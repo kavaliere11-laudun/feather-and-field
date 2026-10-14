@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Feather &amp; Field">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/favicon.png">
+<script>if (navigator.standalone) document.documentElement.classList.add('standalone');</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,9 +40,13 @@
 html{box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%}
+html{background:#4f7a35}
 body{margin:0;background:#4f7a35;color:var(--ink);font-family:var(--body);font-weight:600;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 [hidden]{display:none!important}
 #app{position:relative;height:100%}
+/* installed on the home screen (iPhone draws the page under the status bar, and 100% then falls short of the bottom): fill the whole screen */
+@media (display-mode: standalone){#app{position:fixed;inset:0 0 auto 0;height:100vh}}
+.standalone #app{position:fixed;inset:0 0 auto 0;height:100vh}
 #stage{position:absolute;inset:0;overflow:hidden;background:#4f7a35}
 #farm{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 
