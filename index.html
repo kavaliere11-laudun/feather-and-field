@@ -231,6 +231,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
+const BUILD = '14 Oct 2026 13:28';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -292,7 +293,7 @@ const ROO_NAMES = ['Rupert','Albert','Barnaby','Chester','Gus','Reginald','Hamis
 const I18N = {
 en: {
   tab_farm:'Farm', tab_market:'Market', tab_hatch:'Hatchery', tab_shows:'Shows', tab_awards:'Awards',
-  settings:'Settings', close:'Close', coins:'coins', snd_fx:'Farm sounds', snd_music:'Music', on:'On', off:'Off', snd_note:'Sounds play once you touch the screen. If you hear nothing on an iPhone, check the silent switch.',
+  settings:'Settings', close:'Close', coins:'coins', version:'Version', snd_fx:'Farm sounds', snd_music:'Music', on:'On', off:'Off', snd_note:'Sounds play once you touch the screen. If you hear nothing on an iPhone, check the silent switch.',
   br_rir:'Rhode Island Red', br_orp:'Buff Orpington', br_leg:'Cream Legbar', br_sil:'Silkie', br_bra:'Light Brahma',
   coop_rir:'Red Barn', coop_orp:'Thatched Cottage', coop_leg:'Stone Cottage', coop_sil:'Pagoda Coop', coop_bra:'Timber Lodge',
   col_white:'White', col_black:'Black', col_blue:'Blue', col_splash:'Splash', col_buff:'Buff', col_partridge:'Partridge', col_grey:'Grey', col_lavender:'Lavender', col_cuckoo:'Cuckoo', col_red:'Red', col_paint:'Paint',
@@ -360,7 +361,7 @@ en: {
 },
 fr: {
   tab_farm:'Ferme', tab_market:'Marché', tab_hatch:'Couvoir', tab_shows:'Concours', tab_awards:'Trophées',
-  settings:'Réglages', close:'Fermer', coins:'pièces', snd_fx:'Bruits de la ferme', snd_music:'Musique', on:'Activé', off:'Désactivé', snd_note:'Le son démarre dès que vous touchez l’écran. Si vous n’entendez rien sur iPhone, vérifiez le bouton silencieux.',
+  settings:'Réglages', close:'Fermer', coins:'pièces', version:'Version', snd_fx:'Bruits de la ferme', snd_music:'Musique', on:'Activé', off:'Désactivé', snd_note:'Le son démarre dès que vous touchez l’écran. Si vous n’entendez rien sur iPhone, vérifiez le bouton silencieux.',
   br_rir:'Rhode Island Red', br_orp:'Orpington fauve', br_leg:'Legbar crème', br_sil:'Poule soie', br_bra:'Brahma herminé',
   coop_rir:'Grange rouge', coop_orp:'Chaumière', coop_leg:'Maison de pierre', coop_sil:'Poulailler pagode', coop_bra:'Chalet en rondins',
   col_white:'Blanc', col_black:'Noir', col_blue:'Bleu', col_splash:'Splash', col_buff:'Fauve', col_partridge:'Perdrix', col_grey:'Gris', col_lavender:'Lavande', col_cuckoo:'Coucou', col_red:'Rouge', col_paint:'Pie',
@@ -1115,7 +1116,15 @@ function buildPlots() {
   }
   plots.push({ kind: 'pasture', f: GEOM.pasture, idx: -1 });
 }
+// iPhone home-screen app: the page is drawn under the status bar but measured without it, so size the game to the screen itself
+function fitStandalone() {
+  if (!navigator.standalone) return;
+  const land = innerWidth > innerHeight, a = screen.width, b = screen.height;
+  const h = land ? Math.min(a, b) : Math.max(a, b), w = land ? Math.max(a, b) : Math.min(a, b);
+  const app = document.getElementById('app'); app.style.height = h + 'px'; app.style.width = w + 'px';
+}
 function layout() {
+  fitStandalone();
   const r = cv.getBoundingClientRect();
   view.vw = Math.max(1, r.width); view.vh = Math.max(1, r.height); view.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(view.vw * view.dpr); cv.height = Math.round(view.vh * view.dpr);
@@ -1989,6 +1998,7 @@ const SHEETS = {
       h('p', { class: 'note', text: t('speed_note') }),
       h('div', { class: 'card' }, h('h3', { text: t('time_title') }), h('p', { class: 'small', text: t('time_body') }), h('p', { class: 'small', text: t('away_body') })),
       h('p', { class: 'note', text: t({ cloud: 'saved_cloud', big: 'saved_big', full: 'saved_big', error: 'saved_err' }[cloud.status] || 'saved_here') }),
+      h('p', { class: 'note', text: t('version') + ' ' + BUILD }),
       state.flags.edited ? h('p', { class: 'warn', text: t('edited') }) : null,
       confirmBtn('reset', t('reset'), () => { try { localStorage.removeItem(SAVE_KEY); } catch (_) {} const l = state.lang; agents.clear(); spriteCache.clear(); plotCache.clear(); newGame(l); state.flags.welcome = true; save(true); layout(); closeSheet(); toast(t('reset_done')); }, 'btn alt'),
     ] };
