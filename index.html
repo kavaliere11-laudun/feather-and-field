@@ -232,7 +232,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '14 Oct 2026 17:25';
+const BUILD = '14 Oct 2026 17:55';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -1056,9 +1056,12 @@ const DATA = {"geom":{"size":[3440,3700],"ez":[0.0,-59.46],"slots":[{"c":[911.44
 const GEOM = DATA.geom, SPR = DATA.spr, TREES = DATA.trees, PROPS = DATA.props, OV = DATA.ov, CARDS = new Set(DATA.cards);
 const BIRD_UNIT = 50;                 // map pixels per Blender unit: a hen stands about 0.6 m tall, a touch larger than life
 const IMG = new Map();
+// every picture is asked for with its own version tag (filled in by the phone build), so an update never mixes old and new pictures
+const ASSET_V = {"img/farm_map.webp":"c3ba4d1720","img/b/card_sil_white_r.webp":"a60bc2bd42","img/b/card_sil_cuckoo_h.webp":"8570956df5","img/b/card_bra_r.webp":"56dbff8273","img/b/card_sil_paint_h.webp":"bfee2dbcaf","img/b/card_sil_partridge_r.webp":"e8ed060728","img/b/card_sil_lavender_r.webp":"1f45cfea3a","img/b/card_chick_sil_paint.webp":"a61095c41e","img/b/card_orp_h.webp":"6db2321025","img/b/card_chick_sil_grey.webp":"2ec88aee21","img/b/card_chick_rir.webp":"de894affe3","img/b/card_sil_lavender_h.webp":"e02f2482b7","img/b/card_orp_r.webp":"23b397e98f","img/b/card_sil_splash_h.webp":"c5dd5af728","img/b/card_sil_blue_h.webp":"3115dd305d","img/b/card_sil_splash_r.webp":"7a47398764","img/b/card_rir_r.webp":"06d6cbc09a","img/b/card_sil_black_h.webp":"92c978aea8","img/b/card_sil_grey_r.webp":"6ec5369f3d","img/b/card_chick_sil_white.webp":"be4eea00b5","img/b/card_leg_r.webp":"4b7f8ea4c4","img/b/card_chick_sil_splash.webp":"405272faf8","img/b/card_sil_buff_h.webp":"e1ab4c7e3d","img/b/card_sil_partridge_h.webp":"bb763d9e82","img/b/card_rir_h.webp":"f00194fb23","img/b/card_bra_h.webp":"60b53a3419","img/b/card_sil_red_h.webp":"00cb145e97","img/b/card_chick_sil_cuckoo.webp":"eae137a21d","img/b/card_sil_paint_r.webp":"4afc62254d","img/b/card_sil_cuckoo_r.webp":"030104e8d3","img/b/card_chick_leg.webp":"18b80bd8f0","img/b/card_chick_sil_red.webp":"f51df5087d","img/b/card_chick_sil_buff.webp":"8996cee521","img/b/card_sil_white_h.webp":"b35f471c13","img/b/card_chick_sil_lavender.webp":"225bc8cb28","img/b/card_sil_buff_r.webp":"1abe06c15c","img/b/card_chick_orp.webp":"53beaf7322","img/b/card_chick_sil_blue.webp":"993030c574","img/b/card_chick_sil_black.webp":"150849b4d4","img/b/card_sil_red_r.webp":"d1cff91b74","img/b/card_sil_grey_h.webp":"d658db71d9","img/b/card_chick_sil_partridge.webp":"ed507b98a5","img/b/card_sil_black_r.webp":"f3f9b696d5","img/b/card_leg_h.webp":"58e1033157","img/b/card_chick_bra.webp":"774b60b925","img/b/card_sil_blue_r.webp":"62fbe04552","img/ov/ov_orp_0.webp":"f21673575c","img/ov/ov_sale_90.webp":"1692275e9c","img/ov/ov_sale_0.webp":"a4bfce6b83","img/ov/fence_90.webp":"6afa28839d","img/ov/ov_orp_90.webp":"246add31b3","img/ov/ov_sil_0.webp":"0c4d801283","img/ov/ov_leg_0.webp":"7c3b52f02f","img/ov/fence_0.webp":"fe84195eba","img/ov/ov_bra_0.webp":"a9438a11a4","img/ov/ov_empty_0.webp":"5eda7e7777","img/ov/ov_sil_90.webp":"7acd3d5c43","img/ov/ov_leg_90.webp":"665e73f230","img/ov/ov_rir_0.webp":"cb59d3e28b","img/ov/ov_empty_90.webp":"c254880806","img/ov/ov_bra_90.webp":"dcd6f96103","img/ov/ov_rir_90.webp":"7e88fec29b","img/atlas/sil_paint.webp":"9bf1fcf5eb","img/atlas/sil_splash.webp":"bb96817edd","img/atlas/sil_red.webp":"32f720164e","img/atlas/sil_black.webp":"74277489f9","img/atlas/rir.webp":"3d7378eac2","img/atlas/bra.webp":"91dabb2451","img/atlas/props.webp":"851517e2ad","img/atlas/sil_buff.webp":"118d532179","img/atlas/sil_cuckoo.webp":"5bb56bfa08","img/atlas/sil_grey.webp":"bc85fee51a","img/atlas/leg.webp":"9678a8ae61","img/atlas/sil_partridge.webp":"437e257be2","img/atlas/trees.webp":"fe993d35a9","img/atlas/sil_lavender.webp":"9fc415a9c2","img/atlas/sil_white.webp":"0e762a40f5","img/atlas/sil_blue.webp":"71e9f59d98","img/atlas/orp.webp":"cbb50557d0"};
+const vsrc = s => ASSET_V[s] ? s + '?v=' + ASSET_V[s] : s;
 function img(src) {
   let im = IMG.get(src);
-  if (!im) { im = new Image(); im.decoding = 'async'; im.src = src; im.onload = () => { dirty = true; }; IMG.set(src, im); }
+  if (!im) { im = new Image(); im.decoding = 'async'; im.src = vsrc(src); im.onload = () => { dirty = true; }; IMG.set(src, im); }
   return im;
 }
 const ready = im => im.complete && im.naturalWidth > 0;
@@ -1702,7 +1705,7 @@ function h(tag, attrs, ...kids) {
     const v = attrs[k]; if (v == null || v === false) continue;
     if (k === 'class') el.className = v; else if (k === 'text') el.textContent = v;
     else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else if (k === 'style') el.style.cssText = v;
-    else el.setAttribute(k, v === true ? '' : v);
+    else el.setAttribute(k, v === true ? '' : (k === 'src' && tag === 'img' ? vsrc(v) : v));
   }
   for (const kid of kids.flat(Infinity)) { if (kid == null || kid === false) continue; el.append(kid.nodeType ? kid : document.createTextNode(String(kid))); }
   return el;
@@ -2466,4 +2469,6 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 <script>
 // offline support: keep the game's files on the phone (only on the website, not inside Claude)
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(r => r.update()).catch(() => {}));
+// a newer version just took over: reload once so every file comes from the same version
+if ('serviceWorker' in navigator && navigator.serviceWorker.controller) { let done = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!done) { done = true; location.reload(); } }); }
 </script>
