@@ -232,23 +232,23 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const T = { incubate: 1 * HOUR, young: 6 * HOUR, adult: 3 * DAY, older: 14 * DAY, retire: 30 * DAY };
 const OFFLINE_CAP = 48 * HOUR;          // farm pauses after 2 days away
-const NEST_CAP = 12;                    // eggs a coop holds before hens stop laying into it
-const SHOW_EVERY = 4 * HOUR, SHOW_OPEN = 3 * HOUR, SHOP_EVERY = 2 * HOUR;
+const NEST_CAP = 24;                    // eggs a coop holds before hens stop laying into it (about a day of laying)
+const SHOW_EVERY = 8 * HOUR, SHOW_OPEN = 24 * HOUR, SHOP_EVERY = 6 * HOUR;
 const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '16 Oct 2026 15:18';
+const BUILD = '16 Oct 2026 15:45';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
 // lvl = the farm level at which the breed goes on sale
 const BREEDS = {
-  rir: { price: 40,  egg: 3, lay: 15, eggCol: '#a96a40', size: 1.00, coop: 150,  lvl: 1 },
-  orp: { price: 90,  egg: 5, lay: 20, eggCol: '#dcb98f', size: 1.12, coop: 300,  lvl: 3 },
-  sil: { price: 110, egg: 6, lay: 40, eggCol: '#efe4d2', size: 0.82, coop: 600,  lvl: 5 },
-  leg: { price: 150, egg: 8, lay: 22, eggCol: '#a7cfc8', size: 0.95, coop: 700,  lvl: 7 },
-  bra: { price: 260, egg: 7, lay: 30, eggCol: '#c9a07a', size: 1.30, coop: 1200, lvl: 10 },
+  rir: { price: 40,  egg: 12, lay: 240, eggCol: '#a96a40', size: 1.00, coop: 150,  lvl: 1 },
+  orp: { price: 90,  egg: 20, lay: 300, eggCol: '#dcb98f', size: 1.12, coop: 300,  lvl: 3 },
+  sil: { price: 110, egg: 24, lay: 480, eggCol: '#efe4d2', size: 0.82, coop: 600,  lvl: 5 },
+  leg: { price: 150, egg: 32, lay: 330, eggCol: '#a7cfc8', size: 0.95, coop: 700,  lvl: 7 },
+  bra: { price: 260, egg: 28, lay: 420, eggCol: '#c9a07a', size: 1.30, coop: 1200, lvl: 10 },
 };
 const BREED_IDS = ['rir', 'orp', 'sil', 'leg', 'bra'];
 
@@ -264,8 +264,8 @@ const FEEDER_CAP = 80, EAT_EVERY = 2 * HOUR;
 
 // Levels: XP from eggs, hatching, sales, shows and trophies. Each level unlocks something.
 const TIER_LVL = { village: 1, county: 4, national: 9 };
-const XP = { egg: 1, hatch: 15, sell: 5, coop: 30, land: 20, colour: 60, show: { village: [40, 25, 15], county: [100, 60, 40], national: [250, 150, 100] } };
-const xpFor = L => L <= 1 ? 0 : Math.round(60 * (L - 1) ** 1.6);
+const XP = { egg: 2, hatch: 15, sell: 5, coop: 30, land: 20, colour: 60, show: { village: [40, 25, 15], county: [100, 60, 40], national: [250, 150, 100] } };
+const xpFor = L => L <= 1 ? 0 : L === 2 ? 6 : Math.round(60 * (L - 1) ** 1.7);      // level 2 comes with the first eggs collected
 function levelOf(xp) { let L = 1; while (L < MAX_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
 const plotsAllowed = L => Math.min(MAX_PLOTS, 2 + 2 * L);
 const levelForPlots = n => Math.max(1, Math.ceil((n - 2) / 2));
@@ -336,16 +336,16 @@ en: {
   lang:'Language', speed:'Game speed', speed_1:'Normal', speed_60:'Test ×60', speed_note:'Test speed makes 1 minute equal 1 hour, so you can try breeding and shows quickly.',
   time_title:'How time works',
   time_body:'The farm keeps going while the game is closed. Eggs take 1 hour to hatch. Chicks grow up in 6 hours and hens start laying. Birds are adults at 3 days, lay less after 14 days and retire to the pasture at 30 days. They never die.',
-  away_body:'If you stay away for more than 2 days, the farm pauses until you come back. Nest boxes stop filling at 12 eggs and feeders run down, so check in often.',
+  away_body:'If you stay away for more than 2 days, the farm pauses until you come back. Nest boxes hold about a day of eggs (24) and feeders run down, so come back every day.',
   saved_here:'Your farm is saved on this device only.', saved_cloud:'Your farm is saved on this device and in your Claude account, so it is kept through updates and you can carry on from another device.', saved_err:'Your farm is saved on this device. Saving to your account failed just now; the game will try again.', saved_big:'Your farm is saved on this device. It has grown too big to also save to your account.', restored:'Your farm was restored from your account', edited:'This save was changed outside the game.', reset:'Start a new farm', reset_done:'New farm started',
   welcome_title:'Welcome to your farm', welcome_1:'You start with a Red Barn, three Rhode Island Red hens and a rooster.',
-  welcome_2:'Tap the egg above the coop to collect eggs, then sell them in the Hatchery or hatch the fertile ones. Keep the feeder full: hens only lay when they are fed.',
+  welcome_2:'Tap the egg above a coop to collect. Eating eggs are sold straight away; fertile eggs go to the Hatchery, where you hatch the best and sell the rest. Keep the feeder full: hens only lay when they are fed.',
   welcome_3:'Each coop holds 5 birds. Level up to unlock new breeds and land, breed better birds, win rosettes at shows and decide whether to sell your champion or breed from it.',
   start:'Start farming',
   away_title:'While you were away', away_eggs:'{n} eggs laid', away_hatched:'{n} chicks hatched', away_retired:'{n} birds retired to the pasture', away_shows:'{n} show results', away_new_shows:'{n} new shows open', away_trophies:'{n} trophies won', away_colours:'{n} new Silkie colours', away_full:'{n} nests are full, so those hens have stopped laying', away_full1:'A nest is full, so those hens have stopped laying', collect_all:'Collect all eggs', collect_all_n:'Collect all eggs ({n})', away_paused:'You were away more than 2 days, so the farm paused.',
   pasture:'Pasture', pasture_note:'Retired birds live here. They no longer lay, but you can rehome them.', pasture_empty:'No retired birds yet.',
   sign_build:'Build a coop', sign_sale:'For sale', build_here:'Choose a coop to build', crow:'Cock-a-doodle-doo!', cluck:'cluck',
-  in_coop:'In the {coop}', grade:'Grade', egg_word:'egg', eggs_word:'eggs', sell_eggs_done:'Sold {e} eggs for {n} coins', collected:'+{n} eggs',
+  in_coop:'In the {coop}', grade:'Grade', egg_word:'egg', eggs_word:'eggs', sell_eggs_done:'Sold {e} eggs for {n} coins', collected:'+{n} eggs', neighbour:'A kind neighbour left you a bag of layers pellets. Fill your feeders so the hens lay again.', col_sold:'{n} eating eggs sold +{c}', col_fert:'{n} fertile eggs to the Hatchery', col_extra:'basket full, {n} more sold +{c}', basket_note:'Eating eggs are sold as you collect them. Fertile eggs wait here; when the basket is full it keeps the best ones and sells the rest.',
   coop_cap:'{a} of {b} birds', show_ready:'Show entries open', retired_toast:'{name} retired to the pasture',
   chick_in:'Grows up in {t}', rooster_sym:'♂', hen_sym:'♀', cap_max:'Coop is at full size',
   level:'Level', lvl_short:'Lv {n}', xp:'XP', level_up:'Level {n}!', level_up_body:'Your farm reached level {n}.', unlocks:'New at this level', next_unlocks:'Coming up',
@@ -355,7 +355,7 @@ en: {
   feed:'Feed', feeder:'Feeder', feed_store:'Feed store', feed_basic:'Layers’ pellets', feed_premium:'Premium mix', feed_show:'Show breeder’s ration',
   feed_basic_d:'Everyday feed. Hens lay as normal.', feed_premium_d:'Hens lay faster. Growing birds gain up to +4 size and plumage.', feed_show_d:'Hens lay fastest. Growing birds gain up to +8 size and plumage, and eggs give slightly better chicks.',
   bag:'Bag of {n} portions', buy_bag:'Buy a bag', portions:'{n} portions', in_store:'In your store: {n}', fill:'Fill', fill_all:'Fill every feeder', feeder_empty:'Feeder empty: the hens have stopped laying', feeder_low:'Feeder running low',
-  feeder_level:'{n} of {max} portions', feed_lasts:'Lasts about {t}', no_feed_store:'You have none in store. Buy feed in the Market.', filled:'Feeders filled', hungry_toast:'{coop}: feeder is empty', away_hungry:'{n} feeders ran empty',
+  feeder_level:'{n} of {max} portions', feed_lasts:'Lasts about {t}', no_feed_store:'You have none in store. Buy feed in the Market.', filled:'Feeders filled', hungry_toast:'{coop}: feeder is empty', away_hungry:'{n} feeders ran empty', away_hungry1:'A feeder ran empty', away_eggs1:'1 egg laid', away_hatched1:'1 chick hatched', away_retired1:'1 bird retired to the pasture', away_shows1:'1 show result', away_new_shows1:'1 new show open', away_trophies1:'1 trophy won', away_colours1:'1 new Silkie colour', collected1:'+1 egg', col_sold1:'1 eating egg sold +{c}', col_fert1:'1 fertile egg to the Hatchery', col_extra1:'basket full, 1 more sold +{c}',
   feed_note:'A portion feeds one bird for 2 hours, also while you are away. When a feeder is empty, hens stop laying, but the birds stay healthy.', fed_boost:'Feed bonus +{n}', eating:'Eating: {feed}', none_left:'None left',
   move_to:'Move to another coop', move_none:'No other {coop} has room.', moved:'{name} moved to {coop}', plot_n:'Plot {n}', move_btn:'Move here',
   flock:'Flock', grades:'Grades', sort_value:'Value', sort_quality:'Quality', sort_age:'Youngest', all:'All', flock_empty:'No birds yet.', flock_count:'{n} birds',
@@ -404,16 +404,16 @@ fr: {
   lang:'Langue', speed:'Vitesse du jeu', speed_1:'Normale', speed_60:'Test ×60', speed_note:'La vitesse test fait passer 1 heure en 1 minute, pour essayer l’élevage et les concours rapidement.',
   time_title:'Comment passe le temps',
   time_body:'La ferme continue quand le jeu est fermé. Un œuf éclot en 1 heure. Les poussins grandissent en 6 heures et les poules commencent à pondre. Les volailles sont adultes à 3 jours, pondent moins après 14 jours et partent au pâturage à 30 jours. Elles ne meurent jamais.',
-  away_body:'Si vous partez plus de 2 jours, la ferme se met en pause jusqu’à votre retour. Les pondoirs s’arrêtent à 12 œufs et les mangeoires se vident : passez souvent.',
+  away_body:'Si vous partez plus de 2 jours, la ferme se met en pause jusqu’à votre retour. Les pondoirs gardent environ une journée d’œufs (24) et les mangeoires se vident : passez chaque jour.',
   saved_here:'Votre ferme est enregistrée sur cet appareil uniquement.', saved_cloud:'Votre ferme est enregistrée sur cet appareil et dans votre compte Claude : elle est conservée lors des mises à jour et vous pouvez continuer sur un autre appareil.', saved_err:'Votre ferme est enregistrée sur cet appareil. L’enregistrement dans votre compte a échoué, le jeu va réessayer.', saved_big:'Votre ferme est enregistrée sur cet appareil. Elle est devenue trop grande pour être aussi enregistrée dans votre compte.', restored:'Votre ferme a été récupérée depuis votre compte', edited:'Cette sauvegarde a été modifiée hors du jeu.', reset:'Recommencer une ferme', reset_done:'Nouvelle ferme créée',
   welcome_title:'Bienvenue dans votre ferme', welcome_1:'Vous commencez avec une grange rouge, trois poules Rhode Island Red et un coq.',
-  welcome_2:'Touchez l’œuf au-dessus du poulailler pour ramasser, puis vendez les œufs au couvoir ou faites éclore les œufs fécondés. Gardez la mangeoire pleine : les poules ne pondent que si elles sont nourries.',
+  welcome_2:'Touchez l’œuf au-dessus d’un poulailler pour ramasser. Les œufs de consommation sont vendus aussitôt ; les œufs fécondés vont au couvoir, où vous faites éclore les meilleurs et vendez les autres. Gardez la mangeoire pleine : les poules ne pondent que si elles sont nourries.',
   welcome_3:'Chaque poulailler accueille 5 volailles. Montez de niveau pour débloquer races et terrains, améliorez vos lignées, gagnez des rosettes et décidez : vendre votre champion ou le garder pour la reproduction ?',
   start:'Commencer',
   away_title:'Pendant votre absence', away_eggs:'{n} œufs pondus', away_hatched:'{n} poussins éclos', away_retired:'{n} volailles parties au pâturage', away_shows:'{n} résultats de concours', away_new_shows:'{n} nouveaux concours ouverts', away_trophies:'{n} trophées gagnés', away_colours:'{n} nouvelles couleurs de poule soie', away_full:'{n} pondoirs sont pleins : ces poules ont arrêté de pondre', away_full1:'Un pondoir est plein : ces poules ont arrêté de pondre', collect_all:'Ramasser tous les œufs', collect_all_n:'Ramasser tous les œufs ({n})', away_paused:'Vous êtes parti plus de 2 jours : la ferme s’est mise en pause.',
   pasture:'Pâturage', pasture_note:'Les volailles retraitées vivent ici. Elles ne pondent plus, mais vous pouvez les confier à une famille.', pasture_empty:'Aucune volaille retraitée pour le moment.',
   sign_build:'Construire', sign_sale:'À vendre', build_here:'Choisissez un poulailler à construire', crow:'Cocorico !', cluck:'cot cot',
-  in_coop:'Dans : {coop}', grade:'Note', egg_word:'œuf', eggs_word:'œufs', sell_eggs_done:'{e} œufs vendus pour {n} pièces', collected:'+{n} œufs',
+  in_coop:'Dans : {coop}', grade:'Note', egg_word:'œuf', eggs_word:'œufs', sell_eggs_done:'{e} œufs vendus pour {n} pièces', collected:'+{n} œufs', neighbour:'Un voisin bienveillant vous a laissé un sac de granulés. Remplissez les mangeoires pour que les poules pondent à nouveau.', col_sold:'{n} œufs vendus +{c}', col_fert:'{n} œufs fécondés au couvoir', col_extra:'panier plein, {n} de plus vendus +{c}', basket_note:'Les œufs de consommation sont vendus dès le ramassage. Les œufs fécondés attendent ici ; quand le panier est plein, il garde les meilleurs et vend les autres.',
   coop_cap:'{a} volailles sur {b}', show_ready:'Inscriptions ouvertes', retired_toast:'{name} est parti(e) au pâturage',
   chick_in:'Adulte dans {t}', rooster_sym:'♂', hen_sym:'♀', cap_max:'Le poulailler est à sa taille maximale',
   level:'Niveau', lvl_short:'Niv. {n}', xp:'XP', level_up:'Niveau {n} !', level_up_body:'Votre ferme passe au niveau {n}.', unlocks:'Nouveau à ce niveau', next_unlocks:'Bientôt',
@@ -423,7 +423,7 @@ fr: {
   feed:'Nourriture', feeder:'Mangeoire', feed_store:'Réserve', feed_basic:'Granulés pondeuses', feed_premium:'Mélange premium', feed_show:'Ration concours',
   feed_basic_d:'Aliment de tous les jours. Les poules pondent normalement.', feed_premium_d:'Les poules pondent plus vite. Les jeunes gagnent jusqu’à +4 en taille et en plumage.', feed_show_d:'Ponte la plus rapide. Les jeunes gagnent jusqu’à +8 en taille et en plumage, et les œufs donnent des poussins un peu meilleurs.',
   bag:'Sac de {n} portions', buy_bag:'Acheter un sac', portions:'{n} portions', in_store:'En réserve : {n}', fill:'Remplir', fill_all:'Remplir toutes les mangeoires', feeder_empty:'Mangeoire vide : les poules ne pondent plus', feeder_low:'La mangeoire se vide',
-  feeder_level:'{n} portions sur {max}', feed_lasts:'Dure environ {t}', no_feed_store:'Votre réserve est vide. Achetez de la nourriture au marché.', filled:'Mangeoires remplies', hungry_toast:'{coop} : mangeoire vide', away_hungry:'{n} mangeoires se sont vidées',
+  feeder_level:'{n} portions sur {max}', feed_lasts:'Dure environ {t}', no_feed_store:'Votre réserve est vide. Achetez de la nourriture au marché.', filled:'Mangeoires remplies', hungry_toast:'{coop} : mangeoire vide', away_hungry:'{n} mangeoires se sont vidées', away_hungry1:'Une mangeoire s’est vidée', away_eggs1:'1 œuf pondu', away_hatched1:'1 poussin éclos', away_retired1:'1 volaille partie au pâturage', away_shows1:'1 résultat de concours', away_new_shows1:'1 nouveau concours ouvert', away_trophies1:'1 trophée gagné', away_colours1:'1 nouvelle couleur de poule soie', collected1:'+1 œuf', col_sold1:'1 œuf vendu +{c}', col_fert1:'1 œuf fécondé au couvoir', col_extra1:'panier plein, 1 de plus vendu +{c}',
   feed_note:'Une portion nourrit une volaille pendant 2 heures, même pendant votre absence. Quand la mangeoire est vide, les poules arrêtent de pondre, mais restent en bonne santé.', fed_boost:'Bonus nourriture +{n}', eating:'Mange : {feed}', none_left:'Plus rien',
   move_to:'Changer de poulailler', move_none:'Aucun autre poulailler « {coop} » n’a de place.', moved:'{name} a déménagé : {coop}', plot_n:'Terrain {n}', move_btn:'Installer ici',
   flock:'Troupeau', grades:'Notes', sort_value:'Valeur', sort_quality:'Qualité', sort_age:'Plus jeunes', all:'Toutes', flock_empty:'Pas encore de volailles.', flock_count:'{n} volailles',
@@ -451,6 +451,7 @@ function cleanName(s, fallback) { const v = String(s == null ? '' : s).replace(/
 let state = null;
 const lang = () => (state && I18N[state.lang]) ? state.lang : 'en';
 function t(k, v) {
+  if (v && (v.n === 1 || v.n === '1') && (I18N[lang()][k + '1'] != null)) k += '1';          // "1 egg", not "1 eggs"
   let s = I18N[lang()][k]; if (s == null) s = I18N.en[k]; if (s == null) return k;
   if (v) s = s.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m);
   return s;
@@ -462,7 +463,7 @@ function fmtDur(ms) {
   const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
   const j = lang() === 'fr' ? { d: ' j', h: ' h', m: ' min', s: ' s' } : { d: 'd', h: 'h', m: 'm', s: 's' };
   if (d) return `${d}${j.d} ${h}${j.h}`;
-  if (h) return `${h}${j.h} ${m}${j.m}`;
+  if (h) return m ? `${h}${j.h} ${m}${j.m}` : `${h}${j.h}`;
   if (m) return `${m}${j.m}${m < 10 && sec ? ' ' + sec + j.s : ''}`;
   return `${sec}${j.s}`;
 }
@@ -551,7 +552,7 @@ const sellPrice = b => Math.max(1, Math.round(value(b) * .8));
 function fertileEggPrice(e) {
   const c = e.child; const base = BREEDS[c.breed].price * (c.breed === 'sil' ? SIL[c.colour].m : 1);
   const q = (e.sire.q + e.dam.q) / 2;
-  return Math.round(BREEDS[c.breed].egg * 3 + .06 * base * qMult(q) * (1 + .1 * (c.line || 0)));
+  return Math.round(BREEDS[c.breed].egg * 1.6 + .06 * base * qMult(q) * (1 + .1 * (c.line || 0)));
 }
 function layInterval(b) {
   const age = state.gt - b.born;
@@ -700,7 +701,7 @@ function okEgg(e) { const child = okSpec(e && e.child); if (!child) return null;
 function sanitize(s) {
   if (!s || typeof s !== 'object' || s.v !== 1) return null;
   const o = {
-    v: 1, gt: num(s.gt, -1e13, 1e13, 0), lastReal: num(s.lastReal, 0, 1e14, Date.now()), speed: SPEEDS.includes(s.speed) ? s.speed : 1,
+    v: 1, gt: num(s.gt, -1e13, 1e13, 0), lastReal: num(s.lastReal, 0, 1e14, Date.now()), helpAt: num(s.helpAt, -1e13, 1e13, -1e13), speed: SPEEDS.includes(s.speed) ? s.speed : 1,
     lang: I18N[s.lang] ? s.lang : 'en', coins: int(s.coins, 0, 1e12, 0), nextId: int(s.nextId, 1, 1e9, 1),
     plots: int(s.plots, 1, MAX_PLOTS, 2), coops: [], birds: [], basket: { plain: {}, fertile: [] }, basketCap: int(s.basketCap, 60, 1000, 60),
     inc: { slots: int(s.inc && s.inc.slots, 2, 8, 2), items: [] }, shop: { offers: [], next: num(s.shop && s.shop.next, -1e13, 1e13, 0) },
@@ -993,32 +994,35 @@ function actSell(b) {
 function actRetire(b) { if (b.home === 'pasture') return; retire(b); toast(t('retired_toast', { name: b.name })); changed(); }
 function actSire(b) { const c = coopById(b.home); if (!c || b.sex !== 'r') return; c.sire = b.id; changed(); }
 function actRename(b, v) { b.name = cleanName(v, b.name); changed(true); }
-function actCollect(coop) {
-  const nu = nestUse.get(coop.id); if (nu) nu.hidden = 0;
-  const room = state.basketCap - basketCount();
-  if (room <= 0) { toast(t('basket_full')); openSheet('hatch'); return 0; }
-  let n = 0;
-  while (coop.nest.fertile.length && n < room) { state.basket.fertile.push(coop.nest.fertile.shift()); n++; }
-  const p = Math.min(coop.nest.plain, room - n); coop.nest.plain -= p; state.basket.plain[coop.breed] += p; n += p;
-  if (n) { SND.eggs(n); toast(t('collected', { n }) + ' · ' + t('xp_gain', { n: n * XP.egg })); gainXP(n * XP.egg); } if (nestCount(coop) && basketCount() >= state.basketCap) toast(t('basket_full'));
-  changed(); return n;
-}
-function waitingEggs() { return state.coops.reduce((n, c) => n + nestCount(c), 0); }
-function actCollectAll() {
-  let n = 0; const room0 = state.basketCap - basketCount();
-  if (room0 <= 0) { toast(t('basket_full')); openSheet('hatch'); return 0; }
-  let got = 0;
-  for (const c of [...state.coops].sort((a, b) => nestCount(b) - nestCount(a))) {
-    if (basketCount() >= state.basketCap) break;
+const eggQ = e => (e.sire.q + e.dam.q) / 2;
+function collectFrom(coops) {
+  let total = 0, eatN = 0, eatC = 0, fertIn = 0, extraN = 0, extraC = 0;
+  for (const k of BREED_IDS) if (state.basket.plain[k]) { eatN += state.basket.plain[k]; eatC += state.basket.plain[k] * BREEDS[k].egg; state.basket.plain[k] = 0; }   // eggs kept from older versions
+  for (const c of coops) {
     const nu = nestUse.get(c.id); if (nu) nu.hidden = 0;
-    const room = state.basketCap - basketCount();
-    let k = 0; while (c.nest.fertile.length && k < room) { state.basket.fertile.push(c.nest.fertile.shift()); k++; }
-    const p = Math.min(c.nest.plain, room - k); c.nest.plain -= p; state.basket.plain[c.breed] += p; k += p; got += k;
+    total += nestCount(c);
+    eatN += c.nest.plain; eatC += c.nest.plain * BREEDS[c.breed].egg; c.nest.plain = 0;
+    for (const e of c.nest.fertile) {
+      if (state.basket.fertile.length < state.basketCap) { state.basket.fertile.push(e); fertIn++; continue; }
+      let wi = 0; state.basket.fertile.forEach((x, i) => { if (eggQ(x) < eggQ(state.basket.fertile[wi])) wi = i; });      // basket full: keep the better egg
+      let sold = e; if (eggQ(e) > eggQ(state.basket.fertile[wi])) { sold = state.basket.fertile[wi]; state.basket.fertile[wi] = e; }
+      extraN++; extraC += fertileEggPrice(sold);
+    }
+    c.nest.fertile = [];
   }
-  if (got) { SND.eggs(got); gainXP(got * XP.egg); toast(t('collected', { n: got }) + ' · ' + t('xp_gain', { n: got * XP.egg })); }
-  if (waitingEggs() && basketCount() >= state.basketCap) toast(t('basket_full'));
-  changed(); return got;
+  if (!total && !eatN) return 0;
+  if (eatC + extraC) addCoins(eatC + extraC);
+  if (total) { SND.eggs(total); gainXP(total * XP.egg); }
+  if (eatC + extraC) SND.coin();
+  const bits = [t('collected', { n: total })];
+  if (eatN) bits.push(t('col_sold', { n: eatN, c: fmtN(eatC) }));
+  if (fertIn) bits.push(t('col_fert', { n: fertIn }));
+  if (extraN) bits.push(t('col_extra', { n: extraN, c: fmtN(extraC) }));
+  toast(bits.join(' · ')); changed(); return total;
 }
+function actCollect(coop) { return collectFrom([coop]); }
+function actCollectAll() { return collectFrom(state.coops); }
+function waitingEggs() { return state.coops.reduce((n, c) => n + nestCount(c), 0); }
 function basketCount() { let n = state.basket.fertile.length; for (const k in state.basket.plain) n += state.basket.plain[k]; return n; }
 function actSellPlain() {
   let e = 0, coins = 0;
@@ -1026,7 +1030,6 @@ function actSellPlain() {
   if (!e) return; addCoins(coins); SND.coin(); toast(t('sell_eggs_done', { e: fmtN(e), n: fmtN(coins) })); changed();
 }
 function actSellFertile(id) { const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return; const p = fertileEggPrice(state.basket.fertile[i]); state.basket.fertile.splice(i, 1); addCoins(p); SND.coin(); toast(t('prize_won', { n: fmtN(p) })); changed(); }
-const eggQ = e => (e.sire.q + e.dam.q) / 2;
 function actSellFertileAll(keep) {
   const sorted = [...state.basket.fertile].sort((a, b) => eggQ(b) - eggQ(a)), kept = sorted.slice(0, keep || 0), sold = sorted.slice(keep || 0);
   if (!sold.length) return;
@@ -2078,10 +2081,10 @@ const SHEETS = {
     return { title: t('tab_hatch'), node: [
       h('div', { class: 'card' },
         h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('basket') }), h('span', { class: 'num', text: `${basketCount()} / ${state.basketCap}` })),
-        state.basket.fertile.length ? h('p', { class: 'small', style: 'font-weight:700', text: t('fertile_in_basket', { n: state.basket.fertile.length }) }) : null,
-        plainTotal ? h('div', { class: 'list' }, BREED_IDS.filter(k => state.basket.plain[k]).map(k => h('div', { class: 'row small' }, h('span', { class: 'eggdot', style: `background:${BREEDS[k].eggCol}` }), h('span', { class: 'grow', text: `${state.basket.plain[k]} × ${t('br_' + k)}` }), h('span', { class: 'muted' }, t('eggs_each', { n: '' }).trim(), ' ', coinPrice(BREEDS[k].egg))))) : h('p', { class: 'small muted', text: state.basket.fertile.length ? t('no_plain_fertile', { n: state.basket.fertile.length }) : t('no_eggs') }),
-        h('div', { style: 'display:grid;gap:8px' }, waitingEggs() ? h('button', { class: 'btn', disabled: basketCount() >= state.basketCap, onclick: actCollectAll }, t('collect_all_n', { n: fmtN(waitingEggs()) })) : null,
-          h('button', { class: 'btn good', disabled: !plainTotal, onclick: actSellPlain }, t('sell_all'), ' · ', coinPrice(plainCoins)))),
+        h('p', { class: 'small muted', text: t('basket_note') }),
+        plainTotal ? h('div', { class: 'list' }, BREED_IDS.filter(k => state.basket.plain[k]).map(k => h('div', { class: 'row small' }, h('span', { class: 'eggdot', style: `background:${BREEDS[k].eggCol}` }), h('span', { class: 'grow', text: `${state.basket.plain[k]} × ${t('br_' + k)}` }), h('span', { class: 'muted' }, t('eggs_each', { n: '' }).trim(), ' ', coinPrice(BREEDS[k].egg))))) : null,
+        h('div', { style: 'display:grid;gap:8px' }, waitingEggs() ? h('button', { class: 'btn', onclick: actCollectAll }, t('collect_all_n', { n: fmtN(waitingEggs()) })) : null,
+          plainTotal ? h('button', { class: 'btn good', onclick: actSellPlain }, t('sell_all'), ' · ', coinPrice(plainCoins)) : null)),
       h('div', { class: 'card' },
         h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('incubator') }), h('span', { class: 'small muted', text: t('slots', { a: state.inc.items.length, b: state.inc.slots }) })),
         h('div', { class: 'list' }, slots)),
@@ -2588,7 +2591,13 @@ function frame(now) {
   if (dirty) { dirty = false; uiDirty = true; buildPlots(); updateHud(); }
   requestAnimationFrame(frame);
 }
-setInterval(() => { if (!state) return; checkTrophies(); updateTimers(); updateHud(); if (current && uiDirty && !(document.activeElement && document.activeElement.id === 'rename')) { uiDirty = false; renderSheet(); } }, 1000);
+// safety net: a farm with no feed, empty feeders and too few coins to buy a bag would be stuck for good, so a neighbour helps out (once a day)
+function neighbourHelp() {
+  if (!state.coops.length || state.feed.basic > 0 || state.coins >= FEEDS.basic.price) return;
+  if (state.coops.some(c => feederTotal(c) > 0) || state.gt - (state.helpAt ?? -1e13) < DAY) return;
+  state.helpAt = state.gt; state.feed.basic += FEEDS.basic.bag; toast(t('neighbour'), true); changed();
+}
+setInterval(() => { if (!state) return; checkTrophies(); neighbourHelp(); updateTimers(); updateHud(); if (current && uiDirty && !(document.activeElement && document.activeElement.id === 'rename')) { uiDirty = false; renderSheet(); } }, 1000);
 setInterval(save, 5000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(true); });
 window.addEventListener('pagehide', () => save(true));
