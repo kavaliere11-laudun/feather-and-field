@@ -121,6 +121,12 @@ p{margin:0;line-height:1.5}
 .portrait{width:58px;height:58px;border-radius:16px;background:radial-gradient(ellipse at 50% 88%,#c2dc98,#eef5df 72%);flex:none;object-fit:contain;padding:3px;-webkit-user-drag:none;user-select:none}
 .portrait.chick{padding:9px}
 .portrait.big{width:136px;height:136px;border-radius:24px}
+.portrait.live{position:relative;display:block;overflow:hidden}
+.portrait.live .pf{position:absolute;inset:3px;transform-origin:50% 90%;animation:breathe 3.4s ease-in-out infinite}
+.portrait.live.chick .pf{inset:9px;animation-duration:1.6s}
+.portrait.live img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;visibility:hidden;-webkit-user-drag:none;user-select:none}
+.portrait.live img.on{visibility:visible}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.006,1.016)}}
 
 /* buttons: chunky and pressable */
 .btn{border:0;border-radius:999px;padding:12px 18px;font:600 16px var(--display);cursor:pointer;background:var(--barn);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:48px;box-shadow:inset 0 -4px 0 var(--barn-deep),0 3px 8px rgba(160,40,20,.18);transition:transform .08s,box-shadow .08s}
@@ -232,7 +238,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '16 Oct 2026 13:19';
+const BUILD = '16 Oct 2026 15:18';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -302,13 +308,13 @@ en: {
   tr_type:'Type', tr_plum:'Plumage', tr_size:'Size', tr_lay:'Laying',
   quality:'Quality', value:'Value', age:'Age', gen:'Generation', parents:'Parents', unknown:'Unknown',
   sell_for:'Sell for', confirm:'Tap again to confirm', buy_for:'Buy for', build_for:'Build for',
-  need_coins:'Not enough coins', need_coop:'Build a {coop} first', coop_full:'All {coop} coops are full', need_plot:'Buy a land plot first', basket_full:'Your egg basket is full',
+  need_coins:'Not enough coins', need_coop:'Build a {coop} first', coop_full:'All {coop} coops are full', need_plot:'Buy a land plot first', basket_full:'Your egg basket is full. Sell some eggs in the Hatchery.',
   nest:'Nest box', collect:'Collect eggs', nest_empty:'No eggs yet', birds:'Birds', upgrade_cap:'Make room for 4 more birds',
   sire:'Breeding rooster', make_sire:'Make breeding rooster', is_sire:'Breeding rooster', no_rooster:'No adult rooster here, so eggs are not fertile. Add a rooster to breed.',
   sire_auto:'Chosen at random from your roosters', sire_note:'Fertile eggs from this coop are fathered by the breeding rooster.',
   retire_now:'Retire to pasture now', rehome:'Rehome with a family', rehomed:'{name} went to a loving family',
   retires_in:'Retires in {t}', retired_on:'Living on the pasture', laying_now:'Laying eggs', not_laying:'Not laying yet',
-  enter_show:'Enter a show', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
+  enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
   market_birds:'Birds', market_build:'Build', new_birds_in:'New birds arrive in {t}', no_offers:'No birds for sale right now.',
@@ -316,7 +322,7 @@ en: {
   buy_land:'Buy land', incubator_slot:'Extra incubator slot', basket_up:'Bigger egg basket (+40)', max_reached:'Fully upgraded',
   basket:'Egg basket', sell_all:'Sell all eggs', eggs_each:'{n} each', fertile:'Fertile eggs', fertile_note:'Hatch them or sell them as hatching eggs.',
   incubate:'Incubate', incubator:'Incubator', empty_slot:'Empty slot', hatches_in:'Hatches in {t}', ready_wait:'Ready to hatch. Make room in a {coop}.', hatched:'A {breed} chick hatched: {name}!', est:'Expected quality about {q}',
-  no_fertile:'No fertile eggs. Keep a rooster with your hens and collect their eggs.', no_eggs:'The basket is empty. Tap the egg above a coop to collect.',
+  no_fertile:'No fertile eggs. Keep a rooster with your hens and collect their eggs.', no_eggs:'The basket is empty. Tap the egg above a coop to collect.', no_plain_fertile:'No eating eggs. The {n} fertile eggs in your basket are listed below: hatch the best and sell the rest.', fertile_in_basket:'{n} fertile eggs (below)', sell_fertile_all:'Sell all fertile eggs', keep_best:'Sell all but the best {n}',
   incubator_full:'The incubator is full', slots:'{a} of {b} slots in use',
   shows_open:'Open shows', next_show:'Next show announced in {t}', closes_in:'Judging in {t}', fee:'Entry fee', prizes:'Prizes', any_breed:'Any breed', class:'{breed} class',
   choose_bird:'Choose a bird to enter', no_eligible:'You have no bird that can enter this class.', entered_bird:'{name} is entered', results:'Results', no_results:'No results yet.',
@@ -336,7 +342,7 @@ en: {
   welcome_2:'Tap the egg above the coop to collect eggs, then sell them in the Hatchery or hatch the fertile ones. Keep the feeder full: hens only lay when they are fed.',
   welcome_3:'Each coop holds 5 birds. Level up to unlock new breeds and land, breed better birds, win rosettes at shows and decide whether to sell your champion or breed from it.',
   start:'Start farming',
-  away_title:'While you were away', away_eggs:'{n} eggs laid', away_hatched:'{n} chicks hatched', away_retired:'{n} birds retired to the pasture', away_shows:'{n} show results', away_paused:'You were away more than 2 days, so the farm paused.',
+  away_title:'While you were away', away_eggs:'{n} eggs laid', away_hatched:'{n} chicks hatched', away_retired:'{n} birds retired to the pasture', away_shows:'{n} show results', away_new_shows:'{n} new shows open', away_trophies:'{n} trophies won', away_colours:'{n} new Silkie colours', away_full:'{n} nests are full, so those hens have stopped laying', away_full1:'A nest is full, so those hens have stopped laying', collect_all:'Collect all eggs', collect_all_n:'Collect all eggs ({n})', away_paused:'You were away more than 2 days, so the farm paused.',
   pasture:'Pasture', pasture_note:'Retired birds live here. They no longer lay, but you can rehome them.', pasture_empty:'No retired birds yet.',
   sign_build:'Build a coop', sign_sale:'For sale', build_here:'Choose a coop to build', crow:'Cock-a-doodle-doo!', cluck:'cluck',
   in_coop:'In the {coop}', grade:'Grade', egg_word:'egg', eggs_word:'eggs', sell_eggs_done:'Sold {e} eggs for {n} coins', collected:'+{n} eggs',
@@ -370,13 +376,13 @@ fr: {
   tr_type:'Type', tr_plum:'Plumage', tr_size:'Taille', tr_lay:'Ponte',
   quality:'Qualité', value:'Valeur', age:'Âge', gen:'Génération', parents:'Parents', unknown:'Inconnus',
   sell_for:'Vendre', confirm:'Touchez encore pour confirmer', buy_for:'Acheter', build_for:'Construire',
-  need_coins:'Pas assez de pièces', need_coop:'Construisez d’abord : {coop}', coop_full:'Tous les poulaillers « {coop} » sont pleins', need_plot:'Achetez d’abord un terrain', basket_full:'Votre panier à œufs est plein',
+  need_coins:'Pas assez de pièces', need_coop:'Construisez d’abord : {coop}', coop_full:'Tous les poulaillers « {coop} » sont pleins', need_plot:'Achetez d’abord un terrain', basket_full:'Votre panier à œufs est plein. Vendez des œufs dans le Couvoir.',
   nest:'Pondoir', collect:'Ramasser les œufs', nest_empty:'Pas encore d’œufs', birds:'Volailles', upgrade_cap:'Faire de la place pour 4 volailles de plus',
   sire:'Coq reproducteur', make_sire:'Choisir comme reproducteur', is_sire:'Coq reproducteur', no_rooster:'Pas de coq adulte ici : les œufs ne sont pas fécondés. Ajoutez un coq pour faire de l’élevage.',
   sire_auto:'Choisi au hasard parmi vos coqs', sire_note:'Les œufs fécondés de ce poulailler ont pour père le coq reproducteur.',
   retire_now:'Mettre au pâturage maintenant', rehome:'Confier à une famille', rehomed:'{name} est parti(e) dans une famille aimante',
   retires_in:'Retraite dans {t}', retired_on:'Vit au pâturage', laying_now:'Pond des œufs', not_laying:'Ne pond pas encore',
-  enter_show:'Inscrire à un concours', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
+  enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
   market_birds:'Volailles', market_build:'Construire', new_birds_in:'Nouvelles volailles dans {t}', no_offers:'Aucune volaille à vendre pour le moment.',
@@ -384,9 +390,9 @@ fr: {
   buy_land:'Acheter le terrain', incubator_slot:'Place de couveuse en plus', basket_up:'Panier plus grand (+40)', max_reached:'Amélioration maximale',
   basket:'Panier à œufs', sell_all:'Vendre tous les œufs', eggs_each:'{n} l’unité', fertile:'Œufs fécondés', fertile_note:'Faites-les éclore ou vendez-les comme œufs à couver.',
   incubate:'Couver', incubator:'Couveuse', empty_slot:'Place libre', hatches_in:'Éclosion dans {t}', ready_wait:'Prêt à éclore. Faites de la place dans : {coop}.', hatched:'Un poussin {breed} est né : {name} !', est:'Qualité attendue : environ {q}',
-  no_fertile:'Aucun œuf fécondé. Gardez un coq avec vos poules et ramassez leurs œufs.', no_eggs:'Le panier est vide. Touchez l’œuf au-dessus d’un poulailler pour ramasser.',
+  no_fertile:'Aucun œuf fécondé. Gardez un coq avec vos poules et ramassez leurs œufs.', no_eggs:'Le panier est vide. Touchez l’œuf au-dessus d’un poulailler pour ramasser.', no_plain_fertile:'Aucun œuf de consommation. Les {n} œufs fécondés de votre panier sont listés plus bas : faites éclore les meilleurs et vendez les autres.', fertile_in_basket:'{n} œufs fécondés (plus bas)', sell_fertile_all:'Vendre tous les œufs fécondés', keep_best:'Tout vendre sauf les {n} meilleurs',
   incubator_full:'La couveuse est pleine', slots:'{a} places utilisées sur {b}',
-  shows_open:'Concours ouverts', next_show:'Prochain concours annoncé dans {t}', closes_in:'Jugement dans {t}', fee:'Inscription', prizes:'Prix', any_breed:'Toutes races', class:'Classe {breed}',
+  shows_open:'Concours ouverts', next_show:'Prochain concours annoncé dans {t}', closes_in:'Jugement dans {t}', fee:'frais', prizes:'Prix', any_breed:'Toutes races', class:'Classe {breed}',
   choose_bird:'Choisissez une volaille à inscrire', no_eligible:'Aucune de vos volailles ne peut concourir dans cette classe.', entered_bird:'{name} est inscrit(e)', results:'Résultats', no_results:'Pas encore de résultats.',
   t_village:'Concours de village', t_county:'Concours régional', t_national:'Championnat national',
   show_name_village:'Concours de {town}', show_name_county:'Concours régional du {county}', show_name_national:'Championnat national avicole',
@@ -404,7 +410,7 @@ fr: {
   welcome_2:'Touchez l’œuf au-dessus du poulailler pour ramasser, puis vendez les œufs au couvoir ou faites éclore les œufs fécondés. Gardez la mangeoire pleine : les poules ne pondent que si elles sont nourries.',
   welcome_3:'Chaque poulailler accueille 5 volailles. Montez de niveau pour débloquer races et terrains, améliorez vos lignées, gagnez des rosettes et décidez : vendre votre champion ou le garder pour la reproduction ?',
   start:'Commencer',
-  away_title:'Pendant votre absence', away_eggs:'{n} œufs pondus', away_hatched:'{n} poussins éclos', away_retired:'{n} volailles parties au pâturage', away_shows:'{n} résultats de concours', away_paused:'Vous êtes parti plus de 2 jours : la ferme s’est mise en pause.',
+  away_title:'Pendant votre absence', away_eggs:'{n} œufs pondus', away_hatched:'{n} poussins éclos', away_retired:'{n} volailles parties au pâturage', away_shows:'{n} résultats de concours', away_new_shows:'{n} nouveaux concours ouverts', away_trophies:'{n} trophées gagnés', away_colours:'{n} nouvelles couleurs de poule soie', away_full:'{n} pondoirs sont pleins : ces poules ont arrêté de pondre', away_full1:'Un pondoir est plein : ces poules ont arrêté de pondre', collect_all:'Ramasser tous les œufs', collect_all_n:'Ramasser tous les œufs ({n})', away_paused:'Vous êtes parti plus de 2 jours : la ferme s’est mise en pause.',
   pasture:'Pâturage', pasture_note:'Les volailles retraitées vivent ici. Elles ne pondent plus, mais vous pouvez les confier à une famille.', pasture_empty:'Aucune volaille retraitée pour le moment.',
   sign_build:'Construire', sign_sale:'À vendre', build_here:'Choisissez un poulailler à construire', crow:'Cocorico !', cluck:'cot cot',
   in_coop:'Dans : {coop}', grade:'Note', egg_word:'œuf', eggs_word:'œufs', sell_eggs_done:'{e} œufs vendus pour {n} pièces', collected:'+{n} œufs',
@@ -990,12 +996,28 @@ function actRename(b, v) { b.name = cleanName(v, b.name); changed(true); }
 function actCollect(coop) {
   const nu = nestUse.get(coop.id); if (nu) nu.hidden = 0;
   const room = state.basketCap - basketCount();
-  if (room <= 0) { toast(t('basket_full')); return 0; }
+  if (room <= 0) { toast(t('basket_full')); openSheet('hatch'); return 0; }
   let n = 0;
   while (coop.nest.fertile.length && n < room) { state.basket.fertile.push(coop.nest.fertile.shift()); n++; }
   const p = Math.min(coop.nest.plain, room - n); coop.nest.plain -= p; state.basket.plain[coop.breed] += p; n += p;
   if (n) { SND.eggs(n); toast(t('collected', { n }) + ' · ' + t('xp_gain', { n: n * XP.egg })); gainXP(n * XP.egg); } if (nestCount(coop) && basketCount() >= state.basketCap) toast(t('basket_full'));
   changed(); return n;
+}
+function waitingEggs() { return state.coops.reduce((n, c) => n + nestCount(c), 0); }
+function actCollectAll() {
+  let n = 0; const room0 = state.basketCap - basketCount();
+  if (room0 <= 0) { toast(t('basket_full')); openSheet('hatch'); return 0; }
+  let got = 0;
+  for (const c of [...state.coops].sort((a, b) => nestCount(b) - nestCount(a))) {
+    if (basketCount() >= state.basketCap) break;
+    const nu = nestUse.get(c.id); if (nu) nu.hidden = 0;
+    const room = state.basketCap - basketCount();
+    let k = 0; while (c.nest.fertile.length && k < room) { state.basket.fertile.push(c.nest.fertile.shift()); k++; }
+    const p = Math.min(c.nest.plain, room - k); c.nest.plain -= p; state.basket.plain[c.breed] += p; k += p; got += k;
+  }
+  if (got) { SND.eggs(got); gainXP(got * XP.egg); toast(t('collected', { n: got }) + ' · ' + t('xp_gain', { n: got * XP.egg })); }
+  if (waitingEggs() && basketCount() >= state.basketCap) toast(t('basket_full'));
+  changed(); return got;
 }
 function basketCount() { let n = state.basket.fertile.length; for (const k in state.basket.plain) n += state.basket.plain[k]; return n; }
 function actSellPlain() {
@@ -1004,6 +1026,14 @@ function actSellPlain() {
   if (!e) return; addCoins(coins); SND.coin(); toast(t('sell_eggs_done', { e: fmtN(e), n: fmtN(coins) })); changed();
 }
 function actSellFertile(id) { const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return; const p = fertileEggPrice(state.basket.fertile[i]); state.basket.fertile.splice(i, 1); addCoins(p); SND.coin(); toast(t('prize_won', { n: fmtN(p) })); changed(); }
+const eggQ = e => (e.sire.q + e.dam.q) / 2;
+function actSellFertileAll(keep) {
+  const sorted = [...state.basket.fertile].sort((a, b) => eggQ(b) - eggQ(a)), kept = sorted.slice(0, keep || 0), sold = sorted.slice(keep || 0);
+  if (!sold.length) return;
+  let coins = 0; for (const e of sold) coins += fertileEggPrice(e);
+  state.basket.fertile = state.basket.fertile.filter(e => kept.includes(e)); addCoins(coins); SND.coin();
+  toast(t('sell_eggs_done', { e: fmtN(sold.length), n: fmtN(coins) })); changed();
+}
 function actIncubate(id) {
   if (state.inc.items.length >= state.inc.slots) { toast(t('incubator_full')); return; }
   const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return;
@@ -1761,7 +1791,33 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 const coinPrice = (n, lbl) => h('span', { class: 'price' }, lbl ? lbl + ' ' : '', h('span', { class: 'coin' }), fmtN(n));
+/* the big close-up comes alive: breathing, and every few seconds the bird turns its head to look at you (chicks turn right round) */
+function livePortrait(b) {
+  const base = cardSrc(b).replace(/\.webp$/, ''), chick = stage(b) === 'chick', name = base.split('/').pop();
+  const n = CARDS.has(name + '_f3') ? 4 : 3, frames = [];
+  for (let i = 0; i < n; i++) frames.push(h('img', { src: vsrc(base + (i ? '_f' + i : '') + '.webp'), alt: '', draggable: 'false', class: i ? '' : 'on' }));
+  const el = h('div', { class: 'portrait big live' + (chick ? ' chick' : '') }, h('div', { class: 'pf' }, frames));
+  let cur = 0;
+  const show = i => { if (i === cur) return; frames[i].classList.add('on'); frames[cur].classList.remove('on'); cur = i; };
+  const rnd = (a, z) => a + Math.random() * (z - a);
+  const steps = () => {         // [frame, how long to hold it]
+    const s = [[1, .11], [2, rnd(1, 1.9)]];
+    if (n > 3 && Math.random() < .65) s.push([3, rnd(.6, 1.1)], [2, rnd(.25, .5)]);
+    s.push([1, .11], [0, rnd(1.8, 4.2)]);
+    return s;
+  };
+  let queue = [[0, rnd(.5, 1)]];
+  const next = () => {
+    if (!el.isConnected && el.dataset.seen) return;          // the sheet closed: stop
+    if (el.isConnected) el.dataset.seen = '1';
+    if (!queue.length) queue = steps();
+    const [f, d] = queue.shift(); show(f); setTimeout(next, d * 1000);
+  };
+  setTimeout(next, 50);
+  return el;
+}
 function portrait(b, big) {
+  if (big && !matchMedia('(prefers-reduced-motion: reduce)').matches) { const nm = cardSrc(b).split('/').pop().replace(/\.webp$/, ''); if (nm && CARDS.has(nm + '_f2')) return livePortrait(b); }
   return h('img', { class: 'portrait' + (big ? ' big' : '') + (stage(b) === 'chick' ? ' chick' : ''), src: cardSrc(b), alt: '', draggable: 'false' });
 }
 function meterBar(n, max, cls) { return h('div', { class: 'meter' + (cls ? ' ' + cls : ''), role: 'meter', 'aria-valuenow': n, 'aria-valuemin': 0, 'aria-valuemax': max }, h('i', { style: `width:${clamp(n / max * 100, 0, 100)}%` })); }
@@ -1832,10 +1888,14 @@ const SHEETS = {
     if (a.eggs) lines.push(t('away_eggs', { n: fmtN(a.eggs) })); if (a.hatched) lines.push(t('away_hatched', { n: a.hatched }));
     if (a.retired) lines.push(t('away_retired', { n: a.retired })); if (a.shows) lines.push(t('away_shows', { n: a.shows }));
     if (a.hungry) lines.push(t('away_hungry', { n: a.hungry })); if (a.levels) lines.push(t('level_up', { n: a.levels }));
+    if (a.showsNew) lines.push(t('away_new_shows', { n: a.showsNew })); if (a.trophies) lines.push(t('away_trophies', { n: a.trophies })); if (a.colours) lines.push(t('away_colours', { n: a.colours }));
+    const full = state.coops.filter(c => nestCount(c) >= NEST_CAP).length; if (full) lines.push(full > 1 ? t('away_full', { n: full }) : t('away_full1'));
+    const waiting = waitingEggs();
     return { title: t('away_title') + ` (${fmtDur(a.real)})`, node: [
       h('div', { class: 'list' }, lines.map(l => h('div', { class: 'item', style: 'cursor:default' }, h('span', { class: 'egg' }), h('span', { class: 'grow', text: l })))),
       a.paused ? h('p', { class: 'note', text: t('away_paused') }) : null,
-      h('button', { class: 'btn', onclick: closeSheet }, t('close')),
+      waiting ? h('button', { class: 'btn good', onclick: () => { actCollectAll(); closeSheet(); } }, t('collect_all_n', { n: fmtN(waiting) })) : null,
+      h('button', { class: waiting ? 'btn alt' : 'btn', onclick: closeSheet }, t('close')),
     ] };
   },
   coop({ id }) {
@@ -2018,13 +2078,18 @@ const SHEETS = {
     return { title: t('tab_hatch'), node: [
       h('div', { class: 'card' },
         h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('basket') }), h('span', { class: 'num', text: `${basketCount()} / ${state.basketCap}` })),
-        plainTotal ? h('div', { class: 'list' }, BREED_IDS.filter(k => state.basket.plain[k]).map(k => h('div', { class: 'row small' }, h('span', { class: 'eggdot', style: `background:${BREEDS[k].eggCol}` }), h('span', { class: 'grow', text: `${state.basket.plain[k]} × ${t('br_' + k)}` }), h('span', { class: 'muted' }, t('eggs_each', { n: '' }).trim(), ' ', coinPrice(BREEDS[k].egg))))) : h('p', { class: 'small muted', text: t('no_eggs') }),
-        h('button', { class: 'btn good', disabled: !plainTotal, onclick: actSellPlain }, t('sell_all'), ' · ', coinPrice(plainCoins))),
+        state.basket.fertile.length ? h('p', { class: 'small', style: 'font-weight:700', text: t('fertile_in_basket', { n: state.basket.fertile.length }) }) : null,
+        plainTotal ? h('div', { class: 'list' }, BREED_IDS.filter(k => state.basket.plain[k]).map(k => h('div', { class: 'row small' }, h('span', { class: 'eggdot', style: `background:${BREEDS[k].eggCol}` }), h('span', { class: 'grow', text: `${state.basket.plain[k]} × ${t('br_' + k)}` }), h('span', { class: 'muted' }, t('eggs_each', { n: '' }).trim(), ' ', coinPrice(BREEDS[k].egg))))) : h('p', { class: 'small muted', text: state.basket.fertile.length ? t('no_plain_fertile', { n: state.basket.fertile.length }) : t('no_eggs') }),
+        h('div', { style: 'display:grid;gap:8px' }, waitingEggs() ? h('button', { class: 'btn', disabled: basketCount() >= state.basketCap, onclick: actCollectAll }, t('collect_all_n', { n: fmtN(waitingEggs()) })) : null,
+          h('button', { class: 'btn good', disabled: !plainTotal, onclick: actSellPlain }, t('sell_all'), ' · ', coinPrice(plainCoins)))),
       h('div', { class: 'card' },
         h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('incubator') }), h('span', { class: 'small muted', text: t('slots', { a: state.inc.items.length, b: state.inc.slots }) })),
         h('div', { class: 'list' }, slots)),
       h('h3', { text: t('fertile') }),
-      state.basket.fertile.length ? [h('p', { class: 'note', text: t('fertile_note') }), h('div', { class: 'list' }, state.basket.fertile.map(e => h('div', { class: 'card', style: 'gap:8px' },
+      state.basket.fertile.length ? [h('p', { class: 'note', text: t('fertile_note') }),
+        h('div', { style: 'display:grid;gap:8px' }, h('button', { class: 'btn good sm', onclick: () => actSellFertileAll(0) }, t('sell_fertile_all'), ' · ', coinPrice(state.basket.fertile.reduce((s, e) => s + fertileEggPrice(e), 0))),
+          state.basket.fertile.length > 3 ? h('button', { class: 'btn alt sm', onclick: () => actSellFertileAll(2) }, t('keep_best', { n: 2 })) : null),
+        h('div', { class: 'list' }, [...state.basket.fertile].sort((a, b) => eggQ(b) - eggQ(a)).map(e => h('div', { class: 'card', style: 'gap:8px' },
         h('div', { class: 'row' }, h('span', { class: 'eggdot', style: `background:${BREEDS[e.child.breed].eggCol}` }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('br_' + e.child.breed) }), h('div', { class: 'small muted', text: `${e.sire.name} (${e.sire.q}) × ${e.dam.name} (${e.dam.q})` }), h('div', { class: 'small', text: t('est', { q: Math.round((e.sire.q + e.dam.q) / 2) }) }))),
         h('div', { class: 'btns' }, h('button', { class: 'btn sm', disabled: state.inc.items.length >= state.inc.slots, onclick: () => actIncubate(e.id) }, t('incubate')), h('button', { class: 'btn alt sm', onclick: () => actSellFertile(e.id) }, t('sell_for'), ' ', coinPrice(fertileEggPrice(e)))))))] : h('p', { class: 'small muted', text: t('no_fertile') }),
     ] };
@@ -2037,8 +2102,8 @@ const SHEETS = {
         h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700;font-family:var(--display)', text: showName(s) }), h('div', { class: 'small muted', text: `${t('t_' + s.tier)} · ${s.cls === 'any' ? t('any_breed') : t('class', { breed: t('br_' + s.cls) })}` })), h('span', { class: 'tag' }, timer(s.closes, 'closes_in'))),
         h('div', { class: 'row small' }, [1, 2, 3].map(p => h('span', { class: 'row', style: 'gap:5px' }, h('span', { class: 'rosette p' + p, style: 'width:22px;height:22px' }), coinPrice(T_.prize[p - 1])))),
         entry ? h('p', { class: 'small', style: 'font-weight:700', text: t('entered_bird', { name: entry.name }) }) :
-          pickFor === s.id ? [h('p', { class: 'small', text: t('choose_bird') }), eligible.length ? h('div', { class: 'list' }, eligible.map(b => h('div', { class: 'row' }, h('div', { class: 'grow' }, birdRow(b)), h('button', { class: 'btn sm', disabled: state.coins < T_.fee, onclick: () => { actEnter(b, s); current.args.pickFor = null; renderSheet(); } }, t('enter_show').split(' ')[0])))) : h('p', { class: 'small muted', text: t('no_eligible') })] :
-          eligible.length ? h('button', { class: 'btn', disabled: state.coins < T_.fee, onclick: () => { current.args.pickFor = s.id; renderSheet(); } }, t('enter_show'), ' · ', t('fee'), ' ', coinPrice(T_.fee)) : h('p', { class: 'small muted', text: t('no_eligible') }));
+          pickFor === s.id ? [h('p', { class: 'small', text: t('choose_bird') }), eligible.length ? h('div', { class: 'list' }, eligible.map(b => h('div', { class: 'row' }, h('div', { class: 'grow' }, birdRow(b)), h('button', { class: 'btn sm', disabled: state.coins < T_.fee, onclick: () => { actEnter(b, s); current.args.pickFor = null; renderSheet(); } }, t('enter_go'))))) : h('p', { class: 'small muted', text: t('no_eligible') })] :
+          eligible.length ? h('button', { class: 'btn', disabled: state.coins < T_.fee, onclick: () => { current.args.pickFor = s.id; renderSheet(); } }, t('enter_btn'), ' · ', t('fee'), ' ', coinPrice(T_.fee)) : h('p', { class: 'small muted', text: t('no_eligible') }));
     });
     const hist = state.shows.history.slice(0, 10).map(r => h('div', { class: 'item', style: 'cursor:default' }, h('span', { class: 'rosette p' + (r.place <= 3 ? r.place : 0) }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: `${r.bird} · ${r.place <= 3 ? placeLabel(r.place) : t('not_placed')}` }), h('div', { class: 'small muted', text: t('show_name_' + r.tier, { town: r.town, county: r.county }) })), r.prize ? coinPrice(r.prize) : null));
     const lockedTier = Object.keys(TIER_LVL).find(k => TIER_LVL[k] > state.level);
