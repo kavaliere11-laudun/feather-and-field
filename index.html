@@ -23,7 +23,7 @@
 :root{
   --meringue:#fffdf7; --sage:#eef2e4; --sage-2:#e2e9d4; --ink:#1e3426; --ink-2:#5f6f5c; --line:#d9e1c9;
   --barn:#d2462f; --barn-deep:#a8331f; --meadow:#3f8f4e; --meadow-deep:#2e6e3b; --yolk:#f5b92e; --yolk-deep:#c98d0c; --pond:#4fa3c7;
-  --glass:rgba(255,253,247,.8); --glass-line:rgba(255,255,255,.7); --shadow:0 10px 30px rgba(20,40,20,.18);
+  --glass:rgba(255,253,247,.8); --glass-top:rgba(255,253,247,.93); --glass-line:rgba(255,255,255,.7); --shadow:0 10px 30px rgba(20,40,20,.18);
   --paper:var(--meringue); --paper-2:var(--sage); --good:var(--meadow); --warn:#b36a00; --bad:var(--barn);
   --coin:var(--yolk); --coin-2:var(--yolk-deep);
   --r1:#d2462f; --r2:#2f6cc0; --r3:#e8b322;
@@ -33,10 +33,10 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --meringue:#18241c; --sage:#223228; --sage-2:#2b3d31; --ink:#eef0e6; --ink-2:#a9b8a5; --line:#34483a;
-  --glass:rgba(24,36,28,.78); --glass-line:rgba(255,255,255,.08); --warn:#f0b24a; --hedge-2:rgba(255,255,255,.08); color-scheme:dark}}
+  --glass:rgba(24,36,28,.78); --glass-top:rgba(24,36,28,.92); --glass-line:rgba(255,255,255,.08); --warn:#f0b24a; --hedge-2:rgba(255,255,255,.08); color-scheme:dark}}
 :root[data-theme="dark"]{
   --meringue:#18241c; --sage:#223228; --sage-2:#2b3d31; --ink:#eef0e6; --ink-2:#a9b8a5; --line:#34483a;
-  --glass:rgba(24,36,28,.78); --glass-line:rgba(255,255,255,.08); --warn:#f0b24a; --hedge-2:rgba(255,255,255,.08); color-scheme:dark}
+  --glass:rgba(24,36,28,.78); --glass-top:rgba(24,36,28,.92); --glass-line:rgba(255,255,255,.08); --warn:#f0b24a; --hedge-2:rgba(255,255,255,.08); color-scheme:dark}
 html{box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%}
@@ -55,11 +55,11 @@ body{margin:0;background:#4f7a35;color:var(--ink);font-family:var(--body);font-w
 .topbar{position:absolute;z-index:6;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 0;pointer-events:none}
 .topbar > *{pointer-events:auto}
 .brand{font-family:var(--display);font-weight:700;font-size:20px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.pill{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px 0 7px;border-radius:999px;border:1px solid var(--glass-line);background:var(--glass);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);box-shadow:var(--shadow);color:var(--ink);font:600 15px var(--display);font-variant-numeric:tabular-nums;cursor:pointer}
+.pill{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px 0 7px;border-radius:999px;border:1px solid var(--glass-line);background:var(--glass-top);box-shadow:var(--shadow);color:var(--ink);font:600 15px var(--display);font-variant-numeric:tabular-nums;cursor:pointer}
 .coin{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffeeb0,var(--yolk) 55%,var(--yolk-deep));box-shadow:inset 0 -2px 0 rgba(120,80,0,.3);flex:none;display:inline-block;vertical-align:-6px}
 .price .coin{width:17px;height:17px;vertical-align:-3px}
 .egg{width:20px;height:24px;border-radius:50% 50% 50% 50%/58% 58% 42% 42%;background:radial-gradient(circle at 35% 30%,#fff,#efe3cd 70%,#cdb994);flex:none;display:inline-block;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
-.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--shadow);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass-top);box-shadow:var(--shadow);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none}
 .iconbtn svg{width:20px;height:20px}
 .pill.lvl{padding:0 13px 0 4px}
 .ring{width:30px;height:30px;border-radius:50%;background:conic-gradient(var(--yolk) calc(var(--p,0)*1%),var(--hedge-2) 0);display:grid;place-items:center;flex:none}
@@ -232,7 +232,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '15 Oct 2026 18:08';
+const BUILD = '16 Oct 2026 10:46';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -294,7 +294,7 @@ const ROO_NAMES = ['Rupert','Albert','Barnaby','Chester','Gus','Reginald','Hamis
 const I18N = {
 en: {
   tab_farm:'Farm', tab_market:'Market', tab_hatch:'Hatchery', tab_shows:'Shows', tab_awards:'Awards',
-  settings:'Settings', close:'Close', coins:'coins', version:'Version', snd_fx:'Farm sounds', snd_music:'Music', on:'On', off:'Off', snd_note:'Sounds play once you touch the screen. If you hear nothing on an iPhone, check the silent switch.',
+  settings:'Settings', close:'Close', coins:'coins', version:'Version', snd_fx:'Farm sounds', snd_music:'Music', on:'On', off:'Off', snd_note:'Sounds play once you touch the screen. If you hear nothing on an iPhone, check the silent switch.', snd_silent:'Play sound when the phone is on silent', snd_note2:'Sounds play once you touch the screen. iPhones mute games on silent unless you turn on the setting above.',
   br_rir:'Rhode Island Red', br_orp:'Buff Orpington', br_leg:'Cream Legbar', br_sil:'Silkie', br_bra:'Light Brahma',
   coop_rir:'Red Barn', coop_orp:'Thatched Cottage', coop_leg:'Stone Cottage', coop_sil:'Pagoda Coop', coop_bra:'Timber Lodge',
   col_white:'White', col_black:'Black', col_blue:'Blue', col_splash:'Splash', col_buff:'Buff', col_partridge:'Partridge', col_grey:'Grey', col_lavender:'Lavender', col_cuckoo:'Cuckoo', col_red:'Red', col_paint:'Paint',
@@ -362,7 +362,7 @@ en: {
 },
 fr: {
   tab_farm:'Ferme', tab_market:'Marché', tab_hatch:'Couvoir', tab_shows:'Concours', tab_awards:'Trophées',
-  settings:'Réglages', close:'Fermer', coins:'pièces', version:'Version', snd_fx:'Bruits de la ferme', snd_music:'Musique', on:'Activé', off:'Désactivé', snd_note:'Le son démarre dès que vous touchez l’écran. Si vous n’entendez rien sur iPhone, vérifiez le bouton silencieux.',
+  settings:'Réglages', close:'Fermer', coins:'pièces', version:'Version', snd_fx:'Bruits de la ferme', snd_music:'Musique', on:'Activé', off:'Désactivé', snd_note:'Le son démarre dès que vous touchez l’écran. Si vous n’entendez rien sur iPhone, vérifiez le bouton silencieux.', snd_silent:'Jouer le son même en mode silencieux', snd_note2:'Le son démarre dès que vous touchez l’écran. En mode silencieux, l’iPhone coupe le son des jeux, sauf si vous activez le réglage ci-dessus.',
   br_rir:'Rhode Island Red', br_orp:'Orpington fauve', br_leg:'Legbar crème', br_sil:'Poule soie', br_bra:'Brahma herminé',
   coop_rir:'Grange rouge', coop_orp:'Chaumière', coop_leg:'Maison de pierre', coop_sil:'Poulailler pagode', coop_bra:'Chalet en rondins',
   col_white:'Blanc', col_black:'Noir', col_blue:'Bleu', col_splash:'Splash', col_buff:'Fauve', col_partridge:'Perdrix', col_grey:'Gris', col_lavender:'Lavande', col_cuckoo:'Coucou', col_red:'Rouge', col_paint:'Pie',
@@ -2097,7 +2097,8 @@ const SHEETS = {
     return { title: t('settings'), node: [
       h('h3', { text: t('snd_fx') }), onOff('fx'),
       h('h3', { text: t('snd_music') }), onOff('music'),
-      h('p', { class: 'note', text: t('snd_note') }),
+      navigator.audioSession ? [h('h3', { text: t('snd_silent') }), onOff('silent')] : null,
+      h('p', { class: 'note', text: t(navigator.audioSession ? 'snd_note2' : 'snd_note') }),
       h('h3', { text: t('lang') }),
       h('div', { class: 'seg' }, Object.keys(I18N).map(k => h('button', { 'aria-pressed': String(state.lang === k), onclick: () => { state.lang = k; plotCache.clear(); applyLang(); changed(); } }, k === 'en' ? 'English' : 'Français'))),
       h('h3', { text: t('speed') }),
@@ -2172,7 +2173,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) c
 const SND = (() => {
   let ac = null, master, fxBus, ambBus, musBus, verb, noiseBuf, windG, rustleG, waterG, waterF;
   const prefs = { fx: true, music: true };
-  try { const p = JSON.parse(localStorage.getItem('ff_audio') || '{}'); prefs.fx = p.fx !== false; prefs.music = p.music !== false; } catch (_) {}
+  try { const p = JSON.parse(localStorage.getItem('ff_audio') || '{}'); prefs.fx = p.fx !== false; prefs.music = p.music !== false; prefs.silent = p.silent === true; } catch (_) {}
   const savePrefs = () => { try { localStorage.setItem('ff_audio', JSON.stringify(prefs)); } catch (_) {} };
   const R = (a, b) => a + Math.random() * (b - a);
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -2194,10 +2195,16 @@ const SND = (() => {
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
     const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
   }
+  // iPhone: sound is only allowed to start inside a touch, and can be stopped again ("interrupted") by a call or the app going
+  // to the background. Every touch wakes it back up, and plays one silent sample, which is what really unlocks it on iPhone.
+  function kick() { try { const s = ac.createBufferSource(); s.buffer = ac.createBuffer(1, 1, ac.sampleRate); s.connect(ac.destination); s.start(0); } catch (_) {} }
+  function session() { try { if (navigator.audioSession) navigator.audioSession.type = prefs.silent && (prefs.fx || prefs.music) ? 'playback' : 'ambient'; } catch (_) {} }
   function init() {
-    if (ac) { if (ac.state === 'suspended' && !document.hidden) ac.resume().catch(() => {}); return; }
+    if (ac) { if (ac.state !== 'running' && !document.hidden) { kick(); ac.resume().catch(() => {}); } return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    session();
     try { build(new AC()); } catch (_) { ac = null; return; }
+    kick(); if (ac.state !== 'running') ac.resume().catch(() => {});
     beds();
     if (prefs.music) music.start();
   }
@@ -2440,7 +2447,7 @@ const SND = (() => {
   };
 
   function set(k, v) {
-    prefs[k] = !!v; savePrefs(); init(); if (!ac) return;
+    prefs[k] = !!v; savePrefs(); session(); init(); if (!ac) return;
     const now = ac.currentTime;
     if (k === 'fx') { fxBus.gain.setTargetAtTime(v ? 1 : 0, now, .05); ambBus.gain.setTargetAtTime(v ? 1 : 0, now, .05); }
     if (k === 'music') { musBus.gain.setTargetAtTime(v ? .36 : 0, now, .2); if (v) music.start(); else setTimeout(() => { if (!prefs.music) music.stop(); }, 600); }
