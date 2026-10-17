@@ -247,7 +247,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '17 Oct 2026 11:18';
+const BUILD = '17 Oct 2026 14:02';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -327,7 +327,7 @@ en: {
   enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
-  market_birds:'Birds', market_build:'Build', new_birds_in:'New birds arrive in {t}', no_offers:'No birds for sale right now.',
+  market_birds:'Birds', market_build:'Build', new_birds_in:'New birds arrive in {t}', filter_breed:'Filter by breed', no_offers:'No birds for sale right now.',
   build_coop:'Coop for {breed}', owned:'You own {n}', land:'Land plot', land_note:'Each coop needs its own plot.', coop_name:'Coop name', build_started:'Building your {coop}: ready in {t}', built_toast:'Your {coop} is built! Fill it with birds from the Market.', coop_building:'Your {coop} is still being built', building_sign:'Building', under_construction:'Under construction', ready_in:'Ready in {t}', construction_note:'Builders are at work. When it is finished you can move in {breed} birds.', away_built:'{n} coops finished building', away_built1:'A coop finished building', build_time:'Takes {t} to build', coop_renamed:'Coop renamed: {coop}', updated:'Game updated (version {v})', land_note2:'This plot is for sale. Buy it, then build a coop on it.', land_bought:'Land bought: now build a coop on it', need_land_first:'You need a free plot first: buy land below, then build.', coins_hint:'Coins: {n}', eggs_hint:'Fertile eggs in your basket: {n} of {m}', now_in:'Now in {coop} (plot {plot})', move_to_btn:'Move to {coop}', plots_owned:'{n} of {max} plots owned',
   buy_land:'Buy land', incubator_slot:'Extra incubator slot', basket_up:'Bigger egg basket (+40)', max_reached:'Fully upgraded',
   basket:'Egg basket', sell_all:'Sell all eggs', eggs_each:'{n} each', fertile:'Fertile eggs', fertile_note:'Hatch them or sell them as hatching eggs.',
@@ -395,7 +395,7 @@ fr: {
   enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
-  market_birds:'Volailles', market_build:'Construire', new_birds_in:'Nouvelles volailles dans {t}', no_offers:'Aucune volaille à vendre pour le moment.',
+  market_birds:'Volailles', market_build:'Construire', new_birds_in:'Nouvelles volailles dans {t}', filter_breed:'Filtrer par race', no_offers:'Aucune volaille à vendre pour le moment.',
   build_coop:'Poulailler pour {breed}', owned:'Vous en avez {n}', land:'Terrain', land_note:'Chaque poulailler a besoin de son propre terrain.', coop_name:'Nom du poulailler', build_started:'Construction de votre {coop} : prêt dans {t}', built_toast:'Votre {coop} est construit ! Remplissez-le avec des volailles du Marché.', coop_building:'Votre {coop} est encore en construction', building_sign:'En construction', under_construction:'En construction', ready_in:'Prêt dans {t}', construction_note:'Les ouvriers sont au travail. Une fois terminé, vous pourrez y installer des {breed}.', away_built:'{n} poulaillers terminés', away_built1:'Un poulailler est terminé', build_time:'{t} de construction', coop_renamed:'Poulailler renommé : {coop}', updated:'Jeu mis à jour (version {v})', land_note2:'Ce terrain est à vendre. Achetez-le, puis construisez-y un poulailler.', land_bought:'Terrain acheté : construisez-y un poulailler', need_land_first:'Il vous faut d’abord un terrain libre : achetez-en un ci-dessous, puis construisez.', coins_hint:'Pièces : {n}', eggs_hint:'Œufs fécondés dans votre panier : {n} sur {m}', now_in:'Actuellement : {coop} (terrain {plot})', move_to_btn:'Installer dans {coop}', plots_owned:'{n} terrains sur {max}',
   buy_land:'Acheter le terrain', incubator_slot:'Place de couveuse en plus', basket_up:'Panier plus grand (+40)', max_reached:'Amélioration maximale',
   basket:'Panier à œufs', sell_all:'Vendre tous les œufs', eggs_each:'{n} l’unité', fertile:'Œufs fécondés', fertile_note:'Faites-les éclore ou vendez-les comme œufs à couver.',
@@ -1882,6 +1882,7 @@ function birdRow(b, extra, showValue) {
 }
 
 /* sheets */
+let mktBreed = 'all'; // Market birds filter, kept while the game is open
 let current = null;
 let sheetOpenedAt = 0, sheetReturn = null;        // a level-up shown over another screen goes back to it when closed
 function openSheet(name, args) { sheetOpenedAt = performance.now(); current = { name, args: args || {} }; $('#sheet').hidden = false; $('#scrim').hidden = false; renderSheet(true); setTab(['market', 'hatch', 'shows', 'awards'].includes(name) ? name : 'farm'); }
@@ -2039,8 +2040,13 @@ const SHEETS = {
     const lock = L => h('span', { class: 'tag lock', text: '🔒 ' + t('locked_lvl', { n: L }) });
     let node;
     if (tab === 'birds') {
+      const offerBreeds = BREED_IDS.filter(id => state.shop.offers.some(o => o.breed === id));
+      if (mktBreed !== 'all' && !offerBreeds.includes(mktBreed)) mktBreed = 'all';
+      const shown = state.shop.offers.map((o, i) => [o, i]).filter(([o]) => mktBreed === 'all' || o.breed === mktBreed);
+      const nOf = id => state.shop.offers.filter(o => o.breed === id).length;
       node = [h('p', { class: 'small muted' }, timer(state.shop.next, 'new_birds_in')),
-        state.shop.offers.length ? h('div', { class: 'list' }, state.shop.offers.map((o, i) => {
+        offerBreeds.length > 1 ? h('div', { class: 'chips', role: 'group', 'aria-label': t('filter_breed') }, ['all', ...offerBreeds].map(k => h('button', { class: 'chip', 'aria-pressed': String(mktBreed === k), onclick: () => { mktBreed = k; renderSheet(true); } }, k === 'all' ? `${t('all')} · ${state.shop.offers.length}` : `${t('br_' + k)} · ${nOf(k)}`))) : null,
+        shown.length ? h('div', { class: 'list' }, shown.map(([o, i]) => {
           const fake = { ...o, id: -1 - i, home: 0, champ: 0, line: 0, ribbons: [] };
           const price = offerPrice(o), has = state.coops.some(c => c.breed === o.breed), room = coopWithSpace(o.breed);
           const why = !unlocked(o.breed) ? t('locked_long', { n: BREEDS[o.breed].lvl }) : !has ? t('need_coop', { coop: t('coop_' + o.breed) }) : !room ? t('coop_full', { coop: t('coop_' + o.breed) }) : state.coins < price ? t('need_coins') : null;
