@@ -1,0 +1,15 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.addInitScript(() => { navigator.audioSession = { type: 'auto' }; });
+await page.goto(process.env.URL); await page.waitForTimeout(1500);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(500);
+await page.screenshot({ path: 'r/top_c.png' });
+await page.locator('#gear').click(); await page.waitForTimeout(600);
+await page.screenshot({ path: 'r/set_a.png' });
+await page.getByRole('button', { name: 'On' }).nth(2).click(); await page.waitForTimeout(300);
+console.log('session', await page.evaluate(() => navigator.audioSession.type), JSON.stringify(await page.evaluate(() => localStorage.getItem('ff_audio'))));
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

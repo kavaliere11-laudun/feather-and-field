@@ -1,0 +1,16 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'fr-FR' })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+await page.evaluate(() => window.__ffDebug.inside(g => { g.state.coins = 1000; g.actBuildCoop('rir'); g.closeSheet(); }));
+await page.waitForTimeout(800); if (await page.locator('#sheet').isVisible()) await page.locator('#sheetClose').click();
+await page.locator('#flockBtn').click(); await page.waitForTimeout(400); await page.locator('#sheetBody .item').first().click(); await page.waitForTimeout(500);
+const card = page.locator('.card', { hasText: 'Changer de poulailler' }); await card.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+await page.screenshot({ path: 'r/ux_6_move.png' });
+await card.getByRole('button').first().click(); await page.waitForTimeout(1200); await page.screenshot({ path: 'r/ux_7_moved.png' });
+console.log(errors.length ? errors.join('\n') : 'no errors');
+await browser.close();

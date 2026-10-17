@@ -1,0 +1,12 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+const page = await ctx.newPage(); page.on('pageerror', e => errors.push(e.message));
+await page.goto('http://localhost:8770/'); await page.waitForTimeout(1500);
+const m = () => page.evaluate(() => { const r = document.querySelector('#app').getBoundingClientRect(); return [r.top, r.height, innerHeight]; });
+console.log('browser tab', JSON.stringify(await m()));
+await page.evaluate(() => { document.documentElement.classList.add('standalone'); dispatchEvent(new Event('resize')); }); await page.waitForTimeout(300);
+console.log('home screen', JSON.stringify(await m()));
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

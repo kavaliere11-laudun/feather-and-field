@@ -1,0 +1,16 @@
+import { createRequire } from 'module';
+import { execSync } from 'child_process';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch();
+const ctx = await browser.newContext(); let reqs = [];
+ctx.on('request', r => { if (r.url().includes('localhost')) reqs.push(r.url().replace('http://localhost:8770/', '')); });
+const page = await ctx.newPage();
+await page.goto('http://localhost:8770/'); await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await page.waitForTimeout(2500);
+console.log('first visit requests', reqs.length);
+execSync("cd site && echo '\\nupdated' >> README.md && /usr/bin/python3 - <<'P'\nimport re,hashlib,json\ns=open('sw.js').read(); h=hashlib.sha256(open('README.md','rb').read()).hexdigest()[:10]\ns=re.sub(r'\"README.md\": \"[0-9a-f]+\"', '\"README.md\": \"'+h+'\"', s).replace(\"const V = 'ff-\", \"const V = 'ff-x\")\nopen('sw.js','w').write(s)\nP");
+reqs = [];
+await page.reload(); await page.waitForTimeout(3000);
+console.log('update requests', JSON.stringify(reqs));
+console.log(await page.evaluate(async () => (await caches.keys()).join(',')));
+await browser.close();

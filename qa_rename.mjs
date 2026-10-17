@@ -1,0 +1,16 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'fr-FR' })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+const pts = await page.evaluate(() => window.__ffDebug.points());
+await page.touchscreen.tap(...pts.coop0); await page.waitForTimeout(500);
+await page.locator('#rename').fill('Les Rousses'); await page.locator('#rename').press('Enter'); await page.locator('#sheetBody').click({ position: { x: 5, y: 5 } }).catch(() => {});
+await page.waitForTimeout(1500); await page.screenshot({ path: 'r/ren_1.png' });
+await page.locator('#sheetClose').click(); await page.waitForTimeout(600); await page.screenshot({ path: 'r/ren_2.png' });
+await page.reload(); await page.waitForTimeout(1500); console.log('after reload', await page.evaluate(() => window.__ffDebug.inside(g => g.state.coops[0].name)));
+console.log(errors.length ? errors.join('\n') : 'no errors');
+await browser.close();

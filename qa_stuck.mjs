@@ -1,0 +1,14 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 } })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click();
+await page.evaluate(() => window.__ffDebug.inside(g => { const s = g.state; s.coins = 5; s.feed.basic = 0; for (const c of s.coops) for (const k in c.feeder) c.feeder[k] = 0; }));
+await page.waitForTimeout(2500);
+console.log(JSON.stringify(await page.evaluate(() => window.__ffDebug.inside(g => ({ feed: g.state.feed.basic, helpAt: g.state.helpAt })))), await page.locator('#toasts').innerText());
+await page.reload(); await page.waitForTimeout(2500);
+console.log('after reload', JSON.stringify(await page.evaluate(() => window.__ffDebug.inside(g => ({ feed: g.state.feed.basic, helpAt: g.state.helpAt })))));
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

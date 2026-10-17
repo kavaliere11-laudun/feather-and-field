@@ -1,0 +1,13 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch();
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'fr-FR' })).newPage();
+page.on('console', m => { if (m.text().startsWith('TAP')) console.log(m.text()); });
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(500);
+const sg = (await page.evaluate(() => window.__ffDebug.signs())).find(s => s[0] === 'sale'); console.log(JSON.stringify(sg));
+await page.touchscreen.tap(sg[1], sg[2]); await page.waitForTimeout(500);
+console.log('after touch', await page.locator('#sheet').isVisible(), await page.locator('#sheetTitle').innerText());
+console.log('sheet', await page.locator('#sheet').isVisible());
+await browser.close();

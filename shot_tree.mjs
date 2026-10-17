@@ -1,0 +1,12 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2 })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1000);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+const [x, y] = JSON.parse(process.env.XY);
+await page.evaluate(([x, y]) => window.__ffDebug.zoomTo(x, y, 1.2), [x, y]); await page.waitForTimeout(2500);
+await page.screenshot({ path: process.env.OUT });
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

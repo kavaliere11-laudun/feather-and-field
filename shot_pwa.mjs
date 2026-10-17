@@ -1,0 +1,18 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const page = await ctx.newPage(); page.on('pageerror', e => errors.push(e.message));
+await page.goto('http://localhost:8770/'); await page.waitForTimeout(2500);
+console.log('quirks?', await page.evaluate(() => document.compatMode));
+await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+await page.waitForTimeout(3000);
+console.log('cached files', await page.evaluate(async () => { const ks = await caches.keys(); let n = 0; for (const k of ks) n += (await (await caches.open(k)).keys()).length; return ks.join(',') + ' ' + n; }));
+const m = await page.evaluate(async () => (await fetch('manifest.webmanifest')).json()); console.log('manifest', m.name, m.display, m.icons.length);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(500);
+await ctx.setOffline(true);
+await page.reload(); await page.waitForTimeout(3000);
+await page.screenshot({ path: 'r/icon/offline.png' });
+console.log('offline load ok:', await page.evaluate(() => !!document.querySelector('#farm') && document.querySelector('#coins').textContent));
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

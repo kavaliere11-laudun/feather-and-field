@@ -1,0 +1,16 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const out = process.argv[2];
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+const page = await ctx.newPage(); const errors = [];
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1500);
+await page.locator('.btn').last().click(); await page.waitForTimeout(800);
+await page.evaluate(() => window.__ffDebug.hatch()); await page.waitForTimeout(3500);
+await page.screenshot({ path: `${out}_toast.png` });
+await page.locator('.toastbtn').first().click(); await page.waitForTimeout(1500);
+await page.screenshot({ path: `${out}_found.png` });
+await browser.close();
+console.log(errors.length ? errors.join('\n') : 'no errors');

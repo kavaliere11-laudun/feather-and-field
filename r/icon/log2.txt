@@ -1,0 +1,4 @@
+/tmp/claude-0/-home-claude/88b51f90-727f-5086-b33f-f5130c8e3dff/scratchpad/silkie3.py:47: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m = bpy.data.materials.new(name); m.use_nodes = True
+01:50.758  render           | Saved: 'r/icon/sil_white_h.png'
+RENDER_SECONDS 109.7 r/icon/sil_white_h.png

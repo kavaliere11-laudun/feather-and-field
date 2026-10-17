@@ -1,0 +1,18 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'fr-FR' })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+await page.evaluate(() => window.__ffDebug.inside(g => { g.state.coins = 1000; }));
+await page.locator('#tabbar button[data-tab="market"]').click(); await page.waitForTimeout(300); await page.locator('.seg button').nth(2).click(); await page.waitForTimeout(400);
+await page.screenshot({ path: 'r/bld_1.png' });
+await page.getByRole('button', { name: /180/ }).first().click(); await page.waitForTimeout(600); await page.evaluate(() => window.__ffDebug.inside(g => g.advance(3600e3))); await page.waitForTimeout(900); await page.screenshot({ path: 'r/bld_2.png' });
+const sg = (await page.evaluate(() => window.__ffDebug.signs())).find(s => s[0] === 'build');
+await page.touchscreen.tap(sg[1], sg[2]); await page.waitForTimeout(600); await page.screenshot({ path: 'r/bld_3.png' }); await page.locator('#sheetClose').click();
+await page.evaluate(() => window.__ffDebug.inside(g => g.advance(2.1 * 3600e3))); await page.waitForTimeout(1200); await page.screenshot({ path: 'r/bld_4.png' });
+console.log(JSON.stringify(await page.evaluate(() => window.__ffDebug.inside(g => g.state.coops.map(c => [c.breed, c.ready, g.state.xp])))));
+console.log(errors.length ? errors.join('\n') : 'no errors');
+await browser.close();

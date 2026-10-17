@@ -1,0 +1,16 @@
+import { createRequire } from 'module';
+import { execSync } from 'child_process';
+import fs from 'fs';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch();
+const ctx = await browser.newContext(); const page = await ctx.newPage();
+const n = () => fs.readFileSync('r/srv.log', 'utf8').split('\n').filter(l => l.includes('"GET')).length;
+await page.goto('http://localhost:8771/'); await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await page.waitForTimeout(3000);
+const a = n(); console.log('first visit GETs', a);
+execSync("cd site && printf '\\nupdated\\n' >> README.md && /usr/bin/python3 - <<'P'\nimport re,hashlib\ns=open('sw.js').read(); h=hashlib.sha256(open('README.md','rb').read()).hexdigest()[:10]\ns=s.replace(\"\\\"icons/favicon.png\\\": \\\"\", \"\\\"icons/favicon.png\\\": \\\"zz\").replace(\"const V = 'ff-\", \"const V = 'ff-x\")\nopen('sw.js','w').write(s)\nP");
+await page.reload(); await page.waitForTimeout(5000);
+const lines = fs.readFileSync('r/srv.log', 'utf8').split('\n').filter(l => l.includes('"GET')).slice(a).map(l => l.split('"')[1]);
+console.log('update GETs', JSON.stringify(lines));
+console.log(await page.evaluate(async () => (await caches.keys()).join(',')));
+await browser.close();

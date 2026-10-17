@@ -1,0 +1,11 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] }); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 } })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1000);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(2500);
+console.log('voices', await page.evaluate(() => window.__ffDebug.snd.voices), 'running', await page.evaluate(() => window.__ffDebug.snd.running));
+for (const fn of ['hen', 'crow', 'peep', 'cackle']) await page.evaluate(fn => { const d = window.__ffDebug, v = d.view(); d.snd[fn](v.x + 200, v.y + 300, false); }, fn); await page.waitForTimeout(500);
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');

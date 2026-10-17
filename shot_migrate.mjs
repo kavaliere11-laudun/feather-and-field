@@ -1,0 +1,17 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const c1 = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const p1 = await c1.newPage();
+await p1.goto('http://localhost:8765/index.html'); await p1.waitForTimeout(1500);
+await p1.locator('.btn').last().click(); await p1.waitForTimeout(3000);
+await p1.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+const save = await p1.evaluate(() => localStorage.getItem('feather-field-save-v1'));
+const c2 = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+await c2.addInitScript(s => { if (!sessionStorage.getItem('x')) { localStorage.setItem('feather-field-save-v1', s); sessionStorage.setItem('x', 1); } }, save);
+const p2 = await c2.newPage(); p2.on('pageerror', e => errors.push(e.message));
+await p2.goto('http://localhost:8766/index.html'); await p2.waitForTimeout(3000);
+await p2.screenshot({ path: 'r/mig.png' });
+console.log(save.length, errors.length ? errors.join('\n') : 'no errors');
+await browser.close();

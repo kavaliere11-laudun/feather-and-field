@@ -1,0 +1,15 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, locale: 'fr-FR', hasTouch: true, isMobile: true })).newPage();
+page.on('pageerror', e => errors.push(e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+await page.evaluate(() => window.__ffDebug.inside(g => g.advance(20 * 3600e3)));
+await page.waitForTimeout(600); if (await page.locator('#sheet').isVisible()) await page.locator('#sheetClose').click();
+const pts = await page.evaluate(() => window.__ffDebug.points());
+await page.touchscreen.tap(...pts.coop0); await page.waitForTimeout(500); await page.screenshot({ path: 'r/col_1.png' });
+await page.getByRole('button', { name: /Ramasser/ }).first().click(); await page.waitForTimeout(400); await page.screenshot({ path: 'r/col_2.png' });
+await page.locator('#sheetClose').click(); await page.locator('#tabbar button[data-tab="hatch"]').click(); await page.waitForTimeout(500); await page.screenshot({ path: 'r/col_3.png' });
+await browser.close(); console.log(errors.length ? errors.join('\n') : 'no errors');
