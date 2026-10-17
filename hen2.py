@@ -86,8 +86,7 @@ parts = [
     ellipsoid('neck1', (0.31, 0, 0.98), (0.14, 0.13, 0.15), None, rot=(0, math.radians(20), 0)),
     ellipsoid('neck2', (0.39 + NU * 0.1, 0, 1.12 + NU * 0.6), (0.1, 0.095, 0.12 + NU * 0.3), None, rot=(0, math.radians(14), 0)),
     ellipsoid('head', (HX, 0, HZ), (0.075, 0.06, 0.066), None),
-    ellipsoid('thighL', (0.02, 0.12, 0.47), (0.1, 0.08, 0.11), None),
-    ellipsoid('thighR', (0.02, -0.12, 0.47), (0.1, 0.08, 0.11), None),
+    # (no separate thigh shapes: bent by the leg bones they bulged out through the feathers as bare skin; the feathered belly meets the legs)
 ]
 bpy.ops.object.select_all(action='DESELECT')
 for p in parts: p.select_set(True)
@@ -103,7 +102,7 @@ for v in body.data.vertices:
     v.co.x = v.co.x * (1 + (SHAPE['sx'] - 1) * w); v.co.y *= 1 + (SHAPE['sy'] - 1) * w
     v.co.z = 0.7 + (v.co.z - 0.7) * (1 + (SHAPE['sz'] - 1) * w)
 bpy.ops.object.shade_smooth()
-skin_m = principled('skin', tuple((x + y) / 2 for x, y in zip(lin(P['body']), lin(P['back']))), 0.8)
+skin_m = principled('skin', (0.0, 0.2, 1.0) if os.environ.get('DBGSKIN') else tuple((x + y) / 2 for x, y in zip(lin(P['body']), lin(P['back']))), 0.8)
 body.data.materials.append(skin_m)
 
 def mixc_(c1, c2):
@@ -252,9 +251,22 @@ for p, nrm in sample_surface(body, 4600):
         if breast >= 0.5: edge = P.get('breast_edge')
         if 'mottle' in P and breast < 0.5 and random.random() < 0.45: col = mixc(P['body'], P['mottle'], 0.6 + 0.4 * random.random())
         if under > 0.5: L *= 1.15 * fl; W *= 1.1; col = mixc(P['body'], P['fluff'], 0.45)
+        if p.z < 0.5 and nrm.z < -0.2:      # the very underside: short, flat fluff, so no dark fringe hangs below the belly
+            k = max(0.0, (p.z - 0.36) / 0.14); L *= 0.45 + 0.4 * k; W *= 0.8
+            d = flow(p, nrm, neck, breast, under)
+            add_feather(p - d * L * 0.35 + nrm * 0.002, d, nrm, L, W, col, lift=0.02, curl=0.2, cup=0.3, shape=shape, edge=edge)
+            continue
     d = flow(p, nrm, neck, breast, under)
     add_feather(p - d * L * 0.35 + nrm * 0.003, d, nrm, L, W, col, lift=(0.1 if not neck > 0.5 else 0.07) * (1 + (fl - 1) * 1.5),
                 curl=0.28, cup=0.32, shape=shape, edge=edge)
+# a dense layer of short, flat fluff over the belly and thighs, so no bare skin or dark fringe shows above the legs
+for p, nrm in sample_surface(body, 2200):
+    if not (0.33 < p.z < 0.58 and nrm.z < 0.35 and -0.3 < p.x < 0.22): continue
+    head, neck, breast, back, under = region(p, nrm)
+    if neck > 0.3: continue
+    L = (0.05 + 0.025 * random.random()) * SHAPE['fl']
+    d = Vector((-0.5, 0, -1)); d = (d - nrm * d.dot(nrm)); d = d.normalized() if d.length > 1e-4 else Vector((-1, 0, 0))
+    add_feather(p - d * L * 0.3 + nrm * 0.004, d, nrm, L, L * 0.75, ('#20ff20' if os.environ.get('DBGFLUFF') else mixc(P['body'], P['fluff'], 0.35 + 0.2 * random.random())), lift=0.01, curl=0.25, cup=0.35, shape=1)
 if SHAPE['crest']:      # a small swept-back crest behind the comb
     for i in range(60):
         a = random.uniform(-0.9, 0.9); pnt = Vector((HX - 0.04 + 0.03 * random.random(), math.sin(a) * 0.035, HZ + 0.045 + 0.01 * random.random()))
@@ -389,6 +401,17 @@ bpy.ops.object.mode_set(mode='OBJECT')
 # skin: body by automatic weights; each feather follows the body under its base, the tail feathers the tail bone
 body.parent = rig; bpy.ops.object.select_all(action='DESELECT'); body.select_set(True); rig.select_set(True)
 bpy.context.view_layer.objects.active = rig; bpy.ops.object.parent_set(type='ARMATURE_AUTO')
+# the leg bones must not pull the belly: bent by the leg they dragged a bald bulge out through the feathers above the legs
+_bg = body.vertex_groups.get('body')
+if _bg:
+    for _sd in ('L', 'R'):
+        for _n in ('thigh.' + _sd, 'shank.' + _sd):
+            _g = body.vertex_groups.get(_n)
+            if not _g: continue
+            for v in body.data.vertices:
+                for gg in v.groups:
+                    if gg.group == _g.index and gg.weight > 0: _bg.add([v.index], gg.weight, 'ADD')
+            body.vertex_groups.remove(_g)
 kd = kdtree.KDTree(len(body.data.vertices))
 for v in body.data.vertices: kd.insert(v.co, v.index)
 kd.balance()
