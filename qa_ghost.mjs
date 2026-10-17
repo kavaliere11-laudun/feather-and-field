@@ -1,0 +1,13 @@
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch();
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true })).newPage();
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(300);
+const pts = await page.evaluate(() => window.__ffDebug.points());
+console.log('coop at', pts.coop0);
+await page.touchscreen.tap(...pts.coop0); await page.waitForTimeout(400);
+console.log('focused:', await page.evaluate(() => document.activeElement && (document.activeElement.id || document.activeElement.tagName)));
+const box = await page.locator('#rename').boundingBox(); console.log('input box', box);
+await browser.close();

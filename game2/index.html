@@ -235,7 +235,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '17 Oct 2026 14:02';
+const BUILD = '17 Oct 2026 18:27';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -1747,10 +1747,13 @@ function up(e) {
   ptr.list.delete(e.pointerId);
   if (ptr.list.size === 1) { const [p] = [...ptr.list.values()]; ptr.pinch = null; ptr.x0 = p.x; ptr.y0 = p.y; return; }
   if (ptr.list.size) return;
-  if (e.type === 'pointerup' && ptr.moved < 9) { const [x, y] = local(e); tapAt(view.x + x / view.s, view.y + y / view.s); }
+  if (e.type === 'pointerup' && ptr.moved < 9) { const [x, y] = local(e); const was = current; tapAt(view.x + x / view.s, view.y + y / view.s); if (current && current !== was) ghostUntil = performance.now() + 500; }
   else if (ptr.moved >= 9 && ptr.moved < 99 && performance.now() - ptr.lastT < 80) inertia = { vx: ptr.vx, vy: ptr.vy };
 }
 cv.addEventListener('pointerup', up);
+// A tap on the map that opens a screen must not also press what appears under the finger (phones send a late click/mousedown).
+let ghostUntil = 0;
+for (const ev of ['mousedown', 'mouseup', 'click']) document.addEventListener(ev, e => { if (performance.now() < ghostUntil && e.target !== cv) { e.preventDefault(); e.stopPropagation(); } }, true);
 cv.addEventListener('pointercancel', up);
 cv.addEventListener('wheel', e => {
   e.preventDefault();
