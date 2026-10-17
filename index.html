@@ -247,7 +247,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '16 Oct 2026 23:24';
+const BUILD = '17 Oct 2026 11:18';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -260,6 +260,7 @@ const BREEDS = {
   bra: { price: 260, egg: 28, lay: 420, eggCol: '#c9a07a', size: 1.30, coop: 1200, lvl: 10 },
 };
 const BREED_IDS = ['rir', 'orp', 'sil', 'leg', 'bra'];
+const BUILD_TIME = { rir: 2 * 60 * 60e3, orp: 4 * 60 * 60e3, sil: 6 * 60 * 60e3, leg: 8 * 60 * 60e3, bra: 12 * 60 * 60e3 };     // building a coop takes time; bigger coops take longer
 
 // Feed. A portion feeds one bird for 2 hours. Hens only lay while their feeder has food; birds never go hungry in any other way.
 // lay = laying-interval factor, grow/cap = size and plumage a growing bird gains per portion (up to cap), egg = trait bonus for chicks from eggs laid on it
@@ -327,7 +328,7 @@ en: {
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
   market_birds:'Birds', market_build:'Build', new_birds_in:'New birds arrive in {t}', no_offers:'No birds for sale right now.',
-  build_coop:'Coop for {breed}', owned:'You own {n}', land:'Land plot', land_note:'Each coop needs its own plot.', coop_name:'Coop name', coop_renamed:'Coop renamed: {coop}', updated:'Game updated (version {v})', land_note2:'This plot is for sale. Buy it, then build a coop on it.', land_bought:'Land bought: now build a coop on it', need_land_first:'You need a free plot first: buy land below, then build.', coins_hint:'Coins: {n}', eggs_hint:'Fertile eggs in your basket: {n} of {m}', now_in:'Now in {coop} (plot {plot})', move_to_btn:'Move to {coop}', plots_owned:'{n} of {max} plots owned',
+  build_coop:'Coop for {breed}', owned:'You own {n}', land:'Land plot', land_note:'Each coop needs its own plot.', coop_name:'Coop name', build_started:'Building your {coop}: ready in {t}', built_toast:'Your {coop} is built! Fill it with birds from the Market.', coop_building:'Your {coop} is still being built', building_sign:'Building', under_construction:'Under construction', ready_in:'Ready in {t}', construction_note:'Builders are at work. When it is finished you can move in {breed} birds.', away_built:'{n} coops finished building', away_built1:'A coop finished building', build_time:'Takes {t} to build', coop_renamed:'Coop renamed: {coop}', updated:'Game updated (version {v})', land_note2:'This plot is for sale. Buy it, then build a coop on it.', land_bought:'Land bought: now build a coop on it', need_land_first:'You need a free plot first: buy land below, then build.', coins_hint:'Coins: {n}', eggs_hint:'Fertile eggs in your basket: {n} of {m}', now_in:'Now in {coop} (plot {plot})', move_to_btn:'Move to {coop}', plots_owned:'{n} of {max} plots owned',
   buy_land:'Buy land', incubator_slot:'Extra incubator slot', basket_up:'Bigger egg basket (+40)', max_reached:'Fully upgraded',
   basket:'Egg basket', sell_all:'Sell all eggs', eggs_each:'{n} each', fertile:'Fertile eggs', fertile_note:'Hatch them or sell them as hatching eggs.',
   incubate:'Incubate', incubator:'Incubator', empty_slot:'Empty slot', hatches_in:'Hatches in {t}', ready_wait:'Ready to hatch. Make room in a {coop}.', hatched:'A {breed} chick hatched: {name}!', est:'Expected quality about {q}',
@@ -395,7 +396,7 @@ fr: {
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
   market_birds:'Volailles', market_build:'Construire', new_birds_in:'Nouvelles volailles dans {t}', no_offers:'Aucune volaille à vendre pour le moment.',
-  build_coop:'Poulailler pour {breed}', owned:'Vous en avez {n}', land:'Terrain', land_note:'Chaque poulailler a besoin de son propre terrain.', coop_name:'Nom du poulailler', coop_renamed:'Poulailler renommé : {coop}', updated:'Jeu mis à jour (version {v})', land_note2:'Ce terrain est à vendre. Achetez-le, puis construisez-y un poulailler.', land_bought:'Terrain acheté : construisez-y un poulailler', need_land_first:'Il vous faut d’abord un terrain libre : achetez-en un ci-dessous, puis construisez.', coins_hint:'Pièces : {n}', eggs_hint:'Œufs fécondés dans votre panier : {n} sur {m}', now_in:'Actuellement : {coop} (terrain {plot})', move_to_btn:'Installer dans {coop}', plots_owned:'{n} terrains sur {max}',
+  build_coop:'Poulailler pour {breed}', owned:'Vous en avez {n}', land:'Terrain', land_note:'Chaque poulailler a besoin de son propre terrain.', coop_name:'Nom du poulailler', build_started:'Construction de votre {coop} : prêt dans {t}', built_toast:'Votre {coop} est construit ! Remplissez-le avec des volailles du Marché.', coop_building:'Votre {coop} est encore en construction', building_sign:'En construction', under_construction:'En construction', ready_in:'Prêt dans {t}', construction_note:'Les ouvriers sont au travail. Une fois terminé, vous pourrez y installer des {breed}.', away_built:'{n} poulaillers terminés', away_built1:'Un poulailler est terminé', build_time:'{t} de construction', coop_renamed:'Poulailler renommé : {coop}', updated:'Jeu mis à jour (version {v})', land_note2:'Ce terrain est à vendre. Achetez-le, puis construisez-y un poulailler.', land_bought:'Terrain acheté : construisez-y un poulailler', need_land_first:'Il vous faut d’abord un terrain libre : achetez-en un ci-dessous, puis construisez.', coins_hint:'Pièces : {n}', eggs_hint:'Œufs fécondés dans votre panier : {n} sur {m}', now_in:'Actuellement : {coop} (terrain {plot})', move_to_btn:'Installer dans {coop}', plots_owned:'{n} terrains sur {max}',
   buy_land:'Acheter le terrain', incubator_slot:'Place de couveuse en plus', basket_up:'Panier plus grand (+40)', max_reached:'Amélioration maximale',
   basket:'Panier à œufs', sell_all:'Vendre tous les œufs', eggs_each:'{n} l’unité', fertile:'Œufs fécondés', fertile_note:'Faites-les éclore ou vendez-les comme œufs à couver.',
   incubate:'Couver', incubator:'Couveuse', empty_slot:'Place libre', hatches_in:'Éclosion dans {t}', ready_wait:'Prêt à éclore. Faites de la place dans : {coop}.', hatched:'Un poussin {breed} est né : {name} !', est:'Qualité attendue : environ {q}',
@@ -731,7 +732,7 @@ function sanitize(s) {
     for (const k of FEED_IDS) feeder[k] = fd ? int(fd[k], 0, FEEDER_CAP, 0) : (k === 'basic' ? FEEDER_CAP : 0);
     let tot = FEED_IDS.reduce((n, k) => n + feeder[k], 0);
     for (const k of FEED_IDS) if (tot > FEEDER_CAP) { const cut = Math.min(feeder[k], tot - FEEDER_CAP); feeder[k] -= cut; tot -= cut; }
-    o.coops.push({ id: int(c.id, 1, 1e9, o.nextId++), breed, plot, name: typeof c.name === 'string' ? cleanName(c.name, '') : '', sire: Number.isInteger(c.sire) ? c.sire : null,
+    o.coops.push({ id: int(c.id, 1, 1e9, o.nextId++), breed, plot, name: typeof c.name === 'string' ? cleanName(c.name, '') : '', ready: num(c.ready, 0, 1e13, 0), sire: Number.isInteger(c.sire) ? c.sire : null,
       nest: { plain: int(c.nest && c.nest.plain, 0, NEST_CAP, 0), fertile: (Array.isArray(c.nest && c.nest.fertile) ? c.nest.fertile : []).slice(0, NEST_CAP).map(okEgg).filter(Boolean) },
       feeder, acc: num(c.acc, 0, 5, 0), last: FEEDS[c.last] ? c.last : 'basic', hungry: !!c.hungry });
   }
@@ -777,12 +778,13 @@ const birdById = id => state.birds.find(b => b.id === id);
 const birdsIn = coop => state.birds.filter(b => b.home === coop.id);
 const nestCount = coop => coop.nest.plain + coop.nest.fertile.length;
 const adultRoosters = coop => birdsIn(coop).filter(b => b.sex === 'r' && isGrown(b));
-function coopWithSpace(breed, not) { return state.coops.filter(c => c.breed === breed && c !== not && birdsIn(c).length < COOP_CAP).sort((a, b) => a.plot - b.plot)[0] || null; }
+const isBuilt = c => !c.ready || state.gt >= c.ready;
+function coopWithSpace(breed, not) { return state.coops.filter(c => c.breed === breed && c !== not && isBuilt(c) && birdsIn(c).length < COOP_CAP).sort((a, b) => a.plot - b.plot)[0] || null; }
 const feederTotal = c => FEED_IDS.reduce((n, k) => n + c.feeder[k], 0);
 function coopLabel(c) {
   if (c.name) return c.name;                    // the player's own name for it
   const same = state.coops.filter(x => x.breed === c.breed).sort((a, b) => a.plot - b.plot);
-  return t('coop_' + c.breed) + (same.length > 1 ? ' ' + (same.indexOf(c) + 1) : '');
+  return t('coop_' + c.breed) + (same.length > 1 ? ' ' + (same.findIndex(x => x.id === c.id) + 1) : '');
 }
 const unlocked = id => BREEDS[id].lvl <= state.level;
 function emit(kind, text, gold, action) { if (sink) { sink[kind] = (sink[kind] || 0) + 1; sink.any = true; } else if (text) toast(text, gold, action); }
@@ -800,6 +802,7 @@ function eat(coop, birds) {
 }
 function simStep(step) {
   const gt = state.gt;
+  for (const c of state.coops) if (c.ready && gt >= c.ready) { c.ready = 0; gainXP(XP.coop); emit('built', t('built_toast', { coop: coopLabel(c) }), true, () => scrollToPlot(c.plot)); if (!sink) SND.sparkle(); dirty = true; }
   const groups = new Map();
   for (const b of state.birds) { let g = groups.get(b.home); if (!g) groups.set(b.home, g = []); g.push(b); }
   for (const c of state.coops) {
@@ -983,7 +986,7 @@ function spend(n) { if (state.coins < n) { SND.nope(); toast(t('need_coins')); r
 function actBuyOffer(i) {
   const o = state.shop.offers[i]; if (!o) return;
   const coop = coopWithSpace(o.breed);
-  if (!coop) { toast(state.coops.some(c => c.breed === o.breed) ? t('coop_full', { coop: t('coop_' + o.breed) }) : t('need_coop', { coop: t('coop_' + o.breed) })); return; }
+  if (!coop) { const mine = state.coops.filter(c => c.breed === o.breed); toast(!mine.length ? t('need_coop', { coop: t('coop_' + o.breed) }) : mine.some(c => !isBuilt(c)) ? t('coop_building', { coop: t('coop_' + o.breed) }) : t('coop_full', { coop: t('coop_' + o.breed) })); return; }
   const price = offerPrice(o); if (!spend(price)) return;
   const b = makeBird({ ...o, home: coop.id }); b.seed = o.seed;
   state.birds.push(b); state.shop.offers.splice(i, 1); see(b);
@@ -1057,10 +1060,10 @@ function actBuildCoop(breed) {
   if (!unlocked(breed)) return;
   const plot = freePlot(); if (plot < 0) { toast(t('need_plot')); return; }
   if (!spend(coopPrice(breed))) return;
-  const c = newCoop(breed, plot); c.feeder.basic = 0;
+  const c = newCoop(breed, plot); c.feeder.basic = 0; c.ready = state.gt + BUILD_TIME[breed];
   const give = Math.min(FEEDER_CAP, state.feed.basic); c.feeder.basic = give; state.feed.basic -= give;
-  state.coops.push(c); gainXP(XP.coop);
-  closeSheet(); changed(); scrollToPlot(plot);
+  state.coops.push(c);
+  closeSheet(); toast(t('build_started', { coop: coopLabel(c), t: fmtDur(realLeft(BUILD_TIME[breed])) })); changed(); scrollToPlot(plot);
 }
 function actBuyPlot() { if (state.plots >= plotsAllowed(state.level)) return false; if (!spend(plotPrice())) return false; state.plots++; gainXP(XP.land); toast(t('land_bought')); changed(); return true; }
 function actIncSlot() { if (state.inc.slots >= incAllowed(state.level)) return; if (!spend(incPrice())) return; state.inc.slots++; changed(); }
@@ -1168,7 +1171,7 @@ function buildPlots() {
   for (let i = 0; i < MAX_PLOTS; i++) {
     const f = GEOM.slots[i], coop = state.coops.find(c => c.plot === i);
     let p;
-    if (coop) p = { kind: 'coop', breed: coop.breed, coop };
+    if (coop) p = isBuilt(coop) ? { kind: 'coop', breed: coop.breed, coop } : { kind: 'build', breed: coop.breed, coop };
     else if (i < state.plots) p = { kind: 'empty' };
     else p = { kind: 'sale', next: i === state.plots, locked: i >= allowed, price: plotPrice() };
     p.f = f; p.idx = i; plots.push(p);
@@ -1485,11 +1488,17 @@ function drawButterfly(b) {
 function drawOverlay(p) {
   let src;
   if (p.kind === 'coop') src = ovSrc(p.breed, p.f.deg);
-  else if (p.kind === 'empty') src = ovSrc('empty', p.f.deg);
+  else if (p.kind === 'empty' || p.kind === 'build') src = ovSrc('empty', p.f.deg);
   else if (p.kind === 'sale') src = ovSrc('sale', p.f.deg);
   else return;
   const im = img(src); if (!ready(im)) return;
   ctx.drawImage(im, p.f.c[0] - OV[0], p.f.c[1] - OV[1], 600, 600);
+}
+function buildBar(x, y, f) {            // a little progress bar under a building site's sign
+  const K = uiK(); ctx.save(); ctx.translate(x, y); ctx.scale(K, K);
+  ctx.fillStyle = 'rgba(0,0,0,.22)'; rrect(ctx, -42, -3, 84, 12, 6); ctx.fill();
+  ctx.fillStyle = '#fbf6e6'; rrect(ctx, -42, -5, 84, 12, 6); ctx.fill(); ctx.strokeStyle = 'rgba(80,55,20,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#e1b525'; rrect(ctx, -40, -3, Math.max(8, 80 * clamp(f, 0, 1)), 8, 4); ctx.fill(); ctx.restore();
 }
 const uiK = () => clamp(.8 / view.s, 1, 2.4);     // signs and bubbles keep a readable size when zoomed out
 let signHits = [];
@@ -1623,6 +1632,7 @@ function draw() {
     const sp = toMap(p.f, 0, -1.75, 0.3);
     if (p.kind === 'coop') { const gp = toMap(p.f, 0, -2.5, 0); label(gp[0], gp[1], coopLabel(p.coop), null, 'small'); }  // on the path by the gate, clear of the birds
     else if (p.kind === 'empty') { label(sp[0], sp[1], t('sign_build'), '+'); signHits.push([sp[0], sp[1], p]); }
+    else if (p.kind === 'build') { const left = Math.max(0, p.coop.ready - state.gt), frac = 1 - left / BUILD_TIME[p.coop.breed]; label(sp[0], sp[1], t('building_sign', { coop: coopLabel(p.coop) }), fmtDur(realLeft(left)), 'hot'); buildBar(sp[0], sp[1] + 30 * uiK(), frac); signHits.push([sp[0], sp[1], p]); }
     else if (p.kind === 'sale' && p.next) signHits.push([sp[0], sp[1], p]), label(sp[0], sp[1], p.locked ? t('locked_lvl', { n: levelForPlots(p.idx + 1) }) : t('sign_sale'), p.locked ? null : fmtN(p.price) + ' ' + t('coins'), p.locked ? 'lock' : 'hot');
   }
   for (const p of plots) {
@@ -1763,7 +1773,7 @@ cv.addEventListener('wheel', e => {
 function inBox(f, x, y, box) { const [lx, ly] = toLocal(f, x, y); return lx >= box.x0 && lx <= box.x1 && ly >= box.y0 && ly <= box.y1; }
 function tapAt(x, y) {
   const K = uiK();
-  for (const [sx, sy, p] of signHits) if (Math.abs(x - sx) < 70 * K && Math.abs(y - sy) < 30 * K) { if (p.kind === 'empty') openSheet('market', { tab: 'build' }); else openSheet('land'); return; }
+  for (const [sx, sy, p] of signHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 34 * K) { if (p.kind === 'empty') openSheet('market', { tab: 'build' }); else if (p.kind === 'build') openSheet('coop', { id: p.coop.id }); else openSheet('land'); return; }
   for (const p of plots) if (p.bubble && Math.hypot(x - p.bubble.x, y - p.bubble.y) < p.bubble.r) { actCollect(p.coop); return; }
   for (const p of plots) if (p.feedBubble && Math.hypot(x - p.feedBubble.x, y - p.feedBubble.y) < p.feedBubble.r) { openSheet('coop', { id: p.coop.id }); return; }
   let best = null, bd = 1e9;
@@ -1777,7 +1787,7 @@ function tapAt(x, y) {
   for (const f of frogs) if (f.st === 'sit' && Math.hypot(x - f.x, y - f.y + 6) < 22) { f.puff = .6; SND.frog(f.x, f.y); frogHop(f, false); return; }
   for (const p of plots) {
     if (!inBox(p.f, x, y, p.kind === 'pasture' ? { x0: -3.1, x1: 3.1, y0: -2.4, y1: 2.4 } : { x0: -1.85, x1: 1.85, y0: -1.75, y1: 1.6 })) continue;
-    if (p.kind === 'coop') openSheet('coop', { id: p.coop.id });
+    if (p.kind === 'coop' || p.kind === 'build') openSheet('coop', { id: p.coop.id });
     else if (p.kind === 'empty') openSheet('market', { tab: 'build' });
     else if (p.kind === 'sale') openSheet('land');
     else openSheet('pasture');
@@ -1909,6 +1919,7 @@ const SHEETS = {
     if (a.eggs) lines.push(t('away_eggs', { n: fmtN(a.eggs) })); if (a.hatched) lines.push(t('away_hatched', { n: a.hatched }));
     if (a.retired) lines.push(t('away_retired', { n: a.retired })); if (a.shows) lines.push(t('away_shows', { n: a.shows }));
     if (a.hungry) lines.push(t('away_hungry', { n: a.hungry })); if (a.levels) lines.push(t('level_up', { n: a.levels }));
+    if (a.built) lines.push(t('away_built', { n: a.built }));
     if (a.showsNew) lines.push(t('away_new_shows', { n: a.showsNew })); if (a.trophies) lines.push(t('away_trophies', { n: a.trophies })); if (a.colours) lines.push(t('away_colours', { n: a.colours }));
     const full = state.coops.filter(c => nestCount(c) >= NEST_CAP).length; if (full) lines.push(full > 1 ? t('away_full', { n: full }) : t('away_full1'));
     const waiting = waitingEggs();
@@ -1950,6 +1961,12 @@ const SHEETS = {
         hens.map(hen => h('div', { class: 'small', style: 'display:flex;flex-direction:column;gap:4px' }, h('div', { style: 'font-weight:700', text: `${hen.name} (${t('col_' + hen.colour)}) × ${roo.name} (${t('col_' + roo.colour)})` }),
           h('div', { class: 'row', style: 'flex-wrap:wrap;gap:6px' }, colourOdds(roo.geno, hen.geno).map(([c, p]) => h('span', { class: 'tag' + (state.seen.includes('sil_' + c) ? '' : ' gold') }, `${t('col_' + c)} ${Math.round(p * 100)}%`))))));
     }
+    if (!isBuilt(coop)) return { title: coopLabel(coop), node: [
+      h('label', { class: 'small muted', for: 'rename', text: t('coop_name') }),
+      h('input', { type: 'text', id: 'rename', maxlength: 20, value: coop.name || '', placeholder: coopLabel({ ...coop, name: '' }), 'aria-label': t('coop_name'), autocomplete: 'off', onchange: e => actRenameCoop(coop, e.target.value) }),
+      h('div', { class: 'card' }, h('h3', { text: t('under_construction') }), h('div', { class: 'small muted' }, timer(coop.ready, 'ready_in')), progress(coop.ready - BUILD_TIME[coop.breed], coop.ready),
+        h('p', { class: 'small', text: t('construction_note', { breed: breedName(coop.breed) }) })),
+    ] };
     return { title: coopLabel(coop), node: [
       h('label', { class: 'small muted', for: 'rename', text: t('coop_name') }),
       h('input', { type: 'text', id: 'rename', maxlength: 20, value: coop.name || '', placeholder: coopLabel({ ...coop, name: '' }), 'aria-label': t('coop_name'), autocomplete: 'off', onchange: e => actRenameCoop(coop, e.target.value) }),
@@ -2058,7 +2075,7 @@ const SHEETS = {
           const price = coopPrice(id), owned = state.coops.filter(c => c.breed === id).length, open = unlocked(id);
           const thumb = h('img', { class: 'thumb' + (open ? '' : ' dim'), src: ovSrc(id, 0), alt: '', draggable: 'false' });
           return h('div', { class: 'card' }, thumb,
-            h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('coop_' + id) }), h('div', { class: 'small muted', text: t('build_coop', { breed: t('br_' + id) }) + ' · ' + t('cap_n', { n: COOP_CAP }) + (owned ? ' · ' + t('owned', { n: owned }) : '') })), open ? null : lock(BREEDS[id].lvl)),
+            h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('coop_' + id) }), h('div', { class: 'small muted', text: t('build_coop', { breed: t('br_' + id) }) + ' · ' + t('cap_n', { n: COOP_CAP }) + ' · ' + t('build_time', { t: fmtDur(realLeft(BUILD_TIME[id])) }) + (owned ? ' · ' + t('owned', { n: owned }) : '') })), open ? null : lock(BREEDS[id].lvl)),
             open && free < 0 ? h('p', { class: 'small warn', text: t('need_plot') }) : null,
             open ? h('button', { class: 'btn', disabled: free < 0 || state.coins < price, onclick: () => actBuildCoop(id) }, t('build_for'), ' ', coinPrice(price)) : null);
         }),
