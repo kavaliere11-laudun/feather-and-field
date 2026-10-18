@@ -141,7 +141,12 @@ p{margin:0;line-height:1.5}
 .seg button[aria-pressed="true"]{background:var(--meringue);color:var(--ink);box-shadow:0 2px 6px rgba(20,40,20,.12)}
 .tag{display:inline-block;font:600 12px var(--display);padding:3px 9px;border-radius:999px;background:var(--meringue);color:var(--ink-2);white-space:nowrap}
 .card .tag{background:var(--meringue)}
-.tag.red{background:var(--r1);color:#fff}.tag.blue{background:var(--r2);color:#fff}.tag.gold{background:var(--yolk);color:#3a2a00}
+.tag.pers{background:#f6ecd4;color:#5a3d06}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 6px}
+.pick-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:18px;border:2px solid transparent;background:var(--meringue);font:700 16px var(--display);color:var(--ink-2);cursor:pointer}
+.pick-tile img{height:150px;width:auto;object-fit:contain}
+.pick-tile[aria-pressed="true"]{border-color:var(--good);background:#eef6e6}
+.pick-tile:focus-visible{outline:3px solid var(--good);outline-offset:2px}.tag.red{background:var(--r1);color:#fff}.tag.blue{background:var(--r2);color:#fff}.tag.gold{background:var(--yolk);color:#3a2a00}
 .grade{font:700 15px var(--display);min-width:36px;text-align:center;padding:4px 7px;border-radius:12px;background:var(--meringue);font-variant-numeric:tabular-nums}
 .grade.gs{background:var(--yolk);color:#3a2a00}.grade.gAp,.grade.gA{background:var(--meadow);color:#fff}.grade.gB{background:#2a7a8c;color:#fff}
 .meters{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:14px}
@@ -173,6 +178,12 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
 .sack{width:30px;height:32px;flex:none;background:var(--c);clip-path:polygon(20% 8%,50% 0,80% 8%,96% 92%,50% 100%,4% 92%);box-shadow:inset 0 -6px 0 rgba(0,0,0,.15)}
 .tag.lock{background:var(--sage-2);color:var(--ink-2)}
 .card.locked{opacity:.75}
+.thumb.dc{object-fit:contain;padding:6px 10px;box-sizing:border-box}
+.outfits{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.outfit{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:10px 8px}
+.outfit img{height:130px;width:100%;object-fit:contain}
+.outfit.on{outline:2px solid var(--good);outline-offset:-2px;background:#eef6e6}
+.outfit .tiny{min-height:2.6em}
 .facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center}
 .colours{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .colour{background:var(--meringue);border-radius:16px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
@@ -271,6 +282,39 @@ const levelForPlots = n => Math.max(1, Math.ceil((n - 2) / 2));
 const incAllowed = L => Math.min(8, 2 + Math.floor(L / 3));
 const TRAITS = ['type', 'plum', 'size', 'lay'];
 
+// Personalities: every bird has one, each with an upside and a downside (game design doc, "Personalities").
+const PERS = { mum: { icon: '🐣' }, rebel: { icon: '🏃' }, diva: { icon: '👑' }, glutton: { icon: '🌽' }, brave: { icon: '🛡️' } };
+const PERS_IDS = Object.keys(PERS);
+const PR = {
+  mumFert: .9, mumTraits: 3, mumGrow: .75, mumLay: 1 / .7,            // good mum: fertile eggs, better chicks that grow up faster; lays 30% slower while raising them
+  divaShow: 1.08, divaLay: 1 / .85, clover: 1.1,                      // diva: +8% at shows; 15% slower on layers' pellets. A rebel's clover: +10% at the next show
+  gluttonEat: 1.5, gluttonSize: 6,                                    // glutton: eats 1.5 portions, +6 size as an adult
+  settle: 6 * HOUR, settleLay: 1.25,                                  // brave: a newcomer in her coop slows laying 20% for 6 hours
+  outEvery: [18 * HOUR, 30 * HOUR], outFor: [1 * HOUR, 3 * HOUR], firstOut: [1 * HOUR, 8 * HOUR], nightCatch: HOUR,
+  fright: 4 * HOUR, foxEvery: [2 * DAY, 4 * DAY], foxTakes: 3, protestAfter: 2 * HOUR, thanksXp: 5, foxXp: 10,
+  happy: 6 * HOUR, cuddleXp: 5,
+  trustAt: [3, 8, 15], trustValue: .02, trustOut: [1, 1.2, 1.4, 1.7], trustFind: [.5, .6, .7, .8], friendXp: 20,   // trust: cuddles to each level; +2% value a level; rebels escape less and find more
+                                     // a cuddle: happy for 6 hours; calming a frightened coop or a brave bird earns 5 XP
+};
+const PERS_VALUE = { mum: 1.1, glutton: 1.15, brave: 1.05 };
+// Things to buy: decorations (each has one place on the farm map, in map pixels) and farmer outfits. XP = price / 25.
+const DECOR = {
+  flowers:    { lvl: 3,  price: 400,   at: [1262, 548] },
+  birdbath:   { lvl: 4,  price: 800,   at: [1200, 322] },
+  beehives:   { lvl: 6,  price: 1800,  at: [2722, 566] },
+  duckhouse:  { lvl: 8,  price: 3000,  at: [1525, 1818] },
+  greenhouse: { lvl: 10, price: 6000,  at: [530, 655] },
+  windmill:   { lvl: 13, price: 12000, at: [3170, 420] },
+  bandstand:  { lvl: 16, price: 20000, at: [1642, 2196] },
+  statue:     { lvl: 20, price: 40000, at: [1561, 1572] },
+};
+const DECOR_IDS = Object.keys(DECOR);
+const OUTFITS = { classic: { lvl: 1, price: 0 }, market: { lvl: 5, price: 1200 }, garden: { lvl: 9, price: 3500 }, winter: { lvl: 12, price: 6000 }, rodeo: { lvl: 15, price: 10000 }, show: { lvl: 18, price: 16000 } };
+const OUTFIT_IDS = Object.keys(OUTFITS);
+const shopXp = price => Math.round(price / 25);
+const trustLvl = b => { const n = (b && b.trust) || 0; return n >= PR.trustAt[2] ? 3 : n >= PR.trustAt[1] ? 2 : n >= PR.trustAt[0] ? 1 : 0; };
+const outGap = b => adoptRnd(PR.outEvery) * PR.trustOut[trustLvl(b)];          // time to a rebel's next escape: longer the more she trusts the farmer
+
 // Silkie colours. show = can enter standard show classes. m = price multiplier. w = how often the market offers it.
 const SIL = {
   white:     { w: 18, m: 1.00, show: 1 }, black:  { w: 16, m: 1.00, show: 1 },
@@ -364,6 +408,56 @@ en: {
   chick_colours:'Likely chick colours', odds_note:'Each hen with the breeding rooster. Hidden genes can still surprise you.',
   m_first_sale:'Sell your first bird', m_coops10:'Own 10 coops', m_coops25:'Own 25 coops', m_allsil:'Find all 11 Silkie colours', trophy_xp:'+{n} XP',
   feed_short:'Feed', in_coop_n:'In {coop}', cap_n:'{n} birds', show_me:'Show me', new_chick:'new',
+  personality:'Personality', filter_pers:'Filter by personality', all_pers:'Any personality',
+  pers_mum:'Good mum', pers_rebel:'Rebel', pers_diva:'Diva', pers_glutton:'Glutton', pers_brave:'Brave',
+  pers_mum_d:'More of her eggs are fertile, and her chicks are better and grow up faster. Lays less while raising young chicks. Worth 10% more.',
+  pers_rebel_d:'Escapes about once a day and sometimes comes back with a surprise. No eggs while out of the coop. After a cuddle, no escapes for 6 hours.',
+  pers_diva_d:'Does better at shows (+8%). On layers’ pellets, sulks and lays 15% slower, unless she has had a cuddle.',
+  pers_glutton_d:'Eats half as much again, grows bigger as an adult and is worth 15% more.',
+  pers_brave_d:'Chases the fox away at night and walks runaways home. Grumpy with newcomers: the coop lays slower for 6 hours, or until she gets a cuddle. Worth 5% more.',
+  reveal_mum:'This one looks like a born mum.', reveal_rebel:'This one looks… adventurous!', reveal_diva:'This one already strikes a pose.', reveal_glutton:'This one is already eyeing the feeder.', reveal_brave:'This one isn’t afraid of anything.',
+  escaped:'{name} has escaped from the coop! Tap the runaway to send {farmer}.', escaped_night:'{name} has escaped into the dark! Tap within the hour, before the fox comes.', escaped_tag:'Escaped!', rebel_say:'Freedom!',
+  farmer_day:'{farmer} jogs after {name}: “Come back here, {name}!”', farmer_dusk:'{farmer} hurries after {name} before it gets dark.', farmer_night:'{farmer} runs out with a torch: “{name}! There’s a fox about!”',
+  farmer_title:'Choose your farmer', farmer_note:'Your farmer looks after the hens: fills the feeders, gives cuddles, runs after runaways and keeps an eye out for the fox.', farmer_him:'Him', farmer_her:'Her', farmer_name:'Name',
+  farmer_done:'Let’s go', farmer_default_m:'Arthur', farmer_default_f:'Rosie', farmer_hello:'Hello, {farmer}! The hens are waiting.', your_farmer:'Your farmer', change:'Change',
+  decor_title:'Decorate your farm', decor_note:'Decorations make your farm prettier and each one gives you XP when you buy it. Tap one on the farm to see what it is.',
+  decor_jump:'Decorations for your farm', on_farm:'On your farm', decor_bought:'New on your farm: {name}. +{n} XP', unlock_decor:'New decoration: {name}', unlock_outfit:'New outfit for your farmer: {name}',
+  dc_flowers:'Cottage flower bed', dc_flowers_d:'Tulips, daisies and delphiniums in a stone-edged bed by the farmhouse.',
+  dc_birdbath:'Bird bath', dc_birdbath_d:'A stone bird bath by the farmhouse. A blue tit has already found it.',
+  dc_beehives:'Beehives', dc_beehives_d:'Three white hives by the wheat field, with lavender for the bees.',
+  dc_duckhouse:'Duck house', dc_duckhouse_d:'A little house on a raft in the pond, for the ducks.',
+  dc_greenhouse:'Greenhouse', dc_greenhouse_d:'An old-fashioned greenhouse full of tomatoes.',
+  dc_windmill:'Windmill', dc_windmill_d:'A white windmill by the wheat field. Its sails turn in the breeze.',
+  dc_bandstand:'Bandstand', dc_bandstand_d:'A Victorian bandstand on the green, for summer concerts.',
+  dc_statue:'Golden cockerel', dc_statue_d:'A golden cockerel on a stone plinth by the pond: the mark of a champion farm.',
+  outfits:'Outfits', outfits_note:'New clothes for {farmer}. Each outfit gives you XP when you buy it.', wear:'Wear', wearing:'Wearing',
+  outfit_bought:'{farmer} tries on the {name} outfit. +{n} XP',
+  of_classic:'Classic', of_classic_d:'Straw hat and a checked shirt.', of_market:'Market day', of_market_d:'Tweed flat cap and a blue checked shirt.',
+  of_garden:'Garden party', of_garden_d:'Flowery sun hat and a yellow gingham shirt.', of_winter:'Winter woollies', of_winter_d:'Bobble hat and a green jumper.',
+  of_rodeo:'Rodeo', of_rodeo_d:'Cowboy hat, chambray shirt and a neckerchief.', of_show:'Show day', of_show_d:'Top hat, white shirt and a prize rosette.',
+  m_decor:'Put every decoration on your farm',
+  trust:'Trust', trust_lv0:'Shy', trust_lv1:'Friendly', trust_lv2:'Trusting', trust_lv3:'Best friend',
+  trust_next:'{n} more cuddles to {lv}', trust_next1:'1 more cuddle to {lv}', trust_max:'Best friends with {farmer}',
+  trust_value:'Worth {n}% more for being tame.', trust_rebel:'Escapes less often and brings back more finds.', trust_mum:'Her chicks hatch Friendly.', trust_greet:'Comes to the fence to greet {farmer}.',
+  trust_up1:'{name} is getting friendly with {farmer}.', trust_up2:'{name} trusts {farmer} now, and will come to the fence to say hello.', trust_up3:'{name} and {farmer} are best friends! +{n} XP',
+  will_miss:'{farmer} will miss {name}.', m_friend:'Become best friends with one of your birds',
+  cuddle:'Cuddle', happy_for:'Happy after a cuddle: {t} left', happy_for_r:'Happy after a cuddle: {t} left',
+  cuddle_go:'{farmer} gives {name} a cuddle.', cuddle_diva:'{farmer} gives {name} a cuddle: no more sulking for 6 hours.',
+  cuddle_rebel:'{farmer} gives {name} a cuddle. Happy rebels stay put: no escapes for 6 hours.',
+  cuddle_fox:'{farmer} gives {name} a cuddle, and {coop} calms down: laying again. +{n} XP',
+  cuddle_brave:'{farmer} gives {name} a cuddle. The newcomer is welcome now: laying back to normal. +{n} XP',
+  fright_hint:'A cuddle calms them down.', settle_hint:'A cuddle for {name} helps.',
+  farmer_say_hi:'Hello, girls!', farmer_say_day:'Back you go!', farmer_say_dusk:'Quick, before dark!', farmer_say_night:'Got you! Phew…', farmer_say_feed:'Dinner time!', farmer_say_cuddle:'There, there…',
+  back_alone:'{name} wandered back to the coop.', walked_home:'{brave} walked {name} home before morning.',
+  hid_night:'{name} didn’t come back and is out somewhere for the night.', tree_morning:'{name} spent the night in the apple tree! Back now, but too shaken to lay until noon.', tree_morning_r:'{name} spent the night in the apple tree! Back now, a little shaken.',
+  find_coins:'{name} came back with {n} coins!', find_clover:'{name} found a four-leaf clover: +10% at the next show.', find_egg:'{name} came back with a mystery egg ({breed}). It’s in the Hatchery.', find_egg_sold:'{name} came back with a mystery egg. The basket was full, so it was sold for {n} coins.',
+  protest_feed:'MORE CORN!', protest_nest:'COLLECT US!', protest_sub:'{name} is protesting', protest_thanks:'{name} is pleased: thank you! +5 XP',
+  fox_brave:'A fox came to {coop} in the night. {name} chased it away! +10 XP', fox_fright:'A fox frightened the hens in {coop} in the night: no eggs for 4 hours.', fox_took:' It took {n} eggs.', fox_took1:' It took 1 egg.',
+  out_now:'Out of the coop: back on its own in {t}', out_night:'Out in the dark: bring it back within {t}, or it stays out all night', bring_back:'Send {farmer}', hiding:'Out for the night: back at 7:00', shaken:'Too shaken to lay until noon',
+  clover_note:'🍀 Four-leaf clover: +10% at the next show', sulking:'Sulking on layers’ pellets: lays 15% slower. Premium mix, show ration or a cuddle cheers her up.', raising:'Raising her chicks: lays 30% slower for now.',
+  settling:'A brave bird is getting used to a newcomer: laying is 20% slower for {t}', frightened:'Frightened by the fox: no eggs for {t}',
+  away_escape:'{n} escapes from the coop', away_escape1:'1 escape from the coop', away_finds:'{n} surprises brought back', away_finds1:'A surprise brought back', away_tree:'{n} runaways spent the night in the apple tree', away_tree1:'A runaway spent the night in the apple tree',
+  away_foxBrave:'Brave birds chased the fox away {n} times', away_foxBrave1:'A brave bird chased the fox away', away_fox:'The fox frightened a coop {n} times', away_fox1:'The fox frightened a coop', away_out:'{n} runaways are still out: tap them to bring them back', away_out1:'A runaway is still out: tap it to bring it back',
 },
 fr: {
   tab_farm:'Ferme', tab_market:'Marché', tab_hatch:'Couvoir', tab_shows:'Concours', tab_awards:'Trophées',
@@ -432,6 +526,56 @@ fr: {
   chick_colours:'Couleurs probables des poussins', odds_note:'Chaque poule avec le coq reproducteur. Les gènes cachés peuvent encore surprendre.',
   m_first_sale:'Vendre votre première volaille', m_coops10:'Avoir 10 poulaillers', m_coops25:'Avoir 25 poulaillers', m_allsil:'Trouver les 11 couleurs de poule soie', trophy_xp:'+{n} XP',
   feed_short:'Nourrir', in_coop_n:'Dans : {coop}', cap_n:'{n} volailles', show_me:'Voir', new_chick:'nouveau',
+  personality:'Caractère', filter_pers:'Filtrer par caractère', all_pers:'Tous les caractères',
+  pers_mum:'Mère poule', pers_rebel:'Rebelle', pers_diva:'Diva', pers_glutton:'Gourmande', pers_glutton_r:'Gourmand', pers_brave:'Courageuse', pers_brave_r:'Courageux',
+  pers_mum_d:'Plus d’œufs fécondés, des poussins meilleurs qui grandissent plus vite. Pond moins pendant qu’elle élève ses petits. Vaut 10 % de plus.',
+  pers_rebel_d:'Fait le mur environ une fois par jour et revient parfois avec une surprise. Pas d’œufs pendant l’escapade. Après un câlin, pas de fugue pendant 6 h.',
+  pers_diva_d:'Brille en concours (+8 %). Avec les granulés de ponte, boude et pond 15 % moins vite, sauf après un câlin.',
+  pers_glutton_d:'Mange moitié plus, grossit une fois adulte et vaut 15 % de plus.',
+  pers_brave_d:'Chasse le renard la nuit et ramène les fugueurs. Grognon avec les nouveaux venus : le poulailler pond moins vite pendant 6 h, ou jusqu’à ce qu’on lui fasse un câlin. Vaut 5 % de plus.',
+  reveal_mum:'Ce poussin a tout d’une future mère poule.', reveal_rebel:'Ce poussin a l’air… aventureux !', reveal_diva:'Ce poussin prend déjà la pose.', reveal_glutton:'Ce poussin lorgne déjà la mangeoire.', reveal_brave:'Ce poussin n’a peur de rien.',
+  escaped:'{name} a fait le mur ! Touchez le fugueur pour envoyer {farmer}.', escaped_night:'{name} a fait le mur en pleine nuit ! Touchez dans l’heure, avant le renard.', escaped_tag:'En fuite !', rebel_say:'Liberté !',
+  farmer_day:'{farmer} court après {name} : « Reviens ici, {name} ! »', farmer_dusk:'{farmer} se dépêche de rattraper {name} avant la nuit.', farmer_night:'{farmer} sort avec une lampe : « {name} ! Il y a un renard ! »',
+  farmer_title:'Choisissez votre personnage', farmer_note:'Votre personnage s’occupe des poules : remplit les mangeoires, fait des câlins, rattrape les fugueurs et surveille le renard.', farmer_him:'Lui', farmer_her:'Elle', farmer_name:'Prénom',
+  farmer_done:'C’est parti', farmer_default_m:'Arthur', farmer_default_f:'Rose', farmer_hello:'Bonjour, {farmer} ! Les poules vous attendent.', your_farmer:'Votre personnage', change:'Changer',
+  decor_title:'Décorez votre ferme', decor_note:'Les décorations embellissent votre ferme et chacune vous rapporte de l’XP à l’achat. Touchez-en une sur la ferme pour savoir ce que c’est.',
+  decor_jump:'Décorations pour votre ferme', on_farm:'Sur votre ferme', decor_bought:'Nouveau sur votre ferme : {name}. +{n} XP', unlock_decor:'Nouvelle décoration : {name}', unlock_outfit:'Nouvelle tenue pour votre personnage : {name}',
+  dc_flowers:'Massif de fleurs', dc_flowers_d:'Tulipes, marguerites et delphiniums dans un massif bordé de pierres, près de la ferme.',
+  dc_birdbath:'Bain d’oiseaux', dc_birdbath_d:'Un bain d’oiseaux en pierre près de la ferme. Une mésange l’a déjà trouvé.',
+  dc_beehives:'Ruches', dc_beehives_d:'Trois ruches blanches près du champ de blé, avec de la lavande pour les abeilles.',
+  dc_duckhouse:'Maison des canards', dc_duckhouse_d:'Une petite maison sur un radeau, au milieu de la mare.',
+  dc_greenhouse:'Serre', dc_greenhouse_d:'Une serre à l’ancienne pleine de tomates.',
+  dc_windmill:'Moulin à vent', dc_windmill_d:'Un moulin blanc près du champ de blé. Ses ailes tournent au vent.',
+  dc_bandstand:'Kiosque à musique', dc_bandstand_d:'Un kiosque à l’ancienne sur la place, pour les concerts d’été.',
+  dc_statue:'Coq d’or', dc_statue_d:'Un coq doré sur un socle de pierre, près de la mare : la marque d’une ferme championne.',
+  outfits:'Tenues', outfits_note:'De nouveaux habits pour {farmer}. Chaque tenue vous rapporte de l’XP à l’achat.', wear:'Porter', wearing:'Portée',
+  outfit_bought:'{farmer} enfile la tenue {name}. +{n} XP',
+  of_classic:'Classique', of_classic_d:'Chapeau de paille et chemise à carreaux.', of_market:'Jour de marché', of_market_d:'Casquette en tweed et chemise à carreaux bleus.',
+  of_garden:'Garden-party', of_garden_d:'Chapeau fleuri et chemise vichy jaune.', of_winter:'Lainages d’hiver', of_winter_d:'Bonnet à pompon et pull vert.',
+  of_rodeo:'Rodéo', of_rodeo_d:'Chapeau de cow-boy, chemise en chambray et foulard.', of_show:'Jour de concours', of_show_d:'Haut-de-forme, chemise blanche et cocarde de champion.',
+  m_decor:'Installer toutes les décorations sur votre ferme',
+  trust:'Confiance', trust_lv0:'Farouche', trust_lv1:'Sociable', trust_lv2:'En confiance', trust_lv3:'Inséparable',
+  trust_next:'Encore {n} câlins pour : {lv}', trust_next1:'Encore 1 câlin pour : {lv}', trust_max:'Inséparable de {farmer}',
+  trust_value:'Apprivoisement : +{n} % de valeur.', trust_rebel:'Fugue moins souvent et rapporte plus de trouvailles.', trust_mum:'Ses poussins naissent sociables.', trust_greet:'Vient à la clôture saluer {farmer}.',
+  trust_up1:'{name} s’habitue à {farmer}.', trust_up2:'{name} fait confiance à {farmer} et viendra à la clôture dire bonjour.', trust_up3:'{name} et {farmer} sont inséparables ! +{n} XP',
+  will_miss:'{name} va manquer à {farmer}.', m_friend:'Devenir inséparable d’une de vos volailles',
+  cuddle:'Faire un câlin', happy_for:'Heureuse après un câlin : encore {t}', happy_for_r:'Heureux après un câlin : encore {t}',
+  cuddle_go:'{farmer} fait un câlin à {name}.', cuddle_diva:'{farmer} fait un câlin à {name} : fini de bouder pour 6 h.',
+  cuddle_rebel:'{farmer} fait un câlin à {name} : pas de fugue pendant 6 h.',
+  cuddle_fox:'{farmer} fait un câlin à {name}, et le calme revient ({coop}) : la ponte reprend. +{n} XP',
+  cuddle_brave:'{farmer} fait un câlin à {name} : le nouveau venu est adopté, la ponte redevient normale. +{n} XP',
+  fright_hint:'Un câlin les calmera.', settle_hint:'Un câlin à {name} arrangera les choses.',
+  farmer_say_hi:'Coucou, les filles !', farmer_say_day:'Allez, on rentre !', farmer_say_dusk:'Vite, avant la nuit !', farmer_say_night:'Je te tiens ! Ouf…', farmer_say_feed:'À table !', farmer_say_cuddle:'Là, là…',
+  back_alone:'{name} est de retour au poulailler.', walked_home:'{brave} a ramené {name} au poulailler avant le matin.',
+  hid_night:'{name} n’est pas rentré au poulailler et passe la nuit dehors.', tree_morning:'{name} a passé la nuit dans le pommier ! De retour, mais trop secouée pour pondre avant midi.', tree_morning_r:'{name} a passé la nuit dans le pommier ! De retour, un peu secoué.',
+  find_coins:'{name} revient avec {n} pièces !', find_clover:'{name} a trouvé un trèfle à quatre feuilles : +10 % au prochain concours.', find_egg:'{name} revient avec un œuf mystère ({breed}). Il est au couvoir.', find_egg_sold:'{name} revient avec un œuf mystère. Le panier était plein : il a été vendu {n} pièces.',
+  protest_feed:'PLUS DE GRAINS !', protest_nest:'RAMASSEZ-NOUS !', protest_sub:'{name} manifeste', protest_thanks:'{name} vous dit merci ! +5 XP',
+  fox_brave:'Un renard est venu cette nuit ({coop}). {name} l’a chassé ! +10 XP', fox_fright:'Un renard a effrayé les poules cette nuit ({coop}) : pas d’œufs pendant 4 h.', fox_took:' Il a pris {n} œufs.', fox_took1:' Il a pris 1 œuf.',
+  out_now:'Hors du poulailler : retour tout seul dans {t}', out_night:'Dehors dans le noir : à ramener dans {t}, sinon il reste dehors toute la nuit', bring_back:'Envoyer {farmer}', hiding:'Dehors pour la nuit : retour à 7 h', shaken:'Trop secouée pour pondre avant midi',
+  clover_note:'🍀 Trèfle à quatre feuilles : +10 % au prochain concours', sulking:'Boude avec les granulés de ponte : pond 15 % moins vite. Le mélange premium, la ration de concours ou un câlin la remettent de bonne humeur.', raising:'Élève ses poussins : pond 30 % moins vite pour l’instant.',
+  settling:'Un courageux s’habitue à un nouveau venu : ponte 20 % plus lente encore {t}', frightened:'Effrayé par le renard : pas d’œufs pendant encore {t}',
+  away_escape:'{n} escapades', away_escape1:'Une escapade', away_finds:'{n} surprises rapportées', away_finds1:'Une surprise rapportée', away_tree:'{n} fugueurs ont dormi dans le pommier', away_tree1:'Un fugueur a dormi dans le pommier',
+  away_foxBrave:'Le renard a été chassé {n} fois', away_foxBrave1:'Le renard a été chassé', away_fox:'Le renard a effrayé un poulailler {n} fois', away_fox1:'Le renard a effrayé un poulailler', away_out:'{n} fugueurs sont encore dehors : touchez-les pour les ramener', away_out1:'Un fugueur est encore dehors : touchez-le pour le ramener',
 }};
 
 /* =====================================================================
@@ -521,14 +665,17 @@ function colourOdds(a, b) {
 }
 function inheritGeno(a, b) { const g = {}; for (const k in GENES) g[k] = [a[k][Math.random() < .5 ? 0 : 1], b[k][Math.random() < .5 ? 0 : 1]]; return g; }
 // traits as the bird looks today: good feed while growing adds to size and plumage (not passed on to chicks)
-function eff(b) { const x = b.traits, k = Math.floor(b.boost || 0); return k ? { ...x, size: Math.min(100, x.size + k), plum: Math.min(100, x.plum + k) } : x; }
+function eff(b) {
+  const x = b.traits, k = Math.floor(b.boost || 0), g = b.pers === 'glutton' && state && state.gt - b.born >= T.adult ? PR.gluttonSize : 0;     // a glutton grows bigger
+  return (k || g) ? { ...x, size: Math.min(100, x.size + k + g), plum: Math.min(100, x.plum + k) } : x;
+}
 function quality(b) { const x = eff(b); return Math.round(.3 * x.type + .3 * x.plum + .2 * x.size + .2 * x.lay); }
 function showScoreBase(b) { const x = eff(b); return .4 * x.type + .35 * x.plum + .25 * x.size; }
 function grade(q) { return q >= 95 ? '★' : q >= 88 ? 'A+' : q >= 75 ? 'A' : q >= 60 ? 'B' : q >= 45 ? 'C' : 'D'; }
 function stage(b) {
   if (b.home === 'pasture') return 'retired';
   const a = state.gt - b.born;
-  return a < T.young ? 'chick' : a < T.adult ? 'young' : a < T.older ? 'adult' : 'older';
+  return a < youngAt(b) ? 'chick' : a < T.adult ? 'young' : a < T.older ? 'adult' : 'older';
 }
 function stageLabel(b) { const s = stage(b); return s === 'chick' ? t('st_chick') : t('st_' + s + '_' + b.sex); }
 const isGrown = b => stage(b) !== 'chick';
@@ -545,7 +692,7 @@ function value(b, peak) {            // peak: what the bird was worth in its pri
   const sx = b.sex === 'h' ? 1 : .85;
   const ch = 1 + .5 * Math.min(b.champ, 4);
   const line = 1 + .1 * Math.min(b.line || 0, 4);
-  return Math.max(1, Math.round(breedBase(b) * qMult(quality(b)) * st * sx * ch * line));
+  return Math.max(1, Math.round(breedBase(b) * qMult(quality(b)) * st * sx * ch * line * (PERS_VALUE[b.pers] || 1) * (1 + PR.trustValue * trustLvl(b))));
 }
 const sellPrice = b => Math.max(1, Math.round(value(b) * .8));
 // Adoption: retired birds wait in the pasture; now and then someone offers to adopt one. Offers are random (mostly modest,
@@ -572,11 +719,16 @@ function layInterval(b) {
   const age = state.gt - b.born;
   return BREEDS[b.breed].lay * MIN * (1.3 - .6 * b.traits.lay / 100) * (age >= T.older ? 2 : 1) * (.8 + .4 * Math.random());
 }
+function rollPers(sex, rnd = Math.random) { const ids = sex === 'r' ? PERS_IDS.filter(k => k !== 'mum') : PERS_IDS; return ids[Math.floor(rnd() * ids.length)]; }
+const okPers = (p, sex) => (PERS[p] && !(p === 'mum' && sex === 'r')) ? p : null;      // only hens can be good mums
+const youngAt = b => T.young * (b.fast ? PR.mumGrow : 1);                               // a good mum's chicks grow up faster
+const persName = (p, sex) => (sex === 'r' && I18N[lang()]['pers_' + p + '_r']) ? t('pers_' + p + '_r') : t('pers_' + p);
 function makeBird(o) {
   const b = {
     id: state.nextId++, name: o.name || randomName(o.sex), breed: o.breed, sex: o.sex, born: o.born, home: o.home,
     traits: o.traits, gen: o.gen || 1, sire: o.sire || null, dam: o.dam || null, line: o.line || 0,
     ribbons: [], champ: 0, seed: (Math.random() * 2 ** 31) | 0, nextLay: 0, entered: null, boost: 0,
+    pers: okPers(o.pers, o.sex) || rollPers(o.sex), fast: !!o.fast, out: 0, hide: 0, noLay: 0, nextOut: 0, clover: false, happy: 0, trust: clamp(Math.round(o.trust || 0), 0, PR.trustAt[2]),
   };
   if (o.breed === 'sil') { b.geno = o.geno; b.colour = silkieColour(o.geno); }
   return b;
@@ -585,12 +737,16 @@ function shopTraits() { const x = {}; for (const k of TRAITS) x[k] = clamp(Math.
 function childSpec(sire, dam, nour = 0) {
   const traits = {};
   for (const k of TRAITS) {
-    let v = (sire.traits[k] + dam.traits[k]) / 2 + gauss() * 6 + nour;
+    let v = (sire.traits[k] + dam.traits[k]) / 2 + gauss() * 6 + nour + (dam.pers === 'mum' ? PR.mumTraits : 0);
     if (Math.random() < MUTATION) v += 8 + Math.random() * 8;
     traits[k] = clamp(Math.round(v), 1, 100);
   }
   const spec = { breed: dam.breed, sex: Math.random() < HEN_ODDS ? 'h' : 'r', traits, gen: Math.max(sire.gen, dam.gen) + 1, line: Math.min(4, sire.champ + dam.champ + Math.floor(((sire.line || 0) + (dam.line || 0)) / 2)) };
   if (dam.breed === 'sil') { spec.geno = inheritGeno(sire.geno, dam.geno); spec.colour = silkieColour(spec.geno); }
+  const r = Math.random();                    // personality: half the time the mother's, sometimes the father's, else a surprise
+  spec.pers = okPers(r < .5 ? dam.pers : r < .7 ? sire.pers : null, spec.sex) || rollPers(spec.sex);
+  if (dam.pers === 'mum') spec.fast = true;
+  if (dam.pers === 'mum' && trustLvl(dam) >= 2) spec.trust = PR.trustAt[0];      // a trusting good mum's chicks hatch Friendly
   return spec;
 }
 
@@ -603,14 +759,16 @@ function newGame(langCode) {
     plots: 2, coops: [], birds: [], basket: { plain: {}, fertile: [] }, basketCap: 60,
     inc: { slots: 2, items: [] }, shop: { offers: [], next: 0 }, shows: { list: [], next: 25 * MIN, history: [] },
     stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
-    flags: { welcome: false, edited: false, grades: false },
+    flags: { welcome: false, edited: false, grades: false }, farmer: { look: null, name: '', outfit: 'classic', outfits: ['classic'] }, decor: [],
     xp: 0, level: 1, trophies: [], seen: ['rir'], feed: { basic: 80, premium: 0, show: 0 },
+    epoch: Date.now(), fox: { next: DAY * (1 + Math.random()) },
   };
   for (const id of BREED_IDS) state.basket.plain[id] = 0;
   const coop = newCoop('rir', 0);
   state.coops.push(coop);
+  const firstPers = ['rebel', ...PERS_IDS.filter(k => k !== 'rebel').sort(() => Math.random() - .5)];     // three different hens, one of them a rebel
   for (let i = 0; i < 4; i++) {
-    const b = makeBird({ breed: 'rir', sex: i < 3 ? 'h' : 'r', traits: shopTraits(), born: -(T.young + DAY * (.5 + Math.random())), home: coop.id });
+    const b = makeBird({ breed: 'rir', sex: i < 3 ? 'h' : 'r', traits: shopTraits(), born: -(T.young + DAY * (.5 + Math.random())), home: coop.id, pers: i < 3 ? firstPers[i] : null });
     b.nextLay = 30e3 + Math.random() * 4 * MIN;
     state.birds.push(b);
   }
@@ -704,11 +862,14 @@ function okGeno(g, colour) {
   for (const k in GENES) { const a = Array.isArray(g[k]) ? g[k] : []; o[k] = [0, 1].map(i => GENES[k].includes(a[i]) ? a[i] : GENES[k][GENES[k].length > 2 ? 0 : 1]); }
   return o;
 }
-function okParent(p) { return p && typeof p === 'object' ? { name: cleanName(p.name, '?'), q: int(p.q, 1, 100, 40) } : null; }
+function okParent(p) { if (!p || typeof p !== 'object') return null; const o = { name: cleanName(p.name, '?'), q: int(p.q, 1, 100, 40) }; if (Number.isInteger(p.id)) o.id = int(p.id, 1, 1e9, 1); return o; }
 function okSpec(s) {
   const breed = okBreed(s && s.breed); if (!breed) return null;
   const o = { breed, sex: s.sex === 'r' ? 'r' : 'h', traits: okTraits(s.traits), gen: int(s.gen, 1, 999, 1), line: int(s.line, 0, 4, 0) };
   if (breed === 'sil') { o.geno = okGeno(s.geno, s.colour); o.colour = silkieColour(o.geno); }
+  if (okPers(s.pers, o.sex)) o.pers = s.pers;
+  if (s.fast === true) o.fast = true;
+  if (s.trust === PR.trustAt[0]) o.trust = PR.trustAt[0];
   return o;
 }
 function okEgg(e) { const child = okSpec(e && e.child); if (!child) return null; return { id: int(e.id, 0, 1e9, 0), child, sire: okParent(e.sire) || { name: '?', q: 40 }, dam: okParent(e.dam) || { name: '?', q: 40 }, laid: num(e.laid, -1e13, 1e13, 0) }; }
@@ -738,7 +899,8 @@ function sanitize(s) {
     for (const k of FEED_IDS) if (tot > FEEDER_CAP) { const cut = Math.min(feeder[k], tot - FEEDER_CAP); feeder[k] -= cut; tot -= cut; }
     o.coops.push({ id: int(c.id, 1, 1e9, o.nextId++), breed, plot, name: typeof c.name === 'string' ? cleanName(c.name, '') : '', ready: num(c.ready, 0, 1e13, 0), sire: Number.isInteger(c.sire) ? c.sire : null,
       nest: { plain: int(c.nest && c.nest.plain, 0, NEST_CAP, 0), fertile: (Array.isArray(c.nest && c.nest.fertile) ? c.nest.fertile : []).slice(0, NEST_CAP).map(okEgg).filter(Boolean) },
-      feeder, acc: num(c.acc, 0, 5, 0), last: FEEDS[c.last] ? c.last : 'basic', hungry: !!c.hungry });
+      feeder, acc: num(c.acc, 0, 5, 0), last: FEEDS[c.last] ? c.last : 'basic', hungry: !!c.hungry,
+      settle: num(c.settle, -1e13, o.gt + PR.settle, 0), fright: num(c.fright, -1e13, o.gt + PR.fright, 0), hungryAt: num(c.hungryAt, -1e13, o.gt, 0), fullAt: num(c.fullAt, -1e13, o.gt, 0) });
   }
   const coopIds = new Set(o.coops.map(c => c.id));
   for (const b of (Array.isArray(s.birds) ? s.birds : []).slice(0, MAX_BIRDS)) {
@@ -749,6 +911,11 @@ function sanitize(s) {
       ribbons: (Array.isArray(b.ribbons) ? b.ribbons : []).slice(0, 60).map(r => ({ tier: TIERS[r && r.tier] ? r.tier : 'village', place: int(r && r.place, 1, 3, 3) })),
       champ: int(b.champ, 0, 99, 0), seed: int(b.seed, 0, 2 ** 31, 1), nextLay: num(b.nextLay, -1e13, 1e13, 0), entered: Number.isInteger(b.entered) ? b.entered : null, boost: num(b.boost, 0, 8, 0) };
     if (breed === 'sil') { x.geno = okGeno(b.geno, b.colour); x.colour = silkieColour(x.geno); }
+    // personality (older saves get one that stays the same every time they load), and a rebel's escapes, all clamped
+    x.pers = okPers(b.pers, x.sex) || rollPers(x.sex, rngFrom(x.seed + 7)); x.fast = b.fast === true; x.clover = b.clover === true;
+    x.nextOut = num(b.nextOut, -1e13, o.gt + PR.outEvery[1] * PR.trustOut[3], 0); x.happy = num(b.happy, -1e13, o.gt + PR.happy, 0); x.trust = int(b.trust, 0, PR.trustAt[2], 0); x.noLay = num(b.noLay, -1e13, o.gt + DAY, 0);
+    const rebel = x.pers === 'rebel' && home !== 'pasture';
+    x.out = rebel ? num(b.out, 0, o.gt + PR.outFor[1], 0) : 0; x.outNight = rebel && !!x.out && b.outNight === true; x.hide = rebel && !x.out ? num(b.hide, 0, o.gt + DAY, 0) : 0;
     if (home === 'pasture') {                 // adoption state: an offer can never be worth more than the bird in its prime
       x.retiredAt = num(b.retiredAt, -1e13, 1e13, x.born + T.retire); x.nextOffer = num(b.nextOffer, -1e13, 1e13, 0); x.offer = null;
       const of = b.offer;
@@ -766,13 +933,28 @@ function sanitize(s) {
   const earnedXp = st0.eggs + XP.hatch * st0.hatched + XP.sell * st0.sold + 40 * st0.wins[0] + 25 * st0.wins[1] + 15 * st0.wins[2];
   o.xp = typeof s.xp === 'number' ? int(s.xp, 0, 1e9, 0) : earnedXp;
   o.level = levelOf(o.xp);
-  const TROPHY_IDS = ['m_first_sale', 'm_hatch10', 'm_coops', 'm_coops10', 'm_coops25', 'm_rare', 'm_allsil', 'm_aplus', 'm_perfect', 'm_village', 'm_county', 'm_national'];
+  const TROPHY_IDS = ['m_first_sale', 'm_hatch10', 'm_coops', 'm_coops10', 'm_coops25', 'm_rare', 'm_allsil', 'm_aplus', 'm_perfect', 'm_village', 'm_county', 'm_national', 'm_friend', 'm_decor'];
   o.trophies = (Array.isArray(s.trophies) ? s.trophies : []).filter(x => TROPHY_IDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
   const KINDS = [...BREED_IDS.filter(k => k !== 'sil'), ...Object.keys(SIL).map(c => 'sil_' + c)];
   o.seen = (Array.isArray(s.seen) ? s.seen : []).filter(x => KINDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
   for (const b of o.birds) { const k = b.breed === 'sil' ? 'sil_' + b.colour : b.breed; if (!o.seen.includes(k)) o.seen.push(k); }
   const fs = s.feed && typeof s.feed === 'object' ? s.feed : null;
   for (const k of FEED_IDS) o.feed[k] = fs ? int(fs[k], 0, 1e6, 0) : (k === 'basic' ? 80 : 0);
+  // market offers survive a reload (checked like everything else)
+  o.shop.offers = (Array.isArray(s.shop && s.shop.offers) ? s.shop.offers : []).slice(0, 6).map(x => {
+    const sp = okSpec(x); if (!sp) return null;
+    const of = { breed: sp.breed, sex: sp.sex, traits: sp.traits, born: num(x.born, -1e13, o.gt, o.gt - T.young), name: cleanName(x.name, 'Hen'), seed: int(x.seed, 0, 2 ** 31, 1), pers: sp.pers || rollPers(sp.sex) };
+    if (sp.breed === 'sil') { of.geno = sp.geno; of.colour = sp.colour; }
+    return of;
+  }).filter(Boolean);
+  const fm = s.farmer && typeof s.farmer === 'object' ? s.farmer : {};
+  o.farmer = { look: fm.look === 'm' || fm.look === 'f' ? fm.look : null, name: typeof fm.name === 'string' ? cleanName(fm.name, '') : '' };
+  // things bought: only known items, each once; the outfit worn must be one that was bought
+  o.farmer.outfits = ['classic', ...(Array.isArray(fm.outfits) ? fm.outfits : []).filter(x => OUTFITS[x] && x !== 'classic')].filter((x, i, a) => a.indexOf(x) === i);
+  o.farmer.outfit = o.farmer.outfits.includes(fm.outfit) ? fm.outfit : 'classic';
+  o.decor = (Array.isArray(s.decor) ? s.decor : []).filter(x => DECOR[x]).filter((x, i, a) => a.indexOf(x) === i);
+  o.epoch = num(s.epoch, -1e15, 1e15, o.lastReal - o.gt);
+  o.fox = { next: num(s.fox && s.fox.next, -1e13, o.gt + PR.foxEvery[1], o.gt + DAY * (1 + Math.random())) };
   const ids = [o.nextId, ...o.birds.map(b => b.id + 1), ...o.coops.map(c => c.id + 1), ...o.shows.list.map(x => x.id + 1)];
   o.nextId = Math.max(...ids);
   return o;
@@ -804,7 +986,7 @@ function advance(dt) {
 }
 function eat(coop, birds) {
   const kind = ['show', 'premium', 'basic'].find(k => coop.feeder[k] > 0);
-  if (!kind) { if (!coop.hungry) { coop.hungry = true; emit('hungry', t('hungry_toast', { coop: coopLabel(coop) })); } return; }
+  if (!kind) { if (!coop.hungry) { coop.hungry = true; coop.hungryAt = state.gt; emit('hungry', t('hungry_toast', { coop: coopLabel(coop) })); } return; }
   coop.feeder[kind]--; coop.last = kind; coop.hungry = false;
   const F = FEEDS[kind], b = pick(birds);                       // whoever gets to the feeder first
   if (F.grow && b && (stage(b) === 'chick' || stage(b) === 'young') && (b.boost || 0) < F.cap) b.boost = Math.min(F.cap, (b.boost || 0) + F.grow);
@@ -815,21 +997,24 @@ function simStep(step) {
   const groups = new Map();
   for (const b of state.birds) { let g = groups.get(b.home); if (!g) groups.set(b.home, g = []); g.push(b); }
   for (const c of state.coops) {
+    if (nestCount(c) >= NEST_CAP) { if (!c.fullAt) c.fullAt = gt; } else c.fullAt = 0;
     const birds = groups.get(c.id); if (!birds) continue;
-    c.acc += birds.reduce((n, b) => n + (stage(b) === 'chick' ? .5 : 1), 0) * step / EAT_EVERY;
+    c.acc += birds.reduce((n, b) => n + (stage(b) === 'chick' ? .5 : 1) * (b.pers === 'glutton' ? PR.gluttonEat : 1), 0) * step / EAT_EVERY;
     while (c.acc >= 1) { c.acc -= 1; eat(c, birds); }
   }
   for (const b of state.birds) {
     if (b.home === 'pasture') continue;
     const age = gt - b.born;
     if (age >= T.retire) { retire(b); emit('retired', t('retired_toast', { name: b.name })); continue; }
-    if (b.sex === 'h' && age >= T.young) {
+    if (b.pers === 'rebel') rebelStep(b, gt);
+    if (b.sex === 'h' && age >= youngAt(b)) {
       const coop = coopById(b.home);
-      if (!b.nextLay || b.nextLay < b.born + T.young) b.nextLay = gt + layInterval(b) * Math.random();
+      if (!b.nextLay || b.nextLay < b.born + youngAt(b)) b.nextLay = gt + layInterval(b) * Math.random();
       if (gt >= b.nextLay) {
         const fed = coop && feederTotal(coop) > 0;
-        if (fed && nestCount(coop) < NEST_CAP) { layEgg(b, coop); emit('eggs'); }
-        b.nextLay = gt + layInterval(b) * (fed ? FEEDS[coop.last].lay : .5);
+        const off = b.out || b.hide || gt < (b.noLay || 0) || gt < (coop && coop.fright || 0);      // out of the coop, shaken, or frightened by the fox
+        if (fed && !off && nestCount(coop) < NEST_CAP) { layEgg(b, coop); emit('eggs'); }
+        b.nextLay = gt + layInterval(b) * (fed ? FEEDS[coop.last].lay * layMult(b, coop, gt) : .5);
       }
     }
   }
@@ -838,6 +1023,7 @@ function simStep(step) {
     if (b.offer && gt >= b.offer.until) { b.offer = null; b.nextOffer = gt + adoptRnd(ADOPT.gap); dirty = true; }
     else if (!b.offer && gt >= (b.nextOffer || 0)) { b.offer = makeOffer(b); dirty = true; emit('offer', t('offer_toast', { name: b.name, n: fmtN(b.offer.p) }), b.offer.g >= 2, () => openSheet('pasture')); }
   }
+  if (state.fox && gt >= state.fox.next) foxVisit(gt);
   for (const it of state.inc.items) {
     if (gt >= it.start + T.incubate && !it.waiting) tryHatch(it);
     else if (it.waiting && coopWithSpace(it.egg.child.breed)) tryHatch(it);
@@ -851,14 +1037,128 @@ function simStep(step) {
 function layEgg(hen, coop) {
   state.stats.eggs++;
   const roos = adultRoosters(coop);
-  if (roos.length && Math.random() < FERTILITY) {
+  if (roos.length && Math.random() < (hen.pers === 'mum' ? PR.mumFert : FERTILITY)) {
     const sire = roos.find(r => r.id === coop.sire) || pick(roos);
-    coop.nest.fertile.push({ id: state.nextId++, child: childSpec(sire, hen, FEEDS[coop.last].egg), sire: { name: sire.name, q: quality(sire) }, dam: { name: hen.name, q: quality(hen) }, laid: state.gt });
+    coop.nest.fertile.push({ id: state.nextId++, child: childSpec(sire, hen, FEEDS[coop.last].egg), sire: { name: sire.name, q: quality(sire) }, dam: { name: hen.name, q: quality(hen), id: hen.id }, laid: state.gt });
   } else coop.nest.plain++;
   dirty = true;
   if (!sink) goLay(hen, coop);
 }
+/* ---------- personalities: laying, rebels, the fox ---------- */
+function layMult(b, coop, gt) {
+  let m = 1;
+  if (b.pers === 'diva' && coop.last === 'basic' && !(gt < (b.happy || 0))) m *= PR.divaLay;     // sulks on plain pellets, unless cuddled
+  if (b.pers === 'mum' && raising(b)) m *= PR.mumLay;                          // busy with her young chicks
+  if (coop.settle && gt < coop.settle) m *= PR.settleLay;                      // a brave bird is getting used to a newcomer
+  return m;
+}
+function raising(hen) { return state.birds.some(c => c.home === hen.home && c.dam && (c.dam.id ? c.dam.id === hen.id : c.dam.name === hen.name) && state.gt - c.born < T.young); }
+// the player's own clock: day 7:00-18:00, dusk 18:00-21:00, night 21:00-7:00
+function clockAt(gt) { return new Date(state.epoch + gt); }
+function dayPart(gt) { const h = clockAt(gt).getHours(); return h >= 21 || h < 7 ? 'night' : h >= 18 ? 'dusk' : 'day'; }
+function nextClock(gt, hour) { const d = clockAt(gt), n = new Date(d); n.setHours(hour, 0, 0, 0); if (n <= d) n.setDate(n.getDate() + 1); return n.getTime() - state.epoch; }
+const braveIn = (coop, not) => coop ? birdsIn(coop).find(x => x !== not && x.pers === 'brave' && isGrown(x) && !x.out && !x.hide) || null : null;
+function settleIn(coop, newcomer) { if (coop && braveIn(coop, newcomer)) coop.settle = state.gt + PR.settle; }
+function rebelStep(b, gt) {
+  if (b.hide) {                                // spent the night out: back at 7:00, too shaken to lay until noon
+    if (gt >= b.hide) {
+      b.hide = 0; b.noLay = b.sex === 'h' ? nextClock(gt, 12) : 0; b.nextOut = gt + outGap(b); resetAgent(b); dirty = true;
+      emit('tree', t(b.sex === 'r' ? 'tree_morning_r' : 'tree_morning', { name: b.name }), false, () => focusBird(b.id));
+    }
+    return;
+  }
+  if (b.out) {
+    if (gt < b.out) return;
+    if (b.outNight) {                          // not caught within the hour
+      const guard = braveIn(coopById(b.home), b);
+      if (guard) { rebelHome(b, t('walked_home', { brave: guard.name, name: b.name })); return; }
+      b.out = 0; b.outNight = false; b.hide = nextClock(gt, 7); resetAgent(b); dirty = true;
+      emit('hide', t('hid_night', { name: b.name }));
+      return;
+    }
+    rebelHome(b, t('back_alone', { name: b.name }));
+    return;
+  }
+  if (stage(b) === 'chick') return;
+  if (!b.nextOut) { b.nextOut = gt + adoptRnd(PR.firstOut); return; }
+  if (gt < b.nextOut) return;
+  const night = dayPart(gt) === 'night';
+  b.outNight = night; b.out = gt + (night ? PR.nightCatch : adoptRnd(PR.outFor)); resetAgent(b); dirty = true;
+  emit('escape', t(night ? 'escaped_night' : 'escaped', { name: b.name, farmer: farmerName() }), night, () => focusBird(b.id));
+}
+function rebelHome(b, line) {
+  b.out = 0; b.outNight = false; b.nextOut = state.gt + outGap(b); resetAgent(b); dirty = true;
+  if (line && !sink) toast(line);
+  if (Math.random() < PR.trustFind[trustLvl(b)]) rebelFind(b);
+}
+function rebelFind(b) {                        // something brought back from the escape
+  const r = Math.random();
+  if (r < .6) { const n = Math.round(BREEDS[b.breed].egg * (3 + Math.random() * 5)); addCoins(n); emit('finds', t('find_coins', { name: b.name, n: fmtN(n) }), true); }
+  else if (r < .85) { b.clover = true; emit('finds', t('find_clover', { name: b.name }), true); }
+  else {
+    const breed = pick(BREED_IDS.filter(unlocked)), sex = Math.random() < HEN_ODDS ? 'h' : 'r';
+    const child = { breed, sex, traits: shopTraits(), gen: 1, line: 0, pers: rollPers(sex) };
+    if (breed === 'sil') { child.geno = silTemplate(wpick(SIL)); child.colour = silkieColour(child.geno); }
+    const e = { id: state.nextId++, child, sire: { name: '?', q: 45 }, dam: { name: '?', q: 45 }, laid: state.gt };
+    if (state.basket.fertile.length < state.basketCap) { state.basket.fertile.push(e); emit('finds', t('find_egg', { name: b.name, breed: t('br_' + breed) }), true, () => openSheet('hatch')); }
+    else { const p = fertileEggPrice(e); addCoins(p); emit('finds', t('find_egg_sold', { name: b.name, n: fmtN(p) }), true); }
+  }
+  dirty = true;
+}
+function foxVisit(gt) {
+  if (dayPart(gt) !== 'night') { state.fox.next = gt + 30 * MIN; return; }
+  state.fox.next = gt + adoptRnd(PR.foxEvery);
+  const coops = state.coops.filter(c => isBuilt(c) && birdsIn(c).some(isGrown)); if (!coops.length) return;
+  const c = pick(coops), guard = braveIn(c);
+  if (guard) { gainXP(PR.foxXp); emit('foxBrave', t('fox_brave', { coop: coopLabel(c), name: guard.name }), true, () => scrollToPlot(c.plot)); }
+  else {
+    c.fright = gt + PR.fright; let took = 0;
+    for (let i = 0; i < PR.foxTakes && nestCount(c); i++) { if (c.nest.plain) c.nest.plain--; else c.nest.fertile.pop(); took++; }
+    emit('fox', t('fox_fright', { coop: coopLabel(c) }) + (took ? t('fox_took', { n: took }) : ''), false, () => scrollToPlot(c.plot));
+  }
+  dirty = true;
+}
+// a rebel protests over her coop when it has been neglected for 2 hours; sorting it out earns a thank-you
+function protestOf(c) {
+  const reb = birdsIn(c).find(b => b.pers === 'rebel' && isGrown(b) && !b.out && !b.hide); if (!reb) return null;
+  if (c.hungry && c.hungryAt && state.gt - c.hungryAt >= PR.protestAfter) return { kind: 'feed', b: reb };
+  if (c.fullAt && state.gt - c.fullAt >= PR.protestAfter) return { kind: 'nest', b: reb };
+  return null;
+}
+function thank(c, before) { if (before && !protestOf(c)) { gainXP(PR.thanksXp); toast(t('protest_thanks', { name: before.b.name }), true); } }
+const farmerName = () => (state.farmer && state.farmer.name) || t('farmer_default_' + ((state.farmer && state.farmer.look) || 'f'));
+function actCatch(b) {                         // the farmer runs to the runaway; she goes home when the farmer gets there
+  if (!birdById(b.id) || !b.out || b.hide) return;
+  if (FARM.task && FARM.task.kind === 'catch' && FARM.task.id === b.id) return;      // already on the way
+  const part = dayPart(state.gt);
+  toast(t('farmer_' + part, { name: b.name, farmer: farmerName() }), part === 'night');
+  if (!farmerSendCatch(b)) { rebelHome(b, null); changed(); }
+}
+const cuddleOk = b => { const c = coopById(b.home); return !!c && isBuilt(c) && !b.out && !b.hide && !(state.gt < (b.happy || 0)); };
+function actCuddle(b) {                        // the farmer goes to the bird and strokes her; the effect is immediate, the visit is for show
+  if (!birdById(b.id) || !cuddleOk(b)) return false;
+  const c = coopById(b.home), gt = state.gt, grown = isGrown(b);
+  const sulking = b.pers === 'diva' && b.sex === 'h' && grown && c.last === 'basic';
+  b.happy = gt + PR.happy;
+  let xp = 0, key = b.pers === 'rebel' && stage(b) !== 'chick' ? 'cuddle_rebel' : sulking ? 'cuddle_diva' : 'cuddle_go';
+  if (b.pers === 'brave' && grown && c.settle > gt) { c.settle = gt; xp += PR.cuddleXp; key = 'cuddle_brave'; }
+  if (c.fright > gt) { c.fright = gt; xp += PR.cuddleXp; key = 'cuddle_fox'; }
+  if (b.pers === 'rebel') b.nextOut = Math.max(b.nextOut || 0, b.happy);      // a happy rebel stays put
+  const lv0 = trustLvl(b); b.trust = Math.min(PR.trustAt[2], (b.trust || 0) + 1); const lv = trustLvl(b);
+  if (lv === 3 && lv0 < 3) xp += PR.friendXp;
+  if (xp) gainXP(xp);
+  if (!sink) toast(t(key, { farmer: farmerName(), name: b.name, coop: coopLabel(c), n: xp - (lv > lv0 && lv === 3 ? PR.friendXp : 0) }), !!xp);
+  if (lv > lv0) emit('trust', t('trust_up' + lv, { farmer: farmerName(), name: b.name, n: PR.friendXp }), true, () => focusBird(b.id));
+  if (!sink && !farmerSendCuddle(b)) { const a = agents.get(b.id); if (a && a.sx != null) heartsAt(a.sx, a.sy - (stage(b) === 'chick' ? 22 : 40), 5); }
+  changed(true);
+  return true;
+}
+function finishCatch(id) {
+  const b = birdById(id);
+  if (b && b.out && !b.hide) { rebelHome(b, null); changed(); }
+}
 function retire(b) {
+  b.out = 0; b.hide = 0; b.outNight = false;
   b.home = 'pasture'; b.entered = null; b.offer = null; b.retiredAt = state.gt; b.nextOffer = state.gt + adoptRnd(ADOPT.first);
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
   resetAgent(b); dirty = true;
@@ -867,11 +1167,11 @@ function tryHatch(it) {
   const coop = coopWithSpace(it.egg.child.breed);
   if (!coop) { it.waiting = true; return; }
   const s = it.egg.child;
-  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, it.start + T.incubate), home: coop.id });
-  state.birds.push(b); it.done = true;
+  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, it.start + T.incubate), home: coop.id, pers: s.pers, fast: s.fast, trust: s.trust });
+  state.birds.push(b); it.done = true; settleIn(coop, b);
   state.stats.hatched++; state.stats.best = Math.max(state.stats.best, quality(b));
   if (b.breed === 'sil' && RARE_SIL.includes(b.colour)) state.stats.rare++;
-  emit('hatched', t('hatched', { breed: breedName(b), name: b.name }), true, () => focusBird(b.id)); if (!sink) SND.hatch(); dirty = true;
+  emit('hatched', t('hatched', { breed: breedName(b), name: b.name }) + ' ' + t('reveal_' + b.pers), true, () => focusBird(b.id)); if (!sink) SND.hatch(); dirty = true;
   gainXP(XP.hatch); see(b);
 }
 function refreshShop() {
@@ -881,7 +1181,7 @@ function refreshShop() {
   for (let i = 0; i < 6; i++) {
     const breed = (i < 3 && owned.length) ? pick(owned) : pick(open);
     const sex = Math.random() < .58 ? 'h' : 'r';
-    const o = { breed, sex, traits: shopTraits(), born: state.gt - T.young - Math.random() * 2 * DAY, name: randomName(sex), seed: (Math.random() * 2 ** 31) | 0 };
+    const o = { breed, sex, traits: shopTraits(), born: state.gt - T.young - Math.random() * 2 * DAY, name: randomName(sex), seed: (Math.random() * 2 ** 31) | 0, pers: rollPers(sex) };
     if (breed === 'sil') { const col = wpick(SIL); o.geno = silTemplate(col); o.colour = silkieColour(o.geno); }
     offers.push(o);
   }
@@ -913,7 +1213,7 @@ function judge(s) {
   if (!b || b.home === 'pasture') { if (b) b.entered = null; return; }
   b.entered = null;
   const T_ = TIERS[s.tier];
-  const mine = showScoreBase(b) + gauss() * 4;
+  const mine = showScoreBase(b) * (b.pers === 'diva' ? PR.divaShow : 1) * (b.clover ? PR.clover : 1) + gauss() * 4; b.clover = false;
   let place = 1; for (let i = 0; i < T_.n - 1; i++) if (T_.mean + gauss() * T_.sd > mine) place++;
   let prize = 0;
   if (place <= 3) {
@@ -951,6 +1251,8 @@ function unlocksAt(L) {
   for (const k in TIER_LVL) if (TIER_LVL[k] === L && L > 1) out.push(['show', k]);
   if (plotsAllowed(L) > plotsAllowed(L - 1)) out.push(['plots', plotsAllowed(L)]);
   if (incAllowed(L) > incAllowed(L - 1)) out.push(['inc', incAllowed(L)]);
+  for (const id of DECOR_IDS) if (DECOR[id].lvl === L) out.push(['decor', id]);
+  for (const id of OUTFIT_IDS) if (OUTFITS[id].lvl === L && L > 1) out.push(['outfit', id]);
   return out;
 }
 function unlockText([kind, v]) {
@@ -958,6 +1260,8 @@ function unlockText([kind, v]) {
   if (kind === 'feed') return t('unlock_feed', { feed: t('feed_' + v) });
   if (kind === 'show') return t('unlock_show', { show: t('t_' + v) });
   if (kind === 'plots') return t('unlock_plots', { n: v });
+  if (kind === 'decor') return t('unlock_decor', { name: t('dc_' + v) });
+  if (kind === 'outfit') return t('unlock_outfit', { name: t('of_' + v) });
   return t('unlock_inc', { n: v });
 }
 function see(b) {
@@ -980,6 +1284,8 @@ const TROPHIES = [
   ['m_village', 150, () => state.stats.w1.village > 0],
   ['m_county', 400, () => state.stats.w1.county > 0],
   ['m_national', 1000, () => state.stats.w1.national > 0],
+  ['m_friend', 150, () => state.birds.some(b => trustLvl(b) === 3)],
+  ['m_decor', 500, () => DECOR_IDS.every(id => state.decor.includes(id))],
 ];
 function checkTrophies() {
   for (const [id, xp, test] of TROPHIES) {
@@ -1003,7 +1309,7 @@ function actBuyOffer(i) {
   if (!coop) { const mine = state.coops.filter(c => c.breed === o.breed); toast(!mine.length ? t('need_coop', { coop: t('coop_' + o.breed) }) : mine.some(c => !isBuilt(c)) ? t('coop_building', { coop: t('coop_' + o.breed) }) : t('coop_full', { coop: t('coop_' + o.breed) })); return; }
   const price = offerPrice(o); if (!spend(price)) return;
   const b = makeBird({ ...o, home: coop.id }); b.seed = o.seed;
-  state.birds.push(b); state.shop.offers.splice(i, 1); see(b);
+  state.birds.push(b); state.shop.offers.splice(i, 1); see(b); settleIn(coop, b);
   toast(t('bought', { name: b.name, coop: t('coop_' + b.breed) })); changed();
 }
 function offerPrice(o) { const fake = { ...o, home: 0, champ: 0, line: 0 }; return value(fake); }
@@ -1015,7 +1321,7 @@ function actSell(b) {
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
   for (const s of state.shows.list) if (s.entry === b.id) s.entry = null;
   agents.delete(b.id);
-  toast(b.home === 'pasture' ? t('rehomed', { name: b.name }) : t('sold', { name: b.name, n: fmtN(p) }));
+  toast((b.home === 'pasture' ? t('rehomed', { name: b.name }) : t('sold', { name: b.name, n: fmtN(p) })) + (trustLvl(b) === 3 ? '. ' + t('will_miss', { name: b.name, farmer: farmerName() }) : ''));
   closeSheet(); changed();
 }
 function actAcceptOffer(b) {
@@ -1038,6 +1344,7 @@ function actRename(b, v) { b.name = cleanName(v, b.name); changed(true); }
 const eggQ = e => (e.sire.q + e.dam.q) / 2;
 function collectFrom(coops) {
   let total = 0, eatN = 0, eatC = 0, fertIn = 0, extraN = 0, extraC = 0;
+  const protests = coops.map(c => [c, protestOf(c)]).filter(([, p]) => p && p.kind === 'nest');
   for (const k of BREED_IDS) if (state.basket.plain[k]) { eatN += state.basket.plain[k]; eatC += state.basket.plain[k] * BREEDS[k].egg; state.basket.plain[k] = 0; }   // eggs kept from older versions
   for (const c of coops) {
     const nu = nestUse.get(c.id); if (nu) nu.hidden = 0;
@@ -1049,8 +1356,9 @@ function collectFrom(coops) {
       let sold = e; if (eggQ(e) > eggQ(state.basket.fertile[wi])) { sold = state.basket.fertile[wi]; state.basket.fertile[wi] = e; }
       extraN++; extraC += fertileEggPrice(sold);
     }
-    c.nest.fertile = [];
+    c.nest.fertile = []; c.fullAt = 0;
   }
+  for (const [c, p] of protests) thank(c, p);
   if (!total && !eatN) return 0;
   if (eatC + extraC) addCoins(eatC + extraC);
   if (total) { SND.eggs(total); gainXP(total * XP.egg); }
@@ -1093,6 +1401,26 @@ function actBuildCoop(breed) {
   closeSheet(); toast(t('build_started', { coop: coopLabel(c), t: fmtDur(realLeft(BUILD_TIME[breed])) })); changed(); scrollToPlot(plot);
 }
 function actBuyPlot() { if (state.plots >= plotsAllowed(state.level)) return false; if (!spend(plotPrice())) return false; state.plots++; gainXP(XP.land); toast(t('land_bought')); changed(); return true; }
+function actBuyDecor(id) {
+  const D = DECOR[id]; if (!D || state.decor.includes(id) || state.level < D.lvl) return false;
+  if (!spend(D.price)) return false;
+  state.decor.push(id); const xp = shopXp(D.price); gainXP(xp);
+  toast(t('decor_bought', { name: t('dc_' + id), n: xp }), true, () => lookAtDecor(id)); if (!sink) SND.sparkle();
+  changed(); return true;
+}
+function actBuyOutfit(id) {
+  const O = OUTFITS[id], F = state.farmer; if (!O || F.outfits.includes(id) || state.level < O.lvl) return false;
+  if (!spend(O.price)) return false;
+  F.outfits.push(id); F.outfit = id; const xp = shopXp(O.price); gainXP(xp);
+  toast(t('outfit_bought', { farmer: farmerName(), name: t('of_' + id), n: xp }), true); if (!sink) SND.sparkle();
+  changed(); return true;
+}
+function actWearOutfit(id) { const F = state.farmer; if (!F.outfits.includes(id)) return false; F.outfit = id; changed(); return true; }
+function lookAtDecor(id) {                      // centre the view on a decoration, tall ones included
+  const D = DECOR[id], p = DCS['dc_' + id]; if (!D) return; closeSheet();
+  view.s = id === 'windmill' ? Math.max(view.minS, Math.min(view.maxS, .7)) : clamp(view.s, Math.min(view.maxS, .9), Math.min(view.maxS, 1.1));
+  const up = p ? p.ay * p.k * .45 : 60; view.x = D.at[0] - view.vw / view.s / 2; view.y = D.at[1] - up - view.vh / view.s / 2; clampCam(); inertia = null;
+}
 function actIncSlot() { if (state.inc.slots >= incAllowed(state.level)) return; if (!spend(incPrice())) return; state.inc.slots++; changed(); }
 function actBuyFeed(kind, bags = 1) {
   const F = FEEDS[kind]; if (!F || F.lvl > state.level) return;
@@ -1102,13 +1430,16 @@ function actBuyFeed(kind, bags = 1) {
 function fillCoop(c, kind) {
   const room = FEEDER_CAP - feederTotal(c), n = Math.min(room, state.feed[kind]);
   if (n <= 0) return 0;
-  c.feeder[kind] += n; state.feed[kind] -= n; c.hungry = false; return n;
+  const before = protestOf(c);
+  c.feeder[kind] += n; state.feed[kind] -= n; c.hungry = false; c.hungryAt = 0;
+  if (before && before.kind === 'feed') thank(c, before);
+  return n;
 }
-function actFill(c, kind) { if (!state.feed[kind]) { toast(t('no_feed_store')); return; } if (fillCoop(c, kind)) { SND.feed(); changed(); } }
+function actFill(c, kind) { if (!state.feed[kind]) { toast(t('no_feed_store')); return; } if (fillCoop(c, kind)) { SND.feed(); farmerSendFeed(c); changed(); } }
 function quickFeed(c) {                 // tap on the feeder bubble: fill with the feed it last ate, else any feed in store
   const kind = [c.last, ...FEED_IDS].find(k => FEEDS[k] && state.feed[k] > 0);
   if (!kind) { toast(t('no_feed_store')); openSheet('market', { tab: 'feed' }); return; }
-  if (fillCoop(c, kind)) { SND.feed(); toast(t('filled_one', { coop: coopLabel(c), feed: t('feed_' + kind) })); changed(); }
+  if (fillCoop(c, kind)) { SND.feed(); toast(t('filled_one', { coop: coopLabel(c), feed: t('feed_' + kind) })); farmerSendFeed(c); changed(); }
 }
 function actFillAll(kind) {
   if (!state.feed[kind]) { toast(t('no_feed_store')); return; }
@@ -1118,7 +1449,7 @@ function actFillAll(kind) {
 function actMove(b, coop) {
   if (!birdById(b.id) || b.home === 'pasture' || coop.breed !== b.breed || coop.id === b.home || birdsIn(coop).length >= COOP_CAP) return;
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
-  b.home = coop.id; resetAgent(b);
+  b.home = coop.id; b.out = 0; b.outNight = false; resetAgent(b); settleIn(coop, b);
   toast(t('moved', { name: b.name, coop: coopLabel(coop) })); changed();
 }
 function actBasket() { if (state.basketCap >= 1000) return; if (!spend(basketPrice())) return; state.basketCap += 40; changed(); }
@@ -1186,6 +1517,7 @@ function toLocal(f, x, y) {
 }
 const YARD = { x0: -1.45, x1: 1.45, y0: -1.22, y1: -0.45 };      // trodden earth in front of each coop, in metres
 const PASTURE_YARD = { x0: -2.5, x1: 2.4, y0: -1.9, y1: 0.3 };
+const OUTSIDE = { x0: 0.75, x1: 2.0, y0: -2.85, y1: -2.0 };     // where a runaway potters about: on the grass outside her pen, beside the path
 
 /* =====================================================================
    9. SCENE: LAYOUT, BEHAVIOUR, DRAWING, TOUCH
@@ -1252,17 +1584,22 @@ const yardOf = p => p.kind === 'pasture' ? PASTURE_YARD : YARD;
 /* ---------- chickens: short stop-and-go walks, pecking bouts, chatting, dust baths ---------- */
 function resetAgent(b) { agents.delete(b.id); }
 function agentFor(b) {
+  if (b.hide) return null;                     // out for the night somewhere
   let a = agents.get(b.id); const p = plotOfBird(b); if (!p) return null;
-  const key = p.kind === 'pasture' ? 'pasture' : 'coop' + p.coop.id;
+  const out = !!b.out && p.kind === 'coop';
+  const key = (p.kind === 'pasture' ? 'pasture' : 'coop' + p.coop.id) + (out ? 'out' : '');
   if (a && a.key === key) { a.plot = p; return a; }
-  const y = yardOf(p), face = Math.random() < .5 ? 1 : -1;
-  a = { key, plot: p, x: lerp(y.x0, y.x1, Math.random()), y: lerp(y.y0, y.y1, Math.random()), tx: 0, ty: 0, st: 'idle', t: Math.random() * 2,
+  const y = out ? OUTSIDE : yardOf(p), face = Math.random() < .5 ? 1 : -1;
+  a = { key, reg: y, plot: p, x: lerp(y.x0, y.x1, Math.random()), y: lerp(y.y0, y.y1, Math.random()), tx: 0, ty: 0, st: 'idle', t: Math.random() * 2,
         face, fx: face, faceShown: face, turnT: null, dist: 0, go: 0, head: 0, headT: 0, pose: 'farm', prev: null, fade: 0, say: 0, sayText: '', sx: null, sy: null };
   agents.set(b.id, a);
   return a;
 }
 function decide(b, a, others) {
-  const y = yardOf(a.plot), st = stage(b), r = Math.random(), old = st === 'retired';
+  const y = a.reg || yardOf(a.plot), st = stage(b), r = Math.random(), old = st === 'retired';
+  if (a.caught || a.cuddle) { a.st = 'idle'; a.t = 1; return; }
+  a.greet = false;
+  if (b.out && r < .18) { a.st = 'idle'; a.t = 1.4; a.say = 1.5; a.sayText = t('rebel_say'); return; }
   if (isV2(b) && a.st === 'peck') { a.st = 'idle'; a.t = .35; a.hold = 'peck2'; return; }
   if (a.st === 'scratch') { a.st = 'peck'; a.t = 1 + Math.random() * 1.5; a.head = 0; a.headT = .1; return; }
   a.hold = null;
@@ -1287,6 +1624,7 @@ function decide(b, a, others) {
   else if (r < .8 && b.sex === 'h' && st !== 'chick' && !old) { a.st = 'dust'; a.t = 4 + Math.random() * 4; }
   else if (r < .84 && b.sex === 'r' && st !== 'chick') { a.st = 'crow'; a.t = 2; a.say = 2; a.sayText = t('crow'); SND.crow(a.sx, a.sy); }
   else if (r < .92) { a.face = -a.face; a.t = .6 + Math.random() * 1.4; }    // looks the other way
+  if ((a.st === 'walk' || a.st === 'follow') && a.plot && inCuddleZone(a.plot, a.tx, a.ty)) { a.st = 'walk'; a.chatWith = null; [a.tx, a.ty] = awayFromCuddle(a.plot, a.tx, a.ty); }
 }
 /* ---------- laying: the hen walks to the straw nest beside the coop, sits a few seconds, and leaves an egg behind ---------- */
 const NEST = [1.15, 0.25];                       // where each pen's nest sits, in the pen's own metres (clear of every coop)
@@ -1295,7 +1633,7 @@ const nestUse = new Map();                       // coop id -> { busy: agent sit
 const nestOf = c => { let n = nestUse.get(c.id); if (!n) nestUse.set(c.id, n = { busy: null, hidden: 0 }); return n; };
 function goLay(hen, coop) {
   const a = agents.get(hen.id), n = nestOf(coop);
-  if (!a || !a.plot || a.plot.kind !== 'coop' || a.task || n.hidden >= 2) return;      // at test speed the eggs just appear
+  if (!a || !a.plot || a.plot.kind !== 'coop' || a.task || a.cuddle || n.hidden >= 2) return;      // at test speed the eggs just appear
   n.hidden++; a.task = 'lay'; a.chatWith = null; a.leader = null;
   a.st = 'walk'; a.tx = NEST[0] - .12; a.ty = NEST[1] - .1; a.go = 0; a.t = 25;
 }
@@ -1307,7 +1645,7 @@ function nestArrive(a) {
   a.face = screenDx(a.plot, -1, 0) > 0 ? 1 : -1;
 }
 function nestLeave(a, list) {
-  const n = nestOf(a.plot.coop), y = yardOf(a.plot);
+  const n = nestOf(a.plot.coop), y = a.reg || yardOf(a.plot);
   if (n.busy === a) n.busy = null;
   n.hidden = Math.max(0, n.hidden - 1); a.task = null; dirty = true;
   SND.cackle(a.sx, a.sy); a.say = 1.6; a.sayText = t('cluck');
@@ -1318,14 +1656,15 @@ function updateAgents(dt) {
   const byPlot = new Map();
   for (const b of state.birds) { const a = agentFor(b); if (!a) continue; a.b = b; if (!byPlot.has(a.plot)) byPlot.set(a.plot, []); byPlot.get(a.plot).push({ b, a }); }
   for (const [p, list] of byPlot) {
-    const y = yardOf(p);
+    const yP = yardOf(p);
     if (p.kind === 'coop') {        // eggs waiting to be shown only while a hen is still on her way or on the nest
       const nu = nestUse.get(p.coop.id);
       if (nu) { const going = list.filter(o => o.a.task === 'lay').length; if (nu.hidden > going) nu.hidden = going; if (nu.busy && nu.busy.task !== 'lay') nu.busy = null; }
     }
     for (const { b, a } of list) {
+      const y = a.reg || yP;
       const st = stage(b), chick = st === 'chick', slow = st === 'retired' ? .7 : 1;
-      const spd = (chick ? (isV2(b) ? .2 : .3) : b.breed === 'sil' ? .17 : .22) * slow;   // metres per second
+      const spd = (chick ? (isV2(b) ? .2 : .3) : b.breed === 'sil' ? .17 : .22) * slow * (a.cuddle ? 1.6 : 1);   // metres per second; hurries over for a cuddle
       a.t -= dt; if (a.say > 0) a.say -= dt; if (a.fade > 0) a.fade -= dt; if (a.flash > 0) a.flash -= dt;
       let pose = 'farm';
       if (a.st === 'walk' || a.st === 'follow') {
@@ -1344,7 +1683,7 @@ function updateAgents(dt) {
             const sdx = screenDx(p, a.chatWith.x - a.x, a.chatWith.y - a.y);
             a.face = Math.sign(sdx) || 1; a.chatWith.face = -a.face; a.st = 'chat'; a.t = 1.2 + Math.random() * 1.5;
             if (Math.random() < .45) { a.say = 1.2; a.sayText = t('cluck'); if (a.b) SND.hen(a.sx, a.sy, a.b.sex === 'r'); }
-          } else { a.st = 'idle'; a.t = .4 + Math.random() * 1.2; }
+          } else { a.st = 'idle'; a.t = .4 + Math.random() * 1.2; if (a.greet) { a.greet = false; a.t = 2.5; if (a.sx != null) heartsAt(a.sx, a.sy - (chick ? 22 : 40), 1); } }
         }
         if (a.st === 'follow' && a.t <= 0) a.st = 'idle';
       } else if (a.st === 'peck') {
@@ -1376,6 +1715,226 @@ function updateAgents(dt) {
         if (a.st === 'walk' && a.t <= 0) a.st = 'idle';
       }
     }
+  }
+}
+
+/* ---------- hearts: float up from a cuddled bird ---------- */
+const HEARTS = [];
+function heartsAt(x, y, n, gap = .22) { for (let i = 0; i < n; i++) HEARTS.push({ x: x + (Math.random() - .5) * 16, y, vx: (Math.random() - .5) * 12, vy: -24 - Math.random() * 12, t: -i * gap, life: 1.6, ph: Math.random() * 6, s: 10 + Math.random() * 4 }); }
+function updateHearts(dt) {
+  for (const p of HEARTS) { p.t += dt; if (p.t > 0) { p.x += (p.vx + Math.sin(p.t * 5 + p.ph) * 9) * dt; p.y += p.vy * dt; } }
+  for (let i = HEARTS.length - 1; i >= 0; i--) if (HEARTS[i].t > HEARTS[i].life) HEARTS.splice(i, 1);
+}
+function drawHearts() {
+  for (const p of HEARTS) {
+    if (p.t <= 0) continue;
+    const k = p.t / p.life, s = p.s * (.55 + .45 * Math.min(1, p.t * 5)), x = p.x, y = p.y - s / 2;
+    ctx.save(); ctx.globalAlpha = k > .6 ? (1 - k) / .4 : 1;
+    ctx.beginPath(); ctx.moveTo(x, y + s * .3);
+    ctx.bezierCurveTo(x, y, x - s * .5, y, x - s * .5, y + s * .3); ctx.bezierCurveTo(x - s * .5, y + s * .6, x, y + s * .75, x, y + s);
+    ctx.bezierCurveTo(x, y + s * .75, x + s * .5, y + s * .6, x + s * .5, y + s * .3); ctx.bezierCurveTo(x + s * .5, y, x, y, x, y + s * .3);
+    ctx.fillStyle = '#ff5c7c'; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = '#fff6f2'; ctx.stroke(); ctx.restore();
+  }
+}
+/* ---------- the farmer: strolls between the coops, runs after runaways, fills feeders, carries a torch at night ---------- */
+const FARM = { x: 0, y: 0, tx: 0, ty: 0, st: 'idle', t: 3, face: 1, pose: 'idle', dist: 0, task: null, say: 0, sayText: '', actT: 0, init: false, grains: [], fr: 0, path: [], exitGate: null, heartT: 0 };
+const farmerSpr = pose => {
+  const F = state.farmer || {}, look = F.look || 'f', o = F.outfit && F.outfit !== 'classic' ? '_' + F.outfit : '';
+  const n = 'fm_' + look + o + '_' + pose; if (SPR[n]) return n;
+  const c = 'fm_' + look + '_' + pose; return SPR[c] ? c : null;
+};
+const farmerReady = () => !!farmerSpr('idle') && !!(state.farmer && state.farmer.look);
+function farmerHome() { return [GEOM.house[0] + 70, GEOM.house[1] + 120]; }
+function coopFront(c) { const p = plots[c.plot]; return p ? toMap(p.f, -0.55, -2.05) : farmerHome(); }
+function farmerGo(x, y, st) { FARM.tx = x; FARM.ty = y; FARM.st = st || 'walk'; FARM.t = 30; }
+function farmerSendCatch(b) {
+  const a = agents.get(b.id);
+  if (!farmerReady() || !a || a.sx == null) return false;
+  releaseCuddle();
+  a.caught = true; a.st = 'idle'; a.t = 30;
+  FARM.task = { kind: 'catch', id: b.id, until: performance.now() + 15000 };
+  const side = FARM.x < a.sx ? -1 : 1, out = FARM.exitGate; FARM.exitGate = null;
+  if (out) { FARM.path = [[a.sx + side * 30, a.sy + 4]]; farmerGo(out[0], out[1], 'run'); }       // out through the gate first
+  else { FARM.path = []; farmerGo(a.sx + side * 30, a.sy + 4, 'run'); }
+  return true;
+}
+function farmerSendFeed(c) {
+  if (!farmerReady() || (FARM.task && FARM.task.kind !== 'feed') || FARM.exitGate) return;      // busy, or still in a pen
+  FARM.path = []; FARM.task = { kind: 'feed', id: c.id }; const [x, y] = coopFront(c); farmerGo(x, y, 'walk');
+}
+// a cuddle: in through the pen's gate, kneel by the gate; the bird comes over; out through the gate again
+const GATE = [-0.15, -1.85], KNEEL = [-0.15, -1.12];
+function penOffset(p, dx, dy) {                // map pixels -> metres in the pen
+  const { ex, ey } = p.f, det = ex[0] * ey[1] - ex[1] * ey[0];
+  return [(dx * ey[1] - dy * ey[0]) / det, (ex[0] * dy - ex[1] * dx) / det];
+}
+function farmerSendCuddle(b) {
+  const a = agents.get(b.id); if (!farmerReady() || !a || a.sx == null || !a.plot || a.plot.kind !== 'coop' || a.task) return false;
+  if (FARM.task && FARM.task.kind === 'catch') return false;
+  releaseCuddle();
+  const p = a.plot, y = YARD; let face = 1, spot = null;
+  for (const f of [1, -1]) {                     // the bird stands where the farmer's hand reaches, inside the yard
+    const [ox, oy] = penOffset(p, f * 30, -5), sx = KNEEL[0] + ox, sy = KNEEL[1] + oy;      // beside the farmer, a touch behind, so the hand rests on her back
+    if (sx > y.x0 + .05 && sx < y.x1 - .05 && sy > y.y0 && sy < y.y1) { face = f; spot = [sx, sy]; break; }
+  }
+  if (!spot) spot = [clamp(KNEEL[0] + .3, y.x0, y.x1), clamp(KNEEL[1], y.y0, y.y1)];
+  a.cuddle = true; a.chatWith = null; a.leader = null; a.st = 'walk'; a.tx = spot[0]; a.ty = spot[1]; a.go = 0; a.t = 20;
+  const g = toMap(p.f, GATE[0], GATE[1]), k = toMap(p.f, KNEEL[0], KNEEL[1]);
+  FARM.task = { kind: 'cuddle', id: b.id, face, gate: g, plot: p, spot, zone: [(KNEEL[0] + spot[0]) / 2, (KNEEL[1] + spot[1]) / 2], until: performance.now() + 45000 };
+  for (const [ob, oa] of agents) if (ob !== b.id && oa.plot === p && !oa.task && inCuddleZone(p, oa.x, oa.y)) { oa.st = 'walk'; oa.chatWith = null; [oa.tx, oa.ty] = awayFromCuddle(p, oa.x, oa.y); oa.go = 0; oa.t = 8; }
+  if (FARM.exitGate) { FARM.path = [g, k]; farmerGo(FARM.exitGate[0], FARM.exitGate[1], 'walk'); }       // already in a pen: out first
+  else { FARM.path = [k]; farmerGo(g[0], g[1], 'walk'); }
+  return true;
+}
+// the other birds in the pen keep clear of the farmer and the bird being cuddled
+function inCuddleZone(p, x, y) { const z = FARM.task && FARM.task.kind === 'cuddle' && FARM.task.plot === p && FARM.task.zone; return !!z && Math.hypot(x - z[0], (y - z[1]) * 1.6) < .75; }
+function awayFromCuddle(p, x, y) { const z = FARM.task.zone, Y = YARD; return [clamp(x + (x >= z[0] ? .8 : -.8), Y.x0, Y.x1), clamp(Math.max(y, z[1]) + .5, Y.y0, Y.y1)]; }
+function greetFarmer(coopId) {                 // birds that trust the farmer trot over to the front fence to say hello
+  const c = coopById(coopId); if (!c) return;
+  let i = 0;
+  for (const b of birdsIn(c)) {
+    const a = agents.get(b.id);
+    if (trustLvl(b) < 2 || !a || a.task || a.cuddle || a.caught || b.out || b.hide || a.plot.kind !== 'coop') continue;
+    a.st = 'walk'; a.chatWith = null; a.leader = null; a.greet = true; a.go = 0; a.t = 12;
+    a.tx = clamp(-0.55 + (i % 3) * 0.32 - 0.16 + (Math.random() - .5) * .08, YARD.x0, YARD.x1); a.ty = YARD.y0 + .04 + Math.floor(i / 3) * .2; i++;
+  }
+}
+function releaseCuddle() {
+  const F = FARM; if (!F.task || F.task.kind !== 'cuddle') return;
+  const a = agents.get(F.task.id); if (a) a.cuddle = false;
+  F.task = null;
+}
+function farmerLeavePen() {                     // after a cuddle: back out through the gate
+  releaseCuddle(); F_go_out();
+}
+function F_go_out() { const F = FARM; if (F.exitGate) { F.path = []; farmerGo(F.exitGate[0], F.exitGate[1], 'walk'); } else { F.st = 'idle'; F.t = 3; } }
+function farmerSay(k, s) { FARM.say = s || 1.8; FARM.sayText = t(k); }
+function updateFarmer(dt) {
+  if (!farmerReady()) return;
+  const F = FARM, part = dayPart(state.gt), night = part === 'night';
+  if (!F.init) { [F.x, F.y] = farmerHome(); F.tx = F.x; F.ty = F.y; F.init = true; F.st = 'act'; F.act = 'wave'; F.actT = 2.4; farmerSay('farmer_say_hi', 2.2); }
+  F.t -= dt; if (F.say > 0) F.say -= dt; F.fr += dt;
+  for (const g of F.grains) { g.t += dt; g.x += g.vx * dt; g.y += g.vy * dt; g.vy += 260 * dt; }
+  F.grains = F.grains.filter(g => g.t < g.life);
+  const task = F.task;
+  if (task && task.kind === 'catch') {                      // keep heading for her if she wanders
+    const b = birdById(task.id), a = b && agents.get(b.id);
+    if (!b || !b.out || performance.now() > task.until) { if (a) a.caught = false; F.task = null; if (b && b.out) finishCatch(b.id); }
+    else if (a && a.sx != null && F.st === 'run' && !F.path.length && !F.exitGate) { const side = F.x < a.sx ? -1 : 1; F.tx = a.sx + side * 30; F.ty = a.sy + 4; }
+  }
+  if (task && task.kind === 'cuddle') {                     // the bird left the coop, or it is taking too long
+    const b = birdById(task.id);
+    if (!b || b.out || b.hide || coopById(b.home) == null || performance.now() > task.until) farmerLeavePen();
+  }
+  if (F.st === 'walk' || F.st === 'run') {
+    const dx = F.tx - F.x, dy = F.ty - F.y, d = Math.hypot(dx, dy);
+    const spd = F.st === 'run' ? 92 : 38;
+    if (d > 2) {
+      const step = Math.min(d, spd * dt); F.x += dx / d * step; F.y += dy / d * step; F.dist += step;
+      if (Math.abs(dx) > 1) F.face = dx > 0 ? 1 : -1;
+      F.pose = (night ? 'twalk' : 'walk') + (Math.floor(F.dist / (F.st === 'run' ? 8 : 6)) % 6);
+    } else arrive();
+    if (F.t <= 0) arrive();
+  } else if (F.st === 'act') {
+    F.actT -= dt;
+    if (F.act === 'tell') F.pose = 'tell' + (Math.floor(F.fr * 4) % 2);
+    else if (F.act === 'worry') F.pose = 'worry' + (Math.floor(F.fr * 1.5) % 2);
+    else if (F.act === 'wave') F.pose = 'wave' + (Math.floor(F.fr * 3) % 2);
+    else if (F.act === 'pet') {                               // waits for the bird to come over, then strokes her; hearts float up from her
+      const a = F.task && agents.get(F.task.id), sp = F.task && F.task.spot;
+      const here = a && sp && Math.hypot(a.x - sp[0], a.y - sp[1]) < .12;
+      if (!here) { F.actT += dt; F.pose = farmerSpr('pet0') ? 'pet0' : 'idle'; F.fr = 0; }
+      else {
+        if (a.st === 'idle') a.face = -F.face;
+        F.pose = farmerSpr('pet0') ? 'pet' + [0, 1, 0, 2][Math.floor(F.fr * 3.2) % 4] : 'idle';
+        F.heartT -= dt; if (a.sx != null && F.heartT <= 0) { F.heartT = .32; heartsAt(a.sx, a.sy - (a.b && stage(a.b) === 'chick' ? 22 : 40), 1); }
+      }
+    }
+    else if (F.act === 'feed') {
+      const ph = Math.floor(F.fr * 3) % 3; F.pose = 'feed' + ph;
+      if (ph === 2 && Math.random() < dt * 20) for (let i = 0; i < 3; i++) F.grains.push({ x: F.x + F.face * 16, y: F.y - 42, vx: F.face * (40 + Math.random() * 60), vy: -60 - Math.random() * 40, t: 0, life: .7 + Math.random() * .3 });
+    } else F.pose = night ? 'tidle' : 'idle';
+    if (F.actT <= 0 && F.act === 'pet') {
+      const a = F.task && agents.get(F.task.id); if (a) { a.say = 1.4; a.sayText = t('cluck'); }
+      farmerLeavePen();
+    } else if (F.actT <= 0) { F.st = 'idle'; F.t = 4 + Math.random() * 6; if (F.task && F.task.kind === 'catch') { const id = F.task.id, a = agents.get(id); if (a) a.caught = false; F.task = null; finishCatch(id); } else F.task = null; }
+  } else {                                                    // idle: breathe, then stroll somewhere
+    F.pose = night ? 'tidle' : 'idle';
+    if (F.t <= 0) {
+      const built = state.coops.filter(isBuilt);
+      if (night || !built.length || Math.random() < .35) { const [hx, hy] = farmerHome(); farmerGo(hx + (Math.random() - .5) * 60, hy + (Math.random() - .5) * 30, 'walk'); }
+      else { const c = pick(built), [x, y] = coopFront(c); farmerGo(x + (Math.random() - .5) * 30, y, 'walk'); F.visit = c.id; }
+    }
+  }
+  function arrive() {
+    F.dist = 0;
+    const near = q => q && Math.hypot(F.x - q[0], F.y - q[1]) < 6;
+    if (F.path.length) {                                      // next waypoint; going through a gate means leaving or entering a pen
+      if (near(F.exitGate)) F.exitGate = null;
+      if (F.task && F.task.kind === 'cuddle' && near(F.task.gate)) F.exitGate = F.task.gate;
+      const [x, y] = F.path.shift(); farmerGo(x, y, F.st === 'run' ? 'run' : 'walk'); return;
+    }
+    if (F.task && F.task.kind === 'cuddle') {
+      const a = agents.get(F.task.id);
+      F.face = F.task.face; F.st = 'act'; F.act = 'pet'; F.actT = 3.4; F.fr = 0; F.heartT = .5;
+      if (a) { a.face = -F.face; a.st = 'idle'; a.t = 4; }
+      farmerSay('farmer_say_cuddle', 1.8);
+      return;
+    }
+    if (near(F.exitGate)) F.exitGate = null;                 // out of the pen
+    if (F.task && F.task.kind === 'catch') {
+      const b = birdById(F.task.id), a = b && agents.get(b.id);
+      if (a && a.sx != null) F.face = a.sx > F.x ? 1 : -1;
+      F.st = 'act'; F.act = part === 'night' ? 'night' : part === 'dusk' ? 'worry' : 'tell'; F.actT = part === 'dusk' ? 1.6 : 1.4; F.fr = 0;
+      farmerSay('farmer_say_' + part, 1.8);
+    } else if (F.task && F.task.kind === 'feed') { F.st = 'act'; F.act = 'feed'; F.actT = 2.6; F.fr = 0; F.face = -1; farmerSay('farmer_say_feed', 1.6); }
+    else { F.st = 'idle'; F.t = 6 + Math.random() * 10; if (F.visit) greetFarmer(F.visit); }
+    F.visit = null;
+  }
+}
+function drawFarmer() {
+  const F = FARM, name = farmerSpr(F.pose) || farmerSpr('idle'); if (!name) return;
+  const k = BIRD_UNIT / SPR[name].ppu;
+  const breathe = F.st === 'idle' ? 1 + .012 * Math.sin(clock * 2.4) : 1;
+  drawSprite(name, F.x, F.y, k * F.face, k * breathe);
+  ctx.fillStyle = '#f0b53a';
+  for (const g of F.grains) { ell(ctx, g.x, g.y, 2.2, 1.6); ctx.fill(); }
+}
+function farmerSpeech() {
+  const F = FARM; if (F.say <= 0) return;
+  ctx.save(); const K = uiK(); ctx.translate(F.x + 4, F.y - (F.st === 'act' && F.act === 'pet' ? 66 : 92)); ctx.scale(K, K);
+  ctx.font = '800 15px Nunito, system-ui, sans-serif';
+  const w = ctx.measureText(F.sayText).width + 18;
+  ctx.globalAlpha = Math.min(1, F.say * 3);
+  ctx.fillStyle = '#fffdf6'; rrect(ctx, -w / 2, -26, w, 28, 14); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-5, 1); ctx.lineTo(-10, 9); ctx.lineTo(4, 1); ctx.fill();
+  ctx.fillStyle = '#2b2416'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(F.sayText, 0, -11); ctx.restore();
+}
+// dusk and night: a warm then deep-blue tint over the farm, and the farmer's torch glowing in the dark
+function skyTint() {
+  const d = clockAt(state.gt), h = d.getHours() + d.getMinutes() / 60;
+  const ramp = (a, b) => clamp((h - a) / (b - a), 0, 1);
+  const dusk = h < 12 ? 0 : ramp(17.5, 19.5) * (1 - ramp(20.5, 21.5));
+  const night = h < 12 ? 1 - ramp(6, 7.5) : ramp(20.3, 21.5);
+  return { dusk, night };
+}
+function drawSky(vx0, vy0, vx1, vy1) {
+  const { dusk, night } = skyTint(); if (dusk < .01 && night < .01) return;
+  ctx.save(); ctx.globalCompositeOperation = 'multiply';
+  if (dusk > .01) { ctx.fillStyle = `rgba(255,196,150,${.55 * dusk})`; ctx.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0); }
+  if (night > .01) { ctx.fillStyle = `rgba(70,88,160,${.62 * night})`; ctx.fillRect(vx0, vy0, vx1 - vx0, vy1 - vy0); }
+  ctx.restore();
+  if (night > .3 && farmerReady()) {                        // the torch: a glow round the farmer and a beam ahead
+    const F = FARM, hx = F.x + F.face * 18, hy = F.y - 40;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = night;
+    let g = ctx.createRadialGradient(hx, hy, 2, hx, hy, 70); g.addColorStop(0, 'rgba(255,226,140,.55)'); g.addColorStop(1, 'rgba(255,226,140,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, 70, 0, Math.PI * 2); ctx.fill();
+    const bx = hx + F.face * 95, by = F.y + 18;
+    g = ctx.createRadialGradient(bx, by, 4, bx, by, 60); g.addColorStop(0, 'rgba(255,226,140,.45)'); g.addColorStop(1, 'rgba(255,226,140,0)');
+    ctx.fillStyle = g; ell(ctx, bx, by, 62, 30); ctx.fill();
+    ctx.globalAlpha = .18 * night; ctx.fillStyle = 'rgba(255,226,140,1)';
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(bx - F.face * 10, by - 30); ctx.lineTo(bx + F.face * 30, by + 28); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -1499,6 +2058,16 @@ function drawTree(tr) {
   ctx.drawImage(im, tr.x, tr.y, tr.w, tr.h, -tr.ax * k, -tr.ay * k, tr.w * k, tr.h * k);
   ctx.restore();
 }
+const DCS = DATA.decor || {};
+function drawDecor(id) {                         // a bought decoration in its place; the windmill's sails turn
+  const D = DECOR[id], p = DCS['dc_' + id]; if (!D || !p) return; const im = atlas('decor'); if (!ready(im)) return;
+  ctx.save(); ctx.translate(D.at[0], D.at[1]); ctx.scale(p.k, p.k); ctx.drawImage(im, p.x, p.y, p.w, p.h, -p.ax, -p.ay, p.w, p.h); ctx.restore();
+  const sl = DCS.dc_sails;
+  if (id === 'windmill' && sl && p.hub) {
+    ctx.save(); ctx.translate(D.at[0] + p.hub[0], D.at[1] + p.hub[1]); ctx.scale(sl.k, sl.k * .743); ctx.rotate(-clock * .5);
+    ctx.drawImage(im, sl.x, sl.y, sl.w, sl.h, -sl.ax, -sl.ay, sl.w, sl.h); ctx.restore();
+  }
+}
 function drawProp(name, x, y, sx, sy, skew) {
   const p = PROPS[name]; if (!p) return; const im = atlas('props'); if (!ready(im)) return;
   ctx.save(); ctx.translate(x, y); if (skew) ctx.transform(1, 0, -skew, 1, 0, 0); ctx.scale(sx * p.k, sy * p.k);
@@ -1533,7 +2102,7 @@ function buildBar(x, y, f) {            // a little progress bar under a buildin
   ctx.fillStyle = '#e1b525'; rrect(ctx, -40, -3, Math.max(8, 80 * clamp(f, 0, 1)), 8, 4); ctx.fill(); ctx.restore();
 }
 const uiK = () => clamp(.8 / view.s, 1, 2.4);     // signs and bubbles keep a readable size when zoomed out
-let signHits = [];
+let signHits = [], protestHits = [];
 function label(x, y, text, sub, style) {
   ctx.save(); const K = uiK() * (style === 'small' ? .78 : 1); ctx.translate(x, y); ctx.scale(K, K);
   if (style === 'small') ctx.globalAlpha = .92;
@@ -1642,6 +2211,8 @@ function draw() {
   for (const tf of GEOM.tufts) if (vis(tf[0], tf[1], 40)) items.push([tf[1], 2, tf]);
   for (const f of frogs) if (vis(f.x, f.y, 40)) items.push([f.y, 3, f]);
   for (const d of ducks) if (vis(d.x, d.y, 40)) items.push([d.y, 6, d]);
+  if (farmerReady() && vis(FARM.x, FARM.y, 120)) items.push([FARM.y, 9, FARM]);
+  for (const id of state.decor) { const D = DECOR[id]; if (D && DCS['dc_' + id] && vis(D.at[0], D.at[1] - 150, 420)) items.push([D.at[1], 10, id]); }
   const birds = [];
   for (const b of state.birds) {
     const a = agents.get(b.id); if (!a || !a.plot) continue;
@@ -1658,13 +2229,16 @@ function draw() {
     else if (kind === 7) drawNest(it, false);
     else if (kind === 8) drawNest(it, true);
     else if (kind === 5) { const im = img(`img/ov/fence_${it.f.deg}.webp`); if (ready(im)) ctx.drawImage(im, it.f.c[0] - OV[0], it.f.c[1] - OV[1], 600, 600); }
+    else if (kind === 9) drawFarmer();
+    else if (kind === 10) drawDecor(it);
     else drawBird(it);
   }
   for (const b of butterflies) if (vis(b.x, b.y, 20)) drawButterfly(b);
   if (!cloudCv) cloudCv = makeCloud();
   for (const c of clouds) if (vis(c.x + 450, c.y + 260, 600)) ctx.drawImage(cloudCv, c.x, c.y, 1800, 1040);
+  drawSky(vx0, vy0, vx1, vy1);
   // signs, bubbles and tags sit on top of everything
-  signHits = [];
+  signHits = []; protestHits = [];
   for (const p of plots) {
     if (p.kind === 'pasture' || !vis(p.f.c[0], p.f.c[1], 300)) continue;
     const sp = toMap(p.f, 0, -1.75, 0.3);
@@ -1699,11 +2273,23 @@ function draw() {
         ctx.fillStyle = empty ? '#fff' : '#5a3d06'; ctx.font = '800 15px Nunito, system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, -w / 2 + 36, 1);
       });
     }
+    const pr = protestOf(c);                   // a rebel's protest sign; tap it to sort out what she is protesting about
+    if (pr) { const px = m[0] + 14 * uiK(), py = m[1] - (n ? 42 : 0) * uiK() - (food <= FEEDER_CAP * .15 ? 44 : 0) * uiK() - 52 * uiK() - bob;      // above the egg and feed bubbles
+      label(px, py, '✊ ' + t('protest_' + pr.kind), t('protest_sub', { name: pr.b.name }), 'hot'); protestHits.push([px, py, c, pr.kind]); }
   }
   const pp = toMap(GEOM.pasture, 0, -2.75, .2);
   if (vis(pp[0], pp[1], 100)) { const no = state.birds.filter(b => b.home === 'pasture' && b.offer).length; label(pp[0], pp[1], t('pasture'), no ? t('offers_n', { n: no }) : null, no ? 'hot' : null); }
   if (ui.grades) { birds.sort((a, b) => b.sy - a.sy); const placed = []; for (const a of birds) gradeTag(a, placed); }
+  for (const a of birds) if (a.b && a.b.out && !a.caught) runawayTag(a);
+  drawHearts();
   for (const a of birds) if (a.say > 0) speech(a);
+  if (farmerReady()) farmerSpeech();
+}
+function runawayTag(a) {                     // a bright tag over a runaway, drawn on top of everything so fences never hide it
+  ctx.save(); const K = uiK() * .9; ctx.translate(a.sx, a.sy - 64 - 3 * Math.sin(clock * 4)); ctx.scale(K, K);
+  ctx.font = '900 13px Nunito, system-ui, sans-serif'; const w = ctx.measureText(t('escaped_tag')).width + 16;
+  ctx.fillStyle = '#d9541e'; rrect(ctx, -w / 2, -10, w, 20, 10); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t('escaped_tag'), 0, 1); ctx.restore();
 }
 function drawBird(a) {
   const b = a.b, st = stage(b);
@@ -1729,7 +2315,7 @@ function drawBird(a) {
   drawSprite(name, a.sx, a.sy + dy, sx, sy);
   if (a.fade > 0 && a.prev && a.st !== 'sit' && a.turnT == null) { const pn = spriteFor(b, a.prev); if (pn && pn !== name) { ctx.globalAlpha = clamp(a.fade / .09, 0, 1) * .8; drawSprite(pn, a.sx, a.sy, BIRD_UNIT / SPR[pn].ppu * grow * a.fx, BIRD_UNIT / SPR[pn].ppu * grow); ctx.globalAlpha = 1; } }
   ctx.filter = 'none';
-  if (fresh || a.flash > 0) {
+  if (fresh) {
     ctx.save(); const K = uiK() * .85; ctx.translate(a.sx, a.sy - 34 - 3 * Math.sin(clock * 3)); ctx.scale(K, K);
     ctx.font = '900 12px Nunito, system-ui, sans-serif'; const w = ctx.measureText(t('new_chick')).width + 14;
     ctx.fillStyle = '#e1b525'; rrect(ctx, -w / 2, -9, w, 18, 9); ctx.fill();
@@ -1751,7 +2337,7 @@ function drawNest(p, front) {
 }
 function speech(a) {
   const chick = stage(a.b) === 'chick';
-  ctx.save(); const K = uiK(); ctx.translate(a.sx + 4, a.sy - (chick ? 34 : 70) - (ui.grades ? 24 : 0)); ctx.scale(K, K);
+  ctx.save(); const K = uiK(); ctx.translate(a.sx + 4, a.sy - (chick ? 34 : 70) - (ui.grades ? 24 : 0) - (a.b.out ? 26 * K : 0)); ctx.scale(K, K);
   ctx.font = '700 15px Nunito, system-ui, sans-serif';
   const w = ctx.measureText(a.sayText).width + 16, hx = 0, hy = -12;
   ctx.globalAlpha = Math.min(1, a.say * 3);
@@ -1817,16 +2403,19 @@ function inBox(f, x, y, box) { const [lx, ly] = toLocal(f, x, y); return lx >= b
 function tapAt(x, y) {
   const K = uiK();
   for (const [sx, sy, p] of signHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 34 * K) { if (p.kind === 'empty') openSheet('market', { tab: 'build' }); else if (p.kind === 'build') openSheet('coop', { id: p.coop.id }); else openSheet('land'); return; }
+  for (const [sx, sy, c, kind] of protestHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 28 * K) { if (kind === 'feed') quickFeed(c); else actCollect(c); return; }
   for (const p of plots) if (p.bubble && Math.hypot(x - p.bubble.x, y - p.bubble.y) < p.bubble.r) { actCollect(p.coop); return; }
   for (const p of plots) { const f = p.feedBubble; if (f && Math.abs(x - f.x) < f.w / 2 + 6 && Math.abs(y - f.y) < f.h / 2 + 6) { quickFeed(p.coop); return; } }
   let best = null, bd = 1e9;
   for (const b of state.birds) {
     const a = agents.get(b.id); if (!a || a.sx == null) continue;
-    const r = stage(b) === 'chick' ? 22 : 34;
+    const r = stage(b) === 'chick' ? 22 : b.out ? 46 : 34;
     const d = Math.hypot(x - a.sx, y - (a.sy - r * .8));
     if (d < r && d < bd) { bd = d; best = b; }
   }
-  if (best) { openSheet('bird', { id: best.id }); return; }
+  if (best) { if (best.out) actCatch(best); else openSheet('bird', { id: best.id }); return; }
+  if (farmerReady() && Math.hypot(x - FARM.x, y - (FARM.y - 40)) < 44) { openSheet('farmer'); return; }
+  for (const id of state.decor) { const D = DECOR[id], p = DCS['dc_' + id]; if (D && p && Math.abs(x - D.at[0]) < p.w * p.k * .4 && y < D.at[1] + 20 && y > D.at[1] - p.ay * p.k * .9) { toast(t('dc_' + id) + ' · ' + t('dc_' + id + '_d')); return; } }
   for (const f of frogs) if (f.st === 'sit' && Math.hypot(x - f.x, y - f.y + 6) < 22) { f.puff = .6; SND.frog(f.x, f.y); frogHop(f, false); return; }
   for (const p of plots) {
     if (!inBox(p.f, x, y, p.kind === 'pasture' ? { x0: -3.1, x1: 3.1, y0: -2.4, y1: 2.4 } : { x0: -1.85, x1: 1.85, y0: -1.75, y1: 1.6 })) continue;
@@ -1922,26 +2511,86 @@ function offerBlock(b) {               // an adoption offer (or the wait for one
       h('button', { class: 'btn sm good', onclick: () => actAcceptOffer(b) }, t('accept')),
       h('button', { class: 'btn sm alt', onclick: () => actDeclineOffer(b) }, t('decline')))];
 }
+function persTag(p, sex) { return h('span', { class: 'tag pers', title: t('pers_' + p + '_d') }, PERS[p].icon + ' ' + persName(p, sex)); }
+function persCard(b) {                         // the bird's personality and what it is doing about it right now
+  const now = [], gt = state.gt, coop = coopById(b.home);
+  if (b.out) now.push(h('p', { class: 'small warn' }, timer(b.out, b.outNight ? 'out_night' : 'out_now')), h('button', { class: 'btn sm', onclick: () => { actCatch(b); closeSheet(); focusBird(b.id); } }, t('bring_back', { farmer: farmerName() })));
+  if (b.hide) now.push(h('p', { class: 'small warn', text: t('hiding') }));
+  if (b.noLay && gt < b.noLay && b.sex === 'h') now.push(h('p', { class: 'small muted', text: t('shaken') }));
+  if (b.clover) now.push(h('p', { class: 'small good-t', text: t('clover_note') }));
+  if (b.pers === 'diva' && b.sex === 'h' && coop && coop.last === 'basic' && isGrown(b) && !(gt < (b.happy || 0))) now.push(h('p', { class: 'small muted', text: t('sulking') }));
+  if (coop && !b.out && !b.hide) {
+    if (gt < (b.happy || 0)) now.push(h('p', { class: 'small good-t' }, '♥ ', timer(b.happy, b.sex === 'r' ? 'happy_for_r' : 'happy_for')));
+    else now.push(h('button', { class: 'btn sm alt', style: 'margin-top:8px', onclick: () => { if (actCuddle(b)) focusBird(b.id); else renderSheet(); } }, h('span', { style: 'color:#e0486a', 'aria-hidden': 'true', text: '♥ ' }), t('cuddle')));
+  }
+  if (b.home !== 'pasture' || b.trust) now.push(trustRow(b));
+  if (b.pers === 'mum' && raising(b)) now.push(h('p', { class: 'small muted', text: t('raising') }));
+  return h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('personality') }), persTag(b.pers, b.sex)), h('p', { class: 'small', text: t('pers_' + b.pers + '_d') }), now);
+}
+function trustRow(b) {                         // trust with the farmer: three hearts, the level, how far to the next, what it does
+  const lv = trustLvl(b), n = b.trust || 0, next = PR.trustAt[lv];
+  const does = [];
+  if (lv) does.push(t('trust_value', { n: Math.round(PR.trustValue * 100 * lv) }));
+  if (lv && b.pers === 'rebel') does.push(t('trust_rebel'));
+  if (lv >= 2 && b.pers === 'mum') does.push(t('trust_mum'));
+  if (lv >= 2) does.push(t('trust_greet', { farmer: farmerName() }));
+  return h('div', { class: 'trust', style: 'margin-top:10px;padding-top:10px;border-top:1px solid var(--line, rgba(0,0,0,.08))' },
+    h('div', { class: 'row' }, h('span', { class: 'grow', style: 'font-weight:700', text: t('trust') }),
+      h('span', { style: 'color:#e0486a;letter-spacing:2px', 'aria-label': t('trust_lv' + lv), text: '♥'.repeat(lv) + '♡'.repeat(3 - lv) }),
+      h('span', { class: 'small', style: 'font-weight:700;margin-left:6px', text: t('trust_lv' + lv) })),
+    h('p', { class: 'small muted', text: lv < 3 ? t(next - n === 1 ? 'trust_next1' : 'trust_next', { n: next - n, lv: t('trust_lv' + (lv + 1)) }) : t('trust_max', { farmer: farmerName() }) }),
+    does.length ? h('p', { class: 'small', text: does.join(' ') }) : null);
+}
+function decorCards() {                         // things to buy for the farm (Build tab)
+  const lock = L => h('span', { class: 'tag lock', text: '🔒 ' + t('locked_lvl', { n: L }) });
+  return [h('h3', { id: 'decor', style: 'margin-top:18px', text: t('decor_title') }), h('p', { class: 'small muted', text: t('decor_note') }),
+    DECOR_IDS.map(id => {
+      const D = DECOR[id], own = state.decor.includes(id), open = state.level >= D.lvl;
+      return h('div', { class: 'card' + (open || own ? '' : ' locked') },
+        h('img', { class: 'thumb dc' + (open || own ? '' : ' dim'), src: `img/decor/${id}.webp`, alt: '', draggable: 'false' }),
+        h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('dc_' + id) }), h('div', { class: 'small muted', text: t('dc_' + id + '_d') })), open || own ? null : lock(D.lvl)),
+        own ? h('div', { class: 'row' }, h('span', { class: 'small good-t grow', style: 'font-weight:700', text: '✓ ' + t('on_farm') }), h('button', { class: 'btn sm alt', onclick: () => lookAtDecor(id) }, t('show_me')))
+          : open ? h('button', { class: 'btn', disabled: state.coins < D.price, onclick: () => actBuyDecor(id) }, t('buy_for'), ' ', coinPrice(D.price), h('span', { class: 'small', style: 'opacity:.85;margin-left:8px', text: '+' + shopXp(D.price) + ' XP' })) : null);
+    })];
+}
+function outfitCards() {                        // clothes for the farmer (the farmer sheet)
+  const F = state.farmer, look = F.look || 'f';
+  return [h('h3', { style: 'margin-top:20px', text: t('outfits') }), h('p', { class: 'small muted', text: t('outfits_note', { farmer: farmerName() }) }),
+    h('div', { class: 'outfits' }, OUTFIT_IDS.map(id => {
+      const O = OUTFITS[id], own = F.outfits.includes(id), open = state.level >= O.lvl, on = F.outfit === id;
+      return h('div', { class: 'card outfit' + (on ? ' on' : '') + (open || own ? '' : ' locked') },
+        h('img', { src: `img/farmer/card_${look}${id === 'classic' ? '' : '_' + id}.webp`, alt: '', draggable: 'false' }),
+        h('div', { style: 'font-weight:700', text: t('of_' + id) }), h('div', { class: 'tiny muted', text: t('of_' + id + '_d') }),
+        on ? h('span', { class: 'tag gold', text: '✓ ' + t('wearing') }) : own ? h('button', { class: 'btn sm alt', onclick: () => actWearOutfit(id) }, t('wear'))
+          : open ? h('button', { class: 'btn sm', disabled: state.coins < O.price, onclick: () => actBuyOutfit(id) }, coinPrice(O.price), h('span', { class: 'tiny', style: 'opacity:.85;margin-left:6px', text: '+' + shopXp(O.price) + ' XP' }))
+          : h('span', { class: 'tag lock', text: '🔒 ' + t('locked_lvl', { n: O.lvl }) }));
+    }))];
+}
 function birdRow(b, extra, showValue) {
   const q = quality(b);
   return h('button', { class: 'item', onclick: () => openSheet('bird', { id: b.id }) },
     portrait(b),
     h('div', { class: 'grow' },
-      h('div', { class: 'row' }, h('span', { class: 'name', text: b.name }), h('span', { class: 'muted', text: b.sex === 'r' ? '♂' : '♀', 'aria-label': stageLabel(b) }), b.champ ? h('span', { class: 'tag red', text: t('champion') }) : null),
+      h('div', { class: 'row' }, h('span', { class: 'name', text: b.name }), h('span', { class: 'muted', text: b.sex === 'r' ? '♂' : '♀', 'aria-label': stageLabel(b) }), h('span', { title: persName(b.pers, b.sex), 'aria-label': persName(b.pers, b.sex), text: PERS[b.pers].icon }), b.out ? h('span', { class: 'tag red', text: t('escaped_tag') }) : null, b.champ ? h('span', { class: 'tag red', text: t('champion') }) : null),
       h('div', { class: 'small muted', text: `${birdTitle(b)} · ${stageLabel(b)}` }),
       extra || null),
     h('div', { style: 'display:flex;flex-direction:column;align-items:flex-end;gap:4px' }, h('div', { class: 'grade g' + grade(q).replace('+', 'p').replace('★', 's'), title: t('quality'), text: grade(q) }), showValue ? coinPrice(value(b)) : null));
 }
 
 /* sheets */
-let mktBreed = 'all'; // Market birds filter, kept while the game is open
+let mktBreed = 'all', mktPers = 'all'; // Market birds filters, kept while the game is open
 let current = null;
 let sheetOpenedAt = 0, sheetReturn = null;        // a level-up shown over another screen goes back to it when closed
 function openSheet(name, args) { sheetOpenedAt = performance.now(); current = { name, args: args || {} }; $('#sheet').hidden = false; $('#scrim').hidden = false; renderSheet(true); setTab(['market', 'hatch', 'shows', 'awards'].includes(name) ? name : 'farm'); }
 function setGrades(on) { ui.grades = on; state.flags.grades = on; $('#gradesBtn').setAttribute('aria-pressed', String(on)); }
 function closeSheet() {
   if (current && current.name === 'levelup' && sheetReturn) { const r = sheetReturn; sheetReturn = null; openSheet(r.name, r.args); return; }
-  sheetReturn = null; if (current && current.name === 'welcome' && state && !state.flags.welcome) { state.flags.welcome = true; save(); } current = null; $('#sheet').hidden = true; $('#scrim').hidden = true; setTab('farm'); }
+  sheetReturn = null; if (current && current.name === 'welcome' && state && !state.flags.welcome) { state.flags.welcome = true; save(); }
+  if (current && current.name === 'farmer' && state && !state.farmer.look) { state.farmer.look = farmerPick; FARM.init = false; save(); }
+  const wasWelcomeOrAway = current && ['welcome', 'away', 'levelup'].includes(current.name);
+  current = null; $('#sheet').hidden = true; $('#scrim').hidden = true; setTab('farm');
+  if (wasWelcomeOrAway && state && state.flags.welcome && !state.farmer.look) setTimeout(() => { if (!current) openSheet('farmer'); }, 250); }
+let farmerPick = Math.random() < .5 ? 'm' : 'f';
 function renderSheet(reset) {
   if (!current) return;
   const body = $('#sheetBody'), st = body.scrollTop;
@@ -1974,6 +2623,8 @@ const SHEETS = {
     if (a.hungry) lines.push(t('away_hungry', { n: a.hungry })); if (a.levels) lines.push(t('level_up', { n: a.levels }));
     if (a.built) lines.push(t('away_built', { n: a.built })); if (a.offer) lines.push(t('away_offers', { n: a.offer }));
     if (a.showsNew) lines.push(t('away_new_shows', { n: a.showsNew })); if (a.trophies) lines.push(t('away_trophies', { n: a.trophies })); if (a.colours) lines.push(t('away_colours', { n: a.colours }));
+    for (const k of ['escape', 'finds', 'tree', 'foxBrave', 'fox']) if (a[k]) lines.push(t('away_' + k, { n: a[k] }));
+    const outNow = state.birds.filter(b => b.out).length; if (outNow) lines.push(t('away_out', { n: outNow }));
     const full = state.coops.filter(c => nestCount(c) >= NEST_CAP).length; if (full) lines.push(full > 1 ? t('away_full', { n: full }) : t('away_full1'));
     const waiting = waitingEggs();
     return { title: t('away_title') + ` (${fmtDur(a.real)})`, node: [
@@ -2035,6 +2686,10 @@ const SHEETS = {
         roos.length ? h('p', { class: 'small', text: sire ? `${sire.name} · ${t('quality')} ${quality(sire)}` : t('sire_auto') }) : h('p', { class: 'small warn', text: t('no_rooster') }),
         roos.length ? h('p', { class: 'note', text: t('sire_note') }) : null),
       odds,
+      coop.settle > state.gt ? h('p', { class: 'small muted' }, timer(coop.settle, 'settling')) : null,
+      coop.settle > state.gt && braveIn(coop) ? h('p', { class: 'small muted', text: '♥ ' + t('settle_hint', { name: braveIn(coop).name }) }) : null,
+      coop.fright > state.gt ? h('p', { class: 'small warn' }, timer(coop.fright, 'frightened')) : null,
+      coop.fright > state.gt ? h('p', { class: 'small muted', text: '♥ ' + t('fright_hint') }) : null,
       h('h3', { text: t('birds') }),
       h('div', { class: 'list' }, birds.map(b => birdRow(b, b.id === coop.sire ? h('span', { class: 'tag blue', text: t('is_sire') }) : null, true))),
     ] };
@@ -2066,6 +2721,7 @@ const SHEETS = {
         b.champ ? h('span', { class: 'tag red', text: (b.champ > 1 ? b.champ + '× ' : '') + t('champion') }) : null,
         coop ? h('div', { class: 'small muted', text: t('in_coop_n', { coop: coopLabel(coop) }) }) : null)),
       h('input', { type: 'text', id: 'rename', maxlength: 20, value: b.name, 'aria-label': 'Name', autocomplete: 'off', onchange: e => actRename(b, e.target.value) }),
+      persCard(b),
       meters(eff(b)),
       Math.floor(b.boost || 0) ? h('p', { class: 'small', style: 'color:var(--good);font-weight:700', text: t('fed_boost', { n: Math.floor(b.boost) }) }) : null,
       ...info,
@@ -2094,16 +2750,21 @@ const SHEETS = {
     if (tab === 'birds') {
       const offerBreeds = BREED_IDS.filter(id => state.shop.offers.some(o => o.breed === id));
       if (mktBreed !== 'all' && !offerBreeds.includes(mktBreed)) mktBreed = 'all';
-      const shown = state.shop.offers.map((o, i) => [o, i]).filter(([o]) => mktBreed === 'all' || o.breed === mktBreed);
+      const offerPers = PERS_IDS.filter(p => state.shop.offers.some(o => o.pers === p));
+      if (mktPers !== 'all' && !offerPers.includes(mktPers)) mktPers = 'all';
+      const shown = state.shop.offers.map((o, i) => [o, i]).filter(([o]) => (mktBreed === 'all' || o.breed === mktBreed) && (mktPers === 'all' || o.pers === mktPers));
       const nOf = id => state.shop.offers.filter(o => o.breed === id).length;
       node = [h('p', { class: 'small muted' }, timer(state.shop.next, 'new_birds_in')),
         offerBreeds.length > 1 ? h('div', { class: 'chips', role: 'group', 'aria-label': t('filter_breed') }, ['all', ...offerBreeds].map(k => h('button', { class: 'chip', 'aria-pressed': String(mktBreed === k), onclick: () => { mktBreed = k; renderSheet(true); } }, k === 'all' ? `${t('all')} · ${state.shop.offers.length}` : `${t('br_' + k)} · ${nOf(k)}`))) : null,
+        offerPers.length > 1 ? h('div', { class: 'chips', role: 'group', 'aria-label': t('filter_pers') }, ['all', ...offerPers].map(k => h('button', { class: 'chip', 'aria-pressed': String(mktPers === k), onclick: () => { mktPers = k; renderSheet(true); } }, k === 'all' ? t('all_pers') : `${PERS[k].icon} ${t('pers_' + k)}`))) : null,
         shown.length ? h('div', { class: 'list' }, shown.map(([o, i]) => {
+          if (!okPers(o.pers, o.sex)) o.pers = rollPers(o.sex);
           const fake = { ...o, id: -1 - i, home: 0, champ: 0, line: 0, ribbons: [] };
           const price = offerPrice(o), has = state.coops.some(c => c.breed === o.breed), room = coopWithSpace(o.breed);
           const why = !unlocked(o.breed) ? t('locked_long', { n: BREEDS[o.breed].lvl }) : !has ? t('need_coop', { coop: t('coop_' + o.breed) }) : !room ? t('coop_full', { coop: t('coop_' + o.breed) }) : state.coins < price ? t('need_coins') : null;
           return h('div', { class: 'card' },
             h('div', { class: 'row' }, portrait(fake), h('div', { class: 'grow' }, h('div', { class: 'name', style: 'font-weight:700', text: `${o.name} ${o.sex === 'r' ? '♂' : '♀'}` }), h('div', { class: 'small muted', text: `${birdTitle(fake)} · ${stageLabel(fake)}` })), h('div', { class: 'grade', text: grade(quality(fake)) })),
+            h('div', { class: 'row', style: 'gap:8px;align-items:flex-start' }, persTag(fake.pers, fake.sex), h('span', { class: 'tiny muted', style: 'flex:1', text: t('pers_' + fake.pers + '_d') })),
             meters(o.traits),
             why ? h('p', { class: 'small warn', text: why }) : null,
             h('button', { class: 'btn', disabled: !!why, onclick: () => actBuyOffer(i) }, t('buy_for'), ' ', coinPrice(price)));
@@ -2129,6 +2790,7 @@ const SHEETS = {
           h('button', { class: 'btn alt', disabled: state.coins < plotPrice(), onclick: actBuyPlot }, t('buy_land'), ' · ', coinPrice(plotPrice())));
       node = [
         free < 0 ? [h('p', { class: 'small warn', style: 'font-weight:700', text: t('need_land_first') }), landCard] : null,
+        state.level >= DECOR.flowers.lvl ? h('button', { class: 'btn sm alt', style: 'width:100%;margin-bottom:6px', onclick: () => { const el = $('#decor'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, t('decor_jump')) : null,
         h('h3', { text: t('build_here') }),
         BREED_IDS.map(id => {
           const price = coopPrice(id), owned = state.coops.filter(c => c.breed === id).length, open = unlocked(id);
@@ -2145,6 +2807,7 @@ const SHEETS = {
           h('button', { class: 'btn alt', disabled: state.coins < incPrice(), onclick: actIncSlot }, coinPrice(incPrice()))),
         h('div', { class: 'card' }, h('h3', { text: t('basket_up') }), h('p', { class: 'small muted', text: `${basketCount()} / ${state.basketCap}` }),
           state.basketCap < 1000 ? h('button', { class: 'btn alt', disabled: state.coins < basketPrice(), onclick: actBasket }, coinPrice(basketPrice())) : h('p', { class: 'note', text: t('max_reached') })),
+        decorCards(),
       ];
     } else {
       // the breed catalogue: everything in the game, what it costs and when it unlocks
@@ -2257,17 +2920,32 @@ const SHEETS = {
       h('button', { class: 'btn', onclick: closeSheet }, t('close')),
     ] };
   },
-  flock({ sort = 'value', breed = 'all' } = {}) {
-    const all = state.birds.filter(b => breed === 'all' || b.breed === breed);
+  flock({ sort = 'value', breed = 'all', pers = 'all' } = {}) {
+    const all = state.birds.filter(b => (breed === 'all' || b.breed === breed) && (pers === 'all' || b.pers === pers));
+    const persList = PERS_IDS.filter(p => state.birds.some(b => b.pers === p));
     const key = { value: b => -value(b), quality: b => -quality(b), age: b => -b.born }[sort] || (b => -value(b));
     const list = all.slice().sort((a, b) => key(a) - key(b));
     const breeds = BREED_IDS.filter(id => state.birds.some(b => b.breed === id));
     return { title: t('flock'), node: [
       h('div', { class: 'seg', role: 'group' }, ['value', 'quality', 'age'].map(k => h('button', { 'aria-pressed': String(sort === k), onclick: () => { current.args.sort = k; renderSheet(); } }, t('sort_' + k)))),
       breeds.length > 1 ? h('div', { class: 'chips' }, ['all', ...breeds].map(k => h('button', { class: 'chip', 'aria-pressed': String(breed === k), onclick: () => { current.args.breed = k; renderSheet(true); } }, k === 'all' ? t('all') : t('br_' + k)))) : null,
+      persList.length > 1 ? h('div', { class: 'chips', role: 'group', 'aria-label': t('filter_pers') }, ['all', ...persList].map(k => h('button', { class: 'chip', 'aria-pressed': String(pers === k), onclick: () => { current.args.pers = k; renderSheet(true); } }, k === 'all' ? t('all_pers') : `${PERS[k].icon} ${t('pers_' + k)}`))) : null,
       h('p', { class: 'small muted', text: t('flock_count', { n: list.length }) }),
       list.length ? h('div', { class: 'list' }, list.map(b => { const c = coopById(b.home); return birdRow(b, h('div', { class: 'tiny muted', text: c ? coopLabel(c) : t('pasture') }), true); })) : h('p', { class: 'muted', text: t('flock_empty') }),
     ] };
+  },
+  farmer() {
+    const pickNow = state.farmer.look || farmerPick;
+    const tile = look => h('button', { class: 'pick-tile', 'aria-pressed': String(pickNow === look), onclick: () => { farmerPick = look; if (state.farmer.look) { state.farmer.look = look; FARM.init = false; changed(); } renderSheet(); } },
+      h('img', { src: `img/farmer/card_${look}${state.farmer.outfit && state.farmer.outfit !== 'classic' ? '_' + state.farmer.outfit : ''}.webp`, alt: t(look === 'm' ? 'farmer_him' : 'farmer_her') }), h('span', { text: t(look === 'm' ? 'farmer_him' : 'farmer_her') }));
+    return { title: t('farmer_title'), node: [
+      h('p', { text: t('farmer_note') }),
+      h('div', { class: 'pick' }, tile('m'), tile('f')),
+      h('label', { class: 'small muted', for: 'fname', text: t('farmer_name') }),
+      h('input', { type: 'text', id: 'fname', maxlength: 20, value: state.farmer.name || '', placeholder: t('farmer_default_' + pickNow), autocomplete: 'off', onchange: e => { state.farmer.name = cleanName(e.target.value, ''); changed(true); } }),
+      h('button', { class: 'btn', onclick: () => { const v = $('#fname'); if (v) state.farmer.name = cleanName(v.value, ''); state.farmer.look = farmerPick = pickNow; FARM.init = false; save(true); closeSheet(); toast(t('farmer_hello', { farmer: farmerName() })); } }, t('farmer_done')),
+      state.farmer.look ? outfitCards() : null,
+    ].flat() };
   },
   settings() {
     const onOff = k => h('div', { class: 'seg' }, [true, false].map(v => h('button', { 'aria-pressed': String(SND.prefs[k] === v), onclick: () => { SND.set(k, v); renderSheet(); } }, t(v ? 'on' : 'off'))));
@@ -2276,6 +2954,8 @@ const SHEETS = {
       h('h3', { text: t('snd_music') }), onOff('music'),
       navigator.audioSession ? [h('h3', { text: t('snd_silent') }), onOff('silent')] : null,
       h('p', { class: 'note', text: t(navigator.audioSession ? 'snd_note2' : 'snd_note') }),
+      h('h3', { text: t('your_farmer') }),
+      h('div', { class: 'row' }, h('span', { class: 'grow', text: state.farmer.look ? `${farmerName()} · ${t(state.farmer.look === 'm' ? 'farmer_him' : 'farmer_her')}` : '—' }), h('button', { class: 'btn sm alt', onclick: () => openSheet('farmer') }, t('change'))),
       h('h3', { text: t('lang') }),
       h('div', { class: 'seg' }, Object.keys(I18N).map(k => h('button', { 'aria-pressed': String(state.lang === k), onclick: () => { state.lang = k; plotCache.clear(); applyLang(); changed(); } }, k === 'en' ? 'English' : 'Français'))),
       h('h3', { text: t('speed') }),
@@ -2686,6 +3366,7 @@ function tickTime() {
   const game = Math.min(d * state.speed, OFFLINE_CAP);
   if (away) { sink = { any: false }; advance(game); const s = sink; sink = null; if (s.any && (d > 5 * MIN || s.hatched || s.shows || s.levels)) { s.real = Math.min(d, OFFLINE_CAP); s.paused = paused; if (!current || current.name !== 'welcome') openSheet('away', s); } changed(); }
   else advance(game);
+  if (state.speed === 1 && Math.abs(state.epoch + state.gt - now) > 5 * MIN) state.epoch = now - state.gt;     // keep day and night on the player's own clock
 }
 let last = performance.now();
 function frame(now) {
@@ -2693,6 +3374,8 @@ function frame(now) {
   tickTime();
   stepInertia(dt);
   updateAgents(dt);
+  updateFarmer(dt);
+  updateHearts(dt);
   updateLife(dt);
   SND.tick(dt);
   draw();
@@ -2719,6 +3402,7 @@ function start(hotData) {
   applyLang(); layout(); updateHud();
   img('img/farm_map.webp'); for (const c of state.coops) img(ovSrc(c.breed, GEOM.slots[c.plot].deg));
   if (!state.flags.welcome) openSheet('welcome');
+  else if (!state.farmer.look) setTimeout(() => { if (!current) openSheet('farmer'); }, 900);
   try { if (sessionStorage.getItem('ff_updated')) { sessionStorage.removeItem('ff_updated'); setTimeout(() => toast(t('updated', { v: BUILD })), 800); } } catch (_) {}
   cloudInit();
   tickTime();

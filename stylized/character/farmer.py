@@ -15,7 +15,18 @@ LOOKS = {
               boots='#efbf3a', band='#d8343a', hat='#e6c26c', beard=False, lashes=True),
 }
 _F = {}
-HAT_TILT = -10                 # degrees the hat is pushed back (more for the farm-map sprites, so the face shows)
+HAT_TILT = -10
+# outfits the player can buy in the game (game design doc, "Things to buy"): a hat and a shirt each; both looks wear the same outfit
+OUTFIT = os.environ.get('OUTFIT', 'classic')
+OUTFITS = {
+    'classic': {},
+    'market':  dict(hat='cap', hatcol='#6b5a45', shirt=('#eef2f7', '#3f6fb5', '#1f3c6e')),               # tweed flat cap, blue check
+    'garden':  dict(hat='sunhat', band='#f08bb0', shirt=('#fffaf0', '#f2c94c', '#d0a124'), check=230),    # flowery sun hat, yellow gingham
+    'winter':  dict(hat='beanie', hatcol='#c8372d', hatcol2='#f4ead9', knit='#3f7d4f'),                  # red bobble hat, green jumper
+    'rodeo':   dict(hat='cowboy', hatcol='#7a5233', band='#3b2618', plain='#8fb3d9', scarf='#c8372d'),    # cowboy hat, chambray shirt, neckerchief
+    'show':    dict(hat='tophat', hatcol='#1d1c22', band='#c8372d', plain='#fbfaf6', rosette=True),       # top hat, white shirt, rosette
+}
+def OF(): return OUTFITS.get(OUTFIT, {})                 # degrees the hat is pushed back (more for the farm-map sprites, so the face shows)
 
 
 def plaid(name, cols, f=135.0, axes=('Y', 'Z')):
@@ -43,21 +54,25 @@ def plaid(name, cols, f=135.0, axes=('Y', 'Z')):
 
 
 def mats(look):
-    if look in _F: return _F[look]
-    P = LOOKS[look]
+    key = look + ':' + OUTFIT
+    if key in _F: return _F[key]
+    P = LOOKS[look]; O = OF()
+    if O.get('shirt'): shirt, shirt_arm = plaid('fm_shirt_' + key, O['shirt'], f=O.get('check', 135.0)), plaid('fm_shirtarm_' + key, O['shirt'], f=O.get('check', 135.0), axes=('X', 'Z'))
+    elif O.get('knit'): shirt = shirt_arm = mat('fm_knit_' + key, O['knit'], rough=0.95, sheen=0.5, bump=0.6, bump_scale=420)
+    elif O.get('plain'): shirt = shirt_arm = mat('fm_plain_' + key, O['plain'], rough=0.85, sheen=0.25, bump=0.2, bump_scale=300)
+    else: shirt, shirt_arm = plaid('fm_shirt_' + look, P['shirt']), plaid('fm_shirtarm_' + look, P['shirt'], axes=('X', 'Z'))
     d = dict(
         skin=mat('fm_skin_' + look, P['skin'], rough=0.55, spec=0.3, sss=0.25),
         nose=mat('fm_nose_' + look, P['skin'], rough=0.5, spec=0.35, sss=0.3, ramp=[(0, P['skin']), (1, P['blush'])]),
         hair=mat('fm_hair_' + look, P['hair'], rough=0.55, spec=0.35, sheen=0.3, bump=0.25, bump_scale=90),
-        shirt=plaid('fm_shirt_' + look, P['shirt']),
-        shirt_arm=plaid('fm_shirtarm_' + look, P['shirt'], axes=('X', 'Z')),
+        shirt=shirt, shirt_arm=shirt_arm,
         denim=mat('fm_denim_' + look, P['denim'], rough=0.85, spec=0.15, bump=0.35, bump_scale=260, var=0.0),
         stitch=mat('fm_stitch', '#e9b44c', rough=0.6),
         brass=mat('fm_brass', '#d9a441', rough=0.3, metal=0.8, spec=0.6),
         boots=mat('fm_boots_' + look, P['boots'], rough=0.3, spec=0.6, coat=0.3),
         sole=mat('fm_sole', '#4a3a2c', rough=0.8),
         hat=mat('fm_hat', P['hat'], rough=0.8, spec=0.15, grain=0.35, grain_scale=(30, 30, 3)),
-        band=mat('fm_band_' + look, P['band'], rough=0.6),
+        band=mat('fm_band_' + key, O.get('band', P['band']), rough=0.6),
         white=mat('fm_white', '#fbf8f2', rough=0.25, spec=0.6, coat=0.2),
         iris=mat('fm_iris_' + look, P['iris'], rough=0.2, spec=0.6),
         pupil=mat('fm_pupil', '#0a0706', rough=0.2, spec=0.6),
@@ -68,7 +83,7 @@ def mats(look):
         teeth=mat('fm_teeth', '#fbf6ec', rough=0.3, spec=0.5),
         tongue=mat('fm_tongue', '#e06d78', rough=0.45, sss=0.2),
     )
-    _F[look] = d; return d
+    _F[key] = d; return d
 
 
 # ------------------------------------------------------------------ poses and faces
@@ -260,6 +275,24 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
         o = curve_line_world('strap', strap, 0.016, Mt['denim'], chest)
         o.data.bevel_resolution = 2
         b = sphere('button', 0.012, tuple(a + Vector((0.003, 0, -0.004))), (0.5, 1, 1), m=Mt['brass'], parent=chest, seg=16, rings=10)
+    O = OF()
+    if O.get('rosette'):                                           # a prize rosette pinned on the bib
+        rp, rn = surfT(Vector((1.0, 0.03 * 6, 0.075 * 3)).normalized(), origin=(0, 0.03, 0.075))
+        B = HC.basis(rp + rn * 0.008, Vector((0, 0, 1)), rn)
+        red = mat('fm_rosette', '#c8372d', rough=0.5, sheen=0.3); gd = mat('fm_rosgold', '#f2c14e', rough=0.3, metal=0.8)
+        for i in range(12):
+            a = i / 12 * math.tau
+            o = sphere('pleat', 1.0, (0, 0, 0), m=red, parent=chest, seg=10, rings=6)
+            o.matrix_basis = B @ Matrix.Translation(Vector((math.sin(a) * 0.022, 0.002, math.cos(a) * 0.022))) @ Matrix.Diagonal((0.014, 0.006, 0.014, 1))
+        o = sphere('roscentre', 1.0, (0, 0, 0), m=gd, parent=chest, seg=16, rings=10); o.matrix_basis = B @ Matrix.Translation(Vector((0, 0.008, 0))) @ Matrix.Diagonal((0.017, 0.006, 0.017, 1))
+        for sd in (1, -1):
+            o = sphere('rostail', 1.0, (0, 0, 0), m=red, parent=chest, seg=10, rings=6)
+            o.matrix_basis = B @ Matrix.Translation(Vector((-0.045, -0.002, sd * 0.012))) @ Matrix.Rotation(sd * 0.25, 4, 'Y') @ Matrix.Diagonal((0.035, 0.004, 0.011, 1))
+    if O.get('scarf'):                                             # a cowboy's neckerchief
+        sm_ = mat('fm_scarf', O['scarf'], rough=0.7, sheen=0.3, bump=0.2, bump_scale=200)
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.078, minor_radius=0.026, location=(0, 0, 0)); tor = bpy.context.object
+        tor.parent = chest; tor.location = (0.005, 0, 0.268); tor.data.materials.append(sm_); bpy.ops.object.shade_smooth()
+        o = sphere('scarftip', 1.0, (0.088, 0, 0.215), (0.02, 0.05, 0.05), (0, math.radians(-20), 0), m=sm_, parent=chest, seg=16, rings=10)
     pk = on_torso(0.0, 0.04, 0.003)
     box('pocket', (0.012, 0.075, 0.05), tuple(pk), (0, math.radians(-8), 0), Mt['denim'], bevel=0.006, parent=chest)
     # ---- head
@@ -429,7 +462,69 @@ def hair(look, hd, hr, surf, Mt):
         metaball_mesh('plaitend', [('ELLIPSOID', tuple(tip + Vector((0.004, 0, -0.03))), 0.016 * K, (0.9, 0.9, 1.5), 2.0)], res=0.004, m=Mt['hair'], parent=hd)
 
 
+def dome(name, centre, scale, zcut, m, parent, thick=0.006):
+    """The top of a squashed sphere, cut off at height zcut (in the parent's frame), with a little thickness."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=24, radius=1.0)
+    for v in bm.verts: v.co = Vector((centre[0] + v.co.x * scale[0], centre[1] + v.co.y * scale[1], centre[2] + v.co.z * scale[2]))
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < zcut], context='VERTS')
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); o.parent = parent
+    sm = o.modifiers.new('s', 'SOLIDIFY'); sm.thickness = thick; subsurf(o, 1)
+    for p in o.data.polygons: p.use_smooth = True
+    return o
+
+
+def brim_mesh(name, r0, r1, m, parent, z=0.012, droop=0.026, curl=0.0, wave=0.006, thick=0.012):
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rings = []
+    for k in range(6):
+        f = k / 5; r = r0 + (r1 - r0) * f
+        rings.append([bm.verts.new((math.cos(a) * r, math.sin(a) * r * 0.96, -droop * f * f + wave * math.cos(2 * a) * f + curl * abs(math.sin(a)) ** 2 * f * f)) for a in [i / 64 * math.tau for i in range(64)]])
+    for k in range(5):
+        for i in range(64):
+            j = (i + 1) % 64; bm.faces.new((rings[k][i], rings[k][j], rings[k + 1][j], rings[k + 1][i]))
+    bm.to_mesh(me); bm.free()
+    br = link(bpy.data.objects.new(name, me)); setmat(br, m); br.parent = parent; br.location = (0, 0, z)
+    sm = br.modifiers.new('s', 'SOLIDIFY'); sm.thickness = thick; sm.offset = 0; subsurf(br, 2)
+    for p in br.data.polygons: p.use_smooth = True
+    return br
+
+
+def flower(h, c, petal, centre, s=1.0):
+    for i in range(6):
+        a = i / 6 * math.tau
+        sphere('petal', 1.0, tuple(c + Vector((0, math.cos(a) * 0.016 * s, math.sin(a) * 0.016 * s))), (0.006 * s, 0.013 * s, 0.008 * s), (a, 0, 0), m=petal, parent=h, seg=12, rings=8)
+    sphere('fcentre', 0.008 * s, tuple(c + Vector((0, 0.004, 0))), m=centre, parent=h, seg=12, rings=8)
+
+
 def hat(look, hd, hr, Mt):
+    O = OF(); kind = O.get('hat', 'straw')
+    if kind not in ('straw', 'sunhat'):
+        h = empty('hat', (-0.012, 0, hr * 0.64), (0, math.radians(HAT_TILT * 0.6), 0), hd); h.scale = (hr / 0.165,) * 3
+        col = O.get('hatcol', '#777777')
+        if kind == 'cap':                                          # tweed flat cap: a puffy, forward-swept crown and a short peak
+            tw = mat('fm_tweed', col, rough=0.9, sheen=0.4, bump=0.5, bump_scale=320, var=0.0)
+            dome('capcrown', (0.025, 0, -0.03), (0.19, 0.17, 0.11), -0.035, tw, h)
+            sphere('peak', 1.0, (0.165, 0, -0.03), (0.085, 0.15, 0.014), (0, math.radians(14), 0), m=tw, parent=h, seg=28, rings=12)
+            sphere('button', 0.012, (0.03, 0, 0.078), m=tw, parent=h, seg=10, rings=6)
+        elif kind == 'beanie':                                     # red bobble hat with a cream turn-up and stripe
+            red = mat('fm_wool', col, rough=0.95, sheen=0.5, bump=0.7, bump_scale=380); cream = mat('fm_wool2', O.get('hatcol2', '#f4ead9'), rough=0.95, sheen=0.5, bump=0.7, bump_scale=380)
+            dome('beaniecrown', (0, 0, -0.04), (0.16, 0.155, 0.14), -0.03, red, h)
+            cyl('turnup', 0.166, 0.055, (0, 0, -0.012), (0, 0, 0), cream, verts=40, r2=0.163, bevel=0.01, parent=h)
+            cyl('stripe', 0.15, 0.022, (0, 0, 0.045), (0, 0, 0), cream, verts=40, r2=0.135, bevel=0.004, parent=h)
+            sphere('bobble', 0.045, (0, 0, 0.11), m=cream, parent=h, seg=24, rings=16)
+        elif kind == 'cowboy':                                     # brown felt cowboy hat: creased crown, brim curled up at the sides
+            felt = mat('fm_felt', col, rough=0.8, sheen=0.3, bump=0.2, bump_scale=200)
+            cyl('crown', 0.12, 0.12, (0, 0, 0.06), (0, 0, 0), felt, verts=40, r2=0.105, bevel=0.025, parent=h)
+            for sd in (1, -1): sphere('crease', 1.0, (0, sd * 0.042, 0.118), (0.1, 0.06, 0.03), m=felt, parent=h, seg=24, rings=12)
+            brim_mesh('brim', 0.11, 0.27, felt, h, droop=0.02, curl=0.09, wave=0.0)
+            cyl('band', 0.122, 0.022, (0, 0, 0.022), (0, 0, 0), Mt['band'], verts=40, r2=0.12, bevel=0.004, parent=h)
+        elif kind == 'tophat':                                     # black top hat with a red band
+            sat = mat('fm_satin', col, rough=0.3, spec=0.6, sheen=0.4)
+            cyl('crown', 0.104, 0.22, (0, 0, 0.14), (0, 0, 0), sat, verts=40, r2=0.11, bevel=0.012, parent=h)
+            brim_mesh('brim', 0.095, 0.19, sat, h, z=0.035, droop=0.004, curl=0.03, wave=0.0, thick=0.01)
+            cyl('band', 0.106, 0.035, (0, 0, 0.058), (0, 0, 0), Mt['band'], verts=40, r2=0.106, bevel=0.003, parent=h)
+        return
     h = empty('hat', (-0.012, 0, hr * 0.64), (0, math.radians(HAT_TILT), 0), hd); h.scale = (hr / 0.165,) * 3
     crown = cyl('crown', 0.128, 0.105, (0, 0, 0.06), (0, 0, 0), Mt['hat'], verts=40, r2=0.112, bevel=0.03, parent=h)
     subsurf(crown, 1)
@@ -438,7 +533,7 @@ def hat(look, hd, hr, Mt):
     bmesh.ops.create_circle(bm, cap_ends=False, segments=64, radius=1.0)
     rings = []
     for k in range(6):
-        r = 0.115 + (0.27 - 0.115) * k / 5
+        r = 0.115 + ((0.33 if OF().get('hat') == 'sunhat' else 0.27) - 0.115) * k / 5
         rings.append([bm.verts.new((math.cos(a) * r, math.sin(a) * r * 0.96, -0.012 * (k / 5) ** 2 * (1.6 if look == 'm' else 2.4) * 2.2 + 0.006 * math.cos(2 * a) * (k / 5))) for a in [i / 64 * math.tau for i in range(64)]])
     for v in list(bm.verts):
         if not any(v in r for r in rings): bm.verts.remove(v)
@@ -450,13 +545,12 @@ def hat(look, hd, hr, Mt):
     sm = br.modifiers.new('s', 'SOLIDIFY'); sm.thickness = 0.012; sm.offset = 0; subsurf(br, 2)
     for p in br.data.polygons: p.use_smooth = True
     band = cyl('band', 0.129, 0.028, (0, 0, 0.026), (0, 0, 0), Mt['band'], verts=40, r2=0.126, bevel=0.004, parent=h)
-    if look == 'f':                                                # a little flower on the band
-        fm = mat('fm_flower', '#fff3c4', rough=0.5); fc = mat('fm_flowerc', '#f2b632', rough=0.5)
-        c = Vector((0.06, 0.112, 0.03))
-        for i in range(6):
-            a = i / 6 * math.tau
-            sphere('petal', 1.0, tuple(c + Vector((0, math.cos(a) * 0.016, math.sin(a) * 0.016)) * 1.0), (0.006, 0.013, 0.008), (a, 0, 0), m=fm, parent=h, seg=12, rings=8)
-        sphere('fcentre', 0.008, tuple(c + Vector((0, 0.004, 0))), m=fc, parent=h, seg=12, rings=8)
+    fc = mat('fm_flowerc', '#f2b632', rough=0.5)
+    if OF().get('hat') == 'sunhat':                                # a garden-party sun hat: a bunch of flowers on the band
+        for c, col in ((Vector((0.07, 0.105, 0.03)), '#fff3c4'), (Vector((0.025, 0.125, 0.035)), '#f08bb0'), (Vector((0.105, 0.075, 0.025)), '#ffffff'), (Vector((-0.02, 0.127, 0.03)), '#c9a3f0')):
+            flower(h, c, mat('fm_fl_' + col, col, rough=0.5), fc, 1.15)
+    elif look == 'f':                                              # a little flower on the band
+        flower(h, Vector((0.06, 0.112, 0.03)), mat('fm_flower', '#fff3c4', rough=0.5), fc)
 
 
 # ------------------------------------------------------------------ props
@@ -600,4 +694,4 @@ if __name__ == '__main__':
             cams = [o for o in bpy.data.objects if o.type == 'CAMERA']
             for c in cams: bpy.data.objects.remove(c)
             camera(scn, tuple(tgt + Vector((dx, dy, 0.12)) * 8), tuple(tgt), ortho=float(os.environ.get('ORTHO', 1.75)))
-            render(scn, 'fm_%s_%s_%s' % (look, pose, vname), R_, R_, samples, transparent=True)
+            render(scn, 'fm_%s%s_%s_%s' % (look, '' if OUTFIT == 'classic' else '_' + OUTFIT, pose, vname), R_, R_, samples, transparent=True)

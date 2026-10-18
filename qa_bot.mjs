@@ -12,7 +12,7 @@ await page.locator('#sheetClose').click(); await page.waitForTimeout(200);
 const DAYS = +(process.env.DAYS || 14), EVERY = +(process.env.EVERY || 15);
 const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => {
   const s = () => g.state, MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
-  const log = [], bad = [], seen = new Set(), counts = {};
+  const log = [], bad = [], seen = new Set(), counts = {}, trustSeen = new Map();
   const note = (k) => { counts[k] = (counts[k] || 0) + 1; };
   const flag = (msg) => { if (!seen.has(msg)) { seen.add(msg); bad.push(`day ${(s().gt / DAY).toFixed(2)}: ${msg}`); } };
   function check() {
@@ -20,6 +20,7 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
     if (!(st.coins >= 0) || !isFinite(st.coins)) flag('coins invalid ' + st.coins);
     if (g.basketCount() > st.basketCap) flag('basket over cap ' + g.basketCount() + '/' + st.basketCap);
     if (st.inc.items.length > st.inc.slots) flag('incubator over slots');
+    for (const k of ['escape', 'finds', 'fox', 'foxBrave', 'tree']) { const v = g.sink && g.sink[k]; }
     for (const c of st.coops) {
       const n = g.birdsIn(c).length; if (n > g.COOP_CAP) flag(`coop ${c.id} over cap ${n}`);
       if (g.nestCount(c) > g.NEST_CAP) flag(`nest over cap ${g.nestCount(c)}`);
@@ -30,9 +31,21 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
       for (const k in b.traits) if (!(b.traits[k] >= 1 && b.traits[k] <= 100)) flag('trait out of range ' + k + ' ' + b.traits[k]);
       if (b.home !== 'pasture' && !g.state.coops.some(c => c.id === b.home)) flag('bird in missing coop');
       if (!isFinite(g.value(b))) flag('value NaN');
+      if (!g.PERS_IDS.includes(b.pers)) flag('bad personality ' + b.pers);
+      if (b.sex === 'r' && b.pers === 'mum') flag('rooster good mum');
+      if (b.out && b.hide) flag('out and hiding at once');
+      if (b.out && b.pers !== 'rebel') flag('non-rebel out');
+      if (b.out > st.gt + 3 * HOUR + 1) flag('out too long');
+      if ((b.happy || 0) > st.gt + g.PR.happy + 1) flag('happy too long');
+      if (!Number.isInteger(b.trust) || b.trust < 0 || b.trust > 15) flag('bad trust ' + b.trust);
+      if (trustSeen.has(b.id) && b.trust < trustSeen.get(b.id)) flag('trust went down'); trustSeen.set(b.id, b.trust || 0);
+      if (b.pers === 'rebel' && !b.out && !b.hide && b.happy > st.gt && b.nextOut && b.nextOut < b.happy) flag('rebel may escape while happy');
+      if (b.out && b.happy > st.gt && b.pers === 'rebel' && b.happy - g.PR.happy > b.out - 3 * HOUR) flag('rebel escaped after a cuddle');
     }
     for (const k in st.feed) if (st.feed[k] < 0) flag('negative feed store');
     if (st.level !== g.levelOf(st.xp)) flag('level mismatch');
+    if (st.decor.some((x, i, arr) => !g.DECOR[x] || arr.indexOf(x) !== i)) flag('bad decorations');
+    if (!st.farmer.outfits.includes(st.farmer.outfit)) flag('wearing an outfit not bought');
   }
   function play() {
     const st = s();
@@ -46,6 +59,16 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
     for (const c of st.coops) if (g.feederTotal(c) < 30) {
       if (st.feed.basic < 40 && st.coins >= g.FEEDS.basic.price) { g.actBuyFeed('basic'); note('bought feed'); }
       if (st.feed.basic > 0) g.actFill(c, 'basic'); else note('could not feed (no coins)');
+    }
+    // cuddles, about half the time: calm a frightened coop, settle a brave bird, cheer a sulking diva, keep a rebel in
+    if (Math.random() < .5) for (const c of st.coops) {
+      const bs = () => g.birdsIn(c).filter(b => g.isGrown(b) && g.cuddleOk(b));
+      if (c.fright > st.gt && bs().length) { const x0 = st.xp; g.actCuddle(bs()[0]); note('cuddle: calmed the fox fright'); if (c.fright > st.gt || st.xp - x0 < 5) flag('fright not calmed'); }
+      const brave = bs().find(b => b.pers === 'brave');
+      if (c.settle > st.gt && brave) { g.actCuddle(brave); note('cuddle: brave welcomed a newcomer'); if (c.settle > st.gt) flag('settle not ended'); }
+      for (const b of bs()) if (b.pers === 'diva' && b.sex === 'h' && c.last === 'basic') { g.actCuddle(b); note('cuddle: diva'); if (g.cuddleOk(b)) flag('cuddled twice'); }
+      for (const b of bs()) if (b.pers === 'rebel') { g.actCuddle(b); note('cuddle: rebel'); }
+      for (const b of g.birdsIn(c)) if (b.happy > st.gt && g.actCuddle(b)) flag('cuddle allowed while happy');
     }
     // flock: one breeding rooster per coop, best one; sell the rest once grown; sell retired birds
     for (const c of st.coops) {
@@ -72,6 +95,11 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
       if (o.sex === 'r' && hasRoo) continue;
       if (st.coins >= g.offerPrice(o) + reserve) { g.actBuyOffer(i); note('bought ' + o.breed + ' ' + o.sex); }
     }
+    // things to buy: once the farm is growing, spend spare coins on decorations and outfits (cheapest first), keeping a buffer
+    if (st.coops.length >= 6) {
+      for (const id of g.DECOR_IDS) { const D = g.DECOR[id]; if (!st.decor.includes(id) && st.level >= D.lvl && st.coins >= D.price * 2 + 500) { const x0 = st.xp; g.actBuyDecor(id); note('bought decoration ' + id); if (st.xp - x0 < g.shopXp(D.price)) flag('decoration XP missing'); } }
+      for (const id of g.OUTFIT_IDS) { const O = g.OUTFITS[id]; if (!st.farmer.outfits.includes(id) && st.level >= O.lvl && st.coins >= O.price * 2 + 500) { g.actBuyOutfit(id); note('bought outfit ' + id); } }
+    }
     // shows
     for (const sh of st.shows.list) {
       if (sh.entry) continue;
@@ -83,12 +111,14 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
   const steps = Math.round(DAYS * DAY / (EVERY * MIN));
   let lastXp = 0, lastXpT = 0, lastDay = -1;
   for (let i = 0; i < steps; i++) {
-    try { g.advance(EVERY * MIN); g.checkTrophies(); check(); play(); check(); } catch (e) { flag('ERROR ' + e.message + ' ' + (e.stack || '').split('\n')[1]); }
+    try { const sk = { any: false }; g.setSink(sk); g.advance(EVERY * MIN); g.setSink(null); for (const k of ['escape', 'finds', 'fox', 'foxBrave', 'tree', 'hide']) if (sk[k]) counts['ev_' + k] = (counts['ev_' + k] || 0) + sk[k]; g.checkTrophies(); check(); play(); check(); } catch (e) { flag('ERROR ' + e.message + ' ' + (e.stack || '').split('\n')[1]); }
     const st = s();
     if (st.xp > lastXp) { lastXp = st.xp; lastXpT = st.gt; } else if (st.gt - lastXpT > 12 * HOUR) flag('no progress for 12h at level ' + st.level);
     const d = Math.floor(st.gt / DAY);
     if (d !== lastDay) { lastDay = d; log.push({ day: d, lvl: st.level, xp: st.xp, coins: Math.round(st.coins), coops: st.coops.map(c => c.breed).join(','), birds: st.birds.length, plots: st.plots, eggs: st.stats.eggs, hatched: st.stats.hatched, wins: st.stats.wins.join('/'), trophies: st.trophies.length }); }
   }
+  counts.decor = s().decor.length; counts.outfits = s().farmer.outfits.length - 1;
+  counts.friends = s().birds.filter(b => g.trustLvl(b) === 3).length; counts.trusting = s().birds.filter(b => g.trustLvl(b) === 2).length; counts.trophyFriend = s().trophies.includes('m_friend');
   return { log, bad, counts };
 }), [DAYS, EVERY]);
 console.log(JSON.stringify(out, null, 1));

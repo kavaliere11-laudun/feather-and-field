@@ -16,3 +16,4 @@ Expressions: happy, joyful, hungry, sleepy, surprised, sad, grumpy, in love, mis
 
 Nunito is used under the SIL Open Font License.
 - `farmer_sprites.py` renders the farmer's frames for the web game (walk, walking with a torch, idle, wave, telling off, worried, feeding, and crouching to stroke a hen for a cuddle), with the same camera and lights as the bird sprites; `farmer_pack.py` packs them into the game's sprite atlases and makes the two portraits for the "Choose your farmer" screen.
+- Outfits: `OUTFIT=market|garden|winter|rodeo|show` (flat cap and blue check; flowery sun hat and yellow gingham; bobble hat and green jumper; cowboy hat, chambray shirt and neckerchief; top hat, white shirt and a prize rosette). `run_outfits.sh` renders the portraits and every game frame in each outfit, for both looks.

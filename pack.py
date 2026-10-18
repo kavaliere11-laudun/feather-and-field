@@ -116,6 +116,7 @@ for k in kinds:
 if os.path.exists(f'{R}/r/snd/chickens.mp3'):
     os.makedirs(f'{OUT}/img/snd', exist_ok=True)
     shutil.copy(f'{R}/r/snd/chickens.mp3', f'{OUT}/img/snd/chickens.mp3'); shutil.copy(f'{R}/r/snd/sheet.json', f'{OUT}/img/snd/chickens.json')
+import farmer_pack; print('farmer', farmer_pack.pack(SPR))      # the farmer's sprites ride in the same sprite table
 if os.environ.get('BIRDS_ONLY'):          # quick repack: only the birds changed; keep everything else from the last full pack
     data = json.load(open(f'{OUT}/data.json')); data['spr'] = SPR; data['cards'] = sorted(CARDS)
     json.dump(data, open(f'{OUT}/data.json', 'w'), separators=(',', ':'))
@@ -199,5 +200,6 @@ ov = [300.0, 335.67]
 data = {'geom': {k: g[k] for k in ('size', 'ez', 'slots', 'pasture', 'pond', 'house', 'stall', 'tufts', 'frogSpots', 'stream', 'streams') if k in g}, 'ov': ov,
         'spr': SPR, 'cards': sorted(CARDS), 'trees': tmeta, 'props': pmeta, 'fence': FENCE, 'tiles': TILES}
 if os.environ.get('BRIDGES'): data['geom']['bridges'] = json.load(open(os.environ['BRIDGES']))
+import decor_pack; print('decor', decor_pack.pack(data))      # decorations the player can buy
 json.dump(data, open(f'{OUT}/data.json', 'w'), separators=(',', ':'))
 print('packed', len(SPR), 'sprites', len(CARDS), 'cards', os.path.getsize(f'{OUT}/data.json'), 'bytes of data')

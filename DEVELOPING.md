@@ -39,6 +39,12 @@ Python needs Pillow and numpy. Playwright with Chromium is used for tests (`/opt
   - `render_parts.py`: the farm map, rendered in strips from `r/map7/scene.blend`.
   - Overlays and props: `coops3.py`, `bridges3.py`, and others.
   - Bird poses: stand, walk0..7, peck, look, scratch, crow, turn1..3 (yaw −22.67/−45.33/−68), face1..3 (head turned to camera for close-ups), card.
+- The farmer and things to buy:
+  - `stylized/character/farmer.py` and `farmer_sprites.py` (in the workspace they sit in `sty/`): the farmer and every frame the game uses. `OUTFIT=market|garden|winter|rodeo|show` dresses the farmer in a bought outfit; `run_outfits.sh` renders every frame in every outfit, plus the portraits (about 50 minutes).
+  - `farmer_pack.py`: packs them into `game2/img/atlas/farmer_<look>[_<outfit>].webp` and makes `game2/img/farmer/card_*.webp`.
+  - `decor_sprites.py` (run with `STYLE=fv`, like the map): the eight decorations, seen from the map camera. The windmill's sails are a separate face-on picture.
+  - `decor_pack.py`: packs them into `game2/img/atlas/decor.webp` (key `decor` in `data.json`) and makes the shop pictures `game2/img/decor/<id>.webp`.
+  - Where each decoration stands on the farm, and the prices, are in `ff.html` (`DECOR`, `OUTFITS`).
 - Resumable render scripts (they skip pictures already on disk): `render_turns.sh`, `render_chicks2.sh`, `render_faces.sh`, `render_map2x.sh`, `resume_v2.sh`.
 - `r/`: render outputs that `pack.py` reads:
   - `spr2/`: v2 adult frames;
@@ -60,6 +66,7 @@ URL=http://localhost:8766/ node qa_ui.mjs r/qa          # screen-by-screen walkt
 ./qa_run.sh 30 1440             # simulated player: 30 game days, one visit a day; prints a progression table
 ```
 
+Feature checks (each prints OK/BAD lines and page errors): `qa_pers.mjs` (personalities), `qa_farmer.mjs`, `qa_cuddle.mjs`, `qa_trust.mjs`, `qa_shop.mjs` (decorations and outfits).
 Other walkthroughs: `qa_ux.mjs`, `qa_sale*.mjs`, `qa_move.mjs`, `qa_rename.mjs`, `qa_build.mjs`, `qa_filter.mjs`, `shot_live.mjs`. Test at 402×874, deviceScaleFactor 2, touch, in both `en-GB` and `fr-FR`.
 
 Repacking images after renders:

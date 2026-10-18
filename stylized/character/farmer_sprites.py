@@ -78,8 +78,9 @@ def torch_held(hand_world, fwd):
 if __name__ == '__main__':
     samples = int(sys.argv[-1]) if sys.argv[-1].isdigit() else 16
     look = os.environ.get('LOOK', 'm')
+    key = look if FM.OUTFIT == 'classic' else look + '_' + FM.OUTFIT        # an outfit's frames get their own files
     names = os.environ.get('FRAMES', ','.join(FRAMES)).split(',')
-    mp = os.path.join(OUTD, 'meta_%s.json' % look)
+    mp = os.path.join(OUTD, 'meta_%s.json' % key)
     meta = json.load(open(mp)) if os.path.exists(mp) else {}
     for name in names:
         spec = FRAMES[name]
@@ -97,10 +98,10 @@ if __name__ == '__main__':
         scn.cycles.max_bounces = 4; scn.render.film_transparent = True
         scn.render.resolution_x = scn.render.resolution_y = RES; scn.render.resolution_percentage = 100
         scn.view_settings.view_transform = 'Standard'; scn.view_settings.look = 'None'; scn.view_settings.exposure = -0.15
-        out = os.path.join(OUTD, '%s_%s.png' % (look, name)); scn.render.filepath = out
+        out = os.path.join(OUTD, '%s_%s.png' % (key, name)); scn.render.filepath = out
         bpy.context.view_layer.update()
         u, v, _ = world_to_camera_view(scn, cam, Vector((0, 0, 0)))
         meta[name] = {'ox': round(u * RES, 2), 'oy': round((1 - v) * RES, 2), 'ppu': round(RES / ORTHO, 3)}
         bpy.ops.render.render(write_still=True)
-        print('RENDERED', look, name)
+        print('RENDERED', key, name)
         json.dump(meta, open(mp, 'w'), indent=0)
