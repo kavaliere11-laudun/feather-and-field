@@ -248,7 +248,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '18 Oct 2026 19:03';
+const BUILD = '18 Oct 2026 19:11';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -1958,7 +1958,7 @@ function drawNest(p, front) {
 }
 function speech(a) {
   const chick = stage(a.b) === 'chick';
-  ctx.save(); const K = uiK(); ctx.translate(a.sx + 4, a.sy - (chick ? 34 : 70) - (ui.grades ? 24 : 0)); ctx.scale(K, K);
+  ctx.save(); const K = uiK(); ctx.translate(a.sx + 4, a.sy - (chick ? 34 : 70) - (ui.grades ? 24 : 0) - (a.b.out ? 26 * K : 0)); ctx.scale(K, K);
   ctx.font = '700 15px Nunito, system-ui, sans-serif';
   const w = ctx.measureText(a.sayText).width + 16, hx = 0, hy = -12;
   ctx.globalAlpha = Math.min(1, a.say * 3);
