@@ -19,12 +19,13 @@ PAL = {
 # - outer corner lower: sad), closed = 'happy' (^ ^) or 'sleepy' (- -) closed-eye line, look = (sideways, up/down) pupil shift,
 # pupil = pupil size, eye = eye size, brow = brow slant (+ worried/sad, - cross), brow_h = brow height, beak = opening (radians),
 # blush 0..1, comb = flop 0..1, head = (roll, pitch, yaw) degrees (+pitch looks down), fluff = body puff, fx = little effect
+NEUTRAL = dict(up=0.6, lo=-0.7, tilt=0, look=(0.0, 0.0), pupil=1.0, brow=0.0, brow_h=0.0, beak=0.0, blush=0.0, head=(0, 0, 0))   # every expression starts from this
 EXPR = {
     'happy':     dict(up=0.95, lo=-0.68, smile=0.5, tilt=0, look=(0.05, 0.05), pupil=1.0, brow=0.0, brow_h=0.55, beak=0.4, blush=0.7, head=(9, -10, 0), fx='notes'),
     'joyful':    dict(closed='happy', brow=0.15, brow_h=0.35, beak=0.55, blush=0.95, head=(-8, -16, 0), fx='sparkles'),
     'hungry':    dict(up=0.62, lo=-0.85, tilt=-12, look=(0.3, 0.62), brow=0.5, brow_h=0.35, beak=0.32, blush=0.0, head=(4, -14, -4), fx='thought'),
     'sleepy':    dict(closed='sleepy', brow=0.1, brow_h=-0.25, beak=0.0, blush=0.3, comb=0.45, head=(16, 10, 0), fx='zzz'),
-    'surprised': dict(up=1.0, lo=-1.0, eye=1.15, pupil=0.72, brow=0.0, brow_h=0.85, beak=0.48, blush=0.0, head=(0, -12, 0), fluff=1.04, fx='exclaim'),
+    'surprised': dict(up=1.0, lo=-1.0, eye=1.2, pop=0.004, pupil=0.7, brow=0.0, brow_h=0.85, beak=0.48, blush=0.0, head=(0, -12, 0), fluff=1.04, fx='exclaim'),
     'sad':       dict(up=0.3, lo=-0.75, tilt=-26, look=(0.1, -0.45), brow=0.7, brow_h=0.1, beak=0.0, blush=0.0, comb=0.85, head=(-6, 14, 0), fx='tear'),
     'grumpy':    dict(up=0.12, lo=-0.42, tilt=28, look=(0.15, 0.0), brow=-0.75, brow_h=-0.25, beak=0.06, blush=0.0, head=(0, 6, 8), fx='puffs'),
     'mischief':  dict(up=0.42, lo=-0.62, smile=0.3, tilt=10, look=(0.35, 0.1), wink=-1, brow_side={-1: (0.1, 0.15), 1: (-0.25, 0.8)}, beak=0.26, tongue_out=True,
@@ -297,7 +298,7 @@ def head_mesh(name, hs, m, parent):
 
 def build(key='rir_h', loc=(0, 0, 0), yaw=0.0, expr='happy', seed=1):
     random.seed(seed)
-    X = dict(EXPR['happy']); X.update(EXPR[expr] if isinstance(expr, str) else expr)
+    X = dict(NEUTRAL); X.update(EXPR[expr] if isinstance(expr, str) else expr)
     P = PAL[key]; Mt = M(key); rooster = key.endswith('_r')
     root = empty('hen_' + key, loc, (0, 0, yaw))
     body_rig = empty('body', (0, 0, 0), (0, 0, 0), root)
@@ -327,7 +328,7 @@ def build(key='rir_h', loc=(0, 0, 0), yaw=0.0, expr='happy', seed=1):
     for s in (1, -1):
         Ec = Vector((0.05, s * 0.028, 0.014)); n = Ec.normalized()
         sp_, _ = surf(n)
-        ic = sp_ - n * 0.0078                                      # iris centre, a little sunk into the head
+        ic = sp_ - n * (0.0078 - X.get('pop', 0.0))                                      # iris centre, a little sunk into the head
         _EYES[s] = ic.copy()
         up = Vector((0, 0, 1)); Zl = (up - n * up.dot(n)).normalized(); Xl = n.cross(Zl)
         inner = Xl * s                                            # towards the beak
