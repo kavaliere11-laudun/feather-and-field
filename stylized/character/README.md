@@ -9,4 +9,9 @@ The expressive hen and rooster, built in Blender (Python, bpy 5.x) from the shar
 
 Expressions: happy, joyful, hungry, sleepy, surprised, sad, grumpy, in love, mischievous (rebels), proud (good mums).
 
+- `farmer.py`: the farmer, in two looks (`LOOK=m` or `LOOK=f`), with a posable body and the same kind of face rig plus a mouth.
+  - `MODE=mood MOOD=panic RES=800 python farmer.py 48` renders one of the six moods (happy, telloff, worried, panic, cuddle, feed).
+  - `LOOK=f POSE=turn EXPR=neutral VIEWS=front,34,side,back python farmer.py 48` renders a turnaround; `MODE=lineup` renders both farmers next to a hen.
+- `farmer_sheets.py`: lays out `sheets/sheet_farmer.png` and `sheets/sheet_farmer_moods.png`.
+
 Nunito is used under the SIL Open Font License.
