@@ -253,7 +253,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '18 Oct 2026 22:20';
+const BUILD = '18 Oct 2026 22:41';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -298,9 +298,13 @@ const PR = {
   settle: 6 * HOUR, settleLay: 1.25,                                  // brave: a newcomer in her coop slows laying 20% for 6 hours
   outEvery: [18 * HOUR, 30 * HOUR], outFor: [1 * HOUR, 3 * HOUR], firstOut: [1 * HOUR, 8 * HOUR], nightCatch: HOUR,
   fright: 4 * HOUR, foxEvery: [2 * DAY, 4 * DAY], foxTakes: 3, protestAfter: 2 * HOUR, thanksXp: 5, foxXp: 10,
-  happy: 6 * HOUR, cuddleXp: 5,                                     // a cuddle: happy for 6 hours; calming a frightened coop or a brave bird earns 5 XP
+  happy: 6 * HOUR, cuddleXp: 5,
+  trustAt: [3, 8, 15], trustValue: .02, trustOut: [1, 1.2, 1.4, 1.7], trustFind: [.5, .6, .7, .8], friendXp: 20,   // trust: cuddles to each level; +2% value a level; rebels escape less and find more
+                                     // a cuddle: happy for 6 hours; calming a frightened coop or a brave bird earns 5 XP
 };
 const PERS_VALUE = { mum: 1.1, glutton: 1.15, brave: 1.05 };
+const trustLvl = b => { const n = (b && b.trust) || 0; return n >= PR.trustAt[2] ? 3 : n >= PR.trustAt[1] ? 2 : n >= PR.trustAt[0] ? 1 : 0; };
+const outGap = b => adoptRnd(PR.outEvery) * PR.trustOut[trustLvl(b)];          // time to a rebel's next escape: longer the more she trusts the farmer
 
 // Silkie colours. show = can enter standard show classes. m = price multiplier. w = how often the market offers it.
 const SIL = {
@@ -407,6 +411,11 @@ en: {
   farmer_day:'{farmer} jogs after {name}: “Come back here, {name}!”', farmer_dusk:'{farmer} hurries after {name} before it gets dark.', farmer_night:'{farmer} runs out with a torch: “{name}! There’s a fox about!”',
   farmer_title:'Choose your farmer', farmer_note:'Your farmer looks after the hens: fills the feeders, gives cuddles, runs after runaways and keeps an eye out for the fox.', farmer_him:'Him', farmer_her:'Her', farmer_name:'Name',
   farmer_done:'Let’s go', farmer_default_m:'Arthur', farmer_default_f:'Rosie', farmer_hello:'Hello, {farmer}! The hens are waiting.', your_farmer:'Your farmer', change:'Change',
+  trust:'Trust', trust_lv0:'Shy', trust_lv1:'Friendly', trust_lv2:'Trusting', trust_lv3:'Best friend',
+  trust_next:'{n} more cuddles to {lv}', trust_next1:'1 more cuddle to {lv}', trust_max:'Best friends with {farmer}',
+  trust_value:'Worth {n}% more for being tame.', trust_rebel:'Escapes less often and brings back more finds.', trust_mum:'Her chicks hatch Friendly.', trust_greet:'Comes to the fence to greet {farmer}.',
+  trust_up1:'{name} is getting friendly with {farmer}.', trust_up2:'{name} trusts {farmer} now, and will come to the fence to say hello.', trust_up3:'{name} and {farmer} are best friends! +{n} XP',
+  will_miss:'{farmer} will miss {name}.', m_friend:'Become best friends with one of your birds',
   cuddle:'Cuddle', happy_for:'Happy after a cuddle: {t} left', happy_for_r:'Happy after a cuddle: {t} left',
   cuddle_go:'{farmer} gives {name} a cuddle.', cuddle_diva:'{farmer} gives {name} a cuddle: no more sulking for 6 hours.',
   cuddle_rebel:'{farmer} gives {name} a cuddle. Happy rebels stay put: no escapes for 6 hours.',
@@ -495,18 +504,23 @@ fr: {
   personality:'Caractère', filter_pers:'Filtrer par caractère', all_pers:'Tous les caractères',
   pers_mum:'Mère poule', pers_rebel:'Rebelle', pers_diva:'Diva', pers_glutton:'Gourmande', pers_glutton_r:'Gourmand', pers_brave:'Courageuse', pers_brave_r:'Courageux',
   pers_mum_d:'Plus d’œufs fécondés, des poussins meilleurs qui grandissent plus vite. Pond moins pendant qu’elle élève ses petits. Vaut 10 % de plus.',
-  pers_rebel_d:'Fait le mur environ une fois par jour et revient parfois avec une surprise. Pas d’œufs pendant l’escapade. Après un câlin, pas de fugue pendant 6 h.',
+  pers_rebel_d:'Fait le mur environ une fois par jour et revient parfois avec une surprise. Pas d’œufs pendant l’escapade. Après un câlin, pas de fugue pendant 6 h.',
   pers_diva_d:'Brille en concours (+8 %). Avec les granulés de ponte, boude et pond 15 % moins vite, sauf après un câlin.',
   pers_glutton_d:'Mange moitié plus, grossit une fois adulte et vaut 15 % de plus.',
-  pers_brave_d:'Chasse le renard la nuit et ramène les fugueurs. Grognon avec les nouveaux venus : le poulailler pond moins vite pendant 6 h, ou jusqu’à ce qu’on lui fasse un câlin. Vaut 5 % de plus.',
+  pers_brave_d:'Chasse le renard la nuit et ramène les fugueurs. Grognon avec les nouveaux venus : le poulailler pond moins vite pendant 6 h, ou jusqu’à ce qu’on lui fasse un câlin. Vaut 5 % de plus.',
   reveal_mum:'Ce poussin a tout d’une future mère poule.', reveal_rebel:'Ce poussin a l’air… aventureux !', reveal_diva:'Ce poussin prend déjà la pose.', reveal_glutton:'Ce poussin lorgne déjà la mangeoire.', reveal_brave:'Ce poussin n’a peur de rien.',
   escaped:'{name} a fait le mur ! Touchez le fugueur pour envoyer {farmer}.', escaped_night:'{name} a fait le mur en pleine nuit ! Touchez dans l’heure, avant le renard.', escaped_tag:'En fuite !', rebel_say:'Liberté !',
   farmer_day:'{farmer} court après {name} : « Reviens ici, {name} ! »', farmer_dusk:'{farmer} se dépêche de rattraper {name} avant la nuit.', farmer_night:'{farmer} sort avec une lampe : « {name} ! Il y a un renard ! »',
   farmer_title:'Choisissez votre personnage', farmer_note:'Votre personnage s’occupe des poules : remplit les mangeoires, fait des câlins, rattrape les fugueurs et surveille le renard.', farmer_him:'Lui', farmer_her:'Elle', farmer_name:'Prénom',
   farmer_done:'C’est parti', farmer_default_m:'Arthur', farmer_default_f:'Rose', farmer_hello:'Bonjour, {farmer} ! Les poules vous attendent.', your_farmer:'Votre personnage', change:'Changer',
+  trust:'Confiance', trust_lv0:'Farouche', trust_lv1:'Sociable', trust_lv2:'En confiance', trust_lv3:'Inséparable',
+  trust_next:'Encore {n} câlins pour : {lv}', trust_next1:'Encore 1 câlin pour : {lv}', trust_max:'Inséparable de {farmer}',
+  trust_value:'Apprivoisement : +{n} % de valeur.', trust_rebel:'Fugue moins souvent et rapporte plus de trouvailles.', trust_mum:'Ses poussins naissent sociables.', trust_greet:'Vient à la clôture saluer {farmer}.',
+  trust_up1:'{name} s’habitue à {farmer}.', trust_up2:'{name} fait confiance à {farmer} et viendra à la clôture dire bonjour.', trust_up3:'{name} et {farmer} sont inséparables ! +{n} XP',
+  will_miss:'{name} va manquer à {farmer}.', m_friend:'Devenir inséparable d’une de vos volailles',
   cuddle:'Faire un câlin', happy_for:'Heureuse après un câlin : encore {t}', happy_for_r:'Heureux après un câlin : encore {t}',
-  cuddle_go:'{farmer} fait un câlin à {name}.', cuddle_diva:'{farmer} fait un câlin à {name} : fini de bouder pour 6 h.',
-  cuddle_rebel:'{farmer} fait un câlin à {name} : pas de fugue pendant 6 h.',
+  cuddle_go:'{farmer} fait un câlin à {name}.', cuddle_diva:'{farmer} fait un câlin à {name} : fini de bouder pour 6 h.',
+  cuddle_rebel:'{farmer} fait un câlin à {name} : pas de fugue pendant 6 h.',
   cuddle_fox:'{farmer} fait un câlin à {name}, et le calme revient ({coop}) : la ponte reprend. +{n} XP',
   cuddle_brave:'{farmer} fait un câlin à {name} : le nouveau venu est adopté, la ponte redevient normale. +{n} XP',
   fright_hint:'Un câlin les calmera.', settle_hint:'Un câlin à {name} arrangera les choses.',
@@ -637,7 +651,7 @@ function value(b, peak) {            // peak: what the bird was worth in its pri
   const sx = b.sex === 'h' ? 1 : .85;
   const ch = 1 + .5 * Math.min(b.champ, 4);
   const line = 1 + .1 * Math.min(b.line || 0, 4);
-  return Math.max(1, Math.round(breedBase(b) * qMult(quality(b)) * st * sx * ch * line * (PERS_VALUE[b.pers] || 1)));
+  return Math.max(1, Math.round(breedBase(b) * qMult(quality(b)) * st * sx * ch * line * (PERS_VALUE[b.pers] || 1) * (1 + PR.trustValue * trustLvl(b))));
 }
 const sellPrice = b => Math.max(1, Math.round(value(b) * .8));
 // Adoption: retired birds wait in the pasture; now and then someone offers to adopt one. Offers are random (mostly modest,
@@ -673,7 +687,7 @@ function makeBird(o) {
     id: state.nextId++, name: o.name || randomName(o.sex), breed: o.breed, sex: o.sex, born: o.born, home: o.home,
     traits: o.traits, gen: o.gen || 1, sire: o.sire || null, dam: o.dam || null, line: o.line || 0,
     ribbons: [], champ: 0, seed: (Math.random() * 2 ** 31) | 0, nextLay: 0, entered: null, boost: 0,
-    pers: okPers(o.pers, o.sex) || rollPers(o.sex), fast: !!o.fast, out: 0, hide: 0, noLay: 0, nextOut: 0, clover: false, happy: 0,
+    pers: okPers(o.pers, o.sex) || rollPers(o.sex), fast: !!o.fast, out: 0, hide: 0, noLay: 0, nextOut: 0, clover: false, happy: 0, trust: clamp(Math.round(o.trust || 0), 0, PR.trustAt[2]),
   };
   if (o.breed === 'sil') { b.geno = o.geno; b.colour = silkieColour(o.geno); }
   return b;
@@ -691,6 +705,7 @@ function childSpec(sire, dam, nour = 0) {
   const r = Math.random();                    // personality: half the time the mother's, sometimes the father's, else a surprise
   spec.pers = okPers(r < .5 ? dam.pers : r < .7 ? sire.pers : null, spec.sex) || rollPers(spec.sex);
   if (dam.pers === 'mum') spec.fast = true;
+  if (dam.pers === 'mum' && trustLvl(dam) >= 2) spec.trust = PR.trustAt[0];      // a trusting good mum's chicks hatch Friendly
   return spec;
 }
 
@@ -813,6 +828,7 @@ function okSpec(s) {
   if (breed === 'sil') { o.geno = okGeno(s.geno, s.colour); o.colour = silkieColour(o.geno); }
   if (okPers(s.pers, o.sex)) o.pers = s.pers;
   if (s.fast === true) o.fast = true;
+  if (s.trust === PR.trustAt[0]) o.trust = PR.trustAt[0];
   return o;
 }
 function okEgg(e) { const child = okSpec(e && e.child); if (!child) return null; return { id: int(e.id, 0, 1e9, 0), child, sire: okParent(e.sire) || { name: '?', q: 40 }, dam: okParent(e.dam) || { name: '?', q: 40 }, laid: num(e.laid, -1e13, 1e13, 0) }; }
@@ -856,7 +872,7 @@ function sanitize(s) {
     if (breed === 'sil') { x.geno = okGeno(b.geno, b.colour); x.colour = silkieColour(x.geno); }
     // personality (older saves get one that stays the same every time they load), and a rebel's escapes, all clamped
     x.pers = okPers(b.pers, x.sex) || rollPers(x.sex, rngFrom(x.seed + 7)); x.fast = b.fast === true; x.clover = b.clover === true;
-    x.nextOut = num(b.nextOut, -1e13, o.gt + Math.max(PR.outEvery[1], PR.happy), 0); x.happy = num(b.happy, -1e13, o.gt + PR.happy, 0); x.noLay = num(b.noLay, -1e13, o.gt + DAY, 0);
+    x.nextOut = num(b.nextOut, -1e13, o.gt + PR.outEvery[1] * PR.trustOut[3], 0); x.happy = num(b.happy, -1e13, o.gt + PR.happy, 0); x.trust = int(b.trust, 0, PR.trustAt[2], 0); x.noLay = num(b.noLay, -1e13, o.gt + DAY, 0);
     const rebel = x.pers === 'rebel' && home !== 'pasture';
     x.out = rebel ? num(b.out, 0, o.gt + PR.outFor[1], 0) : 0; x.outNight = rebel && !!x.out && b.outNight === true; x.hide = rebel && !x.out ? num(b.hide, 0, o.gt + DAY, 0) : 0;
     if (home === 'pasture') {                 // adoption state: an offer can never be worth more than the bird in its prime
@@ -876,7 +892,7 @@ function sanitize(s) {
   const earnedXp = st0.eggs + XP.hatch * st0.hatched + XP.sell * st0.sold + 40 * st0.wins[0] + 25 * st0.wins[1] + 15 * st0.wins[2];
   o.xp = typeof s.xp === 'number' ? int(s.xp, 0, 1e9, 0) : earnedXp;
   o.level = levelOf(o.xp);
-  const TROPHY_IDS = ['m_first_sale', 'm_hatch10', 'm_coops', 'm_coops10', 'm_coops25', 'm_rare', 'm_allsil', 'm_aplus', 'm_perfect', 'm_village', 'm_county', 'm_national'];
+  const TROPHY_IDS = ['m_first_sale', 'm_hatch10', 'm_coops', 'm_coops10', 'm_coops25', 'm_rare', 'm_allsil', 'm_aplus', 'm_perfect', 'm_village', 'm_county', 'm_national', 'm_friend'];
   o.trophies = (Array.isArray(s.trophies) ? s.trophies : []).filter(x => TROPHY_IDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
   const KINDS = [...BREED_IDS.filter(k => k !== 'sil'), ...Object.keys(SIL).map(c => 'sil_' + c)];
   o.seen = (Array.isArray(s.seen) ? s.seen : []).filter(x => KINDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
@@ -1001,7 +1017,7 @@ function settleIn(coop, newcomer) { if (coop && braveIn(coop, newcomer)) coop.se
 function rebelStep(b, gt) {
   if (b.hide) {                                // spent the night out: back at 7:00, too shaken to lay until noon
     if (gt >= b.hide) {
-      b.hide = 0; b.noLay = b.sex === 'h' ? nextClock(gt, 12) : 0; b.nextOut = gt + adoptRnd(PR.outEvery); resetAgent(b); dirty = true;
+      b.hide = 0; b.noLay = b.sex === 'h' ? nextClock(gt, 12) : 0; b.nextOut = gt + outGap(b); resetAgent(b); dirty = true;
       emit('tree', t(b.sex === 'r' ? 'tree_morning_r' : 'tree_morning', { name: b.name }), false, () => focusBird(b.id));
     }
     return;
@@ -1026,9 +1042,9 @@ function rebelStep(b, gt) {
   emit('escape', t(night ? 'escaped_night' : 'escaped', { name: b.name, farmer: farmerName() }), night, () => focusBird(b.id));
 }
 function rebelHome(b, line) {
-  b.out = 0; b.outNight = false; b.nextOut = state.gt + adoptRnd(PR.outEvery); resetAgent(b); dirty = true;
+  b.out = 0; b.outNight = false; b.nextOut = state.gt + outGap(b); resetAgent(b); dirty = true;
   if (line && !sink) toast(line);
-  if (Math.random() < .5) rebelFind(b);
+  if (Math.random() < PR.trustFind[trustLvl(b)]) rebelFind(b);
 }
 function rebelFind(b) {                        // something brought back from the escape
   const r = Math.random();
@@ -1083,8 +1099,11 @@ function actCuddle(b) {                        // the farmer goes to the bird an
   if (b.pers === 'brave' && grown && c.settle > gt) { c.settle = gt; xp += PR.cuddleXp; key = 'cuddle_brave'; }
   if (c.fright > gt) { c.fright = gt; xp += PR.cuddleXp; key = 'cuddle_fox'; }
   if (b.pers === 'rebel') b.nextOut = Math.max(b.nextOut || 0, b.happy);      // a happy rebel stays put
+  const lv0 = trustLvl(b); b.trust = Math.min(PR.trustAt[2], (b.trust || 0) + 1); const lv = trustLvl(b);
+  if (lv === 3 && lv0 < 3) xp += PR.friendXp;
   if (xp) gainXP(xp);
-  if (!sink) toast(t(key, { farmer: farmerName(), name: b.name, coop: coopLabel(c), n: xp }), !!xp);
+  if (!sink) toast(t(key, { farmer: farmerName(), name: b.name, coop: coopLabel(c), n: xp - (lv > lv0 && lv === 3 ? PR.friendXp : 0) }), !!xp);
+  if (lv > lv0) emit('trust', t('trust_up' + lv, { farmer: farmerName(), name: b.name, n: PR.friendXp }), true, () => focusBird(b.id));
   if (!sink && !farmerSendCuddle(b)) { const a = agents.get(b.id); if (a && a.sx != null) heartsAt(a.sx, a.sy - (stage(b) === 'chick' ? 22 : 40), 5); }
   changed(true);
   return true;
@@ -1103,7 +1122,7 @@ function tryHatch(it) {
   const coop = coopWithSpace(it.egg.child.breed);
   if (!coop) { it.waiting = true; return; }
   const s = it.egg.child;
-  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, it.start + T.incubate), home: coop.id, pers: s.pers, fast: s.fast });
+  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, it.start + T.incubate), home: coop.id, pers: s.pers, fast: s.fast, trust: s.trust });
   state.birds.push(b); it.done = true; settleIn(coop, b);
   state.stats.hatched++; state.stats.best = Math.max(state.stats.best, quality(b));
   if (b.breed === 'sil' && RARE_SIL.includes(b.colour)) state.stats.rare++;
@@ -1216,6 +1235,7 @@ const TROPHIES = [
   ['m_village', 150, () => state.stats.w1.village > 0],
   ['m_county', 400, () => state.stats.w1.county > 0],
   ['m_national', 1000, () => state.stats.w1.national > 0],
+  ['m_friend', 150, () => state.birds.some(b => trustLvl(b) === 3)],
 ];
 function checkTrophies() {
   for (const [id, xp, test] of TROPHIES) {
@@ -1251,7 +1271,7 @@ function actSell(b) {
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
   for (const s of state.shows.list) if (s.entry === b.id) s.entry = null;
   agents.delete(b.id);
-  toast(b.home === 'pasture' ? t('rehomed', { name: b.name }) : t('sold', { name: b.name, n: fmtN(p) }));
+  toast((b.home === 'pasture' ? t('rehomed', { name: b.name }) : t('sold', { name: b.name, n: fmtN(p) })) + (trustLvl(b) === 3 ? '. ' + t('will_miss', { name: b.name, farmer: farmerName() }) : ''));
   closeSheet(); changed();
 }
 function actAcceptOffer(b) {
@@ -1508,6 +1528,7 @@ function agentFor(b) {
 function decide(b, a, others) {
   const y = a.reg || yardOf(a.plot), st = stage(b), r = Math.random(), old = st === 'retired';
   if (a.caught || a.cuddle) { a.st = 'idle'; a.t = 1; return; }
+  a.greet = false;
   if (b.out && r < .18) { a.st = 'idle'; a.t = 1.4; a.say = 1.5; a.sayText = t('rebel_say'); return; }
   if (isV2(b) && a.st === 'peck') { a.st = 'idle'; a.t = .35; a.hold = 'peck2'; return; }
   if (a.st === 'scratch') { a.st = 'peck'; a.t = 1 + Math.random() * 1.5; a.head = 0; a.headT = .1; return; }
@@ -1592,7 +1613,7 @@ function updateAgents(dt) {
             const sdx = screenDx(p, a.chatWith.x - a.x, a.chatWith.y - a.y);
             a.face = Math.sign(sdx) || 1; a.chatWith.face = -a.face; a.st = 'chat'; a.t = 1.2 + Math.random() * 1.5;
             if (Math.random() < .45) { a.say = 1.2; a.sayText = t('cluck'); if (a.b) SND.hen(a.sx, a.sy, a.b.sex === 'r'); }
-          } else { a.st = 'idle'; a.t = .4 + Math.random() * 1.2; }
+          } else { a.st = 'idle'; a.t = .4 + Math.random() * 1.2; if (a.greet) { a.greet = false; a.t = 2.5; if (a.sx != null) heartsAt(a.sx, a.sy - (chick ? 22 : 40), 1); } }
         }
         if (a.st === 'follow' && a.t <= 0) a.st = 'idle';
       } else if (a.st === 'peck') {
@@ -1694,6 +1715,16 @@ function farmerSendCuddle(b) {
 // the other birds in the pen keep clear of the farmer and the bird being cuddled
 function inCuddleZone(p, x, y) { const z = FARM.task && FARM.task.kind === 'cuddle' && FARM.task.plot === p && FARM.task.zone; return !!z && Math.hypot(x - z[0], (y - z[1]) * 1.6) < .75; }
 function awayFromCuddle(p, x, y) { const z = FARM.task.zone, Y = YARD; return [clamp(x + (x >= z[0] ? .8 : -.8), Y.x0, Y.x1), clamp(Math.max(y, z[1]) + .5, Y.y0, Y.y1)]; }
+function greetFarmer(coopId) {                 // birds that trust the farmer trot over to the front fence to say hello
+  const c = coopById(coopId); if (!c) return;
+  let i = 0;
+  for (const b of birdsIn(c)) {
+    const a = agents.get(b.id);
+    if (trustLvl(b) < 2 || !a || a.task || a.cuddle || a.caught || b.out || b.hide || a.plot.kind !== 'coop') continue;
+    a.st = 'walk'; a.chatWith = null; a.leader = null; a.greet = true; a.go = 0; a.t = 12;
+    a.tx = clamp(-0.55 + (i % 3) * 0.32 - 0.16 + (Math.random() - .5) * .08, YARD.x0, YARD.x1); a.ty = YARD.y0 + .04 + Math.floor(i / 3) * .2; i++;
+  }
+}
 function releaseCuddle() {
   const F = FARM; if (!F.task || F.task.kind !== 'cuddle') return;
   const a = agents.get(F.task.id); if (a) a.cuddle = false;
@@ -1758,7 +1789,7 @@ function updateFarmer(dt) {
     if (F.t <= 0) {
       const built = state.coops.filter(isBuilt);
       if (night || !built.length || Math.random() < .35) { const [hx, hy] = farmerHome(); farmerGo(hx + (Math.random() - .5) * 60, hy + (Math.random() - .5) * 30, 'walk'); }
-      else { const [x, y] = coopFront(pick(built)); farmerGo(x + (Math.random() - .5) * 30, y, 'walk'); }
+      else { const c = pick(built), [x, y] = coopFront(c); farmerGo(x + (Math.random() - .5) * 30, y, 'walk'); F.visit = c.id; }
     }
   }
   function arrive() {
@@ -1783,7 +1814,8 @@ function updateFarmer(dt) {
       F.st = 'act'; F.act = part === 'night' ? 'night' : part === 'dusk' ? 'worry' : 'tell'; F.actT = part === 'dusk' ? 1.6 : 1.4; F.fr = 0;
       farmerSay('farmer_say_' + part, 1.8);
     } else if (F.task && F.task.kind === 'feed') { F.st = 'act'; F.act = 'feed'; F.actT = 2.6; F.fr = 0; F.face = -1; farmerSay('farmer_say_feed', 1.6); }
-    else { F.st = 'idle'; F.t = 6 + Math.random() * 10; }
+    else { F.st = 'idle'; F.t = 6 + Math.random() * 10; if (F.visit) greetFarmer(F.visit); }
+    F.visit = null;
   }
 }
 function drawFarmer() {
@@ -2404,8 +2436,23 @@ function persCard(b) {                         // the bird's personality and wha
     if (gt < (b.happy || 0)) now.push(h('p', { class: 'small good-t' }, '♥ ', timer(b.happy, b.sex === 'r' ? 'happy_for_r' : 'happy_for')));
     else now.push(h('button', { class: 'btn sm alt', style: 'margin-top:8px', onclick: () => { if (actCuddle(b)) focusBird(b.id); else renderSheet(); } }, h('span', { style: 'color:#e0486a', 'aria-hidden': 'true', text: '♥ ' }), t('cuddle')));
   }
+  if (b.home !== 'pasture' || b.trust) now.push(trustRow(b));
   if (b.pers === 'mum' && raising(b)) now.push(h('p', { class: 'small muted', text: t('raising') }));
   return h('div', { class: 'card' }, h('div', { class: 'row' }, h('h3', { class: 'grow', text: t('personality') }), persTag(b.pers, b.sex)), h('p', { class: 'small', text: t('pers_' + b.pers + '_d') }), now);
+}
+function trustRow(b) {                         // trust with the farmer: three hearts, the level, how far to the next, what it does
+  const lv = trustLvl(b), n = b.trust || 0, next = PR.trustAt[lv];
+  const does = [];
+  if (lv) does.push(t('trust_value', { n: Math.round(PR.trustValue * 100 * lv) }));
+  if (lv && b.pers === 'rebel') does.push(t('trust_rebel'));
+  if (lv >= 2 && b.pers === 'mum') does.push(t('trust_mum'));
+  if (lv >= 2) does.push(t('trust_greet', { farmer: farmerName() }));
+  return h('div', { class: 'trust', style: 'margin-top:10px;padding-top:10px;border-top:1px solid var(--line, rgba(0,0,0,.08))' },
+    h('div', { class: 'row' }, h('span', { class: 'grow', style: 'font-weight:700', text: t('trust') }),
+      h('span', { style: 'color:#e0486a;letter-spacing:2px', 'aria-label': t('trust_lv' + lv), text: '♥'.repeat(lv) + '♡'.repeat(3 - lv) }),
+      h('span', { class: 'small', style: 'font-weight:700;margin-left:6px', text: t('trust_lv' + lv) })),
+    h('p', { class: 'small muted', text: lv < 3 ? t(next - n === 1 ? 'trust_next1' : 'trust_next', { n: next - n, lv: t('trust_lv' + (lv + 1)) }) : t('trust_max', { farmer: farmerName() }) }),
+    does.length ? h('p', { class: 'small', text: does.join(' ') }) : null);
 }
 function birdRow(b, extra, showValue) {
   const q = quality(b);
