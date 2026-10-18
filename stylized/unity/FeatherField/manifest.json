@@ -1,0 +1,120 @@
+{
+ "version": "18 Oct 2026 16:14",
+ "files": [
+  {
+   "path": "Data/layout.json",
+   "sha1": "2865cf34cc7da569a8b5ca803789514458a34df1",
+   "size": 3632
+  },
+  {
+   "path": "Data/palette.json",
+   "sha1": "3ed998c220aa3134b60294f39435c793fb4af313",
+   "size": 9254
+  },
+  {
+   "path": "Editor/FarmSetup.cs",
+   "sha1": "ab6496831d27a76169a9408f813fa79eff3a9d62",
+   "size": 18867
+  },
+  {
+   "path": "Editor/FeatherFieldUpdater.cs",
+   "sha1": "ef55940584e1981810ed6150294736e77608dcaf",
+   "size": 5556
+  },
+  {
+   "path": "Models/apple.fbx",
+   "sha1": "5eb41d22ff1d0c3203641e8277c0cb3290bb20a5",
+   "size": 20396
+  },
+  {
+   "path": "Models/apple_tree.fbx",
+   "sha1": "e87ef1bced1a9740b661a3aee9e4ac5e908f3362",
+   "size": 1334364
+  },
+  {
+   "path": "Models/apple_tree_b.fbx",
+   "sha1": "1e57dc7c094d430224af7702fd8c81a22fea819d",
+   "size": 1374796
+  },
+  {
+   "path": "Models/coop.fbx",
+   "sha1": "a3cc02a1ef04aee963b508fd2782ea29d285845c",
+   "size": 1429548
+  },
+  {
+   "path": "Models/flower_butter.fbx",
+   "sha1": "c010765158f2c0a2ed75ec858ab40ce009231e35",
+   "size": 16124
+  },
+  {
+   "path": "Models/flower_clover.fbx",
+   "sha1": "fb443b32208a8fc330783ed73103dd26dcb75198",
+   "size": 16124
+  },
+  {
+   "path": "Models/flower_daisy.fbx",
+   "sha1": "c443fff99f35a42d331824682d49c837522b2f57",
+   "size": 27260
+  },
+  {
+   "path": "Models/grass_tuft_0.fbx",
+   "sha1": "5eae4841f7d0e862d8ecf4b94ca6c17821785f9d",
+   "size": 16940
+  },
+  {
+   "path": "Models/grass_tuft_1.fbx",
+   "sha1": "43a2edf69ccdaeb1e2cf92efeab3ee963b489f56",
+   "size": 17356
+  },
+  {
+   "path": "Models/grass_tuft_2.fbx",
+   "sha1": "75de89a6d6d8f6252b3501db20a36c2b33d96187",
+   "size": 17788
+  },
+  {
+   "path": "Models/hen_peck.fbx",
+   "sha1": "1163b247eadee7688ae204d68d52e61e09fb6c69",
+   "size": 369468
+  },
+  {
+   "path": "Models/hen_stand.fbx",
+   "sha1": "54ef682501ef5dbeed94b87494d255ad1b3f1610",
+   "size": 368700
+  },
+  {
+   "path": "Models/path.fbx",
+   "sha1": "261de68eecb0102c25f777821674960486cad6a4",
+   "size": 59468
+  },
+  {
+   "path": "Models/rooster_peck.fbx",
+   "sha1": "977da28e4ec5090f3794e361b54884c048ccf2e0",
+   "size": 431548
+  },
+  {
+   "path": "Models/rooster_stand.fbx",
+   "sha1": "ff92754bda5ebfda2d0880eebba40036c0457531",
+   "size": 429660
+  },
+  {
+   "path": "README.txt",
+   "sha1": "1b783227467d542514f0c7d35f5df57d57080b54",
+   "size": 1915
+  },
+  {
+   "path": "Scripts/CameraRig.cs",
+   "sha1": "36216f8bbd93c735f3b49640f2d11c8babccb527",
+   "size": 4501
+  },
+  {
+   "path": "Scripts/HenWander.cs",
+   "sha1": "44e271f1cf9a5ca3feb22d9d3f68343065e4915a",
+   "size": 3908
+  },
+  {
+   "path": "Textures/meadow.png",
+   "sha1": "232acc87c1b2b2bde0022ed5f646c88632c4c3ad",
+   "size": 1160989
+  }
+ ]
+}

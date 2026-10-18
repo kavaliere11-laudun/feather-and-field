@@ -26,3 +26,7 @@ Zooming
   This redraws the farm sharp. Leave the Game view's "Scale" slider at 1x: it only stretches pixels.
 - On a Retina Mac, open the aspect menu at the top left of the Game view and untick
   "Low Resolution Aspect Ratios" if it is ticked.
+
+Getting updates
+- Feather and Field > Get latest from Claude downloads the newest version of this pack from the game's
+  GitHub (only the files that changed, each checked against its fingerprint) and offers to rebuild the farm.
