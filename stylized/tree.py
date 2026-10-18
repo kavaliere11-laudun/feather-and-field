@@ -69,11 +69,11 @@ def build(loc=(0, 0, 0), seed=2, scale=1.0, apples=26, leaves='summer'):
         shells.append((c, r))
     # a fringe of small leaves on the outer puffs breaks up the outline
     lf = bpy.data.meshes.new('leaf'); bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=8, v_segments=6, radius=1.0)
+    bmesh.ops.create_uvsphere(bm, u_segments=int(os.environ.get('LEAFU', 8)), v_segments=int(os.environ.get('LEAFV', 6)), radius=1.0)
     for v in bm.verts: v.co = Vector((v.co.x * 0.03, v.co.y * 0.016, v.co.z * 0.004))
     bm.to_mesh(lf); bm.free(); lf.materials.append(lm)
     for p in lf.polygons: p.use_smooth = True
-    for k in range(700):
+    for k in range(int(os.environ.get('LEAVES', 700))):
         c, r = random.choice(shells[1:])
         d = Vector((random.gauss(0, 1), random.gauss(0, 1), random.gauss(0, 1) * 0.9)).normalized()
         if d.z < -0.5: continue

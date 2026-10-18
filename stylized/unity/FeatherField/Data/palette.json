@@ -1,0 +1,704 @@
+{
+ "materials": [
+  {
+   "name": "FF_apple_0",
+   "color": [
+    0.8051,
+    0.2368,
+    0.1694
+   ],
+   "smoothness": 0.54,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_apple_1",
+   "color": [
+    0.8471,
+    0.251,
+    0.1804
+   ],
+   "smoothness": 0.54,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_apple_2",
+   "color": [
+    0.8864,
+    0.2643,
+    0.1907
+   ],
+   "smoothness": 0.54,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_band",
+   "color": [
+    0.6039,
+    0.6392,
+    0.6588
+   ],
+   "smoothness": 0.525,
+   "metallic": 0.9
+  },
+  {
+   "name": "FF_bark_0",
+   "color": [
+    0.4683,
+    0.3144,
+    0.2067
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_bark_2",
+   "color": [
+    0.4883,
+    0.3285,
+    0.2167
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_barn_red_0",
+   "color": [
+    0.6947,
+    0.2404,
+    0.1685
+   ],
+   "smoothness": 0.21,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_barn_red_1",
+   "color": [
+    0.7216,
+    0.251,
+    0.1765
+   ],
+   "smoothness": 0.21,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_barn_red_2",
+   "color": [
+    0.7472,
+    0.2611,
+    0.1841
+   ],
+   "smoothness": 0.21,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_beak_rir_h",
+   "color": [
+    0.9059,
+    0.6902,
+    0.2902
+   ],
+   "smoothness": 0.45,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_beak_rir_r",
+   "color": [
+    0.9059,
+    0.6902,
+    0.2902
+   ],
+   "smoothness": 0.45,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_blade_0",
+   "color": [
+    0.5277,
+    0.6973,
+    0.3321
+   ],
+   "smoothness": 0.225,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_bowl",
+   "color": [
+    0.2471,
+    0.498,
+    0.7098
+   ],
+   "smoothness": 0.488,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_capwood_0",
+   "color": [
+    0.5182,
+    0.3523,
+    0.2203
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_capwood_1",
+   "color": [
+    0.5412,
+    0.3686,
+    0.2314
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_capwood_2",
+   "color": [
+    0.563,
+    0.3841,
+    0.2418
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_centre_y",
+   "color": [
+    0.949,
+    0.7098,
+    0.1725
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_comb_rir_h",
+   "color": [
+    0.8471,
+    0.2078,
+    0.1686
+   ],
+   "smoothness": 0.413,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_comb_rir_r",
+   "color": [
+    0.8784,
+    0.2,
+    0.1647
+   ],
+   "smoothness": 0.413,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_dark",
+   "color": [
+    0.1647,
+    0.1137,
+    0.0863
+   ],
+   "smoothness": 0.0,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_darkwood_0",
+   "color": [
+    0.4089,
+    0.2769,
+    0.1826
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_darkwood_1",
+   "color": [
+    0.4275,
+    0.2902,
+    0.1922
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_darkwood_2",
+   "color": [
+    0.4451,
+    0.3028,
+    0.2012
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_dirt",
+   "color": [
+    0.694,
+    0.5418,
+    0.3642
+   ],
+   "smoothness": 0.038,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_eye_rir_h",
+   "color": [
+    0.8784,
+    0.5412,
+    0.149
+   ],
+   "smoothness": 0.637,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_eye_rir_r",
+   "color": [
+    0.8784,
+    0.5412,
+    0.149
+   ],
+   "smoothness": 0.637,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_f_butter",
+   "color": [
+    0.9647,
+    0.7765,
+    0.1412
+   ],
+   "smoothness": 0.375,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_f_clover",
+   "color": [
+    0.7176,
+    0.5137,
+    0.8392
+   ],
+   "smoothness": 0.375,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_feathers_rir_h",
+   "color": [
+    0.561,
+    0.2318,
+    0.1123
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_feathers_rir_r",
+   "color": [
+    0.5858,
+    0.2134,
+    0.0837
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_galv_0",
+   "color": [
+    0.7021,
+    0.733,
+    0.7523
+   ],
+   "smoothness": 0.51,
+   "metallic": 0.85
+  },
+  {
+   "name": "FF_galv_1",
+   "color": [
+    0.7137,
+    0.7451,
+    0.7647
+   ],
+   "smoothness": 0.51,
+   "metallic": 0.85
+  },
+  {
+   "name": "FF_galv_2",
+   "color": [
+    0.7251,
+    0.757,
+    0.7769
+   ],
+   "smoothness": 0.51,
+   "metallic": 0.85
+  },
+  {
+   "name": "FF_glass",
+   "color": [
+    0.1843,
+    0.298,
+    0.4
+   ],
+   "smoothness": 0.69,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_grainfeed",
+   "color": [
+    0.8784,
+    0.698,
+    0.3529
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_hay_2",
+   "color": [
+    0.8831,
+    0.7348,
+    0.354
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leaf_summer_0",
+   "color": [
+    0.4469,
+    0.6719,
+    0.2722
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leaf_summer_1",
+   "color": [
+    0.4671,
+    0.701,
+    0.2853
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leaf_summer_2",
+   "color": [
+    0.4861,
+    0.7286,
+    0.2978
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leg_rir_h",
+   "color": [
+    0.9373,
+    0.7412,
+    0.2353
+   ],
+   "smoothness": 0.413,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leg_rir_r",
+   "color": [
+    0.9373,
+    0.7412,
+    0.2353
+   ],
+   "smoothness": 0.413,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_meadow",
+   "color": [
+    0.5255,
+    0.7098,
+    0.3255
+   ],
+   "smoothness": 0.05,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_meadow_dark",
+   "color": [
+    0.451,
+    0.6392,
+    0.2784
+   ],
+   "smoothness": 0.05,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_petal_w",
+   "color": [
+    0.9843,
+    0.9686,
+    0.9333
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_pupil",
+   "color": [
+    0.0431,
+    0.0392,
+    0.0353
+   ],
+   "smoothness": 0.712,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_ridge_1",
+   "color": [
+    0.2745,
+    0.3216,
+    0.3725
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_sack",
+   "color": [
+    0.851,
+    0.7686,
+    0.6039
+   ],
+   "smoothness": 0.038,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_slate_0",
+   "color": [
+    0.3158,
+    0.3789,
+    0.4493
+   ],
+   "smoothness": 0.263,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_slate_1",
+   "color": [
+    0.3373,
+    0.4039,
+    0.4784
+   ],
+   "smoothness": 0.263,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_slate_2",
+   "color": [
+    0.3571,
+    0.4272,
+    0.5055
+   ],
+   "smoothness": 0.263,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_stalk",
+   "color": [
+    0.3569,
+    0.2353,
+    0.1333
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_stem",
+   "color": [
+    0.3098,
+    0.5412,
+    0.2
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_straw_0",
+   "color": [
+    0.8304,
+    0.7102,
+    0.3713
+   ],
+   "smoothness": 0.225,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_straw_1",
+   "color": [
+    0.898,
+    0.7686,
+    0.4039
+   ],
+   "smoothness": 0.225,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_straw_2",
+   "color": [
+    0.9596,
+    0.8218,
+    0.4335
+   ],
+   "smoothness": 0.225,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_tail_rir_h",
+   "color": [
+    0.1804,
+    0.0902,
+    0.0627
+   ],
+   "smoothness": 0.375,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_tail_rir_r",
+   "color": [
+    0.0784,
+    0.0627,
+    0.0549
+   ],
+   "smoothness": 0.375,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_trim_0",
+   "color": [
+    0.9299,
+    0.899,
+    0.8334
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_trim_1",
+   "color": [
+    0.9451,
+    0.9137,
+    0.8471
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_trim_2",
+   "color": [
+    0.9599,
+    0.9281,
+    0.8605
+   ],
+   "smoothness": 0.3,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_twine",
+   "color": [
+    0.5569,
+    0.4157,
+    0.2353
+   ],
+   "smoothness": 0.075,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_water",
+   "color": [
+    0.5608,
+    0.8235,
+    0.9255
+   ],
+   "smoothness": 0.66,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_wing_rir_h",
+   "color": [
+    0.4314,
+    0.1569,
+    0.0784
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_wing_rir_r",
+   "color": [
+    0.4863,
+    0.1647,
+    0.0706
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_wood_0",
+   "color": [
+    0.619,
+    0.4291,
+    0.2728
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_wood_1",
+   "color": [
+    0.6549,
+    0.4549,
+    0.2902
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_wood_2",
+   "color": [
+    0.6884,
+    0.479,
+    0.3065
+   ],
+   "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_ypebble_0",
+   "color": [
+    0.6635,
+    0.6347,
+    0.5841
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_ypebble_1",
+   "color": [
+    0.7255,
+    0.6941,
+    0.6392
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_ypebble_2",
+   "color": [
+    0.7812,
+    0.7476,
+    0.6888
+   ],
+   "smoothness": 0.15,
+   "metallic": 0.0
+  }
+ ]
+}
