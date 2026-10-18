@@ -37,6 +37,11 @@ FRAMES['worry1'] = dict(pose=dict(POSES['worried'], head=(-6, -4, -12)), face=di
 FRAMES['feed0'] = dict(pose=dict(POSES['feed'], shR=(-30, 10, 0), elR=-40), face='feeding', yaw=-40, bucket=True)
 FRAMES['feed1'] = dict(pose=dict(POSES['feed'], shR=(-45, -20, 0), elR=-30), face='feeding', yaw=-40, bucket=True)
 FRAMES['feed2'] = dict(pose='feed', face='feeding', yaw=-40, bucket=True)
+# crouching to stroke a hen (the hen is the bird's own sprite, drawn beside the farmer in the game)
+PET_FACE = dict(FACE['cuddle'], fx=None)
+FRAMES['pet0'] = dict(pose='pet', face=PET_FACE, yaw=-14)
+FRAMES['pet1'] = dict(pose=dict(POSES['pet'], shR=(-10, -86, 0), elR=-6, wrR=(0, -4, 0)), face=PET_FACE, yaw=-14)
+FRAMES['pet2'] = dict(pose=dict(POSES['pet'], shR=(-10, -70, 0), elR=-24, wrR=(0, 14, 0), head=(0, 0, 0)), face=PET_FACE, yaw=-14)
 
 
 def stage(scn):

@@ -82,6 +82,9 @@ POSES = {
     'worried': dict(head=(8, -4, 12), chest=(4, 4, 0), shL=(18, -55, 0), elL=-125, shR=(-18, -55, 0), elR=-125, hand=('relax', 'relax'), wrL=(0, -20, 0), wrR=(0, -20, 0)),
     'panic':   dict(chest=(0, 18, -6), head=(0, -6, -4), shR=(-10, -75, 0), elR=-15, shL=(8, 40, 0), elL=-50, hand=('fist', 'hold'), hipL=(0, -32, 0), kneeL=14, hipR=(0, 26, 0), kneeR=34, root_z=-0.01),
     'cuddle':  dict(head=(-6, 10, 0), chest=(0, -4, 0), shL=(6, -50, 0), elL=(-45, -72, 0), shR=(-6, -50, 0), elR=(45, -72, 0), hand=('relax', 'relax'), wrL=(0, 0, -20), wrR=(0, 0, 20)),
+    # crouching down to stroke a hen: sits back on the heels, leans in, right hand out flat
+    'pet':     dict(root_z=-0.285, hipL=(10, -100, 0), hipR=(-10, -100, 0), kneeL=150, kneeR=150, ankleL=-50, ankleR=-50,
+                    chest=(0, 10, 0), head=(0, -4, 0), shR=(-10, -78, 0), elR=-14, wrR=(0, 6, 0), shL=(14, -30, 0), elL=-60, hand=('relax', 'open')),
     'feed':    dict(chest=(0, 4, 12), head=(0, 8, 14), shR=(-62, -40, 0), elR=-25, shL=(10, -12, 0), elL=-20, hand=('open', 'hold')),
 }
 FACE = {
@@ -364,7 +367,9 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
         limb('thigh', 0.17, 0.078, 0.066, Mt['denim'], hp)
         kn = empty('knee' + key, (0, 0, -0.17), (0, math.radians(Q.get('knee' + key, 0)), 0), hp)
         limb('shin', 0.2, 0.064, 0.058, Mt['denim'], kn)
-        an = empty('ankle' + key, (0, 0, -0.24), (0, -math.radians(Q.get('knee' + key, 0)) - math.radians(Q.get('hip' + key, (0, 0, 0))[1]) * 0.6, 0), kn)
+        ank = Q.get('ankle' + key)                     # given: the foot's own angle; otherwise it follows the leg (walking)
+        ank = math.radians(ank) if ank is not None else -math.radians(Q.get('knee' + key, 0)) - math.radians(Q.get('hip' + key, (0, 0, 0))[1]) * 0.6
+        an = empty('ankle' + key, (0, 0, -0.24), (0, ank, 0), kn)
         boot = cyl('boot', 0.07, 0.17, (0, 0, 0.065), (0, 0, 0), Mt['boots'], verts=24, r2=0.074, bevel=0.01, parent=an)
         sphere('toe', 1.0, (0.06, 0, -0.04), (0.11, 0.072, 0.06), m=Mt['boots'], parent=an, seg=24, rings=14)
         sphere('heel', 1.0, (-0.01, 0, -0.045), (0.075, 0.07, 0.05), m=Mt['boots'], parent=an, seg=20, rings=12)
