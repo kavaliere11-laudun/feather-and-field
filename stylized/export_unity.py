@@ -144,6 +144,10 @@ grass._cache.clear()
 for i in range(3):
     fresh()
     me = grass.tuft_mesh('tuft', blades=6 + i, h=0.055 * (0.85 + 0.15 * i), seed=i)
+    bm = bmesh.new(); bm.from_mesh(me)
+    back = bmesh.ops.duplicate(bm, geom=bm.faces[:])['geom']
+    bmesh.ops.reverse_faces(bm, faces=[f for f in back if isinstance(f, bmesh.types.BMFace)])
+    bm.to_mesh(me); bm.free()
     me.materials.append(grass.blade_mat())
     o = link(bpy.data.objects.new('tuft', me))
     bake_and_export('grass_tuft_%d' % i)
@@ -161,6 +165,8 @@ fresh()
 import importlib
 GX = -1.25 + 2.5 * 2.6 / 4 + 0.05
 pts = [(GX + 0.55 * math.sin(t * 3.0) - 1.6 * t * t, -1.98 - t * 4.2, 0) for t in (i / 39 for i in range(40))]
+_d = (Vector(pts[-1]) - Vector(pts[-2])).normalized()
+pts += [tuple(Vector(pts[-1]) + _d * 0.25 * (k + 1)) for k in range(40)]
 me = bpy.data.meshes.new('path'); bm = bmesh.new(); rows = []
 P = [Vector(p) for p in pts]
 for i, p in enumerate(P):
@@ -195,8 +201,8 @@ layout = {
     'hens': [{'model': 'hen', 'pos': U(0.2, -1.05, 0.015), 'yaw': 30, 'area': 'yard'}, {'model': 'hen', 'pos': U(0.62, -1.0, 0.015), 'yaw': 160, 'area': 'yard'},
              {'model': 'hen', 'pos': U(-0.6, -0.8, 0.015), 'yaw': 250, 'area': 'yard'}, {'model': 'rooster', 'pos': U(-0.05, -0.55, 0.015), 'yaw': 300, 'area': 'yard'},
              {'model': 'hen', 'pos': U(-1.55, 0.45), 'yaw': 90, 'area': 'tree'}],
-    'camera': {'target': U(-0.15, -0.1, 0.3), 'pitch': 42.0, 'yaw': 135.0, 'orthoSize': 4.96},
-    'sun': {'dir': [-0.55, -0.72, -0.62], 'color': to_srgb(lin('#fff1dc')), 'intensity': 1.5},
+    'camera': {'target': U(-0.15, -0.1, 0.3), 'pitch': 42.0, 'yaw': 135.0, 'orthoSize': 4.0},
+    'sun': {'dir': [-0.55, -0.72, -0.62], 'color': to_srgb(lin('#fff1dc')), 'intensity': 1.9},
 }
 json.dump(layout, open(os.path.join(DATA, 'layout.json'), 'w'), indent=1)
 json.dump(STATS, open(os.path.join(DATA, 'stats.json'), 'w'), indent=1)

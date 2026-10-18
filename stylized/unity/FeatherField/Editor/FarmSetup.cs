@@ -49,14 +49,14 @@ namespace FeatherField.EditorTools
             sun.color = Col(layout.sun.color);
             sun.intensity = layout.sun.intensity;
             sun.shadows = LightShadows.Soft;
-            sun.shadowStrength = 0.75f;
+            sun.shadowStrength = 0.8f;
             sunGo.transform.rotation = Quaternion.LookRotation(Vec(layout.sun.dir).normalized, Vector3.up);
             RenderSettings.sun = sun;
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.76f, 0.86f, 0.96f);
-            RenderSettings.ambientEquatorColor = new Color(0.68f, 0.78f, 0.6f);
-            RenderSettings.ambientGroundColor = new Color(0.45f, 0.52f, 0.33f);
+            RenderSettings.ambientSkyColor = new Color(0.64f, 0.74f, 0.86f);
+            RenderSettings.ambientEquatorColor = new Color(0.56f, 0.64f, 0.5f);
+            RenderSettings.ambientGroundColor = new Color(0.36f, 0.42f, 0.27f);
 
             // ---- camera: the game's view (orthographic, 42 degrees down, 45 degrees round)
             var camGo = new GameObject("Main Camera");
@@ -72,7 +72,13 @@ namespace FeatherField.EditorTools
             camGo.transform.position = Vec(layout.camera.target) - camRot * Vector3.forward * 40f;
             camGo.AddComponent<AudioListener>();
             var camData = cam.GetUniversalAdditionalCameraData();
-            if (camData != null) camData.renderPostProcessing = true;
+            if (camData != null)
+            {
+                camData.renderPostProcessing = true;
+                camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;     // smooth edges
+                camData.antialiasingQuality = AntialiasingQuality.High;
+            }
+            camGo.AddComponent<CameraRig>();                                                 // scroll/pinch to zoom, drag to move
 
             // ---- a gentle grading: a touch more colour, soft vignette, light bloom
             AddVolume();
@@ -80,9 +86,21 @@ namespace FeatherField.EditorTools
             // ---- ground
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             ground.name = "Meadow";
-            ground.transform.localScale = new Vector3(3f, 1f, 3f);                  // 30 x 30 metres
+            ground.transform.localScale = new Vector3(4f, 1f, 4f);                  // 40 x 40 metres
             Material meadow;
-            if (mats.TryGetValue("FF_meadow", out meadow)) ground.GetComponent<Renderer>().sharedMaterial = meadow;
+            if (mats.TryGetValue("FF_meadow", out meadow))
+            {
+                var ti = AssetImporter.GetAtPath(Root + "/Textures/meadow.png") as TextureImporter;
+                if (ti != null && ti.anisoLevel < 8) { ti.anisoLevel = 8; ti.maxTextureSize = 2048; ti.SaveAndReimport(); }   // stays crisp at a slant
+                var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Textures/meadow.png");
+                if (tex != null)
+                {
+                    meadow.SetTexture("_BaseMap", tex); meadow.SetTexture("_MainTex", tex);
+                    meadow.SetColor("_BaseColor", Color.white); meadow.SetColor("_Color", Color.white);
+                    EditorUtility.SetDirty(meadow);
+                }
+                ground.GetComponent<Renderer>().sharedMaterial = meadow;
+            }
             GameObjectUtility.SetStaticEditorFlags(ground, StaticEditorFlags.BatchingStatic);
 
             // ---- buildings and trees
@@ -139,7 +157,6 @@ namespace FeatherField.EditorTools
                 m.SetFloat("_Metallic", e.metallic);
                 m.enableInstancing = true;
                 // thin single-sided parts (grass blades) must show from both sides
-                if (e.name.StartsWith("FF_blade") || e.name.StartsWith("FF_stem")) m.SetFloat("_Cull", (float)CullMode.Off);
                 EditorUtility.SetDirty(m);
                 dict[e.name] = m;
             }
@@ -255,7 +272,7 @@ namespace FeatherField.EditorTools
             for (int i = 0; i < 140; i++) centres.Add(new Vector3(Rand(rnd, -half, half), 0f, Rand(rnd, -half, half)));
 
             int placed = 0;
-            for (int i = 0; i < 2600 && placed < 1300; i++)
+            for (int i = 0; i < 3200 && placed < 1600; i++)
             {
                 Vector3 p;
                 if (rnd.NextDouble() < 0.78) { var c = centres[rnd.Next(centres.Count)]; p = c + new Vector3(Gauss(rnd) * 0.14f, 0f, Gauss(rnd) * 0.14f); }
@@ -266,8 +283,9 @@ namespace FeatherField.EditorTools
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(src, parent);
                 go.transform.position = p;
                 go.transform.rotation = Quaternion.Euler(0f, Rand(rnd, 0f, 360f), 0f);
-                go.transform.localScale = Vector3.one * Rand(rnd, 0.6f, 1.4f);
+                go.transform.localScale = Vector3.one * (flower ? Rand(rnd, 1.3f, 1.9f) : Rand(rnd, 1.3f, 2.4f));
                 ApplyMaterials(go, mats);
+                foreach (var r in go.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
                 GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
                 placed++;
             }
@@ -299,7 +317,7 @@ namespace FeatherField.EditorTools
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, path);
             var ca = profile.Add<ColorAdjustments>(true);
-            ca.saturation.Override(12f); ca.postExposure.Override(0.1f); ca.contrast.Override(5f);
+            ca.saturation.Override(18f); ca.postExposure.Override(0.05f); ca.contrast.Override(12f);
             var vg = profile.Add<Vignette>(true);
             vg.intensity.Override(0.15f);
             var bl = profile.Add<Bloom>(true);

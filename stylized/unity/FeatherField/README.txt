@@ -7,6 +7,8 @@ What's inside
 - Data/     colours of every material, and where everything goes on the farm
 - Editor/   FarmSetup.cs: adds the menu "Feather and Field > Build starter farm"
 - Scripts/  HenWander.cs: makes the hens walk about and peck when you press Play
+            CameraRig.cs: scroll or pinch to zoom, drag to move around (while playing)
+- Textures/ the painted meadow for the ground
 
 How to use it
 1. Unzip this file (double-click it in Finder). You get a folder called FeatherField.
@@ -18,3 +20,9 @@ How to use it
    then press Play (the triangle at the top). The hens start pottering about.
 
 You can run step 4 again at any time: it rebuilds Scenes/Farm.unity from scratch.
+
+Zooming
+- While playing, scroll (two fingers on the trackpad) to zoom and drag to move around.
+  This redraws the farm sharp. Leave the Game view's "Scale" slider at 1x: it only stretches pixels.
+- On a Retina Mac, open the aspect menu at the top left of the Game view and untick
+  "Low Resolution Aspect Ratios" if it is ticked.
