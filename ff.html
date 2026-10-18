@@ -128,6 +128,7 @@ p{margin:0;line-height:1.5}
 .btn{border:0;border-radius:999px;padding:12px 18px;font:600 16px var(--display);cursor:pointer;background:var(--barn);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:48px;box-shadow:inset 0 -4px 0 var(--barn-deep),0 3px 8px rgba(160,40,20,.18);transition:transform .08s,box-shadow .08s}
 .btn:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 -2px 0 var(--barn-deep)}
 .btn.alt{background:var(--meringue);color:var(--ink);box-shadow:inset 0 0 0 2px var(--line),inset 0 -4px 0 var(--line)}
+.good-t{color:var(--meadow-deep);font-weight:700}
 .btn.good{background:var(--meadow);box-shadow:inset 0 -4px 0 var(--meadow-deep),0 3px 8px rgba(30,90,40,.18)}
 .btn.armed{background:#8a2414;box-shadow:inset 0 -4px 0 #5c1609;animation:pulse 1s infinite}
 @keyframes pulse{50%{filter:brightness(1.18)}}
@@ -310,7 +311,7 @@ en: {
   nest:'Nest box', collect:'Collect eggs', nest_empty:'No eggs yet', birds:'Birds', upgrade_cap:'Make room for 4 more birds',
   sire:'Breeding rooster', make_sire:'Make breeding rooster', is_sire:'Breeding rooster', no_rooster:'No adult rooster here, so eggs are not fertile. Add a rooster to breed.',
   sire_auto:'Chosen at random from your roosters', sire_note:'Fertile eggs from this coop are fathered by the breeding rooster.',
-  retire_now:'Retire to pasture now', rehome:'Rehome with a family', rehomed:'{name} went to a loving family',
+  retire_now:'Retire to pasture now', rehome:'Rehome now, no waiting', rehomed:'{name} went to a loving family',
   retires_in:'Retires in {t}', retired_on:'Living on the pasture', laying_now:'Laying eggs', not_laying:'Not laying yet',
   enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
@@ -341,7 +342,7 @@ en: {
   welcome_3:'Each coop holds 5 birds. Level up to unlock new breeds and land, breed better birds, win rosettes at shows and decide whether to sell your champion or breed from it.',
   start:'Start farming',
   away_title:'While you were away', away_eggs:'{n} eggs laid', away_hatched:'{n} chicks hatched', away_retired:'{n} birds retired to the pasture', away_shows:'{n} show results', away_new_shows:'{n} new shows open', away_trophies:'{n} trophies won', away_colours:'{n} new Silkie colours', away_full:'{n} nests are full, so those hens have stopped laying', away_full1:'A nest is full, so those hens have stopped laying', collect_all:'Collect all eggs', collect_all_n:'Collect all eggs ({n})', away_paused:'You were away more than 2 days, so the farm paused.',
-  pasture:'Pasture', pasture_note:'Retired birds live here. They no longer lay, but you can rehome them.', pasture_empty:'No retired birds yet.',
+  pasture:'Pasture', pasture_note:'Retired birds wait here to be adopted. Now and then a family, a smallholder or a breeder makes an offer: accept it, or decline and wait for a better one. Offers only last a few hours, and they drop a little the longer a bird waits.', offer_toast:'Adoption offer for {name}: {n} coins', offer_from:'{who} offers', offer_ends:'ends in {t}', offer_g0:'A low offer', offer_g1:'A fair offer', offer_g2:'A good offer', offer_g3:'An excellent offer!', waiting_offer:'Waiting for an adoption offer', accept:'Accept', decline:'Decline', adopted:'{name} was adopted: +{n} coins', declined:'Offer declined. Another one will come along.', offers_n:'{n} offers', offers_n1:'1 offer', away_offers:'{n} adoption offers in the Pasture', away_offers1:'1 adoption offer in the Pasture', adopter0:'A family with young children', adopter1:'A primary school, for its nature corner', adopter2:'Your neighbour', adopter3:'A couple starting a smallholding', adopter4:'A café with a garden', adopter5:'A retired farmer', adopter6:'A breeder who wants this bloodline', adopter7:'A collector of fine birds', pasture_empty:'No retired birds yet.',
   sign_build:'Build a coop', sign_sale:'For sale', build_here:'Choose a coop to build', crow:'Cock-a-doodle-doo!', cluck:'cluck',
   in_coop:'In the {coop}', grade:'Grade', egg_word:'egg', eggs_word:'eggs', sell_eggs_done:'Sold {e} eggs for {n} coins', collected:'+{n} eggs', neighbour:'A kind neighbour left you a bag of layers pellets. Fill your feeders so the hens lay again.', col_sold:'{n} eating eggs sold +{c}', col_fert:'{n} fertile eggs to the Hatchery', col_extra:'basket full, {n} more sold +{c}', basket_note:'Eating eggs are sold as you collect them. Fertile eggs wait here; when the basket is full it keeps the best ones and sells the rest.',
   coop_cap:'{a} of {b} birds', show_ready:'Show entries open', retired_toast:'{name} retired to the pasture',
@@ -378,7 +379,7 @@ fr: {
   nest:'Pondoir', collect:'Ramasser les œufs', nest_empty:'Pas encore d’œufs', birds:'Volailles', upgrade_cap:'Faire de la place pour 4 volailles de plus',
   sire:'Coq reproducteur', make_sire:'Choisir comme reproducteur', is_sire:'Coq reproducteur', no_rooster:'Pas de coq adulte ici : les œufs ne sont pas fécondés. Ajoutez un coq pour faire de l’élevage.',
   sire_auto:'Choisi au hasard parmi vos coqs', sire_note:'Les œufs fécondés de ce poulailler ont pour père le coq reproducteur.',
-  retire_now:'Mettre au pâturage maintenant', rehome:'Confier à une famille', rehomed:'{name} est parti(e) dans une famille aimante',
+  retire_now:'Mettre au pâturage maintenant', rehome:'Confier tout de suite, sans attendre', rehomed:'{name} est parti(e) dans une famille aimante',
   retires_in:'Retraite dans {t}', retired_on:'Vit au pâturage', laying_now:'Pond des œufs', not_laying:'Ne pond pas encore',
   enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
@@ -409,7 +410,7 @@ fr: {
   welcome_3:'Chaque poulailler accueille 5 volailles. Montez de niveau pour débloquer races et terrains, améliorez vos lignées, gagnez des rosettes et décidez : vendre votre champion ou le garder pour la reproduction ?',
   start:'Commencer',
   away_title:'Pendant votre absence', away_eggs:'{n} œufs pondus', away_hatched:'{n} poussins éclos', away_retired:'{n} volailles parties au pâturage', away_shows:'{n} résultats de concours', away_new_shows:'{n} nouveaux concours ouverts', away_trophies:'{n} trophées gagnés', away_colours:'{n} nouvelles couleurs de poule soie', away_full:'{n} pondoirs sont pleins : ces poules ont arrêté de pondre', away_full1:'Un pondoir est plein : ces poules ont arrêté de pondre', collect_all:'Ramasser tous les œufs', collect_all_n:'Ramasser tous les œufs ({n})', away_paused:'Vous êtes parti plus de 2 jours : la ferme s’est mise en pause.',
-  pasture:'Pâturage', pasture_note:'Les volailles retraitées vivent ici. Elles ne pondent plus, mais vous pouvez les confier à une famille.', pasture_empty:'Aucune volaille retraitée pour le moment.',
+  pasture:'Pâturage', pasture_note:'Les volailles retraitées attendent ici d’être adoptées. De temps en temps, une famille, un petit fermier ou un éleveur fait une offre : acceptez-la, ou refusez et attendez-en une meilleure. Les offres ne durent que quelques heures et baissent un peu à mesure que la volaille attend.', offer_toast:'Offre d’adoption pour {name} : {n} pièces', offer_from:'{who} propose', offer_ends:'se termine dans {t}', offer_g0:'Une offre basse', offer_g1:'Une offre correcte', offer_g2:'Une bonne offre', offer_g3:'Une offre excellente !', waiting_offer:'En attente d’une offre d’adoption', accept:'Accepter', decline:'Refuser', adopted:'{name} a été adopté(e) : +{n} pièces', declined:'Offre refusée. Une autre arrivera.', offers_n:'{n} offres', offers_n1:'1 offre', away_offers:'{n} offres d’adoption au pâturage', away_offers1:'1 offre d’adoption au pâturage', adopter0:'Une famille avec de jeunes enfants', adopter1:'Une école primaire, pour son coin nature', adopter2:'Votre voisin', adopter3:'Un couple qui démarre une petite ferme', adopter4:'Un café avec jardin', adopter5:'Un agriculteur à la retraite', adopter6:'Un éleveur qui veut cette lignée', adopter7:'Un collectionneur de belles volailles', pasture_empty:'Aucune volaille retraitée pour le moment.',
   sign_build:'Construire', sign_sale:'À vendre', build_here:'Choisissez un poulailler à construire', crow:'Cocorico !', cluck:'cot cot',
   in_coop:'Dans : {coop}', grade:'Note', egg_word:'œuf', eggs_word:'œufs', sell_eggs_done:'{e} œufs vendus pour {n} pièces', collected:'+{n} œufs', neighbour:'Un voisin bienveillant vous a laissé un sac de granulés. Remplissez les mangeoires pour que les poules pondent à nouveau.', col_sold:'{n} œufs vendus +{c}', col_fert:'{n} œufs fécondés au couvoir', col_extra:'panier plein, {n} de plus vendus +{c}', basket_note:'Les œufs de consommation sont vendus dès le ramassage. Les œufs fécondés attendent ici ; quand le panier est plein, il garde les meilleurs et vend les autres.',
   coop_cap:'{a} volailles sur {b}', show_ready:'Inscriptions ouvertes', retired_toast:'{name} est parti(e) au pâturage',
@@ -539,14 +540,29 @@ function randomName(sex) {
 }
 function breedBase(b) { return BREEDS[b.breed].price * (b.breed === 'sil' ? SIL[b.colour].m : 1); }
 function qMult(q) { return .25 + .75 * (q / 50) ** 2; }
-function value(b) {
-  const st = { chick: .45, young: .9, adult: 1, older: .6, retired: .15 }[stage(b)];
+function value(b, peak) {            // peak: what the bird was worth in its prime (adoption offers are based on it)
+  const st = peak ? 1 : { chick: .45, young: .9, adult: 1, older: .6, retired: .15 }[stage(b)];
   const sx = b.sex === 'h' ? 1 : .85;
   const ch = 1 + .5 * Math.min(b.champ, 4);
   const line = 1 + .1 * Math.min(b.line || 0, 4);
   return Math.max(1, Math.round(breedBase(b) * qMult(quality(b)) * st * sx * ch * line));
 }
 const sellPrice = b => Math.max(1, Math.round(value(b) * .8));
+// Adoption: retired birds wait in the pasture; now and then someone offers to adopt one. Offers are random (mostly modest,
+// sometimes generous, more often generous for prize winners and fine birds), drop slowly the longer a bird waits, and expire.
+const ADOPTERS = 8;                                       // adopter0..7: 0-2 homes, 3-5 smallholders, 6-7 breeders and collectors
+const ADOPT = { first: [2 * HOUR, 6 * HOUR], gap: [3 * HOUR, 9 * HOUR], lasts: [4 * HOUR, 10 * HOUR] };
+const adoptRnd = ([a, b]) => a + (b - a) * Math.random();
+function makeOffer(b) {
+  const bonus = Math.min(.25, .04 * (b.champ || 0) + .02 * Math.min(b.ribbons.length, 5) + Math.max(0, quality(b) - 60) / 200);
+  const r = Math.min(.999, Math.random() + bonus);
+  const g = r < .25 ? 0 : r < .75 ? 1 : r < .95 ? 2 : 3;
+  const [lo, hi] = [[.05, .15], [.15, .35], [.35, .6], [.6, .95]][g];
+  const days = Math.max(0, state.gt - (b.retiredAt || b.born + T.retire)) / DAY;
+  const p = Math.max(2, Math.round(value(b, true) * (lo + (hi - lo) * Math.random()) * Math.max(.5, 1 - .02 * days)));
+  const who = [[0, 1, 2], [0, 1, 2, 3, 4, 5], [3, 4, 5], [6, 7]][g];
+  return { p, g, w: who[Math.floor(Math.random() * who.length)], until: state.gt + adoptRnd(ADOPT.lasts) };
+}
 function fertileEggPrice(e) {
   const c = e.child; const base = BREEDS[c.breed].price * (c.breed === 'sil' ? SIL[c.colour].m : 1);
   const q = (e.sire.q + e.dam.q) / 2;
@@ -733,6 +749,11 @@ function sanitize(s) {
       ribbons: (Array.isArray(b.ribbons) ? b.ribbons : []).slice(0, 60).map(r => ({ tier: TIERS[r && r.tier] ? r.tier : 'village', place: int(r && r.place, 1, 3, 3) })),
       champ: int(b.champ, 0, 99, 0), seed: int(b.seed, 0, 2 ** 31, 1), nextLay: num(b.nextLay, -1e13, 1e13, 0), entered: Number.isInteger(b.entered) ? b.entered : null, boost: num(b.boost, 0, 8, 0) };
     if (breed === 'sil') { x.geno = okGeno(b.geno, b.colour); x.colour = silkieColour(x.geno); }
+    if (home === 'pasture') {                 // adoption state: an offer can never be worth more than the bird in its prime
+      x.retiredAt = num(b.retiredAt, -1e13, 1e13, x.born + T.retire); x.nextOffer = num(b.nextOffer, -1e13, 1e13, 0); x.offer = null;
+      const of = b.offer;
+      if (of && typeof of === 'object') x.offer = { p: int(of.p, 1, Math.max(2, Math.round(value(x, true))), 1), g: int(of.g, 0, 3, 1), w: int(of.w, 0, ADOPTERS - 1, 0), until: num(of.until, -1e13, 1e13, 0) };
+    }
     o.birds.push(x);
   }
   for (const id of BREED_IDS) o.basket.plain[id] = int(s.basket && s.basket.plain && s.basket.plain[id], 0, 1e5, 0);
@@ -812,6 +833,11 @@ function simStep(step) {
       }
     }
   }
+  for (const b of state.birds) {             // adoption offers for retired birds
+    if (b.home !== 'pasture') continue;
+    if (b.offer && gt >= b.offer.until) { b.offer = null; b.nextOffer = gt + adoptRnd(ADOPT.gap); dirty = true; }
+    else if (!b.offer && gt >= (b.nextOffer || 0)) { b.offer = makeOffer(b); dirty = true; emit('offer', t('offer_toast', { name: b.name, n: fmtN(b.offer.p) }), b.offer.g >= 2, () => openSheet('pasture')); }
+  }
   for (const it of state.inc.items) {
     if (gt >= it.start + T.incubate && !it.waiting) tryHatch(it);
     else if (it.waiting && coopWithSpace(it.egg.child.breed)) tryHatch(it);
@@ -833,7 +859,7 @@ function layEgg(hen, coop) {
   if (!sink) goLay(hen, coop);
 }
 function retire(b) {
-  b.home = 'pasture'; b.entered = null;
+  b.home = 'pasture'; b.entered = null; b.offer = null; b.retiredAt = state.gt; b.nextOffer = state.gt + adoptRnd(ADOPT.first);
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
   resetAgent(b); dirty = true;
 }
@@ -991,6 +1017,19 @@ function actSell(b) {
   agents.delete(b.id);
   toast(b.home === 'pasture' ? t('rehomed', { name: b.name }) : t('sold', { name: b.name, n: fmtN(p) }));
   closeSheet(); changed();
+}
+function actAcceptOffer(b) {
+  if (!birdById(b.id) || b.home !== 'pasture' || !b.offer || state.gt >= b.offer.until) { changed(); return; }
+  const p = b.offer.p;
+  addCoins(p); state.stats.sold++; SND.coin(); gainXP(XP.sell + p / 20);
+  state.birds = state.birds.filter(x => x.id !== b.id); agents.delete(b.id);
+  toast(t('adopted', { name: b.name, n: fmtN(p) }), true);
+  if (current && current.name === 'bird') closeSheet();
+  changed();
+}
+function actDeclineOffer(b) {
+  if (!birdById(b.id) || !b.offer) return;
+  b.offer = null; b.nextOffer = state.gt + adoptRnd(ADOPT.gap); toast(t('declined')); changed();
 }
 function actRetire(b) { if (b.home === 'pasture') return; retire(b); toast(t('retired_toast', { name: b.name })); changed(); }
 function actSire(b) { const c = coopById(b.home); if (!c || b.sex !== 'r') return; c.sire = b.id; changed(); }
@@ -1662,7 +1701,7 @@ function draw() {
     }
   }
   const pp = toMap(GEOM.pasture, 0, -2.75, .2);
-  if (vis(pp[0], pp[1], 100)) label(pp[0], pp[1], t('pasture'));
+  if (vis(pp[0], pp[1], 100)) { const no = state.birds.filter(b => b.home === 'pasture' && b.offer).length; label(pp[0], pp[1], t('pasture'), no ? t('offers_n', { n: no }) : null, no ? 'hot' : null); }
   if (ui.grades) { birds.sort((a, b) => b.sy - a.sy); const placed = []; for (const a of birds) gradeTag(a, placed); }
   for (const a of birds) if (a.say > 0) speech(a);
 }
@@ -1874,6 +1913,15 @@ function confirmBtn(key, label, fn, cls = 'btn') {
     else { armed = { key, until: performance.now() + 3500 }; renderSheet(); }
   } }, isArmed ? t('confirm') : label);
 }
+function offerBlock(b) {               // an adoption offer (or the wait for one) under a retired bird
+  const o = b.offer;
+  if (!o) return h('p', { class: 'small muted', text: t('waiting_offer') });
+  return [h('p', { class: 'small', style: 'font-weight:700;margin-top:8px' }, t('offer_from', { who: t('adopter' + o.w) }), ' ', coinPrice(o.p)),
+    h('p', { class: 'small ' + (o.g >= 2 ? 'good-t' : 'muted') }, t('offer_g' + o.g), ' · ', timer(o.until, 'offer_ends')),
+    h('div', { class: 'btns', style: 'display:grid;grid-template-columns:1fr 1fr;gap:8px' },
+      h('button', { class: 'btn sm good', onclick: () => actAcceptOffer(b) }, t('accept')),
+      h('button', { class: 'btn sm alt', onclick: () => actDeclineOffer(b) }, t('decline')))];
+}
 function birdRow(b, extra, showValue) {
   const q = quality(b);
   return h('button', { class: 'item', onclick: () => openSheet('bird', { id: b.id }) },
@@ -1924,7 +1972,7 @@ const SHEETS = {
     if (a.eggs) lines.push(t('away_eggs', { n: fmtN(a.eggs) })); if (a.hatched) lines.push(t('away_hatched', { n: a.hatched }));
     if (a.retired) lines.push(t('away_retired', { n: a.retired })); if (a.shows) lines.push(t('away_shows', { n: a.shows }));
     if (a.hungry) lines.push(t('away_hungry', { n: a.hungry })); if (a.levels) lines.push(t('level_up', { n: a.levels }));
-    if (a.built) lines.push(t('away_built', { n: a.built }));
+    if (a.built) lines.push(t('away_built', { n: a.built })); if (a.offer) lines.push(t('away_offers', { n: a.offer }));
     if (a.showsNew) lines.push(t('away_new_shows', { n: a.showsNew })); if (a.trophies) lines.push(t('away_trophies', { n: a.trophies })); if (a.colours) lines.push(t('away_colours', { n: a.colours }));
     const full = state.coops.filter(c => nestCount(c) >= NEST_CAP).length; if (full) lines.push(full > 1 ? t('away_full', { n: full }) : t('away_full1'));
     const waiting = waitingEggs();
@@ -2003,7 +2051,7 @@ const SHEETS = {
     if (b.sex === 'h' && st !== 'retired') info.push(h('p', { class: 'small muted', text: st === 'chick' ? t('not_laying') : t('laying_now') }));
     const ribbons = b.ribbons.length ? h('div', { class: 'row', style: 'flex-wrap:wrap' }, b.ribbons.slice(-12).map(r => h('span', { class: 'rosette p' + r.place, title: `${placeLabel(r.place)} · ${t('t_' + r.tier)}` }))) : null;
     const actions = [];
-    if (st === 'retired') actions.push(confirmBtn('rehome' + b.id, h('span', {}, t('rehome'), ' · ', coinPrice(Math.max(1, value(b)))), () => actSell(b)));
+    if (st === 'retired') { if (b.offer) actions.push(h('div', { class: 'card', style: 'width:100%' }, offerBlock(b))); actions.push(confirmBtn('rehome' + b.id, h('span', {}, t('rehome'), ' · ', coinPrice(Math.max(1, value(b)))), () => actSell(b), 'btn alt')); }
     else {
       actions.push(confirmBtn('sell' + b.id, h('span', {}, t('sell_for'), ' ', coinPrice(sellPrice(b))), () => actSell(b)));
       if (b.sex === 'r' && st !== 'chick' && coop && coop.sire !== b.id) actions.push(h('button', { class: 'btn alt', onclick: () => actSire(b) }, t('make_sire')));
@@ -2036,8 +2084,8 @@ const SHEETS = {
     ] };
   },
   pasture() {
-    const birds = state.birds.filter(b => b.home === 'pasture');
-    return { title: t('pasture'), node: [h('p', { class: 'note', text: t('pasture_note') }), birds.length ? h('div', { class: 'list' }, birds.map(b => birdRow(b))) : h('p', { class: 'muted', text: t('pasture_empty') })] };
+    const birds = state.birds.filter(b => b.home === 'pasture').sort((a, b) => (b.offer ? 1 : 0) - (a.offer ? 1 : 0));
+    return { title: t('pasture'), node: [h('p', { class: 'note', text: t('pasture_note') }), birds.length ? h('div', { class: 'list' }, birds.map(b => h('div', { class: 'card' }, birdRow(b), offerBlock(b)))) : h('p', { class: 'muted', text: t('pasture_empty') })] };
   },
   market({ tab = 'birds' }) {
     const seg = h('div', { class: 'seg', role: 'group' }, ['birds', 'feed', 'build', 'breeds'].map(k => h('button', { 'aria-pressed': String(tab === k), onclick: () => { current.args.tab = k; renderSheet(true); } }, t('market_' + k))));

@@ -26,6 +26,7 @@ window.__ffDebug = {
     return { coop0: sc(m[0], m[1]), bird: a ? sc(a.sx, a.sy - 20) : [0, 0] };
   },
   feedBubble() { const p = plots.find(p => p.feedBubble); return p ? [(p.feedBubble.x - view.x) * view.s, (p.feedBubble.y - view.y) * view.s] : null; },
+  openPasture() { openSheet('pasture'); },
   view() { return { s: view.s, x: view.x, y: view.y, level: state.level, xp: state.xp }; },
   scroll(f) { view.y = (GEOM.size[1] - view.vh / view.s) * f; clampCam(); },
   levelUp() { gainXP(xpFor(state.level + 1) - state.xp); },
