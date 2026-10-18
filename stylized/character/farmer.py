@@ -15,6 +15,7 @@ LOOKS = {
               boots='#efbf3a', band='#d8343a', hat='#e6c26c', beard=False, lashes=True),
 }
 _F = {}
+HAT_TILT = -10                 # degrees the hat is pushed back (more for the farm-map sprites, so the face shows)
 
 
 def plaid(name, cols, f=135.0, axes=('Y', 'Z')):
@@ -424,7 +425,7 @@ def hair(look, hd, hr, surf, Mt):
 
 
 def hat(look, hd, hr, Mt):
-    h = empty('hat', (-0.012, 0, hr * 0.64), (0, math.radians(-10), 0), hd); h.scale = (hr / 0.165,) * 3
+    h = empty('hat', (-0.012, 0, hr * 0.64), (0, math.radians(HAT_TILT), 0), hd); h.scale = (hr / 0.165,) * 3
     crown = cyl('crown', 0.128, 0.105, (0, 0, 0.06), (0, 0, 0), Mt['hat'], verts=40, r2=0.112, bevel=0.03, parent=h)
     subsurf(crown, 1)
     dent = sphere('crowntop', 1.0, (0, 0, 0.11), (0.11, 0.1, 0.03), m=Mt['hat'], parent=h, seg=32, rings=12)

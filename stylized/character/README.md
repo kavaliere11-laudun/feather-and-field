@@ -15,3 +15,4 @@ Expressions: happy, joyful, hungry, sleepy, surprised, sad, grumpy, in love, mis
 - `farmer_sheets.py`: lays out `sheets/sheet_farmer.png` and `sheets/sheet_farmer_moods.png`.
 
 Nunito is used under the SIL Open Font License.
+- `farmer_sprites.py` renders the farmer's frames for the web game (walk, walking with a torch, idle, wave, telling off, worried, feeding), with the same camera and lights as the bird sprites; `farmer_pack.py` packs them into the game's sprite atlases and makes the two portraits for the "Choose your farmer" screen.
