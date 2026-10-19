@@ -32,17 +32,14 @@ html{background:#4f7a35;overflow:hidden;overscroll-behavior:none}     /* nothing
 body{margin:0;background:#4f7a35;color:var(--ink);font-family:var(--body);font-weight:600;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 [hidden]{display:none!important}
 #app{position:relative;height:100%}
-/* installed on the home screen (iPhone draws the page under the status bar, and 100% then falls short of the bottom): fill the whole screen */
-@media (display-mode: standalone){#app{position:fixed;inset:0 0 auto 0;height:100vh}}
-.standalone #app{position:fixed;inset:0 0 auto 0;height:100vh}
+/* installed on the home screen: the status bar is solid (iOS 26.1+ blurs a see-through one), and the page fills what is below it */
+@media (display-mode: standalone){#app{position:fixed;inset:0}}
+.standalone #app{position:fixed;inset:0}
 /* iOS 26 blurs the top of home-screen apps unless something opaque is painted right at the top edge */
 html{background:#4f7a35}
 @media (display-mode: standalone){#app{background:#4f7a35}}
 .standalone #app{background:#4f7a35}
-#noblur{display:none}
-@supports (-webkit-touch-callout: none){@media (display-mode: standalone){#noblur{display:block;position:fixed;top:0;left:0;right:0;height:11px;z-index:50;pointer-events:none;background:#4f7a35;-webkit-background-clip:text;background-clip:text;color:transparent}}
-  .standalone #noblur{display:block;position:fixed;top:0;left:0;right:0;height:11px;z-index:50;pointer-events:none;background:#4f7a35;-webkit-background-clip:text;background-clip:text;color:transparent}}
-.standalone,.standalone body{min-height:calc(100% + env(safe-area-inset-top,0px))}
+
 #stage{position:absolute;inset:0;overflow:hidden;background:#4f7a35}
 #farm{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 
@@ -167,6 +164,7 @@ button.tnode{cursor:pointer;box-shadow:inset 0 0 0 2px var(--line)}
 .tnode b{font:600 13px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tnode span{font-size:11.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tnode.me{background:var(--ink);color:var(--meringue)}.tnode.me span{color:#cbd6c3}.tnode.unk{color:var(--ink-2);opacity:.65}
 .tbr{position:relative;align-self:stretch}.tbr::after{content:'';position:absolute;left:6px;right:0;top:25%;bottom:25%;border:2px solid var(--line);border-right:0;border-radius:6px 0 0 6px}.tbr::before{content:'';position:absolute;left:0;width:7px;top:calc(50% - 1px);border-top:2px solid var(--line)}
+.codebox{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;font:500 12px/1.3 ui-monospace,Menlo,monospace;color:var(--ink);background:var(--meringue);resize:vertical;word-break:break-all}
 .skgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.skopt{background:var(--meringue);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;justify-content:space-between}.skopt .big{font:700 20px var(--display)}.skopt .btn{width:100%}
 .tag.pers{background:#f6ecd4;color:#5a3d06}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 6px}
@@ -255,7 +253,7 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
     <button data-tab="awards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8 21h8M9 17h6"/></svg><span data-t="tab_awards"></span></button>
   </nav>
 </div>
-<div id="noblur" aria-hidden="true"></div>
+
 <div id="scrim" hidden></div>
 <section id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-head"><h2 id="sheetTitle"></h2><button class="iconbtn" id="sheetClose" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -279,7 +277,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 13:49';
+const BUILD = '19 Oct 2026 18:30';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -445,6 +443,10 @@ en: {
   guide_wheat:'Sow the wheat field by the farmhouse. It grows into free feed for your hens.',
   guide_jobs:'Open Jobs: three small jobs a day earn extra coins and XP.',
   guide_shows:'Open Shows: enter your best bird to win rosettes and prizes.',
+  code_t:'Move your farm', code_how:'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after reinstalling the app, to carry on where you left off.',
+  code_copy:'Copy my farm code', code_paste:'Paste a farm code here', code_load:'Load this farm', code_note:'Loading a farm replaces the one on this device.',
+  code_copied:'Farm code copied. Paste it into Notes to keep it safe.', code_select:'Here is your farm code: select it all and copy it.', code_bad:'That farm code doesn’t work. Copy it again, all of it.',
+  code_loaded:'Farm loaded: level {n}. Welcome back!',
   enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
@@ -607,6 +609,10 @@ fr: {
   guide_wheat:'Semez le champ de blé près de la ferme. Il donne de la nourriture gratuite pour vos poules.',
   guide_jobs:'Ouvrez Tâches : trois petites tâches par jour rapportent pièces et XP.',
   guide_shows:'Ouvrez Concours : inscrivez votre meilleure volaille pour gagner cocardes et prix.',
+  code_t:'Déplacer votre ferme', code_how:'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir réinstallé l’app, pour reprendre là où vous en étiez.',
+  code_copy:'Copier le code de ma ferme', code_paste:'Collez un code de ferme ici', code_load:'Charger cette ferme', code_note:'Charger une ferme remplace celle de cet appareil.',
+  code_copied:'Code copié. Collez-le dans Notes pour le garder.', code_select:'Voici le code de votre ferme : sélectionnez-le en entier et copiez-le.', code_bad:'Ce code ne fonctionne pas. Copiez-le à nouveau, en entier.',
+  code_loaded:'Ferme chargée : niveau {n}. Bon retour !',
   enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
@@ -968,6 +974,48 @@ function unwrap(w) {
   if (s && fnv(SALT + w.data) !== w.sum) s.flags.edited = true;
   return s;
 }
+/* A farm code: the whole save, packed small, to copy into Notes and paste into the game on another phone or a reinstalled app.
+   Loading one goes through every check a normal save does (unwrap → sanitize), and an edited one is flagged like any other. */
+const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+async function squeeze(bytes, how) {
+  const cs = how === 'in' ? new CompressionStream('gzip') : new DecompressionStream('gzip');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer());
+}
+async function farmCode() {
+  const data = JSON.stringify(state), w = JSON.stringify({ v: 1, data, sum: fnv(SALT + data), at: Date.now() }), raw = new TextEncoder().encode(w);
+  if (typeof CompressionStream === 'function') return 'FF1-' + b64(await squeeze(raw, 'in'));
+  return 'FF0-' + b64(raw);
+}
+async function readFarmCode(code) {
+  code = String(code || '').replace(/\s+/g, '');
+  if (code.length < 20 || code.length > 4e6 || !/^FF[01]-[A-Za-z0-9+/=]+$/.test(code)) return null;
+  try {
+    let bytes = unb64(code.slice(4));
+    if (code[2] === '1') { if (typeof DecompressionStream !== 'function') return null; bytes = await squeeze(bytes, 'out'); }
+    const w = JSON.parse(new TextDecoder().decode(bytes));
+    return unwrap(w);
+  } catch (e) { return null; }
+}
+async function actCopyCode() {
+  // iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of the code rather than waiting for it
+  let copied = false; const pc = farmCode();
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': pc.then(c => new Blob([c], { type: 'text/plain' })) })]);
+    else await navigator.clipboard.writeText(await pc);
+    copied = true;
+  } catch (e) {
+    try { await navigator.clipboard.writeText(await pc); copied = true; } catch (e2) {}
+  }
+  codeShown = await pc; toast(t(copied ? 'code_copied' : 'code_select'), copied); renderSheet();
+}
+async function actLoadCode(code) {
+  const s = await readFarmCode(code);
+  if (!s) { toast(t('code_bad')); return; }
+  agents.clear(); spriteCache.clear(); plotCache.clear(); lastSpot.clear();
+  state = s; codeDraft = ''; FARM.init = false; hudCache = ''; save(true); layout(); closeSheet(); updateHud(); toast(t('code_loaded', { n: state.level }), true);
+}
+let codeShown = '', codeDraft = '';       // the pasted code survives the sheet being redrawn
 function load() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -1927,6 +1975,9 @@ function layout() {
 }
 function clampCam() {
   const [W, H] = GEOM.size;
+  if (!isFinite(view.s) || view.s <= 0) view.s = 1;
+  if (!isFinite(view.x)) view.x = 0;
+  if (!isFinite(view.y)) view.y = 0;
   view.x = clamp(view.x, 0, Math.max(0, W - view.vw / view.s));
   const padT = (guideShown ? 170 : 64) / view.s, padB = 96 / view.s;      // the top bar (and the guide) and the tab bar float over the map: let its edges scroll clear of them
   view.y = clamp(view.y, -padT, Math.max(-padT, H - view.vh / view.s + padB));
@@ -1941,16 +1992,22 @@ function plotOfBird(b) { if (b.home === 'pasture') return plots[plots.length - 1
 const yardOf = p => p.kind === 'pasture' ? PASTURE_YARD : YARD;
 
 /* ---------- chickens: short stop-and-go walks, pecking bouts, chatting, dust baths ---------- */
-function resetAgent(b) { agents.delete(b.id); }
+function resetAgent(b) { const a = agents.get(b.id); if (a && a.plot && a.plot.coop) lastSpot.set(b.id, { x: a.x, y: a.y, coop: a.plot.coop.id, out: a.key.endsWith('out') }); agents.delete(b.id); }
 function agentFor(b) {
   if (b.hide) return null;                     // out for the night somewhere
   let a = agents.get(b.id); const p = plotOfBird(b); if (!p) return null;
   const out = !!b.out && p.kind === 'coop';
   const key = (p.kind === 'pasture' ? 'pasture' : 'coop' + p.coop.id) + (out ? 'out' : '');
   if (a && a.key === key) { a.plot = p; return a; }
-  const y = out ? OUTSIDE : yardOf(p), face = Math.random() < .5 ? 1 : -1;
+  const y = out ? runawayReg(p) : yardOf(p), face = Math.random() < .5 ? 1 : -1;
   a = { key, reg: y, plot: p, x: lerp(y.x0, y.x1, Math.random()), y: lerp(y.y0, y.y1, Math.random()), tx: 0, ty: 0, st: 'idle', t: Math.random() * 2,
         face, fx: face, faceShown: face, turnT: null, dist: 0, go: 0, head: 0, headT: 0, pose: 'farm', prev: null, fade: 0, say: 0, sayText: '', sx: null, sy: null };
+  const prev = lastSpot.get(b.id); lastSpot.delete(b.id);
+  if (prev && p.kind === 'coop' && prev.coop === p.coop.id && prev.out !== out) {        // over the fence with a flap: out to her patch of grass, or back home
+    const H = { x0: prev.x, y0: prev.y, x1: a.x, y1: a.y, t: 0 };
+    a.x = H.x0; a.y = H.y0; a.st = 'hop'; a.hop = H; a.t = 9;
+    a.face = a.fx = a.faceShown = screenDx(p, H.x1 - H.x0, H.y1 - H.y0) > 0 ? 1 : -1;
+  }
   agents.set(b.id, a);
   return a;
 }
@@ -2010,6 +2067,51 @@ function nestLeave(a, list) {
   SND.cackle(a.sx, a.sy); a.say = 1.6; a.sayText = t('cluck');
   a.st = 'walk'; a.tx = lerp(y.x0, y.x1, .55 + Math.random() * .4); a.ty = lerp(y.y0, y.y1, .3 + Math.random() * .6); a.go = 0; a.t = 12;
 }
+const FENCE = { hw: 2.05, front: -1.72, back: 2.1 };     // each pen's fence, in its own metres
+function outsideBy(lx, ly) {                             // how far outside a pen's fence a point is (negative: inside)
+  const dx = Math.abs(lx) - FENCE.hw, dy = Math.max(FENCE.front - ly, ly - FENCE.back);
+  return dx > 0 && dy > 0 ? Math.hypot(dx, dy) : Math.max(dx, dy);
+}
+function fenceBottom(p, x) {                             // the lowest point on screen of a pen's fence at this x (its near side)
+  const c = [[-FENCE.hw, FENCE.front], [FENCE.hw, FENCE.front], [FENCE.hw, FENCE.back], [-FENCE.hw, FENCE.back]].map(([u, v]) => toMap(p.f, u, v));
+  let y = null;
+  for (let i = 0; i < 4; i++) {
+    const [a, b] = [c[i], c[(i + 1) % 4]]; if (a[0] === b[0] || x < Math.min(a[0], b[0]) || x > Math.max(a[0], b[0])) continue;
+    const yy = a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); if (y == null || yy > y) y = yy;
+  }
+  return y;
+}
+// Something standing outside the pens (the farmer, a runaway, a decoration) must be drawn after the near fence of any pen
+// that is behind it on screen; the near fence is drawn as one picture, so its single sort place is not enough on its own.
+function standKey(x, y) {
+  let k = y;
+  if (!DATA.fence) return k;
+  for (const p of plots) {
+    if (p.kind !== 'coop') continue;
+    const [lx, ly] = toLocal(p.f, x, y); if (outsideBy(lx, ly) < 0) continue;     // inside this pen: its fence is in front
+    const fb = fenceBottom(p, x); if (fb != null && y >= fb - 6) k = Math.max(k, p.f.c[1] + 201);
+  }
+  return k;
+}
+// A runaway's patch of grass: outside her pen, clear of every fence, coop, tree, house and decoration (in her pen's metres)
+function runawayReg(p) {
+  const B = navBlock(), C = NAV.C, w = Math.ceil(GEOM.size[0] / C), [W, H] = GEOM.size;
+  const free = (lx, ly) => {
+    const [mx, my] = toMap(p.f, lx, ly);
+    if (mx < 90 || mx > W - 90 || my < 180 || my > H - 80) return false;
+    if (B[Math.floor(my / C) * w + Math.floor(mx / C)]) return false;
+    for (const q of plots) if ((q.kind === 'coop' || q.kind === 'build') && outsideBy(...toLocal(q.f, mx, my)) < .45) return false;
+    return Math.hypot(mx - GEOM.pasture.c[0], my - GEOM.pasture.c[1]) > 330;
+  };
+  for (let i = 0; i < 80; i++) {
+    const lx = (Math.random() * 2 - 1) * 3.4, ly = -3.6 + Math.random() * (i < 50 ? 3.2 : 6.6);     // the front of the pen first: easier to see
+    const o = outsideBy(lx, ly); if (o < .7 || o > 1.6) continue;
+    const r = { x0: lx - .3, x1: lx + .3, y0: ly - .22, y1: ly + .22 };
+    if ([[r.x0, r.y0], [r.x1, r.y0], [r.x0, r.y1], [r.x1, r.y1], [lx, ly]].every(([u, v]) => free(u, v))) return r;
+  }
+  return OUTSIDE;
+}
+const lastSpot = new Map();                              // where a bird was just before she changed sides of the fence
 function screenDx(p, dx, dy) { return dx * p.f.ex[0] + dy * p.f.ey[0]; }
 function updateAgents(dt) {
   const byPlot = new Map();
@@ -2026,7 +2128,12 @@ function updateAgents(dt) {
       const spd = (chick ? (isV2(b) ? .2 : .3) : b.breed === 'sil' ? .17 : .22) * slow * (a.cuddle ? 1.6 : 1);   // metres per second; hurries over for a cuddle
       a.t -= dt; if (a.say > 0) a.say -= dt; if (a.fade > 0) a.fade -= dt; if (a.flash > 0) a.flash -= dt;
       let pose = 'farm';
-      if (a.st === 'walk' || a.st === 'follow') {
+      if (a.st === 'hop') {                                   // a little flight over the fence
+        const H = a.hop; H.t += dt / .9; const k = Math.min(1, H.t), e = k < .5 ? 2 * k * k : 1 - 2 * (1 - k) * (1 - k);
+        a.x = lerp(H.x0, H.x1, e); a.y = lerp(H.y0, H.y1, e); a.lift = Math.sin(Math.PI * k) * 34;
+        pose = isV2(b) ? 'walk' + (Math.floor(k * 24) % 8) : (Math.floor(k * 12) % 2 ? 'walk1' : 'walk2');
+        if (k >= 1) { a.st = 'idle'; a.t = .8; a.lift = 0; a.hop = null; if (b.out) { a.say = 1.5; a.sayText = t('rebel_say'); } }
+      } else if (a.st === 'walk' || a.st === 'follow') {
         if (a.st === 'follow' && a.leader) { a.tx = clamp(a.leader.x + a.off[0], y.x0, y.x1); a.ty = clamp(a.leader.y + a.off[1], y.y0, y.y1); }
         const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
         if (d > .015) {
@@ -2067,7 +2174,7 @@ function updateAgents(dt) {
         a.fx = a.faceShown;
       } else { a.faceShown = a.face; a.turnT = null; a.fx += (a.face - a.fx) * Math.min(1, dt * 12); }     // older pictures: a quick flip
       const bound = a.task ? PEN : y;
-      a.x = clamp(a.x, bound.x0, bound.x1); a.y = clamp(a.y, bound.y0, bound.y1);
+      if (a.st !== 'hop') { a.x = clamp(a.x, bound.x0, bound.x1); a.y = clamp(a.y, bound.y0, bound.y1); }
       if (a.task) { if (a.st === 'walk' && a.t <= 0) nestArrive(a); }      // a laying hen never wanders off
       else {
         if (a.t <= 0 && a.st !== 'walk') decide(b, a, list.filter(o => o.b !== b));
@@ -2235,7 +2342,7 @@ function greetFarmer(coopId) {                 // birds that trust the farmer tr
     const a = agents.get(b.id);
     if (trustLvl(b) < 2 || !a || a.task || a.cuddle || a.caught || b.out || b.hide || a.plot.kind !== 'coop') continue;
     a.st = 'walk'; a.chatWith = null; a.leader = null; a.greet = true; a.go = 0; a.t = 12;
-    a.tx = clamp(-0.55 + (i % 3) * 0.32 - 0.16 + (Math.random() - .5) * .08, YARD.x0, YARD.x1); a.ty = YARD.y0 + .04 + Math.floor(i / 3) * .2; i++;
+    a.tx = clamp(-0.8 + (i % 3) * 0.52 + (Math.random() - .5) * .08, YARD.x0, YARD.x1); a.ty = YARD.y0 + .04 + Math.floor(i / 3) * .26 + (i % 2) * .07; i++;      // spread out, so they don't pile on top of each other
   }
 }
 function releaseCuddle() {
@@ -2664,13 +2771,13 @@ function draw() {
   for (const tf of GEOM.tufts) if (vis(tf[0], tf[1], 40)) items.push([tf[1], 2, tf]);
   for (const f of frogs) if (vis(f.x, f.y, 40)) items.push([f.y, 3, f]);
   for (const d of ducks) if (vis(d.x, d.y, 40)) items.push([d.y, 6, d]);
-  if (farmerReady() && vis(FARM.x, FARM.y, 120)) items.push([FARM.y, 9, FARM]);
-  for (const id of state.decor) { const D = DECOR[id], [ax, ay] = moving && moving.id === id ? [moving.x, moving.y] : decorPos(id); if (D && DCS['dc_' + id] && vis(ax, ay - 150, 420)) items.push([ay + (moving && moving.id === id ? 2000 : 0), 10, id]); }
+  if (farmerReady() && vis(FARM.x, FARM.y, 120)) items.push([standKey(FARM.x, FARM.y), 9, FARM]);
+  for (const id of state.decor) { const D = DECOR[id], [ax, ay] = moving && moving.id === id ? [moving.x, moving.y] : decorPos(id); if (D && DCS['dc_' + id] && vis(ax, ay - 150, 420)) items.push([standKey(ax, ay) + (moving && moving.id === id ? 2000 : 0), 10, id]); }
   const birds = [];
   for (const b of state.birds) {
     const a = agents.get(b.id); if (!a || !a.plot) continue;
     const m = toMap(a.plot.f, a.x, a.y); a.sx = m[0]; a.sy = m[1];
-    if (vis(a.sx, a.sy, 80)) { items.push([a.sy, 4, a]); birds.push(a); }
+    if (vis(a.sx, a.sy, 80)) { items.push([a.st === 'hop' ? Math.max(a.sy, a.plot.f.c[1] + 202) : a.b.out ? standKey(a.sx, a.sy) : a.sy, 4, a]); birds.push(a); }
   }
   items.sort((p, q) => p[0] - q[0]);
   for (const [, kind, it] of items) {
@@ -2798,7 +2905,7 @@ function drawBird(a) {
   let dy = 0;
   if (a.st === 'sit') { if (name.startsWith('sit_')) { sy *= 1 + .012 * Math.sin(clock * 2.2 + b.id); dy = 3; } else { sy *= .9 + .015 * Math.sin(clock * 2.2 + b.id); sx *= 1.06; dy = 7; } }
   if (st === 'retired') ctx.filter = 'saturate(.8)';
-  drawSprite(name, a.sx, a.sy + dy, sx, sy);
+  drawSprite(name, a.sx, a.sy + dy - (a.lift || 0), sx, sy);
   if (a.fade > 0 && a.prev && a.st !== 'sit' && a.turnT == null) { const pn = spriteFor(b, a.prev); if (pn && pn !== name) { ctx.globalAlpha = clamp(a.fade / .09, 0, 1) * .8; drawSprite(pn, a.sx, a.sy, BIRD_UNIT / SPR[pn].ppu * grow * a.fx, BIRD_UNIT / SPR[pn].ppu * grow); ctx.globalAlpha = 1; } }
   ctx.filter = 'none';
   if (fresh) {
@@ -3599,6 +3706,12 @@ const SHEETS = {
       h('p', { class: 'note', text: t({ cloud: 'saved_cloud', big: 'saved_big', full: 'saved_big', error: 'saved_err' }[cloud.status] || 'saved_here') }),
       h('p', { class: 'note', text: t('version') + ' ' + BUILD }),
       state.flags.edited ? h('p', { class: 'warn', text: t('edited') }) : null,
+      h('div', { class: 'card' }, h('h3', { text: t('code_t') }), h('p', { class: 'small', text: t('code_how') }),
+        h('button', { class: 'btn sm', onclick: () => actCopyCode() }, t('code_copy')),
+        codeShown ? h('textarea', { class: 'codebox', readonly: true, rows: 3, 'aria-label': t('code_t'), onfocus: e => e.target.select() }, codeShown) : null,
+        h('textarea', { class: 'codebox', id: 'codeIn', rows: 3, placeholder: t('code_paste'), 'aria-label': t('code_paste'), autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', oninput: e => { codeDraft = e.target.value; } }, codeDraft),
+        confirmBtn('loadcode', t('code_load'), () => actLoadCode(codeDraft), 'btn sm alt'),
+        h('p', { class: 'tiny muted', text: t('code_note') })),
       confirmBtn('reset', t('reset'), () => { try { localStorage.removeItem(SAVE_KEY); } catch (_) {} const l = state.lang; agents.clear(); spriteCache.clear(); plotCache.clear(); newGame(l); state.flags.welcome = true; save(true); layout(); closeSheet(); toast(t('reset_done')); }, 'btn alt'),
     ] };
   },
@@ -3736,7 +3849,7 @@ const SND = (() => {
 
   /* where a map point sits relative to the screen: pan and loudness, or null when it is well off screen */
   function spot(x, y) {
-    if (x == null || !view.vw) return null;
+    if (x == null || !view.vw || !isFinite(x) || !isFinite(y) || !isFinite(view.x) || !isFinite(view.y)) return null;
     const nx = ((x - view.x) * view.s - view.vw / 2) / (view.vw / 2), ny = ((y - view.y) * view.s - view.vh / 2) / (view.vh / 2);
     const d = Math.hypot(nx, ny * .8), v = Math.max(0, Math.min(1, 1.25 - .5 * d));
     if (v <= .02) return null;
@@ -3888,10 +4001,11 @@ const SND = (() => {
     if (onOverride || !on() || !windG) return;
     bedT -= dt;
     if (bedT <= 0) {
-      bedT = .25; const w = wind(clock), now = ac.currentTime;
+      bedT = .25; const w = wind(clock), now = ac.currentTime, wv = water();
+      if (!isFinite(w) || !isFinite(wv)) return;
       windG.gain.setTargetAtTime(.05 + .07 * w, now, .4);
       rustleG.gain.setTargetAtTime(.004 + .014 * w * w, now, .4);
-      waterG.gain.setTargetAtTime(.075 * water() * (.75 + .25 * Math.sin(clock * 1.7) * Math.sin(clock * .63)), now, .3);
+      waterG.gain.setTargetAtTime(.075 * wv * (.75 + .25 * Math.sin(clock * 1.7) * Math.sin(clock * .63)), now, .3);
       waterF.frequency.setTargetAtTime(850 + 250 * Math.sin(clock * 2.3), now, .2);
     }
     if (!prefs.fx) return;
@@ -4016,6 +4130,10 @@ function tickTime() {
 }
 let last = performance.now();
 function frame(now) {
+  try { frameBody(now); } catch (e) { if (!frame.told) { frame.told = true; console.error('Feather & Field: a frame went wrong', e); } }
+  requestAnimationFrame(frame);
+}
+function frameBody(now) {
   if (state && !current) guideFocus();
   const dt = Math.min(.1, (now - last) / 1000); last = now; clock += dt;
   tickTime();
@@ -4028,7 +4146,6 @@ function frame(now) {
   draw();
   if (pendingLevel && (!current || !['welcome', 'away'].includes(current.name))) { const l = pendingLevel; pendingLevel = 0; sheetReturn = current && current.name !== 'levelup' ? current : null; openSheet('levelup', { l }); SND.levelup(); }
   if (dirty) { dirty = false; uiDirty = true; buildPlots(); updateHud(); }
-  requestAnimationFrame(frame);
 }
 // safety net: a farm with no feed, empty feeders and too few coins to buy a bag would be stuck for good, so a neighbour helps out (once a day)
 function neighbourHelp() {

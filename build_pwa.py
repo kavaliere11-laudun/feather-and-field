@@ -24,10 +24,11 @@ head = '''<!doctype html>
 <html lang="en">
 '''
 app_tags = '''<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#3f8f4e">
+<meta name="theme-color" content="#4f7a35">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- no apple-mobile-web-app-status-bar-style: since iOS 26.1 a see-through ("black-translucent") status bar gets a dark blur
+     drawn over the top of the game; without it the status bar is solid, in the theme colour, and the game starts below it -->
 <meta name="apple-mobile-web-app-title" content="Feather &amp; Field">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/favicon.png">
@@ -54,7 +55,7 @@ open(f'{OUT}/index.html', 'w', encoding='utf-8').write(html)
 # ---------------------------------------------------------------- manifest
 json.dump({
     'name': 'Feather & Field', 'short_name': 'Feather & Field', 'id': './', 'start_url': './', 'scope': './',
-    'display': 'standalone', 'orientation': 'any', 'background_color': '#eef2e4', 'theme_color': '#3f8f4e',
+    'display': 'standalone', 'orientation': 'any', 'background_color': '#4f7a35', 'theme_color': '#4f7a35',
     'description': 'Raise, breed and show chickens on your own farm.',
     'icons': [{'src': 'icons/icon-192.png', 'sizes': '192x192', 'type': 'image/png'},
               {'src': 'icons/icon-512.png', 'sizes': '512x512', 'type': 'image/png'},
