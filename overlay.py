@@ -68,7 +68,26 @@ def overgrown():
     blank_sign(-0.9, -1.3)
 
 
+def coop_pen_deluxe(kind):
+    """The deluxe upgrade (deluxe.py): the same coop, with a picket fence, rose arch, flowers, path, bunting and weathervane."""
+    import deluxe
+    coop = {'rir': red_barn, 'sil': pagoda, 'orp': thatched_cottage, 'leg': stone_cottage, 'bra': timber_lodge}[kind]
+    loc = (0.2, 0.35, 0) if kind == 'rir' else (0.1, 0.35, 0)
+    before = set(bpy.data.objects)
+    build(coop, loc, 0)
+    objs = [o for o in bpy.data.objects if o not in before]
+    build(props, loc, 0)
+    if kind == 'rir':
+        straw = wood('straw', (0.62, 0.45, 0.15), scale=(30, 3, 3), rough=0.9, dark=0.65)
+        build(lambda: [box('bale', (x, y, 0.13), (0.3, 0.5, 0.26), straw, bevel=0.03) for (x, y) in [(-1.45, 0.2), (-1.45, -0.15)]], loc, 0)
+    g = {}
+    build(lambda: g.update(gate=deluxe.picket_fence(PW, PD)), (0, 0, 0), 0)
+    build(lambda: deluxe.extras(objs, PW, PD, *g['gate']), (0, 0, 0), 0)
+    earth_patch(PW - 0.1, PD - 0.1)
+
+
 def coop_pen(kind):
+    if kind.endswith('_dx'): return coop_pen_deluxe(kind[:-3])
     if kind == 'rir':
         def fn():
             red_barn(); props()
@@ -89,8 +108,13 @@ def coop_pen(kind):
 
 
 before = set(bpy.data.objects)
-if KIND == 'fence':      # just the two fence sides nearest the camera, drawn over the birds in the game
-    build(lambda: pen_fence(PW, PD), (0, 0, 0), 0)
+if KIND in ('fence', 'fence_dx'):      # just the two fence sides nearest the camera, drawn over the birds in the game
+    if KIND == 'fence_dx':
+        import deluxe
+        def fx_():
+            g0, g1 = deluxe.picket_fence(PW, PD); deluxe.rose_arch(g0, g1, -PD / 2); deluxe.front_bunting(PW, PD, g0, g1)
+        build(fx_, (0, 0, 0), 0)
+    else: build(lambda: pen_fence(PW, PD), (0, 0, 0), 0)
     fx = PW / 2 if DEG == 0 else -PW / 2
     # the fence may be built as one mesh: split it into its loose pieces (posts, rails) and keep the pieces on the two near sides
     news = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']
@@ -120,7 +144,7 @@ for o in [o for o in bpy.data.objects if o not in before and o is not pivot]:
 pivot.rotation_euler = (0, 0, math.radians(DEG))
 # invisible ground that still catches shadows
 bpy.ops.mesh.primitive_plane_add(size=12, location=(0, 0, 0)); bpy.context.object.is_shadow_catcher = True
-if KIND == 'fence': bpy.data.objects.remove(bpy.context.object, do_unlink=True)     # no ground shadow: the full overlay has it
+if KIND.startswith('fence'): bpy.data.objects.remove(bpy.context.object, do_unlink=True)     # no ground shadow: the full overlay has it
 ffcam.setup(scn, (0, 0, 0.6), SIZE, SIZE, samples=32, transparent=True)
 import os
 scn.render.resolution_percentage = int(100 * float(os.environ.get('OVSCALE', '1')))   # 2 = twice the map's detail, sharp when zoomed in

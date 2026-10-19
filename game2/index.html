@@ -71,6 +71,10 @@ html{background:#4f7a35}
 .badge{position:absolute;top:0;right:calc(50% - 26px);min-width:19px;height:19px;border-radius:10px;background:var(--barn);color:#fff;font:700 11px/19px var(--display);padding:0 5px;box-shadow:0 0 0 2px var(--meringue);font-variant-numeric:tabular-nums}
 button:focus-visible,input:focus-visible{outline:3px solid var(--pond);outline-offset:2px}
 
+#moveBar{position:absolute;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:6;padding:12px 14px;border-radius:20px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--glass-line);box-shadow:var(--shadow);max-width:440px;margin:0 auto}
+#moveBar p{margin:0 0 10px;font:600 14px var(--display);color:var(--ink)}
+#moveBar .row{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+body:has(#moveBar:not([hidden])) #farmBtns{display:none}
 #farmBtns{position:absolute;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:4}
 .fbtn{display:flex;align-items:center;gap:6px;border:1px solid var(--glass-line);border-radius:999px;padding:0 14px 0 11px;height:42px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--ink);font:600 14px var(--display);box-shadow:var(--shadow);cursor:pointer}
 .fbtn svg{width:19px;height:19px}
@@ -215,7 +219,8 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
     <div id="farmBtns">
       <button class="fbtn" id="gradesBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 12V4h8l10 10-7 7z"/><circle cx="7.5" cy="8.5" r="1.5"/></svg><span data-t="grades"></span></button>
       <button class="fbtn" id="flockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span data-t="flock"></span></button>
-    </div></main>
+    </div>
+    <div id="moveBar" hidden><p id="moveMsg"></p><div class="row"><button class="btn sm alt" id="moveCancel" data-t="cancel"></button><button class="btn sm" id="movePlace" data-t="place"></button></div></div></main>
   <nav class="tabbar" id="tabbar">
     <button data-tab="farm" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 21V10l9-6 9 6v11z"/><path d="M9 21v-6h6v6M9 15l6 6M15 15l-6 6"/></svg><span data-t="tab_farm"></span></button>
     <button data-tab="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></svg><span data-t="tab_market"></span><span class="badge" id="bMarket" hidden></span></button>
@@ -247,7 +252,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 08:06';
+const BUILD = '19 Oct 2026 09:00';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -312,6 +317,8 @@ const DECOR_IDS = Object.keys(DECOR);
 const OUTFITS = { classic: { lvl: 1, price: 0 }, market: { lvl: 5, price: 1200 }, garden: { lvl: 9, price: 3500 }, winter: { lvl: 12, price: 6000 }, rodeo: { lvl: 15, price: 10000 }, show: { lvl: 18, price: 16000 } };
 const OUTFIT_IDS = Object.keys(OUTFITS);
 const shopXp = price => Math.round(price / 25);
+const decorPos = id => (state.decorAt && state.decorAt[id]) || DECOR[id].at;      // moved by the player, or its first spot
+const dxPrice = breed => 5 * BREEDS[breed].coop;                                     // a deluxe coop: five times the coop's base price
 const trustLvl = b => { const n = (b && b.trust) || 0; return n >= PR.trustAt[2] ? 3 : n >= PR.trustAt[1] ? 2 : n >= PR.trustAt[0] ? 1 : 0; };
 const outGap = b => adoptRnd(PR.outEvery) * PR.trustOut[trustLvl(b)];          // time to a rebel's next escape: longer the more she trusts the farmer
 
@@ -421,15 +428,18 @@ en: {
   farmer_title:'Choose your farmer', farmer_note:'Your farmer looks after the hens: fills the feeders, gives cuddles, runs after runaways and keeps an eye out for the fox.', farmer_him:'Him', farmer_her:'Her', farmer_name:'Name',
   farmer_done:'Let’s go', farmer_default_m:'Arthur', farmer_default_f:'Rosie', farmer_hello:'Hello, {farmer}! The hens are waiting.', your_farmer:'Your farmer', change:'Change',
   decor_title:'Decorate your farm', decor_note:'Decorations make your farm prettier and each one gives you XP when you buy it. Tap one on the farm to see what it is.',
+  move:'Move', place:'Place it here', cancel:'Cancel', move_hint:'Drag it, or tap where you want it to go.', move_no:'Not here: choose open grass, away from paths, plots and trees.', move_no_water:'The duck house has to float on the pond.',
+  move_note:'You can move it to any open grass on the farm.', move_note_water:'You can move it anywhere on the pond.', decor_placed:'{name}: moved.',
+  dx_title:'Make it Deluxe', dx_is:'A Deluxe coop', dx_tag:'Deluxe', dx_buy:'Make it Deluxe for', dx_note:'A white picket fence, a rose arch with lanterns over the gate, flower borders, a stepping-stone path, bunting and a golden weathervane. It changes the look only: the hens lay the same.', dx_bought:'{coop} is now Deluxe! +{n} XP',
   decor_jump:'Decorations for your farm', on_farm:'On your farm', decor_bought:'New on your farm: {name}. +{n} XP', unlock_decor:'New decoration: {name}', unlock_outfit:'New outfit for your farmer: {name}',
-  dc_flowers:'Cottage flower bed', dc_flowers_d:'Tulips, daisies and delphiniums in a stone-edged bed by the farmhouse.',
-  dc_birdbath:'Bird bath', dc_birdbath_d:'A stone bird bath by the farmhouse. A blue tit has already found it.',
-  dc_beehives:'Beehives', dc_beehives_d:'Three white hives by the wheat field, with lavender for the bees.',
+  dc_flowers:'Cottage flower bed', dc_flowers_d:'Tulips, daisies and delphiniums in a stone-edged bed.',
+  dc_birdbath:'Bird bath', dc_birdbath_d:'A stone bird bath. A blue tit has already found it.',
+  dc_beehives:'Beehives', dc_beehives_d:'Three white hives, with lavender for the bees.',
   dc_duckhouse:'Duck house', dc_duckhouse_d:'A little house on a raft in the pond, for the ducks.',
   dc_greenhouse:'Greenhouse', dc_greenhouse_d:'An old-fashioned greenhouse full of tomatoes.',
-  dc_windmill:'Windmill', dc_windmill_d:'A white windmill by the wheat field. Its sails turn in the breeze.',
-  dc_bandstand:'Bandstand', dc_bandstand_d:'A Victorian bandstand on the green, for summer concerts.',
-  dc_statue:'Golden cockerel', dc_statue_d:'A golden cockerel on a stone plinth by the pond: the mark of a champion farm.',
+  dc_windmill:'Windmill', dc_windmill_d:'A white windmill. Its sails turn in the breeze.',
+  dc_bandstand:'Bandstand', dc_bandstand_d:'A Victorian bandstand for summer concerts.',
+  dc_statue:'Golden cockerel', dc_statue_d:'A golden cockerel on a stone plinth: the mark of a champion farm.',
   outfits:'Outfits', outfits_note:'New clothes for {farmer}. Each outfit gives you XP when you buy it.', wear:'Wear', wearing:'Wearing',
   outfit_bought:'{farmer} tries on the {name} outfit. +{n} XP',
   of_classic:'Classic', of_classic_d:'Straw hat and a checked shirt.', of_market:'Market day', of_market_d:'Tweed flat cap and a blue checked shirt.',
@@ -539,15 +549,18 @@ fr: {
   farmer_title:'Choisissez votre personnage', farmer_note:'Votre personnage s’occupe des poules : remplit les mangeoires, fait des câlins, rattrape les fugueurs et surveille le renard.', farmer_him:'Lui', farmer_her:'Elle', farmer_name:'Prénom',
   farmer_done:'C’est parti', farmer_default_m:'Arthur', farmer_default_f:'Rose', farmer_hello:'Bonjour, {farmer} ! Les poules vous attendent.', your_farmer:'Votre personnage', change:'Changer',
   decor_title:'Décorez votre ferme', decor_note:'Les décorations embellissent votre ferme et chacune vous rapporte de l’XP à l’achat. Touchez-en une sur la ferme pour savoir ce que c’est.',
+  move:'Déplacer', place:'Poser ici', cancel:'Annuler', move_hint:'Faites glisser la décoration ou touchez l’endroit voulu.', move_no:'Pas ici : choisissez de l’herbe libre, loin des chemins, des parcelles et des arbres.', move_no_water:'La maison des canards doit flotter sur la mare.',
+  move_note:'Vous pouvez la déplacer sur n’importe quelle herbe libre de la ferme.', move_note_water:'Vous pouvez la déplacer n’importe où sur la mare.', decor_placed:'Décoration déplacée : {name}.',
+  dx_title:'Passer en version Luxe', dx_is:'Un poulailler Luxe', dx_tag:'Luxe', dx_buy:'Passer en Luxe pour', dx_note:'Une clôture blanche, une arche de roses avec des lanternes au-dessus du portail, des massifs de fleurs, un chemin de pas japonais, des fanions et une girouette dorée. Seul l’aspect change : les poules pondent pareil.', dx_bought:'{coop} passe en version Luxe ! +{n} XP',
   decor_jump:'Décorations pour votre ferme', on_farm:'Sur votre ferme', decor_bought:'Nouveau sur votre ferme : {name}. +{n} XP', unlock_decor:'Nouvelle décoration : {name}', unlock_outfit:'Nouvelle tenue pour votre personnage : {name}',
-  dc_flowers:'Massif de fleurs', dc_flowers_d:'Tulipes, marguerites et delphiniums dans un massif bordé de pierres, près de la ferme.',
-  dc_birdbath:'Bain d’oiseaux', dc_birdbath_d:'Un bain d’oiseaux en pierre près de la ferme. Une mésange l’a déjà trouvé.',
-  dc_beehives:'Ruches', dc_beehives_d:'Trois ruches blanches près du champ de blé, avec de la lavande pour les abeilles.',
+  dc_flowers:'Massif de fleurs', dc_flowers_d:'Tulipes, marguerites et delphiniums dans un massif bordé de pierres.',
+  dc_birdbath:'Bain d’oiseaux', dc_birdbath_d:'Un bain d’oiseaux en pierre. Une mésange l’a déjà trouvé.',
+  dc_beehives:'Ruches', dc_beehives_d:'Trois ruches blanches, avec de la lavande pour les abeilles.',
   dc_duckhouse:'Maison des canards', dc_duckhouse_d:'Une petite maison sur un radeau, au milieu de la mare.',
   dc_greenhouse:'Serre', dc_greenhouse_d:'Une serre à l’ancienne pleine de tomates.',
-  dc_windmill:'Moulin à vent', dc_windmill_d:'Un moulin blanc près du champ de blé. Ses ailes tournent au vent.',
-  dc_bandstand:'Kiosque à musique', dc_bandstand_d:'Un kiosque à l’ancienne sur la place, pour les concerts d’été.',
-  dc_statue:'Coq d’or', dc_statue_d:'Un coq doré sur un socle de pierre, près de la mare : la marque d’une ferme championne.',
+  dc_windmill:'Moulin à vent', dc_windmill_d:'Un moulin blanc. Ses ailes tournent au vent.',
+  dc_bandstand:'Kiosque à musique', dc_bandstand_d:'Un kiosque à l’ancienne pour les concerts d’été.',
+  dc_statue:'Coq d’or', dc_statue_d:'Un coq doré sur un socle de pierre : la marque d’une ferme championne.',
   outfits:'Tenues', outfits_note:'De nouveaux habits pour {farmer}. Chaque tenue vous rapporte de l’XP à l’achat.', wear:'Porter', wearing:'Portée',
   outfit_bought:'{farmer} enfile la tenue {name}. +{n} XP',
   of_classic:'Classique', of_classic_d:'Chapeau de paille et chemise à carreaux.', of_market:'Jour de marché', of_market_d:'Casquette en tweed et chemise à carreaux bleus.',
@@ -759,7 +772,7 @@ function newGame(langCode) {
     plots: 2, coops: [], birds: [], basket: { plain: {}, fertile: [] }, basketCap: 60,
     inc: { slots: 2, items: [] }, shop: { offers: [], next: 0 }, shows: { list: [], next: 25 * MIN, history: [] },
     stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
-    flags: { welcome: false, edited: false, grades: false }, farmer: { look: null, name: '', outfit: 'classic', outfits: ['classic'] }, decor: [],
+    flags: { welcome: false, edited: false, grades: false }, farmer: { look: null, name: '', outfit: 'classic', outfits: ['classic'] }, decor: [], decorAt: {},
     xp: 0, level: 1, trophies: [], seen: ['rir'], feed: { basic: 80, premium: 0, show: 0 },
     epoch: Date.now(), fox: { next: DAY * (1 + Math.random()) },
   };
@@ -776,7 +789,7 @@ function newGame(langCode) {
   createShow('village', 'rir');
 }
 
-function newCoop(breed, plot) { return { id: state.nextId++, breed, plot, nest: { plain: 0, fertile: [] }, sire: null, feeder: { basic: FEEDER_CAP, premium: 0, show: 0 }, acc: 0, last: 'basic', hungry: false }; }
+function newCoop(breed, plot) { return { id: state.nextId++, breed, plot, nest: { plain: 0, fertile: [] }, sire: null, feeder: { basic: FEEDER_CAP, premium: 0, show: 0 }, acc: 0, last: 'basic', hungry: false, dx: false }; }
 let localAt = 0;                       // when the save on this device was written
 function save(urgent) {
   if (!state) return;
@@ -900,7 +913,7 @@ function sanitize(s) {
     o.coops.push({ id: int(c.id, 1, 1e9, o.nextId++), breed, plot, name: typeof c.name === 'string' ? cleanName(c.name, '') : '', ready: num(c.ready, 0, 1e13, 0), sire: Number.isInteger(c.sire) ? c.sire : null,
       nest: { plain: int(c.nest && c.nest.plain, 0, NEST_CAP, 0), fertile: (Array.isArray(c.nest && c.nest.fertile) ? c.nest.fertile : []).slice(0, NEST_CAP).map(okEgg).filter(Boolean) },
       feeder, acc: num(c.acc, 0, 5, 0), last: FEEDS[c.last] ? c.last : 'basic', hungry: !!c.hungry,
-      settle: num(c.settle, -1e13, o.gt + PR.settle, 0), fright: num(c.fright, -1e13, o.gt + PR.fright, 0), hungryAt: num(c.hungryAt, -1e13, o.gt, 0), fullAt: num(c.fullAt, -1e13, o.gt, 0) });
+      settle: num(c.settle, -1e13, o.gt + PR.settle, 0), fright: num(c.fright, -1e13, o.gt + PR.fright, 0), hungryAt: num(c.hungryAt, -1e13, o.gt, 0), fullAt: num(c.fullAt, -1e13, o.gt, 0), dx: c.dx === true });
   }
   const coopIds = new Set(o.coops.map(c => c.id));
   for (const b of (Array.isArray(s.birds) ? s.birds : []).slice(0, MAX_BIRDS)) {
@@ -953,6 +966,9 @@ function sanitize(s) {
   o.farmer.outfits = ['classic', ...(Array.isArray(fm.outfits) ? fm.outfits : []).filter(x => OUTFITS[x] && x !== 'classic')].filter((x, i, a) => a.indexOf(x) === i);
   o.farmer.outfit = o.farmer.outfits.includes(fm.outfit) ? fm.outfit : 'classic';
   o.decor = (Array.isArray(s.decor) ? s.decor : []).filter(x => DECOR[x]).filter((x, i, a) => a.indexOf(x) === i);
+  o.decorAt = {};                                 // moved decorations: only bought ones, only inside the farm
+  const da = s.decorAt && typeof s.decorAt === 'object' ? s.decorAt : {};
+  for (const id of o.decor) { const v = da[id]; if (Array.isArray(v) && v.length === 2 && v.every(n => typeof n === 'number' && isFinite(n))) o.decorAt[id] = [clamp(Math.round(v[0]), 80, GEOM.size[0] - 80), clamp(Math.round(v[1]), 160, GEOM.size[1] - 60)]; }
   o.epoch = num(s.epoch, -1e15, 1e15, o.lastReal - o.gt);
   o.fox = { next: num(s.fox && s.fox.next, -1e13, o.gt + PR.foxEvery[1], o.gt + DAY * (1 + Math.random())) };
   const ids = [o.nextId, ...o.birds.map(b => b.id + 1), ...o.coops.map(c => c.id + 1), ...o.shows.list.map(x => x.id + 1)];
@@ -1416,10 +1432,71 @@ function actBuyOutfit(id) {
   changed(); return true;
 }
 function actWearOutfit(id) { const F = state.farmer; if (!F.outfits.includes(id)) return false; F.outfit = id; changed(); return true; }
+let moving = null;                              // { id, x, y, ok, block } while the player moves a decoration
+function placeBlock(except) {                   // where a decoration may not stand: paths, water, every plot, buildings, trees, other decorations
+  const N = NAV; if (!N) return null; const B = new Uint8Array(N.w * N.h), C = N.C;
+  for (let i = 0; i < B.length; i++) B[i] = N.path[i] ? 1 : 0;
+  const mark = (x0, y0, x1, y1, test) => {
+    for (let cy = Math.max(0, Math.floor(y0 / C)); cy <= Math.min(N.h - 1, Math.floor(y1 / C)); cy++)
+      for (let cx = Math.max(0, Math.floor(x0 / C)); cx <= Math.min(N.w - 1, Math.floor(x1 / C)); cx++)
+        if (test((cx + .5) * C, (cy + .5) * C)) B[cy * N.w + cx] = 1;
+  };
+  for (const p of plots) {
+    const { ex, ey, c } = p.f, det = ex[0] * ey[1] - ex[1] * ey[0], big = p.kind === 'pasture', hw = big ? 3.5 : 2.2, hd = big ? 2.8 : 2.3;
+    mark(c[0] - 340, c[1] - 300, c[0] + 340, c[1] + 300, (x, y) => { const dx = x - c[0], dy = y - c[1], lx = (dx * ey[1] - dy * ey[0]) / det, ly = (ex[0] * dy - ex[1] * dx) / det; return Math.abs(lx) < hw && ly > -hd - .4 && ly < hd; });
+  }
+  const ell2 = (cx, cy, rx, ry) => mark(cx - rx, cy - ry, cx + rx, cy + ry, (x, y) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1);
+  const H = GEOM.house; ell2(H[0], H[1] + 10, 200, 150); if (GEOM.stall) ell2(GEOM.stall[0], GEOM.stall[1], 80, 60);
+  const [hx, hy] = farmerHome(); ell2(hx, hy, 60, 40);
+  for (const tr of TREES) ell2(tr.base[0], tr.base[1] - 6, 70, 45);
+  for (const id of state.decor) { if (id === except) continue; const f = DECOR_FOOT[id], [ax, ay] = decorPos(id); if (f) ell2(ax, ay - f[1] * .35, f[0] + 20, f[1] + 14); }
+  return B;
+}
+function placeOk(id, x, y) {
+  const N = NAV, f = DECOR_FOOT[id]; if (!N || !f || !moving) return false;
+  const [W, H] = GEOM.size; if (x < 80 || y < 160 || x > W - 80 || y > H - 60) return false;
+  const C = N.C, cy0 = y - f[1] * .35, water = id === 'duckhouse';
+  for (let yy = cy0 - f[1]; yy <= cy0 + f[1]; yy += C / 2) for (let xx = x - f[0]; xx <= x + f[0]; xx += C / 2) {
+    if (((xx - x) / f[0]) ** 2 + ((yy - cy0) / f[1]) ** 2 > 1) continue;
+    const i = Math.floor(yy / C) * N.w + Math.floor(xx / C); if (i < 0 || i >= N.w * N.h) return false;
+    if (water ? !N.water[i] : (N.water[i] || moving.block[i])) return false;
+  }
+  return true;
+}
+function startMove(id) {
+  if (!state.decor.includes(id) || !NAV) return;
+  closeSheet(); const [x, y] = decorPos(id);
+  moving = { id, x, y, ox: x, oy: y, block: placeBlock(id), drag: false }; moving.ok = placeOk(id, x, y);
+  lookAtDecor(id); moveBar();
+}
+function moveTo(x, y) { if (!moving) return; moving.x = x; moving.y = y; moving.ok = placeOk(moving.id, x, y); moveBar(); }
+function endMove(place) {
+  if (!moving) return; const m = moving;
+  if (place) {
+    if (!placeOk(m.id, m.x, m.y)) return;
+    if (!state.decorAt) state.decorAt = {};
+    state.decorAt[m.id] = [Math.round(m.x), Math.round(m.y)]; toast(t('decor_placed', { name: t('dc_' + m.id) }));
+  }
+  moving = null; moveBar(); changed(true);
+}
+function moveBar() {                            // the bar shown while moving: what to do, Place and Cancel
+  const bar = $('#moveBar'); if (!bar) return;
+  if (!moving) { bar.hidden = true; return; }
+  bar.hidden = false;
+  $('#moveMsg').textContent = moving.ok ? t('move_hint', { name: t('dc_' + moving.id) }) : t(moving.id === 'duckhouse' ? 'move_no_water' : 'move_no');
+  $('#movePlace').disabled = !moving.ok;
+}
 function lookAtDecor(id) {                      // centre the view on a decoration, tall ones included
   const D = DECOR[id], p = DCS['dc_' + id]; if (!D) return; closeSheet();
   view.s = id === 'windmill' ? Math.max(view.minS, Math.min(view.maxS, .7)) : clamp(view.s, Math.min(view.maxS, .9), Math.min(view.maxS, 1.1));
-  const up = p ? p.ay * p.k * .45 : 60; view.x = D.at[0] - view.vw / view.s / 2; view.y = D.at[1] - up - view.vh / view.s / 2; clampCam(); inertia = null;
+  const up = p ? p.ay * p.k * .45 : 60, [ax, ay] = decorPos(id); view.x = ax - view.vw / view.s / 2; view.y = ay - up - view.vh / view.s / 2; clampCam(); inertia = null;
+}
+function actDeluxe(c) {                         // make a coop deluxe: looks only, the hens lay the same
+  if (!c || c.dx || !isBuilt(c)) return false;
+  const price = dxPrice(c.breed); if (!spend(price)) return false;
+  c.dx = true; const xp = shopXp(price); gainXP(xp);
+  toast(t('dx_bought', { coop: coopLabel(c), n: xp }), true, () => scrollToPlot(c.plot)); if (!sink) SND.sparkle();
+  changed(); return true;
 }
 function actIncSlot() { if (state.inc.slots >= incAllowed(state.level)) return; if (!spend(incPrice())) return; state.inc.slots++; changed(); }
 function actBuyFeed(kind, bags = 1) {
@@ -1755,7 +1832,7 @@ const NAV = (() => {
 })();
 const DECOR_FOOT = { flowers: [80, 50], birdbath: [45, 30], beehives: [130, 55], duckhouse: [50, 40], greenhouse: [150, 95], windmill: [120, 75], bandstand: [125, 90], statue: [65, 45] };
 function navBlock() {                           // the cells the farmer can't walk on, rebuilt when coops or decorations change
-  const N = NAV, key = plots.map(p => p.kind[0]).join('') + state.decor.join(',');
+  const N = NAV, key = plots.map(p => p.kind[0]).join('') + state.decor.map(id => id + decorPos(id).join(':')).join(',');
   if (N.block && N.key === key) return N.block;
   const B = Uint8Array.from(N.water), C = N.C;
   const mark = (x0, y0, x1, y1, test) => {
@@ -1775,7 +1852,7 @@ function navBlock() {                           // the cells the farmer can't wa
   const H = GEOM.house; ell(H[0], H[1] + 10, 130, 95);          // the farmhouse
   if (GEOM.stall) ell(GEOM.stall[0], GEOM.stall[1], 55, 40);     // the egg stall
   for (const tr of TREES) ell(tr.base[0], tr.base[1] - 6, 22, 14);
-  for (const id of state.decor) { const D = DECOR[id], f = DECOR_FOOT[id]; if (D && f) ell(D.at[0], D.at[1] - f[1] * .35, f[0], f[1]); }
+  for (const id of state.decor) { const D = DECOR[id], f = DECOR_FOOT[id]; if (D && f) { const [ax, ay] = decorPos(id); ell(ax, ay - f[1] * .35, f[0], f[1]); } }
   N.block = B; N.key = key; return B;
 }
 function navRoute(x0, y0, x1, y1) {             // points to walk through, from (x0, y0) to (x1, y1); straight if no grid
@@ -2135,14 +2212,22 @@ function drawTree(tr) {
   ctx.restore();
 }
 const DCS = DATA.decor || {};
-function drawDecor(id) {                         // a bought decoration in its place; the windmill's sails turn
+function drawDecor(id) {                         // a bought decoration in its place (or under the finger while moving it); the windmill's sails turn
   const D = DECOR[id], p = DCS['dc_' + id]; if (!D || !p) return; const im = atlas('decor'); if (!ready(im)) return;
-  ctx.save(); ctx.translate(D.at[0], D.at[1]); ctx.scale(p.k, p.k); ctx.drawImage(im, p.x, p.y, p.w, p.h, -p.ax, -p.ay, p.w, p.h); ctx.restore();
+  const mv = moving && moving.id === id, [ax, ay] = mv ? [moving.x, moving.y] : decorPos(id);
+  if (mv) {                                       // the footprint: green where it can go, red where it can't
+    const f = DECOR_FOOT[id] || [60, 40];
+    ctx.save(); ell(ctx, ax, ay - f[1] * .35, f[0], f[1]); ctx.fillStyle = moving.ok ? 'rgba(90,200,90,.38)' : 'rgba(230,70,60,.42)'; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = moving.ok ? '#3d9a3d' : '#c8372d'; ctx.stroke(); ctx.restore();
+    ctx.globalAlpha = .88;
+  }
+  ctx.save(); ctx.translate(ax, ay); ctx.scale(p.k, p.k); ctx.drawImage(im, p.x, p.y, p.w, p.h, -p.ax, -p.ay, p.w, p.h); ctx.restore();
   const sl = DCS.dc_sails;
   if (id === 'windmill' && sl && p.hub) {
-    ctx.save(); ctx.translate(D.at[0] + p.hub[0], D.at[1] + p.hub[1]); ctx.scale(sl.k, sl.k * .743); ctx.rotate(-clock * .5);
+    ctx.save(); ctx.translate(ax + p.hub[0], ay + p.hub[1]); ctx.scale(sl.k, sl.k * .743); ctx.rotate(-clock * .5);
     ctx.drawImage(im, sl.x, sl.y, sl.w, sl.h, -sl.ax, -sl.ay, sl.w, sl.h); ctx.restore();
   }
+  ctx.globalAlpha = 1;
 }
 function drawProp(name, x, y, sx, sy, skew) {
   const p = PROPS[name]; if (!p) return; const im = atlas('props'); if (!ready(im)) return;
@@ -2164,7 +2249,7 @@ function drawButterfly(b) {
 
 function drawOverlay(p) {
   let src;
-  if (p.kind === 'coop') src = ovSrc(p.breed, p.f.deg);
+  if (p.kind === 'coop') src = ovSrc(p.coop.dx ? p.breed + '_dx' : p.breed, p.f.deg);
   else if (p.kind === 'empty' || p.kind === 'build') src = ovSrc('empty', p.f.deg);
   else if (p.kind === 'sale') src = ovSrc('sale', p.f.deg);
   else return;
@@ -2288,7 +2373,7 @@ function draw() {
   for (const f of frogs) if (vis(f.x, f.y, 40)) items.push([f.y, 3, f]);
   for (const d of ducks) if (vis(d.x, d.y, 40)) items.push([d.y, 6, d]);
   if (farmerReady() && vis(FARM.x, FARM.y, 120)) items.push([FARM.y, 9, FARM]);
-  for (const id of state.decor) { const D = DECOR[id]; if (D && DCS['dc_' + id] && vis(D.at[0], D.at[1] - 150, 420)) items.push([D.at[1], 10, id]); }
+  for (const id of state.decor) { const D = DECOR[id], [ax, ay] = moving && moving.id === id ? [moving.x, moving.y] : decorPos(id); if (D && DCS['dc_' + id] && vis(ax, ay - 150, 420)) items.push([ay + (moving && moving.id === id ? 2000 : 0), 10, id]); }
   const birds = [];
   for (const b of state.birds) {
     const a = agents.get(b.id); if (!a || !a.plot) continue;
@@ -2304,7 +2389,7 @@ function draw() {
     else if (kind === 6) drawProp(`duck_${it.sex}_${it.st}`, it.x, it.y + Math.sin(clock * 2 + it.ph) * 1.2, it.face, 1, 0);
     else if (kind === 7) drawNest(it, false);
     else if (kind === 8) drawNest(it, true);
-    else if (kind === 5) { const im = img(`img/ov/fence_${it.f.deg}.webp`); if (ready(im)) ctx.drawImage(im, it.f.c[0] - OV[0], it.f.c[1] - OV[1], 600, 600); }
+    else if (kind === 5) { const im = img(`img/ov/fence_${it.coop && it.coop.dx ? 'dx_' : ''}${it.f.deg}.webp`); if (ready(im)) ctx.drawImage(im, it.f.c[0] - OV[0], it.f.c[1] - OV[1], 600, 600); }
     else if (kind === 9) drawFarmer();
     else if (kind === 10) drawDecor(it);
     else drawBird(it);
@@ -2432,6 +2517,11 @@ let inertia = null;
 function local(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
 cv.addEventListener('pointerdown', e => {
   const [x, y] = local(e); ptr.list.set(e.pointerId, { x, y });
+  if (moving && ptr.list.size === 1) {            // a finger on the decoration being moved picks it up
+    const mx = view.x + x / view.s, my = view.y + y / view.s, p = DCS['dc_' + moving.id];
+    moving.drag = !!p && Math.abs(mx - moving.x) < p.w * p.k * .45 && my < moving.y + 40 && my > moving.y - p.ay * p.k;
+    moving.dx = moving.x - mx; moving.dy = moving.y - my;
+  }
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   inertia = null;
   if (ptr.list.size === 1) { ptr.moved = 0; ptr.x0 = x; ptr.y0 = y; ptr.vx = ptr.vy = 0; ptr.lastT = performance.now(); ptr.pinch = null; }
@@ -2452,6 +2542,7 @@ cv.addEventListener('pointermove', e => {
   }
   const dx = x - old.x, dy = y - old.y; old.x = x; old.y = y;
   ptr.moved = Math.max(ptr.moved, Math.hypot(x - ptr.x0, y - ptr.y0));
+  if (moving && moving.drag) { if (ptr.moved >= 4) moveTo(view.x + x / view.s + moving.dx, view.y + y / view.s + moving.dy); return; }
   if (ptr.moved < 6) return;
   view.x -= dx / view.s; view.y -= dy / view.s; clampCam();
   const now = performance.now(), dtm = Math.max(1, now - ptr.lastT); ptr.vx = dx / dtm; ptr.vy = dy / dtm; ptr.lastT = now;
@@ -2461,6 +2552,7 @@ function up(e) {
   ptr.list.delete(e.pointerId);
   if (ptr.list.size === 1) { const [p] = [...ptr.list.values()]; ptr.pinch = null; ptr.x0 = p.x; ptr.y0 = p.y; return; }
   if (ptr.list.size) return;
+  if (moving && moving.drag) { moving.drag = false; return; }          // picked up: dropped where it is (a tap on it does nothing)
   if (e.type === 'pointerup' && ptr.moved < 9) { const [x, y] = local(e); const was = current; tapAt(view.x + x / view.s, view.y + y / view.s); if (current && current !== was) ghostUntil = performance.now() + 500; }
   else if (ptr.moved >= 9 && ptr.moved < 99 && performance.now() - ptr.lastT < 80) inertia = { vx: ptr.vx, vy: ptr.vy };
 }
@@ -2476,7 +2568,16 @@ cv.addEventListener('wheel', e => {
   else { view.x += e.deltaX / view.s; view.y += e.deltaY / view.s; clampCam(); }
 }, { passive: false });
 function inBox(f, x, y, box) { const [lx, ly] = toLocal(f, x, y); return lx >= box.x0 && lx <= box.x1 && ly >= box.y0 && ly <= box.y1; }
+function decorAtPoint(x, y) {                  // the bought decoration under a map point, nearest the viewer first
+  let best = null;
+  for (const id of state.decor) {
+    const p = DCS['dc_' + id]; if (!p) continue; const [ax, ay] = decorPos(id);
+    if (Math.abs(x - ax) < p.w * p.k * .4 && y < ay + 20 && y > ay - p.ay * p.k * .9 && (!best || ay > best[1])) best = [id, ay];
+  }
+  return best && best[0];
+}
 function tapAt(x, y) {
+  if (moving) { moveTo(x, y); return; }
   const K = uiK();
   for (const [sx, sy, p] of signHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 34 * K) { if (p.kind === 'empty') openSheet('market', { tab: 'build' }); else if (p.kind === 'build') openSheet('coop', { id: p.coop.id }); else openSheet('land'); return; }
   for (const [sx, sy, c, kind] of protestHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 28 * K) { if (kind === 'feed') quickFeed(c); else actCollect(c); return; }
@@ -2491,7 +2592,7 @@ function tapAt(x, y) {
   }
   if (best) { if (best.out) actCatch(best); else openSheet('bird', { id: best.id }); return; }
   if (farmerReady() && Math.hypot(x - FARM.x, y - (FARM.y - 40)) < 44) { openSheet('farmer'); return; }
-  for (const id of state.decor) { const D = DECOR[id], p = DCS['dc_' + id]; if (D && p && Math.abs(x - D.at[0]) < p.w * p.k * .4 && y < D.at[1] + 20 && y > D.at[1] - p.ay * p.k * .9) { toast(t('dc_' + id) + ' · ' + t('dc_' + id + '_d')); return; } }
+  const dHit = decorAtPoint(x, y); if (dHit) { openSheet('decor', { id: dHit }); return; }
   for (const f of frogs) if (f.st === 'sit' && Math.hypot(x - f.x, y - f.y + 6) < 22) { f.puff = .6; SND.frog(f.x, f.y); frogHop(f, false); return; }
   for (const p of plots) {
     if (!inBox(p.f, x, y, p.kind === 'pasture' ? { x0: -3.1, x1: 3.1, y0: -2.4, y1: 2.4 } : { x0: -1.85, x1: 1.85, y0: -1.75, y1: 1.6 })) continue;
@@ -2625,7 +2726,7 @@ function decorCards() {                         // things to buy for the farm (B
       return h('div', { class: 'card' + (open || own ? '' : ' locked') },
         h('img', { class: 'thumb dc' + (open || own ? '' : ' dim'), src: `img/decor/${id}.webp`, alt: '', draggable: 'false' }),
         h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('dc_' + id) }), h('div', { class: 'small muted', text: t('dc_' + id + '_d') })), open || own ? null : lock(D.lvl)),
-        own ? h('div', { class: 'row' }, h('span', { class: 'small good-t grow', style: 'font-weight:700', text: '✓ ' + t('on_farm') }), h('button', { class: 'btn sm alt', onclick: () => lookAtDecor(id) }, t('show_me')))
+        own ? h('div', { class: 'row', style: 'gap:8px' }, h('span', { class: 'small good-t grow', style: 'font-weight:700', text: '✓ ' + t('on_farm') }), h('button', { class: 'btn sm alt', onclick: () => lookAtDecor(id) }, t('show_me')), h('button', { class: 'btn sm alt', onclick: () => startMove(id) }, t('move')))
           : open ? h('button', { class: 'btn', disabled: state.coins < D.price, onclick: () => actBuyDecor(id) }, t('buy_for'), ' ', coinPrice(D.price), h('span', { class: 'small', style: 'opacity:.85;margin-left:8px', text: '+' + shopXp(D.price) + ' XP' })) : null);
     })];
 }
@@ -2768,6 +2869,11 @@ const SHEETS = {
       coop.fright > state.gt ? h('p', { class: 'small muted', text: '♥ ' + t('fright_hint') }) : null,
       h('h3', { text: t('birds') }),
       h('div', { class: 'list' }, birds.map(b => birdRow(b, b.id === coop.sire ? h('span', { class: 'tag blue', text: t('is_sire') }) : null, true))),
+      isBuilt(coop) ? h('div', { class: 'card', style: 'margin-top:14px' },
+        h('img', { class: 'thumb', src: ovSrc(coop.breed + '_dx', 0), alt: '', draggable: 'false' }),
+        h('div', { class: 'row' }, h('h3', { class: 'grow', text: t(coop.dx ? 'dx_is' : 'dx_title') }), coop.dx ? h('span', { class: 'tag gold', text: '✨ ' + t('dx_tag') }) : null),
+        h('p', { class: 'small', text: t('dx_note') }),
+        coop.dx ? null : h('button', { class: 'btn', disabled: state.coins < dxPrice(coop.breed), onclick: () => actDeluxe(coop) }, t('dx_buy'), ' ', coinPrice(dxPrice(coop.breed)), h('span', { class: 'small', style: 'opacity:.85;margin-left:8px', text: '+' + shopXp(dxPrice(coop.breed)) + ' XP' }))) : null,
     ] };
   },
   bird({ id }) {
@@ -2987,6 +3093,15 @@ const SHEETS = {
       h('div', { class: 'card' }, [['s_eggs', state.stats.eggs], ['s_hatched', state.stats.hatched], ['s_sold', state.stats.sold], ['s_earned', state.stats.earned]].map(([k, v]) => h('div', { class: 'row' }, h('span', { class: 'grow', text: t(k) }), h('span', { class: 'num', text: fmtN(v) })))),
     ] };
   },
+  decor({ id }) {
+    const D = DECOR[id]; if (!D || !state.decor.includes(id)) return { title: '', node: [] };
+    return { title: t('dc_' + id), node: [
+      h('img', { class: 'thumb dc', src: `img/decor/${id}.webp`, alt: '', draggable: 'false' }),
+      h('p', { text: t('dc_' + id + '_d') }),
+      h('p', { class: 'small muted', text: t(id === 'duckhouse' ? 'move_note_water' : 'move_note') }),
+      h('button', { class: 'btn', onclick: () => startMove(id) }, t('move')),
+    ] };
+  },
   levelup({ l }) {
     const u = unlocksAt(l);
     return { title: t('level_up', { n: l }), node: [
@@ -3090,6 +3205,8 @@ $('#tabbar').addEventListener('click', e => { const b = e.target.closest('button
 $('#gear').addEventListener('click', () => openSheet('settings'));
 $('#lvlPill').addEventListener('click', () => openSheet('awards'));
 $('#gradesBtn').addEventListener('click', () => { setGrades(!ui.grades); save(); });
+$('#movePlace').addEventListener('click', () => endMove(true));
+$('#moveCancel').addEventListener('click', () => endMove(false));
 $('#flockBtn').addEventListener('click', () => openSheet('flock', { sort: 'value', breed: 'all' }));
 $('#coinPill').addEventListener('click', () => { toast(t('coins_hint', { n: fmtN(state.coins) })); openSheet('market', { tab: 'birds' }); });
 $('#eggPill').addEventListener('click', () => { toast(t('eggs_hint', { n: basketCount(), m: state.basketCap })); openSheet('hatch'); });
@@ -3476,7 +3593,7 @@ function start(hotData) {
   if (!state) newGame((navigator.language || 'en').toLowerCase().startsWith('fr') ? 'fr' : 'en');
   ui.grades = !!state.flags.grades; $('#gradesBtn').setAttribute('aria-pressed', String(ui.grades));
   applyLang(); layout(); updateHud();
-  img('img/farm_map.webp'); for (const c of state.coops) img(ovSrc(c.breed, GEOM.slots[c.plot].deg));
+  img('img/farm_map.webp'); for (const c of state.coops) img(ovSrc(c.dx ? c.breed + '_dx' : c.breed, GEOM.slots[c.plot].deg));
   if (!state.flags.welcome) openSheet('welcome');
   else if (!state.farmer.look) setTimeout(() => { if (!current) openSheet('farmer'); }, 900);
   try { if (sessionStorage.getItem('ff_updated')) { sessionStorage.removeItem('ff_updated'); setTimeout(() => toast(t('updated', { v: BUILD })), 800); } } catch (_) {}

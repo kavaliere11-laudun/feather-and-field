@@ -98,6 +98,7 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
     // things to buy: once the farm is growing, spend spare coins on decorations and outfits (cheapest first), keeping a buffer
     if (st.coops.length >= 6) {
       for (const id of g.DECOR_IDS) { const D = g.DECOR[id]; if (!st.decor.includes(id) && st.level >= D.lvl && st.coins >= D.price * 2 + 500) { const x0 = st.xp; g.actBuyDecor(id); note('bought decoration ' + id); if (st.xp - x0 < g.shopXp(D.price)) flag('decoration XP missing'); } }
+      for (const c of st.coops) if (!c.dx && st.coins >= g.dxPrice(c.breed) * 3 + 500) { if (g.actDeluxe(c)) note('made a coop deluxe'); }
       for (const id of g.OUTFIT_IDS) { const O = g.OUTFITS[id]; if (!st.farmer.outfits.includes(id) && st.level >= O.lvl && st.coins >= O.price * 2 + 500) { g.actBuyOutfit(id); note('bought outfit ' + id); } }
     }
     // shows
@@ -117,7 +118,7 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
     const d = Math.floor(st.gt / DAY);
     if (d !== lastDay) { lastDay = d; log.push({ day: d, lvl: st.level, xp: st.xp, coins: Math.round(st.coins), coops: st.coops.map(c => c.breed).join(','), birds: st.birds.length, plots: st.plots, eggs: st.stats.eggs, hatched: st.stats.hatched, wins: st.stats.wins.join('/'), trophies: st.trophies.length }); }
   }
-  counts.decor = s().decor.length; counts.outfits = s().farmer.outfits.length - 1;
+  counts.deluxe = s().coops.filter(c => c.dx).length; counts.decor = s().decor.length; counts.outfits = s().farmer.outfits.length - 1;
   counts.friends = s().birds.filter(b => g.trustLvl(b) === 3).length; counts.trusting = s().birds.filter(b => g.trustLvl(b) === 2).length; counts.trophyFriend = s().trophies.includes('m_friend');
   return { log, bad, counts };
 }), [DAYS, EVERY]);
