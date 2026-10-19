@@ -88,7 +88,7 @@ for (const loc of ['en-GB', 'fr-FR']) {
   await page.waitForTimeout(500);
   const after = await G(page, g => ({ coins: g.state.coins, xp: g.state.xp, dx: g.state.coops[0].dx }));
   console.log(tag, 'toast:', await toasts(page));
-  check(tag, after.dx && before.coins - after.coins === before.price && after.xp - before.xp >= Math.round(before.price / 25), `deluxe bought for ${before.price}: ${JSON.stringify(after)}`);
+  check(tag, after.dx && before.coins - after.coins === before.price && after.xp - before.xp >= Math.round(before.price / 50), `deluxe bought for ${before.price}: ${JSON.stringify(after)}`);
   check(tag, (await G(page, g => g.actDeluxe(g.state.coops[0]))) === false, 'cannot buy Deluxe twice');
   await G(page, g => g.closeSheet());
   await D(page, () => { const d = window.__ffDebug; const s = d.slot(0); d.lookAt(s[0], s[1] - 30, 1.2); }); await page.waitForTimeout(1500);

@@ -1,4 +1,18 @@
 window.__ffDebug = {
+  // balance checks: where XP and coins come from and go, by the game function that gave or took them
+  ledger(reset) {
+    const L = window.__ffLedger || (window.__ffLedger = { xp: {}, earn: {}, spend: {} });
+    if (!L.on) {
+      L.on = true;
+      const who = () => { const l = (new Error().stack || '').split('\n'); for (let i = 3; i < l.length; i++) { const m = l[i].match(/at (?:Object\.|new )?([\w$]+)/); if (m && !['ledgerGX', 'ledgerAC', 'ledgerSP'].includes(m[1])) return m[1]; } return '?'; };
+      const g0 = gainXP, a0 = addCoins, s0 = spend;
+      gainXP = function ledgerGX(n) { const k = who(); L.xp[k] = (L.xp[k] || 0) + Math.max(0, Math.round(n)); return g0(n); };
+      addCoins = function ledgerAC(n) { const k = who(); L.earn[k] = (L.earn[k] || 0) + n; return a0(n); };
+      spend = function ledgerSP(n) { const k = who(); if (state.coins >= n) L.spend[k] = (L.spend[k] || 0) + n; return s0(n); };
+    }
+    if (reset) { L.xp = {}; L.earn = {}; L.spend = {}; }
+    return L;
+  },
   rich() {
     state.coins = 99999; state.xp = xpFor(12) + 100; state.level = levelOf(state.xp); state.plots = 22;
     state.feed = { basic: 400, premium: 120, show: 40 };

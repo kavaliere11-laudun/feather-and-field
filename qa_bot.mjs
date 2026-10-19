@@ -115,6 +115,7 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
     if (st.jobs.list.length !== 3 || st.jobs.day !== g.dayKey(st.gt)) flag('jobs not three for today');
     if (g.current) g.closeSheet();
   }
+  window.__ffDebug.ledger(true);
   const steps = Math.round(DAYS * DAY / (EVERY * MIN));
   let lastXp = 0, lastXpT = 0, lastDay = -1;
   for (let i = 0; i < steps; i++) {
@@ -126,7 +127,7 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
   }
   counts.deluxe = s().coops.filter(c => c.dx).length; counts.decor = s().decor.length; counts.outfits = s().farmer.outfits.length - 1;
   counts.friends = s().birds.filter(b => g.trustLvl(b) === 3).length; counts.trusting = s().birds.filter(b => g.trustLvl(b) === 2).length; counts.trophyFriend = s().trophies.includes('m_friend');
-  return { log, bad, counts };
+  const L = window.__ffDebug.ledger(); return { log, bad, counts, ledger: { xp: L.xp, earn: L.earn, spend: L.spend } };
 }), [DAYS, EVERY]);
 console.log(JSON.stringify(out, null, 1));
 await browser.close(); console.log(errors.length ? errors.slice(0, 20).join('\n') : 'no page errors');

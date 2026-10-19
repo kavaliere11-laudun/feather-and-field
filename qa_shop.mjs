@@ -39,7 +39,7 @@ for (const loc of ['en-GB', 'fr-FR']) {
   const after = await D(page, () => window.__ffDebug.inside(g => ({ decor: g.state.decor, coins: g.state.coins })));
   const xp1 = await D(page, () => window.__ffDebug.xp());
   console.log(tag, 'toast:', await toasts(page));
-  check(tag, after.decor.includes('flowers') && after.coins === 2100 && xp1 - xp0 === 16, `bought the flower bed: ${JSON.stringify(after)}, +${xp1 - xp0} XP`);
+  check(tag, after.decor.includes('flowers') && after.coins === 2100 && xp1 - xp0 === 8, `bought the flower bed: ${JSON.stringify(after)}, +${xp1 - xp0} XP`);
   check(tag, await D(page, () => window.__ffDebug.inside(g => g.actBuyDecor('flowers'))) === false, 'cannot buy it twice');
   await page.locator('#sheetBody .card', { hasText: tag === 'en' ? 'Cottage flower bed' : 'Massif de fleurs' }).scrollIntoViewIfNeeded(); await page.waitForTimeout(150);
   await shot(page, tag + '_2bought');
@@ -57,7 +57,8 @@ for (const loc of ['en-GB', 'fr-FR']) {
     await D(page, () => window.__ffDebug.inside(g => g.lookAtDecor('windmill'))); await page.waitForTimeout(500);
     const wp = await D(page, () => window.__ffDebug.decorAt('windmill'));
     await page.touchscreen.tap(wp[0], wp[1]); await page.waitForTimeout(400);
-    const tw = await toasts(page); check(tag, /Windmill|Moulin/.test(tw), 'tapping the windmill names it: ' + tw);
+    const tw = (await page.locator('#sheet').isVisible()) ? await page.locator('#sheetTitle').innerText() : await toasts(page); check(tag, /Windmill|Moulin/.test(tw), 'tapping the windmill opens its card: ' + tw);
+    await D(page, () => window.__ffDebug.inside(g => g.closeSheet()));
     await page.waitForTimeout(2000); await shot(page, tag + '_d_windmill2');
   }
   // ---- outfits
@@ -71,7 +72,7 @@ for (const loc of ['en-GB', 'fr-FR']) {
   await ofBuy.click(); await page.waitForTimeout(400);
   const of1 = await D(page, () => window.__ffDebug.inside(g => ({ outfit: g.state.farmer.outfit, owned: g.state.farmer.outfits })));
   console.log(tag, 'toast:', await toasts(page));
-  check(tag, of1.outfit === 'rodeo' && of1.owned.includes('rodeo') && (await D(page, () => window.__ffDebug.xp())) - xq === 400, 'bought and wearing Rodeo: ' + JSON.stringify(of1));
+  check(tag, of1.outfit === 'rodeo' && of1.owned.includes('rodeo') && (await D(page, () => window.__ffDebug.xp())) - xq === 200, 'bought and wearing Rodeo: ' + JSON.stringify(of1));
   await page.locator('#sheetBody .outfit.on').scrollIntoViewIfNeeded(); await page.waitForTimeout(200);
   await shot(page, tag + '_4wearing');
   const back = page.locator('#sheetBody .outfit', { hasText: tag === 'en' ? 'Classic' : 'Classique' }).locator('button');
