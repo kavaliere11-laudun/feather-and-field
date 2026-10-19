@@ -296,7 +296,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 19:03';
+const BUILD = '19 Oct 2026 19:26';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -337,7 +337,10 @@ const jobCoins = L => 25 + 10 * Math.min(L, MAX_LEVEL), jobXp = L => 5 + Math.mi
 const GUIDE = [{ id: 'collect', tgt: 'egg' }, { id: 'hatch', tgt: 'tab:hatch' }, { id: 'coop', tgt: 'coop' }, { id: 'wheat', tgt: 'field' }, { id: 'jobs', tgt: '#jobsBtn' }, { id: 'shows', tgt: 'tab:shows' }];
 const GUIDE_COINS = 10, GUIDE_END = 50;
 const XP = { egg: 2, hatch: 15, sell: 5, coop: 30, land: 20, colour: 60, show: { village: [40, 25, 15], county: [100, 60, 40], national: [250, 150, 100] } };
-const xpFor = L => L <= 1 ? 0 : L === 2 ? 6 : Math.round(60 * (L - 1) ** 1.7);      // level 2 comes with the first eggs collected
+// XP needed for a level: level 2 comes with the first eggs collected; from level 11 each level needs 5% more on top, so the
+// late levels take longer (balance check, 19 Oct 2026: with jobs and the wheat field, players were reaching level 29 in a month)
+const xpFor = L => L <= 1 ? 0 : L === 2 ? 6 : Math.round(60 * (L - 1) ** 1.7 * (1 + .05 * Math.max(0, L - 10)));
+const xpForV1 = L => L <= 1 ? 0 : L === 2 ? 6 : Math.round(60 * (L - 1) ** 1.7);      // the curve before 19 Oct 2026, for older saves
 function levelOf(xp) { let L = 1; while (L < MAX_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
 const plotsAllowed = L => Math.min(MAX_PLOTS, 2 + 2 * L);
 const levelForPlots = n => Math.max(1, Math.ceil((n - 2) / 2));
@@ -373,7 +376,7 @@ const DECOR = {
 const DECOR_IDS = Object.keys(DECOR);
 const OUTFITS = { classic: { lvl: 1, price: 0 }, market: { lvl: 5, price: 1200 }, garden: { lvl: 9, price: 3500 }, winter: { lvl: 12, price: 6000 }, rodeo: { lvl: 15, price: 10000 }, show: { lvl: 18, price: 16000 } };
 const OUTFIT_IDS = Object.keys(OUTFITS);
-const shopXp = price => Math.round(price / 25);
+const shopXp = price => Math.round(price / 50);      // things to buy give a little XP (halved 19 Oct 2026: buying shouldn't race you up the levels)
 const decorPos = id => (state.decorAt && state.decorAt[id]) || DECOR[id].at;      // moved by the player, or its first spot
 const dxPrice = breed => 5 * BREEDS[breed].coop;                                     // a deluxe coop: five times the coop's base price
 const trustLvl = b => { const n = (b && b.trust) || 0; return n >= PR.trustAt[2] ? 3 : n >= PR.trustAt[1] ? 2 : n >= PR.trustAt[0] ? 1 : 0; };
@@ -960,7 +963,7 @@ function newGame(langCode) {
     stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, harvests: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
     field: { sown: 0, ready: 0 }, jobs: { day: 0, list: [], bonus: false }, guide: { step: 0, done: false, did: [] },
     flags: { welcome: false, edited: false, grades: false }, farmer: { look: null, name: '', outfit: 'classic', outfits: ['classic'] }, decor: [], decorAt: {},
-    xp: 0, level: 1, trophies: [], seen: ['rir'], feed: { basic: 80, premium: 0, show: 0 },
+    xp: 0, xpv: 2, level: 1, trophies: [], seen: ['rir'], feed: { basic: 80, premium: 0, show: 0 },
     epoch: Date.now(), fox: { next: DAY * (1 + Math.random()) },
   };
   for (const id of BREED_IDS) state.basket.plain[id] = 0;
@@ -1177,6 +1180,11 @@ function sanitize(s) {
   const st0 = o.stats;
   const earnedXp = st0.eggs + XP.hatch * st0.hatched + XP.sell * st0.sold + 40 * st0.wins[0] + 25 * st0.wins[1] + 15 * st0.wins[2];
   o.xp = typeof s.xp === 'number' ? int(s.xp, 0, 1e9, 0) : earnedXp;
+  if (s.xpv !== 2) {                              // saved before the late levels got steeper: keep the level already reached
+    let L = 1; while (L < MAX_LEVEL && o.xp >= xpForV1(L + 1)) L++;
+    o.xp = Math.max(o.xp, xpFor(L));
+  }
+  o.xpv = 2;
   o.level = levelOf(o.xp);
   const TROPHY_IDS = ['m_first_sale', 'm_hatch10', 'm_coops', 'm_coops10', 'm_coops25', 'm_rare', 'm_allsil', 'm_aplus', 'm_perfect', 'm_village', 'm_county', 'm_national', 'm_friend', 'm_decor'];
   o.trophies = (Array.isArray(s.trophies) ? s.trophies : []).filter(x => TROPHY_IDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
