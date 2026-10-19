@@ -65,6 +65,9 @@ namespace FeatherField
             // a short message under the top bar
             toastBox = Box("Message", root, new Vector2(0.5f, 1f), new Vector2(360f, 44f), ToastCol);
             toastText = Label(toastBox, 16, Color.white, FontStyle.Bold);
+            toastText.horizontalOverflow = HorizontalWrapMode.Wrap;            // long messages go onto two lines
+            toastText.rectTransform.offsetMin = new Vector2(16f, 0f);
+            toastText.rectTransform.offsetMax = new Vector2(-16f, 0f);
             toastGroup = toastBox.gameObject.AddComponent<CanvasGroup>();
             toastGroup.alpha = 0f;
 
@@ -206,8 +209,10 @@ namespace FeatherField
         {
             if (toastText == null) return;
             toastText.text = text;
-            float w = Mathf.Clamp(toastText.preferredWidth + 40f, 160f, 390f);
-            toastBox.sizeDelta = new Vector2(w, 44f);
+            float w = Mathf.Clamp(toastText.preferredWidth + 40f, 160f, 360f);
+            var settings = toastText.GetGenerationSettings(new Vector2(w - 32f, 0f));
+            float h = toastText.cachedTextGeneratorForLayout.GetPreferredHeight(text, settings) / Mathf.Max(0.01f, toastText.pixelsPerUnit);
+            toastBox.sizeDelta = new Vector2(w, Mathf.Max(44f, h + 20f));
             toastLeft = 3.2f;
             toastGroup.alpha = 1f;
         }

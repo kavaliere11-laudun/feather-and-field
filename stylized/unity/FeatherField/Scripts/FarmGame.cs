@@ -120,13 +120,16 @@ namespace FeatherField
             if (save.feeder > 0f)                                    // hens only lay while they are fed
             {
                 save.feeder = Mathf.Max(0f, save.feeder - dt / Mathf.Max(1f, feederLastsSeconds));
+                bool nestTaken = false;                              // one hen on the nest at a time: the others wait their turn
+                for (int i = 0; i < layers.Length; i++) if (layers[i] != null && layers[i].Busy) nestTaken = true;
                 for (int i = 0; i < layers.Length && i < layTimers.Length; i++)
                 {
                     if (layers[i] == null) continue;
                     layTimers[i] -= dt;
                     if (layTimers[i] > 0f) continue;
+                    if (nestTaken) { layTimers[i] = Random.Range(4f, 9f); continue; }
                     layTimers[i] = layEverySeconds * Random.Range(0.8f, 1.2f);
-                    if (nest != null && save.nestEggs < nestCapacity && !layers[i].Busy) layers[i].GoLay(nest.LaySpot, LayEgg);
+                    if (nest != null && save.nestEggs < nestCapacity && !layers[i].Busy) { layers[i].GoLay(nest.LaySpot, LayEgg); nestTaken = true; }
                 }
                 dirty = true;
             }
@@ -184,7 +187,7 @@ namespace FeatherField
                 Vector3 spot = where - (who != null ? who.transform.forward : Vector3.forward) * 0.18f;
                 save.appleEggX = spot.x; save.appleEggZ = spot.z;
                 appleEgg.Show(true, AppleEggSpot(), true);
-                if (hud != null) hud.Toast(name + " ate two apples and laid an apple egg! Tap it to collect.");
+                if (hud != null) hud.Toast(name + " laid an apple egg! Tap it to collect.");
             }
             else if (hud != null) hud.Toast(name + " ate an apple. Yum!");
             Save();
