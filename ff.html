@@ -75,6 +75,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--pond);outline-o
 #moveBar p{margin:0 0 10px;font:600 14px var(--display);color:var(--ink)}
 #moveBar .row{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
 body:has(#moveBar:not([hidden])) #farmBtns{display:none}
+#guide{position:absolute;top:calc(58px + env(safe-area-inset-top,0px));left:12px;right:12px;z-index:6;background:var(--glass-top);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--glass-line);border-radius:18px;padding:9px 14px 11px;box-shadow:var(--shadow);max-width:520px;margin:0 auto}
+#guide .gtop{display:flex;justify-content:space-between;align-items:center;font:600 12.5px var(--display);color:var(--meadow-deep)}
+#guide p{margin:3px 0 0;font:600 15px/1.35 var(--body);color:var(--ink)}
+.gskip{border:0;background:none;color:var(--ink-2);font:600 13px var(--display);text-decoration:underline;text-underline-offset:3px;padding:4px;cursor:pointer}
+body:has(#guide:not([hidden])) #toasts{top:calc(150px + env(safe-area-inset-top,0px))}
+.gpulse{position:relative}.gpulse::after{content:'';position:absolute;inset:-3px;border-radius:999px;border:3px solid var(--yolk);animation:gp 1.2s ease-out infinite;pointer-events:none}
+#tabbar .gpulse::after{border-radius:16px}
+@keyframes gp{0%{opacity:1;transform:scale(.92)}100%{opacity:0;transform:scale(1.15)}}
+.fbtn{position:relative}.fbtn .badge{position:absolute;top:-6px;right:-6px}
+.job .row{align-items:center}.jobicon{font-size:26px;width:40px;text-align:center;flex:none}
+.job.done,.bonus.done{opacity:.72}.jobbar{height:8px;border-radius:99px;background:var(--meringue);overflow:hidden}.jobbar i{display:block;height:100%;background:var(--meadow);border-radius:99px}
+.bonus{background:#fff4d3;box-shadow:inset 0 0 0 2px #f1d58a}
+.fieldpic{border-radius:18px;overflow:hidden;background:var(--sage);aspect-ratio:405/219}.fieldpic img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.14)}
 #farmBtns{position:absolute;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:4}
 .fbtn{display:flex;align-items:center;gap:6px;border:1px solid var(--glass-line);border-radius:999px;padding:0 14px 0 11px;height:42px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:var(--ink);font:600 14px var(--display);box-shadow:var(--shadow);cursor:pointer}
 .fbtn svg{width:19px;height:19px}
@@ -229,8 +242,10 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
   <main id="stage"><canvas id="farm"></canvas><div id="toasts" aria-live="polite"></div>
     <div id="farmBtns">
       <button class="fbtn" id="gradesBtn" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 12V4h8l10 10-7 7z"/><circle cx="7.5" cy="8.5" r="1.5"/></svg><span data-t="grades"></span></button>
+      <button class="fbtn" id="jobsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10l1.5 1.5L13 8.5M8.5 16l1.5 1.5L13 14.5"/></svg><span data-t="jobs_btn"></span><span class="badge" id="bJobs" hidden></span></button>
       <button class="fbtn" id="flockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span data-t="flock"></span></button>
     </div>
+    <div id="guide" hidden><div class="gtop"><span id="guideStep"></span><button id="guideSkip" class="gskip"></button></div><p id="guideText"></p></div>
     <div id="moveBar" hidden><p id="moveMsg"></p><div class="row"><button class="btn sm alt" id="moveCancel" data-t="cancel"></button><button class="btn sm" id="movePlace" data-t="place"></button></div></div></main>
   <nav class="tabbar" id="tabbar">
     <button data-tab="farm" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 21V10l9-6 9 6v11z"/><path d="M9 21v-6h6v6M9 15l6 6M15 15l-6 6"/></svg><span data-t="tab_farm"></span></button>
@@ -291,6 +306,19 @@ const FEEDER_CAP = 80, EAT_EVERY = 2 * HOUR;
 
 // Levels: XP from eggs, hatching, sales, shows and trophies. Each level unlocks something.
 const TIER_LVL = { village: 1, county: 4, national: 9 };
+// The wheat field by the farmhouse: sow it, and a few hours later harvest it; the wheat is milled into Layers' pellets.
+const FIELD = { grow: 4 * HOUR, seed: 20, yield: 60, xp: 12 };
+const FIELD_GEO = { x: 2654, y: 212, w: 405, h: 219, label: [2856, 410], stand: [2730, 422], box: [2679, 236, 3034, 404] };     // the field's patch on the map (from wheat_stages.py)
+// Daily farm jobs: three a day on the player's own calendar; each pays coins and XP, and all three a bonus bag of feed.
+const JOB_KINDS = {
+  collect: { lvl: 1, n: L => 10 + 5 * Math.min(L, 8), icon: '🥚' }, harvest: { lvl: 1, n: () => 1, icon: '🌾' }, feed: { lvl: 1, n: () => 2, icon: '🥣' },
+  cuddle: { lvl: 1, n: () => 3, icon: '💗' }, hatch: { lvl: 2, n: L => 2 + Math.floor(L / 6), icon: '🐣' }, show: { lvl: 2, n: () => 1, icon: '🏅' },
+  sell: { lvl: 2, n: L => 1 + Math.floor(L / 10), icon: '🪙' }, fertile: { lvl: 3, n: () => 4, icon: '🧺' }, buy: { lvl: 3, n: () => 1, icon: '🛒' },
+};
+const jobCoins = L => 25 + 10 * Math.min(L, MAX_LEVEL), jobXp = L => 5 + Math.min(L, MAX_LEVEL);      // XP kept small: jobs should not race players up the levels
+// The first-day guide: six small steps, each pays a few coins; old farms skip it.
+const GUIDE = [{ id: 'collect', tgt: 'egg' }, { id: 'hatch', tgt: 'tab:hatch' }, { id: 'coop', tgt: 'coop' }, { id: 'wheat', tgt: 'field' }, { id: 'jobs', tgt: '#jobsBtn' }, { id: 'shows', tgt: 'tab:shows' }];
+const GUIDE_COINS = 10, GUIDE_END = 50;
 const XP = { egg: 2, hatch: 15, sell: 5, coop: 30, land: 20, colour: 60, show: { village: [40, 25, 15], county: [100, 60, 40], national: [250, 150, 100] } };
 const xpFor = L => L <= 1 ? 0 : L === 2 ? 6 : Math.round(60 * (L - 1) ** 1.7);      // level 2 comes with the first eggs collected
 function levelOf(xp) { let L = 1; while (L < MAX_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
@@ -400,6 +428,23 @@ en: {
   sk_if:'That’s if you hatch and raise them all.', sk_kept:'You’re keeping {name} for breeding.', sk_kept_r:'You’re keeping {name} for breeding.', sk_undo:'Change my mind', keeper:'Keeper',
   sk_older:'She sells for {v} until she gets older in {t}, then {v2}. Best of both: breed from her now and sell before then.',
   sk_older_r:'He sells for {v} until he gets older in {t}, then {v2}. Best of both: breed from him now and sell before then.',
+  jobs_btn:'Jobs', jobs_t:'Today’s farm jobs', jobs_note:'Three new jobs every day.', jobs_new_in:'New jobs in {t}', job_claim:'Collect', job_got:'Done',
+  job_collect:'Collect {n} eggs', job_harvest:'Harvest the wheat field', job_feed:'Fill feeders {n} times', job_cuddle:'Cuddle {n} birds', job_hatch:'Hatch {n} chicks',
+  job_show:'Enter a show', job_sell:'Sell {n} birds', job_sell_1:'Sell a bird', job_hatch_1:'Hatch a chick', job_cuddle_1:'Cuddle a bird', job_feed_1:'Fill a feeder', job_fertile_1:'Sell a fertile egg', job_collect_1:'Collect an egg', job_fertile:'Sell {n} fertile eggs', job_buy:'Buy a bird at the market',
+  job_ready:'Job done: {job}. Collect your reward', job_claimed:'+{c} coins and {x} XP', job_bonus:'Do all three jobs', job_bonus_what:'A bag of {feed}',
+  job_bonus_got:'Bonus: a bag of {feed} and {c} coins',
+  field_t:'Wheat field', field_ripe:'Wheat ready', field_tap_harvest:'Tap to harvest', field_tap_sow:'Tap to sow', field_ready_in:'Ready in {t}', field_ready_in_t:'Ready in {t}',
+  field_how:'Sow wheat, and {h} later it’s ready to harvest. It’s milled into {feed} for your hens: {n} portions, worth {c} coins at the market.',
+  field_sow:'Sow wheat', field_sown:'Wheat sown! Ready to harvest in {t}.', field_harvest:'Harvest', field_harvested:'Harvested: +{n} portions of {feed}', portions:'portions',
+  field_is_ripe:'The wheat is golden and ready.', field_st_sprouts:'The first green shoots are up.', field_st_growing:'Growing tall and green.', field_store:'In your feed store: {n} portions of {feed}.',
+  farmer_say_sow:'Grow, little seeds!', farmer_say_reap:'What a harvest!',
+  guide_step:'First day · {i} of {n}', guide_skip:'Skip', guide_ok:'Nice! +{n} coins', guide_end:'That’s the basics. Have fun on your farm! +{n} coins',
+  guide_collect:'Your hens have laid. Tap the egg bubble above the Red Barn to collect the eggs.',
+  guide_hatch:'Fertile eggs go to the Hatchery. Open it and put your best egg in the incubator.',
+  guide_coop:'Tap your Red Barn to look inside: the feeder (hens only lay when fed), the nest and the breeding plan.',
+  guide_wheat:'Sow the wheat field by the farmhouse. It grows into free feed for your hens.',
+  guide_jobs:'Open Jobs: three small jobs a day earn extra coins and XP.',
+  guide_shows:'Open Shows: enter your best bird to win rosettes and prizes.',
   enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
@@ -545,6 +590,23 @@ fr: {
   sk_if:'À condition de tous les faire éclore et grandir.', sk_kept:'Vous gardez {name} pour la reproduction.', sk_kept_r:'Vous gardez {name} pour la reproduction.', sk_undo:'Changer d’avis', keeper:'À garder',
   sk_older:'Elle se vend {v} jusqu’à ce qu’elle vieillisse dans {t}, puis {v2}. Le meilleur des deux : faites-la reproduire maintenant et vendez-la avant.',
   sk_older_r:'Il se vend {v} jusqu’à ce qu’il vieillisse dans {t}, puis {v2}. Le meilleur des deux : faites-le reproduire maintenant et vendez-le avant.',
+  jobs_btn:'Tâches', jobs_t:'Les tâches du jour', jobs_note:'Trois nouvelles tâches chaque jour.', jobs_new_in:'Nouvelles tâches dans {t}', job_claim:'Récupérer', job_got:'Fait',
+  job_collect:'Ramasser {n} œufs', job_harvest:'Moissonner le champ de blé', job_feed:'Remplir les mangeoires {n} fois', job_cuddle:'Câliner {n} volailles', job_hatch:'Faire éclore {n} poussins',
+  job_show:'Inscrire une volaille à un concours', job_sell:'Vendre {n} volailles', job_sell_1:'Vendre une volaille', job_hatch_1:'Faire éclore un poussin', job_cuddle_1:'Câliner une volaille', job_feed_1:'Remplir une mangeoire', job_fertile_1:'Vendre un œuf fécondé', job_collect_1:'Ramasser un œuf', job_fertile:'Vendre {n} œufs fécondés', job_buy:'Acheter une volaille au marché',
+  job_ready:'Tâche terminée : {job}. Récupérez votre récompense', job_claimed:'+{c} pièces et {x} XP', job_bonus:'Faire les trois tâches', job_bonus_what:'Un sac de {feed}',
+  job_bonus_got:'Bonus : un sac de {feed} et {c} pièces',
+  field_t:'Champ de blé', field_ripe:'Blé mûr', field_tap_harvest:'Touchez pour moissonner', field_tap_sow:'Touchez pour semer', field_ready_in:'Prêt dans {t}', field_ready_in_t:'Prêt dans {t}',
+  field_how:'Semez du blé : {h} plus tard, il est prêt à moissonner. Il est moulu en {feed} pour vos poules : {n} portions, qui valent {c} pièces au marché.',
+  field_sow:'Semer du blé', field_sown:'Blé semé ! Prêt à moissonner dans {t}.', field_harvest:'Moissonner', field_harvested:'Moisson : +{n} portions de {feed}', portions:'portions',
+  field_is_ripe:'Le blé est doré et prêt.', field_st_sprouts:'Les premières pousses vertes sont sorties.', field_st_growing:'Il pousse, haut et vert.', field_store:'Dans votre réserve : {n} portions de {feed}.',
+  farmer_say_sow:'Poussez, petites graines !', farmer_say_reap:'Quelle moisson !',
+  guide_step:'Premier jour · {i} sur {n}', guide_skip:'Passer', guide_ok:'Bravo ! +{n} pièces', guide_end:'Vous connaissez l’essentiel. Amusez-vous bien à la ferme ! +{n} pièces',
+  guide_collect:'Vos poules ont pondu. Touchez la bulle d’œuf au-dessus de la grange rouge pour ramasser.',
+  guide_hatch:'Les œufs fécondés vont au couvoir. Ouvrez-le et mettez votre meilleur œuf dans l’incubateur.',
+  guide_coop:'Touchez la grange rouge pour regarder dedans : la mangeoire (les poules ne pondent que nourries), le nid et le plan de reproduction.',
+  guide_wheat:'Semez le champ de blé près de la ferme. Il donne de la nourriture gratuite pour vos poules.',
+  guide_jobs:'Ouvrez Tâches : trois petites tâches par jour rapportent pièces et XP.',
+  guide_shows:'Ouvrez Concours : inscrivez votre meilleure volaille pour gagner cocardes et prix.',
   enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
@@ -870,7 +932,8 @@ function newGame(langCode) {
     v: 1, gt: 0, lastReal: Date.now(), speed: 1, lang: langCode, coins: 150, nextId: 1,
     plots: 2, coops: [], birds: [], basket: { plain: {}, fertile: [] }, basketCap: 60,
     inc: { slots: 2, items: [] }, shop: { offers: [], next: 0 }, shows: { list: [], next: 25 * MIN, history: [] },
-    stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
+    stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, harvests: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
+    field: { sown: 0, ready: 0 }, jobs: { day: 0, list: [], bonus: false }, guide: { step: 0, done: false, did: [] },
     flags: { welcome: false, edited: false, grades: false }, farmer: { look: null, name: '', outfit: 'classic', outfits: ['classic'] }, decor: [], decorAt: {},
     xp: 0, level: 1, trophies: [], seen: ['rir'], feed: { basic: 80, premium: 0, show: 0 },
     epoch: Date.now(), fox: { next: DAY * (1 + Math.random()) },
@@ -995,7 +1058,7 @@ function sanitize(s) {
     plots: int(s.plots, 1, MAX_PLOTS, 2), coops: [], birds: [], basket: { plain: {}, fertile: [] }, basketCap: int(s.basketCap, 60, 1000, 60),
     inc: { slots: int(s.inc && s.inc.slots, 2, 8, 2), items: [] }, shop: { offers: [], next: num(s.shop && s.shop.next, -1e13, 1e13, 0) },
     shows: { list: [], next: num(s.shows && s.shows.next, -1e13, 1e13, 0), history: [] },
-    stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
+    stats: { eggs: 0, hatched: 0, sold: 0, earned: 0, harvests: 0, wins: [0, 0, 0], best: 0, rare: 0, w1: { village: 0, county: 0, national: 0 } },
     flags: { welcome: !!(s.flags && s.flags.welcome), edited: !!(s.flags && s.flags.edited), grades: !!(s.flags && s.flags.grades) },
     xp: 0, level: 1, trophies: [], seen: [], feed: { basic: 0, premium: 0, show: 0 },
   };
@@ -1053,6 +1116,17 @@ function sanitize(s) {
   const KINDS = [...BREED_IDS.filter(k => k !== 'sil'), ...Object.keys(SIL).map(c => 'sil_' + c)];
   o.seen = (Array.isArray(s.seen) ? s.seen : []).filter(x => KINDS.includes(x)).filter((x, i, a) => a.indexOf(x) === i);
   for (const b of o.birds) { const k = b.breed === 'sil' ? 'sil_' + b.colour : b.breed; if (!o.seen.includes(k)) o.seen.push(k); }
+  // the wheat field, jobs and guide (older saves: an empty field, no jobs yet, and no guide)
+  const sf = s.field && typeof s.field === 'object' ? s.field : {};
+  const ready = num(sf.ready, 0, o.gt + FIELD.grow, 0); o.field = ready > 0 ? { sown: ready - FIELD.grow, ready } : { sown: 0, ready: 0 };
+  const sj = s.jobs && typeof s.jobs === 'object' ? s.jobs : {};
+  o.jobs = { day: int(sj.day, 0, 99991231, 0), bonus: sj.bonus === true, list: (Array.isArray(sj.list) ? sj.list : []).slice(0, 3).map(j => {
+    if (!j || !Object.hasOwn(JOB_KINDS, j.k)) return null; const n = int(j.n, 1, 999, 1);
+    return { k: j.k, n, p: int(j.p, 0, n, 0), got: j.got === true, c: int(j.c, 0, jobCoins(MAX_LEVEL), 0), x: int(j.x, 0, jobXp(MAX_LEVEL), 0) }; }).filter(Boolean) };
+  const sg = s.guide && typeof s.guide === 'object' ? s.guide : null;
+  o.guide = sg ? { step: int(sg.step, 0, GUIDE.length, 0), done: sg.done === true || int(sg.step, 0, GUIDE.length, 0) >= GUIDE.length,
+    did: (Array.isArray(sg.did) ? sg.did : []).filter(x => GUIDE.some(g => g.id === x)).filter((x, i, a) => a.indexOf(x) === i) } : { step: GUIDE.length, done: true, did: [] };
+  o.stats.harvests = int(s.stats && s.stats.harvests, 0, 1e7, 0);
   const fs = s.feed && typeof s.feed === 'object' ? s.feed : null;
   for (const k of FEED_IDS) o.feed[k] = fs ? int(fs[k], 0, 1e6, 0) : (k === 'basic' ? 80 : 0);
   // market offers survive a reload (checked like everything else)
@@ -1149,9 +1223,71 @@ function simStep(step) {
   state.inc.items = state.inc.items.filter(it => !it.done);
   if (gt >= state.shop.next) refreshShop();
   if (gt >= state.shows.next) { createShow(); state.shows.next = gt + SHOW_EVERY; }
+  if (state.jobs.day !== dayKey(gt)) newJobs();
   for (const s of state.shows.list) if (gt >= s.closes && !s.judged) judge(s);
   state.shows.list = state.shows.list.filter(s => !s.judged);
 }
+/* ---------- the wheat field ---------- */
+function fieldStage(gt = state.gt) {
+  const f = state.field; if (!f || !f.ready) return 'soil';
+  if (gt >= f.ready) return 'ripe';
+  return (gt - f.sown) / FIELD.grow < .4 ? 'sprouts' : 'growing';
+}
+function actSow() {
+  const f = state.field; if (f.ready) return false;
+  if (!spend(FIELD.seed)) return false;
+  f.sown = state.gt; f.ready = state.gt + FIELD.grow;
+  if (!sink) { toast(t('field_sown', { t: fmtDur(realLeft(FIELD.grow)) })); farmerSendField('sow'); }
+  guideDone('wheat'); changed(); return true;
+}
+function actHarvest() {
+  const f = state.field; if (!f.ready || state.gt < f.ready) return false;
+  f.sown = 0; f.ready = 0; state.feed.basic += FIELD.yield; state.stats.harvests++; gainXP(FIELD.xp);
+  if (!sink) { SND.feed(); toast(t('field_harvested', { n: FIELD.yield, feed: feedIn('basic') })); farmerSendField('reap'); }
+  job('harvest'); guideDone('wheat'); changed(); return true;
+}
+/* ---------- daily farm jobs ---------- */
+function dayKey(gt) { const d = clockAt(gt); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function nextMidnight(gt) { const d = clockAt(gt), m = new Date(d); m.setHours(24, 0, 0, 0); return gt + (m - d); }
+function newJobs() {
+  const L = state.level, ok = Object.keys(JOB_KINDS).filter(k => JOB_KINDS[k].lvl <= L);
+  const easy = ['collect', 'harvest', 'feed'], first = pick(easy), rest = ok.filter(k => k !== first);
+  const kinds = [first]; while (kinds.length < 3 && rest.length) kinds.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
+  state.jobs = { day: dayKey(state.gt), bonus: false, list: kinds.map(k => ({ k, n: JOB_KINDS[k].n(L), p: 0, got: false, c: jobCoins(L), x: jobXp(L) })) };
+  dirty = true;
+}
+function job(kind, n = 1) {
+  const J = state.jobs; if (!J || !J.list) return;
+  for (const j of J.list) if (j.k === kind && j.p < j.n) { j.p = Math.min(j.n, j.p + n); if (j.p >= j.n) emit('job', t('job_ready', { job: jobText(j) }), true, () => openSheet('jobs')); dirty = true; }
+}
+const jobText = j => t('job_' + j.k + (j.n === 1 && I18N[lang()]['job_' + j.k + '_1'] ? '_1' : ''), { n: fmtN(j.n) });
+const feedIn = k => { const n = t('feed_' + k); return lang() === 'fr' ? n[0].toLowerCase() + n.slice(1) : n; };      // a feed's name inside a French sentence
+const bestFeed = () => [...FEED_IDS].reverse().find(k => FEEDS[k].lvl <= state.level);
+function actClaimJob(i) {
+  const j = state.jobs.list[i]; if (!j || j.got || j.p < j.n) return false;
+  j.got = true; addCoins(j.c); gainXP(j.x); if (!sink) { SND.coin(); toast(t('job_claimed', { c: fmtN(j.c), x: j.x }), true); }
+  changed(); return true;
+}
+function actClaimBonus() {
+  const J = state.jobs; if (J.bonus || J.list.length < 3 || !J.list.every(j => j.got)) return false;
+  J.bonus = true; const f = bestFeed(); state.feed[f] += FEEDS[f].bag; addCoins(jobCoins(state.level));
+  if (!sink) { SND.coin(); toast(t('job_bonus_got', { feed: feedIn(f), c: fmtN(jobCoins(state.level)) }), true); }
+  changed(); return true;
+}
+const jobsToClaim = () => state.jobs ? state.jobs.list.filter(j => !j.got && j.p >= j.n).length + (!state.jobs.bonus && state.jobs.list.length === 3 && state.jobs.list.every(j => j.got) ? 1 : 0) : 0;
+/* ---------- the first-day guide ---------- */
+function guideNow() { const g = state.guide; return g && !g.done && state.flags.welcome && state.farmer.look ? GUIDE[g.step] || null : null; }
+function guideDone(id) {
+  const g = state.guide; if (!g || g.done) return;
+  if (!g.did.includes(id)) g.did.push(id);
+  let moved = false;
+  while (!g.done && GUIDE[g.step] && g.did.includes(GUIDE[g.step].id)) { g.step++; moved = true; addCoins(GUIDE_COINS); if (g.step >= GUIDE.length) g.done = true; }
+  if (!moved) return;
+  if (g.done) { addCoins(GUIDE_END); if (!sink) toast(t('guide_end', { n: GUIDE_END }), true); }
+  else if (!sink) toast(t('guide_ok', { n: GUIDE_COINS }));
+  dirty = true; hudCache = ''; if (!sink) updateHud();
+}
+function actSkipGuide() { state.guide.done = true; hudCache = ''; changed(true); }
 function layEgg(hen, coop) {
   state.stats.eggs++;
   const sire = mateOf(hen, coop);
@@ -1261,6 +1397,7 @@ function actCuddle(b) {                        // the farmer goes to the bird an
   if (b.pers === 'brave' && grown && c.settle > gt) { c.settle = gt; xp += PR.cuddleXp; key = 'cuddle_brave'; }
   if (c.fright > gt) { c.fright = gt; xp += PR.cuddleXp; key = 'cuddle_fox'; }
   if (b.pers === 'rebel') b.nextOut = Math.max(b.nextOut || 0, b.happy);      // a happy rebel stays put
+  job('cuddle');
   const lv0 = trustLvl(b); b.trust = Math.min(PR.trustAt[2], (b.trust || 0) + 1); const lv = trustLvl(b);
   if (lv === 3 && lv0 < 3) xp += PR.friendXp;
   if (xp) gainXP(xp);
@@ -1286,7 +1423,7 @@ function tryHatch(it) {
   const s = it.egg.child;
   const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, gp: it.egg.gp, born: Math.min(state.gt, incEnd(it)), home: coop.id, pers: s.pers, fast: s.fast, trust: s.trust });
   state.birds.push(b); it.done = true; settleIn(coop, b);
-  state.stats.hatched++; state.stats.best = Math.max(state.stats.best, quality(b));
+  state.stats.hatched++; state.stats.best = Math.max(state.stats.best, quality(b)); job('hatch');
   if (b.breed === 'sil' && RARE_SIL.includes(b.colour)) state.stats.rare++;
   emit('hatched', t('hatched', { breed: breedName(b), name: b.name }) + ' ' + t('reveal_' + b.pers), true, () => focusBird(b.id)); if (!sink) SND.hatch(); dirty = true;
   gainXP(XP.hatch); see(b);
@@ -1447,14 +1584,14 @@ function actBuyOffer(i) {
   if (!coop) { const mine = state.coops.filter(c => c.breed === o.breed); toast(!mine.length ? t('need_coop', { coop: t('coop_' + o.breed) }) : mine.some(c => !isBuilt(c)) ? t('coop_building', { coop: t('coop_' + o.breed) }) : t('coop_full', { coop: t('coop_' + o.breed) })); return; }
   const price = offerPrice(o); if (!spend(price)) return;
   const b = makeBird({ ...o, home: coop.id }); b.seed = o.seed;
-  state.birds.push(b); state.shop.offers.splice(i, 1); see(b); settleIn(coop, b);
+  state.birds.push(b); state.shop.offers.splice(i, 1); see(b); settleIn(coop, b); job('buy');
   toast(t('bought', { name: b.name, coop: t('coop_' + b.breed) })); changed();
 }
 function offerPrice(o) { const fake = { ...o, home: 0, champ: 0, line: 0 }; return value(fake); }
 function actSell(b) {
   if (!birdById(b.id)) return;
   const p = b.home === 'pasture' ? Math.max(1, Math.round(value(b))) : sellPrice(b);
-  addCoins(p); state.stats.sold++; SND.coin(); gainXP(XP.sell + p / 20);
+  addCoins(p); state.stats.sold++; SND.coin(); gainXP(XP.sell + p / 20); job('sell');
   state.birds = state.birds.filter(x => x.id !== b.id);
   for (const c of state.coops) if (c.sire === b.id) c.sire = null;
   for (const s of state.shows.list) if (s.entry === b.id) s.entry = null;
@@ -1465,7 +1602,7 @@ function actSell(b) {
 function actAcceptOffer(b) {
   if (!birdById(b.id) || b.home !== 'pasture' || !b.offer || state.gt >= b.offer.until) { changed(); return; }
   const p = b.offer.p;
-  addCoins(p); state.stats.sold++; SND.coin(); gainXP(XP.sell + p / 20);
+  addCoins(p); state.stats.sold++; SND.coin(); gainXP(XP.sell + p / 20); job('sell');
   state.birds = state.birds.filter(x => x.id !== b.id); agents.delete(b.id);
   toast(t('adopted', { name: b.name, n: fmtN(p) }), true);
   if (current && current.name === 'bird') closeSheet();
@@ -1519,7 +1656,7 @@ function collectFrom(coops) {
   for (const [c, p] of protests) thank(c, p);
   if (!total && !eatN) return 0;
   if (eatC + extraC) addCoins(eatC + extraC);
-  if (total) { SND.eggs(total); gainXP(total * XP.egg); }
+  if (total) { SND.eggs(total); gainXP(total * XP.egg); job('collect', total); guideDone('collect'); }
   if (eatC + extraC) SND.coin();
   const bits = [t('collected', { n: total })];
   if (eatN) bits.push(t('col_sold', { n: eatN, c: fmtN(eatC) }));
@@ -1536,18 +1673,18 @@ function actSellPlain() {
   for (const k of BREED_IDS) { const n = state.basket.plain[k]; e += n; coins += n * BREEDS[k].egg; state.basket.plain[k] = 0; }
   if (!e) return; addCoins(coins); SND.coin(); toast(t('sell_eggs_done', { e: fmtN(e), n: fmtN(coins) })); changed();
 }
-function actSellFertile(id) { const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return; const p = fertileEggPrice(state.basket.fertile[i]); state.basket.fertile.splice(i, 1); addCoins(p); SND.coin(); toast(t('prize_won', { n: fmtN(p) })); changed(); }
+function actSellFertile(id) { const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return; job('fertile'); const p = fertileEggPrice(state.basket.fertile[i]); state.basket.fertile.splice(i, 1); addCoins(p); SND.coin(); toast(t('prize_won', { n: fmtN(p) })); changed(); }
 function actSellFertileAll(keep) {
   const sorted = [...state.basket.fertile].sort((a, b) => eggQ(b) - eggQ(a)), kept = sorted.slice(0, keep || 0), sold = sorted.slice(keep || 0);
   if (!sold.length) return;
-  let coins = 0; for (const e of sold) coins += fertileEggPrice(e);
+  let coins = 0; for (const e of sold) coins += fertileEggPrice(e); job('fertile', sold.length);
   state.basket.fertile = state.basket.fertile.filter(e => kept.includes(e)); addCoins(coins); SND.coin();
   toast(t('sell_eggs_done', { e: fmtN(sold.length), n: fmtN(coins) })); changed();
 }
 function actIncubate(id) {
   if (state.inc.items.length >= state.inc.slots) { toast(t('incubator_full')); return; }
   const i = state.basket.fertile.findIndex(e => e.id === id); if (i < 0) return;
-  state.inc.items.push({ egg: state.basket.fertile.splice(i, 1)[0], start: state.gt }); changed();
+  state.inc.items.push({ egg: state.basket.fertile.splice(i, 1)[0], start: state.gt }); guideDone('hatch'); changed();
 }
 function actBuildCoop(breed) {
   if (!unlocked(breed)) return;
@@ -1649,6 +1786,7 @@ function actBuyFeed(kind, bags = 1) {
 function fillCoop(c, kind) {
   const room = FEEDER_CAP - feederTotal(c), n = Math.min(room, state.feed[kind]);
   if (n <= 0) return 0;
+  job('feed');
   const before = protestOf(c);
   c.feeder[kind] += n; state.feed[kind] -= n; c.hungry = false; c.hungryAt = 0;
   if (before && before.kind === 'feed') thank(c, before);
@@ -1675,7 +1813,7 @@ function actBasket() { if (state.basketCap >= 1000) return; if (!spend(basketPri
 function actEnter(b, s) {
   if (!canEnter(b, s) || s.entry || s.judged) return;
   if (!spend(TIERS[s.tier].fee)) return;
-  s.entry = b.id; b.entered = s.id; toast(t('entered_bird', { name: b.name })); changed();
+  s.entry = b.id; b.entered = s.id; job('show'); toast(t('entered_bird', { name: b.name })); changed();
 }
 
 /* =====================================================================
@@ -1790,8 +1928,10 @@ function layout() {
 function clampCam() {
   const [W, H] = GEOM.size;
   view.x = clamp(view.x, 0, Math.max(0, W - view.vw / view.s));
-  view.y = clamp(view.y, 0, Math.max(0, H - view.vh / view.s));
+  const padT = (guideShown ? 170 : 64) / view.s, padB = 96 / view.s;      // the top bar (and the guide) and the tab bar float over the map: let its edges scroll clear of them
+  view.y = clamp(view.y, -padT, Math.max(-padT, H - view.vh / view.s + padB));
 }
+let guideShown = false;
 function zoomAt(sx, sy, ns) {
   ns = clamp(ns, view.minS, view.maxS);
   const wx = view.x + sx / view.s, wy = view.y + sy / view.s;
@@ -2058,6 +2198,10 @@ function farmerSendFeed(c) {
   if (!farmerReady() || (FARM.task && FARM.task.kind !== 'feed') || FARM.exitGate) return;      // busy, or still in a pen
   FARM.task = { kind: 'feed', id: c.id }; const [x, y] = coopFront(c); farmerRoute(x, y, 'walk');
 }
+function farmerSendField(act) {                 // sow: scatter the seed; reap: crouch and cut
+  if (!farmerReady() || (FARM.task && !['feed', 'field'].includes(FARM.task.kind)) || FARM.exitGate) return;
+  FARM.task = { kind: 'field', act }; farmerRoute(FIELD_GEO.stand[0] + (Math.random() - .5) * 60, FIELD_GEO.stand[1], 'walk');
+}
 // a cuddle: in through the pen's gate, kneel by the gate; the bird comes over; out through the gate again
 const GATE = [-0.15, -1.85], KNEEL = [-0.15, -1.12];
 function penOffset(p, dx, dy) {                // map pixels -> metres in the pen
@@ -2145,7 +2289,11 @@ function updateFarmer(dt) {
         F.heartT -= dt; if (a.sx != null && F.heartT <= 0) { F.heartT = .32; heartsAt(a.sx, a.sy - (a.b && stage(a.b) === 'chick' ? 22 : 40), 1); }
       }
     }
-    else if (F.act === 'feed') {
+    else if (F.act === 'reap') {                              // crouched, cutting: golden bits fly
+      F.pose = farmerSpr('pet0') ? 'pet' + [0, 1, 2, 1][Math.floor(F.fr * 4) % 4] : 'idle';
+      if (Math.random() < dt * 12) F.grains.push({ x: F.x + F.face * 14, y: F.y - 18, vx: F.face * (20 + Math.random() * 40), vy: -70 - Math.random() * 50, t: 0, life: .6 + Math.random() * .3 });
+    }
+    else if (F.act === 'feed' || F.act === 'sow') {
       const ph = Math.floor(F.fr * 3) % 3; F.pose = 'feed' + ph;
       if (ph === 2 && Math.random() < dt * 20) for (let i = 0; i < 3; i++) F.grains.push({ x: F.x + F.face * 16, y: F.y - 42, vx: F.face * (40 + Math.random() * 60), vy: -60 - Math.random() * 40, t: 0, life: .7 + Math.random() * .3 });
     } else F.pose = night ? 'tidle' : 'idle';
@@ -2183,6 +2331,7 @@ function updateFarmer(dt) {
       F.st = 'act'; F.act = part === 'night' ? 'night' : part === 'dusk' ? 'worry' : 'tell'; F.actT = part === 'dusk' ? 1.6 : 1.4; F.fr = 0;
       farmerSay('farmer_say_' + part, 1.8);
     } else if (F.task && F.task.kind === 'feed') { F.st = 'act'; F.act = 'feed'; F.actT = 2.6; F.fr = 0; F.face = -1; farmerSay('farmer_say_feed', 1.6); }
+    else if (F.task && F.task.kind === 'field') { F.st = 'act'; F.act = F.task.act; F.actT = 3.2; F.fr = 0; farmerSay('farmer_say_' + F.task.act, 1.8); }
     else { F.st = 'idle'; F.t = 6 + Math.random() * 10; if (F.visit) greetFarmer(F.visit); }
     F.visit = null;
   }
@@ -2500,6 +2649,7 @@ function draw() {
   }
   if (DATA.tiles && k > 1.15) drawTiles(vx0, vy0, vx1, vy1);
   const vis = (x, y, m) => x > vx0 - m && x < vx1 + m && y > vy0 - m && y < vy1 + m;
+  if (vis(FIELD_GEO.x + FIELD_GEO.w / 2, FIELD_GEO.y + FIELD_GEO.h / 2, 260)) { const fim = img(`img/field/wheat_${fieldStage()}.webp`); if (ready(fim)) ctx.drawImage(fim, FIELD_GEO.x, FIELD_GEO.y, FIELD_GEO.w, FIELD_GEO.h); }
   drawWind(vx0, vy0, vx1, vy1);
   if (vis(GEOM.pond.c[0], GEOM.pond.c[1], 300)) drawPond();
   for (const S of GEOM.streams || (GEOM.stream ? [GEOM.stream] : [])) if (S.some(p => vis(p[0], p[1], 120))) drawStream(S, vx0, vy0, vx1, vy1);
@@ -2581,12 +2731,45 @@ function draw() {
       label(px, py, '✊ ' + t('protest_' + pr.kind), t('protest_sub', { name: pr.b.name }), 'hot'); protestHits.push([px, py, c, pr.kind]); }
   }
   const pp = toMap(GEOM.pasture, 0, -2.75, .2);
+  fieldHit = null;
+  const fl = FIELD_GEO.label;
+  if (vis(fl[0], fl[1], 120)) {
+    const st = fieldStage(); fieldHit = fl;
+    if (st === 'ripe') label(fl[0], fl[1], '🌾 ' + t('field_ripe'), t('field_tap_harvest'), 'hot');
+    else if (!state.field.ready) label(fl[0], fl[1], t('field_t'), t('field_tap_sow'), 'hot');
+    else label(fl[0], fl[1], t('field_t'), t('field_ready_in', { t: fmtDur(realLeft(state.field.ready - state.gt)) }), 'small');
+  }
   if (vis(pp[0], pp[1], 100)) { const no = state.birds.filter(b => b.home === 'pasture' && b.offer).length; label(pp[0], pp[1], t('pasture'), no ? t('offers_n', { n: no }) : null, no ? 'hot' : null); }
   if (ui.grades) { birds.sort((a, b) => b.sy - a.sy); const placed = []; for (const a of birds) gradeTag(a, placed); }
   for (const a of birds) if (a.b && a.b.out && !a.caught) runawayTag(a);
   drawHearts();
   for (const a of birds) if (a.say > 0) speech(a);
   if (farmerReady()) farmerSpeech();
+  const gs = guideNow(), gp = gs && guideTarget(gs); if (gp) guideArrow(gp[0], gp[1]);
+}
+let fieldHit = null;
+function guideTarget(g) {                        // where on the map the guide points, if it points at the map
+  const p0 = plots.find(p => p.kind === 'coop');
+  if (g.tgt === 'egg') return p0 ? (p0.bubble ? [p0.bubble.x, p0.bubble.y - p0.bubble.r] : toMap(p0.f, 0, 0.3, 2.6)) : null;
+  if (g.tgt === 'coop') return p0 ? toMap(p0.f, 0, 0.3, 2.6) : null;
+  if (g.tgt === 'field') return [FIELD_GEO.label[0], FIELD_GEO.label[1] - 26 * uiK()];
+  return null;
+}
+function guideArrow(x, y) {                     // a bouncing yellow arrow pointing down at the target
+  ctx.save(); const K = uiK() * 1.1; ctx.translate(x, y - 16 * K - Math.abs(Math.sin(clock * 4)) * 10 * K); ctx.scale(K, K);
+  ctx.beginPath(); ctx.moveTo(-9, -26); ctx.lineTo(9, -26); ctx.lineTo(9, -10); ctx.lineTo(18, -10); ctx.lineTo(0, 8); ctx.lineTo(-18, -10); ctx.lineTo(-9, -10); ctx.closePath();
+  ctx.fillStyle = '#f5b92e'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 6; ctx.stroke(); ctx.shadowBlur = 0; ctx.fill();
+  ctx.strokeStyle = '#a8740a'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore();
+}
+let guideSeen = -1;
+function guideFocus() {                          // when a step begins, bring its target into view
+  const g = guideNow(); if (!g || current || guideSeen === state.guide.step) return;
+  const p0 = plots.find(p => p.kind === 'coop');
+  if ((g.tgt === 'egg' || g.tgt === 'coop') && !p0) return;          // the farm is not laid out yet
+  guideSeen = state.guide.step;
+  const tgt = g.tgt === 'field' ? FIELD_GEO.label : (g.tgt === 'egg' || g.tgt === 'coop') ? toMap(p0.f, 0, 0, 1) : null;
+  if (!tgt) return;
+  view.x = tgt[0] - view.vw / view.s / 2; view.y = tgt[1] - view.vh * .58 / view.s; clampCam(); inertia = null;
 }
 function runawayTag(a) {                     // a bright tag over a runaway, drawn on top of everything so fences never hide it
   ctx.save(); const K = uiK() * .9; ctx.translate(a.sx, a.sy - 64 - 3 * Math.sin(clock * 4)); ctx.scale(K, K);
@@ -2723,6 +2906,7 @@ function tapAt(x, y) {
   const K = uiK();
   for (const [sx, sy, p] of signHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 34 * K) { if (p.kind === 'empty') openSheet('market', { tab: 'build' }); else if (p.kind === 'build') openSheet('coop', { id: p.coop.id }); else openSheet('land'); return; }
   for (const [sx, sy, c, kind] of protestHits) if (Math.abs(x - sx) < 80 * K && Math.abs(y - sy) < 28 * K) { if (kind === 'feed') quickFeed(c); else actCollect(c); return; }
+  if (fieldHit && Math.abs(x - fieldHit[0]) < 90 * K && Math.abs(y - fieldHit[1]) < 30 * K) { if (fieldStage() === 'ripe') actHarvest(); else openSheet('field'); return; }
   for (const p of plots) if (p.bubble && Math.hypot(x - p.bubble.x, y - p.bubble.y) < p.bubble.r) { actCollect(p.coop); return; }
   for (const p of plots) { const f = p.feedBubble; if (f && Math.abs(x - f.x) < f.w / 2 + 6 && Math.abs(y - f.y) < f.h / 2 + 6) { quickFeed(p.coop); return; } }
   let best = null, bd = 1e9;
@@ -2744,6 +2928,7 @@ function tapAt(x, y) {
     else openSheet('pasture');
     return;
   }
+  const fb = FIELD_GEO.box; if (x > fb[0] && x < fb[2] && y > fb[1] && y < fb[3]) { openSheet('field'); return; }
   if (Math.hypot(x - GEOM.stall[0], y - GEOM.stall[1]) < 90) openSheet('market', { tab: 'birds' });
   else if (Math.hypot(x - GEOM.house[0], y - GEOM.house[1]) < 110) openSheet('awards');
 }
@@ -2943,7 +3128,7 @@ function birdRow(b, extra, showValue) {
 let mktBreed = 'all', mktPers = 'all'; // Market birds filters, kept while the game is open
 let current = null;
 let sheetOpenedAt = 0, sheetReturn = null;        // a level-up shown over another screen goes back to it when closed
-function openSheet(name, args) { sheetOpenedAt = performance.now(); current = { name, args: args || {} }; $('#sheet').hidden = false; $('#scrim').hidden = false; renderSheet(true); setTab(['market', 'hatch', 'shows', 'awards'].includes(name) ? name : 'farm'); }
+function openSheet(name, args) { if (state && ['coop', 'jobs', 'shows'].includes(name)) guideDone(name); sheetOpenedAt = performance.now(); current = { name, args: args || {} }; $('#sheet').hidden = false; $('#scrim').hidden = false; renderSheet(true); setTab(['market', 'hatch', 'shows', 'awards'].includes(name) ? name : 'farm'); }
 function setGrades(on) { ui.grades = on; state.flags.grades = on; $('#gradesBtn').setAttribute('aria-pressed', String(on)); }
 function closeSheet() {
   if (current && current.name === 'levelup' && sheetReturn) { const r = sheetReturn; sheetReturn = null; openSheet(r.name, r.args); return; }
@@ -3304,6 +3489,32 @@ const SHEETS = {
       h('h3', { text: t('results') }), hist.length ? h('div', { class: 'list' }, hist) : h('p', { class: 'small muted', text: t('no_results') }),
     ] };
   },
+  field() {
+    const f = state.field, st = fieldStage();
+    const pic = h('div', { class: 'fieldpic' }, h('img', { src: `img/field/wheat_${st}.webp`, alt: '' }));
+    let body;
+    if (st === 'ripe') body = [h('p', { class: 'small', style: 'font-weight:700', text: t('field_is_ripe') }),
+      h('button', { class: 'btn good', onclick: () => actHarvest() }, t('field_harvest'), ' · +' + FIELD.yield + ' ', t('portions'))];
+    else if (f.ready) body = [h('p', { class: 'small' }, timer(f.ready, 'field_ready_in_t')), progress(f.sown, f.ready),
+      h('p', { class: 'small muted', text: t(st === 'sprouts' ? 'field_st_sprouts' : 'field_st_growing') })];
+    else body = [h('button', { class: 'btn', disabled: state.coins < FIELD.seed, onclick: () => actSow() }, t('field_sow'), ' · ', coinPrice(FIELD.seed))];
+    return { title: t('field_t'), node: [pic, h('p', { class: 'small', text: t('field_how', { h: fmtDur(realLeft(FIELD.grow)), n: FIELD.yield, feed: feedIn('basic'), c: fmtN(Math.round(FIELD.yield / FEEDS.basic.bag * FEEDS.basic.price)) }) }),
+      h('div', { class: 'card' }, body), h('p', { class: 'small muted', text: t('field_store', { n: fmtN(state.feed.basic), feed: feedIn('basic') }) })] };
+  },
+  jobs() {
+    const J = state.jobs, all = J.list.length === 3 && J.list.every(j => j.got), f = bestFeed();
+    return { title: t('jobs_t'), node: [
+      h('p', { class: 'small muted' }, t('jobs_note'), ' ', timer(nextMidnight(state.gt), 'jobs_new_in')),
+      h('div', { class: 'list' }, J.list.map((j, i) => h('div', { class: 'card job' + (j.got ? ' done' : '') },
+        h('div', { class: 'row' }, h('span', { class: 'jobicon', text: JOB_KINDS[j.k].icon }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: jobText(j) }),
+          h('div', { class: 'small muted' }, coinPrice(j.c), ` · ${j.x} XP`)),
+          j.got ? h('span', { class: 'tag good', text: '✓ ' + t('job_got') }) : j.p >= j.n ? h('button', { class: 'btn sm good', onclick: () => actClaimJob(i) }, t('job_claim')) : h('span', { class: 'small num', text: `${fmtN(j.p)} / ${fmtN(j.n)}` })),
+        j.got ? null : h('div', { class: 'jobbar' }, h('i', { style: `width:${Math.round(j.p / j.n * 100)}%` }))))),
+      h('div', { class: 'card bonus' + (J.bonus ? ' done' : '') }, h('div', { class: 'row' }, h('span', { class: 'jobicon', text: '🎁' }), h('div', { class: 'grow' },
+        h('div', { style: 'font-weight:700', text: t('job_bonus') }), h('div', { class: 'small muted' }, t('job_bonus_what', { feed: feedIn(f) }), ' + ', coinPrice(jobCoins(state.level)))),
+        J.bonus ? h('span', { class: 'tag good', text: '✓ ' + t('job_got') }) : h('button', { class: 'btn sm good', disabled: !all, onclick: () => actClaimBonus() }, t('job_claim')))),
+    ] };
+  },
   awards() {
     const champs = state.birds.filter(b => b.champ > 0);
     const L = state.level, a = xpFor(L), b = xpFor(L + 1), maxed = L >= MAX_LEVEL;
@@ -3415,14 +3626,22 @@ function updateHud() {
   const fertileReady = state.basket.fertile.length + state.inc.items.filter(i => i.waiting).length;
   const openNoEntry = state.shows.list.filter(s => !s.entry).length;
   const hungry = state.coops.filter(c => feederTotal(c) <= 0).length;
-  const key = [state.coins, basketCount(), state.basketCap, fertileReady, openNoEntry, lang(), state.xp, hungry].join('|');
+  const gs = guideNow(), jc = jobsToClaim();
+  const key = [state.coins, basketCount(), state.basketCap, fertileReady, openNoEntry, lang(), state.xp, hungry, gs ? state.guide.step : -1, jc].join('|');
   if (key === hudCache) return; hudCache = key;
   const L = state.level, p = L >= MAX_LEVEL ? 100 : (state.xp - xpFor(L)) / (xpFor(L + 1) - xpFor(L)) * 100;
   $('#lvlNum').textContent = t('lvl_short', { n: L }); $('#lvlRing').style.setProperty('--p', p.toFixed(1)); $('#lvlPill').setAttribute('aria-label', `${t('level')} ${L}`);
   $('#coins').textContent = fmtN(state.coins);
   $('#eggs').textContent = `${basketCount()}/${state.basketCap}`;
   const setB = (id, n) => { const el = $(id); el.hidden = !n; el.textContent = n; };
-  setB('#bHatch', fertileReady); setB('#bShows', openNoEntry); setB('#bMarket', hungry);
+  setB('#bHatch', fertileReady); setB('#bShows', openNoEntry); setB('#bMarket', hungry); setB('#bJobs', jc);
+  const gd = $('#guide'); gd.hidden = !gs; guideShown = !!gs;
+  for (const el of document.querySelectorAll('.gpulse')) el.classList.remove('gpulse');
+  if (gs) {
+    $('#guideStep').textContent = t('guide_step', { i: state.guide.step + 1, n: GUIDE.length }); $('#guideSkip').textContent = t('guide_skip');
+    $('#guideText').textContent = t('guide_' + gs.id);
+    const el = gs.tgt.startsWith('tab:') ? document.querySelector(`#tabbar [data-tab="${gs.tgt.slice(4)}"]`) : gs.tgt.startsWith('#') ? $(gs.tgt) : null; if (el) el.classList.add('gpulse');
+  }
 }
 function applyLang() {
   document.documentElement.lang = lang();
@@ -3439,6 +3658,8 @@ $('#lvlPill').addEventListener('click', () => openSheet('awards'));
 $('#gradesBtn').addEventListener('click', () => { setGrades(!ui.grades); save(); });
 $('#movePlace').addEventListener('click', () => endMove(true));
 $('#moveCancel').addEventListener('click', () => endMove(false));
+$('#jobsBtn').addEventListener('click', () => openSheet('jobs'));
+$('#guideSkip').addEventListener('click', () => actSkipGuide());
 $('#flockBtn').addEventListener('click', () => openSheet('flock', { sort: 'value', breed: 'all' }));
 $('#coinPill').addEventListener('click', () => { toast(t('coins_hint', { n: fmtN(state.coins) })); openSheet('market', { tab: 'birds' }); });
 $('#eggPill').addEventListener('click', () => { toast(t('eggs_hint', { n: basketCount(), m: state.basketCap })); openSheet('hatch'); });
@@ -3795,6 +4016,7 @@ function tickTime() {
 }
 let last = performance.now();
 function frame(now) {
+  if (state && !current) guideFocus();
   const dt = Math.min(.1, (now - last) / 1000); last = now; clock += dt;
   tickTime();
   stepInertia(dt);

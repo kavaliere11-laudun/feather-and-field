@@ -1,0 +1,23 @@
+// screenshots of the farmer sowing and harvesting at the wheat field
+import { createRequire } from 'module';
+const require = createRequire('/opt/npm-tools/node_modules/');
+const { chromium } = require('playwright');
+const browser = await chromium.launch(); const errors = [];
+const G = (page, fn, arg) => page.evaluate(([f, a]) => window.__ffDebug.inside(g => (new Function('g', 'a', 'return (' + f + ')(g, a)'))(g, a)), [fn.toString(), arg]);
+const page = await (await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, locale: 'en-GB' })).newPage();
+page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+await page.goto(process.env.URL); await page.waitForTimeout(1200);
+await page.locator('#sheetClose').click(); await page.waitForTimeout(1000);
+await page.locator('#sheetBody .btn').last().click(); await page.waitForTimeout(1200);
+await page.evaluate(() => { const d = window.__ffDebug; d.quiet(); d.setHour(11); d.speed(1); });
+await G(page, g => g.actSkipGuide());
+await page.evaluate(() => { const d = window.__ffDebug; d.farmerTo(2700, 430); d.lookAt(2830, 380, 1.5); });
+await page.waitForTimeout(400);
+await G(page, g => g.actSow()); await page.waitForTimeout(2600);
+await page.screenshot({ path: 'r/fl_sow.png' });
+await G(page, g => { g.state.field.ready = g.state.gt - 1; g.state.field.sown = g.state.field.ready - g.FIELD.grow; });
+await page.waitForTimeout(3500);
+await page.evaluate(() => window.__ffDebug.farmerTo(2760, 424));
+await G(page, g => g.actHarvest()); await page.waitForTimeout(2200);
+await page.screenshot({ path: 'r/fl_reap.png' });
+console.log(errors.length ? errors.join('\n') : 'no errors'); await browser.close();

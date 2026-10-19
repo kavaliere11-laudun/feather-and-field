@@ -202,5 +202,6 @@ data = {'geom': {k: g[k] for k in ('size', 'ez', 'slots', 'pasture', 'pond', 'ho
 if os.environ.get('BRIDGES'): data['geom']['bridges'] = json.load(open(os.environ['BRIDGES']))
 import decor_pack; print('decor', decor_pack.pack(data))      # decorations the player can buy
 import nav_pack; print('nav', nav_pack.pack(data))      # the farmer's walking grid
+import field_pack; print('field', field_pack.pack(data))      # the wheat field's growing stages
 json.dump(data, open(f'{OUT}/data.json', 'w'), separators=(',', ':'))
 print('packed', len(SPR), 'sprites', len(CARDS), 'cards', os.path.getsize(f'{OUT}/data.json'), 'bytes of data')

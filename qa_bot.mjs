@@ -107,6 +107,12 @@ const out = await page.evaluate(([DAYS, EVERY]) => window.__ffDebug.inside(g => 
       const el = st.birds.filter(b => g.canEnter(b, sh)).sort((a, b) => g.showScoreBase(b) - g.showScoreBase(a));
       if (el.length && st.coins >= g.TIERS[sh.tier].fee + 20) { g.actEnter(el[0], sh); note('entered ' + sh.tier); }
     }
+    // the wheat field and the daily jobs (harvest when ripe, sow again, collect every finished job and the bonus)
+    if (g.fieldStage() === 'ripe') { const f0 = st.feed.basic; if (g.actHarvest()) { note('harvested wheat'); if (st.feed.basic - f0 !== g.FIELD.yield) flag('harvest gave the wrong amount'); } }
+    if (!st.field.ready && st.coins >= g.FIELD.seed + 40) { if (g.actSow()) note('sowed wheat'); }
+    for (let i = 0; i < st.jobs.list.length; i++) { const j = st.jobs.list[i]; if (j.p > j.n) flag('job progress past its target'); if (!j.got && j.p >= j.n && g.actClaimJob(i)) note('job done: ' + j.k); }
+    if (g.actClaimBonus()) note('all three jobs: bonus');
+    if (st.jobs.list.length !== 3 || st.jobs.day !== g.dayKey(st.gt)) flag('jobs not three for today');
     if (g.current) g.closeSheet();
   }
   const steps = Math.round(DAYS * DAY / (EVERY * MIN));
