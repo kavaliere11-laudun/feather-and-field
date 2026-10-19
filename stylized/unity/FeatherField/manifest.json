@@ -1,10 +1,10 @@
 {
- "version": "19 Oct 2026 21:02",
+ "version": "19 Oct 2026 23:12",
  "files": [
   {
    "path": "Data/layout.json",
-   "sha1": "abbb096b2da0fc6b880579f6b7ec6300fb7ef3ce",
-   "size": 3702
+   "sha1": "ba8ca2a2dac1b00cb77b7906a905cc4da3f71d11",
+   "size": 3851
   },
   {
    "path": "Data/palette.json",
@@ -13,8 +13,8 @@
   },
   {
    "path": "Editor/FarmSetup.cs",
-   "sha1": "31cfe314cf2c62115ee5af2a7b4a1a036f87c2fd",
-   "size": 29491
+   "sha1": "1b5961d971961531a52934b1f77c13010ec4f711",
+   "size": 29670
   },
   {
    "path": "Editor/FeatherFieldUpdater.cs",
@@ -108,23 +108,23 @@
   },
   {
    "path": "README.txt",
-   "sha1": "9f30bac66f65e7ec13973ff06e245230cbc43965",
-   "size": 5554
+   "sha1": "01e722fcf563f5cdd7a5b9f40028385438623d0a",
+   "size": 6104
   },
   {
    "path": "Scripts/AppleSeeker.cs",
-   "sha1": "1fa217e4b6de7f0ad5a16d0c5c8df822db559125",
-   "size": 7011
+   "sha1": "74f9d4b8990fbe2470a7a18af271b7cd4865dbf6",
+   "size": 8968
   },
   {
    "path": "Scripts/AppleTree.cs",
-   "sha1": "8d5f20c32382255612d464772309015c23e56662",
-   "size": 2752
+   "sha1": "d47c91c90f69701b4cd2db18525a2129d4e8d527",
+   "size": 2922
   },
   {
    "path": "Scripts/BirdInfo.cs",
-   "sha1": "65e2ffb9d839b0c01002ae7dd325cad6e0391a32",
-   "size": 912
+   "sha1": "aab5ee73ad9af481e555e5f196896b6bcbee1806",
+   "size": 844
   },
   {
    "path": "Scripts/CameraRig.cs",
@@ -133,13 +133,13 @@
   },
   {
    "path": "Scripts/FarmGame.cs",
-   "sha1": "add0e6411524d575a3d4432e3e870901a4014e0d",
-   "size": 41108
+   "sha1": "6c4c2511ef7ea48e3f4b9b9de643f348e3838619",
+   "size": 41100
   },
   {
    "path": "Scripts/FarmHud.cs",
-   "sha1": "23a48719f190191d0cfa166bacc7a69add7ee133",
-   "size": 36513
+   "sha1": "6751821e5af793e0a4b2924c1f74ba57229e1275",
+   "size": 36430
   },
   {
    "path": "Scripts/Feeder.cs",
@@ -153,8 +153,8 @@
   },
   {
    "path": "Scripts/HenWander.cs",
-   "sha1": "f14f53c07414c68c5d0f76e5b8b08fb93e90b225",
-   "size": 10549
+   "sha1": "f2bfb49553d1cc3d0fe9cdcca5b513ab7f609bbb",
+   "size": 10833
   },
   {
    "path": "Scripts/NestBox.cs",
@@ -163,8 +163,8 @@
   },
   {
    "path": "Scripts/Rules.cs",
-   "sha1": "76f11fb4b823d39a123c2e72abbdc498d1575d4b",
-   "size": 15977
+   "sha1": "bc026d639feb7689d97ab189400942ca90c8cece",
+   "size": 16028
   },
   {
    "path": "Textures/meadow.png",

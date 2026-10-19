@@ -20,7 +20,7 @@ namespace FeatherField.EditorTools
         [System.Serializable] class MatEntry { public string name; public float[] color; public float smoothness; public float metallic; }
         [System.Serializable] class Palette { public MatEntry[] materials; }
         [System.Serializable] class TreeEntry { public string model; public float[] pos; public float scale; public float yaw; }
-        [System.Serializable] class HenEntry { public string model; public float[] pos; public float yaw; public string area; }
+        [System.Serializable] class HenEntry { public string model; public float[] pos; public float yaw; public string area; public bool glutton; }
         [System.Serializable] class Box { public float[] min; public float[] max; }
         [System.Serializable] class CamEntry { public float[] target; public float pitch; public float yaw; public float orthoSize; }
         [System.Serializable] class SunEntry { public float[] dir; public float[] color; public float intensity; }
@@ -28,7 +28,7 @@ namespace FeatherField.EditorTools
         {
             public float[] path; public Box pen; public Box yard; public float[] yardObstacles;
             public TreeEntry[] trees; public HenEntry[] hens; public CamEntry camera; public SunEntry sun;
-            public float[] nest; public float[] feeder;          // since the bigger pen (19 Oct 2026)
+            public float[] nest; public float[] feeder; public float[] gate;      // since the bigger pen (19 Oct 2026)
         }
 
         [MenuItem("Feather and Field/Build starter farm")]
@@ -131,7 +131,7 @@ namespace FeatherField.EditorTools
             // ---- the birds
             var birds = new GameObject("Birds").transform;
             var infos = new List<BirdInfo>();
-            HenWander treeHen = null;
+            bool gluttonSet = false;
             foreach (var h in layout.hens)
             {
                 var w = MakeBird(h, layout, birds, mats);
@@ -139,7 +139,7 @@ namespace FeatherField.EditorTools
                 var info = w.gameObject.AddComponent<BirdInfo>();             // who she is: filled in from the save when the game starts
                 info.rooster = h.model == "rooster";
                 info.slot = infos.Count;
-                if (h.area == "tree" && h.model == "hen" && treeHen == null) { info.appleLover = true; treeHen = w; }
+                if ((h.glutton || h.area == "tree") && h.model == "hen" && !gluttonSet) { info.appleLover = true; gluttonSet = true; }   // the farm's first Glutton
                 var cc = w.gameObject.AddComponent<CapsuleCollider>();        // so a tap finds her
                 cc.center = new Vector3(0f, 0.17f, 0f); cc.radius = 0.13f; cc.height = 0.36f;
                 infos.Add(info);
@@ -159,7 +159,7 @@ namespace FeatherField.EditorTools
             fg.birdMaterials = birdMats.ToArray();
 
             // ---- stage 2: the apple tree's low apples, the Glutton who jumps for them, and her apple egg
-            if (layout.trees.Length > 0) BuildApples(fg, treeHen, Vec(layout.trees[0].pos), mats);
+            if (layout.trees.Length > 0) BuildApples(fg, Vec(layout.trees[0].pos), layout, mats);
 
             // ---- save and frame
             if (!AssetDatabase.IsValidFolder(Root + "/Scenes")) AssetDatabase.CreateFolder(Root, "Scenes");
@@ -268,34 +268,19 @@ namespace FeatherField.EditorTools
 
             var w = root.gameObject.AddComponent<HenWander>();
             w.standModel = stand; w.peckModel = peck; w.visual = visual;
-            if (h.area == "tree" && layout.trees.Length > 0)
-            {
-                // the side of the apple tree the camera sees best (towards the camera and to the left): she is never behind the coop
-                Vector3 c = Vec(layout.trees[0].pos);
-                w.areaMin = new Vector3(Mathf.Max(c.x - 0.85f, layout.pen.max[0] + 0.15f), 0f, c.z + 0.15f);
-                w.areaMax = new Vector3(c.x + 0.6f, 0f, c.z + 1.2f);
-                w.obstacles = new[] { new Vector4(c.x, 0f, c.z, 0.35f) };
-            }
-            else
-            {
-                w.areaMin = Vec(layout.yard.min); w.areaMax = Vec(layout.yard.max);
-                var obs = new List<Vector4>();
-                for (int i = 0; i + 3 < layout.yardObstacles.Length; i += 4)
-                    obs.Add(new Vector4(layout.yardObstacles[i], layout.yardObstacles[i + 1], layout.yardObstacles[i + 2], layout.yardObstacles[i + 3]));
-                w.obstacles = obs.ToArray();
-            }
+            // every bird lives in the coop's yard (the Glutton too, since 19 Oct: she goes out to the apple tree now and then)
+            w.areaMin = Vec(layout.yard.min); w.areaMax = Vec(layout.yard.max);
+            var yardObs = new List<Vector4>();
+            for (int i = 0; i + 3 < layout.yardObstacles.Length; i += 4)
+                yardObs.Add(new Vector4(layout.yardObstacles[i], layout.yardObstacles[i + 1], layout.yardObstacles[i + 2], layout.yardObstacles[i + 3]));
+            yardObs.Add(new Vector4(NestPos.x, 0f, NestPos.z, 0.16f));           // pottering hens keep off the nest (they go there to lay)
+            w.obstacles = yardObs.ToArray();
             // start inside its area, facing the way the layout says
             Vector3 p = Vec(h.pos);
             p.x = Mathf.Clamp(p.x, w.areaMin.x + 0.05f, w.areaMax.x - 0.05f);
             p.z = Mathf.Clamp(p.z, w.areaMin.z + 0.05f, w.areaMax.z - 0.05f);
             root.position = p;
             root.rotation = Quaternion.Euler(0f, h.yaw, 0f);
-            if (h.area != "tree")                       // keep pottering hens off the nest (they go there to lay)
-            {
-                var obs = new List<Vector4>(w.obstacles);
-                obs.Add(new Vector4(NestPos.x, 0f, NestPos.z, 0.16f));
-                w.obstacles = obs.ToArray();
-            }
             return w;
         }
 
@@ -353,7 +338,7 @@ namespace FeatherField.EditorTools
             return fg;
         }
 
-        static void BuildApples(FarmGame fg, HenWander glutton, Vector3 trunk, Dictionary<string, Material> mats)
+        static void BuildApples(FarmGame fg, Vector3 trunk, Layout layout, Dictionary<string, Material> mats)
         {
             // five apples hanging under the canopy, on the side of the tree the camera sees best (towards it and to the left),
             // all outside the pen and never behind the coop
@@ -375,11 +360,17 @@ namespace FeatherField.EditorTools
             var tree = holder.gameObject.AddComponent<AppleTree>();
             tree.apples = apples.ToArray();
             fg.appleTree = tree;
-            if (glutton != null)
-            {
-                var seeker = glutton.gameObject.AddComponent<AppleSeeker>();
-                seeker.tree = tree;
-            }
+
+            // the way a Glutton goes from the coop's yard to the tree: through the open gate, round the pen's corner, along its side
+            // (the game gives every grown Glutton her AppleSeeker when it starts)
+            Vector3 gate = layout.gate != null && layout.gate.Length >= 3 ? Vec(layout.gate) : new Vector3(-0.25f, 0f, layout.pen.max[2] - 0.05f);
+            float sideX = layout.pen.max[0], frontZ = layout.pen.max[2];
+            tree.route = new[] {
+                new Vector3(gate.x, 0f, gate.z - 0.18f),                 // inside the gate (clear of the water dish)
+                new Vector3(gate.x, 0f, gate.z + 0.35f),                 // just outside it
+                new Vector3(sideX + 0.3f, 0f, frontZ + 0.3f),            // round the pen's corner
+                new Vector3(sideX + 0.35f, 0f, trunk.z + 1.15f),         // along its side, to the apple tree
+            };
 
             // her apple egg: rosy gold, a little bigger than an ordinary egg, with a generous tap area
             var appleEggMat = ExtraMaterial(mats, "FF_appleegg", new Color(0.95f, 0.66f, 0.42f), 0.6f);

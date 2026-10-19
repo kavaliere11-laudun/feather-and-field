@@ -332,7 +332,8 @@
     1.3
    ],
    "yaw": 30,
-   "area": "yard"
+   "area": "yard",
+   "glutton": false
   },
   {
    "model": "hen",
@@ -342,7 +343,8 @@
     2.0
    ],
    "yaw": 160,
-   "area": "yard"
+   "area": "yard",
+   "glutton": false
   },
   {
    "model": "hen",
@@ -352,7 +354,8 @@
     1.2
    ],
    "yaw": 250,
-   "area": "yard"
+   "area": "yard",
+   "glutton": false
   },
   {
    "model": "rooster",
@@ -362,18 +365,25 @@
     2.05
    ],
    "yaw": 300,
-   "area": "yard"
+   "area": "yard",
+   "glutton": false
   },
   {
    "model": "hen",
    "pos": [
-    2.4,
-    0.0,
-    0.2
+    -1.35,
+    0.015,
+    0.95
    ],
    "yaw": 90,
-   "area": "tree"
+   "area": "yard",
+   "glutton": true
   }
+ ],
+ "gate": [
+  -0.2542,
+  0.0,
+  2.45
  ],
  "camera": {
   "target": [

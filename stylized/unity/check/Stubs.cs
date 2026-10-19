@@ -128,6 +128,7 @@ namespace UnityEngine
         public static Vector3 forward { get { return default(Vector3); } }
         public static Vector3 back { get { return default(Vector3); } }
         public static float Dot(Vector3 a, Vector3 b) { return 0f; }
+        public static Vector3 MoveTowards(Vector3 current, Vector3 target, float maxDistanceDelta) { return current; }
         public float magnitude { get { return 0f; } }
         public float sqrMagnitude { get { return 0f; } }
         public Vector3 normalized { get { return this; } }

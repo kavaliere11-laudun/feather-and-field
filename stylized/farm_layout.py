@@ -45,7 +45,8 @@ NEW = dict(
     trees=[dict(model='apple_tree', pos=NEW_TRUNK, scale=1.25, yaw=20), dict(model='apple_tree_b', pos=(2.9, 1.7), scale=1.0, yaw=200)],
     yard_birds=[(0.3, -1.3), (0.95, -2.0), (-0.75, -1.2), (-0.2, -2.05)],     # the same spots as the hens below
     chicks=[(0.55, -1.7)],
-    tree_birds=[(-2.4, -0.2)],
+    tree_birds=[],
+    glutton=[(1.35, -0.95)],                 # since 19 Oct she lives in the coop and trots out to the apple tree
     apples=apple_spots(NEW_TRUNK, (90, 112, 135, 157, 180)),
     target=(-0.6, -0.2, 0.3), ortho=4.4,
 )
@@ -63,7 +64,7 @@ NEW.update(
     nest=(0.9, -0.74),                       # the straw nest in the yard, by the house
     hens=[dict(model='hen', pos=(0.3, -1.3, 0.015), yaw=30, area='yard'), dict(model='hen', pos=(0.95, -2.0, 0.015), yaw=160, area='yard'),
           dict(model='hen', pos=(-0.75, -1.2, 0.015), yaw=250, area='yard'), dict(model='rooster', pos=(-0.2, -2.05, 0.015), yaw=300, area='yard'),
-          dict(model='hen', pos=(-2.4, -0.2, 0.0), yaw=90, area='tree')],
+          dict(model='hen', pos=(1.35, -0.95, 0.015), yaw=90, area='yard', glutton=True)],
 )
 
 
@@ -78,7 +79,8 @@ def unity_layout(L, path_pts, sun):
         'yardObstacles': flat(obstacles),
         'nest': U(*L['nest']), 'feeder': U(*P['feeder']),
         'trees': [{'model': t['model'], 'pos': U(*t['pos']), 'scale': t['scale'], 'yaw': t['yaw']} for t in L['trees']],
-        'hens': [{'model': h['model'], 'pos': U(*h['pos']), 'yaw': h['yaw'], 'area': h['area']} for h in L['hens']],
+        'hens': [{'model': h['model'], 'pos': U(*h['pos']), 'yaw': h['yaw'], 'area': h['area'], 'glutton': bool(h.get('glutton'))} for h in L['hens']],
+        'gate': U(L['gate'][1] - 0.1, y0),     # where birds walk through the gate (clear of its open leaf)
         'camera': {'target': U(L['target'][0], L['target'][1], L['target'][2]), 'pitch': 42.0, 'yaw': 135.0, 'orthoSize': L['ortho']},
         'sun': sun,
     }

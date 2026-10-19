@@ -65,7 +65,7 @@ namespace FeatherField
         public const float ChickSeconds = 180f;
         public const float YoungSeconds = 180f;
 
-        public const int CoopCap = 5;            // birds in the coop and its yard
+        public const int CoopCap = 6;            // birds in the coop and its (bigger) pen; the web game's coop holds 5
         public const int BasketCap = 6;          // fertile eggs waiting in the hatchery
         public const int IncubatorSlots = 2;
 
@@ -82,7 +82,7 @@ namespace FeatherField
             "More of her eggs are fertile, and her chicks are better and grow up faster. Worth 10% more.",
             "Escapes about once a day and sometimes comes back with a surprise.",
             "Does better at shows. Sulks on plain pellets unless she has had a cuddle.",
-            "Loves her food: grows bigger and is worth 15% more. By the apple tree she jumps for apples, and two apples make an apple egg.",
+            "Loves her food: grows bigger and is worth 15% more. Now and then she trots out to the apple tree to jump for apples: two make an apple egg.",
             "Chases the fox away at night and walks runaways home. Worth 5% more." };
         static readonly string[] Reveal = {
             "This one looks like a born mum.", "This one looks… adventurous!", "This one already strikes a pose.",

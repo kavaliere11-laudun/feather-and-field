@@ -10,13 +10,11 @@ namespace FeatherField
     {
         public bool rooster;
         public int slot;                 // the birds the farm starts with: their place in the starting flock (saved as id slot + 1)
-        public bool appleLover;          // the hen by the apple tree: always a Glutton, and she lives by the tree, not in the coop
+        public bool appleLover;          // the farm's first Glutton: she lives in the coop and trots out to the apple tree
 
         [System.NonSerialized] public BirdRecord data;
         [System.NonSerialized] public HenWander wander;
         [System.NonSerialized] public float layTimer;
         [System.NonSerialized] public Stage shownStage = Stage.Adult;    // which models she is drawn with
-
-        public bool InYard { get { return !appleLover; } }
     }
 }

@@ -3,19 +3,24 @@ using UnityEngine;
 namespace FeatherField
 {
     /// <summary>
-    /// A Glutton's favourite pastime: now and then she trots under the apple tree, crouches, jumps, knocks an apple down,
-    /// and pecks it up. While she does, her usual pottering (HenWander) is paused.
+    /// A Glutton's favourite outing: now and then she leaves the coop through the gate, trots round the pen to the apple
+    /// tree, looks up, crouches, jumps, knocks an apple down and pecks it up, then walks home the same way.
+    /// While she is out, her usual pottering (HenWander) waits. Chicks stay home: only grown Gluttons go.
     /// </summary>
     [RequireComponent(typeof(HenWander))]
     public class AppleSeeker : MonoBehaviour
     {
         public AppleTree tree;
-        public float everySeconds = 45f;         // about how often she goes for an apple
+        public float everySeconds = 60f;         // about how often she goes for an apple
         public float jumpHeight = 0.32f;
 
         HenWander wander;
+        BirdInfo info;
         float timer, t;
-        int step;                                // 0 pottering, 1 going, 2 looking up, 3 jumping, 6 landing, 4 waiting for the apple, 5 eating
+        // 0 at home in the coop, 7 walking out to the tree, 1 going under the apple, 2 looking up, 3 jumping, 6 landing,
+        // 4 waiting for the apple, 5 eating, 8 walking home
+        int step;
+        int leg;                                 // the point of the tree's route she is walking to
         Transform apple;
         Vector3 spot, appleFrom, appleTo, appleScale;
         bool falling, landed;
@@ -26,7 +31,8 @@ namespace FeatherField
         void Awake()
         {
             wander = GetComponent<HenWander>();
-            timer = Random.Range(6f, 16f);
+            info = GetComponent<BirdInfo>();
+            timer = Random.Range(8f, 18f);
         }
 
         void Update()
@@ -36,7 +42,8 @@ namespace FeatherField
             if (step == 0)
             {
                 var game = FarmGame.Instance;
-                if (tree == null || wander == null || tree.Count <= 0 || game == null || !game.AppleWanted || wander.Busy) return;
+                if (tree == null || wander == null || tree.Count <= 0 || tree.busy || game == null || !game.AppleWanted || wander.Busy || wander.paused) return;
+                if (info == null || info.data == null || !Rules.Grown(info.data) || info.data.pers != (int)Personality.Glutton) return;
                 timer -= dt;
                 if (timer > 0f) return;
                 timer = everySeconds * Random.Range(0.8f, 1.3f);
@@ -44,12 +51,14 @@ namespace FeatherField
                 return;
             }
             t += dt;
-            if (step == 1) Go(dt);
+            if (step == 7) WalkOut(dt);
+            else if (step == 1) Go(dt);
             else if (step == 2) LookUp();
             else if (step == 3) Jump();
             else if (step == 6) Land();
             else if (step == 4) { if (landed || t > 1.2f) { Face(appleTo, 1f); Next(5); } }
             else if (step == 5) Eat();
+            else if (step == 8) WalkHome(dt);
         }
 
         void Begin()
@@ -63,26 +72,52 @@ namespace FeatherField
             wander.paused = true;
             wander.SetPeck(false);
             falling = false; landed = false;
-            Next(1);
+            leg = 0;
+            Next(7);
         }
 
         void Next(int s) { step = s; t = 0f; }
 
-        void Go(float dt)
+        Vector3[] Route { get { return tree != null && tree.route != null ? tree.route : new Vector3[0]; } }
+
+        // a keen trot towards p; true once she is there (or, if something holds her up, after a while)
+        bool WalkTo(Vector3 p, float dt)
         {
-            Vector3 to = spot - transform.position; to.y = 0f;
-            if (to.magnitude < 0.04f || t > 12f)
-            {
-                transform.position = spot;
-                wander.Waddle(false);
-                Next(2);
-                return;
-            }
+            p.y = transform.position.y;
+            Vector3 to = p - transform.position; to.y = 0f;
+            if (to.magnitude < 0.04f || t > 15f) { transform.position = p; wander.Waddle(false); return true; }
             Quaternion look = Quaternion.LookRotation(to.normalized, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, look, wander.turnSpeed * dt);
-            if (Quaternion.Angle(transform.rotation, look) < 25f)
-                transform.position += transform.forward * Mathf.Min(wander.speed * 1.4f * dt, to.magnitude);    // a keen trot
+            if (Quaternion.Angle(transform.rotation, look) < 35f)
+                transform.position = Vector3.MoveTowards(transform.position, p, wander.speed * 1.4f * dt);
             wander.Waddle(true);
+            return false;
+        }
+
+        void WalkOut(float dt)                                         // out through the gate and round the pen
+        {
+            var route = Route;
+            if (leg >= route.Length) { Next(1); return; }
+            if (WalkTo(route[leg], dt)) { leg++; t = 0f; }
+        }
+
+        void WalkHome(float dt)                                        // the same way back, into the coop's yard
+        {
+            var route = Route;
+            if (leg < 0 || leg >= route.Length)
+            {
+                wander.Waddle(false);
+                wander.paused = false;
+                wander.Settle();
+                Next(0);
+                return;
+            }
+            if (WalkTo(route[leg], dt)) { leg--; t = 0f; }
+        }
+
+        void Go(float dt)
+        {
+            if (WalkTo(spot, dt)) Next(2);
         }
 
         // her whole body, tipped back around its middle (so her head points up and her tail stays clear of the ground),
@@ -163,11 +198,18 @@ namespace FeatherField
             if (apple != null) { apple.gameObject.SetActive(false); apple.localScale = appleScale; }
             apple = null;
             tree.busy = false;
-            wander.paused = false;
-            Next(0);
             var game = FarmGame.Instance;
-            var info = GetComponent<BirdInfo>();
             if (game != null) game.AppleEaten(info, transform.position);
+            leg = Route.Length - 1;                                    // and home she goes
+            Next(8);
+        }
+
+        // sold (or the game closing) while she was out: the apple she was after goes back on the tree
+        void OnDestroy()
+        {
+            if (tree == null || step == 0 || step == 8) return;
+            tree.busy = false;
+            if (apple != null) tree.SetCount(tree.Count + 1);
         }
     }
 }

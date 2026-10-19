@@ -62,8 +62,8 @@ Stage 2 (part 2): breeding (19 Oct 2026)
   the incubator) or sell it. The Hatchery keeps six eggs; when it is full the least promising ones are sold.
 - An egg hatches after 1 minute 30 seconds. The chick inherits from both parents, with a little luck. It grows into a
   young hen (pullet) or young rooster (cockerel) after 3 minutes, and is grown up 3 minutes later. Pullets lay.
-- The coop holds 5 birds. When it is full, a hatched egg waits: tap a bird, then Sell (tap twice to be sure).
-  The hen by the apple tree doesn't live in the coop, so she stays.
+- The coop holds 5 birds (6 since the pen got bigger). When it is full, a hatched egg waits: tap a bird, then Sell
+  (tap twice to be sure).
 - These times are quick for now so you can watch it all happen.
 
 A bigger pen, and birds that keep their distance (19 Oct 2026)
@@ -73,3 +73,11 @@ A bigger pen, and birds that keep their distance (19 Oct 2026)
 - The apple tree moved a little, and the Glutton now jumps for apples on the side you can see (before, the coop's roof
   hid her and her apple egg).
 - The bubbles over the nest, the feeder and the apple egg can be tapped too.
+
+The Glutton lives in the coop (19 Oct 2026)
+- After "Get latest from Claude", click Build starter farm again, then press Play.
+- The Glutton now lives in the coop with the others: she lays in the nest, counts as one of the coop's birds and can be sold.
+- About once a minute she leaves through the open gate, trots round the pen to the apple tree, jumps for an apple, eats it,
+  and walks back in. Two apples still make an apple egg, left in the grass by the tree.
+- Any grown Glutton does this, including ones that hatch on the farm.
+- With the bigger pen, the coop now holds 6 birds.

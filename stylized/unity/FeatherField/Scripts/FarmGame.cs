@@ -40,7 +40,7 @@ namespace FeatherField
     /// (tap her for her card); the Glutton by the apple tree jumps for apples, and two apples make an apple egg.
     /// Stage 2b, breeding: with a grown rooster in the yard most eggs are fertile and go to the Hatchery, where each one can be
     /// incubated or sold; chicks hatch with traits from both parents, grow up into young birds then grown-ups, and any bird in
-    /// the coop can be sold to make room (a coop holds 5).
+    /// the coop can be sold to make room (the coop holds 6). Grown Gluttons go out through the gate to the apple tree.
     /// Saved on the device; while the game is closed the farm carries on for up to two days.
     /// </summary>
     public class FarmGame : MonoBehaviour
@@ -102,10 +102,10 @@ namespace FeatherField
         public IReadOnlyList<EggRecord> Basket { get { return save != null ? save.basket : new List<EggRecord>(); } }
         public IReadOnlyList<IncItem> Incubator { get { return save != null ? save.incubator : new List<IncItem>(); } }
 
-        /// <summary>Birds living in the coop and its yard (the hen by the apple tree doesn't count).</summary>
+        /// <summary>Birds living in the coop and its yard (all of them, since the Glutton moved in on 19 Oct).</summary>
         public int YardCount
         {
-            get { int n = 0; foreach (var b in flock) if (b != null && b.InYard) n++; return n; }
+            get { int n = 0; foreach (var b in flock) if (b != null) n++; return n; }
         }
         public bool CoopFull { get { return YardCount >= Rules.CoopCap; } }
 
@@ -117,7 +117,7 @@ namespace FeatherField
             BirdInfo best = null;
             foreach (var b in flock)
             {
-                if (b == null || b.data == null || !b.InYard || !b.data.rooster || !Rules.Grown(b.data)) continue;
+                if (b == null || b.data == null || !b.data.rooster || !Rules.Grown(b.data)) continue;
                 if (best == null || Rules.Quality(b.data) > Rules.Quality(best.data)) best = b;
             }
             return best;
@@ -150,7 +150,7 @@ namespace FeatherField
         {
             for (int i = 0; i < birds.Length && !haveYard; i++)              // where hatched birds walk: the yard, copied from a yard bird
             {
-                if (birds[i] == null || !birds[i].InYard) continue;
+                if (birds[i] == null) continue;
                 var w = birds[i].GetComponent<HenWander>();
                 if (w == null) continue;
                 yardMin = w.areaMin; yardMax = w.areaMax;
@@ -170,13 +170,13 @@ namespace FeatherField
                 BirdRecord r;
                 if (!byId.TryGetValue(i + 1, out r))
                 {
-                    if (save.flockSaved && !b.appleLover) { birds[i] = null; Destroy(b.gameObject); continue; }   // sold
+                    if (save.flockSaved) { birds[i] = null; Destroy(b.gameObject); continue; }   // sold
                     r = Rules.NewBird(b.rooster, rnd, used);
                     r.id = i + 1;
                     save.birds.Add(r);
                 }
                 r.grow = 0f;                                                 // the starting birds are grown up
-                if (b.appleLover) r.pers = (int)Personality.Glutton;         // the hen by the apple tree loves her food
+                if (b.appleLover) r.pers = (int)Personality.Glutton;         // the farm's first Glutton loves her food
                 Attach(b, r);
             }
             var hatchedOnes = new List<BirdRecord>();
@@ -196,6 +196,8 @@ namespace FeatherField
             b.layTimer = Random.Range(4f, layEverySeconds * 0.6f);
             if (!flock.Contains(b)) flock.Add(b);
             if (Rules.StageOf(r) != b.shownStage) ApplyStage(b, false);
+            if (r.pers == (int)Personality.Glutton && appleTree != null && b.GetComponent<AppleSeeker>() == null)
+                b.gameObject.AddComponent<AppleSeeker>().tree = appleTree;      // she goes for apples once she's grown
         }
 
         bool CanSpawn
@@ -311,7 +313,7 @@ namespace FeatherField
 
         bool IsLayer(BirdInfo b)
         {
-            return b != null && b.data != null && b.InYard && !b.data.rooster && Rules.Grown(b.data) && b.wander != null;
+            return b != null && b.data != null && !b.data.rooster && Rules.Grown(b.data) && b.wander != null;
         }
 
         // ------------------------------------------------------------------ every frame
@@ -509,12 +511,11 @@ namespace FeatherField
         }
 
         // ------------------------------------------------------------------ selling a bird
-        public bool CanSell(BirdInfo b) { return b != null && b.data != null && b.InYard && flock.Contains(b); }
+        public bool CanSell(BirdInfo b) { return b != null && b.data != null && flock.Contains(b); }
 
         public void SellBird(BirdInfo b)
         {
             if (b == null || b.data == null || !flock.Contains(b)) return;
-            if (!b.InYard) { if (hud != null) hud.Toast(b.data.name + " lives by the apple tree, so she stays on the farm."); return; }
             int p = Rules.SellPrice(b.data);
             string name = b.data.name;
             save.birds.Remove(b.data);
@@ -772,14 +773,13 @@ namespace FeatherField
                 bool starting = r.id >= 1 && r.id <= birds.Length;
                 if (ids.Contains(r.id) || (!starting && (r.id < 100 || r.id > MaxId))) continue;
                 if (starting && birds[r.id - 1] == null) continue;
-                bool inYard = !starting || birds[r.id - 1].InYard;
-                if (inYard && yard >= Rules.CoopCap) continue;
+                if (yard >= Rules.CoopCap) continue;
                 r = Rules.Clean(r, starting ? birds[r.id - 1].rooster : r.rooster);
                 if (starting) r.grow = 0f;
                 if (names.Contains(r.name)) r.name = Rules.NewName(r.rooster, rnd, names);
                 names.Add(r.name);
                 ids.Add(r.id);
-                if (inYard) yard++;
+                yard++;
                 if (!starting) maxId = Mathf.Max(maxId, r.id);
                 list.Add(r);
             }

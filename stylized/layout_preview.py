@@ -44,7 +44,7 @@ for t in L['trees']:
 red = mat('marker', '#e0302a', rough=0.5)
 for i, (x, y) in enumerate(L.get('yard_birds', [])):
     imp('rooster_stand' if i == 3 else 'hen_stand', (x, y, 0.015), random.uniform(0, 360))
-for x, y in L.get('tree_birds', []):
+for x, y in L.get('tree_birds', []) + L.get('glutton', []):
     imp('hen_stand', (x, y, 0), 200)
 for x, y in L.get('chicks', []):
     imp('chick_stand', (x, y, 0.015), 30)

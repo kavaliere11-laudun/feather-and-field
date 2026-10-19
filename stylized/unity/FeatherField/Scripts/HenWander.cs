@@ -65,6 +65,15 @@ namespace FeatherField
             target = transform.position;
         }
 
+        /// <summary>Back from an outing: stand a moment, then find somewhere new to go.</summary>
+        public void Settle()
+        {
+            peck = 0f;
+            wait = Random.Range(0.3f, 1f);
+            target = transform.position;
+            SetPeck(false);
+        }
+
         /// <summary>Swaps the bird's models (a chick growing up): the old ones are removed.</summary>
         public void SetModels(GameObject stand, GameObject peck)
         {

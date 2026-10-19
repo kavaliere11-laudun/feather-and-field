@@ -9,6 +9,8 @@ namespace FeatherField
     {
         public Transform[] apples = new Transform[0];
         public float regrowSeconds = 180f;
+        [Tooltip("The way from the coop's yard to the tree: inside the gate, outside it, round the pen, near the tree")]
+        public Vector3[] route = new Vector3[0];
 
         /// <summary>While an apple is falling or being eaten, nothing grows back (so it can't jump back onto the tree).</summary>
         [System.NonSerialized] public bool busy;

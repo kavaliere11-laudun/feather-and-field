@@ -345,8 +345,7 @@ namespace FeatherField
             cardGrade.color = (g == "D" || g == "★") ? (Color)Ink : Color.white;
             cardInfo.text = "Quality " + q + " · worth " + Rules.Value(d) + " coins";
             string fam;
-            if (!b.InYard) fam = "Lives by the apple tree, not in the coop.";
-            else if (d.mum != "" && d.dad != "") fam = (d.rooster ? "Son" : "Daughter") + " of " + d.mum + " and " + d.dad;
+            if (d.mum != "" && d.dad != "") fam = (d.rooster ? "Son" : "Daughter") + " of " + d.mum + " and " + d.dad;
             else fam = "One of the farm's first birds";
             if (d.grow > 0f) fam += " · grown up in " + Clock(d.grow);
             cardFamily.text = fam;
