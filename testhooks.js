@@ -85,6 +85,7 @@ window.__ffDebug = {
     BREEDS, FEEDS, TIERS, COOP_CAP, NEST_CAP, FEEDER_CAP, T, closeSheet, refreshShop, get current() { return current; }, tickTime, sanitize, sig,
     actCatch, actCuddle, cuddleOk, actBuyDecor, actDeluxe, dxPrice, startMove, moveTo, endMove, placeOk, decorPos, decorAtPoint, get moving() { return moving; }, navBlock, actBuyOutfit, actWearOutfit, lookAtDecor, DECOR, DECOR_IDS, OUTFITS, OUTFIT_IDS, shopXp, trustLvl, outGap, rebelHome, okSpec, protestOf, dayPart, layMult, foxVisit, rebelStep, braveIn, PERS_IDS, PR, youngAt, eff, okPers, childSpec, layEgg, makeBird, shopTraits,
     showScore, rosetteChance, whyNot, createShow, judge, SIL, silTemplate, openSheet, renderSheet,
+    mateOf, chickOdds, outlook, actMate, actBringRooster, actKeep, pInfo, childSpec, tryHatch, adultRoosters, coopById, birdById, colourOdds, grade, actSell,
     setSink(v) { sink = v; }, get sink() { return sink; } }); },
   tapWorld(i) { const [x, y] = signHits[i]; tapAt(x, y); return [x, y, signHits.length, current && current.name]; },
   signs() { const top = document.querySelector('#farm').getBoundingClientRect().top; return signHits.map(([x, y, p]) => [p.kind, (x - view.x) * view.s, (y - view.y) * view.s + top]); },
