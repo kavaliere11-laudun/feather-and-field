@@ -1,6 +1,8 @@
 """Export the cosy-farm assets for Unity: one FBX per asset (modifiers applied, joined, Unity axes, metres),
 flat colour materials named FF_* (three shades for anything that had per-plank variation), and palette/layout JSON
-that the Unity setup script reads.  Usage: python export_unity.py"""
+that the Unity setup script reads.  Usage: python export_unity.py [only...]
+  e.g. python export_unity.py coop path layout   (only those; the palette keeps every colour already in it)
+The farm's layout (the pen's size, trees, birds, camera) comes from farm_layout.py."""
 import sys, os, json, math, random
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
@@ -108,6 +110,11 @@ def export(objs, name):
 
 
 import hen, coop, tree, grass
+import farm_layout
+ONLY = set(a for a in sys.argv[1:] if not a.startswith('-'))
+def want(x): return not ONLY or x in ONLY
+LAY = farm_layout.NEW
+coop.PEN = dict(LAY['pen'])
 
 
 def fresh():
@@ -117,6 +124,7 @@ def fresh():
 # ---- birds: facing Blender -Y, which becomes Unity's forward (+Z)
 for key, nm in (('rir_h', 'hen'), ('rir_r', 'rooster')):
     for pose in ('stand', 'peck'):
+        if not want(nm): continue
         fresh()
         hen.build(key, (0, 0, 0), math.radians(-90), pose, seed=3)
         for o in bpy.context.scene.objects:          # game weight: feathers one subdivision level, spheres simpler
@@ -125,12 +133,14 @@ for key, nm in (('rir_h', 'hen'), ('rir_r', 'rooster')):
         bake_and_export('%s_%s' % (nm, pose), max_faces=1600)
 
 # ---- coop with its pen (yard, fence, gate, feeder, dish, hay, sack, straw)
-fresh()
-coop.build((0, 0, 0), 0.0, seed=5, pen=True)
-bake_and_export('coop')
+if want('coop'):
+    fresh()
+    coop.build((0, 0, 0), 0.0, seed=5, pen=True)
+    bake_and_export('coop')
 
 # ---- apple tree (lighter on polygons than the close-up: one subdivision level on the puffs)
 for seed, nm in ((2, 'apple_tree'), (5, 'apple_tree_b')):
+    if not want('trees'): continue
     fresh()
     r = tree.build((0, 0, 0), seed=seed, scale=1.0)
     for o in bpy.context.scene.objects:
@@ -140,70 +150,61 @@ for seed, nm in ((2, 'apple_tree'), (5, 'apple_tree_b')):
     bake_and_export(nm, seed=seed, max_faces=900)
 
 # ---- small scatter props: grass tufts, flowers, a fallen apple, a pebble (each its own FBX, origin at its base)
-grass._cache.clear()
-for i in range(3):
+if want('props'):
+    grass._cache.clear()
+    for i in range(3):
+        fresh()
+        me = grass.tuft_mesh('tuft', blades=6 + i, h=0.055 * (0.85 + 0.15 * i), seed=i)
+        bm = bmesh.new(); bm.from_mesh(me)
+        back = bmesh.ops.duplicate(bm, geom=bm.faces[:])['geom']
+        bmesh.ops.reverse_faces(bm, faces=[f for f in back if isinstance(f, bmesh.types.BMFace)])
+        bm.to_mesh(me); bm.free()
+        me.materials.append(grass.blade_mat())
+        o = link(bpy.data.objects.new('tuft', me))
+        bake_and_export('grass_tuft_%d' % i)
+    for kind in ('daisy', 'butter', 'clover'):
+        fresh()
+        grass.flower_obj(kind)
+        bake_and_export('flower_' + kind)
     fresh()
-    me = grass.tuft_mesh('tuft', blades=6 + i, h=0.055 * (0.85 + 0.15 * i), seed=i)
-    bm = bmesh.new(); bm.from_mesh(me)
-    back = bmesh.ops.duplicate(bm, geom=bm.faces[:])['geom']
-    bmesh.ops.reverse_faces(bm, faces=[f for f in back if isinstance(f, bmesh.types.BMFace)])
-    bm.to_mesh(me); bm.free()
-    me.materials.append(grass.blade_mat())
-    o = link(bpy.data.objects.new('tuft', me))
-    bake_and_export('grass_tuft_%d' % i)
-for kind in ('daisy', 'butter', 'clover'):
-    fresh()
-    grass.flower_obj(kind)
-    bake_and_export('flower_' + kind)
-fresh()
-sphere('fapple', 0.038, (0, 0, 0.034), (1, 1, 0.92), m=tree.M()['apple'], seg=16, rings=10)
-cyl('stalk', 0.004, 0.025, (0, 0, 0.075), m=tree.M()['stalk'], verts=5, bevel=0)
-bake_and_export('apple')
+    sphere('fapple', 0.038, (0, 0, 0.034), (1, 1, 0.92), m=tree.M()['apple'], seg=16, rings=10)
+    cyl('stalk', 0.004, 0.025, (0, 0, 0.075), m=tree.M()['stalk'], verts=5, bevel=0)
+    bake_and_export('apple')
 
 # ---- the dirt path from the pen gate (same curve as the farm scene)
-fresh()
-import importlib
-GX = -1.25 + 2.5 * 2.6 / 4 + 0.05
-pts = [(GX + 0.55 * math.sin(t * 3.0) - 1.6 * t * t, -1.98 - t * 4.2, 0) for t in (i / 39 for i in range(40))]
-_d = (Vector(pts[-1]) - Vector(pts[-2])).normalized()
-pts += [tuple(Vector(pts[-1]) + _d * 0.25 * (k + 1)) for k in range(40)]
-me = bpy.data.meshes.new('path'); bm = bmesh.new(); rows = []
-P = [Vector(p) for p in pts]
-for i, p in enumerate(P):
-    d = (P[min(i + 1, len(P) - 1)] - P[max(i - 1, 0)]).normalized(); n = Vector((-d.y, d.x, 0))
-    w = 0.31 * (1 + 0.12 * noise.noise(p * 1.7))
-    rows.append((bm.verts.new(p - n * w + Vector((0, 0, 0.004))), bm.verts.new(p + n * w + Vector((0, 0, 0.004)))))
-for i in range(len(rows) - 1):
-    f = bm.faces.new((rows[i][0], rows[i][1], rows[i + 1][1], rows[i + 1][0]))
-    f.normal_update()
-    if f.normal.z < 0: f.normal_flip()          # single-sided strip: must face up for Unity
-bm.to_mesh(me); bm.free()
-po = link(bpy.data.objects.new('path', me)); setmat(po, coop.dirt_mat())
-for p in po.data.polygons: p.use_smooth = True
-s_ = po.modifiers.new('sub', 'SUBSURF'); s_.levels = s_.render_levels = 2
-bake_and_export('path')
+pts = [(x, y, 0) for x, y in farm_layout.path_points(LAY['gate'][1] + 0.05, LAY['pen']['box'][2])]
+if want('path'):
+    fresh()
+    me = bpy.data.meshes.new('path'); bm = bmesh.new(); rows = []
+    P = [Vector(p) for p in pts]
+    for i, p in enumerate(P):
+        d = (P[min(i + 1, len(P) - 1)] - P[max(i - 1, 0)]).normalized(); n = Vector((-d.y, d.x, 0))
+        w = 0.31 * (1 + 0.12 * noise.noise(p * 1.7))
+        rows.append((bm.verts.new(p - n * w + Vector((0, 0, 0.004))), bm.verts.new(p + n * w + Vector((0, 0, 0.004)))))
+    for i in range(len(rows) - 1):
+        f = bm.faces.new((rows[i][0], rows[i][1], rows[i + 1][1], rows[i + 1][0]))
+        f.normal_update()
+        if f.normal.z < 0: f.normal_flip()          # single-sided strip: must face up for Unity
+    bm.to_mesh(me); bm.free()
+    po = link(bpy.data.objects.new('path', me)); setmat(po, coop.dirt_mat())
+    for p in po.data.polygons: p.use_smooth = True
+    s_ = po.modifiers.new('sub', 'SUBSURF'); s_.levels = s_.render_levels = 2
+    bake_and_export('path')
 
 # meadow colour for the Unity ground plane
 mm = bpy.data.materials.new('meadow_flat'); mm.use_nodes = True
 PALETTE['FF_meadow'] = dict(name='FF_meadow', color=to_srgb(lin('#86b553')), smoothness=0.05, metallic=0.0)
 PALETTE['FF_meadow_dark'] = dict(name='FF_meadow_dark', color=to_srgb(lin('#73a347')), smoothness=0.05, metallic=0.0)
 
-# ---- data for the Unity side: palette and layout, all converted to Unity coordinates (x, y, z) = (-bx, bz, -by)
-def U(x, y, z=0.0): return [round(-x, 4), round(z, 4), round(-y, 4)]
-json.dump({'materials': sorted(PALETTE.values(), key=lambda e: e['name'])}, open(os.path.join(DATA, 'palette.json'), 'w'), indent=1)
-flat = lambda L: [v for item in L for v in item]           # Unity's JsonUtility can't read nested lists
-layout = {
-    'path': flat([U(p[0], p[1]) for p in pts]),
-    'pen': {'min': [-1.4, 0, -0.8], 'max': [1.3, 0, 1.95]},
-    'yard': {'min': [-1.15, 0, 0.6], 'max': [1.05, 0, 1.75]},
-    'yardObstacles': flat([U(-0.85, -1.45) + [0.38], U(0.75, -1.25) + [0.22], U(0.25, -1.55) + [0.22], U(-0.31, -0.75) + [0.18], U(-0.31, -1.0) + [0.16], U(0.95, 0.15) + [0.2]]),
-    'trees': [{'model': 'apple_tree', 'pos': U(-2.0, 1.15), 'scale': 1.25, 'yaw': 20}, {'model': 'apple_tree_b', 'pos': U(2.6, 1.6), 'scale': 1.0, 'yaw': 200}],
-    'hens': [{'model': 'hen', 'pos': U(0.2, -1.05, 0.015), 'yaw': 30, 'area': 'yard'}, {'model': 'hen', 'pos': U(0.62, -1.0, 0.015), 'yaw': 160, 'area': 'yard'},
-             {'model': 'hen', 'pos': U(-0.6, -0.8, 0.015), 'yaw': 250, 'area': 'yard'}, {'model': 'rooster', 'pos': U(-0.05, -0.55, 0.015), 'yaw': 300, 'area': 'yard'},
-             {'model': 'hen', 'pos': U(-1.55, 0.45), 'yaw': 90, 'area': 'tree'}],
-    'camera': {'target': U(-0.15, -0.1, 0.3), 'pitch': 42.0, 'yaw': 135.0, 'orthoSize': 4.0},
-    'sun': {'dir': [-0.55, -0.72, -0.62], 'color': to_srgb(lin('#fff1dc')), 'intensity': 1.9},
-}
-json.dump(layout, open(os.path.join(DATA, 'layout.json'), 'w'), indent=1)
-json.dump(STATS, open(os.path.join(DATA, 'stats.json'), 'w'), indent=1)
+# ---- data for the Unity side: palette (merged with the colours already there) and layout, in Unity coordinates
+pal_path = os.path.join(DATA, 'palette.json')
+have = {}
+if ONLY and os.path.exists(pal_path):
+    have = {m['name']: m for m in json.load(open(pal_path))['materials']}
+have.update(PALETTE)
+json.dump({'materials': sorted(have.values(), key=lambda e: e['name'])}, open(pal_path, 'w'), indent=1)
+if want('layout'):
+    json.dump(farm_layout.unity_layout(LAY, pts, sun=dict(dir=[-0.55, -0.72, -0.62], color=to_srgb(lin('#fff1dc')), intensity=1.9)),
+              open(os.path.join(DATA, 'layout.json'), 'w'), indent=1)
+if not ONLY: json.dump(STATS, open(os.path.join(DATA, 'stats.json'), 'w'), indent=1)
 print('STATS', json.dumps(STATS))

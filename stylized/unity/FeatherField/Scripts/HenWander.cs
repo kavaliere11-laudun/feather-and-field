@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FeatherField
@@ -5,6 +6,8 @@ namespace FeatherField
     /// <summary>
     /// Makes a hen (or rooster) potter about: walk to a random spot in its area, stop, sometimes peck at the ground,
     /// with a little waddle while walking. Pecking swaps the standing model for the pecking one.
+    /// Birds keep a little room around each other: they head for spots nobody else is at (or heading to), with a clear way
+    /// there, and stop when someone is just ahead.
     /// </summary>
     public class HenWander : MonoBehaviour
     {
@@ -22,6 +25,13 @@ namespace FeatherField
         [Header("Feel")]
         public float speed = 0.32f;
         public float turnSpeed = 260f;
+
+        const float Room = 0.45f;          // a new spot this far from everyone else is good
+        const float Personal = 0.26f;      // stop walking when someone is this close, just ahead
+        static readonly List<HenWander> All = new List<HenWander>();
+
+        void OnEnable() { if (!All.Contains(this)) All.Add(this); }
+        void OnDisable() { All.Remove(this); }
 
         Vector3 target;
         float wait, peck, phase;
@@ -64,15 +74,63 @@ namespace FeatherField
             SetPeck(false);
         }
 
-        /// <summary>A free spot in her area (somewhere to put a new chick).</summary>
+        /// <summary>A free spot in her area with some room around it (somewhere to put a new chick).</summary>
         public Vector3 FreeSpot(float y)
         {
+            Vector3 best = new Vector3((areaMin.x + areaMax.x) * 0.5f, y, (areaMin.z + areaMax.z) * 0.5f);
+            float bestRoom = -1f;
             for (int i = 0; i < 40; i++)
             {
                 var p = new Vector3(Random.Range(areaMin.x, areaMax.x), y, Random.Range(areaMin.z, areaMax.z));
-                if (Free(p)) return p;
+                if (!Free(p)) continue;
+                float r = RoomAt(p);
+                if (r >= Room) return p;
+                if (r > bestRoom) { bestRoom = r; best = p; }
             }
-            return new Vector3((areaMin.x + areaMax.x) * 0.5f, y, (areaMin.z + areaMax.z) * 0.5f);
+            return best;
+        }
+
+        // how far the nearest other bird is from this spot (or the spot it is walking to)
+        float RoomAt(Vector3 p)
+        {
+            float d = 99f;
+            foreach (var o in All)
+            {
+                if (o == null || o == this) continue;
+                d = Mathf.Min(d, Flat(o.transform.position - p), Flat(o.target - p));
+            }
+            return d;
+        }
+
+        static float Flat(Vector3 v) { v.y = 0f; return v.magnitude; }
+
+        // nothing in the way on the straight line from a to b
+        bool ClearPath(Vector3 a, Vector3 b)
+        {
+            Vector3 d = b - a; d.y = 0f;
+            float len = d.magnitude;
+            for (float k = 0.1f; k < len; k += 0.1f) if (!Free(a + d * (k / len))) return false;
+            return true;
+        }
+
+        // someone just ahead, too close to keep walking
+        bool SomeoneAhead()
+        {
+            foreach (var o in All)
+            {
+                if (o == null || o == this) continue;
+                Vector3 to = o.transform.position - transform.position; to.y = 0f;
+                float d = to.magnitude;
+                if (d < Personal && Vector3.Dot(to, transform.forward) > 0.2f * d) return true;
+            }
+            return false;
+        }
+
+        bool TooClose()
+        {
+            foreach (var o in All)
+                if (o != null && o != this && Flat(o.transform.position - transform.position) < 0.2f) return true;
+            return false;
         }
 
         bool Free(Vector3 p)
@@ -86,14 +144,22 @@ namespace FeatherField
             return true;
         }
 
+        // somewhere to go: free, with a clear way there, and away from the others (the roomiest of a few tries)
         void PickTarget()
         {
-            for (int i = 0; i < 25; i++)
+            Vector3 here = transform.position;
+            bool startFree = Free(here);                     // just off the nest or back from the apple tree: any free spot will do
+            Vector3 best = here;
+            float bestRoom = -1f;
+            for (int i = 0; i < 30; i++)
             {
-                var p = new Vector3(Random.Range(areaMin.x, areaMax.x), transform.position.y, Random.Range(areaMin.z, areaMax.z));
-                if (Free(p)) { target = p; return; }
+                var p = new Vector3(Random.Range(areaMin.x, areaMax.x), here.y, Random.Range(areaMin.z, areaMax.z));
+                if (!Free(p) || (startFree && !ClearPath(here, p))) continue;
+                float r = RoomAt(p);
+                if (r >= Room) { target = p; return; }
+                if (r > bestRoom) { bestRoom = r; best = p; }
             }
-            target = transform.position;
+            target = best;
         }
 
         public void SetPeck(bool down)
@@ -119,6 +185,7 @@ namespace FeatherField
             }
             if (wait > 0f)                                   // standing about
             {
+                if (wait > 0.3f && TooClose()) wait = 0.3f;  // someone is right on top of her: move along soon
                 wait -= dt;
                 Waddle(false);
                 if (wait <= 0f)
@@ -135,6 +202,7 @@ namespace FeatherField
             Quaternion look = Quaternion.LookRotation(to.normalized, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, look, turnSpeed * dt);
             bool facing = Quaternion.Angle(transform.rotation, look) < 25f;
+            if (facing && SomeoneAhead()) { wait = Random.Range(0.3f, 0.9f); Waddle(false); return; }    // let them pass, then go elsewhere
             if (facing)
             {
                 Vector3 next = transform.position + transform.forward * speed * dt;

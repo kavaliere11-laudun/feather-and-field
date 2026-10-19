@@ -421,6 +421,7 @@ namespace FeatherField
                     msg = plain > 0 ? plain + (plain == 1 ? " egg" : " eggs") + " sold for " + earned + " coins. " : "";
                     int kept = fertile - extra;
                     if (kept > 0) msg += kept + (kept == 1 ? " fertile egg is" : " fertile eggs are") + " waiting in the Hatchery.";
+                    if (kept > 0 && save.hatched == 0 && save.incubator.Count == 0) msg += " Open it and tap Incubate to hatch a chick.";
                     if (extra > 0) msg += (kept > 0 ? " " : "") + "The Hatchery was full: " + extra + (extra == 1 ? " fertile egg" : " fertile eggs") + " sold for " + extraCoins + " coins.";
                 }
                 hud.Toast(msg);
@@ -548,7 +549,10 @@ namespace FeatherField
             {
                 save.applesEaten = 0;
                 save.appleEgg = true;
-                Vector3 spot = where - (who != null ? who.transform.forward : Vector3.forward) * 0.18f;
+                Vector3 toCam = Vector3.back;                                    // in front of her, on the camera's side: always in view
+                var cam = Camera.main;
+                if (cam != null) { toCam = -cam.transform.forward; toCam.y = 0f; toCam = toCam.sqrMagnitude > 0.0001f ? toCam.normalized : Vector3.back; }
+                Vector3 spot = where + toCam * 0.22f;
                 save.appleEggX = spot.x; save.appleEggZ = spot.z;
                 appleEgg.Show(true, AppleEggSpot(), true);
                 if (hud != null) hud.Toast(name + " laid an apple egg! Tap it to collect.");
@@ -729,9 +733,11 @@ namespace FeatherField
             int maxApples = appleTree != null ? appleTree.apples.Length : 0;
             save.apples = save.apples < 0 ? -1 : Mathf.Clamp(save.apples, 0, maxApples);
             save.applesEaten = Mathf.Clamp(save.applesEaten, 0, 1);
-            Vector3 tp = appleTree != null ? appleTree.transform.position : Vector3.zero;          // an apple egg is always near the tree
-            if (float.IsNaN(save.appleEggX) || float.IsNaN(save.appleEggZ) || Mathf.Abs(save.appleEggX - tp.x) > 1.6f || Mathf.Abs(save.appleEggZ - tp.z) > 1.6f)
-            { save.appleEggX = tp.x - 0.55f; save.appleEggZ = tp.z + 0.6f; }
+            // an apple egg is always near the tree, on the side the camera sees (since the bigger pen, the tree's front)
+            Vector3 tp = appleTree != null ? appleTree.transform.position : Vector3.zero;
+            if (float.IsNaN(save.appleEggX) || float.IsNaN(save.appleEggZ) || Mathf.Abs(save.appleEggX - tp.x) > 0.9f
+                || save.appleEggZ < tp.z - 0.2f || save.appleEggZ > tp.z + 1.5f)
+            { save.appleEggX = tp.x - 0.3f; save.appleEggZ = tp.z + 0.75f; }
 
             // eggs: fertile ones in the nest, the hatchery's basket, the incubator
             save.nestFertile = CleanEggs(save.nestFertile, nestCapacity);

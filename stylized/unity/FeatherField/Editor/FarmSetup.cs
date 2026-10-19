@@ -28,6 +28,7 @@ namespace FeatherField.EditorTools
         {
             public float[] path; public Box pen; public Box yard; public float[] yardObstacles;
             public TreeEntry[] trees; public HenEntry[] hens; public CamEntry camera; public SunEntry sun;
+            public float[] nest; public float[] feeder;          // since the bigger pen (19 Oct 2026)
         }
 
         [MenuItem("Feather and Field/Build starter farm")]
@@ -38,6 +39,8 @@ namespace FeatherField.EditorTools
             var layout = JsonUtility.FromJson<Layout>(ReadText(Root + "/Data/layout.json"));
             if (palette == null || layout == null) { Debug.LogError("Feather and Field: could not read Data/palette.json or Data/layout.json"); return; }
 
+            NestPos = layout.nest != null && layout.nest.Length >= 3 ? Vec(layout.nest) : DefaultNest;
+            FeederPos = layout.feeder != null && layout.feeder.Length >= 3 ? Vec(layout.feeder) : DefaultFeeder;
             var mats = MakeMaterials(palette);
             RemapModelMaterials(mats);
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -113,10 +116,12 @@ namespace FeatherField.EditorTools
             if (layout.trees.Length > 0)
             {
                 Vector3 c = Vec(layout.trees[0].pos);
-                for (int i = 0; i < 7; i++)
+                for (int i = 0; i < 7; i++)                                         // fallen apples in the grass (none inside the pen)
                 {
                     float a = (float)(rnd.NextDouble() * Mathf.PI * 2), d = 0.3f + (float)rnd.NextDouble() * 0.8f;
-                    Place("apple", c + new Vector3(Mathf.Cos(a) * d, 0f, Mathf.Sin(a) * d), (float)rnd.NextDouble() * 360f, 1f, farm, mats, true);
+                    var p = c + new Vector3(Mathf.Cos(a) * d, 0f, Mathf.Sin(a) * d);
+                    if (p.x > layout.pen.min[0] - 0.1f && p.x < layout.pen.max[0] + 0.1f && p.z > layout.pen.min[2] - 0.1f && p.z < layout.pen.max[2] + 0.1f) continue;
+                    Place("apple", p, (float)rnd.NextDouble() * 360f, 1f, farm, mats, true);
                 }
             }
 
@@ -265,9 +270,10 @@ namespace FeatherField.EditorTools
             w.standModel = stand; w.peckModel = peck; w.visual = visual;
             if (h.area == "tree" && layout.trees.Length > 0)
             {
+                // the side of the apple tree the camera sees best (towards the camera and to the left): she is never behind the coop
                 Vector3 c = Vec(layout.trees[0].pos);
-                w.areaMin = new Vector3(Mathf.Max(c.x - 1.4f, layout.pen.max[0] + 0.15f), 0f, c.z - 1.3f);
-                w.areaMax = new Vector3(c.x + 1.4f, 0f, Mathf.Min(c.z + 1.3f, layout.pen.min[2] - 0.15f));
+                w.areaMin = new Vector3(Mathf.Max(c.x - 0.85f, layout.pen.max[0] + 0.15f), 0f, c.z + 0.15f);
+                w.areaMax = new Vector3(c.x + 0.6f, 0f, c.z + 1.2f);
                 w.obstacles = new[] { new Vector4(c.x, 0f, c.z, 0.35f) };
             }
             else
@@ -294,8 +300,9 @@ namespace FeatherField.EditorTools
         }
 
         // ------------------------------------------------------------------ stage 1: nest, feeder, rules, counters
-        static readonly Vector3 NestPos = new Vector3(-0.9f, 0f, 0.74f);       // in the yard, by the nest box on the side of the coop
-        static readonly Vector3 FeederPos = new Vector3(-0.75f, 0f, 1.25f);    // the galvanised feeder that comes with the coop
+        static readonly Vector3 DefaultNest = new Vector3(-0.9f, 0f, 0.74f);      // in the yard, by the coop's house
+        static readonly Vector3 DefaultFeeder = new Vector3(-0.75f, 0f, 1.25f);   // the first pen's galvanised feeder
+        static Vector3 NestPos = DefaultNest, FeederPos = DefaultFeeder;          // from Data/layout.json
 
         static GameObject Model(string name)
         {
@@ -348,12 +355,13 @@ namespace FeatherField.EditorTools
 
         static void BuildApples(FarmGame fg, HenWander glutton, Vector3 trunk, Dictionary<string, Material> mats)
         {
-            // five apples hanging under the canopy, on the sides of the tree the camera can see, all outside the pen
+            // five apples hanging under the canopy, on the side of the tree the camera sees best (towards it and to the left),
+            // all outside the pen and never behind the coop
             var holder = new GameObject("Low apples").transform;
             holder.position = trunk;
             Vector3 toCamera = new Vector3(-0.7071f, 0f, 0.7071f), right = new Vector3(-0.7071f, 0f, -0.7071f);
             var apples = new List<Transform>();
-            foreach (float deg in new[] { 0f, 45f, 90f, 135f, 180f })
+            foreach (float deg in new[] { 90f, 112.5f, 135f, 157.5f, 180f })
             {
                 float a = deg * Mathf.Deg2Rad;
                 Vector3 p = trunk + (right * Mathf.Cos(a) + toCamera * Mathf.Sin(a)) * 0.75f;
@@ -376,7 +384,7 @@ namespace FeatherField.EditorTools
             // her apple egg: rosy gold, a little bigger than an ordinary egg, with a generous tap area
             var appleEggMat = ExtraMaterial(mats, "FF_appleegg", new Color(0.95f, 0.66f, 0.42f), 0.6f);
             var eggGo = new GameObject("Apple egg");
-            eggGo.transform.position = trunk + toCamera * 0.6f;
+            eggGo.transform.position = trunk + new Vector3(0f, 0f, 0.75f);
             var vis = Prim(PrimitiveType.Sphere, "Egg", eggGo.transform, new Vector3(0f, 0.045f, 0f), new Vector3(0.07f, 0.09f, 0.07f), appleEggMat);
             var ge = eggGo.AddComponent<GrassEgg>();
             ge.visual = vis.transform;

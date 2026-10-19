@@ -77,6 +77,7 @@ namespace UnityEngine
         public void SetParent(Transform p) { }
         public void SetParent(Transform p, bool worldPositionStays) { }
         public void SetAsLastSibling() { }
+        public bool IsChildOf(Transform parent) { return false; }
         public void SetAsFirstSibling() { }
         public Vector3 TransformPoint(Vector3 p) { return p; }
         public Vector3 InverseTransformPoint(Vector3 p) { return p; }
@@ -125,6 +126,8 @@ namespace UnityEngine
         public static Vector3 one { get { return default(Vector3); } }
         public static Vector3 up { get { return default(Vector3); } }
         public static Vector3 forward { get { return default(Vector3); } }
+        public static Vector3 back { get { return default(Vector3); } }
+        public static float Dot(Vector3 a, Vector3 b) { return 0f; }
         public float magnitude { get { return 0f; } }
         public float sqrMagnitude { get { return 0f; } }
         public Vector3 normalized { get { return this; } }
@@ -191,6 +194,7 @@ namespace UnityEngine
         public static int Clamp(int v, int a, int b) { return v; }
         public static float Clamp01(float v) { return v; }
         public static float Min(float a, float b) { return a; }
+        public static float Min(params float[] values) { return 0f; }
         public static int Min(int a, int b) { return a; }
         public static float Max(float a, float b) { return a; }
         public static int Max(int a, int b) { return a; }

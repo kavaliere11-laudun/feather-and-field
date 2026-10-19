@@ -109,6 +109,11 @@ namespace FeatherField
             appleText.fontSize = 18;
             appleBubble.gameObject.SetActive(false);
 
+            // the bubbles can be tapped too: the nest's collects, the feeder's fills it, the apple egg's collects it
+            AddButton(nestBubble, () => { var g = FarmGame.Instance; HideBird(); if (g != null) g.CollectEggs(); }, fixedBtns);
+            AddButton(feedBubble, () => { var g = FarmGame.Instance; HideBird(); if (g != null) g.FillFeeder(); }, fixedBtns);
+            AddButton(appleBubble, () => { var g = FarmGame.Instance; HideBird(); if (g != null) g.CollectAppleEgg(); }, fixedBtns);
+
             // the Hatchery button at the bottom, with a badge counting the eggs waiting for a choice
             hatchBtn = Box("Hatchery button", root, new Vector2(0.5f, 0f), new Vector2(190f, 52f), Glass);
             hatchBtn.pivot = new Vector2(0.5f, 0f);
@@ -262,9 +267,13 @@ namespace FeatherField
         /// </summary>
         public bool Tap(Vector2 screen)
         {
+            bool panelOpen = panel != null && panel.gameObject.activeSelf;
+            bool onCard = Inside(card, screen);
             Btn hit = null;
             foreach (var b in rowBtns) if (Inside(b.rt, screen)) { hit = b; break; }
-            if (hit == null) foreach (var b in fixedBtns) if (Inside(b.rt, screen)) { hit = b; break; }
+            if (hit == null && !panelOpen)                                     // the open Hatchery covers everything else
+                foreach (var b in fixedBtns)
+                    if (Inside(b.rt, screen) && (!onCard || b.rt.IsChildOf(card))) { hit = b; break; }   // nothing through the card
             if (hit != null)
             {
                 StartCoroutine(Press(hit.rt));

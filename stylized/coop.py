@@ -187,10 +187,24 @@ def straw_bits(objs, c, r, n, z0):
         objs.append(cyl('straw', 0.0025, L, p, dirn.to_track_quat('Z', 'Y').to_euler(), m['straw'], verts=5, bevel=0))
 
 
+# The pen's size and where its things stand (Blender metres; the house is at the origin, its front faces -y).
+# SMALL_PEN is the first version (Oct 2026); export_unity.py may set PEN before building.
+SMALL_PEN = dict(box=(-1.25, 1.35, -1.9, 0.75), gate=2, feeder=(0.75, -1.25), dish=(0.25, -1.55), hay=(-0.85, -1.45), hay_rot=12,
+                 straw=((-0.85, -1.45, 0.4, 70), (-0.3, -1.05, 0.35, 40), (0.55, -0.55, 0.5, 40)), sack=(0.95, 0.15))
+PEN = dict(SMALL_PEN)
+
+
+def gate_span():
+    """Where the gate is on the front fence: (hinge x, opening's centre x)."""
+    x0, x1 = PEN['box'][0], PEN['box'][1]
+    n = max(1, int((x1 - x0) / 0.55)); g = PEN['gate']
+    return x0 + (g + 1) * (x1 - x0) / n, x0 + (g + 0.5) * (x1 - x0) / n
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
-    x0, x1, y0, y1 = -1.25, 1.35, -1.9, 0.75
+    x0, x1, y0, y1 = PEN['box']
     # dirt yard: a slightly raised, wobbly-edged pad
     me = bpy.data.meshes.new('yard'); bm = bmesh.new()
     pts = []
@@ -227,9 +241,9 @@ def build_pen(root, m):
                 if gate and gate[0] <= i < gate[1]: continue
                 d = (q - p).normalized(); nrm = Vector((-d.y, d.x, 0))
                 objs.append(plank('rail', Vector((p.x, p.y, z)), Vector((q.x, q.y, z)), 0.07, 0.03, nrm, m['wood'], jitter=1.2))
-    run((x0, y0), (x1, y0), gate=(2, 3)); run((x1, y0), (x1, y1)); run((x0, y0), (x0, y1)); run((x0, y1), (x1, y1))
+    run((x0, y0), (x1, y0), gate=(PEN['gate'], PEN['gate'] + 1)); run((x1, y0), (x1, y1)); run((x0, y0), (x0, y1)); run((x0, y1), (x1, y1))
     # the gate, swung open outwards on its hinge post
-    gx = x0 + 3 * (x1 - x0) / 4; ang = math.radians(-70)
+    gx = gate_span()[0]; ang = math.radians(-70)
     hinge = Vector((gx, y0, 0)); d = Vector((-math.cos(ang), math.sin(ang), 0)).normalized() * 0.6
     nrm = Vector((-d.y, d.x, 0)).normalized()
     for z in (0.14, 0.3, 0.44):
@@ -239,7 +253,7 @@ def build_pen(root, m):
         objs.append(plank('gatev', p + Vector((0, 0, 0.1)), p + Vector((0, 0, 0.48)), 0.06, 0.03, nrm, m['wood'], jitter=0.5))
     objs.append(plank('gated', hinge + d * 0.12 + Vector((0, 0, 0.14)), hinge + d * 0.95 + Vector((0, 0, 0.44)), 0.05, 0.028, nrm, m['wood'], jitter=0.5))
     # galvanised feeder: tray, tube and cone hat
-    fx, fy = 0.75, -1.25
+    fx, fy = PEN['feeder']
     objs.append(cyl('tray', 0.16, 0.05, (fx, fy, 0.03), m=m['metal'], verts=28, bevel=0.01))
     objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
     objs.append(cyl('tube', 0.09, 0.32, (fx, fy, 0.2), m=m['metal'], verts=24, bevel=0.01))
@@ -247,27 +261,28 @@ def build_pen(root, m):
     for z in (0.12, 0.28):
         objs.append(cyl('band', 0.093, 0.015, (fx, fy, z), m=mat('band', '#9aa3a8', rough=0.3, metal=0.9), verts=24, bevel=0.003))
     # water dish
-    wx, wy = 0.25, -1.55
+    wx, wy = PEN['dish']
     bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
     rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)
     objs.append(cyl('dishbase', 0.16, 0.03, (wx, wy, 0.02), m=m['bowl'], verts=32, bevel=0.008))
     objs.append(cyl('water', 0.135, 0.008, (wx, wy, 0.05), m=m['water'], verts=32, bevel=0.0))
     # hay bale with twine, a little loose hay
-    hb = box('bale', (0.55, 0.32, 0.3), (-0.85, -1.45, 0.15), (0, 0, math.radians(12)), m=m['hay'], bevel=0.04, segs=4, jitter=0.006); objs.append(hb)
+    hx, hy = PEN['hay']; hr = math.radians(PEN['hay_rot'])
+    hb = box('bale', (0.55, 0.32, 0.3), (hx, hy, 0.15), (0, 0, hr), m=m['hay'], bevel=0.04, segs=4, jitter=0.006); objs.append(hb)
     for k in (-0.14, 0.14):
-        objs.append(box('twine', (0.025, 0.335, 0.305), (-0.85 + k * math.cos(math.radians(12)), -1.45 + k * math.sin(math.radians(12)), 0.15), (0, 0, math.radians(12)), m=m['twine'], bevel=0.005))
-    straw_bits(objs, (-0.85, -1.45, 0), 0.4, 70, 0.016)
-    straw_bits(objs, (-0.3, -1.05, 0), 0.35, 40, 0.016)
-    straw_bits(objs, (0.55, -0.55, 0), 0.5, 40, 0.016)
+        objs.append(box('twine', (0.025, 0.335, 0.305), (hx + k * math.cos(hr), hy + k * math.sin(hr), 0.15), (0, 0, hr), m=m['twine'], bevel=0.005))
+    for sx, sy, sr, sn in PEN['straw']:
+        straw_bits(objs, (sx, sy, 0), sr, sn, 0.016)
     peb = mat('ypebble', '#b9b1a3', rough=0.8, var=0.2)
     for i in range(28):
         x, y = random.uniform(x0 + 0.15, x1 - 0.15), random.uniform(y0 + 0.15, y1 - 0.15)
         r = random.uniform(0.012, 0.028)
         objs.append(sphere('ypeb', r, (x, y, 0.015 + r * 0.1), (1.2, 1.0, 0.5), (0, 0, random.uniform(0, 6)), peb, ico=2, disp=0.25, seed=i + 40))
     # feed sack slumped by the house
-    sk = sphere('sack', 0.16, (0.95, 0.15, 0.17), (0.85, 0.7, 1.1), (0, math.radians(-8), math.radians(20)), m['sack'], ico=3, disp=0.12, seed=3)
+    kx, ky = PEN['sack']
+    sk = sphere('sack', 0.16, (kx, ky, 0.17), (0.85, 0.7, 1.1), (0, math.radians(-8), math.radians(20)), m['sack'], ico=3, disp=0.12, seed=3)
     objs.append(sk)
-    objs.append(sphere('sacktop', 0.06, (0.95, 0.15, 0.36), (1.2, 0.8, 0.6), m=m['sack'], ico=2, disp=0.2, seed=4))
+    objs.append(sphere('sacktop', 0.06, (kx, ky, 0.36), (1.2, 0.8, 0.6), m=m['sack'], ico=2, disp=0.2, seed=4))
     for o in objs:
         mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
     return objs

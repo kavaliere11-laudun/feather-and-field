@@ -1,20 +1,20 @@
 {
- "version": "19 Oct 2026 20:20",
+ "version": "19 Oct 2026 21:02",
  "files": [
   {
    "path": "Data/layout.json",
-   "sha1": "2865cf34cc7da569a8b5ca803789514458a34df1",
-   "size": 3632
+   "sha1": "abbb096b2da0fc6b880579f6b7ec6300fb7ef3ce",
+   "size": 3702
   },
   {
    "path": "Data/palette.json",
-   "sha1": "8a28206d21c4a609f87b61d458850e88bb708add",
-   "size": 9913
+   "sha1": "89f4b611d272384fe6f3b5290c6d5c61150d8471",
+   "size": 10043
   },
   {
    "path": "Editor/FarmSetup.cs",
-   "sha1": "75203f100a9b997cad1bdc18bf9c4e5c29575c08",
-   "size": 28614
+   "sha1": "31cfe314cf2c62115ee5af2a7b4a1a036f87c2fd",
+   "size": 29491
   },
   {
    "path": "Editor/FeatherFieldUpdater.cs",
@@ -48,8 +48,8 @@
   },
   {
    "path": "Models/coop.fbx",
-   "sha1": "a3cc02a1ef04aee963b508fd2782ea29d285845c",
-   "size": 1429548
+   "sha1": "ad20e0a196ff578916ebf7e0e1cef5e5984ca089",
+   "size": 1517484
   },
   {
    "path": "Models/flower_butter.fbx",
@@ -93,8 +93,8 @@
   },
   {
    "path": "Models/path.fbx",
-   "sha1": "261de68eecb0102c25f777821674960486cad6a4",
-   "size": 59468
+   "sha1": "7342399829e25369542877b6c0c176f3a11bee19",
+   "size": 59404
   },
   {
    "path": "Models/rooster_peck.fbx",
@@ -108,8 +108,8 @@
   },
   {
    "path": "README.txt",
-   "sha1": "68bd2ef60ef10d7f957e9b587faf809d04224744",
-   "size": 4951
+   "sha1": "9f30bac66f65e7ec13973ff06e245230cbc43965",
+   "size": 5554
   },
   {
    "path": "Scripts/AppleSeeker.cs",
@@ -133,13 +133,13 @@
   },
   {
    "path": "Scripts/FarmGame.cs",
-   "sha1": "60dd8e8a0ffab1cc4d3883f2dae42b5922df01bc",
-   "size": 40578
+   "sha1": "add0e6411524d575a3d4432e3e870901a4014e0d",
+   "size": 41108
   },
   {
    "path": "Scripts/FarmHud.cs",
-   "sha1": "9b577f07afe44e546bc1516a808898a90b8ef6ab",
-   "size": 35686
+   "sha1": "23a48719f190191d0cfa166bacc7a69add7ee133",
+   "size": 36513
   },
   {
    "path": "Scripts/Feeder.cs",
@@ -153,8 +153,8 @@
   },
   {
    "path": "Scripts/HenWander.cs",
-   "sha1": "5fc19114a498b9990757a81adc41f4e29a029f82",
-   "size": 7479
+   "sha1": "f14f53c07414c68c5d0f76e5b8b08fb93e90b225",
+   "size": 10549
   },
   {
    "path": "Scripts/NestBox.cs",

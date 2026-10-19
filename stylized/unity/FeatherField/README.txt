@@ -65,3 +65,11 @@ Stage 2 (part 2): breeding (19 Oct 2026)
 - The coop holds 5 birds. When it is full, a hatched egg waits: tap a bird, then Sell (tap twice to be sure).
   The hen by the apple tree doesn't live in the coop, so she stays.
 - These times are quick for now so you can watch it all happen.
+
+A bigger pen, and birds that keep their distance (19 Oct 2026)
+- After "Get latest from Claude", click Build starter farm again, then press Play.
+- The pen is bigger (3.4 by 3.2 metres instead of 2.6 by 2.65), with the hay bale, feeder and water dish spread out.
+- Birds look for a spot nobody else is at, walk round things rather than into them, and stop to let others pass.
+- The apple tree moved a little, and the Glutton now jumps for apples on the side you can see (before, the coop's roof
+  hid her and her apple egg).
+- The bubbles over the nest, the feeder and the apple egg can be tapped too.

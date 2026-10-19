@@ -391,6 +391,16 @@
    "metallic": 0.0
   },
   {
+   "name": "FF_hay_1",
+   "color": [
+    0.8627,
+    0.7176,
+    0.3451
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
    "name": "FF_hay_2",
    "color": [
     0.8831,
