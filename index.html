@@ -296,7 +296,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 18:57';
+const BUILD = '19 Oct 2026 19:03';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -1968,7 +1968,11 @@ function buildPlots() {
 }
 // iPhone home-screen app: the page is drawn under the status bar but measured without it, so size the game to the screen itself
 function fitStandalone() {
-  if (!navigator.standalone) return;
+  // Only when iPhone draws the page under the clock (an app added with the old see-through status bar) is the page measured
+  // shorter than the screen; with the solid status bar the page starts below it and already fits: sizing it to the whole
+  // screen then pushed the tab bar off the bottom.
+  const els = [document.documentElement, document.body, document.getElementById('app')];
+  if (!navigator.standalone || capH <= 0) { for (const el of els) { el.style.height = ''; el.style.minHeight = ''; el.style.width = ''; } return; }
   const land = innerWidth > innerHeight, a = screen.width, b = screen.height;
   const h = land ? Math.min(a, b) : Math.max(a, b), w = land ? Math.max(a, b) : Math.min(a, b);
   // the page itself must be as tall as the screen too, or iPhone stops painting at the shorter height
@@ -1976,8 +1980,8 @@ function fitStandalone() {
   const app = document.getElementById('app'); app.style.height = h + 'px'; app.style.width = w + 'px';
 }
 function layout() {
-  fitStandalone();
   const cap = document.getElementById('topcap'); capH = cap && getComputedStyle(cap).display !== 'none' ? Math.max(0, cap.offsetHeight - 14) : 0;
+  fitStandalone();
   const r = cv.getBoundingClientRect();
   view.vw = Math.max(1, r.width); view.vh = Math.max(1, r.height); view.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(view.vw * view.dpr); cv.height = Math.round(view.vh * view.dpr);
