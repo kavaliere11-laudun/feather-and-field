@@ -1747,6 +1747,84 @@ const farmerReady = () => !!farmerSpr('idle') && !!(state.farmer && state.farmer
 function farmerHome() { return [GEOM.house[0] + 70, GEOM.house[1] + 120]; }
 function coopFront(c) { const p = plots[c.plot]; return p ? toMap(p.f, -0.55, -2.05) : farmerHome(); }
 function farmerGo(x, y, st) { FARM.tx = x; FARM.ty = y; FARM.st = st || 'walk'; FARM.t = 30; }
+/* ---------- finding the way round the farm ---------- */
+const NAV = (() => {
+  const d = DATA.nav; if (!d) return null;
+  const un = b64 => { const bin = atob(b64), n = d.w * d.h, out = new Uint8Array(n); for (let i = 0; i < n; i++) out[i] = (bin.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1; return out; };
+  return { C: d.cell, w: d.w, h: d.h, path: un(d.path), water: un(d.water), block: null, key: '' };
+})();
+const DECOR_FOOT = { flowers: [80, 50], birdbath: [45, 30], beehives: [130, 55], duckhouse: [50, 40], greenhouse: [150, 95], windmill: [120, 75], bandstand: [125, 90], statue: [65, 45] };
+function navBlock() {                           // the cells the farmer can't walk on, rebuilt when coops or decorations change
+  const N = NAV, key = plots.map(p => p.kind[0]).join('') + state.decor.join(',');
+  if (N.block && N.key === key) return N.block;
+  const B = Uint8Array.from(N.water), C = N.C;
+  const mark = (x0, y0, x1, y1, test) => {
+    for (let cy = Math.max(0, Math.floor(y0 / C)); cy <= Math.min(N.h - 1, Math.floor(y1 / C)); cy++)
+      for (let cx = Math.max(0, Math.floor(x0 / C)); cx <= Math.min(N.w - 1, Math.floor(x1 / C)); cx++)
+        if (test((cx + .5) * C, (cy + .5) * C)) B[cy * N.w + cx] = 1;
+  };
+  const rectIn = (f, hw, front, back) => {      // a rectangle in a plot's own metres (pen fence plus a margin; the front stays clear of the gate)
+    const { ex, ey, c } = f, det = ex[0] * ey[1] - ex[1] * ey[0], m = Math.max(hw, front, back), R = (Math.abs(ex[0]) + Math.abs(ey[0])) * m + 10, Rv = (Math.abs(ex[1]) + Math.abs(ey[1])) * m + 10;
+    mark(c[0] - R, c[1] - Rv, c[0] + R, c[1] + Rv, (x, y) => { const dx = x - c[0], dy = y - c[1], lx = (dx * ey[1] - dy * ey[0]) / det, ly = (ex[0] * dy - ex[1] * dx) / det; return Math.abs(lx) < hw && ly > -front && ly < back; });
+  };
+  for (const p of plots) {
+    if (p.kind === 'coop' || p.kind === 'build') rectIn(p.f, 2.05, 1.72, 2.1);
+    else if (p.kind === 'pasture') rectIn(p.f, (p.f.w || 6) / 2 + .25, (p.f.d || 4.6) / 2 + .25, (p.f.d || 4.6) / 2 + .25);
+  }
+  const ell = (cx, cy, rx, ry) => mark(cx - rx, cy - ry, cx + rx, cy + ry, (x, y) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1);
+  const H = GEOM.house; ell(H[0], H[1] + 10, 130, 95);          // the farmhouse
+  if (GEOM.stall) ell(GEOM.stall[0], GEOM.stall[1], 55, 40);     // the egg stall
+  for (const tr of TREES) ell(tr.base[0], tr.base[1] - 6, 22, 14);
+  for (const id of state.decor) { const D = DECOR[id], f = DECOR_FOOT[id]; if (D && f) ell(D.at[0], D.at[1] - f[1] * .35, f[0], f[1]); }
+  N.block = B; N.key = key; return B;
+}
+function navRoute(x0, y0, x1, y1) {             // points to walk through, from (x0, y0) to (x1, y1); straight if no grid
+  const N = NAV; if (!N) return [[x1, y1]];
+  const B = navBlock(), C = N.C, W = N.w, Hh = N.h;
+  const cellOf = (x, y) => [clamp(Math.floor(x / C), 0, W - 1), clamp(Math.floor(y / C), 0, Hh - 1)];
+  const free = (cx, cy) => cx >= 0 && cy >= 0 && cx < W && cy < Hh && !B[cy * W + cx];
+  const nearestFree = (cx, cy) => {             // the start or goal may sit in a blocked cell (inside a pen, by a fence)
+    if (free(cx, cy)) return [cx, cy];
+    for (let r = 1; r < 14; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if ((Math.abs(dx) === r || Math.abs(dy) === r) && free(cx + dx, cy + dy)) return [cx + dx, cy + dy];
+    return [cx, cy];
+  };
+  const [sx, sy] = nearestFree(...cellOf(x0, y0)), [gx, gy] = nearestFree(...cellOf(x1, y1));
+  const start = sy * W + sx, goal = gy * W + gx;
+  if (start === goal) return [[x1, y1]];
+  const g = new Float32Array(W * Hh).fill(Infinity), from = new Int32Array(W * Hh).fill(-1), done = new Uint8Array(W * Hh);
+  const heap = [], push = (i, f) => { heap.push([f, i]); let k = heap.length - 1; while (k) { const pk = (k - 1) >> 1; if (heap[pk][0] <= heap[k][0]) break; [heap[pk], heap[k]] = [heap[k], heap[pk]]; k = pk; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; [heap[m], heap[k]] = [heap[k], heap[m]]; k = m; } } return top[1]; };
+  const hcost = i => { const dx = Math.abs(i % W - gx), dy = Math.abs(((i / W) | 0) - gy); return (dx + dy) + (Math.SQRT2 - 2) * Math.min(dx, dy); };
+  g[start] = 0; push(start, hcost(start)); let found = false, steps = 0;
+  while (heap.length && steps++ < 60000) {
+    const i = pop(); if (done[i]) continue; done[i] = 1; if (i === goal) { found = true; break; }
+    const cx = i % W, cy = (i / W) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue; const nx = cx + dx, ny = cy + dy; if (!free(nx, ny)) continue;
+      if (dx && dy && (!free(cx + dx, cy) || !free(cx, cy + dy))) continue;      // no squeezing between two blocked corners
+      const j = ny * W + nx, step = (dx && dy ? Math.SQRT2 : 1) * (N.path[j] ? 1 : 1.8), ng = g[i] + step;
+      if (ng < g[j]) { g[j] = ng; from[j] = i; push(j, ng + hcost(j)); }
+    }
+  }
+  if (!found) return [[x1, y1]];
+  const cells = []; for (let i = goal; i !== -1; i = from[i]) cells.push(i); cells.reverse();
+  // straighten: skip ahead to the furthest cell in a clear line (staying on the path when walking along one)
+  const sight = (a, b) => {
+    const ax = a % W, ay = (a / W) | 0, bx = b % W, by = (b / W) | 0, n = Math.max(Math.abs(bx - ax), Math.abs(by - ay)) * 2, onPath = N.path[a] && N.path[b];
+    for (let k = 1; k < n; k++) { const x = Math.round(ax + (bx - ax) * k / n), y = Math.round(ay + (by - ay) * k / n), j = y * W + x; if (B[j] || (onPath && !N.path[j])) return false; }
+    return true;
+  };
+  const pts = []; let a = 0;
+  while (a < cells.length - 1) { let b = cells.length - 1; while (b > a + 1 && !sight(cells[a], cells[b])) b--; pts.push(cells[b]); a = b; }
+  const out = pts.map(i => [(i % W + .5) * C, (((i / W) | 0) + .5) * C]);
+  out[out.length - 1] = [x1, y1];
+  return out;
+}
+function farmerRoute(x, y, st, pre = [], post = []) {      // walk to (x, y) round everything; pre: straight points first (out of a pen); post: points after (into a pen)
+  const F = FARM, from = pre.length ? pre[pre.length - 1] : [F.x, F.y];
+  F.path = [...pre, ...navRoute(from[0], from[1], x, y), ...post];
+  const [nx, ny] = F.path.shift(); farmerGo(nx, ny, st);
+}
 function farmerSendCatch(b) {
   const a = agents.get(b.id);
   if (!farmerReady() || !a || a.sx == null) return false;
@@ -1754,13 +1832,12 @@ function farmerSendCatch(b) {
   a.caught = true; a.st = 'idle'; a.t = 30;
   FARM.task = { kind: 'catch', id: b.id, until: performance.now() + 15000 };
   const side = FARM.x < a.sx ? -1 : 1, out = FARM.exitGate; FARM.exitGate = null;
-  if (out) { FARM.path = [[a.sx + side * 30, a.sy + 4]]; farmerGo(out[0], out[1], 'run'); }       // out through the gate first
-  else { FARM.path = []; farmerGo(a.sx + side * 30, a.sy + 4, 'run'); }
+  farmerRoute(a.sx + side * 30, a.sy + 4, 'run', out ? [out] : []);      // out through the gate first if in a pen, then round the pens
   return true;
 }
 function farmerSendFeed(c) {
   if (!farmerReady() || (FARM.task && FARM.task.kind !== 'feed') || FARM.exitGate) return;      // busy, or still in a pen
-  FARM.path = []; FARM.task = { kind: 'feed', id: c.id }; const [x, y] = coopFront(c); farmerGo(x, y, 'walk');
+  FARM.task = { kind: 'feed', id: c.id }; const [x, y] = coopFront(c); farmerRoute(x, y, 'walk');
 }
 // a cuddle: in through the pen's gate, kneel by the gate; the bird comes over; out through the gate again
 const GATE = [-0.15, -1.85], KNEEL = [-0.15, -1.12];
@@ -1782,8 +1859,7 @@ function farmerSendCuddle(b) {
   const g = toMap(p.f, GATE[0], GATE[1]), k = toMap(p.f, KNEEL[0], KNEEL[1]);
   FARM.task = { kind: 'cuddle', id: b.id, face, gate: g, plot: p, spot, zone: [(KNEEL[0] + spot[0]) / 2, (KNEEL[1] + spot[1]) / 2], until: performance.now() + 45000 };
   for (const [ob, oa] of agents) if (ob !== b.id && oa.plot === p && !oa.task && inCuddleZone(p, oa.x, oa.y)) { oa.st = 'walk'; oa.chatWith = null; [oa.tx, oa.ty] = awayFromCuddle(p, oa.x, oa.y); oa.go = 0; oa.t = 8; }
-  if (FARM.exitGate) { FARM.path = [g, k]; farmerGo(FARM.exitGate[0], FARM.exitGate[1], 'walk'); }       // already in a pen: out first
-  else { FARM.path = [k]; farmerGo(g[0], g[1], 'walk'); }
+  farmerRoute(g[0], g[1], 'walk', FARM.exitGate ? [FARM.exitGate] : [], [k]);      // round the pens to the gate, then in
   return true;
 }
 // the other birds in the pen keep clear of the farmer and the bird being cuddled
@@ -1862,8 +1938,8 @@ function updateFarmer(dt) {
     F.pose = night ? 'tidle' : 'idle';
     if (F.t <= 0) {
       const built = state.coops.filter(isBuilt);
-      if (night || !built.length || Math.random() < .35) { const [hx, hy] = farmerHome(); farmerGo(hx + (Math.random() - .5) * 60, hy + (Math.random() - .5) * 30, 'walk'); }
-      else { const c = pick(built), [x, y] = coopFront(c); farmerGo(x + (Math.random() - .5) * 30, y, 'walk'); F.visit = c.id; }
+      if (night || !built.length || Math.random() < .35) { const [hx, hy] = farmerHome(); farmerRoute(hx + (Math.random() - .5) * 60, hy + (Math.random() - .5) * 30, 'walk'); }
+      else { const c = pick(built), [x, y] = coopFront(c); farmerRoute(x + (Math.random() - .5) * 30, y, 'walk'); F.visit = c.id; }
     }
   }
   function arrive() {

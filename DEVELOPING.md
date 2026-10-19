@@ -45,6 +45,7 @@ Python needs Pillow and numpy. Playwright with Chromium is used for tests (`/opt
   - `decor_sprites.py` (run with `STYLE=fv`, like the map): the eight decorations, seen from the map camera. The windmill's sails are a separate face-on picture.
   - `decor_pack.py`: packs them into `game2/img/atlas/decor.webp` (key `decor` in `data.json`) and makes the shop pictures `game2/img/decor/<id>.webp`.
   - Where each decoration stands on the farm, and the prices, are in `ff.html` (`DECOR`, `OUTFITS`).
+- `nav_pack.py`: the farmer's walking grid (16-pixel cells: path or water), made from the map picture and stored in `data.json` as `nav`. The game adds pens, coops, the farmhouse, decorations and tree trunks itself, and finds routes with A* (`navRoute` in `ff.html`). Re-run it if the map is re-rendered.
 - Resumable render scripts (they skip pictures already on disk): `render_turns.sh`, `render_chicks2.sh`, `render_faces.sh`, `render_map2x.sh`, `resume_v2.sh`.
 - `r/`: render outputs that `pack.py` reads:
   - `spr2/`: v2 adult frames;
@@ -66,7 +67,7 @@ URL=http://localhost:8766/ node qa_ui.mjs r/qa          # screen-by-screen walkt
 ./qa_run.sh 30 1440             # simulated player: 30 game days, one visit a day; prints a progression table
 ```
 
-Feature checks (each prints OK/BAD lines and page errors): `qa_pers.mjs` (personalities), `qa_farmer.mjs`, `qa_cuddle.mjs`, `qa_trust.mjs`, `qa_shop.mjs` (decorations and outfits).
+Feature checks (each prints OK/BAD lines and page errors): `qa_pers.mjs` (personalities), `qa_farmer.mjs`, `qa_cuddle.mjs`, `qa_trust.mjs`, `qa_shop.mjs` (decorations and outfits), `qa_nav.mjs` (the farmer never walks through a pen).
 Other walkthroughs: `qa_ux.mjs`, `qa_sale*.mjs`, `qa_move.mjs`, `qa_rename.mjs`, `qa_build.mjs`, `qa_filter.mjs`, `shot_live.mjs`. Test at 402×874, deviceScaleFactor 2, touch, in both `en-GB` and `fr-FR`.
 
 Repacking images after renders:
