@@ -125,14 +125,22 @@ namespace FeatherField.EditorTools
 
             // ---- the birds
             var birds = new GameObject("Birds").transform;
-            foreach (var h in layout.hens) MakeBird(h, layout, birds, mats);
+            var layers = new List<HenWander>();
+            foreach (var h in layout.hens)
+            {
+                var w = MakeBird(h, layout, birds, mats);
+                if (w != null && h.model == "hen" && h.area != "tree") layers.Add(w);      // the hens in the yard lay into its nest
+            }
+
+            // ---- stage 1 of the game: the nest, the feeder, the farm's rules and its on-screen counters
+            BuildGame(layers, mats);
 
             // ---- save and frame
             if (!AssetDatabase.IsValidFolder(Root + "/Scenes")) AssetDatabase.CreateFolder(Root, "Scenes");
             EditorSceneManager.SaveScene(scene, Root + "/Scenes/Farm.unity");
             Selection.activeGameObject = farm.gameObject;
             if (SceneView.lastActiveSceneView != null) SceneView.lastActiveSceneView.FrameSelected();
-            Debug.Log("Feather and Field: starter farm built and saved as Scenes/Farm.unity. Press Play to see the hens potter about.");
+            Debug.Log("Feather and Field: starter farm built and saved as Scenes/Farm.unity. Press Play: the hens lay in the nest; tap the nest to collect, tap the feeder to fill it.");
         }
 
         // ------------------------------------------------------------------ materials
@@ -222,7 +230,7 @@ namespace FeatherField.EditorTools
             return go;
         }
 
-        static void MakeBird(HenEntry h, Layout layout, Transform parent, Dictionary<string, Material> mats)
+        static HenWander MakeBird(HenEntry h, Layout layout, Transform parent, Dictionary<string, Material> mats)
         {
             var root = new GameObject(h.model == "rooster" ? "Rooster" : "Hen").transform;
             root.SetParent(parent, false);
@@ -255,6 +263,101 @@ namespace FeatherField.EditorTools
             p.z = Mathf.Clamp(p.z, w.areaMin.z + 0.05f, w.areaMax.z - 0.05f);
             root.position = p;
             root.rotation = Quaternion.Euler(0f, h.yaw, 0f);
+            if (h.area != "tree")                       // keep pottering hens off the nest (they go there to lay)
+            {
+                var obs = new List<Vector4>(w.obstacles);
+                obs.Add(new Vector4(NestPos.x, 0f, NestPos.z, 0.16f));
+                w.obstacles = obs.ToArray();
+            }
+            return w;
+        }
+
+        // ------------------------------------------------------------------ stage 1: nest, feeder, rules, counters
+        static readonly Vector3 NestPos = new Vector3(-0.9f, 0f, 0.74f);       // in the yard, by the nest box on the side of the coop
+        static readonly Vector3 FeederPos = new Vector3(-0.75f, 0f, 1.25f);    // the galvanised feeder that comes with the coop
+
+        static void BuildGame(List<HenWander> layers, Dictionary<string, Material> mats)
+        {
+            var egg = ExtraMaterial(mats, "FF_egg", new Color(0.80f, 0.56f, 0.38f), 0.35f);
+
+            // the nest: a bed of straw with room for a dozen eggs, and a generous tap area
+            var nestGo = new GameObject("Nest");
+            nestGo.transform.position = NestPos;
+            Prim(PrimitiveType.Cylinder, "Straw rim", nestGo.transform, new Vector3(0f, 0.016f, 0f), new Vector3(0.40f, 0.016f, 0.36f), Mat(mats, "FF_straw_2"));
+            Prim(PrimitiveType.Cylinder, "Straw", nestGo.transform, new Vector3(0f, 0.022f, 0f), new Vector3(0.32f, 0.012f, 0.28f), Mat(mats, "FF_straw_1"));
+            var nest = nestGo.AddComponent<NestBox>();
+            var eggs = new List<GameObject>();
+            var rnd = new System.Random(7);
+            for (int i = 0; i < 12; i++)
+            {
+                float a = i * 2.4f, d = 0.025f + 0.095f * Mathf.Sqrt(i / 11f);             // a little spiral heap
+                var e = Prim(PrimitiveType.Sphere, "Egg " + (i + 1), nestGo.transform,
+                    new Vector3(Mathf.Cos(a) * d, 0.062f + (i > 8 ? 0.03f : 0f), Mathf.Sin(a) * d * 0.9f), new Vector3(0.055f, 0.07f, 0.055f), egg);
+                e.transform.localRotation = Quaternion.Euler(Rand(rnd, -35f, 35f), Rand(rnd, 0f, 360f), Rand(rnd, -35f, 35f));
+                e.SetActive(false);
+                eggs.Add(e);
+            }
+            nest.eggs = eggs.ToArray();
+            var nb = nestGo.AddComponent<BoxCollider>();
+            nb.center = new Vector3(0f, 0.38f, 0f); nb.size = new Vector3(0.62f, 0.8f, 0.62f);       // covers the egg bubble above it too
+
+            // the feeder: a heap of grain in its tray that goes down as the hens eat
+            var feederGo = new GameObject("Feeder");
+            feederGo.transform.position = FeederPos;
+            var grain = Prim(PrimitiveType.Cylinder, "Grain", feederGo.transform, new Vector3(0f, 0.07f, 0f), new Vector3(0.27f, 0.015f, 0.27f), Mat(mats, "FF_grainfeed"));
+            var feeder = feederGo.AddComponent<Feeder>();
+            feeder.grain = grain.transform;
+            var fc = feederGo.AddComponent<CapsuleCollider>();
+            fc.center = new Vector3(0f, 0.3f, 0f); fc.radius = 0.26f; fc.height = 0.75f;
+
+            // the farm's rules and its counters
+            var game = new GameObject("Game");
+            var hud = game.AddComponent<FarmHud>();
+            var fg = game.AddComponent<FarmGame>();
+            fg.nest = nest; fg.feeder = feeder; fg.hud = hud; fg.layers = layers.ToArray();
+        }
+
+        static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale, Material m)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            UnityEngine.Object.DestroyImmediate(go.GetComponent<Collider>());       // only the tap areas have colliders
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = scale;
+            if (m != null) go.GetComponent<Renderer>().sharedMaterial = m;
+            return go;
+        }
+
+        static Material Mat(Dictionary<string, Material> mats, string name)
+        {
+            Material m;
+            return mats.TryGetValue(name, out m) ? m : null;
+        }
+
+        static Material ExtraMaterial(Dictionary<string, Material> mats, string name, Color c, float smooth)
+        {
+            Material m;
+            if (mats.TryGetValue(name, out m)) return m;
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) shader = Shader.Find("Standard");
+            string path = Root + "/Materials/" + name + ".mat";
+            m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+            m.SetColor("_BaseColor", c); m.SetColor("_Color", c);
+            m.SetFloat("_Smoothness", smooth); m.SetFloat("_Glossiness", smooth);
+            EditorUtility.SetDirty(m);
+            mats[name] = m;
+            return m;
+        }
+
+        [MenuItem("Feather and Field/Start the farm again (clear its save)")]
+        public static void ClearSave()
+        {
+            if (!EditorUtility.DisplayDialog("Feather and Field", "Start the farm again? Coins, eggs and the feeder go back to the start.", "Start again", "Cancel")) return;
+            PlayerPrefs.DeleteKey(FarmGame.SaveKey);
+            PlayerPrefs.Save();
+            Debug.Log("Feather and Field: the farm's save was cleared.");
         }
 
         static void ScatterMeadow(Layout layout, Dictionary<string, Material> mats, System.Random rnd)

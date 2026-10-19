@@ -1,5 +1,5 @@
 {
- "version": "18 Oct 2026 16:14",
+ "version": "19 Oct 2026 13:58",
  "files": [
   {
    "path": "Data/layout.json",
@@ -13,8 +13,8 @@
   },
   {
    "path": "Editor/FarmSetup.cs",
-   "sha1": "ab6496831d27a76169a9408f813fa79eff3a9d62",
-   "size": 18867
+   "sha1": "b525ccc11c916b0df9bae0b512fcdbee3c4384b4",
+   "size": 24695
   },
   {
    "path": "Editor/FeatherFieldUpdater.cs",
@@ -98,8 +98,8 @@
   },
   {
    "path": "README.txt",
-   "sha1": "1b783227467d542514f0c7d35f5df57d57080b54",
-   "size": 1915
+   "sha1": "83fc5573ac53d8f908ee5e9d2e89728ea30da966",
+   "size": 2938
   },
   {
    "path": "Scripts/CameraRig.cs",
@@ -107,9 +107,29 @@
    "size": 4501
   },
   {
+   "path": "Scripts/FarmGame.cs",
+   "sha1": "f75af5aa4b33dfec0a7e34fb4f04d6c2e0627fa7",
+   "size": 10506
+  },
+  {
+   "path": "Scripts/FarmHud.cs",
+   "sha1": "cf6b0c43daabd93c0d89656c96419472ed3eaaa8",
+   "size": 11937
+  },
+  {
+   "path": "Scripts/Feeder.cs",
+   "sha1": "693b749fd640f3ae53c50662da5894730f04cb84",
+   "size": 1191
+  },
+  {
    "path": "Scripts/HenWander.cs",
-   "sha1": "44e271f1cf9a5ca3feb22d9d3f68343065e4915a",
-   "size": 3908
+   "sha1": "71433361a32f0c2f98f38ad138cfab8fac748323",
+   "size": 6366
+  },
+  {
+   "path": "Scripts/NestBox.cs",
+   "sha1": "2c33e8ac9848def1b907144f5221fdb72ea9c457",
+   "size": 1973
   },
   {
    "path": "Textures/meadow.png",

@@ -26,6 +26,25 @@ namespace FeatherField
         Vector3 target;
         float wait, peck, phase;
 
+        // laying: walk to the nest, sit on it a moment, stand up, and the egg is there
+        System.Action onLaid;
+        Vector3 nestSpot;
+        int errand;                 // 0 pottering about, 1 going to the nest, 2 sitting on it
+        float errandT;
+
+        /// <summary>True while this hen is on her way to the nest or sitting on it.</summary>
+        public bool Busy { get { return errand != 0; } }
+
+        /// <summary>Send her to lay: she walks to the nest, sits, and when she gets up laid() is called.</summary>
+        public void GoLay(Vector3 spot, System.Action laid)
+        {
+            onLaid = laid;
+            nestSpot = new Vector3(spot.x, transform.position.y, spot.z);
+            errand = 1; errandT = 0f;
+            peck = 0f; wait = 0f;
+            SetPeck(false);
+        }
+
         void Start()
         {
             phase = Random.value * 10f;
@@ -64,6 +83,7 @@ namespace FeatherField
         {
             float dt = Time.deltaTime;
             phase += dt;
+            if (errand != 0) { Errand(dt); return; }
 
             if (peck > 0f)                                   // pecking: head down, up, down...
             {
@@ -94,10 +114,44 @@ namespace FeatherField
             if (facing)
             {
                 Vector3 next = transform.position + transform.forward * speed * dt;
-                if (Free(next)) transform.position = next;
+                if (Free(next) || !Free(transform.position)) transform.position = next;     // (stepping off the nest is always allowed)
                 else wait = 0.5f;                            // blocked: stop and think again
             }
             Waddle(facing);
+        }
+
+        void Errand(float dt)
+        {
+            errandT += dt;
+            if (errand == 1)
+            {
+                Vector3 to = nestSpot - transform.position; to.y = 0f;
+                if (to.magnitude < 0.05f || errandT > 12f)
+                {
+                    transform.position = nestSpot;
+                    errand = 2; errandT = 0f;
+                    Waddle(false);
+                    return;
+                }
+                Quaternion look = Quaternion.LookRotation(to.normalized, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, look, turnSpeed * dt);
+                if (Quaternion.Angle(transform.rotation, look) < 25f)
+                    transform.position += transform.forward * Mathf.Min(speed * 1.2f * dt, to.magnitude);
+                Waddle(true);
+                return;
+            }
+            // sitting on the nest: settled down low, with a little wiggle
+            if (visual)
+            {
+                visual.localPosition = new Vector3(0f, -0.03f, 0f);
+                visual.localRotation = Quaternion.Euler(0f, Mathf.Sin(phase * 9f) * 5f, 0f);
+            }
+            if (errandT < 1.8f) return;
+            errand = 0;
+            if (visual) { visual.localPosition = Vector3.zero; visual.localRotation = Quaternion.identity; }
+            var laid = onLaid; onLaid = null;
+            if (laid != null) laid();
+            PickTarget();                                   // and off she goes again
         }
 
         void Waddle(bool walking)
