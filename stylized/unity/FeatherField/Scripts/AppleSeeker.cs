@@ -15,7 +15,7 @@ namespace FeatherField
 
         HenWander wander;
         float timer, t;
-        int step;                                // 0 pottering, 1 going, 2 crouching, 3 jumping, 4 waiting for the apple, 5 eating
+        int step;                                // 0 pottering, 1 going, 2 looking up, 3 jumping, 6 landing, 4 waiting for the apple, 5 eating
         Transform apple;
         Vector3 spot, appleFrom, appleTo, appleScale;
         bool falling, landed;
@@ -45,8 +45,9 @@ namespace FeatherField
             }
             t += dt;
             if (step == 1) Go(dt);
-            else if (step == 2) { Squat(-0.025f); if (t > 0.35f) Next(3); }
+            else if (step == 2) LookUp();
             else if (step == 3) Jump();
+            else if (step == 6) Land();
             else if (step == 4) { if (landed || t > 1.2f) { Face(appleTo, 1f); Next(5); } }
             else if (step == 5) Eat();
         }
@@ -84,18 +85,42 @@ namespace FeatherField
             wander.Waddle(true);
         }
 
-        void Squat(float y)
+        // her whole body, tipped back around its middle (so her head points up and her tail stays clear of the ground),
+        // lifted, and stretched (more than 1: taller and slimmer; less than 1: squashed)
+        void Pose(float lift, float headUpDeg, float stretch)
         {
             if (wander.visual == null) return;
-            wander.visual.localPosition = new Vector3(0f, y, 0f);
-            wander.visual.localRotation = Quaternion.identity;
+            Quaternion r = Quaternion.Euler(-headUpDeg, 0f, 0f);
+            Vector3 pivot = new Vector3(0f, 0.14f, 0f);
+            wander.visual.localRotation = r;
+            wander.visual.localPosition = pivot - r * pivot + new Vector3(0f, lift, 0f);
+            float side = 1f / Mathf.Sqrt(Mathf.Max(0.5f, stretch));
+            wander.visual.localScale = new Vector3(side, stretch, side);
+        }
+
+        void LookUp()                                                  // she spots the apple: head up, then a little crouch to spring
+        {
+            const float dur = 0.55f;
+            float k = Mathf.Clamp01(t / dur), e = k * k * (3f - 2f * k);
+            float crouch = k > 0.6f ? (k - 0.6f) / 0.4f : 0f;
+            Pose(-0.02f * crouch, 32f * e, 1f - 0.1f * crouch);
+            if (k >= 1f) Next(3);
+        }
+
+        void Land()                                                    // a soft landing: a quick squash, head coming back down
+        {
+            const float dur = 0.22f;
+            float k = Mathf.Clamp01(t / dur);
+            Pose(0f, 10f * (1f - k), 1f - 0.12f * Mathf.Sin(k * Mathf.PI));
+            if (k >= 1f) { Pose(0f, 0f, 1f); Next(4); }
         }
 
         void Jump()
         {
-            const float dur = 0.5f;
+            const float dur = 0.55f;
             float k = Mathf.Clamp01(t / dur);
-            Squat(jumpHeight * 4f * k * (1f - k));
+            float rising = k < 0.5f ? 1f - k * 2f : 0f;                  // stretched tall on the way up
+            Pose(jumpHeight * 4f * k * (1f - k), Mathf.Lerp(36f, 10f, k), 1f + 0.08f * rising);
             if (k >= 0.5f && !falling && !landed)                      // at the top of the jump the apple comes down
             {
                 appleFrom = apple.position;
@@ -105,7 +130,7 @@ namespace FeatherField
                 fallT = 0f;
                 falling = true;
             }
-            if (k >= 1f) { Squat(0f); Next(4); }
+            if (k >= 1f) Next(6);
         }
 
         void Fall(float dt)
@@ -134,6 +159,7 @@ namespace FeatherField
             if (apple != null) apple.localScale = appleScale * Mathf.Max(0.05f, 1f - t / dur);     // a bite at a time
             if (t < dur) return;
             wander.SetPeck(false);
+            Pose(0f, 0f, 1f);
             if (apple != null) { apple.gameObject.SetActive(false); apple.localScale = appleScale; }
             apple = null;
             tree.busy = false;
