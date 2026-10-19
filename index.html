@@ -124,7 +124,7 @@ h3{font-family:var(--display);font-weight:600;font-size:17px;margin:6px 0 0}
 p{margin:0;line-height:1.5}
 .row{display:flex;align-items:center;gap:10px;min-width:0}
 .grow{flex:1;min-width:0}
-.card{background:var(--sage);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--sage);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px;isolation:isolate}
 .card .card,.card .item{background:var(--meringue)}
 .list{display:flex;flex-direction:column;gap:8px}
 .item{display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;border-radius:18px;background:var(--sage);border:0;color:inherit;font:inherit;text-align:left;width:100%;cursor:pointer;min-width:0;transition:transform .15s}
@@ -149,6 +149,7 @@ p{margin:0;line-height:1.5}
 .btn.armed{background:#8a2414;box-shadow:inset 0 -4px 0 #5c1609;animation:pulse 1s infinite}
 @keyframes pulse{50%{filter:brightness(1.18)}}
 .btn:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}
+.textbtn{border:0;background:none;padding:6px;font:600 15px var(--display);color:var(--meadow-deep);text-decoration:underline;text-underline-offset:3px;cursor:pointer;align-self:center}
 .btn.sm{padding:8px 13px;font-size:14px;min-height:40px}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
 .btns .btn{flex:1 1 140px}
@@ -156,7 +157,7 @@ p{margin:0;line-height:1.5}
 .seg button{flex:1;border:0;background:transparent;color:var(--ink-2);font:600 14px var(--display);padding:9px 6px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
 .seg button[aria-pressed="true"]{background:var(--meringue);color:var(--ink);box-shadow:0 2px 6px rgba(20,40,20,.12)}
 .tag{display:inline-block;font:600 12px var(--display);padding:3px 9px;border-radius:999px;background:var(--meringue);color:var(--ink-2);white-space:nowrap}
-.card .tag{background:var(--meringue)}
+.card .tag{background:var(--meringue)}.card .tag.good{background:var(--meadow);color:#fff}
 .tag.pers{background:#f6ecd4;color:#5a3d06}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 6px}
 .pick-tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px 10px;border-radius:18px;border:2px solid transparent;background:var(--meringue);font:700 16px var(--display);color:var(--ink-2);cursor:pointer}
@@ -177,6 +178,7 @@ p{margin:0;line-height:1.5}
 .eggdot{width:18px;height:23px;border-radius:50% 50% 50% 50%/58% 58% 42% 42%;flex:none;box-shadow:inset -3px -4px 6px rgba(0,0,0,.18),inset 3px 3px 5px rgba(255,255,255,.5)}
 .rosette{--c:var(--r1);position:relative;width:30px;height:30px;flex:none;border-radius:50%;background:radial-gradient(circle,var(--c) 0 30%,#fffbea 31% 37%,transparent 38%),repeating-conic-gradient(var(--c) 0 12deg,color-mix(in srgb,var(--c) 72%,#000) 12deg 24deg)}
 .rosette::after{content:"";position:absolute;left:8px;top:22px;width:14px;height:14px;background:linear-gradient(90deg,var(--c) 0 45%,transparent 45% 55%,var(--c) 55%);clip-path:polygon(0 0,100% 0,100% 100%,75% 80%,50% 100%,25% 80%,0 100%);z-index:-1}
+details.howto>p{margin:8px 0 0}details.howto>summary{font-family:var(--display);font-weight:700;font-size:1.05rem;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}details.howto>summary::-webkit-details-marker{display:none}details.howto>summary::after{content:'▾';transition:transform .2s}details.howto:not([open])>summary::after{transform:rotate(-90deg)}
 .rosette.p2{--c:var(--r2)}.rosette.p3{--c:var(--r3)}.rosette.p0{--c:#9aa39a}
 .trophies{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .trophies .card{align-items:center;text-align:center;gap:6px}
@@ -265,7 +267,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 10:28';
+const BUILD = '19 Oct 2026 12:58';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -377,6 +379,14 @@ en: {
   sire_auto:'Chosen at random from your roosters', sire_note:'Fertile eggs from this coop are fathered by the breeding rooster.',
   retire_now:'Retire to pasture now', rehome:'Rehome now, no waiting', rehomed:'{name} went to a loving family',
   retires_in:'Retires in {t}', retired_on:'Living on the pasture', laying_now:'Laying eggs', not_laying:'Not laying yet',
+  shows_how_t:'How shows work', shows_how1:'Enter one bird in each show. The judges look at Type, Plumage and Size, not laying.',
+  shows_how2:'At judging time your bird is scored against the other entries. 1st, 2nd and 3rd win a rosette, coins and XP.',
+  shows_how3:'Winning a County or National show makes your bird a champion. Champions are worth more, and so are their chicks.',
+  who_any:'any breed can enter', who_breed:'{breed}s only', who_sil:'Silkies in a show colour only', fee_n:'Entry', no_shows_now:'No show at the moment.',
+  your_best:'Your best bird: {name} (judges’ score {n})', judge_score:'Judges’ score {n}', enter_name:'Enter {name}', choose_other:'Choose another bird ({n} more)',
+  ch_slim:'Slim chance', ch_fair:'Fair chance', ch_good:'Good chance', ch_great:'Great chance', chance_title:'Chance of a rosette (1st, 2nd or 3rd)',
+  why_none:'You have no birds that can enter yet.', why_breed:'You need an adult {breed} to enter.', why_young:'Your birds are too young: they can enter once they are grown up.',
+  why_colour:'Only Silkies in a show colour can enter (white, black, blue, buff, partridge or grey).', why_busy:'Your birds are already entered in other shows.',
   enter_show:'Enter a show', enter_btn:'Enter a bird', enter_go:'Enter', no_shows:'No open show for this bird right now.', entered:'Entered in {show}',
   champ_line:'Champion bloodline: chicks bred from this bird are worth more.', champion:'Champion', supreme:'Supreme champion',
   sold:'Sold {name} for {n} coins', bought:'{name} joined your {coop}',
@@ -387,7 +397,7 @@ en: {
   hatch_takes:'Takes {t} to hatch', hatch_time:'Hatching time', incubate:'Incubate', incubator:'Incubator', empty_slot:'Empty slot', hatches_in:'Hatches in {t}', ready_wait:'Ready to hatch. Make room in a {coop}.', hatched:'A {breed} chick hatched: {name}!', est:'Expected quality about {q}',
   no_fertile:'No fertile eggs. Keep a rooster with your hens and collect their eggs.', no_eggs:'The basket is empty. Tap the egg above a coop to collect.', no_plain_fertile:'No eating eggs. The {n} fertile eggs in your basket are listed below: hatch the best and sell the rest.', fertile_in_basket:'{n} fertile eggs (below)', sell_fertile_all:'Sell all fertile eggs', keep_best:'Sell all but the best {n}',
   incubator_full:'The incubator is full', slots:'{a} of {b} slots in use',
-  shows_open:'Open shows', next_show:'Next show announced in {t}', closes_in:'Judging in {t}', fee:'Entry fee', prizes:'Prizes', any_breed:'Any breed', class:'{breed} class',
+  shows_open:'Open shows', next_show:'Next show announced in {t}', closes_in:'Results in {t}', fee:'Entry fee', prizes:'Prizes', any_breed:'Any breed', class:'{breed} class',
   choose_bird:'Choose a bird to enter', no_eligible:'You have no bird that can enter this class.', entered_bird:'{name} is entered', results:'Results', no_results:'No results yet.',
   t_village:'Village show', t_county:'County show', t_national:'National championship',
   show_name_village:'{town} Village Show', show_name_county:'{county} County Show', show_name_national:'National Poultry Championship',
@@ -498,6 +508,14 @@ fr: {
   sire_auto:'Choisi au hasard parmi vos coqs', sire_note:'Les œufs fécondés de ce poulailler ont pour père le coq reproducteur.',
   retire_now:'Mettre au pâturage maintenant', rehome:'Confier tout de suite, sans attendre', rehomed:'{name} est parti(e) dans une famille aimante',
   retires_in:'Retraite dans {t}', retired_on:'Vit au pâturage', laying_now:'Pond des œufs', not_laying:'Ne pond pas encore',
+  shows_how_t:'Comment ça marche', shows_how1:'Inscrivez une volaille par concours. Les juges regardent le type, le plumage et la taille, pas la ponte.',
+  shows_how2:'Au moment du jugement, votre volaille est notée face aux autres. Les 1er, 2e et 3e gagnent une cocarde, des pièces et de l’XP.',
+  shows_how3:'Gagner un concours régional ou national fait de votre volaille un champion : elle vaut plus cher, et ses poussins aussi.',
+  who_any:'toutes races', who_breed:'{breed} uniquement', who_sil:'poules soie de couleur standard uniquement', fee_n:'Inscription', no_shows_now:'Aucun concours pour le moment.',
+  your_best:'Votre meilleure volaille : {name} (note des juges {n})', judge_score:'Note des juges {n}', enter_name:'Inscrire {name}', choose_other:'Choisir une autre volaille ({n} de plus)',
+  ch_slim:'Peu de chances', ch_fair:'Des chances', ch_good:'Bonnes chances', ch_great:'Très bonnes chances', chance_title:'Chances de cocarde (1er, 2e ou 3e)',
+  why_none:'Vous n’avez pas encore de volaille qui peut concourir.', why_breed:'Il vous faut une volaille adulte ({breed}) pour concourir.', why_young:'Vos volailles sont trop jeunes : elles pourront concourir une fois adultes.',
+  why_colour:'Seules les poules soie de couleur standard peuvent concourir (blanc, noir, bleu, fauve, perdrix ou gris).', why_busy:'Vos volailles sont déjà inscrites à d’autres concours.',
   enter_show:'Inscrire à un concours', enter_btn:'Inscrire une volaille', enter_go:'Inscrire', no_shows:'Aucun concours ouvert pour cette volaille.', entered:'Inscrit(e) à : {show}',
   champ_line:'Lignée de champion : ses poussins valent plus cher.', champion:'Champion', supreme:'Grand champion',
   sold:'{name} vendu(e) pour {n} pièces', bought:'{name} a rejoint : {coop}',
@@ -508,7 +526,7 @@ fr: {
   hatch_takes:'Éclosion en {t}', hatch_time:'Couvaison', incubate:'Couver', incubator:'Couveuse', empty_slot:'Place libre', hatches_in:'Éclosion dans {t}', ready_wait:'Prêt à éclore. Faites de la place dans : {coop}.', hatched:'Un poussin {breed} est né : {name} !', est:'Qualité attendue : environ {q}',
   no_fertile:'Aucun œuf fécondé. Gardez un coq avec vos poules et ramassez leurs œufs.', no_eggs:'Le panier est vide. Touchez l’œuf au-dessus d’un poulailler pour ramasser.', no_plain_fertile:'Aucun œuf de consommation. Les {n} œufs fécondés de votre panier sont listés plus bas : faites éclore les meilleurs et vendez les autres.', fertile_in_basket:'{n} œufs fécondés (plus bas)', sell_fertile_all:'Vendre tous les œufs fécondés', keep_best:'Tout vendre sauf les {n} meilleurs',
   incubator_full:'La couveuse est pleine', slots:'{a} places utilisées sur {b}',
-  shows_open:'Concours ouverts', next_show:'Prochain concours annoncé dans {t}', closes_in:'Jugement dans {t}', fee:'frais', prizes:'Prix', any_breed:'Toutes races', class:'Classe {breed}',
+  shows_open:'Concours ouverts', next_show:'Prochain concours annoncé dans {t}', closes_in:'Résultats dans {t}', fee:'frais', prizes:'Prix', any_breed:'Toutes races', class:'Classe {breed}',
   choose_bird:'Choisissez une volaille à inscrire', no_eligible:'Aucune de vos volailles ne peut concourir dans cette classe.', entered_bird:'{name} est inscrit(e)', results:'Résultats', no_results:'Pas encore de résultats.',
   t_village:'Concours de village', t_county:'Concours régional', t_national:'Championnat national',
   show_name_village:'Concours de {town}', show_name_county:'Concours régional du {county}', show_name_national:'Championnat national avicole',
@@ -1238,13 +1256,35 @@ function canEnter(b, s) {
   if (b.entered && b.entered !== s.id && state.shows.list.some(x => x.id === b.entered)) return false;
   return true;
 }
+function showScore(b) { return showScoreBase(b) * (b.pers === 'diva' ? PR.divaShow : 1) * (b.clover ? PR.clover : 1); }
+function rosetteChance(b, tier) {               // the chance of finishing in the top three: averaged over the luck of the day for your bird, each rival beats you on her own
+  const T_ = TIERS[tier], sc = showScore(b), n = T_.n - 1;
+  const phi = x => .5 * (1 + Math.tanh(.7978845608 * (x + .044715 * x * x * x)));            // the normal curve, closely enough
+  let c = 0, wsum = 0;
+  for (let i = -24; i <= 24; i++) {
+    const z = i / 6, w = Math.exp(-z * z / 2), p = 1 - phi((sc + 4 * z - T_.mean) / T_.sd);
+    let comb = 1, top3 = 0;
+    for (let k = 0; k <= 2; k++) { top3 += comb * p ** k * (1 - p) ** (n - k); comb = comb * (n - k) / (k + 1); }
+    c += w * top3; wsum += w;
+  }
+  return Math.max(0, Math.min(1, c / wsum));
+}
+const chanceWord = c => t(c < .15 ? 'ch_slim' : c < .4 ? 'ch_fair' : c < .7 ? 'ch_good' : 'ch_great');
+function whyNot(s) {                            // why nobody can enter a show
+  if (TIER_LVL[s.tier] > state.level) return t('locked_long', { n: TIER_LVL[s.tier] });
+  const pool = state.birds.filter(b => b.home !== 'pasture' && (s.cls === 'any' || b.breed === s.cls));
+  if (!pool.length) return t(s.cls === 'any' ? 'why_none' : 'why_breed', { breed: t('br_' + s.cls) });
+  if (!pool.some(isGrown)) return t('why_young');
+  if (s.cls === 'sil' && !pool.some(b => isGrown(b) && SIL[b.colour].show)) return t('why_colour');
+  return t('why_busy');
+}
 function judge(s) {
   s.judged = true;
   const b = s.entry ? birdById(s.entry) : null;
   if (!b || b.home === 'pasture') { if (b) b.entered = null; return; }
   b.entered = null;
   const T_ = TIERS[s.tier];
-  const mine = showScoreBase(b) * (b.pers === 'diva' ? PR.divaShow : 1) * (b.clover ? PR.clover : 1) + gauss() * 4; b.clover = false;
+  const mine = showScore(b) + gauss() * 4; b.clover = false;
   let place = 1; for (let i = 0; i < T_.n - 1; i++) if (T_.mean + gauss() * T_.sd > mine) place++;
   let prize = 0;
   if (place <= 3) {
@@ -3067,23 +3107,34 @@ const SHEETS = {
     ] };
   },
   shows({ pickFor } = {}) {
+    const chanceTag = (b, tier) => { const c = rosetteChance(b, tier); const pc = c < .01 ? '<1%' : c > .99 ? '>99%' : Math.round(c * 100) + '%'; return h('span', { class: 'tag ' + (c >= .4 ? 'good' : ''), title: t('chance_title') }, `${chanceWord(c)} · ${pc}`); };
+    const prizes = T_ => h('div', { class: 'row small', style: 'flex-wrap:wrap;gap:10px 14px;padding-bottom:10px' }, [1, 2, 3].map(p => h('span', { class: 'row', style: 'gap:5px' }, h('span', { class: 'rosette p' + p, style: 'width:22px;height:22px' }), coinPrice(T_.prize[p - 1]))));
     const list = state.shows.list.map(s => {
       const T_ = TIERS[s.tier], entry = s.entry ? birdById(s.entry) : null;
-      const eligible = state.birds.filter(b => canEnter(b, s)).sort((a, b) => showScoreBase(b) - showScoreBase(a));
+      const eligible = state.birds.filter(b => canEnter(b, s)).sort((a, b) => showScore(b) - showScore(a)), best = eligible[0];
+      const who = s.cls === 'any' ? t('who_any') : t(s.cls === 'sil' ? 'who_sil' : 'who_breed', { breed: t('br_' + s.cls) });
+      let body;
+      if (entry) body = h('div', { class: 'row' }, h('span', { class: 'grow small', style: 'font-weight:700', text: t('entered_bird', { name: entry.name }) }), chanceTag(entry, s.tier));
+      else if (pickFor === s.id) body = [h('p', { class: 'small' }, t('choose_bird'), ' · ', t('fee_n'), ' ', coinPrice(T_.fee)),
+        h('div', { class: 'list' }, eligible.map(b => h('div', { class: 'card', style: 'gap:6px;padding:10px' }, birdRow(b),
+          h('div', { class: 'row' }, h('span', { class: 'small muted grow', text: t('judge_score', { n: Math.round(showScore(b)) }) }), chanceTag(b, s.tier),
+            h('button', { class: 'btn sm', disabled: state.coins < T_.fee, onclick: () => { actEnter(b, s); current.args.pickFor = null; renderSheet(); } }, t('enter_go'))))))];
+      else if (best) body = [h('div', { class: 'row' }, h('span', { class: 'small grow', text: t('your_best', { name: best.name, n: Math.round(showScore(best)) }) }), chanceTag(best, s.tier)),
+        h('button', { class: 'btn' + (rosetteChance(best, s.tier) < .15 ? ' alt' : ''), disabled: state.coins < T_.fee, onclick: () => actEnter(best, s) }, t('enter_name', { name: best.name }), ' · ', coinPrice(T_.fee)),
+        eligible.length > 1 ? h('button', { class: 'textbtn', onclick: () => { current.args.pickFor = s.id; renderSheet(); } }, t('choose_other', { n: eligible.length - 1 })) : null];
+      else body = h('p', { class: 'small muted', text: whyNot(s) });
       return h('div', { class: 'card' },
-        h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700;font-family:var(--display)', text: showName(s) }), h('div', { class: 'small muted', text: `${t('t_' + s.tier)} · ${s.cls === 'any' ? t('any_breed') : t('class', { breed: t('br_' + s.cls) })}` })), h('span', { class: 'tag' }, timer(s.closes, 'closes_in'))),
-        h('div', { class: 'row small' }, [1, 2, 3].map(p => h('span', { class: 'row', style: 'gap:5px' }, h('span', { class: 'rosette p' + p, style: 'width:22px;height:22px' }), coinPrice(T_.prize[p - 1])))),
-        entry ? h('p', { class: 'small', style: 'font-weight:700', text: t('entered_bird', { name: entry.name }) }) :
-          pickFor === s.id ? [h('p', { class: 'small', text: t('choose_bird') }), eligible.length ? h('div', { class: 'list' }, eligible.map(b => h('div', { class: 'row' }, h('div', { class: 'grow' }, birdRow(b)), h('button', { class: 'btn sm', disabled: state.coins < T_.fee, onclick: () => { actEnter(b, s); current.args.pickFor = null; renderSheet(); } }, t('enter_go'))))) : h('p', { class: 'small muted', text: t('no_eligible') })] :
-          eligible.length ? h('button', { class: 'btn', disabled: state.coins < T_.fee, onclick: () => { current.args.pickFor = s.id; renderSheet(); } }, t('enter_btn'), ' · ', t('fee'), ' ', coinPrice(T_.fee)) : h('p', { class: 'small muted', text: t('no_eligible') }));
+        h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700;font-family:var(--display)', text: showName(s) }), h('div', { class: 'small muted', text: `${t('t_' + s.tier)} · ${who}` })), h('span', { class: 'tag' }, timer(s.closes, 'closes_in'))),
+        prizes(T_), body);
     });
-    const hist = state.shows.history.slice(0, 10).map(r => h('div', { class: 'item', style: 'cursor:default' }, h('span', { class: 'rosette p' + (r.place <= 3 ? r.place : 0) }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: `${r.bird} · ${r.place <= 3 ? placeLabel(r.place) : t('not_placed')}` }), h('div', { class: 'small muted', text: t('show_name_' + r.tier, { town: r.town, county: r.county }) })), r.prize ? coinPrice(r.prize) : null));
+    const hist = state.shows.history.slice(0, 10).map(r => h('div', { class: 'item', style: 'cursor:default' }, h('span', { class: 'rosette p' + (r.place <= 3 ? r.place : 0) }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: `${r.bird} · ${r.place <= 3 ? placeLabel(r.place) : t('not_placed')}` }), h('div', { class: 'small muted', text: t('show_name_' + r.tier, { town: r.town, county: r.county }) + (r.prize ? ' · +' + fmtN(r.prize) : '') }))));
     const lockedTier = Object.keys(TIER_LVL).find(k => TIER_LVL[k] > state.level);
     return { title: t('tab_shows'), node: [
+      h('details', { class: 'card howto', style: 'display:block', open: state.shows.history.length < 3 }, h('summary', { text: t('shows_how_t') }),
+        h('p', { class: 'small', text: t('shows_how1') }), h('p', { class: 'small', text: t('shows_how2') }), h('p', { class: 'small', text: t('shows_how3') })),
       h('p', { class: 'small muted' }, timer(state.shows.next, 'next_show')),
-      h('h3', { text: t('shows_open') }), list.length ? list : h('p', { class: 'muted', text: '—' }),
-      lockedTier ? h('div', { class: 'card locked' }, h('div', { class: 'row' }, h('div', { class: 'grow', style: 'font-weight:700', text: t('t_' + lockedTier) }), h('span', { class: 'tag lock', text: '🔒 ' + t('locked_lvl', { n: TIER_LVL[lockedTier] }) })),
-        h('div', { class: 'row small' }, [1, 2, 3].map(p => h('span', { class: 'row', style: 'gap:5px' }, h('span', { class: 'rosette p' + p, style: 'width:22px;height:22px' }), coinPrice(TIERS[lockedTier].prize[p - 1]))))) : null,
+      h('h3', { text: t('shows_open') }), list.length ? list : h('p', { class: 'muted', text: t('no_shows_now') }),
+      lockedTier ? h('div', { class: 'card locked' }, h('div', { class: 'row' }, h('div', { class: 'grow', style: 'font-weight:700', text: t('t_' + lockedTier) }), h('span', { class: 'tag lock', text: '🔒 ' + t('locked_lvl', { n: TIER_LVL[lockedTier] }) })), prizes(TIERS[lockedTier])) : null,
       h('h3', { text: t('results') }), hist.length ? h('div', { class: 'list' }, hist) : h('p', { class: 'small muted', text: t('no_results') }),
     ] };
   },
