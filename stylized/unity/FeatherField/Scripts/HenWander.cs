@@ -55,6 +55,26 @@ namespace FeatherField
             target = transform.position;
         }
 
+        /// <summary>Swaps the bird's models (a chick growing up): the old ones are removed.</summary>
+        public void SetModels(GameObject stand, GameObject peck)
+        {
+            if (standModel != null && standModel != stand) Destroy(standModel);
+            if (peckModel != null && peckModel != peck) Destroy(peckModel);
+            standModel = stand; peckModel = peck;
+            SetPeck(false);
+        }
+
+        /// <summary>A free spot in her area (somewhere to put a new chick).</summary>
+        public Vector3 FreeSpot(float y)
+        {
+            for (int i = 0; i < 40; i++)
+            {
+                var p = new Vector3(Random.Range(areaMin.x, areaMax.x), y, Random.Range(areaMin.z, areaMax.z));
+                if (Free(p)) return p;
+            }
+            return new Vector3((areaMin.x + areaMax.x) * 0.5f, y, (areaMin.z + areaMax.z) * 0.5f);
+        }
+
         bool Free(Vector3 p)
         {
             if (p.x < areaMin.x || p.x > areaMax.x || p.z < areaMin.z || p.z > areaMax.z) return false;

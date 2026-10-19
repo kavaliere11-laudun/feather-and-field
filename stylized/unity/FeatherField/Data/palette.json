@@ -91,6 +91,16 @@
    "metallic": 0.0
   },
   {
+   "name": "FF_beak_rir_c",
+   "color": [
+    0.9137,
+    0.698,
+    0.298
+   ],
+   "smoothness": 0.45,
+   "metallic": 0.0
+  },
+  {
    "name": "FF_beak_rir_h",
    "color": [
     0.9059,
@@ -188,6 +198,26 @@
     0.1647
    ],
    "smoothness": 0.413,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_cshine",
+   "color": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "smoothness": 0.675,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_cwing_rir_c",
+   "color": [
+    0.8588,
+    0.651,
+    0.3059
+   ],
+   "smoothness": 0.112,
    "metallic": 0.0
   },
   {
@@ -301,6 +331,16 @@
    "metallic": 0.0
   },
   {
+   "name": "FF_fluff_rir_c",
+   "color": [
+    0.9195,
+    0.7434,
+    0.3843
+   ],
+   "smoothness": 0.112,
+   "metallic": 0.0
+  },
+  {
    "name": "FF_galv_0",
    "color": [
     0.7021,
@@ -388,6 +428,16 @@
     0.2978
    ],
    "smoothness": 0.188,
+   "metallic": 0.0
+  },
+  {
+   "name": "FF_leg_rir_c",
+   "color": [
+    0.9412,
+    0.7451,
+    0.2588
+   ],
+   "smoothness": 0.413,
    "metallic": 0.0
   },
   {

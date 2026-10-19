@@ -91,7 +91,7 @@ namespace FeatherField
 
             // drag to move: the ground follows the finger or pointer
             if (twoFingers) { dragging = false; return; }
-            if (pressed) { dragging = true; lastPointer = pointer; }
+            if (pressed) { dragging = FarmHud.Instance == null || !FarmHud.Instance.Covers(pointer); lastPointer = pointer; }   // not from a panel or button
             if (!held) dragging = false;
             if (dragging)
             {

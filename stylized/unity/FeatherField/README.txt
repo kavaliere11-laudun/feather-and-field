@@ -2,7 +2,7 @@ Feather & Field - Unity starter pack (cosy style)
 =================================================
 
 What's inside
-- Models/   the Red Barn coop with its pen, hen and rooster (standing and pecking), two apple trees,
+- Models/   the Red Barn coop with its pen, hen, rooster and chick (standing and pecking), two apple trees,
             grass tufts, flowers, a fallen apple and the dirt path (FBX, real size in metres)
 - Data/     colours of every material, and where everything goes on the farm
 - Editor/   FarmSetup.cs: adds the menu "Feather and Field > Build starter farm"
@@ -12,7 +12,9 @@ What's inside
                          collect (eggs are sold for coins), tap the feeder to fill it; saved on the device
             NestBox.cs, Feeder.cs: the nest's eggs and the feeder's grain
             FarmHud.cs: coins and eggs at the top, bubbles over the nest and the feeder, messages, a bird's card
-            Rules.cs, BirdInfo.cs: every bird's name, traits, quality, grade, value and personality (as in the web game)
+                        (with a Sell button), and the Hatchery (incubator and fertile eggs)
+            Rules.cs, BirdInfo.cs: every bird's name, traits, quality, grade, value and personality, and breeding
+                                   (chicks inherit from both parents), all as in the web game
             AppleTree.cs, AppleSeeker.cs, GrassEgg.cs: the low apples, the Glutton who jumps for them, her apple egg
 - Textures/ the painted meadow for the ground
 
@@ -51,3 +53,15 @@ Stage 2 (part 1): birds you can get to know, and the Glutton's apples (19 Oct 20
 - The hen by the big apple tree is a Glutton. Every minute or so she trots under a low apple, crouches, jumps and
   knocks it down, then pecks it up. After two apples she lays an apple egg in the grass (worth three eggs): tap it.
 - One apple grows back every 3 minutes (five at most).
+
+Stage 2 (part 2): breeding (19 Oct 2026)
+- After "Get latest from Claude", click Build starter farm again, then press Play.
+- With a grown rooster in the yard, most eggs are fertile (8 in 10; 9 in 10 from a Good mum). When you collect the
+  nest, eating eggs are sold as before and fertile eggs fly down to the Hatchery button.
+- Tap Hatchery. Each fertile egg shows its parents and roughly how good the chick will be. Incubate it (two fit in
+  the incubator) or sell it. The Hatchery keeps six eggs; when it is full the least promising ones are sold.
+- An egg hatches after 1 minute 30 seconds. The chick inherits from both parents, with a little luck. It grows into a
+  young hen (pullet) or young rooster (cockerel) after 3 minutes, and is grown up 3 minutes later. Pullets lay.
+- The coop holds 5 birds. When it is full, a hatched egg waits: tap a bird, then Sell (tap twice to be sure).
+  The hen by the apple tree doesn't live in the coop, so she stays.
+- These times are quick for now so you can watch it all happen.

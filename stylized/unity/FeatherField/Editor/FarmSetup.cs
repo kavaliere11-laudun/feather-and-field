@@ -125,14 +125,12 @@ namespace FeatherField.EditorTools
 
             // ---- the birds
             var birds = new GameObject("Birds").transform;
-            var layers = new List<HenWander>();
             var infos = new List<BirdInfo>();
             HenWander treeHen = null;
             foreach (var h in layout.hens)
             {
                 var w = MakeBird(h, layout, birds, mats);
                 if (w == null) continue;
-                if (h.model == "hen" && h.area != "tree") layers.Add(w);      // the hens in the yard lay into its nest
                 var info = w.gameObject.AddComponent<BirdInfo>();             // who she is: filled in from the save when the game starts
                 info.rooster = h.model == "rooster";
                 info.slot = infos.Count;
@@ -143,8 +141,17 @@ namespace FeatherField.EditorTools
             }
 
             // ---- stage 1 of the game: the nest, the feeder, the farm's rules and its on-screen counters
-            var fg = BuildGame(layers, mats);
-            fg.birds = infos.ToArray();
+            var fg = BuildGame(mats);
+            fg.birds = infos.ToArray();                                     // the hens in the yard lay into its nest
+
+            // ---- stage 2b: the models chicks hatched on the farm are drawn with (a chick, then a young bird, then a grown-up)
+            fg.henStand = Model("hen_stand"); fg.henPeck = Model("hen_peck");
+            fg.roosterStand = Model("rooster_stand"); fg.roosterPeck = Model("rooster_peck");
+            fg.chickStand = Model("chick_stand"); fg.chickPeck = Model("chick_peck");
+            var birdMats = new List<Material>();
+            foreach (var kv in mats)
+                if (kv.Key.Contains("_rir_") || kv.Key == "FF_pupil" || kv.Key == "FF_cshine") birdMats.Add(kv.Value);
+            fg.birdMaterials = birdMats.ToArray();
 
             // ---- stage 2: the apple tree's low apples, the Glutton who jumps for them, and her apple egg
             if (layout.trees.Length > 0) BuildApples(fg, treeHen, Vec(layout.trees[0].pos), mats);
@@ -154,7 +161,7 @@ namespace FeatherField.EditorTools
             EditorSceneManager.SaveScene(scene, Root + "/Scenes/Farm.unity");
             Selection.activeGameObject = farm.gameObject;
             if (SceneView.lastActiveSceneView != null) SceneView.lastActiveSceneView.FrameSelected();
-            Debug.Log("Feather and Field: starter farm built and saved as Scenes/Farm.unity. Press Play: the hens lay in the nest; tap the nest to collect, tap the feeder to fill it.");
+            Debug.Log("Feather and Field: starter farm built and saved as Scenes/Farm.unity. Press Play: the hens lay in the nest; tap the nest to collect, the feeder to fill it, a bird for her card, and Hatchery for the fertile eggs.");
         }
 
         // ------------------------------------------------------------------ materials
@@ -290,7 +297,14 @@ namespace FeatherField.EditorTools
         static readonly Vector3 NestPos = new Vector3(-0.9f, 0f, 0.74f);       // in the yard, by the nest box on the side of the coop
         static readonly Vector3 FeederPos = new Vector3(-0.75f, 0f, 1.25f);    // the galvanised feeder that comes with the coop
 
-        static FarmGame BuildGame(List<HenWander> layers, Dictionary<string, Material> mats)
+        static GameObject Model(string name)
+        {
+            var m = AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Models/" + name + ".fbx");
+            if (m == null) Debug.LogError("Feather and Field: missing model Models/" + name + ".fbx");
+            return m;
+        }
+
+        static FarmGame BuildGame(Dictionary<string, Material> mats)
         {
             var egg = ExtraMaterial(mats, "FF_egg", new Color(0.80f, 0.56f, 0.38f), 0.35f);
 
@@ -328,7 +342,7 @@ namespace FeatherField.EditorTools
             var game = new GameObject("Game");
             var hud = game.AddComponent<FarmHud>();
             var fg = game.AddComponent<FarmGame>();
-            fg.nest = nest; fg.feeder = feeder; fg.hud = hud; fg.layers = layers.ToArray();
+            fg.nest = nest; fg.feeder = feeder; fg.hud = hud;
             return fg;
         }
 
@@ -408,7 +422,7 @@ namespace FeatherField.EditorTools
         [MenuItem("Feather and Field/Start the farm again (clear its save)")]
         public static void ClearSave()
         {
-            if (!EditorUtility.DisplayDialog("Feather and Field", "Start the farm again? Coins, eggs and the feeder go back to the start.", "Start again", "Cancel")) return;
+            if (!EditorUtility.DisplayDialog("Feather and Field", "Start the farm again? Coins, eggs, the feeder, the birds and the hatchery go back to the start.", "Start again", "Cancel")) return;
             PlayerPrefs.DeleteKey(FarmGame.SaveKey);
             PlayerPrefs.Save();
             Debug.Log("Feather and Field: the farm's save was cleared.");
