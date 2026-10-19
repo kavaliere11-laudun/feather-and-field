@@ -256,7 +256,8 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
    1. GAME RULES (all times are game time; 1x speed = real time)
    ===================================================================== */
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
-const T = { incubate: 1 * HOUR, young: 6 * HOUR, adult: 3 * DAY, older: 14 * DAY, retire: 30 * DAY };
+const T = { incubate: 1 * HOUR,          // the Rhode Island Red's; each breed has its own (BREEDS[..].hatch, minutes)
+  young: 6 * HOUR, adult: 3 * DAY, older: 14 * DAY, retire: 30 * DAY };
 const OFFLINE_CAP = 48 * HOUR;          // farm pauses after 2 days away
 const NEST_CAP = 24;                    // eggs a coop holds before hens stop laying into it (about a day of laying)
 const SHOW_EVERY = 8 * HOUR, SHOW_OPEN = 24 * HOUR, SHOP_EVERY = 6 * HOUR;
@@ -264,17 +265,17 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 09:00';
+const BUILD = '19 Oct 2026 10:28';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
 // lvl = the farm level at which the breed goes on sale
 const BREEDS = {
-  rir: { price: 40,  egg: 12, lay: 240, eggCol: '#a96a40', size: 1.00, coop: 150,  lvl: 1 },
-  orp: { price: 90,  egg: 20, lay: 300, eggCol: '#dcb98f', size: 1.12, coop: 300,  lvl: 3 },
-  sil: { price: 110, egg: 24, lay: 480, eggCol: '#efe4d2', size: 0.82, coop: 600,  lvl: 5 },
-  leg: { price: 150, egg: 32, lay: 330, eggCol: '#a7cfc8', size: 0.95, coop: 700,  lvl: 7 },
-  bra: { price: 260, egg: 28, lay: 420, eggCol: '#c9a07a', size: 1.30, coop: 1200, lvl: 10 },
+  rir: { price: 40,  egg: 12, lay: 240, eggCol: '#a96a40', size: 1.00, coop: 150,  lvl: 1, hatch: 60 },
+  orp: { price: 90,  egg: 20, lay: 300, eggCol: '#dcb98f', size: 1.12, coop: 300,  lvl: 3, hatch: 90 },
+  sil: { price: 110, egg: 24, lay: 480, eggCol: '#efe4d2', size: 0.82, coop: 600,  lvl: 5, hatch: 45 },
+  leg: { price: 150, egg: 32, lay: 330, eggCol: '#a7cfc8', size: 0.95, coop: 700,  lvl: 7, hatch: 75 },
+  bra: { price: 260, egg: 28, lay: 420, eggCol: '#c9a07a', size: 1.30, coop: 1200, lvl: 10, hatch: 120 },
 };
 const BREED_IDS = ['rir', 'orp', 'sil', 'leg', 'bra'];
 const BUILD_TIME = { rir: 2 * 60 * 60e3, orp: 4 * 60 * 60e3, sil: 6 * 60 * 60e3, leg: 8 * 60 * 60e3, bra: 12 * 60 * 60e3 };     // building a coop takes time; bigger coops take longer
@@ -383,7 +384,7 @@ en: {
   build_coop:'Coop for {breed}', owned:'You own {n}', land:'Land plot', land_note:'Each coop needs its own plot.', coop_name:'Coop name', build_started:'Building your {coop}: ready in {t}', built_toast:'Your {coop} is built! Fill it with birds from the Market.', coop_building:'Your {coop} is still being built', building_sign:'Building', under_construction:'Under construction', ready_in:'Ready in {t}', construction_note:'Builders are at work. When it is finished you can move in {breed} birds.', away_built:'{n} coops finished building', away_built1:'A coop finished building', build_time:'Takes {t} to build', coop_renamed:'Coop renamed: {coop}', updated:'Game updated (version {v})', land_note2:'This plot is for sale. Buy it, then build a coop on it.', land_bought:'Land bought: now build a coop on it', need_land_first:'You need a free plot first: buy land below, then build.', coins_hint:'Coins: {n}', eggs_hint:'Fertile eggs in your basket: {n} of {m}', now_in:'Now in {coop} (plot {plot})', move_to_btn:'Move to {coop}', plots_owned:'{n} of {max} plots owned',
   buy_land:'Buy land', incubator_slot:'Extra incubator slot', basket_up:'Bigger egg basket (+40)', max_reached:'Fully upgraded',
   basket:'Egg basket', sell_all:'Sell all eggs', eggs_each:'{n} each', fertile:'Fertile eggs', fertile_note:'Hatch them or sell them as hatching eggs.',
-  incubate:'Incubate', incubator:'Incubator', empty_slot:'Empty slot', hatches_in:'Hatches in {t}', ready_wait:'Ready to hatch. Make room in a {coop}.', hatched:'A {breed} chick hatched: {name}!', est:'Expected quality about {q}',
+  hatch_takes:'Takes {t} to hatch', hatch_time:'Hatching time', incubate:'Incubate', incubator:'Incubator', empty_slot:'Empty slot', hatches_in:'Hatches in {t}', ready_wait:'Ready to hatch. Make room in a {coop}.', hatched:'A {breed} chick hatched: {name}!', est:'Expected quality about {q}',
   no_fertile:'No fertile eggs. Keep a rooster with your hens and collect their eggs.', no_eggs:'The basket is empty. Tap the egg above a coop to collect.', no_plain_fertile:'No eating eggs. The {n} fertile eggs in your basket are listed below: hatch the best and sell the rest.', fertile_in_basket:'{n} fertile eggs (below)', sell_fertile_all:'Sell all fertile eggs', keep_best:'Sell all but the best {n}',
   incubator_full:'The incubator is full', slots:'{a} of {b} slots in use',
   shows_open:'Open shows', next_show:'Next show announced in {t}', closes_in:'Judging in {t}', fee:'Entry fee', prizes:'Prizes', any_breed:'Any breed', class:'{breed} class',
@@ -397,7 +398,7 @@ en: {
   s_eggs:'Eggs laid', s_hatched:'Chicks hatched', s_sold:'Birds sold', s_earned:'Coins earned',
   lang:'Language', speed:'Game speed', speed_1:'Normal', speed_60:'Test ×60', speed_note:'Test speed makes 1 minute equal 1 hour, so you can try breeding and shows quickly.',
   time_title:'How time works',
-  time_body:'The farm keeps going while the game is closed. Eggs take 1 hour to hatch. Chicks grow up in 6 hours and hens start laying. Birds are adults at 3 days, lay less after 14 days and retire to the pasture at 30 days. They never die.',
+  time_body:'The farm keeps going while the game is closed. Eggs take 45 minutes (Silkie) to 2 hours (Brahma) to hatch. Chicks grow up in 6 hours and hens start laying. Birds are adults at 3 days, lay less after 14 days and retire to the pasture at 30 days. They never die.',
   away_body:'If you stay away for more than 2 days, the farm pauses until you come back. Nest boxes hold about a day of eggs (24) and feeders run down, so come back every day.',
   saved_here:'Your farm is saved on this device only.', saved_cloud:'Your farm is saved on this device and in your Claude account, so it is kept through updates and you can carry on from another device.', saved_err:'Your farm is saved on this device. Saving to your account failed just now; the game will try again.', saved_big:'Your farm is saved on this device. It has grown too big to also save to your account.', restored:'Your farm was restored from your account', edited:'This save was changed outside the game.', reset:'Start a new farm', reset_done:'New farm started',
   welcome_title:'Welcome to your farm', welcome_1:'You start with a Red Barn, three Rhode Island Red hens and a rooster.',
@@ -504,7 +505,7 @@ fr: {
   build_coop:'Poulailler pour {breed}', owned:'Vous en avez {n}', land:'Terrain', land_note:'Chaque poulailler a besoin de son propre terrain.', coop_name:'Nom du poulailler', build_started:'Construction de votre {coop} : prêt dans {t}', built_toast:'Votre {coop} est construit ! Remplissez-le avec des volailles du Marché.', coop_building:'Votre {coop} est encore en construction', building_sign:'En construction', under_construction:'En construction', ready_in:'Prêt dans {t}', construction_note:'Les ouvriers sont au travail. Une fois terminé, vous pourrez y installer des {breed}.', away_built:'{n} poulaillers terminés', away_built1:'Un poulailler est terminé', build_time:'{t} de construction', coop_renamed:'Poulailler renommé : {coop}', updated:'Jeu mis à jour (version {v})', land_note2:'Ce terrain est à vendre. Achetez-le, puis construisez-y un poulailler.', land_bought:'Terrain acheté : construisez-y un poulailler', need_land_first:'Il vous faut d’abord un terrain libre : achetez-en un ci-dessous, puis construisez.', coins_hint:'Pièces : {n}', eggs_hint:'Œufs fécondés dans votre panier : {n} sur {m}', now_in:'Actuellement : {coop} (terrain {plot})', move_to_btn:'Installer dans {coop}', plots_owned:'{n} terrains sur {max}',
   buy_land:'Acheter le terrain', incubator_slot:'Place de couveuse en plus', basket_up:'Panier plus grand (+40)', max_reached:'Amélioration maximale',
   basket:'Panier à œufs', sell_all:'Vendre tous les œufs', eggs_each:'{n} l’unité', fertile:'Œufs fécondés', fertile_note:'Faites-les éclore ou vendez-les comme œufs à couver.',
-  incubate:'Couver', incubator:'Couveuse', empty_slot:'Place libre', hatches_in:'Éclosion dans {t}', ready_wait:'Prêt à éclore. Faites de la place dans : {coop}.', hatched:'Un poussin {breed} est né : {name} !', est:'Qualité attendue : environ {q}',
+  hatch_takes:'Éclosion en {t}', hatch_time:'Couvaison', incubate:'Couver', incubator:'Couveuse', empty_slot:'Place libre', hatches_in:'Éclosion dans {t}', ready_wait:'Prêt à éclore. Faites de la place dans : {coop}.', hatched:'Un poussin {breed} est né : {name} !', est:'Qualité attendue : environ {q}',
   no_fertile:'Aucun œuf fécondé. Gardez un coq avec vos poules et ramassez leurs œufs.', no_eggs:'Le panier est vide. Touchez l’œuf au-dessus d’un poulailler pour ramasser.', no_plain_fertile:'Aucun œuf de consommation. Les {n} œufs fécondés de votre panier sont listés plus bas : faites éclore les meilleurs et vendez les autres.', fertile_in_basket:'{n} œufs fécondés (plus bas)', sell_fertile_all:'Vendre tous les œufs fécondés', keep_best:'Tout vendre sauf les {n} meilleurs',
   incubator_full:'La couveuse est pleine', slots:'{a} places utilisées sur {b}',
   shows_open:'Concours ouverts', next_show:'Prochain concours annoncé dans {t}', closes_in:'Jugement dans {t}', fee:'frais', prizes:'Prix', any_breed:'Toutes races', class:'Classe {breed}',
@@ -518,7 +519,7 @@ fr: {
   s_eggs:'Œufs pondus', s_hatched:'Poussins éclos', s_sold:'Volailles vendues', s_earned:'Pièces gagnées',
   lang:'Langue', speed:'Vitesse du jeu', speed_1:'Normale', speed_60:'Test ×60', speed_note:'La vitesse test fait passer 1 heure en 1 minute, pour essayer l’élevage et les concours rapidement.',
   time_title:'Comment passe le temps',
-  time_body:'La ferme continue quand le jeu est fermé. Un œuf éclot en 1 heure. Les poussins grandissent en 6 heures et les poules commencent à pondre. Les volailles sont adultes à 3 jours, pondent moins après 14 jours et partent au pâturage à 30 jours. Elles ne meurent jamais.',
+  time_body:'La ferme continue quand le jeu est fermé. Un œuf éclot en 45 minutes (poule soie) à 2 heures (Brahma). Les poussins grandissent en 6 heures et les poules commencent à pondre. Les volailles sont adultes à 3 jours, pondent moins après 14 jours et partent au pâturage à 30 jours. Elles ne meurent jamais.',
   away_body:'Si vous partez plus de 2 jours, la ferme se met en pause jusqu’à votre retour. Les pondoirs gardent environ une journée d’œufs (24) et les mangeoires se vident : passez chaque jour.',
   saved_here:'Votre ferme est enregistrée sur cet appareil uniquement.', saved_cloud:'Votre ferme est enregistrée sur cet appareil et dans votre compte Claude : elle est conservée lors des mises à jour et vous pouvez continuer sur un autre appareil.', saved_err:'Votre ferme est enregistrée sur cet appareil. L’enregistrement dans votre compte a échoué, le jeu va réessayer.', saved_big:'Votre ferme est enregistrée sur cet appareil. Elle est devenue trop grande pour être aussi enregistrée dans votre compte.', restored:'Votre ferme a été récupérée depuis votre compte', edited:'Cette sauvegarde a été modifiée hors du jeu.', reset:'Recommencer une ferme', reset_done:'Nouvelle ferme créée',
   welcome_title:'Bienvenue dans votre ferme', welcome_1:'Vous commencez avec une grange rouge, trois poules Rhode Island Red et un coq.',
@@ -635,7 +636,9 @@ function fmtDur(ms) {
   if (m) return `${m}${j.m}${m < 10 && sec ? ' ' + sec + j.s : ''}`;
   return `${sec}${j.s}`;
 }
-const realLeft = gameMs => gameMs / state.speed;   // countdowns show real time at the current speed
+const realLeft = gameMs => gameMs / state.speed;
+const hatchMs = breed => (BREEDS[breed] && BREEDS[breed].hatch || 60) * MIN;          // how long an egg of this breed takes in the incubator
+const incEnd = it => it.start + hatchMs(it.egg.child.breed);   // countdowns show real time at the current speed
 function placeLabel(p) { return p <= 3 ? t('place_' + p) : t('place_n', { n: p }); }
 
 /* =====================================================================
@@ -1053,7 +1056,7 @@ function simStep(step) {
   }
   if (state.fox && gt >= state.fox.next) foxVisit(gt);
   for (const it of state.inc.items) {
-    if (gt >= it.start + T.incubate && !it.waiting) tryHatch(it);
+    if (gt >= incEnd(it) && !it.waiting) tryHatch(it);
     else if (it.waiting && coopWithSpace(it.egg.child.breed)) tryHatch(it);
   }
   state.inc.items = state.inc.items.filter(it => !it.done);
@@ -1195,7 +1198,7 @@ function tryHatch(it) {
   const coop = coopWithSpace(it.egg.child.breed);
   if (!coop) { it.waiting = true; return; }
   const s = it.egg.child;
-  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, it.start + T.incubate), home: coop.id, pers: s.pers, fast: s.fast, trust: s.trust });
+  const b = makeBird({ breed: s.breed, sex: s.sex, traits: s.traits, geno: s.geno, gen: s.gen, line: s.line, sire: it.egg.sire, dam: it.egg.dam, born: Math.min(state.gt, incEnd(it)), home: coop.id, pers: s.pers, fast: s.fast, trust: s.trust });
   state.birds.push(b); it.done = true; settleIn(coop, b);
   state.stats.hatched++; state.stats.best = Math.max(state.stats.best, quality(b));
   if (b.breed === 'sil' && RARE_SIL.includes(b.colour)) state.stats.rare++;
@@ -3009,7 +3012,7 @@ const SHEETS = {
       node = [h('p', { class: 'note', text: t('catalogue_note') }),
         BREED_IDS.map(id => {
           const B = BREEDS[id], open = unlocked(id), k = id === 'sil' ? 'sil_white' : id;
-          const facts = [[t('bird_from'), coinPrice(Math.round(B.price * qMult(42) * .9))], [t('egg_value'), coinPrice(B.egg)], [t('lays'), t('lay_every', { t: fmtDur(B.lay * MIN) })], [t('coop_cost'), coinPrice(B.coop)]];
+          const facts = [[t('bird_from'), coinPrice(Math.round(B.price * qMult(42) * .9))], [t('egg_value'), coinPrice(B.egg)], [t('lays'), t('lay_every', { t: fmtDur(B.lay * MIN) })], [t('coop_cost'), coinPrice(B.coop)], [t('hatch_time'), fmtDur(hatchMs(id))]];
           const card = h('div', { class: 'card' + (open ? '' : ' locked') },
             h('div', { class: 'row' }, h('img', { class: 'portrait big cat', src: kindCard(k, 'h'), alt: '' }), h('img', { class: 'portrait big cat', src: kindCard(k, 'r'), alt: '' })),
             h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { style: 'font-weight:700;font-family:var(--display);font-size:17px', text: t('br_' + id) }), h('div', { class: 'small muted', text: t('coop_' + id) })), open ? h('span', { class: 'tag', text: t('locked_lvl', { n: B.lvl }) }) : lock(B.lvl)),
@@ -3042,7 +3045,7 @@ const SHEETS = {
       const e = it.egg;
       slots.push(h('div', { class: 'item', style: 'cursor:default' }, h('span', { class: 'eggdot', style: `background:${BREEDS[e.child.breed].eggCol}` }),
         h('div', { class: 'grow', style: 'display:flex;flex-direction:column;gap:5px' }, h('div', { class: 'small', style: 'font-weight:700', text: `${t('br_' + e.child.breed)} · ${e.sire.name} × ${e.dam.name}` }),
-          it.waiting ? h('div', { class: 'small warn', text: t('ready_wait', { coop: t('coop_' + e.child.breed) }) }) : [h('div', { class: 'small muted' }, timer(it.start + T.incubate, 'hatches_in')), progress(it.start, it.start + T.incubate)])));
+          it.waiting ? h('div', { class: 'small warn', text: t('ready_wait', { coop: t('coop_' + e.child.breed) }) }) : [h('div', { class: 'small muted' }, timer(incEnd(it), 'hatches_in')), progress(it.start, incEnd(it))])));
     }
     return { title: t('tab_hatch'), node: [
       h('div', { class: 'card' },
@@ -3059,7 +3062,7 @@ const SHEETS = {
         h('div', { style: 'display:grid;gap:8px' }, h('button', { class: 'btn good sm', onclick: () => actSellFertileAll(0) }, t('sell_fertile_all'), ' · ', coinPrice(state.basket.fertile.reduce((s, e) => s + fertileEggPrice(e), 0))),
           state.basket.fertile.length > 3 ? h('button', { class: 'btn alt sm', onclick: () => actSellFertileAll(2) }, t('keep_best', { n: 2 })) : null),
         h('div', { class: 'list' }, [...state.basket.fertile].sort((a, b) => eggQ(b) - eggQ(a)).map(e => h('div', { class: 'card', style: 'gap:8px' },
-        h('div', { class: 'row' }, h('span', { class: 'eggdot', style: `background:${BREEDS[e.child.breed].eggCol}` }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('br_' + e.child.breed) }), h('div', { class: 'small muted', text: `${e.sire.name} (${e.sire.q}) × ${e.dam.name} (${e.dam.q})` }), h('div', { class: 'small', text: t('est', { q: Math.round((e.sire.q + e.dam.q) / 2) }) }))),
+        h('div', { class: 'row' }, h('span', { class: 'eggdot', style: `background:${BREEDS[e.child.breed].eggCol}` }), h('div', { class: 'grow' }, h('div', { style: 'font-weight:700', text: t('br_' + e.child.breed) }), h('div', { class: 'small muted', text: `${e.sire.name} (${e.sire.q}) × ${e.dam.name} (${e.dam.q})` }), h('div', { class: 'tiny muted', text: t('hatch_takes', { t: fmtDur(realLeft(hatchMs(e.child.breed))) }) }), h('div', { class: 'small', text: t('est', { q: Math.round((e.sire.q + e.dam.q) / 2) }) }))),
         h('div', { class: 'btns' }, h('button', { class: 'btn sm', disabled: state.inc.items.length >= state.inc.slots, onclick: () => actIncubate(e.id) }, t('incubate')), h('button', { class: 'btn alt sm', onclick: () => actSellFertile(e.id) }, t('sell_for'), ' ', coinPrice(fertileEggPrice(e)))))))] : h('p', { class: 'small muted', text: t('no_fertile') }),
     ] };
   },
