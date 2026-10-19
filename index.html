@@ -52,6 +52,11 @@ body{margin:0;background:#4f7a35;color:var(--ink);font-family:var(--body);font-w
 html{background:#4f7a35}
 @media (display-mode: standalone){#app{background:#4f7a35}}
 .standalone #app{background:#4f7a35}
+/* iOS 26 draws home-screen apps under the clock and blurs whatever is there; a solid strip of the farm's green gives it nothing to blur */
+#topcap{display:none;position:fixed;top:0;left:0;right:0;height:calc(env(safe-area-inset-top,0px) + 14px);z-index:30;pointer-events:none;
+  background:linear-gradient(#4f7a35,#4f7a35 calc(100% - 14px),rgba(79,122,53,0))}
+@media (display-mode: standalone){#topcap{display:block}}
+.standalone #topcap{display:block}
 
 #stage{position:absolute;inset:0;overflow:hidden;background:#4f7a35}
 #farm{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
@@ -242,6 +247,7 @@ input[type=text]{font:600 17px var(--display);padding:11px 14px;border-radius:16
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
+<div id="topcap" aria-hidden="true"></div>
 <div id="app">
   <header class="topbar">
     <div class="brand" id="brand">Feather & Field</div>
@@ -290,7 +296,7 @@ const HEN_ODDS = 0.6, FERTILITY = 0.8, MUTATION = 0.04;
 const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
-const BUILD = '19 Oct 2026 18:30';
+const BUILD = '19 Oct 2026 18:50';
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -1971,6 +1977,7 @@ function fitStandalone() {
 }
 function layout() {
   fitStandalone();
+  const cap = document.getElementById('topcap'); capH = cap && getComputedStyle(cap).display !== 'none' ? Math.max(0, cap.offsetHeight - 14) : 0;
   const r = cv.getBoundingClientRect();
   view.vw = Math.max(1, r.width); view.vh = Math.max(1, r.height); view.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   cv.width = Math.round(view.vw * view.dpr); cv.height = Math.round(view.vh * view.dpr);
@@ -1992,10 +1999,10 @@ function clampCam() {
   if (!isFinite(view.x)) view.x = 0;
   if (!isFinite(view.y)) view.y = 0;
   view.x = clamp(view.x, 0, Math.max(0, W - view.vw / view.s));
-  const padT = (guideShown ? 170 : 64) / view.s, padB = 96 / view.s;      // the top bar (and the guide) and the tab bar float over the map: let its edges scroll clear of them
+  const padT = (capH + (guideShown ? 170 : 64)) / view.s, padB = 96 / view.s;      // the top bar (and the guide) and the tab bar float over the map: let its edges scroll clear of them
   view.y = clamp(view.y, -padT, Math.max(-padT, H - view.vh / view.s + padB));
 }
-let guideShown = false;
+let guideShown = false, capH = 0;      // capH: the solid strip behind the iPhone clock (0 elsewhere)
 function zoomAt(sx, sy, ns) {
   ns = clamp(ns, view.minS, view.maxS);
   const wx = view.x + sx / view.s, wy = view.y + sy / view.s;
