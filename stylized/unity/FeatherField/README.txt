@@ -11,7 +11,9 @@ What's inside
             FarmGame.cs: the farm's rules (stage 1): hens lay while the feeder has food, tap the nest to
                          collect (eggs are sold for coins), tap the feeder to fill it; saved on the device
             NestBox.cs, Feeder.cs: the nest's eggs and the feeder's grain
-            FarmHud.cs: coins and eggs at the top, bubbles over the nest and the feeder, messages
+            FarmHud.cs: coins and eggs at the top, bubbles over the nest and the feeder, messages, a bird's card
+            Rules.cs, BirdInfo.cs: every bird's name, traits, quality, grade, value and personality (as in the web game)
+            AppleTree.cs, AppleSeeker.cs, GrassEgg.cs: the low apples, the Glutton who jumps for them, her apple egg
 - Textures/ the painted meadow for the ground
 
 How to use it
@@ -42,3 +44,10 @@ Stage 1: eggs, coins and the feeder (19 Oct 2026)
 - The feeder's grain goes down; when it is low a bubble says so. Tap the feeder to fill it (60 coins).
 - For now hens lay about once a minute each, so there is something to see straight away.
 - The farm is saved on the device. Feather and Field > Start the farm again (clear its save) resets it.
+
+Stage 2 (part 1): birds you can get to know, and the Glutton's apples (19 Oct 2026)
+- After "Get latest from Claude", click Build starter farm again, then press Play.
+- Tap any bird: her card shows her name, grade, quality, what she is worth and her personality.
+- The hen by the big apple tree is a Glutton. Every minute or so she trots under a low apple, crouches, jumps and
+  knocks it down, then pecks it up. After two apples she lays an apple egg in the grass (worth three eggs): tap it.
+- One apple grows back every 3 minutes (five at most).

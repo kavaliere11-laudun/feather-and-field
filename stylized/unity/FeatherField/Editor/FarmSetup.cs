@@ -126,14 +126,28 @@ namespace FeatherField.EditorTools
             // ---- the birds
             var birds = new GameObject("Birds").transform;
             var layers = new List<HenWander>();
+            var infos = new List<BirdInfo>();
+            HenWander treeHen = null;
             foreach (var h in layout.hens)
             {
                 var w = MakeBird(h, layout, birds, mats);
-                if (w != null && h.model == "hen" && h.area != "tree") layers.Add(w);      // the hens in the yard lay into its nest
+                if (w == null) continue;
+                if (h.model == "hen" && h.area != "tree") layers.Add(w);      // the hens in the yard lay into its nest
+                var info = w.gameObject.AddComponent<BirdInfo>();             // who she is: filled in from the save when the game starts
+                info.rooster = h.model == "rooster";
+                info.slot = infos.Count;
+                if (h.area == "tree" && h.model == "hen" && treeHen == null) { info.appleLover = true; treeHen = w; }
+                var cc = w.gameObject.AddComponent<CapsuleCollider>();        // so a tap finds her
+                cc.center = new Vector3(0f, 0.17f, 0f); cc.radius = 0.13f; cc.height = 0.36f;
+                infos.Add(info);
             }
 
             // ---- stage 1 of the game: the nest, the feeder, the farm's rules and its on-screen counters
-            BuildGame(layers, mats);
+            var fg = BuildGame(layers, mats);
+            fg.birds = infos.ToArray();
+
+            // ---- stage 2: the apple tree's low apples, the Glutton who jumps for them, and her apple egg
+            if (layout.trees.Length > 0) BuildApples(fg, treeHen, Vec(layout.trees[0].pos), mats);
 
             // ---- save and frame
             if (!AssetDatabase.IsValidFolder(Root + "/Scenes")) AssetDatabase.CreateFolder(Root, "Scenes");
@@ -276,7 +290,7 @@ namespace FeatherField.EditorTools
         static readonly Vector3 NestPos = new Vector3(-0.9f, 0f, 0.74f);       // in the yard, by the nest box on the side of the coop
         static readonly Vector3 FeederPos = new Vector3(-0.75f, 0f, 1.25f);    // the galvanised feeder that comes with the coop
 
-        static void BuildGame(List<HenWander> layers, Dictionary<string, Material> mats)
+        static FarmGame BuildGame(List<HenWander> layers, Dictionary<string, Material> mats)
         {
             var egg = ExtraMaterial(mats, "FF_egg", new Color(0.80f, 0.56f, 0.38f), 0.35f);
 
@@ -315,6 +329,46 @@ namespace FeatherField.EditorTools
             var hud = game.AddComponent<FarmHud>();
             var fg = game.AddComponent<FarmGame>();
             fg.nest = nest; fg.feeder = feeder; fg.hud = hud; fg.layers = layers.ToArray();
+            return fg;
+        }
+
+        static void BuildApples(FarmGame fg, HenWander glutton, Vector3 trunk, Dictionary<string, Material> mats)
+        {
+            // five apples hanging under the canopy, on the sides of the tree the camera can see, all outside the pen
+            var holder = new GameObject("Low apples").transform;
+            holder.position = trunk;
+            Vector3 toCamera = new Vector3(-0.7071f, 0f, 0.7071f), right = new Vector3(-0.7071f, 0f, -0.7071f);
+            var apples = new List<Transform>();
+            foreach (float deg in new[] { 0f, 45f, 90f, 135f, 180f })
+            {
+                float a = deg * Mathf.Deg2Rad;
+                Vector3 p = trunk + (right * Mathf.Cos(a) + toCamera * Mathf.Sin(a)) * 0.75f;
+                p.y = 0.98f;
+                var go = Place("apple", Vector3.zero, deg * 2f, 1.4f, holder, mats, false);
+                if (go == null) continue;
+                go.name = "Low apple";
+                go.transform.position = p;
+                apples.Add(go.transform);
+            }
+            var tree = holder.gameObject.AddComponent<AppleTree>();
+            tree.apples = apples.ToArray();
+            fg.appleTree = tree;
+            if (glutton != null)
+            {
+                var seeker = glutton.gameObject.AddComponent<AppleSeeker>();
+                seeker.tree = tree;
+            }
+
+            // her apple egg: rosy gold, a little bigger than an ordinary egg, with a generous tap area
+            var appleEggMat = ExtraMaterial(mats, "FF_appleegg", new Color(0.95f, 0.66f, 0.42f), 0.6f);
+            var eggGo = new GameObject("Apple egg");
+            eggGo.transform.position = trunk + toCamera * 0.6f;
+            var vis = Prim(PrimitiveType.Sphere, "Egg", eggGo.transform, new Vector3(0f, 0.045f, 0f), new Vector3(0.07f, 0.09f, 0.07f), appleEggMat);
+            var ge = eggGo.AddComponent<GrassEgg>();
+            ge.visual = vis.transform;
+            var sc = eggGo.AddComponent<SphereCollider>();
+            sc.center = new Vector3(0f, 0.08f, 0f); sc.radius = 0.18f;
+            fg.appleEgg = ge;
         }
 
         static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale, Material m)

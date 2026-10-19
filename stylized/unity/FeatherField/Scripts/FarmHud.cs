@@ -18,6 +18,8 @@ namespace FeatherField
         static readonly Color32 ToastCol = new Color32(30, 52, 38, 235);
         static readonly Color32 Warn = new Color32(255, 244, 211, 245);
         static readonly Color32 Empty = new Color32(200, 48, 42, 245);
+        static readonly Color32 AppleEggCol = new Color32(236, 168, 96, 255);
+        static readonly Color32 Muted = new Color32(95, 111, 92, 255);
 
         Canvas canvas;
         RectTransform root, topBar, coinPill, eggPill, nestBubble, feedBubble, toastBox;
@@ -31,6 +33,10 @@ namespace FeatherField
         int shownNest = -1;
         float toastLeft, coinBump, eggBump;
         int flying;
+        RectTransform card, appleBubble, gradeBox;
+        Text cardName, cardSub, cardGrade, cardInfo, cardPers, appleText;
+        Image gradeBg;
+        BirdInfo shownBird;
 
         void Awake() { Build(); }
 
@@ -71,6 +77,29 @@ namespace FeatherField
             feedBg = feedBubble.GetComponent<Image>();
             nestBubble.gameObject.SetActive(false);
             feedBubble.gameObject.SetActive(false);
+
+            // a bubble over an apple egg in the grass
+            appleBubble = Pill("Apple egg bubble", root, Vector2.zero, 150f, Glass, out appleText);
+            Dot(appleBubble, new Vector2(-52f, 0f), new Vector2(16f, 21f), AppleEggCol);
+            appleText.text = "  Apple egg!";
+            appleText.fontSize = 18;
+            appleBubble.gameObject.SetActive(false);
+
+            // a bird's card, shown when she is tapped
+            card = Box("Bird card", root, new Vector2(0.5f, 0f), new Vector2(370f, 196f), Glass);
+            card.pivot = new Vector2(0.5f, 0f);
+            card.GetComponent<Image>().pixelsPerUnitMultiplier = 31f / 22f;
+            cardName = TextAt(card, 20f, 14f, 330f, 30f, 24, Ink, FontStyle.Bold);
+            cardSub = TextAt(card, 20f, 46f, 330f, 22f, 16, Muted, FontStyle.Normal);
+            gradeBox = Box("Grade", card, new Vector2(0f, 1f), new Vector2(50f, 30f), Ink);
+            gradeBox.pivot = new Vector2(0f, 1f);
+            gradeBox.anchoredPosition = new Vector2(20f, -76f);
+            gradeBg = gradeBox.GetComponent<Image>();
+            cardGrade = Label(gradeBox, 17, Color.white, FontStyle.Bold);
+            cardInfo = TextAt(card, 80f, 76f, 270f, 30f, 17, Ink, FontStyle.Bold);
+            cardPers = TextAt(card, 20f, 114f, 330f, 70f, 15, Ink, FontStyle.Normal);
+            cardPers.horizontalOverflow = HorizontalWrapMode.Wrap;
+            card.gameObject.SetActive(false);
         }
 
         void LateUpdate()
@@ -118,12 +147,59 @@ namespace FeatherField
                 feedText.text = empty ? "Feeder empty · tap: " + game.feedPrice : "Feed low · tap: " + game.feedPrice;
             }
 
+            // the apple egg's bubble
+            var egg = game.appleEgg;
+            bool showApple = egg != null && egg.gameObject.activeSelf && ToCanvas(egg.transform.position + Vector3.up * 0.32f, out p);
+            appleBubble.gameObject.SetActive(showApple);
+            if (showApple) appleBubble.anchoredPosition = p + new Vector2(0f, Mathf.Sin(Time.time * 3f + 1f) * 3f);
+
+            // the bird card sits above the bottom edge (and the iPhone's home bar)
+            if (card.gameObject.activeSelf)
+            {
+                if (shownBird == null) HideBird();
+                else card.anchoredPosition = new Vector2(0f, Screen.safeArea.yMin / Mathf.Max(0.01f, canvas.scaleFactor) + 16f);
+            }
+
             // messages fade away
             if (toastLeft > 0f)
             {
                 toastLeft -= Time.deltaTime;
                 toastGroup.alpha = Mathf.Clamp01(toastLeft / 0.4f);
             }
+        }
+
+        /// <summary>Shows a bird's card: her name, breed and sex, grade, quality, value and personality.</summary>
+        public void ShowBird(BirdInfo b)
+        {
+            if (b == null || b.data == null || card == null) return;
+            var d = b.data;
+            int q = Rules.Quality(d);
+            string g = Rules.Grade(q);
+            shownBird = b;
+            cardName.text = d.name;
+            cardSub.text = "Rhode Island Red " + (d.rooster ? "rooster" : "hen") + " · " + Rules.PersonalityName(d);
+            cardGrade.text = g;
+            gradeBg.color = GradeColour(g);
+            cardGrade.color = (g == "D" || g == "★") ? (Color)Ink : Color.white;
+            cardInfo.text = "Quality " + q + " · worth " + Rules.Value(d) + " coins";
+            cardPers.text = Rules.PersonalityText(d) + "\nTap anywhere to close.";
+            card.gameObject.SetActive(true);
+        }
+
+        public void HideBird()
+        {
+            shownBird = null;
+            if (card != null) card.gameObject.SetActive(false);
+        }
+
+        static Color GradeColour(string g)
+        {
+            if (g == "★") return new Color32(225, 181, 37, 255);
+            if (g == "A+") return new Color32(47, 122, 58, 255);
+            if (g == "A") return new Color32(61, 138, 69, 255);
+            if (g == "B") return new Color32(42, 111, 128, 255);
+            if (g == "C") return new Color32(123, 127, 116, 255);
+            return new Color32(201, 195, 176, 255);
         }
 
         public void Toast(string text)
@@ -205,6 +281,18 @@ namespace FeatherField
             label = Label(rt, 20, Ink, FontStyle.Bold);
             label.rectTransform.offsetMin = new Vector2(22f, 0f);
             return rt;
+        }
+
+        Text TextAt(RectTransform parent, float x, float y, float w, float h, int size, Color color, FontStyle style)
+        {
+            var t = Label(parent, size, color, style);
+            var rt = t.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(w, h);
+            rt.anchoredPosition = new Vector2(x, -y);
+            t.alignment = TextAnchor.UpperLeft;
+            return t;
         }
 
         void Dot(RectTransform parent, Vector2 pos, Vector2 size, Color color)

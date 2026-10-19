@@ -1,5 +1,5 @@
 {
- "version": "19 Oct 2026 13:58",
+ "version": "19 Oct 2026 19:44",
  "files": [
   {
    "path": "Data/layout.json",
@@ -13,8 +13,8 @@
   },
   {
    "path": "Editor/FarmSetup.cs",
-   "sha1": "b525ccc11c916b0df9bae0b512fcdbee3c4384b4",
-   "size": 24695
+   "sha1": "35345f2bdfe510d1c7124893c58426aef80293e2",
+   "size": 27756
   },
   {
    "path": "Editor/FeatherFieldUpdater.cs",
@@ -98,8 +98,23 @@
   },
   {
    "path": "README.txt",
-   "sha1": "83fc5573ac53d8f908ee5e9d2e89728ea30da966",
-   "size": 2938
+   "sha1": "5b79561b11a0c0480dbfd35602e76e00cdd6dc1f",
+   "size": 3740
+  },
+  {
+   "path": "Scripts/AppleSeeker.cs",
+   "sha1": "03e4b5fd29ab493cdd61934c19ae13b9a325800d",
+   "size": 5525
+  },
+  {
+   "path": "Scripts/AppleTree.cs",
+   "sha1": "8d5f20c32382255612d464772309015c23e56662",
+   "size": 2752
+  },
+  {
+   "path": "Scripts/BirdInfo.cs",
+   "sha1": "45aa59aaa9c5bc206e5114f57216dba21602d26d",
+   "size": 539
   },
   {
    "path": "Scripts/CameraRig.cs",
@@ -108,13 +123,13 @@
   },
   {
    "path": "Scripts/FarmGame.cs",
-   "sha1": "f75af5aa4b33dfec0a7e34fb4f04d6c2e0627fa7",
-   "size": 10506
+   "sha1": "b78be40dea55e0fb50e2377eb90f35e2f5fe12a3",
+   "size": 16411
   },
   {
    "path": "Scripts/FarmHud.cs",
-   "sha1": "cf6b0c43daabd93c0d89656c96419472ed3eaaa8",
-   "size": 11937
+   "sha1": "4dea6682ba046ea518da3b491b2b14b543e1eff4",
+   "size": 16431
   },
   {
    "path": "Scripts/Feeder.cs",
@@ -122,14 +137,24 @@
    "size": 1191
   },
   {
+   "path": "Scripts/GrassEgg.cs",
+   "sha1": "0820b6e462f8a9968f9f3cceccde38288e580cd2",
+   "size": 1575
+  },
+  {
    "path": "Scripts/HenWander.cs",
-   "sha1": "71433361a32f0c2f98f38ad138cfab8fac748323",
-   "size": 6366
+   "sha1": "0554a5006a2b044f90d4d9443f9e80489669e4e2",
+   "size": 6588
   },
   {
    "path": "Scripts/NestBox.cs",
    "sha1": "2c33e8ac9848def1b907144f5221fdb72ea9c457",
    "size": 1973
+  },
+  {
+   "path": "Scripts/Rules.cs",
+   "sha1": "b39a914a4588fd58c8507f04a27e5be6c0586b83",
+   "size": 6160
   },
   {
    "path": "Textures/meadow.png",

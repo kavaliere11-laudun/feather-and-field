@@ -32,6 +32,9 @@ namespace FeatherField
         int errand;                 // 0 pottering about, 1 going to the nest, 2 sitting on it
         float errandT;
 
+        /// <summary>Another script (an apple-loving Glutton's AppleSeeker) is moving her: pottering about waits.</summary>
+        [System.NonSerialized] public bool paused;
+
         /// <summary>True while this hen is on her way to the nest or sitting on it.</summary>
         public bool Busy { get { return errand != 0; } }
 
@@ -73,7 +76,7 @@ namespace FeatherField
             target = transform.position;
         }
 
-        void SetPeck(bool down)
+        public void SetPeck(bool down)
         {
             if (standModel) standModel.SetActive(!down);
             if (peckModel) peckModel.SetActive(down);
@@ -83,6 +86,7 @@ namespace FeatherField
         {
             float dt = Time.deltaTime;
             phase += dt;
+            if (paused) return;
             if (errand != 0) { Errand(dt); return; }
 
             if (peck > 0f)                                   // pecking: head down, up, down...
@@ -154,7 +158,7 @@ namespace FeatherField
             PickTarget();                                   // and off she goes again
         }
 
-        void Waddle(bool walking)
+        public void Waddle(bool walking)
         {
             if (!visual) return;
             float w = walking ? Mathf.Sin(phase * 16f) : 0f;

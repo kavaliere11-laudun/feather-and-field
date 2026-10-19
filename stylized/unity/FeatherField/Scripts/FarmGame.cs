@@ -17,13 +17,19 @@ namespace FeatherField
         public float feeder = 1f;          // 0 = empty, 1 = full
         public long eggsCollected = 0;
         public long savedAt = 0;           // when it was saved (UTC ticks)
+        public BirdRecord[] birds = new BirdRecord[0];
+        public int apples = -1;            // apples on the tree (-1: not saved yet, the tree starts full)
+        public int applesEaten = 0;        // by the Glutton since her last apple egg
+        public bool appleEgg = false;      // an apple egg waiting in the grass
+        public float appleEggX = 0f, appleEggZ = 0f;
         public string check = "";
     }
 
     /// <summary>
-    /// Stage 1 of the farm's rules: hens lay into the nest while the feeder has food; tap the nest to collect
-    /// (the eggs are sold at once for coins); tap the feeder to fill it. Saved on the device; while the game is
-    /// closed the farm carries on for up to two days.
+    /// The farm's rules. Stage 1: hens lay into the nest while the feeder has food; tap the nest to collect (the eggs are
+    /// sold at once for coins); tap the feeder to fill it. Stage 2: every bird has a name, traits, a grade, a value and a
+    /// personality (tap her for her card); the Glutton by the apple tree jumps for apples, and two apples make an apple egg.
+    /// Saved on the device; while the game is closed the farm carries on for up to two days.
     /// </summary>
     public class FarmGame : MonoBehaviour
     {
@@ -41,6 +47,10 @@ namespace FeatherField
         public Feeder feeder;
         public FarmHud hud;
         public HenWander[] layers = new HenWander[0];
+        public BirdInfo[] birds = new BirdInfo[0];
+        public AppleTree appleTree;
+        public GrassEgg appleEgg;
+        public int appleEggEggs = 3;             // an apple egg is worth this many ordinary eggs
 
         public const string SaveKey = "FeatherField.save.v1";
         const string Salt = "ff::feather-field::unity::2026";
@@ -62,11 +72,34 @@ namespace FeatherField
         public int NestEggs { get { return save != null ? save.nestEggs : 0; } }
         public float FeederLevel { get { return save != null ? save.feeder : 0f; } }
         public long EggsCollected { get { return save != null ? save.eggsCollected : 0; } }
+        public bool AppleWanted { get { return save != null && !save.appleEgg; } }
 
         void Awake()
         {
             Instance = this;
             Load();
+            AssignBirds();
+        }
+
+        // every bird on the farm gets her record from the save (new birds get a name, traits and a personality)
+        void AssignBirds()
+        {
+            var used = new System.Collections.Generic.HashSet<string>();
+            var rnd = new System.Random(System.Environment.TickCount);
+            var list = new BirdRecord[birds.Length];
+            for (int i = 0; i < birds.Length; i++)
+            {
+                if (birds[i] == null) continue;
+                BirdRecord r = i < save.birds.Length ? Rules.Clean(save.birds[i], birds[i].rooster) : null;
+                if (r != null && used.Contains(r.name)) r.name = r.name.Length < 18 ? r.name + " " + (i + 1) : r.name;
+                if (r == null) r = Rules.NewBird(birds[i].rooster, rnd, used);
+                if (birds[i].appleLover) r.pers = (int)Personality.Glutton;        // the hen by the apple tree loves her food
+                used.Add(r.name);
+                list[i] = r;
+                birds[i].data = r;
+            }
+            save.birds = list;
+            dirty = true;
         }
 
         void Start()
@@ -75,8 +108,10 @@ namespace FeatherField
             for (int i = 0; i < layTimers.Length; i++) layTimers[i] = Random.Range(4f, layEverySeconds * 0.6f);
             if (nest != null) nest.Show(save.nestEggs, false);
             if (feeder != null) feeder.Show(save.feeder);
+            if (appleTree != null) appleTree.SetCount(save.apples < 0 ? appleTree.Max : save.apples);
+            if (appleEgg != null) appleEgg.Show(save.appleEgg, AppleEggSpot(), false);
             if (hud != null && awayEggs > 0) hud.Toast("While you were away: " + awayEggs + (awayEggs == 1 ? " new egg" : " new eggs") + " in the nest.");
-            else if (hud != null) hud.Toast("Tap the nest to collect eggs. Tap the feeder to fill it.");
+            else if (hud != null) hud.Toast("Tap the nest for eggs, the feeder to fill it, and any bird to see her card.");
         }
 
         void Update()
@@ -96,6 +131,11 @@ namespace FeatherField
                 dirty = true;
             }
             if (feeder != null) feeder.Show(save.feeder);
+            if (appleTree != null)
+            {
+                appleTree.Tick(dt);
+                if (appleTree.Count != save.apples) { save.apples = appleTree.Count; dirty = true; }
+            }
             HandleTaps();
             saveTimer += dt;
             if (dirty && saveTimer > 5f) { saveTimer = 0f; Save(); }
@@ -123,6 +163,43 @@ namespace FeatherField
                 hud.FlyEggs(nest != null ? nest.transform.position : Vector3.zero, n);
                 hud.Toast("+" + n + (n == 1 ? " egg" : " eggs") + ", sold for " + earned + " coins");
             }
+            Save();
+        }
+
+        // ------------------------------------------------------------------ the Glutton and her apples
+        Vector3 AppleEggSpot()
+        {
+            return new Vector3(save.appleEggX, 0f, save.appleEggZ);
+        }
+
+        /// <summary>The Glutton has eaten an apple: two make an apple egg, laid in the grass beside her.</summary>
+        public void AppleEaten(BirdInfo who, Vector3 where)
+        {
+            string name = who != null && who.data != null ? who.data.name : "Your hen";
+            save.applesEaten++;
+            if (save.applesEaten >= 2 && !save.appleEgg && appleEgg != null)
+            {
+                save.applesEaten = 0;
+                save.appleEgg = true;
+                Vector3 spot = where - (who != null ? who.transform.forward : Vector3.forward) * 0.18f;
+                save.appleEggX = spot.x; save.appleEggZ = spot.z;
+                appleEgg.Show(true, AppleEggSpot(), true);
+                if (hud != null) hud.Toast(name + " ate two apples and laid an apple egg! Tap it to collect.");
+            }
+            else if (hud != null) hud.Toast(name + " ate an apple. Yum!");
+            Save();
+        }
+
+        public void CollectAppleEgg()
+        {
+            if (!save.appleEgg) return;
+            long earned = (long)eggPrice * appleEggEggs;
+            save.appleEgg = false;
+            save.eggsCollected += 1;
+            save.coins = System.Math.Min(MaxCoins, save.coins + earned);
+            Vector3 at = AppleEggSpot();
+            if (appleEgg != null) appleEgg.Show(false, at, false);
+            if (hud != null) { hud.FlyEggs(at, 1); hud.Toast("An apple egg! Sold for " + earned + " coins"); }
             Save();
         }
 
@@ -180,16 +257,20 @@ namespace FeatherField
             var cam = Camera.main;
             if (cam == null) return;
             RaycastHit hit;
-            if (!Physics.Raycast(cam.ScreenPointToRay(screenPos), out hit, 500f)) return;
-            if (hit.collider.GetComponentInParent<NestBox>() != null) CollectEggs();
-            else if (hit.collider.GetComponentInParent<Feeder>() != null) FillFeeder();
+            if (!Physics.Raycast(cam.ScreenPointToRay(screenPos), out hit, 500f)) { if (hud != null) hud.HideBird(); return; }
+            var bird = hit.collider.GetComponentInParent<BirdInfo>();
+            if (hit.collider.GetComponentInParent<GrassEgg>() != null) { if (hud != null) hud.HideBird(); CollectAppleEgg(); }
+            else if (bird != null) { if (hud != null) hud.ShowBird(bird); }
+            else if (hit.collider.GetComponentInParent<NestBox>() != null) { if (hud != null) hud.HideBird(); CollectEggs(); }
+            else if (hit.collider.GetComponentInParent<Feeder>() != null) { if (hud != null) hud.HideBird(); FillFeeder(); }
+            else if (hud != null) hud.HideBird();
         }
 
         // ------------------------------------------------------------------ saving
         string Sign(FarmSave s)
         {
             string body = s.version + "|" + s.coins + "|" + s.nestEggs + "|" + s.feeder.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
-                + "|" + s.eggsCollected + "|" + s.savedAt + "|" + Salt;
+                + "|" + s.eggsCollected + "|" + s.savedAt + "|" + s.apples + "|" + s.applesEaten + "|" + s.appleEgg + "|" + BirdsKey(s) + "|" + Salt;
             using (var sha = System.Security.Cryptography.SHA1.Create())
             {
                 byte[] h = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(body));
@@ -197,6 +278,15 @@ namespace FeatherField
                 for (int i = 0; i < 8; i++) sb.Append(h[i].ToString("x2"));
                 return sb.ToString();
             }
+        }
+
+        static string BirdsKey(FarmSave s)
+        {
+            var sb = new System.Text.StringBuilder();
+            if (s.birds != null)
+                foreach (var b in s.birds)
+                    if (b != null) sb.Append(b.name).Append(',').Append(b.type).Append(',').Append(b.plum).Append(',').Append(b.size).Append(',').Append(b.lay).Append(',').Append(b.pers).Append(';');
+            return sb.ToString();
         }
 
         public void Save()
@@ -225,6 +315,13 @@ namespace FeatherField
             save.nestEggs = Mathf.Clamp(save.nestEggs, 0, nestCapacity);
             save.feeder = float.IsNaN(save.feeder) ? 0f : Mathf.Clamp01(save.feeder);
             save.eggsCollected = System.Math.Max(0L, save.eggsCollected);
+            if (save.birds == null) save.birds = new BirdRecord[0];
+            int maxApples = appleTree != null ? appleTree.apples.Length : 0;
+            save.apples = save.apples < 0 ? -1 : Mathf.Clamp(save.apples, 0, maxApples);
+            save.applesEaten = Mathf.Clamp(save.applesEaten, 0, 1);
+            Vector3 tp = appleTree != null ? appleTree.transform.position : Vector3.zero;          // an apple egg is always near the tree
+            if (float.IsNaN(save.appleEggX) || float.IsNaN(save.appleEggZ) || Mathf.Abs(save.appleEggX - tp.x) > 1.6f || Mathf.Abs(save.appleEggZ - tp.z) > 1.6f)
+            { save.appleEggX = tp.x - 0.55f; save.appleEggZ = tp.z + 0.6f; }
             // time away: the farm carries on for up to two days; a clock moved backwards gives nothing
             double away = (System.DateTime.UtcNow.Ticks - save.savedAt) / (double)System.TimeSpan.TicksPerSecond;
             if (save.savedAt <= 0 || away < 0) away = 0;
@@ -241,6 +338,8 @@ namespace FeatherField
             int before = save.nestEggs;
             save.nestEggs = Mathf.Min(nestCapacity, save.nestEggs + Mathf.Max(0, laid));
             awayEggs = save.nestEggs - before;
+            if (appleTree != null && save.apples >= 0)
+                save.apples = Mathf.Min(appleTree.apples.Length, save.apples + Mathf.FloorToInt(seconds / Mathf.Max(1f, appleTree.regrowSeconds)));
         }
 
         void OnApplicationPause(bool paused) { if (paused) Save(); }
