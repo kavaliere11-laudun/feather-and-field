@@ -286,7 +286,8 @@ function applyGrass() { for (const g of grassSets) g.mesh.count = Math.max(1, Ma
 // ------------------------------------------------------------------ the birds: walk, stop, peck, waddle, and keep a little room around each other
 const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Biscuit', 'Nutmeg', 'Poppy', 'Daisy', 'Pearl', 'Ginger'];
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald'];
-const ROOM = 0.45, PERSONAL = 0.26;
+const ROOM = 0.5, PERSONAL = 0.34;                // a new spot this far from everyone; stop walking when someone is this close ahead
+const BODY = 0.32, CHICK_BODY = 0.2;               // birds never stand closer than this: they gently step apart
 let blobGeo, blobMat;
 
 class Bird {
@@ -342,7 +343,7 @@ class Bird {
     }
     return false;
   }
-  tooClose() { for (const b of birds) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < 0.2) return true; return false; }
+  tooClose() { for (const b of birds) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < 0.3) return true; return false; }
   setPeck(down) { this.stand.visible = !down; this.peck.visible = down; }
   waddle(walking) {
     const w = walking ? Math.sin(this.phase * 16) : 0;
@@ -353,6 +354,7 @@ class Bird {
     this.phase += dt;
     if (this.hop > 0) { this.hop = Math.max(0, this.hop - dt * 2.2); }
     if (this.peckT > 0) {
+      if (this.tooClose()) { this.peckT = 0; this.setPeck(false); this.wait = 0.1; return; }    // someone came too close: move along
       this.peckT -= dt; this.setPeck((this.peckT % 0.6) > 0.25); this.waddle(false);
       if (this.peckT <= 0) { this.setPeck(false); this.wait = 0.4 + this.r() * 1.1; }
       return;
@@ -378,6 +380,23 @@ class Bird {
       if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; } else this.wait = 0.5;
     }
     this.waddle(facing);
+  }
+}
+
+// birds never overlap: two that end up too close gently step apart (each half the way, if the spot is free)
+function separate(dt) {
+  const k = Math.min(1, dt * 8);
+  for (let i = 0; i < birds.length; i++) for (let j = i + 1; j < birds.length; j++) {
+    const a = birds[i].root.position, b = birds[j].root.position;
+    const min = birds[i].kind === 'chick' || birds[j].kind === 'chick' ? CHICK_BODY : BODY;
+    let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
+    if (d >= min) continue;
+    if (d < 1e-4) { dx = 1; dz = 0; d = 1; } else { dx /= d; dz /= d; }
+    const push = (min - Math.min(d, min)) * 0.5 * k;
+    const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
+    const aFree = birds[i].free(ax, az), bFree = birds[j].free(bx, bz);
+    if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
+    if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }
   }
 }
 
@@ -483,6 +502,7 @@ function frame(now) {
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   for (const b of birds) b.update(dt);
+  separate(dt);
   placeTag(dt);
   renderer.render(scene, camera);
   // how smooth it is: a frame is late when it came much later than planned (1/60 s while touched, 1/30 s otherwise)
@@ -521,6 +541,7 @@ function showReadout() {
 
 document.addEventListener('visibilitychange', () => { lastSim = 0; meter.since = 0; meter.frames = 0; });
 
+window.__separate = separate;
 window.__farm = { birds, view, renderer, scene, camera, quality: () => q, meter, setQuality: (n) => { while (q < n) stepDown(); } };
 start().catch(err => {
   console.error(err);

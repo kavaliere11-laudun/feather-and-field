@@ -59,7 +59,7 @@ await p.screenshot({ path: 'shot_low.png' });
 
 // the birds keep moving and stay in the yard
 const pos1 = await p.evaluate(() => window.__farm.birds.map(b => [b.root.position.x, b.root.position.z]));
-await p.waitForTimeout(4000);
+await p.waitForTimeout(9000);                          // the test browser draws slowly: give the birds time
 const res = await p.evaluate((pos1) => {
   const f = window.__farm; let moved = 0, out = 0;
   f.birds.forEach((b, i) => { if (Math.hypot(b.root.position.x - pos1[i][0], b.root.position.z - pos1[i][1]) > 0.02) moved++; });
