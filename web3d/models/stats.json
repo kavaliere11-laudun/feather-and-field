@@ -1,0 +1,87 @@
+{
+ "hen_stand": {
+  "tris": 5000,
+  "verts": 2574,
+  "prims": 3
+ },
+ "hen_peck": {
+  "tris": 5000,
+  "verts": 2574,
+  "prims": 3
+ },
+ "rooster_stand": {
+  "tris": 5500,
+  "verts": 2832,
+  "prims": 3
+ },
+ "rooster_peck": {
+  "tris": 5500,
+  "verts": 2832,
+  "prims": 3
+ },
+ "chick_stand": {
+  "tris": 2200,
+  "verts": 1134,
+  "prims": 3
+ },
+ "chick_peck": {
+  "tris": 2200,
+  "verts": 1134,
+  "prims": 3
+ },
+ "coop": {
+  "tris": 29674,
+  "verts": 16648,
+  "prims": 4
+ },
+ "apple_tree": {
+  "tris": 16000,
+  "verts": 8997,
+  "prims": 2
+ },
+ "apple_tree_b": {
+  "tris": 15998,
+  "verts": 9032,
+  "prims": 2
+ },
+ "grass_tuft_0": {
+  "tris": 96,
+  "verts": 120,
+  "prims": 1
+ },
+ "grass_tuft_1": {
+  "tris": 112,
+  "verts": 140,
+  "prims": 1
+ },
+ "grass_tuft_2": {
+  "tris": 128,
+  "verts": 160,
+  "prims": 1
+ },
+ "flower_daisy": {
+  "tris": 300,
+  "verts": 170,
+  "prims": 2
+ },
+ "flower_butter": {
+  "tris": 36,
+  "verts": 22,
+  "prims": 2
+ },
+ "flower_clover": {
+  "tris": 36,
+  "verts": 22,
+  "prims": 2
+ },
+ "apple": {
+  "tris": 184,
+  "verts": 96,
+  "prims": 2
+ },
+ "path": {
+  "tris": 632,
+  "verts": 477,
+  "prims": 1
+ }
+}
