@@ -1,5 +1,5 @@
 {
- "version": "19 Oct 2026 23:12",
+ "version": "20 Oct 2026 07:44",
  "files": [
   {
    "path": "Data/layout.json",
@@ -108,8 +108,8 @@
   },
   {
    "path": "README.txt",
-   "sha1": "01e722fcf563f5cdd7a5b9f40028385438623d0a",
-   "size": 6104
+   "sha1": "73a47ea20f121fbf2a9dd9a68ef9edc61558d909",
+   "size": 6672
   },
   {
    "path": "Scripts/AppleSeeker.cs",
@@ -128,8 +128,8 @@
   },
   {
    "path": "Scripts/CameraRig.cs",
-   "sha1": "9bded4a740e6abbb4339914ffa573a06dfefbd2a",
-   "size": 4590
+   "sha1": "098215661c0044628f347b40794734cf678d5aea",
+   "size": 4733
   },
   {
    "path": "Scripts/FarmGame.cs",
@@ -138,8 +138,8 @@
   },
   {
    "path": "Scripts/FarmHud.cs",
-   "sha1": "6751821e5af793e0a4b2924c1f74ba57229e1275",
-   "size": 36430
+   "sha1": "63b0f090e71c8dc0f44bd89d892caac522364a6f",
+   "size": 41248
   },
   {
    "path": "Scripts/Feeder.cs",

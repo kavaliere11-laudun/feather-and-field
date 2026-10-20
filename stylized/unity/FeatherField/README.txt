@@ -81,3 +81,10 @@ The Glutton lives in the coop (19 Oct 2026)
   and walks back in. Two apples still make an apple egg, left in the grass by the tree.
 - Any grown Glutton does this, including ones that hatch on the farm.
 - With the bigger pen, the coop now holds 6 birds.
+
+Hatchery list and smaller bubbles (20 Oct 2026)
+- After "Get latest from Claude", click Build starter farm again, then press Play.
+- The Hatchery's list scrolls: drag it, or scroll over it with the trackpad. No more pages.
+- Eggs from the same parents share one row ("Chick about 49 (C) · 4 eggs"): Incubate puts one in, Sell sells one.
+- When the incubator is full, the eggs only show Sell, with a note saying another can go in when one hatches.
+- The bubbles are smaller: the nest shows an egg and a number, the feeder "Low" or "Empty", the apple egg just an egg.

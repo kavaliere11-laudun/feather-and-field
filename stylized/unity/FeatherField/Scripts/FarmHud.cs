@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace FeatherField
 {
@@ -27,8 +30,9 @@ namespace FeatherField
         static readonly Color32 RowCol = new Color32(244, 237, 220, 255);
         static readonly Color32 Off = new Color32(208, 210, 200, 255);
         static readonly Color32 BarBg = new Color32(226, 215, 190, 255);
+        static readonly Color32 Grain = new Color32(217, 180, 90, 255);
 
-        class Btn { public RectTransform rt; public System.Action act; }
+        class Btn { public RectTransform rt; public System.Action act; public RectTransform clip; }     // clip: only where it shows
         class IncRow { public int index; public Text line2, time; public RectTransform bar; public float barW; }
 
         Canvas canvas;
@@ -44,7 +48,7 @@ namespace FeatherField
         float toastLeft, coinBump, eggBump, hatchBump;
         int flying;
         RectTransform card, appleBubble, gradeBox;
-        Text cardName, cardSub, cardGrade, cardInfo, cardPers, cardFamily, cardHint, appleText;
+        Text cardName, cardSub, cardGrade, cardInfo, cardPers, cardFamily, cardHint;
         Image gradeBg;
         BirdInfo shownBird;
 
@@ -52,12 +56,16 @@ namespace FeatherField
         readonly List<Btn> fixedBtns = new List<Btn>();
         readonly List<Btn> rowBtns = new List<Btn>();
         readonly List<IncRow> incRows = new List<IncRow>();
-        RectTransform hatchBtn, badge, panel, panelRows, sellBtn;
+        RectTransform hatchBtn, badge, panel, panelRows, sellBtn, viewport, content;
         Text badgeText, sellText;
         Image sellBg;
-        int shownChanges = -1, page;
+        int shownChanges = -1;
         Vector2 shownCanvas;
         float sellArmedUntil, cardRefresh;
+        // the Hatchery's list scrolls: drag it (finger or mouse), or scroll over it (trackpad or mouse wheel)
+        float scrollY, scrollVel, contentH, viewH;
+        bool scrollDrag;
+        Vector2 dragLast;
 
         void Awake() { Instance = this; Build(); }
 
@@ -92,21 +100,13 @@ namespace FeatherField
             toastGroup = toastBox.gameObject.AddComponent<CanvasGroup>();
             toastGroup.alpha = 0f;
 
-            // bubbles over the nest and the feeder
-            nestBubble = Pill("Nest bubble", root, Vector2.zero, 110f, Glass, out nestText);
-            nestBubble.anchorMin = nestBubble.anchorMax = new Vector2(0.5f, 0.5f);
-            Dot(nestBubble, new Vector2(-34f, 0f), new Vector2(16f, 21f), EggCol);
-            feedBubble = Pill("Feeder bubble", root, Vector2.zero, 190f, Warn, out feedText);
-            feedBubble.anchorMin = feedBubble.anchorMax = new Vector2(0.5f, 0.5f);
+            // small bubbles, so they don't hide the farm: the nest's eggs (an egg and a number), the feeder when it runs low
+            // ("Low" or "Empty"), and an apple egg waiting in the grass (just the egg)
+            nestBubble = Bubble("Nest bubble", 68f, Glass, EggCol, new Vector2(14f, 18f), out nestText);
+            feedBubble = Bubble("Feeder bubble", 100f, Warn, Grain, new Vector2(16f, 16f), out feedText);
             feedBg = feedBubble.GetComponent<Image>();
-            nestBubble.gameObject.SetActive(false);
-            feedBubble.gameObject.SetActive(false);
-
-            // a bubble over an apple egg in the grass
-            appleBubble = Pill("Apple egg bubble", root, Vector2.zero, 150f, Glass, out appleText);
-            Dot(appleBubble, new Vector2(-52f, 0f), new Vector2(16f, 21f), AppleEggCol);
-            appleText.text = "  Apple egg!";
-            appleText.fontSize = 18;
+            appleBubble = Box("Apple egg bubble", root, new Vector2(0.5f, 0.5f), new Vector2(38f, 38f), Glass);
+            Dot(appleBubble, Vector2.zero, new Vector2(16f, 21f), AppleEggCol);
             appleBubble.gameObject.SetActive(false);
 
             // the bubbles can be tapped too: the nest's collects, the feeder's fills it, the apple egg's collects it
@@ -154,14 +154,18 @@ namespace FeatherField
             AddButton(sellBtn, SellTapped, fixedBtns);
             card.gameObject.SetActive(false);
 
-            // the Hatchery: built again whenever what is in it changes (RebuildHatchery)
+            // the Hatchery: a header that stays put (title, Close, the coop), and below it a list that scrolls (the incubator,
+            // then the fertile eggs). Its rows are built again whenever what is in it changes (RebuildHatchery).
             panel = Box("Hatchery", root, new Vector2(0.5f, 0f), new Vector2(380f, 400f), Glass);
             panel.pivot = new Vector2(0.5f, 0f);
             panel.GetComponent<Image>().pixelsPerUnitMultiplier = 31f / 22f;
-            panelRows = new GameObject("Rows", typeof(RectTransform)).GetComponent<RectTransform>();
-            panelRows.SetParent(panel, false);
-            panelRows.anchorMin = Vector2.zero; panelRows.anchorMax = Vector2.one;
-            panelRows.offsetMin = Vector2.zero; panelRows.offsetMax = Vector2.zero;
+            panelRows = Stretch("Header", panel, 0f, 0f);
+            viewport = Stretch("List", panel, 10f, HeaderH);
+            viewport.gameObject.AddComponent<RectMask2D>();                 // rows scrolled out of the list are cut off
+            content = new GameObject("Rows", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = content.anchorMax = new Vector2(0f, 1f);
+            content.pivot = new Vector2(0f, 1f);
             panel.gameObject.SetActive(false);
 
             toastBox.SetAsLastSibling();                                  // messages show over everything
@@ -195,17 +199,22 @@ namespace FeatherField
             // the nest's bubble: how many eggs are waiting
             Vector2 p = Vector2.zero;
             int n = game.NestEggs;
-            bool showNest = n > 0 && game.nest != null && ToCanvas(game.nest.transform.position + Vector3.up * 0.55f, out p);
+            bool showNest = n > 0 && game.nest != null && ToCanvas(game.nest.transform.position + Vector3.up * 0.42f, out p);
             nestBubble.gameObject.SetActive(showNest);
             if (showNest)
             {
-                nestBubble.anchoredPosition = p + new Vector2(0f, Mathf.Sin(Time.time * 3f) * 3f);
-                if (n != shownNest) { shownNest = n; nestText.text = "  " + n + (n == 1 ? " egg" : " eggs"); }
+                nestBubble.anchoredPosition = p + new Vector2(0f, Mathf.Sin(Time.time * 3f) * 2f);
+                if (n != shownNest)
+                {
+                    shownNest = n;
+                    nestText.text = n.ToString();
+                    nestBubble.sizeDelta = new Vector2(48f + 10f * nestText.text.Length, 34f);
+                }
             }
 
             // the feeder's bubble when food runs low
             float f = game.FeederLevel;
-            bool showFeed = f <= 0.15f && game.feeder != null && ToCanvas(game.feeder.transform.position + Vector3.up * 0.7f, out p);
+            bool showFeed = f <= 0.15f && game.feeder != null && ToCanvas(game.feeder.transform.position + Vector3.up * 0.62f, out p);
             feedBubble.gameObject.SetActive(showFeed);
             if (showFeed)
             {
@@ -213,12 +222,12 @@ namespace FeatherField
                 bool empty = f <= 0f;
                 feedBg.color = empty ? Empty : Warn;
                 feedText.color = empty ? Color.white : (Color)Ink;
-                feedText.text = empty ? "Feeder empty · tap: " + game.feedPrice : "Feed low · tap: " + game.feedPrice;
+                feedText.text = empty ? "Empty" : "Low";
             }
 
             // the apple egg's bubble
             var egg = game.appleEgg;
-            bool showApple = egg != null && egg.gameObject.activeSelf && ToCanvas(egg.transform.position + Vector3.up * 0.32f, out p);
+            bool showApple = egg != null && egg.gameObject.activeSelf && ToCanvas(egg.transform.position + Vector3.up * 0.28f, out p);
             appleBubble.gameObject.SetActive(showApple);
             if (showApple) appleBubble.anchoredPosition = p + new Vector2(0f, Mathf.Sin(Time.time * 3f + 1f) * 3f);
 
@@ -270,7 +279,7 @@ namespace FeatherField
             bool panelOpen = panel != null && panel.gameObject.activeSelf;
             bool onCard = Inside(card, screen);
             Btn hit = null;
-            foreach (var b in rowBtns) if (Inside(b.rt, screen)) { hit = b; break; }
+            foreach (var b in rowBtns) if (Inside(b.rt, screen) && (b.clip == null || Inside(b.clip, screen))) { hit = b; break; }
             if (hit == null && !panelOpen)                                     // the open Hatchery covers everything else
                 foreach (var b in fixedBtns)
                     if (Inside(b.rt, screen) && (!onCard || b.rt.IsChildOf(card))) { hit = b; break; }   // nothing through the card
@@ -387,10 +396,12 @@ namespace FeatherField
         }
 
         // ------------------------------------------------------------------ the Hatchery
+        const float HeaderH = 74f;                  // title, Close and the coop line; the list scrolls below
+
         public void OpenHatchery()
         {
             HideBird();
-            page = 0;
+            scrollY = 0f; scrollVel = 0f; scrollDrag = false;
             shownChanges = -1;
             panel.gameObject.SetActive(true);
         }
@@ -398,17 +409,68 @@ namespace FeatherField
         public void CloseHatchery()
         {
             panel.gameObject.SetActive(false);
+            scrollDrag = false;
             rowBtns.Clear();
             incRows.Clear();
         }
 
-        // The panel: a title and Close, how full the coop is and who the father is, the incubator's slots, then the fertile
-        // eggs, each with Incubate and Sell. On a wide screen (a computer in landscape) the eggs go in a second column.
+        void Update() { ScrollList(); }
+
+        // drag the list with a finger or the mouse (it carries on a little when let go), or scroll over it with a trackpad or wheel
+        void ScrollList()
+        {
+            if (panel == null || !panel.gameObject.activeSelf || content == null) { scrollDrag = false; return; }
+            Vector2 pos = Vector2.zero;
+            bool down = false, held = false;
+            float wheel = 0f;
+#if ENABLE_INPUT_SYSTEM
+            var pointer = Pointer.current;
+            if (pointer != null)
+            {
+                pos = pointer.position.ReadValue();
+                down = pointer.press.wasPressedThisFrame;
+                held = pointer.press.isPressed;
+            }
+            var mouse = Mouse.current;
+            if (mouse != null) wheel = mouse.scroll.ReadValue().y;
+#else
+            pos = Input.mousePosition;
+            down = Input.GetMouseButtonDown(0);
+            held = Input.GetMouseButton(0);
+            wheel = Input.mouseScrollDelta.y * 120f;
+#endif
+            float scale = Mathf.Max(0.01f, canvas.scaleFactor);
+            float dt = Mathf.Max(0.0001f, Time.deltaTime);
+            float maxScroll = Mathf.Max(0f, contentH - viewH);
+            if (down && Inside(viewport, pos)) { scrollDrag = true; dragLast = pos; scrollVel = 0f; }
+            if (scrollDrag && held)
+            {
+                float dy = (pos.y - dragLast.y) / scale;                     // the list follows the finger
+                dragLast = pos;
+                scrollY += dy;
+                scrollVel = Mathf.Lerp(scrollVel, dy / dt, 0.5f);
+            }
+            else
+            {
+                scrollDrag = false;
+                if (Mathf.Abs(scrollVel) > 5f) { scrollY += scrollVel * dt; scrollVel *= Mathf.Exp(-6f * dt); }
+                else scrollVel = 0f;
+            }
+            if (Mathf.Abs(wheel) > 0.001f && Inside(viewport, pos)) { scrollY -= Mathf.Clamp(wheel, -120f, 120f) * 0.5f; scrollVel = 0f; }
+            if (scrollY < 0f || scrollY > maxScroll) scrollVel = 0f;
+            scrollY = Mathf.Clamp(scrollY, 0f, maxScroll);
+            content.anchoredPosition = new Vector2(0f, scrollY);
+        }
+
+        // The panel: a title and Close, how full the coop is and who the father is; then, in the list, the incubator's slots and
+        // the fertile eggs (eggs from the same parents share a row, with Incubate and Sell). On a wide screen (a computer in
+        // landscape) the eggs go in a second column.
         void RebuildHatchery(FarmGame game)
         {
             shownChanges = game.Changes;
             shownCanvas = root.rect.size;
             foreach (Transform c in panelRows) Destroy(c.gameObject);
+            foreach (Transform c in content) Destroy(c.gameObject);
             rowBtns.Clear();
             incRows.Clear();
 
@@ -417,30 +479,39 @@ namespace FeatherField
             float panelW = wide ? colW * 2f + 48f : colW + 32f;
             float maxH = Mathf.Max(260f, shownCanvas.y - (SafeTop + 72f) - (SafeBottom + 12f));
 
-            // title, Close, the coop
+            // the header: title, Close, the coop
             TextAt(panelRows, 20f, 14f, 200f, 30f, 22, Ink, FontStyle.Bold).text = "Hatchery";
-            Button(panelRows, panelW - 100f, 12f, 84f, 34f, "Close", Ink, Color.white, CloseHatchery);
+            Button(panelRows, panelW - 100f, 12f, 84f, 34f, "Close", Ink, Color.white, CloseHatchery, null);
             var father = game.BreedingRooster();
             string coop = "Coop: " + game.YardCount + " of " + Rules.CoopCap + " birds";
             coop += father != null ? " · Father: " + father.data.name + ", quality " + Rules.Quality(father.data) : " · No grown rooster";
             Fit(TextAt(panelRows, 20f, 48f, panelW - 40f, 20f, 14, Muted, FontStyle.Normal), 11).text = coop;
 
             // the incubator
-            float x = 16f, y = 80f;
-            TextAt(panelRows, x + 4f, y, colW, 22f, 15, Ink, FontStyle.Bold).text = "Incubator";
+            float x = 16f, y = 4f;
+            TextAt(content, x + 4f, y, colW, 22f, 15, Ink, FontStyle.Bold).text = "Incubator";
             y += 26f;
             for (int i = 0; i < Rules.IncubatorSlots; i++) { IncubatorRow(game, i, x, y, colW, rowH); y += rowH + gap; }
             float incBottom = y;
 
-            // the fertile eggs waiting for a choice
+            // the fertile eggs waiting for a choice, those from the same parents together
             var basket = game.Basket;
+            var groups = new List<List<EggRecord>>();
+            foreach (var e in basket)
+            {
+                List<EggRecord> g = null;
+                foreach (var h in groups) if (h[0].dam == e.dam && h[0].sire == e.sire && h[0].expect == e.expect) { g = h; break; }
+                if (g == null) { g = new List<EggRecord>(); groups.Add(g); }
+                g.Add(e);
+            }
+            bool full = game.Incubator.Count >= Rules.IncubatorSlots;
             float bx = wide ? 16f + colW + 16f : 16f;
-            float by = wide ? 80f : y + 6f;
-            TextAt(panelRows, bx + 4f, by, colW, 22f, 15, Ink, FontStyle.Bold).text = "Fertile eggs (" + basket.Count + " of " + Rules.BasketCap + ")";
+            float by = wide ? 4f : y + 6f;
+            TextAt(content, bx + 4f, by, colW, 22f, 15, Ink, FontStyle.Bold).text = "Fertile eggs (" + basket.Count + " of " + Rules.BasketCap + ")";
             by += 26f;
             if (basket.Count == 0)
             {
-                var t = TextAt(panelRows, bx + 4f, by, colW - 8f, 44f, 14, Muted, FontStyle.Normal);
+                var t = TextAt(content, bx + 4f, by, colW - 8f, 44f, 14, Muted, FontStyle.Normal);
                 t.horizontalOverflow = HorizontalWrapMode.Wrap;
                 t.text = father == null ? "No grown rooster in the coop, so the eggs aren't fertile."
                     : "None yet. Collect the nest: with " + father.data.name + " in the coop, most eggs are fertile.";
@@ -448,30 +519,28 @@ namespace FeatherField
             }
             else
             {
-                float room = maxH - by - 12f;
-                int fitAll = Mathf.Max(1, Mathf.FloorToInt((room + gap) / (rowH + gap)));
-                int perPage = basket.Count <= fitAll ? basket.Count : Mathf.Max(1, Mathf.FloorToInt((room - 44f + gap) / (rowH + gap)));
-                int pages = (basket.Count + perPage - 1) / perPage;
-                page = Mathf.Clamp(page, 0, pages - 1);
-                int end = Mathf.Min(basket.Count, (page + 1) * perPage);
-                for (int i = page * perPage; i < end; i++) { BasketRow(game, basket[i], bx, by, colW, rowH); by += rowH + gap; }
-                if (pages > 1)
+                if (full)
                 {
-                    if (page > 0) Button(panelRows, bx, by + 2f, 90f, 34f, "‹ Back", Ink, Color.white, () => { page--; shownChanges = -1; });
-                    var pt = TextAt(panelRows, bx + 96f, by + 2f, colW - 192f, 34f, 14, Muted, FontStyle.Normal);
-                    pt.alignment = TextAnchor.MiddleCenter;
-                    pt.text = "Page " + (page + 1) + " of " + pages;
-                    if (page < pages - 1) Button(panelRows, bx + colW - 90f, by + 2f, 90f, 34f, "More ›", Ink, Color.white, () => { page++; shownChanges = -1; });
-                    by += 44f;
+                    var t = TextAt(content, bx + 4f, by, colW - 8f, 36f, 13, Muted, FontStyle.Normal);
+                    t.horizontalOverflow = HorizontalWrapMode.Wrap;
+                    t.text = "The incubator is full. Another egg can go in when one hatches.";
+                    by += 40f;
                 }
+                foreach (var g in groups) { BasketRow(game, g, full, bx, by, colW, rowH); by += rowH + gap; }
             }
-            panel.sizeDelta = new Vector2(panelW, Mathf.Max(incBottom, by) + 10f);    // the pages keep it within maxH
+
+            contentH = Mathf.Max(incBottom, by) + 4f;
+            viewH = Mathf.Min(contentH, maxH - HeaderH - 10f);
+            content.sizeDelta = new Vector2(panelW, contentH);
+            panel.sizeDelta = new Vector2(panelW, HeaderH + viewH + 10f);
+            scrollY = Mathf.Clamp(scrollY, 0f, Mathf.Max(0f, contentH - viewH));     // stays where it was after a choice
+            content.anchoredPosition = new Vector2(0f, scrollY);
             UpdateIncubatorRows(game);
         }
 
         void IncubatorRow(FarmGame game, int i, float x, float y, float w, float h)
         {
-            var row = Panel("Slot " + (i + 1), panelRows, x, y, w, h, RowCol, 12f);
+            var row = Panel("Slot " + (i + 1), content, x, y, w, h, RowCol, 12f);
             var inc = game.Incubator;
             if (i >= inc.Count)
             {
@@ -516,26 +585,32 @@ namespace FeatherField
             }
         }
 
-        void BasketRow(FarmGame game, EggRecord e, float x, float y, float w, float h)
+        // one row for the eggs from the same parents: Incubate puts one of them in the incubator, Sell sells one
+        void BasketRow(FarmGame game, List<EggRecord> eggs, bool full, float x, float y, float w, float h)
         {
-            var row = Panel("Egg", panelRows, x, y, w, h, RowCol, 12f);
+            var e = eggs[0];
+            var row = Panel("Eggs", content, x, y, w, h, RowCol, 12f);
             DotAt(row, 20f, h * 0.5f, new Vector2(16f, 21f), EggCol);
-            Fit(TextAt(row, 40f, 8f, w - 220f, 22f, 15, Ink, FontStyle.Bold), 10).text = e.dam + " × " + e.sire;
-            Fit(TextAt(row, 40f, 31f, w - 220f, 18f, 13, Muted, FontStyle.Normal), 10).text = "Chick about " + e.expect + " (" + Rules.Grade(e.expect) + ")";
-            bool full = game.Incubator.Count >= Rules.IncubatorSlots;
+            float textW = full ? w - 130f : w - 220f;
+            Fit(TextAt(row, 40f, 8f, textW, 22f, 15, Ink, FontStyle.Bold), 10).text = e.dam + " × " + e.sire;
+            string sub = "Chick about " + e.expect + " (" + Rules.Grade(e.expect) + ")";
+            if (eggs.Count > 1) sub += " · " + eggs.Count + " eggs";
+            Fit(TextAt(row, 40f, 31f, textW, 18f, 13, Muted, FontStyle.Normal), 10).text = sub;
             var egg = e;
-            Button(row, w - 176f, (h - 36f) * 0.5f, 92f, 36f, "Incubate", full ? Off : Ink, full ? (Color)Muted : Color.white, () => game.Incubate(egg));
-            Button(row, w - 78f, (h - 36f) * 0.5f, 68f, 36f, "Sell " + game.EggSellPrice(e), Coin, Ink, () => game.SellEgg(egg));
+            if (!full) Button(row, w - 176f, (h - 36f) * 0.5f, 92f, 36f, "Incubate", Ink, Color.white, () => game.Incubate(egg), viewport);
+            Button(row, w - 78f, (h - 36f) * 0.5f, 68f, 36f, "Sell " + game.EggSellPrice(e), Coin, Ink, () => game.SellEgg(egg), viewport);
         }
 
-        RectTransform Button(RectTransform parent, float x, float y, float w, float h, string label, Color bg, Color fg, System.Action act)
+        RectTransform Button(RectTransform parent, float x, float y, float w, float h, string label, Color bg, Color fg, System.Action act, RectTransform clip)
         {
             var b = Panel(label, parent, x, y, w, h, bg, h * 0.5f);
             var t = Fit(Label(b, 15, fg, FontStyle.Bold), 10);
             t.rectTransform.offsetMin = new Vector2(6f, 0f);
             t.rectTransform.offsetMax = new Vector2(-6f, 0f);
             t.text = label;
-            AddButton(b, act, rowBtns);
+            var btn = new Btn();
+            btn.rt = b; btn.act = act; btn.clip = clip;
+            rowBtns.Add(btn);
             return b;
         }
 
@@ -619,6 +694,30 @@ namespace FeatherField
                 img.color = color;
                 img.raycastTarget = false;
             }
+            return rt;
+        }
+
+        /// <summary>An empty area filling its parent, less `bottom` at the bottom and `top` at the top.</summary>
+        static RectTransform Stretch(string name, RectTransform parent, float bottom, float top)
+        {
+            var rt = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(0f, bottom); rt.offsetMax = new Vector2(0f, -top);
+            return rt;
+        }
+
+        /// <summary>A small bubble over something on the farm: an icon on the left and a word or number.</summary>
+        RectTransform Bubble(string name, float width, Color bg, Color icon, Vector2 iconSize, out Text label)
+        {
+            var rt = Box(name, root, new Vector2(0.5f, 0.5f), new Vector2(width, 34f), bg);
+            var ic = Box("Icon", rt, new Vector2(0f, 0.5f), iconSize, icon);
+            ic.anchoredPosition = new Vector2(19f, 0f);
+            ic.GetComponent<Image>().type = Image.Type.Simple;
+            label = Label(rt, 17, Ink, FontStyle.Bold);
+            label.rectTransform.offsetMin = new Vector2(30f, 0f);
+            label.rectTransform.offsetMax = new Vector2(-10f, 0f);
+            rt.gameObject.SetActive(false);
             return rt;
         }
 

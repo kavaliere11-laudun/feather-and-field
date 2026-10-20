@@ -347,6 +347,7 @@ namespace UnityEngine.UI
         public TextGenerator cachedTextGeneratorForLayout { get { return null; } }
         public TextGenerationSettings GetGenerationSettings(Vector2 extents) { return default(TextGenerationSettings); }
     }
+    public class RectMask2D : Behaviour { }
     public class CanvasScaler : Behaviour
     {
         public enum ScaleMode { ConstantPixelSize, ScaleWithScreenSize, ConstantPhysicalSize }

@@ -83,6 +83,7 @@ namespace FeatherField
             }
             else lastPinch = 0f;
 #endif
+            if (FarmHud.Instance != null && FarmHud.Instance.Covers(pointer)) scroll = 0f;     // scrolling over the Hatchery scrolls its list
             // zoom: change how much of the farm the camera sees, so it is drawn again at full sharpness
             float size = cam.orthographicSize;
             if (Mathf.Abs(scroll) > 0.001f) size *= Mathf.Exp(-scroll * zoomSensitivity);
