@@ -1,7 +1,7 @@
 """Export the cosy-farm models for the browser 3D farm: lighter than the Unity ones (one bevel segment on planks, simpler
 feathers and leaf puffs), each model one mesh with vertex colours and a few shared materials (matte, satin, gloss, metal),
 so the phone draws each model in a handful of calls.
-Writes two GLB files: farm.glb (coop and pen, path, trees, grass, flowers, apple) and birds.glb (hen, rooster, chick;
+Writes three GLB files: plants.glb (grass and flowers, for the village), farm.glb (coop and pen, path, trees, grass, flowers, apple) and birds.glb (hen, rooster, chick;
 standing and pecking). Coordinates: glTF's (x, y, z) = Blender's (x, z, -y); birds face +z.
 Usage: python export_web.py [out_dir]"""
 import os, sys
@@ -78,5 +78,6 @@ bake_and_export('path')
 write_glb(os.path.join(OUT, 'birds.glb'), ['hen_stand', 'hen_peck', 'rooster_stand', 'rooster_peck', 'chick_stand', 'chick_peck'])
 write_glb(os.path.join(OUT, 'farm.glb'), ['coop', 'path', 'apple_tree', 'apple_tree_b', 'apple', 'grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2',
                                           'flower_daisy', 'flower_butter', 'flower_clover'])
+write_glb(os.path.join(OUT, 'plants.glb'), ['grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2', 'flower_daisy', 'flower_butter', 'flower_clover'])   # all the village needs from here
 json.dump(STATS, open(os.path.join(OUT, 'stats.json'), 'w'), indent=1)
 print('STATS', json.dumps(STATS))

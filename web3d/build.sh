@@ -7,5 +7,5 @@ mkdir -p dist
 node_modules/.bin/esbuild src/main.js --bundle --minify --format=iife --target=es2019,safari14 --outfile=dist/app.js --log-level=warning
 cp index.html dist/
 rm -rf dist/models && mkdir -p dist/models
-cp models/farm.glb models/birds.glb models/village.glb models/village.json models/layout.json models/meadow.jpg dist/models/
+cp models/plants.glb models/flock.glb models/flock.json models/coops.glb models/coops.json models/village.glb models/village.json models/layout.json models/meadow.jpg dist/models/
 echo "built: $(du -sh dist | cut -f1)"

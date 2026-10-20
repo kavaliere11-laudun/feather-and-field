@@ -1,16 +1,21 @@
-// Feather & Field: the 3D village (step 1 of the 3D conversion).
+// Feather & Field: the 3D village (steps 1 and 2 of the 3D conversion).
 // The game's village in 3D, laid out like the 2D map: ten clusters of four plots round a green with a pond, lanes, two streams
 // with footbridges, the farmhouse and fields at the top, the pasture at the bottom, woods all round.
+// Step 2: every coop style (Red Barn, Thatched Cottage, Stone Cottage, Timber Lodge, Pagoda Coop) plain and Deluxe, and every
+// breed as hens, roosters and chicks with the 11 Silkie colours (birds.js), moved by bones: walking, pecking, scratching,
+// looking round, flapping, resting; roosters crow; chicks keep near their mum.
 // Built to run smoothly on a phone:
 // - light models, each drawn in a few calls; anything repeated (trees, bushes, flowers, grass, pebbles) is drawn in batches;
 // - shadows come only from things that never move, drawn for the area round the view and redrawn only when the view moves on;
 // - birds get soft round shadows, and only birds near the view walk about;
 // - at most 2x pixel ratio; 30 frames a second when nobody is touching, 60 while dragging or zooming, nothing in the background;
 // - if the phone struggles, the quality steps down by itself.
-// Test page options: ?coops=N fills the first N plots (default 2), ?q=0..3 fixes the quality, ?details shows the numbers.
+// Test page options: ?coops=N fills the first N plots (default 10: every coop style, plain and Deluxe), ?lineup shows every breed
+// and Silkie colour in the pasture, ?q=0..3 fixes the quality, ?details shows the numbers.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar } from './birds.js';
 
 const MODELS = './models/';
 const params = new URLSearchParams(location.search);
@@ -153,16 +158,18 @@ function solid(name) {
 }
 
 // ------------------------------------------------------------------ the village
-let V = null, PEN = null;     // the village plan, and the inside of a pen (from the single farm: yard, obstacles, nest, feeder)
+let V = null, PEN = null, COOPS = null;     // the village plan, and the inside of a pen (from the single farm: yard, obstacles, nest, feeder)
 const plots = [];
 const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow] = await Promise.all([loadGLB('farm.glb'), loadGLB('birds.glb'), loadGLB('village.glb'),
-    loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg')]);
-  V = plan; PEN = pen;
-  for (const g of [farm, flock, village]) {
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+    loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
+    loadJSON('coops.json')]);
+  V = plan; PEN = pen; COOPS = coopsInfo;
+  initFlock(flock, flockInfo);
+  for (const g of [farm, village, coopsGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
@@ -177,17 +184,19 @@ async function start() {
   buildPaths();
   buildProps();
   buildNature();
-  buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '2', 10))));
+  buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
+  if (params.has('lineup')) buildLineup();
   if (allBirds.length) makeBlobs();
   buildGrass();
   const s = V.plots[0].pos;
   view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
   view.size = 4.4;
+  if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   resize();
   aimShadows(true);
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  hint('Drag to look round the village, pinch or scroll to zoom, tap a hen.');
+  hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
 }
 
@@ -406,6 +415,7 @@ function buildGrass() {
   applyGrass();
 }
 function applyGrass() {
+  setFar(view.size > 5.5);
   const far = view.size > 7.2;
   for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); g.mesh.visible = !far; }
 }
@@ -413,7 +423,7 @@ function applyGrass() {
 // ------------------------------------------------------------------ plots: a coop with its birds, an empty plot ready to build, or a plot for sale
 const COOP_SHIFT = new THREE.Vector3(-0.075, 0, -0.85);   // the coop model's pen, centred on its plot
 function buildPlots(nCoops) {
-  const r = rng(7);
+  const r = rng(7), coopParts = {};
   V.plots.forEach((p, i) => {
     const g = new THREE.Group();
     g.position.set(p.pos[0], 0, p.pos[2]); g.rotation.y = p.deg * DEG;
@@ -422,11 +432,24 @@ function buildPlots(nCoops) {
     plots.push(plot);
     if (plot.kind === 'coop') {
       const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
-      const coop = part('coop'); coop.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); frame.add(coop);
       addNest(frame);
       plot.frame = frame;
-      for (const h of PEN.hens) plot.birds.push(new Bird(plot, h.model, h.pos, -h.yaw * DEG + Math.PI, r));
-      if (i === 0) plot.birds.push(new Bird(plot, 'chick', [0.55, 0, 1.7], 0.5, r));
+      plot.breed = BREEDS[i % BREEDS.length]; plot.deluxe = Math.floor(i / BREEDS.length) % 2 === 1;
+      g.updateMatrixWorld(true);                            // the coop itself never moves: it joins its style's batch
+      const at = frame.matrixWorld.clone(), house = 'house_' + plot.breed;
+      (coopParts[house] = coopParts[house] || []).push(at);
+      (coopParts.pen_base = coopParts.pen_base || []).push(at);
+      const fence = plot.deluxe ? 'fence_dx' : 'fence'; (coopParts[fence] = coopParts[fence] || []).push(at);
+      if (plot.deluxe) { const t = COOPS.tops[house]; (coopParts.vane = coopParts.vane || []).push(at.clone().multiply(new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2]))); }
+      const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
+      let k = 0;
+      const colour = () => plot.breed === 'sil' ? SILKIE[(silk * 7 + k++) % SILKIE.length] : null;
+      for (const h of PEN.hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
+      const mum = plot.birds.find(b => b.kind === 'hen');
+      for (let c = 0; c < 2; c++) {
+        const chick = new Bird(plot, plot.breed, 'chick', colour(), [mum.root.position.x + 0.3 - c * 0.5, 0, mum.root.position.z + 0.25], r() * 6, r);
+        chick.mum = mum; plot.birds.push(chick);
+      }
       for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
       allBirds.push(...plot.birds);
     } else {
@@ -442,6 +465,7 @@ function buildPlots(nCoops) {
     g.traverse(c => { if (c !== g && !c.userData.moves) c.matrixAutoUpdate = false; });
     g.matrixAutoUpdate = false;
   });
+  for (const name in coopParts) batch(name, coopParts[name], { cast: true });
 }
 
 const STRAW = new THREE.MeshLambertMaterial({ color: '#e2c169' }), STRAW2 = new THREE.MeshLambertMaterial({ color: '#c9a24f' });
@@ -469,6 +493,7 @@ function addNest(frame) {
 const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Biscuit', 'Nutmeg', 'Poppy', 'Daisy', 'Pearl', 'Ginger',
   'Olive', 'Rosie', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus', 'Rocco'];
+const CHICK_NAMES = ['Pip', 'Peanut', 'Button', 'Sprout', 'Nugget', 'Bean', 'Pebble', 'Tiny', 'Puff', 'Dot'];
 const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
 let blobGeo, blobMat, blobs = null, nameSeed = 0;
 const tmpM = new THREE.Matrix4();
@@ -488,28 +513,36 @@ function placeBlob(b) {
   blobs.instanceMatrix.needsUpdate = true;
 }
 
+// a bird: walks where there's room, pecks, scratches, looks round, stretches her wings, rests; roosters crow; chicks keep near mum
 class Bird {
-  constructor(plot, kind, pos, yaw, r) {
-    this.plot = plot; this.kind = kind; this.r = r;
-    this.name = kind === 'chick' ? 'Pip' : kind === 'rooster' ? ROO_NAMES[nameSeed++ % ROO_NAMES.length] : HEN_NAMES[(nameSeed++ * 7) % HEN_NAMES.length];
+  constructor(plot, breed, kind, colour, pos, yaw, r) {
+    this.plot = plot; this.breed = breed; this.kind = kind; this.colour = colour; this.r = r;
+    this.name = kind === 'chick' ? CHICK_NAMES[nameSeed++ % CHICK_NAMES.length] : kind === 'rooster' ? ROO_NAMES[nameSeed++ % ROO_NAMES.length] : HEN_NAMES[(nameSeed++ * 7) % HEN_NAMES.length];
     if (!blobGeo) makeBlob();
     this.root = new THREE.Group(); this.visual = new THREE.Group(); this.root.add(this.visual);
-    const st = solid(kind + '_stand'), pk = solid(kind + '_peck');
-    this.stand = new THREE.Mesh(st.geo, st.mat); this.peck = new THREE.Mesh(pk.geo, pk.mat); this.peck.visible = false;
-    this.stand.receiveShadow = this.peck.receiveShadow = true;
-    this.visual.add(this.stand, this.peck);
-    const small = kind === 'chick';
+    this.rig = new Rig(breed, kind, colour);
+    this.visual.add(this.rig.mesh); if (this.rig.lo) this.visual.add(this.rig.lo);
+    const small = kind === 'chick', size = this.rig.scale / 0.5;
     this.blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, -0.011, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
-      new THREE.Vector3(small ? 0.55 : 1, small ? 0.55 : 1, 1));
+      new THREE.Vector3(small ? 0.55 : size, small ? 0.55 : size, 1));
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
-    for (const o of [this.root, this.visual, this.stand, this.peck]) o.userData.moves = true;
-    this.speed = small ? 0.24 : 0.32; this.turn = 260 * DEG;
-    this.hitR = small ? 0.12 : 0.17; this.hitY = small ? 0.08 : 0.17;
-    this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.peckT = 0; this.phase = r() * 10; this.hop = 0;
+    for (const o of [this.root, this.visual]) o.userData.moves = true;
+    this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
+    this.hitR = small ? 0.12 : 0.17 * size; this.hitY = small ? 0.08 : 0.17 * size;
+    this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hop = 0;
+    this.act = null;                       // what she's doing while standing: peck, scratch, flap, crow, rest
+    this.A = { walk: 0, phase: r() * 6, peck: 0, lookYaw: 0, lookTilt: 0, flap: 0, crow: 0, sit: 0, kick: 0, kickT: 0, kickLeg: 0, wag: 0, t: r() * 10 };
+    this.look = { yaw: 0, tilt: 0, next: r() * 2 };
+    this.stay = false;                     // line-up birds stand in their place
     plot.frame.add(this.root);
   }
   get flock() { return this.plot.birds; }
+  get label() {
+    const what = this.breed === 'sil' ? 'Silkie, ' + this.colour : BREED_NAMES[this.breed];
+    return this.name + ' · ' + what + (this.kind === 'chick' ? ' chick' : this.kind === 'rooster' ? ' rooster' : '');
+  }
   free(x, z) {
+    if (this.plot.kind === 'lineup') return true;
     const Y = PEN.yard;
     if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
     for (const o of PEN.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
@@ -527,62 +560,134 @@ class Bird {
   }
   pickTarget() {
     const p = this.root.position, startFree = this.free(p.x, p.z), Y = PEN.yard;
+    if (this.stay) { this.target.copy(p); return; }
+    const mum = this.mum && this.mum.root.position;
     let best = null, bestRoom = -1;
     for (let i = 0; i < 30; i++) {
-      const x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]), z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]);
+      let x, z;
+      if (mum && i < 20) { const a = this.r() * 6.28, d = 0.28 + this.r() * 0.3; x = mum.x + Math.cos(a) * d; z = mum.z + Math.sin(a) * d; }     // chicks keep near mum
+      else { x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]); z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]); }
       if (!this.free(x, z) || (startFree && !this.clearPath(p.x, p.z, x, z))) continue;
-      const room = this.roomAt(x, z);
-      if (room >= ROOM) { this.target.set(x, p.y, z); return; }
+      const room = this.roomAt(x, z), need = this.kind === 'chick' ? 0.3 : ROOM;
+      if (room >= need) { this.target.set(x, p.y, z); return; }
       if (room > bestRoom) { bestRoom = room; best = [x, z]; }
     }
     if (best) this.target.set(best[0], p.y, best[1]); else this.target.copy(p);
   }
   someoneAhead() {
     const p = this.root.position, fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y);
+    const reach = this.kind === 'chick' ? 0.22 : PERSONAL;
     for (const b of this.flock) if (b !== this) {
       const dx = b.root.position.x - p.x, dz = b.root.position.z - p.z, d = Math.hypot(dx, dz);
-      if (d < PERSONAL && dx * fx + dz * fz > 0.2 * d) return true;
+      if (d < reach && dx * fx + dz * fz > 0.2 * d) return true;
     }
     return false;
   }
-  tooClose() { for (const b of this.flock) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < 0.3) return true; return false; }
-  setPeck(down) { this.stand.visible = !down; this.peck.visible = down; }
-  waddle(walking) {
-    const w = walking ? Math.sin(this.phase * 16) : 0;
-    this.visual.rotation.z = w * 5 * DEG;
-    this.visual.position.y = (walking ? Math.abs(w) * 0.012 : 0) + Math.max(0, Math.sin(Math.min(1, this.hop) * Math.PI)) * 0.12;
+  tooClose() {
+    const near = this.kind === 'chick' ? 0.2 : 0.3;
+    for (const b of this.flock) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < near) return true;
+    return false;
+  }
+  // something to do while standing still
+  chooseAct() {
+    const x = this.r(), rooster = this.kind === 'rooster', chick = this.kind === 'chick';
+    if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
+    if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
+    if (x < 0.55) return { type: 'flap', left: 0.9 };
+    if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
+    if (x < (rooster ? 0.69 : 0.59) && !this.mum) return { type: 'rest', left: 3 + this.r() * 4 };
+    return null;
+  }
+  tapped() {                               // a hop and a flap (a rooster may crow)
+    this.hop = 1;
+    if (this.kind === 'rooster' && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
+    else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   update(dt) {
     this.phase += dt;
+    const A = this.A, k = Math.min(1, dt * 14);
+    A.t += dt;
     if (this.hop > 0) this.hop = Math.max(0, this.hop - dt * 2.2);
-    if (this.peckT > 0) {
-      if (this.tooClose()) { this.peckT = 0; this.setPeck(false); this.wait = 0.1; return; }
-      this.peckT -= dt; this.setPeck((this.peckT % 0.6) > 0.25); this.waddle(false);
-      if (this.peckT <= 0) { this.setPeck(false); this.wait = 0.4 + this.r() * 1.1; }
-      return;
-    }
-    if (this.wait > 0) {
+    let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0;
+    const act = this.act;
+    if (act) {
+      act.left -= dt;
+      if (act.type !== 'crow' && act.type !== 'flap' && this.tooClose()) act.left = Math.min(act.left, 0.05);
+      if (act.type === 'peck') peckGoal = (act.left % 0.55) > 0.24 ? 1 : 0.3;
+      if (act.type === 'scratch') {                // two kicks back, a step back, then a look at what turned up
+        if (act.left > 0.9) { kick = 1; A.kickLeg = act.leg; A.kickT += dt; } else peckGoal = (act.left % 0.45) > 0.2 ? 1 : 0.4;
+      }
+      if (!act.dur) act.dur = act.left + dt;
+      if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
+      if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); }
+      if (act.type === 'rest') { sitGoal = 1; wag = 0; }
+      if (act.left <= 0) { this.act = null; this.wait = Math.min(this.wait, 0.2 + this.r() * 0.6); this.acted = true; }
+    } else if (this.wait > 0) {
       if (this.wait > 0.3 && this.tooClose()) this.wait = 0.3;
-      this.wait -= dt; this.waddle(false);
-      if (this.wait <= 0) { if (this.r() < 0.45) this.peckT = 1.2 + this.r() * 1.8; else this.pickTarget(); }
-      return;
+      this.wait -= dt;
+      if (this.wait <= 0) {
+        const next = this.acted ? null : this.chooseAct();          // after doing something, she walks on
+        this.acted = false;
+        if (next && !(next.type !== 'flap' && next.type !== 'crow' && this.tooClose())) { this.act = next; this.wait = 0.4 + this.r() * 1.0; }
+        else this.pickTarget();
+      }
+    } else {
+      const p = this.root.position, dx = this.target.x - p.x, dz = this.target.z - p.z, dist = Math.hypot(dx, dz);
+      if (dist < 0.04) { this.wait = 0.5 + this.r() * 2.0; wag = 1; }
+      else {
+        const want = Math.atan2(dx, dz);
+        let diff = ((want - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+        const step = this.turn * dt;
+        this.root.rotation.y += Math.abs(diff) < step ? diff : Math.sign(diff) * step;
+        diff = Math.abs(diff) < step ? 0 : diff - Math.sign(diff) * step;
+        const facing = Math.abs(diff) < 25 * DEG;
+        if (facing && this.someoneAhead()) this.wait = 0.3 + this.r() * 0.6;
+        else if (facing) {
+          const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * dt, dist);
+          const nx = p.x + fx * s, nz = p.z + fz * s;
+          if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; walking = true; } else this.wait = 0.5;
+        } else walking = Math.abs(diff) > 2 * DEG;      // little steps on the spot while turning
+      }
     }
-    const p = this.root.position, dx = this.target.x - p.x, dz = this.target.z - p.z, dist = Math.hypot(dx, dz);
-    if (dist < 0.04) { this.wait = 0.6 + this.r() * 2.4; this.waddle(false); return; }
-    const want = Math.atan2(dx, dz);
-    let diff = ((want - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
-    const step = this.turn * dt;
-    this.root.rotation.y += Math.abs(diff) < step ? diff : Math.sign(diff) * step;
-    diff = Math.abs(diff) < step ? 0 : diff - Math.sign(diff) * step;
-    const facing = Math.abs(diff) < 25 * DEG;
-    if (facing && this.someoneAhead()) { this.wait = 0.3 + this.r() * 0.6; this.waddle(false); return; }
-    if (facing) {
-      const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * dt, dist);
-      const nx = p.x + fx * s, nz = p.z + fz * s;
-      if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; } else this.wait = 0.5;
+    // looking round while standing: a new glance now and then, and a curious head tilt
+    this.look.next -= dt;
+    if (this.look.next <= 0) {
+      this.look.next = 0.6 + this.r() * 1.8;
+      const busy = walking || peckGoal > 0;
+      this.look.yaw = busy ? 0 : (this.r() - 0.5) * 1.3; this.look.tilt = busy ? 0 : (this.r() < 0.35 ? (this.r() - 0.5) * 0.7 : 0);
     }
-    this.waddle(facing);
+    A.lookYaw += (this.look.yaw - A.lookYaw) * Math.min(1, dt * 8); A.lookTilt += (this.look.tilt - A.lookTilt) * Math.min(1, dt * 6);
+    A.walk += ((walking ? 1 : 0) - A.walk) * Math.min(1, dt * 10);
+    if (walking) A.phase += dt * this.stepRate;
+    A.peck += (peckGoal - A.peck) * Math.min(1, dt * (peckGoal > A.peck ? 22 : 12));
+    A.sit += (sitGoal - A.sit) * Math.min(1, dt * 3.5);
+    A.kick += (kick - A.kick) * k; if (!kick) A.kickT = 0;
+    A.flap += (flap - A.flap) * Math.min(1, dt * 20); A.crow += (crow - A.crow) * Math.min(1, dt * 10);
+    A.wag += (wag - A.wag) * Math.min(1, dt * 3); if (!wag) A.wag *= 0.98;
+    this.rig.pose(A);
+    this.visual.position.y = Math.max(0, Math.sin(Math.min(1, this.hop) * Math.PI)) * 0.12;
   }
+}
+
+// every breed and Silkie colour standing in rows on open grass beside the village, for a close look (?lineup)
+let lineup = null;
+function buildLineup() {
+  const c = villageCentre().add(new THREE.Vector3(32, 0, 32));
+  const frame = new THREE.Group(); frame.position.copy(c); frame.rotation.y = 45 * DEG; scene.add(frame);      // rows run across the screen
+  lineup = { kind: 'lineup', frame, birds: [], centre: c };
+  plots.push(lineup);
+  const r = rng(99), yaw = 0;
+  const row = (z, list, step) => list.forEach(([breed, kind, colour], i) => {
+    const b = new Bird(lineup, breed, kind, colour, [(i - (list.length - 1) / 2) * step, 0, z], yaw + (r() - 0.5) * 0.6, r);
+    b.stay = true; lineup.birds.push(b);
+  });
+  const breeds = BREEDS.filter(b => b !== 'sil');
+  row(1.2, breeds.flatMap(b => [[b, 'hen'], [b, 'rooster'], [b, 'chick']]), 0.45);
+  row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
+  row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
+  row(-0.75, SILKIE.map(c => ['sil', 'rooster', c]), 0.45);
+  allBirds.push(...lineup.birds);
+  frame.updateMatrixWorld(true);
 }
 
 function makeBlob() {
@@ -618,8 +723,8 @@ function livePlots() {
   frustum.setFromProjectionMatrix(projView);
   const out = [];
   for (const p of plots) {
-    if (p.kind !== 'coop') continue;
-    sphere.center.copy(p.centre); sphere.radius = 3.2;
+    if (p.kind !== 'coop' && p.kind !== 'lineup') continue;
+    sphere.center.copy(p.centre); sphere.radius = p.kind === 'lineup' ? 4 : 3.2;
     if (frustum.intersectsSphere(sphere)) out.push(p);
   }
   return out;
@@ -661,13 +766,15 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
 function zoomBy(f) {
-  const was = view.size > 7.2;
+  const before = view.size;
   view.size = Math.min(view.max, Math.max(view.min, view.size * f));
-  if ((view.size > 7.2) !== was) applyGrass();
+  const crossed = t => (before > t) !== (view.size > t);
+  if (crossed(7.2) || crossed(5.5)) applyGrass();
   placeCamera();
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
+  if (lineup) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
@@ -697,8 +804,8 @@ function tapAt(x, y) {
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
   if (!best) return;
-  best.hop = 1; tagBird = best; tagLeft = 2.5;
-  tag.textContent = best.name + (best.kind === 'chick' ? ' (chick)' : best.kind === 'rooster' ? ' (rooster)' : '');
+  best.tapped(); tagBird = best; tagLeft = 2.8;
+  tag.textContent = best.label;
   tag.classList.add('on');
 }
 function placeTag(dt) {
@@ -713,7 +820,7 @@ const hintEl = document.getElementById('hint');
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); setTimeout(() => hintEl.classList.remove('on'), 4500); }
 
 // ------------------------------------------------------------------ the loop: 30 frames a second when idle, 60 while touched
-let awakeUntil = 0, lastFrame = 0, lastSim = 0;
+let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false;
 function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }
 const meter = { frames: 0, late: 0, since: 0, fps: 0, slow: 0 };
 const readout = document.getElementById('readout');
@@ -725,7 +832,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  for (const p of livePlots()) { for (const b of p.birds) b.update(dt); separate(p.birds, dt); for (const b of p.birds) placeBlob(b); }
+  if (!frozen) for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); }
   placeTag(dt);
   renderer.render(scene, camera);
   const gap = now - lastFrame;
@@ -768,6 +875,9 @@ window.__farm = {
   setQuality: (n) => { while (q < n) stepDown(); },
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
   plan: () => V, THREE,
+  act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
+  freeze: (on) => { frozen = on; },
+  step: (dt, n) => { for (let i = 0; i < n; i++) for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } wake(300); },
 };
 start().catch(err => {
   console.error(err);

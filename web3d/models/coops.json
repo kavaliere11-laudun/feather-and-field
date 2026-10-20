@@ -1,0 +1,76 @@
+{
+ "tops": {
+  "house_rir": [
+   0.0031,
+   1.5497,
+   0.0175
+  ],
+  "house_orp": [
+   0.0822,
+   1.5995,
+   -0.0807
+  ],
+  "house_leg": [
+   -0.0023,
+   1.493,
+   -0.0071
+  ],
+  "house_sil": [
+   0.0,
+   1.64,
+   -0.0
+  ],
+  "house_bra": [
+   0.0033,
+   1.5308,
+   0.0123
+  ]
+ },
+ "stats": {
+  "house_rir": {
+   "tris": 8888,
+   "verts": 5212,
+   "prims": 4
+  },
+  "house_orp": {
+   "tris": 8292,
+   "verts": 4498,
+   "prims": 4
+  },
+  "house_leg": {
+   "tris": 15000,
+   "verts": 8666,
+   "prims": 4
+  },
+  "house_sil": {
+   "tris": 9328,
+   "verts": 4974,
+   "prims": 3
+  },
+  "house_bra": {
+   "tris": 10416,
+   "verts": 6204,
+   "prims": 3
+  },
+  "pen_base": {
+   "tris": 4999,
+   "verts": 3349,
+   "prims": 3
+  },
+  "fence": {
+   "tris": 3500,
+   "verts": 1934,
+   "prims": 1
+  },
+  "fence_dx": {
+   "tris": 9000,
+   "verts": 5556,
+   "prims": 4
+  },
+  "vane": {
+   "tris": 900,
+   "verts": 480,
+   "prims": 1
+  }
+ }
+}
