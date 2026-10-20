@@ -1,16 +1,20 @@
-// Feather & Field: the 3D test farm (the browser version of the Unity farm).
-// The same models, camera and light as the Unity farm, built to run smoothly on a phone:
-// - lighter models (export_web.py), each drawn in a few calls (vertex colours, a handful of shared materials);
-// - the shadows of things that never move are drawn once, the birds get soft round shadows;
-// - grass is drawn in batches; the screen is drawn at most at twice the CSS resolution;
-// - 30 frames a second when nobody is touching, 60 while dragging or zooming, nothing in the background;
+// Feather & Field: the 3D village (step 1 of the 3D conversion).
+// The game's village in 3D, laid out like the 2D map: ten clusters of four plots round a green with a pond, lanes, two streams
+// with footbridges, the farmhouse and fields at the top, the pasture at the bottom, woods all round.
+// Built to run smoothly on a phone:
+// - light models, each drawn in a few calls; anything repeated (trees, bushes, flowers, grass, pebbles) is drawn in batches;
+// - shadows come only from things that never move, drawn for the area round the view and redrawn only when the view moves on;
+// - birds get soft round shadows, and only birds near the view walk about;
+// - at most 2x pixel ratio; 30 frames a second when nobody is touching, 60 while dragging or zooming, nothing in the background;
 // - if the phone struggles, the quality steps down by itself.
+// Test page options: ?coops=N fills the first N plots (default 2), ?q=0..3 fixes the quality, ?details shows the numbers.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const MODELS = './models/';
 const params = new URLSearchParams(location.search);
-const DEG = Math.PI / 180;
+const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
 const QUALITY = [
@@ -23,23 +27,19 @@ let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0'
 
 // ------------------------------------------------------------------ renderer, scene, camera, light
 const canvas = document.getElementById('farm');
-let renderer = makeRenderer(QUALITY[q].aa);
-function makeRenderer(aa) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: aa, powerPreference: 'high-performance', stencil: false });
-  r.outputColorSpace = THREE.SRGBColorSpace;
-  r.toneMapping = THREE.NoToneMapping;                     // like the Unity farm: colours as they are, no film curve
-  r.shadowMap.enabled = true;
-  r.shadowMap.type = THREE.PCFSoftShadowMap;
-  r.shadowMap.autoUpdate = false;                          // drawn once: only things that never move cast shadows
-  r.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
-  return r;
-}
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[q].aa, powerPreference: 'high-performance', stencil: false });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;               // like the Unity farm: colours as they are, no film curve
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false;                    // redrawn only when the view moves on (only still things cast shadows)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#8cb85c');
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
-const view = { target: new THREE.Vector3(), start: new THREE.Vector3(), size: 4.4, min: 1.2, max: 7.5 };
-// the game's view: 42 degrees down, 45 degrees round (the Unity farm's camera)
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 300);
+const view = { target: new THREE.Vector3(), size: 4.4, min: 1.4, max: 9 };
+// the game's view: 42 degrees down, 45 degrees round
 const VIEW_DIR = new THREE.Vector3(Math.sin(45 * DEG) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(45 * DEG) * Math.cos(42 * DEG)).normalize();
 const PITCH_SIN = Math.sin(42 * DEG);
 
@@ -50,14 +50,37 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight('#fff1dc', parseFloat(params.get('sun') || '5.2'));
 sun.castShadow = true;
 scene.add(sun, sun.target);
+const SUN_DIR = new THREE.Vector3(0.55, -0.72, -0.62).normalize();
+const SHADOW_REACH = 15;                                  // metres round the view that get shadows
+let shadowAt = null;
 
 function placeCamera() {
   const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
   const a = w / Math.max(1, h);
   camera.top = view.size; camera.bottom = -view.size; camera.left = -view.size * a; camera.right = view.size * a;
-  camera.position.copy(view.target).addScaledVector(VIEW_DIR, 60);
+  camera.position.copy(view.target).addScaledVector(VIEW_DIR, 80);
   camera.lookAt(view.target);
   camera.updateProjectionMatrix();
+  camera.updateMatrixWorld();
+  aimShadows(false);
+}
+
+// shadows for the area round the view: redrawn when the view has moved a good way, or zoomed out past what they cover
+function aimShadows(force) {
+  const t = view.target;
+  const reach = Math.max(SHADOW_REACH, view.size * 2.4);
+  if (!force && shadowAt && shadowAt.p.distanceTo(t) < reach * 0.35 && shadowAt.reach >= reach * 0.99) return;
+  shadowAt = { p: t.clone(), reach };
+  sun.target.position.set(t.x, 0, t.z);
+  sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, -40);
+  const s = sun.shadow;
+  s.mapSize.set(QUALITY[q].shadow, QUALITY[q].shadow);
+  s.camera.left = -reach; s.camera.right = reach; s.camera.top = reach; s.camera.bottom = -reach; s.camera.near = 5; s.camera.far = 80;
+  s.bias = -0.0005; s.normalBias = 0.03; s.radius = 3;
+  s.camera.updateProjectionMatrix();
+  if (s.map && s.map.width !== QUALITY[q].shadow) { s.map.dispose(); s.map = null; }
+  sun.updateMatrixWorld(); sun.target.updateMatrixWorld();
+  renderer.shadowMap.needsUpdate = true;
 }
 
 function resize() {
@@ -71,7 +94,7 @@ window.addEventListener('resize', resize);
 
 // ------------------------------------------------------------------ colours: a touch richer, like the Unity farm's grading
 const SAT = 1.15;
-function richer(geo) {
+function richer(geo, sat = SAT, lift = 1) {
   const c = geo.getAttribute('color');
   if (!c || geo.userData.richer) return;
   const n = c.normalized, arr = c.array, k = n ? 255 : 1;
@@ -79,20 +102,19 @@ function richer(geo) {
     const o = i * c.itemSize;
     const r = arr[o] / k, g = arr[o + 1] / k, b = arr[o + 2] / k;
     const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    arr[o] = Math.min(1, Math.max(0, l + (r - l) * SAT)) * k;
-    arr[o + 1] = Math.min(1, Math.max(0, l + (g - l) * SAT)) * k;
-    arr[o + 2] = Math.min(1, Math.max(0, l + (b - l) * SAT)) * k;
+    arr[o] = Math.min(1, Math.max(0, (l + (r - l) * sat) * lift)) * k;
+    arr[o + 1] = Math.min(1, Math.max(0, (l + (g - l) * sat) * lift)) * k;
+    arr[o + 2] = Math.min(1, Math.max(0, (l + (b - l) * sat) * lift)) * k;
   }
   c.needsUpdate = true;
   geo.userData.richer = true;
 }
 
-// ------------------------------------------------------------------ a little seeded randomness (the meadow looks the same every time)
+// ------------------------------------------------------------------ a little seeded randomness (the village looks the same every time)
 function rng(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
-function gauss(r) { const u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
 // ------------------------------------------------------------------ loading
 const loading = document.getElementById('loading');
@@ -112,7 +134,6 @@ function loadImage(name) {
   return new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = MODELS + name; });
 }
 
-// a model from the files: its meshes, ready to copy
 const parts = {};
 function part(name) {
   const p = parts[name];
@@ -121,53 +142,56 @@ function part(name) {
 }
 function meshesOf(o) { const out = []; o.traverse(c => { if (c.isMesh) out.push(c); }); return out; }
 
-// ------------------------------------------------------------------ the farm
-let L = null;                 // the layout
-const birds = [];
-let grassSets = [];           // [{ mesh, full }] instanced batches, thinned out on slower phones
+// one geometry and one material for a model (birds: one draw instead of three)
+const solids = {};
+function solid(name) {
+  if (solids[name]) return solids[name];
+  const geos = meshesOf(parts[name]).map(m => m.geometry.clone().applyMatrix4(m.matrixWorld));
+  for (const g of geos) for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'color'].includes(k)) g.deleteAttribute(k);
+  const geo = mergeGeometries(geos, false);
+  return (solids[name] = { geo, mat: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72 }) });
+}
+
+// ------------------------------------------------------------------ the village
+let V = null, PEN = null;     // the village plan, and the inside of a pen (from the single farm: yard, obstacles, nest, feeder)
+const plots = [];
+const allBirds = [];
+const grassTiles = [];
 
 async function start() {
-  const [farm, flock, layout, meadow] = await Promise.all([loadGLB('farm.glb'), loadGLB('birds.glb'), loadJSON('layout.json'), loadImage('meadow.jpg')]);
-  L = layout;
-  for (const g of [farm, flock]) {
+  const [farm, flock, village, plan, pen, meadow] = await Promise.all([loadGLB('farm.glb'), loadGLB('birds.glb'), loadGLB('village.glb'),
+    loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg')]);
+  V = plan; PEN = pen;
+  for (const g of [farm, flock, village]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
-        richer(m.geometry);
+        richer(m.geometry, g === village ? 1.22 : SAT, g === village ? 1.08 : 1);
         if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; }
       }
       parts[child.name] = child;
     }
   }
   buildGround(meadow);
-  buildFarm();
-  buildMeadow();
-  buildBirds();
-  view.target.set(...L.camera.target); view.start.copy(view.target); view.size = L.camera.size;
-  aimSun();
+  buildWater();
+  buildPaths();
+  buildProps();
+  buildNature();
+  buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '2', 10))));
+  if (allBirds.length) makeBlobs();
+  buildGrass();
+  const s = V.plots[0].pos;
+  view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
+  view.size = 4.4;
   resize();
-  renderer.shadowMap.needsUpdate = true;
+  aimShadows(true);
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  hint('Drag to look around, pinch or scroll to zoom, tap a hen.');
+  hint('Drag to look round the village, pinch or scroll to zoom, tap a hen.');
   requestAnimationFrame(frame);
 }
 
-function aimSun() {
-  const d = new THREE.Vector3(...L.sun.dir).normalize();
-  const c = new THREE.Vector3(0.2, 0, 0.3);
-  sun.target.position.copy(c);
-  sun.position.copy(c).addScaledVector(d, -20);
-  const s = sun.shadow;
-  s.mapSize.set(QUALITY[q].shadow, QUALITY[q].shadow);
-  s.camera.left = -8; s.camera.right = 8; s.camera.top = 8; s.camera.bottom = -8; s.camera.near = 1; s.camera.far = 45;
-  s.bias = -0.0004; s.normalBias = 0.02; s.radius = 3;
-  s.camera.updateProjectionMatrix();
-  if (s.map) { s.map.dispose(); s.map = null; }
-}
-
 function buildGround(img) {
-  // the painted meadow, a little richer, once
   const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
   const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0);
   const d = cx.getImageData(0, 0, cv.width, cv.height), a = d.data;
@@ -178,15 +202,18 @@ function buildGround(img) {
   cx.putImageData(d, 0, 0);
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.MirroredRepeatWrapping;   // seamless however far it goes
+  tex.repeat.set(6, 6);                                    // one picture every 20 m
   tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshLambertMaterial({ map: tex }));
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  ground.matrixAutoUpdate = false; ground.updateMatrix();
-  scene.add(ground);
+  const c = villageCentre();
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshLambertMaterial({ map: tex }));
+  ground.rotation.x = -Math.PI / 2; ground.position.set(c.x, 0, c.z);
+  still(ground);
 }
 
-function still(o, cast, receive) {          // a part of the farm that never moves
+function villageCentre() { const c = V.bounds.corners; return new THREE.Vector3((c[0][0] + c[2][0]) / 2, 0, (c[0][2] + c[2][2]) / 2); }
+
+function still(o, cast = false, receive = true) {          // a part of the village that never moves
   o.traverse(c => { if (c.isMesh) { c.castShadow = cast; c.receiveShadow = receive; } });
   o.updateMatrixWorld(true);
   o.traverse(c => { c.matrixAutoUpdate = false; });
@@ -194,56 +221,98 @@ function still(o, cast, receive) {          // a part of the farm that never mov
   return o;
 }
 
-function buildFarm() {
-  still(part('coop'), true, true);
-  still(part('path'), false, true);
-  for (const t of L.trees) {
-    const o = part(t.model);
-    o.position.set(...t.pos); o.scale.setScalar(t.scale); o.rotation.y = -t.yaw * DEG;
-    still(o, true, true);
+// a ribbon along a line on the ground (paths, streams, their banks), with round ends so lanes join smoothly
+function ribbon(points, half, y) {
+  const pos = [], idx = [];
+  const P = points.map(p => new THREE.Vector2(p[0], p[2]));
+  const n = P.length;
+  for (let i = 0; i < n; i++) {
+    const a = P[Math.max(0, i - 1)], b = P[Math.min(n - 1, i + 1)];
+    const d = new THREE.Vector2().subVectors(b, a).normalize();
+    const nx = -d.y, nz = d.x;
+    pos.push(P[i].x + nx * half, y, P[i].y + nz * half, P[i].x - nx * half, y, P[i].y - nz * half);
+    if (i < n - 1) { const k = i * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
   }
-  // apples hanging low on the big tree, and a few in the grass: one batch for all of them
-  const apples = [];
-  for (const p of L.apples) apples.push(new THREE.Matrix4().compose(new THREE.Vector3(...p), new THREE.Quaternion(), new THREE.Vector3(1.4, 1.4, 1.4)));
-  const r = rng(11), c = L.trees[0].pos;
-  for (let i = 0; i < 7; i++) {
-    const ang = r() * Math.PI * 2, dd = 0.3 + r() * 0.8;
-    const x = c[0] + Math.cos(ang) * dd, z = c[2] + Math.sin(ang) * dd;
-    if (inPen(x, z, 0.1)) continue;
-    apples.push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(1, 1, 1)));
+  for (const end of [P[0], P[n - 1]]) {                    // round caps
+    const c = pos.length / 3; pos.push(end.x, y, end.y);
+    for (let s = 0; s <= 16; s++) { const t = s / 16 * Math.PI * 2; pos.push(end.x + Math.cos(t) * half, y, end.y + Math.sin(t) * half); }
+    for (let s = 0; s < 16; s++) idx.push(c, c + 2 + s, c + 1 + s);
   }
-  batch('apple', apples, false);
-  // the straw nest with a few eggs, and the grain in the feeder
-  const straw = new THREE.MeshLambertMaterial({ color: '#e2c169' }), straw2 = new THREE.MeshLambertMaterial({ color: '#c9a24f' });
-  const egg = new THREE.MeshStandardMaterial({ color: '#d39b68', roughness: 0.45 });
-  const nest = new THREE.Group(); nest.position.set(...L.nest);
-  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.032, 24), straw2); rim.position.y = 0.016; rim.scale.z = 0.9;
-  const bed = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.024, 24), straw); bed.position.y = 0.024; bed.scale.z = 0.88;
-  nest.add(rim, bed);
-  const eggs = new THREE.InstancedMesh(new THREE.SphereGeometry(0.5, 12, 9), egg, 3);
-  for (let i = 0; i < 3; i++) {
-    const a = i * 2.4, d = 0.03 + 0.05 * i;
-    eggs.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(Math.cos(a) * d, 0.062, Math.sin(a) * d * 0.9),
-      new THREE.Quaternion().setFromEuler(new THREE.Euler(0.4 * i, i, 0.3)), new THREE.Vector3(0.055, 0.07, 0.055)));
-  }
-  eggs.computeBoundingSphere();
-  nest.add(eggs);
-  still(nest, false, true);
-  const grain = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.135, 0.02, 24), new THREE.MeshLambertMaterial({ color: '#d9b45a' }));
-  grain.position.set(L.feeder[0], 0.065, L.feeder[2]);
-  still(grain, false, true);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  const nrm = new Float32Array(pos.length); for (let i = 1; i < nrm.length; i += 3) nrm[i] = 1;      // flat on the ground
+  g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  return g;
 }
 
-function inPen(x, z, m) { return x > L.pen.min[0] - m && x < L.pen.max[0] + m && z > L.pen.min[2] - m && z < L.pen.max[2] + m; }
+const DIRT = new THREE.MeshLambertMaterial({ color: '#c79a62', side: THREE.DoubleSide });
+const BANK = new THREE.MeshLambertMaterial({ color: '#b48c5c', side: THREE.DoubleSide });
+const WATER = new THREE.MeshStandardMaterial({ color: '#5fb3d6', roughness: 0.12, metalness: 0.0, side: THREE.DoubleSide });
 
-// many copies of one model, drawn together (one draw per material)
-function batch(name, matrices, lambert) {
+function buildPaths() {
+  const geos = V.paths.map((p, i) => ribbon(p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
+  still(new THREE.Mesh(mergeGeometries(geos, false), DIRT));
+  // pebbles along the edges, in one batch
+  const peb = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.03, 0), new THREE.MeshLambertMaterial({ color: '#cfc8ba' }), V.pebbles.length);
+  const r = rng(5), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), e = new THREE.Euler();
+  V.pebbles.forEach((p, i) => {
+    const s = 0.6 + r() * 0.8;
+    m.compose(new THREE.Vector3(p[0], 0.008, p[2]), qn.setFromEuler(e.set(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(s * 1.2, s * 0.6, s));
+    peb.setMatrixAt(i, m);
+  });
+  peb.computeBoundingSphere();
+  still(peb);
+}
+
+function buildWater() {
+  // the pond: an ellipse of water in a ring of bank
+  const P = V.pond, c = new THREE.Vector3(...P.center), au = new THREE.Vector3(...P.axisU), av = new THREE.Vector3(...P.axisV);
+  const ellipse = (scale, y) => {
+    const pos = [c.x, y, c.z], idx = [];
+    for (let s = 0; s <= 64; s++) {
+      const t = s / 64 * Math.PI * 2, w = 1 + 0.035 * Math.sin(t * 5 + 1) + 0.02 * Math.sin(t * 9);
+      pos.push(c.x + (au.x * Math.cos(t) + av.x * Math.sin(t)) * scale * w, y, c.z + (au.z * Math.cos(t) + av.z * Math.sin(t)) * scale * w);
+    }
+    for (let s = 0; s < 64; s++) idx.push(0, s + 1, s + 2);      // counter-clockwise seen from above: facing up
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx);
+    const nrm = new Float32Array(pos.length); for (let i = 1; i < nrm.length; i += 3) nrm[i] = 1;
+    g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+    return g;
+  };
+  still(new THREE.Mesh(ellipse(1.12, 0.003), BANK));
+  still(new THREE.Mesh(ellipse(1.0, 0.007), WATER));
+  // the streams, each in its banks
+  for (const st of V.streams) {
+    still(new THREE.Mesh(ribbon(st, V.streamHalf + 0.16, 0.0035), BANK));
+    still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075), WATER));
+  }
+}
+
+// many copies of one model, drawn together (one draw per material). A batch is drawn whole whenever any of it is in view, so
+// copies spread over the village are split into tiles: the phone then only draws the tiles near the view.
+function batch(name, matrices, opts = {}) {
+  const TILE = opts.tile === undefined ? 12 : opts.tile;
+  if (!TILE) return batchOne(name, matrices, opts);
+  const tiles = new Map();
+  for (const m of matrices) {
+    const key = Math.floor(m.elements[12] / TILE) + ',' + Math.floor(m.elements[14] / TILE);
+    if (!tiles.has(key)) tiles.set(key, []);
+    tiles.get(key).push(m);
+  }
   const out = [];
+  for (const list of tiles.values()) out.push(...batchOne(name, list, opts));
+  return out;
+}
+function batchOne(name, matrices, opts) {
+  const out = [];
+  if (!matrices.length) return out;
   for (const m of meshesOf(parts[name])) {
-    const mat = lambert ? new THREE.MeshLambertMaterial({ vertexColors: true }) : m.material;
+    const mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
+    inst.userData.model = name;
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
-    inst.receiveShadow = true;
+    inst.castShadow = !!opts.cast; inst.receiveShadow = true;
     inst.instanceMatrix.needsUpdate = true;
     inst.computeBoundingSphere();
     inst.matrixAutoUpdate = false;
@@ -252,70 +321,203 @@ function batch(name, matrices, lambert) {
   }
   return out;
 }
+function place(x, y, z, deg, s) {
+  return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), deg * DEG), new THREE.Vector3(s, s, s));
+}
 
-// ------------------------------------------------------------------ grass and flowers, in batches (one draw per kind)
-function buildMeadow() {
-  const r = rng(11), half = 8.5, centres = [];
-  for (let i = 0; i < 140; i++) centres.push([(r() * 2 - 1) * half, (r() * 2 - 1) * half]);
-  const kinds = ['grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2'], flowers = ['flower_daisy', 'flower_daisy', 'flower_butter', 'flower_clover'];
-  const spots = {};
-  const blocked = (x, z) => {
-    if (inPen(x, z, 0.0)) return true;
-    for (const p of L.path) { const dx = x - p[0], dz = z - p[2]; if (dx * dx + dz * dz < 0.42 * 0.42) return true; }
-    for (const t of L.trees) { const dx = x - t.pos[0], dz = z - t.pos[2]; if (dx * dx + dz * dz < 0.04) return true; }
-    return false;
-  };
-  let placed = 0;
-  for (let i = 0; i < 3200 && placed < 1100; i++) {
-    let x, z;
-    if (r() < 0.78) { const c = centres[Math.floor(r() * centres.length)]; x = c[0] + gauss(r) * 0.14; z = c[1] + gauss(r) * 0.14; }
-    else { x = (r() * 2 - 1) * half; z = (r() * 2 - 1) * half; }
-    if (blocked(x, z)) continue;
-    const flower = r() < 0.07;
-    const kind = flower ? flowers[Math.floor(r() * flowers.length)] : kinds[Math.floor(r() * kinds.length)];
-    const s = flower ? 1.3 + r() * 0.6 : 1.3 + r() * 1.1;
-    (spots[kind] = spots[kind] || []).push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z),
-      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * Math.PI * 2), new THREE.Vector3(s, s, s)));
-    placed++;
+function buildProps() {
+  // buildings, the pasture, fields, decorations, bridges and the dock: grouped by model, each group in one batch
+  const byModel = {};
+  for (const p of V.props) (byModel[p.model] = byModel[p.model] || []).push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));
+  for (const name in byModel) {
+    if (!parts[name]) { console.warn('no model for', name); continue; }
+    batch(name, byModel[name], { cast: true });
   }
-  for (const kind in spots) for (const inst of batch(kind, spots[kind], true)) grassSets.push({ mesh: inst, full: inst.count });
+  for (const mx of byModel.wheat_field || []) wheat(mx, 4.4, 2.4);
+}
+
+// ripe wheat standing on its field: golden stalks with an ear on each (the field's growing stages come later)
+function wheat(fieldMatrix, w, d) {
+  const r = rng(31), stalks = [], ears = [];
+  for (let x = -w / 2 + 0.12; x < w / 2 - 0.1; x += 0.15) {
+    for (let y = -d / 2 + 0.12; y < d / 2 - 0.1; y += 0.15) {
+      const px = x + (r() - 0.5) * 0.06, pz = y + (r() - 0.5) * 0.06, h = 0.85 + r() * 0.3;
+      const local = new THREE.Matrix4().compose(new THREE.Vector3(px, 0.02, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28),
+        new THREE.Vector3(2.4, 7 * h, 2.4));
+      stalks.push(new THREE.Matrix4().multiplyMatrices(fieldMatrix, local));
+      for (let k = 0; k < 2; k++) {
+        const a = r() * 6.28, e = new THREE.Matrix4().compose(new THREE.Vector3(px + Math.cos(a) * 0.035, 0.02 + 0.36 * h, pz + Math.sin(a) * 0.035),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.5, 0, (r() - 0.5) * 0.5)), new THREE.Vector3(1, 1, 1));
+        ears.push(new THREE.Matrix4().multiplyMatrices(fieldMatrix, e));
+      }
+    }
+  }
+  const stalkGeo = meshesOf(parts.grass_tuft_1)[0].geometry;
+  const st = new THREE.InstancedMesh(stalkGeo, new THREE.MeshLambertMaterial({ color: '#d9b24e', side: THREE.DoubleSide }), stalks.length);
+  stalks.forEach((m, i) => st.setMatrixAt(i, m));
+  const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(0.016, 0.09, 4, 1), new THREE.MeshLambertMaterial({ color: '#e7bf55' }), ears.length);
+  ears.forEach((m, i) => ea.setMatrixAt(i, m));
+  for (const o of [st, ea]) { o.computeBoundingSphere(); o.receiveShadow = true; o.castShadow = o === st; still(o, o === st, true); }
+}
+
+function buildNature() {
+  const r = rng(21);
+  // trees: three kinds of shady tree for the woods and the green, apple trees in the orchard
+  const kinds = { a: [], b: [], c: [], apple: [] };
+  V.trees.forEach((t, i) => {
+    const m = place(t.pos[0], 0, t.pos[2], r() * 360, t.h / 2.1);
+    if (t.kind === 'apple') kinds.apple.push(m); else kinds['abc'[i % 3]].push(m);
+  });
+  batch('tree_a', kinds.a, { cast: true }); batch('tree_b', kinds.b, { cast: true }); batch('tree_c', kinds.c, { cast: true });
+  batch('tree_apple', kinds.apple, { cast: true });
+  // bushes and rocks
+  const ba = [], bb = [];
+  V.bushes.forEach((b, i) => (i % 2 ? bb : ba).push(place(b.pos[0], 0, b.pos[2], b.rot, b.s * 1.1)));
+  batch('bush_a', ba, { cast: true }); batch('bush_b', bb, { cast: true });
+  const ra = [], rb = [];
+  V.rocks.forEach((k, i) => (i % 2 ? rb : ra).push(place(k.pos[0], 0, k.pos[2], k.rot, k.s * 1.2)));
+  batch('rock_a', ra); batch('rock_b', rb);
+  // wildflowers in little drifts
+  const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] }, names = Object.keys(fl);
+  for (const f of V.flowers) {
+    const pick = [names[Math.floor(r() * 3)], names[Math.floor(r() * 3)]];
+    const n = 5 + Math.floor(r() * 5);
+    for (let k = 0; k < n; k++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * f.r;
+      fl[pick[k % 2]].push(place(f.pos[0] + Math.cos(a) * d, 0, f.pos[2] + Math.sin(a) * d, r() * 360, 1.3 + r() * 0.6));
+    }
+  }
+  for (const n of names) batch(n, fl[n], { lambert: true, twoSided: true });
+}
+
+// grass tufts in tiles of 6 m, so the phone only draws the tiles in view; fewer on slower phones, none when zoomed far out
+function buildGrass() {
+  const TILE = 6, tiles = new Map();
+  for (const t of V.tufts) {
+    const key = Math.floor(t[0] / TILE) + ',' + Math.floor(t[2] / TILE);
+    if (!tiles.has(key)) tiles.set(key, [[], [], []]);
+    tiles.get(key)[t[3]].push(place(t[0], 0, t[2], t[4] / DEG, t[5]));
+  }
+  for (const lists of tiles.values()) {
+    lists.forEach((list, k) => {
+      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true })) grassTiles.push({ mesh: inst, full: inst.count });
+    });
+  }
   applyGrass();
 }
-function applyGrass() { for (const g of grassSets) g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); }
+function applyGrass() {
+  const far = view.size > 7.2;
+  for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); g.mesh.visible = !far; }
+}
 
-// ------------------------------------------------------------------ the birds: walk, stop, peck, waddle, and keep a little room around each other
-const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Biscuit', 'Nutmeg', 'Poppy', 'Daisy', 'Pearl', 'Ginger'];
-const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald'];
-const ROOM = 0.5, PERSONAL = 0.34;                // a new spot this far from everyone; stop walking when someone is this close ahead
-const BODY = 0.32, CHICK_BODY = 0.2;               // birds never stand closer than this: they gently step apart
-let blobGeo, blobMat;
+// ------------------------------------------------------------------ plots: a coop with its birds, an empty plot ready to build, or a plot for sale
+const COOP_SHIFT = new THREE.Vector3(-0.075, 0, -0.85);   // the coop model's pen, centred on its plot
+function buildPlots(nCoops) {
+  const r = rng(7);
+  V.plots.forEach((p, i) => {
+    const g = new THREE.Group();
+    g.position.set(p.pos[0], 0, p.pos[2]); g.rotation.y = p.deg * DEG;
+    scene.add(g);
+    const plot = { index: i, group: g, birds: [], kind: i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale', centre: new THREE.Vector3(p.pos[0], 0, p.pos[2]) };
+    plots.push(plot);
+    if (plot.kind === 'coop') {
+      const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
+      const coop = part('coop'); coop.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); frame.add(coop);
+      addNest(frame);
+      plot.frame = frame;
+      for (const h of PEN.hens) plot.birds.push(new Bird(plot, h.model, h.pos, -h.yaw * DEG + Math.PI, r));
+      if (i === 0) plot.birds.push(new Bird(plot, 'chick', [0.55, 0, 1.7], 0.5, r));
+      for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
+      allBirds.push(...plot.birds);
+    } else {
+      const m = part(plot.kind === 'empty' ? 'plot_empty' : 'plot_sale');
+      m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+      g.add(m);
+      if (plot.kind === 'empty') {                          // trodden earth, ready to build on
+        const earth = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 2.5), new THREE.MeshLambertMaterial({ color: '#b98d5c' }));
+        earth.rotation.x = -Math.PI / 2; earth.position.y = 0.003; earth.receiveShadow = true; g.add(earth);
+      }
+    }
+    g.updateMatrixWorld(true);
+    g.traverse(c => { if (c !== g && !c.userData.moves) c.matrixAutoUpdate = false; });
+    g.matrixAutoUpdate = false;
+  });
+}
+
+const STRAW = new THREE.MeshLambertMaterial({ color: '#e2c169' }), STRAW2 = new THREE.MeshLambertMaterial({ color: '#c9a24f' });
+const EGG = new THREE.MeshStandardMaterial({ color: '#d39b68', roughness: 0.45 }), GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' });
+const RIM_GEO = new THREE.CylinderGeometry(0.2, 0.2, 0.032, 20), BED_GEO = new THREE.CylinderGeometry(0.16, 0.16, 0.024, 20);
+const EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
+function addNest(frame) {
+  const nest = new THREE.Group(); nest.position.set(...PEN.nest);
+  const rim = new THREE.Mesh(RIM_GEO, STRAW2); rim.position.y = 0.016; rim.scale.z = 0.9;
+  const bed = new THREE.Mesh(BED_GEO, STRAW); bed.position.y = 0.024; bed.scale.z = 0.88;
+  const eggs = new THREE.InstancedMesh(EGG_GEO, EGG, 3);
+  for (let i = 0; i < 3; i++) {
+    const a = i * 2.4, d = 0.03 + 0.05 * i;
+    eggs.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(Math.cos(a) * d, 0.062, Math.sin(a) * d * 0.9),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(0.4 * i, i, 0.3)), new THREE.Vector3(0.055, 0.07, 0.055)));
+  }
+  eggs.computeBoundingSphere();
+  nest.add(rim, bed, eggs);
+  const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(PEN.feeder[0], 0.065, PEN.feeder[2]);
+  for (const o of [rim, bed, eggs, grain]) o.receiveShadow = true;
+  frame.add(nest, grain);
+}
+
+// ------------------------------------------------------------------ birds: walk, stop, peck, waddle, and keep a little room round each other
+const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Biscuit', 'Nutmeg', 'Poppy', 'Daisy', 'Pearl', 'Ginger',
+  'Olive', 'Rosie', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
+const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus', 'Rocco'];
+const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
+let blobGeo, blobMat, blobs = null, nameSeed = 0;
+const tmpM = new THREE.Matrix4();
+// every bird's soft round shadow, drawn in one batch; a bird's shadow follows her when she moves
+function makeBlobs() {
+  scene.updateMatrixWorld(true);
+  blobs = new THREE.InstancedMesh(blobGeo, blobMat, Math.max(1, allBirds.length));
+  blobs.renderOrder = 1; blobs.frustumCulled = false;
+  allBirds.forEach((b, i) => { b.blob = i; placeBlob(b); });
+  blobs.count = allBirds.length;
+  scene.add(blobs);
+}
+function placeBlob(b) {
+  b.root.updateMatrix();
+  tmpM.multiplyMatrices(b.plot.frame.matrixWorld, b.root.matrix).multiply(b.blobLocal);
+  blobs.setMatrixAt(b.blob, tmpM);
+  blobs.instanceMatrix.needsUpdate = true;
+}
 
 class Bird {
-  constructor(kind, pos, yaw, name, r) {
-    this.kind = kind; this.name = name; this.r = r;
+  constructor(plot, kind, pos, yaw, r) {
+    this.plot = plot; this.kind = kind; this.r = r;
+    this.name = kind === 'chick' ? 'Pip' : kind === 'rooster' ? ROO_NAMES[nameSeed++ % ROO_NAMES.length] : HEN_NAMES[(nameSeed++ * 7) % HEN_NAMES.length];
+    if (!blobGeo) makeBlob();
     this.root = new THREE.Group(); this.visual = new THREE.Group(); this.root.add(this.visual);
-    this.stand = part(kind + '_stand'); this.peck = part(kind + '_peck'); this.peck.visible = false;
-    for (const o of [this.stand, this.peck]) o.traverse(c => { if (c.isMesh) { c.receiveShadow = true; c.castShadow = false; } });
+    const st = solid(kind + '_stand'), pk = solid(kind + '_peck');
+    this.stand = new THREE.Mesh(st.geo, st.mat); this.peck = new THREE.Mesh(pk.geo, pk.mat); this.peck.visible = false;
+    this.stand.receiveShadow = this.peck.receiveShadow = true;
     this.visual.add(this.stand, this.peck);
     const small = kind === 'chick';
-    const blob = new THREE.Mesh(blobGeo, blobMat); blob.rotation.x = -Math.PI / 2; blob.position.y = 0.004;
-    blob.scale.setScalar(small ? 0.55 : 1); blob.renderOrder = 1; this.root.add(blob);
+    this.blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, -0.011, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
+      new THREE.Vector3(small ? 0.55 : 1, small ? 0.55 : 1, 1));
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
+    for (const o of [this.root, this.visual, this.stand, this.peck]) o.userData.moves = true;
     this.speed = small ? 0.24 : 0.32; this.turn = 260 * DEG;
     this.hitR = small ? 0.12 : 0.17; this.hitY = small ? 0.08 : 0.17;
     this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.peckT = 0; this.phase = r() * 10; this.hop = 0;
-    scene.add(this.root);
+    plot.frame.add(this.root);
   }
+  get flock() { return this.plot.birds; }
   free(x, z) {
-    if (x < L.yard.min[0] || x > L.yard.max[0] || z < L.yard.min[2] || z > L.yard.max[2]) return false;
-    for (const o of L.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
+    const Y = PEN.yard;
+    if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
+    for (const o of PEN.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
     return true;
   }
   roomAt(x, z) {
     let d = 99;
-    for (const b of birds) if (b !== this) {
-      d = Math.min(d, Math.hypot(b.root.position.x - x, b.root.position.z - z), Math.hypot(b.target.x - x, b.target.z - z));
-    }
+    for (const b of this.flock) if (b !== this) d = Math.min(d, Math.hypot(b.root.position.x - x, b.root.position.z - z), Math.hypot(b.target.x - x, b.target.z - z));
     return d;
   }
   clearPath(ax, az, bx, bz) {
@@ -324,10 +526,10 @@ class Bird {
     return true;
   }
   pickTarget() {
-    const p = this.root.position, startFree = this.free(p.x, p.z);
+    const p = this.root.position, startFree = this.free(p.x, p.z), Y = PEN.yard;
     let best = null, bestRoom = -1;
     for (let i = 0; i < 30; i++) {
-      const x = L.yard.min[0] + this.r() * (L.yard.max[0] - L.yard.min[0]), z = L.yard.min[2] + this.r() * (L.yard.max[2] - L.yard.min[2]);
+      const x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]), z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]);
       if (!this.free(x, z) || (startFree && !this.clearPath(p.x, p.z, x, z))) continue;
       const room = this.roomAt(x, z);
       if (room >= ROOM) { this.target.set(x, p.y, z); return; }
@@ -337,13 +539,13 @@ class Bird {
   }
   someoneAhead() {
     const p = this.root.position, fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y);
-    for (const b of birds) if (b !== this) {
+    for (const b of this.flock) if (b !== this) {
       const dx = b.root.position.x - p.x, dz = b.root.position.z - p.z, d = Math.hypot(dx, dz);
       if (d < PERSONAL && dx * fx + dz * fz > 0.2 * d) return true;
     }
     return false;
   }
-  tooClose() { for (const b of birds) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < 0.3) return true; return false; }
+  tooClose() { for (const b of this.flock) if (b !== this && Math.hypot(b.root.position.x - this.root.position.x, b.root.position.z - this.root.position.z) < 0.3) return true; return false; }
   setPeck(down) { this.stand.visible = !down; this.peck.visible = down; }
   waddle(walking) {
     const w = walking ? Math.sin(this.phase * 16) : 0;
@@ -352,9 +554,9 @@ class Bird {
   }
   update(dt) {
     this.phase += dt;
-    if (this.hop > 0) { this.hop = Math.max(0, this.hop - dt * 2.2); }
+    if (this.hop > 0) this.hop = Math.max(0, this.hop - dt * 2.2);
     if (this.peckT > 0) {
-      if (this.tooClose()) { this.peckT = 0; this.setPeck(false); this.wait = 0.1; return; }    // someone came too close: move along
+      if (this.tooClose()) { this.peckT = 0; this.setPeck(false); this.wait = 0.1; return; }
       this.peckT -= dt; this.setPeck((this.peckT % 0.6) > 0.25); this.waddle(false);
       if (this.peckT <= 0) { this.setPeck(false); this.wait = 0.4 + this.r() * 1.1; }
       return;
@@ -383,35 +585,44 @@ class Bird {
   }
 }
 
-// birds never overlap: two that end up too close gently step apart (each half the way, if the spot is free)
-function separate(dt) {
-  const k = Math.min(1, dt * 8);
-  for (let i = 0; i < birds.length; i++) for (let j = i + 1; j < birds.length; j++) {
-    const a = birds[i].root.position, b = birds[j].root.position;
-    const min = birds[i].kind === 'chick' || birds[j].kind === 'chick' ? CHICK_BODY : BODY;
-    let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
-    if (d >= min) continue;
-    if (d < 1e-4) { dx = 1; dz = 0; d = 1; } else { dx /= d; dz /= d; }
-    const push = (min - Math.min(d, min)) * 0.5 * k;
-    const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
-    const aFree = birds[i].free(ax, az), bFree = birds[j].free(bx, bz);
-    if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
-    if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }
-  }
-}
-
-function buildBirds() {
+function makeBlob() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 64;
   const cx = cv.getContext('2d'), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
   gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.25)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
   cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64);
   blobGeo = new THREE.CircleGeometry(0.16, 20);
   blobMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, color: '#20301a' });
-  const r = rng(7), hens = HEN_NAMES.slice(), roos = ROO_NAMES.slice();
-  const name = (list) => list.splice(Math.floor(r() * list.length), 1)[0];
-  for (const h of L.hens) birds.push(new Bird(h.model, h.pos, -h.yaw * DEG + Math.PI, h.model === 'rooster' ? name(roos) : name(hens), r));
-  birds.push(new Bird('chick', [0.55, 0, 1.7], 0.5, 'Pip', r));                // a chick, to see one on the farm
-  for (const b of birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
+}
+
+// birds in the same pen never overlap: two that end up too close gently step apart
+function separate(flock, dt) {
+  const k = Math.min(1, dt * 8);
+  for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
+    const a = flock[i].root.position, b = flock[j].root.position;
+    const min = flock[i].kind === 'chick' || flock[j].kind === 'chick' ? CHICK_BODY : BODY;
+    let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
+    if (d >= min) continue;
+    if (d < 1e-4) { dx = 1; dz = 0; d = 1; } else { dx /= d; dz /= d; }
+    const push = (min - Math.min(d, min)) * 0.5 * k;
+    const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
+    const aFree = flock[i].free(ax, az), bFree = flock[j].free(bx, bz);
+    if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
+    if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }
+  }
+}
+
+// only pens near the view are brought to life (the others wait where they are)
+const frustum = new THREE.Frustum(), projView = new THREE.Matrix4(), sphere = new THREE.Sphere();
+function livePlots() {
+  projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  frustum.setFromProjectionMatrix(projView);
+  const out = [];
+  for (const p of plots) {
+    if (p.kind !== 'coop') continue;
+    sphere.center.copy(p.centre); sphere.radius = 3.2;
+    if (frustum.intersectsSphere(sphere)) out.push(p);
+  }
+  return out;
 }
 
 // ------------------------------------------------------------------ touch, mouse and trackpad: drag to move, pinch or scroll to zoom, tap a hen
@@ -449,14 +660,26 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.de
 document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
-function zoomBy(f) { view.size = Math.min(view.max, Math.max(view.min, view.size * f)); placeCamera(); }
+function zoomBy(f) {
+  const was = view.size > 7.2;
+  view.size = Math.min(view.max, Math.max(view.min, view.size * f));
+  if ((view.size > 7.2) !== was) applyGrass();
+  placeCamera();
+}
+// the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
+function clampView() {
+  const t = view.target, by = -t.z;
+  let u = (t.x + by) * R2, v = (by - t.x) * R2;
+  u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
+  v = Math.max(V.bounds.v[0] + 2, Math.min(V.bounds.v[1] - 1, v));
+  t.x = (u - v) * R2; t.z = -(u + v) * R2;
+}
 function pan(dx, dy) {
   const upp = 2 * view.size / Math.max(1, canvas.clientHeight);
   const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); right.y = 0; right.normalize();
   const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion); up.y = 0; up.normalize();
   view.target.addScaledVector(right, -dx * upp).addScaledVector(up, dy * upp / PITCH_SIN);
-  const off = new THREE.Vector3().subVectors(view.target, view.start); off.y = 0;
-  if (off.length() > 9) view.target.copy(view.start).add(off.setLength(9));
+  clampView();
   placeCamera();
 }
 
@@ -466,9 +689,10 @@ function tapAt(x, y) {
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   let best = null, bestD = Infinity;
-  const s = new THREE.Sphere();
-  for (const b of birds) {
-    s.center.set(b.root.position.x, b.root.position.y + b.hitY, b.root.position.z); s.radius = b.hitR;
+  const s = new THREE.Sphere(), w = new THREE.Vector3();
+  for (const p of livePlots()) for (const b of p.birds) {
+    b.root.getWorldPosition(w);
+    s.center.set(w.x, w.y + b.hitY, w.z); s.radius = b.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
@@ -481,7 +705,7 @@ function placeTag(dt) {
   if (!tagBird) return;
   tagLeft -= dt;
   if (tagLeft <= 0) { tag.classList.remove('on'); tagBird = null; return; }
-  const v = tagBird.root.position.clone(); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(camera);
+  const v = new THREE.Vector3(); tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(camera);
   tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
 }
 
@@ -501,11 +725,9 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  for (const b of birds) b.update(dt);
-  separate(dt);
+  for (const p of livePlots()) { for (const b of p.birds) b.update(dt); separate(p.birds, dt); for (const b of p.birds) placeBlob(b); }
   placeTag(dt);
   renderer.render(scene, camera);
-  // how smooth it is: a frame is late when it came much later than planned (1/60 s while touched, 1/30 s otherwise)
   const gap = now - lastFrame;
   if (lastFrame && gap < 1000 && gap > (busy ? 1000 / 60 : 1000 / 30) * 1.6) meter.late++;
   lastFrame = now;
@@ -522,16 +744,15 @@ function frame(now) {
 
 function stepDown() {
   q++;
-  const Q = QUALITY[q];
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q.dpr));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
   applyGrass();
-  aimSun(); renderer.shadowMap.needsUpdate = true;
+  aimShadows(true);
   resize();
 }
 
 function showReadout() {
   const fps = Math.round(meter.fps);
-  const word = fps >= 50 ? 'Smooth' : fps >= 26 ? 'Smooth' : fps >= 18 ? 'A bit slow' : 'Slow';
+  const word = fps >= 26 ? 'Smooth' : fps >= 18 ? 'A bit slow' : 'Slow';
   const info = renderer.info.render;
   readout.textContent = details
     ? `${fps} fps · quality ${q + 1} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× · ${Math.round(info.triangles / 1000)}k triangles · ${info.calls} draws`
@@ -541,9 +762,14 @@ function showReadout() {
 
 document.addEventListener('visibilitychange', () => { lastSim = 0; meter.since = 0; meter.frames = 0; });
 
-window.__separate = separate;
-window.__farm = { birds, view, renderer, scene, camera, quality: () => q, meter, setQuality: (n) => { while (q < n) stepDown(); } };
+window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
+window.__farm = {
+  get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
+  setQuality: (n) => { while (q < n) stepDown(); },
+  lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
+  plan: () => V, THREE,
+};
 start().catch(err => {
   console.error(err);
-  loading.querySelector('.msg').textContent = 'The farm could not load. Check your connection and try again.';
+  loading.querySelector('.msg').textContent = 'The village could not load. Check your connection and try again.';
 });

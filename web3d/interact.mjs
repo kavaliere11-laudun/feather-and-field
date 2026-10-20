@@ -1,4 +1,4 @@
-// Checks the 3D test farm's touch and mouse handling: tap a hen (her name shows), drag (the view moves), pinch and scroll (it zooms),
+// Checks the 3D village's touch and mouse handling: tap a hen (her name shows), drag (the view moves), pinch and scroll (it zooms),
 // and that the quality steps down cleanly. Usage: node interact.mjs [url]
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const url = process.argv[2] || 'http://localhost:8770/index.html?q=0';
@@ -15,7 +15,7 @@ const ok = (name, cond, extra = '') => console.log((cond ? 'PASS ' : 'FAIL ') + 
 // a hen's place on screen
 const spot = await p.evaluate(() => {
   const f = window.__farm, bd = f.birds[0];
-  const v = bd.root.position.clone(); v.y += 0.17; v.project(f.camera);
+  const v = bd.root.getWorldPosition(new f.THREE.Vector3()); v.y += 0.17; v.project(f.camera);
   return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, name: bd.name };
 });
 await p.touchscreen.tap(spot.x, spot.y);
@@ -48,7 +48,8 @@ ok('pinch apart zooms in', s2 < s1, s1.toFixed(2) + ' -> ' + s2.toFixed(2));
 // zoom limits
 for (let i = 0; i < 20; i++) await p.mouse.wheel(0, 800);
 const s3 = await p.evaluate(() => window.__farm.view.size);
-ok('zoom stops at the widest view', Math.abs(s3 - 7.5) < 0.01, s3.toFixed(2));
+const vmax = await p.evaluate(() => window.__farm.view.max);
+ok('zoom stops at the widest view', Math.abs(s3 - vmax) < 0.01, s3.toFixed(2) + ' of ' + vmax);
 
 // the quality steps down cleanly to the lowest level
 await p.evaluate(() => window.__farm.setQuality(3));
@@ -58,6 +59,7 @@ ok('lowest quality applies', low.q === 3 && low.dpr === 1, JSON.stringify(low));
 await p.screenshot({ path: 'shot_low.png' });
 
 // the birds keep moving and stay in the yard
+await p.evaluate(() => { const f = window.__farm, b = f.birds[0].root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(b.x, b.z, 4); });
 const pos1 = await p.evaluate(() => window.__farm.birds.map(b => [b.root.position.x, b.root.position.z]));
 await p.waitForTimeout(9000);                          // the test browser draws slowly: give the birds time
 const res = await p.evaluate((pos1) => {

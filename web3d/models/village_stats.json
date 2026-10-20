@@ -1,0 +1,167 @@
+{
+ "farmhouse": {
+  "tris": 996,
+  "verts": 1844,
+  "prims": 3
+ },
+ "egg_stall": {
+  "tris": 2600,
+  "verts": 1588,
+  "prims": 2
+ },
+ "pasture": {
+  "tris": 2672,
+  "verts": 5808,
+  "prims": 1
+ },
+ "pasture_shelter": {
+  "tris": 108,
+  "verts": 216,
+  "prims": 2
+ },
+ "plot_empty": {
+  "tris": 200,
+  "verts": 408,
+  "prims": 1
+ },
+ "plot_sale": {
+  "tris": 3200,
+  "verts": 1946,
+  "prims": 3
+ },
+ "hay_stack": {
+  "tris": 132,
+  "verts": 288,
+  "prims": 1
+ },
+ "round_bale": {
+  "tris": 108,
+  "verts": 56,
+  "prims": 1
+ },
+ "barrels": {
+  "tris": 898,
+  "verts": 549,
+  "prims": 2
+ },
+ "wheelbarrow": {
+  "tris": 648,
+  "verts": 480,
+  "prims": 2
+ },
+ "planter": {
+  "tris": 1200,
+  "verts": 756,
+  "prims": 2
+ },
+ "flower_pots": {
+  "tris": 1140,
+  "verts": 612,
+  "prims": 2
+ },
+ "lamp_post": {
+  "tris": 72,
+  "verts": 92,
+  "prims": 2
+ },
+ "well": {
+  "tris": 796,
+  "verts": 1528,
+  "prims": 2
+ },
+ "veg_patch": {
+  "tris": 3500,
+  "verts": 1906,
+  "prims": 2
+ },
+ "veg_patch_sq": {
+  "tris": 3500,
+  "verts": 1928,
+  "prims": 2
+ },
+ "picket_fence": {
+  "tris": 204,
+  "verts": 408,
+  "prims": 1
+ },
+ "scarecrow": {
+  "tris": 898,
+  "verts": 565,
+  "prims": 1
+ },
+ "log_pile": {
+  "tris": 264,
+  "verts": 144,
+  "prims": 1
+ },
+ "bench": {
+  "tris": 72,
+  "verts": 144,
+  "prims": 2
+ },
+ "dock": {
+  "tris": 228,
+  "verts": 248,
+  "prims": 1
+ },
+ "mushrooms": {
+  "tris": 324,
+  "verts": 174,
+  "prims": 1
+ },
+ "wheat_field": {
+  "tris": 46,
+  "verts": 84,
+  "prims": 1
+ },
+ "sunflowers": {
+  "tris": 6000,
+  "verts": 3410,
+  "prims": 2
+ },
+ "bridge": {
+  "tris": 444,
+  "verts": 888,
+  "prims": 1
+ },
+ "tree_a": {
+  "tris": 9000,
+  "verts": 5442,
+  "prims": 1
+ },
+ "tree_b": {
+  "tris": 9000,
+  "verts": 5393,
+  "prims": 1
+ },
+ "tree_c": {
+  "tris": 9000,
+  "verts": 5470,
+  "prims": 1
+ },
+ "tree_apple": {
+  "tris": 9000,
+  "verts": 5494,
+  "prims": 2
+ },
+ "bush_a": {
+  "tris": 400,
+  "verts": 210,
+  "prims": 1
+ },
+ "bush_b": {
+  "tris": 320,
+  "verts": 168,
+  "prims": 1
+ },
+ "rock_a": {
+  "tris": 20,
+  "verts": 12,
+  "prims": 1
+ },
+ "rock_b": {
+  "tris": 20,
+  "verts": 12,
+  "prims": 1
+ }
+}

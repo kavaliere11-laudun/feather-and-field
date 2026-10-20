@@ -1,37 +1,37 @@
 {
  "hen_stand": {
-  "tris": 5000,
-  "verts": 2574,
+  "tris": 3000,
+  "verts": 1574,
   "prims": 3
  },
  "hen_peck": {
-  "tris": 5000,
-  "verts": 2574,
+  "tris": 3000,
+  "verts": 1574,
   "prims": 3
  },
  "rooster_stand": {
-  "tris": 5500,
-  "verts": 2832,
+  "tris": 3400,
+  "verts": 1782,
   "prims": 3
  },
  "rooster_peck": {
-  "tris": 5500,
-  "verts": 2832,
+  "tris": 3400,
+  "verts": 1782,
   "prims": 3
  },
  "chick_stand": {
-  "tris": 2200,
-  "verts": 1134,
+  "tris": 1500,
+  "verts": 784,
   "prims": 3
  },
  "chick_peck": {
-  "tris": 2200,
-  "verts": 1134,
+  "tris": 1500,
+  "verts": 784,
   "prims": 3
  },
  "coop": {
-  "tris": 29674,
-  "verts": 16648,
+  "tris": 21226,
+  "verts": 12424,
   "prims": 4
  },
  "apple_tree": {
@@ -45,23 +45,23 @@
   "prims": 2
  },
  "grass_tuft_0": {
-  "tris": 96,
-  "verts": 120,
+  "tris": 48,
+  "verts": 60,
   "prims": 1
  },
  "grass_tuft_1": {
-  "tris": 112,
-  "verts": 140,
+  "tris": 56,
+  "verts": 70,
   "prims": 1
  },
  "grass_tuft_2": {
-  "tris": 128,
-  "verts": 160,
+  "tris": 64,
+  "verts": 80,
   "prims": 1
  },
  "flower_daisy": {
-  "tris": 300,
-  "verts": 170,
+  "tris": 140,
+  "verts": 90,
   "prims": 2
  },
  "flower_butter": {
