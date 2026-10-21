@@ -256,6 +256,8 @@ function addFur(g, src, spec) {
 
 // how fine the strands are and how many shells are drawn, from how big a bird is on screen (fewer when zoomed out)
 const FURRY = [];
+// ?soft: strand edges blended by the graphics chip's antialiasing (alpha to coverage) instead of cut hard (a test)
+const SOFT = typeof location !== 'undefined' && /[?&]soft\b/.test(location.search);
 export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null } };
 // real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
 export function setHairTexture(t) {
@@ -275,6 +277,7 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 // the birds' material: lit as before, with the shells' strands cut out of each layer and shaded darker towards the roots
 function birdMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+  if (SOFT) { m.alphaToCoverage = true; m.defines = { SOFT_FUR: '' }; furLook.cut.value = 0.04; }
   m.onBeforeCompile = sh => {
     sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex;
     sh.vertexShader = sh.vertexShader
@@ -317,6 +320,9 @@ function birdMaterial() {
             float rad = mix(0.52, 0.58, step(0.001, vStyle.x)) * (1.0 - mix(0.82, 0.55, step(0.001, vStyle.x)) * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
             float cov = 1.0 - smoothstep(rad - fw, rad + fw, d);
             if (cov < furCut) discard;
+            #ifdef SOFT_FUR
+            diffuseColor.a = cov;
+            #endif
           }
           float sleek = 1.0 - step(0.001, vStyle.x);
           furShade = mix(mix(0.68, 0.86, sleek), mix(1.13, 1.04, sleek), tt / strand) * (0.9 + 0.2 * h) * (0.94 + 0.12 * tid * vStyle.x);
