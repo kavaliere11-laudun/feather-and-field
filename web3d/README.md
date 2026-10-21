@@ -289,6 +289,23 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     crosses the wall, her shadow staying on the ground), turn round by their left where there's room, shuffle onto the seat;
     after laying they leap out of the window to the yard and sing there. The Diva, Good mum and Glutton behave and take the
     ramp and the pop door.
+- 21 Oct 20:15, Audrey (screenshot of the sitting Orpington at the thatched cottage): "The chicken is clipping through the
+  objects". She sat 8 cm in from the front with her breast and shoulders through the window frame and the wall. So:
+  - She sits further in (`SEAT` = 17 cm from the front, `nests.seat`), sunk into the straw (seat height = nest floor +
+    0.5 cm): all of her is inside the cubby, her face just at the window (the window's top hides anything deeper and
+    higher). The straw hollow is centred on her. Eggs lie in front of her seat, under her breast (`NEST_SLOTS`, 3-14 cm
+    from the window), where they show once she's gone.
+  - Nest windows 30 cm wide (`WIN_W`; the pagoda's stays 26 cm, its Silkies are small and its moon door close), so a big
+    hen fits through when she jumps. Red Barn window at x 0.445, barn door to 0.24; thatched door 24 cm at 0.045, its
+    middle post at 0.225.
+  - Birds walk round what stands in front of their house: `nests.block` in coops.json (`block()` in `stylized/coops.py`:
+    a let-down door lying on the ground, the thatched cottage's lavender pot, the pagoda's lantern, the lodge's lantern
+    post), checked by `Bird.free()` via `inBlock()`. And they keep their beak and breast out of walls, fences and those
+    things: a step is taken only if the point 22 cm ahead (scaled by size) is inside the yard (plus 12 cm) and clear of the
+    blocks (`clearAhead()`, in the free walk, `stepToward` and parade sidesteps; not for a hen on her way to lay).
+    `clipcheck.mjs [minutes]` simulates the pens and counts beaks in a house's front wall and birds in a block: 4 minutes,
+    about 15,000 samples, 2 beaks a couple of centimetres in, none in a block.
+  - Jumpers take off further out (51 cm from the front, clear of a let-down door) and land there after.
 - Each coop hen has a personality (the game's five: `PERS_IDS`, spread across each pen) shown in her label, and `layIn`
   (first lay 6-76 s after loading, then every 4-8 minutes; one hen in the nest box at a time).
 - `startLaying(sit)` / `layStep(dt)` (phases go, in, turn, settle, sit, rise, out, sing): across the yard to the foot of

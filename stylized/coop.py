@@ -136,7 +136,7 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
         for a, b in spans:
             objs.append(plank('btrim', (a, sy * (D2 + 0.035), FL + 0.04), (b, sy * (D2 + 0.035), FL + 0.04), 0.06, 0.025, (0, sy, 0), m['white']))
     # ---- big barn door on the front, white frame with the X brace
-    dx0, dx1, dz0, dz1 = (-0.09, 0.29, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
+    dx0, dx1, dz0, dz1 = (-0.09, 0.24, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
     yd = -D2 - 0.03
     for i in range(4):
         x = dx0 + (i + 0.5) * (dx1 - dx0) / 4

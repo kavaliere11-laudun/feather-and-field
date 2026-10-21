@@ -43,5 +43,6 @@ one('fence_dx', coops.deluxe_fence)
 one('vane', coops.weathervane)
 names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane']
 write_glb(os.path.join(OUT, 'coops.glb'), names)
+for k, v in coops.NESTS.items(): v['block'] = coops.BLOCKS.get(k, [])          # what the birds walk round in front of each house
 json.dump(dict(tops=TOPS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

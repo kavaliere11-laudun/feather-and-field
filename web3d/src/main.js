@@ -532,7 +532,8 @@ function buildPlots(nCoops) {
 // the hens lay inside their coop, on a straw nest seen through a little window on the front (stylized/coops.py nest_window;
 // coops.json nests, per house: floor height, window [x, bottom, top, width], seat, inside (where she comes in from, behind
 // the wall), pop (the pop door's threshold), foot (the bottom of the ramp)). Egg slots round the seat.
-const NEST_SLOTS = [[0, -0.02], [0.06, 0.0], [-0.06, 0.01], [0.05, -0.08], [-0.05, -0.09], [0.0, -0.14]];
+// where the eggs lie, from her seat: under her breast, towards the window (further in, the window's top would hide them)
+const NEST_SLOTS = [[0, 0.08], [0.06, 0.06], [-0.06, 0.07], [0.045, 0.12], [-0.045, 0.12], [0.0, 0.03]];
 const nestOf = plot => COOPS.nests['house_' + plot.breed];
 const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', sil: '#efe4cf' };
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
@@ -543,6 +544,7 @@ function addNest(frame, plot) {
   eggs.userData.moves = true; eggs.receiveShadow = true; eggs.castShadow = false;
   frame.add(eggs);
   plot.nest = { eggs, count: 0, pop: 1, by: null };
+  plot.block = (nestOf(plot) || {}).block || [];         // things in front of the house to walk round (a let-down door, a pot...)
   plot.nest.count = 2;                                   // a couple already laid this morning
   showEggs(plot);
   const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(PEN.feeder[0], 0.065, PEN.feeder[2]);
@@ -671,7 +673,20 @@ class Bird {
     const Y = PEN.yard;
     if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
     for (const o of PEN.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
-    return true;
+    return !this.inBlock(x, z);
+  }
+  inBlock(x, z) {
+    for (const o of this.plot.block || []) { const dx = x - o[0], dz = z - o[1]; if (dx * dx + dz * dz < o[2] * o[2]) return true; }
+    return false;
+  }
+  // stepping to (x, z) facing yaw: her breast and beak, ahead of her feet, mustn't go into the house's walls, through the fence
+  // or into what stands in front of the house
+  clearAhead(x, z, yaw) {
+    if (this.plot.kind === 'lineup') return true;
+    const reach = 0.22 * this.rig.scale / 0.5, Y = PEN.yard, m = 0.12;
+    const px = x + Math.sin(yaw) * reach, pz = z + Math.cos(yaw) * reach;
+    if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
+    return !this.inBlock(px, pz);
   }
   roomAt(x, z) {
     let d = 99;
@@ -738,7 +753,7 @@ class Bird {
     if (turning.diff < 25 * DEG) {
       const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * pace * dt, dist);
       const nx = p.x + fx * s, nz = p.z + fz * s;
-      if (!obey || this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; return { arrived: false, walking: true }; }
+      if (!obey || (this.free(nx, nz) && (this.laying || this.clearAhead(nx, nz, this.root.rotation.y))) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; return { arrived: false, walking: true }; }
       return { arrived: false, walking: false, blocked: true };
     }
     return { arrived: false, walking: turning.walking };
@@ -799,8 +814,8 @@ class Bird {
     L.t += dt;
     const G = nestOf(this.plot), FL = G.house, NF = G.floor, ground = 0.015;      // the house's floor, the nest's
     const front = [G.pop[0], Math.max(G.foot[1] + 0.16, 1.2)];             // in the yard, in front of the ramp
-    const launch = [G.seat[0] - 0.02, D2 + 0.36];                           // in the yard, in front of the nest window
-    const inDoor = [G.pop[0], G.inside[1] - 0.04], seatY = NF + 0.035;
+    const launch = [G.seat[0] - 0.02, D2 + 0.51];                           // in the yard, in front of the nest window (and its door)
+    const inDoor = [G.pop[0], G.inside[1] - 0.04], seatY = NF + 0.005;      // she sinks into the straw
     // going through the pop door she stretches her neck out and ducks, from when her head reaches it until she's through
     const atPop = () => p.x < G.inside[0] - 0.1 && p.y > FL - 0.12 && p.z > D2 - 0.2 && p.z < D2 + 0.34;
     switch (L.phase) {
@@ -853,7 +868,7 @@ class Bird {
       case 'rise': {                                         // she stands: the new egg is in the straw
         const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot);
         if (L.t > 1.0) {
-          if (L.jump) { next('leapout'); L.to = new THREE.Vector3(G.seat[0], ground, D2 + 0.36); L.hh = undefined; break; }
+          if (L.jump) { next('leapout'); L.to = new THREE.Vector3(G.seat[0], ground, D2 + 0.51); L.hh = undefined; break; }
           next('out');
           L.path = [[G.inside[0], G.inside[1], FL], [inDoor[0], inDoor[1], FL], [G.pop[0], G.pop[1] + 0.02, FL], [G.foot[0], G.foot[1], ground], [front[0], front[1], ground]];
         }
@@ -1004,11 +1019,11 @@ class Bird {
         else if (facing) {
           const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * (this.pace || 1) * dt, dist);
           const nx = p.x + fx * s, nz = p.z + fz * s;
-          if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; walking = true; }
+          if ((this.free(nx, nz) && this.clearAhead(nx, nz, this.root.rotation.y)) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; walking = true; }
           else if (this.route) {                       // on parade: step round whatever is in the way
             for (const da of [0.6, -0.6, 1.1, -1.1, 1.6, -1.6]) {
               const a = this.root.rotation.y + da, sx = p.x + Math.sin(a) * s, sz = p.z + Math.cos(a) * s;
-              if (this.free(sx, sz)) { p.x = sx; p.z = sz; walking = true; break; }
+              if (this.free(sx, sz) && this.clearAhead(sx, sz, this.root.rotation.y)) { p.x = sx; p.z = sz; walking = true; break; }
             }
             if (!walking) this.wait = 0.3;
           } else this.wait = 0.5;

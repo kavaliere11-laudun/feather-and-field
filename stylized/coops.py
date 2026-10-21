@@ -159,7 +159,7 @@ def thatched(seed=5):
     walls = box('walls', (2 * W2, 2 * D2, EAVE - FL), (0, 0, (EAVE + FL) / 2), m=cream, bevel=0.015, segs=2); objs.append(walls)
     for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, cream))
     # timber frame on the front and the +x side
-    for x in (-W2 + 0.02, 0.235, W2 - 0.02):
+    for x in (-W2 + 0.02, 0.225, W2 - 0.02):
         objs.append(plank('post', (x, -D2 - 0.015, FL + 0.01), (x, -D2 - 0.015, EAVE - 0.01), 0.05, 0.03, (0, -1, 0), oak, jitter=0.4))
     for z in (FL + 0.03, EAVE - 0.03):
         spans = [(-W2, W2)] if z > 0.5 else [(-W2, -0.31 - POP_W / 2 - 0.045), (-0.31 + POP_W / 2 + 0.045, WX - WIN_W / 2 - 0.02), (WX + WIN_W / 2 + 0.02, W2)]
@@ -193,11 +193,12 @@ def thatched(seed=5):
     objs.append(box('chimney', (0.2, 0.2, 0.7), (-0.42, 0.2, PEAK - 0.1), m=brick, bevel=0.012, segs=1))
     objs.append(box('chimcap', (0.25, 0.25, 0.05), (-0.42, 0.2, PEAK + 0.26), m=C('brickdark', '#7e3f2b', rough=0.85), bevel=0.01, segs=1))
     objs.append(cyl('chimpot', 0.045, 0.1, (-0.42, 0.2, PEAK + 0.33), m=C('terra', '#b0603a', rough=0.8), verts=10, bevel=0.0))
-    arched_door(objs, 0.05, -D2 - 0.005, FL, 0.25, 0.56, green, oak, brass)
+    arched_door(objs, 0.045, -D2 - 0.005, FL, 0.24, 0.56, green, oak, brass)
     flw = [C('fbox', '#6d4a31', rough=0.85), C('fl_red', '#e2453c', rough=0.6), C('fl_pink', '#f08bb0', rough=0.6), C('fl_yel', '#f4c430', rough=0.6)]
     nest_window(objs, 'orp', FL, WX, oak, solids=[walls, plinth], nest_floor=NF, door='drop', door_m=oak)
     window(objs, W2 + 0.02, 0.0, 0.58, 0.22, 0.18, oak, glass, normal=(1, 0, 0), box_flowers=flw)
     LX = W2 + 0.06                                  # the lavender pot by the front corner, clear of the nest window and its door
+    block('orp', LX, -D2 - 0.17, 0.13)
     objs.append(cyl('pot', 0.065, 0.14, (LX, -D2 - 0.17, 0.07), m=C('terra', '#b0603a', rough=0.8), verts=14, r2=0.08, bevel=0.006))
     for k in range(9):
         a = k * 0.7
@@ -349,7 +350,7 @@ def pagoda(seed=7):
                 objs.append(box('lat', (0.015, w, 0.012), (x + nx * 0.012, y, z + k * h / 3), m=red, bevel=0.0))
         frame = (w + 0.04, 0.025, h + 0.04) if ny else (0.025, w + 0.04, h + 0.04)
         objs.append(box('latf', frame, (x - nx * 0.004, y - ny * 0.004, z), m=red, bevel=0.004, segs=1))
-    nest_window(objs, 'sil', FL, 0.42, red, solids=[walls, plinth], steps=2, nest_floor=0.06, door='lattice', door_m=red)
+    nest_window(objs, 'sil', FL, 0.42, red, ww=0.26, solids=[walls, plinth], steps=2, nest_floor=0.06, door='lattice', door_m=red)
     lattice(W2 + 0.012, 0.0, 0.46, 0.26, 0.18, (1, 0))
     lattice(-W2 - 0.012, 0.0, 0.46, 0.26, 0.18, (-1, 0))
     # two sweeping teal roofs, the upper storey, a gold finial, a red paper lantern
@@ -363,6 +364,7 @@ def pagoda(seed=7):
     objs.append(cyl('finial', 0.025, 0.14, (0, 0, 1.52), m=gold, verts=10, bevel=0.0))
     objs.append(sphere('finball', 0.04, (0, 0, 1.6), m=gold, seg=14, rings=8))
     objs.append(cyl('cord', 0.004, 0.1, (W2 + 0.2, -D2 - 0.2, EAVE - 0.0), m=dark, verts=5, bevel=0.0))
+    block('sil', W2 + 0.2, -D2 - 0.2, 0.11)
     objs.append(sphere('lantern', 0.065, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12), (1, 1, 1.25), m=C('lanternred', '#dc4b2e', rough=0.5), seg=14, rings=10))
     for dz in (-0.075, 0.075):
         objs.append(cyl('lcap', 0.03, 0.02, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12 + dz), m=gold, verts=10, bevel=0.0))
@@ -423,6 +425,7 @@ def lodge(seed=8):
     objs.append(plank('dlintel', (-0.1, -D2 - 0.05, 0.66), (0.26, -D2 - 0.05, 0.66), 0.06, 0.04, (0, -1, 0), barge, jitter=0.2))
     nest_window(objs, 'bra', 0.26, 0.44, trim, solids=[core], nest_floor=0.2, door='drop', door_m=door_m)
     window(objs, W2 + 0.03, 0.0, 0.5, 0.24, 0.2, trim, glass, normal=(1, 0, 0))
+    block('bra', -0.62, -D2 - 0.28, 0.1)
     objs.append(cyl('lpost', 0.022, 0.95, (-0.62, -D2 - 0.28, 0.475), m=barge, verts=8, bevel=0.0))          # lantern post left of the ramp
     objs.append(box('larm', (0.14, 0.025, 0.025), (-0.56, -D2 - 0.28, 0.92), m=iron, bevel=0.004, segs=1))
     objs.append(box('lantern', (0.07, 0.07, 0.09), (-0.5, -D2 - 0.28, 0.85), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
@@ -556,7 +559,7 @@ def weathervane():
 
 def red_barn():
     """The Red Barn (coop.build) with its nests inside, behind a window right of the barn door."""
-    wx, FL = 0.46, 0.40
+    wx, FL = 0.445, 0.40
     r = coop.build((0, 0, 0), 0.0, seed=5, pen=False, window=(wx - WIN_W / 2, wx + WIN_W / 2, FL + 0.05, FL + 0.05 + WIN_H))
     objs = []; nest_window(objs, 'rir', FL, wx, coop.M()['white'], hollow=True, ramp_len=0.67, door='drop', door_m=coop.M()['red'])
     for o in objs:
@@ -572,7 +575,15 @@ HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': 
 # in at the pop door). Solid houses get the window and the cubby cut out of their walls (boolean cutters, hidden, not
 # exported). NESTS records each house's nest for the browser (glTF axes: (x, y, z) = Blender (x, z, -y)).
 NESTS = {}
-WIN_W, WIN_H = 0.26, 0.3                  # the window's opening (kept under the roof's overhang, which hides what's above)
+SEAT = 0.17                               # she sits this far in from the front: all of her inside, her face at the window
+WIN_W, WIN_H = 0.30, 0.3                  # the window's opening (kept under the roof's overhang, which hides what's above;
+                                          # wide enough for a big hen to jump through)
+BLOCKS = {}                               # per house: [x, z, r] circles in the yard the birds keep out of (glTF axes)
+
+
+def block(house, x, y, r):
+    """Something in front of a house the birds mustn't walk through (Blender x, y; radius r)."""
+    BLOCKS.setdefault('house_' + house, []).append([round(x, 3), round(-y, 3), r])
 
 
 def cutter(name, size, loc):
@@ -585,12 +596,13 @@ def cutter(name, size, loc):
 
 
 def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=None, steps=None, lining_c='#3b2b20', nest_floor=None,
-                door=None, door_m=None):
+                door=None, door_m=None, ww=None):
     """FL: the house's floor (the pop door); nest_floor: the nest's, lower where the roof's overhang would hide the window.
     door: the little nest door, open: 'drop' (hinged at the sill and let down: hanging against the wall below a high window,
     resting on the ground like a little ramp below a low one) or 'lattice' (a lattice screen slid up). Anything above the
     window would be hidden by the roof's overhang."""
     NF = FL if nest_floor is None else nest_floor
+    WIN_W = ww or globals()['WIN_W']                                         # this house's window width
     z0 = NF + 0.04; z1 = z0 + WIN_H; zc = max(NF + 0.44, FL + 0.46)          # sill, top of the window, cubby ceiling
     cx0, cx1, cy0, cy1 = wx - 0.33, wx + 0.15, -D2 + 0.035, -D2 + 0.44       # the cubby (left part behind the wall)
     px0, px1 = -0.31 - POP_W / 2, -0.31 + POP_W / 2                         # the pop door, and the passage from it to the nest
@@ -625,7 +637,7 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
     objs.append(box('hall', (T, hy1 - cy0, hz1 - FL), (hx0 + T / 2, (cy0 + hy1) / 2, (FL + hz1) / 2), m=hall_m, bevel=0.0))
     # the nest: a deep bed of straw over the whole floor, a soft rim of straw round the hollow where she sits, loose straws
     # everywhere, some poking up, some hanging over the sill, a few fallen on the ground below
-    straw = coop.M()['straw']; sy_ = -D2 + 0.1                               # the hollow's centre (she sits just in front of it)
+    straw = coop.M()['straw']; sy_ = -D2 + 0.16                              # the hollow's centre, where she sits
     objs.append(sphere('nb_bed', 1.0, ((cx0 + cx1) / 2, (cy0 + cy1) / 2, NF + T), ((cx1 - cx0) / 2 * 0.98, (cy1 - cy0) / 2 * 0.98, 0.04), m=straw, ico=3, disp=0.3, seed=21))
     for k in range(13):
         a = k / 13 * math.tau + 0.2
@@ -647,16 +659,18 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
     for (u0, v0, u1, v1) in [(-WIN_W / 2 - t / 2, z1, WIN_W / 2 + t / 2, z1), (-WIN_W / 2, z0, -WIN_W / 2, z1), (WIN_W / 2, z0, WIN_W / 2, z1)]:
         objs.append(plank('nwframe', (wx + u0, -D2 - 0.022, v0), (wx + u1, -D2 - 0.022, v1), t, 0.026, (0, -1, 0), frame_m, jitter=0.2, bevel=0.004))
     objs.append(box('nwsill', (WIN_W + 0.09, 0.08, 0.03), (wx, -D2 - 0.02, z0 - 0.012), m=frame_m, bevel=0.006, segs=1))
-    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m)
+    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m, WIN_W)
+    if door == 'drop' and z0 - 0.074 < WIN_H + 0.04:                       # a let-down door lying on the ground: walk round it
+        for dx in (-0.08, 0.08): block(house, wx + dx, -D2 - 0.24, 0.17)
     # for the browser (glTF axes): floor, window, the nest seat, the way in, the ramp
     L = ramp_len if ramp_len else (0.3 if steps else max(0.3, FL * 1.7))
     foot = D2 + 0.05 + (L if not steps else 0.1 + 0.15 * steps)
-    NESTS['house_' + house] = dict(floor=round(NF, 3), house=round(FL, 3), win=[round(wx, 3), round(z0, 3), round(z1, 3), WIN_W], seat=[round(wx, 3), round(D2 - 0.08, 3)],
+    NESTS['house_' + house] = dict(floor=round(NF, 3), house=round(FL, 3), win=[round(wx, 3), round(z0, 3), round(z1, 3), WIN_W], seat=[round(wx, 3), round(D2 - SEAT, 3)],
                                    inside=[round(cx0 + 0.12, 3), round(D2 - 0.2, 3)], pop=[-0.31, round(D2 + 0.03, 3)], foot=[-0.31, round(foot, 3)],
                                    bed=round(NF + T + 0.04, 3), door=door)
 
 
-def nest_door(objs, kind, wx, z0, z1, m, trim):
+def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W):
     """The nest window's little door, open. Planks run across it; it is a little bigger than the opening."""
     if not kind: return
     w, h, th = WIN_W + (0.03 if kind == 'lattice' else 0.05), WIN_H + 0.04, 0.025
