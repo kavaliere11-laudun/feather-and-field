@@ -108,6 +108,16 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   - Soft edges on by default wherever antialiasing is on (quality 1-2): alpha to coverage, with the birds' alpha writes
     masked off (`colorMask` in onBeforeRender/onAfterRender). That mask was the fix for the green tint: the partial alpha
     reached the canvas, so the page showed through. `?hard` turns soft edges off to compare.
+- Silkies like the 2D game's (21 Oct 09:47, Audrey in Safari: the locks "kinda reverted to sheep wool style"). The target
+  is the 2D game's Silkie (`assets/sil_*.webp`): a smooth body, fine hair lying one way, a soft fuzzy edge.
+  - `stylized/breeds.py` silkie(): no metaball bumps any more on the body, tail, crest or cheeks (they made a lumpy cloud,
+    the fleece look); one smooth body with a fuller cushion behind, a smooth tail cushion, a round pompom crest, smooth
+    cheek muffs; the wings a little larger and lying on the sides.
+  - The tile (`hair_paint.py`): fine silky strands (1.3-2 mm) in soft, loosely gathered locks, three layers over a mid-dark
+    undercoat; green is now each strand's own length (no raised lock middles, so no lumps).
+  - The shader fades hair into air over a range that widens with distance (`ramp`, from the tile's pixels per screen
+    pixel), so at the line-up zoom the outer layers become a see-through halo (with soft edges on) instead of a hard rim.
+    Gentler shading (0.5-1.22), mip bias -0.5.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

@@ -1,10 +1,10 @@
 """Paint a seamless tile of Silkie hair for the browser (silkie_hair.jpg). The tile is drawn at the size the hair is seen in the
-game, so its shapes survive on a phone screen: long soft locks (about 1 cm wide, 4-8 cm long), each a bunch of wavy strands that
-gather towards a curling tip, laid in three layers over a dark undercoat. Everything wraps round the tile's edges, so it repeats
-without seams. Strands flow towards the top of the image.
-Two channels: red is how light the hair is (darker roots, bright tips, dark partings between locks; white, the browser tints
-it), green is how far the hair stands out from the body (top locks highest, their middles higher than their edges): the
-browser's fluff layers keep a spot only where the hair reaches that far out, so the locks stand up in 3D.
+game, so its shapes survive on a phone screen: fine silky strands (1.3-2 mm) lying one way in soft locks (about 1 cm wide,
+3.5-7 cm long), in three layers over a darker undercoat, like the 2D game's Silkie. Everything wraps round the tile's edges, so
+it repeats without seams. Strands flow towards the top of the image.
+Two channels: red is how light the hair is (darker roots, bright tips; white, the browser tints it), green is how far the hair
+stands out from the body (each strand its own length, the top layer longest): the browser's fluff layers keep a spot only
+where the hair reaches that far out, and fade the outer layers, so the edge is a soft halo of hair.
 Plain Python (Pillow + numpy). Usage: python3 hair_paint.py out.jpg [size] [tile_cm]"""
 import sys, math, random
 import numpy as np
@@ -18,7 +18,7 @@ W = SIZE * SS
 PX = W / (TILE * 10)                                             # drawing pixels per millimetre
 rnd = random.Random(11)
 
-shade = Image.new('L', (W, W), 40)          # dark undercoat between the locks
+shade = Image.new('L', (W, W), 70)          # a darker undercoat between the locks
 height = Image.new('L', (W, W), 0)
 ds, dh = ImageDraw.Draw(shade), ImageDraw.Draw(height)
 
@@ -38,24 +38,25 @@ def wrap_strand(pts, widths, shades, heights):
                         d_.ellipse([b[0] - r, b[1] - r, b[0] + r, b[1] + r], fill=v)       # round joints: no notches
 
 
-LAYERS = [(0.30, 150, 46), (0.55, 190, 46), (0.80, 232, 40)]     # (how far out, brightness, locks): under-layers lower, darker
+LAYERS = [(0.42, 165, 70), (0.62, 200, 70), (0.80, 235, 60)]     # (how far out, brightness, locks): under-layers lower, darker
 for base, bright, count in LAYERS:
     for _ in range(count):
         rx, ry = rnd.uniform(0, W), rnd.uniform(0, W)                  # where the lock grows from
-        lean = rnd.gauss(0, 0.22)                                      # radians off straight up
-        L = rnd.uniform(45, 85) * PX                                   # lock length
-        half = rnd.uniform(3.5, 6) * PX                                  # half the lock's width at its root
-        clump = rnd.uniform(0.55, 0.8)                                 # how much the strands gather towards the tip
-        curl = rnd.uniform(-0.6, 0.6)                                  # the tip curls over to one side
-        wave_a, wave_f, wave_p = rnd.uniform(1.5, 4.0) * PX, rnd.uniform(0.7, 1.4), rnd.uniform(0, math.tau)
-        lb = bright * rnd.uniform(0.78, 1.1)                          # each lock a little lighter or darker
-        n = rnd.randint(7, 11)
+        lean = rnd.gauss(0, 0.16)                                      # radians off straight up: the hair lies one way
+        L = rnd.uniform(35, 70) * PX                                   # lock length
+        half = rnd.uniform(3.0, 5.5) * PX                              # half the lock's width at its root
+        clump = rnd.uniform(0.25, 0.5)                                 # soft locks: the strands only loosely gather
+        curl = rnd.uniform(-0.35, 0.35)                                # the tip turns a little to one side
+        wave_a, wave_f, wave_p = rnd.uniform(0.8, 2.2) * PX, rnd.uniform(0.6, 1.2), rnd.uniform(0, math.tau)
+        lb = bright * rnd.uniform(0.86, 1.08)                          # each lock a little lighter or darker
+        n = rnd.randint(9, 14)
         for s in range(n):
-            off = max(-1.0, min(1.0, rnd.gauss(0, 0.45)))              # across the lock: -1 one edge, 1 the other
-            ln = L * rnd.uniform(0.7, 1.0) * (1 - 0.25 * abs(off))      # edge strands a little shorter: a pointed lock
-            sw = rnd.uniform(2.4, 3.4) * PX                            # strand width (mm, at its root)
+            off = max(-1.0, min(1.0, rnd.gauss(0, 0.5)))               # across the lock: -1 one edge, 1 the other
+            ln = L * rnd.uniform(0.65, 1.0) * (1 - 0.2 * abs(off))
+            sw = rnd.uniform(1.3, 2.0) * PX                            # strand width (mm, at its root): fine, silky
             ph = rnd.uniform(-0.5, 0.5)
-            sb = lb * rnd.uniform(0.88, 1.08)
+            sb = lb * rnd.uniform(0.85, 1.1)
+            hs = base + rnd.uniform(-0.12, 0.12)                       # each strand reaches its own distance out
             segs = 22
             t0 = rnd.uniform(0, 0.3)                                  # roots staggered, so a lock has no straight bottom edge
             pts, widths, shades, heights = [], [], [], []
@@ -68,10 +69,9 @@ for base, bright, count in LAYERS:
                 y = ry - math.cos(ang) * along + math.sin(ang) * across
                 pts.append((x, y))
                 if i:
-                    widths.append(sw * min(1.0, 0.35 + 0.65 * (t - t0) / 0.2) * (1 - 0.7 * t ** 2))     # a fine root and a fine tip
-                    shades.append(min(255, sb * (0.3 + 0.75 * t ** 0.6)))         # dark at the root (fading into the undercoat), bright tips
-                    hgt = base + 0.16 * (1 - abs(off)) + rnd.uniform(-0.03, 0.03)  # a lock's middle stands out further
-                    heights.append(255 * max(0.0, min(1.0, hgt * (1 - 0.25 * t ** 3) * (0.55 + 0.5 * t ** 0.5))))
+                    widths.append(sw * min(1.0, 0.35 + 0.65 * (t - t0) / 0.2) * (1 - 0.6 * t ** 2))     # a fine root and a fine tip
+                    shades.append(min(255, sb * (0.45 + 0.6 * t ** 0.6)))         # darker at the root, bright tips
+                    heights.append(255 * max(0.0, min(1.0, hs * (0.7 + 0.35 * t ** 0.5))))
             wrap_strand(pts, widths, shades, heights)
 
 sh = shade.resize((SIZE, SIZE), Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.4))

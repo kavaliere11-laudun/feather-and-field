@@ -306,18 +306,20 @@ function birdMaterial() {
           // painted hair: the tile wrapped round the body from three sides (strands falling down the sides, back over the top);
           // red: how light the hair is, green: how far it stands out
           vec3 pt = vRest / abs(vStyle.w), nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
-          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -0.75).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -0.75).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -0.75).rg * nw.z;
-          float hw = max(fwidth(hair.g), 0.02);
+          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -0.5).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -0.5).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -0.5).rg * nw.z;
+          // how many of the tile's pixels fall in one screen pixel: the further away, the more the strands blur together, so
+          // the fade from hair to air is spread wider and the outer layers turn into a soft see-through halo
+          float tpp = max(length(fwidth(pt)) * 512.0, 1.0), ramp = 0.06 + 0.075 * min(log2(tpp), 5.0);
           if (vStyle.w < 0.0) {
-            // Silkie locks: each fluff layer keeps the hair that reaches out that far, so the locks stand up in 3D, darker deeper in
+            // Silkie hair: each fluff layer keeps the hair that reaches out that far, darker deeper in
             if (vFur > 0.0) {
-              float cov = smoothstep(vFur - hw, vFur + hw, hair.g * 1.08);
+              float cov = clamp((hair.g - vFur) / ramp + 0.5, 0.0, 1.0);
               if (cov < furCut) discard;
               #ifdef SOFT_FUR
               diffuseColor.a = cov;
               #endif
             }
-            furShade = mix(0.36, 1.32, hair.r) * mix(0.8, 1.06, vFur);
+            furShade = mix(0.5, 1.22, hair.r) * mix(0.8, 1.05, vFur);
           } else {
             furShade *= mix(0.42, 1.38, hair.r);
             // the down's own strands stand out only round the outline (and short near the body): no speckle across the middle
