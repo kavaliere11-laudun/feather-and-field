@@ -26,6 +26,34 @@
    0.0123
   ]
  },
+ "lights": {
+  "house_sil": [
+   [
+    0.82,
+    0.62,
+    0.64
+   ]
+  ],
+  "house_bra": [
+   [
+    -0.5,
+    0.85,
+    0.72
+   ]
+  ],
+  "fence_dx": [
+   [
+    -0.005,
+    0.66,
+    2.5
+   ],
+   [
+    0.713,
+    0.66,
+    2.5
+   ]
+  ]
+ },
  "nests": {
   "house_rir": {
    "floor": 0.4,
@@ -252,12 +280,12 @@
   "house_sil": {
    "tris": 13268,
    "verts": 7676,
-   "prims": 3
+   "prims": 4
   },
   "house_bra": {
    "tris": 14280,
    "verts": 8518,
-   "prims": 3
+   "prims": 4
   },
   "pen_base": {
    "tris": 4999,
