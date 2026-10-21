@@ -329,6 +329,23 @@ function birdMaterial() {
         vec2 featherLocal(vec2 pp, vec2 ce, float stretch, float point) {
           vec2 l = (pp - ce) * vec2(1.0, 1.2 * stretch) / 0.64;
           return vec2(l.x * (1.0 + point * max(l.y, 0.0)), l.y);
+        }
+        // a feather's barbs: the very thin hairs lying side by side that make up its vane. u runs across the barbs (one unit is
+        // the whole feather); count is how many a real feather has over that. Each barb is a fine bright strand with a thin dark
+        // gap to the next, a little lighter or darker than its neighbours. Barbs finer than about three screen pixels can't be
+        // drawn, so the count drops by halves as the feather gets smaller on screen, blended like a picture's smaller copies:
+        // the vane still reads as fine strands at the line-up zoom, and shows every barb close up. Returns -1 .. 1 (0 = none)
+        float barbLine(float x, float seed) {
+          float v = fract(x), n = floor(x);
+          float strand = smoothstep(0.0, 0.3, v) * smoothstep(1.0, 0.62, v);
+          return (strand - 0.5) * 2.0 * (0.75 + 0.5 * fract(sin(n * 12.9898 + seed * 78.233) * 43758.5453));
+        }
+        float barbs(float u, float count, float seed) {
+          float px = 1.0 / max(fwidth(u), 1e-5);                  // screen pixels across one unit of u
+          float want = clamp(px / 3.2, 1.0, count), lv = log2(want);
+          float L = floor(lv), n1 = exp2(L), f = fract(lv);
+          float b = mix(barbLine(u * n1, seed + L), barbLine(u * n1 * 2.0, seed + L + 1.0), smoothstep(0.2, 0.9, f));
+          return b * smoothstep(3.0, 7.0, want);                   // too few to read as strands: none
         }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float furShade = 1.0;
@@ -434,9 +451,11 @@ function birdMaterial() {
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
           else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));
-          // barbs: fine lines slanting from the quill towards the tip (faded out where they'd be finer than a pixel)
+          // the vane's barbs: thin strands slanting from the quill towards the tip, lying side by side (the two halves of the
+          // vane meet at the quill in a V); their ends make the feather's edge finely ragged
           float ph = (along * 0.85 - abs(across)) * 30.0;
-          float barbs = sin(ph) * (1.0 - smoothstep(0.8, 1.9, fwidth(ph)));
+          float barb = barbs(along * 0.42 - abs(across) * 0.5, 120.0, id * 17.0 + step(0.0, across));
+          t += 0.035 * barb * smoothstep(0.7, 1.0, t);
           // the quill: a thin pale shaft down the middle, fading before the tip
           float qa = max(fwidth(across), 0.004);
           float qw = max(0.05, 0.8 * qa);
@@ -452,7 +471,8 @@ function birdMaterial() {
           float shadow = 1.0 - smoothstep(1.0, 1.5, over);
           // (soft, not outlined: the shadow and the light tip make the overlap, the edge line is only a hint, else they read as scales)
           furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (0.9 + 0.16 * smoothstep(-0.3, 0.95, along)) * (1.0 + 0.1 * rim) * mix(1.0, 0.8 - 0.12 * boost, edge)
-                    * mix(1.0, 0.6 - 0.2 * boost, shadow * shadow) * (0.88 - 0.06 * boost + (0.24 + 0.12 * boost) * id) * (1.0 + 0.08 * barbs) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
+                    * mix(1.0, 0.6 - 0.2 * boost, shadow * shadow) * (0.88 - 0.06 * boost + (0.24 + 0.12 * boost) * id)
+                    * (1.0 + 0.17 * barb * smoothstep(-0.6, 0.2, along)) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
           // where the coverts end, a soft shadow over the flight feathers
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
         }
@@ -467,7 +487,9 @@ function birdMaterial() {
           float sp = abs(fract(al * 5.0 + floor(vRest.x * 400.0 + vRest.z * 300.0) * 0.37) - 0.5);
           float split = step(0.0, ac) * smoothstep(0.35, 0.7, abs(ac)) * (1.0 - smoothstep(0.0, 0.02 + fwidth(al) * 5.0, sp)) * bamp;
           float rimL = smoothstep(0.82, 0.95, abs(ac));
-          furShade *= (1.0 + 0.07 * sin(ph) * bamp) * mix(1.0, 0.82, smoothstep(0.4, 0.9, abs(ac))) * (0.92 + 0.12 * al) * (1.0 - 0.35 * split);
+          // the barbs: hundreds of thin strands slanting from the quill towards the tip, side by side
+          float barb = barbs(al - abs(ac) * 0.06, 260.0, step(0.0, ac) + floor(vRest.y * 300.0));
+          furShade *= (1.0 + 0.2 * barb) * mix(1.0, 0.82, smoothstep(0.4, 0.9, abs(ac))) * (0.92 + 0.12 * al) * (1.0 - 0.35 * split);
           diffuseColor.rgb = mix(diffuseColor.rgb, min(diffuseColor.rgb * 1.5 + 0.07, vec3(1.0)), 0.6 * quill + 0.35 * rimL);
         }
         diffuseColor.rgb *= furShade;`)

@@ -217,6 +217,16 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     tip, lifted a little (hens 9 mm, Orpingtons 12 mm, 4-5 layers), so the outline is feathery. Across the body that washed
     the pattern out, so it's outline only.
   - `phoneshot.mjs` also takes `PORT=`.
+- Barbs (21 Oct 17:04, Audrey: "a chicken feather is not fluffy like the silkies but is composed of very thin 'hair' that's
+  all together build the feather. I'd like that to be reflected in the design a bit more"; and "Do not edit silkies just the
+  other breeds"; Silkies and chicks untouched):
+  - `barbs(u, count, seed)` in the bird shader: each barb a fine bright strand with a thin dark gap, a little lighter or
+    darker than its neighbours. The number drawn is what fits at about 3.2 screen pixels each (capped at the real-ish
+    count), dropping by halves as the feather gets smaller and blended between the two levels (seeded per level, so no
+    jumps), and none below 3-7 strands; so the vanes read as strands at the line-up zoom and show every barb close up.
+  - Body feathers: u = along x 0.42 - |across| x 0.5 (a V meeting at the quill, slanting to the tip), up to 120, shading
+    +/-17% from the visible middle to the tip; barb ends rough up the feather's edge (t +/- 0.035 near the edge).
+  - Modelled feathers: u = along - |across| x 0.06, up to 260 over the feather, +/-20%.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
