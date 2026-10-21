@@ -552,6 +552,55 @@ def weathervane():
 
 HOUSES = {'rir': lambda: coop.build((0, 0, 0), 0.0, seed=5, pen=False), 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge}
 
+# ------------------------------------------------------------------ the nest box: where the hens lay, built onto each house
+# A low box against the house's +x side, its front flush with the house front: a lip to step over at the front, straw inside,
+# and its lid propped open against the back so the hen sitting on the nest (and the eggs) can be seen from the game's camera.
+# In each house's own colours (walls, trim, lid like the roof). The browser puts the eggs in and seats the laying hen on it.
+NEST_BOX = dict(x0=0.72, x1=1.12, y0=-0.5, y1=-0.04, floor=0.08)
+NEST_STYLE = {   # walls, trim (corner posts, lip, lid edge), lid
+    'rir': ('#b8402d', '#f1e9d8', '#56677a'), 'orp': ('#f1e8d2', '#5d3e28', '#c7a866'), 'leg': ('#a7744a', '#efe9dc', '#57657a'),
+    'sil': ('#f3eee2', '#b0312a', '#2f7d70'), 'bra': ('#8d5b34', '#e8dcc0', '#4b7a48')}
+
+
+def nest_box(style, parent=None):
+    random.seed(17)
+    wall_c, trim_c, roof_c = NEST_STYLE[style]
+    wall = C('nb_wall_' + style, wall_c, rough=0.75, var=0.08, grain=0.25, grain_scale=G)
+    trim = C('nb_trim_' + style, trim_c, rough=0.65, var=0.04, grain=0.15, grain_scale=G)
+    roof = C('nb_roof_' + style, roof_c, rough=0.75, var=0.12, hue_var=0.01)
+    straw = coop.M()['straw']
+    B = NEST_BOX; x0, x1, y0, y1, fl = B['x0'], B['x1'], B['y0'], B['y1'], B['floor']
+    cx, cy, W, D = (x0 + x1) / 2, (y0 + y1) / 2, x1 - x0, y1 - y0
+    objs = []
+    H_back, H_front, T = 0.4, 0.3, 0.03                       # the sides slope down to the front
+    objs.append(box('nb_floor', (W, D, fl), (cx, cy, fl / 2), m=wall, bevel=0.01, segs=1))
+    for x in (x0 + T / 2, x1 - T / 2):                         # the two sides: upright boards, sloping top
+        for k in range(3):
+            y = y0 + (k + 0.5) * D / 3; h = H_front + (H_back - H_front) * (y - y0) / D
+            objs.append(plank('nb_side', (x, y, 0.0), (x, y, h), D / 3 * 0.96, T, (1 if x > cx else -1, 0, 0), wall, jitter=0.4))
+    for k in range(3):                                         # the back: three boards
+        x = x0 + (k + 0.5) * W / 3
+        objs.append(plank('nb_back', (x, y1 - T / 2, 0.0), (x, y1 - T / 2, H_back), W / 3 * 0.96, T, (0, 1, 0), wall, jitter=0.4))
+    # the front: a lip to step over, corner posts, a trim along the top of each side
+    objs.append(plank('nb_lip', (x0, y0 + T / 2, fl + 0.05), (x1, y0 + T / 2, fl + 0.05), 0.08, T + 0.012, (0, -1, 0), trim, jitter=0.3))
+    for x in (x0 + 0.02, x1 - 0.02):
+        objs.append(box('nb_post', (0.045, 0.045, H_front + 0.02), (x, y0 + 0.02, (H_front + 0.02) / 2), m=trim, bevel=0.008, segs=1))
+        objs.append(plank('nb_top', (x, y0, H_front + 0.012), (x, y1, H_back + 0.012), 0.045, 0.025, (0, 0, 1), trim, jitter=0.3))
+    objs.append(plank('nb_btop', (x0, y1 - 0.01, H_back + 0.012), (x1, y1 - 0.01, H_back + 0.012), 0.045, 0.025, (0, 0, 1), trim, jitter=0.3))
+    # the lid, hinged along the back and propped open, leaning back a little: roof colour with a trim edge
+    hinge = Vector((cx, y1 + 0.01, H_back + 0.02)); up = Vector((0, 0.26, 0.97)).normalized(); Ld = D + 0.06
+    objs.append(plank('nb_lid', hinge, hinge + up * Ld, W + 0.08, 0.03, (0, -0.97, 0.26), roof, jitter=0.2))
+    objs.append(plank('nb_ledge', hinge + up * Ld + Vector((-(W + 0.08) / 2, -0.012, 0)), hinge + up * Ld + Vector(((W + 0.08) / 2, -0.012, 0)), 0.035, 0.03, (0, -1, 0), trim, jitter=0.2))
+    for x in (x0 + 0.03, x1 - 0.03):                         # hinges
+        objs.append(box('nb_hinge', (0.03, 0.02, 0.05), (x, y1 + 0.005, H_back + 0.03), m=C('iron', '#26231f', rough=0.5, metal=0.6), bevel=0.004, segs=1))
+    # straw: a soft bed and loose bits, a few on the ground in front
+    objs.append(sphere('nb_straw', 0.17, (cx, cy, fl + 0.008), (1.05, 1.15, 0.16), m=straw, ico=3, disp=0.25, seed=21))
+    straw_bits(objs, (cx, cy, 0), 0.16, 40, fl + 0.02)
+    straw_bits(objs, (cx, y0 - 0.06, 0), 0.08, 10, 0.0)
+    for o in objs:
+        if parent is not None:
+            mw = o.matrix_basis.copy(); o.parent = parent; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+    return objs
 
 if __name__ == '__main__':          # all five houses in a row: python coops.py [samples]
     samples = int(sys.argv[-1]) if sys.argv[-1].isdigit() else 24

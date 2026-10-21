@@ -28,7 +28,9 @@ def top_of(name):
 
 def one(name, fn):
     fresh(); coops.reset_mats(); coop.PEN = dict(farm_layout.NEW['pen'])
-    fn(); light(1, bevel_segments=1)
+    r = fn()
+    if name.startswith('house_'): coops.nest_box(name[6:], r)          # every house gets its nest box, in its own colours
+    light(1, bevel_segments=1)
     for o in bpy.context.scene.objects:          # shingles: plain boxes (their bevels can't be seen from the game's camera)
         if o.name.startswith('sh'):
             for md in [m for m in o.modifiers if m.type == 'BEVEL']: o.modifiers.remove(md)

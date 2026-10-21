@@ -28,33 +28,33 @@
  },
  "stats": {
   "house_rir": {
-   "tris": 8888,
-   "verts": 5212,
+   "tris": 10888,
+   "verts": 6354,
    "prims": 4
   },
   "house_orp": {
-   "tris": 8292,
-   "verts": 4498,
+   "tris": 10292,
+   "verts": 5640,
    "prims": 4
   },
   "house_leg": {
    "tris": 15000,
-   "verts": 8666,
+   "verts": 8808,
    "prims": 4
   },
   "house_sil": {
-   "tris": 9328,
-   "verts": 4974,
+   "tris": 11328,
+   "verts": 6116,
    "prims": 3
   },
   "house_bra": {
-   "tris": 10416,
-   "verts": 6204,
-   "prims": 3
+   "tris": 12000,
+   "verts": 7138,
+   "prims": 4
   },
   "pen_base": {
-   "tris": 4999,
-   "verts": 3349,
+   "tris": 5000,
+   "verts": 3355,
    "prims": 3
   },
   "fence": {

@@ -601,29 +601,34 @@ export class Rig {
     B.root.position.y += H.y * (this.chick ? 0.07 : 0.12) * Math.min(1.2, sz);
     const bob = w * Math.abs(Math.sin(ph)) * 0.01;
     const rf = s.ruffle || 0, shake = rf * Math.sin(s.t * 46);
+    // the egg song: standing tall, the head darting forward on each "buk" and thrown up for the "ba-KAWK"; on parade: chest out,
+    // head high, tail up, high steps
+    const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0;
     body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank;
-    body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise + 0.12 * H.squash,
+    body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise + 0.12 * H.squash
+                      - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
-    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch,
+    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr,
                       s.lookYaw * (1 - s.peck) + 0.35 * rf * Math.sin(s.t * 38 + 1),
                       s.lookTilt * (1 - s.peck) + s.crow * 0.06 * Math.sin(s.t * 40));
     // walking, the head holds still in the air while the body passes under it, then darts forward: the chicken head-bob
     const u = ((ph / Math.PI) % 1 + 1) % 1, hold = 0.68, amp = 0.03 * sz;
     const hb = u < hold ? 0.5 - u / hold : -0.5 + smooth(0, 1, (u - hold) / (1 - hold));
-    head.position.z += w * hb * amp;
+    head.position.z += w * hb * amp + 0.016 * sz * ck;
+    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr;
     head.position.y -= w * (u < hold ? 0 : Math.sin((u - hold) / (1 - hold) * Math.PI)) * 0.006 * sz;
-    const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise;
+    const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise + 0.16 * kw + 0.07 * pr;
     B.wingL.rotation.set(0, 0, f + s.sit * 0.05); B.wingR.rotation.set(0, 0, -f - s.sit * 0.05);
     // the tail on a spring: it sways with each step, swings out on turns, lifts to balance a peck, dips as she takes off and
     // flicks up on landing, then settles with a little wobble
     const T = this.tailSpring || (this.tailSpring = { p: 0, pv: 0, y: 0, yv: 0, lastY: 0 });
     const vy = (H.y - T.lastY) / dt; T.lastY = H.y;
-    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash;
+    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash + 0.15 * sg + 0.22 * pr;
     const goalY = -0.09 * Math.max(-3, Math.min(3, s.turn || 0)) + w * 0.09 * Math.sin(ph) + 0.25 * shake;
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
     B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y, 0);
-    const A = 0.5 * w;
+    const A = 0.5 * w * (1 + 0.5 * pr);
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
     const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash;
     B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? 1.0 * kick * s.kick : 0) + legX, 0, 0);
@@ -631,8 +636,8 @@ export class Rig {
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
     // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
     const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank;
-    B.legL.position.y += w * lift * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
-    B.legR.position.y += w * lift * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
+    B.legL.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
+    B.legR.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);
     B.legL.scale.setScalar(fold); B.legR.scale.setScalar(fold);
   }

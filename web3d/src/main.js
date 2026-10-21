@@ -173,6 +173,8 @@ async function start() {
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture)]);
   V = plan; PEN = pen; COOPS = coopsInfo;
+  // the straw nest in the yard has moved into the coop's nest box: its spot is free again
+  PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
   initFlock(flock, flockInfo);
   for (const g of [farm, village, coopsGlb]) {
     for (const child of [...g.scene.children]) {
@@ -490,9 +492,9 @@ function buildPlots(nCoops) {
     plots.push(plot);
     if (plot.kind === 'coop') {
       const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
-      addNest(frame);
       plot.frame = frame;
       plot.breed = BREEDS[i % BREEDS.length]; plot.deluxe = Math.floor(i / BREEDS.length) % 2 === 1;
+      addNest(frame, plot);
       g.updateMatrixWorld(true);                            // the coop itself never moves: it joins its style's batch
       const at = frame.matrixWorld.clone(), house = 'house_' + plot.breed;
       (coopParts[house] = coopParts[house] || []).push(at);
@@ -503,6 +505,7 @@ function buildPlots(nCoops) {
       let k = 0;
       const colour = () => plot.breed === 'sil' ? SILKIE[(silk * 7 + k++) % SILKIE.length] : null;
       for (const h of PEN.hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
+      plot.birds.filter(b => b.kind === 'hen').forEach((h, k) => { h.pers = PERS_IDS[(i * 2 + k) % PERS_IDS.length]; h.layIn = 6 + r() * 70; });
       const mum = plot.birds.find(b => b.kind === 'hen');
       for (let c = 0; c < 2; c++) {
         const chick = new Bird(plot, plot.breed, 'chick', colour(), [mum.root.position.x + 0.3 - c * 0.5, 0, mum.root.position.z + 0.25], r() * 6, r);
@@ -526,25 +529,70 @@ function buildPlots(nCoops) {
   for (const name in coopParts) batch(name, coopParts[name], { cast: true });
 }
 
-const STRAW = new THREE.MeshLambertMaterial({ color: '#e2c169' }), STRAW2 = new THREE.MeshLambertMaterial({ color: '#c9a24f' });
-const EGG = new THREE.MeshStandardMaterial({ color: '#d39b68', roughness: 0.45 }), GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' });
-const RIM_GEO = new THREE.CylinderGeometry(0.2, 0.2, 0.032, 20), BED_GEO = new THREE.CylinderGeometry(0.16, 0.16, 0.024, 20);
-const EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
-function addNest(frame) {
-  const nest = new THREE.Group(); nest.position.set(...PEN.nest);
-  const rim = new THREE.Mesh(RIM_GEO, STRAW2); rim.position.y = 0.016; rim.scale.z = 0.9;
-  const bed = new THREE.Mesh(BED_GEO, STRAW); bed.position.y = 0.024; bed.scale.z = 0.88;
-  const eggs = new THREE.InstancedMesh(EGG_GEO, EGG, 3);
-  for (let i = 0; i < 3; i++) {
-    const a = i * 2.4, d = 0.03 + 0.05 * i;
-    eggs.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(Math.cos(a) * d, 0.062, Math.sin(a) * d * 0.9),
-      new THREE.Quaternion().setFromEuler(new THREE.Euler(0.4 * i, i, 0.3)), new THREE.Vector3(0.055, 0.07, 0.055)));
-  }
-  eggs.computeBoundingSphere();
-  nest.add(rim, bed, eggs);
+// the hens lay in the nest box built onto each coop (stylized/coops.py nest_box: x 0.72..1.12, z 0.04..0.5, floor 0.08):
+// seat is where a laying hen sits, door where she waits in front of it, lip where she lands when she hops out
+const NEST = { seat: [0.92, 0.26], into: [0.92, 0.33], lip: [0.92, 0.76], door: [0.92, 0.92], floor: 0.1, box: [0.7, 0.0, 0.02, 1.14, 0.45, 0.54],
+               slots: [[0, 0.01], [0.055, 0.045], [-0.055, 0.04], [0.045, -0.05], [-0.05, -0.045], [0.0, 0.085]] };
+const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', sil: '#efe4cf' };
+const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
+const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
+function addNest(frame, plot) {
+  const m = EGG_MATS[plot.breed] || (EGG_MATS[plot.breed] = new THREE.MeshStandardMaterial({ color: EGG_COLOUR[plot.breed], roughness: 0.45 }));
+  const eggs = new THREE.InstancedMesh(EGG_GEO, m, NEST.slots.length);
+  eggs.userData.moves = true; eggs.receiveShadow = true; eggs.castShadow = false;
+  frame.add(eggs);
+  plot.nest = { eggs, count: 0, pop: 1, by: null };
+  plot.nest.count = 2;                                   // a couple already laid this morning
+  showEggs(plot);
   const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(PEN.feeder[0], 0.065, PEN.feeder[2]);
-  for (const o of [rim, bed, eggs, grain]) o.receiveShadow = true;
-  frame.add(nest, grain);
+  grain.receiveShadow = true;
+  frame.add(grain);
+}
+const eggM = new THREE.Matrix4(), eggQ = new THREE.Quaternion(), eggE = new THREE.Euler(), eggP = new THREE.Vector3(), eggS = new THREE.Vector3();
+function showEggs(plot) {
+  const n = plot.nest, k = Math.min(n.count, NEST.slots.length);
+  for (let i = 0; i < k; i++) {
+    const [dx, dz] = NEST.slots[i], s = i === k - 1 ? n.pop : 1;       // the newest egg pops in
+    eggP.set(NEST.seat[0] + dx, NEST.floor + 0.02 + 0.015 * s, NEST.seat[1] + dz);
+    eggQ.setFromEuler(eggE.set(1.2 + 0.3 * Math.sin(i * 3.1), i * 1.7, 0.2 * Math.cos(i * 2.3)));
+    n.eggs.setMatrixAt(i, eggM.compose(eggP, eggQ, eggS.set(0.05 * s, 0.064 * s, 0.05 * s)));
+  }
+  n.eggs.count = k; n.eggs.instanceMatrix.needsUpdate = true; n.eggs.computeBoundingSphere();
+}
+
+// a hen's song after laying: notes rising over her head, one for each "buk" and a big one for the "ba-KAWK"
+const NOTES = [];
+let noteMat = null;
+function spawnNote(bird, big, loud) {
+  if (!noteMat) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d');
+    const draw = (col, w) => {          // a quaver: an oval head, a stem and a flag
+      c.save(); c.translate(24, 44); c.rotate(-0.35); c.beginPath(); c.ellipse(0, 0, 11, 8, 0, 0, Math.PI * 2); c.restore();
+      c.moveTo(33, 41); c.lineTo(33, 10); c.quadraticCurveTo(46, 18, 48, 30);
+      c.lineWidth = w; c.strokeStyle = col; c.fillStyle = col;
+    };
+    draw('#2b3a24', 9); c.stroke(); c.fill();
+    c.beginPath(); draw('#fffaf0', 4); c.stroke(); c.fill();
+    noteMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false });
+  }
+  let n = NOTES.find(x => x.life <= 0);
+  if (!n) { if (NOTES.length > 40) return; n = { sprite: new THREE.Sprite(noteMat.clone()), life: 0 }; n.sprite.renderOrder = 3; scene.add(n.sprite); NOTES.push(n); }
+  const p = bird.root.getWorldPosition(new THREE.Vector3()), up = bird.rig.scale * 0.95;
+  n.sprite.position.set(p.x + (Math.random() - 0.5) * 0.08, p.y + up, p.z + (Math.random() - 0.5) * 0.08);
+  n.size = (big ? 0.17 : 0.115) * (0.75 + 0.25 * loud); n.life = n.full = big ? 1.4 : 1.0;
+  n.drift = [(Math.random() - 0.5) * 0.12, 0.2 + 0.1 * Math.random(), (Math.random() - 0.5) * 0.12];
+  n.sprite.visible = true;
+}
+function tickNotes(dt) {
+  for (const n of NOTES) {
+    if (n.life <= 0) continue;
+    n.life -= dt;
+    if (n.life <= 0) { n.sprite.visible = false; continue; }
+    const t = 1 - n.life / n.full;
+    n.sprite.position.x += n.drift[0] * dt; n.sprite.position.y += n.drift[1] * dt; n.sprite.position.z += n.drift[2] * dt;
+    const s = n.size * Math.min(1, t * 5); n.sprite.scale.set(s, s, s);
+    n.sprite.material.opacity = Math.min(1, (1 - t) * 3);
+  }
 }
 
 // ------------------------------------------------------------------ birds: walk, stop, peck, waddle, and keep a little room round each other
@@ -552,7 +600,12 @@ const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'M
   'Olive', 'Rosie', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus', 'Rocco'];
 const CHICK_NAMES = ['Pip', 'Peanut', 'Button', 'Sprout', 'Nugget', 'Bean', 'Pebble', 'Tiny', 'Puff', 'Dot'];
+const smooth01 = u => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
 const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
+// the game's five personalities: each hen celebrates her egg in her own way
+const PERS_IDS = ['diva', 'brave', 'glutton', 'mum', 'rebel'];
+const PERS_NAMES = { diva: 'Diva', brave: 'Brave', glutton: 'Glutton', mum: 'Good mum', rebel: 'Rebel' };
+const SONG = { diva: [4.5, 1.2], brave: [3.6, 1.1], glutton: [2.2, 0.9], mum: [2.6, 0.65], rebel: [2.0, 1.0] };   // seconds, how loud
 let blobGeo, blobMat, blobs = null, nameSeed = 0;
 const tmpM = new THREE.Matrix4(), blobScale = new THREE.Matrix4();
 // every bird's soft round shadow, drawn in one batch; a bird's shadow follows her when she moves
@@ -600,7 +653,9 @@ class Bird {
   get flock() { return this.plot.birds; }
   get label() {
     const what = this.breed === 'sil' ? 'Silkie, ' + this.colour : BREED_NAMES[this.breed];
-    return this.name + ' · ' + what + (this.kind === 'chick' ? ' chick' : this.kind === 'rooster' ? ' rooster' : '');
+    const pers = this.pers ? ' · ' + PERS_NAMES[this.pers] : '';
+    const doing = this.laying && this.laying.inBox ? ' · laying' : '';
+    return this.name + ' · ' + what + (this.kind === 'chick' ? ' chick' : this.kind === 'rooster' ? ' rooster' : '') + pers + doing;
   }
   free(x, z) {
     if (this.plot.kind === 'lineup') return true;
@@ -661,18 +716,189 @@ class Bird {
     return null;
   }
   tapped() {                               // a hop and a flap (a rooster may crow)
+    if (this.laying) return;                 // a laying hen isn't disturbed
     this.hopT = 0;
     if (this.kind === 'rooster' && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
+  }
+  // walk towards (tx, tz): turn first, then step; obey: keep to the yard and round obstacles
+  stepToward(tx, tz, dt, pace = 1, obey = true) {
+    const p = this.root.position, dx = tx - p.x, dz = tz - p.z, dist = Math.hypot(dx, dz);
+    if (dist < 0.04) return { arrived: true, walking: false };
+    const turning = this.turnTo(Math.atan2(dx, dz), dt);
+    if (turning.diff < 25 * DEG) {
+      const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * pace * dt, dist);
+      const nx = p.x + fx * s, nz = p.z + fz * s;
+      if (!obey || this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; return { arrived: false, walking: true }; }
+      return { arrived: false, walking: false, blocked: true };
+    }
+    return { arrived: false, walking: turning.walking };
+  }
+  turnTo(yaw, dt) {
+    let diff = ((yaw - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    const step = this.turn * dt;
+    this.root.rotation.y += Math.abs(diff) < step ? diff : Math.sign(diff) * step;
+    diff = Math.abs(diff) < step ? 0 : Math.abs(diff) - step;
+    return { diff, done: diff < 0.02, walking: diff > 2 * DEG };         // little steps on the spot while turning
+  }
+  // laying: walk to the nest box, hop in, turn round and settle on the straw, sit until the egg comes, get up (the egg
+  // appears), hop out, sing the egg song, then celebrate in her own way
+  startLaying(sit) {
+    this.plot.nest.by = this;
+    this.laying = { phase: 'go', t: 0, sit: sit ?? 30 + this.r() * 15, shuffle: 4 + this.r() * 4, beat: -1 };
+    this.act = null; this.route = null; this.wait = 0;
+  }
+  layStep(dt) {
+    const L = this.laying, p = this.root.position, o = { walking: false, sit: 0, flap: 0, ruffle: 0, sing: 0, cluck: 0, kawk: 0 };
+    const next = ph => { L.phase = ph; L.t = 0; L.from = p.clone(); };
+    L.t += dt;
+    const lerp = (a, b, u) => a + (b - a) * u;
+    switch (L.phase) {
+      case 'go': {                                           // to the front of the nest box
+        const r = this.stepToward(NEST.door[0], NEST.door[1], dt);
+        o.walking = r.walking;
+        if (r.arrived || L.t > 25 || (r.blocked && L.t > 4)) next('lip');
+        break;
+      }
+      case 'lip': {                                          // up to the lip, facing in
+        const r = this.stepToward(NEST.lip[0], NEST.lip[1], dt, 0.7, false);
+        o.walking = r.walking;
+        if (r.arrived) { const t = this.turnTo(Math.PI, dt); o.walking = t.walking; if (t.done) { next('hopin'); this.hopT = 0; L.inBox = true; } }
+        break;
+      }
+      case 'hopin': case 'hopout': {                         // a hop over the lip, carried forward while she's off the ground
+        const h = this.hopT < 0 ? 1 : this.hopT, u = smooth01((h - 0.22) / 0.62);
+        const to = L.phase === 'hopin' ? NEST.into : NEST.lip;
+        p.x = lerp(L.from.x, to[0], u); p.z = lerp(L.from.z, to[1], u);
+        p.y = L.phase === 'hopin' ? lerp(0.015, NEST.floor, u) : lerp(NEST.floor, 0.015, u);
+        if (this.hopT < 0) {
+          if (L.phase === 'hopin') next('turn');
+          else { L.inBox = false; next('sing'); this.plot.nest.by = null; this.answer(); }
+        }
+        break;
+      }
+      case 'turn': {                                         // turn round in the box to face out, and shuffle onto the seat
+        const t = this.turnTo(0, dt * 0.8); o.walking = t.walking;
+        p.x = lerp(L.from.x, NEST.seat[0], Math.min(1, L.t / 0.9)); p.z = lerp(L.from.z, NEST.seat[1], Math.min(1, L.t / 0.9));
+        if (t.done && L.t > 0.9) next('settle');
+        break;
+      }
+      case 'settle':                                         // down onto the straw with a wriggle
+        o.sit = 1; o.ruffle = L.t < 1.0 ? 0.45 * Math.sin(L.t / 1.0 * Math.PI) : 0;
+        if (L.t > 1.4) next('sit');
+        break;
+      case 'sit':                                            // sitting on the nest: now and then a little shuffle
+        o.sit = 1;
+        L.shuffle -= dt;
+        if (L.shuffle < 0.5 && L.shuffle > 0) o.ruffle = 0.3 * Math.sin(L.shuffle / 0.5 * Math.PI);
+        if (L.shuffle <= 0) L.shuffle = 5 + this.r() * 6;
+        if (L.t > L.sit) { next('rise'); const n = this.plot.nest; n.count++; n.pop = 0; showEggs(this.plot); }
+        break;
+      case 'rise': {                                         // she stands: the new egg is in the straw
+        const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot);
+        if (L.t > 1.0) { this.turnTo(0, dt); next('hopout'); this.hopT = 0; }
+        break;
+      }
+      case 'sing': {                                         // "buk buk buk buk ba-KAWK", her head bobbing, notes rising
+        const [dur, loud] = SONG[this.pers] || SONG.mum;
+        o.sing = Math.min(1, L.t / 0.3) * Math.min(1, (dur - L.t) / 0.3);
+        const c = L.t % 1.5, cyc = Math.floor(L.t / 1.5), beats = [0, 0.22, 0.44, 0.66, 0.86];
+        beats.forEach((b, i) => { const u = (c - b) / 0.13; if (u >= 0 && u < 1) o.cluck = Math.sin(u * Math.PI) * (i === 4 ? 0.6 : 1) * Math.min(1, loud); });
+        if (c >= 0.98 && c < 1.4) o.kawk = Math.sin((c - 0.98) / 0.42 * Math.PI) * Math.min(1, loud);
+        const beat = cyc * 6 + (c >= 0.98 ? 5 : beats.filter(b => c >= b).length - 1);
+        if (beat !== L.beat && L.t < dur - 0.2) { L.beat = beat; if (beat % 6 === 5 || loud > 0.8 || beat % 2 === 0) spawnNote(this, beat % 6 === 5, loud); }
+        if (this.pers === 'diva' && L.t > dur - 0.8) o.flap = Math.sin((L.t - dur + 0.8) / 0.8 * Math.PI);
+        if (L.t > dur) this.celebrate();
+        break;
+      }
+    }
+    return o;
+  }
+  answer() {                                                 // the rooster sometimes joins in with a crow
+    const roo = this.flock.find(b => b.kind === 'rooster');
+    if (roo && !roo.laying && this.r() < 0.55) roo.answerIn = 1.0 + this.r() * 1.2;
+  }
+  // after the song: each personality has her own way of being pleased with herself
+  celebrate() {
+    this.laying = null; this.layIn = 240 + this.r() * 240;
+    const Y = PEN.yard, p = this.root.position, cx = (Y.min[0] + Y.max[0]) / 2, cz = (Y.min[2] + Y.max[2]) / 2;
+    // the nearest free spot in the yard to (x, z)
+    const ok = (x, z) => {
+      x = Math.max(Y.min[0] + 0.15, Math.min(Y.max[0] - 0.15, x)); z = Math.max(Y.min[2] + 0.15, Math.min(Y.max[2] - 0.15, z));
+      for (let r = 0; r < 1.2; r += 0.08) for (let a = 0; a < 6.28; a += r ? 0.5 / r * 0.08 + 0.3 : 7) {
+        const qx = x + Math.cos(a) * r, qz = z + Math.sin(a) * r;
+        if (this.free(qx, qz)) return [qx, qz];
+      }
+      return [cx, cz];
+    };
+    this.route = null; this.pace = 1; this.proudGoal = 0; this.then = null;
+    if (this.pers === 'diva') {            // a slow, proud strut round the yard, chest out and head high, then a shake: ta-da
+      this.route = [ok(p.x - 0.45, p.z + 0.35), ok(cx - 0.2, cz + 0.35), ok(cx + 0.35, cz + 0.1), ok(p.x, p.z + 0.25)];
+      this.pace = 0.55; this.proudGoal = 1; this.then = { type: 'ruffle', left: 0.75 };
+    } else if (this.pers === 'brave') {    // marches round the yard on patrol, stopping to look about
+      this.route = [ok(Y.max[0], cz), ok(Y.max[0], Y.max[2], 0), ok(cx, Y.max[2]).concat(0.8), ok(Y.min[0], Y.max[2]).concat(0.8), ok(PEN.gate[0], Y.max[2]).concat(1.0)];
+      this.pace = 1.15; this.proudGoal = 0.6; this.then = { type: 'flap', left: 0.9 };
+    } else if (this.pers === 'glutton') {  // straight to the feeder for a well-earned snack
+      const f = PEN.feeder, a = Math.atan2(cx - f[0], cz - f[2]), at = ok(f[0] + Math.sin(a) * 0.36, f[2] + Math.cos(a) * 0.36);
+      this.route = [at, [at[0] - Math.sin(a) * 0.07, at[1] - Math.cos(a) * 0.07]];
+      this.pace = 1.3; this.then = { type: 'peck', left: 4.5 };
+    } else if (this.pers === 'rebel') {    // a hop and a flap, then a dash to the far corner
+      this.hopT = 0; this.act = { type: 'flap', left: 0.8 };
+      const far = [[Y.min[0], Y.max[2]], [Y.max[0], Y.max[2]], [Y.min[0], Y.min[2]], [Y.max[0], Y.min[2]]].map(c => ok(c[0], c[1]))
+        .sort((a, b) => Math.hypot(b[0] - p.x, b[1] - p.z) - Math.hypot(a[0] - p.x, a[1] - p.z))[0];
+      this.route = [far, ok(far[0] * 0.7 + cx * 0.3, far[1] * 0.7 + cz * 0.3)];
+      this.pace = 1.9; this.then = { type: 'flap', left: 0.8 };
+    } else {                               // a good mum: a contented shake, then back to her chicks
+      this.act = { type: 'ruffle', left: 0.75 };
+      const chick = this.flock.find(b => b.mum === this);
+      if (chick) this.route = [ok(chick.root.position.x + 0.25, chick.root.position.z)];
+    }
+    if (this.route) { this.route = this.plan(this.route); this.nextLeg(); }
+    if (this.act) this.wait = this.act.left;
+  }
+  // a route that goes round the feeder, the water and the hay: where a leg is blocked, a detour point beside it
+  plan(points) {
+    const out = []; let a = [this.root.position.x, this.root.position.z];
+    for (const b of points) {
+      if (!this.clearPath(a[0], a[1], b[0], b[1])) {
+        const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / L, nz = (b[0] - a[0]) / L;
+        let m = null;
+        for (const d of [0.3, -0.3, 0.5, -0.5, 0.75, -0.75]) {
+          const q = [mx + nx * d, mz + nz * d];
+          if (this.free(q[0], q[1]) && this.clearPath(a[0], a[1], q[0], q[1]) && this.clearPath(q[0], q[1], b[0], b[1])) { m = q; break; }
+        }
+        if (!m) continue;                    // no way round: leave that point out
+        out.push(m);
+      }
+      out.push(b); a = b;
+    }
+    return out;
+  }
+  nextLeg() {
+    const p = this.root.position;
+    this.legTime = 0;
+    if (this.route && this.route.length) { const n = this.route.shift(); this.target.set(n[0], p.y, n[1]); this.wait = Math.max(this.wait || 0, n[2] || 0); return; }
+    this.route = null; this.pace = 1; this.proudGoal = 0;
+    if (this.then) { this.act = this.then; this.then = null; this.wait = this.act.left + 0.2; } else this.wait = 0.5 + this.r() * 1.5;
   }
   update(dt) {
     this.phase += dt;
     const A = this.A, k = Math.min(1, dt * 14);
     A.t += dt;
     if (this.hopT >= 0) { this.hopT += dt / 0.8; if (this.hopT >= 1) this.hopT = -1; }        // a hop lasts 0.8 s
-    let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0, ruffle = 0;
+    let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0, ruffle = 0, song = null;
+    // time to lay? (hens in a coop, one in the nest box at a time)
+    if (this.layIn !== undefined && !this.laying && !this.stay && this.plot.nest) {
+      this.layIn -= dt;
+      if (this.layIn <= 0) { if (!this.plot.nest.by && !this.route) this.startLaying(); else this.layIn = 8 + this.r() * 12; }
+    }
+    if (this.route) { this.legTime = (this.legTime || 0) + dt; if (this.legTime > 8) this.nextLeg(); }       // never stuck on a leg
+    if (this.answerIn > 0) { this.answerIn -= dt; if (this.answerIn <= 0 && !this.act) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); } }
     const act = this.act;
-    if (act) {
+    if (this.laying) {
+      song = this.layStep(dt);
+      walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle;
+    } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'peck') peckGoal = (act.left % 0.55) > 0.24 ? 1 : 0.3;
@@ -688,7 +914,7 @@ class Bird {
     } else if (this.wait > 0) {
       if (this.wait > 0.3 && this.tooClose()) this.wait = 0.3;
       this.wait -= dt;
-      if (this.wait <= 0) {
+      if (this.wait <= 0 && !this.route) {
         const next = this.acted ? null : this.chooseAct();          // after doing something, she walks on
         this.acted = false;
         if (next && !(next.type !== 'flap' && next.type !== 'crow' && this.tooClose())) { this.act = next; this.wait = 0.4 + this.r() * 1.0; }
@@ -696,7 +922,7 @@ class Bird {
       }
     } else {
       const p = this.root.position, dx = this.target.x - p.x, dz = this.target.z - p.z, dist = Math.hypot(dx, dz);
-      if (dist < 0.04) { this.wait = 0.5 + this.r() * 2.0; wag = 1; }
+      if (dist < 0.04) { if (this.route) this.nextLeg(); else { this.wait = 0.5 + this.r() * 2.0; wag = 1; } }
       else {
         const want = Math.atan2(dx, dz);
         let diff = ((want - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
@@ -704,11 +930,18 @@ class Bird {
         this.root.rotation.y += Math.abs(diff) < step ? diff : Math.sign(diff) * step;
         diff = Math.abs(diff) < step ? 0 : diff - Math.sign(diff) * step;
         const facing = Math.abs(diff) < 25 * DEG;
-        if (facing && this.someoneAhead()) this.wait = 0.3 + this.r() * 0.6;
+        if (facing && this.someoneAhead() && !(this.route && this.legTime > 1.2)) this.wait = this.route ? 0.15 : 0.3 + this.r() * 0.6;      // on parade she doesn't wait long
         else if (facing) {
-          const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * dt, dist);
+          const fx = Math.sin(this.root.rotation.y), fz = Math.cos(this.root.rotation.y), s = Math.min(this.speed * (this.pace || 1) * dt, dist);
           const nx = p.x + fx * s, nz = p.z + fz * s;
-          if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; walking = true; } else this.wait = 0.5;
+          if (this.free(nx, nz) || !this.free(p.x, p.z)) { p.x = nx; p.z = nz; walking = true; }
+          else if (this.route) {                       // on parade: step round whatever is in the way
+            for (const da of [0.6, -0.6, 1.1, -1.1, 1.6, -1.6]) {
+              const a = this.root.rotation.y + da, sx = p.x + Math.sin(a) * s, sz = p.z + Math.cos(a) * s;
+              if (this.free(sx, sz)) { p.x = sx; p.z = sz; walking = true; break; }
+            }
+            if (!walking) this.wait = 0.3;
+          } else this.wait = 0.5;
         } else walking = Math.abs(diff) > 2 * DEG;      // little steps on the spot while turning
       }
     }
@@ -721,7 +954,8 @@ class Bird {
     }
     A.lookYaw += (this.look.yaw - A.lookYaw) * Math.min(1, dt * 8); A.lookTilt += (this.look.tilt - A.lookTilt) * Math.min(1, dt * 6);
     A.walk += ((walking ? 1 : 0) - A.walk) * Math.min(1, dt * 10);
-    if (walking) A.phase += dt * this.stepRate;
+    const pace = this.pace || 1;
+    if (walking) A.phase += dt * this.stepRate * (pace > 1 ? pace : 0.6 + 0.4 * pace);
     A.peck += (peckGoal - A.peck) * Math.min(1, dt * (peckGoal > A.peck ? 22 : 12));
     A.sit += (sitGoal - A.sit) * Math.min(1, dt * 3.5);
     A.kick += (kick - A.kick) * k; if (!kick) A.kickT = 0;
@@ -733,6 +967,9 @@ class Bird {
     dy = ((dy + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
     A.turn += ((dt > 0 ? dy / dt : 0) - A.turn) * Math.min(1, dt * 12);
     A.hopT = this.hopT; A.dt = dt;
+    A.sing = song ? song.sing : 0; A.cluck = song ? song.cluck : 0; A.kawk = song ? song.kawk : 0;
+    if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
+    A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
     this.rig.pose(A);
   }
 }
@@ -771,6 +1008,7 @@ function makeBlob() {
 function separate(flock, dt) {
   const k = Math.min(1, dt * 8);
   for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
+    if ((flock[i].laying && flock[i].laying.inBox) || (flock[j].laying && flock[j].laying.inBox)) continue;
     const a = flock[i].root.position, b = flock[j].root.position;
     const min = flock[i].kind === 'chick' || flock[j].kind === 'chick' ? CHICK_BODY : BODY;
     let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
@@ -872,6 +1110,20 @@ function tapAt(x, y) {
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
   if (!best) {
+    // a coop's nest box: collect the eggs
+    const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hitP = new THREE.Vector3(), B = NEST.box;
+    const nb = new THREE.Box3(new THREE.Vector3(B[0], B[1], B[2]), new THREE.Vector3(B[3], B[4], B[5]));
+    for (const p of livePlots()) {
+      if (!p.nest) continue;
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
+      if (!loc.intersectBox(nb, hitP)) continue;
+      const n = p.nest, sitting = n.by && n.by.laying && n.by.laying.inBox;
+      if (sitting) tag.textContent = n.by.name + ' is laying…';
+      else if (n.count) { tag.textContent = n.count === 1 ? 'Collected 1 egg' : 'Collected ' + n.count + ' eggs'; n.count = 0; showEggs(p); }
+      else tag.textContent = 'No eggs yet';
+      tagBird = null; tagSpot.set(NEST.seat[0], 0.55, NEST.seat[1]); p.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.8;
+      return;
+    }
     // the wheat field: show its next growing stage
     const g = new THREE.Vector3();
     if (wheatField.inverse && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), g)) {
@@ -879,7 +1131,7 @@ function tapAt(x, y) {
       if (Math.abs(g.x) < wheatField.half[0] && Math.abs(g.z) < wheatField.half[1]) {
         const next = WHEAT_STAGES[(WHEAT_STAGES.indexOf(wheatField.stage) + 1) % 4];
         setWheat(next);
-        tagBird = null; tag.textContent = 'Wheat field · ' + WHEAT_NAMES[next]; tag.classList.add('on'); fieldTag = 2.8;
+        tagBird = null; tag.textContent = 'Wheat field · ' + WHEAT_NAMES[next]; tag.classList.add('on'); fieldTag = 2.8; tagSpot.copy(wheatField.centre);
       }
     }
     return;
@@ -889,13 +1141,14 @@ function tapAt(x, y) {
   tag.classList.add('on');
 }
 let fieldTag = 0;
+const tagSpot = new THREE.Vector3();          // where a label that isn't a bird's stands (the wheat field, a nest box)
 function placeTag(dt) {
   if (!tagBird && fieldTag <= 0) return;
   const v = new THREE.Vector3();
   if (!tagBird) {                               // the wheat field's label, over the field
     fieldTag -= dt;
     if (fieldTag <= 0) { tag.classList.remove('on'); return; }
-    v.copy(wheatField.centre).project(camera);
+    v.copy(tagSpot).project(camera);
     tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
     return;
   }
@@ -923,7 +1176,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  if (!frozen) for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); }
+  if (!frozen) { for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
   renderer.render(scene, camera);
@@ -983,7 +1236,11 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); } wake(300); },
+  // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
+  layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },
+  layAs: (i, pers, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.pers = pers; h.startLaying(sit); return h.name; },
+  noLaying: () => { for (const b of allBirds) if (b.layIn !== undefined) b.layIn = 1e9; },
 };
 start().catch(err => {
   console.error(err);

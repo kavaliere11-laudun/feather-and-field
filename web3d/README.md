@@ -237,6 +237,36 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     Silkies, from the tile's green and blue), shortened to 0.75 where seen face-on; shaded 0.76-1.14 by the hair's lightness.
     The layers spread over the full length when fewer are drawn (furSpan), like the Silkies. The lifted-feather-tip outline
     from 16:28 is replaced by this.
+
+## Egg laying (21 Oct 18:23, Audrey: "Perfect! Carry on. The chickens should lay in their little house. We should see them setting in the nest for the duration of the laying. And of course when they are done, they are happy, they sing and parade a little, depending on their personalities")
+
+- The nest box (`stylized/coops.py` nest_box(style), added to every house by `export_coops.py`): a low box against the
+  house's +x side (Blender x 0.72..1.12, y -0.5..-0.04, floor 0.08), front flush with the house front, a lip to step over,
+  straw, sides sloping down to the front, the lid hinged at the back and propped open (so the camera sees the hen and the
+  eggs), in each house's colours (`NEST_STYLE`: walls, trim, lid like the roof). The straw nest in the yard is gone (its
+  obstacle is dropped on load).
+- `src/main.js`: `NEST` (seat, into, lip, door points in the pen frame; the box for taps); eggs per coop in an
+  InstancedMesh of 6 slots on the straw, coloured per breed (`EGG_COLOUR`), the newest popping in; two to start with.
+  Tapping the nest box collects them ("Collected 3 eggs"; "Ivy is laying…" while a hen sits; "No eggs yet").
+- Each coop hen has a personality (the game's five: `PERS_IDS`, spread across each pen) shown in her label, and `layIn`
+  (first lay 6-76 s after loading, then every 4-8 minutes; one hen in the nest box at a time).
+- `startLaying(sit)` / `layStep(dt)`: go to the door, up to the lip facing in, hop in (carried forward over the lip, up to
+  the floor), turn round and shuffle onto the seat, settle with a wriggle, sit 30-45 s with a shuffle now and then (legs
+  folded away), rise (the egg appears), hop out to the lip, sing. The song (`SONG`: seconds and loudness per personality):
+  "buk buk buk buk ba-KAWK" cycles of 1.5 s, the head darting forward on each buk and thrown up for the KAWK, standing tall,
+  with quaver notes rising over her head (`spawnNote`, sprites, bigger for the KAWK). The rooster joins in with a crow
+  about half the time (`answerIn`). Laying hens are skipped by `separate()` while in the box and aren't disturbed by taps.
+- `celebrate()` by personality, then back to normal life: Diva: a slow strut round the yard (pace 0.55, `proud` pose:
+  chest out, head high, tail up, high steps) then a shake; Brave: a brisk patrol round the yard edge stopping to look about,
+  ending at the gate with a flap; Glutton: straight to the feeder and 4.5 s of pecking; Rebel: a hop and a flap, a dash
+  (pace 1.9) to the farthest free corner and a flap; Good mum: a contented shake, then to her chicks.
+- Routes (`route`, `nextLeg()`, `plan()`): points are moved to the nearest free spot, legs blocked by the feeder, water or
+  hay get a detour point or are left out, a parading hen steps round anything in the way and never waits long, and a leg
+  times out after 8 s.
+- Pose (`src/birds.js`): `sing`, `cluck`, `kawk`, `proud` inputs.
+- Tests: `layclip.mjs PLOT PERS SIT frames fps size out [dx dz]` (frames of one hen laying, with the phase of each frame in
+  out_phases.json; `VW`/`VH`, `COOPS`), `laytrace.mjs PLOT PERS SIT seconds` (her position and state every half second);
+  the page has `__farm.layNow(i, sit)`, `layAs(i, pers, sit)`, `noLaying()`. Ten simulated minutes: 3-8 eggs per coop.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
