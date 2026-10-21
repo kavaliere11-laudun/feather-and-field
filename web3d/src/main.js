@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar } from './birds.js';
+import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail } from './birds.js';
 
 const MODELS = './models/';
 const params = new URLSearchParams(location.search);
@@ -23,10 +23,10 @@ const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
 const QUALITY = [
-  { dpr: 2, shadow: 2048, grass: 1.0, aa: true },
-  { dpr: 1.5, shadow: 2048, grass: 0.8, aa: true },
-  { dpr: 1.25, shadow: 1024, grass: 0.55, aa: false },
-  { dpr: 1, shadow: 1024, grass: 0.35, aa: false },
+  { dpr: 2, shadow: 2048, grass: 1.0, aa: true, fur: 1 },
+  { dpr: 1.5, shadow: 2048, grass: 0.8, aa: true, fur: 1 },
+  { dpr: 1.25, shadow: 1024, grass: 0.55, aa: false, fur: 0.67 },
+  { dpr: 1, shadow: 1024, grass: 0.35, aa: false, fur: 0.34 },
 ];
 let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0', 10) || 0));
 
@@ -93,9 +93,12 @@ function resize() {
   renderer.setSize(w, h, false);
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   placeCamera();
+  furDetail();
   wake(400);
 }
 window.addEventListener('resize', resize);
+// how much fur and fluff to draw: from how big birds are on screen, and the quality level
+function furDetail() { setFurDetail(renderer.getPixelRatio() * (canvas.clientHeight || window.innerHeight) / (2 * view.size), QUALITY[q].fur); }
 
 // ------------------------------------------------------------------ colours: a touch richer, like the Unity farm's grading
 const SAT = 1.15;
@@ -416,6 +419,7 @@ function buildGrass() {
 }
 function applyGrass() {
   setFar(view.size > 5.5);
+  furDetail();
   const far = view.size > 7.2;
   for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); g.mesh.visible = !far; }
 }
@@ -769,7 +773,7 @@ function zoomBy(f) {
   const before = view.size;
   view.size = Math.min(view.max, Math.max(view.min, view.size * f));
   const crossed = t => (before > t) !== (view.size > t);
-  if (crossed(7.2) || crossed(5.5)) applyGrass();
+  if (crossed(7.2) || crossed(5.5)) applyGrass(); else furDetail();
   placeCamera();
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
@@ -820,7 +824,7 @@ const hintEl = document.getElementById('hint');
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); setTimeout(() => hintEl.classList.remove('on'), 4500); }
 
 // ------------------------------------------------------------------ the loop: 30 frames a second when idle, 60 while touched
-let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false;
+let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false, paused = false;
 function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }
 const meter = { frames: 0, late: 0, since: 0, fps: 0, slow: 0 };
 const readout = document.getElementById('readout');
@@ -829,6 +833,7 @@ readout.addEventListener('click', () => { details = !details; showReadout(); });
 
 function frame(now) {
   requestAnimationFrame(frame);
+  if (paused) return;
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
@@ -877,6 +882,8 @@ window.__farm = {
   plan: () => V, THREE,
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   freeze: (on) => { frozen = on; },
+  pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
+  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } wake(300); },
 };
 start().catch(err => {

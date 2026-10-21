@@ -14,7 +14,7 @@ import breeds
 from mathutils import Vector, Matrix
 
 JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR']
-BUDGET_BIRD = {'h': 3000, 'r': 3400, 'chick': 1400}
+BUDGET_BIRD = {'h': 2300, 'r': 2600, 'chick': 1000}         # lighter since 21 Oct: the browser adds fluff shells on top
 flat_info = g['flat_info']
 PIVOTS = {}
 
@@ -138,7 +138,7 @@ for b in ('rir', 'orp', 'leg', 'bra', 'sil'):
         for lo in (False, True):
             fresh(); r = breeds.build(b, sx, seed=3); light(1)
             nm = '%s_%s' % (b, sx) + ('_lo' if lo else '')
-            bake_bird(nm, r, (LOW[sx] if lo else BUDGET_BIRD[sx]) + (300 if b == 'sil' and not lo else 100 if b == 'sil' else 0), *((20, 0.02) if lo else ())); names.append(nm)
+            bake_bird(nm, r, (LOW[sx] if lo else BUDGET_BIRD[sx]) + (100 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
 for lo in (False, True):
     fresh(); r = breeds.chick(seed=3); light(1)
     nm = 'chick' + ('_lo' if lo else ''); bake_bird(nm, r, LOW['chick'] if lo else BUDGET_BIRD['chick'], *((20, 0.02) if lo else ())); names.append(nm)

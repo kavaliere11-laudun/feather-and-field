@@ -162,12 +162,11 @@ def silkie(B, rooster, root, body_rig, seed):
     rnd = random.Random(seed * 31 + (7 if rooster else 0))
     up = 0.025 if rooster else 0.0
     # body: a round core, full breast, a cushion rising behind and a fluffy neck, all edged with soft bumps
-    E = [('ELLIPSOID', (-0.01, 0, 0.19), 0.13 * K, (1.22, 1.0, 0.95), 2.0),
-         ('BALL', (0.075, 0, 0.21 + up * 0.5), 0.092 * K, None, 2.0),
-         ('ELLIPSOID', (-0.13, 0, 0.255), 0.08 * K, (1.0, 0.95, 1.0), 2.0),
-         ('ELLIPSOID', (0.09, 0, 0.285 + up), 0.06 * K, (1.0, 1.0, 1.3), 2.0)]
-    E += bumps(rnd, (-0.01, 0, 0.2), (0.16, 0.13, 0.125), 34, 0.034, 0.05, zmin=-0.45)
-    E += bumps(rnd, (0.09, 0, 0.29 + up), (0.06, 0.06, 0.075), 8, 0.025, 0.035, zmin=-0.2)
+    E = [('ELLIPSOID', (-0.01, 0, 0.19), 0.112 * K, (1.24, 1.0, 0.95), 2.0),
+         ('BALL', (0.07, 0, 0.205 + up * 0.5), 0.08 * K, None, 2.0),
+         ('ELLIPSOID', (-0.12, 0, 0.25), 0.07 * K, (1.0, 0.95, 1.0), 2.0),
+         ('ELLIPSOID', (0.085, 0, 0.28 + up), 0.05 * K, (1.0, 1.0, 1.3), 2.0)]
+    E += bumps(rnd, (-0.01, 0, 0.2), (0.14, 0.11, 0.11), 10, 0.035, 0.045, zmin=-0.3)
     tag(metaball_mesh('body_mb', E, res=0.009, m=pl, parent=body_rig), 'body', 'body')
     pivot('body', (0.0, 0, 0.17), body_rig)
     head = Vector((0.125, 0, 0.35 + up))
@@ -175,8 +174,8 @@ def silkie(B, rooster, root, body_rig, seed):
     pivot('headc', tuple(head), body_rig)
     # the cushion tail: a pompom (a rooster's sits higher and fuller)
     pivot('tail', (-0.15, 0, 0.27), body_rig)
-    T = bumps(rnd, (-0.2, 0, 0.3 + up), (0.05, 0.05, 0.05), 9 if rooster else 7, 0.03, 0.04)
-    T.append(('BALL', (-0.19, 0, 0.3 + up), 0.045 * K, None, 2.0))
+    T = bumps(rnd, (-0.19, 0, 0.29 + up), (0.035, 0.035, 0.035), 5, 0.025, 0.03)
+    T.append(('BALL', (-0.18, 0, 0.29 + up), 0.038 * K, None, 2.0))
     tag(metaball_mesh('tail_mb', T, res=0.008, m=pl, parent=body_rig), 'tail', 'tail')
     # head: a small dark face with a short beak, bead eyes, turquoise earlobes, a mulberry walnut comb, and the pompom crest
     hd = empty('head', tuple(head), (0, math.radians(-8), 0), body_rig)
@@ -190,16 +189,15 @@ def silkie(B, rooster, root, body_rig, seed):
     tag(wal, 'head')
     tag(metaball_mesh('wattles', [('ELLIPSOID', (0.038, sd * 0.007, -0.03), 0.007 * K * (1.4 if rooster else 1), (0.8, 0.6, 1.2), 2.0) for sd in (1, -1)], res=0.0035, m=cm, parent=hd), 'head')
     cr = (-0.012 - (0.012 if rooster else 0), 0, 0.045)
-    C = bumps(rnd, cr, (0.045 * (1.15 if rooster else 1), 0.045, 0.04), 12, 0.022, 0.03, zmin=-0.5)
-    C.append(('ELLIPSOID', cr, 0.04 * K, (1.15 if rooster else 1.0, 1.0, 0.9), 2.0))
+    C = bumps(rnd, cr, (0.03 * (1.15 if rooster else 1), 0.03, 0.026), 5, 0.018, 0.022, zmin=-0.3)
+    C.append(('ELLIPSOID', cr, 0.03 * K, (1.15 if rooster else 1.0, 1.0, 0.9), 2.0))
     tag(metaball_mesh('crest', C, res=0.006, m=pl, parent=hd), 'head', 'crest')
     M_ = bumps(rnd, (0.0, 0, -0.012), (0.03, 0.04, 0.03), 8, 0.016, 0.022, skip=lambda d: d.x > 0.4)     # fluffy cheeks (muffs) round the back of the face
     tag(metaball_mesh('muffs', M_, res=0.005, m=pl, parent=hd), 'head', 'body')
     # wings: soft fluff on the sides (enough to flap)
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
         pivot(nm, (-0.01, sd * 0.1, 0.26 + up), body_rig)
-        W = bumps(rnd, (-0.045, sd * 0.11, 0.22 + up), (0.07, 0.018, 0.04), 8, 0.016, 0.022)
-        W.append(('ELLIPSOID', (-0.045, sd * 0.108, 0.22 + up), 0.045 * K, (1.5, 0.38, 0.8), 2.0))
+        W = [('ELLIPSOID', (-0.045, sd * 0.098, 0.215 + up), 0.042 * K, (1.5, 0.38, 0.8), 2.0)]
         tag(metaball_mesh('wingp', W, res=0.007, m=wg, parent=body_rig), nm, 'wing')
     # short dark legs with feathered shanks and five toes
     sh = B['shank']
