@@ -128,6 +128,11 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   Hair is short right round the face (`face: 0.7`, by distance from a point just in front of the head centre, `headc`,
   for body and crest hair), so the long crest and cheeks don't bury the eyes; less extra fluff underneath (`under: 0.35`
   instead of 0.9) so the feet still show.
+- Zoomed out (21 Oct 11:05, Audrey: "All good when zoomed in, wool effect when zoomed out", 46 fps close, 27 fps far):
+  zoomed out, only the first (inner) layers were drawn, so far Silkies shrank to smooth blobs (crest, body and tail balls).
+  Now, for painted hair (Silkies, chicks), the drawn layers are spread over the hair's full length (`furSpan` = 1 / shown,
+  in the vertex shader), so far birds keep their fuzzy outline; the locks' light and dark even out with distance (towards
+  0.93 from tile mip level 2.5 to 5). Far out, 0.27 of the layers instead of 0.34 (at least 2 per bird) to help the frame rate.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

@@ -270,35 +270,38 @@ export function setSoftFur(on) {
   BIRD_MAT.alphaToCoverage = soft; BIRD_MAT.defines = soft ? { SOFT_FUR: '' } : {}; furLook.cut.value = soft ? 0.04 : 0.45;
   BIRD_MAT.needsUpdate = true;
 }
-export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null } };
+export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null }, span: { value: 1 } };
 // real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
 export function setHairTexture(t) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.anisotropy = 4; t.needsUpdate = true;
   furLook.tex.value = t;
 }     // cut: how much of a strand's soft edge is kept
-function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.round(u.shells * furLook.shown) * u.shell); }
+function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.max(Math.min(2, u.shells), Math.round(u.shells * furLook.shown)) * u.shell); }
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
   // change while zooming
   const d = pixelsPerMetre > 600 ? 210 : pixelsPerMetre > 330 ? 150 : pixelsPerMetre > 180 ? 105 : 70;
   if (d !== furLook.density.value) furLook.density.value = d;
-  const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : 0.34);
-  if (shown !== furLook.shown) { furLook.shown = shown; for (const f of FURRY) showShells(f); }
+  const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : 0.27);     // zoomed far out: fewer layers (at least 2), spread over the hair
+  if (shown !== furLook.shown) { furLook.shown = shown; furLook.span.value = 1 / shown; for (const f of FURRY) showShells(f); }
 }
 
 // the birds' material: lit as before, with the shells' strands cut out of each layer and shaded darker towards the roots
 function birdMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
   m.onBeforeCompile = sh => {
-    sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex;
+    sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex; sh.uniforms.furSpan = furLook.span;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
+      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
-        vFur = furT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
-        if (furT > 0.0) {
+        // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
+        // length, so the far birds keep their fluffy outline
+        float fT = furStyle.w < 0.0 ? min(1.0, furT * furSpan) : furT;
+        vFur = fT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
+        if (fT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
-          transformed += nn * furT * furLen * (1.0 - 0.55 * furComb) + normalize(back) * furT * furT * furLen * 1.4 * furComb;
-          transformed.y -= furT * furT * furLen * 0.35 * (1.0 - furComb);
+          transformed += nn * fT * furLen * (1.0 - 0.55 * furComb) + normalize(back) * fT * fT * furLen * 1.4 * furComb;
+          transformed.y -= fT * fT * furLen * 0.35 * (1.0 - furComb);
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
@@ -324,7 +327,8 @@ function birdMaterial() {
               diffuseColor.a = cov;
               #endif
             }
-            furShade = mix(0.42, 1.28, hair.r) * mix(0.78, 1.06, vFur);
+            // zoomed out, the locks' light and dark would only make blotches (a fleece): even them out with distance
+            furShade = mix(mix(0.42, 1.28, hair.r), 0.93, 0.65 * smoothstep(2.5, 5.0, log2(tpp))) * mix(0.78, 1.06, vFur);
           } else {
             furShade *= mix(0.42, 1.38, hair.r);
             // the down's own strands stand out only round the outline (and short near the body): no speckle across the middle
