@@ -17,8 +17,17 @@ console.log(await p.evaluate(([i, pers, sit, s, dx, dz, process_env]) => {
   const k = lh / Math.tan(42 * Math.PI / 180);          // a raised point shows where the ground further from the camera does
   f.lookAt(w.x - Math.SQRT1_2 * k, w.z - Math.SQRT1_2 * k, s);
   const name = f.layAs(i, pers, sit); window.__henObj = pl.birds.find(b => b.laying);
+  if (process_env.CLEAR !== '0') {      // the others keep out of the way: off the ramp and away from the nest window, staying put
+    const G = f.nestOf(pl);
+    for (const b of pl.birds) {
+      if (b === window.__henObj) continue;
+      const q = b.root.position, nearWin = Math.abs(q.x - G.win[0]) < 0.5 && q.z < 1.25, nearRamp = Math.abs(q.x - G.pop[0]) < 0.45 && q.z < G.foot[1] + 0.45;
+      if (nearWin || nearRamp) q.set((q.x < 0.1 ? -0.6 : 0.95) + (Math.random() - 0.5) * 0.4, 0, 1.6 + Math.random() * 0.45);
+      b.stay = true; b.target.copy(q);
+    }
+  }
   return name;
-}, [parseInt(plot), pers, parseFloat(sit), parseFloat(size), parseFloat(dx), parseFloat(dz), { LX: process.env.LX, LZ: process.env.LZ, LH: process.env.LH }]));
+}, [parseInt(plot), pers, parseFloat(sit), parseFloat(size), parseFloat(dx), parseFloat(dz), { LX: process.env.LX, LZ: process.env.LZ, LH: process.env.LH, CLEAR: process.env.CLEAR }]));
 const per = Math.max(1, Math.round(30 / parseFloat(fps))), phases = [];
 for (let k = 0; k < parseInt(n); k++) {
   phases.push(await p.evaluate((per) => { const f = window.__farm; f.step(1 / 30, per); f.draw(); const h = window.__henObj; return h.laying ? h.laying.phase : (h.route ? 'parade' : (h.act ? h.act.type : 'free')); }, per));

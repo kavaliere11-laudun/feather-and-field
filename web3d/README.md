@@ -308,7 +308,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   times out after 8 s.
 - Pose (`src/birds.js`): `sing`, `cluck`, `kawk`, `proud`, `brood` inputs.
 - Tests: `layclip.mjs PLOT PERS SIT frames fps size out [dx dz]` (frames of one hen laying, with the phase of each frame in
-  out_phases.json; `VW`/`VH`, `COOPS`), `laytrace.mjs PLOT PERS SIT seconds` (her position and state every half second);
+  out_phases.json; `VW`/`VH`, `COOPS`; the other birds of the pen are moved off the ramp and away from the window and stay
+  put, `CLEAR=0` leaves them be), `laytrace.mjs PLOT PERS SIT seconds` (her position and state every half second);
   the page has `__farm.layNow(i, sit)`, `layAs(i, pers, sit)`, `noLaying()`, `nestOf`, `showEggs`. Ten simulated
   minutes: 3-8 eggs per coop. `layclip.mjs` can centre on a raised point (`LX`, `LZ`, `LH` in the pen frame).
   `nesttap.mjs` taps each coop's nest window and checks the eggs are collected. `coopfronts.mjs [size] [out]` pictures each
