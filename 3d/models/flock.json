@@ -1070,11 +1070,11 @@
   },
   "rir_r": {
    "tris": 3792,
-   "verts": 2752
+   "verts": 2780
   },
   "rir_r_lo": {
    "tris": 1768,
-   "verts": 1184
+   "verts": 1196
   },
   "orp_h": {
    "tris": 2984,
@@ -1086,11 +1086,11 @@
   },
   "orp_r": {
    "tris": 3868,
-   "verts": 2790
+   "verts": 2818
   },
   "orp_r_lo": {
    "tris": 1810,
-   "verts": 1205
+   "verts": 1217
   },
   "leg_h": {
    "tris": 2984,
@@ -1102,11 +1102,11 @@
   },
   "leg_r": {
    "tris": 3790,
-   "verts": 2761
+   "verts": 2789
   },
   "leg_r_lo": {
    "tris": 1784,
-   "verts": 1202
+   "verts": 1214
   },
   "bra_h": {
    "tris": 2990,
@@ -1118,11 +1118,11 @@
   },
   "bra_r": {
    "tris": 3856,
-   "verts": 2792
+   "verts": 2820
   },
   "bra_r_lo": {
    "tris": 1804,
-   "verts": 1210
+   "verts": 1222
   },
   "sil_h": {
    "tris": 2286,
