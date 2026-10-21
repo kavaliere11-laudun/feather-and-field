@@ -118,6 +118,10 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   - The shader fades hair into air over a range that widens with distance (`ramp`, from the tile's pixels per screen
     pixel), so at the line-up zoom the outer layers become a see-through halo (with soft edges on) instead of a hard rim.
     Gentler shading (0.5-1.22), mip bias -0.5.
+- More fur (21 Oct 09:55, Audrey: "Thats better! We need to increase the fur effect please", 46 fps): Silkie hair half as
+  long again (body 4.8 cm, crest 5, tail 5.2, wings 4, legs 2.6) in 22 shells, standing out more (comb 0.65), shorter round
+  the face (`face: 0.45`, by head weight) so the face stays clear; stronger strand shading (0.42-1.28); sharper sampling (mip
+  bias -1) and a narrower fade (`ramp` 0.05 + 0.05 per mip level), so single strands and wisps show at the edge.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

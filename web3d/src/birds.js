@@ -196,8 +196,9 @@ export function paintedGeometry(model, breed, colour) {
 // hair length (metres) per paint region, and how many shells
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
-  sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
-         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8, locks: 0.12 },
+  // Silkies: long hair standing out (shorter round the face, so it stays clear)
+  sil: { len: { [R.body]: 0.048, [R.crest]: 0.05, [R.tail]: 0.052, [R.wing]: 0.04, [R.prim]: 0.04, [R.legfeather]: 0.026 }, shells: 22, droop: 0.35,
+         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.65, locks: 0.12, face: 0.45 },
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
@@ -213,6 +214,7 @@ function addFur(g, src, spec) {
   for (let i = 0; i < n; i++) {
     len[i] = spec.len[paint[i]] || 0;
     if (spec.comb && paint[i] === R.body) len[i] *= 1 + 0.9 * (1 - smooth(0.2, 0.42, Pp[i * 3 + 1] / top));    // soft fluff underneath and round the thighs
+    if (spec.face && paint[i] === R.body) len[i] *= 1 - spec.face * g.attributes.featherHead.array[i];        // the cheeks' hair round the face
   }
   const furTris = [];
   for (let t = 0; t < idx.length; t += 3) if (len[idx[t]] > 0 && len[idx[t + 1]] > 0 && len[idx[t + 2]] > 0) furTris.push(idx[t], idx[t + 1], idx[t + 2]);
@@ -306,10 +308,10 @@ function birdMaterial() {
           // painted hair: the tile wrapped round the body from three sides (strands falling down the sides, back over the top);
           // red: how light the hair is, green: how far it stands out
           vec3 pt = vRest / abs(vStyle.w), nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
-          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -0.5).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -0.5).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -0.5).rg * nw.z;
+          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -1.0).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -1.0).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -1.0).rg * nw.z;
           // how many of the tile's pixels fall in one screen pixel: the further away, the more the strands blur together, so
           // the fade from hair to air is spread wider and the outer layers turn into a soft see-through halo
-          float tpp = max(length(fwidth(pt)) * 512.0, 1.0), ramp = 0.06 + 0.075 * min(log2(tpp), 5.0);
+          float tpp = max(length(fwidth(pt)) * 512.0, 1.0), ramp = 0.05 + 0.05 * min(log2(tpp), 5.0);
           if (vStyle.w < 0.0) {
             // Silkie hair: each fluff layer keeps the hair that reaches out that far, darker deeper in
             if (vFur > 0.0) {
@@ -319,7 +321,7 @@ function birdMaterial() {
               diffuseColor.a = cov;
               #endif
             }
-            furShade = mix(0.5, 1.22, hair.r) * mix(0.8, 1.05, vFur);
+            furShade = mix(0.42, 1.28, hair.r) * mix(0.78, 1.06, vFur);
           } else {
             furShade *= mix(0.42, 1.38, hair.r);
             // the down's own strands stand out only round the outline (and short near the body): no speckle across the middle
