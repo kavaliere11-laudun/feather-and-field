@@ -603,8 +603,8 @@ export class Rig {
     const rf = s.ruffle || 0, shake = rf * Math.sin(s.t * 46);
     // the egg song: standing tall, the head darting forward on each "buk" and thrown up for the "ba-KAWK"; on parade: chest out,
     // head high, tail up, high steps
-    const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0;
-    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank;
+    const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0, bd = s.brood || 0;     // brood: settled low on a nest, neck drawn in
+    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd;
     body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise + 0.12 * H.squash
                       - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
@@ -615,7 +615,7 @@ export class Rig {
     const u = ((ph / Math.PI) % 1 + 1) % 1, hold = 0.68, amp = 0.03 * sz;
     const hb = u < hold ? 0.5 - u / hold : -0.5 + smooth(0, 1, (u - hold) / (1 - hold));
     head.position.z += w * hb * amp + 0.016 * sz * ck;
-    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr;
+    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.06 * sz * bd;
     head.position.y -= w * (u < hold ? 0 : Math.sin((u - hold) / (1 - hold) * Math.PI)) * 0.006 * sz;
     const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise + 0.16 * kw + 0.07 * pr;
     B.wingL.rotation.set(0, 0, f + s.sit * 0.05); B.wingR.rotation.set(0, 0, -f - s.sit * 0.05);

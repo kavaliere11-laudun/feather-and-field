@@ -240,19 +240,28 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 
 ## Egg laying (21 Oct 18:23, Audrey: "Perfect! Carry on. The chickens should lay in their little house. We should see them setting in the nest for the duration of the laying. And of course when they are done, they are happy, they sing and parade a little, depending on their personalities")
 
-- The nest box (`stylized/coops.py` nest_box(style), added to every house by `export_coops.py`): a low box against the
-  house's +x side (Blender x 0.72..1.12, y -0.5..-0.04, floor 0.08), front flush with the house front, a lip to step over,
-  straw, sides sloping down to the front, the lid hinged at the back and propped open (so the camera sees the hen and the
-  eggs), in each house's colours (`NEST_STYLE`: walls, trim, lid like the roof). The straw nest in the yard is gone (its
-  obstacle is dropped on load).
-- `src/main.js`: `NEST` (seat, into, lip, door points in the pen frame; the box for taps); eggs per coop in an
-  InstancedMesh of 6 slots on the straw, coloured per breed (`EGG_COLOUR`), the newest popping in; two to start with.
-  Tapping the nest box collects them ("Collected 3 eggs"; "Ivy is laying…" while a hen sits; "No eggs yet").
+- 21 Oct evening, Audrey: "I had in mind the nest to be inside of the little house / coop not on the side" and "The coop
+  can have little windows opened on the nests". The side nest box of 18:23 is gone: each house has its nest inside, behind
+  a little open window in its front wall, to the right of the people door.
+- The nest (`stylized/coops.py` `nest_window()`, called by each house builder): hidden cube cutters (boolean DIFFERENCE,
+  skipped by the exporter) open the window (`WIN_W` 0.26 x `WIN_H` 0.3) and a cubby behind it in the house's walls and
+  plinth; a lining (floor, back, ceiling, sides), a straw mound with loose straws, and a frame (top, sides, sill) in the
+  house's trim colour. Doors, posts, lanterns and pots moved to make room (the people door is a little to the left on
+  most houses). The Red Barn's boards are cut round the window (`coop.py` `wall_boards(win=)`); its old side box is only
+  built without a window. Nest floors sit low enough for the window to show under the roof overhangs (thatched 0.08,
+  pagoda 0.06, lodge 0.2, Red Barn and stone on the house floor).
+- `coops.json` `nests` (per house, glTF axes): `floor` (the nest's), `house` (the house floor), `win` [x, bottom, top,
+  width], `seat` [x, z], `inside` [x, z], `pop` [x, z] (the little door at the top of the ramp), `foot` [x, z].
+- `src/main.js`: `nestOf(plot)` reads them; eggs per coop in an InstancedMesh of 6 slots (`NEST_SLOTS`) on the straw
+  behind the seat, coloured per breed (`EGG_COLOUR`), the newest popping in; two to start with. Tapping the nest window
+  collects them ("Collected 3 eggs"; "Ivy is laying…" while a hen sits; "No eggs yet"); the label stands over the window.
 - Each coop hen has a personality (the game's five: `PERS_IDS`, spread across each pen) shown in her label, and `layIn`
   (first lay 6-76 s after loading, then every 4-8 minutes; one hen in the nest box at a time).
-- `startLaying(sit)` / `layStep(dt)`: go to the door, up to the lip facing in, hop in (carried forward over the lip, up to
-  the floor), turn round and shuffle onto the seat, settle with a wriggle, sit 30-45 s with a shuffle now and then (legs
-  folded away), rise (the egg appears), hop out to the lip, sing. The song (`SONG`: seconds and loudness per personality):
+- `startLaying(sit)` / `layStep(dt)` (phases go, in, turn, settle, sit, rise, out, sing): across the yard to the foot of
+  the ramp, up it and in at the little door (ducking), along inside to the nest (`walkPath`: scripted points with heights),
+  turn to face out of the window and settle low on the straw (`brood` pose: body and head lowered so her face shows at the
+  window), sit 30-45 s with a shuffle now and then (legs folded away), rise (the egg appears in the straw), back the way
+  she came, down the ramp, sing in the yard. About 8 s each way inside, where she is hidden. The song (`SONG`: seconds and loudness per personality):
   "buk buk buk buk ba-KAWK" cycles of 1.5 s, the head darting forward on each buk and thrown up for the KAWK, standing tall,
   with quaver notes rising over her head (`spawnNote`, sprites, bigger for the KAWK). The rooster joins in with a crow
   about half the time (`answerIn`). Laying hens are skipped by `separate()` while in the box and aren't disturbed by taps.
@@ -263,10 +272,12 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - Routes (`route`, `nextLeg()`, `plan()`): points are moved to the nearest free spot, legs blocked by the feeder, water or
   hay get a detour point or are left out, a parading hen steps round anything in the way and never waits long, and a leg
   times out after 8 s.
-- Pose (`src/birds.js`): `sing`, `cluck`, `kawk`, `proud` inputs.
+- Pose (`src/birds.js`): `sing`, `cluck`, `kawk`, `proud`, `brood` inputs.
 - Tests: `layclip.mjs PLOT PERS SIT frames fps size out [dx dz]` (frames of one hen laying, with the phase of each frame in
   out_phases.json; `VW`/`VH`, `COOPS`), `laytrace.mjs PLOT PERS SIT seconds` (her position and state every half second);
-  the page has `__farm.layNow(i, sit)`, `layAs(i, pers, sit)`, `noLaying()`. Ten simulated minutes: 3-8 eggs per coop.
+  the page has `__farm.layNow(i, sit)`, `layAs(i, pers, sit)`, `noLaying()`, `nestOf`, `showEggs`. Ten simulated
+  minutes: 3-8 eggs per coop. `layclip.mjs` can centre on a raised point (`LX`, `LZ`, `LH` in the pen frame).
+  `nesttap.mjs` taps each coop's nest window and checks the eggs are collected.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

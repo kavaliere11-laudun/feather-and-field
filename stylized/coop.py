@@ -65,7 +65,8 @@ def plank(name, a, b, width, thick, normal, m, parent=None, jitter=0.6, bevel=0.
     return o
 
 
-def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True):
+def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
+    """window: (x0, x1, z0, z1), an opening left in the front boards (the nest window; coops.red_barn adds the rest)."""
     random.seed(seed); m = M()
     objs = []
     W2, D2 = 0.62, 0.44          # half width (x) and half depth (y) of the house
@@ -79,7 +80,7 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True):
         objs.append(plank('floor', (-W2 - 0.03, y, FL), (W2 + 0.03, y, FL), 0.13, 0.045, (0, 0, 1), m['wood']))
     # ---- walls: vertical boards in barn red
     BW = 0.105
-    def wall_boards(x0, x1, y, out, top, door=None):
+    def wall_boards(x0, x1, y, out, top, door=None, win=None):
         n = int(round((x1 - x0) / BW)); w = (x1 - x0) / n
         for i in range(n):
             x = x0 + (i + 0.5) * w
@@ -87,9 +88,20 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True):
             if door and door[0] < x < door[1]:
                 objs.append(plank('wall', (x, y, door[2]), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
                 continue
+            if win and x - w / 2 < win[1] and x + w / 2 > win[0]:     # a board the window cuts: full beside it, under and over it
+                xl, xr = x - w / 2, x + w / 2
+                pieces = []
+                if xl < win[0]: pieces.append((xl, win[0], FL + 0.02, z1))
+                if xr > win[1]: pieces.append((win[1], xr, FL + 0.02, z1))
+                a, b = max(xl, win[0]), min(xr, win[1])
+                pieces += [(a, b, FL + 0.02, win[2]), (a, b, win[3], z1)]
+                for (xa, xb, za, zb) in pieces:
+                    if xb - xa > 0.012 and zb - za > 0.01:
+                        objs.append(plank('wall', ((xa + xb) / 2, y, za), ((xa + xb) / 2, y, zb), (xb - xa) * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
+                continue
             objs.append(plank('wall', (x, y, FL + 0.02), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
     # front (-y) and back (+y): straight tops at the eave
-    wall_boards(-W2, W2, -D2, -1, lambda x: EAVE, door=(-0.42, -0.2, FL + 0.27))
+    wall_boards(-W2, W2, -D2, -1, lambda x: EAVE, door=(-0.42, -0.2, FL + 0.27), win=window)
     wall_boards(-W2, W2, D2, 1, lambda x: EAVE)
     # gable ends (+x and -x): boards follow the roof slope
     def gable(xw, out):
@@ -107,7 +119,7 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True):
         objs.append(plank('etrim', (-W2 - 0.05, sy * (D2 + 0.035), EAVE - 0.03), (W2 + 0.05, sy * (D2 + 0.035), EAVE - 0.03), 0.06, 0.025, (0, sy, 0), m['white']))
         objs.append(plank('btrim', (-W2 - 0.05, sy * (D2 + 0.035), FL + 0.04), (W2 + 0.05, sy * (D2 + 0.035), FL + 0.04), 0.06, 0.025, (0, sy, 0), m['white']))
     # ---- big barn door on the front, white frame with the X brace
-    dx0, dx1, dz0, dz1 = 0.0, 0.42, FL + 0.06, EAVE - 0.1
+    dx0, dx1, dz0, dz1 = (-0.13, 0.29, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
     yd = -D2 - 0.03
     for i in range(4):
         x = dx0 + (i + 0.5) * (dx1 - dx0) / 4
@@ -159,14 +171,15 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True):
     objs.append(cyl('pane', 0.098, 0.01, (wx - 0.008, 0, wz), (0, math.radians(90), 0), m['glass'], verts=32, bevel=0.0))
     objs.append(box('mull1', (0.012, 0.2, 0.016), (wx + 0.004, 0, wz), m=m['white'], bevel=0.003))
     objs.append(box('mull2', (0.012, 0.016, 0.2), (wx + 0.004, 0, wz), m=m['white'], bevel=0.003))
-    # ---- nest box on the +x side, with a sloping lid
+    # ---- nest box on the +x side, with a sloping lid (not when the nests are inside, behind the window)
     nx = W2 + 0.03
-    objs.append(box('nest', (0.26, 0.5, 0.24), (nx + 0.13, 0.0, FL + 0.2), m=m['red'], bevel=0.012))
-    lid = box('lid', (0.32, 0.58, 0.035), (nx + 0.15, 0.0, FL + 0.345), (0, math.radians(18), 0), m=m['roof'], bevel=0.01); objs.append(lid)
-    for yy in (-0.255, 0.255):
-        objs.append(box('ntrim', (0.27, 0.03, 0.035), (nx + 0.13, yy, FL + 0.095), m=m['white'], bevel=0.006))
-        objs.append(box('ntrim', (0.035, 0.03, 0.24), (nx + 0.245, yy, FL + 0.2), m=m['white'], bevel=0.006))
-    objs.append(box('nprop', (0.04, 0.04, 0.2), (nx + 0.2, 0, FL - 0.06), (0, math.radians(30), 0), m=m['darkwood'], bevel=0.008))
+    if not window:
+        objs.append(box('nest', (0.26, 0.5, 0.24), (nx + 0.13, 0.0, FL + 0.2), m=m['red'], bevel=0.012))
+        lid = box('lid', (0.32, 0.58, 0.035), (nx + 0.15, 0.0, FL + 0.345), (0, math.radians(18), 0), m=m['roof'], bevel=0.01); objs.append(lid)
+        for yy in (-0.255, 0.255):
+            objs.append(box('ntrim', (0.27, 0.03, 0.035), (nx + 0.13, yy, FL + 0.095), m=m['white'], bevel=0.006))
+            objs.append(box('ntrim', (0.035, 0.03, 0.24), (nx + 0.245, yy, FL + 0.2), m=m['white'], bevel=0.006))
+        objs.append(box('nprop', (0.04, 0.04, 0.2), (nx + 0.2, 0, FL - 0.06), (0, math.radians(30), 0), m=m['darkwood'], bevel=0.008))
     # ---- straw peeking out of the pop door and under the house
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.03), 0.09, 25, 0.0)
     root = empty('coop', loc, (0, 0, yaw))

@@ -1,6 +1,6 @@
 """Export the coops for the browser (coops.glb + coops.json): the five houses (house_rir .. house_bra), the shared pen
 (pen_base: yard, feeder, water, hay, sack; fence: posts and rails; fence_dx: the Deluxe pickets, rose arch, flowers and
-bunting) and the Deluxe weathervane (vane). coops.json gives each house's roof top, where the vane stands.
+bunting) and the Deluxe weathervane (vane). coops.json gives each house's roof top, where the vane stands, and its nest (window, seat, the way in, the ramp).
 Usage: python export_coops.py [out_dir]"""
 import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,9 +28,7 @@ def top_of(name):
 
 def one(name, fn):
     fresh(); coops.reset_mats(); coop.PEN = dict(farm_layout.NEW['pen'])
-    r = fn()
-    if name.startswith('house_'): coops.nest_box(name[6:], r)          # every house gets its nest box, in its own colours
-    light(1, bevel_segments=1)
+    fn(); light(1, bevel_segments=1)
     for o in bpy.context.scene.objects:          # shingles: plain boxes (their bevels can't be seen from the game's camera)
         if o.name.startswith('sh'):
             for md in [m for m in o.modifiers if m.type == 'BEVEL']: o.modifiers.remove(md)
@@ -45,5 +43,5 @@ one('fence_dx', coops.deluxe_fence)
 one('vane', coops.weathervane)
 names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane']
 write_glb(os.path.join(OUT, 'coops.glb'), names)
-json.dump(dict(tops=TOPS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

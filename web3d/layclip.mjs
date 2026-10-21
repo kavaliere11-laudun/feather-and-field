@@ -8,14 +8,17 @@ const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m
 await p.goto('http://localhost:' + (process.env.PORT || 8770) + '/index.html?q=0&coops=' + (process.env.COOPS || 5));
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.addStyleTag({ content: '#hint, #readout, .top { display: none !important; }' });
-console.log(await p.evaluate(([i, pers, sit, s, dx, dz]) => {
+console.log(await p.evaluate(([i, pers, sit, s, dx, dz, process_env]) => {
   const f = window.__farm, pl = f.plots[i]; f.pause(true); f.freeze(true); f.noLaying();
   f.step(1 / 30, 30);
-  const w = new f.THREE.Vector3(0.75 + dx, 0, 0.62 + dz); pl.frame.localToWorld(w);
-  f.lookAt(w.x, w.z, s);
+  // centre on a point in the pen (LX, LH up, LZ), or the default spot moved by dx dz
+  const lx = process_env.LX !== undefined ? +process_env.LX : 0.75 + dx, lz = process_env.LZ !== undefined ? +process_env.LZ : 0.62 + dz, lh = +(process_env.LH || 0);
+  const w = new f.THREE.Vector3(lx, 0, lz); pl.frame.localToWorld(w);
+  const k = lh / Math.tan(42 * Math.PI / 180);          // a raised point shows where the ground further from the camera does
+  f.lookAt(w.x - Math.SQRT1_2 * k, w.z - Math.SQRT1_2 * k, s);
   const name = f.layAs(i, pers, sit); window.__henObj = pl.birds.find(b => b.laying);
   return name;
-}, [parseInt(plot), pers, parseFloat(sit), parseFloat(size), parseFloat(dx), parseFloat(dz)]));
+}, [parseInt(plot), pers, parseFloat(sit), parseFloat(size), parseFloat(dx), parseFloat(dz), { LX: process.env.LX, LZ: process.env.LZ, LH: process.env.LH }]));
 const per = Math.max(1, Math.round(30 / parseFloat(fps))), phases = [];
 for (let k = 0; k < parseInt(n); k++) {
   phases.push(await p.evaluate((per) => { const f = window.__farm; f.step(1 / 30, per); f.draw(); const h = window.__henObj; return h.laying ? h.laying.phase : (h.route ? 'parade' : (h.act ? h.act.type : 'free')); }, per));
