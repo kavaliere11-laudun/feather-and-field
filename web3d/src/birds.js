@@ -201,10 +201,11 @@ const FUR = {
          clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.5, locks: 0.12, face: 0.7, under: 0.35 },
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
-  hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
-  orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.15 },
+  // (thinner than before, and less extra fluff underneath, so the feathers show clearly and the birds look less bulky)
+  hen: { len: { [R.body]: 0.006, [R.wing]: 0.004, [R.crest]: 0.006, [R.legfeather]: 0.008 }, shells: 4, comb: 1, fine: 1.25, under: 0.5 },
+  orp: { len: { [R.body]: 0.011, [R.wing]: 0.006, [R.legfeather]: 0.01 }, shells: 5, comb: 0.8, fine: 1.15, under: 0.6 },
 };
-const FEATHER = { [R.body]: 2.6, [R.wing]: 2.0, [R.crest]: 1.2, [R.legfeather]: 1.2 };     // feather widths, cm (flight and tail feathers are modelled)
+const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
 
 function addFur(g, src, spec, headc) {
@@ -385,14 +386,31 @@ function birdMaterial() {
               if (dist < 1.0 && row < best) { best = row; t = dist; id = fh13(vec3(ce, 3.0)); lp = l; }
             }
           }
-          float across = lp.x, along = lp.y;
+          // the feathers lying over this one (rows further forward) each cast a soft shadow just past their rounded edge
+          float over = 9.0;
+          for (int k = -1; k <= 1; k++) {
+            float row = row0 + float(k), off = mod(row, 2.0) * 0.5, col0 = floor(pp.x - off);
+            if (row >= best) continue;
+            for (int c = 0; c <= 1; c++) {
+              vec2 ce = vec2(col0 + float(c) + off + 0.5, row * 0.5);
+              over = min(over, length((pp - ce) * vec2(1.0, 1.2) / 0.64));
+            }
+          }
+          float across = lp.x, along = lp.y, aa = max(fwidth(t), 0.02);
           float onTop = 1.0 - 0.6 * step(0.001, vFur);     // the fluff over the feathers carries the pattern more softly
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
           else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.2, -0.7, along));
-          float barbs = sin((abs(across) - along * 0.7) * 42.0);
+          // fine barbs slanting out from the quill (faded out where they'd be finer than a pixel)
+          float barbs = sin((abs(across) - along * 0.7) * 42.0) * (1.0 - smoothstep(0.05, 0.12, aa * 6.0));
           float quill = smoothstep(0.07, 0.0, abs(across)) * smoothstep(0.75, -0.3, along);
-          furShade *= (0.84 + 0.24 * (1.0 - t * t)) * mix(1.0, 0.74, smoothstep(0.8, 1.0, t)) * (0.94 + 0.12 * id) * (1.0 + 0.025 * barbs) * (1.0 + 0.08 * quill);
+          // each feather: lit across its rounded middle, a slightly lighter rim just inside its edge, a crisp dark edge line,
+          // and the shadow of the feathers lying over it, so every feather stands out from the next
+          float edge = smoothstep(1.0 - 2.5 * aa - 0.05, 1.0 - 0.5 * aa, t);
+          float rim = smoothstep(0.62, 0.86, t) * (1.0 - edge);
+          float shadow = 1.0 - smoothstep(1.0, 1.32, over);
+          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (1.0 + 0.1 * rim) * mix(1.0, 0.58, edge) * mix(1.0, 0.72, shadow)
+                    * (0.92 + 0.16 * id) * (1.0 + 0.05 * barbs) * (1.0 + 0.1 * quill);
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>

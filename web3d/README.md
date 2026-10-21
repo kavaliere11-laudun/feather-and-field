@@ -179,6 +179,17 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   with two ears a stalk). Each plant has a slight shade of its own. `setWheat(stage)`; `?wheat=` picks one; in the test
   page a tap on the field shows the next stage with a label. Tests: `fieldshot.mjs` (the four stages), `windclip.mjs`
   (frames of the wind).
+- Slimmer feathered breeds (21 Oct 13:49, Audrey after seeing them move: "the silkies are perfect but the other breeds are a
+  bit bulky. Can you improve the body shape and the feathers definition"):
+  - `stylized/breeds.py` feathered(): narrower, lower bodies (e.g. RIR body radii 1.42/0.8/0.84 x 0.12, was 1.45/0.92/0.9 x
+    0.125; similar for the others), smaller breast, a longer neck with the head higher (0.455 m, was 0.415), and the whole
+    body raised on longer legs (`lift`: 3.5-4.5 cm, added to the shank). Slightly larger wings.
+  - `src/birds.js`: feathers 20% larger (body 3.1 cm), each with a crisp anti-aliased edge line, a lighter rim just inside
+    it and the soft shadow of the feathers lying over it (a second pass over the neighbouring cells in front); barbs a
+    little stronger, faded out when finer than a pixel. The fuzz over the feathers is shorter (hens 6 mm in 4 shells,
+    Orpingtons 11 mm in 5) with less extra fluff underneath (`under` 0.5 / 0.6).
+  - Audrey also noted the pond's ducks, frogs and water are missing or still: they're step 3's pieces 3 (ducks and frogs,
+    moving water).
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

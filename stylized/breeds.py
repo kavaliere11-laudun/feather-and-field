@@ -13,13 +13,13 @@ PAINT = dict(keep=0, body=1, wing=2, prim=3, tail=4, crest=5, legfeather=6, down
 
 # shape and base colours per breed (the browser repaints plumage; these are what the file shows on its own)
 BREEDS = {
-    'rir': dict(scale=1.0, body=(1.45, 0.92, 0.9), r=0.125, comb=1.0, tail='fan', shank=0.11,
+    'rir': dict(scale=1.0, body=(1.42, 0.8, 0.84), r=0.12, comb=1.0, tail='fan', shank=0.11, lift=0.04,
                 legs='#efbd3c', beak='#e7b04a', eye='#e08a26', combc='#d8352b', plum='#8a3a1c', wing='#6e2814', tailc='#2e1710'),
-    'orp': dict(scale=1.06, body=(1.4, 1.06, 0.98), r=0.134, comb=0.8, tail='short', shank=0.085, thigh=1.3, cushion=True,
+    'orp': dict(scale=1.06, body=(1.38, 0.92, 0.92), r=0.128, comb=0.8, tail='short', shank=0.085, lift=0.035, thigh=1.15, cushion=True,
                 legs='#ecc6b2', beak='#e6c49a', eye='#d9842a', combc='#d8352b', plum='#e2a94e', wing='#cf9441', tailc='#c08236'),
-    'leg': dict(scale=0.95, body=(1.52, 0.85, 0.86), r=0.121, comb=0.75, crest=True, tail='fan', tail_up=10, shank=0.12,
+    'leg': dict(scale=0.95, body=(1.5, 0.76, 0.8), r=0.116, comb=0.75, crest=True, tail='fan', tail_up=10, shank=0.12, lift=0.045,
                 legs='#e9bd45', beak='#e3c07a', eye='#d9842a', combc='#d8352b', plum='#bdb6a6', wing='#9c968a', tailc='#d8d2c2'),
-    'bra': dict(scale=1.13, body=(1.36, 1.0, 1.04), r=0.13, comb=0.5, pea=True, tail='short', shank=0.1, feathered=True, thigh=1.2,
+    'bra': dict(scale=1.13, body=(1.34, 0.88, 0.98), r=0.125, comb=0.5, pea=True, tail='short', shank=0.1, lift=0.035, feathered=True, thigh=1.1,
                 legs='#efc24a', beak='#e9c46a', eye='#d9842a', combc='#d8352b', plum='#f1ede3', wing='#ece7dc', tailc='#1d1b1a'),
     'sil': dict(scale=0.86, silkie=True, shank=0.08,
                 legs='#5c5868', beak='#757688', eye='#2c2222', combc='#4b2032', lobe='#3fa6b8', plum='#f4f1ea', wing='#ece8df', tailc='#f4f1ea'),
@@ -121,22 +121,23 @@ def feathered(B, rooster, root, body_rig, seed):
     cm = flat('comb', B['combc'], 0.45); bk = flat('beak', B['beak'], 0.4); lg = flat('legs', B['legs'], 0.45)
     ey = flat('eye', B['eye'], 0.15); pu = flat('pupil', '#0b0a09', 0.05)
     bx, by, bz = B['body']; R = B['r']
-    head = Vector((0.15, 0, 0.415)); neck = (head + Vector((0.075, 0, 0.27))) / 2
+    head = Vector((0.16, 0, 0.455)); neck = (head + Vector((0.08, 0, 0.28))) / 2      # the head held up on a clear neck
     th = B.get('thigh', 1.0)
     E = [
         ('ELLIPSOID', (-0.02, 0, 0.215), R * K, (bx, by, bz), 2.0),                     # body
-        ('BALL', (0.085, 0, 0.2), (R * 0.74) * K, None, 2.0),                           # full breast
+        ('BALL', (0.085, 0, 0.205), (R * 0.7) * K, None, 2.0),                          # full breast
         ('ELLIPSOID', (-0.12, 0, 0.27), R * 0.64 * K, (1.2, by * 1.08, 0.95), 2.0),     # back rising to the tail
         ('ELLIPSOID', (-0.19, 0, 0.33), 0.05 * K, (0.85, 0.9, 1.45), 2.0),              # tail cushion
-        ('ELLIPSOID', tuple(neck), 0.044 * K, (1.0, 0.95, 1.55), 2.0),                  # neck
+        ('ELLIPSOID', tuple(neck), 0.042 * K, (1.0, 0.9, 1.9), 2.0),                    # neck
         ('BALL', tuple(head), 0.058 * K, None, 2.0),                                    # head
         ('BALL', (0.0, 0.055, 0.12), 0.05 * th * K, None, 1.6), ('BALL', (0.0, -0.055, 0.12), 0.05 * th * K, None, 1.6),   # thighs
     ]
     if B.get('cushion'): E.append(('ELLIPSOID', (-0.13, 0, 0.17), 0.085 * K, (1.1, by * 1.1, 0.9), 2.0))     # an Orpington's fluffy rear
     if rooster: E.append(('ELLIPSOID', tuple(neck + Vector((-0.02, 0, -0.02))), 0.065 * K, (1.1, 1.05, 1.3), 2.0))   # hackle ruff
     tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
+    body_rig.location.z = B.get('lift', 0.0)          # the whole body held higher, on longer legs (bigger birds looked bulky)
     pivot('body', (0.0, 0, 0.17), body_rig)
-    pivot('head', (0.085, 0, 0.29), body_rig)
+    pivot('head', (0.085, 0, 0.3), body_rig)
     pivot('headc', tuple(head), body_rig)
     # head details (all ride on the head bone)
     hd = empty('head', tuple(head), (0, math.radians(-10), 0), body_rig)
@@ -162,7 +163,7 @@ def feathered(B, rooster, root, body_rig, seed):
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
         w = empty('wing', (0.0, sd * 0.093 * by / 0.92, 0.24), (math.radians(sd * -6), math.radians(-12), math.radians(sd * -4)), body_rig)
         pivot(nm, (-0.01, sd * 0.088 * by / 0.92, 0.285), body_rig)
-        tag(sphere('wingbase', 0.1, (0, 0, 0), (1.05, 0.2, 0.5), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
+        tag(sphere('wingbase', 0.105, (0, 0, 0), (1.1, 0.22, 0.52), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
         for k in range(4):
             e = math.radians(-8 - k * 5)
             tag(paddle('prim', 0.1 - k * 0.008, 0.032, 0.01, wg, w, (-0.05, sd * (0.008 - k * 0.002), -0.012 - k * 0.011),
@@ -201,7 +202,7 @@ def feathered(B, rooster, root, body_rig, seed):
                 feather('saddleh', sad, body_rig, start, -6 - 10 * f, 22, 0.11 - 0.015 * f, 0.016, sd, spread=0.012, twist=78, seg=6 if not LO else 3,
                         part='body', paint='saddle', pointed=True)
     # legs and feet (their own bones: they stay planted while the body tilts)
-    sh = B['shank']
+    sh = B['shank'] + B.get('lift', 0.0)
     for sd, nm in ((1, 'legL'), (-1, 'legR')):
         lg_ = empty('leg', (0.01, sd * 0.055, 0), (0, 0, 0), root)
         pivot(nm, (0.01, sd * 0.055, sh), root)
