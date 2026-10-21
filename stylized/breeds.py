@@ -57,11 +57,31 @@ def ribbon(name, pts, widths, wdirs, m, parent, thick=0.0028):
     for i in range(len(rows) - 1):
         bm.faces.new((rows[i][0], rows[i][1], rows[i + 1][1], rows[i + 1][0]))
     bm.to_mesh(me); bm.free()
+    # feather coordinates for the browser's detail (quill, barbs, edges): u across (0.05 one edge .. 0.95 the other), v along
+    # (0 at the root, 1 at the tip). Rows were made left then right, one row per point
+    uv = me.uv_layers.new(name='feat'); n = len(pts)
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            uv.data[li].uv = (0.05 if vi % 2 == 0 else 0.95, (vi // 2) / max(1, n - 1))
     o = link(bpy.data.objects.new(name, me)); setmat(o, m)
     so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = thick; so.offset = 0; so.use_rim = False      # two faces, no edges
     for p_ in o.data.polygons: p_.use_smooth = True
     o.parent = parent
     return keep(o)
+
+
+def feat_uv(o, length, width):
+    """Feather coordinates (as ribbon()) for a paddle feather from hen.paddle: x runs root to tip, z across."""
+    me = o.data; uv = me.uv_layers.new(name='feat')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            co = me.vertices[me.loops[li].vertex_index].co
+            x = max(0.0, min(1.0, co.x / length))
+            taper = 0.55 + 0.45 * math.sin(x * math.pi * 0.85)
+            a = max(-1.0, min(1.0, co.z / (width * taper / 2)))
+            uv.data[li].uv = (0.5 + 0.45 * a, x)
+    return o
 
 
 def feather(name, m, parent, start, a0, turn, L, w0, side, spread=0.0, twist=25.0, seg=10, droop=0.0, part='tail', paint='tail', pointed=False):
@@ -158,7 +178,7 @@ def feathered(B, rooster, root, body_rig, seed):
     if B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
         for i in range(5):
             a = math.radians(-50 + 25 * i)
-            tag(paddle('crest', 0.06, 0.022, 0.008, pl, hd, (-0.03, 0.012 * math.sin(a), 0.035), (math.radians(20 * math.sin(a)), math.radians(-150), 0), curve=0.15), 'head', 'crest')
+            tag(feat_uv(paddle('crest', 0.06, 0.022, 0.008, pl, hd, (-0.03, 0.012 * math.sin(a), 0.035), (math.radians(20 * math.sin(a)), math.radians(-150), 0), curve=0.15), 0.06, 0.022), 'head', 'crest')
     # wings: soft folded shapes with feather tips at the back
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
         w = empty('wing', (0.0, sd * 0.093 * by / 0.92, 0.24), (math.radians(sd * -6), math.radians(-12), math.radians(sd * -4)), body_rig)
@@ -166,8 +186,8 @@ def feathered(B, rooster, root, body_rig, seed):
         tag(sphere('wingbase', 0.105, (0, 0, 0), (1.1, 0.22, 0.52), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
         for k in range(4):
             e = math.radians(-8 - k * 5)
-            tag(paddle('prim', 0.1 - k * 0.008, 0.032, 0.01, wg, w, (-0.05, sd * (0.008 - k * 0.002), -0.012 - k * 0.011),
-                       (0, e - math.pi, math.radians(sd * (4 + k * 2))), curve=-sd * 0.12), nm, 'prim')
+            tag(feat_uv(paddle('prim', 0.1 - k * 0.008, 0.032, 0.01, wg, w, (-0.05, sd * (0.008 - k * 0.002), -0.012 - k * 0.011),
+                       (0, e - math.pi, math.radians(sd * (4 + k * 2))), curve=-sd * 0.12), 0.1 - k * 0.008, 0.032), nm, 'prim')
     # tail: curved feathers. A rooster's is majestic: long arching sickles over layers of lesser sickles, the main tail
     # feathers and short coverts, with saddle hackles draping down his back
     tb = empty('tail', (-0.2, 0, 0.33), (0, 0, 0), body_rig)

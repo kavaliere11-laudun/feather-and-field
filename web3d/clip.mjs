@@ -6,8 +6,9 @@ const [what = 'hop', n = '12', fps = '15', size = '1.0', dx = '0', dz = '0', out
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 600, height: 420 }, deviceScaleFactor: 1.5 });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto('http://localhost:8770/index.html?lineup&q=0');
+await p.goto('http://localhost:' + (process.env.PORT || 8770) + '/index.html?lineup&q=0');
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
+if (process.env.CLEAN) await p.addStyleTag({ content: '#hint, #readout, .top, nav, header { display: none !important; }' });
 await p.evaluate(([what, size, dx, dz, turn]) => {
   const f = window.__farm; f.pause(true); f.freeze(true);
   const c = f.view.target.clone(); f.lookAt(c.x + dx, c.z + dz, size);

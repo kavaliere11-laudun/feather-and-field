@@ -54,7 +54,7 @@ def bake_bird(name, root, budget, small_cut=60, floor=0.06):
             me2 = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
             bpy.data.objects.remove(tmp); me2.calc_loop_triangles(); rec[1] = me2; rec[2] = len(me2.loop_triangles)
     H = piv['headc']; NB = piv['head']; nd = (H - NB).normalized(); reach = (H - NB).length
-    P_, N_, C_, J_, W_, A_ = [], [], [], [], [], []
+    P_, N_, C_, J_, W_, A_, F_ = [], [], [], [], [], [], []
     for o, me, n in meshes:
         part = o.get('part', 'body'); paint = int(o.get('paint', 0))
         j = JOINTS.index(part)
@@ -82,17 +82,23 @@ def bake_bird(name, root, budget, small_cut=60, floor=0.06):
             jt[:, 0] = JOINTS.index('body'); jt[:, 1] = JOINTS.index('head'); wt[:, 0] = 1 - w; wt[:, 1] = w
         else:
             jt[:, 0] = j; wt[:, 0] = 1
-        P_.append(p); N_.append(nrm); C_.append(c); J_.append(jt); W_.append(wt); A_.append(np.full(len(p), paint, np.float32))
-    p = np.concatenate(P_); n = np.concatenate(N_); c = np.concatenate(C_); jt = np.concatenate(J_); wt = np.concatenate(W_); pa = np.concatenate(A_)
+        # feather coordinates (tail and flight feathers, crest: across, along), 0 elsewhere
+        fuv = np.zeros((len(p), 2), np.float32)
+        if 'feat' in me.uv_layers:
+            lu = np.zeros(len(me.loops) * 2, np.float32); me.uv_layers['feat'].data.foreach_get('uv', lu)
+            fuv = lu.reshape(-1, 2)[corners].astype(np.float32)
+        P_.append(p); N_.append(nrm); C_.append(c); J_.append(jt); W_.append(wt); A_.append(np.full(len(p), paint, np.float32)); F_.append(fuv)
+    p = np.concatenate(P_); n = np.concatenate(N_); c = np.concatenate(C_); jt = np.concatenate(J_); wt = np.concatenate(W_); pa = np.concatenate(A_); fu = np.concatenate(F_)
     P = np.stack([p[:, 0], p[:, 2], -p[:, 1]], 1); N = np.stack([n[:, 0], n[:, 2], -n[:, 1]], 1)
     C = np.clip(np.round(np.clip(c, 0, 1) * 255), 0, 255).astype(np.uint8)
     W8 = np.round(wt * 255).astype(np.int32); W8[:, 0] += 255 - W8.sum(1)          # weights add up to exactly 1
-    key = np.concatenate([np.round(P * 1e4), np.round(N * 1e3), C.astype(np.float32), jt, W8.astype(np.float32), pa[:, None]], 1)
+    key = np.concatenate([np.round(P * 1e4), np.round(N * 1e3), C.astype(np.float32), jt, W8.astype(np.float32), pa[:, None], np.round(fu * 1e3)], 1)
     uniq, inv = np.unique(key, axis=0, return_inverse=True); inv = inv.reshape(-1)
     first = np.zeros(len(uniq), dtype=np.int64); first[inv[::-1]] = np.arange(len(inv))[::-1]
     MODELS[name] = [dict(bucket='satin', pos=P[first].astype(np.float32), nrm=N[first].astype(np.float32),
                          col=np.concatenate([C[first], np.full((len(first), 1), 255, np.uint8)], 1), idx=inv.astype(np.uint32),
-                         joints=jt[first].astype(np.uint8), weights=W8[first].astype(np.uint8), paint=pa[first].astype(np.uint8))]
+                         joints=jt[first].astype(np.uint8), weights=W8[first].astype(np.uint8), paint=pa[first].astype(np.uint8),
+                         feat=np.round(np.clip(fu[first], 0, 1) * 255).astype(np.uint8))]
     STATS[name] = dict(tris=len(inv) // 3, verts=len(first))
     print('BAKED', name, STATS[name], 'ratio', round(ratio, 3))
 
@@ -114,7 +120,8 @@ def write_bird_glb(path, names):
                   COLOR_0=acc(col.tobytes(), 5121, len(col), 'VEC4', normalized=True),
                   JOINTS_0=acc(pr['joints'].tobytes(), 5121, len(pos), 'VEC4'),
                   WEIGHTS_0=acc(pr['weights'].tobytes(), 5121, len(pos), 'VEC4', normalized=True),
-                  _PAINT=acc(pr['paint'].tobytes(), 5121, len(pos), 'SCALAR'))
+                  _PAINT=acc(pr['paint'].tobytes(), 5121, len(pos), 'SCALAR'),
+                  _FEAT=acc(pr['feat'].tobytes(), 5121, len(pos), 'VEC2', normalized=True))
         ib = idx.astype(np.uint16)
         a_idx = acc(ib.tobytes(), 5123, len(ib), 'SCALAR', target=34963)
         meshes.append(dict(name=name, primitives=[dict(attributes=at, indices=a_idx, material=0)])); nodes.append(dict(name=name, mesh=len(meshes) - 1))

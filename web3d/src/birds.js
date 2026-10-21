@@ -184,6 +184,16 @@ export function paintedGeometry(model, breed, colour) {
   }
   g.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); g.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
   g.setAttribute('featherPattern', new THREE.BufferAttribute(fpat, 4)); g.setAttribute('featherMode', new THREE.BufferAttribute(fmode, 1));
+  // featherUV: across and along each modelled feather (tail, sickles, flight feathers, crest; 0 elsewhere), and for the folded
+  // wing how far back along it (0.02 at the shoulder .. 1 at the back, 0 off the wing), for its rows of feathers
+  const fuv = new Float32Array(n * 3), F = src.attributes._feat;
+  if (F) for (let i = 0; i < n; i++) { fuv[i * 3] = F.getX(i); fuv[i * 3 + 1] = F.getY(i); }
+  if (!chick && breed !== 'sil' && paint) {
+    let z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < n; i++) if (paint.array[i] === R.wing) { z0 = Math.min(z0, pos[i * 3 + 2]); z1 = Math.max(z1, pos[i * 3 + 2]); }
+    for (let i = 0; i < n; i++) if (paint.array[i] === R.wing) fuv[i * 3 + 2] = 0.02 + 0.98 * (z1 - pos[i * 3 + 2]) / Math.max(1e-4, z1 - z0);
+  }
+  g.setAttribute('featherUV', new THREE.BufferAttribute(fuv, 3));
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
   const fur = furOf(model, breed);
@@ -232,12 +242,13 @@ function addFur(g, src, spec, headc) {
   const style = new Float32Array(total * 4);
   for (let i = 0; i < total; i++) { style[i * 4] = spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
-  const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array;
-  const fp = new Float32Array(total * 4), fm = new Float32Array(total);
+  const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array, FU = A('featherUV').array;
+  const fp = new Float32Array(total * 4), fm = new Float32Array(total), fu = new Float32Array(total * 3);
   const copy = (dst, from) => {
     pos.set(P.subarray(from * 3, from * 3 + 3), dst * 3); nrm.set(N.subarray(from * 3, from * 3 + 3), dst * 3); col.set(Cc.subarray(from * 3, from * 3 + 3), dst * 3);
     si.set(SI.subarray(from * 4, from * 4 + 4), dst * 4); sw.set(SW.subarray(from * 4, from * 4 + 4), dst * 4); furLen[dst] = len[from];
     fs[dst] = FS[from]; fh[dst] = FH[from]; fp.set(FP.subarray(from * 4, from * 4 + 4), dst * 4); fm[dst] = FM[from];
+    fu.set(FU.subarray(from * 3, from * 3 + 3), dst * 3);
   };
   for (let i = 0; i < n; i++) copy(i, i);
   for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
@@ -254,6 +265,7 @@ function addFur(g, src, spec, headc) {
   f.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); f.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
   f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 4));
   f.setAttribute('featherPattern', new THREE.BufferAttribute(fp, 4)); f.setAttribute('featherMode', new THREE.BufferAttribute(fm, 1));
+  f.setAttribute('featherUV', new THREE.BufferAttribute(fu, 3));
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
   f.userData.fur = { base: idx.length, shell: furTris.length, shells: K, droop: spec.droop };
@@ -294,12 +306,12 @@ function birdMaterial() {
   m.onBeforeCompile = sh => {
     sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex; sh.uniforms.furSpan = furLook.span;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
+      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
         // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
         // length, so the far birds keep their fluffy outline
         float fT = furStyle.w < 0.0 ? min(1.0, furT * furSpan) : furT;
-        vFur = fT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
+        vFUV = featherUV; vFur = fT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
         if (fT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
           transformed += nn * fT * furLen * (1.0 - 0.55 * furComb) + normalize(back) * fT * fT * furLen * 1.4 * furComb;
@@ -309,7 +321,14 @@ function birdMaterial() {
       .replace('#include <common>', `#include <common>
         uniform float furDensity; uniform float furCut; varying float vFur; varying float vFurLen; varying vec3 vRest; varying float vFeather; varying float vHead; varying float vComb; varying vec4 vStyle; varying vec3 vRestN; uniform sampler2D hairTex; varying vec4 vPat; varying float vMode;
         float fh13(vec3 p) { p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
-        vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }`)
+        vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
+        varying vec3 vFUV;
+        // a feather's local coordinates from its centre in the lattice: x across, y along (its tip, the part that shows, at +y);
+        // stretch < 1 makes it long for its width, point narrows it towards the tip
+        vec2 featherLocal(vec2 pp, vec2 ce, float stretch, float point) {
+          vec2 l = (pp - ce) * vec2(1.0, 1.2 * stretch) / 0.64;
+          return vec2(l.x * (1.0 + point * max(l.y, 0.0)), l.y);
+        }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float furShade = 1.0;
         if (vStyle.w != 0.0) {
@@ -355,6 +374,9 @@ function birdMaterial() {
           float h = fh13(cell + 7.0), strand = mix(0.5 + 0.5 * h, 0.4 + 0.6 * h, step(0.001, vStyle.x));
           if (tt > 0.0) {
             if (tt > strand) discard;
+            // the short fuzz over the feathered breeds shows only round the outline (across the middle it made a grainy speckle
+            // over the feathers)
+            if (vStyle.x < 0.001 && vFeather > 0.0 && abs(dot(normalize(vNormal), normalize(vViewPosition))) > 0.5) discard;
             vec3 c = 0.3 + 0.4 * fh33(cell);
             float rad = mix(0.52, 0.58, step(0.001, vStyle.x)) * (1.0 - mix(0.82, 0.55, step(0.001, vStyle.x)) * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
             float cov = 1.0 - smoothstep(rad - fw, rad + fw, d);
@@ -370,47 +392,76 @@ function birdMaterial() {
           furShade *= mix(1.0, mix(1.06, 0.84, smoothstep(0.18, 0.62, lock)), vStyle.x);
         }
         if (vFeather > 0.0) {
-          // overlapping feathers like roof tiles, in rows running back along the body (long hackle feathers down the neck): the
-          // front feather lies on top, so each shows its rounded back edge, with its quill, fine barbs and its own pattern
-          float size = vFeather * mix(1.0, 0.42, vHead) * 0.017, neck = smoothstep(0.15, 0.45, vHead);
+          // overlapping feathers like roof tiles, in rows running back along the body: the front feather lies on top, so each
+          // shows its tip. Body feathers are rounded with a slight point; down the neck the hackles are long, narrow and
+          // pointed; the folded wing has small coverts over the shoulder and a band of long flight feathers behind
+          float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : smoothstep(0.15, 0.45, vHead);
+          float flight = wingT > 0.0 ? smoothstep(0.52, 0.56, wingT) : 0.0;
+          float size = vFeather * mix(1.0, 0.42, vHead) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
+          float stretch = mix(mix(1.0, 0.5, neck), 1.0, flight), point = mix(mix(0.15, 1.2, neck), 0.3, flight);
           vec2 pb = vec2(atan(vRest.x, vRest.y - 0.2) * 0.11, -vRest.z);
           vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y * 0.55);
           vec2 pp = mix(pb, pn, neck) / size;
-          float best = 1e9, t = 1.0, id = 0.0, row0 = floor(pp.y / 0.5); vec2 lp = vec2(0.0);
+          pp *= mix(vec2(1.0), vec2(0.62, 0.3), flight);          // flight feathers: wider apart and three times as long
+          float best = 1e9, id = 0.0, row0 = floor(pp.y / 0.5); vec2 lp = vec2(0.0, 1.0);
           for (int k = -1; k <= 1; k++) {
             float row = row0 + float(k), off = mod(row, 2.0) * 0.5, col0 = floor(pp.x - off);
             for (int c = 0; c <= 1; c++) {
               vec2 ce = vec2(col0 + float(c) + off + 0.5, row * 0.5);
-              vec2 l = (pp - ce) * vec2(1.0, 1.2) / 0.64;
-              float dist = length(l);
-              if (dist < 1.0 && row < best) { best = row; t = dist; id = fh13(vec3(ce, 3.0)); lp = l; }
+              vec2 l = featherLocal(pp, ce, stretch, point);
+              if (length(l) < 1.0 && row < best) { best = row; id = fh13(vec3(ce, 3.0)); lp = l; }
             }
           }
-          // the feathers lying over this one (rows further forward) each cast a soft shadow just past their rounded edge
+          // the feathers lying over this one (rows further forward) each cast a soft shadow just past their edge
           float over = 9.0;
           for (int k = -1; k <= 1; k++) {
             float row = row0 + float(k), off = mod(row, 2.0) * 0.5, col0 = floor(pp.x - off);
             if (row >= best) continue;
-            for (int c = 0; c <= 1; c++) {
-              vec2 ce = vec2(col0 + float(c) + off + 0.5, row * 0.5);
-              over = min(over, length((pp - ce) * vec2(1.0, 1.2) / 0.64));
-            }
+            for (int c = 0; c <= 1; c++) over = min(over, length(featherLocal(pp, vec2(col0 + float(c) + off + 0.5, row * 0.5), stretch, point)));
           }
-          float across = lp.x, along = lp.y, aa = max(fwidth(t), 0.02);
+          float across = lp.x, along = lp.y;
+          // a softly ragged edge, where the barbs end
+          float t = length(lp) + 0.025 * sin(atan(lp.y, lp.x) * 19.0 + id * 40.0) * smoothstep(0.6, 0.95, length(lp));
+          float aa = max(fwidth(t), 0.02);
           float onTop = 1.0 - 0.6 * step(0.001, vFur);     // the fluff over the feathers carries the pattern more softly
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
           else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.2, -0.7, along));
-          // fine barbs slanting out from the quill (faded out where they'd be finer than a pixel)
-          float barbs = sin((abs(across) - along * 0.7) * 42.0) * (1.0 - smoothstep(0.05, 0.12, aa * 6.0));
-          float quill = smoothstep(0.07, 0.0, abs(across)) * smoothstep(0.75, -0.3, along);
-          // each feather: lit across its rounded middle, a slightly lighter rim just inside its edge, a crisp dark edge line,
-          // and the shadow of the feathers lying over it, so every feather stands out from the next
+          // barbs: fine lines slanting from the quill towards the tip (faded out where they'd be finer than a pixel)
+          float ph = (along * 0.85 - abs(across)) * 30.0;
+          float barbs = sin(ph) * (1.0 - smoothstep(0.8, 1.9, fwidth(ph)));
+          // the quill: a thin pale shaft down the middle, fading before the tip
+          float qa = max(fwidth(across), 0.004);
+          float qw = max(0.05, 0.8 * qa);
+          float quill = (1.0 - smoothstep(qw, qw + 1.5 * qa, abs(across))) * smoothstep(0.85, 0.2, along) * smoothstep(-1.0, -0.6, along) * (0.05 / qw);
+          // here and there the vane parts: a thin dark gap between barbs on one side
+          float side = step(0.5, fract(id * 7.13)) * 2.0 - 1.0, sp = fract(ph / 6.2832 / 7.0 + id * 3.7);
+          float split = step(0.55, fract(id * 13.7)) * step(0.0, across * side) * smoothstep(0.3, 0.6, abs(across))
+                      * (1.0 - smoothstep(0.0, 0.06 + fwidth(sp), abs(sp - 0.5))) * (1.0 - smoothstep(0.6, 1.7, fwidth(ph)));
+          // each feather: lit across its rounded middle and lighter towards its tip, a light rim just inside its edge, a crisp
+          // dark edge line, and the shadow of the feathers lying over it, so every feather stands out from the next
           float edge = smoothstep(1.0 - 2.5 * aa - 0.05, 1.0 - 0.5 * aa, t);
           float rim = smoothstep(0.62, 0.86, t) * (1.0 - edge);
-          float shadow = 1.0 - smoothstep(1.0, 1.32, over);
-          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (1.0 + 0.1 * rim) * mix(1.0, 0.58, edge) * mix(1.0, 0.72, shadow)
-                    * (0.92 + 0.16 * id) * (1.0 + 0.05 * barbs) * (1.0 + 0.1 * quill);
+          float shadow = 1.0 - smoothstep(1.0, 1.5, over);
+          // (soft, not outlined: the shadow and the light tip make the overlap, the edge line is only a hint, else they read as scales)
+          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (0.9 + 0.16 * smoothstep(-0.3, 0.95, along)) * (1.0 + 0.1 * rim) * mix(1.0, 0.8, edge)
+                    * mix(1.0, 0.6, shadow * shadow) * (0.88 + 0.24 * id) * (1.0 + 0.08 * barbs) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
+          // where the coverts end, a soft shadow over the flight feathers
+          if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
+        }
+        if (vFUV.x > 0.01 && vFeather <= 0.0) {
+          // a modelled feather (tail, sickles, saddle hackles, flight feathers, crest): a pale quill down the middle, barbs
+          // slanting to the tip, darker towards its edges, a lighter edge line that parts it from the feather behind, and
+          // a gap in the vane here and there
+          float ac = (vFUV.x - 0.5) / 0.45, al = vFUV.y, qa = max(fwidth(ac), 0.01);
+          float quill = (1.0 - smoothstep(0.06, 0.06 + 1.5 * qa, abs(ac))) * smoothstep(0.97, 0.55, al);
+          float ph = (al * 48.0 - abs(ac) * 2.2) * 6.2832;
+          float bamp = 1.0 - smoothstep(0.7, 1.7, fwidth(ph));
+          float sp = abs(fract(al * 5.0 + floor(vRest.x * 400.0 + vRest.z * 300.0) * 0.37) - 0.5);
+          float split = step(0.0, ac) * smoothstep(0.35, 0.7, abs(ac)) * (1.0 - smoothstep(0.0, 0.02 + fwidth(al) * 5.0, sp)) * bamp;
+          float rimL = smoothstep(0.82, 0.95, abs(ac));
+          furShade *= (1.0 + 0.07 * sin(ph) * bamp) * mix(1.0, 0.82, smoothstep(0.4, 0.9, abs(ac))) * (0.92 + 0.12 * al) * (1.0 - 0.35 * split);
+          diffuseColor.rgb = mix(diffuseColor.rgb, min(diffuseColor.rgb * 1.5 + 0.07, vec3(1.0)), 0.6 * quill + 0.35 * rimL);
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>

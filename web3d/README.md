@@ -190,6 +190,21 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     Orpingtons 11 mm in 5) with less extra fluff underneath (`under` 0.5 / 0.6).
   - Audrey also noted the pond's ducks, frogs and water are missing or still: they're step 3's pieces 3 (ducks and frogs,
     moving water).
+- Feather detail (21 Oct 14:06, Audrey: "That's much better ! Can you give a bit more love to the details of the feathers"):
+  - Modelled feathers carry feather coordinates: `stylized/breeds.py` ribbon() writes a UV layer `feat` (u across 0.05..0.95,
+    v root to tip) and `feat_uv()` does the same for paddle feathers (wing primaries, Legbar crest); `export_birds.py` exports
+    it as `_FEAT` (normalised VEC2) and keeps vertices apart by it. The browser packs it with the folded wing's position
+    (0.02 at the shoulder .. 1 at the back, from each model's wing z-range) into one attribute, `featherUV` (vec3), so the bird
+    material stays at 14 vertex attributes.
+  - Body feathers (`featherLocal()`): rounder with a slight point (hackles long, narrow and pointed), soft rather than
+    outlined (edge line 0.8, the overlap shadow wider and stronger, the tip lighter), a pale quill, barbs (30 per feather
+    radius, faded below a pixel), a softly ragged edge, and on some feathers a split vane. The folded wing: coverts at
+    0.72 size over the front half, then a band of flight feathers 3x as long with a shadow where the coverts end.
+  - Modelled feathers: a pale quill, slanting barbs (48 along each), darker towards the edges with a light edge line, and
+    occasional gaps in the vane.
+  - The short fuzz over the feathered breeds is drawn only round the outline (facing < 0.5): across the body it made a
+    grainy speckle.
+  - `clip.mjs` takes `CLEAN=1` (hides the labels) and `PORT=` (e.g. an older build served on 8771, for before/after).
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
