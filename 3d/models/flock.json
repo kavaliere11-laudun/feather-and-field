@@ -1126,19 +1126,19 @@
   },
   "sil_h": {
    "tris": 2286,
-   "verts": 1207
+   "verts": 1205
   },
   "sil_h_lo": {
-   "tris": 986,
-   "verts": 557
+   "tris": 984,
+   "verts": 554
   },
   "sil_r": {
-   "tris": 2584,
-   "verts": 1350
+   "tris": 2582,
+   "verts": 1351
   },
   "sil_r_lo": {
-   "tris": 1286,
-   "verts": 701
+   "tris": 1290,
+   "verts": 705
   },
   "chick": {
    "tris": 984,
