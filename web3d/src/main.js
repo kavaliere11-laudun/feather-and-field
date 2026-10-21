@@ -318,11 +318,38 @@ function batch(name, matrices, opts = {}) {
   for (const list of tiles.values()) out.push(...batchOne(name, list, opts));
   return out;
 }
+// wind: plants bend with their height above the ground (squared, so stems stay rooted and tops move most), in gusts that roll
+// across the village, with a quicker flutter on top. One clock for everything (WIND.time)
+const WIND = { time: { value: 0 } };
+function addWind(mat, amp) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.windTime = WIND.time; sh.uniforms.windAmp = { value: amp };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float windTime;\nuniform float windAmp;')
+      .replace('#include <project_vertex>', `
+        vec4 wBase = vec4(0.0, 0.0, 0.0, 1.0), wPos = vec4(transformed, 1.0);
+        #ifdef USE_INSTANCING
+        wBase = instanceMatrix * wBase; wPos = instanceMatrix * wPos;
+        #endif
+        wBase = modelMatrix * wBase; wPos = modelMatrix * wPos;
+        float wH = max(wPos.y, 0.0);
+        // gusts: waves 3.5 m long rolling with the wind at about 1 m a second, now stronger, now calmer
+        float gust = (0.5 + 0.5 * sin(windTime * 1.6 - (wBase.x * 0.8 + wBase.z * 0.6) * 1.8)) * (0.65 + 0.35 * sin(windTime * 0.31 + wBase.x * 0.02));
+        float flutter = sin(windTime * 4.3 + wBase.x * 1.9 - wBase.z * 1.3 + wH * 2.0);
+        wPos.xz += vec2(0.8, 0.6) * windAmp * wH * wH * (gust + 0.22 * flutter);
+        vec4 mvPosition = viewMatrix * wPos;
+        gl_Position = projectionMatrix * mvPosition;`);
+  };
+  mat.customProgramCacheKey = () => 'wind' + amp;
+  mat.needsUpdate = true;
+  return mat;
+}
 function batchOne(name, matrices, opts) {
   const out = [];
   if (!matrices.length) return out;
   for (const m of meshesOf(parts[name])) {
-    const mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
+    let mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
+    if (opts.wind) mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind);      // its own copy: other models may share the material
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
     inst.userData.model = name;
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
@@ -350,28 +377,53 @@ function buildProps() {
   for (const mx of byModel.wheat_field || []) wheat(mx, 4.4, 2.4);
 }
 
-// ripe wheat standing on its field: golden stalks with an ear on each (the field's growing stages come later)
+// the wheat field in the game's four stages (as in the 2D game): bare ploughed soil, the first green shoots (a fifth of the
+// plants, short, the furrows still showing), growing tall and green, and ripe: golden stalks with ears. Everything sways
+// in the wind. ?wheat=soil|sprouts|growing|ripe picks one; tapping the field shows the next (in the test page)
+const WHEAT_STAGES = ['soil', 'sprouts', 'growing', 'ripe'];
+const WHEAT_NAMES = { soil: 'Ploughed, ready to sow', sprouts: 'The first green shoots', growing: 'Growing tall and green', ripe: 'Golden and ready' };
+const wheatField = { stage: WHEAT_STAGES.includes(params.get('wheat')) ? params.get('wheat') : 'ripe', parts: {}, inverse: null, half: [0, 0] };
 function wheat(fieldMatrix, w, d) {
-  const r = rng(31), stalks = [], ears = [];
-  for (let x = -w / 2 + 0.12; x < w / 2 - 0.1; x += 0.15) {
-    for (let y = -d / 2 + 0.12; y < d / 2 - 0.1; y += 0.15) {
-      const px = x + (r() - 0.5) * 0.06, pz = y + (r() - 0.5) * 0.06, h = 0.85 + r() * 0.3;
-      const local = new THREE.Matrix4().compose(new THREE.Vector3(px, 0.02, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28),
-        new THREE.Vector3(2.4, 7 * h, 2.4));
-      stalks.push(new THREE.Matrix4().multiplyMatrices(fieldMatrix, local));
-      for (let k = 0; k < 2; k++) {
-        const a = r() * 6.28, e = new THREE.Matrix4().compose(new THREE.Vector3(px + Math.cos(a) * 0.035, 0.02 + 0.36 * h, pz + Math.sin(a) * 0.035),
-          new THREE.Quaternion().setFromEuler(new THREE.Euler((r() - 0.5) * 0.5, 0, (r() - 0.5) * 0.5)), new THREE.Vector3(1, 1, 1));
-        ears.push(new THREE.Matrix4().multiplyMatrices(fieldMatrix, e));
-      }
-    }
+  const r = rng(31), spots = [];
+  for (let x = -w / 2 + 0.12; x < w / 2 - 0.1; x += 0.15)
+    for (let y = -d / 2 + 0.12; y < d / 2 - 0.1; y += 0.15)
+      spots.push({ x: x + (r() - 0.5) * 0.06, z: y + (r() - 0.5) * 0.06, h: 0.85 + r() * 0.3, turn: r() * 6.28, keep: r(), shade: 0.86 + r() * 0.22, ears: [0, 1].map(() => [r() * 6.28, r() - 0.5, r() - 0.5]) });
+  const Y = new THREE.Vector3(0, 1, 0), stalkGeo = meshesOf(parts.grass_tuft_1)[0].geometry;
+  const at = (m) => new THREE.Matrix4().multiplyMatrices(fieldMatrix, m);
+  function stalks(list, height, width, colour) {
+    const mesh = new THREE.InstancedMesh(stalkGeo, addWind(new THREE.MeshLambertMaterial({ color: colour, side: THREE.DoubleSide }), 0.3), list.length);
+    const c = new THREE.Color();
+    list.forEach((s, i) => {
+      mesh.setMatrixAt(i, at(new THREE.Matrix4().compose(new THREE.Vector3(s.x, 0.02, s.z), new THREE.Quaternion().setFromAxisAngle(Y, s.turn), new THREE.Vector3(width, 7 * s.h * height, width))));
+      mesh.setColorAt(i, c.setScalar(s.shade));
+    });
+    return mesh;
   }
-  const stalkGeo = meshesOf(parts.grass_tuft_1)[0].geometry;
-  const st = new THREE.InstancedMesh(stalkGeo, new THREE.MeshLambertMaterial({ color: '#d9b24e', side: THREE.DoubleSide }), stalks.length);
-  stalks.forEach((m, i) => st.setMatrixAt(i, m));
-  const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(0.016, 0.09, 4, 1), new THREE.MeshLambertMaterial({ color: '#e7bf55' }), ears.length);
+  // ploughed furrows along the field (bare and sprouting)
+  const ridgeGeo = new THREE.CapsuleGeometry(0.07, w - 0.45, 3, 8).rotateZ(Math.PI / 2).scale(1, 0.45, 1);
+  const ridges = new THREE.InstancedMesh(ridgeGeo, new THREE.MeshLambertMaterial({ color: '#6e4b2c' }), 8);
+  for (let i = 0; i < 8; i++) ridges.setMatrixAt(i, at(new THREE.Matrix4().makeTranslation(0, 0.05, -1.05 + i * 0.3)));
+  // ripe ears, two on each stalk
+  const ears = [];
+  for (const s of spots) for (const [a, ex, ez] of s.ears)
+    ears.push(at(new THREE.Matrix4().compose(new THREE.Vector3(s.x + Math.cos(a) * 0.035, 0.02 + 0.36 * s.h, s.z + Math.sin(a) * 0.035),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(ex * 0.5, 0, ez * 0.5)), new THREE.Vector3(1, 1, 1))));
+  const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(0.016, 0.09, 4, 1), addWind(new THREE.MeshLambertMaterial({ color: '#e7bf55' }), 0.3), ears.length);
   ears.forEach((m, i) => ea.setMatrixAt(i, m));
-  for (const o of [st, ea]) { o.computeBoundingSphere(); o.receiveShadow = true; o.castShadow = o === st; still(o, o === st, true); }
+  const P = wheatField.parts;
+  P.soil = [ridges];
+  P.sprouts = [ridges, stalks(spots.filter(s => s.keep < 0.4), 0.3, 2.0, '#86c24a')];
+  P.growing = [stalks(spots, 0.55, 2.2, '#5f9c36')];
+  P.ripe = [stalks(spots, 1, 2.4, '#d9b24e'), ea];
+  for (const list of Object.values(P)) for (const o of list) if (!o.parent) { o.computeBoundingSphere(); o.receiveShadow = true; still(o, o !== ridges && o !== ea, true); }
+  wheatField.inverse = fieldMatrix.clone().invert(); wheatField.half = [w / 2, d / 2];
+  wheatField.centre = new THREE.Vector3().setFromMatrixPosition(fieldMatrix).add(new THREE.Vector3(0, 0.8, 0));
+  setWheat(wheatField.stage);
+}
+function setWheat(stage) {
+  wheatField.stage = stage;
+  for (const o of new Set(Object.values(wheatField.parts).flat())) o.visible = wheatField.parts[stage].includes(o);
+  aimShadows(true);
 }
 
 function buildNature() {
@@ -382,12 +434,12 @@ function buildNature() {
     const m = place(t.pos[0], 0, t.pos[2], r() * 360, t.h / 2.1);
     if (t.kind === 'apple') kinds.apple.push(m); else kinds['abc'[i % 3]].push(m);
   });
-  batch('tree_a', kinds.a, { cast: true }); batch('tree_b', kinds.b, { cast: true }); batch('tree_c', kinds.c, { cast: true });
-  batch('tree_apple', kinds.apple, { cast: true });
+  batch('tree_a', kinds.a, { cast: true, wind: 0.006 }); batch('tree_b', kinds.b, { cast: true, wind: 0.006 }); batch('tree_c', kinds.c, { cast: true, wind: 0.006 });
+  batch('tree_apple', kinds.apple, { cast: true, wind: 0.007 });
   // bushes and rocks
   const ba = [], bb = [];
   V.bushes.forEach((b, i) => (i % 2 ? bb : ba).push(place(b.pos[0], 0, b.pos[2], b.rot, b.s * 1.1)));
-  batch('bush_a', ba, { cast: true }); batch('bush_b', bb, { cast: true });
+  batch('bush_a', ba, { cast: true, wind: 0.05 }); batch('bush_b', bb, { cast: true, wind: 0.05 });
   const ra = [], rb = [];
   V.rocks.forEach((k, i) => (i % 2 ? rb : ra).push(place(k.pos[0], 0, k.pos[2], k.rot, k.s * 1.2)));
   batch('rock_a', ra); batch('rock_b', rb);
@@ -401,7 +453,7 @@ function buildNature() {
       fl[pick[k % 2]].push(place(f.pos[0] + Math.cos(a) * d, 0, f.pos[2] + Math.sin(a) * d, r() * 360, 1.3 + r() * 0.6));
     }
   }
-  for (const n of names) batch(n, fl[n], { lambert: true, twoSided: true });
+  for (const n of names) batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2 });
 }
 
 // grass tufts in tiles of 6 m, so the phone only draws the tiles in view; fewer on slower phones, none when zoomed far out
@@ -414,7 +466,7 @@ function buildGrass() {
   }
   for (const lists of tiles.values()) {
     lists.forEach((list, k) => {
-      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true })) grassTiles.push({ mesh: inst, full: inst.count });
+      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2 })) grassTiles.push({ mesh: inst, full: inst.count });
     });
   }
   applyGrass();
@@ -819,16 +871,38 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
-  if (!best) return;
+  if (!best) {
+    // the wheat field: show its next growing stage
+    const g = new THREE.Vector3();
+    if (wheatField.inverse && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), g)) {
+      g.applyMatrix4(wheatField.inverse);
+      if (Math.abs(g.x) < wheatField.half[0] && Math.abs(g.z) < wheatField.half[1]) {
+        const next = WHEAT_STAGES[(WHEAT_STAGES.indexOf(wheatField.stage) + 1) % 4];
+        setWheat(next);
+        tagBird = null; tag.textContent = 'Wheat field · ' + WHEAT_NAMES[next]; tag.classList.add('on'); fieldTag = 2.8;
+      }
+    }
+    return;
+  }
   best.tapped(); tagBird = best; tagLeft = 2.8;
   tag.textContent = best.label;
   tag.classList.add('on');
 }
+let fieldTag = 0;
 function placeTag(dt) {
-  if (!tagBird) return;
+  if (!tagBird && fieldTag <= 0) return;
+  const v = new THREE.Vector3();
+  if (!tagBird) {                               // the wheat field's label, over the field
+    fieldTag -= dt;
+    if (fieldTag <= 0) { tag.classList.remove('on'); return; }
+    v.copy(wheatField.centre).project(camera);
+    tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
+    return;
+  }
+  fieldTag = 0;
   tagLeft -= dt;
   if (tagLeft <= 0) { tag.classList.remove('on'); tagBird = null; return; }
-  const v = new THREE.Vector3(); tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(camera);
+  tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(camera);
   tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
 }
 
@@ -851,6 +925,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); }
   placeTag(dt);
+  if (!frozen) WIND.time.value = now / 1000;
   renderer.render(scene, camera);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
@@ -904,6 +979,7 @@ window.__farm = {
   plan: () => V, THREE,
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },
+  wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, camera); },

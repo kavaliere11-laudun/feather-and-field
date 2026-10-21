@@ -162,6 +162,23 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   quality 4 of 4 though it was still smooth).
 - Tests: `clip.mjs WHAT frames fps size dx dz out` renders line-up frames stepped exactly (hop, walk, or an action);
   `make_gif.py` stitches them. The page has `__farm.hop()` (every bird hops, as if tapped).
+- Audrey (12:23): "Love it !" Step 2 done.
+
+## Step 3: a living farm (started 21 Oct)
+
+Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day and night, (3) ducks and frogs on the pond,
+(4) the farmer, (5) the decorations.
+
+- Wind (21 Oct 12:28): `addWind(material, amp)` in `src/main.js` bends a plant by its height above the ground, squared
+  (roots stay put), in gusts 3.5 m long rolling with the wind at about 1 m/s, stronger and calmer over half a minute, with a
+  quicker flutter. Done in the vertex shader (project_vertex replaced, works with instancing), one clock `WIND.time`; batches
+  take `wind:` (grass and flowers 1.2, wheat 0.3, bushes 0.05, trees 0.006 to 0.007); materials shared with other models are
+  cloned first. Shadows don't sway (they are only redrawn when the view moves).
+- The wheat field's stages, as in the game (`fieldStage()`: soil, sprouts, growing, ripe): ploughed furrows (8 rounded
+  ridges), first shoots (40% of the plants, 30% tall, light green, furrows showing), growing (55% tall, green), ripe (golden
+  with two ears a stalk). Each plant has a slight shade of its own. `setWheat(stage)`; `?wheat=` picks one; in the test
+  page a tap on the field shows the next stage with a label. Tests: `fieldshot.mjs` (the four stages), `windclip.mjs`
+  (frames of the wind).
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
