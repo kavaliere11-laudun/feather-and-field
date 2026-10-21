@@ -187,7 +187,7 @@ export function paintedGeometry(model, breed, colour) {
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
   const fur = furOf(model, breed);
-  if (fur) g = addFur(g, src, fur);
+  if (fur) g = addFur(g, src, fur, M.piv.headc);
   return (M.painted[key] = g);
 }
 
@@ -197,8 +197,8 @@ export function paintedGeometry(model, breed, colour) {
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
   // Silkies: long hair standing out (shorter round the face, so it stays clear)
-  sil: { len: { [R.body]: 0.048, [R.crest]: 0.05, [R.tail]: 0.052, [R.wing]: 0.04, [R.prim]: 0.04, [R.legfeather]: 0.026 }, shells: 22, droop: 0.35,
-         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.65, locks: 0.12, face: 0.45 },
+  sil: { len: { [R.body]: 0.062, [R.crest]: 0.06, [R.tail]: 0.066, [R.wing]: 0.05, [R.prim]: 0.05, [R.legfeather]: 0.032 }, shells: 26, droop: 0.35,
+         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.5, locks: 0.12, face: 0.7, under: 0.35 },
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
@@ -207,14 +207,17 @@ const FUR = {
 const FEATHER = { [R.body]: 2.6, [R.wing]: 2.0, [R.crest]: 1.2, [R.legfeather]: 1.2 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
 
-function addFur(g, src, spec) {
+function addFur(g, src, spec, headc) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
   const len = new Float32Array(n);
   const top = g.boundingBox.max.y, Pp = src.attributes.position.array;
   for (let i = 0; i < n; i++) {
     len[i] = spec.len[paint[i]] || 0;
-    if (spec.comb && paint[i] === R.body) len[i] *= 1 + 0.9 * (1 - smooth(0.2, 0.42, Pp[i * 3 + 1] / top));    // soft fluff underneath and round the thighs
-    if (spec.face && paint[i] === R.body) len[i] *= 1 - spec.face * g.attributes.featherHead.array[i];        // the cheeks' hair round the face
+    if (spec.comb && paint[i] === R.body) len[i] *= 1 + (spec.under ?? 0.9) * (1 - smooth(0.2, 0.42, Pp[i * 3 + 1] / top));    // soft fluff underneath and round the thighs
+    if (spec.face && headc && (paint[i] === R.body || paint[i] === R.crest)) {        // short hair round the face, so it stays clear
+      const d = Math.hypot(Pp[i * 3] - headc[0], Pp[i * 3 + 1] - headc[1] + 0.004, Pp[i * 3 + 2] - headc[2] - 0.022);
+      len[i] *= 1 - spec.face * (1 - smooth(0.03, 0.075, d));
+    }
   }
   const furTris = [];
   for (let t = 0; t < idx.length; t += 3) if (len[idx[t]] > 0 && len[idx[t + 1]] > 0 && len[idx[t + 2]] > 0) furTris.push(idx[t], idx[t + 1], idx[t + 2]);

@@ -122,6 +122,12 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   long again (body 4.8 cm, crest 5, tail 5.2, wings 4, legs 2.6) in 22 shells, standing out more (comb 0.65), shorter round
   the face (`face: 0.45`, by head weight) so the face stays clear; stronger strand shading (0.42-1.28); sharper sampling (mip
   bias -1) and a narrower fade (`ramp` 0.05 + 0.05 per mip level), so single strands and wisps show at the edge.
+- Even more fur (21 Oct 10:11, Audrey: "Thats going towards the right direction can we increase more the fur effect",
+  45 fps): Silkie hair body 6.2 cm, crest 6, tail 6.6, wings 5, legs 3.2, in 26 shells, standing out more (comb 0.5). The
+  tile gains a fourth, sparse layer of stray strands that reach furthest out (green 1.0), making wisps round the edge.
+  Hair is short right round the face (`face: 0.7`, by distance from a point just in front of the head centre, `headc`,
+  for body and crest hair), so the long crest and cheeks don't bury the eyes; less extra fluff underneath (`under: 0.35`
+  instead of 0.9) so the feet still show.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

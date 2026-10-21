@@ -38,8 +38,11 @@ def wrap_strand(pts, widths, shades, heights):
                         d_.ellipse([b[0] - r, b[1] - r, b[0] + r, b[1] + r], fill=v)       # round joints: no notches
 
 
-LAYERS = [(0.42, 165, 70), (0.62, 200, 70), (0.80, 235, 60)]     # (how far out, brightness, locks): under-layers lower, darker
+# (how far out, brightness, locks): under-layers lower and darker; the last, sparse layer is stray strands reaching furthest
+# out, which make the wisps round the edge
+LAYERS = [(0.40, 165, 70), (0.60, 200, 70), (0.78, 235, 60), (1.0, 245, 26)]
 for base, bright, count in LAYERS:
+    stray = base >= 1.0
     for _ in range(count):
         rx, ry = rnd.uniform(0, W), rnd.uniform(0, W)                  # where the lock grows from
         lean = rnd.gauss(0, 0.16)                                      # radians off straight up: the hair lies one way
@@ -49,14 +52,14 @@ for base, bright, count in LAYERS:
         curl = rnd.uniform(-0.35, 0.35)                                # the tip turns a little to one side
         wave_a, wave_f, wave_p = rnd.uniform(0.8, 2.2) * PX, rnd.uniform(0.6, 1.2), rnd.uniform(0, math.tau)
         lb = bright * rnd.uniform(0.86, 1.08)                          # each lock a little lighter or darker
-        n = rnd.randint(9, 14)
+        n = rnd.randint(3, 6) if stray else rnd.randint(9, 14)
         for s in range(n):
             off = max(-1.0, min(1.0, rnd.gauss(0, 0.5)))               # across the lock: -1 one edge, 1 the other
             ln = L * rnd.uniform(0.65, 1.0) * (1 - 0.2 * abs(off))
-            sw = rnd.uniform(1.3, 2.0) * PX                            # strand width (mm, at its root): fine, silky
+            sw = rnd.uniform(1.3, 2.0) * PX * (0.8 if stray else 1)   # strand width (mm, at its root): fine, silky
             ph = rnd.uniform(-0.5, 0.5)
             sb = lb * rnd.uniform(0.85, 1.1)
-            hs = base + rnd.uniform(-0.12, 0.12)                       # each strand reaches its own distance out
+            hs = base + rnd.uniform(-0.12, 0.12) * (0.5 if stray else 1)    # each strand reaches its own distance out
             segs = 22
             t0 = rnd.uniform(0, 0.3)                                  # roots staggered, so a lock has no straight bottom edge
             pts, widths, shades, heights = [], [], [], []
