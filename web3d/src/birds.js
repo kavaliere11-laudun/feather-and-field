@@ -197,7 +197,7 @@ export function paintedGeometry(model, breed, colour) {
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
   sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
-         clump: 0.7, fine: 1.0, wave: 1.4, comb: 0.45 },
+         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8 },
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
@@ -260,7 +260,7 @@ function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Ma
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
   // change while zooming
-  const d = pixelsPerMetre > 600 ? 150 : pixelsPerMetre > 330 ? 105 : pixelsPerMetre > 180 ? 75 : 50;
+  const d = pixelsPerMetre > 600 ? 210 : pixelsPerMetre > 330 ? 150 : pixelsPerMetre > 180 ? 105 : 70;
   if (d !== furLook.density.value) furLook.density.value = d;
   const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : 0.34);
   if (shown !== furLook.shown) { furLook.shown = shown; for (const f of FURRY) showShells(f); }

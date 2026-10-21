@@ -76,8 +76,9 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
     underside and thighs. A per-pixel relief (bump) was tried and dropped: the feather edges made dark dashes.
 - Third pass (21 Oct, Audrey from her iPhone: Silkie feathers "become like dots" when zooming, the eyes are "weird", roosters
   should have "very nice almost majestic" tails):
-  - Strands are now at least a few screen pixels wide, in four fixed sizes by zoom (50/75/105/150 per metre), so they neither
-    break into dots nor shimmer while zooming; Silkie tufts and partings gentler.
+  - Strands come in four fixed sizes by zoom so they don't shimmer while zooming. 50/75/105/150 per metre made blobs on her
+    iPhone ("a blurry effect"); now 70/105/150/210 (about 2.5 screen pixels) with the Silkie hair combed down (comb 0.8,
+    clump 0.6), so strands lie along the body and read as streaks of hair instead of dots seen end-on.
   - Eyes (`breeds.natural_eye`): smaller, set into a patch of bare red facial skin, amber iris, a flush round pupil, a thin lid
     and a catch-light (Silkies keep their small dark eyes, chicks their bead eyes).
   - Tails from curved, tapering feathers (`breeds.feather`): hens a fan of main tail feathers; roosters add six lesser sickles
