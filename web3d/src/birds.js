@@ -290,6 +290,9 @@ export function setSoftFur(on) {
 // inside the house's box darker the deeper in it is: she goes into the shadow of the pop door, sits in the half light of the
 // nest with her face at the window
 const INDOOR = new Set();
+// the page's own change to every material (the night colours): applied to the birds' material and to any made later
+let materialHook = null;
+export function setMaterialHook(f) { materialHook = f; f(BIRD_MAT); for (const m of INDOOR) f(m); }
 function syncIndoor(m) {
   m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { INDOOR: '' }); m.needsUpdate = true;
 }
@@ -615,7 +618,7 @@ export class Rig {
   // inside a house: box = { inv (world to the house's frame), lo, hi } shades her darker the deeper in she is; null: outside again
   indoor(box) {
     if (box) {
-      if (!this.inMat) { this.inMat = birdMaterial(true); syncIndoor(this.inMat); INDOOR.add(this.inMat); }
+      if (!this.inMat) { this.inMat = birdMaterial(true); if (materialHook) materialHook(this.inMat); syncIndoor(this.inMat); INDOOR.add(this.inMat); }
       const u = this.inMat.userData.inU; u.inMat.value.copy(box.inv); u.inLo.value.copy(box.lo); u.inHi.value.copy(box.hi);
     }
     const m = box ? this.inMat : BIRD_MAT;

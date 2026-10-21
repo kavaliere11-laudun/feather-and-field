@@ -15,6 +15,7 @@ from ffbird import principled
 from ffscene import box, wood
 
 common = g                                # the cosy helpers (sphere, mat, ...) from the Unity exporter's head
+GLOW.update({'dlamp'}); WINDOWS.update({'glass'})          # at night the lamp posts light up and the farmhouse's windows glow
 BUDGET.update({
     'farmhouse': 4500, 'egg_stall': 2600, 'pasture': 3000, 'pasture_shelter': 2400, 'plot_empty': 700, 'plot_sale': 3200,
     'hay_stack': 900, 'round_bale': 700, 'barrels': 900, 'wheelbarrow': 900, 'planter': 1200, 'flower_pots': 1200, 'lamp_post': 600,

@@ -364,7 +364,7 @@ def pagoda(seed=7):
     objs.append(cyl('finial', 0.025, 0.14, (0, 0, 1.52), m=gold, verts=10, bevel=0.0))
     objs.append(sphere('finball', 0.04, (0, 0, 1.6), m=gold, seg=14, rings=8))
     objs.append(cyl('cord', 0.004, 0.1, (W2 + 0.2, -D2 - 0.2, EAVE - 0.0), m=dark, verts=5, bevel=0.0))
-    block('sil', W2 + 0.2, -D2 - 0.2, 0.11)
+    block('sil', W2 + 0.2, -D2 - 0.2, 0.11); light_at('house_sil', W2 + 0.2, -D2 - 0.2, EAVE - 0.12)
     objs.append(sphere('lantern', 0.065, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12), (1, 1, 1.25), m=C('lanternred', '#dc4b2e', rough=0.5), seg=14, rings=10))
     for dz in (-0.075, 0.075):
         objs.append(cyl('lcap', 0.03, 0.02, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12 + dz), m=gold, verts=10, bevel=0.0))
@@ -428,6 +428,7 @@ def lodge(seed=8):
     block('bra', -0.62, -D2 - 0.28, 0.1)
     objs.append(cyl('lpost', 0.022, 0.95, (-0.62, -D2 - 0.28, 0.475), m=barge, verts=8, bevel=0.0))          # lantern post left of the ramp
     objs.append(box('larm', (0.14, 0.025, 0.025), (-0.56, -D2 - 0.28, 0.92), m=iron, bevel=0.004, segs=1))
+    light_at('house_bra', -0.5, -D2 - 0.28, 0.85)
     objs.append(box('lantern', (0.07, 0.07, 0.09), (-0.5, -D2 - 0.28, 0.85), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
     objs.append(box('lcap', (0.09, 0.09, 0.02), (-0.5, -D2 - 0.28, 0.905), m=iron, bevel=0.004, segs=1))
     pop_door(objs, 0.26, trim, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
@@ -506,6 +507,7 @@ def deluxe_fence(seed=9):
         if random.random() < 0.75:
             objs.append(sphere('rose', 0.026, (p[0] + random.uniform(-0.04, 0.04), p[1] - 0.045, p[2] + random.uniform(-0.03, 0.03)), m=random.choice(rose), ico=1, disp=0.15, seed=i + 50))
     for x in (g0 - 0.08, g1 + 0.08):
+        light_at('fence_dx', x, y0 - 0.05, 0.66)
         objs.append(box('lanternb', (0.07, 0.07, 0.1), (x, y0 - 0.05, 0.66), m=C('iron', '#26231f', rough=0.5, metal=0.6), bevel=0.006, segs=1))
         objs.append(box('lanterng', (0.076, 0.076, 0.065), (x, y0 - 0.05, 0.66), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.0))
         objs.append(cyl('lroof', 0.06, 0.05, (x, y0 - 0.05, 0.735), (0, 0, math.pi / 4), m=C('iron', '#26231f', rough=0.5, metal=0.6), verts=4, r2=0.0, bevel=0.0))
@@ -579,6 +581,11 @@ SEAT = 0.19                               # she sits this far in from the front:
 WIN_W, WIN_H = 0.30, 0.40                 # the window's opening (kept under the roof's overhang, which hides what's above;
                                           # wide enough for a big hen to jump through)
 BLOCKS = {}                               # per house: [x, z, r] circles in the yard the birds keep out of (glTF axes)
+LIGHTS = {}                               # per model: where its lanterns are, [x, y, z] (glTF axes): they light up at night
+
+
+def light_at(model, x, y, z):
+    LIGHTS.setdefault(model, []).append([round(x, 3), round(z, 3), round(-y, 3)])
 
 
 def block(house, x, y, r):

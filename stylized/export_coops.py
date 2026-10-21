@@ -9,6 +9,7 @@ os.makedirs(OUT, exist_ok=True)
 sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
+GLOW.update({'lamp', 'lanternred'})       # the lanterns light up at night
 BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
@@ -44,5 +45,5 @@ one('vane', coops.weathervane)
 names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane']
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = coops.BLOCKS.get(k, [])          # what the birds walk round in front of each house
-json.dump(dict(tops=TOPS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, lights=coops.LIGHTS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

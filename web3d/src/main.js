@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur } from './birds.js';
+import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 
 const MODELS = './models/';
 const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
@@ -80,6 +80,7 @@ function aimShadows(force) {
   shadowAt = { p: t.clone(), reach };
   sun.target.position.set(t.x, 0, t.z);
   sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, -40);
+  DAY.shadowDir.copy(SUN_DIR);                              // (only ever called once the page has loaded)
   const s = sun.shadow;
   s.mapSize.set(QUALITY[q].shadow, QUALITY[q].shadow);
   s.camera.left = -reach; s.camera.right = reach; s.camera.top = reach; s.camera.bottom = -reach; s.camera.near = 5; s.camera.far = 80;
@@ -89,6 +90,120 @@ function aimShadows(force) {
   sun.updateMatrixWorld(); sun.target.updateMatrixWorld();
   renderer.shadowMap.needsUpdate = true;
 }
+
+// ------------------------------------------------------------------ day and night: the player's own clock, as in the game
+// (day 7:00-18:00, dusk 18:00-21:00, night 21:00-7:00): a warm orange from about 17:30, deep blue from about 20:30, brightening
+// again between 6:00 and 7:30. The sun rises on one side and sets on the other, low and long-shadowed; at night the moon
+// gives a soft blue light, and the lamps, lanterns and the farmhouse's windows light up with warm pools on the ground.
+// Midday is the look we had all along. ?time=21:30 fixes the hour (to see the night by day), ?daylapse=3 runs a whole day in
+// 3 minutes, from ?time if given.
+// Each key: hour, sun colour, sun strength, sun height and turn (degrees; turn 0 is the midday direction), sky light,
+// ground light, their strength, the colour round the village, how lit the lamps are.
+const DAY_KEYS = [
+  [0, '#8ea6ff', 1.6, 50, 15, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
+  [5.4, '#8ea6ff', 1.6, 50, 35, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
+  [6.3, '#ff9a72', 1.3, 3, -72, '#6e74ad', '#2b2f2c', 1.4, '#3a4a45', 0.8],
+  [6.9, '#ffc49a', 3.2, 11, -64, '#a3a8c9', '#4a4b34', 2.0, '#6d8a4c', 0.25],
+  [7.5, '#ffe9cf', 4.6, 22, -52, '#a8bcd8', '#5a6943', 2.45, '#86b159', 0],
+  [12.5, '#fff1dc', 5.2, 46, 0, '#a3bddb', '#5c6b45', 2.6, '#8cb85c', 0],
+  [17.2, '#fff1dc', 5.0, 30, 46, '#a3bddb', '#5c6b45', 2.55, '#8cb85c', 0],
+  [18.2, '#ffd8aa', 4.5, 19, 56, '#bcbfcc', '#5e6343', 2.4, '#8aad57', 0],
+  [19.2, '#ffb47c', 3.2, 9, 64, '#b9a6ac', '#56513c', 2.0, '#7a8e50', 0.15],
+  [20.2, '#ff8a5e', 1.4, 2, 70, '#6c6596', '#2c2a2a', 1.85, '#3e4a40', 0.7],
+  [21.0, '#8ea6ff', 1.5, 40, -10, '#384a84', '#181f22', 1.5, '#203046', 1],
+  [24, '#8ea6ff', 1.6, 50, 15, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
+].map(k => [k[0], new THREE.Color(k[1]), k[2], k[3], k[4], new THREE.Color(k[5]), new THREE.Color(k[6]), k[7], new THREE.Color(k[8]), k[9]]);
+const DAY = { hour: 12, glow: { value: 0 }, warm: { value: new THREE.Color('#ffc46e') }, shadowDir: SUN_DIR.clone(), shadowAt: 0 };
+const NOON_FROM = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize();                // where the midday sun is, seen from above
+const dayStart = (() => {                      // ?time=HH:MM and ?daylapse=minutes for a whole day
+  const t = /^(\d{1,2})(?::(\d{2}))?$/.exec(params.get('time') || ''), lapse = parseFloat(params.get('daylapse') || '0');
+  // automated tests (a browser driven by a script) see midday unless they ask for a time, so they don't depend on the clock
+  const fixed = t ? Math.min(24, +t[1] + (+t[2] || 0) / 60) : navigator.webdriver ? 12.5 : null;
+  return { fixed, lapse: lapse > 0 ? lapse : 0, at: performance.now() };
+})();
+function clockHour() {
+  if (DAY.override !== undefined) return DAY.override;
+  if (dayStart.lapse) {
+    const from = dayStart.fixed ?? 6;
+    return (from + (performance.now() - dayStart.at) / 60000 / dayStart.lapse * 24) % 24;
+  }
+  if (dayStart.fixed !== null) return dayStart.fixed;
+  const d = new Date(); return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+}
+const _c = new THREE.Color(), _dir = new THREE.Vector3();
+function applyDaylight(h) {
+  DAY.hour = h;
+  let i = 0; while (i < DAY_KEYS.length - 2 && h >= DAY_KEYS[i + 1][0]) i++;
+  const A = DAY_KEYS[i], B = DAY_KEYS[i + 1], t = Math.min(1, Math.max(0, (h - A[0]) / (B[0] - A[0]))), u = t * t * (3 - 2 * t);
+  const mix = (k) => A[k] + (B[k] - A[k]) * u;
+  sun.color.copy(A[1]).lerp(B[1], u); sun.intensity = mix(2);
+  hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7);
+  scene.background.copy(A[8]).lerp(B[8], u);
+  DAY.glow.value = mix(9); lampPools.update();
+  // where the light comes from: its height and how far round from midday
+  const el = mix(3) * DEG, turn = mix(4) * DEG;
+  _dir.copy(NOON_FROM).applyAxisAngle(new THREE.Vector3(0, 1, 0), turn).multiplyScalar(Math.cos(el)); _dir.y = Math.sin(el);
+  SUN_DIR.copy(_dir).negate().normalize();
+  // the shadows are drawn again when the light has moved a little (not every frame: they're the costly part)
+  const now = performance.now();
+  if (SUN_DIR.angleTo(DAY.shadowDir) > 0.6 * DEG && now - DAY.shadowAt > 400) { DAY.shadowDir.copy(SUN_DIR); DAY.shadowAt = now; aimShadows(true); }
+  else if (shadowAt) { sun.position.copy(sun.target.position).addScaledVector(DAY.shadowDir, -40); }
+}
+// lamps, lanterns and lit windows: their own materials (glow, window) gain a warm light of their own as night falls
+function lightUp(mat) {
+  if (mat.userData.lit || (mat.name !== 'glow' && mat.name !== 'window')) return;
+  const lamp = mat.name === 'glow';
+  mat.userData.lit = true;
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.dayGlow = DAY.glow; sh.uniforms.dayWarm = DAY.warm;
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float dayGlow;\nuniform vec3 dayWarm;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + (lamp
+        ? '#ifdef USE_COLOR\ntotalEmissiveRadiance += mix(vColor.rgb, dayWarm, 0.35) * dayGlow * 2.4;\n#else\ntotalEmissiveRadiance += dayWarm * dayGlow * 2.4;\n#endif'
+        : 'totalEmissiveRadiance += dayWarm * dayGlow * 1.25;'));
+  };
+  mat.customProgramCacheKey = () => 'lit-' + mat.name;
+  mat.needsUpdate = true;
+}
+// night colours: by moonlight the eye sees little colour, so as night falls every material greys towards a moonlit blue
+// (the lamps and lit windows keep their warm colour). One line added to each material's shader, after its own changes.
+const NIGHT_TINT = { value: new THREE.Vector3(0.78, 0.92, 1.32) };
+function nightGrade(mat) {
+  if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'window') return;
+  mat.userData.graded = true;
+  const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev.call(mat, sh, r);
+    sh.uniforms.dayNight = DAY.glow; sh.uniforms.nightTint = NIGHT_TINT;
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float dayNight;\nuniform vec3 nightTint;')
+      .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n{ float nl = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor.rgb = mix(gl_FragColor.rgb, nl * nightTint, 0.6 * dayNight); }');
+  };
+  if (prevKey && prevKey !== THREE.Material.prototype.customProgramCacheKey) mat.customProgramCacheKey = () => prevKey.call(mat) + '+night';
+  mat.needsUpdate = true;
+}
+function gradeScene() { scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); }); }
+
+// warm pools of light on the ground under the lamps and lanterns (soft discs, added on top, only at night)
+const lampPools = {
+  spots: [], mesh: null,
+  add(x, z, r) { this.spots.push([x, z, r]); },
+  build() {
+    if (!this.spots.length) return;
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const cx = cv.getContext('2d'), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.fillStyle = gr; cx.fillRect(0, 0, 64, 64);
+    const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), color: '#ffb25a', transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+    mat.userData.noGrade = true;
+    this.mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2), mat, this.spots.length);
+    this.spots.forEach(([x, z, r], i) => this.mesh.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.012, z), new THREE.Quaternion(), new THREE.Vector3(r, 1, r))));
+    this.mesh.computeBoundingSphere(); this.mesh.renderOrder = 2; this.mesh.visible = false;
+    still(this.mesh);
+  },
+  update() { if (!this.mesh) return; const g = DAY.glow.value; this.mesh.material.opacity = 0.42 * g; this.mesh.visible = g > 0.01; },
+};
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
@@ -181,7 +296,7 @@ async function start() {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
         richer(m.geometry, g === village ? 1.22 : SAT, g === village ? 1.08 : 1);
-        if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; }
+        if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; lightUp(m.material); }
       }
       parts[child.name] = child;
     }
@@ -195,6 +310,9 @@ async function start() {
   if (params.has('lineup')) buildLineup();
   if (allBirds.length) makeBlobs();
   buildGrass();
+  addLampPools();
+  gradeScene(); setMaterialHook(nightGrade);           // the night colours, also for materials made later (a laying hen's own)
+  applyDaylight(clockHour());
   const s = V.plots[0].pos;
   view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
   view.size = 4.4;
@@ -205,6 +323,22 @@ async function start() {
   setTimeout(() => loading.remove(), 600);
   hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
+}
+
+// where the night's pools of lamplight go: under each lamp post round the green, and each coop's lanterns (the lodge's post,
+// the pagoda's paper lantern, a Deluxe arch's pair)
+function addLampPools() {
+  const v = new THREE.Vector3();
+  for (const p of V.props) if (p.model === 'lamp_post') {
+    v.set(0.24, 0, 0).applyMatrix4(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));
+    lampPools.add(v.x, v.z, 1.25 * (p.s || 1));
+  }
+  for (const pl of plots) {
+    if (pl.kind !== 'coop') continue;
+    const L = [...(COOPS.lights['house_' + pl.breed] || []), ...(pl.deluxe ? COOPS.lights.fence_dx || [] : [])];
+    for (const l of L) { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.add(v.x, v.z, 0.75); }
+  }
+  lampPools.build();
 }
 
 function buildGround(img) {
@@ -579,7 +713,7 @@ function spawnNote(bird, big, loud) {
     noteMat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false });
   }
   let n = NOTES.find(x => x.life <= 0);
-  if (!n) { if (NOTES.length > 40) return; n = { sprite: new THREE.Sprite(noteMat.clone()), life: 0 }; n.sprite.renderOrder = 3; scene.add(n.sprite); NOTES.push(n); }
+  if (!n) { if (NOTES.length > 40) return; const sm = noteMat.clone(); nightGrade(sm); n = { sprite: new THREE.Sprite(sm), life: 0 }; n.sprite.renderOrder = 3; scene.add(n.sprite); NOTES.push(n); }
   const p = bird.root.getWorldPosition(new THREE.Vector3()), up = bird.rig.scale * 0.95;
   n.sprite.position.set(p.x + (Math.random() - 0.5) * 0.08, p.y + up, p.z + (Math.random() - 0.5) * 0.08);
   n.size = (big ? 0.17 : 0.115) * (0.75 + 0.25 * loud); n.life = n.full = big ? 1.4 : 1.0;
@@ -625,7 +759,9 @@ function makeBlobs() {
   blobs.count = allBirds.length;
   scene.add(blobs);
 }
+const NO_BLOB = new THREE.Matrix4().makeScale(0, 0, 0);
 function placeBlob(b) {
+  if (!b.root.visible) { blobs.setMatrixAt(b.blob, NO_BLOB); blobs.instanceMatrix.needsUpdate = true; return; }     // in bed
   const y = b.root.position.y;
   if (b.shadowY !== undefined) b.root.position.y = b.shadowY;          // leaping: the shadow stays on the ground (or the nest's floor)
   b.root.updateMatrix();
@@ -739,8 +875,66 @@ class Bird {
     if (x < (rooster ? 0.74 : 0.65)) return { type: 'ruffle', left: 0.75 };             // a quick shake of the feathers
     return null;
   }
+  // bedtime: at dusk the birds go in for the night, up the ramp and in at the pop door, one by one (the rooster last), and in
+  // the morning they come out again (the rooster first, with a crow). Each has her own times, by the player's clock: hens go
+  // in between 20:00 and 20:40, the rooster at 20:45; out between 6:30 and 7:05, the rooster at 6:20; chicks with their mum
+  bedHours() {
+    if (!this.bed) {
+      if (this.kind === 'rooster') this.bed = { in: 20.75, out: 6.33 };
+      else if (this.kind === 'chick' && this.mum) { const m = this.mum.bedHours(); this.bed = { in: m.in + 0.02 + this.r() * 0.03, out: m.out + 0.02 + this.r() * 0.03 }; }
+      else this.bed = { in: 20.0 + this.r() * 0.65, out: 6.5 + this.r() * 0.58 };
+    }
+    return this.bed;
+  }
+  nightNow(early = 0) { const h = DAY.hour, b = this.bedHours(); return h >= b.in - early || h < b.out; }
+  houseBox() { const f = this.plot.frame; f.updateMatrixWorld(true); return { inv: new THREE.Matrix4().copy(f.matrixWorld).invert(), lo: HOUSE_LO, hi: HOUSE_HI }; }
+  goToBed() {
+    this.act = null; this.route = null; this.then = null; this.wait = 0; this.proudGoal = 0;
+    this.roost = { phase: 'go', t: 0 };
+  }
+  sleepNow() {                             // inside for the night: out of sight, just inside the pop door
+    const G = nestOf(this.plot);
+    this.roost = null; this.asleep = true; this.act = null; this.route = null; this.then = null;
+    this.root.position.set(G.pop[0], G.house, D2 - 0.3); this.root.rotation.y = 0; this.root.visible = false;
+    this.rig.indoor(null);
+  }
+  wakeUp() {                               // out again: from just inside the pop door, down the ramp into the yard
+    const G = nestOf(this.plot), ground = 0.015, Y = PEN.yard;
+    this.asleep = false; this.root.visible = true; this.rig.indoor(this.houseBox());
+    let spot = null;
+    for (let k = 0; k < 20 && !spot; k++) {
+      const x = G.foot[0] + (this.r() - 0.3) * 1.2, z = G.foot[1] + 0.25 + this.r() * 0.5;
+      if (x > Y.min[0] + 0.1 && x < Y.max[0] - 0.1 && z < Y.max[2] - 0.1 && this.free(x, z)) spot = [x, z];
+    }
+    spot = spot || [G.foot[0], G.foot[1] + 0.3];
+    this.roost = { phase: 'out', t: 0, path: [[G.pop[0], G.pop[1] + 0.02, G.house], [G.foot[0], G.foot[1], ground], [spot[0], spot[1], ground]] };
+  }
+  roostStep(dt) {
+    const R = this.roost, p = this.root.position, o = { walking: false, sit: 0, flap: 0, ruffle: 0, sing: 0, cluck: 0, kawk: 0 };
+    const G = nestOf(this.plot), FL = G.house, ground = 0.015;
+    const atPop = p.y > FL - 0.12 && p.z > D2 - 0.36 && p.z < D2 + 0.34;
+    R.t += dt;
+    if (R.phase === 'go') {                  // across the yard to the foot of the ramp
+      const r = this.stepToward(G.foot[0], G.foot[1] + 0.1, dt); o.walking = r.walking;
+      if (r.arrived || R.t > 20 || (r.blocked && R.t > 3)) {
+        R.phase = 'up'; R.path = [[G.foot[0], G.foot[1], ground], [G.pop[0], G.pop[1], FL], [G.pop[0], D2 - 0.3, FL]];
+        this.rig.indoor(this.houseBox());
+      }
+    } else {                                 // up the ramp and in for the night, or out in the morning
+      const r = this.walkPath(dt, R.phase === 'up' ? 0.7 : 0.8, R); o.walking = r.walking;
+      if (atPop) o.duck = 1;
+      if (r.done) {
+        if (R.phase === 'up') this.sleepNow();
+        else {
+          this.roost = null; this.rig.indoor(null); this.wait = 0.3 + this.r();
+          if (this.kind === 'rooster') { this.act = { type: 'crow', left: 2.0 }; this.wait = 2.2; }      // good morning!
+        }
+      }
+    }
+    return o;
+  }
   tapped() {                               // a hop and a flap (a rooster may crow)
-    if (this.laying) return;                 // a laying hen isn't disturbed
+    if (this.laying || this.roost || this.asleep) return;      // a laying hen isn't disturbed, nor one going to bed
     this.hopT = 0;
     if (this.kind === 'rooster' && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
@@ -796,8 +990,8 @@ class Bird {
     return u >= 1;
   }
   // a scripted walk along points [x, z, y]: she turns to each and walks there (height from point to point: up the ramp)
-  walkPath(dt, pace = 0.8) {
-    const L = this.laying, p = this.root.position, P = L.path;
+  walkPath(dt, pace = 0.8, L = this.laying) {
+    const p = this.root.position, P = L.path;
     if (!P.length) return { done: true, walking: false };
     const [tx, tz, ty] = P[0], dx = tx - p.x, dz = tz - p.z, dist = Math.hypot(dx, dz);
     if (L.seg === undefined) L.seg = { from: p.clone(), len: Math.max(dist, 1e-3) };
@@ -1013,10 +1207,17 @@ class Bird {
     A.t += dt;
     if (this.hopT >= 0) { this.hopT += dt / 0.8; if (this.hopT >= 1) this.hopT = -1; }        // a hop lasts 0.8 s
     let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0, ruffle = 0, song = null;
-    // time to lay? (hens in a coop, one in the nest box at a time)
-    if (this.layIn !== undefined && !this.laying && !this.stay && this.plot.nest) {
+    // bedtime and getting up (coop birds): already night when the page opens, she's in bed; asleep, nothing to do but wake
+    if (this.plot.kind === 'coop' && !this.stay) {
+      const night = this.nightNow();
+      if (!this.looked) { this.looked = true; if (night && !this.laying) this.sleepNow(); }
+      if (this.asleep) { if (night) return; this.wakeUp(); }
+      else if (night && !this.roost && !this.laying) this.goToBed();
+    }
+    // time to lay? (hens in a coop, one in the nest box at a time; not just before bedtime)
+    if (this.layIn !== undefined && !this.laying && !this.roost && !this.stay && this.plot.nest) {
       this.layIn -= dt;
-      if (this.layIn <= 0) { if (!this.plot.nest.by && !this.route) this.startLaying(); else this.layIn = 8 + this.r() * 12; }
+      if (this.layIn <= 0) { if (!this.plot.nest.by && !this.route && !this.nightNow(0.25)) this.startLaying(); else this.layIn = 8 + this.r() * 12; }
     }
     if (this.route) { this.legTime = (this.legTime || 0) + dt; if (this.legTime > 8) this.nextLeg(); }       // never stuck on a leg
     if (this.answerIn > 0) { this.answerIn -= dt; if (this.answerIn <= 0 && !this.act) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); } }
@@ -1024,6 +1225,8 @@ class Bird {
     if (this.laying) {
       song = this.layStep(dt);
       walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle;
+    } else if (this.roost) {
+      song = this.roostStep(dt); walking = song.walking;
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && this.tooClose()) act.left = Math.min(act.left, 0.05);
@@ -1137,7 +1340,8 @@ function makeBlob() {
 function separate(flock, dt) {
   const k = Math.min(1, dt * 8);
   for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
-    if ((flock[i].laying && flock[i].laying.inside) || (flock[j].laying && flock[j].laying.inside)) continue;
+    const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep;      // on a scripted walk, or in bed
+    if (off(flock[i]) || off(flock[j])) continue;
     const a = flock[i].root.position, b = flock[j].root.position;
     const min = flock[i].kind === 'chick' || flock[j].kind === 'chick' ? CHICK_BODY : BODY;
     let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
@@ -1233,6 +1437,7 @@ function tapAt(x, y) {
   let best = null, bestD = Infinity;
   const s = new THREE.Sphere(), w = new THREE.Vector3();
   for (const p of livePlots()) for (const b of p.birds) {
+    if (!b.root.visible) continue;                       // in bed
     b.root.getWorldPosition(w);
     s.center.set(w.x, w.y + b.hitY, w.z); s.radius = b.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
@@ -1309,6 +1514,7 @@ function frame(now) {
   if (!frozen) { for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
+  if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   renderer.render(scene, camera);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
@@ -1372,6 +1578,8 @@ window.__farm = {
   layAs: (i, pers, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.pers = pers; h.startLaying(sit); return h.name; },
   noLaying: () => { for (const b of allBirds) if (b.layIn !== undefined) b.layIn = 1e9; },
   nestOf, showEggs,
+  // tests: set the hour (0-24) the light shows, or undefined for the clock again
+  setHour: (h) => { DAY.override = h; DAY.shadowAt = 0; applyDaylight(clockHour()); }, day: DAY,
 };
 start().catch(err => {
   console.error(err);

@@ -363,5 +363,38 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   fur), `views.mjs` counts triangles per view (birds separately), `rtime.mjs` times one frame. The page has `__farm.pause(on)`
   and `__farm.draw()` for them.
 
+## Day and night (21 Oct 22:30, Audrey: "Start")
+
+- As in the game, the light follows the player's own clock (day 7:00-18:00, dusk 18:00-21:00, night 21:00-7:00): a warm
+  orange from about 17:30, deep blue from about 20:30, brightening again between 6:00 and 7:30. `DAY_KEYS` in
+  `src/main.js`: per hour, the sun's colour, strength, height and how far round from midday it is, the sky and ground light
+  (hemisphere) and their strength, the colour round the village and how lit the lamps are; `applyDaylight(hour)` blends the
+  two keys either side (smoothly) every quarter second. Midday (12:30) is exactly the look approved before. The sun rises
+  low on one side (-72 degrees round, 3 degrees up at 6:20) and sets on the other (+70, 2 degrees up at 20:10) with long
+  shadows; at night the moon gives a soft blue light from high up. Shadows are redrawn when the light has moved 0.6 degrees
+  (every few minutes in real time).
+- Night colours (`nightGrade()`, one line added to every material's shader, also to materials made later: the laying hens'
+  own, the song's notes): by moonlight colours grey towards a moonlit blue (60% at night), so the grass and roofs don't stay
+  bright green and red.
+- Lamps: the exporter keeps glowing materials apart (`stylized/webglb.py` buckets `glow` and `window`, set per export:
+  village `GLOW = {'dlamp'}` for the lamp posts round the green, `WINDOWS = {'glass'}` for the farmhouse's windows; coops
+  `GLOW = {'lamp', 'lanternred'}` for the lodge's lantern, the Deluxe arch's two lanterns and the pagoda's red paper lantern).
+  `lightUp()` gives those materials a warm light of their own as night falls (lamps 2.4 x, windows 1.25 x), and
+  `lampPools` lays a soft warm disc of light on the ground under each lamp post (1.25 m) and coop lantern (0.75 m; their
+  places in `coops.json` `lights`, from `light_at()` in `stylized/coops.py`), drawn added on top, only at night.
+- Bedtime: at dusk the coop birds go in for the night, each at her own time (hens between 20:00 and 20:40, chicks just
+  after their mum, the rooster last at 20:45): to the foot of the ramp, up it, ducking in at the pop door, and out of sight
+  just inside (`goToBed()`, `roostStep()`, `sleepNow()`: hidden, no shadow, can't be tapped, left out of the jostling). In
+  the morning they come out again (the rooster first at 6:20, with a crow; the hens between 6:30 and 7:05: `wakeUp()`),
+  down the ramp to a free spot in the yard. If the page opens at night they're already in bed. No laying from a quarter of an
+  hour before a hen's bedtime.
+- Seeing it by day: `?time=21:30` fixes the hour; `?daylapse=3` runs a whole day in 3 minutes (from `?time` if given,
+  otherwise from 6:00). Automated tests (a script-driven browser, `navigator.webdriver`) see 12:30 unless they ask, so they
+  don't depend on the clock. The page has `__farm.setHour(h)` and `__farm.day`.
+- Tests: `dayshot.mjs [hours] [size] [out]` (the same view at several hours, `LX`/`LZ`), `dayclip.mjs PLOT FROM TO RATE FPS
+  SIZE OUT` (frames of a coop with the clock run fast), `bedtrace.mjs [rate]` (how many birds of each coop are out, on
+  their way, in bed: all in by 21:00, all out by 7:15, nobody stuck). `withserver.sh CMD` serves `dist/` just for the length
+  of a test.
+
 - Live: the game's site, folder `3d/` (https://kavaliere11-laudun.github.io/feather-and-field/3d/). The game's normal deploy wipes the
   repo, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game itself.

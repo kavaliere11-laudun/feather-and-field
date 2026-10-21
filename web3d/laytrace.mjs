@@ -4,7 +4,7 @@ const [plot = '3', pers = 'diva', sit = '2', secs = '30'] = process.argv.slice(2
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 300, height: 300 } });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto('http://localhost:8770/index.html?q=3&coops=5');
+await p.goto('http://localhost:' + (process.env.PORT || 8770) + '/index.html?q=3&coops=5');
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 const out = await p.evaluate(([i, pers, sit, secs]) => {
   const f = window.__farm, pl = f.plots[i]; f.pause(true); f.freeze(true); f.noLaying(); f.step(1 / 30, 30);
