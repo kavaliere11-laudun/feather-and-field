@@ -212,9 +212,10 @@ const FUR = {
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   // (thinner than before, and less extra fluff underneath, so the feathers show clearly and the birds look less bulky)
-  // (these layers now carry each feather's lifted tip, not fuzz)
-  hen: { len: { [R.body]: 0.009, [R.wing]: 0.008, [R.crest]: 0.006, [R.legfeather]: 0.008 }, shells: 4, comb: 1, fine: 1.25, under: 0.3 },
-  orp: { len: { [R.body]: 0.012, [R.wing]: 0.01, [R.legfeather]: 0.01 }, shells: 5, comb: 0.8, fine: 1.15, under: 0.4 },
+  // (a slight fluff over the feathers, from the same painted hair as the Silkies but short and fine (fluff: the tile's size,
+  // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
+  hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
+  orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
@@ -241,7 +242,7 @@ function addFur(g, src, spec, headc) {
   const si = new Uint8Array(total * 4), sw = new Uint8Array(total * 4), furT = new Float32Array(total), furLen = new Float32Array(total);
   const fs = new Float32Array(total), fh = new Float32Array(total), comb = new Float32Array(total).fill(spec.comb || 0);
   const style = new Float32Array(total * 4);
-  for (let i = 0; i < total; i++) { style[i * 4] = spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
+  for (let i = 0; i < total; i++) { style[i * 4] = spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.fluff ? -spec.fluff : spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
   const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array, FU = A('featherUV').array;
   const fp = new Float32Array(total * 4), fm = new Float32Array(total), fu = new Float32Array(total * 3);
@@ -311,7 +312,7 @@ function birdMaterial() {
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
         // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
         // length, so the far birds keep their fluffy outline
-        float fT = furStyle.w < 0.0 ? min(1.0, furT * furSpan) : furT;
+        float fT = (furStyle.w < 0.0 || furStyle.z < 0.0) ? min(1.0, furT * furSpan) : furT;
         vFUV = featherUV; vFur = fT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
         if (fT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
@@ -440,10 +441,25 @@ function birdMaterial() {
           // a softly ragged edge, where the barbs end
           float t = length(lp) + 0.025 * sin(atan(lp.y, lp.x) * 19.0 + id * 40.0) * smoothstep(0.6, 0.95, length(lp));
           float aa = max(fwidth(t), 0.02);
-          // round the outline the outer layers hold each feather's tip, lifted a little off the one below, so the outline is
-          // feathery rather than smooth (across the body they'd only wash the pattern out)
-          if (vFur > 0.0 && (t > 1.0 - 0.12 * vFur || along < mix(0.15, 0.7, vFur)
-              || abs(dot(normalize(vNormal), normalize(vViewPosition))) > 0.45)) discard;
+          // a slight fluff over the feathers (the outer layers): fine soft strands from the painted hair, short across the body
+          // and wispier at the outline, so the feathers below still show (green: how far each strand reaches out, blue: that
+          // squared, for its spread when the strands blur together further away)
+          float fluff = 1.0;
+          if (vFur > 0.0 && vStyle.z < 0.0) {
+            vec3 hp = vRest / (-vStyle.z), hw = pow(abs(normalize(vRestN)), vec3(4.0)); hw /= (hw.x + hw.y + hw.z);
+            vec3 hair = texture2D(hairTex, vec2(hp.z, -hp.y), -0.5).rgb * hw.x + texture2D(hairTex, vec2(hp.x, -hp.z), -0.5).rgb * hw.y + texture2D(hairTex, vec2(hp.x, -hp.y), -0.5).rgb * hw.z;
+            float facing = abs(dot(normalize(vNormal), normalize(vViewPosition)));
+            float reach = mix(1.0, 0.75, smoothstep(0.3, 0.8, facing));         // seen face-on, a shorter soft fuzz
+            float lt = log2(max(length(fwidth(hp)) * 512.0, 1.0)), spread = sqrt(max(hair.b - hair.g * hair.g, 0.0)) * 3.46;
+            float near = clamp((hair.g * reach - vFur) / (0.06 + 0.05 * min(lt, 5.0)) + 0.5, 0.0, 1.0);
+            float far = clamp((hair.g * reach - vFur) / max(spread * reach, 0.07) + 0.5, 0.0, 1.0);
+            float cov = mix(near, far, smoothstep(2.5, 4.0, lt));
+            if (cov < furCut) discard;
+            #ifdef SOFT_FUR
+            diffuseColor.a = cov;
+            #endif
+            fluff = mix(0.76, 1.14, hair.r) * mix(0.92, 1.08, vFur);
+          }
           // how big a feather is on screen: when small (the line-up and further), its light and shade are drawn stronger so
           // the feathers still show instead of blending into a flat colour
           float fpx = 1.0 / max(length(fwidth(pp)), 1e-4), boost = 1.0 - smoothstep(12.0, 40.0, fpx);
@@ -475,6 +491,7 @@ function birdMaterial() {
                     * (1.0 + 0.17 * barb * smoothstep(-0.6, 0.2, along)) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
           // where the coverts end, a soft shadow over the flight feathers
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
+          furShade *= fluff;
         }
         if (vFUV.x > 0.01 && vFeather <= 0.0) {
           // a modelled feather (tail, sickles, saddle hackles, flight feathers, crest): a pale quill down the middle, barbs

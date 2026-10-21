@@ -227,6 +227,16 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   - Body feathers: u = along x 0.42 - |across| x 0.5 (a V meeting at the quill, slanting to the tip), up to 120, shading
     +/-17% from the visible middle to the tip; barb ends rough up the feather's edge (t +/- 0.035 near the edge).
   - Modelled feathers: u = along - |across| x 0.06, up to 260 over the feather, +/-20%.
+- A slight fluff on the feathered breeds (21 Oct 17:17, Audrey: "perhaps what we need is a slight fluffy effect on the other
+  breeds too (do not edit silkies)"); the Silkie and chick code paths are untouched (checked: the Silkie rows render the
+  same apart from the usual frame-to-frame noise):
+  - The hen/orp FUR specs gain `fluff: 0.06` (the painted hair tile at 6 cm, marked by a negative furStyle.z so it can't
+    collide with the Silkies' negative furStyle.w), longer layers (hens body 1.6 cm, Orpingtons 2.2 cm, 5-6 shells),
+    `under` 1.5 / 1.8 (much fluffier underneath and round the thighs), comb 0.9 / 0.75.
+  - In the feather block, each outer layer keeps the hair that reaches that far out (the same near/far coverage as the
+    Silkies, from the tile's green and blue), shortened to 0.75 where seen face-on; shaded 0.76-1.14 by the hair's lightness.
+    The layers spread over the full length when fewer are drawn (furSpan), like the Silkies. The lifted-feather-tip outline
+    from 16:28 is replaced by this.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
