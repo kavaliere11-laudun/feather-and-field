@@ -554,7 +554,7 @@ function showEggs(plot) {
   const n = plot.nest, k = Math.min(n.count, NEST_SLOTS.length), G = nestOf(plot);
   for (let i = 0; i < k; i++) {
     const [dx, dz] = NEST_SLOTS[i], s = i === k - 1 ? n.pop : 1;       // the newest egg pops in
-    eggP.set(G.seat[0] + dx, G.floor + 0.05 + 0.015 * s, G.seat[1] + dz);
+    eggP.set(G.seat[0] + dx, (G.bed ?? G.floor + 0.05) + 0.004 + 0.012 * s, G.seat[1] + dz);      // nestled in the straw
     eggQ.setFromEuler(eggE.set(1.2 + 0.3 * Math.sin(i * 3.1), i * 1.7, 0.2 * Math.cos(i * 2.3)));
     n.eggs.setMatrixAt(i, eggM.compose(eggP, eggQ, eggS.set(0.05 * s, 0.064 * s, 0.05 * s)));
   }
@@ -607,6 +607,11 @@ const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
 const PERS_IDS = ['diva', 'brave', 'glutton', 'mum', 'rebel'];
 const PERS_NAMES = { diva: 'Diva', brave: 'Brave', glutton: 'Glutton', mum: 'Good mum', rebel: 'Rebel' };
 const SONG = { diva: [4.5, 1.2], brave: [3.6, 1.1], glutton: [2.2, 0.9], mum: [2.6, 0.65], rebel: [2.0, 1.0] };   // seconds, how loud
+// going in to lay: the rebel and the brave jump straight in at the nest window (and jump out of it after); the others behave
+// and go up the ramp and in at the pop door
+const JUMPERS = { rebel: true, brave: true };
+const D2 = 0.44;                                   // the front of every house (pen frame: the houses share the Red Barn's footprint)
+const HOUSE_LO = new THREE.Vector3(-0.66, -0.3, -0.5), HOUSE_HI = new THREE.Vector3(0.66, 2.2, D2);     // inside a house
 let blobGeo, blobMat, blobs = null, nameSeed = 0;
 const tmpM = new THREE.Matrix4(), blobScale = new THREE.Matrix4();
 // every bird's soft round shadow, drawn in one batch; a bird's shadow follows her when she moves
@@ -619,8 +624,11 @@ function makeBlobs() {
   scene.add(blobs);
 }
 function placeBlob(b) {
+  const y = b.root.position.y;
+  if (b.shadowY !== undefined) b.root.position.y = b.shadowY;          // leaping: the shadow stays on the ground (or the nest's floor)
   b.root.updateMatrix();
   tmpM.multiplyMatrices(b.plot.frame.matrixWorld, b.root.matrix).multiply(b.blobLocal);
+  if (b.shadowY !== undefined) { b.root.position.y = y; b.root.updateMatrix(); }
   if (b.hopT > 0.24 && b.hopT < 0.86) { const k = 1 - 0.3 * Math.sin((b.hopT - 0.24) / 0.62 * Math.PI); tmpM.multiply(blobScale.makeScale(k, k, 1)); }   // smaller in the air
   blobs.setMatrixAt(b.blob, tmpM);
   blobs.instanceMatrix.needsUpdate = true;
@@ -747,8 +755,28 @@ class Bird {
   // the egg song, then celebrate in her own way
   startLaying(sit) {
     this.plot.nest.by = this;
-    this.laying = { phase: 'go', t: 0, sit: sit ?? 30 + this.r() * 15, shuffle: 4 + this.r() * 4, beat: -1 };
+    this.laying = { phase: 'go', t: 0, sit: sit ?? 30 + this.r() * 15, shuffle: 4 + this.r() * 4, beat: -1, jump: !!JUMPERS[this.pers] };
     this.act = null; this.route = null; this.wait = 0;
+    const f = this.plot.frame; f.updateMatrixWorld(true);                   // inside the house she is in its shade
+    this.rig.indoor({ inv: new THREE.Matrix4().copy(f.matrixWorld).invert(), lo: HOUSE_LO, hi: HOUSE_HI });
+  }
+  // a leap from L.from to L.to over `dur` seconds: crouch, spring (wings beating, legs tucked, neck out), land and settle.
+  // The arc is high enough for her feet to clear the window's sill where she crosses the wall. Returns true when done.
+  leap(dt, o, G, dur) {
+    const L = this.laying, p = this.root.position, u = Math.min(1, L.t / dur), a = smooth01((u - 0.24) / 0.62);
+    const F = L.from, T = L.to, sz = Math.min(1.2, this.rig.scale / 0.5);
+    if (L.hh === undefined) {                                  // how much higher than the hop's own lift the arc must go
+      const aw = Math.min(0.95, Math.max(0.05, (F.z - D2) / (F.z - T.z))), sill = G.win[1] + 0.02;
+      const base = F.y + (T.y - F.y) * aw + 0.12 * sz * Math.sin(aw * Math.PI);
+      L.hh = Math.max(0.03, (sill - base) / Math.sin(aw * Math.PI));
+    }
+    p.x = F.x + (T.x - F.x) * a; p.z = F.z + (T.z - F.z) * a;
+    p.y = F.y + (T.y - F.y) * a + L.hh * Math.sin(a * Math.PI);
+    this.hopT = u < 1 ? u : -1;
+    const air = u > 0.2 && u < 0.9;
+    o.flap = air ? 1 : 0; o.duck = air ? 1 : 0;
+    this.shadowY = air ? (p.z > D2 ? 0.0 : G.floor + 0.02) : undefined;
+    return u >= 1;
   }
   // a scripted walk along points [x, z, y]: she turns to each and walks there (height from point to point: up the ramp)
   walkPath(dt, pace = 0.8) {
@@ -771,20 +799,37 @@ class Bird {
     L.t += dt;
     const G = nestOf(this.plot), FL = G.house, NF = G.floor, ground = 0.015;      // the house's floor, the nest's
     const front = [G.pop[0], Math.max(G.foot[1] + 0.16, 1.2)];             // in the yard, in front of the ramp
+    const launch = [G.seat[0] - 0.02, D2 + 0.36];                           // in the yard, in front of the nest window
     const inDoor = [G.pop[0], G.inside[1] - 0.04], seatY = NF + 0.035;
+    // going through the pop door she stretches her neck out and ducks, from when her head reaches it until she's through
+    const atPop = () => p.x < G.inside[0] - 0.1 && p.y > FL - 0.12 && p.z > D2 - 0.2 && p.z < D2 + 0.34;
     switch (L.phase) {
-      case 'go': {                                           // across the yard to the foot of the ramp
-        const r = this.stepToward(front[0], front[1], dt);
+      case 'go': {                                           // across the yard to the foot of the ramp (or below the window)
+        const to = L.jump ? launch : front, r = this.stepToward(to[0], to[1], dt);
         o.walking = r.walking;
         if (r.arrived || L.t > 25 || (r.blocked && L.t > 4)) {
+          if (L.jump) { next('aim'); break; }
           next('in'); L.inside = true;
           L.path = [[G.foot[0], G.foot[1], ground], [G.pop[0], G.pop[1], FL], [inDoor[0], inDoor[1], FL], [G.inside[0], G.inside[1], FL], [G.seat[0], G.seat[1], NF + 0.02]];
         }
         break;
       }
+      case 'aim': {                                          // a jumper: faces the window, sizes it up...
+        const t = this.turnTo(Math.PI, dt * 1.2); o.walking = t.walking;
+        if (t.done && L.t > 0.5) { next('leapin'); L.inside = true; L.to = new THREE.Vector3(G.seat[0] - 0.07, NF + 0.025, G.seat[1] - 0.09); }
+        break;
+      }
+      case 'leapin':                                         // ...and jumps straight in at the window, wings beating
+        if (this.leap(dt, o, G, 1.0)) { next('turnin'); L.step = 0; }
+        break;
+      case 'turnin': {                                       // inside: turns round (by her left, where there's room) to face out
+        const t = this.turnTo(L.step ? 0 : -Math.PI / 2, dt * 0.9); o.walking = t.walking;
+        if (t.done) { if (L.step) { next('in'); L.path = [[G.seat[0], G.seat[1], NF + 0.02]]; } else L.step = 1; }
+        break;
+      }
       case 'in': {                                           // up the ramp, in at the pop door (ducking), along inside to the nest
-        const r = this.walkPath(dt, 0.75); o.walking = r.walking;
-        if (Math.abs(p.z - G.pop[1]) < 0.12 && p.x < G.inside[0]) o.duck = 1;
+        const r = this.walkPath(dt, L.jump ? 0.5 : 0.75); o.walking = r.walking;
+        if (atPop()) o.duck = 1;
         if (r.done) next('turn');
         break;
       }
@@ -808,16 +853,20 @@ class Bird {
       case 'rise': {                                         // she stands: the new egg is in the straw
         const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot);
         if (L.t > 1.0) {
+          if (L.jump) { next('leapout'); L.to = new THREE.Vector3(G.seat[0], ground, D2 + 0.36); L.hh = undefined; break; }
           next('out');
           L.path = [[G.inside[0], G.inside[1], FL], [inDoor[0], inDoor[1], FL], [G.pop[0], G.pop[1] + 0.02, FL], [G.foot[0], G.foot[1], ground], [front[0], front[1], ground]];
         }
         break;
       }
+      case 'leapout':                                        // a jumper leaves the way she came: out of the window and down
+        if (this.leap(dt, o, G, 1.0)) { L.inside = false; next('sing'); this.plot.nest.by = null; this.answer(); this.rig.indoor(null); }
+        break;
       case 'out': {                                          // back inside, out at the pop door and down the ramp
         const r = this.walkPath(dt, 0.8); o.walking = r.walking;
-        if (Math.abs(p.z - G.pop[1]) < 0.12 && p.x < G.inside[0]) o.duck = 1;
+        if (atPop()) o.duck = 1;
         if (p.z > G.foot[1] - 0.05) L.inside = false;
-        if (r.done) { L.inside = false; next('sing'); this.plot.nest.by = null; this.answer(); }
+        if (r.done) { L.inside = false; next('sing'); this.plot.nest.by = null; this.answer(); this.rig.indoor(null); }
         break;
       }
       case 'sing': {                                         // "buk buk buk buk ba-KAWK", her head bobbing, notes rising
@@ -841,7 +890,7 @@ class Bird {
   }
   // after the song: each personality has her own way of being pleased with herself
   celebrate() {
-    this.laying = null; this.layIn = 240 + this.r() * 240;
+    this.laying = null; this.layIn = 240 + this.r() * 240; this.rig.indoor(null); this.shadowY = undefined;
     const Y = PEN.yard, p = this.root.position, cx = (Y.min[0] + Y.max[0]) / 2, cz = (Y.min[2] + Y.max[2]) / 2;
     // the nearest free spot in the yard to (x, z)
     const ok = (x, z) => {
@@ -918,7 +967,7 @@ class Bird {
     const act = this.act;
     if (this.laying) {
       song = this.layStep(dt);
-      walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle; peckGoal = song.duck ? 0.55 : 0;
+      walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle;
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && this.tooClose()) act.left = Math.min(act.left, 0.05);
@@ -990,6 +1039,7 @@ class Bird {
     A.hopT = this.hopT; A.dt = dt;
     A.sing = song ? song.sing : 0; A.cluck = song ? song.cluck : 0; A.kawk = song ? song.kawk : 0;
     A.brood = (A.brood || 0) + ((song && song.brood ? 1 : 0) - (A.brood || 0)) * Math.min(1, dt * 3);
+    A.duck = (A.duck || 0) + ((song && song.duck ? 1 : 0) - (A.duck || 0)) * Math.min(1, dt * 7);
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
     this.rig.pose(A);

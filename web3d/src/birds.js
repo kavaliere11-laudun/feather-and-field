@@ -284,6 +284,14 @@ export function setSoftFur(on) {
   soft = !!on && !(typeof location !== 'undefined' && /[?&]hard\b/.test(location.search));
   BIRD_MAT.alphaToCoverage = soft; BIRD_MAT.defines = soft ? { SOFT_FUR: '' } : {}; furLook.cut.value = soft ? 0.04 : 0.45;
   BIRD_MAT.needsUpdate = true;
+  for (const m of INDOOR) syncIndoor(m);
+}
+// a bird inside a house (a hen going in to lay) wears her own copy of the material, which shades whatever part of her is
+// inside the house's box darker the deeper in it is: she goes into the shadow of the pop door, sits in the half light of the
+// nest with her face at the window
+const INDOOR = new Set();
+function syncIndoor(m) {
+  m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { INDOOR: '' }); m.needsUpdate = true;
 }
 export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null }, span: { value: 1 } };
 // real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
@@ -303,12 +311,16 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 }
 
 // the birds' material: lit as before, with the shells' strands cut out of each layer and shaded darker towards the roots
-function birdMaterial() {
+function birdMaterial(indoor) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+  const inU = indoor ? { inMat: { value: new THREE.Matrix4() }, inLo: { value: new THREE.Vector3() }, inHi: { value: new THREE.Vector3() } } : null;
+  m.userData.inU = inU;
   m.onBeforeCompile = sh => {
     sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex; sh.uniforms.furSpan = furLook.span;
+    if (inU) Object.assign(sh.uniforms, inU);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;')
+      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;\n#ifdef INDOOR\nvarying vec3 vWorldIn;\n#endif')
+      .replace('#include <project_vertex>', '#include <project_vertex>\n#ifdef INDOOR\nvWorldIn = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#endif')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
         // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
         // length, so the far birds keep their fluffy outline
@@ -325,6 +337,9 @@ function birdMaterial() {
         float fh13(vec3 p) { p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
         vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
         varying vec3 vFUV;
+        #ifdef INDOOR
+        uniform mat4 inMat; uniform vec3 inLo; uniform vec3 inHi; varying vec3 vWorldIn;
+        #endif
         // a feather's local coordinates from its centre in the lattice: x across, y along (its tip, the part that shows, at +y);
         // stretch < 1 makes it long for its width, point narrows it towards the tip
         vec2 featherLocal(vec2 pp, vec2 ce, float stretch, float point) {
@@ -520,12 +535,19 @@ function birdMaterial() {
           float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += diffuseColor.rgb * rim * rim * (0.08 + 0.16 * vFur) * step(0.001, vStyle.x);
         }
+        #ifdef INDOOR
+        {   // inside the house: darker the deeper in (the shadow of the pop door's passage, the half light of the nest)
+          vec3 lp = (inMat * vec4(vWorldIn, 1.0)).xyz, dd = min(lp - inLo, inHi - lp);
+          float depth = min(min(dd.x, dd.y), dd.z);
+          outgoingLight *= mix(1.0, 0.38, smoothstep(0.0, 0.24, depth));
+        }
+        #endif
         #include <opaque_fragment>`);
   };
   m.customProgramCacheKey = () => 'bird-fur';
   return m;
 }
-const BIRD_MAT = birdMaterial();
+const BIRD_MAT = birdMaterial(false);
 export function modelFor(breed, kind) { return kind === 'chick' ? 'chick' : breed + (kind === 'rooster' ? '_r' : '_h'); }
 
 const RIGS = [];
@@ -590,6 +612,15 @@ export class Rig {
     for (const b of list) b.userData.moves = true;
     this.mesh.userData.moves = true;
   }
+  // inside a house: box = { inv (world to the house's frame), lo, hi } shades her darker the deeper in she is; null: outside again
+  indoor(box) {
+    if (box) {
+      if (!this.inMat) { this.inMat = birdMaterial(true); syncIndoor(this.inMat); INDOOR.add(this.inMat); }
+      const u = this.inMat.userData.inU; u.inMat.value.copy(box.inv); u.inLo.value.copy(box.lo); u.inHi.value.copy(box.hi);
+    }
+    const m = box ? this.inMat : BIRD_MAT;
+    for (const me of [this.mesh, this.lo]) if (me) me.material = m;
+  }
   // pose: walk (phase, amount), peck 0..1, look (yaw, tilt), flap 0..1 (+ beat), crow 0..1, sit 0..1, kick 0..1 (scratching, one
   // leg), hopT (0..1 through a hop, -1 when not hopping), turn (rad/s), ruffle 0..1 (a feather shake), dt
   pose(s) {
@@ -604,18 +635,19 @@ export class Rig {
     // the egg song: standing tall, the head darting forward on each "buk" and thrown up for the "ba-KAWK"; on parade: chest out,
     // head high, tail up, high steps
     const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0, bd = s.brood || 0;     // brood: settled low on a nest, neck drawn in
-    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd;
+    const dk = s.duck || 0;                  // ducking through a little door: crouched and level, neck stretched forward, head low, tail down
+    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk;
     body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise + 0.12 * H.squash
-                      - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr,
+                      - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr + 0.12 * dk,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
-    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr,
+    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk,
                       s.lookYaw * (1 - s.peck) + 0.35 * rf * Math.sin(s.t * 38 + 1),
                       s.lookTilt * (1 - s.peck) + s.crow * 0.06 * Math.sin(s.t * 40));
     // walking, the head holds still in the air while the body passes under it, then darts forward: the chicken head-bob
     const u = ((ph / Math.PI) % 1 + 1) % 1, hold = 0.68, amp = 0.03 * sz;
     const hb = u < hold ? 0.5 - u / hold : -0.5 + smooth(0, 1, (u - hold) / (1 - hold));
-    head.position.z += w * hb * amp + 0.016 * sz * ck;
-    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.06 * sz * bd;
+    head.position.z += w * hb * amp + 0.016 * sz * ck + 0.075 * sz * dk;
+    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.06 * sz * bd - 0.1 * sz * dk;
     head.position.y -= w * (u < hold ? 0 : Math.sin((u - hold) / (1 - hold) * Math.PI)) * 0.006 * sz;
     const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise + 0.16 * kw + 0.07 * pr;
     B.wingL.rotation.set(0, 0, f + s.sit * 0.05); B.wingR.rotation.set(0, 0, -f - s.sit * 0.05);
@@ -623,19 +655,19 @@ export class Rig {
     // flicks up on landing, then settles with a little wobble
     const T = this.tailSpring || (this.tailSpring = { p: 0, pv: 0, y: 0, yv: 0, lastY: 0 });
     const vy = (H.y - T.lastY) / dt; T.lastY = H.y;
-    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash + 0.15 * sg + 0.22 * pr;
+    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash + 0.15 * sg + 0.22 * pr - 0.4 * dk;
     const goalY = -0.09 * Math.max(-3, Math.min(3, s.turn || 0)) + w * 0.09 * Math.sin(ph) + 0.25 * shake;
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
     B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y, 0);
     const A = 0.5 * w * (1 + 0.5 * pr);
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
-    const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash;
+    const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash - 0.35 * dk;
     B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? 1.0 * kick * s.kick : 0) + legX, 0, 0);
     B.legR.rotation.set(-A * Math.sin(ph) + (s.kickLeg === 1 ? 1.0 * kick * s.kick : 0) + legX * 0.92, 0, 0);
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
     // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
-    const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank;
+    const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank - 0.22 * this.shank * dk;
     B.legL.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
     B.legR.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);

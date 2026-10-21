@@ -38,7 +38,7 @@ def to_arrays(ob, name):
     me = ob.data
     tris0 = sum(len(p.vertices) - 2 for p in me.polygons)
     if name in BUDGET and tris0 > BUDGET[name]:                 # simplify the whole model down to its budget
-        md = ob.modifiers.new('budget', 'DECIMATE'); md.ratio = BUDGET[name] / tris0; md.use_collapse_triangulate = True
+        print("BUDGET", name, tris0, "->", BUDGET[name]); md = ob.modifiers.new("budget", "DECIMATE"); md.ratio = BUDGET[name] / tris0; md.use_collapse_triangulate = True
         dg = bpy.context.evaluated_depsgraph_get(); dg.update()
         me = bpy.data.meshes.new_from_object(ob.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
     me.calc_loop_triangles()

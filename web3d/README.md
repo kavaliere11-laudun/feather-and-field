@@ -255,6 +255,40 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - `src/main.js`: `nestOf(plot)` reads them; eggs per coop in an InstancedMesh of 6 slots (`NEST_SLOTS`) on the straw
   behind the seat, coloured per breed (`EGG_COLOUR`), the newest popping in; two to start with. Tapping the nest window
   collects them ("Collected 3 eggs"; "Ivy is laying…" while a hen sits; "No eggs yet"); the label stands over the window.
+- 21 Oct 19:12, Audrey (from the video): "The chickens looks too big to fit in the coop door. Also the chicken overlays the
+  coop. Also the chicken should move her neck forward in order to enter the coop. The little nest is cute, for it to be more
+  realistic, add a little opened door, either that slides, or that opens up. Can depends on the coop style. Also, depending
+  on the personality of the chicken, the chicken can either behave and use the ladder to enter the coop or jump in the nest
+  directly. Make the nest a bit more cosy with more hay". So:
+  - The pop door was a dark panel painted on the wall, 20 x 24 cm, so a hen going in looked pasted over the wall. It is now
+    a real opening, 30 x 40 cm (`coop.POP_W`, `POP_H`; the Brahma and Orpington are 25-26 cm wide), cut through the walls
+    (cutters `cut_pop` and `cut_hall`) with a dark passage behind it (`hall`: floor, back, ceiling, end) running along to
+    the nest; the cubby's left side has a dark doorway where the passage comes in. The Red Barn's boards are cut round it
+    (`wall_boards(holes=)`) and its bottom trim stops at it. `coop.pop_trim()` frames it on every house. People doors moved
+    or narrowed to make room (barn door from x -0.09; thatched door at 0.05, 25 cm; stone door at 0.055, 26 cm; pagoda moon
+    door at 0.085, radius 0.16; lodge door leaves at 0 and 0.16).
+  - Inside, a hen is in the shade: a laying hen wears her own copy of the bird material (`Rig.indoor(box)`, `#define
+    INDOOR`), which darkens whatever part of her is inside the house's box (`HOUSE_LO`/`HOUSE_HI` in the pen frame, front at
+    `D2` = 0.44) the deeper in it is (to 38% at 24 cm): she goes into the shadow of the pop door and sits in the half light
+    of the nest with her face bright at the window. Kept in step with the soft-edge setting (`syncIndoor`).
+  - Ducking (`duck` pose input in `src/birds.js`): crouched and level, neck stretched forward (head +7.5 cm, -10 cm), tail
+    down; used from when her head reaches the pop door until she's through (`atPop()` in `layStep`), both ways, and in the air
+    when leaping.
+  - The nest window's little door, open (`nest_door()` in `stylized/coops.py`). Anything above the window is hidden by the
+    roofs' overhangs from the game's camera (a flap propped up and doors slid up were tried: only their sticks showed), so
+    the doors open downwards: the Red Barn's (high window) hangs against the wall below the window, red with a white Z; on
+    the thatched (oak), stone (blue, with a white Z) and lodge (brown, cream Z) houses the let-down door rests on the ground
+    like a little ramp. The pagoda's is a red lattice screen slid up above the window (its roof is high enough to show it).
+    The stone cottage's basket of blue eggs moved beside the side wall and the thatched cottage's lavender pot a little right.
+  - Cosier nest: a deep bed of straw over the whole cubby floor, a rim of 13 straw lumps round the hollow where she sits
+    (lower at the front, on the sill), 90 loose straws inside, 16 on the sill, 9 hanging over its edge, 12 fallen on the ground.
+    Eggs are nestled in the bed (`nests.bed` in coops.json). House budgets raised to fit (Red Barn 13.5k, thatched 12.5k,
+    stone 17k, pagoda 13.5k, lodge 14.5k triangles).
+  - Jumpers (`JUMPERS`: the Rebel and the Brave): they walk to a spot in the yard in front of the nest window (`launch`), turn
+    to face it, crouch and leap straight in with wings beating (`leap()`: 1 s, the arc just clearing the sill where she
+    crosses the wall, her shadow staying on the ground), turn round by their left where there's room, shuffle onto the seat;
+    after laying they leap out of the window to the yard and sing there. The Diva, Good mum and Glutton behave and take the
+    ramp and the pop door.
 - Each coop hen has a personality (the game's five: `PERS_IDS`, spread across each pen) shown in her label, and `layIn`
   (first lay 6-76 s after loading, then every 4-8 minutes; one hen in the nest box at a time).
 - `startLaying(sit)` / `layStep(dt)` (phases go, in, turn, settle, sit, rise, out, sing): across the yard to the foot of
@@ -277,7 +311,9 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   out_phases.json; `VW`/`VH`, `COOPS`), `laytrace.mjs PLOT PERS SIT seconds` (her position and state every half second);
   the page has `__farm.layNow(i, sit)`, `layAs(i, pers, sit)`, `noLaying()`, `nestOf`, `showEggs`. Ten simulated
   minutes: 3-8 eggs per coop. `layclip.mjs` can centre on a raised point (`LX`, `LZ`, `LH` in the pen frame).
-  `nesttap.mjs` taps each coop's nest window and checks the eggs are collected.
+  `nesttap.mjs` taps each coop's nest window and checks the eggs are collected. `coopfronts.mjs [size] [out]` pictures each
+  house's front with the birds moved aside (`LX`, `LZ`, `LH` to centre); `sitshot.mjs [size] [out] [pers]` a hen sitting at
+  each window, then the eggs once she's gone.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

@@ -65,6 +65,17 @@ def plank(name, a, b, width, thick, normal, m, parent=None, jitter=0.6, bevel=0.
     return o
 
 
+POP_W, POP_H = 0.30, 0.40                 # the hens' pop door: wide and tall enough for a big hen ducking through
+
+
+def pop_trim(objs, z0, trim, D2, x=-0.31):
+    """The frame round the pop door's opening (x, from z0 up)."""
+    a, b, t = x - POP_W / 2 - 0.0225, x + POP_W / 2 + 0.0225, z0 + POP_H + 0.0225
+    for (p, q) in [((a - 0.0225, -D2 - 0.03, t), (b + 0.0225, -D2 - 0.03, t)), ((a, -D2 - 0.03, z0 + 0.01), (a, -D2 - 0.03, t)),
+                   ((b, -D2 - 0.03, z0 + 0.01), (b, -D2 - 0.03, t))]:
+        objs.append(plank('ptrim', p, q, 0.045, 0.02, (0, -1, 0), trim, jitter=0.3))
+
+
 def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
     """window: (x0, x1, z0, z1), an opening left in the front boards (the nest window; coops.red_barn adds the rest)."""
     random.seed(seed); m = M()
@@ -80,28 +91,30 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
         objs.append(plank('floor', (-W2 - 0.03, y, FL), (W2 + 0.03, y, FL), 0.13, 0.045, (0, 0, 1), m['wood']))
     # ---- walls: vertical boards in barn red
     BW = 0.105
-    def wall_boards(x0, x1, y, out, top, door=None, win=None):
+    def wall_boards(x0, x1, y, out, top, holes=()):
         n = int(round((x1 - x0) / BW)); w = (x1 - x0) / n
         for i in range(n):
             x = x0 + (i + 0.5) * w
             z1 = top(x)
-            if door and door[0] < x < door[1]:
-                objs.append(plank('wall', (x, y, door[2]), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
+            xl, xr = x - w / 2, x + w / 2
+            cut = [h for h in holes if xl < h[1] and xr > h[0]]
+            if not cut:
+                objs.append(plank('wall', (x, y, FL + 0.02), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
                 continue
-            if win and x - w / 2 < win[1] and x + w / 2 > win[0]:     # a board the window cuts: full beside it, under and over it
-                xl, xr = x - w / 2, x + w / 2
-                pieces = []
-                if xl < win[0]: pieces.append((xl, win[0], FL + 0.02, z1))
-                if xr > win[1]: pieces.append((win[1], xr, FL + 0.02, z1))
-                a, b = max(xl, win[0]), min(xr, win[1])
-                pieces += [(a, b, FL + 0.02, win[2]), (a, b, win[3], z1)]
-                for (xa, xb, za, zb) in pieces:
-                    if xb - xa > 0.012 and zb - za > 0.01:
-                        objs.append(plank('wall', ((xa + xb) / 2, y, za), ((xa + xb) / 2, y, zb), (xb - xa) * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
+            # a board an opening cuts: the part beside it full height, under and over it
+            pieces = []; h = cut[0]
+            if xl < h[0]: pieces.append((xl, h[0], FL + 0.02, z1))
+            if xr > h[1]: pieces.append((h[1], xr, FL + 0.02, z1))
+            a, b = max(xl, h[0]), min(xr, h[1])
+            pieces += [(a, b, FL + 0.02, h[2]), (a, b, h[3], z1)]
+            for (xa, xb, za, zb) in pieces:
+                if xb - xa > 0.012 and zb - za > 0.01:
+                    objs.append(plank('wall', ((xa + xb) / 2, y, za), ((xa + xb) / 2, y, zb), (xb - xa) * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
                 continue
             objs.append(plank('wall', (x, y, FL + 0.02), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
     # front (-y) and back (+y): straight tops at the eave
-    wall_boards(-W2, W2, -D2, -1, lambda x: EAVE, door=(-0.42, -0.2, FL + 0.27), win=window)
+    POP = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H) if window else (-0.42, -0.2, FL, FL + 0.27)   # the hens' pop door
+    wall_boards(-W2, W2, -D2, -1, lambda x: EAVE, holes=[POP] + ([window] if window else []))
     wall_boards(-W2, W2, D2, 1, lambda x: EAVE)
     # gable ends (+x and -x): boards follow the roof slope
     def gable(xw, out):
@@ -117,9 +130,13 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
             objs.append(box('ctrim', (0.06, 0.06, EAVE - FL), (sx * (W2 + 0.02), sy * (D2 + 0.02), (EAVE + FL) / 2), m=m['white'], bevel=0.008))
     for sy in (-1, 1):
         objs.append(plank('etrim', (-W2 - 0.05, sy * (D2 + 0.035), EAVE - 0.03), (W2 + 0.05, sy * (D2 + 0.035), EAVE - 0.03), 0.06, 0.025, (0, sy, 0), m['white']))
-        objs.append(plank('btrim', (-W2 - 0.05, sy * (D2 + 0.035), FL + 0.04), (W2 + 0.05, sy * (D2 + 0.035), FL + 0.04), 0.06, 0.025, (0, sy, 0), m['white']))
+        spans = [(-W2 - 0.05, W2 + 0.05)]
+        if sy < 0 and window:                   # the front's bottom trim stops at the pop door and the nest window
+            spans = [(-W2 - 0.05, POP[0] - 0.045), (POP[1] + 0.045, window[0] - 0.02), (window[1] + 0.02, W2 + 0.05)]
+        for a, b in spans:
+            objs.append(plank('btrim', (a, sy * (D2 + 0.035), FL + 0.04), (b, sy * (D2 + 0.035), FL + 0.04), 0.06, 0.025, (0, sy, 0), m['white']))
     # ---- big barn door on the front, white frame with the X brace
-    dx0, dx1, dz0, dz1 = (-0.13, 0.29, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
+    dx0, dx1, dz0, dz1 = (-0.09, 0.29, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
     yd = -D2 - 0.03
     for i in range(4):
         x = dx0 + (i + 0.5) * (dx1 - dx0) / 4
@@ -130,10 +147,12 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
         objs.append(plank('xtrim', p, q, 0.05, 0.022, (0, -1, 0), m['white'], jitter=0.2))
     objs.append(sphere('handle', 0.016, (dx0 + 0.06, yt - 0.03, (dz0 + dz1) / 2), m=m['metal'], seg=12, rings=8))
     # ---- chicken pop door, dark opening with a white surround
-    objs.append(box('hole', (0.2, 0.02, 0.24), (-0.31, -D2 + 0.005, FL + 0.14), m=mat('dark', '#2a1d16', rough=1.0), bevel=0.0))
-    for (p, q) in [((-0.43, -D2 - 0.03, FL + 0.27), (-0.19, -D2 - 0.03, FL + 0.27)), ((-0.43, -D2 - 0.03, FL + 0.02), (-0.43, -D2 - 0.03, FL + 0.28)),
-                   ((-0.19, -D2 - 0.03, FL + 0.02), (-0.19, -D2 - 0.03, FL + 0.28))]:
-        objs.append(plank('ptrim', p, q, 0.045, 0.02, (0, -1, 0), m['white'], jitter=0.3))
+    if window: pop_trim(objs, FL, m['white'], D2)   # a real opening (coops.nest_window lines the passage behind it)
+    else:
+        objs.append(box('hole', (0.2, 0.02, 0.24), (-0.31, -D2 + 0.005, FL + 0.14), m=mat('dark', '#2a1d16', rough=1.0), bevel=0.0))
+        for (p, q) in [((-0.43, -D2 - 0.03, FL + 0.27), (-0.19, -D2 - 0.03, FL + 0.27)), ((-0.43, -D2 - 0.03, FL + 0.02), (-0.43, -D2 - 0.03, FL + 0.28)),
+                       ((-0.19, -D2 - 0.03, FL + 0.02), (-0.19, -D2 - 0.03, FL + 0.28))]:
+            objs.append(plank('ptrim', p, q, 0.045, 0.02, (0, -1, 0), m['white'], jitter=0.3))
     # ---- ramp down to the ground with little cross slats
     ra, rb = Vector((-0.31, -D2 - 0.05, FL + 0.02)), Vector((-0.31, -D2 - 0.72, 0.03))
     objs.append(plank('ramp', ra, rb, 0.2, 0.03, (0, -0.5, 0.86), m['wood'], jitter=0.3))

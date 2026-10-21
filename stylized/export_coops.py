@@ -9,7 +9,7 @@ os.makedirs(OUT, exist_ok=True)
 sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
-BUDGET.update({'house_rir': 12000, 'house_orp': 12000, 'house_leg': 15000, 'house_sil': 12000, 'house_bra': 12000,
+BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
 
