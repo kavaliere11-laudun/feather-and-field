@@ -1060,88 +1060,88 @@
  },
  "stats": {
   "rir_h": {
-   "tris": 2962,
-   "verts": 1557
+   "tris": 2274,
+   "verts": 1213
   },
   "rir_h_lo": {
    "tris": 868,
    "verts": 510
   },
   "rir_r": {
-   "tris": 3378,
-   "verts": 1771
+   "tris": 2564,
+   "verts": 1364
   },
   "rir_r_lo": {
    "tris": 960,
    "verts": 562
   },
   "orp_h": {
-   "tris": 2968,
-   "verts": 1560
+   "tris": 2266,
+   "verts": 1209
   },
   "orp_h_lo": {
    "tris": 888,
    "verts": 520
   },
   "orp_r": {
-   "tris": 3364,
-   "verts": 1764
+   "tris": 2570,
+   "verts": 1367
   },
   "orp_r_lo": {
    "tris": 978,
    "verts": 571
   },
   "leg_h": {
-   "tris": 2976,
-   "verts": 1574
+   "tris": 2256,
+   "verts": 1214
   },
   "leg_h_lo": {
    "tris": 868,
    "verts": 520
   },
   "leg_r": {
-   "tris": 3342,
-   "verts": 1763
+   "tris": 2564,
+   "verts": 1374
   },
   "leg_r_lo": {
    "tris": 956,
    "verts": 570
   },
   "bra_h": {
-   "tris": 2968,
-   "verts": 1564
+   "tris": 2266,
+   "verts": 1213
   },
   "bra_h_lo": {
    "tris": 892,
    "verts": 526
   },
   "bra_r": {
-   "tris": 3358,
-   "verts": 1765
+   "tris": 2568,
+   "verts": 1370
   },
   "bra_r_lo": {
    "tris": 970,
    "verts": 571
   },
   "sil_h": {
-   "tris": 3290,
-   "verts": 1707
+   "tris": 2286,
+   "verts": 1207
   },
   "sil_h_lo": {
-   "tris": 984,
-   "verts": 554
+   "tris": 986,
+   "verts": 557
   },
   "sil_r": {
-   "tris": 3686,
-   "verts": 1905
+   "tris": 2584,
+   "verts": 1350
   },
   "sil_r_lo": {
    "tris": 1086,
-   "verts": 605
+   "verts": 601
   },
   "chick": {
-   "tris": 1386,
-   "verts": 729
+   "tris": 984,
+   "verts": 528
   },
   "chick_lo": {
    "tris": 406,
