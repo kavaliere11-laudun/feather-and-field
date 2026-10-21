@@ -1,8 +1,8 @@
 {
  "tops": {
   "house_rir": [
-   -0.0024,
-   1.5473,
+   -0.0031,
+   1.5483,
    -0.0192
   ],
   "house_orp": [
@@ -11,9 +11,9 @@
    -0.0807
   ],
   "house_leg": [
-   0.0023,
-   1.4918,
-   -0.0089
+   -0.0026,
+   1.4936,
+   -0.0068
   ],
   "house_sil": [
    0.0,
@@ -51,7 +51,9 @@
    "foot": [
     -0.31,
     1.16
-   ]
+   ],
+   "bed": 0.46,
+   "door": "drop"
   },
   "house_orp": {
    "floor": 0.08,
@@ -77,7 +79,9 @@
    "foot": [
     -0.31,
     0.83
-   ]
+   ],
+   "bed": 0.14,
+   "door": "drop"
   },
   "house_leg": {
    "floor": 0.18,
@@ -103,23 +107,25 @@
    "foot": [
     -0.31,
     0.796
-   ]
+   ],
+   "bed": 0.24,
+   "door": "drop"
   },
   "house_sil": {
    "floor": 0.06,
    "house": 0.14,
    "win": [
-    0.44,
+    0.42,
     0.1,
     0.4,
     0.26
    ],
    "seat": [
-    0.44,
+    0.42,
     0.36
    ],
    "inside": [
-    0.23,
+    0.21,
     0.24
    ],
    "pop": [
@@ -129,7 +135,9 @@
    "foot": [
     -0.31,
     0.89
-   ]
+   ],
+   "bed": 0.12,
+   "door": "lattice"
   },
   "house_bra": {
    "floor": 0.2,
@@ -155,38 +163,40 @@
    "foot": [
     -0.31,
     0.932
-   ]
+   ],
+   "bed": 0.26,
+   "door": "drop"
   }
  },
  "stats": {
   "house_rir": {
-   "tris": 10040,
-   "verts": 5890,
+   "tris": 13304,
+   "verts": 7764,
    "prims": 4
   },
   "house_orp": {
-   "tris": 8980,
-   "verts": 5133,
+   "tris": 11968,
+   "verts": 7026,
    "prims": 4
   },
   "house_leg": {
-   "tris": 15000,
-   "verts": 8800,
+   "tris": 17000,
+   "verts": 10052,
    "prims": 4
   },
   "house_sil": {
-   "tris": 10440,
-   "verts": 5854,
+   "tris": 13300,
+   "verts": 7680,
    "prims": 3
   },
   "house_bra": {
-   "tris": 11476,
-   "verts": 6858,
+   "tris": 14208,
+   "verts": 8470,
    "prims": 3
   },
   "pen_base": {
    "tris": 4999,
-   "verts": 3354,
+   "verts": 3349,
    "prims": 3
   },
   "fence": {
