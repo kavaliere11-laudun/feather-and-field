@@ -78,6 +78,9 @@ export function initFlock(gltf, json) {
   }
 }
 
+// a pattern drawn on each feather (by the shader), chosen per vertex: 0 none, 1 bars across the feather, 2 a dark centre with light
+// edges (a Brahma's cape), 4 darker towards the feather's base, where the next feather overlaps it
+const FEAT = { c: new THREE.Color(), mode: 0, amt: 0 };
 // the colour of one vertex of a grown bird
 function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   const key = reg === R.wing ? 'wing' : reg === R.prim ? 'prim' : reg === R.tail ? 'tail' : reg === R.crest ? 'crest' : reg === R.legfeather ? 'legfeather' : 'body';
@@ -91,18 +94,21 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
     else if (S.top && h > 0.55) c = S.top;
   }
   out.copy(lin(c));
+  const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
+  FEAT.mode = 4; FEAT.amt = lum > 0.5 ? 0.14 : 0.3; FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
   const n = noise(x * 60, y * 60, z * 60);
   switch (S.pattern) {
-    case 'bars': if (key !== 'crest' && !(key === 'body' && (hw > 0.04 || c === S.breast))) {
-      const b = Math.sin((y + 0.012 * Math.sin(x * 40 + z * 30)) * 2 * Math.PI / 0.03);
-      out.lerp(lin(S.bars), smooth(0.2, 0.7, b) * 0.85);
+    case 'bars': if (key !== 'crest' && !(key === 'body' && c === S.breast)) {          // barred feathers (a light trace on the vertices for far views)
+      const hackle = key === 'body' && hw > 0.04;
+      FEAT.mode = 1; FEAT.c.copy(lin(S.bars)); FEAT.amt = hackle ? 0.35 : 0.85;
+      if (!hackle) { const b = Math.sin((y + 0.012 * Math.sin(x * 40 + z * 30)) * 2 * Math.PI / 0.03); out.lerp(lin(S.bars), smooth(0.2, 0.7, b) * 0.2); }
     } break;
     case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / 0.034); out.lerp(lin(S.bars), smooth(0.0, 0.8, b) * 0.75); } break;
     case 'stripes': if (key === 'body' && hw < 0.97) {                           // a Brahma's cape: black feathers edged in white, round the neck
       const k = top / 0.55, mx = (nb[0] + hc[0]) / 2, my = (nb[1] + hc[1]) / 2 - 0.01, mz = (nb[2] + hc[2]) / 2;
       const d = Math.hypot(x - mx, (y - my) * 0.75, z - mz) / k, cape = 1 - smooth(0.075, 0.12, d);
-      if (cape > 0) { const a = Math.atan2(x, z - mz); out.lerp(lin(S.stripe), (0.72 + 0.25 * Math.sin(a * 6 + y * 25)) * cape); }
-      else if (rooster && c === S.saddle) { const a = Math.atan2(x, -z); out.lerp(lin(S.stripe), smooth(0.4, 0.8, Math.sin(a * 16)) * 0.6); }
+      if (cape > 0) { out.lerp(lin(S.stripe), 0.3 * cape); FEAT.mode = 2; FEAT.c.copy(lin(S.stripe)); FEAT.amt = Math.min(1, cape * 1.3); }
+      else if (rooster && c === S.saddle) { FEAT.mode = 2; FEAT.c.copy(lin(S.stripe)); FEAT.amt = 0.4; }
     } break;
     case 'splash': { const m = noise(x * 22 + 3, y * 22, z * 22); out.lerp(lin(S.spot), smooth(0.56, 0.66, m) * 0.9); } break;
     case 'paint': { const m = noise(x * 14 + 7, y * 14, z * 14 + 2); out.lerp(lin(S.spot), smooth(0.58, 0.64, m)); } break;
@@ -146,8 +152,10 @@ export function paintedGeometry(model, breed, colour) {
   const legHex = (chick && S.leg) || (breed === 'sil' ? '#55505c' : chick ? '#f0be42' : LEG[breed]);
   const beakHex = (chick && S.beak) || (breed === 'sil' ? '#757688' : '#e9b24c');
   const k = base.normalized ? 1 / 255 : 1;
+  const fpat = new Float32Array(n * 4), fmode = new Float32Array(n), feathered = !chick && breed !== 'sil';
   for (let i = 0; i < n; i++) {
     const reg = paint ? paint.array[i] : 0;
+    FEAT.mode = 0;
     if (!reg) { c.setRGB(base.array[i * 4] * k, base.array[i * 4 + 1] * k, base.array[i * 4 + 2] * k); }
     else {
       let hw = 0;
@@ -157,6 +165,7 @@ export function paintedGeometry(model, breed, colour) {
       else adultColour(S, rooster, reg, x, y, z, hw, M.top, c, M.piv.head, M.piv.headc || M.piv.head);
     }
     col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+    if (feathered && FEAT.mode) { fpat[i * 4] = FEAT.c.r; fpat[i * 4 + 1] = FEAT.c.g; fpat[i * 4 + 2] = FEAT.c.b; fpat[i * 4 + 3] = FEAT.amt; fmode[i] = FEAT.mode; }
   }
   let g = new THREE.BufferGeometry();
   for (const a of ['position', 'normal', 'skinIndex', 'skinWeight']) g.setAttribute(a, src.attributes[a]);
@@ -170,6 +179,7 @@ export function paintedGeometry(model, breed, colour) {
     fs[i] = chick || breed === 'sil' ? 0 : FEATHER[reg] || 0; fh[i] = hw;      // Silkies and chicks are all fluff
   }
   g.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); g.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
+  g.setAttribute('featherPattern', new THREE.BufferAttribute(fpat, 4)); g.setAttribute('featherMode', new THREE.BufferAttribute(fmode, 1));
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
   const fur = furOf(model, breed);
@@ -181,11 +191,13 @@ export function paintedGeometry(model, breed, colour) {
 // each keeping only tiny dots, so together they make fine strands (Silkies get long hair-like fluff, chicks soft down)
 // hair length (metres) per paint region, and how many shells
 const FUR = {
-  sil: { len: { [R.body]: 0.03, [R.crest]: 0.03, [R.tail]: 0.032, [R.wing]: 0.024, [R.prim]: 0.024, [R.legfeather]: 0.016 }, shells: 12, droop: 0.35 },
-  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1 },
+  // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
+  sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
+         clump: 0.85, fine: 1.35, wave: 1.4, comb: 0.45 },
+  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.3, wave: 0.4 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
-  hen: { len: { [R.body]: 0.011, [R.wing]: 0.006, [R.crest]: 0.008, [R.legfeather]: 0.009 }, shells: 6, comb: 1 },
-  orp: { len: { [R.body]: 0.016, [R.wing]: 0.008, [R.legfeather]: 0.01 }, shells: 7, comb: 0.8 },
+  hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.7 },
+  orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.5 },
 };
 const FEATHER = { [R.body]: 2.6, [R.wing]: 2.0, [R.crest]: 1.2, [R.legfeather]: 1.2 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
@@ -193,7 +205,11 @@ const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed ==
 function addFur(g, src, spec) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
   const len = new Float32Array(n);
-  for (let i = 0; i < n; i++) len[i] = spec.len[paint[i]] || 0;
+  const top = g.boundingBox.max.y, Pp = src.attributes.position.array;
+  for (let i = 0; i < n; i++) {
+    len[i] = spec.len[paint[i]] || 0;
+    if (spec.comb && paint[i] === R.body) len[i] *= 1 + 0.9 * (1 - smooth(0.2, 0.42, Pp[i * 3 + 1] / top));    // soft fluff underneath and round the thighs
+  }
   const furTris = [];
   for (let t = 0; t < idx.length; t += 3) if (len[idx[t]] > 0 && len[idx[t + 1]] > 0 && len[idx[t + 2]] > 0) furTris.push(idx[t], idx[t + 1], idx[t + 2]);
   const map = new Int32Array(n).fill(-1), furVerts = [];
@@ -203,12 +219,15 @@ function addFur(g, src, spec) {
   const pos = new Float32Array(total * 3), nrm = new Float32Array(total * 3), col = new Float32Array(total * 3);
   const si = new Uint8Array(total * 4), sw = new Uint8Array(total * 4), furT = new Float32Array(total), furLen = new Float32Array(total);
   const fs = new Float32Array(total), fh = new Float32Array(total), comb = new Float32Array(total).fill(spec.comb || 0);
+  const style = new Float32Array(total * 3);
+  for (let i = 0; i < total; i++) { style[i * 3] = spec.clump || 0; style[i * 3 + 1] = spec.fine || 1; style[i * 3 + 2] = spec.wave || 0; }
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
-  const FS = A('featherSize').array, FH = A('featherHead').array;
+  const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array;
+  const fp = new Float32Array(total * 4), fm = new Float32Array(total);
   const copy = (dst, from) => {
     pos.set(P.subarray(from * 3, from * 3 + 3), dst * 3); nrm.set(N.subarray(from * 3, from * 3 + 3), dst * 3); col.set(Cc.subarray(from * 3, from * 3 + 3), dst * 3);
     si.set(SI.subarray(from * 4, from * 4 + 4), dst * 4); sw.set(SW.subarray(from * 4, from * 4 + 4), dst * 4); furLen[dst] = len[from];
-    fs[dst] = FS[from]; fh[dst] = FH[from];
+    fs[dst] = FS[from]; fh[dst] = FH[from]; fp.set(FP.subarray(from * 4, from * 4 + 4), dst * 4); fm[dst] = FM[from];
   };
   for (let i = 0; i < n; i++) copy(i, i);
   for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
@@ -221,7 +240,8 @@ function addFur(g, src, spec) {
   f.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); f.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4, true));
   f.setAttribute('furT', new THREE.BufferAttribute(furT, 1)); f.setAttribute('furLen', new THREE.BufferAttribute(furLen, 1));
   f.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); f.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
-  f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1));
+  f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 3));
+  f.setAttribute('featherPattern', new THREE.BufferAttribute(fp, 4)); f.setAttribute('featherMode', new THREE.BufferAttribute(fm, 1));
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
   f.userData.fur = { base: idx.length, shell: furTris.length, shells: K, droop: spec.droop };
@@ -231,7 +251,7 @@ function addFur(g, src, spec) {
 
 // how fine the strands are and how many shells are drawn, from how big a bird is on screen (fewer when zoomed out)
 const FURRY = [];
-export const furLook = { density: { value: 150 }, shown: 1 };
+export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1 };     // cut: how much of a strand's soft edge is kept
 function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.round(u.shells * furLook.shown) * u.shell); }
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   furLook.density.value = Math.max(60, Math.min(300, pixelsPerMetre / 2.0));
@@ -243,11 +263,11 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 function birdMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
   m.onBeforeCompile = sh => {
-    sh.uniforms.furDensity = furLook.density;
+    sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
+      .replace('#include <common>', '#include <common>\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec3 furStyle;\nvarying vec3 vStyle;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
-        vFur = furT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb;
+        vFur = furT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vPat = featherPattern; vMode = featherMode;
         if (furT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
           transformed += nn * furT * furLen * (1.0 - 0.55 * furComb) + normalize(back) * furT * furT * furLen * 1.4 * furComb;
@@ -255,40 +275,65 @@ function birdMaterial() {
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float furDensity; varying float vFur; varying float vFurLen; varying vec3 vRest; varying float vFeather; varying float vHead; varying float vComb;
+        uniform float furDensity; uniform float furCut; varying float vFur; varying float vFurLen; varying vec3 vRest; varying float vFeather; varying float vHead; varying float vComb; varying vec3 vStyle; varying vec4 vPat; varying float vMode;
         float fh13(vec3 p) { p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
         vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float furShade = 1.0;
         if (vFurLen > 0.0) {
-          vec3 q = vRest * furDensity, cell = floor(q), fr = q - cell;
-          float h = fh13(cell + 7.0), strand = 0.5 + 0.5 * h;
-          if (vFur > 0.0) {
-            if (vFur > strand) discard;
+          // tufts: strands lean in towards their tuft's middle as they grow, with a gentle wave
+          float td = furDensity * 0.16, tt = vFur;
+          vec3 tq = vRest * td, tcell = floor(tq), tmid = (tcell + 0.25 + 0.5 * fh33(tcell + 11.0)) / td;
+          float tid = fh13(tcell + 5.0);
+          vec3 rp = mix(vRest, tmid, vStyle.x * tt * tt);
+          rp += vec3(sin(tt * 7.0 + tid * 6.28), 0.0, cos(tt * 6.0 + tid * 4.0)) * 0.0025 * vStyle.z * tt;
+          vec3 q = rp * furDensity * vStyle.y, cell = floor(q), fr = q - cell;
+          float h = fh13(cell + 7.0), strand = mix(0.5 + 0.5 * h, 0.4 + 0.6 * h, step(0.001, vStyle.x));
+          if (tt > 0.0) {
+            if (tt > strand) discard;
             vec3 c = 0.3 + 0.4 * fh33(cell);
-            if (length(fr - c) > 0.52 * (1.0 - 0.85 * vFur / strand)) discard;
+            float rad = mix(0.52, 0.56, step(0.001, vStyle.x)) * (1.0 - 0.82 * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
+            float cov = 1.0 - smoothstep(rad - fw, rad + fw, d);
+            if (cov < furCut) discard;
           }
-          furShade = mix(mix(0.58, 0.86, vComb), mix(1.1, 1.04, vComb), vFur / strand) * (0.9 + 0.2 * h);     // sleek feathers are less deep than fluff
+          float sleek = 1.0 - step(0.001, vStyle.x);
+          furShade = mix(mix(0.62, 0.86, sleek), mix(1.15, 1.04, sleek), tt / strand) * (0.9 + 0.2 * h) * (0.94 + 0.12 * tid * vStyle.x);
+          // locks: each tuft lighter in its middle and darker where it parts from the next one
+          float lock = length((vRest - tmid) * td) ;
+          furShade *= mix(1.0, mix(1.08, 0.74, smoothstep(0.18, 0.62, lock)), vStyle.x);
         }
         if (vFeather > 0.0) {
-          // overlapping feathers like roof tiles, in rows running back along the body (down the neck near the head): the front
-          // feather lies on top, so each shows its rounded back edge, lighter in the middle, with a soft shadow along the rim
+          // overlapping feathers like roof tiles, in rows running back along the body (long hackle feathers down the neck): the
+          // front feather lies on top, so each shows its rounded back edge, with its quill, fine barbs and its own pattern
           float size = vFeather * mix(1.0, 0.42, vHead) * 0.017, neck = smoothstep(0.15, 0.45, vHead);
           vec2 pb = vec2(atan(vRest.x, vRest.y - 0.2) * 0.11, -vRest.z);
-          vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y);
+          vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y * 0.55);
           vec2 pp = mix(pb, pn, neck) / size;
-          float best = 1e9, t = 1.0, id = 0.0, row0 = floor(pp.y / 0.5);
+          float best = 1e9, t = 1.0, id = 0.0, row0 = floor(pp.y / 0.5); vec2 lp = vec2(0.0);
           for (int k = -1; k <= 1; k++) {
             float row = row0 + float(k), off = mod(row, 2.0) * 0.5, col0 = floor(pp.x - off);
             for (int c = 0; c <= 1; c++) {
               vec2 ce = vec2(col0 + float(c) + off + 0.5, row * 0.5);
-              float dist = length((pp - ce) * vec2(1.0, 1.2)) / 0.64;
-              if (dist < 1.0 && row < best) { best = row; t = dist; id = fh13(vec3(ce, 3.0)); }
+              vec2 l = (pp - ce) * vec2(1.0, 1.2) / 0.64;
+              float dist = length(l);
+              if (dist < 1.0 && row < best) { best = row; t = dist; id = fh13(vec3(ce, 3.0)); lp = l; }
             }
           }
-          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * mix(1.0, 0.82, smoothstep(0.8, 1.0, t)) * (0.95 + 0.1 * id);
+          float across = lp.x, along = lp.y;
+          float onTop = 1.0 - 0.6 * step(0.001, vFur);     // the fluff over the feathers carries the pattern more softly
+          if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
+          else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
+          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.2, -0.7, along));
+          float barbs = sin((abs(across) - along * 0.7) * 42.0);
+          float quill = smoothstep(0.07, 0.0, abs(across)) * smoothstep(0.75, -0.3, along);
+          furShade *= (0.84 + 0.24 * (1.0 - t * t)) * mix(1.0, 0.74, smoothstep(0.8, 1.0, t)) * (0.94 + 0.12 * id) * (1.0 + 0.025 * barbs) * (1.0 + 0.08 * quill);
         }
-        diffuseColor.rgb *= furShade;`);
+        diffuseColor.rgb *= furShade;`)
+      .replace('#include <opaque_fragment>', `if (vFurLen > 0.0) {
+          float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+          outgoingLight += diffuseColor.rgb * rim * rim * (0.08 + 0.16 * vFur) * step(0.001, vStyle.x);
+        }
+        #include <opaque_fragment>`);
   };
   m.customProgramCacheKey = () => 'bird-fur';
   return m;

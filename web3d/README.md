@@ -66,6 +66,14 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   - The other breeds: a short layer (1.1 cm; Orpingtons 1.6 cm) combed back and down (down the neck near the head), over a
     feather texture drawn per pixel: rows of overlapping rounded feathers like roof tiles (attributes featherSize, featherHead).
   - Fewer shells and coarser strands when zoomed out (`setFurDetail`, from pixels per metre; the quality levels cap it too).
+- Second pass (21 Oct, Audrey: "a little bit better with the quality of the silkies feathers", then the other breeds):
+  - Silkie hair: 16 shells, finer strands that gather into tufts (locks) towards their tips with a gentle wave, combed a little
+    back and down so strands read as streaks, locks lighter in the middle and darker where they part, a soft glow where light
+    grazes the fluff. Soft-edged strands (alpha to coverage) were tried and dropped: they tinted the birds green.
+  - Feathered breeds: a pattern drawn on each feather, chosen per vertex (attributes featherPattern, featherMode): bars across
+    the feather (Legbar), a dark centre with light edges (the Brahma's cape and a rooster's saddle), or darker towards the
+    base (everyone else, gently on light plumage); a quill and fine barbs; long hackle feathers down the neck; fluffier
+    underside and thighs. A per-pixel relief (bump) was tried and dropped: the feather edges made dark dashes.
 - Bird budgets lowered (hens 2300, roosters 2600, chicks 1000 triangles) since the shells multiply them.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
 - Tests for heavy views: `still.mjs` / `stillat.mjs` draw once and screenshot (the test browser is too slow to keep drawing
