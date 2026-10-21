@@ -69,7 +69,8 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
 - Second pass (21 Oct, Audrey: "a little bit better with the quality of the silkies feathers", then the other breeds):
   - Silkie hair: 16 shells, finer strands that gather into tufts (locks) towards their tips with a gentle wave, combed a little
     back and down so strands read as streaks, locks lighter in the middle and darker where they part, a soft glow where light
-    grazes the fluff. Soft-edged strands (alpha to coverage) were tried and dropped: they tinted the birds green.
+    grazes the fluff. Soft-edged strands (alpha to coverage) were tried and dropped: they tinted the birds green (fixed and
+    back on since 09:34, see Hair locks below).
   - Feathered breeds: a pattern drawn on each feather, chosen per vertex (attributes featherPattern, featherMode): bars across
     the feather (Legbar), a dark centre with light edges (the Brahma's cape and a rooster's saddle), or darker towards the
     base (everyone else, gently on light plumage); a quill and fine barbs; long hackle feathers down the neck; fluffier
@@ -95,6 +96,18 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   2.2 cm on chicks) and tints it with the bird's colours; the fluff shells now show only round the outline (and short near the
   body), so there is no speckle across the middle. Mipmapped, so it looks the same at every zoom and on every phone. A Blender
   render of particle hair (`hair_tile.py`, not kept) took 7 minutes and came out too straight, with a seam.
+- Hair locks (21 Oct 09:34, Audrey: "I cannot really see a change"): the 5 cm tile's strands were a fraction of a screen pixel,
+  so they averaged away and the outline shells (a hard-cut mosaic on her iPhone) were all she saw. Now:
+  - The tile is drawn at the size the hair is seen: 12 cm wide (Silkies; 3.5 cm on chicks), about 130 locks in three layers,
+    each lock about 1 cm wide and 4-8 cm long, 7-11 strands of 2.4-3.4 mm that gather to a curling tip, staggered tapered roots.
+    Two channels: red = how light (dark partings, darker roots, each lock a little lighter or darker), green = how far the
+    hair stands out (top layer highest, a lock's middle higher than its edges). JPEG 4:4:4 so the channels stay apart.
+  - Silkies and chicks: every fluff layer keeps only the hair that reaches that far out (`locks` in the FUR spec, a negative
+    size in furStyle.w marks it), so the locks stand up in 3D right across the body, darker deeper in; the strand dots and
+    the outline-only rule are gone for them. Sampled a little sharper (mip bias -0.75).
+  - Soft edges on by default wherever antialiasing is on (quality 1-2): alpha to coverage, with the birds' alpha writes
+    masked off (`colorMask` in onBeforeRender/onAfterRender). That mask was the fix for the green tint: the partial alpha
+    reached the canvas, so the page showed through. `?hard` turns soft edges off to compare.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

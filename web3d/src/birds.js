@@ -197,8 +197,8 @@ export function paintedGeometry(model, breed, colour) {
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
   sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
-         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8, tex: 0.05 },
-  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, tex: 0.022 },
+         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8, locks: 0.12 },
+  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
   orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.15 },
@@ -235,7 +235,8 @@ function addFur(g, src, spec) {
   };
   for (let i = 0; i < n; i++) copy(i, i);
   for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
-  for (let i = 0; i < total; i++) style[i * 4 + 3] = furLen[i] > 0 ? spec.tex || 0 : 0;
+  // painted hair: tex (chicks) only shades the down; locks (Silkies) also shapes the fluff layers (a negative size marks it)
+  for (let i = 0; i < total; i++) style[i * 4 + 3] = furLen[i] > 0 ? (spec.locks ? -spec.locks : spec.tex || 0) : 0;
   const index = new (total > 65535 ? Uint32Array : Uint16Array)(idx.length + K * furTris.length);
   index.set(idx, 0);
   for (let k = 1; k <= K; k++) for (let t = 0; t < furTris.length; t++) index[idx.length + (k - 1) * furTris.length + t] = n + (k - 1) * m + map[furTris[t]];
@@ -256,8 +257,14 @@ function addFur(g, src, spec) {
 
 // how fine the strands are and how many shells are drawn, from how big a bird is on screen (fewer when zoomed out)
 const FURRY = [];
-// ?soft: strand edges blended by the graphics chip's antialiasing (alpha to coverage) instead of cut hard (a test)
-const SOFT = typeof location !== 'undefined' && /[?&]soft\b/.test(location.search);
+// soft strand edges: blended by the graphics chip's antialiasing (alpha to coverage) instead of cut hard. Only with antialiasing
+// on (the best two quality levels); ?hard turns it off to compare
+let soft = false;
+export function setSoftFur(on) {
+  soft = !!on && !(typeof location !== 'undefined' && /[?&]hard\b/.test(location.search));
+  BIRD_MAT.alphaToCoverage = soft; BIRD_MAT.defines = soft ? { SOFT_FUR: '' } : {}; furLook.cut.value = soft ? 0.04 : 0.45;
+  BIRD_MAT.needsUpdate = true;
+}
 export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null } };
 // real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
 export function setHairTexture(t) {
@@ -277,7 +284,6 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 // the birds' material: lit as before, with the shells' strands cut out of each layer and shaded darker towards the roots
 function birdMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
-  if (SOFT) { m.alphaToCoverage = true; m.defines = { SOFT_FUR: '' }; furLook.cut.value = 0.04; }
   m.onBeforeCompile = sh => {
     sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex;
     sh.vertexShader = sh.vertexShader
@@ -296,16 +302,30 @@ function birdMaterial() {
         vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float furShade = 1.0;
-        if (vStyle.w > 0.0) {
-          // painted fluff: the hair tile wrapped round the body from three sides (strands falling down the sides, back over the top)
-          vec3 pt = vRest / vStyle.w, nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
-          float hairT = texture2D(hairTex, vec2(pt.z, -pt.y)).r * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z)).r * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y)).r * nw.z;
-          furShade *= mix(0.42, 1.38, hairT);
-          // the fluff's own strands stand out only round the outline (and short near the body): no speckle across the middle
-          float facing = abs(dot(normalize(vNormal), normalize(vViewPosition)));
-          if (vFur > 0.28 && facing > 0.42 + 0.25 * (1.0 - vFur)) discard;
+        if (vStyle.w != 0.0) {
+          // painted hair: the tile wrapped round the body from three sides (strands falling down the sides, back over the top);
+          // red: how light the hair is, green: how far it stands out
+          vec3 pt = vRest / abs(vStyle.w), nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
+          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -0.75).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -0.75).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -0.75).rg * nw.z;
+          float hw = max(fwidth(hair.g), 0.02);
+          if (vStyle.w < 0.0) {
+            // Silkie locks: each fluff layer keeps the hair that reaches out that far, so the locks stand up in 3D, darker deeper in
+            if (vFur > 0.0) {
+              float cov = smoothstep(vFur - hw, vFur + hw, hair.g * 1.08);
+              if (cov < furCut) discard;
+              #ifdef SOFT_FUR
+              diffuseColor.a = cov;
+              #endif
+            }
+            furShade = mix(0.36, 1.32, hair.r) * mix(0.8, 1.06, vFur);
+          } else {
+            furShade *= mix(0.42, 1.38, hair.r);
+            // the down's own strands stand out only round the outline (and short near the body): no speckle across the middle
+            float facing = abs(dot(normalize(vNormal), normalize(vViewPosition)));
+            if (vFur > 0.28 && facing > 0.42 + 0.25 * (1.0 - vFur)) discard;
+          }
         }
-        if (vFurLen > 0.0) {
+        if (vFurLen > 0.0 && vStyle.w >= 0.0) {
           // tufts: strands lean in towards their tuft's middle as they grow, with a gentle wave
           float td = furDensity * 0.16, tt = vFur;
           vec3 tq = vRest * td, tcell = floor(tq), tmid = (tcell + 0.25 + 0.5 * fh33(tcell + 11.0)) / td;
@@ -384,6 +404,10 @@ export function setFar(on) {
   for (const r of RIGS) if (r.lo) { r.mesh.visible = !far; r.lo.visible = far; }
 }
 
+// with soft strand edges the fluff's see-through amount must only steer the antialiasing: it is kept out of the picture's own
+// see-through channel, or the page behind would show through the birds
+const keepAlpha = r => { if (soft) r.getContext().colorMask(true, true, true, false); }, writeAlpha = r => { if (soft) r.getContext().colorMask(true, true, true, true); };
+
 export class Rig {
   constructor(breed, kind, colour) {
     this.model = modelFor(breed, kind);
@@ -391,6 +415,7 @@ export class Rig {
     this.mesh = new THREE.SkinnedMesh(paintedGeometry(this.model, breed, colour), BIRD_MAT);
     this.mesh.receiveShadow = true;
     this.lo = MODELS[this.model + '_lo'] ? new THREE.SkinnedMesh(paintedGeometry(this.model + '_lo', breed, colour), BIRD_MAT) : null;
+    for (const m of [this.mesh, this.lo]) if (m) { m.onBeforeRender = keepAlpha; m.onAfterRender = writeAlpha; }
     this.bones = {}; this.rest = {};
     const list = JOINTS.map(name => {
       const b = new THREE.Bone(); b.name = name;
