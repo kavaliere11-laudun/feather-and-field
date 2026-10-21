@@ -146,6 +146,22 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
     most 4 times a visit; `stepup.mjs` checks it (late frames faked). Far light models draw 0.2 of the layers.
   - `tricount.mjs` prints triangles and draws on the line-up at six zooms: 540k close, 800k at the line-up zoom (Silkies'
     26 shells), 276k far.
+
+## Movement (21 Oct 12:19, Audrey: "This is really good. When should we review the fluidity of the chicken moves? Eg: the legs when they jump, the tail should also move a bit")
+
+- The hop (`hopCurve` in `src/birds.js`, 0.8 s, `hopT` 0..1): a crouch (body down, legs folded forward), the push off with the
+  body tipping back and wings lifting, legs tucked up and back in the air, reaching forward before landing, a small squash
+  and settle. The height is on the root bone now (12 cm, chicks 7 cm), and the bird's round shadow shrinks while she's up.
+- The tail on a damped spring per bird (natural frequency about 2 Hz, damping 0.43, so it overshoots a little): it sways with
+  each step, swings out against turns (`turn`, rad/s, smoothed in main.js), lifts to balance a peck or a scratch, dips as
+  she takes off and flicks up on landing.
+- The head-bob: walking, the head moves back against the body for 68% of each step (holding nearly still in the air), then
+  darts forward with a small dip (3 cm, by bird size).
+- A feather shake (`ruffle` act, 0.75 s, picked now and then while standing): fast body roll, head shake, wings out, tail wag.
+- Quality: a frame counts as late only below 25 a second (it was below 37 while touched, which stepped her phone down to
+  quality 4 of 4 though it was still smooth).
+- Tests: `clip.mjs WHAT frames fps size dx dz out` renders line-up frames stepped exactly (hop, walk, or an action);
+  `make_gif.py` stitches them. The page has `__farm.hop()` (every bird hops, as if tapped).
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).

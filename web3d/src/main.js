@@ -502,7 +502,7 @@ const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald'
 const CHICK_NAMES = ['Pip', 'Peanut', 'Button', 'Sprout', 'Nugget', 'Bean', 'Pebble', 'Tiny', 'Puff', 'Dot'];
 const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
 let blobGeo, blobMat, blobs = null, nameSeed = 0;
-const tmpM = new THREE.Matrix4();
+const tmpM = new THREE.Matrix4(), blobScale = new THREE.Matrix4();
 // every bird's soft round shadow, drawn in one batch; a bird's shadow follows her when she moves
 function makeBlobs() {
   scene.updateMatrixWorld(true);
@@ -515,6 +515,7 @@ function makeBlobs() {
 function placeBlob(b) {
   b.root.updateMatrix();
   tmpM.multiplyMatrices(b.plot.frame.matrixWorld, b.root.matrix).multiply(b.blobLocal);
+  if (b.hopT > 0.24 && b.hopT < 0.86) { const k = 1 - 0.3 * Math.sin((b.hopT - 0.24) / 0.62 * Math.PI); tmpM.multiply(blobScale.makeScale(k, k, 1)); }   // smaller in the air
   blobs.setMatrixAt(b.blob, tmpM);
   blobs.instanceMatrix.needsUpdate = true;
 }
@@ -535,9 +536,11 @@ class Bird {
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
     this.hitR = small ? 0.12 : 0.17 * size; this.hitY = small ? 0.08 : 0.17 * size;
-    this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hop = 0;
-    this.act = null;                       // what she's doing while standing: peck, scratch, flap, crow, rest
-    this.A = { walk: 0, phase: r() * 6, peck: 0, lookYaw: 0, lookTilt: 0, flap: 0, crow: 0, sit: 0, kick: 0, kickT: 0, kickLeg: 0, wag: 0, t: r() * 10 };
+    this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hopT = -1;
+    this.act = null;                       // what she's doing while standing: peck, scratch, flap, crow, rest, ruffle
+    this.A = { walk: 0, phase: r() * 6, peck: 0, lookYaw: 0, lookTilt: 0, flap: 0, crow: 0, sit: 0, kick: 0, kickT: 0, kickLeg: 0, wag: 0, t: r() * 10,
+               hopT: -1, turn: 0, ruffle: 0, dt: 1 / 30 };
+    this.lastYaw = yaw;
     this.look = { yaw: 0, tilt: 0, next: r() * 2 };
     this.stay = false;                     // line-up birds stand in their place
     plot.frame.add(this.root);
@@ -602,10 +605,11 @@ class Bird {
     if (x < 0.55) return { type: 'flap', left: 0.9 };
     if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
     if (x < (rooster ? 0.69 : 0.59) && !this.mum) return { type: 'rest', left: 3 + this.r() * 4 };
+    if (x < (rooster ? 0.74 : 0.65)) return { type: 'ruffle', left: 0.75 };             // a quick shake of the feathers
     return null;
   }
   tapped() {                               // a hop and a flap (a rooster may crow)
-    this.hop = 1;
+    this.hopT = 0;
     if (this.kind === 'rooster' && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
@@ -613,8 +617,8 @@ class Bird {
     this.phase += dt;
     const A = this.A, k = Math.min(1, dt * 14);
     A.t += dt;
-    if (this.hop > 0) this.hop = Math.max(0, this.hop - dt * 2.2);
-    let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0;
+    if (this.hopT >= 0) { this.hopT += dt / 0.8; if (this.hopT >= 1) this.hopT = -1; }        // a hop lasts 0.8 s
+    let walking = false, peckGoal = 0, sitGoal = 0, kick = 0, flap = 0, crow = 0, wag = 0, ruffle = 0;
     const act = this.act;
     if (act) {
       act.left -= dt;
@@ -627,6 +631,7 @@ class Bird {
       if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); }
       if (act.type === 'rest') { sitGoal = 1; wag = 0; }
+      if (act.type === 'ruffle') ruffle = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.left <= 0) { this.act = null; this.wait = Math.min(this.wait, 0.2 + this.r() * 0.6); this.acted = true; }
     } else if (this.wait > 0) {
       if (this.wait > 0.3 && this.tooClose()) this.wait = 0.3;
@@ -670,8 +675,13 @@ class Bird {
     A.kick += (kick - A.kick) * k; if (!kick) A.kickT = 0;
     A.flap += (flap - A.flap) * Math.min(1, dt * 20); A.crow += (crow - A.crow) * Math.min(1, dt * 10);
     A.wag += (wag - A.wag) * Math.min(1, dt * 3); if (!wag) A.wag *= 0.98;
+    A.ruffle += (ruffle - A.ruffle) * Math.min(1, dt * 18);
+    // how fast she is turning (the tail swings out the other way)
+    let dy = this.root.rotation.y - this.lastYaw; this.lastYaw = this.root.rotation.y;
+    dy = ((dy + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    A.turn += ((dt > 0 ? dy / dt : 0) - A.turn) * Math.min(1, dt * 12);
+    A.hopT = this.hopT; A.dt = dt;
     this.rig.pose(A);
-    this.visual.position.y = Math.max(0, Math.sin(Math.min(1, this.hop) * Math.PI)) * 0.12;
   }
 }
 
@@ -843,7 +853,9 @@ function frame(now) {
   placeTag(dt);
   renderer.render(scene, camera);
   const gap = now - lastFrame;
-  if (lastFrame && gap < 1000 && gap > (busy ? 1000 / 60 : 1000 / 30) * 1.6) meter.late++;
+  // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
+  // that were still smooth)
+  if (lastFrame && gap < 1000 && gap > 40) meter.late++;
   lastFrame = now;
   meter.frames++;
   if (!meter.since) meter.since = now;
@@ -891,6 +903,7 @@ window.__farm = {
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
   plan: () => V, THREE,
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
+  hop: () => { for (const b of allBirds) b.tapped(); },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, camera); },
