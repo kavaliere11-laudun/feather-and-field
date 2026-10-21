@@ -212,8 +212,9 @@ const FUR = {
   chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, locks: 0.035 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   // (thinner than before, and less extra fluff underneath, so the feathers show clearly and the birds look less bulky)
-  hen: { len: { [R.body]: 0.006, [R.wing]: 0.004, [R.crest]: 0.006, [R.legfeather]: 0.008 }, shells: 4, comb: 1, fine: 1.25, under: 0.5 },
-  orp: { len: { [R.body]: 0.011, [R.wing]: 0.006, [R.legfeather]: 0.01 }, shells: 5, comb: 0.8, fine: 1.15, under: 0.6 },
+  // (these layers now carry each feather's lifted tip, not fuzz)
+  hen: { len: { [R.body]: 0.009, [R.wing]: 0.008, [R.crest]: 0.006, [R.legfeather]: 0.008 }, shells: 4, comb: 1, fine: 1.25, under: 0.3 },
+  orp: { len: { [R.body]: 0.012, [R.wing]: 0.01, [R.legfeather]: 0.01 }, shells: 5, comb: 0.8, fine: 1.15, under: 0.4 },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
@@ -363,7 +364,7 @@ function birdMaterial() {
             if (vFur > 0.28 && facing > 0.42 + 0.25 * (1.0 - vFur)) discard;
           }
         }
-        if (vFurLen > 0.0 && vStyle.w >= 0.0) {
+        if (vFurLen > 0.0 && vStyle.w >= 0.0 && vFeather <= 0.0) {
           // tufts: strands lean in towards their tuft's middle as they grow, with a gentle wave
           float td = furDensity * 0.16, tt = vFur;
           vec3 tq = vRest * td, tcell = floor(tq), tmid = (tcell + 0.25 + 0.5 * fh33(tcell + 11.0)) / td;
@@ -374,9 +375,6 @@ function birdMaterial() {
           float h = fh13(cell + 7.0), strand = mix(0.5 + 0.5 * h, 0.4 + 0.6 * h, step(0.001, vStyle.x));
           if (tt > 0.0) {
             if (tt > strand) discard;
-            // the short fuzz over the feathered breeds shows only round the outline (across the middle it made a grainy speckle
-            // over the feathers)
-            if (vStyle.x < 0.001 && vFeather > 0.0 && abs(dot(normalize(vNormal), normalize(vViewPosition))) > 0.5) discard;
             vec3 c = 0.3 + 0.4 * fh33(cell);
             float rad = mix(0.52, 0.58, step(0.001, vStyle.x)) * (1.0 - mix(0.82, 0.55, step(0.001, vStyle.x)) * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
             float cov = 1.0 - smoothstep(rad - fw, rad + fw, d);
@@ -398,6 +396,8 @@ function birdMaterial() {
           float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : smoothstep(0.15, 0.45, vHead);
           float flight = wingT > 0.0 ? smoothstep(0.52, 0.56, wingT) : 0.0;
           float size = vFeather * mix(1.0, 0.42, vHead) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
+          // smaller feathers on the breast and underneath, larger over the back and sides
+          if (wingT <= 0.0) size *= mix(1.0, mix(0.82, 1.22, smoothstep(0.08, -0.12, vRest.z)), 1.0 - neck);
           float stretch = mix(mix(1.0, 0.5, neck), 1.0, flight), point = mix(mix(0.15, 1.2, neck), 0.3, flight);
           vec2 pb = vec2(atan(vRest.x, vRest.y - 0.2) * 0.11, -vRest.z);
           vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y * 0.55);
@@ -423,10 +423,17 @@ function birdMaterial() {
           // a softly ragged edge, where the barbs end
           float t = length(lp) + 0.025 * sin(atan(lp.y, lp.x) * 19.0 + id * 40.0) * smoothstep(0.6, 0.95, length(lp));
           float aa = max(fwidth(t), 0.02);
-          float onTop = 1.0 - 0.6 * step(0.001, vFur);     // the fluff over the feathers carries the pattern more softly
+          // round the outline the outer layers hold each feather's tip, lifted a little off the one below, so the outline is
+          // feathery rather than smooth (across the body they'd only wash the pattern out)
+          if (vFur > 0.0 && (t > 1.0 - 0.12 * vFur || along < mix(0.15, 0.7, vFur)
+              || abs(dot(normalize(vNormal), normalize(vViewPosition))) > 0.45)) discard;
+          // how big a feather is on screen: when small (the line-up and further), its light and shade are drawn stronger so
+          // the feathers still show instead of blending into a flat colour
+          float fpx = 1.0 / max(length(fwidth(pp)), 1e-4), boost = 1.0 - smoothstep(12.0, 40.0, fpx);
+          float onTop = 1.0 + 0.8 * boost;
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
-          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.2, -0.7, along));
+          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));
           // barbs: fine lines slanting from the quill towards the tip (faded out where they'd be finer than a pixel)
           float ph = (along * 0.85 - abs(across)) * 30.0;
           float barbs = sin(ph) * (1.0 - smoothstep(0.8, 1.9, fwidth(ph)));
@@ -444,8 +451,8 @@ function birdMaterial() {
           float rim = smoothstep(0.62, 0.86, t) * (1.0 - edge);
           float shadow = 1.0 - smoothstep(1.0, 1.5, over);
           // (soft, not outlined: the shadow and the light tip make the overlap, the edge line is only a hint, else they read as scales)
-          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (0.9 + 0.16 * smoothstep(-0.3, 0.95, along)) * (1.0 + 0.1 * rim) * mix(1.0, 0.8, edge)
-                    * mix(1.0, 0.6, shadow * shadow) * (0.88 + 0.24 * id) * (1.0 + 0.08 * barbs) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
+          furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (0.9 + 0.16 * smoothstep(-0.3, 0.95, along)) * (1.0 + 0.1 * rim) * mix(1.0, 0.8 - 0.12 * boost, edge)
+                    * mix(1.0, 0.6 - 0.2 * boost, shadow * shadow) * (0.88 - 0.06 * boost + (0.24 + 0.12 * boost) * id) * (1.0 + 0.08 * barbs) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
           // where the coverts end, a soft shadow over the flight feathers
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
         }
@@ -583,8 +590,11 @@ export class Rig {
     B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? 1.0 * kick * s.kick : 0) + legX, 0, 0);
     B.legR.rotation.set(-A * Math.sin(ph) + (s.kickLeg === 1 ? 1.0 * kick * s.kick : 0) + legX * 0.92, 0, 0);
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
-    const legY = -s.sit * this.shank * 0.35 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank;
+    // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
+    const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank;
     B.legL.position.y += w * lift * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
     B.legR.position.y += w * lift * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
+    const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);
+    B.legL.scale.setScalar(fold); B.legR.scale.setScalar(fold);
   }
 }

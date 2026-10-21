@@ -205,6 +205,18 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   - The short fuzz over the feathered breeds is drawn only round the outline (facing < 0.5): across the body it made a
     grainy speckle.
   - `clip.mjs` takes `CLEAN=1` (hides the labels) and `PORT=` (e.g. an older build served on 8771, for before/after).
+- Resting legs and line-up feathers (21 Oct 16:28, Audrey: "When the chicken lays her legs are under her folded so not
+  visible" and "I don't really see a difference on the feathers on the line up view", 49-59 fps):
+  - Resting (`sit`): the leg bones go down with the body (0.78 of the shank) and shrink to 12% as they fold, so the legs
+    disappear under her instead of sticking out.
+  - Feathers when small on screen (`boost`, from the lattice's pixels per feather, full below 12 px, none above 40): darker
+    overlap shadows and edges, stronger per-feather shade differences, and the darker-base pattern (mode 4) up to 1.8x,
+    keeping the average brightness, so the rows of feathers still read at the line-up zoom.
+  - Body feathers 0.82x on the breast to 1.22x over the back.
+  - The feathered breeds' shells no longer draw fuzz strands: round the outline (facing < 0.45) they hold each feather's
+    tip, lifted a little (hens 9 mm, Orpingtons 12 mm, 4-5 layers), so the outline is feathery. Across the body that washed
+    the pattern out, so it's outline only.
+  - `phoneshot.mjs` also takes `PORT=`.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
