@@ -350,7 +350,7 @@ def pagoda(seed=7):
                 objs.append(box('lat', (0.015, w, 0.012), (x + nx * 0.012, y, z + k * h / 3), m=red, bevel=0.0))
         frame = (w + 0.04, 0.025, h + 0.04) if ny else (0.025, w + 0.04, h + 0.04)
         objs.append(box('latf', frame, (x - nx * 0.004, y - ny * 0.004, z), m=red, bevel=0.004, segs=1))
-    nest_window(objs, 'sil', FL, 0.42, red, ww=0.26, solids=[walls, plinth], steps=2, nest_floor=0.06, door='lattice', door_m=red)
+    nest_window(objs, 'sil', FL, 0.42, red, ww=0.26, wh=0.3, solids=[walls, plinth], steps=2, nest_floor=0.06, door='lattice', door_m=red)
     lattice(W2 + 0.012, 0.0, 0.46, 0.26, 0.18, (1, 0))
     lattice(-W2 - 0.012, 0.0, 0.46, 0.26, 0.18, (-1, 0))
     # two sweeping teal roofs, the upper storey, a gold finial, a red paper lantern
@@ -382,7 +382,7 @@ def lodge(seed=8):
     door_m = C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G); trim = C('lodgetrim', '#e8dcc0', rough=0.7)
     glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     EAVE, PEAK, r = 0.88, 1.44, 0.055
-    gaps = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, 0.24, 0.26 + POP_H + 0.05), (-0.09, 0.25, 0.0, 0.64), (0.44 - WIN_W / 2 - 0.03, 0.44 + WIN_W / 2 + 0.03, 0.2, 0.6)]   # pop door, door, nest window
+    gaps = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, 0.24, 0.26 + POP_H + 0.05), (-0.09, 0.25, 0.0, 0.64), (0.44 - WIN_W / 2 - 0.03, 0.44 + WIN_W / 2 + 0.03, 0.2, 0.24 + WIN_H + 0.06)]   # pop door, door, nest window
     z = r; row = 0
     while z < EAVE:
         for y in (-D2, D2):                       # logs along x (front and back); the front is cut round its door and window
@@ -575,8 +575,8 @@ HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': 
 # in at the pop door). Solid houses get the window and the cubby cut out of their walls (boolean cutters, hidden, not
 # exported). NESTS records each house's nest for the browser (glTF axes: (x, y, z) = Blender (x, z, -y)).
 NESTS = {}
-SEAT = 0.17                               # she sits this far in from the front: all of her inside, her face at the window
-WIN_W, WIN_H = 0.30, 0.3                  # the window's opening (kept under the roof's overhang, which hides what's above;
+SEAT = 0.19                               # she sits this far in from the front: all of her inside, her face at the window
+WIN_W, WIN_H = 0.30, 0.40                 # the window's opening (kept under the roof's overhang, which hides what's above;
                                           # wide enough for a big hen to jump through)
 BLOCKS = {}                               # per house: [x, z, r] circles in the yard the birds keep out of (glTF axes)
 
@@ -596,17 +596,18 @@ def cutter(name, size, loc):
 
 
 def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=None, steps=None, lining_c='#3b2b20', nest_floor=None,
-                door=None, door_m=None, ww=None):
+                door=None, door_m=None, ww=None, wh=None):
     """FL: the house's floor (the pop door); nest_floor: the nest's, lower where the roof's overhang would hide the window.
     door: the little nest door, open: 'drop' (hinged at the sill and let down: hanging against the wall below a high window,
     resting on the ground like a little ramp below a low one) or 'lattice' (a lattice screen slid up). Anything above the
     window would be hidden by the roof's overhang."""
     NF = FL if nest_floor is None else nest_floor
     WIN_W = ww or globals()['WIN_W']                                         # this house's window width
-    z0 = NF + 0.04; z1 = z0 + WIN_H; zc = max(NF + 0.44, FL + 0.46)          # sill, top of the window, cubby ceiling
-    cx0, cx1, cy0, cy1 = wx - 0.33, wx + 0.15, -D2 + 0.035, -D2 + 0.44       # the cubby (left part behind the wall)
+    WIN_H = wh or globals()['WIN_H']                                         # and height
+    z0 = NF + 0.04; z1 = z0 + WIN_H; zc = max(z1 + 0.03, FL + 0.48)              # sill, top of the window, cubby ceiling
+    cx0, cx1, cy0, cy1 = wx - 0.33, min(wx + 0.17, W2 - 0.02), -D2 + 0.035, -D2 + 0.44   # the cubby (left part behind the wall)
     px0, px1 = -0.31 - POP_W / 2, -0.31 + POP_W / 2                         # the pop door, and the passage from it to the nest
-    hy1, hz1 = -D2 + 0.42, FL + POP_H + 0.03
+    hy1, hz1 = -D2 + 0.6, FL + POP_H + 0.03                                 # deep enough for her to turn round in
     for o in solids:                     # cut the window, the cubby, the pop door and the passage out of solid walls
         for c in (cutter('cut_win', (WIN_W, 0.24, WIN_H), (wx, -D2, (z0 + z1) / 2)),
                   cutter('cut_cubby', (cx1 - cx0, cy1 - cy0, zc - NF + 0.002), ((cx0 + cx1) / 2, (cy0 + cy1) / 2, (NF + zc) / 2)),
@@ -659,9 +660,9 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
     for (u0, v0, u1, v1) in [(-WIN_W / 2 - t / 2, z1, WIN_W / 2 + t / 2, z1), (-WIN_W / 2, z0, -WIN_W / 2, z1), (WIN_W / 2, z0, WIN_W / 2, z1)]:
         objs.append(plank('nwframe', (wx + u0, -D2 - 0.022, v0), (wx + u1, -D2 - 0.022, v1), t, 0.026, (0, -1, 0), frame_m, jitter=0.2, bevel=0.004))
     objs.append(box('nwsill', (WIN_W + 0.09, 0.08, 0.03), (wx, -D2 - 0.02, z0 - 0.012), m=frame_m, bevel=0.006, segs=1))
-    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m, WIN_W)
+    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m, WIN_W, WIN_H)
     if door == 'drop' and z0 - 0.074 < WIN_H + 0.04:                       # a let-down door lying on the ground: walk round it
-        for dx in (-0.08, 0.08): block(house, wx + dx, -D2 - 0.24, 0.17)
+        for dx in (-0.08, 0.08): block(house, wx + dx, -D2 - 0.28, 0.2)
     # for the browser (glTF axes): floor, window, the nest seat, the way in, the ramp
     L = ramp_len if ramp_len else (0.3 if steps else max(0.3, FL * 1.7))
     foot = D2 + 0.05 + (L if not steps else 0.1 + 0.15 * steps)
@@ -670,7 +671,7 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
                                    bed=round(NF + T + 0.04, 3), door=door)
 
 
-def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W):
+def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W, WIN_H):
     """The nest window's little door, open. Planks run across it; it is a little bigger than the opening."""
     if not kind: return
     w, h, th = WIN_W + (0.03 if kind == 'lattice' else 0.05), WIN_H + 0.04, 0.025

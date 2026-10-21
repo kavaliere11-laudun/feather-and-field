@@ -306,6 +306,30 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     `clipcheck.mjs [minutes]` simulates the pens and counts beaks in a house's front wall and birds in a block: 4 minutes,
     about 15,000 samples, 2 beaks a couple of centimetres in, none in a block.
   - Jumpers take off further out (51 cm from the front, clear of a let-down door) and land there after.
+- 21 Oct 20:36, Audrey (frame from the video): "See the head of the chicken in the wall still clipping !" (her head came out
+  through the thatched cottage's side wall as she walked onto the nest). `laycheck.mjs [pers ...]` now measures this: a visit
+  at each coop, 30 samples a second, a third of her body's own vertices (posed, `getVertexPosition`) checked against the
+  house: anything crossing the front wall must do so through the nest window or the pop door, nothing through the side walls,
+  nothing through the cubby's right side. It found her head and tail going through walls whenever she turned inside (on
+  arriving at the nest, getting off it, at the pop door), her standing head above the window, and a jumper's tail and wings
+  over and beside the window. So:
+  - Inside, she never turns where there isn't room: along the passage (`hall`) to beside the nest (`pre`, 20 cm left of the
+    seat), then a turn in step with a sideways shuffle (`swing()`: the yaw follows the move, not her own turn rate) to stand
+    behind the seat (`stand`, 30 cm in, where standing her head is still inside); she moves forward onto the seat only once
+    she's most of the way down (`onNest()`, following her sit amount), and backs off it as she gets up; getting off, the
+    same shuffle the other way (her tail kept inside the cubby).
+  - The passage is 60 cm deep, so she turns round 30 cm inside the pop door; leaving, she turns towards the door from 11 cm
+    to its right. She ducks from 36 cm inside the door; ducking presses her tail down harder.
+  - Pop doors 46 cm tall (`POP_H`), nest windows 40 cm (`WIN_H`; the pagoda's 30 x 26), the cubby 2 cm wider on the right and the seat 19 cm in (`SEAT`); the
+    windows' tops sit under the roofs' overhangs, so they look no different from the game's camera.
+  - Jumpers: a route round the feeder and the rest to the take-off spot (`plan()`; if it can't be reached they take the
+    ramp); the leap's arc is worked out with the hop's own lift at that moment (`leap()`), and goes lower for a low window;
+    in the air she's long and flat (`stretch` pose: head out and low, tail pressed down) and folds her wings to go through
+    the window (and no nose-up on take-off); inside she lands 40 cm in, then turns round by her left while shuffling over
+    that way.
+  - `laycheck.mjs` after the fixes, all five personalities at all five coops: ramp hens 0-4 samples a visit touching by
+    1-2 cm (a foot on the pop door's threshold); jumpers 0-2 samples, the Brahma 3-4 (her tail brushing the window's top for
+    a tenth of a second as she lands). Before: 20-130 samples a visit, up to 36 cm.
 - Each coop hen has a personality (the game's five: `PERS_IDS`, spread across each pen) shown in her label, and `layIn`
   (first lay 6-76 s after loading, then every 4-8 minutes; one hen in the nest box at a time).
 - `startLaying(sit)` / `layStep(dt)` (phases go, in, turn, settle, sit, rise, out, sing): across the yard to the foot of

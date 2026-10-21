@@ -781,15 +781,17 @@ class Bird {
     const L = this.laying, p = this.root.position, u = Math.min(1, L.t / dur), a = smooth01((u - 0.24) / 0.62);
     const F = L.from, T = L.to, sz = Math.min(1.2, this.rig.scale / 0.5);
     if (L.hh === undefined) {                                  // how much higher than the hop's own lift the arc must go
-      const aw = Math.min(0.95, Math.max(0.05, (F.z - D2) / (F.z - T.z))), sill = G.win[1] + 0.02;
-      const base = F.y + (T.y - F.y) * aw + 0.12 * sz * Math.sin(aw * Math.PI);
-      L.hh = Math.max(0.03, (sill - base) / Math.sin(aw * Math.PI));
+      const aw = Math.min(0.95, Math.max(0.05, (F.z - D2) / (F.z - T.z))), sill = G.win[1] - 0.06;   // her body through the middle of the opening
+      let lo = 0, hi = 1;                                       // the hop's own lift runs on straight time: when is she at aw?
+      for (let k = 0; k < 20; k++) { const m = (lo + hi) / 2; if (smooth01(m) < aw) lo = m; else hi = m; }
+      const base = F.y + (T.y - F.y) * aw + 0.12 * sz * Math.sin(lo * Math.PI);
+      L.hh = Math.max(-0.12 * sz * Math.sin(lo * Math.PI), (sill - base) / Math.sin(aw * Math.PI));     // lower for a low window
     }
     p.x = F.x + (T.x - F.x) * a; p.z = F.z + (T.z - F.z) * a;
     p.y = F.y + (T.y - F.y) * a + L.hh * Math.sin(a * Math.PI);
     this.hopT = u < 1 ? u : -1;
     const air = u > 0.2 && u < 0.9;
-    o.flap = air ? 1 : 0; o.duck = air ? 1 : 0;
+    o.flap = air && p.z > D2 + 0.06 ? 1 : 0; o.stretch = u < 0.9 ? 1 : 0;       // long and flat from the crouch; wings folded through the window
     this.shadowY = air ? (p.z > D2 ? 0.0 : G.floor + 0.02) : undefined;
     return u >= 1;
   }
@@ -810,36 +812,64 @@ class Bird {
   }
   layStep(dt) {
     const L = this.laying, p = this.root.position, o = { walking: false, sit: 0, flap: 0, ruffle: 0, sing: 0, cluck: 0, kawk: 0 };
-    const next = ph => { L.phase = ph; L.t = 0; L.from = p.clone(); };
+    const next = ph => { L.phase = ph; L.t = 0; L.from = p.clone(); L.yaw0 = undefined; };
+    // turning in step with a move (k 0..1), the shorter way round (or dir +1 / -1): in the nest there's no room to turn first
+    const swing = (to, k, dir) => {
+      if (L.yaw0 === undefined) {
+        L.yaw0 = this.root.rotation.y; let d = ((to - L.yaw0 + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+        if (dir && Math.sign(d) !== dir && Math.abs(d) > 1e-3) d += dir * 2 * Math.PI;
+        L.dyaw = d;
+      }
+      this.root.rotation.y = L.yaw0 + L.dyaw * k;
+    };
     L.t += dt;
     const G = nestOf(this.plot), FL = G.house, NF = G.floor, ground = 0.015;      // the house's floor, the nest's
     const front = [G.pop[0], Math.max(G.foot[1] + 0.16, 1.2)];             // in the yard, in front of the ramp
-    const launch = [G.seat[0] - 0.02, D2 + 0.51];                           // in the yard, in front of the nest window (and its door)
-    const inDoor = [G.pop[0], G.inside[1] - 0.04], seatY = NF + 0.005;      // she sinks into the straw
+    const launch = [G.seat[0], D2 + 0.51];                                  // in the yard, in front of the nest window (and its door)
+    const inDoor = [G.pop[0], D2 - 0.3], seatY = NF + 0.005;               // inside the pop door, where the passage has room to turn round;
+                                                                            // on the nest she sinks into the straw
+    // inside, the nest is too small for a hen to turn round just anywhere without her head or tail going through a wall: she
+    // comes along the passage (hall) to beside the nest (pre), turns to the window while stepping over behind the seat (stand:
+    // standing there her head is still inside), and only moves forward onto the seat as she sits down (her face at the
+    // window); getting up she backs off it again
+    const hall = [G.seat[0] - 0.3, D2 - 0.24], pre = [G.seat[0] - 0.2, D2 - 0.26], stand = [G.seat[0], D2 - 0.3];
+    const onNest = () => {                                 // forward onto the seat only once she's most of the way down
+      const s = this.A.sit, k = smooth01((s - 0.35) / 0.65);
+      p.x = G.seat[0]; p.z = stand[1] + (G.seat[1] - stand[1]) * k; p.y = NF + 0.02 + (seatY - NF - 0.02) * s;
+    };
     // going through the pop door she stretches her neck out and ducks, from when her head reaches it until she's through
-    const atPop = () => p.x < G.inside[0] - 0.1 && p.y > FL - 0.12 && p.z > D2 - 0.2 && p.z < D2 + 0.34;
+    const atPop = () => p.x < G.inside[0] - 0.05 && p.y > FL - 0.12 && p.z > D2 - 0.36 && p.z < D2 + 0.34;
     switch (L.phase) {
       case 'go': {                                           // across the yard to the foot of the ramp (or below the window)
-        const to = L.jump ? launch : front, r = this.stepToward(to[0], to[1], dt);
+        if (L.jump && !L.route) L.route = this.plan([launch]);          // a jumper goes round the feeder and the rest to her take-off spot
+        const to = L.jump ? (L.route.length > 1 ? L.route[0] : launch) : front, r = this.stepToward(to[0], to[1], dt);
         o.walking = r.walking;
+        if (L.jump && r.arrived && L.route.length > 1) { L.route.shift(); break; }
         if (r.arrived || L.t > 25 || (r.blocked && L.t > 4)) {
+          if (L.jump && r.blocked && !r.arrived && Math.hypot(p.x - launch[0], p.z - launch[1]) > 0.08) { L.jump = false; L.t = 5; break; }   // can't get there: the ramp
           if (L.jump) { next('aim'); break; }
           next('in'); L.inside = true;
-          L.path = [[G.foot[0], G.foot[1], ground], [G.pop[0], G.pop[1], FL], [inDoor[0], inDoor[1], FL], [G.inside[0], G.inside[1], FL], [G.seat[0], G.seat[1], NF + 0.02]];
+          L.path = [[G.foot[0], G.foot[1], ground], [G.pop[0], G.pop[1], FL], [inDoor[0], inDoor[1], FL], [hall[0], hall[1], FL], [pre[0], pre[1], NF + 0.02]];
         }
         break;
       }
       case 'aim': {                                          // a jumper: faces the window, sizes it up...
         const t = this.turnTo(Math.PI, dt * 1.2); o.walking = t.walking;
-        if (t.done && L.t > 0.5) { next('leapin'); L.inside = true; L.to = new THREE.Vector3(G.seat[0] - 0.07, NF + 0.025, G.seat[1] - 0.09); }
+        if (t.done && L.t > 0.5) { next('leapin'); L.inside = true; L.to = new THREE.Vector3(G.seat[0], NF + 0.025, D2 - 0.4); }
         break;
       }
       case 'leapin':                                         // ...and jumps straight in at the window, wings beating
         if (this.leap(dt, o, G, 1.0)) { next('turnin'); L.step = 0; }
         break;
-      case 'turnin': {                                       // inside: turns round (by her left, where there's room) to face out
-        const t = this.turnTo(L.step ? 0 : -Math.PI / 2, dt * 0.9); o.walking = t.walking;
-        if (t.done) { if (L.step) { next('in'); L.path = [[G.seat[0], G.seat[1], NF + 0.02]]; } else L.step = 1; }
+      case 'turnin': {                                       // inside: turns round by her left, stepping over that way (where there's
+        if (!L.step) {                                       // room) as she turns, then round to face out
+          const k = smooth01(L.t / 0.9);
+          swing(-Math.PI / 2, k, 1); p.x = L.from.x + (G.seat[0] - 0.2 - L.from.x) * k; p.z = L.from.z + (D2 - 0.34 - L.from.z) * k; o.walking = true;
+          if (L.t > 0.9) { L.step = 1; L.t = 0; }
+        } else {
+          const t = this.turnTo(0, dt * 0.9); o.walking = t.walking;
+          if (t.done) next('turn');
+        }
         break;
       }
       case 'in': {                                           // up the ramp, in at the pop door (ducking), along inside to the nest
@@ -848,29 +878,40 @@ class Bird {
         if (r.done) next('turn');
         break;
       }
-      case 'turn': {                                         // turn to face out of the window and shuffle down onto the straw
-        const t = this.turnTo(0, dt * 0.8); o.walking = t.walking;
-        p.y = L.from.y + (seatY - L.from.y) * Math.min(1, L.t / 0.6);
-        if (t.done && L.t > 0.6) next('settle');
+      case 'turn': {                                         // turn to face out of the window, stepping over behind the seat
+        const k = smooth01(L.t / 1.0);
+        swing(0, k); p.x = L.from.x + (stand[0] - L.from.x) * k; p.z = L.from.z + (stand[1] - L.from.z) * k;
+        p.y = L.from.y + (NF + 0.02 - L.from.y) * k; o.walking = k < 1;
+        if (L.t > 1.0) next('settle');
         break;
       }
-      case 'settle':                                         // down onto the straw with a wriggle, settling in low
-        o.sit = 1; o.brood = 1; o.ruffle = L.t < 1.0 ? 0.45 * Math.sin(L.t / 1.0 * Math.PI) : 0;
+      case 'unseat': {                                       // getting off the nest: stepping over beside it as she turns to go in
+        const k = smooth01(L.t / 1.0);
+        swing(-Math.PI / 2, k, -1); p.x = L.from.x + (pre[0] - L.from.x) * k; p.z = L.from.z + (pre[1] - L.from.z) * k;
+        p.y = L.from.y + (NF + 0.02 - L.from.y) * k; o.walking = true;
+        if (L.t > 1.0) {
+          next('out');
+          L.path = [[hall[0], hall[1], FL], [inDoor[0] + 0.11, inDoor[1], FL], [G.pop[0], G.pop[1] + 0.02, FL], [G.foot[0], G.foot[1], ground], [front[0], front[1], ground]];
+        }
+        break;
+      }
+      case 'settle':                                         // down onto the straw with a wriggle, settling in low (and forward, her
+        o.sit = 1; o.brood = 1; o.ruffle = L.t < 1.0 ? 0.45 * Math.sin(L.t / 1.0 * Math.PI) : 0;     // face to the window)
+        onNest();
         if (L.t > 1.4) next('sit');
         break;
       case 'sit':                                            // sitting on the nest: now and then a little shuffle and a look out
-        o.sit = 1; o.brood = 1;
+        o.sit = 1; o.brood = 1; onNest();
         L.shuffle -= dt;
         if (L.shuffle < 0.5 && L.shuffle > 0) o.ruffle = 0.3 * Math.sin(L.shuffle / 0.5 * Math.PI);
         if (L.shuffle <= 0) L.shuffle = 5 + this.r() * 6;
         if (L.t > L.sit) { next('rise'); const n = this.plot.nest; n.count++; n.pop = 0; showEggs(this.plot); }
         break;
-      case 'rise': {                                         // she stands: the new egg is in the straw
-        const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot);
+      case 'rise': {                                         // she stands, backing off the seat: the new egg is in the straw
+        const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot); onNest();
         if (L.t > 1.0) {
           if (L.jump) { next('leapout'); L.to = new THREE.Vector3(G.seat[0], ground, D2 + 0.51); L.hh = undefined; break; }
-          next('out');
-          L.path = [[G.inside[0], G.inside[1], FL], [inDoor[0], inDoor[1], FL], [G.pop[0], G.pop[1] + 0.02, FL], [G.foot[0], G.foot[1], ground], [front[0], front[1], ground]];
+          next('unseat');
         }
         break;
       }
@@ -1055,6 +1096,7 @@ class Bird {
     A.sing = song ? song.sing : 0; A.cluck = song ? song.cluck : 0; A.kawk = song ? song.kawk : 0;
     A.brood = (A.brood || 0) + ((song && song.brood ? 1 : 0) - (A.brood || 0)) * Math.min(1, dt * 3);
     A.duck = (A.duck || 0) + ((song && song.duck ? 1 : 0) - (A.duck || 0)) * Math.min(1, dt * 7);
+    A.stretch = (A.stretch || 0) + ((song && song.stretch ? 1 : 0) - (A.stretch || 0)) * Math.min(1, dt * 14);
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
     this.rig.pose(A);

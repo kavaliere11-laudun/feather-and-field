@@ -65,7 +65,7 @@ def plank(name, a, b, width, thick, normal, m, parent=None, jitter=0.6, bevel=0.
     return o
 
 
-POP_W, POP_H = 0.30, 0.40                 # the hens' pop door: wide and tall enough for a big hen ducking through
+POP_W, POP_H = 0.30, 0.46                 # the hens' pop door: wide and tall enough for a big hen ducking through
 
 
 def pop_trim(objs, z0, trim, D2, x=-0.31):

@@ -636,8 +636,9 @@ export class Rig {
     // head high, tail up, high steps
     const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0, bd = s.brood || 0;     // brood: settled low on a nest, neck drawn in
     const dk = s.duck || 0;                  // ducking through a little door: crouched and level, neck stretched forward, head low, tail down
-    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk;
-    body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise + 0.12 * H.squash
+    const st = s.stretch || 0;               // leaping through the nest window: long and flat, head out in front and low, tail pressed down
+    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk - 0.02 * sz * st;
+    body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise * (1 - st) + 0.12 * H.squash
                       - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr + 0.12 * dk,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
     head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk,
@@ -646,8 +647,8 @@ export class Rig {
     // walking, the head holds still in the air while the body passes under it, then darts forward: the chicken head-bob
     const u = ((ph / Math.PI) % 1 + 1) % 1, hold = 0.68, amp = 0.03 * sz;
     const hb = u < hold ? 0.5 - u / hold : -0.5 + smooth(0, 1, (u - hold) / (1 - hold));
-    head.position.z += w * hb * amp + 0.016 * sz * ck + 0.075 * sz * dk;
-    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.06 * sz * bd - 0.1 * sz * dk;
+    head.position.z += w * hb * amp + 0.016 * sz * ck + 0.075 * sz * dk + 0.08 * sz * st;
+    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.08 * sz * bd - 0.1 * sz * dk - 0.15 * sz * st;
     head.position.y -= w * (u < hold ? 0 : Math.sin((u - hold) / (1 - hold) * Math.PI)) * 0.006 * sz;
     const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise + 0.16 * kw + 0.07 * pr;
     B.wingL.rotation.set(0, 0, f + s.sit * 0.05); B.wingR.rotation.set(0, 0, -f - s.sit * 0.05);
@@ -655,7 +656,7 @@ export class Rig {
     // flicks up on landing, then settles with a little wobble
     const T = this.tailSpring || (this.tailSpring = { p: 0, pv: 0, y: 0, yv: 0, lastY: 0 });
     const vy = (H.y - T.lastY) / dt; T.lastY = H.y;
-    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash + 0.15 * sg + 0.22 * pr - 0.4 * dk;
+    const goalP = 0.3 * s.peck + 0.12 * s.kick + w * 0.05 * Math.abs(Math.sin(ph)) - 0.05 * vy + 0.25 * H.squash + 0.15 * sg + 0.22 * pr - 0.7 * dk - 1.0 * st;
     const goalY = -0.09 * Math.max(-3, Math.min(3, s.turn || 0)) + w * 0.09 * Math.sin(ph) + 0.25 * shake;
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
