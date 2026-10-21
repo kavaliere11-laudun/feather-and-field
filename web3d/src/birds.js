@@ -197,8 +197,8 @@ export function paintedGeometry(model, breed, colour) {
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
   sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
-         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8 },
-  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4 },
+         clump: 0.6, fine: 1.0, wave: 1.2, comb: 0.8, tex: 0.05 },
+  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4, tex: 0.022 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
   hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
   orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.15 },
@@ -223,8 +223,8 @@ function addFur(g, src, spec) {
   const pos = new Float32Array(total * 3), nrm = new Float32Array(total * 3), col = new Float32Array(total * 3);
   const si = new Uint8Array(total * 4), sw = new Uint8Array(total * 4), furT = new Float32Array(total), furLen = new Float32Array(total);
   const fs = new Float32Array(total), fh = new Float32Array(total), comb = new Float32Array(total).fill(spec.comb || 0);
-  const style = new Float32Array(total * 3);
-  for (let i = 0; i < total; i++) { style[i * 3] = spec.clump || 0; style[i * 3 + 1] = spec.fine || 1; style[i * 3 + 2] = spec.wave || 0; }
+  const style = new Float32Array(total * 4);
+  for (let i = 0; i < total; i++) { style[i * 4] = spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
   const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array;
   const fp = new Float32Array(total * 4), fm = new Float32Array(total);
@@ -235,6 +235,7 @@ function addFur(g, src, spec) {
   };
   for (let i = 0; i < n; i++) copy(i, i);
   for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
+  for (let i = 0; i < total; i++) style[i * 4 + 3] = furLen[i] > 0 ? spec.tex || 0 : 0;
   const index = new (total > 65535 ? Uint32Array : Uint16Array)(idx.length + K * furTris.length);
   index.set(idx, 0);
   for (let k = 1; k <= K; k++) for (let t = 0; t < furTris.length; t++) index[idx.length + (k - 1) * furTris.length + t] = n + (k - 1) * m + map[furTris[t]];
@@ -244,7 +245,7 @@ function addFur(g, src, spec) {
   f.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); f.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4, true));
   f.setAttribute('furT', new THREE.BufferAttribute(furT, 1)); f.setAttribute('furLen', new THREE.BufferAttribute(furLen, 1));
   f.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); f.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
-  f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 3));
+  f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 4));
   f.setAttribute('featherPattern', new THREE.BufferAttribute(fp, 4)); f.setAttribute('featherMode', new THREE.BufferAttribute(fm, 1));
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
@@ -255,7 +256,12 @@ function addFur(g, src, spec) {
 
 // how fine the strands are and how many shells are drawn, from how big a bird is on screen (fewer when zoomed out)
 const FURRY = [];
-export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1 };     // cut: how much of a strand's soft edge is kept
+export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null } };
+// real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
+export function setHairTexture(t) {
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.anisotropy = 4; t.needsUpdate = true;
+  furLook.tex.value = t;
+}     // cut: how much of a strand's soft edge is kept
 function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.round(u.shells * furLook.shown) * u.shell); }
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
@@ -270,11 +276,11 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 function birdMaterial() {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
   m.onBeforeCompile = sh => {
-    sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut;
+    sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec3 furStyle;\nvarying vec3 vStyle;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
+      .replace('#include <common>', '#include <common>\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
-        vFur = furT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vPat = featherPattern; vMode = featherMode;
+        vFur = furT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
         if (furT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
           transformed += nn * furT * furLen * (1.0 - 0.55 * furComb) + normalize(back) * furT * furT * furLen * 1.4 * furComb;
@@ -282,11 +288,20 @@ function birdMaterial() {
         }`);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
-        uniform float furDensity; uniform float furCut; varying float vFur; varying float vFurLen; varying vec3 vRest; varying float vFeather; varying float vHead; varying float vComb; varying vec3 vStyle; varying vec4 vPat; varying float vMode;
+        uniform float furDensity; uniform float furCut; varying float vFur; varying float vFurLen; varying vec3 vRest; varying float vFeather; varying float vHead; varying float vComb; varying vec4 vStyle; varying vec3 vRestN; uniform sampler2D hairTex; varying vec4 vPat; varying float vMode;
         float fh13(vec3 p) { p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
         vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         float furShade = 1.0;
+        if (vStyle.w > 0.0) {
+          // painted fluff: the hair tile wrapped round the body from three sides (strands falling down the sides, back over the top)
+          vec3 pt = vRest / vStyle.w, nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
+          float hairT = texture2D(hairTex, vec2(pt.z, -pt.y)).r * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z)).r * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y)).r * nw.z;
+          furShade *= mix(0.42, 1.38, hairT);
+          // the fluff's own strands stand out only round the outline (and short near the body): no speckle across the middle
+          float facing = abs(dot(normalize(vNormal), normalize(vViewPosition)));
+          if (vFur > 0.28 && facing > 0.42 + 0.25 * (1.0 - vFur)) discard;
+        }
         if (vFurLen > 0.0) {
           // tufts: strands lean in towards their tuft's middle as they grow, with a gentle wave
           float td = furDensity * 0.16, tt = vFur;

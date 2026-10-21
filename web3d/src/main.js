@@ -15,9 +15,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail } from './birds.js';
+import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture } from './birds.js';
 
 const MODELS = './models/';
+const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
 const params = new URLSearchParams(location.search);
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
@@ -169,7 +170,7 @@ const grassTiles = [];
 async function start() {
   const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
-    loadJSON('coops.json')]);
+    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture)]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   initFlock(flock, flockInfo);
   for (const g of [farm, village, coopsGlb]) {
@@ -867,7 +868,7 @@ function showReadout() {
   const word = fps >= 26 ? 'Smooth' : fps >= 18 ? 'A bit slow' : 'Slow';
   const info = renderer.info.render;
   readout.textContent = details
-    ? `${fps} fps · quality ${q + 1} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× · ${Math.round(info.triangles / 1000)}k triangles · ${info.calls} draws`
+    ? `${fps} fps · quality ${q + 1} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× · ${Math.round(info.triangles / 1000)}k triangles · ${info.calls} draws · version ${VERSION}`
     : `${word} · ${fps} fps`;
   readout.classList.toggle('slow', fps < 18);
 }

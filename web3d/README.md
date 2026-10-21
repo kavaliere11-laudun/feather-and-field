@@ -88,6 +88,15 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
     Silkies 2300/2600, light versions 1200/1500 (their tails have fewer, simpler feathers).
 - Bird budgets lowered (hens 2300, roosters 2600, chicks 1000 triangles) since the shells multiply them (raised again in the
   third pass for the eyes and tails).
+- Painted fluff (21 Oct, Audrey chose option 4 of 4: paint real feather detail on, with a light fluffy edge): Silkies and chicks
+  wear a seamless tile of fluffy hair (`models/silkie_hair.jpg`, painted by `stylized/hair_paint.py`: about 500 locks of fine
+  wavy strands, darker roots and bright curling tips over a dark undercoat, drawn with wrap-round so it repeats without seams).
+  The shader maps it round the body from three sides (strands fall down the sides and back over the top; 5 cm tile on Silkies,
+  2.2 cm on chicks) and tints it with the bird's colours; the fluff shells now show only round the outline (and short near the
+  body), so there is no speckle across the middle. Mipmapped, so it looks the same at every zoom and on every phone. A Blender
+  render of particle hair (`hair_tile.py`, not kept) took 7 minutes and came out too straight, with a seam.
+- `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
+  Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
 - Tests for heavy views: `still.mjs` / `stillat.mjs` draw once and screenshot (the test browser is too slow to keep drawing
   fur), `views.mjs` counts triangles per view (birds separately), `rtime.mjs` times one frame. The page has `__farm.pause(on)`
