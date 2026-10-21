@@ -852,17 +852,25 @@ function frame(now) {
     meter.slow = meter.late > meter.frames * 0.4 ? meter.slow + 1 : 0;      // two slow stretches in a row: step down
     meter.frames = 0; meter.late = 0; meter.since = now;
     if (meter.slow >= 2 && q < QUALITY.length - 1 && !params.has('q')) { stepDown(); meter.slow = 0; }
+    // back up again once the view is clearly lighter than where it got slow (zoomed in), a few times at most
+    else if (q > START_Q && !meter.slow && view.size < slowAt * 0.7 && stepUps < 4 && !params.has('q')) stepUp();
     showReadout();
   }
 }
 
-function stepDown() {
-  q++;
+// a slow stretch steps the quality down (lower resolution, fewer shadows, less grass and fur); it used to stay down for the
+// rest of the visit, so one heavy zoomed-out look left everything blurry afterwards
+const START_Q = q;
+let slowAt = Infinity, stepUps = 0;
+function setQuality(n) {
+  q = n;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
   applyGrass();
   aimShadows(true);
   resize();
 }
+function stepDown() { slowAt = view.size; setQuality(q + 1); }
+function stepUp() { stepUps++; slowAt = q - 1 > START_Q ? slowAt * 0.7 : Infinity; setQuality(q - 1); }
 
 function showReadout() {
   const fps = Math.round(meter.fps);

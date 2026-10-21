@@ -3,8 +3,8 @@ game, so its shapes survive on a phone screen: fine silky strands (1.3-2 mm) lyi
 3.5-7 cm long), in three layers over a darker undercoat, like the 2D game's Silkie. Everything wraps round the tile's edges, so
 it repeats without seams. Strands flow towards the top of the image.
 Two channels: red is how light the hair is (darker roots, bright tips; white, the browser tints it), green is how far the hair
-stands out from the body (each strand its own length, the top layer longest): the browser's fluff layers keep a spot only
-where the hair reaches that far out, and fade the outer layers, so the edge is a soft halo of hair.
+stands out from the body (each strand its own length, the top layer longest), blue is green squared: the browser's fluff
+layers keep the share of hair that reaches that far out, so the edge is a soft halo of hair at every zoom.
 Plain Python (Pillow + numpy). Usage: python3 hair_paint.py out.jpg [size] [tile_cm]"""
 import sys, math, random
 import numpy as np
@@ -80,6 +80,10 @@ for base, bright, count in LAYERS:
 sh = shade.resize((SIZE, SIZE), Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.4))
 ht = height.resize((SIZE, SIZE), Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.6))
 a = np.asarray(sh).astype(np.float32)
-rgb = np.stack([np.clip(a, 0, 255), np.asarray(ht).astype(np.float32), np.zeros_like(a)], 2).astype(np.uint8)
+g = np.asarray(ht).astype(np.float32)
+# blue: the length squared. The phone's smaller copies of the tile (for zoomed-out views) average every channel, so from
+# green and blue together the browser knows both the average length and how much it varies at any distance: far away it
+# still draws the longest strands thinly instead of shrinking the fluff to its average length (which made smooth blobs)
+rgb = np.stack([np.clip(a, 0, 255), g, np.round(g * g / 255.0)], 2).astype(np.uint8)
 Image.fromarray(rgb, 'RGB').save(OUT, quality=92, subsampling=0)
 print('WROTE', OUT, 'shade mean', round(float(a.mean()), 1), 'height mean', round(float(np.asarray(ht).mean()), 1))

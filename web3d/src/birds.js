@@ -282,7 +282,8 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
   // change while zooming
   const d = pixelsPerMetre > 600 ? 210 : pixelsPerMetre > 330 ? 150 : pixelsPerMetre > 180 ? 105 : 70;
   if (d !== furLook.density.value) furLook.density.value = d;
-  const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : 0.27);     // zoomed far out: fewer layers (at least 2), spread over the hair
+  // zoomed far out: fewer layers (at least 2), spread over the hair's length; fewest when the light models are worn
+  const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : far ? 0.2 : 0.27);
   if (shown !== furLook.shown) { furLook.shown = shown; furLook.span.value = 1 / shown; for (const f of FURRY) showShells(f); }
 }
 
@@ -312,23 +313,29 @@ function birdMaterial() {
         float furShade = 1.0;
         if (vStyle.w != 0.0) {
           // painted hair: the tile wrapped round the body from three sides (strands falling down the sides, back over the top);
-          // red: how light the hair is, green: how far it stands out
+          // red: how light the hair is, green: how far it stands out, blue: green squared
           vec3 pt = vRest / abs(vStyle.w), nw = pow(abs(normalize(vRestN)), vec3(4.0)); nw /= (nw.x + nw.y + nw.z);
-          vec2 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -1.0).rg * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -1.0).rg * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -1.0).rg * nw.z;
-          // how many of the tile's pixels fall in one screen pixel: the further away, the more the strands blur together, so
-          // the fade from hair to air is spread wider and the outer layers turn into a soft see-through halo
-          float tpp = max(length(fwidth(pt)) * 512.0, 1.0), ramp = 0.05 + 0.05 * min(log2(tpp), 5.0);
+          vec3 hair = texture2D(hairTex, vec2(pt.z, -pt.y), -1.0).rgb * nw.x + texture2D(hairTex, vec2(pt.x, -pt.z), -1.0).rgb * nw.y + texture2D(hairTex, vec2(pt.x, -pt.y), -1.0).rgb * nw.z;
+          // how many of the tile's pixels fall in one screen pixel (the further away, the more the strands blur together)
+          float tpp = max(length(fwidth(pt)) * 512.0, 1.0);
           if (vStyle.w < 0.0) {
             // Silkie hair: each fluff layer keeps the hair that reaches out that far, darker deeper in
             if (vFur > 0.0) {
-              float cov = clamp((hair.g - vFur) / ramp + 0.5, 0.0, 1.0);
+              // close up: keep the hair that reaches this far out, with a soft edge. Further away the strands blur together,
+              // so use the share of strands reaching this far out, from the average length (green) and how much it varies
+              // (from blue, the average of length squared): the longest strands still show, thinly, instead of the fluff
+              // shrinking to its average length (smooth blobs, a fleece)
+              float lt = log2(tpp), spread = sqrt(max(hair.b - hair.g * hair.g, 0.0)) * 3.46;
+              float near = clamp((hair.g - vFur) / (0.05 + 0.05 * min(lt, 5.0)) + 0.5, 0.0, 1.0);
+              float far = clamp((hair.g - vFur) / max(spread, 0.07) + 0.5, 0.0, 1.0);
+              float cov = mix(near, far, smoothstep(2.5, 4.0, lt));
               if (cov < furCut) discard;
               #ifdef SOFT_FUR
               diffuseColor.a = cov;
               #endif
             }
             // zoomed out, the locks' light and dark would only make blotches (a fleece): even them out with distance
-            furShade = mix(mix(0.42, 1.28, hair.r), 0.93, 0.65 * smoothstep(2.5, 5.0, log2(tpp))) * mix(0.78, 1.06, vFur);
+            furShade = mix(mix(0.42, 1.28, hair.r), 0.93, 0.35 * smoothstep(3.0, 5.5, log2(tpp))) * mix(0.78, 1.06, vFur);
           } else {
             furShade *= mix(0.42, 1.38, hair.r);
             // the down's own strands stand out only round the outline (and short near the body): no speckle across the middle

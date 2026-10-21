@@ -133,6 +133,19 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
   Now, for painted hair (Silkies, chicks), the drawn layers are spread over the hair's full length (`furSpan` = 1 / shown,
   in the vertex shader), so far birds keep their fuzzy outline; the locks' light and dark even out with distance (towards
   0.93 from tile mip level 2.5 to 5). Far out, 0.27 of the layers instead of 0.34 (at least 2 per bird) to help the frame rate.
+- Still woolly at middle distance (21 Oct 11:25, Audrey: "Could be better still quote wooly", screenshot at 30 fps, visibly
+  lower resolution). Two causes:
+  - The tile's smaller copies (mipmaps) average the hair length, so further away the fluff layers saw only the average
+    length and the long strands vanished: smooth blobs. The tile now also carries length squared (blue); the mipmaps average
+    both, so the shader knows the spread of lengths at any distance and keeps the share of strands reaching each layer
+    (`far` coverage: mean ± 1.73 standard deviations as a uniform spread). Close up (tile mip level below 2.5) the old soft
+    cut stays (`near`), blended over levels 2.5-4, so the close-up look she approved is unchanged. Far evening-out of the
+    shading reduced (0.35 from level 3 to 5.5).
+  - A slow zoomed-out view stepped the quality down (resolution 2x to 1.5x and below) for the rest of the visit. Now
+    `stepUp()` brings it back once the view is clearly lighter (zoomed in to under 0.7 of the size where it got slow), at
+    most 4 times a visit; `stepup.mjs` checks it (late frames faked). Far light models draw 0.2 of the layers.
+  - `tricount.mjs` prints triangles and draws on the line-up at six zooms: 540k close, 800k at the line-up zoom (Silkies'
+    26 shells), 276k far.
 - `build.sh` stamps each build with its London time (`__BUILD__`); the details pill (tap it) shows it as "version ...", so
   Audrey can check her phone has the latest.
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
