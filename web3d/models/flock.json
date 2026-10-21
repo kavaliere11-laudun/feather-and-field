@@ -20,7 +20,8 @@
   "down": 7,
   "cwing": 8,
   "cleg": 9,
-  "cbeak": 10
+  "cbeak": 10,
+  "saddle": 11
  },
  "models": {
   "rir_h": {
@@ -1060,68 +1061,68 @@
  },
  "stats": {
   "rir_h": {
-   "tris": 2274,
-   "verts": 1213
+   "tris": 2986,
+   "verts": 1763
   },
   "rir_h_lo": {
-   "tris": 868,
-   "verts": 510
+   "tris": 1526,
+   "verts": 905
   },
   "rir_r": {
-   "tris": 2564,
-   "verts": 1364
+   "tris": 3808,
+   "verts": 2760
   },
   "rir_r_lo": {
-   "tris": 960,
-   "verts": 562
+   "tris": 1790,
+   "verts": 1195
   },
   "orp_h": {
-   "tris": 2266,
-   "verts": 1209
+   "tris": 2988,
+   "verts": 1764
   },
   "orp_h_lo": {
-   "tris": 888,
-   "verts": 520
+   "tris": 1588,
+   "verts": 936
   },
   "orp_r": {
-   "tris": 2570,
-   "verts": 1367
+   "tris": 3968,
+   "verts": 2840
   },
   "orp_r_lo": {
-   "tris": 978,
-   "verts": 571
+   "tris": 1844,
+   "verts": 1222
   },
   "leg_h": {
-   "tris": 2256,
-   "verts": 1214
+   "tris": 2980,
+   "verts": 1770
   },
   "leg_h_lo": {
-   "tris": 868,
-   "verts": 520
+   "tris": 1540,
+   "verts": 922
   },
   "leg_r": {
-   "tris": 2564,
-   "verts": 1374
+   "tris": 3826,
+   "verts": 2779
   },
   "leg_r_lo": {
-   "tris": 956,
-   "verts": 570
+   "tris": 1796,
+   "verts": 1208
   },
   "bra_h": {
-   "tris": 2266,
-   "verts": 1213
+   "tris": 2990,
+   "verts": 1769
   },
   "bra_h_lo": {
-   "tris": 892,
-   "verts": 526
+   "tris": 1592,
+   "verts": 942
   },
   "bra_r": {
-   "tris": 2568,
-   "verts": 1370
+   "tris": 3936,
+   "verts": 2828
   },
   "bra_r_lo": {
-   "tris": 970,
-   "verts": 571
+   "tris": 1832,
+   "verts": 1220
   },
   "sil_h": {
    "tris": 2286,
@@ -1136,8 +1137,8 @@
    "verts": 1350
   },
   "sil_r_lo": {
-   "tris": 1086,
-   "verts": 601
+   "tris": 1286,
+   "verts": 701
   },
   "chick": {
    "tris": 984,

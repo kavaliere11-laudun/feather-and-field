@@ -9,7 +9,7 @@ from common import *
 from hen import paddle, K
 
 # paint regions (the browser's painter uses the same numbers)
-PAINT = dict(keep=0, body=1, wing=2, prim=3, tail=4, crest=5, legfeather=6, down=7, cwing=8, cleg=9, cbeak=10)
+PAINT = dict(keep=0, body=1, wing=2, prim=3, tail=4, crest=5, legfeather=6, down=7, cwing=8, cleg=9, cbeak=10, saddle=11)
 
 # shape and base colours per breed (the browser repaints plumage; these are what the file shows on its own)
 BREEDS = {
@@ -25,6 +25,7 @@ BREEDS = {
                 legs='#5c5868', beak='#757688', eye='#2c2222', combc='#4b2032', lobe='#3fa6b8', plum='#f4f1ea', wing='#ece8df', tailc='#f4f1ea'),
 }
 ROOSTER = 1.12
+LO = False
 
 _mats = {}
 
@@ -43,9 +44,67 @@ def pivot(name, loc, parent):
     return empty('pv_' + name, loc, (0, 0, 0), parent)
 
 
-def build(breed='rir', sex='h', seed=1):
-    """A bird standing at the origin, facing +x. Returns its root empty."""
+def keep(o):
+    """Small careful details (eyes, tail feathers): the exporter never simplifies these."""
+    o['keep'] = True; return o
+
+
+def ribbon(name, pts, widths, wdirs, m, parent, thick=0.0028):
+    """A thin feather: a strip along points, `widths` wide across `wdirs`, with a little thickness."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rows = []
+    for p, w, wd in zip(pts, widths, wdirs):
+        rows.append((bm.verts.new(p - wd * (w / 2)), bm.verts.new(p + wd * (w / 2))))
+    for i in range(len(rows) - 1):
+        bm.faces.new((rows[i][0], rows[i][1], rows[i + 1][1], rows[i + 1][0]))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = thick; so.offset = 0; so.use_rim = False      # two faces, no edges
+    for p_ in o.data.polygons: p_.use_smooth = True
+    o.parent = parent
+    return keep(o)
+
+
+def feather(name, m, parent, start, a0, turn, L, w0, side, spread=0.0, twist=25.0, seg=10, droop=0.0, part='tail', paint='tail', pointed=False):
+    """A curved feather from `start` (parent space; the bird faces +x, so back is -x): it leaves at `a0` degrees above the
+    backward horizontal and bends down by `turn` degrees along its length L, drifting sideways by `spread`."""
+    pts, ws, wds = [], [], []
+    p = Vector(start)
+    for i in range(seg + 1):
+        t = i / seg
+        a = math.radians(a0 - turn * t ** 1.15)
+        d = Vector((-math.cos(a), side * spread / max(L, 1e-3), math.sin(a))).normalized()
+        if i: p = p + d * (L / seg)
+        inplane = Vector((math.sin(a), 0, math.cos(a)))
+        tw = math.radians(twist * (0.4 + 0.6 * t))
+        wd = (inplane * math.cos(tw) + Vector((0, side, 0)) * math.sin(tw)).normalized()
+        if pointed: w = w0 * min(1.0, t / 0.15 + 0.25) * (1 - t) ** 0.9
+        else: w = w0 * min(1.0, t / 0.12 + 0.3) * (1 - t * t) ** 0.5 + 0.002
+        pts.append(p.copy() + Vector((0, 0, -droop * t * t))); ws.append(w); wds.append(wd)
+    return tag(ribbon(name, pts, ws, wds, m, parent), part, paint)
+
+
+def natural_eye(hd, sd, B, R=0.057):
+    """A chicken's eye on the side of the head: set into a patch of bare red skin, amber iris, flush round pupil, a thin lid
+    and a small catch-light."""
+    d = Vector((0.42, sd * 0.86, 0.22)).normalized()
+    rot = d.to_track_quat('Z', 'Y').to_euler()
+    skin = flat('face', '#cf4a3c', 0.55); lid = flat('lid', '#a93a30', 0.5)
+    iris = flat('iris', B['eye'], 0.12); pupil = flat('pupil', '#0a0807', 0.05); glint = flat('glint', '#ffffff', 0.1)
+    face = sphere('face', 0.02, tuple(d * (R - 0.0065) + Vector((0.01, 0, -0.005))), (1.1, 0.95, 0.3), rot, m=skin, parent=hd, seg=10, rings=6)
+    eye_c = d * (R - 0.0035)
+    ball = sphere('eye', 0.0105, tuple(eye_c), m=iris, parent=hd, seg=10, rings=7)
+    pu = sphere('pupil', 0.0052, tuple(eye_c + d * 0.0094), (1, 1, 0.35), rot, m=pupil, parent=hd, seg=8, rings=5)
+    gl = sphere('glint', 0.0017, tuple(eye_c + d * 0.0104 + Vector((0.0025, 0, 0.0028))), m=glint, parent=hd, seg=6, rings=4)
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.0108, minor_radius=0.0021, major_segments=10, minor_segments=4)
+    tor = bpy.context.object; setmat(tor, lid); [setattr(p_, 'use_smooth', True) for p_ in tor.data.polygons]
+    tor.parent = hd; tor.location = tuple(eye_c + d * 0.0045); tor.rotation_euler = rot
+    for o in (face, ball, pu, gl, tor): tag(keep(o), 'head')
+
+
+def build(breed='rir', sex='h', seed=1, lo=False):
+    """A bird standing at the origin, facing +x. Returns its root empty. lo: fewer, simpler tail feathers."""
     random.seed(seed); _mats.clear()
+    global LO; LO = lo
     B = BREEDS[breed]; rooster = sex == 'r'
     root = empty('bird_%s_%s' % (breed, sex))
     body_rig = empty('body', (0, 0, 0), (0, 0, 0), root)
@@ -83,8 +142,7 @@ def feathered(B, rooster, root, body_rig, seed):
     hd = empty('head', tuple(head), (0, math.radians(-10), 0), body_rig)
     tag(cyl('beak', 0.019, 0.048, (0.07, 0, -0.008), (0, math.radians(90 + 12), 0), bk, verts=12, r2=0.002, bevel=0.002, parent=hd), 'head')
     for sd in (1, -1):
-        tag(sphere('eye', 0.016, (0.032, sd * 0.043, 0.013), m=ey, parent=hd, seg=12, rings=8), 'head')
-        tag(sphere('pupil', 0.0098, (0.039, sd * 0.0545, 0.0145), m=pu, parent=hd, seg=10, rings=6), 'head')
+        natural_eye(hd, sd, B)
         tag(sphere('lobe', 0.011, (0.004, sd * 0.045, -0.012), (1, 0.45, 1.2), m=cm if not B.get('pea') else flat('lobe_w', '#efe6da'), parent=hd, seg=12, rings=8), 'head')
     cs = (1.5 if rooster else 1.0) * B['comb']
     if B.get('pea'):           # a Brahma's pea comb: three low ridges
@@ -109,21 +167,39 @@ def feathered(B, rooster, root, body_rig, seed):
             e = math.radians(-8 - k * 5)
             tag(paddle('prim', 0.1 - k * 0.008, 0.032, 0.01, wg, w, (-0.05, sd * (0.008 - k * 0.002), -0.012 - k * 0.011),
                        (0, e - math.pi, math.radians(sd * (4 + k * 2))), curve=-sd * 0.12), nm, 'prim')
-    # tail
+    # tail: curved feathers. A rooster's is majestic: long arching sickles over layers of lesser sickles, the main tail
+    # feathers and short coverts, with saddle hackles draping down his back
     tb = empty('tail', (-0.2, 0, 0.33), (0, 0, 0), body_rig)
     pivot('tail', (-0.19, 0, 0.32), body_rig)
     short = B['tail'] == 'short'
-    n = 9 if rooster else 7
-    up = math.radians(B.get('tail_up', 0))
-    for i in range(n):
-        side = 1 if i % 2 else -1
-        e = math.radians(28 + (40 if short else 50) * i / (n - 1)) + up
-        L = (0.2 if rooster else 0.14) * (0.72 if short else 1.0) * (1.0 - 0.15 * abs(i / (n - 1) - 0.5))
-        tag(paddle('tailf', L, 0.055 if short else (0.05 if not rooster else 0.045), 0.011, tl, tb, (0.01, side * 0.012, -0.01),
-                   (math.radians(side * 6), e - math.pi, math.radians(side * 9)), curve=side * 0.22), 'tail', 'tail')
+    up = B.get('tail_up', 0)
+    k = 0.74 if short else 1.0
+    rnd = random.Random(seed * 7 + (1 if rooster else 0))
+    seg = 4 if LO else 8
+    for sd in (1, -1):
+        n = 5 if not LO else 3
+        for i in range(n):                                   # main tail feathers (rectrices): a fan, fairly straight
+            f = i / (n - 1)
+            feather('tailf', tl, tb, (0.01, sd * (0.006 + 0.004 * i), -0.01 + 0.006 * i), 32 + 34 * f + up + (8 if short else 0), 18,
+                    (0.15 if rooster else 0.135) * k * (1.0 - 0.18 * abs(f - 0.6)), 0.05 if not short else 0.056, sd, spread=0.012 + 0.012 * f, twist=35, seg=seg)
     if rooster:
         for sd in (1, -1):
-            tag(paddle('sickle', 0.3 * (0.7 if short else 1.0), 0.035, 0.01, tl, tb, (0.01, sd * 0.014, 0.02), (math.radians(sd * 6), math.radians(55) + up - math.pi, math.radians(sd * 12)), curve=sd * 0.3), 'tail', 'tail')
+            m_ = 6 if not LO else 3
+            for i in range(m_):                              # lesser sickles, layered down the sides, each falling a little lower
+                f = i / (m_ - 1)
+                feather('sickle_s', tl, tb, (0.015 - 0.006 * f, sd * (0.01 + 0.012 * f), 0.025 - 0.03 * f), 66 - 18 * f + up, 140 + 20 * f,
+                        (0.36 - 0.1 * f) * k, 0.038, sd, spread=0.02 + 0.025 * f, twist=26, seg=seg, droop=0.015)
+            feather('sickle', tl, tb, (0.02, sd * 0.008, 0.04), 78 + up, 172, 0.52 * k, 0.046, sd, spread=0.012, twist=20, seg=seg + 4)   # the two great sickles
+            if not LO:
+                for i in range(3):                           # short coverts over the base
+                    feather('covert', tl, tb, (0.03 - 0.01 * i, sd * (0.02 + 0.01 * i), 0.0), 55 - 10 * i, 70, 0.11 - 0.01 * i, 0.034, sd, spread=0.02, twist=35, seg=6)
+        sad = flat('saddle', B.get('saddle', B['plum']), 0.5)
+        for sd in (1, -1):                                   # saddle hackles: long thin pointed feathers draping from the back
+            for i in range(7 if not LO else 3):
+                f = i / 6 if not LO else i / 2
+                start = (-0.07 - 0.06 * f, sd * (0.025 + 0.04 * f + rnd.uniform(-0.004, 0.004)), 0.318 - 0.012 * f)
+                feather('saddleh', sad, body_rig, start, -6 - 10 * f, 22, 0.11 - 0.015 * f, 0.016, sd, spread=0.012, twist=78, seg=6 if not LO else 3,
+                        part='body', paint='saddle', pointed=True)
     # legs and feet (their own bones: they stay planted while the body tilts)
     sh = B['shank']
     for sd, nm in ((1, 'legL'), (-1, 'legR')):

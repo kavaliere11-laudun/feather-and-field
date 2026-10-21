@@ -74,7 +74,19 @@ Audrey chose (20 Oct) to build the 3D version into the web game instead of Unity
     the feather (Legbar), a dark centre with light edges (the Brahma's cape and a rooster's saddle), or darker towards the
     base (everyone else, gently on light plumage); a quill and fine barbs; long hackle feathers down the neck; fluffier
     underside and thighs. A per-pixel relief (bump) was tried and dropped: the feather edges made dark dashes.
-- Bird budgets lowered (hens 2300, roosters 2600, chicks 1000 triangles) since the shells multiply them.
+- Third pass (21 Oct, Audrey from her iPhone: Silkie feathers "become like dots" when zooming, the eyes are "weird", roosters
+  should have "very nice almost majestic" tails):
+  - Strands are now at least a few screen pixels wide, in four fixed sizes by zoom (50/75/105/150 per metre), so they neither
+    break into dots nor shimmer while zooming; Silkie tufts and partings gentler.
+  - Eyes (`breeds.natural_eye`): smaller, set into a patch of bare red facial skin, amber iris, a flush round pupil, a thin lid
+    and a catch-light (Silkies keep their small dark eyes, chicks their bead eyes).
+  - Tails from curved, tapering feathers (`breeds.feather`): hens a fan of main tail feathers; roosters add six lesser sickles
+    a side, the two great sickles arching up and falling behind, short coverts, and saddle hackles lying along the back
+    (new paint region 11, saddle). Long feathers are glossy with a sheen (green-black on dark tails), feather mode 5.
+  - Eyes and tail feathers are marked `keep` so the exporter never simplifies them; budgets: hens 3000, roosters 3800,
+    Silkies 2300/2600, light versions 1200/1500 (their tails have fewer, simpler feathers).
+- Bird budgets lowered (hens 2300, roosters 2600, chicks 1000 triangles) since the shells multiply them (raised again in the
+  third pass for the eyes and tails).
 - Measured at phone size (10 coops): 165-360k triangles of which birds 45-80k; a Silkie pen close up 320k (birds 150k).
 - Tests for heavy views: `still.mjs` / `stillat.mjs` draw once and screenshot (the test browser is too slow to keep drawing
   fur), `views.mjs` counts triangles per view (birds separately), `rtime.mjs` times one frame. The page has `__farm.pause(on)`

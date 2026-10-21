@@ -14,7 +14,7 @@ import breeds
 from mathutils import Vector, Matrix
 
 JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR']
-BUDGET_BIRD = {'h': 2300, 'r': 2600, 'chick': 1000}         # lighter since 21 Oct: the browser adds fluff shells on top
+BUDGET_BIRD = {'h': 3000, 'r': 3800, 'chick': 1000}         # lighter since 21 Oct: the browser adds fluff shells on top
 flat_info = g['flat_info']
 PIVOTS = {}
 
@@ -41,12 +41,13 @@ def bake_bird(name, root, budget, small_cut=60, floor=0.06):
     for o in objs:
         me = bpy.data.meshes.new_from_object(o.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
         me.calc_loop_triangles(); meshes.append([o, me, len(me.loop_triangles)])
-    small = sum(n for _, _, n in meshes if n <= small_cut); big = sum(n for _, _, n in meshes if n > small_cut)
+    kept = lambda o, n: n <= small_cut or o.get('keep')          # small parts and careful details (eyes, tail feathers) stay as they are
+    small = sum(n for o, _, n in meshes if kept(o, n)); big = sum(n for o, _, n in meshes if not kept(o, n))
     ratio = max(floor, min(1.0, (budget - small) / max(1, big)))
     if ratio < 1.0:                                            # simplify the bigger parts evenly down to the budget
         for rec in meshes:
             o, me, n = rec
-            if n <= small_cut: continue
+            if kept(o, n): continue
             tmp = bpy.data.objects.new('tmp', me); bpy.context.scene.collection.objects.link(tmp)
             md = tmp.modifiers.new('dec', 'DECIMATE'); md.ratio = ratio; md.use_collapse_triangulate = True
             dg.update()
@@ -131,14 +132,15 @@ def write_bird_glb(path, names):
     print('WROTE', os.path.basename(path), round(total / 1024), 'KB', names)
 
 
-LOW = {'h': 900, 'r': 1000, 'chick': 420}      # a light version of each bird for when the view is zoomed far out
+LOW = {'h': 1200, 'r': 1500, 'chick': 420}
+SIL_BUDGET = {'h': 2300, 'r': 2600}     # Silkies: no long tail or bare-skin eyes, and their fluff shells multiply them      # a light version of each bird for when the view is zoomed far out
 names = []
 for b in ('rir', 'orp', 'leg', 'bra', 'sil'):
     for sx in ('h', 'r'):
         for lo in (False, True):
-            fresh(); r = breeds.build(b, sx, seed=3); light(1)
+            fresh(); r = breeds.build(b, sx, seed=3, lo=lo); light(1)
             nm = '%s_%s' % (b, sx) + ('_lo' if lo else '')
-            bake_bird(nm, r, (LOW[sx] if lo else BUDGET_BIRD[sx]) + (100 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
+            bake_bird(nm, r, (LOW[sx] if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx])) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
 for lo in (False, True):
     fresh(); r = breeds.chick(seed=3); light(1)
     nm = 'chick' + ('_lo' if lo else ''); bake_bird(nm, r, LOW['chick'] if lo else BUDGET_BIRD['chick'], *((20, 0.02) if lo else ())); names.append(nm)

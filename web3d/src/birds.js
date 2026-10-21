@@ -6,7 +6,7 @@ import * as THREE from 'three';
 export const BREEDS = ['rir', 'orp', 'leg', 'bra', 'sil'];
 export const SILKIE = ['white', 'black', 'blue', 'buff', 'partridge', 'grey', 'splash', 'cuckoo', 'red', 'paint', 'lavender'];
 export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', sil: 'Silkie' };
-const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10 };
+const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
 
@@ -83,8 +83,8 @@ export function initFlock(gltf, json) {
 const FEAT = { c: new THREE.Color(), mode: 0, amt: 0 };
 // the colour of one vertex of a grown bird
 function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
-  const key = reg === R.wing ? 'wing' : reg === R.prim ? 'prim' : reg === R.tail ? 'tail' : reg === R.crest ? 'crest' : reg === R.legfeather ? 'legfeather' : 'body';
-  let c = S[key] || S.body;
+  const key = reg === R.wing ? 'wing' : reg === R.prim ? 'prim' : reg === R.tail ? 'tail' : reg === R.crest ? 'crest' : reg === R.legfeather ? 'legfeather' : reg === R.saddle ? 'saddle' : 'body';
+  let c = key === 'saddle' ? S.saddle || S.hackle || S.body : S[key] || S.body;
   const h = y / top;                                                      // 0 at the feet, 1 at the top of the head or tail
   if (key === 'body') {
     if (hw > 0.97) c = S.head || S.hackle || S.body;
@@ -97,6 +97,10 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
   FEAT.mode = 4; FEAT.amt = lum > 0.5 ? 0.14 : 0.3; FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
   const n = noise(x * 60, y * 60, z * 60);
+  if (key === 'tail' || key === 'saddle' || key === 'prim') {      // long glossy feathers: a sheen (green-black on dark tails, as in life)
+    FEAT.mode = 5; FEAT.c.copy(lum < 0.06 ? lin('#2f7d58') : lum < 0.35 ? lin('#ffcf7a') : lin('#ffffff')); FEAT.amt = lum < 0.06 ? 0.3 : lum < 0.35 ? 0.16 : 0.1;
+    if (S.pattern === 'stripes' && key === 'saddle') out.lerp(lin(S.stripe), smooth(0.3, 0.8, Math.sin(Math.atan2(x, -z) * 22)) * 0.75);
+  }
   switch (S.pattern) {
     case 'bars': if (key !== 'crest' && !(key === 'body' && c === S.breast)) {          // barred feathers (a light trace on the vertices for far views)
       const hackle = key === 'body' && hw > 0.04;
@@ -193,11 +197,11 @@ export function paintedGeometry(model, breed, colour) {
 const FUR = {
   // clump: strands gather into tufts towards their tips; fine: thinner, denser strands; wave: a gentle curl
   sil: { len: { [R.body]: 0.032, [R.crest]: 0.036, [R.tail]: 0.034, [R.wing]: 0.026, [R.prim]: 0.026, [R.legfeather]: 0.018 }, shells: 16, droop: 0.35,
-         clump: 0.85, fine: 1.35, wave: 1.4, comb: 0.45 },
-  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.3, wave: 0.4 },
+         clump: 0.7, fine: 1.0, wave: 1.4, comb: 0.45 },
+  chick: { len: { [R.down]: 0.009, [R.cwing]: 0.006 }, shells: 8, droop: 0.1, clump: 0.25, fine: 1.1, wave: 0.4 },
   // the other breeds: a short soft layer combed back over the feathers, so they look feathery rather than smooth
-  hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.7 },
-  orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.5 },
+  hen: { len: { [R.body]: 0.009, [R.wing]: 0.005, [R.crest]: 0.007, [R.legfeather]: 0.008 }, shells: 5, comb: 1, fine: 1.25 },
+  orp: { len: { [R.body]: 0.014, [R.wing]: 0.007, [R.legfeather]: 0.01 }, shells: 6, comb: 0.8, fine: 1.15 },
 };
 const FEATHER = { [R.body]: 2.6, [R.wing]: 2.0, [R.crest]: 1.2, [R.legfeather]: 1.2 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
@@ -254,7 +258,10 @@ const FURRY = [];
 export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1 };     // cut: how much of a strand's soft edge is kept
 function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.round(u.shells * furLook.shown) * u.shell); }
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
-  furLook.density.value = Math.max(60, Math.min(300, pixelsPerMetre / 2.0));
+  // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
+  // change while zooming
+  const d = pixelsPerMetre > 600 ? 150 : pixelsPerMetre > 330 ? 105 : pixelsPerMetre > 180 ? 75 : 50;
+  if (d !== furLook.density.value) furLook.density.value = d;
   const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : 0.34);
   if (shown !== furLook.shown) { furLook.shown = shown; for (const f of FURRY) showShells(f); }
 }
@@ -292,15 +299,15 @@ function birdMaterial() {
           if (tt > 0.0) {
             if (tt > strand) discard;
             vec3 c = 0.3 + 0.4 * fh33(cell);
-            float rad = mix(0.52, 0.56, step(0.001, vStyle.x)) * (1.0 - 0.82 * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
+            float rad = mix(0.52, 0.58, step(0.001, vStyle.x)) * (1.0 - mix(0.82, 0.55, step(0.001, vStyle.x)) * tt / strand), d = length(fr - c), fw = max(fwidth(d), 0.02) * step(0.001, vStyle.x);
             float cov = 1.0 - smoothstep(rad - fw, rad + fw, d);
             if (cov < furCut) discard;
           }
           float sleek = 1.0 - step(0.001, vStyle.x);
-          furShade = mix(mix(0.62, 0.86, sleek), mix(1.15, 1.04, sleek), tt / strand) * (0.9 + 0.2 * h) * (0.94 + 0.12 * tid * vStyle.x);
+          furShade = mix(mix(0.68, 0.86, sleek), mix(1.13, 1.04, sleek), tt / strand) * (0.9 + 0.2 * h) * (0.94 + 0.12 * tid * vStyle.x);
           // locks: each tuft lighter in its middle and darker where it parts from the next one
           float lock = length((vRest - tmid) * td) ;
-          furShade *= mix(1.0, mix(1.08, 0.74, smoothstep(0.18, 0.62, lock)), vStyle.x);
+          furShade *= mix(1.0, mix(1.06, 0.84, smoothstep(0.18, 0.62, lock)), vStyle.x);
         }
         if (vFeather > 0.0) {
           // overlapping feathers like roof tiles, in rows running back along the body (long hackle feathers down the neck): the
@@ -329,7 +336,13 @@ function birdMaterial() {
           furShade *= (0.84 + 0.24 * (1.0 - t * t)) * mix(1.0, 0.74, smoothstep(0.8, 1.0, t)) * (0.94 + 0.12 * id) * (1.0 + 0.025 * barbs) * (1.0 + 0.08 * quill);
         }
         diffuseColor.rgb *= furShade;`)
-      .replace('#include <opaque_fragment>', `if (vFurLen > 0.0) {
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+        if (vMode > 4.5) roughnessFactor = 0.34;`)
+      .replace('#include <opaque_fragment>', `if (vMode > 4.5) {        // glossy tail feathers: a coloured sheen at glancing angles
+          float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+          outgoingLight += vPat.rgb * vPat.a * (0.04 + fr * fr * 0.6);
+        }
+        if (vFurLen > 0.0) {
           float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += diffuseColor.rgb * rim * rim * (0.08 + 0.16 * vFur) * step(0.001, vStyle.x);
         }
