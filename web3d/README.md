@@ -406,8 +406,9 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   exported by `stylized/export_interiors.py` to `models/interiors.glb` and `interiors.json`): raw barn boards (Red Barn),
   whitewash and oak beams (Thatched Cottage), stone (Stone Cottage), logs (Timber Lodge), plaster and red lacquer (Pagoda);
   a plank or plastered ceiling on joists, a beam across the open front, floor boards under deep straw, a ladder perch with
-  two bars, two nest boxes, the chicks' hollow in the straw, the pop door shut, a moonlit window (round in the pagoda), a
-  galvanised feeder, a red drinker, a hay bale, and a lantern turned low hanging over the nest boxes. 6.8k-12.9k triangles each.
+  two bars, two nest boxes, the chicks' hollow in the straw, the pop door on the left wall (its panel a separate model,
+  `inside_pop`, sliding up in tall guides to show the night outside), a moonlit window (round in the pagoda), a galvanised
+  feeder, a red drinker, a hay bale, and a lantern turned low hanging over the nest boxes. 6.8k-12.9k triangles each.
 - The birds: up to three hens along the lower bar and the rooster and the other hens on the top bar in the gaps between them,
   so every one shows (any more bed down in the straw in front), the chicks curled up in their corner. Asleep: sitting low and
   fluffed up, breathing slowly, head turned back into the back feathers (`sleep` in `Rig.pose`), eyes shut (`Rig.sleepy()`:
@@ -416,10 +417,33 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   its ring, a bead eye sinks into the head). Now and then a "z" floats up.
 - Tap a bird and she wakes for a cuddle: eyes open, a shake of the feathers, little hearts, her name with "sleepy", then she
   dozes off again. Tap a nest box to collect the eggs ("Collected 4 eggs"). On a phone held upright about a metre of the room
-  shows, so a sideways drag looks along it (from the perch to the nest boxes; a hint says so the first time); a wide screen
-  sees it all. "Back to the farm" (or the morning) brings you out; everyone is still in bed.
+  shows, so a sideways drag looks along it (from the perch to the nest boxes; a hint says so the first time), the view
+  turning up to 34 degrees towards the side wall at either end (the pop door and window on the left); a wide screen sees it all. "Back to the farm" (or the morning) brings you out; everyone is still in bed.
 - How: a separate scene and camera (`inside` in `src/main.js`: `openInside()`, `closeInside()`, `updateInside()`,
   `insideTap()`, `insideFrameCamera()`); the birds are lent to it and given back. Labels stay on screen and clear of the title.
 - Tests: `insideshot.mjs [out] [hour]` (every coop: inside with everyone asleep, a cuddle, a drag to the nest boxes, eggs
   collected, back out), `insidedbg.mjs COOP OUT [x y dist yaw]` (a close look), `insideclip.mjs PLOT FPS OUT` (frames of a
   visit for a video).
+
+## The coop doors at night (22 Oct, the first of Audrey's night activities)
+
+- Each house's pop door has a sliding door (`popdoor_<style>` in `coops.glb`, `pop_slider()` in `stylized/coops.py`, about
+  430 triangles): three boards with a Z brace in the house's colours (red with a white Z on the Red Barn, oak on the thatched
+  cottage, blue with a white Z on the stone cottage, brown with a cream Z on the lodge; the pagoda's a red lattice over
+  paper, like its nest screen) and an iron ring to pull it by. By day it is up out of sight: the browser draws it cut off at
+  the opening's top (`doorShader()`: a per-door slide, `doorSlide`, and anything above the opening discarded), as if it ran up
+  inside the wall, so the houses look exactly as before. All of a style's doors are one batch, drawn only when one is down.
+- At night, once every bird of a coop is in bed, a badge over its door (a little door with a moon) asks for it to be shut:
+  tap the door or the badge and it slides down ("Door shut. Sleep well!"). Before everyone's in: "Not everyone's in yet:
+  Rupert is still out" (names); by day: "The door stays open in the daytime".
+- In the morning the birds wait inside while it's shut, and the badge shows a sun: tap and it slides up ("Good morning! Door
+  open"), and out they come as usual. If nobody opens it, it opens by itself at 7:30, so they're never stuck in.
+- Inside the coop the same door is on the left wall: up (the night showing through) or down, and a tap on it shuts or opens
+  it too. In the morning with it shut you stay inside ("Morning! Tap the pop door to let them out."); open it and everyone
+  gets up.
+- Later (the fox): a coop left open at night is the one the fox visits.
+- Tests: `doors.mjs [out]` (every coop: the moon badge at 23:00, a tap shuts the door; at 6:36 everyone waits with a sun
+  badge; a tap opens it and they come out; it opens by itself at 7:30; by day a tap leaves it open; at 22:15 "Not
+  everyone's in yet"; inside, the door up, a tap shuts it; no page errors), `insidepan.mjs [out]` (both ends of the inside
+  view and the badge), `doorclip.mjs PLOT FPS OUT` (frames of an evening and a morning at one coop). The page has
+  `__farm.doorTap(plot)`, `setDoor(plot, open)`, `doors`.

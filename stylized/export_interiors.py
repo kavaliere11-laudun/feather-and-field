@@ -18,7 +18,8 @@ def one(name, fn):
 
 
 for k in interiors.STYLES: one('inside_' + k, lambda k=k: interiors.room(k))
-names = ['inside_' + k for k in interiors.STYLES]
+BUDGET['inside_pop'] = 600; one('inside_pop', interiors.pop_panel)
+names = ['inside_' + k for k in interiors.STYLES] + ['inside_pop']
 write_glb(os.path.join(OUT, 'interiors.glb'), names)
 json.dump(dict(rooms=interiors.ROOMS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'interiors.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

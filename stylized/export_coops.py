@@ -1,6 +1,6 @@
 """Export the coops for the browser (coops.glb + coops.json): the five houses (house_rir .. house_bra), the shared pen
 (pen_base: yard, feeder, water, hay, sack; fence: posts and rails; fence_dx: the Deluxe pickets, rose arch, flowers and
-bunting) and the Deluxe weathervane (vane). coops.json gives each house's roof top, where the vane stands, and its nest (window, seat, the way in, the ramp).
+bunting), the Deluxe weathervane (vane) and each house's sliding pop door, shut (popdoor_rir .. popdoor_bra). coops.json gives each house's roof top, where the vane stands, and its nest (window, seat, the way in, the ramp).
 Usage: python export_coops.py [out_dir]"""
 import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +42,8 @@ one('pen_base', coops.pen_base)
 one('fence', coops.wood_fence)
 one('fence_dx', coops.deluxe_fence)
 one('vane', coops.weathervane)
-names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane']
+for k in coops.HOUSES: BUDGET['popdoor_' + k] = 900; one('popdoor_' + k, lambda k=k: coops.pop_slider(k))       # the sliding pop doors
+names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane'] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = coops.BLOCKS.get(k, [])          # what the birds walk round in front of each house
 json.dump(dict(tops=TOPS, lights=coops.LIGHTS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)

@@ -571,6 +571,43 @@ def red_barn():
 
 HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge}
 
+
+def pop_slider(style):
+    """The pop door's sliding door, shut: it fills the opening (POP_W x POP_H) and the browser slides it up out of sight by
+    day (cut off at the opening's top, as if it ran up inside the wall). Boards with a Z brace in the house's colours (the
+    pagoda: a red lattice over paper, like its nest screen), an iron ring to pull it by. At the origin: x across, bottom at
+    z=0, the boards' front face at y=0, facing -y."""
+    random.seed(31); objs = []; cm = coop.M()
+    m, trim = {'rir': (cm['red'], cm['white']), 'orp': (C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G), C('oakdark', '#47301f', rough=0.8)),
+               'leg': (C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
+               'bra': (C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G), C('lodgetrim', '#e8dcc0', rough=0.7)),
+               'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None)}[style]
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
+    out = Vector((0, -1, 0))
+    if style == 'sil':
+        objs.append(box('pdpaper', (w - 0.03, 0.012, h - 0.03), (0, 0.008, h / 2), m=C('paper', '#f3e3bd', rough=0.8), bevel=0.0))
+        for k in (1, 2):
+            objs.append(plank('pdlat', (-w / 2 + w * k / 3, -0.002, 0.012), (-w / 2 + w * k / 3, -0.002, h - 0.012), 0.012, 0.012, out, m, jitter=0.1, bevel=0.0))
+        for k in (1, 2, 3):
+            objs.append(plank('pdlat', (-w / 2 + 0.012, -0.002, h * k / 4), (w / 2 - 0.012, -0.002, h * k / 4), 0.012, 0.012, out, m, jitter=0.1, bevel=0.0))
+        for (a, b) in (((-w / 2, h - 0.012), (w / 2, h - 0.012)), ((-w / 2, 0.012), (w / 2, 0.012))):
+            objs.append(plank('pdframe', (a[0], -0.004, a[1]), (b[0], -0.004, b[1]), 0.026, 0.022, out, m, jitter=0.1, bevel=0.004))
+        for x in (-w / 2 + 0.013, w / 2 - 0.013):
+            objs.append(plank('pdframe', (x, -0.004, 0.0), (x, -0.004, h), 0.026, 0.022, out, m, jitter=0.1, bevel=0.004))
+    else:
+        n = 3
+        for k in range(n):                                    # boards running up the door
+            x = -w / 2 + (k + 0.5) * w / n
+            objs.append(plank('pdboard', (x, th / 2, 0.0), (x, th / 2, h), w / n * 0.95, th, out, m, jitter=0.6, bevel=0.004))
+        for f in (0.16, 0.84):                                # two ledges across, a brace between them: the Z
+            objs.append(plank('pdledge', (-w / 2 + 0.02, -0.009, h * f), (w / 2 - 0.02, -0.009, h * f), 0.04, 0.018, out, trim, jitter=0.3, bevel=0.004))
+        objs.append(plank('pdbrace', (-w / 2 + 0.03, -0.008, h * 0.16), (w / 2 - 0.03, -0.008, h * 0.84), 0.034, 0.016, out, trim, jitter=0.3, bevel=0.004))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.022, minor_radius=0.0045, major_segments=12, minor_segments=5, location=(0, -0.03, h * 0.16 + 0.045), rotation=(math.radians(90), 0, 0))
+    t_ = bpy.context.object; setmat(t_, iron); objs.append(t_)
+    objs.append(box('pdplate', (0.03, 0.01, 0.022), (0, -0.022, h * 0.16 + 0.07), m=iron, bevel=0.002))
+    return finish(objs, 'popdoor_' + style)
+
 # ------------------------------------------------------------------ the nests: inside each house, seen through a little window
 # A little open window low on the front wall, and behind it the nest: a straw-filled cubby inside the house, lined in dark
 # wood. The cubby runs further left behind the wall, where the hen comes in from inside the house (she goes up the ramp and

@@ -665,6 +665,7 @@ function buildPlots(nCoops) {
     g.matrixAutoUpdate = false;
   });
   for (const name in coopParts) batch(name, coopParts[name], { cast: true });
+  buildDoors();
 }
 
 // the hens lay inside their coop, on a straw nest seen through a little window on the front (stylized/coops.py nest_window;
@@ -734,6 +735,138 @@ function tickNotes(dt) {
     const s = n.size * Math.min(1, t * 5); n.sprite.scale.set(s, s, s);
     n.sprite.material.opacity = Math.min(1, (1 - t) * 3);
   }
+}
+
+// ------------------------------------------------------------------ the pop doors: shut at night once everyone's in, open in the morning
+// Each coop's pop door has a sliding door (coops.glb popdoor_<style>, stylized/coops.py pop_slider: boards and a Z brace in
+// the house's colours, the pagoda's a red lattice). By day it is up out of sight; at night, once every bird of the coop is in
+// bed, a badge over the door asks for it to be shut: tap the door (or the badge) and it slides down. In the morning the
+// birds wait inside until it's opened (a badge with a sun); if nobody does by 7:30 it opens by itself. The door is drawn
+// cut off at the opening's top (as if it ran up inside the wall), with all of a style's doors in one batch.
+const POP_H = 0.46, DOOR_RUN = POP_H + 0.02;
+const doorEase = u => { u = Math.min(1, Math.max(0, u)); return u * u * u * (u * (u * 6 - 15) + 10); };
+const DOORS = { styles: {} };                // per style: { meshes: [InstancedMesh], plots: [] }
+function doorShader(mat) {
+  mat.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float doorSlide;\nvarying float vDoorY;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\ntransformed.y += doorSlide;\nvDoorY = transformed.y;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vDoorY;')
+      .replace('void main() {', 'void main() {\n  if (vDoorY > ' + POP_H.toFixed(3) + ') discard;');
+  };
+  mat.customProgramCacheKey = () => 'popdoor';
+  mat.needsUpdate = true;
+}
+function buildDoors() {
+  for (const p of plots) if (p.kind === 'coop') {
+    const S = DOORS.styles[p.breed] = DOORS.styles[p.breed] || { meshes: [], plots: [] };
+    p.door = { shut: false, s: 1, goal: 1, i: S.plots.length, badge: null, kind: null };
+    S.plots.push(p);
+  }
+  for (const style in DOORS.styles) {
+    const S = DOORS.styles[style], name = 'popdoor_' + style;
+    if (!parts[name]) continue;
+    for (const m of meshesOf(parts[name])) {
+      const geo = m.geometry.clone().applyMatrix4(m.matrixWorld);
+      geo.setAttribute('doorSlide', new THREE.InstancedBufferAttribute(new Float32Array(S.plots.length).fill(DOOR_RUN), 1));
+      const mat = m.material.clone(); doorShader(mat);
+      const inst = new THREE.InstancedMesh(geo, mat, S.plots.length);
+      S.plots.forEach((p, i) => {
+        const G = nestOf(p);
+        inst.setMatrixAt(i, p.frame.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(G.pop[0], G.house, D2)));
+      });
+      inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN;
+      inst.castShadow = false; inst.receiveShadow = true; inst.matrixAutoUpdate = false; inst.visible = false;
+      scene.add(inst); S.meshes.push(inst);
+    }
+  }
+}
+const doorOpen = p => !p.door || p.door.s >= 1;
+function setDoor(p, open) { if (p.door) { p.door.goal = open ? 1 : 0; p.door.shut = !open; wake(1200); } }
+let BADGE_TEX = null;
+function badgeTextures() {
+  const make = sun => fxTexture64(128, c => {
+    c.beginPath(); c.arc(64, 64, 56, 0, Math.PI * 2); c.fillStyle = sun ? '#fff4d8' : '#e6ecfb'; c.fill();
+    c.lineWidth = 7; c.strokeStyle = '#2b3a24'; c.stroke();
+    // the little door: boards, a Z, a ring
+    c.fillStyle = '#a8572f'; c.beginPath(); c.roundRect(38, 44, 40, 56, 5); c.fill();
+    c.strokeStyle = 'rgba(60,25,10,0.55)'; c.lineWidth = 2.5;
+    for (const x of [51.3, 64.6]) { c.beginPath(); c.moveTo(x, 46); c.lineTo(x, 98); c.stroke(); }
+    c.strokeStyle = '#f6efe0'; c.lineWidth = 4.5; c.beginPath(); c.moveTo(42, 54); c.lineTo(74, 54); c.lineTo(42, 90); c.lineTo(74, 90); c.stroke();
+    if (sun) {                                   // a sun: open me, it's morning
+      c.fillStyle = '#f2b632'; c.beginPath(); c.arc(86, 40, 10, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#f2b632'; c.lineWidth = 3.5;
+      for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; c.beginPath(); c.moveTo(86 + Math.cos(a) * 13.5, 40 + Math.sin(a) * 13.5); c.lineTo(86 + Math.cos(a) * 18.5, 40 + Math.sin(a) * 18.5); c.stroke(); }
+    } else {                                     // a crescent moon: shut me, they're all in bed
+      c.fillStyle = '#f2cf5a'; c.beginPath(); c.arc(84, 41, 13, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#e6ecfb'; c.beginPath(); c.arc(90, 36, 11, 0, Math.PI * 2); c.fill();
+    }
+  });
+  return { moon: make(false), sun: make(true) };
+}
+function fxTexture64(size, draw) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = size; const c = cv.getContext('2d'); draw(c);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const doorV = new THREE.Vector3();
+function evening() { return DAY.hour >= 20 || DAY.hour < 5.5; }
+function tickDoors(dt, now = performance.now()) {
+  const h = DAY.hour;
+  for (const style in DOORS.styles) {
+    const S = DOORS.styles[style]; let any = false, moved = false;
+    const slide = S.meshes.length ? S.meshes[0].geometry.getAttribute('doorSlide') : null;
+    for (const p of S.plots) {
+      const d = p.door;
+      if (d.goal === 0 && h >= 7.5 && h < 20) setDoor(p, true);                 // nobody opened it: it opens by itself at 7:30
+      if (d.s !== d.goal) { d.s = d.goal > d.s ? Math.min(d.goal, d.s + dt / 0.9) : Math.max(d.goal, d.s - dt / 0.9); moved = true; wake(300); }
+      const v = doorEase(d.s) * DOOR_RUN;
+      if (slide && slide.array[d.i] !== v) { for (const m of S.meshes) { const a = m.geometry.getAttribute('doorSlide'); a.array[d.i] = v; a.needsUpdate = true; } }
+      if (d.s < 1) any = true;
+      // the badge: a moon when everyone's in bed and the door is still open; a sun when it's shut and they're waiting to get up
+      let kind = null;
+      if (d.goal === 1 && d.s >= 1 && evening() && p.birds.length && p.birds.every(b => b.asleep)) kind = 'moon';
+      else if (d.goal === 0 && d.s <= 0 && p.birds.some(b => b.asleep && !b.nightNow())) kind = 'sun';
+      if (kind && !d.badge) {
+        BADGE_TEX = BADGE_TEX || badgeTextures();
+        d.badge = new THREE.Sprite(new THREE.SpriteMaterial({ map: BADGE_TEX.moon, transparent: true, depthTest: false, depthWrite: false }));
+        d.badge.renderOrder = 10; scene.add(d.badge);
+      }
+      if (d.badge) {
+        d.badge.visible = !!kind;
+        if (kind) {
+          if (d.kind !== kind) { d.kind = kind; d.badge.material.map = BADGE_TEX[kind]; d.badge.material.needsUpdate = true; }
+          const G = nestOf(p), sz = Math.min(1.2, Math.max(0.3, view.size * 0.13));          // about 40 points across on screen
+          doorV.set(G.pop[0], G.house + POP_H + 0.1 + sz * 0.45 + 0.03 * Math.sin(now / 1000 * 2.4 + p.index), D2 + 0.3); p.frame.localToWorld(doorV);
+          d.badge.position.copy(doorV); d.badge.scale.set(sz, sz, sz);
+        }
+      }
+    }
+    for (const m of S.meshes) m.visible = any;
+  }
+}
+function doorWho(list) {
+  const n = list.map(b => b.name);
+  if (n.length === 1) return n[0] + ' is still out';
+  if (n.length === 2) return n[0] + ' and ' + n[1] + ' are still out';
+  return n[0] + ', ' + n[1] + ' and ' + (n.length - 2) + ' more are still out';
+}
+// a tap on a coop's pop door (or its badge, or the door inside): shut it at night once everyone's in, open it again
+function doorTap(p, at) {
+  const d = p.door; if (!d) return;
+  let msg;
+  if (d.goal === 0) {
+    setDoor(p, true);
+    msg = p.birds.some(b => b.asleep && !b.nightNow()) ? 'Good morning! Door open' : 'Door open';
+  } else if (!evening()) msg = 'The door stays open in the daytime';
+  else {
+    const out = p.birds.filter(b => !b.asleep);
+    if (out.length) msg = "Not everyone's in yet: " + doorWho(out);
+    else { setDoor(p, false); msg = 'Door shut. Sleep well!'; }
+  }
+  tag.textContent = msg; tagBird = null; tag.classList.add('on'); fieldTag = 2.6;
+  if (at) tagSpot.copy(at);
+  else { const G = nestOf(p); tagSpot.set(G.pop[0], G.house + POP_H + 0.12, D2 + 0.1); p.frame.localToWorld(tagSpot); }
 }
 
 // ------------------------------------------------------------------ birds: walk, stop, peck, waddle, and keep a little room round each other
@@ -1216,7 +1349,7 @@ class Bird {
     if (this.plot.kind === 'coop' && !this.stay) {
       const night = this.nightNow();
       if (!this.looked) { this.looked = true; if (night && !this.laying) this.sleepNow(); }
-      if (this.asleep) { if (night) return; this.wakeUp(); }
+      if (this.asleep) { if (night || !doorOpen(this.plot)) return; this.wakeUp(); }          // the door shut: they wait
       else if (night && !this.roost && !this.laying) this.goToBed();
     }
     // time to lay? (hens in a coop, one in the nest box at a time; not just before bedtime)
@@ -1455,6 +1588,16 @@ function tapAt(x, y) {
   }
   if (!best) {
     const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hitP = new THREE.Vector3(), nb = new THREE.Box3();
+    // a coop's pop door (or the badge over it): shut it for the night, open it in the morning
+    for (const p of livePlots()) {
+      if (!p.door) continue;
+      const bd = p.door.badge;
+      if (bd && bd.visible && ray.ray.intersectSphere(new THREE.Sphere(bd.position, bd.scale.x * 0.62), hitP)) { doorTap(p); return; }
+      const G = nestOf(p);
+      nb.min.set(G.pop[0] - 0.22, G.house - 0.06, D2 - 0.12); nb.max.set(G.pop[0] + 0.22, G.house + POP_H + 0.08, D2 + 0.3);
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
+      if (loc.intersectBox(nb, hitP)) { doorTap(p); return; }
+    }
     // a coop whose birds are in bed: go inside and see them asleep
     for (const p of livePlots()) {
       if (!anyAsleep(p)) continue;
@@ -1556,7 +1699,9 @@ function insideFrameCamera() {
   inside.panMax = Math.max(0, 0.78 - (d - 0.45) * half * a);
   inside.pan = Math.max(-inside.panMax, Math.min(inside.panMax, inside.pan));
   const el = Math.min(13 * DEG, Math.asin(Math.min(1, 0.42 / d)));             // looking down a little, from under the ceiling
-  const look = new THREE.Vector3(inside.pan, 0.5, -0.06), dir = new THREE.Vector3(0, Math.sin(el), Math.cos(el));
+  // towards either end the view turns a little to that side wall (the pop door and window on the left, the nest boxes' side)
+  const yaw = inside.panMax > 0.01 ? -(inside.pan / inside.panMax) * 34 * DEG : 0;
+  const look = new THREE.Vector3(inside.pan, 0.5, -0.06), dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(el), Math.sin(el), Math.cos(yaw) * Math.cos(el));
   cam.aspect = a; cam.position.copy(look).addScaledVector(dir, d); cam.lookAt(look); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
   inside.dist = d; inside.mPerPx = 2 * d * half / h;
   // fur and fluff as fine as the birds are big on screen here
@@ -1566,12 +1711,14 @@ function anyAsleep(p) { return p.kind === 'coop' && p.birds.some(b => b.asleep);
 function openInside(plot) {
   if (inside.open || inside.busy) return;
   if (!inside.scene) buildInside();
-  inside.busy = true; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
+  inside.busy = true; inside.morning = false; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
   setTimeout(() => {
     const style = plot.breed, R = inside.rooms[style];
     let room = inside.rooms3d[style];
     if (!room) { room = part('inside_' + style); room.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } }); inside.rooms3d[style] = room; }
     inside.group.add(room);
+    if (!inside.popDoor && parts.inside_pop) inside.popDoor = part('inside_pop');
+    if (inside.popDoor) { inside.group.add(inside.popDoor); placeInsideDoor(plot, R); }
     inside.lamp.position.set(...R.lamp).add(new THREE.Vector3(0, -0.05, 0.06));
     inside.moon.position.set(R.window[0] - 1.5, R.window[1] + 0.9, R.window[2] + 0.4); inside.moon.target.position.set(0.1, 0.3, -0.1);
     // the sleepers: up to three hens along the lower bar; the rooster and the other hens on the top bar in the gaps between
@@ -1643,7 +1790,12 @@ function insideFx(tex, at, life, size, rise, drift) {
   inside.fx.push({ sprite: sp, t: 0, life, size, rise, drift });
 }
 function updateInside(dt) {
-  if (inside.birds.length && inside.birds.every(b => !b.nightNow())) { closeInside('Good morning! Everyone is getting up.'); return; }
+  // morning: out they go once the door is open (shut, a hint to open it, once)
+  if (inside.birds.length && inside.birds.every(b => !b.nightNow())) {
+    if (doorOpen(inside.plot)) { closeInside('Good morning! Everyone is getting up.'); return; }
+    if (!inside.morning) { inside.morning = true; hint('Morning! Tap the pop door to let them out.'); }
+  }
+  placeInsideDoor(inside.plot, inside.rooms[inside.plot.breed]);
   const v = new THREE.Vector3();
   for (const b of inside.birds) {
     const A = b.A, awake = b.woken > 0;
@@ -1676,6 +1828,10 @@ function updateInside(dt) {
     f.sprite.material.opacity = Math.min(1, (1 - u) * 2.5, (0.97 - f.sprite.position.y) / 0.12);       // gone before the ceiling
   }
 }
+function placeInsideDoor(plot, R) {           // inside, the pop door's panel slides up in its guides to open
+  if (!inside.popDoor || !R.pop) return;
+  inside.popDoor.position.set(R.pop[0], R.pop[1] + doorEase(plot.door ? plot.door.s : 1) * (R.pop_h + 0.02), R.pop[2]);
+}
 function insideTap(x, y) {
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, inside.camera);
@@ -1695,6 +1851,10 @@ function insideTap(x, y) {
   }
   // the nest boxes: collect the eggs
   const R = inside.rooms[inside.plot.breed], hitP = new THREE.Vector3(), box = new THREE.Box3();
+  if (R.pop) {                                            // the pop door: shut it (everyone's in) or open it
+    box.min.set(R.pop[0] - 0.1, R.pop[1] - 0.02, R.pop[2] - 0.2); box.max.set(R.pop[0] + 0.12, R.pop[1] + 2 * R.pop_h + 0.06, R.pop[2] + 0.2);      // the opening, and the door raised over it
+    if (ray.ray.intersectBox(box, hitP)) { doorTap(inside.plot, new THREE.Vector3(R.pop[0] + 0.1, R.pop[1] + R.pop_h + 0.12, R.pop[2])); return; }
+  }
   for (const nb of R.nests) {
     box.min.set(nb[0] - 0.12, nb[1] - 0.1, nb[2] - 0.2); box.max.set(nb[0] + 0.12, nb[1] + 0.22, nb[2] + 0.16);
     if (!ray.ray.intersectBox(box, hitP)) continue;
@@ -1720,7 +1880,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); }
+  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
@@ -1781,8 +1941,9 @@ window.__farm = {
   wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
-  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); } wake(300); },
+  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); } placeTag(dt * n); wake(300); },
+  doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },
   layAs: (i, pers, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.pers = pers; h.startLaying(sit); return h.name; },

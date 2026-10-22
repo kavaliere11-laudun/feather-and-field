@@ -306,6 +306,31 @@
    "tris": 900,
    "verts": 480,
    "prims": 1
+  },
+  "popdoor_rir": {
+   "tris": 428,
+   "verts": 408,
+   "prims": 3
+  },
+  "popdoor_orp": {
+   "tris": 428,
+   "verts": 408,
+   "prims": 2
+  },
+  "popdoor_leg": {
+   "tris": 428,
+   "verts": 408,
+   "prims": 2
+  },
+  "popdoor_sil": {
+   "tris": 412,
+   "verts": 408,
+   "prims": 3
+  },
+  "popdoor_bra": {
+   "tris": 428,
+   "verts": 408,
+   "prims": 2
   }
  }
 }

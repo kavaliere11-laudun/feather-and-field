@@ -46,7 +46,13 @@
     1.5,
     1.0,
     0.9
-   ]
+   ],
+   "pop": [
+    -0.685,
+    0.02,
+    0.24
+   ],
+   "pop_h": 0.42
   },
   "inside_orp": {
    "perches": [
@@ -94,7 +100,13 @@
     1.5,
     1.0,
     0.9
-   ]
+   ],
+   "pop": [
+    -0.685,
+    0.02,
+    0.24
+   ],
+   "pop_h": 0.42
   },
   "inside_leg": {
    "perches": [
@@ -142,7 +154,13 @@
     1.5,
     1.0,
     0.9
-   ]
+   ],
+   "pop": [
+    -0.685,
+    0.02,
+    0.24
+   ],
+   "pop_h": 0.42
   },
   "inside_bra": {
    "perches": [
@@ -190,7 +208,13 @@
     1.5,
     1.0,
     0.9
-   ]
+   ],
+   "pop": [
+    -0.685,
+    0.02,
+    0.24
+   ],
+   "pop_h": 0.42
   },
   "inside_sil": {
    "perches": [
@@ -238,34 +262,45 @@
     1.5,
     1.0,
     0.9
-   ]
+   ],
+   "pop": [
+    -0.685,
+    0.02,
+    0.24
+   ],
+   "pop_h": 0.42
   }
  },
  "stats": {
   "inside_rir": {
-   "tris": 8428,
-   "verts": 4904,
+   "tris": 8368,
+   "verts": 4872,
    "prims": 6
   },
   "inside_orp": {
-   "tris": 7332,
-   "verts": 4312,
+   "tris": 7272,
+   "verts": 4280,
    "prims": 6
   },
   "inside_leg": {
-   "tris": 13480,
-   "verts": 7664,
+   "tris": 13420,
+   "verts": 7632,
    "prims": 6
   },
   "inside_bra": {
-   "tris": 8460,
-   "verts": 4936,
+   "tris": 8400,
+   "verts": 4904,
    "prims": 6
   },
   "inside_sil": {
-   "tris": 7428,
-   "verts": 5008,
+   "tris": 7368,
+   "verts": 4976,
    "prims": 6
+  },
+  "inside_pop": {
+   "tris": 248,
+   "verts": 136,
+   "prims": 2
   }
  }
 }

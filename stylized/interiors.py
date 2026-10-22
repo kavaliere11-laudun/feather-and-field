@@ -134,12 +134,12 @@ def room(style):
                        ((wy - ws / 2, wz - ws / 2), (wy - ws / 2, wz + ws / 2)), ((wy + ws / 2, wz - ws / 2), (wy + ws / 2, wz + ws / 2)),
                        ((wy, wz - ws / 2), (wy, wz + ws / 2)), ((wy - ws / 2, wz), (wy + ws / 2, wz))):
             objs.append(plank('wframe', (-X2 + 0.045, a[0], a[1]), (-X2 + 0.045, b[0], b[1]), 0.03, 0.02, (1, 0, 0), frame, jitter=0.2, bevel=0.004))
-    # the pop door, low on the left wall near the front: its little sliding door shut for the night, in its guides
+    # the pop door, low on the left wall near the front: the night outside in the opening, and guides tall enough for its
+    # sliding door (a separate model, inside_pop: the browser slides it down to shut it and up to open it)
     py, ph, pw = -0.24, 0.42, 0.3
-    objs.append(box('popshut', (0.02, pw, ph), (-X2 + 0.04, py, ph / 2 + 0.02), m=wood, bevel=0.006))
+    objs.append(box('popnight', (0.006, pw, ph), (-X2 + 0.045, py, ph / 2 + 0.02), m=C('nightsky', '#22335e', rough=0.3), bevel=0.0))
     for dy in (-pw / 2 - 0.02, pw / 2 + 0.02):
-        objs.append(box('guide', (0.03, 0.03, ph + 0.12), (-X2 + 0.05, py + dy, (ph + 0.12) / 2), m=dark, bevel=0.005))
-    objs.append(cyl('handle', 0.012, 0.06, (-X2 + 0.06, py, ph - 0.02), (0, math.radians(90), 0), m['metal'], verts=8, bevel=0.0))
+        objs.append(box('guide', (0.03, 0.03, 2 * ph + 0.1), (-X2 + 0.07, py + dy, (2 * ph + 0.1) / 2), m=dark, bevel=0.005))
     # the perch: a ladder leaning on the back wall, two round bars
     bars = [(0.16, 0.3), (0.31, 0.52)]                          # (y, z) of each bar
     px0, px1 = -0.62, 0.24
@@ -197,8 +197,26 @@ def room(style):
     objs.append(box('lantbase', (0.08, 0.08, 0.015), (lx, ly, lz - 0.047), m=C('iron', '#26231f', rough=0.5, metal=0.6), bevel=0.004))
     ROOMS['inside_' + style] = dict(
         perches=[dict(x0=px0 + 0.07, x1=px1 - 0.05, top=round(z + 0.024, 3), z=round(-y, 3)) for (y, z) in bars],
-        nests=nb, chicks=g(chick), lamp=g((lx, ly, lz)), window=g((-X2 + 0.04, wy, wz)), size=[2 * X2, H, Y1 - Y0])
+        nests=nb, chicks=g(chick), lamp=g((lx, ly, lz)), window=g((-X2 + 0.04, wy, wz)), size=[2 * X2, H, Y1 - Y0],
+        pop=g((-X2 + 0.065, py, 0.02)), pop_h=ph)
     root = empty('inside_' + style)
+    for o in objs:
+        mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+    return root
+
+
+def pop_panel():
+    """The inside pop door's sliding panel, shut: boards and two battens, a handle, at the origin: across y, bottom at z=0,
+    facing +x (into the room); ROOMS[...]['pop'] is where it stands, 'pop_h' how far up it slides to open."""
+    random.seed(12); objs = []; m = coop.M()
+    ph, pw = 0.42, 0.3
+    for k in range(3):
+        y = -pw / 2 + (k + 0.5) * pw / 3
+        objs.append(plank('pboard', (0, y, 0.0), (0, y, ph), pw / 3 * 0.95, 0.02, (1, 0, 0), m['wood'], jitter=0.5, bevel=0.004))
+    for z in (0.07, ph - 0.07):
+        objs.append(plank('pbatten', (0.016, -pw / 2 + 0.02, z), (0.016, pw / 2 - 0.02, z), 0.04, 0.014, (1, 0, 0), m['darkwood'], jitter=0.3, bevel=0.003))
+    objs.append(cyl('handle', 0.012, 0.06, (0.03, 0, ph - 0.12), (0, math.radians(90), 0), m['metal'], verts=8, bevel=0.0))
+    root = empty('inside_pop')
     for o in objs:
         mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
     return root
