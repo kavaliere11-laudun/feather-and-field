@@ -678,3 +678,9 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - `foxtest.mjs` counts the bumps (pairs pushed apart, per minute; up to 100). The butterfly flies the same way every time
   (it started at a random point), so play is the same from one run to the next, apart from the real time the page runs
   before a check pauses it.
+- On his back (22 Oct 22:08, Audrey: "Sorted ! Now just when the fox puts himself on his back it's a bit odd his neck
+  should be aligned straight with his back"): rolled over, the neck kept its standing angle (rising 52 degrees from the
+  chest), so upside down the head was bent down into the grass. Now, as he rolls, the neck comes down level with the
+  spine and the head turns back so the nose points straight on (`rolled`: neck +0.85, head -0.75), with only a little turn
+  of the head left (looking about, tilting) while he's on his back. Playing dead, the cubs on their backs wrestling and
+  the roll all use it.

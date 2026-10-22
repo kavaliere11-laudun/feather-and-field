@@ -138,7 +138,10 @@ export class Quad {
       B.hips.rotation.x -= 0.72 * sit; lower += 0.15 * S * sit;
       B.neck.rotation.x += 0.3 * sit; B.head.rotation.x += 0.25 * sit;
     }
-    if (lie > 0) { lower += (hy - 0.115 * S) * lie; B.neck.rotation.x += (s.chin || 0) * 0.5; }
+    if (lie > 0) { lower += (hy - 0.115 * S) * lie; B.neck.rotation.x += (s.chin || 0) * 0.5 * (1 - rolled); }
+    // rolled onto his back: the head and neck stretched out in line with the spine (not held up as standing, which upside
+    // down bends them into the ground)
+    if (rolled > 0) { B.neck.rotation.x += 0.85 * rolled; B.head.rotation.x -= 0.75 * rolled; }      // (the neck down level with the back, the head turned back up so the nose points straight on)
     if (bow > 0) { B.chest.rotation.x += 0.42 * bow; lower += 0.02 * S * bow; B.hips.rotation.x -= 0.12 * bow; B.neck.rotation.x -= 0.5 * bow; B.head.rotation.x -= 0.2 * bow; }
     if (rear > 0) { B.hips.rotation.x -= 1.05 * rear; B.neck.rotation.x += 0.55 * rear; B.head.rotation.x += 0.45 * rear; }
     if (dive > 0) B.neck.rotation.x += 0.35 * dive;
@@ -211,9 +214,10 @@ export class Quad {
     }
     if (scratch > 0) { B.head.rotation.z += -0.4 * scratch; B.neck.rotation.y += -0.3 * scratch; }
     // ---- head, look and listen (a tilt of the head, as foxes do hearing a mouse)
-    B.neck.rotation.y += 0.55 * (s.lookYaw || 0); B.head.rotation.y += 0.45 * (s.lookYaw || 0);
-    B.neck.rotation.x += 0.45 * (s.lookPitch || 0); B.head.rotation.x += 0.35 * (s.lookPitch || 0);
-    B.head.rotation.z += s.headTilt || 0;
+    const lk = 1 - 0.8 * rolled;                       // (on his back, only a little turn of the head)
+    B.neck.rotation.y += 0.55 * (s.lookYaw || 0) * lk; B.head.rotation.y += 0.45 * (s.lookYaw || 0) * lk;
+    B.neck.rotation.x += 0.45 * (s.lookPitch || 0) * lk; B.head.rotation.x += 0.35 * (s.lookPitch || 0) * lk;
+    B.head.rotation.z += (s.headTilt || 0) * lk;
     // ---- the face: ears pricked forward (alert, curious), flattened back (frightened, squeezing through, running flat out)
     // or each its own way (puzzled), swivelling to a sound and towards where he looks; the eyes blink, squint, screw shut
     // or open wide; the jaw opens (panting, a yawn, a yelp, the sneeze), the tongue on it
