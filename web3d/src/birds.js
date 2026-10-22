@@ -491,7 +491,7 @@ function birdMaterial(indoor, goose) {
           float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : smoothstep(0.15, 0.45, vHead);
           float flight = wingT > 0.0 ? smoothstep(0.52, 0.56, wingT) : 0.0;
           #ifdef GOOSE
-          float size = vFeather * mix(1.0, 0.24, neck) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
+          float size = vFeather * mix(1.0, 0.17, neck) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
           #else
           float size = vFeather * mix(1.0, 0.42, vHead) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
           #endif
@@ -582,6 +582,10 @@ function birdMaterial(indoor, goose) {
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
           #ifdef GOOSE
           furShade = mix(1.0, furShade, 0.5);            // a goose's feathers lie smooth and soft: their rows only a gentle texture
+          // the neck's furrows: the small feathers lie in ridges running down it (not on the head)
+          float furrow = neck * (1.0 - smoothstep(0.25, 0.31, vGN.z)) * smoothstep(0.0, 0.04, vGN.z);
+          float ridge = sin(atan(vGN.x, vGN.y) * 15.0 + 0.6 * sin(vGN.z * 40.0));
+          furShade *= 1.0 + furrow * (0.2 * ridge - 0.08 * smoothstep(0.7, 1.0, abs(ridge)));
           #endif
           furShade *= fluff;
         }

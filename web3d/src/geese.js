@@ -20,9 +20,9 @@ export const gooseName = kind => NAMES[kind] || kind;
 
 // feather sizes (cm) per region: broad on the body and wings, small on the head (the neck's are made smaller by the drawing);
 // the modelled flight and tail feathers draw their own
-const FEATHER = { [R.body]: 2.7, [R.wing]: 2.5, [R.crest]: 1.8, [R.legfeather]: 1.6 };
+const FEATHER = { [R.body]: 2.7, [R.wing]: 2.5, [R.crest]: 2.7, [R.legfeather]: 1.6 };      // (the neck's and head's drawn much smaller: velvety)
 // a slight soft fluff over the feathers (the birds' painted hair, short and fine), a little longer underneath
-const FUR = { len: { [R.body]: 0.012, [R.wing]: 0.006, [R.crest]: 0.004, [R.legfeather]: 0.012 }, shells: 4, comb: 0.9, fine: 1.3, under: 1.0, fluff: 0.06 };
+const FUR = { len: { [R.body]: 0.012, [R.wing]: 0.006, [R.crest]: 0.003, [R.legfeather]: 0.012 }, shells: 4, comb: 0.9, fine: 1.3, under: 1.0, fluff: 0.06 };
 
 function gooseGeometry(name) {
   const M = MODELS[name];
@@ -34,6 +34,11 @@ function gooseGeometry(name) {
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < 3; j++) col[i * 3 + j] = base.array[i * base.itemSize + j] * k;
     fs[i] = FEATHER[paint[i]] || 0; fh[i] = HW.getX(i);
+    if (paint[i] === R.body && fh[i] < 0.5) {            // small and fine on the breast and belly, broad on the flanks and back
+      const ny = A.normal.getY(i), nz = A.normal.getZ(i), z = pos[i * 3 + 2];
+      const breast = smooth(0.0, 0.1, z) * smooth(0.1, 0.55, nz), belly = smooth(-0.15, -0.6, ny);
+      fs[i] *= 1.15 - 0.55 * Math.max(breast, belly);
+    }
     for (let j = 0; j < 4; j++) fp[i * 4 + j] = P.getComponent(i, j);
     fm[i] = PM.getX(i);
     fuv[i * 3] = F.getX(i); fuv[i * 3 + 1] = F.getY(i);
@@ -61,9 +66,9 @@ function gooseGeometry(name) {
 }
 
 const JOINTS = ['root', 'body', 'neck1', 'neck2', 'neck3', 'neck4', 'head', 'jaw', 'blinkL', 'blinkR',
-  'wingL', 'wingLo', 'wingR', 'wingRo', 'tail', 'legL', 'legLk', 'legLf', 'legR', 'legRk', 'legRf'];
+  'wingL', 'wingLo', 'wingLh', 'wingR', 'wingRo', 'wingRh', 'tail', 'legL', 'legLk', 'legLf', 'legR', 'legRk', 'legRf'];
 const PARENT = { body: 'root', neck1: 'body', neck2: 'neck1', neck3: 'neck2', neck4: 'neck3', head: 'neck4', jaw: 'head', blinkL: 'head', blinkR: 'head',
-  wingL: 'body', wingLo: 'body', wingR: 'body', wingRo: 'body', tail: 'body', legL: 'body', legLk: 'legL', legLf: 'legLk', legR: 'body', legRk: 'legR', legRf: 'legRk' };
+  wingL: 'body', wingLo: 'body', wingLh: 'wingLo', wingR: 'body', wingRo: 'body', wingRh: 'wingRo', tail: 'body', legL: 'body', legLk: 'legL', legLf: 'legLk', legR: 'body', legRk: 'legR', legRf: 'legRk' };
 const NECK = ['neck1', 'neck2', 'neck3', 'neck4', 'head'];
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const clamp01 = x => Math.min(1, Math.max(0, x));
@@ -169,7 +174,8 @@ export class GooseRig {
     // ---- the body: the waddle (rolling onto each foot as it takes the weight, a little rise over each step), a lean
     // forward running, lowered to the ground sitting
     const roll = -0.11 * g * (1 - 0.4 * run) * Math.sin(ph) - 0.06 * turn * g + (s.roll || 0) + 0.22 * (s.shake || 0) * Math.sin(t * 34);
-    const pitch = (s.pitch || 0) + 0.18 * run + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit;
+    const stance = this.name === 'embden' ? -0.17 : -0.04;
+    const pitch = (s.pitch || 0) + stance * (1 - sit) * (1 - 0.6 * (s.low || 0)) + 0.18 * run + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit;
     const drop = sit * (this.by - 0.115) + 0.012 * g * (1 - Math.abs(Math.cos(ph))) - 0.02 * (s.low || 0);
     B.body.position.y -= drop - (s.lift || 0);
     B.body.rotation.set(pitch, 0.05 * g * Math.sin(ph) * (1 - run), roll, 'YXZ');
@@ -184,7 +190,7 @@ export class GooseRig {
     B.neck2.rotation.y += 0.25 * ly; B.neck3.rotation.y += 0.25 * ly; B.neck4.rotation.y += 0.2 * ly; B.head.rotation.y += 0.3 * ly;
     B.neck4.rotation.x += 0.3 * lp; B.head.rotation.x += 0.5 * lp;
     B.neck1.rotation.z -= roll * 0.55; B.neck2.rotation.z -= roll * 0.3;
-    B.neck1.rotation.x -= (pitch - (s.pitch || 0)) * 0.7;                   // (the neck stays up when the body leans into a run)
+    B.neck1.rotation.x -= (pitch - (s.pitch || 0)) * 0.75;                  // (the neck stays up when the body leans into a run or stands tall)
     B.neck2.rotation.x += 0.04 * g * Math.sin(2 * ph);                     // a little nod with each step
     if (s.billAt && (s.billW || 0) > 0.01) { B.root.updateMatrixWorld(true); this.neckTo(s.billAt, Math.min(1, s.billW)); }
     // ---- the bill: open for a honk or a hiss; the eyes blink
@@ -203,6 +209,10 @@ export class GooseRig {
       op.rotation.y = sd * (1 - o) * 1.1;                                       // swept back while opening
       op.rotation.z = sd * (0.25 * (1 - o) + fl * (0.15 + 0.75 * beat) - 0.15 * (s.low || 0) * o);
       op.rotation.x = -0.2 * (s.low || 0) * o;
+      // the hand: folded back along the arm while the wing opens, then out; flapping, it follows the arm a moment later
+      const hd = B[nm + 'h'], beat2 = Math.sin(t * 15 - 0.9);
+      hd.rotation.y = sd * (1 - o) * 1.5;
+      hd.rotation.z = sd * fl * 0.45 * beat2 - sd * 0.1 * (s.low || 0) * o;
     }
     // ---- the tail: on a spring, wagging side to side (a goose's happy shake), up when alert
     const T = this.tail, gy = (s.wag || 0) * 0.38 * Math.sin(t * 11) + 0.08 * g * Math.sin(ph) - 0.06 * turn;
@@ -265,7 +275,7 @@ export class GeeseLineup {
     poses.forEach((p, i) => {
       for (const [k, x] of [['embden', -0.45], ['toulouse', 0.45]]) {
         const gz = new Goose(this.group, k, r);
-        gz.pos.set(x, 0, -2.4 + i * 0.85); gz.heading = -0.35; gz.linePose = p;
+        gz.pos.set(x, 0, -2.4 + i * 0.85); gz.heading = -0.95; gz.linePose = p;
         gz.task = LINE[p]; this.geese.push(gz);
       }
     });

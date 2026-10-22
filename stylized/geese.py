@@ -17,20 +17,20 @@ import breeds
 from breeds import flat, pivot, keep, PAINT, ribbon
 from hen import K
 from beasts import part, chain, surface
-from mathutils import Quaternion, Euler
+from mathutils import Quaternion, Euler, Matrix
 
 JOINTS = ['root', 'body', 'neck1', 'neck2', 'neck3', 'neck4', 'head', 'jaw', 'blinkL', 'blinkR',
-          'wingL', 'wingLo', 'wingR', 'wingRo', 'tail', 'legL', 'legLk', 'legLf', 'legR', 'legRk', 'legRf']
+          'wingL', 'wingLo', 'wingLh', 'wingR', 'wingRo', 'wingRh', 'tail', 'legL', 'legLk', 'legLf', 'legR', 'legRk', 'legRf']
 NECK = ['neck1', 'neck2', 'neck3', 'neck4']
 GEESE = {
     # a white Embden goose: tall and upright, blue eyes, an orange bill with a pale nail
     'embden': dict(name='Gertrude', S=1.0, BL=1.0, low=0.0, LG=1.0, paunch=False, dewlap=False,
-                   coat=dict(white='#f6f4ef', shade='#dedad2'), iris='#78a6d6', ring='#f4c9a0', bill='#f28a2a', nail='#f3dccb', feet='#f2892c'),
+                   coat=dict(white='#f6f4ef', shade='#dedad2'), iris='#8bb9e4', ring='#efbf8f', ringw=1.14, bill='#f5862a', nail='#f6e3d2', feet='#f2892c'),
     # a grey Toulouse gander: longer and lower, a paunch hanging between his legs, a dewlap under his bill, dark eyes with an
     # orange ring; dark grey head, neck and back, grey wings with pale-edged feathers, a pale breast, white belly and tail end
-    'toulouse': dict(name='Hector', S=1.0, BL=1.08, low=0.03, LG=0.86, paunch=True, dewlap=True,
+    'toulouse': dict(name='Hector', S=1.0, BL=1.08, low=0.03, LG=0.86, paunch=True, dewlap=True, neck=0.86,
                      coat=dict(dark='#5f5a56', back='#77716b', wing='#7d7770', edge='#d2ccc1', breast='#a29c94', belly='#f1eee7'),
-                     iris='#3a2618', ring='#ea8e36', bill='#ec8c30', nail='#cbb9a7', feet='#e6832f'),
+                     iris='#4a2a16', ring='#f08a2c', ringw=1.3, bill='#f08a30', nail='#d8c6b2', feet='#e6832f'),
 }
 
 
@@ -38,7 +38,8 @@ def neck_points(B):
     """The neck's joints (base inside the body's front .. under the head), the head's middle and the bill's base."""
     S, BL, zc = B['S'], B['BL'], 0.29 - B['low']
     base = Vector((0.13 * BL, 0, zc + 0.06)) * 1.0
-    off = [Vector((0, 0, 0)), Vector((0.05, 0, 0.1)), Vector((0.066, 0, 0.2)), Vector((0.06, 0, 0.29)), Vector((0.076, 0, 0.355))]
+    nl = B.get('neck', 1.0)
+    off = [Vector((0, 0, 0)), Vector((0.05, 0, 0.1 * nl)), Vector((0.066, 0, 0.2 * nl)), Vector((0.06, 0, 0.29 * nl)), Vector((0.076, 0, 0.355 * nl))]
     N = [(base + o) * S for o in off]
     H = N[4] + Vector((0.034, 0, 0.03)) * S
     return N, H
@@ -54,7 +55,7 @@ def goose(kind='embden', seed=1):
     bill = flat(kind + '_bill', B['bill'], 0.42); nail = flat(kind + '_nail', B['nail'], 0.4); feet = flat(kind + '_feet', B['feet'], 0.5)
     lower = flat(kind + '_lowbill', B['bill'], 0.45); gum = flat('gmouth', '#6a2a2c', 0.6); tongue = flat('gtongue', '#e08a8c', 0.45)
     iris = flat(kind + '_iris', B['iris'], 0.12); pupil = flat('gpupil', '#0b0907', 0.05); glint = flat('gglint', '#ffffff', 0.1)
-    ring = flat(kind + '_ring', B['ring'], 0.5); dark = flat('gdark', '#2a2420', 0.5); claw = flat('gclaw', '#3a2e27', 0.5)
+    ring = flat(kind + '_ring', B['ring'], 0.5); dark = flat('gdark', '#2a2420', 0.5); nos = flat(kind + '_nostril', '#8a3f16', 0.5); claw = flat('gclaw', '#3a2e27', 0.5)
     root = empty(kind)
     N, H = neck_points(B)
     # ---- the body and neck in one smooth shape: a long boat of a body, a full breast, the rump rising to the tail, soft
@@ -66,94 +67,127 @@ def goose(kind='embden', seed=1):
          ('ELLIPSOID', tuple(P(-0.245 * BL, 0, zc / S - 0.015)), 0.06 * S * K, (1.2, 0.8, 0.85), 2.0)]
     if B['paunch']:            # a Toulouse's paunch: two soft lobes hanging low between the legs
         for sd in (1, -1): E.append(('ELLIPSOID', tuple(P(-0.07 * BL, sd * 0.04, zc / S - 0.1)), 0.066 * S * K, (1.55, 0.8, 0.85), 2.0))
-    E += chain(N + [H], [0.064, 0.05, 0.041, 0.036, 0.035, 0.036], S)
+    E += chain(N + [H], [0.066, 0.053, 0.046, 0.042, 0.039, 0.036], S)
     part(metaball_mesh(kind + '_body', E, res=0.0085 * S, m=coat, parent=root), 'body', 'body', 'goose')
-    # ---- the head: rounded, a smooth slope into the bill; a Toulouse's dewlap hanging under the bill and throat
+    # ---- the head: long and smooth, a flat crown, the forehead running straight down into the bill (a goose's profile);
+    # a Toulouse's dewlap hanging under the bill and throat
     h = lambda dx, dy, dz: H + Vector((dx, dy, dz)) * S
-    E = [('ELLIPSOID', tuple(h(0, 0, 0)), 0.043 * S * K, (1.35, 0.86, 0.95), 2.0),
-         ('ELLIPSOID', tuple(h(0.03, 0, 0.008)), 0.03 * S * K, (1.25, 0.85, 0.9), 2.0),
-         ('ELLIPSOID', tuple(h(0.012, 0, -0.016)), 0.034 * S * K, (1.4, 0.88, 0.8), 2.0)]
+    E = [('ELLIPSOID', tuple(h(-0.008, 0, 0.003)), 0.037 * S * K, (1.4, 0.82, 0.92), 2.0),
+         ('ELLIPSOID', tuple(h(0.022, 0, 0.0)), 0.032 * S * K, (1.4, 0.84, 0.95), 2.0),
+         ('ELLIPSOID', tuple(h(0.042, 0, -0.002)), 0.024 * S * K, (1.3, 0.86, 0.95), 2.0),
+         ('ELLIPSOID', tuple(h(0.008, 0, -0.016)), 0.026 * S * K, (1.5, 0.8, 0.7), 2.0)]
     if B['dewlap']:
-        E += [('ELLIPSOID', tuple(h(0.018, 0, -0.045)), 0.025 * S * K, (1.25, 0.55, 1.5), 2.0),
-              ('ELLIPSOID', tuple(h(-0.004, 0, -0.08)), 0.021 * S * K, (1.1, 0.55, 1.35), 2.0)]
-    head = part(keep(metaball_mesh(kind + '_head', E, res=0.0082 * S, m=coat, parent=root)), 'head', 'crest', 'goose')
-    # ---- the bill: the upper bill (orange, a pale nail at its tip, dark nostrils), the lower bill on the jaw with a pink
-    # tongue, the inside of the mouth dark (hidden while shut)
-    b0, b1 = h(0.048, 0, -0.004), h(0.13, 0, -0.021)
-    E = [('ELLIPSOID', tuple(b0.lerp(b1, t)), (0.0235 - 0.0115 * t) * S * K, (1.15, 0.86 - 0.05 * t, 0.72 - 0.14 * t), 2.0) for t in (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)]
-    part(keep(metaball_mesh(kind + '_bill', E, res=0.0046 * S, m=bill, parent=root)), 'head')
-    part(keep(sphere(kind + '_nail', 0.0085 * S, tuple(b1 + Vector((0.006, 0, 0.0)) * S), (1.1, 1.0, 0.55), m=nail, parent=root, seg=10, rings=6)), 'head')
+        E += [('ELLIPSOID', tuple(h(0.028, 0, -0.034)), 0.02 * S * K, (1.3, 0.5, 1.35), 2.0),
+              ('ELLIPSOID', tuple(h(0.006, 0, -0.06)), 0.018 * S * K, (1.15, 0.5, 1.3), 2.0)]
+    head = part(keep(metaball_mesh(kind + '_head', E, res=0.0078 * S, m=coat, parent=root)), 'head', 'crest', 'goose')
+    # ---- the bill: a goose's big wedge of a bill, deep at the base where it meets the face, its top running on from the
+    # forehead and sloping gently to a broad rounded tip with a pale nail; dark nostrils; the lower bill under it on the jaw
+    # (a pink tongue on it), the mouth dark inside (hidden while shut)
+    bx0 = h(0.056, 0, 0)
+    up_ = bill_loft(kind + '_bill', bx0, 0.074 * S, [(0.0, 0.0195, 0.0148, 0.0095), (0.3, 0.0168, 0.0118, 0.0052), (0.6, 0.0146, 0.0092, 0.0012),
+                                                   (0.85, 0.0138, 0.0072, -0.0028), (1.0, 0.0128, 0.0058, -0.0062)], S, bill, nail, root, nail_from=0.82)
+    part(keep(up_), 'head')
     for sd in (1, -1):
-        part(keep(sphere(kind + '_nostril', 0.0032 * S, tuple(b0.lerp(b1, 0.45) + Vector((0, sd * 0.0105, 0.009)) * S), (1.8, 0.6, 0.6), m=dark, parent=root, seg=8, rings=5)), 'head')
-    l0, l1 = h(0.044, 0, -0.021), h(0.121, 0, -0.028)
-    E = [('ELLIPSOID', tuple(l0.lerp(l1, t)), (0.015 - 0.0055 * t) * S * K, (1.15, 0.82, 0.5), 2.0) for t in (0.0, 0.33, 0.66, 1.0)]
-    part(keep(metaball_mesh(kind + '_jaw', E, res=0.0044 * S, m=lower, parent=root)), 'jaw')
-    part(keep(sphere(kind + '_tongue', 0.011 * S, tuple(l0.lerp(l1, 0.45) + Vector((0, 0, 0.007)) * S), (2.4, 0.75, 0.32), m=tongue, parent=root, seg=10, rings=6)), 'jaw')
-    part(keep(sphere(kind + '_mouthin', 0.016 * S, tuple(b0.lerp(b1, 0.4) + Vector((0, 0, -0.008)) * S), (2.6, 0.78, 0.35), m=gum, parent=root, seg=12, rings=6)), 'head')
-    pivot('jaw', tuple(h(0.04, 0, -0.014)), root)
-    # ---- eyes: on the sides of the head towards the front; a round iris (Gertrude's blue, Hector's dark), a round pupil, a
-    # catch-light, and a ring round each (Hector's orange)
-    er = 0.0078 * S
+        part(keep(sphere(kind + '_nostril', 0.0028 * S, tuple(bx0 + Vector((0.027, sd * 0.0122, 0.0132)) * S), (2.4, 0.5, 0.6), m=nos, parent=root, seg=8, rings=5)), 'head')
+    lo_ = bill_loft(kind + '_jaw', bx0 + Vector((-0.004, 0, -0.0082)) * S, 0.07 * S, [(0.0, 0.0172, 0.0066, 0.0), (0.5, 0.0142, 0.0055, -0.0008),
+                                                                                    (1.0, 0.0112, 0.004, -0.003)], S, lower, lower, root)
+    part(keep(lo_), 'jaw')
+    part(keep(sphere(kind + '_tongue', 0.011 * S, tuple(bx0 + Vector((0.03, 0, -0.0065)) * S), (2.4, 0.72, 0.3), m=tongue, parent=root, seg=10, rings=6)), 'jaw')
+    part(keep(sphere(kind + '_mouthin', 0.0145 * S, tuple(bx0 + Vector((0.03, 0, -0.0045)) * S), (2.6, 0.72, 0.3), m=gum, parent=root, seg=12, rings=6)), 'head')
+    pivot('jaw', tuple(bx0 + Vector((-0.006, 0, -0.008)) * S), root)
+    b1 = bx0 + Vector((0.074, 0, -0.007)) * S
+    # ---- eyes: high on the sides of the head, a little forward: a clear round iris (Gertrude's pale blue, Hector's dark
+    # brown), a round pupil, a bright catch-light, and a ring of bare skin round each (Hector's orange)
+    er = 0.0116 * S
     for sd in (1, -1):
-        d = Vector((0.36, sd * 0.92, 0.2)).normalized()
-        at, _ = surface(head, h(0.016, 0, 0.004), d)
-        ec = at - d * er * 0.42
+        d = Vector((0.28, sd * 0.92, 0.27)).normalized()
+        at, _ = surface(head, h(0.012, 0, 0.004), d)
+        ec = at - d * er * 0.12                         # (standing proud of the head's soft feathers)
         rot = d.to_track_quat('Z', 'Y').to_euler()
         dep = lambda k: ec + d * er * k
         nm = 'blink' + ('L' if sd > 0 else 'R')
-        part(keep(sphere(kind + '_ring', er * 1.3, tuple(dep(-0.1)), (1.0, 1.0, 0.45), rot=rot, m=ring, parent=root, seg=12, rings=6)), nm)
-        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.0, 1.0, 0.5), rot=rot, m=iris, parent=root, seg=12, rings=7)), nm)
-        part(keep(sphere(kind + '_pupil', er * 0.5, tuple(dep(0.36)), (1.0, 1.0, 0.4), rot=rot, m=pupil, parent=root, seg=8, rings=5)), nm)
+        part(keep(sphere(kind + '_ring', er * B.get('ringw', 1.3), tuple(dep(-0.12)), (1.0, 1.0, 0.45), rot=rot, m=ring, parent=root, seg=14, rings=6)), nm)
+        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.0, 1.0, 0.52), rot=rot, m=iris, parent=root, seg=14, rings=7)), nm)
+        part(keep(sphere(kind + '_pupil', er * 0.44, tuple(dep(0.38)), (1.0, 1.0, 0.42), rot=rot, m=pupil, parent=root, seg=10, rings=5)), nm)
         q = d.to_track_quat('Z', 'Y'); up = q @ Vector((0, 1, 0)); across = q @ Vector((1, 0, 0))
-        part(keep(sphere(kind + '_glint', er * 0.2, tuple(dep(0.5) + up * er * 0.32 - across * sd * er * 0.25), m=glint, parent=root, seg=6, rings=4)), nm)
+        part(keep(sphere(kind + '_glint', er * 0.26, tuple(dep(0.52) + up * er * 0.3 - across * sd * er * 0.24), m=glint, parent=root, seg=6, rings=4)), nm)
         pivot('eye' + ('L' if sd > 0 else 'R'), tuple(ec), root); pivot(nm, tuple(ec), root)
-    # ---- the folded wings: a smooth panel of coverts on each upper flank, the long flight feathers lying back over the rump,
-    # their tips crossing over the tail
+    # ---- the folded wings: on each upper flank a smooth bed of small coverts at the shoulder, then real feathers lying on it
+    # like roof tiles, following its curve: a row of greater coverts, the long secondaries and tertials below and behind
+    # them (their tips making the wing's scalloped lower and back edge), and the primaries lying back over the rump, their
+    # tips crossing over the tail
     for sd in (1, -1):
         nm = 'wing' + ('L' if sd > 0 else 'R')
-        w = sphere(kind + '_wing', 0.12 * S, tuple(P(-0.03 * BL, sd * 0.1, zc / S + 0.045)), (1.62 * BL, 0.2, 0.52),
-                   (math.radians(sd * -10), math.radians(-5), 0), m=coat, parent=root, seg=22, rings=11)
+        wc = P(-0.03 * BL, sd * 0.1, zc / S + 0.045); wr = Vector((0.12 * 1.62 * BL, 0.12 * 0.2, 0.12 * 0.52)) * S
+        wrot = Euler((math.radians(sd * -10), math.radians(-5), 0))
+        w = sphere(kind + '_wing', 0.12 * S, tuple(wc), (1.62 * BL, 0.2, 0.52), wrot, m=coat, parent=root, seg=22, rings=11)
         part(keep(w), nm, 'wing', 'goose')
-        for i in range(5):                             # (lying low along the back, closing in over the rump: only their ends show)
+        M = Matrix.Translation(wc) @ wrot.to_matrix().to_4x4()
+        def on_panel(x, z, lift):                      # a point on the panel's outer surface (its own frame: x along, z up)
+            u = 1 - (x / wr.x) ** 2 - (z / wr.z) ** 2
+            return M @ Vector((x, sd * (wr.y * math.sqrt(max(0.0, u)) + lift), z))
+        def panel_feather(nm_, x0, z0, ang, L, w0, lift, seg=6, pointed=False):
+            """a feather lying on the panel from (x0, z0), pointing back and down by ang (degrees below -x), hugging it"""
+            d = Vector((-math.cos(math.radians(ang)), 0, -math.sin(math.radians(ang))))
+            pts, ws, wds = [], [], []
+            for k in range(seg + 1):
+                t = k / seg; x, z = x0 + d.x * L * t, z0 + d.z * L * t
+                pts.append(on_panel(x, z, lift + 0.002 * S * t))
+                across = Vector((-d.z, 0, d.x)); a_ = on_panel(x + across.x * 0.004, z + across.z * 0.004, lift)
+                wds.append((a_ - on_panel(x, z, lift)).normalized())
+                if pointed: ws.append(w0 * min(1.0, t / 0.15 + 0.25) * (1 - t) ** 0.8 + 0.001)
+                else: ws.append(w0 * min(1.0, t / 0.12 + 0.35) * (1 - t ** 2.2) ** 0.5 + 0.0015)
+            return ribbon(nm_, pts, ws, wds, coat, root, thick=0.0018)
+        for i in range(7):                             # the greater coverts: a row across the middle of the wing
+            f = i / 6
+            x0, z0 = (0.1 - 0.17 * f) * BL * S, (0.035 - 0.03 * f) * S
+            part(panel_feather(kind + '_gcov', x0, z0, 28, 0.075 * S, 0.042 * S, 0.004 * S), nm, 'prim', 'goose')
+        for i in range(9):                             # secondaries and tertials: long, lying back, their tips the wing's edge
+            f = i / 8
+            x0, z0 = (0.06 - 0.17 * f) * BL * S, (0.004 - 0.022 * f) * S
+            part(panel_feather(kind + '_sec', x0, z0, 22 - 10 * f, (0.12 + 0.05 * f) * S, 0.048 * S, 0.0015 * S), nm, 'prim', 'goose')
+        for i in range(5):                             # the primaries (lying low along the back, closing in over the rump)
             f = i / 4
             st = P(-0.1 * BL - 0.012 * f, sd * (0.088 - 0.01 * f), zc / S + 0.075 - 0.01 * f)
             L = (0.2 + 0.035 * (1 - abs(f - 0.35))) * S * BL
             dirn = Vector((-1, -sd * (0.2 + 0.05 * f), -0.17 - 0.03 * f)).normalized()
-            part(flat_feather(kind + '_prim', st, dirn, L, 0.038 * S, coat, root, lift=0.0018 * S * (4 - i), droop=0.006 * S), nm, 'prim', 'goose')
+            part(flat_feather(kind + '_prim', st, dirn, L, 0.036 * S, coat, root, lift=0.0018 * S * (4 - i), droop=0.006 * S, pointed=True), nm, 'prim', 'goose')
         pivot(nm, tuple(P(0.08 * BL, sd * 0.1, zc / S + 0.07)), root)
-    # ---- the open wings (shown spread): coverts along the arm, secondaries hanging back from it, primaries fanned out from
-    # the hand; laid out flat to the side, the browser grows them from the shoulder and flaps them
+    # ---- the open wings (shown spread): the arm from the shoulder out and a little forward to the wrist, the hand angling
+    # back from it; along the arm rows of coverts like roof tiles over the long secondaries, from the hand the primaries
+    # fanned out, long and pointed, the wing arched (its feathers curving down a little to their tips); the browser grows
+    # it from the shoulder and flaps it, the hand following the arm a moment later
     for sd in (1, -1):
-        nm = 'wing' + ('L' if sd > 0 else 'R') + 'o'
+        nm = 'wing' + ('L' if sd > 0 else 'R') + 'o'; hn = 'wing' + ('L' if sd > 0 else 'R') + 'h'
         s0 = P(0.07 * BL, sd * 0.1, zc / S + 0.075)
-        span = Vector((-0.1, sd * 1.0, 0.08)).normalized()
-        wrist = s0 + span * 0.27 * S
-        # (the arm a slim leading edge; over the roots of the flight feathers, rows of coverts like roof tiles: short ones
-        # along the edge, longer ones behind, the front rows on top)
-        E = [('ELLIPSOID', tuple(s0.lerp(wrist, t)), (0.02 - 0.007 * t) * S * K, (1.2, 1.5, 0.55), 2.0) for t in (0.0, 0.25, 0.5, 0.75, 1.0)]
+        span = Vector((0.1, sd * 1.0, 0.06)).normalized()
+        wrist = s0 + span * 0.28 * S
+        hand = Vector((-0.38, sd * 1.0, 0.0)).normalized()
+        E = [('ELLIPSOID', tuple(s0.lerp(wrist, t) + Vector((-0.008, 0, 0)) * S), (0.026 - 0.009 * t) * S * K, (1.35, 1.5, 0.55), 2.0) for t in (0.0, 0.25, 0.5, 0.75, 1.0)]
         part(metaball_mesh(kind + '_owing', E, res=0.007 * S, m=coat, parent=root), nm, 'wing', 'goose')
-        for row, (n_, L_, w_, back, up_) in enumerate([(8, 0.046, 0.04, 0.0, 0.012), (8, 0.066, 0.045, 0.014, 0.008), (9, 0.092, 0.05, 0.026, 0.004)]):
+        for row, (n_, L_, w_, back, up_) in enumerate([(9, 0.055, 0.042, 0.004, 0.007), (9, 0.075, 0.046, 0.016, 0.005), (10, 0.1, 0.05, 0.028, 0.003)]):
             for i in range(n_):
                 t = 0.04 + 0.92 * i / (n_ - 1)
                 st = s0.lerp(wrist, t) + Vector((-back, 0, 0)) * S
-                dirn = Vector((-1, sd * (0.12 + 0.25 * t), -0.02)).normalized()
-                part(flat_feather(kind + '_ocov', st, dirn, L_ * S, w_ * S, coat, root, lift=up_ * S, seg=4), nm, 'prim', 'goose')
-        for i in range(9):                             # secondaries along the arm, hanging back, overlapping
-            t = 0.05 + 0.9 * i / 8
+                dirn = Vector((-1, sd * (0.06 + 0.2 * t), -0.04)).normalized()
+                part(flat_feather(kind + '_ocov', st, dirn, L_ * S, w_ * S, coat, root, lift=up_ * S, seg=4, droop=0.004 * S, base=0.12), nm, 'prim', 'goose')
+        for i in range(10):                            # secondaries along the arm, hanging back, overlapping
+            t = 0.04 + 0.92 * i / 9
             st = s0.lerp(wrist, t) + Vector((-0.03, 0, 0)) * S
-            dirn = Vector((-1, sd * (0.1 + 0.28 * t), -0.03)).normalized()
-            part(flat_feather(kind + '_osec', st, dirn, (0.165 + 0.02 * t) * S, 0.066 * S, coat, root, lift=-0.0012 * S * i), nm, 'prim', 'goose')
-        for i in range(4):                             # the primaries' coverts at the hand
-            f = i / 3; a = math.radians(-40 + 50 * f)
-            dirn = Vector((math.sin(a), sd * math.cos(a), 0.0)).normalized()
-            part(flat_feather(kind + '_ocov', wrist - Vector((0.01, 0, 0)) * S * f, dirn, 0.1 * S, 0.05 * S, coat, root, lift=0.006 * S, seg=4), nm, 'prim', 'goose')
-        for i in range(8):                             # primaries fanned out from the hand
-            f = i / 7
-            st = wrist + span * 0.015 * S - Vector((0.014, 0, 0)) * S * f
-            a = math.radians(-62 + 66 * f)
-            dirn = Vector((math.sin(a), sd * math.cos(a), 0.02 - 0.02 * f)).normalized()
-            part(flat_feather(kind + '_oprim', st, dirn, (0.28 - 0.07 * abs(f - 0.62)) * S, 0.064 * S, coat, root, lift=-0.002 * S * (7 - i)), nm, 'prim', 'goose')
-        pivot(nm, tuple(s0), root)
+            dirn = Vector((-1, sd * (0.05 + 0.25 * t), -0.05)).normalized()
+            part(flat_feather(kind + '_osec', st, dirn, (0.16 + 0.025 * t) * S, 0.064 * S, coat, root, lift=-0.0012 * S * i, droop=0.014 * S), nm, 'prim', 'goose')
+        for i in range(5):                             # the primaries' coverts on the hand
+            f = i / 4
+            st = wrist + hand * 0.03 * S * f
+            dirn = (hand * 0.55 + Vector((-1, 0, 0)) * (0.7 - 0.3 * f)).normalized()
+            part(flat_feather(kind + '_ocov', st, dirn, 0.11 * S, 0.05 * S, coat, root, lift=0.007 * S, seg=4, droop=0.005 * S), hn, 'prim', 'goose')
+        for i in range(9):                             # primaries fanned out from the hand, long and pointed
+            f = i / 8
+            st = wrist + hand * (0.012 + 0.07 * f) * S
+            a = math.radians(-70 + 62 * f)
+            dirn = Vector((math.sin(a), sd * math.cos(a), -0.03)).normalized()
+            part(flat_feather(kind + '_oprim', st, dirn, (0.27 + 0.05 * f) * S, 0.062 * S, coat, root, lift=-0.002 * S * (8 - i), droop=0.02 * S, pointed=True), hn, 'prim', 'goose')
+        pivot(nm, tuple(s0), root); pivot(hn, tuple(wrist), root)
     # ---- the tail: a short rounded fan of stiff feathers, tipped up a little
     tb = P(-0.265 * BL, 0, zc / S + 0.05)
     for i in range(7):
@@ -186,7 +220,41 @@ def goose(kind='embden', seed=1):
     return root
 
 
-def flat_feather(name, start, dirn, L, w0, m, parent, lift=0.0, droop=0.0, curl=0.0, seg=8):
+def bill_loft(name, base, L, prof, S, m, m_tip, parent, nail_from=2.0, sides=14, rings=10):
+    """A bill as a smooth loft from its base (on the face) forward along +x for L: prof = [(t, half width, half height,
+    the middle's height offset)] along it (t 0..1, metres for S=1), interpolated; rounded closed tip. Faces from nail_from
+    on get m_tip (the pale nail)."""
+    def at(t):
+        for (t0, *a0), (t1, *a1) in zip(prof, prof[1:]):
+            if t0 <= t <= t1:
+                u = (t - t0) / max(1e-6, t1 - t0); return [x + (y - x) * u for x, y in zip(a0, a1)]
+        return prof[-1][1:]
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rows = []
+    for i in range(rings + 1):
+        t = i / rings; hw, hh, dz = at(t)
+        if t > 0.88:                                    # the broad rounded tip
+            k = math.sqrt(max(0.0, 1 - ((t - 0.88) / 0.12) ** 2)); hw *= 0.55 + 0.45 * k; hh *= 0.6 + 0.4 * k
+        c = base + Vector((L * t, 0, dz * S))
+        ring = []
+        for j in range(sides):
+            a = 2 * math.pi * j / sides
+            y, z = math.cos(a) * hw * S, math.sin(a) * hh * S
+            if z < 0: z *= 0.8                           # a little flatter underneath
+            ring.append(bm.verts.new(c + Vector((0, y, z))))
+        rows.append(ring)
+    for i in range(rings):
+        for j in range(sides):
+            f = bm.faces.new((rows[i][j], rows[i][(j + 1) % sides], rows[i + 1][(j + 1) % sides], rows[i + 1][j]))
+            f.material_index = 1 if (i + 0.5) / rings >= nail_from else 0
+    tip = bm.verts.new(base + Vector((L * 1.02, 0, at(1.0)[2] * S)))
+    for j in range(sides): f = bm.faces.new((rows[-1][j], rows[-1][(j + 1) % sides], tip)); f.material_index = 1 if nail_from <= 1 else 0
+    bm.normal_update(); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); o.data.materials.append(m); o.data.materials.append(m_tip); o.parent = parent
+    for p_ in o.data.polygons: p_.use_smooth = True
+    return o
+
+
+def flat_feather(name, start, dirn, L, w0, m, parent, lift=0.0, droop=0.0, curl=0.0, seg=8, pointed=False, base=0.35):
     """A long stiff feather lying flat (its vane level, across `dirn`): from `start` along `dirn` for L, rounded at the
     tip, bending down by `droop` at the tip, curling up by `curl` (a fraction of L); `lift` raises it (stacked feathers)."""
     up = Vector((0, 0, 1)); side = up.cross(dirn).normalized(); nrm = dirn.cross(side).normalized()
@@ -194,7 +262,8 @@ def flat_feather(name, start, dirn, L, w0, m, parent, lift=0.0, droop=0.0, curl=
     for i in range(seg + 1):
         t = i / seg
         p = start + dirn * L * t + nrm * (lift - droop * t * t + curl * L * t * t)
-        w = w0 * min(1.0, t / 0.12 + 0.35) * (1 - t ** 2.2) ** 0.5 + 0.0015
+        if pointed: w = w0 * min(1.0, t / 0.12 + base) * (1 - t ** 1.6) ** 0.7 + 0.001
+        else: w = w0 * min(1.0, t / 0.12 + base) * (1 - t ** 2.2) ** 0.5 + 0.0015
         pts.append(p); ws.append(w); wds.append(side)
     return ribbon(name, pts, ws, wds, m, parent, thick=0.002)
 
@@ -249,5 +318,8 @@ if __name__ == '__main__':
     lighting(scn)
     cam = os.environ.get('CAM', 'front')
     if cam == 'side': camera(scn, (0.25, -3.2, 0.55), (0.25, -0.35, 0.38), lens=45)
+    elif cam == 'head':                               # both heads close up, side-on (ROT=0)
+        c.location = (0.0, -0.32, 0)
+        camera(scn, (0.3, -1.25, 0.8), (0.3, -0.16, 0.72), lens=60)
     else: camera(scn, (1.6, -2.6, 1.1), (0.1, -0.35, 0.38), lens=42)
     render(scn, os.environ.get('NAME', 'geese'), 1000, 800, samples)

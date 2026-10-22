@@ -83,7 +83,7 @@ def bake(name, root, budget):
     pv = {k: np.array(v[:], np.float32) for k, v in piv.items()}
     N, H = geese.neck_points(B)
     neck = [np.array(v[:], np.float32) for v in N] + [np.array(H[:], np.float32), pv['bill']]
-    neck_r = np.array([0.064, 0.05, 0.041, 0.036, 0.035, 0.036], np.float32) * S
+    neck_r = np.array([0.066, 0.053, 0.046, 0.042, 0.039, 0.036], np.float32) * S
     P_, N_, C_, J_, W_, A_, F_, FP_, FM_, GB_, GN_, HW_ = [], [], [], [], [], [], [], [], [], [], [], []
     for o, me, n in meshes:
         prt = o['part']; paint = int(o.get('paint', 0)); mode = o.get('col')

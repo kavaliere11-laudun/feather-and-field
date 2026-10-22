@@ -714,3 +714,20 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   the open ones growing from the shoulder and flapping, the tail wagging on a spring, sitting down.
 - `?lineup=geese`: both geese in a row of poses (standing, walking, honking, grazing, preening, flapping, hissing,
   asleep). `geeseshot.mjs OUT [size]`: each goose in each pose, close up and framed on her own.
+- Second look (22 Oct 22:55, Audrey: "That's quite good. Feathers need improvement, the wings needs work to be more
+  realistic. Overall I don't instantly guess these are geese maybe the beak can be reviewed. Do not forget the eyes"):
+  - The bill: a goose's big wedge (`bill_loft()`: a smooth loft of cross-sections), deep at the base where it meets the
+    face, its top running on from the forehead and sloping to a broad rounded tip with a pale nail; the lower bill under it,
+    a thin dark line between; small oval nostrils. The head longer with a flat crown; the neck thicker and even; Hector's
+    neck shorter (`neck=0.86`) and his dewlap smaller. Gertrude carries her breast high (`stance`), Hector level.
+  - The eyes: bigger, standing proud of the head's soft feathers, a clear iris (Gertrude's pale blue, Hector's dark brown),
+    a round pupil, a bright catch-light, a ring of bare skin (Hector's orange).
+  - The feathers: small and fine on the breast and belly, broad on the flanks and back (`featherSize` by where they are);
+    the neck's and head's much smaller (velvety) with the furrows a goose's neck has (ridges running down it, in the
+    drawing); the head feathered like the neck.
+  - The folded wings: real feathers lying on the smooth bed of coverts, following its curve (`panel_feather()`): a row of
+    greater coverts, nine secondaries and tertials whose tips make the wing's scalloped lower and back edge, the pointed
+    primaries over the rump.
+  - The open wings: the arm out and a little forward to the wrist, the hand angling back (its own bone, `wingLh`/`wingRh`:
+    folded back while the wing opens, and following the arm a moment later when flapping), three rows of coverts tucked
+    under a smooth leading edge, ten secondaries, nine long pointed primaries, the wing arched (feathers curving down).
