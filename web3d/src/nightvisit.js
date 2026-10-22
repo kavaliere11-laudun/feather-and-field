@@ -301,7 +301,8 @@ export class NightVisit {
   // the way into a pen: from a spot outside the fence (take-off) over it to a spot inside (landing); the side with the
   // shortest way there wins
   entry(p, fromX, fromZ) {
-    const sides = [[[-2.2, 1.15], [-1.12, 1.15]], [[2.35, 1.95], [1.32, 1.95]], [[-0.45, 3.1], [-0.45, 2.1]]];
+    // (both spots about a metre from the fence, so his brush clears it after landing either way)
+    const sides = [[[-2.66, 1.38], [-0.52, 1.38]], [[2.8, 1.02], [0.92, 1.02]], [[-0.5, 3.5], [-0.5, 1.42]]];
     let best = null;
     for (const [t, l] of sides) {
       const tw = this.W(p, t[0], 0, t[1]);
@@ -350,9 +351,9 @@ export class NightVisit {
       }
       case 'jumpIn': this.phase = 'toRamp'; return this.leap(this.way.take, this.way.land);
       case 'toRamp': {
-        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.52);
+        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, G.foot[1] + 0.85));
         this.phase = 'climb';
-        return seq(this.follow(this.penPath(p, f.pos, a), 'walk', 99, 0.05), this.face(this.heading(p, 0, -1)));
+        return seq(this.follow(this.penPath(p, f.pos, pre).concat([[a.x, a.z]]), 'walk', 99, 0.05, 0.6), this.face(this.heading(p, 0, -1)));
       }
       case 'climb': this.phase = 'atDoor'; return this.climb(this.target, true);
       case 'atDoor': {
@@ -361,7 +362,13 @@ export class NightVisit {
         this.phase = 'shutDoor'; return this.scratch(p);
       }
       case 'recoil': this.phase = this.pecks < 2 ? 'again' : 'leave'; return this.recoil(this.target);
-      case 'again': this.phase = 'climb'; return seq(this.sit(1.2, true), this.face(this.heading(this.target, 0, -1)));
+      case 'again': {           // a moment's thought, then back in line with the ramp for another try
+        this.phase = 'climb';
+        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, G.foot[1] + 0.85));
+        const away = Math.hypot(a.x - f.pos.x, a.z - f.pos.z) > 0.05;
+        return away ? seq(this.sit(1.2, true), this.follow(this.penPath(p, f.pos, pre).concat([[a.x, a.z]]), 'walk', 99, 0.05, 0.6), this.face(this.heading(p, 0, -1)))
+                    : seq(this.sit(1.2, true), this.face(this.heading(p, 0, -1)));
+      }
       case 'shutDoor': {
         this.tries.push(this.target);
         const other = this.tries.length < 2 ? this.pick(this.tries) : null;
@@ -372,7 +379,7 @@ export class NightVisit {
       case 'leaveFor': case 'leave': {
         const going = this.phase === 'leaveFor';
         this.phase = going ? 'jumpOutFor' : 'jumpOut';
-        return this.follow(this.penPath(this.target, f.pos, this.way.land), 'trot', 99, 0.05);
+        return this.follow(this.penPath(this.target, f.pos, this.way.land), 'trot', 99, 0.05, 0.6);
       }
       case 'jumpOut': this.phase = 'trotHome'; return this.leap(this.way.land, this.way.take);
       case 'jumpOutFor': this.phase = 'trip'; this.target = this.next2; this.note('next ' + this.target.index); return this.leap(this.way.land, this.way.take);
@@ -383,9 +390,9 @@ export class NightVisit {
   }
   // ---- Rusty's moves
   wait(s) { return { name: 'wait', t: 0, run(f, dt) { this.t += dt; return this.t >= s; } }; }
-  face(h) { return { name: 'face', t: 0, run(f, dt) { this.t += dt; return f.turnTo(h, dt, 4) < 0.05 || this.t > 2; } }; }
+  face(h) { const self = this; return { name: 'face', t: 0, run(f, dt) { this.t += dt; if (self.inPen()) f.A.tailUpGoal = 0.6; return f.turnTo(h, dt, 4) < 0.05 || this.t > 2; } }; }
   // along a list of points; slinking low and slow for the last `sneak` metres to the end
-  follow(path, pace, sneak, tol = 0.1) {
+  follow(path, pace, sneak, tol = 0.1, tailUp = 0) {
     const pts = path.slice(1).map(p => [p[0], p[1]]), self = this;
     return { name: 'go', t: 0, i: 0, run(f, dt) {
       this.t += dt;
@@ -404,9 +411,13 @@ export class NightVisit {
       if (self.groundY) {                                      // up and over a footbridge's arched deck
         const S = f.q.S * f.scale, sx = Math.sin(f.heading), cz = Math.cos(f.heading);
         const fy = self.groundY(f.pos.x + sx * 0.14 * S, f.pos.z + cz * 0.14 * S), hy = self.groundY(f.pos.x - sx * 0.13 * S, f.pos.z - cz * 0.13 * S);
-        if (fy || hy) { f.A.lift = (fy + hy) / 2; f.A.pitch = -Math.atan2(fy - hy, 0.27 * S); }
+        if (fy || hy) {
+          f.A.lift = (fy + hy) / 2; f.A.pitch = -Math.atan2(fy - hy, 0.27 * S);
+          f.A.groundF = fy; f.A.groundH = self.groundY(f.pos.x - sx * 0.185 * S, f.pos.z - cz * 0.185 * S);
+        }
       }
       if (pace === 'run') { f.A.tailUpGoal = 0.3; }
+      if (tailUp) f.A.tailUpGoal = Math.max(f.A.tailUpGoal || 0, tailUp);
       return this.i >= pts.length;
     } };
   }
@@ -415,14 +426,23 @@ export class NightVisit {
     const h = angTo(a.x, a.z, b.x, b.z);
     return seq(this.face(h), { name: 'leap', t: 0, run(f, dt) {
       this.t += dt; f.turnTo(h, dt, 6);
-      const T0 = 0.3, T1 = 0.95;
-      if (this.t < T0) { f.A.crouchGoal = 1; return false; }
-      const u = clamp01((this.t - T0) / (T1 - T0));
-      f.pos.x = a.x + (b.x - a.x) * u; f.pos.z = a.z + (b.z - a.z) * u;
-      f.A.lift = Math.sin(u * Math.PI) * 0.82; f.A.airGoal = u < 0.95 ? 1 : 0; f.A.air = Math.max(f.A.air || 0, u < 0.9 ? 1 : 0);
-      f.A.pitch = (u - 0.5) * 0.7;
-      if (u >= 1) { f.A.crouchGoal = 0.6; return this.t > T1 + 0.25; }
-      return false;
+      // gathering himself: down low, weight back on the haunches
+      const T0 = 0.38, T1 = T0 + 0.7, T2 = T1 + 0.34;
+      if (this.t < T0) { const k = smooth(0, T0, this.t); f.A.crouchGoal = 1; f.A.crouch = Math.max(f.A.crouch || 0, k); f.A.pitch = -0.12 * k; f.A.tailUpGoal = 0.3; return false; }
+      // in the air: a parabola just clearing the fence, nose up off the ground and down for the landing; front legs folded up
+      // under the chest going over, then reaching for the ground; hind legs pushing off, then tucked up (pose airPh)
+      if (this.t < T1) {
+        const u = (this.t - T0) / (T1 - T0);
+        f.pos.x = a.x + (b.x - a.x) * u; f.pos.z = a.z + (b.z - a.z) * u;
+        f.A.lift = 4 * u * (1 - u) * 0.7; f.A.air = f.A.airGoal = Math.min(1, Math.min(u, 1 - u) * 8); f.A.airPh = u;
+        f.A.crouch = f.A.crouchGoal = 0; f.A.pitch = -0.38 + 0.72 * u; f.A.tailUpGoal = 0.7; f.A.tailUp = Math.max(f.A.tailUp || 0, 0.5);
+        return false;
+      }
+      // the landing: front feet first, the legs folding to take it, then up
+      f.pos.x = b.x; f.pos.z = b.z; f.A.airPh = undefined;
+      const v = (this.t - T1) / (T2 - T1);
+      f.A.crouch = f.A.crouchGoal = 0.75 * (1 - smooth(0.2, 1, v)); f.A.pitch = 0.34 * (1 - smooth(0, 0.6, v)); f.A.tailUpGoal = 0.6; f.A.tailUp = Math.max(f.A.tailUp || 0, 0.5);
+      return this.t > T2;
     } });
   }
   // across the yard, round the feeder, the water, the hay, the ramp's sides and anything in front of the house (a small grid
@@ -435,6 +455,9 @@ export class NightVisit {
       for (const o of this.penObstacles || []) if (Math.abs(o[0] - this.nestOf(p).pop[0]) > 0.05) g.circle(o[0], o[2], o[3] + 0.2);   // (the old single farm's ramp marks: the ramp is the house's now)
       for (const o of (this.nestOf(p).block || [])) g.circle(o[0], o[1], o[2] + 0.2);
       g.mark(-1.7, 0, 1.8, 0.62, () => true);                                  // the house and just in front of it
+      g.mark(-1.7, 0, 1.8, 2.6, (x, z) => x < -1.64 + 0.36 || x > 1.79 - 0.36 || z > 2.5 - 0.36);     // and off the fence
+      const G = this.nestOf(p);                                                 // and round the ramp (not over its sides)
+      g.mark(-1.7, 0, 1.8, 2.6, (x, z) => Math.abs(x - G.pop[0]) < 0.13 + 0.24 && z < G.foot[1] + 0.05);
     }
     const la = p.frame.worldToLocal(this.w.copy(a)).clone(), lb = p.frame.worldToLocal(this.w.copy(b)).clone();
     const path = g.find(la.x, la.z, lb.x, lb.z) || [[la.x, la.z], [lb.x, lb.z]];
@@ -446,14 +469,15 @@ export class NightVisit {
   // up the ramp until his nose is at the pop door (in: true), or back down to its foot
   climb(p, up) {
     const self = this, G = this.nestOf(p), h = this.heading(p, 0, -1);
-    const top = G.pop[1] + 0.4, bottom = G.foot[1] + 0.52;
+    const top = G.pop[1] + 0.42; let bottom = G.foot[1] + 0.4;
     return { name: 'climb', t: 0, run(f, dt) {
+      if (this.t === 0 && up) bottom = Math.max(top, p.frame.worldToLocal(self.v.copy(f.pos)).z);          // from wherever he is
       this.t += dt; const dur = up ? 1.6 : 1.1, u = smooth(0, dur, this.t);
       const lz = up ? bottom + (top - bottom) * u : top + (bottom - top) * u;
       const w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z; f.turnTo(h, dt, 6);
       self.lean(f, p, lz); self.lz = lz;
       f.pace = 0.5; if (!up) f.A.crouchGoal = 0.3;
-      if (up) f.A.crouchGoal = 0.35 * u;
+      if (up) { f.A.crouchGoal = 0.35 * u; f.A.lookPitchGoal = 0.35 * smooth(0.4, 1, u); }      // head down as he nears the doorway
       if (this.t >= dur && !up) self.lz = null;
       return this.t >= dur;
     } };
@@ -462,14 +486,23 @@ export class NightVisit {
   lean(f, p, lz) {
     const fy = this.rampY(p, lz - 0.14), hy = this.rampY(p, lz + 0.13);
     f.A.lift = (fy + hy) / 2; f.A.pitch = -Math.atan2(fy - hy, 0.27);
+    // the ground under the paws: tipping the body round its middle swings the feet forward up the slope, so look there
+    const S = f.q.S * f.scale, pt = f.A.pitch, down = 0.018 * S - f.q.hy * f.scale;
+    const fwdF = down * Math.sin(pt) + 0.14 * S * Math.cos(pt), fwdH = down * Math.sin(pt) - 0.185 * S * Math.cos(pt);
+    f.A.groundF = this.rampY(p, lz - fwdF); f.A.groundH = this.rampY(p, lz - fwdH);
+    // and how steep it is there (the paws laid along it)
+    const G = this.nestOf(p), slope = Math.atan2(G.house, Math.max(0.05, G.foot[1] - G.pop[1])), on = z => z > G.pop[1] - 0.02 && z < G.foot[1] + 0.01 ? slope : 0;
+    f.A.slopeF = on(lz - fwdF); f.A.slopeH = on(lz - fwdH);
+    if (f.A.slopeF) f.A.groundF += 0.02; if (f.A.slopeH) f.A.groundH += 0.02;            // the tips of the toes clear of the boards
   }
   // nose in at the open door: the hens wake in a flurry, peck his nose; he yelps
   poke(p) {
-    const self = this, G = this.nestOf(p), lz = G.pop[1] + 0.4;
+    const self = this, G = this.nestOf(p), lz = G.pop[1] + 0.42;
     return { name: 'poke', t: 0, burst: false, run(f, dt) {
-      this.t += dt; self.lean(f, p, lz - 0.07 * smooth(0, 0.8, this.t)); self.lz = lz - 0.07 * smooth(0, 0.8, this.t);
-      const w = self.W(p, G.pop[0], 0, lz - 0.07 * smooth(0, 0.8, this.t)); f.pos.x = w.x; f.pos.z = w.z;
-      f.A.crouchGoal = 0.35; f.A.lookPitchGoal = 0.25; f.A.wagGoal = this.t < 1.1 ? 0.6 : 0;      // a sniff, a hopeful wag
+      this.t += dt; self.lean(f, p, lz); self.lz = lz;
+      const w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z;
+      const k = smooth(0, 0.7, this.t);
+      f.A.crouchGoal = 0.35 + 0.2 * k; f.A.lookPitchGoal = 0.2 + 0.25 * k; f.A.wagGoal = this.t < 1.1 ? 0.6 : 0;      // nose down and in, a sniff, a hopeful wag
       if (this.t > 1.1 && !this.burst) { this.burst = true; self.flurry(p); }
       return this.t > 1.45;
     } };
@@ -487,7 +520,7 @@ export class NightVisit {
   // back down the ramp in a hurry (a hop backwards), a feather stuck on his nose, a sneeze and a shake
   recoil(p) {
     const self = this, G = this.nestOf(p), h = this.heading(p, 0, -1);
-    const top = G.pop[1] + 0.33, end = G.foot[1] + 0.52;
+    const top = G.pop[1] + 0.42, end = G.foot[1] + 0.4;
     return seq({ name: 'recoil', t: 0, run(f, dt) {
       this.t += dt; const u = smooth(0, 0.55, this.t);
       if (this.t < 0.05) { self.fx.pop('star', self.noseAt(f), 0.16, 0.6); self.stick(f); }
@@ -497,8 +530,25 @@ export class NightVisit {
       self.lz = this.t > 0.6 ? null : lz;
       return this.t > 0.6;
     } }, { name: 'sneeze', t: 0, run(f, dt) {
+      // round, so we see his face (and the feather): of a few ways facing the player, the one where his brush curls round
+      // onto clear ground
+      if (!this.spot) {
+        // where: here if his brush can curl round onto clear ground, else a step or two away where it can
+        for (const [dx, dz] of [[0, 0], [0.22, 0.12], [-0.22, 0.12], [0, 0.22], [0.36, 0.25], [-0.36, 0.25], [0.5, 0.05], [-0.5, 0.05]]) {
+          const w = self.W(p, G.pop[0] + dx, 0, G.foot[1] + 0.4 + dz), r = self.sitSpot(f, self.toCamera ? self.toCamera(w.x, w.z) : f.heading, w);
+          if (!this.spot || r[2] < this.spot[4] - 1) this.spot = [w.x, w.z, r[0], r[1], r[2]];     // (moving only when it's clearly better)
+          if (r[2] === 0) break;
+        }
+        this.h = this.spot[2]; f.curlSide = this.spot[3]; self.curlSet = true;
+      }
+      self.curlSet = true; f.curlSide = this.spot[3];          // (its choice holds while it lasts)
+      if (!this.there) {
+        f.A.tailUpGoal = 0.5;
+        if (Math.hypot(this.spot[0] - f.pos.x, this.spot[1] - f.pos.z) < 0.04 || f.moveTo(this.spot[0], this.spot[1], dt, 'walk')) this.there = true;
+        return false;
+      }
       this.t += dt;
-      if (self.toCamera) f.turnTo(self.toCamera(f.pos.x, f.pos.z) + 0.35, dt, 3.5);       // round, so we see his face (and the feather)
+      f.turnTo(this.h, dt, 3.5);
       f.A.sitGoal = 1; f.A.lookPitchGoal = this.t < 0.6 ? -0.35 : 0.3;            // a breath in, nose up... and the sneeze
       if (this.t > 0.6 && this.t < 1.4) f.A.shakeGoal = 1;
       if (this.t > 1.4 && this.t < 2.2) f.A.headTiltGoal = 0.35;
@@ -610,7 +660,7 @@ export class NightVisit {
       } };
       case 'away':
         if (this.lz != null) return this.slide(this.target);
-        if (inPen && this.way) { this.fleeStage = 'over'; return this.follow(this.penPath(this.target, f.pos, this.way.land), 'trot', 0, 0.05); }
+        if (inPen && this.way) { this.fleeStage = 'over'; return this.follow(this.penPath(this.target, f.pos, this.way.land), 'trot', 0, 0.05, 0.6); }
         this.fleeStage = 'run'; return this.wait(0);
       case 'over': this.fleeStage = 'run'; return this.leap(this.way.land, this.way.take);
       case 'run': this.fleeStage = 'in'; return this.homeTask('run');
@@ -620,17 +670,17 @@ export class NightVisit {
   }
   // down from the ramp in a hurry, from wherever he is on it
   slide(p) {
-    const self = this, G = this.nestOf(p), from = this.lz, end = G.foot[1] + 0.52;
+    const self = this, G = this.nestOf(p), from = this.lz, end = G.foot[1] + 0.4;
     return { name: 'slide', t: 0, run(f, dt) {
       this.t += dt; const u = smooth(0, 0.45, this.t), lz = from + (end - from) * u, w = self.W(p, G.pop[0], 0, lz);
       f.pos.x = w.x; f.pos.z = w.z; self.lean(f, p, lz); f.A.crouchGoal = 0.5; f.pace = 1;
       if (this.t > 0.45) { self.lz = null; return true; } return false;
     } };
   }
-  inPen() {
+  inPen(margin = 0) {
     const p = this.target; if (!p) return false;
     const l = p.frame.worldToLocal(this.w.copy(this.fox.pos));
-    return l.x > -1.7 && l.x < 1.85 && l.z > -0.85 && l.z < 2.55;
+    return l.x > -1.7 - margin && l.x < 1.85 + margin && l.z > -0.85 - margin && l.z < 2.55 + margin;
   }
   finish() {
     const shooed = this.state === 'fleeing';
@@ -641,6 +691,53 @@ export class NightVisit {
     if (this.nose) { this.nose.life = 0; this.nose.sp.visible = false; this.nose.type = 'feather'; this.nose = null; }
     this.fam.hide(this.fox);
     this.next = this.again ? this.again() : 900 + this.r() * 900;
+  }
+  // which way to sit (near `want`) and which side to curl the brush, so it lies on clear ground
+  sitSpot(f, want, at = f.pos) {
+    const p = this.target, G = this.nestOf(p), obs = (this.penObstacles || []).filter(o => Math.abs(o[0] - G.pop[0]) > 0.05), S0 = f.q.S * f.scale;
+    const blocked = (x, z) => {
+      const l = p.frame.worldToLocal(this.v.set(x, 0, z));
+      if (l.x < -1.64 + 0.2 || l.x > 1.79 - 0.2 || l.z > 2.5 - 0.2) return true;
+      if (Math.abs(l.x - G.pop[0]) < 0.2 && l.z < G.foot[1] + 0.12 && l.z > G.pop[1] - 0.1) return true;
+      return obs.some(o => Math.hypot(l.x - o[0], l.z - o[2]) < o[3] + 0.14);            // (a brush can lie on a let-down nest door: it's a flat board on the ground)
+    };
+    let best = [want, 1], bestN = 99;
+    for (const dh of [0.35, -0.35, 0.8, -0.8, 0, 1.3, -1.3]) for (const side of [1, -1]) {
+      const h = want + dh, rx = -Math.cos(h), rz = Math.sin(h), bx = -Math.sin(h), bz = -Math.cos(h);
+      const n = [[0.32, 0.1], [0.22, 0.26], [0.06, 0.34], [0.42, 0.0]].filter(([bk, sd]) => blocked(at.x + bx * bk * S0 + rx * sd * side * S0, at.z + bz * bk * S0 + rz * sd * side * S0)).length
+        + (blocked(at.x, at.z) ? 9 : 0);
+      if (n < bestN) { bestN = n; best = [h, side]; }
+    }
+    return [best[0], best[1], bestN];
+  }
+  // ---- in the yard he lifts his brush clear of what it would brush past: the hay bale, the feeder, the water dish, the
+  // ramp, the fence (looking where it is now and where it's swinging to)
+  brush(dt) {
+    const f = this.fox, p = this.target; let want = 0;
+    if (this.active() && f.root.visible && p && this.inPen(0.9)) {
+      const G = this.nestOf(p), obs = (this.penObstacles || []).filter(o => Math.abs(o[0] - G.pop[0]) > 0.05);
+      const blocked = (x, z) => {
+        const l = p.frame.worldToLocal(this.v.set(x, 0, z));
+        if (l.x < -1.64 + 0.18 || l.x > 1.79 - 0.18 || l.z > 2.5 - 0.18) return true;
+        if (Math.abs(l.x - G.pop[0]) < 0.2 && l.z < G.foot[1] + 0.08 && l.z > G.pop[1] - 0.1) return true;
+        return obs.some(o => Math.hypot(l.x - o[0], l.z - o[2]) < o[3] + 0.12);
+      };
+      // sitting down: the brush curls round whichever side is clear (chosen as he sits, kept till he stands)
+      const S0 = f.q.S * f.scale, sitting = f.A.sitGoal > 0.5 || (f.A.sit || 0) > 0.3;
+      if (sitting && !this.curlSet) {
+        const rx = -Math.cos(f.heading), rz = Math.sin(f.heading), bx = -Math.sin(f.heading), bz = -Math.cos(f.heading);
+        const hits = side => [[0.3, 0.12], [0.2, 0.26], [0.05, 0.32]].filter(([bk, sd]) => blocked(f.pos.x + bx * bk * S0 + rx * sd * side * S0, f.pos.z + bz * bk * S0 + rz * sd * side * S0)).length;
+        f.curlSide = hits(1) <= hits(-1) ? 1 : -1; this.curlSet = true;        // (the sneeze picks its own, above)
+      }
+      if (!sitting) this.curlSet = false;
+      const hd = f.heading - f.turn * 0.25, S = f.q.S * f.scale;
+      if (!sitting) for (const back of [0.26, 0.4, 0.58, 0.74]) for (const sw of [-0.5, 0, 0.5]) {
+        const a = hd + Math.PI + sw * Math.min(1, Math.abs(f.turn) / 2 + 0.3) * Math.sign(f.turn || 1);
+        if (blocked(f.pos.x + Math.sin(a) * back * S, f.pos.z + Math.cos(a) * back * S)) want = 1;
+      }
+    }
+    f.tailLift = (f.tailLift || 0) + (want * 1.25 - (f.tailLift || 0)) * Math.min(1, dt * 10);
+    if (f.tailLift < 0.01 && !want) f.tailLift = 0;
   }
   // ---- little helpers: where his nose and the top of his head are, and the feather stuck on his nose
   noseAt(f) { const b = f.q.bones.head; b.updateWorldMatrix(true, false); return b.localToWorld(new THREE.Vector3(0, 0.03, 0.21)); }
@@ -667,6 +764,7 @@ export class NightVisit {
         this.nose.sp.visible = true;
       }
     }
+    this.brush(dt);
     this.tickFarmer(dt);
     this.fx.update(dt);
   }

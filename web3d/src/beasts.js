@@ -19,10 +19,10 @@ export function initBeasts(gltf, json) {
 
 // fur: a red fox's coat (longer on the brush, short on the legs and face), a cub's softer and fluffier
 const FUR = {
-  fox: { len: { [R.body]: 0.034, [R.crest]: 0.008, [R.tail]: 0.068, [R.legfeather]: 0.008 }, shells: 12, droop: 0.18, clump: 0.55, fine: 1.0, wave: 0.45,
-         comb: 0.7, under: 0.7, face: 0.5, locks: 0.08 },
-  cub: { len: { [R.body]: 0.027, [R.crest]: 0.008, [R.tail]: 0.042, [R.legfeather]: 0.012 }, shells: 12, droop: 0.15, clump: 0.35, fine: 1.05, wave: 0.7,
-         comb: 0.45, under: 1.0, face: 0.45, locks: 0.05 },
+  fox: { len: { [R.body]: 0.034, [R.crest]: 0.008, [R.tail]: 0.068, [R.legfeather]: 0.008, [R.down]: 0.018 }, shells: 12, droop: 0.18, clump: 0.55, fine: 1.0, wave: 0.45,
+         comb: 0.7, under: 0.7, face: 0.5, locks: 0.11 },
+  cub: { len: { [R.body]: 0.027, [R.crest]: 0.008, [R.tail]: 0.042, [R.legfeather]: 0.012, [R.down]: 0.016 }, shells: 12, droop: 0.15, clump: 0.35, fine: 1.05, wave: 0.7,
+         comb: 0.45, under: 1.0, face: 0.45, locks: 0.075 },
 };
 function beastGeometry(name) {
   const M = MODELS[name];
@@ -42,14 +42,24 @@ function beastGeometry(name) {
   return (M.built = g);
 }
 
-const PARENT = { hips: 'root', chest: 'hips', neck: 'chest', head: 'neck', tail1: 'hips', tail2: 'tail1', tail3: 'tail2',
-  FLu: 'chest', FLl: 'FLu', FRu: 'chest', FRl: 'FRu', HLu: 'hips', HLl: 'HLu', HRu: 'hips', HRl: 'HRu' };
+const PARENT = { hips: 'root', chest: 'hips', neck: 'chest', head: 'neck', tail1: 'hips', tail2: 'tail1', tail3: 'tail2', tail4: 'tail3',
+  FLu: 'chest', FLl: 'FLu', FLw: 'FLl', FRu: 'chest', FRl: 'FRu', FRw: 'FRl',
+  HLu: 'hips', HLk: 'HLu', HLl: 'HLk', HRu: 'hips', HRk: 'HRu', HRl: 'HRk' };
 const LEGS = ['FL', 'FR', 'HL', 'HR'];
+// each leg's three bones, top down: front shoulder (upper arm), elbow (forearm), wrist (the paw); hind hip (thigh), knee
+// (shin), hock (the long foot); and the toe pivot where it meets the ground
+const LEG_BONES = { FL: ['FLu', 'FLl', 'FLw'], FR: ['FRu', 'FRl', 'FRw'], HL: ['HLu', 'HLk', 'HLl'], HR: ['HRu', 'HRk', 'HRl'] };
+const TAIL = ['tail1', 'tail2', 'tail3', 'tail4'];
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const clamp01 = x => Math.min(1, Math.max(0, x));
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+const arg = (y, z) => Math.atan2(z, y);           // a direction in a bone's side view (y up, z forward); rotation.x adds to it
+const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
 
 // A four-legged animal's body and bones, posed from a few numbers (as the birds' Rig): the actor sets the gait and what it's
-// doing (sitting, lying, a play bow, rearing up to box, rolling over, the pounce in the air, nose-down in the grass...)
+// doing (sitting, lying, a play bow, rearing up to box, rolling over, the leap, nose-down in the grass...). The feet are
+// placed and the legs bend to reach them (shoulder, elbow and wrist; hip, knee and hock), so every step, crouch, sit and
+// landing folds them naturally; a leg in the air (rearing, leaping, kicking on its back) is posed joint by joint instead.
 export class Quad {
   constructor(name, joints) {
     const M = MODELS[name], P = M.piv;
@@ -71,7 +81,36 @@ export class Quad {
     this.mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, this.hy, 0), 0.95 * this.S);      // room for any pose
     // the body turns, rolls and pitches round its middle (tilt), not round its feet
     this.tilt = new THREE.Group(); this.tilt.position.y = this.hy; this.tilt.add(this.mesh); this.mesh.position.y = -this.hy;
-    this.tailV = 0; this.tailA = 0;
+    // the legs at rest, in their parent's frame (side view: y up, z forward)
+    const yz = a => [a[1], a[2]];
+    this.legs = {};
+    for (const L of LEGS) {
+      const [b0, b1, b2] = LEG_BONES[L], par = P[PARENT[b0]], j0 = P[b0], j1 = P[b1], j2 = P[b2], toe = P[L + 'p'];
+      const rel = a => [a[1] - par[1], a[2] - par[2]];
+      const S0 = rel(j0), S1 = rel(j1), S2 = rel(j2), T = rel(toe);
+      this.legs[L] = { front: L[0] === 'F', S0, a1: arg(S1[0] - S0[0], S1[1] - S0[1]), a2: arg(S2[0] - S1[0], S2[1] - S1[1]),
+        L1: Math.hypot(S1[0] - S0[0], S1[1] - S0[1]), L2: Math.hypot(S2[0] - S1[0], S2[1] - S1[1]),
+        d3: [T[0] - S2[0], T[1] - S2[1]], toe: new THREE.Vector3(toe[0], toe[1], toe[2]), x: toe[0] };
+    }
+    this.tY = [0, 0, 0, 0]; this.tYv = [0, 0, 0, 0];
+  }
+  // a leg's bones from where its toe should be (mesh frame) and which way its last part (paw, long foot) points (side view)
+  reach(L, target, paw, flexW) {
+    const G = this.legs[L], B = this.bones, [b0, b1, b2] = LEG_BONES[L];
+    // into the frame of the bone the leg hangs from (chest or hips, as posed so far)
+    _m.identity(); for (const nm of G.front ? ['root', 'hips', 'chest'] : ['root', 'hips']) { B[nm].updateMatrix(); _m.multiply(B[nm].matrix); }
+    _mi.copy(_m).invert();
+    _v.copy(target).applyMatrix4(_mi);
+    _d.set(0, paw[0], paw[1]).transformDirection(_mi);
+    const len3 = Math.hypot(G.d3[0], G.d3[1]), dy = _d.y * len3, dz = _d.z * len3;
+    // the joint above the paw goes where the paw's own length leaves it; the upper two bones reach it (elbow back, knee forward)
+    const wy = _v.y - dy, wz = _v.z - dz, vy = wy - G.S0[0], vz = wz - G.S0[1];
+    const dist = Math.min(G.L1 + G.L2 - 1e-4, Math.max(Math.abs(G.L1 - G.L2) + 1e-4, Math.hypot(vy, vz)));
+    const dir = arg(vy, vz), a = Math.acos(Math.min(1, Math.max(-1, (G.L1 * G.L1 + dist * dist - G.L2 * G.L2) / (2 * G.L1 * dist))));
+    const e = dir + (G.front ? a : -a), ey = G.S0[0] + G.L1 * Math.cos(e), ez = G.S0[1] + G.L1 * Math.sin(e);
+    const qy = G.S0[0] + dist * Math.cos(dir), qz = G.S0[1] + dist * Math.sin(dir);
+    const t0 = wrap(e - G.a1), t1 = wrap(arg(qy - ey, qz - ez) - G.a2 - t0), t2 = wrap(arg(dy, dz) - arg(G.d3[0], G.d3[1]) - t0 - t1);
+    B[b0].rotation.x += t0 * flexW; B[b1].rotation.x += t1 * flexW; B[b2].rotation.x += t2 * flexW;
   }
   pose(s) {
     const B = this.bones, S = this.S, t = s.t, hy = this.hy;
@@ -79,92 +118,104 @@ export class Quad {
     const g = s.walk || 0, run = s.run || 0, ph = s.phase || 0;
     const sit = s.sit || 0, lie = s.lie || 0, bow = s.bow || 0, rear = s.rear || 0, crouch = s.crouch || 0, air = s.air || 0, dive = s.dive || 0;
     const shake = s.shake || 0, scratch = s.scratch || 0, kick = s.kick || 0;
-    // ---- legs: a trot (diagonal pairs) blending into a bounding gallop
-    const offs = { FL: 0, HR: 0, FR: Math.PI, HL: Math.PI }, goffs = { FL: 0, FR: 0.55, HL: Math.PI, HR: Math.PI + 0.55 };
-    const amp = (0.4 * g) * (1 - run) + 0.8 * run;
-    for (const L of LEGS) {
-      const front = L[0] === 'F', a = ph + offs[L] * (1 - run) + goffs[L] * run, sw = Math.sin(a), lift = Math.max(0, Math.cos(a));
-      const U = B[L + 'u'], Lo = B[L + 'l'];
-      U.rotation.x = -amp * sw;
-      Lo.rotation.x = front ? (0.75 * g * (1 - run) + 1.2 * run) * lift : -(0.5 * g * (1 - run) + 0.9 * run) * lift;
-    }
-    // ---- the body over its legs
-    let lower = 0;                                                    // how far the middle comes down
-    lower += crouch * 0.11 * S;
-    // crouched: legs folded like a spring, head low and forward, tail low
-    for (const L of LEGS) {
-      const front = L[0] === 'F';
-      B[L + 'u'].rotation.x += crouch * (front ? -0.55 : 0.45); B[L + 'l'].rotation.x += crouch * (front ? 1.05 : -0.95);
-    }
-    B.neck.rotation.x += 0.35 * crouch; B.head.rotation.x -= 0.25 * crouch; B.tail1.rotation.x -= 0.2 * crouch;     // (the brush points back: + lifts it)
-    // sitting: the hips go down and the body pitches up round them; the hind legs fold under, the front legs stay upright
-    if (sit > 0) {
+    let roll = s.roll || 0, pitch = s.pitch || 0;
+    const rolled = Math.min(1, Math.abs(roll) / 1.5);
+    const turn = Math.max(-3, Math.min(3, s.turn || 0));
+    // ---- the body over its legs: how far the middle comes down, the spine
+    let lower = crouch * 0.11 * S;
+    if (sit > 0) {          // sitting: the hips go down and the body pitches up round them
       B.hips.rotation.x -= 0.72 * sit; lower += 0.15 * S * sit;
-      B.HLu.rotation.x += -0.75 * sit; B.HRu.rotation.x += -0.75 * sit; B.HLl.rotation.x += 1.7 * sit; B.HRl.rotation.x += 1.7 * sit;
-      B.FLu.rotation.x += 0.72 * sit; B.FRu.rotation.x += 0.72 * sit;
       B.neck.rotation.x += 0.3 * sit; B.head.rotation.x += 0.25 * sit;
-      B.tail1.rotation.x -= 0.25 * sit; B.tail1.rotation.y += 0.55 * sit; B.tail2.rotation.y += 0.6 * sit; B.tail3.rotation.y += 0.55 * sit;
     }
-    // lying down: the body on the ground, front legs stretched out in front, hind legs folded, the brush curled round
-    if (lie > 0) {
-      lower += (hy - 0.115 * S) * lie;
-      B.FLu.rotation.x += -1.42 * lie; B.FRu.rotation.x += -1.42 * lie; B.FLl.rotation.x += 0.12 * lie; B.FRl.rotation.x += 0.12 * lie;
-      B.HLu.rotation.x += -1.15 * lie; B.HRu.rotation.x += -1.15 * lie; B.HLl.rotation.x += 2.0 * lie; B.HRl.rotation.x += 2.0 * lie;
-      B.tail1.rotation.x -= 0.15 * lie; B.tail1.rotation.y += 1.0 * lie; B.tail2.rotation.y += 0.8 * lie; B.tail3.rotation.y += 0.6 * lie;
-      B.neck.rotation.x += (s.chin || 0) * 0.5;
+    if (lie > 0) { lower += (hy - 0.115 * S) * lie; B.neck.rotation.x += (s.chin || 0) * 0.5; }
+    if (bow > 0) { B.chest.rotation.x += 0.42 * bow; lower += 0.02 * S * bow; B.hips.rotation.x -= 0.12 * bow; B.neck.rotation.x -= 0.5 * bow; B.head.rotation.x -= 0.2 * bow; }
+    if (rear > 0) { B.hips.rotation.x -= 1.05 * rear; B.neck.rotation.x += 0.55 * rear; B.head.rotation.x += 0.45 * rear; }
+    if (dive > 0) B.neck.rotation.x += 0.35 * dive;
+    B.neck.rotation.x += 0.35 * crouch; B.head.rotation.x -= 0.25 * crouch;
+    // breathing, and the step's bob (the feet stay down: the legs take it)
+    lower -= 0.004 * S * Math.sin(t * 2.2) * (1 - g);
+    lower += (0.006 * g * (1 - run) * Math.cos(2 * ph) + 0.022 * run * Math.max(0, Math.sin(ph))) * S * -1;
+    // the spine: flexing with the gallop, bending into a turn; the head held steady
+    B.hips.rotation.x += 0.1 * run * Math.sin(ph); B.chest.rotation.x -= 0.16 * run * Math.sin(ph); B.head.rotation.x += 0.12 * run * Math.sin(ph);
+    B.chest.rotation.y += 0.07 * turn * (1 - rolled); B.hips.rotation.y -= 0.04 * turn * (1 - rolled); B.neck.rotation.y += 0.06 * turn * (1 - rolled);
+    // ---- the legs
+    // where each foot goes: on the ground under the body, stepping (a trot in diagonal pairs blending into the gallop): on
+    // the ground moving back as long as the body moves forward, then lifted, folded and swung forward; under the body when
+    // sitting, out in front when lying down or bowing
+    const offs = { FL: 0, HR: 0, FR: Math.PI, HL: Math.PI }, goffs = { FL: 0, FR: 0.55, HL: Math.PI, HR: Math.PI + 0.55 };
+    const duty = 0.6 - 0.22 * run, stride = s.stride || 0.5 * S, amp = duty * stride / 2 * g;
+    const lift = (0.045 + 0.04 * run) * S * g;
+    for (const L of LEGS) {
+      const G = this.legs[L], [b0, b1, b2] = LEG_BONES[L], front = G.front;
+      const u = (((ph + offs[L] * (1 - run) + goffs[L] * run) / (Math.PI * 2)) % 1 + 1) % 1;
+      let dz, dy = 0, flex = 0;
+      if (u < duty) dz = amp * (1 - 2 * u / duty);
+      else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = lift * Math.pow(Math.sin(Math.PI * v), 0.8); flex = Math.sin(Math.PI * Math.min(1, v * 1.15)); }
+      // the leg's own posing (not on the ground): rearing up, in the air, nose-down after a dive, kicking on its back, a scratch
+      const free = front ? Math.max(rear, air, dive, kick, rolled) : Math.max(air, dive, kick, rolled, L === 'HR' ? scratch : 0);
+      const onGround = 1 - free;
+      if (onGround > 0.001) {
+        const flat = front ? Math.max(lie, bow) : Math.max(sit, lie) * 0.95;          // the paw / long foot laid along the ground
+        dz += front ? 0.17 * S * lie + 0.13 * S * bow - 0.03 * S * sit : 0.09 * S * sit + 0.06 * S * lie;
+        // which way the last part points: as at rest, or laid flat forward; curled back while it swings forward
+        let aim = arg(G.d3[0], G.d3[1]); aim += wrap(arg(-0.14, 1) - aim) * flat + flex * (front ? 1.15 : 0.7);
+        _v.copy(G.toe); _v.y += lower + dy; _v.z += dz;
+        // on a slope (a ramp, a bridge's deck): the ground's height under these feet (s.groundF / s.groundH, world, above
+        // the root), so with the body lifted and tipped the feet stand on it exactly
+        if (s.groundF !== undefined) {
+          const R = front ? s.groundF : s.groundH, p = (s.pitch || 0) + 1.1 * dive, yt = hy - lower + (s.lift || 0);
+          _v.y = G.toe.y + dy + hy + (R - yt + G.toe.z * Math.sin(p)) / Math.cos(p);
+          aim -= ((front ? s.slopeF : s.slopeH) || 0) + p;            // the paw along the slope it stands on
+        }
+        this.reach(L, _v, [Math.cos(aim), Math.sin(aim)], onGround);
+      }
+      if (free > 0.001) {
+        const U = B[b0].rotation, M = B[b1].rotation, W = B[b2].rotation;
+        if (front) {
+          if (rear > 0) { const bat = s.paw || 0; U.x += (-0.55 * rear + 0.5 * bat * Math.sin(t * 9 + (L === 'FR' ? 2.2 : 0))); M.x += 0.95 * rear; W.x += 0.55 * rear; }
+          if (air > 0) {                 // the leap: folded up under the chest clearing the fence, then reaching to land
+            const k = s.airPh === undefined ? 1 : smooth(0.4, 0.75, s.airPh);
+            U.x += air * (-0.25 * (1 - k) - 0.95 * k); M.x += air * (1.5 * (1 - k) - 0.1 * k); W.x += air * (0.9 * (1 - k) + 0.3 * k);
+          }
+          if (dive > 0) { U.x -= 0.35 * dive; M.x += 0.2 * dive; }
+        } else {
+          if (air > 0) {                 // pushing off, stretched out behind, then tucked up for the landing
+            const k = s.airPh === undefined ? 0 : smooth(0.35, 0.8, s.airPh);
+            U.x += air * (0.95 * (1 - k) - 0.55 * k); M.x += air * (0.25 * (1 - k) + 1.2 * k); W.x += air * (0.35 * (1 - k) - 1.0 * k);
+          }
+          if (dive > 0) { const w = 0.25 * Math.sin(t * 7 + (L === 'HR' ? 1.6 : 0)); U.x += -0.45 * dive + w * dive; M.x += 0.4 * dive; W.x -= 0.3 * dive; }
+          if (scratch > 0 && L === 'HR') { U.x -= 1.05 * scratch; U.z += 0.25 * scratch; M.x += 0.9 * scratch; W.x += (-0.9 + 0.35 * Math.sin(t * 30)) * scratch; }
+        }
+        if (kick > 0) { const i = LEGS.indexOf(L); U.x += kick * (0.45 * Math.sin(t * 11 + i * 1.9) - 0.3); M.x += kick * (0.5 + 0.4 * Math.sin(t * 13 + i)) * (front ? 1 : -1); W.x += kick * 0.4 * (front ? 1 : -1); }
+      }
     }
-    // a play bow: front down on the elbows, rump up, tail up and wagging
-    if (bow > 0) {
-      B.chest.rotation.x += 0.42 * bow; lower += 0.02 * S * bow; B.hips.rotation.x -= 0.12 * bow;
-      B.FLu.rotation.x += -1.15 * bow; B.FRu.rotation.x += -1.15 * bow; B.FLl.rotation.x += 0.2 * bow; B.FRl.rotation.x += 0.2 * bow;
-      B.neck.rotation.x -= 0.5 * bow; B.head.rotation.x -= 0.2 * bow; B.tail1.rotation.x += 0.75 * bow;
-    }
-    // rearing up on the hind legs to box: upright, front paws batting
-    if (rear > 0) {
-      B.hips.rotation.x -= 1.05 * rear; B.HLu.rotation.x += 0.85 * rear; B.HRu.rotation.x += 0.85 * rear; B.HLl.rotation.x -= 0.2 * rear; B.HRl.rotation.x -= 0.2 * rear;
-      const bat = s.paw || 0;
-      B.FLu.rotation.x += -0.65 * rear + 0.55 * bat * Math.sin(t * 9); B.FRu.rotation.x += -0.65 * rear + 0.55 * bat * Math.sin(t * 9 + 2.2);
-      B.FLl.rotation.x += 0.7 * rear; B.FRl.rotation.x += 0.7 * rear;
-      B.neck.rotation.x += 0.55 * rear; B.head.rotation.x += 0.45 * rear; B.tail1.rotation.x += 0.75 * rear;
-    }
-    // in the air (the pounce): front legs reaching forward and down, hind legs stretched back, brush streaming out behind
-    if (air > 0) {
-      B.FLu.rotation.x += -0.95 * air; B.FRu.rotation.x += -0.95 * air; B.FLl.rotation.x += -0.15 * air; B.FRl.rotation.x += -0.15 * air;
-      B.HLu.rotation.x += 0.95 * air; B.HRu.rotation.x += 0.95 * air; B.HLl.rotation.x += 0.35 * air; B.HRl.rotation.x += 0.35 * air;
-      B.tail1.rotation.x += 0.1 * air;
-    }
-    // nose-down in the grass after a pounce: hind end up, legs dangling, the brush waving in the air
-    if (dive > 0) {
-      B.FLu.rotation.x += -0.35 * dive; B.FRu.rotation.x += -0.35 * dive;
-      B.HLu.rotation.x += -0.45 * dive + 0.25 * dive * Math.sin(t * 7); B.HRu.rotation.x += -0.45 * dive + 0.25 * dive * Math.sin(t * 7 + 1.6);
-      B.neck.rotation.x += 0.35 * dive; B.tail1.rotation.x += 0.15 * dive;
-    }
-    // a scratch behind the ear with a hind foot (sitting)
-    if (scratch > 0) {
-      B.HRu.rotation.x += -1.0 * scratch; B.HRl.rotation.x += -0.35 * scratch + 0.35 * scratch * Math.sin(t * 30); B.HRu.rotation.z += 0.25 * scratch;
-      B.head.rotation.z += -0.4 * scratch; B.neck.rotation.y += -0.3 * scratch;
-    }
-    // on its back, kicking (wrestling, playing dead)
-    if (kick > 0) for (const [i, L] of LEGS.entries()) { B[L + 'u'].rotation.x += kick * (0.4 * Math.sin(t * 11 + i * 1.9) - 0.3); B[L + 'l'].rotation.x += kick * 0.5 * Math.sin(t * 13 + i); }
+    if (scratch > 0) { B.head.rotation.z += -0.4 * scratch; B.neck.rotation.y += -0.3 * scratch; }
     // ---- head, look and listen (a tilt of the head, as foxes do hearing a mouse)
     B.neck.rotation.y += 0.55 * (s.lookYaw || 0); B.head.rotation.y += 0.45 * (s.lookYaw || 0);
     B.neck.rotation.x += 0.45 * (s.lookPitch || 0); B.head.rotation.x += 0.35 * (s.lookPitch || 0);
     B.head.rotation.z += s.headTilt || 0;
-    // ---- the brush: on a spring, swinging out on turns and with each step, a wag when playing, up when excited
-    const goal = -(s.turn || 0) * 0.22 + (s.wag || 0) * 0.55 * Math.sin(t * 13) + 0.08 * g * Math.sin(ph);
+    // ---- the brush: each part follows the one before it a moment later (a wave down the tail): it sways with the steps,
+    // swings out on turns, wags when playing; hangs a little lower at a trot, up when excited, curled round when sitting or lying
     const dt = Math.min(0.05, s.dt || 1 / 30);
-    this.tailV += ((goal - this.tailA) * 55 - this.tailV * 6) * dt; this.tailA += this.tailV * dt;
-    B.tail1.rotation.y += this.tailA; B.tail2.rotation.y += this.tailA * 0.7; B.tail3.rotation.y += this.tailA * 0.5;
-    B.tail1.rotation.x += (s.tailUp || 0) * 0.7 + 0.04 * Math.sin(t * 1.3);
+    const goal = -turn * 0.24 + (s.wag || 0) * 0.32 * Math.sin(t * 13) + 0.05 * g * Math.sin(ph) + 0.06 * Math.sin(t * 0.9) * (1 - g) * (1 - sit) * (1 - lie);
+    for (let i = 0; i < 4; i++) {
+      const to = i === 0 ? goal : this.tY[i - 1] * 0.92;
+      this.tYv[i] += ((to - this.tY[i]) * (70 - 12 * i) - this.tYv[i] * (8 - 1.2 * i)) * dt; this.tY[i] += this.tYv[i] * dt;
+      B[TAIL[i]].rotation.y += this.tY[i];
+      B[TAIL[i]].rotation.x += g * (0.05 + 0.05 * run) * Math.sin(2 * ph - 0.9 * i) * (0.5 + 0.25 * i);      // the bounce, travelling down it
+    }
+    const up = s.tailUp || 0;
+    B.tail1.rotation.x += up * 0.7 + 0.04 * Math.sin(t * 1.3) - 0.14 * g * (1 - run) * (1 - up) - 0.2 * crouch; B.tail2.rotation.x -= 0.12 * up;
+    const curl = s.curl || 1;
+    if (sit > 0) { B.tail1.rotation.x -= 0.25 * sit; const c = [0.5, 0.5, 0.45, 0.35]; for (let i = 0; i < 4; i++) B[TAIL[i]].rotation.y += c[i] * sit * curl; }
+    if (lie > 0) { B.tail1.rotation.x -= 0.15 * lie; const c = [0.8, 0.65, 0.5, 0.4]; for (let i = 0; i < 4; i++) B[TAIL[i]].rotation.y += c[i] * lie * curl; }
+    if (bow > 0) B.tail1.rotation.x += 0.75 * bow;
+    if (rear > 0) B.tail1.rotation.x += 0.75 * rear;
+    if (air > 0) B.tail1.rotation.x += 0.1 * air;
+    if (dive > 0) B.tail1.rotation.x += 0.15 * dive;
     // ---- the shake (nose to tail, as after a dive in wet grass)
-    let roll = s.roll || 0, pitch = s.pitch || 0;
     if (shake > 0) { roll += 0.22 * shake * Math.sin(t * 36); B.head.rotation.z += 0.45 * shake * Math.sin(t * 36 + 1.2); B.tail1.rotation.y += 0.6 * shake * Math.sin(t * 36 + 2.4); }
-    // breathing, and the step's bob
-    lower -= 0.004 * S * Math.sin(t * 2.2) * (1 - g);
-    lower += (0.006 * g * (1 - run) * Math.cos(2 * ph) + 0.022 * run * Math.max(0, Math.sin(ph))) * S * -1;
-    B.hips.rotation.x += 0.1 * run * Math.sin(ph); B.chest.rotation.x -= 0.16 * run * Math.sin(ph);
     // ---- the whole body: rolled onto its side or back, pitched (nose-dive, leaping), lifted (in the air)
-    const rolled = Math.min(1, Math.abs(roll) / 1.5);
     let cy = hy - lower;
     cy = cy * (1 - rolled) + (0.12 * S + 0.02 * S * Math.min(1, Math.max(0, Math.abs(roll) - 1.6))) * rolled;
     cy = cy * (1 - dive) + 0.26 * S * dive;
@@ -221,21 +272,27 @@ class Fox {
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt;
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'air', 'dive', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) A[k + 'Goal'] = 0;
+    A.airPh = undefined; A.groundF = A.groundH = A.slopeF = A.slopeH = undefined;  // (a leap sets where in the air it is, a slope the ground under the feet, each frame)
     A.lookYawGoal = 0; A.lookPitchGoal = 0; A.headTiltGoal = 0; A.roll = A.roll || 0; A.rollGoal = 0; A.pitch = 0; A.lift = 0;
     this.pace = 0; this.turn = 0;
     if (!this.task) this.task = this.todo.shift() || this.fam.nextTask(this);
     if (this.task && this.task.run(this, dt) !== false) { this.task = null; }
+    if (this.tailLift && !(A.sitGoal > 0.3) && !(A.lieGoal > 0.3)) A.tailUpGoal = Math.max(A.tailUpGoal || 0, this.tailLift);   // lifting his brush clear of something (nightvisit.js)
+    A.curl = this.curlSide || 1;                            // which side the brush curls round when sitting or lying
     // ease the pose numbers towards their goals (the gait from the pace)
     const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) ease(k, 6);
     ease('air', 14); ease('dive', 10); ease('lookYaw', 4); ease('lookPitch', 4); ease('headTilt', 6);
     A.roll += (A.rollGoal - A.roll) * Math.min(1, dt * (A.rollFast ? 9 : 4));
-    const walkGoal = this.pace > 0 ? Math.min(1, this.pace) : 0, runGoal = this.pace >= 2 ? 1 : 0;
+    // turning on the spot, the feet step round instead of sliding
+    const spin = this.pace > 0 ? 0 : Math.min(1, Math.abs(this.turn) / 2.5);
+    const walkGoal = this.pace > 0 ? Math.min(1, this.pace) : 0.5 * spin, runGoal = this.pace >= 2 ? 1 : 0;
     A.walk = (A.walk || 0) + (walkGoal - (A.walk || 0)) * Math.min(1, dt * 8);
     A.run = (A.run || 0) + (runGoal - (A.run || 0)) * Math.min(1, dt * 5);
     const stride = (0.5 * (1 - A.run) + 1.0 * A.run) * this.q.S * this.scale;
-    const speed = this.pace >= 2 ? 1.8 : this.pace >= 1 ? 0.75 : this.pace > 0 ? 0.35 : 0;
+    const speed = this.pace >= 2 ? 1.8 : this.pace >= 1 ? 0.75 : this.pace > 0 ? 0.35 : 0.3 * spin;
     A.phase += dt * (speed * (this.kind === 'cub' ? 0.82 : 1) * this.scale / Math.max(0.05, stride)) * Math.PI * 2;
+    A.stride = stride / this.scale;                       // in the body's own size, for placing the feet
     A.turn = this.turn;
     this.root.rotation.y = this.heading;
     if (this.root.visible) this.q.pose(A);
