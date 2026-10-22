@@ -24,11 +24,11 @@ ok('after a minute of play everyone is still in or near the meadow', st.far.ever
 // three more minutes of play, checked every half second: bodies never through each other (up close when wrestling or chasing,
 // a little), nobody through the den's bank, a bush or a trunk
 st = await p.evaluate(() => {
-  const f = window.__farm, F = f.foxes(); let bodies = 0, close = 0, obs = 0, tails = 0, n = 0, touch = 0;
+  const f = window.__farm, F = f.foxes(); let bodies = 0, close = 0, obs = 0, tails = 0, n = 0, touch = 0; F.bumps = 0;
   for (let k = 0; k < 360; k++) { f.step(1 / 30, 15); const o = F.overlaps(); bodies = Math.max(bodies, o.bodies); close = Math.max(close, o.close); obs = Math.max(obs, o.obs); tails = Math.max(tails, o.tails); if (o.bodies > 0.05 || o.close > 0.3) touch++; n++; }
-  return { samples: n, touching: touch, bodies: +bodies.toFixed(3), close: +close.toFixed(3), obs: +obs.toFixed(3), tails: +tails.toFixed(3) };
+  return { samples: n, touching: touch, bodies: +bodies.toFixed(3), close: +close.toFixed(3), obs: +obs.toFixed(3), tails: +tails.toFixed(3), bumpsPerMin: +(F.bumps / 3).toFixed(1) };
 });
-ok('three minutes of play: no fox through another (a brush of fur now and then, more when wrestling; a brush against a brush), none in the den, a bush or a trunk', st.touching <= 8 && st.bodies <= 0.15 && st.close <= 0.5 && st.obs <= 0.01 && st.tails <= 0.6, JSON.stringify(st));
+ok('three minutes of play: no fox through another (a brush of fur now and then, more when wrestling; a brush against a brush), they walk round each other (a bump now and then), none in the den, a bush or a trunk', st.touching <= 8 && st.bodies <= 0.15 && st.close <= 0.5 && st.obs <= 0.01 && st.tails <= 0.6 && st.bumpsPerMin <= 100, JSON.stringify(st));
 // the Foxes button takes the view there; a tap on a fox shows its name
 await p.click('#foxbtn'); await p.evaluate(() => { const f = window.__farm; f.step(1 / 30, 1); f.draw(); });
 const pt = await p.evaluate(() => {

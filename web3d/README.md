@@ -660,3 +660,21 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   (6.5 cm below the hip) above a longer shin, and a hind foot comes down about under the hip and pushes off well behind it
   (a front foot reaches forward and leaves under the shoulder; the steps' range shifted, `dz += amp * (front ? 0.3 :
   -0.5)`), so the hock points back at every moment. Checked in a true side view with the joints drawn on.
+
+## The pounce and the bumping (22 Oct 21:43, Audrey: "When the fox jumps it falls on his head. Also the foxes keep bumping into each others that's a bug")
+
+- The mouse pounce (`mousePounce()`): no more nose-first into the grass (a nose-dive of 75 degrees and more). Now a high arc
+  with the legs as in the fence jump (`airPh`), nose up off the ground and level by the landing, coming down on the front
+  paws, pinning the grass (the play bow's front: paws forward and flat), nose down between them sniffing, ears pricked,
+  the brush up and waving; then up, the shake, the puzzled look. He doesn't spring if another fox is where he'd land
+  (waits crouched, gives up after 2 s). The cubs' pounce on mum's brush and the snap at the butterfly land the same way.
+  `pounceTask()` starts one (for pictures).
+- Bumping: the foxes only kept apart by being pushed once they touched (`collide()`), so they walked into each other all
+  the time: 430-710 frames a minute with two foxes not playing together pushed apart. Now a fox sees another in its way in
+  good time and bends its path round it, slowing or waiting if it's right in front (`moveTo()`), giving foxes at play
+  (wrestling, rolling, chasing...) more room; strolling to a spot where a fox already stands, near enough is there (never
+  at the den's doorway). One cub after the butterfly at a time, and one at mum's brush. A play bow reaches further forward.
+  Now 25-45 frames a minute with a push (`bumps.mjs`), mostly a brush against a fox bowing to play or one passing a chase.
+- `foxtest.mjs` counts the bumps (pairs pushed apart, per minute; up to 100). The butterfly flies the same way every time
+  (it started at a random point), so play is the same from one run to the next, apart from the real time the page runs
+  before a check pauses it.

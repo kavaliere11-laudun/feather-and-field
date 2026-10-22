@@ -318,8 +318,25 @@ class Fox {
     const p = this.pos, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
     const sp = { walk: 0.35, trot: 0.75, run: 1.8 }[pace] * (this.kind === 'cub' ? 0.82 : 1) * this.scale;
     if (d < 0.06) { this.pace = 0; return true; }
-    const off = this.turnTo(Math.atan2(dx, dz), dt, pace === 'run' ? 6 : 4.5);
-    let want = sp * (off > 1.2 ? 0.25 : off > 0.6 ? 0.6 : 1);
+    // another fox in the way (not one he's playing with): he bends his path round it in good time, and slows or waits if
+    // it's right in front; strolling to a spot where a fox already stands: near enough is there
+    let ax = dx / d, az = dz / d, slow = 1;
+    const cur = this.task && this.task.cur ? this.task.cur() : this.task, mate = cur && cur.with, mine = this.q.S * this.scale;
+    if (!(cur && cur.den)) for (const o of this.fam.foxes || []) {
+      if (o === this || !o.root.visible || o.home || o === mate) continue;
+      const oc = o.task && o.task.cur ? o.task.cur() : o.task; if (oc && (oc.with === this || oc.den)) continue;
+      const lively = oc && /^(wrestle|roll|trip|tailchase|bounce|lead|follow|leap|pounce|stalk|bow)$/.test(oc.name);       // (playing: give it more room)
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = 0.4 * (mine + o.q.S * o.scale) + (lively ? 0.14 * o.q.S * o.scale : 0);
+      if (cur && cur.name === 'go' && Math.hypot(o.pos.x - x, o.pos.z - z) < R * 0.9 && d < R * 1.6) { this.pace = 0; return true; }     // (only for a stroll somewhere: never at the den's doorway)
+      const range = R + 0.6 * mine + 0.6 * Math.max(0, this.spd);
+      if (rd > range || rd > d + R) continue;
+      const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.15) continue;
+      const k = Math.min(1, (range - rd) / Math.max(0.05, range - R * 0.8)) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.3 * k;
+      const c = Math.cos(th), sn = Math.sin(th); [ax, az] = [ax * c - az * sn, ax * sn + az * c];
+      if (rd < R * 1.2 && ahead > 0.6) slow = Math.min(slow, 0.25 + 0.75 * Math.max(0, (rd - R) / (R * 0.2)));
+    }
+    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' ? 6 : 4.5);
+    let want = sp * (off > 1.2 ? 0.25 : off > 0.6 ? 0.6 : 1) * slow;
     if (!through) want = Math.min(want, Math.sqrt(2 * 2.2 * Math.max(0, d - 0.04)) + 0.06);
     this.spd += Math.max(-4.5 * dt, Math.min(2.8 * dt, want - this.spd)); this.moved = true;
     const s = Math.min(d, Math.max(0, this.spd) * dt);
@@ -553,8 +570,8 @@ export class FoxFamily {
     if (r < 0.22 && cubs.length) return chase(this, f, cubs[Math.floor(this.r() * cubs.length)]);
     if (r < 0.4 && cubs.length) return wrestle(this, f, cubs[Math.floor(this.r() * cubs.length)]);
     if (r < 0.5 && others.every(o => Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) > 0.9)) return tailChase(2.2 + this.r() * 1.5);     // with room to spin
-    if (r < 0.62) return butterflyHunt(this);
-    if (r < 0.72) { const m = others.find(o => o.role === 'mum'); if (m) return pounceOn(m); }
+    if (r < 0.62 && !this.butterfly.chaser) return butterflyHunt(this);            // (one cub after it at a time)
+    if (r < 0.72) { const m = others.find(o => o.role === 'mum'); if (m && !this.foxes.some(o => { const t = o.task && o.task.cur ? o.task.cur() : o.task; return t && t.with === m; })) return pounceOn(m); }     // (one cub at mum's brush at a time)
     if (r < 0.8) return tumble(this, spot(0.7));
     if (r < 0.88) return seq(bowAt(others[Math.floor(this.r() * others.length)]), T.wait(0.2));
     const [x, z] = spot(); return seq(T.go(x, z, this.r() < 0.5 ? 'run' : 'trot'), sitWatch(1.5 + this.r() * 2));
@@ -566,7 +583,7 @@ export class FoxFamily {
     else if (this.foxes.every(f => f.home)) { this.out = false; this.leaving = false; this.next = 600 + this.r() * 600; }
     for (const f of this.foxes) if (!f.home || f.todo.length || f.task) f.update(dt);
     this.butterfly.update(dt, this);
-    collide(this.foxes, this.obstacles);
+    this.bumps = (this.bumps || 0) + collide(this.foxes, this.obstacles);
   }
   visible() { return this.out && this.foxes.some(f => f.root.visible); }
   // how much they overlap right now: the deepest overlap of two bodies (a share of the two radii), and how far into an obstacle
@@ -584,6 +601,8 @@ export class FoxFamily {
     for (const f of live) for (const c of circles(f)) for (const o of this.obstacles) obs = Math.max(obs, c[2] + o[2] - Math.hypot(c[0] - o[0], c[1] - o[1]));
     return { bodies, close, obs, tails };
   }
+  pounceTask() { return mousePounce(); }        // (for pictures and checks)
+  bumpLog(on) { if (on) collide.log = {}; return collide.log; }
   centre(v) { let n = 0; v.set(0, 0, 0); for (const f of this.foxes) if (f.root.visible) { v.add(f.pos); n++; } if (n) v.multiplyScalar(1 / n); else v.set(this.field[0], 0, this.field[1]); return v; }
   // a tap on a fox: its name, and a little reaction (a hop of surprise and a play bow)
   tapped(f) { if (this.visit && this.visit.fox === f && this.visit.active()) return; f.todo.unshift(seq(hop(), bowAt(null, 1.2))); if (f.task && !f.task.pair) f.task = null; }
@@ -595,7 +614,7 @@ export class FoxFamily {
 function circles(f) {
   const S = f.q.S * f.scale, sx = Math.sin(f.heading), cz = Math.cos(f.heading), up = Math.max(f.A.sit || 0, f.A.rear || 0);
   const r = (0.13 + 0.035 * Math.max(f.A.lie || 0, Math.min(1, Math.abs(f.A.roll || 0) / 1.5))) * S;     // (with its fur; wider lying or rolled over, legs out)
-  const head = 0.36 * S * (1 - 0.35 * up) + 0.08 * S * (f.A.lie || 0);
+  const head = 0.36 * S * (1 - 0.35 * up) + 0.08 * S * (f.A.lie || 0) + 0.06 * S * (f.A.bow || 0);
   const c = [[f.pos.x + sx * 0.14 * S, f.pos.z + cz * 0.14 * S, r], [f.pos.x - sx * 0.13 * S * (1 - 0.5 * up), f.pos.z - cz * 0.13 * S * (1 - 0.5 * up), r], [f.pos.x + sx * head, f.pos.z + cz * head, 0.07 * S]];
   // and the brush: out behind, or curled round to one side sitting or lying
   const curl = Math.max(f.A.sit || 0, f.A.lie || 0), side = f.curlSide || 1, rx = -cz * side, rz = sx * side;
@@ -604,7 +623,7 @@ function circles(f) {
   return c;
 }
 export function collide(foxes, obstacles) {
-  const live = foxes.filter(f => f.root.visible && !f.home);
+  const live = foxes.filter(f => f.root.visible && !f.home); let bumps = 0;
   const inDen = f => f.task && (f.task.den || (f.task.cur && f.task.cur() && f.task.cur().den));
   // who a fox is playing with up close (wrestling, chasing, pouncing on): only those two may touch a little
   const mate = f => { const t = f.task && f.task.cur ? f.task.cur() : f.task; return t && t.with; };
@@ -637,11 +656,16 @@ export function collide(foxes, obstacles) {
         if (d >= m) continue;
         if (d < 1e-4) { dx = 1; dz = 0; } else { dx /= d; dz /= d; }
         const push = (m - d) * (ca[3] || cb[3] ? 0.5 : 1), w = ca[3] ? (blocked.has(b) ? 0.5 : 0) : cb[3] ? (blocked.has(a) ? 0.5 : 1) : wa;
+        if (it === 0 && close === 1 && push > 0.004) {             // (two foxes not playing together, walked into each other)
+          bumps++;
+          if (collide.log) { const tn = x => { const t = x.task && x.task.cur ? x.task.cur() : x.task; return t ? t.name : '-'; }; const k = [tn(a), tn(b)].sort().join('+'); collide.log[k] = (collide.log[k] || 0) + 1; }
+        }
         a.pos.x -= dx * push * w; a.pos.z -= dz * push * w; b.pos.x += dx * push * (1 - w); b.pos.z += dz * push * (1 - w);
       }
     }
   }
   out();
+  return bumps;
 }
 
 // ---------------------------------------------------------------- what they do
@@ -658,22 +682,35 @@ function lieDown(secs) {
 }
 // a yawn, u from 0 to 1: the jaw opening wide, eyes screwed shut, ears back, head up
 function yawn(f, u) { const k = Math.sin(Math.PI * clamp01(u)); f.A.mouthGoal = 1.15 * k; f.A.squintGoal = 0.95 * k; f.A.earsGoal = -0.6 * k; f.A.lookPitchGoal = -0.35 * k; }
-// the mouse pounce: listen (head tilted one way, then the other), crouch, spring up high and dive nose-first into the grass,
-// stay stuck a moment with the brush waving, pop out and shake. Usually nothing caught
+// the mouse pounce: listen (head tilted one way, then the other), crouch, spring up high in an arc and come down on the
+// front paws, pinning the grass, nose down between them sniffing, the brush waving; then up, a shake, a puzzled look.
+// Usually nothing caught
 function mousePounce() {
   return { name: 'pounce', t: 0, run(f, dt) {
     const A = f.A, S = f.q.S * f.scale; this.t += dt; const t = this.t;
     if (t < 1.6) { A.headTiltGoal = t < 0.8 ? 0.38 : -0.38; A.lookPitchGoal = 0.45; A.crouchGoal = 0.25; A.tailUpGoal = 0.1; A.earsGoal = 1; A[t < 0.8 ? 'earLTwGoal' : 'earRTwGoal'] = 0.6; return false; }
     if (t < 2.1) { A.crouchGoal = 1; A.lookPitchGoal = 0.3; A.headTiltGoal = 0; A.earsGoal = 1; A.wideGoal = 1; return false; }
-    if (t < 2.85) {                                   // up and over: a high arc, landing nose-first
+    if (this.t0 === undefined) {                      // (not onto another fox: if one is where he'd land, he waits, crouched, then gives up)
+      const lx = f.pos.x + Math.sin(f.heading) * 0.55 * S, lz = f.pos.z + Math.cos(f.heading) * 0.55 * S;
+      const busy = f.fam.foxes.some(o => o !== f && o.root.visible && !o.home && Math.hypot(o.pos.x - lx, o.pos.z - lz) < 0.45 * (S + o.q.S * o.scale));
+      if (busy) { this.wait = (this.wait || 0) + dt; this.t = 2.09; A.crouchGoal = 1; A.earsGoal = 1; if (this.wait > 2) return true; return false; }
+      this.t0 = 0;
+    }
+    if (t < 2.85) {                                   // up and over: a high arc, nose up off the ground, front paws reaching down to land
       const u = (t - 2.1) / 0.75;
-      A.lift = Math.sin(u * Math.PI) * 0.62 * S; A.airGoal = 1; A.air = Math.max(A.air || 0, 0.6);
-      A.pitch = -0.7 + 2.0 * smooth(0.15, 0.9, u); A.earsGoal = 1 - 1.4 * u; A.wideGoal = 1 - u; A.squintGoal = smooth(0.6, 1, u); A.mouthGoal = 0.4 * smooth(0.4, 0.8, u);
+      A.lift = Math.sin(u * Math.PI) * 0.5 * S; A.air = A.airGoal = Math.min(1, Math.min(u, 1 - u) * 6); A.airPh = u; A.crouch = A.crouchGoal = 0;
+      A.pitch = -0.45 + 0.85 * smooth(0.1, 0.95, u); A.lookPitchGoal = 0.5 * u; A.tailUpGoal = 0.6;
+      A.earsGoal = 1; A.wideGoal = 1 - 0.5 * u; A.mouthGoal = 0.25 * smooth(0.5, 0.9, u);
       f.pos.x += Math.sin(f.heading) * dt * 0.9 * S; f.pos.z += Math.cos(f.heading) * dt * 0.9 * S;
       return false;
     }
-    if (t < 4.3) { A.diveGoal = 1; A.dive = Math.max(A.dive || 0, 0.7); A.squintGoal = 1; A.earsGoal = -0.4; return false; }      // stuck nose-down in the grass
-    if (t < 4.6) { A.lift = 0.05 * S * Math.sin((t - 4.3) / 0.3 * Math.PI); return false; }
+    if (t < 4.3) {                                    // landed on his front paws, pinning: nose down between them, sniffing, the brush waving
+      const v = smooth(2.85, 3.15, t);
+      A.pitch = 0.4 * (1 - v); A.bowGoal = 1; A.bow = Math.max(A.bow || 0, 0.6 + 0.4 * v); A.lookPitchGoal = 1.6; A.lookYawGoal = 0.12 * Math.sin(t * 9);
+      A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.earsGoal = 0.9; A.squintGoal = 0.45; A.mouthGoal = 0.1 * Math.max(0, Math.sin(t * 20));
+      return false;
+    }
+    if (t < 4.6) { A.lookPitchGoal = -0.1; A.earsGoal = 0.3; return false; }
     if (t < 5.4) { A.shakeGoal = 1; A.squintGoal = 1; A.mouthGoal = 0.2; return false; }
     if (t < 6.2) { A.sitGoal = 0.6; A.headTiltGoal = 0.25; A.earLGoal = 0.5; A.earRGoal = -0.7; return false; }                    // "hm. Nothing."
     return true;
@@ -763,7 +800,8 @@ function pounceOn(m) {
     f.A.crouchGoal = 0.7; f.A.earsGoal = 1; f.A.wideGoal = 0.6; return f.moveTo(tx - Math.sin(f.heading) * 0.25 * f.q.S, tz - Math.cos(f.heading) * 0.25 * f.q.S, dt, 'walk');
   } }, T.wait(0.8, f => { f.A.crouchGoal = 1; f.A.wagGoal = 0.6; f.A.earsGoal = 1; f.A.wideGoal = 1; }), {
     name: 'leap', with: m, t: 0, run(f, dt) { this.t += dt; const u = this.t / 0.45; f.A.lift = Math.sin(clamp01(u) * Math.PI) * 0.14 * f.q.S; f.A.airGoal = 1; f.pos.x += Math.sin(f.heading) * dt * 0.7; f.pos.z += Math.cos(f.heading) * dt * 0.7; m.A.wagGoal = 1; f.A.mouthGoal = 0.9 * smooth(0.3, 0.8, u); f.A.earsGoal = 0.6; return u >= 1; } },
-  T.wait(1.2, (f, t) => { f.A.diveGoal = 0.6; f.A.wagGoal = 1; f.A.mouthGoal = t < 0.25 ? 0.1 : 0.4; f.A.squintGoal = 0.5; }), T.wait(0.6, f => { f.A.shakeGoal = 1; f.A.squintGoal = 1; }));
+  T.wait(1.2, (f, t) => { f.A.bowGoal = 1; f.A.lookPitchGoal = 1.3; f.A.wagGoal = 1; f.A.mouthGoal = t < 0.25 ? 0.1 : 0.4; f.A.squintGoal = 0.5; }),     // landed on mum's brush, paws on it
+  T.wait(0.6, f => { f.A.shakeGoal = 1; f.A.squintGoal = 1; }));
 }
 // dad lies down and rolls over, playing dead with his legs in the air, while the cubs bounce round him
 function playDead(fam, dad, cubs) {
@@ -785,8 +823,8 @@ function butterflyHunt(fam) {
   return { name: 'butterfly', t: 0, run(f, dt) {
     this.t += dt; B.chaser = f; const A = f.A, bx = B.mesh.position.x, bz = B.mesh.position.z;
     if (this.t < 5) { f.moveTo(bx, bz, dt, 'trot'); A.lookPitchGoal = -0.6; A.tailUpGoal = 0.4; A.wagGoal = 0.5; A.earsGoal = 1; A.wideGoal = 0.7; if (Math.hypot(bx - f.pos.x, bz - f.pos.z) < 0.25) this.t = Math.max(this.t, 5); return false; }
-    if (this.t < 5.6) { const u = (this.t - 5) / 0.6; A.lift = Math.sin(u * Math.PI) * 0.22 * f.q.S; A.airGoal = 1; A.pitch = -0.5 + 1.2 * u; A.mouthGoal = u < 0.75 ? 1 : 0; A.earsGoal = 0.6; return false; }
-    if (this.t < 6.8) { A.diveGoal = 0.8; B.flee = 2; A.squintGoal = 0.8; return false; }
+    if (this.t < 5.6) { const u = (this.t - 5) / 0.6; A.lift = Math.sin(u * Math.PI) * 0.22 * f.q.S; A.air = A.airGoal = Math.min(1, Math.min(u, 1 - u) * 6); A.airPh = u; A.pitch = -0.45 + 0.75 * u; A.lookPitchGoal = -0.5 + 0.9 * u; A.mouthGoal = u < 0.75 ? 1 : 0; A.earsGoal = 0.6; return false; }
+    if (this.t < 6.8) { A.bowGoal = 1; A.lookPitchGoal = 1.5; B.flee = 2; A.squintGoal = 0.8; return false; }      // paws down where it was: missed
     if (this.t < 7.6) { A.sitGoal = 1; A.lookPitchGoal = -0.7; A.headTiltGoal = 0.3; A.earLGoal = -0.6; A.earRGoal = 0.4; return false; }
     B.chaser = null; return true;
   } };
@@ -798,7 +836,7 @@ function makeButterfly() {
   const pl = new THREE.Group(), pr = new THREE.Group(); pl.add(L); pr.add(Rr); g.add(pl, pr);
   const body = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.04, 5).rotateX(Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#3a2a1a' })); g.add(body);
   g.visible = false;
-  let t = Math.random() * 10;
+  let t = 3.7;                             // (the same flight every time: the checks see the same play)
   return { mesh: g, chaser: null, flee: 0, update(dt, fam) {
     t += dt; g.visible = fam.out; if (!g.visible) return;
     const [fx, fz, fr] = fam.field, k = this.flee > 0 ? 1.8 : 1; this.flee = Math.max(0, this.flee - dt);
