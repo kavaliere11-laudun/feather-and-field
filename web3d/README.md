@@ -644,3 +644,9 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   (0.3%, was 0.5%) where the brush tip grazes the hay bale or the water dish, or a toe the edge of a ramp.
 - `foxtest.mjs` counts brush touches apart (up to 0.6 of the circles' overlap: fur brushing fur), taps whichever fox stands
   clearest on screen, and allows 30 s for all five to go home one at a time.
+- The back legs (22 Oct 21:10, Audrey: "The back legs of the fox are weird"): they read as round drumsticks hanging under
+  the body, folding like a frog as they swung forward and going straight as a stick when pushing off. Now: a slimmer thigh
+  with a broad flat haunch that is part of the body's outline, the hock higher (12.5 cm) and a longer straight foot below
+  it; a hind foot lifts less and folds less as it swings (the hock flexes, the paw stays low), the heel comes up first at
+  the end of each step, the hind knee never quite straightens, and steps are shorter creeping low (`Fox.update` stride).
+  `visitcheck` after: 39 frames in about 15,000 touching (brush tips on the hay, the dish or the fence for a moment).

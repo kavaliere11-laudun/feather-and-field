@@ -115,7 +115,7 @@ export class Quad {
     const len3 = Math.hypot(G.d3[0], G.d3[1]), dy = _d.y * len3, dz = _d.z * len3;
     // the joint above the paw goes where the paw's own length leaves it; the upper two bones reach it (elbow back, knee forward)
     const wy = _v.y - dy, wz = _v.z - dz, vy = wy - G.S0[0], vz = wz - G.S0[1];
-    const dist = Math.min(G.L1 + G.L2 - 1e-4, Math.max(Math.abs(G.L1 - G.L2) + 1e-4, Math.hypot(vy, vz)));
+    const dist = Math.min((G.L1 + G.L2) * (G.front ? 0.999 : 0.95), Math.max(Math.abs(G.L1 - G.L2) + 1e-4, Math.hypot(vy, vz)));     // (a hind knee never quite straight)
     const dir = arg(vy, vz), a = Math.acos(Math.min(1, Math.max(-1, (G.L1 * G.L1 + dist * dist - G.L2 * G.L2) / (2 * G.L1 * dist))));
     const e = dir + (G.front ? a : -a), ey = G.S0[0] + G.L1 * Math.cos(e), ez = G.S0[1] + G.L1 * Math.sin(e);
     const qy = G.S0[0] + dist * Math.cos(dir), qz = G.S0[1] + dist * Math.sin(dir);
@@ -159,9 +159,11 @@ export class Quad {
     for (const L of LEGS) {
       const G = this.legs[L], [b0, b1, b2] = LEG_BONES[L], front = G.front;
       const u = (((ph + offs[L] * (1 - run) + goffs[L] * run) / (Math.PI * 2)) % 1 + 1) % 1;
-      let dz, dy = 0, flex = 0;
-      if (u < duty) dz = amp * (1 - 2 * u / duty);
-      else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = lift * Math.pow(Math.sin(Math.PI * v), 0.8); flex = Math.sin(Math.PI * Math.min(1, v * 1.15)); }
+      let dz, dy = 0, flex = 0, push = 0;
+      // (a hind foot lifts less and folds less as it swings forward than a front one: the hock flexes, the paw stays low;
+      // at the end of each step the heel comes up off the ground first, the toes last)
+      if (u < duty) { dz = amp * (1 - 2 * u / duty); push = smooth(0.55 * duty, duty, u) * g; }
+      else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = lift * (front ? 1 : 0.75) * Math.pow(Math.sin(Math.PI * v), 0.8); flex = Math.sin(Math.PI * Math.min(1, v * 1.15)); push = (1 - smooth(0, 0.35, v)) * g; }
       // the leg's own posing (not on the ground): rearing up, in the air, nose-down after a dive, kicking on its back, a scratch
       const free = front ? Math.max(rear, air, dive, kick, rolled) : Math.max(air, dive, kick, rolled, L === 'HR' ? scratch : 0);
       const onGround = 1 - free;
@@ -169,7 +171,7 @@ export class Quad {
         const flat = front ? Math.max(lie, bow) : Math.max(sit, lie) * 0.95;          // the paw / long foot laid along the ground
         dz += front ? 0.17 * S * lie + 0.13 * S * bow - 0.03 * S * sit : 0.09 * S * sit + 0.06 * S * lie;
         // which way the last part points: as at rest, or laid flat forward; curled back while it swings forward
-        let aim = arg(G.d3[0], G.d3[1]); aim += wrap(arg(-0.14, 1) - aim) * flat + flex * (front ? 1.15 : 0.7);
+        let aim = arg(G.d3[0], G.d3[1]); aim += wrap(arg(-0.14, 1) - aim) * flat + flex * (front ? 1.15 : 0.38) - push * (front ? 0.3 : 0.45) * (1 - flat);
         _v.copy(G.toe); _v.y += lower + dy; _v.z += dz;
         // on a slope (a ramp, a bridge's deck): the ground's height under these feet (s.groundF / s.groundH, world, above
         // the root), so with the body lifted and tipped the feet stand on it exactly
@@ -359,7 +361,7 @@ class Fox {
     const ns = this.vs / k, spin = Math.min(1, Math.abs(this.turn) / 2.5) * (1 - clamp01(ns / 0.2));
     A.walk = (A.walk || 0) + (Math.max(clamp01(ns / 0.28), 0.5 * spin) - (A.walk || 0)) * Math.min(1, dt * 8);
     A.run = (A.run || 0) + (smooth(1.0, 1.45, ns) - (A.run || 0)) * Math.min(1, dt * 5);
-    const stride = (0.5 * (1 - A.run) + 1.0 * A.run) * this.q.S * this.scale;
+    const stride = (0.5 * (1 - A.run) + 1.0 * A.run) * (1 - 0.35 * clamp01(A.crouch || 0)) * this.q.S * this.scale;     // (shorter steps creeping low)
     A.phase += ((moved + 0.3 * spin * k * dt) / Math.max(0.05, stride)) * Math.PI * 2;
     A.stride = stride / this.scale;                       // in the body's own size, for placing the feet
     A.speed = ns; A.turn = this.turn;

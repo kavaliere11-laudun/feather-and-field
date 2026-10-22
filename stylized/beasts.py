@@ -168,10 +168,13 @@ def fox(kind='fox', seed=1):
         part(metaball_mesh(kind + '_leg' + F, E, res=0.006 * S, m=coat, parent=root), F + 'u', 'legfeather', 'fox_leg')
         pivot(F + 'u', tuple(sh), root); pivot(F + 'l', tuple(el), root); pivot(F + 'w', tuple(wr), root); pivot(F + 'p', tuple(pw), root)
         y = sd * 0.068
-        hip, kn = P(-0.15, y, hy - 0.02), P(-0.1, y * 1.05, hy - 0.02 - 0.13 * LG)
-        hk, pw = P(-0.205, y * 1.05, 0.095 * LG), P(-0.185, y * 1.05, 0.018)
-        E = chain([hip, hip.lerp(kn, 0.5), kn, kn.lerp(hk, 0.5), hk, pw + Vector((0, 0, 0.01 * S))], [0.068, 0.056, 0.04, 0.03, 0.021, 0.018], S) + \
-            [('ELLIPSOID', tuple(pw + Vector((0.012 * S, 0, -0.002 * S))), 0.022 * S * K, (1.5, 0.95, 0.62), 2.0)]
+        # (a fox's hind leg: the thigh a broad flat muscle that is part of the body's outline, the knee just under the belly,
+        # a slim shin angled back to a high hock, and a long straight foot down to the paw; not a round drumstick)
+        hip, kn = P(-0.15, y, hy - 0.015), P(-0.118, y * 1.04, hy - 0.015 - 0.115 * LG)
+        hk, pw = P(-0.2, y * 1.04, 0.125 * LG), P(-0.188, y * 1.04, 0.018)
+        E = chain([hip, hip.lerp(kn, 0.5), kn, kn.lerp(hk, 0.5), hk, pw + Vector((0, 0, 0.01 * S))], [0.05, 0.04, 0.03, 0.024, 0.02, 0.017], S) + \
+            [('ELLIPSOID', tuple(hip.lerp(kn, 0.35) + Vector((-0.012 * S, 0, 0))), 0.062 * S * K, (1.25, 0.62, 1.0), 2.0),      # the haunch
+             ('ELLIPSOID', tuple(pw + Vector((0.012 * S, 0, -0.002 * S))), 0.022 * S * K, (1.5, 0.95, 0.62), 2.0)]
         part(metaball_mesh(kind + '_leg' + H, E, res=0.006 * S, m=coat, parent=root), H + 'u', 'legfeather', 'fox_leg')
         pivot(H + 'u', tuple(hip), root); pivot(H + 'k', tuple(kn), root); pivot(H + 'l', tuple(hk), root); pivot(H + 'p', tuple(pw), root)
     # ---- the brush: big and bushy in four bones, rising from the hips, arching down and back, the white tip turning up
