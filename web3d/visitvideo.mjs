@@ -33,7 +33,7 @@ const frame = (cam) => p.evaluate(([per, cam]) => {
 const den = await p.evaluate(() => { const F = window.__farm.foxes(); const [x, z, h] = F.den; return [x + Math.sin(h) * 0.9, z + Math.cos(h) * 0.9 + 0.2]; });
 let st;
 await p.evaluate(() => { const f = window.__farm, V = f.visit(); for (let k = 0; k < 600 && !V.active(); k++) { f.step(1 / 30, 1); window.__hintTick(1 / 30); } });
-for (let i = 0; i < 4.5 * FPS; i++) { st = await frame([den[0], den[1], 2.6]); await shoot(); }
+for (let i = 0; i < parseFloat(process.env.DEN ?? '4.5') * FPS; i++) { st = await frame([den[0], den[1], 2.6]); await shoot(); }
 // 2. the trot there, not filmed, until he's 4 m from the fence
 const coop = await p.evaluate((i) => { const f = window.__farm, c = f.plots[i].frame.getWorldPosition(new f.THREE.Vector3()); return [c.x, c.z]; }, parseInt(plot));
 for (let k = 0; k < 4000; k++) {
@@ -44,10 +44,14 @@ for (let k = 0; k < 4000; k++) {
 const house = await p.evaluate(() => { const fh = window.__farm.plan().props.find(q => q.model === 'farmhouse'); return [fh.pos[0], fh.pos[2]]; });
 const toward = Math.atan2(house[0] - coop[0], house[1] - coop[1]);
 const cam = [coop[0] + Math.sin(toward) * 1.0, coop[1] + Math.cos(toward) * 1.0 + 0.6, 3.6];
-let sent = false, sentAt = 0, outside = 0;
+let sent = false, sentAt = 0, outside = 0, endAt = 0;
 for (let i = 0; i < 60 * FPS; i++) {
   st = await frame(cam);
   if (!sent && st.phase === 'climb' && st.task === 'sit' && st.canSend) sentAt = sentAt || i;          // sitting after the first peck
+  if (process.env.END === 'sneeze') {                        // stop a second after the sneeze (no farmer)
+    if (st.phase === 'climb' && st.task === 'sit') endAt = endAt || i + Math.round(1.0 * FPS);
+    await shoot(); if (endAt && i >= endAt) break; continue;
+  }
   if (!sent && sentAt && i >= sentAt + Math.round(0.8 * FPS)) {
     const r = await p.evaluate(() => { const e = document.getElementById('farmerbtn'), q = e.getBoundingClientRect(); e.click(); return [q.x + q.width / 2, q.y + q.height / 2]; });
     taps.push({ frame: n, x: r[0], y: r[1] }); sent = true;

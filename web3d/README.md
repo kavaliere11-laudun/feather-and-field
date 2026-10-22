@@ -542,3 +542,53 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   (pictures: the feather, the shoo, a shut door; `LANG=fr`), `visitvideo.mjs OUT [plot] [fps]` (the video: out of the
   den, a cut to the coop, the farmer tapped; `OUT_taps.json` says where the tap was). The page has `__farm.visit()`
   (`start(plot)`, `sendFarmer()`, `log`) and `__farm.onBridge(x, z)`.
+
+## The foxes rebuilt (22 Oct evening, Audrey: "the fox is still clipping with objects. Also his jumping and other moves are not super natural", then on the line-up: "The details of the eyes are missing, as well as the ears they could be better. The movement of the body is not fluid, the legs are not folding, the tail is a bit too straight. I'd say the fur is good just slightly blurry"; and she loved the feather staying on his nose)
+
+- The model (`stylized/beasts.py`, `export_beasts.py`; `beasts.JOINTS` now 21 bones):
+  - Eyes: almond-shaped, set into the skull where a ray from the head's middle meets its surface (`surface()`), looking
+    forward and a little out with the outer corner raised; a dark rim (an ellipsoid just behind the iris, so only its edge
+    shows), an amber iris (the cubs' darker), a slit pupil (the cubs' round) and a catch-light standing a hair proud of it.
+    The head's colouring adds a dark ring round each eye and the fox's tear line down the side of the muzzle (pivots
+    `eyeL`, `eyeR`). The face (front of the head above the cheeks) gets short fur (region crest) so the eyes stay clear;
+    the cheeks' ruff and the back of the head keep the long coat.
+  - Ears: cupped rounded triangles (`ear_shell()`), bigger and more upright: the back (coat, black above an orange base,
+    black tip), a dark hollow inside, and a pale strip of fluff along each inner edge (region down, 1.8 cm). Built as
+    separate pieces so the colours can't smear. (Painted by numbers first, the hollow ended up hidden in the head's fur
+    and the ear looked grey.)
+  - Legs: three bones each: front shoulder `FLu`, elbow `FLl` (behind the shoulder), wrist `FLw`; hind hip `HLu`, knee
+    `HLk` (forward), hock `HLl`; the paw's toe pivot `FLp`/`HLp`. Weights along the chain, blended at the joints.
+  - The brush: four bones (`tail1`..`tail4`), rising from the hips, arching down and back, the white tip turning up.
+  - Budgets 4,300 triangles (fox) and 3,400 (cub), the eyes and ears kept whole.
+- The movement (`src/beasts.js` `Quad`):
+  - Feet are placed and the legs reach them (`reach()`: two-bone reach for the upper bones, elbow back and knee forward,
+    the last bone pointing as asked): standing, every step, crouching, sitting, lying down, the play bow and landing fold
+    the legs by themselves, the feet staying on the ground. A step: on the ground and moving back as fast as the body goes
+    forward (no sliding), then lifted, the paw curled back, and swung forward (the trot's diagonal pairs blending into the
+    gallop). Sitting: the hind feet come forward under the body with the long foot laid flat; lying: front paws out in
+    front, hind legs folded under. Legs in the air are posed joint by joint: rearing up, the leap (front legs folded up
+    going over, then reaching for the ground; hind legs pushing off, then tucked, `airPh`), nose-down after a dive, kicking
+    on his back, the scratch.
+  - On a slope (a ramp, a bridge's deck) the ground under each pair of feet (`groundF`, `groundH`, where the tipped body
+    puts them) and its steepness (`slopeF`, `slopeH`) come from the visit, and the paws stand on it, laid along it.
+  - The spine bends into turns, the head stays steady at a gallop; turning on the spot the feet step round.
+  - The brush: each part follows the one before it a moment later (springs, `tY`), so it sways in a wave, trails along a
+    turn, hangs lower at a trot and lifts when excited; it curls round when sitting or lying, on either side (`curl`).
+  - The fur: the painted hair drawn a little larger on the foxes (locks 0.11, cubs 0.075; Silkies untouched), crisper.
+- The night visit (`src/nightvisit.js`):
+  - The jump: gathering low, a parabola 0.7 m high, nose up then down, legs as above, a landing that folds the legs. The
+    spots outside and inside the fence are about a metre from it, so his nose and brush clear it.
+  - At the door only his nose and muzzle go in, head low, so his ears stay outside under the top of the doorway; head down
+    as he nears it on the ramp.
+  - Up to the ramp from straight behind it (no turning on the spot with his brush sweeping round); the yard's grid keeps him
+    off the fence and round the ramp's sides.
+  - In the yard he lifts his brush clear of whatever it would brush past (hay bale, feeder, water dish, ramp, fence:
+    `brush()` looks where it is and where it's swinging to); sitting down to sneeze he picks, of a few ways facing the
+    player, the one where his brush curls onto clear ground, stepping aside first if he must (`sitSpot()`).
+  - `visitcheck.mjs [plots] [farmerAt]`: every other frame of a visit, his posed body (every third point, skinned) in the pen's
+    frame against the fence (2 cm from its line, below its top), the house's walls (except through the pop door), the
+    ramp's plank, and the hay bale (30 cm), feeder (44 cm) and water dish (7.5 cm). Before: up to 12% of frames touching
+    something at a coop (nose and brush through the fence, ears into the wall, paws into the ramp, brush through the hay).
+    After, at all 10 coops: none through the fence or the house; 66 frames in about 14,000 (0.5%) where the brush tip
+    grazes the hay bale or the water dish for a moment, or a toe tip the edge of a ramp.
+  - `foxhead.mjs OUT [who] [size]`: close-ups of a fox's head at four angles.
