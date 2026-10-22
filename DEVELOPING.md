@@ -91,6 +91,31 @@ Then publish `game2/index.html` to the artifact URL above with the Artifact tool
 
 Commit and push `source` after every change too, so the next session starts from the latest code.
 
+## The 3D village (`web3d/`, started 20 Oct 2026)
+
+The browser 3D version of the farm, being built in steps (see `web3d/README.md`, the full record, and the project doc
+`claude/web3d.md`). Live test page: https://kavaliere11-laudun.github.io/feather-and-field/3d/
+
+```bash
+cd web3d
+npm install three@0.170.0 esbuild@0.24.0      # once
+./build.sh                                      # bundles src/ and copies models/ into dist/
+./withserver.sh node foxtest.mjs                # serves dist/ on :8770 for the length of one test
+```
+
+- `web3d/src/main.js` (village, coops, birds' behaviour, day and night, inside view, doors, foxes' placement),
+  `birds.js` (bird painting, fur shells, rig, poses), `beasts.js` (foxes: fur, four-legged rig, play tasks, family schedule).
+- Models in `web3d/models/` come from the Blender scripts in `stylized/` (in the original workspace this folder was the
+  scratchpad's `sty/`): `export_village.py`, `export_coops.py`, `export_birds.py`, `export_interiors.py`, `export_beasts.py`,
+  `export_web.py`. Run them with the `bl` venv (`bl/bin/python stylized/export_beasts.py web3d/models`).
+- Test page options: `?time=HH:MM`, `?daylapse=N` (a day in N minutes), `?coops=N`, `?q=0..3`, `?details`, `?lineup`,
+  `?lineup=foxes`, `?foxes`.
+- Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `doors.mjs`,
+  `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
+- Deploy: build, then in a clone of `main` replace the `3d/` folder with `web3d/dist/.`, commit and push. The 2D release above
+  wipes `main`, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game.
+- `stylized/extras/`: small helper scripts kept for reference (farmer map sprites, the Silkie hair tile, face sheets).
+
 ## Security (Audrey's standing request: "take security of the game into account")
 
 - Saves are sanitised on load: types, clamped numbers, names stripped of markup.
