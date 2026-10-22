@@ -447,3 +447,36 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   everyone's in yet"; inside, the door up, a tap shuts it; no page errors), `insidepan.mjs [out]` (both ends of the inside
   view and the badge), `doorclip.mjs PLOT FPS OUT` (frames of an evening and a morning at one coop). The page has
   `__farm.doorTap(plot)`, `setDoor(plot, open)`, `doors`.
+
+## The fox family (22 Oct, Audrey: the fox "as a proper character of the game")
+
+- Audrey (22 Oct 08:55): the fox is a proper character; sometimes he attacks the chickens, sometimes he just plays in the
+  fields with other foxes and his babies. He never kills a chicken; instead a frightened hen sometimes decides to leave the
+  farm (rare), and she can come back, though it isn't guaranteed. Protection: stay up at night and send the farmer when you
+  see the fox, or keep a couple of geese or a dog (proper characters too; she chose: either guards the whole farm). After a
+  night attack, a funny replay in the morning. Order (her choice): the fox family first, then the night visit and sending the
+  farmer, then geese and the dog, then the morning replay; the rules (how often, hens leaving, buying geese or a dog) join the
+  game with step 4.
+- Models (`stylized/beasts.py`, exported by `stylized/export_beasts.py` to `models/beasts.glb` + `beasts.json`): a red fox
+  (about 0.55 m to the top of the head, 2,800 triangles) and a cub (a little over half the size, bigger head, shorter legs
+  and muzzle, bigger eyes, browner, 1,800), from smooth metaball shapes; bones root, hips, chest, neck, head, three in the
+  brush and two in each leg (weights worked out by the exporter, the leg tops and tail root joined to the body); the coat's
+  pattern painted per vertex (darker back, white bib, belly, cheeks and tail tip, black socks, ear tips and ear backs).
+  `models/fauna.glb`: the den (a grassy bank under the edge of the wood with a dark round entrance, a fan of dug earth,
+  roots and stones).
+- `src/beasts.js`: the foxes wear the birds' fur (the same material and shell builder, `addFur`; body 2.4 cm, brush 5 cm,
+  face and legs short; the cubs fluffier). `Quad` poses a four-legged body from a few numbers: a trot (diagonal pairs)
+  blending into a bounding gallop, crouch, sit, lie (brush curled round), play bow, rearing up to box, the pounce in the
+  air, nose-down in the grass, on its back kicking, a scratch, a shake, a head tilt, the brush on a spring.
+- The family (`FoxFamily`): Rusty (the dad), Fennel (the mum) and three cubs, Sorrel, Nutkin and Tumble. Every 10-20
+  minutes by day they come up out of the den one by one and play in the meadow for 5-7 minutes, then go back in. The cubs
+  chase each other round the meadow and tumble over at the end, wrestle (rearing up and boxing, then one on its back
+  kicking), chase their own tails until they're dizzy, chase a butterfly and land nose-first in the grass, stalk and
+  pounce on their mum's tail, trip head over heels, play-bow; Rusty listens for mice (head tilted one way, then the other),
+  springs up and dives nose-first into the grass, stays stuck a moment with his brush waving, pops out, shakes and sits
+  looking puzzled; he also plays dead on his back while the cubs bounce round him; Fennel sits and watches, grooms, lies
+  down, and pounces now and then. Tap a fox: its name, a hop and a play bow. "Foxes" at the top (shown while they're
+  out) takes the view to them. `?foxes` brings them out at once and keeps them out. At night they stay in (for now).
+- Tests: `foxtest.mjs` (out with ?foxes, all five in the meadow, a minute of play, the button, a tap, home again, in at
+  night, no page errors), `foxpose.mjs [out] [fox] [heading]` (every pose close up), `foxshot.mjs`, `foxclip.mjs SECONDS FPS
+  OUT [size]` (frames following the family). The page has `__farm.foxes()`.

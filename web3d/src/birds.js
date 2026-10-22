@@ -591,6 +591,10 @@ function birdMaterial(indoor) {
   return m;
 }
 const BIRD_MAT = birdMaterial(false);
+// for the farm's other furry animals (the foxes): the same fur material and drawing, and the fur builder
+export { addFur, R };
+export function furMaterial() { return BIRD_MAT; }
+export function furHooks(mesh) { mesh.onBeforeRender = keepAlpha; mesh.onAfterRender = writeAlpha; }
 export function modelFor(breed, kind) { return kind === 'chick' ? 'chick' : breed + (kind === 'rooster' ? '_r' : '_h'); }
 
 const RIGS = [];

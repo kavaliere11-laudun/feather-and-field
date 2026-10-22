@@ -16,6 +16,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
+import { initBeasts, FoxFamily } from './beasts.js';
 
 const MODELS = './models/';
 const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
@@ -286,15 +287,16 @@ const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
-    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json')]);
+    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
+    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
-  initFlock(flock, flockInfo);
-  for (const g of [farm, village, coopsGlb, insideGlb]) {
+  initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo);
+  for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
@@ -311,6 +313,7 @@ async function start() {
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
   if (params.has('lineup')) buildLineup();
+  buildFoxes(beastsInfo.joints);
   if (allBirds.length) makeBlobs();
   buildGrass();
   addLampPools();
@@ -735,6 +738,29 @@ function tickNotes(dt) {
     const s = n.size * Math.min(1, t * 5); n.sprite.scale.set(s, s, s);
     n.sprite.material.opacity = Math.min(1, (1 - t) * 3);
   }
+}
+
+// ------------------------------------------------------------------ the fox family: a den at the edge of the woods, a meadow to play in
+// (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
+// den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
+const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-6.12, -34.61, Math.atan2(-0.76, 0.65)];     // a clear meadow; the den, under the edge of the wood, faces it
+let foxes = null;
+const foxBtn = document.getElementById('foxbtn');
+function buildFoxes(joints) {
+  if (parts.den) {
+    const den = part('den'); den.position.set(FOX_DEN[0], 0, FOX_DEN[1]); den.rotation.y = FOX_DEN[2] - Math.PI / 2;
+    still(den, true, true);
+  }
+  foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
+  if (foxBtn) foxBtn.addEventListener('click', () => { const c = foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
+}
+let foxHinted = false;
+function tickFoxes(dt) {
+  if (!foxes) return;
+  foxes.update(dt, clockHour(), params.has('foxes'));
+  const out = foxes.visible();
+  if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
+  if (out && !foxHinted) { foxHinted = true; hint('The foxes are out playing in the meadow: tap "Foxes" at the top to watch them.'); }
 }
 
 // ------------------------------------------------------------------ the pop doors: shut at night once everyone's in, open in the morning
@@ -1579,6 +1605,12 @@ function tapAt(x, y) {
   ray.setFromCamera(ndc, camera);
   let best = null, bestD = Infinity;
   const s = new THREE.Sphere(), w = new THREE.Vector3();
+  if (foxes && foxes.visible()) for (const f of foxes.foxes) {
+    if (!f.root.visible) continue;
+    f.root.getWorldPosition(w); s.center.set(w.x, w.y + f.hitY, w.z); s.radius = f.hitR;
+    const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
+    if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = f; } }
+  }
   for (const p of livePlots()) for (const b of p.birds) {
     if (!b.root.visible) continue;                       // in bed
     b.root.getWorldPosition(w);
@@ -1631,7 +1663,8 @@ function tapAt(x, y) {
     }
     return;
   }
-  best.tapped(); tagBird = best; tagLeft = 2.8;
+  if (best.fam) best.fam.tapped(best); else best.tapped();
+  tagBird = best; tagLeft = 2.8;
   tag.textContent = best.label;
   tag.classList.add('on');
 }
@@ -1880,7 +1913,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); }
+  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxes && foxes.visible()) wake(100); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
@@ -1942,7 +1975,8 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); } placeTag(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
+  foxes: () => foxes,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },
