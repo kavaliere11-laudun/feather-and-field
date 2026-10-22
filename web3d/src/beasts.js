@@ -313,6 +313,7 @@ export class FoxFamily {
   }
   // what a fox does next, by who it is
   nextTask(f) {
+    if (this.visit && this.visit.fox === f && this.visit.active()) return this.visit.nextTask(f);      // his night visit (nightvisit.js)
     if (f.home || this.leaving) return T.wait(1);
     const r = this.r(), [fx, fz, fr] = this.field;
     const spot = (k = 0.8) => {
@@ -373,7 +374,7 @@ export class FoxFamily {
   }
   centre(v) { let n = 0; v.set(0, 0, 0); for (const f of this.foxes) if (f.root.visible) { v.add(f.pos); n++; } if (n) v.multiplyScalar(1 / n); else v.set(this.field[0], 0, this.field[1]); return v; }
   // a tap on a fox: its name, and a little reaction (a hop of surprise and a play bow)
-  tapped(f) { f.todo.unshift(seq(hop(), bowAt(null, 1.2))); if (f.task && !f.task.pair) f.task = null; }
+  tapped(f) { if (this.visit && this.visit.fox === f && this.visit.active()) return; f.todo.unshift(seq(hop(), bowAt(null, 1.2))); if (f.task && !f.task.pair) f.task = null; }
 }
 
 // their bodies never pass through each other, nor through the den's bank, a bush or a trunk. Each body is three circles on the

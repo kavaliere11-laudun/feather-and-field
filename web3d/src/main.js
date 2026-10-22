@@ -17,6 +17,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { initBeasts, FoxFamily, FoxLineup } from './beasts.js';
+import { NavGrid, NightVisit } from './nightvisit.js';
 
 const MODELS = './models/';
 const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
@@ -117,7 +118,7 @@ const DAY_KEYS = [
 const DAY = { hour: 12, glow: { value: 0 }, warm: { value: new THREE.Color('#ffc46e') }, shadowDir: SUN_DIR.clone(), shadowAt: 0 };
 const NOON_FROM = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize();                // where the midday sun is, seen from above
 const dayStart = (() => {                      // ?time=HH:MM and ?daylapse=minutes for a whole day
-  const t = /^(\d{1,2})(?::(\d{2}))?$/.exec(params.get('time') || ''), lapse = parseFloat(params.get('daylapse') || '0');
+  const t = /^(\d{1,2})(?::(\d{2}))?$/.exec(params.get('time') || (params.has('visit') ? '23:30' : '')), lapse = parseFloat(params.get('daylapse') || '0');
   // automated tests (a browser driven by a script) see midday unless they ask for a time, so they don't depend on the clock
   const fixed = t ? Math.min(24, +t[1] + (+t[2] || 0) / 60) : navigator.webdriver ? 12.5 : null;
   return { fixed, lapse: lapse > 0 ? lapse : 0, at: performance.now() };
@@ -747,7 +748,7 @@ function tickNotes(dt) {
 const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
 let foxes = null, foxLineup = null;
 const foxBtn = document.getElementById('foxbtn');
-const foxGroups = () => [foxes, foxLineup].filter(g => g && g.visible());
+const foxGroups = () => [foxes, foxLineup].filter(g => g && (g.visible() || (nightVisit && g === foxes && nightVisit.active())));
 function buildFoxes(joints) {
   if (params.get('lineup') === 'foxes') foxLineup = new FoxLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, joints, rng(31));
   // round the meadow: the bushes and tree trunks they walk round
@@ -760,16 +761,145 @@ function buildFoxes(joints) {
     V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.0);     // no grass growing through it
   }
   foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, obstacles, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
-  if (foxBtn) foxBtn.addEventListener('click', () => { const c = foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
+  buildNightVisit();
+  if (foxBtn) foxBtn.addEventListener('click', () => { const c = nightVisit && nightVisit.active() ? nightVisit.fox.pos.clone().sub(new THREE.Vector3(0.3, 0, 0.3)) : foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
 let foxHinted = false;
+
+// ------------------------------------------------------------------ the fox's night visit (nightvisit.js): late at night Rusty goes to a
+// coop (one left open, if there is one), pokes his nose in and gets pecked, or finds the door shut; "Send the farmer" brings
+// the farmer's torch from the farmhouse and Rusty bolts home. ?visit starts one at once (at 23:30 unless ?time says), and
+// another 25 s after each; ?visit=N sends him to coop N. Texts in English, or French with ?lang=fr.
+const VISIT_TEXT = {
+  out: ['Rusty the fox has slipped out of his den…', 'Rusty le renard est sorti de son terrier…'],
+  btnFox: ['Fox!', 'Renard !'],
+  send: ['Send the farmer', 'Envoyer le fermier'],
+  squawk: ['Squawk! Squawk!', 'Cot cot codet !'],
+  shut: ['The door is shut!', 'La porte est fermée !'],
+  sent: ['The farmer is on his way with his torch…', 'Le fermier arrive avec sa lampe…'],
+  shoo: ['Shoo! Off you go, Rusty!', 'Ouste ! File, Rusty !'],
+  safe: ['Rusty ran home. The hens can go back to sleep.', 'Rusty est rentré chez lui. Les poules peuvent se rendormir.'],
+  feather: ['Rusty went home with a feather on his nose.', 'Rusty est rentré avec une plume sur le nez.'],
+  allShut: ['Rusty went home: the doors were shut.', 'Rusty est rentré : les portes étaient fermées.'],
+  atDoor: ['Rusty the fox is at the door!', 'Rusty le renard est à la porte !'],
+  inWay: ["Rusty's nose is in the way!", 'Le nez de Rusty est dans le passage !'],
+};
+const VISIT_PLOT = /^\d+$/.test(params.get('visit') || '') ? parseInt(params.get('visit'), 10) : undefined;
+const LANG = params.get('lang') === 'fr' ? 'fr' : 'en';
+const farmerBtn = document.getElementById('farmerbtn');
+let nightVisit = null;
+// the village as a grid for finding a way round: trees, bushes, rocks, buildings and props, pens and plots, the den, the
+// pond and the streams (except where a path crosses them, on the bridges); grown by about a fox's half width
+function buildNav() {
+  const c = V.bounds.corners, xs = c.map(p => p[0]), zs = c.map(p => p[2]);
+  const nav = new NavGrid(Math.min(...xs) - 2, Math.min(...zs) - 2, Math.max(...xs) + 2, Math.max(...zs) + 2, 0.25);
+  const GROW = 0.22, seg = (px, pz, a, b) => { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
+  const nearLine = (lines, px, pz, r) => lines.some(l => { for (let i = 1; i < l.length; i++) if (seg(px, pz, l[i - 1], l[i]) < r) return true; return false; });
+  for (const t of V.trees) nav.circle(t.pos[0], t.pos[2], 0.3 + GROW);
+  for (const b of V.bushes) nav.circle(b.pos[0], b.pos[2], 0.42 * (b.s || 1) + GROW);
+  for (const k of V.rocks) nav.circle(k.pos[0], k.pos[2], 0.17 * k.s * 1.2 + GROW);
+  const WALK = { bridge: 1, dock: 1, wheat_field: 1, mushrooms: 1 };
+  const box = new THREE.Box3(), wb = new THREE.Box3(), inv = new THREE.Matrix4();
+  for (const p of V.props) {
+    if (WALK[p.model] || !parts[p.model]) continue;
+    const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1);
+    box.setFromObject(parts[p.model]); wb.copy(box).applyMatrix4(m);
+    nav.box(inv.copy(m).invert(), box.min.clone().multiplyScalar(1), box.max, GROW / (p.s || 1), wb);
+  }
+  for (const pl of plots) {
+    if (pl.kind === 'lineup' || !pl.group) continue;
+    const frame = pl.frame || pl.group; frame.updateWorldMatrix(true, false);
+    const lo = pl.kind === 'coop' ? new THREE.Vector3(-1.66, 0, -0.81) : new THREE.Vector3(-1.56, 0, -1.3);
+    const hi = pl.kind === 'coop' ? new THREE.Vector3(1.81, 0, 2.55) : new THREE.Vector3(1.82, 0, 1.68);
+    wb.makeEmpty(); for (const x of [lo.x, hi.x]) for (const z of [lo.z, hi.z]) wb.expandByPoint(frame.localToWorld(new THREE.Vector3(x, 0, z)));
+    nav.box(inv.copy(frame.matrixWorld).invert(), lo, hi, GROW, wb);
+  }
+  nav.circle(FOX_DEN[0] - Math.sin(FOX_DEN[2]) * 0.08, FOX_DEN[1] - Math.cos(FOX_DEN[2]) * 0.08, 0.68 + GROW);
+  const P = V.pond, pu = new THREE.Vector2(P.axisU[0], P.axisU[2]), pv = new THREE.Vector2(P.axisV[0], P.axisV[2]), lu = pu.length() + 0.35, lv = pv.length() + 0.35;
+  pu.normalize(); pv.normalize();
+  nav.mark(P.center[0] - 6, P.center[2] - 6, P.center[0] + 6, P.center[2] + 6, (x, z) => { const dx = x - P.center[0], dz = z - P.center[2]; return ((dx * pu.x + dz * pu.y) / lu) ** 2 + ((dx * pv.x + dz * pv.y) / lv) ** 2 <= 1; });
+  for (const st of V.streams) {
+    const sx = st.map(p => p[0]), sz = st.map(p => p[2]), r = V.streamHalf + GROW;
+    nav.mark(Math.min(...sx) - r, Math.min(...sz) - r, Math.max(...sx) + r, Math.max(...sz) + r, (x, z) => nearLine([st], x, z, r) && !nearLine(V.paths, x, z, V.pathHalf * 0.9));
+  }
+  // the footbridges: rails and all are in the way, but a crossing links their two ends, walked straight along the middle
+  if (parts.bridge) {
+    box.setFromObject(parts.bridge);
+    for (const p of V.props) if (p.model === 'bridge') {
+      const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1); wb.copy(box).applyMatrix4(m);
+      nav.box(inv.copy(m).invert(), box.min, box.max, 0.05, wb);
+      const a = new THREE.Vector3(box.min.x - 0.32, 0, 0).applyMatrix4(m), b = new THREE.Vector3(box.max.x + 0.32, 0, 0).applyMatrix4(m);
+      const fa = nav.freeAt(a.x, a.z), fb = nav.freeAt(b.x, b.z);
+      if (fa && fb) nav.link(a.x, a.z, b.x, b.z); else console.warn('bridge end not free', p.pos, fa, fb);
+    }
+  }
+  return nav;
+}
+// the deck of the footbridges, arched: its height along the bridge, measured from the model (straight down at its middle)
+let BRIDGES = null;
+function bridgeDecks() {
+  if (BRIDGES || !parts.bridge) return BRIDGES || [];
+  const box = new THREE.Box3().setFromObject(parts.bridge), rc = new THREE.Raycaster(), prof = [], N = 24;
+  const meshes = meshesOf(parts.bridge);
+  for (let k = 0; k <= N; k++) {
+    const x = box.min.x + (box.max.x - box.min.x) * k / N;
+    rc.set(new THREE.Vector3(x, 3, 0), new THREE.Vector3(0, -1, 0));
+    const hit = rc.intersectObjects(meshes, false)[0]; prof.push(hit ? Math.max(0, hit.point.y) : 0);
+  }
+  BRIDGES = V.props.filter(p => p.model === 'bridge').map(p => {
+    const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1);
+    return { inv: m.clone().invert(), s: p.s || 1, x0: box.min.x, x1: box.max.x, half: box.max.z, prof, pos: p.pos };
+  });
+  return BRIDGES;
+}
+const deckV = new THREE.Vector3();
+// on a footbridge or stepping on or off it (tests)
+function onBridge(x, z) {
+  for (const B of bridgeDecks()) { deckV.set(x, 0, z).applyMatrix4(B.inv); if (deckV.x > B.x0 - 0.45 && deckV.x < B.x1 + 0.45 && Math.abs(deckV.z) < B.half + 0.1) return true; }
+  return false;
+}
+function groundY(x, z) {
+  for (const B of bridgeDecks()) {
+    if (Math.abs(x - B.pos[0]) > 1.5 || Math.abs(z - B.pos[2]) > 1.5) continue;
+    deckV.set(x, 0, z).applyMatrix4(B.inv);
+    if (deckV.x < B.x0 || deckV.x > B.x1 || Math.abs(deckV.z) > B.half) continue;
+    const u = (deckV.x - B.x0) / (B.x1 - B.x0) * (B.prof.length - 1), i = Math.min(B.prof.length - 2, Math.floor(u)), t = u - i;
+    return (B.prof[i] * (1 - t) + B.prof[i + 1] * t) * B.s;
+  }
+  return 0;
+}
+function buildNightVisit() {
+  const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
+  nightVisit = new NightVisit({
+    scene, fam: foxes, nav: buildNav(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
+    grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(41), penObstacles: PEN.obstacles, groundY,
+    busyPlot: p => inside.open && inside.plot === p,
+    toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),     // which way faces the player
+    // a first visit 2-4 minutes into a night, then every 15-30 minutes (automated tests only get one with ?visit)
+    firstIn: params.has('visit') ? 2.5 : navigator.webdriver ? Infinity : 120 + Math.random() * 120,
+    again: () => params.has('visit') ? 25 : navigator.webdriver ? Infinity : 900 + Math.random() * 900,
+    say(text, at, secs) { tag.textContent = text; tagBird = null; tagSpot.copy(at); tag.classList.add('on'); fieldTag = secs; },
+    hint,
+  });
+  const go = nightVisit.start.bind(nightVisit);
+  nightVisit.start = (i) => {               // ?visit: look at the coop he's going to
+    const ok = go(i);
+    if (ok && params.has('visit') && !inside.open) { const c = nightVisit.target.frame.getWorldPosition(new THREE.Vector3()); view.target.set(c.x - 0.6, 0, c.z + 0.2); view.size = 4.6; clampView(); applyGrass(); placeCamera(); }
+    return ok;
+  };
+  if (farmerBtn) { farmerBtn.textContent = nightVisit.T('send'); farmerBtn.addEventListener('click', () => { nightVisit.sendFarmer(); wake(800); }); }
+}
 function tickFoxes(dt) {
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
   if (foxLineup) foxLineup.update(dt);
-  const out = foxes.visible();
+  if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
+  const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
   if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
-  if (out && !foxHinted) { foxHinted = true; hint('The foxes are out playing in the meadow: tap "Foxes" at the top to watch them.'); }
+  if (foxBtn && foxBtn.classList.contains('alarm') !== prowl) { foxBtn.classList.toggle('alarm', prowl); foxBtn.textContent = prowl ? nightVisit.T('btnFox') : 'Foxes'; }
+  const send = !!(nightVisit && nightVisit.canSend());
+  if (farmerBtn && farmerBtn.hidden === send) farmerBtn.hidden = !send;
+  if (foxes.visible() && !foxHinted) { foxHinted = true; hint('The foxes are out playing in the meadow: tap "Foxes" at the top to watch them.'); }
 }
 
 // ------------------------------------------------------------------ the pop doors: shut at night once everyone's in, open in the morning
@@ -860,7 +990,8 @@ function tickDoors(dt, now = performance.now()) {
       if (d.s < 1) any = true;
       // the badge: a moon when everyone's in bed and the door is still open; a sun when it's shut and they're waiting to get up
       let kind = null;
-      if (d.goal === 1 && d.s >= 1 && evening() && p.birds.length && p.birds.every(b => b.asleep)) kind = 'moon';
+      if (nightVisit && nightVisit.active() && nightVisit.target === p) kind = null;           // Rusty's at this door: keep him in view
+      else if (d.goal === 1 && d.s >= 1 && evening() && p.birds.length && p.birds.every(b => b.asleep)) kind = 'moon';
       else if (d.goal === 0 && d.s <= 0 && p.birds.some(b => b.asleep && !b.nightNow())) kind = 'sun';
       if (kind && !d.badge) {
         BADGE_TEX = BADGE_TEX || badgeTextures();
@@ -890,7 +1021,8 @@ function doorWho(list) {
 function doorTap(p, at) {
   const d = p.door; if (!d) return;
   let msg;
-  if (d.goal === 0) {
+  if (d.goal === 1 && nightVisit && nightVisit.active() && nightVisit.target === p && nightVisit.lz != null) msg = nightVisit.T('inWay');
+  else if (d.goal === 0) {
     setDoor(p, true);
     msg = p.birds.some(b => b.asleep && !b.nightNow()) ? 'Good morning! Door open' : 'Door open';
   } else if (!evening()) msg = 'The door stays open in the daytime';
@@ -1752,6 +1884,10 @@ function insideFrameCamera() {
 function anyAsleep(p) { return p.kind === 'coop' && p.birds.some(b => b.asleep); }
 function openInside(plot) {
   if (inside.open || inside.busy) return;
+  if (nightVisit && nightVisit.active() && nightVisit.target === plot) {
+    const G = nestOf(plot); tag.textContent = nightVisit.T('atDoor'); tagBird = null; tag.classList.add('on'); fieldTag = 2.4;
+    tagSpot.set(G.pop[0], G.house + POP_H + 0.12, D2 + 0.1); plot.frame.localToWorld(tagSpot); return;
+  }
   if (!inside.scene) buildInside();
   inside.busy = true; inside.morning = false; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
   setTimeout(() => {
@@ -1985,7 +2121,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes, foxLineup: () => foxLineup,
+  foxes: () => foxes, foxLineup: () => foxLineup, visit: () => nightVisit, onBridge,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },

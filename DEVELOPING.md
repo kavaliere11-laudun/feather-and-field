@@ -103,15 +103,33 @@ npm install three@0.170.0 esbuild@0.24.0      # once
 ./withserver.sh node foxtest.mjs                # serves dist/ on :8770 for the length of one test
 ```
 
-- `web3d/src/main.js` (village, coops, birds' behaviour, day and night, inside view, doors, foxes' placement),
-  `birds.js` (bird painting, fur shells, rig, poses), `beasts.js` (foxes: fur, four-legged rig, play tasks, family schedule).
+If `npm install` can't reach the npm registry (a session whose network settings allow only GitHub), the same two
+versions can be had from GitHub, and the build comes out identical:
+
+```bash
+# three.js 0.170.0 = the r170 tag (only the folders the build needs)
+git clone --depth 1 --branch r170 --filter=blob:none --sparse https://github.com/mrdoob/three.js ../vendor/three-r170
+(cd ../vendor/three-r170 && git sparse-checkout set --no-cone /package.json /build/ /src/ /examples/jsm/)
+# esbuild 0.24.0 built from source with Go (its one library from GitHub's mirror of golang.org/x/sys)
+git clone --depth 1 --branch v0.24.0 https://github.com/evanw/esbuild ../vendor/esbuild-0.24.0
+git init -q ../vendor/sys && (cd ../vendor/sys && git remote add origin https://github.com/golang/sys && git fetch -q --filter=blob:none origin master && git checkout -q c0bba94af5f8)
+(cd ../vendor/esbuild-0.24.0 && go mod edit -replace golang.org/x/sys=../sys && GOFLAGS=-mod=mod GOPROXY=off GOSUMDB=off go build -o esbuild ./cmd/esbuild)
+mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/three && ln -sfn "$PWD/../vendor/esbuild-0.24.0/esbuild" node_modules/.bin/esbuild
+```
+
+(A newer esbuild won't do: 0.25 and later refuse the build's `safari14` target for destructuring.)
+
+- `web3d/src/main.js` (village, coops, birds' behaviour, day and night, inside view, doors, foxes' placement, the night
+  visit's wiring), `birds.js` (bird painting, fur shells, rig, poses), `beasts.js` (foxes: fur, four-legged rig, play tasks,
+  family schedule), `nightvisit.js` (the fox's night visit: the village grid and ways round, Rusty at the coop, the
+  feathers, the farmer's torch).
 - Models in `web3d/models/` come from the Blender scripts in `stylized/` (in the original workspace this folder was the
   scratchpad's `sty/`): `export_village.py`, `export_coops.py`, `export_birds.py`, `export_interiors.py`, `export_beasts.py`,
   `export_web.py`. Run them with the `bl` venv (`bl/bin/python stylized/export_beasts.py web3d/models`).
 - Test page options: `?time=HH:MM`, `?daylapse=N` (a day in N minutes), `?coops=N`, `?q=0..3`, `?details`, `?lineup`,
-  `?lineup=foxes`, `?foxes`.
-- Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `doors.mjs`,
-  `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
+  `?lineup=foxes`, `?foxes`, `?visit` (the fox's night visit now, at 23:30), `?visit=N` (to coop N), `?lang=fr`.
+- Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `visittest.mjs`,
+  `doors.mjs`, `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
 - Deploy: build, then in a clone of `main` replace the `3d/` folder with `web3d/dist/.`, commit and push. The 2D release above
   wipes `main`, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game.
 - `stylized/extras/`: small helper scripts kept for reference (farmer map sprites, the Silkie hair tile, face sheets).

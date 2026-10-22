@@ -498,3 +498,47 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   for bodies through each other or through the den, a bush or a trunk, the button, a tap, home again, in at night, no
   page errors), `foxline.mjs [out] [hour]` (the line-up and close-ups), `foxpose.mjs [out] [fox] [heading]` (every pose close up), `foxshot.mjs`, `foxclip.mjs SECONDS FPS
   OUT [size]` (frames following the family). The page has `__farm.foxes()`.
+
+## The fox's night visit (22 Oct, the next piece in Audrey's order: "the fox's night visit to a coop (a coop left open is the one it goes for) and sending the farmer when you see him")
+
+- Late at night (23:00-4:30) Rusty slips out of the den alone (`src/nightvisit.js`, `NightVisit`; the family's `nextTask`
+  and `tapped` hand him over while he's out) and trots off to a coop whose birds are all in bed: one with its pop door
+  left open if there is one (nearer ones likelier), otherwise a shut one. In the test page: a first visit 2-4 minutes
+  into a night, then every 15-30 minutes; `?visit` starts one at once (at 23:30 unless `?time` says) and another 25 s
+  after each, `?visit=N` sends him to coop N; automated tests only get one with `?visit`. How often, and what a fright
+  does to the hens, join the game with step 4.
+- The way there (`NavGrid`, 25 cm cells over the village, A* then straightened with a margin either side): round tree
+  trunks, bushes, rocks, every prop and building (by its model's box, not the bridges, dock, wheat field or mushrooms),
+  every pen and plot, the den, the pond and the streams. The footbridges are crossings: their rails block, and a link
+  joins their two ends, so he lines up and walks straight along the middle, rising and falling with the arched deck
+  (`groundY`, the deck's height measured from the bridge model). He trots, and slinks low and slow for his last 3 m.
+- At the pen he leaps the fence from whichever side is quickest to reach (left, right or front: a crouch, a spring, a
+  soft landing), crosses the yard round the feeder, water, hay and anything in front of the house (a small grid in the
+  pen's own frame, `penPath`), and creeps up the ramp (lifted to its height and tipped to its slope, `lean`) until his
+  nose is at the pop door. The door's moon badge hides while he's there, so he stays in view.
+  - Door open: a sniff and a hopeful wag, then the hens' flurry: feathers in the breed's colour burst out of the pop door
+    and the nest window and flutter down, "!" marks over the house, "Squawk! Squawk!"; a peck on the nose (a little star),
+    he hops back down the ramp, turns round to face you and sneezes, a feather stuck on his nose, sits puzzled, tries once
+    more, gets pecked again and trots home (over the fence, along his way, into the den).
+  - Door shut: he sniffs along it, scratches at it ("The door is shut!"), sits back puzzled with a "?" and tries one more
+    open coop if there is one, or goes home.
+  - The fox never harms a hen. While he's on the ramp the door can't be shut on his nose ("Rusty's nose is in the way!"),
+    and the coop he's visiting can't be gone into ("Rusty the fox is at the door!").
+- While he's out the "Foxes" button turns red, "Fox!", and takes the view to him, and "Send the farmer" shows at the
+  bottom. The farmer himself comes later (with the farmer piece), so for now it's his torch you see in the dark (`Torch`):
+  a glow bobbing at hand height down the paths from the farmhouse at 2.1 m/s (the same grid finds his way), its beam a soft
+  fan on the ground swinging with his steps. About 3 m from Rusty with a clear line, it shines on him: "Shoo! Off you go,
+  Rusty!", a "!" over Rusty, a jump of surprise (on the ramp he slides down first), and he runs home (a trot round sharp
+  bends, so he doesn't swing wide); the torch goes back to the farmhouse and fades. Hints: "Rusty the fox has slipped
+  out of his den…", "The farmer is on his way with his torch…", and when he's home "Rusty ran home. The hens can go back
+  to sleep." / "Rusty went home with a feather on his nose." / "Rusty went home: the doors were shut."
+- Texts: English, and French with `?lang=fr` (only this visit's texts so far; the rest of the page is still English until
+  step 4).
+- Tests: `visittest.mjs` (an open door at coop 5: there, pecked twice, home; shut doors: scratched, home; the farmer sent:
+  shooed, home, the torch gone; a visit to each of the 10 coops with the farmer sent on half of them at different
+  moments, on the way, at the door and on the ramp; every half second his way is checked against the grid (bridges
+  allowed) and, in the pen, against the feeder, water and hay; the buttons; no visit by day; no page errors),
+  `visitclip.mjs PLOT SECONDS FPS OUT [size] [farmerAt] [shut]` (frames following him), `visitshot.mjs OUT [plot]`
+  (pictures: the feather, the shoo, a shut door; `LANG=fr`), `visitvideo.mjs OUT [plot] [fps]` (the video: out of the
+  den, a cut to the coop, the farmer tapped; `OUT_taps.json` says where the tap was). The page has `__farm.visit()`
+  (`start(plot)`, `sendFarmer()`, `log`) and `__farm.onBridge(x, z)`.
