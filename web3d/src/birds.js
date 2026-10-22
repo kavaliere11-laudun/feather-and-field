@@ -139,6 +139,35 @@ function chickColour(S, legHex, beakHex, reg, x, y, z, hw, top, out) {
   return out.multiplyScalar(0.86 + 0.14 * smooth(0.2, 0.7, h) + (n - 0.5) * 0.06);
 }
 
+// the eyes, for shutting them in sleep: each vertex of an eyeball, pupil or catch-light (unpainted, on the head, amber, black or
+// white) gets its eye's centre (x, y, z) and 1 (an amber eye in a ring of lid) or 2 (a bead eye); the rest 0. Asleep, an amber
+// eye becomes a small dome of red lid inside the ring, and a bead eye sinks into the head: shut eyes
+function eyeSpots(src, base, k, paint, si, sw) {
+  const n = src.attributes.position.count, pos = src.attributes.position.array, out = new Float32Array(n * 4);
+  const kind = new Int8Array(n), sum = { 1: [0, 0, 0, 0], [-1]: [0, 0, 0, 0] }, dark = { 1: [0, 0, 0, 0], [-1]: [0, 0, 0, 0] };
+  const cs = base.itemSize;
+  for (let i = 0; i < n; i++) {
+    if (paint && paint.array[i]) continue;
+    let hw = 0;
+    for (let j = 0; j < 4; j++) if (si.array[i * 4 + j] === 2) hw += sw.array[i * 4 + j] / (sw.normalized ? 255 : 1);
+    if (hw < 0.8) continue;
+    const r = base.array[i * cs] * k, gg = base.array[i * cs + 1] * k, b = base.array[i * cs + 2] * k;
+    const hi = Math.max(r, gg, b), lo = Math.min(r, gg, b);
+    const t = hi < 0.02 ? 2 : lo > 0.75 ? 3 : (r > 0.3 && gg / r > 0.2 && gg / r < 0.45 && b / r < 0.12) ? 1 : 0;     // pupil, glint, iris
+    if (!t) continue;
+    kind[i] = t;
+    const sd = pos[i * 3] >= 0 ? 1 : -1, acc = t === 1 ? sum[sd] : dark[sd];
+    acc[0] += pos[i * 3]; acc[1] += pos[i * 3 + 1]; acc[2] += pos[i * 3 + 2]; acc[3]++;
+  }
+  for (let i = 0; i < n; i++) {
+    if (!kind[i]) continue;
+    const sd = pos[i * 3] >= 0 ? 1 : -1, c = sum[sd][3] ? sum[sd] : dark[sd];        // the eyeball's middle (bead eyes: the bead's)
+    if (!c[3]) continue;
+    out[i * 4] = c[0] / c[3]; out[i * 4 + 1] = c[1] / c[3]; out[i * 4 + 2] = c[2] / c[3]; out[i * 4 + 3] = sum[sd][3] ? 1 : 2;
+  }
+  return out;
+}
+
 // the geometry of one model in one breed's (or Silkie colour's) paint; shared by every bird that looks the same
 export function paintedGeometry(model, breed, colour) {
   const M = MODELS[model];
@@ -194,6 +223,7 @@ export function paintedGeometry(model, breed, colour) {
     for (let i = 0; i < n; i++) if (paint.array[i] === R.wing) fuv[i * 3 + 2] = 0.02 + 0.98 * (z1 - pos[i * 3 + 2]) / Math.max(1e-4, z1 - z0);
   }
   g.setAttribute('featherUV', new THREE.BufferAttribute(fuv, 3));
+  g.setAttribute('eyeAt', new THREE.BufferAttribute(eyeSpots(src, base, k, paint, si, sw), 4));
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
   const fur = furOf(model, breed);
@@ -246,11 +276,12 @@ function addFur(g, src, spec, headc) {
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
   const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array, FU = A('featherUV').array;
   const fp = new Float32Array(total * 4), fm = new Float32Array(total), fu = new Float32Array(total * 3);
+  const EA = A('eyeAt').array, ea = new Float32Array(total * 4);
   const copy = (dst, from) => {
     pos.set(P.subarray(from * 3, from * 3 + 3), dst * 3); nrm.set(N.subarray(from * 3, from * 3 + 3), dst * 3); col.set(Cc.subarray(from * 3, from * 3 + 3), dst * 3);
     si.set(SI.subarray(from * 4, from * 4 + 4), dst * 4); sw.set(SW.subarray(from * 4, from * 4 + 4), dst * 4); furLen[dst] = len[from];
     fs[dst] = FS[from]; fh[dst] = FH[from]; fp.set(FP.subarray(from * 4, from * 4 + 4), dst * 4); fm[dst] = FM[from];
-    fu.set(FU.subarray(from * 3, from * 3 + 3), dst * 3);
+    fu.set(FU.subarray(from * 3, from * 3 + 3), dst * 3); ea.set(EA.subarray(from * 4, from * 4 + 4), dst * 4);
   };
   for (let i = 0; i < n; i++) copy(i, i);
   for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
@@ -267,7 +298,7 @@ function addFur(g, src, spec, headc) {
   f.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); f.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
   f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 4));
   f.setAttribute('featherPattern', new THREE.BufferAttribute(fp, 4)); f.setAttribute('featherMode', new THREE.BufferAttribute(fm, 1));
-  f.setAttribute('featherUV', new THREE.BufferAttribute(fu, 3));
+  f.setAttribute('featherUV', new THREE.BufferAttribute(fu, 3)); f.setAttribute('eyeAt', new THREE.BufferAttribute(ea, 4));
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
   f.userData.fur = { base: idx.length, shell: furTris.length, shells: K, droop: spec.droop };
@@ -285,6 +316,7 @@ export function setSoftFur(on) {
   BIRD_MAT.alphaToCoverage = soft; BIRD_MAT.defines = soft ? { SOFT_FUR: '' } : {}; furLook.cut.value = soft ? 0.04 : 0.45;
   BIRD_MAT.needsUpdate = true;
   for (const m of INDOOR) syncIndoor(m);
+  syncSleep();
 }
 // a bird inside a house (a hen going in to lay) wears her own copy of the material, which shades whatever part of her is
 // inside the house's box darker the deeper in it is: she goes into the shadow of the pop door, sits in the half light of the
@@ -292,7 +324,13 @@ export function setSoftFur(on) {
 const INDOOR = new Set();
 // the page's own change to every material (the night colours): applied to the birds' material and to any made later
 let materialHook = null;
-export function setMaterialHook(f) { materialHook = f; f(BIRD_MAT); for (const m of INDOOR) f(m); }
+export function setMaterialHook(f) { materialHook = f; f(BIRD_MAT); for (const m of INDOOR) f(m); if (SLEEP_MAT) f(SLEEP_MAT); }
+// asleep (inside a coop at night): the same, with the eyes shut
+let SLEEP_MAT = null;
+function syncSleep() {
+  if (!SLEEP_MAT) return;
+  SLEEP_MAT.alphaToCoverage = BIRD_MAT.alphaToCoverage; SLEEP_MAT.defines = Object.assign({}, BIRD_MAT.defines, { EYES_SHUT: '' }); SLEEP_MAT.needsUpdate = true;
+}
 function syncIndoor(m) {
   m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { INDOOR: '' }); m.needsUpdate = true;
 }
@@ -322,7 +360,9 @@ function birdMaterial(indoor) {
     sh.uniforms.furDensity = furLook.density; sh.uniforms.furCut = furLook.cut; sh.uniforms.hairTex = furLook.tex; sh.uniforms.furSpan = furLook.span;
     if (inU) Object.assign(sh.uniforms, inU);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;\n#ifdef INDOOR\nvarying vec3 vWorldIn;\n#endif')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef EYES_SHUT\nif (eyeAt.w > 0.5 && dot(eyeAt.xyz, eyeAt.xyz) > 1e-8) transformed = mix(transformed, eyeAt.xyz, eyeAt.w > 1.5 ? 0.94 : 0.2);\n#endif')
+      .replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef EYES_SHUT\nif (eyeAt.w > 0.5 && eyeAt.w < 1.5 && dot(eyeAt.xyz, eyeAt.xyz) > 1e-8) vColor.rgb = vec3(0.42, 0.075, 0.055);\n#endif')
+      .replace('#include <common>', '#include <common>\n#ifdef EYES_SHUT\nattribute vec4 eyeAt;\n#endif\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;\n#ifdef INDOOR\nvarying vec3 vWorldIn;\n#endif')
       .replace('#include <project_vertex>', '#include <project_vertex>\n#ifdef INDOOR\nvWorldIn = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#endif')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
         // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
@@ -623,6 +663,14 @@ export class Rig {
     }
     const m = box ? this.inMat : BIRD_MAT;
     for (const me of [this.mesh, this.lo]) if (me) me.material = m;
+    this.shut = false;
+  }
+  // eyes shut (asleep) or open again
+  sleepy(on) {
+    if (!!on === !!this.shut) return;
+    if (on && !SLEEP_MAT) { SLEEP_MAT = birdMaterial(false); if (materialHook) materialHook(SLEEP_MAT); syncSleep(); }
+    this.shut = !!on;
+    for (const me of [this.mesh, this.lo]) if (me) me.material = on ? SLEEP_MAT : BIRD_MAT;
   }
   // pose: walk (phase, amount), peck 0..1, look (yaw, tilt), flap 0..1 (+ beat), crow 0..1, sit 0..1, kick 0..1 (scratching, one
   // leg), hopT (0..1 through a hop, -1 when not hopping), turn (rad/s), ruffle 0..1 (a feather shake), dt
@@ -640,18 +688,19 @@ export class Rig {
     const sg = s.sing || 0, ck = s.cluck || 0, kw = s.kawk || 0, pr = s.proud || 0, bd = s.brood || 0;     // brood: settled low on a nest, neck drawn in
     const dk = s.duck || 0;                  // ducking through a little door: crouched and level, neck stretched forward, head low, tail down
     const st = s.stretch || 0;               // leaping through the nest window: long and flat, head out in front and low, tail pressed down
-    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk - 0.02 * sz * st;
+    const sl = s.sleep || 0;                 // asleep on the perch: fluffed up, breathing slowly, head turned back and tucked into her back feathers
+    body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk - 0.02 * sz * st + 0.004 * sz * sl * Math.sin(s.t * 1.7);
     body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise * (1 - st) + 0.12 * H.squash
                       - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr + 0.12 * dk,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
-    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk,
-                      s.lookYaw * (1 - s.peck) + 0.35 * rf * Math.sin(s.t * 38 + 1),
+    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk + 0.45 * sl,
+                      s.lookYaw * (1 - s.peck) + 0.35 * rf * Math.sin(s.t * 38 + 1) + 2.5 * sl,
                       s.lookTilt * (1 - s.peck) + s.crow * 0.06 * Math.sin(s.t * 40));
     // walking, the head holds still in the air while the body passes under it, then darts forward: the chicken head-bob
     const u = ((ph / Math.PI) % 1 + 1) % 1, hold = 0.68, amp = 0.03 * sz;
     const hb = u < hold ? 0.5 - u / hold : -0.5 + smooth(0, 1, (u - hold) / (1 - hold));
-    head.position.z += w * hb * amp + 0.016 * sz * ck + 0.075 * sz * dk + 0.08 * sz * st;
-    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.08 * sz * bd - 0.1 * sz * dk - 0.15 * sz * st;
+    head.position.z += w * hb * amp + 0.016 * sz * ck + 0.075 * sz * dk + 0.08 * sz * st - 0.07 * sz * sl;
+    head.position.y += 0.014 * sz * kw + 0.008 * sz * pr - 0.08 * sz * bd - 0.1 * sz * dk - 0.15 * sz * st - 0.03 * sz * sl;
     head.position.y -= w * (u < hold ? 0 : Math.sin((u - hold) / (1 - hold) * Math.PI)) * 0.006 * sz;
     const f = s.flap * (0.55 + 0.45 * Math.sin(s.t * 28)) * 1.25 + s.crow * 0.15 + 0.3 * rf + 0.25 * H.rise + 0.16 * kw + 0.07 * pr;
     B.wingL.rotation.set(0, 0, f + s.sit * 0.05); B.wingR.rotation.set(0, 0, -f - s.sit * 0.05);

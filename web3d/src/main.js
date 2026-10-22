@@ -140,6 +140,7 @@ function applyDaylight(h) {
   hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7);
   scene.background.copy(A[8]).lerp(B[8], u);
   DAY.glow.value = mix(9); lampPools.update();
+  GRADE.value = DAY.glow.value * (inside.open ? 0.22 : 0.6);          // inside, by the lantern, colours keep more of themselves
   // where the light comes from: its height and how far round from midday
   const el = mix(3) * DEG, turn = mix(4) * DEG;
   _dir.copy(NOON_FROM).applyAxisAngle(new THREE.Vector3(0, 1, 0), turn).multiplyScalar(Math.cos(el)); _dir.y = Math.sin(el);
@@ -167,17 +168,17 @@ function lightUp(mat) {
 }
 // night colours: by moonlight the eye sees little colour, so as night falls every material greys towards a moonlit blue
 // (the lamps and lit windows keep their warm colour). One line added to each material's shader, after its own changes.
-const NIGHT_TINT = { value: new THREE.Vector3(0.78, 0.92, 1.32) };
+const NIGHT_TINT = { value: new THREE.Vector3(0.78, 0.92, 1.32) }, GRADE = { value: 0 };     // how far (0-1)
 function nightGrade(mat) {
   if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'window') return;
   mat.userData.graded = true;
   const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey;
   mat.onBeforeCompile = (sh, r) => {
     if (prev) prev.call(mat, sh, r);
-    sh.uniforms.dayNight = DAY.glow; sh.uniforms.nightTint = NIGHT_TINT;
+    sh.uniforms.dayNight = GRADE; sh.uniforms.nightTint = NIGHT_TINT;
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float dayNight;\nuniform vec3 nightTint;')
-      .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n{ float nl = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor.rgb = mix(gl_FragColor.rgb, nl * nightTint, 0.6 * dayNight); }');
+      .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n{ float nl = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor.rgb = mix(gl_FragColor.rgb, nl * nightTint, dayNight); }');
   };
   if (prevKey && prevKey !== THREE.Material.prototype.customProgramCacheKey) mat.customProgramCacheKey = () => prevKey.call(mat) + '+night';
   mat.needsUpdate = true;
@@ -211,6 +212,7 @@ function resize() {
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   placeCamera();
   furDetail();
+  if (inside.open) insideFrameCamera();
   wake(400);
 }
 window.addEventListener('resize', resize);
@@ -284,14 +286,15 @@ const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
-    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture)]);
+    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
+  inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
   initFlock(flock, flockInfo);
-  for (const g of [farm, village, coopsGlb]) {
+  for (const g of [farm, village, coopsGlb, insideGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
@@ -312,6 +315,7 @@ async function start() {
   buildGrass();
   addLampPools();
   gradeScene(); setMaterialHook(nightGrade);           // the night colours, also for materials made later (a laying hen's own)
+  for (const k in parts) if (k.startsWith('inside_')) parts[k].traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); });
   applyDaylight(clockHour());
   const s = V.plots[0].pos;
   view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
@@ -1384,6 +1388,11 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointermove', e => {
   const p = pointers.get(e.pointerId); if (!p) return;
   const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (inside.open) {                                    // inside: a sideways drag looks along the room
+    if (drag && Math.hypot(p.x - p.x0, p.y - p.y0) > 8) drag.moved = true;
+    if (drag && drag.moved && pointers.size === 1 && inside.panMax > 0) { inside.pan -= dx * inside.mPerPx; insideFrameCamera(); }
+    wake(1000); return;
+  }
   if (pointers.size >= 2) {
     const s = spread(); if (pinch > 0 && s > 0) zoomBy(pinch / s); pinch = s;
   } else if (drag) {
@@ -1395,13 +1404,13 @@ canvas.addEventListener('pointermove', e => {
 function endPointer(e) {
   const p = pointers.get(e.pointerId); if (!p) return;
   pointers.delete(e.pointerId);
-  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) tapAt(e.clientX, e.clientY);
+  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : tapAt)(e.clientX, e.clientY);
   if (pointers.size < 2) pinch = 0;
   if (pointers.size === 0) drag = null;
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
-canvas.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0016))); wake(1000); }, { passive: false });
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (inside.open) { inside.pan += (e.deltaX || e.deltaY) * inside.mPerPx * 0.5; insideFrameCamera(); wake(1000); return; } zoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0016))); wake(1000); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
@@ -1445,8 +1454,15 @@ function tapAt(x, y) {
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
   if (!best) {
-    // a coop's nest box: collect the eggs
     const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hitP = new THREE.Vector3(), nb = new THREE.Box3();
+    // a coop whose birds are in bed: go inside and see them asleep
+    for (const p of livePlots()) {
+      if (!anyAsleep(p)) continue;
+      nb.min.set(-0.72, 0, -0.52); nb.max.set(0.72, 1.6, 0.6);
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
+      if (loc.intersectBox(nb, hitP)) { openInside(p); return; }
+    }
+    // a coop's nest box: collect the eggs
     for (const p of livePlots()) {
       if (!p.nest) continue;
       const G = nestOf(p), w = G.win;                       // the nest window (and a little round it)
@@ -1484,19 +1500,211 @@ function placeTag(dt) {
   if (!tagBird) {                               // the wheat field's label, over the field
     fieldTag -= dt;
     if (fieldTag <= 0) { tag.classList.remove('on'); return; }
-    v.copy(tagSpot).project(camera);
-    tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
+    v.copy(tagSpot).project(inside.open ? inside.camera : camera);
+    moveTag(v);
     return;
   }
   fieldTag = 0;
   tagLeft -= dt;
   if (tagLeft <= 0) { tag.classList.remove('on'); tagBird = null; return; }
-  tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(camera);
-  tag.style.transform = `translate(${(v.x + 1) / 2 * canvas.clientWidth}px, ${(1 - v.y) / 2 * canvas.clientHeight}px) translate(-50%, -100%)`;
+  tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(inside.open ? inside.camera : camera);
+  moveTag(v);
+}
+function moveTag(v) {          // v: the spot on screen (-1..1) the label stands on; kept on screen, and inside never over the title
+  const W = canvas.clientWidth, hw = tag.offsetWidth / 2 + 6;
+  let y = (1 - v.y) / 2 * canvas.clientHeight, x = (v.x + 1) / 2 * W;
+  if (inside.open) y = Math.max(y, insideEls.title.getBoundingClientRect().bottom + 8 + tag.offsetHeight);
+  if (W > 2 * hw) x = Math.max(hw, Math.min(W - hw, x));
+  tag.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
 }
 
 const hintEl = document.getElementById('hint');
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); setTimeout(() => hintEl.classList.remove('on'), 4500); }
+
+// ------------------------------------------------------------------ inside a coop at night
+// Tap a coop while its birds are in bed and you're inside (a little room in the coop's own style): the hens and the rooster
+// asleep in a row on the perch, heads tucked in, the chicks curled up in the straw by the nest boxes, a lantern turned low,
+// the night sky in the window, the odd "z" floating up. Tap a bird and she wakes for a cuddle (hearts), then dozes off
+// again; tap the nest boxes to collect the eggs. "Back to the farm", or the time to get up, brings you out again.
+const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop' };
+const inside = { open: false, busy: false, plot: null, scene: null, camera: null, rooms: null, rooms3d: {}, birds: [], saved: [], eggs: null, fx: [], zIn: 0.6, pan: 0, panMax: 0, mPerPx: 0.002, hinted: false };
+const insideEls = { top: document.getElementById('inside-top'), title: document.getElementById('inside-title'), back: document.getElementById('inside-back'), fade: document.getElementById('fade') };
+insideEls.back.addEventListener('click', () => closeInside());
+function fxTexture(draw) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'); draw(c);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function buildInside() {
+  const sc = new THREE.Scene(); sc.background = new THREE.Color('#121826');
+  inside.hemi = new THREE.HemisphereLight(new THREE.Color('#566aa0'), new THREE.Color('#2e2418'), 1.25);
+  inside.lamp = new THREE.PointLight('#ffb35e', 2.6, 3.4, 1.3);
+  inside.moon = new THREE.DirectionalLight('#9fb6ff', 1.1);
+  sc.add(inside.hemi, inside.lamp, inside.moon, inside.moon.target);
+  inside.group = new THREE.Group(); sc.add(inside.group);
+  inside.scene = sc;
+  inside.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 30);
+  inside.zTex = fxTexture(c => { c.font = 'bold 50px Fredoka, Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = 'rgba(30,40,70,0.9)'; c.strokeText('z', 32, 34); c.fillStyle = '#e8eeff'; c.fillText('z', 32, 34); });
+  inside.heartTex = fxTexture(c => { c.fillStyle = '#ff6b8a'; c.beginPath(); c.moveTo(32, 54); c.bezierCurveTo(4, 34, 10, 8, 32, 22); c.bezierCurveTo(54, 8, 60, 34, 32, 54); c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff4f6'; c.stroke(); });
+}
+// The camera: the room's full height; across, the whole room on a wide screen, about a metre of it on a phone held upright,
+// where a sideways drag looks along it (from the perch to the nest boxes)
+function insideFrameCamera() {
+  const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight, a = w / Math.max(1, h);
+  const cam = inside.camera, half = Math.tan(cam.fov / 2 * DEG);
+  const whole = Math.max(0.81 / (half * a), 0.58 / half);
+  const d = Math.min(whole, Math.max(0.52 / (half * a), 0.58 / half));
+  inside.panMax = Math.max(0, 0.78 - (d - 0.45) * half * a);
+  inside.pan = Math.max(-inside.panMax, Math.min(inside.panMax, inside.pan));
+  const el = Math.min(13 * DEG, Math.asin(Math.min(1, 0.42 / d)));             // looking down a little, from under the ceiling
+  const look = new THREE.Vector3(inside.pan, 0.5, -0.06), dir = new THREE.Vector3(0, Math.sin(el), Math.cos(el));
+  cam.aspect = a; cam.position.copy(look).addScaledVector(dir, d); cam.lookAt(look); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  inside.dist = d; inside.mPerPx = 2 * d * half / h;
+  // fur and fluff as fine as the birds are big on screen here
+  setFar(false); setFurDetail(renderer.getPixelRatio() * h / (2 * d * half), QUALITY[q].fur);
+}
+function anyAsleep(p) { return p.kind === 'coop' && p.birds.some(b => b.asleep); }
+function openInside(plot) {
+  if (inside.open || inside.busy) return;
+  if (!inside.scene) buildInside();
+  inside.busy = true; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
+  setTimeout(() => {
+    const style = plot.breed, R = inside.rooms[style];
+    let room = inside.rooms3d[style];
+    if (!room) { room = part('inside_' + style); room.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } }); inside.rooms3d[style] = room; }
+    inside.group.add(room);
+    inside.lamp.position.set(...R.lamp).add(new THREE.Vector3(0, -0.05, 0.06));
+    inside.moon.position.set(R.window[0] - 1.5, R.window[1] + 0.9, R.window[2] + 0.4); inside.moon.target.position.set(0.1, 0.3, -0.1);
+    // the sleepers: up to three hens along the lower bar; the rooster and the other hens on the top bar in the gaps between
+    // them, so every one shows; anyone left over beds down in the straw in front; the chicks in their corner by the nest boxes
+    const sleepers = plot.birds.filter(b => b.asleep), adults = sleepers.filter(b => b.kind !== 'chick'), chicks = sleepers.filter(b => b.kind === 'chick');
+    const roo = adults.filter(b => b.kind === 'rooster'), hens = adults.filter(b => b.kind !== 'rooster');
+    const low = R.perches[0], high = R.perches[1], mid = (low.x0 + low.x1) / 2, gap = 0.29;
+    const lowBirds = hens.slice(0, 3), rest = [...roo, ...hens.slice(3)];
+    const c = lowBirds.length, gaps = c === 2 ? [0, -1, 1] : c === 0 ? [0, -1, 1, -2, 2] : [0.5, -0.5, 1.5, -1.5];
+    const highBirds = rest.slice(0, gaps.length - (c === 0 ? 2 : 0)), floor = rest.slice(highBirds.length);
+    const spots = [];
+    lowBirds.forEach((b, i) => spots.push([b, mid + (i - (c - 1) / 2) * gap, low.top, low.z]));
+    highBirds.forEach((b, i) => spots.push([b, Math.max(high.x0, Math.min(high.x1, mid + gaps[i] * gap)), high.top, high.z]));
+    floor.forEach((b, i) => spots.push([b, -0.24 + (i % 3) * 0.27, 0.03, 0.08 + Math.floor(i / 3) * 0.06]));
+    chicks.forEach((b, i) => spots.push([b, R.chicks[0] + (i - (chicks.length - 1) / 2) * 0.12, R.chicks[1] + 0.02, R.chicks[2] + (i % 2) * 0.05]));
+    inside.saved = []; inside.birds = [];
+    for (const [b, x, y, z] of spots) {
+      inside.saved.push({ b, parent: b.root.parent, pos: b.root.position.clone(), rot: b.root.rotation.y });
+      inside.group.add(b.root); b.root.position.set(x, y, z); b.root.rotation.y = (b.kind === 'chick' ? 0.4 * (b.r() - 0.5) : 0);
+      b.root.visible = true; b.rig.indoor(null); b.rig.sleepy(true); b.woken = 0;
+      const A = b.A; A.walk = 0; A.peck = 0; A.flap = 0; A.crow = 0; A.kick = 0; A.ruffle = 0; A.turn = 0; A.sing = 0; A.cluck = 0; A.kawk = 0;
+      A.proud = 0; A.duck = 0; A.stretch = 0; A.hopT = -1; A.sit = 1; A.brood = 1; A.sleep = 1; A.lookYaw = 0; A.lookTilt = 0;
+      inside.birds.push(b);
+    }
+    // the eggs in the nest boxes, three to a box
+    const n = Math.min(6, plot.nest.count);
+    if (!inside.eggs || inside.eggs.material !== plot.nest.eggs.material) {
+      if (inside.eggs) inside.eggs.removeFromParent();
+      inside.eggs = new THREE.InstancedMesh(EGG_GEO, plot.nest.eggs.material, 6); inside.group.add(inside.eggs);
+    }
+    const m = new THREE.Matrix4(), qn = new THREE.Quaternion(), e = new THREE.Euler();
+    for (let i = 0; i < n; i++) {
+      const box = R.nests[i % 2], k = Math.floor(i / 2);
+      m.compose(new THREE.Vector3(box[0] + (k - 1) * 0.055, box[1] + 0.035, box[2] + (k % 2 ? 0.03 : -0.02)), qn.setFromEuler(e.set(1.25, i * 1.7, 0.2)), new THREE.Vector3(0.05, 0.064, 0.05));
+      inside.eggs.setMatrixAt(i, m);
+    }
+    inside.eggs.count = n; inside.eggs.instanceMatrix.needsUpdate = true; inside.eggs.computeBoundingSphere();
+    inside.plot = plot; inside.open = true; inside.busy = false;
+    inside.pan = -0.08; insideFrameCamera();
+    insideEls.title.textContent = `Inside the ${STYLE_NAMES[style]} · ${sleepers.length} asleep`;
+    insideEls.top.hidden = false; insideEls.back.hidden = false; document.body.classList.add('inside');
+    applyDaylight(clockHour());
+    insideEls.fade.classList.remove('on'); wake(800);
+    if (inside.panMax > 0.05 && !inside.hinted) { inside.hinted = true; hint('Drag sideways to look around the coop'); }
+  }, 300);
+}
+function closeInside(note) {
+  if (!inside.open || inside.busy) return;
+  inside.busy = true; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
+  setTimeout(() => {
+    for (const s of inside.saved) {
+      s.parent.add(s.b.root); s.b.root.position.copy(s.pos); s.b.root.rotation.y = s.rot;
+      s.b.root.visible = !s.b.asleep; s.b.A.sleep = 0; s.b.rig.sleepy(false);
+    }
+    for (const f of inside.fx) f.sprite.removeFromParent();
+    inside.fx = []; inside.birds = []; inside.saved = [];
+    inside.group.clear(); inside.eggs = null;
+    showEggs(inside.plot);
+    inside.open = false; inside.busy = false; inside.plot = null;
+    insideEls.top.hidden = true; insideEls.back.hidden = true; document.body.classList.remove('inside');
+    applyGrass(); placeCamera(); applyDaylight(clockHour());
+    insideEls.fade.classList.remove('on'); wake(800);
+    if (note) hint(note);
+  }, 300);
+}
+function insideFx(tex, at, life, size, rise, drift) {
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sp.position.copy(at); sp.scale.setScalar(0.001); sp.renderOrder = 3; inside.scene.add(sp);
+  inside.fx.push({ sprite: sp, t: 0, life, size, rise, drift });
+}
+function updateInside(dt) {
+  if (inside.birds.length && inside.birds.every(b => !b.nightNow())) { closeInside('Good morning! Everyone is getting up.'); return; }
+  const v = new THREE.Vector3();
+  for (const b of inside.birds) {
+    const A = b.A, awake = b.woken > 0;
+    b.woken -= dt;
+    A.t += dt; A.dt = dt;
+    A.sleep += ((awake ? 0 : 1) - A.sleep) * Math.min(1, dt * (awake ? 5 : 1.2));
+    A.brood += ((awake ? 0.3 : 1) - A.brood) * Math.min(1, dt * 3);
+    A.ruffle = awake && b.woken > 1.6 ? 0.35 * Math.sin((2.2 - b.woken) / 0.6 * Math.PI) : 0;
+    A.lookYaw = awake ? 0.25 * Math.sin(A.t * 1.3) : 0;
+    if (awake ? A.sleep < 0.6 : A.sleep > 0.75) b.rig.sleepy(!awake);           // eyes open as she wakes, shut as she dozes off
+    b.rig.pose(A);
+  }
+  // now and then a "z" floats up from a sleeper
+  inside.zIn -= dt;
+  if (inside.zIn <= 0 && inside.birds.length) {
+    inside.zIn = 0.7 + Math.random() * 0.9;
+    const sleepers = inside.birds.filter(b => b.woken <= 0);
+    if (sleepers.length) {
+      const b = sleepers[Math.floor(Math.random() * sleepers.length)];
+      b.root.getWorldPosition(v); v.y += b.rig.scale * (b.kind === 'chick' ? 0.7 : 0.62); v.x += 0.04;
+      insideFx(inside.zTex, v, 2.4, b.kind === 'chick' ? 0.06 : 0.085, 0.16, 0.08);
+    }
+  }
+  for (let i = inside.fx.length - 1; i >= 0; i--) {
+    const f = inside.fx[i]; f.t += dt;
+    const u = f.t / f.life;
+    if (u >= 1) { f.sprite.removeFromParent(); inside.fx.splice(i, 1); continue; }
+    f.sprite.position.y += f.rise * dt / f.life * 1.6; f.sprite.position.x += Math.sin(f.t * 2.2) * f.drift * dt;
+    f.sprite.scale.setScalar(f.size * Math.min(1, u * 5) * (1 + 0.4 * u));
+    f.sprite.material.opacity = Math.min(1, (1 - u) * 2.5, (0.97 - f.sprite.position.y) / 0.12);       // gone before the ceiling
+  }
+}
+function insideTap(x, y) {
+  ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
+  ray.setFromCamera(ndc, inside.camera);
+  let best = null, bestD = Infinity;
+  const s = new THREE.Sphere(), w = new THREE.Vector3();
+  for (const b of inside.birds) {
+    b.root.getWorldPosition(w); s.center.set(w.x, w.y + b.hitY * 0.8, w.z); s.radius = b.hitR;
+    const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
+    if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
+  }
+  if (best) {                                             // a sleepy cuddle: she wakes, shakes her feathers, hearts, dozes off again
+    best.woken = 2.2;
+    const v = best.root.getWorldPosition(new THREE.Vector3()); v.y += best.rig.scale * 0.7;
+    for (let k = 0; k < 4; k++) setTimeout(() => inside.open && insideFx(inside.heartTex, v.clone().add(new THREE.Vector3((k - 1.5) * 0.05, 0, 0)), 1.6, 0.09, 0.28, 0.05), k * 180);
+    tagBird = best; tagLeft = 2.6; tag.textContent = best.label + ' · sleepy'; tag.classList.add('on');
+    return;
+  }
+  // the nest boxes: collect the eggs
+  const R = inside.rooms[inside.plot.breed], hitP = new THREE.Vector3(), box = new THREE.Box3();
+  for (const nb of R.nests) {
+    box.min.set(nb[0] - 0.12, nb[1] - 0.1, nb[2] - 0.2); box.max.set(nb[0] + 0.12, nb[1] + 0.22, nb[2] + 0.16);
+    if (!ray.ray.intersectBox(box, hitP)) continue;
+    const n = inside.plot.nest;
+    tag.textContent = n.count ? (n.count === 1 ? 'Collected 1 egg' : 'Collected ' + n.count + ' eggs') : 'No eggs here';
+    n.count = 0; if (inside.eggs) inside.eggs.count = 0;
+    tagBird = null; tagSpot.set(nb[0], nb[1] + 0.3, nb[2]); tag.classList.add('on'); fieldTag = 2.4;
+    return;
+  }
+}
 
 // ------------------------------------------------------------------ the loop: 30 frames a second when idle, 60 while touched
 let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false, paused = false;
@@ -1512,11 +1720,12 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  if (!frozen) { for (const p of livePlots()) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); }
+  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
-  renderer.render(scene, camera);
+  if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
+  else renderer.render(scene, camera);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
   // that were still smooth)
@@ -1581,6 +1790,8 @@ window.__farm = {
   nestOf, showEggs,
   // tests: set the hour (0-24) the light shows, or undefined for the clock again
   setHour: (h) => { DAY.override = h; DAY.shadowAt = 0; applyDaylight(clockHour()); }, day: DAY,
+  inside, openInside, closeInside, insideTap, drawInside: () => { updateInside(1 / 30); placeTag(1 / 30); renderer.render(inside.scene, inside.camera); },
+  stepInside: (dt, n) => { for (let k = 0; k < n && inside.open; k++) updateInside(dt); placeTag(dt * n); if (inside.open) renderer.render(inside.scene, inside.camera); },
 };
 start().catch(err => {
   console.error(err);

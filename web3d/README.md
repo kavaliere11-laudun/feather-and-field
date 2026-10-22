@@ -399,3 +399,27 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 
 - Live: the game's site, folder `3d/` (https://kavaliere11-laudun.github.io/feather-and-field/3d/). The game's normal deploy wipes the
   repo, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game itself.
+
+## Inside the coops at night (22 Oct, Audrey chose "Look inside sleeping coops", "Night activities", bedtime 22:00-22:45)
+
+- At night, tap a coop with birds in bed and you're inside: a little room in that coop's own style (`stylized/interiors.py`,
+  exported by `stylized/export_interiors.py` to `models/interiors.glb` and `interiors.json`): raw barn boards (Red Barn),
+  whitewash and oak beams (Thatched Cottage), stone (Stone Cottage), logs (Timber Lodge), plaster and red lacquer (Pagoda);
+  a plank or plastered ceiling on joists, a beam across the open front, floor boards under deep straw, a ladder perch with
+  two bars, two nest boxes, the chicks' hollow in the straw, the pop door shut, a moonlit window (round in the pagoda), a
+  galvanised feeder, a red drinker, a hay bale, and a lantern turned low hanging over the nest boxes. 6.8k-12.9k triangles each.
+- The birds: up to three hens along the lower bar and the rooster and the other hens on the top bar in the gaps between them,
+  so every one shows (any more bed down in the straw in front), the chicks curled up in their corner. Asleep: sitting low and
+  fluffed up, breathing slowly, head turned back into the back feathers (`sleep` in `Rig.pose`), eyes shut (`Rig.sleepy()`:
+  the sleepers wear a copy of the bird material with `#define EYES_SHUT`; each eye's vertices are found when a breed is
+  painted (`eyeSpots()`: unpainted, on the head, amber, black or white) and an amber eye becomes a small dome of red lid in
+  its ring, a bead eye sinks into the head). Now and then a "z" floats up.
+- Tap a bird and she wakes for a cuddle: eyes open, a shake of the feathers, little hearts, her name with "sleepy", then she
+  dozes off again. Tap a nest box to collect the eggs ("Collected 4 eggs"). On a phone held upright about a metre of the room
+  shows, so a sideways drag looks along it (from the perch to the nest boxes; a hint says so the first time); a wide screen
+  sees it all. "Back to the farm" (or the morning) brings you out; everyone is still in bed.
+- How: a separate scene and camera (`inside` in `src/main.js`: `openInside()`, `closeInside()`, `updateInside()`,
+  `insideTap()`, `insideFrameCamera()`); the birds are lent to it and given back. Labels stay on screen and clear of the title.
+- Tests: `insideshot.mjs [out] [hour]` (every coop: inside with everyone asleep, a cuddle, a drag to the nest boxes, eggs
+  collected, back out), `insidedbg.mjs COOP OUT [x y dist yaw]` (a close look), `insideclip.mjs PLOT FPS OUT` (frames of a
+  visit for a video).
