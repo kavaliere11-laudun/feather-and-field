@@ -131,16 +131,16 @@ def den():
     soil = mat('densoil', '#6f4d33', rough=0.95, var=0.12); dug = mat('dendug', '#8a6446', rough=0.95, var=0.1)
     turf = mat('denturf', '#5d8c3c', rough=0.9, var=0.1, hue_var=0.015); dark = mat('denhole', '#120c08', rough=1.0)
     root_m = mat('denroot', '#5b4330', rough=0.85, var=0.1); stone = mat('denstone', '#8f8a80', rough=0.85, var=0.1)
-    objs.append(sphere('dmound', 0.62, (-0.08, 0, -0.06), (1.25, 1.05, 0.62), m=soil, ico=3, disp=0.06, disp_scale=3.0, seed=5))
-    objs.append(sphere('dturf', 0.6, (-0.2, 0, 0.0), (1.12, 1.02, 0.58), m=turf, ico=3, disp=0.05, disp_scale=4.0, seed=6))
+    objs.append(sphere('dmound', 0.62, (-0.08, 0, -0.06), (1.25, 1.05, 0.72), m=soil, ico=3, disp=0.06, disp_scale=3.0, seed=5))
+    objs.append(sphere('dturf', 0.6, (-0.26, 0, 0.0), (1.08, 1.02, 0.66), m=turf, ico=3, disp=0.05, disp_scale=4.0, seed=6))
     # the entrance: a dark hollow in the bank's face, with a lip of earth
-    hole = sphere('dhole', 0.17, (0.53, 0, 0.13), (0.45, 1.2, 0.95), m=dark, seg=20, rings=12); objs.append(hole)
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.18, minor_radius=0.045, major_segments=20, minor_segments=8, location=(0.55, 0, 0.13), rotation=(0, math.radians(90), 0))
+    hole = sphere('dhole', 0.2, (0.56, 0, 0.15), (0.5, 1.2, 0.95), m=dark, seg=20, rings=12); objs.append(hole)
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.21, minor_radius=0.05, major_segments=20, minor_segments=8, location=(0.58, 0, 0.15), rotation=(0, math.radians(70), 0))
     lip = bpy.context.object; lip.scale = (1.0, 1.15, 0.9); setmat(lip, soil); objs.append(lip)
-    objs.append(sphere('dspoil', 0.4, (0.95, 0.02, -0.02), (1.1, 1.3, 0.16), m=dug, ico=3, disp=0.05, disp_scale=5.0, seed=7))
-    for k in range(3):                         # roots over the bank
-        a = math.radians(-40 + k * 40); r0 = Vector((-0.25 + 0.1 * k, math.sin(a) * 0.3, 0.33)); r1 = Vector((0.35 + 0.05 * k, math.sin(a) * 0.55, 0.05))
-        mid = (r0 + r1) / 2 + Vector((0, 0, 0.06))
+    objs.append(sphere('dspoil', 0.32, (0.92, 0.02, -0.02), (1.1, 1.3, 0.14), m=dug, ico=3, disp=0.05, disp_scale=5.0, seed=7))
+    for k in range(3):                         # roots over the bank, one arching over the entrance
+        a = math.radians(-40 + k * 40); r0 = Vector((-0.25 + 0.1 * k, math.sin(a) * 0.3, 0.42)); r1 = Vector((0.45 + 0.05 * k, math.sin(a) * 0.62, 0.04))
+        mid = (r0 + r1) / 2 + Vector((0.05, 0, 0.1))
         for (a_, b_) in ((r0, mid), (mid, r1)):
             d = b_ - a_; o = cyl('droot', 0.022 - 0.004 * k, d.length, tuple((a_ + b_) / 2), m=root_m, verts=8, r2=0.016 - 0.003 * k, bevel=0.0)
             o.rotation_euler = d.to_track_quat('Z', 'Y').to_euler(); objs.append(o)

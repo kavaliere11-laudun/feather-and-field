@@ -743,13 +743,14 @@ function tickNotes(dt) {
 // ------------------------------------------------------------------ the fox family: a den at the edge of the woods, a meadow to play in
 // (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
 // den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
-const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-6.12, -34.61, Math.atan2(-0.76, 0.65)];     // a clear meadow; the den, under the edge of the wood, faces it
+const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
 let foxes = null;
 const foxBtn = document.getElementById('foxbtn');
 function buildFoxes(joints) {
   if (parts.den) {
     const den = part('den'); den.position.set(FOX_DEN[0], 0, FOX_DEN[1]); den.rotation.y = FOX_DEN[2] - Math.PI / 2;
     still(den, true, true);
+    V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.0);     // no grass growing through it
   }
   foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
