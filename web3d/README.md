@@ -464,8 +464,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   pattern painted per vertex (darker back, white bib, belly, cheeks and tail tip, black socks, ear tips and ear backs).
   `models/fauna.glb`: the den (a grassy bank under the edge of the wood with a dark round entrance, a fan of dug earth,
   roots and stones).
-- `src/beasts.js`: the foxes wear the birds' fur (the same material and shell builder, `addFur`; body 2.4 cm, brush 5 cm,
-  face and legs short; the cubs fluffier). `Quad` poses a four-legged body from a few numbers: a trot (diagonal pairs)
+- `src/beasts.js`: the foxes wear the birds' fur (the same material and shell builder, `addFur`, 12 layers; body 3.4 cm,
+  brush 6.8 cm, face, ears and legs short; the cubs 2.7 cm and fluffier: less combed, longer underneath). `Quad` poses a four-legged body from a few numbers: a trot (diagonal pairs)
   blending into a bounding gallop, crouch, sit, lie (brush curled round), play bow, rearing up to box, the pounce in the
   air, nose-down in the grass, on its back kicking, a scratch, a shake, a head tilt, the brush on a spring.
 - The family (`FoxFamily`): Rusty (the dad), Fennel (the mum) and three cubs, Sorrel, Nutkin and Tumble. Every 10-20
@@ -477,6 +477,24 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   looking puzzled; he also plays dead on his back while the cubs bounce round him; Fennel sits and watches, grooms, lies
   down, and pounces now and then. Tap a fox: its name, a hop and a play bow. "Foxes" at the top (shown while they're
   out) takes the view to them. `?foxes` brings them out at once and keeps them out. At night they stay in (for now).
-- Tests: `foxtest.mjs` (out with ?foxes, all five in the meadow, a minute of play, the button, a tap, home again, in at
-  night, no page errors), `foxpose.mjs [out] [fox] [heading]` (every pose close up), `foxshot.mjs`, `foxclip.mjs SECONDS FPS
+- 22 Oct 09:50, Audrey: "Good first version of the fox but they are clipping quite a lot with each other and with their
+  home", the video "a bit blurry", and "Can I have a line up view of the foxes too? Want to make sure they look nice and
+  fluffy!" So:
+  - Bodies: each fox is three circles on the ground (chest, hips, head) along its heading (head nearer when sitting or
+    rearing); overlaps between foxes are pushed apart six times a frame, and they're pushed out of the den's bank, the
+    bushes and the tree trunks round the meadow (`collide()`); a fox up against a bush or the den doesn't get pushed into
+    it, the other one gives way. Only two foxes playing together (wrestling, chasing, a cub pouncing on mum's tail, cubs
+    bouncing round dad) may touch a little. Meadow spots are picked clear of the bushes; a cub only chases its tail with
+    room to spin; the follower in a chase keeps a body length behind.
+  - The den: they come out of the entrance itself, low and crouched, rising onto the dug earth, and go in the same way,
+    sinking as they go through; they walk to a spot in front of it first (close enough with others in the way).
+  - Which way the brush lifts was the wrong way round in some poses (sitting, lying, the bow, rearing, crouching, in the
+    air): now it curls on the ground when sitting and lying, and goes up for a play bow.
+  - Fluffier (see above). `?lineup=foxes`: the family in four short rows for a phone held upright: Rusty and Fennel, the
+    three cubs, then Rusty sitting and Fennel lying down, and the cubs in a play bow, on its back kicking and up on its
+    hind legs; they breathe, look round and wag; tap one for its name.
+  - Videos at twice the resolution (`DPR=2` for `foxclip.mjs`).
+- Tests: `foxtest.mjs` (out with ?foxes, all five in the meadow, a minute of play, three minutes checked every half second
+  for bodies through each other or through the den, a bush or a trunk, the button, a tap, home again, in at night, no
+  page errors), `foxline.mjs [out] [hour]` (the line-up and close-ups), `foxpose.mjs [out] [fox] [heading]` (every pose close up), `foxshot.mjs`, `foxclip.mjs SECONDS FPS
   OUT [size]` (frames following the family). The page has `__farm.foxes()`.

@@ -16,7 +16,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
-import { initBeasts, FoxFamily } from './beasts.js';
+import { initBeasts, FoxFamily, FoxLineup } from './beasts.js';
 
 const MODELS = './models/';
 const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
@@ -312,7 +312,7 @@ async function start() {
   buildProps();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup')) buildLineup();
+  if (params.has('lineup') && params.get('lineup') !== 'foxes') buildLineup();
   buildFoxes(beastsInfo.joints);
   if (allBirds.length) makeBlobs();
   buildGrass();
@@ -324,6 +324,7 @@ async function start() {
   view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
   view.size = 4.4;
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
+  if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
   resize();
   aimShadows(true);
   loading.classList.add('done');
@@ -744,21 +745,28 @@ function tickNotes(dt) {
 // (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
 // den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
 const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
-let foxes = null;
+let foxes = null, foxLineup = null;
 const foxBtn = document.getElementById('foxbtn');
+const foxGroups = () => [foxes, foxLineup].filter(g => g && g.visible());
 function buildFoxes(joints) {
+  if (params.get('lineup') === 'foxes') foxLineup = new FoxLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, joints, rng(31));
+  // round the meadow: the bushes and tree trunks they walk round
+  const obstacles = [];
+  for (const b of V.bushes) if (Math.hypot(b.pos[0] - FOX_FIELD[0], b.pos[2] - FOX_FIELD[1]) < 7) obstacles.push([b.pos[0], b.pos[2], 0.5 * (b.s || 1)]);
+  for (const t of V.trees) if (Math.hypot(t.pos[0] - FOX_FIELD[0], t.pos[2] - FOX_FIELD[1]) < 8) obstacles.push([t.pos[0], t.pos[2], 0.3]);
   if (parts.den) {
     const den = part('den'); den.position.set(FOX_DEN[0], 0, FOX_DEN[1]); den.rotation.y = FOX_DEN[2] - Math.PI / 2;
     still(den, true, true);
     V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.0);     // no grass growing through it
   }
-  foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
+  foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, obstacles, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
 let foxHinted = false;
 function tickFoxes(dt) {
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
+  if (foxLineup) foxLineup.update(dt);
   const out = foxes.visible();
   if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
   if (out && !foxHinted) { foxHinted = true; hint('The foxes are out playing in the meadow: tap "Foxes" at the top to watch them.'); }
@@ -1583,7 +1591,7 @@ function zoomBy(f) {
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
-  if (lineup) return;
+  if (lineup || foxLineup) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
@@ -1606,7 +1614,7 @@ function tapAt(x, y) {
   ray.setFromCamera(ndc, camera);
   let best = null, bestD = Infinity;
   const s = new THREE.Sphere(), w = new THREE.Vector3();
-  if (foxes && foxes.visible()) for (const f of foxes.foxes) {
+  for (const G of foxGroups()) for (const f of G.foxes) {
     if (!f.root.visible) continue;
     f.root.getWorldPosition(w); s.center.set(w.x, w.y + f.hitY, w.z); s.radius = f.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
@@ -1914,7 +1922,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
-  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxes && foxes.visible()) wake(100); }
+  if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   placeTag(dt);
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
@@ -1977,7 +1985,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes,
+  foxes: () => foxes, foxLineup: () => foxLineup,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },

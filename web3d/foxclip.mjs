@@ -2,7 +2,7 @@
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [secs = '20', fps = '12', out = 'fc', size = '2.6'] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const p = await b.newPage({ viewport: { width: 390, height: 760 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
+const p = await b.newPage({ viewport: { width: 390, height: 760 }, deviceScaleFactor: +(process.env.DPR || 1), hasTouch: true, isMobile: true });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
 await p.goto('http://localhost:' + (process.env.PORT || 8770) + '/index.html?q=0&coops=5&foxes&time=' + (process.env.HOUR || '16'));
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
