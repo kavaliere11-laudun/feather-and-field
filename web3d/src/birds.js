@@ -299,6 +299,13 @@ function addFur(g, src, spec, headc) {
   f.setAttribute('furComb', new THREE.BufferAttribute(comb, 1)); f.setAttribute('furStyle', new THREE.BufferAttribute(style, 4));
   f.setAttribute('featherPattern', new THREE.BufferAttribute(fp, 4)); f.setAttribute('featherMode', new THREE.BufferAttribute(fm, 1));
   f.setAttribute('featherUV', new THREE.BufferAttribute(fu, 3)); f.setAttribute('eyeAt', new THREE.BufferAttribute(ea, 4));
+  for (const name of Object.keys(g.attributes)) {        // (any others: the geese's feather lattices)
+    if (f.attributes[name]) continue;
+    const a = g.attributes[name], k = a.itemSize, src = a.array, dst = new src.constructor(total * k);
+    dst.set(src.subarray(0, n * k), 0);
+    for (let s = 1; s <= K; s++) for (let j = 0; j < m; j++) dst.set(src.subarray(furVerts[j] * k, furVerts[j] * k + k), (n + (s - 1) * m + j) * k);
+    f.setAttribute(name, new THREE.BufferAttribute(dst, k, a.normalized));
+  }
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
   f.userData.fur = { base: idx.length, shell: furTris.length, shells: K, droop: spec.droop };
@@ -316,6 +323,7 @@ export function setSoftFur(on) {
   BIRD_MAT.alphaToCoverage = soft; BIRD_MAT.defines = soft ? { SOFT_FUR: '' } : {}; furLook.cut.value = soft ? 0.04 : 0.45;
   BIRD_MAT.needsUpdate = true;
   for (const m of INDOOR) syncIndoor(m);
+  if (GOOSE_MAT) syncGoose(GOOSE_MAT);
   syncSleep();
 }
 // a bird inside a house (a hen going in to lay) wears her own copy of the material, which shades whatever part of her is
@@ -324,15 +332,20 @@ export function setSoftFur(on) {
 const INDOOR = new Set();
 // the page's own change to every material (the night colours): applied to the birds' material and to any made later
 let materialHook = null;
-export function setMaterialHook(f) { materialHook = f; f(BIRD_MAT); for (const m of INDOOR) f(m); if (SLEEP_MAT) f(SLEEP_MAT); }
+export function setMaterialHook(f) { materialHook = f; f(BIRD_MAT); for (const m of INDOOR) f(m); if (SLEEP_MAT) f(SLEEP_MAT); if (GOOSE_MAT) f(GOOSE_MAT); }
 // asleep (inside a coop at night): the same, with the eyes shut
 let SLEEP_MAT = null;
+// the geese: the same feathers in their own lattices (geese.js)
+let GOOSE_MAT = null;
 function syncSleep() {
   if (!SLEEP_MAT) return;
   SLEEP_MAT.alphaToCoverage = BIRD_MAT.alphaToCoverage; SLEEP_MAT.defines = Object.assign({}, BIRD_MAT.defines, { EYES_SHUT: '' }); SLEEP_MAT.needsUpdate = true;
 }
 function syncIndoor(m) {
-  m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { INDOOR: '' }); m.needsUpdate = true;
+  m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { INDOOR: '' }, m.userData.goose ? { GOOSE: '' } : {}); m.needsUpdate = true;
+}
+function syncGoose(m) {
+  m.alphaToCoverage = BIRD_MAT.alphaToCoverage; m.defines = Object.assign({}, BIRD_MAT.defines, { GOOSE: '' }); m.needsUpdate = true;
 }
 export const furLook = { density: { value: 150 }, cut: { value: 0.45 }, shown: 1, tex: { value: null }, span: { value: 1 } };
 // real hair detail painted for Silkies and chicks (silkie_hair.jpg, a seamless tile from stylized/hair_paint.py)
@@ -352,7 +365,7 @@ export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the q
 }
 
 // the birds' material: lit as before, with the shells' strands cut out of each layer and shaded darker towards the roots
-function birdMaterial(indoor) {
+function birdMaterial(indoor, goose) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
   const inU = indoor ? { inMat: { value: new THREE.Matrix4() }, inLo: { value: new THREE.Vector3() }, inHi: { value: new THREE.Vector3() } } : null;
   m.userData.inU = inU;
@@ -362,12 +375,15 @@ function birdMaterial(indoor) {
     sh.vertexShader = sh.vertexShader
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n#ifdef EYES_SHUT\nif (eyeAt.w > 0.5 && dot(eyeAt.xyz, eyeAt.xyz) > 1e-8) transformed = mix(transformed, eyeAt.xyz, eyeAt.w > 1.5 ? 0.94 : 0.2);\n#endif')
       .replace('#include <color_vertex>', '#include <color_vertex>\n#ifdef EYES_SHUT\nif (eyeAt.w > 0.5 && eyeAt.w < 1.5 && dot(eyeAt.xyz, eyeAt.xyz) > 1e-8) vColor.rgb = vec3(0.42, 0.075, 0.055);\n#endif')
-      .replace('#include <common>', '#include <common>\n#ifdef EYES_SHUT\nattribute vec4 eyeAt;\n#endif\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;\n#ifdef INDOOR\nvarying vec3 vWorldIn;\n#endif')
+      .replace('#include <common>', '#include <common>\n#ifdef GOOSE\nattribute vec3 gooseN;\nvarying vec3 vGN;\n#endif\n#ifdef EYES_SHUT\nattribute vec4 eyeAt;\n#endif\nuniform float furSpan;\nattribute float furT;\nattribute float furLen;\nattribute float featherSize;\nattribute float featherHead;\nattribute float furComb;\nattribute vec4 furStyle;\nvarying vec4 vStyle;\nvarying vec3 vRestN;\nattribute vec4 featherPattern;\nattribute float featherMode;\nvarying vec4 vPat;\nvarying float vMode;\nvarying float vFur;\nvarying float vFurLen;\nvarying vec3 vRest;\nvarying float vFeather;\nvarying float vHead;\nvarying float vComb;\nattribute vec3 featherUV;\nvarying vec3 vFUV;\n#ifdef INDOOR\nvarying vec3 vWorldIn;\n#endif')
       .replace('#include <project_vertex>', '#include <project_vertex>\n#ifdef INDOOR\nvWorldIn = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#endif')
       .replace('#include <skinning_vertex>', `#include <skinning_vertex>
         // painted hair (Silkies, chicks): when zoomed out and fewer layers are drawn, they are spread over the hair's full
         // length, so the far birds keep their fluffy outline
         float fT = (furStyle.w < 0.0 || furStyle.z < 0.0) ? min(1.0, furT * furSpan) : furT;
+        #ifdef GOOSE
+        vGN = gooseN;
+        #endif
         vFUV = featherUV; vFur = fT; vFurLen = furLen; vRest = position; vFeather = featherSize; vHead = featherHead; vComb = furComb; vStyle = furStyle; vRestN = normal; vPat = featherPattern; vMode = featherMode;
         if (fT > 0.0) {
           vec3 nn = normalize(objectNormal), back = mix(vec3(0.0, -0.45, -1.0), vec3(0.0, -1.0, -0.2), smoothstep(0.1, 0.6, featherHead));
@@ -380,6 +396,9 @@ function birdMaterial(indoor) {
         float fh13(vec3 p) { p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
         vec3 fh33(vec3 p) { p = fract(p * vec3(.1031, .1030, .0973)); p += dot(p, p.yxz + 33.33); return fract((p.xxy + p.yxx) * p.zyx); }
         varying vec3 vFUV;
+        #ifdef GOOSE
+        varying vec3 vGN;
+        #endif
         #ifdef INDOOR
         uniform mat4 inMat; uniform vec3 inLo; uniform vec3 inHi; varying vec3 vWorldIn;
         #endif
@@ -471,12 +490,24 @@ function birdMaterial(indoor) {
           // pointed; the folded wing has small coverts over the shoulder and a band of long flight feathers behind
           float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : smoothstep(0.15, 0.45, vHead);
           float flight = wingT > 0.0 ? smoothstep(0.52, 0.56, wingT) : 0.0;
+          #ifdef GOOSE
+          float size = vFeather * mix(1.0, 0.24, neck) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
+          #else
           float size = vFeather * mix(1.0, 0.42, vHead) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
+          #endif
           // smaller feathers on the breast and underneath, larger over the back and sides
           if (wingT <= 0.0) size *= mix(1.0, mix(0.82, 1.22, smoothstep(0.08, -0.12, vRest.z)), 1.0 - neck);
+          #ifdef GOOSE
+          // a goose: broad rounded feathers in rows back along the body, and small ones in rows up the long curved neck
+          // (round the body's middle, 28 cm up; round the neck's own line, from the model: across, forward of it, how far up)
+          float stretch = mix(mix(1.0, 0.85, neck), 1.0, flight), point = mix(mix(0.12, 0.3, neck), 0.3, flight);
+          vec2 pb = vec2(atan(vRest.x, vRest.y - 0.28) * 0.13, -vRest.z);
+          vec2 pn = vec2(atan(vGN.x, vGN.y) * 0.035, -vGN.z * 0.8);
+          #else
           float stretch = mix(mix(1.0, 0.5, neck), 1.0, flight), point = mix(mix(0.15, 1.2, neck), 0.3, flight);
           vec2 pb = vec2(atan(vRest.x, vRest.y - 0.2) * 0.11, -vRest.z);
           vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y * 0.55);
+          #endif
           vec2 pp = mix(pb, pn, neck) / size;
           pp *= mix(vec2(1.0), vec2(0.62, 0.3), flight);          // flight feathers: wider apart and three times as long
           float best = 1e9, id = 0.0, row0 = floor(pp.y / 0.5); vec2 lp = vec2(0.0, 1.0);
@@ -549,6 +580,9 @@ function birdMaterial(indoor) {
                     * (1.0 + 0.17 * barb * smoothstep(-0.6, 0.2, along)) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
           // where the coverts end, a soft shadow over the flight feathers
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
+          #ifdef GOOSE
+          furShade = mix(1.0, furShade, 0.5);            // a goose's feathers lie smooth and soft: their rows only a gentle texture
+          #endif
           furShade *= fluff;
         }
         if (vFUV.x > 0.01 && vFeather <= 0.0) {
@@ -587,7 +621,8 @@ function birdMaterial(indoor) {
         #endif
         #include <opaque_fragment>`);
   };
-  m.customProgramCacheKey = () => 'bird-fur';
+  m.customProgramCacheKey = () => 'bird-fur' + (goose ? '-goose' : '');
+  m.userData.goose = !!goose;
   return m;
 }
 const BIRD_MAT = birdMaterial(false);
@@ -596,6 +631,11 @@ export { addFur, R };
 export function furMaterial() { return BIRD_MAT; }
 // a copy of the fur material that shades whatever is inside a box darker the deeper in (a fox in its den's tunnel)
 export function indoorMaterial() { const m = birdMaterial(true); if (materialHook) materialHook(m); syncIndoor(m); INDOOR.add(m); return m; }
+export function gooseMaterial() {
+  if (!GOOSE_MAT) { GOOSE_MAT = birdMaterial(false, true); if (materialHook) materialHook(GOOSE_MAT); syncGoose(GOOSE_MAT); }
+  return GOOSE_MAT;
+}
+export function gooseIndoorMaterial() { const m = birdMaterial(true, true); if (materialHook) materialHook(m); syncIndoor(m); INDOOR.add(m); return m; }
 export function furHooks(mesh) { mesh.onBeforeRender = keepAlpha; mesh.onAfterRender = writeAlpha; }
 export function modelFor(breed, kind) { return kind === 'chick' ? 'chick' : breed + (kind === 'rooster' ? '_r' : '_h'); }
 

@@ -684,3 +684,33 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   spine and the head turns back so the nose points straight on (`rolled`: neck +0.85, head -0.75), with only a little turn
   of the head left (looking about, tilting) while he's on his back. Playing dead, the cubs on their backs wrestling and
   the roll all use it.
+
+## The geese: their look (22 Oct night, Audrey: "Start now, use what you learnt from the previous animals you created: clipping, fluidity, natural movements, details of the feathers. The geese can be funny creatures")
+
+- Two characters: Gertrude, a big white Embden goose (the boss: blue eyes, orange bill with a pale nail), and Hector, a grey
+  Toulouse gander (longer and lower, a paunch, a dewlap under his bill, dark eyes with an orange ring; dark head and neck,
+  grey back and wings with pale-edged feathers, pale breast, white belly and under the tail). He follows her and copies
+  her, a beat late (the behaviour comes next). About 0.8 m to the top of the head (Hector a little lower).
+- Model (`stylized/geese.py`, exported by `stylized/export_geese.py` to `models/geese.glb` + `geese.json`): the body and the
+  long S-shaped neck in one smooth shape; the head; the bill (upper bill with nostrils and nail, lower bill on the jaw with a
+  pink tongue, the mouth dark inside); eyes with a ring; the folded wings (a smooth panel of coverts on each upper flank,
+  the long flight feathers lying back over the rump); the open wings (a slim arm, three rows of coverts like roof tiles,
+  nine secondaries, eight fanned primaries, all modelled feathers); a short tail fan; the feathered thighs, the orange
+  shank (the heel's bend points back) and the webbed foot (three toes, the web scalloped between them, claws). 21 bones:
+  body; neck1..neck4 and head; jaw; blinkL/R; wingL/R (folded) and wingLo/Ro (open); tail; per leg the hip (thigh), the
+  heel (legLk) and the foot (legLf). About 11,600 triangles each before the fluff.
+- The feathers: everything about them decided by the exporter per vertex: the colour, the pattern drawn on each feather
+  (Hector's grey with a pale edge, Gertrude's white a shade darker where the next one overlaps, a soft sheen on the long
+  ones), and the neck's own lattice: the rows of small feathers follow the curved neck (`_GN`: across, forward of the
+  neck's line, how far up it), the body's rows go back along the body round its middle. The birds' feather drawing
+  (`birds.js`, `GOOSE`) draws them softer than a hen's (the rows a gentle texture), with a slight fluff over them.
+  (A goose material of its own, `gooseMaterial()`; `addFur` now keeps any extra attributes. WebGL allows 16 attributes per
+  vertex: the body's lattice uses the rest position, only the neck's comes as its own attribute.)
+- `src/geese.js` `GooseRig`: the waddle (feet placed on the ground and the legs reaching them, the body rolling onto each
+  foot, the neck swaying against it so the head stays steady), the neck's shapes (tall, honking with the bill up, stretched
+  out low to hiss and charge, grazing, preening round to one side, tucked away asleep), the neck reaching so the bill's tip
+  comes to a chosen point (`neckTo()`: each joint turned a little at a time, the head first: grazing at a spot, preening a
+  wing, the bill tucked into the back feathers asleep), the bill opening, the eyes blinking, the folded wings lifting and
+  the open ones growing from the shoulder and flapping, the tail wagging on a spring, sitting down.
+- `?lineup=geese`: both geese in a row of poses (standing, walking, honking, grazing, preening, flapping, hissing,
+  asleep). `geeseshot.mjs OUT [size]`: each goose in each pose, close up and framed on her own.

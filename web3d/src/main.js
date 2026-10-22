@@ -17,6 +17,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { initBeasts, FoxFamily, FoxLineup } from './beasts.js';
+import { initGeese, GeeseLineup } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 
 const MODELS = './models/';
@@ -288,15 +289,15 @@ const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
-    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb')]);
+    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
-  initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo);
+  initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo); initGeese(geeseGlb, geeseInfo);
   for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
@@ -313,7 +314,8 @@ async function start() {
   buildProps();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup') && params.get('lineup') !== 'foxes') buildLineup();
+  if (params.has('lineup') && !['foxes', 'geese'].includes(params.get('lineup'))) buildLineup();
+  if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   buildFoxes(beastsInfo.joints);
   if (allBirds.length) makeBlobs();
   buildGrass();
@@ -326,6 +328,7 @@ async function start() {
   view.size = 4.4;
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
+  if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
   resize();
   aimShadows(true);
   loading.classList.add('done');
@@ -746,7 +749,7 @@ function tickNotes(dt) {
 // (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
 // den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
 const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
-let foxes = null, foxLineup = null;
+let foxes = null, foxLineup = null, geeseLineup = null;
 const foxBtn = document.getElementById('foxbtn');
 const foxGroups = () => [foxes, foxLineup].filter(g => g && (g.visible() || (nightVisit && g === foxes && nightVisit.active())));
 function buildFoxes(joints) {
@@ -893,6 +896,7 @@ function tickFoxes(dt) {
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
   if (foxLineup) foxLineup.update(dt);
+  if (geeseLineup) { geeseLineup.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
   if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
@@ -1723,7 +1727,7 @@ function zoomBy(f) {
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
-  if (lineup || foxLineup) return;
+  if (lineup || foxLineup || geeseLineup) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
@@ -2121,7 +2125,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes, foxLineup: () => foxLineup, visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
+  foxes: () => foxes, foxLineup: () => foxLineup, geeseLineup: () => geeseLineup, visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },
