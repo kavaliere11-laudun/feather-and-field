@@ -38,6 +38,12 @@
   #inside-back { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
                  padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; }
   #inside-top[hidden], #inside-back[hidden] { display: none; }
+  #farmerbtn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 17px;
+               padding: 13px 24px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; background: var(--yolk); color: var(--ink);
+               box-shadow: 0 3px 14px rgba(245, 185, 46, 0.45); white-space: nowrap; }
+  #farmerbtn[hidden] { display: none; }
+  body.inside #farmerbtn { display: none; }
+  #foxbtn.alarm { background: var(--barn); color: #fff; border: 0; }
   body.inside .top { display: none; }
   #fade { position: fixed; inset: 0; background: #0d1320; opacity: 0; pointer-events: none; transition: opacity .28s; }
   #fade.on { opacity: 1; }
@@ -50,6 +56,7 @@
 <div class="top"><span class="pill title">3D village</span><button id="foxbtn" class="pill" type="button" hidden>Foxes</button><a class="pill" href="../">Back to the game</a></div>
 <div id="inside-top" hidden><span class="pill title" id="inside-title"></span></div>
 <button id="inside-back" class="pill" type="button" hidden>Back to the farm</button>
+<button id="farmerbtn" class="pill" type="button" hidden>Send the farmer</button>
 <div id="fade"></div>
 <div id="hint" role="status"></div>
 <div id="tag"></div>
