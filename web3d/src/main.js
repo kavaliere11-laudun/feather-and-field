@@ -877,12 +877,13 @@ class Bird {
   }
   // bedtime: at dusk the birds go in for the night, up the ramp and in at the pop door, one by one (the rooster last), and in
   // the morning they come out again (the rooster first, with a crow). Each has her own times, by the player's clock: hens go
-  // in between 20:00 and 20:40, the rooster at 20:45; out between 6:30 and 7:05, the rooster at 6:20; chicks with their mum
+  // in between 22:00 and 22:40, the rooster at 22:45 (Audrey: "Bedtime between 22:00 and 22:45", so the evening is for
+  // playing); out between 6:05 and 6:40, the rooster at 6:00; chicks with their mum
   bedHours() {
     if (!this.bed) {
-      if (this.kind === 'rooster') this.bed = { in: 20.75, out: 6.33 };
+      if (this.kind === 'rooster') this.bed = { in: 22.75, out: 6.0 };
       else if (this.kind === 'chick' && this.mum) { const m = this.mum.bedHours(); this.bed = { in: m.in + 0.02 + this.r() * 0.03, out: m.out + 0.02 + this.r() * 0.03 }; }
-      else this.bed = { in: 20.0 + this.r() * 0.65, out: 6.5 + this.r() * 0.58 };
+      else this.bed = { in: 22.0 + this.r() * 0.65, out: 6.08 + this.r() * 0.58 };
     }
     return this.bed;
   }

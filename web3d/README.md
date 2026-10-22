@@ -382,10 +382,11 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   `lightUp()` gives those materials a warm light of their own as night falls (lamps 2.4 x, windows 1.25 x), and
   `lampPools` lays a soft warm disc of light on the ground under each lamp post (1.25 m) and coop lantern (0.75 m; their
   places in `coops.json` `lights`, from `light_at()` in `stylized/coops.py`), drawn added on top, only at night.
-- Bedtime: at dusk the coop birds go in for the night, each at her own time (hens between 20:00 and 20:40, chicks just
-  after their mum, the rooster last at 20:45): to the foot of the ramp, up it, ducking in at the pop door, and out of sight
+- Bedtime: late in the evening the coop birds go in for the night, each at her own time (hens between 22:00 and 22:40,
+  chicks just after their mum, the rooster last at 22:45; Audrey, 22 Oct 7:24: people can't play if the hens are in bed
+  from 20:00, so "Bedtime between 22:00 and 22:45"): to the foot of the ramp, up it, ducking in at the pop door, and out of sight
   just inside (`goToBed()`, `roostStep()`, `sleepNow()`: hidden, no shadow, can't be tapped, left out of the jostling). In
-  the morning they come out again (the rooster first at 6:20, with a crow; the hens between 6:30 and 7:05: `wakeUp()`),
+  the morning they come out again (the rooster first at 6:00, with a crow; the hens between 6:05 and 6:40: `wakeUp()`),
   down the ramp to a free spot in the yard. If the page opens at night they're already in bed. No laying from a quarter of an
   hour before a hen's bedtime.
 - Seeing it by day: `?time=21:30` fixes the hour; `?daylapse=3` runs a whole day in 3 minutes (from `?time` if given,
@@ -393,7 +394,7 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   don't depend on the clock. The page has `__farm.setHour(h)` and `__farm.day`.
 - Tests: `dayshot.mjs [hours] [size] [out]` (the same view at several hours, `LX`/`LZ`), `dayclip.mjs PLOT FROM TO RATE FPS
   SIZE OUT` (frames of a coop with the clock run fast), `bedtrace.mjs [rate]` (how many birds of each coop are out, on
-  their way, in bed: all in by 21:00, all out by 7:15, nobody stuck). `withserver.sh CMD` serves `dist/` just for the length
+  their way, in bed: all in by 23:00, all out by 6:45, nobody stuck). `withserver.sh CMD` serves `dist/` just for the length
   of a test.
 
 - Live: the game's site, folder `3d/` (https://kavaliere11-laudun.github.io/feather-and-field/3d/). The game's normal deploy wipes the

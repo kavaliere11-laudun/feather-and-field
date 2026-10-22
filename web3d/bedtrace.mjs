@@ -27,9 +27,9 @@ const out = await p.evaluate((rate) => {
       }
     }
   };
-  run(19.8, 21.0);
+  run(21.8, 23.0);
   lines.push('--- morning (out/going/in bed)');
-  run(6.1, 7.3);
+  run(5.8, 7.0);
   // nobody stuck on the way: every bird is either out and free, or in bed
   const stuck = plots.flatMap(pl => pl.birds.filter(bd => bd.roost));
   lines.push('still on their way after the morning: ' + stuck.length);
