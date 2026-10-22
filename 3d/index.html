@@ -34,13 +34,23 @@
   #loading .msg { font-family: Fredoka, Nunito, sans-serif; font-weight: 600; font-size: 20px; color: var(--meringue); text-align: center; padding: 0 24px; }
   #loading .bar { width: 200px; height: 10px; border-radius: 99px; background: rgba(255, 253, 247, 0.35); overflow: hidden; }
   #loading .fill { width: 0; height: 100%; background: var(--yolk); transition: width .2s; }
-  @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading { transition: none; } }
+  #inside-top { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 10px); display: flex; justify-content: center; pointer-events: none; }
+  #inside-back { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
+                 padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; }
+  #inside-top[hidden], #inside-back[hidden] { display: none; }
+  body.inside .top { display: none; }
+  #fade { position: fixed; inset: 0; background: #0d1320; opacity: 0; pointer-events: none; transition: opacity .28s; }
+  #fade.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
 </style>
 </head>
 <body>
 <canvas id="farm"></canvas>
 <div class="vignette"></div>
 <div class="top"><span class="pill title">3D village</span><a class="pill" href="../">Back to the game</a></div>
+<div id="inside-top" hidden><span class="pill title" id="inside-title"></span></div>
+<button id="inside-back" class="pill" type="button" hidden>Back to the farm</button>
+<div id="fade"></div>
 <div id="hint" role="status"></div>
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
