@@ -32,11 +32,19 @@ ok('three minutes of play: no fox through another (a brush of fur now and then, 
 // the Foxes button takes the view there; a tap on a fox shows its name
 await p.click('#foxbtn'); await p.evaluate(() => { const f = window.__farm; f.step(1 / 30, 1); f.draw(); });
 const pt = await p.evaluate(() => {
-  // (whichever fox stands clearest of the others on screen, so the tap can't land on another)
-  const f = window.__farm, F = f.foxes(), at = o => { const v = o.root.getWorldPosition(new f.THREE.Vector3()); v.y += o.hitY; v.project(f.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; };
-  const seen = F.foxes.filter(o => o.root.visible), clear = o => Math.min(...seen.filter(q => q !== o).map(q => Math.hypot(at(q)[0] - at(o)[0], at(q)[1] - at(o)[1])));
-  const x = seen.slice().sort((a, b) => clear(b) - clear(a))[0], [px, py] = at(x);
-  return { x: px, y: py, name: x.name };
+  // (a fox the tap can only land on: the ray through its middle meets no other fox's tap sphere; time moves on until one is)
+  const f = window.__farm, F = f.foxes(), T = f.THREE;
+  for (let tries = 0; tries < 60; tries++) {
+    const seen = F.foxes.filter(o => o.root.visible), mid = o => { const v = o.root.getWorldPosition(new T.Vector3()); v.y += o.hitY; return v; };
+    for (const x of seen) {
+      const v = mid(x).project(f.camera), px = (v.x + 1) / 2 * innerWidth, py = (1 - v.y) / 2 * innerHeight;
+      const rc = new T.Raycaster(); rc.setFromCamera(new T.Vector2(v.x, v.y), f.camera);
+      const clear = seen.every(o => o === x || !rc.ray.intersectsSphere(new T.Sphere(mid(o), o.hitR)));
+      if (clear && px > 30 && px < innerWidth - 30 && py > 120 && py < innerHeight - 120) return { x: px, y: py, name: x.name };
+    }
+    f.step(1 / 30, 15); f.draw();
+  }
+  return { x: 0, y: 0, name: 'none clear' };
 });
 await p.touchscreen.tap(pt.x, pt.y); await p.waitForTimeout(300);
 const tg = await p.evaluate(() => document.getElementById('tag').textContent);

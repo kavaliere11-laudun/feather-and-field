@@ -650,3 +650,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   it; a hind foot lifts less and folds less as it swings (the hock flexes, the paw stays low), the heel comes up first at
   the end of each step, the hind knee never quite straightens, and steps are shorter creeping low (`Fox.update` stride).
   `visitcheck` after: 39 frames in about 15,000 touching (brush tips on the hay, the dish or the fence for a moment).
+- Then (21:22, Audrey: "The angle of the back leg is not correct it's currently towards the inside but it should be the
+  other way around"): the bend you saw pointed forwards (the knee, low under the belly). Now the knee sits high in the
+  haunch and below the body the leg angles back to the hock (14 cm up, 10 cm behind the knee) before the foot comes down
+  to the paw: the visible bend points backwards, as on a dog. `visitcheck` 37 frames; `denclip` none near the mouth;
+  `foxtest` taps a fox that no other fox's tap sphere covers.
