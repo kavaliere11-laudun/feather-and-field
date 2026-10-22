@@ -594,6 +594,8 @@ const BIRD_MAT = birdMaterial(false);
 // for the farm's other furry animals (the foxes): the same fur material and drawing, and the fur builder
 export { addFur, R };
 export function furMaterial() { return BIRD_MAT; }
+// a copy of the fur material that shades whatever is inside a box darker the deeper in (a fox in its den's tunnel)
+export function indoorMaterial() { const m = birdMaterial(true); if (materialHook) materialHook(m); syncIndoor(m); INDOOR.add(m); return m; }
 export function furHooks(mesh) { mesh.onBeforeRender = keepAlpha; mesh.onAfterRender = writeAlpha; }
 export function modelFor(breed, kind) { return kind === 'chick' ? 'chick' : breed + (kind === 'rooster' ? '_r' : '_h'); }
 

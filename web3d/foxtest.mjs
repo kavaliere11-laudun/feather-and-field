@@ -24,23 +24,26 @@ ok('after a minute of play everyone is still in or near the meadow', st.far.ever
 // three more minutes of play, checked every half second: bodies never through each other (up close when wrestling or chasing,
 // a little), nobody through the den's bank, a bush or a trunk
 st = await p.evaluate(() => {
-  const f = window.__farm, F = f.foxes(); let bodies = 0, close = 0, obs = 0, n = 0, touch = 0;
-  for (let k = 0; k < 360; k++) { f.step(1 / 30, 15); const o = F.overlaps(); bodies = Math.max(bodies, o.bodies); close = Math.max(close, o.close); obs = Math.max(obs, o.obs); if (o.bodies > 0.05 || o.close > 0.3) touch++; n++; }
-  return { samples: n, touching: touch, bodies: +bodies.toFixed(3), close: +close.toFixed(3), obs: +obs.toFixed(3) };
+  const f = window.__farm, F = f.foxes(); let bodies = 0, close = 0, obs = 0, tails = 0, n = 0, touch = 0;
+  for (let k = 0; k < 360; k++) { f.step(1 / 30, 15); const o = F.overlaps(); bodies = Math.max(bodies, o.bodies); close = Math.max(close, o.close); obs = Math.max(obs, o.obs); tails = Math.max(tails, o.tails); if (o.bodies > 0.05 || o.close > 0.3) touch++; n++; }
+  return { samples: n, touching: touch, bodies: +bodies.toFixed(3), close: +close.toFixed(3), obs: +obs.toFixed(3), tails: +tails.toFixed(3) };
 });
-ok('three minutes of play: no fox through another (a brush of fur now and then, more when wrestling), none in the den, a bush or a trunk', st.touching <= 8 && st.bodies <= 0.15 && st.close <= 0.5 && st.obs <= 0.01, JSON.stringify(st));
+ok('three minutes of play: no fox through another (a brush of fur now and then, more when wrestling; a brush against a brush), none in the den, a bush or a trunk', st.touching <= 8 && st.bodies <= 0.15 && st.close <= 0.5 && st.obs <= 0.01 && st.tails <= 0.6, JSON.stringify(st));
 // the Foxes button takes the view there; a tap on a fox shows its name
 await p.click('#foxbtn'); await p.evaluate(() => { const f = window.__farm; f.step(1 / 30, 1); f.draw(); });
 const pt = await p.evaluate(() => {
-  const f = window.__farm, F = f.foxes(), x = F.foxes.find(o => o.kind === 'fox'), v = x.root.getWorldPosition(new f.THREE.Vector3()); v.y += x.hitY; v.project(f.camera);
-  return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, name: x.name };
+  // (whichever fox stands clearest of the others on screen, so the tap can't land on another)
+  const f = window.__farm, F = f.foxes(), at = o => { const v = o.root.getWorldPosition(new f.THREE.Vector3()); v.y += o.hitY; v.project(f.camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; };
+  const seen = F.foxes.filter(o => o.root.visible), clear = o => Math.min(...seen.filter(q => q !== o).map(q => Math.hypot(at(q)[0] - at(o)[0], at(q)[1] - at(o)[1])));
+  const x = seen.slice().sort((a, b) => clear(b) - clear(a))[0], [px, py] = at(x);
+  return { x: px, y: py, name: x.name };
 });
 await p.touchscreen.tap(pt.x, pt.y); await p.waitForTimeout(300);
 const tg = await p.evaluate(() => document.getElementById('tag').textContent);
-ok(`a tap on ${pt.name} shows the label`, tg.startsWith(pt.name), tg);
-await p.evaluate(() => { const F = window.__farm.foxes(); F.goHome(); window.__farm.step(1 / 30, 600); });
+ok(`a tap on a fox (${pt.name}) shows the label`, tg.startsWith(pt.name), tg);
+await p.evaluate(() => { const F = window.__farm.foxes(); F.goHome(); window.__farm.step(1 / 30, 900); });
 st = await p.evaluate(() => { const F = window.__farm.foxes(); return { home: F.foxes.filter(f => f.home).length, seen: F.foxes.filter(f => f.root.visible).length }; });
-ok('going home: all five back in the den within 20 s', st.home === 5 && st.seen === 0, JSON.stringify(st));
+ok('going home: all five back in the den, one at a time, within 30 s', st.home === 5 && st.seen === 0, JSON.stringify(st));
 ok('no page errors (day)', !p.errs.length, p.errs.slice(0, 3).join(' | '));
 await p.close();
 p = await page('&time=23');

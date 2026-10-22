@@ -1,7 +1,8 @@
 // A short video of a night visit (open door, then the farmer sent): node visitvideo.mjs OUT [plot] [fps]
 // Frames OUT_0000.png ...: Rusty out of his den (a few seconds), a cut to him creeping up to the coop, the poke, the flurry
 // and the peck, the sneeze, then "Send the farmer" tapped (OUT_taps.json says where and when, for a ring drawn on after),
-// the torch coming, and Rusty off over the fence. Stepped exactly at FPS; DPR=2 for a sharp video; LANG=fr for French.
+// the torch coming, and Rusty off over the fence. Stepped exactly at FPS; DPR=2 for a sharp video; LANG=fr for French;
+// END=sneeze stops after the sneeze; DEN=seconds at the den (4.5); CAMSIZE=1.8 for a close camera on the door.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { writeFileSync } from 'fs';
 const [out = 'vv', plot = '5', fpsArg = '15'] = process.argv.slice(2);
@@ -43,7 +44,9 @@ for (let k = 0; k < 4000; k++) {
 // 3. at the coop: a steady camera on it, room on the farmhouse side for the torch to come in
 const house = await p.evaluate(() => { const fh = window.__farm.plan().props.find(q => q.model === 'farmhouse'); return [fh.pos[0], fh.pos[2]]; });
 const toward = Math.atan2(house[0] - coop[0], house[1] - coop[1]);
-const cam = [coop[0] + Math.sin(toward) * 1.0, coop[1] + Math.cos(toward) * 1.0 + 0.6, 3.6];
+const near = process.env.CAMSIZE ? parseFloat(process.env.CAMSIZE) : 0;      // CAMSIZE=1.8: close on the ramp and door (no room for the torch)
+const door = await p.evaluate((i) => { const f = window.__farm, w = f.plots[i].frame.localToWorld(new f.THREE.Vector3(-0.3, 0, 1.0)); return [w.x, w.z]; }, parseInt(plot));
+const cam = near ? [door[0], door[1], near] : [coop[0] + Math.sin(toward) * 1.0, coop[1] + Math.cos(toward) * 1.0 + 0.6, 3.6];
 let sent = false, sentAt = 0, outside = 0, endAt = 0;
 for (let i = 0; i < 60 * FPS; i++) {
   st = await frame(cam);

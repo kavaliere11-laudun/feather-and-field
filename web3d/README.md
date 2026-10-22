@@ -592,3 +592,55 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     After, at all 10 coops: none through the fence or the house; 66 frames in about 14,000 (0.5%) where the brush tip
     grazes the hay bale or the water dish for a moment, or a toe tip the edge of a ramp.
   - `foxhead.mjs OUT [who] [size]`: close-ups of a fox's head at four angles.
+
+## The den, smoother moves and faces (22 Oct night, Audrey: "The fox is clipping when it goes out of his house. Everything is better but I think you can take it further by removing clipping, improving the fluidity of the moves to make it natural, and improve the face and facial expressions please")
+
+- The den (`stylized/beasts.py` `den()`, `DEN_TUNNEL`): a bigger bank (about 1.9 x 1.5 m, 75 cm high) with a real tunnel cut
+  into it (a boolean of a tilted cylinder, 60 cm wide and high, its floor at the ground at the mouth and lower at the back),
+  dark inside. The ring of earth round the mouth is gone (the foxes' legs went through its lower half); the dug earth in
+  front is flatter; the roots lie on the bank (each point dropped onto it with a ray) and go into the ground where the bank
+  meets it, down its sides, none across the entrance; the stones sit at the sides. 3,000 triangles.
+- Coming out and going in (`src/beasts.js` `FoxFamily.emergeTask()`, `inTask()`): each fox starts deep in the tunnel,
+  crouched low with its ears back and head down, darker the deeper in (`Quad.shade()`, the coops' indoor shading in the
+  den's frame), and walks out, rising as it clears the mouth, ears coming up, eyes wide, trotting off once its head is out.
+  In single file: no fox appears until the one before is clear of where it will be, and one coming up close behind waits a
+  moment (`occupied()`: any other fox's body or brush on the tunnel's line). Going home, one fox at a time heads for the
+  doorway (round to the front first, never across the bank's side); the rest wait in their own spots beside the bank
+  (`waitSpot()`, the nearest free one), sit and watch the mouth, and follow one by one, close behind but never into the one
+  in front. The tunnel is long enough that a fox is fully inside when it appears and disappears.
+  - `denclip.mjs [rounds]`: every other frame of the family coming out and going home, every second point of each fox's
+    posed body against the den's earth (mapped as 2 cm columns of the surfaces a ray down meets): none in the bank near the
+    mouth; deeper in (dark, behind the bank) only the brush tip behind the tunnel's end and the ears touching its roof at
+    the back.
+  - `denfilm.mjs OUT [size] [every]`: a strip of pictures of them coming out and going in, close up.
+- Smoother moves (`src/beasts.js`):
+  - Turning eases in and settles (an angular speed that builds up and slows down, `Fox.turnTo()`); speeding up and slowing
+    down are gradual, slowing to arrive unless more of the way follows (`moveTo(..., through)`; paths go through their
+    middle points without stopping).
+  - The legs' gait comes from how fast the fox really moves, whatever moves it (walk, trot, gallop blended by speed; the
+    stride matched to the distance covered so the feet never slide); turning on the spot, the feet step round.
+  - Leaning into a turn at a trot or a run, on flat ground.
+  - The brush is kept off the ground (crouching low, slinking): lifted at its root just enough; held low and straight with
+    the tip curving up when crouched.
+  - On a ramp or a bridge each foot finds the ground where it is in its stride (`groundAt`), so a front foot on the ramp's
+    edge doesn't sink into it while the other is still on the grass.
+  - Foxes keep apart with their fur counted (wider when lying or rolled over), and a fox steps off another's brush
+    (`circles()` now has the brush, out behind or curled round to the side; brush against brush is let be).
+- The face (`beasts.py` joints `jaw`, `earL`, `earR`, `blinkL`, `blinkR`; `export_beasts.py` paints the inside of the mouth):
+  - Ears: pricked forward (alert, curious, slinking up), flattened back and out (frightened, squeezing in, running flat out,
+    the yelp, a yawn), one each way (puzzled, dizzy), swivelling to a sound (`earLTw`/`earRTw`) and towards where he looks.
+  - Eyes: a blink every few seconds, narrowed (sly, grooming), screwed shut (diving in the grass, the shake, the yelp, the
+    sneeze, playing dead), half shut dozing, wide (alert, a pounce, startled by the torch); one opening for a peek (`winkL`).
+  - Mouth: the jaw opens (up to about 50 degrees) on a dark mouth with a pink tongue (the roof of the mouth under the muzzle
+    is painted dark and furless; the jaw's top is the dark floor), with a dark lip line: panting after a run, the play
+    grin, play bites when wrestling, a big yawn before dozing off, the snap at a butterfly, "Yip!" when pecked, the
+    "ah... ah... choo!", tongue lolling when playing dead, a sniff at the door.
+  - In the night visit: sly and intent creeping up (ears forward, eyes narrowed), eager up the ramp, sniffing and hopeful at
+    the door, wide-eyed shock at the flurry, the yelp, sorry for himself walking off, the sneeze, puzzled (one ear up, one
+    back), ears flat and panting running home, startled by the torch.
+  - `faces.mjs OUT [who] [size] [angle]`: the faces as the player sees them at the closest zoom on a phone, cropped round
+    the head (neutral, alert, sly, yelp, yawn, play, puzzled, dozing).
+- `visitcheck.mjs` after this: none through the fence or the house at any of the 10 coops; 45 frames in about 15,000
+  (0.3%, was 0.5%) where the brush tip grazes the hay bale or the water dish, or a toe the edge of a ramp.
+- `foxtest.mjs` counts brush touches apart (up to 0.6 of the circles' overlap: fur brushing fur), taps whichever fox stands
+  clearest on screen, and allows 30 s for all five to go home one at a time.

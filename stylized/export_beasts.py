@@ -15,7 +15,7 @@ from mathutils import Vector
 
 flat_info = g['flat_info']
 JOINTS = beasts.JOINTS
-BEAST_BUDGET = {'fox': 4300, 'cub': 3400}
+BEAST_BUDGET = {'fox': 4500, 'cub': 3700}
 PIVOTS, MODELS, STATS = {}, {}, {}
 
 
@@ -132,7 +132,19 @@ def bake(name, root, budget):
                     dark = ss(0.45, 0.9, n_[:, 2]) * ss(pv['hips'][0] - 0.1 * S, pv['chest'][0], x) * 0.85
                 base = C['fur'][None, :] * (1 - dark[:, None]) + C['back'][None, :] * dark[:, None]
                 c = base * (1 - wht[:, None]) + C['white'][None, :] * wht[:, None]
-                if prt == 'head': c = c * (1 - mark[:, None]) + C['black'][None, :] * mark[:, None]
+                if prt == 'head':
+                    c = c * (1 - mark[:, None]) + C['black'][None, :] * mark[:, None]
+                    # the mouth: under the muzzle, from the corner of the mouth to the nose, the roof of the mouth (dark, furless:
+                    # the jaw hides it while shut, and opening shows it), edged by a dark lip line along each side
+                    MZ = 0.62 if name == 'cub' else 1.0; u = hc[2] - 0.036 * S * HD
+                    span = ss(hc[0] + 0.004 * S * HD, hc[0] + 0.016 * S * HD, x) * (1 - ss(hc[0] + 0.13 * MZ * S * HD, hc[0] + 0.15 * MZ * S * HD, x))
+                    narrow = 1 - ss(0.02 * S * HD, 0.027 * S * HD, np.abs(y))              # between the cheeks, under the muzzle only
+                    roof = span * narrow * ss(u - 0.002 * S * HD, u - 0.008 * S * HD, z) * ss(-0.2, -0.5, n_[:, 2])
+                    lspan = ss(hc[0] + 0.03 * S * HD, hc[0] + 0.045 * S * HD, x) * (1 - ss(hc[0] + 0.12 * MZ * S * HD, hc[0] + 0.14 * MZ * S * HD, x))
+                    lip = lspan * ss(u - 0.003 * S * HD, u - 0.007 * S * HD, z) * ss(u - 0.017 * S * HD, u - 0.012 * S * HD, z) * (1 - roof) * ss(0.3, 0.6, np.abs(n_[:, 1])) * 0.7
+                    c = c * (1 - lip[:, None]) + C['black'][None, :] * lip[:, None]
+                    c = c * (1 - roof[:, None]) + hexrgb('#3b1a1c')[None, :] * roof[:, None]
+                    mouth_roof = roof > 0.5
             elif mode == 'fox_leg':
                 L = prt[:2]
                 if L[0] == 'F': lo = pv[L + 'l']; blk = ss(lo[2] - 0.005 * S, lo[2] - 0.045 * S, z)               # black from the elbow down
@@ -160,6 +172,10 @@ def bake(name, root, budget):
             # a little unevenness, as in real fur
             rnd = np.sin(x * 61.0 + y * 37.0) * np.sin(z * 53.0 - x * 29.0) * np.sin(y * 71.0 + z * 17.0)
             c = c * (1.0 + 0.06 * rnd[:, None])
+        if prt == 'jaw' and o.name.endswith('_jaw'):                # the lower jaw: its top is the floor of the mouth (dark red, no fur)
+            floor = ss(0.15, 0.55, nrm[:, 2])
+            c = c * (1 - floor[:, None]) + hexrgb('#4e2024')[None, :] * floor[:, None]
+            jaw_floor = floor > 0.5
         # the strongest four bones, weights adding up to one
         top = np.argsort(-W, axis=1)[:, :4]; wt = np.take_along_axis(W, top, 1)
         wt /= np.maximum(1e-6, wt.sum(1, keepdims=True))
@@ -168,6 +184,8 @@ def bake(name, root, budget):
             hc = pv['headc']; HD = 1.38 if name == 'cub' else 1.0
             face = (x > hc[0] - 0.03 * S * HD) & (z > hc[2] - 0.028 * S * HD)
             pa_ = np.where(face, float(beasts.PAINT['crest']), pa_)
+            pa_ = np.where(mouth_roof, 0.0, pa_)
+        if prt == 'jaw' and o.name.endswith('_jaw'): pa_ = np.where(jaw_floor, 0.0, pa_)
         P_.append(p); N_.append(nrm); C_.append(c); J_.append(top.astype(np.float32)); W_.append(wt); A_.append(pa_)
     p = np.concatenate(P_); n = np.concatenate(N_); c = np.concatenate(C_); jt = np.concatenate(J_); wt = np.concatenate(W_); pa = np.concatenate(A_)
     gl = lambda v: np.stack([v[..., 1], v[..., 2], v[..., 0]], -1)          # (forward, left, up) -> (left, up, forward)
@@ -225,7 +243,7 @@ write(os.path.join(OUT, 'beasts.glb'), names)
 # the animals' places (static): the foxes' den
 fresh(); beasts.den(); light(1)
 import webglb
-webglb.BUDGET['den'] = 2600
+webglb.BUDGET['den'] = 3200
 bake_and_export('den')
 write_glb(os.path.join(OUT, 'fauna.glb'), ['den'])
 json.dump(dict(joints=JOINTS, models=PIVOTS, stats={k: STATS[k] for k in names}), open(os.path.join(OUT, 'beasts.json'), 'w'), indent=1)

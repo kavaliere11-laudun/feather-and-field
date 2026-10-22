@@ -758,7 +758,7 @@ function buildFoxes(joints) {
   if (parts.den) {
     const den = part('den'); den.position.set(FOX_DEN[0], 0, FOX_DEN[1]); den.rotation.y = FOX_DEN[2] - Math.PI / 2;
     still(den, true, true);
-    V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.0);     // no grass growing through it
+    V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.3);     // no grass growing through it
   }
   foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, obstacles, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
   buildNightVisit();

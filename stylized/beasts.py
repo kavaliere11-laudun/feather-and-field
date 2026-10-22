@@ -15,7 +15,9 @@ from hen import K
 from mathutils import Quaternion, Euler
 
 JOINTS = ['root', 'hips', 'chest', 'neck', 'head', 'tail1', 'tail2', 'tail3', 'tail4',
-          'FLu', 'FLl', 'FLw', 'FRu', 'FRl', 'FRw', 'HLu', 'HLk', 'HLl', 'HRu', 'HRk', 'HRl']
+          'FLu', 'FLl', 'FLw', 'FRu', 'FRl', 'FRw', 'HLu', 'HLk', 'HLl', 'HRu', 'HRk', 'HRl',
+          'jaw', 'earL', 'earR', 'blinkL', 'blinkR']
+# the face: the lower jaw (opens), each ear (pricks up, flattens back, swivels), each eye (closes: a blink, a squint)
 # the legs' bones, top down: front shoulder (upper arm), elbow (forearm), wrist (the paw); hind hip (thigh), knee (shin), hock
 LEG_BONES = {'FL': ['FLu', 'FLl', 'FLw'], 'FR': ['FRu', 'FRl', 'FRw'], 'HL': ['HLu', 'HLk', 'HLl'], 'HR': ['HRu', 'HRk', 'HRl']}
 TAIL_BONES = ['tail1', 'tail2', 'tail3', 'tail4']
@@ -112,6 +114,14 @@ def fox(kind='fox', seed=1):
          ('ELLIPSOID', tuple(h(0.125 * MZ, 0, -0.033)), 0.022 * S * HD * K, (1.6, 0.8, 0.72), 2.0)]
     head = part(metaball_mesh(kind + '_head', E, res=0.006 * S * HD, m=coat, parent=root), 'head', 'body', 'fox')
     tip = h(0.125 * MZ + 0.033, 0, -0.03)
+    # the lower jaw (white, under the muzzle, hinged at the back of the mouth) with the tongue on it; the inside of the mouth
+    # (dark) on the head, hidden while the mouth is shut
+    chin = flat(kind + '_chin', C['white'], 0.85); gum = flat(kind + '_mouth', '#4b2021', 0.6); tongue_m = flat(kind + '_tongue', '#d9727e', 0.45)
+    E = chain([h(0.0, 0, -0.05), h(0.06 * MZ, 0, -0.054), h(0.112 * MZ, 0, -0.05)], [0.026, 0.02, 0.013], S * HD)
+    part(metaball_mesh(kind + '_jaw', E, res=0.005 * S * HD, m=chin, parent=root), 'jaw', 'crest')
+    part(keep(sphere(kind + '_mouthin', 0.027 * S * HD, tuple(h(0.06 * MZ, 0, -0.043)), (1.75, 0.72, 0.42), m=gum, parent=root, seg=12, rings=6)), 'head')
+    part(keep(sphere(kind + '_tongue', 0.016 * S * HD, tuple(h(0.068 * MZ, 0, -0.037)), (2.1, 0.95, 0.34), m=tongue_m, parent=root, seg=10, rings=6)), 'jaw')
+    pivot('jaw', tuple(h(-0.012, 0, -0.036)), root)
     part(keep(sphere(kind + '_nose', 0.0135 * S * HD, tuple(tip), (1.0, 1.2, 0.85), m=nose, parent=root, seg=12, rings=8)), 'head')
     # ---- eyes: almond-shaped and set at the front of the skull, looking forward and a little out: a dark rim round an
     # amber iris (a cub's darker), a slit pupil (a cub's round), a catch-light. Placed on the skull's surface.
@@ -125,13 +135,13 @@ def fox(kind='fox', seed=1):
         dep = lambda k: ec + d * er * k
         # the rim's front sits just behind the iris's, so it shows only as a dark line round it; the pupil and the catch-light
         # stand a hair proud of the iris so they show
-        part(keep(sphere(kind + '_rim', er * 1.14, tuple(dep(-0.08)), (1.34, 0.86, 0.46), rot=rot, m=rim, parent=root, seg=14, rings=8)), 'head')
-        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.25, 0.78, 0.5), rot=rot, m=iris, parent=root, seg=14, rings=8)), 'head')
+        part(keep(sphere(kind + '_rim', er * 1.14, tuple(dep(-0.08)), (1.34, 0.86, 0.46), rot=rot, m=rim, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
+        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.25, 0.78, 0.5), rot=rot, m=iris, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
         ps = (0.52, 0.56, 0.5) if cub else (0.24, 0.7, 0.5)
-        part(keep(sphere(kind + '_pupil', er, tuple(dep(0.07)), ps, rot=rot, m=pupil, parent=root, seg=10, rings=6)), 'head')
+        part(keep(sphere(kind + '_pupil', er, tuple(dep(0.07)), ps, rot=rot, m=pupil, parent=root, seg=10, rings=6)), 'blink' + ('L' if sd > 0 else 'R'))
         up = q @ Vector((0, 1, 0)); across = q @ Vector((1, 0, 0))
-        part(keep(sphere(kind + '_glint', er * 0.16, tuple(dep(0.47) + up * er * 0.28 - across * sd * er * 0.22), m=glint, parent=root, seg=6, rings=4)), 'head')
-        pivot('eye' + ('L' if sd > 0 else 'R'), tuple(ec), root)
+        part(keep(sphere(kind + '_glint', er * 0.16, tuple(dep(0.47) + up * er * 0.28 - across * sd * er * 0.22), m=glint, parent=root, seg=6, rings=4)), 'blink' + ('L' if sd > 0 else 'R'))
+        pivot('eye' + ('L' if sd > 0 else 'R'), tuple(ec), root); pivot('blink' + ('L' if sd > 0 else 'R'), tuple(ec), root)
         # ---- an ear: a tall cupped triangle, its back black above the base, its inside pale and fluffy, leaning out and back
         eh, ew = (0.12 if cub else 0.112) * S * HD, (0.048 if cub else 0.045) * S * HD
         ed = Vector((-0.16, sd * 0.5, 0.85)).normalized()
@@ -145,7 +155,8 @@ def fox(kind='fox', seed=1):
         for front, nm, mm, pnt, col, u0, u1, lift in pieces:
             e = ear_shell(kind + nm + ('L' if sd > 0 else 'R'), ew, eh, cup, th, front, mm, root, u0, u1, lift)
             e.location = tuple(eb); e.rotation_euler = qe
-            part(keep(e), 'head', pnt, col)
+            part(keep(e), 'ear' + ('L' if sd > 0 else 'R'), pnt, col)
+        pivot('ear' + ('L' if sd > 0 else 'R'), tuple(eb + ed * 0.012 * S * HD), root)
     # ---- legs: three bones each. Front: shoulder, elbow (behind it), wrist; hind: hip, knee (forward), hock (back); the
     # paw on the ground in front of the last joint. Black socks, paler on the inside.
     for sd, F, H in ((1, 'FL', 'HL'), (-1, 'FR', 'HR')):
@@ -181,29 +192,63 @@ def fox(kind='fox', seed=1):
     return root
 
 
+# the den's tunnel (Blender axes, the den's middle at the origin, its mouth facing +x): the mouth's centre x and height, how
+# far it runs into the bank, its half-width (ry) and half-height (rz), its slope down (degrees)
+DEN_TUNNEL = dict(x=0.62, back=-0.75, front=0.95, z=0.21, ry=0.3, rz=0.3, tilt=6)
+
+
+def flat_box(name, size, loc, m):
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
+    for v in bm.verts: v.co = Vector((v.co.x * size[0], v.co.y * size[1], v.co.z * size[2]))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); o.location = loc; setmat(o, m)
+    return o
+
+
 def den():
     """The foxes' den at the edge of the woods: a grassy bank with a dark round entrance facing +x, a fan of dug-out earth in
-    front, a few roots and stones. About 1.6 x 1.3 m. Ground at z=0."""
+    front, a few roots and stones. About 1.9 x 1.5 m, big enough for the whole fox in its tunnel. Ground at z=0."""
     random.seed(4); objs = []
     soil = mat('densoil', '#6f4d33', rough=0.95, var=0.12); dug = mat('dendug', '#8a6446', rough=0.95, var=0.1)
     turf = mat('denturf', '#5d8c3c', rough=0.9, var=0.1, hue_var=0.015); dark = mat('denhole', '#120c08', rough=1.0)
     root_m = mat('denroot', '#5b4330', rough=0.85, var=0.1); stone = mat('denstone', '#8f8a80', rough=0.85, var=0.1)
-    objs.append(sphere('dmound', 0.62, (-0.08, 0, -0.06), (1.25, 1.05, 0.72), m=soil, ico=3, disp=0.06, disp_scale=3.0, seed=5))
-    objs.append(sphere('dturf', 0.6, (-0.26, 0, 0.0), (1.08, 1.02, 0.66), m=turf, ico=3, disp=0.05, disp_scale=4.0, seed=6))
-    # the entrance: a dark hollow in the bank's face, with a lip of earth
-    hole = sphere('dhole', 0.2, (0.56, 0, 0.15), (0.5, 1.2, 0.95), m=dark, seg=20, rings=12); objs.append(hole)
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.21, minor_radius=0.05, major_segments=20, minor_segments=8, location=(0.58, 0, 0.15), rotation=(0, math.radians(70), 0))
-    lip = bpy.context.object; lip.scale = (1.0, 1.15, 0.9); setmat(lip, soil); objs.append(lip)
-    objs.append(sphere('dspoil', 0.32, (0.92, 0.02, -0.02), (1.1, 1.3, 0.14), m=dug, ico=3, disp=0.05, disp_scale=5.0, seed=7))
-    for k in range(3):                         # roots over the bank, one arching over the entrance
-        a = math.radians(-40 + k * 40); r0 = Vector((-0.25 + 0.1 * k, math.sin(a) * 0.3, 0.42)); r1 = Vector((0.45 + 0.05 * k, math.sin(a) * 0.62, 0.04))
-        mid = (r0 + r1) / 2 + Vector((0.05, 0, 0.1))
-        for (a_, b_) in ((r0, mid), (mid, r1)):
-            d = b_ - a_; o = cyl('droot', 0.022 - 0.004 * k, d.length, tuple((a_ + b_) / 2), m=root_m, verts=8, r2=0.016 - 0.003 * k, bevel=0.0)
+    # a bank tall enough to dig into: a steep earth face towards +x, turf over the top and back
+    objs.append(sphere('dmound', 0.62, (-0.12, 0, -0.18), (1.4, 1.15, 1.5), m=soil, ico=4, disp=0.05, disp_scale=3.0, seed=5))
+    objs.append(sphere('dturf', 0.6, (-0.4, 0, -0.08), (1.35, 1.2, 1.42), m=turf, ico=3, disp=0.05, disp_scale=4.0, seed=6))
+    # the entrance: a real tunnel into the bank (DEN_TUNNEL: the browser keeps the foxes inside it as they come and go), dark
+    # inside, with an earth floor
+    T = DEN_TUNNEL
+    cut = cyl('dcut', 1.0, T['front'] - T['back'], ((T['front'] + T['back']) / 2, 0, T['z']), m=dark, verts=28, bevel=0.0)
+    cut.rotation_euler = (0, math.radians(90 - T['tilt']), 0); cut.scale = (T['rz'], T['ry'], 1.0)       # (the back end lower)
+    cut.hide_render = True; cut.hide_set(True)
+    for o in objs[:2]:                         # the mound and the turf
+        md = o.modifiers.new('tunnel', 'BOOLEAN'); md.operation = 'DIFFERENCE'; md.object = cut; md.solver = 'EXACT'
+        if hasattr(md, 'material_mode'): md.material_mode = 'TRANSFER'
+    floor = flat_box('dfloor', (T['x'] - T['back'], T['ry'] * 1.7, 0.01), ((T['x'] + T['back']) / 2, 0, 0.004), mat('denfloor', '#2a1d14', rough=1.0))
+    objs.append(floor)
+    objs.append(sphere('dspoil', 0.32, (0.95, 0.02, -0.02), (1.1, 1.3, 0.1), m=dug, ico=3, disp=0.05, disp_scale=5.0, seed=7))
+    bpy.context.view_layer.update(); dg = bpy.context.evaluated_depsgraph_get()
+    def bank(x, y):                            # the bank's height at (x, y) (the mound or the turf over it, as cut)
+        best = 0.0
+        for o in objs[:2]:
+            inv = o.matrix_world.inverted(); org = inv @ Vector((x, y, 3.0)); dr = (inv.to_3x3() @ Vector((0, 0, -1))).normalized()
+            hit, loc, nrm, idx = o.ray_cast(org, dr, depsgraph=dg)
+            if hit: best = max(best, (o.matrix_world @ loc).z)
+        return best
+    for k in range(3):                         # roots over the bank, down its sides (clear of the entrance), half buried in it
+        a = math.radians((-60, 55, 80)[k]); x0, y0 = -0.3 + 0.1 * k, math.sin(a) * 0.3; x1, y1 = 0.55 + 0.05 * k, math.sin(a) * 0.66
+        pts = []
+        for i in range(13):                    # down the bank until it meets the ground, where the root goes in
+            t = i / 12; x = x0 + (x1 - x0) * t; y = y0 + (y1 - y0) * t + 0.05 * math.sin(t * math.pi) * (1 if y1 > 0 else -1)
+            hz = bank(x, y)
+            if hz < 0.05: pts.append(Vector((x, y, -0.015))); break
+            if i % 2 == 0: pts.append(Vector((x, y, hz - 0.008)))
+        for (a_, b_) in zip(pts, pts[1:]):
+            d = b_ - a_; o = cyl('droot', 0.022 - 0.004 * k, d.length + 0.02, tuple((a_ + b_) / 2), m=root_m, verts=8, r2=0.02 - 0.004 * k, bevel=0.0)
             o.rotation_euler = d.to_track_quat('Z', 'Y').to_euler(); objs.append(o)
-    for k in range(5):
-        a = random.uniform(-1.4, 1.4); r = random.uniform(0.75, 1.1)
-        objs.append(sphere('dstone', random.uniform(0.03, 0.06), (math.cos(a) * r * 0.8, math.sin(a) * r * 0.75, 0.0), (1.2, 1.0, 0.6), m=stone, ico=2, disp=0.2, seed=20 + k))
+    for k in range(5):                         # stones by the sides (none on the foxes' way in and out)
+        a = random.uniform(0.7, 1.6) * (1 if k % 2 else -1); r = random.uniform(0.75, 1.0)
+        objs.append(sphere('dstone', random.uniform(0.03, 0.06), (math.cos(a) * r * 0.8, math.sin(a) * r * 0.9, 0.0), (1.2, 1.0, 0.6), m=stone, ico=2, disp=0.2, seed=20 + k))
     root = empty('den')
     for o in objs:
         mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw

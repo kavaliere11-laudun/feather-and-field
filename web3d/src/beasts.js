@@ -4,7 +4,7 @@
 // Models (beasts.glb / beasts.json, stylized/beasts.py, export_beasts.py): one skinned mesh each with vertex colours, fur
 // regions and bones (root, hips, chest, neck, head, three in the tail, two in each leg); furred here with the birds' fur.
 import * as THREE from 'three';
-import { addFur, R, furMaterial, furHooks } from './birds.js';
+import { addFur, R, furMaterial, furHooks, indoorMaterial } from './birds.js';
 
 let MODELS = {};
 export function initBeasts(gltf, json) {
@@ -44,7 +44,8 @@ function beastGeometry(name) {
 
 const PARENT = { hips: 'root', chest: 'hips', neck: 'chest', head: 'neck', tail1: 'hips', tail2: 'tail1', tail3: 'tail2', tail4: 'tail3',
   FLu: 'chest', FLl: 'FLu', FLw: 'FLl', FRu: 'chest', FRl: 'FRu', FRw: 'FRl',
-  HLu: 'hips', HLk: 'HLu', HLl: 'HLk', HRu: 'hips', HRk: 'HRu', HRl: 'HRk' };
+  HLu: 'hips', HLk: 'HLu', HLl: 'HLk', HRu: 'hips', HRk: 'HRu', HRl: 'HRk',
+  jaw: 'head', earL: 'head', earR: 'head', blinkL: 'head', blinkR: 'head' };
 const LEGS = ['FL', 'FR', 'HL', 'HR'];
 // each leg's three bones, top down: front shoulder (upper arm), elbow (forearm), wrist (the paw); hind hip (thigh), knee
 // (shin), hock (the long foot); and the toe pivot where it meets the ground
@@ -94,6 +95,15 @@ export class Quad {
     }
     this.tY = [0, 0, 0, 0]; this.tYv = [0, 0, 0, 0];
   }
+  // in the den's tunnel: darker the deeper in (box = { inv, lo, hi } in the den's frame), or out in the open (null)
+  shade(box) {
+    if (box) {
+      if (!this.inMat) this.inMat = indoorMaterial();
+      const u = this.inMat.userData.inU; u.inMat.value.copy(box.inv); u.inLo.value.copy(box.lo); u.inHi.value.copy(box.hi);
+    }
+    const m = box ? this.inMat : furMaterial();
+    if (this.mesh.material !== m) this.mesh.material = m;
+  }
   // a leg's bones from where its toe should be (mesh frame) and which way its last part (paw, long foot) points (side view)
   reach(L, target, paw, flexW) {
     const G = this.legs[L], B = this.bones, [b0, b1, b2] = LEG_BONES[L];
@@ -114,13 +124,14 @@ export class Quad {
   }
   pose(s) {
     const B = this.bones, S = this.S, t = s.t, hy = this.hy;
-    for (const nm in B) { B[nm].rotation.set(0, 0, 0); B[nm].position.copy(this.rest[nm]); }
+    for (const nm in B) { B[nm].rotation.set(0, 0, 0); B[nm].position.copy(this.rest[nm]); B[nm].scale.set(1, 1, 1); }
     const g = s.walk || 0, run = s.run || 0, ph = s.phase || 0;
     const sit = s.sit || 0, lie = s.lie || 0, bow = s.bow || 0, rear = s.rear || 0, crouch = s.crouch || 0, air = s.air || 0, dive = s.dive || 0;
     const shake = s.shake || 0, scratch = s.scratch || 0, kick = s.kick || 0;
-    let roll = s.roll || 0, pitch = s.pitch || 0;
-    const rolled = Math.min(1, Math.abs(roll) / 1.5);
     const turn = Math.max(-3, Math.min(3, s.turn || 0));
+    const bank = s.groundF !== undefined ? 0 : 0.1 * turn * smooth(0.6, 1.5, s.speed || 0);       // (leaning into a turn at a trot or a run, on flat ground)
+    let roll = (s.roll || 0) - bank, pitch = s.pitch || 0;     // (leaning into a turn when on the move)
+    const rolled = Math.min(1, Math.abs(s.roll || 0) / 1.5);
     // ---- the body over its legs: how far the middle comes down, the spine
     let lower = crouch * 0.11 * S;
     if (sit > 0) {          // sitting: the hips go down and the body pitches up round them
@@ -163,9 +174,13 @@ export class Quad {
         // on a slope (a ramp, a bridge's deck): the ground's height under these feet (s.groundF / s.groundH, world, above
         // the root), so with the body lifted and tipped the feet stand on it exactly
         if (s.groundF !== undefined) {
-          const R = front ? s.groundF : s.groundH, p = (s.pitch || 0) + 1.1 * dive, yt = hy - lower + (s.lift || 0);
-          _v.y = G.toe.y + dy + hy + (R - yt + G.toe.z * Math.sin(p)) / Math.cos(p);
-          aim -= ((front ? s.slopeF : s.slopeH) || 0) + p;            // the paw along the slope it stands on
+          const p = (s.pitch || 0) + 1.1 * dive, yt = hy - lower + (s.lift || 0);
+          // (each foot's own ground where it is, forward or back in its stride, when the task can say: a ramp's edge under one
+          // front foot and not the other)
+          const fwd = (G.toe.y + lower - hy) * Math.sin(p) + (G.toe.z + dz) * Math.cos(p);
+          const R = s.groundAt ? s.groundAt(fwd) : front ? s.groundF : s.groundH;
+          _v.y = G.toe.y + dy + hy + (R - yt + (G.toe.z + dz) * Math.sin(p)) / Math.cos(p);
+          aim -= (s.slopeAt ? s.slopeAt(fwd) : (front ? s.slopeF : s.slopeH) || 0) + p;            // the paw along the slope it stands on
         }
         this.reach(L, _v, [Math.cos(aim), Math.sin(aim)], onGround);
       }
@@ -194,6 +209,20 @@ export class Quad {
     B.neck.rotation.y += 0.55 * (s.lookYaw || 0); B.head.rotation.y += 0.45 * (s.lookYaw || 0);
     B.neck.rotation.x += 0.45 * (s.lookPitch || 0); B.head.rotation.x += 0.35 * (s.lookPitch || 0);
     B.head.rotation.z += s.headTilt || 0;
+    // ---- the face: ears pricked forward (alert, curious), flattened back (frightened, squeezing through, running flat out)
+    // or each its own way (puzzled), swivelling to a sound and towards where he looks; the eyes blink, squint, screw shut
+    // or open wide; the jaw opens (panting, a yawn, a yelp, the sneeze), the tongue on it
+    if (B.earL) for (const [nm, sd] of [['earL', 1], ['earR', -1]]) {
+      const e = Math.max(-1, Math.min(1, (s.ears || 0) + (s[nm] || 0))), back = Math.max(0, -e), fwd = Math.max(0, e), tw = s[nm + 'Tw'] || 0;
+      B[nm].rotation.x += -1.05 * back + 0.38 * fwd - 0.25 * Math.abs(tw);
+      B[nm].rotation.z += -sd * (0.5 * back + 0.06 * Math.sin(t * 0.7 + sd));
+      B[nm].rotation.y += sd * 0.5 * tw + 0.35 * (s.lookYaw || 0);
+    }
+    if (B.jaw) B.jaw.rotation.x += 0.72 * Math.min(1.2, Math.max(0, s.mouth || 0));
+    if (B.blinkL) for (const [nm, k] of [['blinkL', s.shutL || 0], ['blinkR', s.shutR || 0]]) {
+      const w = clamp01(s.wide || 0), shut = clamp01(k);
+      B[nm].scale.set(1 + 0.12 * w, (1 - 0.9 * shut) * (1 + 0.28 * w), 1 + 0.12 * w);
+    }
     // ---- the brush: each part follows the one before it a moment later (a wave down the tail): it sways with the steps,
     // swings out on turns, wags when playing; hangs a little lower at a trot, up when excited, curled round when sitting or lying
     const dt = Math.min(0.05, s.dt || 1 / 30);
@@ -205,7 +234,7 @@ export class Quad {
       B[TAIL[i]].rotation.x += g * (0.05 + 0.05 * run) * Math.sin(2 * ph - 0.9 * i) * (0.5 + 0.25 * i);      // the bounce, travelling down it
     }
     const up = s.tailUp || 0;
-    B.tail1.rotation.x += up * 0.7 + 0.04 * Math.sin(t * 1.3) - 0.14 * g * (1 - run) * (1 - up) - 0.2 * crouch; B.tail2.rotation.x -= 0.12 * up;
+    B.tail1.rotation.x += up * 0.7 + 0.04 * Math.sin(t * 1.3) - 0.14 * g * (1 - run) * (1 - up) - 0.08 * crouch; B.tail2.rotation.x -= 0.12 * up; B.tail3.rotation.x += 0.1 * crouch;
     const curl = s.curl || 1;
     if (sit > 0) { B.tail1.rotation.x -= 0.25 * sit; const c = [0.5, 0.5, 0.45, 0.35]; for (let i = 0; i < 4; i++) B[TAIL[i]].rotation.y += c[i] * sit * curl; }
     if (lie > 0) { B.tail1.rotation.x -= 0.15 * lie; const c = [0.8, 0.65, 0.5, 0.4]; for (let i = 0; i < 4; i++) B[TAIL[i]].rotation.y += c[i] * lie * curl; }
@@ -221,11 +250,28 @@ export class Quad {
     cy = cy * (1 - dive) + 0.26 * S * dive;
     this.tilt.position.y = cy + (s.lift || 0);
     this.tilt.rotation.set(pitch + 1.1 * dive, 0, roll);
+    // ---- the brush kept off the ground (crouching low, slinking, sitting or lying on it): lifted at its root just enough
+    if (rolled < 0.5 && dive < 0.5 && sit < 0.4 && lie < 0.4) {
+      const gy = (s.groundH !== undefined ? s.groundH : 0) + 0.045 * S, tip = this.tipOff || (this.tipOff = new THREE.Vector3().fromArray(MODELS[this.name].piv.tailtip).sub(new THREE.Vector3().fromArray(MODELS[this.name].piv.tail4)));
+      for (let it = 0; it < 2; it++) {
+        this.tilt.updateMatrix(); this.mesh.updateMatrix(); _tm.multiplyMatrices(this.tilt.matrix, this.mesh.matrix);
+        for (const nm of ['root', 'hips', 'tail1']) { B[nm].updateMatrix(); _tm.multiply(B[nm].matrix); }
+        _tb.setFromMatrixPosition(_tm); let need = 0;
+        for (const nm of ['tail2', 'tail3', 'tail4', 'tip']) {
+          if (nm === 'tip') _tp.copy(tip).applyMatrix4(_tm); else { B[nm].updateMatrix(); _tm.multiply(B[nm].matrix); _tp.setFromMatrixPosition(_tm); }
+          if (_tp.y < gy) need = Math.max(need, (gy - _tp.y) / Math.max(0.08 * S, Math.hypot(_tp.z - _tb.z, _tp.x - _tb.x)));
+        }
+        if (need <= 0) break;
+        B.tail1.rotation.x += Math.min(0.8, need * 1.05);
+      }
+    }
   }
 }
+const _tm = new THREE.Matrix4(), _tb = new THREE.Vector3(), _tp = new THREE.Vector3();
 
 // ---------------------------------------------------------------- the fox family
 const NAMES = { dad: 'Rusty', mum: 'Fennel', cubs: ['Sorrel', 'Nutkin', 'Tumble'] };
+const DEN_MOUTH = 0.64;              // how far the den's tunnel mouth is from its middle (stylized/beasts.py DEN_TUNNEL)
 let blobTex = null;
 function shadowDisc(r) {
   if (!blobTex) {
@@ -246,59 +292,83 @@ class Fox {
     this.root = new THREE.Group(); this.root.add(this.q.tilt); this.root.scale.setScalar(scale); this.scale = scale;
     this.shadow = shadowDisc(0.24 * this.q.S * scale);
     fam.group.add(this.root); fam.group.add(this.shadow);
-    this.A = { t: r() * 10, phase: 0 }; this.heading = 0; this.turn = 0;
+    this.A = { t: r() * 10, phase: 0 }; this.heading = 0; this.turn = 0; this.av = 0; this.spd = 0;
+    this.blinkIn = r() * 3; this.blinkT = 0; this.twIn = 1 + r() * 4; this.twT = 0;
     this.todo = []; this.task = null; this.pace = 0; this.home = true;
     this.hitR = 0.3 * this.q.S * scale; this.hitY = 0.32 * this.q.S * scale;
     this.label = name + (kind === 'cub' ? ' · fox cub' : role === 'dad' ? ' · red fox, the dad' : ' · red fox, the mum');
   }
   get pos() { return this.root.position; }
-  // turn towards a heading at the fox's own turning speed
+  // turn towards a heading: the turn eases in and settles as he lines up (no snapping into a turn, or out of it)
   turnTo(h, dt, rate = 4.5) {
-    let d = h - this.heading; d = Math.atan2(Math.sin(d), Math.cos(d));
-    const step = Math.max(-rate * dt, Math.min(rate * dt, d)); this.heading += step; this.turn = step / Math.max(1e-3, dt);
+    const d = wrap(h - this.heading), want = Math.max(-rate, Math.min(rate, d * 7));
+    this.av += Math.max(-20 * dt, Math.min(20 * dt, want - this.av));
+    let step = this.av * dt; if (Math.abs(step) > Math.abs(d)) { step = d; this.av = 0; }
+    this.heading += step; this.turn = step / Math.max(1e-3, dt); this.turned = true;
     return Math.abs(d);
   }
-  // a step towards (x, z) at a pace: 'walk' 0.35 m/s, 'trot' 0.7, 'run' 1.7 (cubs a little slower); true when there
-  moveTo(x, z, dt, pace = 'trot') {
+  // a step towards (x, z) at a pace: 'walk' 0.35 m/s, 'trot' 0.75, 'run' 1.8 (cubs a little slower); he speeds up and slows
+  // down smoothly, slowing to arrive unless more of the way follows (through); true when there
+  moveTo(x, z, dt, pace = 'trot', through = false) {
     const p = this.pos, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
     const sp = { walk: 0.35, trot: 0.75, run: 1.8 }[pace] * (this.kind === 'cub' ? 0.82 : 1) * this.scale;
     if (d < 0.06) { this.pace = 0; return true; }
     const off = this.turnTo(Math.atan2(dx, dz), dt, pace === 'run' ? 6 : 4.5);
-    const s = Math.min(d, sp * dt * (off > 1.2 ? 0.25 : 1));
+    let want = sp * (off > 1.2 ? 0.25 : off > 0.6 ? 0.6 : 1);
+    if (!through) want = Math.min(want, Math.sqrt(2 * 2.2 * Math.max(0, d - 0.04)) + 0.06);
+    this.spd += Math.max(-4.5 * dt, Math.min(2.8 * dt, want - this.spd)); this.moved = true;
+    const s = Math.min(d, Math.max(0, this.spd) * dt);
     p.x += Math.sin(this.heading) * s; p.z += Math.cos(this.heading) * s;
     this.pace = pace === 'run' ? 2 : pace === 'trot' ? 1 : 0.5;
     return false;
   }
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt;
-    for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'air', 'dive', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) A[k + 'Goal'] = 0;
-    A.airPh = undefined; A.groundF = A.groundH = A.slopeF = A.slopeH = undefined;  // (a leap sets where in the air it is, a slope the ground under the feet, each frame)
+    for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'air', 'dive', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin',
+      'ears', 'earL', 'earR', 'earLTw', 'earRTw', 'mouth', 'squint', 'wide', 'winkL', 'winkR']) A[k + 'Goal'] = 0;
+    A.airPh = undefined; A.groundF = A.groundH = A.slopeF = A.slopeH = A.groundAt = A.slopeAt = undefined;  // (a leap sets where in the air it is, a slope the ground under the feet, each frame)
     A.lookYawGoal = 0; A.lookPitchGoal = 0; A.headTiltGoal = 0; A.roll = A.roll || 0; A.rollGoal = 0; A.pitch = 0; A.lift = 0;
-    this.pace = 0; this.turn = 0;
+    this.pace = 0; this.turn = 0; this.turned = false; this.moved = false;
+    const was = this.lastPos || (this.lastPos = this.pos.clone()); const fx0 = was.x, fz0 = was.z;
     if (!this.task) this.task = this.todo.shift() || this.fam.nextTask(this);
     if (this.task && this.task.run(this, dt) !== false) { this.task = null; }
+    if (!this.turned) this.av *= Math.max(0, 1 - dt * 10);
+    if (!this.moved) this.spd = Math.max(0, this.spd - 4.5 * dt);
     if (this.tailLift && !(A.sitGoal > 0.3) && !(A.lieGoal > 0.3)) A.tailUpGoal = Math.max(A.tailUpGoal || 0, this.tailLift);   // lifting his brush clear of something (nightvisit.js)
     A.curl = this.curlSide || 1;                            // which side the brush curls round when sitting or lying
-    // ease the pose numbers towards their goals (the gait from the pace)
-    const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
-    for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) ease(k, 6);
+    // ease the pose numbers towards their goals
+    const ease = (k, rate, g = k) => { A[k] = (A[k] || 0) + ((A[g + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
+    // ---- the face's own life: a blink every few seconds, an ear flicking round at a sound, panting after a run
+    if ((this.blinkIn -= dt) <= 0) { this.blinkT = 0.17; this.blinkIn = 1.8 + this.r() * 4.2; }
+    const blink = this.blinkT > 0 ? Math.sin(Math.PI * (1 - (this.blinkT -= dt) / 0.17)) : 0;
+    if ((this.twIn -= dt) <= 0) { this.twT = 0.35; this.twSide = this.r() < 0.5 ? 'earLTw' : 'earRTw'; this.twIn = 2.5 + this.r() * 5; }
+    ease('earLTwE', 8, 'earLTw'); ease('earRTwE', 8, 'earRTw'); A.earLTw = A.earLTwE; A.earRTw = A.earRTwE;     // turned to a sound by what he's doing
+    if (this.twT > 0) { this.twT -= dt; A[this.twSide] = Math.max(A[this.twSide], Math.sin(Math.PI * Math.max(0, this.twT) / 0.35)); }
+    this.puff = Math.max(0, Math.min(1, (this.puff || 0) + dt * ((A.run || 0) > 0.5 ? 0.3 : -0.04)));
+    if (this.puff > 0.05 && (A.run || 0) < 0.5) A.mouthGoal = Math.max(A.mouthGoal, (0.25 + 0.07 * Math.sin(A.t * 15)) * Math.min(1, this.puff * 2));
+    for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) ease(k, 5.5);
     ease('air', 14); ease('dive', 10); ease('lookYaw', 4); ease('lookPitch', 4); ease('headTilt', 6);
+    ease('ears', 9); ease('earL', 9); ease('earR', 9); ease('mouth', 12); ease('squint', 10); ease('wide', 10); ease('winkL', 10); ease('winkR', 10);
+    A.shutL = clamp01(Math.max(blink, A.squint || 0) + A.winkL); A.shutR = clamp01(Math.max(blink, A.squint || 0) + A.winkR);
     A.roll += (A.rollGoal - A.roll) * Math.min(1, dt * (A.rollFast ? 9 : 4));
-    // turning on the spot, the feet step round instead of sliding
-    const spin = this.pace > 0 ? 0 : Math.min(1, Math.abs(this.turn) / 2.5);
-    const walkGoal = this.pace > 0 ? Math.min(1, this.pace) : 0.5 * spin, runGoal = this.pace >= 2 ? 1 : 0;
-    A.walk = (A.walk || 0) + (walkGoal - (A.walk || 0)) * Math.min(1, dt * 8);
-    A.run = (A.run || 0) + (runGoal - (A.run || 0)) * Math.min(1, dt * 5);
+    // ---- the gait from how fast he really moves (however a task moves him): legs walking, trotting or galloping, the feet
+    // stepping exactly as far as the body goes (so they never slide); turning on the spot, the feet step round
+    const k = (this.kind === 'cub' ? 0.82 : 1) * this.scale;
+    let moved = Math.hypot(this.pos.x - fx0, this.pos.z - fz0); if (moved > 4 * dt + 0.05) moved = 0;     // (a jump in place: being put somewhere)
+    this.vs = (this.vs || 0) + (moved / Math.max(1e-3, dt) - (this.vs || 0)) * Math.min(1, dt * 12);
+    const ns = this.vs / k, spin = Math.min(1, Math.abs(this.turn) / 2.5) * (1 - clamp01(ns / 0.2));
+    A.walk = (A.walk || 0) + (Math.max(clamp01(ns / 0.28), 0.5 * spin) - (A.walk || 0)) * Math.min(1, dt * 8);
+    A.run = (A.run || 0) + (smooth(1.0, 1.45, ns) - (A.run || 0)) * Math.min(1, dt * 5);
     const stride = (0.5 * (1 - A.run) + 1.0 * A.run) * this.q.S * this.scale;
-    const speed = this.pace >= 2 ? 1.8 : this.pace >= 1 ? 0.75 : this.pace > 0 ? 0.35 : 0.3 * spin;
-    A.phase += dt * (speed * (this.kind === 'cub' ? 0.82 : 1) * this.scale / Math.max(0.05, stride)) * Math.PI * 2;
+    A.phase += ((moved + 0.3 * spin * k * dt) / Math.max(0.05, stride)) * Math.PI * 2;
     A.stride = stride / this.scale;                       // in the body's own size, for placing the feet
-    A.turn = this.turn;
+    A.speed = ns; A.turn = this.turn;
+    (this.lastPos || (this.lastPos = new THREE.Vector3())).copy(this.pos);
     this.root.rotation.y = this.heading;
     if (this.root.visible) this.q.pose(A);
     // the shadow: under the body, smaller while in the air
     this.shadow.position.set(this.pos.x, 0.013, this.pos.z); this.shadow.rotation.y = this.heading;
-    const k = 1 - 0.4 * clamp01((A.lift || 0) / 0.4); this.shadow.scale.set(k, 1, k); this.shadow.visible = this.root.visible;
+    const sh = 1 - 0.4 * clamp01((A.lift || 0) / 0.4); this.shadow.scale.set(sh, 1, sh); this.shadow.visible = this.root.visible;
   }
 }
 
@@ -311,7 +381,7 @@ const T = {
     if (done && end !== undefined) return f.turnTo(end, dt) < 0.05 ? true : false; return done ? true : false; } }),
   wait: (secs, set) => ({ name: 'wait', t: 0, run(f, dt) { this.t += dt; if (set) set(f, this.t, dt); return this.t >= secs ? true : false; } }),
 };
-function look(f, t) { f.A.lookYawGoal = 0.7 * Math.sin(t * 0.7 + f.A.t * 0.13); f.A.lookPitchGoal = 0.15 * Math.sin(t * 0.5); }
+function look(f, t) { const y = Math.sin(t * 0.7 + f.A.t * 0.13); f.A.lookYawGoal = 0.7 * y; f.A.lookPitchGoal = 0.15 * Math.sin(t * 0.5); f.A.earsGoal = 0.35 + 0.3 * Math.abs(y); }
 
 export class FoxFamily {
   // opts: { den: [x, z, heading of its entrance], field: [x, z, radius], joints }
@@ -320,7 +390,7 @@ export class FoxFamily {
     this.den = opts.den; this.field = opts.field;
     // what they walk round: the den's bank (its middle a little behind the entrance), bushes, tree trunks: [x, z, radius]
     const [dx, dz, dh] = opts.den;
-    this.obstacles = [[dx - Math.sin(dh) * 0.08, dz - Math.cos(dh) * 0.08, 0.68], ...(opts.obstacles || [])];
+    this.obstacles = [[dx - Math.sin(dh) * 0.05, dz - Math.cos(dh) * 0.05, 0.74], [dx - Math.sin(dh) * 0.62, dz - Math.cos(dh) * 0.62, 0.66], ...(opts.obstacles || [])];     // the den's bank (front, back)
     this.group = new THREE.Group(); scene.add(this.group);
     this.foxes = [
       new Fox(this, 'fox', NAMES.dad, 'dad', 1.0, r),
@@ -331,41 +401,120 @@ export class FoxFamily {
     this.butterfly = makeButterfly(); this.group.add(this.butterfly.mesh);
     for (const f of this.foxes) this.hide(f);
   }
-  hide(f) { f.root.visible = false; f.shadow.visible = false; f.home = true; f.todo = []; f.task = null; }
+  hide(f) { f.root.visible = false; f.shadow.visible = false; f.home = true; f.todo = []; f.task = null; f.q.shade(null); if (this.doorFox === f) this.doorFox = null; }
   doorway(f) { const [x, z, h] = this.den; return [x + Math.sin(h) * 1.05, z + Math.cos(h) * 1.05, h]; }
-  // out of the den: rising out of the hole one by one, then off to the meadow
+  // the den's tunnel (stylized/beasts.py DEN_TUNNEL): its mouth MOUTH m out from the den's middle along the entrance's
+  // heading; the box (in the den's own frame) where a fox is shaded darker, the deeper in the darker
+  denBox() {
+    if (!this._denBox) {
+      const [x, z, h] = this.den, m = new THREE.Matrix4().makeRotationY(h - Math.PI / 2).setPosition(x, 0, z);
+      this._denBox = { inv: m.invert(), lo: new THREE.Vector3(-0.95, -0.2, -0.36), hi: new THREE.Vector3(DEN_MOUTH, 0.8, 0.36) };
+    }
+    return this._denBox;
+  }
+  along(f) { const [x, z, h] = this.den; return (f.pos.x - x) * Math.sin(h) + (f.pos.z - z) * Math.cos(h); }
+  across(f) { const [x, z, h] = this.den; return Math.abs((f.pos.x - x) * Math.cos(h) - (f.pos.z - z) * Math.sin(h)); }
+  // is any other fox's body or brush in the tunnel's line, between lo and hi along it? (single file: no fox walks into another)
+  occupied(f, lo, hi) {
+    const [x, z, h] = this.den, sh = Math.sin(h), ch = Math.cos(h);
+    for (const o of this.foxes) {
+      if (o === f || !o.root.visible) continue;
+      const So = o.q.S * o.scale, sx = Math.sin(o.heading), cz = Math.cos(o.heading);
+      for (const k of [0.5, 0.2, -0.15, -0.45, -0.75]) {                  // points along its body and brush, nose to tip
+        const px = o.pos.x + sx * k * So - x, pz = o.pos.z + cz * k * So - z, al = px * sh + pz * ch, ac = Math.abs(px * ch - pz * sh);
+        if (ac < 0.42 && al > lo && al < hi) return true;
+      }
+    }
+    return false;
+  }
+  // out of the den: from deep in the tunnel, low and crouched with his ears back and head down to fit, walking out along it
+  // and rising as he clears the mouth, onto the dug earth; in single file (out of sight until there's room behind the one before)
+  emergeTask() {
+    const fam = this, [x, z, h] = this.den, start = -0.12;
+    return { name: 'emerge', t: 0, wait: 0, run(f, dt) {
+      const S = f.q.S * f.scale;
+      if (!this.going) {
+        this.wait += dt; if (fam.occupied(f, start - 0.8 * S, start + 0.6 * S) && this.wait < 15) return false;
+        this.going = this.den = true;
+        f.pos.set(x + Math.sin(h) * start, 0, z + Math.cos(h) * start); f.lastPos = null; f.heading = h; f.av = 0; f.spd = 0; f.root.visible = true; f.shadow.visible = true; f.q.shade(fam.denBox());
+      }
+      this.t += dt;
+      const a = fam.along(f), low = 1 - smooth(DEN_MOUTH + 0.12 * S, DEN_MOUTH + 0.38 * S, a);
+      f.A.crouchGoal = low; f.A.crouch = Math.max(f.A.crouch || 0, low); f.A.earsGoal = -0.9 * (1 - smooth(0.2, 0.5, a)) + 0.6 * smooth(0.6, 0.9, a); f.A.lookPitchGoal = 0.3 * low;
+      if (a > 0.7) f.A.wideGoal = 0.4;                       // out into the light, looking about
+      if (fam.occupied(f, a + 0.3 * S, a + 0.62 * S) && this.t < 12) return false;      // close behind the one in front: wait a moment
+      const done = f.moveTo(x + Math.sin(h) * 1.05, z + Math.cos(h) * 1.05, dt, a > DEN_MOUTH - 0.1 ? 'trot' : 'walk', true);
+      if (done || this.t > 12) { f.q.shade(null); this.going = this.den = false; return true; }
+      return false;
+    } };
+  }
+  // a place to wait for his turn at the tunnel: of a few spots round the front of the den, the nearest no one else is waiting in
+  waitSpot(f) {
+    const [x, z, h] = this.den;
+    // (beside the bank, off the way in: [angle from the entrance's heading, distance from the den's middle])
+    if (!this.spots) this.spots = [[-0.62, 2.0], [0.62, 2.0], [-1.0, 1.6], [1.0, 1.6], [-1.4, 1.5], [1.4, 1.5]].map(([a, r]) => [x + Math.sin(h + a) * r, z + Math.cos(h + a) * r]);
+    const taken = new Set(this.foxes.filter(o => o !== f && o.task && o.task.spot !== undefined && !o.task.going).map(o => o.task.spot));
+    let best = 0, bd = 1e9;
+    this.spots.forEach(([sx, sz], i) => { const d = Math.hypot(sx - f.pos.x, sz - f.pos.z) + (taken.has(i) ? 100 : 0); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  // into the den: to the doorway when it's his turn (one fox heads for it at a time; the rest wait in their spots nearby,
+  // watching), then nose down as he reaches the mouth, crouched and ears back, along the tunnel close behind the one before
+  // (never into it) and out of sight
+  inTask(onDone) {
+    const fam = this, [x, z, h] = this.den, door = [x + Math.sin(h) * 1.05, z + Math.cos(h) * 1.05];
+    return { name: 'in', t: 0, wait: 0, run(f, dt) {
+      const S = f.q.S * f.scale;
+      if (!this.going) {
+        this.wait += dt;
+        const mine = fam.doorFox === f, free = !fam.doorFox || !fam.doorFox.root.visible || fam.doorFox.home;
+        if (!mine && !free && this.wait < 25) {   // not his turn yet: waiting in his spot by the den
+          if (this.spot === undefined) this.spot = fam.waitSpot(f);
+          const [sx, sz] = fam.spots[this.spot], far = Math.hypot(sx - f.pos.x, sz - f.pos.z);
+          if (!this.atSpot) { if (far < 0.08 || f.moveTo(sx, sz, dt, far > 0.6 ? 'trot' : 'walk') || this.wait > 6) this.atSpot = this.wait; return false; }
+          f.turnTo(Math.atan2(x + Math.sin(h) * 0.6 - f.pos.x, z + Math.cos(h) * 0.6 - f.pos.z), dt, 3); f.A.earsGoal = 0.6;
+          if (this.wait - this.atSpot > 0.8) f.A.sitGoal = 1;
+          return false;
+        }
+        fam.doorFox = f; this.spot = undefined;
+        if (!this.lined) {                                    // round to the front first (not across the bank's side)
+          const ax = x + Math.sin(h) * 1.6, az = z + Math.cos(h) * 1.6;
+          if ((fam.along(f) > 1.15 && fam.across(f) < 0.45) || f.moveTo(ax, az, dt, Math.hypot(ax - f.pos.x, az - f.pos.z) > 1.2 ? 'run' : 'trot', true) || Math.hypot(ax - f.pos.x, az - f.pos.z) < 0.15) this.lined = true;
+          else return false;
+        }
+        const far = Math.hypot(door[0] - f.pos.x, door[1] - f.pos.z), al = fam.along(f);
+        if (far > 0.08 && fam.occupied(f, al - 0.62 * S, al - 0.3 * S) && this.wait < 30) { f.turnTo(h + Math.PI, dt); return false; }   // the one before still in the mouth
+        if (far > 0.08 && !f.moveTo(door[0], door[1], dt, 'trot', true)) return false;
+        this.going = this.den = true; f.q.shade(fam.denBox());
+      }
+      this.t += dt;
+      const a = fam.along(f), low = 1 - smooth(DEN_MOUTH + 0.42 * S, DEN_MOUTH + 0.7 * S, a);
+      if (fam.doorFox === f && a < 0.85) fam.doorFox = null;          // into the mouth: the next one may line up behind him
+      f.A.crouchGoal = low; f.A.earsGoal = -0.9 * (1 - smooth(DEN_MOUTH + 0.3 * S, DEN_MOUTH + 0.5 * S, a)); f.A.lookPitchGoal = 0.3 * low;
+      let there = false;
+      if (!fam.occupied(f, a - 0.62 * S, a - 0.3 * S) || this.t > 12) there = f.moveTo(x - Math.sin(h) * 0.32, z - Math.cos(h) * 0.32, dt, 'trot', true);
+      else f.turnTo(h + Math.PI, dt);
+      if (there || a < -0.26 || this.t > 12) { this.going = false; if (fam.doorFox === f) fam.doorFox = null; if (onDone) onDone(f); f.fam.hide(f); return true; }
+      return false;
+    } };
+  }
+  // out of the den one by one, then off to the meadow
   comeOut() {
     this.out = true; this.leaving = false; this.left = 300 + this.r() * 120;
-    const [x, z, h] = this.den;
     this.foxes.forEach((f, i) => {
-      f.home = false; f.todo = []; f.task = null;
-      f.pos.set(x + Math.sin(h) * 0.42, 0, z + Math.cos(h) * 0.42); f.heading = h; f.root.visible = false;
-      // up out of the hole: low and crouched in the entrance, rising as it comes out onto the dug earth
-      f.todo.push(T.wait(i * 1.4 + (f.role === 'dad' ? 0 : 0.6)), {
-        name: 'emerge', den: true, t: 0, run(f, dt) {
-          this.t += dt; f.root.visible = true; const u = smooth(0, 1.3, this.t);
-          f.A.lift = -0.3 * f.q.S * f.scale * (1 - u); f.A.crouchGoal = 1 - u; f.A.crouch = Math.max(f.A.crouch || 0, 1 - u);
-          f.moveTo(x + Math.sin(h) * 1.05, z + Math.cos(h) * 1.05, dt, 'walk');
-          return this.t > 1.4 ? true : false;
-        } });
+      f.home = false; f.todo = []; f.task = null; f.root.visible = false;
+      f.todo.push(T.wait(i * 1.6 + (f.role === 'dad' ? 0 : 0.6)), this.emergeTask());
       const [fx, fz, fr] = this.field, a = this.r() * Math.PI * 2, rr = fr * (0.3 + 0.4 * this.r());
       f.todo.push(T.go(fx + Math.cos(a) * rr, fz + Math.sin(a) * rr, f.kind === 'cub' ? 'run' : 'trot'));
     });
   }
   goHome() {
     this.leaving = true;
-    const [x, z, h] = this.den;
     this.foxes.forEach((f, i) => {
       f.todo = []; f.task = null;
       const [dx, dz] = this.doorway(f);
-      // down into the hole: low, crouched, sinking as it goes in through the entrance
-      f.todo.push(T.wait(f.role === 'mum' ? 0 : 0.8 + i * 0.4), T.go(dx, dz, f.kind === 'cub' ? 'run' : 'trot', undefined, 0.3, 9), {
-        name: 'in', den: true, t: 0, run(f, dt) {
-          this.t += dt; const u = smooth(0.1, 1.3, this.t);
-          f.moveTo(x + Math.sin(h) * 0.38, z + Math.cos(h) * 0.38, dt, 'walk');
-          f.A.crouchGoal = 1; f.A.lift = -0.32 * f.q.S * f.scale * u;
-          if (this.t > 1.5) { f.fam.hide(f); return true; } return false;
-        } });
+      // one at a time (the tunnel takes one fox), to in front of the mouth, then in
+      f.todo.push(T.wait(f.role === 'mum' ? 0 : 0.6 + i * 0.7), this.inTask());
     });
   }
   // what a fox does next, by who it is
@@ -417,17 +566,18 @@ export class FoxFamily {
   visible() { return this.out && this.foxes.some(f => f.root.visible); }
   // how much they overlap right now: the deepest overlap of two bodies (a share of the two radii), and how far into an obstacle
   overlaps() {
-    const live = this.foxes.filter(f => f.root.visible && !f.home && !(f.task && f.task.den)); let bodies = 0, close = 0, obs = 0;
+    const live = this.foxes.filter(f => f.root.visible && !f.home && !(f.task && f.task.den)); let bodies = 0, close = 0, obs = 0, tails = 0;
     for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
       const mt = f => { const t = f.task && f.task.cur ? f.task.cur() : f.task; return t && t.with; };
       const near = mt(live[i]) === live[j] || mt(live[j]) === live[i];
       for (const ca of circles(live[i])) for (const cb of circles(live[j])) {
         const m = ca[2] + cb[2], o = (m - Math.hypot(cb[0] - ca[0], cb[1] - ca[1])) / m;
-        if (near) close = Math.max(close, o); else bodies = Math.max(bodies, o);
+        if (ca[3] && cb[3]) continue;
+        if (ca[3] || cb[3]) { if (!near && o > tails) { tails = o; const ti = x => { const t = x.task && x.task.cur ? x.task.cur() : x.task; return t ? t.name : '-'; }; this.worstTail = [live[i].name + ':' + ti(live[i]) + (ca[3] ? '(brush)' : ''), live[j].name + ':' + ti(live[j]) + (cb[3] ? '(brush)' : ''), +o.toFixed(2), +(live[i].A.sit || 0).toFixed(1), +(live[i].A.lie || 0).toFixed(1), +(live[j].A.sit || 0).toFixed(1), +(live[j].A.lie || 0).toFixed(1)]; } } else if (near) close = Math.max(close, o); else if (o > bodies) { bodies = o; const ti = x => { const t = x.task && x.task.cur ? x.task.cur() : x.task; return t ? t.name : '-'; }; this.worst = [live[i].name + ':' + ti(live[i]), live[j].name + ':' + ti(live[j]), circles(live[i]).findIndex(c => c[0] === ca[0]), circles(live[j]).findIndex(c => c[0] === cb[0]), +o.toFixed(2)]; }
       }
     }
     for (const f of live) for (const c of circles(f)) for (const o of this.obstacles) obs = Math.max(obs, c[2] + o[2] - Math.hypot(c[0] - o[0], c[1] - o[1]));
-    return { bodies, close, obs };
+    return { bodies, close, obs, tails };
   }
   centre(v) { let n = 0; v.set(0, 0, 0); for (const f of this.foxes) if (f.root.visible) { v.add(f.pos); n++; } if (n) v.multiplyScalar(1 / n); else v.set(this.field[0], 0, this.field[1]); return v; }
   // a tap on a fox: its name, and a little reaction (a hop of surprise and a play bow)
@@ -438,9 +588,15 @@ export class FoxFamily {
 // ground (chest, hips, head) along its heading; overlaps are pushed apart (both ways for two foxes), six times a frame. Playing up
 // close (wrestling, chasing) they may touch a little more; going in or out of the den they pass through its entrance
 function circles(f) {
-  const S = f.q.S * f.scale, sx = Math.sin(f.heading), cz = Math.cos(f.heading), up = Math.max(f.A.sit || 0, f.A.rear || 0), r = 0.115 * S;
+  const S = f.q.S * f.scale, sx = Math.sin(f.heading), cz = Math.cos(f.heading), up = Math.max(f.A.sit || 0, f.A.rear || 0);
+  const r = (0.13 + 0.035 * Math.max(f.A.lie || 0, Math.min(1, Math.abs(f.A.roll || 0) / 1.5))) * S;     // (with its fur; wider lying or rolled over, legs out)
   const head = 0.36 * S * (1 - 0.35 * up) + 0.08 * S * (f.A.lie || 0);
-  return [[f.pos.x + sx * 0.14 * S, f.pos.z + cz * 0.14 * S, r], [f.pos.x - sx * 0.13 * S * (1 - 0.5 * up), f.pos.z - cz * 0.13 * S * (1 - 0.5 * up), r], [f.pos.x + sx * head, f.pos.z + cz * head, 0.07 * S]];
+  const c = [[f.pos.x + sx * 0.14 * S, f.pos.z + cz * 0.14 * S, r], [f.pos.x - sx * 0.13 * S * (1 - 0.5 * up), f.pos.z - cz * 0.13 * S * (1 - 0.5 * up), r], [f.pos.x + sx * head, f.pos.z + cz * head, 0.07 * S]];
+  // and the brush: out behind, or curled round to one side sitting or lying
+  const curl = Math.max(f.A.sit || 0, f.A.lie || 0), side = f.curlSide || 1, rx = -cz * side, rz = sx * side;
+  if (curl > 0.5) c.push([f.pos.x - sx * 0.2 * S + rx * 0.2 * S, f.pos.z - cz * 0.2 * S + rz * 0.2 * S, 0.1 * S, 1]);
+  else if (!(f.A.rear > 0.3)) c.push([f.pos.x - sx * 0.5 * S, f.pos.z - cz * 0.5 * S, 0.075 * S, 1]);
+  return c;
 }
 export function collide(foxes, obstacles) {
   const live = foxes.filter(f => f.root.visible && !f.home);
@@ -461,18 +617,22 @@ export function collide(foxes, obstacles) {
   };
   for (let it = 0; it < 6; it++) {
     blocked.clear(); out();
-    for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+    for (const pass of [1, 0]) for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {     // brushes, then bodies
       const a = live[i], b = live[j];
       if (inDen(a) || inDen(b)) continue;
       const close = mate(a) === b || mate(b) === a ? 0.72 : 1;
       // one up against a bush or the den is not pushed into it: the other one gives way
       const wa = blocked.has(a) && !blocked.has(b) ? 0 : blocked.has(b) && !blocked.has(a) ? 1 : 0.5;
       for (const ca of circles(a)) for (const cb of circles(b)) {
+        // a brush: the other one steps off it (brush against brush, or a playmate's, is let be: fur brushing fur)
+        if (ca[3] && cb[3]) continue;
+        if (!!(ca[3] || cb[3]) !== !!pass) continue;
+        if ((ca[3] || cb[3]) && close < 1) continue;
         let dx = cb[0] - ca[0], dz = cb[1] - ca[1]; const d = Math.hypot(dx, dz), m = (ca[2] + cb[2]) * close;
         if (d >= m) continue;
         if (d < 1e-4) { dx = 1; dz = 0; } else { dx /= d; dz /= d; }
-        const push = m - d;
-        a.pos.x -= dx * push * wa; a.pos.z -= dz * push * wa; b.pos.x += dx * push * (1 - wa); b.pos.z += dz * push * (1 - wa);
+        const push = (m - d) * (ca[3] || cb[3] ? 0.5 : 1), w = ca[3] ? (blocked.has(b) ? 0.5 : 0) : cb[3] ? (blocked.has(a) ? 0.5 : 1) : wa;
+        a.pos.x -= dx * push * w; a.pos.z -= dz * push * w; b.pos.x += dx * push * (1 - w); b.pos.z += dz * push * (1 - w);
       }
     }
   }
@@ -482,41 +642,53 @@ export function collide(foxes, obstacles) {
 // ---------------------------------------------------------------- what they do
 function seq(...tasks) { return { name: 'seq', i: 0, pair: tasks.some(t => t.pair), cur() { return tasks[this.i]; }, run(f, dt) { while (this.i < tasks.length) { if (tasks[this.i].run(f, dt) === false) return false; this.i++; } return true; } }; }
 function sitWatch(secs, groom) {
-  return T.wait(secs, (f, t) => { f.A.sitGoal = 1; look(f, t); if (groom && t > secs * 0.6) { f.A.lookPitchGoal = 0.6; f.A.lookYawGoal = 0.9; } if (!groom && t > 1.5 && t < 2.6 && f.r && (f.A.t % 7) < 3) f.A.scratchGoal = 1; });
+  return T.wait(secs, (f, t) => { f.A.sitGoal = 1; look(f, t); if (groom && t > secs * 0.6) { f.A.lookPitchGoal = 0.6; f.A.lookYawGoal = 0.9; f.A.squintGoal = 0.55; f.A.earsGoal = -0.15; } if (!groom && t > 1.5 && t < 2.6 && f.r && (f.A.t % 7) < 3) f.A.scratchGoal = 1; });
 }
-function lieDown(secs) { return T.wait(secs, (f, t) => { f.A.lieGoal = 1; f.A.chinGoal = t > 2 ? 1 : 0; if (t < 2) look(f, t); }); }
+function lieDown(secs) {
+  return T.wait(secs, (f, t) => {
+    const A = f.A; A.lieGoal = 1; A.chinGoal = t > 2 ? 1 : 0; if (t < 2) look(f, t);
+    if (t > 1.2 && t < 2.6) yawn(f, (t - 1.2) / 1.4);               // a big yawn before settling
+    else if (t > 2.6) { A.squintGoal = Math.min(0.85, (t - 2.6) * 0.4); A.earsGoal = -0.3; }   // dozing off, ears relaxed
+  });
+}
+// a yawn, u from 0 to 1: the jaw opening wide, eyes screwed shut, ears back, head up
+function yawn(f, u) { const k = Math.sin(Math.PI * clamp01(u)); f.A.mouthGoal = 1.15 * k; f.A.squintGoal = 0.95 * k; f.A.earsGoal = -0.6 * k; f.A.lookPitchGoal = -0.35 * k; }
 // the mouse pounce: listen (head tilted one way, then the other), crouch, spring up high and dive nose-first into the grass,
 // stay stuck a moment with the brush waving, pop out and shake. Usually nothing caught
 function mousePounce() {
   return { name: 'pounce', t: 0, run(f, dt) {
     const A = f.A, S = f.q.S * f.scale; this.t += dt; const t = this.t;
-    if (t < 1.6) { A.headTiltGoal = t < 0.8 ? 0.38 : -0.38; A.lookPitchGoal = 0.45; A.crouchGoal = 0.25; A.tailUpGoal = 0.1; return false; }
-    if (t < 2.1) { A.crouchGoal = 1; A.lookPitchGoal = 0.3; A.headTiltGoal = 0; return false; }
+    if (t < 1.6) { A.headTiltGoal = t < 0.8 ? 0.38 : -0.38; A.lookPitchGoal = 0.45; A.crouchGoal = 0.25; A.tailUpGoal = 0.1; A.earsGoal = 1; A[t < 0.8 ? 'earLTwGoal' : 'earRTwGoal'] = 0.6; return false; }
+    if (t < 2.1) { A.crouchGoal = 1; A.lookPitchGoal = 0.3; A.headTiltGoal = 0; A.earsGoal = 1; A.wideGoal = 1; return false; }
     if (t < 2.85) {                                   // up and over: a high arc, landing nose-first
       const u = (t - 2.1) / 0.75;
       A.lift = Math.sin(u * Math.PI) * 0.62 * S; A.airGoal = 1; A.air = Math.max(A.air || 0, 0.6);
-      A.pitch = -0.7 + 2.0 * smooth(0.15, 0.9, u);
+      A.pitch = -0.7 + 2.0 * smooth(0.15, 0.9, u); A.earsGoal = 1 - 1.4 * u; A.wideGoal = 1 - u; A.squintGoal = smooth(0.6, 1, u); A.mouthGoal = 0.4 * smooth(0.4, 0.8, u);
       f.pos.x += Math.sin(f.heading) * dt * 0.9 * S; f.pos.z += Math.cos(f.heading) * dt * 0.9 * S;
       return false;
     }
-    if (t < 4.3) { A.diveGoal = 1; A.dive = Math.max(A.dive || 0, 0.7); return false; }      // stuck nose-down in the grass
+    if (t < 4.3) { A.diveGoal = 1; A.dive = Math.max(A.dive || 0, 0.7); A.squintGoal = 1; A.earsGoal = -0.4; return false; }      // stuck nose-down in the grass
     if (t < 4.6) { A.lift = 0.05 * S * Math.sin((t - 4.3) / 0.3 * Math.PI); return false; }
-    if (t < 5.4) { A.shakeGoal = 1; return false; }
-    if (t < 6.2) { A.sitGoal = 0.6; A.headTiltGoal = 0.25; return false; }                    // "hm. Nothing."
+    if (t < 5.4) { A.shakeGoal = 1; A.squintGoal = 1; A.mouthGoal = 0.2; return false; }
+    if (t < 6.2) { A.sitGoal = 0.6; A.headTiltGoal = 0.25; A.earLGoal = 0.5; A.earRGoal = -0.7; return false; }                    // "hm. Nothing."
     return true;
   } };
 }
-function hop() { return { name: 'hop', t: 0, run(f, dt) { this.t += dt; f.A.lift = Math.sin(clamp01(this.t / 0.45) * Math.PI) * 0.16 * f.q.S; f.A.airGoal = 0.4; return this.t > 0.5; } }; }
-function bowAt(o, secs = 1.4) { return { name: 'bow', t: 0, run(f, dt) { this.t += dt; if (o) f.turnTo(Math.atan2(o.pos.x - f.pos.x, o.pos.z - f.pos.z), dt); f.A.bowGoal = 1; f.A.wagGoal = 1; f.A.tailUpGoal = 0.6; return this.t > secs; } }; }
+function hop() { return { name: 'hop', t: 0, run(f, dt) { this.t += dt; f.A.lift = Math.sin(clamp01(this.t / 0.45) * Math.PI) * 0.16 * f.q.S; f.A.airGoal = 0.4; f.A.earsGoal = 0.8; return this.t > 0.5; } }; }
+function bowAt(o, secs = 1.4) { return { name: 'bow', t: 0, run(f, dt) { this.t += dt; if (o) f.turnTo(Math.atan2(o.pos.x - f.pos.x, o.pos.z - f.pos.z), dt); f.A.bowGoal = 1; f.A.wagGoal = 1; f.A.tailUpGoal = 0.6; playFace(f, 0.6); return this.t > secs; } }; }
+// the play face: mouth open in a grin, ears up, eyes bright
+function playFace(f, k = 1) { f.A.mouthGoal = Math.max(f.A.mouthGoal || 0, 0.75 * k); f.A.earsGoal = 0.7 * k; f.A.wideGoal = 0.4 * k; }
 // chasing its own tail, round and round, then a wobbly sit
 function tailChase(secs) {
   return { name: 'tailchase', t: 0, run(f, dt) {
     this.t += dt; const A = f.A;
-    if (this.t < secs) { f.heading += dt * 7.5; f.turn = 7.5; f.pace = 1; A.lookYawGoal = 1.2; A.tailUpGoal = 0.2; A.wagGoal = 0.4; return false; }
-    if (this.t < secs + 1.6) { A.sitGoal = 1; A.headTiltGoal = 0.35 * Math.sin(this.t * 9); A.lookYawGoal = 0.4 * Math.sin(this.t * 5); return false; }
+    if (this.t < secs) { f.heading += dt * 7.5; f.turn = 7.5; f.pace = 1; A.lookYawGoal = 1.2; A.tailUpGoal = 0.2; A.wagGoal = 0.4; playFace(f, 0.8); A.earsGoal = -0.3; return false; }
+    if (this.t < secs + 1.6) { A.sitGoal = 1; A.headTiltGoal = 0.35 * Math.sin(this.t * 9); A.lookYawGoal = 0.4 * Math.sin(this.t * 5); dizzy(f, this.t); return false; }
     return true;
   } };
 }
+// dizzy: the ears every which way, eyes half shut and blinking, mouth a little open
+function dizzy(f, t) { f.A.earLGoal = 0.7 * Math.sin(t * 4); f.A.earRGoal = -0.7 * Math.sin(t * 4 + 1); f.A.squintGoal = 0.4 + 0.4 * Math.sin(t * 6); f.A.mouthGoal = 0.25; }
 // a chase: one cub runs off in a loop round the meadow, the other after it; at the end they bump and roll
 function chase(fam, a, b) {
   const [fx, fz, fr] = fam.field, a0 = fam.r() * Math.PI * 2, dir = fam.r() < 0.5 ? 1 : -1, len = 5 + fam.r() * 3;
@@ -524,12 +696,12 @@ function chase(fam, a, b) {
   const lead = { name: 'lead', pair: true, close: true, with: b, run(f, dt) {
     shared.t += dt; if (shared.t > len || shared.cancel) return true;
     const ang = a0 + dir * shared.t * 0.75, rr = fr * (0.55 + 0.2 * Math.sin(shared.t * 1.3));
-    f.moveTo(fx + Math.cos(ang) * rr, fz + Math.sin(ang) * rr, dt, 'run'); f.A.tailUpGoal = 0.5; return false;
+    f.moveTo(fx + Math.cos(ang) * rr, fz + Math.sin(ang) * rr, dt, 'run'); f.A.tailUpGoal = 0.5; playFace(f, 0.7); f.A.earsGoal = -0.6; return false;
   } };
   const follow = { name: 'follow', pair: true, close: true, with: a, t: 0, run(f, dt) {
     this.t += dt; if (this.t > len + 0.3 || shared.cancel) return true;
     const behind = 0.88 * f.q.S * f.scale;
-    f.moveTo(a.pos.x - Math.sin(a.heading) * behind, a.pos.z - Math.cos(a.heading) * behind, dt, 'run'); f.A.tailUpGoal = 0.6; return false;
+    f.moveTo(a.pos.x - Math.sin(a.heading) * behind, a.pos.z - Math.cos(a.heading) * behind, dt, 'run'); f.A.tailUpGoal = 0.6; playFace(f, 0.8); return false;
   } };
   b.todo = [follow, roll(1.6, 0.9)]; b.task = null;
   return seq(lead, roll(1.2, 0.6));
@@ -539,8 +711,8 @@ function roll(secs, delay = 0) {
   return { name: 'roll', t: 0, close: true, run(f, dt) {
     this.t += dt; const A = f.A, t = this.t - delay;
     if (t < 0) return false;
-    if (t < 0.7) { A.rollFast = true; A.rollGoal = 2.9; A.kickGoal = 1; return false; }
-    if (t < secs) { A.rollGoal = 2.9; A.kickGoal = 1; return false; }
+    if (t < 0.7) { A.rollFast = true; A.rollGoal = 2.9; A.kickGoal = 1; playFace(f); A.squintGoal = 0.4; return false; }
+    if (t < secs) { A.rollGoal = 2.9; A.kickGoal = 1; playFace(f); A.squintGoal = 0.4; A.earsGoal = -0.5; return false; }
     if (t < secs + 0.6) { A.rollFast = true; A.rollGoal = 0; return false; }
     A.rollFast = false; return true;
   } };
@@ -550,7 +722,7 @@ function tumble(fam, spot) {
     this.t += dt; const A = f.A;
     if (this.t < 0.55) { A.rollFast = true; A.rollGoal = 6.28 * smooth(0, 0.55, this.t); A.roll = A.rollGoal; f.pos.x += Math.sin(f.heading) * dt * 0.8; f.pos.z += Math.cos(f.heading) * dt * 0.8; A.lift = 0.06 * f.q.S * Math.sin(this.t / 0.55 * Math.PI); return false; }
     A.roll = 0; A.rollGoal = 0; A.rollFast = false;
-    if (this.t < 2.0) { A.sitGoal = 1; A.headTiltGoal = 0.3 * Math.sin(this.t * 8); return false; }          // dizzy
+    if (this.t < 2.0) { A.sitGoal = 1; A.headTiltGoal = 0.3 * Math.sin(this.t * 8); dizzy(f, this.t); return false; }          // dizzy
     return true;
   } });
 }
@@ -564,12 +736,12 @@ function wrestle(fam, a, b) {
     const A = f.A, dx = other.pos.x - f.pos.x, dz = other.pos.z - f.pos.z, d = Math.hypot(dx, dz), want = 0.3 * f.q.S * 2;
     if (this.stage === 0) { if (d > want + 0.05) { f.moveTo(other.pos.x, other.pos.z, dt, 'trot'); return false; } this.stage = 1; shared.ready++; }
     f.turnTo(Math.atan2(dx, dz), dt, 6);
-    if (shared.ready < 2) { A.bowGoal = 1; A.wagGoal = 1; return false; }
+    if (shared.ready < 2) { A.bowGoal = 1; A.wagGoal = 1; playFace(f, 0.6); return false; }
     this.t += dt; const t = this.t;
-    if (t < 2.2) { A.rearGoal = 1; A.pawGoal = 1; A.lift = 0.02 * f.q.S * Math.abs(Math.sin(t * 6)); return false; }
+    if (t < 2.2) { A.rearGoal = 1; A.pawGoal = 1; A.lift = 0.02 * f.q.S * Math.abs(Math.sin(t * 6)); A.mouthGoal = 0.45 + 0.45 * Math.max(0, Math.sin(t * 7)); A.earsGoal = -0.5; A.squintGoal = 0.3; return false; }
     if (t < 4.6) {
-      if (under) { A.rollFast = true; A.rollGoal = 2.85; A.kickGoal = 1; A.lookYawGoal = 0.6 * Math.sin(t * 3); }
-      else { A.bowGoal = 0.7; A.pawGoal = 1; A.lookPitchGoal = 0.6; A.wagGoal = 1; if (d > want * 0.8) f.moveTo(other.pos.x, other.pos.z, dt, 'walk'); }
+      if (under) { A.rollFast = true; A.rollGoal = 2.85; A.kickGoal = 1; A.lookYawGoal = 0.6 * Math.sin(t * 3); A.mouthGoal = 0.5 + 0.4 * Math.max(0, Math.sin(t * 6)); A.earsGoal = -0.7; }
+      else { A.bowGoal = 0.7; A.pawGoal = 1; A.lookPitchGoal = 0.6; A.wagGoal = 1; A.mouthGoal = 0.35 + 0.5 * Math.max(0, Math.sin(t * 5 + 1)); A.earsGoal = 0.5; if (d > want * 0.8) f.moveTo(other.pos.x, other.pos.z, dt, 'walk'); }
       return false;
     }
     if (t < 5.2) { A.rollGoal = 0; return false; }
@@ -583,32 +755,34 @@ function wrestle(fam, a, b) {
 function pounceOn(m) {
   return seq({ name: 'stalk', with: m, run(f, dt) {
     const tx = m.pos.x - Math.sin(m.heading) * 0.85 * m.q.S, tz = m.pos.z - Math.cos(m.heading) * 0.85 * m.q.S;
-    f.A.crouchGoal = 0.7; return f.moveTo(tx - Math.sin(f.heading) * 0.25 * f.q.S, tz - Math.cos(f.heading) * 0.25 * f.q.S, dt, 'walk');
-  } }, T.wait(0.8, f => { f.A.crouchGoal = 1; f.A.wagGoal = 0.6; }), {
-    name: 'leap', with: m, t: 0, run(f, dt) { this.t += dt; const u = this.t / 0.45; f.A.lift = Math.sin(clamp01(u) * Math.PI) * 0.14 * f.q.S; f.A.airGoal = 1; f.pos.x += Math.sin(f.heading) * dt * 0.7; f.pos.z += Math.cos(f.heading) * dt * 0.7; m.A.wagGoal = 1; return u >= 1; } },
-  T.wait(1.2, f => { f.A.diveGoal = 0.6; f.A.wagGoal = 1; }), T.wait(0.6, f => { f.A.shakeGoal = 1; }));
+    f.A.crouchGoal = 0.7; f.A.earsGoal = 1; f.A.wideGoal = 0.6; return f.moveTo(tx - Math.sin(f.heading) * 0.25 * f.q.S, tz - Math.cos(f.heading) * 0.25 * f.q.S, dt, 'walk');
+  } }, T.wait(0.8, f => { f.A.crouchGoal = 1; f.A.wagGoal = 0.6; f.A.earsGoal = 1; f.A.wideGoal = 1; }), {
+    name: 'leap', with: m, t: 0, run(f, dt) { this.t += dt; const u = this.t / 0.45; f.A.lift = Math.sin(clamp01(u) * Math.PI) * 0.14 * f.q.S; f.A.airGoal = 1; f.pos.x += Math.sin(f.heading) * dt * 0.7; f.pos.z += Math.cos(f.heading) * dt * 0.7; m.A.wagGoal = 1; f.A.mouthGoal = 0.9 * smooth(0.3, 0.8, u); f.A.earsGoal = 0.6; return u >= 1; } },
+  T.wait(1.2, (f, t) => { f.A.diveGoal = 0.6; f.A.wagGoal = 1; f.A.mouthGoal = t < 0.25 ? 0.1 : 0.4; f.A.squintGoal = 0.5; }), T.wait(0.6, f => { f.A.shakeGoal = 1; f.A.squintGoal = 1; }));
 }
 // dad lies down and rolls over, playing dead with his legs in the air, while the cubs bounce round him
 function playDead(fam, dad, cubs) {
   for (const c of cubs.slice(0, 2)) {
     c.todo = [seq(T.wait(1.5 + fam.r()), { name: 'bounce', with: dad, t: 0, run(f, dt) {
       this.t += dt; const a = this.t * 2.2 + c.r() * 6, tx = dad.pos.x + Math.cos(a) * 0.85, tz = dad.pos.z + Math.sin(a) * 0.85;
-      f.moveTo(tx, tz, dt, 'trot'); f.A.lift = Math.abs(Math.sin(this.t * 7)) * 0.07 * f.q.S; f.A.wagGoal = 1; f.A.tailUpGoal = 0.6; return this.t > 4.5;
+      f.moveTo(tx, tz, dt, 'trot'); f.A.lift = Math.abs(Math.sin(this.t * 7)) * 0.07 * f.q.S; f.A.wagGoal = 1; f.A.tailUpGoal = 0.6; playFace(f, 0.8); return this.t > 4.5;
     } }, bowAt(dad))];
     c.task = null;
   }
-  return seq(lieDown(1.5), T.wait(5, (f, t) => { f.A.lieGoal = 1; f.A.rollGoal = 2.75; f.A.kickGoal = t < 0.8 ? 1 : 0.15; f.A.lookYawGoal = 0.7; }),
-    T.wait(1, f => { f.A.rollGoal = 0; f.A.lieGoal = 1; }), T.wait(0.8, f => { f.A.shakeGoal = 1; }));
+  return seq(lieDown(1.5), T.wait(5, (f, t) => { f.A.lieGoal = 1; f.A.rollGoal = 2.75; f.A.kickGoal = t < 0.8 ? 1 : 0.15; f.A.lookYawGoal = 0.7;
+      f.A.mouthGoal = 0.7; f.A.earsGoal = -0.5; f.A.squintGoal = 1; if (t > 3.3 && t < 4) f.A.winkLGoal = -1; }),     // eyes shut, tongue out... and a peek
+
+    T.wait(1, f => { f.A.rollGoal = 0; f.A.lieGoal = 1; playFace(f, 0.6); }), T.wait(0.8, f => { f.A.shakeGoal = 1; f.A.squintGoal = 1; }));
 }
 // a butterfly over the meadow, and a cub after it: hops and snaps, a miss, nose in the grass
 function butterflyHunt(fam) {
   const B = fam.butterfly;
   return { name: 'butterfly', t: 0, run(f, dt) {
     this.t += dt; B.chaser = f; const A = f.A, bx = B.mesh.position.x, bz = B.mesh.position.z;
-    if (this.t < 5) { f.moveTo(bx, bz, dt, 'trot'); A.lookPitchGoal = -0.6; A.tailUpGoal = 0.4; A.wagGoal = 0.5; if (Math.hypot(bx - f.pos.x, bz - f.pos.z) < 0.25) this.t = Math.max(this.t, 5); return false; }
-    if (this.t < 5.6) { const u = (this.t - 5) / 0.6; A.lift = Math.sin(u * Math.PI) * 0.22 * f.q.S; A.airGoal = 1; A.pitch = -0.5 + 1.2 * u; return false; }
-    if (this.t < 6.8) { A.diveGoal = 0.8; B.flee = 2; return false; }
-    if (this.t < 7.6) { A.sitGoal = 1; A.lookPitchGoal = -0.7; A.headTiltGoal = 0.3; return false; }
+    if (this.t < 5) { f.moveTo(bx, bz, dt, 'trot'); A.lookPitchGoal = -0.6; A.tailUpGoal = 0.4; A.wagGoal = 0.5; A.earsGoal = 1; A.wideGoal = 0.7; if (Math.hypot(bx - f.pos.x, bz - f.pos.z) < 0.25) this.t = Math.max(this.t, 5); return false; }
+    if (this.t < 5.6) { const u = (this.t - 5) / 0.6; A.lift = Math.sin(u * Math.PI) * 0.22 * f.q.S; A.airGoal = 1; A.pitch = -0.5 + 1.2 * u; A.mouthGoal = u < 0.75 ? 1 : 0; A.earsGoal = 0.6; return false; }
+    if (this.t < 6.8) { A.diveGoal = 0.8; B.flee = 2; A.squintGoal = 0.8; return false; }
+    if (this.t < 7.6) { A.sitGoal = 1; A.lookPitchGoal = -0.7; A.headTiltGoal = 0.3; A.earLGoal = -0.6; A.earRGoal = 0.4; return false; }
     B.chaser = null; return true;
   } };
 }

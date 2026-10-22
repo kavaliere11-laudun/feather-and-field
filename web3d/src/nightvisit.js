@@ -322,10 +322,8 @@ export class NightVisit {
     this.target = forced || this.pick([]);
     if (!this.target) return false;
     this.state = 'out'; this.phase = 'emerge'; this.note('start ' + this.target.index + (this.doorOpen(this.target) ? ' open' : ' shut'));
-    // out of the den: Rusty alone, low and crouched in the entrance, rising as he comes out
-    const [x, z, h] = this.fam.den;
-    f.home = false; f.todo = []; f.task = null;
-    f.pos.set(x + Math.sin(h) * 0.42, 0, z + Math.cos(h) * 0.42); f.heading = h; f.root.visible = false;
+    // out of the den: Rusty alone, along the tunnel (FoxFamily.emergeTask)
+    f.home = false; f.todo = []; f.task = null; f.root.visible = false;
     this.hint(this.T('out'));
     return true;
   }
@@ -334,15 +332,7 @@ export class NightVisit {
     const self = this;
     if (this.state === 'fleeing') return this.fleeTask();
     switch (this.phase) {
-      case 'emerge': {
-        const [x, z, h] = this.fam.den; this.phase = 'trip';
-        return { name: 'emerge', den: true, t: 0, run(f, dt) {
-          this.t += dt; f.root.visible = true; const u = smooth(0, 1.3, this.t);
-          f.A.lift = -0.3 * f.q.S * f.scale * (1 - u); f.A.crouchGoal = 1 - u; f.A.crouch = Math.max(f.A.crouch || 0, 1 - u);
-          f.moveTo(x + Math.sin(h) * 1.05, z + Math.cos(h) * 1.05, dt, 'walk');
-          return this.t > 1.4;
-        } };
-      }
+      case 'emerge': this.phase = 'trip'; return this.fam.emergeTask();
       case 'trip': {
         const p = this.target, e = this.entry(p, f.pos.x, f.pos.z);
         if (!e) { this.note('no way to ' + p.index); this.phase = 'home'; return this.wait(0.5); }
@@ -406,17 +396,19 @@ export class NightVisit {
         const [nx, nz] = pts[this.i + 1], a1 = Math.atan2(x - f.pos.x, z - f.pos.z), a2 = Math.atan2(nx - x, nz - z);
         if (Math.abs(Math.atan2(Math.sin(a2 - a1), Math.cos(a2 - a1))) > 0.45) gait = 'trot';
       }
-      if (f.moveTo(x, z, dt, gait) || Math.hypot(x - f.pos.x, z - f.pos.z) < (this.i < pts.length - 1 ? tol : 0.06)) this.i++;
-      if (slink) { f.A.crouchGoal = 0.45; f.A.lookPitchGoal = -0.1; f.A.tailUpGoal = -0.2; }
+      if (f.moveTo(x, z, dt, gait, this.i < pts.length - 1) || Math.hypot(x - f.pos.x, z - f.pos.z) < (this.i < pts.length - 1 ? tol : 0.06)) this.i++;
+      if (slink) { f.A.crouchGoal = 0.45; f.A.lookPitchGoal = -0.1; f.A.tailUpGoal = -0.2; f.A.earsGoal = 1; f.A.squintGoal = 0.3; }     // slinking up: ears pricked, eyes narrowed, sly
+      else if (gait === 'trot' && pace !== 'run') f.A.earsGoal = 0.45;
       if (self.groundY) {                                      // up and over a footbridge's arched deck
         const S = f.q.S * f.scale, sx = Math.sin(f.heading), cz = Math.cos(f.heading);
         const fy = self.groundY(f.pos.x + sx * 0.14 * S, f.pos.z + cz * 0.14 * S), hy = self.groundY(f.pos.x - sx * 0.13 * S, f.pos.z - cz * 0.13 * S);
         if (fy || hy) {
           f.A.lift = (fy + hy) / 2; f.A.pitch = -Math.atan2(fy - hy, 0.27 * S);
           f.A.groundF = fy; f.A.groundH = self.groundY(f.pos.x - sx * 0.185 * S, f.pos.z - cz * 0.185 * S);
+          f.A.groundAt = d => self.groundY(f.pos.x + sx * d, f.pos.z + cz * d);
         }
       }
-      if (pace === 'run') { f.A.tailUpGoal = 0.3; }
+      if (pace === 'run') { f.A.tailUpGoal = 0.3; f.A.earsGoal = -0.85; f.A.mouthGoal = 0.3; f.A.wideGoal = 0.3; }     // running for it: ears flat, panting
       if (tailUp) f.A.tailUpGoal = Math.max(f.A.tailUpGoal || 0, tailUp);
       return this.i >= pts.length;
     } };
@@ -428,7 +420,7 @@ export class NightVisit {
       this.t += dt; f.turnTo(h, dt, 6);
       // gathering himself: down low, weight back on the haunches
       const T0 = 0.38, T1 = T0 + 0.7, T2 = T1 + 0.34;
-      if (this.t < T0) { const k = smooth(0, T0, this.t); f.A.crouchGoal = 1; f.A.crouch = Math.max(f.A.crouch || 0, k); f.A.pitch = -0.12 * k; f.A.tailUpGoal = 0.3; return false; }
+      if (this.t < T0) { const k = smooth(0, T0, this.t); f.A.crouchGoal = 1; f.A.crouch = Math.max(f.A.crouch || 0, k); f.A.pitch = -0.12 * k; f.A.tailUpGoal = 0.3; f.A.earsGoal = 1; f.A.wideGoal = 0.6; return false; }
       // in the air: a parabola just clearing the fence, nose up off the ground and down for the landing; front legs folded up
       // under the chest going over, then reaching for the ground; hind legs pushing off, then tucked up (pose airPh)
       if (this.t < T1) {
@@ -436,6 +428,7 @@ export class NightVisit {
         f.pos.x = a.x + (b.x - a.x) * u; f.pos.z = a.z + (b.z - a.z) * u;
         f.A.lift = 4 * u * (1 - u) * 0.7; f.A.air = f.A.airGoal = Math.min(1, Math.min(u, 1 - u) * 8); f.A.airPh = u;
         f.A.crouch = f.A.crouchGoal = 0; f.A.pitch = -0.38 + 0.72 * u; f.A.tailUpGoal = 0.7; f.A.tailUp = Math.max(f.A.tailUp || 0, 0.5);
+        f.A.earsGoal = -0.6 + 1.2 * smooth(0.5, 1, u); f.A.wideGoal = 0.5; f.A.mouthGoal = 0.15;
         return false;
       }
       // the landing: front feet first, the legs folding to take it, then up
@@ -477,7 +470,8 @@ export class NightVisit {
       const w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z; f.turnTo(h, dt, 6);
       self.lean(f, p, lz); self.lz = lz;
       f.pace = 0.5; if (!up) f.A.crouchGoal = 0.3;
-      if (up) { f.A.crouchGoal = 0.35 * u; f.A.lookPitchGoal = 0.35 * smooth(0.4, 1, u); }      // head down as he nears the doorway
+      if (up) { f.A.crouchGoal = 0.35 * u; f.A.lookPitchGoal = 0.35 * smooth(0.4, 1, u); f.A.earsGoal = 1; f.A.wideGoal = 0.4; }
+      else f.A.earsGoal = -0.3;      // head down as he nears the doorway
       if (this.t >= dur && !up) self.lz = null;
       return this.t >= dur;
     } };
@@ -494,6 +488,8 @@ export class NightVisit {
     const G = this.nestOf(p), slope = Math.atan2(G.house, Math.max(0.05, G.foot[1] - G.pop[1])), on = z => z > G.pop[1] - 0.02 && z < G.foot[1] + 0.01 ? slope : 0;
     f.A.slopeF = on(lz - fwdF); f.A.slopeH = on(lz - fwdH);
     if (f.A.slopeF) f.A.groundF += 0.02; if (f.A.slopeH) f.A.groundH += 0.02;            // the tips of the toes clear of the boards
+    // and for each foot where it really is, a step ahead or behind (the pose asks, d metres forward of his middle)
+    f.A.groundAt = d => { const z = lz - d; return this.rampY(p, z) + (on(z) ? 0.02 : 0); }; f.A.slopeAt = d => on(lz - d);
   }
   // nose in at the open door: the hens wake in a flurry, peck his nose; he yelps
   poke(p) {
@@ -503,6 +499,8 @@ export class NightVisit {
       const w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z;
       const k = smooth(0, 0.7, this.t);
       f.A.crouchGoal = 0.35 + 0.2 * k; f.A.lookPitchGoal = 0.2 + 0.25 * k; f.A.wagGoal = this.t < 1.1 ? 0.6 : 0;      // nose down and in, a sniff, a hopeful wag
+      if (this.t < 1.1) { f.A.earsGoal = 1; f.A.wideGoal = 0.5; f.A.squintGoal = 0.25 * k; f.A.mouthGoal = 0.06 * Math.max(0, Math.sin(this.t * 22)); }
+      else { f.A.earsGoal = -1; f.A.wideGoal = 1; f.A.squint = 0; f.A.mouthGoal = 0.3; }              // !
       if (this.t > 1.1 && !this.burst) { this.burst = true; self.flurry(p); }
       return this.t > 1.45;
     } };
@@ -527,6 +525,7 @@ export class NightVisit {
       const lz = top + (end - top) * u, w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z;
       f.heading = h; f.A.rearGoal = 0.6 * (1 - u); f.A.rear = Math.max(f.A.rear || 0, 0.6 * (1 - u));
       f.A.lift = Math.max(self.rampY(p, lz), 0) * (1 - u) + Math.sin(u * Math.PI) * 0.12; f.A.tailUpGoal = 0.6;
+      f.A.squintGoal = 1; f.A.earsGoal = -1; f.A.mouthGoal = this.t < 0.35 ? 1 : 0.3;                   // "Yip!"
       self.lz = this.t > 0.6 ? null : lz;
       return this.t > 0.6;
     } }, { name: 'sneeze', t: 0, run(f, dt) {
@@ -543,15 +542,18 @@ export class NightVisit {
       }
       self.curlSet = true; f.curlSide = this.spot[3];          // (its choice holds while it lasts)
       if (!this.there) {
-        f.A.tailUpGoal = 0.5;
+        f.A.tailUpGoal = 0.5; f.A.earsGoal = -0.5; f.A.squintGoal = 0.35;
         if (Math.hypot(this.spot[0] - f.pos.x, this.spot[1] - f.pos.z) < 0.04 || f.moveTo(this.spot[0], this.spot[1], dt, 'walk')) this.there = true;
         return false;
       }
       this.t += dt;
       f.turnTo(this.h, dt, 3.5);
       f.A.sitGoal = 1; f.A.lookPitchGoal = this.t < 0.6 ? -0.35 : 0.3;            // a breath in, nose up... and the sneeze
-      if (this.t > 0.6 && this.t < 1.4) f.A.shakeGoal = 1;
-      if (this.t > 1.4 && this.t < 2.2) f.A.headTiltGoal = 0.35;
+      if (this.t < 0.6) { const k = smooth(0, 0.6, this.t); f.A.mouthGoal = 0.45 * k; f.A.squintGoal = 0.35 + 0.55 * k; f.A.earsGoal = -0.4 * k; }    // ah... ah...
+      else if (this.t < 0.85) { f.A.mouthGoal = this.t < 0.7 ? 1 : 0; f.A.squintGoal = 1; f.A.earsGoal = -0.9; }   // ...choo!
+      if (this.t > 0.6 && this.t < 1.4) { f.A.shakeGoal = 1; f.A.squintGoal = 1; }
+      if (this.t > 1.4 && this.t < 2.2) { f.A.headTiltGoal = 0.35; f.A.earLGoal = 0.5; f.A.earRGoal = -0.6; }       // what was that?
+      if (this.t > 1.4) f.A.wideGoal = 0.3;
       return this.t > 2.4;
     } });
   }
@@ -561,8 +563,9 @@ export class NightVisit {
     return { name: 'scratch', t: 0, run(f, dt) {
       this.t += dt; self.lean(f, p, lz); self.lz = lz;
       f.A.crouchGoal = 0.3;
-      if (this.t < 1.4) { f.A.lookYawGoal = 0.35 * Math.sin(this.t * 7); f.A.lookPitchGoal = 0.15; }    // sniffing along the door
-      else if (this.t < 2.8) { f.A.rearGoal = 0.25; f.A.paw = 1; f.A.pawGoal = 1; }                 // scratching at it
+      if (this.t < 1.4) { f.A.lookYawGoal = 0.35 * Math.sin(this.t * 7); f.A.lookPitchGoal = 0.15; f.A.earsGoal = 1; f.A.mouthGoal = 0.06 * Math.max(0, Math.sin(this.t * 22)); }    // sniffing along the door
+      else if (this.t < 2.8) { f.A.rearGoal = 0.25; f.A.paw = 1; f.A.pawGoal = 1; f.A.earsGoal = 0.6; f.A.squintGoal = 0.35; }    // scratching at it
+      else { f.A.earsGoal = -0.4; }
       if (this.t > 2.8 && !this.said) { this.said = true; self.say(self.T('shut'), self.W(p, G.pop[0], G.house + 0.8, self.D2 + 0.2), 2.4); }
       return this.t > 3.2;
     } };
@@ -571,7 +574,7 @@ export class NightVisit {
     const self = this;
     return { name: 'sit', t: 0, run(f, dt) {
       this.t += dt; f.A.sitGoal = 1; f.A.lift = 0; f.A.pitch = 0;
-      if (puzzled) f.A.headTiltGoal = 0.4 * Math.sin(Math.min(1, this.t / 0.8) * Math.PI / 2) * (this.t % 2 < 1 ? 1 : -1);
+      if (puzzled) { const sd = this.t % 2 < 1 ? 1 : -1; f.A.headTiltGoal = 0.4 * Math.sin(Math.min(1, this.t / 0.8) * Math.PI / 2) * sd; f.A.earLGoal = 0.5 * sd; f.A.earRGoal = -0.5 * sd; f.A.wideGoal = 0.25; }
       if (mark && !this.marked && this.t > 0.4) { this.marked = true; self.fx.pop(mark, self.overHead(f), 0.2, 1.8); }
       return this.t > s;
     } };
@@ -582,16 +585,7 @@ export class NightVisit {
     path.push([dx, dz]);
     return this.follow(path, pace, 0);
   }
-  denIn() {
-    const self = this, [x, z, h] = this.fam.den;
-    return { name: 'in', den: true, t: 0, run(f, dt) {
-      this.t += dt; const u = smooth(0.1, 1.3, this.t);
-      f.moveTo(x + Math.sin(h) * 0.38, z + Math.cos(h) * 0.38, dt, 'walk');
-      f.A.crouchGoal = 1; f.A.lift = -0.32 * f.q.S * f.scale * u;
-      if (this.t > 1.5) { self.finish(); return true; }
-      return false;
-    } };
-  }
+  denIn() { return this.fam.inTask(() => this.finish()); }
   // ---- the farmer
   sendFarmer() {
     if (!this.canSend()) return false;
@@ -655,7 +649,7 @@ export class NightVisit {
         f.A.lookPitchGoal = -0.2;
         if (self.lz != null) { self.lean(f, self.target, self.lz); f.A.lift += Math.sin(clamp01(this.t / 0.4) * Math.PI) * 0.1; }
         else { f.A.lift = Math.sin(clamp01(this.t / 0.4) * Math.PI) * 0.18; f.A.airGoal = this.t < 0.4 ? 0.5 : 0; }
-        f.A.tailUpGoal = 0.8;
+        f.A.tailUpGoal = 0.8; f.A.wideGoal = 1; f.A.wide = Math.max(f.A.wide || 0, 0.8); f.A.earsGoal = -1; f.A.mouthGoal = this.t < 0.3 ? 0.6 : 0.2;
         return this.t > 0.7;
       } };
       case 'away':
@@ -673,7 +667,7 @@ export class NightVisit {
     const self = this, G = this.nestOf(p), from = this.lz, end = G.foot[1] + 0.4;
     return { name: 'slide', t: 0, run(f, dt) {
       this.t += dt; const u = smooth(0, 0.45, this.t), lz = from + (end - from) * u, w = self.W(p, G.pop[0], 0, lz);
-      f.pos.x = w.x; f.pos.z = w.z; self.lean(f, p, lz); f.A.crouchGoal = 0.5; f.pace = 1;
+      f.pos.x = w.x; f.pos.z = w.z; self.lean(f, p, lz); f.A.crouchGoal = 0.5; f.pace = 1; f.A.earsGoal = -1; f.A.wideGoal = 0.8;
       if (this.t > 0.45) { self.lz = null; return true; } return false;
     } };
   }
