@@ -172,10 +172,10 @@ def fox(kind='fox', seed=1):
         # high hock, and a long straight foot down to the paw; not a round drumstick)
         # (the knee high up, tucked in the haunch; below the body the leg angles BACK to the hock, then the foot comes down
         # and a little forward to the paw: the bend you see points backwards, as on a dog)
-        hip, kn = P(-0.15, y, hy - 0.015), P(-0.132, y * 1.04, hy - 0.015 - 0.09 * LG)
-        hk, pw = P(-0.235, y * 1.04, 0.14 * LG), P(-0.2, y * 1.04, 0.018)
+        hip, kn = P(-0.15, y, hy - 0.015), P(-0.142, y * 1.04, hy - 0.015 - 0.065 * LG)
+        hk, pw = P(-0.248, y * 1.04, 0.135 * LG), P(-0.205, y * 1.04, 0.018)
         E = chain([hip, hip.lerp(kn, 0.5), kn, kn.lerp(hk, 0.5), hk, pw + Vector((0, 0, 0.01 * S))], [0.05, 0.04, 0.03, 0.024, 0.02, 0.017], S) + \
-            [('ELLIPSOID', tuple(hip.lerp(kn, 0.35) + Vector((-0.012 * S, 0, 0))), 0.062 * S * K, (1.25, 0.62, 1.0), 2.0),      # the haunch
+            [('ELLIPSOID', tuple(hip.lerp(kn, 0.7) + Vector((-0.01 * S, 0, 0))), 0.062 * S * K, (1.25, 0.62, 1.0), 2.0),      # the haunch, over the knee
              ('ELLIPSOID', tuple(pw + Vector((0.012 * S, 0, -0.002 * S))), 0.022 * S * K, (1.5, 0.95, 0.62), 2.0)]
         part(metaball_mesh(kind + '_leg' + H, E, res=0.006 * S, m=coat, parent=root), H + 'u', 'legfeather', 'fox_leg')
         pivot(H + 'u', tuple(hip), root); pivot(H + 'k', tuple(kn), root); pivot(H + 'l', tuple(hk), root); pivot(H + 'p', tuple(pw), root)

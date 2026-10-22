@@ -164,6 +164,9 @@ export class Quad {
       // at the end of each step the heel comes up off the ground first, the toes last)
       if (u < duty) { dz = amp * (1 - 2 * u / duty); push = smooth(0.55 * duty, duty, u) * g; }
       else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = lift * (front ? 1 : 0.75) * Math.pow(Math.sin(Math.PI * v), 0.8); flex = Math.sin(Math.PI * Math.min(1, v * 1.15)); push = (1 - smooth(0, 0.35, v)) * g; }
+      // a hind foot comes down about under the hip and pushes off well behind it (so the hock always points back); a front
+      // foot reaches forward and leaves under the shoulder
+      dz += amp * (front ? 0.3 : -0.5);
       // the leg's own posing (not on the ground): rearing up, in the air, nose-down after a dive, kicking on its back, a scratch
       const free = front ? Math.max(rear, air, dive, kick, rolled) : Math.max(air, dive, kick, rolled, L === 'HR' ? scratch : 0);
       const onGround = 1 - free;

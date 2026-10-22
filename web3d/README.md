@@ -655,3 +655,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   haunch and below the body the leg angles back to the hock (14 cm up, 10 cm behind the knee) before the foot comes down
   to the paw: the visible bend points backwards, as on a dog. `visitcheck` 37 frames; `denclip` none near the mouth;
   `foxtest` taps a fox that no other fox's tap sphere covers.
+- Then (21:27, "The 2 first ones are still wrong": the first two moments of the walk): there the hind foot had just come
+  down well forward of the hip, so the shin stood upright under a forward knee. Now the knee is tucked higher in the haunch
+  (6.5 cm below the hip) above a longer shin, and a hind foot comes down about under the hip and pushes off well behind it
+  (a front foot reaches forward and leaves under the shoulder; the steps' range shifted, `dz += amp * (front ? 0.3 :
+  -0.5)`), so the hock points back at every moment. Checked in a true side view with the joints drawn on.
