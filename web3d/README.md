@@ -978,4 +978,5 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - Tests: `teamguard.mjs [coops]` (for each coop: the geese and Biscuit out, Rusty home seen off by them all, Biscuit never
   into anything, into Rusty or through a goose, the parade together, everyone asleep again after; NOGEESE=1: Biscuit
   alone; and the parade in full view), `geeseguard.mjs` (now the geese alone, `?nodog`; also the parade in full view), `teamfilm.mjs OUT coop secs fps` (FROM=alarm, wake or
-  parade; the view keeps everyone in the story in the picture).
+  parade; the view keeps whoever's in the story in the picture; CAM=geese follows the geese; CUT=1 films each moment for
+  a few seconds and skips the rest, for a short video, or CUT='{"back/await": 6}' only the moments given; the message at the top held for 4.5 s of the farm's time).
