@@ -814,6 +814,7 @@ const VISIT_TEXT = {
   inWay: ["Rusty's nose is in the way!", 'Le nez de Rusty est dans le passage !'],
   geeseHeard: ['The geese have heard Rusty! They\'re raising the alarm…', 'Les oies ont entendu Rusty ! Elles donnent l\'alerte…'],
   geeseSafe: ['The geese chased Rusty all the way home!', 'Les oies ont chassé Rusty jusque chez lui !'],
+  geeseProud: ['Victory! The geese are so proud of themselves, they\'re parading round the farm.', 'Victoire ! Les oies sont si fières d\'elles qu\'elles paradent dans la ferme.'],
 };
 const VISIT_PLOT = /^\d+$/.test(params.get('visit') || '') ? parseInt(params.get('visit'), 10) : undefined;
 const LANG = params.get('lang') === 'fr' ? 'fr' : 'en';

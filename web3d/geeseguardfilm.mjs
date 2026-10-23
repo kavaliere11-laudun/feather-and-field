@@ -9,10 +9,14 @@ const errs = []; p.on('pageerror', e => errs.push(e.message));
 await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&visit=${coop}&geese` + (process.env.LANG === 'fr' ? '&lang=fr' : ''));
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.addStyleTag({ content: '#readout, .top' + (process.env.CHROME ? '' : ', #foxbtn, #farmerbtn') + (process.env.NOHINT ? ', #hint, #tag' : '') + ' { display: none !important; }' });
-await p.evaluate((lead) => {
+await p.evaluate(([lead, stage]) => {
   const f = window.__farm, F = f.geese(), V = f.visit(), G = F.geese[0]; f.pause(true); V.again = () => 1e9;
-  for (let i = 0; i < 30 * 200; i++) { f.step(1 / 30, 1); if (V.fox.root.visible && Math.hypot(V.fox.pos.x - G.pos.x, V.fox.pos.z - G.pos.z) < 14 + lead) break; if (F.guarding) break; }
-}, +(process.env.LEAD || 2.5));
+  for (let i = 0; i < 30 * 300; i++) {
+    f.step(1 / 30, 1);
+    if (stage) { if (G.task && G.task.stage === stage) break; continue; }        // STAGE=hiss: from that moment of her guard
+    if (V.fox.root.visible && Math.hypot(V.fox.pos.x - G.pos.x, V.fox.pos.z - G.pos.z) < 14 + lead) break; if (F.guarding) break;
+  }
+}, [+(process.env.LEAD || 2.5), process.env.STAGE || '']);
 let n = 0; const log = [];
 for (let i = 0; i < +secs * FPS; i++) {
   const s = await p.evaluate(([per, size]) => {
@@ -21,7 +25,9 @@ for (let i = 0; i < +secs * FPS; i++) {
     // the view: on the geese, and Rusty too while he's near them
     // (Gertrude and Rusty both in view while he's within 12 m of her, the view widening to fit them)
     let x = c.x, z = c.z, sz = size; const G = F.geese[0], d = Math.hypot(fox.pos.x - G.pos.x, fox.pos.z - G.pos.z);
-    if (fox.root.visible && d < 12) { x = (G.pos.x + fox.pos.x) / 2; z = (G.pos.z + fox.pos.z) / 2; sz = Math.max(size, d * 0.62 + 0.9); }
+    if (fox.root.visible && d < 12 && (V.state === 'out' || d < 5)) {          // (once he's off, back on the geese)
+      x = (G.pos.x + fox.pos.x) / 2; z = (G.pos.z + fox.pos.z) / 2; sz = Math.max(size, d * 0.62 + 0.9);
+    }
     window.__cam = window.__cam || [x, z, sz]; const k = Math.min(1, 0.05 * per);
     window.__cam[0] += (x - window.__cam[0]) * k; window.__cam[1] += (z - window.__cam[1]) * k; window.__cam[2] += (sz - window.__cam[2]) * k;
     f.lookAt(window.__cam[0] + 0.3, window.__cam[1] + 0.3, window.__cam[2]); f.draw();

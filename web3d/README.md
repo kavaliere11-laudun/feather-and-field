@@ -825,3 +825,11 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - Tests: `geeseguard.mjs [coops]` (for each coop: the geese wake, Rusty goes home chased, never into anything (brushing the
   margin round a pen counted apart, under 3 s), never into Rusty, asleep in bed again after); `geeseguardfilm.mjs OUT
   coop secs fps` (the view on Gertrude and Rusty).
+- The victory parade (23 Oct 12:56, Audrey: "After they chased the fox, the geese needs to be super proud and parade"):
+  after seeing him off, Gertrude gives a victory honk with her chest puffed out, then a lap of honour (`lapOfHonour()`:
+  three quarters of a little circle from where she stands, clear of everything) strutting with short high steps, chest out
+  and up (`proud` in the pose: the body tipped back, the folded wings held a little out, a jaunty bob of the head with each
+  step, more sway), bill in the air, tail high and wagging, honking now and then; Hector marches behind her just as proud.
+  Then a ta-da: wings flung wide and beating, a great honk, the tail waggling, Hector beside her doing the same a beat
+  later; then they strut off home. A message: "Victory! The geese are so proud of themselves, they're parading round the
+  farm." ("Victoire ! Les oies sont si fières d'elles qu'elles paradent dans la ferme.").

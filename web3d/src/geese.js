@@ -180,9 +180,11 @@ export class GooseRig {
     // forward running, lowered to the ground sitting
     // swimming (swim 0..1): no waddle, gliding level and bobbing a little on the water, the tail up
     const sw = s.swim || 0, dry = 1 - sw;
-    const roll = (-0.11 * g * (1 - 0.4 * run) * Math.sin(ph) - 0.06 * turn * g) * dry + 0.03 * sw * Math.sin(t * 1.3) + (s.roll || 0) + 0.22 * (s.shake || 0) * Math.sin(t * 34);
+    const roll = (-0.11 * g * (1 - 0.4 * run) * (1 + 0.9 * (s.proud || 0)) * Math.sin(ph) - 0.06 * turn * g) * dry + 0.03 * sw * Math.sin(t * 1.3) + (s.roll || 0) + 0.22 * (s.shake || 0) * Math.sin(t * 34);
     const stance = (this.name === 'embden' ? -0.17 : -0.04) * (1 - 0.6 * sw);
-    const pitch = (s.pitch || 0) + stance * (1 - sit) * (1 - 0.6 * (s.low || 0)) + 0.18 * run * dry + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit + 0.02 * sw * Math.sin(t * 1.7);
+    // proud (0..1): chest puffed out and up, head high, high steps, swaying (the victory parade)
+    const pr = s.proud || 0;
+    const pitch = (s.pitch || 0) + stance * (1 - sit) * (1 - 0.6 * (s.low || 0)) + 0.18 * run * dry + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit + 0.02 * sw * Math.sin(t * 1.7) - 0.22 * pr;
     const drop = sit * (this.by - 0.115) + 0.012 * g * dry * (1 - Math.abs(Math.cos(ph))) - 0.02 * (s.low || 0) - 0.004 * sw * Math.sin(t * 1.7);
     B.body.position.y -= drop - (s.lift || 0);
     B.body.rotation.set(pitch, 0.05 * g * dry * Math.sin(ph) * (1 - run), roll, 'YXZ');
@@ -200,6 +202,7 @@ export class GooseRig {
     B.neck1.rotation.z -= roll * 0.55; B.neck2.rotation.z -= roll * 0.3;
     B.neck1.rotation.x -= (pitch - (s.pitch || 0)) * 0.75;                  // (the neck stays up when the body leans into a run or stands tall)
     B.neck2.rotation.x += 0.04 * g * Math.sin(2 * ph);                     // a little nod with each step
+    B.neck4.rotation.x += 0.09 * pr * g * Math.sin(2 * ph); B.head.rotation.x -= 0.06 * pr * g * Math.sin(2 * ph);       // (proud: a jaunty bob)
     if (s.billAt && (s.billW || 0) > 0.01) { B.root.updateMatrixWorld(true); this.neckTo(s.billAt, Math.min(1, s.billW)); }
     // ---- the bill: open for a honk or a hiss; the eyes blink
     B.jaw.rotation.x = 0.55 * clamp01(s.jaw || 0);
@@ -213,7 +216,7 @@ export class GooseRig {
     const beat = Math.sin(ps), lag = Math.sin(ps - 0.9), ck = clamp01(s.cloak || 0) * o;
     for (const [nm, sd] of [['wingL', 1], ['wingR', -1]]) {
       B[nm].scale.setScalar(Math.max(0.001, 1 - smooth(0.0, 0.6, o)));
-      B[nm].rotation.z = sd * 0.12 * (s.wingLift || 0) * (1 + 0.5 * Math.sin(t * 30));
+      B[nm].rotation.z = sd * (0.12 * (s.wingLift || 0) * (1 + 0.5 * Math.sin(t * 30)) + 0.2 * (s.proud || 0));      // (proud: held out a little, puffed up)
       B[nm].rotation.x = -0.05 * (s.wingLift || 0);
       const op = B[nm + 'o'], u = smooth(0.15, 1.0, o);
       op.scale.setScalar(Math.max(0.001, u));
@@ -235,7 +238,7 @@ export class GooseRig {
       const G = this.legs[L], u = (((ph + off) / (Math.PI * 2)) % 1 + 1) % 1;
       let dz, dy = 0, curl = 0;
       if (u < duty) dz = amp * (1 - 2 * u / duty);
-      else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = (0.03 + 0.02 * run) * g * Math.sin(Math.PI * v); curl = 0.9 * Math.sin(Math.PI * Math.min(1, v * 1.2)) * g; }
+      else { const v = (u - duty) / (1 - duty), w = smooth(0, 1, v); dz = amp * (2 * w - 1); dy = (0.03 + 0.02 * run) * (1 + 1.4 * pr) * g * Math.sin(Math.PI * v); curl = 0.9 * (1 + 0.4 * pr) * Math.sin(Math.PI * Math.min(1, v * 1.2)) * g; }
       // the foot's target in the body's frame (the body lowered and tipped)
       const fx = G.side, fy = G.foot[1] + dy, fz = G.foot[2] + dz - 0.03 * sit;
       B.root.updateMatrix(); B.body.updateMatrix(); _m.multiplyMatrices(B.root.matrix, B.body.matrix).invert();
@@ -284,7 +287,7 @@ class Goose {
   moveTo(x, z, dt, pace = 'walk', through = false) {
     const p = this.pos, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
     if (d < 0.05) return true;
-    let sp = { walk: 0.24, hurry: 0.45, run: 0.8, charge: 1.25 }[pace] || 0.24;
+    let sp = { walk: 0.24, hurry: 0.45, run: 0.8, charge: 1.25, strut: 0.2 }[pace] || 0.24;
     if (this.wet > 0.5) sp = Math.min(sp, pace === 'walk' ? 0.16 : 0.3);
     let ax = dx / d, az = dz / d, slow = 1;
     for (const o of this.flock ? this.flock.near : []) {
@@ -310,7 +313,7 @@ class Goose {
   }
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt; this.clock += dt;
-    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak']) A[k + 'Goal'] = 0;
+    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak', 'proud']) A[k + 'Goal'] = 0;
     A.lookYawGoal = 0; A.lookPitchGoal = 0;
     this.turned = false; this.moved = false; this.turn = 0;
     const was = this.lastPos || (this.lastPos = this.pos.clone()), fx0 = was.x, fz0 = was.z;
@@ -331,7 +334,7 @@ class Goose {
     const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
     for (const k of ['up', 'honk', 'low', 'graze', 'preen', 'tuck', 'sit', 'wingLift', 'tailUp', 'lookYaw', 'lookPitch', 'tilt', 'lift']) ease(k, 5);
     for (const k of ['jaw', 'wag', 'shake', 'squint']) ease(k, 12);
-    ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('billW', 4);
+    ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('billW', 4); ease('proud', 3);
     A.shut = Math.max(blink, A.squint || 0);
     if (this.flock) {
       // the gait from how far she really moves (whatever moves her): the feet step exactly as far as the body goes, so they
@@ -341,7 +344,7 @@ class Goose {
       const spin = Math.min(1, Math.abs(this.turn) / 2) * (1 - clamp01(this.vs / 0.12));
       A.walk += (Math.max(clamp01(this.vs / 0.05), 0.6 * spin) - A.walk) * Math.min(1, dt * 8);
       A.run += (smooth(0.4, 0.7, this.vs) - A.run) * Math.min(1, dt * 5);
-      const stride = 0.22 + 0.12 * A.run;
+      const stride = (0.22 + 0.12 * A.run) * (1 - 0.25 * (A.proud || 0));              // (strutting: short proud steps)
       A.phase += (moved + 0.1 * spin * dt) / stride * Math.PI * 2;
       A.stride = stride; A.turn = this.turn;
       // in the pond: lower and lower as she wades in, floating once it's deep (the water hides her feet, paddling)
@@ -469,6 +472,14 @@ export const ACT = {
   alarm(g, u) { const A = g.A; A.upGoal = 1; A.honkGoal = u > 0.4 ? 1 : 0.3; A.jawGoal = u > 0.4 && Math.sin(u * 13) > 0 ? 1 : 0.1; A.wingLiftGoal = 0.9; A.tailUpGoal = 0.8; A.wagGoal = 0.3; },
   // charging: neck stretched out low, wings out and beating, bill open, hissing
   charge(g, u) { const A = g.A; A.lowGoal = 0.85; A.wingsGoal = 1; A.cloakGoal = 0.45; A.flapGoal = 0.4; A.jawGoal = 0.8 + 0.2 * Math.sin(u * 9); A.tailUpGoal = 0.6; },
+  // super proud (after seeing the fox off): chest out, head held high, bill in the air, wings a little puffed out, the tail
+  // up and wagging, a honk now and then
+  parade(g, u) { const A = g.A, c = u % 3.2; A.proudGoal = 1; A.upGoal = 1; A.lookPitchGoal = -0.38; A.tailUpGoal = 1; A.wagGoal = 0.6; A.tiltGoal = 0.12 * Math.sin(u * 1.4);
+    if (c > 2.2 && c < 2.9) { A.honkGoal = 0.5; A.jawGoal = Math.sin((c - 2.2) * Math.PI * 3) > 0 ? 0.9 : 0.1; } },
+  // ta-da: wings flung wide and beating, a great honk, then held out a moment, the tail waggling
+  tada(g, u) { const A = g.A; A.proudGoal = 1; A.upGoal = 1; A.tailUpGoal = 0.9; A.wagGoal = 1; A.liftGoal = 0.02;
+    if (u < 2.6) { A.wingsGoal = 1; A.flapGoal = u < 1.6 ? 1 : 0; A.honkGoal = 1; A.jawGoal = Math.sin(u * 9) > 0 ? 1 : 0.15; }
+    else { A.lookPitchGoal = -0.25; A.wingLiftGoal = 0.6; } },
   // something has caught his eye: he stares at it, head tilted, then honks at it
   distracted(g, u) { const A = g.A; A.tiltGoal = 0.42 * Math.sin(u * 0.9 + 0.6); A.upGoal = 0.7; A.lookPitchGoal = -0.1;
     if (u > 1.6 && u < 2.6) { A.honkGoal = 0.7; A.jawGoal = Math.sin((u - 1.6) * Math.PI * 4) > 0 ? 1 : 0; A.tailUpGoal = 0.6; } },
@@ -720,10 +731,11 @@ export class GeeseFlock {
     const keep = (G.wet > 0.5 ? 0.85 : 0.72) + (G.vs > 0.05 ? 0.1 : 0);
     if ((G.vs > 0.05 && along > keep + 0.08 && dG > 0.6) || dG > 1.4) {
       const charging = G.act === 'charge' || G.act === 'hiss' || G.act === 'alarm';
-      const pace = charging && along > 1.0 ? 'charge' : along > 3.4 ? 'run' : along > 1.7 ? 'hurry' : 'walk', p = this.hk < T.length ? T[this.hk] : [G.pos.x, G.pos.z];
+      const pace = charging && along > 1.0 ? 'charge' : along > 3.4 ? 'run' : along > 1.7 ? 'hurry' : G.act === 'parade' ? 'strut' : 'walk', p = this.hk < T.length ? T[this.hk] : [G.pos.x, G.pos.z];
       h.moveTo(p[0], p[1], dt, pace, true);
       if (h.act !== 'walk') { h.act = 'walk'; h.actT = 0; }
       if (charging) ACT.charge(h, this.time);                                          // (after the fox with her)
+      else if (G.act === 'parade' || G.act === 'tada') { ACT.parade(h, this.time); h.act = 'parade'; }      // (marching behind her, just as proud)
       else if (pace === 'run' && h.wet < 0.3) { A.wingsGoal = 0.6; A.flapGoal = 0.3; A.tailUpGoal = 0.5; A.upGoal = 0.4; }       // flapping along to catch up
       else if (pace === 'hurry') { A.wagGoal = 0.3; A.upGoal = 0.2; }
       this.copying = null;
@@ -805,11 +817,28 @@ export class GeeseFlock {
           if (this.st < 2.2 && f.root.visible && d > 1.2 && self.clearWalk(g.pos.x, g.pos.z, ax, az)) { g.moveTo(ax, az, dt, 'run', true); ACT.charge(g, this.st); return false; }
           to('victory', 'honk'); return false;
         }
-        case 'victory': ACT.honk(g, this.st); if (this.st > 2.4) to('stretch', 'stretch'); return false;
-        case 'stretch': ACT.stretch(g, this.st); if (this.st > 4.6) to('home', 'walk'); return false;
+        // super proud: a victory honk with her chest puffed out, a lap of honour strutting with Hector marching behind,
+        // a ta-da with her wings flung wide, then strutting off home
+        case 'victory':
+          ACT.parade(g, this.st + 2.2); g.A.honkGoal = 1; g.A.jawGoal = Math.sin(this.st * 8) > 0 ? 1 : 0.1;
+          if (this.st < 0.1 && V.hint) V.hint(V.T('geeseProud'));
+          if (this.st > 1.8) { this.lap = self.lapOfHonour(g); to(this.lap ? 'lap' : 'tada', this.lap ? 'parade' : 'tada'); }
+          return false;
+        case 'lap': {
+          const p = this.lap[0], last = this.lap.length === 1;
+          if (g.moveTo(p[0], p[1], dt, 'strut', !last) || (!last && Math.hypot(p[0] - g.pos.x, p[1] - g.pos.z) < 0.12)) this.lap.shift();
+          ACT.parade(g, this.st);
+          if (!this.lap.length || this.st > 30) to('tada', 'tada');
+          return false;
+        }
+        case 'tada':
+          if (this.st < 0.8 && self.mate.vs > 0.05) { ACT.parade(g, this.st); this.st -= dt * 0.5; return false; }       // (a moment for him to come up beside her)
+          ACT.tada(g, this.st); if (this.st > 4.2) to('home', 'parade');
+          return false;
         case 'home':
-          if (!this.home) this.home = TK.path(bed[0], bed[1], 'walk', 150);
+          if (!this.home) this.home = TK.path(bed[0], bed[1], this.st < 6 ? 'strut' : 'walk', 150);
           if (this.home.run(g, dt) !== false) to('face', 'look');
+          if (this.st < 6) ACT.parade(g, this.st); else if (g.act === 'parade') { g.act = 'walk'; g.actT = 0; }
           return false;
         case 'face':
           if (g.turnTo(bed[2], dt, 2) < 0.06 || this.st > 3) { self.guarding = false; return true; }
@@ -817,6 +846,20 @@ export class GeeseFlock {
       }
       return true;
     } };
+  }
+  // a lap of honour: a little circle from where she stands, all of it clear of everything (the first that fits of a few
+  // sizes and ways round), three quarters of the way round
+  lapOfHonour(g) {
+    const nav = this.nav;
+    for (const r of [0.85, 0.65, 0.5]) for (let k = 0; k < 8; k++) {
+      const a0 = g.heading + k * Math.PI / 4, cx = g.pos.x + Math.sin(a0) * r, cz = g.pos.z + Math.cos(a0) * r, pts = [];
+      const start = Math.atan2(g.pos.x - cx, g.pos.z - cz), dir = k % 2 ? 1 : -1;
+      for (let i = 1; i <= 9; i++) { const a = start + dir * i * Math.PI * 1.5 / 9; pts.push([cx + Math.sin(a) * r, cz + Math.cos(a) * r]); }
+      let ok = !nav || nav.freeAt(cx, cz);
+      for (let i = 0; ok && i < pts.length; i++) { const q = i ? pts[i - 1] : [g.pos.x, g.pos.z]; ok = !nav || (nav.freeAt(pts[i][0], pts[i][1]) && nav.clearLine(q[0], q[1], pts[i][0], pts[i][1], 0.18)); }
+      if (ok && this.pondAt(cx, cz)[0] > 1.6) return pts;
+    }
+    return null;
   }
   update(dt, hour) {
     this.time += dt; this.scoldOk -= dt;
