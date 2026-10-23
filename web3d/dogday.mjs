@@ -19,11 +19,11 @@ const r = await p.evaluate(async ([mins, at, hour2]) => {
   for (let i = 0; i < N; i++) {
     if (at >= 0 && i === Math.round(at * 30)) f.setHour(hour2);
     f.step(1 / 30, 1); frames++;
-    const [lx, lz] = D.local(d.pos.x, d.pos.z), inKennel = lx > -0.75 && lx < 1.35 && Math.abs(lz) < 0.95;     // (his home: his kennel, its doorstep, his bowls)
+    const [lx, lz] = D.local(d.pos.x, d.pos.z), inKennel = lx > -0.85 && lx < 1.55 && Math.abs(lz) < 1.15;     // (his home: his kennel, its doorstep, his bowls)
     if (!inKennel && !nav.freeAt(d.pos.x, d.pos.z) && !f.onBridge(d.pos.x, d.pos.z)) { blocked++; if (bl.length < 8) bl.push([D.doing, d.task && d.task.name, +d.pos.x.toFixed(2), +d.pos.z.toFixed(2)]); }
     if (F) for (const g of F.geese) { const dd = Math.hypot(g.pos.x - d.pos.x, g.pos.z - d.pos.z); closest = Math.min(closest, dd); if (dd < 0.45) gooseClose++; }
     const B = D.ball, bp = B.mesh.getWorldPosition(new f.THREE.Vector3());
-    if (B.state !== 'mouth' && !nav.freeAt(bp.x, bp.z)) { const [bx, bz] = D.local(bp.x, bp.z); if (!(bx > -0.75 && bx < 1.35 && Math.abs(bz) < 0.95)) ballBad++; }
+    if (B.state !== 'mouth' && !nav.freeAt(bp.x, bp.z)) { const [bx, bz] = D.local(bp.x, bp.z); if (!(bx > -0.85 && bx < 1.55 && Math.abs(bz) < 1.15)) ballBad++; }
     if (Math.hypot(bp.x - D.k.x, bp.z - D.k.z) > 12) ballFar++;
     const doing = D.asleep ? 'asleep' : D.doing || '';
     if (doing !== last) { did[doing] = (did[doing] || 0) + 1; last = doing; }
@@ -31,7 +31,7 @@ const r = await p.evaluate(async ([mins, at, hour2]) => {
     if (tn !== lastT) { tasks[tn] = (tasks[tn] || 0) + 1; lastT = tn; }
   }
   const [lx, lz] = D.local(d.pos.x, d.pos.z);
-  return { frames, blocked, blockedAt: bl, gooseClose, closest: +closest.toFixed(2), ballBad, ballFar, did, tasks, asleep: D.asleep, inKennel: lx > -0.5 && lx < 0.5 && Math.abs(lz) < 0.4,
+  return { frames, blocked, blockedAt: bl, gooseClose, closest: +closest.toFixed(2), ballBad, ballFar, did, tasks, asleep: D.asleep, inKennel: lx > -0.62 && lx < 0.62 && Math.abs(lz) < 0.5,
     at: [+d.pos.x.toFixed(2), +d.pos.z.toFixed(2)], teased: F ? F.teased || 0 : 0, spots: [D.spotsOf().coops.length, D.spotsOf().farm.length] };
 }, [+mins, +(process.env.AT || -1), +(process.env.HOUR2 || 0)]);
 console.log(JSON.stringify(r));

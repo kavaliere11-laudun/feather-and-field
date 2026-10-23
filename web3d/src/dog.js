@@ -17,8 +17,8 @@ const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 // bedtime 21:30 (before the hens, who go in from 22:00), up at 6:15 (after the rooster's crow)
 export const DOG_NIGHT = h => h >= 21.5 || h < 6.25;
 // the kennel (stylized/beasts.py KENNEL, in the browser's axes: x out of the door, z to its side, the bowls' side +z)
-export const KENNEL = { x0: -0.5, x1: 0.5, half: 0.4, floor: 0.065, board: [0.528, 0.735, 0], boardSize: [0.3, 0.09], food: [0.78, 0.68], water: [0.8, 0.42], r: 0.127 };
-const BALL_R = 0.042;
+export const KENNEL = { x0: -0.62, x1: 0.62, half: 0.56, floor: 0.065, board: [0.648, 0.86, 0], boardSize: [0.32, 0.1], food: [0.9, 0.8], water: [0.92, 0.52], r: 0.127 };
+const BALL_R = 0.042, _mw = new THREE.Vector3();
 
 export class FarmDog {
   // opts: { joints, name, kennel: [x, z, heading out of its door], nav, groundY(x, z), spots(): { coops: [[x, z, heading to
@@ -35,7 +35,7 @@ export class FarmDog {
     this.foxes = [d];
     this.hour = 12; this.time = 0; this.asleep = false; this.last = ''; this.mealIn = 0; this.geeseIn = 30; this.peek = 0;
     this.ball = makeBall(); this.group.add(this.ball.mesh);
-    const b = this.K(1.12, -0.52); this.ball.mesh.position.set(b[0], BALL_R, b[1]);
+    const b = this.K(1.3, -0.68); this.ball.mesh.position.set(b[0], BALL_R, b[1]);
     this.zs = [0, 1].map(() => zSprite()); for (const z of this.zs) this.group.add(z.sp);
     this.zIn = 0;
   }
@@ -50,8 +50,8 @@ export class FarmDog {
   // ---- where he is when the page opens: asleep in his kennel at night, by his door by day
   place(hour) {
     const d = this.dog;
-    if (DOG_NIGHT(hour)) { const p = this.K(-0.09, 0); d.pos.set(p[0], 0, p[1]); d.heading = this.k.h; d.A.lie = 1; d.A.chin = 1; d.task = this.wrap(this.sleepTask()); this.bedtime = true; this.asleep = true; }
-    else { const p = this.K(1.3, -0.15); d.pos.set(p[0], 0, p[1]); d.heading = this.toCamera(p[0], p[1]); }
+    if (DOG_NIGHT(hour)) { const p = this.K(0.08, 0); d.pos.set(p[0], 0, p[1]); d.heading = this.k.h; d.A.lie = 1; d.A.chin = 1; d.task = this.wrap(this.sleepTask()); this.bedtime = true; this.asleep = true; }
+    else { const p = this.K(1.5, -0.2); d.pos.set(p[0], 0, p[1]); d.heading = this.toCamera(p[0], p[1]); }
     d.lastPos = d.pos.clone(); this.placed = true;
   }
 
@@ -84,7 +84,7 @@ export class FarmDog {
       const done = task.run(f, dt);
       if (self.ball.state === 'mouth') { f.A.mouthGoal = Math.max(f.A.mouthGoal || 0, 0.42); f.A.mouth = Math.max(f.A.mouth || 0, 0.38); }
       const [lx, lz] = self.local(f.pos.x, f.pos.z);
-      if (Math.abs(lz) < KENNEL.half + 0.05) f.A.lift = Math.max(f.A.lift || 0, KENNEL.floor * smooth(0.78, 0.38, lx) * (lx > KENNEL.x0 - 0.2 ? 1 : 0));
+      if (Math.abs(lz) < KENNEL.half + 0.05) f.A.lift = Math.max(f.A.lift || 0, KENNEL.floor * smooth(KENNEL.x1 + 0.28, KENNEL.x1 - 0.12, lx) * (lx > KENNEL.x0 - 0.2 ? 1 : 0));
       return done;
     } };
   }
@@ -154,15 +154,29 @@ export class FarmDog {
 
   // ---- night and morning
   bedTask() {
-    const k = this.k, door = this.K(1.05, 0), inn = this.K(-0.14, 0), self = this;
+    const k = this.k, door = this.K(1.2, 0), inn = this.K(-0.02, 0), self = this;
     const L = [];
     if (this.ball.state === 'mouth') L.push(this.dropBall());
     L.push(this.go(door[0], door[1], 'trot'), this.face(k.h + Math.PI),
-      this.straight(inn[0], inn[1], 'walk', f => { f.A.crouchGoal = 0.55; f.A.lookPitchGoal = 0.35; f.A.earsGoal = -0.4; f.A.tailUpGoal = -0.1; }),      // in, head down under the doorway
-      { name: 'turn', t: 0, run(f, dt) { this.t += dt; f.A.lookPitchGoal = 0.3; f.A.earsGoal = 0.2; return f.turnTo(k.h, dt, 2.4) < 0.05 || this.t > 4; } },       // round to face out
-      this.straight(...this.K(-0.09, 0), 'walk'),
+      this.straight(inn[0], inn[1], 'walk', f => { self.ducking(f); f.A.tailUpGoal = -0.1; }),      // in, head down under the doorway
+      { name: 'turn', t: 0, run(f, dt) {                       // round to face out: low, curled round the way he turns, head down
+        this.t += dt; const off = wrap(k.h - f.heading);
+        if (this.dir === undefined) this.dir = off >= 0 ? 1 : -1;
+        f.A.crouchGoal = 0.9; f.A.duckGoal = 1; f.A.lookPitchGoal = 0.75; f.A.lookYawGoal = 1.5 * this.dir * smooth(0.05, 0.4, Math.abs(off)); f.A.earsGoal = -1; f.A.tailUpGoal = -0.3;
+        if (Math.abs(off) < 0.05 || this.t > 5) return true;
+        const s = Math.min(Math.abs(off), 2.0 * dt) * this.dir; f.heading += s; f.turn = s / dt; f.turned = true;
+        const to = self.K(-0.02, -0.035 * this.dir * Math.sin(Math.min(Math.PI, Math.abs(wrap(f.heading - k.h - Math.PI)))));       // (a little to the far side as his head comes round)
+        f.pos.x += (to[0] - f.pos.x) * Math.min(1, dt * 6); f.pos.z += (to[1] - f.pos.z) * Math.min(1, dt * 6);
+        return false;
+      } },
+      this.straight(...this.K(0.08, 0), 'walk'),
       lieDown(3.6), this.sleepTask());
     return seq(...L);
+  }
+  // under his kennel's roof and through its doorway: low, head down, ears back (until he's out in front of it)
+  ducking(f) {
+    const [lx] = this.local(f.pos.x, f.pos.z), k = smooth(KENNEL.x1 + 0.75, KENNEL.x1 + 0.45, lx);
+    f.A.crouchGoal = Math.max(f.A.crouchGoal || 0, 0.8 * k); f.A.duckGoal = k; f.A.duck = Math.max(f.A.duck || 0, 0.8 * k); f.A.lookPitchGoal = 0.6 * k; f.A.earsGoal = -0.9 * k;
   }
   sleepTask() {
     const self = this;
@@ -174,12 +188,13 @@ export class FarmDog {
     } };
   }
   wakeTask() {
-    const self = this, out = this.K(1.05, 0);
+    const self = this, out = this.K(1.32, 0);
     return seq(T.wait(2.4, (f, t) => {
       const A = f.A; A.lieGoal = 1; A.chinGoal = t < 0.7 ? 1 : 0; A.squintGoal = 1 - smooth(0.2, 1.0, t);
       if (t > 1.0) yawn(f, (t - 1.0) / 1.3);
     }), T.wait(0.7, f => { self.asleep = false; f.A.earsGoal = 0.6; }),
-      this.straight(out[0], out[1], 'walk', f => { f.A.crouchGoal = 0.45; f.A.lookPitchGoal = 0.3; }),
+      { name: 'duck', t: 0, run(f, dt) { this.t += dt; self.ducking(f); return this.t > 0.6; } },          // (head down first)
+      this.straight(out[0], out[1], 'walk', f => self.ducking(f)),
       this.face(this.toCamera(out[0], out[1])), this.stretch(), this.shake(), T.wait(0.8, (f, t) => look(f, t)));
   }
 
@@ -199,7 +214,7 @@ export class FarmDog {
     return L.length ? seq(...L) : null;
   }
   napTask() {
-    const R = this.r, at = this.K(1.32 + R() * 0.25, -0.05 - R() * 0.25), self = this;
+    const R = this.r, at = this.K(1.5 + R() * 0.25, -0.12 - R() * 0.3), self = this;
     return seq(this.go(at[0], at[1], 'trot'), this.circle(1 + (R() < 0.5 ? 1 : 0)), this.face(this.toCamera(at[0], at[1]) + (R() - 0.5) * 1.6, 3),
       lieDown(4), T.wait(16 + R() * 20, (f, t) => {
         const A = f.A; A.lieGoal = 1; A.chinGoal = 1; A.squintGoal = 1; A.earsGoal = -0.3; A.lidSoftGoal = 0.2;
@@ -208,17 +223,22 @@ export class FarmDog {
       }), T.wait(1.5, (f, t) => { f.A.lieGoal = 1; yawn(f, t / 1.4); }), this.stretch(), this.shake());
   }
   mealTask() {
-    const fb = this.K(1.24, KENNEL.food[1]), wb = this.K(1.26, KENNEL.water[1]), h = this.k.h + Math.PI, R = this.r;
+    const fb = this.K(KENNEL.food[0] + 0.44, KENNEL.food[1]), wb = this.K(KENNEL.water[0] + 0.44, KENNEL.water[1]), h = this.k.h + Math.PI, R = this.r;
     return seq(this.go(fb[0], fb[1], 'trot'), this.face(h),
-      T.wait(4.5 + R() * 2, (f, t) => { f.A.lookPitchGoal = 1.25; f.A.crouchGoal = 0.3; f.A.mouthGoal = 0.35 * Math.max(0, Math.sin(t * 9)); f.A.wagGoal = 0.7; f.A.earsGoal = 0.3; f.A.lidSoftGoal = 0.2; }),     // crunch crunch
+      T.wait(4.5 + R() * 2, (f, t) => { this.inBowl(f, KENNEL.food, 0.075); f.A.mouthGoal = 0.35 * Math.max(0, Math.sin(t * 9)); f.A.wagGoal = 0.7; f.A.earsGoal = 0.3; f.A.lidSoftGoal = 0.2; }),     // crunch crunch
       T.wait(0.8, (f, t) => { f.A.mouthGoal = 0.3; f.A.lookPitchGoal = -0.1; }),             // a lick of the lips
       this.straight(wb[0], wb[1], 'walk'), this.face(h),
-      T.wait(3 + R() * 1.5, (f, t) => { f.A.lookPitchGoal = 1.25; f.A.crouchGoal = 0.3; f.A.mouthGoal = 0.12 + 0.12 * Math.max(0, Math.sin(t * 16)); f.A.earsGoal = 0.2; }),     // lap lap
+      T.wait(3 + R() * 1.5, (f, t) => { this.inBowl(f, KENNEL.water, 0.06); f.A.mouthGoal = 0.12 + 0.12 * Math.max(0, Math.sin(t * 16)); f.A.earsGoal = 0.2; }),     // lap lap
       T.wait(1.2, (f, t) => { f.A.sitGoal = 1; f.A.mouthGoal = 0.2; look(f, t); }));
+  }
+  // his head down in a bowl (its middle, h up from the ground), mouth right in it
+  inBowl(f, b, h) {
+    const w = this.K(b[0], b[1]); f.A.reachGoal = 1; f.A.reachAt = (f.A.reachAt || new THREE.Vector3()).set(w[0], h, w[1]);
+    f.A.crouchGoal = 0.1;
   }
   watchTask() {
     const S = this.spotsOf ? this.spotsOf() : { farm: [] }, R = this.r;
-    const s = S.farm.length && R() < 0.6 ? S.farm[Math.floor(R() * S.farm.length)] : this.K(1.4, 0.15);
+    const s = S.farm.length && R() < 0.6 ? S.farm[Math.floor(R() * S.farm.length)] : this.K(1.6, 0.2);
     return seq(this.go(s[0], s[1], 'trot'), this.face(this.toCamera(s[0], s[1]) + (R() - 0.5) * 2, 3), sitWatch(7 + R() * 6));
   }
   playTask() {
@@ -226,7 +246,7 @@ export class FarmDog {
     // somewhere with room round him (a tail chase spins, a roll throws his legs about)
     const room = (px, pz) => !this.nav || [0, 1, 2, 3, 4, 5].every(k => this.nav.freeAt(px + Math.cos(k * 1.05) * 0.7, pz + Math.sin(k * 1.05) * 0.7));
     let spot = [this.dog.pos.x, this.dog.pos.z];
-    if (!room(...spot)) { const s = this.K(1.6, -0.4); spot = s; }
+    if (!room(...spot)) { const s = this.K(1.9, -0.5); spot = s; }
     const L = [this.go(spot[0], spot[1], 'trot')];
     if (x < 0.4) L.push(T.wait(0.8, f => { f.A.lookYawGoal = 1.1; f.A.earsGoal = 1; f.A.wideGoal = 0.6; }), tailChase(2.4 + R()), this.shake());   // what's that behind me?
     else if (x < 0.75) L.push(T.wait(0.6, f => { f.A.crouchGoal = 0.4; }), roll(1.8), T.wait(0.6, f => { f.A.lieGoal = 0.6; playFace(f, 0.8); }), this.shake());     // a good roll in the grass
@@ -248,7 +268,7 @@ export class FarmDog {
     const B = this.ball; if (B.state !== 'ground') return null;
     const L = [this.fetch()], n = 2 + Math.floor(this.r() * 2);
     for (let i = 0; i < n; i++) L.push(this.toss(), this.chaseBall(), this.fetch(true));
-    const home = this.K(1.12 + 0.42, -0.52);                  // (standing so it drops at its place by the kennel)
+    const home = this.K(1.3 + 0.42, -0.68);                  // (standing so it drops at its place by the kennel)
     L.push(this.go(home[0], home[1], 'trot'), this.face(this.k.h + Math.PI), this.dropBall(), T.wait(0.6, f => { f.A.lookPitchGoal = 0.6; f.A.wagGoal = 0.6; }),
       this.circle(1), lieDown(3), T.wait(5, (f, t) => { f.A.lieGoal = 1; f.A.chinGoal = 1; f.A.lidSoftGoal = 0.35; f.A.wagGoal = t % 3 < 1 ? 0.4 : 0; }));
     return seq(...L);
@@ -257,13 +277,13 @@ export class FarmDog {
   fetch(pounce) {
     const self = this, B = this.ball;
     return { name: 'fetch', t: 0, stage: 0, run(f, dt) {
-      this.t += dt; const bp = B.mesh.position, d = Math.hypot(bp.x - f.pos.x, bp.z - f.pos.z), reach = 0.4 * f.q.S;
+      this.t += dt; const bp = B.mesh.position, d = Math.hypot(bp.x - f.pos.x, bp.z - f.pos.z), reach = 0.34 * f.q.S;
       if (B.state !== 'ground' && B.state !== 'roll') return this.t > 8;
       if (this.stage === 0) {                                // up to it, nose to it
         const h = Math.atan2(bp.x - f.pos.x, bp.z - f.pos.z);
-        if (d > reach + 0.14) {                              // (near enough: the rest is a turn to it and a reach of the neck)
+        if (d > reach + 0.03) {                              // (near enough: the rest is a turn to it and a reach of the neck)
           if (!this.path || this.t - this.at > 1) { this.at = this.t; this.path = self.nav && !self.nav.clearLine(f.pos.x, f.pos.z, bp.x, bp.z) ? self.nav.find(f.pos.x, f.pos.z, bp.x, bp.z) : null; this.pi = 1; }
-          let tx = bp.x - Math.sin(h) * (reach - 0.04), tz = bp.z - Math.cos(h) * (reach - 0.04);
+          let tx = bp.x - Math.sin(h) * (reach - 0.07), tz = bp.z - Math.cos(h) * (reach - 0.07);
           if (this.path && this.pi < this.path.length - 1) { [tx, tz] = this.path[this.pi]; if (Math.hypot(tx - f.pos.x, tz - f.pos.z) < 0.15) this.pi++; }
           f.moveTo(tx, tz, dt, d > 1.5 ? 'trot' : 'walk', true); f.A.lookPitchGoal = 0.5; f.A.earsGoal = 0.8; f.A.wagGoal = 0.6;
           return this.t > 25;
@@ -274,9 +294,17 @@ export class FarmDog {
       const u = this.t - this.t0;
       if (pounce && u < 0.7) { f.A.bowGoal = 1; f.A.wagGoal = 1; f.A.lookPitchGoal = 1.3; playFace(f, 0.7); return false; }      // paws on it!
       const v = u - (pounce ? 0.7 : 0);
-      f.A.lookPitchGoal = 1.3; f.A.crouchGoal = 0.25; f.A.mouthGoal = v < 0.35 ? 0.8 : 0.42; f.A.wagGoal = 0.8;
-      if (v > 0.35 && B.state !== 'mouth') self.grab();
-      return v > 0.75;
+      // down to it, mouth open wide, and right round it: the jaws close on it, head up with it (Audrey: "he needs to
+      // literally grab it with his mouth")
+      f.A.wagGoal = 0.8; f.A.earsGoal = 0.7; f.A.crouchGoal = 0.15;
+      if (B.state !== 'mouth') {
+        f.A.reachGoal = 1; f.A.reachAt = (f.A.reachAt || new THREE.Vector3()).copy(bp); f.A.mouthGoal = 0.85; f.A.lidSoftGoal = 0.15;
+        const m = f.q.mouthWorld(_mw), gap = m.distanceTo(bp);
+        if ((gap < 0.03 && v > 0.35) || v > 1.4) { self.grab(); this.got = v; }
+        return false;
+      }
+      f.A.mouthGoal = 0.42; f.A.reachGoal = v - this.got < 0.25 ? 1 : 0;      // (a moment with it, then up)
+      return v - this.got > 0.75;
     } };
   }
   // a flick of the head: the ball flies off in front of him, somewhere with room
@@ -319,10 +347,9 @@ export class FarmDog {
   }
   // the ball into his mouth (on his jaw), and out again flying (speed forward, speed up)
   grab() {
-    const B = this.ball, jaw = this.dog.q.bones.jaw, P = this.dog.q.piv;
+    const B = this.ball, jaw = this.dog.q.bones.jaw;
     jaw.add(B.mesh); B.state = 'mouth';
-    B.mesh.position.set((P.nose[0] - P.jaw[0]) * 0.72, (P.nose[1] - P.jaw[1]) * 0.72 - 0.026, (P.nose[2] - P.jaw[2]) * 0.72);
-    B.mesh.rotation.set(0, 0, 0);
+    B.mesh.position.copy(this.dog.q.mouthSpot()); B.mesh.rotation.set(0, 0, 0);
   }
   release(fwd, up) {
     const B = this.ball, f = this.dog, w = B.mesh.getWorldPosition(new THREE.Vector3());
@@ -407,7 +434,7 @@ export class FarmDog {
     // asleep in his kennel: a "z" now and then, up from the doorway
     if (this.asleep && (this.zIn -= dt) <= 0) {
       this.zIn = 2.6; const z = this.zs.find(s => s.life <= 0);
-      if (z) { const p = this.K(0.62, 0); z.at = new THREE.Vector3(p[0], 0.5, p[1]); z.life = z.full = 2.4; }
+      if (z) { const p = this.K(0.8, 0); z.at = new THREE.Vector3(p[0], 0.62, p[1]); z.life = z.full = 2.4; }
     }
     for (const z of this.zs) {
       if (z.life <= 0) { z.sp.visible = false; continue; }

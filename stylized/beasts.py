@@ -330,8 +330,9 @@ def den():
 
 # Biscuit's kennel (Blender axes, the door facing +x, ground at z=0): the inside, the doorway and the name board, for the
 # browser (main.js KENNEL): he lies inside with his chin on his paws at the door; his name is written on the board
-KENNEL = dict(x0=-0.5, x1=0.5, half=0.4, wall=0.6, ridge=0.98, door_w=0.38, door_h=0.56, floor=0.06, board=(0.528, 0.0, 0.735), board_size=(0.3, 0.09),
-              bowls=[(0.78, -0.68, 'food'), (0.8, -0.42, 'water')])
+# (big enough for him to turn round in and stand up inside: Audrey saw his head come through the roof of the first one)
+KENNEL = dict(x0=-0.62, x1=0.62, half=0.56, wall=0.68, ridge=1.12, door_w=0.42, door_h=0.62, floor=0.06, board=(0.648, 0.0, 0.86), board_size=(0.32, 0.1),
+              bowls=[(0.9, -0.8, 'food'), (0.92, -0.52, 'water')])
 
 
 def prism(name, pts, x0, x1, m):

@@ -854,7 +854,7 @@ function buildDog(joints) {
   if (parts.kennel) {
     const k = part('kennel'); k.position.set(KENNEL_AT[0], 0, KENNEL_AT[1]); k.rotation.y = KENNEL_AT[2] - Math.PI / 2;
     still(k, true, true);
-    V.tufts = V.tufts.filter(t => { const dx = t[0] - KENNEL_AT[0], dz = t[2] - KENNEL_AT[1]; return Math.hypot(dx, dz) > 0.9; });     // no grass through it
+    V.tufts = V.tufts.filter(t => { const dx = t[0] - KENNEL_AT[0], dz = t[2] - KENNEL_AT[1]; return Math.hypot(dx, dz) > 1.15; });     // no grass through it
     kennelBoard = nameBoard(); const [bx, by] = KENNEL.board;
     kennelBoard.mesh.position.set(bx + 0.003, by, 0); kennelBoard.mesh.rotation.y = Math.PI / 2; k.add(kennelBoard.mesh);
     kennelBoard.draw(dogName);

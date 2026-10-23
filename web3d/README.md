@@ -917,3 +917,22 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   ball never into anything or far from home, a varied day, asleep in his kennel at night, up by day; HOUR2/AT set the clock
   partway, for the morning), `dogfarmfilm.mjs OUT secs fps hour [what] [skip]` (the view following him; HOUR2/AT, GEESE=1),
   `spotshot.mjs OUT x z size hour` (a still of any spot).
+- Fixes (23 Oct 18:13 and 18:18, Audrey: "When he picks the ball he needs to literally grab it with his mouth, currently he
+  barely moves his neck down. When he shakes, the legs need to stay on the floor. Same as the geese", then a screenshot of
+  his head through his kennel's roof):
+  - Grabbing: a reach for the mouth (`Quad.mouthTo()`, `s.reach`/`s.reachAt`; `mouthSpot()` is the point between his jaws,
+    where the ball sits when he carries it): his shoulders go down and forward, the elbows bending (the chest bone lowered
+    and tipped), and the neck and head bend down until his open mouth is round the ball; the jaws close on it and his head
+    comes up with it. Also for eating and drinking (his mouth in the bowl). (The neck and head's limit was wrong: a joint
+    over its limit went back to where it started instead of stopping there; the same slip is in the geese's `neckTo()`,
+    left alone as their look is approved and their limits are rarely reached.)
+  - The shake (and leaning into turns): the feet stay planted (`Quad.pose`): the rocking body's roll is undone for each foot
+    on the ground, and the leg swung out sideways at the shoulder or hip to reach it (the upper leg bones turn in the order
+    'ZYX', so the swing comes after the leg's bend), the knees a little bent to give room; each paw moves under a
+    centimetre standing (half a centimetre is breathing), under two sitting. The foxes have it too. Test: `dogshake.mjs`.
+  - The kennel is roomier (1.24 x 1.12 m, walls 0.68, ridge 1.12, a taller doorway) and he keeps under its roof: through
+    the doorway and inside he ducks (`ducking()`: the same shoulders-down as the grab, head down, ears back), turns round
+    low and curled the way he's turning, easing to the far side as his head comes round; lies down further in. Test:
+    `kennelclip.mjs` (bedtime, the night and the morning: his nose, the top of his head, ear tips, back and tail tip never
+    through the walls or roof; anything of him behind the front wall is inside or in the doorway).
+- Tests: `dogclose.mjs OUT grab|shake frames per` (close films side on).

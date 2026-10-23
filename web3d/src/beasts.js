@@ -71,6 +71,7 @@ const clamp01 = x => Math.min(1, Math.max(0, x));
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const arg = (y, z) => Math.atan2(z, y);           // a direction in a bone's side view (y up, z forward); rotation.x adds to it
 const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector3(), _d = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+const _j = new THREE.Vector3(), _e = new THREE.Vector3(), _w = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qi = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qr = new THREE.Quaternion();
 
 // A four-legged animal's body and bones, posed from a few numbers (as the birds' Rig): the actor sets the gait and what it's
 // doing (sitting, lying, a play bow, rearing up to box, rolling over, the leap, nose-down in the grass...). The feet are
@@ -109,6 +110,7 @@ export class Quad {
         d3: [T[0] - S2[0], T[1] - S2[1]], toe: new THREE.Vector3(toe[0], toe[1], toe[2]), x: toe[0] };
     }
     this.tY = [0, 0, 0, 0]; this.tYv = [0, 0, 0, 0];
+    for (const L of LEGS) this.bones[LEG_BONES[L][0]].rotation.order = 'ZYX';      // (a leg swings out sideways after its bend: see pose)
     // eyelids (the dog's): each turns about its eye's across axis to close, and about its forward axis to tilt; inner: which
     // way along the across axis is towards the nose
     if (P.lidaxL && this.bones.lidL) {
@@ -157,8 +159,9 @@ export class Quad {
     const bank = s.groundF !== undefined ? 0 : 0.1 * turn * smooth(0.6, 1.5, s.speed || 0);       // (leaning into a turn at a trot or a run, on flat ground)
     let roll = (s.roll || 0) - bank, pitch = s.pitch || 0;     // (leaning into a turn when on the move)
     const rolled = Math.min(1, Math.abs(s.roll || 0) / 1.5);
+    if (shake > 0) roll += 0.22 * shake * Math.sin(t * 36);          // the shake: the body rocks side to side (the feet stay put, below)
     // ---- the body over its legs: how far the middle comes down, the spine
-    let lower = crouch * 0.11 * S;
+    let lower = crouch * 0.11 * S + 0.025 * S * shake * (1 - sit);            // (knees a little bent to shake: room for the legs to reach out sideways)
     if (sit > 0) {          // sitting: the hips go down and the body pitches up round them
       B.hips.rotation.x -= 0.72 * sit; lower += 0.15 * S * sit;
       B.neck.rotation.x += 0.3 * sit; B.head.rotation.x += 0.25 * sit;
@@ -170,6 +173,10 @@ export class Quad {
     if (bow > 0) { B.chest.rotation.x += 0.42 * bow; lower += 0.02 * S * bow; B.hips.rotation.x -= 0.12 * bow; B.neck.rotation.x -= 0.5 * bow; B.head.rotation.x -= 0.2 * bow; }
     if (rear > 0) { B.hips.rotation.x -= 1.05 * rear; B.neck.rotation.x += 0.55 * rear; B.head.rotation.x += 0.45 * rear; }
     if (dive > 0) B.neck.rotation.x += 0.35 * dive;
+    // reaching down with his mouth (s.reach, below): the shoulders go down and forward, elbows bending, so his head can get
+    // right down to the ground; the neck and head do the rest
+    const reachK = Math.min(1, Math.max(s.reach || 0, 0.7 * (s.duck || 0)));          // (ducking under something: the same, a little less)
+    if (reachK > 0) { B.chest.rotation.x += 0.85 * reachK; B.chest.position.y -= 0.16 * S * reachK; B.hips.rotation.x -= 0.1 * reachK; lower += 0.03 * S * reachK; }
     B.neck.rotation.x += 0.35 * crouch; B.head.rotation.x -= 0.25 * crouch;
     // a dog carries his head up, alert, where a fox holds his lower (less when bowing, lying with his chin down, on his back)
     if (this.name === 'collie') { const k = (1 - rolled) * (1 - bow) * (1 - 0.7 * (s.chin || 0) * lie); B.neck.rotation.x -= 0.3 * k; B.head.rotation.x += 0.2 * k; }
@@ -217,7 +224,23 @@ export class Quad {
           _v.y = G.toe.y + dy + hy + (R - yt + (G.toe.z + dz) * Math.sin(p)) / Math.cos(p);
           aim -= (s.slopeAt ? s.slopeAt(fwd) : (front ? s.slopeF : s.slopeH) || 0) + p;            // the paw along the slope it stands on
         }
+        // the body rocked or leaning (a shake, a turn): the foot stays where it stands on the ground, the leg swung out
+        // sideways at the shoulder or hip to reach it (Audrey: "When he shakes, the legs need to stay on the floor")
+        let swing = 0;
+        if (Math.abs(roll) > 1e-3 && rolled < 0.05) {
+          const dx = _v.x, dy = _v.y - hy, c = Math.cos(roll), sn = Math.sin(roll);
+          const x2 = dx * c + dy * sn, y2 = -dx * sn + dy * c + hy;                 // (where the ground spot is in the rocked body)
+          // (worked out in the frame the leg hangs from, the chest's or the hips', as they're turned: its swing is about
+          // that frame's forward axis, at the shoulder or hip)
+          _m.identity(); for (const nm of front ? ['root', 'hips', 'chest'] : ['root', 'hips']) { B[nm].updateMatrix(); _m.multiply(B[nm].matrix); }
+          _mi.copy(_m).invert();
+          const jp = B[b0].position, tp = _e.set(x2, y2, _v.z).applyMatrix4(_mi), tq = _w.copy(_v).applyMatrix4(_mi);
+          swing = Math.atan2(tp.x - jp.x, jp.y - tp.y) - Math.atan2(tq.x - jp.x, jp.y - tq.y);
+          const rx = tp.x - jp.x, ry = tp.y - jp.y, cs = Math.cos(-swing), ss = Math.sin(-swing);
+          _v.set(jp.x + rx * cs - ry * ss, jp.y + rx * ss + ry * cs, tp.z).applyMatrix4(_m);     // (the leg's own plane: reached, then swung out)
+        }
         this.reach(L, _v, [Math.cos(aim), Math.sin(aim)], onGround);
+        if (swing) B[b0].rotation.z += swing * onGround;
       }
       if (free > 0.001) {
         const U = B[b0].rotation, M = B[b1].rotation, W = B[b2].rotation;
@@ -297,7 +320,7 @@ export class Quad {
     if (air > 0) B.tail1.rotation.x += 0.1 * air;
     if (dive > 0) B.tail1.rotation.x += 0.15 * dive;
     // ---- the shake (nose to tail, as after a dive in wet grass)
-    if (shake > 0) { roll += 0.22 * shake * Math.sin(t * 36); B.head.rotation.z += 0.45 * shake * Math.sin(t * 36 + 1.2); B.tail1.rotation.y += 0.6 * shake * Math.sin(t * 36 + 2.4); }
+    if (shake > 0) { B.head.rotation.z += 0.45 * shake * Math.sin(t * 36 + 1.2); B.tail1.rotation.y += 0.6 * shake * Math.sin(t * 36 + 2.4); }
     // ---- the whole body: rolled onto its side or back, pitched (nose-dive, leaping), lifted (in the air)
     let cy = hy - lower;
     cy = cy * (1 - rolled) + (0.12 * S + 0.02 * S * Math.min(1, Math.max(0, Math.abs(roll) - 1.6))) * rolled;
@@ -319,6 +342,35 @@ export class Quad {
         B.tail1.rotation.x += Math.min(0.8, need * 1.05);
       }
     }
+    // ---- reaching with the mouth to something (s.reachAt, world; s.reach how far): the neck and head bend down to it, the
+    // mouth (between the jaws) right on it: picking up his ball, eating from his bowl (Audrey: "he needs to literally grab it
+    // with his mouth")
+    if ((s.reach || 0) > 0.002 && s.reachAt) this.mouthTo(s.reachAt, Math.min(1, s.reach));
+  }
+  // where his mouth holds something, between the jaws (in the jaw bone's frame), and that point in the world
+  mouthSpot() {
+    const P = this.piv;
+    return this.mouthOff || (this.mouthOff = new THREE.Vector3((P.nose[0] - P.jaw[0]) * 0.72, (P.nose[1] - P.jaw[1]) * 0.72 - 0.026 * this.S, (P.nose[2] - P.jaw[2]) * 0.72));
+  }
+  mouthWorld(v) { this.tilt.updateWorldMatrix(true, true); return v.copy(this.mouthSpot()).applyMatrix4(this.bones.jaw.matrixWorld); }
+  mouthTo(target, w) {
+    const B = this.bones, chain = [['head', 1.4], ['neck', 1.8]];
+    const start = chain.map(([nm]) => B[nm].quaternion.clone()), off = this.mouthSpot();
+    this.tilt.updateWorldMatrix(true, true);
+    for (let it = 0; it < 8; it++) for (let k = 0; k < chain.length; k++) {
+      const [nm, lim] = chain[k], b = B[nm];
+      b.updateWorldMatrix(true, true);
+      b.getWorldPosition(_j); _e.copy(off).applyMatrix4(B.jaw.matrixWorld);
+      const v1 = _e.sub(_j), v2 = _w.copy(target).sub(_j);
+      if (v1.lengthSq() < 1e-8 || v2.lengthSq() < 1e-8) continue;
+      _qa.setFromUnitVectors(v1.normalize(), v2.normalize()); _qi.identity(); _qa.slerp(_qi, 0.4);
+      b.parent.getWorldQuaternion(_qp);
+      _qr.copy(_qp).invert().multiply(_qa).multiply(_qp);
+      b.quaternion.premultiply(_qr);
+      const a = b.quaternion.angleTo(start[k]);
+      if (a > lim) { _qr.copy(b.quaternion); b.quaternion.copy(start[k]).slerp(_qr, lim / a); }       // (each joint only so far)
+    }
+    if (w < 1) chain.forEach(([nm], k) => { const got = B[nm].quaternion.clone(); B[nm].quaternion.copy(start[k]).slerp(got, w); });
   }
 }
 const _tm = new THREE.Matrix4(), _tb = new THREE.Vector3(), _tp = new THREE.Vector3();
@@ -400,7 +452,7 @@ class Fox {
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt;
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'air', 'dive', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin',
-      'ears', 'earL', 'earR', 'earLTw', 'earRTw', 'mouth', 'squint', 'wide', 'winkL', 'winkR', 'lidSoft', 'lidTilt']) A[k + 'Goal'] = 0;
+      'ears', 'earL', 'earR', 'earLTw', 'earRTw', 'mouth', 'squint', 'wide', 'winkL', 'winkR', 'lidSoft', 'lidTilt', 'reach', 'duck']) A[k + 'Goal'] = 0;
     A.airPh = undefined; A.groundF = A.groundH = A.slopeF = A.slopeH = A.groundAt = A.slopeAt = undefined;  // (a leap sets where in the air it is, a slope the ground under the feet, each frame)
     A.lookYawGoal = 0; A.lookPitchGoal = 0; A.headTiltGoal = 0; A.roll = A.roll || 0; A.rollGoal = 0; A.pitch = 0; A.lift = 0;
     this.pace = 0; this.turn = 0; this.turned = false; this.moved = false;
@@ -424,7 +476,7 @@ class Fox {
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) ease(k, 5.5);
     ease('air', 14); ease('dive', 10); ease('lookYaw', 4); ease('lookPitch', 4); ease('headTilt', 6);
     ease('ears', 9); ease('earL', 9); ease('earR', 9); ease('mouth', 12); ease('squint', 10); ease('wide', 10); ease('winkL', 10); ease('winkR', 10);
-    ease('lidSoft', 6); ease('lidTilt', 6);
+    ease('lidSoft', 6); ease('lidTilt', 6); ease('reach', 5.5); ease('duck', 6);
     A.shutL = clamp01(Math.max(blink, A.squint || 0) + A.winkL); A.shutR = clamp01(Math.max(blink, A.squint || 0) + A.winkR);
     A.roll += (A.rollGoal - A.roll) * Math.min(1, dt * (A.rollFast ? 9 : 4));
     // ---- the gait from how fast he really moves (however a task moves him): legs walking, trotting or galloping, the feet
