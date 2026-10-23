@@ -19,7 +19,7 @@ from mathutils import Vector
 
 flat_info = g['flat_info']
 JOINTS = geese.JOINTS
-BUDGET = {'embden': 14000, 'toulouse': 14300}
+BUDGET = {'embden': 14000, 'toulouse': 14300, 'mallard_m': 13000, 'mallard_f': 12500}
 PIVOTS, MODELS, STATS = {}, {}, {}
 
 
@@ -59,7 +59,7 @@ def chain_w(s, n, blend=0.2):
 
 def bake(name, root, budget):
     bpy.context.view_layer.update()
-    B = geese.GEESE[name]; S = B['S']; zc = (0.29 - B['low']) * S
+    B = geese.GEESE[name]; S = B['S']; zc = (0.29 - B['low']) * S; BLs = B['BL'] * S
     piv = {o.name.split('.')[0][3:]: Vector(o.matrix_world.translation) for o in bpy.context.scene.objects if o.name.startswith('pv_')}
     C = {k: hexrgb(v) for k, v in B['coat'].items()}
     dg = bpy.context.evaluated_depsgraph_get(); dg.update()
@@ -120,7 +120,67 @@ def bake(name, root, budget):
             if prt in ('head', 'jaw', 'blinkL', 'blinkR'): hw[:] = 1
         # colour and the feathers' pattern: 0 none, 2 a dark centre with a pale edge, 4 darker where the next feather overlaps
         fpat = np.zeros((len(p), 4), np.float32); fmode = np.zeros(len(p), np.float32)
-        if mode == 'goose':
+        if mode == 'goose' and name.startswith('mallard'):
+            up = nrm[:, 2]; on = np.clip(hw, 0, 1) if prt in ('body', 'head') else np.zeros(len(p), np.float32)
+            nmn = o.name.split('.')[0]
+            sN = np.where(np.full(len(p), prt == 'head'), 9.0, seg)            # how far up the neck (0 its base .. 5 the bill)
+            hc = pv['headc']; ec = pv['eyeL']
+            isw = prt.startswith('wing') or paint in (PAINT['wing'], PAINT['prim'])
+            if name == 'mallard_m':
+                # the drake: pale grey flanks finely marked, a grey-brown back, a chestnut breast, a black rump and under
+                # the tail, a pale belly; the neck green above a white collar; the head bottle green with a sheen
+                c = np.zeros((len(p), 3), np.float32) + C['grey']
+                back = ss(0.3, 0.75, up) * ss(0.08 * S, 0.0, x)
+                breast = ss(0.02 * S, 0.1 * S, x) * ss(zc + 0.08 * S, zc - 0.04 * S, z) * ss(-0.2, 0.35, nrm[:, 0])
+                rump = ss(-0.15 * BLs, -0.21 * BLs, x)
+                belly = ss(-0.3, -0.75, up) * (1 - rump)
+                c = c * (1 - back[:, None]) + C['back'][None, :] * back[:, None]
+                c = c * (1 - breast[:, None]) + C['chest'][None, :] * breast[:, None]
+                c = c * (1 - belly[:, None]) + C['belly'][None, :] * belly[:, None]
+                c = c * (1 - rump[:, None]) + C['black'][None, :] * rump[:, None]
+                collar = ss(0.66, 0.71, sN) * (1 - ss(0.77, 0.82, sN))
+                green = ss(0.77, 0.82, sN)
+                neckc = C['chest'][None, :] * (1 - collar - green)[:, None] + C['collar'][None, :] * collar[:, None] + C['green'][None, :] * green[:, None]
+                c = c * (1 - on[:, None]) + neckc * on[:, None]
+                fpat[:, :3] = c * 0.8; fpat[:, 3] = 0.25; fmode[:] = 4
+                fmode[:] = np.where(green * on > 0.5, 5, fmode); fpat[:, :3] = np.where((green * on > 0.5)[:, None], 1.0, fpat[:, :3]); fpat[:, 3] = np.where(green * on > 0.5, 0.12, fpat[:, 3])
+                if isw:
+                    c = c * 0 + C['wing']; fpat[:, :3] = C['wing'] * 0.8; fpat[:, 3] = 0.3; fmode[:] = 4
+            else:
+                # the duck: mottled brown (each feather dark in the middle with a pale buff edge), paler underneath; the head
+                # and neck buff, finely streaked, a dark crown and a dark line through the eye
+                c = np.zeros((len(p), 3), np.float32) + C['buff']
+                belly = ss(-0.2, -0.7, up)
+                fpat[:, :3] = C['dark'] * (1 - belly[:, None]) + C['brown'] * belly[:, None]
+                fpat[:, 3] = 0.78 - 0.35 * belly; fmode[:] = 2
+                c = c * (1 - belly[:, None]) + C['belly'][None, :] * belly[:, None]
+                crown = ss(hc[2] + 0.006 * S, hc[2] + 0.016 * S, z) * on
+                stripe = (1 - ss(0.003 * S, 0.0055 * S, np.abs(z - ec[2] - 0.001 * S))) * ss(ec[0] - 0.03 * S, ec[0] - 0.015 * S, x) * (prt == 'head')
+                hd = on * (1 - crown)
+                c = c * (1 - on[:, None]) + C['buff'][None, :] * on[:, None]
+                fpat[:, :3] = fpat[:, :3] * (1 - on[:, None]) + C['brown'][None, :] * on[:, None]; fpat[:, 3] = fpat[:, 3] * (1 - on) + 0.4 * on
+                dk = np.maximum(crown, stripe)
+                c = c * (1 - dk[:, None]) + C['crown'][None, :] * dk[:, None]
+                if isw:
+                    c = c * 0 + C['buff'] * 0.8; fpat[:, :3] = C['wing']; fpat[:, 3] = 0.8; fmode[:] = 2
+            fi = int(o.name.split('.')[1]) if '.' in o.name else 0                   # (which feather of its row: Blender numbers them)
+            tert = ('_sec' in nmn and fi % 9 >= 5) or ('_osec' in nmn and fi % 13 < 3)        # the tertials, nearest the body
+            if isw and ('_sec' in nmn or '_osec' in nmn) and not tert:      # the speculum: shining blue, a white edge at the tip
+                along = np.clip(((p - p.mean(0)) @ (p.max(0) - p.min(0))) / max(1e-6, float(np.sum((p.max(0) - p.min(0)) ** 2))) + 0.5, 0, 1)
+                c = c * 0 + C['spec']; fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.2
+            elif isw and ('_sec' in nmn or '_osec' in nmn):                  # the tertials: long, lying over the back
+                c = c * 0 + (C['back'] * 1.1 if name == 'mallard_m' else C['wing']); fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.08
+            elif isw and ('_gcov' in nmn):                        # the coverts over it: the wing's own grey-brown (white-tipped: the bar)
+                c = c * 0 + (C['wing'] if name == 'mallard_m' else C['buff'] * 0.75); fmode[:] = 4; fpat[:, :3] = c[0] * 0.8; fpat[:, 3] = 0.2
+            elif isw and ('_prim' in nmn or '_oprim' in nmn):
+                c = c * 0 + (C['back'] if name == 'mallard_m' else C['wing']) * 0.85; fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.08
+            if paint == PAINT['tail']:
+                if '_curl' in nmn: c = c * 0 + C['black']; fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.15
+                elif name == 'mallard_m': c = c * 0 + C['tailw']; fpat[:, :3] = C['grey'] * 0.7; fpat[:, 3] = 0.5; fmode[:] = 2
+                else: c = c * 0 + C['buff']; fpat[:, :3] = C['dark']; fpat[:, 3] = 0.7; fmode[:] = 2
+            rnd = np.sin(x * 61.0 + y * 37.0) * np.sin(z * 53.0 - x * 29.0) * np.sin(y * 71.0 + z * 17.0)
+            c = c * (1.0 + 0.035 * rnd[:, None])
+        elif mode == 'goose':
             up = nrm[:, 2]
             if name == 'embden':
                 shade = ss(-0.1, -0.7, up) * 0.55 + (paint == PAINT['wing']) * 0.12 * ss(0.2, -0.4, up)
@@ -153,6 +213,9 @@ def bake(name, root, budget):
                 fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.08
             rnd = np.sin(x * 61.0 + y * 37.0) * np.sin(z * 53.0 - x * 29.0) * np.sin(y * 71.0 + z * 17.0)
             c = c * (1.0 + 0.035 * rnd[:, None])
+        if name == 'mallard_f' and o.name.split('.')[0].endswith('_bill'):          # the duck's bill: a dark saddle on top
+            b0 = pv['bill'][0]; sad = ss(0.45, 0.8, nrm[:, 2]) * ss(b0 - 0.075 * S, b0 - 0.05 * S, x) * (1 - ss(b0 - 0.02 * S, b0 - 0.006 * S, x))
+            c = c * (1 - sad[:, None]) + hexrgb(B['saddle'])[None, :] * sad[:, None]
         # the strongest four bones, weights adding up to one
         top = np.argsort(-W, axis=1)[:, :4]; wt = np.take_along_axis(W, top, 1)
         wt /= np.maximum(1e-6, wt.sum(1, keepdims=True))
@@ -224,7 +287,7 @@ def write(path, names):
 
 
 names = []
-for k in ('embden', 'toulouse'):
+for k in [a for a in (sys.argv[2].split(',') if len(sys.argv) > 2 else ('embden', 'toulouse', 'mallard_m', 'mallard_f'))]:
     fresh(); r = geese.goose(k, seed=3); light(1)
     bake(k, r, BUDGET[k]); names.append(k)
 write(os.path.join(OUT, 'geese.glb'), names)

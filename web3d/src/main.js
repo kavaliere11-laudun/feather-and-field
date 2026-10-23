@@ -18,7 +18,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
 import { initBeasts, DogLineup, FoxFamily, FoxLineup } from './beasts.js';
-import { initGeese, GeeseLineup, GeeseFlock } from './geese.js';
+import { initGeese, GeeseLineup, GeeseFlock, DuckLineup } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
@@ -320,8 +320,9 @@ async function start() {
   buildProps();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs'].includes(params.get('lineup'))) buildLineup();
+  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
+  if (params.get('lineup') === 'ducks') { geeseLineup = new DuckLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(42)); view.min = 0.5; }
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
   buildFoxes(beastsInfo.joints);
   buildGeese();
@@ -338,7 +339,8 @@ async function start() {
   view.size = 4.4;
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
-  if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
+  if (geeseLineup && params.get('lineup') === 'ducks') { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, 0.5))); view.size = 1.25; }
+  else if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
   if (frogLineup) { frogLineup.group.updateMatrixWorld(true); view.target.copy(frogLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.02))); view.size = 0.52; }
   if (geeseFlock && params.has('geese')) { const c = geeseFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.6; }
   if (frogPond && params.has('frogs')) { const f = frogPond.frogs[0]; view.target.set(f.pos.x + 0.2, 0, f.pos.z + 0.2); view.size = 1.6; }

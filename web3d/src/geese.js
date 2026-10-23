@@ -20,13 +20,17 @@ export function initGeese(gltf, json) {
 }
 export const gooseName = kind => NAMES[kind] || kind;
 const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
-const BREED = { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'] };
+const BREED = { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'],
+  mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'] };
+const isDuck = kind => /^mallard/.test(kind);
 
 // feather sizes (cm) per region: broad on the body and wings, small on the head (the neck's are made smaller by the drawing);
 // the modelled flight and tail feathers draw their own
 const FEATHER = { [R.body]: 2.7, [R.wing]: 2.5, [R.crest]: 2.7, [R.legfeather]: 1.6 };      // (the neck's and head's drawn much smaller: velvety)
 // a slight soft fluff over the feathers (the birds' painted hair, short and fine), a little longer underneath
 const FUR = { len: { [R.body]: 0.012, [R.wing]: 0.006, [R.crest]: 0.003, [R.legfeather]: 0.012 }, shells: 4, comb: 0.9, fine: 1.3, under: 1.0, fluff: 0.06 };
+// the mallards: smaller birds, smaller feathers and shorter fluff
+const DUCK_FUR = { len: { [R.body]: 0.007, [R.wing]: 0.004, [R.crest]: 0.002, [R.legfeather]: 0.007 }, shells: 4, comb: 0.9, fine: 1.3, under: 1.0, fluff: 0.05 };
 
 function gooseGeometry(name) {
   const M = MODELS[name];
@@ -37,7 +41,7 @@ function gooseGeometry(name) {
   const P = A._fpat, PM = A._fmode, HW = A._headw, F = A._feat;
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < 3; j++) col[i * 3 + j] = base.array[i * base.itemSize + j] * k;
-    fs[i] = FEATHER[paint[i]] || 0; fh[i] = HW.getX(i);
+    fs[i] = (FEATHER[paint[i]] || 0) * (isDuck(name) ? 0.62 : 1); fh[i] = HW.getX(i);
     if (paint[i] === R.body && fh[i] < 0.5) {            // small and fine on the breast and belly, broad on the flanks and back
       const ny = A.normal.getY(i), nz = A.normal.getZ(i), z = pos[i * 3 + 2];
       const breast = smooth(0.0, 0.1, z) * smooth(0.1, 0.55, nz), belly = smooth(-0.15, -0.6, ny);
@@ -65,7 +69,7 @@ function gooseGeometry(name) {
   g.setAttribute('gooseN', A._gn);
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox.clone(); g.computeBoundingSphere();
-  g = addFur(g, src, FUR, M.piv.headc);
+  g = addFur(g, src, isDuck(name) ? DUCK_FUR : FUR, M.piv.headc);
   return (M.built = g);
 }
 
@@ -187,7 +191,8 @@ export class GooseRig {
     const pitch = (s.pitch || 0) + stance * (1 - sit) * (1 - 0.6 * (s.low || 0)) + 0.18 * run * dry + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit + 0.02 * sw * Math.sin(t * 1.7) - 0.22 * pr;
     const drop = sit * (this.by - 0.115) + 0.012 * g * dry * (1 - Math.abs(Math.cos(ph))) - 0.02 * (s.low || 0) - 0.004 * sw * Math.sin(t * 1.7);
     B.body.position.y -= drop - (s.lift || 0);
-    B.body.rotation.set(pitch, 0.05 * g * dry * Math.sin(ph) * (1 - run), roll, 'YXZ');
+    const ue = clamp01(s.upend || 0);                   // (a duck up-ending: tipped right forward, tail up, head under the water)
+    B.body.rotation.set(pitch + 1.4 * smooth(0, 1, ue), 0.05 * g * dry * Math.sin(ph) * (1 - run), roll, 'YXZ');
     // ---- the neck: the shapes blended, turned to look, swaying against the waddle so the head stays steady
     const side = s.side || 1;
     for (const nm of NECK) { const b = B[nm].rotation; b.x = 0; b.y = 0; b.z = 0; }
@@ -243,6 +248,10 @@ export class GooseRig {
       const fx = G.side, fy = G.foot[1] + dy, fz = G.foot[2] + dz - 0.03 * sit;
       B.root.updateMatrix(); B.body.updateMatrix(); _m.multiplyMatrices(B.root.matrix, B.body.matrix).invert();
       _v.set(fx, fy + (sit > 0 ? 0.035 * sit : 0), fz).applyMatrix4(_m);
+      if (ue > 0.01) {                                  // up-ended: the feet paddling behind, in the body's own frame
+        const pz = G.H[1] - 0.6 * (G.L1 + G.L2) + 0.25 * (G.L1 + G.L2) * Math.sin(t * 9 + off), py = G.H[0] - 0.35 * (G.L1 + G.L2);
+        _v.set(G.side, _v.y + (py - _v.y) * ue, _v.z + (pz - _v.z) * ue);
+      }
       // the hip swings the leg out to the side as far as the foot is from under it, so a planted foot stays put while the
       // body rolls over it (the waddle, a shake), and the foot is kept flat on the ground, facing the way she does
       const drop = G.H[0] - _v.y, dx = _v.x - G.side;
@@ -256,13 +265,14 @@ export class GooseRig {
 
 // ------------------------------------------------------------------ one goose: where she is, which way she faces, what she's doing
 class Goose {
-  constructor(group, kind, r) {
-    this.kind = kind; this.name = gooseName(kind); this.r = r;
+  constructor(group, kind, r, name) {
+    this.kind = kind; this.name = name || gooseName(kind); this.r = r; this.isDuck = isDuck(kind);
     this.rig = new GooseRig(kind);
     this.root = new THREE.Group(); this.root.add(this.rig.mesh); group.add(this.root);
     this.A = { t: r() * 10, phase: 0, walk: 0, run: 0, swim: 0 }; this.heading = 0; this.task = null; this.clock = 0;
     this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.hitR = 0.3; this.hitY = 0.4; this.tagY = 0.88; this.isGoose = true; this.react = 0; this.reactYaw = 0;
+    if (this.isDuck) { this.hitR = 0.2; this.hitY = 0.2; this.tagY = 0.5; }
     this.label = this.name + ' · ' + BREED[kind][FR ? 1 : 0];
     this.av = 0; this.spd = 0; this.vs = 0; this.turn = 0; this.wet = 0; this.flock = null; this.act = ''; this.actT = 0; this.seed = r() * 10;
   }
@@ -379,6 +389,44 @@ export class GeeseLineup {
   }
   update(dt) { for (const g of this.geese) g.update(dt); }
 }
+// ------------------------------------------------------------------ ?lineup=ducks: the pond's mallards (Rocco the drake and Daisy the
+// duck) in a row of poses, for a close look: looking about, the waddle, a quack, preening, a wing-flap, swimming, up-ending
+// (tail and paddling feet in the air) and asleep
+export class DuckLineup {
+  constructor(scene, centre, yaw, grade, r) {
+    this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
+    const poses = ['look', 'walk', 'quack', 'preen', 'wings', 'swim', 'upend', 'sleep'];
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.2).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#4a9cc0', roughness: 0.15 }));
+    water.position.set(0, 0.007, -1.25 + 5.5 * 0.5); this.group.add(water); if (grade) grade(water.material);
+    this.ducks = [];
+    poses.forEach((p, i) => {
+      for (const [k, x] of [['mallard_m', -0.3], ['mallard_f', 0.3]]) {
+        const d = new Goose(this.group, k, r);
+        d.pos.set(x, 0, -1.25 + i * 0.5); d.heading = -0.95; d.linePose = p;
+        this.ducks.push(d);
+      }
+    });
+    this.geese = this.ducks;
+  }
+  update(dt) {
+    for (const d of this.ducks) {
+      const A = d.A, c = d.clock - (d.kind === 'mallard_f' ? 0.4 : 0), sk = d.rig.by - 0.037, k = d.rig.by / 0.29;
+      d.task = DUCK_LINE[d.linePose];
+      if (d.linePose === 'swim' || d.linePose === 'upend') { A.swim = 1; d.pos.y = -sk; }
+      d.update(dt);
+    }
+  }
+}
+const DUCK_LINE = {
+  look: (g) => { const u = ((g.clock % 6) + 6) % 6, A = g.A; A.lookYawGoal = u < 2.5 ? 1.1 : 0.5 * Math.sin(u * 1.2); A.tiltGoal = u < 2.5 ? 0.35 : 0; A.wagGoal = u > 2.5 && u < 3.2 ? 1 : 0; },
+  walk: (g) => { const A = g.A; A.walkGoal = 1; A.wagGoal = 0.3; A.lookYawGoal = 0.3 * Math.sin(g.clock * 1.1); },
+  quack: (g) => { const u = ((g.clock % 2.6) + 2.6) % 2.6, A = g.A; if (u < 1.2) { A.honkGoal = 0.6; A.upGoal = 0.4; A.jawGoal = Math.sin(u / 1.2 * 3 * Math.PI) > 0.1 ? 1 : 0; A.wagGoal = 0.6; } else { A.lookYawGoal = 0.6; A.tiltGoal = 0.2; } },
+  preen: (g) => { const A = g.A, k = g.rig.by / 0.29; A.preenGoal = 1; A.side = 1; A.wingLiftGoal = 0.4; A.billAt = at1(g).set(0.115 * k, g.rig.by + 0.055 * k + 0.015 * k * Math.sin(g.clock * 7), -0.04 * k - 0.05 * k * Math.sin(g.clock * 0.8)); A.billWGoal = 1; },
+  wings: (g) => { const u = ((g.clock % 5) + 5) % 5, A = g.A; if (u < 2.4) { A.upGoal = 0.8; A.wingsGoal = 1; A.flapGoal = 1; A.tailUpGoal = 0.6; A.liftGoal = 0.015; } else if (u < 3.4) { A.shakeGoal = 0.6; A.wagGoal = 1; } else { A.lookYawGoal = 0.8; } },
+  swim: (g) => { const A = g.A; A.lookYawGoal = 0.4 * Math.sin(g.clock * 0.7); A.wagGoal = 0.15; },
+  upend: (g) => { const u = ((g.clock % 5.5) + 5.5) % 5.5, A = g.A, on = u > 0.8 && u < 4.2; A.upend = (A.upend || 0) + ((on ? 1 : 0) - (A.upend || 0)) * Math.min(1, A.dt * 4); A.grazeGoal = on ? 1 : 0; A.tailUpGoal = on ? 1 : 0; A.wagGoal = !on && u > 4.4 ? 1 : 0; },
+  sleep: (g) => { const A = g.A, k = g.rig.by / 0.29; A.sitGoal = 1; A.tuckGoal = 1; A.side = -1; A.billAt = g.tuckAt || (g.tuckAt = new THREE.Vector3(-0.07 * k, 0.2 * k, -0.06 * k)); A.squintGoal = 1; A.billWGoal = 1; },
+};
 // each goose's own clock in the line-up, round a cycle of n seconds: Hector does what Gertrude does, a beat later (he copies
 // her in everything)
 const cyc = (g, n) => { const c = g.clock - (g.kind === 'toulouse' ? 0.55 : 0); return ((c % n) + n) % n; };

@@ -31,6 +31,18 @@ GEESE = {
     'toulouse': dict(name='Hector', S=1.0, BL=1.08, low=0.03, LG=0.86, paunch=True, dewlap=True, neck=0.86,
                      coat=dict(dark='#5f5a56', back='#77716b', wing='#7d7770', edge='#d2ccc1', breast='#a29c94', belly='#f1eee7'),
                      iris='#4a2a16', ring='#f08a2c', ringw=1.3, bill='#f08a30', nail='#d8c6b2', feet='#e6832f', web='#cf6d26'),
+    # the pond's mallards (24 Oct, as the game's art plan has them: a drake and two ducks): smaller, lower and rounder than a
+    # goose, a short neck, a round head with a steep forehead, a broad flat bill; the drake with his bottle-green head, white
+    # collar, chestnut breast, pale grey flanks, black rump and the two curled black feathers over his tail; the duck mottled
+    # brown, a dark crown and a dark line through the eye, an orange bill with a dark saddle; both with the blue patch on
+    # the wing (the speculum) edged white
+    'mallard_m': dict(name='Rocco', S=0.6, BL=0.94, low=0.07, LG=0.62, paunch=False, dewlap=False, neck=0.52, duck=True, drake=True,
+                      coat=dict(grey='#cbc7bd', green='#1c5a34', collar='#f3f1ea', chest='#6e3a22', back='#776b5d', black='#19191b', wing='#8c8275',
+                                spec='#2b52ad', specw='#f1efe8', tailw='#e4e1d9', belly='#e3e0d8'),
+                      iris='#3a2012', ring='#1c5a34', ringw=1.0, bill='#d8c23d', nail='#2b2a1e', feet='#f08a2c', web='#e0782a'),
+    'mallard_f': dict(name='Daisy', S=0.58, BL=0.94, low=0.07, LG=0.62, paunch=False, dewlap=False, neck=0.52, duck=True, drake=False,
+                      coat=dict(brown='#9c7b56', dark='#4e3723', buff='#cdb085', crown='#4a3626', wing='#7f6951', spec='#2b52ad', specw='#f1efe8', belly='#bc9f78'),
+                      iris='#3a2012', ring='#9c7b56', ringw=1.0, bill='#d27a2c', nail='#3b2b1c', feet='#f08a2c', web='#e0782a', saddle='#4a3a2a'),
 }
 
 
@@ -106,6 +118,10 @@ def goose(kind='embden', seed=1):
          ('ELLIPSOID', tuple(h(0.022, 0, 0.0)), 0.032 * S * K, (1.4, 0.84, 0.95), 2.0),
          ('ELLIPSOID', tuple(h(0.042, 0, -0.002)), 0.024 * S * K, (1.3, 0.86, 0.95), 2.0),
          ('ELLIPSOID', tuple(h(0.008, 0, -0.016)), 0.026 * S * K, (1.5, 0.8, 0.7), 2.0)]
+    if B.get('duck'):          # a duck's round head: a high round crown, a steep forehead, full cheeks
+        E = [('ELLIPSOID', tuple(h(-0.004, 0, 0.008)), 0.043 * S * K, (1.22, 0.86, 1.0), 2.0),
+             ('ELLIPSOID', tuple(h(0.026, 0, 0.002)), 0.033 * S * K, (1.15, 0.86, 0.95), 2.0),
+             ('ELLIPSOID', tuple(h(0.006, 0, -0.018)), 0.03 * S * K, (1.4, 0.82, 0.75), 2.0)]
     if B['dewlap']:
         E += [('ELLIPSOID', tuple(h(0.028, 0, -0.034)), 0.02 * S * K, (1.3, 0.5, 1.35), 2.0),
               ('ELLIPSOID', tuple(h(0.006, 0, -0.06)), 0.018 * S * K, (1.15, 0.5, 1.3), 2.0)]
@@ -114,13 +130,22 @@ def goose(kind='embden', seed=1):
     # forehead and sloping gently to a broad rounded tip with a pale nail; dark nostrils; the lower bill under it on the jaw
     # (a pink tongue on it), the mouth dark inside (hidden while shut)
     bx0 = h(0.056, 0, 0)
-    up_ = bill_loft(kind + '_bill', bx0, 0.074 * S, [(0.0, 0.0195, 0.0148, 0.0095), (0.3, 0.0168, 0.0118, 0.0052), (0.6, 0.0146, 0.0092, 0.0012),
-                                                   (0.85, 0.0138, 0.0072, -0.0028), (1.0, 0.0128, 0.0058, -0.0062)], S, bill, nail, root, nail_from=0.82)
+    if B.get('duck'):          # a duck's bill: long, flat and broad, a little wider towards its rounded tip, a small dark nail
+        bx0 = h(0.05, 0, -0.004)
+        up_ = bill_loft(kind + '_bill', bx0, 0.076 * S, [(0.0, 0.0172, 0.0118, 0.0062), (0.3, 0.0152, 0.0072, 0.0012), (0.65, 0.0162, 0.0052, -0.0022),
+                                                       (1.0, 0.0172, 0.0042, -0.0042)], S, bill, nail, root, nail_from=0.93)
+    else:
+        up_ = bill_loft(kind + '_bill', bx0, 0.074 * S, [(0.0, 0.0195, 0.0148, 0.0095), (0.3, 0.0168, 0.0118, 0.0052), (0.6, 0.0146, 0.0092, 0.0012),
+                                                       (0.85, 0.0138, 0.0072, -0.0028), (1.0, 0.0128, 0.0058, -0.0062)], S, bill, nail, root, nail_from=0.82)
     part(keep(up_), 'head')
     for sd in (1, -1):
         part(keep(sphere(kind + '_nostril', 0.0028 * S, tuple(bx0 + Vector((0.027, sd * 0.0122, 0.0132)) * S), (2.4, 0.5, 0.6), m=nos, parent=root, seg=8, rings=5)), 'head')
-    lo_ = bill_loft(kind + '_jaw', bx0 + Vector((-0.004, 0, -0.0082)) * S, 0.07 * S, [(0.0, 0.0172, 0.0066, 0.0), (0.5, 0.0142, 0.0055, -0.0008),
-                                                                                    (1.0, 0.0112, 0.004, -0.003)], S, lower, lower, root)
+    if B.get('duck'):
+        lo_ = bill_loft(kind + '_jaw', bx0 + Vector((-0.004, 0, -0.0062)) * S, 0.072 * S, [(0.0, 0.015, 0.0045, 0.0), (0.5, 0.0145, 0.0034, -0.0006),
+                                                                                         (1.0, 0.0155, 0.0028, -0.0024)], S, lower, lower, root)
+    else:
+        lo_ = bill_loft(kind + '_jaw', bx0 + Vector((-0.004, 0, -0.0082)) * S, 0.07 * S, [(0.0, 0.0172, 0.0066, 0.0), (0.5, 0.0142, 0.0055, -0.0008),
+                                                                                        (1.0, 0.0112, 0.004, -0.003)], S, lower, lower, root)
     part(keep(lo_), 'jaw')
     part(keep(sphere(kind + '_tongue', 0.011 * S, tuple(bx0 + Vector((0.03, 0, -0.0065)) * S), (2.4, 0.72, 0.3), m=tongue, parent=root, seg=10, rings=6)), 'jaw')
     part(keep(sphere(kind + '_mouthin', 0.0145 * S, tuple(bx0 + Vector((0.03, 0, -0.0045)) * S), (2.6, 0.72, 0.3), m=gum, parent=root, seg=12, rings=6)), 'head')
@@ -167,6 +192,10 @@ def goose(kind='embden', seed=1):
             part(lay(kind + '_sec', x0, p0, x1, p1, sd, 0.011 + 0.0006 * i, 0.0125 + 0.0006 * i, 0.05, bend=3 * (1 - f)), nm, 'prim', 'goose')
         for j in range(5):                             # the primaries: out from under the tertials, back over the rump
             f = j / 4; x0, p0 = (-0.03 - 0.02 * f) * BL, 62 - 6 * f
+            if B.get('duck'):                            # (a duck's: shorter, lying close along the back to the tail)
+                part(lay(kind + '_prim', x0, p0, (-0.27 + 0.012 * f) * BL, 24 + 4 * f + (1.5 if sd > 0 else 0), sd, 0.0085 - 0.0004 * j, 0.009 + 0.0003 * (4 - j),
+                         0.036, pointed=True, seg=9, xmin=-0.27), nm, 'prim', 'goose')
+                continue
             part(lay(kind + '_prim', x0, p0, (-0.33 + 0.012 * f) * BL, 17 + 4 * f + (1.5 if sd > 0 else 0), sd, 0.0105 - 0.0004 * j, 0.0125 + 0.0003 * (4 - j) + (0.0015 if sd > 0 else 0),
                      0.038, pointed=True, seg=9, xmin=-0.315), nm, 'prim', 'goose')
         pivot(nm, tuple(P(0.07 * BL, sd * 0.1, zc / S + 0.07)), root)
@@ -236,6 +265,10 @@ def goose(kind='embden', seed=1):
         st = tb + Vector((0.008 * abs(f), f * 0.012, -0.01 * f * f)) * S
         dirn = Vector((-math.cos(a), math.sin(a), 0.3 - 0.22 * f * f)).normalized()
         part(flat_feather(kind + '_tail', st, dirn, (0.105 - 0.02 * f * f) * S, 0.05 * S, coat, root, lift=0.003 * S * (1 - abs(f)), droop=0.002 * S, curl=0.05, seg=6, base=0.6), 'tail', 'tail', 'goose')
+    if B.get('drake'):
+        for k_, sd in enumerate((1, -1)):
+            st = tb + Vector((0.012, sd * 0.004, 0.006)) * S
+            part(flat_feather(kind + '_curl', st, Vector((0.25, sd * 0.05, 1.0)).normalized(), 0.05 * S, 0.012 * S, coat, root, lift=0.002 * S * k_, curl=0.9, seg=8, pointed=True, base=0.5), 'tail', 'tail', 'goose')
     pivot('tail', tuple(P(-0.25 * BL, 0, zc / S + 0.05)), root)
     # ---- legs: the feathered thigh tucked into the body (hip), the heel at the top of the orange shank (the bend points back),
     # the shank down and a little forward to the webbed foot: three long toes joined by the web, a little claw on each
