@@ -1038,3 +1038,32 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   - The colour is worked out after the ripples' normals, before the light (at `emissivemap_fragment`); the night colours
     apply as before. One clock, `WATER_T` (`__farm.water(t)` for tests); `WATER_DAY` fades the sparkles at night.
 - Tests: `waterclip.mjs OUT x z [size] [secs] [fps] [hour]` (frames of the water moving, the clock stepped exactly).
+
+## The pond: the frogs (24 Oct, the second piece of the pond)
+
+- Five frogs live round the pond (`src/pond.js`, as the game's art plan has it: "Frogs sit at the water's edge, hop along
+  it, dive in and pop up elsewhere (tap one to make it jump)"). Each is built in the page from rounded shapes (no model
+  file), about 17 cm long (larger than life, like the 2D game's frog, so it reads on a phone): a plump pear-shaped body, a
+  broad head, big golden eyes bulging up out of it with a black pupil lying across and a catch-light, lids that blink, a
+  pale throat that puffs into a balloon when it croaks, small front legs with four fingers, long folded hind legs with
+  five webbed toes; green with dark blotches and a golden line down each side of the back, a cream belly, barred legs, a
+  brown ear disc behind each eye, a dark mouth line and nostrils. The eyes, the blotches and the lines are drawn per pixel
+  in the frog's own shader (from where on the eye or the back each point is), so their edges stay smooth close up; the
+  rest is coloured per point. Each part hangs rigid on a bone (`Frog`), so a frog is one draw; its pose comes from a few
+  numbers (`P`: the hind legs stretched out, the front legs reaching, the body's pitch, the throat, the lids, the head
+  turned and nodding, how high in the water), each leg's bones aimed so its joints lie where the pose wants them.
+- Their life (`FrogPond`): on the bank at the water's edge they sit facing the water, breathing (the throat fluttering),
+  blinking, looking about, now and then croaking ("Ribbit!", French "Croâ !", over their heads; one to three croaks),
+  hopping along the bank to a spot with room (never onto another frog's spot or one it's heading for, never across the
+  dock or where a stream comes in), and diving in: a leap out over the water, a splash (rings and droplets), under it
+  goes, and a few seconds later it pops up somewhere else with a plop; it floats with only its eyes and the top of its
+  head out, paddles about (little rings behind it), swims to the bank and hops out. By night (21:30-6:00) they croak much
+  more and move less. A goose, Biscuit or Rusty coming near: in they jump (one already in the water dives and comes up
+  elsewhere). Tap one: its label ("Frog", "Grenouille") and it jumps in with a "Ribbit!".
+- `?frogs` starts the view on them; `?lineup=frogs` shows six in their poses (sitting, croaking, looking about, leaping,
+  blinking, swimming). They're hidden while the morning replay plays.
+- Tests: `frogtest.mjs` (4 minutes by day and 3 by night, every frame: each frog on the bank at the edge, in the water, or
+  mid-hop; never on or under the dock; never two on one spot; all they do happens; more croaking at night; a goose coming
+  close; a real tap on the screen; `LANG=fr`), `frogfilm.mjs OUT [secs] [fps] [hour] [frog] [size]` (frames following a
+  frog; `PLAN=2:croak,6:hopAlong,11:dive,30:tap` arranges what it does when), `frogshot.mjs OUT [hour] [secs]` (the
+  line-up). (`waterclip.mjs` and `frogfilm.mjs` step the farm in 1/30 s steps.)
