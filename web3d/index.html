@@ -71,6 +71,7 @@
                background: #2b2118; color: #f6e7c4; box-shadow: 0 3px 14px rgba(43, 33, 24, 0.4); }
   #replaybtn[hidden], #film[hidden] { display: none; }
   #farm.film { filter: sepia(0.92) contrast(1.16) brightness(1.62) saturate(0.82); }
+  html:has(body.replaying), body.replaying { background: #0b0805; }          /* (the gate weave shows no green at the edges) */
   body.replaying .top, body.replaying #readout, body.replaying #farmerbtn, body.replaying #dogbtn, body.replaying #hint, body.replaying .vignette { display: none; }
   #film { position: fixed; inset: 0; pointer-events: none; z-index: 8; }
   #film > * { position: absolute; }

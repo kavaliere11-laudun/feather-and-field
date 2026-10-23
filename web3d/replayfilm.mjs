@@ -1,6 +1,6 @@
 // Pictures of the morning replay (replay.js) as the player sees it, at a phone's size: from the "Last night" button to the
 // end. node replayfilm.mjs OUT [every] [extra]   (every: one picture each N of the film's 16 a second, default 1;
-// extra: more of the address, e.g. '&noguard'; LANG=fr; COOP=N, default 3; DSF=2)
+// extra: more of the address, e.g. '&noguard'; LANG=fr; COOP=N, default 3; DSF=2; START=n: from picture n on)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [out = 'rf', every = '1', extra = ''] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -13,9 +13,10 @@ await p.evaluate(() => { const h = document.getElementById('hint'); h.classList.
 await p.screenshot({ path: `${out}_btn.png` });                     // the morning, with the button
 await p.evaluate(() => window.__farm.pause(true));
 await p.click('#replaybtn');
-let n = 0, k = 0;
+const START = +(process.env.START || 0);                // (pictures from this one on: to finish a film that was cut short)
+let n = 0, k = START;
 for (; n < 16 * 100; n++) {
-  const shot = n % +every === 0;
+  const shot = n % +every === 0 && n >= START;
   const on = await p.evaluate((shot) => { const f = window.__farm; f.replayTick(1 / 16, 1); if (f.replay().on && shot) f.draw(); return f.replay().on; }, shot);
   if (!on) break;
   if (shot) await p.screenshot({ path: `${out}_${String(k++).padStart(4, '0')}.png`, timeout: 120000 });
