@@ -147,7 +147,7 @@ function applyDaylight(h) {
   sun.color.copy(A[1]).lerp(B[1], u); sun.intensity = mix(2);
   hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7);
   scene.background.copy(A[8]).lerp(B[8], u);
-  DAY.glow.value = mix(9); lampPools.update();
+  DAY.glow.value = mix(9); lampPools.update(); WATER_DAY.value = Math.max(0, 1 - DAY.glow.value * 1.4);
   GRADE.value = DAY.glow.value * (inside.open ? 0.22 : 0.6);          // inside, by the lantern, colours keep more of themselves
   // where the light comes from: its height and how far round from midday
   const el = mix(3) * DEG, turn = mix(4) * DEG;
@@ -394,24 +394,31 @@ function still(o, cast = false, receive = true) {          // a part of the vill
 }
 
 // a ribbon along a line on the ground (paths, streams, their banks), with round ends so lanes join smoothly
-function ribbon(points, half, y) {
-  const pos = [], idx = [];
+function ribbon(points, half, y, flowing = false) {
+  const pos = [], idx = [], flow = [];
   const P = points.map(p => new THREE.Vector2(p[0], p[2]));
-  const n = P.length;
+  const n = P.length; let along = 0; const dirs = [], alongs = [];
   for (let i = 0; i < n; i++) {
     const a = P[Math.max(0, i - 1)], b = P[Math.min(n - 1, i + 1)];
     const d = new THREE.Vector2().subVectors(b, a).normalize();
     const nx = -d.y, nz = d.x;
+    if (i) along += P[i].distanceTo(P[i - 1]);
+    dirs.push(d); alongs.push(along);
     pos.push(P[i].x + nx * half, y, P[i].y + nz * half, P[i].x - nx * half, y, P[i].y - nz * half);
+    flow.push(along, 1, d.x, d.y, along, -1, d.x, d.y);            // (along it in metres, across it -1..1, its way)
     if (i < n - 1) { const k = i * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
   }
-  for (const end of [P[0], P[n - 1]]) {                    // round caps
-    const c = pos.length / 3; pos.push(end.x, y, end.y);
-    for (let s = 0; s <= 16; s++) { const t = s / 16 * Math.PI * 2; pos.push(end.x + Math.cos(t) * half, y, end.y + Math.sin(t) * half); }
+  for (const [end, d, al] of [[P[0], dirs[0], alongs[0]], [P[n - 1], dirs[n - 1], alongs[n - 1]]]) {        // round caps
+    const c = pos.length / 3; pos.push(end.x, y, end.y); flow.push(al, 0, d.x, d.y);
+    for (let s = 0; s <= 16; s++) {
+      const t = s / 16 * Math.PI * 2, ox = Math.cos(t) * half, oz = Math.sin(t) * half;
+      pos.push(end.x + ox, y, end.y + oz); flow.push(al + ox * d.x + oz * d.y, (ox * -d.y + oz * d.x) / half, d.x, d.y);
+    }
     for (let s = 0; s < 16; s++) idx.push(c, c + 2 + s, c + 1 + s);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  if (flowing) g.setAttribute('flow', new THREE.Float32BufferAttribute(flow, 4));
   g.setIndex(idx);
   const nrm = new Float32Array(pos.length); for (let i = 1; i < nrm.length; i += 3) nrm[i] = 1;      // flat on the ground
   g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
@@ -421,6 +428,101 @@ function ribbon(points, half, y) {
 const DIRT = new THREE.MeshLambertMaterial({ color: '#c79a62', side: THREE.DoubleSide });
 const BANK = new THREE.MeshLambertMaterial({ color: '#b48c5c', side: THREE.DoubleSide });
 const WATER = new THREE.MeshStandardMaterial({ color: '#5fb3d6', roughness: 0.12, metalness: 0.0, side: THREE.DoubleSide });
+// ------------------------------------------------------------------ moving water (Audrey, 23 Oct: "Perfect next": the pond's moving
+// water, frogs and ducks). The pond: little wind ripples drifting across it (a few travelling waves of different lengths
+// and ways, their strength coming and going in gusts), which the light catches: each wave's side facing you a shade
+// lighter, the other darker, and the sun glinting off them; deeper blue in the middle, lighter in the shallows, a bright
+// wet line at the bank. The streams: the water flowing along them, faster in the middle, with streaks and ripples carried
+// downstream and a little white water round the edges. Worked out in the material's own shader, from where each point
+// is (no textures); the night colours apply as before.
+const WATER_T = { value: 0 }, WATER_DAY = { value: 1 };            // (the sparkles fade out at night)
+function waterShader(mat, kind, extra = {}) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.wTime = WATER_T; sh.uniforms.wDay = WATER_DAY;
+    for (const k in extra) sh.uniforms[k] = extra[k];
+    const stream = kind === 'stream';
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;' + (stream ? '\nattribute vec4 flow;\nvarying vec4 vFlow;' : ''))
+      .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;' + (stream ? '\nvFlow = flow;' : ''));
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+uniform float wTime; uniform float wDay;
+varying vec3 vWPos;
+${stream ? 'varying vec4 vFlow;' : 'uniform vec3 pondC; uniform vec3 pondU; uniform vec3 pondV;'}
+float wh, whf; vec2 wg; float wEdge;
+void wave(vec2 p, vec2 d, float k, float sp, float a) { float ph = dot(p, d) * k - wTime * sp; float v = a * sin(ph); wh += v; if (k > 10.0) whf += v; wg += a * k * cos(ph) * d; }`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+{
+  wh = 0.0; wg = vec2(0.0);
+  ${stream ? `
+  // along the stream (metres) and across it (-1 at one bank, 1 at the other); the flow is fastest in the middle
+  float al = vFlow.x, ac = vFlow.y; vec2 dir = normalize(vFlow.zw), side = vec2(-dir.y, dir.x);
+  float run = wTime * (0.55 + 0.25 * (1.0 - ac * ac));
+  vec2 q = vec2(al - run, ac * 0.42);
+  float g1 = 0.0; vec2 gq = vec2(0.0);
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i), k = 3.1 + fi * 2.3; vec2 d = normalize(vec2(1.0, (fi - 1.5) * 0.9));
+    float ph = dot(q, d) * k + fi * 1.7 + sin(q.x * 0.7 + fi) * 1.3;
+    float a = 0.016 / (1.0 + fi * 0.6);
+    wh += a * sin(ph); gq += a * k * cos(ph) * d;
+  }
+  wg = gq.x * dir + gq.y * side * 0.42 / 0.42;
+  wEdge = abs(ac);` : `
+  // where in the pond: 0 in the middle, 1 at the bank (the ellipse with its wobble)
+  vec2 rel = vWPos.xz - pondC.xz;
+  float pa = dot(rel, pondU.xz) / dot(pondU.xz, pondU.xz), pb = dot(rel, pondV.xz) / dot(pondV.xz, pondV.xz);
+  float at = atan(pb, pa), wob = 1.0 + 0.035 * sin(at * 5.0 + 1.0) + 0.02 * sin(at * 9.0);
+  wEdge = length(vec2(pa, pb)) / wob;
+  vec2 p = vWPos.xz;
+  p += 0.32 * vec2(sin(p.y * 0.83 + wTime * 0.29), sin(p.x * 0.71 - wTime * 0.23));        // (so the ripples aren't in neat rows)
+  // patches of the pond ruffled by the breeze and calmer patches between, drifting across it
+  float gust = 0.35 + 0.65 * smoothstep(-0.6, 0.9, sin(p.x * 0.53 + wTime * 0.21) * sin(p.y * 0.61 - wTime * 0.16) + 0.35 * sin((p.x + p.y) * 0.9 + wTime * 0.4));
+  whf = 0.0;
+  wave(p, normalize(vec2(0.8, 0.6)), 1.9, 0.9, 0.006);
+  wave(p, normalize(vec2(-0.45, 0.89)), 4.7, 1.7, 0.0045 * gust);
+  wave(p, normalize(vec2(0.31, -0.95)), 7.3, 2.2, 0.0035 * gust);
+  wave(p, normalize(vec2(-0.93, -0.36)), 11.0, 2.8, 0.0024 * gust);
+  wave(p, normalize(vec2(0.97, -0.22)), 15.5, 3.4, 0.0016 * gust);
+  wave(p, normalize(vec2(0.55, 0.83)), 21.0, 4.1, 0.0011 * gust);
+  wg *= 1.0 - 0.6 * smoothstep(0.86, 1.0, wEdge);          // (calmer right at the bank)`}
+  vec3 nW = normalize(vec3(-wg.x, 1.0, -wg.y));
+  normal = normalize((viewMatrix * vec4(nW, 0.0)).xyz);
+}`)
+      .replace('#include <emissivemap_fragment>', `
+{
+  // (after the normal is worked out, before the light falls on it) the light on the ripples: the side of a wave facing the player lighter, the far side darker
+  vec2 toCam = normalize(cameraPosition.xz - vWPos.xz);
+  float face = dot(wg, toCam);
+  ${stream ? `
+  vec3 deep = vec3(0.05, 0.3, 0.47), shallow = vec3(0.19, 0.55, 0.68);          // (linear colours: #3c94b6 and #78c2d6)
+  diffuseColor.rgb = mix(deep, shallow, smoothstep(0.35, 1.0, wEdge));
+  float streak = smoothstep(0.55, 1.0, sin((vFlow.x - wTime * 0.75) * 2.3 + sin(vFlow.y * 4.0 + vFlow.x * 0.9) * 1.8) * 0.5 + 0.5) * (1.0 - wEdge * 0.6);
+  diffuseColor.rgb += vec3(0.1, 0.12, 0.12) * streak;
+  float foam = smoothstep(0.78, 0.98, wEdge) * (0.55 + 0.45 * sin(vFlow.x * 7.0 - wTime * 2.4 + vFlow.y * 3.0));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.96, 0.97), foam * 0.45);
+  diffuseColor.rgb *= 1.0 + 3.6 * face;` : `
+  vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);         // (linear colours: #3487ad and #72bfd4)
+  diffuseColor.rgb = mix(deep, shallow, smoothstep(0.4, 0.98, wEdge));
+  diffuseColor.rgb *= 1.0 + 3.4 * face;
+  diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.88, 0.97, wEdge));     // (the brightest ripple faces, crisp)
+  // little sparkles of light here and there, each twinkling on and off, more where the breeze ruffles the water, by day
+  vec2 sp = vWPos.xz * 3.2, cell = floor(sp), fr = fract(sp) - 0.5;
+  float rnd = fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.55);
+  vec2 off = (vec2(fract(rnd * 17.3), fract(rnd * 31.7)) - 0.5) * 0.55;
+  float tw = smoothstep(0.6, 1.0, sin(wTime * (1.6 + rnd * 2.8) + rnd * 60.0));
+  float spark = (1.0 - smoothstep(0.05, 0.11, length((fr - off) * vec2(1.0, 1.7)))) * tw * step(0.5, rnd) * smoothstep(0.0, 0.004, whf + 0.002);
+  spark *= 1.0 - smoothstep(0.85, 0.97, wEdge);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.98, 1.0), spark * 0.8 * wDay);
+  // a bright wet line where the water meets the bank, coming and going with the little waves
+  float lap = smoothstep(0.93, 0.985, wEdge) * (1.0 - smoothstep(0.985, 1.0, wEdge));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.95), lap * (0.45 + 0.25 * sin(wTime * 1.3 + atan(vWPos.z - pondC.z, vWPos.x - pondC.x) * 9.0)));`}
+}
+#include <emissivemap_fragment>`);
+  };
+  mat.customProgramCacheKey = () => 'water-' + kind;
+  mat.needsUpdate = true;
+  return mat;
+}
 
 function buildPaths() {
   const geos = V.paths.map((p, i) => ribbon(p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
@@ -453,11 +555,13 @@ function buildWater() {
     return g;
   };
   still(new THREE.Mesh(ellipse(1.12, 0.003), BANK));
-  still(new THREE.Mesh(ellipse(1.0, 0.007), WATER));
-  // the streams, each in its banks
+  const pond = waterShader(WATER.clone(), 'pond', { pondC: { value: c }, pondU: { value: au }, pondV: { value: av } });
+  still(new THREE.Mesh(ellipse(1.0, 0.007), pond));
+  // the streams, each in its banks, flowing from its first point to its last (the west one into the pond, the other out of it)
+  const flowing = waterShader(WATER.clone(), 'stream');
   for (const st of V.streams) {
     still(new THREE.Mesh(ribbon(st, V.streamHalf + 0.16, 0.0035), BANK));
-    still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075), WATER));
+    still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075, true), flowing));
   }
 }
 
@@ -2338,7 +2442,7 @@ function replayFrame(now) {
   if (now - lastFrame < 1000 / 16 - 2) return;            // a silent film: 16 pictures a second (and the quality left alone)
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now; lastFrame = now;
   replay.update(dt); tickDoors(dt, now); placeTag(dt);
-  WIND.time.value = now / 1000;
+  WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }
   renderer.render(scene, camera);
   wake(300);
@@ -2360,7 +2464,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   placeTag(dt); tickDogBtn(dt); tickReplayBtn();
-  if (!frozen) WIND.time.value = now / 1000;
+  if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
   else renderer.render(scene, camera);
@@ -2416,7 +2520,7 @@ window.__farm = {
   plan: () => V, THREE,
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },
-  wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; },
+  wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; }, water: (t) => { WATER_T.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },

@@ -1023,3 +1023,18 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   cards in the story's order for that farm; the visit as it should go; to "The End" in under 75 s; no page errors; the
   farm's own, the light and the doors put back exactly; the cast hidden, the button gone), `replayfilm.mjs OUT [every]
   [extra]` (pictures at phone size, as the player sees it). `__farm.replay()`, `startReplay`, `replayRecord`, `replayTick`.
+
+## The pond: moving water (23 Oct 22:43, Audrey: "Perfect next": ducks, frogs and moving water on the pond)
+
+- The pond and the streams move, in the water's own shader (`waterShader()` in main.js, no textures):
+  - The pond: little wind ripples drifting across it (six travelling waves from 30 cm to 3 m long, each its own way, the
+    shorter ones stronger where the breeze ruffles the water: patches of chop and calmer patches drifting over it, and the
+    rows bent so they aren't neat); each ripple's side facing the player a shade lighter and the far side darker, the
+    brightest faces crisp; little sparkles of light here and there that twinkle on and off by day (fading out at night);
+    deeper blue in the middle, lighter in the shallows, and a bright wet line where it meets the bank, lapping.
+  - The streams: flowing from their first point to their last (the west one into the pond, the other out of it), faster
+    in the middle, with ripples and pale streaks carried downstream and a little white water along the banks (`ribbon()`
+    gives the stream water a `flow` attribute: metres along, -1..1 across, its way).
+  - The colour is worked out after the ripples' normals, before the light (at `emissivemap_fragment`); the night colours
+    apply as before. One clock, `WATER_T` (`__farm.water(t)` for tests); `WATER_DAY` fades the sparkles at night.
+- Tests: `waterclip.mjs OUT x z [size] [secs] [fps] [hour]` (frames of the water moving, the clock stepped exactly).
