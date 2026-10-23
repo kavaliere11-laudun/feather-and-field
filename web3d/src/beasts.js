@@ -520,7 +520,7 @@ export class FoxFamily {
     const [dx, dz, dh] = opts.den;
     this.obstacles = [[dx - Math.sin(dh) * 0.05, dz - Math.cos(dh) * 0.05, 0.74], [dx - Math.sin(dh) * 0.62, dz - Math.cos(dh) * 0.62, 0.66], ...(opts.obstacles || [])];     // the den's bank (front, back)
     this.group = new THREE.Group(); scene.add(this.group);
-    this.foxes = [
+    this.foxes = opts.only === 'dad' ? [new Fox(this, 'fox', NAMES.dad, 'dad', 1.0, r)] : [        // (only Rusty: the morning replay's cast)
       new Fox(this, 'fox', NAMES.dad, 'dad', 1.0, r),
       new Fox(this, 'fox', NAMES.mum, 'mum', 0.92, r),
       ...NAMES.cubs.map((n, i) => new Fox(this, 'cub', n, 'cub', 1 - i * 0.05, r)),

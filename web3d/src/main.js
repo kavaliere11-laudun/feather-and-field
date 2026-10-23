@@ -20,6 +20,7 @@ import { FarmDog, nameBoard, KENNEL } from './dog.js';
 import { initBeasts, DogLineup, FoxFamily, FoxLineup } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
+import { Replay, REPLAY_TEXT } from './replay.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -323,6 +324,7 @@ async function start() {
   buildFoxes(beastsInfo.joints);
   buildGeese();
   buildDog(beastsInfo.joints);
+  beastJoints = beastsInfo.joints; setupReplay();
   if (allBirds.length) makeBlobs();
   buildGrass();
   addLampPools();
@@ -784,6 +786,7 @@ function buildFoxes(joints) {
     V.tufts = V.tufts.filter(t => Math.hypot(t[0] - FOX_DEN[0], t[2] - FOX_DEN[1]) > 1.3);     // no grass growing through it
   }
   foxes = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints, obstacles, firstIn: params.has('foxes') ? 0.3 : 15 }, rng(23));
+  FOX_OBSTACLES = obstacles;
   buildNightVisit();
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = nightVisit && nightVisit.active() ? nightVisit.fox.pos.clone().sub(new THREE.Vector3(0.3, 0, 0.3)) : foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
@@ -853,6 +856,7 @@ function buildGeese() {
   }
   const P = V.pond, mouths = [];
   for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
+  GEESE_OPTS = { pond: P, nav: navGrid(), avoid, mouths, groundY, inView };
   geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
   geeseFlock.update(1 / 60, clockHour());
 }
@@ -1037,6 +1041,7 @@ function buildNightVisit() {
   const go = nightVisit.start.bind(nightVisit);
   nightVisit.start = (i) => {               // ?visit: look at the coop he's going to
     const ok = go(i);
+    if (ok) lastNight = { coop: nightVisit.target.index, open: doorOpen(nightVisit.target), hour: clockHour(), hen: heroHen(nightVisit.target) };     // (for the morning's replay)
     if (ok && params.has('visit') && !inside.open) { const c = nightVisit.target.frame.getWorldPosition(new THREE.Vector3()); view.target.set(c.x - 0.6, 0, c.z + 0.2); view.size = 4.6; clampView(); applyGrass(); placeCamera(); }
     return ok;
   };
@@ -1836,6 +1841,7 @@ const pointers = new Map();
 let drag = null, pinch = 0;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 canvas.addEventListener('pointerdown', e => {
+  if (replay && replay.on) return;                       // (the morning replay films itself)
   canvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
@@ -1867,7 +1873,7 @@ function endPointer(e) {
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
-canvas.addEventListener('wheel', e => { e.preventDefault(); if (inside.open) { inside.pan += (e.deltaX || e.deltaY) * inside.mPerPx * 0.5; insideFrameCamera(); wake(1000); return; } zoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0016))); wake(1000); }, { passive: false });
+canvas.addEventListener('wheel', e => { e.preventDefault(); if (replay && replay.on) return; if (inside.open) { inside.pan += (e.deltaX || e.deltaY) * inside.mPerPx * 0.5; insideFrameCamera(); wake(1000); return; } zoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0016))); wake(1000); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
@@ -2209,6 +2215,135 @@ function insideTap(x, y) {
 }
 
 // ------------------------------------------------------------------ the loop: 30 frames a second when idle, 60 while touched
+// ------------------------------------------------------------------ the morning replay of last night's fox visit (replay.js)
+// Audrey (23 Oct): an old silent film, from a "Last night" button in the morning. In the game it shows the morning after a
+// night with a visit; this test page offers one every morning (6:00-12:00) until it's been watched that day: last night's
+// visit if this page saw one, otherwise the one Rusty would have made (a coop left open if there is one, as he picks).
+// ?replay shows the button at any hour (?replay=N: coop N; &shut: its door was shut). The cast (Rusty, the geese, Biscuit)
+// is the farm's own kind, built the first time; ?nodog, ?nogeese or ?noguard leave them out as on the farm.
+let replay = null, replayCast = null, beastJoints = null, FOX_OBSTACLES = [], GEESE_OPTS = null, lastNight = null, replaySaved = null;
+const replayBtn = document.getElementById('replaybtn');
+const REPLAY_KEY = 'ff3d.replaySeen';               // the day it was last watched, "YYYY-MM-DD" (checked when read)
+function dayKey(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+let seenCheck = { at: -1e9, v: false };
+function replaySeenToday() {                       // (read again every few seconds at most)
+  const now = performance.now(); if (now - seenCheck.at < 5000) return seenCheck.v;
+  seenCheck = { at: now, v: readSeen() }; return seenCheck.v;
+}
+function readSeen() { try { const v = localStorage.getItem(REPLAY_KEY); return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && v === dayKey(); } catch (e) { return false; } }
+function heroHen(p) {                              // the hen who sees him off: the Brave if the coop has her, else the Rebel, else the first
+  const hens = p.birds.filter(b => b.kind === 'hen');
+  const h = hens.find(b => b.pers === 'brave') || hens.find(b => b.pers === 'rebel') || hens[0] || p.birds[0];
+  return h ? h.name : '';
+}
+function replayRecord() {
+  const coops = plots.filter(p => p.kind === 'coop' && p.birds.length), want = params.get('replay');
+  const forced = want && /^\d{1,2}$/.test(want) ? coops.find(p => p.index === +want) : null;
+  if (lastNight && !forced) return lastNight;
+  if (!coops.length) return null;
+  const d = new Date(), r = rng(d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate());
+  let p = forced;
+  if (!p) {                                         // as Rusty picks: a coop left open first, the nearer the den the likelier
+    const open = coops.filter(doorOpen), pool = open.length ? open : coops;
+    const w = pool.map(c => 1 / Math.max(3, Math.hypot(c.centre.x - FOX_DEN[0], c.centre.z - FOX_DEN[1])) ** 2);
+    let x = r() * w.reduce((a, b) => a + b, 0); p = pool[pool.length - 1];
+    for (let i = 0; i < pool.length; i++) { x -= w[i]; if (x <= 0) { p = pool[i]; break; } }
+  }
+  return { coop: p.index, open: params.has('shut') ? false : doorOpen(p), hour: (23.1 + r() * 3.2) % 24, hen: heroHen(p) };
+}
+function buildReplayCast() {
+  const has = k => !params.has('noguard') && !params.has(k);
+  const fam = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints: beastJoints, obstacles: FOX_OBSTACLES, only: 'dad', firstIn: 1e9 }, rng(71));
+  const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
+  const visit = new NightVisit({
+    scene, fam, nav: navGrid(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
+    grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(43), penObstacles: PEN.obstacles, groundY,
+    toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),
+    firstIn: Infinity, again: () => Infinity,
+    say(text, at, secs) { tag.textContent = text; tagBird = null; tagSpot.copy(at); tag.classList.add('on'); fieldTag = secs; },
+    hint: () => {},                                 // (the film has its own cards)
+  });
+  visit.dogName = () => dogName;
+  const c = { fam, visit, geese: null, dog: null };
+  if (geeseFlock && GEESE_OPTS && has('nogeese')) c.geese = new GeeseFlock(scene, Object.assign({}, GEESE_OPTS, { watch: () => visit, dog: () => c.dog ? c.dog.dog : null, wakeOn: () => replay.alarm }), rng(58));
+  if (farmDog && has('nodog')) {
+    c.dog = new FarmDog(scene, { joints: beastJoints, name: dogName, kennel: KENNEL_AT, nav: navGrid(), groundY, spots: farmSpots, geese: () => c.geese,
+      foxes: () => fam, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), visit: () => visit, den: FOX_DEN, wakeOn: () => replay.dogAlarm }, rng(62));
+  }
+  for (const g of [fam.group, c.geese && c.geese.group, c.dog && c.dog.group]) if (g) { g.traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); }); g.visible = false; }
+  return c;
+}
+// the farm's own hidden and paused for the film (the night's light, the visited coop's door as it was), or all put back
+function replayLive(on, rec) {
+  const castGroups = c => [c.fam.group, c.geese && c.geese.group, c.dog && c.dog.group].filter(Boolean);
+  if (on) {
+    replaySaved = { target: view.target.clone(), size: view.size, override: DAY.override, birds: [], doors: [] };
+    for (const p of plots) for (const b of p.birds) { replaySaved.birds.push([b, b.root.visible]); b.root.visible = false; placeBlob(b); }
+    for (const p of plots) if (p.door) replaySaved.doors.push([p, p.door.s, p.door.goal, p.door.shut]);
+    const t = plots.find(p => p.index === rec.coop);
+    if (t && t.door) { t.door.s = t.door.goal = rec.open ? 1 : 0; t.door.shut = !rec.open; }
+    for (const g of [foxes && foxes.group, geeseFlock && geeseFlock.group, farmDog && farmDog.group]) if (g) g.visible = false;
+    for (const g of castGroups(replayCast)) g.visible = true;
+    if (nightVisit) nightVisit.fx.list.forEach(s => { s.sp.visible = false; });
+    for (const n of NOTES) { n.life = 0; n.sprite.visible = false; }                 // (a song's notes from this morning)
+    tag.classList.remove('on'); hintEl.classList.remove('on'); dogBtnLeft = 0; if (dogEls.btn) dogEls.btn.hidden = true; closeDogName();
+    document.body.classList.add('replaying'); replayBtn.hidden = true;
+    DAY.override = rec.hour; DAY.shadowAt = 0; applyDaylight(clockHour());
+  } else {
+    const S = replaySaved; if (!S) return;
+    for (const [b, vis] of S.birds) { b.root.visible = vis; placeBlob(b); }
+    for (const [p, s, goal, shut] of S.doors) { p.door.s = s; p.door.goal = goal; p.door.shut = shut; }
+    for (const g of [foxes && foxes.group, geeseFlock && geeseFlock.group, farmDog && farmDog.group]) if (g) g.visible = true;
+    for (const g of castGroups(replayCast)) g.visible = false;
+    tag.classList.remove('on');
+    document.body.classList.remove('replaying');
+    if (S.override === undefined) delete DAY.override; else DAY.override = S.override;
+    DAY.shadowAt = 0; applyDaylight(clockHour()); tickDoors(0);
+    view.target.copy(S.target); view.size = S.size; clampView(); applyGrass(); placeCamera(); furDetail();
+    replaySaved = null; lastSim = 0; wake(800);
+  }
+}
+function setupReplay() {
+  if (params.get('lineup') || !foxes || !nightVisit) return;
+  const el = id => document.getElementById(id);
+  replay = new Replay({
+    cast: () => (replayCast = replayCast || buildReplayCast()),
+    live: replayLive,
+    look: (x, z, size) => { view.target.set(x, 0, z); view.size = size; clampView(); applyGrass(); placeCamera(); furDetail(); },
+    lang: LANG, dogName: () => dogName,
+    els: { film: el('film'), grain: el('film-grain'), flick: el('film-flick'), scratches: [el('film-s1'), el('film-s2')], iris: el('film-iris'),
+      card: el('film-card'), title: el('film-title'), sub: el('film-sub'), skip: el('film-skip'), canvas },
+  });
+  replay.onClose = () => { try { localStorage.setItem(REPLAY_KEY, dayKey()); } catch (e) {} replayDone = true; seenCheck.at = -1e9; };
+  if (replayBtn) { replayBtn.textContent = '🎞 ' + REPLAY_TEXT.btn[LANG === 'fr' ? 1 : 0]; replayBtn.addEventListener('click', () => startReplay()); }
+}
+let replayDone = false;
+function startReplay() {
+  if (!replay || replay.on || inside.open) return false;
+  const rec = replayRecord(); if (!rec) return false;
+  return replay.start(rec);
+}
+// the button: in the morning until it's been watched (?replay: at any hour, once), not while inside a coop or while another
+// button has the spot
+function tickReplayBtn() {
+  if (!replay || !replayBtn) return;
+  const h = clockHour(), want = !replay.on && !inside.open && !replayDone && (params.has('replay') || (h >= 6 && h < 12 && !replaySeenToday()))
+    && (!farmerBtn || farmerBtn.hidden) && (!dogEls.btn || dogEls.btn.hidden) && dogEls.form && dogEls.form.hidden;
+  if (replayBtn.hidden === want) {
+    replayBtn.hidden = !want;
+    if (want && document.fonts && document.fonts.load) for (const f of ['italic 27px Fell', '44px Fell']) document.fonts.load(f).catch(() => {});      // (the cards' type, ready)
+  }
+}
+function replayFrame(now) {
+  if (now - lastFrame < 1000 / 16 - 2) return;            // a silent film: 16 pictures a second (and the quality left alone)
+  const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now; lastFrame = now;
+  replay.update(dt); tickDoors(dt, now); placeTag(dt);
+  WIND.time.value = now / 1000;
+  if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }
+  renderer.render(scene, camera);
+  wake(300);
+}
+
 let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false, paused = false;
 function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }
 const meter = { frames: 0, late: 0, since: 0, fps: 0, slow: 0 };
@@ -2219,11 +2354,12 @@ readout.addEventListener('click', () => { details = !details; showReadout(); });
 function frame(now) {
   requestAnimationFrame(frame);
   if (paused) return;
+  if (replay && replay.on) { replayFrame(now); return; }
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
-  placeTag(dt); tickDogBtn(dt);
+  placeTag(dt); tickDogBtn(dt); tickReplayBtn();
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -2287,6 +2423,8 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
+  replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
+  replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },
   layAs: (i, pers, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.pers = pers; h.startLaying(sit); return h.name; },

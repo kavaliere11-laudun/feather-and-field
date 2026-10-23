@@ -980,3 +980,46 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   alone; and the parade in full view), `geeseguard.mjs` (now the geese alone, `?nodog`; also the parade in full view), `teamfilm.mjs OUT coop secs fps` (FROM=alarm, wake or
   parade; the view keeps whoever's in the story in the picture; CAM=geese follows the geese; CUT=1 films each moment for
   a few seconds and skips the rest, for a short video, or CUT='{"back/await": 6}' only the moments given; the message at the top held for 4.5 s of the farm's time).
+
+## The morning replay of last night's fox visit (23 Oct 21:04, Audrey: "Carry on"; she chose "Old silent film" and "A button to tap")
+
+- In the morning a "🎞 Last night" button (French "🎞 La nuit dernière") sits at the bottom of the screen; tap it and last
+  night's visit plays again as an old silent film (`src/replay.js`, `Replay`). In the game it shows the morning after a
+  night with a visit; this test page offers one every morning (6:00-12:00) until it's been watched that day: last night's
+  visit if the page saw one (`lastNight`: the coop, its door open or shut, the time, the coop's hen), otherwise the one Rusty
+  would have made (a coop left open first, the nearer the den the likelier, a time between 11 pm and 2:30 am). The day it
+  was watched is kept in the browser (`ff3d.replaySeen`, only ever a "YYYY-MM-DD" date, checked when read). `?replay` shows
+  the button at any hour (`?replay=N`: coop N; `&shut`: its door was shut). Skip any time.
+- The cast: the night is played again with a Rusty, geese and Biscuit of its own (built the first time, like the farm's
+  own: `buildReplayCast()`; `FoxFamily` with `only: 'dad'`; geese and dog with `wakeOn`, so they wake when the film says),
+  put back to bed before each showing (`NightVisit.reset()`, `GeeseFlock.reset()`, `FarmDog.reset()`). Meanwhile the farm's
+  own hens, foxes, geese and dog are hidden and paused, the light is the night's (`DAY.override`), the visited coop's door
+  is as it was; afterwards everything is put back exactly (the view too). Whoever the farm has takes part (`?nodog`,
+  `?nogeese`, `?noguard` as on the farm).
+- The director (`plan()`): title cards between the scenes, the dull bits skipped behind them; travelling sped up (as old
+  films did: the approach a little, the chase nearly twice as fast, the lap of honour twice); the peck in slow motion (a
+  third of the speed, from the sniff to the leap back); the view framed on whoever's in the scene, worked out for a phone
+  held upright. The story, by what the farm has:
+  - "Last night, on the farm…" · Rusty out of the den · "11:41 pm. Rusty had a plan." · the jump over the fence and up
+    the ramp · "Nothing could possibly go wrong." · the flurry and the peck (slow motion), the feather on his nose, the
+    sneeze · "He had not planned for Willow." (the coop's Brave, else its Rebel, else its first hen) — or, at a shut door,
+    the scratching and the "?" · "The door was shut. He had not planned for that."
+  - With guards: Rusty puzzled · "But someone had heard everything…" · the geese honking the alarm · Biscuit waking and
+    out of his kennel · the race · "Run, Rusty, run!" · the chase · Biscuit barking at the edge of the wood · "The heroes of
+    the night." (Biscuit alone: "The hero of the night.") · the parade.
+  - Without: his second try, home at a trot · "Rusty went home… with a feather on his nose." (or "…empty-handed, and very
+    puzzled.") · into the den.
+  - An iris closing, then "The End" · "Everyone is safe and sound." About 40 to 60 seconds.
+  - French: "La nuit dernière, à la ferme…", "23 h 41. Rusty avait un plan.", "Rien ne pouvait mal tourner.", "Il n'avait
+    pas prévu Willow.", "La porte était fermée. Ça, il ne l'avait pas prévu.", "Mais quelqu'un avait tout entendu…",
+    "Cours, Rusty, cours !", "Les héros de la nuit." / "Le héros de la nuit.", "Rusty est rentré chez lui… avec une plume sur
+    le nez.", "Rusty est rentré bredouille, et très perplexe.", "Fin", "Tout le monde est sain et sauf.", "Passer".
+- The old film look: the picture sepia and brighter (a CSS filter on the canvas), at 16 pictures a second, with grain, a
+  flicker, scratches, a vignette and a little gate weave (a few DOM layers over it, `#film`); the cards black with a double
+  cream frame and fleurons, in IM Fell English italic (old printing types, SIL Open Font License, kept with the page in
+  `fonts/` as small WOFF files with its licence; Google Fonts isn't needed). The game's buttons, hints and labels are hidden
+  while it plays; taps and drags do nothing but Skip. The quality isn't stepped down for the film's 16 pictures a second.
+- Tests: `replaytest.mjs [cases]` (team, teamshut, dog, geese, none, noneshut; `LANG=fr`: the button and its words; the
+  cards in the story's order for that farm; the visit as it should go; to "The End" in under 75 s; no page errors; the
+  farm's own, the light and the doors put back exactly; the cast hidden, the button gone), `replayfilm.mjs OUT [every]
+  [extra]` (pictures at phone size, as the player sees it). `__farm.replay()`, `startReplay`, `replayRecord`, `replayTick`.

@@ -28,6 +28,7 @@ export class FarmDog {
     this.r = r; this.nav = opts.nav; this.groundY = opts.groundY; this.spotsOf = opts.spots; this.geeseOf = opts.geese || (() => null);
     this.foxesOf = opts.foxes || (() => null); this.toCamera = opts.toCamera || (() => 0); this.joints = opts.joints; this.out = true;
     this.visitOf = opts.visit || (() => null); this.guard = null; this.heard = 0; this.barkT = 0;
+    this.wakeOn = opts.wakeOn || null;                       // (the morning replay: he wakes when the film says, replay.js)
     this.den = opts.den || null;                             // (where the foxes' den is: he sees Rusty that far and no further)
     this.group = new THREE.Group(); scene.add(this.group);
     const [kx, kz, kh] = opts.kennel, th = kh - Math.PI / 2;
@@ -55,6 +56,15 @@ export class FarmDog {
     if (DOG_NIGHT(hour)) { const p = this.K(0.08, 0); d.pos.set(p[0], 0, p[1]); d.heading = this.k.h; d.A.lie = 1; d.A.chin = 1; d.task = this.wrap(this.sleepTask()); this.bedtime = true; this.asleep = true; }
     else { const p = this.K(1.5, -0.2); d.pos.set(p[0], 0, p[1]); d.heading = this.toCamera(p[0], p[1]); }
     d.lastPos = d.pos.clone(); this.placed = true;
+  }
+
+  // back to how he'd be at this hour, as when the page opens (the morning replay's cast, before each showing)
+  reset() {
+    const d = this.dog;
+    this.guard = null; this.heard = 0; this.barkT = 0; this.placed = false; this.bedtime = false; this.asleep = false;
+    d.todo = []; d.task = null;
+    if (this.ball.state !== 'ground') { this.group.add(this.ball.mesh); this.ball.state = 'ground'; this.ball.vel.set(0, 0, 0); }
+    const b = this.K(1.3, -0.68); this.ball.mesh.position.set(b[0], BALL_R, b[1]);
   }
 
   // ---- what he does next
@@ -428,6 +438,7 @@ export class FarmDog {
   watchFor(dt) {
     const V = this.visitOf();
     if (this.guard || !V || !DOG_NIGHT(this.hour)) return;
+    if (this.wakeOn) { if (V.active() && V.fox.root.visible && this.wakeOn()) this.raise(V, this.geeseOf() && this.geeseOf().guarding); return; }
     if (V.state !== 'out' || !V.fox.root.visible) { if (V.state !== 'out') this.heard = 0; return; }
     const F = this.geeseOf(), f = V.fox, d = Math.hypot(f.pos.x - this.dog.pos.x, f.pos.z - this.dog.pos.z);
     this.heard += dt;

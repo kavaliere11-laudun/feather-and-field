@@ -707,6 +707,15 @@ export class NightVisit {
     this.fam.hide(this.fox);
     this.next = this.again ? this.again() : 900 + this.r() * 900;
   }
+  // back to before any visit: Rusty home, no feather, no farmer, nothing in the air (the morning replay's own visit, before
+  // each showing)
+  reset() {
+    if (this.nose) { this.nose.type = 'feather'; this.nose = null; }
+    for (const s of this.fx.list) { s.life = 0; s.sp.visible = false; if (s.type === 'stuck') s.type = 'feather'; }
+    this.state = 'idle'; this.phase = null; this.lz = null; this.helpers = {}; this.byGeese = false; this.scare = null; this.ended = null;
+    this.farmer = null; this.torch.on = 0; this.torch.group.visible = false; this.pecks = 0; this.tries = []; this.curlSet = false;
+    this.fam.hide(this.fox); this.next = Infinity;
+  }
   // which way to sit (near `want`) and which side to curl the brush, so it lies on clear ground
   sitSpot(f, want, at = f.pos) {
     const p = this.target, G = this.nestOf(p), obs = (this.penObstacles || []).filter(o => Math.abs(o[0] - G.pop[0]) > 0.05), S0 = f.q.S * f.scale;

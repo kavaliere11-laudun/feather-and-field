@@ -539,6 +539,7 @@ export class GeeseFlock {
     this.lu2 = this.pu[0] ** 2 + this.pu[1] ** 2; this.lv2 = this.pv[0] ** 2 + this.pv[1] ** 2;
     this.avoid = opts.avoid || []; this.mouths = opts.mouths || [];
     this.watch = opts.watch; this.groundY = opts.groundY; this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
+    this.wakeOn = opts.wakeOn || null;                 // (the morning replay: they wake when the film says, replay.js)
     this.group = new THREE.Group(); scene.add(this.group);
     this.geese = ['embden', 'toulouse'].map(k => {
       const g = new Goose(this.group, k, r); g.flock = this;
@@ -767,6 +768,7 @@ export class GeeseFlock {
   watchFor(dt, hour) {
     const V = this.watch && this.watch();
     // (Biscuit barking: they wake to that too, even once Rusty's running, and go out after him with Biscuit)
+    if (this.wakeOn) { if (!this.guarding && V && this.night(hour) && V.active() && this.wakeOn()) this.raise(V); return; }
     const D = this.farmDog(), barking = D && D.guard && !D.guard.done && /^(charge|pursue|stand)$/.test(D.guard.stage);
     if (!this.guarding && V && this.night(hour) && barking && V.fox.root.visible && (V.state === 'out' || V.state === 'fleeing')) { this.raise(V); return; }
     if (this.guarding || !V || !this.night(hour) || V.state !== 'out' || !V.fox.root.visible) { if (!V || V.state !== 'out') this.heard = 0; return; }
@@ -874,6 +876,11 @@ export class GeeseFlock {
       }
       return true;
     } };
+  }
+  // back to how they'd be at this hour, as when the page opens (the morning replay's cast, before each showing)
+  reset() {
+    this.guarding = false; this.heard = 0; this.trail = null; this.raisedAt = 0;
+    for (const g of this.geese) { g.task = null; g.asleep = false; g.act = null; g.actT = 0; }
   }
   // where to parade: here if it's in full view with room round it (for the lap and for Biscuit going round them), else
   // the nearest such spot within 10 m she can walk to; null for here (or nowhere better)
