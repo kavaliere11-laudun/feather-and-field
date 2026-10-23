@@ -1067,3 +1067,19 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   close; a real tap on the screen; `LANG=fr`), `frogfilm.mjs OUT [secs] [fps] [hour] [frog] [size]` (frames following a
   frog; `PLAN=2:croak,6:hopAlong,11:dive,30:tap` arranges what it does when), `frogshot.mjs OUT [hour] [secs]` (the
   line-up). (`waterclip.mjs` and `frogfilm.mjs` step the farm in 1/30 s steps.)
+
+## The pond: the mallards' look (24 Oct, the third piece of the pond; first their look, as with the geese)
+
+- Rocco the drake and Daisy the duck (names offered to Audrey for change), built with the geese's own pipeline
+  (`stylized/geese.py` `mallard_m`, `mallard_f`; `export_geese.py` paints them; both kinds go in `models/geese.glb` with
+  the geese) and posed by the same rig (`GooseRig`), so all the geese's moves work for them: smaller (S 0.6), a low
+  boat-shaped body, a short neck, a round head and a broad flat bill (yellow for him, orange with a dark saddle for her),
+  orange webbed feet. The drake: bottle-green head with a sheen, a narrow white collar, chestnut breast, pale grey flanks,
+  grey-brown back, black rump with the two black curled feathers over a white tail. The duck: warm brown, each feather
+  dark brown in the middle with a tan edge, paler underneath, a buff head with a dark crown and a dark line through the
+  eye. Both with the blue patch on the wing (the speculum). Their feathers are drawn smaller (x0.62) and their fluff
+  shorter (`DUCK_FUR`).
+- Up-ending (`upend` in the rig's pose, 0..1): tipped forward (1.2 rad), sunk so only the back end shows, the tail cocked
+  up, the feet kicking at the surface either side, bobbing a little (`window.__UP` overrides the numbers for tuning).
+- `?lineup=ducks`: both in eight poses (looking about, the waddle, a quack, preening, a wing-flap, swimming, up-ending,
+  asleep). `duckpose.mjs OUTDIR [who,..] [secs]` takes close-ups of chosen ones (`VARS` tries `__UP` settings).
