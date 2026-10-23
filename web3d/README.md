@@ -731,3 +731,38 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   - The open wings: the arm out and a little forward to the wrist, the hand angling back (its own bone, `wingLh`/`wingRh`:
     folded back while the wing opens, and following the arm a moment later when flapping), three rows of coverts tucked
     under a smooth leading edge, ten secondaries, nine long pointed primaries, the wing arched (feathers curving down).
+- Third look (23 Oct 09:11, Audrey, from her iPhone: "Why do all of them have a wing out? Wings are missing feathers as
+  they have empty parts. The feet are not connected to the right part of the leg. The number 6 the wings are turning like a
+  windmill that's not ok. Can the eye be a bit bigger and they need a tail. Remember they need to have a fun personality"):
+  - The wing out, the loose feet, the missing tail and the windmill were her phone keeping last night's goose model and
+    using it with the new code (the bones numbered differently: the open wing followed the folded one, the tail and legs
+    followed the wrong bones). Reproduced here exactly. Now every published version asks for its own files: `build.sh` stamps
+    `app.js?v=...` in the page and the code adds the same `?v=` to every model it loads (`BUST`); `initGeese` warns if the
+    model's bones don't match the code.
+  - The folded wings lie snug on the body (`onbody()`/`lay()` in `geese.py`: everything placed by casting onto the body
+    and raised off it a little): a smooth bed of coverts blending into the body at its edges, a row of greater coverts,
+    secondaries and tertials lying back flat (their tips the scalloped lower and back edge), the primaries coming out from
+    under them and crossing over the rump. (The tertials were raised too far, which drew a dark line along the back.)
+  - The open wings are whole: a smooth leading edge (`tube()`), a thin bed behind it on the arm and the hand (`sheet()`),
+    two rows of coverts, 13 broad overlapping secondaries (the inner ones longer, turned in to meet the body), the hand's
+    coverts and 10 primaries fanned from pointing back to pointing out, each overlapping the next (`wing_feather()`: lying in
+    the wing's plane).
+  - The flap: most of the beat above level (as a goose stretching), about two beats a second, the hand following the arm
+    a moment later and folding back a little on each upstroke (no more spinning). `cloak`: wings held half open, raised at
+    the wrist with the hand folded back down (hissing, puffing up big).
+  - A real tail: ten broad stiff feathers in a fan tipped up and cupped, sticking out from a stern-shaped back end (the
+    belly curving up under it, the back sloping down to it); it wags on its spring and lifts when she's excited (`tailUp`
+    lifted it the wrong way before).
+  - Bigger eyes (a fifth bigger); thicker shanks; broader, darker webs between the toes.
+  - About 14,000 triangles each.
+  - Personality, in the line-up (each goose on her own clock, Hector a beat behind Gertrude, copying her): standing, she
+    turns to give you a good look with one eye, head tilted (`tilt`), does a double take, nods and waggles her tail;
+    honking, a breath in, chest out and three honks with the wings lifted, then a pleased waggle; grazing, she pops up with
+    a start to check round, then back down; preening, then a big shake of every feather and a look as if to say "what?";
+    the wing-flap stretch up on her toes, then a shake; hissing, the head swaying like a snake; asleep, she peeks now and
+    then. Tap a goose: she turns to look at you and honks twice, then waggles her tail; her name and breed show (French with
+    `?lang=fr`: "oie d'Embden", "jars de Toulouse").
+  - Tools: `gphone.mjs` (the line-up at phone size), `goosepose.mjs OUT kind 'POSE' views size` (one goose in a set pose
+    from any side: game, side, right, front, back, top, az:el; CLEAN=1 hides the rest of the village, DY moves the view up or
+    down, NP tries other neck shapes), `geesefilm.mjs OUT poses` (frames of each move with both geese, pose:cycle:start:secs),
+    `geesetap.mjs` (tap test, both languages).

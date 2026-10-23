@@ -18,6 +18,8 @@ export function initGeese(gltf, json) {
   }
 }
 export const gooseName = kind => NAMES[kind] || kind;
+const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+const BREED = { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'] };
 
 // feather sizes (cm) per region: broad on the body and wings, small on the head (the neck's are made smaller by the drawing);
 // the modelled flight and tail feathers draw their own
@@ -84,11 +86,11 @@ const _j = new THREE.Vector3(), _e = new THREE.Vector3(), _t = new THREE.Vector3
 // (asleep: head laid back on the back, bill under the wing)
 const NECK_POSE = {
   up: { neck1: [-0.38, 0, 0], neck2: [0.02, 0, 0], neck3: [0.1, 0, 0], neck4: [0.12, 0, 0], head: [0.12, 0, 0] },
-  honk: { neck1: [-0.42, 0, 0], neck2: [-0.05, 0, 0], neck3: [0.0, 0, 0], neck4: [-0.15, 0, 0], head: [-0.65, 0, 0] },
+  honk: { neck1: [-0.42, 0, 0], neck2: [-0.05, 0, 0], neck3: [0.0, 0, 0], neck4: [-0.05, 0, 0], head: [-0.38, 0, 0] },
   low: { neck1: [1.12, 0, 0], neck2: [0.22, 0, 0], neck3: [-0.05, 0, 0], neck4: [-0.3, 0, 0], head: [-0.75, 0, 0] },
   graze: { neck1: [1.05, 0, 0], neck2: [0.55, 0, 0], neck3: [0.35, 0, 0], neck4: [0.2, 0, 0], head: [0.35, 0, 0] },
   preen: { neck1: [0.15, 0.55, 0], neck2: [0.25, 0.75, 0.1], neck3: [0.3, 0.7, 0.1], neck4: [0.25, 0.4, 0], head: [0.5, 0.35, 0.3] },
-  tuck: { neck1: [-0.45, 0.85, 0], neck2: [0.45, 0.95, 0.25], neck3: [0.75, 0.85, 0.25], neck4: [0.6, 0.5, 0.1], head: [0.95, 0.7, 0.5] },
+  tuck: { neck1: [-1.0, 0.6, 0], neck2: [0.5, 0.7, 0.25], neck3: [0.9, 0.6, 0.25], neck4: [0.6, 0.4, 0.1], head: [0.9, 0.6, 0.5] },
 };
 
 if (typeof window !== 'undefined') window.__NECK_POSE = NECK_POSE;        // (for tuning the shapes from a test page)
@@ -190,6 +192,7 @@ export class GooseRig {
     const ly = s.lookYaw || 0, lp = s.lookPitch || 0;
     B.neck2.rotation.y += 0.25 * ly; B.neck3.rotation.y += 0.25 * ly; B.neck4.rotation.y += 0.2 * ly; B.head.rotation.y += 0.3 * ly;
     B.neck4.rotation.x += 0.3 * lp; B.head.rotation.x += 0.5 * lp;
+    B.head.rotation.z += s.tilt || 0;                                       // the head tilted (to look up with one eye)
     B.neck1.rotation.z -= roll * 0.55; B.neck2.rotation.z -= roll * 0.3;
     B.neck1.rotation.x -= (pitch - (s.pitch || 0)) * 0.75;                  // (the neck stays up when the body leans into a run or stands tall)
     B.neck2.rotation.x += 0.04 * g * Math.sin(2 * ph);                     // a little nod with each step
@@ -198,27 +201,29 @@ export class GooseRig {
     B.jaw.rotation.x = 0.55 * clamp01(s.jaw || 0);
     const shut = clamp01(s.shut || 0); B.blinkL.scale.set(1, 1 - 0.85 * shut, 1); B.blinkR.scale.set(1, 1 - 0.85 * shut, 1);
     // ---- the wings: folded (lifted a little shaking out), or open: the folded wing tucks away as the open one grows from
-    // the shoulder, swept back while half open; flapping beats them up and down
-    const o = clamp01(s.wings || 0), fl = s.flap || 0, beat = Math.sin(t * 15);
+    // the shoulder, swept back while opening; held open they arch a little (the hand angled down); flapping beats them up
+    // and down from the shoulder (most of the beat above level, as a goose stretching), the hand following a moment later
+    // and folding back a little on each upstroke; cloak: held half open, out from the body and raised at the wrist, the hand
+    // folded back down along it (a goose hissing, or puffing herself up big)
+    const o = clamp01(s.wings || 0), fl = clamp01(s.flap || 0), ps = s.flapPhase !== undefined ? s.flapPhase : t * 13.5;
+    const beat = Math.sin(ps), lag = Math.sin(ps - 0.9), ck = clamp01(s.cloak || 0) * o;
     for (const [nm, sd] of [['wingL', 1], ['wingR', -1]]) {
-      const k = 1 - 0.9 * smooth(0.0, 0.55, o);
-      B[nm].scale.setScalar(Math.max(0.05, k));
+      B[nm].scale.setScalar(Math.max(0.001, 1 - smooth(0.0, 0.6, o)));
       B[nm].rotation.z = sd * 0.12 * (s.wingLift || 0) * (1 + 0.5 * Math.sin(t * 30));
       B[nm].rotation.x = -0.05 * (s.wingLift || 0);
       const op = B[nm + 'o'], u = smooth(0.15, 1.0, o);
       op.scale.setScalar(Math.max(0.001, u));
-      op.rotation.y = sd * (1 - o) * 1.1;                                       // swept back while opening
-      op.rotation.z = sd * (0.25 * (1 - o) + fl * (0.15 + 0.75 * beat) - 0.15 * (s.low || 0) * o);
-      op.rotation.x = -0.2 * (s.low || 0) * o;
-      // the hand: folded back along the arm while the wing opens, then out; flapping, it follows the arm a moment later
-      const hd = B[nm + 'h'], beat2 = Math.sin(t * 15 - 0.9);
-      hd.rotation.y = sd * (1 - o) * 1.5;
-      hd.rotation.z = sd * fl * 0.45 * beat2 - sd * 0.1 * (s.low || 0) * o;
+      op.rotation.y = sd * ((1 - o) * 1.1 + 0.62 * ck);
+      op.rotation.z = sd * (0.25 * (1 - o) + 0.12 * o * (1 - ck) + fl * (0.32 + 0.52 * beat) + 0.42 * ck);
+      op.rotation.x = -0.12 * fl * Math.cos(ps) + 0.1 * ck;
+      const hd = B[nm + 'h'];
+      hd.rotation.y = sd * ((1 - o) * 1.5 + fl * 0.3 * Math.max(0, Math.cos(ps)) + 1.05 * ck);
+      hd.rotation.z = sd * (-0.12 * o * (1 - ck) + fl * 0.22 * lag - 0.45 * ck);
     }
     // ---- the tail: on a spring, wagging side to side (a goose's happy shake), up when alert
     const T = this.tail, gy = (s.wag || 0) * 0.38 * Math.sin(t * 11) + 0.08 * g * Math.sin(ph) - 0.06 * turn;
     T.yv += ((gy - T.y) * 140 - T.yv * 10) * dt; T.y += T.yv * dt;
-    B.tail.rotation.set(-(s.tailUp || 0) * 0.35 + 0.05 * Math.sin(t * 1.3), T.y, 0);
+    B.tail.rotation.set((s.tailUp || 0) * 0.3 + 0.05 * Math.sin(t * 1.3), T.y, 0);       // (+ x lifts it)
     // ---- the legs: each foot on the ground under the hip, stepping (duty: the share of the step on the ground), lifted a
     // little and curled as it swings; under the body when sitting
     const duty = 0.62 - 0.17 * run, stride = s.stride || 0.16, amp = duty * stride / 2 * g;
@@ -242,25 +247,38 @@ class Goose {
     this.kind = kind; this.name = gooseName(kind); this.r = r;
     this.rig = new GooseRig(kind);
     this.root = new THREE.Group(); this.root.add(this.rig.mesh); group.add(this.root);
-    this.A = { t: r() * 10, phase: 0 }; this.heading = 0; this.task = null;
+    this.A = { t: r() * 10, phase: 0 }; this.heading = 0; this.task = null; this.clock = 0;
     this.blinkIn = 1 + r() * 3; this.blinkT = 0;
-    this.hitR = 0.3; this.hitY = 0.4;
-    this.label = this.name + (kind === 'embden' ? ' · Embden goose' : ' · Toulouse gander');
+    this.hitR = 0.3; this.hitY = 0.4; this.tagY = 0.88; this.isGoose = true; this.react = 0; this.reactYaw = 0;
+    this.label = this.name + ' · ' + BREED[kind][FR ? 1 : 0];
   }
   get pos() { return this.root.position; }
+  // tapped: she turns to look at you and honks twice (cross at being disturbed, or just saying hello), then waggles her tail;
+  // asleep, she lifts her head for it and settles again. toCam: the way to the camera (the world's frame)
+  tapped(toCam) {
+    const q = this.root.getWorldQuaternion(new THREE.Quaternion()).invert(), d = toCam.clone().setY(0).applyQuaternion(q);
+    this.reactYaw = Math.max(-1.3, Math.min(1.3, Math.atan2(d.x, d.z))); this.react = 1.9;
+  }
   update(dt) {
-    const A = this.A; A.t += dt; A.dt = dt;
-    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW']) A[k + 'Goal'] = 0;
+    const A = this.A; A.t += dt; A.dt = dt; this.clock += dt;
+    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak']) A[k + 'Goal'] = 0;
     A.lookYawGoal = 0; A.lookPitchGoal = 0;
     if (this.task && this.task(this, dt) === true) this.task = null;
+    if (this.react > 0) {
+      const u = 1.9 - (this.react -= dt), honk = u > 0.3 && u < 1.35;
+      A.lookYawGoal = this.reactYaw; A.lookPitchGoal = -0.1; A.tiltGoal = 0; A.grazeGoal = 0; A.preenGoal = 0; A.lowGoal = 0; A.billWGoal = 0;
+      A.tuckGoal *= 0.3; A.squintGoal = 0; A.upGoal = 0.7; A.honkGoal = honk ? 0.8 : 0; A.wingLiftGoal = honk ? 0.5 : 0;
+      A.jawGoal = honk && Math.sin((u - 0.3) * Math.PI * 4) > 0 ? 1 : 0; A.wagGoal = u > 1.35 ? 1 : 0; A.tailUpGoal = honk ? 0.6 : 0;
+    }
     if ((this.blinkIn -= dt) <= 0) { this.blinkT = 0.16; this.blinkIn = 2 + this.r() * 4; }
     const blink = this.blinkT > 0 ? Math.sin(Math.PI * (1 - (this.blinkT -= dt) / 0.16)) : 0;
     const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
-    for (const k of ['up', 'honk', 'low', 'graze', 'preen', 'tuck', 'sit', 'wingLift', 'tailUp', 'lookYaw', 'lookPitch']) ease(k, 5);
+    for (const k of ['up', 'honk', 'low', 'graze', 'preen', 'tuck', 'sit', 'wingLift', 'tailUp', 'lookYaw', 'lookPitch', 'tilt', 'lift']) ease(k, 5);
     for (const k of ['jaw', 'wag', 'shake', 'squint']) ease(k, 12);
-    ease('wings', 6); ease('flap', 6); ease('walk', 6); ease('run', 4); ease('billW', 4);
+    ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('walk', 6); ease('run', 4); ease('billW', 4);
     A.shut = Math.max(blink, A.squint || 0);
     A.phase += dt * (A.walk || 0) * (6 + 6 * (A.run || 0));
+    A.flapPhase = (A.flapPhase || 0) + dt * 13.5 * Math.min(1, (A.flap || 0) * 4 + 0.2);
     A.stride = 0.15 + 0.1 * (A.run || 0);
     this.root.rotation.y = this.heading;
     this.rig.pose(A);
@@ -283,13 +301,46 @@ export class GeeseLineup {
   }
   update(dt) { for (const g of this.geese) g.update(dt); }
 }
+// each goose's own clock in the line-up, round a cycle of n seconds: Hector does what Gertrude does, a beat later (he copies
+// her in everything)
+const cyc = (g, n) => { const c = g.clock - (g.kind === 'toulouse' ? 0.55 : 0); return ((c % n) + n) % n; };
+const at1 = g => g.at1 || (g.at1 = new THREE.Vector3());
 const LINE = {
-  stand: (g, dt) => { g.A.lookYawGoal = 0.5 * Math.sin(g.A.t * 0.6); g.A.wagGoal = Math.sin(g.A.t * 0.5) > 0.8 ? 1 : 0; },
-  walk: (g, dt) => { g.A.walkGoal = 1; },
-  honk: (g, dt) => { const u = (g.A.t % 2.4) / 2.4; g.A.honkGoal = 1; g.A.jawGoal = u < 0.5 ? (Math.sin(u * 40) > 0 ? 1 : 0.2) : 0; g.A.tailUpGoal = 0.6; },
-  graze: (g, dt) => { g.A.grazeGoal = 1; g.A.jawGoal = Math.sin(g.A.t * 9) > 0.5 ? 0.4 : 0; g.A.billAt = (g.at1 || (g.at1 = new THREE.Vector3())).set(0.03 * Math.sin(g.A.t * 1.3), 0.025, 0.28 + 0.03 * Math.sin(g.A.t * 0.9)); g.A.billWGoal = 1; },
-  preen: (g, dt) => { g.A.preenGoal = 1; g.A.side = 1; g.A.wingLiftGoal = 0.4; g.A.billAt = (g.at1 || (g.at1 = new THREE.Vector3())).set(0.115, g.rig.by + 0.055 + 0.015 * Math.sin(g.A.t * 7), -0.04 - 0.05 * Math.sin(g.A.t * 0.8)); g.A.billWGoal = 1; },
-  wings: (g, dt) => { g.A.wingsGoal = 1; g.A.flapGoal = 1; g.A.upGoal = 0.7; },
-  hiss: (g, dt) => { g.A.lowGoal = 1; g.A.wingsGoal = 0.75; g.A.jawGoal = 0.8; g.A.tailUpGoal = 0.4; },
-  sleep: (g, dt) => { g.A.sitGoal = 1; g.A.tuckGoal = 1; g.A.side = -1; g.A.squintGoal = 1; g.A.billAt = g.tuckAt || (g.tuckAt = new THREE.Vector3(-0.07, 0.2, -0.06)); g.A.billWGoal = 1; },
+  // curious: she turns her head to give you a good look with one eye, head tilted; a double take; a nod and a waggle of the
+  // tail, then a look round
+  stand: (g) => { const u = cyc(g, 7), A = g.A;
+    if (u < 1.7) { A.lookYawGoal = 1.25; A.tiltGoal = 0.4; A.lookPitchGoal = -0.15; }
+    else if (u < 2.15) { A.lookYawGoal = -0.4; A.tiltGoal = -0.15; A.upGoal = 0.4; }
+    else if (u < 3.8) { A.lookYawGoal = 1.0; A.tiltGoal = 0.25 * Math.sin(u * 7); A.lookPitchGoal = 0.3 * Math.max(0, Math.sin((u - 2.15) * 7)); A.wagGoal = 1; }
+    else { A.lookYawGoal = 0.45 * Math.sin(u * 1.1); A.upGoal = 0.3; } },
+  // the waddle, the tail swinging, looking about as she goes
+  walk: (g) => { const A = g.A; A.walkGoal = 1; A.wagGoal = 0.3; A.lookYawGoal = 0.3 * Math.sin(g.clock * 1.1); A.tiltGoal = 0.1 * Math.sin(g.clock * 2.2); },
+  // a proud honk: a breath in, then chest out, bill up and three honks with the wings lifted, then a pleased waggle
+  honk: (g) => { const u = cyc(g, 3.6), A = g.A;
+    if (u < 0.4) { A.upGoal = 0.7; A.lookPitchGoal = 0.35; }
+    else if (u < 1.7) { A.honkGoal = 1; A.jawGoal = Math.sin((u - 0.4) / 1.3 * 3 * Math.PI) > 0.15 ? 1 : 0.1; A.wingLiftGoal = 0.7; A.tailUpGoal = 0.8; A.liftGoal = 0.012; }
+    else if (u < 2.5) { A.upGoal = 0.5; A.wagGoal = 1; A.tailUpGoal = 0.4; }
+    else { A.upGoal = 0.3; A.lookYawGoal = 0.7; A.tiltGoal = 0.2; } },
+  // grazing, nibbling, then up with a start to check round (a quick look each way) and back down
+  graze: (g) => { const u = cyc(g, 5.5), A = g.A;
+    if (u < 3.4 || u > 4.9) { A.grazeGoal = 1; A.jawGoal = Math.sin(g.clock * 9) > 0.5 ? 0.4 : 0; A.billAt = at1(g).set(0.03 * Math.sin(g.clock * 1.3), 0.025, 0.28 + 0.03 * Math.sin(g.clock * 0.9)); A.billWGoal = 1; A.wagGoal = 0.2; }
+    else { A.upGoal = 0.8; A.lookYawGoal = u < 4.1 ? 0.75 : -0.6; A.tiltGoal = u < 4.1 ? 0.3 : -0.25; } },
+  // preening a wing, then a big shake of every feather (the tail waggling) and a look as if to say "what?"
+  preen: (g) => { const u = cyc(g, 6.5), A = g.A;
+    if (u < 3.8) { A.preenGoal = 1; A.side = 1; A.wingLiftGoal = 0.4; A.billAt = at1(g).set(0.115, g.rig.by + 0.055 + 0.015 * Math.sin(g.clock * 7), -0.04 - 0.05 * Math.sin(g.clock * 0.8)); A.billWGoal = 1; }
+    else if (u < 5.0) { A.shakeGoal = 1; A.wagGoal = 1; A.wingLiftGoal = 0.8; A.upGoal = 0.4; }
+    else { A.lookYawGoal = 1.1; A.tiltGoal = 0.35; A.wagGoal = 0.5; } },
+  // a wing-flap stretch: up on her toes, the wings open and beat, folded again, a shake and a waggle
+  wings: (g) => { const u = cyc(g, 6.5), A = g.A;
+    if (u < 0.5) { A.upGoal = 1; A.liftGoal = 0.02; A.tailUpGoal = 0.5; }
+    else if (u < 3.0) { A.upGoal = 0.8; A.liftGoal = 0.03; A.wingsGoal = 1; A.flapGoal = 1; A.tailUpGoal = 0.6; A.lookPitchGoal = -0.2; }
+    else if (u < 3.8) { A.upGoal = 0.6; }
+    else if (u < 4.8) { A.shakeGoal = 0.6; A.wagGoal = 1; A.wingLiftGoal = 0.6; }
+    else { A.lookYawGoal = 0.8; A.tiltGoal = 0.25; } },
+  // hissing: neck stretched out low, the head swaying like a snake, wings held out, the bill open
+  hiss: (g) => { const A = g.A, c = g.clock; A.lowGoal = 1; A.wingsGoal = 1; A.cloakGoal = 1; A.jawGoal = 0.7 + 0.3 * Math.sin(c * 5); A.tailUpGoal = 0.5;
+    A.lookYawGoal = 0.38 * Math.sin(c * 2.3); A.tiltGoal = 0.15 * Math.sin(c * 2.3 + 1); A.wagGoal = 0.25; },
+  // asleep, head tucked in; now and then she half wakes, lifts her head a little and peeks, then settles again
+  sleep: (g) => { const u = cyc(g, 8), A = g.A; A.sitGoal = 1; A.tuckGoal = 1; A.side = -1; A.billAt = g.tuckAt || (g.tuckAt = new THREE.Vector3(-0.07, 0.2, -0.06));
+    const peek = u > 5.2 && u < 6.6; A.squintGoal = peek ? 0.1 : 1; A.billWGoal = peek ? 0.55 : 1; A.lookYawGoal = peek ? 0.3 : 0; },
 };

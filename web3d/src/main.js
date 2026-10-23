@@ -1759,6 +1759,12 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = f; } }
   }
+  for (const g of geeseLineup ? geeseLineup.geese : []) {
+    if (!g.root.visible) continue;
+    g.root.getWorldPosition(w); s.center.set(w.x, w.y + g.hitY, w.z); s.radius = g.hitR;
+    const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
+    if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = g; } }
+  }
   for (const p of livePlots()) for (const b of p.birds) {
     if (!b.root.visible) continue;                       // in bed
     b.root.getWorldPosition(w);
@@ -1811,7 +1817,7 @@ function tapAt(x, y) {
     }
     return;
   }
-  if (best.fam) best.fam.tapped(best); else best.tapped();
+  if (best.fam) best.fam.tapped(best); else if (best.isGoose) best.tapped(VIEW_DIR); else best.tapped();
   tagBird = best; tagLeft = 2.8;
   tag.textContent = best.label;
   tag.classList.add('on');
@@ -1831,7 +1837,7 @@ function placeTag(dt) {
   fieldTag = 0;
   tagLeft -= dt;
   if (tagLeft <= 0) { tag.classList.remove('on'); tagBird = null; return; }
-  tagBird.root.getWorldPosition(v); v.y += tagBird.kind === 'chick' ? 0.3 : 0.55; v.project(inside.open ? inside.camera : camera);
+  tagBird.root.getWorldPosition(v); v.y += tagBird.tagY || (tagBird.kind === 'chick' ? 0.3 : 0.55); v.project(inside.open ? inside.camera : camera);
   moveTag(v);
 }
 function moveTag(v) {          // v: the spot on screen (-1..1) the label stands on; kept on screen, and inside never over the title
