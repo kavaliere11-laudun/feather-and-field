@@ -9,6 +9,7 @@ import { addFur, R, gooseMaterial, furHooks } from './birds.js';
 let MODELS = {}, NAMES = {};
 export function initGeese(gltf, json) {
   MODELS = {}; NAMES = json.names || {};
+  if (json.joints && json.joints.join() !== JOINTS.join()) console.warn('geese: the model\'s bones do not match this code');
   for (const child of gltf.scene.children) {
     let mesh = null; child.traverse(c => { if (c.isMesh && !mesh) mesh = c; });
     if (!mesh) continue;

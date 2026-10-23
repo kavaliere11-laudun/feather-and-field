@@ -21,6 +21,9 @@ import { initGeese, GeeseLineup } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 
 const MODELS = './models/';
+// each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
+// earlier visit with new code
+const BUST = typeof __BUST__ !== 'undefined' ? '?v=' + __BUST__ : '';
 const VERSION = typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'test';      // when this version was published (shown with the details)
 const params = new URLSearchParams(location.search);
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
@@ -256,12 +259,12 @@ function showProgress() {
   bar.style.width = Math.round(100 * got / Math.max(1, total)) + '%';
 }
 function loadGLB(name) {
-  return new Promise((resolve, reject) => new GLTFLoader().load(MODELS + name, resolve,
+  return new Promise((resolve, reject) => new GLTFLoader().load(MODELS + name + BUST, resolve,
     e => { progress[name] = [e.loaded, e.total || 1]; showProgress(); }, reject));
 }
-function loadJSON(name) { return fetch(MODELS + name).then(r => { if (!r.ok) throw new Error(name); return r.json(); }); }
+function loadJSON(name) { return fetch(MODELS + name + BUST).then(r => { if (!r.ok) throw new Error(name); return r.json(); }); }
 function loadImage(name) {
-  return new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = MODELS + name; });
+  return new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = MODELS + name + BUST; });
 }
 
 const parts = {};
@@ -291,7 +294,7 @@ const grassTiles = [];
 async function start() {
   const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
-    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg').then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
+    loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
     loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
