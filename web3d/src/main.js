@@ -582,6 +582,17 @@ function setWheat(stage) {
   aimShadows(true);
 }
 
+// whether a spot (and a couple of metres round it) is in full view from the game's camera, with no tree's crown or the
+// farmhouse between: where the geese and Biscuit choose to have their victory parade, so the player sees it
+function inView(x, z, m = 1.6) {
+  const cx = VIEW_DIR.x, cz = VIEW_DIR.z, n = Math.hypot(cx, cz), ux = cx / n, uz = cz / n, rise = VIEW_DIR.y / n;
+  const hides = (px, pz, r, h) => {
+    const dx = px - x, dz = pz - z, along = dx * ux + dz * uz, perp = Math.abs(dx * uz - dz * ux);
+    return perp < r + m && along > -(r + m) && along < (h - 0.3) / rise + r + m;
+  };
+  for (const t of V.trees) if (hides(t.pos[0], t.pos[2], t.r || 1.3, t.h)) return false;
+  return !hides(V.house[0], V.house[2], 3.2, 6);
+}
 function buildNature() {
   const r = rng(21);
   // trees: three kinds of shady tree for the woods and the green, apple trees in the orchard
@@ -842,7 +853,7 @@ function buildGeese() {
   }
   const P = V.pond, mouths = [];
   for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
-  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, watch: () => params.has('noguard') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
+  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
   geeseFlock.update(1 / 60, clockHour());
 }
 
@@ -862,7 +873,9 @@ function buildDog(joints) {
   }
   if (params.get('lineup')) return;                  // (not on the line-up pages)
   farmDog = new FarmDog(scene, { joints, name: dogName, kennel: KENNEL_AT, nav: navGrid(), groundY, spots: farmSpots, geese: () => geeseFlock,
-    foxes: () => foxes, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z) }, rng(61));
+    foxes: () => foxes, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),
+    visit: () => params.has('noguard') || params.has('nodog') ? null : nightVisit, den: FOX_DEN }, rng(61));         // (?noguard: he sleeps through it too; ?nodog: just him, as if the farm had only the geese)
+  if (nightVisit) nightVisit.dogName = () => dogName;
   farmDog.update(1 / 60, clockHour());
 }
 // where he goes on his rounds: outside each coop's front fence (facing the hens), and the farm's corners (benches, the well,
@@ -906,6 +919,14 @@ const VISIT_TEXT = {
   geeseHeard: ['The geese have heard Rusty! They\'re raising the alarm…', 'Les oies ont entendu Rusty ! Elles donnent l\'alerte…'],
   geeseSafe: ['The geese chased Rusty all the way home!', 'Les oies ont chassé Rusty jusque chez lui !'],
   geeseProud: ['Victory! The geese are so proud of themselves, they\'re parading round the farm.', 'Victoire ! Les oies sont si fières d\'elles qu\'elles paradent dans la ferme.'],
+  // Biscuit out after Rusty too ({dog}: his name, as the player chose it; only ever shown as text)
+  dogHeard: ['{dog} has heard Rusty! Woof! He\'s off after him…', '{dog} a entendu Rusty ! Ouaf ! Il file après lui…'],
+  dogToo: ['{dog} is up too, barking! He\'s off after Rusty…', '{dog} est réveillé aussi, il aboie ! Il file après Rusty…'],
+  dogSafe: ['{dog} chased Rusty all the way home!', '{dog} a chassé Rusty jusque chez lui !'],
+  bothHeard: ['The geese and {dog} have heard Rusty! Honking and barking, they\'re off after him…', 'Les oies et {dog} ont entendu Rusty ! En cacardant et en aboyant, ils filent après lui…'],
+  geeseToo: ['The geese have heard {dog} barking! They\'re coming too, honking…', 'Les oies ont entendu {dog} aboyer ! Elles arrivent aussi en cacardant…'],
+  teamSafe: ['The geese and {dog} chased Rusty all the way home!', 'Les oies et {dog} ont chassé Rusty jusque chez lui !'],
+  teamProud: ['Victory! The geese and {dog} are so proud of themselves, they\'re parading round the farm.', 'Victoire ! Les oies et {dog} sont si fiers d\'eux qu\'ils paradent dans la ferme.'],
 };
 const VISIT_PLOT = /^\d+$/.test(params.get('visit') || '') ? parseInt(params.get('visit'), 10) : undefined;
 const LANG = params.get('lang') === 'fr' ? 'fr' : 'en';
@@ -1029,6 +1050,7 @@ function tickFoxes(dt) {
   if (foxLineup) foxLineup.update(dt);
   if (geeseLineup) { geeseLineup.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
+  if (farmDog) farmDog.separate();                   // (Biscuit out of Rusty's way, after everyone has moved)
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
   if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
   if (foxBtn && foxBtn.classList.contains('alarm') !== prowl) { foxBtn.classList.toggle('alarm', prowl); foxBtn.textContent = prowl ? nightVisit.T('btnFox') : 'Foxes'; }

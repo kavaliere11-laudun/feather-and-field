@@ -1,4 +1,4 @@
-// The geese guarding the farm at night: Rusty visits coop N (?visit=N); the geese hear him, honk the alarm, charge and
+// The geese guarding the farm at night, on their own (?nodog, as on a farm without Biscuit): Rusty visits coop N (?visit=N); the geese hear him, honk the alarm, charge and
 // chase him home, then go back to bed. node geeseguard.mjs [coops, e.g. 8,3,0]
 // Checks for each: no page errors; the geese woke; Rusty went home chased by the geese (or had already gone); on their
 // way they never go into anything (the village grid; the footbridges' decks allowed) and never into Rusty; asleep again
@@ -10,16 +10,17 @@ let all = true;
 for (const n of list) {
   const p = await b.newPage({ viewport: { width: 300, height: 300 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&visit=${n}&geese`);
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&visit=${n}&geese&nodog`);          // (the geese alone: Biscuit sleeps through it)
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
   const r = await p.evaluate(() => {
     const f = window.__farm, F = f.geese(), V = f.visit(), nav = f.nav(), [G, H] = F.geese;
     f.pause(true); V.again = () => 1e9;          // (just the one visit)
-    let woke = false, wokeAt = null, blocked = 0, margin = 0, closest = 9, t = 0, ended = null, chaseSecs = 0, bl = [];
+    let paradeSeen = null, gStages = new Set(), woke = false, wokeAt = null, blocked = 0, margin = 0, closest = 9, t = 0, ended = null, chaseSecs = 0, bl = [];
     while (t < 30 * 300) {
       f.step(1 / 30, 1); t++;
       if (F.guarding && !woke) { woke = true; wokeAt = +(t / 30).toFixed(1); }
       if (F.guarding) chaseSecs += 1 / 30;
+      if (F.guarding && G.task && G.task.stage) { gStages.add(G.task.stage); if (G.task.stage === 'victory' && paradeSeen === null) paradeSeen = F.inView(G.pos.x, G.pos.z); }
       for (const g of F.geese) {
         const [s] = F.pondAt(g.pos.x, g.pos.z);
         // on a blocked cell (the grid's cells are grown by a fox's half width round everything, more round the pens): just
@@ -33,10 +34,10 @@ for (const n of list) {
       if (V.ended && !ended) ended = V.ended;
       if (ended && !F.guarding && G.asleep && H.asleep) break;
     }
-    return { ended, woke, wokeAt, chaseSecs: +chaseSecs.toFixed(0), blocked, margin, bl, closest: +closest.toFixed(2), backAsleep: G.asleep && H.asleep, secs: +(t / 30).toFixed(0), log: V.log.slice(-6) };
+    return { paradeSeen, gStages: [...gStages], ended, woke, wokeAt, chaseSecs: +chaseSecs.toFixed(0), blocked, margin, bl, closest: +closest.toFixed(2), backAsleep: G.asleep && H.asleep, secs: +(t / 30).toFixed(0), log: V.log.slice(-6) };
   });
   const checks = [['no page errors', errs.length === 0, errs.slice(0, 2)], ['the geese woke', r.woke, r.wokeAt], ['Rusty went home', !!r.ended, r.ended],
-    ['never into anything (and brushing the margin round things under 3 s)', r.blocked === 0 && r.margin < 90, [r.blocked, r.margin, r.bl]], ['never into Rusty', r.closest > 0.55, r.closest], ['asleep in bed again after', r.backAsleep, r.secs]];
+    ['never into anything (and brushing the margin round things under 3 s)', r.blocked === 0 && r.margin < 90, [r.blocked, r.margin, r.bl]], ['never into Rusty', r.closest > 0.55, r.closest], ['asleep in bed again after', r.backAsleep, r.secs], ['the parade in full view', r.paradeSeen === true, r.gStages]];
   console.log(`coop ${n}:`, JSON.stringify({ ended: r.ended, woke: r.wokeAt, chase: r.chaseSecs, log: r.log }));
   for (const [nm, ok, v] of checks) { all = all && ok; console.log(ok ? 'PASS' : 'FAIL', nm, '·', JSON.stringify(v)); }
   await p.close();

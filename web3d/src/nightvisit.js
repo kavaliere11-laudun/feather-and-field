@@ -147,6 +147,16 @@ function textures() {
     c.font = 'bold 42px Fredoka, Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = ch === '!' ? '#d2462f' : '#3a5fae'; c.fillText(ch, 32, 35);
   });
   TEX.bang = mark('!'); TEX.what = mark('?');
+  // the dog's bark: a speech bubble, "Woof!" (French "Ouaf !")
+  const woof = word => canvasTex(128, c => {
+    c.beginPath(); const x0 = 8, y0 = 22, w = 112, h = 62, r = 22;
+    c.moveTo(x0 + r, y0); c.arcTo(x0 + w, y0, x0 + w, y0 + h, r); c.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+    c.lineTo(40, y0 + h); c.lineTo(26, y0 + h + 22); c.lineTo(30, y0 + h);
+    c.arcTo(x0, y0 + h, x0, y0, r); c.arcTo(x0, y0, x0 + w, y0, r); c.closePath();
+    c.fillStyle = '#fff7e2'; c.fill(); c.lineWidth = 6; c.strokeStyle = '#2b3a24'; c.stroke();
+    c.font = 'bold 34px Fredoka, Nunito, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#2b3a24'; c.fillText(word, 64, y0 + h / 2 + 2);
+  });
+  TEX.woof = woof('Woof!'); TEX.ouaf = woof('Ouaf !');
   TEX.star = canvasTex(64, c => {                       // a peck on the nose: a little burst
     c.translate(32, 32); c.fillStyle = '#ffe36b'; c.strokeStyle = '#7a4a10'; c.lineWidth = 3; c.beginPath();
     for (let k = 0; k < 16; k++) { const r = k % 2 ? 11 : 27, a = k / 16 * Math.PI * 2; c.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
@@ -280,7 +290,7 @@ export class NightVisit {
     this.nose = null;               // the feather stuck on his nose
     this.v = new THREE.Vector3(); this.w = new THREE.Vector3();
   }
-  T(k) { const t = this.text[k]; return t ? t[this.lang === 'fr' ? 1 : 0] : k; }
+  T(k) { const t = this.text[k]; return t ? t[this.lang === 'fr' ? 1 : 0].replace('{dog}', this.dogName ? this.dogName() : 'Biscuit') : k; }
   note(s) { this.log.push(s); if (this.log.length > 60) this.log.shift(); }
   active() { return this.state === 'out' || this.state === 'fleeing'; }
   canSend() { return this.state === 'out' && !this.farmer && this.fox.root.visible; }
@@ -317,7 +327,7 @@ export class NightVisit {
     if (this.active()) return false;
     const f = this.fox;
     if (!f.home || this.fam.out) return false;
-    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null; this.byGeese = false; this.scare = null;
+    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null; this.byGeese = false; this.scare = null; this.helpers = {};
     const forced = plotIndex !== undefined ? this.coops().find(p => p.index === plotIndex) : null;
     this.target = forced || this.pick([]);
     if (!this.target) return false;
@@ -638,9 +648,11 @@ export class NightVisit {
     f.todo = []; f.task = null;
   }
   // the geese have come for him (geese.js): the same jump of surprise, facing them, and off home as fast as he can
-  chasedBy(x, z) {
+  // seen off by the farm's guards (who: 'geese' or 'dog'; helpers: who was out after him, for the night's last message)
+  chasedBy(x, z, who = 'geese') {
     if (this.state !== 'out' || !this.fox.root.visible) return false;
-    this.state = 'fleeing'; this.fleeStage = 'startle'; this.scare = [x, z]; this.byGeese = true; this.note('geese');
+    this.state = 'fleeing'; this.fleeStage = 'startle'; this.scare = [x, z]; this.byGeese = true; this.note(who);
+    (this.helpers || (this.helpers = {}))[who] = true;
     const f = this.fox; f.todo = []; f.task = null;
     return true;
   }
@@ -685,9 +697,10 @@ export class NightVisit {
   }
   finish() {
     const shooed = this.state === 'fleeing';
-    this.ended = shooed ? (this.byGeese ? 'geese' : 'shooed') : this.pecks ? 'pecked' : 'shut';
-    this.hint(this.T(shooed ? (this.byGeese ? 'geeseSafe' : 'safe') : this.pecks ? 'feather' : 'allShut'));
-    this.byGeese = false; this.scare = null;
+    const H = this.helpers || {}, guards = H.geese && H.dog ? 'team' : H.dog ? 'dog' : 'geese';
+    this.ended = shooed ? (this.byGeese ? guards : 'shooed') : this.pecks ? 'pecked' : 'shut';
+    this.hint(this.T(shooed ? (this.byGeese ? guards + 'Safe' : 'safe') : this.pecks ? 'feather' : 'allShut'));
+    this.byGeese = false; this.scare = null; this.helpers = {};
     this.note('home ' + this.ended);
     this.state = 'idle'; this.phase = null; this.lz = null;
     if (this.nose) { this.nose.life = 0; this.nose.sp.visible = false; this.nose.type = 'feather'; this.nose = null; }

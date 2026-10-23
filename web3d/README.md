@@ -936,3 +936,46 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     `kennelclip.mjs` (bedtime, the night and the morning: his nose, the top of his head, ear tips, back and tail tip never
     through the walls or roof; anything of him behind the front wall is inside or in the doorway).
 - Tests: `dogclose.mjs OUT grab|shake frames per` (close films side on).
+
+## The team effort at night (23 Oct 19:30, Audrey chose "Team effort" for who chases the fox, then "Perfect, next")
+
+- The geese hear Rusty first and honk the alarm (as before). Biscuit wakes at their honking (a moment after), or when
+  Rusty comes within 9 m of his kennel, or the hens squawk, or 45 s after Rusty's out (so with no geese he still goes):
+  eyes open, head up, ears up, "Woof!" (a speech bubble, French "Ouaf !"); out of his kennel ducking under the doorway; a
+  bark at the door and off flat out to Rusty along the village grid (replanned as Rusty moves; while Rusty's in a pen, the
+  nearest place round it he can reach), barking. Whoever gets to Rusty first (2.4 m for Biscuit, 1.7 for Gertrude) sends
+  him running home (`NightVisit.chasedBy(x, z, who)`); Biscuit chases him all the way home, barking, never catching him
+  (at least 0.95 m, keeping about 2 m behind), while the geese charge along behind a little way. At the edge of the wood
+  (3 m from the den) he stands planted, tail high and wagging, barking after him; then runs back to the geese.
+- If Biscuit is up first (Rusty's visit near his kennel), the geese wake to his barking and come too: they hear him while
+  he's barking at Rusty and Rusty is out (even already running), honk the alarm and charge after them. If they all wake at
+  the same moment, one message for both.
+- Somewhere you can see it: once Rusty's seen off, if the geese are behind a tree's crown or the farmhouse from the
+  game's view, or there's no room for a lap of honour (by the pond, among things), they hurry, chests out and honking, to
+  the nearest open spot in full view within 10 m (`GeeseFlock.paradeSpot()`, stage 'gather'; `inView(x, z)` in main.js:
+  nothing tall between the spot, give or take a couple of metres, and the camera, which looks down at 42 degrees from
+  the +x +z side). The same with or without Biscuit. Hector never gets scolded in the middle of it (a scolding
+  could cut her guard short).
+- The geese wait for him (`guardTask` stage 'await': chests out, honking now and then, looking his way, up to 50 s), then
+  the victory parade together: Gertrude's victory honk and lap of honour with Hector, Biscuit prancing round them with a
+  jaunty trot, head high, tail wagging, grinning; at their ta-da he play-bows at them, barks, hops and barks again. Then
+  they all go back to bed (Biscuit trots home into his kennel).
+- Messages (the dog's name as the player chose it, only ever shown as text): "{dog} has heard Rusty! Woof! He's off after
+  him…" (first) or "{dog} is up too, barking! He's off after Rusty…" (after the geese); "The geese have heard {dog}
+  barking! They're coming too, honking…" (the geese after him); "The geese and {dog} have heard Rusty! Honking and
+  barking, they're off after him…" (together); the night ends "The geese and {dog}
+  chased Rusty all the way home!" (or "{dog} chased Rusty all the way home!" without the geese), and "Victory! The geese and
+  {dog} are so proud of themselves, they're parading round the farm." French: "{dog} a entendu Rusty ! Ouaf ! Il file
+  après lui…", "{dog} est réveillé aussi, il aboie ! Il file après Rusty…", "Les oies ont entendu {dog} aboyer ! Elles
+  arrivent aussi en cacardant…", "Les oies et {dog} ont entendu Rusty ! En cacardant et en aboyant, ils filent après
+  lui…", "Les oies et {dog} ont chassé Rusty jusque chez
+  lui !", "{dog} a chassé Rusty jusque chez lui !", "Victoire ! Les oies et {dog} sont si fiers d'eux qu'ils paradent dans
+  la ferme." (`NightVisit.helpers`: who was out after him.)
+- Tap him while he's busy seeing Rusty off: just a "Woof!". `?noguard`: the geese and Biscuit both sleep through it (the
+  fox's own tests).
+- In the game a player may have only the geese or only Biscuit: that one does it (both work alone here too: `?nodog`,
+  Biscuit sleeps through it, as on a farm with only the geese; `?nogeese`, the geese sleep through it).
+- Tests: `teamguard.mjs [coops]` (for each coop: the geese and Biscuit out, Rusty home seen off by them all, Biscuit never
+  into anything, into Rusty or through a goose, the parade together, everyone asleep again after; NOGEESE=1: Biscuit
+  alone; and the parade in full view), `geeseguard.mjs` (now the geese alone, `?nodog`; also the parade in full view), `teamfilm.mjs OUT coop secs fps` (FROM=alarm, wake or
+  parade; the view keeps everyone in the story in the picture).

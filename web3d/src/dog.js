@@ -27,6 +27,8 @@ export class FarmDog {
   constructor(scene, opts, r) {
     this.r = r; this.nav = opts.nav; this.groundY = opts.groundY; this.spotsOf = opts.spots; this.geeseOf = opts.geese || (() => null);
     this.foxesOf = opts.foxes || (() => null); this.toCamera = opts.toCamera || (() => 0); this.joints = opts.joints; this.out = true;
+    this.visitOf = opts.visit || (() => null); this.guard = null; this.heard = 0; this.barkT = 0;
+    this.den = opts.den || null;                             // (where the foxes' den is: he sees Rusty that far and no further)
     this.group = new THREE.Group(); scene.add(this.group);
     const [kx, kz, kh] = opts.kennel, th = kh - Math.PI / 2;
     this.k = { x: kx, z: kz, h: kh, c: Math.cos(th), s: Math.sin(th) };
@@ -58,6 +60,7 @@ export class FarmDog {
   // ---- what he does next
   nextTask(f) {
     const h = this.hour, R = this.r;
+    if (this.guard) { this.guard.done = true; this.guard = null; }
     if (this.ball.state === 'mouth') return this.wrap(this.dropBall());                 // (interrupted while carrying it)
     if (DOG_NIGHT(h)) return this.wrap(this.bedTask());
     if (this.asleep) return this.wrap(this.wakeTask());
@@ -82,6 +85,7 @@ export class FarmDog {
     const self = this;
     return { name: task.name, inner: task, cur() { return task.cur ? task.cur() : task; }, run(f, dt) {
       const done = task.run(f, dt);
+      if (self.barkT > 0) { const k = Math.sin(Math.PI * Math.min(1, (0.28 - self.barkT) / 0.28)); f.A.mouthGoal = Math.max(f.A.mouthGoal || 0, 0.95 * k); f.A.mouth = Math.max(f.A.mouth || 0, 0.8 * k); f.A.earsGoal = 0.8; f.A.wideGoal = 0.5; }      // woof!
       if (self.ball.state === 'mouth') { f.A.mouthGoal = Math.max(f.A.mouthGoal || 0, 0.42); f.A.mouth = Math.max(f.A.mouth || 0, 0.38); }
       const [lx, lz] = self.local(f.pos.x, f.pos.z);
       if (Math.abs(lz) < KENNEL.half + 0.05) f.A.lift = Math.max(f.A.lift || 0, KENNEL.floor * smooth(KENNEL.x1 + 0.28, KENNEL.x1 - 0.12, lx) * (lx > KENNEL.x0 - 0.2 ? 1 : 0));
@@ -90,6 +94,7 @@ export class FarmDog {
   }
   tapped(f) {
     if (this.asleep) { this.peek = 2.2; return; }          // one eye opens, a thump of the tail
+    if (this.guard) { this.bark(this.visitOf()); return; }   // (busy seeing Rusty off: just a woof)
     const h = this.toCamera(f.pos.x, f.pos.z), self = this;
     f.todo.unshift(this.wrap(seq({ name: 'hello', t: 0, run(f, dt) { this.t += dt; f.turnTo(h, dt, 5); f.A.earsGoal = 1; f.A.wideGoal = 0.5; f.A.wagGoal = 1; f.A.lidTiltGoal = -0.5; return this.t > 0.5; } },
       hop(), bowAt(null, 1.3), T.wait(1.2, (f, t) => { f.A.sitGoal = 1; playFace(f, 0.9); f.A.wagGoal = 1; f.A.headTiltGoal = t < 0.6 ? 0.3 : 0; }))));
@@ -415,11 +420,141 @@ export class FarmDog {
     } };
   }
 
+  // ---- guarding the farm at night (Audrey, 23 Oct: a team effort): the geese hear Rusty first and honk; Biscuit wakes at
+  // their alarm (or Rusty close to his kennel, or the hens squawking, or a while after Rusty's out), barks and races out,
+  // the fastest of them, and chases Rusty home (never catching him) while the geese charge along behind; at the edge of
+  // the wood he stands barking after him, then runs back to the geese, who've waited for him, and they parade together:
+  // he prances round them while they strut their lap of honour, and play-bows and barks at their ta-da. Then to bed.
+  watchFor(dt) {
+    const V = this.visitOf();
+    if (this.guard || !V || !DOG_NIGHT(this.hour)) return;
+    if (V.state !== 'out' || !V.fox.root.visible) { if (V.state !== 'out') this.heard = 0; return; }
+    const F = this.geeseOf(), f = V.fox, d = Math.hypot(f.pos.x - this.dog.pos.x, f.pos.z - this.dog.pos.z);
+    this.heard += dt;
+    const geese = F && F.guarding && F.time - (F.raisedAt || 0) > 1.4;
+    if (geese || d < 9 || V.pecks > 0 || this.heard > 45) this.raise(V, geese);
+  }
+  raise(V, geese) {
+    const d = this.dog;
+    this.guard = { stage: 'wake', done: false }; (V.helpers || (V.helpers = {})).dog = true;
+    d.todo = []; d.task = this.wrap(this.guardTask(V));
+    V.hint(V.T(geese ? 'dogToo' : 'dogHeard'));
+  }
+  bark(V) {
+    if (!V || !V.fx) return;
+    this.barkT = 0.28; const h = this.dog.q.bones.head.getWorldPosition(new THREE.Vector3());
+    V.fx.pop(V.lang === 'fr' ? 'ouaf' : 'woof', h.add(new THREE.Vector3(0, 0.34, 0)), 0.32, 1.1);
+  }
+  guardTask(V) {
+    const self = this, f = V.fox, G = this.guard, door = this.K(1.2, 0);
+    // along the village grid to (tx, tz), the way replanned as it moves (round everything, over the footbridges)
+    const steer = (st, d, dt, tx, tz, pace, near = 0.1) => {
+      st.re = (st.re || 0) - dt;
+      if (st.re <= 0 || !st.path || !st.path.length || Math.hypot(tx - st.tx, tz - st.tz) > 0.8) {
+        st.re = 0.6; st.tx = tx; st.tz = tz;
+        let p = self.nav ? self.nav.find(d.pos.x, d.pos.z, tx, tz) : [[d.pos.x, d.pos.z], [tx, tz]];
+        for (const r of [1.6, 2.4, 3.2]) for (let k = 0; k < 8 && !p; k++) {          // (somewhere he can't get to: the nearest place round it he can)
+          const x = tx + Math.cos(k * 0.785) * r, z = tz + Math.sin(k * 0.785) * r;
+          if (self.nav.freeAt(x, z)) p = self.nav.find(d.pos.x, d.pos.z, x, z);
+        }
+        if (p) st.path = p.slice(1);
+        if (!st.path || !st.path.length) st.path = [[d.pos.x, d.pos.z]];
+      }
+      while (st.path.length > 1 && Math.hypot(st.path[0][0] - d.pos.x, st.path[0][1] - d.pos.z) < 0.15) st.path.shift();
+      const p = st.path[0], end = st.path.length === 1 && Math.hypot(p[0] - d.pos.x, p[1] - d.pos.z) < near;
+      if (!end) d.moveTo(p[0], p[1], dt, pace, st.path.length > 1);
+      self.onDeck(d);
+      return end;
+    };
+    return { name: 'guard', stage: 'wake', st: 0, t: 0, run(d, dt) {
+      this.t += dt; this.st += dt; G.stage = this.stage; G.t = this.t;
+      const A = d.A, fx = f.pos.x, fz = f.pos.z, dist = Math.hypot(fx - d.pos.x, fz - d.pos.z), toF = Math.atan2(fx - d.pos.x, fz - d.pos.z);
+      const to = s => { this.stage = s; this.st = 0; this.path = null; this.barkIn = 0.3; G.stage = s; };
+      const barking = (every) => { if ((this.barkIn = (this.barkIn ?? 0.3) - dt) <= 0) { self.bark(V); this.barkIn = every * (0.8 + 0.4 * self.r()); } };
+      switch (this.stage) {
+        case 'wake': {                          // eyes open, head up, ears up: woof!
+          self.asleep = false; A.earsGoal = 1; A.wideGoal = 0.8; A.lidSoftGoal = 0; A.lookPitchGoal = -0.2;
+          const [lx] = self.local(d.pos.x, d.pos.z);
+          if (lx < KENNEL.x1) { A.lieGoal = this.st < 0.6 ? 1 : 0; self.ducking(d); }
+          if (this.st > 0.35 && !this.woke) { this.woke = true; self.bark(V); }
+          if (this.st > 1.0) to(lx < KENNEL.x1 + 0.3 ? 'out' : 'charge');
+          return false;
+        }
+        case 'out':                             // out of his kennel, head down under the doorway
+          self.ducking(d);
+          if (d.moveTo(door[0], door[1], dt, 'trot') || this.st > 4) { to('charge'); self.bark(V); }
+          return false;
+        case 'charge': {                        // flat out to him, barking
+          if (!f.root.visible) { to('back'); return false; }
+          if (V.state === 'fleeing') { to('pursue'); return false; }                  // (the geese got there first)
+          const end = steer(this, d, dt, fx, fz, 'run', 0.35);
+          const sees = !self.nav || self.nav.clearLine(d.pos.x, d.pos.z, fx, fz);
+          if ((dist < 2.4 && sees) || (dist < 3.8 && end) || this.st > 80) { V.chasedBy(d.pos.x, d.pos.z, 'dog'); self.bark(V); to('pursue'); return false; }
+          if (end) d.turnTo(toF, dt, 4);
+          barking(1.5); A.earsGoal = 0.4; A.tailUpGoal = 0.45; A.lidTiltGoal = 0.3; A.mouthGoal = Math.max(A.mouthGoal || 0, 0.35);
+          return false;
+        }
+        case 'pursue': {                        // after him all the way home, never catching him
+          const den = self.den, toDen = den ? Math.hypot(fx - den[0], fz - den[1]) : 99;
+          if (!f.root.visible || toDen < 3.2 || this.st > 40) { to('stand'); return false; }
+          if (dist > 1.9) steer(this, d, dt, fx, fz, 'run', 0.1);
+          else { d.turnTo(toF, dt, 4); }
+          barking(1.3); A.earsGoal = 0.5; A.tailUpGoal = 0.5; A.mouthGoal = Math.max(A.mouthGoal || 0, 0.35);
+          return false;
+        }
+        case 'stand': {                         // at the edge of the wood: planted, barking after him, tail high and wagging
+          if (this.h === undefined) this.h = f.root.visible ? toF : self.den ? Math.atan2(self.den[0] - d.pos.x, self.den[1] - d.pos.z) : d.heading;
+          d.turnTo(this.h, dt, 4); A.earsGoal = 1; A.tailUpGoal = 0.8; A.wagGoal = 0.7; A.lookPitchGoal = -0.15;
+          if (this.st > 0.2 && this.st < 2.6) barking(0.75);
+          if (this.st > 3) { this.h = undefined; to('back'); }
+          return false;
+        }
+        case 'back': {                          // back to the geese (they wait for him); if they're not out, home
+          const F = self.geeseOf(), g = F && F.guarding ? F.geese[0] : null, stg = g && g.task ? g.task.stage : '';
+          if (!g || !/^(gather|await|victory|lap|tada|pursue|hiss|charge)$/.test(stg)) { G.done = true; self.guard = null; return true; }
+          const a = Math.atan2(d.pos.x - g.pos.x, d.pos.z - g.pos.z), tx = g.pos.x + Math.sin(a) * 1.5, tz = g.pos.z + Math.cos(a) * 1.5;
+          const end = steer(this, d, dt, tx, tz, Math.hypot(tx - d.pos.x, tz - d.pos.z) > 3 ? 'run' : 'trot', 0.25);
+          A.tailUpGoal = 0.6; A.wagGoal = 0.8; playFace(d, 0.8);
+          if (end || Math.hypot(g.pos.x - d.pos.x, g.pos.z - d.pos.z) < 1.8 || this.st > 60) to('parade');
+          return false;
+        }
+        case 'parade': {                        // with the geese: proud, prancing round them on their lap, a bow and a bark at the ta-da
+          const F = self.geeseOf(), g = F && F.guarding ? F.geese[0] : null, stg = g && g.task ? g.task.stage : '';
+          if (!g || !/^(gather|await|victory|lap|tada)$/.test(stg) || this.st > 60) { G.done = true; self.guard = null; return true; }
+          const toG = Math.atan2(g.pos.x - d.pos.x, g.pos.z - d.pos.z), dg = Math.hypot(g.pos.x - d.pos.x, g.pos.z - d.pos.z);
+          A.tailUpGoal = 0.75; A.wagGoal = 1; playFace(d, 0.9); A.earsGoal = 0.8;
+          if (stg === 'lap') {                   // round them, a jaunty trot, head high
+            if (this.ang === undefined) { this.ang = Math.atan2(d.pos.x - g.pos.x, d.pos.z - g.pos.z); this.dir = self.r() < 0.5 ? 1 : -1; }
+            this.ang += this.dir * dt * 0.9;
+            let tx = g.pos.x + Math.sin(this.ang) * 1.5, tz = g.pos.z + Math.cos(this.ang) * 1.5;
+            if (self.nav && !self.nav.clearLine(d.pos.x, d.pos.z, tx, tz, 0.15)) { tx = d.pos.x; tz = d.pos.z; d.turnTo(toG, dt, 3); }
+            else d.moveTo(tx, tz, dt, 'trot', true);
+            A.lift = Math.abs(Math.sin(this.t * 7)) * 0.05; A.lookPitchGoal = -0.25;
+          } else if (stg === 'tada') {           // a play bow at them and a bark
+            d.turnTo(toG, dt, 4);
+            if (!this.bowT) this.bowT = this.t;
+            const u = this.t - this.bowT;
+            if (u < 1.6) { A.bowGoal = 1; if (!this.tadaBark && u > 0.4) { this.tadaBark = true; self.bark(V); } }
+            else if (u < 2.1) { A.lift = Math.sin(Math.min(1, (u - 1.6) / 0.45) * Math.PI) * 0.15; A.airGoal = 0.4; }
+            else if (!this.tada2 && u > 2.3) { this.tada2 = true; self.bark(V); }
+          } else {                               // waiting for the lap: sitting up proud beside them
+            if (dg > 2.2) steer(this, d, dt, g.pos.x - Math.sin(toG) * 1.5, g.pos.z - Math.cos(toG) * 1.5, 'trot', 0.25);       // (along with them, round everything)
+            else { d.turnTo(toG, dt, 3); A.sitGoal = 1; A.lookPitchGoal = -0.2; }
+          }
+          return false;
+        }
+      }
+      return true;
+    } };
+  }
+
   // ---- each moment
   update(dt, hour) {
     this.hour = hour; this.time += dt; this.mealIn -= dt; this.geeseIn -= dt;
     if (!this.placed) this.place(hour);
     const d = this.dog;
+    this.barkT = Math.max(0, this.barkT - dt);
+    this.watchFor(dt);
     // (to bed at bedtime, whatever he was doing; up in the morning)
     if (DOG_NIGHT(hour) && !this.bedtime) { this.bedtime = true; d.todo = []; d.task = null; }
     if (!DOG_NIGHT(hour)) this.bedtime = false;
@@ -441,6 +576,19 @@ export class FarmDog {
       z.life -= dt; const t = 1 - z.life / z.full;
       z.sp.visible = true; z.sp.position.copy(z.at); z.sp.position.y += t * 0.35; z.sp.position.x += Math.sin(t * 5) * 0.04;
       z.sp.scale.setScalar(0.09 + 0.06 * t); z.sp.material.opacity = Math.min(1, z.life * 2, t * 6);
+    }
+  }
+  // after everyone has moved (main.js calls it last): never into Rusty, who may come running his way (he's seeing him off,
+  // not catching him): out of his way, straight back from him or, if that's not free ground, to one side
+  separate() {
+    const d = this.dog, V = this.visitOf(), fox = V && V.fox && V.fox.root.visible ? V.fox : null;
+    if (!fox) return;
+    const dx = d.pos.x - fox.pos.x, dz = d.pos.z - fox.pos.z, dd = Math.hypot(dx, dz), min = 0.95;
+    if (dd >= min) return;
+    const a = dd > 1e-4 ? Math.atan2(dx, dz) : d.heading + Math.PI;
+    for (const t of [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8]) {
+      const x = fox.pos.x + Math.sin(a + t) * min, z = fox.pos.z + Math.cos(a + t) * min;
+      if (!this.nav || this.nav.freeAt(x, z)) { d.pos.x = x; d.pos.z = z; return; }
     }
   }
   updateBall(dt) {

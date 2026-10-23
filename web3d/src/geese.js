@@ -538,7 +538,7 @@ export class GeeseFlock {
     const P = opts.pond; this.pc = [P.center[0], P.center[2]]; this.pu = [P.axisU[0], P.axisU[2]]; this.pv = [P.axisV[0], P.axisV[2]];
     this.lu2 = this.pu[0] ** 2 + this.pu[1] ** 2; this.lv2 = this.pv[0] ** 2 + this.pv[1] ** 2;
     this.avoid = opts.avoid || []; this.mouths = opts.mouths || [];
-    this.watch = opts.watch; this.groundY = opts.groundY; this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
+    this.watch = opts.watch; this.groundY = opts.groundY; this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
     this.group = new THREE.Group(); scene.add(this.group);
     this.geese = ['embden', 'toulouse'].map(k => {
       const g = new Goose(this.group, k, r); g.flock = this;
@@ -766,6 +766,9 @@ export class GeeseFlock {
   // alarm and off after him
   watchFor(dt, hour) {
     const V = this.watch && this.watch();
+    // (Biscuit barking: they wake to that too, even once Rusty's running, and go out after him with Biscuit)
+    const D = this.farmDog(), barking = D && D.guard && !D.guard.done && /^(charge|pursue|stand)$/.test(D.guard.stage);
+    if (!this.guarding && V && this.night(hour) && barking && V.fox.root.visible && (V.state === 'out' || V.state === 'fleeing')) { this.raise(V); return; }
     if (this.guarding || !V || !this.night(hour) || V.state !== 'out' || !V.fox.root.visible) { if (!V || V.state !== 'out') this.heard = 0; return; }
     const [G] = this.geese, f = V.fox, d = Math.hypot(f.pos.x - G.pos.x, f.pos.z - G.pos.z);
     this.heard += dt;
@@ -776,9 +779,13 @@ export class GeeseFlock {
     this.guarding = true; this.heard = 0; G.asleep = false; H.asleep = false;
     G.task = this.guardTask(V); G.act = 'alarm'; G.actT = 0;
     H.task = TK.seq('wake', [TK.act('look', 0.5), TK.act('alarm', 2.2)]);
-    V.hint(V.T('geeseHeard'));
+    // (Biscuit up already and barking: they've heard him; up this very moment too, before his first woof: they both heard Rusty)
+    const D = this.farmDog(); V.hint(V.T(!D || !D.guard ? 'geeseHeard' : (D.guard.t || 0) < 0.3 ? 'bothHeard' : 'geeseToo')); (V.helpers || (V.helpers = {})).geese = true; this.raisedAt = this.time;
     for (const g of this.geese) V.fx.pop('bang', g.pos.clone().add(new THREE.Vector3(0, 0.95, 0)), 0.2, 1.5);
   }
+  // Biscuit out after Rusty too (dog.js): they wait for him to come back before their victory parade, and parade together
+  farmDog() { const d = this.dogOf(); return d && d.fam && d.fam.guard !== undefined ? d.fam : null; }
+  dogOut() { const D = this.farmDog(); return !!(D && D.guard && !D.guard.done && D.guard.stage !== 'parade'); }
   // Gertrude on guard: up and honking, then charging at him (her way round everything replanned as he moves), stopping
   // to hiss when she's on him (he bolts), after him a little way, a triumphant honk and a wing-flap, and back to bed
   guardTask(V) {
@@ -787,10 +794,17 @@ export class GeeseFlock {
       this.t += dt; this.st += dt;
       const fx = f.pos.x, fz = f.pos.z, d = Math.hypot(fx - g.pos.x, fz - g.pos.z), toF = Math.atan2(fx - g.pos.x, fz - g.pos.z);
       const to = (stage, act) => { this.stage = stage; this.st = 0; if (g.act !== act) { g.act = act; g.actT = 0; } };
+      // Rusty seen off: waiting for Biscuit, or the victory parade; first, if here's hidden from view, somewhere open nearby
+      const proud = (there) => {
+        const s = there ? null : self.paradeSpot(g);
+        if (s) { this.gath = TK.path(s[0], s[1], 'hurry', 25); to('gather', 'parade'); return; }
+        to(self.dogOut() ? 'await' : 'victory', self.dogOut() ? 'parade' : 'honk');
+      };
       switch (this.stage) {
         case 'wake': g.turnTo(toF, dt, 2.5); ACT.alarm(g, this.st); if (this.st > 2.6) to('charge', 'charge'); return false;
         case 'charge': {
-          if (V.state !== 'out' || !f.root.visible) { to('victory', 'honk'); return false; }        // (gone already)
+          if (!f.root.visible) { proud(); return false; }        // (gone already)
+          if (V.state === 'fleeing') { to('pursue', 'charge'); return false; }                   // (Biscuit got there first: after Rusty with him)
           if ((this.re -= dt) <= 0 || !this.path || !this.path.length) {
             // her way to him round everything; while he's somewhere she can't get to (in a pen), the nearest place round him
             // she can; failing that she keeps to the way she had (never a straight line through things)
@@ -815,13 +829,27 @@ export class GeeseFlock {
         case 'pursue': {                                  // after him a few steps while he runs, if the way's clear
           const ax = g.pos.x + Math.sin(toF) * 0.8, az = g.pos.z + Math.cos(toF) * 0.8;
           if (this.st < 2.2 && f.root.visible && d > 1.2 && self.clearWalk(g.pos.x, g.pos.z, ax, az)) { g.moveTo(ax, az, dt, 'run', true); ACT.charge(g, this.st); return false; }
-          to('victory', 'honk'); return false;
+          proud(); return false;
+        }
+        // to somewhere open for the parade, in full view (not behind a tree), hurrying with their chests out
+        case 'gather': {
+          if (this.gath.run(g, dt) !== false || this.st > 25) { this.gath = null; proud(true); return false; }
+          ACT.parade(g, 1.2); g.A.honkGoal = this.st % 2.6 < 0.6 ? 1 : 0;
+          return false;
+        }
+        // waiting for Biscuit to come back from seeing Rusty home: chest out, honking now and then, looking his way
+        case 'await': {
+          const D = self.farmDog(), dog = D && D.dog;
+          if (dog) g.turnTo(Math.atan2(dog.pos.x - g.pos.x, dog.pos.z - g.pos.z), dt, 2);
+          ACT.parade(g, 1.2); g.A.honkGoal = this.st % 3 < 0.8 ? 1 : 0; g.A.jawGoal = this.st % 3 < 0.8 && Math.sin(this.st * 8) > 0 ? 1 : 0.1;
+          if (!self.dogOut() || this.st > 50) to('victory', 'honk');
+          return false;
         }
         // super proud: a victory honk with her chest puffed out, a lap of honour strutting with Hector marching behind,
         // a ta-da with her wings flung wide, then strutting off home
         case 'victory':
           ACT.parade(g, this.st + 2.2); g.A.honkGoal = 1; g.A.jawGoal = Math.sin(this.st * 8) > 0 ? 1 : 0.1;
-          if (this.st < 0.1 && V.hint) V.hint(V.T('geeseProud'));
+          if (this.st < 0.1 && V.hint) V.hint(V.T(self.farmDog() && self.farmDog().guard ? 'teamProud' : 'geeseProud'));
           if (this.st > 1.8) { this.lap = self.lapOfHonour(g); to(this.lap ? 'lap' : 'tada', this.lap ? 'parade' : 'tada'); }
           return false;
         case 'lap': {
@@ -846,6 +874,24 @@ export class GeeseFlock {
       }
       return true;
     } };
+  }
+  // where to parade: here if it's in full view with room round it (for the lap and for Biscuit going round them), else
+  // the nearest such spot within 10 m she can walk to; null for here (or nowhere better)
+  paradeSpot(g) {
+    const nav = this.nav, x0 = g.pos.x, z0 = g.pos.z;
+    const roomy = (x, z) => {
+      if (this.pondAt(x, z)[0] < 1.8 || (nav && !nav.freeAt(x, z))) return false;
+      for (const r of [0.9, 1.5]) for (let k = 0; nav && k < 16; k++) if (!nav.freeAt(x + Math.cos(k * 0.393) * r, z + Math.sin(k * 0.393) * r)) return false;
+      return true;
+    };
+    if (this.inView(x0, z0) && roomy(x0, z0) && this.lapOfHonour(g)) return null;
+    for (const r of [1.5, 2.5, 3.5, 4.5, 5.5, 7, 8.5, 10]) for (let k = 0; k < 12; k++) {          // (somewhere well in view, so a step short of it still is)
+      const a = k * Math.PI / 6, x = x0 + Math.sin(a) * r, z = z0 + Math.cos(a) * r;
+      if (!this.inView(x, z, 2.4) || !roomy(x, z)) continue;
+      const p = nav ? nav.find(x0, z0, x, z) : [[x0, z0], [x, z]];
+      if (p && p.length) return [x, z];
+    }
+    return null;
   }
   // a lap of honour: a little circle from where she stands, all of it clear of everything (the first that fits of a few
   // sizes and ways round), three quarters of the way round
@@ -892,7 +938,7 @@ export class GeeseFlock {
     for (const g of this.geese) { g.actT += dt; g.update(dt); }
     // crowding her while she's busy (cheeky, or just too close): she turns and hisses, he backs off looking sheepish
     const dG = Math.hypot(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
-    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !/^(bed|scold|call|morning)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
+    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !/^(bed|scold|call|morning|guard)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
       this.scoldOk = 50 + this.r() * 50;
       const away = Math.atan2(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
       let to = null;
