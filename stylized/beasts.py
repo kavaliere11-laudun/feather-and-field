@@ -16,8 +16,9 @@ from mathutils import Quaternion, Euler
 
 JOINTS = ['root', 'hips', 'chest', 'neck', 'head', 'tail1', 'tail2', 'tail3', 'tail4',
           'FLu', 'FLl', 'FLw', 'FRu', 'FRl', 'FRw', 'HLu', 'HLk', 'HLl', 'HRu', 'HRk', 'HRl',
-          'jaw', 'earL', 'earR', 'blinkL', 'blinkR']
-# the face: the lower jaw (opens), each ear (pricks up, flattens back, swivels), each eye (closes: a blink, a squint)
+          'jaw', 'earL', 'earR', 'blinkL', 'blinkR', 'lidL', 'lidR']
+# the face: the lower jaw (opens), each ear (pricks up, flattens back, swivels), each eye (closes: a blink, a squint), and on
+# the dog each upper eyelid (lowers over the eye and tilts: soft, sleepy, pleading, intent)
 # the legs' bones, top down: front shoulder (upper arm), elbow (forearm), wrist (the paw); hind hip (thigh), knee (shin), hock
 LEG_BONES = {'FL': ['FLu', 'FLl', 'FLw'], 'FR': ['FRu', 'FRl', 'FRw'], 'HL': ['HLu', 'HLk', 'HLl'], 'HR': ['HRu', 'HRk', 'HRl']}
 TAIL_BONES = ['tail1', 'tail2', 'tail3', 'tail4']
@@ -28,7 +29,7 @@ COATS = {
     'cub': dict(fur='#9a6a4a', back='#7d5539', white='#e3d6c3', black='#4a3a30', eye='#5b4a3a', nose='#1e1714'),
     # Biscuit, a Border Collie: black and white (a white blaze down the face, white muzzle, collar, chest, belly, socks and
     # tail tip), warm brown eyes
-    'collie': dict(fur='#1c1a1b', back='#151415', white='#f1ede6', black='#0f0e0f', eye='#6b4320', nose='#121011'),
+    'collie': dict(fur='#2b282a', back='#211f21', white='#f1ede6', black='#151315', eye='#93592a', nose='#121011'),
 }
 # the shapes: overall size, the head against the body, leg length, muzzle length
 SHAPES = {'fox': dict(S=1.0, HD=1.0, LG=1.0, MZ=1.0), 'cub': dict(S=0.56, HD=1.38, LG=0.82, MZ=0.62), 'collie': dict(S=1.08, HD=1.08, LG=1.22, MZ=0.8)}
@@ -57,6 +58,38 @@ def surface(o, centre, d):
     bpy.context.view_layer.update()
     hit, loc, nrm, _ = o.ray_cast(centre + d * 0.5, -d)
     return (Vector(loc), Vector(nrm)) if hit else (centre + d * 0.05, d)
+
+
+LID_OPEN, LID_SHUT = 70.0, -75.0          # (degrees: where the eyelid's edge sits on its dome, open and shut; the browser turns it)
+
+
+def eyelid(name, centre, q, er, m, parent, c=0.45, R=1.12, RX=2.2, span=150.0):
+    """An upper eyelid: part of a dome round the eye (round in its up-down section, so turning it about the eye's across
+    axis slides it over the eye without its surface moving), its edge across the eye. Built open (the edge up inside the
+    brow); the browser turns it down over the eye (LID_OPEN to LID_SHUT). centre: the dome's middle (behind the eye), q: the
+    eye's frame (x across, y up, z out of the face), er: the eye's size."""
+    nx, nf = 12, 10
+    verts, faces = [], []
+    for i in range(nx + 1):
+        x = (-1.0 + 2.0 * i / nx) * 1.6 * er
+        ryz = R * er * math.sqrt(max(0.0, 1 - (x / (RX * er)) ** 2))       # (smaller towards the corners: the edge arches)
+        for j in range(nf + 1):
+            ph = math.radians(LID_OPEN + span * j / nf)
+            verts.append(tuple(centre + q @ Vector((x, ryz * math.sin(ph), ryz * math.cos(ph) - c * er))))
+    for i in range(nx):
+        for j in range(nf):
+            a = i * (nf + 1) + j; b = a + 1; cc = a + nf + 1; dd = cc + 1
+            faces.append((a, cc, dd, b))
+    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update()
+    me.validate()
+    for p in me.polygons: p.use_smooth = True
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); o.parent = parent
+    # facing out of the face (the normals away from the eye)
+    bpy.context.view_layer.update()
+    pc = o.data.polygons[len(o.data.polygons) // 2]
+    if (o.matrix_world @ pc.center - centre).dot(o.matrix_world.to_3x3() @ pc.normal) < 0:
+        for p in me.polygons: p.flip()
+    return o
 
 
 def ear_shell(name, w, h, cup, thick, front, m, parent, u0=-1.0, u1=1.0, lift=0.0, fold=0.0, fold_at=0.55):
@@ -147,11 +180,11 @@ def fox(kind='fox', seed=1):
     part(keep(sphere(kind + '_nose', 0.0135 * S * HD, tuple(tip), (1.0, 1.2, 0.85), m=nose, parent=root, seg=12, rings=8)), 'head')
     # ---- eyes: almond-shaped and set at the front of the skull, looking forward and a little out: a dark rim round an
     # amber iris (a cub's darker), a slit pupil (a cub's round), a catch-light. Placed on the skull's surface.
-    er = (0.0135 if cub else 0.0124 if dog else 0.0112) * S * HD
+    er = (0.0135 if cub else 0.0142 if dog else 0.0112) * S * HD
     for sd in (1, -1):
         d = Vector((0.8, sd * 0.58, 0.16)).normalized()
         at, nrm = surface(head, h(0.02, 0, 0.005), d)
-        ec = at - d * er * 0.38                                                     # set into the skull, not bulging
+        ec = at - d * er * (0.24 if dog else 0.38)                                  # set into the skull, not bulging (a dog's rounder, fuller)
         q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), sd * -0.22)          # the outer corner a little higher
         rot = q.to_euler()
         dep = lambda k: ec + d * er * k
@@ -159,11 +192,19 @@ def fox(kind='fox', seed=1):
         # stand a hair proud of the iris so they show
         part(keep(sphere(kind + '_rim', er * 1.14, tuple(dep(-0.08)), (1.34, 0.86, 0.46), rot=rot, m=rim, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
         part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.12, 0.92, 0.5) if dog else (1.25, 0.78, 0.5), rot=rot, m=iris, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
-        ps = (0.52, 0.56, 0.5) if cub or dog else (0.24, 0.7, 0.5)                  # (a dog's pupil round)
+        ps = (0.6, 0.64, 0.5) if dog else (0.52, 0.56, 0.5) if cub else (0.24, 0.7, 0.5)     # (a dog's pupil round and big)
         part(keep(sphere(kind + '_pupil', er, tuple(dep(0.07)), ps, rot=rot, m=pupil, parent=root, seg=10, rings=6)), 'blink' + ('L' if sd > 0 else 'R'))
         up = q @ Vector((0, 1, 0)); across = q @ Vector((1, 0, 0))
-        part(keep(sphere(kind + '_glint', er * 0.16, tuple(dep(0.47) + up * er * 0.28 - across * sd * er * 0.22), m=glint, parent=root, seg=6, rings=4)), 'blink' + ('L' if sd > 0 else 'R'))
+        if dog:       # a big bright catch-light up by the pupil and a little one below: wet, lively eyes
+            part(keep(sphere(kind + '_glint', er * 0.21, tuple(dep(0.46) + up * er * 0.3 - across * sd * er * 0.26), (1.0, 1.0, 0.6), rot=rot, m=glint, parent=root, seg=8, rings=5)), 'blink' + ('L' if sd > 0 else 'R'))
+            part(keep(sphere(kind + '_glint2', er * 0.085, tuple(dep(0.46) - up * er * 0.32 + across * sd * er * 0.3), (1.0, 1.0, 0.6), rot=rot, m=glint, parent=root, seg=6, rings=4)), 'blink' + ('L' if sd > 0 else 'R'))
+        else:
+            part(keep(sphere(kind + '_glint', er * 0.16, tuple(dep(0.47) + up * er * 0.28 - across * sd * er * 0.22), m=glint, parent=root, seg=6, rings=4)), 'blink' + ('L' if sd > 0 else 'R'))
         pivot('eye' + ('L' if sd > 0 else 'R'), tuple(ec), root); pivot('blink' + ('L' if sd > 0 else 'R'), tuple(ec), root)
+        if dog:       # his upper eyelids (coat black, no fur), and where they turn: about the eye's across axis, tilted about its forward one
+            sdn = 'L' if sd > 0 else 'R'; lc = ec - d * er * 0.45
+            part(keep(eyelid(kind + '_lid' + sdn, lc, q, er, coat, root)), 'lid' + sdn)
+            pivot('lid' + sdn, tuple(lc), root); pivot('lidax' + sdn, tuple(lc + across * er), root); pivot('lidfw' + sdn, tuple(lc + d * er), root)
         # ---- an ear: a tall cupped triangle, its back black above the base, its inside pale and fluffy, leaning out and back
         eh, ew = (0.12 if cub else 0.092 if dog else 0.112) * S * HD, (0.048 if cub else 0.04 if dog else 0.045) * S * HD
         ed = Vector((-0.16, sd * (0.74 if dog else 0.5), 0.66 if dog else 0.85)).normalized()

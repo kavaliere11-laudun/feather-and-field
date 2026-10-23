@@ -26,10 +26,17 @@ const FUR = {
          comb: 0.45, under: 1.0, face: 0.45, locks: 0.075 },
   // Biscuit the Border Collie: a long silky coat, a thick ruff round the neck and chest, feathering down the backs of the
   // legs, a plumed tail; short and smooth on the face and the fronts of the legs
-  collie: { len: { [R.body]: 0.05, [R.crest]: 0.007, [R.tail]: 0.075, [R.legfeather]: 0.016, [R.down]: 0.014 }, shells: 12, droop: 0.32, clump: 0.62, fine: 1.0, wave: 0.55,
-         comb: 0.78, under: 0.9, face: 0.55, locks: 0.12 },
+  // (crisp: his strands drawn sharp, bigger locks, more layers, so the coat reads as hair close up, not a haze; the face
+  // short-haired and the eyes clear of hair)
+  collie: { len: { [R.body]: 0.05, [R.crest]: 0.007, [R.tail]: 0.075, [R.legfeather]: 0.016, [R.down]: 0.014 }, shells: 16, droop: 0.32, clump: 0.62, fine: 1.0, wave: 0.55,
+         comb: 0.78, under: 0.9, face: 0.75, faceR: 1.3, eyeClear: 0.9, locks: 0.32, crisp: 0.8 },
 };
 const SIZE = { cub: 0.56, collie: 1.08 };
+// (tests: ?dogfur=locks:0.3,crisp:0.9 tries other numbers on the dog's coat; numbers only, known keys only)
+if (typeof location !== 'undefined') for (const kv of (new URLSearchParams(location.search).get('dogfur') || '').split(',')) {
+  const [k, v] = kv.split(':'), x = parseFloat(v);
+  if (['locks', 'crisp', 'droop', 'comb', 'shells', 'face', 'faceR', 'eyeClear', 'under', 'wave'].includes(k) && isFinite(x)) FUR.collie[k] = k === 'shells' ? Math.max(2, Math.min(24, Math.round(x))) : x;
+}
 function beastGeometry(name) {
   const M = MODELS[name];
   if (M.built) return M.built;
@@ -44,14 +51,16 @@ function beastGeometry(name) {
   g.setAttribute('featherUV', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('eyeAt', new THREE.BufferAttribute(new Float32Array(n * 4), 4));
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox.clone(); g.computeBoundingSphere();
-  g = addFur(g, src, FUR[name], M.piv.headc);
+  g = addFur(g, src, FUR[name], M.piv.headc, M.piv.eyeL ? [M.piv.eyeL, M.piv.eyeR] : null);
   return (M.built = g);
 }
 
 const PARENT = { hips: 'root', chest: 'hips', neck: 'chest', head: 'neck', tail1: 'hips', tail2: 'tail1', tail3: 'tail2', tail4: 'tail3',
   FLu: 'chest', FLl: 'FLu', FLw: 'FLl', FRu: 'chest', FRl: 'FRu', FRw: 'FRl',
   HLu: 'hips', HLk: 'HLu', HLl: 'HLk', HRu: 'hips', HRk: 'HRu', HRl: 'HRk',
-  jaw: 'head', earL: 'head', earR: 'head', blinkL: 'head', blinkR: 'head' };
+  jaw: 'head', earL: 'head', earR: 'head', blinkL: 'head', blinkR: 'head', lidL: 'head', lidR: 'head' };
+// the dog's upper eyelids (stylized/beasts.py LID_OPEN, LID_SHUT): how far each turns from open to shut, radians
+const LID_SWEEP = (70 + 75) * Math.PI / 180;
 const LEGS = ['FL', 'FR', 'HL', 'HR'];
 // each leg's three bones, top down: front shoulder (upper arm), elbow (forearm), wrist (the paw); hind hip (thigh), knee
 // (shin), hock (the long foot); and the toe pivot where it meets the ground
@@ -61,7 +70,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const clamp01 = x => Math.min(1, Math.max(0, x));
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const arg = (y, z) => Math.atan2(z, y);           // a direction in a bone's side view (y up, z forward); rotation.x adds to it
-const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector3(), _d = new THREE.Vector3();
+const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector3(), _d = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 
 // A four-legged animal's body and bones, posed from a few numbers (as the birds' Rig): the actor sets the gait and what it's
 // doing (sitting, lying, a play bow, rearing up to box, rolling over, the leap, nose-down in the grass...). The feet are
@@ -100,6 +109,16 @@ export class Quad {
         d3: [T[0] - S2[0], T[1] - S2[1]], toe: new THREE.Vector3(toe[0], toe[1], toe[2]), x: toe[0] };
     }
     this.tY = [0, 0, 0, 0]; this.tYv = [0, 0, 0, 0];
+    // eyelids (the dog's): each turns about its eye's across axis to close, and about its forward axis to tilt; inner: which
+    // way along the across axis is towards the nose
+    if (P.lidaxL && this.bones.lidL) {
+      this.lids = {};
+      for (const sd of ['L', 'R']) {
+        const c = new THREE.Vector3().fromArray(P['lid' + sd]), ax = new THREE.Vector3().fromArray(P['lidax' + sd]).sub(c).normalize();
+        const fw = new THREE.Vector3().fromArray(P['lidfw' + sd]).sub(c).normalize();
+        this.lids[sd] = { ax, fw, inner: ax.x * c.x < 0 ? 1 : -1 };
+      }
+    }
   }
   // in the den's tunnel: darker the deeper in (box = { inv, lo, hi } in the den's frame), or out in the open (null)
   shade(box) {
@@ -236,9 +255,27 @@ export class Quad {
       B[nm].rotation.y += sd * 0.5 * tw + 0.35 * (s.lookYaw || 0);
     }
     if (B.jaw) B.jaw.rotation.x += 0.72 * Math.min(1.2, Math.max(0, s.mouth || 0));
-    if (B.blinkL) for (const [nm, k] of [['blinkL', s.shutL || 0], ['blinkR', s.shutR || 0]]) {
+    if (B.blinkL && !this.lids) for (const [nm, k] of [['blinkL', s.shutL || 0], ['blinkR', s.shutR || 0]]) {
       const w = clamp01(s.wide || 0), shut = clamp01(k);
       B[nm].scale.set(1 + 0.12 * w, (1 - 0.9 * shut) * (1 + 0.28 * w), 1 + 0.12 * w);
+    }
+    // the dog's eyes: real eyelids, so they say how he feels. Blinks, squints and winks close them; a little lowered when
+    // he's relaxed, more when he's happy (with his grin) or intent (crouched, watching); the inner corners raised when he's
+    // interested (ears forward), pleading (lying with his chin down, looking up), worried (ears back), one up and one down
+    // when puzzled (his head tilted); lowered at the inner corners for the intent stare. (s.lidSoft / s.lidTilt: a task's own)
+    if (this.lids) {
+      const w = clamp01(s.wide || 0), mouth = smooth(0.3, 0.8, s.mouth || 0), cr = clamp01(s.crouch || 0), ears = s.ears || 0;
+      const chin = (s.chin || 0) * lie, tiltH = s.headTilt || 0;
+      const soft = clamp01(0.16 + 0.3 * mouth + 0.28 * cr + 0.12 * chin + (s.lidSoft || 0) - 0.3 * w);
+      const tilt = Math.max(-1, Math.min(1, -0.35 * Math.max(0, ears - 0.35) * (1 - mouth) - 0.5 * chin - 0.5 * Math.max(0, -ears - 0.2) + 0.55 * cr + (s.lidTilt || 0)));
+      for (const [sd, shut] of [['L', s.shutL || 0], ['R', s.shutR || 0]]) {
+        const side = (sd === 'L' ? 1 : -1) * Math.max(-1, Math.min(1, tiltH / 0.38)), puzzled = side * 0.3;      // (one lid up, the other down)
+        const L = this.lids[sd], close = Math.max(clamp01(shut), clamp01(soft + 0.16 * side));
+        _q1.setFromAxisAngle(L.ax, close * LID_SWEEP);
+        _q2.setFromAxisAngle(L.fw, (-tilt * 0.42 + puzzled) * L.inner * (1 - clamp01(shut)));
+        B['lid' + sd].quaternion.copy(_q2.multiply(_q1));
+        B['blink' + sd].scale.set(1 + 0.06 * w, 1 + 0.1 * w, 1 + 0.06 * w);
+      }
     }
     // ---- the brush: each part follows the one before it a moment later (a wave down the tail): it sways with the steps,
     // swings out on turns, wags when playing; hangs a little lower at a trot, up when excited, curled round when sitting or lying
@@ -363,7 +400,7 @@ class Fox {
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt;
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'air', 'dive', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin',
-      'ears', 'earL', 'earR', 'earLTw', 'earRTw', 'mouth', 'squint', 'wide', 'winkL', 'winkR']) A[k + 'Goal'] = 0;
+      'ears', 'earL', 'earR', 'earLTw', 'earRTw', 'mouth', 'squint', 'wide', 'winkL', 'winkR', 'lidSoft', 'lidTilt']) A[k + 'Goal'] = 0;
     A.airPh = undefined; A.groundF = A.groundH = A.slopeF = A.slopeH = A.groundAt = A.slopeAt = undefined;  // (a leap sets where in the air it is, a slope the ground under the feet, each frame)
     A.lookYawGoal = 0; A.lookPitchGoal = 0; A.headTiltGoal = 0; A.roll = A.roll || 0; A.rollGoal = 0; A.pitch = 0; A.lift = 0;
     this.pace = 0; this.turn = 0; this.turned = false; this.moved = false;
@@ -387,6 +424,7 @@ class Fox {
     for (const k of ['sit', 'lie', 'bow', 'rear', 'crouch', 'shake', 'scratch', 'kick', 'paw', 'wag', 'tailUp', 'chin']) ease(k, 5.5);
     ease('air', 14); ease('dive', 10); ease('lookYaw', 4); ease('lookPitch', 4); ease('headTilt', 6);
     ease('ears', 9); ease('earL', 9); ease('earR', 9); ease('mouth', 12); ease('squint', 10); ease('wide', 10); ease('winkL', 10); ease('winkR', 10);
+    ease('lidSoft', 6); ease('lidTilt', 6);
     A.shutL = clamp01(Math.max(blink, A.squint || 0) + A.winkL); A.shutR = clamp01(Math.max(blink, A.squint || 0) + A.winkR);
     A.roll += (A.rollGoal - A.roll) * Math.min(1, dt * (A.rollFast ? 9 : 4));
     // ---- the gait from how fast he really moves (however a task moves him): legs walking, trotting or galloping, the feet
@@ -916,10 +954,23 @@ export class DogLineup {
     if (p === 'trot') return T.wait(6, (f, t, dt) => {             // round and round a long oval across the bottom row, happily
       const RX = 0.75, RZ = 0.2, a = Math.atan2((f.pos.x - f.spot[0]) / RX, (f.pos.z - f.spot[1]) / RZ) - 0.5;
       f.moveTo(f.spot[0] + Math.sin(a) * RX, f.spot[1] + Math.cos(a) * RZ, dt, 'trot', true); f.A.wagGoal = 0.5; f.A.tailUpGoal = 0.25; playFace(f, 0.5); });
-    return T.wait(6, (f, t) => { look(f, t); f.A.wagGoal = Math.sin(t * 0.7) > 0.5 ? 0.8 : 0.2; });
+    return T.wait(15, (f, t) => moods(f, t));
   }
   update(dt) { for (const f of this.foxes) f.update(dt); }
   visible() { return true; }
   centre(v) { return v.copy(this.group.position); }
   tapped(f) { f.todo.unshift(seq(hop(), bowAt(null, 1.2))); f.task = null; }
+}
+// the standing dog of the line-up shows his faces, 2.5 s each: looking about, puzzled (head tilted, one lid up), happy
+// (grinning, wagging), pleading (looking up, inner corners raised), intent (crouched, the stare) and sleepy
+export const MOODS = ['look', 'puzzled', 'happy', 'pleading', 'intent', 'sleepy'];
+function moods(f, t) {
+  const A = f.A, m = MOODS[Math.floor(t / 2.5) % MOODS.length];
+  if (m === 'look') { look(f, t); A.wagGoal = 0.2; }
+  if (m === 'puzzled') { A.earsGoal = 0.9; A.earLGoal = 0.3; A.earRGoal = -0.4; A.headTiltGoal = 0.36; A.lookPitchGoal = -0.05; }
+  if (m === 'happy') { playFace(f, 1); A.wagGoal = 1; A.tailUpGoal = 0.4; }
+  if (m === 'pleading') { A.lidTiltGoal = -0.9; A.lidSoftGoal = 0.12; A.earsGoal = -0.25; A.lookPitchGoal = -0.35; A.wagGoal = 0.25; }
+  if (m === 'intent') { A.crouchGoal = 0.45; A.earsGoal = 1; A.lookPitchGoal = 0.25; A.lidTiltGoal = 0.2; A.wideGoal = 0.2; }
+  if (m === 'sleepy') { A.lidSoftGoal = 0.42; A.earsGoal = -0.35; A.lookPitchGoal = 0.15; }
+  f.mood = m;
 }

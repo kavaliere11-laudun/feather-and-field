@@ -858,3 +858,22 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   grinning, a tilt of the head), trotting round a little ring). Tap one: a hop and a play bow.
 - Tests: `dogname.mjs [OUT]` (the name: tap, rename, the checks, kept after a reload, no pop-ups; LANG=fr), `dogshot.mjs
   OUT which heading size steps` (close pictures, HEAD=1 on his face), `dogfilm.mjs OUT secs fps [which]`.
+- Fur and eyes (23 Oct 15:38, Audrey on her iPhone: "Looks good! Review the blurry fur and the eyes please they need to be
+  more expressive"):
+  - The coat: his strands drawn sharp (`crisp` in `FUR.collie`: in the painted-hair shader a narrower soft edge, kept to
+    further away; stored as a negative `furStyle.x`, which the Silkies, foxes and chicks never have, so they're unchanged),
+    bigger locks of hair (`locks` 0.32: strands a couple of screen pixels wide instead of a haze), 16 layers, a slightly
+    lifted black (`#2b282a`) so the locks' light and shade show; short hair over the face (`face` 0.75, `faceR` 1.3) and
+    kept clear round the eyes (`eyeClear`, `addFur`'s new `eyes`). `?dogfur=locks:0.4,crisp:0.9` tries other numbers
+    (numbers and known keys only).
+  - The eyes: bigger (1.27 times), fuller (less sunk into the skull), a warmer lighter brown, a big round pupil, a big
+    catch-light and a small second one; the face's model given more triangles (`o['dec']`).
+  - Eyelids: two new joints, `lidL` and `lidR` (`beasts.JOINTS`, the dog only; the foxes have the joints but nothing on
+    them): each upper lid is part of a dome round the eye (`beasts.eyelid()`), round in its up-down section so turning it
+    about the eye's across axis slides its edge over the eye without the lid moving off the face (`LID_OPEN` 70°,
+    `LID_SHUT` -75°). The browser (`Quad.pose`, `this.lids`) closes them for blinks, squints and winks (instead of
+    squashing the eye), and sets them by his mood from what he's doing: a little lowered when relaxed, more when happy
+    (grinning) or intent (crouched: the inner corners down, the stare), the inner corners raised when interested (ears
+    forward), pleading (lying with his chin down) or worried (ears back), one up and one down when puzzled (head tilted);
+    `lidSoft` and `lidTilt` let a task set them. The line-up's first dog shows six faces in turn (`MOODS`: look,
+    puzzled, happy, pleading, intent, sleepy); `dogmoods.mjs OUT` takes a close picture of each.

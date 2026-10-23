@@ -250,7 +250,7 @@ const FUR = {
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
 
-function addFur(g, src, spec, headc) {
+function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
   const len = new Float32Array(n);
   const top = g.boundingBox.max.y, Pp = src.attributes.position.array;
@@ -259,7 +259,12 @@ function addFur(g, src, spec, headc) {
     if (spec.comb && paint[i] === R.body) len[i] *= 1 + (spec.under ?? 0.9) * (1 - smooth(0.2, 0.42, Pp[i * 3 + 1] / top));    // soft fluff underneath and round the thighs
     if (spec.face && headc && (paint[i] === R.body || paint[i] === R.crest)) {        // short hair round the face, so it stays clear
       const d = Math.hypot(Pp[i * 3] - headc[0], Pp[i * 3 + 1] - headc[1] + 0.004, Pp[i * 3 + 2] - headc[2] - 0.022);
-      len[i] *= 1 - spec.face * (1 - smooth(0.03, 0.075, d));
+      const fr = spec.faceR || 1;                   // (a bigger face: the dog's)
+      len[i] *= 1 - spec.face * (1 - smooth(0.03 * fr, 0.075 * fr, d));
+    }
+    if (spec.eyeClear && eyes) for (const e of eyes) {        // the hair round the eyes kept short, so the eyes show clearly
+      const d = Math.hypot(Pp[i * 3] - e[0], Pp[i * 3 + 1] - e[1], Pp[i * 3 + 2] - e[2]);
+      len[i] *= 1 - spec.eyeClear * (1 - smooth(0.014, 0.034, d));
     }
   }
   const furTris = [];
@@ -272,7 +277,7 @@ function addFur(g, src, spec, headc) {
   const si = new Uint8Array(total * 4), sw = new Uint8Array(total * 4), furT = new Float32Array(total), furLen = new Float32Array(total);
   const fs = new Float32Array(total), fh = new Float32Array(total), comb = new Float32Array(total).fill(spec.comb || 0);
   const style = new Float32Array(total * 4);
-  for (let i = 0; i < total; i++) { style[i * 4] = spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.fluff ? -spec.fluff : spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
+  for (let i = 0; i < total; i++) { style[i * 4] = spec.locks && spec.crisp ? -spec.crisp : spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.fluff ? -spec.fluff : spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
   const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
   const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array, FU = A('featherUV').array;
   const fp = new Float32Array(total * 4), fm = new Float32Array(total), fu = new Float32Array(total * 3);
@@ -442,9 +447,12 @@ function birdMaterial(indoor, goose) {
               // (from blue, the average of length squared): the longest strands still show, thinly, instead of the fluff
               // shrinking to its average length (smooth blobs, a fleece)
               float lt = log2(tpp), spread = sqrt(max(hair.b - hair.g * hair.g, 0.0)) * 3.46;
-              float near = clamp((hair.g - vFur) / (0.05 + 0.05 * min(lt, 5.0)) + 0.5, 0.0, 1.0);
+              // (crisp, the dog's: a sharper edge kept to further away, so his long coat reads as strands, not a haze; the
+              // Silkies, foxes and chicks have none: x is their clump, never below 0)
+              float crisp = max(0.0, -vStyle.x);
+              float near = clamp((hair.g - vFur) / ((0.05 + 0.05 * min(lt, 5.0)) * (1.0 - 0.75 * crisp)) + 0.5, 0.0, 1.0);
               float far = clamp((hair.g - vFur) / max(spread, 0.07) + 0.5, 0.0, 1.0);
-              float cov = mix(near, far, smoothstep(2.5, 4.0, lt));
+              float cov = mix(near, far, smoothstep(2.5 + 2.5 * crisp, 4.0 + 2.5 * crisp, lt));
               if (cov < furCut) discard;
               #ifdef SOFT_FUR
               diffuseColor.a = cov;

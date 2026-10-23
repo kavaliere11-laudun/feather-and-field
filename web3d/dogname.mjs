@@ -2,13 +2,16 @@
 // be, and that it's kept after a reload: node dogname.mjs [OUT_prefix]   (LANG=fr for French)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [out] = process.argv.slice(2), FR = process.env.LANG === 'fr';
-const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
 const errs = [], url = 'http://localhost:' + (process.env.PORT || 8770) + '/index.html?lineup=dog' + (FR ? '&lang=fr' : '');
-// each load in a fresh tab of the same browser (the same saved name): leaving a page in the test browser can take minutes
-let p = null;
+// each load in a fresh test browser carrying over what the last one saved (the dog's name): leaving or even closing a page
+// in the test browser can hold up the next one for minutes
+let b = null, ctx = null, p = null;
 const load = async () => {
-  const old = p; p = await ctx.newPage(); if (old) old.close().catch(() => {});
+  let state;
+  if (b) { state = await ctx.storageState(); const old = b; old.close().catch(() => {}); }
+  b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, storageState: state });
+  p = await ctx.newPage();
   p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => { errs.push('dialog ' + d.message()); d.dismiss(); });
   await p.goto(url, { timeout: 120000, waitUntil: 'domcontentloaded' }); await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 30); f.draw(); }); };

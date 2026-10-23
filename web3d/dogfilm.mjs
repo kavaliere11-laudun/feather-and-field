@@ -1,5 +1,5 @@
 // Frames of the dog line-up (?lineup=dog) at phone size, the page's own view or closer on one dog: node dogfilm.mjs OUT
-// [secs] [fps] [which]   (which: a dog's number 0-5 to follow up close, SIZE the view; LANG=fr)
+// [secs] [fps] [which]   (which: a dog's number 0-5 to follow up close, SIZE the view, HEAD=1 on his face alone; LANG=fr)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [out = 'df', secs = '6', fpsArg = '15', which = ''] = process.argv.slice(2);
 const FPS = +fpsArg, PER = Math.round(30 / FPS);
@@ -11,16 +11,17 @@ await p.waitForFunction(() => window.__farm && document.getElementById('loading'
 await p.addStyleTag({ content: '#hint, #readout, #tag, .top { display: none !important; }' });
 await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); });
 for (let n = 0; n < +secs * FPS; n++) {
-  await p.evaluate(([per, w, size]) => {
+  await p.evaluate(([per, w, size, head]) => {
     const f = window.__farm, T = f.THREE; f.step(1 / 30, per);
     if (w !== '') {
-      const d = f.foxLineup().foxes[+w], v = d.root.getWorldPosition(new T.Vector3());
-      const k = 0.3 / Math.tan(42 * Math.PI / 180) * Math.SQRT1_2;
+      const d = f.foxLineup().foxes[+w], v = head ? d.q.bones.head.getWorldPosition(new T.Vector3()) : d.root.getWorldPosition(new T.Vector3());
+      const k = (head ? v.y * 0.62 : 0.3) / Math.tan(42 * Math.PI / 180) * Math.SQRT1_2;
+      if (head) for (const o of f.foxLineup().foxes) if (o !== d) { o.root.visible = false; o.shadow.visible = false; }
       window.__c = window.__c || [v.x, v.z]; window.__c[0] += (v.x - window.__c[0]) * 0.15; window.__c[1] += (v.z - window.__c[1]) * 0.15;
       f.lookAt(window.__c[0] - k, window.__c[1] - k, size);
     }
     f.draw();
-  }, [PER, which, +(process.env.SIZE || 0.9)]);
+  }, [PER, which, +(process.env.SIZE || 0.9), !!process.env.HEAD]);
   await p.screenshot({ path: `${out}_${String(n).padStart(4, '0')}.png`, timeout: 120000 });
 }
 console.log('frames', +secs * FPS, 'errors', errs);
