@@ -4,10 +4,13 @@ import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [out] = process.argv.slice(2), FR = process.env.LANG === 'fr';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
-const p = await ctx.newPage();
-const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => { errs.push('dialog ' + d.message()); d.dismiss(); });
-const url = 'http://localhost:' + (process.env.PORT || 8770) + '/index.html?lineup=dog' + (FR ? '&lang=fr' : '');
-const load = async () => { await p.goto(url, { timeout: 120000, waitUntil: 'domcontentloaded' }); await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
+const errs = [], url = 'http://localhost:' + (process.env.PORT || 8770) + '/index.html?lineup=dog' + (FR ? '&lang=fr' : '');
+// each load in a fresh tab of the same browser (the same saved name): leaving a page in the test browser can take minutes
+let p = null;
+const load = async () => {
+  const old = p; p = await ctx.newPage(); if (old) old.close().catch(() => {});
+  p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => { errs.push('dialog ' + d.message()); d.dismiss(); });
+  await p.goto(url, { timeout: 120000, waitUntil: 'domcontentloaded' }); await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 30); f.draw(); }); };
 await load();
 let ok = true; const check = (what, pass, info = '') => { ok = ok && pass; console.log(pass ? 'PASS' : 'FAIL', what, info); };
