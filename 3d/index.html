@@ -47,6 +47,21 @@
   body.inside .top { display: none; }
   #fade { position: fixed; inset: 0; background: #0d1320; opacity: 0; pointer-events: none; transition: opacity .28s; }
   #fade.on { opacity: 1; }
+  /* the farm dog's name: a button after tapping him, and a little card to type a new one in */
+  #dogbtn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
+            padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; white-space: nowrap;
+            max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+  #dogname { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translateX(-50%); width: min(340px, calc(100vw - 32px));
+             background: var(--meringue); border-radius: 18px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(30, 52, 38, 0.25);
+             display: flex; flex-direction: column; gap: 10px; margin: 0; z-index: 5; }
+  #dogname label { font-weight: 800; font-size: 15px; }
+  #dogname input { font: inherit; font-size: 17px; font-weight: 700; padding: 10px 12px; border-radius: 12px; border: 2px solid rgba(30, 52, 38, 0.22);
+                   background: #fff; color: var(--ink); width: 100%; -webkit-user-select: text; user-select: text; }
+  #dogname input:focus { outline: none; border-color: var(--meadow); }
+  #dogname .row { display: flex; gap: 10px; justify-content: flex-end; }
+  #dogname .row button { font-size: 16px; padding: 10px 18px; border: 0; cursor: pointer; font-family: inherit; }
+  #dogname-save { background: var(--yolk) !important; }
+  #dogbtn[hidden], #dogname[hidden] { display: none; }
   @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
 </style>
 </head>
@@ -57,11 +72,13 @@
 <div id="inside-top" hidden><span class="pill title" id="inside-title"></span></div>
 <button id="inside-back" class="pill" type="button" hidden>Back to the farm</button>
 <button id="farmerbtn" class="pill" type="button" hidden>Send the farmer</button>
+<button id="dogbtn" class="pill" type="button" hidden></button>
+<form id="dogname" hidden><label for="dogname-in" id="dogname-label"></label><input id="dogname-in" type="text" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"><div class="row"><button type="button" class="pill" id="dogname-cancel"></button><button type="submit" class="pill" id="dogname-save"></button></div></form>
 <div id="fade"></div>
 <div id="hint" role="status"></div>
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792756768"></script>
+<script src="app.js?v=1792763784"></script>
 </body>
 </html>
