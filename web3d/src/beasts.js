@@ -79,7 +79,7 @@ const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector
 export class Quad {
   constructor(name, joints) {
     const M = MODELS[name], P = M.piv;
-    this.name = name; this.S = SIZE[name] || 1.0; this.hy = P.hips[1];
+    this.name = name; this.S = SIZE[name] || 1.0; this.hy = P.hips[1]; this.piv = P;
     this.mesh = new THREE.SkinnedMesh(beastGeometry(name), furMaterial()); furHooks(this.mesh);
     this.mesh.receiveShadow = true;
     this.bones = {}; this.rest = {};
@@ -974,3 +974,6 @@ function moods(f, t) {
   if (m === 'sleepy') { A.lidSoftGoal = 0.42; A.earsGoal = -0.35; A.lookPitchGoal = 0.15; }
   f.mood = m;
 }
+
+// (for the farm dog's day, dog.js: the same animal and moves)
+export { Fox, T, seq, look, playFace, sitWatch, lieDown, yawn, hop, bowAt, tailChase, roll, dizzy };

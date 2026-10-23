@@ -877,3 +877,43 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     forward), pleading (lying with his chin down) or worried (ears back), one up and one down when puzzled (head tilted);
     `lidSoft` and `lidTilt` let a task set them. The line-up's first dog shows six faces in turn (`MOODS`: look,
     puzzled, happy, pleading, intent, sleepy); `dogmoods.mjs OUT` takes a close picture of each.
+
+## Biscuit's day on the farm (23 Oct 17:00, Audrey on his eyes and coat: "Go on all good")
+
+- His kennel (`stylized/beasts.py kennel()`, exported with the den into `models/fauna.glb`; `KENNEL` in both files gives
+  its sizes): honey-coloured planks with grooves, a white trim up the corners and round the arched doorway, a terracotta
+  roof like the farmhouse's with a ridge cap, a cream board over the door; his food bowl (kibble) and water bowl, blue
+  enamel with white rims, beside it. In front of the farmhouse, left of the path, its door turned to the path
+  (`main.js KENNEL_AT`). His name is written on the board (`dog.js nameBoard()`: text drawn on a little picture, so any
+  name is only ever text) and changes when he's renamed. The village grid blocks the kennel and the bowls.
+- `src/dog.js` `FarmDog`: Biscuit is the foxes' animal (`beasts.js` now shares `Fox` and its moves: one body, gait, face
+  and set of moves for all of them), with his own day:
+  - Bedtime 21:30 (before the hens), up at 6:15 (after the rooster). At bedtime he trots home, goes in through the doorway
+    head down, turns round inside, lies down with a yawn and sleeps with his chin on his paws at the door, eyes shut, a
+    "z" floating up now and then. In the morning: eyes open, a yawn, out he comes, a long stretch with a yawn, a shake,
+    a look round.
+  - By day, something different each time (never the same twice running), weighted by the time of day: his rounds (to two
+    coops, where he sits outside the front fence watching the hens with his ears up and his tail sweeping, and one of the
+    farm's corners for a long sniff; trotting there, nose down along the way now and then); a nap in front of his kennel
+    (round on the spot, lies down, dozes 15-35 s, an ear twitching, then a yawn, a stretch and a shake; more after
+    lunch); breakfast (first thing) and a meal now and then: crunching at his food bowl, a lick of the lips, lapping at the
+    water; his ball (picks it up, tosses it with a flick of the head somewhere with room, watches it go crouched and
+    wagging, runs after it, pounces on it with a play bow and picks it up again, two or three times; then carries it home,
+    drops it in its place and lies down by it); playing (a tail chase, a roll in the grass, or zoomies round a loop flat
+    out, ears back, grinning, then a play bow and a pant); sitting and watching the farm; and the geese (below).
+  - The geese: he trots up to 3 m from Gertrude, then creeps in low with the herding stare (crouched, ears up, eyelids set
+    intent, tail down); 1.5 m off he freezes, staring... and Gertrude has had enough: she turns on him, hisses with her
+    wings up and honks, Hector honks along (`GeeseFlock.teasedBy()`). He bounces back ("oh!"), gives her a play bow and
+    zooms off happily. If she wanders off first, he just sits and watches. The geese steer round him as they do round
+    Rusty, and a goose in his way steps aside; he never goes through them.
+  - Getting about: along the village grid (`NavGrid`, as Rusty), over the footbridges' decks, easing off round sharp bends
+    so he doesn't swing wide into things; straight lines only in and out of his kennel and between his bowls.
+  - The ball: red rubber with a white band, held in his mouth on his jaw bone while he carries it; when it flies it falls,
+    bounces, rolls to a stop and comes off whatever it hits (never into anything).
+  - Tap him: he turns to you, hops, play-bows and sits grinning and wagging, with the "Rename" button; asleep, one eye opens
+    and his tail thumps.
+  - `?dog` starts the view on him. `__farm.dog()` for the tests (`force`: what he does next).
+- Tests: `dogday.mjs [minutes] [hour]` (never into anything outside his own kennel and bowls, never through a goose, his
+  ball never into anything or far from home, a varied day, asleep in his kennel at night, up by day; HOUR2/AT set the clock
+  partway, for the morning), `dogfarmfilm.mjs OUT secs fps hour [what] [skip]` (the view following him; HOUR2/AT, GEESE=1),
+  `spotshot.mjs OUT x z size hour` (a still of any spot).

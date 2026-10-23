@@ -538,7 +538,7 @@ export class GeeseFlock {
     const P = opts.pond; this.pc = [P.center[0], P.center[2]]; this.pu = [P.axisU[0], P.axisU[2]]; this.pv = [P.axisV[0], P.axisV[2]];
     this.lu2 = this.pu[0] ** 2 + this.pu[1] ** 2; this.lv2 = this.pv[0] ** 2 + this.pv[1] ** 2;
     this.avoid = opts.avoid || []; this.mouths = opts.mouths || [];
-    this.watch = opts.watch; this.groundY = opts.groundY; this.guarding = false; this.heard = 0;
+    this.watch = opts.watch; this.groundY = opts.groundY; this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
     this.group = new THREE.Group(); scene.add(this.group);
     this.geese = ['embden', 'toulouse'].map(k => {
       const g = new Goose(this.group, k, r); g.flock = this;
@@ -864,8 +864,8 @@ export class GeeseFlock {
   update(dt, hour) {
     this.time += dt; this.scoldOk -= dt;
     this.watchFor(dt, hour);
-    const V = this.watch && this.watch(), fox = V && V.fox && V.fox.root.visible ? V.fox : null;
-    this.near = fox ? [...this.geese, fox] : this.geese;
+    const V = this.watch && this.watch(), fox = V && V.fox && V.fox.root.visible ? V.fox : null, dog = this.dogOf();
+    this.near = [...this.geese, ...(fox ? [fox] : []), ...(dog ? [dog] : [])];          // (steering well clear of the fox, and of Biscuit)
     const [G, H] = this.geese;
     if (!this.trail) this.place(hour);
     if (!this.night(hour) && G.asleep && G.task && G.task.name === 'bed') G.task = null;               // morning: up she gets
@@ -921,11 +921,11 @@ export class GeeseFlock {
       if (can(H, H.pos.x + bx * worst * hm, H.pos.z + bz * worst * hm)) { H.pos.x += bx * worst * hm; H.pos.z += bz * worst * hm; }
       if (can(G, G.pos.x - bx * worst * (1 - hm), G.pos.z - bz * worst * (1 - hm))) { G.pos.x -= bx * worst * (1 - hm); G.pos.z -= bz * worst * (1 - hm); }
     }
-    // and never into the fox (he doesn't look where he's running): a goose in his way steps aside
-    if (fox) for (const g of this.geese) {
-      const dx = g.pos.x - fox.pos.x, dz = g.pos.z - fox.pos.z, d = Math.hypot(dx, dz), min = 0.62;
-      if (d < min && d > 1e-4) {
-        const nx = fox.pos.x + dx / d * min, nz = fox.pos.z + dz / d * min;
+    // and never into the fox (he doesn't look where he's running) or the dog: a goose in his way steps aside
+    for (const o of [fox, dog]) if (o) for (const g of this.geese) {
+      const dx = g.pos.x - o.pos.x, dz = g.pos.z - o.pos.z, d = Math.hypot(dx, dz), min = o === dog ? 0.56 : 0.62;
+      if (d < min && d > 1e-4 && g.wet < 0.3) {
+        const nx = o.pos.x + dx / d * min, nz = o.pos.z + dz / d * min;
         if (!this.nav || this.nav.freeAt(nx, nz)) { g.pos.x = nx; g.pos.z = nz; }
       }
     }
@@ -940,6 +940,16 @@ export class GeeseFlock {
       if (u >= 1) { rp.visible = false; continue; }
       rp.scale.setScalar(0.2 + 0.45 * u); rp.material.opacity = 0.42 * (1 - u) * (1 - u);
     }
+  }
+  // Biscuit creeping up on them with his herding stare (dog.js): Gertrude turns on him, hisses with her wings up and honks,
+  // Hector honks along; he bounces off
+  teasedBy(d) {
+    const [G, H] = this.geese;
+    if (this.guarding || G.asleep || G.wet > 0.1) return;
+    const toD = g => Math.atan2(d.pos.x - g.pos.x, d.pos.z - g.pos.z);
+    G.task = TK.seq('scold', [TK.face(toD(G)), TK.act('scold', 1.9), TK.act('honk', 1.6), TK.act('look', 1)]);
+    if (!H.asleep && H.wet < 0.1) H.task = TK.seq('backoff', [TK.act('look', 0.5), TK.face(toD(H)), TK.act('honk', 2.2), TK.act('look', 1)]);
+    this.scoldOk = Math.max(this.scoldOk, 25); this.teased = (this.teased || 0) + 1;
   }
   ripple(x, z) {
     let rp = this.ripples.find(o => !o.visible);

@@ -278,6 +278,9 @@ fresh(); beasts.den(); light(1)
 import webglb
 webglb.BUDGET['den'] = 3200
 bake_and_export('den')
-write_glb(os.path.join(OUT, 'fauna.glb'), ['den'])
+fresh(); beasts.kennel(); light(1)
+webglb.BUDGET['kennel'] = 3600
+bake_and_export('kennel')
+write_glb(os.path.join(OUT, 'fauna.glb'), ['den', 'kennel'])
 json.dump(dict(joints=JOINTS, models=PIVOTS, stats={k: STATS[k] for k in names}), open(os.path.join(OUT, 'beasts.json'), 'w'), indent=1)
-print('STATS', json.dumps({k: STATS[k] for k in names}), 'den', webglb.STATS.get('den'))
+print('STATS', json.dumps({k: STATS[k] for k in names}), 'den', webglb.STATS.get('den'), 'kennel', webglb.STATS.get('kennel'))

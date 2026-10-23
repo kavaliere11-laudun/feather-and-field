@@ -328,6 +328,88 @@ def den():
     return root
 
 
+# Biscuit's kennel (Blender axes, the door facing +x, ground at z=0): the inside, the doorway and the name board, for the
+# browser (main.js KENNEL): he lies inside with his chin on his paws at the door; his name is written on the board
+KENNEL = dict(x0=-0.5, x1=0.5, half=0.4, wall=0.6, ridge=0.98, door_w=0.38, door_h=0.56, floor=0.06, board=(0.528, 0.0, 0.735), board_size=(0.3, 0.09),
+              bowls=[(0.78, -0.68, 'food'), (0.8, -0.42, 'water')])
+
+
+def prism(name, pts, x0, x1, m):
+    """A flat shape in the y-z plane (pts: [(y, z), ...] round its edge), thick from x0 to x1."""
+    n = len(pts); verts = [(x0, y, z) for (y, z) in pts] + [(x1, y, z) for (y, z) in pts]
+    faces = [tuple(range(n - 1, -1, -1)), tuple(range(n, 2 * n))] + [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+    me = bpy.data.meshes.new(name); me.from_pydata(verts, [], faces); me.update(); me.validate()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    bpy.context.view_layer.update()
+    return o
+
+
+def kennel():
+    """Biscuit's kennel by the farmhouse: honey-coloured planks with a white trim, a terracotta roof like the farmhouse's,
+    an arched doorway, a cream name board over it; his food bowl and water bowl beside it. About 1 x 0.8 m, 1 m tall."""
+    random.seed(9); objs = []; K_ = KENNEL
+    wood_m = mat('kwood', '#c99657', rough=0.8, var=0.08); groove = mat('kgroove', '#8f6534', rough=0.85)
+    trim = mat('ktrim', '#f2ebdd', rough=0.7); roof = mat('kroof', '#c4683f', rough=0.8, var=0.06); ridge_m = mat('kridge', '#9c4f31', rough=0.8)
+    base_m = mat('kbase', '#7a5634', rough=0.9); inside = mat('kinside', '#3a2a1c', rough=1.0); board_m = mat('kboard', '#f6efe0', rough=0.7)
+    x0, x1, hw, wh, rz, fl = K_['x0'], K_['x1'], K_['half'], K_['wall'], K_['ridge'], K_['floor']
+    t = 0.04
+    objs.append(box('kbase', (x1 - x0 + 0.06, 2 * hw + 0.06, fl), ((x0 + x1) / 2, 0, fl / 2), m=base_m, bevel=0.01))
+    objs.append(box('kfloor', (x1 - x0 - 2 * t, 2 * hw - 2 * t, 0.01), ((x0 + x1) / 2, 0, fl + 0.005), m=inside, bevel=0.0))
+    # the walls: back, two sides, the front with its arched doorway
+    objs.append(box('kback', (t, 2 * hw, wh - fl), (x0 + t / 2, 0, (wh + fl) / 2), m=wood_m, bevel=0.006))
+    for sd in (1, -1):
+        objs.append(box('kside', (x1 - x0, t, wh - fl), ((x0 + x1) / 2, sd * (hw - t / 2), (wh + fl) / 2), m=wood_m, bevel=0.006))
+        for k in range(1, 4):                 # the planks' grooves
+            objs.append(box('kgr', (x1 - x0 - 0.04, 0.006, 0.008), ((x0 + x1) / 2, sd * (hw + 0.001), fl + (wh - fl) * k / 4), m=groove, bevel=0.0))
+    dw, dh = K_['door_w'], K_['door_h']; ar = dw / 2
+    front = box('kfront', (t, 2 * hw, wh - fl), (x1 - t / 2, 0, (wh + fl) / 2), m=wood_m, bevel=0.0)
+    cutter = box('kcut', (0.3, dw, dh - ar - fl + 0.02), (x1, 0, fl + (dh - ar - fl) / 2 - 0.01), m=inside, bevel=0.0)
+    arch = cyl('kcuta', ar, 0.3, (x1, 0, dh - ar), rot=(0, math.radians(90), 0), m=inside, verts=20, bevel=0.0)
+    for c in (cutter, arch):
+        md = front.modifiers.new('door', 'BOOLEAN'); md.operation = 'DIFFERENCE'; md.object = c; md.solver = 'EXACT'
+        c.hide_render = True; c.hide_set(True)
+    objs.append(front)
+    # the gables: the front one (and its doorway's arch running up into it) and the back one
+    gpts = [(-hw, wh - 0.002), (hw, wh - 0.002), (0, rz - 0.03)]
+    objs.append(prism('kgable_f', gpts, x1 - t, x1, wood_m)); objs.append(prism('kgable_b', gpts, x0, x0 + t, wood_m))
+    # a white trim round the doorway (up its sides and round the arch) and up the corners
+    for sd in (1, -1):
+        objs.append(box('ktrim_d', (0.012, 0.035, dh - ar - fl), (x1 + 0.004, sd * (ar + 0.017), fl + (dh - ar - fl) / 2), m=trim, bevel=0.004))
+        for xx in (x0, x1):
+            objs.append(box('ktrim_c', (0.03, 0.03, wh - fl), (xx + (0.012 if xx == x1 else -0.012), sd * (hw - 0.012), (wh + fl) / 2), m=trim, bevel=0.004))
+    for k in range(9):                        # the arch's trim: little pieces round it
+        a = math.pi * (k + 0.5) / 9
+        objs.append(box('ktrim_a', (0.012, 0.035, 0.07), (x1 + 0.004, math.cos(a) * (ar + 0.017), dh - ar + math.sin(a) * (ar + 0.017)), rot=(a - math.pi / 2, 0, 0), m=trim, bevel=0.004))
+    # the roof: two sloping boards meeting at the ridge, overhanging all round, and a ridge cap
+    ov, rt = 0.09, 0.035
+    run, rise = hw + ov, rz - wh + 0.02
+    L = math.hypot(run, rise); ang = math.atan2(rise, run)
+    for sd in (1, -1):
+        cy, cz = sd * run / 2, rz - rise / 2 + 0.012
+        objs.append(box('kroof', (x1 - x0 + 2 * ov, L + 0.02, rt), ((x0 + x1) / 2, cy, cz), rot=(sd * -ang, 0, 0), m=roof, bevel=0.008))
+    objs.append(cyl('kridge', 0.028, x1 - x0 + 2 * ov + 0.02, ((x0 + x1) / 2, 0, rz + 0.008), rot=(0, math.radians(90), 0), m=ridge_m, verts=10))
+    # the name board over the door (the browser writes his name on it)
+    bx, by, bz = K_['board']; bw, bh = K_['board_size']
+    objs.append(box('kboard', (0.018, bw, bh), (bx - 0.006, by, bz), m=board_m, bevel=0.006))
+    objs.append(box('kboard_rim', (0.012, bw + 0.02, bh + 0.02), (bx - 0.012, by, bz), m=groove, bevel=0.004))
+    # his bowls: food (kibble) and water
+    enamel = mat('kbowl', '#3f72ad', rough=0.4); rim_m = mat('kbowlrim', '#e9eef4', rough=0.4)
+    kib = mat('kkibble', '#8a5a2c', rough=0.9, var=0.15); water = mat('kwater', '#9fd0ea', rough=0.15)
+    deep = mat('kbowlin', '#2c5688', rough=0.4)
+    for (bx_, by_, kind) in K_['bowls']:
+        objs.append(cyl('kbowl', 0.1, 0.06, (bx_, by_, 0.03), m=enamel, verts=20, r2=0.125, bevel=0.01))
+        objs.append(cyl('kbowlrim', 0.127, 0.012, (bx_, by_, 0.062), m=rim_m, verts=20, bevel=0.004))     # a white rim round the top
+        objs.append(cyl('kbowlin', 0.104, 0.004, (bx_, by_, 0.0695), m=water if kind == 'water' else deep, verts=20, bevel=0.0))     # the inside: water, or the bowl's bottom
+        if kind == 'food':
+            for k in range(16):
+                a = random.uniform(0, math.tau); r = random.uniform(0, 0.075)
+                objs.append(sphere('kkib', 0.016, (bx_ + math.cos(a) * r, by_ + math.sin(a) * r, 0.072 + random.uniform(-0.002, 0.008)), (1.2, 1.0, 0.7), m=kib, seg=6, rings=4))
+    root = empty('kennel')
+    for o in objs:
+        mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+    return root
+
+
 if __name__ == '__main__':
     samples = int(sys.argv[-1]) if sys.argv[-1].isdigit() else 32
     scn = reset()
