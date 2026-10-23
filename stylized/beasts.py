@@ -26,7 +26,12 @@ COATS = {
     'fox': dict(fur='#c4592a', back='#9f4420', white='#efe6d8', black='#2a1f19', eye='#d9982c', nose='#1a1412'),
     # a cub: softer, browner and greyer, lighter round the muzzle
     'cub': dict(fur='#9a6a4a', back='#7d5539', white='#e3d6c3', black='#4a3a30', eye='#5b4a3a', nose='#1e1714'),
+    # Biscuit, a Border Collie: black and white (a white blaze down the face, white muzzle, collar, chest, belly, socks and
+    # tail tip), warm brown eyes
+    'collie': dict(fur='#1c1a1b', back='#151415', white='#f1ede6', black='#0f0e0f', eye='#6b4320', nose='#121011'),
 }
+# the shapes: overall size, the head against the body, leg length, muzzle length
+SHAPES = {'fox': dict(S=1.0, HD=1.0, LG=1.0, MZ=1.0), 'cub': dict(S=0.56, HD=1.38, LG=0.82, MZ=0.62), 'collie': dict(S=1.08, HD=1.08, LG=1.22, MZ=0.8)}
 
 
 def part(o, joint, paint='keep', col=None):
@@ -54,7 +59,7 @@ def surface(o, centre, d):
     return (Vector(loc), Vector(nrm)) if hit else (centre + d * 0.05, d)
 
 
-def ear_shell(name, w, h, cup, thick, front, m, parent, u0=-1.0, u1=1.0, lift=0.0):
+def ear_shell(name, w, h, cup, thick, front, m, parent, u0=-1.0, u1=1.0, lift=0.0, fold=0.0, fold_at=0.55):
     """One side of a fox's ear: a rounded triangle cupped like a shell, base at the origin, rising along +z, opening towards
     +x. front=True is the inside of the ear (facing +x), False the back; the two meet along the rim. u0..u1: only that strip
     across the ear (-1 one edge, 1 the other); lift: that far in front of the inside (a layer over it)."""
@@ -68,7 +73,11 @@ def ear_shell(name, w, h, cup, thick, front, m, parent, u0=-1.0, u1=1.0, lift=0.
             bow = (1 - u * u)
             xf = -cup * bow * (0.35 + 0.65 * math.sin(math.pi * min(1.0, v * 1.15)))   # hollow in the middle, flat at the rim
             x = xf + lift * math.sqrt(max(0.0, bow)) if front else xf - thick * math.sqrt(max(0.0, bow)) * (1 - 0.6 * v)
-            verts.append((x, u * half, v * h - 0.12 * h * bow * (1 - v)))           # the base curves down at its middle
+            zz = v * h - 0.12 * h * bow * (1 - v)                                    # the base curves down at its middle
+            if fold and v > fold_at:                     # a tipped ear (a collie's): the top folds forward, bending over smoothly
+                a = fold * min(1.0, (v - fold_at) / 0.22); zc = fold_at * h; dz = zz - zc
+                x, zz = x + dz * math.sin(a), zc + dz * math.cos(a)
+            verts.append((x, u * half, zz))
     for j in range(nv):
         for i in range(nu):
             a = j * (nu + 1) + i; b = a + 1; c = a + nu + 1; d = c + 1
@@ -81,19 +90,19 @@ def ear_shell(name, w, h, cup, thick, front, m, parent, u0=-1.0, u1=1.0, lift=0.
 
 def fox(kind='fox', seed=1):
     """A fox standing at the origin, facing +x. kind 'fox' (grown, about 0.55 m to the top of the head) or 'cub' (a little
-    over half that, with a bigger head, shorter legs and muzzle, and bigger eyes)."""
+    over half that, with a bigger head, shorter legs and muzzle, and bigger eyes); or 'collie': Biscuit the farm dog, a
+    Border Collie on the same frame (longer legs, a deeper chest, a broad head with a shorter muzzle, round brown eyes,
+    tipped ears, a long low plumed tail)."""
     random.seed(seed); breeds._mats.clear()
-    cub = kind == 'cub'
-    S = 0.56 if cub else 1.0                      # overall size
-    HD = 1.38 if cub else 1.0                     # the head's size against the body
-    LG = 0.82 if cub else 1.0                     # leg length
-    MZ = 0.62 if cub else 1.0                     # muzzle length
-    C = COATS['cub' if cub else 'fox']
+    cub, dog = kind == 'cub', kind == 'collie'
+    SH = SHAPES[kind if kind in SHAPES else 'fox']
+    S, HD, LG, MZ = SH['S'], SH['HD'], SH['LG'], SH['MZ']      # overall size, the head against the body, leg and muzzle length
+    C = COATS[kind if kind in COATS else 'fox']
     coat = flat(kind + '_coat', C['fur'], 0.85)
     black = flat(kind + '_black', C['black'], 0.8); nose = flat(kind + '_nose', C['nose'], 0.35)
-    iris = flat(kind + '_iris', '#c98a2e' if not cub else '#7c5c34', 0.12); pupil = flat('fpupil', '#0b0907', 0.05); glint = flat('fglint', '#ffffff', 0.1)
+    iris = flat(kind + '_iris', C['eye'] if dog else '#c98a2e' if not cub else '#7c5c34', 0.12); pupil = flat('fpupil', '#0b0907', 0.05); glint = flat('fglint', '#ffffff', 0.1)
     rim = flat('frim', '#17110d', 0.4)
-    inner = flat(kind + '_inner', '#e6d6c2', 0.8); hollow = flat(kind + '_hollow', '#3b2c25', 0.9)
+    inner = flat(kind + '_inner', '#2e2a2a' if dog else '#e6d6c2', 0.8); hollow = flat(kind + '_hollow', '#6a5250' if dog else '#3b2c25', 0.9)
     root = empty(kind)
     P = lambda x, y, z: Vector((x * S, y * S, z * S))
     hy = 0.34 * LG + 0.03                          # height of the back (legs shorter on a cub)
@@ -103,6 +112,12 @@ def fox(kind='fox', seed=1):
          ('ELLIPSOID', tuple(P(-0.15, 0, hy)), 0.108 * S * K, (1.15, 0.9, 0.98), 2.0),
          ('BALL', tuple(P(0.22, 0, hy + 0.07)), 0.082 * S * K, None, 2.0),
          ('BALL', tuple(P(0.27, 0, hy + 0.12)), 0.07 * S * K, None, 2.0)]
+    if dog:                                         # a collie: a deeper chest, a tucked-up waist, a strong neck carried higher
+        E = [('ELLIPSOID', tuple(P(0.13, 0, hy - 0.025)), 0.128 * S * K, (1.25, 0.86, 1.12), 2.0),
+             ('ELLIPSOID', tuple(P(-0.01, 0, hy - 0.002)), 0.1 * S * K, (1.5, 0.84, 0.92), 2.0),      # (a level back)
+             ('ELLIPSOID', tuple(P(-0.15, 0, hy + 0.005)), 0.104 * S * K, (1.15, 0.9, 0.96), 2.0),
+             ('BALL', tuple(P(0.22, 0, hy + 0.08)), 0.085 * S * K, None, 2.0),
+             ('BALL', tuple(P(0.265, 0, hy + 0.135)), 0.072 * S * K, None, 2.0)]
     part(metaball_mesh(kind + '_body', E, res=0.009 * S, m=coat, parent=root), 'chest', 'body', 'fox')
     # ---- head: skull, white cheeks, a tapering muzzle, nose
     hc = P(0.335, 0, hy + 0.19) if not cub else P(0.31, 0, hy + 0.2)
@@ -112,6 +127,12 @@ def fox(kind='fox', seed=1):
          ('ELLIPSOID', tuple(h(-0.004, -0.05, -0.03)), 0.042 * S * HD * K, (1.0, 0.9, 0.85), 2.0),
          ('ELLIPSOID', tuple(h(0.07 * MZ, 0, -0.026)), 0.038 * S * HD * K, (1.4, 0.74, 0.66), 2.0),
          ('ELLIPSOID', tuple(h(0.125 * MZ, 0, -0.033)), 0.022 * S * HD * K, (1.6, 0.8, 0.72), 2.0)]
+    if dog:                                         # a collie: a broad rounded skull, a clear stop, a strong blunter muzzle
+        E = [('ELLIPSOID', tuple(h(0, 0, 0.004)), 0.072 * S * HD * K, (1.05, 1.08, 0.88), 2.0),
+             ('ELLIPSOID', tuple(h(0.0, 0.045, -0.028)), 0.04 * S * HD * K, (1.0, 0.85, 0.85), 2.0),
+             ('ELLIPSOID', tuple(h(0.0, -0.045, -0.028)), 0.04 * S * HD * K, (1.0, 0.85, 0.85), 2.0),
+             ('ELLIPSOID', tuple(h(0.072 * MZ, 0, -0.03)), 0.04 * S * HD * K, (1.45, 0.82, 0.7), 2.0),
+             ('ELLIPSOID', tuple(h(0.125 * MZ, 0, -0.036)), 0.026 * S * HD * K, (1.5, 0.92, 0.78), 2.0)]
     head = part(metaball_mesh(kind + '_head', E, res=0.006 * S * HD, m=coat, parent=root), 'head', 'body', 'fox')
     tip = h(0.125 * MZ + 0.033, 0, -0.03)
     # the lower jaw (white, under the muzzle, hinged at the back of the mouth) with the tongue on it; the inside of the mouth
@@ -125,7 +146,7 @@ def fox(kind='fox', seed=1):
     part(keep(sphere(kind + '_nose', 0.0135 * S * HD, tuple(tip), (1.0, 1.2, 0.85), m=nose, parent=root, seg=12, rings=8)), 'head')
     # ---- eyes: almond-shaped and set at the front of the skull, looking forward and a little out: a dark rim round an
     # amber iris (a cub's darker), a slit pupil (a cub's round), a catch-light. Placed on the skull's surface.
-    er = (0.0135 if cub else 0.0112) * S * HD
+    er = (0.0135 if cub else 0.0124 if dog else 0.0112) * S * HD
     for sd in (1, -1):
         d = Vector((0.8, sd * 0.58, 0.16)).normalized()
         at, nrm = surface(head, h(0.02, 0, 0.005), d)
@@ -136,24 +157,24 @@ def fox(kind='fox', seed=1):
         # the rim's front sits just behind the iris's, so it shows only as a dark line round it; the pupil and the catch-light
         # stand a hair proud of the iris so they show
         part(keep(sphere(kind + '_rim', er * 1.14, tuple(dep(-0.08)), (1.34, 0.86, 0.46), rot=rot, m=rim, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
-        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.25, 0.78, 0.5), rot=rot, m=iris, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
-        ps = (0.52, 0.56, 0.5) if cub else (0.24, 0.7, 0.5)
+        part(keep(sphere(kind + '_eye', er, tuple(dep(0.0)), (1.12, 0.92, 0.5) if dog else (1.25, 0.78, 0.5), rot=rot, m=iris, parent=root, seg=14, rings=8)), 'blink' + ('L' if sd > 0 else 'R'))
+        ps = (0.52, 0.56, 0.5) if cub or dog else (0.24, 0.7, 0.5)                  # (a dog's pupil round)
         part(keep(sphere(kind + '_pupil', er, tuple(dep(0.07)), ps, rot=rot, m=pupil, parent=root, seg=10, rings=6)), 'blink' + ('L' if sd > 0 else 'R'))
         up = q @ Vector((0, 1, 0)); across = q @ Vector((1, 0, 0))
         part(keep(sphere(kind + '_glint', er * 0.16, tuple(dep(0.47) + up * er * 0.28 - across * sd * er * 0.22), m=glint, parent=root, seg=6, rings=4)), 'blink' + ('L' if sd > 0 else 'R'))
         pivot('eye' + ('L' if sd > 0 else 'R'), tuple(ec), root); pivot('blink' + ('L' if sd > 0 else 'R'), tuple(ec), root)
         # ---- an ear: a tall cupped triangle, its back black above the base, its inside pale and fluffy, leaning out and back
-        eh, ew = (0.12 if cub else 0.112) * S * HD, (0.048 if cub else 0.045) * S * HD
-        ed = Vector((-0.16, sd * 0.5, 0.85)).normalized()
+        eh, ew = (0.12 if cub else 0.092 if dog else 0.112) * S * HD, (0.048 if cub else 0.04 if dog else 0.045) * S * HD
+        ed = Vector((-0.16, sd * (0.74 if dog else 0.5), 0.66 if dog else 0.85)).normalized()
         eb, _ = surface(head, h(-0.01, 0, 0.0), ed)
         eb = eb - ed * 0.016 * S * HD
-        qe = Euler((math.radians(-sd * 15), math.radians(-8), math.radians(sd * 16)), 'XYZ')
+        qe = Euler((math.radians(-sd * (30 if dog else 15)), math.radians(-8), math.radians(sd * 16)), 'XYZ')
         # the back (coat: black above an orange base), the dark hollow inside, and a strip of pale fluff along each inner edge
         cup, th = 0.022 * S * HD, 0.009 * S * HD
-        pieces = [(False, '_ear', coat, 'crest', 'fox_ear', -1, 1, 0), (True, '_earin', hollow, 'keep', None, -1, 1, 0),
+        pieces = [(False, '_ear', coat, 'down' if dog else 'crest', 'fox_ear', -1, 1, 0), (True, '_earin', hollow, 'keep', None, -1, 1, 0),
                   (True, '_fringeA', inner, 'down', None, -1, -0.68, 0.0015 * S * HD), (True, '_fringeB', inner, 'down', None, 0.68, 1, 0.0015 * S * HD)]
         for front, nm, mm, pnt, col, u0, u1, lift in pieces:
-            e = ear_shell(kind + nm + ('L' if sd > 0 else 'R'), ew, eh, cup, th, front, mm, root, u0, u1, lift)
+            e = ear_shell(kind + nm + ('L' if sd > 0 else 'R'), ew, eh, cup, th, front, mm, root, u0, u1, lift, fold=0.95 if dog else 0.0, fold_at=0.6)
             e.location = tuple(eb); e.rotation_euler = qe
             part(keep(e), 'ear' + ('L' if sd > 0 else 'R'), pnt, col)
         pivot('ear' + ('L' if sd > 0 else 'R'), tuple(eb + ed * 0.012 * S * HD), root)
@@ -163,7 +184,8 @@ def fox(kind='fox', seed=1):
         y = sd * 0.062
         sh, el = P(0.15, y, hy - 0.03), P(0.105, y * 1.03, hy - 0.03 - 0.125 * LG)
         wr, pw = P(0.12, y * 1.04, 0.065 * LG + 0.004), P(0.14, y * 1.04, 0.018)
-        E = chain([sh, sh.lerp(el, 0.5), el, el.lerp(wr, 0.5), wr, pw + Vector((0, 0, 0.01 * S))], [0.05, 0.04, 0.03, 0.025, 0.02, 0.019], S) + \
+        lr = [0.054, 0.044, 0.034, 0.029, 0.024, 0.022] if dog else [0.05, 0.04, 0.03, 0.025, 0.02, 0.019]     # (a dog's legs a little sturdier)
+        E = chain([sh, sh.lerp(el, 0.5), el, el.lerp(wr, 0.5), wr, pw + Vector((0, 0, 0.01 * S))], lr, S) + \
             [('ELLIPSOID', tuple(pw + Vector((0.012 * S, 0, -0.002 * S))), 0.022 * S * K, (1.5, 0.95, 0.62), 2.0)]
         part(metaball_mesh(kind + '_leg' + F, E, res=0.006 * S, m=coat, parent=root), F + 'u', 'legfeather', 'fox_leg')
         pivot(F + 'u', tuple(sh), root); pivot(F + 'l', tuple(el), root); pivot(F + 'w', tuple(wr), root); pivot(F + 'p', tuple(pw), root)
@@ -174,13 +196,17 @@ def fox(kind='fox', seed=1):
         # and a little forward to the paw: the bend you see points backwards, as on a dog)
         hip, kn = P(-0.15, y, hy - 0.015), P(-0.142, y * 1.04, hy - 0.015 - 0.065 * LG)
         hk, pw = P(-0.248, y * 1.04, 0.135 * LG), P(-0.205, y * 1.04, 0.018)
-        E = chain([hip, hip.lerp(kn, 0.5), kn, kn.lerp(hk, 0.5), hk, pw + Vector((0, 0, 0.01 * S))], [0.05, 0.04, 0.03, 0.024, 0.02, 0.017], S) + \
+        lr = [0.054, 0.044, 0.034, 0.028, 0.024, 0.021] if dog else [0.05, 0.04, 0.03, 0.024, 0.02, 0.017]
+        E = chain([hip, hip.lerp(kn, 0.5), kn, kn.lerp(hk, 0.5), hk, pw + Vector((0, 0, 0.01 * S))], lr, S) + \
             [('ELLIPSOID', tuple(hip.lerp(kn, 0.7) + Vector((-0.01 * S, 0, 0))), 0.062 * S * K, (1.25, 0.62, 1.0), 2.0),      # the haunch, over the knee
              ('ELLIPSOID', tuple(pw + Vector((0.012 * S, 0, -0.002 * S))), 0.022 * S * K, (1.5, 0.95, 0.62), 2.0)]
         part(metaball_mesh(kind + '_leg' + H, E, res=0.006 * S, m=coat, parent=root), H + 'u', 'legfeather', 'fox_leg')
         pivot(H + 'u', tuple(hip), root); pivot(H + 'k', tuple(kn), root); pivot(H + 'l', tuple(hk), root); pivot(H + 'p', tuple(pw), root)
     # ---- the brush: big and bushy in four bones, rising from the hips, arching down and back, the white tip turning up
-    if not cub:
+    if dog:                                         # a collie's tail: long, carried low, plumed, an upward sweep at the tip
+        tl = [P(-0.205, 0, hy + 0.01), P(-0.29, 0, hy - 0.055), P(-0.345, 0, hy - 0.15), P(-0.37, 0, hy - 0.245), P(-0.36, 0, hy - 0.32), P(-0.315, 0, hy - 0.36)]
+        rad = [0.028, 0.034, 0.038, 0.037, 0.031, 0.02]
+    elif not cub:
         tl = [P(-0.205, 0, hy + 0.03), P(-0.33, 0, hy - 0.005), P(-0.45, 0, hy - 0.075), P(-0.56, 0, hy - 0.14), P(-0.655, 0, hy - 0.17), P(-0.74, 0, hy - 0.16)]
         rad = [0.033, 0.052, 0.066, 0.068, 0.058, 0.036]
     else:

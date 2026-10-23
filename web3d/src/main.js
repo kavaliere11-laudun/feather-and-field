@@ -16,7 +16,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
-import { initBeasts, FoxFamily, FoxLineup } from './beasts.js';
+import { initBeasts, DogLineup, FoxFamily, FoxLineup } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 
@@ -317,7 +317,7 @@ async function start() {
   buildProps();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup') && !['foxes', 'geese'].includes(params.get('lineup'))) buildLineup();
+  if (params.has('lineup') && !['foxes', 'geese', 'dog'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   buildFoxes(beastsInfo.joints);
   buildGeese();
@@ -759,6 +759,7 @@ const foxBtn = document.getElementById('foxbtn');
 const foxGroups = () => [foxes, foxLineup].filter(g => g && (g.visible() || (nightVisit && g === foxes && nightVisit.active())));
 function buildFoxes(joints) {
   if (params.get('lineup') === 'foxes') foxLineup = new FoxLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, joints, rng(31));
+  if (params.get('lineup') === 'dog') foxLineup = new DogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, joints, rng(33), dogName);
   // round the meadow: the bushes and tree trunks they walk round
   const obstacles = [];
   for (const b of V.bushes) if (Math.hypot(b.pos[0] - FOX_FIELD[0], b.pos[2] - FOX_FIELD[1]) < 7) obstacles.push([b.pos[0], b.pos[2], 0.5 * (b.s || 1)]);
@@ -773,6 +774,52 @@ function buildFoxes(joints) {
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = nightVisit && nightVisit.active() ? nightVisit.fox.pos.clone().sub(new THREE.Vector3(0.3, 0, 0.3)) : foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
 let foxHinted = false;
+
+// ------------------------------------------------------------------ the farm dog's name: Biscuit, unless the player chooses another.
+// Checked as the game checks every name (no control characters or < >, spaces tidied, at most 20 letters), kept in this
+// browser only, and always shown as plain text. Tap the dog, then "Rename Biscuit".
+const DOG_KEY = 'ff3d.dogName', DOG_DEFAULT = 'Biscuit';
+function cleanName(s, fallback) {
+  const v = Array.from(String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f-\u009f<>]/g, '').replace(/\s+/g, ' ').trim()).slice(0, 20).join('').trim();
+  return v || fallback;
+}
+function loadDogName() { try { return cleanName(localStorage.getItem(DOG_KEY), DOG_DEFAULT); } catch (e) { return DOG_DEFAULT; } }
+let dogName = loadDogName();
+const DOG_TEXT = { rename: ['Rename {n}', 'Renommer {n}'], label: ["Your dog's name", 'Le nom de votre chien'], save: ['Save', 'Enregistrer'], cancel: ['Cancel', 'Annuler'],
+  named: ['Your dog is called {n}', 'Votre chien s’appelle {n}'] };
+const dogT = (k, n) => DOG_TEXT[k][LANG === 'fr' ? 1 : 0].replace('{n}', n || '');
+const dogEls = { btn: document.getElementById('dogbtn'), form: document.getElementById('dogname'), input: document.getElementById('dogname-in'),
+  label: document.getElementById('dogname-label'), save: document.getElementById('dogname-save'), cancel: document.getElementById('dogname-cancel') };
+let dogBtnLeft = 0;
+const dogs = () => foxGroups().flatMap(g => g.foxes.filter(f => f.role === 'dog'));
+function setDogName(n) {
+  dogName = cleanName(n, DOG_DEFAULT);
+  try { if (dogName === DOG_DEFAULT) localStorage.removeItem(DOG_KEY); else localStorage.setItem(DOG_KEY, dogName); } catch (e) { /* (private browsing: just for now) */ }
+  for (const G of [foxes, foxLineup]) if (G) for (const f of G.foxes) if (f.role === 'dog') f.rename(dogName);
+}
+function dogTapped() {                       // after tapping him: a button to rename him, for a few seconds
+  if (!dogEls.btn || !dogEls.form.hidden || (farmerBtn && !farmerBtn.hidden)) return;
+  dogEls.btn.textContent = dogT('rename', dogName); dogEls.btn.hidden = false; dogBtnLeft = 6;
+}
+function tickDogBtn(dt) { if (dogBtnLeft > 0 && (dogBtnLeft -= dt) <= 0 && dogEls.btn) dogEls.btn.hidden = true; }
+function openDogName() {
+  dogEls.btn.hidden = true; dogBtnLeft = 0;
+  dogEls.label.textContent = dogT('label'); dogEls.save.textContent = dogT('save'); dogEls.cancel.textContent = dogT('cancel');
+  dogEls.input.value = dogName; dogEls.input.placeholder = DOG_DEFAULT; dogEls.form.hidden = false;
+  tag.classList.remove('on'); tagBird = null; fieldTag = 0;                    // (his label off, out of the card's way)
+  dogEls.input.focus(); dogEls.input.select();
+}
+function closeDogName() { dogEls.form.hidden = true; dogEls.input.blur(); }
+if (dogEls.btn) {
+  dogEls.btn.addEventListener('click', openDogName);
+  dogEls.cancel.addEventListener('click', closeDogName);
+  dogEls.form.addEventListener('submit', e => {
+    e.preventDefault(); setDogName(dogEls.input.value); closeDogName();
+    const d = dogs()[0]; tag.textContent = dogT('named', dogName);
+    if (d) { tagBird = d; tagLeft = 3.2; } else { tagBird = null; fieldTag = 0; }
+    tag.classList.add('on'); wake(800);
+  });
+}
 
 // ------------------------------------------------------------------ the geese (geese.js): Gertrude and Hector live round the pond in
 // the middle of the village. ?geese starts the view on them.
@@ -1847,6 +1894,7 @@ function tapAt(x, y) {
     return;
   }
   if (best.fam) best.fam.tapped(best); else if (best.isGoose) best.tapped(VIEW_DIR); else best.tapped();
+  if (best.role === 'dog') dogTapped();
   tagBird = best; tagLeft = 2.8;
   tag.textContent = best.label;
   tag.classList.add('on');
@@ -2101,7 +2149,7 @@ function frame(now) {
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
-  placeTag(dt);
+  placeTag(dt); tickDogBtn(dt);
   if (!frozen) WIND.time.value = now / 1000;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -2163,7 +2211,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes, foxLineup: () => foxLineup, geeseLineup: () => geeseLineup, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
+  foxes: () => foxes, foxLineup: () => foxLineup, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },

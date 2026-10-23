@@ -833,3 +833,28 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   Then a ta-da: wings flung wide and beating, a great honk, the tail waggling, Hector beside her doing the same a beat
   later; then they strut off home. A message: "Victory! The geese are so proud of themselves, they're parading round the
   farm." ("Victoire ! Les oies sont si fières d'elles qu'elles paradent dans la ferme.").
+
+## Biscuit the farm dog: his look (23 Oct, Audrey: "Go ahead with the dog", choosing a Border Collie, and "People should be able to choose the name of the dog, the default can be biscuit")
+
+- The model (`stylized/beasts.py` `fox('collie')`, exported with the foxes by `stylized/export_beasts.py ../web3d/models` into
+  `models/beasts.glb`; 7200 triangles): a Border Collie on the fox's frame and bones (same 26 joints, so every fox move works
+  for him), 1.08 times a fox's size, longer and a little sturdier legs, a deeper chest and a level back, a strong neck, a
+  broad rounded skull with a clear stop and a blunter muzzle, round brown eyes (a little bigger than a fox's) with a catch
+  light, semi-pricked ears set wide on the skull with their tips folding forward, a long low plumed tail.
+- His coat (`export_beasts.py`, `dog`): black with a narrow white blaze up between the eyes widening over the muzzle, the
+  eyes and cheeks kept black round them, white muzzle, chin and throat, a full white collar, white chest, belly and socks
+  (front legs from the elbow, hind from the hock), a white tail tip; the ears black, darker pink-grey inside. Fur
+  (`FUR.collie` in `beasts.js`): a long silky coat with a thick ruff round the neck and chest, feathering down the legs, a
+  plumed tail; short on the face so the eyes stay clear.
+- He carries his head up, alert (a fox holds his lower); not when bowing, lying with his chin down or on his back.
+- His name: Biscuit, unless the player chooses another. Tap him: his label ("Biscuit · Border Collie", French "Biscuit ·
+  border collie") and a "Rename Biscuit" button ("Renommer Biscuit") for 6 s; it opens a little card ("Your dog's name" /
+  "Le nom de votre chien", Save / Enregistrer, Cancel / Annuler); saving shows "Your dog is called …" ("Votre chien
+  s'appelle …"). Security: the name goes through `cleanName()`, the game's own name check (no control characters or `<` `>`,
+  spaces tidied, at most 20 letters, empty means Biscuit), on saving and again on loading; it's kept in this browser only
+  (`localStorage` `ff3d.dogName`, read and written in try/catch, so private browsing still works for the visit) and only
+  ever shown as plain text (`textContent`). When the dog joins the game's save, the same check goes in the save's checks.
+- `?lineup=dog`: six of him in a few poses for a close look (standing, sitting, a play bow, lying down, happy (wagging,
+  grinning, a tilt of the head), trotting round a little ring). Tap one: a hop and a play bow.
+- Tests: `dogname.mjs [OUT]` (the name: tap, rename, the checks, kept after a reload, no pop-ups; LANG=fr), `dogshot.mjs
+  OUT which heading size steps` (close pictures, HEAD=1 on his face), `dogfilm.mjs OUT secs fps [which]`.

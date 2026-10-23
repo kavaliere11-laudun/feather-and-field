@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { addFur, R, furMaterial, furHooks, indoorMaterial } from './birds.js';
 
 let MODELS = {};
+const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
 export function initBeasts(gltf, json) {
   MODELS = {};
   for (const child of gltf.scene.children) {
@@ -23,7 +24,12 @@ const FUR = {
          comb: 0.7, under: 0.7, face: 0.5, locks: 0.11 },
   cub: { len: { [R.body]: 0.027, [R.crest]: 0.008, [R.tail]: 0.042, [R.legfeather]: 0.012, [R.down]: 0.016 }, shells: 12, droop: 0.15, clump: 0.35, fine: 1.05, wave: 0.7,
          comb: 0.45, under: 1.0, face: 0.45, locks: 0.075 },
+  // Biscuit the Border Collie: a long silky coat, a thick ruff round the neck and chest, feathering down the backs of the
+  // legs, a plumed tail; short and smooth on the face and the fronts of the legs
+  collie: { len: { [R.body]: 0.05, [R.crest]: 0.007, [R.tail]: 0.075, [R.legfeather]: 0.016, [R.down]: 0.014 }, shells: 12, droop: 0.32, clump: 0.62, fine: 1.0, wave: 0.55,
+         comb: 0.78, under: 0.9, face: 0.55, locks: 0.12 },
 };
+const SIZE = { cub: 0.56, collie: 1.08 };
 function beastGeometry(name) {
   const M = MODELS[name];
   if (M.built) return M.built;
@@ -64,7 +70,7 @@ const _m = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _v = new THREE.Vector
 export class Quad {
   constructor(name, joints) {
     const M = MODELS[name], P = M.piv;
-    this.name = name; this.S = name === 'cub' ? 0.56 : 1.0; this.hy = P.hips[1];
+    this.name = name; this.S = SIZE[name] || 1.0; this.hy = P.hips[1];
     this.mesh = new THREE.SkinnedMesh(beastGeometry(name), furMaterial()); furHooks(this.mesh);
     this.mesh.receiveShadow = true;
     this.bones = {}; this.rest = {};
@@ -146,6 +152,8 @@ export class Quad {
     if (rear > 0) { B.hips.rotation.x -= 1.05 * rear; B.neck.rotation.x += 0.55 * rear; B.head.rotation.x += 0.45 * rear; }
     if (dive > 0) B.neck.rotation.x += 0.35 * dive;
     B.neck.rotation.x += 0.35 * crouch; B.head.rotation.x -= 0.25 * crouch;
+    // a dog carries his head up, alert, where a fox holds his lower (less when bowing, lying with his chin down, on his back)
+    if (this.name === 'collie') { const k = (1 - rolled) * (1 - bow) * (1 - 0.7 * (s.chin || 0) * lie); B.neck.rotation.x -= 0.3 * k; B.head.rotation.x += 0.2 * k; }
     // breathing, and the step's bob (the feet stay down: the legs take it)
     lower -= 0.004 * S * Math.sin(t * 2.2) * (1 - g);
     lower += (0.006 * g * (1 - run) * Math.cos(2 * ph) + 0.022 * run * Math.max(0, Math.sin(ph))) * S * -1;
@@ -305,7 +313,11 @@ class Fox {
     this.blinkIn = r() * 3; this.blinkT = 0; this.twIn = 1 + r() * 4; this.twT = 0;
     this.todo = []; this.task = null; this.pace = 0; this.home = true;
     this.hitR = 0.3 * this.q.S * scale; this.hitY = 0.32 * this.q.S * scale;
-    this.label = name + (kind === 'cub' ? ' · fox cub' : role === 'dad' ? ' · red fox, the dad' : ' · red fox, the mum');
+    this.rename(name);
+  }
+  rename(name) {               // (the dog's name is the player's to choose: main.js checks it before it gets here)
+    const k = this.kind, role = this.role; this.name = name;
+    this.label = name + (role === 'dog' ? ' · ' + (FR ? 'border collie' : 'Border Collie') : k === 'cub' ? ' · fox cub' : role === 'dad' ? ' · red fox, the dad' : ' · red fox, the mum');
   }
   get pos() { return this.root.position; }
   // turn towards a heading: the turn eases in and settles as he lines up (no snapping into a turn, or out of it)
@@ -876,6 +888,35 @@ export class FoxLineup {
     if (p === 'back') return T.wait(6, (f, t) => { f.A.rollGoal = 2.85; f.A.kickGoal = Math.sin(t * 1.3) > 0.4 ? 1 : 0.15; f.A.lookYawGoal = 0.5; });
     if (p === 'rear') return T.wait(6, (f, t) => { f.A.rearGoal = 1; f.A.pawGoal = Math.sin(t * 0.9) > 0 ? 1 : 0.2; });
     return T.wait(6, (f, t) => look(f, t));
+  }
+  update(dt) { for (const f of this.foxes) f.update(dt); }
+  visible() { return true; }
+  centre(v) { return v.copy(this.group.position); }
+  tapped(f) { f.todo.unshift(seq(hop(), bowAt(null, 1.2))); f.task = null; }
+}
+
+// ------------------------------------------------------------------ ?lineup=dog: Biscuit the Border Collie in a few poses, for a close look
+export class DogLineup {
+  constructor(scene, centre, yaw, joints, r, name = 'Biscuit') {
+    this.r = r; this.joints = joints; this.out = true; this.isDogs = true;
+    this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
+    const L = [[-0.5, -1.45, 'stand'], [0.5, -1.45, 'sit'], [-0.5, -0.35, 'bow'], [0.5, -0.35, 'lie'], [-0.5, 0.75, 'happy'], [0, 1.75, 'trot']];
+    this.foxes = L.map(([x, z, pose]) => {
+      const f = new Fox(this, 'collie', name, 'dog', 1, r);
+      f.home = false; f.root.visible = true; f.pos.set(x, 0, z); f.heading = -0.75; f.linePose = pose; f.spot = [x, z]; return f;
+    });
+  }
+  nextTask(f) {
+    const p = f.linePose;
+    if (p === 'sit') return sitWatch(8);
+    if (p === 'lie') return lieDown(10);
+    if (p === 'bow') return T.wait(4, (f, t) => { f.A.bowGoal = 1; f.A.wagGoal = 1; f.A.tailUpGoal = 0.6; playFace(f, 0.7); });
+    if (p === 'happy') return T.wait(6, (f, t) => {             // pleased to see you: tail going, grinning, a tilt of the head
+      f.A.wagGoal = 1; f.A.tailUpGoal = 0.45; playFace(f, 0.9); f.A.squintGoal = 0.3; f.A.headTiltGoal = t % 3 < 1.4 ? 0.3 : 0; f.A.lookPitchGoal = -0.15; });
+    if (p === 'trot') return T.wait(6, (f, t, dt) => {             // round and round a long oval across the bottom row, happily
+      const RX = 0.75, RZ = 0.2, a = Math.atan2((f.pos.x - f.spot[0]) / RX, (f.pos.z - f.spot[1]) / RZ) - 0.5;
+      f.moveTo(f.spot[0] + Math.sin(a) * RX, f.spot[1] + Math.cos(a) * RZ, dt, 'trot', true); f.A.wagGoal = 0.5; f.A.tailUpGoal = 0.25; playFace(f, 0.5); });
+    return T.wait(6, (f, t) => { look(f, t); f.A.wagGoal = Math.sin(t * 0.7) > 0.5 ? 0.8 : 0.2; });
   }
   update(dt) { for (const f of this.foxes) f.update(dt); }
   visible() { return true; }

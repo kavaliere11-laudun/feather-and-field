@@ -15,7 +15,7 @@ from mathutils import Vector
 
 flat_info = g['flat_info']
 JOINTS = beasts.JOINTS
-BEAST_BUDGET = {'fox': 4500, 'cub': 3700}
+BEAST_BUDGET = {'fox': 4500, 'cub': 3700, 'collie': 7200}
 PIVOTS, MODELS, STATS = {}, {}, {}
 
 
@@ -31,8 +31,8 @@ def hexrgb(h):           # a colour as the materials hold it (linear)
 def bake(name, root, budget):
     bpy.context.view_layer.update()
     piv = {o.name.split('.')[0][3:]: Vector(o.matrix_world.translation) for o in bpy.context.scene.objects if o.name.startswith('pv_')}
-    C = {k: hexrgb(v) for k, v in beasts.COATS['cub' if name == 'cub' else 'fox'].items()}
-    S = 0.56 if name == 'cub' else 1.0
+    C = {k: hexrgb(v) for k, v in beasts.COATS[name if name in beasts.COATS else 'fox'].items()}
+    SH = beasts.SHAPES[name if name in beasts.SHAPES else 'fox']; S = SH['S']; dog = name == 'collie'
     dg = bpy.context.evaluated_depsgraph_get(); dg.update()
     objs = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.visible_get() and 'part' in o]
     meshes = []
@@ -112,7 +112,7 @@ def bake(name, root, budget):
             n_ = nrm
             if mode == 'fox':
                 if prt == 'head':
-                    hc = pv['headc']; HD = 1.38 if name == 'cub' else 1.0
+                    hc = pv['headc']; HD = SH['HD']
                     line = hc[2] - 0.014 * S * HD + 0.12 * np.maximum(0, x - hc[0])          # rising a little towards the nose
                     wht = ss(line + 0.003 * S, line - 0.016 * S, z) * ss(hc[0] - 0.075 * S * HD, hc[0] - 0.04 * S * HD, x)
                     dark = ss(0.6, 0.95, n_[:, 2]) * ss(hc[0] + 0.02 * S, hc[0] - 0.02 * S, x) * 0.5
@@ -124,19 +124,38 @@ def bake(name, root, budget):
                         b = ec + np.array([0.045 * S * HD, -sd * 0.006 * S * HD, -0.04 * S * HD], np.float32)
                         ab = b - a; u = np.clip(((p - a) @ ab) / (ab @ ab), 0, 1)
                         dl = np.linalg.norm(p - (a + u[:, None] * ab), axis=1)
-                        mark = np.maximum(mark, (1 - ss(0.0035 * S * HD * (1.4 - u), 0.008 * S * HD * (1.4 - u), dl)) * (1 - 0.6 * u) * 0.9)
+                        if not dog: mark = np.maximum(mark, (1 - ss(0.0035 * S * HD * (1.4 - u), 0.008 * S * HD * (1.4 - u), dl)) * (1 - 0.6 * u) * 0.9)
                 else:
                     belly = ss(-0.2, -0.65, n_[:, 2])
                     bib = ss(0.15, 0.6, n_[:, 0]) * ss(pv['chest'][0] - 0.02 * S, pv['chest'][0] + 0.08 * S, x) * ss(pv['head'][2] + 0.02 * S, pv['head'][2] - 0.04 * S, z)
                     wht = np.maximum(belly, bib)
                     dark = ss(0.45, 0.9, n_[:, 2]) * ss(pv['hips'][0] - 0.1 * S, pv['chest'][0], x) * 0.85
+                if dog:                                     # Biscuit: black with white markings
+                    if prt == 'head':
+                        # a white blaze from the forehead down between the eyes, widening over the muzzle; the muzzle, chin
+                        # and throat white; the rest of the head black
+                        # (a narrow stripe between the eyes, the eyes and cheeks kept black round them: a Border Collie's
+                        # face, not a panda's)
+                        u_ = S * HD; w = 0.006 * u_ + 0.06 * np.maximum(0, x - (hc[0] - 0.02 * u_)) + 0.5 * np.maximum(0, x - (hc[0] + 0.08 * u_))
+                        blaze = (1 - ss(w, w + 0.004 * u_, np.abs(y))) * ss(hc[0] - 0.045 * u_, hc[0] - 0.025 * u_, x) * ss(hc[2] - 0.05 * u_, hc[2] - 0.02 * u_, z)
+                        muzzle = ss(hc[0] + 0.082 * u_, hc[0] + 0.1 * u_, x)
+                        chin = ss(hc[2] - 0.026 * u_, hc[2] - 0.042 * u_, z) * ss(hc[0] - 0.04 * u_, hc[0] - 0.01 * u_, x)
+                        eyes = np.zeros(len(p), np.float32)
+                        for e in ('eyeL', 'eyeR'): eyes = np.maximum(eyes, 1 - ss(0.026 * u_, 0.034 * u_, np.linalg.norm(p - pv[e], axis=1)))
+                        wht = np.maximum(np.maximum(blaze, muzzle), chin) * (1 - eyes); dark = np.zeros(len(p), np.float32)
+                    else:
+                        # a full white collar round the neck, the chest, belly and front white; the back, sides and hips black
+                        collar = ss(pv['chest'][0] + 0.07 * S, pv['chest'][0] + 0.11 * S, x)
+                        chest = ss(0.1, 0.5, n_[:, 0]) * ss(pv['chest'][0] - 0.04 * S, pv['chest'][0] + 0.04 * S, x) * ss(pv['chest'][2] + 0.02 * S, pv['chest'][2] - 0.04 * S, z)
+                        belly = ss(-0.15, -0.55, n_[:, 2]) * ss(pv['hips'][0] - 0.02 * S, pv['hips'][0] + 0.08 * S, x)
+                        wht = np.maximum(np.maximum(collar, chest), belly); dark = np.zeros(len(p), np.float32)
                 base = C['fur'][None, :] * (1 - dark[:, None]) + C['back'][None, :] * dark[:, None]
                 c = base * (1 - wht[:, None]) + C['white'][None, :] * wht[:, None]
                 if prt == 'head':
                     c = c * (1 - mark[:, None]) + C['black'][None, :] * mark[:, None]
                     # the mouth: under the muzzle, from the corner of the mouth to the nose, the roof of the mouth (dark, furless:
                     # the jaw hides it while shut, and opening shows it), edged by a dark lip line along each side
-                    MZ = 0.62 if name == 'cub' else 1.0; u = hc[2] - 0.036 * S * HD
+                    MZ = SH['MZ']; u = hc[2] - 0.036 * S * HD
                     span = ss(hc[0] + 0.004 * S * HD, hc[0] + 0.016 * S * HD, x) * (1 - ss(hc[0] + 0.13 * MZ * S * HD, hc[0] + 0.15 * MZ * S * HD, x))
                     narrow = 1 - ss(0.02 * S * HD, 0.027 * S * HD, np.abs(y))              # between the cheeks, under the muzzle only
                     roof = span * narrow * ss(u - 0.002 * S * HD, u - 0.008 * S * HD, z) * ss(-0.2, -0.5, n_[:, 2])
@@ -152,11 +171,21 @@ def bake(name, root, budget):
                 inner = ss(0.4, 0.8, -np.sign(y) * n_[:, 1]) * (1 - blk) * 0.5        # paler on the inside of the legs
                 c = C['fur'][None, :] * (1 - blk[:, None]) + C['black'][None, :] * blk[:, None]
                 c = c * (1 - inner[:, None]) + C['white'][None, :] * inner[:, None]
+                if dog:                                         # Biscuit's white socks: the front legs from the elbow, the hind from the hock
+                    if L[0] == 'F': wsock = ss(pv[L + 'l'][2] + 0.03 * S, pv[L + 'l'][2] - 0.01 * S, z)
+                    else: wsock = ss(pv[L + 'l'][2] + 0.035 * S, pv[L + 'l'][2] - 0.005 * S, z)
+                    c = C['fur'][None, :] * (1 - wsock[:, None]) + C['white'][None, :] * wsock[:, None]
             elif mode == 'fox_tail':
                 s = along(p, tl) * 3.0 / NT                    # (0..3, as when the brush had three bones)
                 tipw = ss(2.5, 2.78, s); dark = ss(0.3, 0.8, n_[:, 2]) * 0.7 * (1 - tipw) + ss(1.9, 2.4, s) * (1 - tipw) * 0.45
+                if dog: tipw = ss(2.12, 2.42, s); dark = np.zeros(len(p), np.float32)        # (black, a white tip)
                 base = C['fur'][None, :] * (1 - dark[:, None]) + C['back'][None, :] * dark[:, None]
                 c = base * (1 - tipw[:, None]) + C['white'][None, :] * tipw[:, None]
+            elif mode == 'fox_ear' and dog:                          # Biscuit's ears: black all over
+                c = np.zeros((len(p), 3), np.float32) + C['fur'][None, :]
+            elif mode == 'fox_earin' and dog:                        # inside: dark pink-grey skin deep in, fringed with black hair
+                f = (loc[:, 2] - loc[:, 2].min()) / max(1e-6, loc[:, 2].max() - loc[:, 2].min())
+                c = hexrgb('#4a3a38')[None, :] * (1 - ss(0.6, 0.95, f))[:, None] + C['fur'][None, :] * ss(0.6, 0.95, f)[:, None]
             elif mode == 'fox_ear':                                  # the back of the ear: black above an orange base, the tip black
                 f = (loc[:, 2] - loc[:, 2].min()) / max(1e-6, loc[:, 2].max() - loc[:, 2].min())
                 blk = np.maximum(ss(0.62, 0.8, f), ss(0.18, 0.42, f) * 0.92)
@@ -181,7 +210,7 @@ def bake(name, root, budget):
         wt /= np.maximum(1e-6, wt.sum(1, keepdims=True))
         pa_ = np.full(len(p), paint, np.float32)
         if prt == 'head' and mode == 'fox':
-            hc = pv['headc']; HD = 1.38 if name == 'cub' else 1.0
+            hc = pv['headc']; HD = SH['HD']
             face = (x > hc[0] - 0.03 * S * HD) & (z > hc[2] - 0.028 * S * HD)
             pa_ = np.where(face, float(beasts.PAINT['crest']), pa_)
             pa_ = np.where(mouth_roof, 0.0, pa_)
@@ -236,7 +265,7 @@ def write(path, names):
 
 
 names = []
-for k in ('fox', 'cub'):
+for k in ('fox', 'cub', 'collie'):
     fresh(); r = beasts.fox(k, seed=3); light(1)
     bake(k, r, BEAST_BUDGET[k]); names.append(k)
 write(os.path.join(OUT, 'beasts.glb'), names)
