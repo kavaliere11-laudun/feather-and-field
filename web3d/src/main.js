@@ -339,7 +339,7 @@ async function start() {
   view.size = 4.4;
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
-  if (geeseLineup && params.get('lineup') === 'ducks') { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, 0.5))); view.size = 1.25; }
+  if (geeseLineup && params.get('lineup') === 'ducks') { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, 0.5))); view.size = 1.58; }
   else if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
   if (frogLineup) { frogLineup.group.updateMatrixWorld(true); view.target.copy(frogLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.02))); view.size = 0.52; }
   if (geeseFlock && params.has('geese')) { const c = geeseFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.6; }

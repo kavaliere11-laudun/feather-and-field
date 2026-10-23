@@ -152,17 +152,17 @@ def bake(name, root, budget):
                 c = np.zeros((len(p), 3), np.float32) + C['buff']
                 belly = ss(-0.2, -0.7, up)
                 fpat[:, :3] = C['dark'] * (1 - belly[:, None]) + C['brown'] * belly[:, None]
-                fpat[:, 3] = 0.78 - 0.35 * belly; fmode[:] = 2
+                fpat[:, 3] = 0.62 - 0.3 * belly; fmode[:] = 2
                 c = c * (1 - belly[:, None]) + C['belly'][None, :] * belly[:, None]
                 crown = ss(hc[2] + 0.006 * S, hc[2] + 0.016 * S, z) * on
-                stripe = (1 - ss(0.003 * S, 0.0055 * S, np.abs(z - ec[2] - 0.001 * S))) * ss(ec[0] - 0.03 * S, ec[0] - 0.015 * S, x) * (prt == 'head')
+                stripe = (1 - ss(0.0045 * S, 0.0075 * S, np.abs(z - ec[2] - 0.001 * S))) * ss(ec[0] - 0.055 * S, ec[0] - 0.035 * S, x) * (prt == 'head')
                 hd = on * (1 - crown)
                 c = c * (1 - on[:, None]) + C['buff'][None, :] * on[:, None]
                 fpat[:, :3] = fpat[:, :3] * (1 - on[:, None]) + C['brown'][None, :] * on[:, None]; fpat[:, 3] = fpat[:, 3] * (1 - on) + 0.4 * on
                 dk = np.maximum(crown, stripe)
                 c = c * (1 - dk[:, None]) + C['crown'][None, :] * dk[:, None]
                 if isw:
-                    c = c * 0 + C['buff'] * 0.8; fpat[:, :3] = C['wing']; fpat[:, 3] = 0.8; fmode[:] = 2
+                    c = c * 0 + C['wing']; fpat[:, :3] = C['dark']; fpat[:, 3] = 0.3; fmode[:] = 4
             fi = int(o.name.split('.')[1]) if '.' in o.name else 0                   # (which feather of its row: Blender numbers them)
             tert = ('_sec' in nmn and fi % 9 >= 5) or ('_osec' in nmn and fi % 13 < 3)        # the tertials, nearest the body
             if isw and ('_sec' in nmn or '_osec' in nmn) and not tert:      # the speculum: shining blue, a white edge at the tip
@@ -177,7 +177,7 @@ def bake(name, root, budget):
             if paint == PAINT['tail']:
                 if '_curl' in nmn: c = c * 0 + C['black']; fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.15
                 elif name == 'mallard_m': c = c * 0 + C['tailw']; fpat[:, :3] = C['grey'] * 0.7; fpat[:, 3] = 0.5; fmode[:] = 2
-                else: c = c * 0 + C['buff']; fpat[:, :3] = C['dark']; fpat[:, 3] = 0.7; fmode[:] = 2
+                else: c = c * 0 + C['buff']; fpat[:, :3] = C['brown']; fpat[:, 3] = 0.6; fmode[:] = 2
             rnd = np.sin(x * 61.0 + y * 37.0) * np.sin(z * 53.0 - x * 29.0) * np.sin(y * 71.0 + z * 17.0)
             c = c * (1.0 + 0.035 * rnd[:, None])
         elif mode == 'goose':

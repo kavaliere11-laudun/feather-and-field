@@ -83,6 +83,7 @@ const clamp01 = x => Math.min(1, Math.max(0, x));
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const arg = (y, z) => Math.atan2(z, y);             // a direction in a bone's side view (y up, z forward); rotation.x adds to it
 const _m = new THREE.Matrix4(), _v = new THREE.Vector3(), _q = new THREE.Vector3(), _fq = new THREE.Quaternion(), _cq = new THREE.Quaternion(), _X = new THREE.Vector3(1, 0, 0);
+const _hp = new THREE.Vector3(), _ft = new THREE.Vector3(), _mb = new THREE.Matrix4();
 const _j = new THREE.Vector3(), _e = new THREE.Vector3(), _t = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qi = new THREE.Quaternion(), _qr = new THREE.Quaternion();
 
 // the neck's shapes, as each joint's turn (pitch: + leans forward and down; yaw: + to the goose's left; roll), from the
@@ -191,8 +192,11 @@ export class GooseRig {
     const pitch = (s.pitch || 0) + stance * (1 - sit) * (1 - 0.6 * (s.low || 0)) + 0.18 * run * dry + 0.06 * (s.low || 0) - 0.05 * (s.up || 0) - 0.08 * (s.honk || 0) + 0.05 * sit + 0.02 * sw * Math.sin(t * 1.7) - 0.22 * pr;
     const drop = sit * (this.by - 0.115) + 0.012 * g * dry * (1 - Math.abs(Math.cos(ph))) - 0.02 * (s.low || 0) - 0.004 * sw * Math.sin(t * 1.7);
     B.body.position.y -= drop - (s.lift || 0);
-    const ue = clamp01(s.upend || 0);                   // (a duck up-ending: tipped right forward, tail up, head under the water)
-    B.body.rotation.set(pitch + 1.4 * smooth(0, 1, ue), 0.05 * g * dry * Math.sin(ph) * (1 - run), roll, 'YXZ');
+    // a duck up-ending: tipped forward, head and front under the water, only the back end showing (tail cocked up, the
+    // feet kicking at the surface either side); it bobs a little as she paddles to stay down
+    const ue = clamp01(s.upend || 0), ues = smooth(0, 1, ue), UP = (typeof window !== 'undefined' && window.__UP) || {};
+    B.body.position.y -= ues * this.by * ((UP.sink ?? 0.75) + 0.04 * Math.sin(t * 9));
+    B.body.rotation.set(pitch + (UP.tip ?? 1.2) * ues, 0.05 * g * dry * Math.sin(ph) * (1 - run), roll + 0.05 * ues * Math.sin(t * 4.5), 'YXZ');
     // ---- the neck: the shapes blended, turned to look, swaying against the waddle so the head stays steady
     const side = s.side || 1;
     for (const nm of NECK) { const b = B[nm].rotation; b.x = 0; b.y = 0; b.z = 0; }
@@ -235,7 +239,7 @@ export class GooseRig {
     // ---- the tail: on a spring, wagging side to side (a goose's happy shake), up when alert
     const T = this.tail, gy = (s.wag || 0) * 0.38 * Math.sin(t * 11) + 0.08 * g * (1 - (s.swim || 0)) * Math.sin(ph) - 0.06 * turn;
     T.yv += ((gy - T.y) * 140 - T.yv * 10) * dt; T.y += T.yv * dt;
-    B.tail.rotation.set(((s.tailUp || 0) + 0.35 * (s.swim || 0)) * 0.3 + 0.05 * Math.sin(t * 1.3), T.y, 0);       // (+ x lifts it)
+    B.tail.rotation.set(((s.tailUp || 0) + 0.35 * (s.swim || 0)) * 0.3 + 0.05 * Math.sin(t * 1.3) + (UP.tail ?? 0.9) * ues, T.y, 0);       // (+ x lifts it)
     // ---- the legs: each foot on the ground under the hip, stepping (duty: the share of the step on the ground), lifted a
     // little and curled as it swings; under the body when sitting
     const duty = 0.62 - 0.17 * run, stride = s.stride || 0.16, amp = duty * stride / 2 * g;
@@ -248,9 +252,11 @@ export class GooseRig {
       const fx = G.side, fy = G.foot[1] + dy, fz = G.foot[2] + dz - 0.03 * sit;
       B.root.updateMatrix(); B.body.updateMatrix(); _m.multiplyMatrices(B.root.matrix, B.body.matrix).invert();
       _v.set(fx, fy + (sit > 0 ? 0.035 * sit : 0), fz).applyMatrix4(_m);
-      if (ue > 0.01) {                                  // up-ended: the feet paddling behind, in the body's own frame
-        const pz = G.H[1] - 0.6 * (G.L1 + G.L2) + 0.25 * (G.L1 + G.L2) * Math.sin(t * 9 + off), py = G.H[0] - 0.35 * (G.L1 + G.L2);
-        _v.set(G.side, _v.y + (py - _v.y) * ue, _v.z + (pz - _v.z) * ue);
+      if (ue > 0.01) {                                  // up-ended: the feet kicking at the surface, out either side of the tail
+        const LL = G.L1 + G.L2, kick = Math.sin(t * 9 + off);
+        _hp.set(G.side, G.H[0], G.H[1]).applyMatrix4(_mb.multiplyMatrices(B.root.matrix, B.body.matrix));      // (the hip, upright)
+        _ft.set(G.side * (UP.out ?? 2.3), this.by - (UP.fy ?? 0.03) + 0.18 * LL * Math.max(0, kick), _hp.z - (UP.back ?? 0.3) * LL + 0.22 * LL * kick).applyMatrix4(_m);
+        _v.set(_v.x + (_ft.x - _v.x) * ue, _v.y + (_ft.y - _v.y) * ue, _v.z + (_ft.z - _v.z) * ue);
       }
       // the hip swings the leg out to the side as far as the foot is from under it, so a planted foot stays put while the
       // body rolls over it (the waddle, a shake), and the foot is kept flat on the ground, facing the way she does
@@ -396,13 +402,13 @@ export class DuckLineup {
   constructor(scene, centre, yaw, grade, r) {
     this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
     const poses = ['look', 'walk', 'quack', 'preen', 'wings', 'swim', 'upend', 'sleep'];
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.2).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#4a9cc0', roughness: 0.15 }));
-    water.position.set(0, 0.007, -1.25 + 5.5 * 0.5); this.group.add(water); if (grade) grade(water.material);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#4a9cc0', roughness: 0.15 }));
+    water.position.set(0, 0.007, -1.4 + 5.5 * 0.56); this.group.add(water); if (grade) grade(water.material);
     this.ducks = [];
     poses.forEach((p, i) => {
       for (const [k, x] of [['mallard_m', -0.3], ['mallard_f', 0.3]]) {
         const d = new Goose(this.group, k, r);
-        d.pos.set(x, 0, -1.25 + i * 0.5); d.heading = -0.95; d.linePose = p;
+        d.pos.set(x, 0, -1.4 + i * 0.56); d.heading = -0.95; d.linePose = p;
         this.ducks.push(d);
       }
     });

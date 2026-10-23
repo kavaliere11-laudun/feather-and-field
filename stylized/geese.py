@@ -41,7 +41,7 @@ GEESE = {
                                 spec='#2b52ad', specw='#f1efe8', tailw='#e4e1d9', belly='#e3e0d8'),
                       iris='#3a2012', ring='#1c5a34', ringw=1.0, bill='#d8c23d', nail='#2b2a1e', feet='#f08a2c', web='#e0782a'),
     'mallard_f': dict(name='Daisy', S=0.58, BL=0.94, low=0.07, LG=0.62, paunch=False, dewlap=False, neck=0.52, duck=True, drake=False,
-                      coat=dict(brown='#9c7b56', dark='#4e3723', buff='#cdb085', crown='#4a3626', wing='#7f6951', spec='#2b52ad', specw='#f1efe8', belly='#bc9f78'),
+                      coat=dict(brown='#9a7650', dark='#5e4129', buff='#b9945f', crown='#45311f', wing='#7a6550', spec='#2b52ad', specw='#f1efe8', belly='#b39572'),
                       iris='#3a2012', ring='#9c7b56', ringw=1.0, bill='#d27a2c', nail='#3b2b1c', feet='#f08a2c', web='#e0782a', saddle='#4a3a2a'),
 }
 
