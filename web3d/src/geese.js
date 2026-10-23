@@ -77,7 +77,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const clamp01 = x => Math.min(1, Math.max(0, x));
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const arg = (y, z) => Math.atan2(z, y);             // a direction in a bone's side view (y up, z forward); rotation.x adds to it
-const _m = new THREE.Matrix4(), _v = new THREE.Vector3(), _q = new THREE.Vector3();
+const _m = new THREE.Matrix4(), _v = new THREE.Vector3(), _q = new THREE.Vector3(), _fq = new THREE.Quaternion(), _cq = new THREE.Quaternion(), _X = new THREE.Vector3(1, 0, 0);
 const _j = new THREE.Vector3(), _e = new THREE.Vector3(), _t = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qi = new THREE.Quaternion(), _qr = new THREE.Quaternion();
 
 // the neck's shapes, as each joint's turn (pitch: + leans forward and down; yaw: + to the goose's left; roll), from the
@@ -114,6 +114,7 @@ export class GooseRig {
     });
     for (const nm of JOINTS) if (PARENT[nm]) this.bones[PARENT[nm]].add(this.bones[nm]);
     this.mesh.add(this.bones.root);
+    for (const L of ['legL', 'legR']) this.bones[L].rotation.order = 'ZYX';     // (the hip's swing out to the side comes last)
     this.mesh.updateMatrixWorld(true);
     this.mesh.bind(new THREE.Skeleton(list));
     this.mesh.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.35, 0), 0.75);
@@ -236,7 +237,13 @@ export class GooseRig {
       const fx = G.side, fy = G.foot[1] + dy, fz = G.foot[2] + dz - 0.03 * sit;
       B.root.updateMatrix(); B.body.updateMatrix(); _m.multiplyMatrices(B.root.matrix, B.body.matrix).invert();
       _v.set(fx, fy + (sit > 0 ? 0.035 * sit : 0), fz).applyMatrix4(_m);
-      this.reach(L, _v.y, _v.z, curl + 0.6 * sit, pitch);
+      // the hip swings the leg out to the side as far as the foot is from under it, so a planted foot stays put while the
+      // body rolls over it (the waddle, a shake), and the foot is kept flat on the ground, facing the way she does
+      const drop = G.H[0] - _v.y, dx = _v.x - G.side;
+      this.reach(L, G.H[0] - Math.hypot(drop, dx), _v.z, curl + 0.6 * sit, pitch);
+      B[L].rotation.z = Math.atan2(dx, Math.max(0.02, drop));
+      _fq.copy(B.body.quaternion).multiply(B[L].quaternion).multiply(B[L + 'k'].quaternion).invert();
+      B[L + 'f'].quaternion.copy(_fq).multiply(_cq.setFromAxisAngle(_X, curl + 0.6 * sit));
     }
   }
 }

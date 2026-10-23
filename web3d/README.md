@@ -766,3 +766,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
     from any side: game, side, right, front, back, top, az:el; CLEAN=1 hides the rest of the village, DY moves the view up or
     down, NP tries other neck shapes), `geesefilm.mjs OUT poses` (frames of each move with both geese, pose:cycle:start:secs),
     `geesetap.mjs` (tap test, both languages).
+- The shake (23 Oct 10:57, Audrey: "Much better. When they shake, the feet should not move, just the body"): the legs
+  only bent in their own side view, so when the body rolled the feet swung with it (about 10 cm and tilted 12 degrees). Now
+  each hip also swings the leg out to the side as far as the foot is from under it (`legL/R` turn 'ZYX', the side swing
+  last), and each foot is set flat and facing her way whatever the body does: planted feet stay put (half a millimetre)
+  through a shake and the waddle's roll. `shakefeet.mjs` measures it.
