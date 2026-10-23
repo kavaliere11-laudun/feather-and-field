@@ -317,7 +317,7 @@ export class NightVisit {
     if (this.active()) return false;
     const f = this.fox;
     if (!f.home || this.fam.out) return false;
-    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null;
+    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null; this.byGeese = false; this.scare = null;
     const forced = plotIndex !== undefined ? this.coops().find(p => p.index === plotIndex) : null;
     this.target = forced || this.pick([]);
     if (!this.target) return false;
@@ -632,20 +632,27 @@ export class NightVisit {
   // the torch finds Rusty: a jump of surprise, then off home as fast as he can (over the fence if he's in a pen)
   shoo() {
     const f = this.fox, T = this.torch;
-    this.state = 'fleeing'; this.fleeStage = 'startle'; this.note('shoo');
+    this.state = 'fleeing'; this.fleeStage = 'startle'; this.note('shoo'); this.scare = null;
     this.farmer.home = [this.house[0], this.house[1]];
     this.say(this.T('shoo'), new THREE.Vector3(T.pos.x, 1.5, T.pos.y), 2.6);
     f.todo = []; f.task = null;
   }
+  // the geese have come for him (geese.js): the same jump of surprise, facing them, and off home as fast as he can
+  chasedBy(x, z) {
+    if (this.state !== 'out' || !this.fox.root.visible) return false;
+    this.state = 'fleeing'; this.fleeStage = 'startle'; this.scare = [x, z]; this.byGeese = true; this.note('geese');
+    const f = this.fox; f.todo = []; f.task = null;
+    return true;
+  }
   fleeTask() {
-    const self = this, f = this.fox, T = this.torch;
+    const self = this, f = this.fox, T = this.torch, S = this.scare ? { x: this.scare[0], y: this.scare[1] } : T.pos;
     const inPen = this.inPen();
     switch (this.fleeStage) {
       case 'startle': this.fleeStage = 'away'; return { name: 'startle', t: 0, run(f, dt) {
         this.t += dt;
         if (this.t < 0.05) self.fx.pop('bang', self.overHead(f), 0.2, 1.2);
-        if (self.lz == null) f.turnTo(angTo(f.pos.x, f.pos.z, T.pos.x, T.pos.y), dt, 8);
-        else f.A.lookYawGoal = Math.max(-1, Math.min(1, Math.atan2(Math.sin(angTo(f.pos.x, f.pos.z, T.pos.x, T.pos.y) - f.heading), Math.cos(angTo(f.pos.x, f.pos.z, T.pos.x, T.pos.y) - f.heading))));
+        if (self.lz == null) f.turnTo(angTo(f.pos.x, f.pos.z, S.x, S.y), dt, 8);
+        else f.A.lookYawGoal = Math.max(-1, Math.min(1, Math.atan2(Math.sin(angTo(f.pos.x, f.pos.z, S.x, S.y) - f.heading), Math.cos(angTo(f.pos.x, f.pos.z, S.x, S.y) - f.heading))));
         f.A.lookPitchGoal = -0.2;
         if (self.lz != null) { self.lean(f, self.target, self.lz); f.A.lift += Math.sin(clamp01(this.t / 0.4) * Math.PI) * 0.1; }
         else { f.A.lift = Math.sin(clamp01(this.t / 0.4) * Math.PI) * 0.18; f.A.airGoal = this.t < 0.4 ? 0.5 : 0; }
@@ -678,8 +685,9 @@ export class NightVisit {
   }
   finish() {
     const shooed = this.state === 'fleeing';
-    this.ended = shooed ? 'shooed' : this.pecks ? 'pecked' : 'shut';
-    this.hint(this.T(shooed ? 'safe' : this.pecks ? 'feather' : 'allShut'));
+    this.ended = shooed ? (this.byGeese ? 'geese' : 'shooed') : this.pecks ? 'pecked' : 'shut';
+    this.hint(this.T(shooed ? (this.byGeese ? 'geeseSafe' : 'safe') : this.pecks ? 'feather' : 'allShut'));
+    this.byGeese = false; this.scare = null;
     this.note('home ' + this.ended);
     this.state = 'idle'; this.phase = null; this.lz = null;
     if (this.nose) { this.nose.life = 0; this.nose.sp.visible = false; this.nose.type = 'feather'; this.nose = null; }

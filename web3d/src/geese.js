@@ -284,19 +284,23 @@ class Goose {
   moveTo(x, z, dt, pace = 'walk', through = false) {
     const p = this.pos, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
     if (d < 0.05) return true;
-    let sp = { walk: 0.24, hurry: 0.45, run: 0.8 }[pace] || 0.24;
+    let sp = { walk: 0.24, hurry: 0.45, run: 0.8, charge: 1.25 }[pace] || 0.24;
     if (this.wet > 0.5) sp = Math.min(sp, pace === 'walk' ? 0.16 : 0.3);
     let ax = dx / d, az = dz / d, slow = 1;
-    for (const o of this.flock ? this.flock.geese : []) {
-      if (o === this) continue;
-      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = 0.46;
+    for (const o of this.flock ? this.flock.near : []) {
+      if (o === this || (!o.isGoose && pace === 'charge')) continue;        // (charging at the fox: straight at him)
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? 0.46 : 0.85;      // (the fox: well clear)
       if (rd > R + 0.45 || rd > d + R) continue;
       const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.2) continue;
       const k = Math.min(1, (R + 0.45 - rd) / 0.55) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.2 * k;
       const c = Math.cos(th), sn = Math.sin(th); [ax, az] = [ax * c - az * sn, ax * sn + az * c];
       if (rd < R * 1.15 && ahead > 0.6) slow = Math.min(slow, Math.max(0, (rd - R * 0.85) / (R * 0.3)));
     }
-    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' ? 4.5 : 3.2);
+    // (bending round the others never into anything: if the bent way is blocked just ahead and the straight way isn't,
+    // straight on)
+    const nav = this.flock && this.flock.nav;
+    if (nav && (ax !== dx / d || az !== dz / d) && !nav.freeAt(p.x + ax * 0.3, p.z + az * 0.3) && nav.freeAt(p.x + dx / d * 0.3, p.z + dz / d * 0.3)) { ax = dx / d; az = dz / d; }
+    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' || pace === 'charge' ? 4.5 : 3.2);
     let want = sp * (off > 1.2 ? 0.12 : off > 0.6 ? 0.5 : 1) * slow;
     if (!through) want = Math.min(want, Math.sqrt(2 * 1.2 * Math.max(0, d - 0.03)) + 0.04);
     this.spd += Math.max(-2.5 * dt, Math.min(1.6 * dt, want - this.spd)); this.moved = true;
@@ -343,7 +347,7 @@ class Goose {
       // in the pond: lower and lower as she wades in, floating once it's deep (the water hides her feet, paddling)
       this.wet = this.flock.wetAt(this.pos.x, this.pos.z);
       A.swim += (smooth(0.35, 0.85, this.wet) - A.swim) * Math.min(1, dt * 4);
-      this.pos.y = -this.wet * (this.rig.by - 0.037);
+      this.pos.y = (this.flock.groundY ? this.flock.groundY(this.pos.x, this.pos.z) : 0) - this.wet * (this.rig.by - 0.037);      // (up over a footbridge)
     } else {
       ease('walk', 6); ease('run', 4);
       A.phase += dt * (A.walk || 0) * (6 + 6 * (A.run || 0));
@@ -461,10 +465,16 @@ export const ACT = {
   scold(g, u) { const A = g.A; A.lowGoal = 0.85; A.wingsGoal = 0.8; A.cloakGoal = 1; A.jawGoal = 0.85 + 0.15 * Math.sin(u * 9); A.tailUpGoal = 0.5; A.lookYawGoal = 0.15 * Math.sin(u * 6); },
   // told off: head low and tilted, a little waggle, not looking at her
   sheepish(g, u) { const A = g.A; A.grazeGoal = 0.25; A.tiltGoal = 0.38; A.lookYawGoal = -0.5; A.wagGoal = 0.35; },
+  // woken by the fox: up on her feet, neck stretched tall, honking the alarm over and over, wings lifted
+  alarm(g, u) { const A = g.A; A.upGoal = 1; A.honkGoal = u > 0.4 ? 1 : 0.3; A.jawGoal = u > 0.4 && Math.sin(u * 13) > 0 ? 1 : 0.1; A.wingLiftGoal = 0.9; A.tailUpGoal = 0.8; A.wagGoal = 0.3; },
+  // charging: neck stretched out low, wings out and beating, bill open, hissing
+  charge(g, u) { const A = g.A; A.lowGoal = 0.85; A.wingsGoal = 1; A.cloakGoal = 0.45; A.flapGoal = 0.4; A.jawGoal = 0.8 + 0.2 * Math.sin(u * 9); A.tailUpGoal = 0.6; },
   // something has caught his eye: he stares at it, head tilted, then honks at it
   distracted(g, u) { const A = g.A; A.tiltGoal = 0.42 * Math.sin(u * 0.9 + 0.6); A.upGoal = 0.7; A.lookPitchGoal = -0.1;
     if (u > 1.6 && u < 2.6) { A.honkGoal = 0.7; A.jawGoal = Math.sin((u - 1.6) * Math.PI * 4) > 0 ? 1 : 0; A.tailUpGoal = 0.6; } },
 };
+
+ACT.hiss = ACT.scold;           // (hissing at the fox: the same as at Hector)
 
 // tasks: run(goose, dt) is false while it goes on, true when done; each keeps its own time
 const TK = {
@@ -517,6 +527,7 @@ export class GeeseFlock {
     const P = opts.pond; this.pc = [P.center[0], P.center[2]]; this.pu = [P.axisU[0], P.axisU[2]]; this.pv = [P.axisV[0], P.axisV[2]];
     this.lu2 = this.pu[0] ** 2 + this.pu[1] ** 2; this.lv2 = this.pv[0] ** 2 + this.pv[1] ** 2;
     this.avoid = opts.avoid || []; this.mouths = opts.mouths || [];
+    this.watch = opts.watch; this.groundY = opts.groundY; this.guarding = false; this.heard = 0;
     this.group = new THREE.Group(); scene.add(this.group);
     this.geese = ['embden', 'toulouse'].map(k => {
       const g = new Goose(this.group, k, r); g.flock = this;
@@ -525,6 +536,7 @@ export class GeeseFlock {
     [this.lead, this.mate] = this.geese;
     this.mate.distractIn = 60 + r() * 90; this.scoldOk = 20;
     this.places();
+    this.near = this.geese;
     this.ripples = []; this.rippleGeo = new THREE.RingGeometry(0.86, 1, 40).rotateX(-Math.PI / 2);
   }
   // where a point is against the pond: its ellipse's scale there (1 at the water's edge, with its wobble), and the angle
@@ -585,13 +597,13 @@ export class GeeseFlock {
     }
     // the bed: the way in farthest from the dock and the streams, a little back from the edge, facing the water
     // (with room all round: nothing within half a metre of either of them, a bench, a bush)
-    const roomy = (t) => [this.at(t, 1.3), this.at(t + 0.12, 1.3)].every(p => { for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; for (const r of [0, 0.3, 0.6]) if (nav && !nav.freeAt(p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r)) return false; } return true; });
+    const roomy = (t) => [this.at(t, 1.3), this.at(t + 0.19, 1.3)].every(p => { for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; for (const r of [0, 0.3, 0.6]) if (nav && !nav.freeAt(p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r)) return false; } return true; });
     let best = null, bd = -1;
     for (const w of this.ways) {
       const d = Math.min(...this.avoid.map(a => Math.hypot(a[0] - w.edge[0], a[1] - w.edge[1])), ...this.mouths.map(m => Math.hypot(m[0] - w.edge[0], m[1] - w.edge[1])));
       if (d > bd && roomy(w.t)) { bd = d; best = w; }
     }
-    const w = best || { t: 0 }, a = this.at(w.t, 1.3), b = this.at(w.t + 0.12, 1.3), face = this.at(w.t, 1.0);
+    const w = best || { t: 0 }, a = this.at(w.t, 1.3), b = this.at(w.t + 0.19, 1.3), face = this.at(w.t, 1.0);
     this.bed = [a, b].map(p => [p[0], p[1], Math.atan2(face[0] - p[0], face[1] - p[1])]); this.bedReg = this.regionAt(a[0], a[1]); this.bedWay = w;
     if (nav) for (const p of this.bed) nav.circle(p[0], p[1], 0.32);      // (the fox finds his way round them)
   }
@@ -707,10 +719,12 @@ export class GeeseFlock {
     along += Math.hypot(G.pos.x - T[T.length - 1][0], G.pos.z - T[T.length - 1][1]);
     const keep = (G.wet > 0.5 ? 0.85 : 0.72) + (G.vs > 0.05 ? 0.1 : 0);
     if ((G.vs > 0.05 && along > keep + 0.08 && dG > 0.6) || dG > 1.4) {
-      const pace = along > 3.4 ? 'run' : along > 1.7 ? 'hurry' : 'walk', p = this.hk < T.length ? T[this.hk] : [G.pos.x, G.pos.z];
+      const charging = G.act === 'charge' || G.act === 'hiss' || G.act === 'alarm';
+      const pace = charging && along > 1.0 ? 'charge' : along > 3.4 ? 'run' : along > 1.7 ? 'hurry' : 'walk', p = this.hk < T.length ? T[this.hk] : [G.pos.x, G.pos.z];
       h.moveTo(p[0], p[1], dt, pace, true);
       if (h.act !== 'walk') { h.act = 'walk'; h.actT = 0; }
-      if (pace === 'run' && h.wet < 0.3) { A.wingsGoal = 0.6; A.flapGoal = 0.3; A.tailUpGoal = 0.5; A.upGoal = 0.4; }       // flapping along to catch up
+      if (charging) ACT.charge(h, this.time);                                          // (after the fox with her)
+      else if (pace === 'run' && h.wet < 0.3) { A.wingsGoal = 0.6; A.flapGoal = 0.3; A.tailUpGoal = 0.5; A.upGoal = 0.4; }       // flapping along to catch up
       else if (pace === 'hurry') { A.wagGoal = 0.3; A.upGoal = 0.2; }
       this.copying = null;
       return;
@@ -735,14 +749,86 @@ export class GeeseFlock {
     ACT[doing](h, doing === 'look' ? this.time : u, dt);
     if (h.act !== doing) { h.act = doing; h.actT = 0; }
   }
+  // ---- guarding the farm at night: Rusty out on a visit (watch(): the night visit). A goose sleeps lightly: she hears him
+  // near (14 m), or the hens squawking anywhere, or wakes a while after he's slipped out; then they're up honking the
+  // alarm and off after him
+  watchFor(dt, hour) {
+    const V = this.watch && this.watch();
+    if (this.guarding || !V || !this.night(hour) || V.state !== 'out' || !V.fox.root.visible) { if (!V || V.state !== 'out') this.heard = 0; return; }
+    const [G] = this.geese, f = V.fox, d = Math.hypot(f.pos.x - G.pos.x, f.pos.z - G.pos.z);
+    this.heard += dt;
+    if (d < 14 || V.pecks > 0 || this.heard > 35) this.raise(V);
+  }
+  raise(V) {
+    const [G, H] = this.geese;
+    this.guarding = true; this.heard = 0; G.asleep = false; H.asleep = false;
+    G.task = this.guardTask(V); G.act = 'alarm'; G.actT = 0;
+    H.task = TK.seq('wake', [TK.act('look', 0.5), TK.act('alarm', 2.2)]);
+    V.hint(V.T('geeseHeard'));
+    for (const g of this.geese) V.fx.pop('bang', g.pos.clone().add(new THREE.Vector3(0, 0.95, 0)), 0.2, 1.5);
+  }
+  // Gertrude on guard: up and honking, then charging at him (her way round everything replanned as he moves), stopping
+  // to hiss when she's on him (he bolts), after him a little way, a triumphant honk and a wing-flap, and back to bed
+  guardTask(V) {
+    const self = this, f = V.fox, bed = this.bed[0];
+    return { name: 'guard', act: 'alarm', t: 0, st: 0, stage: 'wake', path: null, re: 0, home: null, run(g, dt) {
+      this.t += dt; this.st += dt;
+      const fx = f.pos.x, fz = f.pos.z, d = Math.hypot(fx - g.pos.x, fz - g.pos.z), toF = Math.atan2(fx - g.pos.x, fz - g.pos.z);
+      const to = (stage, act) => { this.stage = stage; this.st = 0; if (g.act !== act) { g.act = act; g.actT = 0; } };
+      switch (this.stage) {
+        case 'wake': g.turnTo(toF, dt, 2.5); ACT.alarm(g, this.st); if (this.st > 2.6) to('charge', 'charge'); return false;
+        case 'charge': {
+          if (V.state !== 'out' || !f.root.visible) { to('victory', 'honk'); return false; }        // (gone already)
+          if ((this.re -= dt) <= 0 || !this.path || !this.path.length) {
+            // her way to him round everything; while he's somewhere she can't get to (in a pen), the nearest place round him
+            // she can; failing that she keeps to the way she had (never a straight line through things)
+            this.re = 0.8;
+            const nav = self.nav; let p = nav ? nav.find(g.pos.x, g.pos.z, fx, fz) : [[g.pos.x, g.pos.z], [fx, fz]];
+            for (const r of [1.8, 2.6, 3.4]) for (let k = 0; k < 8 && !p; k++) {
+              const tx = fx + Math.cos(k * 0.785) * r, tz = fz + Math.sin(k * 0.785) * r;
+              if (nav.freeAt(tx, tz)) p = nav.find(g.pos.x, g.pos.z, tx, tz);
+            }
+            if (p) this.path = p.slice(1);
+            if (!this.path || !this.path.length) this.path = [[g.pos.x, g.pos.z]];
+          }
+          while (this.path.length > 1 && Math.hypot(this.path[0][0] - g.pos.x, this.path[0][1] - g.pos.z) < 0.14) this.path.shift();
+          const p = this.path[0], end = this.path.length === 1 && Math.hypot(p[0] - g.pos.x, p[1] - g.pos.z) < 0.35;
+          const sees = !self.nav || self.nav.clearLine(g.pos.x, g.pos.z, fx, fz);
+          if ((d < 1.7 && sees) || (d < 3.6 && end) || this.st > 75) { V.chasedBy(g.pos.x, g.pos.z); to('hiss', 'hiss'); return false; }
+          if (!end) g.moveTo(p[0], p[1], dt, 'charge', this.path.length > 1); else g.turnTo(toF, dt, 3);
+          ACT.charge(g, this.st);
+          return false;
+        }
+        case 'hiss': g.turnTo(toF, dt, 3); ACT.hiss(g, this.st); if (this.st > 1.4) to('pursue', 'charge'); return false;
+        case 'pursue': {                                  // after him a few steps while he runs, if the way's clear
+          const ax = g.pos.x + Math.sin(toF) * 0.8, az = g.pos.z + Math.cos(toF) * 0.8;
+          if (this.st < 2.2 && f.root.visible && d > 1.2 && self.clearWalk(g.pos.x, g.pos.z, ax, az)) { g.moveTo(ax, az, dt, 'run', true); ACT.charge(g, this.st); return false; }
+          to('victory', 'honk'); return false;
+        }
+        case 'victory': ACT.honk(g, this.st); if (this.st > 2.4) to('stretch', 'stretch'); return false;
+        case 'stretch': ACT.stretch(g, this.st); if (this.st > 4.6) to('home', 'walk'); return false;
+        case 'home':
+          if (!this.home) this.home = TK.path(bed[0], bed[1], 'walk', 150);
+          if (this.home.run(g, dt) !== false) to('face', 'look');
+          return false;
+        case 'face':
+          if (g.turnTo(bed[2], dt, 2) < 0.06 || this.st > 3) { self.guarding = false; return true; }
+          return false;
+      }
+      return true;
+    } };
+  }
   update(dt, hour) {
     this.time += dt; this.scoldOk -= dt;
+    this.watchFor(dt, hour);
+    const V = this.watch && this.watch(), fox = V && V.fox && V.fox.root.visible ? V.fox : null;
+    this.near = fox ? [...this.geese, fox] : this.geese;
     const [G, H] = this.geese;
     if (!this.trail) this.place(hour);
     if (!this.night(hour) && G.asleep && G.task && G.task.name === 'bed') G.task = null;               // morning: up she gets
     if (!this.night(hour) && H.asleep && !G.asleep && G.actT > 1.2 && H.task && H.task.name === 'bed') { H.asleep = false; H.task = TK.seq('morning', [TK.act('look', 0.6), TK.act('stretch', 4.6), TK.act('honk', 2.4)]); }
     if (!G.task) G.task = this.nextLead(G, hour);
-    else if (this.night(hour) && !/^(bed|scold)/.test(G.task.name) && !G.asleep && G.wet < 0.1) G.task = this.nextLead(G, hour);      // (bedtime: off to bed)
+    else if (this.night(hour) && !/^(bed|scold|guard)/.test(G.task.name) && !G.asleep && G.wet < 0.1) G.task = this.nextLead(G, hour);      // (bedtime: off to bed)
     // Hector: his own little moments, or following her
     const free = !H.task || H.task.name === 'follow', calm = G.vs < 0.05 && G.wet < 0.1 && H.wet < 0.1 && !this.night(hour) && !G.asleep;
     if ((H.distractIn -= dt) <= 0 && free && calm) {
@@ -788,7 +874,17 @@ export class GeeseFlock {
       }
       if (worst <= 0) break;
       const hm = G.vs < 0.03 && H.vs >= 0.03 ? 0.85 : 0.5;              // (the one moving gives way most)
-      H.pos.x += bx * worst * hm; H.pos.z += bz * worst * hm; G.pos.x -= bx * worst * (1 - hm); G.pos.z -= bz * worst * (1 - hm);
+      const can = (g, x, z) => !this.nav || g.wet > 0.2 || this.nav.freeAt(x, z) || !this.nav.freeAt(g.pos.x, g.pos.z);     // (never pushed into anything)
+      if (can(H, H.pos.x + bx * worst * hm, H.pos.z + bz * worst * hm)) { H.pos.x += bx * worst * hm; H.pos.z += bz * worst * hm; }
+      if (can(G, G.pos.x - bx * worst * (1 - hm), G.pos.z - bz * worst * (1 - hm))) { G.pos.x -= bx * worst * (1 - hm); G.pos.z -= bz * worst * (1 - hm); }
+    }
+    // and never into the fox (he doesn't look where he's running): a goose in his way steps aside
+    if (fox) for (const g of this.geese) {
+      const dx = g.pos.x - fox.pos.x, dz = g.pos.z - fox.pos.z, d = Math.hypot(dx, dz), min = 0.62;
+      if (d < min && d > 1e-4) {
+        const nx = fox.pos.x + dx / d * min, nz = fox.pos.z + dz / d * min;
+        if (!this.nav || this.nav.freeAt(nx, nz)) { g.pos.x = nx; g.pos.z = nz; }
+      }
     }
     // shadows on the grass, ripples round them on the water
     for (const g of this.geese) {

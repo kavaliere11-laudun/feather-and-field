@@ -803,3 +803,25 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   never closer than 0.28 m, a varied day; it counts the moments: in 20 minutes 3-6 hisses at Hector, 6-9 distractions,
   calls, swims, drinks, rests); `geesenight.mjs` (in bed within 5 minutes of bedtime, side by side, heads tucked; up with a
   stretch and a honk); `geesefarm.mjs` (frames following them; UNTIL=swim/scold, WET, BED, HOUR).
+
+## The geese guard the farm at night (23 Oct, Audrey: "Perfect carry on")
+
+- When Rusty is out on a night visit, the geese wake (`watchFor()` in `GeeseFlock`): a goose sleeps lightly, so she hears
+  him within 14 m, or the hens squawking at any coop (his first peck at an open door), or wakes a while (35 s) after he's
+  slipped out. "!" over them and a message: "The geese have heard Rusty! They're raising the alarm…" (French: "Les oies ont
+  entendu Rusty ! Elles donnent l'alerte…").
+- Gertrude (`guardTask()`): up on her feet, neck stretched tall, honking the alarm with her wings lifted; then a charge
+  (1.25 m/s: neck stretched out low, wings out and beating, bill open, hissing) along her way round everything to him,
+  replanned as he moves (while he's somewhere she can't reach, in a pen, the nearest place round him she can; never a
+  straight line through things; over the footbridges if need be, up and over their decks). On him (1.7 m, or at the fence
+  of the pen he's in) she stops and hisses with her wings raised: Rusty jumps in surprise, facing her, and runs home
+  (`NightVisit.chasedBy()`, his flight as when the farmer's torch finds him, over the fence if he's in the pen). She goes
+  after him a few steps, then a triumphant honk and a wing-flap stretch, walks back to bed and settles down again. Hector
+  wakes a moment later, honks with her and charges along behind her. The night ends with "The geese chased Rusty all the
+  way home!" ("Les oies ont chassé Rusty jusque chez lui !").
+- The geese never run into Rusty (they give him 0.85 m when steering and step aside if he runs at them) and steering round
+  each other never takes them into anything.
+- `?noguard`: they sleep through it (the fox's own tests use it: visittest, visitcheck, visitvideo, visitshot).
+- Tests: `geeseguard.mjs [coops]` (for each coop: the geese wake, Rusty goes home chased, never into anything (brushing the
+  margin round a pen counted apart, under 3 s), never into Rusty, asleep in bed again after); `geeseguardfilm.mjs OUT
+  coop secs fps` (the view on Gertrude and Rusty).

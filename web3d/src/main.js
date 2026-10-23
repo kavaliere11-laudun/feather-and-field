@@ -791,7 +791,7 @@ function buildGeese() {
   }
   const P = V.pond, mouths = [];
   for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
-  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths }, rng(57));
+  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, watch: () => params.has('noguard') ? null : nightVisit }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
   geeseFlock.update(1 / 60, clockHour());
 }
 
@@ -812,6 +812,8 @@ const VISIT_TEXT = {
   allShut: ['Rusty went home: the doors were shut.', 'Rusty est rentré : les portes étaient fermées.'],
   atDoor: ['Rusty the fox is at the door!', 'Rusty le renard est à la porte !'],
   inWay: ["Rusty's nose is in the way!", 'Le nez de Rusty est dans le passage !'],
+  geeseHeard: ['The geese have heard Rusty! They\'re raising the alarm…', 'Les oies ont entendu Rusty ! Elles donnent l\'alerte…'],
+  geeseSafe: ['The geese chased Rusty all the way home!', 'Les oies ont chassé Rusty jusque chez lui !'],
 };
 const VISIT_PLOT = /^\d+$/.test(params.get('visit') || '') ? parseInt(params.get('visit'), 10) : undefined;
 const LANG = params.get('lang') === 'fr' ? 'fr' : 'en';

@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 8770;
 async function page(q) {
   const p = await b.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
   p.errs = []; p.on('pageerror', e => p.errs.push(e.message));
-  await p.goto(`http://localhost:${PORT}/index.html?q=0&coops=10&${q}`);
+  await p.goto(`http://localhost:${PORT}/index.html?q=0&coops=10&noguard&${q}`);
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 5); });
   return p;

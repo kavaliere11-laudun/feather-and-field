@@ -9,7 +9,7 @@ let total = 0;
 for (const plot of plots) {
   const p = await b.newPage({ viewport: { width: 200, height: 300 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&coops=10&visit=${plot}`);
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&coops=10&noguard&visit=${plot}`);
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
   const r = await p.evaluate(([plot, farmerAt]) => {
     const f = window.__farm, V = f.visit(), fox = V.fox, THREE = f.THREE, mesh = fox.q.mesh, g = mesh.geometry;

@@ -10,7 +10,7 @@ const FPS = parseFloat(fpsArg), PER = Math.round(30 / FPS);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: parseFloat(process.env.DPR || '2'), hasTouch: true, isMobile: true });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&coops=10&visit=${plot}${process.env.LANG === 'fr' ? '&lang=fr' : ''}`);
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&coops=10&noguard&visit=${plot}${process.env.LANG === 'fr' ? '&lang=fr' : ''}`);
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.addStyleTag({ content: '#readout { display: none !important; } #hint, #tag { transition: none !important; }' });
 await p.evaluate(() => {
