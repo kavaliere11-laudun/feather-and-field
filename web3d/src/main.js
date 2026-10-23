@@ -17,7 +17,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { initBeasts, FoxFamily, FoxLineup } from './beasts.js';
-import { initGeese, GeeseLineup } from './geese.js';
+import { initGeese, GeeseLineup, GeeseFlock } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 
 const MODELS = './models/';
@@ -320,6 +320,7 @@ async function start() {
   if (params.has('lineup') && !['foxes', 'geese'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   buildFoxes(beastsInfo.joints);
+  buildGeese();
   if (allBirds.length) makeBlobs();
   buildGrass();
   addLampPools();
@@ -332,6 +333,7 @@ async function start() {
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
   if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
+  if (geeseFlock && params.has('geese')) { const c = geeseFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.6; }
   resize();
   aimShadows(true);
   loading.classList.add('done');
@@ -752,7 +754,7 @@ function tickNotes(dt) {
 // (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
 // den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
 const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
-let foxes = null, foxLineup = null, geeseLineup = null;
+let foxes = null, foxLineup = null, geeseLineup = null, geeseFlock = null;
 const foxBtn = document.getElementById('foxbtn');
 const foxGroups = () => [foxes, foxLineup].filter(g => g && (g.visible() || (nightVisit && g === foxes && nightVisit.active())));
 function buildFoxes(joints) {
@@ -771,6 +773,27 @@ function buildFoxes(joints) {
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = nightVisit && nightVisit.active() ? nightVisit.fox.pos.clone().sub(new THREE.Vector3(0.3, 0, 0.3)) : foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
 let foxHinted = false;
+
+// ------------------------------------------------------------------ the geese (geese.js): Gertrude and Hector live round the pond in
+// the middle of the village. ?geese starts the view on them.
+function buildGeese() {
+  if (params.get('lineup')) return;                  // (not on the line-up pages)
+  const avoid = [];
+  if (parts.dock) {                                  // the dock out over the water: circles along it to swim round
+    const box = new THREE.Box3().setFromObject(parts.dock);
+    for (const p of V.props) if (p.model === 'dock') {
+      const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1), long = box.max.x - box.min.x > box.max.z - box.min.z, half = (long ? box.max.z - box.min.z : box.max.x - box.min.x) / 2;
+      for (let k = 0; k <= 4; k++) {
+        const u = k / 4, c = long ? new THREE.Vector3(box.min.x + (box.max.x - box.min.x) * u, 0, (box.min.z + box.max.z) / 2) : new THREE.Vector3((box.min.x + box.max.x) / 2, 0, box.min.z + (box.max.z - box.min.z) * u);
+        c.applyMatrix4(m); avoid.push([c.x, c.z, half + 0.3]);
+      }
+    }
+  }
+  const P = V.pond, mouths = [];
+  for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
+  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths }, rng(57));
+  geeseFlock.update(1 / 60, clockHour());
+}
 
 // ------------------------------------------------------------------ the fox's night visit (nightvisit.js): late at night Rusty goes to a
 // coop (one left open, if there is one), pokes his nose in and gets pecked, or finds the door shut; "Send the farmer" brings
@@ -796,6 +819,8 @@ const farmerBtn = document.getElementById('farmerbtn');
 let nightVisit = null;
 // the village as a grid for finding a way round: trees, bushes, rocks, buildings and props, pens and plots, the den, the
 // pond and the streams (except where a path crosses them, on the bridges); grown by about a fox's half width
+let NAV = null;
+const navGrid = () => NAV || (NAV = buildNav());          // (one grid for everyone who finds a way round the village)
 function buildNav() {
   const c = V.bounds.corners, xs = c.map(p => p[0]), zs = c.map(p => p[2]);
   const nav = new NavGrid(Math.min(...xs) - 2, Math.min(...zs) - 2, Math.max(...xs) + 2, Math.max(...zs) + 2, 0.25);
@@ -877,7 +902,7 @@ function groundY(x, z) {
 function buildNightVisit() {
   const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
   nightVisit = new NightVisit({
-    scene, fam: foxes, nav: buildNav(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
+    scene, fam: foxes, nav: navGrid(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
     grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(41), penObstacles: PEN.obstacles, groundY,
     busyPlot: p => inside.open && inside.plot === p,
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),     // which way faces the player
@@ -896,6 +921,7 @@ function buildNightVisit() {
   if (farmerBtn) { farmerBtn.textContent = nightVisit.T('send'); farmerBtn.addEventListener('click', () => { nightVisit.sendFarmer(); wake(800); }); }
 }
 function tickFoxes(dt) {
+  if (geeseFlock) geeseFlock.update(dt, clockHour());
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
   if (foxLineup) foxLineup.update(dt);
@@ -1759,7 +1785,7 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = f; } }
   }
-  for (const g of geeseLineup ? geeseLineup.geese : []) {
+  for (const g of [...(geeseLineup ? geeseLineup.geese : []), ...(geeseFlock ? geeseFlock.geese : [])]) {
     if (!g.root.visible) continue;
     g.root.getWorldPosition(w); s.center.set(w.x, w.y + g.hitY, w.z); s.radius = g.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
@@ -2134,7 +2160,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes, foxLineup: () => foxLineup, geeseLineup: () => geeseLineup, visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
+  foxes: () => foxes, foxLineup: () => foxLineup, geeseLineup: () => geeseLineup, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },

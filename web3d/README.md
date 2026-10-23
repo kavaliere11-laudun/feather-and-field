@@ -771,3 +771,35 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   each hip also swings the leg out to the side as far as the foot is from under it (`legL/R` turn 'ZYX', the side swing
   last), and each foot is set flat and facing her way whatever the body does: planted feet stay put (half a millimetre)
   through a shake and the waddle's roll. `shakefeet.mjs` measures it.
+
+## The geese on the farm (23 Oct, Audrey on the shake fix: "Yes all goog")
+
+- Gertrude and Hector live round the pond in the middle of the village (`GeeseFlock` in `src/geese.js`, built by
+  `buildGeese()` in `main.js`; `?geese` starts the view on them). They walk the village grid (the same `NavGrid` as the
+  fox's night visit, now one shared grid, `navGrid()`), round bushes, benches and lamp posts, never into the pond on foot.
+- Their places (`places()`): the grass round the pond, in the parts the two streams cut it into (`regions()`: cells
+  reached from each other without a footbridge): a goose strolls only on her own side; to get to the other side she
+  swims across. 38 ways into the water from the bank (clear of the dock and the streams' mouths), 60 spots to stroll to,
+  and their bed: two places side by side a little back from the water, with room all round, marked on the grid so the fox
+  goes round them.
+- Gertrude decides (`nextLead()`): a stroll a few metres off (then a look round), grazing (nibbling, now and then up with
+  a start to check round, a couple of steps on to fresh grass), a swim (wading in, gliding to a few places, dabbling with
+  her bill in the water, out again, possibly on the other side, a shake and a preen), a drink at the edge (bill dipped,
+  head raised to swallow), preening one wing then a shake, a rest sitting down (sometimes dozing, head tucked), a
+  wing-flap stretch, a honk. She calls Hector with a honk if he's more than 4.5 m away.
+- Hector (`follow()`): in her footsteps a little behind (her trail, so never through anything), hurrying when she gets
+  ahead, running with his wings out flapping if he's left far behind; when she stops he comes up beside her, faces her way
+  and does what she does, a beat late (`ACT`: each pose by seconds into it). His own moments: something catches his eye
+  (he stares, head tilted, and honks at it); cheeky, he edges over to nibble right under her bill: she turns and hisses,
+  wings half raised, and he backs off and stands there looking sheepish.
+- In the water (`wetAt()`): lower and lower as they wade in, then floating (the water hides the feet, still paddling),
+  gliding level with a gentle bob, the tail up; rings spread on the water round them. Shadows on land only.
+- Their bodies never pass through each other (each body two round parts, breast and rump, eased apart), and they steer
+  round each other in good time.
+- Night (21:30-6:15): to bed (swimming over if it's across a stream), sitting side by side, heads tucked in, peeking now
+  and then. Morning: up with a wing-flap stretch and a honk, Hector a moment later. (Guarding comes next.)
+- Tap a goose on the farm: she turns to you and honks, her name shows (French with `?lang=fr`).
+- Tests: `geeseday.mjs [minutes] [hour]` (never on a blocked cell of the grid or into the dock, Hector never far, bodies
+  never closer than 0.28 m, a varied day; it counts the moments: in 20 minutes 3-6 hisses at Hector, 6-9 distractions,
+  calls, swims, drinks, rests); `geesenight.mjs` (in bed within 5 minutes of bedtime, side by side, heads tucked; up with a
+  stretch and a honk); `geesefarm.mjs` (frames following them; UNTIL=swim/scold, WET, BED, HOUR).

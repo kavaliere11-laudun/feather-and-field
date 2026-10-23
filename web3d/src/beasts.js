@@ -282,7 +282,7 @@ const _tm = new THREE.Matrix4(), _tb = new THREE.Vector3(), _tp = new THREE.Vect
 const NAMES = { dad: 'Rusty', mum: 'Fennel', cubs: ['Sorrel', 'Nutkin', 'Tumble'] };
 const DEN_MOUTH = 0.64;              // how far the den's tunnel mouth is from its middle (stylized/beasts.py DEN_TUNNEL)
 let blobTex = null;
-function shadowDisc(r) {
+export function shadowDisc(r) {
   if (!blobTex) {
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d');
     const gr = c.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(0,0,0,0.42)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.2)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
