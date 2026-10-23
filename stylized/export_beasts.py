@@ -42,12 +42,16 @@ def bake(name, root, budget):
     kept = lambda o, n: n <= 60 or o.get('keep')
     small = sum(n for o, _, n in meshes if kept(o, n)); big = sum(n for o, _, n in meshes if not kept(o, n))
     ratio = max(0.004, min(1.0, (budget - small) / max(1, big)))
+    # (a part can ask for more of the budget than its share: o['dec'] times the others' ratio, the rest shared out)
+    for _ in range(30):
+        used = small + sum(min(1.0, ratio * o.get('dec', 1.0)) * n for o, _, n in meshes if not kept(o, n))
+        ratio = max(0.004, min(1.0, ratio * (budget / max(1, used)) ** 0.8))
     if ratio < 1.0:
         for rec in meshes:
             o, me, n = rec
             if kept(o, n): continue
             tmp = bpy.data.objects.new('tmp', me); bpy.context.scene.collection.objects.link(tmp)
-            md = tmp.modifiers.new('dec', 'DECIMATE'); md.ratio = ratio; md.use_collapse_triangulate = True
+            md = tmp.modifiers.new('dec', 'DECIMATE'); md.ratio = min(1.0, ratio * o.get('dec', 1.0)); md.use_collapse_triangulate = True
             dg.update()
             me2 = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
             bpy.data.objects.remove(tmp); me2.calc_loop_triangles(); rec[1] = me2; rec[2] = len(me2.loop_triangles)

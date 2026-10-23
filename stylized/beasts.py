@@ -134,6 +134,7 @@ def fox(kind='fox', seed=1):
              ('ELLIPSOID', tuple(h(0.072 * MZ, 0, -0.03)), 0.04 * S * HD * K, (1.45, 0.82, 0.7), 2.0),
              ('ELLIPSOID', tuple(h(0.125 * MZ, 0, -0.036)), 0.026 * S * HD * K, (1.5, 0.92, 0.78), 2.0)]
     head = part(metaball_mesh(kind + '_head', E, res=0.006 * S * HD, m=coat, parent=root), 'head', 'body', 'fox')
+    if dog: head['dec'] = 3.0                       # (more of his triangles in the face, so the blaze's edges stay smooth)
     tip = h(0.125 * MZ + 0.033, 0, -0.03)
     # the lower jaw (white, under the muzzle, hinged at the back of the mouth) with the tongue on it; the inside of the mouth
     # (dark) on the head, hidden while the mouth is shut
