@@ -1331,6 +1331,18 @@ into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live st
   and Gertrude behind them on the right, clear of them, with room between his nose and her bill; Hector further back by
   the wheelbarrow. The picture is taller than the space it fills (1206 x 1500) so on any phone only grass is cut off,
   never anyone; it fades in once loaded.
+- Audrey (18:50): "The dog back legs are not really touching the floor. The 5 chickens eating need a bit more action
+  they are boring. This image might end up being the cover of the game so I want top quality output." Done:
+  - Biscuit's bow: the body tipped forward also lifted his hips, so his hind legs (fully stretched) ended 8 cm short of
+    the grass. `PosterDog` now lets the body down (`A.lift = -0.105`) as it tips (`A.pitch = 0.3`): all four paws on
+    the ground (measured on the skinned mesh: front -0.008, hind 0.002).
+  - The hens, each doing something: the Orpington and the Brahma in a tug of war over a worm, leaning back, wings half
+    out (the worm held bill to bill: `billTip(b)`, the frontmost point the head bone carries); the Cream Legbar leaping
+    in, legs tucked, wings at full spread (`A.t` held at the open moment of the beat); the black Silkie side-on to the
+    corn heap, kicking the grains out behind her; the white Silkie jumping up to catch a grain the farmer has just
+    thrown, beak up.
+  - Quality: rendered at six times phone size (2412 x 3000) and shrunk to 1206 x 1500 for smooth edges and fur, saved at
+    quality 88 with full colour (250 KB). The big render can be made again any time for a store cover.
 - `gameui.js hero()`: the picture across the top of the screen behind the welcome sheet, "Feather & Field" and a line
   under it ("A flock to love for good" / "Une basse-cour à aimer pour toujours") over a soft shade; gone once the
   farm starts.
