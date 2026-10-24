@@ -164,6 +164,15 @@
   .gstars .on { color: var(--yolk); }
   .ghearts { font-size: 21px; color: #d9b2ba; letter-spacing: 2px; line-height: 1; }
   .ghearts .on { color: #e0566f; }
+  /* congratulations (a brood grown up): a row for each young hen and rooster, its rating and its coins */
+  .gkids { gap: 2px; padding-block: 6px; }
+  .gkid { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+  .gkid + .gkid { border-top: 1px solid var(--line); }
+  .gkid-t { flex: 1; min-width: 0; font-family: var(--display); font-weight: 600; font-size: 16.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gstars.gsmall { font-size: 17px; letter-spacing: 1px; white-space: nowrap; }
+  .gkid-c { display: inline-flex; align-items: center; gap: 4px; min-width: 52px; justify-content: flex-end; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
+  .gcoin.gcoin-s { width: 18px; height: 18px; } .gcoin.gcoin-s::after { inset: 5px; }
+  .gtotal { margin: 2px 0 0; text-align: center; font: 600 21px var(--display); color: var(--ink); }
   .grow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .gchips { display: flex; gap: 8px; flex-wrap: wrap; }
   .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
@@ -292,6 +301,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792877731"></script>
+<script src="app.js?v=1792883256"></script>
 </body>
 </html>
