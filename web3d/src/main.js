@@ -23,6 +23,7 @@ import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
 import { DuckFlock } from './ducks.js';
+import { initFarmer, FarmerLineup } from './farmer.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -296,15 +297,15 @@ const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
-    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json')]);
+    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json'), loadGLB('farmer.glb'), loadJSON('farmer.json')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
-  initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo); initGeese(geeseGlb, geeseInfo);
+  initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo); initGeese(geeseGlb, geeseInfo); initFarmer(farmerGlb, farmerInfo);
   for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
@@ -321,9 +322,10 @@ async function start() {
   buildProps();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks'].includes(params.get('lineup'))) buildLineup();
+  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   if (params.get('lineup') === 'ducks') { geeseLineup = new DuckLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(42)); view.min = 0.5; }
+  if (params.get('lineup') === 'farmer') { farmerLineup = new FarmerLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(44), parseInt(params.get('set') || '1', 10)); view.min = 0.4; }
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
   buildFoxes(beastsInfo.joints);
   buildGeese();
@@ -342,6 +344,7 @@ async function start() {
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
   if (geeseLineup && params.get('lineup') === 'ducks') { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, 0.5))); view.size = 1.58; }
   else if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
+  if (farmerLineup) { farmerLineup.group.updateMatrixWorld(true); const s3 = farmerLineup.set === 3; view.target.copy(farmerLineup.group.localToWorld(new THREE.Vector3(0, 0, s3 ? 0.2 : -0.5))); if (s3) view.target.sub(new THREE.Vector3(1, 0, 1).normalize().multiplyScalar(1.12 / Math.tan(42 * DEG))); view.size = s3 ? 0.5 : 3.9; }      // (set 3: the ground point behind their faces, from the camera)
   if (frogLineup) { frogLineup.group.updateMatrixWorld(true); view.target.copy(frogLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.02))); view.size = 0.52; }
   if (geeseFlock && params.has('geese')) { const c = geeseFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.6; }
   if (duckFlock && params.has('ducks')) { const c = duckFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.2, 0, c.z + 0.2); view.size = 1.9; }
@@ -882,7 +885,7 @@ function tickNotes(dt) {
 // (beasts.js). Now and then by day (every 10-20 minutes, for 5-7 minutes) Rusty, Fennel and their three cubs come out of the
 // den to play; ?foxes brings them out at once and keeps them out. The "Foxes" button at the top takes the view there.
 const FOX_FIELD = [-8.0, -33.0, 2.5], FOX_DEN = [-7.49, -35.94, Math.atan2(-0.17, 0.985)];    // a clear meadow; the den, at the edge of the wood, faces it
-let foxes = null, foxLineup = null, geeseLineup = null, geeseFlock = null, frogLineup = null, frogPond = null, duckFlock = null;
+let foxes = null, foxLineup = null, geeseLineup = null, geeseFlock = null, frogLineup = null, frogPond = null, duckFlock = null, farmerLineup = null;
 const foxBtn = document.getElementById('foxbtn');
 const foxGroups = () => [foxes, foxLineup].filter(g => g && (g.visible() || (nightVisit && g === foxes && nightVisit.active())));
 function buildFoxes(joints) {
@@ -1183,6 +1186,7 @@ function tickFoxes(dt) {
   if (foxLineup) foxLineup.update(dt);
   if (geeseLineup) { geeseLineup.update(dt); wake(100); }
   if (frogLineup) { frogLineup.update(dt); wake(100); }
+  if (farmerLineup) { farmerLineup.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
   if (farmDog) farmDog.separate();                   // (Biscuit out of Rusty's way, after everyone has moved)
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
@@ -2015,7 +2019,7 @@ function zoomBy(f) {
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
-  if (lineup || foxLineup || geeseLineup || frogLineup) return;
+  if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
@@ -2556,7 +2560,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, frogs: () => frogPond, ducks: () => duckFlock, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
