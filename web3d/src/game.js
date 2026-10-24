@@ -164,8 +164,8 @@ export const FEED_DAYS = 2;                           // a full feeder keeps its
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
 const DAY_MS = 86400e3;
-// when a hen lays: a morning window (7:30 to 11:30) and an afternoon one (13:00 to 17:30), each day at a time of her own
-const LAY_WINDOWS = [[7.5, 4], [13, 4.5]];
+// when a hen lays: a morning window (7:30 to 11:30) and an afternoon one (13:00 to 19:00), each day at a time of her own
+const LAY_WINDOWS = [[7.5, 4], [13, 6]];
 function hash01(str) { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; return (h >>> 0) / 4294967296; }
 const dayStart = t => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
 const nextDay = t => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(); };
@@ -176,8 +176,8 @@ export function layTimes(henId, day) {               // day: a local midnight (m
 // a first egg soon after a new farm starts (by day; at night, the next morning)
 function firstEggAt(now) {
   const d = new Date(now), h = d.getHours() + d.getMinutes() / 60;
-  if (h >= 7 && h < 20.5) return now + 75e3;
-  const morning = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (h >= 20.5 ? 1 : 0), 7, 20).getTime();
+  if (h >= 7 && h < 21.5) return now + 75e3;
+  const morning = new Date(d.getFullYear(), d.getMonth(), d.getDate() + (h >= 21.5 ? 1 : 0), 7, 20).getTime();
   return morning;
 }
 
@@ -224,6 +224,10 @@ export function checkFarm(d, now = Date.now()) {
   for (const x of [...out.coops, ...out.birds]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
   const f = d.first, fh = f && typeof f === 'object' ? out.birds.find(b => b.id === f.hen && b.sex === 'h') : null;
   out.first = fh ? { hen: fh.id, t: int(f.t, 0, now + DAY_MS, now) } : null;
+  if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
+    const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
+    if (mum) out.first = { hen: mum.id, t: firstEggAt(now) };
+  }
   return out;
 }
 

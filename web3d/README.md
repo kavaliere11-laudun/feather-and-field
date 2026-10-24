@@ -1395,10 +1395,10 @@ sideways; the App Store app can, if she wants). Every step from here is built si
 Designed sideways first, checked both ways, English and French. The rules are in `game.js` (starting values; the year-long
 balance is step 11), the farm shows them (`main.js`, "the game's eggs and feed"), the cards are `gameui.js`.
 - **Laying:** each hen lays twice a day on the phone's own clock, once in the morning (7:30-11:30) and once in the
-  afternoon (13:00-17:30), at times of her own that change from day to day (`layTimes`: a hash of her id and the date).
+  afternoon (13:00-19:00), at times of her own that change from day to day (`layTimes`: a hash of her id and the date).
   She lays while her coop's feeder has food and its nest has room (12 eggs, `NEST_MAX`). A new farm's good mum lays a
-  first egg 75 seconds in (by day; at night, the next morning at 7:20): "Fern has laid your first egg! Tap the nest to
-  collect it."
+  first egg 75 seconds in (until 21:30; later, the next morning at 7:20): "Fern has laid your first egg! Tap the nest to
+  collect it." A farm from before this step gets its good mum's first egg the same way.
 - **Seen on the farm:** once a second the lays that are due (`game.dueLays`). A hen whose time has just come walks in
   and lays (the walk, the nest, the song Audrey approved); the egg is saved when it's in the straw (`gameLaid`). One who
   can't go yet (busy, held by her card, the nest taken, the page out of view) has two and a half minutes, then her egg
