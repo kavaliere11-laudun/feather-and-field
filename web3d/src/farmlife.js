@@ -19,6 +19,8 @@ export const FARMER_TEXT = {
   hello: ['Hello!', 'Coucou !'],
   dog: ['Good boy, {dog}!', 'Brave chien, {dog} !'],
   ducks: ['Hello, ducks!', 'Bonjour, les canards !'],
+  feed: ['Dinner time!', 'À table !'],                                 // (the 2D game's own lines)
+  cuddle: ['There, there…', 'Là, là…'],
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -43,11 +45,14 @@ function bubbleTexture(text) {
 // ------------------------------------------------------------------ the farmer's tasks: run(life, dt) true when done
 const TK = {
   // along the paths to (x, z) (the village grid's way, the paths preferred)
-  path: (x, z, pace = 'walk', tmax = 120) => ({ name: 'path', t: 0, pts: null, i: 0, run(L, dt) {
+  // (held up at a corner, or by someone in the way, for a second and a half: the way found again from where he is)
+  path: (x, z, pace = 'walk', tmax = 120) => ({ name: 'path', t: 0, pts: null, i: 0, still: 0, again: 0, run(L, dt) {
     this.t += dt;
-    if (!this.pts) { const f = L.o.nav.find(L.pos.x, L.pos.z, x, z, true); this.pts = f ? f.slice(1) : []; if (!this.pts.length) return true; }
-    const p = this.pts[this.i], last = this.i >= this.pts.length - 1;
+    if (!this.pts) { const f = L.o.nav.find(L.pos.x, L.pos.z, x, z, true); this.pts = f ? f.slice(1) : []; this.i = 0; if (!this.pts.length) return true; }
+    const p = this.pts[this.i], last = this.i >= this.pts.length - 1, x0 = L.pos.x, z0 = L.pos.z;
     if (L.moveTo(p[0], p[1], dt, pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
+    this.still = Math.hypot(L.pos.x - x0, L.pos.z - z0) < 0.002 ? this.still + dt : 0;
+    if (this.still > 1.5 && this.again < 4) { this.pts = null; this.still = 0; this.again++; }
     L.want.face = 'neutral'; L.want.lookAbout = true;
     return this.t > tmax;
   } }),
@@ -56,6 +61,15 @@ const TK = {
   // standing doing something for secs: set(want, u) sets the pose and face u seconds in
   act: (name, secs, set) => ({ name, t: 0, run(L, dt) { this.t += dt; set(L.want, this.t, L); return this.t >= secs; } }),
   say: (key) => ({ name: 'say', run(L) { L.say(key); return true; } }),
+  // straight from point to point (into a pen and out: the village grid has the pen blocked), slowing for a hen in the way
+  walk: (pts, pace = 'walk') => ({ name: 'walk', i: 0, t: 0, run(L, dt) {
+    this.t += dt; const p = pts[this.i], last = this.i >= pts.length - 1;
+    const h = Math.atan2(p[0] - L.pos.x, p[1] - L.pos.z);
+    if (L.speed < 0.2 && Math.abs(wrap(h - L.heading)) > 0.5 && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) > 0.1) { L.turnTo(h, dt, 4); L.want.face = 'neutral'; return false; }      // (round on the spot first: no swinging wide)
+    if (L.moveTo(p[0], p[1], dt, pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.1)) { if (last) return true; this.i++; }
+    L.want.face = 'neutral';
+    return this.t > 40;
+  } }),
   // out of the farmhouse door (fading in), or in through it (fading out)
   fade: (to) => ({ name: 'fade', t: 0, run(L, dt) {
     this.t += dt; const u = Math.min(1, this.t / 0.6); L.f.fade(to ? u : 1 - u);
@@ -122,7 +136,7 @@ export class FarmLife {
     if (d < 0.05) return true;
     let ax = dx / d, az = dz / d, slow = 1;
     for (const o of this.near) {
-      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isDuck ? 0.42 : 0.6;
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.R || (o.isDuck ? 0.42 : 0.6);
       if (rd > R + 0.7 || rd > d + R) continue;
       const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.2) continue;
       const k = Math.min(1, (R + 0.7 - rd) / 0.8) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.1 * k;
@@ -137,7 +151,12 @@ export class FarmLife {
     const st = Math.min(d, Math.max(0, this.speed) * dt);
     let nx = p.x + Math.sin(this.heading) * st, nz = p.z + Math.cos(this.heading) * st;
     const nav = this.o.nav;
-    if (nav && !nav.freeAt(nx, nz) && nav.freeAt(p.x, p.z)) { nx = p.x + dx / d * st; nz = p.z + dz / d * st; }       // (stepping round someone: never into anything; straight on, the way is clear)
+    if (nav && !nav.freeAt(nx, nz) && nav.freeAt(p.x, p.z)) {
+      nx = p.x + dx / d * st; nz = p.z + dz / d * st;        // (stepping round someone: never into anything; straight on, the way is clear)
+      if (!this.pen && !nav.freeAt(nx, nz) && !(this.o.onBridge && this.o.onBridge(nx, nz))) {      // (not even that, at a corner: sliding along it, or a moment's wait; onto a footbridge, into a pen only by its gate)
+        if (nav.freeAt(nx, p.z)) nz = p.z; else if (nav.freeAt(p.x, nz)) nx = p.x; else { nx = p.x; nz = p.z; }
+      }
+    }
     this.moved += Math.hypot(nx - p.x, nz - p.z); p.x = nx; p.z = nz;
     return false;
   }
@@ -210,9 +229,60 @@ export class FarmLife {
     if (this.o.inView && this.o.inView(this.pos.x, this.pos.z)) return TK.seq('wave', [TK.face('camera'), TK.say('hello'), TK.act('wave', 2.4, STAND.wave)]);
     return TK.seq('about', [TK.act('about', 3 + R() * 3, STAND.about)]);
   }
+  // ---- into a pen (main.js penSpec: P): a cuddle for `hen`, or filling the feeder and scattering corn. If he's in the middle
+  // of coming out, going in or another pen, straight after it. False when he can't (indoors, or out after Rusty)
+  visitPen(P, kind, hen) {
+    if (!P || this.home || this.running) return false;
+    const t = this.penTask(P, kind, hen);
+    if (kind === 'cuddle' && P.reserve) P.reserve(hen);
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = t; else this.task = t;
+    return true;
+  }
+  penTask(P, kind, hen) {
+    const self = this, pen = on => () => { if (on) { self.pen = P; P.enter(); } else { P.leave(); self.pen = null; } return null; };
+    // (never got to the gate after all: no visit)
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - P.out[0], Lf.pos.z - P.out[1]) > 0.7) { seq.aborted = true; if (P.letGo) P.letGo(hen); } return true; } };
+    const L = [TK.path(P.out[0], P.out[1], 'hurry'), there, TK.face(P.toGate), pen(true), TK.walk(P.in)];
+    if (kind === 'fill') {
+      // the pail into the feeder, then corn for everyone, four handfuls ("Dinner time!"), and a moment watching them peck
+      let thrown = 0;
+      L.push(TK.walk([P.feederAt]), TK.face(P.toFeeder),
+        TK.act('pour', 2.6, (W, u) => { W.pose = 'feed'; W.face = 'feeding'; W.pour = Math.min(1, u / 0.6) * Math.min(1, Math.max(0, (2.6 - u) / 0.5)); P.fill((u - 0.5) / 1.5); }),
+        TK.walk([P.throwAt]), TK.face(P.toCorn), TK.say('feed'),
+        TK.act('scatter', 3.9, (W, u, Lf) => {
+          W.pose = 'feed'; W.face = 'feeding'; W.scatter = u;
+          const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
+        }),
+        TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
+    } else {
+      // a crouch, she hurries over and settles in front of him, a stroke ("There, there…"), hearts
+      let ready = null, heart = 0.2;
+      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        () => { ready = P.callHen(hen); return null; },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 8; } },
+        // (she couldn't come after all, gone in to lay, say: he gets up again)
+        () => ready ? TK.seq('stroking', [TK.say('cuddle'),
+          TK.act('stroke', 4.6, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.low = Math.min(1, u / 0.5) * Math.min(1, (4.6 - u) / 0.4); if (u > heart) { heart += 0.45; P.heart(hen); } })]) : null,
+        () => { P.letGo(hen); return null; },
+        TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }));
+    }
+    L.push(TK.walk(P.back.slice(0, 3)), pen(false), TK.walk(P.back.slice(3)));
+    const seq = TK.seq('pen', L), run = seq.run.bind(seq);
+    seq.run = (Lf, dt) => {
+      if (seq.aborted) return true;
+      if (kind !== 'fill') return run(Lf, dt);
+      const W = Lf.want; W.props.pail = true;
+      const done = run(Lf, dt);
+      if (W.pose === 'turn') { W.pose = 'carry'; W.keepArms = 'R'; }      // (carrying the pail, it steady in the left hand)
+      return done;
+    };
+    return seq;
+  }
+  // where a handful of corn leaves his hand (the right hand, a little ahead of it)
+  handTip() { return this.f.rig.B.wristR.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(Math.sin(this.heading) * 0.08, 0, Math.cos(this.heading) * 0.08)); }
   // tapped: a wave and "Hello!" (not indoors, nor while chasing Rusty off)
   tapped() {
-    if (this.home || this.running || (this.task && /^(out|home)$/.test(this.task.name))) return false;
+    if (this.home || this.running || this.pen || (this.task && /^(out|home|pen)$/.test(this.task.name))) return false;
     this.task = TK.seq('tapped', [TK.face('camera'), TK.say('hello'), TK.act('wave', 2.4, STAND.wave)]);
     return true;
   }
@@ -236,6 +306,7 @@ export class FarmLife {
   update(dt, hour) {
     this.time += dt; this.moved = 0; this.movedNow = false; this.turned = false;
     this.near = (this.o.others ? this.o.others() : []).filter(o => o && o.pos && (!o.root || o.root.visible));
+    if (this.pen) this.near.push(...this.pen.hens());
     this.want = { pose: 'turn', face: 'neutral', look: [0, 0], head: null, props: {} };
     if (!this.placed) this.place(hour);
     const V = this.o.visit && this.o.visit(), F = V && V.farmer;
@@ -244,8 +315,8 @@ export class FarmLife {
       if (this.running) { this.running = false; this.task = null; if (V) V.torch.glowAt = null; }
       const night = this.night(hour);
       if (this.home) { if (!night && !this.task) this.task = this.comeOut(hour); }
-      else if (night && (!this.task || !/^(home|out)$/.test(this.task.name))) this.task = this.goHome();
-      else if (!this.task) this.task = this.next(hour);
+      else if (night && (!this.task || !/^(home|out|pen)$/.test(this.task.name))) { this.task = this.goHome(); this.pending = null; }
+      else if (!this.task) { this.task = this.pending && !night ? this.pending : this.next(hour); this.pending = null; }
       if (this.task && this.task.run(this, dt)) this.task = null;
       this.torchOn = !this.home && (hour >= TORCH_AT || hour < OUT_AT + 0.3);
       if (this.torchOn) { this.want.props.torch = true; if (this.want.pose === 'turn' || this.want.pose === 'hips') { this.want.pose = 'torch'; this.want.keepArms = 'L'; } }
@@ -263,17 +334,21 @@ export class FarmLife {
       if (head) { P.head[0] += head[0]; P.head[1] += head[1]; P.head[2] += head[2]; }
       if (W.waving) { P.shR[0] += 10 * Math.sin(t * 7); P.wrR[0] += 18 * Math.sin(t * 7 + 0.6); }
       if (W.patting) { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); }
+      if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }
+      if (W.pour) { P.shL[1] -= 45 * W.pour; P.elL[1] -= 25 * W.pour; P.wrL[1] += 70 * W.pour; P.chest[1] += 8 * W.pour; }      // the pail tipped
+      if (W.scatter !== undefined) { const k = Math.sin(((W.scatter * 1.1) % 1) * Math.PI); P.shR[1] += -30 * k; P.elR[1] += 20 * k; P.wrR[1] += -30 * k; }
       if (W.talk) Fc.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'o';
     };
     f.want = A;
     f.root.rotation.y = this.heading;
     if (this.o.groundY) this.pos.y = this.o.groundY(this.pos.x, this.pos.z);
     f.update(dt);
+    if (this.pen) this.pen.at(this.pos);
     // ---- the animals step aside if he's right on them (geese, ducks on the grass, Biscuit)
     const nav = this.o.nav;
     if (!this.home) for (const o of this.near) {
-      if (o.wet > 0.3 || o.inKennel) continue;
+      if (o.wet > 0.3 || o.inKennel || o.noPush) continue;
       const dx = o.pos.x - this.pos.x, dz = o.pos.z - this.pos.z, d = Math.hypot(dx, dz), min = o.isDuck ? 0.36 : 0.5;
       if (d < min && d > 1e-4) {
         const nx = this.pos.x + dx / d * min, nz = this.pos.z + dz / d * min;

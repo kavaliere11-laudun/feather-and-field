@@ -1176,3 +1176,37 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   to Rusty, "Shoo!", home and in). `farmertrack.mjs` plots the way taken; `farmerfilm.mjs` films him (`PLAN`: at a
   moment the hour, what he does next, or whom the view follows; `SEND`: the night visit; `OFF`, `FOLLOW`: the framing);
   `farmersmoke.mjs` a quick look at a few moments.
+
+## The farmer, step 3: feeding and cuddles in the pens (24 Oct, Audrey chose "Feeding and cuddles (Recommended)")
+
+- Tap a hen (or the rooster, or a chick) by day: under her label, two buttons, the 2D game's own words: "♥ Cuddle" /
+  "♥ Faire un câlin" and "Fill the feeder" / "Remplir la mangeoire" ("{farmer} is on the way…" / "{farmer} arrive…").
+  In the game, what a cuddle or a full feeder does is the game's; this is the show of it.
+- `farmlife.js visitPen`: the farmer goes to the pen (hurrying, along the paths, with the pail for the feeder), in
+  through its open gate (round the water dish), and:
+  - **Fill the feeder:** tips the pail into the feeder (its corn rising to the top), walks to the back of the yard, turns
+    to face the player and throws four handfuls of corn ("Dinner time!" / "À table !"); the hens rush over (the glutton
+    first) and peck it up grain by grain, a little crowd round him; he watches them a moment.
+  - **Cuddle:** crouches at the back of the yard facing the player; she hurries over and settles in front of him, a
+    little to his right; he leans down and strokes her, eyes shut, "There, there…" / "Là, là…", hearts floating up
+    from her; then he stands.
+  - Then out by the gate again. If he's coming out of the door, going in, or already in a pen, straight after; never at
+    night. A hen he's been sent to doesn't go off to lay meanwhile, and no hen starts laying while he's in the pen; if
+    she can't come after all, he just gets up again.
+- `main.js penSpec`: the pen's places, in its own frame: just inside the gate, a step on clear of the water dish, in
+  front of the feeder; and of three places at the back of the yard (with where the corn goes, or where the hen settles)
+  the one facing the player best. While he's in the pen the birds keep out of his way (a few quick steps if he comes
+  within 0.42 m; never closer than 0.33 m, pushed round him if squeezed against the feeder); the corn never lands at
+  his feet. `penvisit.js Corn`: the grains (one batch per pen) flying in little arcs from his hand, lying on the ground,
+  pecked up. Hearts: little sprites floating up (as the song's notes).
+- The pail: the 2D model has it standing on the ground at the farmer's feet; now it hangs from his left hand, the
+  handle in his fist, carried steady while he walks (`carry` pose; the `feed` pose's left hand round the handle).
+- The village grid: a plot's margin no longer closes a path running through it (two plots corner to corner had shut four
+  coops' gates in), only the plot itself. The farmer never steps from free ground into anything (he slides along a
+  corner, or waits; onto a footbridge, and into a pen only by its gate), and finds his way again if held up. Rusty can
+  now come in over the front fence of those four coops too, so his paths across a pen leave a little more room at the
+  bends (`NavGrid.room`).
+- `pentest.mjs` (`LANG=fr`; coops to try): a real tap on a hen and her buttons; at every coop the feeder filled and a
+  cuddle, checked every tenth of a second (into a pen only by its gate, inside only on the yard's free ground, never in
+  the feeder, the water or the hay; no bird ever inside him; every grain pecked up; the hen settles; the pen as it was).
+  `farmerfilm.mjs` takes `pen-6-fill-1`, `pen-4-cuddle-2`, `tap-6-1`, `look-6`, `zoom-1.5` in its `PLAN`.

@@ -32,11 +32,12 @@ export const POSES = {
   panic: { chest: [0, 18, -6], head: [0, -6, -4], shR: [-10, -75, 0], elR: -15, shL: [8, 40, 0], elL: -50, hand: ['fist', 'hold'], hipL: [0, -32, 0], kneeL: 14, hipR: [0, 26, 0], kneeR: 34, root_z: -0.01 },
   cuddle: { head: [-6, 10, 0], chest: [0, -4, 0], shL: [6, -50, 0], elL: [-45, -72, 0], shR: [-6, -50, 0], elR: [45, -72, 0], hand: ['relax', 'relax'], wrL: [0, 0, -20], wrR: [0, 0, 20] },
   pet: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 10, 0], head: [0, -4, 0], shR: [-10, -78, 0], elR: -14, wrR: [0, 6, 0], shL: [14, -30, 0], elL: -60, hand: ['relax', 'open'] },
-  feed: { chest: [0, 4, 12], head: [0, 8, 14], shR: [-62, -40, 0], elR: -25, shL: [10, -12, 0], elL: -20, hand: ['open', 'hold'] },
+  feed: { chest: [0, 4, 12], head: [0, 8, 14], shR: [-62, -40, 0], elR: -25, shL: [10, -12, 0], elL: -20, hand: ['hold', 'hold'] },      // (3D: the left hand round the pail's handle)
   // (3D only) hands on hips, looking at the hens; the torch held out in front; a big stretch in the morning
   hips: { shL: [38, 18, 0], elL: [-70, -20, 0], shR: [-38, 18, 0], elR: [70, -20, 0], hand: ['fist', 'fist'], chest: [0, -3, 0] },
   torch: { shR: [-8, -62, 0], elR: -18, wrR: [0, 10, 0], hand: ['relax', 'hold'] },
   stretch: { shL: [30, -150, 0], elL: -10, shR: [-30, -150, 0], elR: -10, chest: [0, -8, 0], head: [0, -12, 0], hand: ['open', 'open'] },
+  carry: { shL: [10, -12, 0], elL: -20, shR: [-6, 0, 0], elR: -8, hand: ['hold', 'relax'] },          // (3D only) the pail carried, as when feeding
 };
 // faces (farmer.py's FACE): the upper and lower lids' edges (-1..1 of the eye's height), the lids slanted (degrees), where the
 // eyes look, the brows' slant (+ worried, - cross) and height, the mouth, the blush
@@ -125,6 +126,10 @@ export class FarmerRig {
     // (three.js refreshes a skin once a frame, but counts a shadow redraw as that frame's refresh, so the picture just after
     // a shadow redraw would show last frame's pose, a step behind his torch's glow: refreshed here right before each draw)
     this.mesh.onBeforeRender = () => this.mesh.skeleton.update();
+    // the pail came out of the 2D model standing on the ground at the farmer's feet: hung from the left hand here instead, its
+    // handle's top in the hand (the pail is built round its bottom's middle, the handle 0.21 m up; the hand reaches 0.08 m
+    // below the wrist)
+    if (B.pail) { B.pail.position.set(0.012, -0.3, 0); this.rest.pail.p.copy(B.pail.position); }
     this.B = B; this.blush = this.mesh.material.userData.blush;
     this.eyeR = INFO.info[look].eyes.L.r; this.gazeUp = 0.55;
   }
@@ -195,6 +200,7 @@ export class Farmer {
       target.ankleL = -target.kneeL - target.hipL[1] * 0.6; target.ankleR = -target.kneeR - target.hipR[1] * 0.6;
       if (!W.keepArms) { target.shL[1] += (20 + 25 * rn) * s * g; target.shR[1] += -(20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; target.elR[1] -= (10 + 40 * rn) * g; }
       else if (W.keepArms === 'L') { target.shL[1] += (20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; }          // (the torch held steady in the right hand)
+      else if (W.keepArms === 'R') { target.shR[1] += -(20 + 25 * rn) * s * g; target.elR[1] -= (10 + 40 * rn) * g; }        // (the pail held steady in the left)
       target.chest[2] += 5 * s * g; target.chest[1] += 6 * rn; target.rootZ += -0.012 * g * Math.abs(c) - 0.03 * rn;
     }
     if (W.anim) W.anim(target, face, t);

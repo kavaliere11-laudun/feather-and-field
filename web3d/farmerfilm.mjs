@@ -1,6 +1,8 @@
 // Frames following the farmer: node farmerfilm.mjs OUT [secs] [fps] [hour] [size]  (SKIP: seconds first; START: seconds
 // of film before the pictures; EXTRA: more page options, e.g. &visit=3 to have Rusty out; SEND=t: send the farmer at t;
-// PLAN=1:6.6,5:coop,30:fox: at t the hour, what the farmer does next, or whom the camera follows; OFF: the view's centre
+// PLAN=1:6.6,5:coop,30:fox,8:pen-2-fill-0: at t the hour, what the farmer does next, whom the camera follows, or a pen visit
+// (coop 2's pen: fill the feeder, or a cuddle for bird 0: pen-2-cuddle-0; tap-2-0: bird 0 tapped, her buttons; zoom-1.5: the view
+// easing to that size; look-2: the view on coop 2's pen, me: back on the farmer); OFF: the view's centre
 // from him along x and z (-0.45 puts him in the middle of the picture); FOLLOW: how quickly the view keeps up, per second)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const [out = 'ff', secs = '20', fps = '12', hour = '14', size = '2.2'] = process.argv.slice(2);
@@ -18,9 +20,10 @@ for (let i = 0; i < +secs * +fps; i++) {
     const f = window.__farm, L = f.farmer(), V = f.visit();
     if (send >= 0 && t >= send && !window.__sent && V && V.canSend()) { window.__sent = V.sendFarmer(); }
     window.__done = window.__done || {};
-    for (const [at, what] of plan) if (t >= at && !window.__done[at]) { if (!/^([\d.]+|fox|me)$/.test(what) && (L.home || L.f.opacity < 0.99)) continue; window.__done[at] = true; if (/^[\d.]+$/.test(what)) f.setHour(+what); else if (what === 'fox') window.__follow = 'fox'; else if (what === 'me') window.__follow = null; else L.task = L.next(14, what); }
+    for (const [at, what] of plan) if (t >= at && !window.__done[at]) { if (!/^([\d.]+|fox|me|pen.*|tap.*|zoom.*|look.*)$/.test(what) && (L.home || L.f.opacity < 0.99)) continue; window.__done[at] = true; if (/^[\d.]+$/.test(what)) f.setHour(+what); else if (what === 'fox') window.__follow = 'fox'; else if (what === 'me') window.__follow = null; else if (/^pen/.test(what)) { const [, i, kind, j] = what.split('-'); window.__pen = f.penVisit(+i, kind, +(j || 0)); } else if (/^tap/.test(what)) { const [, i, j] = what.split('-'); f.henTap(f.coopPlots()[+i].birds[+j]); } else if (/^zoom/.test(what)) window.__zoom = +what.split('-')[1]; else if (/^look/.test(what)) window.__follow = 'pen-' + what.split('-')[1]; else L.task = L.next(14, what); }
     f.step(1 / 30, Math.max(1, Math.round(dt * 30))); f.water(100 + t); f.wind(100 + t);
-    const at = window.__follow === 'fox' && V && V.fox.root.visible ? V.fox.pos : L.pos;
+    let at = window.__follow === 'fox' && V && V.fox.root.visible ? V.fox.pos : L.pos;
+    if (/^pen-/.test(window.__follow || '')) { const c = f.coopPlots()[+window.__follow.slice(4)]; at = c.frame.localToWorld(new f.THREE.Vector3(0.3, 0, 1.6)); }      // (look-6: the view on coop 6's pen)
     window.__c = window.__c || [at.x, at.z]; const k = Math.min(1, follow * dt);
     // (looking ahead of him by as much as the view lags behind, so he stays in the middle when he walks or runs)
     const last = window.__last || [at.x, at.z], v = window.__v = window.__v || [0, 0], kv = Math.min(1, 3 * dt);
@@ -28,7 +31,8 @@ for (let i = 0; i < +secs * +fps; i++) {
     else { v[0] += ((at.x - last[0]) / dt - v[0]) * kv; v[1] += ((at.z - last[1]) / dt - v[1]) * kv; }
     window.__last = [at.x, at.z];
     const lead = window.__lead ?? 1; window.__c[0] += (at.x + lead * v[0] / follow - window.__c[0]) * k; window.__c[1] += (at.z + lead * v[1] / follow - window.__c[1]) * k;
-    f.lookAt(window.__c[0] + off, window.__c[1] + off, size); if (draw) f.draw();
+    window.__size = window.__size || size; if (window.__zoom) window.__size += (window.__zoom - window.__size) * Math.min(1, 1.5 * dt);      // (zoom-1.5: easing in)
+    f.lookAt(window.__c[0] + off, window.__c[1] + off, window.__size); if (draw) f.draw();
     return (L.home ? 'home' : 'out') + ' ' + (L.task ? L.task.name : L.running ? 'torch' : '-') + (V && V.farmer ? ' F:' + V.farmer.stage : '') + (V ? ' V:' + V.state : '');
   }, [1 / +fps, +size, t, +(process.env.SEND ?? -1), draw, +(process.env.OFF ?? 0.25), +(process.env.FOLLOW ?? 2), (process.env.PLAN || '').split(',').filter(Boolean).map(x => { const [a, w] = x.split(':'); return [+a, w]; })]);
   log.push(s);

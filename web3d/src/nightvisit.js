@@ -154,7 +154,7 @@ export class NavGrid {
       for (let k = a + 1; k < b; k++) if (fixed[k] === 'start') { b = k; break; }
       if (fixed[a] === 'start') b = a + 1;
       // (with costs: a straight stretch only where it costs no more than the way found: along a path, never across the grass)
-      while (b > a + 1 && (!this.clearLine(cells[a][0], cells[a][1], cells[b][0], cells[b][1], this.cell * 0.45) || (W && this.lineCost(cells[a][0], cells[a][1], cells[b][0], cells[b][1]) > (gs[b] - gs[a]) * 1.04 + 0.5))) b--;
+      while (b > a + 1 && (!this.clearLine(cells[a][0], cells[a][1], cells[b][0], cells[b][1], this.room ?? this.cell * 0.45) || (W && this.lineCost(cells[a][0], cells[a][1], cells[b][0], cells[b][1]) > (gs[b] - gs[a]) * 1.04 + 0.5))) b--;
       out.push(cells[b]); a = b;
     }
     return out;
@@ -501,6 +501,7 @@ export class NightVisit {
     let g = this.penGrids[p.breed];
     if (!g) {
       g = this.penGrids[p.breed] = new NavGrid(-1.62, 0.2, 1.77, 2.48, 0.08);
+      g.room = 0.12;                                                            // (his straight stretches with room to swing a little at the bends)
       for (const o of this.penObstacles || []) if (Math.abs(o[0] - this.nestOf(p).pop[0]) > 0.05) g.circle(o[0], o[2], o[3] + 0.2);   // (the old single farm's ramp marks: the ramp is the house's now)
       for (const o of (this.nestOf(p).block || [])) g.circle(o[0], o[1], o[2] + 0.2);
       g.mark(-1.7, 0, 1.8, 0.62, () => true);                                  // the house and just in front of it
