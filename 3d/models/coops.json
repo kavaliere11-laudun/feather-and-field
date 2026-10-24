@@ -24,6 +24,11 @@
    0.0033,
    1.5308,
    0.0123
+  ],
+  "rustic_rir": [
+   -0.0033,
+   1.5484,
+   -0.0194
   ]
  },
  "lights": {
@@ -305,6 +310,16 @@
   "vane": {
    "tris": 900,
    "verts": 480,
+   "prims": 1
+  },
+  "rustic_rir": {
+   "tris": 13912,
+   "verts": 8118,
+   "prims": 3
+  },
+  "fence_rustic": {
+   "tris": 3500,
+   "verts": 1934,
    "prims": 1
   },
   "popdoor_rir": {
