@@ -1484,7 +1484,8 @@ rate higher and sell for more. Replaces the farmer leading the chicks out of the
   a brood that grew up while it was shut ("While you were away, Lulu's babies grew up"): "🎉 Congratulations! Lulu's
   babies have grown up", a row for each (🐔 Young hen or 🐓 Young rooster, its stars, +coins), the total "+76 coins ·
   +34 XP", "Lulu and Percy gain experience: their next chicks will be even better." and "Lovely!". Closing it marks the
-  news seen and counts the coins up. One at a time, never over another card.
+  news seen and counts the coins up. One at a time, never over another card. Sideways the card takes the full height
+  (the level and coins pills hidden behind it till it's closed) and "Lovely!" stays in sight at the bottom.
 - **The save:** `brood.kids` (at most 4: sex h or r, stars 1-5) and `news` (only for birds on the farm; at most 4
   youngsters, stars 1-5, coins at most 1000 each, totals at most 4000) checked on load.
 - `chicktest.mjs` (`LANG=fr`, `W=874 H=402`): a fake clock from the 24th: no brood on the first day; the morning one

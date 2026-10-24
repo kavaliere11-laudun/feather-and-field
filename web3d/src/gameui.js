@@ -65,13 +65,13 @@ export class GameUI {
   open(kind, title, modal = false) {
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
-    this.sheet.classList.toggle('modal', modal); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
+    this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats'); document.body.classList.toggle('gcong', kind === 'congrats'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     return this.body;
   }
   close() {
     if (this.sheet.hidden) return;
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
-    this.sheet.hidden = true; this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
+    this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
   // the welcome picture over the top of the screen (the farmer, hens of every breed, the geese and the dog: main.js ?poster),
