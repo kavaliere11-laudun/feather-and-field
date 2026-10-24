@@ -173,7 +173,8 @@
   .gbtn.gdanger { background: var(--barn); color: #fff; }
   .ghero { position: fixed; z-index: 18; left: 0; right: 0; top: 0; height: calc(100% - 400px); min-height: 230px; overflow: hidden; background: #8cb85c; }
   .ghero[hidden] { display: none; }
-  .ghero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; display: block; }
+  .ghero img { opacity: 0; transition: opacity 0.4s; } .ghero img.on { opacity: 1; }
+  .ghero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; display: block; }      /* (the picture is taller than the space: only grass goes) */
   .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 120px); background: linear-gradient(rgba(25, 45, 20, 0.45), rgba(25, 45, 20, 0)); }
   .glogo, .gtag { z-index: 2; }
   .ghero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(rgba(140, 184, 92, 0), rgba(30, 52, 38, 0.18)); }
@@ -206,6 +207,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792863451"></script>
+<script src="app.js?v=1792863985"></script>
 </body>
 </html>
