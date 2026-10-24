@@ -1024,7 +1024,8 @@ export class PosterDog {
   nextTask(f) {
     return T.wait(1e6, (f, t) => {
       const A = f.A;
-      if (this.pose === 'bow') { A.bowGoal = 1; A.pitch = this.pitch ?? 0.3; A.wagGoal = 1; A.tailUpGoal = 0.85; playFace(f, 1); A.lookPitchGoal = this.look ?? -0.25; A.headTiltGoal = 0.2; }
+      if (this.pose === 'bow') { A.bowGoal = 1; A.pitch = this.pitch ?? 0.3; A.lift = this.lift ?? -0.105; A.groundF = 0.008; A.groundH = 0; A.slopeF = 0; A.slopeH = 0;      // (the body tipped, and let down so the hind paws reach the ground too: Audrey, "The dog back legs are not really touching the floor")
+        A.wagGoal = 1; A.tailUpGoal = 0.85; playFace(f, 1); A.lookPitchGoal = this.look ?? -0.25; A.headTiltGoal = 0.2; }
       else if (this.pose === 'sit') { A.sitGoal = 1; A.wagGoal = 0.6; playFace(f, 0.8); }
     });
   }

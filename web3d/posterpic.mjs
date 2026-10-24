@@ -1,5 +1,6 @@
 // The game's welcome picture (main.js ?poster): node posterpic.mjs OUT  (W, H: css px; DSF; EL, AZ, DIST, FOV, AT=x,y,z: the camera; T: seconds of posing)
-// Made with: AT=0.35,0.75,0.1 DIST=9.8 FOV=28.5 H=500 DSF=3 ./withserver.sh node posterpic.mjs /tmp/p  (then saved as welcome.jpg, quality 84)
+// Made with: AT=0.35,0.75,0.1 DIST=9.8 FOV=28.5 H=500 DSF=6 ./withserver.sh node posterpic.mjs /tmp/p  (2412x3000, then shrunk to
+// 1206x1500 for smooth edges and saved as welcome.jpg, quality 88, full colour)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const out = process.argv[2] || '/tmp/claude-0/farmer/poster/p';
 const W = +(process.env.W || 402), H = +(process.env.H || 432);

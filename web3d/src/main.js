@@ -2316,6 +2316,7 @@ class Bird {
     A.stretch = (A.stretch || 0) + ((song && song.stretch ? 1 : 0) - (A.stretch || 0)) * Math.min(1, dt * 14);
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
+    if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);
   }
 }
@@ -2361,10 +2362,22 @@ function buildPoster(joints) {
   const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
   const bird = (breed, kind, colour, x, z, tx, tz, act) => { const b = new Bird(plot, breed, kind, colour, [x, 0, z], face(x, z, tx, tz), r); b.stay = true; b.posterAct = act; plot.birds.push(b); return b; };
   const rooster = bird('rir', 'rooster', null, 0.6, -1.25, 0.2, 2, 'crow');
-  // (the hens in an open ring round the corn, each with room of her own so every breed shows clearly)
-  const C = [-0.2, 0.95];
-  const hens = [bird('leg', 'hen', null, -0.22, 0.45, C[0], C[1], 'peck'), bird('orp', 'hen', null, -0.72, 0.98, C[0], C[1], 'peck'), bird('bra', 'hen', null, 0.36, 0.78, C[0], C[1], 'peck'),
-    bird('sil', 'hen', 'white', -0.5, 1.5, C[0], C[1], 'peck'), bird('sil', 'hen', 'black', 0.22, 1.45, C[0], C[1], 'peck')];
+  // (the hens, each busy in her own space: the Orpington and the Brahma in a tug of war over a worm, the Cream Legbar
+  // leaping in, wings wide, the black Silkie scratching the corn heap so the grains fly, the white Silkie running in late)
+  const C = [-0.2, 0.85];
+  const orp = bird('orp', 'hen', null, -0.7, 1.28, 1, 1.28, null), bra = bird('bra', 'hen', null, 0.02, 1.28, -1.5, 1.28, null);
+  const leg = bird('leg', 'hen', null, 1.62, 1.92, 0.6, 2.75, null), blk = bird('sil', 'hen', 'black', 0.92, 1.02, 2.2, 1.1, null);
+  const wht = bird('sil', 'hen', 'white', -0.42, 0.62, -1.4, 0.75, null);
+  const hens = [orp, bra, leg, blk, wht];
+  const hold = (b, f) => { b.posterPose = f; };
+  // the tug of war: the worm in the bill, leaning back hard, wings half out for balance
+  for (const b of [orp, bra]) hold(b, A => { A.peck = 0.32; A.walk = 0; A.flap = 0.35; A.wag = 0.5; A.lookYaw = 0; A.lookTilt = 0.12; });
+  // the Legbar in mid-leap: legs tucked, wings wide (A.t: the moment in the beat they're fully open)
+  hold(leg, (A, dt) => { A.hopT = 0.52; A.flap = 1; A.t = 2.3; A.peck = 0; A.lookYaw = 0; A.lookTilt = 0; A.walk = 0; });
+  // the black Silkie scratching: a kick back, head down at the heap
+  hold(blk, A => { A.kick = 1; A.kickT = 0.18; A.kickLeg = 1; A.peck = 0.35; A.walk = 0; A.flap = 0; });
+  // the white Silkie jumping up to catch a grain out of the air, beak up
+  hold(wht, A => { A.hopT = 0.5; A.crow = 0.75; A.flap = 0.6; A.t = 2.3; A.peck = 0; A.walk = 0; A.lookYaw = 0; A.lookTilt = 0.1; });
   const chick = bird('sil', 'chick', 'buff', 1.2, 0.9, 1.5, 2, null);
   const hatHen = bird('sil', 'hen', 'buff', -1.0, 0.1, 0.5, 2, 'rest');          // (a Silkie sitting on his hat, quite at home)
   allBirds.push(...plot.birds);
@@ -2377,16 +2390,39 @@ function buildPoster(joints) {
   // the corn: a handful in the air, from his hand towards the hens, and some already down
   const grain = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: '#e8b84e' }), 60);
   grain.castShadow = true; grain.frustumCulled = false; g.add(grain); nightGrade(grain.material);
-  poster = { g, set, birds: plot.birds, rooster, hens, chick, hatHen, farmer, gert, hector, dog, grain, t: 0, toss: 0.62, r };
+  // the worm the two of them are tugging at (pink, stretched between their bills, a little sag)
+  const worm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(), new THREE.Vector3(1, 0, 0)), 8, 0.012, 6), new THREE.MeshStandardMaterial({ color: '#d9776f', roughness: 0.5 }));
+  worm.castShadow = true; g.add(worm); nightGrade(worm.material);
+  poster = { g, set, birds: plot.birds, rooster, hens, orp, bra, leg, blk, wht, worm, chick, hatHen, farmer, gert, hector, dog, grain, t: 0, toss: 0.62, r };
   tickPoster(0);
 }
-function placeGrain(hand) {           // hand: his throwing hand (the stage's frame); the corn fans out from it towards the hens
-  const P = poster, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(7), to = [-0.2, 0.95];
+// the tip of a bird's bill, world (the frontmost point of what the head bone carries, found once); back: that far behind it
+function billTip(b, back = 0) {
+  if (!b.billAt) {
+    const m = b.rig.mesh, g = m.geometry, sk = m.skeleton, hi = sk.bones.indexOf(b.rig.bones.head);
+    const pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, best = new THREE.Vector3(0, 0, -1e9);
+    for (let i = 0; i < pos.count; i++) {
+      let w = 0; for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === hi) w += sw.getComponent(i, k);
+      if (w > 0.6 && pos.getZ(i) > best.z) best.fromBufferAttribute(pos, i);
+    }
+    b.billAt = best.applyMatrix4(m.bindMatrix).applyMatrix4(sk.boneInverses[hi]);
+  }
+  const h = b.rig.bones.head; b.root.updateMatrixWorld(true);
+  const v = h.localToWorld(b.billAt.clone());
+  if (back) { const w = h.localToWorld(b.billAt.clone().add(new THREE.Vector3(0, 0, -1))); v.add(w.sub(v).normalize().multiplyScalar(back)); }
+  return v;
+}
+function placeGrain(hand) {           // hand: his throwing hand (the stage's frame); the corn: out of his hand in an arc, one grain just over
+  const P = poster, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(7), to = [1.16, 1.04];   // the white Silkie's beak; a heap the black Silkie is scratching, the grains she kicks flying behind her
+  const bill = P.whtBill || new THREE.Vector3(-0.42, 0.6, 0.62);
   for (let i = 0; i < 60; i++) {
     let x, y, z;
-    if (i < 18) { const u = 0.15 + 0.7 * r(), spread = (r() - 0.5) * 0.22 * u;                    // in the air: an arc from his hand
-      x = hand.x + (to[0] - hand.x) * u + spread; z = hand.z + (to[1] - hand.z) * u - spread * 0.5; y = hand.y + Math.sin(u * Math.PI) * 0.22 - u * u * (hand.y - 0.05) + (r() - 0.5) * 0.04; }
-    else { const a = r() * 6.28, d = Math.sqrt(r()) * 0.24; x = to[0] + Math.cos(a) * d; z = to[1] + Math.sin(a) * d * 0.8; y = 0.012; }      // down, in the middle of the ring
+    if (i === 0) { x = bill.x + 0.02; y = bill.y + 0.07; z = bill.z + 0.01; }
+    else if (i < 16) { const u = 0.12 + 0.75 * r(), spread = (r() - 0.5) * 0.2 * u;                // in the air: an arc from his hand towards her
+      x = hand.x + (bill.x - hand.x) * u * 1.3 + spread; z = hand.z + (bill.z - hand.z) * u * 1.3 - spread * 0.5; y = hand.y + Math.sin(u * Math.PI) * 0.18 - u * u * (hand.y - bill.y) * 0.9 + (r() - 0.5) * 0.04; }
+    else if (i < 28) { const u = 0.2 + 0.8 * r(), sp = (r() - 0.5) * 0.18;                             // kicked up behind the black Silkie
+      x = 0.86 - 0.36 * u; z = 1.0 + sp - 0.03 * u; y = 0.04 + Math.sin(u * Math.PI) * 0.17 + r() * 0.03; }
+    else { const a = r() * 6.28, d = Math.sqrt(r()) * 0.16; x = to[0] + Math.cos(a) * d; z = to[1] + Math.sin(a) * d * 0.7; y = 0.012; }      // the heap
     m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(0.011, 0.008, 0.009));
     P.grain.setMatrixAt(i, m);
   }
@@ -2402,6 +2438,16 @@ function tickPoster(dt) {
   // the farmer throwing: his arm out at the moment of letting go (toss: how far through the throw), grinning, an eye on the goose
   P.farmer.want = { pose: 'feed', face: 'happy', props: { pail: true }, anim: (Q, F) => { const u = P.toss; Q.shR[1] += -30 * Math.sin(u * Math.PI); Q.elR[1] += 20 * Math.sin(u * Math.PI); Q.wrR[1] += -30 * Math.sin(u * Math.PI); F.look = P.look || [0.15, 0.8]; Q.head[2] += 6; Q.head[1] -= 6; } };
   if (dt > 0) { P.farmer.update(dt); P.gert.update(dt); P.hector.update(dt); P.dog.update(dt); }
+  // the Legbar up in the air; the tug of war's worm from bill to bill
+  P.leg.root.position.y = P.legUp ?? 0.24; P.wht.root.position.y = P.whtUp ?? 0.1;
+  P.g.updateMatrixWorld(true); P.whtBill = P.g.worldToLocal(billTip(P.wht));
+  for (const b of [P.orp, P.bra]) { b.root.rotation.x = 0; b.visual.rotation.x = -(P.lean ?? 0.3); }
+  {
+    const tip = b => P.g.worldToLocal(billTip(b, 0.012));
+    P.g.updateMatrixWorld(true); for (const b of [P.orp, P.bra]) b.root.updateMatrixWorld(true);
+    const a = tip(P.orp), c = tip(P.bra), mid = a.clone().add(c).multiplyScalar(0.5); mid.y -= 0.035;
+    P.worm.geometry.dispose(); P.worm.geometry = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, mid, c), 16, 0.014, 8);
+  }
   // the chick riding on Biscuit's back
   const d = P.dog.foxes[0], bone = d.q.bones.chest || d.q.bones.spine || d.q.bones.hips;
   if (bone) { P.g.updateMatrixWorld(true); const w = bone.getWorldPosition(new THREE.Vector3()); P.g.worldToLocal(w); P.chick.root.position.set(w.x, w.y + (P.chickUp ?? 0.11), w.z); }
@@ -3100,6 +3146,10 @@ window.__farm = {
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
     cam.position.copy(tw).addScaledVector(dir, o.dist || 9); cam.lookAt(tw); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
     view.target.set(tw.x, 0, tw.z); aimShadows(true); for (const p of plots) for (const b of p.birds) placeBlob(b);
+    // (the best it can be: crisp shadows over just the stage, fur and fluff as fine as they come at this size)
+    const sh = sun.shadow, R = o.shadowReach || 4.5; sh.mapSize.set(4096, 4096); if (sh.map) { sh.map.dispose(); sh.map = null; }
+    sh.camera.left = -R; sh.camera.right = R; sh.camera.top = R; sh.camera.bottom = -R; sh.camera.updateProjectionMatrix(); sh.radius = 2.5; sh.needsUpdate = true;
+    const h = (canvas.clientHeight || innerHeight) * renderer.getPixelRatio(); setFar(false); setFurDetail(h / (2 * (o.dist || 9) * Math.tan((o.fov || 24) / 2 * DEG)), 1);
     renderer.render(scene, cam); return true; },
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
