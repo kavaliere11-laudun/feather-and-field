@@ -765,3 +765,83 @@ if __name__ == '__main__':          # all five houses in a row: python coops.py 
     lighting(scn)
     camera(scn, (3.2, -6.5, 4.0), (0.0, 0, 0.6), lens=40)
     R = int(os.environ.get('RES', 1600)); render(scn, os.environ.get('NAME', 'coops_row'), R, int(R * 0.5), samples)
+
+
+# ---- a new breed's coop as it first comes: rustic (Audrey's brief, 24 Oct 2026: coops start very rustic and are improved
+# with game money). The same house, weathered: paint faded and peeling, a few boards replaced with bare ones, a board or
+# two nailed over the cracks, the slates faded with some moss, a sheet of corrugated tin patching the roof, the trims gone
+# grey. The pen's fence the same way: grey posts and rails, a little crooked.
+RUSTIC = dict(red='#a45a49', redd='#8a4a3c', bare='#a8957b', white='#bdb6a5', slate='#646b6e', moss='#6b7452', ridge='#6d5a4a',
+              wood='#93836f', darkwood='#5f5144', capwood='#7d6e5e', glass='#4a565c', tin='#c3c6c3', tin2='#a7acaa', rust='#a5683f')
+
+
+def _rmat(key, rough=0.85, **kw):
+    G = (1.5, 26, 26)
+    return mat('r_' + key, RUSTIC[key], rough=rough, var=kw.pop('var', 0.1), grain=kw.pop('grain', 0.3), grain_scale=G, **kw)
+
+
+def _weather(root, seed):
+    """Swap each part's material for its weathered one (by the material's name)."""
+    random.seed(seed)
+    M_ = {k: _rmat(k) for k in ('red', 'redd', 'bare', 'white', 'wood', 'darkwood', 'capwood')}
+    M_['slate'] = _rmat('slate', rough=0.8, grain=0.0, bump=0.15, bump_scale=50, var=0.14)
+    M_['moss'] = _rmat('moss', rough=0.95, grain=0.0, bump=0.4, bump_scale=80, var=0.1)
+    M_['ridge'] = _rmat('ridge', rough=0.8, grain=0.0)
+    M_['glass'] = mat('r_glass', RUSTIC['glass'], rough=0.35, spec=0.4)
+    objs = [o for o in root.children_recursive if o.type == 'MESH']
+    for o in objs:
+        for i, m in enumerate(o.data.materials):
+            if m is None: continue
+            n = m.name.split('.')[0]
+            if n == 'barn_red':
+                u = random.random(); o.data.materials[i] = M_['bare'] if u < 0.16 else M_['redd'] if u < 0.3 else M_['red']
+            elif n == 'trim': o.data.materials[i] = M_['white']
+            elif n == 'slate': o.data.materials[i] = M_['moss'] if random.random() < 0.05 else M_['slate']
+            elif n in ('ridge', 'glass', 'wood', 'darkwood', 'capwood'): o.data.materials[i] = M_[n]
+    return M_
+
+
+def rustic_barn(seed=11):
+    """The Red Barn as it first comes, rustic."""
+    r = red_barn()
+    M_ = _weather(r, seed)
+    W2, D2, FL, EAVE, PEAK = 0.62, 0.44, 0.40, 1.02, 1.46
+    objs = []
+    bare = M_['bare']
+    # boards nailed over the cracks: on the front left of the pop door, and along both gable ends
+    objs.append(coop.plank('patch', (-0.605, -D2 - 0.04, 0.56), (-0.47, -D2 - 0.04, 0.71), 0.075, 0.02, (0, -1, 0), bare, jitter=0.6))
+    for sx in (-1, 1):
+        x = sx * (W2 + 0.04)
+        objs.append(coop.plank('patch', (x, -0.3, 0.63), (x, 0.12, 0.66), 0.08, 0.02, (sx, 0, 0), bare, jitter=0.6))
+        objs.append(coop.plank('patch', (x, 0.05, 0.83), (x, 0.3, 0.8), 0.07, 0.02, (sx, 0, 0), bare, jitter=0.6))
+    # a sheet of corrugated tin over part of the front slope, with a few rust spots
+    sy = -1
+    e0 = Vector((0, sy * (D2 + 0.16), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02)); down = e0 - r0; dn = down.normalized()
+    nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + 0.16)).normalized()
+    tin = mat('r_tin', RUSTIC['tin'], rough=0.7, var=0.04); tin2 = mat('r_tin2', RUSTIC['tin2'], rough=0.7, var=0.04)     # (light and shade of the corrugations)
+    rust = mat('r_rust', RUSTIC['rust'], rough=0.9)
+    xa, xb, ta, tb = 0.08, 0.5, 0.3, 0.78
+    n = 14
+    for k in range(n):
+        x = xa + (k + 0.5) * (xb - xa) / n
+        a = r0 + down * ta + nrm * 0.056 + Vector((x, 0, 0)); b = r0 + down * tb + nrm * 0.056 + Vector((x, 0, 0))
+        objs.append(coop.plank('tin', a, b, (xb - xa) / n * 1.01, 0.008, nrm, tin if k % 2 else tin2, jitter=0.0, bevel=0.0))
+    for (x, t, s) in ((0.17, 0.62, 0.05), (0.38, 0.4, 0.035), (0.44, 0.7, 0.04)):
+        c = r0 + down * t + nrm * 0.07 + Vector((x, 0, 0))
+        objs.append(coop.plank('rust', c - dn * s / 2, c + dn * s / 2, s * 1.2, 0.004, nrm, rust, jitter=0.0, bevel=0.001))
+    for o in objs:
+        mw = o.matrix_basis.copy(); o.parent = r; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+    return r
+
+
+def rustic_fence(seed=12):
+    """The pen's fence as it first comes: grey weathered posts and rails, a little crooked."""
+    root = wood_fence()
+    M_ = _weather(root, seed)
+    random.seed(seed)
+    for o in root.children_recursive:
+        if o.type != 'MESH': continue
+        n = o.name.split('.')[0]
+        if n == 'post': o.rotation_euler.x += math.radians(random.uniform(-3.5, 3.5)); o.rotation_euler.y += math.radians(random.uniform(-3.5, 3.5))
+        elif n == 'rail': o.rotation_euler.rotate_axis('Z', math.radians(random.uniform(-1.2, 1.2)))
+    return root

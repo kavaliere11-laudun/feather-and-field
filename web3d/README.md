@@ -1269,3 +1269,47 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   round by the shortest way through points round the pond (`route`), and a duck stuck on her way home gets a new way.
   And a hen who jumps in or out at the nest window waits while the farmer is in the pen near her take-off spot
   (pentest saw one leap past him at two coops).
+
+## The game, release 1 step 1: a new farm (24 Oct 2026, Audrey: "Let's go")
+
+Audrey's brief (24 Oct) changed the game play: the plan is the project doc `claude/game-plan-v2.md`. She chose to start
+fresh, hens raising their own chicks, about a year to the top level for a once-a-day player, and to build it straight
+into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live steps; this is the first.
+
+- **The game's own page:** `play.html` (the same page and code as the test village, built with `body.game`:
+  `build.sh`). `/3d/` stays the test village with everything in it; `/3d/play.html` is the game. In the game the geese,
+  the dog and the decorations are bought, so a new farm has none of them yet (`HAS_GEESE`, `HAS_DOG`, `HAS_DECOR`), the
+  fox doesn't visit before the geese can be bought, the wheat field is ploughed and waits (sowing comes later), the test
+  page's own buttons and hints are hidden.
+- **`game.js`:** the farm and its rules so far.
+  - The farm: coins (100 to start), XP (the level always comes from the XP, never from the save; a first curve, the
+    year-long balance comes with step 9), the language, the farmer (him or her, and a name), the patches of land owned
+    (the village's 40 plots; the first is plot 0, the 2D game's start), the coops (a breed, how far it's been done up:
+    0 rustic to 4 Deluxe, its patch, a name) and the birds.
+  - The forever trio: a rooster and two hens with three different personalities, never a good mum rooster. The first
+    trio meets the game's characters at once: a Brave rooster, a Good mum and a Rebel. Each bird: name, personality,
+    since when, experience (stars, 0 to 5) and trust (0 to 15 cuddles: Shy, Friendly, Trusting, Best friend).
+  - Saved on the phone (`localStorage`, `ff3d.farm`) with a seal. Every load is checked: wrong types dropped, numbers
+    clamped, names cleaned of code, a coop only on land owned, a trio at most per coop (one rooster, two hens, of the
+    coop's breed), only hens good mums. A farm changed outside the game loads checked and is flagged in Settings.
+  - Every word in English and French (the phone's language to start, then the player's choice).
+- **`gameui.js`:** the game's screens in the 2D game's look: the top bar (level with its ring, coins, Settings), sheets
+  that slide up: the welcome over the loading farm (language, him or her, a name, "Start my farm"), a bird's card (name,
+  breed, hen or rooster, "In your flock for good", personality with its icon and what she's like, experience stars,
+  trust hearts, her coop and since when), the level, the coins, Settings (language, "Start a new farm" with a second tap
+  to confirm, a warning when the farm was changed outside the game, the version). Names are always set as text.
+- **`main.js`:** the farm drawn from the save: the player's coops on their patches with their own birds (names and
+  personalities from the save), nothing on land not yet owned (and the farmer can walk there). Tap a bird: her card, and
+  the view glides over so she shows above it; tap the grass: the card goes. The coop doors' messages and the inside of a
+  coop at night now have French too (for the test page as well).
+- **The rustic coop** (`stylized/coops.py rustic_barn`, `rustic_fence`; `export_coops.py`: `rustic_rir`,
+  `fence_rustic`): a new breed's coop as it first comes. The Red Barn weathered: the red faded and patchy, some boards
+  replaced with bare ones, boards nailed over the cracks on the front and both ends, the trims gone grey, the slates
+  faded with a little moss, a sheet of corrugated tin with rust spots patching the roof; the pen's fence grey and a
+  little crooked. Same shape as the Red Barn, so the nest, the pop door and the inside are the same.
+- **`gametest.mjs`** (`LANG=fr` for a French phone): a fresh phone through the welcome (him or her, a name with code in
+  it), the farm (level 1, 100 coins, the rustic Red Barn and the trio, nothing else), a real tap on each bird and her card
+  in the language, the same farm after a reload, a save changed outside the game (a fourth bird, a rooster good mum,
+  code in a name, a level typed in, XP as text: all checked, and flagged), the trio in bed at night and the inside view's
+  title, Settings: the other language, and a new farm.
+

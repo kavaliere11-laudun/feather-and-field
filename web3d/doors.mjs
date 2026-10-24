@@ -61,7 +61,7 @@ await p.close();
 p = await page('22:15');
 const s2 = await state(p, 0);
 await tapDoor(p, 0); const s3 = await state(p, 0);
-ok('coop 0: 22:15 with birds still out: "Not everyone\'s in yet"', s2.asleep < s2.n && !s2.badge && s3.goal === 1 && s3.tag.startsWith("Not everyone's in yet: "), JSON.stringify(s3));
+ok('coop 0: 22:15 with birds still out: "Not everyone\'s in yet"', s2.asleep < s2.n && !s2.badge && s3.goal === 1 && /^Not everyone[’']s in yet: /.test(s3.tag), JSON.stringify(s3));
 await p.close();
 
 // inside: the pop door from inside, open then shut by a tap

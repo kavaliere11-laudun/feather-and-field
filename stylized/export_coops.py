@@ -33,7 +33,7 @@ def one(name, fn):
     for o in bpy.context.scene.objects:          # shingles: plain boxes (their bevels can't be seen from the game's camera)
         if o.name.startswith('sh'):
             for md in [m for m in o.modifiers if m.type == 'BEVEL']: o.modifiers.remove(md)
-    if name.startswith('house_'): top_of(name)
+    if name.startswith('house_') or name.startswith('rustic_'): top_of(name)
     bake_and_export(name)
 
 
@@ -42,9 +42,12 @@ one('pen_base', coops.pen_base)
 one('fence', coops.wood_fence)
 one('fence_dx', coops.deluxe_fence)
 one('vane', coops.weathervane)
+BUDGET.update({'rustic_rir': 14500, 'fence_rustic': 3500})
+one('rustic_rir', coops.rustic_barn)                     # a new breed's coop as it first comes (rustic)
+one('fence_rustic', coops.rustic_fence)
 for k in coops.HOUSES: BUDGET['popdoor_' + k] = 900; one('popdoor_' + k, lambda k=k: coops.pop_slider(k))       # the sliding pop doors
-names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane'] + ['popdoor_' + k for k in coops.HOUSES]
+names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
-for k, v in coops.NESTS.items(): v['block'] = coops.BLOCKS.get(k, [])          # what the birds walk round in front of each house
+for k, v in coops.NESTS.items(): v['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get(k, []))]          # what the birds walk round in front of each house (once each: the rustic barn builds the Red Barn again)
 json.dump(dict(tops=TOPS, lights=coops.LIGHTS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))
