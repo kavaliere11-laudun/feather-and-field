@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS } from './game.js';
 import { GameUI } from './gameui.js';
 
 const MODELS = './models/';
@@ -390,7 +390,7 @@ async function start() {
   aimShadows(true);
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  if (GAME_MODE) { gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); gameTick(Date.now(), true); }      // (the eggs laid while away, at once)
+  if (GAME_MODE) { openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); gameTick(Date.now(), true); }      // (the eggs laid while away, at once)
   else hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
 }
@@ -1037,7 +1037,7 @@ function spawnNote(bird, big, loud) {
   if (!n) { if (NOTES.length > 40) return; const sm = noteMat.clone(); nightGrade(sm); n = { sprite: new THREE.Sprite(sm), life: 0 }; n.sprite.renderOrder = 3; scene.add(n.sprite); NOTES.push(n); }
   const p = bird.root.getWorldPosition(new THREE.Vector3()), up = bird.rig.scale * 0.95;
   n.sprite.position.set(p.x + (Math.random() - 0.5) * 0.08, p.y + up, p.z + (Math.random() - 0.5) * 0.08);
-  n.size = (big ? 0.17 : 0.115) * (0.75 + 0.25 * loud); n.life = n.full = big ? 1.4 : 1.0;
+  n.size = (big ? 0.17 : 0.115) * (0.75 + 0.25 * loud); n.life = n.full = big ? 1.4 : 1.0; n.sprite.scale.setScalar(1e-4);      // (grown in tickNotes)
   n.drift = [(Math.random() - 0.5) * 0.12, 0.2 + 0.1 * Math.random(), (Math.random() - 0.5) * 0.12];
   n.sprite.visible = true;
 }
@@ -1914,29 +1914,31 @@ class Bird {
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
   busy() { return this.laying || this.roost || this.asleep || this.leaving; }
-  // grown chicks off to their new farm: gathering by the farmer, then following him out of the pen in a line, then gone
+  // grown and off to a new farm (main.js chicksGo, tickFarewell): to her place in the line just inside the gate ('gather'),
+  // turning to face out, hopping for joy there ('party': tickFarewell's hops; the flaps here), then out of the gate along
+  // the way out ('exit'), and gone down the lane ('fade')
   leaveStep(dt) {
-    const L = this.leaving, p = this.root.position, F = this.plot.farmer;
+    const L = this.leaving, p = this.root.position;
     L.t = (L.t || 0) + dt;
     if (L.phase === 'fade') { const s = Math.max(0, 1 - L.t / 0.7); this.root.scale.setScalar((this.size || 1) * s); if (L.t >= 0.7) L.gone = true; return false; }
-    let tx, tz;
-    if (L.phase === 'follow' && this.plot.trail && this.plot.trail.length) {         // a point on his trail, each chick a little further back
-      const T = this.plot.trail, want = 0.34 + 0.2 * L.i; let d = 0; tx = T[T.length - 1][0]; tz = T[T.length - 1][1];
-      for (let k = T.length - 1; k > 0; k--) {
-        const ax = T[k][0], az = T[k][1], bx = T[k - 1][0], bz = T[k - 1][1], seg = Math.hypot(bx - ax, bz - az);
-        if (d + seg >= want) { const u = (want - d) / Math.max(1e-6, seg); tx = ax + (bx - ax) * u; tz = az + (bz - az) * u; break; }
-        d += seg; tx = bx; tz = bz;
-      }
-      const Y = PEN.pen, outside = p.x < Y.min[0] - 0.45 || p.x > Y.max[0] + 0.45 || p.z < Y.min[2] - 0.45 || p.z > Y.max[2] + 0.45;
-      if (outside || L.t > 40) { L.phase = 'fade'; L.t = 0; }                       // out of the pen: off down the lane
-    } else if (F) { const a = Math.atan2(p.x - F.x, p.z - F.z), r0 = 0.38 + 0.12 * L.i; tx = F.x + Math.sin(a) * r0; tz = F.z + Math.cos(a) * r0; }      // round him
-    else return false;
-    const dx = tx - p.x, dz = tz - p.z, dist = Math.hypot(dx, dz);
-    if (dist < 0.03) return false;
+    if (L.phase === 'gather' || L.phase === 'party') {
+      let walking = false, flap = 0;
+      if (L.route && L.route.length) {
+        const q = L.route[0], r = this.stepToward(q[0], q[1], dt, 1.3, !(L.stuck > 0.6));
+        walking = r.walking; L.stuck = r.blocked ? (L.stuck || 0) + dt : 0;
+        if (r.arrived || L.t > 12) L.route.shift();
+      } else if (L.face !== undefined) walking = this.turnTo(L.face, dt).walking;
+      if (L.flapT !== undefined && L.flapT < 0.8) { L.flapT += dt; flap = Math.sin(Math.min(1, L.flapT / 0.8) * Math.PI); }
+      return { walking, flap };
+    }
+    const q = L.path && L.path[0];                                          // 'exit': out of the gate, a trot
+    if (!q || L.t > 20) { L.phase = 'fade'; L.t = 0; return false; }
+    const dx = q[0] - p.x, dz = q[1] - p.z, dist = Math.hypot(dx, dz);
+    if (dist < 0.05) { L.path.shift(); if (!L.path.length) { L.phase = 'fade'; L.t = 0; } return true; }
     const want = Math.atan2(dx, dz); let diff = ((want - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
     this.root.rotation.y += Math.max(-dt * 6, Math.min(dt * 6, diff));
-    const sp = (dist > 0.6 ? 1.1 : dist > 0.25 ? 0.75 : 0.42) * dt, s = Math.min(dist, sp);
-    p.x += dx / dist * s; p.z += dz / dist * s; this.pace = 1.7;
+    if (Math.abs(diff) < 0.6) { const st = Math.min(dist, 0.5 * dt); p.x += dx / dist * st; p.z += dz / dist * st; }
+    this.pace = 1.6;
     return true;
   }
   penStep(dt) {
@@ -2285,7 +2287,7 @@ class Bird {
       const night = this.nightNow();
       if (!this.looked) { this.looked = true; if (night && !this.laying) this.sleepNow(); }
       if (this.asleep) { if (night || !doorOpen(this.plot)) return; this.wakeUp(); }          // the door shut: they wait
-      else if (night && !this.roost && !this.laying) this.goToBed();
+      else if (night && !this.roost && !this.laying && !this.leaving) this.goToBed();
     }
     if (this.plot.kind === 'coop' && !this.stay) this.penStep(dt);          // the farmer in the pen: keeping clear, corn, a cuddle
     // time to lay? (hens in a coop, one in the nest box at a time; not just before bedtime)
@@ -2302,7 +2304,8 @@ class Bird {
     } else if (this.roost) {
       song = this.roostStep(dt); walking = song.walking;
     } else if (this.leaving) {
-      walking = this.leaveStep(dt);
+      const o = this.leaveStep(dt);
+      if (o && typeof o === 'object') { walking = o.walking; flap = o.flap; } else walking = !!o;
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
@@ -2539,7 +2542,7 @@ function makeBlob() {
 function separate(flock, dt) {
   const k = Math.min(1, dt * 8);
   for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
-    const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep;      // on a scripted walk, or in bed
+    const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep || (b.leaving && (b.leaving.phase === 'exit' || b.leaving.phase === 'fade'));      // on a scripted walk, in bed, or out of the gate
     if (off(flock[i]) || off(flock[j])) continue;
     const a = flock[i].root.position, b = flock[j].root.position;
     const min = flock[i].kind === 'chick' || flock[j].kind === 'chick' ? CHICK_BODY : BODY;
@@ -2771,7 +2774,7 @@ let gameTickAt = 0, fullNoted = 0;
 const gamePlots = () => plots.filter(p => p.gc);
 function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
 function canLayNow(b) {
-  return b.root.visible && !b.laying && !b.roost && !b.asleep && !b.cuddle && !b.called && !b.held && !b.plot.farmer && !b.plot.nest.by && !b.nightNow(0.25) && !(inside.open && inside.plot === b.plot);
+  return b.root.visible && !b.laying && !b.roost && !b.asleep && !b.cuddle && !b.called && !b.held && !b.plot.farmer && !b.plot.fw && !b.plot.nest.by && !b.nightNow(0.25) && !(inside.open && inside.plot === b.plot);
 }
 function gameTick(now = Date.now(), force = false) {
   if (!GAME_MODE || !game.data || (!force && now - gameTickAt < 1000)) return;
@@ -2795,6 +2798,7 @@ function gameTick(now = Date.now(), force = false) {
   }
   for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
   bubbleText(now);
+  showNews();
 }
 function gameLaid(b) {                       // her egg is in the straw: into the save
   const e = b.layEvt; b.layEvt = null;
@@ -2864,16 +2868,16 @@ function collectAt(plot) {
 }
 // ---- broody hens and chicks (game.js broodTick): the farm follows the save. A hen whose brood has just begun walks in
 // and settles on the nest; otherwise she's simply there, sitting (sitNow). Hatched: she comes out with her chicks, or
-// they're there round her. Grown and gone: the farmer comes and they follow him out of the gate in a line, or they're gone.
+// they're there round her. A day on they're young hens and roosters (a pop, in view), growing. Grown and gone: a farewell
+// at the gate (by day, in view), or they're simply gone; then the congratulations card (showNews)
 const sayName = id => { const b = game.bird(id); return b ? b.name : ''; };
 function broodNews(news, now) {
-  const fresh = news.filter(e => now - e.t < LIVE_LAY), pick = t => [...news].reverse().find(e => e.type === t);
-  const e = pick('sold') || pick('hatch') || pick('broody');
-  if (e.type === 'sold') { gameUI.refresh(); gameUI.bumpCoins(); }
-  else gameUI.refresh();
-  hint(game.t(e.type === 'sold' ? 'sold' : e.type === 'hatch' ? 'hatched' : 'broody', { name: sayName(e.hen), n: e.n, c: e.coins }));
+  const pick = t => [...news].reverse().find(e => e.type === t);
+  const e = pick('hatch') || pick('broody');                            // (grown and gone: the card says it, showNews)
+  if (!e) return;
+  gameUI.refresh();
+  hint(game.t(e.type === 'hatch' ? 'hatched' : 'broody', { name: sayName(e.hen), n: e.n }));
   if (gameUI.kind === 'bird' && gameUI.bird) { const b = game.bird(gameUI.bird); if (b) gameUI.birdCard(b); }
-  return fresh;
 }
 function sitNow(b, secs) {                   // on the nest, sitting on her eggs, as if she'd been there all along
   if (b.asleep) { b.asleep = false; b.root.visible = true; b.rig.sleepy(false); }
@@ -2881,28 +2885,51 @@ function sitNow(b, secs) {                   // on the nest, sitting on her eggs
   b.startLaying(secs); const L = b.laying; L.broody = true; L.jump = false; L.phase = 'sit'; L.t = 0; L.inside = true;
   const G = nestOf(b.plot); b.root.position.set(G.seat[0], G.floor + 0.005, G.seat[1]); b.root.rotation.y = 0; b.A.sit = 1; b.A.brood = 1;
 }
+// a brood's youngsters on the farm (chicks, then young hens and roosters), not yet on their way
 function gameChicks(plot) { return plot.birds.filter(b => b.gameChick && !b.leaving); }
-function addChick(plot, mum, x, z, asleep) {
-  const k = plot.birds.length, r = rng(9001 + plots.indexOf(plot) * 31 + k * 7 + (Date.now() % 997));
+const kidRng = (plot) => rng(9001 + plots.indexOf(plot) * 31 + plot.birds.length * 7 + (Date.now() % 997));
+function addChick(plot, mum, x, z, asleep, i) {
+  const r = kidRng(plot);
   const c = new Bird(plot, plot.breed, 'chick', plot.breed === 'sil' ? mum.colour : null, [x, 0, z], r() * 6.28, r);
-  c.mum = mum; c.gameChick = true; c.blob = freeBlobs.length ? freeBlobs.pop() : -1; c.size = 1; c.appear = asleep ? 1 : 0; c.root.scale.setScalar(asleep ? 1 : 0.05);
+  c.mum = mum; c.gameChick = true; c.kidI = i; c.blob = freeBlobs.length ? freeBlobs.pop() : -1; c.size = 1; c.appear = asleep ? 1 : 0; c.root.scale.setScalar(asleep ? 1 : 0.05);
   plot.birds.push(c); allBirds.push(c);
   if (asleep) c.sleepNow();
   return c;
 }
+// a young hen (sex 'h') or rooster ('r'): her own bird, smaller than the grown ones and growing, her mum's for the card
+function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name) {
+  const r = kidRng(plot);
+  const y = new Bird(plot, plot.breed, sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);
+  if (name) y.name = name;
+  y.gameChick = true; y.young = sex === 'r' ? 'r' : 'h'; y.kidOf = mum; y.kidI = i; y.blob = freeBlobs.length ? freeBlobs.pop() : -1;
+  y.size = 0.62; y.appear = 1; y.root.scale.setScalar(0.62); y.stepRate = 22;
+  plot.birds.push(y); allBirds.push(y);
+  if (asleep) y.sleepNow();
+  return y;
+}
+// a chick turning into a young hen or rooster where she stands (pop: in view, a little burst and a heart)
+function turnYoung(ch, sex, pop) {
+  const p = ch.root.position, plot = ch.plot, at = [p.x, p.z], yaw = ch.root.rotation.y, asleep = ch.asleep;
+  removeBird(ch);
+  const y = addYoung(plot, ch.mum, sex, at[0], at[1], yaw, asleep, ch.kidI, ch.name);
+  if (pop) { y.appear = 0.45; y.hopT = 0; heartOver(y); }
+  return y;
+}
+function heartOver(b) { const w = b.root.getWorldPosition(new THREE.Vector3()); w.y += b.rig.scale * (b.size || 1) * 0.95; spawnHeart(w); }
 function removeBird(b) {
   b.root.removeFromParent();
   const i = b.plot.birds.indexOf(b); if (i >= 0) b.plot.birds.splice(i, 1);
   const j = allBirds.indexOf(b); if (j >= 0) allBirds.splice(j, 1);
   if (b.blob >= 0) { blobs.setMatrixAt(b.blob, NO_BLOB); blobs.instanceMatrix.needsUpdate = true; freeBlobs.push(b.blob); b.blob = -1; }
   if (tagBird === b) { tagBird = null; tag.classList.remove('on'); }
+  if (heldBird === b) heldBird = null;
 }
 // out of the coop with her new chicks: they tumble down the ramp behind her
 function hatchOut(mum) {
   const c = mum.plot.gc && game.coop(mum.plot.gc.id), br = c && c.brood;
   if (!br || br.hen !== mum.gid) return;
-  const G = nestOf(mum.plot), have = gameChicks(mum.plot).length;
-  for (let i = have; i < br.n; i++) addChick(mum.plot, mum, G.foot[0] + (i - 1) * 0.12, G.foot[1] + 0.05 + (i % 2) * 0.08, false);
+  const G = nestOf(mum.plot), have = new Set(gameChicks(mum.plot).map(ch => ch.kidI));
+  for (let i = 0; i < br.n; i++) if (!have.has(i)) addChick(mum.plot, mum, G.foot[0] + (i - 1) * 0.12, G.foot[1] + 0.05 + (i % 2) * 0.08, false, i);
   wake(2000);
 }
 function syncBrood(plot, now, live, news) {
@@ -2918,37 +2945,108 @@ function syncBrood(plot, now, live, news) {
       }
       else sitNow(mum, Math.max(5, left));
     }
-  } else if (br && br.hatched && mum) {                                   // raising her chicks
+  } else if (br && br.hatched && mum) {                                   // raising her chicks, then her young hens and roosters
     plot.lastMum = br.hen;
-    const L = mum.laying;
+    const L = mum.laying, youngAt = game.youngAt(c), young = now >= youngAt, kids = br.kids && br.kids.length === br.n ? br.kids : game.kidsOf(c, br);
+    const sexOf = i => (kids[i] && kids[i].sex) || 'h';
     if (L && L.broody) { if (L.phase === 'sit' && !mum.nightNow(0.1)) L.sit = Math.min(L.sit, L.t); }      // (out she comes)
-    else if (!L && chicks.length < br.n) {
-      const at = mum.root.position, G = nestOf(plot);
-      for (let i = chicks.length; i < br.n; i++) {
-        const a = i * 2.1, x = mum.asleep ? G.foot[0] : at.x + Math.sin(a) * 0.3, z = mum.asleep ? G.foot[1] : at.z + Math.cos(a) * 0.3;
-        const ch = addChick(plot, mum, x, z, mum.asleep);
+    else if (!L && chicks.length < br.n) {                                // (the page opened: they're there)
+      const at = mum.root.position, G = nestOf(plot), have = new Set(chicks.map(ch => ch.kidI));
+      for (let i = 0; i < br.n; i++) {
+        if (have.has(i)) continue;
+        const a = i * 2.1, d = young ? 0.55 : 0.3, x = mum.asleep ? G.foot[0] : at.x + Math.sin(a) * d, z = mum.asleep ? G.foot[1] : at.z + Math.cos(a) * d;
+        const ch = young ? addYoung(plot, mum, sexOf(i), x, z, null, mum.asleep, i) : addChick(plot, mum, x, z, mum.asleep, i);
         if (!mum.asleep && !ch.free(x, z)) { ch.pickTarget(); ch.root.position.copy(ch.target); }
       }
     }
-    const grow = Math.max(0, Math.min(1, (now - game.hatchAt(c)) / GROW_MS));
-    for (const ch of gameChicks(plot)) ch.size = 1 + 0.55 * grow;
-  } else if (!br && chicks.length) chicksGo(plot, live && news.some(e => e.type === 'sold' && e.coop === plot.gc.id && now - e.t < LIVE_LAY));
+    if (young) {                                                          // a day old: young hens and roosters
+      const pop = live && plot.synced && now - youngAt < LIVE_LAY;
+      let turned = 0;
+      for (const ch of gameChicks(plot)) if (!ch.young) { turnYoung(ch, sexOf(ch.kidI), pop && !ch.asleep); turned++; }
+      if (turned && pop) { hint(game.t('turned', { name: mum.name })); wake(1500); }
+    }
+    const gc = Math.max(0, Math.min(1, (now - game.hatchAt(c)) / YOUNG_MS)), gy = Math.max(0, Math.min(1, (now - youngAt) / Math.max(1, game.grownAt(c) - youngAt)));
+    for (const ch of gameChicks(plot)) ch.size = ch.young ? 0.62 + 0.23 * gy : 1 + 0.4 * gc;
+  } else if (!br && chicks.length) {
+    const e = news.find(x => x.type === 'sold' && x.coop === plot.gc.id);
+    chicksGo(plot, live && !!e && now - e.t < LIVE_LAY, e);
+  }
   plot.synced = true;
 }
-// grown: the farmer comes for them (by day, out and about) and they follow him out of the gate; or they're simply gone
-function chicksGo(plot, live) {
-  const chicks = gameChicks(plot);
-  chicks.forEach((ch, i) => { ch.leaving = { phase: 'gather', i, t: 0 }; ch.act = null; ch.route = null; ch.wait = 0; });
-  const ok = live && farmLife && !farmLife.home && !farmLife.running && !chicks.some(ch => ch.asleep) && !chicks[0].nightNow(0.3);
-  const P = ok ? penSpec(plot) : null;
-  if (P) {
-    P.lead = () => { plot.trail = []; plot.leading = true; for (const ch of chicks) if (ch.leaving.phase !== 'fade') { ch.leaving.phase = 'follow'; ch.leaving.t = 0; } };
-    if (farmLife.visitPen(P, 'chicks', null)) return;
+// grown and off to a new farm (their coins and the news: game.js broodTick). Seen (by day, in view, the farmer out and
+// about): a farewell at the gate (tickFarewell). Otherwise they're simply gone. Then the congratulations card (showNews)
+function chicksGo(plot, live, e) {
+  const kids = gameChicks(plot);
+  for (const k of kids) { k.act = null; k.route = null; k.then = null; k.eatAt = null; k.feedIn = 0; k.held = false; k.leaving = { phase: 'fade', t: 0 }; }
+  if (!live || !kids.length || !farmLife || farmLife.home || farmLife.running || inside.open || kids.some(k => k.asleep || k.roost || !k.root.visible) || kids[0].nightNow(0.5)) return;
+  const G = gateOf(plot, kids[0]); if (!G) return;
+  const fw = plot.fw = { phase: 'wait', t: 0, all: 0, kids, G, hen: e && e.hen, ready: false };
+  kids.forEach((k, i) => { k.leaving = { phase: 'gather', t: 0, i, spot: G.line[i], route: k.plan([G.line[i]]), face: G.faceIn[i] }; });
+  fw.order = [...kids].sort((a, b) => Math.abs(a.leaving.spot[0] - G.gx) - Math.abs(b.leaving.spot[0] - G.gx));      // (nearest the gate first)
+  if (!farmLife.cheerAt(G.stand, G.face, () => { fw.ready = true; }, () => plot.fw !== fw)) fw.ready = true;
+  hint(game.t('young_going', { name: sayName(fw.hen) }));
+  if (!gameUI.isOpen) {                                                 // (the gate in the middle, the line, him and the way out in view)
+    const side = sideways(), w = G.W(G.gx + (side ? 0 : G.s * 0.2), G.gz), hz = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), size = side ? 1.55 : 2.5, up = (side ? 0.18 : 0.1) * size / PITCH_SIN;
+    focusOn(w[0] - VIEW_DIR.x / hz * up, w[1] - VIEW_DIR.z / hz * up, size);
   }
-  for (const ch of chicks) { ch.leaving.phase = 'fade'; ch.leaving.t = 0; }
+  wake(2000);
 }
-// each frame: chicks popping into being and growing, the farmer's trail while he leads them off, those gone taken away
-const trailV = new THREE.Vector3();
+// the gate (pen frame: gx, gz): where the farmer stands outside it (beside the way out, on the far side from the player,
+// so they walk out in front of him) and his heading (the gate, turned a little to the player); where they line up just
+// inside it (clear of the water dish) facing out; their way out, past him and off down the lane
+function gateOf(plot, kid) {
+  const f = plot.frame; f.updateMatrixWorld(true);
+  const v = new THREE.Vector3(), W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; };
+  const gx = PEN.gate[0], gz = PEN.pen.max[2], nav = navGrid();
+  const cam = camera.position.clone().applyMatrix4(new THREE.Matrix4().copy(f.matrixWorld).invert()), pref = cam.x > gx ? -1 : 1;
+  let stand = null, s = pref;
+  for (const side of [pref, -pref]) { const w = W(gx + side * 0.62, gz + 0.5), q = nav.nearestIn(farmReach(), w[0], w[1], 0.3); if (q) { stand = q; s = side; break; } }
+  if (!stand) return null;
+  const g = W(gx, gz - 0.2), hg = Math.atan2(g[0] - stand[0], g[1] - stand[1]), hc = Math.atan2(camera.position.x - stand[0], camera.position.z - stand[1]);
+  const face = hg + 0.45 * Math.atan2(Math.sin(hc - hg), Math.cos(hc - hg));
+  const line = [], faceIn = [];
+  for (let i = 0; i < 4; i++) {
+    const x0 = gx + (i - 1.5) * 0.32 + (i < 2 ? -0.02 : 0.02);
+    let q = [x0, gz - 0.3];
+    find: for (const dz of [0, -0.12, -0.24, -0.36]) for (const dx of [0, 0.1, -0.1]) {
+      const x = x0 + dx, z = gz - 0.3 + dz;
+      if (kid.free(x, z) && line.every(o => Math.hypot(o[0] - x, o[1] - z) > 0.27)) { q = [x, z]; break find; }
+    }
+    line.push(q); faceIn.push(Math.atan2(gx - q[0], gz + 0.5 - q[1]));
+  }
+  const path = [[gx, gz - 0.3], [gx, gz + 0.3], [gx - s * 0.18, gz + 0.95], [gx - s * 0.42, gz + 1.7]];
+  return { stand, face, line, faceIn, path, s, gx, gz, W };
+}
+// each frame: the farewell. They line up inside the gate and the farmer comes to stand outside it ('wait': for him half a
+// minute at most); the party ('party', 4.6 s: the youngsters hop and flap, hearts over them; the hens flap and hop, the
+// rooster crows, their mum sings); then out of the gate one by one, past him, and off down the lane ('exit'). A minute
+// for it all at most
+function tickFarewell(dt) {
+  for (const p of gamePlots()) {
+    const F = p.fw; if (!F) continue;
+    F.t += dt; F.all += dt; wake(500);
+    const kids = F.kids.filter(k => p.birds.includes(k));
+    if (!kids.length) { p.fw = null; continue; }
+    if (F.all > 60) { for (const k of kids) if (k.leaving.phase !== 'fade') { k.leaving.phase = 'fade'; k.leaving.t = 0; } continue; }
+    const at = t0 => F.t >= t0 && F.t - dt < t0;                          // (the moment t0 is passed)
+    if (F.phase === 'wait') {
+      if ((F.ready && F.t > 1 && kids.every(k => !(k.leaving.route && k.leaving.route.length))) || F.t > 30) { F.phase = 'party'; F.t = 0; }
+    } else if (F.phase === 'party') {
+      kids.forEach((k, i) => { for (const t0 of [0.15, 1.45, 2.75]) if (at(t0 + i * 0.17)) { k.hopT = 0; k.leaving.flapT = 0; heartOver(k); } });
+      for (const b of p.birds) {
+        if (b.gameChick || b.busy() || b.cuddle || b.held || !b.root.visible) continue;
+        const mum = b.gid && b.gid === F.hen;
+        if (b.kind === 'rooster') { if (at(0.5) || at(3.0)) { b.act = { type: 'crow', left: 2.0 }; b.wait = Math.max(b.wait, 2.3); b.route = null; } }
+        else if (at(mum ? 0.3 : 0.65) || at(mum ? 2.2 : 2.6)) { b.act = { type: 'flap', left: 0.8 }; b.hopT = 0; b.wait = Math.max(b.wait, 1.1); b.route = null; }
+        if (mum && F.t > 0.8 && F.t < 4.2 && Math.floor(F.t / 0.3) !== Math.floor((F.t - dt) / 0.3)) spawnNote(b, Math.floor(F.t / 0.3) % 4 === 3, 0.8);
+      }
+      if (F.t > 4.6) { F.phase = 'exit'; F.t = 0; }
+    } else if (F.phase === 'exit') {
+      F.order.forEach((k, i) => { const L = k.leaving; if (p.birds.includes(k) && (L.phase === 'gather' || L.phase === 'party') && F.t >= i * 0.85) { L.phase = 'exit'; L.t = 0; L.path = F.G.path.map(q => [...q]); k.hopT = 0; } });
+    }
+  }
+}
+// each frame: youngsters popping into being and growing, those gone taken away; the farewells
 function tickChicks(dt) {
   for (const p of gamePlots()) {
     for (const b of [...p.birds]) {
@@ -2959,17 +3057,23 @@ function tickChicks(dt) {
       const s = (b.size || 1) * (b.appear < 1 ? 0.05 + 0.95 * smooth01(b.appear) * (1 + 0.15 * Math.sin(b.appear * Math.PI)) : 1);
       if (Math.abs(b.root.scale.x - s) > 1e-3) b.root.scale.setScalar(s);
     }
-    if (p.leading && farmLife) {
-      trailV.copy(farmLife.pos); p.frame.worldToLocal(trailV);
-      const T = p.trail, last = T[T.length - 1];
-      if (!last || Math.hypot(trailV.x - last[0], trailV.z - last[1]) > 0.04) { T.push([trailV.x, trailV.z]); if (T.length > 400) T.shift(); }
-      if (!p.birds.some(b => b.leaving)) { p.leading = false; p.trail = null; }
-    }
   }
+  tickFarewell(dt);
 }
+// a youngster's card: a chick (whose, when she's a young hen or rooster) or a young hen or rooster (when off to a new farm)
 function chickCard(ch) {
-  const c = game.coop(ch.plot.gc.id), mum = ch.mum && ch.mum.gid ? game.bird(ch.mum.gid) : null;
-  gameUI.chickCard(ch.name, c, mum, c && c.brood ? game.grownAt(c) - Date.now() : 0);
+  const c = game.coop(ch.plot.gc.id), m = ch.young ? ch.kidOf : ch.mum, mum = m && m.gid ? game.bird(m.gid) : null;
+  if (!c) return;
+  if (ch.young) gameUI.youngCard(ch.name, ch.young, c, mum, c.brood ? game.grownAt(c) - Date.now() : 0);
+  else gameUI.chickCard(ch.name, c, mum, c.brood ? game.youngAt(c) - Date.now() : 0);
+}
+// congratulations: a brood grown up and gone (game.js news), its card once the farewell's over, or (grown while the farm
+// was shut) a moment after it opens; one at a time, never over another card
+let newsFrom = Infinity, openedAt = 0;
+function showNews() {
+  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || performance.now() < newsFrom) return;
+  const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
+  if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); }
 }
 // a feeder's card, and filling it: the save at once, the farmer bringing the feed (by day, out and about) or straight in
 function feederCard(plot) {
@@ -3479,7 +3583,8 @@ window.__farm = {
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard,
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
-  gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
+  youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; }, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);

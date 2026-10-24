@@ -1454,7 +1454,43 @@ farm following the save in `main.js` ("broody hens and chicks"), the cards in `g
 - **The save:** each coop's `brood` (one of its own hens, start never ahead of now, 1-4 chicks, hatched only once its
   time has come), `lastBrood`, `checked` (the last morning looked at), all checked on load; a farm from before this step
   starts with none. Nothing new to buy or tap: it's all the hens' own doing.
+- `chicktest.mjs`: see the next section (it now follows the brood to the end).
+
+## Young hens and roosters, the farewell, congratulations (24 Oct 2026, 23:40, Audrey: "When the chicks are leaving the other chickens are celebrating them and the chicks are happy. Actually we should see them turning chickens and leaving the farm. The farmer doesn't need to enter the coop it can stay outside and is also celebrating. We should have somewhere the detail "congratulations, lulu's babies turned adult into xxxx (give ratings) and Money. What do you think? In the logic that the chickens from the coop gains experience and produce better and better babies ?")
+
+Agreed with her: chicks for the first day, then young hens and roosters; a farewell at the gate with everyone
+celebrating; a congratulations card with each one's rating and coins; the parents gain experience, so their next broods
+rate higher and sell for more. Replaces the farmer leading the chicks out of the pen (step 4).
+- **The rules (`game.js`):** at hatching each youngster gets its sex and rating (`kidsOf`, kept in the brood's `kids`):
+  1 + the mum's and the rooster's stars averaged (+0.4 for a good mum), a little luck either way (a hash of the brood),
+  1 to 5 stars, so first broods are 1-2 stars. Price `kidPrice`: the breed's chick price × (0.6 + 0.2 × stars), so 5 stars
+  sell for twice 1 star (Rhode Island Red: 18 to 35 coins). XP: 6 + 2 a star each. When they go: the mum +60 experience,
+  the rooster +30 (`EXP_MUM`, `EXP_DAD`; 100 a star). The news goes in the save (`news`: the coop, mum, rooster, each
+  youngster's sex, stars and coins, the totals, when, seen), at most 6 kept.
+- **Young hens and roosters:** a day after hatching (`YOUNG_MS`, 7:00 the next morning) each chick turns into a young
+  hen or rooster where she stands (`turnYoung`): her breed's own hen or rooster, 62% of full size, growing to 85% by
+  the time they go; with the game open a pop and a heart, and "Lulu's chicks are turning into young hens and roosters!".
+  Their own ways now (not at mum's heels); the young roosters crow. A young one's card: "Young hen · Rhode Island Red ·
+  Lulu's daughter: off to a new farm in about 28 hours. Her rating comes when she leaves." A chick's card: "A young hen
+  or rooster in about 24 hours." The mum's card says which.
+- **The farewell (`chicksGo`, `gateOf`, `tickFarewell`; the farmer's `cheerAt` in `farmlife.js`):** grown, at 11 two
+  days after hatching, with the game open by day: "Lulu's youngsters are off to a new farm!", the view glides to the
+  gate; they line up just inside it (clear of the water dish) facing out, and the farmer hurries over to stand outside
+  it, beside the way out on the far side from the player, and calls "Off you go, and good luck!" then cheers (both arms
+  up, a wave, in turn). The party (4.6 s): the youngsters hop and flap with hearts over them, the hens flap and hop, the
+  rooster crows, their mum sings. Then out of the gate one by one (nearest first), past him and off down the lane. (Half a
+  minute's wait for him at most; a minute for it all.) Otherwise, they're simply gone.
+- **Congratulations (`showNews`, `gameUI.congratsCard`):** once the farewell's over, or a moment after the farm opens for
+  a brood that grew up while it was shut ("While you were away, Lulu's babies grew up"): "🎉 Congratulations! Lulu's
+  babies have grown up", a row for each (🐔 Young hen or 🐓 Young rooster, its stars, +coins), the total "+76 coins ·
+  +34 XP", "Lulu and Percy gain experience: their next chicks will be even better." and "Lovely!". Closing it marks the
+  news seen and counts the coins up. One at a time, never over another card.
+- **The save:** `brood.kids` (at most 4: sex h or r, stars 1-5) and `news` (only for birds on the farm; at most 4
+  youngsters, stars 1-5, coins at most 1000 each, totals at most 4000) checked on load.
 - `chicktest.mjs` (`LANG=fr`, `W=874 H=402`): a fake clock from the 24th: no brood on the first day; the morning one
   goes broody she walks in and sits; a reload: sitting at once; the next morning they hatch and she brings them out; a
-  chick's card; a reload: round her; grown: the coins, the farmer leads them out, gone; she lays again; a brood changed
-  outside the game.
+  chick's card; a reload: round her; a day on: young hens and roosters (the news, a young one's card, her card); a
+  reload: still young; grown: the coins and the news, the farewell (the farmer to the gate, the party, out one by one),
+  gone; the card (ratings, coins, totals); "Lovely!": seen, the parents' experience up, no card after a reload; she lays
+  again; grown while away: the card says so; news and a brood changed outside the game. All pass both ways, both
+  languages.

@@ -22,6 +22,7 @@ export const FARMER_TEXT = {
   feed: ['Dinner time!', 'À table !'],                                 // (the 2D game's own lines)
   cuddle: ['There, there…', 'Là, là…'],
   chicks: ['Off to your new home, little ones!', 'En route pour votre nouvelle maison, mes petits !'],
+  farewell: ['Off you go, and good luck!', 'Allez, bonne route !'],
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -94,6 +95,7 @@ const STAND = {
   about: (W, u) => { W.pose = 'turn'; W.face = 'neutral'; W.look = [0.7 * Math.sin(u * 0.6), 0]; W.head = [0, 0, 22 * Math.sin(u * 0.6)]; },
   wave: (W, u) => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; },
   stretch: (W, u) => { W.pose = u < 2.2 ? 'stretch' : 'turn'; W.face = u < 2.2 ? 'cuddle' : 'happy'; },
+  cheer: (W, u) => { const k = u % 3.0; W.pose = k < 1.1 ? 'stretch' : 'wave'; W.face = 'happy'; W.waving = k >= 1.1; },      // (both arms up: hooray! then a wave)
   pat: (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; },
 };
 
@@ -255,10 +257,6 @@ export class FarmLife {
           const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
         }),
         TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
-    } else if (kind === 'chicks') {
-      // grown chicks off to a new farm: he crouches, they gather round him, then they follow him out of the gate in a line
-      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.say('chicks'), TK.act('crouch', 2.2, W => { W.pose = 'pet'; W.face = 'happy'; }),
-        () => { if (P.lead) P.lead(); return null; }, TK.act('up', 0.6, W => { W.pose = 'turn'; W.face = 'happy'; }));
     } else {
       // a crouch, she hurries over and settles in front of him, a stroke ("There, there…"), hearts
       let ready = null, heart = 0.2;
@@ -282,6 +280,18 @@ export class FarmLife {
       return done;
     };
     return seq;
+  }
+  // ---- a farewell at a coop's gate (main.js chicksGo): he hurries to `at` ([x, z], outside the gate), turns to `face`
+  // (the gate, a little towards the player), ready(), "Off you go, and good luck!", and cheers them off (hooray, a wave)
+  // till done() or half a minute. (Named 'pen': he isn't called away meanwhile; a visit asked for waits till after)
+  cheerAt(at, face, ready, done) {
+    if (this.home || this.running) return false;
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - at[0], Lf.pos.z - at[1]) > 0.7) seq.aborted = true; return true; } };
+    const cheer = { name: 'cheer', t: 0, run(Lf, dt) { this.t += dt; STAND.cheer(Lf.want, this.t); return (this.t > 3 && done()) || this.t > 30; } };
+    const seq = TK.seq('pen', [TK.path(at[0], at[1], 'hurry'), there, TK.face(face), () => { ready(); return null; }, TK.say('farewell'), cheer, TK.act('about', 1.5, STAND.about)]);
+    const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
+    return true;
   }
   // where his pail is (its middle, world), as he's posed now
   pailAt() { const b = this.f.rig.B.pail; b.updateWorldMatrix(true, false); return b.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); }

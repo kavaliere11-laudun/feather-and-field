@@ -15,7 +15,10 @@
 // Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
 // time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
 // sale), they hatch the next morning (2 or 3 chicks, a good mum 3 or 4) and she raises them; two days later, late in the
-// morning, they're grown and go to a new farm, and their coins are yours.
+// morning, they're grown and go to a new farm, and their coins are yours. Each youngster is a young hen or rooster with a
+// rating, 1 to 5 stars, from its parents' experience (stars) and a little luck, and a better one sells for more (Audrey,
+// 24 Oct: "In the logic that the chickens from the coop gains experience and produce better and better babies"); a brood
+// gives its parents experience.
 
 export const SAVE_KEY = 'ff3d.farm';
 const SAVE_V = 1;
@@ -62,13 +65,22 @@ const TEXT = {
     bub_low: 'Feed low', bub_empty: 'Feeder empty',
     broody: '{name} has gone broody: she’s sitting on {n} eggs.',
     hatched: '{n} chicks have hatched! {name} is a mum.',
-    sold: '{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins',
-    sitting: 'Sitting on {n} eggs: they hatch in about {when}.', raising: 'Raising {n} chicks: they grow up in about {when}.',
-    hatch_soon: 'Sitting on {n} eggs: they hatch very soon.', grow_soon: 'Raising {n} chicks: they’re almost grown.',
+    sold: '{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins', young_going: '{name}’s youngsters are off to a new farm!',
+    sitting: 'Sitting on {n} eggs: they hatch in about {when}.', raising: 'Raising {n} chicks: young hens and roosters in about {when}.',
+    raising_y: 'Raising {n} young hens and roosters: off to a new farm in about {when}.',
+    hatch_soon: 'Sitting on {n} eggs: they hatch very soon.', grow_soon: 'Raising {n} youngsters: off to a new farm very soon.',
     no_lay_brood: 'She lays no eggs for sale while she’s busy with her chicks.',
-    chick: 'Chick', chick_of: '{breed} · {name}’s chick', chick_grows: 'Grows up in about {when}, then goes to a new farm: +{c} coins.',
-    chick_soon: 'Almost grown: soon off to a new farm, +{c} coins.',
+    chick: 'Chick', chick_of: '{breed} · {name}’s chick', chick_grows: 'A young hen or rooster in about {when}.',
+    chick_soon: 'Almost a young hen or rooster!',
     h: '{n} h', h1: 'an hour', hours: '{n} hours', days1: 'a day', days: '{n} days', min: '{n} min',
+    young_h: 'Young hen', young_r: 'Young rooster', young_of: '{breed} · {name}’s {kid}', daughter: 'daughter', son: 'son',
+    young_leaves: 'Off to a new farm in about {when}. Her rating comes when she leaves.', young_leaves_r: 'Off to a new farm in about {when}. His rating comes when he leaves.',
+    young_soon: 'Off to a new farm very soon.',
+    turned: '{name}’s chicks are turning into young hens and roosters!',
+    congrats: 'Congratulations!', congrats_sub: '{name}’s babies have grown up', congrats_away: 'While you were away, {name}’s babies grew up',
+    congrats_total: '+{c} coins · +{xp} XP', congrats_exp: '{mum} and {dad} gain experience: their next chicks will be even better.',
+    congrats_exp1: '{mum} gains experience: her next chicks will be even better.', congrats_ok: 'Lovely!',
+    farewell: 'Off you go, and good luck!',
   },
   fr: {
     brand: 'Feather & Field', tagline: 'Une basse-cour à aimer pour toujours',
@@ -110,13 +122,22 @@ const TEXT = {
     bub_low: 'Presque vide', bub_empty: 'Mangeoire vide',
     broody: '{name} est devenue couveuse : elle couve {n} œufs.',
     hatched: '{n} poussins sont nés ! {name} est maman.',
-    sold: 'Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces',
-    sitting: 'Couve {n} œufs : ils éclosent dans environ {when}.', raising: 'Élève {n} poussins : ils seront grands dans environ {when}.',
-    hatch_soon: 'Couve {n} œufs : ils vont éclore très bientôt.', grow_soon: 'Élève {n} poussins : ils sont presque grands.',
+    sold: 'Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces', young_going: 'Les jeunes de {name} partent pour une nouvelle ferme !',
+    sitting: 'Couve {n} œufs : ils éclosent dans environ {when}.', raising: 'Élève {n} poussins : jeunes poules et coqs dans environ {when}.',
+    raising_y: 'Élève {n} jeunes poules et coqs : ils partent pour une nouvelle ferme dans environ {when}.',
+    hatch_soon: 'Couve {n} œufs : ils vont éclore très bientôt.', grow_soon: 'Élève {n} jeunes : ils partent très bientôt pour une nouvelle ferme.',
     no_lay_brood: 'Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses petits.',
-    chick: 'Poussin', chick_of: '{breed} · poussin de {name}', chick_grows: 'Sera grand dans environ {when}, puis partira pour une nouvelle ferme : +{c} pièces.',
-    chick_soon: 'Presque grand : bientôt en route pour une nouvelle ferme, +{c} pièces.',
+    chick: 'Poussin', chick_of: '{breed} · poussin de {name}', chick_grows: 'Jeune poule ou jeune coq dans environ {when}.',
+    chick_soon: 'Bientôt une jeune poule ou un jeune coq !',
     h: '{n} h', h1: 'une heure', hours: '{n} heures', days1: 'un jour', days: '{n} jours', min: '{n} min',
+    young_h: 'Jeune poule', young_r: 'Jeune coq', young_of: '{breed} · {kid} de {name}', daughter: 'fille', son: 'fils',
+    young_leaves: 'Part pour une nouvelle ferme dans environ {when}. Sa note viendra à son départ.', young_leaves_r: 'Part pour une nouvelle ferme dans environ {when}. Sa note viendra à son départ.',
+    young_soon: 'Part très bientôt pour une nouvelle ferme.',
+    turned: 'Les poussins de {name} deviennent de jeunes poules et coqs !',
+    congrats: 'Félicitations !', congrats_sub: 'Les petits de {name} ont grandi', congrats_away: 'Pendant votre absence, les petits de {name} ont grandi',
+    congrats_total: '+{c} pièces · +{xp} XP', congrats_exp: '{mum} et {dad} gagnent de l’expérience : leurs prochains poussins seront encore meilleurs.',
+    congrats_exp1: '{mum} gagne de l’expérience : ses prochains poussins seront encore meilleurs.', congrats_ok: 'Super !',
+    farewell: 'Allez, bonne route !',
   },
 };
 // in French "Just arrived" agrees with the bird
@@ -191,6 +212,9 @@ const DAY_MS = 86400e3;
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
 export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26 };   // coins for each grown chick
 export const XP_HATCH = 4, XP_CHICK = 6;
+export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
+export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
+export const kidPrice = (base, stars) => Math.round(base * (0.6 + 0.2 * stars));        // 1 star: 0.8 of the price; 5 stars: 1.6
 const BROODY_AT = 7, BROODY_P = { mum: 0.35, other: 0.12 };          // the morning check (hour), each hen's chance that day
 const nextCheck = t => { const d = new Date(t), c = new Date(d.getFullYear(), d.getMonth(), d.getDate(), BROODY_AT).getTime(); return c > t ? c : new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, BROODY_AT).getTime(); };
 // when a hen lays: a morning window (7:30 to 11:30) and an afternoon one (13:00 to 19:00), each day at a time of her own
@@ -231,7 +255,8 @@ export function checkFarm(d, now = Date.now()) {
     seen.add(c.id);
     out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), plot: c.plot, name: cleanName(c.name, 24),
       eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
-      brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true } : null,
+      brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
+        kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1) })) : null } : null,
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now) });
   }
   out.birds = [];
@@ -257,6 +282,11 @@ export function checkFarm(d, now = Date.now()) {
   for (const x of [...out.coops, ...out.birds]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
   const f = d.first, fh = f && typeof f === 'object' ? out.birds.find(b => b.id === f.hen && b.sex === 'h') : null;
   out.first = fh ? { hen: fh.id, t: int(f.t, 0, now + DAY_MS, now) } : null;
+  // the news waiting to be shown: grown youngsters gone to a new farm (the congratulations card)
+  out.news = (Array.isArray(d.news) ? d.news : []).slice(-6).filter(n => n && typeof n === 'object' && n.type === 'grown' && out.birds.some(b => b.id === n.hen)).map(n => ({
+    type: 'grown', coop: String(n.coop).slice(0, 8), hen: String(n.hen).slice(0, 8), dad: String(n.dad || '').slice(0, 8),
+    kids: (Array.isArray(n.kids) ? n.kids : []).slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1), coins: int(k && k.coins, 0, 1000, 0) })),
+    coins: int(n.coins, 0, 4000, 0), xp: int(n.xp, 0, 4000, 0), t: int(n.t, 0, now, now), seen: n.seen === true }));
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
     const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
     if (mum) out.first = { hen: mum.id, t: firstEggAt(now) };
@@ -325,6 +355,7 @@ export class Game {
     this.data.birds.push(...this.trio('rir', coop.id, true));
     const mum = this.data.birds.find(b => b.pers === 'mum') || this.data.birds.find(b => b.sex === 'h');
     this.data.first = { hen: mum.id, t: firstEggAt(now) };
+    this.data.news = [];
     this.edited = false;
     this.save();
     return this.data;
@@ -371,6 +402,19 @@ export class Game {
   chickPrice(c) { return CHICK_PRICE[c.breed] || 20; }
   hatchAt(c) { return c.brood ? c.brood.start + SIT_MS : 0; }
   grownAt(c) { return c.brood ? c.brood.start + SIT_MS + GROW_MS : 0; }
+  youngAt(c) { return c.brood ? c.brood.start + SIT_MS + YOUNG_MS : 0; }
+  // a brood's youngsters, when they hatch: hen or rooster, and a rating from the parents' experience (a good mum's a little
+  // better), with a little luck either way
+  kidsOf(c, br) {
+    const mum = this.bird(br.hen), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
+    const base = 1 + ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0)) / 2 + (mum && mum.pers === 'mum' ? 0.4 : 0);
+    return Array.from({ length: br.n }, (_, i) => {
+      const key = br.hen + '|' + br.start + '|' + i;
+      return { sex: hash01(key + '|sex') < 0.5 ? 'h' : 'r', stars: Math.max(1, Math.min(5, Math.round(base + hash01(key + '|q') * 1.5 - 0.5))) };
+    });
+  }
+  unseenNews() { return (this.data.news || []).filter(n => !n.seen); }
+  seenNews(n) { n.seen = true; this.save(); }
   brooding(henId) { const b = this.bird(henId), c = b && this.coop(b.coop); return !!(c && c.brood && c.brood.hen === henId); }
   // what's happened since: a hen gone broody, chicks hatched, grown chicks gone to a new farm (their coins in), in order
   broodTick(now = Date.now()) {
@@ -381,12 +425,16 @@ export class Game {
         const br = c.brood;
         if (br) {
           const hatch = br.start + SIT_MS, grown = hatch + GROW_MS, hen = this.bird(br.hen);
-          if (!br.hatched && hatch <= now) { br.hatched = true; this.data.xp += XP_HATCH; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
+          if (!br.hatched && hatch <= now) { br.hatched = true; br.kids = this.kidsOf(c, br); this.data.xp += XP_HATCH; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
           if (grown <= now) {
-            const coins = br.n * this.chickPrice(c);
-            this.data.coins += coins; this.data.xp += br.n * XP_CHICK; c.lastBrood = grown; c.brood = null;
-            if (hen) hen.laid = Math.max(hen.laid, grown);               // (her lays while she was busy don't come back)
-            out.push({ type: 'sold', coop: c.id, hen: br.hen, n: br.n, coins, t: grown }); dirty = true; continue;
+            const kids = (br.kids && br.kids.length === br.n ? br.kids : this.kidsOf(c, br)).map(k => ({ ...k, coins: kidPrice(this.chickPrice(c), k.stars) }));
+            const coins = kids.reduce((a, k) => a + k.coins, 0), xp = kids.reduce((a, k) => a + XP_CHICK + 2 * k.stars, 0), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
+            this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null;
+            if (hen) { hen.laid = Math.max(hen.laid, grown); hen.exp = Math.min(1e7, hen.exp + EXP_MUM); }       // (her lays while she was busy don't come back)
+            if (dad) dad.exp = Math.min(1e7, dad.exp + EXP_DAD);
+            const news = { type: 'grown', coop: c.id, hen: br.hen, dad: dad ? dad.id : '', kids, coins, xp, t: grown, seen: false };
+            this.data.news = [...(this.data.news || []), news].slice(-6);
+            out.push({ type: 'sold', coop: c.id, hen: br.hen, n: br.n, coins, t: grown, news }); dirty = true; continue;
           }
           break;
         }

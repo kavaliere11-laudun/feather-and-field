@@ -68,7 +68,10 @@ export class GameUI {
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     return this.body;
   }
-  close() { if (this.sheet.hidden) return; this.sheet.hidden = true; this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
+  close() {
+    if (this.sheet.hidden) return;
+    if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
+    this.sheet.hidden = true; this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
   // the welcome picture over the top of the screen (the farmer, hens of every breed, the geese and the dog: main.js ?poster),
@@ -180,7 +183,8 @@ export class GameUI {
       const kc = el('div', 'gcard'), br = coop.brood && coop.brood.hen === b.id ? coop.brood : null, now = Date.now();
       kc.append(el('div', 'glabel', this.t('eggs')));
       if (br && !br.hatched) { const ms = g.hatchAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('hatch_soon', { n: br.n }) : this.t('sitting', { n: br.n, when: g.howLong(ms) }))); }
-      else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising', { n: br.n, when: g.howLong(ms) }))); }
+      else if (br && now < g.youngAt(coop)) kc.append(el('p', 'gtext', this.t('raising', { n: br.n, when: g.howLong(Math.max(60e3, g.youngAt(coop) - now)) })));
+      else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising_y', { n: br.n, when: g.howLong(ms) }))); }
       kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t('lays', { p: g.eggPrice(coop) })));
       body.append(kc);
     }
@@ -195,9 +199,40 @@ export class GameUI {
     const g = this.g, body = this.open('chick', name);
     this.bird = null;
     body.append(el('p', 'gsub', this.t('chick_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
-    const cc = el('div', 'gcard'), c = g.chickPrice(coop);
-    cc.append(el('div', 'glabel', this.t('chick')), el('p', 'gtext', ms > 1800e3 ? this.t('chick_grows', { when: g.howLong(ms), c }) : this.t('chick_soon', { c })));
+    const cc = el('div', 'gcard');
+    cc.append(el('div', 'glabel', this.t('chick')), el('p', 'gtext', ms > 1800e3 ? this.t('chick_grows', { when: g.howLong(ms) }) : this.t('chick_soon')));
     body.append(cc);
+  }
+  // ---- a young hen or rooster (a day after hatching): whose, when off to a new farm (the rating then: congratsCard)
+  youngCard(name, sex, coop, mum, ms) {
+    const g = this.g, body = this.open('chick', name), f = sex === 'h';
+    this.bird = null;
+    body.append(el('p', 'gsub', this.t('young_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '', kid: this.t(f ? 'daughter' : 'son') })));
+    const cc = el('div', 'gcard'), ch = el('div', 'gcard-h');
+    ch.append(el('span', 'gemoji', f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(f ? 'young_h' : 'young_r')));
+    cc.append(ch, el('p', 'gtext', ms > 1800e3 ? this.t(f ? 'young_leaves' : 'young_leaves_r', { when: g.howLong(ms) }) : this.t('young_soon')));
+    body.append(cc);
+  }
+  // ---- congratulations: a brood grown up and gone to a new farm (game.js news): each young hen and rooster with its rating
+  // and coins, the total, and the parents' experience (better chicks next time). Seen when it's closed
+  congratsCard(n, away) {
+    const g = this.g, mum = g.bird(n.hen), dad = n.dad ? g.bird(n.dad) : null, body = this.open('congrats', '🎉 ' + this.t('congrats'));
+    this.bird = null; this.news = n;
+    body.append(el('p', 'gsub', this.t(away ? 'congrats_away' : 'congrats_sub', { name: mum ? mum.name : '' })));
+    const list = el('div', 'gcard gkids');
+    for (const k of n.kids) {
+      const row = el('div', 'gkid'), st = el('span', 'gstars gsmall');
+      st.setAttribute('aria-label', k.stars + ' / ' + MAX_STARS);
+      for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < k.stars ? 'on' : '', i < k.stars ? '★' : '☆'));
+      const c = el('span', 'gkid-c'); c.append(el('span', 'gcoin gcoin-s'), document.createTextNode('+' + k.coins));
+      row.append(el('span', 'gemoji', k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', this.t(k.sex === 'h' ? 'young_h' : 'young_r')), st, c);
+      list.append(row);
+    }
+    body.append(list, el('p', 'gtotal', this.t('congrats_total', { c: n.coins, xp: n.xp })));
+    if (mum) body.append(el('p', 'gnote', dad ? this.t('congrats_exp', { mum: mum.name, dad: dad.name }) : this.t('congrats_exp1', { mum: mum.name })));
+    const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button';
+    ok.addEventListener('click', () => this.close());
+    body.append(ok);
   }
   // ---- a coop's feeder: how full, how long it lasts, fill it (main.js sends the farmer)
   feederSheet(coop, onFill) {

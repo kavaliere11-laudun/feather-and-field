@@ -2,9 +2,12 @@
 // A fresh farm on a fake clock (24 Oct 2026, 10:00, London), the feeder kept full: no hen broody on the farm's first day;
 // some morning at 7:00 one goes broody (the same morning every time: it comes from the hens and the date), walks in and
 // sits (the hatching bubble, her card); a reload: she's simply sitting; the next morning her chicks hatch and she
-// brings them out (the right number, round her, a chick's card); a reload: they're there round her; two days on, late in
-// the morning, they're grown: their coins in, the farmer comes and they follow him out of the gate, gone; she lays again;
-// a brood changed outside the game is checked.
+// brings them out (the right number, round her, a chick's card); a reload: they're there round her; a day on they turn
+// into young hens and roosters (the news, a young one's card, her card); a reload: still young; the next day, late in the
+// morning, they're grown: their coins in, a farewell at the gate (the farmer outside it cheering, the party, out one by
+// one), gone; the congratulations card (each one's rating and coins, the total); "Lovely!": seen, the parents' experience
+// up, not shown again after a reload; she lays again; a brood that grew up while away: its card says so; news and a brood
+// changed outside the game are checked.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -28,7 +31,7 @@ const state = () => p.evaluate(() => {
   const f = window.__farm, g = f.game(), c = g.data.coops[0], P = f.gamePlots()[0], br = c.brood, B = P.bub || {};
   const mum = br && P.birds.find(x => x.gid === br.hen);
   return { coins: g.data.coins, brood: br && { n: br.n, hatched: br.hatched }, mum: mum ? { phase: mum.laying ? mum.laying.phase : null, broody: !!(mum.laying && mum.laying.broody), name: mum.name } : null,
-    chicks: f.gameChicks(0), leaving: P.birds.filter(x => x.leaving).length, farmerIn: !!P.farmer, bub: B.brood && !B.brood.hidden ? B.brood.textContent : null,
+    chicks: f.gameChicks(0), youngs: f.youngs(0), leaving: P.birds.filter(x => x.leaving).length, fw: f.farewell(0), card: f.gameUI().kind, bub: B.brood && !B.brood.hidden ? B.brood.textContent : null,
     hint: document.getElementById('hint').textContent, edited: g.edited };
 });
 const load = async () => {
@@ -76,26 +79,68 @@ await sim(20);
 const near2 = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0], c = f.game().data.coops[0], m = P.birds.find(x => x.gid === c.brood.hen); return P.birds.filter(x => x.gameChick).map(x => +x.root.position.distanceTo(m.root.position).toFixed(2)); });
 ok('the chicks keep near their mum', near2.every(d => d < 1.2), { near, near2 });
 const ccard = await p.evaluate(() => { const f = window.__farm, ch = f.gamePlots()[0].birds.find(x => x.gameChick); f.chickCard ? f.chickCard(ch) : null; return document.querySelector('.gsheet').innerText; });
-ok('a chick\'s card: whose she is, grown in about 2 days, her coins', /chick|poussin/i.test(ccard) && /2 days|2 jours/.test(ccard) && /22/.test(ccard), ccard);
+ok('a chick\'s card: whose she is, a young hen or rooster in about 24 hours', /chick|poussin/i.test(ccard) && /24 hours|24 heures/.test(ccard) && /young hen or rooster|jeune poule ou (un )?jeune coq/i.test(ccard), ccard);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a reload while they grow: there round her
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await state();
 ok('a reload while they grow: the chicks are there', s.chicks === s.brood.n, s);
-const n = s.brood.n, coins0 = s.coins;
-// grown: their coins in, the farmer comes and they follow him out of the gate
+const n = s.brood.n;
+// a day on: young hens and roosters
+await jump(at(next(2) + 'T07:00:30+00:00'));
+s = await state();
+ok('a day after hatching: young hens and roosters (the news)', s.youngs.length === n && s.youngs.every(y => y === 'h' || y === 'r') && /turning into young|deviennent de jeunes/.test(s.hint), s);
+const ycard = await p.evaluate(() => { const f = window.__farm, y = f.gamePlots()[0].birds.find(x => x.young); f.chickCard(y); return document.querySelector('.gsheet').innerText; });
+ok('a young one\'s card: young hen or rooster, whose, off to a new farm in about a day, the rating then', /Young (hen|rooster)|Jeune (poule|coq)/.test(ycard) && /daughter|son|fille|fils/.test(ycard) && /rating|note/.test(ycard) && /(2[0-9]|30) hours|(2[0-9]|30) heures|a day|un jour/.test(ycard), ycard);
+const mcard = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; f.openBirdCard(f.gamePlots()[0].birds.find(x => x.gid === c.brood.hen)); return document.querySelector('.gsheet').innerText; });
+ok('her card: raising young hens and roosters', /young hens and roosters|jeunes poules et coqs/.test(mcard), mcard.split('\n').filter(l => /young|jeune/i.test(l)));
+await p.evaluate(() => window.__farm.gameUI().close());
+await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+s = await state();
+ok('a reload: they\'re there, young', s.youngs.length === n && s.youngs.every(y => y !== 'chick') && !s.edited, s);
+// grown, late morning the next day: their coins in, a farewell at the gate
 await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; g.collect(c.id); g.fillFeeder(c.id, window.__T); });
-const coins1 = (await state()).coins;
+const before = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0], mum = g.bird(c.brood.hen), dad = g.birdsIn(c.id).find(b => b.sex === 'r'); return { coins: g.data.coins, mumExp: mum.exp, dadExp: dad.exp, mum: mum.id, dad: dad.id }; });
 await jump(at(next(3) + 'T11:00:20+00:00'), false);
 s = await state();
-ok('two days on, late morning: grown, their coins in (the news)', !s.brood && s.coins === coins1 + n * 22 && /new farm|nouvelle ferme/.test(s.hint), { n, coins0, ...s });
-let gone = false, sawIn = false;
-for (let i = 0; i < 30 && !gone; i++) { await sim(5); s = await state(); sawIn = sawIn || s.farmerIn; gone = s.chicks === 0 && s.leaving === 0; }
-ok('the farmer comes for them and they follow him out: gone', gone && sawIn, s);
+const news = await p.evaluate(() => window.__farm.game().unseenNews());
+const nw = news[0] || {};
+ok('grown, late morning: their coins in, the news (a rating and coins each), a farewell begins', news.length === 1 && nw.kids.length === n && nw.kids.every(k => k.stars >= 1 && k.stars <= 5 && k.coins >= 17 && k.coins <= 36) && s.coins === before.coins + nw.coins && nw.coins === nw.kids.reduce((a, k) => a + k.coins, 0) && !!s.fw && /off to a new farm|partent pour une nouvelle ferme/.test(s.hint), { s, nw });
+let ready = false, party = false;
+for (let i = 0; i < 40 && !(s.fw && s.fw.phase === 'exit'); i++) { await sim(2); s = await state(); ready = ready || !!(s.fw && s.fw.ready); party = party || !!(s.fw && s.fw.phase === 'party'); }
+const said = await p.evaluate(() => document.querySelectorAll('.gsheet:not([hidden])').length);
+ok('the farmer comes to the gate and cheers; the party; then out they go', ready && party && s.fw && s.fw.phase === 'exit' && said === 0, s);
+let gone = false;
+for (let i = 0; i < 30 && !gone; i++) { await sim(1); s = await state(); gone = s.youngs.length === 0 && s.leaving === 0 && !s.fw; }
+ok('one by one out of the gate and gone', gone, s);
+await sim(2); await p.waitForTimeout(400);
+s = await state();
+const cc = await p.evaluate(() => ({ text: document.querySelector('.gsheet').innerText, rows: document.querySelectorAll('.gsheet .gkid').length, stars: [...document.querySelectorAll('.gsheet .gkid .gstars')].map(e => e.querySelectorAll('.on').length) }));
+ok('the congratulations card: her babies grown up, each one\'s rating and coins, the total, the parents\' experience', s.card === 'congrats' && /Congratulations|Félicitations/.test(cc.text) && /babies have grown up|petits de .* ont grandi/.test(cc.text) && cc.rows === n && cc.stars.join() === nw.kids.map(k => k.stars).join() && cc.text.includes('+' + nw.coins) && /experience|expérience/.test(cc.text), cc);
+await p.tap('.gsheet .gbtn');
+const after = await p.evaluate(([m, d]) => { const g = window.__farm.game(); return { unseen: g.unseenNews().length, card: window.__farm.gameUI().kind, mumExp: g.bird(m).exp, dadExp: g.bird(d).exp }; }, [before.mum, before.dad]);
+ok('"Lovely!": closed, seen; the mum and the rooster gained experience', after.unseen === 0 && !after.card && after.mumExp === before.mumExp + 60 && after.dadExp === before.dadExp + 30, after);
+await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.waitForTimeout(1800); await p.evaluate(() => window.__farm.gameTick(window.__T));
+ok('a reload: no card again', !(await p.evaluate(() => window.__farm.gameUI().kind)) && !(await state()).edited, await state());
 // she lays again
 await jump(at(next(4) + 'T19:30:00+00:00'));
 const laid = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return c.eggs; });
 ok('afterwards she lays again', laid >= 2, laid);
+// a brood that grew up while the game was shut: the card when it's opened, saying so
+await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0], hen = g.birdsIn(c.id).find(b => b.sex === 'h'); c.brood = { hen: hen.id, start: window.__T - 80 * 3600e3, n: 2, hatched: true }; c.brood.kids = g.kidsOf(c, c.brood); g.save(); });
+await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.waitForTimeout(1800); await p.evaluate(() => window.__farm.gameTick(window.__T));
+const away = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, text: document.querySelector('.gsheet').innerText, youngs: window.__farm.youngs(0).length }));
+ok('grown while away: the card on opening, "while you were away"', away.kind === 'congrats' && /While you were away|Pendant votre absence/.test(away.text) && away.youngs === 0, away);
+await p.evaluate(() => window.__farm.gameUI().close());
+// news changed outside the game: checked
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.news = [{ type: 'grown', coop: raw.d.coops[0].id, hen: raw.d.birds.find(b => b.sex === 'h').id, dad: '', kids: [{ sex: 'q', stars: 9, coins: 1e9 }, 1, 2, 3, 4, 5], coins: 5e9, xp: -4, t: 1, seen: false }]; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+const tn = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, news: g.data.news }; });
+const k0 = tn.news[0] && tn.news[0].kids;
+ok('news changed outside the game: kept within bounds, flagged', tn.edited && k0 && k0.length <= 4 && k0.every(k => k.stars <= 5 && k.coins <= 1000 && (k.sex === 'h' || k.sex === 'r')) && tn.news[0].coins <= 4000 && tn.news[0].xp >= 0, tn);
+await p.evaluate(() => window.__farm.gameUI().close());
 // a brood changed outside the game
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.coops[0].brood = { hen: 'b999', start: 5, n: 9, hatched: true }; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
