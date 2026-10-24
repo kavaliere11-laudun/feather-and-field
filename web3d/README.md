@@ -1414,6 +1414,8 @@ balance is step 11), the farm shows them (`main.js`, "the game's eggs and feed")
   does) and scatters corn for the hens; at night it's simply filled. Short of coins: "Fill what you can"; no coins and
   nothing in it: free kitchen scraps (a unit), so the hens can always go on laying. 2 coins a unit, 4 XP a full fill.
 - **The hen's card:** "Eggs: Lays about 2 eggs a day, 6 coins each."
+- **Messages:** sideways the game's messages run along the bottom (at the top they sat over the coop's egg bubble), and
+  each lasts by the farm's own time.
 - **The save:** each coop's `eggs` (0-12), `feed` (0 to full) and `fedAt` (never ahead of now), each hen's `laid`
   (never ahead of now) and the farm's `first` egg, all checked on every load. A farm saved before this step loads with
   an empty nest and a full feeder and is not flagged (`fits`: fields the save didn't have yet don't count as an edit).
