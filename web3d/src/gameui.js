@@ -59,11 +59,26 @@ export class GameUI {
   close() { if (this.sheet.hidden) return; this.sheet.hidden = true; this.dim.hidden = true; const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
+  // the welcome picture over the top of the screen (the farmer, hens of every breed, the geese and the dog: main.js ?poster),
+  // with the game's name; the welcome sheet below it
+  hero(on) {
+    if (!this.heroEl) {
+      this.heroEl = el('div', 'ghero');
+      const img = el('img'); img.alt = ''; img.src = 'welcome.jpg' + (this.o.bust || ''); img.decoding = 'async';
+      this.heroLogo = el('div', 'glogo'); this.heroTag = el('div', 'gtag');
+      this.heroEl.append(img, this.heroLogo); this.heroLogo.after(this.heroTag);
+      document.body.append(this.heroEl);
+    }
+    this.heroLogo.textContent = this.t('brand'); this.heroTag.textContent = this.t('tagline');
+    this.heroEl.hidden = !on;
+  }
   welcome() {
     return new Promise(resolve => {
       let look = 'm', typed = '';
       const draw = () => {
+        this.hero(true);
         const b = this.open('welcome', this.t('welcome_title'), true);
+        this.dim.hidden = true; this.sheet.classList.add('gwelcome');
         b.append(el('p', 'gtext', this.t('welcome_body')));
         const langRow = el('div', 'grow');
         langRow.append(el('span', 'glabel', this.t('lang')));
@@ -89,7 +104,7 @@ export class GameUI {
         input.addEventListener('input', () => { typed = input.value; });
         b.append(lab, input);
         const go = el('button', 'gbtn', this.t('start')); go.type = 'button';
-        go.addEventListener('click', () => { const name = cleanName(input.value); this.close(); resolve({ lang: this.g.lang, look, name }); });
+        go.addEventListener('click', () => { const name = cleanName(input.value); this.sheet.classList.remove('gwelcome'); this.hero(false); this.close(); resolve({ lang: this.g.lang, look, name }); });
         input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         b.append(go);
       };

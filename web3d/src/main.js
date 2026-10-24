@@ -17,13 +17,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
-import { initBeasts, DogLineup, FoxFamily, FoxLineup } from './beasts.js';
-import { initGeese, GeeseLineup, GeeseFlock, DuckLineup } from './geese.js';
+import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog } from './beasts.js';
+import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
 import { DuckFlock } from './ducks.js';
-import { initFarmer, FarmerLineup, FARMER_NAME } from './farmer.js';
+import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
@@ -42,7 +42,8 @@ const params = new URLSearchParams(location.search);
 const GAME_MODE = document.body.classList.contains('game');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
-const HAS_GEESE = !GAME_MODE, HAS_DOG = !GAME_MODE, HAS_DECOR = !GAME_MODE;
+const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
+const HAS_GEESE = !GAME_MODE && !POSTER, HAS_DOG = !GAME_MODE && !POSTER, HAS_DECOR = !GAME_MODE && !POSTER;
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
@@ -312,7 +313,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, reload: () => location.reload(), onClose: gameSheetClosed });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo, decorGlb, decorInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
@@ -348,6 +349,7 @@ async function start() {
   if (params.get('lineup') === 'ducks') { geeseLineup = new DuckLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(42)); view.min = 0.5; }
   if (params.get('lineup') === 'farmer') { farmerLineup = new FarmerLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(44), parseInt(params.get('set') || '1', 10)); view.min = 0.4; }
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
+  if (POSTER) buildPoster(beastsInfo.joints);
   buildFoxes(beastsInfo.joints);
   buildGeese();
   buildDog(beastsInfo.joints);
@@ -1364,7 +1366,7 @@ function pathCosts(nav) {
   for (const l of V.paths) for (let i = 1; i < l.length; i++) nav.costLine(l[i - 1][0], l[i - 1][2], l[i][0], l[i][2], V.pathHalf * 0.85, 1);
 }
 function buildFarmer() {
-  if (params.get('lineup')) return;
+  if (params.get('lineup') || POSTER) return;
   const nav = navGrid(); pathCosts(nav);
   const door = farmDoor(), kh = KENNEL_AT[2], kd = nav.nearestIn(farmReach(), KENNEL_AT[0] + Math.sin(kh) * 1.7, KENNEL_AT[1] + Math.cos(kh) * 1.7, 0.8);
   // on the bank, a step back from where the geese go in and out, facing the water
@@ -2339,6 +2341,70 @@ function buildLineup() {
   frame.updateMatrixWorld(true);
 }
 
+// ------------------------------------------------------------------ ?poster: the stage for the game's welcome picture (Audrey, 24 Oct:
+// "an image that would represent the game with a farmer, few chickens from different breeds, the geese, the dog. All of them
+// together and interacting needs to be funny"). Breakfast at the Red Barn: the farmer throws the corn and the hens of every
+// breed rush in to peck it up; the Rhode Island Red rooster crows from the top of a round bale; Gertrude hisses, wings out,
+// at Biscuit, who answers with a delighted play bow, a chick riding on his back; Hector honks his support from behind her.
+// Out on the grass past the village (as the line-ups), its own little set round it. gamefilm-style scripts pose and shoot it.
+let poster = null;
+function buildPoster(joints) {
+  const O = villageCentre().add(new THREE.Vector3(32, 0, 32)), r = rng(123);
+  const g = new THREE.Group(); g.position.copy(O); g.rotation.y = 45 * DEG; scene.add(g); g.updateMatrixWorld(true);     // (its +z towards the camera)
+  const set = [];
+  const prop = (name, x, z, deg = 0, s = 1) => { if (!parts[name]) return null; const m = part(name); m.position.set(x, 0, z); m.rotation.y = deg * DEG; m.scale.setScalar(s); still(m, true, true); g.add(m); set.push(m); return m; };
+  prop('house_rir', -0.35, -2.75, 0); prop('round_bale', 0.6, -1.25, 75); prop('wheelbarrow', 1.75, -1.45, -35); prop('flower_pots', 0.75, -2.35, 0);
+  prop('tree_apple', 2.4, -3.6, 0); prop('tree_a', -2.9, -3.8, 40); prop('bush_a', 1.7, -2.6, 0, 0.8); prop('bush_b', -2.1, -2.2, 0, 0.7);
+  for (let i = 0; i < 70; i++) { const a = r() * 6.28, d = 0.8 + r() * 3.4, x = Math.cos(a) * d * 1.3, z = Math.sin(a) * d - 0.4; if (Math.abs(x) < 1.6 && z > -0.9 && z < 1.6) continue; prop(['grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2', 'flower_daisy', 'flower_butter'][i % 5], x, z, r() * 360, 0.8 + r() * 0.5); }
+  const plot = { kind: 'lineup', frame: g, birds: [], centre: O, poster: true };
+  plots.push(plot);
+  const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
+  const bird = (breed, kind, colour, x, z, tx, tz, act) => { const b = new Bird(plot, breed, kind, colour, [x, 0, z], face(x, z, tx, tz), r); b.stay = true; b.posterAct = act; plot.birds.push(b); return b; };
+  const rooster = bird('rir', 'rooster', null, 0.6, -1.25, 0.2, 2, 'crow');
+  const hens = [bird('orp', 'hen', null, -0.3, 0.6, -0.2, 0.85, 'peck'), bird('bra', 'hen', null, 0.05, 1.0, -0.15, 1.05, 'peck'),
+    bird('sil', 'hen', 'white', -0.6, 1.05, -0.4, 0.95, 'peck'), bird('leg', 'hen', null, -0.5, 0.45, -0.2, 2.5, 'flap'), bird('sil', 'hen', 'black', -0.25, 1.4, 0.5, 3, null)];
+  const chick = bird('sil', 'chick', 'buff', 1.2, 0.9, 1.5, 2, null);
+  const hatHen = bird('sil', 'hen', 'buff', -1.0, 0.1, 0.5, 2, 'rest');          // (a Silkie sitting on his hat, quite at home)
+  allBirds.push(...plot.birds);
+  const farmer = new Farmer(g, 'm', nightGrade, r); farmer.pos.set(-1.0, 0, 0.1); farmer.root.rotation.y = 0.85;
+  const gert = new Goose(g, 'embden', r), hector = new Goose(g, 'toulouse', r);
+  gert.pos.set(1.38, 0, 0.9); gert.heading = -1.45; gert.task = GOOSE_POSE.hiss;
+  hector.pos.set(1.52, 0, 0.18); hector.heading = -1.6; hector.task = GOOSE_POSE.honk;
+  for (const m of [gert, hector]) m.root.traverse(o => { if (o.material) for (const x of [].concat(o.material)) nightGrade(x); });
+  const dog = new PosterDog(g, 0.3, 0.95, 1.62, joints, r);
+  // the corn: a handful in the air, from his hand towards the hens, and some already down
+  const grain = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: '#e8b84e' }), 60);
+  grain.castShadow = true; grain.frustumCulled = false; g.add(grain); nightGrade(grain.material);
+  poster = { g, set, birds: plot.birds, rooster, hens, chick, hatHen, farmer, gert, hector, dog, grain, t: 0, toss: 0.62, r };
+  tickPoster(0);
+}
+function placeGrain(hand) {           // hand: his throwing hand (the stage's frame); the corn fans out from it towards the hens
+  const P = poster, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(7), to = [-0.15, 0.8];
+  for (let i = 0; i < 60; i++) {
+    let x, y, z;
+    if (i < 34) { const u = Math.pow(r(), 0.8), spread = (r() - 0.5) * 0.5 * u;                     // in the air: an arc from his hand
+      x = hand.x + (to[0] - hand.x) * u * 0.8 + spread; z = hand.z + (to[1] - hand.z) * u * 0.8 - spread * 0.5; y = hand.y + Math.sin(u * Math.PI * 0.8) * 0.28 - u * u * (hand.y - 0.1) + (r() - 0.5) * 0.06; }
+    else { x = to[0] - 0.55 + r() * 1.0; z = to[1] - 0.35 + r() * 0.8; y = 0.012; }                // down, where they're pecking
+    m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(0.011, 0.008, 0.009));
+    P.grain.setMatrixAt(i, m);
+  }
+  P.grain.instanceMatrix.needsUpdate = true;
+}
+function tickPoster(dt) {
+  const P = poster; P.t += dt;
+  for (const b of P.birds) if (b.posterAct && (!b.act || b.act.type !== b.posterAct)) b.act = { type: b.posterAct, left: b.posterAct === 'flap' ? 1.1 : 40 };
+  P.rooster.root.position.y = (P.baleTop ?? 0.62);
+  P.g.updateMatrixWorld(true);
+  const hat = P.farmer.rig.B.hat.getWorldPosition(new THREE.Vector3()); P.g.worldToLocal(hat); P.hatHen.root.position.set(hat.x, hat.y + (P.hatUp ?? 0.16), hat.z);
+  if (!P.grained || dt === 0) { const h = P.farmer.rig.B.wristR.getWorldPosition(new THREE.Vector3()); P.g.worldToLocal(h); placeGrain(h); P.grained = P.t > 2; }
+  // the farmer throwing: his arm out at the moment of letting go (toss: how far through the throw), grinning, an eye on the goose
+  P.farmer.want = { pose: 'feed', face: 'happy', props: { pail: true }, anim: (Q, F) => { const u = P.toss; Q.shR[1] += -30 * Math.sin(u * Math.PI); Q.elR[1] += 20 * Math.sin(u * Math.PI); Q.wrR[1] += -30 * Math.sin(u * Math.PI); F.look = P.look || [0.15, 0.8]; Q.head[2] += 6; Q.head[1] -= 6; } };
+  if (dt > 0) { P.farmer.update(dt); P.gert.update(dt); P.hector.update(dt); P.dog.update(dt); }
+  // the chick riding on Biscuit's back
+  const d = P.dog.foxes[0], bone = d.q.bones.chest || d.q.bones.spine || d.q.bones.hips;
+  if (bone) { P.g.updateMatrixWorld(true); const w = bone.getWorldPosition(new THREE.Vector3()); P.g.worldToLocal(w); P.chick.root.position.set(w.x, w.y + (P.chickUp ?? 0.11), w.z); }
+}
+
 function makeBlob() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 64;
   const cx = cv.getContext('2d'), gr = cx.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -2960,6 +3026,7 @@ function frame(now) {
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
+  if (poster) { tickPoster(dt); wake(100); }
   tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn();
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
@@ -3021,11 +3088,17 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard,
+  poster: () => poster, posterShot: (o) => {                // the welcome picture: a perspective camera on the stage
+    const P = poster, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
+    P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
+    cam.position.copy(tw).addScaledVector(dir, o.dist || 9); cam.lookAt(tw); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    view.target.set(tw.x, 0, tw.z); aimShadows(true); for (const p of plots) for (const b of p.birds) placeBlob(b);
+    renderer.render(scene, cam); return true; },
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits

@@ -1013,6 +1013,26 @@ export class DogLineup {
   centre(v) { return v.copy(this.group.position); }
   tapped(f) { f.todo.unshift(seq(hop(), bowAt(null, 1.2))); f.task = null; }
 }
+// the game's welcome picture (main.js ?poster): Biscuit alone, in a play bow (tail up and going, grinning), or as asked
+export class PosterDog {
+  constructor(scene, x, z, heading, joints, r, name = 'Biscuit') {
+    this.r = r; this.joints = joints; this.out = true; this.isDogs = true; this.pose = 'bow';
+    this.group = new THREE.Group(); scene.add(this.group);
+    const f = new Fox(this, 'collie', name, 'dog', 1, r);
+    f.home = false; f.root.visible = true; f.pos.set(x, 0, z); f.heading = heading; this.foxes = [f];
+  }
+  nextTask(f) {
+    return T.wait(1e6, (f, t) => {
+      const A = f.A;
+      if (this.pose === 'bow') { A.bowGoal = 1; A.pitch = this.pitch ?? 0.3; A.wagGoal = 1; A.tailUpGoal = 0.85; playFace(f, 1); A.lookPitchGoal = this.look ?? -0.25; A.headTiltGoal = 0.2; }
+      else if (this.pose === 'sit') { A.sitGoal = 1; A.wagGoal = 0.6; playFace(f, 0.8); }
+    });
+  }
+  update(dt) { for (const f of this.foxes) f.update(dt); }
+  visible() { return true; }
+  centre(v) { return v.copy(this.foxes[0].pos); }
+  tapped() {}
+}
 // the standing dog of the line-up shows his faces, 2.5 s each: looking about, puzzled (head tilted, one lid up), happy
 // (grinning, wagging), pleading (looking up, inner corners raised), intent (crouched, the stare) and sleepy
 export const MOODS = ['look', 'puzzled', 'happy', 'pleading', 'intent', 'sleepy'];

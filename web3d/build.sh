@@ -13,4 +13,5 @@ sed -e "s/src=\"app.js\"/src=\"app.js?v=$BUST\"/" -e "s/<body>/<body class=\"gam
 rm -rf dist/models && mkdir -p dist/models
 cp models/plants.glb models/flock.glb models/flock.json models/coops.glb models/coops.json models/silkie_hair.jpg models/village.glb models/village.json models/layout.json models/meadow.jpg models/interiors.glb models/interiors.json models/beasts.glb models/beasts.json models/fauna.glb models/geese.glb models/geese.json models/farmer.glb models/farmer.json models/decor.glb models/decor.json dist/models/
 rm -rf dist/fonts && cp -r fonts dist/fonts          # (the replay's title cards: IM Fell English, with its licence)
+cp welcome.jpg dist/welcome.jpg                      # (the game's welcome picture: main.js ?poster, rendered by posterpic.mjs)
 echo "built: $(du -sh dist | cut -f1)"

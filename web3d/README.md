@@ -1313,3 +1313,19 @@ into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live st
   code in a name, a level typed in, XP as text: all checked, and flagged), the trio in bed at night and the inside view's
   title, Settings: the other language, and a new farm.
 
+## The game's welcome picture (24 Oct 2026, Audrey: "I'd like the first welcome screen a bit more appealing, probably an image that would represent the game with a farmer, few chickens from different breeds, the geese the dog. All of them together and interacting needs to be funny")
+
+- `main.js ?poster` (with `&coops=0&time=10:30`): its own little stage out past the village (as the line-ups), nobody
+  else about. Breakfast at the Red Barn: the farmer throws the corn (grains in the air from his hand, more on the
+  ground) with a buff Silkie sitting on his hat, and looks up at her, grinning; a Buff Orpington, a Light Brahma, a
+  white and a black Silkie and a Cream Legbar peck it up; the Rhode Island Red rooster crows from the top of a round
+  bale; Gertrude hisses, wings out, at Biscuit, who answers with a delighted play bow (tail up and going, grinning), a
+  yellow Silkie chick riding on his back; Hector honks his support behind her. Round them a wheelbarrow of pumpkins,
+  flower pots, an apple tree, bushes, grass and flowers. `beasts.js PosterDog` (Biscuit alone, posed), `geese.js` shares
+  its line-up poses (`LINE`), `farmer.js Farmer`.
+- `posterpic.mjs`: shoots it through a perspective camera (`__farm.posterShot`) at three times phone size; saved as
+  `web3d/welcome.jpg` (1206 x 1320, quality 84, 135 KB), copied with the page by `build.sh`.
+- `gameui.js hero()`: the picture across the top of the screen behind the welcome sheet, "Feather & Field" and a line
+  under it ("A flock to love for good" / "Une basse-cour à aimer pour toujours") over a soft shade; gone once the
+  farm starts.
+

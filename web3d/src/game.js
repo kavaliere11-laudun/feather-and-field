@@ -13,7 +13,7 @@ const SAVE_V = 1;
 // ---- the words
 const TEXT = {
   en: {
-    brand: 'Feather & Field',
+    brand: 'Feather & Field', tagline: 'A flock to love for good',
     level: 'Level', coins: 'Coins', settings: 'Settings', close: 'Close',
     welcome_title: 'Welcome to your farm',
     welcome_body: 'Three Rhode Island Reds are waiting for you: a rooster and two hens. They’re yours for good, so get to know them!',
@@ -39,7 +39,7 @@ const TEXT = {
     loading: 'Loading your farm…',
   },
   fr: {
-    brand: 'Feather & Field',
+    brand: 'Feather & Field', tagline: 'Une basse-cour à aimer pour toujours',
     level: 'Niveau', coins: 'Pièces', settings: 'Réglages', close: 'Fermer',
     welcome_title: 'Bienvenue dans votre ferme',
     welcome_body: 'Trois Rhode Island Red vous attendent : un coq et deux poules. Ils sont à vous pour toujours, apprenez à les connaître !',

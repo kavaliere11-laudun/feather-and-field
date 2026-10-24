@@ -448,7 +448,7 @@ const DUCK_LINE = {
 // her in everything)
 const cyc = (g, n) => { const c = g.clock - (g.kind === 'toulouse' ? 0.55 : 0); return ((c % n) + n) % n; };
 const at1 = g => g.at1 || (g.at1 = new THREE.Vector3());
-const LINE = {
+export const LINE = {
   // curious: she turns her head to give you a good look with one eye, head tilted; a double take; a nod and a waggle of the
   // tail, then a look round
   stand: (g) => { const u = cyc(g, 7), A = g.A;
