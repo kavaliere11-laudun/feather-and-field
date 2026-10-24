@@ -266,7 +266,7 @@ export class FarmLife {
         () => { P.letGo(hen); return null; },
         TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }));
     }
-    L.push(TK.walk(P.back.slice(0, 3)), pen(false), TK.walk(P.back.slice(3)));
+    L.push(TK.walk([...(kind === 'fill' && P.clear ? [P.clear] : []), ...P.back.slice(0, 3)]), pen(false), TK.walk(P.back.slice(3)));      // (with the pail: round the feeder's far side of it)
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => {
       if (seq.aborted) return true;
@@ -278,6 +278,8 @@ export class FarmLife {
     };
     return seq;
   }
+  // where his pail is (its middle, world), as he's posed now
+  pailAt() { const b = this.f.rig.B.pail; b.updateWorldMatrix(true, false); return b.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); }
   // where a handful of corn leaves his hand (the right hand, a little ahead of it)
   handTip() { return this.f.rig.B.wristR.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(Math.sin(this.heading) * 0.08, 0, Math.cos(this.heading) * 0.08)); }
   // tapped: a wave and "Hello!" (not indoors, nor while chasing Rusty off)
@@ -344,7 +346,7 @@ export class FarmLife {
     f.root.rotation.y = this.heading;
     if (this.o.groundY) this.pos.y = this.o.groundY(this.pos.x, this.pos.z);
     f.update(dt);
-    if (this.pen) this.pen.at(this.pos);
+    if (this.pen) this.pen.at(this.pos, W.props.pail ? this.pailAt() : null);
     // ---- the animals step aside if he's right on them (geese, ducks on the grass, Biscuit)
     const nav = this.o.nav;
     if (!this.home) for (const o of this.near) {

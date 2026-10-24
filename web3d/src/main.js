@@ -1424,13 +1424,21 @@ function penSpec(plot) {
   const H = (a, b) => { const A = W(a[0], a[1]), B = W(b[0], b[1]); return Math.atan2(B[0] - A[0], B[1] - A[1]); };
   const gx = PEN.gate[0], gz = PEN.pen.max[2], o = W(gx, gz + 0.6), out = navGrid().nearestIn(farmReach(), o[0], o[1], 0.6);
   if (!out) return null;
-  // (pen frame) just inside the gate, a step on (clear of the water dish), in front of the feeder; then where he stands at the
-  // back of the yard and where the corn goes (or where the hen settles), of three ways round the one that faces the player
-  const IN = [gx + 0.15, 2.26], S = [gx + 0.47, 2.08], FS = [0.82, 1.78], FD = [PEN.feeder[0], PEN.feeder[2]];
+  // (pen frame) just inside the gate, a step on (clear of the water dish), beside the feeder; then where he stands at the
+  // back of the yard and where the corn goes (or where the hen settles), of three ways round the one that faces the player.
+  // The pail hangs from his left hand, ahead of him and to his left (POUR, SCATTER: where it is then, in his own frame,
+  // measured from the rig): he stands so that tipped it's just over the feeder's tray, clear of its tube and hat (Audrey:
+  // "There is clipping with the farmer seed bucket"), and scatters the corn and walks with it clear of the feeder too
+  const FD = [PEN.feeder[0], PEN.feeder[2]], POUR = [0.38, 0.27], over = 0.31, pr = Math.hypot(POUR[0], POUR[1]), side = Math.atan2(POUR[0], POUR[1]);
+  const IN = [gx + 0.15, 2.26], S = [gx + 0.47, 2.08], CLEAR = [0.45, 1.5];
   const c = W(0.4, 1.3), camH = Math.atan2(camera.position.x - c[0], camera.position.z - c[1]), off = h => Math.abs(Math.atan2(Math.sin(h - camH), Math.cos(h - camH)));
   const best = list => list.reduce((a, b) => off(H(a[0], a[1])) <= off(H(b[0], b[1])) ? a : b);
-  const [B, SC] = best([[[0.78, 1.0], [0.22, 1.6]], [[0.2, 0.95], [0.8, 1.55]], [[0.55, 0.95], [0.55, 1.75]]]);
+  const [B, SC] = best([[[0.66, 0.98], [0.22, 1.6]], [[0.2, 0.95], [0.8, 1.55]], [[0.55, 0.95], [0.55, 1.75]]]);
   const [CB, ahead] = best([[[0.78, 1.05], [0.47, 1.36]], [[0.25, 1.0], [0.56, 1.31]], [[0.55, 1.0], [0.55, 1.44]]]);
+  // where he pours from: round the feeder, in the yard and clear of what's in it, the one where he faces the player most
+  const Y = PEN.yard, pours = [131, 15, 60, 95].map(d => { const a = d * DEG; return [FD[0] - (pr + over) * Math.sin(a), FD[1] - (pr + over) * Math.cos(a)]; })
+    .filter(([x, z]) => x > Y.min[0] + 0.2 && x < Y.max[0] - 0.2 && z > Y.min[2] + 0.12 && z < Y.max[2] - 0.15 && !PEN.obstacles.some(o => o !== PEN.obstacles.find(q => q[0] === FD[0] && q[2] === FD[1]) && Math.hypot(x - o[0], z - o[2]) < o[3] + 0.18));
+  const FS = pours.reduce((a, b) => off(H(a, FD) - side) <= off(H(b, FD) - side) ? a : b);
   // the hen settles a little in front of him and to his right, under his stroking hand
   const fl = Math.hypot(ahead[0] - CB[0], ahead[1] - CB[1]), fx = (ahead[0] - CB[0]) / fl, fz = (ahead[1] - CB[1]) / fl;
   const spot = [CB[0] + fx * 0.36 - fz * 0.12, CB[1] + fz * 0.36 + fx * 0.12];
@@ -1438,11 +1446,17 @@ function penSpec(plot) {
   const P = {
     plot, out,
     in: [W(gx, gz + 0.12), W(IN[0], IN[1]), W(S[0], S[1])], back: [W(S[0], S[1]), W(IN[0], IN[1]), W(gx, gz + 0.12), out],
-    toGate: H([gx, gz + 0.6], [gx, gz]), feederAt: W(FS[0], FS[1]), toFeeder: H(FS, FD),
+    toGate: H([gx, gz + 0.6], [gx, gz]), feederAt: W(FS[0], FS[1]), toFeeder: H(FS, FD) - side, clear: W(CLEAR[0], CLEAR[1]),
     throwAt: W(B[0], B[1]), toCorn: H(B, SC), crouchAt: W(CB[0], CB[1]), toHen: H(CB, ahead),
-    enter() { plot.fb = [S[0], S[1], 0.3]; plot.block = [...base, plot.fb]; plot.farmer = { x: S[0], z: S[1], hen: null }; },
-    at(pos) { if (!plot.farmer) return; v.copy(pos).applyMatrix4(inv); plot.farmer.x = plot.fb[0] = v.x; plot.farmer.z = plot.fb[1] = v.z; },
-    leave() { plot.block = base; plot.farmer = null; plot.fb = null; for (const b of plot.birds) b.called = false; },
+    enter() { plot.fb = [S[0], S[1], 0.3]; plot.pb = [S[0], S[1], 0]; plot.block = [...base, plot.fb, plot.pb]; plot.farmer = { x: S[0], z: S[1], hen: null }; },
+    // where he is (and his pail, when he has it: the hens keep out of it too)
+    at(pos, pail) {
+      if (!plot.farmer) return;
+      v.copy(pos).applyMatrix4(inv); plot.farmer.x = plot.fb[0] = v.x; plot.farmer.z = plot.fb[1] = v.z;
+      if (pail) { v.copy(pail).applyMatrix4(inv); plot.farmer.px = plot.pb[0] = v.x; plot.farmer.pz = plot.pb[1] = v.z; plot.pb[2] = 0.2; }
+      else { plot.farmer.px = undefined; plot.pb[2] = 0; }
+    },
+    leave() { plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; },
     reserve(b) { if (b) b.called = true; },                  // (sent for: she doesn't go off to lay meanwhile)
     // the hens and the rooster, where he must mind them (world)
     hens() { return plot.birds.filter(b => b.root.visible && !(b.laying && b.laying.inside)).map(b => ({ pos: b.root.getWorldPosition(new THREE.Vector3()), R: 0.32, noPush: true })); },
@@ -1766,7 +1780,7 @@ class Bird {
     return !this.inBlock(x, z, notFarmer);
   }
   inBlock(x, z, notFarmer = false) {
-    for (const o of this.plot.block || []) { if (o[3] === this || (notFarmer && o === this.plot.fb)) continue; const dx = x - o[0], dz = z - o[1]; if (dx * dx + dz * dz < o[2] * o[2]) return true; }
+    for (const o of this.plot.block || []) { if (o[3] === this || (notFarmer && o === this.plot.pb) || (notFarmer === true && o === this.plot.fb)) continue; const dx = x - o[0], dz = z - o[1]; if (dx * dx + dz * dz < o[2] * o[2]) return true; }      // (notFarmer: him and his pail, or 'pail': just that)
     return false;
   }
   // stepping to (x, z) facing yaw: her breast and beak, ahead of her feet, mustn't go into the house's walls, through the fence
@@ -1908,6 +1922,17 @@ class Bird {
           const tx = F.x + Math.sin(a0 + da) * min, tz = F.z + Math.cos(a0 + da) * min;
           if (!this.free(tx, tz, true)) continue;
           const k = Math.min(1, dt * 20); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
+        }
+      }
+    }
+    if (F && onGround && F.px !== undefined) {           // nor in his pail: out to its edge
+      const p = this.root.position, dx = p.x - F.px, dz = p.z - F.pz, d = Math.hypot(dx, dz), min = this.kind === 'chick' ? 0.2 : this.kind === 'rooster' ? 0.34 : 0.27;      // (his tail too)
+      if (d < min) {
+        const a0 = d > 1e-4 ? Math.atan2(dx, dz) : this.r() * 6.28;
+        for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.4, -2.4]) {
+          const tx = F.px + Math.sin(a0 + da) * min, tz = F.pz + Math.cos(a0 + da) * min;
+          if (!this.free(tx, tz, 'pail') || Math.hypot(tx - F.x, tz - F.z) < (this.kind === 'chick' ? 0.27 : 0.33)) continue;      // (never into his boots instead)
+          const k = Math.min(1, dt * 30); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
         }
       }
     }
@@ -3301,6 +3326,10 @@ window.__farm = {
   game: () => game, gameUI: () => gameUI, openBirdCard,
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
+  closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
+    const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
+    cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, cam); return true; },
   poster: () => poster, posterShot: (o) => {                // the welcome picture: a perspective camera on the stage
     const P = poster, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);

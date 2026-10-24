@@ -1414,6 +1414,13 @@ balance is step 11), the farm shows them (`main.js`, "the game's eggs and feed")
   does) and scatters corn for the hens; at night it's simply filled. Short of coins: "Fill what you can"; no coins and
   nothing in it: free kitchen scraps (a unit), so the hens can always go on laying. 2 coins a unit, 4 XP a full fill.
 - **The hen's card:** "Eggs: Lays about 2 eggs a day, 6 coins each."
+- Audrey (21:14): "There is clipping with the farmer seed bucket". Measured (`pailAt`: the pail's middle, from the rig):
+  he poured standing half a metre off with the pail at his side, 0.36 from the feeder and into a hen; scattering, it was
+  0.29 off the feeder; walking out it passed 0.17 from its middle, through its tube; hens came 0.04 from it. Now: he
+  pours from round the feeder, the side where he faces you most (`POUR`: where the tipped pail is in his own frame), the
+  pail just over the tray, clear of the tube and hat (0.25 at the closest); he scatters from a step further off (0.34)
+  and walks out round the far side of the yard (`CLEAR`, 0.38); the hens keep out of the pail (0.27, the rooster's
+  tail 0.34, `penStep`) without ever being pushed into him (`free(x, z, 'pail')`). pentest and farmertest pass.
 - **Messages:** sideways the game's messages run along the bottom (at the top they sat over the coop's egg bubble), and
   each lasts by the farm's own time.
 - **The save:** each coop's `eggs` (0-12), `feed` (0 to full) and `fedAt` (never ahead of now), each hen's `laid`
