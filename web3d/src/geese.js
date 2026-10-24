@@ -270,7 +270,7 @@ export class GooseRig {
 }
 
 // ------------------------------------------------------------------ one goose: where she is, which way she faces, what she's doing
-class Goose {
+export class Goose {
   constructor(group, kind, r, name) {
     this.kind = kind; this.name = name || gooseName(kind); this.r = r; this.isDuck = isDuck(kind);
     this.rig = new GooseRig(kind);
@@ -288,6 +288,7 @@ class Goose {
   tapped(toCam) {
     const q = this.root.getWorldQuaternion(new THREE.Quaternion()).invert(), d = toCam.clone().setY(0).applyQuaternion(q);
     this.reactYaw = Math.max(-1.3, Math.min(1.3, Math.atan2(d.x, d.z))); this.react = 1.9;
+    if (this.flock && this.flock.onTap) this.flock.onTap(this);
   }
   // turn towards a heading: the turn eases in and settles as she lines up (no snapping into a turn, or out of it)
   turnTo(h, dt, rate = 3.2) {
@@ -303,17 +304,20 @@ class Goose {
   moveTo(x, z, dt, pace = 'walk', through = false) {
     const p = this.pos, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
     if (d < 0.05) return true;
-    let sp = { walk: 0.24, hurry: 0.45, run: 0.8, charge: 1.25, strut: 0.2 }[pace] || 0.24;
+    let sp = { walk: 0.24, hurry: 0.45, run: 0.8, charge: 1.25, strut: 0.2, slow: 0.09 }[pace] || 0.24;
+    if (this.isDuck && this.wet <= 0.5) sp *= 0.78;                         // (a duck's shorter legs)
     if (this.wet > 0.5) sp = Math.min(sp, pace === 'walk' ? 0.16 : 0.3);
     let ax = dx / d, az = dz / d, slow = 1;
     for (const o of this.flock ? this.flock.near : []) {
       if (o === this || (!o.isGoose && pace === 'charge')) continue;        // (charging at the fox: straight at him)
-      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? 0.46 : 0.85;      // (the fox: well clear)
+      if (this.isDuck && o.isDuck && o.idx > this.idx) continue;              // (a duck never waits for those behind her in the line)
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? (this.isDuck ? (o.isDuck ? 0.36 : 0.5) : o.isDuck ? 0.4 : 0.46) : 0.85;      // (the fox: well clear)
       if (rd > R + 0.45 || rd > d + R) continue;
       const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.2) continue;
       const k = Math.min(1, (R + 0.45 - rd) / 0.55) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.2 * k;
       const c = Math.cos(th), sn = Math.sin(th); [ax, az] = [ax * c - az * sn, ax * sn + az * c];
-      if (rd < R * 1.15 && ahead > 0.6) slow = Math.min(slow, Math.max(0, (rd - R * 0.85) / (R * 0.3)));
+      // (waiting for the one in front: a goose for the other, a duck only for the one ahead of her in the line; round anyone else)
+      if (rd < R * 1.15 && ahead > 0.6 && (this.isDuck ? o.isDuck && this.following : !o.isDuck)) slow = Math.min(slow, Math.max(0, (rd - R * 0.85) / (R * 0.3)));
     }
     // (bending round the others never into anything: if the bent way is blocked just ahead and the straight way isn't,
     // straight on)
@@ -329,7 +333,7 @@ class Goose {
   }
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt; this.clock += dt;
-    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak', 'proud']) A[k + 'Goal'] = 0;
+    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak', 'proud', 'upend']) A[k + 'Goal'] = 0;
     A.lookYawGoal = 0; A.lookPitchGoal = 0;
     this.turned = false; this.moved = false; this.turn = 0;
     const was = this.lastPos || (this.lastPos = this.pos.clone()), fx0 = was.x, fz0 = was.z;
@@ -340,7 +344,7 @@ class Goose {
     if (this.react > 0) {
       const u = 1.9 - (this.react -= dt), honk = u > 0.3 && u < 1.35;
       A.lookYawGoal = this.reactYaw; A.lookPitchGoal = -0.1; A.tiltGoal = 0; A.grazeGoal = 0; A.preenGoal = 0; A.lowGoal = 0; A.billWGoal = 0;
-      A.tuckGoal *= 0.3; A.squintGoal = 0; A.upGoal = 0.7; A.honkGoal = honk ? 0.8 : 0; A.wingLiftGoal = honk ? 0.5 : 0;
+      A.tuckGoal *= 0.3; A.squintGoal = 0; A.upGoal = 0.7; A.upendGoal = 0; A.sitGoal *= 0.5; A.honkGoal = honk ? 0.8 : 0; A.wingLiftGoal = honk ? 0.5 : 0;
       A.jawGoal = honk && Math.sin((u - 0.3) * Math.PI * 4) > 0 ? 1 : 0; A.wagGoal = u > 1.35 ? 1 : 0; A.tailUpGoal = honk ? 0.6 : 0;
     }
     if (!this.turned) this.av *= Math.max(0, 1 - dt * 10);
@@ -350,7 +354,7 @@ class Goose {
     const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
     for (const k of ['up', 'honk', 'low', 'graze', 'preen', 'tuck', 'sit', 'wingLift', 'tailUp', 'lookYaw', 'lookPitch', 'tilt', 'lift']) ease(k, 5);
     for (const k of ['jaw', 'wag', 'shake', 'squint']) ease(k, 12);
-    ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('billW', 4); ease('proud', 3);
+    ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('billW', 4); ease('proud', 3); ease('upend', 4);
     A.shut = Math.max(blink, A.squint || 0);
     if (this.flock) {
       // the gait from how far she really moves (whatever moves her): the feet step exactly as far as the body goes, so they
@@ -360,7 +364,7 @@ class Goose {
       const spin = Math.min(1, Math.abs(this.turn) / 2) * (1 - clamp01(this.vs / 0.12));
       A.walk += (Math.max(clamp01(this.vs / 0.05), 0.6 * spin) - A.walk) * Math.min(1, dt * 8);
       A.run += (smooth(0.4, 0.7, this.vs) - A.run) * Math.min(1, dt * 5);
-      const stride = (0.22 + 0.12 * A.run) * (1 - 0.25 * (A.proud || 0));              // (strutting: short proud steps)
+      const stride = (0.22 + 0.12 * A.run) * (1 - 0.25 * (A.proud || 0)) * (this.isDuck ? this.rig.by / 0.29 : 1);      // (strutting: short proud steps; a duck's short ones)
       A.phase += (moved + 0.1 * spin * dt) / stride * Math.PI * 2;
       A.stride = stride; A.turn = this.turn;
       // in the pond: lower and lower as she wades in, floating once it's deep (the water hides her feet, paddling)
@@ -430,7 +434,7 @@ const DUCK_LINE = {
   preen: (g) => { const A = g.A, k = g.rig.by / 0.29; A.preenGoal = 1; A.side = 1; A.wingLiftGoal = 0.4; A.billAt = at1(g).set(0.115 * k, g.rig.by + 0.055 * k + 0.015 * k * Math.sin(g.clock * 7), -0.04 * k - 0.05 * k * Math.sin(g.clock * 0.8)); A.billWGoal = 1; },
   wings: (g) => { const u = ((g.clock % 5) + 5) % 5, A = g.A; if (u < 2.4) { A.upGoal = 0.8; A.wingsGoal = 1; A.flapGoal = 1; A.tailUpGoal = 0.6; A.liftGoal = 0.015; } else if (u < 3.4) { A.shakeGoal = 0.6; A.wagGoal = 1; } else { A.lookYawGoal = 0.8; } },
   swim: (g) => { const A = g.A; A.lookYawGoal = 0.4 * Math.sin(g.clock * 0.7); A.wagGoal = 0.15; },
-  upend: (g) => { const u = ((g.clock % 5.5) + 5.5) % 5.5, A = g.A, on = u > 0.8 && u < 4.2; A.upend = (A.upend || 0) + ((on ? 1 : 0) - (A.upend || 0)) * Math.min(1, A.dt * 4); A.grazeGoal = on ? 1 : 0; A.tailUpGoal = on ? 1 : 0; A.wagGoal = !on && u > 4.4 ? 1 : 0; },
+  upend: (g) => { const u = ((g.clock % 5.5) + 5.5) % 5.5, A = g.A, on = u > 0.8 && u < 4.2; A.upendGoal = on ? 1 : 0; A.grazeGoal = on ? 1 : 0; A.tailUpGoal = on ? 1 : 0; A.wagGoal = !on && u > 4.4 ? 1 : 0; },
   sleep: (g) => { const A = g.A, k = g.rig.by / 0.29; A.sitGoal = 1; A.tuckGoal = 1; A.side = -1; A.billAt = g.tuckAt || (g.tuckAt = new THREE.Vector3(-0.07 * k, 0.2 * k, -0.06 * k)); A.squintGoal = 1; A.billWGoal = 1; },
 };
 // each goose's own clock in the line-up, round a cycle of n seconds: Hector does what Gertrude does, a beat later (he copies
@@ -542,7 +546,7 @@ export const ACT = {
 ACT.hiss = ACT.scold;           // (hissing at the fox: the same as at Hector)
 
 // tasks: run(goose, dt) is false while it goes on, true when done; each keeps its own time
-const TK = {
+export const TK = {
   // walk the village grid's way to (x, z) (round bushes, benches, lamps; never into the pond)
   path: (x, z, pace = 'walk', tmax = 45) => ({ name: 'path', act: 'walk', t: 0, pts: null, i: 0, run(g, dt) {
     this.t += dt;
@@ -577,33 +581,27 @@ const TK = {
   } }),
 };
 
-// ------------------------------------------------------------------ Gertrude and Hector on the farm: they live round the pond
-// Gertrude decides what they do; Hector follows in her footsteps a little way behind and copies whatever she does, a beat
-// late: strolling about, grazing, a swim (wading in, gliding round, dabbling, out again with a shake), drinking at the edge,
-// preening, a rest, a wing-flap stretch, a honk. He hurries after her when she gets ahead, running with his wings out if
-// he's left far behind; she calls him with a honk if he's lost; if he crowds her she turns and hisses, and he backs off
-// looking sheepish; now and then something catches his eye. At night they sleep side by side by the water, heads tucked in;
-// in the morning a stretch and a honk.
-export class GeeseFlock {
+// the pond and its banks, for the birds that live on it (the geese, the ducks): its shape, how deep in a point is, the grass
+// round it in parts the streams cut it into, the ways into the water, swimming clear of the dock
+export class PondBirds {
   // opts: { pond: V.pond, nav: the village grid, avoid: [[x, z, r], ...] in the pond (the dock), mouths: [[x, z], ...]
   // where streams meet it }
-  constructor(scene, opts, r) {
+  setPond(opts, r) {
     this.r = r; this.nav = opts.nav; this.time = 0;
     const P = opts.pond; this.pc = [P.center[0], P.center[2]]; this.pu = [P.axisU[0], P.axisU[2]]; this.pv = [P.axisV[0], P.axisV[2]];
     this.lu2 = this.pu[0] ** 2 + this.pu[1] ** 2; this.lv2 = this.pv[0] ** 2 + this.pv[1] ** 2;
-    this.avoid = opts.avoid || []; this.mouths = opts.mouths || [];
-    this.watch = opts.watch; this.groundY = opts.groundY; this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
-    this.wakeOn = opts.wakeOn || null;                 // (the morning replay: they wake when the film says, replay.js)
-    this.group = new THREE.Group(); scene.add(this.group);
-    this.geese = ['embden', 'toulouse'].map(k => {
-      const g = new Goose(this.group, k, r); g.flock = this;
-      g.shadow = shadowDisc(0.17); this.group.add(g.shadow); return g;
-    });
-    [this.lead, this.mate] = this.geese;
-    this.mate.distractIn = 60 + r() * 90; this.scoldOk = 20;
-    this.places();
-    this.near = this.geese;
-    this.ripples = []; this.rippleGeo = new THREE.RingGeometry(0.86, 1, 40).rotateX(-Math.PI / 2);
+    this.avoid = opts.avoid || []; this.mouths = opts.mouths || []; this.groundY = opts.groundY;
+  }
+  // the ways into the water: from the bank (on the grass, s 1.24) over the edge (0.97) to where she floats (0.74), clear
+  // of the dock and the streams' mouths, each knowing which part of the grass it's on
+  waysIn() {
+    const nav = this.nav; this.ways = [];
+    for (let k = 0; k < 72; k++) {
+      const t = k / 72 * Math.PI * 2, out = this.at(t, 1.24), edge = this.at(t, 0.97), inn = this.at(t, 0.74);
+      if (nav && !nav.freeAt(out[0], out[1])) continue;
+      if (!this.clearWater(inn[0], inn[1], 0.5) || !this.clearWater(edge[0], edge[1], 0.6) || this.mouths.some(m => Math.hypot(m[0] - edge[0], m[1] - edge[1]) < 1.5)) continue;
+      this.ways.push({ t, out, edge, inn, reg: this.regionAt(out[0], out[1]) });
+    }
   }
   // where a point is against the pond: its ellipse's scale there (1 at the water's edge, with its wobble), and the angle
   pondAt(x, z) {
@@ -618,8 +616,6 @@ export class GeeseFlock {
   clearWalk(ax, az, bx, bz) { return !this.nav || (this.nav.freeAt(bx, bz) && this.nav.clearLine(ax, az, bx, bz, 0.1)); }
   clearWater(x, z, pad = 0) { return this.avoid.every(([ax, az, r]) => Math.hypot(x - ax, z - az) > r + pad); }
   clearSwim(ax, az, bx, bz) { for (let k = 0; k <= 12; k++) { const u = k / 12; if (!this.clearWater(ax + (bx - ax) * u, az + (bz - az) * u, 0.15)) return false; } return true; }
-  // their places: the grass round the pond they wander over (reached without crossing a stream), the ways into the water
-  // (from the bank, clear of the dock and the streams' mouths), and where they sleep
   // the grass round the pond in parts the streams cut it into (cells reached from each other without a footbridge): a
   // goose walks only within her own part; to the other she swims across
   regions() {
@@ -645,16 +641,60 @@ export class GeeseFlock {
     const f = this.nav.nearestFree(x, z, 1.5); if (!f) return -1;
     return this.lab[this.nav.iz(f[1]) * this.nav.nx + this.nav.ix(f[0])];
   }
+  // the nearest way into the water (on land: on her side of the streams; reg: on that side; not: any but that one)
+  nearestWay(x, z, not, reg) {
+    if (!this.ways.length) { const t = this.pondAt(x, z)[1]; return { t, out: this.at(t, 1.24), edge: this.at(t, 0.97), inn: this.at(t, 0.74) }; }
+    if (reg === undefined && this.pondAt(x, z)[0] > 1.0) reg = this.regionAt(x, z);
+    let best = null, bd = Infinity;
+    for (const w of this.ways) { if (w === not || (reg !== undefined && reg !== null && w.reg !== reg)) continue; const d = Math.hypot(w.out[0] - x, w.out[1] - z); if (d < bd) { bd = d; best = w; } }
+    return best || (reg !== undefined ? this.nearestWay(x, z, not, null) : null);
+  }
+  // swimming from one way in to another, round the dock if it's in the way (by the pond's middle)
+  swimTo(L, from, to) {
+    if (!this.clearSwim(from[0], from[1], to[0], to[1])) { const m = this.at(0, 0); if (this.clearSwim(from[0], from[1], m[0], m[1])) L.push(TK.straight(m[0], m[1], 'walk', true, 0.35)); }
+    L.push(TK.straight(to[0], to[1], 'walk', true, 0.3));
+  }
+  // a few places to swim to in turn, each clear of the dock on the way
+  swimRoute(from, n) {
+    const pts = []; let [x, z] = from;
+    for (let k = 0, tries = 0; k < n && tries < 80; tries++) {
+      const t = this.r() * Math.PI * 2, s = 0.2 + this.r() * 0.5, p = this.at(t, s);
+      if (!this.clearWater(p[0], p[1], 0.35) || !this.clearSwim(x, z, p[0], p[1]) || Math.hypot(p[0] - x, p[1] - z) < 0.9) continue;
+      pts.push(p); [x, z] = p; k++;
+    }
+    return pts;
+  }
+}
+
+// ------------------------------------------------------------------ Gertrude and Hector on the farm: they live round the pond
+// Gertrude decides what they do; Hector follows in her footsteps a little way behind and copies whatever she does, a beat
+// late: strolling about, grazing, a swim (wading in, gliding round, dabbling, out again with a shake), drinking at the edge,
+// preening, a rest, a wing-flap stretch, a honk. He hurries after her when she gets ahead, running with his wings out if
+// he's left far behind; she calls him with a honk if he's lost; if he crowds her she turns and hisses, and he backs off
+// looking sheepish; now and then something catches his eye. At night they sleep side by side by the water, heads tucked in;
+// in the morning a stretch and a honk.
+export class GeeseFlock extends PondBirds {
+  constructor(scene, opts, r) {
+    super(); this.setPond(opts, r);
+    this.watch = opts.watch; this.others = opts.others || (() => []); this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
+    this.wakeOn = opts.wakeOn || null;                 // (the morning replay: they wake when the film says, replay.js)
+    this.group = new THREE.Group(); scene.add(this.group);
+    this.geese = ['embden', 'toulouse'].map(k => {
+      const g = new Goose(this.group, k, r); g.flock = this;
+      g.shadow = shadowDisc(0.17); this.group.add(g.shadow); return g;
+    });
+    [this.lead, this.mate] = this.geese;
+    this.mate.distractIn = 60 + r() * 90; this.scoldOk = 20;
+    this.places();
+    this.near = this.geese;
+    this.ripples = []; this.rippleGeo = new THREE.RingGeometry(0.86, 1, 40).rotateX(-Math.PI / 2);
+  }
+  // their places: the grass round the pond they wander over (reached without crossing a stream), the ways into the water,
+  // and where they sleep
   places() {
     const nav = this.nav, R = this.r;
-    this.regions();
-    this.spots = []; this.ways = [];
-    for (let k = 0; k < 72; k++) {
-      const t = k / 72 * Math.PI * 2, out = this.at(t, 1.24), edge = this.at(t, 0.97), inn = this.at(t, 0.74);
-      if (nav && !nav.freeAt(out[0], out[1])) continue;
-      if (!this.clearWater(inn[0], inn[1], 0.5) || !this.clearWater(edge[0], edge[1], 0.6) || this.mouths.some(m => Math.hypot(m[0] - edge[0], m[1] - edge[1]) < 1.5)) continue;
-      this.ways.push({ t, out, edge, inn, reg: this.regionAt(out[0], out[1]) });
-    }
+    this.regions(); this.waysIn();
+    this.spots = [];
     for (let k = 0; k < 400 && this.spots.length < 60; k++) {
       const t = R() * Math.PI * 2, s = 1.3 + R() * 0.65, p = this.at(t, s);
       if (nav && (!nav.freeAt(p[0], p[1]) || !nav.clearLine(p[0], p[1], ...this.at(t, 1.2)))) continue;      // (on this side of any stream)
@@ -684,29 +724,6 @@ export class GeeseFlock {
       if (d > 1.2 && d < 4.5) return p; if (!best) best = p;
     }
     return best || this.at(0, 1.4);
-  }
-  // the nearest way into the water (on land: on her side of the streams; reg: on that side; not: any but that one)
-  nearestWay(x, z, not, reg) {
-    if (!this.ways.length) { const t = this.pondAt(x, z)[1]; return { t, out: this.at(t, 1.24), edge: this.at(t, 0.97), inn: this.at(t, 0.74) }; }
-    if (reg === undefined && this.pondAt(x, z)[0] > 1.0) reg = this.regionAt(x, z);
-    let best = null, bd = Infinity;
-    for (const w of this.ways) { if (w === not || (reg !== undefined && reg !== null && w.reg !== reg)) continue; const d = Math.hypot(w.out[0] - x, w.out[1] - z); if (d < bd) { bd = d; best = w; } }
-    return best || (reg !== undefined ? this.nearestWay(x, z, not, null) : null);
-  }
-  // swimming from one way in to another, round the dock if it's in the way (by the pond's middle)
-  swimTo(L, from, to) {
-    if (!this.clearSwim(from[0], from[1], to[0], to[1])) { const m = this.at(0, 0); if (this.clearSwim(from[0], from[1], m[0], m[1])) L.push(TK.straight(m[0], m[1], 'walk', true, 0.35)); }
-    L.push(TK.straight(to[0], to[1], 'walk', true, 0.3));
-  }
-  // a few places to swim to in turn, each clear of the dock on the way
-  swimRoute(from, n) {
-    const pts = []; let [x, z] = from;
-    for (let k = 0, tries = 0; k < n && tries < 80; tries++) {
-      const t = this.r() * Math.PI * 2, s = 0.2 + this.r() * 0.5, p = this.at(t, s);
-      if (!this.clearWater(p[0], p[1], 0.35) || !this.clearSwim(x, z, p[0], p[1]) || Math.hypot(p[0] - x, p[1] - z) < 0.9) continue;
-      pts.push(p); [x, z] = p; k++;
-    }
-    return pts;
   }
   // put them out for the time of day: by day grazing on the grass, at night asleep in their bed
   place(hour) {
@@ -972,7 +989,7 @@ export class GeeseFlock {
     this.time += dt; this.scoldOk -= dt;
     this.watchFor(dt, hour);
     const V = this.watch && this.watch(), fox = V && V.fox && V.fox.root.visible ? V.fox : null, dog = this.dogOf();
-    this.near = [...this.geese, ...(fox ? [fox] : []), ...(dog ? [dog] : [])];          // (steering well clear of the fox, and of Biscuit)
+    this.near = [...this.geese, ...(fox ? [fox] : []), ...(dog ? [dog] : []), ...this.others()];          // (steering well clear of the fox, of Biscuit, round the ducks)
     const [G, H] = this.geese;
     if (!this.trail) this.place(hour);
     if (!this.night(hour) && G.asleep && G.task && G.task.name === 'bed') G.task = null;               // morning: up she gets

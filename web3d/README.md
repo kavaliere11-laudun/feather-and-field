@@ -1083,3 +1083,39 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   up, the feet kicking at the surface either side, bobbing a little (`window.__UP` overrides the numbers for tuning).
 - `?lineup=ducks`: both in eight poses (looking about, the waddle, a quack, preening, a wing-flap, swimming, up-ending,
   asleep). `duckpose.mjs OUTDIR [who,..] [secs]` takes close-ups of chosen ones (`VARS` tries `__UP` settings).
+
+## The pond: the ducks' life (24 Oct, Audrey chose the names Rocco, Daisy and Dot)
+
+- `src/ducks.js`: `DuckFlock`, Rocco the drake and two ducks, Daisy and Dot (the same duck model; Dot named in the code),
+  drawn and posed by the geese's code (`Goose`, `GooseRig`; the pond's shape, its ways in and out and swimming clear of
+  the dock are shared with the geese in `PondBirds`). Their poses are in `DACT` (sized for a duck); their tasks in `DK`.
+- By day they live on the water. Rocco leads: short hops over the pond (now and then right across it), a quack first
+  sometimes, then a good while feeding where he stops: dabbling, drifting along dabbling, up-ending. Daisy follows in his
+  wake and Dot in hers (each along the trail of the one ahead, about half a metre behind, hurrying, or pattering over the
+  water with her wings going if she's far behind; never waiting behind for long: she goes round). When the one ahead
+  stops, each does her own things nearby (dabbling, up-ending, preening, floating, quacking), moving a little away first
+  if she's too close to another. Rocco also preens, rises up on the water and flaps, and takes a splashy bath (splashes
+  from the frogs' pond's effects).
+- Daisy is the chatterbox (quacks most, three at a time), Dot the curious one: a frog's splash or croak within 3 m
+  (`FrogPond` calls `heard`) and she paddles over for a look, head tilted, then hurries to catch up.
+- Now and then (not within 140 s of the last) a rest on the bank: the nearest resting place clear of the geese (three
+  spots side by side 0.36 m apart, each with its own way in; never by the geese's bed, the dock or the streams), each in
+  by her own way, a shake, a preen, a nap with heads tucked in; when Rocco gets up they all do, a stretch, and back into
+  the water. A goose, Biscuit or Rusty within 1.3 m while they're ashore: up they get and hurry into the water quacking.
+- Dusk (21:15): out to their raft in the middle of the pond (as far from the dock and streams as can be), asleep afloat,
+  heads tucked in, drifting about a little round their places; morning (6:20): awake one after another, a stretch and
+  a quack. Tap one: she turns to you and quacks, "Quack!" ("Coin coin !" in French) over her head; her label "Rocco ·
+  mallard drake" / "canard colvert", "Daisy · mallard duck" / "cane colvert".
+- Never through each other or a goose (two round parts each; the one behind in the line gives way, one asleep stays
+  put), never onto the dock or out of the water while swimming (`keepIn`), never into anything on the bank; a duck
+  blocked for 4 s gives up on that and does something else (`unstick`). The geese steer round them (`others`), the frogs
+  jump in when they come close.
+- Wakes: behind each swimming duck a V of two thin lines spreading from her breast, drawn from where she's been in the
+  last 1.5 s (so it curves after her), fading; all three in one draw, added onto the water's colour (dimmer at night).
+  Faint rings now and then round one afloat, and as she goes under and comes up (`Ripples`, one instanced draw).
+- `?ducks` starts the view on them. They're hidden while the morning replay plays.
+- Tests: `ducktest.mjs [minutes]` (12 minutes by day, every tenth of a second: never on the dock, into anything on the
+  bank, through each other or a goose, never stuck; afloat only on the water; the followers keeping up; all they do; a
+  rest with all three ashore and back together; a goose coming close; dusk and the raft; the morning; a real tap;
+  `LANG=fr`), `ducktrack.mjs OUT.json [hour] [mins]` (their tracks, for a picture from above), `duckfilm.mjs OUT [secs]
+  [fps] [hour] [who] [size]` (frames keeping all three in view; `PLAN=0:far,13:tap1,17:bath`, `START`, `NIGHT`).

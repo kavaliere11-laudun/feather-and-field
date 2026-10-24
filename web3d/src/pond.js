@@ -291,13 +291,13 @@ export class FrogLineup {
 // the water, with a "Ribbit!"; one in the water dives and pops up elsewhere).
 const WATER_Y = 0.007, BANK_K = 1.045;
 const TXT = { ribbit: ['Ribbit!', 'Croâ !'] };
-function bubbleTexture(text) {
+export function bubbleTexture(text, ink = '#2e5a1c') {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 112; const c = cv.getContext('2d');
   c.font = '800 46px Nunito, system-ui, sans-serif'; const w = Math.min(236, c.measureText(text).width + 44);
   const x0 = (256 - w) / 2;
   c.fillStyle = 'rgba(255,253,247,0.96)'; c.beginPath(); c.roundRect(x0, 8, w, 72, 34); c.fill();
   c.beginPath(); c.moveTo(118, 78); c.lineTo(138, 78); c.lineTo(124, 102); c.fill();
-  c.fillStyle = '#2e5a1c'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, 128, 46);
+  c.fillStyle = ink; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, 128, 46);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function ringTexture() {
@@ -551,7 +551,8 @@ export class FrogPond {
     if (!s) { s = { mesh: new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.ringTex, transparent: true, depthWrite: false, opacity: 0 })), life: 0 }; s.mesh.renderOrder = 2; s.mesh.material.userData.noGrade = true; this.group.add(s.mesh); this.fx.rings.push(s); }
     s.mesh.position.set(x, WATER_Y + 0.002, z); s.life = s.full = 1.6; s.size = size; s.mesh.visible = true;
   }
-  splash(x, z, k) {
+  splash(x, z, k, quiet) {
+    if (!quiet && this.o.heard) this.o.heard(x, z);          // (the ducks hear it: a curious one paddles over to look)
     this.ring(x, z, 0.6 * k); setTimeout(() => this.ring(x, z, 0.35 * k), 180);
     for (let i = 0; i < 9; i++) {
       let d = this.fx.drops.find(q => q.life <= 0);
@@ -563,6 +564,7 @@ export class FrogPond {
   }
   drip(f) { this.ring(f.pos.x, f.pos.z, 0.18); }
   say(f) {
+    if (this.o.heard) this.o.heard(f.pos.x, f.pos.z);
     let b = this.fx.bubbles.find(q => q.life <= 0);
     if (!b) { b = { sp: new THREE.Sprite(new THREE.SpriteMaterial({ map: this.bubbleTex, transparent: true, depthWrite: false, depthTest: false })), life: 0 }; b.sp.material.userData.noGrade = true; b.sp.renderOrder = 12; this.group.add(b.sp); this.fx.bubbles.push(b); }
     b.f = f; b.life = b.full = 1.3; b.sp.visible = true;
