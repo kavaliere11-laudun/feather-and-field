@@ -250,6 +250,25 @@
   }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 320px) { .gsheet.gwelcome .gtext { display: none; } }      /* (the choices first, all in sight) */
   .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
+  .gfeedbar { height: 14px; } .gfeedbar.low .gbar-fill { background: #e8913a; }
+  .gbtn:disabled { opacity: 0.75; cursor: default; }
+  /* the farm's bubbles (main.js places them): the eggs waiting in a coop's nest, a feeder running low. Tap one. */
+  .gbub { position: fixed; z-index: 5; left: 0; top: 0; transform: translate(-50%, calc(-100% - 7px)); display: inline-flex; align-items: center; gap: 6px;
+          height: 34px; padding: 0 12px 0 9px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow);
+          font: 600 16px var(--display); color: var(--ink); white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .gbub[hidden] { display: none; }
+  .gbub::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: var(--glass-top); }
+  .gbub .gegg-i { width: 14px; height: 18px; flex: none; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; background: var(--egg, #b97a4f); box-shadow: inset -2px -3px 0 rgba(0, 0, 0, 0.13); }
+  .gbub.full { background: #fff1c2; } .gbub.full::after { border-top-color: #fff1c2; }
+  .gbub.low { background: #fff1c2; } .gbub.low::after { border-top-color: #fff1c2; }
+  .gbub.empty { background: #ffd9cf; color: #8a2d1d; } .gbub.empty::after { border-top-color: #ffd9cf; }
+  .gbub.pop { animation: gbubpop 0.5s ease-out; }
+  @keyframes gbubpop { 0% { transform: translate(-50%, calc(-100% - 7px)) scale(1); } 40% { transform: translate(-50%, calc(-100% - 7px)) scale(1.22); } 100% { transform: translate(-50%, calc(-100% - 7px)) scale(1); } }
+  body.inside .gbub, body.replaying .gbub { display: none; }
+  .gegg { position: fixed; z-index: 30; width: 18px; height: 22px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; pointer-events: none;
+          box-shadow: inset -3px -4px 0 rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.2); }
+  .gpill.gbump { animation: gbump 0.45s ease-out; }
+  @keyframes gbump { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
   .gbar-fill { height: 100%; background: var(--yolk); border-radius: 99px; }
   @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
   @media (prefers-reduced-motion: reduce) { .gsheet.in { animation: none; } }
@@ -272,6 +291,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792868349"></script>
+<script src="app.js?v=1792869876"></script>
 </body>
 </html>
