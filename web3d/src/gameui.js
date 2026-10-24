@@ -64,7 +64,7 @@ export class GameUI {
   hero(on) {
     if (!this.heroEl) {
       this.heroEl = el('div', 'ghero');
-      const img = el('img'); img.alt = ''; img.src = 'welcome.jpg' + (this.o.bust || ''); img.decoding = 'async';
+      const img = el('img'); img.alt = ''; img.decoding = 'async'; img.addEventListener('load', () => img.classList.add('on')); img.src = 'welcome.jpg' + (this.o.bust || '');      // (fading in once it's there)
       this.heroLogo = el('div', 'glogo'); this.heroTag = el('div', 'gtag');
       this.heroEl.append(img, this.heroLogo); this.heroLogo.after(this.heroTag);
       document.body.append(this.heroEl);

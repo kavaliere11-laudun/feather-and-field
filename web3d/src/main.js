@@ -2361,17 +2361,19 @@ function buildPoster(joints) {
   const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
   const bird = (breed, kind, colour, x, z, tx, tz, act) => { const b = new Bird(plot, breed, kind, colour, [x, 0, z], face(x, z, tx, tz), r); b.stay = true; b.posterAct = act; plot.birds.push(b); return b; };
   const rooster = bird('rir', 'rooster', null, 0.6, -1.25, 0.2, 2, 'crow');
-  const hens = [bird('orp', 'hen', null, -0.3, 0.6, -0.2, 0.85, 'peck'), bird('bra', 'hen', null, 0.05, 1.0, -0.15, 1.05, 'peck'),
-    bird('sil', 'hen', 'white', -0.6, 1.05, -0.4, 0.95, 'peck'), bird('leg', 'hen', null, -0.5, 0.45, -0.2, 2.5, 'flap'), bird('sil', 'hen', 'black', -0.25, 1.4, 0.5, 3, null)];
+  // (the hens in an open ring round the corn, each with room of her own so every breed shows clearly)
+  const C = [-0.2, 0.95];
+  const hens = [bird('leg', 'hen', null, -0.22, 0.45, C[0], C[1], 'peck'), bird('orp', 'hen', null, -0.72, 0.98, C[0], C[1], 'peck'), bird('bra', 'hen', null, 0.36, 0.78, C[0], C[1], 'peck'),
+    bird('sil', 'hen', 'white', -0.5, 1.5, C[0], C[1], 'peck'), bird('sil', 'hen', 'black', 0.22, 1.45, C[0], C[1], 'peck')];
   const chick = bird('sil', 'chick', 'buff', 1.2, 0.9, 1.5, 2, null);
   const hatHen = bird('sil', 'hen', 'buff', -1.0, 0.1, 0.5, 2, 'rest');          // (a Silkie sitting on his hat, quite at home)
   allBirds.push(...plot.birds);
-  const farmer = new Farmer(g, 'm', nightGrade, r); farmer.pos.set(-1.0, 0, 0.1); farmer.root.rotation.y = 0.85;
+  const farmer = new Farmer(g, 'm', nightGrade, r); farmer.pos.set(-1.15, 0, -0.05); farmer.root.rotation.y = 0.85;
   const gert = new Goose(g, 'embden', r), hector = new Goose(g, 'toulouse', r);
-  gert.pos.set(1.38, 0, 0.9); gert.heading = -1.45; gert.task = GOOSE_POSE.hiss;
-  hector.pos.set(1.52, 0, 0.18); hector.heading = -1.6; hector.task = GOOSE_POSE.honk;
+  gert.pos.set(2.04, 0, 0.14); gert.heading = -1.5; gert.task = GOOSE_POSE.hiss;
+  hector.pos.set(1.62, 0, -1.08); hector.heading = -2.2; hector.task = GOOSE_POSE.honk;
   for (const m of [gert, hector]) m.root.traverse(o => { if (o.material) for (const x of [].concat(o.material)) nightGrade(x); });
-  const dog = new PosterDog(g, 0.3, 0.95, 1.62, joints, r);
+  const dog = new PosterDog(g, 0.98, 0.1, 1.58, joints, r);
   // the corn: a handful in the air, from his hand towards the hens, and some already down
   const grain = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: '#e8b84e' }), 60);
   grain.castShadow = true; grain.frustumCulled = false; g.add(grain); nightGrade(grain.material);
@@ -2379,12 +2381,12 @@ function buildPoster(joints) {
   tickPoster(0);
 }
 function placeGrain(hand) {           // hand: his throwing hand (the stage's frame); the corn fans out from it towards the hens
-  const P = poster, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(7), to = [-0.15, 0.8];
+  const P = poster, m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(7), to = [-0.2, 0.95];
   for (let i = 0; i < 60; i++) {
     let x, y, z;
-    if (i < 34) { const u = Math.pow(r(), 0.8), spread = (r() - 0.5) * 0.5 * u;                     // in the air: an arc from his hand
-      x = hand.x + (to[0] - hand.x) * u * 0.8 + spread; z = hand.z + (to[1] - hand.z) * u * 0.8 - spread * 0.5; y = hand.y + Math.sin(u * Math.PI * 0.8) * 0.28 - u * u * (hand.y - 0.1) + (r() - 0.5) * 0.06; }
-    else { x = to[0] - 0.55 + r() * 1.0; z = to[1] - 0.35 + r() * 0.8; y = 0.012; }                // down, where they're pecking
+    if (i < 18) { const u = 0.15 + 0.7 * r(), spread = (r() - 0.5) * 0.22 * u;                    // in the air: an arc from his hand
+      x = hand.x + (to[0] - hand.x) * u + spread; z = hand.z + (to[1] - hand.z) * u - spread * 0.5; y = hand.y + Math.sin(u * Math.PI) * 0.22 - u * u * (hand.y - 0.05) + (r() - 0.5) * 0.04; }
+    else { const a = r() * 6.28, d = Math.sqrt(r()) * 0.24; x = to[0] + Math.cos(a) * d; z = to[1] + Math.sin(a) * d * 0.8; y = 0.012; }      // down, in the middle of the ring
     m.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(0.011, 0.008, 0.009));
     P.grain.setMatrixAt(i, m);
   }
@@ -2392,7 +2394,7 @@ function placeGrain(hand) {           // hand: his throwing hand (the stage's fr
 }
 function tickPoster(dt) {
   const P = poster; P.t += dt;
-  for (const b of P.birds) if (b.posterAct && (!b.act || b.act.type !== b.posterAct)) b.act = { type: b.posterAct, left: b.posterAct === 'flap' ? 1.1 : 40 };
+  for (const b of P.birds) if (b.posterAct && (!b.act || b.act.type !== b.posterAct)) b.act = { type: b.posterAct, left: b.posterAct === 'flap' ? 1.1 : 40 + b.r() * 0.55 };          // (pecking out of step)
   P.rooster.root.position.y = (P.baleTop ?? 0.62);
   P.g.updateMatrixWorld(true);
   const hat = P.farmer.rig.B.hat.getWorldPosition(new THREE.Vector3()); P.g.worldToLocal(hat); P.hatHen.root.position.set(hat.x, hat.y + (P.hatUp ?? 0.16), hat.z);

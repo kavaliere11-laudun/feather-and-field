@@ -1325,6 +1325,12 @@ into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live st
   its line-up poses (`LINE`), `farmer.js Farmer`.
 - `posterpic.mjs`: shoots it through a perspective camera (`__farm.posterShot`) at three times phone size; saved as
   `web3d/welcome.jpg` (1206 x 1320, quality 84, 135 KB), copied with the page by `build.sh`.
+- Audrey (18:41, a close-up of the hens round the pail): "This part is too messy". Tidied: the hens in an open ring round
+  the corn, each with room of her own (a Cream Legbar, a Buff Orpington, a Light Brahma, a white and a black Silkie),
+  pecking out of step; the corn in a little heap in the middle and a few grains in the air, never across a bird; Biscuit
+  and Gertrude behind them on the right, clear of them, with room between his nose and her bill; Hector further back by
+  the wheelbarrow. The picture is taller than the space it fills (1206 x 1500) so on any phone only grass is cut off,
+  never anyone; it fades in once loaded.
 - `gameui.js hero()`: the picture across the top of the screen behind the welcome sheet, "Feather & Field" and a line
   under it ("A flock to love for good" / "Une basse-cour à aimer pour toujours") over a soft shade; gone once the
   farm starts.
