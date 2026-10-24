@@ -219,6 +219,7 @@
     .gsheet.in { animation-name: gsin; }
     @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
+    body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
   }
   /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
