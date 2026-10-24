@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#4f7a35">
+<meta name="theme-color" content="#4a7530">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Feather &amp; Field">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Feather &amp; Field · 3D village (test)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@600;700;800&display=swap">
@@ -171,19 +176,49 @@
           box-shadow: 0 4px 14px rgba(210, 70, 47, 0.35); }
   .gbtn.galt { background: var(--sage); color: var(--ink); box-shadow: none; font-size: 16px; }
   .gbtn.gdanger { background: var(--barn); color: #fff; }
-  .ghero { position: fixed; z-index: 18; left: 0; right: 0; top: 0; height: calc(100% - 400px); min-height: 230px; overflow: hidden; background: #8cb85c; }
+  /* the welcome picture: the whole screen behind the welcome, placed by gameui.js fitHero() so the farmer, the dog, the
+     geese and the hens always show above the sheet (or beside the card, sideways). Safari paints the strip under the
+     clock in this background colour, so the picture's top fades into that same colour: one picture up to the top. Opened
+     from the Home Screen the page runs under the clock itself and the top is only lightly shaded. */
+  .ghero { position: fixed; z-index: 18; inset: 0; overflow: hidden; background: #4a7530; padding-left: env(safe-area-inset-left); }      /* (the padding: read by fitHero, clear of a notch) */
   .ghero[hidden] { display: none; }
-  .ghero img { opacity: 0; transition: opacity 0.4s; } .ghero img.on { opacity: 1; }
-  .ghero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; display: block; }      /* (the picture is taller than the space: only grass goes) */
-  .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 120px); background: linear-gradient(rgba(25, 45, 20, 0.45), rgba(25, 45, 20, 0)); }
+  .ghero img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.4s; }
+  .ghero img.on { opacity: 1; }
+  .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 150px);
+                   background: linear-gradient(#4a7530, rgba(74, 117, 48, 0.82) 38%, rgba(74, 117, 48, 0)); }
+  .standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
+  @media (display-mode: standalone), (display-mode: fullscreen) { .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
   .glogo, .gtag { z-index: 2; }
-  .ghero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(rgba(140, 184, 92, 0), rgba(30, 52, 38, 0.18)); }
   .glogo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center; font: 600 34px/1.05 var(--display); color: #fffdf7;
            text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); letter-spacing: 0.01em; }
   .gtag { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 56px); text-align: center; font: 700 15px Nunito, system-ui, sans-serif; color: #fffdf7;
           text-shadow: 0 1px 8px rgba(20, 40, 15, 0.7); }
   .gsheet.gwelcome { max-height: none; }
   .gsheet.gwelcome .gsheet-head { padding-top: 18px; }
+  .gsheet-body { min-height: 0; }
+  /* a short screen held upright (a browser inside another app, a small phone): the welcome a little tighter */
+  @media (orientation: portrait) and (max-height: 760px) {
+    .gsheet.gwelcome .gsheet-head { padding-top: 14px; } .gsheet.gwelcome .gsheet-head h2 { font-size: 23px; }
+    .gsheet.gwelcome .gsheet-body { gap: 8px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); } .gsheet.gwelcome .gtext { font-size: 14.5px; line-height: 1.35; }
+    .gsheet.gwelcome .gwho .gchip { padding: 9px; } .gsheet.gwelcome .ginput { padding: 9px 13px; } .gsheet.gwelcome .gbtn { padding: 12px 18px; }
+  }
+  /* a big screen held upright (a tablet): the welcome's lines no wider than reads well, in the middle */
+  @media (orientation: portrait) and (min-width: 640px) { .gsheet.gwelcome .gsheet-head, .gsheet.gwelcome .gsheet-body { width: 100%; max-width: 580px; margin-inline: auto; } }
+  /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet.gwelcome { left: auto; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom));
+                       width: min(400px, 46vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - 24px); margin-block: auto; border-radius: 26px; }
+    .gsheet.gwelcome::before { display: none; }
+    .gsheet.gwelcome .gsheet-head { padding-top: 16px; }
+    .gsheet.gwelcome .gsheet-body { padding-bottom: 16px; gap: 9px; }
+    .ghero .glogo, .ghero .gtag { right: calc(min(400px, 46vw) + 12px); }
+  }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 520px) {
+    .gsheet.gwelcome .gsheet-head h2 { font-size: 21px; } .gsheet.gwelcome .gtext { font-size: 14px; line-height: 1.32; }
+    .gsheet.gwelcome .gwho .gchip { padding: 8px; font-size: 16px; } .gsheet.gwelcome .gchip { padding: 7px 13px; } .gsheet.gwelcome .ginput { padding: 8px 12px; }
+    .gsheet.gwelcome .gbtn { padding: 12px 18px; font-size: 17px; }
+    .glogo { font-size: 28px; } .gtag { top: calc(env(safe-area-inset-top) + 48px); font-size: 14px; }
+  }
   .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
   .gbar-fill { height: 100%; background: var(--yolk); border-radius: 99px; }
   @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
@@ -207,6 +242,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792865059"></script>
+<script src="app.js?v=1792866335"></script>
 </body>
 </html>
