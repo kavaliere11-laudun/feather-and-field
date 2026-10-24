@@ -1429,3 +1429,32 @@ balance is step 11), the farm shows them (`main.js`, "the game's eggs and feed")
 - `eggtest.mjs` (`LANG=fr`, `W=874 H=402`): a fake clock from 10:00; the first egg walked in and laid, collected; two
   and three days away; the feeder's card and filling it with the farmer; a full nest; a reload; a clock put back; a
   save changed outside the game.
+
+## The game, release 1 step 4: chicks (24 Oct 2026, Audrey: "Next step")
+
+Designed sideways first, checked both ways, English and French. Rules in `game.js` (`broodTick`, starting values), the
+farm following the save in `main.js` ("broody hens and chicks"), the cards in `gameui.js`.
+- **Going broody:** each morning at 7 each hen may go broody (a good mum 35% a day, the others 12%; a hash of her id
+  and the date, so the same every time), if her coop has no brood, had one more than a day ago, the farm is past its
+  first day and the feeder has food. A brood: 2 or 3 chicks to come, a good mum's 3 or 4.
+- **Sitting:** a day on the nest (`SIT_MS`), laying nothing for sale (her lays then don't come back afterwards). With
+  the game open she walks in and settles on the nest (the laying walk Audrey approved, never leaping in at the window);
+  otherwise she's simply there (`sitNow`). A bubble by the coop counts down ("🐣 24 h"); her card: "Sitting on 3 eggs:
+  they hatch in about 24 hours." She counts as in for the night (the door shuts on her), and inside the coop at night
+  she's on a nest box, awake. The other hen's eggs still come (straight into the nest while it's taken).
+- **Hatching:** the next morning at 7 (a hatch in the night waits for morning): she rises, comes out down the ramp and
+  her chicks pop up round her (`hatchOut`); "3 chicks have hatched! Lulu is a mum." Loaded later, they're round her.
+  They keep near her (the test village's chicks' ways), go to bed with her and grow (to half as big again).
+  A chick's card: "Rhode Island Red · Lulu's chick. Grows up in about 2 days, then goes to a new farm: +22 coins."
+- **Grown and gone:** two days later, at 11 (`GROW_MS`): their coins (22 each for the Rhode Island Red, `CHICK_PRICE`;
+  6 XP each, 4 for the hatching) and "Lulu's 3 chicks have grown up and gone to a new farm · +66 coins". With the game
+  open by day the farmer comes into the pen ("Off to your new home, little ones!"), crouches while they gather round
+  him, then walks out of the gate with them following in a line, and once out of the pen they're off down the lane
+  (`leaveStep`, the farmer's trail); otherwise they're simply gone. Then she lays again.
+- **The save:** each coop's `brood` (one of its own hens, start never ahead of now, 1-4 chicks, hatched only once its
+  time has come), `lastBrood`, `checked` (the last morning looked at), all checked on load; a farm from before this step
+  starts with none. Nothing new to buy or tap: it's all the hens' own doing.
+- `chicktest.mjs` (`LANG=fr`, `W=874 H=402`): a fake clock from the 24th: no brood on the first day; the morning one
+  goes broody she walks in and sits; a reload: sitting at once; the next morning they hatch and she brings them out; a
+  chick's card; a reload: round her; grown: the coins, the farmer leads them out, gone; she lays again; a brood changed
+  outside the game.

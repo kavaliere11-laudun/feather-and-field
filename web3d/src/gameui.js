@@ -175,13 +175,29 @@ export class GameUI {
     th.append(hearts, el('span', 'gcard-t', this.t('trust_lv' + lv)));
     tc.append(el('div', 'glabel', this.t('trust')), th, el('p', 'gtext', this.t('trust_body')));
     body.append(tc);
-    // her eggs
-    if (f && coop) { const kc = el('div', 'gcard'); kc.append(el('div', 'glabel', this.t('eggs')), el('p', 'gtext', this.t('lays', { p: g.eggPrice(coop) }))); body.append(kc); }
+    // her eggs, or her brood
+    if (f && coop) {
+      const kc = el('div', 'gcard'), br = coop.brood && coop.brood.hen === b.id ? coop.brood : null, now = Date.now();
+      kc.append(el('div', 'glabel', this.t('eggs')));
+      if (br && !br.hatched) { const ms = g.hatchAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('hatch_soon', { n: br.n }) : this.t('sitting', { n: br.n, when: g.howLong(ms) }))); }
+      else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising', { n: br.n, when: g.howLong(ms) }))); }
+      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t('lays', { p: g.eggPrice(coop) })));
+      body.append(kc);
+    }
     // where and since when
     const where = coop ? (coop.tier === 0 && !coop.name ? this.t('coop_rustic', { coop: g.coopName(coop) }) : g.coopName(coop)) : '';
     body.append(el('p', 'gnote', this.t('lives_in', { coop: where })));
     const date = new Date(b.since).toLocaleDateString(g.lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     body.append(el('p', 'gnote', this.t('since', { date })));
+  }
+  // ---- a chick: whose she is, when she's grown and off to a new farm
+  chickCard(name, coop, mum, ms) {
+    const g = this.g, body = this.open('chick', name);
+    this.bird = null;
+    body.append(el('p', 'gsub', this.t('chick_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
+    const cc = el('div', 'gcard'), c = g.chickPrice(coop);
+    cc.append(el('div', 'glabel', this.t('chick')), el('p', 'gtext', ms > 1800e3 ? this.t('chick_grows', { when: g.howLong(ms), c }) : this.t('chick_soon', { c })));
+    body.append(cc);
   }
   // ---- a coop's feeder: how full, how long it lasts, fill it (main.js sends the farmer)
   feederSheet(coop, onFill) {

@@ -75,7 +75,8 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.coops[0].eggs = 
 await setT(T0 + 4 * day);
 await p.evaluate(() => { const f = window.__farm; f.gameTick(window.__T); f.draw(); });
 s = await state();
-ok('a full nest: 12, no more laid, the bubble says so', s.eggs === 12 && s.eggBub === '12' && /full|plein/.test(s.hint), s);
+const full = await p.evaluate(() => window.__farm.gamePlots()[0].bub.eggs.classList.contains('full'));
+ok('a full nest: 12, no more laid, the bubble says so', s.eggs === 12 && s.eggBub === '12' && full, { full, ...s });
 // a reload keeps it all
 const keep = () => p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return JSON.stringify({ coins: g.data.coins, xp: g.data.xp, eggs: c.eggs, feed: c.feed, fedAt: c.fedAt, birds: g.data.birds.map(b => b.name + b.pers) }); });
 const saved = await keep();

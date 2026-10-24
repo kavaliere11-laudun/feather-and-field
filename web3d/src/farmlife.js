@@ -21,6 +21,7 @@ export const FARMER_TEXT = {
   ducks: ['Hello, ducks!', 'Bonjour, les canards !'],
   feed: ['Dinner time!', 'À table !'],                                 // (the 2D game's own lines)
   cuddle: ['There, there…', 'Là, là…'],
+  chicks: ['Off to your new home, little ones!', 'En route pour votre nouvelle maison, mes petits !'],
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -254,6 +255,10 @@ export class FarmLife {
           const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
         }),
         TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
+    } else if (kind === 'chicks') {
+      // grown chicks off to a new farm: he crouches, they gather round him, then they follow him out of the gate in a line
+      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.say('chicks'), TK.act('crouch', 2.2, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        () => { if (P.lead) P.lead(); return null; }, TK.act('up', 0.6, W => { W.pose = 'turn'; W.face = 'happy'; }));
     } else {
       // a crouch, she hurries over and settles in front of him, a stroke ("There, there…"), hearts
       let ready = null, heart = 0.2;

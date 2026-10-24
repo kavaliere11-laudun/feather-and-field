@@ -11,6 +11,11 @@
 // afternoon, at times of her own that change from day to day, while her coop's feeder has food in it and its nest has
 // room. Tap the nest and the eggs are sold. The feeder goes down as the trio eats; fill it for a few coins. Away from the
 // game, the eggs of the last two days are there when you come back; a clock put back gives nothing.
+//
+// Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
+// time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
+// sale), they hatch the next morning (2 or 3 chicks, a good mum 3 or 4) and she raises them; two days later, late in the
+// morning, they're grown and go to a new farm, and their coins are yours.
 
 export const SAVE_KEY = 'ff3d.farm';
 const SAVE_V = 1;
@@ -55,6 +60,15 @@ const TEXT = {
     filled: 'Feeder filled · −{c} coins', filled_scraps: 'Kitchen scraps in the feeder: enough for a few hours.',
     farmer_feed: '{farmer} is on the way with the feed · −{c} coins', farmer_scraps: '{farmer} is on the way with some kitchen scraps',
     bub_low: 'Feed low', bub_empty: 'Feeder empty',
+    broody: '{name} has gone broody: she’s sitting on {n} eggs.',
+    hatched: '{n} chicks have hatched! {name} is a mum.',
+    sold: '{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins',
+    sitting: 'Sitting on {n} eggs: they hatch in about {when}.', raising: 'Raising {n} chicks: they grow up in about {when}.',
+    hatch_soon: 'Sitting on {n} eggs: they hatch very soon.', grow_soon: 'Raising {n} chicks: they’re almost grown.',
+    no_lay_brood: 'She lays no eggs for sale while she’s busy with her chicks.',
+    chick: 'Chick', chick_of: '{breed} · {name}’s chick', chick_grows: 'Grows up in about {when}, then goes to a new farm: +{c} coins.',
+    chick_soon: 'Almost grown: soon off to a new farm, +{c} coins.',
+    h: '{n} h', h1: 'an hour', hours: '{n} hours', days1: 'a day', days: '{n} days', min: '{n} min',
   },
   fr: {
     brand: 'Feather & Field', tagline: 'Une basse-cour à aimer pour toujours',
@@ -94,6 +108,15 @@ const TEXT = {
     filled: 'Mangeoire remplie · −{c} pièces', filled_scraps: 'Des restes de cuisine dans la mangeoire : de quoi tenir quelques heures.',
     farmer_feed: '{farmer} arrive avec le grain · −{c} pièces', farmer_scraps: '{farmer} arrive avec des restes de cuisine',
     bub_low: 'Presque vide', bub_empty: 'Mangeoire vide',
+    broody: '{name} est devenue couveuse : elle couve {n} œufs.',
+    hatched: '{n} poussins sont nés ! {name} est maman.',
+    sold: 'Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces',
+    sitting: 'Couve {n} œufs : ils éclosent dans environ {when}.', raising: 'Élève {n} poussins : ils seront grands dans environ {when}.',
+    hatch_soon: 'Couve {n} œufs : ils vont éclore très bientôt.', grow_soon: 'Élève {n} poussins : ils sont presque grands.',
+    no_lay_brood: 'Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses petits.',
+    chick: 'Poussin', chick_of: '{breed} · poussin de {name}', chick_grows: 'Sera grand dans environ {when}, puis partira pour une nouvelle ferme : +{c} pièces.',
+    chick_soon: 'Presque grand : bientôt en route pour une nouvelle ferme, +{c} pièces.',
+    h: '{n} h', h1: 'une heure', hours: '{n} heures', days1: 'un jour', days: '{n} jours', min: '{n} min',
   },
 };
 // in French "Just arrived" agrees with the bird
@@ -164,6 +187,12 @@ export const FEED_DAYS = 2;                           // a full feeder keeps its
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
 const DAY_MS = 86400e3;
+// ---- chicks (starting values)
+export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
+export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26 };   // coins for each grown chick
+export const XP_HATCH = 4, XP_CHICK = 6;
+const BROODY_AT = 7, BROODY_P = { mum: 0.35, other: 0.12 };          // the morning check (hour), each hen's chance that day
+const nextCheck = t => { const d = new Date(t), c = new Date(d.getFullYear(), d.getMonth(), d.getDate(), BROODY_AT).getTime(); return c > t ? c : new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, BROODY_AT).getTime(); };
 // when a hen lays: a morning window (7:30 to 11:30) and an afternoon one (13:00 to 19:00), each day at a time of her own
 const LAY_WINDOWS = [[7.5, 4], [13, 6]];
 function hash01(str) { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12; return (h >>> 0) / 4294967296; }
@@ -201,7 +230,9 @@ export function checkFarm(d, now = Date.now()) {
     if (!BREED_INFO[c.breed] || !out.land.includes(c.plot) || out.coops.some(o => o.plot === c.plot)) continue;
     seen.add(c.id);
     out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), plot: c.plot, name: cleanName(c.name, 24),
-      eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now) });
+      eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
+      brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true } : null,
+      lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now) });
   }
   out.birds = [];
   const ids = new Set();
@@ -220,6 +251,8 @@ export function checkFarm(d, now = Date.now()) {
   }
   // each feeder holds at most two days for the birds it feeds (missing: full, as for a farm from before feeders)
   for (const c of out.coops) { const cap = Math.max(1, out.birds.filter(b => b.coop === c.id).length) * FEED_DAYS; c.feed = c.feed === null ? cap : num(c.feed, 0, cap, cap); }
+  // a brood: one of the coop's own hens, hatched only once its time has come
+  for (const c of out.coops) if (c.brood && (!out.birds.some(b => b.id === c.brood.hen && b.sex === 'h' && b.coop === c.id) || (c.brood.hatched && c.brood.start + SIT_MS > now))) c.brood = null;
   out.next = int(d.next, 1, 99999, 1);
   for (const x of [...out.coops, ...out.birds]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
   const f = d.first, fh = f && typeof f === 'object' ? out.birds.find(b => b.id === f.hen && b.sex === 'h') : null;
@@ -243,6 +276,14 @@ export class Game {
     return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
   }
   li() { return this.lang === 'fr' ? 1 : 0; }
+  // how long, in words: "about 6 hours", "a day", "2 days"
+  howLong(ms) {
+    const h = ms / 3600e3;
+    if (h < 1.5) return this.t('h1');
+    if (h < 30) return this.t('hours', { n: Math.round(h) });
+    const d = Math.round(h / 24);
+    return d <= 1 ? this.t('days1') : this.t('days', { n: d });
+  }
   breedName(b) { return BREED_INFO[b].name[this.li()]; }
   coopName(c) { return c.name || BREED_INFO[c.breed].coop[this.li()]; }
   persName(p, sex) { const n = PERS_INFO[p].name[this.lang]; return n[sex === 'r' && n[1] ? 1 : 0]; }
@@ -279,7 +320,7 @@ export class Game {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
     this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], coops: [], birds: [], next: 1 };
-    const coop = { id: this.id('c'), breed: 'rir', tier: 0, plot: 0, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now };
+    const coop = { id: this.id('c'), breed: 'rir', tier: 0, plot: 0, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
     const mum = this.data.birds.find(b => b.pers === 'mum') || this.data.birds.find(b => b.sex === 'h');
@@ -303,7 +344,7 @@ export class Game {
     for (const b of this.data.birds) {
       if (b.sex !== 'h') continue;
       const from = Math.max(b.laid, b.since, now - CATCH_UP);
-      if (from >= now) continue;
+      if (from >= now || this.brooding(b.id)) continue;                 // (sitting or raising chicks: no eggs for sale)
       for (let day = dayStart(from); day <= now; day = nextDay(day)) for (const t of layTimes(b.id, day)) if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t });
       const f = this.data.first;
       if (f && f.hen === b.id && f.t > b.laid && f.t <= now) out.push({ hen: b.id, coop: b.coop, t: f.t, first: true });
@@ -319,11 +360,52 @@ export class Game {
     b.laid = t;
     if (this.data.first && this.data.first.hen === henId && t >= this.data.first.t) this.data.first = null;
     let res = 'laid';
-    if (this.feedAt(c, t) <= 0) res = 'hungry';
+    if (this.brooding(henId)) res = 'brooding';
+    else if (this.feedAt(c, t) <= 0) res = 'hungry';
     else if (c.eggs >= NEST_MAX) res = 'full';
     else c.eggs++;
     this.save();
     return res;
+  }
+  // ---- broody hens and their chicks
+  chickPrice(c) { return CHICK_PRICE[c.breed] || 20; }
+  hatchAt(c) { return c.brood ? c.brood.start + SIT_MS : 0; }
+  grownAt(c) { return c.brood ? c.brood.start + SIT_MS + GROW_MS : 0; }
+  brooding(henId) { const b = this.bird(henId), c = b && this.coop(b.coop); return !!(c && c.brood && c.brood.hen === henId); }
+  // what's happened since: a hen gone broody, chicks hatched, grown chicks gone to a new farm (their coins in), in order
+  broodTick(now = Date.now()) {
+    const out = []; let dirty = false;
+    for (const c of this.data.coops) {
+      if (c.checked < now - CATCH_UP - DAY_MS) { c.checked = now - CATCH_UP - DAY_MS; dirty = true; }        // (away long: from two days back)
+      for (let guard = 0; guard < 12; guard++) {
+        const br = c.brood;
+        if (br) {
+          const hatch = br.start + SIT_MS, grown = hatch + GROW_MS, hen = this.bird(br.hen);
+          if (!br.hatched && hatch <= now) { br.hatched = true; this.data.xp += XP_HATCH; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
+          if (grown <= now) {
+            const coins = br.n * this.chickPrice(c);
+            this.data.coins += coins; this.data.xp += br.n * XP_CHICK; c.lastBrood = grown; c.brood = null;
+            if (hen) hen.laid = Math.max(hen.laid, grown);               // (her lays while she was busy don't come back)
+            out.push({ type: 'sold', coop: c.id, hen: br.hen, n: br.n, coins, t: grown }); dirty = true; continue;
+          }
+          break;
+        }
+        const t = nextCheck(c.checked);                                   // the next morning's check
+        if (t > now) break;
+        c.checked = t; dirty = true;
+        if (t < now - CATCH_UP || t < c.lastBrood + DAY_MS || t < this.data.made + DAY_MS || this.feedAt(c, t) <= 0) continue;
+        const day = dayStart(t);
+        for (const h of this.birdsIn(c.id).filter(x => x.sex === 'h')) {
+          if (hash01(h.id + '|brood|' + day) >= (h.pers === 'mum' ? BROODY_P.mum : BROODY_P.other)) continue;
+          const n = (h.pers === 'mum' ? 3 : 2) + (hash01(h.id + '|n|' + day) < 0.5 ? 1 : 0);
+          c.brood = { hen: h.id, start: t, n, hatched: false }; h.laid = Math.max(h.laid, t);
+          out.push({ type: 'broody', coop: c.id, hen: h.id, n, t });
+          break;
+        }
+      }
+    }
+    if (dirty) this.save();
+    return out;
   }
   // tap the nest: its eggs sold, coins and XP
   collect(coopId) {
