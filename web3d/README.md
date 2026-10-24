@@ -1363,3 +1363,17 @@ into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live st
   under it ("A flock to love for good" / "Une basse-cour à aimer pour toujours") over a soft shade; gone once the
   farm starts.
 
+
+## The game, release 1 step 2: sideways first (24 Oct 2026, Audrey: "We should plan for the game to be played landscape mode I think by default"; she chose "Sideways first (Recommended)")
+
+The game is designed for a phone held sideways first; upright still works (a website on iPhone can't lock the phone
+sideways; the App Store app can, if she wants). Every step from here is built sideways first and checked both ways
+(`gametest.mjs` takes `W=874 H=402`).
+- `main.js`: held sideways (`sideways()`: wider than 1.25 times its height) the farm comes closer (`SIDE_K` 0.7 on the
+  view and on how near and far a pinch goes), so it fills the shorter height as it fills the width upright; turning the
+  phone swaps it over (`resize()`). A bird's card sideways: the view glides so she stands in the middle of the space
+  beside the card (`openBirdCard`).
+- `index.html`: sideways (`(orientation: landscape) and (min-aspect-ratio: 5/4)`) every sheet (a bird's card, the
+  level, the coins, the settings) is a card on the right under the top bar, as tall as it needs (scrolling if it must),
+  sliding in from the side; the hint hides while a card is open (`body.gopen`). The welcome is its own card, centred on
+  the right, beside the picture.
