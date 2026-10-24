@@ -2391,10 +2391,11 @@ function buildPoster(joints) {
   allBirds.push(...plot.birds);
   const farmer = new Farmer(g, 'm', nightGrade, r); farmer.pos.set(-1.15, 0, -0.05); farmer.root.rotation.y = 0.85;
   const gert = new Goose(g, 'embden', r), hector = new Goose(g, 'toulouse', r);
-  gert.pos.set(2.04, 0, 0.14); gert.heading = -1.5; gert.task = GOOSE_POSE.hiss;
+  gert.pos.set(2.2, 0, 0.16); gert.heading = -1.5;      // (a good beak's length between her and his nose: Audrey, "should not be almost touching the dog")
+  gert.task = GOOSE_POSE.hiss;
   hector.pos.set(1.62, 0, -1.08); hector.heading = -2.2; hector.task = GOOSE_POSE.honk;
   for (const m of [gert, hector]) m.root.traverse(o => { if (o.material) for (const x of [].concat(o.material)) nightGrade(x); });
-  const dog = new PosterDog(g, 0.98, 0.1, 1.58, joints, r);
+  const dog = new PosterDog(g, 0.86, 0.1, 1.58, joints, r);
   // the corn: a handful in the air, from his hand towards the hens, and some already down
   const grain = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshLambertMaterial({ color: '#e8b84e' }), 60);
   grain.castShadow = true; grain.frustumCulled = false; g.add(grain); nightGrade(grain.material);

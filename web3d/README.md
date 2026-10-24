@@ -1384,3 +1384,8 @@ sideways; the App Store app can, if she wants). Every step from here is built si
   (sticky) and below 320 px high the welcome's sentence makes way so every choice shows. Safari paints its bars in the
   page's own colour (not the hero's, it turned out): while the welcome is up the page is the picture's top green
   (`html.gwelcoming`), the farm's grass green after. Checked at 874x293, 844x300, 932x330, 874x402 and upright.
+- Audrey (19:57): "The white goose position in front of the dog is odd. I like it's pose but should not be almost
+  touching the dog like that". Gertrude moved back and Biscuit a little the other way (a good beak's length between her
+  bill and his nose); the picture rendered again and `HERO.key` widened to her tail. Her screenshots showed Safari's
+  bars still the old light green: the hero now has a solid background colour as well as its gradient (Safari reads a
+  fixed layer's background colour, as it does the welcome sheet's at the bottom).

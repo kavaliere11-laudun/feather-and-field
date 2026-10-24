@@ -7,7 +7,7 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName } from './g
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
 // with grass to spare on every side, so it can be fitted to any screen, upright or sideways.
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
-export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.628, 0.79] };
+export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.642, 0.79] };
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
