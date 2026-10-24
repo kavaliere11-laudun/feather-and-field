@@ -328,7 +328,14 @@ export class Goose {
     if (!through) want = Math.min(want, Math.sqrt(2 * 1.2 * Math.max(0, d - 0.03)) + 0.04);
     this.spd += Math.max(-2.5 * dt, Math.min(1.6 * dt, want - this.spd)); this.moved = true;
     const st = Math.min(d, Math.max(0, this.spd) * dt);
-    p.x += Math.sin(this.heading) * st; p.z += Math.cos(this.heading) * st;
+    let nx = p.x + Math.sin(this.heading) * st, nz = p.z + Math.cos(this.heading) * st;
+    // (on the grass, going somewhere on the grass: never a step from free ground into anything; straight on instead, or
+    // sliding along it, or a moment's wait. Into the water by the ways, as ever)
+    if (nav && this.wet < 0.3 && nav.freeAt(x, z) && nav.freeAt(p.x, p.z) && !nav.freeAt(nx, nz)) {
+      nx = p.x + dx / d * st; nz = p.z + dz / d * st;
+      if (!nav.freeAt(nx, nz)) { if (nav.freeAt(nx, p.z)) nz = p.z; else if (nav.freeAt(p.x, nz)) nx = p.x; else { nx = p.x; nz = p.z; } }
+    }
+    p.x = nx; p.z = nz;
     return false;
   }
   update(dt) {

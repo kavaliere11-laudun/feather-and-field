@@ -299,16 +299,16 @@ const allBirds = [];
 const grassTiles = [];
 
 async function start() {
-  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
+  const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo, decorGlb, decorInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
-    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json'), loadGLB('farmer.glb'), loadJSON('farmer.json')]);
+    loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json'), loadGLB('farmer.glb'), loadJSON('farmer.json'), loadGLB('decor.glb'), loadJSON('decor.json')]);
   V = plan; PEN = pen; COOPS = coopsInfo;
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
   initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo); initGeese(geeseGlb, geeseInfo); initFarmer(farmerGlb, farmerInfo);
-  for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb]) {
+  for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb, decorGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
@@ -321,7 +321,8 @@ async function start() {
   buildGround(meadow);
   buildWater();
   buildPaths();
-  buildProps();
+  placeDecor(decorInfo);
+  buildProps(); buildDecor();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
   if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer'].includes(params.get('lineup'))) buildLineup();
@@ -643,6 +644,114 @@ function place(x, y, z, deg, s) {
   return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), deg * DEG), new THREE.Vector3(s, s, s));
 }
 
+// ------------------------------------------------------------------ the decorations the player buys (the 2D game's "Decorate your farm":
+// the same eight, from its own Blender script, stylized/export_decor.py): each starts where the 2D game puts it, on open
+// grass near it (never on a path, a plot, the pond, a stream, a tree or anything else), turned to face the player. They
+// join the village's props: batched like them, and everyone walks round them. The windmill's sails turn; the duck house
+// floats on the pond (the geese, the ducks and the frogs swim round it). Tap one: its name.
+const DECOR_NAMES = {
+  flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
+  duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
+  bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'],
+};
+let DECOR_INFO = null, decorFree = null, decorSpots = null;
+const decorList = [];                                          // { model, pos, deg, box (its own frame), m (world matrix) }
+function placeDecor(info) {
+  DECOR_INFO = info;
+  if (!info || params.has('nodecor')) return;
+  const P = V.pond, house = V.props.find(p => p.model === 'farmhouse'), wheat = V.props.find(p => p.model === 'wheat_field'),
+    sun = V.props.find(p => p.model === 'sunflowers'), veg = V.props.find(p => p.model === 'veg_patch'), dock = V.props.find(p => p.model === 'dock');
+  const at = (p, dx, dz) => [p.pos[0] + dx, p.pos[2] + dz];
+  // where the 2D game starts each one (south on its map is towards the player here)
+  const WANT = [
+    ['flowers', house ? at(house, 3.2, -1.2) : [0, 0]], ['birdbath', house && veg ? [(house.pos[0] + veg.pos[0]) / 2 + 0.5, (house.pos[2] + veg.pos[2]) / 2 + 0.5] : [0, 0]],
+    ['beehives', wheat ? at(wheat, 3.2, 3.2) : [0, 0]], ['greenhouse', sun ? at(sun, 3.0, 3.0) : [0, 0]],
+    ['windmill', wheat ? at(wheat, -4.5, 1.5) : [0, 0]], ['bandstand', [P.center[0] + 5.2, P.center[2] + 5.2]], ['statue', [P.center[0] - 5.0, P.center[2] - 5.0]],
+  ];
+  // what's in the way: the paths, the plots, the pond and the streams, trees, bushes and rocks, the other props, the kennel
+  const seg = (px, pz, a, b) => { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
+  const nearLine = (lines, px, pz, r) => lines.some(l => { for (let i = 1; i < l.length; i++) if (seg(px, pz, l[i - 1], l[i]) < r) return true; return false; });
+  const plotsAt = V.plots.map(p => { const a = p.deg * DEG; return [p.pos[0], p.pos[2], Math.cos(a), Math.sin(a)]; });
+  const inPlot = (x, z) => plotsAt.some(([px, pz, c, s]) => { const dx = x - px, dz = z - pz, lx = dx * c - dz * s, lz = dx * s + dz * c; return lx > -2.35 && lx < 2.4 && lz > -2.3 && lz < 2.3; });
+  const pu = new THREE.Vector2(P.axisU[0], P.axisU[2]), pv = new THREE.Vector2(P.axisV[0], P.axisV[2]), lu = pu.length(), lv = pv.length(); pu.normalize(); pv.normalize();
+  const inPond = (x, z, m) => { const dx = x - P.center[0], dz = z - P.center[2]; return ((dx * pu.x + dz * pu.y) / (lu + m)) ** 2 + ((dx * pv.x + dz * pv.y) / (lv + m)) ** 2 <= 1; };
+  const circles = [...V.trees.map(t => [t.pos[0], t.pos[2], 0.65]), ...V.bushes.map(b => [b.pos[0], b.pos[2], 0.42 * (b.s || 1) + 0.15]), ...V.rocks.map(k => [k.pos[0], k.pos[2], 0.25 * (k.s || 1) + 0.1]),
+    [KENNEL_AT[0], KENNEL_AT[1], 2.2], [FOX_FIELD[0], FOX_FIELD[1], 9], [FOX_DEN[0], FOX_DEN[1], 3]];
+  const boxes = [];
+  for (const p of V.props) {
+    if (p.model === 'wheat_field') {                             // (the field is made here, not a model: its own size)
+      const b = new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 1, 1.2)).applyMatrix4(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1)); b.expandByScalar(0.4); boxes.push(b);
+    }
+    if (!parts[p.model]) continue;
+    const b = new THREE.Box3().setFromObject(parts[p.model]).applyMatrix4(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1)); b.expandByScalar(0.3); boxes.push(b);
+  }
+  const mid = V.bounds.corners.reduce((s, c) => [s[0] + c[0] / 4, s[1] + c[2] / 4], [0, 0]);
+  const pt = new THREE.Vector3();
+  const free = (x, z) => !inPlot(x, z) && !inPond(x, z, 0.6) && !nearLine(V.paths, x, z, V.pathHalf + 0.2) && !nearLine(V.streams, x, z, V.streamHalf + 0.45)
+    && !circles.some(c => Math.hypot(x - c[0], z - c[1]) < c[2]) && !boxes.some(b => b.containsPoint(pt.set(x, 0.5, z)))
+    && !decorList.some(d => d.wb.containsPoint(pt.set(x, 0.5, z))) && Math.hypot(x - mid[0], z - mid[1]) < 40;
+  decorFree = free;
+  const ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };
+  const fits = (name, x, z) => {                                 // every point of its footprint (and a margin) free
+    const f = info.foot[name], m = place(x, 0, z, 45, 1), v = new THREE.Vector3(), M = 0.25;
+    for (let fx = f[0] - M; fx <= f[2] + M + 1e-6; fx += 0.25) for (let fz = f[1] - M; fz <= f[3] + M + 1e-6; fz += 0.25) {
+      if (ROUND[name] && Math.hypot(fx, fz) > ROUND[name] + M && !(name === 'bandstand' && Math.abs(fx) < 0.5 + M && fz > 0)) continue;     // (round ones: their circle, the bandstand's steps)
+      v.set(Math.min(fx, f[2] + M), 0, Math.min(fz, f[3] + M)).applyMatrix4(m);
+      if (!free(v.x, v.z)) return false;
+    }
+    return true;
+  };
+  const add = (name, x, z) => {
+    const m = place(x, 0, z, 45, 1), box = new THREE.Box3().setFromObject(parts[name]), wb = box.clone().applyMatrix4(m).expandByScalar(0.6);
+    decorList.push({ model: name, pos: [x, z], deg: 45, box, m, wb });
+    V.props.push({ model: name, pos: [x, 0, z], deg: 45, s: 1, decor: true });
+  };
+  for (const [name, [ax, az]] of WANT) {
+    if (!parts[name] || !info.foot[name]) continue;
+    let spot = null;
+    for (let r = 0; r <= (name === 'bandstand' ? 16 : 9) && !spot; r += 0.35) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n && !spot; k++) {
+      const a = k / n * Math.PI * 2 + r, x = ax + Math.cos(a) * r, z = az + Math.sin(a) * r;
+      if (fits(name, x, z)) spot = [x, z];
+    }
+    if (spot) add(name, spot[0], spot[1]); else console.warn('no room for', name);
+  }
+  // the duck house floats on the pond: along its long axis, at the end away from the dock
+  if (parts.duckhouse) {
+    const c = P.center, e1 = [c[0] + P.axisU[0] * 0.42, c[2] + P.axisU[2] * 0.42], e2 = [c[0] - P.axisU[0] * 0.42, c[2] - P.axisU[2] * 0.42];
+    const far = !dock || Math.hypot(e1[0] - dock.pos[0], e1[1] - dock.pos[2]) > Math.hypot(e2[0] - dock.pos[0], e2[1] - dock.pos[2]) ? e1 : e2;
+    add('duckhouse', far[0], far[1]);
+  }
+}
+// in the pond: circles round the duck house's raft (for whoever swims)
+function decorAvoid() {
+  const out = [];
+  for (const d of decorList) if (d.model === 'duckhouse') { const c = new THREE.Vector3(); d.box.getCenter(c).applyMatrix4(d.m); out.push([c.x, c.z, 0.85]); }
+  return out;
+}
+// the windmill's sails, turning slowly in the wind (one turn in about 14 s)
+let sails = null;
+function buildDecor() {
+  for (const d of decorList) for (const m of meshesOf(parts[d.model])) if (m.material && m.material.name === 'glass') { m.material.transparent = true; m.material.opacity = 0.34; m.material.depthWrite = false; m.material.needsUpdate = true; }
+  const w = decorList.find(d => d.model === 'windmill');
+  if (w && parts.sails && DECOR_INFO.hub) {
+    sails = new THREE.Group(); const s = part('sails'); sails.add(s);
+    sails.position.fromArray(DECOR_INFO.hub).applyMatrix4(w.m); sails.rotation.y = 45 * DEG;
+    s.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    scene.add(sails);
+  }
+}
+function tickDecor(dt) { if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31)); }
+// a tap on one: its name over it
+function decorAt(ray) {
+  const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hit = new THREE.Vector3();
+  let best = null, bestD = Infinity;
+  for (const d of decorList) {
+    loc.copy(ray).applyMatrix4(inv.copy(d.m).invert());
+    if (loc.intersectBox(d.box, hit)) { const dd = hit.applyMatrix4(d.m).distanceTo(ray.origin); if (dd < bestD) { bestD = dd; best = d; } }
+  }
+  return best;
+}
+
 function buildProps() {
   // buildings, the pasture, fields, decorations, bridges and the dock: grouped by model, each group in one batch
   const byModel = {};
@@ -962,7 +1071,7 @@ if (dogEls.btn) {
 // the middle of the village. ?geese starts the view on them.
 function buildGeese() {
   if (params.get('lineup')) return;                  // (not on the line-up pages)
-  const avoid = [];
+  const avoid = [...decorAvoid()];                   // (the duck house's raft)
   if (parts.dock) {                                  // the dock out over the water: circles along it to swim round
     const box = new THREE.Box3().setFromObject(parts.dock);
     for (const p of V.props) if (p.model === 'dock') {
@@ -1216,7 +1325,8 @@ function buildFarmer() {
   const spots = () => {                                   // in front of each coop's fence (beside where Biscuit sits), the farm's corners
     const S = farmSpots(), coops = [];
     for (const p of plots) if (p.kind === 'coop' && p.frame) { const f = coopFront(p, -0.55); if (f) coops.push(f); }
-    return { coops, farm: S.farm };
+    if (!decorSpots) decorSpots = decorList.filter(d => d.model !== 'duckhouse').map(d => { const c = new THREE.Vector3(); d.box.getCenter(c); c.applyMatrix4(d.m); return nav.nearestIn(farmReach(), c.x + 1.4, c.z + 1.4, 2.5); }).filter(Boolean);
+    return { coops, farm: [...S.farm, ...decorSpots] };          // (the farmer stops by the decorations too)
   };
   farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge,
     kennel: kd ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
@@ -1312,6 +1422,7 @@ function tickPenFx(dt) {
     const s = n.size * Math.min(1, t * 6); n.sprite.scale.set(s, s, s); n.sprite.material.opacity = Math.min(1, (1 - t) * 2.5);
   }
   for (const p of plots) if (p.corn) p.corn.update(dt);
+  tickDecor(dt);
 }
 // the buttons after tapping a hen (by day, the farmer out and about, she not laying or off to bed)
 function henTapped(b) {
@@ -2348,6 +2459,13 @@ function tapAt(x, y) {
       tagBird = null; tagSpot.set(G.seat[0], G.win[2] + 0.12, 0.44); p.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.8;
       return;
     }
+    // a decoration: its name over it
+    const dc = decorAt(ray.ray);
+    if (dc) {
+      tagBird = null; tag.textContent = DECOR_NAMES[dc.model][LANG === 'fr' ? 1 : 0]; tag.classList.add('on'); fieldTag = 2.8;
+      dc.box.getCenter(tagSpot); tagSpot.y = dc.box.max.y + 0.1; tagSpot.applyMatrix4(dc.m);
+      return;
+    }
     // the wheat field: show its next growing stage
     const g = new THREE.Vector3();
     if (wheatField.inverse && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), g)) {
@@ -2809,7 +2927,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
+  decor: () => decorList, sails: () => sails, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,

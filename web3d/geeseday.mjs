@@ -7,7 +7,7 @@ const [mins = '6', hour = '10'] = process.argv.slice(2);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1 });
 const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if ((m.type() === 'warning' || m.type() === 'error') && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&geese&time=${hour}`);
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=3&geese&time=${hour}${process.env.EXTRA || ""}`);
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 const r = await p.evaluate(async (mins) => {
   const f = window.__farm, F = f.geese(), nav = f.nav(), [G, H] = F.geese, acts = {}, hacts = {};

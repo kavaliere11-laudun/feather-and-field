@@ -1210,3 +1210,25 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   cuddle, checked every tenth of a second (into a pen only by its gate, inside only on the yard's free ground, never in
   the feeder, the water or the hay; no bird ever inside him; every grain pecked up; the hen settles; the pen as it was).
   `farmerfilm.mjs` takes `pen-6-fill-1`, `pen-4-cuddle-2`, `tap-6-1`, `look-6`, `zoom-1.5` in its `PLAN`.
+
+## The decorations, step 1: on the farm (24 Oct, Audrey chose "The decorations (Recommended)")
+
+- The eight the 2D game sells ("Decorate your farm"), from its own Blender script (`decor_sprites.py`), so they're the same
+  shapes and colours as on the farm map: the cottage flower bed, the bird bath (a blue tit on the rim), the beehives
+  (three white hives, lavender), the duck house on its raft, the greenhouse (white frames, glass, tomatoes inside), the
+  windmill (its sails turning in the wind, one turn in about 14 s), the bandstand and the golden cockerel on his plinth.
+  `stylized/export_decor.py` builds them unturned (the 2D script turns them for its camera) and writes `decor.glb`
+  (glass as its own see-through material) and `decor.json` (the windmill's hub, each one's footprint).
+- `main.js placeDecor`: each starts where the 2D game puts it (the flower bed by the farmhouse, the bird bath between it
+  and the vegetable patch, the beehives and the windmill by the wheat field, the greenhouse next to the sunflowers, the
+  golden cockerel on the green north of the pond, the bandstand south of it), on the nearest open grass that fits it
+  (never on a path, a plot, the pond, a stream, under a tree or bush, on the wheat field or another prop; round ones
+  by their circle), turned to face the player; the duck house floats on the pond at the end away from the dock. They
+  join the village's props: drawn in its batches, and on the village grid, so the farmer, Biscuit, the geese and Rusty
+  walk round them; the geese, the ducks and the frogs swim round the duck house's raft. The farmer stops by them on his
+  rounds. Tap one: its name, in English or French. In the game they're bought, and can be moved (step 4).
+- The geese and ducks on the grass never step from free ground into anything either (as the farmer: straight on, or
+  sliding along it, or a moment's wait; into the water by their ways as before): with the decorations in, a goose now
+  and then brushed a bush's edge for a few seconds (the old "occasional geeseday blocked cell").
+- `decortest.mjs` (`LANG=fr`): all eight placed, turned to the player, on the village grid, the sails turning, a real
+  tap on each and its name. `decorshot.mjs`: a picture of each where it stands.
