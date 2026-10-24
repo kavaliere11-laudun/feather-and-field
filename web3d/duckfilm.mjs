@@ -12,7 +12,7 @@ await p.addStyleTag({ content: '#hint, #readout, .top, #replaybtn { display: non
 await p.evaluate(([h, skip, night]) => { const f = window.__farm; f.pause(true); f.setHour(h); for (let i = 0; i < skip; i++) f.step(1 / 30, 30); if (night) f.setHour(night); }, [+hour, +(process.env.SKIP || 1), +(process.env.NIGHT || 0)]);
 const log = [];
 for (let i = 0; i < +secs * +fps; i++) {
-  const s = await p.evaluate(([dt, who, size, t, plan]) => {
+  const s = await p.evaluate(([dt, who, size, t, plan, start]) => {
     const f = window.__farm, D = f.ducks();
     window.__done = window.__done || {};
     for (const [at, what] of plan) if (t >= at && !window.__done[at]) {
@@ -26,11 +26,11 @@ for (let i = 0; i < +secs * +fps; i++) {
     const ds = who < 0 ? D.ducks.filter(d => d.root.visible) : [D.ducks[who]], SX = d => (d.pos.x - d.pos.z) / Math.SQRT2, SY = d => (d.pos.x + d.pos.z) / Math.SQRT2 * 0.669;
     const x0 = Math.min(...ds.map(SX)), x1 = Math.max(...ds.map(SX)), y0 = Math.min(...ds.map(SY)), y1 = Math.max(...ds.map(SY));
     const sx = (x0 + x1) / 2, sy = (y0 + y1) / 2 / 0.669, cx = (sx + sy) / Math.SQRT2, cz = (sy - sx) / Math.SQRT2;
-    const want = Math.max(size, (x1 - x0) / 2 * 874 / 402 + 0.45, (y1 - y0) / 2 + 0.45);
-    window.__c = window.__c || [cx, cz, want]; const k = Math.min(1, 1.2 * dt); window.__c[0] += (cx - window.__c[0]) * k; window.__c[1] += (cz - window.__c[1]) * k; window.__c[2] += (Math.min(2.4, want) - window.__c[2]) * k * 0.7;
-    f.lookAt(window.__c[0], window.__c[1], window.__c[2]); f.draw();
+    const want = ds.length < 2 ? size : Math.max(size, ((x1 - x0) / 2 + 0.32) * 874 / 402, (y1 - y0) / 2 + 0.45);          // (the view's half height: the screen is 402 wide, 874 high)
+    window.__c = window.__c || [cx, cz, want]; const k = Math.min(1, 2.5 * dt); window.__c[0] += (cx - window.__c[0]) * k; window.__c[1] += (cz - window.__c[1]) * k; window.__c[2] += (Math.min(2.4, want) - window.__c[2]) * (want > window.__c[2] ? k : k * 0.4);      // (out quickly, in gently)
+    f.lookAt(window.__c[0], window.__c[1], window.__c[2]); if (t >= start) f.draw();          // (no drawing before the pictures start: it piles up)
     return D.plan + ' ' + D.ducks.map(d => (d.task ? d.task.name : '-') + '/' + d.act).join(' ');
-  }, [1 / +fps, +who, +size, i / +fps, (process.env.PLAN || '').split(',').filter(Boolean).map(x => { const [a, w] = x.split(':'); return [+a, w]; })]);
+  }, [1 / +fps, +who, +size, i / +fps, (process.env.PLAN || '').split(',').filter(Boolean).map(x => { const [a, w] = x.split(':'); return [+a, w]; }), +(process.env.START || 0)]);
   log.push(s);
   if (i / +fps >= +(process.env.START || 0)) await p.screenshot({ path: `${out}_${String(i).padStart(4, '0')}.png`, timeout: 120000 });
 }

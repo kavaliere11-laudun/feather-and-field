@@ -92,8 +92,8 @@ const DK = {
   // up-ending for secs: a ring as she goes under and another as she comes up
   upend: (secs) => ({ name: 'upend', act: 'upend', t: 0, run(g, dt) {
     const was = this.t; this.t += dt;
-    if (was < 0.35 && this.t >= 0.35) g.flock.ring(g.pos.x, g.pos.z, 0.34);
-    if (was < secs - 0.55 && this.t >= secs - 0.55) g.flock.ring(g.pos.x, g.pos.z, 0.4);
+    if (was < 0.35 && this.t >= 0.35) g.flock.ring(g.pos.x, g.pos.z, 0.26);
+    if (was < secs - 0.55 && this.t >= secs - 0.55) g.flock.ring(g.pos.x, g.pos.z, 0.3);
     DACT.upend(g, this.t, secs); return this.t >= secs;
   } }),
   // a splashy bath for secs: a splash each time the wings fling the water
@@ -442,7 +442,7 @@ export class DuckFlock extends PondBirds {
   }
   onTap(d) { this.say(d); if (d.task && /^(upend|bath)/.test(d.task.name)) d.task = null; }
   // ---- the water's answers: rings, splashes (the frogs' pond draws them), wakes; and the "Quack!"
-  ring(x, z, size, bright = 0.3) { this.rings.add(x, z, 0, size * 0.25, size, 1.6, bright); }
+  ring(x, z, size, bright = 0.16) { this.rings.add(x, z, 0, size * 0.25, size, 1.6, bright); }
   splash(x, z, k) { const F = this.o.fx && this.o.fx(); if (F && F.splash) F.splash(x, z, k, true); else this.ring(x, z, 0.5 * k); }
   say(d) {
     let b = this.bubbles.find(q => q.life <= 0);
@@ -519,13 +519,13 @@ export class DuckFlock extends PondBirds {
     const light = this.o.light ? this.o.light() : 1;
     for (const d of this.ducks) {
       d.shadow.position.set(d.pos.x, d.pos.y + 0.013, d.pos.z); d.shadow.rotation.y = d.heading; d.shadow.visible = d.wet < 0.3 && this.group.visible;
-      if (d.wet > 0.6 && d.vs < 0.03 && (d.ringIn = (d.ringIn === undefined ? 1 + this.r() * 3 : d.ringIn) - dt) <= 0) { d.ringIn = 3 + this.r() * 3; if (!d.asleep || this.r() < 0.3) this.ring(d.pos.x, d.pos.z, 0.3, 0.16); }
+      if (d.wet > 0.6 && d.vs < 0.03 && (d.ringIn = (d.ringIn === undefined ? 1 + this.r() * 3 : d.ringIn) - dt) <= 0) { d.ringIn = 3 + this.r() * 3; if ((!d.asleep || this.r() < 0.3) && (d.A.upend || 0) < 0.2) this.ring(d.pos.x, d.pos.z, 0.24, 0.07); }
     }
     this.wakes.update(dt, this.ducks, light); this.rings.update(dt, light);
     for (const b of this.bubbles) {
       if (b.life <= 0) continue; b.life -= dt; if (b.life <= 0 || !this.group.visible) { b.life = 0; b.sp.visible = false; continue; }
-      const u = 1 - b.life / b.full, s = 0.24 * Math.min(1, u * 6);
-      b.sp.scale.set(s, s * 112 / 256, 1); b.sp.position.set(b.d.pos.x, b.d.pos.y + b.d.rig.by + 0.22 + u * 0.03, b.d.pos.z); b.sp.material.opacity = Math.min(1, b.life * 3);
+      const u = 1 - b.life / b.full, s = 0.36 * Math.min(1, u * 6);
+      b.sp.scale.set(s, s * 112 / 256, 1); b.sp.position.set(b.d.pos.x, b.d.pos.y + b.d.rig.by + 0.27 + u * 0.03, b.d.pos.z); b.sp.material.opacity = Math.min(1, b.life * 3);
     }
   }
   centre(v) { const n = this.ducks.length; return v.set(this.ducks.reduce((a, d) => a + d.pos.x, 0) / n, 0, this.ducks.reduce((a, d) => a + d.pos.z, 0) / n); }

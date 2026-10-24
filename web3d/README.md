@@ -1076,8 +1076,8 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   boat-shaped body, a short neck, a round head and a broad flat bill (yellow for him, orange with a dark saddle for her),
   orange webbed feet. The drake: bottle-green head with a sheen, a narrow white collar, chestnut breast, pale grey flanks,
   grey-brown back, black rump with the two black curled feathers over a white tail. The duck: warm brown, each feather
-  dark brown in the middle with a tan edge, paler underneath, a buff head with a dark crown and a dark line through the
-  eye. Both with the blue patch on the wing (the speculum). Their feathers are drawn smaller (x0.62) and their fluff
+  dark brown in the middle with a tan edge, paler underneath, pale outer tail feathers (so her tail shows when she
+  up-ends), a buff head with a dark crown and a dark line through the eye. Both with the blue patch on the wing (the speculum). Their feathers are drawn smaller (x0.62) and their fluff
   shorter (`DUCK_FUR`).
 - Up-ending (`upend` in the rig's pose, 0..1): tipped forward (1.2 rad), sunk so only the back end shows, the tail cocked
   up, the feet kicking at the surface either side, bobbing a little (`window.__UP` overrides the numbers for tuning).

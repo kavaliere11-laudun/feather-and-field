@@ -177,7 +177,7 @@ def bake(name, root, budget):
             if paint == PAINT['tail']:
                 if '_curl' in nmn: c = c * 0 + C['black']; fmode[:] = 5; fpat[:, :3] = 1.0; fpat[:, 3] = 0.15
                 elif name == 'mallard_m': c = c * 0 + C['tailw']; fpat[:, :3] = C['grey'] * 0.7; fpat[:, 3] = 0.5; fmode[:] = 2
-                else: c = c * 0 + C['buff']; fpat[:, :3] = C['brown']; fpat[:, 3] = 0.6; fmode[:] = 2
+                else: c = c * 0 + (C['buff'] * 0.45 + np.array([0.93, 0.9, 0.84], np.float32) * 0.55); fpat[:, :3] = C['brown']; fpat[:, 3] = 0.45; fmode[:] = 2      # (pale outer tail feathers)
             rnd = np.sin(x * 61.0 + y * 37.0) * np.sin(z * 53.0 - x * 29.0) * np.sin(y * 71.0 + z * 17.0)
             c = c * (1.0 + 0.035 * rnd[:, None])
         elif mode == 'goose':

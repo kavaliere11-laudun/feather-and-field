@@ -13,7 +13,7 @@ await p.evaluate(([s]) => { const f = window.__farm; f.pause(true); f.setHour(14
 let n = 0;
 for (const v of vars) for (const w of who) {
   await p.evaluate(([v, w, size, extra]) => {
-    const f = window.__farm; window.__UP = v; f.step(1 / 30, extra || 1); f.view.size = size;
+    const f = window.__farm; window.__UP = v; if (v.head !== undefined) f.geeseLineup().ducks[w].heading = v.head; f.step(1 / 30, extra || 1); f.view.size = size;
     const L = f.geeseLineup(), d = L.ducks[w], q = d.root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(q.x, q.z); f.draw();
   }, [v, w, +(process.env.SIZE || 0.26), +(process.env.EXTRA || 1)]);
   await p.screenshot({ path: `${out}/${String(n++).padStart(2, '0')}.png`, clip: { x: 0, y: 187, width: 402, height: 500 }, timeout: 120000 });
