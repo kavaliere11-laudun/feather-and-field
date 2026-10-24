@@ -3,9 +3,10 @@
 // or under the dock, never through anything on the bank, never through each other or a goose, never stuck; the followers
 // keeping up with Rocco; all they do happens (dabbling, up-ending, preening, quacking with "Quack!", a bath with splashes,
 // a stretch, Dot's curious looks at the frogs). A rest on the bank: all three ashore side by side, up and back into the
-// water together; a goose coming close while they rest: all back into the water, quacking. Dusk: out to their raft in the
-// middle and asleep afloat, staying there; morning: awake, a stretch and a quack, off again. A tap on a duck (a real tap
-// on the screen): her label and "Quack!". No page errors.
+// water together; a goose coming close while they rest: all back into the water, quacking. Dusk: with the duck house on
+// the pond, up its ramp and in at the door one by one, asleep inside and staying there; morning: out again and down into
+// the water, awake and off (without it: out to their raft in the middle, asleep afloat). A tap on a duck (a real tap on
+// the screen): her label and "Quack!". No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const mins = +(process.argv[2] || 12), fr = process.env.LANG === 'fr';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -84,15 +85,20 @@ const rest2 = await p.evaluate(() => {
 // ---- dusk, the night, the morning
 const night = await p.evaluate(() => {
   const f = window.__farm, D = f.ducks(), out = {};
-  f.setHour(21.4); window.__run(90);
-  out.asleep = D.ducks.map(d => !!d.asleep); out.atRaft = D.ducks.map((d, i) => +Math.hypot(d.pos.x - D.raft[i][0], d.pos.z - D.raft[i][1]).toFixed(2));
+  out.house = !!D.house;
+  f.setHour(21.4);
+  if (D.house) { for (let k = 0; k < 40 && !D.ducks.every(d => d.inside); k++) window.__run(5); out.inTime = window.__S.n; }
+  else window.__run(90);
+  out.asleep = D.ducks.map(d => !!d.asleep); out.atRaft = D.house ? null : D.ducks.map((d, i) => +Math.hypot(d.pos.x - D.raft[i][0], d.pos.z - D.raft[i][1]).toFixed(2));
+  out.inside = D.ducks.map(d => !!d.inside && !d.root.visible);
   const at = D.ducks.map(d => [d.pos.x, d.pos.z]);
   window.__run(120);
   out.stayed = Math.max(...D.ducks.map((d, i) => Math.hypot(d.pos.x - at[i][0], d.pos.z - at[i][1])));
-  out.stillAsleep = D.ducks.every(d => d.asleep);
+  out.stillAsleep = D.ducks.every(d => d.asleep); out.stillInside = D.ducks.every(d => d.inside);
   f.setHour(6.5); window.__run(25);
   out.morning = D.ducks.map(d => !d.asleep); out.plan = D.plan;
   window.__run(20); out.plan2 = D.plan;
+  out.out = D.ducks.map(d => !d.inside && d.root.visible); out.wet = D.ducks.map(d => +d.wet.toFixed(2));
   f.setHour(14);
   return out;
 });
@@ -127,8 +133,9 @@ const checks = [
   ['a rest: all three ashore side by side', rest.ashore && rest.apart > 0.22, rest],
   ['a goose close while they rest: all back in the water, quacking', rest.scrambled !== null && rest.scrambled < 20 && rest.quacked > 0, [rest.scrambled, rest.quacked]],
   ['the rest over: back into the water together', rest2.back && rest2.back.length === 3 && rest2.spread < 12, rest2],
-  ['dusk: asleep on their raft in the middle, and staying there', night.asleep.every(Boolean) && night.atRaft.every(x => x < 0.3) && night.stayed < 0.4 && night.stillAsleep, night],
-  ['morning: awake and off again', night.morning.every(Boolean) && !/^(night|morning)$/.test(night.plan2), night],
+  night.house ? ['dusk: up the ramp and into their house one by one, asleep inside and staying there', night.inside.every(Boolean) && night.asleep.every(Boolean) && night.stillInside && night.stillAsleep && night.stayed < 0.01, night]
+    : ['dusk: asleep on their raft in the middle, and staying there', night.asleep.every(Boolean) && night.atRaft.every(x => x < 0.3) && night.stayed < 0.4 && night.stillAsleep, night],
+  ['morning: awake, out and off again' + (night.house ? ' (down into the water)' : ''), night.morning.every(Boolean) && !/^(night|morning)$/.test(night.plan2) && (!night.house || (night.out.every(Boolean) && night.wet.every(w => w > 0.5))), night],
   ['a tap: she quacks, "Quack!", her label', !!tapped && tapped.react && tapped.said && tapped.tag === pick.name + ' · ' + breed, [pick, tapped]],
 ];
 let all = true;

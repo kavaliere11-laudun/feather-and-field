@@ -1221,7 +1221,9 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   (glass as its own see-through material) and `decor.json` (the windmill's hub, each one's footprint).
 - `main.js placeDecor`: each starts where the 2D game puts it (the flower bed by the farmhouse, the bird bath between it
   and the vegetable patch, the beehives and the windmill by the wheat field, the greenhouse next to the sunflowers, the
-  golden cockerel on the green north of the pond, the bandstand south of it), on the nearest open grass that fits it
+  golden cockerel and the bandstand on the green either side of the pond: the 2D game has the cockerel north and the
+  bandstand south, but from here the tall bandstand in front would hide the pond, so the cockerel stands in front and
+  the bandstand behind), on the nearest open grass that fits it
   (never on a path, a plot, the pond, a stream, under a tree or bush, on the wheat field or another prop; round ones
   by their circle), turned to face the player; the duck house floats on the pond at the end away from the dock. They
   join the village's props: drawn in its batches, and on the village grid, so the farmer, Biscuit, the geese and Rusty
@@ -1232,3 +1234,38 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   and then brushed a bush's edge for a few seconds (the old "occasional geeseday blocked cell").
 - `decortest.mjs` (`LANG=fr`): all eight placed, turned to the player, on the village grid, the sails turning, a real
   tap on each and its name. `decorshot.mjs`: a picture of each where it stands.
+
+## The decorations, step 2: life round them (24 Oct, Audrey chose "Life round them (Recommended)")
+
+- The ducks use their house (`ducks.js setHouse`, given the duck house's frame by `main.js`): on its raft and up its
+  ramp they walk, dry (the deck at its own height, the ramp sloping down into the water, wet again at its foot). At dusk
+  they swim over and wait their turn by the foot of the ramp; one at a time (Dot, then Daisy, then Rocco) up the ramp,
+  across the deck to the door and in, to sleep inside (hidden, no shadow). In the morning out again one at a time
+  (Rocco first), down the ramp into the water, a stretch and a quack, and off; one still on her way in when morning
+  comes just stretches and quacks where she is. Without the duck house (`?nodecor`) they sleep afloat in the middle as
+  before.
+- `decorlife.js` (`DecorLife`, from `main.js buildDecor`, ticked with the sails; `?nolife` leaves it out): each
+  decoration's life in its own frame, drawn a little bigger than life so it shows from the game's camera, with the night
+  colours:
+  - the beehives: 14 bees out of the hives' slots to the lavender in front, a hover at a flower or two, back in (or into
+    another hive), on curving flights; striped bodies, wings a blur;
+  - the cottage flower bed: four butterflies (white, yellow, orange, blue) fluttering from flower to flower, settling
+    with the wings slowly opening and closing, now and then a little wander out and back;
+  - the bird bath (its own blue tit sits on the rim): a robin and a chaffinch drop in by turns, mostly on the far side of
+    the rim facing you, a look round and a sip, a hop into the water for a splashy bath (drops flying), back on the rim
+    for a shake of the feathers, and off; back every 6-18 s;
+  - the golden cockerel: a sparkle of sun on him every 2-5 s;
+  - the bandstand: music notes (purple, blue, green, navy, edged in cream) floating up over its roof of an evening
+    (17:30-21:30), and a little tune (4.5 s of notes) when it's tapped, with its name.
+  The bees, butterflies and birds are out by day only (6:30-20:00): the bees go home, the birds fly off. No sounds yet
+  (they come with the game's sounds).
+- `decortest.mjs` (`LANG=fr`) now also checks the life: by day the bees out and back and never far from the hives and
+  lavender, four butterflies never far from the bed, the robin and the chaffinch each having a bath, the cockerel
+  glinting, no music by day until a real tap on the bandstand and then a tune, music of an evening, and at night the
+  bees in, no butterflies, birds, glints or music. `ducktest.mjs`: with the house, all three in by dusk and staying in,
+  out in the morning and back in the water. `lifefilm.mjs`: the film of it all.
+- Found on the way: a duck whose way to the house was blocked both straight and by the pond's middle swam into the dock
+  and stuck there (and was then put on along her way, into the house from metres off): the ducks' `swimVia` now goes
+  round by the shortest way through points round the pond (`route`), and a duck stuck on her way home gets a new way.
+  And a hen who jumps in or out at the nest window waits while the farmer is in the pen near her take-off spot
+  (pentest saw one leap past him at two coops).

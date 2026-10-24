@@ -26,6 +26,7 @@ import { DuckFlock } from './ducks.js';
 import { initFarmer, FarmerLineup, FARMER_NAME } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
+import { DecorLife } from './decorlife.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -666,7 +667,9 @@ function placeDecor(info) {
   const WANT = [
     ['flowers', house ? at(house, 3.2, -1.2) : [0, 0]], ['birdbath', house && veg ? [(house.pos[0] + veg.pos[0]) / 2 + 0.5, (house.pos[2] + veg.pos[2]) / 2 + 0.5] : [0, 0]],
     ['beehives', wheat ? at(wheat, 3.2, 3.2) : [0, 0]], ['greenhouse', sun ? at(sun, 3.0, 3.0) : [0, 0]],
-    ['windmill', wheat ? at(wheat, -4.5, 1.5) : [0, 0]], ['bandstand', [P.center[0] + 5.2, P.center[2] + 5.2]], ['statue', [P.center[0] - 5.0, P.center[2] - 5.0]],
+    // (the 2D game has the bandstand south of the pond and the cockerel north; seen from here the tall bandstand in front
+    // would hide the pond, so they swap: the bandstand behind it, the cockerel in front)
+    ['windmill', wheat ? at(wheat, -4.5, 1.5) : [0, 0]], ['statue', [P.center[0] + 4.6, P.center[2] + 4.6]], ['bandstand', [P.center[0] - 5.2, P.center[2] - 5.2]],
   ];
   // what's in the way: the paths, the plots, the pond and the streams, trees, bushes and rocks, the other props, the kennel
   const seg = (px, pz, a, b) => { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
@@ -709,7 +712,7 @@ function placeDecor(info) {
   for (const [name, [ax, az]] of WANT) {
     if (!parts[name] || !info.foot[name]) continue;
     let spot = null;
-    for (let r = 0; r <= (name === 'bandstand' ? 16 : 9) && !spot; r += 0.35) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n && !spot; k++) {
+    for (let r = 0; r <= (name === 'bandstand' || name === 'statue' ? 16 : 9) && !spot; r += 0.35) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n && !spot; k++) {
       const a = k / n * Math.PI * 2 + r, x = ax + Math.cos(a) * r, z = az + Math.sin(a) * r;
       if (fits(name, x, z)) spot = [x, z];
     }
@@ -728,8 +731,9 @@ function decorAvoid() {
   for (const d of decorList) if (d.model === 'duckhouse') { const c = new THREE.Vector3(); d.box.getCenter(c).applyMatrix4(d.m); out.push([c.x, c.z, 0.85]); }
   return out;
 }
-// the windmill's sails, turning slowly in the wind (one turn in about 14 s)
-let sails = null;
+// the windmill's sails, turning slowly in the wind (one turn in about 14 s); the life round them (decorlife.js: bees,
+// butterflies, birds at the bath, the cockerel's glints, the bandstand's music)
+let sails = null, decorLife = null;
 function buildDecor() {
   for (const d of decorList) for (const m of meshesOf(parts[d.model])) if (m.material && m.material.name === 'glass') { m.material.transparent = true; m.material.opacity = 0.34; m.material.depthWrite = false; m.material.needsUpdate = true; }
   const w = decorList.find(d => d.model === 'windmill');
@@ -739,8 +743,12 @@ function buildDecor() {
     s.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     scene.add(sails);
   }
+  if (decorList.length && !params.has('nolife')) decorLife = new DecorLife(scene, decorList, { grade: nightGrade, hour: () => DAY.hour, toCam: VIEW_DIR }, rng(91));
 }
-function tickDecor(dt) { if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31)); }
+function tickDecor(dt) {
+  if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
+  if (decorLife) decorLife.update(dt);
+}
 // a tap on one: its name over it
 function decorAt(ray) {
   const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hit = new THREE.Vector3();
@@ -1099,7 +1107,10 @@ function buildGeese() {
     return out;
   }, heard: (x, z) => { if (duckFlock) duckFlock.heard(x, z); } }, rng(81));
   // the pond's mallards (ducks.js): Rocco, Daisy and Dot; they keep clear of the geese, Biscuit and Rusty
-  duckFlock = new DuckFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, lang: LANG, geeseBed: geeseFlock.bed, fx: () => frogPond,
+  // their house, if it's on the pond (a decoration): its own frame, to and from the world
+  const dh = decorList.find(d => d.model === 'duckhouse'), hv = new THREE.Vector3(), hinv = dh ? dh.m.clone().invert() : null;
+  const house = dh ? { local: (x, z) => { hv.set(x, 0, z).applyMatrix4(hinv); return [hv.x, hv.z]; }, world: (lx, lz) => { hv.set(lx, 0, lz).applyMatrix4(dh.m); return [hv.x, hv.z]; } } : null;
+  duckFlock = new DuckFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, lang: LANG, geeseBed: geeseFlock.bed, fx: () => frogPond, house,
     light: () => 0.35 + 0.65 * WATER_DAY.value,
     others: () => [...geeseFlock.geese, ...(farmDog && farmDog.group.visible ? [farmDog.dog] : []), ...(nightVisit && nightVisit.fox.root.visible ? [nightVisit.fox] : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])] }, rng(91));
 }
@@ -1977,6 +1988,8 @@ class Bird {
     // standing there her head is still inside), and only moves forward onto the seat as she sits down (her face at the
     // window); getting up she backs off it again
     const hall = [G.seat[0] - 0.3, D2 - 0.24], pre = [G.seat[0] - 0.2, D2 - 0.26], stand = [G.seat[0], D2 - 0.3];
+    // the farmer in the pen near where a jumper takes off or lands: she waits for him to move on before she leaps
+    const farmerBy = () => { const F = this.plot.farmer; return F && Math.hypot(F.x - launch[0], F.z - launch[1]) < 0.6; };
     const onNest = () => {                                 // forward onto the seat only once she's most of the way down
       const s = this.A.sit, k = smooth01((s - 0.35) / 0.65);
       p.x = G.seat[0]; p.z = stand[1] + (G.seat[1] - stand[1]) * k; p.y = NF + 0.02 + (seatY - NF - 0.02) * s;
@@ -1999,7 +2012,7 @@ class Bird {
       }
       case 'aim': {                                          // a jumper: faces the window, sizes it up...
         const t = this.turnTo(Math.PI, dt * 1.2); o.walking = t.walking;
-        if (t.done && L.t > 0.5) { next('leapin'); L.inside = true; L.to = new THREE.Vector3(G.seat[0], NF + 0.025, D2 - 0.4); }
+        if (t.done && L.t > 0.5 && !farmerBy()) { next('leapin'); L.inside = true; L.to = new THREE.Vector3(G.seat[0], NF + 0.025, D2 - 0.4); }
         break;
       }
       case 'leapin':                                         // ...and jumps straight in at the window, wings beating
@@ -2054,6 +2067,7 @@ class Bird {
       case 'rise': {                                         // she stands, backing off the seat: the new egg is in the straw
         const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot); onNest();
         if (L.t > 1.0) {
+          if (L.jump && farmerBy()) break;
           if (L.jump) { next('leapout'); L.to = new THREE.Vector3(G.seat[0], ground, D2 + 0.51); L.hh = undefined; break; }
           next('unseat');
         }
@@ -2463,6 +2477,7 @@ function tapAt(x, y) {
     const dc = decorAt(ray.ray);
     if (dc) {
       tagBird = null; tag.textContent = DECOR_NAMES[dc.model][LANG === 'fr' ? 1 : 0]; tag.classList.add('on'); fieldTag = 2.8;
+      if (dc.model === 'bandstand' && decorLife) decorLife.play();          // (and a little tune)
       dc.box.getCenter(tagSpot); tagSpot.y = dc.box.max.y + 0.1; tagSpot.applyMatrix4(dc.m);
       return;
     }
@@ -2927,7 +2942,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
-  decor: () => decorList, sails: () => sails, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
+  decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,

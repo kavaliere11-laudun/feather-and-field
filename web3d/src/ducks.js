@@ -197,6 +197,7 @@ export class DuckFlock extends PondBirds {
     Da.after = Ro; Do.after = Da;
     Ro.chat = 0.5; Da.chat = 1.6; Do.chat = 0.9;                       // (Daisy the chatterbox)
     Ro.curious = 0.15; Da.curious = 0.3; Do.curious = 1;               // (Dot the curious one)
+    if (opts.house) this.setHouse(opts.house);
     this.regions(); this.waysIn(); this.places();
     this.near = this.ducks; this.plan = null; this.placed = false; this.restedAt = -60;
     this.wakes = new Wakes(this.group, this.ducks.length);
@@ -204,6 +205,63 @@ export class DuckFlock extends PondBirds {
     this.bubbleTex = bubbleTexture(QUACK[this.lang], '#24508f'); this.bubbles = [];
   }
   night(h) { return h >= 21.25 || h < 6.35; }
+  // ---- their house (the duck house on the pond, bought in the game; main.js says where): house.local(x, z) gives a
+  // point in its own frame (its door towards +z, the raft round it, the ramp down into the water at the front),
+  // house.world(lx, lz) back. On its raft and up its ramp they walk, dry; at dusk they go in one by one (Dot, Daisy, then
+  // Rocco) and sleep inside; in the morning out again (Rocco first) and down into the water
+  setHouse(H) {
+    this.house = H;
+    const w0 = this.wetAt.bind(this), g0 = this.groundY;
+    this.onHouse = (x, z) => {
+      const [lx, lz] = H.local(x, z);
+      if (Math.abs(lx) <= 0.47 && lz >= -0.43 && lz <= 0.425) return { y: 0.075, wet: 0 };          // (the raft's deck)
+      if (Math.abs(lx) <= 0.14 && lz > 0.425 && lz <= 0.92) return { y: 0.075 - (lz - 0.425) / 0.44 * 0.12, wet: smooth(0.66, 0.88, lz) };      // (the ramp)
+      return null;
+    };
+    this.wetAt = (x, z) => { const q = this.onHouse(x, z); return q ? q.wet : w0(x, z); };
+    this.groundY = (x, z) => { const q = this.onHouse(x, z); return q ? q.y * (1 - q.wet) : (g0 ? g0(x, z) : 0); };
+    const W = (lx, lz) => H.world(lx, lz);
+    H.foot = W(0, 1.16); H.bottom = W(0, 0.86); H.top = W(0, 0.4); H.door = W(0, 0.2); H.inside = W(0, 0.05);
+    H.into = Math.atan2(H.door[0] - H.top[0], H.door[1] - H.top[1]);      // (facing the door)
+    H.waits = [[0, 1.2], [-0.5, 1.45], [0.5, 1.45]].map(([lx, lz]) => W(lx, lz));
+  }
+  // in at the door: out of sight, asleep
+  inHouse(d) { d.root.visible = false; d.shadow.visible = false; d.asleep = true; d.inside = true; d.pos.set(this.house.inside[0], 0, this.house.inside[1]); d.heading = this.house.into; }
+  outHouse(d) { d.root.visible = true; d.shadow.visible = true; d.inside = false; d.pos.set(this.house.inside[0], 0, this.house.inside[1]); d.heading = this.house.into + Math.PI; d.lastPos = d.pos.clone(); }
+  goHouse() {
+    this.plan = 'night'; this.houseNext = 2;
+    this.ducks.forEach(d => { d.task = this.homeTask(d); });
+  }
+  // one duck's way home: (into the water if she's on the bank) over to her place by the foot of the ramp (round the dock if
+  // need be), facing it, waiting her turn; then to the foot, up the ramp, across to the door and in
+  homeTask(d) {
+    const H = this.house, order = [2, 1, 0], i = d.idx, k = order.indexOf(i), w = H.waits[k], L = [];
+    if (this.dry(d) && !this.onHouse(d.pos.x, d.pos.z)) { const way = this.intoWater(d, L); this.swimVia(L, way.inn, w, 'walk', 0.1); }
+    else this.swimVia(L, [d.pos.x, d.pos.z], w, 'walk', 0.1);
+    L.push(DK.face(Math.atan2(H.foot[0] - w[0], H.foot[1] - w[1])), DK.until('float', () => this.houseNext === i, 240));
+    const climb = L.length;
+    if (k > 0) L.push(DK.swim(H.foot[0], H.foot[1], 'walk', 0.08, false));
+    L.push(DK.straight(H.bottom[0], H.bottom[1], 'walk', true, 0.08), DK.straight(H.top[0], H.top[1], 'walk', true, 0.08), DK.face(H.into), DK.straight(H.door[0], H.door[1], 'walk', false, 0.05),
+      () => { this.inHouse(d); this.houseNext = order[k + 1] ?? -1; return DK.act('sleep', 1e9); });
+    const T = DK.seq('home', L); T.climb = climb; return T;
+  }
+  // the morning: out one after another, down the ramp, a stretch on the water and a quack
+  outOfHouse() {
+    const H = this.house, order = [0, 1, 2];
+    this.plan = 'morning';
+    this.ducks.forEach((d, i) => {
+      const k = order.indexOf(i);
+      let away = H.world((this.r() - 0.5) * 0.8, 1.8 + this.r() * 0.5);          // (out in front of the ramp, clear of the house)
+      if (this.wetAt(away[0], away[1]) < 0.95 || !this.clearWater(away[0], away[1], 0.2)) away = H.world(0, 1.6);
+      if (!d.inside) {                                   // (not in yet, still on her way: a stretch and a quack where she is)
+        d.asleep = false; d.task = DK.seq('morning', [DK.act('stretch', 3.4), DK.quack(2), DK.act('float', 1 + this.r() * 2)]);
+        return;
+      }
+      d.task = DK.seq('morning', [DK.act('sleep', 0.3 + k * 2.2 + this.r() * 0.5), () => { this.outHouse(d); d.asleep = false; return null; },
+        DK.straight(H.top[0], H.top[1], 'walk', true, 0.08), DK.straight(H.bottom[0], H.bottom[1], 'walk', true, 0.08), DK.swim(H.foot[0], H.foot[1], 'walk', 0.1),
+        DK.swim(away[0], away[1], 'walk', 0.2), DK.act('stretch', 3.4), DK.quack(2 + (i === 1 ? 1 : 0)), DK.act('float', 1.5 + this.r() * 2)]);
+    });
+  }
   dry(d) { return this.wetAt(d.pos.x, d.pos.z) < 0.5; }
   // their places: where they rest on the bank (three spots side by side, each with its own way in), and the raft out in
   // the middle where they sleep at night
@@ -252,10 +310,49 @@ export class DuckFlock extends PondBirds {
     for (let k = 0; k < 60; k++) { const p = this.at(this.r() * Math.PI * 2, s0 + this.r() * (s1 - s0)); if (this.clearWater(p[0], p[1], 0.4)) return p; }
     return this.at(0, 0.3);
   }
-  // swimming from one place to another, round the dock if it's in the way (by the pond's middle)
+  // swimming from one place to another, round the dock if it's in the way (by the pond's middle, or if that won't do, by
+  // the shortest way round the pond)
   swimVia(L, from, to, pace = 'walk', tol = 0.3) {
-    if (!this.clearSwim(from[0], from[1], to[0], to[1])) { const m = this.at(0, 0); if (this.clearSwim(from[0], from[1], m[0], m[1])) L.push(DK.swim(m[0], m[1], pace, 0.35)); }
+    if (!this.clearSwim(from[0], from[1], to[0], to[1])) {
+      const m = this.at(0, 0);
+      if (this.clearSwim(from[0], from[1], m[0], m[1]) && this.clearSwim(m[0], m[1], to[0], to[1])) L.push(DK.swim(m[0], m[1], pace, 0.35));
+      else { const R = this.route(from, to); R.pop(); for (const q of R) L.push(DK.swim(q[0], q[1], pace, 0.35)); }
+    }
     L.push(DK.swim(to[0], to[1], pace, tol, tol > 0.2));          // (slowing to arrive where she must be just so)
+  }
+  // a way across the water round the dock and the duck house: straight if that's clear, else through points round the
+  // pond (two rings and its middle), the shortest way; its points after from, to last. (Near either end a little closer
+  // to the dock or the house is all right: that's where she is, or where she must be.)
+  route(from, to) {
+    const clear = (a, b) => {
+      const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(L / 0.15));
+      for (let k = 0; k <= n; k++) {
+        const u = k / n, x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u;
+        if (Math.min(u, 1 - u) * L < 0.35) continue;
+        if (!this.clearWater(x, z, 0.12) || this.pondAt(x, z)[0] > 0.86) return false;
+      }
+      return true;
+    };
+    if (clear(from, to)) return [to];
+    if (!this.nodes) {
+      this.nodes = [this.at(0, 0)];
+      for (const sr of [0.32, 0.62]) for (let i = 0; i < 16; i++) { const q = this.at(i / 16 * Math.PI * 2, sr); if (this.clearWater(q[0], q[1], 0.3)) this.nodes.push(q); }
+    }
+    const N = [from, to, ...this.nodes], n = N.length, dist = new Array(n).fill(Infinity), prev = new Array(n).fill(-1), done = new Array(n).fill(false);
+    dist[0] = 0;
+    for (;;) {
+      let u = -1; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+      if (u < 0 || u === 1) break;
+      done[u] = true;
+      for (let v = 1; v < n; v++) {
+        if (done[v]) continue;
+        const w = dist[u] + Math.hypot(N[v][0] - N[u][0], N[v][1] - N[u][1]);
+        if (w < dist[v] && clear(N[u], N[v])) { dist[v] = w; prev[v] = u; }
+      }
+    }
+    if (prev[1] < 0) return [to];
+    const out = []; for (let v = 1; v > 0; v = prev[v]) out.unshift(N[v]);
+    return out;
   }
   // into the water from wherever she is on the bank (by the nearest way in)
   intoWater(d, L, pace = 'walk') {
@@ -266,7 +363,10 @@ export class DuckFlock extends PondBirds {
   // put them out for the time of day: by day afloat together somewhere on the pond, at night asleep on their raft
   place(hour) {
     this.placed = true;
-    if (this.night(hour)) {
+    if (this.night(hour) && this.house) {
+      this.ducks.forEach(d => { this.inHouse(d); d.task = DK.seq('home', [DK.act('sleep', 1e9)]); });
+      this.plan = 'night'; this.houseNext = -1;
+    } else if (this.night(hour)) {
       this.ducks.forEach((d, i) => { const p = this.raft[i]; d.pos.set(p[0], 0, p[1]); d.heading = p[2]; d.asleep = true; d.task = DK.seq('night', [DK.act('sleep', 1e9)]); });
       this.plan = 'night';
     } else {
@@ -343,6 +443,7 @@ export class DuckFlock extends PondBirds {
   }
   // dusk: all out to their raft in the middle of the pond, and to sleep there, afloat
   goNight() {
+    if (this.house) return this.goHouse();
     this.plan = 'night';
     this.ducks.forEach((d, i) => {
       const p = this.raft[i], L = [];
@@ -354,6 +455,7 @@ export class DuckFlock extends PondBirds {
   }
   // morning: awake one after another, a stretch on the water and a quack, then off they go
   wakeUp() {
+    if (this.house) return this.outOfHouse();
     this.plan = 'morning';
     this.ducks.forEach((d, i) => {
       d.task = DK.seq('morning', [DK.act('sleep', 0.4 + i * 1.5 + this.r()), () => { d.asleep = false; return DK.act('stretch', 3.4); }, DK.quack(2 + (i === 1 ? 1 : 0)), DK.act('float', 1.5 + this.r() * 2)]);
@@ -437,6 +539,8 @@ export class DuckFlock extends PondBirds {
       for (const o of this.ducks) if (o.task && o.task.name === 'rest') o.task = this.dry(o) ? DK.seq('toWater', (() => { const L = []; this.intoWater(o, L); return L; })()) : null;
       return;
     }
+    if (d.task && d.task.name === 'home' && this.house && d.task.climb !== undefined && d.task.i < d.task.climb && !d.inside) { d.task = this.homeTask(d); return; }      // (on her way to the house: a new way there)
+    if (d.task && /^(home|morning)$/.test(d.task.name)) { if (d.task.list && d.task.i < d.task.list.length - 1) d.task.i++; return; }      // (going in or out of their house: on with it)
     if (d.task && d.task.list && d.task.i < d.task.list.length - 1 && !this.dry(d)) { d.task.i++; return; }      // (on to the next part of what she's doing)
     if (d.task && d.task.name !== 'night') d.task = null;
   }
@@ -456,7 +560,8 @@ export class DuckFlock extends PondBirds {
     const parts = (o) => o.isDuck ? [[0.085, 0.085], [-0.075, 0.085]] : o.isGoose ? [[0.14, 0.155], [-0.13, 0.155]] : [[0, 0.3]];
     const can = (d, x, z) => d.wet > 0.5 ? (this.wetAt(x, z) > 0.5 && this.clearWater(x, z, 0.05)) : (!this.nav || this.nav.freeAt(x, z) || !this.nav.freeAt(d.pos.x, d.pos.z) || this.wetAt(x, z) > 0.2);
     for (let pass = 0; pass < 2; pass++) for (let i = 0; i < this.ducks.length; i++) {
-      const d = this.ducks[i], list = [...this.ducks.slice(i + 1), ...others];
+      const d = this.ducks[i], list = [...this.ducks.slice(i + 1), ...others].filter(o => !o.inside);
+      if (d.inside) continue;
       for (const o of list) {
         let bx = 0, bz = 0, worst = 0;
         for (const [a, ra] of parts(d)) for (const [c, rc] of parts(o)) {
@@ -475,6 +580,7 @@ export class DuckFlock extends PondBirds {
   // swimming ducks stay in the water and off the dock (those crossing the bank on a way in or out are on their way)
   keepIn(d) {
     if (d.wet < 0.5 || (d.task && /^(rest|toWater|scramble|night)$/.test(d.task.name) && d.task.list && this.crossing(d))) return;
+    if (this.house && d.task && /^(home|morning)$/.test(d.task.name) && Math.hypot(d.pos.x - this.house.foot[0], d.pos.z - this.house.foot[1]) < 1.3) return;     // (to and from their house's ramp)
     const [s, t] = this.pondAt(d.pos.x, d.pos.z);
     if (s > 0.86) { const p = this.at(t, 0.86); d.pos.x = p[0]; d.pos.z = p[1]; }
     for (const [ax, az, r] of this.avoid) {
@@ -493,7 +599,7 @@ export class DuckFlock extends PondBirds {
     if (!night && this.plan === 'night') this.wakeUp();
     // on the bank: anyone coming close and they're off into the water
     if (this.plan === 'rest' && others.some(o => this.ducks.some(d => d.wet < 0.5 && Math.hypot(o.pos.x - d.pos.x, o.pos.z - d.pos.z) < 1.3))) this.scramble();
-    if (!Ro.task) Ro.task = this.plan === 'night' ? DK.seq('night', [DK.act('sleep', 1e9)]) : this.nextLead(Ro, hour);
+    if (!Ro.task) Ro.task = this.plan === 'night' ? DK.seq(this.house ? 'home' : 'night', [DK.act('sleep', 1e9)]) : this.nextLead(Ro, hour);
     for (const d of [Da, Do]) this.follow(d, dt);
     if (this.plan === 'morning' && this.ducks.every(d => !d.task || d.task.name !== 'morning')) this.plan = 'paddle';
     for (const d of this.ducks) { d.actT += dt; d.update(dt); }
