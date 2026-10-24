@@ -1119,3 +1119,22 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
   rest with all three ashore and back together; a goose coming close; dusk and the raft; the morning; a real tap;
   `LANG=fr`), `ducktrack.mjs OUT.json [hour] [mins]` (their tracks, for a picture from above), `duckfilm.mjs OUT [secs]
   [fps] [hour] [who] [size]` (frames keeping all three in view; `PLAN=0:far,13:tap1,17:bath`, `START`, `NIGHT`).
+
+## The farmer, step 1: the look (24 Oct, Audrey chose "The farmer (Recommended)" after the ducks)
+
+- Both looks, Arthur (`m`) and Rosie (`f`), from the 2D game's own Blender model (`stylized/character/farmer.py`), so they
+  match the game's sprites: straw hat (blue band; red ribbon and a daisy for her), checked shirt with rolled sleeves,
+  denim dungarees with brass buttons and a pocket, wellies (green; yellow for her), his short beard, her plait.
+- `stylized/export_farmer.py` builds each with every joint at rest (arms and legs straight down, hands open), each part
+  rigid on its joint (42 bones), one mesh each (about 26,000 triangles: the big round shapes simplified part by part, the
+  face's little parts kept). The face is made to move: each upper and lower eyelid is a half sphere on its own bone, turned
+  open or shut; the iris, pupil and catch-lights on an eye bone; the brows on brow bones; every mouth shape (smile, grin,
+  talk, shout, worried, frown) on its own bone, one shown at a time. Torch and pail hang on the hands, hidden until
+  wanted. The checked shirt is drawn per pixel from each point's place on its part (`_CLOTH`, as the Blender material);
+  the blush is a weight (`_BLUSH`) so it can deepen. `farmer.glb` + `farmer.json` (bones, the shirt's colours).
+- `src/farmer.js`: `FarmerRig` (posed from farmer.py's `POSES` and `FACE`, same degrees and axes), `Farmer` (eases from pose
+  to pose, a walk or run on top, blinking, looking about), `FarmerLineup`. In 3D the hat sits pushed back on the head
+  (20 degrees) so the face shows from the game's camera above, and the eyes look up a little, at the player.
+- `?lineup=farmer` (`&set=1`: looking about, waving hello, telling off, worried; `&set=2`: walking, running with the torch,
+  feeding with the pail, crouched for a cuddle; `&set=3`: their faces close, through every expression).
+  `hatshot.mjs` takes pictures of the line-up (`VARS`: per picture the hat's tilt, a face close-up, the eyes' gaze).
