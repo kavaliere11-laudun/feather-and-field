@@ -3,6 +3,12 @@
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName } from './game.js';
 
+// the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
+// of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
+// with grass to spare on every side, so it can be fitted to any screen, upright or sideways.
+const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
+export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.628, 0.79] };
+
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
 export class GameUI {
@@ -35,6 +41,12 @@ export class GameUI {
     this.coins.addEventListener('click', () => this.coinSheet());
     this.gear.addEventListener('click', () => this.settings());
     this.kind = null;
+    // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
+    if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');
+    const refit = () => this.fitHero();
+    addEventListener('resize', refit); addEventListener('orientationchange', () => setTimeout(refit, 250));
+    if (window.visualViewport) visualViewport.addEventListener('resize', refit);
+    if (window.ResizeObserver) new ResizeObserver(refit).observe(this.sheet);
   }
   t(k, v, f) { return this.g.t(k, v, f); }
   // ---- the top bar
@@ -64,13 +76,35 @@ export class GameUI {
   hero(on) {
     if (!this.heroEl) {
       this.heroEl = el('div', 'ghero');
-      const img = el('img'); img.alt = ''; img.decoding = 'async'; img.addEventListener('load', () => img.classList.add('on')); img.src = 'welcome.jpg' + (this.o.bust || '');      // (fading in once it's there)
+      const img = this.heroImg = el('img'); img.alt = ''; img.decoding = 'async';
+      img.addEventListener('load', () => { this.fitHero(); img.classList.add('on'); }); img.src = 'welcome.jpg' + (this.o.bust || '');      // (fading in once it's there)
       this.heroLogo = el('div', 'glogo'); this.heroTag = el('div', 'gtag');
       this.heroEl.append(img, this.heroLogo); this.heroLogo.after(this.heroTag);
       document.body.append(this.heroEl);
     }
     this.heroLogo.textContent = this.t('brand'); this.heroTag.textContent = this.t('tagline');
     this.heroEl.hidden = !on;
+    if (on) this.fitHero();
+  }
+  // the picture as big as it can be with all of its main part (HERO.key) in the open space: under the game's name and above
+  // the welcome sheet (upright), or beside the card (sideways); centred there, and always covering the screen behind
+  fitHero() {
+    const H = this.heroEl, img = this.heroImg;
+    if (!H || H.hidden || !img) return;
+    const W = H.clientWidth, Ht = H.clientHeight; if (!W || !Ht) return;
+    const S = this.sheet, side = !S.hidden && !!window.matchMedia && matchMedia(SIDEWAYS).matches;     // (the card on the right)
+    const top = this.heroTag.offsetTop + this.heroTag.offsetHeight + 6, left = parseFloat(getComputedStyle(H).paddingLeft) || 0;     // (clear of a notch, sideways)
+    const bottom = side || S.hidden ? Ht - 8 : S.offsetTop - 8, right = side ? S.offsetLeft - 8 : W;
+    // how far down the picture must reach: under the sheet's round corners, or to the bottom when the sheet doesn't fill the width
+    const cover = side || S.hidden || S.offsetWidth < W - 2 ? Ht : Math.min(Ht, S.offsetTop + 32);
+    const [x0, y0, x1, y1] = HERO.key, kw = (x1 - x0) * HERO.w, kh = (y1 - y0) * HERO.h;
+    let k = Math.min((right - left) / kw, Math.max(60, bottom - top) / kh, 1);    // (never bigger than it was drawn)
+    k = Math.max(k, W / HERO.w, cover / HERO.h);
+    const iw = HERO.w * k, ih = HERO.h * k;
+    let x = (left + right) / 2 - (x0 + x1) / 2 * iw, y = (top + bottom) / 2 - (y0 + y1) / 2 * ih;
+    x = Math.min(0, Math.max(W - iw, x)); y = Math.min(0, Math.max(cover - ih, y));
+    Object.assign(img.style, { width: iw + 'px', height: ih + 'px', left: x + 'px', top: y + 'px' });
+    this.heroFit = { k: +k.toFixed(4), x: Math.round(x), y: Math.round(y), side, open: [0, Math.round(top), Math.round(right), Math.round(bottom)] };
   }
   welcome() {
     return new Promise(resolve => {
@@ -107,6 +141,7 @@ export class GameUI {
         go.addEventListener('click', () => { const name = cleanName(input.value); this.sheet.classList.remove('gwelcome'); this.hero(false); this.close(); resolve({ lang: this.g.lang, look, name }); });
         input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         b.append(go);
+        this.fitHero();
       };
       draw();
     });

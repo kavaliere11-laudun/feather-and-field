@@ -2356,7 +2356,8 @@ function buildPoster(joints) {
   const prop = (name, x, z, deg = 0, s = 1) => { if (!parts[name]) return null; const m = part(name); m.position.set(x, 0, z); m.rotation.y = deg * DEG; m.scale.setScalar(s); still(m, true, true); g.add(m); set.push(m); return m; };
   prop('house_rir', -0.35, -2.75, 0); prop('round_bale', 0.6, -1.25, 75); prop('wheelbarrow', 1.75, -1.45, -35); prop('flower_pots', 0.75, -2.35, 0);
   prop('tree_apple', 2.4, -3.6, 0); prop('tree_a', -2.9, -3.8, 40); prop('bush_a', 1.7, -2.6, 0, 0.8); prop('bush_b', -2.1, -2.2, 0, 0.7);
-  for (let i = 0; i < 70; i++) { const a = r() * 6.28, d = 0.8 + r() * 3.4, x = Math.cos(a) * d * 1.3, z = Math.sin(a) * d - 0.4; if (Math.abs(x) < 1.6 && z > -0.9 && z < 1.6) continue; prop(['grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2', 'flower_daisy', 'flower_butter'][i % 5], x, z, r() * 360, 0.8 + r() * 0.5); }
+  prop('bush_b', 3.5, 0.5, 30, 0.75); prop('bush_a', -3.4, 0.9, 0, 0.7); prop('flower_pots', 3.0, -0.9, 20, 0.9);     // (the sides, for the wide picture)
+  for (let i = 0; i < 110; i++) { const a = r() * 6.28, d = 0.8 + r() * 4.2, x = Math.cos(a) * d * 1.3, z = Math.sin(a) * d - 0.4; if (Math.abs(x) < 1.6 && z > -0.9 && z < 1.6) continue; prop(['grass_tuft_0', 'grass_tuft_1', 'grass_tuft_2', 'flower_daisy', 'flower_butter'][i % 5], x, z, r() * 360, 0.8 + r() * 0.5); }
   const plot = { kind: 'lineup', frame: g, birds: [], centre: O, poster: true };
   plots.push(plot);
   const face = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);
