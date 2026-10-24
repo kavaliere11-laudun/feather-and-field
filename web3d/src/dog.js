@@ -110,6 +110,23 @@ export class FarmDog {
       hop(), bowAt(null, 1.3), T.wait(1.2, (f, t) => { f.A.sitGoal = 1; playFace(f, 0.9); f.A.wagGoal = 1; f.A.headTiltGoal = t < 0.6 ? 0.3 : 0; }))));
     f.task = null; self.last = '';
   }
+  // the farmer coming over to give him a pat (farmlife.js): he drops what he's doing, trots to the spot in front of where
+  // the farmer will stop (to (x, z)), sits there, ears up and tail going, watching the farmer come; `ready` once he's sat
+  // facing the farmer there. The pat itself is a tap (tapped): his hello. farmer: { pos }
+  awaitPat(farmer, x, z) {
+    if (this.asleep || this.guard || this.bedtime) return null;
+    const self = this, d = this.dog, go = this.go(x, z, 'trot');
+    const task = { name: 'awaitpat', t: 0, ready: false, run(f, dt) {
+      this.t += dt; if (this.t > 30) return true;              // (the farmer never came: something else)
+      const p = farmer.pos, toF = Math.atan2(p.x - f.pos.x, p.z - f.pos.z);
+      if (!this.there) { this.there = go.run(f, dt) || Math.hypot(x - f.pos.x, z - f.pos.z) < 0.08; return false; }
+      f.turnTo(toF, dt, 4); f.A.sitGoal = 1; f.A.earsGoal = 1; f.A.wagGoal = 1; f.A.wideGoal = 0.3; f.A.lookPitchGoal = -0.25;
+      this.ready = this.t > 0.5 && f.spd < 0.1 && Math.abs(wrap(toF - f.heading)) < 0.35;
+      return false;
+    } };
+    d.todo = [this.wrap(task)]; d.task = null; this.last = 'pat'; this.doing = 'pat';
+    return task;
+  }
 
   // ---- getting about
   // along the village grid to (x, z): trotting, walking or running; sniff: nose down along the ground, stopping now and then

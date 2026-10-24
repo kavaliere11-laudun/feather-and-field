@@ -33,6 +33,10 @@ export const POSES = {
   cuddle: { head: [-6, 10, 0], chest: [0, -4, 0], shL: [6, -50, 0], elL: [-45, -72, 0], shR: [-6, -50, 0], elR: [45, -72, 0], hand: ['relax', 'relax'], wrL: [0, 0, -20], wrR: [0, 0, 20] },
   pet: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 10, 0], head: [0, -4, 0], shR: [-10, -78, 0], elR: -14, wrR: [0, 6, 0], shL: [14, -30, 0], elL: -60, hand: ['relax', 'open'] },
   feed: { chest: [0, 4, 12], head: [0, 8, 14], shR: [-62, -40, 0], elR: -25, shL: [10, -12, 0], elL: -20, hand: ['open', 'hold'] },
+  // (3D only) hands on hips, looking at the hens; the torch held out in front; a big stretch in the morning
+  hips: { shL: [38, 18, 0], elL: [-70, -20, 0], shR: [-38, 18, 0], elR: [70, -20, 0], hand: ['fist', 'fist'], chest: [0, -3, 0] },
+  torch: { shR: [-8, -62, 0], elR: -18, wrR: [0, 10, 0], hand: ['relax', 'hold'] },
+  stretch: { shL: [30, -150, 0], elL: -10, shR: [-30, -150, 0], elR: -10, chest: [0, -8, 0], head: [0, -12, 0], hand: ['open', 'open'] },
 };
 // faces (farmer.py's FACE): the upper and lower lids' edges (-1..1 of the eye's height), the lids slanted (degrees), where the
 // eyes look, the brows' slant (+ worried, - cross) and height, the mouth, the blush
@@ -118,6 +122,9 @@ export class FarmerRig {
     this.mesh = new THREE.SkinnedMesh(MODELS[look], farmerMaterial(look, grade));
     this.mesh.add(B.root); B.root.updateMatrixWorld(true); this.mesh.bind(new THREE.Skeleton(list));
     this.mesh.frustumCulled = false; this.mesh.castShadow = true;
+    // (three.js refreshes a skin once a frame, but counts a shadow redraw as that frame's refresh, so the picture just after
+    // a shadow redraw would show last frame's pose, a step behind his torch's glow: refreshed here right before each draw)
+    this.mesh.onBeforeRender = () => this.mesh.skeleton.update();
     this.B = B; this.blush = this.mesh.material.userData.blush;
     this.eyeR = INFO.info[look].eyes.L.r; this.gazeUp = 0.55;
   }
@@ -171,20 +178,23 @@ export class Farmer {
     this.P = fullPose(POSES.turn); this.F = fullFace(); this.t = r() * 10; this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.want = { pose: 'turn', face: 'neutral', walk: 0, run: 0, talk: 0, props: {} };
     this.label = FARMER_NAME[look][FR ? 1 : 0];
-    this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.55;
+    this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.6;
+    const m = this.rig.mesh.material; m.transparent = true; this.opacity = 1;          // (fading in and out at the farmhouse door)
   }
+  fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5; }
   get pos() { return this.root.position; }
   update(dt) {
     const W = this.want, t = (this.t += dt);
     const target = fullPose(POSES[W.pose] || {}), face = fullFace(FACES[W.face] || {});
     // a walk (or a run): legs swinging from the hips, knees bending as each comes through, arms swinging against them, a bob
-    const g = W.walk || 0, rn = W.run || 0, ph = t * (W.run ? 11 : 6.6);
+    const g = W.walk || 0, rn = W.run || 0, ph = W.phase !== undefined ? W.phase : t * (W.run ? 11 : 6.6);      // (phase: from how far he's really gone)
     if (g > 0) {
       const sw = (24 + 16 * rn) * g, s = Math.sin(ph), c = Math.cos(ph);
       target.hipL[1] += -sw * s; target.hipR[1] += sw * s;
       target.kneeL += (8 + (30 + 30 * rn) * Math.max(0, -c)) * g; target.kneeR += (8 + (30 + 30 * rn) * Math.max(0, c)) * g;
       target.ankleL = -target.kneeL - target.hipL[1] * 0.6; target.ankleR = -target.kneeR - target.hipR[1] * 0.6;
       if (!W.keepArms) { target.shL[1] += (20 + 25 * rn) * s * g; target.shR[1] += -(20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; target.elR[1] -= (10 + 40 * rn) * g; }
+      else if (W.keepArms === 'L') { target.shL[1] += (20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; }          // (the torch held steady in the right hand)
       target.chest[2] += 5 * s * g; target.chest[1] += 6 * rn; target.rootZ += -0.012 * g * Math.abs(c) - 0.03 * rn;
     }
     if (W.anim) W.anim(target, face, t);

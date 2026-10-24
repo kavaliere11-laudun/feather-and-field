@@ -55,6 +55,29 @@ export class NavGrid {
       for (let a = 0; a < 24; a++) { const px = x + Math.cos(a / 24 * Math.PI * 2) * r, pz = z + Math.sin(a / 24 * Math.PI * 2) * r; if (this.freeAt(px, pz)) return [px, pz]; }
     return null;
   }
+  // every cell that can be walked to from (x, z), over the crossings too: a mask, for picking places one can really get to
+  // (a free cell can still be shut in, between a pen's fence and a hedge, say)
+  reach(x, z) {
+    const s = this.nearestFree(x, z), m = new Uint8Array(this.block.length); if (!s) return m;
+    const nx = this.nx, st = [this.iz(s[1]) * nx + this.ix(s[0])]; m[st[0]] = 1;
+    while (st.length) {
+      const i = st.pop(), X0 = i % nx, Z0 = (i / nx) | 0;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const X = X0 + dx, Z = Z0 + dz; if (X < 0 || Z < 0 || X >= nx || Z >= this.nz) continue;
+        const j = Z * nx + X; if (!m[j] && !this.block[j]) { m[j] = 1; st.push(j); }
+      }
+      const L = this.links.get(i); if (L) for (const [j] of L) if (!m[j]) { m[j] = 1; st.push(j); }
+    }
+    return m;
+  }
+  // the nearest free cell to (x, z), within maxR, that's in `mask` (from reach)
+  nearestIn(mask, x, z, maxR = 3) {
+    const ok = (px, pz) => this.freeAt(px, pz) && !!mask[this.iz(pz) * this.nx + this.ix(px)];
+    if (ok(x, z)) return [x, z];
+    for (let r = this.cell; r <= maxR; r += this.cell)
+      for (let a = 0; a < 24; a++) { const px = x + Math.cos(a / 24 * Math.PI * 2) * r, pz = z + Math.sin(a / 24 * Math.PI * 2) * r; if (ok(px, pz)) return [px, pz]; }
+    return null;
+  }
   // a straight line clear of everything, `w` either side of it too (room for a little drift after a bend)
   clearLine(ax, az, bx, bz, w = 0) {
     const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / (this.cell * 0.4)), ox = d ? -(bz - az) / d * w : 0, oz = d ? (bx - ax) / d * w : 0;
@@ -64,8 +87,28 @@ export class NavGrid {
     }
     return true;
   }
-  // A* over the cells (8 ways), then straightened (each point goes as far as it can see); null if there's no way
-  find(ax, az, bx, bz) {
+  // what walking each cell costs (1 on the paths, more on the grass, for the farmer, who keeps to the paths): fill(c) sets
+  // every cell, line(a, b, r, c) the cells within r of a stretch of path
+  costs(c) { this.cost = new Float32Array(this.block.length).fill(c); }
+  costLine(ax, az, bx, bz, r, c) {
+    const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1;
+    this.markCost(Math.min(ax, bx) - r, Math.min(az, bz) - r, Math.max(ax, bx) + r, Math.max(az, bz) + r, (x, z) => { const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)); return Math.hypot(x - ax - dx * t, z - az - dz * t) <= r; }, c);
+  }
+  markCost(xa, za, xb, zb, test, c) {
+    const i0 = Math.max(0, this.ix(xa)), i1 = Math.min(this.nx - 1, this.ix(xb)), k0 = Math.max(0, this.iz(za)), k1 = Math.min(this.nz - 1, this.iz(zb));
+    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) if (test(this.cx(i), this.cz(k))) this.cost[k * this.nx + i] = c;
+  }
+  costAt(x, z) { const i = this.ix(x), k = this.iz(z); return this.cost && i >= 0 && k >= 0 && i < this.nx && k < this.nz ? this.cost[k * this.nx + i] : 1; }
+  // what walking straight from a to b costs (in cells walked, each at its own cost)
+  lineCost(ax, az, bx, bz) {
+    const d = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(d / (this.cell * 0.5))); let c = 0;
+    for (let s = 0; s < n; s++) c += this.costAt(ax + (bx - ax) * (s + 0.5) / n, az + (bz - az) * (s + 0.5) / n);
+    return c / n * d / this.cell;
+  }
+  // A* over the cells (8 ways), then straightened (each point goes as far as it can see); null if there's no way. With
+  // useCost, the cells' own costs count (the paths preferred), and a straightened stretch never leaves the path
+  find(ax, az, bx, bz, useCost = false) {
+    const W = useCost && this.cost ? this.cost : null;
     const s = this.nearestFree(ax, az), g = this.nearestFree(bx, bz);
     if (!s || !g) return null;
     const nx = this.nx, si = this.iz(s[1]) * nx + this.ix(s[0]), gi = this.iz(g[1]) * nx + this.ix(g[0]);
@@ -85,22 +128,23 @@ export class NavGrid {
         const X = x + dx, Z = z + dz; if (X < 0 || Z < 0 || X >= nx || Z >= this.nz) continue;
         const j = Z * nx + X; if (this.block[j] || done[j]) continue;
         if (dx && dz && (this.block[z * nx + X] || this.block[Z * nx + x])) continue;          // no cutting corners
-        const nc = cost[i] + c; if (nc < cost[j]) { cost[j] = nc; from[j] = i; push(j, nc + hfun(j)); }
+        const nc = cost[i] + c * (W ? W[j] : 1); if (nc < cost[j]) { cost[j] = nc; from[j] = i; push(j, nc + hfun(j)); }
       }
       const L = this.links.get(i);
       if (L) for (const [j, c] of L) { if (done[j]) continue; const nc = cost[i] + c; if (nc < cost[j]) { cost[j] = nc; from[j] = i; push(j, nc + hfun(j)); } }
     }
     if (!found) return null;
     // the cells back from the goal; a crossing's two ends are kept exactly (it's walked straight along its middle)
-    const cells = [], fixed = [];
+    const cells = [], fixed = [], gs = [];
     for (let i = gi; i !== -1; i = from[i]) {
+      gs.push(cost[i]);
       const at = this.linkAt && this.linkAt.get(i), pi = from[i];
       const cross = at && pi !== -1 && this.links.has(pi) && this.links.get(pi).some(l => l[0] === i);
       const crossFrom = at && cells.length && fixed[fixed.length - 1] === 'end';
       cells.push(at && (cross || crossFrom) ? at.slice() : [this.cx(i % nx), this.cz((i / nx) | 0)]);
       fixed.push(cross ? 'end' : crossFrom ? 'start' : '');
     }
-    cells.reverse(); fixed.reverse(); cells[0] = s; cells[cells.length - 1] = g;
+    cells.reverse(); fixed.reverse(); gs.reverse(); cells[0] = s; cells[cells.length - 1] = g;
     // fixed after reversing: 'start' is where a crossing begins, 'end' where it ends
     const out = [cells[0]];
     let a = 0;
@@ -109,7 +153,8 @@ export class NavGrid {
       // never shortcut past the start of a crossing; from its start, straight to its end
       for (let k = a + 1; k < b; k++) if (fixed[k] === 'start') { b = k; break; }
       if (fixed[a] === 'start') b = a + 1;
-      while (b > a + 1 && !this.clearLine(cells[a][0], cells[a][1], cells[b][0], cells[b][1], this.cell * 0.45)) b--;
+      // (with costs: a straight stretch only where it costs no more than the way found: along a path, never across the grass)
+      while (b > a + 1 && (!this.clearLine(cells[a][0], cells[a][1], cells[b][0], cells[b][1], this.cell * 0.45) || (W && this.lineCost(cells[a][0], cells[a][1], cells[b][0], cells[b][1]) > (gs[b] - gs[a]) * 1.04 + 0.5))) b--;
       out.push(cells[b]); a = b;
     }
     return out;
@@ -242,7 +287,7 @@ class Fx {
 }
 
 // ---------------------------------------------------------------- the farmer's torch, coming down the path in the dark
-class Torch {
+export class Torch {
   constructor(scene) {
     textures();
     this.group = new THREE.Group(); this.group.visible = false; scene.add(this.group);
@@ -270,7 +315,8 @@ class Torch {
     this.beam.rotation.y = this.heading + step * 0.06;                    // the beam swings a little with each step
     this.beam.material.opacity = 0.62 * this.on;
     this.pool.material.opacity = 0.3 * this.on;
-    this.glow.position.set(Math.sin(this.heading) * 0.18, 1.0 + 0.025 * Math.abs(step), Math.cos(this.heading) * 0.18);
+    if (this.glowAt) { const g = this.glowAt(); this.glow.position.set(g.x - this.pos.x, g.y, g.z - this.pos.y); }        // (the farmer's own torch, in his hand)
+    else this.glow.position.set(Math.sin(this.heading) * 0.18, 1.0 + 0.025 * Math.abs(step), Math.cos(this.heading) * 0.18);
     this.glow.scale.setScalar(0.42 * this.on); this.glow.material.opacity = this.on;
   }
 }
@@ -290,7 +336,7 @@ export class NightVisit {
     this.nose = null;               // the feather stuck on his nose
     this.v = new THREE.Vector3(); this.w = new THREE.Vector3();
   }
-  T(k) { const t = this.text[k]; return t ? t[this.lang === 'fr' ? 1 : 0].replace('{dog}', this.dogName ? this.dogName() : 'Biscuit') : k; }
+  T(k) { const t = this.text[k]; return t ? t[this.lang === 'fr' ? 1 : 0].replace('{dog}', this.dogName ? this.dogName() : 'Biscuit').replace('{farmer}', this.farmerName ? this.farmerName() : (this.lang === 'fr' ? 'le fermier' : 'the farmer')) : k; }
   note(s) { this.log.push(s); if (this.log.length > 60) this.log.shift(); }
   active() { return this.state === 'out' || this.state === 'fleeing'; }
   canSend() { return this.state === 'out' && !this.farmer && this.fox.root.visible; }
@@ -600,7 +646,7 @@ export class NightVisit {
   sendFarmer() {
     if (!this.canSend()) return false;
     const f = this.fox, h = this.house;
-    const start = this.nav.nearestFree(h[0] + Math.sign(f.pos.x - h[0]) * 2.0, h[1] + Math.sign(f.pos.z - h[1]) * 2.0, 4) || [h[0], h[1]];
+    const start = this.door ? [this.door[0], this.door[1]] : this.nav.nearestFree(h[0] + Math.sign(f.pos.x - h[0]) * 2.0, h[1] + Math.sign(f.pos.z - h[1]) * 2.0, 4) || [h[0], h[1]];      // (out of the farmhouse door)
     this.farmer = { stage: 'coming', at: start, path: null, replan: 0, t: 0 };
     this.torch.place(start[0], start[1], angTo(start[0], start[1], f.pos.x, f.pos.z)); this.torch.walking = true;
     this.hint(this.T('sent'));
@@ -643,7 +689,7 @@ export class NightVisit {
   shoo() {
     const f = this.fox, T = this.torch;
     this.state = 'fleeing'; this.fleeStage = 'startle'; this.note('shoo'); this.scare = null;
-    this.farmer.home = [this.house[0], this.house[1]];
+    this.farmer.home = this.door ? [this.door[0], this.door[1]] : [this.house[0], this.house[1]];
     this.say(this.T('shoo'), new THREE.Vector3(T.pos.x, 1.5, T.pos.y), 2.6);
     f.todo = []; f.task = null;
   }

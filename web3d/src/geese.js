@@ -743,8 +743,9 @@ export class GeeseFlock extends PondBirds {
     const R = this.r, H = this.mate, [s] = this.pondAt(g.pos.x, g.pos.z);
     if (this.night(hour)) {
       const b = this.bed[0], L = [];
-      if (this.lab && this.regionAt(g.pos.x, g.pos.z) !== this.bedReg) {          // (their bed's across a stream: swim over)
+      if (this.lab && this.regionAt(g.pos.x, g.pos.z) !== this.bedReg && this.bedWay && this.bedWay.inn) {          // (their bed's across a stream: swim over)
         const a = this.nearestWay(g.pos.x, g.pos.z), w = this.bedWay;
+        if (!a) return TK.seq('bed', [TK.path(b[0], b[1]), TK.face(b[2]), () => { g.asleep = true; return TK.act('sleep', 1e9); }]);
         L.push(TK.path(a.out[0], a.out[1]), TK.straight(a.edge[0], a.edge[1], 'walk', true, 0.25), TK.straight(a.inn[0], a.inn[1], 'walk', true, 0.3));
         this.swimTo(L, a.inn, w.inn); L.push(TK.straight(w.edge[0], w.edge[1], 'walk', true, 0.2), TK.straight(w.out[0], w.out[1]), TK.act('shake', 1.4));
       }

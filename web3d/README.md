@@ -1138,3 +1138,41 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - `?lineup=farmer` (`&set=1`: looking about, waving hello, telling off, worried; `&set=2`: walking, running with the torch,
   feeding with the pail, crouched for a cuddle; `&set=3`: their faces close, through every expression).
   `hatshot.mjs` takes pictures of the line-up (`VARS`: per picture the hat's tilt, a face close-up, the eyes' gaze).
+
+## The farmer, step 2: the farmer's day on the farm (24 Oct, Audrey on the look: "Yes all good")
+
+- `src/farmlife.js`: `FarmLife`, the farmer out on the farm (`?farmer`: Arthur; `?farmer=f`: Rosie; in the game the
+  player's own choice and name). Out of the farmhouse door in the morning (6:24, fading in at the door; before 8:30 a big
+  stretch first) with "Good morning, girls!" and a wave; then round the farm: to a coop to stand at its fence, hands on
+  hips, watching the hens (sometimes a wave and "Hello, girls!", the 2D game's own line); to a corner of the farm (a bench,
+  the well, the stall) for a look about; to the pond to watch the ducks (sometimes "Hello, ducks!"); to Biscuit's kennel
+  if he's at home: Biscuit trots over and sits in front of where the farmer stops (on the player's side, a little round,
+  so both faces show), ears up and tail going, and gets a crouch and a pat ("Good boy, Biscuit!" with the dog's name as
+  the player chose it), answering with his hello (`FarmDog.awaitPat`; if he's gone off meanwhile, just a look about); to
+  the porch for a rest; a wave and "Hello!" when the player's looking. Somewhere not just
+  visited, and one of the nearer places: a stroll, not a march. From 21:12 (and before 6:42) the torch is lit in his
+  hand, its beam on the ground ahead. At 22:36 "Goodnight, girls!", a wave, and in through the door (fading out); indoors
+  all night. A page opened by day: he comes out with "Hello, girls!".
+- He keeps to the paths: the village grid (`NavGrid` in `nightvisit.js`) now has costs (grass 3.2, the paths 1), the
+  way found with them, and a bend cut straight only when it costs no more than going round (`find(..., useCost)`).
+  About 70% of his walking is on the paths. Every place he goes is one that can be got to: `reach(x, z)` marks every cell
+  walkable from the farmhouse door (a free cell can be shut in, like a pen's yard), `nearestIn` picks within it; a coop
+  whose front is shut in (two coops facing each other round a shared yard) gets a place at an open side. Biscuit's
+  places by the coops and round the farm follow the same rule.
+- He steers round the geese, the ducks on the bank and Biscuit, waiting a moment if one's right in front; if he's right on
+  one, it steps aside (or he steps back if it has no room). The geese, ducks and frogs treat him as one of the farm's
+  animals to walk round or hop away from.
+- The night visit: "Send the farmer" (now "Send Arthur" / "Envoyer Arthur", the name in the visit's messages) brings the
+  farmer out of the farmhouse door with the torch lit, running (a worried face) to Rusty, shining it on him with a stern
+  face and a telling-off ("Shoo! Off you go, Rusty!"), then walking home: "Goodnight, girls!" at the door and in.
+- Everything said is in a little bubble over the head, in English or French ("Coucou, les filles !", "Bonjour, les
+  filles !", "Bonne nuit, les filles !", "Coucou !", "Brave chien, Biscuit !", "Bonjour, les canards !"). Tap the farmer:
+  the label ("Arthur · farmer", "Arthur · fermier", "Rose · fermière"), a wave and "Hello!". Nothing new is saved.
+- The farmer's skin is refreshed right before each draw (`onBeforeRender`): three.js counts a shadow redraw as the
+  frame's refresh, so the picture just after one showed the last frame's pose, a step behind the torch's glow.
+- `farmertest.mjs` (`LANG=fr`, `LOOK=f`): a 10-minute day checked every tenth of a second (never in anything, only free
+  ground, a footbridge or the door; never through a goose, a duck or Biscuit; mostly on the paths; never stuck; a way to
+  every place he goes; all the farmer does), bedtime, indoors all night, the morning, a real tap, and a night visit (out of the door with the torch,
+  to Rusty, "Shoo!", home and in). `farmertrack.mjs` plots the way taken; `farmerfilm.mjs` films him (`PLAN`: at a
+  moment the hour, what he does next, or whom the view follows; `SEND`: the night visit; `OFF`, `FOLLOW`: the framing);
+  `farmersmoke.mjs` a quick look at a few moments.
