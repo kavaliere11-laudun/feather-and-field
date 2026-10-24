@@ -204,6 +204,20 @@
   }
   /* a big screen held upright (a tablet): the welcome's lines no wider than reads well, in the middle */
   @media (orientation: portrait) and (min-width: 640px) { .gsheet.gwelcome .gsheet-head, .gsheet.gwelcome .gsheet-body { width: 100%; max-width: 580px; margin-inline: auto; } }
+  /* sideways (the game is played sideways first): every sheet is a card on the right under the top bar, sliding in from
+     the side, so the farm stays in view beside it */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet { left: auto; right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 60px); bottom: max(12px, env(safe-area-inset-bottom));
+              width: min(400px, 46vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - env(safe-area-inset-top) - 72px); margin-block: 0 auto; border-radius: 24px;
+              box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+    .gsheet.modal { max-height: calc(100% - env(safe-area-inset-top) - 72px); }
+    .gsheet::before { display: none; }
+    .gsheet-head { padding-top: 16px; }
+    .gsheet-body { padding-bottom: 16px; }
+    .gsheet.in { animation-name: gsin; }
+    @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
+    body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
+  }
   /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
     .gsheet.gwelcome { left: auto; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom));

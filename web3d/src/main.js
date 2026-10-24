@@ -73,6 +73,11 @@ const view = { target: new THREE.Vector3(), size: 4.4, min: 1.4, max: 9 };
 // the game's view: 42 degrees down, 45 degrees round
 const VIEW_DIR = new THREE.Vector3(Math.sin(45 * DEG) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(45 * DEG) * Math.cos(42 * DEG)).normalize();
 const PITCH_SIN = Math.sin(42 * DEG);
+// the game played sideways first (Audrey, 24 Oct): held sideways the farm comes a little closer (its views, and how near
+// and far a pinch goes), so it fills the shorter height as it fills the width upright; turning the phone swaps it over
+const SIDE_K = 0.7, sideways = () => window.innerWidth > 1.25 * window.innerHeight;
+let wasSide = null;
+function sideScale(k) { view.size *= k; view.min *= k; view.max *= k; }
 
 // light: the Unity farm's warm sun and sky-tinted ambient light (three.js lights are physical: about pi times Unity's numbers)
 const hemi = new THREE.HemisphereLight(new THREE.Color().setRGB(0.64, 0.74, 0.86, THREE.SRGBColorSpace),
@@ -232,6 +237,7 @@ const lampPools = {
 
 function resize() {
   const w = window.innerWidth, h = window.innerHeight;
+  if (GAME_MODE && wasSide !== null && sideways() !== wasSide) { wasSide = !wasSide; sideScale(wasSide ? SIDE_K : 1 / SIDE_K); applyGrass(); }
   renderer.setSize(w, h, false);
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   placeCamera();
@@ -367,6 +373,7 @@ async function start() {
   if (GAME_MODE) {                                       // the game: your first coop, its house and pen
     const home = plots.find(p => p.kind === 'coop' && p.frame);
     if (home) { const c = home.frame.localToWorld(new THREE.Vector3(-0.1, 0, 0.85)); view.target.set(c.x, 0, c.z); view.size = 2.9; }
+    wasSide = sideways(); if (wasSide) sideScale(SIDE_K);
   }
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
@@ -2666,8 +2673,14 @@ function holdBird(b) {                       // a bird whose card is open stays 
 function openBirdCard(b) {
   const gb = game.data.birds.find(x => x.id === b.gid); if (!gb) return;
   gameUI.birdCard(gb); holdBird(b);
-  const w = b.root.getWorldPosition(new THREE.Vector3()), size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN,      // (her feet a third of the way up the screen, her head under the top bar)
-    hz = Math.hypot(VIEW_DIR.x, VIEW_DIR.z);
+  const w = b.root.getWorldPosition(new THREE.Vector3()), hz = Math.hypot(VIEW_DIR.x, VIEW_DIR.z);
+  if (sideways()) {                 // (sideways: the card on the right, she in the middle of the space beside it)
+    const size = Math.min(view.size, 0.85), up = -0.2 * size / PITCH_SIN, upp = 2 * size / Math.max(1, canvas.clientHeight);
+    const side = (gameUI.sheet.offsetWidth + 24) / 2 * upp, right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); right.y = 0; right.normalize();
+    focusOn(w.x + VIEW_DIR.x / hz * up + right.x * side, w.z + VIEW_DIR.z / hz * up + right.z * side, size);
+    return;
+  }
+  const size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN;      // (upright: her feet a third of the way up the screen, her head under the top bar)
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
 function gameSheetClosed() { holdBird(null); wake(300); }

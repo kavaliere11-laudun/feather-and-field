@@ -1,4 +1,4 @@
-// The game, release 1 step 1 (play.html, game.js, gameui.js): node gametest.mjs   (LANG=fr: a French phone)
+// The game, release 1 step 1 (play.html, game.js, gameui.js): node gametest.mjs   (LANG=fr: a French phone; W, H: the screen, e.g. W=874 H=402 sideways)
 // A fresh phone: the welcome (language, him or her, a name) over the loading farm; the farm: level 1, 100 coins, a rustic
 // Red Barn on the first patch with the Rhode Island Red trio (a rooster and two hens, three different personalities, the
 // rooster never a good mum), nobody else's coops, no geese, dog or decorations yet; a real tap on each bird: her card
@@ -9,7 +9,7 @@
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0`;
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB' });
+const ctx = await b.newContext({ viewport: { width: +(process.env.W || 402), height: +(process.env.H || 874) }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB' });
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const ready = () => p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
