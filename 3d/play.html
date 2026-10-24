@@ -173,6 +173,17 @@
   .gkid-c { display: inline-flex; align-items: center; gap: 4px; min-width: 52px; justify-content: flex-end; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
   .gcoin.gcoin-s { width: 18px; height: 18px; } .gcoin.gcoin-s::after { inset: 5px; }
   .gtotal { margin: 2px 0 0; text-align: center; font: 600 21px var(--display); color: var(--ink); }
+  .gsheet.gcongrats .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }      /* ("Lovely!" always in sight) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    /* (sideways the whole height, over the coins: they count up when it's closed) */
+    body.gcong .gbar > :not(.gbrand) { visibility: hidden; }
+    .gsheet.gcongrats { top: max(10px, env(safe-area-inset-top)); bottom: max(10px, env(safe-area-inset-bottom)); max-height: calc(100% - 20px); margin-block: auto; }
+    .gsheet.gcongrats .gsheet-head { padding-top: 12px; } .gsheet.gcongrats .gsheet-head h2 { font-size: 22px; }
+    .gsheet.gcongrats .gsheet-body { gap: 7px; padding-bottom: 12px; }
+    .gsheet.gcongrats .gkids { padding-block: 3px; } .gsheet.gcongrats .gkid { min-height: 29px; }
+    .gsheet.gcongrats .gtotal { font-size: 19px; margin: 0; } .gsheet.gcongrats .gnote { font-size: 13px; line-height: 1.3; }
+    .gsheet.gcongrats .gbtn { padding: 11px 18px; margin-top: 2px; }
+  }
   .grow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .gchips { display: flex; gap: 8px; flex-wrap: wrap; }
   .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
@@ -301,6 +312,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792883256"></script>
+<script src="app.js?v=1792884463"></script>
 </body>
 </html>
