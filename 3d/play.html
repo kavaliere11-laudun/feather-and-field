@@ -171,6 +171,18 @@
           box-shadow: 0 4px 14px rgba(210, 70, 47, 0.35); }
   .gbtn.galt { background: var(--sage); color: var(--ink); box-shadow: none; font-size: 16px; }
   .gbtn.gdanger { background: var(--barn); color: #fff; }
+  .ghero { position: fixed; z-index: 18; left: 0; right: 0; top: 0; height: calc(100% - 400px); min-height: 230px; overflow: hidden; background: #8cb85c; }
+  .ghero[hidden] { display: none; }
+  .ghero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; display: block; }
+  .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 120px); background: linear-gradient(rgba(25, 45, 20, 0.45), rgba(25, 45, 20, 0)); }
+  .glogo, .gtag { z-index: 2; }
+  .ghero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: linear-gradient(rgba(140, 184, 92, 0), rgba(30, 52, 38, 0.18)); }
+  .glogo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center; font: 600 34px/1.05 var(--display); color: #fffdf7;
+           text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); letter-spacing: 0.01em; }
+  .gtag { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 56px); text-align: center; font: 700 15px Nunito, system-ui, sans-serif; color: #fffdf7;
+          text-shadow: 0 1px 8px rgba(20, 40, 15, 0.7); }
+  .gsheet.gwelcome { max-height: none; }
+  .gsheet.gwelcome .gsheet-head { padding-top: 18px; }
   .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
   .gbar-fill { height: 100%; background: var(--yolk); border-radius: 99px; }
   @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
@@ -194,6 +206,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792859034"></script>
+<script src="app.js?v=1792863451"></script>
 </body>
 </html>
