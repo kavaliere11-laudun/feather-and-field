@@ -1,0 +1,104 @@
+{
+ "hub": [
+  0.0,
+  6.3,
+  1.32
+ ],
+ "foot": {
+  "flowers": [
+   -0.931,
+   -0.899,
+   0.931,
+   0.899
+  ],
+  "birdbath": [
+   -0.68,
+   -0.684,
+   0.68,
+   0.684
+  ],
+  "beehives": [
+   -1.3,
+   -0.31,
+   1.16,
+   0.832
+  ],
+  "duckhouse": [
+   -0.475,
+   -0.425,
+   0.475,
+   0.84
+  ],
+  "greenhouse": [
+   -1.59,
+   -1.01,
+   1.59,
+   1.01
+  ],
+  "windmill": [
+   -1.34,
+   -1.34,
+   1.34,
+   1.41
+  ],
+  "bandstand": [
+   -1.349,
+   -1.349,
+   1.349,
+   1.99
+  ],
+  "statue": [
+   -1.018,
+   -1.178,
+   1.018,
+   1.001
+  ]
+ },
+ "stats": {
+  "flowers": {
+   "tris": 9000,
+   "verts": 5060,
+   "prims": 2
+  },
+  "birdbath": {
+   "tris": 2600,
+   "verts": 1446,
+   "prims": 3
+  },
+  "beehives": {
+   "tris": 4200,
+   "verts": 3573,
+   "prims": 2
+  },
+  "duckhouse": {
+   "tris": 354,
+   "verts": 606,
+   "prims": 1
+  },
+  "greenhouse": {
+   "tris": 2918,
+   "verts": 2452,
+   "prims": 3
+  },
+  "windmill": {
+   "tris": 1760,
+   "verts": 1532,
+   "prims": 2
+  },
+  "sails": {
+   "tris": 668,
+   "verts": 1184,
+   "prims": 1
+  },
+  "bandstand": {
+   "tris": 2490,
+   "verts": 1571,
+   "prims": 3
+  },
+  "statue": {
+   "tris": 11998,
+   "verts": 6555,
+   "prims": 3
+  }
+ }
+}
