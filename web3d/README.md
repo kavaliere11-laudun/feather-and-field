@@ -1377,3 +1377,10 @@ sideways; the App Store app can, if she wants). Every step from here is built si
   level, the coins, the settings) is a card on the right under the top bar, as tall as it needs (scrolling if it must),
   sliding in from the side; the hint hides while a card is open (`body.gopen`). The welcome is its own card, centred on
   the right, beside the picture.
+- Audrey (19:51, her iPhone sideways in Safari, its bars and a row of tabs leaving 874 x 293): "Sideways welcome image
+  doesn't work": the card ran off the bottom (no Start) and the picture, too small to cover the screen and keep the scene
+  beside the card, was pushed right under it. Now: sideways the picture need only reach under the card's edge (round the
+  card the hero's own grass-green shows); on short screens the card is tighter, Start stays in sight at the bottom
+  (sticky) and below 320 px high the welcome's sentence makes way so every choice shows. Safari paints its bars in the
+  page's own colour (not the hero's, it turned out): while the welcome is up the page is the picture's top green
+  (`html.gwelcoming`), the farm's grass green after. Checked at 874x293, 844x300, 932x330, 874x402 and upright.

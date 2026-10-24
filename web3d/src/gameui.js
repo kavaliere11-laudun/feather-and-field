@@ -84,6 +84,7 @@ export class GameUI {
     }
     this.heroLogo.textContent = this.t('brand'); this.heroTag.textContent = this.t('tagline');
     this.heroEl.hidden = !on;
+    document.documentElement.classList.toggle('gwelcoming', on);      // (the page's colour then the picture's top: Safari paints its bars in it)
     if (on) this.fitHero();
   }
   // the picture as big as it can be with all of its main part (HERO.key) in the open space: under the game's name and above
@@ -102,7 +103,9 @@ export class GameUI {
     k = Math.max(k, W / HERO.w, cover / HERO.h);
     const iw = HERO.w * k, ih = HERO.h * k;
     let x = (left + right) / 2 - (x0 + x1) / 2 * iw, y = (top + bottom) / 2 - (y0 + y1) / 2 * ih;
-    x = Math.min(0, Math.max(W - iw, x)); y = Math.min(0, Math.max(cover - ih, y));
+    // (sideways the picture need only reach under the card's edge: past it the card covers it, round it the grass colour)
+    const reach = side ? Math.min(W, S.offsetLeft + 40) : W;
+    x = Math.min(0, Math.max(reach - iw, x)); y = Math.min(0, Math.max(cover - ih, y));
     Object.assign(img.style, { width: iw + 'px', height: ih + 'px', left: x + 'px', top: y + 'px' });
     this.heroFit = { k: +k.toFixed(4), x: Math.round(x), y: Math.round(y), side, open: [0, Math.round(top), Math.round(right), Math.round(bottom)] };
   }
