@@ -1389,3 +1389,34 @@ sideways; the App Store app can, if she wants). Every step from here is built si
   bill and his nose); the picture rendered again and `HERO.key` widened to her tail. Her screenshots showed Safari's
   bars still the old light green: the hero now has a solid background colour as well as its gradient (Safari reads a
   fixed layer's background colour, as it does the welcome sheet's at the bottom).
+
+## The game, release 1 step 3: eggs and the feeder (24 Oct 2026, Audrey: "Ok next step")
+
+Designed sideways first, checked both ways, English and French. The rules are in `game.js` (starting values; the year-long
+balance is step 11), the farm shows them (`main.js`, "the game's eggs and feed"), the cards are `gameui.js`.
+- **Laying:** each hen lays twice a day on the phone's own clock, once in the morning (7:30-11:30) and once in the
+  afternoon (13:00-17:30), at times of her own that change from day to day (`layTimes`: a hash of her id and the date).
+  She lays while her coop's feeder has food and its nest has room (12 eggs, `NEST_MAX`). A new farm's good mum lays a
+  first egg 75 seconds in (by day; at night, the next morning at 7:20): "Fern has laid your first egg! Tap the nest to
+  collect it."
+- **Seen on the farm:** once a second the lays that are due (`game.dueLays`). A hen whose time has just come walks in
+  and lays (the walk, the nest, the song Audrey approved); the egg is saved when it's in the straw (`gameLaid`). One who
+  can't go yet (busy, held by her card, the nest taken, the page out of view) has two and a half minutes, then her egg
+  is simply there, as for a lay while the game was shut. Away from the game the eggs of the last two days are there
+  when you come back (`CATCH_UP`); a clock put back gives nothing.
+- **Collecting:** a bubble over the coop shows the eggs waiting; tap it or the nest window: the eggs fly up to the
+  coins, which count up with a little bounce, "4 eggs sold · +24 coins" (6 coins an egg for the Rhode Island Red,
+  `EGG_PRICE`; 2 XP an egg). Inside the coop at night the nest boxes sell them too. A full nest: "The nest is full:
+  collect the eggs so your hens can lay again".
+- **The feeder:** its grain goes down as the trio eats (a unit a bird a day; full is two days); "Feed low" under a
+  quarter, "Feeder empty" (no grain; no laying). Tap the feeder or its bubble: its card (how full, how long it lasts,
+  "Fill it · 12 coins"). The save fills at once; by day the farmer brings the pail, pours it (the grain rises as he
+  does) and scatters corn for the hens; at night it's simply filled. Short of coins: "Fill what you can"; no coins and
+  nothing in it: free kitchen scraps (a unit), so the hens can always go on laying. 2 coins a unit, 4 XP a full fill.
+- **The hen's card:** "Eggs: Lays about 2 eggs a day, 6 coins each."
+- **The save:** each coop's `eggs` (0-12), `feed` (0 to full) and `fedAt` (never ahead of now), each hen's `laid`
+  (never ahead of now) and the farm's `first` egg, all checked on every load. A farm saved before this step loads with
+  an empty nest and a full feeder and is not flagged (`fits`: fields the save didn't have yet don't count as an edit).
+- `eggtest.mjs` (`LANG=fr`, `W=874 H=402`): a fake clock from 10:00; the first egg walked in and laid, collected; two
+  and three days away; the feeder's card and filling it with the farmer; a full nest; a reload; a clock put back; a
+  save changed outside the game.

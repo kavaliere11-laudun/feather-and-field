@@ -175,12 +175,46 @@ export class GameUI {
     th.append(hearts, el('span', 'gcard-t', this.t('trust_lv' + lv)));
     tc.append(el('div', 'glabel', this.t('trust')), th, el('p', 'gtext', this.t('trust_body')));
     body.append(tc);
+    // her eggs
+    if (f && coop) { const kc = el('div', 'gcard'); kc.append(el('div', 'glabel', this.t('eggs')), el('p', 'gtext', this.t('lays', { p: g.eggPrice(coop) }))); body.append(kc); }
     // where and since when
     const where = coop ? (coop.tier === 0 && !coop.name ? this.t('coop_rustic', { coop: g.coopName(coop) }) : g.coopName(coop)) : '';
     body.append(el('p', 'gnote', this.t('lives_in', { coop: where })));
     const date = new Date(b.since).toLocaleDateString(g.lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     body.append(el('p', 'gnote', this.t('since', { date })));
   }
+  // ---- a coop's feeder: how full, how long it lasts, fill it (main.js sends the farmer)
+  feederSheet(coop, onFill) {
+    const g = this.g, q = g.fillQuote(coop), left = g.feedLeft(coop), h = g.feedHours(coop);
+    const b = this.open('feeder', this.t('feeder_title', { coop: g.coopName(coop) }));
+    this.feederCoop = coop.id;
+    const pct = Math.round(left * 100);
+    const bar = el('div', 'gbar-xp gfeedbar' + (left < 0.25 ? ' low' : '')); const fill = el('div', 'gbar-fill'); fill.style.width = Math.max(0, Math.min(100, pct)) + '%'; bar.append(fill);
+    b.append(el('p', 'gtext gfeedpct', pct >= 99 ? this.t('feed_full') : pct <= 0 ? this.t('feed_empty') : this.t('feed_pct', { p: pct })), bar);
+    b.append(el('p', 'gtext', left <= 0 ? this.t('feed_empty_line') : h >= 47 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
+    b.append(el('p', 'gnote', this.t('feed_how')));
+    const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
+    go.type = 'button'; go.disabled = !!(q.full || q.broke); if (go.disabled) go.classList.add('galt');
+    go.addEventListener('click', () => { if (!go.disabled) onFill(); });
+    b.append(go);
+  }
+  // ---- eggs flying from the nest to the coins, then the coins counted up
+  flyEggs(from, n, colour, done) {
+    const to = this.coins.getBoundingClientRect(), tx = to.left + 18, ty = to.top + to.height / 2;
+    const k = Math.max(1, Math.min(6, n)); let left = k;
+    for (let i = 0; i < k; i++) {
+      const e = el('div', 'gegg'); e.style.background = colour; e.style.left = (from.x - 9) + 'px'; e.style.top = (from.y - 11) + 'px'; document.body.append(e);
+      const dx = tx - from.x, dy = ty - from.y, lift = -40 - 20 * (i % 3);
+      const a = e.animate ? e.animate([
+        { transform: 'translate(0,0) scale(0.6) rotate(0deg)', opacity: 0 },
+        { transform: `translate(${dx * 0.35}px,${dy * 0.35 + lift}px) scale(1.15) rotate(${i % 2 ? 40 : -40}deg)`, opacity: 1, offset: 0.35 },
+        { transform: `translate(${dx}px,${dy}px) scale(0.55) rotate(${i % 2 ? 120 : -120}deg)`, opacity: 0.9 }],
+        { duration: 720, delay: i * 90, easing: 'cubic-bezier(0.4, 0, 0.6, 1)', fill: 'both' }) : null;
+      const end = () => { e.remove(); if (--left === 0) { this.refresh(); this.bumpCoins(); if (done) done(); } };
+      if (a) a.onfinish = end; else setTimeout(end, 720 + i * 90);
+    }
+  }
+  bumpCoins() { this.coins.classList.remove('gbump'); void this.coins.offsetWidth; this.coins.classList.add('gbump'); }
   levelSheet() {
     const g = this.g, L = g.level, d = g.data;
     const b = this.open('level', this.t('level_title', { n: L }));

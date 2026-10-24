@@ -130,6 +130,9 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
   `?lineup=foxes`, `?foxes`, `?visit` (the fox's night visit now, at 23:30), `?visit=N` (to coop N), `?lang=fr`.
 - Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `visittest.mjs`,
   `doors.mjs`, `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
+- The new game is `play.html` (built from `index.html` with `body.game`): `src/game.js` (its rules and the save, every
+  field checked on load), `src/gameui.js` (its top bar, cards and welcome). It is played sideways first and checked both
+  ways: `gametest.mjs` and `eggtest.mjs` take `LANG=fr` and `W=874 H=402` (sideways).
 - Deploy: build, then in a clone of `main` replace the `3d/` folder with `web3d/dist/.`, commit and push. The 2D release above
   wipes `main`, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game.
 - `stylized/extras/`: small helper scripts kept for reference (farmer map sprites, the Silkie hair tile, face sheets).

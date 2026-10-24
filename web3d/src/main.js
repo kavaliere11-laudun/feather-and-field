@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game } from './game.js';
+import { Game, NEST_MAX } from './game.js';
 import { GameUI } from './gameui.js';
 
 const MODELS = './models/';
@@ -390,7 +390,7 @@ async function start() {
   aimShadows(true);
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  if (GAME_MODE) { gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); }
+  if (GAME_MODE) { gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); gameTick(Date.now(), true); }      // (the eggs laid while away, at once)
   else hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
 }
@@ -993,11 +993,18 @@ function addNest(frame, plot) {
   frame.add(eggs);
   plot.nest = { eggs, count: 0, pop: 1, by: null };
   plot.block = (nestOf(plot) || {}).block || [];         // things in front of the house to walk round (a let-down door, a pot...)
-  plot.nest.count = GAME_MODE ? 0 : 2;                   // (on the test page a couple already laid this morning)
+  plot.nest.count = GAME_MODE ? (plot.gc ? plot.gc.eggs : 0) : 2;      // (the game: its save; on the test page a couple already laid this morning)
   showEggs(plot);
   const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(PEN.feeder[0], 0.065, PEN.feeder[2]);
   grain.receiveShadow = true; grain.userData.moves = true;
   frame.add(grain); plot.feedMesh = grain;
+  if (GAME_MODE && plot.gc) setFeed(plot, game.feedLeft(plot.gc));
+}
+// the grain in the feeder, from empty (none) to full
+function setFeed(plot, u) {
+  if (!plot.feedMesh) return;
+  u = Math.max(0, Math.min(1, u)); plot.feedMesh.visible = u > 0.01;
+  plot.feedMesh.position.y = FEEDER_LOW + (FEEDER_FULL - FEEDER_LOW) * u;
 }
 const eggM = new THREE.Matrix4(), eggQ = new THREE.Quaternion(), eggE = new THREE.Euler(), eggP = new THREE.Vector3(), eggS = new THREE.Vector3();
 function showEggs(plot) {
@@ -2109,7 +2116,7 @@ class Bird {
         L.shuffle -= dt;
         if (L.shuffle < 0.5 && L.shuffle > 0) o.ruffle = 0.3 * Math.sin(L.shuffle / 0.5 * Math.PI);
         if (L.shuffle <= 0) L.shuffle = 5 + this.r() * 6;
-        if (L.t > L.sit) { next('rise'); const n = this.plot.nest; n.count++; n.pop = 0; showEggs(this.plot); }
+        if (L.t > L.sit) { next('rise'); const n = this.plot.nest; n.count++; n.pop = 0; if (GAME_MODE) gameLaid(this); showEggs(this.plot); }
         break;
       case 'rise': {                                         // she stands, backing off the seat: the new egg is in the straw
         const n = this.plot.nest; n.pop = Math.min(1, L.t / 0.35); showEggs(this.plot); onNest();
@@ -2151,7 +2158,7 @@ class Bird {
   }
   // after the song: each personality has her own way of being pleased with herself
   celebrate() {
-    this.laying = null; this.layIn = 240 + this.r() * 240; this.rig.indoor(null); this.shadowY = undefined;
+    this.laying = null; this.layIn = GAME_MODE ? undefined : 240 + this.r() * 240; this.rig.indoor(null); this.shadowY = undefined;
     const Y = PEN.yard, p = this.root.position, cx = (Y.min[0] + Y.max[0]) / 2, cz = (Y.min[2] + Y.max[2]) / 2;
     // the nearest free spot in the yard to (x, z)
     const ok = (x, z) => {
@@ -2621,19 +2628,31 @@ function tapAt(x, y) {
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { openInside(p); return; }
     }
-    // a coop's nest box: collect the eggs (the game's eggs come with its next step)
-    for (const p of GAME_MODE ? [] : livePlots()) {
+    // a coop's nest box: collect the eggs (the game: sold)
+    for (const p of livePlots()) {
       if (!p.nest) continue;
       const G = nestOf(p), w = G.win;                       // the nest window (and a little round it)
       nb.min.set(w[0] - w[3] / 2 - 0.06, w[1] - 0.06, 0.3); nb.max.set(w[0] + w[3] / 2 + 0.06, w[2] + 0.06, 0.56);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (!loc.intersectBox(nb, hitP)) continue;
       const n = p.nest, sitting = n.by && n.by.laying && n.by.laying.inside;
-      if (sitting) tag.textContent = n.by.name + ' is laying…';
+      if (GAME_MODE && p.gc) {
+        if (!p.gc.eggs) { tag.textContent = sitting ? game.t('laying', { name: n.by.name }) : game.t('no_eggs'); }
+        else { collectAt(p); return; }
+      }
+      else if (sitting) tag.textContent = n.by.name + ' is laying…';
       else if (n.count) { tag.textContent = n.count === 1 ? 'Collected 1 egg' : 'Collected ' + n.count + ' eggs'; n.count = 0; showEggs(p); }
       else tag.textContent = 'No eggs yet';
       tagBird = null; tagSpot.set(G.seat[0], G.win[2] + 0.12, 0.44); p.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.8;
       return;
+    }
+    // the game: a coop's feeder (its card: how full, fill it)
+    if (GAME_MODE) for (const p of livePlots()) {
+      if (!p.gc) continue;
+      const f = PEN.feeder;
+      nb.min.set(f[0] - 0.2, 0, f[2] - 0.2); nb.max.set(f[0] + 0.2, 0.55, f[2] + 0.2);
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
+      if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
     }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);
@@ -2685,6 +2704,123 @@ function openBirdCard(b) {
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
 function gameSheetClosed() { holdBird(null); wake(300); }
+
+// ---- the game's eggs and feed (game.js has the rules; here they're seen). Once a second: the lays that are due. A hen
+// whose time has just come walks in and lays (the egg counts when it's in the straw, gameLaid); one that can't go yet
+// (busy, the nest taken, the page not in view) has a couple of minutes, then her egg is simply there, as for a lay while
+// the game was shut. The feeders' grain goes down with the save's level; bubbles over a nest with eggs and a feeder low.
+const LIVE_LAY = 150e3;
+let gameTickAt = 0, fullNoted = 0;
+const gamePlots = () => plots.filter(p => p.gc);
+function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
+function canLayNow(b) {
+  return b.root.visible && !b.laying && !b.roost && !b.asleep && !b.cuddle && !b.called && !b.held && !b.plot.farmer && !b.plot.nest.by && !b.nightNow(0.25) && !(inside.open && inside.plot === b.plot);
+}
+function gameTick(now = Date.now(), force = false) {
+  if (!GAME_MODE || !game.data || (!force && now - gameTickAt < 1000)) return;
+  gameTickAt = now;
+  const live = document.visibilityState !== 'hidden';
+  for (const e of game.dueLays(now)) {
+    const b = allBirds.find(x => x.gid === e.hen);
+    if (b && b.layEvt && !b.laying) b.layEvt = null;                     // (a lay cut short: she'll go again, or it's simply there)
+    if (b && b.layEvt) continue;                                          // on her way to lay it
+    const c = game.coop(e.coop);
+    if (b && c && now - e.t < LIVE_LAY && game.feedAt(c, e.t) > 0 && c.eggs < NEST_MAX) {
+      if (live && canLayNow(b)) { b.layEvt = e; b.startLaying(); wake(1500); }
+      continue;                                                            // (or a little later)
+    }
+    const res = game.layEgg(e.hen, e.t, now);
+    if (res === 'full' && now - fullNoted > 600e3) { fullNoted = now; hint(game.t('nest_full')); }
+    if (res === 'laid' && e.first && b) hint(game.t('first_egg', { name: b.name }));
+  }
+  for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
+  bubbleText(now);
+}
+function gameLaid(b) {                       // her egg is in the straw: into the save
+  const e = b.layEvt; b.layEvt = null;
+  if (!e) return;
+  const res = game.layEgg(e.hen, e.t);
+  if (res === 'laid' && e.first) hint(game.t('first_egg', { name: b.name }));
+  b.plot.gc = game.coop(b.plot.gc.id) || b.plot.gc;
+  b.plot.nest.count = b.plot.gc.eggs;                                     // (the save's count, the new egg popping in)
+  bubbleText(Date.now(), b.plot);
+}
+// the bubbles: built once for each coop, their words now and then, placed over the nest and the feeder every frame
+function bubbleFor(plot) {
+  if (plot.bub) return plot.bub;
+  const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
+  const eggs = mk('geggs', () => collectAt(plot)), feed = mk('gfeed', () => feederCard(plot));
+  eggs.style.setProperty('--egg', EGG_COLOUR[plot.breed]);
+  return (plot.bub = { eggs, feed, n: -1, f: '' });
+}
+function bubbleText(now = Date.now(), only = null) {
+  for (const p of only ? [only] : gamePlots()) {
+    const B = bubbleFor(p), c = p.gc, n = c.eggs;
+    if (n !== B.n) {
+      B.eggs.replaceChildren(Object.assign(document.createElement('span'), { className: 'gegg-i' }), document.createTextNode(String(n)));
+      B.eggs.classList.toggle('full', n >= NEST_MAX); B.eggs.setAttribute('aria-label', game.t('eggs') + ' ' + n);
+      if (n > B.n && B.n >= 0) { B.eggs.classList.remove('pop'); void B.eggs.offsetWidth; B.eggs.classList.add('pop'); }
+      B.n = n; if (!n) B.eggs.hidden = true;
+    }
+    const left = game.feedLeft(c, now), f = left <= 0 ? 'empty' : left < 0.25 ? 'low' : '';
+    if (f !== B.f) { B.f = f; B.feed.className = 'gbub gfeed ' + f; B.feed.textContent = f ? '🌾 ' + game.t(f === 'empty' ? 'bub_empty' : 'bub_low') : ''; }
+  }
+}
+const bubV = new THREE.Vector3();
+function placeBubbles() {
+  if (!GAME_MODE) return;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  for (const p of gamePlots()) {
+    const B = p.bub; if (!B) continue;
+    const put = (e, show, x, y, z) => {
+      if (!show || inside.open) { e.hidden = true; return; }
+      bubV.set(x, y, z); p.frame.localToWorld(bubV); bubV.project(camera);
+      const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
+      if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
+      e.hidden = false; e.style.left = sx.toFixed(1) + 'px'; e.style.top = sy.toFixed(1) + 'px';
+    };
+    const G = nestOf(p), f = PEN.feeder;
+    put(B.eggs, B.n > 0, G.win[0], G.win[2] - 0.05, 0.52);            // (its tail on the nest window)
+    put(B.feed, !!B.f, f[0], 0.46, f[2]);
+  }
+}
+// tap a nest (or its bubble): the eggs fly to the coins, sold
+function collectAt(plot) {
+  const r = game.collect(plot.gc.id);
+  if (!r) { tagBird = null; tag.textContent = game.t('no_eggs'); const G = nestOf(plot); tagSpot.set(G.seat[0], G.win[2] + 0.12, 0.44); plot.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.4; return; }
+  const B = bubbleFor(plot), at = B.eggs.hidden ? null : B.eggs.getBoundingClientRect();
+  let from;
+  if (at) from = { x: at.left + at.width / 2, y: at.top + at.height / 2 };
+  else { const G = nestOf(plot); bubV.set(G.seat[0], G.win[1] + 0.1, 0.5); plot.frame.localToWorld(bubV); bubV.project(camera); from = { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; }
+  plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
+  gameUI.flyEggs(from, r.n, EGG_COLOUR[plot.breed]);
+  hint(game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }));
+}
+// a feeder's card, and filling it: the save at once, the farmer bringing the feed (by day, out and about) or straight in
+function feederCard(plot) {
+  if (!plot.gc) return;
+  holdBird(null);
+  gameUI.feederSheet(plot.gc, () => fillFeeder(plot));
+}
+function fillFeeder(plot) {
+  const c = plot.gc, before = game.feedLeft(c), q = game.fillFeeder(c.id);
+  if (!q || q.full || q.broke) return null;
+  gameUI.close(); gameUI.refresh();
+  const P = farmLife && !farmLife.home && !farmLife.running ? penSpec(plot) : null;
+  if (P) {
+    P.fill = u => { plot.pourUntil = performance.now() + 4000; setFeed(plot, before + (q.level - before) * Math.max(0, Math.min(1, u))); };
+    const leave = P.leave; P.leave = () => { leave(); plot.pourUntil = 0; };
+    if (farmLife.visitPen(P, 'fill', null)) {
+      plot.pourUntil = performance.now() + 90e3;                          // (the grain stays as it was until he pours)
+      hint(game.t(q.scraps ? 'farmer_scraps' : 'farmer_feed', { farmer: farmerName(), c: q.cost }));
+      bubbleText(Date.now(), plot); wake(1000);
+      return q;
+    }
+  }
+  setFeed(plot, q.level); bubbleText(Date.now(), plot);
+  hint(game.t(q.scraps ? 'filled_scraps' : 'filled', { c: q.cost }));
+  return q;
+}
 let focus = null;
 function focusOn(x, z, size) { focus = { fx: view.target.x, fz: view.target.z, tx: x, tz: z, s0: view.size, s1: size, t: 0 }; wake(1000); }
 function tickFocus(dt) {
@@ -2736,7 +2872,9 @@ const VT = {
 };
 const vt = (k, v = {}) => VT[k][LANG === 'fr' ? 1 : 0].replace(/\{(\w+)\}/g, (m, x) => (v[x] !== undefined ? v[x] : m));
 const hintEl = document.getElementById('hint');
-function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); setTimeout(() => hintEl.classList.remove('on'), 4500); }
+let hintLeft = 0;
+function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
+function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) hintEl.classList.remove('on'); }
 
 // ------------------------------------------------------------------ inside a coop at night
 // Tap a coop while its birds are in bed and you're inside (a little room in the coop's own style): the hens and the rooster
@@ -2937,7 +3075,11 @@ function insideTap(x, y) {
     box.min.set(nb[0] - 0.12, nb[1] - 0.1, nb[2] - 0.2); box.max.set(nb[0] + 0.12, nb[1] + 0.22, nb[2] + 0.16);
     if (!ray.ray.intersectBox(box, hitP)) continue;
     const n = inside.plot.nest;
-    tag.textContent = n.count ? (n.count === 1 ? vt('eggs1') : vt('eggsn', { n: n.count })) : vt('no_eggs_here');
+    if (GAME_MODE && inside.plot.gc) {
+      const r = game.collect(inside.plot.gc.id);
+      tag.textContent = r ? game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }) : game.t('no_eggs');
+      if (r) { gameUI.refresh(); gameUI.bumpCoins(); }
+    } else tag.textContent = n.count ? (n.count === 1 ? vt('eggs1') : vt('eggsn', { n: n.count })) : vt('no_eggs_here');
     n.count = 0; if (inside.eggs) inside.eggs.count = 0;
     tagBird = null; tagSpot.set(nb[0], nb[1] + 0.3, nb[2]); tag.classList.add('on'); fieldTag = 2.4;
     return;
@@ -3090,7 +3232,8 @@ function frame(now) {
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
-  tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn();
+  tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
+  if (GAME_MODE) { gameTick(); placeBubbles(); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -3150,12 +3293,14 @@ window.__farm = {
   wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; }, water: (t) => { WATER_T.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
-  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); wake(300); },
+  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard,
+  // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
+  gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   poster: () => poster, posterShot: (o) => {                // the welcome picture: a perspective camera on the stage
     const P = poster, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
