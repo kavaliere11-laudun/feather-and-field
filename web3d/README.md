@@ -1343,6 +1343,22 @@ into the 3D game. Release 1, "Your forever flock, in 3D", comes in small live st
     thrown, beak up.
   - Quality: rendered at six times phone size (2412 x 3000) and shrunk to 1206 x 1500 for smooth edges and fur, saved at
     quality 88 with full colour (250 KB). The big render can be made again any time for a store cover.
+- Audrey (19:13, her iPhone, Safari and the Claude app's browser): "Still the green bar at the top. Other games are using a
+  transparent effect so the screen really looks bigger and full screen" and "The visible part of the image on the screenshot
+  is not the best one might need a little resize or a different option depending on screen size (responsive game)". Done:
+  - The strip under the clock: iOS 26 Safari ignores `theme-color` and paints it in the background colour of a fixed
+    element at the top (else the page's): it was the hero's flat green. The hero is now the whole screen with a dark
+    green background (`#4a7530`) and the picture's top fades from exactly that colour, so the strip and the picture are
+    one. A web page can't hide Safari's own bars; added to the Home Screen (web-app meta, `play.webmanifest`, the rooster
+    icon `icon-180/192/512.png`) the game opens full screen, the picture running under the clock (`.standalone`: only a
+    light shade there).
+  - The picture fitted to the screen: one wide picture (3300 x 1500, the scene with grass to spare, more on the right)
+    and `GameUI.fitHero()`: `HERO.key` (the farmer to the Legbar, the Silkie on his hat to the hens' feet) as big as it
+    fits in the open space (under the name, above the sheet; beside the card sideways; clear of a notch), centred there,
+    the picture always covering the screen behind; again on any resize, turn or change of the sheet. Sideways
+    (`(orientation: landscape) and (min-aspect-ratio: 5/4)`) the welcome is a card on the right; on short screens held
+    upright it is a little tighter; on a tablet its lines stay a readable width. Checked at 402x874, 402x700, 375x667,
+    874x402, 932x430, 820x1180, 1280x800 and 1920x1080 in both languages: everyone in view, Start on screen, no scrolling.
 - `gameui.js hero()`: the picture across the top of the screen behind the welcome sheet, "Feather & Field" and a line
   under it ("A flock to love for good" / "Une basse-cour à aimer pour toujours") over a soft shade; gone once the
   farm starts.

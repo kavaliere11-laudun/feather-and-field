@@ -1,6 +1,8 @@
 // The game's welcome picture (main.js ?poster): node posterpic.mjs OUT  (W, H: css px; DSF; EL, AZ, DIST, FOV, AT=x,y,z: the camera; T: seconds of posing)
-// Made with: AT=0.35,0.75,0.1 DIST=9.8 FOV=28.5 H=500 DSF=6 ./withserver.sh node posterpic.mjs /tmp/p  (2412x3000, then shrunk to
-// 1206x1500 for smooth edges and saved as welcome.jpg, quality 88, full colour)
+// Made with: AT=1.05,0.75,0.1 DIST=9.8 FOV=28.5 W=1100 H=500 DSF=5 ./withserver.sh node posterpic.mjs /tmp/p  (5500x2500: the scene
+// with grass to spare all round, more on the right for the card sideways; shrunk to 3300x1500 for smooth edges and saved as
+// welcome.jpg, quality 86, full colour; gameui.js HERO: its size and the part that must always show)
+// The app icon: AT=0.58,0.98,-1.25 EL=12 AZ=-75 DIST=1.75 FOV=26 W=320 H=320 DSF=4 (the rooster crowing), shrunk to 512, 192, 180
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const out = process.argv[2] || '/tmp/claude-0/farmer/poster/p';
 const W = +(process.env.W || 402), H = +(process.env.H || 432);
