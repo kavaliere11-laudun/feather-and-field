@@ -62,6 +62,13 @@
   #dogname .row button { font-size: 16px; padding: 10px 18px; border: 0; cursor: pointer; font-family: inherit; }
   #dogname-save { background: var(--yolk) !important; }
   #dogbtn[hidden], #dogname[hidden] { display: none; }
+  /* after tapping a hen by day: send the farmer into her pen for a cuddle, or to fill the feeder (the game's own words) */
+  #henbtns { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); display: flex; gap: 10px;
+             max-width: calc(100vw - 32px); }
+  #henbtns button { font-size: 16px; padding: 12px 18px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; white-space: nowrap; }
+  #cuddlebtn { background: #ffd6df !important; }
+  #henbtns[hidden] { display: none; }
+  body.inside #henbtns, body.replaying #henbtns { display: none; }
   /* the morning replay of last night's fox visit, as an old silent film (replay.js); the title cards in IM Fell English
      (old printing types, SIL Open Font License: fonts/OFL-IM-Fell.txt), kept here with the page */
   @font-face { font-family: Fell; src: url(fonts/fell-italic.woff) format('woff'); font-style: italic; font-weight: 400; font-display: swap; }
@@ -105,6 +112,7 @@
 <button id="farmerbtn" class="pill" type="button" hidden>Send the farmer</button>
 <button id="dogbtn" class="pill" type="button" hidden></button>
 <button id="replaybtn" class="pill" type="button" hidden></button>
+<div id="henbtns" hidden><button id="cuddlebtn" class="pill" type="button"></button><button id="feedbtn" class="pill" type="button"></button></div>
 <form id="dogname" hidden><label for="dogname-in" id="dogname-label"></label><input id="dogname-in" type="text" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"><div class="row"><button type="button" class="pill" id="dogname-cancel"></button><button type="submit" class="pill" id="dogname-save"></button></div></form>
 <div id="fade"></div>
 <div id="hint" role="status"></div>
@@ -112,6 +120,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792840634"></script>
+<script src="app.js?v=1792846251"></script>
 </body>
 </html>
