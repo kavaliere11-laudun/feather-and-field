@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -410,7 +410,8 @@ async function start() {
   setTimeout(() => loading.remove(), 600);
   if (GAME_MODE) syncLand(true);
   if (GAME_MODE) {
-    openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move'));
+    openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); if (!welcome) hint(game.t('hint_move'));
+    startFirstDay(!!welcome);                              // (a new farm: the pictures, then the first day's guide)
     try { if (sessionStorage.getItem('ff3d.loaded')) { sessionStorage.removeItem('ff3d.loaded'); hint(game.t('code_loaded', { n: game.level })); } } catch (e) { /* */ }      // (a farm code just loaded)
     if (!welcome && game.data.lastSeen && openedAt - game.data.lastSeen >= AWAY_MIN) AWAY = { from: game.data.lastSeen };      // (away a while: the summary first)
     gameTick(Date.now(), true);                            // (the eggs laid while away, at once)
@@ -2949,7 +2950,7 @@ function gameCuddle(id) {
   if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
   starsSeen.set(id, game.stars(gb));                      // (a star from the cuddle: said with it)
   if (r.star && !r.up) hint(game.t('star_up', { name: gb.name }));
-  jobsDone(r.done);
+  jobsDone(r.done); guideDid('cuddle');
   return r;
 }
 // a bird gaining a star while you watch (time on the farm, a brood, a cuddle): a word and a little burst of stars over her
@@ -2994,7 +2995,7 @@ function openBirdCard(b) {
   const size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN;      // (upright: her feet a third of the way up the screen, her head under the top bar)
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
-function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay(); wake(300); }
+function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay(); if (k === 'intro') { GUIDE_UI.intro = false; GUIDE_UI.on = true; } wake(300); }
 
 // ---- the game's eggs and feed (game.js has the rules; here they're seen). Once a second: the lays that are due. A hen
 // whose time has just come walks in and lays (the egg counts when it's in the straw, gameLaid); one that can't go yet
@@ -3076,7 +3077,7 @@ const bubV = new THREE.Vector3();
 function placeBubbles() {
   if (!GAME_MODE) return;
   const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (game.data) fieldBubbles(w, h);
+  if (game.data) { fieldBubbles(w, h); tickGuide(); }
   { // the patch for sale: "🪧 For sale · 100" over its sign
     const B = saleBubble(), n = SALE.field >= 0 && SALE.at && game.landForSale();
     if (!n || inside.open) B.hidden = true;
@@ -3115,7 +3116,7 @@ function collectAll() {
     plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
     gameUI.flyEggs(at ? { x: at.left + at.width / 2, y: at.top + at.height / 2 } : { x: canvas.clientWidth / 2, y: canvas.clientHeight * 0.6 }, r.n, EGG_COLOUR[plot.breed]);
   }
-  if (n) hint(game.t('away_sold', { n, c: coins }));
+  if (n) { hint(game.t('away_sold', { n, c: coins })); guideDid('eggs'); }
   jobsDone(done);
   return { n, coins };
 }
@@ -3130,7 +3131,7 @@ function collectAt(plot) {
   plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
   gameUI.flyEggs(from, r.n, EGG_COLOUR[plot.breed]);
   hint(game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }));
-  jobsDone(r.done);
+  jobsDone(r.done); guideDid('eggs');
 }
 // ---- broody hens and chicks (game.js broodTick): the farm follows the save. A hen whose brood has just begun walks in
 // and settles on the nest; otherwise she's simply there, sitting (sitNow). Hatched: she comes out with her chicks, or
@@ -3390,7 +3391,7 @@ function chickCard(ch) {
 let newsFrom = Infinity, openedAt = 0, AWAY = null, hiddenAt = 0;
 const AWAY_MIN = 3600e3;
 function showNews() {
-  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || DMOVE.id || SHOWDAY || performance.now() < newsFrom) return;
+  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || DMOVE.id || SHOWDAY || GUIDE_UI.intro || performance.now() < newsFrom) return;
   if (AWAY) {
     const sum = game.awaySummary(AWAY.from); AWAY = null;
     if (sum.items.length || sum.paused) { holdBird(null); henOff(); gameUI.awayCard(sum, { collectAll: () => collectAll() }); return; }
@@ -3980,7 +3981,7 @@ function endShowDay() {
 }
 // ---- Today's jobs (release 1 step 9c; game.js jobs): the clipboard up top; a job done: Collect its reward
 function jobsSheet() {
-  holdBird(null); henOff();
+  holdBird(null); henOff(); guideDid('jobs');
   game.lookedAtJobs(); gameUI.refresh();
   gameUI.jobsSheet({ claim: i => {
     const r = game.claimJob(i); if (!r) return;
@@ -4288,7 +4289,7 @@ function duckHouseOn() {
 // ---- the shop, and a decoration's card
 function shopSheet(tab = 'decor') {
   if (DMOVE.id || MOVE.plot) return;
-  holdBird(null); henOff();
+  holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
 function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id) }; }
@@ -4547,6 +4548,7 @@ function sowWheat() {
   const done = () => { FIELD.hold = null; tickWheat(); };
   if (farmerWork('sow', done)) hint(game.t('wheat_sowing', { farmer: farmerName(), c: r.cost }));
   else { done(); seedsOver(); hint(game.t('wheat_sowed', { c: r.cost })); }
+  guideDid('sow');
   tickWheat();
   return true;
 }
@@ -4660,6 +4662,92 @@ function fieldBubbles(w, h) {
     const txt = '🍯 ' + n; if (FIELD.hbub.textContent !== txt) FIELD.hbub.textContent = txt;
     Hv.d.box.getCenter(bubV); bubV.y = Hv.d.box.max.y + 0.05; put(FIELD.hbub, true, bubV.applyMatrix4(Hv.d.m));
   } else FIELD.hbub.hidden = true;
+}
+// ---- the first day (release 1 step 10; Audrey: "Scenes from the 3D farm"): on a new farm, four pictures first (gameui
+// introCards: your forever flock, eggs and chicks, land and new breeds, shows and honey), then a guide: a little card
+// under the top bar ("First day · 1 of 5") saying what to do, and a bouncing arrow over where to tap: collect the first egg,
+// cuddle a hen (then ♥ Cuddle in her card), sow the wheat field (its sign, then Sow), Today's jobs, the shop. Each done:
+// a few coins ("Well done! +10 coins"), the last a bonus. Something off screen: "Show me" brings the view there (the
+// player's tap; the view never moves by itself). Skip: no more guide. Hidden while a card's open (unless the arrow points
+// into it), while something's being moved, inside a coop, on show day
+const GUIDE_UI = { card: null, n: null, text: null, show: null, arrow: null, on: false, intro: false, k: '' };
+const GUIDE_OFF = params.has('q') && !params.has('firstday');      // (the automated tests' pages: none, unless asked for)
+function guideEls() {
+  if (GUIDE_UI.card) return GUIDE_UI;
+  const G = GUIDE_UI, mk = (tag, cls) => { const e = document.createElement(tag); e.className = cls; return e; };
+  G.card = mk('section', 'gguide'); G.card.hidden = true;
+  G.n = mk('div', 'gguide-n'); G.text = mk('p', 'gguide-t');
+  const row = mk('div', 'gguide-row'); G.show = mk('button', 'gguide-show'); G.show.type = 'button';
+  const skip = mk('button', 'gguide-skip'); skip.type = 'button';
+  G.show.addEventListener('click', () => { const T = guideTarget(game.guideStep()); if (T && T.world) focusOn(T.world.x, T.world.z, Math.min(view.size, sideways() ? 2.6 : 3.2)); });
+  skip.addEventListener('click', () => { game.guideSkip(); G.on = false; G.card.hidden = true; G.arrow.hidden = true; });
+  row.append(G.show, skip); G.card.append(G.n, G.text, row); document.body.append(G.card);
+  G.arrow = mk('div', 'garrow'); G.arrow.hidden = true;
+  G.arrow.innerHTML = '<svg viewBox="0 0 34 40"><path d="M10 2h14v18h8L17 38 2 20h8z" fill="#f2c94c" stroke="#7a5200" stroke-width="2.4" stroke-linejoin="round"/></svg>';
+  document.body.append(G.arrow);
+  G.skipEl = skip;
+  return G;
+}
+// where to tap for a step: a thing on screen (el), or a place on the farm (world), and what the card says
+function guideTarget(k) {
+  if (!k) return null;
+  const sheetEl = sel => gameUI.isOpen ? document.querySelector('.gsheet ' + sel) : null, plot = gamePlots()[0], v = new THREE.Vector3();
+  if (k === 'eggs') {
+    const B = plot && bubbleFor(plot);
+    if (B && plot.gc.eggs > 0) { const G = nestOf(plot); v.set(G.win[0], G.win[2] + 0.1, 0.52); plot.frame.localToWorld(v); return { el: B.eggs.hidden ? null : B.eggs, world: v, say: 'guide_eggs' }; }
+    if (plot) { const G = nestOf(plot); v.set(G.seat[0], G.win[2], 0.5); plot.frame.localToWorld(v); }
+    return { world: plot ? v : null, say: 'guide_eggs_wait', none: true };
+  }
+  if (k === 'cuddle') {
+    if (gameUI.kind === 'bird') { const e = sheetEl('.gcuddle'); return { el: e, say: 'guide_cuddle_card', inSheet: true }; }
+    const hen = plot && plot.birds.find(b => b.kind === 'hen' && b.root.visible && !b.asleep);
+    if (hen) { hen.root.getWorldPosition(v); v.y += hen.hitY + 0.35; }
+    return { world: hen ? v : null, say: 'guide_cuddle' };
+  }
+  if (k === 'sow') {
+    if (gameUI.kind === 'wheat') return { el: sheetEl('.gbtn'), say: 'guide_sow_card', inSheet: true };
+    const W = DEC.items.wheat; if (W) v.set(0, 0.5, 1.0).applyMatrix4(W.d.m);
+    return { el: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub : null, world: W ? v : null, say: 'guide_sow' };
+  }
+  if (k === 'jobs') return { el: document.querySelector('.gbar .gjobs'), say: 'guide_jobs' };
+  if (k === 'shop') return { el: document.querySelector('.gbar .gpill:not(.glvl)'), say: 'guide_shop' };
+  return null;
+}
+// each frame: the card and the arrow
+function tickGuide() {
+  if (!GAME_MODE || !game.data) return;
+  const G = guideEls(), k = game.guideStep();
+  const off = () => { G.card.hidden = true; G.arrow.hidden = true; };
+  if (!k || !G.on || inside.open || MOVE.plot || DMOVE.id || SHOWDAY || gameUI.kind === 'intro' || (replay && replay.on)) { off(); return; }
+  const T = guideTarget(k);
+  if (!T) { off(); return; }
+  const sheetOpen = gameUI.isOpen;
+  if (sheetOpen && !T.inSheet) { off(); return; }
+  // the card: its words, Show me when the place is off screen
+  let sx = 0, sy = 0, onScreen = false;
+  if (T.el) { const r = T.el.getBoundingClientRect(); sx = r.left + r.width / 2; sy = r.top; onScreen = r.width > 0 && r.bottom > 0 && r.top < innerHeight; }
+  else if (T.world) { bubV.copy(T.world).project(camera); sx = (bubV.x + 1) / 2 * canvas.clientWidth; sy = (1 - bubV.y) / 2 * canvas.clientHeight; onScreen = bubV.z < 1 && sx > 20 && sx < canvas.clientWidth - 20 && sy > 60 && sy < canvas.clientHeight - 20; }
+  const idx = GUIDE.indexOf(k) + 1, nTxt = game.t('guide_n', { n: idx, of: GUIDE.length }), txt = game.t(T.say);
+  if (G.k !== k + T.say) { G.k = k + T.say; G.n.textContent = nTxt; G.text.textContent = txt; G.show.textContent = game.t('guide_show'); G.skipEl.textContent = game.t('guide_skip'); }
+  G.card.hidden = sheetOpen;
+  G.show.hidden = onScreen || !T.world;
+  // the arrow: over the place to tap, bouncing
+  if (onScreen && !T.none) { G.arrow.hidden = false; G.arrow.style.left = sx.toFixed(1) + 'px'; G.arrow.style.top = (sy - 2).toFixed(1) + 'px'; }
+  else G.arrow.hidden = true;
+}
+// a step done (k): its coins, the word after what was said; the last: the bonus
+function guideDid(k) {
+  if (GUIDE_OFF) return;
+  const r = game.guideDid(k); if (!r) return;
+  gameUI.refresh(); gameUI.bumpCoins();
+  hintNext(game.t(r.done ? 'guide_done' : 'guide_did', { c: r.coins }));
+  GUIDE_UI.k = '';
+}
+// the first day starts: the pictures (a new farm), then the guide
+function startFirstDay(isNew) {
+  if (!GAME_MODE || !game.data || !game.guideStep() || GUIDE_OFF) return;
+  if (isNew) { GUIDE_UI.intro = true; holdBird(null); gameUI.introCards(() => {}); }
+  else GUIDE_UI.on = true;
 }
 let saleBub = null;
 function saleBubble() {
@@ -5204,6 +5292,7 @@ window.__farm = {
     wheat: { tap: () => wheatTap(), sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => startDecor('wheat'),
       state: () => { const it = DEC.items.wheat; return { stage: game.wheatStage(), shown: FIELD.shown, hold: FIELD.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },
     away: { at: t => { AWAY = { from: t }; newsFrom = 0; }, pending: () => !!AWAY, collectAll: () => collectAll() },
+    guide: { state: () => ({ step: game.guideStep(), on: GUIDE_UI.on, intro: GUIDE_UI.intro, card: GUIDE_UI.card && !GUIDE_UI.card.hidden ? GUIDE_UI.text.textContent : null, n: GUIDE_UI.card ? GUIDE_UI.n.textContent : null, arrow: GUIDE_UI.arrow && !GUIDE_UI.arrow.hidden ? [parseFloat(GUIDE_UI.arrow.style.left), parseFloat(GUIDE_UI.arrow.style.top)] : null, show: GUIDE_UI.show && !GUIDE_UI.show.hidden }), target: () => { const T = guideTarget(game.guideStep()); return T && { el: T.el ? T.el.className : null, world: T.world ? [T.world.x, T.world.y, T.world.z] : null }; } },
     honey: { tap: () => honeyTap(), n: () => game.honeyAt(), state: () => ({ n: game.honeyAt(), going: FIELD.honey, work: FIELD.work && FIELD.work.kind, frame: FIELD.frameOn, bub: FIELD.hbub && !FIELD.hbub.hidden ? FIELD.hbub.textContent : null }) } },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap

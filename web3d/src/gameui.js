@@ -99,6 +99,7 @@ export class GameUI {
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
+    this.sheet.classList.toggle('gintro', kind === 'intro');
     return this.body;
   }
   close() {
@@ -628,6 +629,28 @@ export class GameUI {
   }
   // a time to wait, in hours and minutes ("3 h 59 min", "25 min")
   dur(ms) { const m = Math.max(1, Math.ceil(ms / 60e3)), h = Math.floor(m / 60), r = m % 60; return h ? this.t('h', { n: h }) + (r ? ' ' + this.t('min', { n: r }) : '') : this.t('min', { n: m }); }
+  // ---- the pictures before the first day (release 1 step 10; Audrey: "Scenes from the 3D farm"): four, one at a time, a
+  // picture made from the game's own farm (intro/1-4.webp), a title and a line or two; Next (a swipe too), Let's go! on the
+  // last, Skip; then done()
+  introCards(done) {
+    const N = 4; let i = 0, x0 = null;
+    const finish = () => { this.introDone = done; this.close(); };
+    const draw = () => {
+      const b = this.open('intro', this.t('intro_' + (i + 1)), true);
+      this.bird = null; this.dim.hidden = true; this.sheet.classList.add('gintro');
+      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + '.webp' + (this.o.bust || '');
+      img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
+      pic.addEventListener('pointerdown', e => { x0 = e.clientX; });
+      pic.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (dx < -40 && i < N - 1) { i++; draw(); } else if (dx > 40 && i > 0) { i--; draw(); } });
+      const dots = el('div', 'gdots'); for (let k = 0; k < N; k++) dots.append(el('span', k === i ? 'on' : ''));
+      b.append(pic, el('p', 'gtext gintro-t', this.t('intro_' + (i + 1) + 'b')), dots);
+      const row = el('div', 'gstick'), next = el('button', 'gbtn', this.t(i < N - 1 ? 'intro_next' : 'intro_go')); next.type = 'button';
+      next.addEventListener('click', () => { if (i < N - 1) { i++; draw(); } else finish(); });
+      const skip = el('button', 'gbtn galt', this.t('intro_skip')); skip.type = 'button'; skip.addEventListener('click', () => finish());
+      row.append(next); if (i < N - 1) row.append(skip); b.append(row);
+    };
+    draw();
+  }
   // a long time away ("2 days 3 h", "9 h 12 min")
   longDur(ms) { const d = Math.floor(ms / 86400e3); if (!d) return this.dur(ms); const h = Math.floor((ms - d * 86400e3) / 3600e3); return (d === 1 ? this.t('days1') : this.t('days', { n: d })) + (h ? ' ' + this.t('h', { n: h }) : ''); }
   // ---- the welcome-back summary (release 1 step 9f): how long you were away, then what's waiting, one line each with

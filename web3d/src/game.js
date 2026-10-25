@@ -115,6 +115,17 @@ const TEXT = {
     away_wheat: 'Your wheat is ripe: tap the field to harvest it', away_wheat_grow: 'Your wheat is growing: ripe in {t}', away_feed: '{coop}: the feeder is empty', away_feed_low: '{coop}: the feeder is low',
     away_show: 'The show results are in: they’re next', away_jobs: 'New jobs for today', away_jobs_ready: '{n} job rewards to collect', away_jobs_ready1: 'A job reward to collect',
     away_collect: 'Collect all eggs ({n})', away_ok: 'Off to the farm', away_sold: '{n} eggs sold · +{c} coins',
+    intro_1: 'Your forever flock', intro_1b: 'Your three Rhode Island Reds are yours for good. Cuddle them: they trust you more, earn stars and lay better eggs.',
+    intro_2: 'Eggs and chicks', intro_2b: 'Each hen lays about two eggs a day: collect them to sell. Now and then a hen raises chicks; grown up, they leave for a new farm and you earn coins.',
+    intro_3: 'Land and new breeds', intro_3b: 'Each level brings a field to buy, and new breeds arrive as trios with their own coop. Put everything where you like.',
+    intro_4: 'Shows, honey and more', intro_4b: 'Win rosettes at shows, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.',
+    intro_next: 'Next', intro_go: 'Let’s go!', intro_skip: 'Skip',
+    guide_n: 'First day · {n} of {of}', guide_skip: 'Skip', guide_show: 'Show me',
+    guide_eggs: 'Collect your first egg: tap the egg over the Red Barn.', guide_eggs_wait: 'Your first egg is on its way: a hen will go in to lay in a moment.',
+    guide_cuddle: 'Give a hen a cuddle: tap a hen, then ♥ Cuddle.', guide_cuddle_card: 'Now tap ♥ Cuddle.',
+    guide_sow: 'Sow your wheat field: tap its sign, then Sow.', guide_sow_card: 'Tap Sow: the wheat will feed your hens.',
+    guide_jobs: 'Today’s jobs: tap the clipboard at the top.', guide_shop: 'Tap your coins: the shop for decorations and outfits.',
+    guide_did: 'Well done! +{c} coins', guide_done: 'Your first day is done! +{c} coins. A new field comes at level 2.',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
     job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
@@ -252,6 +263,17 @@ const TEXT = {
     away_wheat: 'Votre blé est mûr : touchez le champ pour le récolter', away_wheat_grow: 'Votre blé pousse : mûr dans {t}', away_feed: '{coop} : la mangeoire est vide', away_feed_low: '{coop} : la mangeoire est presque vide',
     away_show: 'Les résultats des concours sont arrivés : ils arrivent juste après', away_jobs: 'De nouvelles tâches aujourd’hui', away_jobs_ready: '{n} récompenses de tâches à récupérer', away_jobs_ready1: 'Une récompense de tâche à récupérer',
     away_collect: 'Ramasser les œufs ({n})', away_ok: 'À la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
+    intro_1: 'Votre basse-cour pour toujours', intro_1b: 'Vos trois Rhode Island Red sont à vous pour toujours. Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs.',
+    intro_2: 'Œufs et poussins', intro_2b: 'Chaque poule pond environ deux œufs par jour : ramassez-les pour les vendre. De temps en temps, une poule élève des poussins ; une fois grands, ils partent pour une nouvelle ferme et vous gagnez des pièces.',
+    intro_3: 'Terres et nouvelles races', intro_3b: 'Chaque niveau apporte un terrain à acheter, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez.',
+    intro_4: 'Concours, miel et plus encore', intro_4b: 'Gagnez des cocardes aux concours, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour.',
+    intro_next: 'Suivant', intro_go: 'C’est parti !', intro_skip: 'Passer',
+    guide_n: 'Premier jour · {n} sur {of}', guide_skip: 'Passer', guide_show: 'Montrer',
+    guide_eggs: 'Ramassez votre premier œuf : touchez l’œuf au-dessus de la Grange rouge.', guide_eggs_wait: 'Votre premier œuf arrive : une poule va aller pondre dans un instant.',
+    guide_cuddle: 'Faites un câlin à une poule : touchez une poule, puis ♥ Faire un câlin.', guide_cuddle_card: 'Touchez maintenant ♥ Faire un câlin.',
+    guide_sow: 'Semez votre champ de blé : touchez son panneau, puis Semer.', guide_sow_card: 'Touchez Semer : le blé nourrira vos poules.',
+    guide_jobs: 'Les tâches du jour : touchez le presse-papiers en haut.', guide_shop: 'Touchez vos pièces : la boutique des décorations et des tenues.',
+    guide_did: 'Bravo ! +{c} pièces', guide_done: 'Votre premier jour est terminé ! +{c} pièces. Un nouveau terrain arrive au niveau 2.',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
@@ -450,6 +472,10 @@ export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 30, xp: 12, max: 120 };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
+// ---- the first day's guide (release 1 step 10; Audrey: "Scenes from the 3D farm" for the pictures before it): five
+// little things to do on a new farm, one at a time, each a few coins; the last a bonus
+export const GUIDE = ['eggs', 'cuddle', 'sow', 'jobs', 'shop'];
+export const GUIDE_COINS = 10, GUIDE_BONUS = 30;
 // the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
 export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
 export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
@@ -639,6 +665,9 @@ export function checkFarm(d, now = Date.now()) {
   out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
   // when the farm was last open (for the welcome-back summary): never ahead of now
   out.lastSeen = Number.isFinite(d.lastSeen) && d.lastSeen > 0 ? Math.min(d.lastSeen, now) : now;
+  // the first day's guide: the step reached, done or not (a farm from before it: done)
+  const gd = d.guide && typeof d.guide === 'object' ? d.guide : null;
+  out.guide = gd ? { step: int(gd.step, 0, GUIDE.length, 0), done: gd.done === true || int(gd.step, 0, GUIDE.length, 0) >= GUIDE.length } : { step: GUIDE.length, done: true };
   // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
   // done at most as far as its target and paid only once done
   const jb = d.jobs && typeof d.jobs === 'object' ? d.jobs : null;
@@ -879,6 +908,17 @@ export class Game {
     const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
     return { n, coins, xp };
   }
+  // ---- the first day's guide: the step now ('eggs', 'cuddle', …, or null: done or skipped); a step done (k: only if it's
+  // the one now): its coins, the next; skipped: done, no more coins
+  guideStep() { const G = this.data.guide; return G && !G.done && G.step < GUIDE.length ? GUIDE[G.step] : null; }
+  guideDid(k) {
+    const G = this.data.guide; if (!G || G.done || GUIDE[G.step] !== k) return null;
+    G.step++; let coins = GUIDE_COINS;
+    if (G.step >= GUIDE.length) { G.done = true; coins += GUIDE_BONUS; }
+    this.data.coins += coins; this.save();
+    return { coins, done: G.done, next: G.done ? null : GUIDE[G.step], n: G.step };
+  }
+  guideSkip() { const G = this.data.guide; if (G && !G.done) { G.done = true; this.save(); } }
   // ---- the welcome-back summary (release 1 step 9f; Audrey: "Welcome-back summary (Recommended)"): after time away (from:
   // when the farm was last open), what's waiting: the eggs in the nests (and full nests), chicks hatched and grown, honey,
   // the wheat, feeders empty or low, show results, the day's jobs
@@ -987,7 +1027,7 @@ export class Game {
     this.data.news = [];
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
-    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.lastSeen = now;
+    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
     this.edited = false;
     this.save();
     return this.data;
