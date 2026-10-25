@@ -23,6 +23,8 @@
 // otherwise it waits in Your coops (a red dot on the little barn in the top bar) till the player places it. A breed's
 // coop only once its level has come, and one each.
 //
+// Step 8, the Breed Book: a page for each breed (bookPages), found once its coop is on the farm. Nothing new is saved.
+//
 // Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
 // time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
 // sale), they hatch the next morning (2 or 3 chicks, a good mum 3 or 4) and she raises them; two days later, late in the
@@ -79,6 +81,10 @@ const TEXT = {
     place_now: 'Place their coop now', later: 'Later', later_note: 'It waits for you in Your coops (the little barn up top).', place_btn: 'Place it',
     move_short: 'Move', coops_next: 'At level {n}: {breed}', coops_all: 'Every breed is on your farm!',
     no_room: 'No room on your land for another coop yet: buy the next field.', welcome_trio: 'Welcome, {names}!',
+    book_title: 'Breed Book', book_btn: '📖 Breed Book', book_found: '{n} of {all} breeds found', book_found1: '1 of {all} breeds found',
+    book_on_farm: 'On your farm: {names}', book_at_level: 'Comes at level {n}', book_waiting: 'Their coop is waiting for you in Your coops',
+    book_price: '{p} coins an egg, plus a coin for each star of the hen', book_coop: '{coop}, rustic to start', book_more: 'More pages to come.',
+    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
@@ -160,6 +166,10 @@ const TEXT = {
     place_now: 'Installer leur poulailler', later: 'Plus tard', later_note: 'Il vous attend dans Vos poulaillers (la petite grange en haut).', place_btn: 'L’installer',
     move_short: 'Déplacer', coops_next: 'Au niveau {n} : {breed}', coops_all: 'Toutes les races sont dans votre ferme !',
     no_room: 'Pas encore de place sur votre terrain pour un autre poulailler : achetez le prochain terrain.', welcome_trio: 'Bienvenue, {names} !',
+    book_title: 'Livre des races', book_btn: '📖 Livre des races', book_found: '{n} races trouvées sur {all}', book_found1: '1 race trouvée sur {all}',
+    book_on_farm: 'Dans votre ferme : {names}', book_at_level: 'Arrive au niveau {n}', book_waiting: 'Leur poulailler vous attend dans Vos poulaillers',
+    book_price: '{p} pièces l’œuf, plus une pièce par étoile de la poule', book_coop: '{coop}, rustique pour commencer', book_more: 'D’autres pages à venir.',
+    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
@@ -438,6 +448,17 @@ export class Game {
   waitingCoops() { return Object.keys(BREED_LEVEL).filter(b => this.level >= BREED_LEVEL[b] && !this.data.coops.some(c => c.breed === b)).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]); }
   nextBreed() { const b = Object.keys(BREED_LEVEL).filter(k => BREED_LEVEL[k] > this.level).sort((a, c) => BREED_LEVEL[a] - BREED_LEVEL[c])[0]; return b ? { breed: b, level: BREED_LEVEL[b] } : null; }
   newAt(L, from) { return Object.keys(BREED_LEVEL).filter(b => BREED_LEVEL[b] > from && BREED_LEVEL[b] <= L && !this.data.coops.some(c => c.breed === b)); }
+  // ---- the Breed Book (release 1 step 8): a page for each breed in level order, found once its coop is on the farm (its
+  // birds' names, the rooster first); else the level it comes at, or (its level come) waiting in Your coops. Nothing of it
+  // is saved: it all comes from the coops on the farm and the XP
+  bookPages() {
+    return Object.keys(BREED_LEVEL).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]).map(breed => {
+      const coop = this.data.coops.find(c => c.breed === breed);
+      const names = coop ? this.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name) : [];
+      return { breed, level: BREED_LEVEL[breed], found: !!coop, names, waiting: !coop && this.level >= BREED_LEVEL[breed], price: EGG_PRICE[breed] || 6 };
+    });
+  }
+  bookName(b) { return b === 'sil' ? this.t('book_sil') : this.breedName(b); }        // (the Silkies' page is the white one's: release 2 brings the other colours)
   // a waiting breed's coop and trio, ready to place (not on the farm until placeCoop)
   draftCoop(breed, at) {
     if (!this.waitingCoops().includes(breed)) return null;
