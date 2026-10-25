@@ -1492,18 +1492,18 @@ function penSpec(plot) {
   const FS = pours.reduce((a, b) => off(H(a, FD) - side) <= off(H(b, FD) - side) ? a : b);
   // the hen settles a little in front of him and to his right, under his stroking hand
   const fl = Math.hypot(ahead[0] - CB[0], ahead[1] - CB[1]), fx = (ahead[0] - CB[0]) / fl, fz = (ahead[1] - CB[1]) / fl;
-  const spot = [CB[0] + fx * 0.36 - fz * 0.12, CB[1] + fz * 0.36 + fx * 0.12];
+  const spot = [CB[0] + fx * 0.44 - fz * 0.04, CB[1] + fz * 0.44 + fx * 0.04];      // (clear of his knees as he crouches)
   const base = plot.block || [];
   const P = {
     plot, out,
     in: [W(gx, gz + 0.12), W(IN[0], IN[1]), W(S[0], S[1])], back: [W(S[0], S[1]), W(IN[0], IN[1]), W(gx, gz + 0.12), out],
     toGate: H([gx, gz + 0.6], [gx, gz]), feederAt: W(FS[0], FS[1]), toFeeder: H(FS, FD) - side, clear: W(CLEAR[0], CLEAR[1]),
     throwAt: W(B[0], B[1]), toCorn: H(B, SC), crouchAt: W(CB[0], CB[1]), toHen: H(CB, ahead),
-    enter() { plot.fb = [S[0], S[1], 0.3]; plot.pb = [S[0], S[1], 0]; plot.block = [...base, plot.fb, plot.pb]; plot.farmer = { x: S[0], z: S[1], hen: null }; },
+    enter() { plot.fb = [S[0], S[1], 0.42]; plot.pb = [S[0], S[1], 0]; plot.block = [...base, plot.fb, plot.pb]; plot.farmer = { x: S[0], z: S[1], hen: null }; },      // (the hens keep clear of him: no one through his legs)
     // where he is (and his pail, when he has it: the hens keep out of it too)
     at(pos, pail) {
       if (!plot.farmer) return;
-      v.copy(pos).applyMatrix4(inv); plot.farmer.x = plot.fb[0] = v.x; plot.farmer.z = plot.fb[1] = v.z;
+      v.copy(pos).applyMatrix4(inv); const F = plot.farmer, mx = v.x - F.x, mz = v.z - F.z; F.mv = Math.hypot(mx, mz) > 0.004; if (F.mv) F.dir = Math.atan2(mx, mz); F.x = plot.fb[0] = v.x; F.z = plot.fb[1] = v.z;      // (and which way he's going)
       if (pail) { v.copy(pail).applyMatrix4(inv); plot.farmer.px = plot.pb[0] = v.x; plot.farmer.pz = plot.pb[1] = v.z; plot.pb[2] = 0.2; }
       else { plot.farmer.px = undefined; plot.pb[2] = 0; }
     },
@@ -1521,9 +1521,24 @@ function penSpec(plot) {
     callHen(b) {
       if (!plot.farmer || !b || b.busy()) return null;
       plot.farmer.hen = b; plot.block = [...plot.block, [spot[0], spot[1], 0.22, b]];
-      return b.comeForCuddle(spot, Math.atan2(CB[0] - spot[0], CB[1] - spot[1])) ? () => !b.cuddle || b.cuddle.ready : null;
+      for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - spot[0], o.root.position.z - spot[1]) < 0.4) o.shooFrom(spot[0], spot[1]);      // (anyone sitting where she'll be: up and off)
+      return b.comeForCuddle(spot, Math.atan2(CB[0] - spot[0], CB[1] - spot[1]), [plot.farmer.x, plot.farmer.z])
+        ? () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.root.position.x - spot[0], b.root.position.z - spot[1]) < 0.16) : null;      // (there in front of him: only then is she picked up)
     },
-    letGo(b) { if (b) { b.called = false; if (b.cuddle) b.cuddle.done = true; } },
+    letGo(b) { if (b) { b.called = false; if (b.cuddle) { b.cuddle.carry = null; b.cuddle.done = true; } b.shadowY = undefined; b.root.position.y = 0.015; if (b.rig.shut) b.rig.sleepy(false); } },
+    // lifted k of the way from where she settled (0) into his arms (1): in front of his chest, across his arms with her head
+    // to his left, sitting, her eyes shut once she's up; her shadow stays on the ground
+    lift(b, k, Lf) {
+      const C = b.cuddle; if (!C) return;
+      if (!Lf || k <= 0) { C.carry = null; b.shadowY = undefined; b.root.position.y = 0.015; if (b.rig.shut) b.rig.sleepy(false); return; }
+      const h = Lf.heading, Lp = Lf.pos, hold = v.set(Lp.x + Math.sin(h) * 0.22, 0.69, Lp.z + Math.cos(h) * 0.22).applyMatrix4(inv);
+      const ground = C.from || (C.from = { x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y });
+      const ry = (h + Math.PI / 2) - plot.group.rotation.y, dy = Math.atan2(Math.sin(ry - ground.yaw), Math.cos(ry - ground.yaw));
+      const arc = Math.sin(k * Math.PI) * 0.06;
+      C.carry = { k, x: ground.x + (hold.x - ground.x) * k, y: 0.015 + (hold.y - 0.015) * k + arc, z: ground.z + (hold.z - ground.z) * k, yaw: ground.yaw + dy * Math.min(1, k * 1.4) };
+      b.shadowY = 0.015;
+      b.rig.sleepy(k > 0.9);
+    },
     heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.rig.scale * 0.8; spawnHeart(p); },
   };
   return P;
@@ -1846,7 +1861,7 @@ class Bird {
     return !this.inBlock(x, z, notFarmer);
   }
   inBlock(x, z, notFarmer = false) {
-    for (const o of this.plot.block || []) { if (o[3] === this || (notFarmer && o === this.plot.pb) || (notFarmer === true && o === this.plot.fb)) continue; const dx = x - o[0], dz = z - o[1]; if (dx * dx + dz * dz < o[2] * o[2]) return true; }      // (notFarmer: him and his pail, or 'pail': just that)
+    for (const o of this.plot.block || []) { if (o[3] === this || (notFarmer && o === this.plot.pb) || (notFarmer === true && o === this.plot.fb)) continue; const dx = x - o[0], dz = z - o[1], r = o === this.plot.fb && this.cuddle && !this.cuddle.greet ? 0.3 : o[2]; if (dx * dx + dz * dz < r * r) return true; }      // (notFarmer: him and his pail, or 'pail': just that; the hen he's called may come up close in front of him)
     return false;
   }
   // stepping to (x, z) facing yaw: her breast and beak, ahead of her feet, mustn't go into the house's walls, through the fence
@@ -1856,7 +1871,7 @@ class Bird {
     const reach = 0.22 * this.rig.scale / 0.5, Y = PEN.yard, m = 0.12;
     const px = x + Math.sin(yaw) * reach, pz = z + Math.cos(yaw) * reach;
     if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
-    return !this.inBlock(px, pz);
+    return !this.inBlock(px, pz, this.cuddle && !this.cuddle.greet ? true : false);      // (the hen he's called: her beak may come up to him, he's reaching for her)
   }
   roomAt(x, z) {
     let d = 99;
@@ -2039,8 +2054,12 @@ class Bird {
     if (F && !this.busy() && this !== F.hen && !(this.shooT > 0)) {        // right by him: a few quick steps out of his way
       const p = this.root.position, dx = p.x - F.x, dz = p.z - F.z, d = Math.hypot(dx, dz);
       if (d < 0.42) {
-        const a0 = d > 1e-3 ? Math.atan2(dx, dz) : this.r() * 6.28;
-        for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.2, -2.2]) {
+        let a0 = d > 1e-3 ? Math.atan2(dx, dz) : this.r() * 6.28, das = [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.2, -2.2];
+        if (F.mv && F.dir !== undefined) {         // (he's walking her way: aside, off his line, not on ahead of him to be herded along)
+          const rel = Math.atan2(Math.sin(a0 - F.dir), Math.cos(a0 - F.dir));
+          if (Math.abs(rel) < 1.9) { const s = rel >= 0 ? 1 : -1, d0 = a0 - F.dir; a0 = F.dir; das = [s * 1.57, s * 1.15, s * 2.0, s * 0.8, s * 2.5, -s * 1.57, -s * 2.0, -s * 1.15, ...das.map(x => x + d0)]; }      // (or, hemmed in, any way out)
+        }
+        for (const da of das) {
           const x = F.x + Math.sin(a0 + da) * 0.75, z = F.z + Math.cos(a0 + da) * 0.75;
           if (!this.free(x, z)) continue;
           this.act = null; this.wait = 0; this.then = null; this.eatAt = null; this.route = this.plan([[x, z]]); this.pace = 1.5; this.nextLeg();
@@ -2072,11 +2091,31 @@ class Bird {
     this.eatAt = null; if (C.left > 0) this.feedIn = 0.12 + this.r() * 0.35;
   }
   // the farmer crouched in the pen for a cuddle: she hurries over to `spot` and settles there facing him (face: her heading)
-  comeForCuddle(spot, face) {
+  // up and a few steps away from (cx, cz)
+  shooFrom(cx, cz) {
+    const p = this.root.position, a0 = Math.atan2(p.x - cx, p.z - cz);
+    for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.2, -2.2]) {
+      const x = cx + Math.sin(a0 + da) * 0.7, z = cz + Math.cos(a0 + da) * 0.7;
+      if (!this.free(x, z)) continue;
+      this.act = null; this.wait = 0; this.then = null; this.eatAt = null; this.route = this.plan([[x, z]]); this.pace = 1.5; this.nextLeg(); this.shooT = 0.9;
+      return true;
+    }
+    return false;
+  }
+  comeForCuddle(spot, face, around) {
     if (this.busy()) return false;
     this.cuddle = { spot, face, ready: false, done: false }; this.eatAt = null; this.feedIn = 0;
     this.act = null; this.wait = 0; this.then = { type: 'cuddle', left: 60 };
-    this.route = this.plan([spot]); this.pace = 1.9; this.nextLeg();
+    // (from behind him: round him, wide of his feet, never through him)
+    let route = this.plan([spot]);
+    if (around && route[route.length - 1] !== spot) {
+      const ux = spot[0] - around[0], uz = spot[1] - around[1], ul = Math.hypot(ux, uz) || 1, side = a => { const c = Math.cos(a), s = Math.sin(a); return [around[0] + (ux * c - uz * s) / ul * 0.66, around[1] + (ux * s + uz * c) / ul * 0.66]; };
+      for (const via of [[side(1.15)], [side(-1.15)], [side(2.4), side(1.15)], [side(-2.4), side(-1.15)]]) {
+        if (!via.every(q => this.free(q[0], q[1]))) continue;
+        const r = this.plan([...via, spot]); if (r[r.length - 1] === spot && r.length >= via.length + 1) { route = r; break; }
+      }
+    }
+    this.route = route; this.pace = 1.9; this.nextLeg();
     return true;
   }
   // walk towards (tx, tz): turn first, then step; obey: keep to the yard and round obstacles
@@ -2380,7 +2419,14 @@ class Bird {
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
         const C = this.cuddle, G = C && C.greet; sitGoal = G ? 0 : 1;
-        if (C && !C.done) { this.turnTo(C.face, dt); C.ready = true; if (G) { if (!G.t) heartOver(this); G.t += dt; if (G.t > 2.6) C.done = true; } } else act.left = 0;
+        if (C && !C.done) {
+          const p = this.root.position, off = G || C.carry ? 0 : Math.hypot(C.spot[0] - p.x, C.spot[1] - p.z);
+          if (C.carry) { const K = C.carry; p.set(K.x, K.y, K.z); this.root.rotation.y = K.yaw; }      // (in his arms, or on the way up or down)
+          else if (off > 0.06) {                   // (not quite there yet: the last little steps up to him)
+            const r = this.stepToward(C.spot[0], C.spot[1], dt, 0.8, !(C.stuck > 1.2)); walking = r.walking; C.stuck = r.blocked || C.stuck > 1.2 ? (C.stuck || 0) + dt : 0; sitGoal = 0;
+          } else this.turnTo(C.face, dt);
+          C.ready = off < 0.12; if (G) { if (!G.t) heartOver(this); G.t += dt; if (G.t > 2.6) C.done = true; }
+        } else act.left = 0;
       }
       if (act.type === 'peck') peckGoal = (act.left % 0.55) > 0.24 ? 1 : 0.3;
       if (act.type === 'scratch') {                // two kicks back, a step back, then a look at what turned up
@@ -2611,7 +2657,7 @@ function makeBlob() {
 function separate(flock, dt) {
   const k = Math.min(1, dt * 8);
   for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
-    const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep || (b.leaving && (b.leaving.phase === 'exit' || b.leaving.phase === 'fade'));      // on a scripted walk, in bed, or out of the gate
+    const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep || (b.cuddle && b.cuddle.carry) || (b.leaving && (b.leaving.phase === 'exit' || b.leaving.phase === 'fade'));      // on a scripted walk, in bed, in his arms, or out of the gate
     if (off(flock[i]) || off(flock[j])) continue;
     const a = flock[i].root.position, b = flock[j].root.position;
     const min = flock[i].kind === 'chick' || flock[j].kind === 'chick' ? CHICK_BODY : BODY;
@@ -2620,6 +2666,8 @@ function separate(flock, dt) {
     if (d < 1e-4) { dx = 1; dz = 0; d = 1; } else { dx /= d; dz /= d; }
     const push = (min - Math.min(d, min)) * 0.5 * k;
     const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
+    const lead = q => q.cuddle && !q.cuddle.greet && !q.cuddle.done;      // (the hen on her way up to him for a cuddle: the others make way)
+    if (lead(flock[i]) !== lead(flock[j])) { const o = lead(flock[i]) ? b : a, sg = lead(flock[i]) ? 1 : -1; o.x += dx * push * 2 * sg; o.z += dz * push * 2 * sg; continue; }
     const aFree = flock[i].free(ax, az), bFree = flock[j].free(bx, bz);
     if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
     if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }

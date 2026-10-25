@@ -42,7 +42,18 @@ await cuddleTap();
 let h = await hen(); let ht = await hintT();
 const visit = await p.evaluate(() => { const L = window.__farm.farmer(); return !!(L && ((L.task && L.task.name === 'pen') || (L.pending && L.pending.name === 'pen'))); });
 ok('a cuddle: counted at once (trust 1, a little experience, happy for 6 hours), the card closed, the farmer on his way into the pen', h.trust === 1 && h.exp === 8 && h.happy === 360 && T.done.test(ht) && visit && !(await p.evaluate(() => window.__farm.gameUI().kind)), { h, ht, visit });
-await run(25);
+// the farmer's visit, watched: she comes round to the front of him, he picks her up and holds her (her eyes shut), puts her
+// back down; no bird goes into him (where he is in the pen, against each bird's feet)
+const watch = await p.evaluate(id => { const f = window.__farm, B = f.allBirds.find(x => x.gid === id), P = B.plot; const w = { k: 0, shut: false, front: null, near: 9, own: 9, down: false };
+  for (let i = 0; i < 40 * 30; i++) {
+    window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false);
+    const F = P.farmer; if (!F) continue; const C = B.cuddle, k = C && C.carry ? C.carry.k : 0;
+    if (k > 0 && w.front === null) { B.root.updateWorldMatrix(true, false); const L = f.farmer(), e = B.root.matrixWorld.elements, v = { x: e[12], z: e[14] }, a = Math.atan2(v.x - L.pos.x, v.z - L.pos.z); w.front = Math.round(Math.abs(Math.atan2(Math.sin(a - L.heading), Math.cos(a - L.heading))) * 57.3); }
+    w.k = Math.max(w.k, k); if (k > 0.99 && B.rig.shut) w.shut = true; if (w.k > 0.99 && C && C.done) w.down = B.root.position.y < 0.05;
+    for (const b of P.birds) { if (!b.root.visible || (b.laying && b.laying.inside)) continue; const d = Math.hypot(b.root.position.x - F.x, b.root.position.z - F.z); if (b === B) { if (!k) w.own = Math.min(w.own, d); } else if (d < w.near) { w.near = d; let t = f.farmer().task, nm = []; while (t && t.list) { const c = t.list[t.i]; if (!c || typeof c === 'function') break; nm.push(c.name); t = c; } w.at = [i, nm.join('/'), b.kind, b.act && b.act.type, !!b.route, b.called]; } }
+  }
+  sessionStorage.setItem('__T', window.__T); f.draw(); w.near = +w.near.toFixed(2); w.own = +w.own.toFixed(2); return w; }, HEN);
+ok('the farmer\'s visit: she comes round to his front, he picks her up and holds her (her eyes shut) and puts her down; no bird walks into him', watch.k === 1 && watch.shut && watch.front !== null && watch.front < 25 && watch.down && watch.near >= 0.3 && watch.own >= 0.3, watch);
 t = await card(HEN);
 ok('her card after it: happy for 6 hours, no button, 2 cuddles to Friendly', T.happy.test(t) && T.next2.test(t) && !(await p.evaluate(() => !!document.querySelector('.gsheet .gcuddle'))), t);
 const again = await p.evaluate(id => window.__farm.game().cuddle(id), HEN);
@@ -96,12 +107,12 @@ ok('trusting birds trot to the front fence to greet the farmer when he stops by'
 // a reload keeps it all
 await run(5);
 const keep = await p.evaluate(() => JSON.stringify(window.__farm.game().data.birds.map(b => [b.trust, b.exp, b.happy])));
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 const kept = await p.evaluate(() => ({ b: JSON.stringify(window.__farm.game().data.birds.map(b => [b.trust, b.exp, b.happy])), edited: window.__farm.game().edited }));
 ok('a reload: trust, experience and happy times kept, not flagged', kept.b === keep && !kept.edited, { keep, kept });
 // a save changed outside: happy for days, trust past 15
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.birds[0].happy = window.__T + 5 * 86400e3; raw.d.birds[1].trust = 40; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 const tm = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, happy: Math.round((g.data.birds[0].happy - window.__T) / 3600e3), trust: g.data.birds[1].trust }; });
 ok('a save changed outside (happy for days, trust 40): at most 6 hours and 15, flagged', tm.edited && tm.happy <= 6 && tm.trust === 15, tm);
 ok('no page errors', errs.length === 0, errs);

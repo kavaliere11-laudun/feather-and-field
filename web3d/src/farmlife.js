@@ -258,14 +258,24 @@ export class FarmLife {
         }),
         TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
     } else {
-      // a crouch, she hurries over and settles in front of him, a stroke ("There, there…"), hearts
-      let ready = null, heart = 0.2;
+      // a proper cuddle (Audrey, 25 Oct: "Could you do a proper cuddle?"): a crouch, she hurries over and settles in front of
+      // him; he scoops her up in both hands and stands with her held against his chest, stroking her back and swaying a
+      // little ("There, there…"), hearts floating up, her eyes shut happily; then he crouches and sets her down again
+      // (P.lift: how far up she is, 0 on the ground .. 1 in his arms; where his arms are, from him)
+      let ready = null, heart = 0.3;
+      const sm = u => u * u * (3 - 2 * u), step = (a, b, u) => Math.max(0, Math.min(1, (u - a) / (b - a)));
       L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 8; } },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 12; } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
-        () => ready ? TK.seq('stroking', [TK.say('cuddle'),
-          TK.act('stroke', 4.6, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.low = Math.min(1, u / 0.5) * Math.min(1, (4.6 - u) / 0.4); if (u > heart) { heart += 0.45; P.heart(hen); } })]) : null,
+        () => ready && ready() ? TK.seq('cuddling', [
+          TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
+          TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
+          TK.say('cuddle'),
+          TK.act('hug', 4.8, (W, u, Lf) => { W.pose = 'hold'; W.face = 'cuddle'; W.hug = u; if (P.lift) P.lift(hen, 1, Lf); if (u > heart) { heart += 0.55; P.heart(hen); } }),
+          TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'hold' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 1 - sm(step(0.2, 0.95, u)), Lf); }),
+          () => { if (P.lift) P.lift(hen, 0, null); return null; },
+        ]) : null,
         () => { P.letGo(hen); return null; },
         TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }));
     }
@@ -357,6 +367,10 @@ export class FarmLife {
       if (head) { P.head[0] += head[0]; P.head[1] += head[1]; P.head[2] += head[2]; }
       if (W.waving) { P.shR[0] += 10 * Math.sin(t * 7); P.wrR[0] += 18 * Math.sin(t * 7 + 0.6); }
       if (W.patting) { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); }
+      if (W.hug !== undefined) {                              // her back stroked, a gentle sway from side to side
+        const st = Math.sin(t * 2.4), sw = Math.sin(t * 1.25);
+        P.shR[0] += 7 * st; P.elR[0] += 10 * st; P.wrR[0] += 12 * st; P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
+      }
       if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }
       if (W.pour) { P.shL[1] -= 45 * W.pour; P.elL[1] -= 25 * W.pour; P.wrL[1] += 70 * W.pour; P.chest[1] += 8 * W.pour; }      // the pail tipped

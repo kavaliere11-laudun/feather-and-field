@@ -38,6 +38,11 @@ export const POSES = {
   torch: { shR: [-8, -62, 0], elR: -18, wrR: [0, 10, 0], hand: ['relax', 'hold'] },
   stretch: { shL: [30, -150, 0], elL: -10, shR: [-30, -150, 0], elR: -10, chest: [0, -8, 0], head: [0, -12, 0], hand: ['open', 'open'] },
   carry: { shL: [10, -12, 0], elL: -20, shR: [-6, 0, 0], elR: -8, hand: ['hold', 'relax'] },          // (3D only) the pail carried, as when feeding
+  // (3D only) a proper cuddle: crouched with both arms reaching down and forward to scoop a hen up; then standing with her
+  // held against his chest, the left arm under her, the right hand on her back (farmlife.js: stroking, a gentle sway)
+  scoop: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 24, 0], head: [0, -2, 0],
+    shL: [10, -66, 0], elL: [-15, -22, 0], shR: [-10, -66, 0], elR: [15, -22, 0], hand: ['hold', 'hold'], wrL: [0, 10, 0], wrR: [0, 10, 0] },
+  hold: { head: [-8, 14, 0], chest: [0, -5, 0], shL: [10, -42, 0], elL: [-55, -80, 0], wrL: [0, 0, -15], shR: [-4, -68, 0], elR: [40, -58, 0], wrR: [0, 18, 10], hand: ['relax', 'open'] },
 };
 // faces (farmer.py's FACE): the upper and lower lids' edges (-1..1 of the eye's height), the lids slanted (degrees), where the
 // eyes look, the brows' slant (+ worried, - cross) and height, the mouth, the blush
