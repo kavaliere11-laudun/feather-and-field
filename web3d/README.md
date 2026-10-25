@@ -1728,3 +1728,58 @@ the rules, the Shows sheet and the results; the show day itself comes next.
   word, the sheet and her card say so; no second bird in it); a reload; the next morning (the results card, 1st, the
   prize and XP, her rosette on her card; seen, not again); level 4 (its card brings the County show; not enough coins); a
   save changed outside (an entry before its show, a bird not there, 40 rosettes in a day, a prize of 5000).
+
+## The show ground and the judge (25 Oct 2026, for release 1 step 9: Audrey chose a "show day on the farm")
+
+When a show's results come, a white show tent stands on the farm, the farmer carries the player's bird there, a judge looks
+at each bird in its show pen and pins the rosettes. These are its pieces and a test view; the show's rules, screens and save
+(`game.js`, `gameui.js`) and the scene's choreography (`main.js`) are written separately.
+- **The show ground** (`stylized/showground.py`, `stylized/export_showground.py` writes `showground.glb` + `showground.json`):
+  a white marquee 4.4 x 2.3 m (eaves 2.35 m, two peaks 3.2 m with a gold knob and a pennant each), open along the side
+  that faces the player, a scalloped valance with a red trim, seams on its canvas, its front canvas rolled up, wooden poles,
+  guy ropes with runners and pegs (the front ones running out sideways and back, clear of the open front), bunting along the
+  front; inside, a trestle table under a green pleated cloth with six show pens in a row (inside 0.6 x 0.95 x 0.8 m: room
+  for a Light Brahma rooster, 0.71 m tall; white boards, wire fronts and tops, straw floors with loose straws, a little card
+  on each), close to the open side so the birds show from the game's view under the valance; a sign board on two posts
+  with a little roof (its words are drawn by the browser); the judge's folding table (his clipboard, the rosette box, a cup
+  of tea). The rosettes: 1st red, 2nd blue, 3rd yellow (17 cm across, 230 triangles), the champion's red, white and blue
+  with three longer tails (22 cm, 374 triangles), each built round its pin. Meshes: `show_tent` 9,936 triangles,
+  `show_pens` 4,136, `show_sign` 432, `show_jtable` 848, `show_clipboard` 100 (the one on his table, hidden while he carries
+  his own): 15,452 in all; 460 KB.
+- **`showground.json`** (the show ground's own frame: x across, y up, z towards the player; turned 45 degrees it faces the
+  game's camera, as the decorations): for each pen its middle (`x`) and `front` (z), where its bird stands (`bird`: x, y on
+  the straw, z) and turns (`birdYaw`, a little to the right), its `room`, its rosette `pin` (on the bottom rail of its
+  front, in the middle: the rosette hangs over the table's cloth, never in front of the bird), its `card`, its `door`, where
+  the judge stands to peer in (`judge`, `judgeYaw`) and to pin its rosette (`pinAt`, `pinYaw`), where the farmer stands to
+  put a bird in (`farmer`, `farmerYaw`); `floor`, `top`, `eave`, `valance`; footprints: `tent`, `table`, `signFoot`,
+  `judgeTable` (with where the judge stands behind it, facing the player), the guy ropes' `pegs` and the whole `foot` (for
+  placing it on open grass: x -3.55..3.22, z -2.1..1.94); the open strip in front of the pens (`aisle`) and the `entrance`;
+  the sign's face (`sign`: its middle, size and normal, for its words); each rosette's `pin` (its origin), middle and size.
+- **The judge** (`stylized/character/farmer.py`, look `j`): an older gentleman, so he reads at once as the show's judge from
+  the game's view, next to Arthur's beard and straw hat and Rosie's plait: silver hair, a big white moustache, bushy white
+  brows, little round glasses, a brown felt hat with a dark green band and a pheasant feather, an olive tweed jacket (its
+  check drawn per pixel, as the farmers' shirts) with lapels, buttons, pocket flaps and a mustard handkerchief, a cream
+  shirt and a red tie, grey trousers, brown leather boots. On the farmers' own body and face rig, his clipboard (left hand)
+  and pencil (right hand) hidden until wanted. `export_farmer.py web3d/models j` writes his own `judge.glb` (817 KB,
+  25,788 triangles) + `judge.json` (the farmers' 42 bones, plus his clipboard's and pencil's; where a held thing goes in his
+  hand: `info.j.hold`); `farmer.glb` is untouched (Arthur and Rosie the same to the vertex, checked against the old script).
+- `src/farmer.js`: `addLook()` adds the judge after `initFarmer()`, then `new Farmer(parent, 'j', ...)` drives him like
+  Arthur and Rosie (walks, blinks, looks, mouths); props `clipboard` and `pencil`. New poses: `judge_look` (leaning in to
+  peer into a pen, hands clasped behind his back), `judge_write` (the clipboard flat on his left forearm, writing),
+  `judge_pin` (reaching out with a rosette to a pen's bottom rail), `clap`, `judge_carry` (his clipboard up against his
+  chest, for walking); a new face, `peer` (eyes narrowed, weighing a bird up).
+- `src/showground.js`: `loadShow(loadGLB, loadJSON)` (once, when a show is on); `ShowGround(parent, { x, z, deg, grade })`:
+  the pieces placed, `pen(i)` (its places in the world), `pin(i, kind)` (a rosette on pen i), `hold(judge, kind)` (a
+  rosette in his right hand, by its pin), `reachPin(judge, i)` (moves him so the rosette in his hand is at pen i's pin; then
+  `pin(i, held)` hands it over), `clipboard(on)` (the one on his table), `sign(title, line)` (its words, in the player's
+  language, with a little rosette either side of the line).
+- **`?lineup=show`** (test page): the show ground on open grass beside the village, the line-up's own birds in the pens (a
+  Rhode Island Red, a Buff Orpington, a white Silkie, a Cream Legbar, a Light Brahma hen and rooster), the four rosettes
+  pinned, the judge going through his poses in turn (every 3.5 s: looking into a pen, writing, pinning a rosette, clapping,
+  holding his clipboard, walking along the pens), Arthur standing by, hands on hips. `&pose=judge_write` (or `walk`) holds
+  one, `&pen=N` puts him at pen N, `&lang=fr` the French sign ("Concours avicole"). In `main.js`: the import, `'show'` in the
+  line-up list, the line that makes it, its view, its tick and its place in `clampView` (six lines).
+- `showgroundtest.mjs` (`LANG=fr`, `W`, `H`): the pens, a bird of each breed inside her pen on the straw, the rosettes, the judge's
+  every pose (the clipboard and pencil when wanted, the rosette held and brought to within a centimetre of the pen's pin, the
+  walk), a real tap on a bird in a pen, no page errors. `showshot.mjs` takes pictures (`SHOTS`: views, poses, close-ups).
+
