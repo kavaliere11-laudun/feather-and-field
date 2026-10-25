@@ -196,6 +196,9 @@
   .gros { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; font-size: 14px; color: var(--ink); }
   .gchamp { color: #b1781a; font-weight: 800; margin: 2px 0 0; }
   .gtext.gfound { color: var(--meadow); font-weight: 700; }
+  .gskip { position: fixed; z-index: 7; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); border: 0; border-radius: 999px;
+           padding: 10px 18px; background: rgba(255, 253, 247, 0.93); color: var(--ink); font-weight: 700; font-size: 15px; font-family: inherit; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2); cursor: pointer; }
+  .gskip[hidden] { display: none; }
   .gresult .gcard-h { align-items: flex-start; gap: 10px; } .gresult .gtext { margin: 0; }
   .gdot { position: absolute; top: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #e2412f; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
   .gdot[hidden] { display: none; }
@@ -391,6 +394,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792945611"></script>
+<script src="app.js?v=1792949516"></script>
 </body>
 </html>
