@@ -191,6 +191,29 @@
   .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
   .gcenter { text-align: center; }
+  /* the Breed Book (release 1 step 8): a page for each breed, its picture beside its words (how it comes, its eggs, its
+     coop); not yet on the farm, the picture a dark silhouette. Upright a taller sheet; sideways the card on the right */
+  .gsheet.gbook { max-height: 86%; }
+  html:has(.gsheet.gbook:not([hidden])) #hint { opacity: 0; }              /* (the taller sheet would cut a hint in two) */
+  .gpage { flex-direction: row; align-items: flex-start; gap: 12px; padding: 10px 12px 11px 10px; }
+  .gpic { width: 92px; height: 92px; flex: none; border-radius: 16px; overflow: hidden; display: grid; place-items: center;
+          background: radial-gradient(circle at 50% 80%, #fffbea 0, #f6f1dc 40%, #dbe7c6 100%); box-shadow: inset 0 0 0 1px rgba(63, 143, 78, 0.12); }
+  .gpic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .gpage-no .gpic { background: radial-gradient(circle at 50% 80%, #f8f9f3 0, #e4e9db 100%); box-shadow: inset 0 0 0 1px rgba(30, 52, 38, 0.08); }
+  .gpage-no .gpic img { filter: brightness(0); opacity: 0.62; }
+  .gpage-i { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; padding-top: 1px; }
+  .gpage .gcard-t { font-size: 18px; line-height: 1.15; }
+  .gpage-s { margin: 0 0 2px; font-weight: 800; font-size: 14.5px; line-height: 1.3; color: var(--ink-2); }
+  .gpage-s.gfound { color: var(--meadow); }
+  .gpage-l { display: flex; align-items: flex-start; gap: 7px; font-size: 13.5px; line-height: 1.3; }
+  .gpage-k { color: var(--ink); font-weight: 800; }
+  .gpage .gegg-i { width: 11px; height: 14px; flex: none; margin: 2px 2px 0 1px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+                   background: var(--egg, #b97a4f); box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.13), 0 0 0 1px rgba(30, 52, 38, 0.1); }
+  .gpage-c { width: 15px; height: 15px; flex: none; margin-top: 1px; color: var(--ink-2); }
+  .gpage-c svg { width: 15px; height: 15px; display: block; }
+  .gpage-go { align-self: flex-start; margin-top: 4px; }
+  .gbookbtn { margin-top: 2px; }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
   .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }
   .gcuddle { background: #e0566f; box-shadow: 0 4px 14px rgba(224, 86, 111, 0.35); margin-top: 0; padding: 11px 18px; }
   .ghappy { color: #c4475f; }
@@ -353,6 +376,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792936082"></script>
+<script src="app.js?v=1792941923"></script>
 </body>
 </html>
