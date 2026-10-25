@@ -1851,3 +1851,36 @@ The 2D game's farm jobs made the new game's own (`game.js` `JOBS`, `jobsFor`, `j
   first easy, progress and reward; the dot gone); doing them (each counted, the word, the number 3); Collect (coins and XP,
   Done ✓, the number down, not twice); a reload; midnight (new jobs, the dot); a save changed outside (more than the
   target, paid before done, tomorrow's jobs, a level the farm hasn't had).
+
+## The game, release 1 step 9d: decorations (25 Oct 2026, Audrey: "Decorations and outfits (Recommended)")
+
+The 2D game's "Decorate your farm" made the new game's own (`game.js` `DECOR`, `buyDecor`, `moveDecor`; `gameui.js`
+`shopSheet`, `decorCard`; `main.js` the decorations on the farm, after `clearAway`).
+- **The shop:** tap your coins at the top. The 2D game's eight, each with its picture (`decor/`, the 2D game's own, the
+  same Blender models as the 3D ones), what it brings ("Butterflies come to it."), its price and XP, and "Buy and place";
+  one its level hasn't come for greyed with "Comes at level 13"; not enough coins: "Not enough coins yet"; one on the farm:
+  "On your farm" and Move. Levels and prices (starting values, the balance is step 11): flower bed 3 / 400, bird bath 4 /
+  800, beehives 6 / 1,800, duck house 8 / 3,000, greenhouse 10 / 6,000, windmill 13 / 12,000, bandstand 16 / 20,000,
+  golden cockerel 20 / 40,000; XP a fiftieth of the price. A new level's card says which come with it.
+- **Placing one:** it appears at the nearest good spot to the view (best with nothing to clear, and never shutting off the
+  way to a coop's gate), with its outline on the ground (green, red where it can't go) and the move bar without Turn (they
+  always face you, as in the village): drag it, or tap where it should go; "Put it here" buys it then ("New on the farm:
+  Cottage flower bed! +8 XP"); Cancel costs nothing. Anywhere on your own land: never on a lane or in the water ("Not on a
+  lane or in the water."), off your land ("Only on your own land."), over a building, a coop (or just outside its gate) or
+  another decoration ("Not enough room here."), or shutting off a coop ("It would block the way to a coop."). Trees,
+  bushes and rocks in the way are cleared in their puff, for good (the save's `cleared`).
+- **On the farm:** each is its own copy (not batched: they come and go and move), in everyone's way (the walking grid, and
+  the coops' spots), no grass, flowers or pebbles through it (`underCoop` covers them too); the farmer stops by them on
+  his rounds; the life round them is the village's (`decorlife.js`: bees, butterflies, the bath's birds, the cockerel's
+  glints, the bandstand's music, a tune when tapped; the windmill's sails turn). Tap one: its card, Move (moved like
+  placing it, "Cottage flower bed: moved!"). A tap goes to whichever is in front, a decoration or a coop's house.
+- **The duck house** goes straight onto the pond where the village has it ("Buy · 3,000"), the view to it, and the ducks
+  sleep in it from that night (`duckFlock.setHouse`, its raft kept clear by whoever swims).
+- **The save:** `decor` ({ id, x, z } on the quarter-metre; the duck house just { id }): each known one once, only from its
+  level, a spot on the map; the farm then makes sure each stands where one can (a spot that's no good any more: the
+  nearest good one).
+- `dectest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the shop (eight, pictures loaded, five to buy, three greyed);
+  Buy and place (the spot, green, no Turn, nothing paid); off your land (red, why); Cancel (nothing paid or there); Put it
+  here (paid, saved, in the grid's way, no grass, the word, its butterflies); tapped (its card, Move); moved; the bird
+  bath, the beehives and the duck house (the ducks' house); a reload; a save changed outside (one twice, one not known,
+  one before its level, a spot off the map). `decshow.mjs OUTDIR`: all eight on a level-20 farm, a picture of each.

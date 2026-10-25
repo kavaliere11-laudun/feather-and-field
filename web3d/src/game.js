@@ -105,6 +105,10 @@ const TEXT = {
     dec_buy: 'Buy and place · {c}', dec_buy_pond: 'Buy · {c}', dec_level: 'Comes at level {n}', dec_broke: 'Not enough coins yet', dec_owned: 'On your farm', dec_move: 'Move', dec_xp: '+{xp} XP',
     dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_way: 'It would block the way to a coop.',
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
+    shop_decor: 'Decorations', shop_outfits: 'Outfits', outfits_note: 'New clothes for {farmer}. Each one gives XP when you buy it.',
+    of_classic: 'Classic', of_market: 'Market day', of_garden: 'Garden party', of_winter: 'Winter woollies', of_rodeo: 'Rodeo', of_show: 'Show day',
+    ofd_classic: 'Straw hat and a checked shirt.', ofd_market: 'Tweed flat cap and a blue checked shirt.', ofd_garden: 'Flowery sun hat and a yellow gingham shirt.', ofd_winter: 'Bobble hat and a green jumper.', ofd_rodeo: 'Cowboy hat, chambray shirt and a neckerchief.', ofd_show: 'Top hat, white shirt and a prize rosette.',
+    out_buy: 'Buy and wear · {c}', out_wear: 'Wear', out_wearing: 'Wearing', out_bought: '{farmer} tries on the {name} outfit! +{xp} XP', out_worn: '{farmer} is wearing the {name} outfit.', out_new: 'New outfit for {farmer}: {names}',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
     job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
@@ -219,6 +223,10 @@ const TEXT = {
     dec_buy: 'Acheter et placer · {c}', dec_buy_pond: 'Acheter · {c}', dec_level: 'Arrive au niveau {n}', dec_broke: 'Pas encore assez de pièces', dec_owned: 'Dans votre ferme', dec_move: 'Déplacer', dec_xp: '+{xp} XP',
     dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
+    shop_decor: 'Décorations', shop_outfits: 'Tenues', outfits_note: 'De nouveaux habits pour {farmer}. Chacun rapporte de l’XP à l’achat.',
+    of_classic: 'Classique', of_market: 'Jour de marché', of_garden: 'Garden-party', of_winter: 'Lainages d’hiver', of_rodeo: 'Rodéo', of_show: 'Jour de concours',
+    ofd_classic: 'Chapeau de paille et chemise à carreaux.', ofd_market: 'Casquette en tweed et chemise à carreaux bleus.', ofd_garden: 'Chapeau fleuri et chemise vichy jaune.', ofd_winter: 'Bonnet à pompon et pull vert.', ofd_rodeo: 'Chapeau de cow-boy, chemise en chambray et foulard.', ofd_show: 'Haut-de-forme, chemise blanche et cocarde de champion.',
+    out_buy: 'Acheter et porter · {c}', out_wear: 'Porter', out_wearing: 'Portée', out_bought: '{farmer} enfile la tenue {name} ! +{xp} XP', out_worn: '{farmer} porte la tenue {name}.', out_new: 'Nouvelle tenue pour {farmer} : {names}',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
@@ -397,6 +405,9 @@ export const DECOR = {
   greenhouse: { level: 10, price: 6000 }, windmill: { level: 13, price: 12000 }, bandstand: { level: 16, price: 20000 }, statue: { level: 20, price: 40000 },
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
+// the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
+export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
+export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
 
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
@@ -464,6 +475,9 @@ export function checkFarm(d, now = Date.now()) {
   out.xp = int(d.xp, 0, 1e9, 0);
   const look = d.farmer && d.farmer.look === 'f' ? 'f' : 'm';
   out.farmer = { look, name: cleanName(d.farmer && d.farmer.name) };
+  // the outfits bought (known ones, once each, from their level) and the one worn (one bought, or the classic)
+  const fo = d.farmer && Array.isArray(d.farmer.outfits) ? d.farmer.outfits.filter((x, i, a) => OUTFITS[x] && x !== 'classic' && a.indexOf(x) === i && levelOf(out.xp) >= OUTFITS[x].level) : [];
+  if (fo.length) { out.farmer.outfits = fo; out.farmer.outfit = fo.includes(d.farmer.outfit) ? d.farmer.outfit : 'classic'; }
   // the land: the first fields in order, at most one a level (a farm's own purchases never go further)
   const land = Array.isArray(d.land) ? d.land : [];
   out.land = Array.from({ length: Math.max(1, Math.min(land.length, levelOf(out.xp), FIELDS)) }, (_, i) => i);
@@ -743,6 +757,24 @@ export class Game {
   // the trees, bushes and rocks cleared where something was put (the village's own ids, each once)
   cleared(list) { for (const k of list) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k); }
   decorName(id) { return this.t('dec_' + id); }
+  // ---- the farmer's outfits: bought (and put on at once), worn
+  outfitOwned(id) { return id === 'classic' || (this.data.farmer.outfits || []).includes(id); }
+  outfitNext(id) { return OUTFITS[id] && !this.outfitOwned(id) && this.level >= OUTFITS[id].level; }
+  outfitWorn() { return this.data.farmer.outfit || 'classic'; }
+  buyOutfit(id) {
+    const O = OUTFITS[id]; if (!O || !this.outfitNext(id) || this.data.coins < O.price) return null;
+    const F = this.data.farmer;
+    this.data.coins -= O.price; const xp = outfitXp(id); this.data.xp += xp;
+    (F.outfits || (F.outfits = [])).push(id); F.outfit = id;
+    this.save();
+    return { price: O.price, xp };
+  }
+  wearOutfit(id) {
+    if (!OUTFITS[id] || !this.outfitOwned(id)) return false;
+    const F = this.data.farmer; if (!F.outfits) { if (id === 'classic') return true; return false; }
+    F.outfit = id; this.save(); return true;
+  }
+  outfitName(id) { return this.t('of_' + id); }
   // ---- daily jobs: today's (new at midnight), progress as things are done (job(k, n)), the reward collected with a tap
   jobs(now = Date.now()) {
     const day = dayKey(now), J = this.data.jobs;
@@ -806,7 +838,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], decor: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
@@ -814,6 +846,7 @@ export class Game {
     this.data.first = { hen: mum.id, t: firstEggAt(now) };
     this.data.news = [];
     this.data.shows = { in: [], res: [], seen: '' };
+    this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
     this.edited = false;
     this.save();
     return this.data;
