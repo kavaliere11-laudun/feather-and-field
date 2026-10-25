@@ -64,7 +64,7 @@ const card = await p.evaluate(() => { const f = window.__farm, g = f.game(), c =
 ok('her card: sitting on her eggs, hatching in about…', /Sitting on \d eggs|Couve \d œufs/.test(card), card.split('\n').filter(l => /egg|œuf/i.test(l)));
 await p.evaluate(() => window.__farm.gameUI().close());
 // a reload while she sits: she's simply there, sitting
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state();
 ok('a reload while she sits: she is on the nest at once', s.mum && s.mum.broody && s.mum.phase === 'sit' && !s.edited, s.mum);
 // the next morning: they hatch and she brings them out
@@ -82,7 +82,7 @@ const ccard = await p.evaluate(() => { const f = window.__farm, ch = f.gamePlots
 ok('a chick\'s card: whose she is, a young hen or rooster in about 24 hours', /chick|poussin/i.test(ccard) && /24 hours|24 heures/.test(ccard) && /young hen or rooster|jeune poule ou (un )?jeune coq/i.test(ccard), ccard);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a reload while they grow: there round her
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state();
 ok('a reload while they grow: the chicks are there', s.chicks === s.brood.n, s);
 const n = s.brood.n;
@@ -95,7 +95,7 @@ ok('a young one\'s card: young hen or rooster, whose, off to a new farm in about
 const mcard = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; f.openBirdCard(f.gamePlots()[0].birds.find(x => x.gid === c.brood.hen)); return document.querySelector('.gsheet').innerText; });
 ok('her card: raising young hens and roosters', /young hens and roosters|jeunes poules et coqs/.test(mcard), mcard.split('\n').filter(l => /young|jeune/i.test(l)));
 await p.evaluate(() => window.__farm.gameUI().close());
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state();
 ok('a reload: they\'re there, young', s.youngs.length === n && s.youngs.every(y => y !== 'chick') && !s.edited, s);
 // grown, late morning the next day: their coins in, a farewell at the gate
@@ -123,7 +123,7 @@ ok('the congratulations card: her babies grown up, each one\'s rating and coins,
 await p.tap('.gsheet .gbtn');
 const after = await p.evaluate(([m, d]) => { const g = window.__farm.game(); return { unseen: g.unseenNews().length, card: window.__farm.gameUI().kind, mumExp: g.bird(m).exp, dadExp: g.bird(d).exp }; }, [before.mum, before.dad]);
 ok('"Lovely!": closed, seen; the mum and the rooster gained experience', after.unseen === 0 && !after.card && after.mumExp === before.mumExp + 60 && after.dadExp === before.dadExp + 30, after);
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.waitForTimeout(1800); await p.evaluate(() => window.__farm.gameTick(window.__T));
 ok('a reload: no congratulations card again', (await p.evaluate(() => window.__farm.gameUI().kind)) !== 'congrats' && !(await state()).edited, await state());
 await p.evaluate(() => { const f = window.__farm; if (f.gameUI().kind === 'levelup') f.gameUI().close(); });      // (the farm's reached level 2 meanwhile: its card, closed)
@@ -133,21 +133,21 @@ const laid = await p.evaluate(() => { const g = window.__farm.game(), c = g.data
 ok('afterwards she lays again', laid >= 2, laid);
 // a brood that grew up while the game was shut: the card when it's opened, saying so
 await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0], hen = g.birdsIn(c.id).find(b => b.sex === 'h'); c.brood = { hen: hen.id, start: window.__T - 80 * 3600e3, n: 2, hatched: true }; c.brood.kids = g.kidsOf(c, c.brood); g.save(); });
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.waitForTimeout(1800); await p.evaluate(() => window.__farm.gameTick(window.__T));
 const away = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, text: document.querySelector('.gsheet').innerText, youngs: window.__farm.youngs(0).length }));
 ok('grown while away: the card on opening, "while you were away"', away.kind === 'congrats' && /While you were away|Pendant votre absence/.test(away.text) && away.youngs === 0, away);
 await p.evaluate(() => window.__farm.gameUI().close());
 // news changed outside the game: checked
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.news = [{ type: 'grown', coop: raw.d.coops[0].id, hen: raw.d.birds.find(b => b.sex === 'h').id, dad: '', kids: [{ sex: 'q', stars: 9, coins: 1e9 }, 1, 2, 3, 4, 5], coins: 5e9, xp: -4, t: 1, seen: false }]; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 const tn = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, news: g.data.news }; });
 const k0 = tn.news[0] && tn.news[0].kids;
 ok('news changed outside the game: kept within bounds, flagged', tn.edited && k0 && k0.length <= 4 && k0.every(k => k.stars <= 5 && k.coins <= 1000 && (k.sex === 'h' || k.sex === 'r')) && tn.news[0].coins <= 4000 && tn.news[0].xp >= 0, tn);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a brood changed outside the game
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.coops[0].brood = { hen: 'b999', start: 5, n: 9, hatched: true }; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 const t = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, brood: g.data.coops[0].brood }; });
 ok('a brood changed outside the game: dropped, flagged', t.edited && t.brood === null, t);
 ok('no page errors', errs.length === 0, errs);

@@ -492,6 +492,7 @@ export class Game {
     return [['r', pers[0]], ['h', pers[1]], ['h', pers[2]]].map(([sex, p]) => {
       const b = { id: this.id('b'), name: pick(sex === 'r' ? ROO_NAMES : HEN_NAMES), sex, breed, pers: p, coop: coopId, since: now, exp: 0, trust: 0 };
       if (sex === 'h') b.laid = now;
+      b.happy = 0;
       return b;
     });
   }
