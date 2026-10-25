@@ -49,7 +49,7 @@ await p.evaluate(() => document.querySelector('.gsheet .gbtn').click()); await r
 await p.waitForTimeout(1200); await run(0.3);
 const after = await p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, eggs: g.data.coops[0].eggs }; });
 const w = await p.evaluate(() => document.getElementById('hint').textContent);
-ok('"Collect all eggs (n)": the card closes, the eggs sold, the word', (fr ? /Ramasser tous les œufs \(\d+\)/ : /Collect all eggs \(\d+\)/).test(btn) && (await kind()) !== 'away' && after.eggs === 0 && after.coins > before.coins && (fr ? /œufs vendus/ : /eggs sold/).test(w), { btn, before, after, w });
+ok('"Collect all eggs (n)": the card closes, the eggs sold, the word', (fr ? /Ramasser les œufs \(\d+\)/ : /Collect all eggs \(\d+\)/).test(btn) && (await kind()) !== 'away' && after.eggs === 0 && after.coins > before.coins && (fr ? /œufs vendus/ : /eggs sold/).test(w), { btn, before, after, w });
 await shot('2_collected');
 // the page shown again after two hours
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); window.__T += 2 * 3600e3; f.deco.away.at(window.__T - 2 * 3600e3); });

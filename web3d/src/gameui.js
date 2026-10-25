@@ -645,8 +645,10 @@ export class GameUI {
       row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
     }
     if (sum.items.length) b.append(list);
-    if (sum.eggs) { const c = el('button', 'gbtn', this.t('away_collect', { n: sum.eggs })); c.type = 'button'; c.addEventListener('click', () => h.collectAll()); b.append(c); }
-    const ok = el('button', 'gbtn' + (sum.eggs ? ' galt' : ''), this.t('away_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close()); b.append(ok);
+    const row = el('div', 'gstick gstick-wrap');      // (always in sight, the card scrolling under them)
+    if (sum.eggs) { const c = el('button', 'gbtn', this.t('away_collect', { n: sum.eggs })); c.type = 'button'; c.addEventListener('click', () => h.collectAll()); row.append(c); }
+    const ok = el('button', 'gbtn' + (sum.eggs ? ' galt' : ''), this.t('away_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close()); row.append(ok);
+    b.append(row);
   }
   // ---- the wheat field (tapped, not ripe): how far it's grown and when it's ripe, what it gives, the grain in store; Sow
   // (h.sow) or, ripe, Harvest (h.harvest); Move the field (h.move)

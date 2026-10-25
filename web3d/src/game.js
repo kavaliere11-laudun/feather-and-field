@@ -247,7 +247,7 @@ const TEXT = {
     away_hatched: '{name} a fait éclore {n} poussins', away_grown: 'Les poussins de {name} ont grandi : leur carte arrive', away_honey: '{n} pots de miel dans les ruches', away_honey1: 'Un pot de miel dans les ruches',
     away_wheat: 'Votre blé est mûr : touchez le champ pour le récolter', away_wheat_grow: 'Votre blé pousse : mûr dans {t}', away_feed: '{coop} : la mangeoire est vide', away_feed_low: '{coop} : la mangeoire est presque vide',
     away_show: 'Les résultats des concours sont arrivés : ils arrivent juste après', away_jobs: 'De nouvelles tâches aujourd’hui', away_jobs_ready: '{n} récompenses de tâches à récupérer', away_jobs_ready1: 'Une récompense de tâche à récupérer',
-    away_collect: 'Ramasser tous les œufs ({n})', away_ok: 'Aller à la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
+    away_collect: 'Ramasser les œufs ({n})', away_ok: 'À la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
