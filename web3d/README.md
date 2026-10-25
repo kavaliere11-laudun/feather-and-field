@@ -1984,3 +1984,21 @@ The 2D game's "While you were away" made the new game's own (`game.js` `awaySumm
 - `awaytest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): a fresh farm (none); back after 9 hours (the card, how long,
   the eggs, honey, ripe wheat, the empty feeder); Collect all eggs (sold, the word); the page back after two hours (again);
   back after 20 minutes (none); a last-seen time ahead of now (checked, flagged).
+
+## The game, release 1 step 9g: the farm code (25 Oct 2026, the last of step 9)
+
+The 2D game's farm code made the new game's own (`game.js` `makeFarmCode`, `readFarmCode`, `farmCode`, `loadCode`;
+`gameui.js` `settings`).
+- **Settings → 🔑 Your farm code:** "Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on
+  another phone, or after clearing Safari, to carry on where you left off." "Copy my farm code" copies it (on iPhone the
+  clipboard is handed a promise of the code straight from the tap) and shows it too, to select by hand if copying isn't
+  allowed. A box to paste a code into, and "Load this farm" (a second tap: "Tap again to replace this farm"): the page
+  opens the farm, "Farm loaded: level 6. Welcome back!" (and the welcome-back summary, if it's been a while).
+- **The code:** the save as the phone keeps it (the farm and its seal), gzipped where the phone can (`FF3-`, else plain
+  `FF2-`), base64. A pasted one is read (prefix, size, characters, unpacked, a farm the save check accepts), written as it
+  came, and checked when the farm opens like any save: one edited by hand is flagged, its names cleaned. A broken one:
+  "That farm code doesn't work. Copy it again, all of it." One from the first game (`FF0-`/`FF1-`): "That code is from the
+  first Feather & Field: this new farm starts fresh." (Audrey chose a fresh start.)
+- `codetest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the card; Copy (copied, shown, the word); the farm changed,
+  the code loaded (as it was, the word, not flagged); a broken code; a first-game code; one edited by hand (flagged, names
+  cleaned).

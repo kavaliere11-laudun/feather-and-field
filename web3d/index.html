@@ -266,6 +266,13 @@
   .gaway-r.gwarn { color: #8a2d1d; }
   .gaway-i { width: 26px; flex: none; text-align: center; font-size: 19px; }
   .gstick-wrap .gbtn { white-space: normal; line-height: 1.15; }
+  /* the farm code (release 1 step 9g) */
+  .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
+  .gcodebox[hidden] { display: none; }
+  .gcode .gcode-load { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+  .gcode .gcode-load.gdanger { background: var(--barn); color: #fff; box-shadow: none; }
+  .gcodebox::placeholder { font-family: inherit; color: var(--ink-2); }
   .gdecnew .gnote { margin: 4px 0 0; }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
   .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }

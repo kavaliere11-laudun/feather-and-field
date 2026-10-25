@@ -694,6 +694,37 @@ export class GameUI {
     }
     langRow.append(chips); b.append(langRow);
     b.append(el('p', 'gnote', this.t('saved_here')));
+    // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of
+    // the code rather than waiting for it); shown to select by hand if copying isn't allowed; paste one and load it (two
+    // taps: it replaces this farm)
+    const card = el('div', 'gcard gcode'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🔑'), el('span', 'gcard-t', this.t('code_t'))); card.append(hd, el('p', 'gnote', this.t('code_how')));
+    const copy = el('button', 'gbtn gsmallbtn gcode-copy', this.t('code_copy')); copy.type = 'button'; card.append(copy);
+    const shown = el('textarea', 'gcodebox gcode-out'); shown.readOnly = true; shown.rows = 3; shown.hidden = !this.codeShown; shown.value = this.codeShown || ''; shown.setAttribute('aria-label', this.t('code_t'));
+    shown.addEventListener('focus', () => shown.select()); card.append(shown);
+    copy.addEventListener('click', async () => {
+      let copied = false; const pc = g.farmCode();
+      try {
+        if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) await navigator.clipboard.write([new ClipboardItem({ 'text/plain': pc.then(c => new Blob([c], { type: 'text/plain' })) })]);
+        else await navigator.clipboard.writeText(await pc);
+        copied = true;
+      } catch (e) { try { await navigator.clipboard.writeText(await pc); copied = true; } catch (e2) { /* (shown to copy by hand) */ } }
+      this.codeShown = await pc; shown.value = this.codeShown; shown.hidden = false;
+      if (this.o.say) this.o.say(this.t(copied ? 'code_copied' : 'code_select'));
+    });
+    const paste = el('textarea', 'gcodebox gcode-in'); paste.rows = 3; paste.placeholder = this.t('code_paste'); paste.setAttribute('aria-label', this.t('code_paste'));
+    paste.autocomplete = 'off'; paste.setAttribute('autocapitalize', 'off'); paste.spellcheck = false; paste.value = this.codeDraft || '';
+    paste.addEventListener('input', () => { this.codeDraft = paste.value; });
+    let loadSure = false;
+    const load = el('button', 'gbtn gsmallbtn gcode-load', this.t('code_load')); load.type = 'button';
+    load.addEventListener('click', async () => {
+      if (!paste.value.trim()) return;
+      if (!loadSure) { loadSure = true; load.textContent = this.t('code_load_sure'); load.classList.add('gdanger'); setTimeout(() => { loadSure = false; load.textContent = this.t('code_load'); load.classList.remove('gdanger'); }, 4000); return; }
+      const r = await g.loadCode(paste.value);
+      if (!r) { if (this.o.say) this.o.say(this.t('code_bad')); return; }
+      if (r.old) { if (this.o.say) this.o.say(this.t('code_old')); return; }
+      this.codeDraft = ''; if (this.o.loaded) this.o.loaded();
+    });
+    card.append(paste, load, el('p', 'gnote', this.t('code_note'))); b.append(card);
     if (g.edited) b.append(el('p', 'gnote gwarn', this.t('settings_edited')));
     let sure = false;
     const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button';

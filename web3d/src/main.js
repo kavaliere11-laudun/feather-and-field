@@ -321,7 +321,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -411,6 +411,7 @@ async function start() {
   if (GAME_MODE) syncLand(true);
   if (GAME_MODE) {
     openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move'));
+    try { if (sessionStorage.getItem('ff3d.loaded')) { sessionStorage.removeItem('ff3d.loaded'); hint(game.t('code_loaded', { n: game.level })); } } catch (e) { /* */ }      // (a farm code just loaded)
     if (!welcome && game.data.lastSeen && openedAt - game.data.lastSeen >= AWAY_MIN) AWAY = { from: game.data.lastSeen };      // (away a while: the summary first)
     gameTick(Date.now(), true);                            // (the eggs laid while away, at once)
   }

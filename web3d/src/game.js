@@ -129,6 +129,10 @@ const TEXT = {
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
     settings_version: 'Version {v}',
     saved_here: 'Your farm is saved on this phone.',
+    code_t: 'Your farm code', code_how: 'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.',
+    code_copy: 'Copy my farm code', code_paste: 'Paste a farm code here', code_load: 'Load this farm', code_load_sure: 'Tap again to replace this farm', code_note: 'Loading a farm replaces the one on this phone.',
+    code_copied: 'Farm code copied. Paste it into Notes to keep it safe.', code_select: 'Here is your farm code: select it all and copy it.', code_bad: 'That farm code doesn’t work. Copy it again, all of it.',
+    code_old: 'That code is from the first Feather & Field: this new farm starts fresh.', code_loaded: 'Farm loaded: level {n}. Welcome back!',
     loading: 'Loading your farm…',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
@@ -262,6 +266,10 @@ const TEXT = {
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
     settings_version: 'Version {v}',
     saved_here: 'Votre ferme est enregistrée sur ce téléphone.',
+    code_t: 'Le code de votre ferme', code_how: 'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez.',
+    code_copy: 'Copier le code de ma ferme', code_paste: 'Collez un code de ferme ici', code_load: 'Charger cette ferme', code_load_sure: 'Touchez encore pour remplacer cette ferme', code_note: 'Charger une ferme remplace celle de ce téléphone.',
+    code_copied: 'Code copié. Collez-le dans Notes pour le garder.', code_select: 'Voici le code de votre ferme : sélectionnez-le en entier et copiez-le.', code_bad: 'Ce code ne fonctionne pas. Copiez-le à nouveau, en entier.',
+    code_old: 'Ce code vient du premier Feather & Field : cette nouvelle ferme repart de zéro.', code_loaded: 'Ferme chargée : niveau {n}. Bon retour !',
     loading: 'Chargement de votre ferme…',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
@@ -445,6 +453,35 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
 export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
 export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
+
+// ---- the farm code (release 1 step 9g; the 2D game's, made the new game's own): the whole save as it's kept on the phone
+// (the farm and its seal), packed small (gzip where the phone can), to copy into Notes and paste into the game on another
+// phone or after clearing Safari. FF3- packed, FF2- plain (the first game's are FF0-/FF1-). Loading one goes the way every
+// save does: written as it came, then checked when the farm opens, and an edited one flagged like any other
+const b64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+async function squeeze(bytes, how) {
+  const cs = how === 'in' ? new CompressionStream('gzip') : new DecompressionStream('gzip');
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer());
+}
+export async function makeFarmCode(raw) {
+  const bytes = new TextEncoder().encode(JSON.stringify(raw));
+  if (typeof CompressionStream === 'function') return 'FF3-' + b64(await squeeze(bytes, 'in'));
+  return 'FF2-' + b64(bytes);
+}
+// a pasted code: { raw } (the save, not yet checked), { old: true } (the first game's), or null
+export async function readFarmCode(code, now = Date.now()) {
+  code = String(code || '').replace(/\s+/g, '');
+  if (/^FF[01]-/.test(code)) return { old: true };
+  if (code.length < 20 || code.length > 3e6 || !/^FF[23]-[A-Za-z0-9+/=]+$/.test(code)) return null;
+  try {
+    let bytes = unb64(code.slice(4));
+    if (code[2] === '3') { if (typeof DecompressionStream !== 'function') return null; bytes = await squeeze(bytes, 'out'); }
+    const raw = JSON.parse(new TextDecoder().decode(bytes));
+    if (!raw || typeof raw !== 'object' || !raw.d || typeof raw.d !== 'object' || typeof raw.s !== 'string' || !checkFarm(JSON.parse(JSON.stringify(raw.d)), now)) return null;
+    return { raw: { d: raw.d, s: raw.s } };
+  } catch (e) { return null; }
+}
 
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
@@ -1104,5 +1141,13 @@ export class Game {
     return d;
   }
   wipe() { try { this.store && this.store.removeItem(SAVE_KEY); } catch (e) { /* */ } this.data = null; }
+  // the farm code for this farm (as saved on the phone, its seal with it); a pasted one put in its place (the page then
+  // opens it again: checked as it loads)
+  async farmCode() { this.save(); let raw = null; try { raw = JSON.parse(this.store.getItem(SAVE_KEY) || 'null'); } catch (e) { raw = null; } return makeFarmCode(raw || { d: this.data, s: seal(JSON.stringify(this.data)) }); }
+  async loadCode(code) {
+    const r = await readFarmCode(code); if (!r || r.old) return r;
+    try { this.store.setItem(SAVE_KEY, JSON.stringify(r.raw)); } catch (e) { return null; }
+    return r;
+  }
   onChange(f) { this.listeners.push(f); }
 }
