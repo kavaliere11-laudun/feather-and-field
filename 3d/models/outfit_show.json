@@ -1,0 +1,45 @@
+{
+ "id": "show",
+ "meshes": {
+  "m": [
+   "outfit_show"
+  ],
+  "f": [
+   "outfit_show",
+   "outfit_show_hair_f"
+  ]
+ },
+ "hide": [
+  "hat"
+ ],
+ "shirt": {
+  "kind": "plain",
+  "col": "#fbfaf6"
+ },
+ "band": "#c8372d",
+ "ribbon": {
+  "f": {
+   "joint": "headc",
+   "from": [
+    175,
+    9,
+    11
+   ],
+   "to": [
+    147,
+    10,
+    7
+   ]
+  }
+ },
+ "stats": {
+  "outfit_show": {
+   "tris": 3238,
+   "verts": 1653
+  },
+  "outfit_show_hair_f": {
+   "tris": 1200,
+   "verts": 602
+  }
+ }
+}

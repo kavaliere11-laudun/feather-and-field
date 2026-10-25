@@ -1,0 +1,45 @@
+{
+ "id": "rodeo",
+ "meshes": {
+  "m": [
+   "outfit_rodeo"
+  ],
+  "f": [
+   "outfit_rodeo",
+   "outfit_rodeo_hair_f"
+  ]
+ },
+ "hide": [
+  "hat"
+ ],
+ "shirt": {
+  "kind": "plain",
+  "col": "#8fb3d9"
+ },
+ "band": "#3b2618",
+ "ribbon": {
+  "f": {
+   "joint": "headc",
+   "from": [
+    175,
+    9,
+    11
+   ],
+   "to": [
+    11,
+    5,
+    2
+   ]
+  }
+ },
+ "stats": {
+  "outfit_rodeo": {
+   "tris": 2498,
+   "verts": 1259
+  },
+  "outfit_rodeo_hair_f": {
+   "tris": 1200,
+   "verts": 602
+  }
+ }
+}
