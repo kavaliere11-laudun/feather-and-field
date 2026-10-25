@@ -338,7 +338,7 @@ export class GameUI {
     if (on) { this.mturn.textContent = '↻ ' + this.t('move_turn'); this.mcancel.textContent = this.t('move_cancel'); this.mplace.textContent = '✓ ' + this.t('move_place'); }
   }
   moveStatus(text, ok) { if (!this.mbar) return; this.mtext.textContent = text; this.mtext.classList.toggle('bad', !ok); this.mplace.disabled = !ok; }
-  moveTop() { return this.mbar && !this.mbar.hidden ? this.mbar.getBoundingClientRect().top : innerHeight; }      // (where the bar starts: the farm above it)
+  moveTop() { return this.mbar && !this.mbar.hidden ? this.mbar.offsetTop : innerHeight; }      // (where the bar starts: the farm above it)
 
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));

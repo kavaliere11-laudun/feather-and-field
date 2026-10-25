@@ -3584,7 +3584,14 @@ function startMove(p) {
   if (farmLife && farmLife.task && farmLife.task.name === 'coop') farmLife.task = null;      // (he was off to watch them: something else)
   gameUI.moveBar(true, { turn: () => { MOVE.moved = true; moveTo(MOVE.at.x, MOVE.at.z, (MOVE.at.deg + 90) % 360, true); }, cancel: () => endMove(false), place: () => placeCoop() });
   moveTo(MOVE.at.x, MOVE.at.z, MOVE.at.deg, true);
-  focusOn(p.centre.x, p.centre.z, Math.max(view.size, sideways() ? 3.4 : 4.4));      // (the player's tap: room round it in view)
+  const size = Math.max(view.size, sideways() ? 3.4 : 4.4), v = viewAbove(p.centre.x, p.centre.z, size);
+  focusOn(v[0], v[1], size);                                // (the player's tap: room round it in view, above the bar)
+}
+// where the view's middle goes so that (x, z) is in the middle of the farm above the bar
+function viewAbove(x, z, size) {
+  const H = canvas.clientHeight, dy = (H - Math.min(H, gameUI.moveTop())) / 2, k = dy * 2 * size / Math.max(1, H) / PITCH_SIN;
+  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion); up.y = 0; up.normalize();
+  return [x - up.x * k, z - up.z * k];
 }
 let FOOT_TEX = null;
 function footMark() {
@@ -4237,6 +4244,7 @@ window.__farm = {
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
   nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id) }), underCoop: (x, z, m) => underCoop(x, z, m),
   screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },
+  viewAbove: (x, z, size) => viewAbove(x, z, size),
   penOut: i => { const P = penSpec(gamePlots()[i]); return P && P.out; }, grassIn: i => { const c = game.data.coops[i], m = new THREE.Matrix4(), v = new THREE.Vector3(); let n = 0; for (const g of VGRASS) for (let k = 0; k < g.count; k++) { g.getMatrixAt(k, m); v.setFromMatrixPosition(m); const [lx, lz] = inSpot(c, v.x, v.z); if (rectGap(FOOT, lx, lz) <= 0) n++; } return n; }, coopAt: i => { const g = gamePlots()[i].group; return [g.position.x, g.position.z, Math.round(g.rotation.y / DEG)]; }, navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
