@@ -125,7 +125,8 @@ const after = await p.evaluate(([m, d]) => { const g = window.__farm.game(); ret
 ok('"Lovely!": closed, seen; the mum and the rooster gained experience', after.unseen === 0 && !after.card && after.mumExp === before.mumExp + 60 && after.dadExp === before.dadExp + 30, after);
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.waitForTimeout(1800); await p.evaluate(() => window.__farm.gameTick(window.__T));
-ok('a reload: no card again', !(await p.evaluate(() => window.__farm.gameUI().kind)) && !(await state()).edited, await state());
+ok('a reload: no congratulations card again', (await p.evaluate(() => window.__farm.gameUI().kind)) !== 'congrats' && !(await state()).edited, await state());
+await p.evaluate(() => { const f = window.__farm; if (f.gameUI().kind === 'levelup') f.gameUI().close(); });      // (the farm's reached level 2 meanwhile: its card, closed)
 // she lays again
 await jump(at(next(4) + 'T19:30:00+00:00'));
 const laid = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return c.eggs; });
