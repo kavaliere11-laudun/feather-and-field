@@ -182,7 +182,22 @@
   @media (prefers-reduced-motion: reduce) { .glevelbig { animation: none; } }
   .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
   /* Your coops: the little barn in the top bar (a red dot: a new breed's coop waiting), the sheet's rows */
-  .gcoops { position: relative; }
+  .gcoops, .gshows { position: relative; }
+  /* Shows (release 1 step 9): the rosette in the top bar, the shows' cards, a bird's rosettes, the results */
+  .gros-i { display: inline-grid; width: 24px; height: 24px; flex: none; } .gros-i svg { width: 100%; height: 100%; display: block; }
+  .gros-big { width: 32px; height: 32px; }
+  .gshow .gcard-h { gap: 8px; } .gshow .gbtn { margin-top: 2px; }
+  .gchance { margin: 2px 0 0; font-weight: 700; }
+  .gshowrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(40, 60, 30, 0.1); padding-top: 6px; margin-top: 4px; }
+  .gshowrow .gchance { font-weight: 600; font-size: 14px; }
+  .glink { align-self: flex-start; background: none; border: 0; padding: 4px 0; margin: 0; color: var(--meadow); font-weight: 700; font-size: 14.5px; font-family: inherit; text-decoration: underline; cursor: pointer; }
+  .ghow { background: #f3f6ea; } .ghow .gnote { margin: 0; }
+  .grosrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .grostier { min-width: 72px; font-weight: 700; font-size: 14px; color: var(--ink-2); }
+  .gros { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; font-size: 14px; color: var(--ink); }
+  .gchamp { color: #b1781a; font-weight: 800; margin: 2px 0 0; }
+  .gtext.gfound { color: var(--meadow); font-weight: 700; }
+  .gresult .gcard-h { align-items: flex-start; gap: 10px; } .gresult .gtext { margin: 0; }
   .gdot { position: absolute; top: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #e2412f; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
   .gdot[hidden] { display: none; }
   .gnewcoop { background: #fff3cf; }
@@ -377,6 +392,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792941923"></script>
+<script src="app.js?v=1792945611"></script>
 </body>
 </html>
