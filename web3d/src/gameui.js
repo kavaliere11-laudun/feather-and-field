@@ -71,6 +71,7 @@ export class GameUI {
   close() {
     if (this.sheet.hidden) return;
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
+    if (this.kind === 'levelup' && this.levelShown) { this.g.seenLevel(); this.levelShown = 0; }
     this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
@@ -273,6 +274,44 @@ export class GameUI {
     const lo = xpFor(L), hi = xpFor(L + 1);
     const bar = el('div', 'gbar-xp'); const fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * (d.xp - lo) / Math.max(1, hi - lo)) + '%'; bar.append(fill);
     b.append(bar, el('p', 'gtext', this.t('level_xp', { xp: d.xp - lo, need: hi - lo, next: L + 1 })), el('p', 'gnote', this.t('level_how')));
+    // the land: how much, and what the next level brings
+    const n = g.landNext(), lc = el('div', 'gcard'), lh = el('div', 'gcard-h');
+    lh.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', d.land.length === 1 ? this.t('land_count1') : this.t('land_count', { n: d.land.length })));
+    lc.append(lh, el('p', 'gtext', !n ? this.t('land_all') : g.level >= n.level ? this.t('land_new', { c: n.price }) : this.t('level_next_land', { n: n.level })));
+    b.append(lc);
+  }
+  // ---- a new level: what it brings (the next patch of land for sale; onShow: the view to it, the player's tap)
+  levelUpCard(L, sale, onShow) {
+    const body = this.open('levelup', '🎉 ' + this.t('level_up', { n: L }));
+    this.bird = null; this.levelShown = L;
+    body.append(el('p', 'gsub', this.t('level_up_sub')));
+    const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    if (sale) {
+      const c = el('div', 'gcard'), h = el('div', 'gcard-h');
+      h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('level_new')));
+      c.append(h, el('p', 'gtext', this.t('land_new', { c: sale.price })));
+      body.append(c);
+      const go = el('button', 'gbtn', this.t('land_show')); go.type = 'button';
+      go.addEventListener('click', () => { this.close(); if (onShow) onShow(); });
+      body.append(go);
+    } else {
+      const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close()); body.append(ok);
+    }
+  }
+  // ---- a patch of land for sale: buy it (onBuy), or not enough coins yet; or one of your own, bare and ready
+  landCard(n, onBuy) {
+    const g = this.g, body = this.open('land', this.t('land_title'));
+    this.bird = null;
+    body.append(el('p', 'gtext', this.t('land_body')));
+    const broke = g.data.coins < n.price, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('land_broke', { c: n.price }) : this.t('land_buy', { c: n.price }));
+    go.type = 'button'; go.disabled = broke;
+    go.addEventListener('click', () => { if (!go.disabled) onBuy(); });
+    body.append(go);
+  }
+  ownLandCard() {
+    const body = this.open('land', this.t('land_mine'));
+    this.bird = null;
+    body.append(el('p', 'gtext', this.t('land_mine_body')));
   }
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));

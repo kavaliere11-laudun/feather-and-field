@@ -924,7 +924,7 @@ function buildPlots(nCoops) {
     scene.add(g);
     // (the game: a coop where the player has one, the rest of their land bare, and the land they don't own yet just grass)
     const gc = GAME_MODE ? game.data.coops.find(c => c.plot === i) : null;
-    const kind = GAME_MODE ? (gc ? 'coop' : game.data.land.includes(i) ? 'land' : 'none') : i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale';
+    const kind = GAME_MODE ? (gc ? 'coop' : game.data.land.includes(i) ? 'land' : 'none') : i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale';      // (the game's patch for sale: syncLand)
     const plot = { index: i, group: g, birds: [], kind, centre: new THREE.Vector3(p.pos[0], 0, p.pos[2]) };
     plots.push(plot);
     if (plot.kind === 'coop') {
@@ -960,7 +960,8 @@ function buildPlots(nCoops) {
       }
       for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
       allBirds.push(...plot.birds);
-    } else if (plot.kind === 'empty' || plot.kind === 'sale') {
+    } else if (plot.kind === 'land') dressPlot(plot, 'land');
+    else if (plot.kind === 'empty' || plot.kind === 'sale') {
       const m = part(plot.kind === 'empty' ? 'plot_empty' : 'plot_sale');
       m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
       g.add(m);
@@ -1283,7 +1284,7 @@ function buildNav() {
     nav.box(inv.copy(m).invert(), box.min.clone().multiplyScalar(1), box.max, GROW / (p.s || 1), wb);
   }
   for (const pl of plots) {
-    if (pl.kind === 'lineup' || pl.kind === 'none' || pl.kind === 'land' || !pl.group) continue;
+    if (pl.kind === 'lineup' || pl.kind === 'none' || pl.kind === 'land' || (GAME_MODE && pl.kind === 'sale') || !pl.group) continue;
     const frame = pl.frame || pl.group; frame.updateWorldMatrix(true, false);
     const lo = pl.kind === 'coop' ? new THREE.Vector3(-1.66, 0, -0.81) : new THREE.Vector3(-1.56, 0, -1.3);
     const hi = pl.kind === 'coop' ? new THREE.Vector3(1.81, 0, 2.55) : new THREE.Vector3(1.82, 0, 1.68);
@@ -2721,6 +2722,13 @@ function tapAt(x, y) {
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
     }
+    // the game: a patch of land, yours or for sale (its card)
+    if (GAME_MODE) for (const p of plots) {
+      if (p.kind !== 'land' && p.kind !== 'sale') continue;
+      nb.min.set(-1.56, 0, -1.3); nb.max.set(1.82, 0.9, 1.68);
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.group.matrixWorld).invert());
+      if (loc.intersectBox(nb, hitP)) { landCard(p); return; }
+    }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);
     if (dc) {
@@ -2805,6 +2813,7 @@ function gameTick(now = Date.now(), force = false) {
   }
   for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
   bubbleText(now);
+  syncLand();
   showNews();
 }
 function gameLaid(b) {                       // her egg is in the straw: into the save
@@ -2846,6 +2855,17 @@ const bubV = new THREE.Vector3();
 function placeBubbles() {
   if (!GAME_MODE) return;
   const w = canvas.clientWidth, h = canvas.clientHeight;
+  { // the patch for sale: "🪧 For sale · 100" over its sign
+    const B = saleBubble(), p = salePlot(), n = p && game.landForSale();
+    if (!p || !n || inside.open) B.hidden = true;
+    else {
+      const txt = '🪧 ' + game.t('bub_sale') + ' · ' + n.price; if (B.textContent !== txt) B.textContent = txt;
+      bubV.set(SIGN_AT[0], SIGN_AT[1] + 0.26, SIGN_AT[2]); p.group.localToWorld(bubV); bubV.project(camera);
+      const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
+      if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
+      else { B.hidden = false; B.style.left = sx.toFixed(1) + 'px'; B.style.top = sy.toFixed(1) + 'px'; }
+    }
+  }
   for (const p of gamePlots()) {
     const B = p.bub; if (!B) continue;
     const put = (e, show, x, y, z) => {
@@ -3131,7 +3151,87 @@ let newsFrom = Infinity, openedAt = 0;
 function showNews() {
   if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || performance.now() < newsFrom) return;
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
-  if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); }
+  if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
+  const L = game.levelNews();                                               // (then a new level's card: what it brings)
+  if (L && !gamePlots().some(p => p.fw)) { holdBird(null); syncLand(); gameUI.refresh(); gameUI.levelUpCard(L, game.landForSale(), () => { const pl = salePlot(); if (pl) focusOn(pl.centre.x, pl.centre.z, Math.min(view.size, sideways() ? 2.2 : 3)); }); }
+}
+// ---- levels and land (release 1 step 5; game.js landForSale, buyLand). The land you own is bare earth with its building
+// lines pegged out and a stack of planks, ready for a coop; the next patch, once your level allows it, is grass with a
+// "For sale" sign and a bubble over it. Tap either for its card; buy it and the sign goes and the earth pops in. One
+// patch at a time, in order (Audrey: "One at a time, in order")
+const SIGN_AT = [-0.9, 0.66, 1.347];                     // (the plot_sale model's board: its front face, middle)
+let signMat = null;
+function signLabel() {
+  if (signMat && signMat.userData.lang === LANG) return signMat;
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const c = cv.getContext('2d');
+  c.fillStyle = '#f6efdc'; c.fillRect(0, 0, 256, 128); c.strokeStyle = '#b8332a'; c.lineWidth = 10; c.strokeRect(8, 8, 240, 112);
+  c.fillStyle = '#b8332a'; c.textAlign = 'center'; c.textBaseline = 'middle'; let f = 58; c.font = `800 ${f}px Nunito, system-ui, sans-serif`;
+  const t = game.t('sale_sign'); while (c.measureText(t).width > 212 && f > 30) { f -= 2; c.font = `800 ${f}px Nunito, system-ui, sans-serif`; }
+  c.fillText(t, 128, 68);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  signMat = new THREE.MeshLambertMaterial({ map: tex }); signMat.userData.lang = LANG; nightGrade(signMat);
+  return signMat;
+}
+// a patch's look: 'land' (yours, bare), 'sale' (for sale) or 'none' (just grass); pop: it springs up
+function dressPlot(plot, kind, pop = false) {
+  if (plot.dress) { plot.dress.removeFromParent(); plot.dress = null; }
+  plot.kind = kind;
+  if (kind === 'land' || kind === 'sale') {
+    const g = plot.dress = new THREE.Group();
+    const m = part(kind === 'land' ? 'plot_empty' : 'plot_sale');
+    m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.add(m);
+    if (kind === 'land') {
+      const earth = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 2.5), new THREE.MeshLambertMaterial({ color: '#b98d5c' }));
+      nightGrade(earth.material); earth.rotation.x = -Math.PI / 2; earth.position.y = 0.003; earth.receiveShadow = true; g.add(earth);
+    } else {
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.27), signLabel()); label.position.set(...SIGN_AT); g.add(label);
+    }
+    plot.group.add(g);
+    if (pop) { plot.popT = 0; g.scale.setScalar(0.4); }
+    g.updateMatrix(); g.updateMatrixWorld(true);
+  }
+  plot.group.updateMatrixWorld(true);
+  renderer.shadowMap.needsUpdate = true;
+}
+const salePlot = () => plots.find(p => p.kind === 'sale' && GAME_MODE);
+// the patch for sale as the save says: its sign up (once the level allows it), a sign taken down when bought
+function syncLand() {
+  if (!GAME_MODE || !game.data) return;
+  const n = game.landForSale(), want = n ? plots[n.plot] : null;
+  for (const p of plots) if (p.kind === 'sale' && p !== want) dressPlot(p, game.data.land.includes(p.index) ? 'land' : 'none');
+  if (want && want.kind === 'none') { dressPlot(want, 'sale'); wake(500); }
+}
+function landCard(plot) {
+  holdBird(null);
+  if (plot.kind === 'land') { gameUI.ownLandCard(); return; }
+  const n = game.landForSale(); if (!n || n.plot !== plot.index) return;
+  gameUI.landCard(n, () => buyLand(plot));
+}
+function buyLand(plot) {
+  const r = game.buyLand();
+  if (!r || r.broke) return r;
+  gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
+  dressPlot(plot, 'land', true);
+  hint(game.t('land_bought'));
+  syncLand(); wake(1500);
+  return r;
+}
+// each frame: a new patch springing up; the sale bubble's words
+function tickLand(dt) {
+  for (const p of plots) {
+    if (p.popT === undefined || !p.dress) continue;
+    p.popT = Math.min(1, p.popT + dt / 0.5); const u = p.popT, k = 0.4 + 0.6 * (1 - Math.pow(1 - u, 3)) + 0.08 * Math.sin(u * Math.PI);
+    p.dress.scale.setScalar(k); p.dress.updateMatrix(); p.dress.updateMatrixWorld(true);
+    if (u >= 1) { p.dress.scale.setScalar(1); p.dress.updateMatrix(); p.dress.updateMatrixWorld(true); p.popT = undefined; renderer.shadowMap.needsUpdate = true; }
+  }
+}
+let saleBub = null;
+function saleBubble() {
+  if (saleBub) return saleBub;
+  saleBub = document.createElement('button'); saleBub.type = 'button'; saleBub.className = 'gbub gsale'; saleBub.hidden = true;
+  saleBub.addEventListener('click', ev => { ev.stopPropagation(); const p = salePlot(); if (p) landCard(p); });
+  document.body.append(saleBub); return saleBub;
 }
 // a feeder's card, and filling it: the save at once, the farmer bringing the feed (by day, out and about) or straight in
 function feederCard(plot) {
@@ -3574,7 +3674,7 @@ function frame(now) {
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
   tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
-  if (GAME_MODE) { gameTick(); tickChicks(dt); placeBubbles(); }
+  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); placeBubbles(); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -3635,7 +3735,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) tickChicks(dt); } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
@@ -3643,7 +3743,9 @@ window.__farm = {
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; },
-  lastExit: i => gamePlots()[i].lastExit || null, farmExit, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  lastExit: i => gamePlots()[i].lastExit || null, farmExit,
+  // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale
+  landKinds: () => plots.filter(p => p.kind === 'land' || p.kind === 'sale' || p.gc).map(p => p.index + ':' + (p.gc ? 'coop' : p.kind)).join(' '), landCard: i => landCard(plots[i]), buyLand: () => { const p = salePlot(); return p ? buyLand(p) : null; }, salePlot: () => { const p = salePlot(); return p ? p.index : null; }, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);

@@ -1507,3 +1507,31 @@ rate higher and sell for more. Replaces the farmer leading the chicks out of the
   gone; the card (ratings, coins, totals); "Lovely!": seen, the parents' experience up, no card after a reload; she lays
   again; grown while away: the card says so; news and a brood changed outside the game. All pass both ways, both
   languages.
+
+## The game, release 1 step 5: levels and land (25 Oct 2026, Audrey: "Cool next"; she chose "One at a time, in order")
+
+Three small live steps: level-ups, land for sale (this one, both together), then moving a coop. Rules in `game.js`
+(`LAND_ORDER`, `landPrice`, `landForSale`, `buyLand`, `levelNews`), the farm in `main.js` ("levels and land"), the cards
+in `gameui.js`.
+- **Level-ups:** the XP (eggs, chicks) fills the ring as before (`xpFor`: 60 XP for level 2, 257 for 3, 607 for 4...).
+  A new level: its card once ("🎉 Level 2! Your farm is growing.", the number big in a golden ring, "New at this level:
+  a patch of land is for sale: 100 coins", "See the land"), after any congratulations card, never over another card;
+  several levels at once: one card, the latest. The level card (tap the level) now also says how much land is yours and
+  what the next level brings ("At level 3: a patch of land for sale").
+- **Land:** the village's 40 plots are the patches; the farm starts with plot 0 (the coop's). One more can be bought at
+  each level, one at a time, in order (`LAND_ORDER`: the plots by distance from plot 0: 2, 1, 3, 9, 8...), 30 at most;
+  the price `landPrice`: 100 coins for the second, 120, 140... up to 10,000 for the thirtieth (100 × 100^((k−1)/28),
+  rounded). The patch for sale (`syncLand`, once the level allows it): its grass overgrown with bushes and a sign painted
+  "FOR SALE" / "À VENDRE" (the village's `plot_sale`, with a painted board), and a bubble over it ("🪧 For sale · 100").
+  Tap the bubble or the patch: its card ("A patch of land: room for a coop and its pen, yours for good", "Buy for 100
+  coins", or "Not enough coins yet (100)", the button off). Bought: the coins counted down, the overgrowth gives way to
+  bare earth with its building lines pegged out and a stack of planks (the village's `plot_empty`), springing up, and
+  "The new patch of land is yours!"; the next patch's sign goes up when the level allows. Your patch's card: "Bare earth,
+  ready for a coop. New breeds come with the levels." The view moves only when the player taps "See the land".
+- **The save:** `land` (only the first patches in order, at most one a level: anything else is put right and flagged)
+  and `lvSeen` (the last level whose card was shown, at most the level; a farm from before this step owes no card).
+- `landtest.mjs` (`LANG=fr`, `W=874 H=402`): a new farm (level 1, one patch, nothing for sale, what level 2 brings);
+  level 2 (its card once, the bar, the sign and its bubble; a reload: no card again); not enough coins; bought (coins,
+  bare earth, nothing more for sale); level 4 at once (one card, the next patch at 120); a reload; a save changed outside
+  (land in order, one a level, the card mark); a farm from before this step.
+

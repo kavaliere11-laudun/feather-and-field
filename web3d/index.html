@@ -172,6 +172,14 @@
   .gkid-c { display: inline-flex; align-items: center; gap: 4px; min-width: 52px; justify-content: flex-end; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
   .gcoin.gcoin-s { width: 18px; height: 18px; } .gcoin.gcoin-s::after { inset: 5px; }
   .gtotal { margin: 2px 0 0; text-align: center; font: 600 21px var(--display); color: var(--ink); }
+  /* a new level: the number big in a golden ring */
+  .glevelbig { align-self: center; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; margin: 2px 0;
+               background: radial-gradient(circle at 35% 30%, #fff3c4, var(--yolk) 60%, var(--yolk-deep)); box-shadow: inset 0 -3px 0 rgba(120, 80, 0, 0.25), 0 6px 18px rgba(201, 141, 12, 0.35);
+               font: 600 40px var(--display); color: #6b4300; animation: glvpop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  @keyframes glvpop { from { transform: scale(0.3); } to { transform: none; } }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet .glevelbig { width: 64px; height: 64px; font-size: 30px; } }
+  @media (prefers-reduced-motion: reduce) { .glevelbig { animation: none; } }
+  .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
   .gsheet.gcongrats .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }      /* ("Lovely!" always in sight) */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
     /* (sideways the whole height, over the coins: they count up when it's closed) */
