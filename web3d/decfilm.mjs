@@ -38,7 +38,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0`, { wai
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60 * Math.pow(9, 2.1) + 5; g.data.coins = 12000; g.data.lvSeen = g.level; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60 * Math.pow(9, 2.1) + 5; g.data.coins = 12000; g.data.land = [0, 1, 2, 3]; g.data.lvSeen = g.level; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); document.getElementById('hint').classList.remove('on'); f.lookAt(f.view.target.x, f.view.target.z, 3.4); });
 marks.push('farm:' + n); await hold(1.2);
@@ -50,13 +50,17 @@ await hold(2.4);
 marks.push('buy:' + n); await tapEl('.gdec[data-decor="flowers"] .gbtn');
 await hold(1.8);
 // drag it: onto the lane, then a good spot
-const plan = await p.evaluate(() => {
-  const f = window.__farm, s = f.deco.state(), at = s.at;
-  let lane = null;
-  for (let r = 1; r < 8 && !lane; r += 0.5) for (let a = 0; a < 6.28 && !lane; a += 0.3) { const x = at.x + Math.cos(a) * r, z = at.z + Math.sin(a) * r, S = f.deco.spot('flowers', x, z); if (S.why === 'dec_bad_lane') lane = { x, z }; }
-  const good = f.deco.free('flowers', at.x + 1.5, at.z - 1.5);
-  return { at, lane, good };
+const plan = await p.evaluate(() => {               // (each where the finger stays well inside the screen, above the bar)
+  const f = window.__farm, s = f.deco.state(), at = s.at, bar = document.querySelector('.gmove').offsetTop;
+  const inside = (x, z) => { const q = f.screenOf(x, z, 0.15); return q.x > 90 && q.x < innerWidth - 90 && q.y > 170 && q.y < bar - 90; };
+  let lane = null, good = null;
+  for (let r = 1; r < 8 && !lane; r += 0.5) for (let a = 0; a < 6.28 && !lane; a += 0.3) { const x = at.x + Math.cos(a) * r, z = at.z + Math.sin(a) * r, S = f.deco.spot('flowers', x, z); if (S.why === 'dec_bad_lane' && inside(x, z)) lane = { x, z }; }
+  for (let r = 1.5; r < 9 && !good; r += 0.5) for (let a = 0; a < 6.28 && !good; a += 0.3) { const x = Math.round((at.x + Math.cos(a) * r) * 4) / 4, z = Math.round((at.z + Math.sin(a) * r) * 4) / 4, S = f.deco.spot('flowers', x, z); if (S.ok && !S.clear.length && inside(x, z) && f.deco.way('flowers', x, z)) good = { x, z }; }
+  const dbg = [];
+  for (let r = 2; r < 6; r += 1) for (let a = 0; a < 6.28; a += 0.8) { const x = Math.round((at.x + Math.cos(a) * r) * 4) / 4, z = Math.round((at.z + Math.sin(a) * r) * 4) / 4, S = f.deco.spot('flowers', x, z), q = f.screenOf(x, z, 0.15); dbg.push([x, z, S.why, S.clear.length, Math.round(q.x), Math.round(q.y)]); }
+  return { at, lane, good, bar, dbg };
 });
+if (!plan.good) { console.log(JSON.stringify(plan)); process.exit(1); }
 const scr = (x, z) => p.evaluate(([x, z]) => window.__farm.screenOf(x, z, 0.15), [x, z]);
 let cur = await scr(plan.at.x, plan.at.z);
 await finger(cur.x, cur.y, true); await p.mouse.move(cur.x, cur.y); await p.mouse.down(); await step(1 / FPS); await shot(); await shot();
