@@ -27,6 +27,7 @@ const load = async () => {
 };
 const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.draw()); await p.screenshot({ path: `${SHOTS}/showday_${fr ? 'fr' : 'en'}_${W}x${H}_${name}.png`, timeout: 180000 }); } };
 const kind = () => p.evaluate(() => window.__farm.gameUI().kind);
+const press = async () => { await run(0.3); await p.evaluate(() => document.querySelector('.gsheet .gbtn').click()); };      // (a sheet's first button, once it has slid in)
 const enter = () => p.evaluate(() => { const g = window.__farm.game(), s = g.openShows()[0], x = g.showBirds(s)[0]; g.enterShow(s.id, x.b.id); const b = g.bird(x.b.id); b.exp = Math.max(b.exp, 300); b.trust = 15; g.save(); return x.b.id; });
 const toHour = h => p.evaluate(h => { const d = new Date(window.__T); let t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h).getTime(); if (t <= window.__T) t += 86400e3; window.__T = t; sessionStorage.setItem('__T', window.__T); }, h);
 const state = () => p.evaluate(() => { const f = window.__farm, S = f.showDay(), v = f.view;
@@ -44,7 +45,7 @@ const hen = await enter();
 await p.evaluate(() => { window.__T += 21.2 * 3600e3; sessionStorage.setItem('__T', window.__T); }); await run(2);
 ok('the next morning: "Show day!"', (await kind()) === 'showday', await kind());
 // watch the judging
-await p.tap('.gsheet .gbtn'); await p.waitForTimeout(2500); await run(1.5);
+await press(); await p.waitForTimeout(2500); await run(1.5);
 let s = await state();
 ok('watching: the tent on the show field, the view on it with the whole tent on screen, Skip, the other entries in their pens, the farm\'s farmer and her bird away at the show',
   s.on && s.skip && s.onScreen && s.centreGap < 0.2 && s.birds === 6 && s.farmer === false && s.real === false && !s.inPen, s);
@@ -61,7 +62,7 @@ for (let k = 0; k < 40 && s.on && s.kind !== 'showres'; k++) { await run(1); s =
 await shot('4_rosettes');
 const res = await p.evaluate(() => window.__farm.game().data.shows.res.slice(-1)[0]);
 ok('the judge pinned three rosettes (hers too, as she placed), then the results card', seenPins === 3 && s.kind === 'showres' && (res.place > 3 || s.hers === res.place - 1), { seenPins, s, res });
-await p.tap('.gsheet .gbtn'); await run(1.5);
+await press(); await run(1.5);
 s = await state();
 const view1 = await p.evaluate(() => [window.__farm.view.target.x, window.__farm.view.target.z]);
 const realBack = await p.evaluate(id => window.__farm.allBirds.find(x => x.gid === id).root.visible, hen);
@@ -72,7 +73,7 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await enter();
 await toHour(22); await run(1); await toHour(22); await run(2);              // (the night after it's judged)
 ok('at night: the results card straight away (no show day)', (await kind()) === 'showres' && !(await state()).on, await kind());
-await p.tap('.gsheet .gbtn'); await run(0.5);
+await press(); await run(0.5);
 // watched and skipped
 await enter();
 await toHour(9); await run(2);
@@ -81,7 +82,7 @@ await run(0.3); await p.evaluate(() => document.querySelector('.gsheet .gbtn').c
 await p.evaluate(() => document.querySelector('.gskip').click()); await run(2);
 s = await state();
 ok('Skip: straight to the end, its rosettes pinned, the results card', s.on && s.pinned === 3 && s.kind === 'showres', s);
-await p.tap('.gsheet .gbtn'); await run(1);
+await press(); await run(1);
 ok('closed: the tent gone again', !(await state()).on);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
