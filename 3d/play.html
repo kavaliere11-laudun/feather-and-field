@@ -253,6 +253,13 @@
   .gshop-tabs { margin: 2px 0 0; } .gshop-tabs .gchip { flex: 1; }
   .gout .gpic { padding: 4px 10px 0; }
   .gout-on { box-shadow: inset 0 0 0 2px var(--meadow); }
+  /* the wheat field and the honey (release 1 step 9e): the field's sign, the honey pot over the hives, a jar flying to the coins */
+  .gbub.gwheat { background: #fff7d6; } .gbub.gwheat::after { border-top-color: #fff7d6; }
+  .gbub.gwheat.ripe { background: #ffe38a; } .gbub.gwheat.ripe::after { border-top-color: #ffe38a; }
+  .gbub.ghoney { background: #ffe9b0; } .gbub.ghoney::after { border-top-color: #ffe9b0; }
+  .gjar { position: fixed; z-index: 30; width: 16px; height: 20px; border-radius: 4px 4px 6px 6px; pointer-events: none;
+          background: linear-gradient(#a8742a 0 4px, #f2b230 4px 100%); box-shadow: inset -3px -3px 0 rgba(120, 60, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.25); }
+  .gwheat-s { font-weight: 800; }
   .gdecnew .gnote { margin: 4px 0 0; }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
   .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }
@@ -418,6 +425,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792959991"></script>
+<script src="app.js?v=1792963123"></script>
 </body>
 </html>
