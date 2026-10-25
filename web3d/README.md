@@ -1649,7 +1649,17 @@ the 2D game's cuddles and trust carried over (game-design-v1.md) and made the fa
 - **The save:** each bird's `happy` (till when, at most 6 hours on) and `trust` (0 to 15) as before; each coop's egg
   `bonus` (at most five a egg in its nest). The stars always come from the save's experience and how long the bird's been
   on the farm, never stored.
-- `cuddletest.mjs` (`LANG=fr`, `W=874 H=402`): the card's button; a cuddle (counted, the card, the farmer's visit); no
+- **A proper cuddle** (25 Oct, Audrey: "Please see the clipping. Also the cuddle is not super interactive as the farmer
+  does not even really touch the chicken. Could you do a proper cuddle ?"): he crouches, she comes round to his front
+  (`Bird.comeForCuddle`: from behind him, by points wide of his feet, never through him; the last little steps up to him
+  in her 'cuddle' act; whoever sits where she'll be gets up and off, `shooFrom`, and the others make way for her in
+  `separate`), then he picks her up in both hands (`farmer.js` pose `scoop`), stands with her held to his chest (`hold`:
+  his left arm under her, his right hand stroking her back, `W.hug`), her eyes shut, hearts floating up, "There, there…",
+  and crouches to put her back down where she stood (`penSpec` `lift`: her place from the ground to his arms, `letGo`).
+  The others keep clear of him (`fb` 0.42), and when he walks their way they step aside off his path instead of being
+  herded along in front of him (`penStep`, `farmer.dir`).
+- `cuddletest.mjs` (`LANG=fr`, `W=874 H=402`): the card's button; a cuddle (counted, the card, the farmer's visit: she
+  comes round to his front, he picks her up and holds her with her eyes shut, puts her down, no bird walks into him); no
   second one while happy; 6 hours on; Friendly, Trusting, Best friend (+20 XP), trust stopping at 15; a star from a cuddle;
   stars from time; eggs a coin dearer a star; at night; the greeting at the fence; a reload; a save changed outside.
 
