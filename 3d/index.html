@@ -273,6 +273,7 @@
   .gmove-go:disabled { background: #d8d1bf; box-shadow: none; cursor: default; }
   body.gmoving #hint { opacity: 0; }
   body.gmoving .gbub { pointer-events: none; }
+  body.gmoving .gbar { opacity: 0.55; } body.gmoving .gbar button { pointer-events: none; }      /* (placing or moving something: finish first) */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
     .gmove { left: 50%; right: auto; width: min(560px, 72vw); transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); border-radius: 22px; padding: 10px 12px 12px; gap: 8px; animation: none; }
     .gmove-b { padding: 10px 8px; }
@@ -416,6 +417,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792957928"></script>
+<script src="app.js?v=1792959991"></script>
 </body>
 </html>
