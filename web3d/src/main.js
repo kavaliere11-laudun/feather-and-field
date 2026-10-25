@@ -4480,7 +4480,7 @@ function workSpot(kind) {
 }
 // sowing, harvesting, honey: the farmer's work there (false: he isn't about, it's simply done)
 function farmerWork(kind, done) {
-  if (!farmLife || farmLife.home || farmLife.running) return false;
+  if (!farmLife || farmLife.home || farmLife.running || FIELD.work || farmLife.pending) return false;      // (busy with another: it's simply done)
   const S = workSpot(kind); if (!S) return false;
   let acts, o = {};
   if (kind === 'sow') {                                      // four handfuls of seed over the field
@@ -5166,7 +5166,7 @@ window.__farm = {
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z) => { const S = decorSpot(id, x, z); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
-    items: () => Object.entries(DEC.items).map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
+    items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
     wheat: { tap: () => wheatTap(), sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => startDecor('wheat'),
       state: () => { const it = DEC.items.wheat; return { stage: game.wheatStage(), shown: FIELD.shown, hold: FIELD.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },

@@ -1932,3 +1932,36 @@ neckerchief), Show day (`show`: top hat, white shirt, prize rosette). The shop, 
   straw hat gone, the outfit's hat on its bone, Rosie's hair, the shirt's colours and check, the ribbon), every pose and
   face held in every outfit with the torch and the pail, back to Classic and dressed again, one farmer's outfit never
   changing another's, an outfit not loaded changing nothing; Classic loads no outfit; `&outfit=rodeo` only the rodeo's.
+
+## The game, release 1 step 9e: the wheat field and honey (25 Oct 2026, Audrey: "The wheat field (Recommended)", "On your land from the start (Recommended)", then "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !")
+
+The 2D game's wheat field (Audrey's own idea) made the new game's own, and honey from the beehives (`game.js` `WHEAT`,
+`HONEY`, `sowWheat`, `harvestWheat`, `collectHoney`; `gameui.js` `wheatSheet`; `main.js` after the decorations; the
+farmer's `workAt` in `farmlife.js`).
+- **The field** is yours from the start: a new farm (or a save from before) gets it on its own land a little way out from
+  the farmhouse on the side that faces you, either way round (`settleDecor`); the village's own field further out is gone
+  from the game. It's drawn in its own frame (`wheat(null, w, d, parent)`: the bed and the wheat in four stages, swaying),
+  everyone walks over it, nothing grows through it, and it's moved like a decoration (its card: "Move the field"), with
+  Turn (45° or 135°).
+- **Its sign** (a bubble at its front): "🌾 Sow", "🌱 3 h 59 min", "🌾 Harvest". Tap the field: its card (how it's
+  growing, a bar and the time left, what it gives, the grain in store, Sow · 20 coins, Move the field); a ripe field is
+  harvested at once.
+- **Sowing** (20 coins): ripe 4 hours later; ploughed for the first tenth, the first shoots till 45%, tall and green, then
+  golden. **Harvesting**: 30 grain into store (at most 120) and 12 XP. Both count straight away (the save); by day the
+  farmer hurries over (the middle of its edge most towards you), "Grow tall and golden!" with the pail, scattering four
+  handfuls of seed; or "What a harvest!", crouched and cutting with straw flying, then a golden puff, hooray, and "Wheat
+  harvested: +30 grain for the feeders · +12 XP". The field shows the change once he's done (`FIELD.hold`); at night,
+  or with nobody about, it simply is. A safety: done anyway after 100 s.
+- **The grain** fills the feeders before coins (a unit of grain a unit of feed): the feeder's card says "Your grain from
+  the wheat field: 24 (used first)" and "Fill it with your grain (free)" or "Fill it · 4 coins + your grain".
+- **Honey:** the beehives fill a jar every 8 hours, up to 6 (`HONEY`; the shop says so). A honey pot "🍯 2" over the hives;
+  tap it (or the hives): the farmer goes to the hives ("Thank you, bees!"), bends and lifts out a frame of honey (a wooden
+  frame with golden comb, between his hands), turns to show it, and the jars fly to the coins: "2 jars of honey sold ·
+  +30 coins" (15 coins and 3 XP a jar). No honey yet: the hives' card says when the next jar comes.
+- **The save:** `wheat` ({ x, z, deg 45/135, ripe: 0 or when it's ripe, never further ahead than it takes to grow }),
+  `grain` (0-120), `honey` ({ n 0-6, at never ahead of now }, only with the beehives).
+- `wheattest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the field on your land, the sign, its card; sowing (the
+  coins, the farmer there scattering, then sown); the stages over 4 hours; harvesting (at once in the save, the farmer
+  cutting, the grain and XP); the feeder filled from the grain; the field moved and turned; the honey (two jars after 16
+  hours, the pot, the farmer and the frame, the jars sold); a reload; a save changed outside (ripe too late, grain past
+  the store, honey past the hives, honey without hives).
