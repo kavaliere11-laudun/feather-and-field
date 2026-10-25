@@ -18,6 +18,11 @@
 // where you like: each stands where you put it on your land (its middle and which way it faces), moved whenever you like;
 // trees, bushes and rocks where it goes are cleared, for good.
 //
+// Step 6, new breeds by level: the Buff Orpingtons at level 5, the Silkies (white) at 6, the Cream Legbars at 11, the Light
+// Brahmas at 17, each a forever trio with its own rustic coop. At its level the level card offers to place it at once;
+// otherwise it waits in Your coops (a red dot on the little barn in the top bar) till the player places it. A breed's
+// coop only once its level has come, and one each.
+//
 // Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
 // time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
 // sale), they hatch the next morning (2 or 3 chicks, a good mum 3 or 4) and she raises them; two days later, late in the
@@ -62,6 +67,11 @@ const TEXT = {
     move_land: 'Only on your own land.', move_lane: 'Not on a lane or in the water.', move_room: 'Not enough room here.', move_coop: 'Too close to another coop.',
     move_gate: 'Its gate would be shut in here.', move_turn: 'Turn', move_cancel: 'Cancel', move_place: 'Put it here', moved: 'The coop is in its new place!',
     move_busy: 'Not just now: try again in a moment.',
+    coops_title: 'Your coops', coops_aria: 'Your coops', coops_waiting: 'A new coop is waiting for you', coops_new: 'New!', trio_new: 'New breed: {breed}!',
+    trio_body: 'A rooster and two hens, yours for good, with their own coop. Put it anywhere on your land.',
+    place_now: 'Place their coop now', later: 'Later', later_note: 'It waits for you in Your coops (the little barn up top).', place_btn: 'Place it',
+    move_short: 'Move', coops_next: 'At level {n}: {breed}', coops_all: 'Every breed is on your farm!',
+    no_room: 'No room on your land for another coop yet: buy the next field.', welcome_trio: 'Welcome, {names}!',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
@@ -131,6 +141,11 @@ const TEXT = {
     move_land: 'Seulement sur votre terrain.', move_lane: 'Pas sur un chemin ni dans l’eau.', move_room: 'Pas assez de place ici.', move_coop: 'Trop près d’un autre poulailler.',
     move_gate: 'Sa porte serait bloquée ici.', move_turn: 'Tourner', move_cancel: 'Annuler', move_place: 'Le mettre ici', moved: 'Le poulailler est à sa nouvelle place !',
     move_busy: 'Pas tout de suite : réessayez dans un instant.',
+    coops_title: 'Vos poulaillers', coops_aria: 'Vos poulaillers', coops_waiting: 'Un nouveau poulailler vous attend', coops_new: 'Nouveau !', trio_new: 'Nouvelle race : {breed} !',
+    trio_body: 'Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain.',
+    place_now: 'Installer leur poulailler', later: 'Plus tard', later_note: 'Il vous attend dans Vos poulaillers (la petite grange en haut).', place_btn: 'L’installer',
+    move_short: 'Déplacer', coops_next: 'Au niveau {n} : {breed}', coops_all: 'Toutes les races sont dans votre ferme !',
+    no_room: 'Pas encore de place sur votre terrain pour un autre poulailler : achetez le prochain terrain.', welcome_trio: 'Bienvenue, {names} !',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
@@ -217,6 +232,9 @@ export const FIELDS = 30;
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
 // time); a new farm's first coop in the home field (where the village had its first plot)
 export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
+// the breeds by level (release 1 step 6; game-plan-v2.md): each a forever trio with its own rustic coop, the player's to
+// place; the other Silkie colours come with release 2
+export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
@@ -294,7 +312,7 @@ export function checkFarm(d, now = Date.now()) {
   const seen = new Set();
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed]) continue;
+    if (!BREED_INFO[c.breed] || levelOf(out.xp) < BREED_LEVEL[c.breed] || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come, one each)
     seen.add(c.id);
     // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
@@ -392,6 +410,27 @@ export class Game {
     for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
     this.save();
     return true;
+  }
+  // ---- new breeds: the coops waiting to be placed (their level come, none yet on the farm), the next to come
+  waitingCoops() { return Object.keys(BREED_LEVEL).filter(b => this.level >= BREED_LEVEL[b] && !this.data.coops.some(c => c.breed === b)).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]); }
+  nextBreed() { const b = Object.keys(BREED_LEVEL).filter(k => BREED_LEVEL[k] > this.level).sort((a, c) => BREED_LEVEL[a] - BREED_LEVEL[c])[0]; return b ? { breed: b, level: BREED_LEVEL[b] } : null; }
+  newAt(L, from) { return Object.keys(BREED_LEVEL).filter(b => BREED_LEVEL[b] > from && BREED_LEVEL[b] <= L && !this.data.coops.some(c => c.breed === b)); }
+  // a waiting breed's coop and trio, ready to place (not on the farm until placeCoop)
+  draftCoop(breed, at) {
+    if (!this.waitingCoops().includes(breed)) return null;
+    const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+    return { coop, birds: this.trio(breed, coop.id, false) };
+  }
+  placeCoop(draft, at, clear = []) {
+    const c = draft && draft.coop, X = spotNum(at.x), Z = spotNum(at.z);
+    if (!c || !this.waitingCoops().includes(c.breed) || X === null || Z === null || ![0, 90, 180, 270].includes(at.deg)) return null;
+    const now = Date.now();
+    Object.assign(c, { x: X, z: Z, deg: at.deg, fedAt: now, checked: now }); c.feed = draft.birds.length * FEED_DAYS;       // (its feeder full)
+    for (const b of draft.birds) { b.since = now; if (b.sex === 'h') b.laid = now; }
+    this.data.coops.push(c); this.data.birds.push(...draft.birds);
+    for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
+    this.save();
+    return c;
   }
   stars(b) { return Math.min(MAX_STARS, Math.floor(b.exp / 100)); }          // (how experience is earned: step 6)
   coop(id) { return this.data.coops.find(c => c.id === id); }

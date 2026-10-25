@@ -319,7 +319,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet() });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -421,6 +421,10 @@ function addLampPools() {
     for (const l of L) { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.add(v.x, v.z, 0.75); }
   }
   lampPools.build();
+}
+function rebuildPools() {                                  // (a coop more, or less)
+  if (lampPools.mesh) { lampPools.mesh.removeFromParent(); lampPools.mesh.material.map.dispose(); lampPools.mesh.material.dispose(); lampPools.mesh.geometry.dispose(); lampPools.mesh = null; }
+  lampPools.spots = []; addLampPools();
 }
 function placePools(pl) {                                    // (its coop moved)
   const P = pl.pools, M = lampPools.mesh; if (!P || !M) return;
@@ -954,7 +958,7 @@ function buildPlots(nCoops) {
   batchCoops();
   buildDoors();
 }
-function makePlot(i, pos, deg, gc, r, kind) {
+function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   const g = new THREE.Group();
   g.position.set(pos[0], 0, pos[2]); g.rotation.y = deg * DEG;
   scene.add(g);
@@ -969,10 +973,10 @@ function makePlot(i, pos, deg, gc, r, kind) {
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
     let k = 0;
-    const colour = () => plot.breed === 'sil' ? SILKIE[(silk * 7 + k++) % SILKIE.length] : null;
+    const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
     if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
       const henAt = PEN.hens.filter(h => h.model === 'hen'), rooAt = PEN.hens.find(h => h.model === 'rooster'); let k = 0;
-      for (const gb of game.birdsIn(gc.id)) {
+      for (const gb of trio || game.birdsIn(gc.id)) {
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
         const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', colour(), h.pos, -h.yaw * DEG + Math.PI, r);
         b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
@@ -1636,7 +1640,8 @@ function doorShader(mat) {
 function buildDoors() {
   for (const p of plots) if (p.kind === 'coop') {
     const S = DOORS.styles[p.breed] = DOORS.styles[p.breed] || { meshes: [], plots: [] };
-    p.door = { shut: false, s: 1, goal: 1, i: S.plots.length, badge: null, kind: null };
+    const o = p.door || {};                                 // (made again, a new coop: each door as it was)
+    p.door = { shut: !!o.shut, s: o.s ?? 1, goal: o.goal ?? 1, i: S.plots.length, badge: o.badge || null, kind: o.kind || null };
     S.plots.push(p);
   }
   for (const style in DOORS.styles) {
@@ -1656,6 +1661,11 @@ function buildDoors() {
       scene.add(inst); S.meshes.push(inst);
     }
   }
+}
+function rebuildDoors() {                                  // (a coop more, or less)
+  for (const k in DOORS.styles) for (const m of DOORS.styles[k].meshes) { m.removeFromParent(); m.geometry.dispose(); m.material.dispose(); }
+  DOORS.styles = {};
+  buildDoors();
 }
 function placeDoor(p) {                                    // (its coop moved)
   const S = DOORS.styles[p.breed]; if (!S || !p.door) return;
@@ -2848,7 +2858,7 @@ function gameSheetClosed() { holdBird(null); wake(300); }
 // the game was shut. The feeders' grain goes down with the save's level; bubbles over a nest with eggs and a feeder low.
 const LIVE_LAY = 150e3;
 let gameTickAt = 0, fullNoted = 0;
-const gamePlots = () => plots.filter(p => p.gc);
+const gamePlots = () => plots.filter(p => p.gc && !p.draft);          // (not a new coop still being placed)
 function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
 function canLayNow(b) {
   return b.root.visible && !b.laying && !b.roost && !b.asleep && !b.cuddle && !b.called && !b.held && !b.plot.farmer && !b.plot.fw && !b.plot.nest.by && !b.nightNow(0.25) && !(inside.open && inside.plot === b.plot);
@@ -3215,7 +3225,10 @@ function showNews() {
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const L = game.levelNews();                                               // (then a new level's card: what it brings)
-  if (L && !gamePlots().some(p => p.fw)) { holdBird(null); syncLand(); gameUI.refresh(); gameUI.levelUpCard(L, game.landForSale(), () => { if (SALE.at) focusOn(SALE.at.x, SALE.at.z, Math.min(view.size, sideways() ? 2.4 : 3.2)); }); }
+  if (L && !gamePlots().some(p => p.fw)) {
+    holdBird(null); syncLand(); gameUI.refresh();
+    gameUI.levelUpCard(L, game.landForSale(), () => { if (SALE.at) focusOn(SALE.at.x, SALE.at.z, Math.min(view.size, sideways() ? 2.4 : 3.2)); }, game.newAt(L, game.data.lvSeen || 1), b => startPlace(b));
+  }
 }
 // ---- levels and land (release 1 step 5; game.js landForSale, buyLand; the fields: fields.py, models/fields.json). The
 // farm is split into fields along its lanes and the stream. Your land is the mown farm you know; the rest is wild meadow
@@ -3570,9 +3583,9 @@ function coopCard(p) {
 function startMove(p) {
   if (!p || !p.gc || MOVE.plot) return;
   gameUI.close();
-  if (moveBusy(p)) { hint(game.t('move_busy')); return; }
+  if (!p.draft && moveBusy(p)) { hint(game.t('move_busy')); return; }
   holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
-  MOVE.plot = p; MOVE.from = spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = false; MOVE.nav = false;
+  MOVE.plot = p; MOVE.from = p.draft ? null : spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = !!p.draft; MOVE.nav = false;
   // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
   const ghost = new THREE.Group();
   for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
@@ -3656,7 +3669,7 @@ function tickMove(dt) {
 function placeCoop() {
   const p = MOVE.plot; if (!p || !MOVE.spot || !MOVE.spot.ok) return false;
   const at = MOVE.at, from = MOVE.from;
-  if (at.x === from.x && at.z === from.z && at.deg === from.deg) { endMove(false); return true; }
+  if (from && at.x === from.x && at.z === from.z && at.deg === from.deg) { endMove(false); return true; }
   // its gate must open onto the farm: the walking grid with it there, and what's in its way gone
   const clear = MOVE.spot.clear, ids = new Set(clear.map(o => o.id)), keep = [V.trees, V.bushes, V.rocks];
   V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
@@ -3666,15 +3679,24 @@ function placeCoop() {
     MOVE.spot = { ok: false, why: 'move_gate', clear: [] }; MOVE.foot.material.color.set(FOOT_NO); gameUI.moveStatus(game.t('move_gate'), false);
     return false;
   }
-  game.moveCoop(p.gc.id, at.x, at.z, at.deg, [...ids]);
+  let said = game.t('moved');
+  if (p.draft) {                                            // a new breed's coop: on the farm now, its trio with it
+    const c = game.placeCoop(p.draft, at, [...ids]);
+    if (!c) { [V.trees, V.bushes, V.rocks] = keep; endMove(false); return false; }
+    p.gc = c; delete p.draft;
+    const names = game.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
+    said = game.t('welcome_trio', { names: names.slice(0, -1).join(', ') + ' ' + game.t('and') + ' ' + names[names.length - 1] });
+    gameUI.refresh();
+  } else game.moveCoop(p.gc.id, at.x, at.z, at.deg, [...ids]);
   for (const o of clear) clearAway(o);
   endMove(true);
-  hint(game.t('moved'));
+  hint(said);
   return true;
 }
 function endMove(placed) {
   const p = MOVE.plot; if (!p) return;
-  if (!placed) {
+  if (!placed && p.draft) dropPlot(p);                      // (a new coop not placed after all: back to Your coops)
+  else if (!placed) {
     const f = MOVE.from, g = p.group; g.position.set(f.x, 0, f.z); g.rotation.y = f.deg * DEG; g.updateMatrix(); g.updateMatrixWorld(true);
     p.centre.set(f.x, 0, f.z); placeDoor(p); placePools(p);
   }
@@ -3686,6 +3708,44 @@ function endMove(placed) {
   else { if (nav) rebuildNav(); if (grass) buildGrass(); }
   gameUI.moveBar(false);
   renderer.shadowMap.needsUpdate = true; wake(1000);
+}
+// ---- new breeds (release 1 step 6): Your coops (the little barn in the top bar, a red dot when one's waiting), and
+// placing a waiting breed's coop: it appears at the nearest good spot to the view with its trio, and is moved like any
+// other; put down, it's on the farm for good ("Welcome, Duke, Honey and Clover!"); Cancel, and it waits again
+function coopsSheet() {
+  holdBird(null); henOff();
+  gameUI.coopsSheet({ place: b => { gameUI.close(); startPlace(b); }, move: id => { const p = gamePlots().find(q => q.gc.id === id); gameUI.close(); if (p) startMove(p); } });
+}
+function startPlace(breed) {
+  if (MOVE.plot || inside.open || !game.waitingCoops().includes(breed)) return false;
+  const at = placeSpot(breed); if (!at) { hint(game.t('no_room')); return false; }
+  const d = game.draftCoop(breed, at); if (!d) return false;
+  const p = makePlot(Math.max(-1, ...plots.map(q => q.index)) + 1, [at.x, 0, at.z], at.deg, d.coop, rng(97 + plots.length), 'coop', d.birds);
+  p.draft = d;
+  for (const b of p.birds) b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
+  rebuildDoors(); rebuildPools();
+  startMove(p);
+  return true;
+}
+// where a new coop first appears: the nearest spot to the middle of the view where it can stand, facing you, best with
+// nothing to clear
+function placeSpot(breed) {
+  const self = { breed }, cx = Math.round(view.target.x * 4) / 4, cz = Math.round(view.target.z * 4) / 4;
+  const quick = (x, z) => [[0, 0], [-1.7, -1.6], [1.7, -1.6], [-1.7, 1.6], [1.7, 1.6]].every(([dx, dz]) => owned(fieldAt(x + dx, z + dz)));
+  let best = null;
+  for (let r = 0; r < 40 && !best; r += 1) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n; k++) {
+    const a = k / n * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
+    if (!quick(x, z)) continue;
+    for (const deg of [90, 0]) { const S = coopSpot({ x, z, deg }, self); if (S.ok && (!best || S.clear.length < best.n)) best = { x, z, deg, n: S.clear.length }; if (best && !best.n) break; }
+    if (best && !best.n) break;
+  }
+  return best && { x: best.x, z: best.z, deg: best.deg };
+}
+function dropPlot(p) {
+  for (const b of [...p.birds]) removeBird(b);
+  p.group.removeFromParent();
+  const i = plots.indexOf(p); if (i >= 0) plots.splice(i, 1);
+  rebuildDoors(); rebuildPools();
 }
 // a tree, bush or rock cleared: it shrinks away in a puff of leaves (or dust)
 const CLEARING = [];
@@ -4241,6 +4301,7 @@ window.__farm = {
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
+  place: b => startPlace(b), coopsSheet: () => coopsSheet(), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
   nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id) }), underCoop: (x, z, m) => underCoop(x, z, m),
   screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },

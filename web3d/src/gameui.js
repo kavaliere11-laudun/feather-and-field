@@ -22,8 +22,12 @@ export class GameUI {
     this.coinNum = el('span', 'gnum'); this.coins.append(el('span', 'gcoin'), this.coinNum);
     this.gear = el('button', 'gicon'); this.gear.type = 'button';
     this.gear.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>';
+    // Your coops: a little barn, with a red dot when a new breed's coop is waiting to be placed
+    this.coopsBtn = el('button', 'gicon gcoops'); this.coopsBtn.type = 'button';
+    this.coopsBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
+    this.dot = el('span', 'gdot'); this.dot.hidden = true; this.coopsBtn.append(this.dot);
     this.brand = el('div', 'gbrand');
-    this.bar.append(this.brand, this.lvl, this.coins, this.gear);
+    this.bar.append(this.brand, this.lvl, this.coins, this.coopsBtn, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
@@ -40,6 +44,7 @@ export class GameUI {
     this.lvl.addEventListener('click', () => this.levelSheet());
     this.coins.addEventListener('click', () => this.coinSheet());
     this.gear.addEventListener('click', () => this.settings());
+    this.coopsBtn.addEventListener('click', () => { if (this.o.coops) this.o.coops(); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
     if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');
@@ -59,6 +64,8 @@ export class GameUI {
     this.coinNum.textContent = d.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB');
     this.coins.setAttribute('aria-label', this.t('coins') + ' ' + d.coins);
     this.gear.setAttribute('aria-label', this.t('settings')); this.x.setAttribute('aria-label', this.t('close'));
+    const waiting = this.g.waitingCoops().length > 0;
+    this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
   }
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
@@ -281,12 +288,26 @@ export class GameUI {
     b.append(lc);
   }
   // ---- a new level: what it brings (the next patch of land for sale; onShow: the view to it, the player's tap)
-  levelUpCard(L, sale, onShow) {
+  levelUpCard(L, sale, onShow, trios = [], onPlace = null) {
     const body = this.open('levelup', '🎉 ' + this.t('level_up', { n: L }));
     this.bird = null; this.levelShown = L;
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
-    if (sale) {
+    if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
+      for (const b of trios) {
+        const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
+        h.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('trio_new', { breed: this.g.breedName(b) })));
+        c.append(h, el('p', 'gtext', this.t('trio_body')));
+        body.append(c);
+      }
+      if (sale) { const c = el('div', 'gcard'), h = el('div', 'gcard-h'); h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('land_new', { c: sale.price }))); c.append(h); body.append(c); }
+      const go = el('button', 'gbtn', this.t('place_now')); go.type = 'button';
+      go.addEventListener('click', () => { this.close(); if (onPlace) onPlace(trios[0]); });
+      const later = el('button', 'gbtn galt', this.t('later')); later.type = 'button';
+      later.addEventListener('click', () => this.close());
+      const row = el('div', 'gstick'); row.append(go, later);            // (always in sight, the card scrolling under them)
+      body.append(el('p', 'gnote gcenter', this.t('later_note')), row);
+    } else if (sale) {
       const c = el('div', 'gcard'), h = el('div', 'gcard-h');
       h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('level_new')));
       c.append(h, el('p', 'gtext', this.t('land_new', { c: sale.price })));
@@ -339,6 +360,27 @@ export class GameUI {
   }
   moveStatus(text, ok) { if (!this.mbar) return; this.mtext.textContent = text; this.mtext.classList.toggle('bad', !ok); this.mplace.disabled = !ok; }
   moveTop() { return this.mbar && !this.mbar.hidden ? this.mbar.offsetTop : innerHeight; }      // (where the bar starts: the farm above it)
+
+  // ---- Your coops: a new breed's coop waiting to be placed (h.place(breed)), each coop on the farm (h.move(id)), the next breed
+  coopsSheet(h) {
+    const g = this.g, b = this.open('coops', this.t('coops_title'));
+    this.bird = null;
+    for (const breed of g.waitingCoops()) {
+      const c = el('div', 'gcard gnewcoop'), hd = el('div', 'gcard-h');
+      hd.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('trio_new', { breed: g.breedName(breed) })), el('span', 'gbadge', this.t('coops_new')));
+      c.append(hd, el('p', 'gtext', this.t('trio_body')));
+      const go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(breed));
+      c.append(go); b.append(c);
+    }
+    for (const coop of g.data.coops) {
+      const row = el('div', 'gcard gcooprow'), info = el('div', 'gcoopinfo');
+      info.append(el('span', 'gcard-t', g.coopName(coop)), el('span', 'gnote', g.breedName(coop.breed) + (coop.tier === 0 ? ' · ' + this.t('rustic') : '')));
+      const mv = el('button', 'gbtn galt gsmallbtn', this.t('move_short')); mv.type = 'button'; mv.addEventListener('click', () => h.move(coop.id));
+      row.append(info, mv); b.append(row);
+    }
+    const nx = g.nextBreed();
+    b.append(el('p', 'gnote', nx ? this.t('coops_next', { n: nx.level, breed: g.breedName(nx.breed) }) : this.t('coops_all')));
+  }
 
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));

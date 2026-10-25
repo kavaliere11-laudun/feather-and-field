@@ -180,6 +180,20 @@
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet .glevelbig { width: 64px; height: 64px; font-size: 30px; } }
   @media (prefers-reduced-motion: reduce) { .glevelbig { animation: none; } }
   .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
+  /* Your coops: the little barn in the top bar (a red dot: a new breed's coop waiting), the sheet's rows */
+  .gcoops { position: relative; }
+  .gdot { position: absolute; top: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #e2412f; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+  .gdot[hidden] { display: none; }
+  .gnewcoop { background: #fff3cf; }
+  .gnewcoop .gbtn { margin-top: 4px; }
+  .gbadge { margin-left: auto; background: #e2412f; color: #fff; font: 600 12.5px var(--display); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .gcooprow { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+  .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
+  .gcenter { text-align: center; }
+  .gstick { position: sticky; bottom: 0; z-index: 1; display: flex; gap: 8px; background: var(--meringue); box-shadow: 0 -10px 10px var(--meringue); padding-top: 2px; }
+  .gstick .gbtn { margin: 0; flex: 1; font-size: 17px; padding: 13px 12px; white-space: nowrap; }
+  .gstick .gbtn:first-child { flex: 1.7; }
   /* moving a coop: along the bottom, what the spot's like (green: good, red: why not) and Turn, Cancel, Put it here */
   .gmove { position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; background: var(--meringue); color: var(--ink); border-radius: 24px 24px 0 0;
            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2); padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px;

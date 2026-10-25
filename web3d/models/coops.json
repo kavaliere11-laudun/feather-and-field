@@ -29,6 +29,26 @@
    -0.0033,
    1.5484,
    -0.0194
+  ],
+  "rustic_orp": [
+   0.0822,
+   1.5995,
+   -0.0807
+  ],
+  "rustic_leg": [
+   -0.0033,
+   1.4926,
+   -0.0095
+  ],
+  "rustic_sil": [
+   0.0,
+   1.64,
+   -0.0
+  ],
+  "rustic_bra": [
+   0.0033,
+   1.5308,
+   0.0123
   ]
  },
  "lights": {
@@ -321,6 +341,26 @@
    "tris": 3500,
    "verts": 1934,
    "prims": 1
+  },
+  "rustic_orp": {
+   "tris": 12000,
+   "verts": 7068,
+   "prims": 3
+  },
+  "rustic_leg": {
+   "tris": 18000,
+   "verts": 10578,
+   "prims": 3
+  },
+  "rustic_sil": {
+   "tris": 13444,
+   "verts": 7772,
+   "prims": 3
+  },
+  "rustic_bra": {
+   "tris": 14624,
+   "verts": 8726,
+   "prims": 4
   },
   "popdoor_rir": {
    "tris": 428,

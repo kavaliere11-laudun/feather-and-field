@@ -1,4 +1,5 @@
-"""Export the coops for the browser (coops.glb + coops.json): the five houses (house_rir .. house_bra), the shared pen
+"""Export the coops for the browser (coops.glb + coops.json): the five houses (house_rir .. house_bra) and each as it first
+comes, rustic (rustic_rir .. rustic_bra, with the pen's rustic fence, fence_rustic), the shared pen
 (pen_base: yard, feeder, water, hay, sack; fence: posts and rails; fence_dx: the Deluxe pickets, rose arch, flowers and
 bunting), the Deluxe weathervane (vane) and each house's sliding pop door, shut (popdoor_rir .. popdoor_bra). coops.json gives each house's roof top, where the vane stands, and its nest (window, seat, the way in, the ramp).
 Usage: python export_coops.py [out_dir]"""
@@ -9,7 +10,7 @@ os.makedirs(OUT, exist_ok=True)
 sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
-GLOW.update({'lamp', 'lanternred'})       # the lanterns light up at night
+GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred'})       # the lanterns light up at night (the rustic coops' too)
 BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
@@ -45,9 +46,13 @@ one('vane', coops.weathervane)
 BUDGET.update({'rustic_rir': 14500, 'fence_rustic': 3500})
 one('rustic_rir', coops.rustic_barn)                     # a new breed's coop as it first comes (rustic)
 one('fence_rustic', coops.rustic_fence)
+RUSTIC_K = ['orp', 'leg', 'sil', 'bra']                  # the other breeds' coops as they first come (release 1 step 6)
+BUDGET.update({'rustic_orp': 13500, 'rustic_leg': 18000, 'rustic_sil': 14500, 'rustic_bra': 15500})
+for k in RUSTIC_K: one('rustic_' + k, lambda k=k: coops.rustic_house(k))
 for k in coops.HOUSES: BUDGET['popdoor_' + k] = 900; one('popdoor_' + k, lambda k=k: coops.pop_slider(k))       # the sliding pop doors
-names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['popdoor_' + k for k in coops.HOUSES]
+names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get(k, []))]          # what the birds walk round in front of each house (once each: the rustic barn builds the Red Barn again)
-json.dump(dict(tops=TOPS, lights=coops.LIGHTS, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in coops.LIGHTS.items()}      # (once each: a rustic house builds its house again)
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

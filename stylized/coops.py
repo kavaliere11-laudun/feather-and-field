@@ -845,3 +845,125 @@ def rustic_fence(seed=12):
         if n == 'post': o.rotation_euler.x += math.radians(random.uniform(-3.5, 3.5)); o.rotation_euler.y += math.radians(random.uniform(-3.5, 3.5))
         elif n == 'rail': o.rotation_euler.rotate_axis('Z', math.radians(random.uniform(-1.2, 1.2)))
     return root
+
+
+# ---- the other breeds' coops as they first come, rustic too (release 1 step 6, 25 Oct 2026: each new breed arrives with
+# its own rustic coop). Each house is built again with every colour weathered (faded, greyer, rougher: paint and
+# limewash gone dull, the roofs bleached), some of its boards, posts or logs gone bare and grey, then a few touches of its
+# own: moss and gaps in the Thatched Cottage's thatch, a sheet of tin over the Stone Cottage's slates and the Timber
+# Lodge's shingles with moss here and there, boards nailed across a window, torn paper in the Pagoda's lattice. The pen's
+# fence is the rustic one they all share.
+import colorsys
+
+
+def _fade(hexc, s_k=0.55, v_k=0.88, grey=0.22):
+    h = hexc.lstrip('#'); r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    hh, ss, vv = colorsys.rgb_to_hsv(r, g, b); r, g, b = colorsys.hsv_to_rgb(hh, ss * s_k, vv * v_k)
+    r, g, b = (c * (1 - grey) + w * grey for c, w in zip((r, g, b), (0.56, 0.51, 0.44)))
+    return '#%02x%02x%02x' % tuple(int(max(0.0, min(1.0, c)) * 255 + 0.5) for c in (r, g, b))
+
+
+_KEEP = {'lamp'}                                  # (the lantern still lights up at night)
+
+
+def _rustic_C(name, hexc, rough=0.75, **kw):
+    key = 'rw_' + name
+    if key not in _m:
+        if name in _KEEP: _m[key] = mat(key, hexc, rough=rough, **kw)
+        elif name == 'glass': _m[key] = mat(key, RUSTIC['glass'], rough=0.35, spec=0.4)
+        else:
+            kw = dict(kw); kw.pop('coat', None)
+            if kw.get('metal'): kw['metal'] = 0.3
+            kw['var'] = max(kw.get('var', 0.0), 0.08)
+            _m[key] = mat(key, _fade(hexc), rough=min(1.0, rough + 0.12), **kw)
+    return _m[key]
+
+
+def _bare_bits(root, names, p, seed):
+    """Some of its boards, posts or logs gone bare and grey."""
+    random.seed(seed)
+    bare = _rmat('bare'); grey = _rmat('wood')
+    for o in root.children_recursive:
+        if o.type == 'MESH' and o.name.split('.')[0] in names and random.random() < p:
+            o.data.materials.clear(); o.data.materials.append(bare if random.random() < 0.6 else grey)
+
+
+def _moss_shingles(root, p, seed):
+    random.seed(seed); moss = _rmat('moss', rough=0.95, grain=0.0, bump=0.4, bump_scale=80, var=0.1)
+    for o in root.children_recursive:
+        if o.type == 'MESH' and o.name.split('.')[0] == 'sh' and random.random() < p:
+            o.data.materials.clear(); o.data.materials.append(moss)
+
+
+def _tin_sheet(objs, eave, peak, over, xa, xb, ta, tb):
+    """A sheet of corrugated tin over part of the front slope of a shingle roof, a few rust spots on it."""
+    sy = -1
+    e0 = Vector((0, sy * (D2 + over), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); down = e0 - r0; dn = down.normalized()
+    nrm = Vector((0, sy * (peak - eave + 0.08), D2 + over)).normalized()
+    tin = mat('r_tin3', '#a8adab', rough=0.75, var=0.04); tin2 = mat('r_tin4', '#929896', rough=0.75, var=0.04); rust = mat('r_rust2', '#8e5d3e', rough=0.9)
+    n = 14
+    for k in range(n):
+        x = xa + (k + 0.5) * (xb - xa) / n
+        a = r0 + down * ta + nrm * 0.056 + Vector((x, 0, 0)); b = r0 + down * tb + nrm * 0.056 + Vector((x, 0, 0))
+        objs.append(plank('tin', a, b, (xb - xa) / n * 1.01, 0.008, nrm, tin if k % 2 else tin2, jitter=0.0, bevel=0.0))
+    for (u, t, s) in ((0.25, 0.62, 0.035), (0.68, 0.3, 0.025)):
+        x = xa + (xb - xa) * u; c = r0 + down * (ta + (tb - ta) * t) + nrm * 0.066 + Vector((x, 0, 0))
+        objs.append(plank('rust', c - dn * s / 2, c + dn * s / 2, s * 1.3, 0.003, nrm, rust, jitter=0.0, bevel=0.001))
+
+
+def _boards(objs, x, ys, z0, z1, side, slant=0.03):
+    """Bare boards nailed upright on a side wall at x (side: +1 or -1), a little crooked."""
+    bare = _rmat('bare')
+    for k, y in enumerate(ys):
+        objs.append(plank('patch', (x, y, z0), (x, y + (slant if k % 2 else -slant), z1), 0.075, 0.02, (side, 0, 0), bare, jitter=0.8))
+
+
+def _across(objs, x, y, z, w, side):
+    """Two bare boards nailed in a cross over a side window."""
+    bare = _rmat('bare')
+    for s in (-1, 1):
+        objs.append(plank('patch', (x, y - w / 2, z - s * w * 0.42), (x, y + w / 2, z + s * w * 0.42), 0.055, 0.02, (side, 0, 0), bare, jitter=0.5))
+
+
+def rustic_house(k, seed=21):
+    """A breed's house as it first comes (k: orp, leg, sil, bra), rustic."""
+    global C
+    keep = C; C = _rustic_C
+    try: r = HOUSES[k]()
+    finally: C = keep
+    objs = []
+    if k == 'orp':                                 # Thatched Cottage: posts gone grey, moss and gaps in the thatch, side boards
+        _bare_bits(r, {'post', 'rail', 'spost', 'srail', 'brace', 'sbrace'}, 0.3, seed)
+        random.seed(seed + 1)
+        sc = [o for o in r.children_recursive if o.name.split('.')[0] == 'scallop']
+        for o in random.sample(sc, min(4, len(sc))): bpy.data.objects.remove(o, do_unlink=True)
+        moss = _rmat('moss', rough=0.95, grain=0.0, bump=0.4, bump_scale=80, var=0.1)
+        EAVE, PEAK = 0.9, 1.5
+        e = Vector((0, -(D2 + 0.22), EAVE - 0.1)); top = Vector((0, 0, PEAK)); nrm = Vector((0, -(PEAK - EAVE + 0.1), D2 + 0.22)).normalized()
+        moss = mat('r_moss2', '#5c6b43', rough=0.95, var=0.12, bump=0.4, bump_scale=80)
+        for i, (x, t, sz) in enumerate(((-0.5, 0.8, 0.07), (-0.42, 0.9, 0.05), (-0.3, 0.84, 0.045), (0.05, 0.92, 0.05), (0.34, 0.78, 0.065), (0.44, 0.88, 0.05), (0.6, 0.83, 0.04))):
+            c = top.lerp(e, t) + nrm * 0.135 + Vector((x, 0, 0))
+            objs.append(sphere('mossy', sz, c, (1.3, 1.0, 0.45), (math.atan2(-nrm.y, nrm.z), 0, 0), m=moss, ico=2, disp=0.35, seed=i + 3))
+        _boards(objs, W2 + 0.05, (-0.26, 0.2), 0.32, 0.72, 1)
+        _boards(objs, -W2 - 0.05, (-0.1,), 0.3, 0.7, -1)
+    elif k == 'leg':                               # Stone Cottage: slates faded with moss, a tin patch, boards over the side window
+        _moss_shingles(r, 0.07, seed)
+        _tin_sheet(objs, 0.86, 1.4, 0.13, -0.5, -0.08, 0.3, 0.8)
+        _across(objs, W2 + 0.075, 0.0, 0.55, 0.26, 1)
+    elif k == 'sil':                               # Pagoda: torn paper in the lattice, boards on a side window, faded lacquer
+        random.seed(seed)
+        torn = mat('r_paper', '#b9a57c', rough=0.9, var=0.1)
+        for o in r.children_recursive:
+            if o.type == 'MESH' and o.name.split('.')[0] == 'paper' and random.random() < 0.6:
+                o.data.materials.clear(); o.data.materials.append(torn)
+        _across(objs, -W2 - 0.045, 0.0, 0.46, 0.3, -1)
+        _boards(objs, W2 + 0.04, (-0.3, 0.3), 0.22, 0.6, 1)
+    elif k == 'bra':                               # Timber Lodge: logs gone grey, moss on the shingles, a tin patch, a boarded window
+        _bare_bits(r, {'log', 'gable'}, 0.18, seed)
+        _moss_shingles(r, 0.08, seed + 1)
+        _tin_sheet(objs, 0.88, 1.44, 0.2, 0.12, 0.55, 0.25, 0.75)
+        _across(objs, W2 + 0.1, 0.0, 0.5, 0.28, 1)
+    for o in objs:
+        mw = o.matrix_basis.copy(); o.parent = r; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+    r.name = 'rustic_' + k
+    return r

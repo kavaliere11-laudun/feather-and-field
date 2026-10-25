@@ -1589,3 +1589,36 @@ she chose "Drag anywhere, clears the way". Then: a level that brings a new coop 
   busy; level 2 and the next field: moved there (bushes to clear), turned, put down (saved, cleared for good, no grass in
   its pen, the farmer can get to its gate, its old spot open); a reload; a save changed outside (a coop on the wild
   meadow: flagged, put back on your land); a farm from before this step.
+
+## The game, release 1 step 6: new breeds by level (25 Oct 2026, Audrey: "Perfect, next")
+
+Audrey (25 Oct): "when people reach a level where they unlock a coop. They get notify that they have it with it 3
+chickens and can place it whenever they want. Probably a pop up offers to do it right now. Otherwise it needs to be
+stored somewhere easy with a little red dot on it to say notifications".
+- **The breeds by level** (`game.js` `BREED_LEVEL`, from `claude/game-plan-v2.md`): the Rhode Island Reds from the start,
+  the Buff Orpingtons at level 5, the Silkies (the white trio) at 6, the Cream Legbars at 11, the Light Brahmas at 17; each
+  a forever trio (a rooster and two hens, three personalities, names not yet on the farm) with its own rustic coop. The
+  other Silkie colours come with release 2.
+- **At its level:** the level card says so ("New breed: Buff Orpington! A rooster and two hens, yours for good, with their
+  own coop. Put it anywhere on your land.", and the field for sale if there is one), with "Place their coop now" and
+  "Later" always in sight at its bottom ("It waits for you in Your coops (the little barn up top).").
+- **Your coops:** a little barn in the top bar, with a red dot while a new breed's coop is waiting. Its sheet: each
+  waiting breed ("New!", "Place it"), each coop on the farm (its name, breed, rustic, "Move"), and what's next ("At level
+  6: Silkie"). Also the way to move a coop at night, when a tap on it takes you inside.
+- **Placing it:** the coop and its trio appear at the nearest spot to the middle of the view where a coop can stand
+  (facing you, best with nothing to clear), and are moved like any coop (drag, tap, Turn, the green or red outline).
+  Cancel and it's back in Your coops; put down, it's on the farm for good: its feeder full, its hens laying from then on,
+  "Welcome, Gus, Juniper and Dotty!". No room on your land: "No room on your land for another coop yet: buy the next
+  field." Until it's placed nothing of it is saved (the trio is made when it's put down).
+- **The rustic coops** (`stylized/coops.py` `rustic_house`; `export_coops.py`: `rustic_orp`, `rustic_leg`, `rustic_sil`,
+  `rustic_bra`): each house built again with every colour weathered (faded, greyer, rougher) and touches of its own: the
+  Thatched Cottage's posts gone grey, moss and gaps in its thatch, boards on its walls; the Stone Cottage's slates with
+  moss and a patch of tin, boards across its side window; the Pagoda's lacquer faded, torn paper in its lattice, boards on
+  its walls; the Timber Lodge's logs gone grey, moss on its shingles, a patch of tin, a boarded window. All with the
+  shared rustic fence. Their lanterns still light up at night. (coops.glb 2.5 to 3.8 MB.)
+- **The save:** a breed's coop only once its level has come, and one of each (anything else dropped and flagged); a
+  placed coop's trio as any other birds.
+- `breedtest.mjs` (`LANG=fr`, `W=874 H=402`): a new farm (nothing waiting, Your coops); level 5 (the card, its buttons in
+  sight; Later: the red dot; Your coops: Place it; Cancel; put down: the trio, the rustic house, a full feeder, the coop
+  card); a reload; level 6 from its card (the white Silkies, the rustic Pagoda); a save changed outside.
+
