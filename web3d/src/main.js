@@ -971,8 +971,9 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   if (plot.kind === 'coop') {
     const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
     plot.frame = frame;
-    plot.breed = gc ? gc.breed : BREEDS[i % BREEDS.length]; plot.deluxe = gc ? gc.tier >= 4 : Math.floor(i / BREEDS.length) % 2 === 1;
-    plot.gc = gc; plot.rustic = !!gc && gc.tier === 0;             // (a new breed's coop comes rustic)
+    const look = params.has('looks') ? Math.floor(i / BREEDS.length) % 3 : -1;      // (the test page's ?looks: rows of rustic, plain, Deluxe)
+    plot.breed = gc ? gc.breed : BREEDS[i % BREEDS.length]; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 2 : Math.floor(i / BREEDS.length) % 2 === 1;
+    plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look === 0;     // (a new breed's coop comes rustic)
     addNest(frame, plot);
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
