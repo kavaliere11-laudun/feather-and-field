@@ -1483,9 +1483,9 @@ rate higher and sell for more. Replaces the farmer leading the chicks out of the
 - **All the way off the farm (25 Oct 08:20, Audrey: "Instead of them disappearing after the coop door we need to see
   them walking until outside of the farm please. The rest is perfect"):** out of the gate they trot in a line (0.7 m/s,
   never into the one ahead) along the way off the farm (`farmExit`: the cheapest way, paths preferred as the farmer
-  walks, over a footbridge if need be, to 2 m past the farm's edge, beyond the trees along it; worked out once for each
-  coop), taking a few steps more as they go. The view glides along with the line (a finger on the farm or a card
-  opened: the view's the player's again). From the first coop it's 18 m, about 30 s, up the path past the bales,
+  walks, over a footbridge if need be, to just past the farm's edge, beyond the trees along it; worked out once for each
+  coop), taking a few steps more as they go. The view glides along with the line, a little past the farm's edge if need
+  be (`view.reach`), then back onto the farm (a finger on the farm or a card opened: the view's the player's again). From the first coop it's 18 m, about 30 s, up the path past the bales,
   between the vegetable patch and the well and out through the trees at the back. The farmer stands by the gate on the
   side clear of their way (the far side from the player if he can, else turned more towards you), cheers till they're all
   on their way, then goes about his day. The card once the last one's gone (two and a half minutes at most for it all).

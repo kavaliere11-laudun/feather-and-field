@@ -2631,8 +2631,9 @@ function clampView() {
   if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
-  u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
-  v = Math.max(V.bounds.v[0] + 2, Math.min(V.bounds.v[1] - 1, v));
+  const r = view.reach || 0;                                  // (a farewell going along with them out past the farm's edge)
+  u = Math.max(V.bounds.u[0] + 2 - r, Math.min(V.bounds.u[1] - 2 + r, u));
+  v = Math.max(V.bounds.v[0] + 2 - r, Math.min(V.bounds.v[1] - 1 + r, v));
   t.x = (u - v) * R2; t.z = -(u + v) * R2;
 }
 function pan(dx, dy) {
@@ -3036,12 +3037,12 @@ function gateOf(plot, kid) {
   return { stand, face, line, faceIn, path, s, gx, gz, W };
 }
 // the way off the farm from (x, z) (world): the cheapest (the paths preferred, as the farmer walks; over a footbridge if
-// need be) to a couple of metres past the farm's edge, beyond the trees along it (the village's bounds: u, v as clampView);
+// need be) to just past the farm's edge, beyond the trees along it (still in view as they go) (the village's bounds: u, v as clampView);
 // [] if there's none
 function farmExit(x, z) {
   const nav = navGrid(); pathCosts(nav);
   const s = nav.nearestFree(x, z); if (!s) return [];
-  const B = V.bounds, M = 2.0, nx = nav.nx, N = nav.block.length, Wc = nav.cost;
+  const B = V.bounds, M = 1.3, nx = nav.nx, N = nav.block.length, Wc = nav.cost;
   const outside = i => { const cx = nav.cx(i % nx), cz = nav.cz((i / nx) | 0), u = (cx - cz) * R2, v = (-cz - cx) * R2; return u < B.u[0] - M || u > B.u[1] + M || v < B.v[0] - M || v > B.v[1] + M; };
   const cost = new Float32Array(N).fill(Infinity), done = new Uint8Array(N), heap = [];
   const push = (i, c) => { heap.push([c, i]); let k = heap.length - 1; while (k > 0) { const q = (k - 1) >> 1; if (heap[q][0] <= heap[k][0]) break; [heap[q], heap[k]] = [heap[k], heap[q]]; k = q; } };
@@ -3074,7 +3075,11 @@ function tickFarewell(dt) {
     const F = p.fw; if (!F) continue;
     F.t += dt; F.all += dt; wake(500);
     const kids = F.kids.filter(k => p.birds.includes(k));
-    if (!kids.length) { p.fw = null; continue; }
+    if (!kids.length) {                                                   // (all gone: the view glides back onto the farm)
+      p.fw = null;
+      if (view.reach) { view.reach = 0; const t = view.target, x = t.x, z = t.z; clampView(); const gx = t.x, gz = t.z; t.x = x; t.z = z; if (Math.hypot(gx - x, gz - z) > 0.01) focusOn(gx, gz, view.size); }
+      continue;
+    }
     if (F.all > 150) { for (const k of kids) if (k.leaving.phase !== 'fade') { k.leaving.phase = 'fade'; k.leaving.t = 0; } continue; }
     const at = t0 => F.t >= t0 && F.t - dt < t0;                          // (the moment t0 is passed)
     if (F.phase === 'wait') {
@@ -3100,7 +3105,7 @@ function tickFarewell(dt) {
       if (pointers.size || gameUI.isOpen || inside.open) F.free = true;
       if (!F.free && going.length && !focus) {
         fwV.set(0, 0, 0); for (const k of going) { k.root.getWorldPosition(tmpV3); fwV.add(tmpV3); } fwV.divideScalar(going.length);
-        const u = Math.min(1, dt * 1.6), t = view.target, x0 = t.x, z0 = t.z;
+        const u = Math.min(1, dt * 1.6), t = view.target, x0 = t.x, z0 = t.z; view.reach = 2.6;
         t.x += (fwV.x - t.x) * u; t.z += (fwV.z - t.z) * u; clampView();
         if (Math.hypot(t.x - x0, t.z - z0) > 1e-4) { F.panned = (F.panned || 0) + Math.hypot(t.x - x0, t.z - z0); applyGrass(); placeCamera(); furDetail(); }
       }
