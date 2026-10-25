@@ -127,7 +127,8 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
   scratchpad's `sty/`): `export_village.py`, `export_coops.py`, `export_birds.py`, `export_interiors.py`, `export_beasts.py`,
   `export_web.py`. Run them with the `bl` venv (`bl/bin/python stylized/export_beasts.py web3d/models`).
 - Test page options: `?time=HH:MM`, `?daylapse=N` (a day in N minutes), `?coops=N`, `?q=0..3`, `?details`, `?lineup`,
-  `?lineup=foxes`, `?foxes`, `?visit` (the fox's night visit now, at 23:30), `?visit=N` (to coop N), `?lang=fr`.
+  `?lineup=foxes`, `?foxes`, `?visit` (the fox's night visit now, at 23:30), `?visit=N` (to coop N), `?lang=fr`,
+  `?poster` (the welcome picture's stage, `posterpic.mjs`), `?intro=1..4` (the onboarding pictures' stages, `intropics.mjs`).
 - Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `visittest.mjs`,
   `doors.mjs`, `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
 - The new game is `play.html` (built from `index.html` with `body.game`): `src/game.js` (its rules and the save, every

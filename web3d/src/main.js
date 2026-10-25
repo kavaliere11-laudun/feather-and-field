@@ -27,10 +27,11 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE, gameText } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
+import { buildIntro } from './intro.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -45,7 +46,8 @@ const GAME_MODE = document.body.classList.contains('game');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
-const HAS_GEESE = !GAME_MODE && !POSTER, HAS_DOG = !GAME_MODE && !POSTER, HAS_DECOR = !GAME_MODE && !POSTER;
+const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
+const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
@@ -372,6 +374,8 @@ async function start() {
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
   if (params.get('lineup') === 'show') { await loadShow(loadGLB, loadJSON); new ShowLineup({ scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng(45), params }); view.min = 0.4; }
   if (POSTER) buildPoster(beastsInfo.joints);
+  if (INTRO) intro = await buildIntro(INTRO, { scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), part, parts, batch,
+    newBird: (...a) => new Bird(...a), plots, allBirds, grade: nightGrade, heart: spawnHeart, rng, fence: buildFence, saleBoard: () => saleBoard(gameText(LANG, 'sale_sign')), saleStakes, honeyFrame, loadGLB, loadJSON });
   buildFoxes(beastsInfo.joints);
   buildGeese();
   buildDog(beastsInfo.joints);
@@ -393,6 +397,7 @@ async function start() {
     wasSide = sideways(); if (wasSide) sideScale(SIDE_K);
   }
   if (lineup) { view.target.copy(lineup.centre); view.size = 2.2; }
+  if (intro) { view.target.copy(intro.g.position); view.size = 2.6; }          // (its stage, if the page is looked at as it is)
   if (foxLineup) { foxLineup.group.updateMatrixWorld(true); view.target.copy(foxLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.1))); view.size = 2.35; }
   if (geeseLineup && params.get('lineup') === 'ducks') { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, 0.5))); view.size = 1.58; }
   else if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
@@ -1453,7 +1458,7 @@ function pathCosts(nav) {
   for (const l of V.paths) for (let i = 1; i < l.length; i++) nav.costLine(l[i - 1][0], l[i - 1][2], l[i][0], l[i][2], V.pathHalf * 0.85, 1);
 }
 function buildFarmer() {
-  if (params.get('lineup') || POSTER) return;
+  if (params.get('lineup') || POSTER || INTRO) return;
   const nav = navGrid(); pathCosts(nav);
   const door = farmDoor(), kh = KENNEL_AT[2], kd = nav.nearestIn(farmReach(), KENNEL_AT[0] + Math.sin(kh) * 1.7, KENNEL_AT[1] + Math.cos(kh) * 1.7, 0.8);
   // on the bank, a step back from where the geese go in and out, facing the water
@@ -1578,6 +1583,7 @@ function spawnHeart(at) {
   n.size = 0.1 + Math.random() * 0.04; n.life = n.full = 1.5;
   n.drift = [(Math.random() - 0.5) * 0.08, 0.32 + 0.08 * Math.random(), (Math.random() - 0.5) * 0.08];
   n.sprite.visible = true;
+  return n;                                                 // (the onboarding pictures place theirs just so: intro.js)
 }
 function tickPenFx(dt) {
   for (const n of HEARTS) {
@@ -2561,7 +2567,7 @@ function buildLineup() {
 // breed rush in to peck it up; the Rhode Island Red rooster crows from the top of a round bale; Gertrude hisses, wings out,
 // at Biscuit, who answers with a delighted play bow, a chick riding on his back; Hector honks his support from behind her.
 // Out on the grass past the village (as the line-ups), its own little set round it. gamefilm-style scripts pose and shoot it.
-let poster = null;
+let poster = null, intro = null;             // (intro: the onboarding pictures' stage, ?intro=1..4: intro.js)
 function buildPoster(joints) {
   const O = villageCentre().add(new THREE.Vector3(32, 0, 32)), r = rng(123);
   const g = new THREE.Group(); g.position.copy(O); g.rotation.y = 45 * DEG; scene.add(g); g.updateMatrixWorld(true);     // (its +z towards the camera)
@@ -3541,14 +3547,11 @@ function saleSign(F) {
   const g = new THREE.Group();
   if (best) {
     const { sx, sz, nx, nz } = best, face = Math.atan2(-nx, -nz);
-    const sign = new THREE.Group(); sign.position.set(sx, 0, sz); sign.rotation.y = face;
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.95, 0.07), WOOD); post.position.y = 0.47; post.castShadow = true;
-    const board = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.34, 0.035), WOOD); board.position.set(0, 0.86, 0.04); board.castShadow = true;
-    const label = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.29), signLabel()); label.position.set(0, 0.86, 0.06);
-    sign.add(post, board, label); g.add(sign);
+    const sign = saleBoard(); sign.position.set(sx, 0, sz); sign.rotation.y = face;
+    g.add(sign);
     SALE.at = new THREE.Vector3(sx, 1.15, sz);
   } else SALE.at = new THREE.Vector3(F.mid[0], 1.0, F.mid[1]);
-  const stakes = [], m = new THREE.Matrix4(), qn = new THREE.Quaternion();
+  const stakes = [];
   for (const L of F.lines) {
     if (!(typeof L.by === 'number' && L.by >= n)) continue;
     for (let i = 1; i < L.pts.length; i++) {
@@ -3556,24 +3559,37 @@ function saleSign(F) {
       for (let j = 0; j <= k; j++) stakes.push([ax + (bx - ax) * j / k, az + (bz - az) * j / k]);
     }
   }
-  if (stakes.length) {
-    const st = new THREE.InstancedMesh(new THREE.BoxGeometry(0.035, 0.5, 0.035), STAKE, stakes.length), rb = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.05, 0.16), RIBBON, stakes.length);
-    stakes.forEach(([x, z], i) => {
-      st.setMatrixAt(i, m.compose(new THREE.Vector3(x, 0.25, z), qn.identity(), new THREE.Vector3(1, 1, 1)));
-      rb.setMatrixAt(i, m.compose(new THREE.Vector3(x + 0.03, 0.42, z), qn.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (x * 7.1 + z * 3.3) % 6.28), new THREE.Vector3(1, 1, 1)));
-    });
-    for (const im of [st, rb]) { im.castShadow = true; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); g.add(im); }
-  }
+  if (stakes.length) saleStakes(stakes, g);
   scene.add(g); g.updateMatrixWorld(true);
   return g;
 }
+// the sign itself: a post, a board and its words, facing +z (also the onboarding pictures': intro.js)
+function saleBoard(text) {
+  const sign = new THREE.Group();
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.95, 0.07), WOOD); post.position.y = 0.47; post.castShadow = true;
+  const board = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.34, 0.035), WOOD); board.position.set(0, 0.86, 0.04); board.castShadow = true;
+  const label = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.29), signLabel(text)); label.position.set(0, 0.86, 0.06);
+  sign.add(post, board, label);
+  return sign;
+}
+// stakes with red ribbons at each [x, z] (world), into g (else the scene)
+function saleStakes(stakes, g = null) {
+  const m = new THREE.Matrix4(), qn = new THREE.Quaternion();
+  const st = new THREE.InstancedMesh(new THREE.BoxGeometry(0.035, 0.5, 0.035), STAKE, stakes.length), rb = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.05, 0.16), RIBBON, stakes.length);
+  stakes.forEach(([x, z], i) => {
+    st.setMatrixAt(i, m.compose(new THREE.Vector3(x, 0.25, z), qn.identity(), new THREE.Vector3(1, 1, 1)));
+    rb.setMatrixAt(i, m.compose(new THREE.Vector3(x + 0.03, 0.42, z), qn.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (x * 7.1 + z * 3.3) % 6.28), new THREE.Vector3(1, 1, 1)));
+  });
+  for (const im of [st, rb]) { im.castShadow = true; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); (g || scene).add(im); }
+  return [st, rb];
+}
 let signMat = null;
-function signLabel() {
+function signLabel(text) {                                   // (text: the onboarding pictures' own, the test page having no game)
   if (signMat && signMat.userData.lang === LANG) return signMat;
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const c = cv.getContext('2d');
   c.fillStyle = '#f6efdc'; c.fillRect(0, 0, 256, 128); c.strokeStyle = '#b8332a'; c.lineWidth = 10; c.strokeRect(8, 8, 240, 112);
   c.fillStyle = '#b8332a'; c.textAlign = 'center'; c.textBaseline = 'middle'; let f = 58; c.font = `800 ${f}px Nunito, system-ui, sans-serif`;
-  const t = game.t('sale_sign'); while (c.measureText(t).width > 212 && f > 30) { f -= 2; c.font = `800 ${f}px Nunito, system-ui, sans-serif`; }
+  const t = text || game.t('sale_sign'); while (c.measureText(t).width > 212 && f > 30) { f -= 2; c.font = `800 ${f}px Nunito, system-ui, sans-serif`; }
   c.fillText(t, 128, 68);
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
   signMat = new THREE.MeshLambertMaterial({ map: tex }); signMat.userData.lang = LANG; nightGrade(signMat);
@@ -4619,25 +4635,27 @@ function harvestPuff() {
 // the frame of honey in his hands (between them, as he holds it up)
 function tickHoneyFrame() {
   if (!FIELD.frameOn || !farmLife || !farmLife.f.rig) { if (FIELD.frame) FIELD.frame.visible = false; return; }
-  if (!FIELD.frame) {
-    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 96;                 // (the comb: golden cells, a few capped)
-    const cx = cv.getContext('2d'); cx.fillStyle = '#e39a1c'; cx.fillRect(0, 0, 128, 96);
-    for (let r = 0; r < 9; r++) for (let q = 0; q < 12; q++) {
-      const x = q * 11 + (r % 2) * 5.5 + 3, y = r * 10.5 + 4; cx.beginPath();
-      for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; cx.lineTo(x + Math.cos(a) * 5.4, y + Math.sin(a) * 5.4); }
-      cx.closePath(); cx.fillStyle = (q * 7 + r * 3) % 5 === 0 ? '#f6d48a' : '#f2b13a'; cx.fill(); cx.strokeStyle = '#b8740f'; cx.lineWidth = 1.2; cx.stroke();
-    }
-    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
-    const g = new THREE.Group(), wood = new THREE.MeshLambertMaterial({ color: '#c8a26a' }), comb = new THREE.MeshLambertMaterial({ map: tex, emissive: '#3a2000' });
-    const add = (w, h, d, x, y, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, 0); m.castShadow = true; g.add(m); };
-    add(0.25, 0.018, 0.03, 0, 0.09, wood); add(0.25, 0.012, 0.025, 0, -0.085, wood); add(0.014, 0.18, 0.025, -0.118, 0, wood); add(0.014, 0.18, 0.025, 0.118, 0, wood);
-    add(0.222, 0.16, 0.016, 0, 0, comb);
-    for (const m of [wood, comb]) nightGrade(m);
-    scene.add(g); FIELD.frame = g;
-  }
+  if (!FIELD.frame) { FIELD.frame = honeyFrame(); scene.add(FIELD.frame); }
   const B = farmLife.f.rig.B, a = B.wristL.getWorldPosition(new THREE.Vector3()), b = B.wristR.getWorldPosition(new THREE.Vector3()), h = farmLife.heading;
   FIELD.frame.position.copy(a).add(b).multiplyScalar(0.5).add(new THREE.Vector3(Math.sin(h) * 0.07, 0.07, Math.cos(h) * 0.07));
   FIELD.frame.rotation.set(-0.85, h, 0, 'YXZ'); FIELD.frame.visible = true;          // (tipped back: its comb shows)
+}
+// the frame of honey itself (also the onboarding pictures': intro.js)
+function honeyFrame() {
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 96;                 // (the comb: golden cells, a few capped)
+  const cx = cv.getContext('2d'); cx.fillStyle = '#e39a1c'; cx.fillRect(0, 0, 128, 96);
+  for (let r = 0; r < 9; r++) for (let q = 0; q < 12; q++) {
+    const x = q * 11 + (r % 2) * 5.5 + 3, y = r * 10.5 + 4; cx.beginPath();
+    for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; cx.lineTo(x + Math.cos(a) * 5.4, y + Math.sin(a) * 5.4); }
+    cx.closePath(); cx.fillStyle = (q * 7 + r * 3) % 5 === 0 ? '#f6d48a' : '#f2b13a'; cx.fill(); cx.strokeStyle = '#b8740f'; cx.lineWidth = 1.2; cx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+  const g = new THREE.Group(), wood = new THREE.MeshLambertMaterial({ color: '#c8a26a' }), comb = new THREE.MeshLambertMaterial({ map: tex, emissive: '#3a2000' });
+  const add = (w, h, d, x, y, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, 0); m.castShadow = true; g.add(m); };
+  add(0.25, 0.018, 0.03, 0, 0.09, wood); add(0.25, 0.012, 0.025, 0, -0.085, wood); add(0.014, 0.18, 0.025, -0.118, 0, wood); add(0.014, 0.18, 0.025, 0.118, 0, wood);
+  add(0.222, 0.16, 0.016, 0, 0, comb);
+  for (const m of [wood, comb]) nightGrade(m);
+  return g;
 }
 // the field's sign and the honey pot: placed each frame (game bubbles), their words when they change
 function fieldBubbles(w, h) {
@@ -5200,6 +5218,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
+  if (intro) { intro.update(dt); wake(100); }
   tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
   if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); placeBubbles(); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
@@ -5267,7 +5286,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
@@ -5306,8 +5325,8 @@ window.__farm = {
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
     cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, cam); return true; },
-  poster: () => poster, posterShot: (o) => {                // the welcome picture: a perspective camera on the stage
-    const P = poster, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
+  poster: () => poster, intro: () => intro, posterShot: (o) => {                // the welcome picture (and the onboarding pictures): a perspective camera on the stage
+    const P = poster || intro, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
     cam.position.copy(tw).addScaledVector(dir, o.dist || 9); cam.lookAt(tw); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
     view.target.set(tw.x, 0, tw.z); aimShadows(true); for (const p of plots) for (const b of p.birds) placeBlob(b);

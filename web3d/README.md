@@ -2022,3 +2022,43 @@ day, after the wheat field and honey).
   unless asked (`&firstday`), so they play as before.
 - `firstdaytest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the pictures; each step with its arrow and coins ("Show
   me" for the wheat); the end and the bonus; a reload; Skip and Skip; a guide past its end (checked, flagged).
+
+## The onboarding pictures (25 Oct 2026, Audrey chose "Scenes from the 3D farm")
+
+Four pictures for a new player's first screens, made from the game's own 3D models in the spirit of the welcome picture:
+each a little scene on its own stage out past the village, bright late-morning light (10:30), soft shadows, grass and
+flowers round it, everyone doing something lively and kind. `web3d/intro/1.webp` to `4.webp` (1200 x 900, 4:3, 50 to
+120 KB), copied with the page by `build.sh`; nothing in the game shows them yet.
+1. **"Your forever flock"**: the rustic Red Barn with its Rhode Island Red trio; Arthur crouched beside one hen, stroking
+   her back (the cuddle's `pet`, the arms the other way round so she sits on the open side), her eyes shut, hearts
+   floating up from her; the rooster chest out (`proud`) by the barn; the other hen trotting over, her head on one side.
+2. **"Eggs and chicks"**: a Rhode Island Red mum settled low, her near wing spread over a chick sheltering under it; a
+   chick hopping for joy, one pecking, one peering at a straw nest of four brown eggs; the Red Barn behind.
+3. **"Land and new breeds"**: the wild meadow beyond the land's fence (its warm tint, long tawny grass and wildflowers,
+   as `syncLand` draws them) with the FOR SALE sign just inside it and red-ribbon stakes running back along the field's
+   border; mown farm grass this side; the Buff Orpingtons just arrived at their Thatched Cottage (rustic): the rooster
+   crowing, a hen leaping with her wings out, the other trotting up. The sign has words, so this one is also made in
+   French: `3-fr.webp` ("À VENDRE").
+4. **"Shows, honey and more"**: inside the show tent, the judge turned towards us pinning the first prize's red rosette on
+   a Light Brahma in her little blue show coop (hearts over her), the white Silkie and the others in their coops either
+   side; Arthur beside her holding up a frame of honey from his hives, two bees after it.
+- **`main.js ?intro=1..4`** (test page only: the game ignores it): the stage, its cast and nobody else (no farmer of the
+  village, no geese, dog or decorations); the test village itself is hidden while it's on, only the ground and the stage
+  show. `src/intro.js` builds each scene from the game's own pieces: `Bird` posed through the `posterPose` hook (every
+  pose field set each frame, so nothing the bird does by herself shows), `Farmer` and its poses (the judge's arm and
+  Arthur's stroking hand set in the pose's `anim`), the coops' models (`rustic_rir`, `rustic_orp`), `ShowGround`
+  (`loadShow`, a rosette pinned with `pin`), the land's fence (`buildFence`), sign (`saleBoard`, its words from
+  `game.js gameText`) and stakes (`saleStakes`), the hearts (`spawnHeart`, now returning its pool entry so a scene can
+  place them the same each time), the honey frame (`honeyFrame`). `saleBoard`, `saleStakes` and `honeyFrame` were taken
+  out of `saleSign` and `tickHoneyFrame` unchanged, so the game's sign and frame are the very same (`landtest.mjs`,
+  `wheattest.mjs` and `gametest.mjs` pass). Each scene's stage and camera are turned together (`TURNS`, -50 degrees,
+  the show -72) so the sun comes from in front and to the left: faces lit, shadows falling away behind.
+- **Made again with** `./withserver.sh node intropics.mjs` (writes `intro/`; `ONLY=1,3` just those, `PNG=folder` keeps the
+  full-size shots, `CAM='{"dist": 3}'` looks from elsewhere for checking): each scene shot through `__farm.posterShot` and
+  its own camera (`intro.js` `cam`) at 600 x 450 css px x 4 (2400 x 1800), posed for 3 seconds from a fresh start
+  (`restart`, no blinking), shrunk to 1200 x 900 and saved as WebP (quality 85, full colour) by Python's PIL. About
+  20 seconds a picture.
+- **For the picture only** (nothing in the game changed): the bees are drawn as the hives' bees but 2.5 times their size
+  (the game's are 2 cm, a dot at phone size); the nest's eggs are a quarter bigger than the nest box's; the coop behind
+  Arthur in the show is left empty (a bird there peeked out round his head); in picture 2 the barn's roof is cut by the
+  top edge (with the camera low enough for the chicks to read, the roof is at the camera's own height).

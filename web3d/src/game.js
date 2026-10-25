@@ -335,6 +335,8 @@ const TEXT = {
     farewell: 'Allez, bonne route !',
   },
 };
+// a word of the game's in a language, outside a game (the onboarding pictures' sale sign: main.js ?intro)
+export const gameText = (lang, key) => (TEXT[lang] || TEXT.en)[key] || TEXT.en[key] || key;
 // in French "Just arrived" agrees with the bird
 const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
   fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
