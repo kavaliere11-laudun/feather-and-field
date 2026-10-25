@@ -1,7 +1,9 @@
 """The show ground for the 3D game's poultry shows (release 1 step 9, Audrey chose a "show day on the farm"): a white marquee
 open along its front (two peaks with pennants, a scalloped valance with a red trim, guy ropes and pegs, bunting along the
-front), a trestle table inside under a green cloth with six show pens in a row (white boards, wire fronts and tops, straw
-floors, a little card on each), the judge's table (his clipboard, the rosette box, a cup of tea), a blank sign board on two
+front), a trestle table inside under a green cloth with six little show coops in a row (Audrey, 25 Oct: "the chickens
+should not be in a cage"): each a tiny wooden house in its own soft colour, open at the front so its bird shows, a pitched
+shingle roof, a heart cut out of its gable, a pennant, a straw floor, its card under the eave (the part is still called
+'show_pens'), the judge's table (his clipboard, the rosette box, a cup of tea), a blank sign board on two
 posts (its words are drawn by the browser, in English or French), and the rosettes (1st red, 2nd blue, 3rd yellow, the
 champion's red, white and blue with longer tails), each hung from its pin.
 Built facing -Y, which is glTF's +Z (the browser turns it to face the player, as the decorations); metres. Each part is
@@ -16,19 +18,25 @@ from common import mat, box, cyl, sphere, empty, link, setmat, subsurf
 HW, FRONT, BACK = 2.2, -1.15, 1.15            # the marquee: 4.4 m wide, 2.3 m deep
 EAVE, PEAK, SAG = 2.35, 3.2, 2.98              # its walls' tops, its two peaks, the dip of the ridge between them
 PEAKS = (-1.1, 1.1)
-NPEN, PW, PT, PD, PH = 6, 0.6, 0.03, 0.95, 0.8  # six pens: inside 0.6 wide, 0.95 deep, 0.8 high (a Light Brahma rooster stands 0.71)
-PITCH = PW + PT
-ROW = NPEN * PITCH + PT                        # the row of pens, end to end
-PF = FRONT + 0.38                              # the pens' fronts (close to the open side, so the birds show from the game's view)
+NPEN, CW, CD, WT = 6, 0.54, 0.93, 0.025         # six little coops: inside 0.54 wide, 0.93 deep (a Light Brahma rooster's tail), boards 2.5 cm
+OW = CW + 2 * WT                               # a coop's width outside its walls
+PITCH = 0.67                                   # from one coop's middle to the next (their eaves 2 cm apart)
+OH, OHF, OHB = 0.03, 0.05, 0.03                # the roof's overhang at the sides, the front and the back
+ROW = (NPEN - 1) * PITCH + OW + 2 * OH         # the row of coops, end to end (eave to eave)
+PF = FRONT + 0.15                              # the coops' fronts (close to the open side, so the birds show from the game's view under the valance)
 TABLE = 0.74                                   # the table's top, under its cloth
-BASE = 0.025                                   # the pens' base boards
+BASE = 0.025                                   # the coops' floor boards
 FLOOR = TABLE + BASE + 0.018                   # where a bird stands, on the straw
-TOP = TABLE + BASE + PH                        # the pens' tops
+SILL = TABLE + 0.135                           # the top of the front board under the opening (its rosette pinned on it)
+TOP = 1.65                                     # the walls' tops (the eaves): a Light Brahma rooster (0.71) and room over him
+RA = math.radians(33)                          # the roof's pitch
+RIDGE = TOP + OW / 2 * math.tan(RA)            # the roof's underside at the ridge
+CORNER = 0.06                                  # the corner boards either side of the opening (0.47 m wide between them)
 SIGN = (-2.95, -1.75)                          # the sign board (x, y): in front, to the left of the marquee
 JT = (2.85, -1.7)                              # the judge's table: in front, to the right
 
 COL = dict(canvas='#f7f5ee', seam='#d8d0bc', trim='#c8372d', pole='#94693f', rope='#e3d8bd', peg='#a07245', baize='#3d6b48',
-           penwhite='#f2efe6', wire='#b3b9bf', straw='#ebcf78', straw2='#c99a3e', signface='#fbf6e7', signframe='#3d6b48',
+           coopwhite='#f7f1e3', heart='#5a3f33', wire='#b3b9bf', straw='#ebcf78', straw2='#c99a3e', signface='#fbf6e7', signframe='#3d6b48',
            wood='#b88d5c', cloth='#f7f4ec', box='#a8794a', card='#fbfaf4', gold='#efbf45', tea='#f6f3ec', teafill='#9a6235',
            red='#d0342c', blue='#2f62b8', yellow='#f2c230', white='#f8f6f0')
 FLAGS = ['#d8433a', '#f2c14e', '#3f7fc4', '#5aa65a', '#f4f1e8']
@@ -204,57 +212,150 @@ def tent():
 def pen_x(i): return (i - (NPEN - 1) / 2) * PITCH
 
 
+# each little coop's own soft colour: its walls, its roof (a deeper shade of it), the pennant on its gable
+COOPS = [('#f6e2b6', '#c98e57', '#3f7fc4'),     # cream
+         ('#b2d49c', '#6a9a5a', '#d8433a'),     # sage
+         ('#aed3f0', '#5a8bbd', '#f2c14e'),     # pale blue
+         ('#fbd970', '#d89a32', '#3f7fc4'),     # butter yellow
+         ('#f7bdb8', '#cf6f6b', '#5aa65a'),     # blush
+         ('#cbb8ee', '#8a72c2', '#f2c14e')]     # lavender
+
+
+def MV(hexc, var=0.07):
+    """A coop's colour, each board a shade of it."""
+    k = 'v' + hexc
+    if k not in _M: _M[k] = mat('sg_c' + hexc.lstrip('#'), hexc, rough=0.85, spec=0.2, var=var)
+    return _M[k]
+
+
+def shade(hexc, k):
+    c = [int(hexc[i:i + 2], 16) * k for i in (1, 3, 5)]
+    return '#%02x%02x%02x' % tuple(max(0, min(255, round(v))) for v in c)
+
+
+def prism(name, pts, y0, y1, m):
+    """A board cut to the outline pts ((x, z), anticlockwise seen from the front), from y0 (its front) back to y1."""
+    n = len(pts)
+    V = [(x, y0, z) for x, z in pts] + [(x, y1, z) for x, z in pts]
+    F = [tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))] + [(i, i + n, (i + 1) % n + n, (i + 1) % n) for i in range(n)]
+    return mesh_obj(name, V, F, m)
+
+
+def board(name, a, b, width, thick, normal, m, bevel=0.0):
+    """A board from a to b (its length), its face towards normal."""
+    a, b, n = Vector(a), Vector(b), Vector(normal).normalized()
+    X = b - a; L = X.length; X = X / L
+    T = (n - X * n.dot(X)).normalized(); W = X.cross(T)
+    o = box(name, (L, thick, width), (0, 0, 0), m=m, bevel=bevel, segs=1)
+    o.matrix_world = Matrix.Translation((a + b) / 2) @ Matrix((X, T, W)).transposed().to_4x4()
+    return o
+
+
+def heart_pts(cx, cz, w, n=16):
+    """A heart's outline (x, z), w across, its middle at (cx, cz), anticlockwise from its point."""
+    P = []
+    for k in range(n):
+        t = math.pi - k / n * math.tau
+        x, z = 16 * math.sin(t) ** 3, 13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)
+        P.append((cx + x * w / 32, cz + (z + 2.5) * w / 32))
+    return P
+
+
+def coop(i, rnd):
+    """Coop i: a little wooden house on the table, open at the front (no door, nothing across it) so its bird shows: board
+    walls at the back and sides in its own colour, a pitched roof of lapped shingles a shade deeper with a little overhang,
+    white trim (corner boards, the front board under the opening, the barge boards), a white gable piece with a heart cut
+    out under the ridge, a pennant on the ridge, a straw floor, and its card hanging under the eave."""
+    cx = pen_x(i); wall, roofc, flag = COOPS[i]
+    Wm, Rm, Tm = MV(wall), MV(roofc, 0.09), M('coopwhite', 0.7)
+    il, ir, yb = cx - CW / 2, cx + CW / 2, PF + CD          # (inside its walls; its back wall's inside)
+    ta = math.tan(RA)
+    def under(x): return RIDGE - abs(x - cx) * ta           # the roof's underside above x
+    z0 = TABLE + BASE
+    box('floor', (CW, CD, BASE), (cx, PF + CD / 2, TABLE + BASE / 2), (0, 0, 0), Wm, bevel=0.0)
+    # the side walls: lapped boards, up to the roof
+    nb = 5; hb = (TOP + WT * ta - TABLE) / nb
+    for s in (-1, 1):
+        for k in range(nb):
+            box('side', (WT, CD + WT, hb + 0.01), (cx + s * (CW / 2 + WT / 2 + 0.002), PF + (CD + WT) / 2, TABLE + hb * (k + 0.5)), (0, math.radians(-s * 2.5), 0), Wm, bevel=0.0)
+    # the back wall: upright boards up into the gable, a darker backing showing between them
+    nv = 5; bw = CW / nv
+    for k in range(nv):
+        x0, x1 = il + k * bw + 0.002, il + (k + 1) * bw - 0.002
+        pts = [(x0, TABLE), (x1, TABLE), (x1, under(x1))] + ([(cx, RIDGE)] if x0 < cx < x1 else []) + [(x0, under(x0))]
+        prism('back', pts, yb, yb + WT, Wm)
+    prism('backing', [(il, TABLE), (ir, TABLE), (ir, under(ir)), (cx, RIDGE), (il, under(il))], yb + WT, yb + WT + 0.006, MV(shade(wall, 0.62), 0.0))
+    # the front: a white board under the opening (its rosette pinned on it), corner boards in its colour up to the barge boards
+    box('sill', (OW + 0.02, 0.036, SILL - TABLE), (cx, PF - 0.018, (TABLE + SILL) / 2), (0, 0, 0), Tm, bevel=0.006, segs=1)
+    for s in (-1, 1):
+        box('corner', (CORNER, 0.026, TOP + 0.01 - SILL), (cx + s * (OW / 2 - CORNER / 2), PF - 0.013, (SILL + TOP + 0.01) / 2), (0, 0, 0), Wm, bevel=0.0)
+    # the roof: three courses of shingles a side, each lapping the one below, a ridge cap, white barge boards at the front
+    yf, yk = PF - OHF, yb + WT + 0.006 + OHB
+    Ls = (OW / 2 + OH) / math.cos(RA)
+    for s in (-1, 1):
+        d, n = Vector((s * math.cos(RA), 0, -math.sin(RA))), Vector((s * math.sin(RA), 0, math.cos(RA)))
+        P0 = Vector((cx, 0, RIDGE))
+        for k in range(3):
+            u = Ls - k * 0.12 - 0.155 / 2; c = P0 + d * u + n * (0.009 + k * 0.008)
+            board('shingles', (c.x, yf, c.z), (c.x, yk, c.z), 0.155, 0.018, n, Rm)
+        a, b = P0 + d * -0.03 + n * 0.007, P0 + d * Ls + n * 0.007
+        board('barge', (a.x, yf - 0.011, a.z), (b.x, yf - 0.011, b.z), 0.064, 0.022, (0, -1, 0), Tm)
+    box('ridgecap', (0.026, yk - yf + 0.01, 0.026), (cx, (yf + yk) / 2, RIDGE + 0.034 / math.cos(RA) + 0.004), (0, math.radians(45), 0), Tm, bevel=0.0)
+    # the gable piece under the ridge, with a heart cut out of it (dark, as the roof's inside behind it)
+    apex = RIDGE - 0.032 / math.cos(RA); gh = 0.085
+    prism('gable', [(cx - gh / ta, apex - gh), (cx + gh / ta, apex - gh), (cx, apex)], yf, yf + 0.014, Tm)
+    H = heart_pts(cx, apex - gh * 0.6, 0.05)
+    mesh_obj('heart', [(x, yf - 0.001, z) for x, z in H] + [(cx, yf - 0.001, apex - gh * 0.6)], [(len(H), k, (k + 1) % len(H)) for k in range(len(H))], M('heart', 0.9))
+    # a pennant on the ridge, over the gable
+    top = RIDGE + 0.06 + 0.085; px, py = cx, yf + 0.02
+    rod('flagpole', (px, py, RIDGE + 0.04), (px, py, top + 0.008), 0.0055, M('pole'), 6)
+    mesh_obj('pennant', [(px, py, top), (px, py, top - 0.045), (px + 0.08, py - 0.004, top - 0.024)], [(0, 1, 2)], flag_mat(flag), solid=0.005)
+    # the straw: a bumpy layer, loose straws, a couple over the front board
+    nx, ny = 5, 8; V, F = [], []
+    for j in range(ny + 1):
+        for k in range(nx + 1):
+            x = il + CW * k / nx; y = PF + 0.004 + (CD - 0.008) * j / ny
+            edge = k in (0, nx) or j in (0, ny)
+            h = 0.006 if edge else 0.012 + 0.012 * noise.noise(Vector((x * 9 + i * 3.1, y * 9, 0.5)))
+            V.append((x, y, z0 + h))
+    for j in range(ny):
+        for k in range(nx):
+            q = j * (nx + 1) + k; F.append((q, q + 1, q + nx + 2, q + nx + 1))
+    mesh_obj('straw', V, F, M('straw'), smooth=True)
+    for k in range(8):
+        x = cx + rnd.uniform(-0.23, 0.23); y = PF + rnd.uniform(0.06, CD - 0.08); a = rnd.uniform(0, math.pi)
+        box('straws', (rnd.uniform(0.07, 0.13), 0.006, 0.004), (x, y, z0 + 0.022), (rnd.uniform(-0.3, 0.3), 0, a), M('straw2' if k % 2 else 'straw'), bevel=0.0)
+    for k in range(2):
+        x = cx + (-0.15 if k else 0.11) + rnd.uniform(-0.03, 0.03)
+        box('straws', (0.006, rnd.uniform(0.09, 0.12), 0.004), (x, PF - 0.01, SILL + 0.004), (math.radians(-12), 0, rnd.uniform(-0.5, 0.5)), M('straw2' if k else 'straw'), bevel=0.0)
+    # its card, hanging on a string under the eave at the left (clear of a bird turned to the right)
+    kx, ky, kz = card_at(cx)
+    rod('cardstring', (kx, ky, kz + 0.0275), (kx, ky, kz + 0.0275 + 0.038), 0.0025, M('rope'), 4)
+    box('card', (0.08, 0.006, 0.055), (kx, ky, kz), (0, 0, 0), M('card', 0.7), bevel=0.0)
+
+
+def card_at(cx):
+    """The middle of a coop's card (hanging 3.4 cm under its barge board, at the left)."""
+    kx = cx - (OW / 2 - 0.095)
+    return kx, PF - OHF - 0.011, RIDGE - abs(kx - cx) * math.tan(RA) - 0.032 / math.cos(RA) - 0.034 - 0.0275
+
+
 def pens():
-    y0, y1 = PF - 0.014, PF + PD + 0.09                              # (the pens' fronts at the table's front edge)
-    box('tabletop', (ROW + 0.16, y1 - y0, 0.04), (0, (y0 + y1) / 2, TABLE - 0.02), (0, 0, 0), M('baize'), bevel=0.012, segs=1)
+    """The trestle table under its green cloth, and the six little coops in a row on it."""
+    y0, y1 = PF - 0.014, PF + CD + WT + 0.06                           # (the coops' fronts at the table's front edge)
+    TL = ROW + 0.1
+    box('tabletop', (TL, y1 - y0, 0.04), (0, (y0 + y1) / 2, TABLE - 0.02), (0, 0, 0), M('baize'), bevel=0.012, segs=1)
     # the cloth's skirt: pleated along the front, plain at the ends
     V, F = [], []
-    n = 64; xa, xb = -(ROW + 0.16) / 2, (ROW + 0.16) / 2
+    n = 64; xa, xb = -TL / 2, TL / 2
     for k in range(n + 1):
         x = xa + (xb - xa) * k / n; y = y0 - 0.008 - (0.012 if k % 2 else 0.0)
         V += [(x, y, 0.035), (x, y, TABLE)]
     for k in range(n): F.append((2 * k, 2 * k + 2, 2 * k + 3, 2 * k + 1))
     mesh_obj('skirt', V, F, M('baize'), solid=0.006)
-    for s in (-1, 1): box('skirtend', (0.01, y1 - y0, TABLE - 0.035), (s * (ROW + 0.17) / 2, (y0 + y1) / 2, (TABLE + 0.035) / 2), (0, 0, 0), M('baize'), bevel=0.0)
-    # the row of pens: base, back, side boards (white), a kick board and a top rail along the front
-    z0 = TABLE + BASE
-    box('penbase', (ROW, PD + 0.04, BASE), (0, PF + PD / 2, TABLE + BASE / 2), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
-    box('penback', (ROW, 0.02, PH), (0, PF + PD + 0.01, z0 + PH / 2), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
-    for i in range(NPEN + 1):
-        x = (i - NPEN / 2) * PITCH
-        box('penside', (PT, PD + 0.02, PH), (x, PF + PD / 2, z0 + PH / 2), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
-    box('kick', (ROW, 0.022, 0.07), (0, PF, z0 + 0.035), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
-    box('toprail', (ROW, 0.035, 0.035), (0, PF, TOP - 0.0175), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
-    box('backrail', (ROW, 0.035, 0.03), (0, PF + PD, TOP + 0.005), (0, 0, 0), M('penwhite'), bevel=0.006, segs=1)
+    for s in (-1, 1): box('skirtend', (0.01, y1 - y0, TABLE - 0.035), (s * (TL + 0.01) / 2, (y0 + y1) / 2, (TABLE + 0.035) / 2), (0, 0, 0), M('baize'), bevel=0.0)
     rnd = random.Random(7)
-    for i in range(NPEN):
-        cx = pen_x(i)
-        for k in range(5):                                         # the wire front
-            x = cx + (k - 2) * 0.12
-            rod('bar', (x, PF, z0 + 0.07), (x, PF, TOP - 0.035), 0.0055, M('wire', 0.5), 6)
-        for k in (-1, 0, 1):                                       # the wire top
-            x = cx + k * 0.16
-            rod('topbar', (x, PF, TOP - 0.01), (x, PF + PD, TOP - 0.01), 0.005, M('wire', 0.5), 6)
-        rod('crossbar', (cx - PW / 2, PF + PD / 2, TOP - 0.008), (cx + PW / 2, PF + PD / 2, TOP - 0.008), 0.005, M('wire', 0.5), 6)
-        # the straw: a bumpy layer, and a few loose straws
-        nx, ny = 6, 9; V, F = [], []
-        for j in range(ny + 1):
-            for k in range(nx + 1):
-                x = cx - PW / 2 + PW * k / nx; y = PF + 0.012 + (PD - 0.024) * j / ny
-                edge = k in (0, nx) or j in (0, ny)
-                h = 0.004 if edge else 0.012 + 0.012 * noise.noise(Vector((x * 9 + i * 3.1, y * 9, 0.5)))
-                V.append((x, y, z0 + h))
-        for j in range(ny):
-            for k in range(nx):
-                a = j * (nx + 1) + k; F.append((a, a + 1, a + nx + 2, a + nx + 1))
-        mesh_obj('straw', V, F, M('straw'), smooth=True)
-        for k in range(16):
-            x = cx + rnd.uniform(-0.26, 0.26); y = PF + rnd.uniform(0.05, PD - 0.05); a = rnd.uniform(0, math.pi)
-            L = rnd.uniform(0.07, 0.13)
-            o = box('straws', (L, 0.006, 0.004), (x, y, z0 + 0.022), (rnd.uniform(-0.3, 0.3), 0, a), M('straw2' if k % 2 else 'straw'), bevel=0.0)
-        # the pen's card (its number), hung on the top rail at the right
-        box('card', (0.08, 0.006, 0.055), (cx + PW / 2 - 0.07, PF - 0.021, TOP - 0.055), (0, 0, 0), M('card', 0.7), bevel=0.0)
-        rod('cardstring', (cx + PW / 2 - 0.07, PF - 0.022, TOP - 0.03), (cx + PW / 2 - 0.07, PF - 0.022, TOP - 0.006), 0.0025, M('rope'), 4)
+    for i in range(NPEN): coop(i, rnd)
 
 
 # ------------------------------------------------------------------ the sign board and the judge's table
@@ -361,26 +462,30 @@ def rosette(kind):
 def gl(x, y, z): return [round(x, 4), round(z, 4), round(-y, 4)]
 
 
+BIRD = (-0.02, 0.37)                             # a bird's spot in her coop: a touch left of the middle, 0.37 m in (her tail clear of the back wall)
+
+
 def places(sign_rect):
     P = []
     for i in range(NPEN):
-        cx = pen_x(i)
+        cx = pen_x(i); bx, bz = cx + BIRD[0], -(PF + BIRD[1]); jx, jz = cx + 0.36, -PF + 0.46
         P.append(dict(
-            x=round(cx, 4), front=round(-PF, 4),                    # the pen's middle across, its front (z)
-            bird=gl(cx, PF + 0.4, FLOOR), birdYaw=round(math.radians(14), 3),          # where a bird stands, turned a little to the right
-            room=[round(PW, 3), round(PD, 3), round(PH, 3)],
-            pin=gl(cx, PF - 0.046, TABLE + BASE + 0.062),                              # a rosette's pin: on the front's bottom rail, in the middle (it hangs over the table's cloth)
-            card=gl(cx + PW / 2 - 0.07, PF - 0.0245, TOP - 0.055),
-            judge=[round(cx + 0.36, 3), round(-PF + 0.46, 3)], judgeYaw=round(math.atan2(-0.36, -0.86), 3),     # beside it, peering in
+            x=round(cx, 4), front=round(-PF, 4),                    # the coop's middle across, its front (z)
+            bird=gl(bx, PF + BIRD[1], FLOOR), birdYaw=round(math.radians(14), 3),     # where a bird stands on the straw, turned a little to the right
+            room=[round(CW, 3), round(CD, 3), round(TOP - TABLE - BASE, 3)],         # inside: wide, deep, high to the eaves
+            pin=gl(cx, PF - 0.046, TABLE + BASE + 0.062),                              # a rosette's pin: on the front board under the opening, in the middle (it hangs over the table's cloth)
+            card=gl(*card_at(cx)),
+            judge=[round(jx, 3), round(jz, 3)], judgeYaw=round(math.atan2(bx - jx, bz - jz), 3),     # beside it, peering in at her
             pinAt=[round(cx - 0.24, 3), round(-PF + 0.54, 3)], pinYaw=round(math.pi, 3),                          # facing it, his right hand (judge_pin) at its pin
             farmer=[round(cx, 3), round(-PF + 0.5, 3)], farmerYaw=round(math.pi, 3),  # in front of it, facing it, to put a bird in
-            door=gl(cx, PF, (FLOOR + TOP) / 2)))
+            door=gl(cx, PF, (SILL + TOP) / 2)))                       # the opening's middle (where she's lifted in)
     sc = sign_rect['centre']
+    TL, y1 = ROW + 0.11, PF + CD + WT + 0.06
     return dict(
-        pens=P, floor=round(FLOOR, 4), top=round(TOP, 4),
+        pens=P, floor=round(FLOOR, 4), top=round(TOP, 4), sill=round(SILL, 4), ridge=round(RIDGE, 4),
         eave=EAVE, peak=PEAK, valance=round(EAVE - 0.17, 3),
         tent=[-HW, -BACK, HW, -FRONT],                              # the marquee's walls and roof (x0, z0, x1, z1)
-        table=[round(-(ROW + 0.17) / 2, 3), round(-(PF + PD + 0.09), 3), round((ROW + 0.17) / 2, 3), round(-(PF - 0.022), 3)],
+        table=[round(-TL / 2, 3), round(-y1, 3), round(TL / 2, 3), round(-(PF - 0.022), 3)],
         aisle=[-2.05, round(-PF + 0.18, 3), 2.05, round(-PF + 0.95, 3)],         # the open strip in front of the pens
         entrance=[0.0, round(-FRONT + 0.75, 3)],
         sign=dict(centre=gl(*sc), w=round(sign_rect['w'], 3), h=round(sign_rect['h'], 3), normal=[0, 0, 1]),

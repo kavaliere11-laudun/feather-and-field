@@ -1,13 +1,13 @@
 // The show ground (release 1 step 9: Audrey chose a "show day on the farm" for the poultry shows): when a show's results
 // come, a white marquee stands on the farm, the farmer carries the player's bird there, a judge looks at each bird in its
-// show pen and pins the rosettes. This file has the pieces (the scene's choreography is main.js's):
+// little show coop and pins the rosettes. This file has the pieces (the scene's choreography is main.js's):
 // - loadShow(): showground.glb / showground.json (stylized/export_showground.py) and the judge (judge.glb / judge.json,
 //   stylized/export_farmer.py ... j, a third look on the farmers' own skeleton: farmer.js drives him with the same poses);
-// - ShowGround: the marquee open towards the player, its trestle table with six show pens, the sign board (its words drawn
-//   here, in English or French), the judge's table with his clipboard, tea and the rosette box; places in its own frame
-//   (showground.json: each pen, where its bird stands, where the judge and the farmer stand, its rosette pin, the sign's
-//   rectangle, the footprints), rosettes pinned on a pen or held in the judge's hand;
-// - ShowLineup: the test page's ?lineup=show: the show ground on open grass, a bird of each breed in the pens, the four
+// - ShowGround: the marquee open towards the player, its trestle table with six little show coops, the sign board (its
+//   words drawn here, in English or French), the judge's table with his clipboard, tea and the rosette box; places in its
+//   own frame (showground.json: each coop ('pens'), where its bird stands, where the judge and the farmer stand, its rosette
+//   pin, the sign's rectangle, the footprints), rosettes pinned on a coop or held in the judge's hand;
+// - ShowLineup: the test page's ?lineup=show: the show ground on open grass, a bird of each breed in the coops, the four
 //   rosettes pinned, the judge in front going through his poses in turn, Arthur standing by.
 import * as THREE from 'three';
 import { addLook, Farmer, POSES } from './farmer.js';
@@ -90,7 +90,7 @@ export class ShowGround {
   }
   // a rosette ('first', 'second', 'third', 'champion'): a new one, not placed yet (its origin is its pin; it faces +z)
   rosette(kind) { return this.prep(PARTS['rosette_' + kind].clone()); }
-  // pinned on pen i's front (on its bottom rail, in the middle, hanging over the table's cloth); one rosette a pen
+  // pinned on coop i's front (on the board under its opening, in the middle, hanging over the table's cloth); one a coop
   pin(i, kind) {
     this.unpin(i);
     const r = typeof kind === 'string' ? this.rosette(kind) : kind;

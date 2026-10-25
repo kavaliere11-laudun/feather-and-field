@@ -1732,28 +1732,42 @@ the rules, the Shows sheet and the results; the show day itself comes next.
 ## The show ground and the judge (25 Oct 2026, for release 1 step 9: Audrey chose a "show day on the farm")
 
 When a show's results come, a white show tent stands on the farm, the farmer carries the player's bird there, a judge looks
-at each bird in its show pen and pins the rosettes. These are its pieces and a test view; the show's rules, screens and save
-(`game.js`, `gameui.js`) and the scene's choreography (`main.js`) are written separately.
+at each bird in its little show coop and pins the rosettes. These are its pieces and a test view; the show's rules, screens
+and save (`game.js`, `gameui.js`) and the scene's choreography (`main.js`) are written separately.
 - **The show ground** (`stylized/showground.py`, `stylized/export_showground.py` writes `showground.glb` + `showground.json`):
   a white marquee 4.4 x 2.3 m (eaves 2.35 m, two peaks 3.2 m with a gold knob and a pennant each), open along the side
   that faces the player, a scalloped valance with a red trim, seams on its canvas, its front canvas rolled up, wooden poles,
   guy ropes with runners and pegs (the front ones running out sideways and back, clear of the open front), bunting along the
-  front; inside, a trestle table under a green pleated cloth with six show pens in a row (inside 0.6 x 0.95 x 0.8 m: room
-  for a Light Brahma rooster, 0.71 m tall; white boards, wire fronts and tops, straw floors with loose straws, a little card
-  on each), close to the open side so the birds show from the game's view under the valance; a sign board on two posts
+  front; inside, a trestle table under a green pleated cloth with six little show coops in a row; a sign board on two posts
   with a little roof (its words are drawn by the browser); the judge's folding table (his clipboard, the rosette box, a cup
   of tea). The rosettes: 1st red, 2nd blue, 3rd yellow (17 cm across, 230 triangles), the champion's red, white and blue
   with three longer tails (22 cm, 374 triangles), each built round its pin. Meshes: `show_tent` 9,936 triangles,
-  `show_pens` 4,136, `show_sign` 432, `show_jtable` 848, `show_clipboard` 100 (the one on his table, hidden while he carries
-  his own): 15,452 in all; 460 KB.
+  `show_pens` 4,568, `show_sign` 432, `show_jtable` 848, `show_clipboard` 100 (the one on his table, hidden while he carries
+  his own): 15,884 in all; 507 KB.
+- **The little show coops** (25 Oct 2026, Audrey: "the chickens should not be in a cage it has a bad connotation. So either
+  an open nest, or some individual small coops"; they replace the first show pens): six tiny wooden houses side by
+  side on the table, each in its own soft colour (cream, sage, pale blue, butter yellow, blush, lavender), open at the front
+  with nothing across the opening, so the bird inside shows whole from the game's view: board walls at the back and sides
+  (each board a shade of the colour, a darker backing between the back boards), a pitched roof (33 degrees) of three
+  courses of lapped shingles a side in a deeper shade of the coop's colour, a white ridge cap, white barge boards along the
+  front edge of the roof, a white gable piece under the ridge with a heart cut out of it, a little pennant on the ridge
+  (blue, red, yellow, blue, green, yellow), corner boards in the coop's colour either side of the opening, a white front
+  board under it (where the rosette is pinned), a straw floor with loose straws (a couple over the front board), and the
+  coop's card hanging on a string under the eave at the left. Inside 0.54 m wide, 0.93 deep, 0.89 high to the eaves and
+  1.08 to the ridge (a Light Brahma rooster, 0.71 m tall and 0.8 long with his tail, stands with 7 cm either side and 2 cm
+  behind his tail); 1.16 m tall on the table (1.25 to the pennant's tip), 0.67 m from one to the next. The row stands
+  0.15 m inside the tent's open front (the pens were 0.38), so the coops' fronts, gables and roofs show under the valance
+  from the game's view; the footprint of the whole show ground is unchanged. About 660 triangles a coop.
 - **`showground.json`** (the show ground's own frame: x across, y up, z towards the player; turned 45 degrees it faces the
-  game's camera, as the decorations): for each pen its middle (`x`) and `front` (z), where its bird stands (`bird`: x, y on
-  the straw, z) and turns (`birdYaw`, a little to the right), its `room`, its rosette `pin` (on the bottom rail of its
-  front, in the middle: the rosette hangs over the table's cloth, never in front of the bird), its `card`, its `door`, where
-  the judge stands to peer in (`judge`, `judgeYaw`) and to pin its rosette (`pinAt`, `pinYaw`), where the farmer stands to
-  put a bird in (`farmer`, `farmerYaw`); `floor`, `top`, `eave`, `valance`; footprints: `tent`, `table`, `signFoot`,
+  game's camera, as the decorations): for each coop (`pens`) its middle (`x`) and `front` (z), where its bird stands
+  (`bird`: x, y on the straw, z: 0.37 m in, a touch left of the middle) and turns (`birdYaw`, a little to the right), its
+  `room` (inside: wide, deep, high to the eaves), its rosette `pin` (on the white board under the opening, in the middle: the
+  rosette hangs over the table's cloth, never in front of the bird), its `card`, its `door` (the opening's middle, where the
+  farmer lifts the bird in), where the judge stands to peer in (`judge`, `judgeYaw`: at her) and to pin its rosette (`pinAt`,
+  `pinYaw`), where the farmer stands to put a bird in (`farmer`, `farmerYaw`); `floor`, `top` (the coops' eaves), `sill`,
+  `ridge`, `eave`, `valance`; footprints: `tent`, `table`, `signFoot`,
   `judgeTable` (with where the judge stands behind it, facing the player), the guy ropes' `pegs` and the whole `foot` (for
-  placing it on open grass: x -3.55..3.22, z -2.1..1.94); the open strip in front of the pens (`aisle`) and the `entrance`;
+  placing it on open grass: x -3.55..3.22, z -2.1..1.94); the open strip in front of the coops (`aisle`) and the `entrance`;
   the sign's face (`sign`: its middle, size and normal, for its words); each rosette's `pin` (its origin), middle and size.
 - **The judge** (`stylized/character/farmer.py`, look `j`): an older gentleman, so he reads at once as the show's judge from
   the game's view, next to Arthur's beard and straw hat and Rosie's plait: silver hair, a big white moustache, bushy white
@@ -1765,23 +1779,23 @@ at each bird in its show pen and pins the rosettes. These are its pieces and a t
   hand: `info.j.hold`); `farmer.glb` is untouched (Arthur and Rosie the same to the vertex, checked against the old script).
 - `src/farmer.js`: `addLook()` adds the judge after `initFarmer()`, then `new Farmer(parent, 'j', ...)` drives him like
   Arthur and Rosie (walks, blinks, looks, mouths); props `clipboard` and `pencil`. New poses: `judge_look` (leaning in to
-  peer into a pen, hands clasped behind his back), `judge_write` (the clipboard flat on his left forearm, writing),
-  `judge_pin` (reaching out with a rosette to a pen's bottom rail), `clap`, `judge_carry` (his clipboard up against his
-  chest, for walking); a new face, `peer` (eyes narrowed, weighing a bird up).
+  peer into a coop, hands clasped behind his back), `judge_write` (the clipboard flat on his left forearm, writing),
+  `judge_pin` (reaching out with a rosette to the board under a coop's opening), `clap`, `judge_carry` (his clipboard up
+  against his chest, for walking); a new face, `peer` (eyes narrowed, weighing a bird up).
 - `src/showground.js`: `loadShow(loadGLB, loadJSON)` (once, when a show is on); `ShowGround(parent, { x, z, deg, grade })`:
-  the pieces placed, `pen(i)` (its places in the world), `pin(i, kind)` (a rosette on pen i), `hold(judge, kind)` (a
-  rosette in his right hand, by its pin), `reachPin(judge, i)` (moves him so the rosette in his hand is at pen i's pin; then
+  the pieces placed, `pen(i)` (coop i's places in the world), `pin(i, kind)` (a rosette on coop i), `hold(judge, kind)` (a
+  rosette in his right hand, by its pin), `reachPin(judge, i)` (moves him so the rosette in his hand is at coop i's pin; then
   `pin(i, held)` hands it over), `clipboard(on)` (the one on his table), `sign(title, line)` (its words, in the player's
   language, with a little rosette either side of the line).
-- **`?lineup=show`** (test page): the show ground on open grass beside the village, the line-up's own birds in the pens (a
+- **`?lineup=show`** (test page): the show ground on open grass beside the village, the line-up's own birds in the coops (a
   Rhode Island Red, a Buff Orpington, a white Silkie, a Cream Legbar, a Light Brahma hen and rooster), the four rosettes
-  pinned, the judge going through his poses in turn (every 3.5 s: looking into a pen, writing, pinning a rosette, clapping,
-  holding his clipboard, walking along the pens), Arthur standing by, hands on hips. `&pose=judge_write` (or `walk`) holds
-  one, `&pen=N` puts him at pen N, `&lang=fr` the French sign ("Concours avicole"). In `main.js`: the import, `'show'` in the
+  pinned, the judge going through his poses in turn (every 3.5 s: looking into a coop, writing, pinning a rosette, clapping,
+  holding his clipboard, walking along the coops), Arthur standing by, hands on hips. `&pose=judge_write` (or `walk`) holds
+  one, `&pen=N` puts him at coop N, `&lang=fr` the French sign ("Concours avicole"). In `main.js`: the import, `'show'` in the
   line-up list, the line that makes it, its view, its tick and its place in `clampView` (six lines).
-- `showgroundtest.mjs` (`LANG=fr`, `W`, `H`): the pens, a bird of each breed inside her pen on the straw, the rosettes, the judge's
-  every pose (the clipboard and pencil when wanted, the rosette held and brought to within a centimetre of the pen's pin, the
-  walk), a real tap on a bird in a pen, no page errors. `showshot.mjs` takes pictures (`SHOTS`: views, poses, close-ups).
+- `showgroundtest.mjs` (`LANG=fr`, `W`, `H`): the coops, a bird of each breed inside her coop on the straw, the rosettes,
+  the judge's every pose (the clipboard and pencil when wanted, the rosette held and brought to within a centimetre of the
+  coop's pin, the walk), a real tap on a bird in a coop, no page errors. `showshot.mjs` takes pictures (`SHOTS`: views, poses, close-ups).
 
 
 ## The game, release 1 step 9b: the show day (25 Oct 2026, Audrey: "Show day on the farm (Recommended)", "Hours later (Recommended)")
@@ -1797,21 +1811,22 @@ before. Several shows judged at once: the scene shows the grandest (National, Co
   by itself), the whole tent across the screen upright or sideways (the view free of the farm's bounds meanwhile), and
   back to where it was once the results card is closed.
 - **The scene** (`src/showday.js` `ShowDay`, from the show ground and the judge of `showground.js`): the white tent with
-  its sign ("Village Show" and the town, "Concours de village"), the other five entries already in their pens (any breed,
-  hens and roosters, Silkies of six colours), her pen one of the six. The farmer (the player's own look) comes up from the
-  front holding her in his arms (the cuddle's hold), lifts her in at her pen's door onto the straw and steps back by the
-  sign, hands on hips ("Arthur brings Clover to the show…"). Meanwhile the judge takes his clipboard from his table, waits
-  at the first pen, then goes along them all peering in and writing ("The judge looks at every bird…"); at hers she hops
-  and flaps. Back at his table he fetches the rosettes ("And now, the rosettes!") and pins them on the pens, third, second,
-  first (the champion's rosette for a County or National winner); hers if she placed, hearts floating up over her and the
-  farmer cheering (arms up, a wave). Then everyone claps and the results card comes up over it. About 35 seconds; "Skip ⏭"
-  at the bottom right jumps to the end, every rosette pinned. Meanwhile the farm's own farmer and her bird are away at the
-  show (hidden), and taps on the farm do nothing; closed, the tent's gone and they're home.
+  its sign ("Village Show" and the town, "Concours de village"), the other five entries already in their little coops
+  (any breed, hens and roosters, Silkies of six colours), her coop one of the six. The farmer (the player's own look) comes
+  up from the front holding her in his arms (the cuddle's hold), lifts her in at her coop's open front onto the straw and
+  steps back by the sign, hands on hips ("Arthur brings Clover to the show…"). Meanwhile the judge takes his clipboard
+  from his table, waits at the first coop, then goes along them all peering in and writing ("The judge looks at every
+  bird…"); at hers she hops and flaps. Back at his table he fetches the rosettes ("And now, the rosettes!") and pins them
+  on the coops' fronts, third, second, first (the champion's rosette for a County or National winner); hers if she
+  placed, hearts floating up over her and the farmer cheering (arms up, a wave). Then everyone claps and the results card
+  comes up over it. About 35 seconds; "Skip ⏭" at the bottom right jumps to the end, every rosette pinned. Meanwhile the
+  farm's own farmer and her bird are away at the show (hidden), and taps on the farm do nothing; closed, the tent's gone
+  and they're home.
 - Nothing new is saved: the result is the game's (`showTick`), the scene only shows it (the places of the others' rosettes
   and the other entries from the show and bird, the same each time).
 - `showdaytest.mjs` (`LANG=fr`, `W=402 H=874`, `SHOTS=folder`): the next morning "Show day!"; Watch: the tent, the view on
   it with the whole tent on screen, Skip, the other entries, the farmer and her bird away; a tap on the farm does nothing;
-  she's put in her pen on the straw; three rosettes pinned (hers too), the results card; closed: the tent gone, the farmer
+  she's put in her coop on the straw; three rosettes pinned (hers too), the results card; closed: the tent gone, the farmer
   and her bird home, the view back; at night the results straight away; Skip: straight to the end. `showtest.mjs` takes
   "Just the results".
 
