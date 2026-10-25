@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP } from './game.js';
 import { GameUI } from './gameui.js';
 
 const MODELS = './models/';
@@ -330,9 +330,11 @@ async function start() {
   if (welcome) game.newFarm(await welcome);
   if (GAME_MODE) { LANG = game.lang; FARMER_LOOK = game.data.farmer.look; document.documentElement.lang = LANG; }
   V = plan; PEN = pen; COOPS = coopsInfo;
+  tagNature();
   if (GAME_MODE) {                                         // the game: its fields; no set places for coops, so no little paths to them
     FIELDS = await fieldsP;
     V.paths = V.paths.filter(l => l.length > 3);
+    fillPlotGaps();
     const near = (x, z) => V.paths.some(l => { for (let i = 1; i < l.length; i++) { const a = l[i - 1], b = l[i], dx = b[0] - a[0], dz = b[2] - a[2], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[2]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < V.pathHalf + 0.6) return true; } return false; });
     V.pebbles = V.pebbles.filter(q => near(q[0], q[2]));
   }
@@ -354,6 +356,7 @@ async function start() {
   buildWater();
   buildPaths();
   placeDecor(decorInfo);
+  if (GAME_MODE) { settleCoops(); hidePebbles(); }        // (each coop where it can stand, what's under it cleared)
   buildProps(); buildDecor();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
@@ -414,9 +417,16 @@ function addLampPools() {
   for (const pl of plots) {
     if (pl.kind !== 'coop') continue;
     const L = [...(COOPS.lights['house_' + pl.breed] || []), ...(pl.deluxe ? COOPS.lights.fence_dx || [] : [])];
+    pl.pools = { from: lampPools.spots.length, L };
     for (const l of L) { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.add(v.x, v.z, 0.75); }
   }
   lampPools.build();
+}
+function placePools(pl) {                                    // (its coop moved)
+  const P = pl.pools, M = lampPools.mesh; if (!P || !M) return;
+  const v = new THREE.Vector3(), m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(0.75, 1, 0.75);
+  P.L.forEach((l, k) => { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.spots[P.from + k] = [v.x, v.z, 0.75]; M.setMatrixAt(P.from + k, m.compose(new THREE.Vector3(v.x, 0.012, v.z), q, sc)); });
+  M.instanceMatrix.needsUpdate = true; M.computeBoundingSphere();
 }
 
 function buildGround(img) {
@@ -586,13 +596,22 @@ function buildPaths() {
   // pebbles along the edges, in one batch
   const peb = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.03, 0), new THREE.MeshLambertMaterial({ color: '#cfc8ba' }), V.pebbles.length);
   const r = rng(5), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), e = new THREE.Euler();
+  PEBBLES.mesh = peb; PEBBLES.at = [];
   V.pebbles.forEach((p, i) => {
     const s = 0.6 + r() * 0.8;
     m.compose(new THREE.Vector3(p[0], 0.008, p[2]), qn.setFromEuler(e.set(r() * 3, r() * 3, r() * 3)), new THREE.Vector3(s * 1.2, s * 0.6, s));
-    peb.setMatrixAt(i, m);
+    peb.setMatrixAt(i, m); PEBBLES.at.push(m.clone());
   });
   peb.computeBoundingSphere();
   still(peb);
+  hidePebbles();
+}
+const PEBBLES = { mesh: null, at: [] };
+function hidePebbles() {                                    // (none showing through a coop)
+  if (!PEBBLES.mesh || !GAME_MODE) return;
+  const zero = new THREE.Matrix4().makeScale(0, 0, 0);
+  V.pebbles.forEach((p, i) => PEBBLES.mesh.setMatrixAt(i, underCoop(p[0], p[2], 0.1) ? zero : PEBBLES.at[i]));
+  PEBBLES.mesh.instanceMatrix.needsUpdate = true;
 }
 
 function buildWater() {
@@ -669,7 +688,7 @@ function batchOne(name, matrices, opts) {
     let mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
     if (opts.wind) mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind);      // its own copy: other models may share the material
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
-    inst.userData.model = name;
+    inst.userData.model = name; inst.userData.ownMat = mat !== m.material;
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
     inst.castShadow = !!opts.cast; inst.receiveShadow = true;
     inst.instanceMatrix.needsUpdate = true;
@@ -870,47 +889,50 @@ function inView(x, z, m = 1.6) {
   for (const t of V.trees) if (hides(t.pos[0], t.pos[2], t.r || 1.3, t.h)) return false;
   return !hides(V.house[0], V.house[2], 3.2, 6);
 }
-function buildNature() {
-  const r = rng(21);
+// each tree, bush and rock with its own id (t12, b40, r3: the game saves the ones cleared for a coop), model and turn, and
+// each drift of wildflowers its flowers, all decided once so they stay the same as some are cleared
+function tagNature() {
+  const r = rng(21), names = ['flower_daisy', 'flower_butter', 'flower_clover'];
   // trees: three kinds of shady tree for the woods and the green, apple trees in the orchard
-  const kinds = { a: [], b: [], c: [], apple: [] };
-  V.trees.forEach((t, i) => {
-    const m = place(t.pos[0], 0, t.pos[2], r() * 360, t.h / 2.1);
-    if (t.kind === 'apple') kinds.apple.push(m); else kinds['abc'[i % 3]].push(m);
-  });
-  batch('tree_a', kinds.a, { cast: true, wind: 0.006 }); batch('tree_b', kinds.b, { cast: true, wind: 0.006 }); batch('tree_c', kinds.c, { cast: true, wind: 0.006 });
-  batch('tree_apple', kinds.apple, { cast: true, wind: 0.007 });
-  // bushes and rocks
-  const ba = [], bb = [];
-  V.bushes.forEach((b, i) => (i % 2 ? bb : ba).push(place(b.pos[0], 0, b.pos[2], b.rot, b.s * 1.1)));
-  batch('bush_a', ba, { cast: true, wind: 0.05 }); batch('bush_b', bb, { cast: true, wind: 0.05 });
-  const ra = [], rb = [];
-  V.rocks.forEach((k, i) => (i % 2 ? rb : ra).push(place(k.pos[0], 0, k.pos[2], k.rot, k.s * 1.2)));
-  batch('rock_a', ra); batch('rock_b', rb);
-  // wildflowers in little drifts
-  const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] }, names = Object.keys(fl);
+  V.trees.forEach((t, i) => { t.id = 't' + i; t.model = t.kind === 'apple' ? 'tree_apple' : 'tree_' + 'abc'[i % 3]; t.yaw = r() * 360; });
+  V.bushes.forEach((b, i) => { b.id = 'b' + i; b.model = i % 2 ? 'bush_b' : 'bush_a'; });
+  V.rocks.forEach((k, i) => { k.id = 'r' + i; k.model = i % 2 ? 'rock_b' : 'rock_a'; });
   for (const f of V.flowers) {
-    const pick = [names[Math.floor(r() * 3)], names[Math.floor(r() * 3)]];
-    const n = 5 + Math.floor(r() * 5);
-    for (let k = 0; k < n; k++) {
-      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * f.r;
-      fl[pick[k % 2]].push(place(f.pos[0] + Math.cos(a) * d, 0, f.pos[2] + Math.sin(a) * d, r() * 360, 1.3 + r() * 0.6));
-    }
+    const pick = [names[Math.floor(r() * 3)], names[Math.floor(r() * 3)]], n = 5 + Math.floor(r() * 5);
+    f.pts = [];
+    for (let k = 0; k < n; k++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * f.r; f.pts.push([pick[k % 2], f.pos[0] + Math.cos(a) * d, f.pos[2] + Math.sin(a) * d, r() * 360, 1.3 + r() * 0.6]); }
   }
-  for (const n of names) batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2 });
+}
+const natureMatrix = o => o.id[0] === 't' ? place(o.pos[0], 0, o.pos[2], o.yaw, o.h / 2.1) : place(o.pos[0], 0, o.pos[2], o.rot, o.s * (o.id[0] === 'b' ? 1.1 : 1.2));
+const NATURE = [];
+function dropMeshes(list) { for (const m of list) { m.removeFromParent(); if (m.userData.ownMat) m.material.dispose(); } list.length = 0; }
+function buildNature() {
+  dropMeshes(NATURE);
+  const lists = {};
+  for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
+  for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b'])
+    NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007 } : name[0] === 't' ? { cast: true, wind: 0.006 } : name[0] === 'b' ? { cast: true, wind: 0.05 } : {}));
+  // wildflowers in little drifts (none through a coop)
+  const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] };
+  for (const f of V.flowers) for (const [name, x, z, yaw, sc] of f.pts) if (!underCoop(x, z, 0.1)) fl[name].push(place(x, 0, z, yaw, sc));
+  for (const n in fl) NATURE.push(...batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2 }));
 }
 
 // grass tufts in tiles of 6 m, so the phone only draws the tiles in view; fewer on slower phones, none when zoomed far out
+const VGRASS = [];
 function buildGrass() {
+  for (const m of VGRASS) { const i = grassTiles.findIndex(g => g.mesh === m); if (i >= 0) grassTiles.splice(i, 1); }
+  dropMeshes(VGRASS);
   const TILE = 6, tiles = new Map();
   for (const t of V.tufts) {
+    if (underCoop(t[0], t[2], 0.05)) continue;
     const key = Math.floor(t[0] / TILE) + ',' + Math.floor(t[2] / TILE);
     if (!tiles.has(key)) tiles.set(key, [[], [], []]);
     tiles.get(key)[t[3]].push(place(t[0], 0, t[2], t[4] / DEG, t[5]));
   }
   for (const lists of tiles.values()) {
     lists.forEach((list, k) => {
-      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2 })) grassTiles.push({ mesh: inst, full: inst.count });
+      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2 })) { grassTiles.push({ mesh: inst, full: inst.count }); VGRASS.push(inst); }
     });
   }
   applyGrass();
@@ -925,64 +947,75 @@ function applyGrass() {
 // ------------------------------------------------------------------ plots: a coop with its birds, an empty plot ready to build, or a plot for sale
 const COOP_SHIFT = new THREE.Vector3(-0.075, 0, -0.85);   // the coop model's pen, centred on its plot
 function buildPlots(nCoops) {
-  const r = rng(7), coopParts = {};
-  V.plots.forEach((p, i) => {
-    const g = new THREE.Group();
-    g.position.set(p.pos[0], 0, p.pos[2]); g.rotation.y = p.deg * DEG;
-    scene.add(g);
-    // (the game: a coop where the player has one, the rest of their land bare, and the land they don't own yet just grass)
-    const gc = GAME_MODE ? game.data.coops.find(c => c.plot === i) : null;
-    const kind = GAME_MODE ? (gc ? 'coop' : 'none') : i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale';      // (the game: no set places, just its coops; the land is fields: syncLand)
-    const plot = { index: i, group: g, birds: [], kind, centre: new THREE.Vector3(p.pos[0], 0, p.pos[2]) };
-    plots.push(plot);
-    if (plot.kind === 'coop') {
-      const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
-      plot.frame = frame;
-      plot.breed = gc ? gc.breed : BREEDS[i % BREEDS.length]; plot.deluxe = gc ? gc.tier >= 4 : Math.floor(i / BREEDS.length) % 2 === 1;
-      plot.gc = gc; plot.rustic = !!gc && gc.tier === 0;             // (a new breed's coop comes rustic)
-      addNest(frame, plot);
-      g.updateMatrixWorld(true);                            // the coop itself never moves: it joins its style's batch
-      const at = frame.matrixWorld.clone(), house = (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed;
-      (coopParts[house] = coopParts[house] || []).push(at);
-      (coopParts.pen_base = coopParts.pen_base || []).push(at);
-      const fence = plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence'; (coopParts[fence] = coopParts[fence] || []).push(at);
-      if (plot.deluxe) { const t = COOPS.tops[house]; (coopParts.vane = coopParts.vane || []).push(at.clone().multiply(new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2]))); }
-      const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
-      let k = 0;
-      const colour = () => plot.breed === 'sil' ? SILKIE[(silk * 7 + k++) % SILKIE.length] : null;
-      if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
-        const henAt = PEN.hens.filter(h => h.model === 'hen'), rooAt = PEN.hens.find(h => h.model === 'rooster'); let k = 0;
-        for (const gb of game.birdsIn(gc.id)) {
-          const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
-          const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', colour(), h.pos, -h.yaw * DEG + Math.PI, r);
-          b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
-        }
-      } else {
-        for (const h of PEN.hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
-        plot.birds.filter(b => b.kind === 'hen').forEach((h, k) => { h.pers = PERS_IDS[(i * 2 + k) % PERS_IDS.length]; h.layIn = 6 + r() * 70; });
-        const mum = plot.birds.find(b => b.kind === 'hen');
-        for (let c = 0; c < 2; c++) {
-          const chick = new Bird(plot, plot.breed, 'chick', colour(), [mum.root.position.x + 0.3 - c * 0.5, 0, mum.root.position.z + 0.25], r() * 6, r);
-          chick.mum = mum; plot.birds.push(chick);
-        }
+  const r = rng(7);
+  // (the game: its coops where the player put them; no set places, the land is fields: syncLand)
+  if (GAME_MODE) game.data.coops.forEach((gc, i) => makePlot(i, [gc.x, 0, gc.z], gc.deg, gc, r, 'coop'));
+  else V.plots.forEach((p, i) => makePlot(i, p.pos, p.deg, null, r, i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale'));
+  batchCoops();
+  buildDoors();
+}
+function makePlot(i, pos, deg, gc, r, kind) {
+  const g = new THREE.Group();
+  g.position.set(pos[0], 0, pos[2]); g.rotation.y = deg * DEG;
+  scene.add(g);
+  const plot = { index: i, group: g, birds: [], kind, centre: new THREE.Vector3(pos[0], 0, pos[2]) };
+  plots.push(plot);
+  if (plot.kind === 'coop') {
+    const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
+    plot.frame = frame;
+    plot.breed = gc ? gc.breed : BREEDS[i % BREEDS.length]; plot.deluxe = gc ? gc.tier >= 4 : Math.floor(i / BREEDS.length) % 2 === 1;
+    plot.gc = gc; plot.rustic = !!gc && gc.tier === 0;             // (a new breed's coop comes rustic)
+    addNest(frame, plot);
+    g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
+    const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
+    let k = 0;
+    const colour = () => plot.breed === 'sil' ? SILKIE[(silk * 7 + k++) % SILKIE.length] : null;
+    if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
+      const henAt = PEN.hens.filter(h => h.model === 'hen'), rooAt = PEN.hens.find(h => h.model === 'rooster'); let k = 0;
+      for (const gb of game.birdsIn(gc.id)) {
+        const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
+        const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', colour(), h.pos, -h.yaw * DEG + Math.PI, r);
+        b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
       }
-      for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
-      allBirds.push(...plot.birds);
-    } else if (plot.kind === 'empty' || plot.kind === 'sale') {
-      const m = part(plot.kind === 'empty' ? 'plot_empty' : 'plot_sale');
-      m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-      g.add(m);
-      if (plot.kind === 'empty') {                          // trodden earth, ready to build on
-        const earth = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 2.5), new THREE.MeshLambertMaterial({ color: '#b98d5c' }));
-        earth.rotation.x = -Math.PI / 2; earth.position.y = 0.003; earth.receiveShadow = true; g.add(earth);
+    } else {
+      for (const h of PEN.hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
+      plot.birds.filter(b => b.kind === 'hen').forEach((h, k) => { h.pers = PERS_IDS[(i * 2 + k) % PERS_IDS.length]; h.layIn = 6 + r() * 70; });
+      const mum = plot.birds.find(b => b.kind === 'hen');
+      for (let c = 0; c < 2; c++) {
+        const chick = new Bird(plot, plot.breed, 'chick', colour(), [mum.root.position.x + 0.3 - c * 0.5, 0, mum.root.position.z + 0.25], r() * 6, r);
+        chick.mum = mum; plot.birds.push(chick);
       }
     }
-    g.updateMatrixWorld(true);
-    g.traverse(c => { if (c !== g && !c.userData.moves) c.matrixAutoUpdate = false; });
-    g.matrixAutoUpdate = false;
-  });
-  for (const name in coopParts) batch(name, coopParts[name], { cast: true });
-  buildDoors();
+    for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
+    allBirds.push(...plot.birds);
+  } else if (plot.kind === 'empty' || plot.kind === 'sale') {
+    const m = part(plot.kind === 'empty' ? 'plot_empty' : 'plot_sale');
+    m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.add(m);
+    if (plot.kind === 'empty') {                          // trodden earth, ready to build on
+      const earth = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 2.5), new THREE.MeshLambertMaterial({ color: '#b98d5c' }));
+      earth.rotation.x = -Math.PI / 2; earth.position.y = 0.003; earth.receiveShadow = true; g.add(earth);
+    }
+  }
+  g.updateMatrixWorld(true);
+  g.traverse(c => { if (c !== g && !c.userData.moves) c.matrixAutoUpdate = false; });
+  g.matrixAutoUpdate = false;
+  return plot;
+}
+// a coop's parts drawn in its style's batch: [model, where in its frame]
+function coopParts(plot) {
+  const house = (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, I = new THREE.Matrix4();
+  const out = [[house, I], ['pen_base', I], [plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', I]];
+  if (plot.deluxe) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
+  return out;
+}
+// the coops in their styles' batches (made again when one's moved; the one being moved is drawn on its own meanwhile)
+const COOP_BATCH = [];
+function batchCoops() {
+  dropMeshes(COOP_BATCH);
+  const lists = {};
+  for (const p of plots) if (p.kind === 'coop' && p.frame && p !== MOVE.plot) for (const [name, M] of coopParts(p)) (lists[name] = lists[name] || []).push(p.frame.matrixWorld.clone().multiply(M));
+  for (const name in lists) COOP_BATCH.push(...batch(name, lists[name], { cast: true }));
 }
 
 // the hens lay inside their coop, on a straw nest seen through a little window on the front (stylized/coops.py nest_window;
@@ -1623,6 +1656,11 @@ function buildDoors() {
       scene.add(inst); S.meshes.push(inst);
     }
   }
+}
+function placeDoor(p) {                                    // (its coop moved)
+  const S = DOORS.styles[p.breed]; if (!S || !p.door) return;
+  const G = nestOf(p), M = p.frame.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(G.pop[0], G.house, D2));
+  for (const inst of S.meshes) { inst.setMatrixAt(p.door.i, M); inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN; }
 }
 const doorOpen = p => !p.door || p.door.s >= 1;
 function setDoor(p, open) { if (p.door) { p.door.goal = open ? 1 : 0; p.door.shut = !open; wake(1200); } }
@@ -2601,7 +2639,8 @@ canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
-  if (pointers.size === 2) { drag = null; pinch = spread(); }
+  if (pointers.size === 2) { drag = null; pinch = spread(); MOVE.drag = null; }
+  if (MOVE.plot && pointers.size === 1 && moveGrab(e)) drag = { moved: false, coop: true };      // (moving a coop: a finger on it carries it)
   wake(1000);
 });
 canvas.addEventListener('pointermove', e => {
@@ -2614,6 +2653,9 @@ canvas.addEventListener('pointermove', e => {
   }
   if (pointers.size >= 2) {
     const s = spread(); if (pinch > 0 && s > 0) zoomBy(pinch / s); pinch = s;
+  } else if (MOVE.drag && MOVE.drag.id === e.pointerId) {
+    if (Math.hypot(p.x - p.x0, p.y - p.y0) > 6 && drag) drag.moved = true;
+    if (!drag || drag.moved) moveDrag(p.x, p.y);
   } else if (drag) {
     if (Math.hypot(p.x - p.x0, p.y - p.y0) > 8) drag.moved = true;
     if (drag.moved) pan(dx, dy);
@@ -2623,7 +2665,8 @@ canvas.addEventListener('pointermove', e => {
 function endPointer(e) {
   const p = pointers.get(e.pointerId); if (!p) return;
   pointers.delete(e.pointerId);
-  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : tapAt)(e.clientX, e.clientY);
+  if (MOVE.drag && MOVE.drag.id === e.pointerId) MOVE.drag = null;
+  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : tapAt)(e.clientX, e.clientY);
   if (pointers.size < 2) pinch = 0;
   if (pointers.size === 0) drag = null;
 }
@@ -2734,6 +2777,13 @@ function tapAt(x, y) {
       nb.min.set(f[0] - 0.2, 0, f[2] - 0.2); nb.max.set(f[0] + 0.2, 0.55, f[2] + 0.2);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
+    }
+    // the game: a coop (its house or its pen): its card (who lives there; move it)
+    if (GAME_MODE) for (const p of livePlots()) {
+      if (!p.gc) continue;
+      nb.min.set(-1.66, 0, -0.81); nb.max.set(1.81, 2.1, 2.55);
+      loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
+      if (loc.intersectBox(nb, hitP)) { coopCard(p); return; }
     }
     // the game: the field for sale (its card), or the wild meadow (when it comes up for sale)
     if (GAME_MODE && FIELDS && game.data) {
@@ -3006,7 +3056,7 @@ function syncBrood(plot, now, live, news) {
     }
     const gc = Math.max(0, Math.min(1, (now - game.hatchAt(c)) / YOUNG_MS)), gy = Math.max(0, Math.min(1, (now - youngAt) / Math.max(1, game.grownAt(c) - youngAt)));
     for (const ch of gameChicks(plot)) ch.size = ch.young ? 0.62 + 0.23 * gy : 1 + 0.4 * gc;
-  } else if (!br && chicks.length) {
+  } else if (!br && chicks.length && MOVE.plot !== plot) {              // (not while their coop's being moved: once it's down)
     const e = news.find(x => x.type === 'sold' && x.coop === plot.gc.id);
     chicksGo(plot, live && !!e && now - e.t < LIVE_LAY, e);
   }
@@ -3161,7 +3211,7 @@ function chickCard(ch) {
 // was shut) a moment after it opens; one at a time, never over another card
 let newsFrom = Infinity, openedAt = 0;
 function showNews() {
-  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || performance.now() < newsFrom) return;
+  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || performance.now() < newsFrom) return;
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const L = game.levelNews();                                               // (then a new level's card: what it brings)
@@ -3392,6 +3442,272 @@ function tickLand(dt) {
   for (const m of M.meshes) { m.scale.set(1, Math.max(0.001, k), 1); m.updateMatrix(); m.updateMatrixWorld(true); }
   if (M.t >= 1) { for (const m of M.meshes) m.removeFromParent(); LAND.mow = null; }
   wake(100);
+}
+// ---- coops where you like (release 1 step 5b; Audrey, 25 Oct: "people will have choice to put their coops where they
+// want so no predefined places", "Drag anywhere, clears the way"). Each coop stands where the player put it on their own
+// land, facing one of four ways (game.js: x, z, deg). Tap a coop by day: its card, "Move this coop"; then drag it about
+// (or tap where it should go), turn it, and put it there. Anywhere on your own land: never on a lane, in the water or the
+// wild meadow, over the farmhouse or anything else, or too near another coop, and its gate open to the farm. Trees,
+// bushes and rocks where it goes are cleared (shrinking away in a puff), for good: the save lists them. Its birds come
+// along in their pen; the walking grid, its lantern's pool of light at night and the grass round it all follow.
+const FOOT = { x0: -1.74, z0: -1.67, x1: 1.74, z1: 1.67 };   // a coop and its pen, in its own place (its middle; its gate towards +z)
+const APRON = { x0: -0.3, z0: 1.67, x1: 0.66, z1: 2.45 };    // the ground just outside its gate: kept open, to come and go
+const spotOf = c => ({ x: c.x, z: c.z, deg: c.deg });
+function inSpot(sp, x, z) { const a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a), dx = x - sp.x, dz = z - sp.z; return [dx * c - dz * s, dx * s + dz * c]; }
+const rectGap = (R, lx, lz) => Math.hypot(Math.max(R.x0 - lx, 0, lx - R.x1), Math.max(R.z0 - lz, 0, lz - R.z1));
+function segDist(px, pz, a, b) { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); }
+const nearLines = (lines, px, pz, r) => lines.some(l => { for (let i = 1; i < l.length; i++) if (segDist(px, pz, l[i - 1], l[i]) < r) return true; return false; });
+function inPondAt(x, z, m) { const P = V.pond, ux = P.axisU[0], uz = P.axisU[2], vx = P.axisV[0], vz = P.axisV[2], lu = Math.hypot(ux, uz), lv = Math.hypot(vx, vz), dx = x - P.center[0], dz = z - P.center[2]; return ((dx * ux + dz * uz) / lu / (lu + m)) ** 2 + ((dx * vx + dz * vz) / lv / (lv + m)) ** 2 <= 1; }
+// whether (x, z) is under one of the farm's coops (where the save has them), or within m of one
+function underCoop(x, z, m = 0) {
+  if (!GAME_MODE || !game.data) return false;
+  for (const c of game.data.coops) { const [lx, lz] = inSpot(c, x, z); if (rectGap(FOOT, lx, lz) <= m) return true; }
+  if (MOVE.plot && MOVE.at) { const [lx, lz] = inSpot(MOVE.at, x, z); if (rectGap(FOOT, lx, lz) <= m) return true; }     // (and where one's being moved to)
+  return false;
+}
+// what a coop can't stand on: the buildings and props (a little round them), the way out of the farmhouse's front door,
+// the den, the kennel
+let BLOCKERS = null;
+function blockers() {
+  if (BLOCKERS) return BLOCKERS;
+  const out = [];
+  for (const p of V.props) {
+    if (p.model === 'bridge' || p.model === 'dock') continue;                // (on the lanes and the water anyway)
+    const box = p.model === 'wheat_field' ? new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 1, 1.2)) : parts[p.model] ? new THREE.Box3().setFromObject(parts[p.model]) : null;
+    if (!box) continue;
+    const pad = 0.15 / (p.s || 1);
+    out.push({ inv: place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1).invert(), x0: box.min.x - pad, x1: box.max.x + pad, z0: box.min.z - pad, z1: box.max.z + pad });
+  }
+  const fh = V.props.find(p => p.model === 'farmhouse');
+  if (fh) { const h = fh.deg * DEG; out.push({ c: [fh.pos[0] + Math.sin(h) * 2.4, fh.pos[2] + Math.cos(h) * 2.4], r: 1.2 }); }
+  out.push({ c: [FOX_DEN[0], FOX_DEN[1]], r: 1.6 });
+  if (HAS_DOG) out.push({ c: [KENNEL_AT[0], KENNEL_AT[1]], r: 1.4 });
+  return (BLOCKERS = out);
+}
+// a coop at sp ({ x, z, deg }; self: the coop itself, in the save): whether it can stand there and if not why, and the
+// trees, bushes and rocks to clear
+function coopSpot(sp, self) {
+  const a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
+  const others = GAME_MODE ? game.data.coops.filter(o => o !== self) : [];
+  let land = false, lane = false, room = false, near = false;
+  // (off the fields: right up to a lane's edge is fine (the fields stop a little short of it), and the way out of the gate
+  // can open onto a lane; never on a lane itself, in the water, or off the farm)
+  const check = (R, m, gate) => {
+    for (let lz = R.z0 - m; lz < R.z1 + m + 0.124; lz += 0.25) for (let lx = R.x0 - m; lx < R.x1 + m + 0.124; lx += 0.25) {
+      const px = Math.min(lx, R.x1 + m), pz = Math.min(lz, R.z1 + m), x = sp.x + px * c + pz * s, z = sp.z - px * s + pz * c, f = fieldAt(x, z);
+      if (f < 0) {
+        if (nearLines(V.paths, x, z, gate ? V.pathHalf + 0.5 : V.pathHalf + 0.02)) { if (!gate) lane = true; }
+        else if (nearLines(V.paths, x, z, V.pathHalf + 0.4)) { /* its verge */ }
+        else if (nearLines(V.streams, x, z, V.streamHalf + 0.7) || inPondAt(x, z, 0.6)) lane = true; else land = true;
+      } else if (!owned(f)) land = true;
+      if (!room) for (const b of B) {
+        if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) { room = true; break; } continue; }
+        v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) { room = true; break; }
+      }
+      if (!near) for (const o of others) { const [ox, oz] = inSpot(o, x, z); if (rectGap(FOOT, ox, oz) < 0.35 || rectGap(APRON, ox, oz) < 0.2) { near = true; break; } }
+    }
+  };
+  check(FOOT, 0, false); check(APRON, 0, true);
+  const clear = [], hits = (o, r) => { const [lx, lz] = inSpot(sp, o.pos[0], o.pos[2]); return rectGap(FOOT, lx, lz) < r || rectGap(APRON, lx, lz) < r * 0.7; };
+  for (const t of V.trees) if (hits(t, 0.75 * (t.r || 1.3))) clear.push(t);
+  for (const b of V.bushes) if (hits(b, 0.46 * (b.s || 1) + 0.05)) clear.push(b);
+  for (const k of V.rocks) if (hits(k, 0.2 * (k.s || 1) + 0.05)) clear.push(k);
+  const why = lane ? 'move_lane' : land ? 'move_land' : near ? 'move_coop' : room ? 'move_room' : null;
+  return { ok: !why, why, clear };
+}
+// the farm opening: every coop where it can stand (a save from before, or a spot that's no good any more: the nearest
+// good one to home), what's under them cleared, and the trees, bushes and rocks cleared for good taken away
+function settleCoops() {
+  let changed = false;
+  for (const c of game.data.coops) {
+    if (coopSpot(c, c).ok) continue;
+    const f = freeSpot(c); if (f) { Object.assign(c, f); changed = true; }
+  }
+  const gone = new Set(game.data.cleared);
+  for (const c of game.data.coops) for (const o of coopSpot(c, c).clear) if (!gone.has(o.id)) { gone.add(o.id); game.data.cleared.push(o.id); changed = true; }
+  V.trees = V.trees.filter(o => !gone.has(o.id)); V.bushes = V.bushes.filter(o => !gone.has(o.id)); V.rocks = V.rocks.filter(o => !gone.has(o.id));
+  if (changed) game.save();
+}
+function freeSpot(self) {
+  const h = HOME_COOP;
+  for (let r = 0; r < 34; r += 0.5) for (let k = 0, n = Math.max(1, Math.round(r * 8)); k < n; k++) {
+    const a = k / n * Math.PI * 2, x = Math.round((h.x + Math.cos(a) * r) * 4) / 4, z = Math.round((h.z + Math.sin(a) * r) * 4) / 4;
+    if (!owned(fieldAt(x, z))) continue;
+    for (const deg of [self.deg, 90, 0, 180, 270]) if (coopSpot({ x, z, deg }, self).ok) return { x, z, deg };
+  }
+  return null;
+}
+// the village's plots had no grass of their own: in the game there are none, so the grass grows there like round it (as
+// thick as round each, in patches)
+function fillPlotGaps() {
+  V.plots.forEach((p, pi) => {
+    const a = p.deg * DEG, c = Math.cos(a), s = Math.sin(a), W = (lx, lz) => [p.pos[0] + lx * c + lz * s, p.pos[2] - lx * s + lz * c];
+    const ringAt = (lx, lz) => { const m = Math.max(Math.abs(lx - 0.25), Math.abs(lz - 0.25)); return m > 2.6 && m < 4.2; };
+    const ring = V.tufts.filter(t => { const dx = t[0] - p.pos[0], dz = t[2] - p.pos[2]; return ringAt(dx * c - dz * s, dx * s + dz * c); });
+    let area = 0;
+    for (let lz = -3.95; lz < 4.45; lz += 0.25) for (let lx = -3.95; lx < 4.45; lx += 0.25) if (ringAt(lx, lz)) { const [x, z] = W(lx, lz); if (fieldAt(x, z) >= 0) area += 0.0625; }
+    if (ring.length < 4 || area < 2) return;
+    const per = ring.length / area * 0.25, r = rng(500 + pi);                 // (tufts in each half-metre square)
+    for (let lz = -2.25; lz < 2.7; lz += 0.5) for (let lx = -2.25; lx < 2.7; lx += 0.5) {
+      const patch = 0.35 + 1.3 * (0.5 + 0.5 * Math.sin(lx * 1.3 + pi) * Math.cos(lz * 1.1 - pi * 0.7));
+      for (let n = Math.floor(per * patch + r()); n > 0; n--) {
+        const [x, z] = W(lx + r() * 0.5, lz + r() * 0.5), t = ring[Math.floor(r() * ring.length)];
+        if (fieldAt(x, z) >= 0) V.tufts.push([x, 0, z, t[3], r() * 6.283, t[5]]);
+      }
+    }
+  });
+}
+// ---- moving one
+const MOVE = { plot: null, from: null, at: null, spot: null, ghost: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false };
+const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55';
+function moveBusy(p) {
+  return !!(p.fw || p.farmer || inside.open || (farmLife && (farmLife.pen || [farmLife.task, farmLife.pending].some(t => t && t.name === 'pen'))) || (nightVisit && nightVisit.active()));
+}
+function coopCard(p) {
+  holdBird(null); henOff();
+  gameUI.coopCard(p.gc, () => startMove(p));
+}
+function startMove(p) {
+  if (!p || !p.gc || MOVE.plot) return;
+  gameUI.close();
+  if (moveBusy(p)) { hint(game.t('move_busy')); return; }
+  holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
+  MOVE.plot = p; MOVE.from = spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = false; MOVE.nav = false;
+  // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
+  const ghost = new THREE.Group();
+  for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
+    const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(M).multiply(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; ghost.add(k);
+  }
+  p.frame.add(ghost); MOVE.ghost = ghost;
+  MOVE.foot = footMark(); p.group.add(MOVE.foot);
+  batchCoops();
+  if (farmLife && farmLife.task && farmLife.task.name === 'coop') farmLife.task = null;      // (he was off to watch them: something else)
+  gameUI.moveBar(true, { turn: () => { MOVE.moved = true; moveTo(MOVE.at.x, MOVE.at.z, (MOVE.at.deg + 90) % 360, true); }, cancel: () => endMove(false), place: () => placeCoop() });
+  moveTo(MOVE.at.x, MOVE.at.z, MOVE.at.deg, true);
+  focusOn(p.centre.x, p.centre.z, Math.max(view.size, sideways() ? 3.4 : 4.4));      // (the player's tap: room round it in view)
+}
+let FOOT_TEX = null;
+function footMark() {
+  const X0 = FOOT.x0 - 0.25, X1 = FOOT.x1 + 0.25, Z0 = FOOT.z0 - 0.25, Z1 = APRON.z1 + 0.15, w = X1 - X0, h = Z1 - Z0;
+  if (!FOOT_TEX) {
+    const W = 256, H = Math.round(256 * h / w), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const c = cv.getContext('2d'), px = x => (x - X0) / w * W, pz = z => (z - Z0) / h * H;
+    c.fillStyle = 'rgba(255,255,255,0.3)'; c.strokeStyle = '#fff'; c.lineWidth = 9; c.lineJoin = 'round';
+    c.beginPath(); c.roundRect(px(FOOT.x0), pz(FOOT.z0), px(FOOT.x1) - px(FOOT.x0), pz(FOOT.z1) - pz(FOOT.z0), 22); c.fill(); c.stroke();
+    // the way out of its gate
+    const gx = px((APRON.x0 + APRON.x1) / 2), y0 = pz(FOOT.z1) + 4, y1 = pz(APRON.z1) - 4;
+    c.fillStyle = '#fff'; c.beginPath(); c.moveTo(gx - 9, y0); c.lineTo(gx + 9, y0); c.lineTo(gx + 9, y1 - 18); c.lineTo(gx + 20, y1 - 18); c.lineTo(gx, y1); c.lineTo(gx - 20, y1 - 18); c.lineTo(gx - 9, y1 - 18); c.closePath(); c.fill();
+    FOOT_TEX = new THREE.CanvasTexture(cv); FOOT_TEX.colorSpace = THREE.SRGBColorSpace;
+  }
+  const mat = new THREE.MeshBasicMaterial({ map: FOOT_TEX, color: FOOT_OK, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  mat.userData.noGrade = true;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), mat);
+  m.position.set((X0 + X1) / 2, 0.025, (Z0 + Z1) / 2); m.renderOrder = 3; m.matrixAutoUpdate = false; m.updateMatrix();
+  return m;
+}
+function moveTo(x, z, deg, force = false) {
+  const p = MOVE.plot; if (!p) return;
+  x = Math.round(x * 4) / 4; z = Math.round(z * 4) / 4;
+  if (!force && x === MOVE.at.x && z === MOVE.at.z && deg === MOVE.at.deg) return;
+  if (x !== MOVE.at.x || z !== MOVE.at.z) MOVE.moved = true;
+  MOVE.at = { x, z, deg };
+  const g = p.group; g.position.set(x, 0, z); g.rotation.y = deg * DEG; g.updateMatrix(); g.updateMatrixWorld(true);
+  p.centre.set(x, 0, z); placeDoor(p); placePools(p);
+  const S = MOVE.spot = coopSpot(MOVE.at, p.gc);
+  MOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
+  gameUI.moveStatus(game.t(!MOVE.moved ? 'move_hint' : S.ok ? (S.clear.length ? 'move_clear' : 'move_ok') : S.why), S.ok);
+  MOVE.grassAt = performance.now() + 220;                   // (once it's still a moment: no grass through its pen)
+  renderer.shadowMap.needsUpdate = true; wake(600);
+}
+function groundAt(cx, cy, out = new THREE.Vector3()) {
+  ndc.set(cx / canvas.clientWidth * 2 - 1, -(cy / canvas.clientHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), out);
+}
+// a finger down on the coop: it's carried along; a tap elsewhere: it goes there
+function moveGrab(e) {
+  const g = groundAt(e.clientX, e.clientY); if (!g) return false;
+  const [lx, lz] = inSpot(MOVE.at, g.x, g.z);
+  if (rectGap(FOOT, lx, lz) > 0.35) return false;
+  MOVE.drag = { id: e.pointerId, dx: g.x - MOVE.at.x, dz: g.z - MOVE.at.z }; return true;
+}
+function moveDrag(cx, cy) { const g = groundAt(cx, cy); if (g) moveTo(g.x - MOVE.drag.dx, g.z - MOVE.drag.dz, MOVE.at.deg); }
+function moveTap(cx, cy) {
+  const g = groundAt(cx, cy); if (!g) return;
+  const [lx, lz] = inSpot(MOVE.at, g.x, g.z); if (rectGap(FOOT, lx, lz) < 0.05) return;
+  moveTo(g.x, g.z, MOVE.at.deg);
+}
+// each frame: carried to the edge of the screen, the view goes along
+function tickMove(dt) {
+  if (MOVE.plot && MOVE.grassAt && !MOVE.drag && performance.now() > MOVE.grassAt) { MOVE.grassAt = 0; MOVE.grass = true; buildGrass(); wake(200); }
+  const D = MOVE.drag; if (!D) return;
+  const p = pointers.get(D.id); if (!p) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight, bar = gameUI.moveTop(), E = 44;
+  const ex = p.x < E ? -1 : p.x > W - E ? 1 : 0, ey = p.y < 70 ? -1 : p.y > Math.min(H, bar) - E ? 1 : 0;
+  if (!ex && !ey) return;
+  pan(-ex * 320 * dt, -ey * 320 * dt); moveDrag(p.x, p.y); wake(300);
+}
+function placeCoop() {
+  const p = MOVE.plot; if (!p || !MOVE.spot || !MOVE.spot.ok) return false;
+  const at = MOVE.at, from = MOVE.from;
+  if (at.x === from.x && at.z === from.z && at.deg === from.deg) { endMove(false); return true; }
+  // its gate must open onto the farm: the walking grid with it there, and what's in its way gone
+  const clear = MOVE.spot.clear, ids = new Set(clear.map(o => o.id)), keep = [V.trees, V.bushes, V.rocks];
+  V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
+  rebuildNav(); MOVE.nav = true;
+  if (!penSpec(p)) {
+    [V.trees, V.bushes, V.rocks] = keep;
+    MOVE.spot = { ok: false, why: 'move_gate', clear: [] }; MOVE.foot.material.color.set(FOOT_NO); gameUI.moveStatus(game.t('move_gate'), false);
+    return false;
+  }
+  game.moveCoop(p.gc.id, at.x, at.z, at.deg, [...ids]);
+  for (const o of clear) clearAway(o);
+  endMove(true);
+  hint(game.t('moved'));
+  return true;
+}
+function endMove(placed) {
+  const p = MOVE.plot; if (!p) return;
+  if (!placed) {
+    const f = MOVE.from, g = p.group; g.position.set(f.x, 0, f.z); g.rotation.y = f.deg * DEG; g.updateMatrix(); g.updateMatrixWorld(true);
+    p.centre.set(f.x, 0, f.z); placeDoor(p); placePools(p);
+  }
+  MOVE.ghost.removeFromParent(); MOVE.foot.removeFromParent(); MOVE.foot.geometry.dispose(); MOVE.foot.material.dispose();
+  const nav = MOVE.nav, grass = MOVE.grass;
+  MOVE.plot = MOVE.ghost = MOVE.foot = MOVE.drag = MOVE.spot = null; MOVE.nav = MOVE.grass = false; MOVE.grassAt = 0;
+  batchCoops();
+  if (placed) { buildNature(); buildGrass(); hidePebbles(); }
+  else { if (nav) rebuildNav(); if (grass) buildGrass(); }
+  gameUI.moveBar(false);
+  renderer.shadowMap.needsUpdate = true; wake(1000);
+}
+// a tree, bush or rock cleared: it shrinks away in a puff of leaves (or dust)
+const CLEARING = [];
+let PUFF_TEX = null;
+function clearAway(o) {
+  const g = new THREE.Group(), base = new THREE.Vector3();
+  for (const m of meshesOf(parts[o.model])) { const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; g.add(k); }
+  natureMatrix(o).decompose(g.position, g.quaternion, g.scale); base.copy(g.scale); scene.add(g);
+  if (!PUFF_TEX) PUFF_TEX = fxTexture64(64, c => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(32, 32, 30, 0, Math.PI * 2); c.fill(); });
+  const mat = new THREE.SpriteMaterial({ map: PUFF_TEX, color: o.id[0] === 'r' ? '#d8cfbf' : o.id[0] === 't' ? '#8cc26a' : '#9fcf78', transparent: true, depthWrite: false });
+  const R = rng(o.pos[0] * 131 + o.pos[2] * 71), H = o.id[0] === 't' ? (o.h || 3) * 0.55 : o.id[0] === 'b' ? 0.45 : 0.2, bits = [];
+  for (let i = 0; i < (o.id[0] === 't' ? 16 : 9); i++) {
+    const sp = new THREE.Sprite(mat), a = R() * Math.PI * 2, up = R();
+    sp.position.set(o.pos[0], H * (0.3 + 0.7 * up), o.pos[2]); sp.scale.setScalar(0.01);
+    bits.push({ sp, v: new THREE.Vector3(Math.cos(a) * (0.6 + R()), 0.4 + R() * 0.8, Math.sin(a) * (0.6 + R())), s: (o.id[0] === 't' ? 0.5 : 0.28) * (0.7 + R() * 0.6) });
+    scene.add(sp);
+  }
+  CLEARING.push({ g, base, t: 0, bits, mat });
+}
+function tickClearing(dt) {
+  for (let i = CLEARING.length - 1; i >= 0; i--) {
+    const C = CLEARING[i]; C.t += dt;
+    const k = Math.max(0.001, 1 - Math.min(1, C.t / 0.55) ** 2); C.g.scale.copy(C.base).multiplyScalar(k);
+    const u = Math.min(1, C.t / 1.1);
+    for (const b of C.bits) { b.sp.position.addScaledVector(b.v, dt); b.v.multiplyScalar(1 - dt * 2.2); b.sp.scale.setScalar(b.s * (0.4 + u)); }
+    C.mat.opacity = 0.9 * (1 - u) * Math.min(1, C.t / 0.08);
+    if (C.t >= 1.1) { C.g.removeFromParent(); for (const b of C.bits) b.sp.removeFromParent(); C.mat.dispose(); CLEARING.splice(i, 1); }
+  }
+  if (CLEARING.length) wake(100);
 }
 let saleBub = null;
 function saleBubble() {
@@ -3841,7 +4157,7 @@ function frame(now) {
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
   tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
-  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); placeBubbles(); }
+  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); placeBubbles(); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -3902,7 +4218,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
   doorTap, setDoor, doors: DOORS,
@@ -3915,7 +4231,13 @@ window.__farm = {
   saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
   farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
   wildIn: f => { let c = 0; const m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.grass) for (let i = 0; i < im.instanceMatrix.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) c++; } return c; },
-  land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
+  move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
+    state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
+  coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
+  nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id) }), underCoop: (x, z, m) => underCoop(x, z, m),
+  screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },
+  penOut: i => { const P = penSpec(gamePlots()[i]); return P && P.out; }, grassIn: i => { const c = game.data.coops[i], m = new THREE.Matrix4(), v = new THREE.Vector3(); let n = 0; for (const g of VGRASS) for (let k = 0; k < g.count; k++) { g.getMatrixAt(k, m); v.setFromMatrixPosition(m); const [lx, lz] = inSpot(c, v.x, v.z); if (rectGap(FOOT, lx, lz) <= 0) n++; } return n; }, coopAt: i => { const g = gamePlots()[i].group; return [g.position.x, g.position.z, Math.round(g.rotation.y / DEG)]; }, navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);

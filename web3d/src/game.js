@@ -3,8 +3,8 @@
 // game into account please"), and the game's words in English and French. The 3D village (main.js) draws it.
 //
 // The farm: coins, XP (the level always comes from the XP, never from the save), the farmer (him or her, and a name),
-// the patches of land owned (the village's plots), the coops (a breed, how far it's been done up: 0 rustic .. 4 Deluxe,
-// the patch it stands on, the eggs waiting in its nest, its feeder) and the birds: each breed's forever trio, a rooster
+// the fields owned, the coops (a breed, how far it's been done up: 0 rustic .. 4 Deluxe, where it stands on your land, the
+// eggs waiting in its nest, its feeder) and the birds: each breed's forever trio, a rooster
 // and two hens with three different personalities, who stay for good and earn experience and trust.
 //
 // Step 3, eggs and feed: each hen lays twice a day on the phone's own clock, once in the morning and once in the
@@ -14,7 +14,9 @@
 //
 // Step 5, levels and land: the XP fills the level ring; a new level's card once, saying what it brings. The farm is split
 // into fields along its lanes and the stream; the home field is yours from the start and one more can be bought at each
-// level, nearest first, from 100 coins at level 2 to 10,000 at level 30; the rest is wild meadow, fenced off.
+// level, nearest first, from 100 coins at level 2 to 10,000 at level 30; the rest is wild meadow, fenced off. Then coops
+// where you like: each stands where you put it on your land (its middle and which way it faces), moved whenever you like;
+// trees, bushes and rocks where it goes are cleared, for good.
 //
 // Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
 // time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
@@ -54,6 +56,12 @@ const TEXT = {
     land_title: 'A field', land_body: 'Wild meadow with room for a coop or two. Buy it and it’s yours for good: the grass is cut and your fence moves out round it.',
     land_buy: 'Buy for {c} coins', land_broke: 'Not enough coins yet ({c})', land_bought: 'The new field is yours!', land_wild: 'Wild meadow · for sale at level {n}',
         sale_sign: 'FOR SALE', bub_sale: 'For sale',
+    coop_lives: '{names} live here.', and: 'and', rustic: 'rustic',
+    move_body: 'Put it anywhere on your land. Trees, bushes and rocks in the way are cleared.', move_btn: 'Move this coop',
+    move_hint: 'Drag the coop, or tap where it should go.', move_ok: 'A good spot!', move_clear: 'A good spot! What’s in the way will be cleared.',
+    move_land: 'Only on your own land.', move_lane: 'Not on a lane or in the water.', move_room: 'Not enough room here.', move_coop: 'Too close to another coop.',
+    move_gate: 'Its gate would be shut in here.', move_turn: 'Turn', move_cancel: 'Cancel', move_place: 'Put it here', moved: 'The coop is in its new place!',
+    move_busy: 'Not just now: try again in a moment.',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
@@ -117,6 +125,12 @@ const TEXT = {
     land_title: 'Un terrain', land_body: 'Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : l’herbe est coupée et votre clôture l’entoure.',
     land_buy: 'Acheter pour {c} pièces', land_broke: 'Pas encore assez de pièces ({c})', land_bought: 'Le nouveau terrain est à vous !', land_wild: 'Pré sauvage · à vendre au niveau {n}',
         sale_sign: 'À VENDRE', bub_sale: 'À vendre',
+    coop_lives: '{names} vivent ici.', and: 'et', rustic: 'rustique',
+    move_body: 'Installez-le où vous voulez sur votre terrain. Les arbres, buissons et rochers qui gênent sont dégagés.', move_btn: 'Déplacer ce poulailler',
+    move_hint: 'Faites glisser le poulailler, ou touchez l’endroit voulu.', move_ok: 'Bel emplacement !', move_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.',
+    move_land: 'Seulement sur votre terrain.', move_lane: 'Pas sur un chemin ni dans l’eau.', move_room: 'Pas assez de place ici.', move_coop: 'Trop près d’un autre poulailler.',
+    move_gate: 'Sa porte serait bloquée ici.', move_turn: 'Tourner', move_cancel: 'Annuler', move_place: 'Le mettre ici', moved: 'Le poulailler est à sa nouvelle place !',
+    move_busy: 'Pas tout de suite : réessayez dans un instant.',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
@@ -200,6 +214,10 @@ export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L +
 // farmhouse), is the farm's from the start; one more can be bought at each level, nearest first (Audrey, 25 Oct: "For me
 // it's a full piece of land"; "Fields with natural borders", "One each level"), from 100 coins at level 2 to 10,000 at 30
 export const FIELDS = 30;
+// where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
+// time); a new farm's first coop in the home field (where the village had its first plot)
+export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
+const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
@@ -276,9 +294,12 @@ export function checkFarm(d, now = Date.now()) {
   const seen = new Set();
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed] || !Number.isInteger(c.plot) || c.plot < 0 || c.plot >= 40 || out.coops.some(o => o.plot === c.plot)) continue;
+    if (!BREED_INFO[c.breed]) continue;
     seen.add(c.id);
-    out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), plot: c.plot, name: cleanName(c.name, 24),
+    // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
+    // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
+    const x = spotNum(c.x), z = spotNum(c.z), deg = [0, 90, 180, 270].includes(c.deg) ? c.deg : null, at = x === null || z === null || deg === null ? HOME_COOP : { x, z, deg };
+    out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), x: at.x, z: at.z, deg: at.deg, ...(Number.isInteger(c.plot) ? { plot: c.plot } : {}), name: cleanName(c.name, 24),
       eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
       brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
         kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1) })) : null } : null,
@@ -303,6 +324,8 @@ export function checkFarm(d, now = Date.now()) {
   for (const c of out.coops) { const cap = Math.max(1, out.birds.filter(b => b.coop === c.id).length) * FEED_DAYS; c.feed = c.feed === null ? cap : num(c.feed, 0, cap, cap); }
   // a brood: one of the coop's own hens, hatched only once its time has come
   for (const c of out.coops) if (c.brood && (!out.birds.some(b => b.id === c.brood.hen && b.sex === 'h' && b.coop === c.id) || (c.brood.hatched && c.brood.start + SIT_MS > now))) c.brood = null;
+  // the trees, bushes and rocks cleared where a coop was put (each once; the village's own: t12, b40, r3)
+  out.cleared = (Array.isArray(d.cleared) ? d.cleared : []).filter((k, i, a) => typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && a.indexOf(k) === i).slice(0, 400);
   out.next = int(d.next, 1, 99999, 1);
   for (const x of [...out.coops, ...out.birds]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
   const f = d.first, fh = f && typeof f === 'object' ? out.birds.find(b => b.id === f.hen && b.sex === 'h') : null;
@@ -360,6 +383,16 @@ export class Game {
     this.data.coins -= n.price; this.data.land.push(n.field); this.save();
     return n;
   }
+  // a coop put somewhere else on the land (main.js checks the spot: the farm's own land, room for it, its gate open), and
+  // what was cleared there
+  moveCoop(id, x, z, deg, clear = []) {
+    const c = this.coop(id), X = spotNum(x), Z = spotNum(z);
+    if (!c || X === null || Z === null || ![0, 90, 180, 270].includes(deg)) return false;
+    c.x = X; c.z = Z; c.deg = deg; delete c.plot;
+    for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
+    this.save();
+    return true;
+  }
   stars(b) { return Math.min(MAX_STARS, Math.floor(b.exp / 100)); }          // (how experience is earned: step 6)
   coop(id) { return this.data.coops.find(c => c.id === id); }
   birdsIn(coopId) { return this.data.birds.filter(b => b.coop === coopId); }
@@ -386,8 +419,8 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], next: 1 };
-    const coop = { id: this.id('c'), breed: 'rir', tier: 0, plot: 0, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
+    const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
     const mum = this.data.birds.find(b => b.pers === 'mum') || this.data.birds.find(b => b.sex === 'h');
@@ -540,6 +573,7 @@ export class Game {
     const d = checkFarm(raw.d);
     if (!d) return null;
     this.edited = raw.s !== seal(JSON.stringify(raw.d)) || !fits(d, raw.d);
+    for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
     return d;
   }
   wipe() { try { this.store && this.store.removeItem(SAVE_KEY); } catch (e) { /* */ } this.data = null; }

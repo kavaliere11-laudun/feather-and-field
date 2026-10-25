@@ -1543,10 +1543,49 @@ it waits somewhere easy to reach with a red dot. Two live steps: the fields (thi
   Prices `landPrice`: 100 coins for the second field, 120, 140... up to 10,000 for the thirtieth (100 × 100^((k−1)/28)).
 - **The save:** `land` (the fields owned: only the first in order, at most one a level, anything else put right and
   flagged; a farm from the plots version keeps as many as it had) and `lvSeen` (the last level whose card was shown, at
-  most the level; a farm from before this step owes no card). Coops keep their places for now (`plot`); placing them
-  where you like comes next.
+  most the level; a farm from before this step owes no card). Where the coops stand: the next section.
 - `landtest.mjs` (`LANG=fr`, `W=874 H=402`): a new farm (the home field, the meadow fenced with its long grass, nothing
   for sale, what level 2 brings, a tap on the meadow); level 2 (its card once, the bar, the sign, stakes and bubble; a
   reload: no card again); not enough coins; bought (coins, the field's long grass gone, the fence moved, the farmer can
   walk there now and couldn't before); level 4 at once (one card, the next field at 120); a reload; a save changed
   outside (fields in order, one a level, the card mark); a farm from before this step.
+
+## The game, release 1 step 5b: coops where you like (25 Oct 2026, Audrey: "Drag anywhere, clears the way")
+
+Audrey (25 Oct): "people will have choice to put their coops where they want so no predefined places", and for placing
+she chose "Drag anywhere, clears the way". Then: a level that brings a new coop pops up a card offering to place it now
+(its three chickens with it); otherwise it waits somewhere easy to reach with a red dot. This step is placing and moving
+(the one coop a farm has so far); the new coops and their store come with the new breeds (step 6).
+- **Where a coop stands** (`game.js`: `x`, `z`, `deg` on each coop; `HOME_COOP`): its middle on the farm, on a
+  quarter-metre grid, facing one of four ways. A new farm's first coop stands where the village's first plot was, in the
+  home field. A farm from before this step (`plot: 0`) keeps its coop there, not flagged.
+- **Its card:** tap a coop by day (its house or its pen, not a bird, the nest window, the pop door or the feeder): its
+  name, breed (rustic), who lives there ("Albert, Peggy and Fern live here."), "Put it anywhere on your land. Trees,
+  bushes and rocks in the way are cleared." and "Move this coop". At night a tap still takes you inside.
+- **Moving it** (`main.js` "coops where you like"): the view glides back a little to show room round it (the player's
+  tap); the coop is drawn on its own while it moves, with its outline on the ground (green where it can go, red where it
+  can't, an arrow out of its gate) and a bar along the bottom: what the spot's like ("Drag the coop, or tap where it
+  should go.", "A good spot!", "A good spot! What's in the way will be cleared.", or why not: "Only on your own land.",
+  "Not on a lane or in the water.", "Not enough room here.", "Too close to another coop.", "Its gate would be shut in
+  here.") and ↻ Turn (a quarter turn), Cancel, ✓ Put it here (only when the spot's good). A finger on the coop carries it
+  (a finger elsewhere still moves the view, two pinch); carried to the screen's edge, the view goes along; a tap
+  elsewhere puts it there. Its hens come along in their pen; once it's still a moment no grass shows through its pen.
+- **Where it can go** (`coopSpot`): every point of the coop and its pen on fields you own (right up to a lane's edge;
+  the ground just outside its gate may open onto a lane), clear of the buildings and props (the farmhouse and its
+  garden, the way out of its front door, the well, the vegetable patches, bales, lamp posts...) and of other coops; its
+  gate must open onto the farm (checked with the walking grid as it would be). The home field alone has little room (the
+  farmhouse takes much of it); each field bought gives more.
+- **Put down:** saved; the trees, bushes and rocks in its way (and their crowns over it) shrink away in a puff of leaves
+  or dust and are gone for good (`cleared`: their ids, t12, b40, r3); its old spot grows grass again (the village's plots
+  had none: in the game they're grassed over like round them, `fillPlotGaps`); the walking grid, its lantern's pool of
+  light at night, its pop door, the grass, flowers and pebbles round it all follow. "The coop is in its new place!" Not
+  while the farmer's in a pen (or on his way to one), a farewell is on, or Rusty's about ("Not just now: try again in a
+  moment."); youngsters due to leave wait till it's down.
+- **The save:** each coop's `x`, `z` (numbers on the quarter-metre, within the farm's reach) and `deg` (0, 90, 180,
+  270); `cleared` (ids, each once). On every load the farm checks each coop stands where a coop can (else it's moved to
+  the nearest good spot to home) and clears what's under it; a save changed outside the game is flagged as before.
+- `movetest.mjs` (`LANG=fr`, `W=874 H=402`): the home spot; a tap on the coop: its card; moving (the bar, a finger
+  carries it, the wild meadow, a lane and the farmhouse each say why and can't be chosen); Cancel; not while the farmer's
+  busy; level 2 and the next field: moved there (bushes to clear), turned, put down (saved, cleared for good, no grass in
+  its pen, the farmer can get to its gate, its old spot open); a reload; a save changed outside (a coop on the wild
+  meadow: flagged, put back on your land); a farm from before this step.

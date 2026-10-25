@@ -309,6 +309,37 @@ export class GameUI {
     body.append(go);
   }
 
+  // ---- a coop: who lives there; move it (onMove: main.js startMove)
+  coopCard(coop, onMove) {
+    const g = this.g, body = this.open('coop', g.coopName(coop));
+    this.bird = null;
+    body.append(el('p', 'gsub', g.breedName(coop.breed) + (coop.tier === 0 ? ' · ' + this.t('rustic') : '')));
+    const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
+    if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] })));
+    body.append(el('p', 'gnote', this.t('move_body')));
+    const go = el('button', 'gbtn', this.t('move_btn')); go.type = 'button';
+    go.addEventListener('click', () => onMove());
+    body.append(go);
+  }
+  // ---- moving a coop: what the spot's like, and Turn, Cancel, Put it here (h: { turn(), cancel(), place() })
+  moveBar(on, h) {
+    if (!this.mbar) {
+      const b = this.mbar = el('section', 'gmove'); b.hidden = true;
+      this.mtext = el('p', 'gmove-t');
+      const row = el('div', 'gmove-row');
+      this.mturn = el('button', 'gbtn galt gmove-b'); this.mcancel = el('button', 'gbtn galt gmove-b'); this.mplace = el('button', 'gbtn gmove-b gmove-go');
+      for (const x of [this.mturn, this.mcancel, this.mplace]) { x.type = 'button'; row.append(x); }
+      b.append(this.mtext, row); document.body.append(b);
+      this.mturn.addEventListener('click', () => this.mh && this.mh.turn());
+      this.mcancel.addEventListener('click', () => this.mh && this.mh.cancel());
+      this.mplace.addEventListener('click', () => { if (this.mh && !this.mplace.disabled) this.mh.place(); });
+    }
+    this.mh = on ? h : null; this.mbar.hidden = !on; document.body.classList.toggle('gmoving', !!on);
+    if (on) { this.mturn.textContent = '↻ ' + this.t('move_turn'); this.mcancel.textContent = this.t('move_cancel'); this.mplace.textContent = '✓ ' + this.t('move_place'); }
+  }
+  moveStatus(text, ok) { if (!this.mbar) return; this.mtext.textContent = text; this.mtext.classList.toggle('bad', !ok); this.mplace.disabled = !ok; }
+  moveTop() { return this.mbar && !this.mbar.hidden ? this.mbar.getBoundingClientRect().top : innerHeight; }      // (where the bar starts: the farm above it)
+
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));
     b.append(el('p', 'gtext', this.t('coins_body')));
