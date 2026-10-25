@@ -51,7 +51,7 @@ for (let i = 0; i < 40 * FPS && (await p.evaluate(() => window.__farm.deco.wheat
 await hold(2.4);
 // the beehives, with two jars
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = Math.round(60 * Math.pow(5, 2.1) + 5); g.data.coins = 3000; g.data.lvSeen = g.level; g.save(); f.gameUI().refresh(); f.deco.start('beehives'); f.deco.place(); window.__T += 16.2 * 3600e3; f.gameTick(window.__T, true); document.getElementById('hint').classList.remove('on'); });
-await p.evaluate(() => { const f = window.__farm, it = f.deco.items().find(x => x.id === 'beehives'); f.lookAt(it.at[0] + 0.7, it.at[1] + 0.7, 2.6); });
+await p.evaluate(() => { const f = window.__farm, it = f.deco.items().find(x => x.id === 'beehives'); f.lookAt(it.at[0] + 0.55, it.at[1] + 0.55, 1.75); });
 await step(0.5);
 marks.push('honey:' + n); await hold(1.2);
 await tapEl('.gbub.ghoney');
