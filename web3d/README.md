@@ -2002,3 +2002,23 @@ The 2D game's farm code made the new game's own (`game.js` `makeFarmCode`, `read
 - `codetest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the card; Copy (copied, shown, the word); the farm changed,
   the code loaded (as it was, the word, not flagged); a broken code; a first-game code; one edited by hand (flagged, names
   cleaned).
+
+## The game, release 1 step 10: the first day (25 Oct 2026, Audrey: "Scenes from the 3D farm (Recommended)")
+
+Onboarding for new players (`gameui.js` `introCards`; `game.js` `GUIDE`, `guideDid`, `guideSkip`; `main.js` the first
+day, after the wheat field and honey).
+- **The pictures:** on a new farm, once it's open, four cards one at a time, each a picture made from the game's own farm
+  (`intro/1-4.webp`, see "The onboarding pictures"), a title and a line or two: "Your forever flock", "Eggs and chicks",
+  "Land and new breeds", "Shows, honey and more"; dots, Next (or a swipe), "Let's go!" on the last, Skip.
+- **The guide:** then a little card ("First day · 1 of 5", along the bottom upright, top left sideways) saying what to do,
+  and a bouncing yellow arrow over where to tap (under it, pointing up, for the top bar): collect the first egg (it's laid
+  a little over a minute in: "Your first egg is on its way" till then); give a hen a cuddle (the arrow over a hen, then
+  over ♥ Cuddle in her card); sow the wheat field (its sign, then Sow); Today's jobs; the shop (the coins). Each done:
+  "Well done! +10 coins"; the last: "Your first day is done! +40 coins. A new field comes at level 2." Something off
+  screen: "Show me" brings the view to it (the player's tap: the view never moves by itself). Skip: no more guide.
+  Hidden while a card is open (unless the arrow points into it), while something's being moved, inside a coop and on
+  show day; the other cards (a level, news) wait for the pictures.
+- **The save:** `guide` ({ step 0-5, done }); a farm from before: done. The tests' pages (`?q=`) leave the first day out
+  unless asked (`&firstday`), so they play as before.
+- `firstdaytest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the pictures; each step with its arrow and coins ("Show
+  me" for the wheat); the end and the bonus; a reload; Skip and Skip; a guide past its end (checked, flagged).
