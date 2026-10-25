@@ -29,7 +29,8 @@ import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP } from './game.js';
 import { GameUI } from './gameui.js';
-import { loadShow, ShowLineup } from './showground.js';
+import { loadShow, ShowLineup, SHOW } from './showground.js';
+import { ShowDay } from './showday.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -1625,6 +1626,7 @@ function tickFoxes(dt) {
   if (frogLineup) { frogLineup.update(dt); wake(100); }
   if (farmerLineup) { farmerLineup.update(dt); wake(100); }
   if (ShowLineup.on) { ShowLineup.on.update(dt); wake(100); }
+  if (SHOWDAY) { SHOWDAY.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
   if (farmDog) farmDog.separate();                   // (Biscuit out of Rusty's way, after everyone has moved)
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
@@ -2747,7 +2749,7 @@ function zoomBy(f) {
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
-  if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup || ShowLineup.on) return;
+  if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup || ShowLineup.on || SHOWDAY) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));
@@ -2766,6 +2768,7 @@ function pan(dx, dy) {
 const tag = document.getElementById('tag');
 let tagBird = null, tagLeft = 0;
 function tapAt(x, y) {
+  if (SHOWDAY) return;                                   // (the show day: watch, or Skip)
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   let best = null, bestD = Infinity;
@@ -2952,7 +2955,7 @@ function openBirdCard(b) {
   const size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN;      // (upright: her feet a third of the way up the screen, her head under the top bar)
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
-function gameSheetClosed() { holdBird(null); wake(300); }
+function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay(); wake(300); }
 
 // ---- the game's eggs and feed (game.js has the rules; here they're seen). Once a second: the lays that are due. A hen
 // whose time has just come walks in and lays (the egg counts when it's in the straw, gameLaid); one that can't go yet
@@ -3325,11 +3328,11 @@ function chickCard(ch) {
 // was shut) a moment after it opens; one at a time, never over another card
 let newsFrom = Infinity, openedAt = 0;
 function showNews() {
-  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || performance.now() < newsFrom) return;
+  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || SHOWDAY || performance.now() < newsFrom) return;
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
-  const sr = game.unseenShows();                                           // (the show results)
-  if (sr.length) { holdBird(null); gameUI.showResults(sr); return; }
+  const sr = game.unseenShows();                                           // (the show results: the show day first, by day)
+  if (sr.length) { holdBird(null); if (!offerShowDay(sr)) gameUI.showResults(sr); return; }
   const L = game.levelNews();                                               // (then a new level's card: what it brings)
   if (L && !gamePlots().some(p => p.fw)) {
     holdBird(null); syncLand(); gameUI.refresh();
@@ -3836,6 +3839,76 @@ function showsSheet(more) {
     hint(game.t('show_entered', { name: b.name, show: game.showName(id) }, b.sex === 'h'));
     gameUI.refresh(); gameUI.bumpCoins(); showsSheet();
   } }, more);
+}
+// ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
+// the judging" (the view goes to the show tent on the green: the player's tap) or "Just the results". The scene, then the
+// results card; the tent goes once it's closed. Meanwhile the farm's own farmer and her bird are away at the show (hidden)
+let SHOWDAY = null, showDayOffered = '', SHOW_WHY = null, showFrom = null;
+const SHOW_DAY_HOURS = [7, 21];
+function offerShowDay(list) {
+  const d = new Date(Date.now()), h = d.getHours() + d.getMinutes() / 60, key = list.map(r => r.id + r.bird).join();      // (the phone's own clock, as the shows')
+  if (h < SHOW_DAY_HOURS[0] || h >= SHOW_DAY_HOURS[1] || showDayOffered === key || gamePlots().some(p => p.fw) || (farmLife && farmLife.pen)) return false;
+  const r = pickShowDay(list); if (!r || !showSpot()) return false;
+  showDayOffered = key;
+  gameUI.showDayCard(game.showName(r.id), () => startShowDay(r, list), () => gameUI.showResults(list));
+  return true;
+}
+const pickShowDay = list => list.slice().sort((a, b) => 'vcn'.indexOf(b.id[0]) - 'vcn'.indexOf(a.id[0]) || a.place - b.place)[0];
+// where the show tent goes: the village's show field, on open grass just past the farm's edge beside the first coop (or past
+// its front), clear of the lanes, the water, the buildings and the trees (the farm's own land is too full for it);
+// the view goes there for the show (the player's tap) and back after; worked out once a visit
+let SHOW_SPOT;
+function showSpot() {
+  if (SHOW_SPOT !== undefined) return SHOW_SPOT;
+  const foot = [-3.55, -2.1, 3.22, 1.94], M = 0.4, a = 45 * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
+  const trees = [...V.trees.map(t => [t.pos[0], t.pos[2], 0.75 * (t.r || 1.3)]), ...V.bushes.map(b => [b.pos[0], b.pos[2], 0.5 * (b.s || 1)]), ...V.rocks.map(k => [k.pos[0], k.pos[2], 0.3 * (k.s || 1)])];
+  const why = SHOW_WHY = {}, no = k => { why[k] = (why[k] || 0) + 1; return false; };
+  const fits = (X, Z) => {
+    for (let lz = foot[1] - M; lz <= foot[3] + M + 1e-6; lz += 0.35) for (let lx = foot[0] - M; lx <= foot[2] + M + 1e-6; lx += 0.35) {
+      const x = X + lx * c + lz * s, z = Z - lx * s + lz * c;
+      if (fieldAt(x, z) >= 0) return no('field');
+      if (nearLines(V.paths, x, z, V.pathHalf + 0.15) || nearLines(V.streams, x, z, V.streamHalf + 0.6) || inPondAt(x, z, 0.5)) return no('lane');
+      if (B.some(b => b.r ? Math.hypot(x - b.c[0], z - b.c[1]) < b.r : (v.set(x, 0, z).applyMatrix4(b.inv), v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1))) return no('prop');
+      if (trees.some(t => Math.hypot(x - t[0], z - t[1]) < t[2])) return no('tree');
+    }
+    return true;
+  };
+  // (u across the screen, v up it): just past the farm's left or right edge, as far up as the first coop, the nearer side
+  // first; else past its front edge
+  const hc = game.data.coops[0] || HOME_COOP, hu = (hc.x - hc.z) * R2, hv = (-hc.z - hc.x) * R2, out = [];
+  for (const side of hu < 0 ? [-1, 1] : [1, -1]) for (let du = 3; du < 12; du += 0.5) for (const dv of [0, -1, 1, -2, 2, -3, 3, -4, 4, -6, 6]) {
+    const u = side < 0 ? V.bounds.u[0] - du : V.bounds.u[1] + du, vv = Math.max(V.bounds.v[0] + 3, Math.min(V.bounds.v[1] - 4, hv + dv));
+    out.push([u, vv]);
+  }
+  for (let dv = 2.5; dv < 14; dv += 0.5) for (const du of [0, 2, -2, 4, -4, 6, -6]) out.push([Math.max(V.bounds.u[0] + 3, Math.min(V.bounds.u[1] - 3, hu + du)), V.bounds.v[0] - dv]);
+  for (const [u, vv] of out) { const X = (u - vv) * R2, Z = -(u + vv) * R2; if (fits(X, Z)) return (SHOW_SPOT = { x: X, z: Z }); }
+  return (SHOW_SPOT = null);
+}
+async function startShowDay(r, list) {
+  const at = showSpot(), gb = game.bird(r.bird), real = allBirds.find(x => x.gid === r.bird);
+  if (!at || !gb) { gameUI.showResults(list); return; }
+  holdBird(null); henOff();
+  try { await loadShow(loadGLB, loadJSON); } catch (e) { gameUI.showResults(list); return; }
+  const f = gb.sex === 'h';
+  SHOWDAY = new ShowDay({ scene, grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng([...(r.id + r.bird)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7)), at, look: FARMER_LOOK,
+    bird: { breed: gb.breed, kind: f ? 'hen' : 'rooster', colour: real ? real.colour : (gb.breed === 'sil' ? 'white' : null) }, place: r.place, champTier: r.id[0] !== 'v',
+    title: game.t('show_sign_' + r.id[0]), sub: r.id[0] === 'n' ? '' : game.showName(r.id).replace(/ (Village|County) Show$/, '').replace(/^Concours (de |d’|régional du )/, ''),
+    hearts: w => spawnHeart(w), say: k => hint(game.t('sd_' + k, { farmer: game.farmerName(), name: gb.name }, f)),
+    onEnd: () => { if (SHOWDAY) gameUI.showResults(list); } });
+  SHOWDAY.real = real; if (real) real.root.visible = false;
+  if (farmLife) farmLife.group.visible = false;
+  showFrom = [view.target.x, view.target.z, view.size];
+  const c = SHOWDAY.centre(), asp = innerWidth / Math.max(1, innerHeight); focusOn(c.x, c.z, Math.min(view.max, Math.max(2.25, 6.2 / (2 * asp))));      // (the whole tent across the screen, upright too)
+  gameUI.skipBtn(true, () => { if (SHOWDAY) SHOWDAY.skip(); });
+  wake(1000);
+}
+function endShowDay() {
+  if (!SHOWDAY) return;
+  if (SHOWDAY.real) SHOWDAY.real.root.visible = true;
+  if (farmLife) farmLife.group.visible = true;
+  SHOWDAY.dispose(); SHOWDAY = null; gameUI.skipBtn(false);
+  if (showFrom) { focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was)
+  wake(300);
 }
 function bookSheet() {
   holdBird(null); henOff();
@@ -4447,7 +4520,7 @@ window.__farm = {
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
-  place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
+  place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },

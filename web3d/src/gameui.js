@@ -498,6 +498,22 @@ export class GameUI {
     b.append(how());                                   // (how shows work: under the shows, so the first one's button is in sight)
     if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
   }
+  // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
+  showDayCard(show, onWatch, onSkip) {
+    const body = this.open('showday', '🎀 ' + this.t('showday_title'));
+    this.bird = null;
+    body.append(el('p', 'gtext', this.t('showday_body', { show })));
+    const go = el('button', 'gbtn', this.t('showday_watch')); go.type = 'button';
+    go.addEventListener('click', () => { this.close(); onWatch(); });
+    const no = el('button', 'gbtn galt', this.t('showday_results')); no.type = 'button';
+    no.addEventListener('click', () => { this.close(); onSkip(); });
+    body.append(go, no);
+  }
+  // a Skip button over the farm (the show day)
+  skipBtn(on, onSkip) {
+    if (!this.skip) { this.skip = el('button', 'gskip'); this.skip.type = 'button'; this.skip.hidden = true; document.body.append(this.skip); this.skip.addEventListener('click', () => this.onSkip && this.onSkip()); }
+    this.skip.textContent = this.t('skip') + ' ⏭'; this.skip.hidden = !on; this.onSkip = on ? onSkip : null;
+  }
   // ---- the show results (after the show day): each bird's place, her rosette, the prizes; seen once closed
   showResults(list) {
     const g = this.g, body = this.open('showres', '🏆 ' + this.t('results_title'));

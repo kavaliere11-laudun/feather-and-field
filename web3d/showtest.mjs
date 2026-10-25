@@ -3,7 +3,7 @@
 // name, any breed, results at 7:00, the prizes), the best bird with her chance of a rosette and "Enter … · 10", the County
 // and the National locked; the dot gone once looked at. Entered: the fee, a word, "… is entered", her card says so; no second
 // bird in that show; a reload keeps it. The next morning at 7: the results card (her place, the prizes), the coins and XP,
-// her rosette on her card; seen, it doesn't come back. Level 4: the level card brings the County show; not enough coins: the
+// her rosette on her card; seen, it doesn't come back ("Show day!" first: here, just the results; showdaytest watches). Level 4: the level card brings the County show; not enough coins: the
 // button says so. A save changed outside (an entry before its show opened, a bird that isn't there, rosettes she can't have
 // won, a result with the wrong prize) is checked and flagged.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
@@ -72,6 +72,10 @@ ok('a reload: still entered, not flagged', st.in === 1 && !st.edited, st);
 await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id); b.exp = 350; b.trust = 15; g.save(); }, best.id);
 const before = await p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, xp: g.data.xp }; });
 await later(21.2); await run(2);
+const sd = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, btns: [...document.querySelectorAll('.gsheet .gbtn')].map(b => b.textContent) }));
+ok('the next morning: "Show day!", watch the judging or just the results', sd.kind === 'showday' && sd.btns.length === 2 && (fr ? /Regarder le jugement/ : /Watch the judging/).test(sd.btns[0]) && (fr ? /Juste les résultats/ : /Just the results/).test(sd.btns[1]), sd);
+await shot('4a_showday');
+await p.tap('.gsheet .gbtn:nth-child(3)'); await run(0.5);
 t = await sheet();
 st = await p.evaluate(id => { const g = window.__farm.game(); return { kind: window.__farm.gameUI().kind, coins: g.data.coins, xp: g.data.xp, ros: g.bird(id).ros, res: g.data.shows.res, in: g.data.shows.in.length }; }, best.id);
 ok('the next morning: the results card (1st, a rosette), the prize and XP in, a rosette for her', st.kind === 'showres' && T.results.test(t) && T.placed.test(t) && st.ros[0] === 1 && st.in === 0 && st.res.length === 1 && st.res[0].place === 1 && st.coins === before.coins + 60 && st.xp === before.xp + 14, { st, t });
