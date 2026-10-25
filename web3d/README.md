@@ -1562,8 +1562,8 @@ she chose "Drag anywhere, clears the way". Then: a level that brings a new coop 
 - **Its card:** tap a coop by day (its house or its pen, not a bird, the nest window, the pop door or the feeder): its
   name, breed (rustic), who lives there ("Albert, Peggy and Fern live here."), "Put it anywhere on your land. Trees,
   bushes and rocks in the way are cleared." and "Move this coop". At night a tap still takes you inside.
-- **Moving it** (`main.js` "coops where you like"): the view glides back a little to show room round it (the player's
-  tap); the coop is drawn on its own while it moves, with its outline on the ground (green where it can go, red where it
+- **Moving it** (`main.js` "coops where you like"): the view glides back a little to show room round it, the coop in
+  the middle of the farm above the bar (the player's tap); the coop is drawn on its own while it moves, with its outline on the ground (green where it can go, red where it
   can't, an arrow out of its gate) and a bar along the bottom: what the spot's like ("Drag the coop, or tap where it
   should go.", "A good spot!", "A good spot! What's in the way will be cleared.", or why not: "Only on your own land.",
   "Not on a lane or in the water.", "Not enough room here.", "Too close to another coop.", "Its gate would be shut in
