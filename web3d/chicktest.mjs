@@ -5,9 +5,9 @@
 // brings them out (the right number, round her, a chick's card); a reload: they're there round her; a day on they turn
 // into young hens and roosters (the news, a young one's card, her card); a reload: still young; the next day, late in the
 // morning, they're grown: their coins in, a farewell at the gate (the farmer outside it cheering, the party, out one by
-// one), gone; the congratulations card (each one's rating and coins, the total); "Lovely!": seen, the parents' experience
-// up, not shown again after a reload; she lays again; a brood that grew up while away: its card says so; news and a brood
-// changed outside the game are checked.
+// one and all the way off the farm, the view going along), gone; the congratulations card (each one's rating and coins,
+// the total); "Lovely!": seen, the parents' experience up, not shown again after a reload; she lays again; a brood that
+// grew up while away: its card says so; news and a brood changed outside the game are checked.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -111,8 +111,9 @@ for (let i = 0; i < 40 && !(s.fw && s.fw.phase === 'exit'); i++) { await sim(2);
 const said = await p.evaluate(() => document.querySelectorAll('.gsheet:not([hidden])').length);
 ok('the farmer comes to the gate and cheers; the party; then out they go', ready && party && s.fw && s.fw.phase === 'exit' && said === 0, s);
 let gone = false;
-for (let i = 0; i < 30 && !gone; i++) { await sim(1); s = await state(); gone = s.youngs.length === 0 && s.leaving === 0 && !s.fw; }
-ok('one by one out of the gate and gone', gone, s);
+for (let i = 0; i < 40 && !gone; i++) { await sim(2); s = await state(); gone = s.youngs.length === 0 && s.leaving === 0 && !s.fw; }
+const ex = await p.evaluate(() => window.__farm.lastExit(0));
+ok('one by one out of the gate and all the way off the farm (past its edge), the view going along with them, then gone', gone && ex && ex.past >= 1.5 && ex.panned > 5, { ex, s });
 await sim(2); await p.waitForTimeout(400);
 s = await state();
 const cc = await p.evaluate(() => ({ text: document.querySelector('.gsheet').innerText, rows: document.querySelectorAll('.gsheet .gkid').length, stars: [...document.querySelectorAll('.gsheet .gkid .gstars')].map(e => e.querySelectorAll('.on').length) }));

@@ -1920,7 +1920,11 @@ class Bird {
   leaveStep(dt) {
     const L = this.leaving, p = this.root.position;
     L.t = (L.t || 0) + dt;
-    if (L.phase === 'fade') { const s = Math.max(0, 1 - L.t / 0.7); this.root.scale.setScalar((this.size || 1) * s); if (L.t >= 0.7) L.gone = true; return false; }
+    if (L.phase === 'fade') {                                               // (past the farm's edge: still trotting on as they go)
+      const s = Math.max(0, 1 - L.t / 0.7); this.root.scale.setScalar((this.size || 1) * s); if (L.t >= 0.7) L.gone = true;
+      if (L.on) { const y = this.root.rotation.y; p.x += Math.sin(y) * L.on * dt; p.z += Math.cos(y) * L.on * dt; this.pace = 1.9; return true; }
+      return false;
+    }
     if (L.phase === 'gather' || L.phase === 'party') {
       let walking = false, flap = 0;
       if (L.route && L.route.length) {
@@ -1931,15 +1935,18 @@ class Bird {
       if (L.flapT !== undefined && L.flapT < 0.8) { L.flapT += dt; flap = Math.sin(Math.min(1, L.flapT / 0.8) * Math.PI); }
       return { walking, flap };
     }
-    const q = L.path && L.path[0];                                          // 'exit': out of the gate, a trot
-    if (!q || L.t > 20) { L.phase = 'fade'; L.t = 0; return false; }
+    const q = L.path && L.path[0];                                          // 'exit': out of the gate and off the farm, a trot
+    if (!q || L.t > 120) { L.phase = 'fade'; L.t = 0; return false; }
     const dx = q[0] - p.x, dz = q[1] - p.z, dist = Math.hypot(dx, dz);
-    if (dist < 0.05) { L.path.shift(); if (!L.path.length) { L.phase = 'fade'; L.t = 0; } return true; }
+    if (dist < 0.06) { L.path.shift(); if (!L.path.length) { L.phase = 'fade'; L.t = 0; L.on = 0.7; } return true; }
     const want = Math.atan2(dx, dz); let diff = ((want - this.root.rotation.y + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
     this.root.rotation.y += Math.max(-dt * 6, Math.min(dt * 6, diff));
-    if (Math.abs(diff) < 0.6) { const st = Math.min(dist, 0.5 * dt); p.x += dx / dist * st; p.z += dz / dist * st; }
-    this.pace = 1.6;
-    return true;
+    const A = L.ahead && L.ahead.leaving && !L.ahead.leaving.gone && L.ahead.plot.birds.includes(L.ahead) ? L.ahead.root.position : null;
+    const close = A && Math.hypot(A.x - p.x, A.z - p.z) < 0.42 && (A.x - p.x) * dx + (A.z - p.z) * dz > 0;     // (the one ahead: never into her)
+    if (Math.abs(diff) < 0.6 && !close) { const st = Math.min(dist, 0.7 * dt); p.x += dx / dist * st; p.z += dz / dist * st; }
+    this.plot.frame.localToWorld(bubV.set(p.x, 0, p.z)); p.y = 0.015 + groundY(bubV.x, bubV.z);      // (over a footbridge: its deck)
+    this.pace = 2.1;
+    return !close || Math.abs(diff) > 0.1;
   }
   penStep(dt) {
     const F = this.plot.farmer;
@@ -2983,7 +2990,7 @@ function chicksGo(plot, live, e) {
   const fw = plot.fw = { phase: 'wait', t: 0, all: 0, kids, G, hen: e && e.hen, ready: false };
   kids.forEach((k, i) => { k.leaving = { phase: 'gather', t: 0, i, spot: G.line[i], route: k.plan([G.line[i]]), face: G.faceIn[i] }; });
   fw.order = [...kids].sort((a, b) => Math.abs(a.leaving.spot[0] - G.gx) - Math.abs(b.leaving.spot[0] - G.gx));      // (nearest the gate first)
-  if (!farmLife.cheerAt(G.stand, G.face, () => { fw.ready = true; }, () => plot.fw !== fw)) fw.ready = true;
+  if (!farmLife.cheerAt(G.stand, G.face, () => { fw.ready = true; }, () => plot.fw !== fw || fw.cheered)) fw.ready = true;
   hint(game.t('young_going', { name: sayName(fw.hen) }));
   if (!gameUI.isOpen) {                                                 // (the gate in the middle, the line, him and the way out in view)
     const side = sideways(), w = G.W(G.gx + (side ? 0 : G.s * 0.2), G.gz), hz = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), size = side ? 1.55 : 2.5, up = (side ? 0.18 : 0.1) * size / PITCH_SIN;
@@ -2991,19 +2998,30 @@ function chicksGo(plot, live, e) {
   }
   wake(2000);
 }
-// the gate (pen frame: gx, gz): where the farmer stands outside it (beside the way out, on the far side from the player,
-// so they walk out in front of him) and his heading (the gate, turned a little to the player); where they line up just
-// inside it (clear of the water dish) facing out; their way out, past him and off down the lane
+// the gate (pen frame: gx, gz): the way off the farm from just outside it (farmExit); where the farmer stands outside the
+// gate (beside the way out, on the side it doesn't turn to, else the far side from the player, so they walk out in front
+// of him) and his heading (the gate, turned a little to the player); where they line up just inside it (clear of the water
+// dish) facing out; their way out: through the gate, then along the way off the farm (pen frame)
 function gateOf(plot, kid) {
   const f = plot.frame; f.updateMatrixWorld(true);
-  const v = new THREE.Vector3(), W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; };
-  const gx = PEN.gate[0], gz = PEN.pen.max[2], nav = navGrid();
-  const cam = camera.position.clone().applyMatrix4(new THREE.Matrix4().copy(f.matrixWorld).invert()), pref = cam.x > gx ? -1 : 1;
-  let stand = null, s = pref;
-  for (const side of [pref, -pref]) { const w = W(gx + side * 0.62, gz + 0.5), q = nav.nearestIn(farmReach(), w[0], w[1], 0.3); if (q) { stand = q; s = side; break; } }
+  const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(f.matrixWorld).invert();
+  const W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; }, L = (x, z) => { v.set(x, 0, z).applyMatrix4(inv); return [v.x, v.z]; };
+  const gx = PEN.gate[0], gz = PEN.pen.max[2], nav = navGrid(), o = W(gx, gz + 0.95);
+  const away = plot.exitWay || (plot.exitWay = farmExit(o[0], o[1]) || []);
+  const route = away.map(q => L(q[0], q[1])), way = [[gx, gz + 0.3], ...(route.length > 1 ? route : [[gx, gz + 1.7]])];
+  const clear = (x, z) => { let m = 9; for (let i = 1; i < way.length; i++) { const a = way[i - 1], c = way[i], dx = c[0] - a[0], dz = c[1] - a[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / l2)); m = Math.min(m, Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t)); } return m; };
+  // (the far side from the player, so he faces you; a little further out if their way goes past there)
+  const cam = camera.position.clone().applyMatrix4(inv), pref = cam.x > gx ? -1 : 1;
+  let stand = null, s = pref, first = null;
+  look: for (const side of [pref, -pref]) for (const [dx, dz] of [[0.62, 0.5], [0.85, 0.45], [1.1, 0.4], [0.85, 0.85], [1.35, 0.6]]) {
+    const x = gx + side * dx, z = gz + dz, w = W(x, z), q = nav.nearestIn(farmReach(), w[0], w[1], 0.2); if (!q) continue;
+    if (!first) first = [q, side];
+    if (clear(x, z) >= 0.6) { stand = q; s = side; break look; }
+  }
+  if (!stand && first) [stand, s] = first;
   if (!stand) return null;
   const g = W(gx, gz - 0.2), hg = Math.atan2(g[0] - stand[0], g[1] - stand[1]), hc = Math.atan2(camera.position.x - stand[0], camera.position.z - stand[1]);
-  const face = hg + 0.45 * Math.atan2(Math.sin(hc - hg), Math.cos(hc - hg));
+  const face = hg + (s === pref ? 0.45 : 0.75) * Math.atan2(Math.sin(hc - hg), Math.cos(hc - hg));      // (on the player's side: turned more to you)
   const line = [], faceIn = [];
   for (let i = 0; i < 4; i++) {
     const x0 = gx + (i - 1.5) * 0.32 + (i < 2 ? -0.02 : 0.02);
@@ -3014,20 +3032,50 @@ function gateOf(plot, kid) {
     }
     line.push(q); faceIn.push(Math.atan2(gx - q[0], gz + 0.5 - q[1]));
   }
-  const path = [[gx, gz - 0.3], [gx, gz + 0.3], [gx - s * 0.18, gz + 0.95], [gx - s * 0.42, gz + 1.7]];
+  const path = route.length > 1 ? [[gx, gz - 0.3], [gx, gz + 0.3], ...route] : [[gx, gz - 0.3], [gx, gz + 0.3], [gx - s * 0.18, gz + 0.95], [gx - s * 0.42, gz + 1.7]];
   return { stand, face, line, faceIn, path, s, gx, gz, W };
+}
+// the way off the farm from (x, z) (world): the cheapest (the paths preferred, as the farmer walks; over a footbridge if
+// need be) to a couple of metres past the farm's edge, beyond the trees along it (the village's bounds: u, v as clampView);
+// [] if there's none
+function farmExit(x, z) {
+  const nav = navGrid(); pathCosts(nav);
+  const s = nav.nearestFree(x, z); if (!s) return [];
+  const B = V.bounds, M = 2.0, nx = nav.nx, N = nav.block.length, Wc = nav.cost;
+  const outside = i => { const cx = nav.cx(i % nx), cz = nav.cz((i / nx) | 0), u = (cx - cz) * R2, v = (-cz - cx) * R2; return u < B.u[0] - M || u > B.u[1] + M || v < B.v[0] - M || v > B.v[1] + M; };
+  const cost = new Float32Array(N).fill(Infinity), done = new Uint8Array(N), heap = [];
+  const push = (i, c) => { heap.push([c, i]); let k = heap.length - 1; while (k > 0) { const q = (k - 1) >> 1; if (heap[q][0] <= heap[k][0]) break; [heap[q], heap[k]] = [heap[k], heap[q]]; k = q; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === k) break; [heap[m], heap[k]] = [heap[k], heap[m]]; k = m; } } return top; };
+  const si = nav.iz(s[1]) * nx + nav.ix(s[0]); cost[si] = 0; push(si, 0);
+  const D = [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]];
+  let goal = -1;
+  while (heap.length) {
+    const [, i] = pop(); if (done[i]) continue; done[i] = 1;
+    if (outside(i)) { goal = i; break; }
+    const X0 = i % nx, Z0 = (i / nx) | 0;
+    for (const [dx, dz, c] of D) {
+      const X = X0 + dx, Z = Z0 + dz; if (X < 0 || Z < 0 || X >= nx || Z >= nav.nz) continue;
+      const j = Z * nx + X; if (nav.block[j] || done[j] || (dx && dz && (nav.block[Z0 * nx + X] || nav.block[Z * nx + X0]))) continue;
+      const nc = cost[i] + c * Wc[j]; if (nc < cost[j]) { cost[j] = nc; push(j, nc); }
+    }
+    const Lk = nav.links.get(i); if (Lk) for (const [j, c] of Lk) if (!done[j] && cost[i] + c < cost[j]) { cost[j] = cost[i] + c; push(j, cost[j]); }
+  }
+  if (goal < 0) return [];
+  return nav.find(s[0], s[1], nav.cx(goal % nx), nav.cz((goal / nx) | 0), true) || [];
 }
 // each frame: the farewell. They line up inside the gate and the farmer comes to stand outside it ('wait': for him half a
 // minute at most); the party ('party', 4.6 s: the youngsters hop and flap, hearts over them; the hens flap and hop, the
-// rooster crows, their mum sings); then out of the gate one by one, past him, and off down the lane ('exit'). A minute
-// for it all at most
+// rooster crows, their mum sings); then out of the gate one by one, past him, and along the way off the farm, the view
+// gliding along with them till they're past its edge (a finger on the farm or a card opened: the view's the player's
+// again); he cheers till they're on their way. Two and a half minutes for it all at most
+const fwV = new THREE.Vector3();
 function tickFarewell(dt) {
   for (const p of gamePlots()) {
     const F = p.fw; if (!F) continue;
     F.t += dt; F.all += dt; wake(500);
     const kids = F.kids.filter(k => p.birds.includes(k));
     if (!kids.length) { p.fw = null; continue; }
-    if (F.all > 60) { for (const k of kids) if (k.leaving.phase !== 'fade') { k.leaving.phase = 'fade'; k.leaving.t = 0; } continue; }
+    if (F.all > 150) { for (const k of kids) if (k.leaving.phase !== 'fade') { k.leaving.phase = 'fade'; k.leaving.t = 0; } continue; }
     const at = t0 => F.t >= t0 && F.t - dt < t0;                          // (the moment t0 is passed)
     if (F.phase === 'wait') {
       if ((F.ready && F.t > 1 && kids.every(k => !(k.leaving.route && k.leaving.route.length))) || F.t > 30) { F.phase = 'party'; F.t = 0; }
@@ -3042,10 +3090,27 @@ function tickFarewell(dt) {
       }
       if (F.t > 4.6) { F.phase = 'exit'; F.t = 0; }
     } else if (F.phase === 'exit') {
-      F.order.forEach((k, i) => { const L = k.leaving; if (p.birds.includes(k) && (L.phase === 'gather' || L.phase === 'party') && F.t >= i * 0.85) { L.phase = 'exit'; L.t = 0; L.path = F.G.path.map(q => [...q]); k.hopT = 0; } });
+      F.order.forEach((k, i) => {
+        const L = k.leaving;
+        if (p.birds.includes(k) && (L.phase === 'gather' || L.phase === 'party') && F.t >= i * 0.85) { L.phase = 'exit'; L.t = 0; L.path = F.G.path.map(q => [...q]); L.ahead = F.order[i - 1] || null; k.hopT = 0; }
+      });
+      if (F.t > F.order.length * 0.85 + 3.5) F.cheered = true;            // (all on their way: he can go about his day)
+      // the view along with them (the middle of those still walking), at the farewell's zoom
+      const going = kids;
+      if (pointers.size || gameUI.isOpen || inside.open) F.free = true;
+      if (!F.free && going.length && !focus) {
+        fwV.set(0, 0, 0); for (const k of going) { k.root.getWorldPosition(tmpV3); fwV.add(tmpV3); } fwV.divideScalar(going.length);
+        const u = Math.min(1, dt * 1.6), t = view.target, x0 = t.x, z0 = t.z;
+        t.x += (fwV.x - t.x) * u; t.z += (fwV.z - t.z) * u; clampView();
+        if (Math.hypot(t.x - x0, t.z - z0) > 1e-4) { F.panned = (F.panned || 0) + Math.hypot(t.x - x0, t.z - z0); applyGrass(); placeCamera(); furDetail(); }
+      }
+      // (for the tests: how far past the farm's edge they got)
+      for (const k of going) { k.root.getWorldPosition(tmpV3); const u = (tmpV3.x - tmpV3.z) * R2, v = (-tmpV3.z - tmpV3.x) * R2, B = V.bounds; F.past = Math.max(F.past || -99, Math.max(B.u[0] - u, u - B.u[1], B.v[0] - v, v - B.v[1])); }
+      p.lastExit = { past: +(F.past || 0).toFixed(2), panned: +(F.panned || 0).toFixed(1), way: F.G.path.length };
     }
   }
 }
+const tmpV3 = new THREE.Vector3();
 // each frame: youngsters popping into being and growing, those gone taken away; the farewells
 function tickChicks(dt) {
   for (const p of gamePlots()) {
@@ -3584,7 +3649,8 @@ window.__farm = {
   game: () => game, gameUI: () => gameUI, openBirdCard,
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
-  youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; }, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length, free: !!F.free } : null; },
+  lastExit: i => gamePlots()[i].lastExit || null, farmExit, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
