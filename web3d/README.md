@@ -1610,6 +1610,8 @@ stored somewhere easy with a little red dot on it to say notifications".
   Cancel and it's back in Your coops; put down, it's on the farm for good: its feeder full, its hens laying from then on,
   "Welcome, Gus, Juniper and Dotty!". No room on your land: "No room on your land for another coop yet: buy the next
   field." Until it's placed nothing of it is saved (the trio is made when it's put down).
+- **The farmer and a coop put down:** if it lands where he's walking he steps out of its way (to the nearest open ground,
+  in its puff), and thinks again about where he was going with the farm as it is now (`clearWalkers`).
 - **The rustic coops** (`stylized/coops.py` `rustic_house`; `export_coops.py`: `rustic_orp`, `rustic_leg`, `rustic_sil`,
   `rustic_bra`): each house built again with every colour weathered (faded, greyer, rougher) and touches of its own: the
   Thatched Cottage's posts gone grey, moss and gaps in its thatch, boards on its walls; the Stone Cottage's slates with

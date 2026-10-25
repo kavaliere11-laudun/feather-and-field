@@ -3704,7 +3704,7 @@ function endMove(placed) {
   const nav = MOVE.nav, grass = MOVE.grass;
   MOVE.plot = MOVE.ghost = MOVE.foot = MOVE.drag = MOVE.spot = null; MOVE.nav = MOVE.grass = false; MOVE.grassAt = 0;
   batchCoops();
-  if (placed) { buildNature(); buildGrass(); hidePebbles(); }
+  if (placed) { buildNature(); buildGrass(); hidePebbles(); clearWalkers(p); }
   else { if (nav) rebuildNav(); if (grass) buildGrass(); }
   gameUI.moveBar(false);
   renderer.shadowMap.needsUpdate = true; wake(1000);
@@ -3746,6 +3746,17 @@ function dropPlot(p) {
   p.group.removeFromParent();
   const i = plots.indexOf(p); if (i >= 0) plots.splice(i, 1);
   rebuildDoors(); rebuildPools();
+}
+// a coop put down where the farmer was walking: he steps out of its way (to the nearest open ground, in its puff), and
+// whatever he was off to do he thinks again about with the farm as it is now
+function clearWalkers(p) {
+  if (!farmLife || farmLife.home) return;
+  const L = farmLife, at = L.pos, [lx, lz] = inSpot(spotOf(p.gc), at.x, at.z);
+  if (rectGap(FOOT, lx, lz) < 0.5 || rectGap(APRON, lx, lz) < 0.2 || !navGrid().freeAt(at.x, at.z)) {
+    const f = navGrid().nearestIn(farmReach(), at.x, at.z, 5);
+    if (f) { at.x = f[0]; at.z = f[1]; }
+  }
+  if (L.task && !/^(out|home|pen)$/.test(L.task.name)) L.task = null;
 }
 // a tree, bush or rock cleared: it shrinks away in a puff of leaves (or dust)
 const CLEARING = [];
