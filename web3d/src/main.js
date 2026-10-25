@@ -321,7 +321,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shows: () => showsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -2911,6 +2911,7 @@ function gameCuddle(id) {
   if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
   starsSeen.set(id, game.stars(gb));                      // (a star from the cuddle: said with it)
   if (r.star && !r.up) hint(game.t('star_up', { name: gb.name }));
+  jobsDone(r.done);
   return r;
 }
 // a bird gaining a star while you watch (time on the farm, a brood, a cuddle): a word and a little burst of stars over her
@@ -2962,7 +2963,7 @@ function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay();
 // (busy, the nest taken, the page not in view) has a couple of minutes, then her egg is simply there, as for a lay while
 // the game was shut. The feeders' grain goes down with the save's level; bubbles over a nest with eggs and a feeder low.
 const LIVE_LAY = 150e3;
-let gameTickAt = 0, fullNoted = 0;
+let gameTickAt = 0, fullNoted = 0, jobsDay = '';
 const gamePlots = () => plots.filter(p => p.gc && !p.draft);          // (not a new coop still being placed)
 function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
 function canLayNow(b) {
@@ -2975,6 +2976,7 @@ function gameTick(now = Date.now(), force = false) {
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
   if (game.showTick(now).length) gameUI.refresh();                    // (a show judged: its results card once the farm's free)
+  const jd = game.jobs(now).day; if (jd !== jobsDay) { jobsDay = jd; gameUI.refresh(); }      // (midnight: new jobs, the clipboard's dot)
   for (const p of gamePlots()) syncBrood(p, now, live, news);
   for (const e of game.dueLays(now)) {
     const b = allBirds.find(x => x.gid === e.hen);
@@ -3071,6 +3073,7 @@ function collectAt(plot) {
   plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
   gameUI.flyEggs(from, r.n, EGG_COLOUR[plot.breed]);
   hint(game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }));
+  jobsDone(r.done);
 }
 // ---- broody hens and chicks (game.js broodTick): the farm follows the save. A hen whose brood has just begun walks in
 // and settles on the nest; otherwise she's simply there, sitting (sitNow). Hatched: she comes out with her chicks, or
@@ -3837,7 +3840,7 @@ function showsSheet(more) {
     const s = game.enterShow(id, bid), b = game.bird(bid);
     if (!s || !b) return;
     hint(game.t('show_entered', { name: b.name, show: game.showName(id) }, b.sex === 'h'));
-    gameUI.refresh(); gameUI.bumpCoins(); showsSheet();
+    gameUI.refresh(); gameUI.bumpCoins(); showsSheet(); jobsDone(s.done);
   } }, more);
 }
 // ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
@@ -3909,6 +3912,15 @@ function endShowDay() {
   SHOWDAY.dispose(); SHOWDAY = null; gameUI.skipBtn(false);
   if (showFrom) { focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was)
   wake(300);
+}
+// ---- Today's jobs (release 1 step 9c; game.js jobs): the clipboard up top; a job done: Collect its reward
+function jobsSheet() {
+  holdBird(null); henOff();
+  game.lookedAtJobs(); gameUI.refresh();
+  gameUI.jobsSheet({ claim: i => {
+    const r = game.claimJob(i); if (!r) return;
+    hint(game.t('job_claimed', { c: r.coins, xp: r.xp })); gameUI.refresh(); gameUI.bumpCoins(); jobsSheet();
+  } });
 }
 function bookSheet() {
   holdBird(null); henOff();
@@ -4011,7 +4023,7 @@ function feederCard(plot) {
 function fillFeeder(plot) {
   const c = plot.gc, before = game.feedLeft(c), q = game.fillFeeder(c.id);
   if (!q || q.full || q.broke) return null;
-  gameUI.close(); gameUI.refresh();
+  gameUI.close(); gameUI.refresh(); jobsDone(q.done);
   const P = farmLife && !farmLife.home && !farmLife.running ? penSpec(plot) : null;
   if (P) {
     P.fill = u => { plot.pourUntil = performance.now() + 4000; setFeed(plot, before + (q.level - before) * Math.max(0, Math.min(1, u))); };
@@ -4079,8 +4091,12 @@ const VT = {
 const vt = (k, v = {}) => VT[k][LANG === 'fr' ? 1 : 0].replace(/\{(\w+)\}/g, (m, x) => (v[x] !== undefined ? v[x] : m));
 const hintEl = document.getElementById('hint');
 let hintLeft = 0;
+const HINT_NEXT = [];                                    // (words to say once the one showing has had its time: a job done)
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
-function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) hintEl.classList.remove('on'); }
+function hintNext(t) { if (hintLeft > 0) HINT_NEXT.push(t); else hint(t); }
+function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) { if (HINT_NEXT.length) hint(HINT_NEXT.shift()); else hintEl.classList.remove('on'); } }
+// jobs just done (game.js job): said after what was done, the clipboard's number up
+function jobsDone(done) { if (!done || !done.length) return; for (const j of done) hintNext(game.t('job_done', { job: game.jobText(j) })); gameUI.refresh(); }
 
 // ------------------------------------------------------------------ inside a coop at night
 // Tap a coop while its birds are in bed and you're inside (a little room in the coop's own style): the hens and the rooster
@@ -4288,7 +4304,7 @@ function insideTap(x, y) {
     if (GAME_MODE && inside.plot.gc) {
       const r = game.collect(inside.plot.gc.id);
       tag.textContent = r ? game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }) : game.t('no_eggs');
-      if (r) { gameUI.refresh(); gameUI.bumpCoins(); }
+      if (r) { gameUI.refresh(); gameUI.bumpCoins(); jobsDone(r.done); }
     } else tag.textContent = n.count ? (n.count === 1 ? vt('eggs1') : vt('eggsn', { n: n.count })) : vt('no_eggs_here');
     n.count = 0; if (inside.eggs) inside.eggs.count = 0;
     tagBird = null; tagSpot.set(nb[0], nb[1] + 0.3, nb[2]); tag.classList.add('on'); fieldTag = 2.4;
@@ -4520,7 +4536,7 @@ window.__farm = {
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
-  place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
+  place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },

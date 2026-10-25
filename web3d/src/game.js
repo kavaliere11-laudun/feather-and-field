@@ -99,6 +99,10 @@ const TEXT = {
     results_title: 'Show results', res_place: '{name} came {place} in the {show}!', res_none: '{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.',
     res_champ: '{name} is a champion now!', res_in: 'The show results are in!',
     rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
+    jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
+    job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
+    job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
+    job_done: 'Job done: {job}! Collect your reward in Today’s jobs.', job_claimed: '+{c} coins · +{xp} XP',
     show_sign_v: 'Village Show', show_sign_c: 'County Show', show_sign_n: 'National Championship',
     showday_title: 'Show day!', showday_body: 'The results of the {show} are in: the judge is looking at the birds.', showday_watch: 'Watch the judging', showday_results: 'Just the results', skip: 'Skip',
     sd_arrive: '{farmer} brings {name} to the show…', sd_judge: 'The judge looks at every bird…', sd_rosettes: 'And now, the rosettes!',
@@ -203,6 +207,10 @@ const TEXT = {
     results_title: 'Résultats des concours', res_place: '{name} prend la {place} place au {show} !', res_none: '{name} n’est pas classé au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est champion maintenant !', res_in: 'Les résultats des concours sont arrivés !',
     rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
+    jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
+    job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
+    job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
+    job_done: 'Tâche faite : {job} ! Récupérez la récompense dans Les tâches du jour.', job_claimed: '+{c} pièces · +{xp} XP',
     show_sign_v: 'Concours de village', show_sign_c: 'Concours régional', show_sign_n: 'Championnat national',
     showday_title: 'Jour de concours !', showday_body: 'Les résultats du {show} sont arrivés : le juge regarde les volailles.', showday_watch: 'Regarder le jugement', showday_results: 'Juste les résultats', skip: 'Passer',
     sd_arrive: '{farmer} amène {name} au concours…', sd_judge: 'Le juge regarde chaque volaille…', sd_rosettes: 'Et maintenant, les cocardes !',
@@ -349,6 +357,26 @@ function rivalScores(id) {
 }
 const normCdf = x => { const t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp(-x * x / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 
+// ---- daily jobs (release 1 step 9c; the 2D game's farm jobs, Audrey: "Daily jobs (Recommended)"): three small jobs a day
+// on the phone's calendar, new at midnight, one of them always an easy one (eggs or cuddles); done, a tap collects the
+// reward. What they can be grows with the game (the wheat field, the decorations... when they come). Targets and rewards
+// grow a little with the level the day's jobs were set at (`lv`). Starting values (the balance is step 11)
+export const JOBS = {
+  eggs: { easy: true, n: L => Math.min(30, 4 + 2 * L) },          // collect eggs
+  cuddle: { easy: true, n: L => Math.min(6, 1 + Math.floor(L / 3)) },      // give cuddles (each bird once every 6 hours)
+  feed: { n: () => 1 },                                            // fill a feeder
+  show: { n: () => 1 },                                            // enter a bird in a show
+};
+export const jobReward = L => ({ coins: 15 + 5 * L, xp: 5 + L });
+const dayKey = t => { const d = new Date(t); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); };
+// the day's three jobs: one easy, two others, all different (the same for that day and level, from the day's own numbers)
+function jobsFor(day, lv) {
+  const keys = Object.keys(JOBS), easy = keys.filter(k => JOBS[k].easy);
+  const first = easy[Math.floor(hash01(day + '|easy') * easy.length)];
+  const rest = keys.filter(k => k !== first).sort((a, b) => hash01(day + '|' + a) - hash01(day + '|' + b)).slice(0, 2);
+  return [first, ...rest].map(k => ({ k, n: JOBS[k].n(lv), got: 0, paid: false }));
+}
+
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
   if (typeof s !== 'string') return '';
@@ -487,6 +515,13 @@ export function checkFarm(d, now = Date.now()) {
     if (t < 0 || Math.abs(t - showJudged(r.id)) > TZ_SLACK) continue;
     out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? T.prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0), t, seen: r.seen === true });
   }
+  // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
+  // done at most as far as its target and paid only once done
+  const jb = d.jobs && typeof d.jobs === 'object' ? d.jobs : null;
+  if (jb && typeof jb.day === 'string' && /^\d{8}$/.test(jb.day) && jb.day <= dayKey(now) && Number.isInteger(jb.lv) && jb.lv >= 1 && jb.lv <= L && Array.isArray(jb.list)) {
+    const want = jobsFor(jb.day, jb.lv);
+    out.jobs = { day: jb.day, lv: jb.lv, seen: jb.seen === true, list: want.map((w, i) => { const r = jb.list[i] || {}, got = r.k === w.k ? int(r.got, 0, w.n, 0) : 0; return { k: w.k, n: w.n, got, paid: r.paid === true && got >= w.n }; }) };
+  } else out.jobs = null;
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
     const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
     if (mum) out.first = { hen: mum.id, t: firstEggAt(now) };
@@ -626,7 +661,7 @@ export class Game {
     if (!s || !b || this.canEnter(b, s) !== 'ok') return null;
     this.data.coins -= SHOWS[s.tier].fee;
     this.shows().in.push({ id, bird: birdId, at: now });
-    this.save();
+    s.done = this.job('show', 1, now);
     return s;
   }
   // the judging: every show whose morning has come; her place among the others, the prize, a rosette for her card
@@ -659,6 +694,28 @@ export class Game {
     return this.openShows(now).some(s => !s.locked && !this.shows().in.some(e => e.id === s.id) && this.data.birds.some(b => this.canEnter(b, s) === 'ok'));
   }
   lookedAtShows(now = Date.now()) { const k = showIdAt('v', now).slice(1); if (this.shows().seen !== k) { this.shows().seen = k; this.save(); } }
+  // ---- daily jobs: today's (new at midnight), progress as things are done (job(k, n)), the reward collected with a tap
+  jobs(now = Date.now()) {
+    const day = dayKey(now), J = this.data.jobs;
+    if (!J || J.day !== day) { this.data.jobs = { day, lv: this.level, seen: false, list: jobsFor(day, this.level) }; this.save(); }
+    return this.data.jobs;
+  }
+  // something done that a job counts: the jobs it finishes (just now)
+  job(k, n = 1, now = Date.now()) {
+    const J = this.jobs(now), done = [];
+    for (const j of J.list) if (j.k === k && j.got < j.n) { j.got = Math.min(j.n, j.got + n); if (j.got >= j.n) done.push(j); }
+    this.save();
+    return done;
+  }
+  jobReward() { return jobReward(this.jobs().lv); }
+  jobsReady(now = Date.now()) { return this.jobs(now).list.filter(j => j.got >= j.n && !j.paid).length; }
+  claimJob(i, now = Date.now()) {
+    const J = this.jobs(now), j = J.list[i]; if (!j || j.got < j.n || j.paid) return null;
+    const r = jobReward(J.lv); j.paid = true; this.data.coins += r.coins; this.data.xp += r.xp; this.save();
+    return r;
+  }
+  jobText(j) { return j.n === 1 && (j.k === 'eggs' || j.k === 'cuddle') ? this.t('job_' + j.k + '1') : this.t('job_' + j.k, { n: j.n }); }
+  lookedAtJobs() { const J = this.jobs(); if (!J.seen) { J.seen = true; this.save(); } }
   rosettesOf(b) { return b.ros && b.ros.length === 9 ? b.ros : [0, 0, 0, 0, 0, 0, 0, 0, 0]; }
   champion(b) { const r = this.rosettesOf(b); return r[6] > 0 ? 'n' : r[3] > 0 ? 'c' : null; }
   // a cuddle (the farmer's visit to the pen only shows it): happy for 6 hours; while trust is still growing, one more
@@ -671,8 +728,8 @@ export class Game {
     if (b.trust < TRUST_AT[3]) { b.trust++; b.exp = Math.min(1e7, b.exp + EXP_CUDDLE); }
     const lv = this.trustLevel(b), xp = lv > lv0 && lv === 3 ? XP_BEST : 0;
     this.data.xp += xp;
-    this.save();
-    return { trust: b.trust, level: lv, up: lv > lv0 ? lv : 0, xp, star: this.stars(b, now) > s0 };
+    const done = this.job('cuddle', 1, now);
+    return { trust: b.trust, level: lv, up: lv > lv0 ? lv : 0, xp, star: this.stars(b, now) > s0, done };
   }
   coop(id) { return this.data.coops.find(c => c.id === id); }
   birdsIn(coopId) { return this.data.birds.filter(b => b.coop === coopId); }
@@ -813,8 +870,8 @@ export class Game {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
     const n = c.eggs, coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XP_EGG;
     c.eggs = 0; c.bonus = 0; this.data.coins += coins; this.data.xp += xp;
-    this.save();
-    return { n, coins, xp };
+    const done = this.job('eggs', n);
+    return { n, coins, xp, done };
   }
   // what filling the feeder now would cost, and how much it would get: all of it, what the coins can buy, or (no coins and
   // nothing left in it) a free handful of kitchen scraps, a unit, so the hens can always go on laying
@@ -837,7 +894,7 @@ export class Game {
     this.data.coins -= q.cost;
     q.xp = q.scraps ? 0 : Math.round(XP_FILL * q.buy / cap); this.data.xp += q.xp;
     q.level = c.feed / cap;
-    this.save();
+    q.done = this.job('feed', 1, now);
     return q;
   }
   setLang(l) { this.lang = l === 'fr' ? 'fr' : 'en'; if (this.data) { this.data.lang = this.lang; this.save(); } }

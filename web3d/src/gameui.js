@@ -19,6 +19,7 @@ function rosette(place, champ = false) {
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.3 13.5L5.6 23l3.3-1.6 1.9 2.4 1.6-9.6z" fill="' + (champ ? '#2f6fd0' : c) + '"/><path d="M15.7 13.5l2.7 9.5-3.3-1.6-1.9 2.4-1.6-9.6z" fill="' + c + '"/>' +
     '<circle cx="12" cy="10" r="8.2" fill="' + c + '"/><circle cx="12" cy="10" r="7.4" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="1.9 1.5"/>' + mid + '</svg>';
 }
+const JOB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10.5l1.6 1.6 3-3M8.5 16.5l1.6 1.6 3-3M15 11h1.5M15 17h1.5"/></svg>';
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -41,8 +42,11 @@ export class GameUI {
     // Shows: a rosette, with a red dot when a new show is open (and not looked at yet today) or results are waiting
     this.showsBtn = el('button', 'gicon gshows'); this.showsBtn.type = 'button'; this.showsBtn.innerHTML = ROS_ICON;
     this.sdot = el('span', 'gdot'); this.sdot.hidden = true; this.showsBtn.append(this.sdot);
+    // Today's jobs: a clipboard, with the number of rewards to collect (or a dot: today's jobs not looked at yet)
+    this.jobsBtn = el('button', 'gicon gjobs'); this.jobsBtn.type = 'button'; this.jobsBtn.innerHTML = JOB_ICON;
+    this.jdot = el('span', 'gdot gcount'); this.jdot.hidden = true; this.jobsBtn.append(this.jdot);
     this.brand = el('div', 'gbrand');
-    this.bar.append(this.brand, this.lvl, this.coins, this.showsBtn, this.coopsBtn, this.gear);
+    this.bar.append(this.brand, this.lvl, this.coins, this.jobsBtn, this.showsBtn, this.coopsBtn, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
@@ -61,6 +65,7 @@ export class GameUI {
     this.gear.addEventListener('click', () => this.settings());
     this.coopsBtn.addEventListener('click', () => { if (this.o.coops) this.o.coops(); });
     this.showsBtn.addEventListener('click', () => { if (this.o.shows) this.o.shows(); });
+    this.jobsBtn.addEventListener('click', () => { if (this.o.jobs) this.o.jobs(); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
     if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');
@@ -82,6 +87,9 @@ export class GameUI {
     this.gear.setAttribute('aria-label', this.t('settings')); this.x.setAttribute('aria-label', this.t('close'));
     const waiting = this.g.waitingCoops().length > 0;
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
+    const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
+    this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
+    this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
     const sd = this.g.showsDot(); this.sdot.hidden = !sd; this.showsBtn.setAttribute('aria-label', this.t('shows_aria') + (sd ? ' · ' + this.t('shows_new') : ''));
   }
   showBar() { this.refresh(); this.bar.hidden = false; }
@@ -497,6 +505,22 @@ export class GameUI {
     }
     b.append(how());                                   // (how shows work: under the shows, so the first one's button is in sight)
     if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
+  }
+  // ---- Today's jobs (release 1 step 9c): each job, how far along it is, its reward; done: "Collect" (h.claim(i))
+  jobsSheet(h = {}) {
+    const g = this.g, J = g.jobs(), r = g.jobReward(), b = this.open('jobs', this.t('jobs_title'));
+    this.bird = null;
+    J.list.forEach((j, i) => {
+      const c = el('div', 'gcard gjob' + (j.paid ? ' gjob-paid' : j.got >= j.n ? ' gjob-done' : '')), hd = el('div', 'gcard-h');
+      hd.append(el('span', 'gemoji', { eggs: '🥚', cuddle: '♥', feed: '🌾', show: '🎀' }[j.k] || '✓'), el('span', 'gcard-t', g.jobText(j)));
+      c.append(hd);
+      const bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.min(1, j.got / j.n)) + '%'; bar.append(fill);
+      const row = el('div', 'gjobrow'); row.append(el('span', 'gnote', j.got + ' / ' + j.n + ' · ' + this.t('job_reward', { c: r.coins, xp: r.xp })));
+      if (j.paid) row.append(el('span', 'gjob-ok', this.t('job_paid')));
+      else if (j.got >= j.n) { const go = el('button', 'gbtn gsmallbtn', this.t('job_claim')); go.type = 'button'; go.addEventListener('click', () => h.claim && h.claim(i)); row.append(go); }
+      c.append(bar, row); b.append(c);
+    });
+    b.append(el('p', 'gnote gcenter', this.t('jobs_note')));
   }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
   showDayCard(show, onWatch, onSkip) {
