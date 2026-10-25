@@ -16,6 +16,7 @@ cp models/outfit_*.glb models/outfit_*.json dist/models/          # (the farmers
 rm -rf dist/fonts && cp -r fonts dist/fonts          # (the replay's title cards: IM Fell English, with its licence)
 cp welcome.jpg dist/welcome.jpg                      # (the game's welcome picture: main.js ?poster, rendered by posterpic.mjs)
 rm -rf dist/book && cp -r book dist/book             # (the Breed Book's pictures, one a breed: rendered by bookpics.mjs)
+rm -rf dist/intro && cp -r intro dist/intro          # (the onboarding pictures, 1-4 and 3-fr: main.js ?intro, rendered by intropics.mjs)
 rm -rf dist/outfits && cp -r outfits dist/outfits        # (the shop's pictures of the farmer's outfits: the 2D game's own, game2/img/farmer)
 rm -rf dist/decor && cp -r decor dist/decor          # (the shop's pictures of the decorations: the 2D game's own, game2/img/decor)
 cp icon-180.png icon-192.png icon-512.png play.webmanifest dist/     # (added to the Home Screen: the game opens full screen, the rooster as its icon)
