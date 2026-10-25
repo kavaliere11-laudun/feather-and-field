@@ -1,11 +1,11 @@
 """Export the show ground for the browser (showground.glb + showground.json), built by showground.py: the marquee
-('show_tent': canvas, valance, poles, guy ropes and pegs, bunting), the trestle table with the six show pens
+('show_tent': canvas, valance, poles, guy ropes and pegs, bunting), the trestle table with the six little show coops
 ('show_pens'), the sign board ('show_sign'), the judge's table ('show_jtable': the rosette box and his tea) and the
 clipboard lying on it ('show_clipboard', hidden while he carries his own), and the four rosettes ('rosette_first',
 'rosette_second', 'rosette_third', 'rosette_champion'), each with its origin at its pin.
-Built facing -Y (glTF +Z): the browser turns it to face the player. showground.json: where things go (the pens, where a
-bird stands in each, where the judge and the farmer stand, each pen's rosette pin and card, the sign's rectangle for its
-words, the footprints), in glTF axes, and the stats.
+Built facing -Y (glTF +Z): the browser turns it to face the player. showground.json: where things go (the coops ('pens'),
+where a bird stands in each, where the judge and the farmer stand, each coop's rosette pin and card, the sign's rectangle
+for its words, the footprints), in glTF axes, and the stats.
 Usage: ../bl/bin/python export_showground.py [out_dir] [parts...]"""
 import os, sys, json, math
 HERE = os.path.dirname(os.path.abspath(__file__))

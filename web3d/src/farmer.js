@@ -53,10 +53,10 @@ export const POSES = {
   scoop: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 24, 0], head: [0, -2, 0],
     shL: [10, -66, 0], elL: [-15, -22, 0], shR: [-10, -66, 0], elR: [15, -22, 0], hand: ['hold', 'hold'], wrL: [0, 10, 0], wrR: [0, 10, 0] },
   hold: { head: [-8, 14, 0], chest: [0, -5, 0], shL: [10, -42, 0], elL: [-55, -80, 0], wrL: [0, 0, -15], shR: [-4, -68, 0], elR: [40, -58, 0], wrR: [0, 18, 10], hand: ['relax', 'open'] },
-  // (3D only) the show judge (showground.js; any look can take them): leaning in to peer into a show pen, hands clasped
+  // (3D only) the show judge (showground.js; any look can take them): leaning in to peer into a show coop, hands clasped
   // behind his back; writing on his clipboard (held flat on his left forearm, the pencil in the right hand: props clipboard
-  // and pencil); reaching out to pin a rosette on a pen's front (the rosette in his right hand: ShowGround.hold); clapping
-  // the winners; his clipboard held up against his chest as he walks from pen to pen (props clipboard)
+  // and pencil); reaching out to pin a rosette on a coop's front (the rosette in his right hand: ShowGround.hold); clapping
+  // the winners; his clipboard held up against his chest as he walks from coop to coop (props clipboard)
   judge_look: { chest: [0, 30, 0], head: [0, -22, 0], hipL: [0, -10, 0], hipR: [0, -10, 0], kneeL: 14, kneeR: 14, root_z: -0.015, shL: [16, 40, -70], elL: [0, -75, 0], shR: [-16, 40, 70], elR: [0, -75, 0], hand: ['relax', 'relax'] },
   judge_write: { head: [0, 14, 0], chest: [0, 6, 0], shL: [0, -15, -40], elL: [0, -100, 0], wrL: [0, 0, 90], shR: [-8, -35, 30], elR: [0, -90, 0], wrR: [0, 30, 0], hand: ['hold', 'hold'] },
   judge_pin: { chest: [0, 10, 0], head: [0, 4, 0], shR: [-6, -82, 0], elR: -10, wrR: [0, -8, 0], shL: [10, -4, 0], elL: -14, hand: ['relax', 'hold'], hipR: [0, -14, 0], kneeR: 8 },

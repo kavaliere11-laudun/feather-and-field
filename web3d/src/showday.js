@@ -1,7 +1,8 @@
 // The show day (release 1 step 9b; Audrey chose a "Show day on the farm", the judging "Hours later"): when a show's results
 // come and the player taps "Watch the judging", the white show tent stands on the green (showground.js), the other entries
-// already in their pens. The farmer walks up with the player's bird in his arms and puts her in her pen; the judge takes
-// his clipboard and goes along the pens, peering in at each bird and writing; at the player's bird she hops and flaps.
+// already in their little coops. The farmer walks up with the player's bird in his arms and puts her in her coop; the
+// judge takes his clipboard and goes along the coops, peering in at each bird and writing; at the player's bird she hops
+// and flaps.
 // Then he fetches the rosettes from his table and pins them, third, second and first (a champion's rosette for a County or
 // National winner); if hers is one, the farmer cheers, hearts float up over her and the judge claps. Then main.js shows the
 // results card, and the tent goes once it's closed. "Skip" (main.js) jumps to the end. Nothing here is saved: the result
@@ -119,7 +120,7 @@ export class ShowDay {
       F.pos.set(P.farmer[0], 0, P.farmer[1]); F.root.rotation.y += (P.farmerYaw - F.root.rotation.y) * Math.min(1, dt * 10);
       const u = sm(fu), h = holdAt(), lean = Math.sin(Math.min(1, fu * 1.15) * Math.PI);
       fw = { pose: u < 0.75 ? 'hold' : 'hips', face: 'happy', props: {}, anim: Q => { Q.chest[0] += 14 * lean; Q.shL[1] -= 30 * lean; Q.shR[1] -= 30 * lean; } };
-      // her way: from his arms up to the pen's door and in onto the straw, turning to face out
+      // her way: from his arms up to her coop's open front (its door) and in onto the straw, turning to face out
       const door = [P.door[0], P.door[1] - 0.2, P.door[2]], bird = P.bird;
       const a = u < 0.5 ? u * 2 : 1, b = u < 0.5 ? 0 : (u - 0.5) * 2;
       const x1 = h[0] + (door[0] - h[0]) * a, y1 = h[1] + (door[1] - h[1]) * a + Math.sin(a * Math.PI) * 0.08, z1 = h[2] + (door[2] - h[2]) * a;
