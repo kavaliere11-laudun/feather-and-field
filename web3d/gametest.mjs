@@ -61,7 +61,7 @@ const tamper = await p.evaluate(async () => {
   const f = window.__farm, g = f.game(), d = g.data; f.pause(true);
   f.openBirdCard(f.coopPlots()[0].birds[1]);
   const card = document.querySelector('.gsheet').innerHTML;
-  f.gameUI().close(); document.querySelector('.gbar .gicon').click();
+  f.gameUI().close(); document.querySelector('.gbar .ggear').click();
   return { xp: d.xp, coins: d.coins, level: g.level, rooster: d.birds[0].pers, name: d.birds[1].name, n: d.birds.length, trust: d.birds[2].trust, tier: d.coops[0].tier, edited: g.edited,
     hacked: !!window.__hacked, imgInCard: /<img/i.test(card), warned: /gwarn/.test(document.querySelector('.gsheet').innerHTML), settings: document.querySelector('.gsheet h2').textContent };
 });
@@ -76,10 +76,10 @@ await p.waitForFunction(() => window.__farm.inside.open, null, { timeout: 20000 
 const insideTitle = await p.evaluate(() => { const t = document.getElementById('inside-title').textContent; window.__farm.closeInside(); window.__farm.setHour(undefined); return t; });
 await p.waitForFunction(() => !window.__farm.inside.open && !window.__farm.inside.busy, null, { timeout: 20000 });
 // ---- Settings: the other language, then a new farm (tap twice)
-await p.evaluate(() => { window.__farm.gameUI().close(); document.querySelector('.gbar .gicon').click(); });
+await p.evaluate(() => { window.__farm.gameUI().close(); document.querySelector('.gbar .ggear').click(); });
 await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(fr => [...document.querySelectorAll('.gsheet .gchip')].find(c => c.textContent === (fr ? 'English' : 'Français')).click(), fr)]);
 await ready();
-const other = await p.evaluate(() => { const g = window.__farm.game(); document.querySelector('.gbar .gicon').click(); return { lang: g.lang, html: document.documentElement.lang, title: document.querySelector('.gsheet h2').textContent }; });
+const other = await p.evaluate(() => { const g = window.__farm.game(); document.querySelector('.gbar .ggear').click(); return { lang: g.lang, html: document.documentElement.lang, title: document.querySelector('.gsheet h2').textContent }; });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn.galt').click());
 await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(() => document.querySelector('.gsheet .gbtn.galt').click())]);
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
