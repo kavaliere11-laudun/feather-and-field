@@ -1740,7 +1740,7 @@ at each bird in its show pen and pins the rosettes. These are its pieces and a t
   holding his clipboard, walking along the pens), Arthur standing by, hands on hips. `&pose=judge_write` (or `walk`) holds
   one, `&pen=N` puts him at pen N, `&lang=fr` the French sign ("Concours avicole"). In `main.js`: the import, `'show'` in the
   line-up list, the line that makes it, its view, its tick and its place in `clampView` (six lines).
-- `showtest.mjs` (`LANG=fr`, `W`, `H`): the pens, a bird of each breed inside her pen on the straw, the rosettes, the judge's
+- `showgroundtest.mjs` (`LANG=fr`, `W`, `H`): the pens, a bird of each breed inside her pen on the straw, the rosettes, the judge's
   every pose (the clipboard and pencil when wanted, the rosette held and brought to within a centimetre of the pen's pin, the
   walk), a real tap on a bird in a pen, no page errors. `showshot.mjs` takes pictures (`SHOTS`: views, poses, close-ups).
 

@@ -1,7 +1,7 @@
 // Checks the show ground's test view (index.html?lineup=show): it loads with no page errors; the show ground, six pens each
 // with its bird standing inside its pen on the straw, four rosettes pinned, the judge and Arthur; the judge goes through
 // every pose of his turn (the clipboard and pencil when wanted, the rosette held and brought to the pen's pin); a real tap
-// on a bird in a pen shows her name. LANG=fr (or the word fr after it), W, H. ./withserver.sh node showtest.mjs
+// on a bird in a pen shows her name. LANG=fr (or the word fr after it), W, H. ./withserver.sh node showgroundtest.mjs
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const W = +(process.env.W || 874), H = +(process.env.H || 402), FR = process.env.LANG === 'fr' || process.argv.includes('fr');
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
