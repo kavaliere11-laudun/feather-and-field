@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -10,6 +10,16 @@ const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      //
 export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.642, 0.79] };
 // the little barn (as on Your coops' button): the Breed Book's coop lines
 const BARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
+
+// a rosette (the shows): its colour by place (1st red, 2nd blue, 3rd yellow; a champion's red, white and blue), a fixed
+// drawing (nothing of the save goes in it)
+const ROS_COL = ['#d63c3c', '#2f6fd0', '#e7b521'];
+function rosette(place, champ = false) {
+  const c = ROS_COL[place - 1] || '#9aa59a', mid = champ ? '<circle cx="12" cy="10" r="5.6" fill="#fff"/><circle cx="12" cy="10" r="3.6" fill="#2f6fd0"/>' : '<circle cx="12" cy="10" r="4.2" fill="#fff8e6"/><circle cx="12" cy="10" r="4.2" fill="none" stroke="' + c + '" stroke-width="0.9"/>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.3 13.5L5.6 23l3.3-1.6 1.9 2.4 1.6-9.6z" fill="' + (champ ? '#2f6fd0' : c) + '"/><path d="M15.7 13.5l2.7 9.5-3.3-1.6-1.9 2.4-1.6-9.6z" fill="' + c + '"/>' +
+    '<circle cx="12" cy="10" r="8.2" fill="' + c + '"/><circle cx="12" cy="10" r="7.4" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="1.9 1.5"/>' + mid + '</svg>';
+}
+const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
@@ -28,8 +38,11 @@ export class GameUI {
     this.coopsBtn = el('button', 'gicon gcoops'); this.coopsBtn.type = 'button';
     this.coopsBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
     this.dot = el('span', 'gdot'); this.dot.hidden = true; this.coopsBtn.append(this.dot);
+    // Shows: a rosette, with a red dot when a new show is open (and not looked at yet today) or results are waiting
+    this.showsBtn = el('button', 'gicon gshows'); this.showsBtn.type = 'button'; this.showsBtn.innerHTML = ROS_ICON;
+    this.sdot = el('span', 'gdot'); this.sdot.hidden = true; this.showsBtn.append(this.sdot);
     this.brand = el('div', 'gbrand');
-    this.bar.append(this.brand, this.lvl, this.coins, this.coopsBtn, this.gear);
+    this.bar.append(this.brand, this.lvl, this.coins, this.showsBtn, this.coopsBtn, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
@@ -47,6 +60,7 @@ export class GameUI {
     this.coins.addEventListener('click', () => this.coinSheet());
     this.gear.addEventListener('click', () => this.settings());
     this.coopsBtn.addEventListener('click', () => { if (this.o.coops) this.o.coops(); });
+    this.showsBtn.addEventListener('click', () => { if (this.o.shows) this.o.shows(); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
     if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');
@@ -68,13 +82,14 @@ export class GameUI {
     this.gear.setAttribute('aria-label', this.t('settings')); this.x.setAttribute('aria-label', this.t('close'));
     const waiting = this.g.waitingCoops().length > 0;
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
+    const sd = this.g.showsDot(); this.sdot.hidden = !sd; this.showsBtn.setAttribute('aria-label', this.t('shows_aria') + (sd ? ' · ' + this.t('shows_new') : ''));
   }
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
   open(kind, title, modal = false) {
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
-    this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats'); document.body.classList.toggle('gcong', kind === 'congrats'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
+    this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
     return this.body;
   }
@@ -82,6 +97,7 @@ export class GameUI {
     if (this.sheet.hidden) return;
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
     if (this.kind === 'levelup' && this.levelShown) { this.g.seenLevel(); this.levelShown = 0; }
+    if (this.kind === 'showres') { this.g.seenShows(); this.refresh(); this.bumpCoins(); }
     this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
@@ -168,7 +184,8 @@ export class GameUI {
     const g = this.g, f = b.sex === 'h', coop = g.coop(b.coop);
     const body = this.open('bird', b.name);
     this.bird = b.id;
-    body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(f ? 'hen' : 'rooster')));
+    const champ = g.champion(b);
+    body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(f ? 'hen' : 'rooster') + (champ ? ' · 🏆 ' + this.t('champ_' + champ, {}, f) : '')));
     const forever = el('p', 'gforever'); forever.append(el('span', 'gheart', '♥'), document.createTextNode(' ' + this.t(f ? 'forever_h' : 'forever_r'))); body.append(forever);
     // a cuddle (or how long she's happy after one; at night, in the morning)
     const left = g.happyLeft(b), state = this.o.cuddleState ? this.o.cuddleState(b) : 'ok';
@@ -199,6 +216,21 @@ export class GameUI {
     if (lv >= 2) tc.append(el('p', 'gtext', this.t('trust_greets', { farmer })));
     tc.append(el('p', 'gnote', this.t('trust_body')));
     body.append(tc);
+    // shows: her rosettes (by show and place), a champion, the show she's entered in
+    const sc = el('div', 'gcard'), ros = g.rosettesOf(b), ent = g.showOf(b.id);
+    sc.append(el('div', 'glabel', this.t('rosettes')));
+    if (ros.some(n => n > 0)) {
+      SHOW_TIERS.forEach((tier, ti) => {
+        if (!ros.slice(ti * 3, ti * 3 + 3).some(n => n > 0)) return;
+        const row = el('div', 'grosrow'); row.append(el('span', 'grostier', this.t('tier_' + tier)));
+        for (let p = 1; p <= 3; p++) { const n = ros[ti * 3 + p - 1]; if (!n) continue; const r = el('span', 'gros'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(p, p === 1 && tier !== 'v'); r.append(ic, el('span', 'gros-n', '×' + n)); r.setAttribute('aria-label', g.place(p, f) + ' ×' + n); row.append(r); }
+        sc.append(row);
+      });
+      if (champ) sc.append(el('p', 'gtext gchamp', '🏆 ' + this.t('champ_' + champ, {}, f)));
+    }
+    if (ent) sc.append(el('p', 'gtext gfound', this.t('show_card_in', { show: g.showName(ent.id), when: g.howLong(Math.max(60e3, g.showJudgedAt(ent.id) - Date.now())) })));
+    else if (!ros.some(n => n > 0)) sc.append(el('p', 'gnote', this.t('ros_none', {}, f)));
+    body.append(sc);
     // her eggs, or her brood
     if (f && coop) {
       const kc = el('div', 'gcard'), br = coop.brood && coop.brood.hen === b.id ? coop.brood : null, now = Date.now();
@@ -306,6 +338,7 @@ export class GameUI {
     this.bird = null; this.levelShown = L;
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
         const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
@@ -426,6 +459,62 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
     b.append(el('p', 'gnote gcenter', this.t('book_more')));
+  }
+
+  // ---- Shows (release 1 step 9): today's shows (the Village, then from level 4 the County and from 9 the National), who may
+  // enter, when the results come, the prizes; your best bird for each with her chance of a rosette and "Enter Clover · 10"
+  // (h.enter(id, bird)), or the others to choose from; a bird entered: when her results come; how shows work
+  showsSheet(h = {}, more = null) {
+    const g = this.g, now = Date.now(), b = this.open('shows', this.t('shows_title'));
+    this.bird = null;
+    const how = () => { const c = el('div', 'gcard ghow'); for (const k of ['shows_how1', 'shows_how2', 'shows_how3']) c.append(el('p', 'gnote', this.t(k))); return c; };
+    for (const s of g.openShows(now)) {
+      const T = SHOWS[s.tier], c = el('div', 'gcard gshow' + (s.locked ? ' gpage-no' : '')), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i gros-big');
+      ic.innerHTML = rosette(1, s.tier !== 'v'); c.dataset.show = s.id;
+      hd.append(ic, el('span', 'gcard-t', g.showName(s.id)));
+      c.append(hd);
+      if (s.locked) { c.append(el('p', 'gnote', this.t('show_locked', { n: s.level }))); b.append(c); continue; }
+      const when = g.howLong(Math.max(60e3, s.judged - now));
+      c.append(el('p', 'gnote', (s.breed ? this.t('show_only', { breed: g.breedName(s.breed) }) : this.t('show_any')) + ' · ' + this.t('show_when', { when })));
+      c.append(el('p', 'gnote', this.t('show_prizes', { a: T.prize[0], b: T.prize[1], c: T.prize[2] })));
+      const ent = g.shows().in.find(e => e.id === s.id);
+      if (ent) { const eb = g.bird(ent.bird); c.append(el('p', 'gtext gfound', this.t('show_in', { name: eb ? eb.name : '', when }, eb && eb.sex === 'h'))); b.append(c); continue; }
+      const list = g.showBirds(s);
+      if (!list.length) { c.append(el('p', 'gnote', s.breed && !g.data.birds.some(x => x.breed === s.breed) ? this.t('show_none_breed', { breed: g.breedName(s.breed) }) : this.t('show_none_busy'))); b.append(c); continue; }
+      const broke = g.data.coins < T.fee;
+      const line = x => el('p', 'gtext gchance', this.t('show_chance', { name: x.b.name, word: this.t('chance' + x.ch.word), p: Math.round(x.ch.rosette * 100) }));
+      const enterBtn = (x, small) => {
+        const go = el('button', 'gbtn' + (small ? ' gsmallbtn' : '') + (broke || x.ch.word === 0 ? ' galt' : ''), broke ? this.t('show_broke', { fee: T.fee }) : small ? this.t('show_pick') : this.t('show_enter', { name: x.b.name, fee: T.fee }));
+        go.type = 'button'; go.disabled = broke; go.addEventListener('click', () => { if (!go.disabled && h.enter) h.enter(s.id, x.b.id); });
+        return go;
+      };
+      c.append(line(list[0]), enterBtn(list[0], false));
+      if (list.length > 1) {
+        if (more === s.id) for (const x of list.slice(1)) { const row = el('div', 'gshowrow'); row.append(line(x)); if (!broke) row.append(enterBtn(x, true)); c.append(row); }
+        else { const o = el('button', 'glink', this.t('show_other')); o.type = 'button'; o.addEventListener('click', () => this.showsSheet(h, s.id)); c.append(o); }
+      }
+      b.append(c);
+    }
+    b.append(how());                                   // (how shows work: under the shows, so the first one's button is in sight)
+    if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
+  }
+  // ---- the show results (after the show day): each bird's place, her rosette, the prizes; seen once closed
+  showResults(list) {
+    const g = this.g, body = this.open('showres', '🏆 ' + this.t('results_title'));
+    this.bird = null;
+    let coins = 0, xp = 0;
+    for (const r of list) {
+      const b = g.bird(r.bird), f = b && b.sex === 'h', name = b ? b.name : '', c = el('div', 'gcard gresult'), hd = el('div', 'gcard-h');
+      const ic = el('span', 'gros-i gros-big'); ic.innerHTML = rosette(r.place <= 3 ? r.place : 9, r.place === 1 && r.id[0] !== 'v');
+      hd.append(ic, el('span', 'gtext', r.place <= 3 ? this.t('res_place', { name, place: g.place(r.place, true), show: g.showName(r.id) }) : this.t('res_none', { name, show: g.showName(r.id), place: g.place(r.place, f), of: r.of }, f)));
+      c.append(hd);
+      const won1 = r.place === 1 && r.id[0] !== 'v' && b && g.rosettesOf(b)[SHOW_TIERS.indexOf(r.id[0]) * 3] === 1;      // (her first win there: a champion now)
+      if (won1) c.append(el('p', 'gtext gchamp', '🏆 ' + this.t('res_champ', { name }, f)));
+      body.append(c); coins += r.coins; xp += r.xp;
+    }
+    body.append(el('p', 'gtotal', this.t('congrats_total', { c: coins, xp })));
+    const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close());
+    body.append(ok);
   }
 
   coinSheet() {

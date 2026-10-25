@@ -84,6 +84,22 @@ const TEXT = {
     book_title: 'Breed Book', book_btn: '📖 Breed Book', book_found: '{n} of {all} breeds found', book_found1: '1 of {all} breeds found',
     book_on_farm: 'On your farm: {names}', book_at_level: 'Comes at level {n}', book_waiting: 'Their coop is waiting for you in Your coops',
     book_price: '{p} coins an egg, plus a coin for each star of the hen', book_coop: '{coop}, rustic to start', book_more: 'More pages to come.',
+    shows_title: 'Shows', shows_aria: 'Shows', shows_new: 'a new show is open',
+    shows_how1: 'Enter one bird in each show. The judge looks at its stars, and at how calm it is in the judge’s hands (trust). A Diva shines a little more.',
+    shows_how2: 'Results the next morning at 7:00. 1st, 2nd and 3rd win a rosette, coins and XP, and the rosette stays on the bird’s card for good.',
+    shows_how3: 'A win at the County show or the National Championship makes your bird a champion.',
+    show_v: '{town} Village Show', show_c: '{county} County Show', show_n: 'National Poultry Championship',
+    show_any: 'Any breed can enter', show_only: '{breed}s only', show_locked: 'From level {n}',
+    show_when: 'Results at 7:00, in {when}', show_prizes: 'Prizes: 1st {a} · 2nd {b} · 3rd {c} coins',
+    show_chance: '{name} · chance of a rosette: {word} ({p}%)', chance0: 'slim', chance1: 'fair', chance2: 'good', chance3: 'great',
+    show_enter: 'Enter {name} · {fee}', show_other: 'Choose another bird', show_pick: 'Enter',
+    show_in: '{name} is entered: results at 7:00, in {when}', show_none_breed: 'None of your birds is a {breed}.',
+    show_none_busy: 'All your birds are entered in other shows.', show_broke: 'Not enough coins: the entry is {fee}',
+    show_entered: '{name} is entered in the {show}!', show_card_in: 'In the {show}: results at 7:00, in {when}',
+    results_title: 'Show results', res_place: '{name} came {place} in the {show}!', res_none: '{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.',
+    res_champ: '{name} is a champion now!', res_in: 'The show results are in!',
+    rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
+    champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry 40, 1st prize 250 coins', show_new_n: 'The National Championship: entry 150, 1st prize 1,000 coins',
     book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
@@ -169,6 +185,22 @@ const TEXT = {
     book_title: 'Livre des races', book_btn: '📖 Livre des races', book_found: '{n} races trouvées sur {all}', book_found1: '1 race trouvée sur {all}',
     book_on_farm: 'Dans votre ferme : {names}', book_at_level: 'Arrive au niveau {n}', book_waiting: 'Leur poulailler vous attend dans Vos poulaillers',
     book_price: '{p} pièces l’œuf, plus une pièce par étoile de la poule', book_coop: '{coop}, rustique pour commencer', book_more: 'D’autres pages à venir.',
+    shows_title: 'Concours', shows_aria: 'Concours', shows_new: 'un nouveau concours est ouvert',
+    shows_how1: 'Inscrivez une volaille par concours. Le juge regarde ses étoiles, et son calme quand il la prend en main (la confiance). Une diva brille un peu plus.',
+    shows_how2: 'Résultats le lendemain à 7 h. Les 1er, 2e et 3e gagnent une cocarde, des pièces et de l’XP, et la cocarde reste pour toujours sur sa fiche.',
+    shows_how3: 'Gagner le concours régional ou le championnat national fait de votre volaille un champion.',
+    show_v: 'Concours de {town}', show_v2: 'Concours d’{town}', show_c: 'Concours régional du {county}', show_n: 'Championnat national avicole',
+    show_any: 'Toutes les races', show_only: 'Race : {breed} uniquement', show_locked: 'À partir du niveau {n}',
+    show_when: 'Résultats à 7 h, dans {when}', show_prizes: 'Prix : 1er {a} · 2e {b} · 3e {c} pièces',
+    show_chance: '{name} · chances de cocarde : {word} ({p}\u202f%)', chance0: 'faibles', chance1: 'moyennes', chance2: 'bonnes', chance3: 'excellentes',
+    show_enter: 'Inscrire {name} · {fee}', show_other: 'Choisir une autre volaille', show_pick: 'Inscrire',
+    show_in: '{name} est inscrit : résultats à 7 h, dans {when}', show_none_breed: 'Aucune de vos volailles n’est de la race {breed}.',
+    show_none_busy: 'Toutes vos volailles sont déjà inscrites à d’autres concours.', show_broke: 'Pas assez de pièces : l’inscription coûte {fee}',
+    show_entered: '{name} est inscrit au {show} !', show_card_in: 'Au {show} : résultats à 7 h, dans {when}',
+    results_title: 'Résultats des concours', res_place: '{name} prend la {place} place au {show} !', res_none: '{name} n’est pas classé au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
+    res_champ: '{name} est champion maintenant !', res_in: 'Les résultats des concours sont arrivés !',
+    rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
+    champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription 40, 1er prix 250 pièces', show_new_n: 'Le championnat national : inscription 150, 1er prix 1 000 pièces',
     book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
@@ -212,7 +244,11 @@ const TEXT = {
 // in French "Just arrived" agrees with the bird
 const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
   fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
-    exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.' } };
+    exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.',
+    show_in: '{name} est inscrite : résultats à 7 h, dans {when}', show_entered: '{name} est inscrite au {show} !',
+    res_none: '{name} n’est pas classée au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
+    res_champ: '{name} est championne maintenant !', ros_none: 'Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut).',
+    champ_c: 'Championne régionale', champ_n: 'Championne nationale' } };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -267,6 +303,45 @@ export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
 export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
+
+// ---- shows (release 1 step 9; the 2D game's shows made the forever birds' own, Audrey: "Shows (Recommended)", "Show day
+// on the farm", "Hours later"). Each day at 7:00 a Village show opens (from level 4 a County show too, from level 9 the
+// National Championship), open for a day and judged the next morning at 7:00. One bird a show, a bird in one show at a time;
+// the fee when she's entered. The judge looks at her stars (experience), how much she trusts you (calm in the judge's hands)
+// and a Diva shines a little more, with a little luck of the day; against the day's other entries (the same for everyone,
+// from the show's own numbers). 1st, 2nd and 3rd: a rosette (kept on her card for good), coins and XP; a win at the County or
+// National makes her a champion. Starting values (the balance is step 11)
+export const SHOW_HOUR = 7;
+export const SHOWS = {
+  v: { level: 1, fee: 10, prize: [60, 30, 15], xp: [12, 6, 3], rivals: 5, mean: 52, sd: 7 },
+  c: { level: 4, fee: 40, prize: [250, 120, 60], xp: [40, 20, 10], rivals: 7, mean: 66, sd: 7 },
+  n: { level: 9, fee: 150, prize: [1000, 500, 250], xp: [100, 50, 25], rivals: 9, mean: 80, sd: 6 },
+};
+export const SHOW_TIERS = ['v', 'c', 'n'];
+const SHOW_LUCK = 10, XP_SHOW = 2, TZ_SLACK = 14 * 3600e3;                     // (the luck of the day either way; a little XP just for taking part)
+const TOWNS = ['Thornbury Green', 'Ashwell', 'Marlow Down', 'Kettlewick', 'Bramley Cross', 'Fenwick', 'Oakhurst', 'Saxby Vale', 'Little Hollowby', 'Wexcombe'];
+const COUNTIES = ['Wessex', 'Mercia', 'Downland', 'Fenshire', 'Weald'];
+// a show's id: its tier and the day it opened (v20261025); when it opens and when it's judged (7:00 that day and the next)
+const showDay = id => { const m = /^[vcn](\d{4})(\d{2})(\d{2})$/.exec(id); return m ? [+m[1], +m[2] - 1, +m[3]] : null; };
+export function showOpens(id) { const d = showDay(id); return d ? new Date(d[0], d[1], d[2], SHOW_HOUR).getTime() : NaN; }
+export function showJudged(id) { const d = showDay(id); return d ? new Date(d[0], d[1], d[2] + 1, SHOW_HOUR).getTime() : NaN; }
+function showIdAt(tier, now) {                         // the show of that tier open at now (opened at 7:00 today, or yesterday before 7)
+  const d = new Date(now), back = d.getHours() < SHOW_HOUR ? 1 : 0, o = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+  return tier + o.getFullYear() + String(o.getMonth() + 1).padStart(2, '0') + String(o.getDate()).padStart(2, '0');
+}
+// who may enter: the Village and the National, any breed; the County, every other day or so one breed (of those come by
+// the player's level, so it can be one of theirs)
+function showBreed(id, level) {
+  if (id[0] !== 'c' || hash01(id + '|any') < 0.5) return null;
+  const come = Object.keys(BREED_LEVEL).filter(b => BREED_LEVEL[b] <= Math.max(level, SHOWS.c.level));
+  return come[Math.floor(hash01(id + '|breed') * come.length)];
+}
+// the day's other entries (the same for everyone): each a score round the show's middle
+function rivalScores(id) {
+  const T = SHOWS[id[0]];
+  return Array.from({ length: T.rivals }, (_, i) => { const u1 = Math.max(1e-6, hash01(id + '|r' + i + 'a')), u2 = hash01(id + '|r' + i + 'b'); return T.mean + T.sd * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2); });
+}
+const normCdf = x => { const t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp(-x * x / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
 
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
@@ -367,6 +442,9 @@ export function checkFarm(d, now = Date.now()) {
     const nb = { id: b.id, name, sex, breed: coop.breed, pers, coop: coop.id, since: int(b.since, 0, now, now), exp: int(b.exp, 0, 1e7, 0), trust: int(b.trust, 0, 15, 0) };
     if (sex === 'h') nb.laid = int(b.laid, 0, now, now);          // (when she last laid, or was due to: never ahead of now)
     nb.happy = int(b.happy, 0, now + HAPPY_MS, 0);                     // (happy after a cuddle till then: at most 6 hours on)
+    // her rosettes (1st, 2nd, 3rd at the Village, County and National): a show a day at most since she came
+    const most = Math.floor((now - nb.since) / DAY_MS) + 1, ros = Array.isArray(b.ros) && b.ros.length === 9 && b.ros.every(n => Number.isInteger(n) && n >= 0) ? b.ros : null;
+    nb.ros = ros && ros.reduce((a, n) => a + n, 0) <= most ? ros.slice() : [0, 0, 0, 0, 0, 0, 0, 0, 0];
     out.birds.push(nb);
   }
   // the eggs' star bonus (a coin an egg for each star of the hen who laid it): at most five stars' worth for each egg
@@ -386,6 +464,23 @@ export function checkFarm(d, now = Date.now()) {
     type: 'grown', coop: String(n.coop).slice(0, 8), hen: String(n.hen).slice(0, 8), dad: String(n.dad || '').slice(0, 8),
     kids: (Array.isArray(n.kids) ? n.kids : []).slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1), coins: int(k && k.coins, 0, 1000, 0) })),
     coins: int(n.coins, 0, 4000, 0), xp: int(n.xp, 0, 4000, 0), t: int(n.t, 0, now, now), seen: n.seen === true }));
+  // the shows: the birds entered (a show open when she was entered, of a tier the level allows, the breed it's for; one a
+  // show, a show at a time for each bird) and the results waiting to be seen (each as the show's own numbers make it)
+  const sh = d.shows && typeof d.shows === 'object' ? d.shows : {}, L = levelOf(out.xp);
+  out.shows = { in: [], res: [], seen: typeof sh.seen === 'string' && /^\d{8}$/.test(sh.seen) ? sh.seen : '' };
+  for (const e of Array.isArray(sh.in) ? sh.in.slice(0, 3) : []) {
+    if (!e || typeof e.id !== 'string' || !showDay(e.id) || typeof e.bird !== 'string') continue;
+    const T = SHOWS[e.id[0]], b = out.birds.find(x => x.id === e.bird), at = int(e.at, 0, now, -1), breed = showBreed(e.id);
+    if (!b || L < T.level || at < showOpens(e.id) - TZ_SLACK || at >= showJudged(e.id) + TZ_SLACK || at < b.since || (breed && b.breed !== breed)) continue;      // (a phone taken across time zones: a little slack)
+    if (out.shows.in.some(x => x.id === e.id || x.bird === e.bird)) continue;
+    out.shows.in.push({ id: e.id, bird: e.bird, at });
+  }
+  for (const r of Array.isArray(sh.res) ? sh.res.slice(-6) : []) {
+    if (!r || typeof r.id !== 'string' || !showDay(r.id) || !out.birds.some(x => x.id === r.bird)) continue;
+    const T = SHOWS[r.id[0]], of = T.rivals + 1, place = int(r.place, 1, of, of), t = int(r.t, 0, now, -1);
+    if (t < 0 || Math.abs(t - showJudged(r.id)) > TZ_SLACK) continue;
+    out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? T.prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0), t, seen: r.seen === true });
+  }
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
     const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
     if (mum) out.first = { hen: mum.id, t: firstEggAt(now) };
@@ -481,6 +576,85 @@ export class Game {
   stars(b, now = Date.now()) { return Math.min(MAX_STARS, Math.floor(this.expOf(b, now) / 100)); }
   starPart(b, now = Date.now()) { return this.stars(b, now) >= MAX_STARS ? 1 : (this.expOf(b, now) % 100) / 100; }      // (on the way to the next star)
   happyLeft(b, now = Date.now()) { return Math.max(0, (b.happy || 0) - now); }
+  // ---- shows (release 1 step 9): the shows open now, a show's name, who may enter, a bird's score and chance; entering;
+  // the judging (showTick, at 7:00 the next morning, whenever the farm next looks)
+  shows() { return this.data.shows || (this.data.shows = { in: [], res: [], seen: '' }); }
+  openShows(now = Date.now()) {
+    return SHOW_TIERS.map(tier => { const id = showIdAt(tier, now), T = SHOWS[tier]; return { id, tier, locked: this.level < T.level, level: T.level, fee: T.fee, prize: T.prize, opens: showOpens(id), judged: showJudged(id), breed: showBreed(id) }; });
+  }
+  showName(id) {
+    const k = id[0];
+    const town = TOWNS[Math.floor(hash01(id + '|town') * TOWNS.length)];
+    return k === 'v' ? this.t(this.lang === 'fr' && /^[AEIOU]/.test(town) ? 'show_v2' : 'show_v', { town }) : k === 'c' ? this.t('show_c', { county: COUNTIES[Math.floor(hash01(id + '|county') * COUNTIES.length)] }) : this.t('show_n');
+  }
+  place(n, sexF = false) { return this.lang === 'fr' ? (n === 1 ? (sexF ? '1re' : '1er') : n + 'e') : n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'); }
+  showScore(b, id) { const s = 50 + 9 * Math.min(MAX_STARS, this.expOf(b, showJudged(id)) / 100) + 2 * this.trustLevel(b); return b.pers === 'diva' ? s * 1.08 : s; }
+  showLuck(id, birdId) { return (hash01(id + '|' + birdId + '|luck') * 2 - 1) * SHOW_LUCK; }
+  // her chance of a rosette (and of 1st), over the luck of the day: each of the others beats her with the chance their spread gives
+  showChance(b, id) {
+    const T = SHOWS[id[0]], S = this.showScore(b, id), n = T.rivals; let ros = 0, win = 0;
+    const C = (k) => { let c = 1; for (let i = 0; i < k; i++) c = c * (n - i) / (i + 1); return c; };
+    for (let i = 0; i <= 40; i++) {
+      const L = (i / 20 - 1) * SHOW_LUCK, p = 1 - normCdf((S + L - T.mean) / T.sd), q = 1 - p;
+      let r = 0; for (let k = 0; k <= 2; k++) r += C(k) * Math.pow(p, k) * Math.pow(q, n - k);
+      ros += r / 41; win += Math.pow(q, n) / 41;
+    }
+    return { rosette: ros, win, word: ros < 0.15 ? 0 : ros < 0.4 ? 1 : ros < 0.7 ? 2 : 3 };
+  }
+  showJudgedAt(id) { return showJudged(id); }
+  showOf(birdId) { return this.shows().in.find(e => e.bird === birdId) || null; }
+  // whether a bird can go in a show: 'ok', or why not ('locked', 'done': you've a bird in it already, 'busy': she's in another
+  // show, 'breed', 'coins')
+  canEnter(b, s) {
+    if (s.locked) return 'locked';
+    if (this.shows().in.some(e => e.id === s.id)) return 'done';
+    if (s.breed && b.breed !== s.breed) return 'breed';
+    if (this.showOf(b.id)) return 'busy';
+    if (this.data.coins < SHOWS[s.tier].fee) return 'coins';
+    return 'ok';
+  }
+  // the birds that could go in a show, best chance first
+  showBirds(s) { return this.data.birds.filter(b => (!s.breed || b.breed === s.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
+  enterShow(id, birdId, now = Date.now()) {
+    const s = this.openShows(now).find(x => x.id === id), b = this.bird(birdId);
+    if (!s || !b || this.canEnter(b, s) !== 'ok') return null;
+    this.data.coins -= SHOWS[s.tier].fee;
+    this.shows().in.push({ id, bird: birdId, at: now });
+    this.save();
+    return s;
+  }
+  // the judging: every show whose morning has come; her place among the others, the prize, a rosette for her card
+  showTick(now = Date.now()) {
+    const S = this.shows(), out = [];
+    for (const e of S.in.slice()) {
+      const t = showJudged(e.id); if (t > now) continue;
+      S.in.splice(S.in.indexOf(e), 1);
+      const b = this.bird(e.bird); if (!b) continue;
+      const T = SHOWS[e.id[0]], score = this.showScore(b, e.id) + this.showLuck(e.id, e.bird), others = rivalScores(e.id);
+      const place = 1 + others.filter(r => r > score).length, of = others.length + 1;
+      const coins = place <= 3 ? T.prize[place - 1] : 0, xp = XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0);
+      const champ0 = this.champion(b);
+      if (place <= 3) { b.ros = (b.ros && b.ros.length === 9 ? b.ros : [0, 0, 0, 0, 0, 0, 0, 0, 0]).slice(); b.ros[SHOW_TIERS.indexOf(e.id[0]) * 3 + place - 1]++; }
+      this.data.coins += coins; this.data.xp += xp;
+      const r = { id: e.id, bird: e.bird, place, of, coins, xp, t, seen: false };
+      S.res = [...S.res, r].slice(-6);
+      out.push({ ...r, champ: !champ0 && this.champion(b) });
+    }
+    if (out.length) this.save();
+    return out;
+  }
+  unseenShows() { return this.shows().res.filter(r => !r.seen); }
+  seenShows() { for (const r of this.shows().res) r.seen = true; this.save(); }
+  // a new show today that a bird of yours could go in, and the Shows sheet not looked at yet today: the red dot
+  showsDot(now = Date.now()) {
+    const today = showIdAt('v', now).slice(1);
+    if (this.unseenShows().length) return true;
+    if (this.shows().seen === today) return false;
+    return this.openShows(now).some(s => !s.locked && !this.shows().in.some(e => e.id === s.id) && this.data.birds.some(b => this.canEnter(b, s) === 'ok'));
+  }
+  lookedAtShows(now = Date.now()) { const k = showIdAt('v', now).slice(1); if (this.shows().seen !== k) { this.shows().seen = k; this.save(); } }
+  rosettesOf(b) { return b.ros && b.ros.length === 9 ? b.ros : [0, 0, 0, 0, 0, 0, 0, 0, 0]; }
+  champion(b) { const r = this.rosettesOf(b); return r[6] > 0 ? 'n' : r[3] > 0 ? 'c' : null; }
   // a cuddle (the farmer's visit to the pen only shows it): happy for 6 hours; while trust is still growing, one more
   // cuddle's worth of trust and a little experience; best friends: +20 XP
   cuddle(id, now = Date.now()) {
@@ -513,7 +687,7 @@ export class Game {
     return [['r', pers[0]], ['h', pers[1]], ['h', pers[2]]].map(([sex, p]) => {
       const b = { id: this.id('b'), name: pick(sex === 'r' ? ROO_NAMES : HEN_NAMES), sex, breed, pers: p, coop: coopId, since: now, exp: 0, trust: 0 };
       if (sex === 'h') b.laid = now;
-      b.happy = 0;
+      b.happy = 0; b.ros = [0, 0, 0, 0, 0, 0, 0, 0, 0];
       return b;
     });
   }
@@ -527,6 +701,7 @@ export class Game {
     const mum = this.data.birds.find(b => b.pers === 'mum') || this.data.birds.find(b => b.sex === 'h');
     this.data.first = { hen: mum.id, t: firstEggAt(now) };
     this.data.news = [];
+    this.data.shows = { in: [], res: [], seen: '' };
     this.edited = false;
     this.save();
     return this.data;

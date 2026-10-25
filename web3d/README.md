@@ -1690,3 +1690,41 @@ other Silkie colours (release 2) and the fish (release 5) get their pages when t
   pages to come", all in sight); closed, nothing saved; Your coops' button; at night; level 5 (the Orpingtons waiting,
   "Place it" from the book, placed: "2 of 5", their trio named); a name with code in it shown as text.
 
+
+## The game, release 1 step 9a: shows, the rules and the screens (25 Oct 2026, Audrey: "Shows (Recommended)")
+
+Step 9 brings across from the game she plays now, one piece at a time; Audrey chose shows first, a "Show day on the farm"
+(a white show tent on the green, the farmer carrying the bird there, the judge, the rosettes pinned: step 9b) and the
+judging "Hours later" (enter today, the show day the next time you open the game after judging time). This first part is
+the rules, the Shows sheet and the results; the show day itself comes next.
+- **The shows** (`game.js` `SHOWS`, `openShows`): each day at 7:00 a Village show opens (from level 4 a County show too,
+  from level 9 the National Poultry Championship), open for a day and judged the next morning at 7:00. Their names from the
+  2D game ("Bramley Cross Village Show" / "Concours de Bramley Cross", "Weald County Show" / "Concours régional du Weald",
+  "National Poultry Championship" / "Championnat national avicole"). The Village and the National: any breed; the County,
+  about two days in five, one breed only. Entry 10, 40, 150 coins; prizes 60/30/15, 250/120/60, 1000/500/250 coins (and
+  12/6/3, 40/20/10, 100/50/25 XP, 2 XP for taking part). Starting values: the balance is step 11.
+- **The judging** (`showScore`, `showTick`): a bird's score is 50 + 9 a star (her experience, as stars to the decimal, on
+  the judging morning) + 2 a trust level (calm in the judge's hands), a Diva's 8% more, and the luck of the day (up to 10
+  either way, from the show and the bird); against the day's other entries (5, 7, 9; each a score round 52, 66, 80, the same
+  for every player, from the show's own numbers). 1st, 2nd and 3rd: a rosette for her card (kept for good) and the prizes;
+  a win at the County or the National makes her a champion ("🏆 County champion" by her name). Her chance of a rosette
+  (`showChance`): worked out over the luck of the day, each of the others beating her with the chance their spread gives
+  (slim under 15%, fair under 40%, good under 70%, great): a new bird about 1 in 3 at the Village, half with full trust.
+- **One bird a show, a show at a time for each bird.** The fee when she's entered; the results whenever the farm next
+  looks after 7:00 (the coins and XP in, then "🏆 Show results": each bird's place, her rosette, "+60 coins · +14 XP",
+  "Lovely!"; a bird that didn't place: "Time on the farm and cuddles will help.").
+- **The screens** (`gameui.js`): a rosette in the top bar (a red dot when today's show is open and you haven't looked yet,
+  or results are waiting); the Shows sheet: each show (its name, who may enter, "Results at 7:00, in 21 hours", the
+  prizes), your best bird for it with her chance and "Enter Reginald · 10" (quieter when her chance is slim; "Not enough
+  coins: the entry is 40"), "Choose another bird" (each with its chance), a bird entered ("Reginald is entered: results at
+  7:00, in 21 hours"), the locked ones ("From level 4"), how shows work. A bird's card: her rosettes by show and place, a
+  champion, the show she's in. The level card at 4 and 9 says which show comes.
+- **The save:** `shows.in` (a show open when she was entered, of a tier the level allows, the breed it's for, one a show,
+  a show at a time for each bird), `shows.res` (the results still to be seen, each as the show's own numbers make it, the
+  prize checked), `shows.seen` (the day the sheet was looked at), each bird's `ros` (9 counts: at most a show a day since she
+  came). A little slack for a phone taken across time zones. Anything else is dropped and the farm flagged.
+- `showtest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): a fresh farm (the rosette and its dot; the sheet: the Village
+  show, the best bird and her chance, Enter on screen, the County and National locked; the dot gone); entered (the fee, a
+  word, the sheet and her card say so; no second bird in it); a reload; the next morning (the results card, 1st, the
+  prize and XP, her rosette on her card; seen, not again); level 4 (its card brings the County show; not enough coins); a
+  save changed outside (an entry before its show, a bird not there, 40 rosettes in a day, a prize of 5000).
