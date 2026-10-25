@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -321,7 +321,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -358,8 +358,8 @@ async function start() {
   buildWater();
   buildPaths();
   placeDecor(decorInfo);
-  if (GAME_MODE) { settleCoops(); hidePebbles(); }        // (each coop where it can stand, what's under it cleared)
-  buildProps(); buildDecor();
+  if (GAME_MODE) { settleCoops(); settleDecor(); hidePebbles(); }        // (each coop and decoration where it can stand, what's under it cleared)
+  buildProps(); if (GAME_MODE) syncDecor(); else buildDecor();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
   if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer', 'show'].includes(params.get('lineup'))) buildLineup();
@@ -721,6 +721,7 @@ const DECOR_NAMES = {
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'],
 };
+const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
 const decorList = [];                                          // { model, pos, deg, box (its own frame), m (world matrix) }
 function placeDecor(info) {
@@ -760,7 +761,7 @@ function placeDecor(info) {
     && !circles.some(c => Math.hypot(x - c[0], z - c[1]) < c[2]) && !boxes.some(b => b.containsPoint(pt.set(x, 0.5, z)))
     && !decorList.some(d => d.wb.containsPoint(pt.set(x, 0.5, z))) && Math.hypot(x - mid[0], z - mid[1]) < 40;
   decorFree = free;
-  const ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };
+  const ROUND = DECOR_ROUND;
   const fits = (name, x, z) => {                                 // every point of its footprint (and a margin) free
     const f = info.foot[name], m = place(x, 0, z, 45, 1), v = new THREE.Vector3(), M = 0.25;
     for (let fx = f[0] - M; fx <= f[2] + M + 1e-6; fx += 0.25) for (let fz = f[1] - M; fz <= f[3] + M + 1e-6; fz += 0.25) {
@@ -823,13 +824,14 @@ function decorAt(ray) {
     loc.copy(ray).applyMatrix4(inv.copy(d.m).invert());
     if (loc.intersectBox(d.box, hit)) { const dd = hit.applyMatrix4(d.m).distanceTo(ray.origin); if (dd < bestD) { bestD = dd; best = d; } }
   }
+  decorAt.dist = bestD;                                        // (how far along the ray: nearer than a coop behind it?)
   return best;
 }
 
 function buildProps() {
   // buildings, the pasture, fields, decorations, bridges and the dock: grouped by model, each group in one batch
   const byModel = {};
-  for (const p of V.props) (byModel[p.model] = byModel[p.model] || []).push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));
+  for (const p of V.props) if (!p.own) (byModel[p.model] = byModel[p.model] || []).push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));      // (not the game's decorations: their own copies)
   for (const name in byModel) {
     if (!parts[name]) { console.warn('no model for', name); continue; }
     batch(name, byModel[name], { cast: true });
@@ -2704,8 +2706,9 @@ canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
-  if (pointers.size === 2) { drag = null; pinch = spread(); MOVE.drag = null; }
+  if (pointers.size === 2) { drag = null; pinch = spread(); MOVE.drag = null; DMOVE.drag = null; }
   if (MOVE.plot && pointers.size === 1 && moveGrab(e)) drag = { moved: false, coop: true };      // (moving a coop: a finger on it carries it)
+  if (DMOVE.id && pointers.size === 1 && decGrab(e)) drag = { moved: false, coop: true };       // (and a decoration)
   wake(1000);
 });
 canvas.addEventListener('pointermove', e => {
@@ -2721,6 +2724,9 @@ canvas.addEventListener('pointermove', e => {
   } else if (MOVE.drag && MOVE.drag.id === e.pointerId) {
     if (Math.hypot(p.x - p.x0, p.y - p.y0) > 6 && drag) drag.moved = true;
     if (!drag || drag.moved) moveDrag(p.x, p.y);
+  } else if (DMOVE.drag && DMOVE.drag.id === e.pointerId) {
+    if (Math.hypot(p.x - p.x0, p.y - p.y0) > 6 && drag) drag.moved = true;
+    if (!drag || drag.moved) decDrag(p.x, p.y);
   } else if (drag) {
     if (Math.hypot(p.x - p.x0, p.y - p.y0) > 8) drag.moved = true;
     if (drag.moved) pan(dx, dy);
@@ -2731,7 +2737,8 @@ function endPointer(e) {
   const p = pointers.get(e.pointerId); if (!p) return;
   pointers.delete(e.pointerId);
   if (MOVE.drag && MOVE.drag.id === e.pointerId) MOVE.drag = null;
-  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : tapAt)(e.clientX, e.clientY);
+  if (DMOVE.drag && DMOVE.drag.id === e.pointerId) DMOVE.drag = null;
+  if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : DMOVE.id ? decTap : tapAt)(e.clientX, e.clientY);
   if (pointers.size < 2) pinch = 0;
   if (pointers.size === 0) drag = null;
 }
@@ -2844,12 +2851,16 @@ function tapAt(x, y) {
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
     }
-    // the game: a coop (its house or its pen): its card (who lives there; move it)
+    // the game: a coop (its house or its pen): its card (who lives there; move it); a decoration in front of it: its own
+    const gdc = GAME_MODE ? decorAt(ray.ray) : null, gdd = gdc ? decorAt.dist : Infinity;
     if (GAME_MODE) for (const p of livePlots()) {
       if (!p.gc) continue;
       nb.min.set(-1.66, 0, -0.81); nb.max.set(1.81, 2.1, 2.55);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
-      if (loc.intersectBox(nb, hitP)) { coopCard(p); return; }
+      if (!loc.intersectBox(nb, hitP)) continue;
+      if (!gdc) { coopCard(p); return; }
+      nb.min.set(-0.8, 0, -0.6); nb.max.set(0.8, 1.9, 0.7);         // (a decoration hit too: the coop only if its house is in front of it)
+      if (loc.intersectBox(nb, hitP) && hitP.applyMatrix4(p.frame.matrixWorld).distanceTo(ray.ray.origin) < gdd) { coopCard(p); return; }
     }
     // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it)
     if (GAME_MODE && game.data && farmhouseAt(ray.ray)) { bookSheet(); return; }
@@ -2861,6 +2872,7 @@ function tapAt(x, y) {
     }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);
+    if (dc && GAME_MODE) { if (dc.model === 'bandstand' && decorLife) decorLife.play(); decorCard(dc.model); return; }      // (the game: its card, Move)
     if (dc) {
       tagBird = null; tag.textContent = DECOR_NAMES[dc.model][LANG === 'fr' ? 1 : 0]; tag.classList.add('on'); fieldTag = 2.8;
       if (dc.model === 'bandstand' && decorLife) decorLife.play();          // (and a little tune)
@@ -3332,7 +3344,7 @@ function chickCard(ch) {
 // was shut) a moment after it opens; one at a time, never over another card
 let newsFrom = Infinity, openedAt = 0;
 function showNews() {
-  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || SHOWDAY || performance.now() < newsFrom) return;
+  if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || DMOVE.id || SHOWDAY || performance.now() < newsFrom) return;
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const sr = game.unseenShows();                                           // (the show results: the show day first, by day)
@@ -3589,7 +3601,7 @@ function underCoop(x, z, m = 0) {
   if (!GAME_MODE || !game.data) return false;
   for (const c of game.data.coops) { const [lx, lz] = inSpot(c, x, z); if (rectGap(FOOT, lx, lz) <= m) return true; }
   if (MOVE.plot && MOVE.at) { const [lx, lz] = inSpot(MOVE.at, x, z); if (rectGap(FOOT, lx, lz) <= m) return true; }     // (and where one's being moved to)
-  return false;
+  return underDecor(x, z, m);                               // (and the decorations: no grass, flowers or pebbles through them)
 }
 // what a coop can't stand on: the buildings and props (a little round them), the way out of the farmhouse's front door,
 // the den, the kennel
@@ -3602,7 +3614,7 @@ function blockers() {
     const box = p.model === 'wheat_field' ? new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 1, 1.2)) : parts[p.model] ? new THREE.Box3().setFromObject(parts[p.model]) : null;
     if (!box) continue;
     const pad = 0.15 / (p.s || 1);
-    out.push({ inv: place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1).invert(), x0: box.min.x - pad, x1: box.max.x + pad, z0: box.min.z - pad, z1: box.max.z + pad });
+    out.push({ p, inv: place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1).invert(), x0: box.min.x - pad, x1: box.max.x + pad, z0: box.min.z - pad, z1: box.max.z + pad });
   }
   const fh = V.props.find(p => p.model === 'farmhouse');
   if (fh) { const h = fh.deg * DEG; out.push({ c: [fh.pos[0] + Math.sin(h) * 2.4, fh.pos[2] + Math.cos(h) * 2.4], r: 1.2 }); }
@@ -3694,7 +3706,7 @@ function coopCard(p) {
   gameUI.coopCard(p.gc, () => startMove(p));
 }
 function startMove(p) {
-  if (!p || !p.gc || MOVE.plot) return;
+  if (!p || !p.gc || MOVE.plot || DMOVE.id) return;
   gameUI.close();
   if (!p.draft && moveBusy(p)) { hint(game.t('move_busy')); return; }
   holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
@@ -3771,6 +3783,7 @@ function moveTap(cx, cy) {
 }
 // each frame: carried to the edge of the screen, the view goes along
 function tickMove(dt) {
+  tickDecMove(dt);
   if (MOVE.plot && MOVE.grassAt && !MOVE.drag && performance.now() > MOVE.grassAt) { MOVE.grassAt = 0; MOVE.grass = true; buildGrass(); wake(200); }
   const D = MOVE.drag; if (!D) return;
   const p = pointers.get(D.id); if (!p) return;
@@ -3938,7 +3951,7 @@ function farmhouseAt(r) {
   return new THREE.Ray().copy(r).applyMatrix4(HOUSE_HIT.inv).intersectsBox(HOUSE_HIT.box);
 }
 function startPlace(breed) {
-  if (MOVE.plot || inside.open || !game.waitingCoops().includes(breed)) return false;
+  if (MOVE.plot || DMOVE.id || inside.open || !game.waitingCoops().includes(breed)) return false;
   const at = placeSpot(breed); if (!at) { hint(game.t('no_room')); return false; }
   const d = game.draftCoop(breed, at); if (!d) return false;
   const p = makePlot(Math.max(-1, ...plots.map(q => q.index)) + 1, [at.x, 0, at.z], at.deg, d.coop, rng(97 + plots.length), 'coop', d.birds);
@@ -4007,6 +4020,337 @@ function tickClearing(dt) {
     if (C.t >= 1.1) { C.g.removeFromParent(); for (const b of C.bits) b.sp.removeFromParent(); C.mat.dispose(); CLEARING.splice(i, 1); }
   }
   if (CLEARING.length) wake(100);
+}
+// ---- decorations on the farm (release 1 step 9d; Audrey, 25 Oct: "Decorations and outfits (Recommended)"). The shop
+// (tap your coins at the top: "Decorate your farm", game.js DECOR) has the 2D game's eight, each from its level. Bought, it
+// appears at the nearest good spot to the view and is moved like a coop: dragged about, or a tap where it should go, then
+// "Put it here" (paid for then: Cancel costs nothing). Anywhere on your own land: never on a lane or in the water, over a
+// building, a coop or another decoration, and never shutting off the way to a coop's gate; trees, bushes and rocks in the
+// way are cleared (in their puff, for good, like a coop's). The duck house goes straight onto the pond, where the village
+// has it (the ducks sleep in it from that night). Tap one on the farm: its card, Move. Each stands as its own copy (not in
+// a batch: they come and go and move), facing the player like the village's; everyone walks round them; the life round
+// them is the village's (bees, butterflies, birds at the bath, the cockerel's glints, the music, the windmill's sails)
+const DEC = { items: {}, lifeRoot: null };                   // items[id]: { group, prop (its V.props entry), d (its decorList entry) }
+const DMOVE = { id: null, item: null, buy: false, from: null, at: null, spot: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false };
+// how far (lx, lz: in its own frame) a point is outside its footprint (round ones: their circle; the bandstand's steps too)
+function decGap(id, lx, lz) {
+  const f = DECOR_INFO.foot[id], R = DECOR_ROUND[id];
+  if (R && !(id === 'bandstand' && Math.abs(lx) < 0.5 && lz > 0)) return Math.max(0, Math.hypot(lx, lz) - R);
+  return Math.hypot(Math.max(f[0] - lx, 0, lx - f[2]), Math.max(f[1] - lz, 0, lz - f[3]));
+}
+const decSp = (x, z) => ({ x, z, deg: 45 });
+// whether (x, z) is under one of the farm's decorations (where the save has them, and where one's being moved to)
+function underDecor(x, z, m = 0) {
+  if (!GAME_MODE || !game.data || !DECOR_INFO) return false;
+  for (const o of game.data.decor || []) { if (o.x === undefined || o.x === null) continue; const [lx, lz] = inSpot(decSp(o.x, o.z), x, z); if (decGap(o.id, lx, lz) <= m) return true; }
+  if (DMOVE.id && DMOVE.at) { const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z), x, z); if (decGap(DMOVE.id, lx, lz) <= m) return true; }
+  return false;
+}
+// a decoration at (x, z): whether it can stand there and if not why, and the trees, bushes and rocks to clear
+function decorSpot(id, x, z) {
+  const f = DECOR_INFO.foot[id], sp = decSp(x, z), a = 45 * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
+  const self = DEC.items[id] && DEC.items[id].prop;
+  let land = false, lane = false, room = false;
+  for (let lz = f[1]; lz < f[3] + 0.124; lz += 0.25) for (let lx = f[0]; lx < f[2] + 0.124; lx += 0.25) {
+    const px = Math.min(lx, f[2]), pz = Math.min(lz, f[3]);
+    if (decGap(id, px, pz) > 0.01) continue;
+    const wx = x + px * c + pz * s, wz = z - px * s + pz * c, fi = fieldAt(wx, wz);
+    if (fi < 0) {
+      if (nearLines(V.paths, wx, wz, V.pathHalf + 0.02)) lane = true;
+      else if (nearLines(V.paths, wx, wz, V.pathHalf + 0.4)) { /* its verge */ }
+      else if (nearLines(V.streams, wx, wz, V.streamHalf + 0.5) || inPondAt(wx, wz, 0.5)) lane = true; else land = true;
+    } else if (!owned(fi)) land = true;
+    if (!room) for (const b of B) {
+      if (b.p && b.p === self) continue;
+      if (b.r) { if (Math.hypot(wx - b.c[0], wz - b.c[1]) < b.r) { room = true; break; } continue; }
+      v.set(wx, 0, wz).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) { room = true; break; }
+    }
+    if (!room) for (const o of game.data.coops) { const [ox, oz] = inSpot(o, wx, wz); if (rectGap(FOOT, ox, oz) < 0.3 || rectGap(APRON, ox, oz) < 0.3) { room = true; break; } }
+  }
+  const clear = [], hits = (o, r) => { const [lx, lz] = inSpot(sp, o.pos[0], o.pos[2]); return decGap(id, lx, lz) < r; };
+  for (const t of V.trees) if (hits(t, 0.75 * (t.r || 1.3))) clear.push(t);
+  for (const b of V.bushes) if (hits(b, 0.46 * (b.s || 1) + 0.05)) clear.push(b);
+  for (const k of V.rocks) if (hits(k, 0.2 * (k.s || 1) + 0.05)) clear.push(k);
+  const why = lane ? 'dec_bad_lane' : land ? 'dec_bad_land' : room ? 'dec_bad_room' : null;
+  return { ok: !why, why, clear };
+}
+// the nearest good spot to (cx, cz), best with nothing to clear, and (way: when it's offered to be put down) the way to
+// every coop's gate still open with it there
+function decorFreeNear(id, cx, cz, far = 40, way = false) {
+  cx = Math.round(cx * 4) / 4; cz = Math.round(cz * 4) / 4;
+  const no = new Set();
+  for (let tries = 0; tries < 6; tries++) {
+    let best = null, until = far;
+    for (let r = 0; r < Math.min(far, until) && !(best && !best.n); r += 1) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n; k++) {
+      const a = k / n * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
+      if (!owned(fieldAt(x, z)) || no.has(x + ',' + z)) continue;
+      const S = decorSpot(id, x, z);
+      if (S.ok && (!best || S.clear.length < best.n)) { if (!best) until = r + 3; best = { x, z, n: S.clear.length }; if (!best.n) break; }      // (a few steps further for one with nothing to clear)
+    }
+    if (!best) return null;
+    if (!way || decorWayOk(id, best.x, best.z)) return { x: best.x, z: best.z };
+    for (let dx = -1; dx <= 1; dx += 0.25) for (let dz = -1; dz <= 1; dz += 0.25) no.add((best.x + dx) + ',' + (best.z + dz));      // (and not just beside it)
+  }
+  return null;
+}
+// whether with it at (x, z) the farmer can still get to every coop's gate (the walking grid made with it there, then as it was)
+function decorWayOk(id, x, z) {
+  const it = DEC.items[id], tmp = it ? null : { model: id, pos: [x, 0, z], deg: 45, s: 1, decor: true, own: true }, old = it && it.prop.pos;
+  if (tmp) V.props.push(tmp); else it.prop.pos = [x, 0, z];
+  rebuildNav();
+  const ok = !gamePlots().some(p => !penSpec(p));
+  if (tmp) V.props.splice(V.props.indexOf(tmp), 1); else it.prop.pos = old;
+  rebuildNav();
+  return ok;
+}
+// the duck house on the pond: along its long axis, at the end away from the dock (as in the village)
+function duckHouseSpot() {
+  const P = V.pond, c = P.center, dock = V.props.find(p => p.model === 'dock');
+  const e1 = [c[0] + P.axisU[0] * 0.42, c[2] + P.axisU[2] * 0.42], e2 = [c[0] - P.axisU[0] * 0.42, c[2] - P.axisU[2] * 0.42];
+  return !dock || Math.hypot(e1[0] - dock.pos[0], e1[1] - dock.pos[2]) > Math.hypot(e2[0] - dock.pos[0], e2[1] - dock.pos[2]) ? e1 : e2;
+}
+// the farm opening: every decoration where it can stand (a spot that's no good any more, or none: the nearest good one),
+// what's under them cleared
+function settleDecor() {
+  if (!game.data.decor) game.data.decor = [];
+  if (!DECOR_INFO) return;
+  let changed = false;
+  const gone = new Set(game.data.cleared);
+  for (const o of game.data.decor) {
+    if (DECOR[o.id].pond || !DECOR_INFO.foot[o.id] || !parts[o.id]) continue;
+    if (o.x === null || o.z === null || !decorSpot(o.id, o.x, o.z).ok) {
+      const hc = game.data.coops[0] || HOME_COOP, f = o.x !== null && o.z !== null ? decorFreeNear(o.id, o.x, o.z) : decorFreeNear(o.id, hc.x + 3, hc.z + 3);
+      if (f) { o.x = f.x; o.z = f.z; } else { o.x = o.z = null; }
+      changed = true;
+    }
+    if (o.x === null) continue;
+    for (const t of decorSpot(o.id, o.x, o.z).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); changed = true; }
+    V.trees = V.trees.filter(t => !gone.has(t.id)); V.bushes = V.bushes.filter(t => !gone.has(t.id)); V.rocks = V.rocks.filter(t => !gone.has(t.id));
+    addDecor(o.id, o.x, o.z);                                 // (in V.props: the next one keeps clear of it)
+  }
+  if (changed) game.save();
+}
+// its own copy of the model (and the windmill's sails), not yet anywhere
+function decorModel(id) {
+  const g = new THREE.Group(); g.matrixAutoUpdate = false;
+  for (const m of meshesOf(parts[id])) {
+    if (m.material && m.material.name === 'glass') { m.material.transparent = true; m.material.opacity = 0.34; m.material.depthWrite = false; }
+    nightGrade(m.material);
+    const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; g.add(k);
+  }
+  if (id === 'windmill' && parts.sails && DECOR_INFO.hub) {
+    const w = new THREE.Group(), s = part('sails'); w.add(s); w.position.fromArray(DECOR_INFO.hub);
+    s.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; nightGrade(o.material); } });
+    g.add(w); g.userData.sails = w;
+  }
+  return g;
+}
+// one on the farm: drawn, in everyone's way (V.props), and tappable (decorList); its life is made again with the rest's
+function addDecor(id, x, z) {
+  let it = DEC.items[id];
+  if (!it) {
+    it = DEC.items[id] = { group: decorModel(id), prop: { model: id, pos: [x, 0, z], deg: 45, s: 1, decor: true, own: true }, d: { model: id, box: new THREE.Box3().setFromObject(parts[id]) } };
+    scene.add(it.group); V.props.push(it.prop);
+  }
+  setDecorAt(it, x, z);
+  return it;
+}
+function setDecorAt(it, x, z) {
+  const m = place(x, 0, z, 45, 1);
+  it.group.matrix.copy(m); it.group.matrixWorldNeedsUpdate = true;
+  it.prop.pos = [x, 0, z]; Object.assign(it.d, { pos: [x, z], deg: 45, m, wb: it.d.box.clone().applyMatrix4(m).expandByScalar(0.6) });
+  BLOCKERS = null; decorSpots = null;
+  renderer.shadowMap.needsUpdate = true; wake(500);
+}
+function dropDecor(id) {
+  const it = DEC.items[id]; if (!it) return;
+  it.group.removeFromParent();
+  const i = V.props.indexOf(it.prop); if (i >= 0) V.props.splice(i, 1);
+  const k = decorList.indexOf(it.d); if (k >= 0) decorList.splice(k, 1);
+  delete DEC.items[id]; BLOCKERS = null; decorSpots = null;
+}
+// what's drawn as the save has it (the farm opening, and after each change): the duck house on the pond; the windmill's
+// sails turning; the life round them all
+function syncDecor() {
+  if (!GAME_MODE || !game.data || !DECOR_INFO) return;
+  for (const o of game.data.decor) {
+    if (!parts[o.id]) continue;
+    const at = DECOR[o.id].pond ? duckHouseSpot() : o.x === null ? null : [o.x, o.z];
+    if (!at) continue;
+    const it = addDecor(o.id, at[0], at[1]);
+    if (!decorList.includes(it.d)) decorList.push(it.d);
+  }
+  const w = DEC.items.windmill; sails = w ? w.group.userData.sails || null : null;
+  decorLifeAgain();
+}
+// the bees, butterflies, bath birds, glints and music: made again for the decorations there are (skip: one being moved)
+function decorLifeAgain(skip = null) {
+  if (DEC.lifeRoot) {
+    DEC.lifeRoot.removeFromParent();
+    DEC.lifeRoot.traverse(o => { if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { if (m.map) m.map.dispose(); m.dispose(); } });
+    DEC.lifeRoot = null; decorLife = null;
+  }
+  const list = decorList.filter(d => d.model !== skip);
+  if (!list.length || params.has('nolife')) return;
+  DEC.lifeRoot = new THREE.Group(); scene.add(DEC.lifeRoot);
+  decorLife = new DecorLife(DEC.lifeRoot, list, { grade: nightGrade, hour: () => DAY.hour, toCam: VIEW_DIR }, rng(91));
+}
+// the duck house bought: the ducks' house from tonight, its raft for whoever swims to keep clear of
+function duckHouseOn() {
+  const dh = DEC.items.duckhouse; if (!dh || !duckFlock || duckFlock.house) return;
+  const hv = new THREE.Vector3(), hinv = dh.d.m.clone().invert();
+  duckFlock.setHouse({ local: (x, z) => { hv.set(x, 0, z).applyMatrix4(hinv); return [hv.x, hv.z]; }, world: (lx, lz) => { hv.set(lx, 0, lz).applyMatrix4(dh.d.m); return [hv.x, hv.z]; } });
+  if (GEESE_OPTS && GEESE_OPTS.avoid) GEESE_OPTS.avoid.push(...decorAvoid());
+  duckFlock.places();
+}
+// ---- the shop, and a decoration's card
+function shopSheet() {
+  if (DMOVE.id || MOVE.plot) return;
+  holdBird(null); henOff();
+  gameUI.shopSheet({ buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); } });
+}
+function decorCard(id) {
+  holdBird(null); henOff();
+  gameUI.decorCard(id, () => startDecor(id));
+}
+function buyDecor(id) {
+  if (!game.decorNext(id) || game.data.coins < DECOR[id].price) return false;
+  if (!DECOR[id].pond) { gameUI.close(); return startDecor(id); }
+  const r = game.buyDecor(id, null); if (!r) return false;           // (the duck house: straight onto the pond)
+  gameUI.close(); syncDecor(); duckHouseOn(); BLOCKERS = null; rebuildNav();
+  gameUI.refresh(); gameUI.bumpCoins();
+  const [x, z] = duckHouseSpot(); focusOn(x, z, Math.min(view.max, Math.max(view.size, 2.6)));      // (the player's tap: the view to it)
+  hint(game.t('dec_placed', { name: game.decorName(id), xp: r.xp })); hintNext(game.t('dec_pond_hint'));
+  return true;
+}
+// ---- placing one (bought, not yet paid for) or moving one: it, and its outline on the ground (green where it can go, red not)
+let DFOOT_TEX = {};
+function decorFootMark(id) {
+  const f = DECOR_INFO.foot[id], M = 0.2, X0 = f[0] - M, X1 = f[2] + M, Z0 = f[1] - M, Z1 = f[3] + M, w = X1 - X0, h = Z1 - Z0;
+  if (!DFOOT_TEX[id]) {
+    const W = 256, H = Math.round(256 * h / w), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const c = cv.getContext('2d'), px = x => (x - X0) / w * W, pz = z => (z - Z0) / h * H, R = DECOR_ROUND[id];
+    c.fillStyle = 'rgba(255,255,255,0.3)'; c.strokeStyle = '#fff'; c.lineWidth = 9; c.lineJoin = 'round';
+    c.beginPath();
+    if (R) c.ellipse(px(0), pz(0), R / w * W, R / h * H, 0, 0, Math.PI * 2);
+    else c.roundRect(px(f[0]), pz(f[1]), px(f[2]) - px(f[0]), pz(f[3]) - pz(f[1]), 22);
+    c.fill(); c.stroke();
+    DFOOT_TEX[id] = new THREE.CanvasTexture(cv); DFOOT_TEX[id].colorSpace = THREE.SRGBColorSpace;
+  }
+  const mat = new THREE.MeshBasicMaterial({ map: DFOOT_TEX[id], color: FOOT_OK, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  mat.userData.noGrade = true;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h).rotateX(-Math.PI / 2), mat);
+  m.position.set((X0 + X1) / 2, 0.025, (Z0 + Z1) / 2); m.renderOrder = 3; m.matrixAutoUpdate = false; m.updateMatrix();
+  return m;
+}
+function startDecor(id) {
+  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR[id] || DECOR[id].pond || !DECOR_INFO || !parts[id]) return false;
+  const own = game.decorOwned(id);
+  if (!own && (!game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
+  gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
+  let at = own && own.x !== null ? { x: own.x, z: own.z } : null;
+  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true); if (!at) { hint(game.t('dec_no_room')); return false; } }
+  DMOVE.id = id; DMOVE.buy = !own; DMOVE.from = own && own.x !== null ? { ...at } : null; DMOVE.at = { ...at }; DMOVE.moved = false; DMOVE.nav = false;
+  DMOVE.item = addDecor(id, at.x, at.z);
+  decorLifeAgain(id);                                       // (its bees and birds wait till it's down)
+  DMOVE.foot = decorFootMark(id); DMOVE.item.group.add(DMOVE.foot);
+  gameUI.moveBar(true, { turn: null, cancel: () => endDecor(false), place: () => putDecor() });
+  decMoveTo(at.x, at.z, true);
+  const tall = DMOVE.item.d.box.max.y, size = Math.max(view.size, sideways() ? 3.4 : 4.4, Math.min(view.max, tall * 0.62)), v = viewAbove(at.x, at.z, size);
+  focusOn(v[0], v[1], size);                                // (the player's tap: room round it in view, above the bar)
+  return true;
+}
+function decMoveTo(x, z, force = false) {
+  if (!DMOVE.id) return;
+  x = Math.round(x * 4) / 4; z = Math.round(z * 4) / 4;
+  if (!force && x === DMOVE.at.x && z === DMOVE.at.z) return;
+  if (x !== DMOVE.at.x || z !== DMOVE.at.z) DMOVE.moved = true;
+  DMOVE.at = { x, z };
+  setDecorAt(DMOVE.item, x, z);
+  const S = DMOVE.spot = decorSpot(DMOVE.id, x, z);
+  DMOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
+  gameUI.moveStatus(game.t(!DMOVE.moved ? 'dec_place_hint' : S.ok ? (S.clear.length ? 'dec_ok_clear' : 'dec_ok') : S.why), S.ok);
+  DMOVE.grassAt = performance.now() + 220;
+  wake(600);
+}
+// a finger down on it (its model, or its outline on the ground): it's carried along; a tap elsewhere: it goes there
+function decorHit(cx, cy) {
+  const it = DMOVE.item; if (!it) return false;
+  ndc.set(cx / canvas.clientWidth * 2 - 1, -(cy / canvas.clientHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const loc = new THREE.Ray().copy(ray.ray).applyMatrix4(it.d.m.clone().invert());
+  if (loc.intersectsBox(it.d.box)) return true;
+  const g = groundAt(cx, cy); if (!g) return false;
+  const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z), g.x, g.z);
+  return decGap(DMOVE.id, lx, lz) < 0.3;
+}
+function decGrab(e) {
+  if (!decorHit(e.clientX, e.clientY)) return false;
+  const g = groundAt(e.clientX, e.clientY); if (!g) return false;
+  DMOVE.drag = { id: e.pointerId, dx: g.x - DMOVE.at.x, dz: g.z - DMOVE.at.z }; return true;
+}
+function decDrag(cx, cy) { const g = groundAt(cx, cy); if (g) decMoveTo(g.x - DMOVE.drag.dx, g.z - DMOVE.drag.dz); }
+function decTap(cx, cy) {
+  if (decorHit(cx, cy)) return;
+  const g = groundAt(cx, cy); if (g) decMoveTo(g.x, g.z);
+}
+function tickDecMove(dt) {
+  if (DMOVE.id && DMOVE.grassAt && !DMOVE.drag && performance.now() > DMOVE.grassAt) { DMOVE.grassAt = 0; DMOVE.grass = true; buildGrass(); wake(200); }
+  const D = DMOVE.drag; if (!D) return;
+  const p = pointers.get(D.id); if (!p) return;
+  const W = canvas.clientWidth, H = canvas.clientHeight, bar = gameUI.moveTop(), E = 44;
+  const ex = p.x < E ? -1 : p.x > W - E ? 1 : 0, ey = p.y < 70 ? -1 : p.y > Math.min(H, bar) - E ? 1 : 0;
+  if (!ex && !ey) return;
+  pan(-ex * 320 * dt, -ey * 320 * dt); decDrag(p.x, p.y); wake(300);
+}
+function putDecor() {
+  const id = DMOVE.id; if (!id || !DMOVE.spot || !DMOVE.spot.ok) return false;
+  const at = DMOVE.at, from = DMOVE.from;
+  if (from && at.x === from.x && at.z === from.z) { endDecor(false); return true; }
+  // the way to every coop's gate still open with it there, and what's in its way gone
+  const clear = DMOVE.spot.clear, ids = new Set(clear.map(o => o.id)), keep = [V.trees, V.bushes, V.rocks];
+  V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
+  rebuildNav(); DMOVE.nav = true;
+  if (gamePlots().some(p => !penSpec(p))) {
+    [V.trees, V.bushes, V.rocks] = keep;
+    DMOVE.spot = { ok: false, why: 'dec_bad_way', clear: [] }; DMOVE.foot.material.color.set(FOOT_NO); gameUI.moveStatus(game.t('dec_bad_way'), false);
+    return false;
+  }
+  let said;
+  if (DMOVE.buy) {
+    const r = game.buyDecor(id, at, [...ids]);
+    if (!r) { [V.trees, V.bushes, V.rocks] = keep; endDecor(false); return false; }
+    said = game.t('dec_placed', { name: game.decorName(id), xp: r.xp });
+    gameUI.refresh(); gameUI.bumpCoins();
+  } else { game.moveDecor(id, at, [...ids]); said = game.t('dec_moved', { name: game.decorName(id) }); }
+  for (const o of clear) clearAway(o);
+  endDecor(true);
+  hint(said);
+  return true;
+}
+function endDecor(placed) {
+  const id = DMOVE.id; if (!id) return;
+  const it = DMOVE.item;
+  DMOVE.foot.removeFromParent(); DMOVE.foot.geometry.dispose(); DMOVE.foot.material.dispose();
+  if (!placed && (DMOVE.buy || !DMOVE.from)) dropDecor(id);      // (not bought after all, or never placed: gone)
+  else if (!placed) setDecorAt(it, DMOVE.from.x, DMOVE.from.z);
+  const nav = DMOVE.nav, grass = DMOVE.grass;
+  Object.assign(DMOVE, { id: null, item: null, buy: false, from: null, at: null, spot: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false });
+  BLOCKERS = null; decorSpots = null;
+  if (placed) { if (!decorList.includes(it.d)) decorList.push(it.d); buildNature(); buildGrass(); hidePebbles(); clearDecorWalkers(it); }
+  else { if (nav) rebuildNav(); if (grass) buildGrass(); }
+  syncDecor();
+  gameUI.moveBar(false);
+  renderer.shadowMap.needsUpdate = true; wake(1000);
+}
+// one put down where the farmer was walking: he steps out of its way, and thinks again about where he was off to
+function clearDecorWalkers(it) {
+  if (!farmLife || farmLife.home) return;
+  const L = farmLife, at = L.pos, [lx, lz] = inSpot(decSp(it.d.pos[0], it.d.pos[1]), at.x, at.z);
+  if (decGap(it.d.model, lx, lz) < 0.4 || !navGrid().freeAt(at.x, at.z)) {
+    const f = navGrid().nearestIn(farmReach(), at.x, at.z, 5);
+    if (f) { at.x = f[0]; at.z = f[1]; }
+  }
+  if (L.task && !/^(out|home|pen)$/.test(L.task.name)) L.task = null;
 }
 let saleBub = null;
 function saleBubble() {
@@ -4537,6 +4881,12 @@ window.__farm = {
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
+  // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
+  deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
+    spot: (id, x, z) => { const S = decorSpot(id, x, z); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true),
+    state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
+    items: () => Object.entries(DEC.items).map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
+    blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },

@@ -99,6 +99,12 @@ const TEXT = {
     results_title: 'Show results', res_place: '{name} came {place} in the {show}!', res_none: '{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.',
     res_champ: '{name} is a champion now!', res_in: 'The show results are in!',
     rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
+    shop_title: 'Decorate your farm', shop_coins: 'Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:',
+    dec_flowers: 'Cottage flower bed', dec_birdbath: 'Bird bath', dec_beehives: 'Beehives', dec_duckhouse: 'Duck house', dec_greenhouse: 'Greenhouse', dec_windmill: 'Windmill', dec_bandstand: 'Bandstand', dec_statue: 'Golden cockerel',
+    decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.',
+    dec_buy: 'Buy and place · {c}', dec_buy_pond: 'Buy · {c}', dec_level: 'Comes at level {n}', dec_broke: 'Not enough coins yet', dec_owned: 'On your farm', dec_move: 'Move', dec_xp: '+{xp} XP',
+    dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_way: 'It would block the way to a coop.',
+    dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
     job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
@@ -207,6 +213,12 @@ const TEXT = {
     results_title: 'Résultats des concours', res_place: '{name} prend la {place} place au {show} !', res_none: '{name} n’est pas classé au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est champion maintenant !', res_in: 'Les résultats des concours sont arrivés !',
     rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
+    shop_title: 'Décorez votre ferme', shop_coins: 'Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :',
+    dec_flowers: 'Massif de fleurs', dec_birdbath: 'Bain d’oiseaux', dec_beehives: 'Ruches', dec_duckhouse: 'Maison des canards', dec_greenhouse: 'Serre', dec_windmill: 'Moulin à vent', dec_bandstand: 'Kiosque à musique', dec_statue: 'Coq d’or',
+    decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.',
+    dec_buy: 'Acheter et placer · {c}', dec_buy_pond: 'Acheter · {c}', dec_level: 'Arrive au niveau {n}', dec_broke: 'Pas encore assez de pièces', dec_owned: 'Dans votre ferme', dec_move: 'Déplacer', dec_xp: '+{xp} XP',
+    dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
+    dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
@@ -377,6 +389,15 @@ function jobsFor(day, lv) {
   return [first, ...rest].map(k => ({ k, n: JOBS[k].n(lv), got: 0, paid: false }));
 }
 
+// ---- decorations (release 1 step 9d; the 2D game's eight, Audrey: "Decorations and outfits (Recommended)"): bought with
+// coins from the level each comes at, put anywhere on your land (the duck house on the pond), moved later. They only change
+// how the farm looks. XP a fiftieth of the price (the 2D game's half). Starting values (the balance is step 11)
+export const DECOR = {
+  flowers: { level: 3, price: 400 }, birdbath: { level: 4, price: 800 }, beehives: { level: 6, price: 1800 }, duckhouse: { level: 8, price: 3000, pond: true },
+  greenhouse: { level: 10, price: 6000 }, windmill: { level: 13, price: 12000 }, bandstand: { level: 16, price: 20000 }, statue: { level: 20, price: 40000 },
+};
+export const decorXp = id => Math.round(DECOR[id].price / 50);
+
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
   if (typeof s !== 'string') return '';
@@ -514,6 +535,14 @@ export function checkFarm(d, now = Date.now()) {
     const T = SHOWS[r.id[0]], of = T.rivals + 1, place = int(r.place, 1, of, of), t = int(r.t, 0, now, -1);
     if (t < 0 || Math.abs(t - showJudged(r.id)) > TZ_SLACK) continue;
     out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? T.prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0), t, seen: r.seen === true });
+  }
+  // the decorations bought: each known one once, from its level, where it stands (on the quarter-metre; the duck house on the
+  // pond, no spot); the farm (main.js) then makes sure each stands where one can
+  out.decor = [];
+  for (const x of Array.isArray(d.decor) ? d.decor.slice(0, 8) : []) {
+    if (!x || !DECOR[x.id] || out.decor.some(o => o.id === x.id) || L < DECOR[x.id].level) continue;
+    const X = spotNum(x.x), Z = spotNum(x.z);
+    out.decor.push(DECOR[x.id].pond ? { id: x.id } : { id: x.id, x: X === null ? null : X, z: Z === null ? null : Z });
   }
   // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
   // done at most as far as its target and paid only once done
@@ -694,6 +723,26 @@ export class Game {
     return this.openShows(now).some(s => !s.locked && !this.shows().in.some(e => e.id === s.id) && this.data.birds.some(b => this.canEnter(b, s) === 'ok'));
   }
   lookedAtShows(now = Date.now()) { const k = showIdAt('v', now).slice(1); if (this.shows().seen !== k) { this.shows().seen = k; this.save(); } }
+  // ---- decorations: which can be bought (their level come, not yet on the farm), buying one where it goes, moving it
+  decorOwned(id) { return (this.data.decor || []).find(x => x.id === id) || null; }
+  decorNext(id) { return !this.decorOwned(id) && this.level >= DECOR[id].level; }
+  buyDecor(id, at, clear = []) {
+    const D = DECOR[id]; if (!D || !this.decorNext(id) || this.data.coins < D.price) return null;
+    const X = at ? spotNum(at.x) : null, Z = at ? spotNum(at.z) : null;
+    if (!D.pond && (X === null || Z === null)) return null;
+    this.data.coins -= D.price; const xp = decorXp(id); this.data.xp += xp;
+    (this.data.decor || (this.data.decor = [])).push(D.pond ? { id } : { id, x: X, z: Z });
+    this.cleared(clear); this.save();
+    return { price: D.price, xp };
+  }
+  moveDecor(id, at, clear = []) {
+    const o = this.decorOwned(id), X = spotNum(at.x), Z = spotNum(at.z);
+    if (!o || DECOR[id].pond || X === null || Z === null) return false;
+    o.x = X; o.z = Z; this.cleared(clear); this.save(); return true;
+  }
+  // the trees, bushes and rocks cleared where something was put (the village's own ids, each once)
+  cleared(list) { for (const k of list) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k); }
+  decorName(id) { return this.t('dec_' + id); }
   // ---- daily jobs: today's (new at midnight), progress as things are done (job(k, n)), the reward collected with a tap
   jobs(now = Date.now()) {
     const day = dayKey(now), J = this.data.jobs;
@@ -757,7 +806,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], decor: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));

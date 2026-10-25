@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -61,7 +61,7 @@ export class GameUI {
     document.body.append(this.dim, this.sheet);
     this.x.addEventListener('click', () => this.close());
     this.lvl.addEventListener('click', () => this.levelSheet());
-    this.coins.addEventListener('click', () => this.coinSheet());
+    this.coins.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
     this.gear.addEventListener('click', () => this.settings());
     this.coopsBtn.addEventListener('click', () => { if (this.o.coops) this.o.coops(); });
     this.showsBtn.addEventListener('click', () => { if (this.o.shows) this.o.shows(); });
@@ -346,6 +346,8 @@ export class GameUI {
     this.bird = null; this.levelShown = L;
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    const decs = Object.keys(DECOR).filter(id => DECOR[id].level === L);      // (a decoration to buy now: the shop, the coins at the top)
+    if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
@@ -410,6 +412,7 @@ export class GameUI {
       this.mplace.addEventListener('click', () => { if (this.mh && !this.mplace.disabled) this.mh.place(); });
     }
     this.mh = on ? h : null; this.mbar.hidden = !on; document.body.classList.toggle('gmoving', !!on);
+    if (on) this.mturn.hidden = !h.turn;                 // (a decoration always faces you: no Turn)
     if (on) { this.mturn.textContent = '↻ ' + this.t('move_turn'); this.mcancel.textContent = this.t('move_cancel'); this.mplace.textContent = '✓ ' + this.t('move_place'); }
   }
   moveStatus(text, ok) { if (!this.mbar) return; this.mtext.textContent = text; this.mtext.classList.toggle('bad', !ok); this.mplace.disabled = !ok; }
@@ -557,6 +560,45 @@ export class GameUI {
     body.append(ok);
   }
 
+  // ---- the shop (the coins at the top: "Decorate your farm", the 2D game's eight decorations): each with its picture, what
+  // it brings, and Buy and place (h.buy: placed on the farm, paid for once put down), or its level to come, or not enough
+  // coins yet; one on the farm: Move (h.move). The duck house goes straight onto the pond
+  shopSheet(h) {
+    const g = this.g, b = this.open('shop', this.t('shop_title'));
+    this.bird = null; b.scrollTop = 0;
+    const fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
+    const top = el('div', 'gshop-top'), pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins)));
+    top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
+    for (const id of Object.keys(DECOR)) {
+      const D = DECOR[id], own = g.decorOwned(id), lock = g.level < D.level, broke = !own && !lock && g.data.coins < D.price;
+      const card = el('div', 'gcard gpage gdec' + (lock ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.decor = id;
+      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const info = el('div', 'gpage-i');
+      info.append(el('span', 'gcard-t', g.decorName(id)), el('p', 'gnote gdec-l', this.t('decl_' + id)));
+      if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('dec_owned')));
+      else if (lock) info.append(el('p', 'gpage-s', this.t('dec_level', { n: D.level })));
+      else {
+        const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(D.price) + ' · ' + this.t('dec_xp', { xp: decorXp(id) }))); info.append(pr);
+      }
+      if (own && !D.pond) { const mv = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('dec_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move(id)); info.append(mv); }
+      if (!own && !lock) {
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
+        go.addEventListener('click', () => { if (!go.disabled) h.buy(id); });
+        info.append(go);
+      }
+      card.append(pic, info); b.append(card);
+    }
+  }
+  // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)
+  decorCard(id, onMove) {
+    const g = this.g, body = this.open('decor', g.decorName(id));
+    this.bird = null;
+    const card = el('div', 'gcard gpage gdec gdec-own'), pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+    const info = el('div', 'gpage-i'); info.append(el('p', 'gtext', this.t('decl_' + id)));
+    if (!DECOR[id].pond) info.append(el('p', 'gnote', this.t('dec_card_body')));
+    card.append(pic, info); body.append(card);
+    if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
+  }
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));
     b.append(el('p', 'gtext', this.t('coins_body')));
