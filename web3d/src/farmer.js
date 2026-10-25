@@ -25,6 +25,68 @@ export function addLook(gltf, json) {
   for (const k of ['joints', 'info', 'plaid', 'colours', 'stats']) INFO[k] = Object.assign(INFO[k] || {}, json[k]);
 }
 export const hasLook = (look) => !!MODELS[look];
+
+// ------------------------------------------------------------------ the outfits the player can buy (the 2D game's six: Classic is the
+// farmer as made, then these five), for Arthur and Rosie (the judge keeps his tweeds). outfit_<id>.glb + outfit_<id>.json
+// (export_farmer.py ... outfits) hold only what an outfit changes: its hat, and the show rosette or the rodeo neckerchief,
+// on the farmers' own bones; the shirt's colours (a check, plain or a knit); Rosie's plait ribbon's colour where it
+// matches the hat band. Loaded only when worn: await loadOutfit(id, loadGLB, loadJSON), then farmer.wear(id) (a Farmer or
+// a FarmerRig), farmer.wear(null) for Classic again.
+export const OUTFIT_IDS = ['market', 'garden', 'winter', 'rodeo', 'show'];
+const OUTFITS = {}, LOADING = {}, DRESSED = {};
+// how each hat sits in 3D: pushed back on the head (degrees, from how it's made) and moved up and back (m), so the face
+// shows from the game's view above, as the straw hat (Classic)
+// (the flat cap and the top hat less than the rest: the cap's back would dip into Rosie's hair, the top hat stands up)
+const HAT_SIT = {
+  classic: { tilt: -20, up: 0.01, back: -0.02 }, garden: { tilt: -20, up: 0.01, back: -0.02 }, rodeo: { tilt: -20, up: 0.01, back: -0.02 },
+  market: { tilt: -11, up: 0.012, back: -0.012 }, winter: { tilt: -18, up: 0.01, back: -0.018 }, show: { tilt: -12, up: 0.008, back: -0.015 },
+};
+export function loadOutfit(id, loadGLB, loadJSON) {
+  if (!OUTFIT_IDS.includes(id)) return Promise.reject(new Error('no outfit ' + id));
+  if (!LOADING[id]) {
+    LOADING[id] = Promise.all([loadGLB('outfit_' + id + '.glb'), loadJSON('outfit_' + id + '.json')]).then(([g, json]) => {
+      const geo = {};
+      for (const child of g.scene.children) { let mesh = null; child.traverse(c => { if (c.isMesh && !mesh) mesh = c; }); if (mesh) geo[child.name] = mesh.geometry; }
+      OUTFITS[id] = { json, geo: { m: json.meshes.m.map(n => geo[n]), f: json.meshes.f.map(n => geo[n]) } };          // (each look's parts: a list)
+      return OUTFITS[id];
+    });
+    LOADING[id].catch(() => { delete LOADING[id]; });          // (a failed load can be tried again)
+  }
+  return LOADING[id];
+}
+export const outfitLoaded = (id) => !!OUTFITS[id];
+// a look in an outfit: the farmer's own mesh with the parts on the outfit's hidden bones left out (the straw hat), the
+// outfit's parts added, Rosie's ribbon recoloured; made once for each look and outfit, shared by every farmer wearing it
+function dressed(look, id) {
+  const key = look + ':' + id;
+  if (DRESSED[key]) return DRESSED[key];
+  const base = MODELS[look], O = OUTFITS[id], adds = O.geo[look], names = INFO.joints[look].map(j => j.name);
+  const g = new THREE.BufferGeometry(), nb = base.attributes.position.count, na = adds.reduce((n, a) => n + a.attributes.position.count, 0);
+  for (const name in base.attributes) {
+    const a = base.attributes[name], arr = new a.array.constructor((nb + na) * a.itemSize);
+    let at = 0;
+    for (const src of [base, ...adds]) { arr.set(src.attributes[name].array, at); at += src.attributes[name].array.length; }
+    g.setAttribute(name, new THREE.BufferAttribute(arr, a.itemSize, a.normalized));
+  }
+  const si = g.attributes.skinIndex.array, col = g.attributes.color.array;
+  const rb = O.json.ribbon && O.json.ribbon[look];
+  if (rb) {
+    const j = names.indexOf(rb.joint);
+    for (let v = 0; v < nb; v++) if (si[v * 4] === j && col[v * 4] === rb.from[0] && col[v * 4 + 1] === rb.from[1] && col[v * 4 + 2] === rb.from[2]) { col[v * 4] = rb.to[0]; col[v * 4 + 1] = rb.to[1]; col[v * 4 + 2] = rb.to[2]; }
+  }
+  const hide = new Set(O.json.hide.map(n => names.indexOf(n))), bi = base.index.array;
+  const keep = [];
+  for (let t = 0; t < bi.length; t += 3) if (!hide.has(si[bi[t] * 4])) keep.push(bi[t], bi[t + 1], bi[t + 2]);
+  const idx = new (nb + na > 65535 ? Uint32Array : Uint16Array)(keep.length + adds.reduce((n, a) => n + a.index.count, 0));
+  idx.set(keep);
+  let at = keep.length, off = nb;
+  for (const a of adds) { const ai = a.index.array; for (let i = 0; i < ai.length; i++) idx[at + i] = ai[i] + off; at += ai.length; off += a.attributes.position.count; }
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  if (!base.boundingSphere) base.computeBoundingSphere();
+  g.boundingSphere = base.boundingSphere.clone(); g.boundingSphere.radius += 0.15;
+  g.userData.outfit = id; g.userData.baseCount = nb;          // (the farmer's own vertices first, then the outfit's)
+  return (DRESSED[key] = g);
+}
 const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
 export const FARMER_NAME = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'] };
 const DEG = Math.PI / 180;
@@ -106,26 +168,36 @@ export function fullFace(f = {}) {
 }
 
 // ------------------------------------------------------------------ the material: vertex colours, the checked shirt per pixel, the blush
+// (the shirt's colours, how fine its check and whether it's a knit are the material's own: an outfit changes them, wear())
 function farmerMaterial(look, grade) {
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.66, metalness: 0 });
   const P = INFO.plaid[look].map(h => new THREE.Color(h)), blush = { value: 0.35 };
-  m.userData.blush = blush;
+  const cloth = { A: { value: P[0] }, B: { value: P[1] }, C: { value: P[2] }, F: { value: 135 }, knit: { value: 0 } };
+  m.userData.blush = blush; m.userData.cloth = cloth;
   m.onBeforeCompile = (sh) => {
-    sh.uniforms.plaidA = { value: P[0] }; sh.uniforms.plaidB = { value: P[1] }; sh.uniforms.plaidC = { value: P[2] };
+    sh.uniforms.plaidA = cloth.A; sh.uniforms.plaidB = cloth.B; sh.uniforms.plaidC = cloth.C; sh.uniforms.plaidF = cloth.F; sh.uniforms.knit = cloth.knit;
     sh.uniforms.blushCol = { value: new THREE.Color(INFO.colours[look].blush) }; sh.uniforms.blushAmt = blush;
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute vec3 _cloth; attribute float _cmode; attribute float _blush;\nvarying vec3 vCloth; varying float vCMode; varying float vBlush;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCloth = _cloth; vCMode = _cmode; vBlush = _blush;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 plaidA; uniform vec3 plaidB; uniform vec3 plaidC; uniform vec3 blushCol; uniform float blushAmt;\nvarying vec3 vCloth; varying float vCMode; varying float vBlush;')
+      .replace('#include <common>', '#include <common>\nuniform vec3 plaidA; uniform vec3 plaidB; uniform vec3 plaidC; uniform float plaidF; uniform float knit; uniform vec3 blushCol; uniform float blushAmt;\nvarying vec3 vCloth; varying float vCMode; varying float vBlush;')
       .replace('#include <color_fragment>', `#include <color_fragment>
         if (vCMode > 0.5) {          // the checked shirt: coloured bands both ways (sin > 0.35), darker where they cross
-          vec2 q = (vCMode < 1.5 ? vCloth.yz : vCloth.xz) * 135.0;
+          vec2 cl = vCMode < 1.5 ? vCloth.yz : vCloth.xz;
+          vec2 q = cl * plaidF;
           vec2 s = sin(q), w = max(fwidth(s), vec2(1e-3));
           vec2 st = clamp((s - 0.35) / w + 0.5, 0.0, 1.0);
           float h = (st.x + st.y) * 0.5;
           vec3 c = mix(plaidA, plaidB, clamp(h * 2.0, 0.0, 1.0));
           diffuseColor.rgb = mix(c, plaidC, clamp(h * 2.0 - 1.0, 0.0, 1.0));
+          if (knit > 0.5) {          // a jumper (the outfits' winter woollies): columns of little knitted Vs, fading out far off
+            vec2 u = cl * vec2(72.0, 105.0);
+            float d = abs(fract(u.x) - 0.5) * 2.0, r = fract(u.y + d * 0.55);
+            float v = smoothstep(0.0, 0.4, r) * smoothstep(1.0, 0.6, r) * (1.0 - 0.55 * d * d);
+            float far = clamp(max(fwidth(u.x), fwidth(u.y)) * 2.0 - 0.5, 0.0, 1.0);
+            diffuseColor.rgb *= mix(mix(0.82, 1.12, v) * (1.0 - 0.2 * smoothstep(0.72, 1.0, d)), 0.96, far);
+          }
         }
         diffuseColor.rgb = mix(diffuseColor.rgb, blushCol, clamp(vBlush * blushAmt, 0.0, 1.0) * 0.75);`);
   };
@@ -158,6 +230,22 @@ export class FarmerRig {
     if (B.pail) { B.pail.position.set(0.012, -0.3, 0); this.rest.pail.p.copy(B.pail.position); }
     this.B = B; this.blush = this.mesh.material.userData.blush;
     this.eyeR = INFO.info[look].eyes.L.r; this.gazeUp = 0.55;
+    this.outfit = null; this.hatSit = HAT_SIT.classic;
+  }
+  // dressed in a bought outfit (its id, loaded first: loadOutfit), or back to Classic (null). Only Arthur and Rosie have
+  // outfits; false if this look has none or the outfit isn't loaded yet (nothing changes then)
+  wear(id) {
+    id = id || null;
+    if (id && !(OUTFITS[id] && OUTFITS[id].geo[this.look])) return false;
+    if (id === this.outfit) return true;
+    this.outfit = id;
+    this.mesh.geometry = id ? dressed(this.look, id) : MODELS[this.look];
+    const C = this.mesh.material.userData.cloth, S = id ? OUTFITS[id].json.shirt : null;
+    const cols = !S ? INFO.plaid[this.look] : S.kind === 'check' ? S.cols : [S.col, S.col, S.col];
+    C.A.value.set(cols[0]); C.B.value.set(cols[1]); C.C.value.set(cols[2]);
+    C.F.value = S && S.f ? S.f : 135; C.knit.value = S && S.kind === 'knit' ? 1 : 0;
+    this.hatSit = HAT_SIT[id || 'classic'] || HAT_SIT.classic;
+    return true;
   }
   // a joint turned to farmer.py's angles (degrees: about the farmer's forward, left and up axes), from its rest
   turn(name, a) { _e.set(a[1] * DEG, a[2] * DEG, a[0] * DEG, 'YXZ'); this.B[name].quaternion.copy(this.rest[name].q).multiply(_q.setFromEuler(_e)); }
@@ -193,8 +281,8 @@ export class FarmerRig {
     B.torch.scale.setScalar(props.torch ? 1 : 1e-4); B.pail.scale.setScalar(props.pail ? 1 : 1e-4);
     if (B.clipboard) { B.clipboard.scale.setScalar(props.clipboard ? 1 : 1e-4); B.pencil.scale.setScalar(props.pencil ? 1 : 1e-4); }     // (the judge's)
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
-    const ht = (typeof window !== 'undefined' && window.__HAT) || {};
-    this.turn('hat', [0, ht.tilt ?? -20, 0]); B.hat.position.copy(R.hat.p).add(new THREE.Vector3(0, ht.up ?? 0.01, ht.back ?? -0.02));
+    const ht = (typeof window !== 'undefined' && window.__HAT) || {}, hs = this.hatSit;          // (each outfit's hat its own way: HAT_SIT)
+    this.turn('hat', [0, ht.tilt ?? hs.tilt, 0]); B.hat.position.copy(R.hat.p).add(new THREE.Vector3(0, ht.up ?? hs.up, ht.back ?? hs.back));
   }
   jointOf(k) { return { shL: 'shoulderL', shR: 'shoulderR', elL: 'elbowL', elR: 'elbowR', wrL: 'wristL', wrR: 'wristR', hipL: 'hipL', hipR: 'hipR', chest: 'chest', head: 'head' }[k]; }
 }
@@ -214,6 +302,9 @@ export class Farmer {
     const m = this.rig.mesh.material; m.transparent = true; this.opacity = 1;          // (fading in and out at the farmhouse door)
   }
   fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5; }
+  // a bought outfit on (its id, loaded first: loadOutfit), or Classic again (null): FarmerRig.wear
+  wear(id) { return this.rig.wear(id); }
+  get outfit() { return this.rig.outfit; }
   get pos() { return this.root.position; }
   update(dt) {
     const W = this.want, t = (this.t += dt);
@@ -256,25 +347,48 @@ const LINE = {
   pet: { pose: 'pet', face: 'cuddle', anim: (P, F, t) => { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); P.head[0] += 5 * Math.sin(t * 1.5); } },
 };
 const FACE_CYCLE = ['neutral', 'happy', 'stern', 'worried', 'panic', 'cuddle', 'feeding'];
+// &set=4 (or &outfits): the five outfits, one row each (market at the back, then garden, winter, rodeo, show), Arthur and
+// Rosie side by side, all in the same mood, a new one every 4 s (or &mood=wave and so on, held; &pose=stretch holds any of
+// POSES); &outfit=rodeo: just that one, in four moods at once (looking about, waving, walking, the torch); &wear=rodeo
+// dresses sets 1 to 3 in it
+const MOOD_CYCLE = ['look', 'wave', 'walk', 'torch', 'feed', 'pet', 'telloff', 'worried'];
+const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
 export class FarmerLineup {
   constructor(scene, centre, yaw, grade, r, set = 1) {
     this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
-    this.set = set; this.farmers = [];
-    const rows = set === 2 ? ['walk', 'torch', 'feed', 'pet'] : set === 3 ? ['face'] : ['look', 'wave', 'telloff', 'worried'];
+    const one = OUTFIT_IDS.includes(Q.get('outfit')) ? Q.get('outfit') : null;
+    if (Q.has('outfits') || one) set = 4;
+    this.set = set; this.farmers = []; this.mood = MOOD_CYCLE.includes(Q.get('mood')) ? Q.get('mood') : null;
+    this.pose = set === 4 && POSES[Q.get('pose')] ? Q.get('pose') : null;
+    const wear = OUTFIT_IDS.includes(Q.get('wear')) ? Q.get('wear') : null;
+    const rows = set === 4 ? (one ? ['look', 'wave', 'walk', 'torch'] : OUTFIT_IDS) : set === 2 ? ['walk', 'torch', 'feed', 'pet'] : set === 3 ? ['face'] : ['look', 'wave', 'telloff', 'worried'];
+    const gap = set === 4 && !one ? 1.9 : 2.4;
     rows.forEach((row, i) => {
       for (const [look, x] of [['m', -0.62], ['f', 0.62]]) {
         const f = new Farmer(this.group, look, grade, r);
-        f.pos.set(x * (set === 3 ? 0.36 : 1), 0, (set === 3 ? 0 : -3.6 + i * 2.4)); f.root.rotation.y = -0.3; f.row = row;
+        f.pos.set(x * (set === 3 ? 0.36 : 1), 0, (set === 3 ? 0 : -gap * (rows.length - 1) / 2 + i * gap)); f.root.rotation.y = -0.3;
+        f.row = set === 4 && !one ? 'mood' : row; f.dressIn = set === 4 ? (one || row) : wear;
         this.farmers.push(f);
       }
     });
     this.t = 0;
   }
+  // the outfits the line-up wears, loaded (with main.js's own loaders) and put on
+  async dress(loadGLB, loadJSON) {
+    this.loaders = [loadGLB, loadJSON];
+    const ids = [...new Set(this.farmers.map(f => f.dressIn).filter(Boolean))];
+    await Promise.all(ids.map(id => loadOutfit(id, loadGLB, loadJSON).catch(e => console.warn('outfit', id, e))));          // (one that fails: Classic)
+    for (const f of this.farmers) if (f.dressIn) f.wear(f.dressIn);
+  }
+  // the line-up's farmer i in an outfit (or Classic: null), for tests; and what the tests compare with (outfittest.mjs)
+  async wear(i, id) { if (id) await loadOutfit(id, ...this.loaders); return this.farmers[i].wear(id); }
+  tests() { return { poses: Object.keys(POSES), faces: Object.keys(FACES), plaid: INFO.plaid, model: look => MODELS[look] }; }
   update(dt) {
     this.t += dt;
     for (const f of this.farmers) {
       if (f.row === 'face') { const k = Math.floor(this.t / 3) % FACE_CYCLE.length; f.want = { pose: 'turn', face: FACE_CYCLE[k], props: {}, anim: (P, F, t) => { if (FACE_CYCLE[k] === 'stern') F.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'frown'; } }; }
-      else f.want = Object.assign({ props: {} }, LINE[f.row]);
+      else if (this.pose) f.want = { pose: this.pose, face: 'neutral', props: {} };
+      else f.want = Object.assign({ props: {} }, LINE[f.row === 'mood' ? this.mood || MOOD_CYCLE[Math.floor(this.t / 4) % MOOD_CYCLE.length] : f.row]);
       f.update(dt);
     }
   }
