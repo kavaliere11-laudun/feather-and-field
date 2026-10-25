@@ -181,7 +181,14 @@
   @media (prefers-reduced-motion: reduce) { .glevelbig { animation: none; } }
   .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
   /* Your coops: the little barn in the top bar (a red dot: a new breed's coop waiting), the sheet's rows */
-  .gcoops, .gshows { position: relative; }
+  .gcoops, .gshows, .gjobs { position: relative; }
+  .gdot.gcount.gnum1 { width: auto; min-width: 18px; height: 18px; top: -5px; right: -5px; padding: 0 4px; border-radius: 9px; color: #fff; font-weight: 800; font-size: 11px; line-height: 14px; text-align: center; }
+  /* Today's jobs (release 1 step 9c) */
+  .gjob .gbar-xp { margin: 2px 0 0; }
+  .gjobrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
+  .gjobrow .gnote { margin: 0; }
+  .gjob-done { background: #fff3cf; } .gjob-paid { opacity: 0.7; }
+  .gjob-ok { color: var(--meadow); font-weight: 800; font-size: 14.5px; }
   /* Shows (release 1 step 9): the rosette in the top bar, the shows' cards, a bird's rosettes, the results */
   .gros-i { display: inline-grid; width: 24px; height: 24px; flex: none; } .gros-i svg { width: 100%; height: 100%; display: block; }
   .gros-big { width: 32px; height: 32px; }
@@ -394,6 +401,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1792949516"></script>
+<script src="app.js?v=1792952497"></script>
 </body>
 </html>
