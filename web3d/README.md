@@ -1814,3 +1814,25 @@ before. Several shows judged at once: the scene shows the grandest (National, Co
   she's put in her pen on the straw; three rosettes pinned (hers too), the results card; closed: the tent gone, the farmer
   and her bird home, the view back; at night the results straight away; Skip: straight to the end. `showtest.mjs` takes
   "Just the results".
+
+## The game, release 1 step 9c: daily jobs (25 Oct 2026, Audrey: "Daily jobs (Recommended)")
+
+The 2D game's farm jobs made the new game's own (`game.js` `JOBS`, `jobsFor`, `job`, `claimJob`; `gameui.js`
+`jobsSheet`).
+- **Three a day** on the phone's calendar, new at midnight: the first always an easy one (collect eggs, or give cuddles),
+  the other two different ones of collect eggs, give cuddles, fill a feeder, enter a bird in a show (more kinds as the
+  wheat field and the decorations come). The day's jobs are the same for that day and level (from the day's own numbers).
+  Targets grow a little with the level the day's jobs were set at: eggs 4 + 2 a level (at most 30), cuddles 1 + one every
+  three levels (at most 6). Reward: 15 + 5 a level coins and 5 + the level XP each (level 1: +20 coins · +6 XP).
+- **Counted where they happen:** eggs collected (the nest, its bubble, a nest box inside at night), a cuddle that counts
+  (not while she's still happy from the last), a feeder filled, a bird entered in a show. A job done: "Job done: Give a
+  cuddle! Collect your reward in Today's jobs." said once what was done has been said (`hintNext`).
+- **Today's jobs:** a clipboard in the top bar, with a dot for a new day's jobs not looked at yet, and the number of
+  rewards ready to collect. Its sheet: each job (its icon, what to do, a bar, "1 / 1 · +20 coins · +6 XP", "Collect" once
+  done, then "Done ✓"), "New jobs every day at midnight."
+- **The save:** `jobs` (the day, the level they were set at, each job's progress and whether it's paid): a day not ahead
+  of today, a level the farm has had, the jobs that day's numbers give, done at most to the target, paid only once done.
+- `jobtest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): the clipboard and its dot; the sheet (three different, the
+  first easy, progress and reward; the dot gone); doing them (each counted, the word, the number 3); Collect (coins and XP,
+  Done ✓, the number down, not twice); a reload; midnight (new jobs, the dot); a save changed outside (more than the
+  target, paid before done, tomorrow's jobs, a level the farm hasn't had).
