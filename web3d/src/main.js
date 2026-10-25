@@ -23,7 +23,7 @@ import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
 import { DuckFlock } from './ducks.js';
-import { initFarmer, FarmerLineup, FARMER_NAME, Farmer } from './farmer.js';
+import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
@@ -321,7 +321,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -374,6 +374,7 @@ async function start() {
   buildGeese();
   buildDog(beastsInfo.joints);
   buildFarmer();
+  if (GAME_MODE) await dressFarmer();                     // (in the outfit last worn)
   beastJoints = beastsInfo.joints; setupReplay();
   if (allBirds.length) makeBlobs();
   buildGrass();
@@ -3913,6 +3914,7 @@ async function startShowDay(r, list) {
     title: game.t('show_sign_' + r.id[0]), sub: r.id[0] === 'n' ? '' : game.showName(r.id).replace(/ (Village|County) Show$/, '').replace(/^Concours (de |d’|régional du )/, ''),
     hearts: w => spawnHeart(w), say: k => hint(game.t('sd_' + k, { farmer: game.farmerName(), name: gb.name }, f)),
     onEnd: () => { if (SHOWDAY) gameUI.showResults(list); } });
+  { const wo = game.outfitWorn(); if (wo !== 'classic' && outfitLoaded(wo)) SHOWDAY.farmer.wear(wo); }      // (in the outfit he wears on the farm)
   SHOWDAY.real = real; if (real) real.root.visible = false;
   if (farmLife) farmLife.group.visible = false;
   showFrom = [view.target.x, view.target.z, view.size];
@@ -4205,10 +4207,39 @@ function duckHouseOn() {
   duckFlock.places();
 }
 // ---- the shop, and a decoration's card
-function shopSheet() {
+function shopSheet(tab = 'decor') {
   if (DMOVE.id || MOVE.plot) return;
   holdBird(null); henOff();
-  gameUI.shopSheet({ buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); } });
+  gameUI.shopSheet(shopHands(), tab);
+}
+function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id) }; }
+// ---- the farmer's outfits (the shop's second shelf; farmer.js loadOutfit, wear): bought and put on at once, or another
+// worn; the farm's farmer in it (each outfit's hat and bits loaded only when worn), and on show day too. Bought: the view
+// to him (the player's tap), so it's seen
+async function dressFarmer() {
+  if (!GAME_MODE || !game.data) return;
+  const id = game.outfitWorn();
+  if (id !== 'classic') { try { await loadOutfit(id, loadGLB, loadJSON); } catch (e) { console.warn('outfit', id, e); return; } }
+  if (game.outfitWorn() !== id) return;                    // (another chosen meanwhile)
+  if (farmLife) farmLife.wear(id === 'classic' ? null : id);
+  if (SHOWDAY && SHOWDAY.farmer) SHOWDAY.farmer.wear(id === 'classic' ? null : id);
+  renderer.shadowMap.needsUpdate = true; wake(500);
+}
+async function buyOutfit(id) {
+  const r = game.buyOutfit(id); if (!r) return false;
+  gameUI.refresh(); gameUI.bumpCoins();
+  await dressFarmer();
+  gameUI.close();
+  if (farmLife && !farmLife.home) { const p = farmLife.pos; focusOn(p.x + 0.2, p.z + 0.2, Math.min(view.size, sideways() ? 2.2 : 2.8)); }
+  hint(game.t('out_bought', { farmer: game.farmerName(), name: game.outfitName(id), xp: r.xp }));
+  return true;
+}
+async function wearOutfit(id) {
+  if (!game.wearOutfit(id)) return false;
+  await dressFarmer();
+  gameUI.shopSheet(shopHands(), 'outfits');
+  hint(game.t('out_worn', { farmer: game.farmerName(), name: game.outfitName(id) }));
+  return true;
 }
 function decorCard(id) {
   holdBird(null); henOff();

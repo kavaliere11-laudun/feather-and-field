@@ -4,8 +4,10 @@
 // at. Buy the flower bed: it appears near the view with its outline (green), the move bar without Turn; off your land, red
 // and why; then "Put it here": paid for then (coins and XP), on the farm, in everyone's way (the walking grid), no grass
 // through it, its butterflies. Cancel a purchase: nothing paid, nothing there. Tap it: its card, Move; moved, saved where
-// it went. The duck house: straight onto the pond, the ducks' house. A reload: all where they were. A save changed outside
-// (a decoration twice, one not known, one before its level, a spot off the map) is checked and flagged. No page errors.
+// it went. The duck house: straight onto the pond, the ducks' house. A reload: all where they were. The farmer's outfits
+// (the shop's second shelf): bought and worn on the farm, the classic again, kept after a reload. A save changed outside
+// (an outfit not known or not bought, a decoration twice, one not known, one before its level, a spot off the map) is
+// checked and flagged. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
@@ -112,16 +114,43 @@ const before = JSON.stringify(m.decor);
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 m = await money(); it = await items();
 ok('a reload: all where they were, not flagged', JSON.stringify(m.decor) === before && it.length === 4 && it.every(x => x.shown && x.tap) && !(await p.evaluate(() => window.__farm.game().edited)) && (await p.evaluate(() => window.__farm.deco.duckHouse())), { m, it });
+// the farmer's outfits: the shop's second shelf
+const worn = () => p.evaluate(() => { const f = window.__farm, F = f.farmer(); return { save: f.game().data.farmer.outfit || 'classic', on: F ? F.f.outfit : 'none' }; });
+await p.evaluate(() => window.__farm.deco.shop()); await run(0.3);
+await p.evaluate(() => document.querySelector('.gshop-tabs .gchip[data-tab="outfits"]').click()); await run(0.3);
+await p.waitForFunction(() => [...document.querySelectorAll('.gout img')].every(i => i.complete), null, { timeout: 30000 }).catch(() => {});
+const outs = await p.evaluate(() => [...document.querySelectorAll('.gout')].map(c => [c.dataset.outfit, c.classList.contains('gpage-no'), c.classList.contains('gout-on'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img').naturalWidth > 0]));
+t = await sheet();
+ok('Outfits: the six with their pictures; the classic worn; market day and the garden party to buy; the other three to come',
+  outs.length === 6 && outs.every(o => o[4]) && outs[0][2] && outs.filter(o => o[1]).length === 3 && outs.filter(o => o[3]).length === 2 && (fr ? /Jour de marché/ : /Market day/).test(t) && (fr ? /Acheter et porter · 1[\s\u202f ]200/ : /Buy and wear · 1,200/).test(t), { outs, t: t.slice(0, 300) });
+await shot('6_outfits');
+let m1 = await money();
+await p.evaluate(() => document.querySelector('.gout[data-outfit="market"] .gbtn').click()); await p.waitForTimeout(1500); await run(1.5);
+let m2 = await money(), w = await worn();
+const word3 = await p.evaluate(() => document.getElementById('hint').textContent);
+ok('Buy and wear: paid (1,200 coins, +24 XP), the farmer in it on the farm, the word', m2.coins === m1.coins - 1200 && m2.xp === m1.xp + 24 && w.save === 'market' && w.on === 'market' && (fr ? /enfile la tenue Jour de marché/ : /tries on the Market day outfit/).test(word3), { m1, m2, w, word3 });
+await run(1); await shot('7_farmer');
+await p.evaluate(() => window.__farm.deco.shop()); await run(0.3);
+await p.evaluate(() => document.querySelector('.gshop-tabs .gchip[data-tab="outfits"]').click()); await run(0.3);
+await p.evaluate(() => document.querySelector('.gout[data-outfit="classic"] .gbtn').click()); await p.waitForTimeout(500); await run(0.5);
+w = await worn();
+ok('Wear the classic again: nothing paid, back in it', w.save === 'classic' && w.on === null && (await money()).coins === m2.coins, w);
+await p.evaluate(() => document.querySelector('.gout[data-outfit="market"] .gbtn').click()); await p.waitForTimeout(800); await run(0.5);
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+w = await worn();
+ok('a reload: the market-day outfit on', w.save === 'market' && w.on === 'market' && !(await p.evaluate(() => window.__farm.game().edited)), w);
+await p.evaluate(() => window.__farm.gameUI().close());
 // a save changed outside
 for (const [what, edit, check] of [
+  ['an outfit not known, one before its level, one worn not bought', 'd.farmer.outfits.push("tuxedo", "show"); d.farmer.outfit = "rodeo"', r => r.farmer.outfits.join() === 'market' && r.farmer.outfit === 'classic'],
   ['a decoration twice', 'd.decor.push({ id: "flowers", x: 1, z: 1 })', r => r.filter(x => x.id === 'flowers').length === 1],
   ['one not known', 'd.decor.push({ id: "castle", x: 1, z: 1 })', r => !r.some(x => x.id === 'castle')],
   ['one before its level', 'd.decor.push({ id: "statue", x: 1, z: 1 })', r => !r.some(x => x.id === 'statue')],
   ['a spot off the map', 'd.decor.find(x => x.id === "birdbath").x = 9999', r => { const o = r.find(x => x.id === 'birdbath'); return o && Math.abs(o.x) < 200; }]]) {
   await p.evaluate(e => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d; eval(e); localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, edit);
   await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
-  const r = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, decor: g.data.decor, items: window.__farm.deco.items().length }; });
-  ok('a save changed outside (' + what + '): checked and flagged', r.edited && check(r.decor) && r.items === r.decor.length, r);
+  const r = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, decor: g.data.decor, farmer: g.data.farmer, items: window.__farm.deco.items().length }; });
+  ok('a save changed outside (' + what + '): checked and flagged', r.edited && (r.farmer && /outfit/.test(what) ? check(r) : check(r.decor)) && r.items === r.decor.length, r);
   await p.evaluate(() => { const g = window.__farm.game(); g.edited = false; g.save(); });
 }
 ok('no page errors', errs.length === 0, errs);

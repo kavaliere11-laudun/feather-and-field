@@ -348,6 +348,8 @@ export class GameUI {
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
     const decs = Object.keys(DECOR).filter(id => DECOR[id].level === L);      // (a decoration to buy now: the shop, the coins at the top)
     if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
+    const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
+    if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
@@ -602,7 +604,7 @@ export class GameUI {
   // the farmer's outfits (the shop's second shelf): each with its picture (the 2D game's, for the farm's farmer), what it is,
   // and Buy and wear (h.buyOutfit), Wear (h.wear), "Wearing", or the level it comes at
   outfitCards(b, h, fmt) {
-    const g = this.g, look = g.data.farmer.look === 'f' ? 'f' : 'm', who = g.data.farmer.name || this.t(look === 'f' ? 'her' : 'him');
+    const g = this.g, look = g.data.farmer.look === 'f' ? 'f' : 'm', who = g.farmerName();
     b.append(el('p', 'gnote', this.t('outfits_note', { farmer: who })));
     for (const id of Object.keys(OUTFITS)) {
       const O = OUTFITS[id], own = g.outfitOwned(id), on = g.outfitWorn() === id, lock = !own && g.level < O.level, broke = !own && !lock && g.data.coins < O.price;

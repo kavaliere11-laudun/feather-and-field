@@ -1,7 +1,8 @@
 // A film of decorating the farm (release 1 step 9d): node decfilm.mjs OUTDIR [fps]   (LANG=fr, W, H, DSF, PORT)
 // A farm at level 10 with coins: a tap on the coins, the shop; "Buy and place" the flower bed: it appears near the view;
 // a finger drags it onto the lane (red: why), then on to a good spot (green); "Put it here": the bush in the way cleared,
-// the coins down, the word, its butterflies. Then the shop again: the duck house straight onto the pond. Prints the marks.
+// the coins down, the word, its butterflies. Then the shop again: the duck house straight onto the pond; and an outfit for
+// the farmer, the view to him in it. Prints the marks.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const [out = 'df', fps = '12'] = process.argv.slice(2), FPS = +fps, fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
@@ -74,6 +75,12 @@ await hold(4.5);
 marks.push('duck:' + n); await tapEl('.gbar .gpill:not(.glvl)'); await hold(0.8);
 await p.evaluate(() => { const c = document.querySelector('.gdec[data-decor="duckhouse"]'); c.scrollIntoView({ block: 'center' }); }); await hold(1.4);
 await tapEl('.gdec[data-decor="duckhouse"] .gbtn');
+await hold(4.5);
+// an outfit for the farmer
+marks.push('outfit:' + n); await tapEl('.gbar .gpill:not(.glvl)'); await hold(0.6);
+await tapEl('.gshop-tabs .gchip[data-tab="outfits"]'); await p.waitForTimeout(800); await hold(1.6);
+await p.evaluate(() => document.querySelector('.gout[data-outfit="market"]').scrollIntoView({ block: 'center' })); await hold(0.8);
+await tapEl('.gout[data-outfit="market"] .gbtn'); await p.waitForTimeout(1500);
 await hold(4.5);
 console.log('frames', n, 'errors', errs, JSON.stringify(plan), marks.join(' | '));
 await b.close();

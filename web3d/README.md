@@ -1876,6 +1876,14 @@ The 2D game's "Decorate your farm" made the new game's own (`game.js` `DECOR`, `
   placing it, "Cottage flower bed: moved!"). A tap goes to whichever is in front, a decoration or a coop's house.
 - **The duck house** goes straight onto the pond where the village has it ("Buy · 3,000"), the view to it, and the ducks
   sleep in it from that night (`duckFlock.setHouse`, its raft kept clear by whoever swims).
+- **Outfits** (the shop's second shelf, "Outfits"; the 2D game's six, made in 3D by `farmer.js`, see "The farmer's outfits"
+  below): Classic from the start, Market day at level 5 (1,200), Garden party 9 (3,500), Winter woollies 12 (6,000), Rodeo
+  15 (10,000), Show day 18 (16,000); XP a fiftieth of the price. Each with the 2D game's picture of your own farmer
+  (`outfits/`), what it is, and "Buy and wear", "Wear", "Wearing" or the level it comes at. Bought: worn at once, the shop
+  closes and the view goes to the farmer ("Arthur tries on the Market day outfit! +24 XP"). The farmer wears it on the farm
+  from the moment the farm opens (`dressFarmer`: the outfit's hat and bits loaded only when worn) and on show day. A new
+  level's card says which outfit comes with it. The save: `farmer.outfits` (known ones, once each, from their level) and
+  `farmer.outfit` (one bought, else the classic); both only once one's bought.
 - **The save:** `decor` ({ id, x, z } on the quarter-metre; the duck house just { id }): each known one once, only from its
   level, a spot on the map; the farm then makes sure each stands where one can (a spot that's no good any more: the
   nearest good one).
@@ -1883,7 +1891,9 @@ The 2D game's "Decorate your farm" made the new game's own (`game.js` `DECOR`, `
   Buy and place (the spot, green, no Turn, nothing paid); off your land (red, why); Cancel (nothing paid or there); Put it
   here (paid, saved, in the grid's way, no grass, the word, its butterflies); tapped (its card, Move); moved; the bird
   bath, the beehives and the duck house (the ducks' house); a reload; a save changed outside (one twice, one not known,
-  one before its level, a spot off the map). `decshow.mjs OUTDIR`: all eight on a level-20 farm, a picture of each.
+  one before its level, a spot off the map); the outfits (six, pictures, the classic worn, two to buy; Buy and wear: paid,
+  worn on the farm, the word; the classic again; a reload; a save changed outside: one not known, one before its level, one
+  worn not bought). `decshow.mjs OUTDIR`: all eight on a level-20 farm, a picture of each. `decfilm.mjs OUTDIR`: a film.
 
 ## The farmer's outfits (25 Oct 2026, for the game's shop)
 
