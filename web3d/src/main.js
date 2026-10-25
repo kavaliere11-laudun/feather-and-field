@@ -4724,15 +4724,15 @@ function tickGuide() {
   const sheetOpen = gameUI.isOpen;
   if (sheetOpen && !T.inSheet) { off(); return; }
   // the card: its words, Show me when the place is off screen
-  let sx = 0, sy = 0, onScreen = false;
-  if (T.el) { const r = T.el.getBoundingClientRect(); sx = r.left + r.width / 2; sy = r.top; onScreen = r.width > 0 && r.bottom > 0 && r.top < innerHeight; }
+  let sx = 0, sy = 0, onScreen = false, up = false;
+  if (T.el) { const r = T.el.getBoundingClientRect(); sx = r.left + r.width / 2; sy = r.top; onScreen = r.width > 0 && r.bottom > 0 && r.top < innerHeight; if (r.top < 70) { up = true; sy = r.bottom; } }      // (at the top: the arrow under it, pointing up)
   else if (T.world) { bubV.copy(T.world).project(camera); sx = (bubV.x + 1) / 2 * canvas.clientWidth; sy = (1 - bubV.y) / 2 * canvas.clientHeight; onScreen = bubV.z < 1 && sx > 20 && sx < canvas.clientWidth - 20 && sy > 60 && sy < canvas.clientHeight - 20; }
   const idx = GUIDE.indexOf(k) + 1, nTxt = game.t('guide_n', { n: idx, of: GUIDE.length }), txt = game.t(T.say);
   if (G.k !== k + T.say) { G.k = k + T.say; G.n.textContent = nTxt; G.text.textContent = txt; G.show.textContent = game.t('guide_show'); G.skipEl.textContent = game.t('guide_skip'); }
   G.card.hidden = sheetOpen;
   G.show.hidden = onScreen || !T.world;
   // the arrow: over the place to tap, bouncing
-  if (onScreen && !T.none) { G.arrow.hidden = false; G.arrow.style.left = sx.toFixed(1) + 'px'; G.arrow.style.top = (sy - 2).toFixed(1) + 'px'; }
+  if (onScreen && !T.none) { G.arrow.hidden = false; G.arrow.classList.toggle('up', up); G.arrow.style.left = sx.toFixed(1) + 'px'; G.arrow.style.top = (up ? sy + 2 : sy - 2).toFixed(1) + 'px'; }
   else G.arrow.hidden = true;
 }
 // a step done (k): its coins, the word after what was said; the last: the bonus

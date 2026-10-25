@@ -276,7 +276,7 @@
   .gdots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(30, 52, 38, 0.18); }
   .gdots span.on { background: var(--meadow); width: 20px; border-radius: 4px; }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gintro-pic { aspect-ratio: auto; height: 42vh; } }
-  .gguide { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top, 0px) + 70px); width: min(92vw, 380px); box-sizing: border-box;
+  .gguide { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(92vw, 380px); box-sizing: border-box;
             background: #fffdf3; border-radius: 18px; padding: 10px 14px 11px; box-shadow: 0 6px 18px rgba(30, 52, 38, 0.22), 0 0 0 2px #f2c94c; font-family: var(--body); }
   .gguide[hidden] { display: none; }
   .gguide-n { font: 600 12.5px var(--display); color: #a3740d; letter-spacing: 0.02em; text-transform: uppercase; }
@@ -285,10 +285,12 @@
   .gguide-row button { font: 700 14px var(--body); border: 0; background: none; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
   .gguide-row .gguide-show { background: #f2c94c; color: #3b2a00; border-radius: 999px; padding: 6px 14px; }
   .gguide-row .gguide-skip { margin-left: auto; text-decoration: underline; }
-  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: 12px; transform: none; top: calc(env(safe-area-inset-top, 0px) + 52px); width: min(44vw, 360px); } }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: 12px; transform: none; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 52px); width: min(44vw, 360px); } }
   .garrow { position: fixed; z-index: 40; left: 0; top: 0; width: 34px; height: 40px; margin: -46px 0 0 -17px; pointer-events: none; animation: garrowb 0.9s ease-in-out infinite; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
   .garrow[hidden] { display: none; }
   @keyframes garrowb { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
+  .garrow.up { margin: 6px 0 0 -17px; rotate: 180deg; animation-name: garrowu; }      /* (under something at the top, pointing up at it) */
+  @keyframes garrowu { 0%, 100% { translate: 0 0; } 50% { translate: 0 9px; } }
   /* the farm code (release 1 step 9g) */
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
