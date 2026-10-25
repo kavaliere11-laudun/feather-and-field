@@ -1965,3 +1965,22 @@ farmer's `workAt` in `farmlife.js`).
   cutting, the grain and XP); the feeder filled from the grain; the field moved and turned; the honey (two jars after 16
   hours, the pot, the farmer and the frame, the jars sold); a reload; a save changed outside (ripe too late, grain past
   the store, honey past the hives, honey without hives).
+
+## The game, release 1 step 9f: the welcome-back summary (25 Oct 2026, Audrey: "Welcome-back summary (Recommended)")
+
+The 2D game's "While you were away" made the new game's own (`game.js` `awaySummary`, `lastSeen`; `gameui.js` `awayCard`;
+`main.js` `showNews`, `collectAll`).
+- **When:** the farm opened after an hour or more away (the save's `lastSeen`, kept to the minute while the farm is
+  open), or the page shown again after an hour or more put away (the phone locked, another app). It comes first, before
+  the other cards (congratulations, show results, a new level), a moment after the farm opens. Nothing waiting: no card.
+- **What:** "While you were away", "You were away 9 h 12 min." ("2 days 3 h"; more than two days: "your hens laid for the
+  last two"), then a line each with its picture: the eggs waiting in the nests (🥚), full nests (🪺, in red), chicks
+  hatched (🐣 "Lulu hatched 3 chicks"), broods grown up (🎉 "their card is next"), honey in the hives (🍯), the wheat ripe
+  (🌾) or growing (🌱 "ripe in 1 h 20 min"), a feeder empty (in red) or low, show results in (🎀 "they're next"), the
+  day's jobs (📋 new, or rewards to collect).
+- **Buttons:** "Collect all eggs (8)": every nest's eggs fly to the coins at once from their bubbles, sold ("8 eggs sold
+  · +48 coins"); "Off to the farm".
+- **The save:** `lastSeen` (never ahead of now).
+- `awaytest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder`): a fresh farm (none); back after 9 hours (the card, how long,
+  the eggs, honey, ripe wheat, the empty feeder); Collect all eggs (sold, the word); the page back after two hours (again);
+  back after 20 minutes (none); a last-seen time ahead of now (checked, flagged).
