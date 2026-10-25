@@ -1484,11 +1484,14 @@ rate higher and sell for more. Replaces the farmer leading the chicks out of the
   them walking until outside of the farm please. The rest is perfect"):** out of the gate they trot in a line (0.7 m/s,
   never into the one ahead) along the way off the farm (`farmExit`: the cheapest way, paths preferred as the farmer
   walks, over a footbridge if need be, to just past the farm's edge, beyond the trees along it; worked out once for each
-  coop), taking a few steps more as they go. The view glides along with the line, a little past the farm's edge if need
-  be (`view.reach`), then back onto the farm (a finger on the farm or a card opened: the view's the player's again). From the first coop it's 18 m, about 30 s, up the path past the bales,
-  between the vegetable patch and the well and out through the trees at the back. The farmer stands by the gate on the
-  side clear of their way (the far side from the player if he can, else turned more towards you), cheers till they're all
-  on their way, then goes about his day. The card once the last one's gone (two and a half minutes at most for it all).
+  coop), taking a few steps more as they go. From the first coop it's 17 m, about 30 s, up the path past the bales,
+  between the vegetable patch and the well and out through the trees at the back. The farmer stands by the gate, clear of
+  their way (the far side from the player if their way leaves room there), and watches them all the way: he faces them
+  lined up at the gate and turns to follow them as they go (`cheerAt`'s watch), cheering till they're all on their way,
+  then goes about his day. The card once the last one's gone (two and a half minutes at most for it all).
+- **The view stays put (25 Oct 09:14, Audrey: "The farmer is not looking at the chickens anymore to say goodbye that's
+  odd" and "the camera should not follow the chickens, the user can it they want manually but the camera doesn't move by
+  itself"):** no glide to the gate when it starts and no following; the player can drag along with them if they like.
 - **Congratulations (`showNews`, `gameUI.congratsCard`):** once the farewell's over, or a moment after the farm opens for
   a brood that grew up while it was shut ("While you were away, Lulu's babies grew up"): "🎉 Congratulations! Lulu's
   babies have grown up", a row for each (🐔 Young hen or 🐓 Young rooster, its stars, +coins), the total "+76 coins ·

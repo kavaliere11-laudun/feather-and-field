@@ -282,12 +282,18 @@ export class FarmLife {
     return seq;
   }
   // ---- a farewell at a coop's gate (main.js chicksGo): he hurries to `at` ([x, z], outside the gate), turns to `face`
-  // (the gate, a little towards the player), ready(), "Off you go, and good luck!", and cheers them off (hooray, a wave)
-  // till done() or half a minute. (Named 'pen': he isn't called away meanwhile; a visit asked for waits till after)
-  cheerAt(at, face, ready, done) {
+  // (the youngsters lined up inside it), ready(), "Off you go, and good luck!", and cheers them off (hooray, a wave),
+  // turning to keep watching them as they go (watch(): where they are, [x, z]), till done() or half a minute. (Named
+  // 'pen': he isn't called away meanwhile; a visit asked for waits till after.) Audrey: "The farmer is not looking at
+  // the chickens anymore to say goodbye that's odd"
+  cheerAt(at, face, ready, done, watch) {
     if (this.home || this.running) return false;
     const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - at[0], Lf.pos.z - at[1]) > 0.7) seq.aborted = true; return true; } };
-    const cheer = { name: 'cheer', t: 0, run(Lf, dt) { this.t += dt; STAND.cheer(Lf.want, this.t); return (this.t > 3 && done()) || this.t > 30; } };
+    const cheer = { name: 'cheer', t: 0, run(Lf, dt) {
+      this.t += dt; STAND.cheer(Lf.want, this.t);
+      const w = watch && watch(); if (w) Lf.turnTo(Math.atan2(w[0] - Lf.pos.x, w[1] - Lf.pos.z), dt, 2.4);
+      return (this.t > 3 && done()) || this.t > 30;
+    } };
     const seq = TK.seq('pen', [TK.path(at[0], at[1], 'hurry'), there, TK.face(face), () => { ready(); return null; }, TK.say('farewell'), cheer, TK.act('about', 1.5, STAND.about)]);
     const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;

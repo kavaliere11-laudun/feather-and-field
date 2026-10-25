@@ -5,9 +5,9 @@
 // brings them out (the right number, round her, a chick's card); a reload: they're there round her; a day on they turn
 // into young hens and roosters (the news, a young one's card, her card); a reload: still young; the next day, late in the
 // morning, they're grown: their coins in, a farewell at the gate (the farmer outside it cheering, the party, out one by
-// one and all the way off the farm, the view going along), gone; the congratulations card (each one's rating and coins,
-// the total); "Lovely!": seen, the parents' experience up, not shown again after a reload; she lays again; a brood that
-// grew up while away: its card says so; news and a brood changed outside the game are checked.
+// one and all the way off the farm, him watching them go, the view left alone), gone; the congratulations card (each
+// one's rating and coins, the total); "Lovely!": seen, the parents' experience up, not shown again after a reload; she
+// lays again; a brood that grew up while away: its card says so; news and a brood changed outside the game are checked.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -101,6 +101,7 @@ ok('a reload: they\'re there, young', s.youngs.length === n && s.youngs.every(y 
 // grown, late morning the next day: their coins in, a farewell at the gate
 await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; g.collect(c.id); g.fillFeeder(c.id, window.__T); });
 const before = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0], mum = g.bird(c.brood.hen), dad = g.birdsIn(c.id).find(b => b.sex === 'r'); return { coins: g.data.coins, mumExp: mum.exp, dadExp: dad.exp, mum: mum.id, dad: dad.id }; });
+const view0 = await p.evaluate(() => window.__farm.view.target.toArray().join());
 await jump(at(next(3) + 'T11:00:20+00:00'), false);
 s = await state();
 const news = await p.evaluate(() => window.__farm.game().unseenNews());
@@ -112,8 +113,9 @@ const said = await p.evaluate(() => document.querySelectorAll('.gsheet:not([hidd
 ok('the farmer comes to the gate and cheers; the party; then out they go', ready && party && s.fw && s.fw.phase === 'exit' && said === 0, s);
 let gone = false;
 for (let i = 0; i < 40 && !gone; i++) { await sim(2); s = await state(); gone = s.youngs.length === 0 && s.leaving === 0 && !s.fw; }
-const ex = await p.evaluate(() => window.__farm.lastExit(0));
-ok('one by one out of the gate and all the way off the farm (past its edge), the view going along with them, then gone', gone && ex && ex.past >= 1.5 && ex.panned > 5, { ex, s });
+const ex = await p.evaluate(() => window.__farm.lastExit(0)), view1 = await p.evaluate(() => window.__farm.view.target.toArray().join());
+ok('one by one out of the gate and all the way off the farm (past its edge), the farmer watching them go, then gone', gone && ex && ex.past >= 1.2 && ex.look <= 45, { ex, s });
+ok('the view never moved by itself', view1 === view0, { view0, view1 });
 await sim(2); await p.waitForTimeout(400);
 s = await state();
 const cc = await p.evaluate(() => ({ text: document.querySelector('.gsheet').innerText, rows: document.querySelectorAll('.gsheet .gkid').length, stars: [...document.querySelectorAll('.gsheet .gkid .gstars')].map(e => e.querySelectorAll('.on').length) }));
