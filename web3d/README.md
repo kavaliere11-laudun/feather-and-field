@@ -1783,3 +1783,34 @@ at each bird in its show pen and pins the rosettes. These are its pieces and a t
   every pose (the clipboard and pencil when wanted, the rosette held and brought to within a centimetre of the pen's pin, the
   walk), a real tap on a bird in a pen, no page errors. `showshot.mjs` takes pictures (`SHOTS`: views, poses, close-ups).
 
+
+## The game, release 1 step 9b: the show day (25 Oct 2026, Audrey: "Show day on the farm (Recommended)", "Hours later (Recommended)")
+
+The judging's morning, the results in and the farm free, by day (7:00 to 21:00 on the phone's clock): "🎀 Show day! The
+results of the Bramley Cross Village Show are in: the judge is looking at the birds." with "Watch the judging" and "Just
+the results" (`gameui.js` `showDayCard`). At night, or with a farewell on or the farmer in a pen, the results card as
+before. Several shows judged at once: the scene shows the grandest (National, County, Village), the card has them all.
+- **The show field** (`main.js` `showSpot`): the farm itself has no room for a 7 x 4 m tent (the home field holds the
+  farmhouse and the first coop; the fields beyond are wild meadow), so the show is on the village's show field, open grass
+  just past the farm's edge on the side of the first coop, at its height up the screen (or past the farm's front), clear
+  of the lanes, the water, the props and the trees. Watching takes the view there (the player's tap: the view never moves
+  by itself), the whole tent across the screen upright or sideways (the view free of the farm's bounds meanwhile), and
+  back to where it was once the results card is closed.
+- **The scene** (`src/showday.js` `ShowDay`, from the show ground and the judge of `showground.js`): the white tent with
+  its sign ("Village Show" and the town, "Concours de village"), the other five entries already in their pens (any breed,
+  hens and roosters, Silkies of six colours), her pen one of the six. The farmer (the player's own look) comes up from the
+  front holding her in his arms (the cuddle's hold), lifts her in at her pen's door onto the straw and steps back by the
+  sign, hands on hips ("Arthur brings Clover to the show…"). Meanwhile the judge takes his clipboard from his table, waits
+  at the first pen, then goes along them all peering in and writing ("The judge looks at every bird…"); at hers she hops
+  and flaps. Back at his table he fetches the rosettes ("And now, the rosettes!") and pins them on the pens, third, second,
+  first (the champion's rosette for a County or National winner); hers if she placed, hearts floating up over her and the
+  farmer cheering (arms up, a wave). Then everyone claps and the results card comes up over it. About 35 seconds; "Skip ⏭"
+  at the bottom right jumps to the end, every rosette pinned. Meanwhile the farm's own farmer and her bird are away at the
+  show (hidden), and taps on the farm do nothing; closed, the tent's gone and they're home.
+- Nothing new is saved: the result is the game's (`showTick`), the scene only shows it (the places of the others' rosettes
+  and the other entries from the show and bird, the same each time).
+- `showdaytest.mjs` (`LANG=fr`, `W=402 H=874`, `SHOTS=folder`): the next morning "Show day!"; Watch: the tent, the view on
+  it with the whole tent on screen, Skip, the other entries, the farmer and her bird away; a tap on the farm does nothing;
+  she's put in her pen on the straw; three rosettes pinned (hers too), the results card; closed: the tent gone, the farmer
+  and her bird home, the view back; at night the results straight away; Skip: straight to the end. `showtest.mjs` takes
+  "Just the results".
