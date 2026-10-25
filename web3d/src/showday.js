@@ -69,10 +69,12 @@ export class ShowDay {
     let jt = 0; const J = [];                          // (the judge's own steps, from the start: he sets off while the farmer comes)
     const jadd = (name, len, o = {}) => { J.push({ name, t0: jt, t1: jt + len, ...o }); jt += len; };
     jadd('take', 0.7);
+    // (he waits at his table till she's in and the farmer's stepping back: never in the farmer's way at her coop)
+    const backAt = S.find(x => x.name === 'back');
+    if (jt < backAt.t0 + 0.4) jadd('tablewait', backAt.t0 + 0.4 - jt);
     for (let i = 0; i < n; i++) {
       const to = I.pens[i].judge;
       jadd('walk', walkLen(at, to, 1.15), { from: at, to, yaw: I.pens[i].judgeYaw });
-      if (i === 0 && jt < t) jadd('wait', t - jt, { pen: 0 });        // (he waits by the first pen till she's in)
       jadd('look', i === this.mine ? 2.0 : 1.05, { pen: i, say: i === 0 ? 'judge' : null });
       jadd('write', 0.75, { pen: i });
       at = to;
@@ -139,7 +141,8 @@ export class ShowDay {
     const js = this.J.find(s => t < s.t1) || this.J[this.J.length - 1], ju = Math.min(1, (t - js.t0) / (js.t1 - js.t0));
     say(js.say);
     let jw = { pose: 'judge_carry', face: 'neutral', props: { clipboard: true } };
-    if (js.name === 'take') { G.clipboard(ju < 0.5); jw = { pose: ju < 0.5 ? 'judge_write' : 'judge_carry', face: 'neutral', props: { clipboard: ju >= 0.5 } }; }
+    if (js.name === 'tablewait') { Jd.pos.set(I.judgeTable.stand[0], 0, I.judgeTable.stand[1]); Jd.root.rotation.y = I.judgeTable.standYaw; G.clipboard(false); jw = { pose: 'judge_carry', face: 'happy', props: { clipboard: true }, anim: (Q, Fa) => { Fa.look = [-0.5, 0]; } }; }
+    else if (js.name === 'take') { G.clipboard(ju < 0.5); jw = { pose: ju < 0.5 ? 'judge_write' : 'judge_carry', face: 'neutral', props: { clipboard: ju >= 0.5 } }; }
     else if (js.name === 'walk' || js.name === 'carry' || js.name === 'stepback') {
       const walk = this.walkFig(Jd, js, ju, dt);
       jw = { pose: js.name === 'carry' ? 'stand' : 'judge_carry', face: js.name === 'carry' ? 'happy' : 'neutral', walk, phase: Jd.walkPh, keepArms: 'R', props: { clipboard: js.name === 'walk' && this.J.indexOf(js) < this.J.findIndex(s => s.name === 'fetch') } };
