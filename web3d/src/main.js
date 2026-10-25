@@ -409,7 +409,11 @@ async function start() {
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
   if (GAME_MODE) syncLand(true);
-  if (GAME_MODE) { openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); gameTick(Date.now(), true); }      // (the eggs laid while away, at once)
+  if (GAME_MODE) {
+    openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move'));
+    if (!welcome && game.data.lastSeen && openedAt - game.data.lastSeen >= AWAY_MIN) AWAY = { from: game.data.lastSeen };      // (away a while: the summary first)
+    gameTick(Date.now(), true);                            // (the eggs laid while away, at once)
+  }
   else hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
 }
@@ -3027,6 +3031,7 @@ function gameTick(now = Date.now(), force = false) {
   for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
   bubbleText(now);
   tickWheat();
+  if (now - (game.data.lastSeen || 0) > 60e3) game.seenNow(now);      // (while open: when the farm was last seen, for the welcome-back summary)
   syncLand();
   watchStars();
   showNews();
@@ -3096,6 +3101,22 @@ function placeBubbles() {
     put(B.feed, !!B.f, f[0], 0.46, f[2]);
     put(B.brood, !!B.b, G.win[0] - 0.55, G.win[2] - 0.05, 0.52);
   }
+}
+// the welcome-back card's "Collect all eggs": every nest's eggs fly to the coins at once, sold
+function collectAll() {
+  gameUI.close();
+  let n = 0, coins = 0; const done = [];
+  for (const plot of gamePlots()) {
+    if (!plot.gc.eggs) continue;
+    const B = bubbleFor(plot), at = B.eggs.hidden ? null : B.eggs.getBoundingClientRect();
+    const r = game.collect(plot.gc.id); if (!r) continue;
+    n += r.n; coins += r.coins; if (r.done) done.push(...[].concat(r.done));
+    plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
+    gameUI.flyEggs(at ? { x: at.left + at.width / 2, y: at.top + at.height / 2 } : { x: canvas.clientWidth / 2, y: canvas.clientHeight * 0.6 }, r.n, EGG_COLOUR[plot.breed]);
+  }
+  if (n) hint(game.t('away_sold', { n, c: coins }));
+  jobsDone(done);
+  return { n, coins };
 }
 // tap a nest (or its bubble): the eggs fly to the coins, sold
 function collectAt(plot) {
@@ -3363,10 +3384,16 @@ function chickCard(ch) {
   else gameUI.chickCard(ch.name, c, mum, c.brood ? game.youngAt(c) - Date.now() : 0);
 }
 // congratulations: a brood grown up and gone (game.js news), its card once the farewell's over, or (grown while the farm
-// was shut) a moment after it opens; one at a time, never over another card
-let newsFrom = Infinity, openedAt = 0;
+// was shut) a moment after it opens; one at a time, never over another card. Back after an hour or more away (the farm
+// opened, or the page shown again): the welcome-back summary first (release 1 step 9f)
+let newsFrom = Infinity, openedAt = 0, AWAY = null, hiddenAt = 0;
+const AWAY_MIN = 3600e3;
 function showNews() {
   if (!GAME_MODE || !game.data || gameUI.isOpen || inside.open || MOVE.plot || DMOVE.id || SHOWDAY || performance.now() < newsFrom) return;
+  if (AWAY) {
+    const sum = game.awaySummary(AWAY.from); AWAY = null;
+    if (sum.items.length || sum.paused) { holdBird(null); henOff(); gameUI.awayCard(sum, { collectAll: () => collectAll() }); return; }
+  }
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const sr = game.unseenShows();                                           // (the show results: the show day first, by day)
@@ -5132,7 +5159,12 @@ function showReadout() {
   readout.classList.toggle('slow', fps < 18);
 }
 
-document.addEventListener('visibilitychange', () => { lastSim = 0; meter.since = 0; meter.frames = 0; });
+document.addEventListener('visibilitychange', () => {
+  lastSim = 0; meter.since = 0; meter.frames = 0;
+  if (!GAME_MODE || !game || !game.data) return;
+  if (document.hidden) hiddenAt = Date.now();               // (put away: the save keeps when it was last seen, to the minute)
+  else if (hiddenAt && Date.now() - hiddenAt >= AWAY_MIN) { AWAY = { from: hiddenAt }; newsFrom = performance.now() + 1500; }      // (back after a while: the summary)
+});
 
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
 window.__farm = {
@@ -5170,6 +5202,7 @@ window.__farm = {
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
     wheat: { tap: () => wheatTap(), sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => startDecor('wheat'),
       state: () => { const it = DEC.items.wheat; return { stage: game.wheatStage(), shown: FIELD.shown, hold: FIELD.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },
+    away: { at: t => { AWAY = { from: t }; newsFrom = 0; }, pending: () => !!AWAY, collectAll: () => collectAll() },
     honey: { tap: () => honeyTap(), n: () => game.honeyAt(), state: () => ({ n: game.honeyAt(), going: FIELD.honey, work: FIELD.work && FIELD.work.kind, frame: FIELD.frameOn, bub: FIELD.hbub && !FIELD.hbub.hidden ? FIELD.hbub.textContent : null }) } },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap

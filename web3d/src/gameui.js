@@ -628,6 +628,26 @@ export class GameUI {
   }
   // a time to wait, in hours and minutes ("3 h 59 min", "25 min")
   dur(ms) { const m = Math.max(1, Math.ceil(ms / 60e3)), h = Math.floor(m / 60), r = m % 60; return h ? this.t('h', { n: h }) + (r ? ' ' + this.t('min', { n: r }) : '') : this.t('min', { n: m }); }
+  // a long time away ("2 days 3 h", "9 h 12 min")
+  longDur(ms) { const d = Math.floor(ms / 86400e3); if (!d) return this.dur(ms); const h = Math.floor((ms - d * 86400e3) / 3600e3); return (d === 1 ? this.t('days1') : this.t('days', { n: d })) + (h ? ' ' + this.t('h', { n: h }) : ''); }
+  // ---- the welcome-back summary (release 1 step 9f): how long you were away, then what's waiting, one line each with
+  // its picture; "Collect all eggs (14)" (h.collectAll) when there are eggs; "Off to the farm"
+  awayCard(sum, h) {
+    const b = this.open('away', this.t('away_title'));
+    this.bird = null;
+    b.append(el('p', 'gsub', this.t('away_for', { t: this.longDur(sum.away) })));
+    if (sum.paused) b.append(el('p', 'gnote', this.t('away_paused')));
+    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
+    const list = el('div', 'gcard gaway');
+    for (const it of sum.items) {
+      const one = it.n === 1 && ['eggs', 'full', 'honey', 'jobs_ready'].includes(it.k), txt = this.t('away_' + it.k + (one ? '1' : ''), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
+      const row = el('div', 'gaway-r' + (it.k === 'feed' || it.k === 'full' ? ' gwarn' : '')); row.dataset.k = it.k;
+      row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
+    }
+    if (sum.items.length) b.append(list);
+    if (sum.eggs) { const c = el('button', 'gbtn', this.t('away_collect', { n: sum.eggs })); c.type = 'button'; c.addEventListener('click', () => h.collectAll()); b.append(c); }
+    const ok = el('button', 'gbtn' + (sum.eggs ? ' galt' : ''), this.t('away_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close()); b.append(ok);
+  }
   // ---- the wheat field (tapped, not ripe): how far it's grown and when it's ripe, what it gives, the grain in store; Sow
   // (h.sow) or, ripe, Harvest (h.harvest); Move the field (h.move)
   wheatSheet(h) {

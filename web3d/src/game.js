@@ -109,6 +109,12 @@ const TEXT = {
     of_classic: 'Classic', of_market: 'Market day', of_garden: 'Garden party', of_winter: 'Winter woollies', of_rodeo: 'Rodeo', of_show: 'Show day',
     ofd_classic: 'Straw hat and a checked shirt.', ofd_market: 'Tweed flat cap and a blue checked shirt.', ofd_garden: 'Flowery sun hat and a yellow gingham shirt.', ofd_winter: 'Bobble hat and a green jumper.', ofd_rodeo: 'Cowboy hat, chambray shirt and a neckerchief.', ofd_show: 'Top hat, white shirt and a prize rosette.',
     out_buy: 'Buy and wear · {c}', out_wear: 'Wear', out_wearing: 'Wearing', out_bought: '{farmer} tries on the {name} outfit! +{xp} XP', out_worn: '{farmer} is wearing the {name} outfit.', out_new: 'New outfit for {farmer}: {names}',
+    away_title: 'While you were away', away_for: 'You were away {t}.', away_paused: 'You were away more than 2 days: your hens laid for the last two.',
+    away_eggs: '{n} eggs are waiting in your nests', away_eggs1: 'An egg is waiting in a nest', away_full: '{n} nests are full: those hens have stopped laying', away_full1: 'A nest is full: those hens have stopped laying',
+    away_hatched: '{name} hatched {n} chicks', away_grown: '{name}’s chicks have grown up: their card is next', away_honey: '{n} jars of honey in the hives', away_honey1: 'A jar of honey in the hives',
+    away_wheat: 'Your wheat is ripe: tap the field to harvest it', away_wheat_grow: 'Your wheat is growing: ripe in {t}', away_feed: '{coop}: the feeder is empty', away_feed_low: '{coop}: the feeder is low',
+    away_show: 'The show results are in: they’re next', away_jobs: 'New jobs for today', away_jobs_ready: '{n} job rewards to collect', away_jobs_ready1: 'A job reward to collect',
+    away_collect: 'Collect all eggs ({n})', away_ok: 'Off to the farm', away_sold: '{n} eggs sold · +{c} coins',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
     job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
@@ -236,6 +242,12 @@ const TEXT = {
     of_classic: 'Classique', of_market: 'Jour de marché', of_garden: 'Garden-party', of_winter: 'Lainages d’hiver', of_rodeo: 'Rodéo', of_show: 'Jour de concours',
     ofd_classic: 'Chapeau de paille et chemise à carreaux.', ofd_market: 'Casquette en tweed et chemise à carreaux bleus.', ofd_garden: 'Chapeau fleuri et chemise vichy jaune.', ofd_winter: 'Bonnet à pompon et pull vert.', ofd_rodeo: 'Chapeau de cow-boy, chemise en chambray et foulard.', ofd_show: 'Haut-de-forme, chemise blanche et cocarde de champion.',
     out_buy: 'Acheter et porter · {c}', out_wear: 'Porter', out_wearing: 'Portée', out_bought: '{farmer} enfile la tenue {name} ! +{xp} XP', out_worn: '{farmer} porte la tenue {name}.', out_new: 'Nouvelle tenue pour {farmer} : {names}',
+    away_title: 'Pendant votre absence', away_for: 'Vous étiez loin de la ferme pendant {t}.', away_paused: 'Plus de 2 jours loin de la ferme : vos poules ont pondu pour les deux derniers.',
+    away_eggs: '{n} œufs vous attendent dans les pondoirs', away_eggs1: 'Un œuf vous attend dans un pondoir', away_full: '{n} pondoirs sont pleins : ces poules ont arrêté de pondre', away_full1: 'Un pondoir est plein : ces poules ont arrêté de pondre',
+    away_hatched: '{name} a fait éclore {n} poussins', away_grown: 'Les poussins de {name} ont grandi : leur carte arrive', away_honey: '{n} pots de miel dans les ruches', away_honey1: 'Un pot de miel dans les ruches',
+    away_wheat: 'Votre blé est mûr : touchez le champ pour le récolter', away_wheat_grow: 'Votre blé pousse : mûr dans {t}', away_feed: '{coop} : la mangeoire est vide', away_feed_low: '{coop} : la mangeoire est presque vide',
+    away_show: 'Les résultats des concours sont arrivés : ils arrivent juste après', away_jobs: 'De nouvelles tâches aujourd’hui', away_jobs_ready: '{n} récompenses de tâches à récupérer', away_jobs_ready1: 'Une récompense de tâche à récupérer',
+    away_collect: 'Ramasser tous les œufs ({n})', away_ok: 'Aller à la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
@@ -588,6 +600,8 @@ export function checkFarm(d, now = Date.now()) {
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
   out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: wh.deg === 135 ? 135 : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
   out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
+  // when the farm was last open (for the welcome-back summary): never ahead of now
+  out.lastSeen = Number.isFinite(d.lastSeen) && d.lastSeen > 0 ? Math.min(d.lastSeen, now) : now;
   // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
   // done at most as far as its target and paid only once done
   const jb = d.jobs && typeof d.jobs === 'object' ? d.jobs : null;
@@ -828,6 +842,24 @@ export class Game {
     const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
     return { n, coins, xp };
   }
+  // ---- the welcome-back summary (release 1 step 9f; Audrey: "Welcome-back summary (Recommended)"): after time away (from:
+  // when the farm was last open), what's waiting: the eggs in the nests (and full nests), chicks hatched and grown, honey,
+  // the wheat, feeders empty or low, show results, the day's jobs
+  awaySummary(from, now = Date.now()) {
+    const d = this.data, items = [], name = id => { const b = this.bird(id); return b ? b.name : ''; };
+    const eggs = d.coops.reduce((a, c) => a + (c.eggs || 0), 0), full = d.coops.filter(c => c.eggs >= NEST_MAX).length;
+    if (eggs) items.push({ k: 'eggs', n: eggs });
+    if (full) items.push({ k: 'full', n: full });
+    for (const c of d.coops) { const br = c.brood; if (br && br.hatched && this.hatchAt(c) > from) items.push({ k: 'hatched', name: name(br.hen), n: br.n }); }
+    for (const n of this.unseenNews()) if (n.type === 'grown' && n.t > from) items.push({ k: 'grown', name: name(n.hen) });
+    const h = this.honeyAt(now); if (h) items.push({ k: 'honey', n: h });
+    if (this.wheatStage(now) === 'ripe') items.push({ k: 'wheat' }); else if (this.wheat().ripe) items.push({ k: 'wheat_grow', ms: this.wheatLeft(now) });
+    for (const c of d.coops) { const l = this.feedLeft(c, now); if (l <= 0) items.push({ k: 'feed', coop: this.coopName(c) }); else if (l < 0.25) items.push({ k: 'feed_low', coop: this.coopName(c) }); }
+    if (this.unseenShows().length) items.push({ k: 'show' });
+    const jr = this.jobsReady(now); if (jr) items.push({ k: 'jobs_ready', n: jr }); else if (!this.jobs(now).seen) items.push({ k: 'jobs' });
+    return { away: Math.max(0, now - from), paused: now - from > CATCH_UP, eggs, items };
+  }
+  seenNow(now = Date.now()) { this.data.lastSeen = now; this.save(); }
   // ---- the farmer's outfits: bought (and put on at once), worn
   outfitOwned(id) { return id === 'classic' || (this.data.farmer.outfits || []).includes(id); }
   outfitNext(id) { return OUTFITS[id] && !this.outfitOwned(id) && this.level >= OUTFITS[id].level; }
@@ -918,7 +950,7 @@ export class Game {
     this.data.news = [];
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
-    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0;
+    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.lastSeen = now;
     this.edited = false;
     this.save();
     return this.data;
