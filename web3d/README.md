@@ -1653,3 +1653,30 @@ the 2D game's cuddles and trust carried over (game-design-v1.md) and made the fa
   second one while happy; 6 hours on; Friendly, Trusting, Best friend (+20 XP), trust stopping at 15; a star from a cuddle;
   stars from time; eggs a coin dearer a star; at night; the greeting at the fence; a reload; a save changed outside.
 
+## The game, release 1 step 8: the Breed Book (25 Oct 2026)
+
+From the plan (`claude/game-plan-v2.md`): "a book on the farmhouse shelf with a page for each breed and each Silkie
+colour: its picture, found or not yet; how to get it; its eggs and its coop". For now the five breeds of release 1; the
+other Silkie colours (release 2) and the fish (release 5) get their pages when they come ("More pages to come.").
+- **Opening it:** tap the farmhouse, by day or night (`main.js` `farmhouseAt`: its model's box, checked after the birds
+  and the coops, before the land behind it), or "📖 Breed Book" at the bottom of Your coops.
+- **The book** (`gameui.js` `bookSheet`, `game.js` `bookPages`): "Breed Book" / "Livre des races", "1 of 5 breeds found",
+  then a page for each breed in level order: Rhode Island Red, Buff Orpington, White Silkie, Cream Legbar, Light Brahma.
+  Each page: its picture; its name; found (its coop on the farm): "On your farm: Rupert, Henrietta and Mabel" (the
+  rooster first); not yet: "Comes at level 5" and the picture a dark silhouette, or once its level has come "Their coop
+  is waiting for you in Your coops" with "Place it"; its eggs, a little egg in the farm's own colour for them ("Brown
+  eggs · 6 coins an egg, plus a coin for each star of the hen"; light brown, cream-tinted, blue, light brown; 6 to 9
+  coins from `EGG_PRICE`); its coop ("Red Barn, rustic to start"). Upright a taller sheet (the hint hidden while it's
+  open); sideways the card on the right, a little wider than the others (fewer lines). Names set as text, never HTML.
+- **The pictures** (`book/<breed>.webp`, 320 x 320, 18 to 28 KB each, copied by `build.sh`): `bookpics.mjs` stands each
+  breed's rooster and hen from the test page's line-up (`index.html?lineup`; the Silkies the white ones) together on
+  their own, the hen in front, both turned to the left and looking round at you; shoots them through a long lens on black
+  and on white and cuts them out from the two (soft fur edges and their soft shadow see-through), crops round them and
+  shrinks them. The birds are only stood and posed for it; no model or look changes (the Silkies as they are).
+  `./withserver.sh node bookpics.mjs` makes them again (`PREVIEW=folder` for PNG previews, found and not).
+- **The save:** nothing new. Found or not comes from the coops on the farm, the levels from the XP.
+- `booktest.mjs` (`LANG=fr`, `W=874 H=402`, `SHOTS=folder` for pictures): a real tap on the farmhouse (the book, "1 of 5",
+  the pages in order with their pictures, the Reds' trio named, the others "level N" as silhouettes, eggs, coops, "More
+  pages to come", all in sight); closed, nothing saved; Your coops' button; at night; level 5 (the Orpingtons waiting,
+  "Place it" from the book, placed: "2 of 5", their trio named); a name with code in it shown as text.
+

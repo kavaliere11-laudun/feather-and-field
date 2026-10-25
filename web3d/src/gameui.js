@@ -8,6 +8,8 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName } from './g
 // with grass to spare on every side, so it can be fitted to any screen, upright or sideways.
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
 export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.642, 0.79] };
+// the little barn (as on Your coops' button): the Breed Book's coop lines
+const BARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 
@@ -73,6 +75,7 @@ export class GameUI {
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats'); document.body.classList.toggle('gcong', kind === 'congrats'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
+    this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
     return this.body;
   }
   close() {
@@ -390,6 +393,39 @@ export class GameUI {
     }
     const nx = g.nextBreed();
     b.append(el('p', 'gnote', nx ? this.t('coops_next', { n: nx.level, breed: g.breedName(nx.breed) }) : this.t('coops_all')));
+    if (h.book) { const bk = el('button', 'gbtn galt gbookbtn', this.t('book_btn')); bk.type = 'button'; bk.addEventListener('click', () => h.book()); b.append(bk); }
+  }
+
+  // ---- the Breed Book (release 1 step 8; on the farmhouse shelf): a page for each breed in level order, its picture (made
+  // from the game's own birds: bookpics.mjs) beside its words. Found (its coop on the farm): who lives there; not yet: the
+  // picture a dark silhouette, and the level it comes at (or, its level come, waiting in Your coops: h.place(breed)). Its
+  // eggs (h.egg: their colours, main.js) and its coop. Names set as text, never as HTML
+  bookSheet(h = {}) {
+    const g = this.g, pages = g.bookPages(), found = pages.filter(x => x.found).length;
+    const b = this.open('book', this.t('book_title'));
+    this.bird = null; b.scrollTop = 0;
+    b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
+    const list = names => names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] || '';
+    for (const pg of pages) {
+      const card = el('div', 'gcard gpage' + (pg.found ? '' : ' gpage-no')); card.dataset.breed = pg.breed;
+      const pic = el('div', 'gpic'), img = el('img');
+      img.alt = ''; img.width = img.height = 320; img.decoding = 'async'; img.src = 'book/' + pg.breed + '.webp' + (this.o.bust || '');
+      pic.append(img);
+      const info = el('div', 'gpage-i');
+      info.append(el('span', 'gcard-t', g.bookName(pg.breed)));
+      info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
+      const eggs = el('p', 'gnote gpage-l'), ei = el('span', 'gegg-i'), et = el('span');
+      if (h.egg && h.egg[pg.breed]) ei.style.setProperty('--egg', h.egg[pg.breed]);
+      et.append(el('span', 'gpage-k', this.t('egg_' + pg.breed)), document.createTextNode(' · ' + this.t('book_price', { p: pg.price })));
+      eggs.append(ei, et);
+      const coop = el('p', 'gnote gpage-l'), ci = el('span', 'gpage-c');
+      ci.innerHTML = BARN;                              // (the little barn of Your coops: a fixed drawing, nothing of the save)
+      coop.append(ci, el('span', null, this.t('book_coop', { coop: g.coopName({ breed: pg.breed, name: '' }) })));
+      info.append(eggs, coop);
+      if (pg.waiting && h.place) { const go = el('button', 'gbtn gsmallbtn gpage-go', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(pg.breed)); info.append(go); }
+      card.append(pic, info); b.append(card);
+    }
+    b.append(el('p', 'gnote gcenter', this.t('book_more')));
   }
 
   coinSheet() {

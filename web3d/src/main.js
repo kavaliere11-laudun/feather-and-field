@@ -2843,6 +2843,8 @@ function tapAt(x, y) {
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { coopCard(p); return; }
     }
+    // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it)
+    if (GAME_MODE && game.data && farmhouseAt(ray.ray)) { bookSheet(); return; }
     // the game: the field for sale (its card), or the wild meadow (when it comes up for sale)
     if (GAME_MODE && FIELDS && game.data) {
       const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP), f = gp ? fieldAt(gp.x, gp.z) : -1;
@@ -3811,7 +3813,24 @@ function endMove(placed) {
 // other; put down, it's on the farm for good ("Welcome, Duke, Honey and Clover!"); Cancel, and it waits again
 function coopsSheet() {
   holdBird(null); henOff();
-  gameUI.coopsSheet({ place: b => { gameUI.close(); startPlace(b); }, move: id => { const p = gamePlots().find(q => q.gc.id === id); gameUI.close(); if (p) startMove(p); } });
+  gameUI.coopsSheet({ place: b => { gameUI.close(); startPlace(b); }, move: id => { const p = gamePlots().find(q => q.gc.id === id); gameUI.close(); if (p) startMove(p); }, book: () => bookSheet() });
+}
+// ---- the Breed Book (release 1 step 8; gameui.js bookSheet, game.js bookPages): on the farmhouse shelf. A tap on the
+// farmhouse (by day or night) opens it, or "📖 Breed Book" at the bottom of Your coops. A page for each breed: found or
+// not yet, how it comes, its eggs (their colours as the farm's own) and its coop; a breed waiting can be placed from it
+function bookSheet() {
+  holdBird(null); henOff();
+  gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); } });
+}
+// whether a ray meets the farmhouse (its model's box, where the village has it)
+let HOUSE_HIT = null;
+function farmhouseAt(r) {
+  if (!HOUSE_HIT) {
+    const fh = V.props.find(p => p.model === 'farmhouse'); if (!fh || !parts.farmhouse) return false;
+    const m = place(fh.pos[0], 0, fh.pos[2], fh.deg, fh.s || 1);
+    HOUSE_HIT = { m, inv: m.clone().invert(), box: new THREE.Box3().setFromObject(parts.farmhouse) };
+  }
+  return new THREE.Ray().copy(r).applyMatrix4(HOUSE_HIT.inv).intersectsBox(HOUSE_HIT.box);
 }
 function startPlace(breed) {
   if (MOVE.plot || inside.open || !game.waitingCoops().includes(breed)) return false;
@@ -4410,6 +4429,8 @@ window.__farm = {
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
+  // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
+  book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
   nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id) }), underCoop: (x, z, m) => underCoop(x, z, m),
   screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },

@@ -14,5 +14,6 @@ rm -rf dist/models && mkdir -p dist/models
 cp models/plants.glb models/flock.glb models/flock.json models/coops.glb models/coops.json models/silkie_hair.jpg models/village.glb models/village.json models/layout.json models/meadow.jpg models/interiors.glb models/interiors.json models/beasts.glb models/beasts.json models/fauna.glb models/geese.glb models/geese.json models/farmer.glb models/farmer.json models/decor.glb models/decor.json models/fields.json dist/models/
 rm -rf dist/fonts && cp -r fonts dist/fonts          # (the replay's title cards: IM Fell English, with its licence)
 cp welcome.jpg dist/welcome.jpg                      # (the game's welcome picture: main.js ?poster, rendered by posterpic.mjs)
+rm -rf dist/book && cp -r book dist/book             # (the Breed Book's pictures, one a breed: rendered by bookpics.mjs)
 cp icon-180.png icon-192.png icon-512.png play.webmanifest dist/     # (added to the Home Screen: the game opens full screen, the rooster as its icon)
 echo "built: $(du -sh dist | cut -f1)"
