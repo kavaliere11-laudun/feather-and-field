@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -305,17 +305,19 @@ export class GameUI {
     b.append(el('p', 'gtext gfeedpct', pct >= 99 ? this.t('feed_full') : pct <= 0 ? this.t('feed_empty') : this.t('feed_pct', { p: pct })), bar);
     b.append(el('p', 'gtext', left <= 0 ? this.t('feed_empty_line') : h >= 47 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
     b.append(el('p', 'gnote', this.t('feed_how')));
-    const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
+    if (g.data.grain >= 0.5) b.append(el('p', 'gnote gfound', '🌾 ' + this.t('feed_grain', { n: Math.floor(g.data.grain) })));
+    const grain = q.grain >= 0.01 && !q.full && !q.broke && !q.scraps;
+    const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : grain && !q.cost ? this.t('fill_grain') : grain && !q.partial ? this.t('fill_grain_c', { c: q.cost }) : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
     go.type = 'button'; go.disabled = !!(q.full || q.broke); if (go.disabled) go.classList.add('galt');
     go.addEventListener('click', () => { if (!go.disabled) onFill(); });
     b.append(go);
   }
   // ---- eggs flying from the nest to the coins, then the coins counted up
-  flyEggs(from, n, colour, done) {
+  flyEggs(from, n, colour, done, cls = 'gegg') {
     const to = this.coins.getBoundingClientRect(), tx = to.left + 18, ty = to.top + to.height / 2;
     const k = Math.max(1, Math.min(6, n)); let left = k;
     for (let i = 0; i < k; i++) {
-      const e = el('div', 'gegg'); e.style.background = colour; e.style.left = (from.x - 9) + 'px'; e.style.top = (from.y - 11) + 'px'; document.body.append(e);
+      const e = el('div', cls); if (colour) e.style.background = colour; e.style.left = (from.x - 9) + 'px'; e.style.top = (from.y - 11) + 'px'; document.body.append(e);
       const dx = tx - from.x, dy = ty - from.y, lift = -40 - 20 * (i % 3);
       const a = e.animate ? e.animate([
         { transform: 'translate(0,0) scale(0.6) rotate(0deg)', opacity: 0 },
@@ -624,12 +626,33 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
   }
+  // a time to wait, in hours and minutes ("3 h 59 min", "25 min")
+  dur(ms) { const m = Math.max(1, Math.ceil(ms / 60e3)), h = Math.floor(m / 60), r = m % 60; return h ? this.t('h', { n: h }) + (r ? ' ' + this.t('min', { n: r }) : '') : this.t('min', { n: m }); }
+  // ---- the wheat field (tapped, not ripe): how far it's grown and when it's ripe, what it gives, the grain in store; Sow
+  // (h.sow) or, ripe, Harvest (h.harvest); Move the field (h.move)
+  wheatSheet(h) {
+    const g = this.g, st = g.wheatStage(), b = this.open('wheat', this.t('wheat_title'));
+    this.bird = null;
+    b.append(el('p', 'gtext gwheat-s', this.t('wheat_' + st)));
+    if (st !== 'soil' && st !== 'ripe') {
+      const left = g.wheatLeft(), u = 1 - left / WHEAT.grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
+      b.append(bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
+    }
+    b.append(el('p', 'gnote', this.t('wheat_how', { c: WHEAT.sow, g: WHEAT.grain, xp: WHEAT.xp })));
+    b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: WHEAT.max })));
+    if (st === 'soil') {
+      const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
+      go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
+    } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => h.harvest()); b.append(go); }
+    const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+  }
   // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)
   decorCard(id, onMove) {
     const g = this.g, body = this.open('decor', g.decorName(id));
     this.bird = null;
     const card = el('div', 'gcard gpage gdec gdec-own'), pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
     const info = el('div', 'gpage-i'); info.append(el('p', 'gtext', this.t('decl_' + id)));
+    if (id === 'beehives' && g.data.honey) { const n = g.honeyAt(); info.append(el('p', 'gpage-s gfound', '🍯 ' + (n ? (n === 1 ? this.t('honey_jar') : this.t('honey_jars', { n })) : this.t('honey_none', { t: this.dur(g.honeyNext()) })))); }
     if (!DECOR[id].pond) info.append(el('p', 'gnote', this.t('dec_card_body')));
     card.append(pic, info); body.append(card);
     if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }

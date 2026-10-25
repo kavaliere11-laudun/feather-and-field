@@ -21,7 +21,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0`, { wai
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60 * Math.pow(19, 2.1) + 5; g.data.coins = 200000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7]; g.data.lvSeen = g.level; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = Math.round(60 * Math.pow(19, 2.1) + 5); g.data.coins = 200000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7]; g.data.lvSeen = g.level; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 const placed = [];

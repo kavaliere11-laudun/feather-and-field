@@ -101,7 +101,7 @@ const TEXT = {
     rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
     shop_title: 'Decorate your farm', shop_coins: 'Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:',
     dec_flowers: 'Cottage flower bed', dec_birdbath: 'Bird bath', dec_beehives: 'Beehives', dec_duckhouse: 'Duck house', dec_greenhouse: 'Greenhouse', dec_windmill: 'Windmill', dec_bandstand: 'Bandstand', dec_statue: 'Golden cockerel',
-    decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.',
+    decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender, and honey to sell: a jar every 8 hours.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.',
     dec_buy: 'Buy and place · {c}', dec_buy_pond: 'Buy · {c}', dec_level: 'Comes at level {n}', dec_broke: 'Not enough coins yet', dec_owned: 'On your farm', dec_move: 'Move', dec_xp: '+{xp} XP',
     dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_way: 'It would block the way to a coop.',
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
@@ -133,6 +133,15 @@ const TEXT = {
     feed_hours: 'Enough for about {h} hours.', feed_hour: 'Enough for about an hour.', feed_days: 'Enough for about two days.',
     feed_empty_line: 'Your hens stop laying until it’s filled.',
     feed_how: 'Your hens lay while there’s food in it. Full, it feeds your trio for two days.',
+    fill_grain: 'Fill it with your grain (free)', fill_grain_c: 'Fill it · {c} coins + your grain', feed_grain: 'Your grain from the wheat field: {n} (used first).',
+    filled_grain: 'Feeder filled with your own grain', farmer_grain: '{farmer} is on the way with your grain',
+    wheat_title: 'Your wheat field', wheat_soil: 'Ploughed and ready to sow.', wheat_sown: 'Sown: the first shoots soon.', wheat_sprouts: 'The first green shoots.', wheat_growing: 'Growing tall and green.', wheat_ripe: 'Golden and ready to harvest!',
+    wheat_how: 'Sow it for {c} coins; 4 hours later it’s ripe. Harvested, it gives {g} grain for your feeders (they use it before coins) and {xp} XP.',
+    wheat_left: 'Ripe in {t}', wheat_store: 'Grain in store: {n} of {max}', wheat_sow: 'Sow · {c} coins', wheat_harvest: 'Harvest', wheat_move: 'Move the field', wheat_broke: 'Not enough coins to sow yet',
+    bub_sow: 'Sow', bub_harvest: 'Harvest', wheat_sowing: '{farmer} is on the way to sow the wheat · −{c} coins', wheat_sowed: 'Wheat sown · −{c} coins. Ripe in 4 hours.',
+    wheat_cutting: '{farmer} is on the way to harvest the wheat', wheat_done: 'Wheat harvested: +{g} grain for the feeders · +{xp} XP', wheat_full: 'Wheat harvested · +{xp} XP (your grain store is full)',
+    honey_title: 'Honey', honey_jars: '{n} jars of honey', honey_jar: 'A jar of honey', honey_none: 'No honey yet: the next jar in {t}.', honey_going: '{farmer} is on the way to the beehives',
+    honey_sold: '{n} jars of honey sold · +{c} coins', honey_sold1: 'A jar of honey sold · +{c} coins',
     fill_btn: 'Fill it · {c} coins', fill_part: 'Fill what you can · {c} coins', fill_scraps: 'Kitchen scraps (free)', fill_full: 'It’s full', fill_broke: 'Sell some eggs first',
     filled: 'Feeder filled · −{c} coins', filled_scraps: 'Kitchen scraps in the feeder: enough for a few hours.',
     farmer_feed: '{farmer} is on the way with the feed · −{c} coins', farmer_scraps: '{farmer} is on the way with some kitchen scraps',
@@ -219,7 +228,7 @@ const TEXT = {
     rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
     shop_title: 'Décorez votre ferme', shop_coins: 'Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :',
     dec_flowers: 'Massif de fleurs', dec_birdbath: 'Bain d’oiseaux', dec_beehives: 'Ruches', dec_duckhouse: 'Maison des canards', dec_greenhouse: 'Serre', dec_windmill: 'Moulin à vent', dec_bandstand: 'Kiosque à musique', dec_statue: 'Coq d’or',
-    decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.',
+    decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande, et du miel à vendre : un pot toutes les 8 heures.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.',
     dec_buy: 'Acheter et placer · {c}', dec_buy_pond: 'Acheter · {c}', dec_level: 'Arrive au niveau {n}', dec_broke: 'Pas encore assez de pièces', dec_owned: 'Dans votre ferme', dec_move: 'Déplacer', dec_xp: '+{xp} XP',
     dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
@@ -251,6 +260,15 @@ const TEXT = {
     feed_hours: 'De quoi tenir environ {h} heures.', feed_hour: 'De quoi tenir environ une heure.', feed_days: 'De quoi tenir environ deux jours.',
     feed_empty_line: 'Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie.',
     feed_how: 'Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.',
+    fill_grain: 'La remplir avec votre grain (gratuit)', fill_grain_c: 'La remplir · {c} pièces + votre grain', feed_grain: 'Votre grain du champ de blé : {n} (utilisé d’abord).',
+    filled_grain: 'Mangeoire remplie avec votre propre grain', farmer_grain: '{farmer} arrive avec votre grain',
+    wheat_title: 'Votre champ de blé', wheat_soil: 'Labouré et prêt à semer.', wheat_sown: 'Semé : les premières pousses bientôt.', wheat_sprouts: 'Les premières pousses vertes.', wheat_growing: 'Il pousse, haut et vert.', wheat_ripe: 'Doré et prêt à récolter !',
+    wheat_how: 'Semez-le pour {c} pièces ; 4 heures plus tard, il est mûr. Récolté, il donne {g} de grain pour vos mangeoires (utilisé avant les pièces) et {xp} XP.',
+    wheat_left: 'Mûr dans {t}', wheat_store: 'Grain en réserve : {n} sur {max}', wheat_sow: 'Semer · {c} pièces', wheat_harvest: 'Récolter', wheat_move: 'Déplacer le champ', wheat_broke: 'Pas encore assez de pièces pour semer',
+    bub_sow: 'Semer', bub_harvest: 'Récolter', wheat_sowing: '{farmer} va semer le blé · −{c} pièces', wheat_sowed: 'Blé semé · −{c} pièces. Mûr dans 4 heures.',
+    wheat_cutting: '{farmer} va récolter le blé', wheat_done: 'Blé récolté : +{g} de grain pour les mangeoires · +{xp} XP', wheat_full: 'Blé récolté · +{xp} XP (votre réserve de grain est pleine)',
+    honey_title: 'Miel', honey_jars: '{n} pots de miel', honey_jar: 'Un pot de miel', honey_none: 'Pas encore de miel : le prochain pot dans {t}.', honey_going: '{farmer} va aux ruches',
+    honey_sold: '{n} pots de miel vendus · +{c} pièces', honey_sold1: 'Un pot de miel vendu · +{c} pièces',
     fill_btn: 'La remplir · {c} pièces', fill_part: 'Remplir ce que vous pouvez · {c} pièces', fill_scraps: 'Des restes de cuisine (gratuit)', fill_full: 'Elle est pleine', fill_broke: 'Vendez d’abord quelques œufs',
     filled: 'Mangeoire remplie · −{c} pièces', filled_scraps: 'Des restes de cuisine dans la mangeoire : de quoi tenir quelques heures.',
     farmer_feed: '{farmer} arrive avec le grain · −{c} pièces', farmer_scraps: '{farmer} arrive avec des restes de cuisine',
@@ -405,6 +423,13 @@ export const DECOR = {
   greenhouse: { level: 10, price: 6000 }, windmill: { level: 13, price: 12000 }, bandstand: { level: 16, price: 20000 }, statue: { level: 20, price: 40000 },
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
+// ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
+// start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
+// unit of feed) and XP. Starting values (the balance is step 11)
+export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 30, xp: 12, max: 120 };
+// ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
+// beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
+export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
 export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
 export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
@@ -558,6 +583,11 @@ export function checkFarm(d, now = Date.now()) {
     const X = spotNum(x.x), Z = spotNum(x.z);
     out.decor.push(DECOR[x.id].pond ? { id: x.id } : { id: x.id, x: X === null ? null : X, z: Z === null ? null : Z });
   }
+  // the wheat field: where it is (the farm puts it on your land when it has no spot), which way it lies, when it's ripe
+  // (0: not sown; never further ahead than it takes to grow); the grain in store
+  const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
+  out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: wh.deg === 135 ? 135 : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
+  out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
   // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
   // done at most as far as its target and paid only once done
   const jb = d.jobs && typeof d.jobs === 'object' ? d.jobs : null;
@@ -568,6 +598,11 @@ export function checkFarm(d, now = Date.now()) {
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
     const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
     if (mum) out.first = { hen: mum.id, t: firstEggAt(now) };
+  }
+  // the honey (only with the beehives): the jars waiting, and when the last one came (never ahead of now)
+  if (out.decor.some(o => o.id === 'beehives')) {
+    const hn = d.honey && typeof d.honey === 'object' ? d.honey : {};
+    out.honey = { n: int(hn.n, 0, HONEY.max, 0), at: Number.isFinite(hn.at) ? Math.min(hn.at, now) : now };
   }
   return out;
 }
@@ -746,6 +781,7 @@ export class Game {
     if (!D.pond && (X === null || Z === null)) return null;
     this.data.coins -= D.price; const xp = decorXp(id); this.data.xp += xp;
     (this.data.decor || (this.data.decor = [])).push(D.pond ? { id } : { id, x: X, z: Z });
+    if (id === 'beehives') this.data.honey = { n: 0, at: Date.now() };          // (the first jar 8 hours on)
     this.cleared(clear); this.save();
     return { price: D.price, xp };
   }
@@ -757,6 +793,41 @@ export class Game {
   // the trees, bushes and rocks cleared where something was put (the village's own ids, each once)
   cleared(list) { for (const k of list) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k); }
   decorName(id) { return this.t('dec_' + id); }
+  // ---- the wheat field: how far it's grown, sowing it, harvesting it, where it is
+  wheat() { return this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
+  wheatStage(now = Date.now()) {
+    const w = this.wheat(); if (!w.ripe) return 'soil';
+    const u = 1 - (w.ripe - now) / WHEAT.grow;
+    return u >= 1 ? 'ripe' : u >= 0.45 ? 'growing' : u >= 0.1 ? 'sprouts' : 'sown';
+  }
+  wheatLeft(now = Date.now()) { const w = this.wheat(); return w.ripe ? Math.max(0, w.ripe - now) : 0; }
+  sowWheat(now = Date.now()) {
+    const w = this.wheat(); if (w.ripe) return null;
+    if (this.data.coins < WHEAT.sow) return { broke: true };
+    this.data.coins -= WHEAT.sow; w.ripe = now + WHEAT.grow; this.save();
+    return { cost: WHEAT.sow };
+  }
+  harvestWheat(now = Date.now()) {
+    const w = this.wheat(); if (!w.ripe || now < w.ripe) return null;
+    const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, WHEAT.max - g));
+    w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.save();
+    return { grain: add, xp: WHEAT.xp, store: this.data.grain };
+  }
+  placeWheat(at, clear = []) {
+    const X = spotNum(at.x), Z = spotNum(at.z); if (X === null || Z === null) return false;
+    const w = this.wheat(); w.x = X; w.z = Z; w.deg = at.deg === 135 ? 135 : 45; this.cleared(clear); this.save(); return true;
+  }
+  // ---- honey: the jars in the hives now, when the next comes, harvesting them (sold)
+  honeyAt(now = Date.now()) { const H = this.data.honey; if (!H) return 0; return Math.min(HONEY.max, H.n + Math.floor(Math.max(0, now - H.at) / HONEY.every)); }
+  honeyNext(now = Date.now()) { const H = this.data.honey; if (!H || this.honeyAt(now) >= HONEY.max) return 0; return HONEY.every - (Math.max(0, now - H.at) % HONEY.every); }
+  collectHoney(now = Date.now()) {
+    const H = this.data.honey; if (!H) return null;
+    const k = Math.floor(Math.max(0, now - H.at) / HONEY.every), n = Math.min(HONEY.max, H.n + k);
+    if (!n) return null;
+    H.at = H.n + k >= HONEY.max ? now : H.at + k * HONEY.every; H.n = 0;
+    const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
+    return { n, coins, xp };
+  }
   // ---- the farmer's outfits: bought (and put on at once), worn
   outfitOwned(id) { return id === 'classic' || (this.data.farmer.outfits || []).includes(id); }
   outfitNext(id) { return OUTFITS[id] && !this.outfitOwned(id) && this.level >= OUTFITS[id].level; }
@@ -847,6 +918,7 @@ export class Game {
     this.data.news = [];
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
+    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0;
     this.edited = false;
     this.save();
     return this.data;
@@ -960,10 +1032,10 @@ export class Game {
   fillQuote(c, now = Date.now()) {
     const cap = this.feedCap(c), left = this.feedAt(c, now), need = cap - left;
     if (need < cap * 0.05) return { full: true, cost: 0, buy: 0, left: left / cap };
-    const cost = Math.ceil(need * FEED_PRICE - 1e-9);
-    if (this.data.coins >= cost) return { cost, buy: need, left: left / cap };
+    const grain = Math.min(this.data.grain || 0, need), cost = Math.ceil((need - grain) * FEED_PRICE - 1e-9);      // (the wheat field's grain first)
+    if (this.data.coins >= cost) return { cost, buy: need, grain, left: left / cap };
     const units = Math.floor(this.data.coins / FEED_PRICE);
-    if (units >= 1) return { cost: units * FEED_PRICE, buy: units, partial: true, left: left / cap };
+    if (units + grain >= 1) return { cost: units * FEED_PRICE, buy: units + grain, grain, partial: true, left: left / cap };
     if (left < 1) return { cost: 0, buy: Math.min(need, 1), scraps: true, left: left / cap };
     return { cost: 0, buy: 0, broke: true, left: left / cap };
   }
@@ -974,6 +1046,7 @@ export class Game {
     const cap = this.feedCap(c);
     c.feed = Math.min(cap, this.feedAt(c, now) + q.buy); c.fedAt = now;
     this.data.coins -= q.cost;
+    if (q.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - q.grain) * 100) / 100);
     q.xp = q.scraps ? 0 : Math.round(XP_FILL * q.buy / cap); this.data.xp += q.xp;
     q.level = c.feed / cap;
     q.done = this.job('feed', 1, now);

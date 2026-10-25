@@ -42,7 +42,7 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 // level 10, coins to spend (as the game would have them: saved, sealed)
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60 * Math.pow(9, 2.1) + 5; g.data.coins = 20000; g.data.lvSeen = g.level; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = Math.round(60 * Math.pow(9, 2.1) + 5); g.data.coins = 20000; g.data.lvSeen = g.level; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 // the shop

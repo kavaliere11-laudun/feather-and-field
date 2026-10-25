@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -336,6 +336,7 @@ async function start() {
   if (GAME_MODE) {                                         // the game: its fields; no set places for coops, so no little paths to them
     FIELDS = await fieldsP;
     V.paths = V.paths.filter(l => l.length > 3);
+    V.props = V.props.filter(p => p.model !== 'wheat_field');      // (the village's wheat field: the farm has its own, on its land)
     fillPlotGaps();
     const near = (x, z) => V.paths.some(l => { for (let i = 1; i < l.length; i++) { const a = l[i - 1], b = l[i], dx = b[0] - a[0], dz = b[2] - a[2], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[2]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < V.pathHalf + 0.6) return true; } return false; });
     V.pebbles = V.pebbles.filter(q => near(q[0], q[2]));
@@ -358,6 +359,7 @@ async function start() {
   buildWater();
   buildPaths();
   placeDecor(decorInfo);
+  if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.wheat = [-2.25, -1.25, 2.25, 1.25];      // (the wheat field's footprint: its bed)
   if (GAME_MODE) { settleCoops(); settleDecor(); hidePebbles(); }        // (each coop and decoration where it can stand, what's under it cleared)
   buildProps(); if (GAME_MODE) syncDecor(); else buildDecor();
   buildNature();
@@ -817,6 +819,7 @@ function buildDecor() {
 function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
+  if (GAME_MODE) { tickBits(dt); tickHoneyFrame(); }
 }
 // a tap on one: its name over it
 function decorAt(ray) {
@@ -847,13 +850,13 @@ function buildProps() {
 const WHEAT_STAGES = ['soil', 'sprouts', 'growing', 'ripe'];
 const WHEAT_NAMES = { soil: 'Ploughed, ready to sow', sprouts: 'The first green shoots', growing: 'Growing tall and green', ripe: 'Golden and ready' };
 const wheatField = { stage: GAME_MODE ? 'soil' : WHEAT_STAGES.includes(params.get('wheat')) ? params.get('wheat') : 'ripe', parts: {}, inverse: null, half: [0, 0] };
-function wheat(fieldMatrix, w, d) {
+function wheat(fieldMatrix, w, d, parent = null) {      // (parent: the game's own field, drawn in its frame: its parts back)
   const r = rng(31), spots = [];
   for (let x = -w / 2 + 0.12; x < w / 2 - 0.1; x += 0.15)
     for (let y = -d / 2 + 0.12; y < d / 2 - 0.1; y += 0.15)
       spots.push({ x: x + (r() - 0.5) * 0.06, z: y + (r() - 0.5) * 0.06, h: 0.85 + r() * 0.3, turn: r() * 6.28, keep: r(), shade: 0.86 + r() * 0.22, ears: [0, 1].map(() => [r() * 6.28, r() - 0.5, r() - 0.5]) });
   const Y = new THREE.Vector3(0, 1, 0), stalkGeo = meshesOf(parts.grass_tuft_1)[0].geometry;
-  const at = (m) => new THREE.Matrix4().multiplyMatrices(fieldMatrix, m);
+  const at = (m) => parent ? m : new THREE.Matrix4().multiplyMatrices(fieldMatrix, m);
   function stalks(list, height, width, colour) {
     const mesh = new THREE.InstancedMesh(stalkGeo, addWind(new THREE.MeshLambertMaterial({ color: colour, side: THREE.DoubleSide }), 0.3), list.length);
     const c = new THREE.Color();
@@ -874,12 +877,16 @@ function wheat(fieldMatrix, w, d) {
       new THREE.Quaternion().setFromEuler(new THREE.Euler(ex * 0.5, 0, ez * 0.5)), new THREE.Vector3(1, 1, 1))));
   const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(0.016, 0.09, 4, 1), addWind(new THREE.MeshLambertMaterial({ color: '#e7bf55' }), 0.3), ears.length);
   ears.forEach((m, i) => ea.setMatrixAt(i, m));
-  const P = wheatField.parts;
+  const P = parent ? {} : wheatField.parts;
   P.soil = [ridges];
   P.sprouts = [ridges, stalks(spots.filter(s => s.keep < 0.4), 0.3, 2.0, '#86c24a')];
   P.growing = [stalks(spots, 0.55, 2.2, '#5f9c36')];
   P.ripe = [stalks(spots, 1, 2.4, '#d9b24e'), ea];
-  for (const list of Object.values(P)) for (const o of list) if (!o.parent) { o.computeBoundingSphere(); o.receiveShadow = true; still(o, o !== ridges && o !== ea, true); }
+  for (const list of Object.values(P)) for (const o of list) if (!o.parent) {
+    o.computeBoundingSphere(); o.receiveShadow = true;
+    if (parent) { o.castShadow = o !== ridges && o !== ea; nightGrade(o.material); parent.add(o); } else still(o, o !== ridges && o !== ea, true);
+  }
+  if (parent) return P;
   wheatField.inverse = fieldMatrix.clone().invert(); wheatField.half = [w / 2, d / 2];
   wheatField.centre = new THREE.Vector3().setFromMatrixPosition(fieldMatrix).add(new THREE.Vector3(0, 0.8, 0));
   setWheat(wheatField.stage);
@@ -2854,7 +2861,10 @@ function tapAt(x, y) {
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
     }
     // the game: a coop (its house or its pen): its card (who lives there; move it); a decoration in front of it: its own
-    const gdc = GAME_MODE ? decorAt(ray.ray) : null, gdd = gdc ? decorAt.dist : Infinity;
+    let gdc = GAME_MODE ? decorAt(ray.ray) : null, gdd = gdc ? decorAt.dist : Infinity;
+    // (the wheat field: a tap on the ground inside it, unless a decoration stands in front)
+    const WF = GAME_MODE ? DEC.items.wheat : null, gw = WF && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3());
+    if (gw && (!gdc || gw.distanceTo(ray.ray.origin) < gdd)) { const [lx, lz] = inSpot(decSp(WF.d.pos[0], WF.d.pos[1], WF.d.deg), gw.x, gw.z); if (decGap('wheat', lx, lz) < 0.05) { gdc = WF.d; gdd = gw.distanceTo(ray.ray.origin); } }
     if (GAME_MODE) for (const p of livePlots()) {
       if (!p.gc) continue;
       nb.min.set(-1.66, 0, -0.81); nb.max.set(1.81, 2.1, 2.55);
@@ -2864,8 +2874,16 @@ function tapAt(x, y) {
       nb.min.set(-0.8, 0, -0.6); nb.max.set(0.8, 1.9, 0.7);         // (a decoration hit too: the coop only if its house is in front of it)
       if (loc.intersectBox(nb, hitP) && hitP.applyMatrix4(p.frame.matrixWorld).distanceTo(ray.ray.origin) < gdd) { coopCard(p); return; }
     }
-    // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it)
-    if (GAME_MODE && game.data && farmhouseAt(ray.ray)) { bookSheet(); return; }
+    // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it); a
+    // decoration or the wheat field in front of it: theirs (the field's card, or the harvest; the hives' honey)
+    const hd = GAME_MODE && game.data && farmhouseAt(ray.ray) ? farmhouseAt.dist : Infinity;
+    if (gdc && gdd < hd) {
+      if (gdc.model === 'wheat') { wheatTap(); return; }
+      if (gdc.model === 'bandstand' && decorLife) decorLife.play();
+      if (gdc.model === 'beehives' && game.honeyAt() > 0) { honeyTap(); return; }
+      decorCard(gdc.model); return;
+    }
+    if (hd < Infinity) { bookSheet(); return; }
     // the game: the field for sale (its card), or the wild meadow (when it comes up for sale)
     if (GAME_MODE && FIELDS && game.data) {
       const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP), f = gp ? fieldAt(gp.x, gp.z) : -1;
@@ -2874,7 +2892,7 @@ function tapAt(x, y) {
     }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);
-    if (dc && GAME_MODE) { if (dc.model === 'bandstand' && decorLife) decorLife.play(); decorCard(dc.model); return; }      // (the game: its card, Move)
+    if (dc && GAME_MODE) { decorCard(dc.model); return; }
     if (dc) {
       tagBird = null; tag.textContent = DECOR_NAMES[dc.model][LANG === 'fr' ? 1 : 0]; tag.classList.add('on'); fieldTag = 2.8;
       if (dc.model === 'bandstand' && decorLife) decorLife.play();          // (and a little tune)
@@ -3008,6 +3026,7 @@ function gameTick(now = Date.now(), force = false) {
   }
   for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
   bubbleText(now);
+  tickWheat();
   syncLand();
   watchStars();
   showNews();
@@ -3051,6 +3070,7 @@ const bubV = new THREE.Vector3();
 function placeBubbles() {
   if (!GAME_MODE) return;
   const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (game.data) fieldBubbles(w, h);
   { // the patch for sale: "🪧 For sale · 100" over its sign
     const B = saleBubble(), n = SALE.field >= 0 && SALE.at && game.landForSale();
     if (!n || inside.open) B.hidden = true;
@@ -3951,7 +3971,9 @@ function farmhouseAt(r) {
     const m = place(fh.pos[0], 0, fh.pos[2], fh.deg, fh.s || 1);
     HOUSE_HIT = { m, inv: m.clone().invert(), box: new THREE.Box3().setFromObject(parts.farmhouse) };
   }
-  return new THREE.Ray().copy(r).applyMatrix4(HOUSE_HIT.inv).intersectsBox(HOUSE_HIT.box);
+  const p = new THREE.Ray().copy(r).applyMatrix4(HOUSE_HIT.inv).intersectBox(HOUSE_HIT.box, new THREE.Vector3());
+  farmhouseAt.dist = p ? p.applyMatrix4(HOUSE_HIT.m).distanceTo(r.origin) : Infinity;
+  return !!p;
 }
 function startPlace(breed) {
   if (MOVE.plot || DMOVE.id || inside.open || !game.waitingCoops().includes(breed)) return false;
@@ -4041,17 +4063,19 @@ function decGap(id, lx, lz) {
   if (R && !(id === 'bandstand' && Math.abs(lx) < 0.5 && lz > 0)) return Math.max(0, Math.hypot(lx, lz) - R);
   return Math.hypot(Math.max(f[0] - lx, 0, lx - f[2]), Math.max(f[1] - lz, 0, lz - f[3]));
 }
-const decSp = (x, z) => ({ x, z, deg: 45 });
+const decSp = (x, z, deg = 45) => ({ x, z, deg });
 // whether (x, z) is under one of the farm's decorations (where the save has them, and where one's being moved to)
 function underDecor(x, z, m = 0) {
   if (!GAME_MODE || !game.data || !DECOR_INFO) return false;
   for (const o of game.data.decor || []) { if (o.x === undefined || o.x === null) continue; const [lx, lz] = inSpot(decSp(o.x, o.z), x, z); if (decGap(o.id, lx, lz) <= m) return true; }
-  if (DMOVE.id && DMOVE.at) { const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z), x, z); if (decGap(DMOVE.id, lx, lz) <= m) return true; }
+  const W = game.data.wheat;                                // (and the wheat field)
+  if (W && W.x !== null && DECOR_INFO.foot.wheat) { const [lx, lz] = inSpot(decSp(W.x, W.z, W.deg), x, z); if (decGap('wheat', lx, lz) <= m) return true; }
+  if (DMOVE.id && DMOVE.at) { const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z, DMOVE.at.deg), x, z); if (decGap(DMOVE.id, lx, lz) <= m) return true; }
   return false;
 }
 // a decoration at (x, z): whether it can stand there and if not why, and the trees, bushes and rocks to clear
-function decorSpot(id, x, z) {
-  const f = DECOR_INFO.foot[id], sp = decSp(x, z), a = 45 * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
+function decorSpot(id, x, z, deg = 45) {
+  const f = DECOR_INFO.foot[id], sp = decSp(x, z, deg), a = deg * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
   const self = DEC.items[id] && DEC.items[id].prop;
   let land = false, lane = false, room = false;
   for (let lz = f[1]; lz < f[3] + 0.124; lz += 0.25) for (let lx = f[0]; lx < f[2] + 0.124; lx += 0.25) {
@@ -4079,26 +4103,29 @@ function decorSpot(id, x, z) {
 }
 // the nearest good spot to (cx, cz), best with nothing to clear, and (way: when it's offered to be put down) the way to
 // every coop's gate still open with it there
-function decorFreeNear(id, cx, cz, far = 40, way = false) {
+function decorFreeNear(id, cx, cz, far = 40, way = false, degs = [45]) {
   cx = Math.round(cx * 4) / 4; cz = Math.round(cz * 4) / 4;
   const no = new Set();
   for (let tries = 0; tries < 6; tries++) {
     let best = null, until = far;
-    for (let r = 0; r < Math.min(far, until) && !(best && !best.n); r += 1) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n; k++) {
+    for (let r = 0; r < Math.min(far, until) && !(best && !best.n); r += 1) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n && !(best && !best.n); k++) {
       const a = k / n * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
       if (!owned(fieldAt(x, z)) || no.has(x + ',' + z)) continue;
-      const S = decorSpot(id, x, z);
-      if (S.ok && (!best || S.clear.length < best.n)) { if (!best) until = r + 3; best = { x, z, n: S.clear.length }; if (!best.n) break; }      // (a few steps further for one with nothing to clear)
+      for (const deg of degs) {                             // (the wheat field: either way round)
+        const S = decorSpot(id, x, z, deg);
+        if (S.ok && (!best || S.clear.length < best.n)) { if (!best) until = r + 3; best = { x, z, deg, n: S.clear.length }; if (!best.n) break; }      // (a few steps further for one with nothing to clear)
+      }
     }
     if (!best) return null;
-    if (!way || decorWayOk(id, best.x, best.z)) return { x: best.x, z: best.z };
+    if (!way || decorWayOk(id, best.x, best.z, best.deg)) return { x: best.x, z: best.z, deg: best.deg };
     for (let dx = -1; dx <= 1; dx += 0.25) for (let dz = -1; dz <= 1; dz += 0.25) no.add((best.x + dx) + ',' + (best.z + dz));      // (and not just beside it)
   }
   return null;
 }
 // whether with it at (x, z) the farmer can still get to every coop's gate (the walking grid made with it there, then as it was)
-function decorWayOk(id, x, z) {
-  const it = DEC.items[id], tmp = it ? null : { model: id, pos: [x, 0, z], deg: 45, s: 1, decor: true, own: true }, old = it && it.prop.pos;
+function decorWayOk(id, x, z, deg = 45) {
+  if (id === 'wheat') return true;                          // (the field can be walked over)
+  const it = DEC.items[id], tmp = it ? null : { model: id, pos: [x, 0, z], deg, s: 1, decor: true, own: true }, old = it && it.prop.pos;
   if (tmp) V.props.push(tmp); else it.prop.pos = [x, 0, z];
   rebuildNav();
   const ok = !gamePlots().some(p => !penSpec(p));
@@ -4131,11 +4158,32 @@ function settleDecor() {
     V.trees = V.trees.filter(t => !gone.has(t.id)); V.bushes = V.bushes.filter(t => !gone.has(t.id)); V.rocks = V.rocks.filter(t => !gone.has(t.id));
     addDecor(o.id, o.x, o.z);                                 // (in V.props: the next one keeps clear of it)
   }
+  // the wheat field: on your land from the start, a little way out from the farmhouse (Audrey: "On your land from
+  // the start"), on the side of the farmhouse that faces you; a spot that's no good any more: the nearest good one
+  const W = game.wheat();
+  if (DECOR_INFO.foot.wheat) {
+    if (W.x === null || W.z === null || !decorSpot('wheat', W.x, W.z, W.deg).ok) {
+      const fh = V.props.find(p => p.model === 'farmhouse'), vl = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), c = fh ? [fh.pos[0] + VIEW_DIR.x / vl * 6.5, fh.pos[2] + VIEW_DIR.z / vl * 6.5] : [HOME_COOP.x, HOME_COOP.z];      // (in front of the farmhouse as you look at it, so it shows)
+      const f = W.x !== null && W.z !== null ? decorFreeNear('wheat', W.x, W.z, 40, false, [W.deg, W.deg === 45 ? 135 : 45]) : decorFreeNear('wheat', c[0], c[1], 40, false, [45, 135]);
+      if (f) { W.x = f.x; W.z = f.z; W.deg = f.deg; } else { W.x = W.z = null; }
+      changed = true;
+    }
+    if (W.x !== null) {
+      for (const t of decorSpot('wheat', W.x, W.z, W.deg).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); changed = true; }
+      V.trees = V.trees.filter(t => !gone.has(t.id)); V.bushes = V.bushes.filter(t => !gone.has(t.id)); V.rocks = V.rocks.filter(t => !gone.has(t.id));
+      addDecor('wheat', W.x, W.z, W.deg);
+    }
+  }
   if (changed) game.save();
 }
 // its own copy of the model (and the windmill's sails), not yet anywhere
 function decorModel(id) {
   const g = new THREE.Group(); g.matrixAutoUpdate = false;
+  if (id === 'wheat') {                                     // (the wheat field: its bed, and its wheat in the four stages)
+    if (parts.wheat_field) for (const m of meshesOf(parts.wheat_field)) { nightGrade(m.material); const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.receiveShadow = true; g.add(k); }
+    g.userData.wheat = wheat(null, 4.4, 2.4, g);
+    return g;
+  }
   for (const m of meshesOf(parts[id])) {
     if (m.material && m.material.name === 'glass') { m.material.transparent = true; m.material.opacity = 0.34; m.material.depthWrite = false; }
     nightGrade(m.material);
@@ -4149,19 +4197,20 @@ function decorModel(id) {
   return g;
 }
 // one on the farm: drawn, in everyone's way (V.props), and tappable (decorList); its life is made again with the rest's
-function addDecor(id, x, z) {
+function addDecor(id, x, z, deg = 45) {
   let it = DEC.items[id];
   if (!it) {
-    it = DEC.items[id] = { group: decorModel(id), prop: { model: id, pos: [x, 0, z], deg: 45, s: 1, decor: true, own: true }, d: { model: id, box: new THREE.Box3().setFromObject(parts[id]) } };
+    const box = id === 'wheat' ? new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 0.6, 1.2)) : new THREE.Box3().setFromObject(parts[id]);
+    it = DEC.items[id] = { group: decorModel(id), prop: { model: id === 'wheat' ? 'wheat_field' : id, pos: [x, 0, z], deg, s: 1, decor: true, own: true }, d: { model: id, box } };
     scene.add(it.group); V.props.push(it.prop);
   }
-  setDecorAt(it, x, z);
+  setDecorAt(it, x, z, deg);
   return it;
 }
-function setDecorAt(it, x, z) {
-  const m = place(x, 0, z, 45, 1);
+function setDecorAt(it, x, z, deg = 45) {
+  const m = place(x, 0, z, deg, 1);
   it.group.matrix.copy(m); it.group.matrixWorldNeedsUpdate = true;
-  it.prop.pos = [x, 0, z]; Object.assign(it.d, { pos: [x, z], deg: 45, m, wb: it.d.box.clone().applyMatrix4(m).expandByScalar(0.6) });
+  it.prop.pos = [x, 0, z]; it.prop.deg = deg; Object.assign(it.d, { pos: [x, z], deg, m, wb: it.d.box.clone().applyMatrix4(m).expandByScalar(0.6) });
   BLOCKERS = null; decorSpots = null;
   renderer.shadowMap.needsUpdate = true; wake(500);
 }
@@ -4183,6 +4232,8 @@ function syncDecor() {
     const it = addDecor(o.id, at[0], at[1]);
     if (!decorList.includes(it.d)) decorList.push(it.d);
   }
+  const W = game.wheat();                                   // (the wheat field, as the save has it)
+  if (W.x !== null && DECOR_INFO.foot.wheat && !(DMOVE.id === 'wheat')) { addDecor('wheat', W.x, W.z, W.deg); FIELD.shown = ''; tickWheat(); }
   const w = DEC.items.windmill; sails = w ? w.group.userData.sails || null : null;
   decorLifeAgain();
 }
@@ -4276,30 +4327,31 @@ function decorFootMark(id) {
   return m;
 }
 function startDecor(id) {
-  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR[id] || DECOR[id].pond || !DECOR_INFO || !parts[id]) return false;
-  const own = game.decorOwned(id);
+  const isW = id === 'wheat';                               // (the wheat field: moved the same way, and turned)
+  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR_INFO || (isW ? !DECOR_INFO.foot.wheat || FIELD.work : !DECOR[id] || DECOR[id].pond || !parts[id])) return false;
+  const own = isW ? game.wheat() : game.decorOwned(id);
   if (!own && (!game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
   gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
-  let at = own && own.x !== null ? { x: own.x, z: own.z } : null;
-  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true); if (!at) { hint(game.t('dec_no_room')); return false; } }
+  let at = own && own.x !== null ? { x: own.x, z: own.z, deg: own.deg || 45 } : null;
+  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : [45]); if (!at) { hint(game.t('dec_no_room')); return false; } }
   DMOVE.id = id; DMOVE.buy = !own; DMOVE.from = own && own.x !== null ? { ...at } : null; DMOVE.at = { ...at }; DMOVE.moved = false; DMOVE.nav = false;
-  DMOVE.item = addDecor(id, at.x, at.z);
+  DMOVE.item = addDecor(id, at.x, at.z, at.deg);
   decorLifeAgain(id);                                       // (its bees and birds wait till it's down)
   DMOVE.foot = decorFootMark(id); DMOVE.item.group.add(DMOVE.foot);
-  gameUI.moveBar(true, { turn: null, cancel: () => endDecor(false), place: () => putDecor() });
-  decMoveTo(at.x, at.z, true);
+  gameUI.moveBar(true, { turn: isW ? () => { DMOVE.moved = true; decMoveTo(DMOVE.at.x, DMOVE.at.z, true, DMOVE.at.deg === 45 ? 135 : 45); } : null, cancel: () => endDecor(false), place: () => putDecor() });
+  decMoveTo(at.x, at.z, true, at.deg);
   const tall = DMOVE.item.d.box.max.y, size = Math.max(view.size, sideways() ? 3.4 : 4.4, Math.min(view.max, tall * 0.62)), v = viewAbove(at.x, at.z, size);
   focusOn(v[0], v[1], size);                                // (the player's tap: room round it in view, above the bar)
   return true;
 }
-function decMoveTo(x, z, force = false) {
+function decMoveTo(x, z, force = false, deg = DMOVE.at ? DMOVE.at.deg || 45 : 45) {
   if (!DMOVE.id) return;
   x = Math.round(x * 4) / 4; z = Math.round(z * 4) / 4;
-  if (!force && x === DMOVE.at.x && z === DMOVE.at.z) return;
+  if (!force && x === DMOVE.at.x && z === DMOVE.at.z && deg === DMOVE.at.deg) return;
   if (x !== DMOVE.at.x || z !== DMOVE.at.z) DMOVE.moved = true;
-  DMOVE.at = { x, z };
-  setDecorAt(DMOVE.item, x, z);
-  const S = DMOVE.spot = decorSpot(DMOVE.id, x, z);
+  DMOVE.at = { x, z, deg };
+  setDecorAt(DMOVE.item, x, z, deg);
+  const S = DMOVE.spot = decorSpot(DMOVE.id, x, z, deg);
   DMOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
   gameUI.moveStatus(game.t(!DMOVE.moved ? 'dec_place_hint' : S.ok ? (S.clear.length ? 'dec_ok_clear' : 'dec_ok') : S.why), S.ok);
   DMOVE.grassAt = performance.now() + 220;
@@ -4312,7 +4364,7 @@ function decorHit(cx, cy) {
   const loc = new THREE.Ray().copy(ray.ray).applyMatrix4(it.d.m.clone().invert());
   if (loc.intersectsBox(it.d.box)) return true;
   const g = groundAt(cx, cy); if (!g) return false;
-  const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z), g.x, g.z);
+  const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z, DMOVE.at.deg), g.x, g.z);
   return decGap(DMOVE.id, lx, lz) < 0.3;
 }
 function decGrab(e) {
@@ -4337,7 +4389,7 @@ function tickDecMove(dt) {
 function putDecor() {
   const id = DMOVE.id; if (!id || !DMOVE.spot || !DMOVE.spot.ok) return false;
   const at = DMOVE.at, from = DMOVE.from;
-  if (from && at.x === from.x && at.z === from.z) { endDecor(false); return true; }
+  if (from && at.x === from.x && at.z === from.z && at.deg === from.deg) { endDecor(false); return true; }
   // the way to every coop's gate still open with it there, and what's in its way gone
   const clear = DMOVE.spot.clear, ids = new Set(clear.map(o => o.id)), keep = [V.trees, V.bushes, V.rocks];
   V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
@@ -4353,7 +4405,8 @@ function putDecor() {
     if (!r) { [V.trees, V.bushes, V.rocks] = keep; endDecor(false); return false; }
     said = game.t('dec_placed', { name: game.decorName(id), xp: r.xp });
     gameUI.refresh(); gameUI.bumpCoins();
-  } else { game.moveDecor(id, at, [...ids]); said = game.t('dec_moved', { name: game.decorName(id) }); }
+  } else if (id === 'wheat') { game.placeWheat(at, [...ids]); said = game.t('dec_moved', { name: game.t('wheat_title') }); }
+  else { game.moveDecor(id, at, [...ids]); said = game.t('dec_moved', { name: game.decorName(id) }); }
   for (const o of clear) clearAway(o);
   endDecor(true);
   hint(said);
@@ -4364,11 +4417,11 @@ function endDecor(placed) {
   const it = DMOVE.item;
   DMOVE.foot.removeFromParent(); DMOVE.foot.geometry.dispose(); DMOVE.foot.material.dispose();
   if (!placed && (DMOVE.buy || !DMOVE.from)) dropDecor(id);      // (not bought after all, or never placed: gone)
-  else if (!placed) setDecorAt(it, DMOVE.from.x, DMOVE.from.z);
+  else if (!placed) setDecorAt(it, DMOVE.from.x, DMOVE.from.z, DMOVE.from.deg);
   const nav = DMOVE.nav, grass = DMOVE.grass;
   Object.assign(DMOVE, { id: null, item: null, buy: false, from: null, at: null, spot: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false });
   BLOCKERS = null; decorSpots = null;
-  if (placed) { if (!decorList.includes(it.d)) decorList.push(it.d); buildNature(); buildGrass(); hidePebbles(); clearDecorWalkers(it); }
+  if (placed) { if (!decorList.includes(it.d) && id !== 'wheat') decorList.push(it.d); buildNature(); buildGrass(); hidePebbles(); clearDecorWalkers(it); }
   else { if (nav) rebuildNav(); if (grass) buildGrass(); }
   syncDecor();
   gameUI.moveBar(false);
@@ -4377,12 +4430,208 @@ function endDecor(placed) {
 // one put down where the farmer was walking: he steps out of its way, and thinks again about where he was off to
 function clearDecorWalkers(it) {
   if (!farmLife || farmLife.home) return;
-  const L = farmLife, at = L.pos, [lx, lz] = inSpot(decSp(it.d.pos[0], it.d.pos[1]), at.x, at.z);
+  const L = farmLife, at = L.pos, [lx, lz] = inSpot(decSp(it.d.pos[0], it.d.pos[1], it.d.deg), at.x, at.z);
   if (decGap(it.d.model, lx, lz) < 0.4 || !navGrid().freeAt(at.x, at.z)) {
     const f = navGrid().nearestIn(farmReach(), at.x, at.z, 5);
     if (f) { at.x = f[0]; at.z = f[1]; }
   }
   if (L.task && !/^(out|home|pen)$/.test(L.task.name)) L.task = null;
+}
+// ---- the wheat field and the honey (release 1 step 9e; Audrey, 25 Oct: the wheat field "On your land from the start";
+// then "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"). The field (game.js WHEAT)
+// lies on your land from the start, a little way out from the farmhouse (moved like a decoration, and turned); its sign
+// says what to do ("Sow", how long till it's ripe, "Harvest"). Tap it: its card (Sow, Move the field); a ripe field is
+// harvested at once. Sowing and harvesting count straight away (the save); by day the farmer hurries over with the pail
+// and scatters the seed, or crouches and cuts the wheat (golden bits, then the grain into store for the feeders), and the
+// field shows it once he's done; at night (or out after Rusty) it simply is. The beehives fill a jar every 8 hours
+// (game.js HONEY): a honey pot over them with the number; tap it: the farmer goes to the hives, lifts out a frame of
+// honey, and the jars fly to the coins, sold
+const FIELD = { shown: '', hold: null, work: null, bub: null, hbub: null, frame: null, frameOn: false, honey: false };
+function showWheat(stage) {
+  const it = DEC.items.wheat; if (!it) return;
+  const P = it.group.userData.wheat, want = stage === 'sown' ? 'soil' : stage;
+  if (FIELD.shown === want) return;
+  FIELD.shown = want;
+  for (const o of new Set(Object.values(P).flat())) o.visible = P[want].includes(o);
+  renderer.shadowMap.needsUpdate = true; wake(300);
+}
+// each second (and after a change): the field as the save has it (or as it was, till the farmer's done)
+function tickWheat() {
+  if (!GAME_MODE || !game.data) return;
+  showWheat(FIELD.hold || game.wheatStage());
+  if (FIELD.work && performance.now() > FIELD.work.until) FIELD.work.seq.finish();      // (he never got there: it's done anyway)
+}
+// where the farmer stands to work at the field (the middle of its edge most towards the player, or near it, facing in)
+// or at the hives (in front of them, facing them)
+function workSpot(kind) {
+  const it = kind === 'honey' ? DEC.items.beehives : DEC.items.wheat; if (!it) return null;
+  const m = it.d.m, v = new THREE.Vector3(), c = new THREE.Vector3(), nav = navGrid(), R = farmReach();
+  it.d.box.getCenter(c).applyMatrix4(m); c.y = 0;
+  const pts = kind === 'honey' ? [[0, 1.55], [-0.6, 1.55], [0.6, 1.55], [0, 1.9]] : [[0, 1.6], [1.3, 1.6], [-1.3, 1.6], [0, -1.6], [2.6, 0], [-2.6, 0]];
+  let best = null, bs = -Infinity;
+  for (const [lx, lz] of pts) {
+    v.set(lx, 0, lz).applyMatrix4(m);
+    const f = nav.nearestIn(R, v.x, v.z, 0.7); if (!f) continue;
+    const sc = (f[0] - c.x) * VIEW_DIR.x + (f[1] - c.z) * VIEW_DIR.z - 0.6 * Math.hypot(f[0] - v.x, f[1] - v.z);
+    if (sc > bs) { bs = sc; best = f; }
+    if (kind === 'honey') break;                            // (in front of the hives if he can be)
+  }
+  return best && { at: best, face: Math.atan2(c.x - best[0], c.z - best[1]) };
+}
+// sowing, harvesting, honey: the farmer's work there (false: he isn't about, it's simply done)
+function farmerWork(kind, done) {
+  if (!farmLife || farmLife.home || farmLife.running) return false;
+  const S = workSpot(kind); if (!S) return false;
+  let acts, o = {};
+  if (kind === 'sow') {                                      // four handfuls of seed over the field
+    let thrown = 0; o = { pail: true, say: 'sow' };
+    acts = [['scatter', 3.9, (W, u, L) => { W.pose = 'feed'; W.face = 'feeding'; W.scatter = u; const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; seedThrow(L.handTip(), L.heading, thrown); } }], 'done'];
+  } else if (kind === 'harvest') {                           // crouched, cutting, the straw flying; then hooray
+    let bit = 0.3;
+    acts = [['cut', 3.0, (W, u, L) => { W.pose = 'pet'; W.face = 'happy'; W.patting = true; W.look = [0, -0.4]; if (u > bit) { bit += 0.35; strawBits(L.handTip(), 5); } }], 'done',
+      ['hooray', 1.4, W => { W.pose = 'stretch'; W.face = 'happy'; }]];
+    o = { say: 'harvest' };
+  } else {                                                   // a frame of honey lifted out, held up to look at, the jars
+    acts = [['bend', 1.1, (W, u) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; FIELD.frameOn = u > 0.8; }],
+      ['up', 0.5, W => { W.pose = 'hold'; W.face = 'happy'; FIELD.frameOn = true; }], 'camera',          // (turned round to show it)
+      ['show', 2.2, W => { W.pose = 'hold'; W.face = 'happy'; W.look = [0, -0.3]; FIELD.frameOn = true; }],
+      'done', ['away', 0.4, W => { W.pose = 'turn'; W.face = 'happy'; FIELD.frameOn = false; }]];
+    o = { say: 'honey' };
+  }
+  const seq = farmLife.workAt(S.at, S.face, acts, () => { FIELD.frameOn = false; if (FIELD.work && FIELD.work.seq === seq) FIELD.work = null; done(); }, o);
+  if (!seq) return false;
+  FIELD.work = { kind, seq, until: performance.now() + 100e3 };
+  return true;
+}
+// the field tapped (or its sign): ripe, harvested; otherwise its card
+function wheatTap() {
+  if (FIELD.work && FIELD.work.kind !== 'honey') { hint(game.t(FIELD.work.kind === 'sow' ? 'wheat_sowing' : 'wheat_cutting', { farmer: farmerName(), c: WHEAT.sow })); return; }
+  if (game.wheatStage() === 'ripe') { harvestWheat(); return; }
+  holdBird(null); henOff();
+  gameUI.wheatSheet({ sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => { gameUI.close(); startDecor('wheat'); } });
+}
+function sowWheat() {
+  if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  const r = game.sowWheat(); if (!r) return false;
+  if (r.broke) { hint(game.t('wheat_broke')); return false; }
+  gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
+  FIELD.hold = 'soil';
+  const done = () => { FIELD.hold = null; tickWheat(); };
+  if (farmerWork('sow', done)) hint(game.t('wheat_sowing', { farmer: farmerName(), c: r.cost }));
+  else { done(); seedsOver(); hint(game.t('wheat_sowed', { c: r.cost })); }
+  tickWheat();
+  return true;
+}
+function harvestWheat() {
+  if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  const r = game.harvestWheat(); if (!r) return false;
+  gameUI.close(); gameUI.refresh();
+  FIELD.hold = 'ripe';
+  const said = game.t(r.grain ? 'wheat_done' : 'wheat_full', { g: r.grain, xp: r.xp });
+  const done = () => { FIELD.hold = null; tickWheat(); harvestPuff(); hint(said); gameUI.refresh(); };
+  if (farmerWork('harvest', done)) hint(game.t('wheat_cutting', { farmer: farmerName() }));
+  else done();
+  tickWheat();
+  return true;
+}
+// the honey pot (or the hives) tapped: the jars sold, flying to the coins once the farmer has them
+function honeyTap() {
+  if (FIELD.honey) return false;
+  const r = game.collectHoney(); if (!r) { decorCard('beehives'); return false; }
+  const fly = () => {
+    FIELD.honey = false;
+    const it = DEC.items.beehives, v = new THREE.Vector3(); it.d.box.getCenter(v); v.y = it.d.box.max.y; v.applyMatrix4(it.d.m); v.project(camera);
+    gameUI.flyEggs({ x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }, r.n, null, null, 'gjar');
+    hint(game.t(r.n === 1 ? 'honey_sold1' : 'honey_sold', { n: r.n, c: r.coins }));
+  };
+  FIELD.honey = true;
+  if (farmerWork('honey', fly)) hint(game.t('honey_going', { farmer: farmerName() }));
+  else fly();
+  return true;
+}
+// little bits flying: seed from his hand onto the field, straw as he cuts, a golden puff over the field when it's done
+const BITS = [];
+let BIT_TEX = null;
+function bitsAt(at, n, colour, o = {}) {
+  if (!BIT_TEX) BIT_TEX = fxTexture64(64, c => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(32, 32, 30, 0, Math.PI * 2); c.fill(); });
+  const R = Math.random;
+  for (let i = 0; i < n; i++) {
+    const mat = new THREE.SpriteMaterial({ map: BIT_TEX, color: colour, transparent: true, depthWrite: false }); mat.userData.noGrade = true;
+    const sp = new THREE.Sprite(mat), a = (o.dir ?? R() * Math.PI * 2) + (R() - 0.5) * (o.spread ?? 6.3), v = (o.speed || 1) * (0.5 + R() * 0.7);
+    sp.position.copy(at); sp.scale.setScalar(o.size || 0.03); scene.add(sp);
+    BITS.push({ sp, v: new THREE.Vector3(Math.sin(a) * v, (o.up ?? 1.2) * (0.6 + R() * 0.6), Math.cos(a) * v), t: 0, life: o.life || 1.1, g: o.g ?? 6, floor: o.floor ?? 0.02, size: o.size || 0.03, grow: o.grow || 0 });
+  }
+  wake(1500);
+}
+function tickBits(dt) {
+  for (let i = BITS.length - 1; i >= 0; i--) {
+    const B = BITS[i]; B.t += dt;
+    B.v.y -= B.g * dt; B.sp.position.addScaledVector(B.v, dt);
+    if (B.sp.position.y < B.floor) { B.sp.position.y = B.floor; B.v.set(0, 0, 0); }
+    B.sp.scale.setScalar(B.size * (1 + B.grow * B.t));
+    B.sp.material.opacity = Math.min(1, (B.life - B.t) * 3);
+    if (B.t >= B.life) { B.sp.removeFromParent(); B.sp.material.dispose(); BITS.splice(i, 1); }
+  }
+  if (BITS.length) wake(100);
+}
+function seedThrow(hand, heading, k) { bitsAt(hand, 14, '#d9c08a', { dir: heading + (k - 2.5) * 0.35, spread: 0.9, speed: 1.6, up: 0.9, life: 1.3, size: 0.022 }); }
+function seedsOver() {                                       // (sown with nobody there to see: the seed just lands)
+  const it = DEC.items.wheat; if (!it) return;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < 6; i++) { v.set((Math.random() - 0.5) * 3.6, 0.6, (Math.random() - 0.5) * 1.8).applyMatrix4(it.d.m); bitsAt(v, 6, '#d9c08a', { speed: 0.4, up: 0.3, life: 1, size: 0.022 }); }
+}
+function strawBits(hand, n) { bitsAt(hand, n, '#e7bf55', { speed: 0.7, up: 1.6, life: 0.9, size: 0.035, g: 5 }); }
+function harvestPuff() {
+  const it = DEC.items.wheat; if (!it) return;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < 10; i++) { v.set((Math.random() - 0.5) * 4, 0.35, (Math.random() - 0.5) * 2).applyMatrix4(it.d.m); bitsAt(v, 3, '#f2d27a', { speed: 0.5, up: 1.4, life: 1.2, size: 0.12, g: 1.5, grow: 0.8 }); }
+}
+// the frame of honey in his hands (between them, as he holds it up)
+function tickHoneyFrame() {
+  if (!FIELD.frameOn || !farmLife || !farmLife.f.rig) { if (FIELD.frame) FIELD.frame.visible = false; return; }
+  if (!FIELD.frame) {
+    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 96;                 // (the comb: golden cells, a few capped)
+    const cx = cv.getContext('2d'); cx.fillStyle = '#e39a1c'; cx.fillRect(0, 0, 128, 96);
+    for (let r = 0; r < 9; r++) for (let q = 0; q < 12; q++) {
+      const x = q * 11 + (r % 2) * 5.5 + 3, y = r * 10.5 + 4; cx.beginPath();
+      for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; cx.lineTo(x + Math.cos(a) * 5.4, y + Math.sin(a) * 5.4); }
+      cx.closePath(); cx.fillStyle = (q * 7 + r * 3) % 5 === 0 ? '#f6d48a' : '#f2b13a'; cx.fill(); cx.strokeStyle = '#b8740f'; cx.lineWidth = 1.2; cx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const g = new THREE.Group(), wood = new THREE.MeshLambertMaterial({ color: '#c8a26a' }), comb = new THREE.MeshLambertMaterial({ map: tex, emissive: '#3a2000' });
+    const add = (w, h, d, x, y, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, 0); m.castShadow = true; g.add(m); };
+    add(0.25, 0.018, 0.03, 0, 0.09, wood); add(0.25, 0.012, 0.025, 0, -0.085, wood); add(0.014, 0.18, 0.025, -0.118, 0, wood); add(0.014, 0.18, 0.025, 0.118, 0, wood);
+    add(0.222, 0.16, 0.016, 0, 0, comb);
+    for (const m of [wood, comb]) nightGrade(m);
+    scene.add(g); FIELD.frame = g;
+  }
+  const B = farmLife.f.rig.B, a = B.wristL.getWorldPosition(new THREE.Vector3()), b = B.wristR.getWorldPosition(new THREE.Vector3()), h = farmLife.heading;
+  FIELD.frame.position.copy(a).add(b).multiplyScalar(0.5).add(new THREE.Vector3(Math.sin(h) * 0.07, 0.07, Math.cos(h) * 0.07));
+  FIELD.frame.rotation.set(-0.85, h, 0, 'YXZ'); FIELD.frame.visible = true;          // (tipped back: its comb shows)
+}
+// the field's sign and the honey pot: placed each frame (game bubbles), their words when they change
+function fieldBubbles(w, h) {
+  const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
+  if (!FIELD.bub) FIELD.bub = mk('gwheat', () => wheatTap());
+  if (!FIELD.hbub) FIELD.hbub = mk('ghoney', () => honeyTap());
+  const put = (e, show, v) => {
+    if (!show || inside.open || SHOWDAY) { e.hidden = true; return; }
+    v.project(camera);
+    const sx = (v.x + 1) / 2 * w, sy = (1 - v.y) / 2 * h;
+    if (v.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
+    e.hidden = false; e.style.left = sx.toFixed(1) + 'px'; e.style.top = sy.toFixed(1) + 'px';
+  };
+  const W = DEC.items.wheat, st = game.wheatStage(), busy = FIELD.work && FIELD.work.kind !== 'honey';
+  if (W && !busy && DMOVE.id !== 'wheat') {
+    const txt = st === 'soil' ? '🌾 ' + game.t('bub_sow') : st === 'ripe' ? '🌾 ' + game.t('bub_harvest') : '🌱 ' + gameUI.dur(game.wheatLeft());
+    if (FIELD.bub.textContent !== txt) { FIELD.bub.textContent = txt; FIELD.bub.classList.toggle('ripe', st === 'ripe'); }
+    put(FIELD.bub, true, bubV.set(0, 0.5, 1.0).applyMatrix4(W.d.m));
+  } else FIELD.bub.hidden = true;
+  const Hv = DEC.items.beehives, n = Hv && !FIELD.honey && DMOVE.id !== 'beehives' ? game.honeyAt() : 0;
+  if (n) {
+    const txt = '🍯 ' + n; if (FIELD.hbub.textContent !== txt) FIELD.hbub.textContent = txt;
+    Hv.d.box.getCenter(bubV); bubV.y = Hv.d.box.max.y + 0.05; put(FIELD.hbub, true, bubV.applyMatrix4(Hv.d.m));
+  } else FIELD.hbub.hidden = true;
 }
 let saleBub = null;
 function saleBubble() {
@@ -4918,7 +5167,10 @@ window.__farm = {
     spot: (id, x, z) => { const S = decorSpot(id, x, z); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
-    blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z },
+    blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
+    wheat: { tap: () => wheatTap(), sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => startDecor('wheat'),
+      state: () => { const it = DEC.items.wheat; return { stage: game.wheatStage(), shown: FIELD.shown, hold: FIELD.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },
+    honey: { tap: () => honeyTap(), n: () => game.honeyAt(), state: () => ({ n: game.honeyAt(), going: FIELD.honey, work: FIELD.work && FIELD.work.kind, frame: FIELD.frameOn, bub: FIELD.hbub && !FIELD.hbub.hidden ? FIELD.hbub.textContent : null }) } },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },

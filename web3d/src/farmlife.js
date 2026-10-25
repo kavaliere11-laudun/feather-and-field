@@ -23,6 +23,9 @@ export const FARMER_TEXT = {
   cuddle: ['There, there…', 'Là, là…'],
   chicks: ['Off to your new home, little ones!', 'En route pour votre nouvelle maison, mes petits !'],
   farewell: ['Off you go, and good luck!', 'Allez, bonne route !'],
+  sow: ['Grow tall and golden!', 'Pousse bien, mon blé !'],
+  harvest: ['What a harvest!', 'Quelle belle récolte !'],
+  honey: ['Thank you, bees!', 'Merci, les abeilles !'],
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -309,6 +312,28 @@ export class FarmLife {
     const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return true;
+  }
+  // ---- work about the farm (main.js: sowing and harvesting the wheat, the honey): he hurries to `at` ([x, z]), turns to
+  // `face`, says `say`, then `acts` ([name, secs, set(want, u, life)], 'camera': turning to face the player, or 'done': done() there), then a moment's look
+  // about. done() once ('done', or the end of the acts, or straight away if he never gets there); pail: carrying the pail all the while. Named 'pen': he isn't
+  // called away meanwhile; asked while he's coming out, going in or busy in a pen, straight after it
+  workAt(at, face, acts, done, o = {}) {
+    if (this.home || this.running) return false;
+    let fin = false; const finish = () => { if (!fin) { fin = true; if (done) done(); } return null; };
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - at[0], Lf.pos.z - at[1]) > 0.8) { seq.aborted = true; finish(); } return true; } };
+    const L = [TK.path(at[0], at[1], 'hurry'), there, TK.face(face), ...(o.say ? [TK.say(o.say)] : []), ...acts.map(a => a === 'done' ? finish : a === 'camera' ? TK.face('camera') : TK.act(a[0], a[1], a[2])), finish, TK.act('about', 1.4, STAND.about)];
+    const seq = TK.seq('pen', L), run = seq.run.bind(seq);
+    seq.run = (Lf, dt) => {
+      if (seq.aborted) return true;
+      if (!o.pail) return run(Lf, dt);
+      const W = Lf.want; W.props.pail = true;
+      const r = run(Lf, dt);
+      if (W.pose === 'turn') { W.pose = 'carry'; W.keepArms = 'R'; }
+      return r;
+    };
+    seq.finish = finish;
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
+    return seq;
   }
   // where his pail is (its middle, world), as he's posed now
   pailAt() { const b = this.f.rig.B.pail; b.updateWorldMatrix(true, false); return b.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); }

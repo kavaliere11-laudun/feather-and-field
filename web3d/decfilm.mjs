@@ -38,7 +38,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0`, { wai
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60 * Math.pow(9, 2.1) + 5; g.data.coins = 12000; g.data.land = [0, 1, 2, 3]; g.data.lvSeen = g.level; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = Math.round(60 * Math.pow(9, 2.1) + 5); g.data.coins = 12000; g.data.land = [0, 1, 2, 3]; g.data.lvSeen = g.level; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); document.getElementById('hint').classList.remove('on'); f.lookAt(f.view.target.x, f.view.target.z, 3.4); });
 marks.push('farm:' + n); await hold(1.2);
