@@ -29,6 +29,7 @@ import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP } from './game.js';
 import { GameUI } from './gameui.js';
+import { loadShow, ShowLineup } from './showground.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -360,11 +361,12 @@ async function start() {
   buildProps(); buildDecor();
   buildNature();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
-  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer'].includes(params.get('lineup'))) buildLineup();
+  if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer', 'show'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   if (params.get('lineup') === 'ducks') { geeseLineup = new DuckLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(42)); view.min = 0.5; }
   if (params.get('lineup') === 'farmer') { farmerLineup = new FarmerLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(44), parseInt(params.get('set') || '1', 10)); view.min = 0.4; }
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
+  if (params.get('lineup') === 'show') { await loadShow(loadGLB, loadJSON); new ShowLineup({ scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng(45), params }); view.min = 0.4; }
   if (POSTER) buildPoster(beastsInfo.joints);
   buildFoxes(beastsInfo.joints);
   buildGeese();
@@ -391,6 +393,7 @@ async function start() {
   else if (geeseLineup) { geeseLineup.group.updateMatrixWorld(true); view.target.copy(geeseLineup.group.localToWorld(new THREE.Vector3(0, 0, -1.6))); view.size = 1.6; }
   if (farmerLineup) { farmerLineup.group.updateMatrixWorld(true); const s3 = farmerLineup.set === 3; view.target.copy(farmerLineup.group.localToWorld(new THREE.Vector3(0, 0, s3 ? 0.2 : -0.5))); if (s3) view.target.sub(new THREE.Vector3(1, 0, 1).normalize().multiplyScalar(1.12 / Math.tan(42 * DEG))); view.size = s3 ? 0.5 : 3.9; }      // (set 3: the ground point behind their faces, from the camera)
   if (frogLineup) { frogLineup.group.updateMatrixWorld(true); view.target.copy(frogLineup.group.localToWorld(new THREE.Vector3(0, 0, -0.02))); view.size = 0.52; }
+  if (ShowLineup.on) ShowLineup.on.frameView(view);
   if (geeseFlock && params.has('geese')) { const c = geeseFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.6; }
   if (duckFlock && params.has('ducks')) { const c = duckFlock.centre(new THREE.Vector3()); view.target.set(c.x + 0.2, 0, c.z + 0.2); view.size = 1.9; }
   if (frogPond && params.has('frogs')) { const f = frogPond.frogs[0]; view.target.set(f.pos.x + 0.2, 0, f.pos.z + 0.2); view.size = 1.6; }
@@ -1621,6 +1624,7 @@ function tickFoxes(dt) {
   if (geeseLineup) { geeseLineup.update(dt); wake(100); }
   if (frogLineup) { frogLineup.update(dt); wake(100); }
   if (farmerLineup) { farmerLineup.update(dt); wake(100); }
+  if (ShowLineup.on) { ShowLineup.on.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
   if (farmDog) farmDog.separate();                   // (Biscuit out of Rusty's way, after everyone has moved)
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
@@ -2743,7 +2747,7 @@ function zoomBy(f) {
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
 function clampView() {
-  if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup) return;
+  if (lineup || foxLineup || geeseLineup || frogLineup || farmerLineup || ShowLineup.on) return;
   const t = view.target, by = -t.z;
   let u = (t.x + by) * R2, v = (by - t.x) * R2;
   u = Math.max(V.bounds.u[0] + 2, Math.min(V.bounds.u[1] - 2, u));

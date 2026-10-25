@@ -15,8 +15,18 @@ export function initFarmer(gltf, json) {
     if (mesh) MODELS[child.name.replace('farmer_', '')] = mesh.geometry;
   }
 }
+// another look made the same way, in its own file (the show judge: judge.glb + judge.json, look 'j'), added after
+// initFarmer; it then makes a FarmerRig or a Farmer like Arthur and Rosie, with the same poses and faces
+export function addLook(gltf, json) {
+  for (const child of gltf.scene.children) {
+    let mesh = null; child.traverse(c => { if (c.isMesh && !mesh) mesh = c; });
+    if (mesh) MODELS[child.name.replace('farmer_', '')] = mesh.geometry;
+  }
+  for (const k of ['joints', 'info', 'plaid', 'colours', 'stats']) INFO[k] = Object.assign(INFO[k] || {}, json[k]);
+}
+export const hasLook = (look) => !!MODELS[look];
 const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
-export const FARMER_NAME = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'] };
+export const FARMER_NAME = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'] };
 const DEG = Math.PI / 180;
 const ease = (a, b, k) => a + (b - a) * k;
 
@@ -43,6 +53,15 @@ export const POSES = {
   scoop: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 24, 0], head: [0, -2, 0],
     shL: [10, -66, 0], elL: [-15, -22, 0], shR: [-10, -66, 0], elR: [15, -22, 0], hand: ['hold', 'hold'], wrL: [0, 10, 0], wrR: [0, 10, 0] },
   hold: { head: [-8, 14, 0], chest: [0, -5, 0], shL: [10, -42, 0], elL: [-55, -80, 0], wrL: [0, 0, -15], shR: [-4, -68, 0], elR: [40, -58, 0], wrR: [0, 18, 10], hand: ['relax', 'open'] },
+  // (3D only) the show judge (showground.js; any look can take them): leaning in to peer into a show pen, hands clasped
+  // behind his back; writing on his clipboard (held flat on his left forearm, the pencil in the right hand: props clipboard
+  // and pencil); reaching out to pin a rosette on a pen's front (the rosette in his right hand: ShowGround.hold); clapping
+  // the winners; his clipboard held up against his chest as he walks from pen to pen (props clipboard)
+  judge_look: { chest: [0, 30, 0], head: [0, -22, 0], hipL: [0, -10, 0], hipR: [0, -10, 0], kneeL: 14, kneeR: 14, root_z: -0.015, shL: [16, 40, -70], elL: [0, -75, 0], shR: [-16, 40, 70], elR: [0, -75, 0], hand: ['relax', 'relax'] },
+  judge_write: { head: [0, 14, 0], chest: [0, 6, 0], shL: [0, -15, -40], elL: [0, -100, 0], wrL: [0, 0, 90], shR: [-8, -35, 30], elR: [0, -90, 0], wrR: [0, 30, 0], hand: ['hold', 'hold'] },
+  judge_pin: { chest: [0, 10, 0], head: [0, 4, 0], shR: [-6, -82, 0], elR: -10, wrR: [0, -8, 0], shL: [10, -4, 0], elL: -14, hand: ['relax', 'hold'], hipR: [0, -14, 0], kneeR: 8 },
+  clap: { head: [0, -8, 0], chest: [0, -3, 0], shL: [-8, -44, -30], elL: [0, -80, 0], shR: [8, -44, 30], elR: [0, -80, 0], hand: ['open', 'open'] },
+  judge_carry: { shL: [0, -15, -40], elL: [0, -100, 0], wrL: [-90, 0, 90], hand: ['hold', 'relax'] },
 };
 // faces (farmer.py's FACE): the upper and lower lids' edges (-1..1 of the eye's height), the lids slanted (degrees), where the
 // eyes look, the brows' slant (+ worried, - cross) and height, the mouth, the blush
@@ -54,6 +73,8 @@ export const FACES = {
   panic: { up: 1.0, lo: -1.0, brow: 0.6, browH: 0.95, mouth: 'o', blush: 0 },
   cuddle: { up: -0.2, lo: -0.25, brow: 0.1, browH: 0.45, mouth: 'smile', blush: 1.0 },
   feeding: { up: 0.9, lo: -0.45, look: [0.35, -0.2], brow: 0, browH: 0.4, mouth: 'grin', blush: 0.5 },
+  // (3D only) the judge weighing a bird up: eyes narrowed, brows down a little, lips pressed
+  peer: { up: 0.5, lo: -0.55, look: [0, -0.15], brow: -0.3, browH: 0.05, mouth: 'smile', blush: 0.3 },
 };
 const HANDS = { relax: [25, 18, 20, 4], open: [5, 0, 20, 14], point: [95, 0, 20, 4], fist: [105, 110, 40, 4], hold: [85, 85, 40, 4] };      // knuckles, index, thumb, spread
 const MOUTHS = ['smile', 'grin', 'talk', 'o', 'wavy', 'frown'];
@@ -170,6 +191,7 @@ export class FarmerRig {
     for (const m of MOUTHS) { const b = B['mouth_' + m]; if (b) b.scale.setScalar(m === F.mouth ? 1 : 1e-4); }
     this.blush.value = F.blush;
     B.torch.scale.setScalar(props.torch ? 1 : 1e-4); B.pail.scale.setScalar(props.pail ? 1 : 1e-4);
+    if (B.clipboard) { B.clipboard.scale.setScalar(props.clipboard ? 1 : 1e-4); B.pencil.scale.setScalar(props.pencil ? 1 : 1e-4); }     // (the judge's)
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
     const ht = (typeof window !== 'undefined' && window.__HAT) || {};
     this.turn('hat', [0, ht.tilt ?? -20, 0]); B.hat.position.copy(R.hat.p).add(new THREE.Vector3(0, ht.up ?? 0.01, ht.back ?? -0.02));

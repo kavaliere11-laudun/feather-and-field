@@ -13,6 +13,12 @@ LOOKS = {
               boots='#3f6e3c', band='#3d6aa8', hat='#e6c26c', beard=True, lashes=False),
     'f': dict(skin='#a8714f', blush='#e0746a', hair='#2a1a12', iris='#4a2c18', shirt=('#f6efe0', '#e0566a', '#8f2236'), denim='#3e6ea3',
               boots='#efbf3a', band='#d8343a', hat='#e6c26c', beard=False, lashes=True),
+    # the show judge (3D poultry shows): an older gentleman on the farmer's own body and face rig. Silver hair and a white
+    # moustache, little round glasses, a brown felt hat with a pheasant feather, an olive tweed jacket (its check drawn like
+    # the farmers' shirts: 'shirt' is the tweed here) over a cream shirt and a red tie, grey trousers, brown leather boots
+    'j': dict(skin='#f0c19e', blush='#ea8a7c', hair='#dedad2', iris='#4f78a3', shirt=('#7a7253', '#8a6b4a', '#7a5d40'), denim='#76726b',
+              boots='#74482a', band='#33452f', hat='#6e5a3f', beard=False, lashes=False, judge=True,
+              jshirt='#f5f0e4', tie='#8c2433', square='#e7b53c', stache='#efebe3', rims='#3b2a1c', lapel='#6a6349'),
 }
 _F = {}
 HAT_TILT = -10
@@ -57,7 +63,8 @@ def mats(look):
     key = look + ':' + OUTFIT
     if key in _F: return _F[key]
     P = LOOKS[look]; O = OF()
-    if O.get('shirt'): shirt, shirt_arm = plaid('fm_shirt_' + key, O['shirt'], f=O.get('check', 135.0)), plaid('fm_shirtarm_' + key, O['shirt'], f=O.get('check', 135.0), axes=('X', 'Z'))
+    if P.get('judge'): return judge_mats(look, key)
+    if O.get('shirt'):shirt, shirt_arm = plaid('fm_shirt_' + key, O['shirt'], f=O.get('check', 135.0)), plaid('fm_shirtarm_' + key, O['shirt'], f=O.get('check', 135.0), axes=('X', 'Z'))
     elif O.get('knit'): shirt = shirt_arm = mat('fm_knit_' + key, O['knit'], rough=0.95, sheen=0.5, bump=0.6, bump_scale=420)
     elif O.get('plain'): shirt = shirt_arm = mat('fm_plain_' + key, O['plain'], rough=0.85, sheen=0.25, bump=0.2, bump_scale=300)
     else: shirt, shirt_arm = plaid('fm_shirt_' + look, P['shirt']), plaid('fm_shirtarm_' + look, P['shirt'], axes=('X', 'Z'))
@@ -84,6 +91,139 @@ def mats(look):
         tongue=mat('fm_tongue', '#e06d78', rough=0.45, sss=0.2),
     )
     _F[key] = d; return d
+
+
+def judge_mats(look, key):
+    """The judge's own clothes (he never wears the farmers' bought outfits): the tweed is named like the farmers' shirts
+    (fm_shirt_ / fm_shirtarm_) so the browser draws its check per pixel the same way, with the tweed's colours."""
+    P = LOOKS[look]
+    d = dict(
+        skin=mat('fm_skin_' + look, P['skin'], rough=0.55, spec=0.3, sss=0.25),
+        nose=mat('fm_nose_' + look, P['skin'], rough=0.5, spec=0.35, sss=0.3, ramp=[(0, P['skin']), (1, P['blush'])]),
+        hair=mat('fm_hair_' + look, P['hair'], rough=0.6, spec=0.3, sheen=0.3, bump=0.25, bump_scale=90),
+        shirt=plaid('fm_shirt_' + look, P['shirt']), shirt_arm=plaid('fm_shirtarm_' + look, P['shirt'], axes=('X', 'Z')),
+        denim=mat('fm_trousers_' + look, P['denim'], rough=0.85, spec=0.15, bump=0.3, bump_scale=260),
+        boots=mat('fm_boots_' + look, P['boots'], rough=0.35, spec=0.5, coat=0.3),
+        sole=mat('fm_sole', '#4a3a2c', rough=0.8),
+        band=mat('fm_band_' + key, P['band'], rough=0.6),
+        white=mat('fm_white', '#fbf8f2', rough=0.25, spec=0.6, coat=0.2),
+        iris=mat('fm_iris_' + look, P['iris'], rough=0.2, spec=0.6),
+        pupil=mat('fm_pupil', '#0a0706', rough=0.2, spec=0.6),
+        shine=mat('fm_shine', '#ffffff', rough=0.2, emission=('#ffffff', 3.0)),
+        lid=mat('fm_lid_' + look, P['skin'], rough=0.55, spec=0.3, sss=0.2),
+        line=mat('fm_line', '#3b1d14', rough=0.6),
+        mouth=mat('fm_mouth', '#5c1d1f', rough=0.6),
+        teeth=mat('fm_teeth', '#fbf6ec', rough=0.3, spec=0.5),
+        tongue=mat('fm_tongue', '#e06d78', rough=0.45, sss=0.2),
+        jshirt=mat('fm_jshirt_' + look, P['jshirt'], rough=0.8, sheen=0.2),
+        tie=mat('fm_tie_' + look, P['tie'], rough=0.5, sheen=0.3),
+        square=mat('fm_square_' + look, P['square'], rough=0.5, sheen=0.3),
+        lapel=mat('fm_lapel_' + look, P['lapel'], rough=0.9),
+        button=mat('fm_jbutton', '#4a3322', rough=0.35, spec=0.5),
+        stache=mat('fm_stache_' + look, P['stache'], rough=0.7, sheen=0.4, bump=0.3, bump_scale=160),
+        rims=mat('fm_rims_' + look, P['rims'], rough=0.3, spec=0.6),
+        felt=mat('fm_felt_' + look, P['hat'], rough=0.85, sheen=0.3, bump=0.2, bump_scale=200),
+        feather=mat('fm_feather_' + look, '#b8642e', rough=0.6, sheen=0.3), quill=mat('fm_quill_' + look, '#3a2a1e', rough=0.6),
+    )
+    _F[key] = d; return d
+
+
+def judge_torso(chest, Mt):
+    """The judge's tweed jacket over a cream shirt and a red tie, on the farmers' own torso (a little rounder in front):
+    the V of the jacket shows the shirt and the tie, the collar shows all round under the jacket's; lapels, two buttons,
+    pocket flaps and a mustard handkerchief in the breast pocket."""
+    E = [('ELLIPSOID', (0.012, 0, -0.13), 0.165 * K, (0.92, 1.05, 0.85), 2.0),
+         ('ELLIPSOID', (0.0, 0, 0.07), 0.15 * K, (0.85, 1.12, 0.95), 2.0),
+         ('BALL', (-0.005, 0.15, 0.15), 0.07 * K, None, 2.0), ('BALL', (-0.005, -0.15, 0.15), 0.07 * K, None, 2.0),
+         ('ELLIPSOID', (0.0, 0, 0.25), 0.058 * K, (1, 1, 1.2), 2.0),
+         ('ELLIPSOID', (0.06, 0, -0.1), 0.1 * K, (1.0, 1.25, 0.95), 2.0)]           # (a comfortable tummy)
+    torso = metaball_mesh('torso', E, res=0.008, m=Mt['shirt'], parent=chest)
+    for k in ('jshirt', 'tie'): torso.data.materials.append(Mt[k])
+    ZV, NECK = 0.035, 0.262                                          # the V's bottom, where the collar starts
+    def vhalf(z): return 0.012 + (z - ZV) * 0.36
+    for poly in torso.data.polygons:
+        c = poly.center
+        if c.x > 0.02 and ZV < c.z < NECK + 0.02 and abs(c.y) < vhalf(c.z):
+            poly.material_index = 2 if abs(c.y) < 0.019 + (c.z - ZV) * 0.03 and c.z < NECK - 0.012 else 1
+        elif c.z > NECK + 0.012 and c.x > -0.045: poly.material_index = 1          # the shirt collar round the neck
+    surfT = HC.surface_finder(torso)
+    def on_torso(y, z, off=0.004):
+        p, n = surfT(Vector((1.0, y * 6, z * 3)).normalized(), origin=(0, y, z)); return p + n * off
+    def on_front(y, z, off):                                         # (straight in from the front: the V's edges)
+        p, n = surfT(Vector((1.0, y * 1.5, 0.15)).normalized(), origin=(0, y * 0.5, z)); return p + n * off
+    for sd in (1, -1):                                               # the lapels along the V
+        pts = [on_front(sd * (vhalf(z) + 0.004), z, 0.005) for z in [ZV + (NECK - 0.012 - ZV) * i / 7 for i in range(8)]]
+        o = curve_line_world('lapel', pts, 0.009, Mt['lapel'], chest); o.data.bevel_resolution = 2
+        cp, cn = surfT(Vector((0.7, sd * 0.8, 0.35)).normalized(), origin=(0, sd * 0.03, NECK))          # the shirt collar's points
+        B = HC.basis(cp + cn * 0.004, Vector((0.25, -sd * 0.6, -1.0)), cn)
+        o = sphere('collarpt', 1.0, (0, 0, 0), m=Mt['jshirt'], parent=chest, seg=12, rings=8)
+        o.matrix_basis = B @ Matrix.Diagonal((0.034, 0.006, 0.02, 1))
+    kp, kn = surfT(Vector((1.0, 0, 0.9)).normalized(), origin=(0, 0, NECK - 0.012))         # the tie's knot
+    sphere('tieknot', 1.0, tuple(kp + kn * 0.004), (0.018, 0.022, 0.02), m=Mt['tie'], parent=chest, seg=14, rings=10)
+    for z in (-0.005, -0.075):                                       # two buttons
+        b = sphere('jbutton', 0.013, tuple(on_torso(0.0, z, 0.003)), (0.5, 1, 1), m=Mt['button'], parent=chest, seg=14, rings=8)
+    for sd in (1, -1):                                               # pocket flaps
+        p, n = surfT(Vector((1.0, sd * 0.9, -0.35)).normalized(), origin=(0, sd * 0.08, -0.12))
+        o = box('pflap', (0.012, 0.085, 0.03), (0, 0, 0), (0, 0, 0), Mt['shirt'], bevel=0.005, parent=chest)
+        o.matrix_basis = HC.basis(p + n * 0.006, n, Vector((0, 0, 1))) @ Matrix.Rotation(math.radians(90), 4, 'X')
+    p, n = surfT(Vector((1.0, 0.8, 0.45)).normalized(), origin=(0, 0.1, 0.13))      # the breast pocket and its handkerchief
+    Bp = HC.basis(p + n * 0.004, Vector((0, 0, 1)), n)
+    for (u, v, s_) in ((0.012, 0.0, 1.0), (0.018, 0.016, 0.8), (0.016, -0.015, 0.8)):
+        o = sphere('hanky', 1.0, (0, 0, 0), m=Mt['square'], parent=chest, seg=10, rings=6)
+        o.matrix_basis = Bp @ Matrix.Translation(Vector((u, 0.002, v))) @ Matrix.Diagonal((0.016 * s_, 0.005, 0.011 * s_, 1))
+    return torso
+
+
+def judge_face(hd, hr, surf, Mt):
+    """Little round glasses (wire rims in front of the eyes, a bridge over the nose, arms back to the ears) and a white
+    moustache under the nose, clear of the mouth."""
+    R = 0.037; rim = Mt['rims']; ends = {}
+    for s in (1, -1):
+        n = Vector((0.9, s * 0.36, 0.06)).normalized(); sp_, _ = surf(n); ic = sp_ - n * 0.014
+        up = Vector((0, 0, 1)); Zl = (up - n * up.dot(n)).normalized(); Xl = n.cross(Zl)
+        c = ic + n * (R + 0.013); rr = 0.046
+        pts = [c + (Xl * math.cos(t) + Zl * math.sin(t)) * rr for t in [i / 28 * math.tau for i in range(29)]]
+        o = curve_line_world('glassrim', pts, 0.0034, rim, hd); o.data.bevel_resolution = 1
+        ends[s] = (c + Xl * s * rr, c - Xl * s * rr + Zl * 0.008)          # (its inner edge, by the nose; its outer edge)
+        ep, en = surf((0.05, s * 1.0, 0.0))                          # the arm back over the ear
+        pts = [ends[s][1], ends[s][1] - n * 0.02 + en * 0.004, ep + en * 0.006 + Vector((0.02, 0, 0.012))]
+        o = curve_line_world('glassarm', pts, 0.0026, rim, hd); o.data.bevel_resolution = 1
+    a, b = ends[1][0], ends[-1][0]; mid = (a + b) / 2
+    bp, bn = surf((mid - Vector()).normalized())
+    pts = [a, a.lerp(bp + bn * 0.016, 0.6) + Vector((0, 0, 0.004)), bp + bn * 0.016 + Vector((0, 0, 0.006)), b.lerp(bp + bn * 0.016, 0.6) + Vector((0, 0, 0.004)), b]
+    o = curve_line_world('glassbridge', pts, 0.003, rim, hd); o.data.bevel_resolution = 1
+    E = []
+    for i in range(11):
+        k = -1 + 2 * i / 10
+        p, nrm = surf((0.96, k * 0.46, -0.31 - 0.13 * k * k))
+        E.append(('BALL', tuple(p + nrm * 0.004), (0.0165 - 0.005 * abs(k) ** 1.5) * K, None, 2.0))
+    metaball_mesh('moustache', E, res=0.004, m=Mt['stache'], parent=hd)
+
+
+def judge_hat(hd, hr, Mt):
+    """A brown felt hat: a rounded crown pinched at the front, a short brim snapped down in front and up at the back, a dark
+    green band and a pheasant feather tucked into it."""
+    h = empty('hat', (-0.012, 0, hr * 0.64), (0, math.radians(HAT_TILT * 0.6), 0), hd); h.scale = (hr / 0.165,) * 3
+    felt = Mt['felt']; z0 = -0.03                                    # (it sits down round his head, not on top of it)
+    cyl('crown', 0.14, 0.13, (0, 0, z0 + 0.065), (0, 0, 0), felt, verts=40, r2=0.122, bevel=0.035, parent=h)
+    sphere('crowntop', 1.0, (-0.008, 0, z0 + 0.124), (0.118, 0.108, 0.036), m=felt, parent=h, seg=32, rings=12)
+    for sd in (1, -1): sphere('pinch', 1.0, (0.066, sd * 0.062, z0 + 0.104), (0.042, 0.014, 0.03), (sd * 0.5, 0, 0), m=felt, parent=h, seg=14, rings=8)
+    me = bpy.data.meshes.new('brim'); bm = bmesh.new(); rings = []
+    for k in range(6):
+        f = k / 5; r = 0.126 + (0.228 - 0.126) * f
+        rings.append([bm.verts.new((math.cos(a) * r, math.sin(a) * r * 0.95,
+                                    -0.024 * f * f * max(0.0, math.cos(a)) + 0.05 * f * f * max(0.0, -math.cos(a)) ** 1.5 + 0.014 * f * f * math.sin(a) ** 2))
+                      for a in [i / 64 * math.tau for i in range(64)]])
+    for k in range(5):
+        for i in range(64):
+            j = (i + 1) % 64; bm.faces.new((rings[k][i], rings[k][j], rings[k + 1][j], rings[k + 1][i]))
+    bm.to_mesh(me); bm.free()
+    br = link(bpy.data.objects.new('brim', me)); setmat(br, felt); br.parent = h; br.location = (0, 0, z0 + 0.012)
+    sm = br.modifiers.new('s', 'SOLIDIFY'); sm.thickness = 0.012; sm.offset = 0; subsurf(br, 2)
+    for p in br.data.polygons: p.use_smooth = True
+    cyl('band', 0.1415, 0.03, (0, 0, z0 + 0.03), (0, 0, 0), Mt['band'], verts=40, r2=0.139, bevel=0.004, parent=h)
+    sphere('feather', 1.0, (-0.04, 0.14, z0 + 0.07), (0.09, 0.008, 0.019), (math.radians(8), math.radians(-28), math.radians(-12)), m=Mt['feather'], parent=h, seg=16, rings=8)
+    sphere('quill', 1.0, (-0.11, 0.132, z0 + 0.105), (0.035, 0.007, 0.012), (math.radians(8), math.radians(-28), math.radians(-12)), m=Mt['quill'], parent=h, seg=12, rings=6)
 
 
 # ------------------------------------------------------------------ poses and faces
@@ -235,16 +375,7 @@ def curve_line_world(name, pts, depth, m, parent):
     return o
 
 
-def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3):
-    random.seed(seed)
-    P = LOOKS[look]; Mt = mats(look)
-    Q = dict(POSES['stand']); Q.update(POSES[pose] if isinstance(pose, str) else pose)
-    X = dict(FACE['neutral']); X.update(FACE[expr] if isinstance(expr, str) else expr)
-    D = lambda a: tuple(math.radians(v) for v in a)
-    root = empty('farmer_' + look, loc, (0, 0, yaw))
-    pel = empty('pelvis', (0, 0, 0.56 + Q.get('root_z', 0)), (0, 0, 0), root)
-    chest = empty('chest', (0, 0, 0.14), D(Q.get('chest', (0, 0, 0))), pel)
-    # ---- torso: one soft shape, shirt above the waist, dungarees below and on the bib
+def _farmer_torso(chest, Mt):
     E = [('ELLIPSOID', (0.012, 0, -0.13), 0.165 * K, (0.92, 1.05, 0.85), 2.0),
          ('ELLIPSOID', (0.0, 0, 0.07), 0.15 * K, (0.85, 1.12, 0.95), 2.0),
          ('BALL', (-0.005, 0.15, 0.15), 0.07 * K, None, 2.0), ('BALL', (-0.005, -0.15, 0.15), 0.07 * K, None, 2.0),
@@ -295,6 +426,20 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
         o = sphere('scarftip', 1.0, (0.088, 0, 0.215), (0.02, 0.05, 0.05), (0, math.radians(-20), 0), m=sm_, parent=chest, seg=16, rings=10)
     pk = on_torso(0.0, 0.04, 0.003)
     box('pocket', (0.012, 0.075, 0.05), tuple(pk), (0, math.radians(-8), 0), Mt['denim'], bevel=0.006, parent=chest)
+
+def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3):
+    random.seed(seed)
+    P = LOOKS[look]; Mt = mats(look)
+    Q = dict(POSES['stand']); Q.update(POSES[pose] if isinstance(pose, str) else pose)
+    X = dict(FACE['neutral']); X.update(FACE[expr] if isinstance(expr, str) else expr)
+    D = lambda a: tuple(math.radians(v) for v in a)
+    root = empty('farmer_' + look, loc, (0, 0, yaw))
+    pel = empty('pelvis', (0, 0, 0.56 + Q.get('root_z', 0)), (0, 0, 0), root)
+    chest = empty('chest', (0, 0, 0.14), D(Q.get('chest', (0, 0, 0))), pel)
+    J = P.get('judge', False)
+    if J: judge_torso(chest, Mt)
+    # ---- torso: one soft shape, shirt above the waist, dungarees below and on the bib
+    else: _farmer_torso(chest, Mt)
     # ---- head
     head = empty('head', (0, 0, 0.3), D(Q.get('head', (0, 0, 0))), chest)
     hr = 0.2; hs = hr / 0.165
@@ -374,17 +519,27 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
         for i in range(9):
             u = -1 + 2 * i / 8
             pts.append(tuple(frame @ Vector((u * 0.036, 0.0, 0.008 * (1 - u * u)))))
-        o = curve_line_world('brow', [Vector(p) for p in pts], 0.0075 if look == 'm' else 0.0058, Mt['hair'], hd)
+        o = curve_line_world('brow', [Vector(p) for p in pts], 0.0088 if J else 0.0075 if look == 'm' else 0.0058, Mt['hair'], hd)
     mouth(X.get('mouth', 'smile'), hd, hr, surf, Mt)
+    if J: judge_face(hd, hr, surf, Mt)
     # ---- hair and hat
     hair(look, hd, hr, surf, Mt)
-    hat(look, hd, hr, Mt)
+    if J: judge_hat(hd, hr, Mt)
+    else: hat(look, hd, hr, Mt)
     # ---- arms
     for side, key in ((1, 'L'), (-1, 'R')):
         sh = empty('shoulder' + key, (-0.005, side * 0.19, 0.155), D(Q.get('sh' + key, (side * 6, 0, 0))), chest)
         limb('upperarm', 0.2, 0.058, 0.05, Mt['shirt_arm'], sh)
         ev = Q.get('el' + key, -6); ev = (0, ev, 0) if isinstance(ev, (int, float)) else ev
         el = empty('elbow' + key, (0, 0, -0.2), D(ev), sh)
+        if J:                                          # the judge: the tweed sleeve down to a cream shirt cuff at the wrist
+            limb('forearm', 0.15, 0.05, 0.045, Mt['shirt_arm'], el)
+            cyl('scuff', 0.043, 0.03, (0, 0, -0.158), (0, 0, 0), Mt['jshirt'], verts=24, r2=0.04, bevel=0.005, parent=el)
+            sphere('wristb', 0.034, (0, 0, -0.18), m=Mt['skin'], parent=el, seg=18, rings=12)
+            wr = empty('wrist' + key, (0, 0, -0.18), D(Q.get('wr' + key, (0, 0, 0))), el)
+            hs = Q.get('hand', ('relax', 'relax'))
+            hand(side, hs[0] if side > 0 else hs[1], Mt, wr)
+            continue
         cuff = bpy.data.meshes.new('cuff'); bm = bmesh.new()
         bmesh.ops.create_cone(bm, cap_ends=False, segments=24, radius1=0.054, radius2=0.052, depth=0.034); bm.to_mesh(cuff); bm.free()
         co = link(bpy.data.objects.new('cuff', cuff)); setmat(co, Mt['shirt_arm']); co.parent = el; co.location = (0, 0, -0.012)
@@ -403,6 +558,13 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
         ank = Q.get('ankle' + key)                     # given: the foot's own angle; otherwise it follows the leg (walking)
         ank = math.radians(ank) if ank is not None else -math.radians(Q.get('knee' + key, 0)) - math.radians(Q.get('hip' + key, (0, 0, 0))[1]) * 0.6
         an = empty('ankle' + key, (0, 0, -0.24), (0, ank, 0), kn)
+        if J:                                          # the judge: grey trousers down over brown leather ankle boots
+            cyl('hem', 0.064, 0.06, (0, 0, -0.205), (0, 0, 0), Mt['denim'], verts=24, r2=0.068, bevel=0.006, parent=kn)
+            cyl('boot', 0.058, 0.09, (0, 0, 0.0), (0, 0, 0), Mt['boots'], verts=24, r2=0.056, bevel=0.01, parent=an)
+            sphere('toe', 1.0, (0.062, 0, -0.045), (0.1, 0.063, 0.05), m=Mt['boots'], parent=an, seg=24, rings=14)
+            sphere('heel', 1.0, (-0.01, 0, -0.05), (0.068, 0.062, 0.045), m=Mt['boots'], parent=an, seg=20, rings=12)
+            cyl('sole', 0.066, 0.016, (0.042, 0, -0.091), (0, 0, 0), Mt['sole'], verts=24, bevel=0.005, parent=an).scale = (1.55, 1.0, 1.0)
+            continue
         boot = cyl('boot', 0.07, 0.17, (0, 0, 0.065), (0, 0, 0), Mt['boots'], verts=24, r2=0.074, bevel=0.01, parent=an)
         sphere('toe', 1.0, (0.06, 0, -0.04), (0.11, 0.072, 0.06), m=Mt['boots'], parent=an, seg=24, rings=14)
         sphere('heel', 1.0, (-0.01, 0, -0.045), (0.075, 0.07, 0.05), m=Mt['boots'], parent=an, seg=20, rings=12)
@@ -413,6 +575,16 @@ def build(look='m', pose='stand', expr='neutral', loc=(0, 0, 0), yaw=0.0, seed=3
 
 
 def hair(look, hd, hr, surf, Mt):
+    if LOOKS[look].get('judge'):                                     # the judge: short silver hair at the sides and back
+        E = []
+        for i in range(24):
+            a = math.radians(78 + i * (204 / 23)); z = random.uniform(-0.08, 0.22)
+            d = Vector((math.cos(a) * 0.95, math.sin(a), z)).normalized()
+            p, n = surf(d); E.append(('BALL', tuple(p - n * 0.012), 0.024 * K, None, 2.0))
+        for sd in (1, -1):
+            p, n = surf((0.22, sd * 1.0, -0.2)); E.append(('ELLIPSOID', tuple(p - n * 0.007), 0.014 * K, (0.6, 0.6, 1.5), 2.0))
+        metaball_mesh('hair', E, res=0.006, m=Mt['hair'], parent=hd)
+        return
     if look == 'm':
         E = []
         for i in range(26):                                         # short tousled hair: sides and back, under the hat
@@ -585,6 +757,36 @@ def bucket_prop(hand_world):
         sphere('g', 1.0, (math.cos(a) * rr, math.sin(a) * rr, 0.075 + random.uniform(0, 0.012)), (0.009, 0.007, 0.006), (0, 0, a), grain, seg=8, rings=6, parent=r)
     pts = [(math.cos(t) * 0.12, math.sin(t) * 0.0, 0.08 + math.sin(t) * 0.12) for t in [i / 16 * math.pi for i in range(17)]]
     HC.curve_line('handle', pts, 0.004, pail, r, Matrix.Rotation(math.radians(90), 4, 'Z'))
+    return r
+
+
+def clipboard_prop(wrist_world):
+    """The judge's clipboard, gripped at its top edge by the left hand (built in the hanging hand's frame: fingers down -Z,
+    palm towards -Y): a hardboard board, a sheet of paper with a few lines on its palm side, a clip at the top."""
+    board = mat('fm_clipboard', '#a8794a', rough=0.7); paper = mat('fm_paper', '#fbfaf3', rough=0.8)
+    clip = mat('fm_clip', '#c4c8cc', rough=0.35, spec=0.6); ink = mat('fm_ink', '#8a96a6', rough=0.8); tick = mat('fm_tick', '#c8372d', rough=0.6)
+    r = empty('clipboard'); r.matrix_world = wrist_world
+    cz, cx = -0.205, 0.02                                            # (the board's middle: its top edge in the hand)
+    box('cboard', (0.22, 0.008, 0.29), (cx, 0, cz), (0, 0, 0), board, bevel=0.004, segs=1, parent=r)
+    box('cpaper', (0.19, 0.003, 0.24), (cx, -0.0055, cz - 0.018), (0, 0, 0), paper, bevel=0.0, segs=1, parent=r)
+    box('cclip', (0.08, 0.014, 0.03), (cx, -0.006, cz + 0.128), (0, 0, 0), clip, bevel=0.004, segs=1, parent=r)
+    for i in range(4):
+        box('cline', (0.13 - 0.03 * (i % 2), 0.001, 0.006), (cx - 0.01, -0.0075, cz + 0.06 - i * 0.045), (0, 0, 0), ink, bevel=0.0, segs=1, parent=r)
+    box('ctick', (0.016, 0.001, 0.006), (cx + 0.07, -0.0076, cz + 0.06), (0, math.radians(40), 0), tick, bevel=0.0, segs=1, parent=r)
+    return r
+
+
+def pencil_prop(wrist_world):
+    """The judge's pencil, between the right thumb and finger (the hanging hand's frame), its point beyond the fingertips."""
+    body = mat('fm_pencil', '#f2c230', rough=0.45, spec=0.4); wood = mat('fm_pwood', '#ecc9a0', rough=0.7)
+    lead = mat('fm_lead', '#2f2f33', rough=0.4); rub = mat('fm_rubber', '#ea8f9c', rough=0.7); band = mat('fm_ferrule', '#c4c8cc', rough=0.35, spec=0.6)
+    r = empty('pencil'); r.matrix_world = wrist_world
+    t = empty('ptilt', (0.04, 0.0, -0.1), (0, math.radians(-18), 0), r)          # (along the fingers, its point a little forward)
+    cyl('pbody', 0.0068, 0.11, (0, 0, 0), (0, 0, 0), body, verts=6, bevel=0.0, parent=t)
+    cyl('pwood', 0.0068, 0.022, (0, 0, -0.066), (0, 0, 0), wood, verts=6, r2=0.0022, bevel=0.0, parent=t)
+    cyl('plead', 0.0022, 0.006, (0, 0, -0.079), (0, 0, 0), lead, verts=6, r2=0.0004, bevel=0.0, parent=t)
+    cyl('pband', 0.0072, 0.01, (0, 0, 0.06), (0, 0, 0), band, verts=8, bevel=0.0, parent=t)
+    cyl('prub', 0.0066, 0.012, (0, 0, 0.071), (0, 0, 0), rub, verts=8, bevel=0.002, parent=t)
     return r
 
 

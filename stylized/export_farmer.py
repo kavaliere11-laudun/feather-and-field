@@ -86,6 +86,18 @@ def build(look):
     # ---- the props: the torch in the right hand, the pail in the left (hidden until wanted)
     wR = [o for o in root.children_recursive if o.name.startswith('wristR')][0]; wL = [o for o in root.children_recursive if o.name.startswith('wristL')][0]
     bpy.context.view_layer.update()
+    if FM.LOOKS[look].get('judge'):
+        # the judge: his clipboard in the left hand, his pencil in the right (hidden until wanted); the torch's and the
+        # pail's bones are kept, with nothing on them, so the farmers' rig drives him just the same
+        for nm, w in (('torch', wR), ('pail', wL)): empty(nm, (0, 0, 0), (0, 0, 0), w)
+        cb = FM.clipboard_prop(wL.matrix_world.copy()); reparent(cb, wL)
+        pc = FM.pencil_prop(wR.matrix_world.copy()); reparent(pc, wR)
+        bpy.context.view_layer.update()
+        # where a held thing goes, in each wrist's own frame (glTF axes): the palm's middle, and the right hand's pinch
+        # between thumb and finger (a rosette held by its pin to be pinned on a pen)
+        info['hold'] = dict(palm=to_gl(Vector((0.0, 0.0, -0.059))), pinch=to_gl(Vector((0.045, 0.0, -0.105))))
+        info['mouth'] = to_gl(hd.matrix_world @ mp); info['blush'] = [to_gl(hd.matrix_world @ surf((0.75, sd * 0.55, -0.3))[0]) for sd in (1, -1)]
+        return root, hd, info
     t = FM.torch_prop(wR.matrix_world @ Vector((0, 0, -0.06)), Vector((1.0, 0.0, -0.05)))
     for o in list(t.children):
         if o.name.startswith('tbeam'): bpy.data.objects.remove(o)
@@ -136,8 +148,10 @@ def bake(look, root, budget, info):
         me.calc_loop_triangles(); meshes.append([o, me, len(me.loop_triangles)])
     # simplified part by part: the face's little parts kept as they are, the big soft shapes to a set number of triangles
     # each, every other round part to about 40% (they're smooth-shaded, so it hardly shows)
-    KEEP = ('m', 'mline', 'mouth', 'teeth', 'tongue', 'lip', 'lipline', 'shine', 'lashline', 'flick', 'brow')
-    TARGET = dict(torso=2600, beard=1300, headm=3000, hair=1600, plait=700, plaitend=120, brim=800, crown=600, cuff=180, eyeball=360, lidup=420, lidlo=420, iris=260, pupil=200)
+    KEEP = ('m', 'mline', 'mouth', 'teeth', 'tongue', 'lip', 'lipline', 'shine', 'lashline', 'flick', 'brow',
+            'glassrim', 'glassarm', 'glassbridge', 'cline', 'ctick', 'lapel')          # (the judge's: thin lines)
+    TARGET = dict(torso=2600, beard=1300, headm=3000, hair=1600, plait=700, plaitend=120, brim=800, crown=600, cuff=180, eyeball=360, lidup=420, lidlo=420, iris=260, pupil=200,
+                  moustache=700, scuff=120)
     total = 0
     for rec in meshes:
         o, me, n = rec; k = o.name.split('.')[0]
@@ -234,8 +248,13 @@ looks = sys.argv[2].split(',') if len(sys.argv) > 2 else ['m', 'f']
 for look in looks:
     root, hd, info = build(look); light(1)
     bake(look, root, 0, info)
-write(os.path.join(OUT, 'farmer.glb'), looks)
-plaid = {k: [FM.LOOKS[k]['shirt'][i] for i in range(3)] for k in looks}
-json.dump(dict(joints=JOINTS, info=INFO, plaid=plaid, colours={k: {c: FM.LOOKS[k][c] for c in ('skin', 'blush', 'hair', 'band', 'hat', 'boots', 'denim')} for k in looks},
-               mouths=MOUTHS, stats=STATS), open(os.path.join(OUT, 'farmer.json'), 'w'), indent=1)
+# the farmers (Arthur, Rosie) in farmer.glb; the show judge ('j') in his own judge.glb + judge.json (same layout, loaded
+# only for a show day: farmer.js addLook)
+for fname, group in (('farmer', [k for k in looks if k != 'j']), ('judge', [k for k in looks if k == 'j'])):
+    if not group: continue
+    write(os.path.join(OUT, fname + '.glb'), group)
+    plaid = {k: [FM.LOOKS[k]['shirt'][i] for i in range(3)] for k in group}
+    json.dump(dict(joints={k: JOINTS[k] for k in group}, info={k: INFO[k] for k in group}, plaid=plaid,
+                   colours={k: {c: FM.LOOKS[k][c] for c in ('skin', 'blush', 'hair', 'band', 'hat', 'boots', 'denim')} for k in group},
+                   mouths=MOUTHS, stats={k: STATS[k] for k in group}), open(os.path.join(OUT, fname + '.json'), 'w'), indent=1)
 print('STATS', json.dumps(STATS))
