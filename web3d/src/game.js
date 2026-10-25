@@ -12,9 +12,9 @@
 // room. Tap the nest and the eggs are sold. The feeder goes down as the trio eats; fill it for a few coins. Away from the
 // game, the eggs of the last two days are there when you come back; a clock put back gives nothing.
 //
-// Step 5, levels and land: the XP fills the level ring; a new level's card once, saying what it brings. The village's
-// plots are the patches of land: one more can be bought at each level, offered one at a time in order, the nearest to the
-// first coop first (Audrey: "One at a time, in order"), from 100 coins at level 2 to 10,000 at level 30.
+// Step 5, levels and land: the XP fills the level ring; a new level's card once, saying what it brings. The farm is split
+// into fields along its lanes and the stream; the home field is yours from the start and one more can be bought at each
+// level, nearest first, from 100 coins at level 2 to 10,000 at level 30; the rest is wild meadow, fenced off.
 //
 // Step 4, chicks: now and then a hen goes broody (each morning at 7, a good mum more often than the others; one brood at a
 // time in a coop, a day's rest after one, never on the farm's first day). She sits on her eggs for a day (laying none for
@@ -49,12 +49,11 @@ const TEXT = {
     level_title: 'Level {n}', level_xp: '{xp} of {need} XP to level {next}', level_top: 'Top level!',
     level_how: 'Look after your birds to earn XP.',
     level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', level_new: 'New at this level',
-    land_new: 'A patch of land is for sale: {c} coins', land_show: 'See the land', level_next_land: 'At level {n}: a patch of land for sale',
-    land_count: 'Your land: {n} patches', land_count1: 'Your land: 1 patch', land_all: 'All the land is yours!',
-    land_title: 'A patch of land', land_body: 'Room for a coop and its pen, yours for good. Your farm grows one patch at a time.',
-    land_buy: 'Buy for {c} coins', land_broke: 'Not enough coins yet ({c})', land_bought: 'The new patch of land is yours!',
-    land_mine: 'Your land', land_mine_body: 'Bare earth, ready for a coop. New breeds come with the levels.',
-    sale_sign: 'FOR SALE', bub_sale: 'For sale',
+    land_new: 'A new field is for sale: {c} coins', land_show: 'See the field', level_next_land: 'At level {n}: a new field for sale',
+    land_count: 'Your land: {n} fields', land_count1: 'Your land: 1 field', land_all: 'All the land is yours!',
+    land_title: 'A field', land_body: 'Wild meadow with room for a coop or two. Buy it and it’s yours for good: the grass is cut and your fence moves out round it.',
+    land_buy: 'Buy for {c} coins', land_broke: 'Not enough coins yet ({c})', land_bought: 'The new field is yours!', land_wild: 'Wild meadow · for sale at level {n}',
+        sale_sign: 'FOR SALE', bub_sale: 'For sale',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
@@ -113,12 +112,11 @@ const TEXT = {
     level_title: 'Niveau {n}', level_xp: '{xp} sur {need} XP pour le niveau {next}', level_top: 'Niveau maximum !',
     level_how: 'Prenez soin de vos volailles pour gagner de l’XP.',
     level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', level_new: 'Nouveau à ce niveau',
-    land_new: 'Un terrain est à vendre : {c} pièces', land_show: 'Voir le terrain', level_next_land: 'Au niveau {n} : un terrain à vendre',
+    land_new: 'Un nouveau terrain est à vendre : {c} pièces', land_show: 'Voir le terrain', level_next_land: 'Au niveau {n} : un nouveau terrain à vendre',
     land_count: 'Vos terrains : {n}', land_count1: 'Votre terrain : 1', land_all: 'Tous les terrains sont à vous !',
-    land_title: 'Un terrain', land_body: 'De la place pour un poulailler et son enclos, à vous pour toujours. Votre ferme s’agrandit un terrain à la fois.',
-    land_buy: 'Acheter pour {c} pièces', land_broke: 'Pas encore assez de pièces ({c})', land_bought: 'Le nouveau terrain est à vous !',
-    land_mine: 'Votre terrain', land_mine_body: 'De la terre nue, prête pour un poulailler. Les nouvelles races viennent avec les niveaux.',
-    sale_sign: 'À VENDRE', bub_sale: 'À vendre',
+    land_title: 'Un terrain', land_body: 'Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : l’herbe est coupée et votre clôture l’entoure.',
+    land_buy: 'Acheter pour {c} pièces', land_broke: 'Pas encore assez de pièces ({c})', land_bought: 'Le nouveau terrain est à vous !', land_wild: 'Pré sauvage · à vendre au niveau {n}',
+        sale_sign: 'À VENDRE', bub_sale: 'À vendre',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
@@ -197,11 +195,12 @@ export const TOP_LEVEL = 30;
 export function xpFor(level) { return level <= 1 ? 0 : Math.round(60 * Math.pow(level - 1, 2.1)); }
 export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
 
-// ---- land (release 1 step 5): the village's plots are the patches. One more patch can be bought at each level, offered
-// one at a time in order, the nearest to the first coop first (Audrey, 25 Oct: "One at a time, in order"), from 100 coins
-// at level 2 to 10,000 at level 30. (The plots by distance from plot 0, the farm's first patch: village.json)
-export const LAND_ORDER = [0, 2, 1, 3, 9, 8, 4, 6, 11, 10, 5, 7, 12, 17, 16, 14, 13, 19, 15, 18, 20, 24, 25, 21, 22, 28, 26, 27, 23, 29];
-export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th patch after the first
+// ---- land (release 1 step 5): the farm is split into 30 fields along its lanes and the stream (fields.py: models/
+// fields.json, each field's number the order it comes up for sale). Field 0, the home field (the first coop and the
+// farmhouse), is the farm's from the start; one more can be bought at each level, nearest first (Audrey, 25 Oct: "For me
+// it's a full piece of land"; "Fields with natural borders", "One each level"), from 100 coins at level 2 to 10,000 at 30
+export const FIELDS = 30;
+export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
 // ---- names typed by the player: letters, numbers, spaces and a little punctuation, never code
 export function cleanName(s, max = 20) {
@@ -269,15 +268,15 @@ export function checkFarm(d, now = Date.now()) {
   out.xp = int(d.xp, 0, 1e9, 0);
   const look = d.farmer && d.farmer.look === 'f' ? 'f' : 'm';
   out.farmer = { look, name: cleanName(d.farmer && d.farmer.name) };
-  // the land: the first patches in order, at most one a level (a farm's own purchases never go further)
+  // the land: the first fields in order, at most one a level (a farm's own purchases never go further)
   const land = Array.isArray(d.land) ? d.land : [];
-  out.land = LAND_ORDER.slice(0, Math.max(1, Math.min(land.length, levelOf(out.xp), LAND_ORDER.length)));
+  out.land = Array.from({ length: Math.max(1, Math.min(land.length, levelOf(out.xp), FIELDS)) }, (_, i) => i);
   out.lvSeen = int(d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
   out.coops = [];
   const seen = new Set();
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed] || !out.land.includes(c.plot) || out.coops.some(o => o.plot === c.plot)) continue;
+    if (!BREED_INFO[c.breed] || !Number.isInteger(c.plot) || c.plot < 0 || c.plot >= 40 || out.coops.some(o => o.plot === c.plot)) continue;
     seen.add(c.id);
     out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), plot: c.plot, name: cleanName(c.name, 24),
       eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
@@ -353,12 +352,12 @@ export class Game {
   // once the level allows; bought with coins
   levelNews() { return this.level > (this.data.lvSeen || 1) ? this.level : 0; }
   seenLevel() { this.data.lvSeen = this.level; this.save(); }
-  landNext() { const k = this.data.land.length; return k < LAND_ORDER.length ? { plot: LAND_ORDER[k], price: landPrice(k), level: k + 1 } : null; }
+  landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: k + 1 } : null; }
   landForSale() { const n = this.landNext(); return n && this.level >= n.level ? n : null; }
   buyLand() {
     const n = this.landForSale(); if (!n) return null;
     if (this.data.coins < n.price) return { ...n, broke: true };
-    this.data.coins -= n.price; this.data.land.push(n.plot); this.save();
+    this.data.coins -= n.price; this.data.land.push(n.field); this.save();
     return n;
   }
   stars(b) { return Math.min(MAX_STARS, Math.floor(b.exp / 100)); }          // (how experience is earned: step 6)

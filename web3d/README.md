@@ -1508,30 +1508,45 @@ rate higher and sell for more. Replaces the farmer leading the chicks out of the
   again; grown while away: the card says so; news and a brood changed outside the game. All pass both ways, both
   languages.
 
-## The game, release 1 step 5: levels and land (25 Oct 2026, Audrey: "Cool next"; she chose "One at a time, in order")
+## The game, release 1 step 5: levels and land (25 Oct 2026, Audrey: "Cool next")
 
-Three small live steps: level-ups, land for sale (this one, both together), then moving a coop. Rules in `game.js`
-(`LAND_ORDER`, `landPrice`, `landForSale`, `buyLand`, `levelNews`), the farm in `main.js` ("levels and land"), the cards
-in `gameui.js`.
+First built as the village's 40 plots sold one at a time (Audrey chose "One at a time, in order"); she then said (10:18):
+"that's not how I imagined it. For me it's a full piece of land not just a patch for the coop. Baring in mind people will
+have choice to put their coops where they want so no predefined places. Ask questions". Her answers: "Fields with
+natural borders", "Wild meadow, fenced off", coops placed by "Drag anywhere, clears the way", and "One each level". Then
+(10:33): a level that brings a new coop pops up a card offering to place it now (its three chickens with it); otherwise
+it waits somewhere easy to reach with a red dot. Two live steps: the fields (this one), then placing coops.
 - **Level-ups:** the XP (eggs, chicks) fills the ring as before (`xpFor`: 60 XP for level 2, 257 for 3, 607 for 4...).
   A new level: its card once ("🎉 Level 2! Your farm is growing.", the number big in a golden ring, "New at this level:
-  a patch of land is for sale: 100 coins", "See the land"), after any congratulations card, never over another card;
-  several levels at once: one card, the latest. The level card (tap the level) now also says how much land is yours and
-  what the next level brings ("At level 3: a patch of land for sale").
-- **Land:** the village's 40 plots are the patches; the farm starts with plot 0 (the coop's). One more can be bought at
-  each level, one at a time, in order (`LAND_ORDER`: the plots by distance from plot 0: 2, 1, 3, 9, 8...), 30 at most;
-  the price `landPrice`: 100 coins for the second, 120, 140... up to 10,000 for the thirtieth (100 × 100^((k−1)/28),
-  rounded). The patch for sale (`syncLand`, once the level allows it): its grass overgrown with bushes and a sign painted
-  "FOR SALE" / "À VENDRE" (the village's `plot_sale`, with a painted board), and a bubble over it ("🪧 For sale · 100").
-  Tap the bubble or the patch: its card ("A patch of land: room for a coop and its pen, yours for good", "Buy for 100
-  coins", or "Not enough coins yet (100)", the button off). Bought: the coins counted down, the overgrowth gives way to
-  bare earth with its building lines pegged out and a stack of planks (the village's `plot_empty`), springing up, and
-  "The new patch of land is yours!"; the next patch's sign goes up when the level allows. Your patch's card: "Bare earth,
-  ready for a coop. New breeds come with the levels." The view moves only when the player taps "See the land".
-- **The save:** `land` (only the first patches in order, at most one a level: anything else is put right and flagged)
-  and `lvSeen` (the last level whose card was shown, at most the level; a farm from before this step owes no card).
-- `landtest.mjs` (`LANG=fr`, `W=874 H=402`): a new farm (level 1, one patch, nothing for sale, what level 2 brings);
-  level 2 (its card once, the bar, the sign and its bubble; a reload: no card again); not enough coins; bought (coins,
-  bare earth, nothing more for sale); level 4 at once (one card, the next patch at 120); a reload; a save changed outside
-  (land in order, one a level, the card mark); a farm from before this step.
-
+  a new field is for sale: 100 coins", "See the field", which glides the view there: the player's tap), after any
+  congratulations card, never over another card; several levels at once: one card, the latest. The level card (tap the
+  level) also says how much land is yours and what the next level brings ("At level 3: a new field for sale").
+- **The fields (`fields.py` -> `models/fields.json`):** the farm inside its bounds, less its lanes (the plots' little
+  gate paths left out: no set places any more, and in the game they're no longer drawn), the streams and the pond with
+  their banks, split into 30 fields: the lanes and the water are their natural borders, and the open stretches between
+  are shared out evenly by growing fields from seeds over the ground (geodesic, never across a lane or the water; a few
+  rounds of moving each seed to its field's middle). The home field (the first coop and the farmhouse, 147 m²) is the
+  farm's from the start; the rest (50-170 m², a coop or two each) come up for sale in order: always one touching your
+  land or just over a lane from it, the nearest to home first. Saved as a quarter-metre grid (run-length rows) and each
+  field's borders as simplified lines saying what's over them (another field, a lane, water, the farm's edge).
+- **On the farm (`main.js` "levels and land"):** your land is the mown farm; the wild meadow has a warm tint over the
+  ground (a picture of the fields, soft-edged), long grass (the village's grass tufts, taller and fuller, each spot's own
+  so it stays put as fields are bought) and wildflowers; fenced off with a rustic post-and-rail fence (posts about every
+  1.5 m along smoothed lines, two rails) wherever it meets your land or a lane (not between two wild fields, the woods or
+  the water). The farmer keeps to your land and the lanes (the fence, and the meadow's edge with the woods, are in the
+  walking grid, made again in place when a field's bought). The next field, once your level allows it: a painted FOR
+  SALE / À VENDRE sign just inside its fence where it meets your land, on clear ground, not under a tree, near your first
+  coop; stakes with red ribbons along its borders with the rest of the meadow; a bubble ("🪧 For sale · 100"). Tap it or
+  the field: its card ("A field: wild meadow with room for a coop or two..." and "Buy for 100 coins", or "Not enough
+  coins yet"). Bought: the coins counted down, its long grass shrinks away as it's cut, the tint goes, the fence moves out
+  round your land, "The new field is yours!". A tap on the rest of the meadow: "Wild meadow · for sale at level 6".
+  Prices `landPrice`: 100 coins for the second field, 120, 140... up to 10,000 for the thirtieth (100 × 100^((k−1)/28)).
+- **The save:** `land` (the fields owned: only the first in order, at most one a level, anything else put right and
+  flagged; a farm from the plots version keeps as many as it had) and `lvSeen` (the last level whose card was shown, at
+  most the level; a farm from before this step owes no card). Coops keep their places for now (`plot`); placing them
+  where you like comes next.
+- `landtest.mjs` (`LANG=fr`, `W=874 H=402`): a new farm (the home field, the meadow fenced with its long grass, nothing
+  for sale, what level 2 brings, a tap on the meadow); level 2 (its card once, the bar, the sign, stakes and bubble; a
+  reload: no card again); not enough coins; bought (coins, the field's long grass gone, the fence moved, the farmer can
+  walk there now and couldn't before); level 4 at once (one card, the next field at 120); a reload; a save changed
+  outside (fields in order, one a level, the card mark); a farm from before this step.

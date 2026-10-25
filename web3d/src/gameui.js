@@ -298,7 +298,7 @@ export class GameUI {
       const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button'; ok.addEventListener('click', () => this.close()); body.append(ok);
     }
   }
-  // ---- a patch of land for sale: buy it (onBuy), or not enough coins yet; or one of your own, bare and ready
+  // ---- a field for sale: buy it (onBuy), or not enough coins yet
   landCard(n, onBuy) {
     const g = this.g, body = this.open('land', this.t('land_title'));
     this.bird = null;
@@ -308,11 +308,7 @@ export class GameUI {
     go.addEventListener('click', () => { if (!go.disabled) onBuy(); });
     body.append(go);
   }
-  ownLandCard() {
-    const body = this.open('land', this.t('land_mine'));
-    this.bird = null;
-    body.append(el('p', 'gtext', this.t('land_mine_body')));
-  }
+
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));
     b.append(el('p', 'gtext', this.t('coins_body')));

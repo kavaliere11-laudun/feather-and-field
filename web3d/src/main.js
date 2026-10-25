@@ -322,6 +322,7 @@ async function start() {
     gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
+  const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
   const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo, decorGlb, decorInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),
     loadGLB('village.glb'), loadJSON('village.json'), loadJSON('layout.json'), loadImage('meadow.jpg'), loadJSON('flock.json'), loadGLB('coops.glb'),
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
@@ -329,6 +330,12 @@ async function start() {
   if (welcome) game.newFarm(await welcome);
   if (GAME_MODE) { LANG = game.lang; FARMER_LOOK = game.data.farmer.look; document.documentElement.lang = LANG; }
   V = plan; PEN = pen; COOPS = coopsInfo;
+  if (GAME_MODE) {                                         // the game: its fields; no set places for coops, so no little paths to them
+    FIELDS = await fieldsP;
+    V.paths = V.paths.filter(l => l.length > 3);
+    const near = (x, z) => V.paths.some(l => { for (let i = 1; i < l.length; i++) { const a = l[i - 1], b = l[i], dx = b[0] - a[0], dz = b[2] - a[2], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[2]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < V.pathHalf + 0.6) return true; } return false; });
+    V.pebbles = V.pebbles.filter(q => near(q[0], q[2]));
+  }
   inside.rooms = Object.fromEntries(Object.entries(insideInfo.rooms).map(([k, v]) => [k.replace('inside_', ''), v]));
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
@@ -390,6 +397,7 @@ async function start() {
   aimShadows(true);
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
+  if (GAME_MODE) syncLand(true);
   if (GAME_MODE) { openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); hint(game.t(welcome ? 'hint_start' : 'hint_move')); gameTick(Date.now(), true); }      // (the eggs laid while away, at once)
   else hint('Drag to look round the village, pinch or scroll to zoom, tap a bird.');
   requestAnimationFrame(frame);
@@ -924,7 +932,7 @@ function buildPlots(nCoops) {
     scene.add(g);
     // (the game: a coop where the player has one, the rest of their land bare, and the land they don't own yet just grass)
     const gc = GAME_MODE ? game.data.coops.find(c => c.plot === i) : null;
-    const kind = GAME_MODE ? (gc ? 'coop' : game.data.land.includes(i) ? 'land' : 'none') : i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale';      // (the game's patch for sale: syncLand)
+    const kind = GAME_MODE ? (gc ? 'coop' : 'none') : i < nCoops ? 'coop' : i < nCoops + 2 ? 'empty' : 'sale';      // (the game: no set places, just its coops; the land is fields: syncLand)
     const plot = { index: i, group: g, birds: [], kind, centre: new THREE.Vector3(p.pos[0], 0, p.pos[2]) };
     plots.push(plot);
     if (plot.kind === 'coop') {
@@ -960,8 +968,7 @@ function buildPlots(nCoops) {
       }
       for (const b of plot.birds) if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
       allBirds.push(...plot.birds);
-    } else if (plot.kind === 'land') dressPlot(plot, 'land');
-    else if (plot.kind === 'empty' || plot.kind === 'sale') {
+    } else if (plot.kind === 'empty' || plot.kind === 'sale') {
       const m = part(plot.kind === 'empty' ? 'plot_empty' : 'plot_sale');
       m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
       g.add(m);
@@ -1313,6 +1320,12 @@ function buildNav() {
   for (const st of V.streams) {
     const sx = st.map(p => p[0]), sz = st.map(p => p[2]), r = V.streamHalf + GROW;
     nav.mark(Math.min(...sx) - r, Math.min(...sz) - r, Math.max(...sx) + r, Math.max(...sz) + r, (x, z) => nearLine([st], x, z, r) && !nearLine(V.paths, x, z, V.pathHalf * 0.9));
+  }
+  // the game: the wild meadow's fence (the farmer keeps to your land and the lanes), and its edge with the woods round the
+  // farm closed too (no way round into it from outside)
+  if (GAME_MODE && FIELDS && game.data) for (const pts of [...fenceLines(), ...fenceLines('edge')]) for (let i = 1; i < pts.length; i++) {
+    const [ax, az] = pts[i - 1], [bx, bz] = pts[i], dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1;
+    nav.mark(Math.min(ax, bx) - 0.3, Math.min(az, bz) - 0.3, Math.max(ax, bx) + 0.3, Math.max(az, bz) + 0.3, (x, z) => { const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)); return Math.hypot(x - ax - dx * t, z - az - dz * t) < 0.2; });
   }
   // the footbridges: rails and all are in the way, but a crossing links their two ends, walked straight along the middle
   if (parts.bridge) {
@@ -2722,12 +2735,11 @@ function tapAt(x, y) {
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
     }
-    // the game: a patch of land, yours or for sale (its card)
-    if (GAME_MODE) for (const p of plots) {
-      if (p.kind !== 'land' && p.kind !== 'sale') continue;
-      nb.min.set(-1.56, 0, -1.3); nb.max.set(1.82, 0.9, 1.68);
-      loc.copy(ray.ray).applyMatrix4(inv.copy(p.group.matrixWorld).invert());
-      if (loc.intersectBox(nb, hitP)) { landCard(p); return; }
+    // the game: the field for sale (its card), or the wild meadow (when it comes up for sale)
+    if (GAME_MODE && FIELDS && game.data) {
+      const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP), f = gp ? fieldAt(gp.x, gp.z) : -1;
+      if (f >= 0 && f === SALE.field) { landCard(); return; }
+      if (f >= game.data.land.length) { tagBird = null; tag.textContent = game.t('land_wild', { n: f + 1 }); tagSpot.set(gp.x, 0.6, gp.z); tag.classList.add('on'); fieldTag = 2.4; return; }
     }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);
@@ -2856,11 +2868,11 @@ function placeBubbles() {
   if (!GAME_MODE) return;
   const w = canvas.clientWidth, h = canvas.clientHeight;
   { // the patch for sale: "🪧 For sale · 100" over its sign
-    const B = saleBubble(), p = salePlot(), n = p && game.landForSale();
-    if (!p || !n || inside.open) B.hidden = true;
+    const B = saleBubble(), n = SALE.field >= 0 && SALE.at && game.landForSale();
+    if (!n || inside.open) B.hidden = true;
     else {
       const txt = '🪧 ' + game.t('bub_sale') + ' · ' + n.price; if (B.textContent !== txt) B.textContent = txt;
-      bubV.set(SIGN_AT[0], SIGN_AT[1] + 0.26, SIGN_AT[2]); p.group.localToWorld(bubV); bubV.project(camera);
+      bubV.copy(SALE.at); bubV.project(camera);
       const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
       else { B.hidden = false; B.style.left = sx.toFixed(1) + 'px'; B.style.top = sy.toFixed(1) + 'px'; }
@@ -3153,13 +3165,169 @@ function showNews() {
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const L = game.levelNews();                                               // (then a new level's card: what it brings)
-  if (L && !gamePlots().some(p => p.fw)) { holdBird(null); syncLand(); gameUI.refresh(); gameUI.levelUpCard(L, game.landForSale(), () => { const pl = salePlot(); if (pl) focusOn(pl.centre.x, pl.centre.z, Math.min(view.size, sideways() ? 2.2 : 3)); }); }
+  if (L && !gamePlots().some(p => p.fw)) { holdBird(null); syncLand(); gameUI.refresh(); gameUI.levelUpCard(L, game.landForSale(), () => { if (SALE.at) focusOn(SALE.at.x, SALE.at.z, Math.min(view.size, sideways() ? 2.4 : 3.2)); }); }
 }
-// ---- levels and land (release 1 step 5; game.js landForSale, buyLand). The land you own is bare earth with its building
-// lines pegged out and a stack of planks, ready for a coop; the next patch, once your level allows it, is grass with a
-// "For sale" sign and a bubble over it. Tap either for its card; buy it and the sign goes and the earth pops in. One
-// patch at a time, in order (Audrey: "One at a time, in order")
-const SIGN_AT = [-0.9, 0.66, 1.347];                     // (the plot_sale model's board: its front face, middle)
+// ---- levels and land (release 1 step 5; game.js landForSale, buyLand; the fields: fields.py, models/fields.json). The
+// farm is split into fields along its lanes and the stream. Your land is the mown farm you know; the rest is wild meadow
+// (a warmer, longer-grassed look: a tint over the ground, tall grass and wildflowers), fenced off along its edges with the
+// lanes and your land. The next field, once your level allows it, has a FOR SALE sign at its edge nearest your land,
+// stakes with red ribbons along its borders with the rest of the meadow, and a bubble. Tap it for its card; buy it and
+// its long grass is cut (shrinking away), the fence moves out round your land, and the next sign goes up when the level
+// allows (Audrey: "Fields with natural borders", "Wild meadow, fenced off", "One each level")
+let FIELDS = null;
+function fieldAt(x, z) {                                   // which field (x, z) is in, or -1 (a lane, the water, off the farm)
+  if (!FIELDS) return -1;
+  const k = Math.floor((z - FIELDS.z0) / FIELDS.cell), i = Math.floor((x - FIELDS.x0) / FIELDS.cell);
+  if (k < 0 || k >= FIELDS.nz) return -1;
+  const r = FIELDS.rows[k];
+  for (let j = 0; j < r.length; j += 3) { if (i < r[j]) return -1; if (i < r[j] + r[j + 1]) return r[j + 2]; }
+  return -1;
+}
+const owned = f => GAME_MODE && game.data && f >= 0 && f < game.data.land.length;
+// the wild meadow's edges to fence: a wild field's borders with your land or a lane (not between two wild fields, the
+// farm's edge or the water)
+// (each smoothed: the fields' edges come from a grid, a little stepped)
+function fenceLines(by) {
+  const out = [], n = game.data.land.length;
+  for (const F of FIELDS.fields) {
+    if (F.id < n) continue;
+    for (const L of F.lines) if (by ? L.by === by : L.by === 'lane' || (typeof L.by === 'number' && L.by < n)) out.push(smoothLine(L.pts));
+  }
+  return out;
+}
+function smoothLine(pts) {
+  let p = pts.map(q => [q[0], q[1]]);
+  for (let it = 0; it < 3 && p.length > 2; it++) {
+    const o = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) { const a = p[i], b = p[i + 1]; o.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]); }
+    o.push(p[p.length - 1]); p = o;
+  }
+  return p;
+}
+const SALE = { sign: null, stakes: null, field: -1, at: null };
+const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
+const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
+// the wild meadow's tint: a picture of the fields over the ground (soft-edged), warmer where it's wild
+function landTint() {
+  const nx = FIELDS.nx, nz = FIELDS.nz, n = game.data.land.length;
+  if (!LAND.tintCv) {
+    LAND.tintCv = document.createElement('canvas'); LAND.tintCv.width = nx; LAND.tintCv.height = nz;
+    const tex = new THREE.CanvasTexture(LAND.tintCv); tex.colorSpace = THREE.SRGBColorSpace; tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter;
+    const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    nightGrade(mat);
+    const w = nx * FIELDS.cell, h = nz * FIELDS.cell, m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+    m.rotation.x = -Math.PI / 2; m.position.set(FIELDS.x0 + w / 2, 0.0022, FIELDS.z0 + h / 2); m.receiveShadow = true; m.renderOrder = -1;
+    scene.add(m); LAND.tint = m; m.updateMatrixWorld(true); m.matrixAutoUpdate = false;
+  }
+  const c = LAND.tintCv.getContext('2d'), img = c.createImageData(nx, nz), d = img.data;
+  for (let k = 0; k < nz; k++) {
+    const r = FIELDS.rows[k], row = k;                     // (the canvas's top row is the plane's top: the lowest z, laid flat)
+    for (let j = 0; j < r.length; j += 3) {
+      if (r[j + 2] < n) continue;
+      for (let i = r[j]; i < r[j] + r[j + 1]; i++) { const o = (row * nx + i) * 4; d[o] = 196; d[o + 1] = 186; d[o + 2] = 92; d[o + 3] = 92; }
+    }
+  }
+  c.putImageData(img, 0, 0);
+  c.filter = 'blur(2px)'; c.drawImage(LAND.tintCv, 0, 0); c.filter = 'none';
+  LAND.tint.material.map.needsUpdate = true;
+}
+// long grass and wildflowers over the wild fields (not under trees, bushes, rocks, props, the coops); `only`: just that
+// field's (for its mowing)
+function wildPlants(only = -1) {
+  const nav = navGrid(), n = game.data.land.length, tufts = [[], [], []], flowers = { flower_daisy: [], flower_butter: [], flower_clover: [] }, fn = Object.keys(flowers);
+  const step = 0.85;
+  for (let z = FIELDS.z0, zi = 0; z < FIELDS.z0 + FIELDS.nz * FIELDS.cell; z += step, zi++) for (let x = FIELDS.x0, xi = 0; x < FIELDS.x0 + FIELDS.nx * FIELDS.cell; x += step, xi++) {
+    const r = rng(xi * 7919 + zi * 104729 + 13);         // (each spot its own: the meadow stays the same as fields are bought)
+    const px = x + r() * step, pz = z + r() * step, f = fieldAt(px, pz);
+    if (only >= 0 ? f !== only : f < n) continue;
+    if (!nav.freeAt(px, pz)) continue;
+    tufts[Math.floor(r() * 3)].push(new THREE.Matrix4().compose(new THREE.Vector3(px, 0, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(1.3 + r() * 0.5, 1.9 + r() * 0.9, 1.3 + r() * 0.5)));
+    if (r() < 0.22) { const k = fn[Math.floor((Math.sin(px * 0.31) + Math.cos(pz * 0.27) + 2) * 0.75) % 3]; for (let j = 0; j < 3; j++) flowers[k].push(place(px + (r() - 0.5) * 0.5, 0, pz + (r() - 0.5) * 0.5, r() * 360, 1.4 + r() * 0.6)); }
+  }
+  const made = [];
+  tufts.forEach((list, k) => made.push(...batch('grass_tuft_' + k, list, { lambert: true, tile: 6, twoSided: true, wind: 1.2 })));
+  for (const k of fn) made.push(...batch(k, flowers[k], { lambert: true, twoSided: true, wind: 1.2 }));
+  return made;
+}
+// the wild meadow's fence: posts every metre and a half or so, two rails between them
+function buildFence(lines) {
+  const posts = [], rails = [], m = new THREE.Matrix4(), qn = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  for (const pts of lines) {
+    // posts evenly along it (about every metre and a half), rails straight between them
+    const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const total = cum[cum.length - 1]; if (total < 0.3) continue;
+    const n = Math.max(1, Math.round(total / 1.5)), at = d => { let i = 1; while (i < cum.length - 1 && cum[i] < d) i++; const u = (d - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]); return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u]; };
+    const P = Array.from({ length: n + 1 }, (_, k) => at(total * k / n));
+    P.forEach(([x, z], k) => {
+      const j = Math.sin(x * 12.9 + z * 78.2) * 0.04, nb = P[Math.min(n, k + 1)], pb = P[Math.max(0, k - 1)], yaw = Math.atan2(nb[0] - pb[0], nb[1] - pb[1]);
+      posts.push(m.compose(new THREE.Vector3(x, 0.36, z), qn.setFromAxisAngle(up, yaw + j), new THREE.Vector3(1, 1 + j, 1)).clone());
+      if (k < n) {
+        const [bx, bz] = P[k + 1], l = Math.hypot(bx - x, bz - z), ry = Math.atan2(bx - x, bz - z);
+        for (const y of [0.3, 0.58]) rails.push(m.compose(new THREE.Vector3((x + bx) / 2, y + j * 0.2, (z + bz) / 2), qn.setFromAxisAngle(up, ry), new THREE.Vector3(1, 1, l + 0.06)).clone());
+      }
+    });
+  }
+  const out = [];
+  for (const [geo, list] of [[new THREE.BoxGeometry(0.075, 0.72, 0.075), posts], [new THREE.BoxGeometry(0.045, 0.06, 1), rails]]) {
+    if (!list.length) continue;
+    const inst = new THREE.InstancedMesh(geo, WOOD, list.length);
+    list.forEach((mx, i) => inst.setMatrixAt(i, mx));
+    inst.castShadow = true; inst.receiveShadow = true; inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.matrixAutoUpdate = false;
+    scene.add(inst); out.push(inst);
+  }
+  return out;
+}
+// the sign for the field for sale, at its edge nearest your land (else a lane), facing out; stakes with red ribbons along
+// its borders with the rest of the meadow
+function saleSign(F) {
+  const n = game.data.land.length;
+  // (along its edges with your land, else a lane, the spot nearest the middle of the longest stretch that's clear ground)
+  const nav = navGrid(), spots = [], c0 = gamePlots()[0], home = c0 ? [c0.centre.x, c0.centre.z] : FIELDS.fields[0].mid;      // (near your first coop, where you look most)
+  for (const L of F.lines) {
+    const mine = typeof L.by === 'number' && L.by < n, lane = L.by === 'lane';
+    if (!mine && !lane) continue;
+    for (let i = 1; i < L.pts.length; i++) {
+      const [ax, az] = L.pts[i - 1], [bx, bz] = L.pts[i], len = Math.hypot(bx - ax, bz - az); if (len < 0.8) continue;
+      let nx = -(bz - az) / len, nz = (bx - ax) / len;
+      if (fieldAt((ax + bx) / 2 + nx * 0.6, (az + bz) / 2 + nz * 0.6) !== F.id) { nx = -nx; nz = -nz; }     // (into the field)
+      for (let u = 0.15; u <= 0.851; u += 0.1) {
+        const sx = ax + (bx - ax) * u + nx * 0.62, sz = az + (bz - az) * u + nz * 0.62;      // (just inside its fence)
+        let room = fieldAt(sx, sz) === F.id && !V.trees.some(t => Math.hypot(t.pos[0] - sx, t.pos[2] - sz) < 2.3);     // (not under a tree)
+        for (let a = 0; a < 8 && room; a++) room = nav.freeAt(sx + Math.cos(a * 0.785) * 0.3, sz + Math.sin(a * 0.785) * 0.3);
+        if (room) spots.push({ sx, sz, nx, nz, score: Math.min(len, 6) * (mine ? 3 : 1) * (1 - Math.abs(u - 0.5)) - 0.25 * Math.hypot(sx - home[0], sz - home[1]) });
+      }
+    }
+  }
+  const best = spots.sort((a, b) => b.score - a.score)[0];
+  const g = new THREE.Group();
+  if (best) {
+    const { sx, sz, nx, nz } = best, face = Math.atan2(-nx, -nz);
+    const sign = new THREE.Group(); sign.position.set(sx, 0, sz); sign.rotation.y = face;
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.95, 0.07), WOOD); post.position.y = 0.47; post.castShadow = true;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.34, 0.035), WOOD); board.position.set(0, 0.86, 0.04); board.castShadow = true;
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.29), signLabel()); label.position.set(0, 0.86, 0.06);
+    sign.add(post, board, label); g.add(sign);
+    SALE.at = new THREE.Vector3(sx, 1.15, sz);
+  } else SALE.at = new THREE.Vector3(F.mid[0], 1.0, F.mid[1]);
+  const stakes = [], m = new THREE.Matrix4(), qn = new THREE.Quaternion();
+  for (const L of F.lines) {
+    if (!(typeof L.by === 'number' && L.by >= n)) continue;
+    for (let i = 1; i < L.pts.length; i++) {
+      const [ax, az] = L.pts[i - 1], [bx, bz] = L.pts[i], len = Math.hypot(bx - ax, bz - az), k = Math.max(1, Math.round(len / 2.4));
+      for (let j = 0; j <= k; j++) stakes.push([ax + (bx - ax) * j / k, az + (bz - az) * j / k]);
+    }
+  }
+  if (stakes.length) {
+    const st = new THREE.InstancedMesh(new THREE.BoxGeometry(0.035, 0.5, 0.035), STAKE, stakes.length), rb = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.05, 0.16), RIBBON, stakes.length);
+    stakes.forEach(([x, z], i) => {
+      st.setMatrixAt(i, m.compose(new THREE.Vector3(x, 0.25, z), qn.identity(), new THREE.Vector3(1, 1, 1)));
+      rb.setMatrixAt(i, m.compose(new THREE.Vector3(x + 0.03, 0.42, z), qn.setFromAxisAngle(new THREE.Vector3(0, 1, 0), (x * 7.1 + z * 3.3) % 6.28), new THREE.Vector3(1, 1, 1)));
+    });
+    for (const im of [st, rb]) { im.castShadow = true; im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere(); g.add(im); }
+  }
+  scene.add(g); g.updateMatrixWorld(true);
+  return g;
+}
 let signMat = null;
 function signLabel() {
   if (signMat && signMat.userData.lang === LANG) return signMat;
@@ -3172,65 +3340,64 @@ function signLabel() {
   signMat = new THREE.MeshLambertMaterial({ map: tex }); signMat.userData.lang = LANG; nightGrade(signMat);
   return signMat;
 }
-// a patch's look: 'land' (yours, bare), 'sale' (for sale) or 'none' (just grass); pop: it springs up
-function dressPlot(plot, kind, pop = false) {
-  if (plot.dress) { plot.dress.removeFromParent(); plot.dress = null; }
-  plot.kind = kind;
-  if (kind === 'land' || kind === 'sale') {
-    const g = plot.dress = new THREE.Group();
-    const m = part(kind === 'land' ? 'plot_empty' : 'plot_sale');
-    m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-    g.add(m);
-    if (kind === 'land') {
-      const earth = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 2.5), new THREE.MeshLambertMaterial({ color: '#b98d5c' }));
-      nightGrade(earth.material); earth.rotation.x = -Math.PI / 2; earth.position.y = 0.003; earth.receiveShadow = true; g.add(earth);
-    } else {
-      const label = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.27), signLabel()); label.position.set(...SIGN_AT); g.add(label);
-    }
-    plot.group.add(g);
-    if (pop) { plot.popT = 0; g.scale.setScalar(0.4); }
-    g.updateMatrix(); g.updateMatrixWorld(true);
+// the land as the save says: the tint, the wild plants, the fence, the nav (the farmer keeps out of the wild meadow), the
+// sign; fresh: everything from scratch (the farm opening), else what's changed (a field bought: its plants mown)
+let landOwned = -1;
+function syncLand(fresh = false) {
+  if (!GAME_MODE || !game.data || !FIELDS) return;
+  const n = game.data.land.length, sale = game.landForSale(), saleF = sale ? sale.field : -1;
+  if (fresh || n !== landOwned) {
+    const bought = !fresh && landOwned >= 0 && n > landOwned ? landOwned : -1;
+    landOwned = n;
+    landTint();
+    for (const m of LAND.grass) { m.removeFromParent(); const i = grassTiles.findIndex(g => g.mesh === m); if (i >= 0) grassTiles.splice(i, 1); }
+    for (const m of LAND.fence) { m.removeFromParent(); m.geometry.dispose(); }
+    LAND.fence = buildFence(fenceLines());
+    rebuildNav();
+    if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
+    LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
+    applyGrass();
+    renderer.shadowMap.needsUpdate = true;
   }
-  plot.group.updateMatrixWorld(true);
-  renderer.shadowMap.needsUpdate = true;
+  if (saleF !== SALE.field) {
+    if (SALE.sign) { SALE.sign.removeFromParent(); SALE.sign = null; }
+    SALE.field = saleF;
+    if (saleF >= 0) { SALE.sign = saleSign(FIELDS.fields[saleF]); renderer.shadowMap.needsUpdate = true; wake(500); }
+  }
 }
-const salePlot = () => plots.find(p => p.kind === 'sale' && GAME_MODE);
-// the patch for sale as the save says: its sign up (once the level allows it), a sign taken down when bought
-function syncLand() {
-  if (!GAME_MODE || !game.data) return;
-  const n = game.landForSale(), want = n ? plots[n.plot] : null;
-  for (const p of plots) if (p.kind === 'sale' && p !== want) dressPlot(p, game.data.land.includes(p.index) ? 'land' : 'none');
-  if (want && want.kind === 'none') { dressPlot(want, 'sale'); wake(500); }
+// the farm's walking grid made again in place (everyone keeps the same one): the fence now somewhere else
+function rebuildNav() {
+  if (!NAV) return;
+  const fresh = buildNav();
+  NAV.block = fresh.block; NAV.links = fresh.links; NAV.linkAt = fresh.linkAt; NAV.cost = null; pathCosts(NAV);
+  REACH = null; dogSpots = null; for (const p of plots) p.exitWay = null;
 }
-function landCard(plot) {
+function landCard() {
   holdBird(null);
-  if (plot.kind === 'land') { gameUI.ownLandCard(); return; }
-  const n = game.landForSale(); if (!n || n.plot !== plot.index) return;
-  gameUI.landCard(n, () => buyLand(plot));
+  const n = game.landForSale(); if (!n) return;
+  gameUI.landCard(n, () => buyField());
 }
-function buyLand(plot) {
+function buyField() {
   const r = game.buyLand();
   if (!r || r.broke) return r;
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
-  dressPlot(plot, 'land', true);
   hint(game.t('land_bought'));
   syncLand(); wake(1500);
   return r;
 }
-// each frame: a new patch springing up; the sale bubble's words
+// each frame: a bought field's long grass shrinking away as it's cut
 function tickLand(dt) {
-  for (const p of plots) {
-    if (p.popT === undefined || !p.dress) continue;
-    p.popT = Math.min(1, p.popT + dt / 0.5); const u = p.popT, k = 0.4 + 0.6 * (1 - Math.pow(1 - u, 3)) + 0.08 * Math.sin(u * Math.PI);
-    p.dress.scale.setScalar(k); p.dress.updateMatrix(); p.dress.updateMatrixWorld(true);
-    if (u >= 1) { p.dress.scale.setScalar(1); p.dress.updateMatrix(); p.dress.updateMatrixWorld(true); p.popT = undefined; renderer.shadowMap.needsUpdate = true; }
-  }
+  const M = LAND.mow; if (!M) return;
+  M.t = Math.min(1, M.t + dt / 0.8); const k = 1 - M.t * M.t;
+  for (const m of M.meshes) { m.scale.set(1, Math.max(0.001, k), 1); m.updateMatrix(); m.updateMatrixWorld(true); }
+  if (M.t >= 1) { for (const m of M.meshes) m.removeFromParent(); LAND.mow = null; }
+  wake(100);
 }
 let saleBub = null;
 function saleBubble() {
   if (saleBub) return saleBub;
   saleBub = document.createElement('button'); saleBub.type = 'button'; saleBub.className = 'gbub gsale'; saleBub.hidden = true;
-  saleBub.addEventListener('click', ev => { ev.stopPropagation(); const p = salePlot(); if (p) landCard(p); });
+  saleBub.addEventListener('click', ev => { ev.stopPropagation(); landCard(); });
   document.body.append(saleBub); return saleBub;
 }
 // a feeder's card, and filling it: the save at once, the farmer bringing the feed (by day, out and about) or straight in
@@ -3745,7 +3912,10 @@ window.__farm = {
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; },
   lastExit: i => gamePlots()[i].lastExit || null, farmExit,
   // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale
-  landKinds: () => plots.filter(p => p.kind === 'land' || p.kind === 'sale' || p.gc).map(p => p.index + ':' + (p.gc ? 'coop' : p.kind)).join(' '), landCard: i => landCard(plots[i]), buyLand: () => { const p = salePlot(); return p ? buyLand(p) : null; }, salePlot: () => { const p = salePlot(); return p ? p.index : null; }, collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
+  saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
+  farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
+  wildIn: f => { let c = 0; const m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.grass) for (let i = 0; i < im.instanceMatrix.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) c++; } return c; },
+  land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
