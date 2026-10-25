@@ -319,7 +319,7 @@ async function start() {
   let welcome = null;
   if (GAME_MODE) {
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet() });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), onClose: gameSheetClosed, coops: () => coopsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -1443,7 +1443,7 @@ function buildFarmer() {
     if (!decorSpots) decorSpots = decorList.filter(d => d.model !== 'duckhouse').map(d => { const c = new THREE.Vector3(); d.box.getCenter(c); c.applyMatrix4(d.m); return nav.nearestIn(farmReach(), c.x + 1.4, c.z + 1.4, 2.5); }).filter(Boolean);
     return { coops, farm: [...S.farm, ...decorSpots] };          // (the farmer stops by the decorations too)
   };
-  farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge,
+  farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge, greet: greetFarmer,
     kennel: kd && HAS_DOG ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
     others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : [])],
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), inView: (x, z) => inView(x, z, 2.2) }, rng(71));
@@ -2378,9 +2378,9 @@ class Bird {
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
-      if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done
-        sitGoal = 1;
-        if (this.cuddle && !this.cuddle.done) { this.turnTo(this.cuddle.face, dt); this.cuddle.ready = true; } else act.left = 0;
+      if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
+        const C = this.cuddle, G = C && C.greet; sitGoal = G ? 0 : 1;
+        if (C && !C.done) { this.turnTo(C.face, dt); C.ready = true; if (G) { if (!G.t) heartOver(this); G.t += dt; if (G.t > 2.6) C.done = true; } } else act.left = 0;
       }
       if (act.type === 'peck') peckGoal = (act.left % 0.55) > 0.24 ? 1 : 0.3;
       if (act.type === 'scratch') {                // two kicks back, a step back, then a look at what turned up
@@ -2837,6 +2837,54 @@ function holdBird(b) {                       // a bird whose card is open stays 
   heldBird = b;
   if (b && !b.laying && !b.roost && !b.asleep) { b.held = true; b.target.copy(b.root.position); b.route = null; b.wait = Math.max(b.wait, 0.6); }
 }
+// ---- cuddles, trust and stars (release 1 step 7; game.js cuddle, stars). "♥ Cuddle" on a bird's card: the cuddle counts
+// at once (happy for 6 hours, trust and a little experience); the farmer comes into the pen, crouches and strokes her,
+// hearts floating up (by day, out and about: at night "Cuddles in the morning"). A new trust level or star: a word.
+// Trusting birds come to the front fence to greet the farmer when he stops to look at their coop.
+function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 || DAY.hour < 6.3; }
+function gameCuddle(id) {
+  const r = game.cuddle(id); if (!r || r.happy) return r;
+  const b = allBirds.find(x => x.gid === id), gb = game.bird(id), farmer = farmerName();
+  gameUI.close(); holdBird(null);
+  if (b && farmLife && !farmLife.home && !farmLife.running && !b.busy() && !b.nightNow(0.3)) {
+    const P = penSpec(b.plot);
+    if (P && farmLife.visitPen(P, 'cuddle', b)) wake(1500);
+  }
+  hint(r.up ? game.t('trust_up' + r.up, { name: gb.name, farmer, xp: r.xp }) : game.t('cuddle_done', { name: gb.name, farmer }));
+  if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
+  starsSeen.set(id, game.stars(gb));                      // (a star from the cuddle: said with it)
+  if (r.star && !r.up) hint(game.t('star_up', { name: gb.name }));
+  return r;
+}
+// a bird gaining a star while you watch (time on the farm, a brood, a cuddle): a word and a little burst of stars over her
+const starsSeen = new Map();
+function watchStars() {
+  for (const gb of game.data.birds) {
+    const s = game.stars(gb), was = starsSeen.get(gb.id);
+    starsSeen.set(gb.id, s);
+    if (was === undefined || s <= was) continue;
+    hint(game.t('star_up', { name: gb.name }));
+    const b = allBirds.find(x => x.gid === gb.id);
+    if (b && b.root.visible) { const w = b.root.getWorldPosition(new THREE.Vector3()); w.y += b.rig.scale * 0.95; for (let k = 0; k < 3; k++) setTimeout(() => spawnHeart(w.clone().add(new THREE.Vector3((k - 1) * 0.08, k * 0.05, 0))), k * 180); }
+  }
+}
+// the farmer stops at a coop's fence: its trusting birds trot over to the front fence to say hello, a heart over each
+function greetFarmer(at) {
+  if (!GAME_MODE || !game.data) return;
+  let plot = null, best = 6;
+  for (const p of gamePlots()) { const d = Math.hypot(p.centre.x - at[0], p.centre.z - at[1]); if (d < best) { best = d; plot = p; } }
+  if (!plot) return;
+  const f = plot.frame, v = new THREE.Vector3(at[0], 0, at[1]); f.updateMatrixWorld(true); f.worldToLocal(v);
+  const Y = PEN.yard, fx = Math.max(Y.min[0] + 0.25, Math.min(Y.max[0] - 0.25, v.x)), fz = Y.max[2] - 0.2;
+  let k = 0;
+  for (const b of plot.birds) {
+    const gb = b.gid && game.bird(b.gid);
+    if (!gb || game.trustLevel(gb) < 2 || b.busy() || b.asleep || b.cuddle || b.nightNow(0.3)) continue;
+    const off = [0, 0.32, -0.32, 0.6][k++] || 0, x = Math.max(Y.min[0] + 0.15, Math.min(Y.max[0] - 0.15, fx + off)), z = fz - (k > 2 ? 0.25 : 0);
+    if (!yardFree(x, z)) continue;
+    if (b.comeForCuddle([x, z], Math.atan2(v.x - x, v.z - z))) b.cuddle.greet = { t: 0 };      // (a heart when she's there, then off she goes)
+  }
+}
 function openBirdCard(b) {
   const gb = game.data.birds.find(x => x.id === b.gid); if (!gb) return;
   gameUI.birdCard(gb); holdBird(b);
@@ -2886,6 +2934,7 @@ function gameTick(now = Date.now(), force = false) {
   for (const p of gamePlots()) { syncNest(p); if (!(p.pourUntil > performance.now())) setFeed(p, game.feedLeft(p.gc, now)); }
   bubbleText(now);
   syncLand();
+  watchStars();
   showNews();
 }
 function gameLaid(b) {                       // her egg is in the straw: into the save

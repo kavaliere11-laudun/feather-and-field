@@ -167,24 +167,34 @@ export class GameUI {
     this.bird = b.id;
     body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(f ? 'hen' : 'rooster')));
     const forever = el('p', 'gforever'); forever.append(el('span', 'gheart', '♥'), document.createTextNode(' ' + this.t(f ? 'forever_h' : 'forever_r'))); body.append(forever);
+    // a cuddle (or how long she's happy after one; at night, in the morning)
+    const left = g.happyLeft(b), state = this.o.cuddleState ? this.o.cuddleState(b) : 'ok';
+    if (left > 0) body.append(el('p', 'gtext ghappy', '♥ ' + this.t('happy_left', { when: g.howLong(left) }, f)));
+    else if (state === 'night') body.append(el('p', 'gnote', this.t('cuddle_night', { farmer: g.farmerName() })));
+    else { const cb = el('button', 'gbtn gcuddle', this.t('cuddle_btn')); cb.type = 'button'; cb.addEventListener('click', () => { if (this.o.cuddle) this.o.cuddle(b.id); }); body.append(cb); }
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
     pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex)));
     body.append(pc);
-    // experience
-    const ec = el('div', 'gcard'), s = g.stars(b);
+    // experience: the stars, the way to the next, how they come and what they do
+    const ec = el('div', 'gcard'), s = g.stars(b), part = g.starPart(b);
     const st = el('div', 'gstars'); st.setAttribute('aria-label', s + ' / ' + MAX_STARS);
     for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < s ? 'on' : '', i < s ? '★' : '☆'));
     ec.append(el('div', 'glabel', this.t('experience')), st);
-    if (!s) ec.append(el('p', 'gtext', this.t('exp_none', {}, f)));
+    if (s < MAX_STARS) { const bar = el('div', 'gbar-xp gstarbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(part * 100) + '%'; bar.append(fill); ec.append(bar); }
+    ec.append(el('p', 'gtext', !s && part < 0.05 ? this.t('exp_none', {}, f) : s >= MAX_STARS ? this.t('exp_top') : this.t('exp_how')));
+    ec.append(el('p', 'gnote', (f ? this.t('exp_eggs', { p: g.henEggPrice(b) }) + ' ' : '') + this.t('exp_chicks', {}, f)));
     body.append(ec);
-    // trust
-    const tc = el('div', 'gcard'), lv = g.trustLevel(b);
+    // trust: the hearts, cuddles to the next level, what it does; a cuddle (or how long she's happy after one)
+    const tc = el('div', 'gcard', ), lv = g.trustLevel(b), farmer = g.farmerName();
     const th = el('div', 'gcard-h');
     const hearts = el('span', 'ghearts'); for (let i = 1; i <= 3; i++) hearts.append(el('span', i <= lv ? 'on' : '', i <= lv ? '♥' : '♡'));
     th.append(hearts, el('span', 'gcard-t', this.t('trust_lv' + lv)));
-    tc.append(el('div', 'glabel', this.t('trust')), th, el('p', 'gtext', this.t('trust_body')));
+    tc.append(el('div', 'glabel', this.t('trust')), th);
+    if (lv < 3) { const need = TRUST_AT[lv + 1] - b.trust; tc.append(el('p', 'gtext', this.t(need === 1 ? 'trust_next1' : 'trust_next', { n: need, level: this.t('trust_lv' + (lv + 1)) }))); }
+    if (lv >= 2) tc.append(el('p', 'gtext', this.t('trust_greets', { farmer })));
+    tc.append(el('p', 'gnote', this.t('trust_body')));
     body.append(tc);
     // her eggs, or her brood
     if (f && coop) {
@@ -193,7 +203,7 @@ export class GameUI {
       if (br && !br.hatched) { const ms = g.hatchAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('hatch_soon', { n: br.n }) : this.t('sitting', { n: br.n, when: g.howLong(ms) }))); }
       else if (br && now < g.youngAt(coop)) kc.append(el('p', 'gtext', this.t('raising', { n: br.n, when: g.howLong(Math.max(60e3, g.youngAt(coop) - now)) })));
       else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising_y', { n: br.n, when: g.howLong(ms) }))); }
-      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t('lays', { p: g.eggPrice(coop) })));
+      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t('lays', { p: g.henEggPrice(b) })));
       body.append(kc);
     }
     // where and since when

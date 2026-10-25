@@ -192,7 +192,7 @@ export class FarmLife {
     const dog = this.o.dog && this.o.dog(), K = this.o.kennel;
     if (pick < 0.4 && S.coops.length) {                       // a look at a coop's hens over the fence
       const c = fresh(S.coops), s = c[Math.floor(R() * c.length)] || S.coops[0];
-      const L = [go(s), TK.face(s[2]), TK.act('hips', 4 + R() * 4, STAND.hips)];
+      const L = [go(s), TK.face(s[2]), () => { if (this.o.greet) this.o.greet(s); return null; }, TK.act('hips', 4 + R() * 4, STAND.hips)];      // (its trusting birds come to say hello)
       if (R() < 0.4) L.push(TK.say('hi'), TK.act('wave', 2.2, STAND.wave));
       L.push(TK.act('about', 1.5 + R() * 2, STAND.about));
       return TK.seq('coop', L);

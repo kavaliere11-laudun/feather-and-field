@@ -1624,3 +1624,32 @@ stored somewhere easy with a little red dot on it to say notifications".
   sight; Later: the red dot; Your coops: Place it; Cancel; put down: the trio, the rustic house, a full feeder, the coop
   card); a reload; level 6 from its card (the white Silkies, the rustic Pagoda); a save changed outside.
 
+## The game, release 1 step 7: experience stars, cuddles and trust (25 Oct 2026, Audrey: "Very good, carry on")
+
+From the plan (`claude/game-plan-v2.md`): each bird earns up to 5 stars with time on the farm and the love you give it;
+the 2D game's cuddles and trust carried over (game-design-v1.md) and made the farm's own.
+- **Cuddles:** "♥ Cuddle" near the top of a bird's card (by day; at night "Cuddles in the morning: Arthur is asleep."). It
+  counts at once (rules first, as in the 2D game): the bird is happy for 6 hours (the card then says "♥ Happy after a
+  cuddle: 5 hours left" instead of the button), and while her trust is still growing, a cuddle's worth of trust and 8
+  experience. The card closes and the farmer comes into the pen, crouches and strokes her, hearts floating up ("Arthur
+  gives Clover a cuddle ♥"); he isn't needed for it to count (out after Rusty, or she's busy laying: it still counts).
+- **Trust** (0 to 15 cuddles, as in the 2D game): Shy, Friendly at 3 ("Clover is getting friendly with Arthur."),
+  Trusting at 8 ("Clover trusts Arthur now, and comes to the fence to say hello."), Best friend at 15 ("Clover and Arthur
+  are best friends! +20 XP"). The card: the three hearts, "2 more cuddles to “Friendly”", what it does. Trusting and best
+  friend birds come to greet the farmer: when he stops to look at their coop over the fence they trot to the front fence
+  (`greetFarmer`), stand facing him, a heart over each, then go back to what they were doing.
+- **Experience** (`game.js` `expOf`, `stars`): 100 a star, up to 5. It comes with time on the farm (5 a day, up to 250: two
+  and a half stars over 50 days), cuddles (8 each while trust grows: up to 120) and raising chicks (the mum 60 a brood,
+  the rooster 30). The card: the stars, a bar to the next one, how they come ("Stars come with time on the farm, cuddles
+  and raising chicks.") and what they do ("Each star makes her eggs a coin dearer. The more stars, the better her
+  chicks."). A star earned while you watch (a cuddle, a brood, a new day): "★ Clover has earned a new star!" and a little
+  burst of hearts over her.
+- **What stars do:** each egg sells for a coin more for each star of the hen who laid it (the coop keeps the eggs' star
+  bonus, `bonus`, so a nest of eggs from different hens is paid right); the chicks rate higher (already: `kidsOf`).
+- **The save:** each bird's `happy` (till when, at most 6 hours on) and `trust` (0 to 15) as before; each coop's egg
+  `bonus` (at most five a egg in its nest). The stars always come from the save's experience and how long the bird's been
+  on the farm, never stored.
+- `cuddletest.mjs` (`LANG=fr`, `W=874 H=402`): the card's button; a cuddle (counted, the card, the farmer's visit); no
+  second one while happy; 6 hours on; Friendly, Trusting, Best friend (+20 XP), trust stopping at 15; a star from a cuddle;
+  stars from time; eggs a coin dearer a star; at night; the greeting at the fence; a reload; a save changed outside.
+

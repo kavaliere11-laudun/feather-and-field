@@ -50,7 +50,14 @@ const TEXT = {
     personality: 'Personality', experience: 'Experience', trust: 'Trust',
     exp_none: 'Just arrived: experience grows with time on the farm and with the love you give.',
     trust_lv0: 'Shy', trust_lv1: 'Friendly', trust_lv2: 'Trusting', trust_lv3: 'Best friend',
-    trust_body: 'Cuddles build trust.',
+    trust_body: 'Cuddles build trust: one counts every 6 hours.',
+    exp_how: 'Stars come with time on the farm, cuddles and raising chicks.', exp_top: 'All five stars!',
+    exp_eggs: 'Each star makes her eggs a coin dearer.', exp_chicks: 'The more stars, the better his chicks.',
+    trust_next: '{n} more cuddles to “{level}”', trust_next1: '1 more cuddle to “{level}”', trust_greets: 'Comes to the fence to greet {farmer}.',
+    cuddle_btn: '♥ Cuddle', happy_left: 'Happy after a cuddle: {when} left', cuddle_night: 'Cuddles in the morning: {farmer} is asleep.',
+    cuddle_done: '{farmer} gives {name} a cuddle ♥', trust_up1: '{name} is getting friendly with {farmer}.',
+    trust_up2: '{name} trusts {farmer} now, and comes to the fence to say hello.', trust_up3: '{name} and {farmer} are best friends! +{xp} XP',
+    star_up: '★ {name} has earned a new star!',
     lives_in: 'Lives in: {coop}', since: 'On your farm since {date}',
     coop_rustic: '{coop} (rustic)',
     level_title: 'Level {n}', level_xp: '{xp} of {need} XP to level {next}', level_top: 'Top level!',
@@ -124,7 +131,14 @@ const TEXT = {
     personality: 'Caractère', experience: 'Expérience', trust: 'Confiance',
     exp_none: 'Tout juste arrivé : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.',
     trust_lv0: 'Farouche', trust_lv1: 'Sociable', trust_lv2: 'En confiance', trust_lv3: 'Inséparable',
-    trust_body: 'Les câlins donnent confiance.',
+    trust_body: 'Les câlins donnent confiance : un compte toutes les 6 heures.',
+    exp_how: 'Les étoiles viennent avec le temps passé à la ferme, les câlins et les poussins élevés.', exp_top: 'Les cinq étoiles !',
+    exp_eggs: 'Chaque étoile rend ses œufs une pièce plus chers.', exp_chicks: 'Plus il a d’étoiles, meilleurs sont ses poussins.',
+    trust_next: 'Encore {n} câlins avant « {level} »', trust_next1: 'Encore 1 câlin avant « {level} »', trust_greets: 'Vient saluer {farmer} à la clôture.',
+    cuddle_btn: '♥ Faire un câlin', happy_left: 'Heureux après un câlin : encore {when}', cuddle_night: 'Les câlins, ce sera demain matin : {farmer} dort.',
+    cuddle_done: '{farmer} fait un câlin à {name} ♥', trust_up1: '{name} devient sociable avec {farmer}.',
+    trust_up2: '{name} a confiance en {farmer} et vient lui dire bonjour à la clôture.', trust_up3: '{name} et {farmer} sont inséparables ! +{xp} XP',
+    star_up: '★ {name} gagne une nouvelle étoile !',
     lives_in: 'Habite : {coop}', since: 'À la ferme depuis le {date}',
     coop_rustic: '{coop} (rustique)',
     level_title: 'Niveau {n}', level_xp: '{xp} sur {need} XP pour le niveau {next}', level_top: 'Niveau maximum !',
@@ -186,7 +200,9 @@ const TEXT = {
   },
 };
 // in French "Just arrived" agrees with the bird
-const TEXT_F = { fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.' } };
+const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
+  fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
+    exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.' } };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -217,6 +233,10 @@ const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'M
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus'];
 const FARMER_DEFAULT = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'] };
 export const TRUST_AT = [0, 3, 8, 15];                 // cuddles for Shy, Friendly, Trusting, Best friend
+// experience (release 1 step 7): 100 a star, up to 5; it comes with time on the farm (a little each day, up to two and a
+// half stars' worth), cuddles (each one that counts while trust is still growing) and raising chicks (the mum more than
+// the rooster); a cuddle counts once every 6 hours (the bird's happy meanwhile)
+export const EXP_DAY = 5, EXP_TIME_MAX = 250, EXP_CUDDLE = 8, HAPPY_MS = 6 * 3600e3, XP_BEST = 20;
 export const MAX_STARS = 5;
 
 // ---- levels: the XP to reach each level (a first curve; the year-long balance comes with step 9)
@@ -318,7 +338,7 @@ export function checkFarm(d, now = Date.now()) {
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
     const x = spotNum(c.x), z = spotNum(c.z), deg = [0, 90, 180, 270].includes(c.deg) ? c.deg : null, at = x === null || z === null || deg === null ? HOME_COOP : { x, z, deg };
     out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), x: at.x, z: at.z, deg: at.deg, ...(Number.isInteger(c.plot) ? { plot: c.plot } : {}), name: cleanName(c.name, 24),
-      eggs: int(c.eggs, 0, NEST_MAX, 0), feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
+      eggs: int(c.eggs, 0, NEST_MAX, 0), bonus: 0, feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
       brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
         kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1) })) : null } : null,
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now) });
@@ -336,8 +356,11 @@ export function checkFarm(d, now = Date.now()) {
     ids.add(b.id);
     const nb = { id: b.id, name, sex, breed: coop.breed, pers, coop: coop.id, since: int(b.since, 0, now, now), exp: int(b.exp, 0, 1e7, 0), trust: int(b.trust, 0, 15, 0) };
     if (sex === 'h') nb.laid = int(b.laid, 0, now, now);          // (when she last laid, or was due to: never ahead of now)
+    nb.happy = int(b.happy, 0, now + HAPPY_MS, 0);                     // (happy after a cuddle till then: at most 6 hours on)
     out.birds.push(nb);
   }
+  // the eggs' star bonus (a coin an egg for each star of the hen who laid it): at most five stars' worth for each egg
+  for (const c of out.coops) { const raw = (Array.isArray(d.coops) ? d.coops : []).find(x => x && x.id === c.id); c.bonus = int(raw && raw.bonus, 0, c.eggs * MAX_STARS, 0); }
   // each feeder holds at most two days for the birds it feeds (missing: full, as for a farm from before feeders)
   for (const c of out.coops) { const cap = Math.max(1, out.birds.filter(b => b.coop === c.id).length) * FEED_DAYS; c.feed = c.feed === null ? cap : num(c.feed, 0, cap, cap); }
   // a brood: one of the coop's own hens, hatched only once its time has come
@@ -418,7 +441,7 @@ export class Game {
   // a waiting breed's coop and trio, ready to place (not on the farm until placeCoop)
   draftCoop(breed, at) {
     if (!this.waitingCoops().includes(breed)) return null;
-    const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+    const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     return { coop, birds: this.trio(breed, coop.id, false) };
   }
   placeCoop(draft, at, clear = []) {
@@ -432,7 +455,24 @@ export class Game {
     this.save();
     return c;
   }
-  stars(b) { return Math.min(MAX_STARS, Math.floor(b.exp / 100)); }          // (how experience is earned: step 6)
+  // ---- experience, cuddles and trust
+  expOf(b, now = Date.now()) { return b.exp + Math.min(EXP_TIME_MAX, Math.floor(Math.max(0, now - b.since) / DAY_MS) * EXP_DAY); }
+  stars(b, now = Date.now()) { return Math.min(MAX_STARS, Math.floor(this.expOf(b, now) / 100)); }
+  starPart(b, now = Date.now()) { return this.stars(b, now) >= MAX_STARS ? 1 : (this.expOf(b, now) % 100) / 100; }      // (on the way to the next star)
+  happyLeft(b, now = Date.now()) { return Math.max(0, (b.happy || 0) - now); }
+  // a cuddle (the farmer's visit to the pen only shows it): happy for 6 hours; while trust is still growing, one more
+  // cuddle's worth of trust and a little experience; best friends: +20 XP
+  cuddle(id, now = Date.now()) {
+    const b = this.bird(id); if (!b) return null;
+    const left = this.happyLeft(b, now); if (left > 0) return { happy: true, left };
+    const lv0 = this.trustLevel(b), s0 = this.stars(b, now);
+    b.happy = now + HAPPY_MS;
+    if (b.trust < TRUST_AT[3]) { b.trust++; b.exp = Math.min(1e7, b.exp + EXP_CUDDLE); }
+    const lv = this.trustLevel(b), xp = lv > lv0 && lv === 3 ? XP_BEST : 0;
+    this.data.xp += xp;
+    this.save();
+    return { trust: b.trust, level: lv, up: lv > lv0 ? lv : 0, xp, star: this.stars(b, now) > s0 };
+  }
   coop(id) { return this.data.coops.find(c => c.id === id); }
   birdsIn(coopId) { return this.data.birds.filter(b => b.coop === coopId); }
   id(k) { return k + (this.data.next++); }
@@ -459,7 +499,7 @@ export class Game {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
     this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
-    const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+    const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
     const mum = this.data.birds.find(b => b.pers === 'mum') || this.data.birds.find(b => b.sex === 'h');
@@ -477,6 +517,7 @@ export class Game {
   feedLeft(c, t = Date.now()) { return this.feedAt(c, t) / this.feedCap(c); }            // 0 empty .. 1 full
   feedHours(c, t = Date.now()) { const r = this.feedRate(c); return r > 0 ? this.feedAt(c, t) / r / 3600e3 : Infinity; }
   eggPrice(c) { return EGG_PRICE[c.breed] || 6; }
+  henEggPrice(b) { return (EGG_PRICE[b.breed] || 6) + this.stars(b); }                  // (a coin more for each of her stars)
   // the lays due since each hen last laid (her own times, and a new farm's first egg), oldest first; not yet laid: the
   // farm (main.js) has each hen walk in and lay while it's open, or lays them straight away (layEgg)
   dueLays(now = Date.now()) {
@@ -503,7 +544,7 @@ export class Game {
     if (this.brooding(henId)) res = 'brooding';
     else if (this.feedAt(c, t) <= 0) res = 'hungry';
     else if (c.eggs >= NEST_MAX) res = 'full';
-    else c.eggs++;
+    else { c.eggs++; c.bonus = (c.bonus || 0) + this.stars(b, t); }
     this.save();
     return res;
   }
@@ -567,8 +608,8 @@ export class Game {
   // tap the nest: its eggs sold, coins and XP
   collect(coopId) {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
-    const n = c.eggs, coins = n * this.eggPrice(c), xp = n * XP_EGG;
-    c.eggs = 0; this.data.coins += coins; this.data.xp += xp;
+    const n = c.eggs, coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XP_EGG;
+    c.eggs = 0; c.bonus = 0; this.data.coins += coins; this.data.xp += xp;
     this.save();
     return { n, coins, xp };
   }
