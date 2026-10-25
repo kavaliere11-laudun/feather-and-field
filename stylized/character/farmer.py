@@ -634,6 +634,21 @@ def hair(look, hd, hr, surf, Mt):
         metaball_mesh('plaitend', [('ELLIPSOID', tuple(tip + Vector((0.004, 0, -0.03))), 0.016 * K, (0.9, 0.9, 1.5), 2.0)], res=0.004, m=Mt['hair'], parent=hd)
 
 
+def hair_top(look, hd, surf, Mt):
+    """Hair over the top of the head, for Rosie in the 3D game's bought outfits (export_farmer.py outfits): her hair was made
+    for under the straw hat's deep crown, so a top hat, or a cap or a bobble hat pushed back, showed bare scalp. A thin layer
+    (sunk into the head, so the hats still sit on it), swept from a parting on her left, a soft hairline above the fringe."""
+    E = []
+    for z, n, a0, a1, sink in ((0.55, 16, 40, 320, 0.02), (0.85, 16, 30, 330, 0.021), (1.25, 14, 20, 340, 0.024), (1.8, 11, 0, 360, 0.031), (3.0, 6, 0, 360, 0.034)):
+        for i in range(n):                                          # (thinner towards the top, under the hats' crowns)
+            a = math.radians(a0 + (a1 - a0) * i / (n if a1 - a0 >= 360 else n - 1))
+            p, nm = surf(Vector((math.cos(a) * 0.95, math.sin(a), z)).normalized()); E.append(('BALL', tuple(p - nm * sink), 0.042 * K, None, 2.0))
+    p, nm = surf((0.0, 0.0, 1.0)); E.append(('BALL', tuple(p - nm * 0.034), 0.045 * K, None, 2.0))           # (the crown)
+    for x, z in ((0.0, 1.0), (-0.3, 0.95), (0.3, 1.05), (-0.55, 0.85), (0.55, 0.95)):                     # (the hairline over the fringe)
+        p, nm = surf((0.8, x, z)); E.append(('ELLIPSOID', tuple(p - nm * 0.02), 0.03 * K, (1, 1.5, 0.8), 2.0))
+    return metaball_mesh('hairtop', E, res=0.006, m=Mt['hair'], parent=hd)
+
+
 def dome(name, centre, scale, zcut, m, parent, thick=0.006):
     """The top of a squashed sphere, cut off at height zcut (in the parent's frame), with a little thickness."""
     me = bpy.data.meshes.new(name); bm = bmesh.new()

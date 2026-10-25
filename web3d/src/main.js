@@ -366,6 +366,7 @@ async function start() {
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
   if (params.get('lineup') === 'ducks') { geeseLineup = new DuckLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(42)); view.min = 0.5; }
   if (params.get('lineup') === 'farmer') { farmerLineup = new FarmerLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(44), parseInt(params.get('set') || '1', 10)); view.min = 0.4; }
+  if (farmerLineup) await farmerLineup.dress(loadGLB, loadJSON);          // (its outfits: &set=4, &outfit=, &wear=)
   if (params.get('lineup') === 'frogs') { frogLineup = new FrogLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, nightGrade, rng(43)); view.min = 0.4; }
   if (params.get('lineup') === 'show') { await loadShow(loadGLB, loadJSON); new ShowLineup({ scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng(45), params }); view.min = 0.4; }
   if (POSTER) buildPoster(beastsInfo.joints);

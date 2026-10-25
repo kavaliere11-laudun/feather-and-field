@@ -1851,3 +1851,41 @@ The 2D game's farm jobs made the new game's own (`game.js` `JOBS`, `jobsFor`, `j
   first easy, progress and reward; the dot gone); doing them (each counted, the word, the number 3); Collect (coins and XP,
   Done ✓, the number down, not twice); a reload; midnight (new jobs, the dot); a save changed outside (more than the
   target, paid before done, tomorrow's jobs, a level the farm hasn't had).
+
+## The farmer's outfits (25 Oct 2026, for the game's shop)
+
+The 2D game's six outfits, each a hat and a shirt, for Arthur and Rosie: Classic (the straw hat and checked shirt, the
+farmer as made), Market day (`market`: tweed flat cap, blue check), Garden party (`garden`: flowery sun hat, yellow
+gingham), Winter woollies (`winter`: red bobble hat, green jumper), Rodeo (`rodeo`: cowboy hat, chambray shirt, red
+neckerchief), Show day (`show`: top hat, white shirt, prize rosette). The shop, the prices and the save are the game's
+(`game.js`, `gameui.js`); these are the clothes. The judge keeps his tweeds.
+- **The files** (`stylized/export_farmer.py web3d/models outfits`, or `outfits=market,show`): one for each outfit,
+  `models/outfit_<id>.glb` + `.json`, loaded only when someone wears it, holding only what the outfit changes, from the 2D
+  game's own Blender model (`farmer.py`'s `OUTFITS`): its hat (everything on the hat's bone), the rosette or the neckerchief
+  on the chest, and for Rosie under the cap, the bobble hat, the cowboy hat and the top hat, her hair over the top of her
+  head (`farmer.py hair_top`: her hair was made for under the straw hat's deep crown, and the 2D top hat showed bare scalp).
+  One mesh for both looks where they're the same shape (the sun hat's brim droops like each look's own straw hat). The hat
+  bands are kept as made (simplified, their edges came out frayed). 80 to 226 KB an outfit (`farmer.glb` is 1.6 MB);
+  1,284 to 3,486 triangles, and 1,200 more for Rosie's hair. Every part is on the farmers' own 42 bones (checked against
+  `farmer.json` when exported), so every pose and face, the torch and the pail work the same in every outfit. The json:
+  the meshes for each look, the bones whose Classic parts it hides (`hide`: the straw hat), the shirt (`check` with its
+  three colours and how fine, 135 or the gingham's 230; `plain`; `knit`), and Rosie's plait ribbon's new colour where the
+  hat band's differs (the 2D game ties them: pink with the sun hat, brown with the cowboy hat, red with the top hat).
+- **`src/farmer.js`**: `await loadOutfit(id, loadGLB, loadJSON)` (main.js's own loaders; once per outfit, shared by every
+  farmer), then `farmer.wear(id)` on a `Farmer` or a `FarmerRig` (`FarmLife.wear(id)` for the farm's own farmer), and
+  `farmer.wear(null)` for Classic again (the very same mesh and colours as before). `wear` answers false and changes
+  nothing for an outfit not loaded, one that doesn't exist, or the judge; `farmer.outfit` is what's worn; `OUTFIT_IDS` the
+  five. Dressed, a look is one mesh again (still one draw): the farmer's own with the straw hat's parts left out, the
+  outfit's added, the ribbon recoloured, made once for each look and outfit. The shirt's colours, its check and the knit are
+  the material's own (uniforms), drawn per pixel as the checked shirt; the jumper has little knitted Vs in columns, fading
+  out far off. Each hat sits its own way (`HAT_SIT`): pushed back so the face shows from the game's view, as the straw hat,
+  the flat cap and the top hat less (the cap's back would dip into Rosie's hair; the top hat stands up).
+- **`?lineup=farmer&set=4`** (or `&outfits`): the five outfits, one row each, Arthur and Rosie side by side, all in the
+  same mood, a new one every 4 s (looking about, waving, walking, the torch, feeding, a cuddle, telling off, worried);
+  `&mood=wave` holds one, `&pose=stretch` any of `POSES`; `&outfit=rodeo` just that one in four moods at once (looking
+  about, waving, walking, the torch); `&wear=rodeo` dresses sets 1 to 3 in it (set 3: the faces close). In `main.js` one
+  line after the line-up is made: `if (farmerLineup) await farmerLineup.dress(loadGLB, loadJSON);`.
+- `outfittest.mjs` (`fr`, `W`, `H`): set 4 loads the five outfits and nothing else, each farmer in his row's outfit (the
+  straw hat gone, the outfit's hat on its bone, Rosie's hair, the shirt's colours and check, the ribbon), every pose and
+  face held in every outfit with the torch and the pail, back to Classic and dressed again, one farmer's outfit never
+  changing another's, an outfit not loaded changing nothing; Classic loads no outfit; `&outfit=rodeo` only the rodeo's.

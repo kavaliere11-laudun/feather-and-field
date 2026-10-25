@@ -119,6 +119,7 @@ export class FarmLife {
     this.f.fade(0);
   }
   get pos() { return this.f.pos; }
+  wear(id) { return this.f.wear(id); }          // a bought outfit (loaded first: farmer.js loadOutfit), or Classic (null)
   T(key) { return FARMER_TEXT[key][this.L].replace('{dog}', this.o.dogName ? this.o.dogName() : 'Biscuit'); }
   say(key, secs = 2.6) {
     const text = this.T(key), m = this.bubble.material; m.map = bubbleTexture(text); m.needsUpdate = true;
