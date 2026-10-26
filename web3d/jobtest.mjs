@@ -66,7 +66,7 @@ await shot('2_done');
 const c0 = await jobs();
 await p.evaluate(() => document.querySelector('.gjob .gbtn').click()); await run(0.3);
 J = await jobs(); t = await sheet();
-ok('Collect: the coins and XP in (+20 and +6 at level 1), "Done ✓", the number down to 2', J.coins === c0.coins + 20 && J.xp === c0.xp + 6 && J.list[0][3] && T.paid.test(t) && (await dot()) === '2', { J, c0 });
+ok('Collect: the coins and XP in (+20 and +4 at level 1), "Done ✓", the number down to 2', J.coins === c0.coins + 20 && J.xp === c0.xp + 4 && J.list[0][3] && T.paid.test(t) && (await dot()) === '2', { J, c0 });
 const twice = await p.evaluate(() => window.__farm.game().claimJob(0));
 ok('not twice', twice === null && (await jobs()).coins === J.coins);
 await shot('3_paid');

@@ -75,7 +75,7 @@ h = await hen(); ht = await hintT();
 const xp1 = await p.evaluate(() => window.__farm.game().data.xp);
 await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id); b.happy = 0; }, HEN);
 const e0 = (await hen()).exp; await card(HEN); await cuddleTap(); const h2 = await hen();
-ok('the fifteenth: best friends, +20 XP; trust stops at 15 (and cuddles add no more experience)', h.trust === 15 && h.level === 3 && T.best.test(ht) && xp1 - xp0 === 20 && h2.trust === 15 && h2.exp === e0, { h, ht, xp: xp1 - xp0, h2 });
+ok('the fifteenth: best friends, +20 XP (and the cuddle\'s own 1); trust stops at 15 (and cuddles add no more experience)', h.trust === 15 && h.level === 3 && T.best.test(ht) && xp1 - xp0 === 21 && h2.trust === 15 && h2.exp === e0, { h, ht, xp: xp1 - xp0, h2 });
 // a star from a cuddle
 const rooster = await p.evaluate(() => { const g = window.__farm.game(), r = g.data.birds.find(b => b.sex === 'r'); r.exp = 95; r.happy = 0; g.save(); return r.id; });
 await run(1.2);

@@ -57,7 +57,7 @@ const TEXT = {
     exp_eggs: 'Each star makes her eggs a coin dearer.', exp_chicks: 'The more stars, the better his chicks.',
     trust_next: '{n} more cuddles to “{level}”', trust_next1: '1 more cuddle to “{level}”', trust_greets: 'Comes to the fence to greet {farmer}.',
     cuddle_btn: '♥ Cuddle', happy_left: 'Happy after a cuddle: {when} left', cuddle_night: 'Cuddles in the morning: {farmer} is asleep.',
-    cuddle_done: '{farmer} gives {name} a cuddle ♥', trust_up1: '{name} is getting friendly with {farmer}.',
+    cuddle_done: '{farmer} gives {name} a cuddle ♥ +{xp} XP', trust_up1: '{name} is getting friendly with {farmer}.',
     trust_up2: '{name} trusts {farmer} now, and comes to the fence to say hello.', trust_up3: '{name} and {farmer} are best friends! +{xp} XP',
     star_up: '★ {name} has earned a new star!',
     lives_in: 'Lives in: {coop}', since: 'On your farm since {date}',
@@ -149,6 +149,7 @@ const TEXT = {
     loading: 'Loading your farm…',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
+    eggs_fresh1: '1 fresh egg sold · +{c} coins · +{xp} XP', eggs_fresh: '{n} eggs sold · +{c} coins · {f} fresh: +{xp} XP',
     no_eggs: 'No eggs yet', laying: '{name} is laying…',
     first_egg: '{name} has laid your first egg! Tap the nest to collect it.',
     nest_full: 'The nest is full: collect the eggs so your hens can lay again.',
@@ -207,7 +208,7 @@ const TEXT = {
     exp_eggs: 'Chaque étoile rend ses œufs une pièce plus chers.', exp_chicks: 'Plus il a d’étoiles, meilleurs sont ses poussins.',
     trust_next: 'Encore {n} câlins avant « {level} »', trust_next1: 'Encore 1 câlin avant « {level} »', trust_greets: 'Vient saluer {farmer} à la clôture.',
     cuddle_btn: '♥ Faire un câlin', happy_left: 'Heureux après un câlin : encore {when}', cuddle_night: 'Les câlins, ce sera demain matin : {farmer} dort.',
-    cuddle_done: '{farmer} fait un câlin à {name} ♥', trust_up1: '{name} devient sociable avec {farmer}.',
+    cuddle_done: '{farmer} fait un câlin à {name} ♥ +{xp} XP', trust_up1: '{name} devient sociable avec {farmer}.',
     trust_up2: '{name} a confiance en {farmer} et vient lui dire bonjour à la clôture.', trust_up3: '{name} et {farmer} sont inséparables ! +{xp} XP',
     star_up: '★ {name} gagne une nouvelle étoile !',
     lives_in: 'Habite : {coop}', since: 'À la ferme depuis le {date}',
@@ -299,6 +300,7 @@ const TEXT = {
     loading: 'Chargement de votre ferme…',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
+    eggs_fresh1: '1 œuf tout frais vendu · +{c} pièces · +{xp} XP', eggs_fresh: '{n} œufs vendus · +{c} pièces · {f} tout frais : +{xp} XP',
     no_eggs: 'Pas encore d’œufs', laying: '{name} est en train de pondre…',
     first_egg: '{name} a pondu votre premier œuf ! Touchez le nid pour le ramasser.',
     nest_full: 'Le nid est plein : ramassez les œufs pour que vos poules pondent à nouveau.',
@@ -455,7 +457,7 @@ export const JOBS = {
   feed: { n: () => 1 },                                            // fill a feeder
   show: { n: () => 1 },                                            // enter a bird in a show
 };
-export const jobReward = L => ({ coins: 15 + 5 * L, xp: 5 + L });
+export const jobReward = L => ({ coins: 15 + 5 * L, xp: 3 + L });
 const dayKey = t => { const d = new Date(t); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); };
 // the day's three jobs: one easy, two others, all different (the same for that day and level, from the day's own numbers)
 function jobsFor(day, lv) {
@@ -524,6 +526,8 @@ export function cleanName(s, max = 20) {
 }
 // every field the save has came through the checks unchanged (fields it didn't have yet, from before a step added them,
 // are filled in and don't count as an edit)
+// a nest's lay times as saved: whole times, none ahead of now, no more than its eggs (the latest)
+function layTimesKept(lt, eggs, now) { const ok = lt.filter(t => Number.isInteger(t) && t > 0 && t <= now); return eggs ? ok.slice(-eggs) : []; }
 function fits(c, r) {
   if (c === r) return true;
   if (c === null || r === null || typeof c !== 'object' || typeof r !== 'object') return c === r;
@@ -541,7 +545,11 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
 export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7 };        // coins an egg sells for (the Legbar's blue eggs the dearest)
-export const XP_EGG = 2, XP_FILL = 4;                 // XP for each egg collected, and for a feeder filled from empty
+export const XP_EGG = 1, XP_FILL = 4;                 // XP for each egg collected, and for a feeder filled from empty
+// rewards for coming back during the day (Audrey, 26 Oct: "people playing multiple times a day should be rewarded a bit
+// more"; "A bit quicker"): fresh eggs, collected within 3 hours of being laid, earn more; a cuddle earns a little each time
+// (once her happy glow from the last one has worn off, 6 hours)
+export const FRESH = { ms: 3 * 3600e3, xp: 4, cuddle: 1 };
 export const FEED_DAYS = 2;                           // a full feeder keeps its birds for two days (a unit a bird a day)
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
@@ -603,7 +611,8 @@ export function checkFarm(d, now = Date.now()) {
       eggs: int(c.eggs, 0, NEST_MAX, 0), bonus: 0, feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
       brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
         kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1) })) : null } : null,
-      lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now) });
+      lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
+      ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
   }
   out.birds = [];
   const ids = new Set();
@@ -996,7 +1005,7 @@ export class Game {
     const lv0 = this.trustLevel(b), s0 = this.stars(b, now);
     b.happy = now + HAPPY_MS;
     if (b.trust < TRUST_AT[3]) { b.trust++; b.exp = Math.min(1e7, b.exp + EXP_CUDDLE); }
-    const lv = this.trustLevel(b), xp = lv > lv0 && lv === 3 ? XP_BEST : 0;
+    const lv = this.trustLevel(b), xp = (lv > lv0 && lv === 3 ? XP_BEST : 0) + FRESH.cuddle;
     this.data.xp += xp;
     const done = this.job('cuddle', 1, now);
     return { trust: b.trust, level: lv, up: lv > lv0 ? lv : 0, xp, star: this.stars(b, now) > s0, done };
@@ -1076,7 +1085,7 @@ export class Game {
     if (this.brooding(henId)) res = 'brooding';
     else if (this.feedAt(c, t) <= 0) res = 'hungry';
     else if (c.eggs >= NEST_MAX) res = 'full';
-    else { c.eggs++; c.bonus = (c.bonus || 0) + this.stars(b, t); }
+    else { c.eggs++; c.bonus = (c.bonus || 0) + this.stars(b, t); c.lt = [...(c.lt || []), t].slice(-c.eggs); }      // (when each egg in the nest was laid: fresh ones earn more)
     this.save();
     return res;
   }
@@ -1137,13 +1146,18 @@ export class Game {
     if (dirty) this.save();
     return out;
   }
+  // how many of a nest's eggs are fresh now (laid within 3 hours)
+  freshIn(c, now = Date.now()) { return Math.min(c.eggs || 0, (c.lt || []).filter(t => t <= now && now - t <= FRESH.ms).length); }
+  // the words for eggs sold (collect's result): fresh ones say so, with the XP
+  soldText(r) { return r.fresh ? this.t(r.n === 1 ? 'eggs_fresh1' : 'eggs_fresh', { n: r.n, c: r.coins, f: r.fresh, xp: r.xp }) : this.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }); }
   // tap the nest: its eggs sold, coins and XP
-  collect(coopId) {
+  collect(coopId, now = Date.now()) {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
-    const n = c.eggs, coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XP_EGG;
-    c.eggs = 0; c.bonus = 0; this.data.coins += coins; this.data.xp += xp;
+    const n = c.eggs, fresh = this.freshIn(c, now);
+    const coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XP_EGG + fresh * FRESH.xp;
+    c.eggs = 0; c.bonus = 0; c.lt = []; this.data.coins += coins; this.data.xp += xp;
     const done = this.job('eggs', n);
-    return { n, coins, xp, done };
+    return { n, fresh, coins, xp, done };
   }
   // what filling the feeder now would cost, and how much it would get: all of it, what the coins can buy, or (no coins and
   // nothing left in it) a free handful of kitchen scraps, a unit, so the hens can always go on laying

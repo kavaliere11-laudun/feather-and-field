@@ -1,8 +1,9 @@
 // The game, release 1 step 3 (eggs and feed): node eggtest.mjs   (LANG=fr: a French phone; W, H: the screen, e.g. W=874 H=402)
 // A fresh farm at 10:00 on a fake clock: the first egg (the good mum walks in and lays it, the bubble shows 1); collected
-// (the eggs fly to the coins: +6 coins, +2 XP); two days away: the eggs laid meanwhile are there, the feeder low; three
+// (the eggs fly to the coins: +6 coins; fresh, collected within 3 hours of being laid: 1 XP and 4 more); two days away: the eggs laid meanwhile are there, the feeder low; three
 // days: empty, no eggs after it ran out; the feeder's card and filling it (the farmer brings the feed, the grain rises,
-// coins down); a full nest stops the laying; a reload keeps it all; a save changed outside the game is checked and flagged;
+// coins down); a full nest stops the laying; a reload keeps it all; eggs laid long ago: 1 XP each, none fresh; a save changed
+// outside the game is checked and flagged (when its eggs were laid too);
 // a clock put back gives nothing.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
@@ -20,7 +21,7 @@ const sim = (secs) => p.evaluate(s => { const f = window.__farm; for (let i = 0;
 const state = () => p.evaluate(() => {
   const f = window.__farm, g = f.game(), c = g.data.coops[0], P = f.gamePlots()[0], B = P.bub || {};
   return { coins: g.data.coins, xp: g.data.xp, eggs: c.eggs, nest: P.nest.count, feed: +g.feedLeft(c).toFixed(3), mesh: +P.feedMesh.position.y.toFixed(4), meshOn: P.feedMesh.visible,
-    eggBub: B.eggs ? (B.eggs.hidden ? null : B.eggs.textContent) : null, feedBub: B.feed ? (B.feed.hidden ? null : B.feed.textContent) : null,
+    eggBub: B.eggs ? (B.eggs.hidden ? null : B.eggs.childNodes[1].textContent) : null, fresh: B.eggs ? B.eggs.classList.contains('fresh') : null, feedBub: B.feed ? (B.feed.hidden ? null : B.feed.textContent) : null,
     laying: P.birds.filter(x => x.laying).map(x => x.name), hint: document.getElementById('hint').textContent, first: g.data.first, edited: g.edited };
 });
 
@@ -37,13 +38,13 @@ s = await state();
 ok('the first egg: the good mum goes in to lay', s.laying.length === 1, s.laying);
 await sim(70);
 s = await state();
-ok('the first egg laid: in the nest and its bubble', s.eggs === 1 && s.nest === 1 && s.eggBub === '1' && s.first === null && /first egg|premier œuf/.test(s.hint), s);
+ok('the first egg laid: in the nest and its bubble (fresh: a sparkle)', s.eggs === 1 && s.nest === 1 && s.eggBub === '1' && s.fresh && s.first === null && /first egg|premier œuf/.test(s.hint), s);
 // collected: the eggs fly to the coins
 await p.evaluate(() => window.__farm.collectAt(0));
 const flying = await p.evaluate(() => document.querySelectorAll('.gegg').length);
 await p.waitForTimeout(1200);
 s = await state();
-ok('collected: sold for 6 coins and 2 XP, the nest empty, the bubble gone, an egg flew', flying >= 1 && s.coins === 106 && s.xp === 2 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && /\+6/.test(s.hint), { flying, ...s });
+ok('collected: sold for 6 coins; fresh: 1 + 4 XP ("fresh"), the nest empty, the bubble gone, an egg flew', flying >= 1 && s.coins === 106 && s.xp === 5 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && /\+6/.test(s.hint) && (fr ? /tout frais/ : /fresh/).test(s.hint) && /\+5 XP/.test(s.hint), { flying, ...s });
 // away for two days: the eggs laid meanwhile are there (no walking in), the feeder low
 const day = 86400e3;
 await setT(T0 + 2 * day - 3600e3);
@@ -76,7 +77,7 @@ await setT(T0 + 4 * day);
 await p.evaluate(() => { const f = window.__farm; f.gameTick(window.__T); f.draw(); });
 s = await state();
 const full = await p.evaluate(() => window.__farm.gamePlots()[0].bub.eggs.classList.contains('full'));
-ok('a full nest: 12, no more laid, the bubble says so', s.eggs === 12 && s.eggBub === '12' && full, { full, ...s });
+ok('a full nest: 12, no more laid, the bubble says so (no sparkle: laid long ago)', s.eggs === 12 && s.eggBub === '12' && full && !s.fresh, { full, ...s });
 // a reload keeps it all
 const keep = () => p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return JSON.stringify({ coins: g.data.coins, xp: g.data.xp, eggs: c.eggs, feed: c.feed, fedAt: c.fedAt, birds: g.data.birds.map(b => b.name + b.pers) }); });
 const saved = await keep();
@@ -86,18 +87,21 @@ await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 
 s = await state();
 const after = await keep();
 ok('a reload: the same farm, the nest and feeder as they were, not flagged', after === saved && s.nest === 12 && !s.edited, { same: after === saved, ...s });
+// eggs laid long ago: no fresh ones
+const old = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0], xp = g.data.xp, lt = (c.lt || []).length; window.__farm.collectAt(0); return { dx: g.data.xp - xp, lt, hint: document.getElementById('hint').textContent }; });
+ok('eggs laid a day or more ago: 1 XP each, none fresh', old.dx === 12 && old.lt > 0 && !/fresh|frais/.test(old.hint), old);
 // a clock put back: nothing
 await setT(T0 + 2 * day);
 await p.evaluate(() => { const f = window.__farm; f.gameTick(window.__T); f.draw(); });
 const back = await p.evaluate(() => window.__farm.game().dueLays().length);
 ok('a clock put back: nothing due', back === 0, back);
 // a save changed outside the game: checked and flagged
-await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.coops[0].eggs = 999; raw.d.coops[0].feed = 1e6; raw.d.birds.find(b => b.sex === 'h').laid = -1; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.coops[0].eggs = 999; raw.d.coops[0].feed = 1e6; raw.d.birds.find(b => b.sex === 'h').laid = -1; raw.d.coops[0].lt = [window.__T + 9e9, 'x', window.__T - 60e3]; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 5); f.draw(); });
-const t = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return { edited: g.edited, eggs: c.eggs, feed: c.feed, cap: g.feedCap(c) }; });
-ok('a save changed outside: eggs at most 12, the feeder at most full, flagged', t.edited && t.eggs === 12 && t.feed <= t.cap, t);
+const t = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return { edited: g.edited, eggs: c.eggs, feed: c.feed, cap: g.feedCap(c), lt: c.lt, now: window.__T }; });
+ok('a save changed outside: eggs at most 12, the feeder at most full, lay times none ahead of now, flagged', t.edited && t.eggs === 12 && t.feed <= t.cap && Array.isArray(t.lt) && t.lt.length === 1 && t.lt.every(x => Number.isInteger(x) && x <= t.now), t);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

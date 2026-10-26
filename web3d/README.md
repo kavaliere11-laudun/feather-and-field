@@ -2109,3 +2109,20 @@ The 3D game is the game at the usual address (https://kavaliere11-laudun.github.
   old worker still there, every file found, the old worker and caches gone, the first game's farm untouched; a new 3D
   farm; Settings' card opens `classic/` with "Audrey"'s farm and its own worker; its "Open the new game" comes back; a new
   phone sees neither line nor card. English upright and sideways, French both ways.
+
+## The balance, again: playing more often rewarded (26 Oct 2026, Audrey: "people playing multiple times a day should be rewarded a bit more", then "A bit quicker (Recommended)")
+
+The year's graph showed the three kinds of player almost together (twice a day only a month quicker): eggs, honey, shows
+and jobs all come on a daily clock, so only the wheat rewarded coming back. Now (`FRESH` in `src/game.js`):
+- **Fresh eggs:** an egg collected within 3 hours of being laid earns 4 XP more (an egg is 1 XP, was 2). The nest keeps
+  when each of its eggs was laid (`lt` on each coop, saved: whole times, none ahead of now, no more than its eggs, checked
+  and flagged otherwise). While fresh eggs are waiting, the coop's egg bubble has a sparkle (✨); collected: "6 eggs sold ·
+  +42 coins · 4 fresh: +22 XP" ("4 tout frais").
+- **Cuddles:** each cuddle earns 1 XP (once the bird's happy glow from the last one has worn off, 6 hours): "+1 XP" after
+  "Arthur gives Clover a cuddle ♥".
+- **Jobs:** 3 + level XP each (was 5 + level), so a once-a-day player still takes about a year.
+- **Now (`balsim.mjs`, 6 farms each):** once a day: level 30 on day 357 (was about 365); twice a day: day 300, about 10
+  months (was 337); every 3 hours: day 244, about 8 months (was 314). New breeds for a once-a-day player as before (3
+  weeks, a month, 10 weeks, 4 and a half months); twice a day 17, 23, 58 and 112 days.
+- On the way: the words at the top (`#hint`) are as wide as they need, up to the screen's width; centred from the middle
+  of the screen they used to wrap at half its width ("4 eggs sold · +24 / coins").

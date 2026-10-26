@@ -2962,7 +2962,7 @@ function gameCuddle(id) {
     const P = penSpec(b.plot);
     if (P && farmLife.visitPen(P, 'cuddle', b)) wake(1500);
   }
-  hint(r.up ? game.t('trust_up' + r.up, { name: gb.name, farmer, xp: r.xp }) : game.t('cuddle_done', { name: gb.name, farmer }));
+  hint(r.up ? game.t('trust_up' + r.up, { name: gb.name, farmer, xp: r.xp }) : game.t('cuddle_done', { name: gb.name, farmer, xp: r.xp }));
   if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
   starsSeen.set(id, game.stars(gb));                      // (a star from the cuddle: said with it)
   if (r.star && !r.up) hint(game.t('star_up', { name: gb.name }));
@@ -3076,11 +3076,13 @@ function bubbleText(now = Date.now(), only = null) {
   for (const p of only ? [only] : gamePlots()) {
     const B = bubbleFor(p), c = p.gc, n = c.eggs;
     if (n !== B.n) {
-      B.eggs.replaceChildren(Object.assign(document.createElement('span'), { className: 'gegg-i' }), document.createTextNode(String(n)));
+      B.eggs.replaceChildren(Object.assign(document.createElement('span'), { className: 'gegg-i' }), document.createTextNode(String(n)), Object.assign(document.createElement('span'), { className: 'gfresh', textContent: '✨' }));
       B.eggs.classList.toggle('full', n >= NEST_MAX); B.eggs.setAttribute('aria-label', game.t('eggs') + ' ' + n);
       if (n > B.n && B.n >= 0) { B.eggs.classList.remove('pop'); void B.eggs.offsetWidth; B.eggs.classList.add('pop'); }
       B.n = n; if (!n) B.eggs.hidden = true;
     }
+    const fresh = n > 0 && game.freshIn(c, now) > 0;          // (fresh eggs waiting, laid within 3 hours: a sparkle, worth more XP)
+    if (fresh !== B.fresh) { B.fresh = fresh; B.eggs.classList.toggle('fresh', fresh); }
     // sitting on her eggs: how long till they hatch
     const br = c.brood && !c.brood.hatched ? c.brood : null, ms = br ? game.hatchAt(c) - now : 0;
     const bt = br ? '🐣 ' + (ms < 3600e3 ? game.t('min', { n: Math.max(1, Math.round(ms / 60e3)) }) : game.t('h', { n: Math.round(ms / 3600e3) })) : '';
@@ -3146,7 +3148,7 @@ function collectAt(plot) {
   else { const G = nestOf(plot); bubV.set(G.seat[0], G.win[1] + 0.1, 0.5); plot.frame.localToWorld(bubV); bubV.project(camera); from = { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; }
   plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
   gameUI.flyEggs(from, r.n, EGG_COLOUR[plot.breed]);
-  hint(game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }));
+  hint(game.soldText(r));
   jobsDone(r.done); guideDid('eggs');
 }
 // ---- broody hens and chicks (game.js broodTick): the farm follows the save. A hen whose brood has just begun walks in
@@ -5073,7 +5075,7 @@ function insideTap(x, y) {
     const n = inside.plot.nest;
     if (GAME_MODE && inside.plot.gc) {
       const r = game.collect(inside.plot.gc.id);
-      tag.textContent = r ? game.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }) : game.t('no_eggs');
+      tag.textContent = r ? game.soldText(r) : game.t('no_eggs');
       if (r) { gameUI.refresh(); gameUI.bumpCoins(); jobsDone(r.done); }
     } else tag.textContent = n.count ? (n.count === 1 ? vt('eggs1') : vt('eggsn', { n: n.count })) : vt('no_eggs_here');
     n.count = 0; if (inside.eggs) inside.eggs.count = 0;
