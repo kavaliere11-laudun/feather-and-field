@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -89,7 +89,7 @@ export class GameUI {
     this.coinNum.textContent = d.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB');
     this.coins.setAttribute('aria-label', this.t('coins') + ' ' + d.coins);
     this.gear.setAttribute('aria-label', this.t('settings')); this.x.setAttribute('aria-label', this.t('close'));
-    const waiting = this.g.waitingCoops().length > 0;
+    const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
     const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
@@ -262,19 +262,21 @@ export class GameUI {
     body.append(el('p', 'gnote', this.t('since', { date })));
   }
   // ---- a chick: whose she is, when she's grown and off to a new farm
-  chickCard(name, coop, mum, ms) {
+  chickCard(name, coop, mum, ms, rare) {
     const g = this.g, body = this.open('chick', name);
     this.bird = null;
     body.append(el('p', 'gsub', this.t('chick_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
+    if (rare) body.append(el('p', 'gtext grare', this.t('rare_chick', { line: g.breedName(rare) })));
     const cc = el('div', 'gcard');
     cc.append(el('div', 'glabel', this.t('chick')), el('p', 'gtext', ms > 1800e3 ? this.t('chick_grows', { when: g.howLong(ms) }) : this.t('chick_soon')));
     body.append(cc);
   }
   // ---- a young hen or rooster (a day after hatching): whose, when off to a new farm (the rating then: congratsCard)
-  youngCard(name, sex, coop, mum, ms) {
+  youngCard(name, sex, coop, mum, ms, rare) {
     const g = this.g, body = this.open('chick', name), f = sex === 'h';
     this.bird = null;
     body.append(el('p', 'gsub', this.t('young_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '', kid: this.t(f ? 'daughter' : 'son') })));
+    if (rare) body.append(el('p', 'gtext grare', this.t(f ? 'rare_young_h' : 'rare_young_r', { line: g.breedName(rare) })));
     const cc = el('div', 'gcard'), ch = el('div', 'gcard-h');
     ch.append(el('span', 'gemoji', f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(f ? 'young_h' : 'young_r')));
     cc.append(ch, el('p', 'gtext', ms > 1800e3 ? this.t(f ? 'young_leaves' : 'young_leaves_r', { when: g.howLong(ms) }) : this.t('young_soon')));
@@ -288,18 +290,41 @@ export class GameUI {
     body.append(el('p', 'gsub', this.t(away ? 'congrats_away' : 'congrats_sub', { name: mum ? mum.name : '' })));
     const list = el('div', 'gcard gkids');
     for (const k of n.kids) {
-      const row = el('div', 'gkid'), st = el('span', 'gstars gsmall');
+      const row = el('div', 'gkid' + (k.rare ? ' gkid-rare' : '')), st = el('span', 'gstars gsmall');
       st.setAttribute('aria-label', k.stars + ' / ' + MAX_STARS);
       for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < k.stars ? 'on' : '', i < k.stars ? '★' : '☆'));
       const c = el('span', 'gkid-c'); c.append(el('span', 'gcoin gcoin-s'), document.createTextNode('+' + k.coins));
-      row.append(el('span', 'gemoji', k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', this.t(k.sex === 'h' ? 'young_h' : 'young_r')), st, c);
+      const what = k.rare ? '✨ ' + g.breedName(k.rare) : this.t(k.sex === 'h' ? 'young_h' : 'young_r');
+      row.append(el('span', 'gemoji', k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', what), st, k.wait ? el('span', 'gkid-c') : c);
       list.append(row);
+      // a rare one: kept or sold for you (its trio complete), or yours to choose now (still waiting)
+      if (k.rare && k.full) list.append(el('p', 'gnote gkid-n', this.t('rare_full', { line: g.breedName(k.rare) })));
+      const e = k.wait && g.rareWaiting().find(x => x.id === k.wait);
+      if (e && this.o.rare) list.append(this.rareChoice(e, () => this.congratsCard(n, away)));
     }
     body.append(list, el('p', 'gtotal', this.t('congrats_total', { c: n.coins, xp: n.xp })));
     if (mum) body.append(el('p', 'gnote', dad ? this.t('congrats_exp', { mum: mum.name, dad: dad.name }) : this.t('congrats_exp1', { mum: mum.name })));
     const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button';
     ok.addEventListener('click', () => this.close());
     body.append(ok);
+  }
+  // ---- a rare baby, grown (release 2 step 2): keep (the basket by the farmhouse fire) or sell (main.js: this.o.rare)
+  rareChoice(e, then) {
+    const row = el('div', 'grow grare-row'), f = e.sex === 'h';
+    const keep = el('button', 'gbtn gsmallbtn grare-keep', this.t(f ? 'rare_keep_h' : 'rare_keep_r')); keep.type = 'button';
+    const sell = el('button', 'gbtn galt gsmallbtn grare-sell', this.t('rare_sell', { c: rarePrice(e.stars).toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') })); sell.type = 'button';
+    keep.addEventListener('click', () => { this.o.rare.keep(e.id); if (then) then(); });
+    sell.addEventListener('click', () => { this.o.rare.sell(e.id); if (then) then(); });
+    row.append(keep, sell);
+    return row;
+  }
+  rareCard(e) {
+    const g = this.g, coop = g.coop(e.coop), body = this.open('rare', this.t('rare_card_t', { line: g.breedName(e.line) })), f = e.sex === 'h';
+    this.bird = null;
+    const st = el('p', 'gstars'); for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < e.stars ? 'on' : '', i < e.stars ? '★' : '☆'));
+    body.append(el('p', 'gsub', this.t('rare_of', { line: g.breedName(e.line), kind: this.t(f ? 'young_h' : 'young_r') })), st,
+      el('p', 'gtext', this.t(f ? 'rare_card_body' : 'rare_card_body_r', { coop: coop ? g.coopName(coop) : '' })));
+    if (this.o.rare) body.append(this.rareChoice(e, () => this.close()));
   }
   // ---- a coop's feeder: how full, how long it lasts, fill it (main.js sends the farmer)
   feederSheet(coop, onFill) {
@@ -438,6 +463,21 @@ export class GameUI {
       c.append(hd, el('p', 'gtext', this.t('trio_body')));
       const go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(breed));
       c.append(go); b.append(c);
+    }
+    // rare babies waiting for your choice, and the basket by the fire (release 2 step 2)
+    for (const e of g.rareWaiting()) {
+      const c = el('div', 'gcard grarecard'), hd = el('div', 'gcard-h');
+      hd.append(el('span', 'gemoji', '✨'), el('span', 'gcard-t', this.t('rare_card_t', { line: g.breedName(e.line) })), el('span', 'gbadge', this.t('coops_new')));
+      c.append(hd, el('p', 'gnote', this.t('rare_waiting')));
+      if (this.o.rare) c.append(this.rareChoice(e, () => this.coopsSheet(h)));
+      b.append(c);
+    }
+    if (g.basket().length) {
+      const c = el('div', 'gcard gbasket'), hd = el('div', 'gcard-h');
+      hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t('basket_t')));
+      c.append(hd);
+      for (const x of g.basket()) c.append(el('p', 'gtext', x.name + ' · ' + this.t('rare_of', { line: g.breedName(x.breed), kind: this.t(x.sex === 'h' ? 'hen' : 'rooster') })));
+      c.append(el('p', 'gnote', this.t('basket_note'))); b.append(c);
     }
     for (const coop of g.data.coops) {
       const row = el('div', 'gcard gcooprow'), info = el('div', 'gcoopinfo');

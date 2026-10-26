@@ -187,6 +187,12 @@ const TEXT = {
     congrats: 'Congratulations!', congrats_sub: '{name}’s babies have grown up', congrats_away: 'While you were away, {name}’s babies grew up',
     congrats_total: '+{c} coins · +{xp} XP', congrats_exp: '{mum} and {dad} gain experience: their next chicks will be even better.',
     congrats_exp1: '{mum} gains experience: her next chicks will be even better.', congrats_ok: 'Lovely!',
+    hatched_rare: '{n} chicks have hatched, and one is a rare {line}! ✨', rare_chick: '✨ A rare {line} chick', rare_young_h: '✨ A rare {line}: a young hen', rare_young_r: '✨ A rare {line}: a young rooster',
+    rare_keep_h: 'Keep her', rare_keep_r: 'Keep him', rare_sell: 'Sell · {c}',
+    rare_kept: '{name} is snug in the basket by the farmhouse fire.', rare_kept_r: '{name} is snug in the basket by the farmhouse fire.', rare_sold: 'Sold for {c} coins', rare_full: 'Your {line} trio is complete: this one is sold for you',
+    rare_card_t: 'A rare {line}!', rare_card_body: 'Born in {coop}. Keep her, and she lives in a basket by the farmhouse fire until she has a coop of her own; or sell her for a lot.',
+    rare_card_body_r: 'Born in {coop}. Keep him, and he lives in a basket by the farmhouse fire until he has a coop of his own; or sell him for a lot.',
+    rare_waiting: 'A rare baby is waiting for your choice', basket_t: 'The basket by the fire', basket_note: 'Their own coop comes soon.', rare_of: '{line} · {kind}',
     farewell: 'Off you go, and good luck!',
   },
   fr: {
@@ -338,6 +344,12 @@ const TEXT = {
     congrats: 'Félicitations !', congrats_sub: 'Les petits de {name} ont grandi', congrats_away: 'Pendant votre absence, les petits de {name} ont grandi',
     congrats_total: '+{c} pièces · +{xp} XP', congrats_exp: '{mum} et {dad} gagnent de l’expérience : leurs prochains poussins seront encore meilleurs.',
     congrats_exp1: '{mum} gagne de l’expérience : ses prochains poussins seront encore meilleurs.', congrats_ok: 'Super !',
+    hatched_rare: '{n} poussins sont nés, dont un rare : {line} ! ✨', rare_chick: '✨ Un poussin rare : {line}', rare_young_h: '✨ Rare : {line}, une jeune poule', rare_young_r: '✨ Rare : {line}, un jeune coq',
+    rare_keep_h: 'La garder', rare_keep_r: 'Le garder', rare_sell: 'Vendre · {c}',
+    rare_kept: '{name} est bien au chaud dans le panier près du feu de la ferme.', rare_kept_r: '{name} est bien au chaud dans le panier près du feu de la ferme.', rare_sold: 'Vendu {c} pièces', rare_full: 'Votre trio {line} est complet : celui-ci est vendu pour vous',
+    rare_card_t: 'Une {line} rare !', rare_card_body: 'Née à {coop}. Gardez-la : elle vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-la pour beaucoup.',
+    rare_card_body_r: 'Né à {coop}. Gardez-le : il vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-le pour beaucoup.',
+    rare_waiting: 'Un bébé rare attend votre choix', basket_t: 'Le panier près du feu', basket_note: 'Leur poulailler arrive bientôt.', rare_of: '{line} · {kind}',
     farewell: 'Allez, bonne route !',
   },
 };
@@ -365,7 +377,23 @@ export const BREED_INFO = {
   sil_blue: { name: ['Blue Silkie', 'Poule soie bleue'], kind: ['Silkie', 'Poule soie'], col: ['Blue', 'bleue'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
   sil_partridge: { name: ['Partridge Silkie', 'Poule soie perdrix'], kind: ['Silkie', 'Poule soie'], col: ['Partridge', 'perdrix'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
   sil_grey: { name: ['Grey Silkie', 'Poule soie grise'], kind: ['Silkie', 'Poule soie'], col: ['Grey', 'grise'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  // the rare colours (release 2 step 2): only from breeding (RARE_FROM)
+  sil_paint: { name: ['Paint Silkie', 'Poule soie pie'], kind: ['Silkie', 'Poule soie'], col: ['Paint', 'pie'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
+  sil_lavender: { name: ['Lavender Silkie', 'Poule soie lavande'], kind: ['Silkie', 'Poule soie'], col: ['Lavender', 'lavande'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
+  sil_red: { name: ['Red Silkie', 'Poule soie rouge'], kind: ['Silkie', 'Poule soie'], col: ['Red', 'rouge'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
+  sil_splash: { name: ['Splash Silkie', 'Poule soie splash'], kind: ['Silkie', 'Poule soie'], col: ['Splash', 'splash'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
+  sil_cuckoo: { name: ['Cuckoo Silkie', 'Poule soie coucou'], kind: ['Silkie', 'Poule soie'], col: ['Cuckoo', 'coucou'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
 };
+// ---- rare Silkie babies (release 2 step 2, game-plan-v2.md §4; Audrey: "Every month or two" a Silkie coop, "When it's
+// grown"): each rare colour only from breeding, from its own colour; a chick's chance grows a little with her parents' stars
+// (rare all the same). She hatches in her colour; grown, she's yours to keep (into the basket by the farmhouse fire, until
+// her own coop: the next step) or to sell, for a lot. Up to a trio of each rare colour (a rooster and two hens): one more
+// than that is sold for you. A rare one sells for RARE.price plus RARE.starPrice a star
+export const RARE_FROM = { sil: 'sil_paint', sil_black: 'sil_lavender', sil_buff: 'sil_red', sil_blue: 'sil_splash', sil_partridge: 'sil_cuckoo', sil_grey: 'sil_cuckoo' };
+export const RARE_LINES = ['sil_paint', 'sil_lavender', 'sil_red', 'sil_splash', 'sil_cuckoo'];
+export const RARE = { base: 0.018, star: 0.004, price: 400, starPrice: 50, basket: 15, pending: 6 };
+const rareMost = () => RARE.base + RARE.star * 10;      // (the most a chick's chance can be: both parents five stars)
+export const rarePrice = stars => RARE.price + RARE.starPrice * stars;
 // a line's breed (the Silkie colours are all Silkies: their eggs, chicks, house and shows) and a Silkie line's colour
 export function baseBreed(k) { return typeof k === 'string' && k.startsWith('sil') ? 'sil' : k; }
 export function silColour(k) { return k === 'sil' ? 'white' : typeof k === 'string' && k.startsWith('sil_') ? k.slice(4) : null; }
@@ -623,7 +651,8 @@ export function checkFarm(d, now = Date.now()) {
     out.coops.push({ id: c.id, breed: c.breed, tier: int(c.tier, 0, 4, 0), x: at.x, z: at.z, deg: at.deg, ...(Number.isInteger(c.plot) ? { plot: c.plot } : {}), name: cleanName(c.name, 24),
       eggs: int(c.eggs, 0, NEST_MAX, 0), bonus: 0, feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
       brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
-        kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1) })) : null } : null,
+        kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map((k, i) => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1),
+          ...(k && k.rare && k.rare === RARE_FROM[c.breed] && hash01(String(c.brood.hen) + '|' + c.brood.start + '|' + i + '|rare') < rareMost() ? { rare: k.rare } : {}) })) : null } : null,      // (a rare one: only its own colour's, only where the luck could have given it)
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
       ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
   }
@@ -661,7 +690,8 @@ export function checkFarm(d, now = Date.now()) {
   // the news waiting to be shown: grown youngsters gone to a new farm (the congratulations card)
   out.news = (Array.isArray(d.news) ? d.news : []).slice(-6).filter(n => n && typeof n === 'object' && n.type === 'grown' && out.birds.some(b => b.id === n.hen)).map(n => ({
     type: 'grown', coop: String(n.coop).slice(0, 8), hen: String(n.hen).slice(0, 8), dad: String(n.dad || '').slice(0, 8),
-    kids: (Array.isArray(n.kids) ? n.kids : []).slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1), coins: int(k && k.coins, 0, 1000, 0) })),
+    kids: (Array.isArray(n.kids) ? n.kids : []).slice(0, 4).map(k => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1), coins: int(k && k.coins, 0, 1000, 0),
+      ...(k && RARE_LINES.includes(k.rare) ? { rare: k.rare } : {}), ...(k && k.rare && typeof k.wait === 'string' && /^b\d{1,5}$/.test(k.wait) ? { wait: k.wait } : {}), ...(k && k.rare && k.full === true ? { full: true } : {}) })),
     coins: int(n.coins, 0, 4000, 0), xp: int(n.xp, 0, 4000, 0), t: int(n.t, 0, now, now), seen: n.seen === true }));
   // the shows: the birds entered (a show open when she was entered, of a tier the level allows, the breed it's for; one a
   // show, a show at a time for each bird) and the results waiting to be seen (each as the show's own numbers make it)
@@ -715,6 +745,30 @@ export function checkFarm(d, now = Date.now()) {
     const hn = d.honey && typeof d.honey === 'object' ? d.honey : {};
     out.honey = { n: int(hn.n, 0, HONEY.max, 0), at: Number.isFinite(hn.at) ? Math.min(hn.at, now) : now };
   }
+  // rare babies (release 2 step 2): those waiting for your choice (each from a Silkie coop of the colour it comes from) and
+  // those kept, in the basket by the farmhouse fire (rare colours only); at most a rooster and two hens of each colour
+  const taken = new Set([...out.coops, ...out.birds].map(x => x.id)), room = (line, sex) => [...(out.basket || []), ...out.birds, ...(out.rare || [])].filter(b => (b.line || b.breed) === line && b.sex === sex).length < (sex === 'r' ? 1 : 2);
+  if (Array.isArray(d.rare)) {
+    out.rare = [];
+    for (const e of d.rare.slice(0, RARE.pending)) {
+      const coop = e && out.coops.find(c => c.id === e.coop), sex = e && (e.sex === 'r' ? 'r' : e.sex === 'h' ? 'h' : null);
+      if (!coop || !sex || typeof e.id !== 'string' || !/^b\d{1,5}$/.test(e.id) || taken.has(e.id) || e.line !== RARE_FROM[coop.breed] || !room(e.line, sex)) continue;
+      taken.add(e.id);
+      out.rare.push({ id: e.id, line: e.line, sex, stars: int(e.stars, 1, 5, 1), coop: coop.id, i: int(e.i, 0, 3, 0), mum: String(e.mum).slice(0, 8), t: int(e.t, 0, now, now) });
+    }
+  }
+  if (Array.isArray(d.basket)) {
+    out.basket = [];
+    for (const b of d.basket.slice(0, RARE.basket)) {
+      const sex = b && (b.sex === 'r' ? 'r' : b.sex === 'h' ? 'h' : null);
+      if (!sex || typeof b.id !== 'string' || !/^b\d{1,5}$/.test(b.id) || taken.has(b.id) || !RARE_LINES.includes(b.breed) || !room(b.breed, sex)) continue;
+      taken.add(b.id);
+      const since = int(b.since, 0, now, now), most = Math.floor((now - since) / DAY_MS) + 1, ros = Array.isArray(b.ros) && b.ros.length === 9 && b.ros.every(n => Number.isInteger(n) && n >= 0) ? b.ros : null;
+      out.basket.push({ id: b.id, name: cleanName(b.name) || (sex === 'r' ? ROO_NAMES[0] : HEN_NAMES[0]), sex, breed: b.breed, pers: PERS.includes(b.pers) && !(b.pers === 'mum' && sex === 'r') ? b.pers : (sex === 'r' ? 'brave' : 'diva'),
+        since, exp: int(b.exp, 0, 1e7, 0), trust: int(b.trust, 0, 15, 0), happy: int(b.happy, 0, now + HAPPY_MS, 0), ros: ros && ros.reduce((a, n) => a + n, 0) <= most ? ros.slice() : [0, 0, 0, 0, 0, 0, 0, 0, 0] });
+    }
+  }
+  for (const x of [...(out.rare || []), ...(out.basket || [])]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
   return out;
 }
 
@@ -1116,10 +1170,34 @@ export class Game {
   kidsOf(c, br) {
     const mum = this.bird(br.hen), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
     const base = 1 + ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0)) / 2 + (mum && mum.pers === 'mum' ? 0.4 : 0);
+    const rl = RARE_FROM[c.breed], chance = RARE.base + RARE.star * ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0));
     return Array.from({ length: br.n }, (_, i) => {
       const key = br.hen + '|' + br.start + '|' + i;
-      return { sex: hash01(key + '|sex') < 0.5 ? 'h' : 'r', stars: Math.max(1, Math.min(5, Math.round(base + hash01(key + '|q') * 1.5 - 0.5))) };
+      const k = { sex: hash01(key + '|sex') < 0.5 ? 'h' : 'r', stars: Math.max(1, Math.min(5, Math.round(base + hash01(key + '|q') * 1.5 - 0.5))) };
+      if (rl && hash01(key + '|rare') < chance) k.rare = rl;          // (a rare colour: the luck of the day, more likely with stars)
+      return k;
     });
+  }
+  // rare babies: room for one more of that colour (a rooster and two hens at most: the basket, the ones waiting for your
+  // choice, and later their own coop), the ones waiting, and keeping or selling one
+  rareCount(line, sex) { const d = this.data; return [...(d.basket || []), ...d.birds, ...(d.rare || [])].filter(b => (b.line || b.breed) === line && b.sex === sex).length; }
+  rareRoom(line, sex) { return this.rareCount(line, sex) < (sex === 'r' ? 1 : 2); }
+  rareWaiting() { return this.data.rare || []; }
+  basket() { return this.data.basket || []; }
+  keepRare(id, now = Date.now()) {
+    const R = this.data.rare || [], k = R.findIndex(x => x.id === id); if (k < 0) return null;
+    const e = R[k], used = new Set([...this.data.birds, ...this.basket()].map(b => b.name));
+    const names = (e.sex === 'r' ? ROO_NAMES : HEN_NAMES).filter(n => !used.has(n)), name = names.length ? names[Math.floor(hash01(e.id + '|name') * names.length)] : (e.sex === 'r' ? ROO_NAMES : HEN_NAMES)[0];
+    const pers = (e.sex === 'r' ? PERS.filter(x => x !== 'mum') : PERS)[Math.floor(hash01(e.id + '|pers') * (e.sex === 'r' ? 4 : 5))];
+    const b = { id: e.id, name, sex: e.sex, breed: e.line, pers, since: now, exp: e.stars * 100 - 100, trust: 0, happy: 0, ros: [0, 0, 0, 0, 0, 0, 0, 0, 0] };      // (her rating as a youngster: her stars to start)
+    R.splice(k, 1); (this.data.basket = this.data.basket || []).push(b); this.save();
+    return b;
+  }
+  sellRare(id) {
+    const R = this.data.rare || [], k = R.findIndex(x => x.id === id); if (k < 0) return null;
+    const e = R[k], coins = rarePrice(e.stars);
+    R.splice(k, 1); this.data.coins += coins; this.save();
+    return { ...e, coins };
   }
   unseenNews() { return (this.data.news || []).filter(n => !n.seen); }
   seenNews(n) { n.seen = true; this.save(); }
@@ -1135,7 +1213,15 @@ export class Game {
           const hatch = br.start + SIT_MS, grown = hatch + GROW_MS, hen = this.bird(br.hen);
           if (!br.hatched && hatch <= now) { br.hatched = true; br.kids = this.kidsOf(c, br); this.data.xp += XPV.hatch; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
           if (grown <= now) {
-            const kids = (br.kids && br.kids.length === br.n ? br.kids : this.kidsOf(c, br)).map(k => ({ ...k, coins: kidPrice(this.chickPrice(c), k.stars) }));
+            const kids = (br.kids && br.kids.length === br.n ? br.kids : this.kidsOf(c, br)).map((k, i) => {
+              if (!k.rare) return { ...k, coins: kidPrice(this.chickPrice(c), k.stars) };
+              if (this.rareRoom(k.rare, k.sex)) {                         // (a rare one: yours to keep or sell, when you next look)
+                const id = this.id('b');
+                (this.data.rare = this.data.rare || []).push({ id, line: k.rare, sex: k.sex, stars: k.stars, coop: c.id, i, mum: br.hen, t: grown });
+                return { ...k, coins: 0, wait: id };
+              }
+              return { ...k, coins: rarePrice(k.stars), full: true };     // (the trio of that colour complete: sold for you)
+            });
             const coins = kids.reduce((a, k) => a + k.coins, 0), xp = kids.reduce((a, k) => a + XPV.chick + XPV.star * k.stars, 0), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
             this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null;
             if (hen) { hen.laid = Math.max(hen.laid, grown); hen.exp = Math.min(1e7, hen.exp + EXP_MUM); }       // (her lays while she was busy don't come back)

@@ -2158,3 +2158,31 @@ are the colours the birds already had (`SILKIE` in `birds.js`).
 - `silktest.mjs` (new; English upright, French sideways): level 7's Your coops, level 8's card, placing the black coop
   (its model, its trio's colours), a black hen's card, the Breed Book's ten pages, a County show, a reload, a changed save.
   breedtest and eggtest updated (the white ones' name, a fresh egg's XP).
+
+## Release 2, step 2: rare babies (26 Oct 2026, Audrey: "Every month or two (Recommended)", "When it's grown (Recommended)")
+
+game-plan-v2.md §4: five rare Silkie colours come only from breeding: Paint from the White Silkies, Lavender from Black,
+Red from Buff, Splash from Blue, Cuckoo from Partridge or Grey (`RARE_FROM`, `RARE_LINES` in `game.js`; their names in
+`BREED_INFO`, French "pie", "lavande", "rouge", "splash", "coucou"). The Silkies' look is unchanged: these are colours
+the birds already had.
+- **The luck:** each chick of a Silkie coop has a chance of its rare colour, 1.8% plus 0.4% for each star of her mum and
+  dad (`RARE`; at most 5.8%), decided when she hatches from the brood's own numbers (`kidsOf`), as the rest of her is.
+  `balsim.mjs`: about one rare baby every month and a half from each Silkie coop for a once-a-day player, the first
+  around day 70; 35 in the first year.
+- **On the farm:** she hatches in her own colour ("3 chicks have hatched, and one is a rare Paint Silkie! ✨"), with a
+  little golden sparkle now and then; her card says "✨ A rare Paint Silkie chick" (as a young hen or rooster, too).
+- **Grown:** her brothers and sisters go to a new farm as before; she stays in the pen, waiting for your choice
+  (`data.rare`): the congratulations card shows her ("✨ Paint Silkie", her stars) with **Keep** and **Sell · 500** (400
+  coins and 50 a star, `rarePrice`); a tap on her, or Your coops (its red dot), offers the same. Kept: a name and a
+  personality of her own, her stars as a youngster to start, and she goes to **the basket by the farmhouse fire**
+  (`data.basket`) with a heart: "Percy is snug in the basket by the farmhouse fire." Your coops lists the basket ("Their
+  own coop comes soon": the next step). Sold: the coins.
+- **A trio at most** of each rare colour (a rooster and two hens, counting the basket, those waiting and, later, their
+  coop): one more is sold for you, its coins with its brothers' and sisters' ("Your Paint Silkie trio is complete: this
+  one is sold for you").
+- **Save checks:** a chick's rare colour only its own coop's and only where its luck could have given it (the most a
+  chance can be); those waiting from a Silkie coop of the colour they come from; the basket only rare colours; the trio's
+  limits; names cleaned; times never ahead of now. Changed outside: checked and flagged.
+- `raretest.mjs` (new; English upright, French sideways): a brood whose luck gives a rare chick, her colour and card, the
+  congratulations card's Keep and Sell, her waiting in the pen, the basket, Sell from Your coops, a complete trio, a reload,
+  a changed save.

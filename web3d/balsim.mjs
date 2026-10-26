@@ -23,7 +23,7 @@ function simulate(name, seed) {
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
-  const levelDay = {}, at = {};
+  const levelDay = {}, at = {}, rares = []; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
   let spot = 0;
   for (let d = 0; d < DAYS; d++) {
@@ -34,6 +34,9 @@ function simulate(name, seed) {
       const coins0 = g.data.coins;
       const news = track('chicks', () => g.broodTick(NOW));
       const chicks = news.filter(n => n.type === 'sold').reduce((a, n) => a + n.coins, 0); earn.chicks += chicks;
+      for (const n of news.filter(n => n.type === 'sold')) for (const k of n.news.kids) if (k.rare) rares.push(d);      // (rare babies: kept while there's room, else sold for you)
+      for (const e of [...g.rareWaiting()]) g.keepRare(e.id, NOW);
+      silkDays += g.data.coops.filter(c => G.RARE_FROM[c.breed]).length / hours.length;
       const shows = track('shows', () => g.showTick(NOW)); for (const r of shows) earn.shows += r.coins || 0;
       for (const e of g.dueLays(NOW)) g.layEgg(e.hen, e.t, NOW);
       g.seenShows(); for (const n of g.unseenNews()) g.seenNews(n);
@@ -67,7 +70,7 @@ function simulate(name, seed) {
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy };
+  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, rares, silkDays, basket: g.basket().length };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -79,5 +82,6 @@ for (const name of Object.keys(PROFILES)) {
   console.log('the day each level comes: ' + lv.join(' '));
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
   console.log('XP from: ' + Object.keys(runs[0].xpBy).map(k => `${k} ${Math.round(avg(runs, r => r.xpBy[k] || 0))}`).join(', '));
+  console.log('rare babies: ' + avg(runs, r => r.rares.length).toFixed(1) + ' in the year, one every ' + (avg(runs, r => r.silkDays / Math.max(1, r.rares.length)) / 30).toFixed(1) + ' months a Silkie coop; the first on day ' + Math.round(avg(runs, r => r.rares[0] || 0)) + '; kept ' + avg(runs, r => r.basket).toFixed(1));
   console.log('spent: ' + Object.entries(runs[0].spend).map(([k]) => `${k} ${Math.round(avg(runs, r => r.spend[k]))}`).join(', '));
 }

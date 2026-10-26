@@ -363,7 +363,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -3193,7 +3193,8 @@ function broodNews(news, now) {
   const e = pick('hatch') || pick('broody');                            // (grown and gone: the card says it, showNews)
   if (!e) return;
   gameUI.refresh();
-  hint(game.t(e.type === 'hatch' ? 'hatched' : 'broody', { name: sayName(e.hen), n: e.n }));
+  const c = e.type === 'hatch' && game.coop(e.coop), rare = c && c.brood && (c.brood.kids || []).find(k => k.rare);
+  hint(rare ? game.t('hatched_rare', { n: e.n, line: game.breedName(rare.rare) }) : game.t(e.type === 'hatch' ? 'hatched' : 'broody', { name: sayName(e.hen), n: e.n }));
   if (gameUI.kind === 'bird' && gameUI.bird) { const b = game.bird(gameUI.bird); if (b) gameUI.birdCard(b); }
 }
 function sitNow(b, secs) {                   // on the nest, sitting on her eggs, as if she'd been there all along
@@ -3203,22 +3204,22 @@ function sitNow(b, secs) {                   // on the nest, sitting on her eggs
   const G = nestOf(b.plot); b.root.position.set(G.seat[0], G.floor + 0.005, G.seat[1]); b.root.rotation.y = 0; b.A.sit = 1; b.A.brood = 1;
 }
 // a brood's youngsters on the farm (chicks, then young hens and roosters), not yet on their way
-function gameChicks(plot) { return plot.birds.filter(b => b.gameChick && !b.leaving); }
+function gameChicks(plot) { return plot.birds.filter(b => b.gameChick && !b.leaving && !b.pendingId); }
 const kidRng = (plot) => rng(9001 + plots.indexOf(plot) * 31 + plot.birds.length * 7 + (Date.now() % 997));
-function addChick(plot, mum, x, z, asleep, i) {
-  const r = kidRng(plot);
-  const c = new Bird(plot, plot.breed, 'chick', plot.breed === 'sil' ? mum.colour : null, [x, 0, z], r() * 6.28, r);
-  c.mum = mum; c.gameChick = true; c.kidI = i; c.blob = freeBlobs.length ? freeBlobs.pop() : -1; c.size = 1; c.appear = asleep ? 1 : 0; c.root.scale.setScalar(asleep ? 1 : 0.05);
+function addChick(plot, mum, x, z, asleep, i, kid) {
+  const r = kidRng(plot), rare = kid && kid.rare;
+  const c = new Bird(plot, plot.breed, 'chick', rare ? silColour(rare) : plot.breed === 'sil' ? mum.colour : null, [x, 0, z], r() * 6.28, r);      // (a rare one in her own colour)
+  c.mum = mum; c.gameChick = true; c.kidI = i; c.rare = rare || null; c.blob = freeBlobs.length ? freeBlobs.pop() : -1; c.size = 1; c.appear = asleep ? 1 : 0; c.root.scale.setScalar(asleep ? 1 : 0.05);
   plot.birds.push(c); allBirds.push(c);
   if (asleep) c.sleepNow();
   return c;
 }
 // a young hen (sex 'h') or rooster ('r'): her own bird, smaller than the grown ones and growing, her mum's for the card
-function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name) {
+function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name, rare) {
   const r = kidRng(plot);
-  const y = new Bird(plot, plot.breed, sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);
+  const y = new Bird(plot, plot.breed, sex === 'r' ? 'rooster' : 'hen', rare ? silColour(rare) : plot.breed === 'sil' && mum ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);
   if (name) y.name = name;
-  y.gameChick = true; y.young = sex === 'r' ? 'r' : 'h'; y.kidOf = mum; y.kidI = i; y.blob = freeBlobs.length ? freeBlobs.pop() : -1;
+  y.gameChick = true; y.young = sex === 'r' ? 'r' : 'h'; y.kidOf = mum; y.kidI = i; y.rare = rare || null; y.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   y.size = 0.62; y.appear = 1; y.root.scale.setScalar(0.62); y.stepRate = 22;
   plot.birds.push(y); allBirds.push(y);
   if (asleep) y.sleepNow();
@@ -3228,7 +3229,7 @@ function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name) {
 function turnYoung(ch, sex, pop) {
   const p = ch.root.position, plot = ch.plot, at = [p.x, p.z], yaw = ch.root.rotation.y, asleep = ch.asleep;
   removeBird(ch);
-  const y = addYoung(plot, ch.mum, sex, at[0], at[1], yaw, asleep, ch.kidI, ch.name);
+  const y = addYoung(plot, ch.mum, sex, at[0], at[1], yaw, asleep, ch.kidI, ch.name, ch.rare);
   if (pop) { y.appear = 0.45; y.hopT = 0; heartOver(y); }
   return y;
 }
@@ -3245,8 +3246,8 @@ function removeBird(b) {
 function hatchOut(mum) {
   const c = mum.plot.gc && game.coop(mum.plot.gc.id), br = c && c.brood;
   if (!br || br.hen !== mum.gid) return;
-  const G = nestOf(mum.plot), have = new Set(gameChicks(mum.plot).map(ch => ch.kidI));
-  for (let i = 0; i < br.n; i++) if (!have.has(i)) addChick(mum.plot, mum, G.foot[0] + (i - 1) * 0.12, G.foot[1] + 0.05 + (i % 2) * 0.08, false, i);
+  const G = nestOf(mum.plot), have = new Set(gameChicks(mum.plot).map(ch => ch.kidI)), kids = br.kids || [];
+  for (let i = 0; i < br.n; i++) if (!have.has(i)) addChick(mum.plot, mum, G.foot[0] + (i - 1) * 0.12, G.foot[1] + 0.05 + (i % 2) * 0.08, false, i, kids[i]);
   wake(2000);
 }
 function syncBrood(plot, now, live, news) {
@@ -3272,7 +3273,7 @@ function syncBrood(plot, now, live, news) {
       for (let i = 0; i < br.n; i++) {
         if (have.has(i)) continue;
         const a = i * 2.1, d = young ? 0.55 : 0.3, x = mum.asleep ? G.foot[0] : at.x + Math.sin(a) * d, z = mum.asleep ? G.foot[1] : at.z + Math.cos(a) * d;
-        const ch = young ? addYoung(plot, mum, sexOf(i), x, z, null, mum.asleep, i) : addChick(plot, mum, x, z, mum.asleep, i);
+        const ch = young ? addYoung(plot, mum, sexOf(i), x, z, null, mum.asleep, i, null, kids[i] && kids[i].rare) : addChick(plot, mum, x, z, mum.asleep, i, kids[i]);
         if (!mum.asleep && !ch.free(x, z)) { ch.pickTarget(); ch.root.position.copy(ch.target); }
       }
     }
@@ -3286,9 +3287,26 @@ function syncBrood(plot, now, live, news) {
     for (const ch of gameChicks(plot)) ch.size = ch.young ? 0.62 + 0.23 * gy : 1 + 0.4 * gc;
   } else if (!br && chicks.length && MOVE.plot !== plot) {              // (not while their coop's being moved: once it's down)
     const e = news.find(x => x.type === 'sold' && x.coop === plot.gc.id);
+    for (const w of game.rareWaiting().filter(w => w.coop === plot.gc.id && !plot.birds.some(b => b.pendingId === w.id))) {      // (a rare one for your choice stays)
+      const ch = chicks.find(k => k.kidI === w.i && k.rare === w.line && !k.pendingId); if (ch) { ch.pendingId = w.id; if (!ch.young) turnYoung(ch, w.sex, false).pendingId = w.id; }
+    }
     chicksGo(plot, live && !!e && now - e.t < LIVE_LAY, e);
   }
+  syncRare(plot);
   plot.synced = true;
+}
+// rare babies grown and waiting for your choice (release 2 step 2): each in her mum's pen in her own colour, a young bird
+// with a sparkle, till you keep her (off to the basket by the farmhouse fire: a heart) or sell her; tap her for her card
+function syncRare(plot) {
+  const W = game.rareWaiting().filter(w => w.coop === plot.gc.id);
+  for (const b of plot.birds.filter(b => b.pendingId && !W.some(w => w.id === b.pendingId))) { heartOver(b); removeBird(b); }      // (decided)
+  for (const w of W) {
+    if (plot.birds.some(b => b.pendingId === w.id)) continue;
+    const mum = plot.birds.find(b => b.gid === w.mum), at = PEN.feeder, x = at[0] + 0.5 - w.i * 0.25, z = at[2] - 0.6;
+    const y = addYoung(plot, mum || null, w.sex, x, z, null, !!(mum && mum.asleep), w.i, null, w.line);
+    y.pendingId = w.id; if (!y.free(x, z)) { y.pickTarget(); y.root.position.copy(y.target); }
+  }
+  for (const b of plot.birds) if (b.pendingId) b.size = 0.85;
 }
 // grown and off to a new farm (their coins and the news: game.js broodTick). Seen (by day, in view, the farmer out and
 // about): a farewell at the gate (tickFarewell). Otherwise they're simply gone. Then the congratulations card (showNews)
@@ -3421,6 +3439,10 @@ function tickChicks(dt) {
       if (!b.gameChick) continue;
       if (b.leaving && b.leaving.gone) { removeBird(b); continue; }
       if (b.leaving && b.leaving.phase === 'fade') continue;
+      if (b.rare && b.root.visible && !b.asleep && (b.sparkT = (b.sparkT || Math.random()) - dt) <= 0) {      // (a rare one: a little golden sparkle now and then)
+        b.sparkT = 1.1 + Math.random() * 0.8; const w = b.root.getWorldPosition(new THREE.Vector3()); w.y += b.rig.scale * (b.size || 1) * 0.9;
+        bitsAt(w, 2, '#ffe27a', { up: 0.5, speed: 0.25, size: 0.022, life: 0.9, g: 0.6, floor: -9 });
+      }
       if (b.appear < 1) b.appear = Math.min(1, b.appear + dt / 0.45);
       const s = (b.size || 1) * (b.appear < 1 ? 0.05 + 0.95 * smooth01(b.appear) * (1 + 0.15 * Math.sin(b.appear * Math.PI)) : 1);
       if (Math.abs(b.root.scale.x - s) > 1e-3) b.root.scale.setScalar(s);
@@ -3430,10 +3452,22 @@ function tickChicks(dt) {
 }
 // a youngster's card: a chick (whose, when she's a young hen or rooster) or a young hen or rooster (when off to a new farm)
 function chickCard(ch) {
+  if (ch.pendingId) { const w = game.rareWaiting().find(x => x.id === ch.pendingId); if (w) { holdBird(null); gameUI.rareCard(w); } return; }
   const c = game.coop(ch.plot.gc.id), m = ch.young ? ch.kidOf : ch.mum, mum = m && m.gid ? game.bird(m.gid) : null;
   if (!c) return;
-  if (ch.young) gameUI.youngCard(ch.name, ch.young, c, mum, c.brood ? game.grownAt(c) - Date.now() : 0);
-  else gameUI.chickCard(ch.name, c, mum, c.brood ? game.youngAt(c) - Date.now() : 0);
+  if (ch.young) gameUI.youngCard(ch.name, ch.young, c, mum, c.brood ? game.grownAt(c) - Date.now() : 0, ch.rare);
+  else gameUI.chickCard(ch.name, c, mum, c.brood ? game.youngAt(c) - Date.now() : 0, ch.rare);
+}
+// keeping or selling a rare baby (the card's buttons: gameUI's rareChoice)
+function keepRare(id) {
+  const b = game.keepRare(id); if (!b) return;
+  for (const p of gamePlots()) syncRare(p);
+  hint(game.t(b.sex === 'h' ? 'rare_kept' : 'rare_kept_r', { name: b.name })); gameUI.refresh(); wake(1500);
+}
+function sellRare(id) {
+  const r = game.sellRare(id); if (!r) return;
+  for (const p of gamePlots()) syncRare(p);
+  hint(game.t('rare_sold', { c: r.coins })); gameUI.refresh(); gameUI.bumpCoins(); wake(1500);
 }
 // congratulations: a brood grown up and gone (game.js news), its card once the farewell's over, or (grown while the farm
 // was shut) a moment after it opens; one at a time, never over another card. Back after an hour or more away (the farm
