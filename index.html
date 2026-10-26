@@ -217,6 +217,13 @@
   .gcooprow { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
   .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
+  /* rare babies (release 2 step 2): keep or sell, side by side under her row; her card's line */
+  .grow.grare-row { justify-content: flex-start; flex-wrap: nowrap; padding: 2px 0 4px; } .gkids .grow.grare-row { padding: 2px 0 8px 34px; }
+  .grare-row .gbtn, .gsheet.gcongrats .grare-row .gbtn { position: static; box-shadow: none; margin: 0; padding: 8px 14px; font-size: 15px; flex: none; }
+  .grare-row .gbtn.galt { background: #fff; border: 1.5px solid var(--line); }
+  .gkid-rare .gkid-t { color: #8a5a00; }
+  .gkid-n { margin: 0 0 6px 34px; }
+  .grare { color: #8a5a00; font-weight: 700; }
   .gcenter { text-align: center; }
   /* the Breed Book (release 1 step 8): a page for each breed, its picture beside its words (how it comes, its eggs, its
      coop); not yet on the farm, the picture a dark silhouette. Upright a taller sheet; sideways the card on the right */
@@ -467,6 +474,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793010575"></script>
+<script src="app.js?v=1793013905"></script>
 </body>
 </html>
