@@ -37,6 +37,7 @@ const run = (secs, dt = 1 / 30) => p.evaluate(([s, dt]) => {
         if (fl !== 10 && fl !== 14 && F.pondAt(g.pos.x, g.pos.z)[0] > 1.3) { out.offField++; (out.off || (out.off = [])).length < 6 && out.off.push([g.name, +g.pos.x.toFixed(2), +g.pos.z.toFixed(2), fl]); }
       }
       if (Math.hypot(F.geese[0].pos.x - F.geese[1].pos.x, F.geese[0].pos.z - F.geese[1].pos.z) > 9) out.far++;
+      if (F.geese.every(g => g.wet < 0.1)) out.dry = (out.dry || 0) + 1;      // (both up on the grass: a moment of it at least)
     }
   }
   sessionStorage.setItem('__T', window.__T); f.draw(); document.getAnimations().forEach(a => { try { a.finish(); } catch (e) { /* */ } });
@@ -94,7 +95,7 @@ ok('bought: 1,200 coins, +24 XP, the sheet closed; they come swimming over the p
 let r = await run(40);
 const ashore = await p.evaluate(() => { const F = window.__farm.geese(); return { wet: F.geese.map(g => +g.wet.toFixed(2)), task: F.lead.task && F.lead.task.name, act: F.lead.act }; });
 await shot('5_ashore');
-ok('forty seconds on: both ashore, never on anything, on the pond\'s own fields', ashore.wet.every(w => w < 0.1) && r.blocked === 0 && r.offField === 0, { ashore, r });
+ok('forty seconds on: both have come ashore, never on anything, on the pond\'s own fields', r.dry > 4 && ashore.task !== 'arrive' && r.blocked === 0 && r.offField === 0, { ashore, r });
 // minutes of their day
 r = await run(240, 1 / 15);
 ok('four minutes of their day: never on anything, on land only on the pond\'s two fields, Hector never far', r.n > 400 && r.blocked === 0 && r.offField === 0 && r.far === 0, r);

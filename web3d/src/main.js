@@ -1266,9 +1266,10 @@ function buildGeese() {
   }
   const P = V.pond, mouths = [];
   for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
-  GEESE_OPTS = { pond: P, nav: navGrid(), avoid, mouths, groundY, inView };
+  const across = () => [VIEW_DIR.z, -VIEW_DIR.x].map(v => v / Math.hypot(VIEW_DIR.x, VIEW_DIR.z));      // (the way across the screen)
+  GEESE_OPTS = { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, across };
   setGooseLang(LANG);                                  // (the game: the player's language for their names)
-  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null,
+  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, across, heart: (x, y, z) => spawnHeart(new THREE.Vector3(x, y, z)), watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null,
     others: () => [...(duckFlock ? duckFlock.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])] }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
   geeseFlock.pair = geeseFlock.geese;
   if (geeseOwned()) geeseFlock.update(1 / 60, clockHour());

@@ -607,9 +607,21 @@ export class PondBirds {
     for (let k = 0; k < 72; k++) {
       const t = k / 72 * Math.PI * 2, out = this.at(t, 1.24), edge = this.at(t, 0.97), inn = this.at(t, 0.74);
       if (nav && !nav.freeAt(out[0], out[1])) continue;
+      if (nav && !this.clearBank(edge, out)) continue;
       if (!this.clearWater(inn[0], inn[1], 0.5) || !this.clearWater(edge[0], edge[1], 0.6) || this.mouths.some(m => Math.hypot(m[0] - edge[0], m[1] - edge[1]) < 1.5)) continue;
       this.ways.push({ t, out, edge, inn, reg: this.regionAt(out[0], out[1]) });
     }
+  }
+  // the walk up the bank from the water's edge clear of anything on the grass (a reed clump, a stone: the grid's blocked cells
+  // other than the pond's own margin, its ellipse grown 0.35 m and a little: a rock by the edge is a cell or two beyond it)
+  clearBank(edge, out) {
+    const L = Math.sqrt(this.lu2), V = Math.sqrt(this.lv2);
+    for (let j = 1; j <= 32; j++) {
+      const x = edge[0] + (out[0] - edge[0]) * j / 32, z = edge[1] + (out[1] - edge[1]) * j / 32, dx = x - this.pc[0], dz = z - this.pc[1];
+      const margin = ((dx * this.pu[0] + dz * this.pu[1]) / L / (L + 0.42)) ** 2 + ((dx * this.pv[0] + dz * this.pv[1]) / V / (V + 0.42)) ** 2 <= 1;
+      if (!margin && !this.nav.freeAt(x, z)) return false;
+    }
+    return true;
   }
   // where a point is against the pond: its ellipse's scale there (1 at the water's edge, with its wobble), and the angle
   pondAt(x, z) {
@@ -686,6 +698,7 @@ export class GeeseFlock extends PondBirds {
     super(); this.setPond(opts, r);
     this.watch = opts.watch; this.others = opts.others || (() => []); this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
     this.wakeOn = opts.wakeOn || null;                 // (the morning replay: they wake when the film says, replay.js)
+    this.across = opts.across || null;                 // (the way across the screen: a squabble side-on to you, () => [x, z])
     this.group = new THREE.Group(); scene.add(this.group);
     this.geese = ['embden', 'toulouse'].map(k => {
       const g = new Goose(this.group, k, r); g.flock = this;
@@ -693,6 +706,7 @@ export class GeeseFlock extends PondBirds {
     });
     [this.lead, this.mate] = this.geese;
     this.mate.distractIn = 60 + r() * 90; this.scoldOk = 20;
+    this.loveIn = 120 + r() * 120; this.duet = null; this.heart = opts.heart || null; this.props = {};      // (their squabbles: below)
     this.places();
     this.near = this.geese;
     this.ripples = []; this.rippleGeo = new THREE.RingGeometry(0.86, 1, 40).rotateX(-Math.PI / 2);
@@ -768,6 +782,11 @@ export class GeeseFlock extends PondBirds {
       for (const [g, b] of [[G, this.bed[0]], [H, this.bed[1]]]) { g.pos.set(b[0], 0, b[1]); g.heading = b[2]; g.task = TK.seq('bed', [TK.act('sleep', 1e9)]); g.asleep = true; }
     } else {
       const p = this.spot(); G.pos.set(p[0], 0, p[1]); G.heading = this.r() * 6.28;
+      // Hector a step behind her, on clear grass on her side of anything (a fence, a stream: else he'd start beyond it)
+      for (let k = 0; k < 12; k++) {
+        const h = G.heading + k * 0.53, x = p[0] - Math.sin(h) * 0.8, z = p[1] - Math.cos(h) * 0.8;
+        if (this.clearWalk(p[0], p[1], x, z) && this.pondAt(x, z)[0] > 1.2) { G.heading = h; break; }
+      }
       H.pos.set(p[0] - Math.sin(G.heading) * 0.8, 0, p[1] - Math.cos(G.heading) * 0.8); H.heading = G.heading;
       G.task = TK.seq('graze', [TK.act('graze', 6 + this.r() * 6)]);
     }
@@ -886,6 +905,7 @@ export class GeeseFlock extends PondBirds {
   }
   raise(V) {
     const [G, H] = this.geese;
+    this.endDuet();
     this.guarding = true; this.heard = 0; G.asleep = false; H.asleep = false;
     G.task = this.guardTask(V); G.act = 'alarm'; G.actT = 0;
     H.task = TK.seq('wake', [TK.act('look', 0.5), TK.act('alarm', 2.2)]);
@@ -987,6 +1007,7 @@ export class GeeseFlock extends PondBirds {
   }
   // back to how they'd be at this hour, as when the page opens (the morning replay's cast, before each showing)
   reset() {
+    this.endDuet();
     this.guarding = false; this.heard = 0; this.trail = null; this.raisedAt = 0;
     for (const g of this.geese) { g.task = null; g.asleep = false; g.act = null; g.actT = 0; }
   }
@@ -1045,6 +1066,11 @@ export class GeeseFlock extends PondBirds {
       const tx = G.pos.x + fx * 0.2 + fz * side * 0.45, tz = G.pos.z + fz * 0.2 - fx * side * 0.45;
       if (this.clearWalk(H.pos.x, H.pos.z, tx, tz)) H.task = TK.seq('cheeky', [TK.straight(tx, tz, 'walk', false, 0.08), TK.act('graze', 30)]);
     }
+    // now and then a squabble (over a snail, a puddle, the best spot), and they make up
+    if ((this.loveIn -= dt) <= 0 && free && calm && !this.guarding && G.task && /^(graze|stroll|preen|honk|stretch)$/.test(G.task.name) && Math.hypot(H.pos.x - G.pos.x, H.pos.z - G.pos.z) < 2.2) {
+      this.loveIn = this.squabble(this.force || null) ? 200 + this.r() * 220 : 15; this.force = null;
+    }
+    if (this.duet && (this.night(hour) || G.task !== this.duet.gt)) this.endDuet();      // (bedtime, or something else came up)
     if (!H.task) H.task = { name: 'follow', act: 'walk', run: (h, d) => { this.follow(h, d, hour); return false; } };
     // her footsteps for him to follow
     const T = this.trail, last = T[T.length - 1];
@@ -1053,7 +1079,7 @@ export class GeeseFlock extends PondBirds {
     for (const g of this.geese) { g.actT += dt; g.update(dt); }
     // crowding her while she's busy (cheeky, or just too close): she turns and hisses, he backs off looking sheepish
     const dG = Math.hypot(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
-    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !/^(bed|scold|call|morning|guard)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
+    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !this.duet && !/^(bed|scold|call|morning|guard|squabble)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
       this.scoldOk = 50 + this.r() * 50;
       const away = Math.atan2(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
       let to = null;
@@ -1090,6 +1116,7 @@ export class GeeseFlock extends PondBirds {
         if (!this.nav || this.nav.freeAt(nx, nz)) { g.pos.x = nx; g.pos.z = nz; }
       }
     }
+    this.tickProps(dt);
     // shadows on the grass, ripples round them on the water
     for (const g of this.geese) {
       g.shadow.position.set(g.pos.x, 0.013, g.pos.z); g.shadow.rotation.y = g.heading; g.shadow.visible = g.wet < 0.3;
@@ -1101,6 +1128,185 @@ export class GeeseFlock extends PondBirds {
       if (u >= 1) { rp.visible = false; continue; }
       rp.scale.setScalar(0.2 + 0.45 * u); rp.material.opacity = 0.42 * (1 - u) * (1 - u);
     }
+  }
+  // ---- love and squabbles (release 3; the game's plan, as Audrey has it: "Gertrude and Hector are in love, but they squabble
+  // now and then (over a snail, a puddle, the best spot), then make up"). Something on the grass a little ahead of her: a
+  // snail, a puddle (rainwater), or just the best spot. They face each other over it, a stare, a tussle (necks low, wings
+  // up, bills jabbing, hissing), one of them wins (eats the snail, drinks the puddle, sits down in the spot) while the other
+  // sulks; then the other comes back beside the winner, they turn to each other, necks curved, a soft honk, and hearts float
+  // up between them. kind: 'snail', 'puddle' or 'spot' (else the luck's)
+  squabble(kind) {
+    const [G, H] = this.geese, R = this.r, nav = this.nav;
+    kind = kind || ['snail', 'puddle', 'spot'][Math.floor(R() * 3)];
+    const roomy = (x, z) => !nav || [[0, 0], [0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45], [0.32, 0.32], [-0.32, 0.32], [0.32, -0.32], [-0.32, -0.32]].every(([dx, dz]) => nav.freeAt(x + dx, z + dz));
+    let at = null;
+    for (const a of [0, 0.6, -0.6, 1.2, -1.2, 2.2, -2.2]) {
+      const x = G.pos.x + Math.sin(G.heading + a) * 0.75, z = G.pos.z + Math.cos(G.heading + a) * 0.75;
+      if (this.pondAt(x, z)[0] > 1.3 && this.clearWalk(G.pos.x, G.pos.z, x, z) && roomy(x, z)) { at = [x, z]; break; }
+    }
+    if (!at) return false;
+    // their places: either side of it, across the way she came (he takes the side he's on), or else along the way from her
+    // to him; never walking over it on the way (the snail)
+    const wl = Math.hypot(at[0] - G.pos.x, at[1] - G.pos.z) || 1, px = -(at[1] - G.pos.z) / wl, pz = (at[0] - G.pos.x) / wl;
+    const s = ((H.pos.x - at[0]) * px + (H.pos.z - at[1]) * pz) > 0 ? 1 : -1;
+    let ux = H.pos.x - at[0], uz = H.pos.z - at[1]; const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+    const segD = (x0, z0, x1, z1, q) => { const dx = x1 - x0, dz = z1 - z0, l2 = dx * dx + dz * dz || 1, k = Math.max(0, Math.min(1, ((q[0] - x0) * dx + (q[1] - z0) * dz) / l2)); return Math.hypot(x0 + dx * k - q[0], z0 + dz * k - q[1]); };
+    const past = (x0, z0, x1, z1) => segD(x0, z0, x1, z1, at) > 0.36;
+    // (side-on to you if it can be, so you see them face to face over it)
+    const ac = this.across ? this.across() : null, cands = [[px * s, pz * s], [-px * s, -pz * s], [ux, uz], [-uz, ux], [uz, -ux]];
+    if (ac) cands.push([ac[0], ac[1]], [-ac[0], -ac[1]]);
+    // the way there: straight, or round it by a point to one side (never over it, nor through where the other one is)
+    const leg = (x0, z0, x1, z1, by) => this.clearWalk(x0, z0, x1, z1) && past(x0, z0, x1, z1) && (!by || segD(x0, z0, x1, z1, by) > 0.5);
+    const route = (g, to, by) => {
+      if (leg(g.pos.x, g.pos.z, to[0], to[1], by)) return [];
+      const dx = to[0] - g.pos.x, dz = to[1] - g.pos.z, l = Math.hypot(dx, dz) || 1;
+      for (const sd of [1, -1]) {
+        const w = [at[0] - dz / l * sd * 0.5, at[1] + dx / l * sd * 0.5];
+        if (this.pondAt(w[0], w[1])[0] > 1.25 && leg(g.pos.x, g.pos.z, w[0], w[1], by) && leg(w[0], w[1], to[0], to[1], by)) return [w];
+      }
+      return null;
+    };
+    let gp = null, hp = null, gway = null, hway = null, best = -9;
+    cands.forEach(([cx, cz], i) => {
+      const a = [at[0] - cx * 0.6, at[1] - cz * 0.6], b = [at[0] + cx * 0.6, at[1] + cz * 0.6];      // (far enough apart that their necks never cross, stretched out at each other)
+      const score = (ac ? Math.abs(cx * ac[0] + cz * ac[1]) : 0) - i * 0.04;
+      if (score <= best || this.pondAt(a[0], a[1])[0] <= 1.25 || this.pondAt(b[0], b[1])[0] <= 1.25) return;
+      const gw = route(G, a, [H.pos.x, H.pos.z]), hw = gw && route(H, b, a);      // (she goes first, round him; then he comes, round her)
+      if (gw && hw) { gp = a; hp = b; gway = gw; hway = hw; best = score; }
+    });
+    if (!gp) return false;
+    const S = this.duet = { kind, at, gp, hp, gway, hway, stage: 'go', t: 0, win: R() < 0.55 ? G : H, hearts: 0 };
+    this.prop(kind, at, true);
+    S.gt = G.task = this.duetTask(G, S, true); S.ht = H.task = this.duetTask(H, S, false);
+    this.squabbles = (this.squabbles || 0) + 1;
+    return true;
+  }
+  endDuet() {
+    const S = this.duet; if (!S) return;
+    this.duet = null; this.prop(S.kind, S.at, false);
+    for (const g of this.geese) if (g.task === S.gt || g.task === S.ht) g.task = null;
+  }
+  duetTask(g, S, lead) {
+    const self = this;
+    return { name: 'squabble', act: 'squabble', run(g, dt) {
+      if (self.duet !== S) return true;
+      const [G, H] = self.geese, other = g === G ? H : G, mine = g === G ? S.gp : S.hp, win = S.win === g;
+      if (lead) S.t += dt;
+      const toAt = Math.atan2(S.at[0] - g.pos.x, S.at[1] - g.pos.z), toOther = Math.atan2(other.pos.x - g.pos.x, other.pos.z - g.pos.z);
+      g.act = 'squabble';
+      switch (S.stage) {
+        case 'go': {                                       // over to it, each on their side (round it if need be)
+          const way = g === G ? S.gway : S.hway;
+          if (g === H && S.t < 8 && Math.hypot(S.gp[0] - G.pos.x, S.gp[1] - G.pos.z) > 0.1) { g.turnTo(toAt, dt, 2); ACT.look(g, S.t); return false; }      // (he waits for her to get there)
+          if (way.length) { if (Math.hypot(way[0][0] - g.pos.x, way[0][1] - g.pos.z) < 0.12 || g.moveTo(way[0][0], way[0][1], dt, 'walk')) way.shift(); ACT.look(g, S.t); if (lead && S.t > 25) self.endDuet(); return false; }
+          const there = Math.hypot(mine[0] - g.pos.x, mine[1] - g.pos.z) < 0.06 || g.moveTo(mine[0], mine[1], dt, 'walk');
+          if (there) g.turnTo(toAt, dt, 2.4);
+          ACT.look(g, S.t);
+          if (lead && Math.hypot(S.gp[0] - G.pos.x, S.gp[1] - G.pos.z) < 0.08 && Math.hypot(S.hp[0] - H.pos.x, S.hp[1] - H.pos.z) < 0.08 && S.t > 1) { S.stage = 'eye'; S.t = 0; }
+          if (lead && S.t > 25) self.endDuet();
+          return false;
+        }
+        case 'eye': {                                      // a long look at it, then at each other
+          g.turnTo(S.t < 0.9 ? toAt : toOther, dt, 2.6);
+          const A = g.A; A.lowGoal = 0.25; A.lookPitchGoal = S.t < 0.9 ? 0.35 : 0; A.tiltGoal = S.t < 0.9 ? 0.25 : 0; A.tailUpGoal = 0.3;
+          if (lead && S.t > 1.6) { S.stage = 'tussle'; S.t = 0; }
+          return false;
+        }
+        case 'tussle': {                                   // necks low, wings up, bills jabbing, hissing
+          g.turnTo(toOther, dt, 3);
+          ACT.scold(g, S.t * (g === G ? 1 : 1.13));
+          const jab = Math.max(0, Math.sin(S.t * 6.5 + (g === G ? 0 : Math.PI))) * 0.05;
+          g.pos.x = mine[0] + Math.sin(toOther) * jab; g.pos.z = mine[1] + Math.cos(toOther) * jab;
+          if (lead && S.t > 2.6) { S.stage = 'win'; S.t = 0; }
+          return false;
+        }
+        case 'win': {                                      // one has it (up to it first); the other sulks, a step back
+          if (win) {
+            if (!S.wat) { const d = Math.hypot(S.at[0] - mine[0], S.at[1] - mine[1]) || 1, k = S.kind === 'spot' ? 1 : (d - 0.3) / d; S.wat = [mine[0] + (S.at[0] - mine[0]) * k, mine[1] + (S.at[1] - mine[1]) * k]; }
+            if (!S.wthere && !(Math.hypot(S.wat[0] - g.pos.x, S.wat[1] - g.pos.z) < 0.04 || g.moveTo(S.wat[0], S.wat[1], dt, 'walk'))) { ACT.look(g, S.t); return false; }
+            S.wthere = true; S.wt = (S.wt || 0) + dt;
+            if (S.kind !== 'spot') g.turnTo(Math.atan2(S.at[0] - g.pos.x, S.at[1] - g.pos.z), dt, 2.6);
+            else if (self.across) { const ac = self.across(); g.turnTo(Math.atan2(-ac[1], ac[0]) + 0.35, dt, 2.2); }      // (settling in it half facing you)
+            if (S.kind === 'snail') { ACT.graze(g, S.wt); if (S.wt > 1.3 && !S.eaten) { S.eaten = true; self.prop('snail', S.at, false); } }
+            else if (S.kind === 'puddle') ACT.drink(g, S.wt);
+            else { ACT.rest(g, S.wt); }
+          } else {
+            const away = Math.atan2(g.pos.x - other.pos.x, g.pos.z - other.pos.z), back = [mine[0] + Math.sin(away) * 0.22, mine[1] + Math.cos(away) * 0.22];
+            if (S.t < 1.4 && self.clearWalk(g.pos.x, g.pos.z, back[0], back[1])) g.moveTo(back[0], back[1], dt, 'walk');
+            g.turnTo(away, dt, 2.2);
+            if (S.t > 0.8) ACT.sheepish(g, S.t); else ACT.look(g, S.t);
+          }
+          if (lead && S.t > 2.4 && (S.wt || 0) > 2.2) { S.stage = 'makeup'; S.t = 0; S.side = null; }
+          return false;
+        }
+        case 'makeup': {                                   // back beside each other: a neck rub, a soft honk, hearts
+          if (!win) {
+            if (!S.side) {
+              // (beside her across the screen if there's room, on the side he's on; else beside her the way she faces; else her other side)
+              const w = S.win, fx = Math.sin(w.heading), fz = Math.cos(w.heading), ac = self.across ? self.across() : null, opts = [];
+              if (ac) { const sg = (g.pos.x - w.pos.x) * ac[0] + (g.pos.z - w.pos.z) * ac[1] >= 0 ? 1 : -1; opts.push([ac[0] * sg, ac[1] * sg]); }
+              opts.push([fz, -fx], [-fz, fx]); if (ac) opts.push([-opts[0][0], -opts[0][1]]);
+              for (const [ox, oz] of opts) { const x = w.pos.x + ox * 0.52, z = w.pos.z + oz * 0.52; if (!S.side && self.clearWalk(g.pos.x, g.pos.z, x, z) && self.pondAt(x, z)[0] > 1.2) S.side = [x, z]; }
+              if (!S.side) S.side = [g.pos.x, g.pos.z];
+            }
+            if (Math.hypot(S.side[0] - g.pos.x, S.side[1] - g.pos.z) > 0.06) { g.moveTo(S.side[0], S.side[1], dt, 'walk'); ACT.look(g, S.t); return false; }
+          }
+          const near = Math.hypot(other.pos.x - g.pos.x, other.pos.z - g.pos.z) < 0.75;
+          if (S.kind === 'spot' && win) { ACT.rest(g, 1); g.A.lookYawGoal = 0.6 * Math.sign(Math.sin(toOther - g.heading)); g.A.tiltGoal = 0.3; }
+          else {
+            g.turnTo(toOther, dt, 2);
+            const A = g.A; A.upGoal = 0.55; A.tiltGoal = 0.35 * (g === G ? 1 : -1); A.lookPitchGoal = 0.12; A.wagGoal = 0.6; A.squintGoal = 0.5;
+            if (near && S.t % 2.4 > 1.2 && S.t % 2.4 < 1.6) { A.honkGoal = 0.4; A.jawGoal = 0.6; }       // (a soft honk)
+          }
+          if (lead && near && S.nearAt === undefined) S.nearAt = S.t;      // (beside each other: the hearts from then)
+          if (lead && near && S.hearts < 3 && S.t > S.nearAt + 0.5 + S.hearts * 0.55) {
+            S.hearts++;
+            if (self.heart) self.heart((G.pos.x + H.pos.x) / 2, 0.78 + S.hearts * 0.04, (G.pos.z + H.pos.z) / 2);
+          }
+          if (lead && ((S.hearts >= 3 && S.t > S.nearAt + 3.0) || S.t > 10)) {
+            const spot = S.kind === 'spot'; self.endDuet();
+            if (spot) { g.sleepy = false; g.task = TK.seq('rest', [TK.act('rest', 10 + self.r() * 10), TK.act('stretch', 4.6)]); }      // (side by side in the spot)
+          }
+          return false;
+        }
+      }
+      return true;
+    } };
+  }
+  // the little things they squabble over: a snail on the grass (a slow crawl), a puddle (it soaks away after)
+  prop(kind, at, on) {
+    if (kind === 'spot') return;
+    let m = this.props[kind];
+    if (!m && on) {
+      if (kind === 'puddle') {
+        m = new THREE.Mesh(new THREE.CircleGeometry(0.21, 28), new THREE.MeshStandardMaterial({ color: '#86b7d4', roughness: 0.12, metalness: 0.15, transparent: true, opacity: 0.85, depthWrite: false }));
+        m.rotation.x = -Math.PI / 2; m.scale.set(1.25, 0.85, 1); m.renderOrder = 1;
+      } else {
+        m = new THREE.Group();
+        const shell = new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 12), new THREE.MeshStandardMaterial({ color: '#a2703f', roughness: 0.6 }));
+        shell.scale.set(0.8, 1, 1); shell.position.set(0, 0.032, -0.006);
+        const swirl = new THREE.Mesh(new THREE.TorusGeometry(0.017, 0.0045, 8, 20), new THREE.MeshStandardMaterial({ color: '#d9b27a', roughness: 0.6 }));
+        swirl.rotation.y = Math.PI / 2; swirl.position.set(0.025, 0.034, -0.006); const swirl2 = swirl.clone(); swirl2.position.x = -0.025;
+        const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.011, 0.07, 4, 10), new THREE.MeshStandardMaterial({ color: '#cdbf8e', roughness: 0.4 }));
+        body.rotation.x = Math.PI / 2; body.position.set(0, 0.011, 0.012);
+        m.add(shell, swirl, swirl2, body);
+        for (const sd of [-1, 1]) {
+          const st = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0028, 0.03, 6), body.material); st.position.set(sd * 0.007, 0.03, 0.052); st.rotation.x = 0.5;
+          const eye = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), new THREE.MeshStandardMaterial({ color: '#2a241c' })); eye.position.set(sd * 0.007, 0.044, 0.06);
+          m.add(st, eye);
+        }
+      }
+      this.props[kind] = m; this.group.add(m);
+    }
+    if (!m) return;
+    m.visible = on; m.userData.t = 0; m.userData.fade = !on && kind === 'puddle';
+    if (on) { m.position.set(at[0], kind === 'puddle' ? 0.012 : 0, at[1]); if (kind === 'snail') m.rotation.y = this.r() * 6.28; else m.material.opacity = 0.85; }
+    if (!on && kind === 'puddle') m.visible = true;                // (it soaks away)
+  }
+  tickProps(dt) {
+    const sn = this.props.snail, pd = this.props.puddle;
+    if (sn && sn.visible) { sn.position.x += Math.sin(sn.rotation.y) * 0.008 * dt; sn.position.z += Math.cos(sn.rotation.y) * 0.008 * dt; }
+    if (pd && pd.visible && pd.userData.fade) { pd.material.opacity -= dt * 0.25; if (pd.material.opacity <= 0) { pd.visible = false; pd.userData.fade = false; } }
   }
   // Biscuit creeping up on them with his herding stare (dog.js): Gertrude turns on him, hisses with her wings up and honks,
   // Hector honks along; he bounces off

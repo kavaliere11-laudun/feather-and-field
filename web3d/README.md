@@ -2321,3 +2321,28 @@ the birds already had.
   night with the geese (the card, the film), two changed saves. `foxfilm.mjs OUT [every]`: the morning card and the film
   (NIGHT=geese: a night the geese chased him). `balsim.mjs` now has Rusty's visits too: about 107 a year, and a player who
   collects the eggs in the evening loses none.
+
+## Release 3, step 4: Gertrude and Hector's squabbles (26 Oct 2026, from the plan Audrey chose: "Gertrude and Hector are in love, but they squabble now and then (over a snail, a puddle, the best spot), then make up")
+
+- **Now and then** (every 3 to 7 minutes of their day, when they're both on the grass, calm and close: `GeeseFlock.squabble`)
+  something on the grass a little ahead of Gertrude catches their eye: a snail (a little one built in the page: a brown
+  shell with a pale swirl, a cream body, eyes on stalks, crawling slowly), a puddle (rainwater: a small round of sky-blue
+  water), or just the best spot.
+- **The squabble** (`duetTask`, one stage for both at once): Gertrude walks to her side of it, then Hector to his (round her), 1.2 m
+  apart (far enough that their necks never cross), side-on to you when there's room (the flock's `across`: the way across
+  the screen), going round it rather than over it; a long look at it, then at each other; a tussle (necks out low, wings up, bills open
+  and jabbing at each other, hissing, 2.6 s); one of them wins (either one) and steps up to it: eats the snail, drinks
+  from the puddle, or sits down in the spot, while the other steps back, turns away and sulks.
+- **Making up:** the one who sulked comes back beside the winner (across the screen from her when there's room; a spot's
+  winner settles in it half facing you); they turn to each other, necks curved, heads tilted, a
+  soft honk, and three hearts float up between them (the hens' hearts, `spawnHeart`). After a squabble over the spot they
+  rest there side by side. The puddle soaks away afterwards.
+- Bedtime, Rusty, Biscuit's teasing or anything else that comes up ends it at once (`endDuet`).
+- Fixed on the way (found by running the day many times): a way out of the pond whose walk up the bank brushed a rock by
+  the edge (the ways now check the whole walk, `clearBank`: 29 ways, were 33); after a reload, Hector could be put a step
+  behind her on the far side of the pond's fence (he's now put on clear grass on her side). geesebuy's "come ashore" check
+  now asks that both were up on the grass a moment (she may be drinking at the edge by then).
+- `geesesquabblefilm.mjs OUT [kinds]`: a film of them.
+- `geesesquabble.mjs [kinds]` (new, each kind twice by default): each kind on the test page (the stages in order, never walking over it on the way, the
+  snail eaten, the puddle soaking away, three hearts; every frame never on anything, never into each other or the water; back to their day after), and
+  one coming on its own. geeseday still passes.
