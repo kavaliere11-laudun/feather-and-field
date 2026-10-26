@@ -1,0 +1,80 @@
+// The balance (release 1 step 11): simulated players over a year, through the game's own rules (src/game.js), on a
+// fake clock. node balsim.mjs [days=365] [profile=all] [seeds=3]
+// Profiles: 'daily' (once a day, 19:00), 'twice' (8:00 and 19:00), 'often' (every 3 hours, 8:00 to 23:00). At each visit
+// the player does everything a keen player would: collects the eggs and the honey, fills the feeders (grain first), sows
+// and harvests the wheat, cuddles every bird, enters the best bird in each open show, collects the jobs, buys the next field
+// when it can, places a new breed's coop, and buys decorations and outfits once they leave a reserve for feed and land.
+// Prints, for each profile: the level reached on days 7, 30, 90, 180, 365, the day each level comes, the coins, the
+// birds, and where the coins came from.
+globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+let NOW = Date.UTC(2026, 9, 26, 9, 0);
+Date.now = () => NOW;
+const G = await import('./src/game.js');
+const { Game, DECOR, OUTFITS, WHEAT } = G;
+const DAYS = +(process.argv[2] || 365), WHICH = process.argv[3] || 'all', SEEDS = +(process.argv[4] || 3);
+const PROFILES = { daily: [19], twice: [8, 19], often: [8, 11, 14, 17, 20, 23] };
+function rngOf(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+function simulate(name, seed) {
+  NOW = Date.UTC(2026, 9, 26, 9, 0) + seed * 3600e3 * 24 * 7;
+  const g = new Game(null), R = rngOf(seed * 7919 + 1);
+  Math.random = R;                                   // (the trios' personalities and names, the same each run)
+  g.newFarm({ lang: 'en', look: 'f', name: 'Sim' });
+  g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
+  const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
+  const levelDay = {}, at = {};
+  const start = NOW, hours = PROFILES[name];
+  let spot = 0;
+  for (let d = 0; d < DAYS; d++) {
+    const day0 = start + d * 86400e3 - ((start % 86400e3) - 0);    // (midnight UTC of the day)
+    for (const h of hours) {
+      NOW = day0 + h * 3600e3 + Math.floor(R() * 40) * 60e3;
+      // the game catching up (as the farm does when it opens)
+      const coins0 = g.data.coins;
+      const news = g.broodTick(NOW);
+      const chicks = news.filter(n => n.type === 'sold').reduce((a, n) => a + n.coins, 0); earn.chicks += chicks;
+      const shows = g.showTick(NOW); for (const r of shows) earn.shows += r.coins || 0;
+      for (const e of g.dueLays(NOW)) g.layEgg(e.hen, e.t, NOW);
+      g.seenShows(); for (const n of g.unseenNews()) g.seenNews(n);
+      // the eggs, the honey, the wheat
+      for (const c of g.data.coops) { const r = g.collect(c.id); if (r) earn.eggs += r.coins; }
+      const hr = g.collectHoney(NOW); if (hr) earn.honey += hr.coins;
+      if (g.wheatStage(NOW) === 'ripe') g.harvestWheat(NOW);
+      if (g.wheatStage(NOW) === 'soil' && g.data.coins >= WHEAT.sow + 40) { g.sowWheat(NOW); spend.wheat += WHEAT.sow; }
+      // the feeders (when below half: the grain first)
+      for (const c of g.data.coops) if (g.feedLeft(c, NOW) < 0.5) { const q = g.fillFeeder(c.id, NOW); if (q && q.cost) spend.feed += q.cost; }
+      // cuddles
+      for (const b of g.data.birds) g.cuddle(b.id, NOW);
+      // shows: the best bird in each open one (if her chance is fair)
+      for (const s of g.openShows(NOW)) {
+        if (s.locked || g.shows().in.some(e => e.id === s.id)) continue;
+        const cands = g.showBirds(s).filter(x => g.canEnter(x.b, s) === 'ok');
+        if (cands.length && cands[0].ch.rosette > 0.15) { const fee = G.SHOWS[s.id[0]].fee; const r = g.enterShow(s.id, cands[0].b.id, NOW); if (r) spend.shows += fee; }
+      }
+      // the jobs
+      const J = g.jobs(NOW); J.list.forEach((j, i) => { if (j.got >= j.n && !j.paid) { const r = g.claimJob(i, NOW); if (r) earn.jobs += r.coins; } });
+      // a new level: seen; the next field when it can; a new breed's coop placed
+      if (g.levelNews()) g.seenLevel();
+      const sale = g.landForSale();
+      if (sale && g.data.coins >= sale.price) { const r = g.buyLand(); if (r && !r.broke) spend.land += sale.price; }
+      for (const breed of g.waitingCoops()) { spot++; const dft = g.draftCoop(breed, { x: spot * 6, z: 0, deg: 90 }); if (dft) g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 }); }
+      // decorations and outfits, keeping enough back for the next field and a few days' feed
+      const keep = (g.landNext() ? g.landNext().price : 0) + 60 * g.data.coops.length;
+      for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 })) spend.decor += DECOR[id].price; }
+      for (const id of Object.keys(OUTFITS)) if (g.outfitNext(id) && g.data.coins - OUTFITS[id].price >= keep) { if (g.buyOutfit(id)) spend.outfits += OUTFITS[id].price; }
+      const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
+    }
+    if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
+  }
+  return { levelDay, at, earn, spend, xp: g.data.xp };
+}
+const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
+for (const name of Object.keys(PROFILES)) {
+  if (WHICH !== 'all' && WHICH !== name) continue;
+  const runs = []; for (let s = 1; s <= SEEDS; s++) runs.push(simulate(name, s));
+  console.log(`\n== ${name} (${PROFILES[name].length} visit${PROFILES[name].length > 1 ? 's' : ''} a day, ${SEEDS} farms)`);
+  for (const d of [7, 30, 90, 180, 365]) if (runs[0].at[d]) console.log(`day ${String(d).padStart(3)}: level ${avg(runs, r => r.at[d].level).toFixed(1)}, coins ${Math.round(avg(runs, r => r.at[d].coins))}, birds ${avg(runs, r => r.at[d].birds).toFixed(0)}, coops ${avg(runs, r => r.at[d].coops).toFixed(1)}, fields ${avg(runs, r => r.at[d].land).toFixed(1)}, decorations ${avg(runs, r => r.at[d].decor).toFixed(1)}`);
+  const lv = [2, 3, 5, 6, 8, 10, 11, 13, 15, 17, 20, 23, 25, 30].map(L => `L${L}:${runs.every(r => r.levelDay[L]) ? Math.round(avg(runs, r => r.levelDay[L])) : '-'}`);
+  console.log('the day each level comes: ' + lv.join(' '));
+  console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
+  console.log('spent: ' + Object.entries(runs[0].spend).map(([k]) => `${k} ${Math.round(avg(runs, r => r.spend[k]))}`).join(', '));
+}
