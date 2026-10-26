@@ -6,25 +6,20 @@
  "scope": "./",
  "display": "standalone",
  "orientation": "any",
- "background_color": "#4f7a35",
- "theme_color": "#4f7a35",
+ "background_color": "#4a7530",
+ "theme_color": "#4a7530",
  "description": "Raise, breed and show chickens on your own farm.",
  "icons": [
   {
-   "src": "icons/icon-192.png",
+   "src": "3d/icon-192.png",
    "sizes": "192x192",
    "type": "image/png"
   },
   {
-   "src": "icons/icon-512.png",
-   "sizes": "512x512",
-   "type": "image/png"
-  },
-  {
-   "src": "icons/maskable-512.png",
+   "src": "3d/icon-512.png",
    "sizes": "512x512",
    "type": "image/png",
-   "purpose": "maskable"
+   "purpose": "any"
   }
  ]
 }
