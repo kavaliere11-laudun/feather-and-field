@@ -99,13 +99,15 @@ const TEXT = {
     results_title: 'Show results', res_place: '{name} came {place} in the {show}!', res_none: '{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.',
     res_champ: '{name} is a champion now!', res_in: 'The show results are in!',
     rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
-    shop_title: 'Decorate your farm', shop_coins: 'Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:',
+    shop_title: 'The farm shop', shop_coins: 'Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:',
     dec_flowers: 'Cottage flower bed', dec_birdbath: 'Bird bath', dec_beehives: 'Beehives', dec_duckhouse: 'Duck house', dec_greenhouse: 'Greenhouse', dec_windmill: 'Windmill', dec_bandstand: 'Bandstand', dec_statue: 'Golden cockerel',
     decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender, and honey to sell: a jar every 8 hours.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.',
     dec_buy: 'Buy and place · {c}', dec_buy_pond: 'Buy · {c}', dec_level: 'Comes at level {n}', dec_broke: 'Not enough coins yet', dec_owned: 'On your farm', dec_move: 'Move', dec_xp: '+{xp} XP',
     dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_way: 'It would block the way to a coop.',
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
     shop_decor: 'Decorations', shop_outfits: 'Outfits', outfits_note: 'New clothes for {farmer}. Each one gives XP when you buy it.',
+    shop_animals: 'Animals', ani_geese: 'Gertrude and Hector, the geese', anil_geese: 'A pair of geese for the pond: they graze, swim, honk at everything and squabble now and then.',
+    ani_buy: 'Buy · {c}', ani_owned: 'At the pond', ani_see: 'See them', geese_came: 'Gertrude and Hector have come to live by the pond! +{xp} XP', geese_hello: 'Tap a goose to say hello.',
     of_classic: 'Classic', of_market: 'Market day', of_garden: 'Garden party', of_winter: 'Winter woollies', of_rodeo: 'Rodeo', of_show: 'Show day',
     ofd_classic: 'Straw hat and a checked shirt.', ofd_market: 'Tweed flat cap and a blue checked shirt.', ofd_garden: 'Flowery sun hat and a yellow gingham shirt.', ofd_winter: 'Bobble hat and a green jumper.', ofd_rodeo: 'Cowboy hat, chambray shirt and a neckerchief.', ofd_show: 'Top hat, white shirt and a prize rosette.',
     out_buy: 'Buy and wear · {c}', out_wear: 'Wear', out_wearing: 'Wearing', out_bought: '{farmer} tries on the {name} outfit! +{xp} XP', out_worn: '{farmer} is wearing the {name} outfit.', out_new: 'New outfit for {farmer}: {names}',
@@ -124,7 +126,7 @@ const TEXT = {
     guide_eggs: 'Collect your first egg: tap the egg over the Red Barn.', guide_eggs_wait: 'Your first egg is on its way: a hen will go in to lay in a moment.',
     guide_cuddle: 'Give a hen a cuddle: tap a hen, then ♥ Cuddle.', guide_cuddle_card: 'Now tap ♥ Cuddle.',
     guide_sow: 'Sow your wheat field: tap its sign, then Sow.', guide_sow_card: 'Tap Sow: the wheat will feed your hens.',
-    guide_jobs: 'Today’s jobs: tap the clipboard at the top.', guide_shop: 'Tap your coins: the shop for decorations and outfits.',
+    guide_jobs: 'Today’s jobs: tap the clipboard at the top.', guide_shop: 'Tap your coins: the shop for decorations, animals and outfits.',
     guide_did: 'Well done! +{c} coins', guide_done: 'Your first day is done! +{c} coins. A new field comes at level 2.',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
@@ -257,13 +259,15 @@ const TEXT = {
     results_title: 'Résultats des concours', res_place: '{name} prend la {place} place au {show} !', res_none: '{name} n’est pas classé au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est champion maintenant !', res_in: 'Les résultats des concours sont arrivés !',
     rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
-    shop_title: 'Décorez votre ferme', shop_coins: 'Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :',
+    shop_title: 'La boutique de la ferme', shop_coins: 'Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :',
     dec_flowers: 'Massif de fleurs', dec_birdbath: 'Bain d’oiseaux', dec_beehives: 'Ruches', dec_duckhouse: 'Maison des canards', dec_greenhouse: 'Serre', dec_windmill: 'Moulin à vent', dec_bandstand: 'Kiosque à musique', dec_statue: 'Coq d’or',
     decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande, et du miel à vendre : un pot toutes les 8 heures.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.',
     dec_buy: 'Acheter et placer · {c}', dec_buy_pond: 'Acheter · {c}', dec_level: 'Arrive au niveau {n}', dec_broke: 'Pas encore assez de pièces', dec_owned: 'Dans votre ferme', dec_move: 'Déplacer', dec_xp: '+{xp} XP',
     dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
     shop_decor: 'Décorations', shop_outfits: 'Tenues', outfits_note: 'De nouveaux habits pour {farmer}. Chacun rapporte de l’XP à l’achat.',
+    shop_animals: 'Animaux', ani_geese: 'Gertrude et Hector, les oies', anil_geese: 'Un couple d’oies pour l’étang : elles broutent, nagent, cacardent après tout le monde et se chamaillent de temps en temps.',
+    ani_buy: 'Acheter · {c}', ani_owned: 'À l’étang', ani_see: 'Les voir', geese_came: 'Gertrude et Hector viennent vivre au bord de l’étang ! +{xp} XP', geese_hello: 'Touchez une oie pour lui dire bonjour.',
     of_classic: 'Classique', of_market: 'Jour de marché', of_garden: 'Garden-party', of_winter: 'Lainages d’hiver', of_rodeo: 'Rodéo', of_show: 'Jour de concours',
     ofd_classic: 'Chapeau de paille et chemise à carreaux.', ofd_market: 'Casquette en tweed et chemise à carreaux bleus.', ofd_garden: 'Chapeau fleuri et chemise vichy jaune.', ofd_winter: 'Bonnet à pompon et pull vert.', ofd_rodeo: 'Chapeau de cow-boy, chemise en chambray et foulard.', ofd_show: 'Haut-de-forme, chemise blanche et cocarde de champion.',
     out_buy: 'Acheter et porter · {c}', out_wear: 'Porter', out_wearing: 'Portée', out_bought: '{farmer} enfile la tenue {name} ! +{xp} XP', out_worn: '{farmer} porte la tenue {name}.', out_new: 'Nouvelle tenue pour {farmer} : {names}',
@@ -282,7 +286,7 @@ const TEXT = {
     guide_eggs: 'Ramassez votre premier œuf : touchez l’œuf au-dessus de la Grange rouge.', guide_eggs_wait: 'Votre premier œuf arrive : une poule va aller pondre dans un instant.',
     guide_cuddle: 'Faites un câlin à une poule : touchez une poule, puis ♥ Faire un câlin.', guide_cuddle_card: 'Touchez maintenant ♥ Faire un câlin.',
     guide_sow: 'Semez votre champ de blé : touchez son panneau, puis Semer.', guide_sow_card: 'Touchez Semer : le blé nourrira vos poules.',
-    guide_jobs: 'Les tâches du jour : touchez le presse-papiers en haut.', guide_shop: 'Touchez vos pièces : la boutique des décorations et des tenues.',
+    guide_jobs: 'Les tâches du jour : touchez le presse-papiers en haut.', guide_shop: 'Touchez vos pièces : la boutique des décorations, des animaux et des tenues.',
     guide_did: 'Bravo ! +{c} pièces', guide_done: 'Votre premier jour est terminé ! +{c} pièces. Un nouveau terrain arrive au niveau 2.',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
@@ -517,6 +521,11 @@ export const DECOR = {
   greenhouse: { level: 10, price: 6000 }, windmill: { level: 13, price: 12000 }, bandstand: { level: 16, price: 20000 }, statue: { level: 20, price: 40000 },
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
+// ---- the guardians (release 3, Audrey: "The guardians"): animals bought with coins from their level. The geese first
+// (level 4, when the fox's visits are to start): Gertrude and Hector come to live by the pond. XP a fiftieth of the price,
+// as the decorations
+export const ANIMALS = { geese: { level: 4, price: 1200 } };
+export const animalXp = id => Math.round(ANIMALS[id].price / 50);
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
 // unit of feed) and XP. Starting values (the balance is step 11)
@@ -720,6 +729,14 @@ export function checkFarm(d, now = Date.now()) {
     if (!x || !DECOR[x.id] || out.decor.some(o => o.id === x.id) || L < DECOR[x.id].level) continue;
     const X = spotNum(x.x), Z = spotNum(x.z);
     out.decor.push(DECOR[x.id].pond ? { id: x.id } : { id: x.id, x: X === null ? null : X, z: Z === null ? null : Z });
+  }
+  // the guardians bought (release 3): each known one from its level, when it came (never ahead of now)
+  if (d.animals && typeof d.animals === 'object' && !Array.isArray(d.animals)) {
+    out.animals = {};
+    for (const id of Object.keys(ANIMALS)) {
+      const a = d.animals[id];
+      if (a && typeof a === 'object' && L >= ANIMALS[id].level && Number.isFinite(a.at) && a.at > 0) out.animals[id] = { at: Math.min(a.at, now) };
+    }
   }
   // the wheat field: where it is (the farm puts it on your land when it has no spot), which way it lies, when it's ripe
   // (0: not sown; never further ahead than it takes to grow); the grain in store
@@ -987,6 +1004,17 @@ export class Game {
   // the trees, bushes and rocks cleared where something was put (the village's own ids, each once)
   cleared(list) { for (const k of list) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k); }
   decorName(id) { return this.t('dec_' + id); }
+  // ---- the guardians (release 3): which can be bought (their level come, not yet on the farm), buying one
+  animalOwned(id) { return !!(this.data.animals && this.data.animals[id]); }
+  animalNext(id) { return !!ANIMALS[id] && !this.animalOwned(id) && this.level >= ANIMALS[id].level; }
+  buyAnimal(id, now = Date.now()) {
+    const A = ANIMALS[id]; if (!A || !this.animalNext(id) || this.data.coins < A.price) return null;
+    this.data.coins -= A.price; const xp = animalXp(id); this.data.xp += xp;
+    (this.data.animals || (this.data.animals = {}))[id] = { at: now };
+    this.save();
+    return { price: A.price, xp };
+  }
+  animalName(id) { return this.t('ani_' + id); }
   // ---- the wheat field: how far it's grown, sowing it, harvesting it, where it is
   wheat() { return this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
   wheatStage(now = Date.now()) {

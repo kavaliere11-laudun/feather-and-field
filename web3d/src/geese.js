@@ -19,7 +19,8 @@ export function initGeese(gltf, json) {
   }
 }
 export const gooseName = kind => NAMES[kind] || kind;
-const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+let FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+export const setGooseLang = lang => { FR = lang === 'fr'; };          // (the game: the player's language, before they're made)
 const BREED = { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'],
   mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'] };
 const isDuck = kind => /^mallard/.test(kind);
@@ -710,15 +711,43 @@ export class GeeseFlock extends PondBirds {
     }
     // the bed: the way in farthest from the dock and the streams, a little back from the edge, facing the water
     // (with room all round: nothing within half a metre of either of them, a bench, a bush)
-    const roomy = (t) => [this.at(t, 1.3), this.at(t + 0.19, 1.3)].every(p => { for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; for (const r of [0, 0.3, 0.6]) if (nav && !nav.freeAt(p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r)) return false; } return true; });
+    // (the two places 0.68 m apart along the bank; the pond itself, as the grid marks it, its ellipse grown 0.35 m, doesn't
+    // count: it's the water they face)
+    const pair = t => { const a = this.at(t, 1.3), e = this.at(t + 0.02, 1.3), L = Math.hypot(e[0] - a[0], e[1] - a[1]) || 1; return [a, [a[0] + (e[0] - a[0]) / L * 0.68, a[1] + (e[1] - a[1]) / L * 0.68]]; };
+    const roomy = (t) => pair(t).every(p => { for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; for (const r of [0, 0.3, 0.6]) { const x = p[0] + Math.cos(a) * r, z = p[1] + Math.sin(a) * r; if (nav && !nav.freeAt(x, z) && this.pondAt(x, z)[0] > 1.2) return false; } } return true; });
     let best = null, bd = -1;
     for (const w of this.ways) {
       const d = Math.min(...this.avoid.map(a => Math.hypot(a[0] - w.edge[0], a[1] - w.edge[1])), ...this.mouths.map(m => Math.hypot(m[0] - w.edge[0], m[1] - w.edge[1])));
       if (d > bd && roomy(w.t)) { bd = d; best = w; }
     }
-    const w = best || { t: 0 }, a = this.at(w.t, 1.3), b = this.at(w.t + 0.19, 1.3), face = this.at(w.t, 1.0);
-    this.bed = [a, b].map(p => [p[0], p[1], Math.atan2(face[0] - p[0], face[1] - p[1])]); this.bedReg = this.regionAt(a[0], a[1]); this.bedWay = w;
-    if (nav) for (const p of this.bed) nav.circle(p[0], p[1], 0.32);      // (the fox finds his way round them)
+    const w = best || { t: 0 }, [a, b] = pair(w.t), face = this.at(w.t, 1.0), h = Math.atan2(face[0] - a[0], face[1] - a[1]);
+    this.bed = [[a[0], a[1], h], [b[0], b[1], h + 0.15]]; this.bedReg = this.regionAt(a[0], a[1]); this.bedWay = w;
+    if (nav && !this.noMark) for (const p of this.bed) nav.circle(p[0], p[1], 0.32);      // (the fox finds his way round them)
+  }
+  // the walking grid changed (the game: a field bought, something placed): their places again where one can walk, the
+  // bed kept unless something's on it now (then a new one, in the same array: the ducks keep clear of it), marked again
+  renav() {
+    const nav = this.nav, ref = this.bed, old = ref.map(b => b.slice()), oldWay = this.bedWay, R = this.r;
+    let n = 0; this.r = () => ((n = (n * 1103515245 + 12345) >>> 0) / 4294967296);       // (the same spots each time for the same grid)
+    this.noMark = true; this.places(); this.noMark = false;
+    this.r = R;
+    if (old.every(b => !nav || nav.freeAt(b[0], b[1])) && oldWay) { ref.splice(0, 2, ...old); this.bedWay = oldWay; }
+    else ref.splice(0, 2, ...this.bed);
+    this.bed = ref; this.bedReg = this.regionAt(ref[0][0], ref[0][1]); if (this.bedWay && this.bedWay.out) this.bedWay.reg = this.regionAt(this.bedWay.out[0], this.bedWay.out[1]);
+    if (nav) for (const p of ref) nav.circle(p[0], p[1], 0.32);
+  }
+  // newly come (the game: just bought): out on the water a little way off their bed's side of the pond, they swim in, come
+  // out with a shake, a honk and a wing-flap stretch, and have a look round their new home; at night, then to bed
+  arrive(hour) {
+    const [G, H] = this.geese, w = this.bedWay && this.bedWay.inn ? this.bedWay : this.nearestWay(this.bed[0][0], this.bed[0][1]);
+    const out = this.at(w.t, 0.42), dx = w.inn[0] - out[0], dz = w.inn[1] - out[1], d = Math.hypot(dx, dz) || 1, h = Math.atan2(dx, dz);
+    G.pos.set(out[0], 0, out[1]); G.heading = h;
+    H.pos.set(out[0] - dx / d * 0.75, 0, out[1] - dz / d * 0.75); H.heading = h;
+    for (const g of this.geese) { g.asleep = false; g.spd = 0; g.wet = 1; g.lastPos = g.pos.clone(); }
+    G.task = TK.seq('arrive', [TK.straight(w.inn[0], w.inn[1], 'walk', true, 0.3), TK.straight(w.edge[0], w.edge[1], 'walk', true, 0.2), TK.straight(w.out[0], w.out[1]),
+      TK.act('shake', 1.4), TK.act('honk', 2.4), TK.act('stretch', 4.6), TK.act('look', 2.5)]);
+    H.task = null; this.trail = [[H.pos.x, H.pos.z], [G.pos.x, G.pos.z]]; this.hk = 1;
+    return [w.out[0], w.out[1]];
   }
   night(h) { return h >= 21.5 || h < 6.25; }
   // somewhere to stroll to: on her own side of the streams, a few metres off
@@ -809,7 +838,7 @@ export class GeeseFlock extends PondBirds {
     for (let i = this.hk; i < T.length - 1; i++) along += Math.hypot(T[i + 1][0] - T[i][0], T[i + 1][1] - T[i][1]);
     along += Math.hypot(G.pos.x - T[T.length - 1][0], G.pos.z - T[T.length - 1][1]);
     const keep = (G.wet > 0.5 ? 0.85 : 0.72) + (G.vs > 0.05 ? 0.1 : 0);
-    if ((G.vs > 0.05 && along > keep + 0.08 && dG > 0.6) || dG > 1.4) {
+    if ((G.vs > 0.05 && along > keep + 0.08 && dG > 0.6) || dG > 1.4 || (h.wet > 0.04 && G.wet < 0.1 && along > 0.5)) {      // (and out of the water after her: never left standing in the shallows)
       const charging = G.act === 'charge' || G.act === 'hiss' || G.act === 'alarm';
       const pace = charging && along > 1.0 ? 'charge' : along > 3.4 ? 'run' : along > 1.7 ? 'hurry' : G.act === 'parade' ? 'strut' : 'walk', p = this.hk < T.length ? T[this.hk] : [G.pos.x, G.pos.z];
       h.moveTo(p[0], p[1], dt, pace, true);
@@ -827,7 +856,7 @@ export class GeeseFlock extends PondBirds {
       const fx = Math.sin(G.heading), fz = Math.cos(G.heading), rx = fz, rz = -fx;            // her forward and her right
       const side = ((h.pos.x - G.pos.x) * rx + (h.pos.z - G.pos.z) * rz) >= 0 ? 1 : -1;
       let sx = G.pos.x + rx * side * 0.62 - fx * 0.18, sz = G.pos.z + rz * side * 0.62 - fz * 0.18;
-      const ok = (x, z) => (G.wet > 0.5 ? this.clearWater(x, z, 0.3) : this.clearWalk(h.pos.x, h.pos.z, x, z)) && (G.wet > 0.5) === (this.wetAt(x, z) > 0.5);
+      const ok = (x, z) => (G.wet > 0.5 ? this.clearWater(x, z, 0.3) : this.clearWalk(h.pos.x, h.pos.z, x, z) && (G.wet > 0.1 || this.wetAt(x, z) < 0.1)) && (G.wet > 0.5) === (this.wetAt(x, z) > 0.5);      // (she's on the grass: so is he)
       if (!ok(sx, sz)) { sx = G.pos.x - rx * side * 0.62 - fx * 0.18; sz = G.pos.z - rz * side * 0.62 - fz * 0.18; }
       const ds = Math.hypot(sx - h.pos.x, sz - h.pos.z);
       if (ok(sx, sz) && (ds > 0.18 || (this.adjusting && ds > 0.06))) { this.adjusting = true; h.moveTo(sx, sz, dt, 'walk'); if (h.act !== 'walk') { h.act = 'walk'; h.actT = 0; } ACT.look(h, this.time); return; }
@@ -1003,7 +1032,7 @@ export class GeeseFlock extends PondBirds {
     if (!this.night(hour) && G.asleep && G.task && G.task.name === 'bed') G.task = null;               // morning: up she gets
     if (!this.night(hour) && H.asleep && !G.asleep && G.actT > 1.2 && H.task && H.task.name === 'bed') { H.asleep = false; H.task = TK.seq('morning', [TK.act('look', 0.6), TK.act('stretch', 4.6), TK.act('honk', 2.4)]); }
     if (!G.task) G.task = this.nextLead(G, hour);
-    else if (this.night(hour) && !/^(bed|scold|guard)/.test(G.task.name) && !G.asleep && G.wet < 0.1) G.task = this.nextLead(G, hour);      // (bedtime: off to bed)
+    else if (this.night(hour) && !/^(bed|scold|guard|arrive)/.test(G.task.name) && !G.asleep && G.wet < 0.1) G.task = this.nextLead(G, hour);      // (bedtime: off to bed)
     // Hector: his own little moments, or following her
     const free = !H.task || H.task.name === 'follow', calm = G.vs < 0.05 && G.wet < 0.1 && H.wet < 0.1 && !this.night(hour) && !G.asleep;
     if ((H.distractIn -= dt) <= 0 && free && calm) {

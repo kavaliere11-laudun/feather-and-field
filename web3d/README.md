@@ -2211,3 +2211,36 @@ the birds already had.
 - `rarecooptest.mjs` (new; English upright, French sideways): the basket's build button (too dear, then not), building the
   Paint coop, a Silkie hen's laying, the Breed Book's fifteen pages, a brood of the pair, keeping their third hen, a reload,
   a changed save. booktest and silktest updated (fifteen pages), eggtest (a fresh egg's XP).
+
+## Release 3, step 1: the geese to buy (26 Oct 2026, Audrey: "The guardians (Recommended)")
+
+- **The shop** is now "The farm shop" ("La boutique de la ferme") with three shelves: Decorations, Animals (Animaux),
+  Outfits. On Animals: Gertrude and Hector, the geese, from level 4 (`ANIMALS` in game.js: 1,200 coins, +24 XP, a fiftieth
+  of the price like the decorations), with their picture (`decor/geese.webp`, made by `animalpics.mjs` from the geese
+  line-up: Gertrude looking round at you, Hector flapping his wings, cut out as the Breed Book's pictures). Not enough
+  coins: "Not enough coins yet"; bought: "✓ At the pond" and "See them" (the view to them). The level-4 card says "New to
+  buy: Gertrude and Hector, the geese" ("Nouveau à acheter : Gertrude et Hector, les oies").
+- **Bought:** they come swimming over the pond from a little way out, come ashore on their side of it with a shake, a honk
+  and a wing-flap stretch and look round (`GeeseFlock.arrive()`); the view goes to where they come ashore (the player's
+  tap); "Gertrude and Hector have come to live by the pond! +24 XP", then "Tap a goose to say hello." Then their life as on
+  the village page: grazing, strolling, swims, drinks, preening, rests, Hector following and getting told off, bed by the
+  water at night. The pond's two fields (10 and 14) are wild meadow until levels 11 and 15, so the meadow's fence along
+  the lane keeps them there, round the pond. A tap: "Gertrude · Embden goose" ("Gertrude · oie d'Embden"; the geese's
+  labels now follow the game's language, `setGooseLang`).
+- **The walking grid made again** (a field bought, a coop or a decoration placed): their places are worked out again where
+  one can walk, their bed kept unless something's on it now (`GeeseFlock.renav()`).
+- **Their bed, for everyone (the village page too):** it was meant to be where there's room all round, but the pond's own
+  margin on the grid counted as "something in the way", so no spot ever had room and the bed fell back to one beside the
+  stream's mouth, where they brushed the stream's edge going to bed. Now the pond doesn't count: their bed is on a
+  bank away from the dock and the streams, the two places side by side facing the water.
+- **Hector out of the water after her:** when she stops on the grass he follows her trail out, and only stands beside her
+  on the grass (he used to be left standing in the shallows).
+- **The ducks after a night's sleep** don't take a nap on the bank straight away (`restedAt` set when they wake): they head
+  off over the water (ducktest now always sees them down into the water in the morning).
+- **Save checks:** `animals` only known animals, each from its level, when it came never ahead of now; anything else is
+  dropped and the farm flagged.
+- `geesebuy.mjs` (new; English upright, French sideways): level 3 (none, the shelf says level 4), the level-4 card, too
+  few coins, buying (coins, XP, the arrival, the message), forty seconds and four minutes of their day (never on anything,
+  on land only on the pond's two fields or its bank, Hector never far), a tap, the shelf's See them, a reload, bedtime, two
+  changed saves. dectest updated (the shop's title). `geesebuyfilm.mjs OUT [fps]`: the film (the shop, buying, the
+  arrival, a tap on Gertrude).

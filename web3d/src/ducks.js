@@ -248,7 +248,7 @@ export class DuckFlock extends PondBirds {
   // the morning: out one after another, down the ramp, a stretch on the water and a quack
   outOfHouse() {
     const H = this.house, order = [0, 1, 2];
-    this.plan = 'morning';
+    this.plan = 'morning'; this.restedAt = this.time;            // (a night's sleep: no nap on the bank straight after)
     this.ducks.forEach((d, i) => {
       const k = order.indexOf(i);
       let away = H.world((this.r() - 0.5) * 0.8, 1.8 + this.r() * 0.5);          // (out in front of the ramp, clear of the house)
@@ -456,7 +456,7 @@ export class DuckFlock extends PondBirds {
   // morning: awake one after another, a stretch on the water and a quack, then off they go
   wakeUp() {
     if (this.house) return this.outOfHouse();
-    this.plan = 'morning';
+    this.plan = 'morning'; this.restedAt = this.time;
     this.ducks.forEach((d, i) => {
       d.task = DK.seq('morning', [DK.act('sleep', 0.4 + i * 1.5 + this.r()), () => { d.asleep = false; return DK.act('stretch', 3.4); }, DK.quack(2 + (i === 1 ? 1 : 0)), DK.act('float', 1.5 + this.r() * 2)]);
     });

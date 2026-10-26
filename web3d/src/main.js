@@ -18,7 +18,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
 import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog } from './beasts.js';
-import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE } from './geese.js';
+import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE, setGooseLang } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
@@ -48,6 +48,8 @@ let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
+// (the game: the geese once bought, release 3)
+const geeseOwned = () => GAME_MODE ? !!(game.data && game.animalOwned('geese')) : HAS_GEESE;
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
@@ -1260,10 +1262,12 @@ function buildGeese() {
   const P = V.pond, mouths = [];
   for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - P.center[0], e[2] - P.center[2]) < 8) mouths.push([e[0], e[2]]);
   GEESE_OPTS = { pond: P, nav: navGrid(), avoid, mouths, groundY, inView };
+  setGooseLang(LANG);                                  // (the game: the player's language for their names)
   geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null,
     others: () => [...(duckFlock ? duckFlock.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])] }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
-  if (HAS_GEESE) geeseFlock.update(1 / 60, clockHour());
-  else { geeseFlock.group.visible = false; geeseFlock.geese = []; }        // (the game: none bought yet; the pond's ways stay for the others)
+  geeseFlock.pair = geeseFlock.geese;
+  if (geeseOwned()) geeseFlock.update(1 / 60, clockHour());
+  else { geeseFlock.group.visible = false; geeseFlock.geese = []; }        // (the game: not bought yet; the pond's ways stay for the others)
   // the pond's frogs (pond.js): they jump in when a goose, Biscuit or Rusty comes near
   frogPond = new FrogPond(scene, { pond: P, avoid, mouths, spots: V.frogs, grade: nightGrade, lang: LANG, near: () => {
     const out = [];
@@ -1683,7 +1687,7 @@ function buildNightVisit() {
 }
 function tickFoxes(dt) {
   if (farmDog) farmDog.update(dt, clockHour());
-  if (geeseFlock && HAS_GEESE) geeseFlock.update(dt, clockHour());
+  if (geeseFlock && geeseFlock.geese.length) geeseFlock.update(dt, clockHour());
   if (frogPond) frogPond.update(dt, clockHour());
   if (duckFlock) duckFlock.update(dt, clockHour());
   if (farmLife) farmLife.update(dt, clockHour());
@@ -3708,6 +3712,7 @@ function rebuildNav() {
   const fresh = buildNav();
   NAV.block = fresh.block; NAV.links = fresh.links; NAV.linkAt = fresh.linkAt; NAV.cost = null; pathCosts(NAV);
   REACH = null; dogSpots = null; for (const p of plots) p.exitWay = null;
+  if (geeseFlock) geeseFlock.renav();                // (their places where one can walk now, their bed marked again)
 }
 function landCard() {
   holdBird(null);
@@ -4400,7 +4405,26 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id) }; }
+function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id) }; }
+// ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
+// to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
+// player's tap). See them: the view to them
+function buyAnimal(id) {
+  if (id !== 'geese' || !geeseFlock || !geeseFlock.pair) return false;
+  const r = game.buyAnimal(id); if (!r) return false;
+  gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
+  geeseFlock.geese = geeseFlock.pair; geeseFlock.group.visible = true;
+  const w = geeseFlock.arrive(clockHour()), G = geeseFlock.lead.pos;
+  focusOn((G.x + w[0]) / 2, (G.z + w[1]) / 2, Math.min(view.max, sideways() ? 2.4 : 3.0));
+  renderer.shadowMap.needsUpdate = true; wake(1000);
+  hint(game.t('geese_came', { xp: r.xp })); hintNext(game.t('geese_hello'));
+  return true;
+}
+function seeAnimal(id) {
+  if (id !== 'geese' || !geeseFlock || !geeseFlock.geese.length) return;
+  gameUI.close();
+  const c = geeseFlock.centre(new THREE.Vector3()); focusOn(c.x, c.z, Math.min(view.max, sideways() ? 2.2 : 2.8));
+}
 // ---- the farmer's outfits (the shop's second shelf; farmer.js loadOutfit, wear): bought and put on at once, or another
 // worn; the farm's farmer in it (each outfit's hat and bits loaded only when worn), and on show day too. Bought: the view
 // to him (the player's tap), so it's seen
@@ -5232,7 +5256,8 @@ function replayLive(on, rec) {
     for (const p of plots) if (p.door) replaySaved.doors.push([p, p.door.s, p.door.goal, p.door.shut]);
     const t = plots.find(p => p.index === rec.coop);
     if (t && t.door) { t.door.s = t.door.goal = rec.open ? 1 : 0; t.door.shut = !rec.open; }
-    for (const g of [foxes && foxes.group, geeseFlock && geeseFlock.group, farmDog && farmDog.group, frogPond && frogPond.group, duckFlock && duckFlock.group, farmLife && farmLife.group]) if (g) g.visible = false;
+    replaySaved.groups = [foxes, geeseFlock, farmDog, frogPond, duckFlock, farmLife].filter(x => x && x.group).map(x => [x.group, x.group.visible]);
+    for (const [g] of replaySaved.groups) g.visible = false;
     for (const g of castGroups(replayCast)) g.visible = true;
     if (nightVisit) nightVisit.fx.list.forEach(s => { s.sp.visible = false; });
     for (const n of NOTES) { n.life = 0; n.sprite.visible = false; }                 // (a song's notes from this morning)
@@ -5243,7 +5268,7 @@ function replayLive(on, rec) {
     const S = replaySaved; if (!S) return;
     for (const [b, vis] of S.birds) { b.root.visible = vis; placeBlob(b); }
     for (const [p, s, goal, shut] of S.doors) { p.door.s = s; p.door.goal = goal; p.door.shut = shut; }
-    for (const g of [foxes && foxes.group, geeseFlock && geeseFlock.group, farmDog && farmDog.group, frogPond && frogPond.group, duckFlock && duckFlock.group, farmLife && farmLife.group]) if (g) g.visible = true;
+    for (const [g, vis] of S.groups) g.visible = vis;
     for (const g of castGroups(replayCast)) g.visible = false;
     tag.classList.remove('on');
     document.body.classList.remove('replaying');
@@ -5395,6 +5420,7 @@ window.__farm = {
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
+  animal: { buy: id => buyAnimal(id), see: id => seeAnimal(id), owned: () => geeseOwned() },
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z) => { const S = decorSpot(id, x, z); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),

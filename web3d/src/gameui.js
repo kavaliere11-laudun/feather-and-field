@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -381,6 +381,12 @@ export class GameUI {
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
     const decs = Object.keys(DECOR).filter(id => DECOR[id].level === L);      // (a decoration to buy now: the shop, the coins at the top)
     if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
+    for (const id of Object.keys(ANIMALS).filter(k => ANIMALS[k].level === L && !this.g.animalOwned(k))) {      // (an animal to buy now: the shop's Animals shelf)
+      const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); c.dataset.animal = id; ic.alt = ''; ic.src = 'decor/' + id + '.webp' + (this.o.bust || '');
+      hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: this.g.animalName(id) }))); c.append(hd); body.append(c);
+      if (!decs.length) c.append(el('p', 'gnote', this.t('dec_new_where')));
+      else { const n = body.querySelector('.gdecnew .gnote'); if (n) { n.remove(); c.append(n); } }      // (where to buy them said once, under the last)
+    }
     const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') }))); c.append(hd); body.append(c); }
@@ -625,9 +631,9 @@ export class GameUI {
     const fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
     const top = el('div', 'gshop-top'), pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins)));
     top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
-    if (h.outfits) {                                    // (two shelves: the decorations, the farmer's outfits)
+    if (h.outfits) {                                    // (three shelves: the decorations, the animals, the farmer's outfits)
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label] of [['decor', 'shop_decor'], ['outfits', 'shop_outfits']]) {
+      for (const [k, label] of [['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), this.t(label)); c.type = 'button'; c.dataset.tab = k;
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
         tabs.append(c);
@@ -635,6 +641,7 @@ export class GameUI {
       b.append(tabs);
     }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
+    if (tab === 'animals') { this.animalCards(b, h, fmt); return; }
     for (const id of Object.keys(DECOR)) {
       const D = DECOR[id], own = g.decorOwned(id), lock = g.level < D.level, broke = !own && !lock && g.data.coins < D.price;
       const card = el('div', 'gcard gpage gdec' + (lock ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.decor = id;
@@ -655,7 +662,29 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
   }
-  // the farmer's outfits (the shop's second shelf): each with its picture (the 2D game's, for the farm's farmer), what it is,
+  // the animals (the shop's second shelf, release 3: the guardians): each with its picture, what it is, and Buy (h.buyAnimal:
+  // it comes to the farm at once), or its level to come, or not enough coins yet; one on the farm: where it lives, See (h.see)
+  animalCards(b, h, fmt) {
+    const g = this.g;
+    for (const id of Object.keys(ANIMALS)) {
+      const A = ANIMALS[id], own = g.animalOwned(id), lock = !own && g.level < A.level, broke = !own && !lock && g.data.coins < A.price;
+      const card = el('div', 'gcard gpage gdec gani' + (lock ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.animal = id;
+      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const info = el('div', 'gpage-i');
+      info.append(el('span', 'gcard-t', g.animalName(id)), el('p', 'gnote gdec-l', this.t('anil_' + id)));
+      if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('ani_owned')));
+      else if (lock) info.append(el('p', 'gpage-s', this.t('dec_level', { n: A.level })));
+      else { const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(A.price) + ' · ' + this.t('dec_xp', { xp: animalXp(id) }))); info.append(pr); }
+      if (own && h.see) { const sb = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('ani_see')); sb.type = 'button'; sb.addEventListener('click', () => h.see(id)); info.append(sb); }
+      if (!own && !lock) {
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t('ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
+        go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
+        info.append(go);
+      }
+      card.append(pic, info); b.append(card);
+    }
+  }
+  // the farmer's outfits (the shop's third shelf): each with its picture (the 2D game's, for the farm's farmer), what it is,
   // and Buy and wear (h.buyOutfit), Wear (h.wear), "Wearing", or the level it comes at
   outfitCards(b, h, fmt) {
     const g = this.g, look = g.data.farmer.look === 'f' ? 'f' : 'm', who = g.farmerName();

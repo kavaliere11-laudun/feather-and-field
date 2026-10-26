@@ -1,5 +1,5 @@
 // The game, release 1 step 9d (decorations): node dectest.mjs   (LANG=fr; W, H: the screen; SHOTS=folder for pictures)
-// A farm at level 10 with coins: the coins at the top open the shop, "Decorate your farm": the eight, each with its
+// A farm at level 10 with coins: the coins at the top open the shop, "The farm shop": the eight, each with its
 // picture; the ones its level has come for with their price and Buy and place, the others greyed with the level they come
 // at. Buy the flower bed: it appears near the view with its outline (green), the move bar without Turn; off your land, red
 // and why; then "Put it here": paid for then (coins and XP), on the farm, in everyone's way (the walking grid), no grass
@@ -33,7 +33,7 @@ const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText
 const money = () => p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, xp: g.data.xp, decor: JSON.parse(JSON.stringify(g.data.decor || [])) }; });
 const S = () => p.evaluate(() => window.__farm.deco.state());
 const items = () => p.evaluate(() => window.__farm.deco.items());
-const T = { title: fr ? /Décorez votre ferme/ : /Decorate your farm/, buy: fr ? /Acheter et placer · 400/ : /Buy and place · 400/, lvl13: fr ? /Arrive au niveau 13/ : /Comes at level 13/,
+const T = { title: fr ? /La boutique de la ferme/ : /The farm shop/, buy: fr ? /Acheter et placer · 400/ : /Buy and place · 400/, lvl13: fr ? /Arrive au niveau 13/ : /Comes at level 13/,
   pond: fr ? /Acheter · 3[\s  ]000/ : /Buy · 3,000/, placed: fr ? /Nouveau dans la ferme : Massif de fleurs ! \+8 XP/ : /New on the farm: Cottage flower bed! \+8 XP/,
   moved: fr ? /Massif de fleurs : c’est déplacé !/ : /Cottage flower bed: moved!/, owned: fr ? /Dans votre ferme/ : /On your farm/, move: fr ? /Déplacer/ : /Move/,
   hint: fr ? /Faites-le glisser/ : /Drag it, or tap/, land: fr ? /Seulement sur votre terrain/ : /Only on your own land/ };
