@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -252,7 +252,7 @@ export class GameUI {
       if (br && !br.hatched) { const ms = g.hatchAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('hatch_soon', { n: br.n }) : this.t('sitting', { n: br.n, when: g.howLong(ms) }))); }
       else if (br && now < g.youngAt(coop)) kc.append(el('p', 'gtext', this.t('raising', { n: br.n, when: g.howLong(Math.max(60e3, g.youngAt(coop) - now)) })));
       else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising_y', { n: br.n, when: g.howLong(ms) }))); }
-      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t('lays', { p: g.henEggPrice(b) })));
+      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t(g.baseOf(b.breed) === 'sil' ? 'lays_sil' : 'lays', { p: g.henEggPrice(b) })));
       body.append(kc);
     }
     // where and since when
@@ -472,12 +472,18 @@ export class GameUI {
       if (this.o.rare) c.append(this.rareChoice(e, () => this.coopsSheet(h)));
       b.append(c);
     }
-    if (g.basket().length) {
-      const c = el('div', 'gcard gbasket'), hd = el('div', 'gcard-h');
+    if (g.basket().length) {                            // (each rare colour's: its birds, and its own coop to build: release 2 step 3)
+      const c = el('div', 'gcard gbasket'), hd = el('div', 'gcard-h'), price = RARE.coop.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
       hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t('basket_t')));
       c.append(hd);
-      for (const x of g.basket()) c.append(el('p', 'gtext', x.name + ' · ' + this.t('rare_of', { line: g.breedName(x.breed), kind: this.t(x.sex === 'h' ? 'hen' : 'rooster') })));
-      c.append(el('p', 'gnote', this.t('basket_note'))); b.append(c);
+      for (const line of [...new Set(g.basket().map(x => x.breed))]) {
+        for (const x of g.basket().filter(y => y.breed === line)) c.append(el('p', 'gtext', x.name + ' · ' + this.t('rare_of', { line: g.breedName(x.breed), kind: this.t(x.sex === 'h' ? 'hen' : 'rooster') })));
+        if (g.rareCoops().includes(line) && h.place) {
+          const can = g.data.coins >= RARE.coop, go = el('button', 'gbtn gsmallbtn grare-build', this.t(can ? 'rare_build' : 'rare_build_no', { c: price })); go.type = 'button'; go.disabled = !can; go.dataset.line = line;
+          go.addEventListener('click', () => h.place(line)); c.append(go);
+        }
+      }
+      c.append(el('p', 'gnote', this.t('basket_note', { c: price }))); b.append(c);
     }
     for (const coop of g.data.coops) {
       const row = el('div', 'gcard gcooprow'), info = el('div', 'gcoopinfo');
@@ -507,7 +513,7 @@ export class GameUI {
       pic.append(img);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.bookName(pg.breed)));
-      info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
+      info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : '') + (pg.rare ? ' grare' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.rare ? this.t('book_rare', { from: pg.from.map(k => g.breedName(k)).join(this.t('book_or')) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
       const eggs = el('p', 'gnote gpage-l'), ei = el('span', 'gegg-i'), et = el('span');
       if (h.egg && h.egg[pg.base]) ei.style.setProperty('--egg', h.egg[pg.base]);
       et.append(el('span', 'gpage-k', this.t('egg_' + pg.base)), document.createTextNode(' · ' + this.t('book_price', { p: pg.price })));

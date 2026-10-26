@@ -2186,3 +2186,28 @@ the birds already had.
 - `raretest.mjs` (new; English upright, French sideways): a brood whose luck gives a rare chick, her colour and card, the
   congratulations card's Keep and Sell, her waiting in the pen, the basket, Sell from Your coops, a complete trio, a reload,
   a changed save.
+
+## Release 2, step 3: the rare colours' own coops (26 Oct 2026, Audrey: "Buy it, 2,500 coins (Recommended)")
+
+- **Their coop:** once one of a rare colour is in the basket by the fire, Your coops offers "Build their coop · 2,500"
+  ("Their coop: 2,500 coins" until you have them; `RARE.coop`, `rareCoops()`, `placeable()`). Placed like any coop: a
+  rustic Pagoda in the rare colour (`SIL_TINT`: Paint a white roof with black frames, Lavender, Red, Splash pale blue-grey,
+  Cuckoo slate), the coins paid when it's put down, and the colour's birds move in from the basket with their time on the
+  farm kept ("Welcome home, Paddy and Pip!"). A rare one kept later goes straight into her colour's coop ("Ginger has
+  joined Pagoda Coop.").
+- **A rare pair's chicks** are all their colour: the trio's missing hen or rooster waits for your choice as before; the
+  rest are sold for you, for less than a rare one from the other Silkies (`RARE.bred`, 40%: 200 to 300 coins), and a rare
+  pair goes broody half as often (`RARE.broody`).
+- **The Breed Book:** fifteen pages, the rare colours last: found once one is yours (in the basket or her coop), else
+  "Rare: hatched by a Black Silkie" ("Rare : naît d’une Poule soie noire"; the Cuckoo ones by a Partridge or a Grey); their
+  pictures by `bookpics.mjs` (`ONLY=sil_paint,...`).
+- **Silkies lay about an egg a day** (one window of two: `dueLays`), as real ones do ("Silkies are better mums than
+  layers", on a Silkie hen's card): with eleven of the fifteen coops Silkies, the late game was too quick.
+- **The balance** (`balsim.mjs` now builds the rare coops too, and keeps every rare baby it can): 44 birds and 15 coops by
+  the end; a fresh egg 2 more (was 3), a chick half a star more (was 1). Level 30 on day 365 once a day, 296 twice a day,
+  243 every 3 hours. About 200,000 coins at a year.
+- **Save checks:** a rare colour's coop only from level 6, one each; its chicks all its colour; one waiting from its own
+  coop or the Silkie colour it comes from.
+- `rarecooptest.mjs` (new; English upright, French sideways): the basket's build button (too dear, then not), building the
+  Paint coop, a Silkie hen's laying, the Breed Book's fifteen pages, a brood of the pair, keeping their third hen, a reload,
+  a changed save. booktest and silktest updated (fifteen pages), eggtest (a fresh egg's XP).

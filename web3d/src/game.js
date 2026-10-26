@@ -147,7 +147,7 @@ const TEXT = {
     first_t: 'The first Feather & Field', first_how: 'Your farm from the first game is kept just as it was. Open it whenever you like.', first_open: 'Open the first game',
     welcome_first: 'Your farm from the first game is safe in Settings.',
     loading: 'Loading your farm…',
-    eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.',
+    eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.', lays_sil: 'Lays about an egg a day, {p} coins each: Silkies are better mums than layers.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
     eggs_fresh1: '1 fresh egg sold · +{c} coins · +{xp} XP', eggs_fresh: '{n} eggs sold · +{c} coins · {f} fresh: +{xp} XP',
     no_eggs: 'No eggs yet', laying: '{name} is laying…',
@@ -192,7 +192,8 @@ const TEXT = {
     rare_kept: '{name} is snug in the basket by the farmhouse fire.', rare_kept_r: '{name} is snug in the basket by the farmhouse fire.', rare_sold: 'Sold for {c} coins', rare_full: 'Your {line} trio is complete: this one is sold for you',
     rare_card_t: 'A rare {line}!', rare_card_body: 'Born in {coop}. Keep her, and she lives in a basket by the farmhouse fire until she has a coop of her own; or sell her for a lot.',
     rare_card_body_r: 'Born in {coop}. Keep him, and he lives in a basket by the farmhouse fire until he has a coop of his own; or sell him for a lot.',
-    rare_waiting: 'A rare baby is waiting for your choice', basket_t: 'The basket by the fire', basket_note: 'Their own coop comes soon.', rare_of: '{line} · {kind}',
+    rare_waiting: 'A rare baby is waiting for your choice', basket_t: 'The basket by the fire', basket_note: 'Build their own coop for {c} coins: they move in, and a rare pair can raise more of their colour.', rare_of: '{line} · {kind}',
+    rare_build: 'Build their coop · {c}', rare_build_no: 'Their coop: {c} coins', rare_home: 'Welcome home, {names}!', rare_kept_home: '{name} has joined {coop}.', book_rare: 'Rare: hatched by a {from}', book_or: ' or a ',
     farewell: 'Off you go, and good luck!',
   },
   fr: {
@@ -304,7 +305,7 @@ const TEXT = {
     first_t: 'Le premier Feather & Field', first_how: 'Votre ferme du premier jeu est gardée telle quelle. Ouvrez-la quand vous voulez.', first_open: 'Ouvrir le premier jeu',
     welcome_first: 'Votre ferme du premier jeu est dans les Réglages.',
     loading: 'Chargement de votre ferme…',
-    eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.',
+    eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.', lays_sil: 'Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
     eggs_fresh1: '1 œuf tout frais vendu · +{c} pièces · +{xp} XP', eggs_fresh: '{n} œufs vendus · +{c} pièces · {f} tout frais : +{xp} XP',
     no_eggs: 'Pas encore d’œufs', laying: '{name} est en train de pondre…',
@@ -349,7 +350,8 @@ const TEXT = {
     rare_kept: '{name} est bien au chaud dans le panier près du feu de la ferme.', rare_kept_r: '{name} est bien au chaud dans le panier près du feu de la ferme.', rare_sold: 'Vendu {c} pièces', rare_full: 'Votre trio {line} est complet : celui-ci est vendu pour vous',
     rare_card_t: 'Une {line} rare !', rare_card_body: 'Née à {coop}. Gardez-la : elle vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-la pour beaucoup.',
     rare_card_body_r: 'Né à {coop}. Gardez-le : il vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-le pour beaucoup.',
-    rare_waiting: 'Un bébé rare attend votre choix', basket_t: 'Le panier près du feu', basket_note: 'Leur poulailler arrive bientôt.', rare_of: '{line} · {kind}',
+    rare_waiting: 'Un bébé rare attend votre choix', basket_t: 'Le panier près du feu', basket_note: 'Construisez leur poulailler pour {c} pièces : ils s’y installent, et un couple rare peut avoir d’autres petits de sa couleur.', rare_of: '{line} · {kind}',
+    rare_build: 'Construire leur poulailler · {c}', rare_build_no: 'Leur poulailler : {c} pièces', rare_home: 'Bienvenue chez vous, {names} !', rare_kept_home: '{name} rejoint {coop}.', book_rare: 'Rare : naît d’une {from}', book_or: ' ou d’une ',
     farewell: 'Allez, bonne route !',
   },
 };
@@ -391,7 +393,7 @@ export const BREED_INFO = {
 // than that is sold for you. A rare one sells for RARE.price plus RARE.starPrice a star
 export const RARE_FROM = { sil: 'sil_paint', sil_black: 'sil_lavender', sil_buff: 'sil_red', sil_blue: 'sil_splash', sil_partridge: 'sil_cuckoo', sil_grey: 'sil_cuckoo' };
 export const RARE_LINES = ['sil_paint', 'sil_lavender', 'sil_red', 'sil_splash', 'sil_cuckoo'];
-export const RARE = { base: 0.018, star: 0.004, price: 400, starPrice: 50, basket: 15, pending: 6 };
+export const RARE = { base: 0.018, star: 0.004, price: 400, starPrice: 50, basket: 15, pending: 6, coop: 2500, bred: 0.4, broody: 0.5 };      // (coop: a rare colour's own coop, release 2 step 3: Audrey, "Buy it, 2,500 coins")
 const rareMost = () => RARE.base + RARE.star * 10;      // (the most a chick's chance can be: both parents five stars)
 export const rarePrice = stars => RARE.price + RARE.starPrice * stars;
 // a line's breed (the Silkie colours are all Silkies: their eggs, chicks, house and shows) and a Silkie line's colour
@@ -587,11 +589,11 @@ export const NEST_MAX = 12;                           // eggs a nest holds: full
 export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7 };        // coins an egg sells for (the Legbar's blue eggs the dearest)
 // XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
 // each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
-export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 1, job: 3.5, jobL: 0.3 };      // (26 Oct, with the five Silkie colours: a year to level 30 once a day still)
+export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, jobL: 0.3 };      // (26 Oct, with the Silkie colours and the rare ones' coops: a year to level 30 once a day still)
 // rewards for coming back during the day (Audrey, 26 Oct: "people playing multiple times a day should be rewarded a bit
 // more"; "A bit quicker"): fresh eggs, collected within 3 hours of being laid, earn more; a cuddle earns a little each time
 // (once her happy glow from the last one has worn off, 6 hours)
-export const FRESH = { ms: 3 * 3600e3, xp: 3, cuddle: 1 };
+export const FRESH = { ms: 3 * 3600e3, xp: 2, cuddle: 1 };
 export const FEED_DAYS = 2;                           // a full feeder keeps its birds for two days (a unit a bird a day)
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
@@ -643,7 +645,7 @@ export function checkFarm(d, now = Date.now()) {
   const seen = new Set();
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed] || levelOf(out.xp) < BREED_LEVEL[c.breed] || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come, one each)
+    if (!BREED_INFO[c.breed] || levelOf(out.xp) < (BREED_LEVEL[c.breed] || BREED_LEVEL.sil) || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come, one each; a rare colour's once the Silkies have)
     seen.add(c.id);
     // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
@@ -652,7 +654,7 @@ export function checkFarm(d, now = Date.now()) {
       eggs: int(c.eggs, 0, NEST_MAX, 0), bonus: 0, feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
       brood: c.brood && typeof c.brood === 'object' ? { hen: String(c.brood.hen), start: int(c.brood.start, 0, now, now), n: int(c.brood.n, 1, 4, 2), hatched: c.brood.hatched === true,
         kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map((k, i) => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1),
-          ...(k && k.rare && k.rare === RARE_FROM[c.breed] && hash01(String(c.brood.hen) + '|' + c.brood.start + '|' + i + '|rare') < rareMost() ? { rare: k.rare } : {}) })) : null } : null,      // (a rare one: only its own colour's, only where the luck could have given it)
+          ...(k && k.rare && ((k.rare === RARE_FROM[c.breed] && hash01(String(c.brood.hen) + '|' + c.brood.start + '|' + i + '|rare') < rareMost()) || (k.rare === c.breed && RARE_LINES.includes(c.breed))) ? { rare: k.rare } : {}) })) : null } : null,      // (a rare one: only its own colour's, only where the luck could have given it)
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
       ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
   }
@@ -752,7 +754,7 @@ export function checkFarm(d, now = Date.now()) {
     out.rare = [];
     for (const e of d.rare.slice(0, RARE.pending)) {
       const coop = e && out.coops.find(c => c.id === e.coop), sex = e && (e.sex === 'r' ? 'r' : e.sex === 'h' ? 'h' : null);
-      if (!coop || !sex || typeof e.id !== 'string' || !/^b\d{1,5}$/.test(e.id) || taken.has(e.id) || e.line !== RARE_FROM[coop.breed] || !room(e.line, sex)) continue;
+      if (!coop || !sex || typeof e.id !== 'string' || !/^b\d{1,5}$/.test(e.id) || taken.has(e.id) || (e.line !== RARE_FROM[coop.breed] && e.line !== coop.breed) || !RARE_LINES.includes(e.line) || !room(e.line, sex)) continue;
       taken.add(e.id);
       out.rare.push({ id: e.id, line: e.line, sex, stars: int(e.stars, 1, 5, 1), coop: coop.id, i: int(e.i, 0, 3, 0), mum: String(e.mum).slice(0, 8), t: int(e.t, 0, now, now) });
     }
@@ -839,22 +841,45 @@ export class Game {
       const coop = this.data.coops.find(c => c.breed === breed);
       const names = coop ? this.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name) : [];
       return { breed, base: baseBreed(breed), level: BREED_LEVEL[breed], found: !!coop, names, waiting: !coop && this.level >= BREED_LEVEL[breed], price: EGG_PRICE[baseBreed(breed)] || 6 };
-    });
+    }).concat(RARE_LINES.map(breed => {                                   // (the rare colours: from breeding; found once one's yours)
+      const coop = this.data.coops.find(c => c.breed === breed), mine = [...(coop ? this.birdsIn(coop.id) : []), ...this.basket().filter(b => b.breed === breed)];
+      return { breed, base: 'sil', rare: true, from: Object.keys(RARE_FROM).filter(k => RARE_FROM[k] === breed), found: mine.length > 0, names: mine.sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name), waiting: false, price: EGG_PRICE.sil };
+    }));
   }
   bookName(b) { return this.breedName(b); }
-  // a waiting breed's coop and trio, ready to place (not on the farm until placeCoop)
+  // a rare colour's own coop (release 2 step 3): to build once one of that colour is in the basket (RARE.coop coins); its
+  // birds move in from the basket. A breed's or colour's coop that can be put down now
+  rareCoops() { return RARE_LINES.filter(l => this.basket().some(b => b.breed === l) && !this.data.coops.some(c => c.breed === l)); }
+  placeable(breed) { return this.waitingCoops().includes(breed) || this.rareCoops().includes(breed); }
+  // a waiting breed's coop and trio (or a rare colour's coop and its birds from the basket), ready to place (not on the
+  // farm until placeCoop)
   draftCoop(breed, at) {
-    if (!this.waitingCoops().includes(breed)) return null;
+    if (!this.placeable(breed)) return null;
+    if (BREED_INFO[breed].rare) {
+      if (this.data.coins < RARE.coop) return null;
+      const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+      return { coop, birds: this.basket().filter(b => b.breed === breed).map(b => ({ ...b, coop: coop.id })), rare: true };
+    }
     const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     return { coop, birds: this.trio(breed, coop.id, false) };
   }
   placeCoop(draft, at, clear = []) {
     const c = draft && draft.coop, X = spotNum(at.x), Z = spotNum(at.z);
-    if (!c || !this.waitingCoops().includes(c.breed) || X === null || Z === null || ![0, 90, 180, 270].includes(at.deg)) return null;
-    const now = Date.now();
+    if (!c || !this.placeable(c.breed) || X === null || Z === null || ![0, 90, 180, 270].includes(at.deg)) return null;
+    const now = Date.now(), rare = BREED_INFO[c.breed].rare;
+    if (rare && this.data.coins < RARE.coop) return null;
     Object.assign(c, { x: X, z: Z, deg: at.deg, fedAt: now, checked: now }); c.feed = draft.birds.length * FEED_DAYS;       // (its feeder full)
-    for (const b of draft.birds) { b.since = now; if (b.sex === 'h') b.laid = now; }
-    this.data.coops.push(c); this.data.birds.push(...draft.birds);
+    if (rare) {                                                          // (paid for; its birds from the basket, their time on the farm kept)
+      this.data.coins -= RARE.coop;
+      const ids = new Set(draft.birds.map(b => b.id));
+      this.data.basket = this.basket().filter(b => !ids.has(b.id));
+      for (const b of draft.birds) { const nb = { id: b.id, name: b.name, sex: b.sex, breed: b.breed, pers: b.pers, coop: c.id, since: b.since, exp: b.exp, trust: b.trust };
+        if (b.sex === 'h') nb.laid = now; nb.happy = b.happy || 0; nb.ros = b.ros || [0, 0, 0, 0, 0, 0, 0, 0, 0]; this.data.birds.push(nb); }
+      this.data.coops.push(c);
+    } else {
+      for (const b of draft.birds) { b.since = now; if (b.sex === 'h') b.laid = now; }
+      this.data.coops.push(c); this.data.birds.push(...draft.birds);
+    }
     for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
     this.save();
     return c;
@@ -1138,7 +1163,7 @@ export class Game {
       if (b.sex !== 'h') continue;
       const from = Math.max(b.laid, b.since, now - CATCH_UP);
       if (from >= now || this.brooding(b.id)) continue;                 // (sitting or raising chicks: no eggs for sale)
-      for (let day = dayStart(from); day <= now; day = nextDay(day)) for (const t of layTimes(b.id, day)) if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t });
+      for (let day = dayStart(from); day <= now; day = nextDay(day)) for (const t of layTimes(b.id, day).slice(baseBreed(b.breed) === 'sil' ? 1 : 0)) if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t });      // (a Silkie lays one a day, in the afternoon: Silkies are better mums than layers)
       const f = this.data.first;
       if (f && f.hen === b.id && f.t > b.laid && f.t <= now) out.push({ hen: b.id, coop: b.coop, t: f.t, first: true });
     }
@@ -1170,11 +1195,12 @@ export class Game {
   kidsOf(c, br) {
     const mum = this.bird(br.hen), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
     const base = 1 + ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0)) / 2 + (mum && mum.pers === 'mum' ? 0.4 : 0);
-    const rl = RARE_FROM[c.breed], chance = RARE.base + RARE.star * ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0));
+    const rl = RARE_FROM[c.breed], own = BREED_INFO[c.breed] && BREED_INFO[c.breed].rare, chance = RARE.base + RARE.star * ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0));
     return Array.from({ length: br.n }, (_, i) => {
       const key = br.hen + '|' + br.start + '|' + i;
       const k = { sex: hash01(key + '|sex') < 0.5 ? 'h' : 'r', stars: Math.max(1, Math.min(5, Math.round(base + hash01(key + '|q') * 1.5 - 0.5))) };
-      if (rl && hash01(key + '|rare') < chance) k.rare = rl;          // (a rare colour: the luck of the day, more likely with stars)
+      if (own) k.rare = c.breed;                                      // (a rare pair's chicks: all their colour)
+      else if (rl && hash01(key + '|rare') < chance) k.rare = rl;     // (a rare colour: the luck of the day, more likely with stars)
       return k;
     });
   }
@@ -1190,7 +1216,15 @@ export class Game {
     const names = (e.sex === 'r' ? ROO_NAMES : HEN_NAMES).filter(n => !used.has(n)), name = names.length ? names[Math.floor(hash01(e.id + '|name') * names.length)] : (e.sex === 'r' ? ROO_NAMES : HEN_NAMES)[0];
     const pers = (e.sex === 'r' ? PERS.filter(x => x !== 'mum') : PERS)[Math.floor(hash01(e.id + '|pers') * (e.sex === 'r' ? 4 : 5))];
     const b = { id: e.id, name, sex: e.sex, breed: e.line, pers, since: now, exp: e.stars * 100 - 100, trust: 0, happy: 0, ros: [0, 0, 0, 0, 0, 0, 0, 0, 0] };      // (her rating as a youngster: her stars to start)
-    R.splice(k, 1); (this.data.basket = this.data.basket || []).push(b); this.save();
+    R.splice(k, 1);
+    const home = this.data.coops.find(c => c.breed === e.line);
+    if (home) {                                                          // (her colour's coop: straight in, as a coop's own bird)
+      const nb = { id: b.id, name: b.name, sex: b.sex, breed: b.breed, pers: b.pers, coop: home.id, since: b.since, exp: b.exp, trust: 0 };
+      if (b.sex === 'h') nb.laid = now; nb.happy = 0; nb.ros = b.ros; this.data.birds.push(nb); this.save();
+      return { ...nb, home };
+    }
+    (this.data.basket = this.data.basket || []).push(b);
+    this.save();
     return b;
   }
   sellRare(id) {
@@ -1220,9 +1254,9 @@ export class Game {
                 (this.data.rare = this.data.rare || []).push({ id, line: k.rare, sex: k.sex, stars: k.stars, coop: c.id, i, mum: br.hen, t: grown });
                 return { ...k, coins: 0, wait: id };
               }
-              return { ...k, coins: rarePrice(k.stars), full: true };     // (the trio of that colour complete: sold for you)
+              return { ...k, coins: BREED_INFO[c.breed].rare ? Math.round(rarePrice(k.stars) * RARE.bred) : rarePrice(k.stars), full: true };     // (the trio of that colour complete: sold for you; a rare pair's own, for less)
             });
-            const coins = kids.reduce((a, k) => a + k.coins, 0), xp = kids.reduce((a, k) => a + XPV.chick + XPV.star * k.stars, 0), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
+            const coins = kids.reduce((a, k) => a + k.coins, 0), xp = Math.round(kids.reduce((a, k) => a + XPV.chick + XPV.star * k.stars, 0)), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
             this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null;
             if (hen) { hen.laid = Math.max(hen.laid, grown); hen.exp = Math.min(1e7, hen.exp + EXP_MUM); }       // (her lays while she was busy don't come back)
             if (dad) dad.exp = Math.min(1e7, dad.exp + EXP_DAD);
@@ -1238,7 +1272,7 @@ export class Game {
         if (t < now - CATCH_UP || t < c.lastBrood + DAY_MS || t < this.data.made + DAY_MS || this.feedAt(c, t) <= 0) continue;
         const day = dayStart(t);
         for (const h of this.birdsIn(c.id).filter(x => x.sex === 'h')) {
-          if (hash01(h.id + '|brood|' + day) >= (h.pers === 'mum' ? BROODY_P.mum : BROODY_P.other)) continue;
+          if (hash01(h.id + '|brood|' + day) >= (h.pers === 'mum' ? BROODY_P.mum : BROODY_P.other) * (BREED_INFO[c.breed] && BREED_INFO[c.breed].rare ? RARE.broody : 1)) continue;      // (a rare pair: less often)
           const n = (h.pers === 'mum' ? 3 : 2) + (hash01(h.id + '|n|' + day) < 0.5 ? 1 : 0);
           c.brood = { hen: h.id, start: t, n, hatched: false }; h.laid = Math.max(h.laid, t);
           out.push({ type: 'broody', coop: c.id, hen: h.id, n, t });

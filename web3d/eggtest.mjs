@@ -1,6 +1,6 @@
 // The game, release 1 step 3 (eggs and feed): node eggtest.mjs   (LANG=fr: a French phone; W, H: the screen, e.g. W=874 H=402)
 // A fresh farm at 10:00 on a fake clock: the first egg (the good mum walks in and lays it, the bubble shows 1); collected
-// (the eggs fly to the coins: +6 coins; fresh, collected within 3 hours of being laid: 1 XP and 3 more); two days away: the eggs laid meanwhile are there, the feeder low; three
+// (the eggs fly to the coins: +6 coins; fresh, collected within 3 hours of being laid: 1 XP and 2 more); two days away: the eggs laid meanwhile are there, the feeder low; three
 // days: empty, no eggs after it ran out; the feeder's card and filling it (the farmer brings the feed, the grain rises,
 // coins down); a full nest stops the laying; a reload keeps it all; eggs laid long ago: 1 XP each, none fresh; a save changed
 // outside the game is checked and flagged (when its eggs were laid too);
@@ -44,7 +44,7 @@ await p.evaluate(() => window.__farm.collectAt(0));
 const flying = await p.evaluate(() => document.querySelectorAll('.gegg').length);
 await p.waitForTimeout(1200);
 s = await state();
-ok('collected: sold for 6 coins; fresh: 1 + 3 XP ("fresh"), the nest empty, the bubble gone, an egg flew', flying >= 1 && s.coins === 106 && s.xp === 4 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && /\+6/.test(s.hint) && (fr ? /tout frais/ : /fresh/).test(s.hint) && /\+4 XP/.test(s.hint), { flying, ...s });
+ok('collected: sold for 6 coins; fresh: 1 + 2 XP ("fresh"), the nest empty, the bubble gone, an egg flew', flying >= 1 && s.coins === 106 && s.xp === 3 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && /\+6/.test(s.hint) && (fr ? /tout frais/ : /fresh/).test(s.hint) && /\+3 XP/.test(s.hint), { flying, ...s });
 // away for two days: the eggs laid meanwhile are there (no walking in), the feeder low
 const day = 86400e3;
 await setT(T0 + 2 * day - 3600e3);

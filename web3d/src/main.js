@@ -300,7 +300,9 @@ const parts = {};
 // "Roof in its colour", so each shows from the farm's view), and its frames, door, round window, pop door and roof trim
 // (the white Silkies' keeps its green roof and red). Made once from the model's own vertex colours: house_sil@black,
 // rustic_sil@black (faded, as the rustic's own), popdoor_sil@black. Each: [frames, trim, roof]
-const SIL_TINT = { black: ['#34343e', '#22222a', '#4b4b57'], buff: ['#d4a24a', '#9c7430', '#c9a05c'], blue: ['#5d7099', '#3e4d6e', '#61759b'], partridge: ['#8c5129', '#5c3418', '#8a5a36'], grey: ['#8f9395', '#5f6365', '#8d9296'] };
+const SIL_TINT = { black: ['#34343e', '#22222a', '#4b4b57'], buff: ['#d4a24a', '#9c7430', '#c9a05c'], blue: ['#5d7099', '#3e4d6e', '#61759b'], partridge: ['#8c5129', '#5c3418', '#8a5a36'], grey: ['#8f9395', '#5f6365', '#8d9296'],
+  // the rare colours' own coops (release 2 step 3)
+  paint: ['#2a2a30', '#1c1c22', '#e6e2d8'], lavender: ['#9b8fb5', '#6e6288', '#b0a5c6'], red: ['#a8431c', '#76300f', '#b4552b'], splash: ['#7a879b', '#566173', '#d3d8df'], cuckoo: ['#4d5058', '#33363c', '#5d646e'] };
 function tintSilkieCoops(glb) {
   const out = [], lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, FADE = new THREE.Color('#8c8780');
   // the model's colours to change: [its colours, the first the reference], which of the two tints, faded (the rustic's)
@@ -3462,7 +3464,9 @@ function chickCard(ch) {
 function keepRare(id) {
   const b = game.keepRare(id); if (!b) return;
   for (const p of gamePlots()) syncRare(p);
-  hint(game.t(b.sex === 'h' ? 'rare_kept' : 'rare_kept_r', { name: b.name })); gameUI.refresh(); wake(1500);
+  const home = b.home && gamePlots().find(p => p.gc.id === b.home.id);      // (her colour's coop on the farm: she joins it)
+  if (home) addGameBird(home, game.bird(b.id));
+  hint(b.home ? game.t('rare_kept_home', { name: b.name, coop: game.coopName(b.home) }) : game.t(b.sex === 'h' ? 'rare_kept' : 'rare_kept_r', { name: b.name })); gameUI.refresh(); wake(1500);
 }
 function sellRare(id) {
   const r = game.sellRare(id); if (!r) return;
@@ -3954,10 +3958,10 @@ function placeCoop() {
   if (p.draft) {                                            // a new breed's coop: on the farm now, its trio with it
     const c = game.placeCoop(p.draft, at, [...ids]);
     if (!c) { [V.trees, V.bushes, V.rocks] = keep; endMove(false); return false; }
-    p.gc = c; delete p.draft;
-    const names = game.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
-    said = game.t('welcome_trio', { names: names.slice(0, -1).join(', ') + ' ' + game.t('and') + ' ' + names[names.length - 1] });
-    gameUI.refresh();
+    const rare = !!p.draft.rare; p.gc = c; delete p.draft;
+    const names = joinNames(game.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name));
+    said = game.t(rare ? 'rare_home' : 'welcome_trio', { names });      // (a rare colour's: its birds from the basket, home at last)
+    gameUI.refresh(); if (rare) gameUI.bumpCoins();
   } else game.moveCoop(p.gc.id, at.x, at.z, at.deg, [...ids]);
   for (const o of clear) clearAway(o);
   endMove(true);
@@ -4098,8 +4102,18 @@ function farmhouseAt(r) {
   farmhouseAt.dist = p ? p.applyMatrix4(HOUSE_HIT.m).distanceTo(r.origin) : Infinity;
   return !!p;
 }
+const joinNames = n => n.length > 1 ? n.slice(0, -1).join(', ') + ' ' + game.t('and') + ' ' + n[n.length - 1] : n[0] || '';
+// a forever bird joining her coop on the farm (a rare one kept, her colour's coop there already): as makePlot draws them
+function addGameBird(plot, gb) {
+  const h = gb.sex === 'r' ? PEN.hens.find(x => x.model === 'rooster') : PEN.hens.filter(x => x.model === 'hen')[plot.birds.filter(b => b.gid && b.kind === 'hen').length % 2];
+  const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, rng(311 + plots.indexOf(plot) * 17 + allBirds.length));
+  b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
+  if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
+  plot.birds.push(b); allBirds.push(b); heartOver(b);
+  return b;
+}
 function startPlace(breed) {
-  if (MOVE.plot || DMOVE.id || inside.open || !game.waitingCoops().includes(breed)) return false;
+  if (MOVE.plot || DMOVE.id || inside.open || !game.placeable(breed)) return false;
   const at = placeSpot(breed); if (!at) { hint(game.t('no_room')); return false; }
   const d = game.draftCoop(breed, at); if (!d) return false;
   const p = makePlot(Math.max(-1, ...plots.map(q => q.index)) + 1, [at.x, 0, at.z], at.deg, d.coop, rng(97 + plots.length), 'coop', d.birds);
