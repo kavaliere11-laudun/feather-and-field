@@ -59,6 +59,12 @@ export class FarmDog {
   }
 
   // back to how he'd be at this hour, as when the page opens (the morning replay's cast, before each showing)
+  // the game: his kennel moved (the player's), and him back at it
+  setKennel(kennel) {
+    const [kx, kz, kh] = kennel, th = kh - Math.PI / 2;
+    this.k = { x: kx, z: kz, h: kh, c: Math.cos(th), s: Math.sin(th) };
+    this.reset();
+  }
   reset() {
     const d = this.dog;
     this.guard = null; this.heard = 0; this.barkT = 0; this.placed = false; this.bedtime = false; this.asleep = false;
@@ -391,7 +397,7 @@ export class FarmDog {
   }
   // ---- the geese: up on them low and slow with the stare, until Gertrude has had enough
   geeseOk() {
-    const F = this.geeseOf(); if (!F || F.guarding) return false;
+    const F = this.geeseOf(); if (!F || F.guarding || !F.geese.length) return false;              // (the game: none bought)
     const [G] = F.geese; return !G.asleep && G.wet < 0.1 && !/^(bed|scold|guard|swim|out)/.test(G.task ? G.task.name : '');
   }
   geeseTask() {
@@ -402,6 +408,8 @@ export class FarmDog {
     let from = null;
     for (const t of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.1]) { const x = G.pos.x + Math.sin(a + t) * 3, z = G.pos.z + Math.cos(a + t) * 3; if (!from && (!this.nav || this.nav.freeAt(x, z))) from = [x, z]; }
     if (!from) return null;
+    // (the game: the pond's fields fenced off until they're yours, so only if he can get to her, and up to her from there)
+    if (this.nav && (!this.nav.find(this.dog.pos.x, this.dog.pos.z, from[0], from[1]) || !this.nav.clearLine(from[0], from[1], G.pos.x, G.pos.z, 0.1))) return null;
     const st = { teased: false };
     return seq(this.go(from[0], from[1], 'trot'), {
       name: 'stalk', t: 0, run(f, dt) {                      // the herding crouch, the eye, a slow creep

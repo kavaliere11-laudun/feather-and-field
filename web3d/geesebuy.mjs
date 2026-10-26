@@ -14,7 +14,7 @@ const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-un
 const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: SHOTS ? 2 : 1, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London' });
 const T0 = new Date('2026-10-26T11:00:00Z').getTime();
 await ctx.addInitScript(t0 => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || t0); Date.now = () => window.__T; }, T0);
-const p = await ctx.newPage();
+const p = await ctx.newPage(); p.setDefaultNavigationTimeout(120000);       // (a busy machine loads slowly)
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };

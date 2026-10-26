@@ -17,7 +17,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
-import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog } from './beasts.js';
+import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog, setBeastLang } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE, setGooseLang } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE, gameText, baseBreed, silColour } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -48,8 +48,9 @@ let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
-// (the game: the geese once bought, release 3)
+// (the game: the geese and the dog once bought, release 3)
 const geeseOwned = () => GAME_MODE ? !!(game.data && game.animalOwned('geese')) : HAS_GEESE;
+const dogOwned = () => GAME_MODE ? !!(game.data && game.animalOwned('dog')) : HAS_DOG;
 const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
@@ -376,7 +377,7 @@ async function start() {
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
     loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json'), loadGLB('farmer.glb'), loadJSON('farmer.json'), loadGLB('decor.glb'), loadJSON('decor.json')]);
   if (welcome) game.newFarm(await welcome);
-  if (GAME_MODE) { LANG = game.lang; FARMER_LOOK = game.data.farmer.look; document.documentElement.lang = LANG; }
+  if (GAME_MODE) { LANG = game.lang; FARMER_LOOK = game.data.farmer.look; document.documentElement.lang = LANG; dogName = game.dogName(); setBeastLang(LANG); }
   V = plan; PEN = pen; COOPS = coopsInfo;
   tagNature();
   if (GAME_MODE) {                                         // the game: its fields; no set places for coops, so no little paths to them
@@ -408,6 +409,7 @@ async function start() {
   buildPaths();
   placeDecor(decorInfo);
   if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.wheat = [-2.25, -1.25, 2.25, 1.25];      // (the wheat field's footprint: its bed)
+  if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.kennel = [KENNEL.x0 - 0.06, -KENNEL.half - 0.06, 1.45, KENNEL.food[1] + KENNEL.r + 0.02];      // (the dog's kennel: it, his bowls, the grass in front of his door)
   if (GAME_MODE) { settleCoops(); settleDecor(); hidePebbles(); }        // (each coop and decoration where it can stand, what's under it cleared)
   buildProps(); if (GAME_MODE) syncDecor(); else buildDecor();
   buildNature();
@@ -1206,7 +1208,7 @@ function cleanName(s, fallback) {
   return v || fallback;
 }
 function loadDogName() { try { return cleanName(localStorage.getItem(DOG_KEY), DOG_DEFAULT); } catch (e) { return DOG_DEFAULT; } }
-let dogName = loadDogName();
+let dogName = GAME_MODE ? DOG_DEFAULT : loadDogName();          // (the game: the save's, once it's open)
 const DOG_TEXT = { rename: ['Rename {n}', 'Renommer {n}'], label: ["Your dog's name", 'Le nom de votre chien'], save: ['Save', 'Enregistrer'], cancel: ['Cancel', 'Annuler'],
   named: ['Your dog is called {n}', 'Votre chien s’appelle {n}'] };
 const dogT = (k, n) => DOG_TEXT[k][LANG === 'fr' ? 1 : 0].replace('{n}', n || '');
@@ -1215,8 +1217,11 @@ const dogEls = { btn: document.getElementById('dogbtn'), form: document.getEleme
 let dogBtnLeft = 0;
 const dogs = () => [...foxGroups(), ...(farmDog ? [farmDog] : [])].flatMap(g => g.foxes.filter(f => f.role === 'dog'));
 function setDogName(n) {
-  dogName = cleanName(n, DOG_DEFAULT);
-  try { if (dogName === DOG_DEFAULT) localStorage.removeItem(DOG_KEY); else localStorage.setItem(DOG_KEY, dogName); } catch (e) { /* (private browsing: just for now) */ }
+  if (GAME_MODE) dogName = game.renameDog(n) || DOG_DEFAULT;          // (the game: in the save, checked as any name)
+  else {
+    dogName = cleanName(n, DOG_DEFAULT);
+    try { if (dogName === DOG_DEFAULT) localStorage.removeItem(DOG_KEY); else localStorage.setItem(DOG_KEY, dogName); } catch (e) { /* (private browsing: just for now) */ }
+  }
   for (const G of [foxes, foxLineup, farmDog]) if (G) for (const f of G.foxes) if (f.role === 'dog') f.rename(dogName);
   if (kennelBoard) kennelBoard.draw(dogName);
 }
@@ -1289,9 +1294,23 @@ function buildGeese() {
 
 // ------------------------------------------------------------------ Biscuit the farm dog (dog.js): his kennel by the farmhouse, left of the
 // path in front of it, its door turned to the path; his day on the farm. ?dog starts the view on him.
-const KENNEL_AT = [-24.47, -21.64, 1.249];        // x, z, the way its door faces
-let farmDog = null, kennelBoard = null, dogSpots = null;
+const KENNEL_AT = [-24.47, -21.64, 1.249];        // x, z, the way its door faces (the game: where the save has it)
+let farmDog = null, kennelBoard = null, dogSpots = null, DOG_JOINTS = null;
+// the game: his kennel placed like a decoration, turned KENNEL_DEG (its door the way the village's faces)
+const kennelHeading = () => KENNEL_DEG * DEG + Math.PI / 2;
+function kennelFromSave() {
+  const k = game.data && game.kennel(); if (!k || k.x === null || k.z === null) return false;
+  KENNEL_AT[0] = k.x; KENNEL_AT[1] = k.z; KENNEL_AT[2] = kennelHeading(); return true;
+}
+// where the walking grid has his kennel: the village's; the game's as saved, or where it's being put
+function kennelNav() {
+  if (!GAME_MODE) return HAS_DOG ? KENNEL_AT : null;
+  if (DMOVE.id === 'kennel' && DMOVE.at) return [DMOVE.at.x, DMOVE.at.z, kennelHeading()];
+  const k = game.data && game.kennel(); return k && k.x !== null ? [k.x, k.z, kennelHeading()] : null;
+}
 function buildDog(joints) {
+  DOG_JOINTS = joints;
+  if (GAME_MODE) { if (dogOwned() && kennelFromSave()) makeDog(); return; }
   if (!HAS_DOG) return;
   if (parts.kennel) {
     const k = part('kennel'); k.position.set(KENNEL_AT[0], 0, KENNEL_AT[1]); k.rotation.y = KENNEL_AT[2] - Math.PI / 2;
@@ -1302,7 +1321,11 @@ function buildDog(joints) {
     kennelBoard.draw(dogName);
     if (document.fonts && document.fonts.load) document.fonts.load('600 40px Fredoka').then(() => kennelBoard.draw(dogName)).catch(() => {});
   }
-  if (params.get('lineup')) return;                  // (not on the line-up pages)
+  makeDog();
+}
+function makeDog() {
+  if (params.get('lineup') || farmDog || !DOG_JOINTS) return;      // (not on the line-up pages)
+  const joints = DOG_JOINTS;
   farmDog = new FarmDog(scene, { joints, name: dogName, kennel: KENNEL_AT, nav: navGrid(), groundY, spots: farmSpots, geese: () => geeseFlock,
     foxes: () => foxes, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),
     visit: () => params.has('noguard') || params.has('nodog') ? null : nightVisit, den: FOX_DEN }, rng(61));         // (?noguard: he sleeps through it too; ?nodog: just him, as if the farm had only the geese)
@@ -1397,7 +1420,7 @@ function buildNav() {
   const WALK = { bridge: 1, dock: 1, wheat_field: 1, mushrooms: 1 };
   const box = new THREE.Box3(), wb = new THREE.Box3(), inv = new THREE.Matrix4();
   for (const p of V.props) {
-    if (WALK[p.model] || !parts[p.model]) continue;
+    if (WALK[p.model] || p.model === 'kennel' || !parts[p.model]) continue;      // (the game's kennel: below, with its bowls)
     const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1);
     box.setFromObject(parts[p.model]); wb.copy(box).applyMatrix4(m);
     nav.box(inv.copy(m).invert(), box.min.clone().multiplyScalar(1), box.max, GROW / (p.s || 1), wb);
@@ -1419,8 +1442,9 @@ function buildNav() {
     });
   }
   nav.circle(FOX_DEN[0] - Math.sin(FOX_DEN[2]) * 0.08, FOX_DEN[1] - Math.cos(FOX_DEN[2]) * 0.08, 0.68 + GROW);
-  if (HAS_DOG) {                                     // Biscuit's kennel and his bowls
-    const th = KENNEL_AT[2] - Math.PI / 2, m = new THREE.Matrix4().makeRotationY(th).setPosition(KENNEL_AT[0], 0, KENNEL_AT[1]);
+  const KA = kennelNav();
+  if (KA) {                                          // Biscuit's kennel and his bowls
+    const th = KA[2] - Math.PI / 2, m = new THREE.Matrix4().makeRotationY(th).setPosition(KA[0], 0, KA[1]);
     const lo = new THREE.Vector3(KENNEL.x0 - 0.1, 0, -KENNEL.half - 0.1), hi = new THREE.Vector3(KENNEL.x1 + 0.06, 0, KENNEL.half + 0.1);
     wb.makeEmpty(); for (const x of [lo.x, hi.x]) for (const z of [lo.z, hi.z]) wb.expandByPoint(new THREE.Vector3(x, 0, z).applyMatrix4(m));
     nav.box(inv.copy(m).invert(), lo, hi, GROW, wb);
@@ -1519,7 +1543,7 @@ function buildFarmer() {
     return { coops, farm: [...S.farm, ...decorSpots] };          // (the farmer stops by the decorations too)
   };
   farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge, greet: greetFarmer,
-    kennel: kd && HAS_DOG ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
+    kennel: kd && (HAS_DOG || (GAME_MODE && farmDog)) ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
     others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : [])],
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), inView: (x, z) => inView(x, z, 2.2) }, rng(71));
 }
@@ -2975,6 +2999,7 @@ function tapAt(x, y) {
   if (best.isFarmer) best.life.tapped(); else if (best.fam) best.fam.tapped(best); else if (best.isGoose) best.tapped(VIEW_DIR); else if (best.pond) best.pond.tapped(best); else best.tapped();
   if (GAME_MODE) { henOff(); if (best.gid) openBirdCard(best); else if (best.gameChick && best.plot.gc) chickCard(best); else if (gameUI.kind === 'bird') gameUI.close(); }
   else if (best.role === 'dog') { dogTapped(); henOff(); }
+  if (GAME_MODE && best.role === 'dog') dogTapped();          // (the game's dog: a button to rename him too)
   else if (best.plot && best.rig && !best.isGoose) henTapped(best); else henOff();
   tagBird = best; tagLeft = 2.8;
   tag.textContent = best.label;
@@ -4212,6 +4237,8 @@ function underDecor(x, z, m = 0) {
   for (const o of game.data.decor || []) { if (o.x === undefined || o.x === null) continue; const [lx, lz] = inSpot(decSp(o.x, o.z), x, z); if (decGap(o.id, lx, lz) <= m) return true; }
   const W = game.data.wheat;                                // (and the wheat field)
   if (W && W.x !== null && DECOR_INFO.foot.wheat) { const [lx, lz] = inSpot(decSp(W.x, W.z, W.deg), x, z); if (decGap('wheat', lx, lz) <= m) return true; }
+  const K = game.kennel();                                  // (and the dog's kennel)
+  if (K && K.x !== null && DECOR_INFO.foot.kennel) { const [lx, lz] = inSpot(decSp(K.x, K.z, KENNEL_DEG), x, z); if (decGap('kennel', lx, lz) <= m) return true; }
   if (DMOVE.id && DMOVE.at) { const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z, DMOVE.at.deg), x, z); if (decGap(DMOVE.id, lx, lz) <= m) return true; }
   return false;
 }
@@ -4316,6 +4343,21 @@ function settleDecor() {
       addDecor('wheat', W.x, W.z, W.deg);
     }
   }
+  // the dog's kennel (release 3): where the save has it, or the nearest good spot to it (none: near the farmhouse)
+  const K = game.data.animals && game.data.animals.dog;
+  if (K && DECOR_INFO.foot.kennel && parts.kennel) {
+    if (K.x === null || K.z === null || !decorSpot('kennel', K.x, K.z, KENNEL_DEG).ok) {
+      const fh = V.props.find(p => p.model === 'farmhouse'), vl = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), c = fh ? [fh.pos[0] + VIEW_DIR.x / vl * 4, fh.pos[2] + VIEW_DIR.z / vl * 4] : [HOME_COOP.x, HOME_COOP.z];
+      const f = decorFreeNear('kennel', K.x !== null && K.z !== null ? K.x : c[0], K.x !== null && K.z !== null ? K.z : c[1], 40, false, [KENNEL_DEG]);
+      if (f) { K.x = f.x; K.z = f.z; } else { K.x = K.z = null; }
+      changed = true;
+    }
+    if (K.x !== null) {
+      for (const t of decorSpot('kennel', K.x, K.z, KENNEL_DEG).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); changed = true; }
+      V.trees = V.trees.filter(t => !gone.has(t.id)); V.bushes = V.bushes.filter(t => !gone.has(t.id)); V.rocks = V.rocks.filter(t => !gone.has(t.id));
+      addDecor('kennel', K.x, K.z, KENNEL_DEG);
+    }
+  }
   if (changed) game.save();
 }
 // its own copy of the model (and the windmill's sails), not yet anywhere
@@ -4325,6 +4367,12 @@ function decorModel(id) {
     if (parts.wheat_field) for (const m of meshesOf(parts.wheat_field)) { nightGrade(m.material); const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.receiveShadow = true; g.add(k); }
     g.userData.wheat = wheat(null, 4.4, 2.4, g);
     return g;
+  }
+  if (id === 'kennel') {                                    // (the dog's kennel: his name on the board over the door)
+    kennelBoard = kennelBoard || nameBoard(); const [bx, by] = KENNEL.board;
+    kennelBoard.mesh.position.set(bx + 0.003, by, 0); kennelBoard.mesh.rotation.y = Math.PI / 2; g.add(kennelBoard.mesh);
+    kennelBoard.draw(dogName);
+    if (document.fonts && document.fonts.load) document.fonts.load('600 40px Fredoka').then(() => kennelBoard.draw(dogName)).catch(() => {});
   }
   for (const m of meshesOf(parts[id])) {
     if (m.material && m.material.name === 'glass') { m.material.transparent = true; m.material.opacity = 0.34; m.material.depthWrite = false; }
@@ -4376,6 +4424,8 @@ function syncDecor() {
   }
   const W = game.wheat();                                   // (the wheat field, as the save has it)
   if (W.x !== null && DECOR_INFO.foot.wheat && !(DMOVE.id === 'wheat')) { addDecor('wheat', W.x, W.z, W.deg); FIELD.shown = ''; tickWheat(); }
+  const K = game.kennel();                                  // (the dog's kennel, as the save has it)
+  if (K && K.x !== null && parts.kennel && DECOR_INFO.foot.kennel && DMOVE.id !== 'kennel') { const it = addDecor('kennel', K.x, K.z, KENNEL_DEG); if (!decorList.includes(it.d)) decorList.push(it.d); }
   const w = DEC.items.windmill; sails = w ? w.group.userData.sails || null : null;
   decorLifeAgain();
 }
@@ -4405,11 +4455,13 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id) }; }
+function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id),
+  moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
 // player's tap). See them: the view to them
 function buyAnimal(id) {
+  if (id === 'dog') return startDecor('kennel');                   // (the dog: his kennel placed first, paid for once it's down)
   if (id !== 'geese' || !geeseFlock || !geeseFlock.pair) return false;
   const r = game.buyAnimal(id); if (!r) return false;
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
@@ -4421,9 +4473,9 @@ function buyAnimal(id) {
   return true;
 }
 function seeAnimal(id) {
-  if (id !== 'geese' || !geeseFlock || !geeseFlock.geese.length) return;
-  gameUI.close();
-  const c = geeseFlock.centre(new THREE.Vector3()); focusOn(c.x, c.z, Math.min(view.max, sideways() ? 2.2 : 2.8));
+  const c = id === 'dog' ? farmDog && farmDog.dog.pos : id === 'geese' && geeseFlock && geeseFlock.geese.length ? geeseFlock.centre(new THREE.Vector3()) : null;
+  if (!c) return;
+  gameUI.close(); focusOn(c.x, c.z, Math.min(view.max, sideways() ? 2.2 : 2.8));
 }
 // ---- the farmer's outfits (the shop's second shelf; farmer.js loadOutfit, wear): bought and put on at once, or another
 // worn; the farm's farmer in it (each outfit's hat and bits loaded only when worn), and on show day too. Bought: the view
@@ -4454,6 +4506,7 @@ async function wearOutfit(id) {
   return true;
 }
 function decorCard(id) {
+  if (id === 'kennel') { shopSheet('animals'); return; }         // (the dog's kennel: the Animals shelf, with his buttons)
   holdBird(null); henOff();
   gameUI.decorCard(id, () => startDecor(id));
 }
@@ -4488,13 +4541,13 @@ function decorFootMark(id) {
   return m;
 }
 function startDecor(id) {
-  const isW = id === 'wheat';                               // (the wheat field: moved the same way, and turned)
-  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR_INFO || (isW ? !DECOR_INFO.foot.wheat || FIELD.work : !DECOR[id] || DECOR[id].pond || !parts[id])) return false;
-  const own = isW ? game.wheat() : game.decorOwned(id);
-  if (!own && (!game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
+  const isW = id === 'wheat', isK = id === 'kennel';       // (the wheat field: moved the same way, and turned; the dog's kennel (release 3): bought and moved the same way)
+  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR_INFO || (isW ? !DECOR_INFO.foot.wheat || FIELD.work : isK ? !DECOR_INFO.foot.kennel || !parts.kennel : !DECOR[id] || DECOR[id].pond || !parts[id])) return false;
+  const own = isW ? game.wheat() : isK ? game.kennel() : game.decorOwned(id);
+  if (!own && (isK ? !game.animalNext('dog') || game.data.coins < ANIMALS.dog.price : !game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
   gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   let at = own && own.x !== null ? { x: own.x, z: own.z, deg: own.deg || 45 } : null;
-  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : [45]); if (!at) { hint(game.t('dec_no_room')); return false; } }
+  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : isK ? [KENNEL_DEG] : [45]); if (!at) { hint(game.t('dec_no_room')); return false; } }
   DMOVE.id = id; DMOVE.buy = !own; DMOVE.from = own && own.x !== null ? { ...at } : null; DMOVE.at = { ...at }; DMOVE.moved = false; DMOVE.nav = false;
   DMOVE.item = addDecor(id, at.x, at.z, at.deg);
   decorLifeAgain(id);                                       // (its bees and birds wait till it's down)
@@ -4560,18 +4613,35 @@ function putDecor() {
     DMOVE.spot = { ok: false, why: 'dec_bad_way', clear: [] }; DMOVE.foot.material.color.set(FOOT_NO); gameUI.moveStatus(game.t('dec_bad_way'), false);
     return false;
   }
-  let said;
+  let said, dogCame = false;
   if (DMOVE.buy) {
-    const r = game.buyDecor(id, at, [...ids]);
+    const r = id === 'kennel' ? game.buyAnimal('dog', Date.now(), at, [...ids]) : game.buyDecor(id, at, [...ids]);
     if (!r) { [V.trees, V.bushes, V.rocks] = keep; endDecor(false); return false; }
-    said = game.t('dec_placed', { name: game.decorName(id), xp: r.xp });
+    said = id === 'kennel' ? game.t('dog_came', { name: game.dogName(), xp: r.xp }) : game.t('dec_placed', { name: game.decorName(id), xp: r.xp });
+    dogCame = id === 'kennel';
     gameUI.refresh(); gameUI.bumpCoins();
   } else if (id === 'wheat') { game.placeWheat(at, [...ids]); said = game.t('dec_moved', { name: game.t('wheat_title') }); }
+  else if (id === 'kennel') { game.moveKennel(at, [...ids]); said = game.t('kennel_moved', { name: game.dogName() }); }
   else { game.moveDecor(id, at, [...ids]); said = game.t('dec_moved', { name: game.decorName(id) }); }
   for (const o of clear) clearAway(o);
   endDecor(true);
   hint(said);
+  if (id === 'kennel') dogHome(dogCame);
   return true;
+}
+// the dog's kennel put down (release 3): bought, he comes to live in it (out in front of his door, a hop and a play bow at
+// you) and the card for his name opens ("Choose his name, or keep Biscuit."); moved, he's back at it
+function dogHome(came) {
+  if (!kennelFromSave()) return;
+  if (!farmDog) makeDog(); else farmDog.setKennel(KENNEL_AT);
+  if (farmLife) { const nav = navGrid(), kh = KENNEL_AT[2], kd = nav.nearestIn(farmReach(), KENNEL_AT[0] + Math.sin(kh) * 1.7, KENNEL_AT[1] + Math.cos(kh) * 1.7, 0.8); farmLife.o.kennel = kd ? [kd[0], kd[1]] : null; }      // (the farmer's pat at his door)
+  if (kennelBoard) kennelBoard.draw(dogName);
+  renderer.shadowMap.needsUpdate = true; wake(1500);
+  if (came && farmDog) {
+    farmDog.tapped(farmDog.dog);                             // (a hop and a play bow at you)
+    hintNext(game.t('dog_name_now'));
+    setTimeout(() => { if (!DMOVE.id && !MOVE.plot) openDogName(); }, 900);
+  }
 }
 function endDecor(placed) {
   const id = DMOVE.id; if (!id) return;
@@ -5422,7 +5492,7 @@ window.__farm = {
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
   animal: { buy: id => buyAnimal(id), see: id => seeAnimal(id), owned: () => geeseOwned() },
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
-    spot: (id, x, z) => { const S = decorSpot(id, x, z); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true), way: (id, x, z) => decorWayOk(id, x, z),
+    spot: (id, x, z) => { const S = decorSpot(id, x, z, id === 'kennel' ? KENNEL_DEG : 45); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45]), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,

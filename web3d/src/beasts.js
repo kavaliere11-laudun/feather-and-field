@@ -7,7 +7,8 @@ import * as THREE from 'three';
 import { addFur, R, furMaterial, furHooks, indoorMaterial } from './birds.js';
 
 let MODELS = {};
-const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+let FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+export const setBeastLang = lang => { FR = lang === 'fr'; };          // (the game: the player's language, before they're made)
 export function initBeasts(gltf, json) {
   MODELS = {};
   for (const child of gltf.scene.children) {
@@ -406,7 +407,7 @@ class Fox {
   }
   rename(name) {               // (the dog's name is the player's to choose: main.js checks it before it gets here)
     const k = this.kind, role = this.role; this.name = name;
-    this.label = name + (role === 'dog' ? ' · ' + (FR ? 'border collie' : 'Border Collie') : k === 'cub' ? ' · fox cub' : role === 'dad' ? ' · red fox, the dad' : ' · red fox, the mum');
+    this.label = name + ' · ' + (role === 'dog' ? (FR ? 'border collie' : 'Border Collie') : k === 'cub' ? (FR ? 'renardeau' : 'fox cub') : role === 'dad' ? (FR ? 'renard roux, le papa' : 'red fox, the dad') : (FR ? 'renarde, la maman' : 'red fox, the mum'));
   }
   get pos() { return this.root.position; }
   // turn towards a heading: the turn eases in and settles as he lines up (no snapping into a turn, or out of it)

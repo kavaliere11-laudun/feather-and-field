@@ -3,7 +3,8 @@
 // Profiles: 'daily' (once a day, 19:00), 'twice' (8:00 and 19:00), 'often' (every 3 hours, 8:00 to 23:00). At each visit
 // the player does everything a keen player would: collects the eggs and the honey, fills the feeders (grain first), sows
 // and harvests the wheat, cuddles every bird, enters the best bird in each open show, collects the jobs, buys the next field
-// when it can, places a new breed's coop, and buys decorations and outfits once they leave a reserve for feed and land.
+// when it can, places a new breed's coop, and buys decorations, the geese and the dog, and outfits once they leave a reserve
+// for feed and land.
 // Prints, for each profile: the level reached on days 7, 30, 90, 180, 365, the day each level comes, the coins, the
 // birds, and where the coins came from.
 globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
@@ -66,6 +67,7 @@ function simulate(name, seed) {
       const keep = (g.landNext() ? g.landNext().price : 0) + 60 * g.data.coops.length;
       for (const line of g.rareCoops()) if (g.data.coins - G.RARE.coop >= keep) { spot++; const dft = g.draftCoop(line, { x: spot * 6, z: 0, deg: 90 }); if (dft && track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 }))) spend.rare = (spend.rare || 0) + G.RARE.coop; }      // (a rare colour's own coop)
       for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (track('decor', () => g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 }))) spend.decor += DECOR[id].price; }
+      for (const id of Object.keys(G.ANIMALS)) if (g.animalNext(id) && g.data.coins - G.ANIMALS[id].price >= keep) { spot++; if (track('animals', () => g.buyAnimal(id, NOW, { x: -spot * 4, z: 14 }))) spend.animals = (spend.animals || 0) + G.ANIMALS[id].price; }      // (the geese and the dog, release 3)
       for (const id of Object.keys(OUTFITS)) if (g.outfitNext(id) && g.data.coins - OUTFITS[id].price >= keep) { if (track('outfits', () => g.buyOutfit(id))) spend.outfits += OUTFITS[id].price; }
       const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
     }

@@ -663,7 +663,8 @@ export class GameUI {
     }
   }
   // the animals (the shop's second shelf, release 3: the guardians): each with its picture, what it is, and Buy (h.buyAnimal:
-  // it comes to the farm at once), or its level to come, or not enough coins yet; one on the farm: where it lives, See (h.see)
+  // the geese come at once; the dog's kennel is placed first, like a decoration), or its level to come, or not enough coins
+  // yet; one on the farm: where it lives, See (h.see); the dog: Move his kennel (h.moveKennel), Rename (h.rename)
   animalCards(b, h, fmt) {
     const g = this.g;
     for (const id of Object.keys(ANIMALS)) {
@@ -672,12 +673,18 @@ export class GameUI {
       const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.animalName(id)), el('p', 'gnote gdec-l', this.t('anil_' + id)));
-      if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('ani_owned')));
+      if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t(A.kennel ? 'ani_dog_owned' : 'ani_owned')));
       else if (lock) info.append(el('p', 'gpage-s', this.t('dec_level', { n: A.level })));
       else { const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(A.price) + ' · ' + this.t('dec_xp', { xp: animalXp(id) }))); info.append(pr); }
-      if (own && h.see) { const sb = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('ani_see')); sb.type = 'button'; sb.addEventListener('click', () => h.see(id)); info.append(sb); }
+      if (own) {
+        const row = el('div', 'gani-btns'), btn = (k, f) => { const b = el('button', 'gbtn galt gsmallbtn', this.t(k)); b.type = 'button'; b.addEventListener('click', f); row.append(b); };
+        if (h.see) btn(A.kennel ? 'ani_see_dog' : 'ani_see', () => h.see(id));
+        if (A.kennel && h.moveKennel) btn('ani_move_kennel', () => h.moveKennel());
+        if (A.kennel && h.rename) btn('ani_rename', () => h.rename());
+        info.append(row);
+      }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t('ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
         info.append(go);
       }

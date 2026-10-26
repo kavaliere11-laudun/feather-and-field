@@ -2244,3 +2244,32 @@ the birds already had.
   on land only on the pond's two fields or its bank, Hector never far), a tap, the shelf's See them, a reload, bedtime, two
   changed saves. dectest updated (the shop's title). `geesebuyfilm.mjs OUT [fps]`: the film (the shop, buying, the
   arrival, a tap on Gertrude).
+
+## Release 3, step 2: the dog to buy (26 Oct 2026, the guardians' second piece; his name as Audrey asked on 23 Oct: "People should be able to choose the name of the dog, the default can be biscuit")
+
+- **On the Animals shelf** from level 9: "Biscuit, the farm dog" ("Biscuit, le chien de la ferme"), 4,000 coins, +80 XP
+  (`ANIMALS.dog`), with his picture (`decor/dog.webp`: `animalpics.mjs`, `ONLY=dog`: Biscuit pleased to see you in front of
+  a copy of the village's kennel, his name over the door). The level-9 card says "New to buy: Biscuit, the farm dog".
+- **"Buy and place · 4,000":** his kennel is placed like a decoration (`startDecor('kennel')`: the green or red outline on
+  the ground round it, his bowls and the grass in front of his door, `DECOR_INFO.foot.kennel`; drag it or tap where it
+  goes; only on your land, not on a lane, with room; what's in the way cleared), always turned the way the village's
+  faces, its door to you a little to the right (`KENNEL_DEG`). "Put it here": paid for then; out he comes in front of his
+  door with a hop and a play bow at you, "Biscuit has come to live on your farm! +80 XP", and a moment later the card for
+  his name opens ("Your dog's name", Biscuit ready to keep or change; "Choose his name, or keep Biscuit."). Saved: "Your dog
+  is called …", his label, the board over his door and the shelf all say it.
+- **On the shelf once he's yours:** "✓ On your farm", See him (the view to him), Move his kennel (the same placing; he's
+  back at it once it's down, "Pepper's kennel: moved!"), Rename. A tap on the kennel opens the shelf; a tap on him: his
+  name and "Rename …" for a few seconds, as on the village page.
+- **His day** is the village page's (`FarmDog`, `makeDog()`): rounds to the coops, naps, meals, his ball, play, watching
+  the farm, the farmer's pat at his door; asleep in his kennel at night. The kennel and bowls are in everyone's way on the
+  walking grid (`kennelNav()`: as saved, or where it's being put). He only creeps up on the geese if he can get to them
+  (the pond's fields are fenced off until they're yours; `geeseTask`), and never when there are none.
+- **Language:** the dog's and the foxes' labels follow the game's language (`setBeastLang`; the foxes' are now in French
+  too: "renardeau", "renard roux, le papa", "renarde, la maman").
+- **Save checks:** the dog only from level 9; his name checked as any name (no `< > & " \` { } [ ] =`, spaces tidied, at
+  most 20 letters, empty: Biscuit), his kennel on the quarter-metre; a kennel that can't stand where it is any more is put
+  at the nearest good spot when the farm opens (`settleDecor`).
+- **The balance:** `balsim.mjs` buys the geese and the dog too (5,200 coins): still level 30 in about a year once a day.
+- `dogbuy.mjs` (new; English upright, French sideways): level 8 (none, the shelf says level 9), the level-9 card, too few
+  coins, placing the kennel, buying, his name, the shelf, four minutes of his day (never into anything outside his own
+  kennel), moving his kennel, a tap on it, a reload, the night, two changed saves.

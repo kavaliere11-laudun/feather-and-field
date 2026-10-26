@@ -107,6 +107,9 @@ const TEXT = {
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
     shop_decor: 'Decorations', shop_outfits: 'Outfits', outfits_note: 'New clothes for {farmer}. Each one gives XP when you buy it.',
     shop_animals: 'Animals', ani_geese: 'Gertrude and Hector, the geese', anil_geese: 'A pair of geese for the pond: they graze, swim, honk at everything and squabble now and then.',
+    ani_dog: '{name}, the farm dog', anil_dog: 'A Border Collie with his kennel and his ball: he does his rounds of the coops, plays, teases the geese, and you choose his name.',
+    ani_dog_owned: 'On your farm', ani_see_dog: 'See him', ani_move_kennel: 'Move his kennel', ani_rename: 'Rename', kennel_name: 'Kennel',
+    dog_came: '{name} has come to live on your farm! +{xp} XP', dog_name_now: 'Choose his name, or keep Biscuit.', kennel_moved: '{name}’s kennel: moved!',
     ani_buy: 'Buy · {c}', ani_owned: 'At the pond', ani_see: 'See them', geese_came: 'Gertrude and Hector have come to live by the pond! +{xp} XP', geese_hello: 'Tap a goose to say hello.',
     of_classic: 'Classic', of_market: 'Market day', of_garden: 'Garden party', of_winter: 'Winter woollies', of_rodeo: 'Rodeo', of_show: 'Show day',
     ofd_classic: 'Straw hat and a checked shirt.', ofd_market: 'Tweed flat cap and a blue checked shirt.', ofd_garden: 'Flowery sun hat and a yellow gingham shirt.', ofd_winter: 'Bobble hat and a green jumper.', ofd_rodeo: 'Cowboy hat, chambray shirt and a neckerchief.', ofd_show: 'Top hat, white shirt and a prize rosette.',
@@ -267,6 +270,9 @@ const TEXT = {
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
     shop_decor: 'Décorations', shop_outfits: 'Tenues', outfits_note: 'De nouveaux habits pour {farmer}. Chacun rapporte de l’XP à l’achat.',
     shop_animals: 'Animaux', ani_geese: 'Gertrude et Hector, les oies', anil_geese: 'Un couple d’oies pour l’étang : elles broutent, nagent, cacardent après tout le monde et se chamaillent de temps en temps.',
+    ani_dog: '{name}, le chien de la ferme', anil_dog: 'Un border collie avec sa niche et sa balle : il fait le tour des poulaillers, joue, taquine les oies, et c’est vous qui choisissez son nom.',
+    ani_dog_owned: 'Dans votre ferme', ani_see_dog: 'Le voir', ani_move_kennel: 'Déplacer sa niche', ani_rename: 'Renommer', kennel_name: 'Niche',
+    dog_came: '{name} vient vivre dans votre ferme ! +{xp} XP', dog_name_now: 'Choisissez son nom, ou gardez Biscuit.', kennel_moved: 'La niche de {name} : c’est déplacé !',
     ani_buy: 'Acheter · {c}', ani_owned: 'À l’étang', ani_see: 'Les voir', geese_came: 'Gertrude et Hector viennent vivre au bord de l’étang ! +{xp} XP', geese_hello: 'Touchez une oie pour lui dire bonjour.',
     of_classic: 'Classique', of_market: 'Jour de marché', of_garden: 'Garden-party', of_winter: 'Lainages d’hiver', of_rodeo: 'Rodéo', of_show: 'Jour de concours',
     ofd_classic: 'Chapeau de paille et chemise à carreaux.', ofd_market: 'Casquette en tweed et chemise à carreaux bleus.', ofd_garden: 'Chapeau fleuri et chemise vichy jaune.', ofd_winter: 'Bonnet à pompon et pull vert.', ofd_rodeo: 'Chapeau de cow-boy, chemise en chambray et foulard.', ofd_show: 'Haut-de-forme, chemise blanche et cocarde de champion.',
@@ -522,9 +528,12 @@ export const DECOR = {
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
 // ---- the guardians (release 3, Audrey: "The guardians"): animals bought with coins from their level. The geese first
-// (level 4, when the fox's visits are to start): Gertrude and Hector come to live by the pond. XP a fiftieth of the price,
-// as the decorations
-export const ANIMALS = { geese: { level: 4, price: 1200 } };
+// (level 4, when the fox's visits are to start): Gertrude and Hector come to live by the pond. Then the dog (level 9), a
+// Border Collie with his kennel, placed where you like on your land like a decoration (turned to face you a little to
+// the right, as the village's), and named by the player (Audrey, 23 Oct: "People should be able to choose the name of
+// the dog, the default can be biscuit"). XP a fiftieth of the price, as the decorations
+export const ANIMALS = { geese: { level: 4, price: 1200 }, dog: { level: 9, price: 4000, kennel: true } };
+export const DOG_NAME = 'Biscuit', KENNEL_DEG = -20;
 export const animalXp = id => Math.round(ANIMALS[id].price / 50);
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
@@ -735,7 +744,9 @@ export function checkFarm(d, now = Date.now()) {
     out.animals = {};
     for (const id of Object.keys(ANIMALS)) {
       const a = d.animals[id];
-      if (a && typeof a === 'object' && L >= ANIMALS[id].level && Number.isFinite(a.at) && a.at > 0) out.animals[id] = { at: Math.min(a.at, now) };
+      if (!a || typeof a !== 'object' || L < ANIMALS[id].level || !Number.isFinite(a.at) || a.at <= 0) continue;
+      out.animals[id] = { at: Math.min(a.at, now) };
+      if (ANIMALS[id].kennel) Object.assign(out.animals[id], { name: cleanName(a.name) || DOG_NAME, x: spotNum(a.x), z: spotNum(a.z) });      // (his name as any name; his kennel on the quarter-metre: the farm puts it where it can stand)
     }
   }
   // the wheat field: where it is (the farm puts it on your land when it has no spot), which way it lies, when it's ripe
@@ -1007,14 +1018,25 @@ export class Game {
   // ---- the guardians (release 3): which can be bought (their level come, not yet on the farm), buying one
   animalOwned(id) { return !!(this.data.animals && this.data.animals[id]); }
   animalNext(id) { return !!ANIMALS[id] && !this.animalOwned(id) && this.level >= ANIMALS[id].level; }
-  buyAnimal(id, now = Date.now()) {
+  buyAnimal(id, now = Date.now(), at = null, clear = []) {
     const A = ANIMALS[id]; if (!A || !this.animalNext(id) || this.data.coins < A.price) return null;
+    const X = at ? spotNum(at.x) : null, Z = at ? spotNum(at.z) : null;
+    if (A.kennel && (X === null || Z === null)) return null;                // (the dog: where his kennel goes)
     this.data.coins -= A.price; const xp = animalXp(id); this.data.xp += xp;
-    (this.data.animals || (this.data.animals = {}))[id] = { at: now };
-    this.save();
+    (this.data.animals || (this.data.animals = {}))[id] = A.kennel ? { at: now, name: DOG_NAME, x: X, z: Z } : { at: now };
+    this.cleared(clear); this.save();
     return { price: A.price, xp };
   }
-  animalName(id) { return this.t('ani_' + id); }
+  animalName(id) { return this.t('ani_' + id, { name: this.dogName() }); }
+  // the dog: his name (the player's, as any name is checked), his kennel moved
+  dogName() { const d = this.data.animals && this.data.animals.dog; return d ? d.name : DOG_NAME; }
+  renameDog(n) { const d = this.data.animals && this.data.animals.dog; if (!d) return null; d.name = cleanName(n) || DOG_NAME; this.save(); return d.name; }
+  kennel() { const d = this.data.animals && this.data.animals.dog; return d ? { x: d.x, z: d.z, deg: KENNEL_DEG } : null; }
+  moveKennel(at, clear = []) {
+    const d = this.data.animals && this.data.animals.dog, X = spotNum(at.x), Z = spotNum(at.z);
+    if (!d || X === null || Z === null) return false;
+    d.x = X; d.z = Z; this.cleared(clear); this.save(); return true;
+  }
   // ---- the wheat field: how far it's grown, sowing it, harvesting it, where it is
   wheat() { return this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
   wheatStage(now = Date.now()) {
