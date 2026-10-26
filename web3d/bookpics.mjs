@@ -4,14 +4,15 @@
 // white ones), stood together on their own: the hen in front on the left, the rooster beside her a step behind, chest
 // out, both turned to the left and looking round at you. Everything else hidden, they're shot through a long lens a little above
 // them, on black and then on white, and cut out from the two shots (so their fur's soft edges and their soft shadow on the
-// ground come out see-through), cropped round them, shrunk to SIZE x SIZE and saved as <breed>.webp. The birds are only
+// ground come out see-through), cropped round them, shrunk to SIZE x SIZE and saved as <breed>.webp (a Silkie colour's:
+// sil_black.webp... from that colour's pair; ONLY=sil_black,sil_buff makes just those). The birds are only
 // stood and posed for the picture: no model, colour or look is changed.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { mkdirSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 const OUT = process.argv[2] || fileURLToPath(new URL('./book/', import.meta.url));
 const SIZE = +(process.env.SIZE || 320), PREVIEW = process.env.PREVIEW || '';
-const BREEDS = ['rir', 'orp', 'sil', 'leg', 'bra'];
+const BREEDS = (process.env.ONLY || 'rir,orp,sil,leg,bra,sil_black,sil_buff,sil_blue,sil_partridge,sil_grey').split(',');
 // the pair's places on the line-up's ground (metres; +z towards the camera), which way each faces (0: at the camera; less:
 // turned to the left of the picture), the head turned (lookYaw) and tilted, and the camera
 const STAGE = { hen: { x: -0.07, z: 0.1, yaw: -1.0, look: 0.32, tilt: 0.05 }, roo: { x: 0.12, z: -0.1, yaw: -0.82, look: 0.22, tilt: -0.03, proud: 0.5 },
@@ -28,7 +29,8 @@ for (const breed of BREEDS) {
   const res = await p.evaluate(([breed, S, SIZE]) => {
     const f = window.__farm, T = f.THREE, line = f.allBirds.filter(x => x.plot.kind === 'lineup');
     f.pause(true);
-    const pick = kind => line.find(x => x.breed === breed && x.kind === kind && (breed !== 'sil' || x.colour === 'white'));
+    const base = breed.startsWith('sil') ? 'sil' : breed, col = breed === 'sil' ? 'white' : breed.slice(4);
+    const pick = kind => line.find(x => x.breed === base && x.kind === kind && (base !== 'sil' || x.colour === col));
     const hen = pick('hen'), roo = pick('rooster');
     // stood together, posed (held each frame, as the welcome picture's birds), everyone else out of sight
     const stand = (x, s) => {
@@ -86,7 +88,7 @@ for (const breed of BREEDS) {
       if (dark) { gr.addColorStop(0, '#f8f9f3'); gr.addColorStop(1, '#e4e9db'); } else { gr.addColorStop(0, '#fffbea'); gr.addColorStop(0.4, '#f6f1dc'); gr.addColorStop(1, '#dbe7c6'); }
       q.fillStyle = gr; q.fillRect(0, 0, SIZE, SIZE); if (dark) q.filter = 'brightness(0) opacity(0.4)'; q.drawImage(o, 0, 0); return c.toDataURL('image/png'); };
     return { names: [hen.name, roo.name], crop: [sx, sy, side, W, H], webp: o.toDataURL('image/webp', 0.9), found: prev(false), not: prev(true) };
-  }, [breed, { ...STAGE, hen: { ...STAGE.hen, ...(APART[breed] || {}).hen }, roo: { ...STAGE.roo, ...(APART[breed] || {}).roo } }, SIZE]);
+  }, [breed, { ...STAGE, hen: { ...STAGE.hen, ...(APART[breed.slice(0, 3)] || {}).hen }, roo: { ...STAGE.roo, ...(APART[breed.slice(0, 3)] || {}).roo } }, SIZE]);
   const buf = Buffer.from(res.webp.split(',')[1], 'base64');
   writeFileSync(OUT + '/' + breed + '.webp', buf);
   if (PREVIEW) { writeFileSync(PREVIEW + '/' + breed + '.png', Buffer.from(res.found.split(',')[1], 'base64')); writeFileSync(PREVIEW + '/' + breed + '_no.png', Buffer.from(res.not.split(',')[1], 'base64')); }

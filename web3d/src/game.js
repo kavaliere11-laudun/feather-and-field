@@ -76,7 +76,7 @@ const TEXT = {
     move_land: 'Only on your own land.', move_lane: 'Not on a lane or in the water.', move_room: 'Not enough room here.', move_coop: 'Too close to another coop.',
     move_gate: 'Its gate would be shut in here.', move_turn: 'Turn', move_cancel: 'Cancel', move_place: 'Put it here', moved: 'The coop is in its new place!',
     move_busy: 'Not just now: try again in a moment.',
-    coops_title: 'Your coops', coops_aria: 'Your coops', coops_waiting: 'A new coop is waiting for you', coops_new: 'New!', trio_new: 'New breed: {breed}!',
+    coops_title: 'Your coops', coops_aria: 'Your coops', coops_waiting: 'A new coop is waiting for you', coops_new: 'New!', trio_new: 'New breed: {breed}!', trio_new_col: 'New Silkie colour: {col}!',
     trio_body: 'A rooster and two hens, yours for good, with their own coop. Put it anywhere on your land.',
     place_now: 'Place their coop now', later: 'Later', later_note: 'It waits for you in Your coops (the little barn up top).', place_btn: 'Place it',
     move_short: 'Move', coops_next: 'At level {n}: {breed}', coops_all: 'Every breed is on your farm!',
@@ -227,7 +227,7 @@ const TEXT = {
     move_land: 'Seulement sur votre terrain.', move_lane: 'Pas sur un chemin ni dans l’eau.', move_room: 'Pas assez de place ici.', move_coop: 'Trop près d’un autre poulailler.',
     move_gate: 'Sa porte serait bloquée ici.', move_turn: 'Tourner', move_cancel: 'Annuler', move_place: 'Le mettre ici', moved: 'Le poulailler est à sa nouvelle place !',
     move_busy: 'Pas tout de suite : réessayez dans un instant.',
-    coops_title: 'Vos poulaillers', coops_aria: 'Vos poulaillers', coops_waiting: 'Un nouveau poulailler vous attend', coops_new: 'Nouveau !', trio_new: 'Nouvelle race : {breed} !',
+    coops_title: 'Vos poulaillers', coops_aria: 'Vos poulaillers', coops_waiting: 'Un nouveau poulailler vous attend', coops_new: 'Nouveau !', trio_new: 'Nouvelle race : {breed} !', trio_new_col: 'Nouvelle couleur de poule soie : {col} !',
     trio_body: 'Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain.',
     place_now: 'Installer leur poulailler', later: 'Plus tard', later_note: 'Il vous attend dans Vos poulaillers (la petite grange en haut).', place_btn: 'L’installer',
     move_short: 'Déplacer', coops_next: 'Au niveau {n} : {breed}', coops_all: 'Toutes les races sont dans votre ferme !',
@@ -355,10 +355,20 @@ const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
   orp: { name: ['Buff Orpington', 'Orpington fauve'], coop: ['Thatched Cottage', 'Chaumière'] },
-  sil: { name: ['Silkie', 'Poule soie'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  sil: { name: ['White Silkie', 'Poule soie blanche'], kind: ['Silkie', 'Poule soie'], col: ['White', 'blanche'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
   leg: { name: ['Cream Legbar', 'Legbar crème'], coop: ['Stone Cottage', 'Maison de pierre'] },
   bra: { name: ['Light Brahma', 'Brahma herminé'], coop: ['Timber Lodge', 'Chalet en rondins'] },
+  // the other Silkie colours by level (release 2, game-plan-v2.md §4): each its own forever trio and Pagoda Coop with a touch
+  // of its colour; a "line" of the Silkie breed (the key `sil_<colour>` on its coop and birds; the white ones keep `sil`)
+  sil_black: { name: ['Black Silkie', 'Poule soie noire'], kind: ['Silkie', 'Poule soie'], col: ['Black', 'noire'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  sil_buff: { name: ['Buff Silkie', 'Poule soie fauve'], kind: ['Silkie', 'Poule soie'], col: ['Buff', 'fauve'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  sil_blue: { name: ['Blue Silkie', 'Poule soie bleue'], kind: ['Silkie', 'Poule soie'], col: ['Blue', 'bleue'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  sil_partridge: { name: ['Partridge Silkie', 'Poule soie perdrix'], kind: ['Silkie', 'Poule soie'], col: ['Partridge', 'perdrix'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
+  sil_grey: { name: ['Grey Silkie', 'Poule soie grise'], kind: ['Silkie', 'Poule soie'], col: ['Grey', 'grise'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
 };
+// a line's breed (the Silkie colours are all Silkies: their eggs, chicks, house and shows) and a Silkie line's colour
+export function baseBreed(k) { return typeof k === 'string' && k.startsWith('sil') ? 'sil' : k; }
+export function silColour(k) { return k === 'sil' ? 'white' : typeof k === 'string' && k.startsWith('sil_') ? k.slice(4) : null; }
 
 // the five personalities (the 2D game's), with what each is like in a line, for a hen (h) and a rooster (r)
 export const PERS = ['mum', 'rebel', 'diva', 'glutton', 'brave'];
@@ -401,8 +411,10 @@ export const FIELDS = 30;
 // time); a new farm's first coop in the home field (where the village had its first plot)
 export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
 // the breeds by level (release 1 step 6; game-plan-v2.md): each a forever trio with its own rustic coop, the player's to
-// place; the other Silkie colours come with release 2
-export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
+// place; the other Silkie colours by level with release 2 (Black at 8, Buff 13, Blue 15, Partridge 20, Grey 23)
+export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23 };
+// (the County show's breed of the day: from the breeds themselves, as before the Silkie colours, so a day's show is the same)
+const SHOW_BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
@@ -437,7 +449,7 @@ function showIdAt(tier, now) {                         // the show of that tier 
 // the player's level, so it can be one of theirs)
 function showBreed(id, level) {
   if (id[0] !== 'c' || hash01(id + '|any') < 0.5) return null;
-  const come = Object.keys(BREED_LEVEL).filter(b => BREED_LEVEL[b] <= Math.max(level, SHOWS.c.level));
+  const come = Object.keys(SHOW_BREED_LEVEL).filter(b => SHOW_BREED_LEVEL[b] <= Math.max(level, SHOWS.c.level));
   return come[Math.floor(hash01(id + '|breed') * come.length)];
 }
 // the day's other entries (the same for everyone): each a score round the show's middle
@@ -457,7 +469,7 @@ export const JOBS = {
   feed: { n: () => 1 },                                            // fill a feeder
   show: { n: () => 1 },                                            // enter a bird in a show
 };
-export const jobReward = L => ({ coins: 15 + 5 * L, xp: 3 + L });
+export const jobReward = L => ({ coins: 15 + 5 * L, xp: Math.round(XPV.job + XPV.jobL * L) });
 const dayKey = t => { const d = new Date(t); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); };
 // the day's three jobs: one easy, two others, all different (the same for that day and level, from the day's own numbers)
 function jobsFor(day, lv) {
@@ -545,11 +557,13 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
 export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7 };        // coins an egg sells for (the Legbar's blue eggs the dearest)
-export const XP_EGG = 1, XP_FILL = 4;                 // XP for each egg collected, and for a feeder filled from empty
+// XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
+// each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
+export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 1, job: 3.5, jobL: 0.3 };      // (26 Oct, with the five Silkie colours: a year to level 30 once a day still)
 // rewards for coming back during the day (Audrey, 26 Oct: "people playing multiple times a day should be rewarded a bit
 // more"; "A bit quicker"): fresh eggs, collected within 3 hours of being laid, earn more; a cuddle earns a little each time
 // (once her happy glow from the last one has worn off, 6 hours)
-export const FRESH = { ms: 3 * 3600e3, xp: 4, cuddle: 1 };
+export const FRESH = { ms: 3 * 3600e3, xp: 3, cuddle: 1 };
 export const FEED_DAYS = 2;                           // a full feeder keeps its birds for two days (a unit a bird a day)
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
@@ -557,7 +571,6 @@ const DAY_MS = 86400e3;
 // ---- chicks (starting values)
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
 export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26 };   // coins for each grown chick
-export const XP_HATCH = 4, XP_CHICK = 6;
 export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
 export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
 export const kidPrice = (base, stars) => Math.round(base * (0.6 + 0.2 * stars));        // 1 star: 0.8 of the price; 5 stars: 1.6
@@ -657,7 +670,7 @@ export function checkFarm(d, now = Date.now()) {
   for (const e of Array.isArray(sh.in) ? sh.in.slice(0, 3) : []) {
     if (!e || typeof e.id !== 'string' || !showDay(e.id) || typeof e.bird !== 'string') continue;
     const T = SHOWS[e.id[0]], b = out.birds.find(x => x.id === e.bird), at = int(e.at, 0, now, -1), breed = showBreed(e.id);
-    if (!b || L < T.level || at < showOpens(e.id) - TZ_SLACK || at >= showJudged(e.id) + TZ_SLACK || at < b.since || (breed && b.breed !== breed)) continue;      // (a phone taken across time zones: a little slack)
+    if (!b || L < T.level || at < showOpens(e.id) - TZ_SLACK || at >= showJudged(e.id) + TZ_SLACK || at < b.since || (breed && baseBreed(b.breed) !== breed)) continue;      // (a phone taken across time zones: a little slack)
     if (out.shows.in.some(x => x.id === e.id || x.bird === e.bird)) continue;
     out.shows.in.push({ id: e.id, bird: e.bird, at });
   }
@@ -725,8 +738,12 @@ export class Game {
     const d = Math.round(h / 24);
     return d <= 1 ? this.t('days1') : this.t('days', { n: d });
   }
-  breedName(b) { return BREED_INFO[b].name[this.li()]; }
+  breedName(b) { return BREED_INFO[b].name[this.li()]; }                  // (a line's: "Black Silkie")
+  kindName(b) { const I = BREED_INFO[b]; return (I.kind || I.name)[this.li()]; }      // (the breed's: "Silkie", for the shows)
+  baseOf(b) { return baseBreed(b); }
   coopName(c) { return c.name || BREED_INFO[c.breed].coop[this.li()]; }
+  // a new trio's title: a new breed, or a new Silkie colour
+  trioTitle(b) { return silColour(b) && b !== 'sil' ? this.t('trio_new_col', { col: BREED_INFO[b].col[this.li()] }) : this.t('trio_new', { breed: this.breedName(b) }); }
   persName(p, sex) { const n = PERS_INFO[p].name[this.lang]; return n[sex === 'r' && n[1] ? 1 : 0]; }
   persLine(p, sex) { const n = PERS_INFO[p].line[this.lang]; return n[sex === 'r' && n[1] ? 1 : 0]; }
   farmerName() { const f = this.data ? this.data.farmer : { look: 'm', name: '' }; return f.name || FARMER_DEFAULT[f.look][this.li()]; }
@@ -767,10 +784,10 @@ export class Game {
     return Object.keys(BREED_LEVEL).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]).map(breed => {
       const coop = this.data.coops.find(c => c.breed === breed);
       const names = coop ? this.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name) : [];
-      return { breed, level: BREED_LEVEL[breed], found: !!coop, names, waiting: !coop && this.level >= BREED_LEVEL[breed], price: EGG_PRICE[breed] || 6 };
+      return { breed, base: baseBreed(breed), level: BREED_LEVEL[breed], found: !!coop, names, waiting: !coop && this.level >= BREED_LEVEL[breed], price: EGG_PRICE[baseBreed(breed)] || 6 };
     });
   }
-  bookName(b) { return b === 'sil' ? this.t('book_sil') : this.breedName(b); }        // (the Silkies' page is the white one's: release 2 brings the other colours)
+  bookName(b) { return this.breedName(b); }
   // a waiting breed's coop and trio, ready to place (not on the farm until placeCoop)
   draftCoop(breed, at) {
     if (!this.waitingCoops().includes(breed)) return null;
@@ -825,13 +842,13 @@ export class Game {
   canEnter(b, s) {
     if (s.locked) return 'locked';
     if (this.shows().in.some(e => e.id === s.id)) return 'done';
-    if (s.breed && b.breed !== s.breed) return 'breed';
+    if (s.breed && baseBreed(b.breed) !== s.breed) return 'breed';
     if (this.showOf(b.id)) return 'busy';
     if (this.data.coins < SHOWS[s.tier].fee) return 'coins';
     return 'ok';
   }
   // the birds that could go in a show, best chance first
-  showBirds(s) { return this.data.birds.filter(b => (!s.breed || b.breed === s.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
+  showBirds(s) { return this.data.birds.filter(b => (!s.breed || baseBreed(b.breed) === s.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
   enterShow(id, birdId, now = Date.now()) {
     const s = this.openShows(now).find(x => x.id === id), b = this.bird(birdId);
     if (!s || !b || this.canEnter(b, s) !== 'ok') return null;
@@ -1057,8 +1074,8 @@ export class Game {
   feedAt(c, t = Date.now()) { return t <= c.fedAt ? c.feed : Math.max(0, c.feed - this.feedRate(c) * (t - c.fedAt)); }
   feedLeft(c, t = Date.now()) { return this.feedAt(c, t) / this.feedCap(c); }            // 0 empty .. 1 full
   feedHours(c, t = Date.now()) { const r = this.feedRate(c); return r > 0 ? this.feedAt(c, t) / r / 3600e3 : Infinity; }
-  eggPrice(c) { return EGG_PRICE[c.breed] || 6; }
-  henEggPrice(b) { return (EGG_PRICE[b.breed] || 6) + this.stars(b); }                  // (a coin more for each of her stars)
+  eggPrice(c) { return EGG_PRICE[baseBreed(c.breed)] || 6; }
+  henEggPrice(b) { return (EGG_PRICE[baseBreed(b.breed)] || 6) + this.stars(b); }                  // (a coin more for each of her stars)
   // the lays due since each hen last laid (her own times, and a new farm's first egg), oldest first; not yet laid: the
   // farm (main.js) has each hen walk in and lay while it's open, or lays them straight away (layEgg)
   dueLays(now = Date.now()) {
@@ -1090,7 +1107,7 @@ export class Game {
     return res;
   }
   // ---- broody hens and their chicks
-  chickPrice(c) { return CHICK_PRICE[c.breed] || 20; }
+  chickPrice(c) { return CHICK_PRICE[baseBreed(c.breed)] || 20; }
   hatchAt(c) { return c.brood ? c.brood.start + SIT_MS : 0; }
   grownAt(c) { return c.brood ? c.brood.start + SIT_MS + GROW_MS : 0; }
   youngAt(c) { return c.brood ? c.brood.start + SIT_MS + YOUNG_MS : 0; }
@@ -1116,10 +1133,10 @@ export class Game {
         const br = c.brood;
         if (br) {
           const hatch = br.start + SIT_MS, grown = hatch + GROW_MS, hen = this.bird(br.hen);
-          if (!br.hatched && hatch <= now) { br.hatched = true; br.kids = this.kidsOf(c, br); this.data.xp += XP_HATCH; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
+          if (!br.hatched && hatch <= now) { br.hatched = true; br.kids = this.kidsOf(c, br); this.data.xp += XPV.hatch; out.push({ type: 'hatch', coop: c.id, hen: br.hen, n: br.n, t: hatch }); dirty = true; continue; }
           if (grown <= now) {
             const kids = (br.kids && br.kids.length === br.n ? br.kids : this.kidsOf(c, br)).map(k => ({ ...k, coins: kidPrice(this.chickPrice(c), k.stars) }));
-            const coins = kids.reduce((a, k) => a + k.coins, 0), xp = kids.reduce((a, k) => a + XP_CHICK + 2 * k.stars, 0), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
+            const coins = kids.reduce((a, k) => a + k.coins, 0), xp = kids.reduce((a, k) => a + XPV.chick + XPV.star * k.stars, 0), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
             this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null;
             if (hen) { hen.laid = Math.max(hen.laid, grown); hen.exp = Math.min(1e7, hen.exp + EXP_MUM); }       // (her lays while she was busy don't come back)
             if (dad) dad.exp = Math.min(1e7, dad.exp + EXP_DAD);
@@ -1154,7 +1171,7 @@ export class Game {
   collect(coopId, now = Date.now()) {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
     const n = c.eggs, fresh = this.freshIn(c, now);
-    const coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XP_EGG + fresh * FRESH.xp;
+    const coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XPV.egg + fresh * FRESH.xp;
     c.eggs = 0; c.bonus = 0; c.lt = []; this.data.coins += coins; this.data.xp += xp;
     const done = this.job('eggs', n);
     return { n, fresh, coins, xp, done };
@@ -1179,7 +1196,7 @@ export class Game {
     c.feed = Math.min(cap, this.feedAt(c, now) + q.buy); c.fedAt = now;
     this.data.coins -= q.cost;
     if (q.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - q.grain) * 100) / 100);
-    q.xp = q.scraps ? 0 : Math.round(XP_FILL * q.buy / cap); this.data.xp += q.xp;
+    q.xp = q.scraps ? 0 : Math.round(XPV.fill * q.buy / cap); this.data.xp += q.xp;
     q.level = c.feed / cap;
     q.done = this.job('feed', 1, now);
     return q;

@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE, gameText } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, WHEAT, GUIDE, gameText, baseBreed, silColour } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -296,6 +296,36 @@ function loadImage(name) {
 }
 
 const parts = {};
+// the Silkie colours' Pagoda Coops (release 2, game-plan-v2.md §4): the same pagoda in its colour: the roof (Audrey, 26 Oct:
+// "Roof in its colour", so each shows from the farm's view), and its frames, door, round window, pop door and roof trim
+// (the white Silkies' keeps its green roof and red). Made once from the model's own vertex colours: house_sil@black,
+// rustic_sil@black (faded, as the rustic's own), popdoor_sil@black. Each: [frames, trim, roof]
+const SIL_TINT = { black: ['#34343e', '#22222a', '#4b4b57'], buff: ['#d4a24a', '#9c7430', '#c9a05c'], blue: ['#5d7099', '#3e4d6e', '#61759b'], partridge: ['#8c5129', '#5c3418', '#8a5a36'], grey: ['#8f9395', '#5f6365', '#8d9296'] };
+function tintSilkieCoops(glb) {
+  const out = [], lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, FADE = new THREE.Color('#8c8780');
+  // the model's colours to change: [its colours, the first the reference], which of the two tints, faded (the rustic's)
+  const FROM = { house_sil: [[['#b0322a'], 0, false], [['#1c5d55'], 1, false], [['#2e7c6e', '#2e7f71'], 2, false]], popdoor_sil: [[['#b0322a'], 0, false]],
+    rustic_sil: [[['#9d6962', '#93625c', '#98655f'], 0, true], [['#455851', '#4b5f58', '#495c55'], 1, true], [['#556e66', '#5c766d'], 2, true]] };
+  for (const name in FROM) {
+    const src = glb.scene.getObjectByName(name); if (!src) continue;
+    for (const col in SIL_TINT) {
+      const map = {};
+      for (const [hexes, which, faded] of FROM[name]) {
+        const ref = new THREE.Color(hexes[0]), to = new THREE.Color(SIL_TINT[col][which]); if (faded) to.lerp(FADE, 0.45);
+        for (const h of hexes) map[h.slice(1)] = to.clone().multiplyScalar(lum(new THREE.Color(h)) / lum(ref));
+      }
+      const o = src.clone(true); o.name = name + '@' + col;
+      for (const m of meshesOf(o)) {
+        const a0 = m.geometry.attributes.color; if (!a0) continue;
+        m.geometry = m.geometry.clone(); m.geometry.userData = {}; const a = m.geometry.attributes.color, c = new THREE.Color();      // (its own userData: a clone shares the original's, which says it's richened)
+        for (let i = 0; i < a.count; i++) { const t = map[c.setRGB(a.getX(i), a.getY(i), a.getZ(i)).getHexString(THREE.SRGBColorSpace)]; if (t) a.setXYZ(i, t.r, t.g, t.b); }
+      }
+      out.push(o);
+    }
+  }
+  return out;
+}
+const tintOf = p => p.col && p.col !== 'white' && SIL_TINT[p.col] ? '@' + p.col : '';      // (a coop's model names: its Silkie colour's)
 function part(name) {
   const p = parts[name];
   if (!p) throw new Error('missing model ' + name);
@@ -357,6 +387,7 @@ async function start() {
   // the straw nest in the yard has moved into the coop's nest box: its spot is free again
   PEN.obstacles = PEN.obstacles.filter(o => Math.hypot(o[0] - PEN.nest[0], o[2] - PEN.nest[2]) > 1e-3);
   initFlock(flock, flockInfo); initBeasts(beastsGlb, beastsInfo); initGeese(geeseGlb, geeseInfo); initFarmer(farmerGlb, farmerInfo);
+  const tinted = tintSilkieCoops(coopsGlb);                 // (from the model's own colours, before they're richened below)
   for (const g of [farm, village, coopsGlb, insideGlb, faunaGlb, decorGlb]) {
     for (const child of [...g.scene.children]) {
       child.updateMatrixWorld(true);
@@ -367,6 +398,7 @@ async function start() {
       parts[child.name] = child;
     }
   }
+  for (const o of tinted) { o.updateMatrixWorld(true); for (const m of meshesOf(o)) richer(m.geometry, SAT, 1); parts[o.name] = o; }      // (their materials: the originals', done above)
   buildGround(meadow);
   buildWater();
   buildPaths();
@@ -1004,7 +1036,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
     plot.frame = frame;
     const look = params.has('looks') ? Math.floor(i / BREEDS.length) % 3 : -1;      // (the test page's ?looks: rows of rustic, plain, Deluxe)
-    plot.breed = gc ? gc.breed : BREEDS[i % BREEDS.length]; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 2 : Math.floor(i / BREEDS.length) % 2 === 1;
+    plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 2 : Math.floor(i / BREEDS.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look === 0;     // (a new breed's coop comes rustic)
     addNest(frame, plot);
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
@@ -1015,7 +1047,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
       const henAt = PEN.hens.filter(h => h.model === 'hen'), rooAt = PEN.hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
-        const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', colour(), h.pos, -h.yaw * DEG + Math.PI, r);
+        const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, r);      // (a Silkie in her own colour)
         b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
       }
     } else {
@@ -1046,7 +1078,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
 // a coop's parts drawn in its style's batch: [model, where in its frame]
 function coopParts(plot) {
   const house = (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, I = new THREE.Matrix4();
-  const out = [[house, I], ['pen_base', I], [plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', I]];
+  const out = [[house + (parts[house + tintOf(plot)] ? tintOf(plot) : ''), I], ['pen_base', I], [plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', I]];
   if (plot.deluxe) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
   return out;
 }
@@ -1694,7 +1726,7 @@ function doorShader(mat) {
 }
 function buildDoors() {
   for (const p of plots) if (p.kind === 'coop') {
-    const S = DOORS.styles[p.breed] = DOORS.styles[p.breed] || { meshes: [], plots: [] };
+    const st = p.breed + (parts['popdoor_' + p.breed + tintOf(p)] ? tintOf(p) : ''), S = DOORS.styles[st] = DOORS.styles[st] || { meshes: [], plots: [] };
     const o = p.door || {};                                 // (made again, a new coop: each door as it was)
     p.door = { shut: !!o.shut, s: o.s ?? 1, goal: o.goal ?? 1, i: S.plots.length, badge: o.badge || null, kind: o.kind || null };
     S.plots.push(p);
@@ -1723,7 +1755,7 @@ function rebuildDoors() {                                  // (a coop more, or l
   buildDoors();
 }
 function placeDoor(p) {                                    // (its coop moved)
-  const S = DOORS.styles[p.breed]; if (!S || !p.door) return;
+  const S = DOORS.styles[p.breed + (parts['popdoor_' + p.breed + tintOf(p)] ? tintOf(p) : '')]; if (!S || !p.door) return;
   const G = nestOf(p), M = p.frame.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(G.pop[0], G.house, D2));
   for (const inst of S.meshes) { inst.setMatrixAt(p.door.i, M); inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN; }
 }
@@ -3987,7 +4019,7 @@ async function startShowDay(r, list) {
   try { await loadShow(loadGLB, loadJSON); } catch (e) { gameUI.showResults(list); return; }
   const f = gb.sex === 'h';
   SHOWDAY = new ShowDay({ scene, grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng([...(r.id + r.bird)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7)), at, look: FARMER_LOOK,
-    bird: { breed: gb.breed, kind: f ? 'hen' : 'rooster', colour: real ? real.colour : (gb.breed === 'sil' ? 'white' : null) }, place: r.place, champTier: r.id[0] !== 'v',
+    bird: { breed: baseBreed(gb.breed), kind: f ? 'hen' : 'rooster', colour: real ? real.colour : silColour(gb.breed) }, place: r.place, champTier: r.id[0] !== 'v',
     title: game.t('show_sign_' + r.id[0]), sub: r.id[0] === 'n' ? '' : game.showName(r.id).replace(/ (Village|County) Show$/, '').replace(/^Concours (de |d’|régional du )/, ''),
     hearts: w => spawnHeart(w), say: k => hint(game.t('sd_' + k, { farmer: game.farmerName(), name: gb.name }, f)),
     onEnd: () => { if (SHOWDAY) gameUI.showResults(list); } });

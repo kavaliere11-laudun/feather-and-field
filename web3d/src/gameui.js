@@ -362,7 +362,7 @@ export class GameUI {
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
         const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
-        h.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('trio_new', { breed: this.g.breedName(b) })));
+        h.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
         c.append(h, el('p', 'gtext', this.t('trio_body')));
         body.append(c);
       }
@@ -434,7 +434,7 @@ export class GameUI {
     this.bird = null;
     for (const breed of g.waitingCoops()) {
       const c = el('div', 'gcard gnewcoop'), hd = el('div', 'gcard-h');
-      hd.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('trio_new', { breed: g.breedName(breed) })), el('span', 'gbadge', this.t('coops_new')));
+      hd.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', g.trioTitle(breed)), el('span', 'gbadge', this.t('coops_new')));
       c.append(hd, el('p', 'gtext', this.t('trio_body')));
       const go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(breed));
       c.append(go); b.append(c);
@@ -469,8 +469,8 @@ export class GameUI {
       info.append(el('span', 'gcard-t', g.bookName(pg.breed)));
       info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
       const eggs = el('p', 'gnote gpage-l'), ei = el('span', 'gegg-i'), et = el('span');
-      if (h.egg && h.egg[pg.breed]) ei.style.setProperty('--egg', h.egg[pg.breed]);
-      et.append(el('span', 'gpage-k', this.t('egg_' + pg.breed)), document.createTextNode(' · ' + this.t('book_price', { p: pg.price })));
+      if (h.egg && h.egg[pg.base]) ei.style.setProperty('--egg', h.egg[pg.base]);
+      et.append(el('span', 'gpage-k', this.t('egg_' + pg.base)), document.createTextNode(' · ' + this.t('book_price', { p: pg.price })));
       eggs.append(ei, et);
       const coop = el('p', 'gnote gpage-l'), ci = el('span', 'gpage-c');
       ci.innerHTML = BARN;                              // (the little barn of Your coops: a fixed drawing, nothing of the save)
@@ -496,12 +496,12 @@ export class GameUI {
       c.append(hd);
       if (s.locked) { c.append(el('p', 'gnote', this.t('show_locked', { n: s.level }))); b.append(c); continue; }
       const when = g.howLong(Math.max(60e3, s.judged - now));
-      c.append(el('p', 'gnote', (s.breed ? this.t('show_only', { breed: g.breedName(s.breed) }) : this.t('show_any')) + ' · ' + this.t('show_when', { when })));
+      c.append(el('p', 'gnote', (s.breed ? this.t('show_only', { breed: g.kindName(s.breed) }) : this.t('show_any')) + ' · ' + this.t('show_when', { when })));
       c.append(el('p', 'gnote', this.t('show_prizes', { a: T.prize[0], b: T.prize[1], c: T.prize[2] })));
       const ent = g.shows().in.find(e => e.id === s.id);
       if (ent) { const eb = g.bird(ent.bird); c.append(el('p', 'gtext gfound', this.t('show_in', { name: eb ? eb.name : '', when }, eb && eb.sex === 'h'))); b.append(c); continue; }
       const list = g.showBirds(s);
-      if (!list.length) { c.append(el('p', 'gnote', s.breed && !g.data.birds.some(x => x.breed === s.breed) ? this.t('show_none_breed', { breed: g.breedName(s.breed) }) : this.t('show_none_busy'))); b.append(c); continue; }
+      if (!list.length) { c.append(el('p', 'gnote', s.breed && !g.data.birds.some(x => g.baseOf(x.breed) === s.breed) ? this.t('show_none_breed', { breed: g.kindName(s.breed) }) : this.t('show_none_busy'))); b.append(c); continue; }
       const broke = g.data.coins < T.fee;
       const line = x => el('p', 'gtext gchance', this.t('show_chance', { name: x.b.name, word: this.t('chance' + x.ch.word), p: Math.round(x.ch.rosette * 100) }));
       const enterBtn = (x, small) => {

@@ -26,7 +26,7 @@ const load = async () => {
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), dot: !document.querySelector('.gcoops .gdot').hidden, coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length,
   plots: f.coopPlots().length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
-const T = { orp: fr ? /Nouvelle race : Orpington fauve/ : /New breed: Buff Orpington/, sil: fr ? /Nouvelle race : Poule soie/ : /New breed: Silkie/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
+const T = { orp: fr ? /Nouvelle race : Orpington fauve/ : /New breed: Buff Orpington/, sil: fr ? /Nouvelle race : Poule soie blanche/ : /New breed: White Silkie/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
   later: fr ? /Plus tard/ : /Later/, next5: fr ? /Au niveau 5 : Orpington fauve/ : /At level 5: Buff Orpington/, red: fr ? /Grange rouge/ : /Red Barn/, welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/,
   thatched: fr ? /Chaumière/ : /Thatched Cottage/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });

@@ -11,6 +11,7 @@ let NOW = Date.UTC(2026, 9, 26, 9, 0);
 Date.now = () => NOW;
 const G = await import('./src/game.js');
 const { Game, DECOR, OUTFITS, WHEAT } = G;
+if (process.env.BAL) { const o = JSON.parse(process.env.BAL); for (const k in o) { if (k in G.XPV) G.XPV[k] = o[k]; else if (k.startsWith('fresh.')) G.FRESH[k.slice(6)] = o[k]; } }      // (other values to try)
 const DAYS = +(process.argv[2] || 365), WHICH = process.argv[3] || 'all', SEEDS = +(process.argv[4] || 3);
 const PROFILES = { daily: [19], twice: [8, 19], often: [8, 11, 14, 17, 20, 23] };
 function rngOf(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }

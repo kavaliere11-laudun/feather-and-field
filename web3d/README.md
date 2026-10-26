@@ -2114,7 +2114,8 @@ The 3D game is the game at the usual address (https://kavaliere11-laudun.github.
 
 The year's graph showed the three kinds of player almost together (twice a day only a month quicker): eggs, honey, shows
 and jobs all come on a daily clock, so only the wheat rewarded coming back. Now (`FRESH` in `src/game.js`):
-- **Fresh eggs:** an egg collected within 3 hours of being laid earns 4 XP more (an egg is 1 XP, was 2). The nest keeps
+- **Fresh eggs:** an egg collected within 3 hours of being laid earns 4 XP more (an egg is 1 XP, was 2; 3 more since release
+  2 step 1, below). The nest keeps
   when each of its eggs was laid (`lt` on each coop, saved: whole times, none ahead of now, no more than its eggs, checked
   and flagged otherwise). While fresh eggs are waiting, the coop's egg bubble has a sparkle (✨); collected: "6 eggs sold ·
   +42 coins · 4 fresh: +22 XP" ("4 tout frais").
@@ -2126,3 +2127,34 @@ and jobs all come on a daily clock, so only the wheat rewarded coming back. Now 
   weeks, a month, 10 weeks, 4 and a half months); twice a day 17, 23, 58 and 112 days.
 - On the way: the words at the top (`#hint`) are as wide as they need, up to the screen's width; centred from the middle
   of the screen they used to wrap at half its width ("4 eggs sold · +24 / coins").
+
+## Release 2, step 1: the Silkie colours by level (26 Oct 2026, Audrey: "Silkie colours next (Recommended)", "Roof in its colour (Recommended)")
+
+game-plan-v2.md §4: five more Silkie colours come with levels, each a forever trio with its own Pagoda Coop: Black at
+level 8, Buff 13, Blue 15, Partridge 20, Grey 23 (the White ones at 6, as before). The Silkies' look is unchanged: these
+are the colours the birds already had (`SILKIE` in `birds.js`).
+- **Lines:** each colour is a line of the Silkie breed, keyed `sil_<colour>` on its coop and birds (the white ones keep
+  `sil`, so saves from before are the same): `BREED_INFO` (names: "Black Silkie", "Poule soie noire"; `kind`: "Silkie"
+  for the shows; `col`: the colour's word), `BREED_LEVEL`, and `baseBreed()` / `silColour()` in `game.js`. Eggs, chicks,
+  the house and the shows go by the breed (`baseBreed`): a Silkies-only County show takes any colour, and the County's
+  breed of the day still comes from the five breeds (`SHOW_BREED_LEVEL`), so a day's show is what it was. One coop a line;
+  a line's coop only from its level (checked on load, flagged otherwise).
+- **The level card and Your coops:** "New Silkie colour: Black!" ("Nouvelle couleur de poule soie : noire !"), "Place
+  their coop now"; "At level 8: Black Silkie". A bird's card: "Black Silkie · Hen". The white ones are "White Silkie"
+  now (the shows still say "Silkies only").
+- **The coops:** the same pagoda in its colour (`tintSilkieCoops` in `main.js`): first a touch (frames, door, round window,
+  pop door, the roof's trim), then, Audrey's choice from pictures of both, the roof too, so each coop shows from the
+  farm's view (the White Silkies' keeps its green roof and red). Made once from the model's own vertex colours, before
+  they're richened (`house_sil@black`, `rustic_sil@black` faded as the rustic's own, `popdoor_sil@black`); the coops'
+  batches and the pop doors go by the coloured model (`tintOf`).
+- **The Breed Book:** ten pages in level order; the five colours' pictures made by `bookpics.mjs` from each colour's pair
+  in the line-up (`ONLY=sil_black,...` makes just those).
+- **The balance** (`balsim.mjs`, now with `BAL='{"chick":3}'` to try other values; `XPV` in `game.js`): the five more trios
+  (30 birds by level 23) brought level 30 to day 282 for a once-a-day player. Now: a grown chick 3 XP and 1 a star (was 6
+  and 2), a brood hatched 2 (was 4), a feeder filled 2 (was 4), a fresh egg 3 more (was 4), a job 3.5 + 0.3 a level (was
+  3 + 1). Level 30 on day 373 once a day, 296 twice a day (10 months), 229 every 3 hours (7 and a half months); for a
+  once-a-day player the Orpingtons in 3 and a half weeks, the White Silkies in 5, Black 7, Legbars 11, Buff 14, Blue 18,
+  Brahmas 21, Partridge 27, Grey 34. About 159,000 coins at a year.
+- `silktest.mjs` (new; English upright, French sideways): level 7's Your coops, level 8's card, placing the black coop
+  (its model, its trio's colours), a black hen's card, the Breed Book's ten pages, a County show, a reload, a changed save.
+  breedtest and eggtest updated (the white ones' name, a fresh egg's XP).
