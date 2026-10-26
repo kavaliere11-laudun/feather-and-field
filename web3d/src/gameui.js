@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -387,6 +387,7 @@ export class GameUI {
       if (!decs.length) c.append(el('p', 'gnote', this.t('dec_new_where')));
       else { const n = body.querySelector('.gdecnew .gnote'); if (n) { n.remove(); c.append(n); } }      // (where to buy them said once, under the last)
     }
+    if (L === FOX.level) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
     const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') }))); c.append(hd); body.append(c); }
@@ -788,6 +789,17 @@ export class GameUI {
     if (!DECOR[id].pond) info.append(el('p', 'gnote', this.t('dec_card_body')));
     card.append(pic, info); body.append(card);
     if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
+  }
+  // ---- last night's visit (release 3): what Rusty did, a tip when the eggs were taken, the film (h.watch)
+  foxCard(l, h) {
+    const body = this.open('fox', '🦊 ' + this.t('fox_title'));
+    this.bird = null;
+    body.append(el('p', 'gtext gfox-story', this.g.foxStory(l)));
+    if (l.open && !l.by) body.append(el('p', 'gnote', this.t('fox_tip')));
+    const row = el('div', 'gfox-row'), w = el('button', 'gbtn', this.t('fox_watch')), ok = el('button', 'gbtn galt', this.t('fox_ok'));
+    w.type = ok.type = 'button';
+    w.addEventListener('click', () => { this.close(); h.watch(); }); ok.addEventListener('click', () => this.close());
+    row.append(w, ok); body.append(row);
   }
   coinSheet() {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));

@@ -26,6 +26,10 @@ export const REPLAY_TEXT = {
   empty: ['Rusty went home empty-handed, and very puzzled.', 'Rusty est rentré bredouille, et très perplexe.'],
   end: ['The End', 'Fin'],
   safe: ['Everyone is safe and sound.', 'Tout le monde est sain et sauf.'],
+  // the game (release 3): a door left open, nobody to guard it, eggs in the nest
+  took: ['This time, nothing went wrong.', 'Cette fois, rien n\'a mal tourné.'],
+  eggsHome: ['Rusty went home… with the eggs.', 'Rusty est rentré chez lui… avec les œufs.'],
+  safeEggs: ['The hens are safe and sound. The eggs, not so much.', 'Les poules sont saines et sauves. Les œufs, beaucoup moins.'],
 };
 const STEP = 1 / 30;                  // the farm's own step
 const FPS = 16;                       // a silent film's pictures a second
@@ -51,7 +55,7 @@ export class Replay {
   // ---- the showing
   start(rec) {
     if (this.on) return false;
-    this.rec = rec; this.c = this.cast();
+    this.rec = rec; this.c = this.cast(rec);
     const c = this.c;
     // the cast back to bed, the visit's coop as it was; a few steps so they're in place
     c.visit.reset(); if (c.geese) c.geese.reset(); if (c.dog) c.dog.reset();
@@ -129,7 +133,14 @@ export class Replay {
     card('plan', 2.2, () => (V.phase === 'jumpIn' && V.way && fox.root.visible && dist(fox, V.way.take.x, V.way.take.z) < 4.2) || /^(toRamp|climb|atDoor|recoil|again|shutDoor|leave|leaveFor)$/.test(V.phase || '') || !V.active());
     scene('approach', { speed: () => 1.2, max: 5.5, ffTo: true, cam: () => [[P(fox), [door.x, door.z]], 2.2], until: () => /^(poke|scratch)$/.test(tname()) || !V.active() });
     card('sneak', 2.0);
-    if (rec.open) {
+    const eggs = rec.open && rec.eggs > 0 && !guards;
+    if (eggs) {
+      // the eggs: a sniff, then in slow motion the flurry, his head in, and out with an egg; back down the ramp, pleased
+      scene('grab', { max: 12, cam: () => [[P(fox), [door.x, door.z]], 1.5],
+        speed: () => { const t = task(), n = t ? t.name : ''; return n === 'poke' ? (t.t > 0.95 ? 0.35 : 1) : n === 'grab' ? 0.35 : 1; },
+        until(s) { const n = tname(); if (n === 'backDown') s.seen = true; return (s.seen && n !== 'backDown') || !V.active(); } });
+      card('took', 2.2);
+    } else if (rec.open) {
       // the peck: a sniff, then in slow motion the flurry, the peck on the nose and the leap back; the sneeze as it was
       scene('peck', { max: 14, cam: () => [[P(fox), [door.x, door.z]], 1.55],
         speed: () => { const t = task(), n = t ? t.name : ''; return n === 'poke' ? (t.t > 0.95 ? 0.32 : 1) : n === 'recoil' ? 0.32 : 1; },
@@ -149,9 +160,10 @@ export class Replay {
         until(s) { if (dst() === 'charge') s.go = (s.go || 0) + 1; return s.go > 12; } });
       scene('race', { speed: () => 1.7, max: 4.5, ffTo: true, cam: () => [[P(lead()), ...(near(lead(), 5) ? [P(fox)] : [])], 2.0], until: () => V.state === 'fleeing' || !V.active() });
       card('run', 1.6);
+      // (the game: the geese behind the pond's fence can't get to him, their alarm sends him off: the view on him running)
       scene('chase', { speed: () => 1.9, max: 5, ffTo: true,
-        cam: () => [[P(lead()), ...(near(lead(), 6) ? [P(fox)] : []), ...(F ? F.geese.filter(g => dist(g, lead().pos.x, lead().pos.z) < 3.5).map(P) : [])], 2.0],
-        until: () => D ? !/^(wake|out|charge|pursue)$/.test(dst()) : !/^(wake|charge|hiss|pursue)$/.test(gst()) });
+        cam: () => !near(lead(), 6) && fox.root.visible ? [[P(fox)], 2.0] : [[P(lead()), ...(near(lead(), 6) ? [P(fox)] : []), ...(F ? F.geese.filter(g => dist(g, lead().pos.x, lead().pos.z) < 3.5).map(P) : [])], 2.0],
+        until: s => (D ? !/^(wake|out|charge|pursue)$/.test(dst()) : !/^(wake|charge|hiss|pursue)$/.test(gst())) && (near(lead(), 6) || s.t > 3.2 || !V.active()) });
       if (D) scene('stand', { max: 2.6, cam: () => [[P(dog), ...(near(dog, 6) ? [P(fox)] : [])], 1.9], until: () => dst() !== 'stand' });
       if (F) {
         card('heroes', 2.2, () => /^(victory|lap|tada|home|face)$/.test(gst()) || !F.guarding);
@@ -164,11 +176,11 @@ export class Replay {
     } else {
       if (rec.open) scene('again', { speed: () => 1.5, max: 9, ffTo: true, cam: () => [[P(fox), [door.x, door.z]], 1.8], until: () => /^(jumpOut|trotHome|in)$/.test(V.phase || '') || !V.active() });
       scene('home', { speed: () => 2.2, max: 3.2, cam: () => [[P(fox)], 2.0] });
-      card(rec.open ? 'feather' : 'empty', 2.6, () => !V.active() || (fox.root.visible && dist(fox, doorway[0], doorway[1]) < 3.2));
+      card(eggs ? 'eggsHome' : rec.open ? 'feather' : 'empty', 2.6, () => !V.active() || (fox.root.visible && dist(fox, doorway[0], doorway[1]) < 3.2));
       scene('den', { max: 6, ffTo: true, speed: () => 1.3, cam: () => [[[doorway[0], doorway[1]], ...(fox.root.visible ? [P(fox)] : [])], 1.9], until: () => !V.active() });
     }
     S.push({ kind: 'iris', secs: 1.4 });
-    card('end', 2.8, null, 'safe');
+    card('end', 2.8, null, eggs ? 'safeEggs' : 'safe');
     return S;
   }
 

@@ -109,8 +109,19 @@ const TEXT = {
     shop_animals: 'Animals', ani_geese: 'Gertrude and Hector, the geese', anil_geese: 'A pair of geese for the pond: they graze, swim, honk at everything and squabble now and then.',
     ani_dog: '{name}, the farm dog', anil_dog: 'A Border Collie with his kennel and his ball: he does his rounds of the coops, plays, teases the geese, and you choose his name.',
     ani_dog_owned: 'On your farm', ani_see_dog: 'See him', ani_move_kennel: 'Move his kennel', ani_rename: 'Rename', kennel_name: 'Kennel',
-    dog_came: '{name} has come to live on your farm! +{xp} XP', dog_name_now: 'Choose his name, or keep Biscuit.', kennel_moved: '{name}’s kennel: moved!',
-    ani_buy: 'Buy · {c}', ani_owned: 'At the pond', ani_see: 'See them', geese_came: 'Gertrude and Hector have come to live by the pond! +{xp} XP', geese_hello: 'Tap a goose to say hello.',
+    dog_came: '{name} has come to live on your farm! +{xp} XP', kennel_moved: '{name}’s kennel: moved!',
+    ani_buy: 'Buy · {c}', ani_owned: 'At the pond', ani_see: 'See them',
+    fox_title: 'Last night on the farm', fox_watch: '🎞 Watch it', fox_ok: 'OK',
+    fox_eggs: 'Rusty the fox found the door of {hen}’s coop open and took {n} eggs from the nest. The hens are fine, just a little ruffled.',
+    fox_eggs1: 'Rusty the fox found the door of {hen}’s coop open and took an egg from the nest. The hens are fine, just a little ruffled.',
+    fox_empty: 'Rusty the fox found the door of {hen}’s coop open, but the nest was empty: {hen} pecked him on the nose and he went home.',
+    fox_shut: 'Rusty the fox came for the eggs, but the doors were shut. He went home empty-handed.',
+    fox_geese: 'Rusty the fox came for the eggs in {hen}’s coop, but the geese heard him and chased him all the way home!',
+    fox_dog: 'Rusty the fox came for the eggs in {hen}’s coop, but {dog} heard him and chased him all the way home!',
+    fox_team: 'Rusty the fox came for the eggs in {hen}’s coop, but the geese and {dog} heard him and chased him all the way home!',
+    fox_farmer: 'Rusty the fox came for the eggs in {hen}’s coop, but {farmer} came out with the torch and sent him home!',
+    fox_tip: 'To keep the eggs safe, shut the coops’ doors at night (tap the moon over each door), or get the geese (the shop, Animals).',
+    fox_new: 'From now on Rusty the fox may come at night for the eggs: shut the coops’ doors, or get the geese.', geese_came: 'Gertrude and Hector have come to live by the pond! +{xp} XP', geese_hello: 'Tap a goose to say hello.',
     of_classic: 'Classic', of_market: 'Market day', of_garden: 'Garden party', of_winter: 'Winter woollies', of_rodeo: 'Rodeo', of_show: 'Show day',
     ofd_classic: 'Straw hat and a checked shirt.', ofd_market: 'Tweed flat cap and a blue checked shirt.', ofd_garden: 'Flowery sun hat and a yellow gingham shirt.', ofd_winter: 'Bobble hat and a green jumper.', ofd_rodeo: 'Cowboy hat, chambray shirt and a neckerchief.', ofd_show: 'Top hat, white shirt and a prize rosette.',
     out_buy: 'Buy and wear · {c}', out_wear: 'Wear', out_wearing: 'Wearing', out_bought: '{farmer} tries on the {name} outfit! +{xp} XP', out_worn: '{farmer} is wearing the {name} outfit.', out_new: 'New outfit for {farmer}: {names}',
@@ -272,8 +283,19 @@ const TEXT = {
     shop_animals: 'Animaux', ani_geese: 'Gertrude et Hector, les oies', anil_geese: 'Un couple d’oies pour l’étang : elles broutent, nagent, cacardent après tout le monde et se chamaillent de temps en temps.',
     ani_dog: '{name}, le chien de la ferme', anil_dog: 'Un border collie avec sa niche et sa balle : il fait le tour des poulaillers, joue, taquine les oies, et c’est vous qui choisissez son nom.',
     ani_dog_owned: 'Dans votre ferme', ani_see_dog: 'Le voir', ani_move_kennel: 'Déplacer sa niche', ani_rename: 'Renommer', kennel_name: 'Niche',
-    dog_came: '{name} vient vivre dans votre ferme ! +{xp} XP', dog_name_now: 'Choisissez son nom, ou gardez Biscuit.', kennel_moved: 'La niche de {name} : c’est déplacé !',
-    ani_buy: 'Acheter · {c}', ani_owned: 'À l’étang', ani_see: 'Les voir', geese_came: 'Gertrude et Hector viennent vivre au bord de l’étang ! +{xp} XP', geese_hello: 'Touchez une oie pour lui dire bonjour.',
+    dog_came: '{name} vient vivre dans votre ferme ! +{xp} XP', kennel_moved: 'La niche de {name} : c’est déplacé !',
+    ani_buy: 'Acheter · {c}', ani_owned: 'À l’étang', ani_see: 'Les voir',
+    fox_title: 'La nuit dernière à la ferme', fox_watch: '🎞 Le voir', fox_ok: 'OK',
+    fox_eggs: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris {n} œufs dans le nid. Les poules vont bien, juste un peu ébouriffées.',
+    fox_eggs1: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris un œuf dans le nid. Les poules vont bien, juste un peu ébouriffées.',
+    fox_empty: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen}, mais le nid était vide : {hen} lui a pincé le nez et il est rentré chez lui.',
+    fox_shut: 'Rusty le renard est venu pour les œufs, mais les portes étaient fermées. Il est rentré bredouille.',
+    fox_geese: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies l’ont entendu et l’ont chassé jusque chez lui !',
+    fox_dog: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {dog} l’a entendu et l’a chassé jusque chez lui !',
+    fox_team: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies et {dog} l’ont entendu et l’ont chassé jusque chez lui !',
+    fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sorti avec sa lampe et l’a renvoyé chez lui !',
+    fox_tip: 'Pour protéger les œufs, fermez les portes des poulaillers la nuit (touchez la lune au-dessus de chaque porte), ou prenez les oies (la boutique, Animaux).',
+    fox_new: 'Désormais, Rusty le renard peut venir la nuit chercher les œufs : fermez les portes des poulaillers, ou prenez les oies.', geese_came: 'Gertrude et Hector viennent vivre au bord de l’étang ! +{xp} XP', geese_hello: 'Touchez une oie pour lui dire bonjour.',
     of_classic: 'Classique', of_market: 'Jour de marché', of_garden: 'Garden-party', of_winter: 'Lainages d’hiver', of_rodeo: 'Rodéo', of_show: 'Jour de concours',
     ofd_classic: 'Chapeau de paille et chemise à carreaux.', ofd_market: 'Casquette en tweed et chemise à carreaux bleus.', ofd_garden: 'Chapeau fleuri et chemise vichy jaune.', ofd_winter: 'Bonnet à pompon et pull vert.', ofd_rodeo: 'Chapeau de cow-boy, chemise en chambray et foulard.', ofd_show: 'Haut-de-forme, chemise blanche et cocarde de champion.',
     out_buy: 'Acheter et porter · {c}', out_wear: 'Porter', out_wearing: 'Portée', out_bought: '{farmer} enfile la tenue {name} ! +{xp} XP', out_worn: '{farmer} porte la tenue {name}.', out_new: 'Nouvelle tenue pour {farmer} : {names}',
@@ -374,7 +396,8 @@ const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
     show_in: '{name} est inscrite : résultats à 7 h, dans {when}', show_entered: '{name} est inscrite au {show} !',
     res_none: '{name} n’est pas classée au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est championne maintenant !', ros_none: 'Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut).',
-    champ_c: 'Championne régionale', champ_n: 'Championne nationale' } };
+    champ_c: 'Championne régionale', champ_n: 'Championne nationale',
+    fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !' } };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -534,6 +557,20 @@ export const decorXp = id => Math.round(DECOR[id].price / 50);
 // the dog, the default can be biscuit"). XP a fiftieth of the price, as the decorations
 export const ANIMALS = { geese: { level: 4, price: 1200 }, dog: { level: 9, price: 4000, kennel: true } };
 export const DOG_NAME = 'Biscuit', KENNEL_DEG = -20;
+// ---- Rusty's night visits (release 3; Audrey: "He takes the nest's eggs", "About twice a week"): from level 4, on about two
+// nights in seven (the night's own luck, the same on every phone), between 11 pm and 2:30 am, Rusty slips out of his den
+// to a coop: one whose pop door was left open if there is one, else a shut one (he scratches at it and goes home). At an
+// open door: with the geese or the dog on the farm they hear him and chase him home first; without them he takes the
+// nest's eggs (an empty nest: a peck on the nose). No bird is ever hurt. The doors: shut for the night by the player (the
+// moon over each door), open again in the morning
+export const FOX = { level: 4, chance: 2 / 7, from: 23, hours: 3.5 };
+// a night: the evening's date (a time before noon belongs to the night before)
+export const nightKey = t => dayKey(t - 12 * 3600e3);
+const prevNight = k => nightKey(nightStart(k) - 1);
+const nightStart = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8), 12).getTime();      // (its noon)
+export const foxNight = k => hash01('fox|' + k) < FOX.chance;
+export const foxAt = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8), FOX.from).getTime() + Math.floor(hash01('foxt|' + k) * FOX.hours * 60) * 60e3;
+const foxSeenFrom = now => new Date(now).getHours() < 12 ? nightKey(now) : prevNight(nightKey(now));      // (a farm from before the visits: none for a night already over)
 export const animalXp = id => Math.round(ANIMALS[id].price / 50);
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
@@ -674,6 +711,7 @@ export function checkFarm(d, now = Date.now()) {
         kids: Array.isArray(c.brood.kids) ? c.brood.kids.slice(0, 4).map((k, i) => ({ sex: k && k.sex === 'r' ? 'r' : 'h', stars: int(k && k.stars, 1, 5, 1),
           ...(k && k.rare && ((k.rare === RARE_FROM[c.breed] && hash01(String(c.brood.hen) + '|' + c.brood.start + '|' + i + '|rare') < rareMost()) || (k.rare === c.breed && RARE_LINES.includes(c.breed))) ? { rare: k.rare } : {}) })) : null } : null,      // (a rare one: only its own colour's, only where the luck could have given it)
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
+      ...(typeof c.shut === 'string' && /^\d{8}$/.test(c.shut) && c.shut <= nightKey(now + TZ_SLACK) ? { shut: c.shut } : {}),      // (its pop door shut for that night)
       ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
   }
   out.birds = [];
@@ -774,6 +812,16 @@ export function checkFarm(d, now = Date.now()) {
   if (out.decor.some(o => o.id === 'beehives')) {
     const hn = d.honey && typeof d.honey === 'object' ? d.honey : {};
     out.honey = { n: int(hn.n, 0, HONEY.max, 0), at: Number.isFinite(hn.at) ? Math.min(hn.at, now) : now };
+  }
+  // Rusty's visits (release 3): the last night looked at (never ahead of now), and the last visit: a night he could have
+  // come, a coop of the farm's, the door open or shut, chased off only by animals the farm had then, eggs only from an open
+  // door nobody guarded, at most a nest's
+  const fx = d.fox && typeof d.fox === 'object' ? d.fox : null;
+  out.fox = { seen: fx && typeof fx.seen === 'string' && /^\d{8}$/.test(fx.seen) && fx.seen <= nightKey(now + TZ_SLACK) ? fx.seen : foxSeenFrom(now) };      // (a phone taken across time zones: a little slack)
+  const fl = fx && fx.last && typeof fx.last === 'object' ? fx.last : null;
+  if (fl && typeof fl.key === 'string' && /^\d{8}$/.test(fl.key) && fl.key <= out.fox.seen && foxNight(fl.key) && Number.isInteger(fl.t) && Math.abs(fl.t - foxAt(fl.key)) <= TZ_SLACK && fl.t <= now + TZ_SLACK && out.coops.some(c => c.id === fl.coop)) {
+    const by = ['geese', 'dog', 'team', 'farmer'].includes(fl.by) && fl.open === true && (fl.by === 'farmer' || (fl.by === 'dog' ? out.animals && out.animals.dog : fl.by === 'geese' ? out.animals && out.animals.geese : out.animals && out.animals.geese && out.animals.dog)) ? fl.by : null;
+    out.fox.last = { key: fl.key, t: fl.t, coop: fl.coop, open: fl.open === true, by, eggs: fl.open === true && !by ? int(fl.eggs, 0, NEST_MAX, 0) : 0, hen: cleanName(fl.hen) || HEN_NAMES[0], seen: fl.seen === true, watched: fl.watched === true };
   }
   // rare babies (release 2 step 2): those waiting for your choice (each from a Silkie coop of the colour it comes from) and
   // those kept, in the basket by the farmhouse fire (rare colours only); at most a rooster and two hens of each colour
@@ -1037,6 +1085,74 @@ export class Game {
     if (!d || X === null || Z === null) return false;
     d.x = X; d.z = Z; this.cleared(clear); this.save(); return true;
   }
+  // ---- Rusty's night visits: the coops' doors for the night, tonight's visit, and each night gone by since the farm was
+  // last looked at (the eggs laid before he came in the nest; the last visit kept for the morning's card and film)
+  fox() { return this.data.fox || (this.data.fox = { seen: foxSeenFrom(Date.now()) }); }
+  doorShut(c, now = Date.now()) { return c.shut === nightKey(now); }
+  setDoorShut(coopId, shut, now = Date.now()) {
+    const c = this.coop(coopId); if (!c) return;
+    const k = shut ? nightKey(now) : undefined; if (c.shut === k) return;
+    if (k) c.shut = k; else delete c.shut;
+    this.save();
+  }
+  // tonight's visit, if there's one to come: when, the coop he'll go for (as the doors are now), the night
+  foxTonight(now = Date.now()) {
+    const k = nightKey(now), F = this.fox();
+    if (this.level < FOX.level || k <= F.seen || !foxNight(k)) return null;
+    const t = foxAt(k), c = this.foxCoop(k, t);
+    return c ? { key: k, t, coop: c.id, open: c.shut !== k } : null;
+  }
+  foxCoop(k, t) {
+    const coops = this.data.coops.filter(c => this.birdsIn(c.id).length);
+    if (!coops.length) return null;
+    const order = coops.slice().sort((a, b) => hash01('foxc|' + k + '|' + a.id) - hash01('foxc|' + k + '|' + b.id));
+    return order.find(c => c.shut !== k) || order[0];
+  }
+  // the hen who sees him off in the story: the coop's Brave, else its Rebel, else its first hen
+  foxHen(c) { const hens = this.birdsIn(c.id).filter(b => b.sex === 'h'); const h = hens.find(b => b.pers === 'brave') || hens.find(b => b.pers === 'rebel') || hens[0]; return h ? h.name : HEN_NAMES[0]; }
+  // what happened at the coop: the door open or shut; open, chased off by the animals the farm had then, else the nest's
+  // eggs taken (the result kept; live: the farm's own visit says what happened)
+  foxResolve(k, live = null) {
+    const t = foxAt(k), c = this.coop(live ? live.coop : '') || this.foxCoop(k, t); if (!c) return null;
+    for (const e of this.dueLays(t)) this.layEgg(e.hen, e.t, t);               // (the eggs laid before he came)
+    const open = live ? live.open : c.shut !== k, A = this.data.animals || {};
+    const g = !!(A.geese && A.geese.at < t), dg = !!(A.dog && A.dog.at < t);
+    const by = live ? live.by || null : open && (g || dg) ? (g && dg ? 'team' : g ? 'geese' : 'dog') : null;
+    let eggs = 0;
+    if (live) eggs = open && !by ? live.took || 0 : 0;                          // (taken already, as he went: foxTakeNow)
+    else if (open && !by) { eggs = c.eggs; c.eggs = 0; c.lt = []; c.bonus = 0; }
+    const last = { key: k, t, coop: c.id, open, by, eggs, hen: this.foxHen(c), seen: false, watched: false };
+    const F = this.fox(); F.last = last; if (k > F.seen) F.seen = k;
+    this.save();
+    return last;
+  }
+  // the nights gone by: each one over (his time come and gone) checked once, a visit on those he came (the last two days'
+  // only; a night before level 4: nothing). live: tonight's is being played on the farm, left to it
+  foxTick(now = Date.now(), live = null) {
+    const F = this.fox(), last = nightKey(now); let out = null;
+    for (let k = F.seen, n = 0; k < last && n < 60; n++) {
+      let next = nightKey(nightStart(k) + DAY_MS); if (next <= k) next = nightKey(nightStart(k) + DAY_MS + 3 * 3600e3);      // (the night after)
+      k = next;
+      const t = foxAt(k);
+      if (t > now || k === live) break;
+      if (this.level >= FOX.level && foxNight(k) && now - t < CATCH_UP) out = this.foxResolve(k) || out;
+      if (k > F.seen) { F.seen = k; this.save(); }
+    }
+    return out;
+  }
+  foxLast() { return this.fox().last || null; }
+  // tonight's visit on the farm: the eggs gone from the nest the moment he takes them
+  foxTakeNow(coopId) { const c = this.coop(coopId); if (!c) return 0; const n = c.eggs; c.eggs = 0; c.lt = []; c.bonus = 0; this.save(); return n; }
+  // the morning's film: from the morning after until the next evening, till it's been watched
+  foxFilmable(now = Date.now()) { const l = this.foxLast(); return !!(l && !l.watched && now >= l.t && now - l.t < 20 * 3600e3); }
+  foxStory(l = this.foxLast()) {
+    if (!l) return '';
+    const de = /^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛ]/.test(l.hen) ? 'd’' + l.hen : 'de ' + l.hen;      // (French: d’Ivy, de Willow)
+    const k = !l.open ? 'fox_shut' : l.by ? 'fox_' + l.by : l.eggs > 1 ? 'fox_eggs' : l.eggs === 1 ? 'fox_eggs1' : 'fox_empty';
+    return this.t(k, { hen: l.hen, dehen: de, n: l.eggs, dog: this.dogName(), farmer: this.farmerName() }, k === 'fox_farmer' && this.data.farmer.look === 'f');
+  }
+  foxSeen() { const l = this.foxLast(); if (l && !l.seen) { l.seen = true; this.save(); } }
+  foxWatched() { const l = this.foxLast(); if (l && !l.watched) { l.watched = true; l.seen = true; this.save(); } }
   // ---- the wheat field: how far it's grown, sowing it, harvesting it, where it is
   wheat() { return this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
   wheatStage(now = Date.now()) {

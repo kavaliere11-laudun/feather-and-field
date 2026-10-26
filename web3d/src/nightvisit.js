@@ -323,7 +323,11 @@ export class Torch {
 
 // ---------------------------------------------------------------- the visit
 // o: { scene, fam (FoxFamily), nav, coops() (the coop plots), doorOpen(p), nestOf(p), D2, house: [x, z], grade(material),
-//      say(text, worldPos, seconds), hint(text), text: { key: [en, fr] }, lang, r }
+//      say(text, worldPos, seconds), hint(text), text: { key: [en, fr] }, lang, r,
+//      the game (release 3, Audrey: "He takes the nest's eggs"): eggsAt(p) (the eggs in its nest: at an open door with some
+//      there he takes them, carrying one home in his mouth), eggColour(p), tookEggs(p) (they're gone); fences() (the wild
+//      meadow's fences, [[x, z], ...] lines: nav then leaves them out and he leaps each one on his way); alarm() (the farm's
+//      guards up and raising the alarm, { x, z, who }, or null: he hears them and runs for home, wherever they are) }
 export class NightVisit {
   constructor(o) {
     Object.assign(this, o);
@@ -373,7 +377,7 @@ export class NightVisit {
     if (this.active()) return false;
     const f = this.fox;
     if (!f.home || this.fam.out) return false;
-    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null; this.byGeese = false; this.scare = null; this.helpers = {};
+    this.tries = []; this.pecks = 0; this.farmer = null; this.nose = null; this.ended = null; this.byGeese = false; this.scare = null; this.helpers = {}; this.took = 0; this.dropEgg();
     const forced = plotIndex !== undefined ? this.coops().find(p => p.index === plotIndex) : null;
     this.target = forced || this.pick([]);
     if (!this.target) return false;
@@ -384,7 +388,13 @@ export class NightVisit {
     return true;
   }
   // FoxFamily asks what Rusty does next while he's on his visit
+  // (with an egg in his mouth: his jaws a little open round it, whatever he's doing)
   nextTask(f) {
+    const t = this.nextTask0(f);
+    if (!t || !this.egg || !this.egg.parent) return t;
+    return { name: t.name, inner: t, cur() { return t.cur ? t.cur() : t; }, run(f, dt) { const d = t.run(f, dt); f.A.mouthGoal = Math.max(f.A.mouthGoal || 0, 0.34); f.A.mouth = Math.max(f.A.mouth || 0, 0.3); return d; } };
+  }
+  nextTask0(f) {
     const self = this;
     if (this.state === 'fleeing') return this.fleeTask();
     switch (this.phase) {
@@ -393,7 +403,7 @@ export class NightVisit {
         const p = this.target, e = this.entry(p, f.pos.x, f.pos.z);
         if (!e) { this.note('no way to ' + p.index); this.phase = 'home'; return this.wait(0.5); }
         this.way = e; this.phase = 'jumpIn';
-        return this.follow(e.path, 'trot', 3.2);
+        return this.walk(e.path, 'trot', 3.2);
       }
       case 'jumpIn': this.phase = 'toRamp'; return this.leap(this.way.take, this.way.land);
       case 'toRamp': {
@@ -404,10 +414,14 @@ export class NightVisit {
       case 'climb': this.phase = 'atDoor'; return this.climb(this.target, true);
       case 'atDoor': {
         const p = this.target;
+        if (this.doorOpen(p) && this.eggsAt && this.eggsAt(p) > 0) { this.phase = 'grab'; return this.poke(p); }      // (the game: eggs in the nest)
         if (this.doorOpen(p)) { this.phase = 'recoil'; this.pecks++; return this.poke(p); }
         this.phase = 'shutDoor'; return this.scratch(p);
       }
       case 'recoil': this.phase = this.pecks < 2 ? 'again' : 'leave'; return this.recoil(this.target);
+      case 'grab': this.phase = 'carry'; return this.grab(this.target);
+      case 'carry': this.phase = 'show'; return this.backDown(this.target);
+      case 'show': this.phase = 'leave'; return this.showOff(f);
       case 'again': {           // a moment's thought, then back in line with the ramp for another try
         this.phase = 'climb';
         const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, G.foot[1] + 0.85));
@@ -614,6 +628,56 @@ export class NightVisit {
       return this.t > 2.4;
     } });
   }
+  // the game's eggs: his head in through the pop door, the hens squawking, and out it comes with an egg in his mouth
+  grab(p) {
+    const self = this, G = this.nestOf(p), lz = G.pop[1] + 0.42;
+    return { name: 'grab', t: 0, run(f, dt) {
+      this.t += dt; const k = smooth(0, 0.45, this.t) - smooth(0.75, 1.1, this.t), z = lz - 0.07 * k;
+      self.lean(f, p, z); self.lz = z;
+      const w = self.W(p, G.pop[0], 0, z); f.pos.x = w.x; f.pos.z = w.z;
+      f.A.crouchGoal = 0.45 + 0.25 * k; f.A.lookPitchGoal = 0.35 + 0.25 * k; f.A.earsGoal = 0.2; f.A.wideGoal = 0.6;
+      f.A.mouthGoal = this.t < 0.7 ? 0.55 : 0.34; f.A.wagGoal = this.t > 0.8 ? 0.7 : 0;
+      if (this.t > 0.7 && !(self.egg && self.egg.parent)) self.takeEgg(f, p);
+      return this.t > 1.25;
+    } };
+  }
+  takeEgg(f, p) {
+    if (!this.egg) {
+      this.egg = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), new THREE.MeshStandardMaterial({ roughness: 0.45 }));
+    }
+    this.egg.material.color.set(this.eggColour ? this.eggColour(p) : '#efe4cf');
+    this.egg.material.emissive.copy(this.egg.material.color).multiplyScalar(0.3);      // (it shows in the dark: the story's whole point)
+    this.egg.scale.set(0.064, 0.05, 0.05);                  // (lying across his jaws)
+    const jaw = f.q.bones.jaw; jaw.add(this.egg); this.egg.position.copy(f.q.mouthSpot());
+    this.took = this.eggsAt ? this.eggsAt(p) : 1;
+    if (this.tookEggs) this.tookEggs(p, this.took);
+    this.say(this.T('grabbed'), this.W(p, 0, 2.0, 0), 2.4);
+    this.note('eggs ' + p.index + ' ' + this.took);
+  }
+  dropEgg() { if (this.egg && this.egg.parent) this.egg.removeFromParent(); }
+  // back down the ramp with it, pleased with himself (no peck, no feather), then off home
+  backDown(p) {
+    const self = this, G = this.nestOf(p), h = this.heading(p, 0, -1), top = G.pop[1] + 0.42, end = G.foot[1] + 0.4;
+    return { name: 'backDown', t: 0, run(f, dt) {
+      this.t += dt; const u = smooth(0, 0.7, this.t);
+      const lz = top + (end - top) * u, w = self.W(p, G.pop[0], 0, lz); f.pos.x = w.x; f.pos.z = w.z;
+      f.heading = h; f.A.lift = Math.max(self.rampY(p, lz), 0) * (1 - u) + Math.sin(u * Math.PI) * 0.06;
+      f.A.tailUpGoal = 0.8; f.A.wagGoal = 1; f.A.earsGoal = 0.8; f.A.squintGoal = 0.3;
+      self.lz = this.t > 0.75 ? null : lz;
+      return this.t > 0.8;
+    } };
+  }
+  // round to face you at the foot of the ramp, the egg in his mouth: very pleased with himself (a wag, ears up, eyes
+  // narrowed), then off
+  showOff(f) {
+    const self = this;
+    return { name: 'showOff', t: 0, run(f, dt) {
+      this.t += dt;
+      const h = self.toCamera ? self.toCamera(f.pos.x, f.pos.z) : f.heading; f.turnTo(h, dt, 4);
+      f.A.lookPitchGoal = -0.18; f.A.earsGoal = 1; f.A.wagGoal = 1; f.A.tailUpGoal = 0.7; f.A.squintGoal = 0.45; f.A.headTiltGoal = this.t > 0.9 ? 0.25 : 0;
+      return this.t > 1.9;
+    } };
+  }
   // at a shut door: sniffs along it, scratches at it, sits back puzzled
   scratch(p) {
     const self = this, G = this.nestOf(p), lz = G.pop[1] + 0.42;
@@ -640,7 +704,42 @@ export class NightVisit {
     const f = this.fox, [x, z, h] = this.fam.den, dx = x + Math.sin(h) * 1.05, dz = z + Math.cos(h) * 1.05;
     const path = this.nav.find(f.pos.x, f.pos.z, dx, dz) || [[f.pos.x, f.pos.z], [dx, dz]];
     path.push([dx, dz]);
-    return this.follow(path, pace, 0);
+    return this.walk(path, pace, 0);
+  }
+  // along a way, over the wild meadow's fences where it crosses them (the game): to a spot 0.8 m short of the first fence,
+  // a leap square over it, then on from the far side the same way (a way found again from there)
+  walk(path, pace, sneak, tol, tailUp, depth = 0) {
+    const F = this.fences ? this.fences() : null;
+    if (!F || !F.length || path.length < 2 || depth > 6) return this.follow(path, pace, sneak, tol, tailUp);
+    let c = null;
+    for (let i = 1; i < path.length && !c; i++) {
+      const [ax, az] = path[i - 1], [bx, bz] = path[i], ex = bx - ax, ez = bz - az;
+      let best = null;
+      for (const L of F) for (let j = 1; j < L.length; j++) {
+        const [cx, cz] = L[j - 1], [dx, dz] = L[j], gx = dx - cx, gz = dz - cz, den = ex * gz - ez * gx;
+        if (Math.abs(den) < 1e-9) continue;
+        const u = ((cx - ax) * gz - (cz - az) * gx) / den, v = ((cx - ax) * ez - (cz - az) * ex) / den;
+        if (u < 0 || u > 1 || v < 0 || v > 1 || (best && u >= best.u)) continue;
+        const gl = Math.hypot(gx, gz) || 1; let nx = -gz / gl, nz = gx / gl; if (nx * ex + nz * ez < 0) { nx = -nx; nz = -nz; }
+        best = { u, x: ax + ex * u, z: az + ez * u, nx, nz, tx: gx / gl, tz: gz / gl };
+      }
+      c = best;
+    }
+    if (!c) return this.follow(path, pace, sneak, tol, tailUp);
+    // the take-off and landing square to the fence, slid along it a little if one of them is in something's way
+    let take = null, land = null;
+    for (const sl of [0, 0.25, -0.25, 0.5, -0.5, 0.8, -0.8, 1.2, -1.2]) {
+      const tx = c.x - c.nx * 0.8 + c.tx * sl, tz = c.z - c.nz * 0.8 + c.tz * sl, lx = c.x + c.nx * 0.8 + c.tx * sl, lz = c.z + c.nz * 0.8 + c.tz * sl;
+      if (this.nav.freeAt(tx, tz) && this.nav.freeAt(lx, lz)) { take = { x: tx, z: tz }; land = { x: lx, z: lz }; break; }
+    }
+    if (!take) return this.follow(path, pace, sneak, tol, tailUp);
+    const self = this, f0 = path[0], end = path[path.length - 1];
+    const to = this.nav.find(f0[0], f0[1], take.x, take.z) || [[f0[0], f0[1]], [take.x, take.z]]; to.push([take.x, take.z]);
+    const on = { name: 'go', inner: null, cur() { return this.inner ? (this.inner.cur ? this.inner.cur() : this.inner) : this; }, run(f, dt) {
+      if (!this.inner) { const r = self.nav.find(land.x, land.z, end[0], end[1]) || [[land.x, land.z], [end[0], end[1]]]; r.push([end[0], end[1]]); this.inner = self.walk(r, pace, sneak, tol, tailUp, depth + 1); }
+      return this.inner.run(f, dt);
+    } };
+    return seq(this.follow(to, pace, 0, tol, tailUp), this.leap(take, land), on);
   }
   denIn() { return this.fam.inTask(() => this.finish()); }
   // ---- the farmer
@@ -745,8 +844,9 @@ export class NightVisit {
   finish() {
     const shooed = this.state === 'fleeing';
     const H = this.helpers || {}, guards = H.geese && H.dog ? 'team' : H.dog ? 'dog' : 'geese';
-    this.ended = shooed ? (this.byGeese ? guards : 'shooed') : this.pecks ? 'pecked' : 'shut';
-    this.hint(this.T(shooed ? (this.byGeese ? guards + 'Safe' : 'safe') : this.pecks ? 'feather' : 'allShut'));
+    this.ended = shooed ? (this.byGeese ? guards : 'shooed') : this.took ? 'eggs' : this.pecks ? 'pecked' : 'shut';
+    this.hint(this.T(shooed ? (this.byGeese ? guards + 'Safe' : 'safe') : this.took ? 'eggsGone' : this.pecks ? 'feather' : 'allShut'));
+    this.dropEgg();
     this.byGeese = false; this.scare = null; this.helpers = {};
     this.note('home ' + this.ended);
     this.state = 'idle'; this.phase = null; this.lz = null;
@@ -758,6 +858,7 @@ export class NightVisit {
   // each showing)
   reset() {
     if (this.nose) { this.nose.type = 'feather'; this.nose = null; }
+    this.dropEgg(); this.took = 0;
     for (const s of this.fx.list) { s.life = 0; s.sp.visible = false; if (s.type === 'stuck') s.type = 'feather'; }
     this.state = 'idle'; this.phase = null; this.lz = null; this.helpers = {}; this.byGeese = false; this.scare = null; this.ended = null;
     this.farmer = null; this.torch.on = 0; this.torch.group.visible = false; this.pecks = 0; this.tries = []; this.curlSet = false;
@@ -822,6 +923,10 @@ export class NightVisit {
   // ---- every frame
   update(dt, hour, opts = {}) {
     const night = hour >= 23 || hour < 4.5;
+    if (this.alarm && this.state === 'out' && this.fox.root.visible) {      // (the game: the guards' alarm heard, wherever they are)
+      const a = this.alarm();
+      if (a) { this.alarmT = (this.alarmT || 0) + dt; if (this.alarmT > 1.6 && this.chasedBy(a.x, a.z, a.who[0])) for (const w of a.who) this.helpers[w] = true; }
+    } else this.alarmT = 0;
     if (this.state === 'idle') {
       if (!this.farmer || this.farmer.stage === 'gone') this.next -= dt;
       if (night && this.next <= 0) { if (!this.start(opts.plot)) this.next = 20; }

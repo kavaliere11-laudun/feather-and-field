@@ -2254,9 +2254,9 @@ the birds already had.
   the ground round it, his bowls and the grass in front of his door, `DECOR_INFO.foot.kennel`; drag it or tap where it
   goes; only on your land, not on a lane, with room; what's in the way cleared), always turned the way the village's
   faces, its door to you a little to the right (`KENNEL_DEG`). "Put it here": paid for then; out he comes in front of his
-  door with a hop and a play bow at you, "Biscuit has come to live on your farm! +80 XP", and a moment later the card for
-  his name opens ("Your dog's name", Biscuit ready to keep or change; "Choose his name, or keep Biscuit."). Saved: "Your dog
-  is called …", his label, the board over his door and the shelf all say it.
+  door with a hop and a play bow at you (the view to him: the player's tap), "Biscuit has come to live on your farm! +80
+  XP", and a moment later the card for his name opens ("Your dog's name", Biscuit ready to keep or change). Saved: "Your
+  dog is called …", his label, the board over his door and the shelf all say it.
 - **On the shelf once he's yours:** "✓ On your farm", See him (the view to him), Move his kennel (the same placing; he's
   back at it once it's down, "Pepper's kennel: moved!"), Rename. A tap on the kennel opens the shelf; a tap on him: his
   name and "Rename …" for a few seconds, as on the village page.
@@ -2273,3 +2273,51 @@ the birds already had.
 - `dogbuy.mjs` (new; English upright, French sideways): level 8 (none, the shelf says level 9), the level-9 card, too few
   coins, placing the kennel, buying, his name, the shelf, four minutes of his day (never into anything outside his own
   kennel), moving his kennel, a tap on it, a reload, the night, two changed saves.
+
+## Release 3, step 3: Rusty's night visits in the game (26 Oct 2026, Audrey: "He takes the nest's eggs (Recommended)", "About twice a week (Recommended)")
+
+- **When:** from level 4, on about two nights in seven (`FOX.chance`, the night's own luck from its date, the same on
+  every phone: `foxNight`), at a time between 11 pm and 2:30 am (`foxAt`). A night is the evening's date (`nightKey`: a
+  time before noon belongs to the night before). The level-4 card says so: "From now on Rusty the fox may come at night
+  for the eggs: shut the coops' doors, or get the geese."
+- **Where:** a coop whose pop door was left open if there is one (the night's luck picks which), else a shut one.
+- **What happens** (`Game.foxResolve`): the eggs laid before he came go into the nests first; then a shut door: he
+  scratches at it and goes home; an open door with the geese or the dog on the farm (bought before he came): they hear
+  him and chase him home; an open door with no guards: he takes the nest's eggs (none there: the hen pecks his nose).
+  No bird is ever hurt.
+- **The doors** are kept in the save for the night (`coop.shut`, the night's key): the moon over a door at bedtime shuts
+  it as before, now remembered; a farm opened at night shows them shut; in the morning they open as before.
+- **The nights the farm was shut** (`foxTick`): each night gone by is checked once (the last two days' only), and the
+  last visit kept (`fox.last`). In the morning a card: "🦊 Last night on the farm" and what happened in words ("Rusty the
+  fox found the door of Fern's coop open and took 3 eggs from the nest. The hens are fine, just a little ruffled."; "…but
+  the doors were shut. He went home empty-handed."; "…but the geese heard him and chased him all the way home!"; the dog,
+  the geese and the dog; French with "d'Ivy" / "de Willow"), a tip when the eggs went ("To keep the eggs safe, shut the
+  coops' doors at night (tap the moon over each door), or get the geese (the shop, Animals)."), "🎞 Watch it" and OK.
+  The "🎞 Last night" button stays till it's been watched, until the next evening.
+- **The film** (replay.js) is that night's: its coop, its door, its time, its hen, and only the guards who chased him
+  (the cast made again when that changes). The eggs' story: "Rusty had a plan." … "Nothing could possibly go wrong." …
+  in slow motion his head in at the pop door and out with an egg … "This time, nothing went wrong." … he turns to show
+  it off … "Rusty went home… with the eggs." … "The End" · "The hens are safe and sound. The eggs, not so much."
+- **The egg** (nightvisit.js `grab`, `takeEgg`, `backDown`, `showOff`): the hens' flurry, his head pushes in at the pop
+  door, and he comes out with an egg in his jaws (the breed's egg colour, a little glow so it shows in the dark), hops
+  back down the ramp pleased with himself, turns round to show it off (ears up, wagging, eyes narrowed), and trots home
+  with it in his mouth (his jaws a little open round it whatever he's doing), "Rusty has taken the eggs!", "Rusty went home
+  with the eggs."
+- **The farm open at his time** (`foxLiveTick`): his visit is played on the farm (the farm's own `NightVisit`), "Send
+  Arthur" as on the village page; the eggs go from the nest the moment he takes them; what happened is kept as already
+  seen (no card in the morning). With guards on the farm he never takes eggs.
+- **The fences:** the wild meadow's fences kept Rusty out (no way to the coops). He now finds his way on the farm's grid
+  without them (`navWild`) and leaps each fence where his way crosses it (`NightVisit.walk`: to a spot 0.8 m short of
+  it, his pen-fence leap square over it, on from the far side). The geese live behind the pond's fence until those
+  fields are yours, so in the game the guards' alarm is enough: once they're up honking or out barking (`guardAlarm`),
+  he hears them and runs for home wherever they are; if they get to him they chase him as before.
+- **Save checks:** `fox.seen` a night not ahead of now; `fox.last` a night he could have come, at his time (a time zone's
+  slack), a coop of the farm's, chased only by animals the farm has, eggs only from an open door nobody guarded and at
+  most a nest's; `coop.shut` a night not ahead of now. Anything else is dropped and the farm flagged.
+- **Also:** after buying the dog the view goes to him, and the card for his name comes a moment later.
+- `foxvisit.mjs` (new; English upright, French sideways): level 3 (no visits), the level-4 card, a night with the eggs
+  taken (the card, the tip, the film with the egg, the button gone), a night played on the open farm (an egg in his
+  mouth, the nest emptied, nothing to tell after), a night with the doors shut (kept in the save, shut after a reload), a
+  night with the geese (the card, the film), two changed saves. `foxfilm.mjs OUT [every]`: the morning card and the film
+  (NIGHT=geese: a night the geese chased him). `balsim.mjs` now has Rusty's visits too: about 107 a year, and a player who
+  collects the eggs in the evening loses none.

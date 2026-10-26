@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -1387,6 +1387,7 @@ const VISIT_TEXT = {
   safe: ['Rusty ran home. The hens can go back to sleep.', 'Rusty est rentré chez lui. Les poules peuvent se rendormir.'],
   feather: ['Rusty went home with a feather on his nose.', 'Rusty est rentré avec une plume sur le nez.'],
   allShut: ['Rusty went home: the doors were shut.', 'Rusty est rentré : les portes étaient fermées.'],
+  grabbed: ['Rusty has taken the eggs!', 'Rusty a pris les œufs !'], eggsGone: ['Rusty went home with the eggs.', 'Rusty est rentré avec les œufs.'],
   atDoor: ['Rusty the fox is at the door!', 'Rusty le renard est à la porte !'],
   inWay: ["Rusty's nose is in the way!", 'Le nez de Rusty est dans le passage !'],
   geeseHeard: ['The geese have heard Rusty! They\'re raising the alarm…', 'Les oies ont entendu Rusty ! Elles donnent l\'alerte…'],
@@ -1409,7 +1410,11 @@ let nightVisit = null;
 // pond and the streams (except where a path crosses them, on the bridges); grown by about a fox's half width
 let NAV = null;
 const navGrid = () => NAV || (NAV = buildNav());          // (one grid for everyone who finds a way round the village)
-function buildNav() {
+// (the game: the same without the wild meadow's fences, for Rusty, who leaps them on his way: nightvisit.js walk)
+let NAVW = null;
+const navWild = () => !GAME_MODE ? navGrid() : NAVW || (NAVW = buildNav(true));
+const meadowFences = () => GAME_MODE && FIELDS && game.data ? [...fenceLines(), ...fenceLines('edge')] : null;
+function buildNav(wild = false) {
   const c = V.bounds.corners, xs = c.map(p => p[0]), zs = c.map(p => p[2]);
   const nav = new NavGrid(Math.min(...xs) - 2, Math.min(...zs) - 2, Math.max(...xs) + 2, Math.max(...zs) + 2, 0.25);
   const GROW = 0.22, seg = (px, pz, a, b) => { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
@@ -1459,7 +1464,7 @@ function buildNav() {
   }
   // the game: the wild meadow's fence (the farmer keeps to your land and the lanes), and its edge with the woods round the
   // farm closed too (no way round into it from outside)
-  if (GAME_MODE && FIELDS && game.data) for (const pts of [...fenceLines(), ...fenceLines('edge')]) for (let i = 1; i < pts.length; i++) {
+  if (GAME_MODE && FIELDS && game.data && !wild) for (const pts of [...fenceLines(), ...fenceLines('edge')]) for (let i = 1; i < pts.length; i++) {
     const [ax, az] = pts[i - 1], [bx, bz] = pts[i], dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1;
     nav.mark(Math.min(ax, bx) - 0.3, Math.min(az, bz) - 0.3, Math.max(ax, bx) + 0.3, Math.max(az, bz) + 0.3, (x, z) => { const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L)); return Math.hypot(x - ax - dx * t, z - az - dz * t) < 0.2; });
   }
@@ -1687,12 +1692,23 @@ function sendToPen(kind) {
 }
 if (henEls.box) { henEls.cuddle.addEventListener('click', () => sendToPen('cuddle')); henEls.fill.addEventListener('click', () => sendToPen('fill')); }
 
+// the game: the farm's guards up and raising the alarm (the geese honking, the dog out barking), wherever they are: Rusty
+// hears them and runs for home (the pond's fields are fenced off till they're yours, so the geese can't always reach him)
+function guardAlarm(F, D) {
+  if (!GAME_MODE) return null;
+  const g = F && F.guarding && F.geese.length ? F.geese[0] : null, d = D && D.guard && !D.guard.done ? D.dog : null, o = d || g;
+  return o ? { x: o.pos.x, z: o.pos.z, who: [...(d ? ['dog'] : []), ...(g ? ['geese'] : [])] } : null;
+}
 function buildNightVisit() {
   const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
   nightVisit = new NightVisit({ door: farmDoor(), farmerName,
-    scene, fam: foxes, nav: navGrid(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
+    scene, fam: foxes, nav: navWild(), fences: meadowFences, alarm: () => guardAlarm(geeseFlock && geeseFlock.geese.length ? geeseFlock : null, farmDog), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
     grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(41), penObstacles: PEN.obstacles, groundY,
     busyPlot: p => inside.open && inside.plot === p,
+    // the game (release 3): tonight's visit played on the farm: the eggs in the nest he goes for; taken, gone from it
+    eggsAt: p => GAME_MODE && FOXLIVE && p.gc && !geeseOwned() && !dogOwned() ? ((game.coop(p.gc.id) || {}).eggs || 0) : 0,      // (the guards: never, as the game has it)
+    eggColour: p => EGG_COLOUR[p.breed] || '#efe4cf',
+    tookEggs: p => { if (GAME_MODE && p.gc) { game.foxTakeNow(p.gc.id); p.gc = game.coop(p.gc.id) || p.gc; if (p.nest) { p.nest.count = 0; showEggs(p); } bubbleText(Date.now(), p); } },
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),     // which way faces the player
     // a first visit 2-4 minutes into a night, then every 15-30 minutes (automated tests only get one with ?visit)
     firstIn: GAME_MODE ? Infinity : params.has('visit') ? 2.5 : navigator.webdriver ? Infinity : 120 + Math.random() * 120,
@@ -1724,6 +1740,7 @@ function tickFoxes(dt) {
   if (ShowLineup.on) { ShowLineup.on.update(dt); wake(100); }
   if (SHOWDAY) { SHOWDAY.update(dt); wake(100); }
   if (nightVisit) nightVisit.update(dt, clockHour(), { plot: VISIT_PLOT });
+  if (FOXLIVE && nightVisit && nightVisit.state === 'idle' && nightVisit.ended) foxLiveDone();
   if (farmDog) farmDog.separate();                   // (Biscuit out of Rusty's way, after everyone has moved)
   const prowl = !!(nightVisit && nightVisit.active() && nightVisit.fox.root.visible), out = foxes.visible() || prowl;
   if (foxBtn && foxBtn.hidden === out) foxBtn.hidden = !out;
@@ -1757,7 +1774,7 @@ function doorShader(mat) {
 function buildDoors() {
   for (const p of plots) if (p.kind === 'coop') {
     const st = p.breed + (parts['popdoor_' + p.breed + tintOf(p)] ? tintOf(p) : ''), S = DOORS.styles[st] = DOORS.styles[st] || { meshes: [], plots: [] };
-    const o = p.door || {};                                 // (made again, a new coop: each door as it was)
+    const h0 = clockHour(), o = p.door || (GAME_MODE && p.gc && game.doorShut(p.gc) && (h0 >= 18 || h0 < 7.5) ? { shut: true, s: 0, goal: 0 } : {});      // (made again, a new coop: each door as it was; the game: shut tonight as the save has it)
     p.door = { shut: !!o.shut, s: o.s ?? 1, goal: o.goal ?? 1, i: S.plots.length, badge: o.badge || null, kind: o.kind || null };
     S.plots.push(p);
   }
@@ -1790,7 +1807,7 @@ function placeDoor(p) {                                    // (its coop moved)
   for (const inst of S.meshes) { inst.setMatrixAt(p.door.i, M); inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN; }
 }
 const doorOpen = p => !p.door || p.door.s >= 1;
-function setDoor(p, open) { if (p.door) { p.door.goal = open ? 1 : 0; p.door.shut = !open; wake(1200); } }
+function setDoor(p, open) { if (p.door) { p.door.goal = open ? 1 : 0; p.door.shut = !open; wake(1200); if (GAME_MODE && p.gc && !(replay && replay.on)) game.setDoorShut(p.gc.id, !open); } }
 let BADGE_TEX = null;
 function badgeTextures() {
   const make = sun => fxTexture64(128, c => {
@@ -3087,10 +3104,39 @@ function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) re
 function canLayNow(b) {
   return b.root.visible && !b.laying && !b.roost && !b.asleep && !b.cuddle && !b.called && !b.held && !b.plot.farmer && !b.plot.fw && !b.plot.nest.by && !b.nightNow(0.25) && !(inside.open && inside.plot === b.plot);
 }
+// ---- Rusty's visits in the game (release 3; game.js foxTonight, foxTick): tonight's played on the farm when it's open at
+// his time (the farm's own visit, nightvisit.js: the guards, the farmer's torch, the eggs taken at an open door); its end
+// kept as the night's story, already seen. The nights the farm was shut: worked out by the game, a card in the morning
+let FOXLIVE = null;
+// (returns the night being played, or about to be, which the game leaves to the farm)
+function foxLiveTick(now, live) {
+  if (FOXLIVE) return FOXLIVE.key;
+  if (!nightVisit || !live || (replay && replay.on)) return null;
+  const tn = game.foxTonight(now); if (!tn || now < tn.t || now > tn.t + 20 * 60e3) return null;
+  const p = gamePlots().find(q => q.gc && q.gc.id === tn.coop); if (!p) return null;
+  FOXLIVE = { key: tn.key, coop: tn.coop };
+  if (!nightVisit.start(p.index)) FOXLIVE = null;                       // (not out yet: in a moment; past his time, the game's)
+  return tn.key;
+}
+function foxLiveDone() {
+  const V = nightVisit, e = V.ended, p = V.target, by = ['geese', 'dog', 'team'].includes(e) ? e : e === 'shooed' ? 'farmer' : e !== 'shut' && (geeseOwned() || dogOwned()) ? (geeseOwned() && dogOwned() ? 'team' : geeseOwned() ? 'geese' : 'dog') : null;
+  game.foxResolve(FOXLIVE.key, { coop: p && p.gc ? p.gc.id : FOXLIVE.coop, open: e === 'shut' ? false : e === 'eggs' || e === 'pecked' ? true : !!(p && doorOpen(p)), by, took: V.took || 0 });
+  game.foxWatched();                                                      // (seen as it happened)
+  FOXLIVE = null; V.ended = null;
+}
+// the morning's film of last night, from the game's story
+function foxRec() {
+  const l = game.foxLast(); if (!l) return null;
+  const p = gamePlots().find(q => q.gc && q.gc.id === l.coop); if (!p) return null;
+  const d = new Date(l.t);
+  return { coop: p.index, open: l.open, hour: d.getHours() + d.getMinutes() / 60, hen: l.hen, eggs: l.eggs, by: l.by };
+}
 function gameTick(now = Date.now(), force = false) {
   if (!GAME_MODE || !game.data || (!force && now - gameTickAt < 1000)) return;
   gameTickAt = now;
   const live = document.visibilityState !== 'hidden';
+  const tonight = foxLiveTick(now, live);                               // (tonight's visit, if it's time and the farm is open)
+  if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
   if (game.showTick(now).length) gameUI.refresh();                    // (a show judged: its results card once the farm's free)
@@ -3513,6 +3559,8 @@ function showNews() {
     const sum = game.awaySummary(AWAY.from); AWAY = null;
     if (sum.items.length || sum.paused) { holdBird(null); henOff(); gameUI.awayCard(sum, { collectAll: () => collectAll() }); return; }
   }
+  const fl = game.foxLast();                                                // (last night's visit: what happened, the film)
+  if (fl && !fl.seen && !FOXLIVE) { holdBird(null); henOff(); game.foxSeen(); gameUI.foxCard(fl, { watch: () => startReplay() }); return; }
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const sr = game.unseenShows();                                           // (the show results: the show day first, by day)
@@ -3736,6 +3784,7 @@ function rebuildNav() {
   if (!NAV) return;
   const fresh = buildNav();
   NAV.block = fresh.block; NAV.links = fresh.links; NAV.linkAt = fresh.linkAt; NAV.cost = null; pathCosts(NAV);
+  if (NAVW) { const w = buildNav(true); NAVW.block = w.block; NAVW.links = w.links; NAVW.linkAt = w.linkAt; NAVW.cost = null; }
   REACH = null; dogSpots = null; for (const p of plots) p.exitWay = null;
   if (geeseFlock) geeseFlock.renav();                // (their places where one can walk now, their bed marked again)
 }
@@ -4639,8 +4688,8 @@ function dogHome(came) {
   renderer.shadowMap.needsUpdate = true; wake(1500);
   if (came && farmDog) {
     farmDog.tapped(farmDog.dog);                             // (a hop and a play bow at you)
-    hintNext(game.t('dog_name_now'));
-    setTimeout(() => { if (!DMOVE.id && !MOVE.plot) openDogName(); }, 900);
+    const d = farmDog.dog.pos; focusOn(d.x - 0.3, d.z - 0.3, Math.min(view.max, sideways() ? 2.0 : 2.6));      // (the player's tap: the view to him)
+    setTimeout(() => { if (!DMOVE.id && !MOVE.plot && !(replay && replay.on)) openDogName(); }, 1600);
   }
 }
 function endDecor(placed) {
@@ -5281,6 +5330,7 @@ function heroHen(p) {                              // the hen who sees him off: 
   return h ? h.name : '';
 }
 function replayRecord() {
+  if (GAME_MODE) return foxRec();
   const coops = plots.filter(p => p.kind === 'coop' && p.birds.length), want = params.get('replay');
   const forced = want && /^\d{1,2}$/.test(want) ? coops.find(p => p.index === +want) : null;
   if (lastNight && !forced) return lastNight;
@@ -5295,17 +5345,19 @@ function replayRecord() {
   }
   return { coop: p.index, open: params.has('shut') ? false : doorOpen(p), hour: (23.1 + r() * 3.2) % 24, hen: heroHen(p) };
 }
-function buildReplayCast() {
-  const has = k => !params.has('noguard') && !params.has(k);
+function buildReplayCast(rec) {
+  const has = k => GAME_MODE ? !!(rec && (rec.by === 'team' || rec.by === (k === 'nogeese' ? 'geese' : 'dog'))) : !params.has('noguard') && !params.has(k);
   const fam = new FoxFamily(scene, { den: FOX_DEN, field: FOX_FIELD, joints: beastJoints, obstacles: FOX_OBSTACLES, only: 'dad', firstIn: 1e9 }, rng(71));
   const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
   const visit = new NightVisit({
-    scene, fam, nav: navGrid(), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
+    scene, fam, nav: navWild(), fences: meadowFences, alarm: () => replayCast ? guardAlarm(replayCast.geese, replayCast.dog) : null,
+    coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
     grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(43), penObstacles: PEN.obstacles, groundY,
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),
     firstIn: Infinity, again: () => Infinity,
     say(text, at, secs) { tag.textContent = text; tagBird = null; tagSpot.copy(at); tag.classList.add('on'); fieldTag = secs; },
     hint: () => {},                                 // (the film has its own cards)
+    eggsAt: p => replay && replay.rec && replay.rec.eggs > 0 && p.index === replay.rec.coop ? replay.rec.eggs : 0, eggColour: p => EGG_COLOUR[p.breed] || '#efe4cf',
   });
   visit.dogName = () => dogName;
   const c = { fam, visit, geese: null, dog: null };
@@ -5315,7 +5367,17 @@ function buildReplayCast() {
       foxes: () => fam, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), visit: () => visit, den: FOX_DEN, wakeOn: () => replay.dogAlarm }, rng(62));
   }
   for (const g of [fam.group, c.geese && c.geese.group, c.dog && c.dog.group]) if (g) { g.traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); }); g.visible = false; }
+  c.key = castKey(rec);
   return c;
+}
+// (the game: a cast for who chased him that night; made again when that changes)
+const castKey = rec => GAME_MODE && rec ? String(rec.by) : '';
+function castFor(rec) {
+  if (replayCast && replayCast.key !== castKey(rec)) {
+    for (const g of [replayCast.fam.group, replayCast.geese && replayCast.geese.group, replayCast.dog && replayCast.dog.group]) if (g) g.removeFromParent();
+    replayCast = null;
+  }
+  return (replayCast = replayCast || buildReplayCast(rec));
 }
 // the farm's own hidden and paused for the film (the night's light, the visited coop's door as it was), or all put back
 function replayLive(on, rec) {
@@ -5352,14 +5414,14 @@ function setupReplay() {
   if (params.get('lineup') || !foxes || !nightVisit) return;
   const el = id => document.getElementById(id);
   replay = new Replay({
-    cast: () => (replayCast = replayCast || buildReplayCast()),
+    cast: rec => castFor(rec),
     live: replayLive,
     look: (x, z, size) => { view.target.set(x, 0, z); view.size = size; clampView(); applyGrass(); placeCamera(); furDetail(); },
     lang: LANG, dogName: () => dogName,
     els: { film: el('film'), grain: el('film-grain'), flick: el('film-flick'), scratches: [el('film-s1'), el('film-s2')], iris: el('film-iris'),
       card: el('film-card'), title: el('film-title'), sub: el('film-sub'), skip: el('film-skip'), canvas },
   });
-  replay.onClose = () => { try { localStorage.setItem(REPLAY_KEY, dayKey()); } catch (e) {} replayDone = true; seenCheck.at = -1e9; };
+  replay.onClose = () => { if (GAME_MODE) { game.foxWatched(); return; } try { localStorage.setItem(REPLAY_KEY, dayKey()); } catch (e) {} replayDone = true; seenCheck.at = -1e9; };
   if (replayBtn) { replayBtn.textContent = '🎞 ' + REPLAY_TEXT.btn[LANG === 'fr' ? 1 : 0]; replayBtn.addEventListener('click', () => startReplay()); }
 }
 let replayDone = false;
@@ -5372,7 +5434,7 @@ function startReplay() {
 // button has the spot
 function tickReplayBtn() {
   if (!replay || !replayBtn) return;
-  const h = clockHour(), want = !GAME_MODE && !replay.on && !inside.open && !replayDone && (params.has('replay') || (h >= 6 && h < 12 && !replaySeenToday()))
+  const h = clockHour(), want = !replay.on && !inside.open && (GAME_MODE ? !!game.data && game.foxFilmable() && !gameUI.isOpen && !MOVE.plot && !DMOVE.id && !SHOWDAY : !replayDone && (params.has('replay') || (h >= 6 && h < 12 && !replaySeenToday())))
     && (!farmerBtn || farmerBtn.hidden) && (!dogEls.btn || dogEls.btn.hidden) && dogEls.form && dogEls.form.hidden;
   if (replayBtn.hidden === want) {
     replayBtn.hidden = !want;
@@ -5491,6 +5553,9 @@ window.__farm = {
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
   animal: { buy: id => buyAnimal(id), see: id => seeAnimal(id), owned: () => geeseOwned() },
+  // tests (Rusty's visits in the game): the nights to come he visits (from a time), tonight's on the farm, the film's record
+  foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
+    live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z) => { const S = decorSpot(id, x, z, id === 'kennel' ? KENNEL_DEG : 45); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45]), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
