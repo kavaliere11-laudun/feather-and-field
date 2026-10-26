@@ -1947,10 +1947,10 @@ farmer's `workAt` in `farmlife.js`).
   growing, a bar and the time left, what it gives, the grain in store, Sow · 20 coins, Move the field); a ripe field is
   harvested at once.
 - **Sowing** (20 coins): ripe 4 hours later; ploughed for the first tenth, the first shoots till 45%, tall and green, then
-  golden. **Harvesting**: 30 grain into store (at most 120) and 12 XP. Both count straight away (the save); by day the
+  golden. **Harvesting**: 20 grain into store (at most 120) and 12 XP (30 till the balance, step 11). Both count straight away (the save); by day the
   farmer hurries over (the middle of its edge most towards you), "Grow tall and golden!" with the pail, scattering four
   handfuls of seed; or "What a harvest!", crouched and cutting with straw flying, then a golden puff, hooray, and "Wheat
-  harvested: +30 grain for the feeders · +12 XP". The field shows the change once he's done (`FIELD.hold`); at night,
+  harvested: +20 grain for the feeders · +12 XP". The field shows the change once he's done (`FIELD.hold`); at night,
   or with nobody about, it simply is. A safety: done anyway after 100 s.
 - **The grain** fills the feeders before coins (a unit of grain a unit of feed): the feeder's card says "Your grain from
   the wheat field: 24 (used first)" and "Fill it with your grain (free)" or "Fill it · 4 coins + your grain".
@@ -2062,3 +2062,25 @@ flowers round it, everyone doing something lively and kind. `web3d/intro/1.webp`
   (the game's are 2 cm, a dot at phone size); the nest's eggs are a quarter bigger than the nest box's; the coop behind
   Arthur in the show is left empty (a bird there peeked out round his head); in picture 2 the barn's roof is cut by the
   top edge (with the camera low enough for the chicks to read, the roof is at the camera's own height).
+
+## The game, release 1 step 11: the balance (26 Oct 2026, Audrey's pace: "about a year to the top level for a once-a-day player")
+
+`balsim.mjs [days] [profile] [farms]`: simulated players through the game's own rules (`src/game.js` on a fake clock, no
+page). Three kinds of player: once a day (19:00), twice (8:00 and 19:00), often (every 3 hours, 8:00 to 23:00), each doing
+everything a keen player would at each visit: the eggs and the honey, the feeders (grain first), sowing and harvesting the
+wheat, a cuddle for every bird, the best bird in every open show (when her chance of a rosette is fair), the jobs, the
+next field when it can, a new breed's coop, decorations and outfits once they leave enough for the next field and feed.
+It prints the level on days 7, 30, 90, 180 and 365, the day each level comes, the coins, birds, coops and fields, where
+the coins and the XP came from, and what they went on.
+- **First run (the numbers as built):** a once-a-day player reached level 30 on day 256, with 355,000 coins at a year;
+  the shows gave half the XP (52,000) and most of the coins (426,000 in a year: the National's 1,000 coins a win every
+  day); the wheat's grain fed every hen (no feed bought).
+- **Changed:** the shows' prizes and XP: Village 40 / 20 / 10 coins and 5 / 3 / 1 XP (was 60 / 30 / 15, 12 / 6 / 3);
+  County 120 / 60 / 30 and 15 / 8 / 4 (was 250 / 120 / 60, 40 / 20 / 10), fee 30 (was 40); National 300 / 150 / 75 and
+  35 / 18 / 9 (was 1,000 / 500 / 250, 100 / 50 / 25), fee 100 (was 150). A harvest gives 20 grain (was 30). A show result
+  saved before keeps what it said (not flagged: `SHOWS_25OCT`).
+- **Now (3 farms each):** once a day: level 13 on day 90, 20 on day 176, 29.7 at a year; twice a day: level 30 on day
+  337; every 3 hours: day 314. New breeds: the Buff Orpingtons (level 5) in 3 weeks, the white Silkies (6) in a month,
+  the Cream Legbars (11) in 10 weeks, the Light Brahmas (17) in 4 and a half months. Coins at a year: about 88,000 (left
+  for release 4's coop upgrades and seasonal coops); a year's earnings: shows 148,000, jobs 76,000, eggs 56,000, chicks
+  29,000, honey 15,000. All eight decorations by level 20, the outfits by 18. The wheat still feeds a daily player's hens.

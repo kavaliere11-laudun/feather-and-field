@@ -133,7 +133,7 @@ const TEXT = {
     show_sign_v: 'Village Show', show_sign_c: 'County Show', show_sign_n: 'National Championship',
     showday_title: 'Show day!', showday_body: 'The results of the {show} are in: the judge is looking at the birds.', showday_watch: 'Watch the judging', showday_results: 'Just the results', skip: 'Skip',
     sd_arrive: '{farmer} brings {name} to the show…', sd_judge: 'The judge looks at every bird…', sd_rosettes: 'And now, the rosettes!',
-    champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry 40, 1st prize 250 coins', show_new_n: 'The National Championship: entry 150, 1st prize 1,000 coins',
+    champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry {f}, 1st prize {p} coins', show_new_n: 'The National Championship: entry {f}, 1st prize {p} coins',
     book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
@@ -281,7 +281,7 @@ const TEXT = {
     show_sign_v: 'Concours de village', show_sign_c: 'Concours régional', show_sign_n: 'Championnat national',
     showday_title: 'Jour de concours !', showday_body: 'Les résultats du {show} sont arrivés : le juge regarde les volailles.', showday_watch: 'Regarder le jugement', showday_results: 'Juste les résultats', skip: 'Passer',
     sd_arrive: '{farmer} amène {name} au concours…', sd_judge: 'Le juge regarde chaque volaille…', sd_rosettes: 'Et maintenant, les cocardes !',
-    champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription 40, 1er prix 250 pièces', show_new_n: 'Le championnat national : inscription 150, 1er prix 1 000 pièces',
+    champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription {f}, 1er prix {p} pièces', show_new_n: 'Le championnat national : inscription {f}, 1er prix {p} pièces',
     book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
@@ -409,11 +409,13 @@ export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); retu
 // National makes her a champion. Starting values (the balance is step 11)
 export const SHOW_HOUR = 7;
 export const SHOWS = {
-  v: { level: 1, fee: 10, prize: [60, 30, 15], xp: [12, 6, 3], rivals: 5, mean: 52, sd: 7 },
-  c: { level: 4, fee: 40, prize: [250, 120, 60], xp: [40, 20, 10], rivals: 7, mean: 66, sd: 7 },
-  n: { level: 9, fee: 150, prize: [1000, 500, 250], xp: [100, 50, 25], rivals: 9, mean: 80, sd: 6 },
+  v: { level: 1, fee: 10, prize: [40, 20, 10], xp: [5, 3, 1], rivals: 5, mean: 52, sd: 7 },
+  c: { level: 4, fee: 30, prize: [120, 60, 30], xp: [15, 8, 4], rivals: 7, mean: 66, sd: 7 },
+  n: { level: 9, fee: 100, prize: [300, 150, 75], xp: [35, 18, 9], rivals: 9, mean: 80, sd: 6 },
 };
 export const SHOW_TIERS = ['v', 'c', 'n'];
+// (the prizes and XP before the balance of 26 Oct (release 1 step 11): a result saved then keeps what it said, unflagged)
+const SHOWS_25OCT = { v: { prize: [60, 30, 15], xp: [12, 6, 3] }, c: { prize: [250, 120, 60], xp: [40, 20, 10] }, n: { prize: [1000, 500, 250], xp: [100, 50, 25] } };
 const SHOW_LUCK = 10, XP_SHOW = 2, TZ_SLACK = 14 * 3600e3;                     // (the luck of the day either way; a little XP just for taking part)
 const TOWNS = ['Thornbury Green', 'Ashwell', 'Marlow Down', 'Kettlewick', 'Bramley Cross', 'Fenwick', 'Oakhurst', 'Saxby Vale', 'Little Hollowby', 'Wexcombe'];
 const COUNTIES = ['Wessex', 'Mercia', 'Downland', 'Fenshire', 'Weald'];
@@ -470,7 +472,7 @@ export const decorXp = id => Math.round(DECOR[id].price / 50);
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
 // unit of feed) and XP. Starting values (the balance is step 11)
-export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 30, xp: 12, max: 120 };
+export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120 };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
@@ -650,7 +652,8 @@ export function checkFarm(d, now = Date.now()) {
     if (!r || typeof r.id !== 'string' || !showDay(r.id) || !out.birds.some(x => x.id === r.bird)) continue;
     const T = SHOWS[r.id[0]], of = T.rivals + 1, place = int(r.place, 1, of, of), t = int(r.t, 0, now, -1);
     if (t < 0 || Math.abs(t - showJudged(r.id)) > TZ_SLACK) continue;
-    out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? T.prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0), t, seen: r.seen === true });
+    const O = SHOWS_25OCT[r.id[0]], was = place <= 3 && r.coins === O.prize[place - 1] && r.xp === XP_SHOW + O.xp[place - 1];
+    out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? (was ? O : T).prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? (was ? O : T).xp[place - 1] : 0), t, seen: r.seen === true });
   }
   // the decorations bought: each known one once, from its level, where it stands (on the quarter-metre; the duck house on the
   // pond, no spot); the farm (main.js) then makes sure each stands where one can

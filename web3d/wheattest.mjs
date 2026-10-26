@@ -36,7 +36,7 @@ const word = () => p.evaluate(() => document.getElementById('hint').textContent)
 const look = (x, z, size = 3.4) => p.evaluate(([x, z, size]) => window.__farm.lookAt(x + 0.4, z + 0.4, size), [x, z, size]);
 const untilDone = async (max = 60) => { for (let i = 0; i < max; i++) { await run(1); if (!(await S()).work) return i; } return -1; };
 const T = { sow: fr ? /Semer · 20 pièces/ : /Sow · 20 coins/, bubSow: fr ? /Semer/ : /Sow/, bubHarvest: fr ? /Récolter/ : /Harvest/, store: fr ? /Grain en réserve : 0 sur 120/ : /Grain in store: 0 of 120/,
-  sowing: fr ? /va semer le blé/ : /is on the way to sow the wheat/, done: fr ? /Blé récolté : \+30 de grain/ : /Wheat harvested: \+30 grain/, grainFill: fr ? /avec votre grain \(gratuit\)/ : /with your grain \(free\)/,
+  sowing: fr ? /va semer le blé/ : /is on the way to sow the wheat/, done: fr ? /Blé récolté : \+20 de grain/ : /Wheat harvested: \+20 grain/, grainFill: fr ? /avec votre grain \(gratuit\)/ : /with your grain \(free\)/,
   honey: fr ? /2 pots de miel vendus · \+30 pièces/ : /2 jars of honey sold · \+30 coins/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -78,13 +78,13 @@ await shot('5_ripe');
 const m1 = await money();
 await p.evaluate(() => window.__farm.deco.wheat.tap()); await run(0.5);
 s = await S();
-ok('tapped ripe: harvested at once (the save), the farmer on his way, the field golden till he\'s done', s.work === 'harvest' && s.hold === 'ripe' && s.stage === 'soil' && (await money()).grain === 30 && (await money()).xp === m1.xp + 12, { s, m: await money() });
+ok('tapped ripe: harvested at once (the save), the farmer on his way, the field golden till he\'s done', s.work === 'harvest' && s.hold === 'ripe' && s.stage === 'soil' && (await money()).grain === 20 && (await money()).xp === m1.xp + 12, { s, m: await money() });
 let cut = -1;
 for (let i = 0; i < 60; i++) { await run(1); if ((await p.evaluate(() => { const L = window.__farm.farmer(); return L && L.want && L.want.patting; }))) { await run(1); await shot('6_cutting'); cut = i; break; } }
 await untilDone();
 s = await S();
 const w2 = await word();
-ok('he cuts it, then it\'s ploughed again, "+30 grain", the sign Sow', cut >= 0 && !s.work && s.shown === 'soil' && T.done.test(w2) && T.bubSow.test(s.bub || ''), { cut, s, w2 });
+ok('he cuts it, then it\'s ploughed again, "+20 grain", the sign Sow', cut >= 0 && !s.work && s.shown === 'soil' && T.done.test(w2) && T.bubSow.test(s.bub || ''), { cut, s, w2 });
 await run(1.5); await shot('7_harvested');
 // an empty feeder: filled with the grain
 await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; c.feed = 0; c.fedAt = window.__T; g.save(); });

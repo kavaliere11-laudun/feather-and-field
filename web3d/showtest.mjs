@@ -31,12 +31,12 @@ const kind = () => p.evaluate(() => window.__farm.gameUI().kind);
 const dot = () => p.evaluate(() => !document.querySelector('.gshows .gdot').hidden);
 const later = h => p.evaluate(h => { window.__T += h * 3600e3; sessionStorage.setItem('__T', window.__T); }, h);
 const T = { title: fr ? /Concours/ : /Shows/, village: fr ? /Concours d(e |’)[A-Z]/ : /[A-Z][a-z]+.* Village Show/, any: fr ? /Toutes les races/ : /Any breed can enter/,
-  when: fr ? /Résultats à 7 h, dans/ : /Results at 7:00, in/, prizes: fr ? /Prix : 1er 60 · 2e 30 · 3e 15 pièces/ : /Prizes: 1st 60 · 2nd 30 · 3rd 15 coins/,
+  when: fr ? /Résultats à 7 h, dans/ : /Results at 7:00, in/, prizes: fr ? /Prix : 1er 40 · 2e 20 · 3e 10 pièces/ : /Prizes: 1st 40 · 2nd 20 · 3rd 10 coins/,
   chance: fr ? /chances de cocarde : (faibles|moyennes|bonnes|excellentes) \(\d+\u202f%\)/ : /chance of a rosette: (slim|fair|good|great) \(\d+%\)/, enter: fr ? /^Inscrire .+ · 10$/ : /^Enter .+ · 10$/,
   lock4: fr ? /À partir du niveau 4/ : /From level 4/, lock9: fr ? /À partir du niveau 9/ : /From level 9/, entered: fr ? /est inscrite? au Concours d(e |’)/ : /is entered in the .+ Village Show!/,
   isIn: fr ? /est inscrite? : résultats à 7 h/ : /is entered: results at 7:00/, cardIn: fr ? /Au Concours d(e |’).+ : résultats à 7 h/ : /In the .+ Village Show: results at 7:00/,
   results: fr ? /Résultats des concours/ : /Show results/, placed: fr ? /prend la 1re place au Concours d(e |’)/ : /came 1st in the .+ Village Show!/, ros: fr ? /Cocardes/i : /Rosettes/i,
-  county: fr ? /Le concours régional : inscription 40/ : /The County show: entry 40/, broke: fr ? /Pas assez de pièces : l’inscription coûte 40/ : /Not enough coins: the entry is 40/ };
+  county: fr ? /Le concours régional : inscription 30/ : /The County show: entry 30/, broke: fr ? /Pas assez de pièces : l’inscription coûte 30/ : /Not enough coins: the entry is 30/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
@@ -78,7 +78,7 @@ await shot('4a_showday');
 await p.tap('.gsheet .gbtn:nth-child(3)'); await run(0.5);
 t = await sheet();
 st = await p.evaluate(id => { const g = window.__farm.game(); return { kind: window.__farm.gameUI().kind, coins: g.data.coins, xp: g.data.xp, ros: g.bird(id).ros, res: g.data.shows.res, in: g.data.shows.in.length }; }, best.id);
-ok('the next morning: the results card (1st, a rosette), the prize and XP in, a rosette for her', st.kind === 'showres' && T.results.test(t) && T.placed.test(t) && st.ros[0] === 1 && st.in === 0 && st.res.length === 1 && st.res[0].place === 1 && st.coins === before.coins + 60 && st.xp === before.xp + 14, { st, t });
+ok('the next morning: the results card (1st, a rosette), the prize and XP in, a rosette for her', st.kind === 'showres' && T.results.test(t) && T.placed.test(t) && st.ros[0] === 1 && st.in === 0 && st.res.length === 1 && st.res[0].place === 1 && st.coins === before.coins + 40 && st.xp === before.xp + 7, { st, t });
 await shot('4_results');
 await p.tap('.gsheet .gbtn'); await run(0.5);
 t = await p.evaluate(id => { const f = window.__farm; f.openBirdCard(f.allBirds.find(x => x.gid === id)); return document.querySelector('.gsheet').innerText; }, best.id);
@@ -110,7 +110,7 @@ await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
   localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 st = await p.evaluate(() => { const g = window.__farm.game(), d = g.data; return { edited: g.edited, in: d.shows.in.length, ros: d.birds[2].ros.reduce((a, n) => a + n, 0), coins: d.shows.res.map(r => r.coins) }; });
-ok('a save changed outside (an entry before its show, a bird not there, 40 rosettes in a day, a prize of 5000): checked and flagged', st.edited && st.in === 0 && st.ros === 0 && st.coins.every(c => c === 60), st);
+ok('a save changed outside (an entry before its show, a bird not there, 40 rosettes in a day, a prize of 5000): checked and flagged', st.edited && st.in === 0 && st.ros === 0 && st.coins.every(c => c === 40), st);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
