@@ -319,9 +319,19 @@ const plots = [];
 const allBirds = [];
 const grassTiles = [];
 
+// the switch (26 Oct 2026): the 3D game took the usual address from the first game, whose offline worker there is retired
+// with its ff-... caches (the first game, now in classic/, has its own worker and ffc-... caches; the saves are in
+// localStorage, never touched here)
+function retireOldCache() {
+  try {
+    if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(rs => { const top = new URL('../', document.baseURI).href; for (const r of rs) if (r.scope === top) r.unregister(); }).catch(() => {});
+    if (window.caches) caches.keys().then(ks => { for (const k of ks) if (/^ff-/.test(k)) caches.delete(k); }).catch(() => {});
+  } catch (e) { /* */ }
+}
 async function start() {
   let welcome = null;
   if (GAME_MODE) {
+    retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok' });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)

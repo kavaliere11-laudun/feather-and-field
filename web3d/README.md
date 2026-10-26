@@ -2084,3 +2084,28 @@ the coins and the XP came from, and what they went on.
   the Cream Legbars (11) in 10 weeks, the Light Brahmas (17) in 4 and a half months. Coins at a year: about 88,000 (left
   for release 4's coop upgrades and seasonal coops); a year's earnings: shows 148,000, jobs 76,000, eggs 56,000, chicks
   29,000, honey 15,000. All eight decorations by level 20, the outfits by 18. The wheat still feeds a daily player's hens.
+
+## The game, release 1 step 12: the switch (26 Oct 2026, Audrey: "Switch now")
+
+The 3D game is the game at the usual address (https://kavaliere11-laudun.github.io/feather-and-field/); the first game
+(2D) moved to `classic/`. Published with `./deploy.sh <clone of main> [<the first game's site/>]` (after `./build.sh`):
+- `3d/` is `dist/` as before (`3d/play.html` still opens the game; `3d/` is still the village's test page).
+- `site.mjs` writes the top: `index.html` is `play.html` with `<base href="3d/">` (every file the page and its code ask
+  for comes from `3d/`; the code only reads `location.search` and reloads, so nothing else changes) and the top's
+  `manifest.webmanifest` (same id `./` as the first game's, so the Home Screen app stays the same app, the rooster icon);
+  `sw.js` retires the first game's offline worker there (deletes its `ff-...` caches, unregisters itself). The game also
+  does that itself when it opens (`retireOldCache` in `main.js`: only the worker at the site's top, only `ff-...` caches).
+- `classic/` is the first game's `site/` (`build2.py`, then `build_pwa.py`): its own worker, scoped to `classic/`, its
+  caches named `ffc-...`. Its Settings has "The new Feather & Field" and "Open the new game" (`ff.html`, only on the
+  website's `classic/`, not in the Claude artifact).
+- The saves are in the phone's storage for the site (`ff3d.farm` for the 3D game, `feather-field-save-v1` for the first
+  game) and are never touched by the switch. When the first game's farm is on the phone, the 3D welcome says so under the
+  picture's tagline ("Your farm from the first game is safe in Settings.", French "Votre ferme du premier jeu est dans les
+  Réglages."; the welcome card itself unchanged, so it still fits sideways) and Settings has "The first Feather & Field" with
+  "Open the first game". An iPhone Home Screen app keeps its own storage, apart from Safari's: the farm there is the one
+  played from the icon.
+- `switchtest.mjs <old site> <new site>` serves both copies under `/feather-and-field/` as GitHub Pages does: a phone that
+  played the first game (its worker, a farm "Audrey"), then the site switched: the 3D welcome at the usual address with the
+  old worker still there, every file found, the old worker and caches gone, the first game's farm untouched; a new 3D
+  farm; Settings' card opens `classic/` with "Audrey"'s farm and its own worker; its "Open the new game" comes back; a new
+  phone sees neither line nor card. English upright and sideways, French both ways.

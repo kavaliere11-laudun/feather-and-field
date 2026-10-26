@@ -2,7 +2,7 @@
 
 This `source` branch holds everything needed to change and rebuild the game. The `main` branch is the published web app only (GitHub Pages serves `main`); never commit source files to `main`.
 
-- Live web app: https://kavaliere11-laudun.github.io/feather-and-field/ (Audrey plays it as a home-screen app on iPhone)
+- Live web app: https://kavaliere11-laudun.github.io/feather-and-field/ (Audrey plays it as a home-screen app on iPhone). Since 26 Oct 2026 the usual address is the 3D game (`web3d/`, see below); this 2D game is at `classic/`.
 - Same game as a private Claude artifact: https://claude.ai/artifact/3s8uFYaDFst6BirdTjFwDo (uses a per-user database for cloud saves)
 - Owner: Audrey (kavaliere11@gmail.com). Commits are made as `Audrey <kavaliere11@gmail.com>` with the Claude attribution lines.
 
@@ -82,9 +82,10 @@ BIRDS_ONLY=1 python3 pack.py                                                    
 
 ```bash
 python3 build2.py               # release build (no test hooks)
-python3 build_pwa.py            # writes site/ with service worker (hashed asset keys)
-# in a clone of main:
-git rm -rq . && cp -r <src>/site/. . && git add -A && git commit -m "…" && git push
+python3 build_pwa.py            # writes site/ with service worker (hashed asset keys, caches named ffc-...)
+# the 2D game is published in classic/ of main (the 3D game is at the top): with the 3D build in web3d/dist,
+web3d/deploy.sh <clone of main> site     # replaces 3d/ and classic/, writes the top
+# then in the clone: git add -A && git commit -m "…" && git push
 ```
 
 Then publish `game2/index.html` to the artifact URL above with the Artifact tool. Read the artifact first in a new conversation. Images are already uploaded as artifact files; publish with `root=game2` and a `files` list only when images change.
@@ -134,8 +135,10 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
 - The new game is `play.html` (built from `index.html` with `body.game`): `src/game.js` (its rules and the save, every
   field checked on load), `src/gameui.js` (its top bar, cards and welcome). It is played sideways first and checked both
   ways: `gametest.mjs` and `eggtest.mjs` take `LANG=fr` and `W=874 H=402` (sideways).
-- Deploy: build, then in a clone of `main` replace the `3d/` folder with `web3d/dist/.`, commit and push. The 2D release above
-  wipes `main`, so it must copy `web3d/dist/.` into `3d/` too until the 3D village becomes part of the game.
+- Deploy: `./build.sh`, then `./deploy.sh <clone of main>` (it replaces `3d/` with `dist/` and writes the usual address's
+  page from it, `site.mjs`; give the 2D game's `site/` as a second folder to replace `classic/` too), commit and push.
+  Since the switch (release 1 step 12, 26 Oct 2026) the usual address is the 3D game and the 2D game is in `classic/`
+  (see `web3d/README.md`, "the switch"; `switchtest.mjs` checks a phone that had the 2D game).
 - `stylized/extras/`: small helper scripts kept for reference (farmer map sprites, the Silkie hair tile, face sheets).
 
 ## Security (Audrey's standing request: "take security of the game into account")

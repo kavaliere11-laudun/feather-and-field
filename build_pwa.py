@@ -1,5 +1,7 @@
 """Package the game as an installable web app (home-screen icon, full screen, works offline) for GitHub Pages.
-Reads the release build in game2/ (run build2.py first) and writes site/.
+Reads the release build in game2/ (run build2.py first) and writes site/, published in the classic/ folder of main since
+the 3D game took the usual address (26 Oct 2026). Its offline cache is named ffc-...: the usual address retired the old
+ff-... caches (web3d/site.mjs).
 Usage: python3 build_pwa.py"""
 import os, shutil, json, hashlib, zipfile
 from PIL import Image
@@ -68,9 +70,9 @@ files = sorted(os.path.relpath(os.path.join(d, f), OUT).replace(os.sep, '/') for
 fh = {f: hashlib.sha256(open(f'{OUT}/{f}', 'rb').read()).hexdigest()[:10] for f in files}
 ver = hashlib.sha256(json.dumps(fh, sort_keys=True).encode()).hexdigest()[:12]
 sw = """// Feather & Field offline cache, version %s
-const V = 'ff-%s';
+const V = 'ffc-%s';
 const FILES = %s;
-const OLD = () => caches.keys().then(ks => ks.filter(k => k.startsWith('ff-') && k !== V && k !== 'ff-fonts'));
+const OLD = () => caches.keys().then(ks => ks.filter(k => k.startsWith('ffc-') && k !== V && k !== 'ffc-fonts'));
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(V), old = await OLD();
@@ -98,13 +100,11 @@ self.addEventListener('fetch', e => {
     }
     e.respondWith(caches.match(req, { cacheName: V }).then(r => r || (url.search ? null : caches.match(req, { ignoreSearch: true, cacheName: V }))).then(r => r || fetch(req)));
   } else if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
-    e.respondWith(caches.open('ff-fonts').then(c => c.match(req).then(r => r || fetch(req).then(res => { c.put(req, res.clone()); return res; }))));
+    e.respondWith(caches.open('ffc-fonts').then(c => c.match(req).then(r => r || fetch(req).then(res => { c.put(req, res.clone()); return res; }))));
   }
 });
 """ % (ver, ver, json.dumps(fh))
 open(f'{OUT}/sw.js', 'w').write(sw)
-open(f'{OUT}/.nojekyll', 'w').write('')
-open(f'{OUT}/README.md', 'w').write('# Feather & Field\n\nA farm game about raising, breeding and showing chickens.\n\nPlay: open the GitHub Pages address on your phone and choose **Add to Home Screen**.\n')
 
 # a zip of the site, for uploading by hand if needed
 with zipfile.ZipFile(f'{R}/feather-and-field-site.zip', 'w', zipfile.ZIP_DEFLATED) as z:

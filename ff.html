@@ -284,6 +284,7 @@ const MAX_PLOTS = 40, MAX_BIRDS = 600;
 const COOP_CAP = 5;                     // one rooster and four hens; build more coops to grow
 const MAX_LEVEL = 30;
 const BUILD = '/*BUILD*/dev';
+const CLASSIC = /\/classic\/(index\.html)?$/.test(location.pathname);     // (the website's first game, beside the 3D game)
 const SAVE_KEY = 'feather-field-save-v1', SALT = 'ff::feather-field::2026';
 const SPEEDS = [1, 60];
 
@@ -452,6 +453,7 @@ en: {
   guide_wheat:'Sow the wheat field by the farmhouse. It grows into free feed for your hens.',
   guide_jobs:'Open Jobs: three small jobs a day earn extra coins and XP.',
   guide_shows:'Open Shows: enter your best bird to win rosettes and prizes.',
+  new_t:'The new Feather & Field', new_how:'The game is now in 3D. This is the first game, kept so your farm here isn’t lost.', new_open:'Open the new game',
   code_t:'Move your farm', code_how:'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after reinstalling the app, to carry on where you left off.',
   code_copy:'Copy my farm code', code_paste:'Paste a farm code here', code_load:'Load this farm', code_note:'Loading a farm replaces the one on this device.',
   code_copied:'Farm code copied. Paste it into Notes to keep it safe.', code_select:'Here is your farm code: select it all and copy it.', code_bad:'That farm code doesn’t work. Copy it again, all of it.',
@@ -618,6 +620,7 @@ fr: {
   guide_wheat:'Semez le champ de blé près de la ferme. Il donne de la nourriture gratuite pour vos poules.',
   guide_jobs:'Ouvrez Tâches : trois petites tâches par jour rapportent pièces et XP.',
   guide_shows:'Ouvrez Concours : inscrivez votre meilleure volaille pour gagner cocardes et prix.',
+  new_t:'Le nouveau Feather & Field', new_how:'Le jeu est maintenant en 3D. Voici le premier jeu, gardé pour que votre ferme ne soit pas perdue.', new_open:'Ouvrir le nouveau jeu',
   code_t:'Déplacer votre ferme', code_how:'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir réinstallé l’app, pour reprendre là où vous en étiez.',
   code_copy:'Copier le code de ma ferme', code_paste:'Collez un code de ferme ici', code_load:'Charger cette ferme', code_note:'Charger une ferme remplace celle de cet appareil.',
   code_copied:'Code copié. Collez-le dans Notes pour le garder.', code_select:'Voici le code de votre ferme : sélectionnez-le en entier et copiez-le.', code_bad:'Ce code ne fonctionne pas. Copiez-le à nouveau, en entier.',
@@ -3711,6 +3714,8 @@ const SHEETS = {
   settings() {
     const onOff = k => h('div', { class: 'seg' }, [true, false].map(v => h('button', { 'aria-pressed': String(SND.prefs[k] === v), onclick: () => { SND.set(k, v); renderSheet(); } }, t(v ? 'on' : 'off'))));
     return { title: t('settings'), node: [
+      // on the website, the first game lives in classic/ since the 3D game took the usual address (26 Oct 2026): the way back
+      CLASSIC ? h('div', { class: 'card' }, h('h3', { text: t('new_t') }), h('p', { class: 'small', text: t('new_how') }), h('button', { class: 'btn sm', onclick: () => { location.href = '../'; } }, t('new_open'))) : null,
       h('h3', { text: t('snd_fx') }), onOff('fx'),
       h('h3', { text: t('snd_music') }), onOff('music'),
       navigator.audioSession ? [h('h3', { text: t('snd_silent') }), onOff('silent')] : null,

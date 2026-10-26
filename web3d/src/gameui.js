@@ -6,6 +6,10 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHO
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
 // with grass to spare on every side, so it can be fitted to any screen, upright or sideways.
+// the first Feather & Field's save on this phone (since the switch, 26 Oct 2026, the first game lives in the site's classic/
+// folder and the 3D game at the usual address): only whether it's there, to offer the way to it; never read or changed here
+const FIRST_SAVE = 'feather-field-save-v1';
+function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
 export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.642, 0.79] };
 // the little barn (as on Your coops' button): the Breed Book's coop lines
@@ -122,6 +126,7 @@ export class GameUI {
       document.body.append(this.heroEl);
     }
     this.heroLogo.textContent = this.t('brand'); this.heroTag.textContent = this.t('tagline');
+    if (firstGameKept()) this.heroTag.append(el('span', 'gtag-first', this.t('welcome_first')));      // (under the tagline: the picture fits below it)
     this.heroEl.hidden = !on;
     document.documentElement.classList.toggle('gwelcoming', on);      // (the page's colour then the picture's top: Safari paints its bars in it)
     if (on) this.fitHero();
@@ -748,6 +753,13 @@ export class GameUI {
       this.codeDraft = ''; if (this.o.loaded) this.o.loaded();
     });
     card.append(paste, load, el('p', 'gnote', this.t('code_note'))); b.append(card);
+    // the first game (only if its farm is on this phone): the way to it, in classic/ beside the 3D game's own folder
+    if (firstGameKept()) {
+      const fc = el('div', 'gcard gfirst'), fh = el('div', 'gcard-h'); fh.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('first_t'))); fc.append(fh, el('p', 'gnote', this.t('first_how')));
+      const open = el('button', 'gbtn gsmallbtn gfirst-open', this.t('first_open')); open.type = 'button';
+      open.addEventListener('click', () => { location.href = new URL('../classic/', document.baseURI).href; });
+      fc.append(open); b.append(fc);
+    }
     if (g.edited) b.append(el('p', 'gnote gwarn', this.t('settings_edited')));
     let sure = false;
     const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button';
