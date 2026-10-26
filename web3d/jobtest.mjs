@@ -28,7 +28,7 @@ const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.d
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const dot = () => p.evaluate(() => { const d = document.querySelector('.gjobs .gdot'); return d.hidden ? null : d.textContent || 'dot'; });
 const jobs = () => p.evaluate(() => { const g = window.__farm.game(), J = g.jobs(); return { day: J.day, lv: J.lv, list: J.list.map(j => [j.k, j.got, j.n, j.paid]), coins: g.data.coins, xp: g.data.xp }; });
-const T = { title: fr ? /Les tâches du jour/ : /Today’s jobs/, reward: fr ? /\+20 pièces · \+6 XP/ : /\+20 coins · \+6 XP/, note: fr ? /De nouvelles tâches chaque jour à minuit/ : /New jobs every day at midnight/,
+const T = { title: fr ? /Les tâches du jour/ : /Today’s jobs/, reward: fr ? /\+20 pièces · \+4 XP/ : /\+20 coins · \+4 XP/, note: fr ? /De nouvelles tâches chaque jour à minuit/ : /New jobs every day at midnight/,
   done: fr ? /Tâche faite : .+ ! Récupérez la récompense/ : /Job done: .+! Collect your reward/, claim: fr ? /Récupérer/ : /Collect/, paid: fr ? /Fait ✓/ : /Done ✓/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
