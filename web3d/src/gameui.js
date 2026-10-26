@@ -790,6 +790,27 @@ export class GameUI {
     card.append(pic, info); body.append(card);
     if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
   }
+  // ---- Gertrude and Hector (release 3): who they are, their trust (cross .. friends: hearts, what it means, days of visits to
+  // the next), a visit (h.visit; friends: a cuddle, or how long they're happy after one; at night, in the morning)
+  geeseCard(state, h) {
+    const g = this.g, T = g.geeseTrust(), farmer = g.farmerName(), f = !!(g.data.farmer && g.data.farmer.look === 'f');
+    if (!T) return;
+    const body = this.open('geese', g.animalName('geese'));
+    this.bird = null;
+    body.append(el('p', 'gsub', this.t('geese_sub')));
+    if (T.level === 3 && T.happy > 0) body.append(el('p', 'gtext ghappy', '♥ ' + this.t('geese_happy', { when: g.howLong(T.happy) })));
+    else if (state === 'night') body.append(el('p', 'gnote', this.t(T.level === 3 ? 'cuddle_night' : 'geese_night', { farmer })));
+    else { const b = el('button', 'gbtn gcuddle', this.t(T.level === 3 ? 'cuddle_btn' : 'geese_visit')); b.type = 'button'; b.addEventListener('click', () => h.visit()); body.append(b); }
+    const tc = el('div', 'gcard'), th = el('div', 'gcard-h'), hearts = el('span', 'ghearts');
+    for (let i = 1; i <= 3; i++) hearts.append(el('span', i <= T.level ? 'on' : '', i <= T.level ? '♥' : '♡'));
+    th.append(hearts, el('span', 'gcard-t', this.t('geese_lv' + T.level)));
+    tc.append(el('div', 'glabel', this.t('trust')), th, el('p', 'gtext', this.t('geese_b' + T.level, { farmer }, f)));
+    if (T.level < 3) {
+      tc.append(el('p', 'gtext', this.t(T.next === 1 ? 'geese_next1' : 'geese_next', { n: T.next, level: this.t('geese_lv' + (T.level + 1)) })));
+      tc.append(el('p', 'gnote', this.t(T.today ? 'geese_today' : 'geese_how')));
+    }
+    body.append(tc);
+  }
   // ---- last night's visit (release 3): what Rusty did, a tip when the eggs were taken, the film (h.watch)
   foxCard(l, h) {
     const body = this.open('fox', '🦊 ' + this.t('fox_title'));

@@ -23,7 +23,7 @@ for (const kind of kinds) {
     const f = window.__farm, F = f.geese(), nav = f.nav(), [G, H] = F.geese, out = { stages: [], blocked: 0, closest: 9, wet: 0, hearts: 0, eaten: null, started: false, overIt: 9 };
     let tries = 0;
     while (!F.duet && tries++ < 30 * 400) { F.force = kind; F.loveIn = 0; f.step(1 / 30, 1); }
-    out.started = !!F.duet; if (!F.duet) return out;
+    out.started = !!F.duet; if (!F.duet) { out.state = { G: [G.task && G.task.name, G.act, +G.vs.toFixed(3), +G.wet.toFixed(2), +G.pos.x.toFixed(2), +G.pos.z.toFixed(2)], H: [H.task && H.task.name, H.act, +H.wet.toFixed(2)], d: +Math.hypot(G.pos.x - H.pos.x, G.pos.z - H.pos.z).toFixed(2), guarding: F.guarding, hour: F.hour, can: F.squabble(kind) }; if (F.duet) F.endDuet(); return out; }
     out.start = { G: [+G.pos.x.toFixed(2), +G.pos.z.toFixed(2)], H: [+H.pos.x.toFixed(2), +H.pos.z.toFixed(2)], at: F.duet.at.map(v => +v.toFixed(2)), gp: F.duet.gp.map(v => +v.toFixed(2)), hp: F.duet.hp.map(v => +v.toFixed(2)), gway: JSON.stringify(F.duet.gway), hway: JSON.stringify(F.duet.hway) };
     const S = F.duet, H0 = f.heartsLive ? f.heartsLive() : null;
     let last = '';

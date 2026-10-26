@@ -207,7 +207,8 @@ function farmerMaterial(look, grade) {
 }
 
 // ------------------------------------------------------------------ one farmer's body and face, posed from a pose and a face
-const _e = new THREE.Euler(), _q = new THREE.Quaternion();
+const _e = new THREE.Euler(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _hm = new THREE.Matrix4();
+const _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _s2 = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 export class FarmerRig {
   constructor(look, grade) {
     this.look = look;
@@ -283,7 +284,23 @@ export class FarmerRig {
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
     const ht = (typeof window !== 'undefined' && window.__HAT) || {}, hs = this.hatSit;          // (each outfit's hat its own way: HAT_SIT)
     this.turn('hat', [0, ht.tilt ?? hs.tilt, 0]); B.hat.position.copy(R.hat.p).add(new THREE.Vector3(0, ht.up ?? hs.up, ht.back ?? hs.back));
+    // the hat off his head (knocked off as he runs from the geese: farmlife.js): where it is in the world, as a matrix; with
+    // hatHome (0..1) on its way back onto his head (1: on it)
+    B.hat.scale.copy(R.hat.s);
+    if (this.hatWorld) {
+      const par = B.hat.parent; par.updateWorldMatrix(true, false);
+      const k = this.hatHome || 0;
+      _m.copy(this.hatWorld);
+      if (k > 0) {
+        _hm.compose(B.hat.position, B.hat.quaternion, B.hat.scale).premultiply(par.matrixWorld);       // (on his head, as posed now)
+        _m.decompose(_p1, _q1, _s1); _hm.decompose(_p2, _q2, _s2);
+        _m.compose(_p1.lerp(_p2, k), _q1.slerp(_q2, k), _s1.lerp(_s2, k));
+      }
+      _m.premultiply(_hm.copy(par.matrixWorld).invert()).decompose(B.hat.position, B.hat.quaternion, B.hat.scale);
+    }
   }
+  // where the hat is now, in the world (to knock it off from)
+  hatMatrix() { this.B.hat.updateWorldMatrix(true, false); return this.B.hat.matrixWorld.clone(); }
   jointOf(k) { return { shL: 'shoulderL', shR: 'shoulderR', elL: 'elbowL', elR: 'elbowR', wrL: 'wristL', wrR: 'wristR', hipL: 'hipL', hipR: 'hipR', chest: 'chest', head: 'head' }[k]; }
 }
 

@@ -26,6 +26,11 @@ export const FARMER_TEXT = {
   sow: ['Grow tall and golden!', 'Pousse bien, mon blé !'],
   harvest: ['What a harvest!', 'Quelle belle récolte !'],
   honey: ['Thank you, bees!', 'Merci, les abeilles !'],
+  geese: ['Hello, you two!', 'Coucou, vous deux !'],                     // (a visit to the geese: geese.js, main.js geeseVisit)
+  whoa: ['Whoa!', 'Oh là là !'],
+  tomorrow: ['Maybe tomorrow…', 'Demain, peut-être…'],
+  corn: ['Some corn for you!', 'Du grain pour vous !'],
+  there: ['There you are!', 'Vous voilà !'],
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -101,6 +106,16 @@ const STAND = {
   cheer: (W, u) => { const k = u % 3.0; W.pose = k < 1.1 ? 'stretch' : 'wave'; W.face = 'happy'; W.waving = k >= 1.1; },      // (both arms up: hooray! then a wave)
   pat: (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; },
 };
+
+// a few handfuls of corn thrown towards V.cornAt (V.scatter) (the geese's visit): the feed pose, a throw each time round
+const HAT_REST = 0.02;                // (the hat lying on the grass: its bone's height above the ground)
+function scatter(V, n) {
+  let thrown = 0;
+  return TK.act('scatter', 0.45 + n * 0.9, (W, u, Lf) => {
+    W.pose = 'feed'; W.face = 'feeding'; W.scatter = u;
+    const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < n) { thrown = k; V.scatter(Lf.handTip()); }
+  });
+}
 
 export class FarmLife {
   // o: { look, name, nav (with the paths' costs), door: [x, z, the heading out], groundY(x, z), spots(): { coops: [[x, z,
@@ -194,6 +209,9 @@ export class FarmLife {
     const fresh = list => { const l = list.filter(s => !this.recent.some(q => Math.hypot(q[0] - s[0], q[1] - s[1]) < 1.5)).sort((a, b) => Math.hypot(a[0] - this.pos.x, a[1] - this.pos.z) - Math.hypot(b[0] - this.pos.x, b[1] - this.pos.z)); return l.slice(0, Math.max(2, Math.ceil(l.length * 0.35))); };
     const go = (s, pace = 'walk') => { this.recent.push(s); if (this.recent.length > 4) this.recent.shift(); return TK.path(s[0], s[1], pace); };
     const dog = this.o.dog && this.o.dog(), K = this.o.kennel;
+    // (friends with the geese: now and then over to their gate to say hello, and they come over to it: main.js geeseFence)
+    const GF = !force && this.o.geeseFence ? this.o.geeseFence() : null;
+    if (GF && R() < 0.14) return TK.seq('coop', [go(GF), TK.face(GF[2]), () => { if (this.o.greetGeese) this.o.greetGeese(GF); return null; }, TK.act('hips', 4, STAND.hips), TK.say('geese'), TK.act('wave', 2.2, STAND.wave), TK.act('about', 2 + R() * 2, STAND.about)]);
     if (pick < 0.4 && S.coops.length) {                       // a look at a coop's hens over the fence
       const c = fresh(S.coops), s = c[Math.floor(R() * c.length)] || S.coops[0];
       const L = [go(s), TK.face(s[2]), () => { if (this.o.greet) this.o.greet(s); return null; }, TK.act('hips', 4 + R() * 4, STAND.hips)];      // (its trusting birds come to say hello)
@@ -335,6 +353,99 @@ export class FarmLife {
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return seq;
   }
+  // ---- a visit to the geese (main.js geeseVisit: V, with the geese's own part in geese.js): to their gate, in, and as far
+  // as they trust the farmer (V.stage): 0 cross: "Hello, you two!", a wave; they come at him hissing, "Whoa!", and he runs
+  // for the gate, his hat knocked off on the way out; it lands outside, he gets it back and puts it on ("Maybe
+  // tomorrow…"). 1 wary: corn scattered towards them ("Some corn for you!"), then back by the gate watching them come for
+  // it. 2 curious: a handful of corn at his feet and a crouch while they come and eat by him ("There you are!"). 3
+  // friends: they come to meet him; a crouch, they come up to him and he strokes their necks ("There, there…"), hearts
+  // floating up. Then out again, the gate shut behind him. Named 'pen' (he isn't called away meanwhile).
+  visitGeese(V) {
+    if (this.home || this.running) return false;
+    const self = this, R = this.r;
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - V.out[0], Lf.pos.z - V.out[1]) > 0.8) { seq.aborted = true; V.done(false); } return true; } };
+    const gate = on => () => { if (on) { self.pen = V; V.enter(); } else if (self.pen === V) { V.leave(); self.pen = null; } return null; };
+    const wait = (test, tmax, set) => ({ name: 'wait', t: 0, run(Lf, dt) { this.t += dt; set(Lf.want, this.t, Lf, dt); return test(Lf) || this.t > tmax; } });
+    const watch = (W, u, Lf, dt) => { const g = V.lead(); if (g) Lf.turnTo(Math.atan2(g.x - Lf.pos.x, g.z - Lf.pos.z), dt, 2.5); };
+    const react = k => () => { V.react(k); return null; };
+    const L = [TK.path(V.out[0], V.out[1], 'hurry'), there, TK.face(V.toIn), gate(true), TK.act('open', 0.7, W => { W.pose = 'turn'; W.face = 'happy'; W.look = [0, -0.2]; })];
+    L.push(react(['chase', 'wary', 'curious', 'friends'][V.stage]));      // (they've seen him: coming over, as far as they trust him)
+    L.push(TK.walk(V.noGate ? [V.meet] : [V.gin, V.meet]));
+    if (V.stage === 0) {
+      let flew = false;
+      L.push(wait(() => V.close() < 3.4, 20, (W, u, Lf, dt) => { W.pose = 'turn'; W.face = 'happy'; watch(W, u, Lf, dt); }),      // (here they come)
+        TK.say('geese'), TK.act('wave', 1.8, STAND.wave), react('charge'),
+        wait(() => V.close() < 2.0, 10, (W, u, Lf, dt) => { W.pose = 'worried'; W.face = 'worried'; watch(W, u, Lf, dt); }),
+        TK.say('whoa'),
+        // (off at a run for the gate: his hat knocked off as he goes through it, landing outside)
+        { name: 'flee', i: 0, t: 0, run(Lf, dt) {
+          this.t += dt; const pts = V.noGate ? [V.flee] : [V.gin, V.out, V.flee], p = pts[this.i], last = this.i >= pts.length - 1;
+          const W = Lf.want; W.face = 'panic'; W.pose = 'panic';
+          if (!flew && (this.i >= 1 || V.noGate) ) { flew = true; Lf.hatFly(V.hatAt); }
+          if (this.i === 2 && self.pen === V) { V.leave(); self.pen = null; }       // (out: the gate shut behind him)
+          if (Lf.moveTo(p[0], p[1], dt, 'run', !last) || (!last && Math.hypot(p[0] - Lf.pos.x, p[1] - Lf.pos.z) < 0.25)) { if (last) return true; this.i++; }
+          return this.t > 15;
+        } },
+        gate(false),
+        TK.act('phew', 1.2, W => { W.pose = 'worried'; W.face = 'worried'; }),
+        () => TK.path(V.hatAt[0] + V.hatFrom[0] * 0.45, V.hatAt[1] + V.hatFrom[1] * 0.45),
+        () => TK.face(Math.atan2(-V.hatFrom[0], -V.hatFrom[1])),
+        TK.act('pick', 1.6, (W, u, Lf) => { W.pose = 'pet'; W.face = 'neutral'; W.look = [0, -0.5]; if (u > 0.45) Lf.hatHome(Math.min(1, (u - 0.45) / 0.9)); }),
+        () => { self.hatOn(); return null; },
+        TK.face('camera'), TK.say('tomorrow'), TK.act('shrug', 2.2, W => { W.pose = 'worried'; W.face = 'happy'; }));
+    } else if (V.stage === 1) {
+      L.push(TK.say('corn'), scatter(V, 3), TK.walk([V.gin]), TK.face(V.toIn), react('back'),
+        wait(() => V.ate(), 16, (W, u, Lf, dt) => { STAND.hips(W, u); watch(W, u, Lf, dt); }),
+        TK.act('about', 1.5, STAND.about));
+    } else if (V.stage === 2) {
+      L.push(TK.say('corn'), scatter(V, 1),
+        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; }),
+        wait(() => V.close() < 1.3, 12, (W, u, Lf, dt) => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; watch(W, u, Lf, dt); }),
+        TK.say('there'),
+        wait(() => V.ate(), 14, (W, u, Lf, dt) => { W.pose = 'pet'; W.face = 'cuddle'; W.look = [0, -0.35]; watch(W, u, Lf, dt); }),
+        TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }));
+    } else {
+      let heart = 0.4;
+      // (watching them come, across the water if they're on the far side; a crouch once they're near; the stroke once they're
+      // up to him; if they never came after all, up again, a wave and off)
+      const stroke = { name: 'stroke', t: 0, run(Lf, dt) {         // (turned to her, stroking her neck, hearts floating up)
+        this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.low = 0.5; watch(W, this.t, Lf, dt);
+        if (this.t > heart) { heart += 0.6; V.heart(); }
+        return this.t >= 5.4;
+      } };
+      const up = () => TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; });
+      L.push(wait(() => V.close() < 2.0, 45, (W, u, Lf, dt) => { W.pose = 'turn'; W.face = 'happy'; watch(W, u, Lf, dt); }),
+        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; }),
+        wait(() => V.ready(), 12, (W, u, Lf, dt) => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; watch(W, u, Lf, dt); }),
+        () => V.ready() ? TK.seq('stroking', [react('stroke'), TK.say('cuddle'), stroke, up(), TK.face('camera'), TK.act('wave', 1.8, STAND.wave)])
+          : TK.seq('nocuddle', [up(), TK.say('geese'), TK.act('wave', 1.8, STAND.wave)]));
+    }
+    if (V.stage > 0) L.push(TK.walk(V.noGate ? [V.out] : [V.gin, V.out]), gate(false));
+    L.push(() => { V.done(true); return null; });
+    const seq = TK.seq('pen', L), run = seq.run.bind(seq);
+    seq.run = (Lf, dt) => { const r = seq.aborted || run(Lf, dt); if (r && self.hat) self.hatOn(); return r; };      // (never left without his hat)
+    seq.visit = V;
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
+    return true;
+  }
+  // his hat knocked off (the geese chasing him out): up off his head and down at `to` ([x, z]), tumbling; back on (hatHome
+  // 0..1 as he picks it up and puts it on: farmer.js), on (hatOn)
+  hatFly(to) {
+    const M = this.f.rig.hatMatrix(), p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(); M.decompose(p, q, sc);
+    const gy = this.o.groundY ? this.o.groundY(to[0], to[1]) : 0, yaw = new THREE.Euler().setFromQuaternion(q, 'YXZ').y;
+    this.hat = { t: 0, T: 0.95, p0: p, q0: q, sc, to: new THREE.Vector3(to[0], gy + HAT_REST, to[1]), qEnd: new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + 1.3, 0)), spin: this.r() < 0.5 ? 1 : -1, home: 0 };
+    this.f.rig.hatWorld = M; this.f.rig.hatHome = 0;
+  }
+  hatHome(k) { if (this.hat) this.hat.home = k; }
+  hatOn() { this.hat = null; this.f.rig.hatWorld = null; this.f.rig.hatHome = 0; }
+  hatStep(dt) {
+    const H = this.hat; if (!H) return;
+    H.t += dt; const u = Math.min(1, H.t / H.T);
+    const p = H.p0.clone().lerp(H.to, u); p.y += 0.75 * 4 * u * (1 - u);                     // (up and over)
+    const tumble = new THREE.Quaternion().setFromEuler(new THREE.Euler(H.spin * u * Math.PI * 2.2, 0, 0.6 * Math.sin(u * Math.PI)));
+    const q = H.q0.clone().multiply(tumble).slerp(H.qEnd, u * u);
+    this.f.rig.hatWorld = new THREE.Matrix4().compose(p, q, H.sc); this.f.rig.hatHome = H.home;
+  }
   // where his pail is (its middle, world), as he's posed now
   pailAt() { const b = this.f.rig.B.pail; b.updateWorldMatrix(true, false); return b.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.08, 0)); }
   // where a handful of corn leaves his hand (the right hand, a little ahead of it)
@@ -406,6 +517,7 @@ export class FarmLife {
     f.want = A;
     f.root.rotation.y = this.heading;
     if (this.o.groundY) this.pos.y = this.o.groundY(this.pos.x, this.pos.z);
+    this.hatStep(dt);
     f.update(dt);
     if (this.pen) this.pen.at(this.pos, W.props.pail ? this.pailAt() : null);
     // ---- the animals step aside if he's right on them (geese, ducks on the grass, Biscuit)

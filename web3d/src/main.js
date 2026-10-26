@@ -1548,7 +1548,7 @@ function buildFarmer() {
     if (!decorSpots) decorSpots = decorList.filter(d => d.model !== 'duckhouse').map(d => { const c = new THREE.Vector3(); d.box.getCenter(c); c.applyMatrix4(d.m); return nav.nearestIn(farmReach(), c.x + 1.4, c.z + 1.4, 2.5); }).filter(Boolean);
     return { coops, farm: [...S.farm, ...decorSpots] };          // (the farmer stops by the decorations too)
   };
-  farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge, greet: greetFarmer,
+  farmLife = new FarmLife(scene, { look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge, greet: greetFarmer, geeseFence, greetGeese,
     kennel: kd && (HAS_DOG || (GAME_MODE && farmDog)) ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
     others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : [])],
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), inView: (x, z) => inView(x, z, 2.2) }, rng(71));
@@ -1650,7 +1650,9 @@ function penSpec(plot) {
 }
 // hearts floating up (a cuddle): sprites from a little pool, as the song's notes
 const HEARTS = []; let heartMat = null;
+let heartsMade = 0;                                     // (how many so far: for the tests)
 function spawnHeart(at) {
+  heartsMade++;
   if (!heartMat) {
     heartMat = new THREE.SpriteMaterial({ map: fxTexture64(64, c => { c.fillStyle = '#ff6b8a'; c.beginPath(); c.moveTo(32, 54); c.bezierCurveTo(4, 34, 10, 8, 32, 22); c.bezierCurveTo(54, 8, 60, 34, 32, 54); c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff4f6'; c.stroke(); }), transparent: true, depthWrite: false });
     heartMat.userData.noGrade = true;
@@ -1698,7 +1700,7 @@ if (henEls.box) { henEls.cuddle.addEventListener('click', () => sendToPen('cuddl
 function guardAlarm(F, D) {
   if (!GAME_MODE) return null;
   const g = F && F.guarding && F.geese.length ? F.geese[0] : null, d = D && D.guard && !D.guard.done ? D.dog : null, o = d || g;
-  return o ? { x: o.pos.x, z: o.pos.z, who: [...(d ? ['dog'] : []), ...(g ? ['geese'] : [])] } : null;
+  return o ? { x: o.pos.x, z: o.pos.z, who: [...(d ? ['dog'] : []), ...(g ? ['geese'] : [])], quick: !!(g && F.brave) } : null;      // (quick: the geese friends with the farmer, braver guards)
 }
 function buildNightVisit() {
   const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
@@ -1732,6 +1734,7 @@ function tickFoxes(dt) {
   if (frogPond) frogPond.update(dt, clockHour());
   if (duckFlock) duckFlock.update(dt, clockHour());
   if (farmLife) farmLife.update(dt, clockHour());
+  if (GAME_MODE) { tickGates(dt); tickCorn(dt); }
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
   if (foxLineup) foxLineup.update(dt);
@@ -3015,7 +3018,7 @@ function tapAt(x, y) {
     return;
   }
   if (best.isFarmer) best.life.tapped(); else if (best.fam) best.fam.tapped(best); else if (best.isGoose) best.tapped(VIEW_DIR); else if (best.pond) best.pond.tapped(best); else best.tapped();
-  if (GAME_MODE) { henOff(); if (best.gid) openBirdCard(best); else if (best.gameChick && best.plot.gc) chickCard(best); else if (gameUI.kind === 'bird') gameUI.close(); }
+  if (GAME_MODE) { henOff(); if (best.gid) openBirdCard(best); else if (best.gameChick && best.plot.gc) chickCard(best); else if (geeseFlock && geeseFlock.geese.includes(best) && geeseOwned()) geeseCard(); else if (gameUI.kind === 'bird') gameUI.close(); }
   else if (best.role === 'dog') { dogTapped(); henOff(); }
   if (GAME_MODE && best.role === 'dog') dogTapped();          // (the game's dog: a button to rename him too)
   else if (best.plot && best.rig && !best.isGoose) henTapped(best); else henOff();
@@ -3609,6 +3612,214 @@ function smoothLine(pts) {
   }
   return p;
 }
+// ---- the geese's gates (release 3: the geese's trust; Audrey: "A gate in their fence"). While the pond's fields are wild
+// meadow, a wooden gate in the fence of each (once the geese are on the farm), where it's nearest the bank they come and go
+// by: the fence's rails stop at its two posts; it swings open into their field as the farmer goes through and shuts behind
+// him. The grid keeps it shut for everyone else (the geese, Biscuit, Rusty): the farmer walks through it as into a pen.
+// Each: p (on the fence), t (along it), n (into the field), the farmer's places: out (in front of it), gin (just inside),
+// meet, front (where the geese meet him), flee (where he runs to), hatAt (where his hat lands); reg (the geese's part of
+// the grass it opens on)
+let GATES = [];
+const GATE_HALF = 0.55;
+function pondFields() { return geeseFlock ? [...new Set(geeseFlock.ways.map(w => fieldAt(w.out[0], w.out[1])).filter(f => f >= 0))] : []; }
+function pondGates() {
+  if (!GAME_MODE || !game.data || !FIELDS || !geeseOwned() || !geeseFlock) return [];
+  const n = game.data.land.length, nav = navGrid(), R = farmReach(), F = geeseFlock, door = farmDoor(), out = [];
+  const roomy = (q, r) => nav.freeAt(q[0], q[1]) && [0, 1, 2, 3, 4, 5].every(k => nav.freeAt(q[0] + Math.cos(k * 1.047) * r, q[1] + Math.sin(k * 1.047) * r));
+  for (const id of pondFields()) {
+    if (id < n) continue;                                  // (bought: no fence round it, no gate)
+    let best = null;
+    for (const L of FIELDS.fields[id].lines) {
+      if (!(L.by === 'lane' || (typeof L.by === 'number' && L.by < n))) continue;
+      const pts = smoothLine(L.pts), cum = [0];
+      for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+      const total = cum[cum.length - 1];
+      // (a place along the fence: where it is, the way along, the way into the field)
+      const frame = sv => {
+        let i = 1; while (i < pts.length - 1 && cum[i] < sv) i++;
+        const a = pts[i - 1], b = pts[i], u = (sv - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]), q = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, t = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+        let nn = [-t[1], t[0]]; if (fieldAt(q[0] + nn[0] * 0.8, q[1] + nn[1] * 0.8) !== id) nn = [-nn[0], -nn[1]];
+        return { q, t, nn, at: k => [q[0] + nn[0] * k, q[1] + nn[1] * k] };
+      };
+      for (let sAt = 1.3; sAt <= total - 1.3; sAt += 0.2) {
+        const Fr = frame(sAt), p = Fr.q, t = Fr.t, nn = Fr.nn, at = Fr.at;
+        if (fieldAt(p[0] + nn[0] * 0.8, p[1] + nn[1] * 0.8) !== id) continue;
+        // (outside: the lane, often narrow, so he runs off along it, one way or the other, his hat landing on it)
+        const o = at(-0.75), gin = at(0.7), meet = at(1.7), front = at(2.35), W = window.__gateWhy, no = k => { if (W) W[id + k] = (W[id + k] || 0) + 1; };
+        const side = [1, -1].find(sd => { if (sAt + sd * 2.4 < 0.2 || sAt + sd * 2.4 > total - 0.2) return false; const f = frame(sAt + sd * 2.3).at(-0.8), h = frame(sAt + sd * 0.7).at(-0.85); return roomy(f, 0.2) && roomy(h, 0.18) && nav.clearLine(o[0], o[1], f[0], f[1], 0.12); });
+        if (!roomy(o, 0.22) || !side) { no('out'); continue; }
+        const flee = frame(sAt + side * 2.3).at(-0.8), hatAt = frame(sAt + side * 0.7).at(-0.85);
+        if (!roomy(gin, 0.35) || !roomy(meet, 0.45) || !roomy(front, 0.4) || !roomy(at(0.55, 0.5), 0.3)) { no('in'); continue; }
+        if (!nav.clearLine(gin[0], gin[1], front[0], front[1], 0.25)) { no('line'); continue; }
+        if (!R[nav.iz(o[1]) * nav.nx + nav.ix(o[0])] || !R[nav.iz(flee[1]) * nav.nx + nav.ix(flee[0])]) { no('reach'); continue; }      // (the farmer can get there)
+        if (V.trees.some(tr => Math.hypot(tr.pos[0] - p[0], tr.pos[2] - p[1]) < 1.3)) { no('tree'); continue; }
+        const reg = F.regionAt(meet[0], meet[1]);
+        let wd = Infinity; for (const w of F.ways) if (w.reg === reg) wd = Math.min(wd, Math.hypot(w.out[0] - meet[0], w.out[1] - meet[1]));
+        if (wd === Infinity) { no('way'); continue; }
+        const score = -wd - 0.05 * Math.hypot(o[0] - door[0], o[1] - door[1]);
+        if (!best || score > best.score) best = { field: id, p, t, n: nn, out: o, gin, meet, front, flee, hatAt, hatFrom: [t[0] * side, t[1] * side], toIn: Math.atan2(nn[0], nn[1]), reg, score, open: 0, want: 0 };
+      }
+    }
+    if (best) out.push(best);
+  }
+  return out;
+}
+// the fence's lines with a gap at each gate (its posts stand at the ends)
+function cutGates(lines) {
+  if (!GATES.length) return lines;
+  const out = [];
+  for (const pts of lines) {
+    const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const cuts = [];
+    for (const G of GATES) {
+      let bs = -1, bd = 0.08;
+      for (let i = 1; i < pts.length; i++) {
+        const a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((G.p[0] - a[0]) * dx + (G.p[1] - a[1]) * dz) / l2));
+        const d = Math.hypot(a[0] + dx * u - G.p[0], a[1] + dz * u - G.p[1]); if (d < bd) { bd = d; bs = cum[i - 1] + u * Math.sqrt(l2); }
+      }
+      if (bs >= 0) cuts.push([bs - GATE_HALF, bs + GATE_HALF]);
+    }
+    if (!cuts.length) { out.push(pts); continue; }
+    const pointAt = sv => { let i = 1; while (i < pts.length - 1 && cum[i] < sv) i++; const u = (sv - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]); return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * u]; };
+    const piece = (s0, s1) => { if (s1 - s0 < 0.05) return; const q = [pointAt(s0)]; for (let i = 0; i < pts.length; i++) if (cum[i] > s0 + 1e-3 && cum[i] < s1 - 1e-3) q.push(pts[i]); q.push(pointAt(s1)); out.push(q); };
+    cuts.sort((a, b) => a[0] - b[0]);
+    let from = 0; for (const [a, b] of cuts) { piece(from, a); from = b; }
+    piece(from, cum[cum.length - 1]);
+  }
+  return out;
+}
+// the gate: two posts and a leaf (two rails, two stiles, a brace) hinged on the first post
+function gateMesh(G) {
+  const g = new THREE.Group(), post = new THREE.BoxGeometry(0.095, 0.86, 0.095), W = 2 * GATE_HALF - 0.12;
+  for (const sd of [-1, 1]) { const m = new THREE.Mesh(post, WOOD); m.position.set(G.p[0] + G.t[0] * sd * GATE_HALF, 0.43, G.p[1] + G.t[1] * sd * GATE_HALF); m.castShadow = true; m.receiveShadow = true; g.add(m); }
+  const pivot = new THREE.Group(); pivot.position.set(G.p[0] - G.t[0] * (GATE_HALF - 0.06), 0, G.p[1] - G.t[1] * (GATE_HALF - 0.06));
+  const part = (geo, y, z, rx = 0) => { const m = new THREE.Mesh(geo, WOOD); m.position.set(0, y, z); m.rotation.x = rx; m.castShadow = true; pivot.add(m); };
+  for (const y of [0.24, 0.6]) part(new THREE.BoxGeometry(0.04, 0.065, W), y, W / 2);
+  for (const z of [0.03, W - 0.03]) part(new THREE.BoxGeometry(0.045, 0.48, 0.05), 0.42, z);
+  const bl = Math.hypot(W - 0.08, 0.36); part(new THREE.BoxGeometry(0.035, 0.05, bl), 0.42, W / 2, Math.atan2(0.36, W - 0.08));
+  g.add(pivot); G.pivot = pivot; setGate(G);
+  scene.add(g); g.updateMatrixWorld(true);
+  return g;
+}
+function setGate(G) { const th = G.open * 1.75, dx = G.t[0] * Math.cos(th) + G.n[0] * Math.sin(th), dz = G.t[1] * Math.cos(th) + G.n[1] * Math.sin(th); G.pivot.rotation.y = Math.atan2(dx, dz); }
+function tickGates(dt) {
+  for (const G of GATES) {
+    // (the geese out of its way as it swings: anyone in the reach of its leaf on the field's side steps clear of it)
+    if (G.open > 0 && geeseFlock) for (const g of geeseFlock.geese) {
+      const hx = G.p[0] - G.t[0] * (GATE_HALF - 0.06), hz = G.p[1] - G.t[1] * (GATE_HALF - 0.06), dx = g.pos.x - hx, dz = g.pos.z - hz, d = Math.hypot(dx, dz);
+      if (d < 2 * GATE_HALF + 0.3 && d > 1e-3 && dx * G.n[0] + dz * G.n[1] > -0.1) { const k = (2 * GATE_HALF + 0.3) / d, nx = hx + dx * k, nz = hz + dz * k; if (navGrid().freeAt(nx, nz)) { g.pos.x += (nx - g.pos.x) * Math.min(1, dt * 4); g.pos.z += (nz - g.pos.z) * Math.min(1, dt * 4); } }
+    }
+    if (G.open === G.want) continue;
+    G.open = G.want > G.open ? Math.min(G.want, G.open + dt / 0.6) : Math.max(G.want, G.open - dt / 0.8);
+    setGate(G); G.mesh.updateMatrixWorld(true); renderer.shadowMap.needsUpdate = true; wake(200);
+  }
+}
+// ---- corn for the geese (the farmer's visits): a handful thrown lands round a spot on the grass, and goes as a goose
+// grazing there pecks it up (or after a while)
+const CORN = { list: [], mesh: null };
+function cornMesh() {
+  if (!CORN.mesh) {
+    const geo = new THREE.SphereGeometry(0.013, 6, 4); geo.scale(1, 0.7, 1.35);
+    const mat = new THREE.MeshLambertMaterial({ color: '#e8b52f' }); nightGrade(mat);
+    CORN.mesh = new THREE.InstancedMesh(geo, mat, 90); CORN.mesh.count = 0; CORN.mesh.frustumCulled = false; scene.add(CORN.mesh);
+  }
+  return CORN.mesh;
+}
+function cornThrow(from, to) {
+  for (let k = 0; k < 15 && CORN.list.length < 90; k++) {
+    const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * 0.3, tx = to[0] + Math.cos(a) * r, tz = to[1] + Math.sin(a) * r, T = 0.5 + Math.random() * 0.25, gy = groundY(tx, tz) + 0.008;
+    const p = from.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.06, 0, (Math.random() - 0.5) * 0.06));
+    CORN.list.push({ p, v: new THREE.Vector3((tx - p.x) / T, (gy - p.y + 4.9 * T * T) / T, (tz - p.z) / T), t: 0, T, gy, landed: false, life: 45, spin: Math.random() * 6.28 });
+  }
+  wake(1200);
+}
+function cornLanded(at) { return CORN.list.some(c => c.landed && Math.hypot(c.p.x - at[0], c.p.z - at[1]) < 0.6); }
+function tickCorn(dt) {
+  if (!CORN.list.length && !(CORN.mesh && CORN.mesh.count)) return;
+  for (const g of geeseFlock ? geeseFlock.geese : []) if (g.act === 'graze') {             // (pecked up: the bill just ahead of her)
+    const bx = g.pos.x + Math.sin(g.heading) * 0.3, bz = g.pos.z + Math.cos(g.heading) * 0.3;
+    for (const c of CORN.list) if (c.landed && Math.hypot(c.p.x - bx, c.p.z - bz) < 0.22 && Math.random() < dt * 2.2) c.life = 0;
+  }
+  CORN.list = CORN.list.filter(c => (c.life -= dt) > 0);
+  const M = cornMesh(), m = new THREE.Matrix4(), q = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1), up = new THREE.Vector3(0, 1, 0);
+  let flying = false;
+  CORN.list.forEach((c, i) => {
+    if (!c.landed) { c.t += dt; c.p.addScaledVector(c.v, dt); c.v.y -= 9.8 * dt; if (c.t >= c.T || c.p.y <= c.gy) { c.landed = true; c.p.y = c.gy; } else flying = true; }
+    M.setMatrixAt(i, m.compose(c.p, q.setFromAxisAngle(up, c.spin), one));
+  });
+  M.count = CORN.list.length; M.instanceMatrix.needsUpdate = true;
+  if (flying) wake(200);
+}
+// ---- the geese's card and a visit (game.js geeseTrust, visitGeese): tap a goose
+let GVISIT = null;
+function geeseCard() {
+  if (!geeseFlock || !geeseFlock.geese.length || !game.geeseTrust()) return;
+  holdBird(null); henOff();
+  gameUI.geeseCard(farmerAsleep() ? 'night' : 'ok', { visit: () => geeseVisit() });
+}
+function geeseVisit() {
+  const r = game.visitGeese(); if (!r) return null;
+  gameUI.close();
+  const farmer = farmerName();
+  if (r.cuddle) hint(r.happy ? game.t('geese_happy', { when: game.howLong(r.left) }) : game.t('geese_cuddled', { farmer, xp: r.xp }));
+  else hint(r.up ? game.t('geese_up' + r.up, { farmer, xp: r.xp }) : game.t(r.counted ? 'geese_visited' : 'geese_again', { farmer, xp: r.xp }));
+  if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
+  if (r.done) jobsDone(r.done);
+  braveGuards();
+  if (!r.happy) startGeeseVisit(r.level);
+  return r;
+}
+// the friends' geese are braver guards (quicker after Rusty: nightvisit.js alarm, geese.js watchFor)
+function braveGuards() { if (geeseFlock && GAME_MODE && game.data) { const T = game.geeseTrust(); geeseFlock.brave = !!(T && T.level === 3); } }
+// the farmer's way in: by the gate on their side of the pond (or, the pond's fields bought, straight over to them)
+function startGeeseVisit(stage) {
+  const F = geeseFlock;
+  if (!farmLife || farmLife.home || farmLife.running || farmerAsleep() || !F || !F.geese.length || F.guarding || GVISIT) return false;
+  const G = F.geese[0], reg = F.regionAt(G.pos.x, G.pos.z);
+  const gate = GATES.find(q => q.reg === reg) || GATES.slice().sort((a, b) => Math.hypot(a.meet[0] - G.pos.x, a.meet[1] - G.pos.z) - Math.hypot(b.meet[0] - G.pos.x, b.meet[1] - G.pos.z))[0];
+  const sp = gate ? { out: gate.out, gin: gate.gin, meet: gate.meet, front: gate.front, flee: gate.flee, hatAt: gate.hatAt, hatFrom: gate.hatFrom, toIn: gate.toIn, dir: gate.n, noGate: false } : openSpots(G);
+  if (!sp) return false;
+  const dir = sp.dir, nav = navGrid(), along = k => [sp.meet[0] + dir[0] * k, sp.meet[1] + dir[1] * k];
+  let cornAt = stage === 1 ? along(1.5) : along(0.72);
+  if (!nav.freeAt(cornAt[0], cornAt[1])) cornAt = along(stage === 1 ? 1.0 : 0.9);
+  const V = Object.assign(sp, { stage, phase: null, inside: false, gate, eaten: false, settled: false, cornAt,
+    farmer: () => farmLife.pos, lead: () => G.pos,
+    close: () => Math.min(...F.geese.map(g => Math.hypot(g.pos.x - farmLife.pos.x, g.pos.z - farmLife.pos.z))),
+    ate: () => !!V.eaten, ready: () => !!V.settled,
+    enter() { V.inside = true; if (gate) gate.want = 1; wake(1000); }, leave() { V.inside = false; if (gate) gate.want = 0; wake(1000); },
+    hens: () => [], at() {},
+    react(k) { V.phase = k; if (F.visitV !== V) F.visit(V); wake(1500); },
+    scatter(from) { cornThrow(from, V.cornAt); },
+    corn: () => cornLanded(V.cornAt) ? V.cornAt : null,
+    heart() { const a = G.pos, b = farmLife.pos; spawnHeart(new THREE.Vector3(a.x * 0.6 + b.x * 0.4, 0.78, a.z * 0.6 + b.z * 0.4)); },
+    done() { if (F.visitV === V) F.endVisit(); if (gate) gate.want = 0; if (GVISIT === V) GVISIT = null; } });
+  if (!farmLife.visitGeese(V)) return false;
+  GVISIT = V; wake(1500);
+  return true;
+}
+// (the pond's field bought: no fence, no gate; the farmer comes over the grass to them, from the farm's side)
+function openSpots(G) {
+  const nav = navGrid(), R = farmReach(), fp = farmLife.pos;
+  let best = null;
+  for (let k = 0; k < 16; k++) {
+    const a = k / 16 * Math.PI * 2, o = [G.pos.x + Math.sin(a) * 3.4, G.pos.z + Math.cos(a) * 3.4];
+    if (!nav.freeAt(o[0], o[1]) || !R[nav.iz(o[1]) * nav.nx + nav.ix(o[0])] || geeseFlock.pondAt(o[0], o[1])[0] < 1.3) continue;
+    const dir = [(G.pos.x - o[0]) / 3.4, (G.pos.z - o[1]) / 3.4], flee = [o[0] - dir[0] * 2.4, o[1] - dir[1] * 2.4], meet = [o[0] + dir[0] * 1.0, o[1] + dir[1] * 1.0], front = [o[0] + dir[0] * 1.65, o[1] + dir[1] * 1.65];
+    if (!nav.freeAt(flee[0], flee[1]) || !nav.clearLine(o[0], o[1], front[0], front[1], 0.2) || !nav.clearLine(o[0], o[1], flee[0], flee[1], 0.2)) continue;
+    const d = Math.hypot(o[0] - fp.x, o[1] - fp.z);
+    if (!best || d < best.d) best = { d, out: o, gin: o, meet, front, flee, hatAt: [o[0] - dir[0] * 1.3 + dir[1] * 0.4, o[1] - dir[1] * 1.3 - dir[0] * 0.4], hatFrom: [-dir[0], -dir[1]], toIn: Math.atan2(dir[0], dir[1]), dir, noGate: true };
+  }
+  return best;
+}
+// friends: now and then the farmer stops by their gate (the one on their side) to say hello, and they come over to it
+function geeseFence() {
+  if (!GAME_MODE || !game.data || !geeseFlock || !geeseFlock.geese.length || GVISIT) return null;
+  const T = game.geeseTrust(); if (!T || T.level < 3 || !GATES.length) return null;
+  const G = geeseFlock.geese[0], gate = GATES.find(q => q.reg === geeseFlock.regionAt(G.pos.x, G.pos.z));
+  return gate ? [gate.out[0], gate.out[1], gate.toIn, gate] : null;
+}
+function greetGeese(s) { if (geeseFlock && s[3]) geeseFlock.greetAt(s[3].gin[0], s[3].gin[1], s[3].toIn + Math.PI); }
 const SALE = { sign: null, stakes: null, field: -1, at: null };
 const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
 const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
@@ -3761,14 +3972,17 @@ let landOwned = -1;
 function syncLand(fresh = false) {
   if (!GAME_MODE || !game.data || !FIELDS) return;
   const n = game.data.land.length, sale = game.landForSale(), saleF = sale ? sale.field : -1;
-  if (fresh || n !== landOwned) {
+  const gk = geeseOwned() ? 'geese' : '';                   // (the geese's gates: once they're on the farm)
+  if (fresh || n !== landOwned || gk !== LAND.gk) {
     const bought = !fresh && landOwned >= 0 && n > landOwned ? landOwned : -1;
-    landOwned = n;
+    landOwned = n; LAND.gk = gk;
     landTint();
     for (const m of LAND.grass) { m.removeFromParent(); const i = grassTiles.findIndex(g => g.mesh === m); if (i >= 0) grassTiles.splice(i, 1); }
     for (const m of LAND.fence) { m.removeFromParent(); m.geometry.dispose(); }
-    LAND.fence = buildFence(fenceLines());
     rebuildNav();
+    for (const G of GATES) G.mesh.removeFromParent();
+    GATES = pondGates(); for (const G of GATES) G.mesh = gateMesh(G);
+    LAND.fence = buildFence(cutGates(fenceLines()));
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
     applyGrass();
@@ -3779,6 +3993,7 @@ function syncLand(fresh = false) {
     SALE.field = saleF;
     if (saleF >= 0) { SALE.sign = saleSign(FIELDS.fields[saleF]); renderer.shadowMap.needsUpdate = true; wake(500); }
   }
+  braveGuards();
 }
 // the farm's walking grid made again in place (everyone keeps the same one): the fence now somewhere else
 function rebuildNav() {
@@ -4520,6 +4735,7 @@ function buyAnimal(id) {
   focusOn((G.x + w[0]) / 2, (G.z + w[1]) / 2, Math.min(view.max, sideways() ? 2.4 : 3.0));
   renderer.shadowMap.needsUpdate = true; wake(1000);
   hint(game.t('geese_came', { xp: r.xp })); hintNext(game.t('geese_hello'));
+  syncLand();                                               // (their gates)
   return true;
 }
 function seeAnimal(id) {
@@ -5549,6 +5765,11 @@ window.__farm = {
   saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
   farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
   wildIn: f => { let c = 0; const m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.grass) for (let i = 0; i < im.instanceMatrix.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) c++; } return c; },
+  gateWant: (i, on) => { if (GATES[i]) GATES[i].want = on; },
+  heartsLive: () => heartsMade,
+  geeseTrust: { why: () => { window.__gateWhy = {}; pondGates(); return window.__gateWhy; }, card: () => geeseCard(), greet: () => { const GF = geeseFence(); if (GF) greetGeese(GF); return !!GF; },
+    alarm: () => guardAlarm(geeseFlock, null), brave: () => !!(geeseFlock && geeseFlock.brave), visit: () => geeseVisit(), start: k => startGeeseVisit(k), V: () => GVISIT, corn: () => CORN.list.filter(c => c.landed).length,
+    gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },

@@ -2346,3 +2346,38 @@ the birds already had.
 - `geesesquabble.mjs [kinds]` (new, each kind twice by default): each kind on the test page (the stages in order, never walking over it on the way, the
   snail eaten, the puddle soaking away, three hearts; every frame never on anything, never into each other or the water; back to their day after), and
   one coming on its own. geeseday still passes.
+
+## Release 3, step 5: the geese's trust (26 Oct 2026; the plan: "The geese don't like the farmer at first. They hiss and chase him (he runs, his hat flies off). Visit them regularly and little by little they trust him, until they let him cuddle them"; Audrey: "A gate in their fence", "About a week", and for their trust "Cuddles, hearts, a little XP", "They greet him", "Braver guards")
+
+- **The gates** (main.js `pondGates`, `gateMesh`, `cutGates`): while the pond's fields are wild meadow, once the geese are on
+  the farm, a wooden gate in the fence of each (fields 10 and 14), where it's nearest the bank they come and go by, on
+  clear ground both sides with the lane outside (the farmer runs off along it): two posts, a leaf of two rails, two stiles
+  and a brace, hinged on one post. The fence's rails stop at its posts (the fence's lines are cut there); on the grid it
+  stays shut, so the geese, Biscuit and Rusty never use it; the farmer goes through it as into a pen (`pen`). It swings
+  open into their field as he goes in and shuts behind him; geese in the reach of its leaf step clear.
+- **Their card** (gameui.js `geeseCard`): a tap on a goose: "Gertrude and Hector, the geese", Embden goose and Toulouse
+  gander, their trust (hearts and Cross / Wary / Curious / Friends, Fâchés / Méfiants / Curieux / Amis), what it means, the
+  days of visits to the next ("A visit counts once a day", or "Today's visit has counted: come back tomorrow"), and "Visit
+  them" (friends: "♥ Cuddle", or how long they're happy after one; at night, visits in the morning).
+- **A visit** (game.js `visitGeese`, `geeseTrust`, `GEESE_TRUST`): counts once a day on the phone's calendar (+3 XP):
+  Wary from the 3rd day's, Curious from the 5th, Friends from the 7th (+20 XP more, and that visit is their first cuddle);
+  friends, a cuddle counts once every 6 hours (+1 XP, and today's job "Give a cuddle"). Saved as `animals.geese.trust`,
+  `day`, `happy`, each checked when the farm opens (no more than a visit a day since they came, a day between their
+  coming and now, trust only with a day, happy only for friends and at most 6 hours on); a changed save is flagged.
+- **The show** (farmlife.js `visitGeese`, geese.js `visit`, main.js `startGeeseVisit`): the farmer goes to the gate on
+  their side of the pond, opens it and goes in. Cross: they come over and square up to him a couple of metres off, necks
+  low and hissing; "Hello, you two!" and a wave, and they charge; "Whoa!", he runs for the gate (it shuts behind him), his
+  hat knocked off on the way and landing on the lane; they parade by the gate with a victory honk; he gets his hat back,
+  puts it on, "Maybe tomorrow…". Wary: a hiss from well back, a long hard look; "Some corn for you!", three handfuls
+  thrown towards them, and he steps back by the gate; they come round him, well clear, for the corn. Curious: a handful at
+  his feet, a crouch; they come and eat by him (a step clear), Gertrude looks up at him, head on one side, a soft honk
+  ("There you are!"). Friends: they come to meet him; a crouch, Gertrude up to him, Hector beside her, he strokes her neck
+  ("There, there…"), their eyes shut happily, hearts. Corn lies on the grass till they peck it up (`cornThrow`). The
+  pond's fields bought (no fence): he walks straight over to them (`openSpots`). The hat comes off and goes back on through
+  the hat's joint (farmer.js `hatWorld`, `hatHome`).
+- **Friends greet him:** now and then the farmer stops by their gate to say hello, and they hurry over to it with a honk
+  (`geeseFence`, `greetGeese`, geese.js `greetAt`). **Braver guards:** they hear Rusty sooner and he gives up sooner
+  (`brave`: the alarm 0.8 s, was 1.6).
+- `geesetrust.mjs` (new; LANG=fr with Rosie): the gates, a real tap and the card, a visit at each level day by day (what
+  they do, nobody through the fence or on anything, the geese never out of their field, the hat), same-day visits, a
+  cuddle every 6 hours, the hello at the gate, braver guards, five changed saves. `geesetrustfilm.mjs OUT [parts]`: a film.

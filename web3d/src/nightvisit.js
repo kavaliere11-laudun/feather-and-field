@@ -925,7 +925,7 @@ export class NightVisit {
     const night = hour >= 23 || hour < 4.5;
     if (this.alarm && this.state === 'out' && this.fox.root.visible) {      // (the game: the guards' alarm heard, wherever they are)
       const a = this.alarm();
-      if (a) { this.alarmT = (this.alarmT || 0) + dt; if (this.alarmT > 1.6 && this.chasedBy(a.x, a.z, a.who[0])) for (const w of a.who) this.helpers[w] = true; }
+      if (a) { this.alarmT = (this.alarmT || 0) + dt; if (this.alarmT > (a.quick ? 0.8 : 1.6) && this.chasedBy(a.x, a.z, a.who[0])) for (const w of a.who) this.helpers[w] = true; }
     } else this.alarmT = 0;
     if (this.state === 'idle') {
       if (!this.farmer || this.farmer.stage === 'gone') this.next -= dt;

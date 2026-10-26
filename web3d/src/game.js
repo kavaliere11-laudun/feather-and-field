@@ -111,6 +111,15 @@ const TEXT = {
     ani_dog_owned: 'On your farm', ani_see_dog: 'See him', ani_move_kennel: 'Move his kennel', ani_rename: 'Rename', kennel_name: 'Kennel',
     dog_came: '{name} has come to live on your farm! +{xp} XP', kennel_moved: '{name}’s kennel: moved!',
     ani_buy: 'Buy · {c}', ani_owned: 'At the pond', ani_see: 'See them',
+    geese_sub: 'Embden goose and Toulouse gander · by the pond', geese_visit: 'Visit them',
+    geese_lv0: 'Cross', geese_lv1: 'Wary', geese_lv2: 'Curious', geese_lv3: 'Friends',
+    geese_b0: 'They don’t like {farmer} yet: they hiss and chase him out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once he steps back.',
+    geese_b2: 'They come right up to eat the corn by {farmer}.', geese_b3: 'They let {farmer} cuddle them, come to the fence to say hello, and chase Rusty off quicker.',
+    geese_next: '{n} more days of visits to “{level}”', geese_next1: '1 more day of visits to “{level}”', geese_how: 'A visit counts once a day.',
+    geese_today: 'Today’s visit has counted: come back tomorrow.', geese_night: 'Visits in the morning: {farmer} is asleep.',
+    geese_visited: '{farmer} goes to see Gertrude and Hector. +{xp} XP', geese_again: '{farmer} goes to see Gertrude and Hector again (today’s visit has already counted).',
+    geese_up1: 'Gertrude and Hector are getting used to {farmer}. +{xp} XP', geese_up2: 'Gertrude and Hector are curious about {farmer} now. +{xp} XP', geese_up3: 'Gertrude and Hector trust {farmer} now! +{xp} XP',
+    geese_cuddled: '{farmer} gives Gertrude and Hector a cuddle ♥ +{xp} XP', geese_happy: 'Happy after a cuddle: {when} left', geese_gate: 'The geese’s gate',
     fox_title: 'Last night on the farm', fox_watch: '🎞 Watch it', fox_ok: 'OK',
     fox_eggs: 'Rusty the fox found the door of {hen}’s coop open and took {n} eggs from the nest. The hens are fine, just a little ruffled.',
     fox_eggs1: 'Rusty the fox found the door of {hen}’s coop open and took an egg from the nest. The hens are fine, just a little ruffled.',
@@ -285,6 +294,15 @@ const TEXT = {
     ani_dog_owned: 'Dans votre ferme', ani_see_dog: 'Le voir', ani_move_kennel: 'Déplacer sa niche', ani_rename: 'Renommer', kennel_name: 'Niche',
     dog_came: '{name} vient vivre dans votre ferme ! +{xp} XP', kennel_moved: 'La niche de {name} : c’est déplacé !',
     ani_buy: 'Acheter · {c}', ani_owned: 'À l’étang', ani_see: 'Les voir',
+    geese_sub: 'Oie d’Embden et jars de Toulouse · au bord de l’étang', geese_visit: 'Leur rendre visite',
+    geese_lv0: 'Fâchés', geese_lv1: 'Méfiants', geese_lv2: 'Curieux', geese_lv3: 'Amis',
+    geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et le chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand il s’éloigne.',
+    geese_b2: 'Ils viennent manger le grain tout près de {farmer}.', geese_b3: 'Ils se laissent câliner par {farmer}, viennent dire bonjour à la clôture et chassent Rusty plus vite.',
+    geese_next: 'Encore {n} jours de visites avant « {level} »', geese_next1: 'Encore 1 jour de visites avant « {level} »', geese_how: 'Une visite compte une fois par jour.',
+    geese_today: 'La visite d’aujourd’hui a compté : revenez demain.', geese_night: 'Les visites, ce sera demain matin : {farmer} dort.',
+    geese_visited: '{farmer} va voir Gertrude et Hector. +{xp} XP', geese_again: '{farmer} retourne voir Gertrude et Hector (la visite d’aujourd’hui a déjà compté).',
+    geese_up1: 'Gertrude et Hector s’habituent à {farmer}. +{xp} XP', geese_up2: 'Gertrude et Hector s’intéressent à {farmer} maintenant. +{xp} XP', geese_up3: 'Gertrude et Hector ont confiance en {farmer} ! +{xp} XP',
+    geese_cuddled: '{farmer} fait un câlin à Gertrude et Hector ♥ +{xp} XP', geese_happy: 'Heureux après un câlin : encore {when}', geese_gate: 'Le portail des oies',
     fox_title: 'La nuit dernière à la ferme', fox_watch: '🎞 Le voir', fox_ok: 'OK',
     fox_eggs: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris {n} œufs dans le nid. Les poules vont bien, juste un peu ébouriffées.',
     fox_eggs1: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris un œuf dans le nid. Les poules vont bien, juste un peu ébouriffées.',
@@ -390,14 +408,15 @@ const TEXT = {
 // a word of the game's in a language, outside a game (the onboarding pictures' sale sign: main.js ?intro)
 export const gameText = (lang, key) => (TEXT[lang] || TEXT.en)[key] || TEXT.en[key] || key;
 // in French "Just arrived" agrees with the bird
-const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.' },
+const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', geese_b0: 'They don’t like {farmer} yet: they hiss and chase her out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once she steps back.' },
   fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
     exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.',
     show_in: '{name} est inscrite : résultats à 7 h, dans {when}', show_entered: '{name} est inscrite au {show} !',
     res_none: '{name} n’est pas classée au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est championne maintenant !', ros_none: 'Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut).',
     champ_c: 'Championne régionale', champ_n: 'Championne nationale',
-    fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !' } };
+    fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !',
+    geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne.' } };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -572,6 +591,15 @@ export const foxNight = k => hash01('fox|' + k) < FOX.chance;
 export const foxAt = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8), FOX.from).getTime() + Math.floor(hash01('foxt|' + k) * FOX.hours * 60) * 60e3;
 const foxSeenFrom = now => new Date(now).getHours() < 12 ? nightKey(now) : prevNight(nightKey(now));      // (a farm from before the visits: none for a night already over)
 export const animalXp = id => Math.round(ANIMALS[id].price / 50);
+// ---- the geese's trust (release 3; the plan: "The geese don't like the farmer at first. They hiss and chase him (he runs,
+// his hat flies off). Visit them regularly and little by little they trust him, until they let him cuddle them"; Audrey:
+// "A gate in their fence", "About a week", and for their trust "Cuddles, hearts, a little XP", "They greet him", "Braver
+// guards"). A visit counts once a day (the phone's calendar): cross at first (they chase the farmer out of their field),
+// wary from the 3rd day's (they hiss from afar and eat the corn once the farmer steps back), curious from the 5th (they
+// come and eat by the farmer), friends from the 7th (cuddles, as the hens': one counts every 6 hours; a hello at the fence;
+// quicker after Rusty). XP for each visit that counts, and for becoming friends
+export const GEESE_TRUST = { at: [0, 3, 5, 7], visitXp: 3, friendsXp: 20 };
+const geeseLevel = n => GEESE_TRUST.at.filter(k => n >= k).length - 1;
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
 // unit of feed) and XP. Starting values (the balance is step 11)
@@ -784,7 +812,14 @@ export function checkFarm(d, now = Date.now()) {
       const a = d.animals[id];
       if (!a || typeof a !== 'object' || L < ANIMALS[id].level || !Number.isFinite(a.at) || a.at <= 0) continue;
       out.animals[id] = { at: Math.min(a.at, now) };
-      if (ANIMALS[id].kennel) Object.assign(out.animals[id], { name: cleanName(a.name) || DOG_NAME, x: spotNum(a.x), z: spotNum(a.z) });      // (his name as any name; his kennel on the quarter-metre: the farm puts it where it can stand)
+      if (ANIMALS[id].kennel) Object.assign(out.animals[id], { name: cleanName(a.name) || DOG_NAME, x: spotNum(a.x), z: spotNum(a.z) });
+      if (id === 'geese') {                            // their trust: a visit a day at most since they came, on a day from then to now
+        const G = out.animals.geese, days = Math.floor((now + TZ_SLACK - G.at) / DAY_MS) + 2, n = Number.isInteger(a.trust) ? Math.max(0, Math.min(GEESE_TRUST.at[3], days, a.trust)) : 0;
+        const day = typeof a.day === 'string' && /^\d{8}$/.test(a.day) && a.day >= dayKey(G.at - TZ_SLACK) && a.day <= dayKey(now + TZ_SLACK) ? a.day : null;
+        if (n > 0 && day) { G.trust = n; G.day = day; }
+        const h = n >= GEESE_TRUST.at[3] && day ? int(a.happy, 0, now + HAPPY_MS, 0) : 0;      // (happy after a cuddle: friends only, at most 6 hours on)
+        if (h) G.happy = h;
+      }      // (his name as any name; his kennel on the quarter-metre: the farm puts it where it can stand)
     }
   }
   // the wheat field: where it is (the farm puts it on your land when it has no spot), which way it lies, when it's ripe
@@ -1076,6 +1111,30 @@ export class Game {
     return { price: A.price, xp };
   }
   animalName(id) { return this.t('ani_' + id, { name: this.dogName() }); }
+  // the geese's trust: visits counted (one a day), the level (0 cross .. 3 friends), whether today's has counted, visits to
+  // the next level, how long they're happy after a cuddle (friends)
+  geeseTrust(now = Date.now()) {
+    const a = this.data.animals && this.data.animals.geese; if (!a) return null;
+    const n = a.trust || 0, level = geeseLevel(n);
+    return { n, level, today: a.day === dayKey(now), next: level < 3 ? GEESE_TRUST.at[level + 1] - n : 0, happy: level === 3 ? Math.max(0, (a.happy || 0) - now) : 0 };
+  }
+  // a visit to the geese: counted once a day (XP, and more for becoming friends); friends, a cuddle (counts every 6 hours)
+  visitGeese(now = Date.now()) {
+    const a = this.data.animals && this.data.animals.geese; if (!a) return null;
+    const T = this.geeseTrust(now);
+    if (T.level === 3) {
+      if (T.happy > 0) return { level: 3, cuddle: true, happy: true, left: T.happy, xp: 0 };
+      a.happy = Math.round(now + HAPPY_MS); const xp = FRESH.cuddle; this.data.xp += xp;
+      const done = this.job('cuddle', 1, now); this.save();
+      return { level: 3, cuddle: true, xp, done };
+    }
+    if (T.today) return { level: T.level, n: T.n, counted: false, xp: 0 };
+    a.trust = T.n + 1; a.day = dayKey(now);
+    const level = geeseLevel(a.trust), up = level > T.level ? level : 0, xp = GEESE_TRUST.visitXp + (up === 3 ? GEESE_TRUST.friendsXp : 0);
+    if (up === 3) a.happy = Math.round(now + HAPPY_MS);              // (friends: this visit's stroke their first cuddle)
+    this.data.xp += xp; this.save();
+    return { level, n: a.trust, counted: true, up, xp };
+  }
   // the dog: his name (the player's, as any name is checked), his kennel moved
   dogName() { const d = this.data.animals && this.data.animals.dog; return d ? d.name : DOG_NAME; }
   renameDog(n) { const d = this.data.animals && this.data.animals.dog; if (!d) return null; d.name = cleanName(n) || DOG_NAME; this.save(); return d.name; }

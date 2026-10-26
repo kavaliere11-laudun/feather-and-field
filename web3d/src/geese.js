@@ -312,7 +312,7 @@ export class Goose {
     for (const o of this.flock ? this.flock.near : []) {
       if (o === this || (!o.isGoose && pace === 'charge')) continue;        // (charging at the fox: straight at him)
       if (this.isDuck && o.isDuck && o.idx > this.idx) continue;              // (a duck never waits for those behind her in the line)
-      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? (this.isDuck ? (o.isDuck ? 0.36 : 0.5) : o.isDuck ? 0.4 : 0.46) : 0.85;      // (the fox: well clear)
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? (this.isDuck ? (o.isDuck ? 0.36 : 0.5) : o.isDuck ? 0.4 : 0.46) : o.isFarmer && this.flock && this.flock.calmBy ? 0.74 : 0.85;      // (the fox: well clear; the farmer they trust, up to him)
       if (rd > R + 0.45 || rd > d + R) continue;
       const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.2) continue;
       const k = Math.min(1, (R + 0.45 - rd) / 0.55) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.2 * k;
@@ -901,7 +901,7 @@ export class GeeseFlock extends PondBirds {
     if (this.guarding || !V || !this.night(hour) || V.state !== 'out' || !V.fox.root.visible) { if (!V || V.state !== 'out') this.heard = 0; return; }
     const [G] = this.geese, f = V.fox, d = Math.hypot(f.pos.x - G.pos.x, f.pos.z - G.pos.z);
     this.heard += dt;
-    if (d < 14 || V.pecks > 0 || this.heard > 35) this.raise(V);
+    if (d < (this.brave ? 18 : 14) || V.pecks > 0 || this.heard > (this.brave ? 22 : 35)) this.raise(V);      // (friends with the farmer: braver guards, up sooner)
   }
   raise(V) {
     const [G, H] = this.geese;
@@ -1044,7 +1044,7 @@ export class GeeseFlock extends PondBirds {
     return null;
   }
   update(dt, hour) {
-    this.time += dt; this.scoldOk -= dt;
+    this.time += dt; this.scoldOk -= dt; this.hour = hour;
     this.watchFor(dt, hour);
     const V = this.watch && this.watch(), fox = V && V.fox && V.fox.root.visible ? V.fox : null, dog = this.dogOf();
     this.near = [...this.geese, ...(fox ? [fox] : []), ...(dog ? [dog] : []), ...this.others()];          // (steering well clear of the fox, of Biscuit, round the ducks)
@@ -1079,7 +1079,7 @@ export class GeeseFlock extends PondBirds {
     for (const g of this.geese) { g.actT += dt; g.update(dt); }
     // crowding her while she's busy (cheeky, or just too close): she turns and hisses, he backs off looking sheepish
     const dG = Math.hypot(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
-    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !this.duet && !/^(bed|scold|call|morning|guard|squabble)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
+    if (dG < 0.5 && G.vs < 0.03 && H.wet < 0.3 && G.wet < 0.3 && this.scoldOk <= 0 && !G.asleep && !this.duet && !/^(bed|scold|call|morning|guard|squabble|visit|greet)/.test(G.task ? G.task.name : '') && (!H.task || /^(follow|cheeky)$/.test(H.task.name))) {
       this.scoldOk = 50 + this.r() * 50;
       const away = Math.atan2(H.pos.x - G.pos.x, H.pos.z - G.pos.z);
       let to = null;
@@ -1273,6 +1273,167 @@ export class GeeseFlock extends PondBirds {
       return true;
     } };
   }
+  // ---- a visit from the farmer (release 3: the geese's trust; farmlife.js visitGeese, main.js geeseVisit). V: { stage 0..3,
+  // phase (what the farmer's up to: 'chase' (they square up to him), 'charge', 'wary', 'back', 'curious', 'friends', 'stroke'), farmer() {x, z}, inside (in
+  // their field), corn() [x, z] where the corn lies (or null), gin [x, z] just inside the gate, front [x, z] where to meet
+  // him (friends); set here: eaten (they've had the corn a while), settled (friends: up to him for the cuddle) }. Cross:
+  // they come at him hissing and chase him out, then a victory parade by the gate. Wary: a hiss from afar, a long hard look,
+  // and once he's stepped back, over for the corn. Curious: over for the corn at his feet, a look up at him, a soft honk.
+  // Friends: over to meet him, up to him for a cuddle, necks stretched up, eyes shut happily. Hector with her all the way
+  visit(V) {
+    const [G, H] = this.geese;
+    this.endDuet(); this.visitV = V; V.eaten = false; V.settled = false;
+    this.calmBy = V.stage >= 2;                        // (curious, friends: they walk right up to the farmer)
+    G.task = this.visitTask(V, true); H.task = this.visitTask(V, false);
+  }
+  endVisit() {
+    if (!this.visitV) return;
+    this.visitV = null; this.calmBy = false;
+    for (const g of this.geese) if (g.task && g.task.name === 'visit') g.task = null;
+  }
+  // friends: over to (x, z) (inside their gate, the farmer outside it) to say hello: a honk, a wag, a look at him (face)
+  greetAt(x, z, face) {
+    const [G] = this.geese;
+    if (this.guarding || this.visitV || this.duet || G.asleep || this.night(this.hour) || (G.task && /^(bed|guard|scold|morning|arrive|greet)/.test(G.task.name))) return false;
+    G.task = TK.seq('greet', [this.wayTo(G, x, z, 'hurry', 20), TK.face(face), TK.act('honk', 2.4), TK.act('look', 3.5)]);
+    return true;
+  }
+  // a way for g to (x, z) on the grass: a walk on her side of the streams, else into the water, across and up the bank
+  wayTo(g, x, z, pace = 'walk', tmax = 60) {
+    const reg = this.regionAt(x, z), wet = g.wet > 0.3 || this.pondAt(g.pos.x, g.pos.z)[0] < 1.0;
+    if (!wet && this.regionAt(g.pos.x, g.pos.z) === reg) return TK.path(x, z, pace, tmax);
+    const L = []; let at = [g.pos.x, g.pos.z];
+    if (!wet) { const a = this.nearestWay(g.pos.x, g.pos.z); L.push(TK.path(a.out[0], a.out[1], pace), TK.straight(a.edge[0], a.edge[1], 'walk', true, 0.25), TK.straight(a.inn[0], a.inn[1], 'walk', true, 0.3)); at = a.inn; }
+    const b = this.nearestWay(x, z, null, reg);
+    this.swimTo(L, at, b.inn);
+    L.push(TK.straight(b.edge[0], b.edge[1], 'walk', true, 0.2), TK.straight(b.out[0], b.out[1]), TK.act('shake', 1.2), TK.path(x, z, pace, tmax));
+    return TK.seq('way', L);
+  }
+  visitTask(V, lead) {
+    const self = this;
+    return { name: 'visit', act: 'look', st: 0, stage: '', phase: null, way: null, eat: 0, run(g, dt) {
+      if (self.visitV !== V) return true;
+      const [G, H] = self.geese, F = V.farmer(), fx = F.x, fz = F.z, d = Math.hypot(fx - g.pos.x, fz - g.pos.z), toF = Math.atan2(fx - g.pos.x, fz - g.pos.z);
+      const act = a => { if (g.act !== a) { g.act = a; g.actT = 0; } };
+      const to = s => { this.stage = s; this.st = 0; this.way = null; };
+      const go = (x, z, pace = 'walk', tol = 0.15) => {        // (there yet? on the way round by the water if need be)
+        if (Math.hypot(x - g.pos.x, z - g.pos.z) < tol) return true;
+        if (!this.way) this.way = self.wayTo(g, x, z, pace);
+        if (!this.way.list) act(g.wet > 0.5 ? 'swim' : 'walk');
+        if (this.way.run(g, dt) !== false) { this.way = null; return true; }
+        return false;
+      };
+      const near = (x, z, r) => { const l = Math.hypot(g.pos.x - x, g.pos.z - z) || 1; return [x + (g.pos.x - x) / l * r, z + (g.pos.z - z) / l * r]; };      // (r from (x, z) on her side)
+      const free = q => !self.nav || self.nav.freeAt(q[0], q[1]);
+      if (V.phase !== this.phase) { this.phase = V.phase; to('go'); this.spot = null; }
+      this.st += dt;
+      if (!lead) return self.visitMate(g, G, V, dt, this, d, toF, act);
+      switch (V.phase) {
+        case 'chase':                                      // (over, a few steps off him: a hiss, wings up, and they stand their ground)
+          if (this.stage === 'go') { if ((d < 3.0 && d > 1.6) || go(...near(fx, fz, d <= 1.6 ? 2.0 : 2.6), 'hurry', 0.3) || this.st > 10) to('hiss'); return false; }      // (a step back if he's right on them)
+          if (d < 1.4 && this.st > 0.5) { to('go'); return false; }
+          g.turnTo(toF, dt, 3); act('hiss'); ACT.hiss(g, this.st); if (this.st > 2.4) g.A.wingsGoal = 0.5 + 0.3 * Math.sin(this.st * 3);
+          return false;
+        case 'charge':                                     // (at him! he runs for the gate)
+          if (this.stage === 'go') to('charge');
+          if (this.stage === 'charge') {
+            if (!V.inside) { to('gate'); return false; }
+            let t = near(fx, fz, 1.05); if (!free(t)) t = near(V.gin[0], V.gin[1], 0.9);      // (never through the gate after him; never quite on him)
+            if (Math.hypot(t[0] - g.pos.x, t[1] - g.pos.z) > 0.12 && d > 1.0) g.moveTo(t[0], t[1], dt, 'charge', true); else g.turnTo(toF, dt, 3);
+            act('charge'); ACT.charge(g, this.st);
+            return false;
+          }
+          if (this.stage === 'gate') {                       // (up to the gate, chests out, and a victory honk)
+            if (Math.hypot(V.gin[0] - g.pos.x, V.gin[1] - g.pos.z) > 0.9 && this.st < 6) { g.moveTo(V.gin[0], V.gin[1], dt, 'strut'); act('parade'); ACT.parade(g, this.st); return false; }
+            to('victory'); return false;
+          }
+          if (this.stage === 'victory') {
+            g.turnTo(toF, dt, 2); act(this.st < 2 ? 'honk' : 'tada');
+            if (this.st < 2) { ACT.parade(g, this.st + 2.2); g.A.honkGoal = 1; g.A.jawGoal = Math.sin(this.st * 8) > 0 ? 1 : 0.1; } else ACT.tada(g, this.st - 2);
+            if (this.st > 5.5) { V.chased = true; return true; }
+            return false;
+          }
+          return false;
+        case 'wary':                                       // (well back from him: over if far off, a few steps away if too close)
+          if (this.stage === 'go') { if ((d < 5 && d > 2.8) || go(...near(fx, fz, d < 2.8 ? 3.3 : 4), d < 2.8 ? 'hurry' : 'walk', 0.4) || this.st > 12) to('hiss'); return false; }
+          if (this.stage === 'hiss') { g.turnTo(toF, dt, 3); act('hiss'); ACT.hiss(g, this.st); if (this.st > 1.6) to('watch'); return false; }
+          g.turnTo(toF, dt, 2); act('look'); g.A.upGoal = 0.85; g.A.lookYawGoal = 0.12 * Math.sin(this.st * 0.7); g.A.tiltGoal = 0.15;      // (a long hard look)
+          return false;
+        case 'back': case 'curious': {
+          const c = V.corn(); if (!c) { g.turnTo(toF, dt, 2); act('look'); ACT.look(g, this.st); return false; }
+          const toC = Math.atan2(c[0] - g.pos.x, c[1] - g.pos.z);
+          if (this.stage === 'go') {                         // (to the corn's far side from him)
+            if (!this.spot) {
+              const l = Math.hypot(c[0] - fx, c[1] - fz) || 1, q = [c[0] + (c[0] - fx) / l * 0.32, c[1] + (c[1] - fz) / l * 0.32]; this.spot = free(q) ? q : near(c[0], c[1], 0.32);
+              // (wary: round him, well clear, if the way there passes close by him)
+              const ax = g.pos.x, az = g.pos.z, bx = this.spot[0], bz = this.spot[1], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((fx - ax) * dx + (fz - az) * dz) / L2));
+              this.wp = null;
+              if (V.phase === 'back' && Math.hypot(ax + dx * u - fx, az + dz * u - fz) < 1.4) { const mx = (ax + bx) / 2 - fx, mz = (az + bz) / 2 - fz, ml = Math.hypot(mx, mz) || 1, w = [fx + mx / ml * 1.9, fz + mz / ml * 1.9]; if (free(w)) this.wp = w; }
+            }
+            if (this.wp) { if (go(this.wp[0], this.wp[1], 'walk', 0.3)) { this.wp = null; this.way = null; } return false; }
+            if (go(this.spot[0], this.spot[1], 'walk', 0.1)) to('eat'); return false;
+          }
+          g.turnTo(this.stage === 'look' ? toF : toC, dt, 2.2);
+          if (this.stage === 'look') {                       // (curious: a look up at him, head on one side, a soft honk)
+            act('look'); const A = g.A; A.upGoal = 0.7; A.tiltGoal = 0.38; A.lookPitchGoal = 0.1; A.wagGoal = 0.5;
+            if (this.st > 0.7 && this.st < 1.2) { A.honkGoal = 0.45; A.jawGoal = 0.6; }
+            if (this.st > 2.4) to('eat');
+            return false;
+          }
+          act('graze'); ACT.graze(g, this.st); this.eat += dt;
+          if (this.eat > 7) V.eaten = true;
+          if (V.phase === 'curious' && !this.looked && this.eat > 3.5) { this.looked = true; to('look'); }
+          return false;
+        }
+        case 'friends': case 'stroke': {
+          const f = V.front;
+          if (this.stage === 'go') { if (go(f[0], f[1], 'hurry', 0.12)) to('wait'); else { g.A.wagGoal = 0.6; } return false; }
+          g.turnTo(toF, dt, 2.4);
+          const A = g.A;
+          if (V.phase === 'stroke') { act('look'); A.upGoal = 1; A.squintGoal = 0.85; A.lookPitchGoal = -0.25; A.tiltGoal = 0.22 * Math.sin(this.st * 0.9); A.wagGoal = 0.7; return false; }      // (eyes shut happily, necks up to his hand)
+          act('look'); A.upGoal = 0.8; A.wagGoal = 1; A.tailUpGoal = 0.4;
+          if (this.st > 0.3 && this.st < 0.9) { A.honkGoal = 0.6; A.jawGoal = Math.sin(this.st * 14) > 0 ? 0.8 : 0.1; }      // (a happy hello)
+          V.settled = d < 1.05;
+          return false;
+        }
+      }
+      return false;
+    } };
+  }
+  // Hector on a visit: after her while she's on her way; once she's there, beside her (his side of her), doing as she does
+  visitMate(h, G, V, dt, T, d, toF, act) {
+    const Gt = G.task && G.task.name === 'visit' ? G.task : null;
+    if (!Gt) return true;
+    if (V.phase === 'charge' && Gt.stage === 'charge') {     // (charging at him too, beside her)
+      const fx = V.farmer().x, fz = V.farmer().z, l = d || 1, side = ((h.pos.x - G.pos.x) * Math.cos(toF) - (h.pos.z - G.pos.z) * Math.sin(toF)) >= 0 ? 1 : -1;
+      let t = [fx - (fx - h.pos.x) / l * 0.8 + Math.cos(toF) * side * 0.5, fz - (fz - h.pos.z) / l * 0.8 - Math.sin(toF) * side * 0.5];
+      if (this.nav && !this.nav.freeAt(t[0], t[1])) t = [h.pos.x, h.pos.z];
+      if (Math.hypot(t[0] - h.pos.x, t[1] - h.pos.z) > 0.12 && d > 1.0) h.moveTo(t[0], t[1], dt, 'charge', true); else h.turnTo(toF, dt, 3);
+      act('charge'); ACT.charge(h, T.st); return false;
+    }
+    if ((V.phase === 'wary' || V.phase === 'back') && d < 1.3 && h.wet < 0.3) {      // (wary: never close to him; a few steps off if he is)
+      const F = V.farmer(), l = d || 1, t = [F.x + (h.pos.x - F.x) / l * 1.7, F.z + (h.pos.z - F.z) / l * 1.7];
+      if (this.clearWalk(h.pos.x, h.pos.z, t[0], t[1])) { h.moveTo(t[0], t[1], dt, 'hurry'); act('walk'); return false; }
+    }
+    const moving = G.vs > 0.06 || /^(go|gate)$/.test(Gt.stage) || G.wet > 0.3;
+    if (moving || Math.hypot(h.pos.x - G.pos.x, h.pos.z - G.pos.z) > 1.4) { T.side = null; this.follow(h, dt, this.hour); return false; }
+    // beside her: on his side of her, a little back
+    if (!T.side) {                                         // (never right on the farmer: a step clear of him)
+      const fx = Math.sin(G.heading), fz = Math.cos(G.heading), sd = ((h.pos.x - G.pos.x) * fz - (h.pos.z - G.pos.z) * fx) >= 0 ? 1 : -1, F = V.farmer();
+      for (const s of [sd, -sd]) { const x = G.pos.x + fz * s * 0.55 - fx * 0.12, z = G.pos.z - fx * s * 0.55 - fz * 0.12; if (!T.side && this.clearWalk(h.pos.x, h.pos.z, x, z) && this.pondAt(x, z)[0] > 1.2 && Math.hypot(x - F.x, z - F.z) > 0.8) T.side = [x, z]; }
+      if (!T.side) T.side = [h.pos.x, h.pos.z];
+      T.sideT = 0;
+    }
+    if (Math.hypot(T.side[0] - h.pos.x, T.side[1] - h.pos.z) > 0.08 && (T.sideT += dt) < 5) { h.moveTo(T.side[0], T.side[1], dt, 'walk'); act('walk'); return false; }
+    // as she does: hissing, a hard look, grazing the corn, looking up at him, a hello, a stroke
+    const a = G.act, u = h.actT;
+    if (Gt.stage === 'eat' || a === 'graze') { act('graze'); h.turnTo(G.heading, dt, 2); ACT.graze(h, u + 1.3); return false; }
+    h.turnTo(toF, dt, 2.2);
+    if (a === 'hiss') { act('hiss'); ACT.hiss(h, u); return false; }
+    if (a === 'honk' || a === 'tada') { act(a); ACT[a](h, u); return false; }
+    act('look'); const A = h.A, B = G.A; A.upGoal = B.upGoal; A.squintGoal = B.squintGoal; A.lookPitchGoal = B.lookPitchGoal; A.tiltGoal = -B.tiltGoal; A.wagGoal = B.wagGoal; A.tailUpGoal = B.tailUpGoal;
+    return false;
+  }
   // the little things they squabble over: a snail on the grass (a slow crawl), a puddle (it soaks away after)
   prop(kind, at, on) {
     if (kind === 'spot') return;
@@ -1312,7 +1473,7 @@ export class GeeseFlock extends PondBirds {
   // Hector honks along; he bounces off
   teasedBy(d) {
     const [G, H] = this.geese;
-    if (this.guarding || G.asleep || G.wet > 0.1) return;
+    if (this.guarding || G.asleep || G.wet > 0.1 || this.visitV) return;          // (not while the farmer's visiting)
     const toD = g => Math.atan2(d.pos.x - g.pos.x, d.pos.z - g.pos.z);
     G.task = TK.seq('scold', [TK.face(toD(G)), TK.act('scold', 1.9), TK.act('honk', 1.6), TK.act('look', 1)]);
     if (!H.asleep && H.wet < 0.1) H.task = TK.seq('backoff', [TK.act('look', 0.5), TK.face(toD(H)), TK.act('honk', 2.2), TK.act('look', 1)]);
