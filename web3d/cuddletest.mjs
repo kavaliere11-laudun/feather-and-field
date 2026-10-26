@@ -24,7 +24,7 @@ const load = async () => {
 };
 const T = { cuddle: fr ? /Faire un câlin/ : /♥ Cuddle/, done: fr ? /fait un câlin à/ : /gives .+ a cuddle/, happy: fr ? /Heureuse après un câlin : encore/ : /Happy after a cuddle: .+ left/,
   friend: fr ? /devient sociable avec/ : /is getting friendly with/, trusts: fr ? /a confiance en .+ et vient lui dire bonjour/ : /trusts .+ now, and comes to the fence/,
-  best: fr ? /sont inséparables ! \+20 XP/ : /are best friends! \+20 XP/, star: fr ? /gagne une nouvelle étoile/ : /has earned a new star/, night: fr ? /Les câlins, ce sera demain matin/ : /Cuddles in the morning/,
+  best: fr ? /sont inséparables ! \+21 XP/ : /are best friends! \+21 XP/, star: fr ? /gagne une nouvelle étoile/ : /has earned a new star/, night: fr ? /Les câlins, ce sera demain matin/ : /Cuddles in the morning/,
   next2: fr ? /Encore 2 câlins avant « Sociable »/ : /2 more cuddles to “Friendly”/, next3: fr ? /Encore 3 câlins avant « Sociable »/ : /3 more cuddles to “Friendly”/, greets: fr ? /Vient saluer .+ à la clôture/ : /Comes to the fence to greet/, eggs8: fr ? /à 8 pièces l’œuf/ : /8 coins each/ };
 const card = id => p.evaluate(id => { const f = window.__farm; f.gameUI().close(); f.openBirdCard(f.allBirds.find(x => x.gid === id)); return document.querySelector('.gsheet').innerText; }, id);
 const hen = () => p.evaluate(id => { const g = window.__farm.game(), h = g.bird(id); return { trust: h.trust, exp: h.exp, happy: Math.round((h.happy - window.__T) / 60e3), stars: g.stars(h), level: g.trustLevel(h) }; }, HEN);
