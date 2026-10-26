@@ -638,7 +638,7 @@ export class GameUI {
     const draw = () => {
       const b = this.open('intro', this.t('intro_' + (i + 1)), true);
       this.bird = null; this.dim.hidden = true; this.sheet.classList.add('gintro');
-      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + '.webp' + (this.o.bust || '');
+      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + (i === 2 && this.g.lang === 'fr' ? '-fr' : '') + '.webp' + (this.o.bust || '');      // (the third has words on its sign: À VENDRE in French)
       img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
       pic.addEventListener('pointerdown', e => { x0 = e.clientX; });
       pic.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (dx < -40 && i < N - 1) { i++; draw(); } else if (dx > 40 && i > 0) { i--; draw(); } });

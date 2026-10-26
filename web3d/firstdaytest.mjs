@@ -46,11 +46,12 @@ await start();
 // the pictures
 const seen = [];
 for (let i = 0; i < 4; i++) {
-  seen.push([await title(), await p.evaluate(() => document.querySelectorAll('.gdots span').length), await p.evaluate(() => document.querySelector('.gstick .gbtn').textContent)]);
+  await p.waitForFunction(() => { const i = document.querySelector('.gintro-pic img'); return i && i.complete; }, null, { timeout: 20000 }).catch(() => {});
+  seen.push([await title(), await p.evaluate(() => document.querySelectorAll('.gdots span').length), await p.evaluate(() => document.querySelector('.gstick .gbtn').textContent), await p.evaluate(() => { const i = document.querySelector('.gintro-pic img'); return i.naturalWidth > 0 ? i.src.split('/').pop().split('?')[0] : 'none'; })]);
   if (i === 0) await shot('1_picture');
   await click('.gstick .gbtn'); await run(0.2);
 }
-ok('a new farm: the four pictures, Next, then Let\'s go!', seen.every((x, i) => x[0] === TT[i] && x[1] === 4) && (fr ? /C’est parti/ : /Let’s go/).test(seen[3][2]) && (await kind()) === null, seen);
+ok('a new farm: the four pictures (each shown), Next, then Let\'s go!', seen.every((x, i) => x[0] === TT[i] && x[1] === 4 && x[3] === (i + 1) + (fr && i === 2 ? '-fr' : '') + '.webp') && (fr ? /C’est parti/ : /Let’s go/).test(seen[3][2]) && (await kind()) === null, seen);
 let g = await G();
 ok('then the guide: "First day · 1 of 5", the first egg on its way', g.on && g.step === 'eggs' && (fr ? /Premier jour · 1 sur 5/ : /First day · 1 of 5/).test(g.n) && (fr ? /premier œuf arrive/ : /first egg is on its way/).test(g.card), g);
 await shot('2_guide');
