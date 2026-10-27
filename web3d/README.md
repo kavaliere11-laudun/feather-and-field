@@ -2381,3 +2381,61 @@ the birds already had.
 - `geesetrust.mjs` (new; LANG=fr with Rosie): the gates, a real tap and the card, a visit at each level day by day (what
   they do, nobody through the fence or on anything, the geese never out of their field, the hat), same-day visits, a
   cuddle every 6 hours, the hello at the gate, braver guards, five changed saves. `geesetrustfilm.mjs OUT [parts]`: a film.
+
+## Release 4, step 1: the Red Barn's five looks (26-27 Oct 2026; Audrey: "Coops to work on (Recommended)", "Red Barn first", "Look nicer and help a little", "300 / 1,000 / 3,000 / 8,000"; on the first try: "They are all far too similar. Be creative, the size of the parc around the coop perhaps"; then the Deluxe: "the water pot can become a fountain. Instead of the extension the coop can have a second floor? And change the material of the roof to something more noble", "Copper, gone green"; the play things: "Starting at the cosy one, add a swing in their garden that they can perch on. Come with ideas like this cute fun that they interact with", all four ideas; "a weird egg on its right? Its garden looks too messy and busy. We can probably get rid of the perchoir. The send bath should be bigger … Use the left space next to the coop. Also the seed dispenser should look different for the deluxe"; "For the cosy revert the old send bath")
+
+- **The looks** (stylized/coops.py, release 4 block; export_coops.py): the pen grows with each and each building is its own.
+  Rustic `box_rir` (the old crate: grey boards, two faded red ones, a tin roof with a brick and a stone on it, bricks and
+  a stump for legs) in `pen_t0` (a tiny yard, a tin basin, no hay) and `fence_t0` (rails down, posts leaning); Mended
+  `shed_rir` (a lean-to of new boards half painted red, a felt roof, the paint tin and brush) in `pen_t1` and `fence_t1`
+  (new pale rails and posts among the grey); Snug `house_rir` in `pen_base` and `fence`; Cosy `cosy_rir` (sage trim, a
+  porch with a bench and a hanging lantern, a window box, a lantern by the hens' door, flower pots, stepping stones to the
+  gate) in `pen_t3` (grass tufts, the half-barrel sand bath) and `fence_t3` (painted sage, white caps, flowers along the
+  front); Deluxe `deluxe_rir` (a storey taller: a belt of trim, a hayloft door with a hoist, windows upstairs with flowers,
+  a green copper roof with standing seams, a cupola with the vane on top; `noble_roof`: copper, cedar or fish-scale, the
+  first chosen) in `pen_t4` (a stone fountain, an eight-sided feeder with a copper roof, a sandbox with a beach umbrella,
+  bucket and spade beside the barn; the hay behind the barn) and `fence_t4` (the Deluxe pickets, roses and bunting). From
+  Cosy, the automatic door's box over the hens' door (a green light) and a little solar panel on the roof. Every look has
+  the same floor, pop door, nest window and ramp (`nest_window`, asserted), so the hens come, go and lay the same way.
+  `PENS` per look: the pen's box, gate, feeder, water, hay and sack; coops.json `pens` (`pen_info`, `play_info`).
+- **Their pens for the birds** (main.js `tierPen`, `penOf`): each coop's own yard, obstacles, feeder, gate and start spots
+  (the Snug pen's fitted into the yard), from coops.json; every use of the pen goes through `penOf(plot)` (the birds,
+  the corn, the farmer's spots, the gate, the greeting, the chicks' farewell); the night visits through `NightVisit.pen`
+  (its fence, its grid, Rusty's ways in, a metre off its own fence).
+- **The play things** (play.js, coops.py `PLAY`): Cosy: a swing (its perch `swing_seat` swings), the half-barrel sand bath,
+  a cabbage on a string (`cabbage`, it swings and spins); Deluxe: the swing, the sandbox, the cabbage and a rainbow
+  xylophone. Now and then a grown bird goes to a free one (`wantPlay`): up onto the swing's perch, a turn to face out, a
+  ride (she keeps it going), a hop down; into the sand, down low, wriggling and kicking it up in puffs, rests, out and a
+  big shake; pecks at the cabbage; pecks at the xylophone, a note floating up in the bar's colour. Not by night, not while
+  the farmer's in the pen; a bird at play is busy. `playtest.mjs` (each, in both pens), `playfilm.mjs` (a film).
+- `barnlooks.mjs`: the test page's `?looks=N` in turn and a sheet of the five (ONLY, SIZE, OX, OZ, W, H, TIME).
+
+## Release 4, step 2: upgrades in the game (27 Oct 2026; Audrey: "Yes, put them in the game")
+
+- **The upgrade** (game.js `COOP_LOOKS`, `UPGRADE`, `coopNext`, `upgradeCoop`; gameui.js `coopCard`; main.js `tryUpgrade`,
+  `retier`): a coop's card says its look (Red Barn · Rustic) and what's next: "Upgrade to Mended", what it brings, what it
+  does, "Upgrade · 300 coins" (not enough: says so). Tapped: its bigger pen where it stands if there's room (`coopSpot`
+  with the next look's footprint), else "Its bigger pen needs more room here: move the coop first"; the price paid, a
+  little XP (8, 20, 45, 100), what's in the way cleared for good; the coop in its new look there and then (`retier`: its
+  house, pen and fence, its birds' yard, play things, feeder, lanterns, the grid and grass). Not while the farmer's in its
+  pen. Prices 300, 1,000, 3,000, 8,000.
+- **What each look does** (`lookOf`, `lookLays`, `kidsOf`, `cuddle`): Rustic misses the afternoon egg one day in three,
+  Mended one in six, Snug two a day, Cosy an evening egg too one day in four, Deluxe one in two; the chicks' ratings a
+  little lower (Rustic, Mended) or higher (Cosy, Deluxe); a cuddle counts again after 5 hours (Cosy) or 4 (Deluxe), else
+  6. Only the Red Barn so far (`UPGRADES`): the other coops keep their looks and a Snug coop's ways till theirs are made.
+- **The farms from before**: their coops become Snug (load(), once, marked `cv: 1`: not counted as an edit); a new farm's
+  Red Barn comes Rustic. A coop's footprint by its look (`footOf`, `apronOf`): placing, moving, the decorations, the grass.
+- `upgradetest.mjs` (new; LANG=fr): a new farm's Rustic barn and its card, each upgrade from the card (no room: move it
+  first), the looks, the birds free in their pens, the gate reachable, the play things, a reload, a farm from before.
+- **The automatic doors** (Audrey: "starting at cosy the coop door are automatic. They close automatically but sometimes,
+  rarely, it doesn't work and that's when [Rusty] comes", "About once a month"; game.js `AUTO_DOOR`, `autoDoor`,
+  `doorStuck`, `shutFor`, `foxComes`; main.js `tickDoors`): a Cosy or Deluxe coop's pop door shuts itself once they're
+  all in (by 22:48 at the latest; no moon to tap) and opens at 6:00. About one night in thirty (by the coop and the night)
+  it sticks open: with the farm open, a hint says so and its moon shows, to shut it by hand; that night Rusty comes for it
+  even when he wouldn't have, and finds it open unless it was shut by hand. The morning's card starts "An automatic door
+  stuck open last night." (saved with the visit as `stuck`, checked: only on a night that coop's door could have stuck).
+- `doortest.mjs` (new; LANG=fr): a Cosy barn's door on a night it works, in the morning, on a night it sticks (the hint,
+  the moon, Rusty's visit, shut by hand), a night it sticks with the farm shut (the card), a reload. `looktest.mjs` (new,
+  no browser): each look's eggs, chicks and cuddles, the doors' nights, the upgrades' prices and XP.
+- Balance (`balsim.mjs`, which now buys the upgrades): the same pace as before (once a day level 29 at a year, twice a
+  day level 30 on day 296, every 3 hours day 244); the Red Barn Deluxe around day 110.

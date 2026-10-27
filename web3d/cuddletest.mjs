@@ -35,6 +35,7 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
+await p.evaluate(() => { const g = window.__farm.game(); if (g.data.first) { g.data.first.t = window.__T + 3600e3; g.save(); } });      // (the first egg after the visit: no hen off to lay in the middle of it)
 const HEN = await p.evaluate(() => window.__farm.game().data.birds.find(b => b.sex === 'h').id);
 let t = await card(HEN);
 ok('a hen\'s card: "♥ Cuddle", cuddles to the next trust level', T.cuddle.test(t) && T.next3.test(t) && (await p.evaluate(() => !!document.querySelector('.gsheet .gcuddle'))), t);
@@ -101,9 +102,9 @@ await p.evaluate(() => { const L = window.__farm.farmer(); L.task = L.next(11, '
 let greet = null;
 for (let k = 0; k < 40 && !greet; k++) {
   await run(1);
-  greet = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots()[0], g = P.birds.filter(b => b.cuddle && b.cuddle.greet && b.cuddle.ready); return g.length ? g.map(b => +b.root.position.z.toFixed(2)) : null; });
+  greet = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots()[0], g = P.birds.filter(b => b.cuddle && b.cuddle.greet && b.cuddle.ready); return g.length ? g.map(b => +(b.root.position.z - (P.pen || {}).yard.max[2]).toFixed(2)) : null; });      // (how far from the front of its yard: the pen's own, by its look)
 }
-ok('trusting birds trot to the front fence to greet the farmer when he stops by', greet && greet.every(z => z > 1.7), greet);
+ok('trusting birds trot to the front fence to greet the farmer when he stops by', greet && greet.every(z => z > -0.6), greet);
 // a reload keeps it all
 await run(5);
 const keep = await p.evaluate(() => JSON.stringify(window.__farm.game().data.birds.map(b => [b.trust, b.exp, b.happy])));

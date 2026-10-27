@@ -22,7 +22,7 @@ const state = () => p.evaluate(() => {
   const f = window.__farm, g = f.game(), c = g.data.coops[0], P = f.gamePlots()[0], B = P.bub || {};
   return { coins: g.data.coins, xp: g.data.xp, eggs: c.eggs, nest: P.nest.count, feed: +g.feedLeft(c).toFixed(3), mesh: +P.feedMesh.position.y.toFixed(4), meshOn: P.feedMesh.visible,
     eggBub: B.eggs ? (B.eggs.hidden ? null : B.eggs.childNodes[1].textContent) : null, fresh: B.eggs ? B.eggs.classList.contains('fresh') : null, feedBub: B.feed ? (B.feed.hidden ? null : B.feed.textContent) : null,
-    laying: P.birds.filter(x => x.laying).map(x => x.name), hint: document.getElementById('hint').textContent, first: g.data.first, edited: g.edited };
+    laying: P.birds.filter(x => x.laying && x.laying.phase !== 'sing').map(x => x.name), hint: document.getElementById('hint').textContent, first: g.data.first, edited: g.edited };
 });
 
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -30,6 +30,7 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 30); f.gameTick(window.__T); f.draw(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.coops[0].tier = 2; g.save(); f.retier(0); });      // (a Snug coop: two eggs a day, as before the looks; release 4)
 let s = await state();
 ok('a new farm: no eggs yet, the feeder full, a first egg on its way', s.eggs === 0 && s.feed === 1 && s.meshOn && !!s.first && s.eggBub === null, s);
 // the first egg, 75 s in: the good mum walks in and lays it

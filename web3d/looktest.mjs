@@ -1,0 +1,63 @@
+// The coops' looks in the game's rules (release 4; src/game.js UPGRADE, lookLays, kidsOf, cuddle, the automatic doors):
+// node looktest.mjs   (no browser)
+// Over 300 days a Red Barn hen lays about 1.67 eggs a day in a Rustic coop, 1.83 Mended, 2 Snug, 2.25 Cosy, 2.5 Deluxe
+// (her own times each day, the extra evening ones between 19:30 and 21:00); a Thatched Cottage's (its looks not made yet)
+// 2 whatever its tier. The chicks' ratings: a little lower Rustic, higher Cosy and Deluxe. A cuddle counts again after 6,
+// 5, 4 hours. The automatic door: none below Cosy; sticks about one night in thirty; on such a night Rusty comes for that
+// coop even when he wouldn't have; shut by hand, he finds it shut. The upgrade: the price, the XP, no further than Deluxe,
+// none for a coop whose looks aren't made, not without the coins.
+globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+let NOW = Date.UTC(2026, 9, 26, 9, 0);
+Date.now = () => NOW;
+const G = await import('./src/game.js');
+let fails = 0;
+const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
+const g = new G.Game(null); g.newFarm({ lang: 'en', look: 'f', name: 'Test' });
+const c = g.data.coops[0], hen = g.birdsIn(c.id).find(b => b.sex === 'h');
+ok('a new farm: its Red Barn comes Rustic', c.tier === 0 && G.lookOf(c) === 0);
+// eggs a day by look
+const perDay = tier => { c.tier = tier; hen.laid = NOW; hen.since = NOW - 1; const t0 = NOW; let n = 0, eve = 0;
+  for (let d = 0; d < 300; d++) { const day = t0 + d * 86400e3, lays = g.dueLays(day + 86400e3).filter(e => e.hen === hen.id && e.t > day && e.t <= day + 86400e3); n += lays.length; eve += lays.filter(e => { const h = new Date(e.t).getHours() + new Date(e.t).getMinutes() / 60; return h >= 19.5 && h <= 21; }).length; hen.laid = day + 86400e3; }
+  hen.laid = NOW; return { a: n / 300, eve }; };
+const want = [1.667, 1.833, 2, 2.25, 2.5], got = [0, 1, 2, 3, 4].map(perDay);
+ok('eggs a day: Rustic 1.67, Mended 1.83, Snug 2, Cosy 2.25, Deluxe 2.5 (roughly)', got.every((x, t) => Math.abs(x.a - want[t]) < 0.1), got.map(x => x.a.toFixed(2)));
+ok('the extra eggs come in the evening (19:30 to 21:00), only in a Cosy or Deluxe coop', got[0].eve === 0 && got[2].eve === 0 && got[3].eve > 40 && got[4].eve > got[3].eve, got.map(x => x.eve));
+// another breed's coop: as Snug whatever its tier
+const orp = { id: 'c9', breed: 'orp', tier: 0 };
+ok('a coop whose looks aren\'t made yet: as Snug, no upgrade, no automatic door', G.lookOf(orp) === 2 && g.coopNext(orp) === null && !G.autoDoor({ ...orp, tier: 4 }));
+// chicks
+const rate = tier => { c.tier = tier; let sum = 0, n = 0; for (let k = 0; k < 200; k++) { const kids = g.kidsOf(c, { hen: hen.id, start: NOW + k * 7919, n: 3 }); for (const x of kids) { sum += x.stars; n++; } } return sum / n; };
+const r = [0, 2, 4].map(rate);
+ok('the chicks: a little lower in a Rustic coop, higher in a Deluxe one', r[0] < r[1] && r[1] < r[2], r.map(x => x.toFixed(2)));
+// cuddles
+const glow = tier => { c.tier = tier; hen.happy = 0; hen.trust = 0; const out = g.cuddle(hen.id, NOW); return Math.round((hen.happy - NOW) / 3600e3); };
+ok('a cuddle counts again after 6 hours (Snug), 5 (Cosy), 4 (Deluxe)', glow(2) === 6 && glow(3) === 5 && glow(4) === 4, [glow(2), glow(3), glow(4)]);
+// the automatic doors
+c.tier = 2;
+ok('a Snug coop: no automatic door', !G.autoDoor(c) && !g.doorStuck(c, NOW));
+c.tier = 3;
+let stuck = 0, came = 0, extra = 0; const N = 3000;
+g.data.xp = 100000;                                          // (Rusty from level 4)
+for (let d = 0; d < N; d++) {
+  const ev = Date.UTC(2026, 10, 1, 21) + d * 86400e3, k = G.nightKey(ev);
+  if (!G.doorStuck(c, k)) continue;
+  stuck++;
+  NOW = ev; g.fox().seen = G.nightKey(ev - 86400e3); delete c.shut;
+  const v = g.foxTonight(NOW);
+  if (v && v.coop === c.id && v.open) came++;
+  if (!G.foxNight(k)) extra++;
+}
+ok('a Cosy coop\'s door sticks about one night in thirty', Math.abs(stuck / N - 1 / 30) < 0.012, (stuck / N).toFixed(4));
+ok('each night it sticks Rusty comes for it, its door open (on nights he wouldn\'t have come too)', came === stuck && extra > 0, { stuck, came, extra });
+// shut by hand on such a night: he finds it shut
+for (let d = 0; d < N; d++) { const ev = Date.UTC(2026, 10, 1, 21) + d * 86400e3, k = G.nightKey(ev); if (!G.doorStuck(c, k)) continue; NOW = ev; g.fox().seen = G.nightKey(ev - 86400e3); g.setDoorShut(c.id, true, NOW); const v = g.foxTonight(NOW); ok('shut by hand on a night it sticks: he finds it shut', v && v.open === false, v); break; }
+// a night it works: shut by itself
+for (let d = 0; d < N; d++) { const ev = Date.UTC(2026, 10, 1, 21) + d * 86400e3, k = G.nightKey(ev); if (G.doorStuck(c, k) || !G.foxNight(k)) continue; NOW = ev; g.fox().seen = G.nightKey(ev - 86400e3); delete c.shut; const v = g.foxTonight(NOW); ok('a night it works and he comes anyway: he finds it shut by itself', v && v.open === false, v); break; }
+// the upgrade
+NOW = Date.UTC(2026, 9, 26, 9, 0); c.tier = 0; g.data.coins = 299;
+ok('not enough coins: no upgrade', g.upgradeCoop(c.id) === 'coins' && c.tier === 0);
+g.data.coins = 20000; const xp0 = g.data.xp;
+const steps = [1, 2, 3, 4].map(() => g.upgradeCoop(c.id));
+ok('each upgrade in turn: 300, 1,000, 3,000, 8,000 coins, 8, 20, 45, 100 XP, up to Deluxe', steps.every(x => x === 'ok') && c.tier === 4 && g.data.coins === 20000 - 12300 && g.data.xp - xp0 === 173, { steps, coins: g.data.coins, xp: g.data.xp - xp0 });
+ok('no further than Deluxe', g.upgradeCoop(c.id) === 'top' && c.tier === 4);
+console.log(fails ? `${fails} FAILED` : 'ALL PASS');

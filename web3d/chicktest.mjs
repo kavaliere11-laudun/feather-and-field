@@ -42,6 +42,7 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.coops[0].tier = 2; g.save(); f.retier(0); });      // (a Snug coop, as before the looks: release 4)
 // the first day: nobody broody; then each morning at 7 till one is
 await jump(at('2026-10-25T06:59:00+01:00'));
 let s = await state();

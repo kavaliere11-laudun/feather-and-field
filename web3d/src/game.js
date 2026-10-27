@@ -71,6 +71,15 @@ const TEXT = {
     land_buy: 'Buy for {c} coins', land_broke: 'Not enough coins yet ({c})', land_bought: 'The new field is yours!', land_wild: 'Wild meadow · for sale at level {n}',
         sale_sign: 'FOR SALE', bub_sale: 'For sale',
     coop_lives: '{names} live here.', and: 'and', rustic: 'rustic',
+    look_rustic: 'Rustic', look_mended: 'Mended', look_snug: 'Snug', look_cosy: 'Cosy', look_deluxe: 'Deluxe',
+    up_next: 'Upgrade to {look}', up_btn: 'Upgrade · {c} coins', up_broke: 'Not enough coins ({c})', up_top: 'The finest coop on the farm.',
+    up_rir_mended: 'A little shed, half painted red, in a bigger pen.', up_rir_snug: 'The Red Barn, in a roomier pen.',
+    up_rir_cosy: 'A porch with a bench, lanterns, flowers, and a bigger garden with a swing, a sand bath and a cabbage to peck.',
+    up_rir_deluxe: 'A second floor, a copper roof with a cupola, a fountain, a xylophone, a sandbox and the biggest garden, with white pickets and roses.',
+    upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
+    upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
+    upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
+    up_room: 'Its bigger pen needs more room here: move the coop first.', up_done: '{coop} is now {look}! +{xp} XP', up_busy: '{farmer} is in the pen: try again in a moment.',
     move_body: 'Put it anywhere on your land. Trees, bushes and rocks in the way are cleared.', move_btn: 'Move this coop',
     move_hint: 'Drag the coop, or tap where it should go.', move_ok: 'A good spot!', move_clear: 'A good spot! What’s in the way will be cleared.',
     move_land: 'Only on your own land.', move_lane: 'Not on a lane or in the water.', move_room: 'Not enough room here.', move_coop: 'Too close to another coop.',
@@ -125,6 +134,7 @@ const TEXT = {
     fox_eggs1: 'Rusty the fox found the door of {hen}’s coop open and took an egg from the nest. The hens are fine, just a little ruffled.',
     fox_empty: 'Rusty the fox found the door of {hen}’s coop open, but the nest was empty: {hen} pecked him on the nose and he went home.',
     fox_shut: 'Rusty the fox came for the eggs, but the doors were shut. He went home empty-handed.',
+    fox_stuck: 'An automatic door stuck open last night.',
     fox_geese: 'Rusty the fox came for the eggs in {hen}’s coop, but the geese heard him and chased him all the way home!',
     fox_dog: 'Rusty the fox came for the eggs in {hen}’s coop, but {dog} heard him and chased him all the way home!',
     fox_team: 'Rusty the fox came for the eggs in {hen}’s coop, but the geese and {dog} heard him and chased him all the way home!',
@@ -254,6 +264,15 @@ const TEXT = {
     land_buy: 'Acheter pour {c} pièces', land_broke: 'Pas encore assez de pièces ({c})', land_bought: 'Le nouveau terrain est à vous !', land_wild: 'Pré sauvage · à vendre au niveau {n}',
         sale_sign: 'À VENDRE', bub_sale: 'À vendre',
     coop_lives: '{names} vivent ici.', and: 'et', rustic: 'rustique',
+    look_rustic: 'Rustique', look_mended: 'Rafistolé', look_snug: 'Confortable', look_cosy: 'Douillet', look_deluxe: 'De luxe',
+    up_next: 'Améliorer : style {look}', up_btn: 'Améliorer · {c} pièces', up_broke: 'Pas assez de pièces ({c})', up_top: 'Le plus beau poulailler de la ferme.',
+    up_rir_mended: 'Une petite cabane, à moitié peinte en rouge, dans un enclos plus grand.', up_rir_snug: 'La Grange rouge, dans un enclos plus spacieux.',
+    up_rir_cosy: 'Un porche avec un banc, des lanternes, des fleurs, et un jardin plus grand avec une balançoire, un bain de sable et un chou à picorer.',
+    up_rir_deluxe: 'Un étage de plus, un toit de cuivre et un lanternon, une fontaine, un xylophone, un bac à sable et le plus grand jardin, avec palissade blanche et roses.',
+    upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
+    upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
+    upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
+    up_room: 'Son enclos plus grand a besoin de plus de place ici : déplacez d’abord le poulailler.', up_done: '{coop} passe au style {look} ! +{xp} XP', up_busy: '{farmer} est dans l’enclos : réessayez dans un instant.',
     move_body: 'Installez-le où vous voulez sur votre terrain. Les arbres, buissons et rochers qui gênent sont dégagés.', move_btn: 'Déplacer ce poulailler',
     move_hint: 'Faites glisser le poulailler, ou touchez l’endroit voulu.', move_ok: 'Bel emplacement !', move_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.',
     move_land: 'Seulement sur votre terrain.', move_lane: 'Pas sur un chemin ni dans l’eau.', move_room: 'Pas assez de place ici.', move_coop: 'Trop près d’un autre poulailler.',
@@ -308,6 +327,7 @@ const TEXT = {
     fox_eggs1: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris un œuf dans le nid. Les poules vont bien, juste un peu ébouriffées.',
     fox_empty: 'Rusty le renard a trouvé ouverte la porte du poulailler {dehen}, mais le nid était vide : {hen} lui a pincé le nez et il est rentré chez lui.',
     fox_shut: 'Rusty le renard est venu pour les œufs, mais les portes étaient fermées. Il est rentré bredouille.',
+    fox_stuck: 'Une porte automatique est restée coincée ouverte cette nuit.',
     fox_geese: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies l’ont entendu et l’ont chassé jusque chez lui !',
     fox_dog: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {dog} l’a entendu et l’a chassé jusque chez lui !',
     fox_team: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies et {dog} l’ont entendu et l’ont chassé jusque chez lui !',
@@ -588,6 +608,15 @@ export const nightKey = t => dayKey(t - 12 * 3600e3);
 const prevNight = k => nightKey(nightStart(k) - 1);
 const nightStart = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8), 12).getTime();      // (its noon)
 export const foxNight = k => hash01('fox|' + k) < FOX.chance;
+// the automatic doors (release 4; Audrey, 27 Oct: "starting at cosy the coop door are automatic. They close automatically
+// but sometimes, rarely, it doesn't work and that's when [Rusty] comes"; "About once a month"): a Cosy or Deluxe coop's
+// pop door shuts itself at night; about one night in thirty it sticks open, and that night Rusty comes (shut by hand, it
+// keeps him out like any other)
+export const AUTO_DOOR = { look: 3, stuck: 1 / 30 };
+export const autoDoor = c => !!c && lookOf(c) >= AUTO_DOOR.look;
+export const doorStuck = (c, k) => autoDoor(c) && hash01('stuck|' + c.id + '|' + k) < AUTO_DOOR.stuck;
+const shutFor = (c, k) => c.shut === k || (autoDoor(c) && !doorStuck(c, k));      // (by hand, or by itself)
+const foxComes = (coops, k) => foxNight(k) || coops.some(c => doorStuck(c, k));
 export const foxAt = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8), FOX.from).getTime() + Math.floor(hash01('foxt|' + k) * FOX.hours * 60) * 60e3;
 const foxSeenFrom = now => new Date(now).getHours() < 12 ? nightKey(now) : prevNight(nightKey(now));      // (a farm from before the visits: none for a night already over)
 export const animalXp = id => Math.round(ANIMALS[id].price / 50);
@@ -678,6 +707,17 @@ export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, j
 // (once her happy glow from the last one has worn off, 6 hours)
 export const FRESH = { ms: 3 * 3600e3, xp: 2, cuddle: 1 };
 export const FEED_DAYS = 2;                           // a full feeder keeps its birds for two days (a unit a bird a day)
+// ---- the coops' five looks (release 4; Audrey: "Coops to work on", the Red Barn first; "Look nicer and help a little";
+// prices "300 / 1,000 / 3,000 / 8,000"): Rustic (0, a new coop), Mended, Snug (the coops of a farm from before: "Snug:
+// nothing changes"), Cosy, Deluxe. Each look helps a little: the eggs (Rustic: the afternoon egg missed one day in three,
+// Mended one in six; Snug: two a day; Cosy: an evening egg too one day in four, Deluxe one in two), the chicks' ratings
+// (a little lower in a Rustic coop, a little higher in a Cosy or Deluxe one), and a cuddle counting again sooner (Cosy 5
+// hours, Deluxe 4, else 6). So far only the Red Barn has its five looks: the others stay as they were (their rustic look
+// new, else the plain one; the eggs, chicks and cuddles of a Snug coop) until theirs are made.
+export const COOP_LOOKS = ['rustic', 'mended', 'snug', 'cosy', 'deluxe'];
+export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 100], kids: [-0.2, -0.1, 0, 0.15, 0.3], happyH: [6, 6, 6, 5, 4], skip: [1 / 3, 1 / 6, 0, 0, 0], extra: [0, 0, 0, 0.25, 0.5] };
+export const UPGRADES = ['rir'];
+export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
 const DAY_MS = 86400e3;
@@ -698,6 +738,14 @@ export function layTimes(henId, day) {               // day: a local midnight (m
   const d = new Date(day), key = henId + '|' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
   return LAY_WINDOWS.map(([at, len], i) => { const h = at + len * hash01(key + '|' + i); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(h), Math.round((h % 1) * 60)).getTime(); });
 }
+// her lays that day in a coop of look lk (UPGRADE): now and then no afternoon egg in a Rustic or Mended coop, now and then
+// an evening one too (19:30 to 21:00) in a Cosy or Deluxe one
+function lookLays(henId, day, lk, silkie) {
+  const T = layTimes(henId, day).slice(silkie ? 1 : 0), d = new Date(day), key = henId + '|' + d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+  if (UPGRADE.skip[lk] && hash01(key + '|skip') < UPGRADE.skip[lk]) T.pop();
+  if (UPGRADE.extra[lk] && hash01(key + '|extra') < UPGRADE.extra[lk]) { const h = 19.5 + 1.5 * hash01(key + '|eve'); T.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(h), Math.round((h % 1) * 60)).getTime()); }
+  return T;
+}
 // a first egg soon after a new farm starts (by day; at night, the next morning)
 function firstEggAt(now) {
   const d = new Date(now), h = d.getHours() + d.getMinutes() / 60;
@@ -715,6 +763,7 @@ export function checkFarm(d, now = Date.now()) {
   out.lang = d.lang === 'fr' ? 'fr' : 'en';
   out.coins = int(d.coins, 0, 1e9, 0);
   out.xp = int(d.xp, 0, 1e9, 0);
+  if (d.cv === 1) out.cv = 1;                         // (a farm from after the coops' looks came: load() makes the older ones' coops Snug)
   const look = d.farmer && d.farmer.look === 'f' ? 'f' : 'm';
   out.farmer = { look, name: cleanName(d.farmer && d.farmer.name) };
   // the outfits bought (known ones, once each, from their level) and the one worn (one bought, or the classic)
@@ -854,9 +903,10 @@ export function checkFarm(d, now = Date.now()) {
   const fx = d.fox && typeof d.fox === 'object' ? d.fox : null;
   out.fox = { seen: fx && typeof fx.seen === 'string' && /^\d{8}$/.test(fx.seen) && fx.seen <= nightKey(now + TZ_SLACK) ? fx.seen : foxSeenFrom(now) };      // (a phone taken across time zones: a little slack)
   const fl = fx && fx.last && typeof fx.last === 'object' ? fx.last : null;
-  if (fl && typeof fl.key === 'string' && /^\d{8}$/.test(fl.key) && fl.key <= out.fox.seen && foxNight(fl.key) && Number.isInteger(fl.t) && Math.abs(fl.t - foxAt(fl.key)) <= TZ_SLACK && fl.t <= now + TZ_SLACK && out.coops.some(c => c.id === fl.coop)) {
+  if (fl && typeof fl.key === 'string' && /^\d{8}$/.test(fl.key) && fl.key <= out.fox.seen && (foxNight(fl.key) || doorStuck(out.coops.find(c => c.id === fl.coop), fl.key)) && Number.isInteger(fl.t) && Math.abs(fl.t - foxAt(fl.key)) <= TZ_SLACK && fl.t <= now + TZ_SLACK && out.coops.some(c => c.id === fl.coop)) {
     const by = ['geese', 'dog', 'team', 'farmer'].includes(fl.by) && fl.open === true && (fl.by === 'farmer' || (fl.by === 'dog' ? out.animals && out.animals.dog : fl.by === 'geese' ? out.animals && out.animals.geese : out.animals && out.animals.geese && out.animals.dog)) ? fl.by : null;
     out.fox.last = { key: fl.key, t: fl.t, coop: fl.coop, open: fl.open === true, by, eggs: fl.open === true && !by ? int(fl.eggs, 0, NEST_MAX, 0) : 0, hen: cleanName(fl.hen) || HEN_NAMES[0], seen: fl.seen === true, watched: fl.watched === true };
+    if (fl.stuck === true && fl.open === true && doorStuck(out.coops.find(c => c.id === fl.coop), fl.key)) out.fox.last.stuck = true;      // (its automatic door stuck open that night)
   }
   // rare babies (release 2 step 2): those waiting for your choice (each from a Silkie coop of the colour it comes from) and
   // those kept, in the basket by the farmhouse fire (rare colours only); at most a rooster and two hens of each colour
@@ -940,6 +990,19 @@ export class Game {
     this.save();
     return true;
   }
+  // ---- a coop's next look (null: Deluxe, or a coop whose looks aren't made yet) and the upgrade to it: its price paid, a
+  // little XP; what had to be cleared for its bigger pen gone for good (release 4)
+  coopNext(c) { if (!c || !UPGRADES.includes(baseBreed(c.breed)) || c.tier >= 4) return null; const t = c.tier + 1; return { tier: t, look: COOP_LOOKS[t], price: UPGRADE.price[t], xp: UPGRADE.xp[t] }; }
+  upgradeCoop(id, clear = []) {
+    const c = this.coop(id), n = this.coopNext(c);
+    if (!n) return 'top';
+    if (this.data.coins < n.price) return 'coins';
+    this.data.coins -= n.price; c.tier = n.tier; this.data.xp += n.xp;
+    for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
+    this.save();
+    return 'ok';
+  }
+  lookName(c) { return this.t('look_' + COOP_LOOKS[Math.max(0, Math.min(4, c.tier))]); }
   // ---- new breeds: the coops waiting to be placed (their level come, none yet on the farm), the next to come
   waitingCoops() { return Object.keys(BREED_LEVEL).filter(b => this.level >= BREED_LEVEL[b] && !this.data.coops.some(c => c.breed === b)).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]); }
   nextBreed() { const b = Object.keys(BREED_LEVEL).filter(k => BREED_LEVEL[k] > this.level).sort((a, c) => BREED_LEVEL[a] - BREED_LEVEL[c])[0]; return b ? { breed: b, level: BREED_LEVEL[b] } : null; }
@@ -1147,7 +1210,9 @@ export class Game {
   // ---- Rusty's night visits: the coops' doors for the night, tonight's visit, and each night gone by since the farm was
   // last looked at (the eggs laid before he came in the nest; the last visit kept for the morning's card and film)
   fox() { return this.data.fox || (this.data.fox = { seen: foxSeenFrom(Date.now()) }); }
-  doorShut(c, now = Date.now()) { return c.shut === nightKey(now); }
+  doorShut(c, now = Date.now()) { return shutFor(c, nightKey(now)); }
+  autoDoor(c) { return autoDoor(c); }
+  doorStuck(c, now = Date.now()) { return doorStuck(c, nightKey(now)); }
   setDoorShut(coopId, shut, now = Date.now()) {
     const c = this.coop(coopId); if (!c) return;
     const k = shut ? nightKey(now) : undefined; if (c.shut === k) return;
@@ -1157,15 +1222,15 @@ export class Game {
   // tonight's visit, if there's one to come: when, the coop he'll go for (as the doors are now), the night
   foxTonight(now = Date.now()) {
     const k = nightKey(now), F = this.fox();
-    if (this.level < FOX.level || k <= F.seen || !foxNight(k)) return null;
+    if (this.level < FOX.level || k <= F.seen || !foxComes(this.data.coops, k)) return null;
     const t = foxAt(k), c = this.foxCoop(k, t);
-    return c ? { key: k, t, coop: c.id, open: c.shut !== k } : null;
+    return c ? { key: k, t, coop: c.id, open: !shutFor(c, k) } : null;
   }
   foxCoop(k, t) {
     const coops = this.data.coops.filter(c => this.birdsIn(c.id).length);
     if (!coops.length) return null;
     const order = coops.slice().sort((a, b) => hash01('foxc|' + k + '|' + a.id) - hash01('foxc|' + k + '|' + b.id));
-    return order.find(c => c.shut !== k) || order[0];
+    return order.find(c => !shutFor(c, k)) || order[0];
   }
   // the hen who sees him off in the story: the coop's Brave, else its Rebel, else its first hen
   foxHen(c) { const hens = this.birdsIn(c.id).filter(b => b.sex === 'h'); const h = hens.find(b => b.pers === 'brave') || hens.find(b => b.pers === 'rebel') || hens[0]; return h ? h.name : HEN_NAMES[0]; }
@@ -1174,13 +1239,13 @@ export class Game {
   foxResolve(k, live = null) {
     const t = foxAt(k), c = this.coop(live ? live.coop : '') || this.foxCoop(k, t); if (!c) return null;
     for (const e of this.dueLays(t)) this.layEgg(e.hen, e.t, t);               // (the eggs laid before he came)
-    const open = live ? live.open : c.shut !== k, A = this.data.animals || {};
+    const open = live ? live.open : !shutFor(c, k), A = this.data.animals || {};
     const g = !!(A.geese && A.geese.at < t), dg = !!(A.dog && A.dog.at < t);
     const by = live ? live.by || null : open && (g || dg) ? (g && dg ? 'team' : g ? 'geese' : 'dog') : null;
     let eggs = 0;
     if (live) eggs = open && !by ? live.took || 0 : 0;                          // (taken already, as he went: foxTakeNow)
     else if (open && !by) { eggs = c.eggs; c.eggs = 0; c.lt = []; c.bonus = 0; }
-    const last = { key: k, t, coop: c.id, open, by, eggs, hen: this.foxHen(c), seen: false, watched: false };
+    const last = { key: k, t, coop: c.id, open, by, eggs, hen: this.foxHen(c), seen: false, watched: false, ...(open && doorStuck(c, k) ? { stuck: true } : {}) };
     const F = this.fox(); F.last = last; if (k > F.seen) F.seen = k;
     this.save();
     return last;
@@ -1194,7 +1259,7 @@ export class Game {
       k = next;
       const t = foxAt(k);
       if (t > now || k === live) break;
-      if (this.level >= FOX.level && foxNight(k) && now - t < CATCH_UP) out = this.foxResolve(k) || out;
+      if (this.level >= FOX.level && foxComes(this.data.coops, k) && now - t < CATCH_UP) out = this.foxResolve(k) || out;
       if (k > F.seen) { F.seen = k; this.save(); }
     }
     return out;
@@ -1208,7 +1273,7 @@ export class Game {
     if (!l) return '';
     const de = /^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛ]/.test(l.hen) ? 'd’' + l.hen : 'de ' + l.hen;      // (French: d’Ivy, de Willow)
     const k = !l.open ? 'fox_shut' : l.by ? 'fox_' + l.by : l.eggs > 1 ? 'fox_eggs' : l.eggs === 1 ? 'fox_eggs1' : 'fox_empty';
-    return this.t(k, { hen: l.hen, dehen: de, n: l.eggs, dog: this.dogName(), farmer: this.farmerName() }, k === 'fox_farmer' && this.data.farmer.look === 'f');
+    return (l.stuck ? this.t('fox_stuck') + ' ' : '') + this.t(k, { hen: l.hen, dehen: de, n: l.eggs, dog: this.dogName(), farmer: this.farmerName() }, k === 'fox_farmer' && this.data.farmer.look === 'f');
   }
   foxSeen() { const l = this.foxLast(); if (l && !l.seen) { l.seen = true; this.save(); } }
   foxWatched() { const l = this.foxLast(); if (l && !l.watched) { l.watched = true; l.seen = true; this.save(); } }
@@ -1324,7 +1389,7 @@ export class Game {
     const b = this.bird(id); if (!b) return null;
     const left = this.happyLeft(b, now); if (left > 0) return { happy: true, left };
     const lv0 = this.trustLevel(b), s0 = this.stars(b, now);
-    b.happy = now + HAPPY_MS;
+    b.happy = now + UPGRADE.happyH[lookOf(this.coop(b.coop))] * 3600e3;      // (sooner again in a Cosy or Deluxe coop)
     if (b.trust < TRUST_AT[3]) { b.trust++; b.exp = Math.min(1e7, b.exp + EXP_CUDDLE); }
     const lv = this.trustLevel(b), xp = (lv > lv0 && lv === 3 ? XP_BEST : 0) + FRESH.cuddle;
     this.data.xp += xp;
@@ -1357,7 +1422,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: 1, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
@@ -1388,7 +1453,8 @@ export class Game {
       if (b.sex !== 'h') continue;
       const from = Math.max(b.laid, b.since, now - CATCH_UP);
       if (from >= now || this.brooding(b.id)) continue;                 // (sitting or raising chicks: no eggs for sale)
-      for (let day = dayStart(from); day <= now; day = nextDay(day)) for (const t of layTimes(b.id, day).slice(baseBreed(b.breed) === 'sil' ? 1 : 0)) if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t });      // (a Silkie lays one a day, in the afternoon: Silkies are better mums than layers)
+      const lk = lookOf(this.coop(b.coop));
+      for (let day = dayStart(from); day <= now; day = nextDay(day)) for (const t of lookLays(b.id, day, lk, baseBreed(b.breed) === 'sil')) if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t });      // (a Silkie lays one a day, in the afternoon: Silkies are better mums than layers)
       const f = this.data.first;
       if (f && f.hen === b.id && f.t > b.laid && f.t <= now) out.push({ hen: b.id, coop: b.coop, t: f.t, first: true });
     }
@@ -1419,7 +1485,7 @@ export class Game {
   // better), with a little luck either way
   kidsOf(c, br) {
     const mum = this.bird(br.hen), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
-    const base = 1 + ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0)) / 2 + (mum && mum.pers === 'mum' ? 0.4 : 0);
+    const base = 1 + ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0)) / 2 + (mum && mum.pers === 'mum' ? 0.4 : 0) + UPGRADE.kids[lookOf(c)];      // (the coop's look: a little either way)
     const rl = RARE_FROM[c.breed], own = BREED_INFO[c.breed] && BREED_INFO[c.breed].rare, chance = RARE.base + RARE.star * ((mum ? this.stars(mum) : 0) + (dad ? this.stars(dad) : 0));
     return Array.from({ length: br.n }, (_, i) => {
       const key = br.hen + '|' + br.start + '|' + i;
@@ -1563,6 +1629,7 @@ export class Game {
     if (!d) return null;
     this.edited = raw.s !== seal(JSON.stringify(raw.d)) || !fits(d, raw.d);
     for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
+    if (d.cv !== 1) { for (const c of d.coops) c.tier = Math.max(2, c.tier); d.cv = 1; }      // (a farm from before the coops' looks: its coops are Snug, release 4)
     return d;
   }
   wipe() { try { this.store && this.store.removeItem(SAVE_KEY); } catch (e) { /* */ } this.data = null; }

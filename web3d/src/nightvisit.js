@@ -344,6 +344,13 @@ export class NightVisit {
   note(s) { this.log.push(s); if (this.log.length > 60) this.log.shift(); }
   active() { return this.state === 'out' || this.state === 'fleeing'; }
   canSend() { return this.state === 'out' && !this.farmer && this.fox.root.visible; }
+  // a coop's pen (release 4: bigger with its look; main.js penOf): its fence's sides (x0, x1, front z1), its yard, what's
+  // in it; the Snug one's by default
+  pen(p) {
+    const P = this.penOf ? this.penOf(p) : null;
+    if (!P) return { x0: -1.64, x1: 1.79, z1: 2.5, obs: this.penObstacles || [], Y: null, key: p.breed };
+    return { x0: P.pen.min[0] + 0.01, x1: P.pen.max[0] - 0.01, z1: P.pen.max[2], obs: P.obstacles, Y: P.yard, key: p.breed + '|' + P.pen.max[0] + '|' + P.pen.max[2] };
+  }
   // pen frame (local) to world, and a heading in the pen frame
   W(p, x, y, z) { return p.frame.localToWorld(this.v.set(x, y, z)).clone(); }
   heading(p, lx, lz) { const a = this.W(p, 0, 0, 0), b = this.W(p, lx, 0, lz); return Math.atan2(b.x - a.x, b.z - a.z); }
@@ -362,7 +369,13 @@ export class NightVisit {
   // shortest way there wins
   entry(p, fromX, fromZ) {
     // (both spots about a metre from the fence, so his brush clears it after landing either way)
-    const sides = [[[-2.66, 1.38], [-0.52, 1.38]], [[2.8, 1.02], [0.92, 1.02]], [[-0.5, 3.5], [-0.5, 1.42]]];
+    const Q = this.pen(p), snug = Q.x0 === -1.64 && Q.x1 === 1.79 && Q.z1 === 2.5;
+    // (in a pen of another look: the same a metre off its own fence, landing where it's clear inside)
+    const free = (x, z) => !Q.obs.some(o => Math.hypot(x - o[0], z - o[2]) < o[3] + 0.25);
+    const near = (x, z) => { for (const d of [0, 0.15, -0.15, 0.3, -0.3, 0.45, -0.45, 0.6, -0.6]) for (const [dx, dz] of [[d, 0], [0, d]]) if (free(x + dx, z + dz)) return [x + dx, z + dz]; return [x, z]; };
+    const zl = Q.Y ? Math.max(Q.Y.min[2] + 0.35, Math.min(Q.Y.max[2] - 0.35, 1.38)) : 1.38, zr = Q.Y ? Math.max(Q.Y.min[2] + 0.35, Math.min(Q.Y.max[2] - 0.35, 1.02)) : 1.02;
+    const sides = snug ? [[[-2.66, 1.38], [-0.52, 1.38]], [[2.8, 1.02], [0.92, 1.02]], [[-0.5, 3.5], [-0.5, 1.42]]]
+      : [[[Q.x0 - 1.02, zl], near(Math.max(Q.x0 + 0.9, -0.52), zl)], [[Q.x1 + 1.01, zr], near(Math.min(Q.x1 - 0.9, 0.92), zr)], [[-0.5, Q.z1 + 1.0], near(-0.5, Math.max(1.0, Q.z1 - 1.08))]];
     let best = null;
     for (const [t, l] of sides) {
       const tw = this.W(p, t[0], 0, t[1]);
@@ -407,7 +420,7 @@ export class NightVisit {
       }
       case 'jumpIn': this.phase = 'toRamp'; return this.leap(this.way.take, this.way.land);
       case 'toRamp': {
-        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, G.foot[1] + 0.85));
+        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, this.pen(p).z1 - 0.35, G.foot[1] + 0.85));
         this.phase = 'climb';
         return seq(this.follow(this.penPath(p, f.pos, pre).concat([[a.x, a.z]]), 'walk', 99, 0.05, 0.6), this.face(this.heading(p, 0, -1)));
       }
@@ -424,7 +437,7 @@ export class NightVisit {
       case 'show': this.phase = 'leave'; return this.showOff(f);
       case 'again': {           // a moment's thought, then back in line with the ramp for another try
         this.phase = 'climb';
-        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, G.foot[1] + 0.85));
+        const p = this.target, G = this.nestOf(p), a = this.W(p, G.pop[0], 0, G.foot[1] + 0.4), pre = this.W(p, G.pop[0], 0, Math.min(2.1, this.pen(p).z1 - 0.35, G.foot[1] + 0.85));
         const away = Math.hypot(a.x - f.pos.x, a.z - f.pos.z) > 0.05;
         return away ? seq(this.sit(1.2, true), this.follow(this.penPath(p, f.pos, pre).concat([[a.x, a.z]]), 'walk', 99, 0.05, 0.6), this.face(this.heading(p, 0, -1)))
                     : seq(this.sit(1.2, true), this.face(this.heading(p, 0, -1)));
@@ -512,16 +525,17 @@ export class NightVisit {
   // in the pen's own frame, one per house style); world points in and out
   penPath(p, a, b) {
     this.penGrids = this.penGrids || {};
-    let g = this.penGrids[p.breed];
+    const Q = this.pen(p);
+    let g = this.penGrids[Q.key];
     if (!g) {
-      g = this.penGrids[p.breed] = new NavGrid(-1.62, 0.2, 1.77, 2.48, 0.08);
+      g = this.penGrids[Q.key] = new NavGrid(Q.x0 + 0.02, 0.2, Q.x1 - 0.02, Q.z1 - 0.02, 0.08);
       g.room = 0.12;                                                            // (his straight stretches with room to swing a little at the bends)
-      for (const o of this.penObstacles || []) if (Math.abs(o[0] - this.nestOf(p).pop[0]) > 0.05) g.circle(o[0], o[2], o[3] + 0.2);   // (the old single farm's ramp marks: the ramp is the house's now)
+      for (const o of Q.obs) if (Math.abs(o[0] - this.nestOf(p).pop[0]) > 0.05) g.circle(o[0], o[2], o[3] + 0.2);   // (the old single farm's ramp marks: the ramp is the house's now)
       for (const o of (this.nestOf(p).block || [])) g.circle(o[0], o[1], o[2] + 0.2);
-      g.mark(-1.7, 0, 1.8, 0.62, () => true);                                  // the house and just in front of it
-      g.mark(-1.7, 0, 1.8, 2.6, (x, z) => x < -1.64 + 0.36 || x > 1.79 - 0.36 || z > 2.5 - 0.36);     // and off the fence
+      g.mark(Q.x0 - 0.06, 0, Q.x1 + 0.01, 0.62, () => true);                  // the house and just in front of it
+      g.mark(Q.x0 - 0.06, 0, Q.x1 + 0.01, Q.z1 + 0.1, (x, z) => x < Q.x0 + 0.36 || x > Q.x1 - 0.36 || z > Q.z1 - 0.36);     // and off the fence
       const G = this.nestOf(p);                                                 // and round the ramp (not over its sides)
-      g.mark(-1.7, 0, 1.8, 2.6, (x, z) => Math.abs(x - G.pop[0]) < 0.13 + 0.24 && z < G.foot[1] + 0.05);
+      g.mark(Q.x0 - 0.06, 0, Q.x1 + 0.01, Q.z1 + 0.1, (x, z) => Math.abs(x - G.pop[0]) < 0.13 + 0.24 && z < G.foot[1] + 0.05);
     }
     const la = p.frame.worldToLocal(this.w.copy(a)).clone(), lb = p.frame.worldToLocal(this.w.copy(b)).clone();
     const path = g.find(la.x, la.z, lb.x, lb.z) || [[la.x, la.z], [lb.x, lb.z]];
@@ -839,7 +853,8 @@ export class NightVisit {
   inPen(margin = 0) {
     const p = this.target; if (!p) return false;
     const l = p.frame.worldToLocal(this.w.copy(this.fox.pos));
-    return l.x > -1.7 - margin && l.x < 1.85 + margin && l.z > -0.85 - margin && l.z < 2.55 + margin;
+    const Q = this.pen(p);
+    return l.x > Q.x0 - 0.06 - margin && l.x < Q.x1 + 0.06 + margin && l.z > -0.85 - margin && l.z < Q.z1 + 0.05 + margin;
   }
   finish() {
     const shooed = this.state === 'fleeing';
@@ -866,10 +881,10 @@ export class NightVisit {
   }
   // which way to sit (near `want`) and which side to curl the brush, so it lies on clear ground
   sitSpot(f, want, at = f.pos) {
-    const p = this.target, G = this.nestOf(p), obs = (this.penObstacles || []).filter(o => Math.abs(o[0] - G.pop[0]) > 0.05), S0 = f.q.S * f.scale;
+    const p = this.target, G = this.nestOf(p), Q = this.pen(p), obs = Q.obs.filter(o => Math.abs(o[0] - G.pop[0]) > 0.05), S0 = f.q.S * f.scale;
     const blocked = (x, z) => {
       const l = p.frame.worldToLocal(this.v.set(x, 0, z));
-      if (l.x < -1.64 + 0.2 || l.x > 1.79 - 0.2 || l.z > 2.5 - 0.2) return true;
+      if (l.x < Q.x0 + 0.2 || l.x > Q.x1 - 0.2 || l.z > Q.z1 - 0.2) return true;
       if (Math.abs(l.x - G.pop[0]) < 0.2 && l.z < G.foot[1] + 0.12 && l.z > G.pop[1] - 0.1) return true;
       return obs.some(o => Math.hypot(l.x - o[0], l.z - o[2]) < o[3] + 0.14);            // (a brush can lie on a let-down nest door: it's a flat board on the ground)
     };
@@ -887,10 +902,10 @@ export class NightVisit {
   brush(dt) {
     const f = this.fox, p = this.target; let want = 0;
     if (this.active() && f.root.visible && p && this.inPen(0.9)) {
-      const G = this.nestOf(p), obs = (this.penObstacles || []).filter(o => Math.abs(o[0] - G.pop[0]) > 0.05);
+      const G = this.nestOf(p), Q = this.pen(p), obs = Q.obs.filter(o => Math.abs(o[0] - G.pop[0]) > 0.05);
       const blocked = (x, z) => {
         const l = p.frame.worldToLocal(this.v.set(x, 0, z));
-        if (l.x < -1.64 + 0.18 || l.x > 1.79 - 0.18 || l.z > 2.5 - 0.18) return true;
+        if (l.x < Q.x0 + 0.18 || l.x > Q.x1 - 0.18 || l.z > Q.z1 - 0.18) return true;
         if (Math.abs(l.x - G.pop[0]) < 0.2 && l.z < G.foot[1] + 0.08 && l.z > G.pop[1] - 0.1) return true;
         return obs.some(o => Math.hypot(l.x - o[0], l.z - o[2]) < o[3] + 0.12);
       };

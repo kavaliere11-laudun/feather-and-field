@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -428,13 +428,32 @@ export class GameUI {
     body.append(go);
   }
 
-  // ---- a coop: who lives there; move it (onMove: main.js startMove)
-  coopCard(coop, onMove) {
-    const g = this.g, body = this.open('coop', g.coopName(coop));
+  // a coop's look after its breed: its name (release 4: a coop with its five looks), else "rustic" while it's new
+  lookTag(coop) { return UPGRADES.includes(this.g.baseOf(coop.breed)) ? ' · ' + this.g.lookName(coop) : coop.tier === 0 ? ' · ' + this.t('rustic') : ''; }
+  // ---- a coop: who lives there; its next look (release 4: what it brings, its price; up.onUpgrade(): main.js tryUpgrade,
+  // 'ok', or why not: 'room' (its bigger pen doesn't fit there: move it first), 'coins', 'busy'); move it (onMove:
+  // main.js startMove)
+  coopCard(coop, onMove, up) {
+    const g = this.g, body = this.open('coop', g.coopName(coop)), fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
     this.bird = null;
-    body.append(el('p', 'gsub', g.breedName(coop.breed) + (coop.tier === 0 ? ' · ' + this.t('rustic') : '')));
+    body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
     const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
     if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] })));
+    const n = up && g.coopNext(coop);
+    if (n) {
+      const c = el('div', 'gcard gup'), hd = el('div', 'gcard-h');
+      hd.append(el('span', 'gemoji', '✨'), el('span', 'gcard-t', this.t('up_next', { look: this.t('look_' + n.look) })));
+      c.append(hd, el('p', 'gtext', this.t('up_' + g.baseOf(coop.breed) + '_' + n.look)), el('p', 'gnote', this.t('upfx_' + n.look)));
+      const broke = g.data.coins < n.price, b = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
+      b.type = 'button'; b.disabled = broke;
+      const why = el('p', 'gnote gup-why'); why.hidden = true;
+      b.addEventListener('click', () => {
+        if (b.disabled) return;
+        const r = up.onUpgrade();
+        if (r === 'room') { why.textContent = this.t('up_room'); why.hidden = false; }
+      });
+      c.append(b, why); body.append(c);
+    } else if (up && UPGRADES.includes(g.baseOf(coop.breed))) body.append(el('p', 'gnote', this.t('up_top')));
     body.append(el('p', 'gnote', this.t('move_body')));
     const go = el('button', 'gbtn', this.t('move_btn')); go.type = 'button';
     go.addEventListener('click', () => onMove());
@@ -494,7 +513,7 @@ export class GameUI {
     }
     for (const coop of g.data.coops) {
       const row = el('div', 'gcard gcooprow'), info = el('div', 'gcoopinfo');
-      info.append(el('span', 'gcard-t', g.coopName(coop)), el('span', 'gnote', g.breedName(coop.breed) + (coop.tier === 0 ? ' · ' + this.t('rustic') : '')));
+      info.append(el('span', 'gcard-t', g.coopName(coop)), el('span', 'gnote', g.breedName(coop.breed) + this.lookTag(coop)));
       const mv = el('button', 'gbtn galt gsmallbtn', this.t('move_short')); mv.type = 'button'; mv.addEventListener('click', () => h.move(coop.id));
       row.append(info, mv); b.append(row);
     }

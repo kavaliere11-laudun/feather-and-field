@@ -3,7 +3,7 @@
 // Profiles: 'daily' (once a day, 19:00), 'twice' (8:00 and 19:00), 'often' (every 3 hours, 8:00 to 23:00). At each visit
 // the player does everything a keen player would: collects the eggs and the honey, fills the feeders (grain first), sows
 // and harvests the wheat, cuddles every bird, enters the best bird in each open show, collects the jobs, buys the next field
-// when it can, places a new breed's coop, and buys decorations, the geese and the dog, and outfits once they leave a reserve
+// when it can, places a new breed's coop, upgrades the coops (release 4), and buys decorations, the geese and the dog, and outfits once they leave a reserve
 // for feed and land.
 // Prints, for each profile: the level reached on days 7, 30, 90, 180, 365, the day each level comes, the coins, the
 // birds, and where the coins came from.
@@ -24,7 +24,7 @@ function simulate(name, seed) {
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
-  const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }; let silkDays = 0;
+  const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
   let spot = 0;
   for (let d = 0; d < DAYS; d++) {
@@ -66,6 +66,7 @@ function simulate(name, seed) {
       for (const breed of g.waitingCoops()) { spot++; const dft = g.draftCoop(breed, { x: spot * 6, z: 0, deg: 90 }); if (dft) track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 })); }
       // decorations and outfits, keeping enough back for the next field and a few days' feed
       const keep = (g.landNext() ? g.landNext().price : 0) + 60 * g.data.coops.length;
+      for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; if (c.breed === 'rir') upDay[n.tier] = d + 1; } }      // (the coops' looks, release 4)
       for (const line of g.rareCoops()) if (g.data.coins - G.RARE.coop >= keep) { spot++; const dft = g.draftCoop(line, { x: spot * 6, z: 0, deg: 90 }); if (dft && track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 }))) spend.rare = (spend.rare || 0) + G.RARE.coop; }      // (a rare colour's own coop)
       for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (track('decor', () => g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 }))) spend.decor += DECOR[id].price; }
       for (const id of Object.keys(G.ANIMALS)) if (g.animalNext(id) && g.data.coins - G.ANIMALS[id].price >= keep) { spot++; if (track('animals', () => g.buyAnimal(id, NOW, { x: -spot * 4, z: 14 }))) spend.animals = (spend.animals || 0) + G.ANIMALS[id].price; }      // (the geese and the dog, release 3)
@@ -74,7 +75,7 @@ function simulate(name, seed) {
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes };
+  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -88,5 +89,6 @@ for (const name of Object.keys(PROFILES)) {
   console.log('XP from: ' + Object.keys(runs[0].xpBy).map(k => `${k} ${Math.round(avg(runs, r => r.xpBy[k] || 0))}`).join(', '));
   console.log('Rusty: ' + avg(runs, r => r.foxes.n).toFixed(1) + ' visits in the time, ' + avg(runs, r => r.foxes.eggs).toFixed(1) + ' eggs taken');
   console.log('rare babies: ' + avg(runs, r => r.rares.length).toFixed(1) + ' in the year, one every ' + (avg(runs, r => r.silkDays / Math.max(1, r.rares.length)) / 30).toFixed(1) + ' months a Silkie coop; the first on day ' + Math.round(avg(runs, r => r.rares[0] || 0)) + '; in the basket at the end ' + avg(runs, r => r.basket).toFixed(1) + ', rare coops ' + avg(runs, r => r.rareCoops).toFixed(1));
+  console.log('the Red Barn: ' + [1, 2, 3, 4].map(t => ['', 'Mended', 'Snug', 'Cosy', 'Deluxe'][t] + ' day ' + (runs.every(r => r.upDay[t]) ? Math.round(avg(runs, r => r.upDay[t])) : '-')).join(', '));
   console.log('spent: ' + Object.entries(runs[0].spend).map(([k]) => `${k} ${Math.round(avg(runs, r => r.spend[k]))}`).join(', '));
 }
