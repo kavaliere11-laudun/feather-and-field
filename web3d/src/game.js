@@ -828,7 +828,6 @@ export function checkFarm(d, now = Date.now()) {
   out.coops = [];
   const seen = new Set();
   const dresses = Array.isArray(d.dresses) ? d.dresses.filter((x, i, a) => typeof x === 'string' && DRESSES[x] && a.indexOf(x) === i) : [];       // (the seasonal dresses owned: known ones, once each)
-  out.dresses = dresses;
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
     if (!BREED_INFO[c.breed] || levelOf(out.xp) < (BREED_LEVEL[c.breed] || BREED_LEVEL.sil) || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come, one each; a rare colour's once the Silkies have)
@@ -929,6 +928,7 @@ export function checkFarm(d, now = Date.now()) {
   }
   // the wheat field: where it is (the farm puts it on your land when it has no spot), which way it lies, when it's ripe
   // (0: not sown; never further ahead than it takes to grow); the grain in store
+  out.dresses = dresses;                             // (the seasonal dresses owned: after the decorations, as a new farm has them)
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
   out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: wh.deg === 135 ? 135 : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
   out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
