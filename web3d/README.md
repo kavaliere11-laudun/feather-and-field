@@ -2528,3 +2528,38 @@ the birds already had.
   `looktest.mjs`. Released together with the Pagoda (step 4). Balance (`balsim.mjs`, now with the Stone Cottage's
   upgrade days): once a day level 30 on day 337, twice a day 283, every 3 hours 235 (the Stone Cottage's Mended comes
   around day 85, its Deluxe around day 186); to look at again once all five coops have their looks.
+
+## Release 4, step 6: the Timber Lodge's five looks (27 Oct 2026; Audrey: "The other four coops", one at a time, shown first; then "Perfect, put it in")
+
+- **The looks** (stylized/coops.py `box_bra`, `shed_bra`, `lodge`, `cosy_bra` with `_lodge_bits`, `deluxe_bra`): Rustic, a
+  woodpile hut: split firewood stacked for its sides (outside the walls, clear of the hens' door and the nest window) and
+  its back, rough bark-edged slab boards for its front on an old log, a roof of bark sheets on three poles under fir
+  boughs, two logs on top to hold them down, a chopping stump where the lodge's lantern post stands (the hint: the
+  lodge's logs and green roof). Mended, a little cabin of new peeled logs (`_log_walls`, the lodge's way), chinked white
+  on its left so far (its inside white there, dark on the right; the bucket of chinking and a trowel where the lantern
+  post will be), a roof of rough slab boards of uneven widths, bark up on some, held down with stones, a new plank door,
+  fresh logs stacked by its right side (the birds walk round them). Snug, the Timber Lodge (`lodge()` now takes the
+  eave, the peak and the name). Cosy, the lodge with a woodpile under a little roof of green shingles against its left
+  side, a wreath of pine and cones with a red bow on its door, a red birdhouse on the lantern post, a mossy stump with red
+  toadstools and ferns in a hollow log either side of the foot of the ramp, the automatic door's box and its solar panel,
+  rounds of log for stepping stones to the gate. Deluxe, a storey taller: a dormer up the front slope (boards, a window,
+  crossed logs at its peak, its own shingles), crossed logs at the gables' peaks, a window with green shutters in the
+  right gable, a tall chimney of river stones against the left gable, a hood of green shingles over the door on log
+  brackets with a lantern hanging from it (lit at night), a carved wooden bear sitting by the front right corner; the
+  cosy touches (the woodpile in front of the chimney). Every look keeps the lodge's nest (`NESTS['house_bra']` asserted:
+  the floor 0.26, the nest's 0.2, the ramp, the nest window with its door let down).
+- **Its gardens**: a turned wooden bowl for water in the small pens, a copper one in the Cosy; Cosy: a swing on two log
+  posts with sawn ends (`log_swing`, beside the lodge on its right; its posts kept clear), a big half log hollowed and
+  full of sand (`sand_log`, coop.py `half_log`, lying along the yard: a box sand bath), the cabbage from a crooked branch
+  stood in an old stump (`cabbage_stump`); Deluxe: a crib of logs notched at its corners, full of sand, cones on it, a
+  young pine at its back corner (`sand_crib`), water from a split-log flume on crossed sticks into a hollow log (coop.py
+  `log_flume`), a feeder like a tiny log cabin with a green roof (`feeder_style='cabin'`), a xylophone of round branches
+  painted in rainbow colours on two little logs, played with a pine-cone stick (`log_xylophone`), the log swing, the
+  stump. The five coops' gardens all differ (Audrey: "try not to get the same configuration of the toys/ accessories for
+  each coop").
+- **In the game**: `LOOKS_CV.bra = 5` (`CV` 5): every coop has its looks now; `up_bra_*` in English and French; farms from
+  before have their Timber Lodges Snug. Tests: `upgradetest.mjs BREED=bra` (both ways), `playtest.mjs BREED=bra` (the half
+  log, the crib), `looktest.mjs` (a breed without looks: none now). Balance (`balsim.mjs`, with the lodge's upgrade
+  days): unchanged, once a day level 30 on day 337, twice a day 283, every 3 hours 236 (the lodge's Mended around day
+  153 once a day, its Deluxe around day 235). A quick look at a model in Blender, without the browser:
+  `stylized/view_model.py` (`YAWS`, `PITCH`, `AT`, `ORTHO`).

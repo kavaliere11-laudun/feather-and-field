@@ -85,6 +85,9 @@ const TEXT = {
     up_leg_mended: 'A little stone hut with its roof slated half way and a new door, in a bigger pen.', up_leg_snug: 'The Stone Cottage, in a roomier pen.',
     up_leg_cosy: 'Duck-egg blue windows, wisteria, a dovecote, blue hydrangeas, and a bigger garden with a swing from an apple tree, a wheelbarrow of sand and a cabbage to peck.',
     up_leg_deluxe: 'A storey taller with dormers, a slate porch and two chimneys, a little blue boat full of sand, a water butt, a xylophone and the biggest garden, with white pickets and roses.',
+    up_bra_mended: 'A little cabin of new peeled logs under a roof of rough boards, in a bigger pen.', up_bra_snug: 'The Timber Lodge, in a roomier pen.',
+    up_bra_cosy: 'A woodpile under its own little roof, a wreath on the door, a birdhouse, toadstools and ferns, and a bigger garden with a swing on log posts, a half log full of sand and a cabbage to peck.',
+    up_bra_deluxe: 'A storey taller with a gable over the door, a chimney of river stones and a carved bear, a crib of logs full of sand, water from a log flume, a xylophone and the biggest garden, with white pickets and roses.',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -287,6 +290,9 @@ const TEXT = {
     up_leg_mended: 'Une petite cabane de pierre au toit à moitié couvert d’ardoises et à la porte neuve, dans un enclos plus grand.', up_leg_snug: 'La Maison de pierre, dans un enclos plus spacieux.',
     up_leg_cosy: 'Des fenêtres bleu pâle, une glycine, un pigeonnier, des hortensias bleus, et un jardin plus grand avec une balançoire sous un pommier, une brouette de sable et un chou à picorer.',
     up_leg_deluxe: 'Un étage de plus avec des lucarnes, un auvent d’ardoise et deux cheminées, une petite barque bleue pleine de sable, un récupérateur d’eau, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
+    up_bra_mended: 'Une petite cabane de rondins neufs sous un toit de planches brutes, dans un enclos plus grand.', up_bra_snug: 'Le Chalet en rondins, dans un enclos plus spacieux.',
+    up_bra_cosy: 'Une pile de bois sous son petit toit, une couronne sur la porte, un nichoir, des champignons et des fougères, et un jardin plus grand avec une balançoire sur des rondins, un demi-tronc plein de sable et un chou à picorer.',
+    up_bra_deluxe: 'Un étage de plus avec un pignon au-dessus de la porte, une cheminée de galets et un ours sculpté, un bac de rondins plein de sable, de l’eau qui coule d’une rigole en bois, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -737,7 +743,7 @@ export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 1
 // each breed's looks came with a version of the save (cv): a farm from before them has that breed's coops Snug (nothing
 // changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct), the Pagoda's (27 Oct: every Silkie colour's),
 // the Stone Cottage's (27 Oct)
-export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4 }, CV = 4;
+export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5 }, CV = 5;
 export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
