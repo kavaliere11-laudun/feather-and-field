@@ -1406,13 +1406,15 @@ def deluxe_barn(kind=None):
 # Deluxe also: a climbing ladder of perches and a little xylophone. The swing's perch and the cabbage move (their own
 # models, swing_seat and cabbage, hung from their pivot at the origin); PLAY gives where each is (Blender x, y) and
 # play_info what the browser needs (glTF axes).
-PLAY = {3: dict(swing=(-1.3, -1.15), dust=(-1.35, -2.3), cabbage=(1.0, -0.95)),
+PLAY = {3: dict(swing=(-1.3, -1.15), tub=(1.45, -2.35), cabbage=(1.0, -0.95)),
         4: dict(swing=(-1.55, -1.5), dust=(-1.5, -0.12), cabbage=(1.05, -0.95), xylo=(-1.2, -2.45))}
 # (Audrey, 27 Oct, on the Deluxe: "a weird egg on its right? Its garden looks too messy and busy. We can probably get rid
 # of the perchoir. The send bath should be bigger and a bit more obvious that it's a send bath. Use the left space next to
 # the coop": no feed sack in the Cosy and Deluxe pens, no ladder, one bale tucked behind the barn, few straws and
 # pebbles; the sand bath a sandbox with a beach umbrella, a bucket and spade: in the Deluxe, beside the barn on its left)
 SAND_W, SAND_D = 0.9, 0.7                                       # the sandbox (x, y)
+# (Audrey, then: "For the cosy revert the old send bath": the Cosy's is the half-barrel of sand again, in its yard; the
+# Deluxe's the sandbox)
 SWING_TOP, SWING_PERCH, SWING_HALF = 0.56, 0.14, 0.32           # the top bar, the perch's height, half the frame's width
 CAB_TOP, CAB_Z = 0.56, 0.21                                     # the arm the cabbage hangs from, the cabbage's middle
 LADDER = ((-0.17, 0.13), (-0.09, 0.27), (0.0, 0.42))            # its perches on the front face: (y from its middle, height)
@@ -1440,8 +1442,25 @@ def swing_seat():
     return finish(objs, 'swing_seat')
 
 
+def dust_tub(objs, x, y):
+    """The Cosy's sand bath: a low half-barrel of fine sand, a little spilt round it."""
+    staves = [_barn_m('stump', grain=0.5), _barn_m('cut', grain=0.3)]; sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    n = 16
+    for k in range(n):
+        a = k / n * math.tau; c, s_ = math.cos(a), math.sin(a)
+        objs.append(plank('stave', (x + c * 0.25, y + s_ * 0.25, 0.0), (x + c * 0.25, y + s_ * 0.25, 0.11), 0.1, 0.025, (c, s_, 0), staves[k % 2], jitter=0.5))
+    for z in (0.03, 0.09):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.262, minor_radius=0.008, major_segments=24, minor_segments=5, location=(x, y, z))
+        o = bpy.context.object; setmat(o, iron); objs.append(o)
+    objs.append(sphere('dsand', 0.235, (x, y, 0.06), (1, 1, 0.14), m=sand, ico=3, disp=0.12, seed=7))
+    for k in range(7):
+        a = random.uniform(0, math.tau); d = random.uniform(0.28, 0.38)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.07), (x + math.cos(a) * d, y + math.sin(a) * d, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 3))
+
+
 def dust_bath(objs, x, y):
-    """The sand bath: a low wooden sandbox full of pale sand (a few hollows where they've bathed), a striped beach umbrella
+    """The Deluxe's sand bath: a low wooden sandbox full of pale sand (a few hollows where they've bathed), a striped beach umbrella
     over its back corner, a little bucket and spade."""
     wood = _barn_m('pine2', rough=0.75, var=0.08); dark = coop.M()['darkwood']
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
@@ -1541,7 +1560,9 @@ def xylophone(objs, x, y):
 def play_things(objs, t):
     P = PLAY.get(t)
     if not P: return
-    swing_frame(objs, *P['swing']); dust_bath(objs, *P['dust']); cabbage_post(objs, *P['cabbage'])
+    swing_frame(objs, *P['swing']); cabbage_post(objs, *P['cabbage'])
+    if 'tub' in P: dust_tub(objs, *P['tub'])
+    if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
     if 'xylo' in P: xylophone(objs, *P['xylo'])
 
@@ -1551,12 +1572,14 @@ def play_info(t):
     P = PLAY.get(t)
     if not P: return None
     g = lambda q: [q[0], round(-q[1], 3)]
-    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105),
+    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF),
+               dust=dict(at=g(P['tub']), r=0.235, y=0.075) if 'tub' in P else dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105),
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
     if 'ladder' in P: out['ladder'] = dict(at=g(P['ladder']), perches=[[round(-dy, 3), z] for (dy, z) in LADDER])
     if 'xylo' in P: out['xylo'] = dict(at=g(P['xylo']), bars=[round(0.13 - k * 0.052, 3) for k in range(6)])
-    dx, dy = P['dust']
-    keep = [g(P['swing']) + [0.38], g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42], g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
+    dx, dy = P.get('dust') or P['tub']
+    sand = [g(P['tub']) + [0.29]] if 'tub' in P else [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
+    keep = [g(P['swing']) + [0.38], *sand, g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
     if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
     out['keep'] = keep

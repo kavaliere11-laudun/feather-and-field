@@ -1,5 +1,5 @@
 // The hens' play things (release 4, play.js): ./withserver.sh node playtest.mjs [OUT]   (W, H: the screen; PORT)
-// On the test page's ?looks=3 (Cosy: swing, sand bath, cabbage) and ?looks=4 (Deluxe: also the xylophone; its sand bath beside the barn),
+// On the test page's ?looks=3 (Cosy: swing, sand tub, cabbage) and ?looks=4 (Deluxe: also the xylophone; a sandbox beside the barn),
 // the Red Barn's pen: a hen sent to each play thing in turn. Checks she gets there and plays (on the swing's perch and it
 // swinging, in the sandbox with puffs, the cabbage swinging and spinning, notes from the xylophone), that she ends back on the ground in the yard, free to walk, and that each takes a sensible time. Leaves a
 // picture of each at play (OUT/play_<look>_<kind>.png).
@@ -47,7 +47,7 @@ for (const look of [3, 4]) {
     ok(!r.end.playing && r.time < 45, `look ${look} ${kind}: played and done in ${r.time.toFixed(1)} s (${r.phases.join(' → ')})`);
     ok(r.end.y === 0.015 && r.end.free && r.end.byFree, `look ${look} ${kind}: back on the ground in the yard, the ${kind} free again (${JSON.stringify(r.end)})`);
     if (kind === 'swing') ok(r.phases.includes('ride') && r.maxSwing > 0.12 && r.onPerchY > 0.1, `look ${look} swing: on the perch and swinging (up to ${r.maxSwing.toFixed(2)} rad, ${r.onPerchY.toFixed(2)} m up)`);
-    if (kind === 'dust') ok(r.phases.includes('bathe') && r.minY > 0.08 && r.minY < 0.13 && r.fx > 2, `look ${look} dust: in the sandbox (${r.minY.toFixed(3)} m), puffs (${r.fx} at once)`);
+    if (kind === 'dust') ok(r.phases.includes('bathe') && r.minY > 0.06 && r.minY < 0.13 && r.fx > 2, `look ${look} dust: in the sand (${r.minY.toFixed(3)} m), puffs (${r.fx} at once)`);
     if (kind === 'cabbage') ok(r.spin > 1, `look ${look} cabbage: it spun (${r.spin.toFixed(1)} rad/s)`);
     if (kind === 'ladder') ok(r.phases.includes('top') && r.maxY > 0.4, `look ${look} ladder: up to the top (${r.maxY.toFixed(2)} m)`);
     if (kind === 'xylo') ok(r.fx > 0, `look ${look} xylophone: notes (${r.fx} at once)`);

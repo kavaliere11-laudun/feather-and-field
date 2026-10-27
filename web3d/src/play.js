@@ -62,7 +62,13 @@ export function startPlay(b, kind) {
   const T = b.plot.toys, P = T.P, j = b.r() - 0.5;
   let C;                                             // where she might go first ({ spot, face, bath }), in order
   if (kind === 'swing') C = [{ spot: [P.swing.at[0] + j * 0.08, P.swing.at[1] + 0.46], face: Math.PI }];
-  else if (kind === 'dust') {                        // beside the sandbox (its front if she can), then a hop in to a spot of her own
+  else if (kind === 'dust' && !P.dust.w) {          // the Cosy's tub: from the side she's on, just outside it, then a hop into its middle
+    const D = P.dust.at, p = b.root.position, a = Math.atan2(p.x - D[0], p.z - D[1]);
+    C = [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9, 2.6, -2.6, Math.PI].map(da => {
+      const spot = [D[0] + Math.sin(a + da) * 0.42, D[1] + Math.cos(a + da) * 0.42];
+      return { spot, face: Math.atan2(D[0] - spot[0], D[1] - spot[1]), bath: [D[0], D[1]] };
+    });
+  } else if (kind === 'dust') {                      // the Deluxe's sandbox: beside it (its front if she can), then a hop in to a spot of her own
     const D = P.dust, hw = D.w / 2, hd = D.d / 2;
     C = [[0, 1], [-1, 0], [1, 0], [0, -1]].map(([sx, sz]) => ({
       spot: [D.at[0] + (sx ? sx * (hw + 0.2) : j * hw * 0.8), D.at[1] + (sz ? sz * (hd + 0.2) : j * hd * 0.6)], face: Math.atan2(-sx, -sz),
