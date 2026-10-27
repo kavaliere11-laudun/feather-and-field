@@ -3612,3 +3612,179 @@ def log_xylophone(objs, x, y):
         _log(objs, (x - L / 2, yy, 0.106), (x + L / 2, yy, 0.106), 0.018, C('xbar%d' % k, cols[k], rough=0.35, metal=0.4), endg, verts=8, name='xbar')
     objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.24, 0.015), (math.radians(90), 0, math.radians(30)), m=bark, verts=6, bevel=0.0))
     objs.append(sphere('xmhead', 0.022, (x + 0.12, y + 0.31, 0.02), (1, 1.4, 1), m=cone, ico=1, disp=0.3, seed=399))
+
+
+# ---- the Christmas dress (Audrey, 27 Oct: seasonal coops; "The next one will be Christmas and should only be a dress for
+# any coop"; "In season, kept forever"; 1,500 coins). It fits every coop in every look: a garland of fir along the top of
+# its pen's fence (front and sides) with little coloured lights and red bows on the posts, a wreath with a red bow on the
+# gate posts (on the Deluxe's rose arch), a little Christmas tree in its garden (baubles, lights, a gold star, presents at
+# its foot) where there's room, and a lit gold star on the roof's top. The fence's dress by the pen's size
+# (xmas_fence_t0..t4: the five pens are the same for every breed); the tree and the star their own models, set in place by
+# the browser (coops.json dress: where the tree stands in each breed's pen in each look).
+XMAS = dict(fir='#2f5a34', fir2='#3e6e3c', fir3='#24492b', bow='#c8283c', bow2='#a81f30', gold='#e2b443', silver='#c9d6e3',
+            red='#d23b3b', blue='#3d6fc4', green='#4fae55', paper=('#c8283c', '#2f6e4a', '#e9d7a5', '#3d6aa8'), ribbon='#f2d36b', pot='#a8442f')
+XLIGHTS = ('#ff5a4f', '#ffd25c', '#5fd36b', '#5aa2ff', '#ffffff')            # its bulbs (they glow at night: export GLOW)
+
+
+def _xm(key, rough=0.7, **kw):
+    v = XMAS[key]
+    return C('xm_' + key, v if isinstance(v, str) else v[0], rough=rough, **kw)
+
+
+def _xbulbs():
+    return [C('xlight%d' % i, h, rough=0.3, emission=(h, 0.6)) for i, h in enumerate(XLIGHTS)]
+
+
+def _bow(objs, x, y, z, nx, ny, s=1.0):
+    """A red bow facing (nx, ny): two loops, a knot, two tails."""
+    bow, bow2 = _xm('bow', rough=0.5), _xm('bow2', rough=0.5)
+    tx, ty = -ny, nx                                               # (along the face)
+    for sd in (-1, 1):
+        objs.append(sphere('xbow', 0.022 * s, (x + tx * sd * 0.024 * s, y + ty * sd * 0.024 * s, z), (1.4, 0.7, 0.9), (0, 0, math.atan2(ty, tx)), m=bow, seg=8, rings=5))
+        objs.append(box('xtail', (0.012 * s, 0.006 * s, 0.05 * s), (x + tx * sd * 0.012 * s, y + ty * sd * 0.012 * s, z - 0.03 * s), (0, sd * 0.35, math.atan2(ty, tx)), m=bow2, bevel=0.002, segs=1))
+    objs.append(sphere('xknot', 0.011 * s, (x + nx * 0.008, y + ny * 0.008, z), m=bow2, seg=8, rings=5))
+
+
+def _garland(objs, pts, sag, bulbs, seed=0):
+    """A fir garland hung from point to point (each span sagging), little coloured lights along it."""
+    random.seed(seed); fir = [_xm('fir', rough=0.9), _xm('fir2', rough=0.9), _xm('fir3', rough=0.9)]
+    k = 0
+    for p, q in zip(pts, pts[1:]):
+        p, q = Vector(p), Vector(q); L = (q - p).length; n = max(4, int(L / 0.075))
+        cur = [p.lerp(q, i / n) - Vector((0, 0, sag * 4 * (i / n) * (1 - i / n) * min(1.0, L / 0.55))) for i in range(n + 1)]
+        for a, b in zip(cur, cur[1:]):
+            objs.append(cyl('xrope', 0.016, (b - a).length + 0.004, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=fir[0], verts=5, bevel=0.0))
+        for i, c in enumerate(cur[:-1]):
+            objs.append(sphere('xfir', random.uniform(0.026, 0.034), c + Vector((random.uniform(-0.01, 0.01), random.uniform(-0.01, 0.01), 0.004)), (1.3, 1.0, 0.8), (0, 0, random.uniform(0, 3)), m=random.choice(fir), ico=1, disp=0.4, disp_scale=5.0, seed=k))
+            if i % 2 == 1:
+                d = Vector((random.uniform(-1, 1), random.uniform(-1, 1), -0.6)).normalized()
+                objs.append(sphere('xbulb', 0.014, c + d * 0.03, (1, 1, 1.25), m=bulbs[k % len(bulbs)], ico=1))
+            k += 1
+
+
+def xmas_fence(t):
+    """The Christmas dress for a pen's fence (t: the look): the garland along its front and sides, bows on the posts, a wreath
+    with a bow on each gate post (the Deluxe: on its rose arch)."""
+    random.seed(80 + t); objs = []
+    L = pen_layout(t); keep = coop.PEN; coop.PEN = L
+    try: hinge, gc = coop.gate_span()
+    finally: coop.PEN = keep
+    x0, x1, y0, y1 = L['box']; bulbs = _xbulbs()
+    zt = 0.53 if t != 4 else 0.45                                  # (the posts' tops; the pickets' on the Deluxe)
+    def posts(a, b):
+        a, b = Vector(a), Vector(b); n = max(1, int((b - a).length / 0.55)); return [a.lerp(b, i / n) for i in range(n + 1)]
+    front = posts((x0, y0), (x1, y0)); g0 = min(hinge, 2 * gc - hinge); g1 = max(hinge, 2 * gc - hinge)
+    left, right = posts((x0, y0), (x0, y1)), posts((x1, y0), (x1, y1))
+    runs = [[(p.x, p.y, zt) for p in front if p.x <= g0 + 0.01], [(p.x, p.y, zt) for p in front if p.x >= g1 - 0.01],
+            [(p.x, p.y, zt) for p in left], [(p.x, p.y, zt) for p in right]]
+    for i, r in enumerate(runs):
+        if len(r) > 1: _garland(objs, r, 0.07, bulbs, seed=i + 10 * t)
+    for p in front + left[1:] + right[1:]:                         # a bow on each post (not the gate's: their wreaths)
+        if abs(p.x - g0) < 0.05 or abs(p.x - g1) < 0.05: continue
+        ny = -1 if abs(p.y - y0) < 0.01 else 0; nx = 0 if ny else (-1 if abs(p.x - x0) < 0.01 else 1)
+        _bow(objs, p.x + nx * 0.045, p.y + ny * 0.045, zt - 0.03, nx, ny, 1.0)
+    # the wreaths: on the two gate posts, facing out (the Deluxe: one, under its rose arch's top)
+    fir = [_xm('fir', rough=0.9), _xm('fir2', rough=0.9)]; berry = _xm('red', rough=0.4)
+    spots = [((g0 + g1) / 2, y0 - 0.03, 0.86 + (g1 - g0) / 2 - 0.16, 0.09)] if t == 4 else [(g0, y0 - 0.06, 0.36, 0.075), (g1, y0 - 0.06, 0.36, 0.075)]
+    for (wx, wy, wz, R) in spots:
+        bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=R * 0.3, major_segments=18, minor_segments=6, location=(wx, wy, wz), rotation=(math.radians(90), 0, 0))
+        o = bpy.context.object; setmat(o, fir[0]); objs.append(o)
+        for k in range(10):
+            a = k / 10 * math.tau
+            objs.append(sphere('xwfir', R * 0.36, (wx + math.cos(a) * R, wy - 0.01, wz + math.sin(a) * R), (1.3, 0.6, 0.9), (0, a, 0), m=fir[k % 2], ico=1, disp=0.35, seed=k + 30))
+            if k % 3 == 0: objs.append(sphere('xberry', 0.012, (wx + math.cos(a + 0.3) * R, wy - 0.03, wz + math.sin(a + 0.3) * R), m=berry, ico=1))
+        _bow(objs, wx, wy - 0.03, wz - R * 0.95, 0, -1, 1.2)
+        if t == 4: objs.append(cyl('xwire', 0.003, 0.16, (wx, wy, wz + R + 0.08), m=C('iron', '#26231f', rough=0.5, metal=0.6), verts=4, bevel=0.0))
+    return finish(objs, 'xmas_fence_t%d' % t)
+
+
+XMAS_TREE_R = 0.3                                                  # what the birds keep clear of round the tree
+
+
+def xmas_tree():
+    """A little Christmas tree in a red pot: tiers of fir, baubles, a string of lights, a gold star, three presents at its foot."""
+    random.seed(90); objs = []
+    fir = [_xm('fir', rough=0.9), _xm('fir2', rough=0.9), _xm('fir3', rough=0.9)]; gold = C('xm_star', XMAS['gold'], rough=0.3, emission=(XMAS['gold'], 0.5))
+    bulbs = _xbulbs(); balls = [_xm('red', rough=0.25, spec=0.6), _xm('gold', rough=0.25, metal=0.6), _xm('silver', rough=0.25, metal=0.6), _xm('blue', rough=0.25, spec=0.6)]
+    objs.append(cyl('xpot', 0.1, 0.12, (0, 0, 0.06), m=_xm('pot', rough=0.6), verts=14, r2=0.085, bevel=0.008))
+    objs.append(cyl('xtrunk', 0.025, 0.12, (0, 0, 0.16), m=C('cs_trunk', CS['trunk'], rough=0.9), verts=7, bevel=0.0))
+    tiers = ((0.18, 0.22, 0.24), (0.33, 0.17, 0.22), (0.47, 0.12, 0.2), (0.59, 0.075, 0.16))
+    for k, (z0, r, h) in enumerate(tiers):
+        objs.append(cyl('xtier', r, h, (0, 0, z0 + h / 2), (0, 0, k * 0.5), m=fir[k % 3], verts=10, r2=0.0, bevel=0.0))
+        for j in range(7 - k):                                    # bushy edges
+            a = j / (7 - k) * math.tau + k
+            objs.append(sphere('xedge', 0.035, (math.cos(a) * r * 0.85, math.sin(a) * r * 0.85, z0 + 0.03), (1.2, 1.2, 0.6), m=fir[(j + k) % 3], ico=1, disp=0.3, seed=j + 10 * k))
+    for k in range(16):                                           # baubles round the tiers
+        z = random.uniform(0.22, 0.62); rr = 0.2 * (1 - (z - 0.18) / 0.55) + 0.02; a = random.uniform(0, math.tau)
+        objs.append(sphere('xball', 0.022, (math.cos(a) * rr, math.sin(a) * rr, z), m=balls[k % 4], seg=10, rings=6))
+    for k in range(26):                                           # a string of lights spiralling up
+        u = k / 26; z = 0.2 + u * 0.45; rr = 0.21 * (1 - u) + 0.04; a = u * 3.2 * math.tau
+        objs.append(sphere('xbulb', 0.011, (math.cos(a) * rr, math.sin(a) * rr, z), (1, 1, 1.25), m=bulbs[k % len(bulbs)], ico=1))
+    star(objs, 0, 0, 0.8, 0.055, gold)
+    paper = [C('xm_paper%d' % i, h, rough=0.6) for i, h in enumerate(XMAS['paper'])]; rib = _xm('ribbon', rough=0.4)
+    for k, (dx, dy, w, d, h, a) in enumerate(((0.16, -0.08, 0.1, 0.09, 0.08, 0.3), (-0.12, -0.14, 0.12, 0.1, 0.07, -0.4), (0.03, -0.2, 0.08, 0.08, 0.1, 0.1))):
+        objs.append(box('xgift', (w, d, h), (dx, dy, h / 2), (0, 0, a), m=paper[k], bevel=0.006, segs=1))
+        objs.append(box('xrib', (w + 0.004, 0.016, h + 0.004), (dx, dy, h / 2), (0, 0, a), m=rib, bevel=0.002, segs=1))
+        objs.append(box('xrib', (0.016, d + 0.004, h + 0.004), (dx, dy, h / 2), (0, 0, a), m=rib, bevel=0.002, segs=1))
+        _bow(objs, dx, dy, h + 0.012, 0, -1, 0.5)
+    return finish(objs, 'xmas_tree')
+
+
+def star(objs, x, y, z, r, m, th=0.022, name='xstar'):
+    """A five-pointed star standing upright at (x, y, z), r across its points, facing the front (-y)."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); ring = []
+    for k in range(10):
+        a = math.pi / 2 + k * math.pi / 5; rr = r if k % 2 == 0 else r * 0.45
+        ring.append((x + math.cos(a) * rr, z + math.sin(a) * rr))
+    f0 = [bm.verts.new((u, y - th / 2, v)) for (u, v) in ring]; f1 = [bm.verts.new((u, y + th / 2, v)) for (u, v) in ring]
+    c0 = bm.verts.new((x, y - th, z)); c1 = bm.verts.new((x, y + th, z))      # (a little domed, front and back)
+    for i in range(10):
+        j = (i + 1) % 10
+        bm.faces.new((c0, f0[i], f0[j])); bm.faces.new((c1, f1[j], f1[i])); bm.faces.new((f0[i], f1[i], f1[j], f0[j]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); objs.append(o)
+
+
+def xmas_star():
+    """A lit gold star on a little rod, standing on the origin (the browser sets it on a roof's top)."""
+    objs = []; gold = C('xm_star', XMAS['gold'], rough=0.3, emission=(XMAS['gold'], 0.5))
+    objs.append(cyl('xsrod', 0.01, 0.16, (0, 0, 0.08), m=C('gold', '#d4a640', rough=0.3, metal=0.9), verts=6, bevel=0.0))
+    star(objs, 0, 0, 0.3, 0.15, gold, th=0.04)
+    return finish(objs, 'xmas_star')
+
+
+def xmas_tree_spot(t, k):
+    """Where the Christmas tree stands in breed k's pen in look t ([glTF x, z, its size]), clear of everything (its keep:
+    XMAS_TREE_R times its size), in front of the house, as near a front corner as there's room: full size, else smaller
+    (a small pen); None if there's no room at all."""
+    for s_ in (1.0, 0.8, 0.65):
+        sp = _tree_spot(t, k, XMAS_TREE_R * s_)
+        if sp: return sp + [s_]
+    return None
+
+
+def _tree_spot(t, k, TR):
+    P = pen_info(t, k); play = play_info(t, k); L = pen_layout(t, k); N = NESTS['house_' + k]
+    x0, x1 = P['min'][0], P['max'][0]; z0, z1 = P['min'][1], P['max'][1]          # (glTF: z = -y; the front at z1)
+    obs = [(P['feeder'][0], P['feeder'][1], 0.22), (P['dish'][0], P['dish'][1], P['dish_r'] + 0.02)]
+    obs += [(h[0], h[1], 0.36) for h in P['hay']] + ([(P['sack'][0], P['sack'][1], 0.25)] if P['sack'] else [])
+    if play: obs += [tuple(c) for c in play['keep']]
+    look = (['box_', 'shed_', 'house_', 'cosy_', 'deluxe_'][t]) + k
+    obs += [tuple(b) for b in BLOCKS.get('house_' + k, []) + BLOCKS.get(look, [])]
+    foot = (N['foot'][0], N['foot'][1]); gate = (P['gate'], z1 - 0.05)
+    def seg_d(px, pz, a, b):
+        ax, az = a; bx, bz = b; vx, vz = bx - ax, bz - az; t_ = max(0, min(1, ((px - ax) * vx + (pz - az) * vz) / (vx * vx + vz * vz + 1e-9)))
+        return math.hypot(px - ax - t_ * vx, pz - az - t_ * vz)
+    best = None
+    for i in range(int((x1 - x0) / 0.05) + 1):
+        for j in range(int((z1 - z0) / 0.05) + 1):
+            x, z = x0 + i * 0.05, z0 + j * 0.05
+            if min(x - x0, x1 - x, z - z0, z1 - z) < TR + 0.05: continue
+            if abs(x) < W2 + 0.2 + TR and z < D2 + 0.15 + TR: continue        # (the house)
+            if seg_d(x, z, (-0.31, D2), foot) < 0.22 + TR: continue                       # (the ramp)
+            if seg_d(x, z, foot, gate) < 0.28 + TR: continue                              # (the way to the gate)
+            if any(math.hypot(x - a, z - b) < r + TR for (a, b, r) in obs): continue
+            if z < D2 + 0.3: continue                                                              # (in front of the house)
+            d = min(math.hypot(x - (x0 + 0.4), z - (z1 - 0.4)), math.hypot(x - (x1 - 0.4), z - (z1 - 0.4)))
+            if best is None or d < best[0]: best = (d, round(x, 3), round(z, 3))
+    return [best[1], best[2]] if best else None

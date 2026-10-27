@@ -15,18 +15,19 @@ import hen, coop, tree, grass, farm_layout
 
 MODELS = {}              # name -> list of primitives (bucket, positions, normals, colours, indices)
 STATS = {}
-BUCKETS = {'matte': (0.85, 0.0), 'satin': (0.55, 0.0), 'gloss': (0.25, 0.0), 'metal': (0.35, 0.8), 'glow': (0.4, 0.0), 'window': (0.15, 0.0),
+BUCKETS = {'matte': (0.85, 0.0), 'satin': (0.55, 0.0), 'gloss': (0.25, 0.0), 'metal': (0.35, 0.8), 'glow': (0.4, 0.0), 'glowc': (0.4, 0.0), 'window': (0.15, 0.0),
            'sky': (0.3, 0.0)}
 # materials that light up at night in the browser (by material name, without Blender's .001 suffixes): lamps and lanterns
 # ('glow') and lit windows ('window'); each export script fills these in
 GLOW, WINDOWS, SKIES = set(), set(), set()               # SKIES: a night sky seen through a window (a cool glow)
+GLOWC = set()                                             # coloured lights that keep their own colour at night (the Christmas bulbs)
 
 
 def bucket_of(m):
     if m is None: return 'matte', [0.8, 0.8, 0.8]
     import re                                    # baked materials are FF_<name> or FF_<name>_<shade>
     base = re.sub(r'^FF_', '', m.name.split('.')[0]); names = {base, re.sub(r'_[012]$', '', base)}
-    lit = 'glow' if names & GLOW else 'window' if names & WINDOWS else 'sky' if names & SKIES else None
+    lit = 'glowc' if names & GLOWC else 'glow' if names & GLOW else 'window' if names & WINDOWS else 'sky' if names & SKIES else None
     if lit:
         b = m.node_tree.nodes.get('Principled BSDF') if m.use_nodes else None
         return lit, (list(b.inputs['Base Color'].default_value)[:3] if b else list(m.diffuse_color)[:3])

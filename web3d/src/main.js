@@ -190,14 +190,16 @@ function applyDaylight(h) {
 }
 // lamps, lanterns and lit windows: their own materials (glow, window) gain a warm light of their own as night falls
 function lightUp(mat) {
-  if (mat.userData.lit || (mat.name !== 'glow' && mat.name !== 'window')) return;
-  const lamp = mat.name === 'glow';
+  if (mat.userData.lit || (mat.name !== 'glow' && mat.name !== 'glowc' && mat.name !== 'window')) return;
+  const lamp = mat.name === 'glow', own = mat.name === 'glowc';             // (glowc: coloured bulbs that keep their colour)
   mat.userData.lit = true;
   mat.onBeforeCompile = sh => {
     sh.uniforms.dayGlow = DAY.glow; sh.uniforms.dayWarm = DAY.warm;
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float dayGlow;\nuniform vec3 dayWarm;')
-      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + (lamp
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' + (own
+        ? '#ifdef USE_COLOR\ntotalEmissiveRadiance += vColor.rgb * dayGlow * 1.5;\n#endif'
+        : lamp
         ? '#ifdef USE_COLOR\ntotalEmissiveRadiance += mix(vColor.rgb, dayWarm, 0.35) * dayGlow * 2.4;\n#else\ntotalEmissiveRadiance += dayWarm * dayGlow * 2.4;\n#endif'
         : 'totalEmissiveRadiance += dayWarm * dayGlow * 1.25;'));
   };
@@ -208,7 +210,7 @@ function lightUp(mat) {
 // (the lamps and lit windows keep their warm colour). One line added to each material's shader, after its own changes.
 const NIGHT_TINT = { value: new THREE.Vector3(0.78, 0.92, 1.32) }, GRADE = { value: 0 };     // how far (0-1)
 function nightGrade(mat) {
-  if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'window') return;
+  if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'glowc' || mat.name === 'window') return;
   mat.userData.graded = true;
   const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey;
   mat.onBeforeCompile = (sh, r) => {
@@ -491,7 +493,7 @@ function addLampPools() {
   }
   for (const pl of plots) {
     if (pl.kind !== 'coop') continue;
-    const lk = coopLook(pl), L = [...(COOPS.lights[lk.house] || COOPS.lights['house_' + pl.breed] || []), ...(COOPS.lights[lk.fence] || [])];
+    const lk = coopLook(pl), tree = dressTree(pl), L = [...(COOPS.lights[lk.house] || COOPS.lights['house_' + pl.breed] || []), ...(COOPS.lights[lk.fence] || []), ...(tree ? [[tree[0], 0.4, tree[1]]] : [])];
     pl.pools = { from: lampPools.spots.length, L };
     for (const l of L) { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.add(v.x, v.z, 0.75); }
   }
@@ -1053,7 +1055,8 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / BREEDS.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
-    plot.pen = coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN;      // (its pen: the birds' yard, what's in it, its gate)
+    plot.dress = gc ? gc.dress || null : params.get('dress');       // (a seasonal dress: the game's, or the test page's ?dress=xmas)
+    plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN);      // (its pen: the birds' yard, what's in it, its gate)
     addNest(frame, plot);
     if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
@@ -1132,7 +1135,37 @@ function coopParts(plot) {
   const L = coopLook(plot), house = L.house, I = new THREE.Matrix4();
   const out = [[inColour(house, plot), I], [L.pen, I], [L.fence, I]];
   if (L.vane) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
+  if (plot.dress === 'xmas' && parts.xmas_star) {                // (the Christmas dress: the garland on its fence, the tree, the star on its roof; on a vane's top)
+    out.push(['xmas_fence_t' + Math.max(0, L.penT < 0 ? 2 : L.penT), I]);
+    const tr = dressTree(plot); if (tr) out.push(['xmas_tree', new THREE.Matrix4().makeTranslation(tr[0], 0, tr[1]).multiply(new THREE.Matrix4().makeScale(tr[2] || 1, tr[2] || 1, tr[2] || 1))]);
+    const t = COOPS.tops[house]; if (t) out.push(['xmas_star', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.03 + (L.vane ? 0.47 : 0), t[2])]);
+    const fl = xmasLights(house); if (fl) out.push([fl, I]);
+  }
   return out;
+}
+// the dress's fairy lights along a house's front eave (coops.json dress.xmas.lights: each bulb, from stylized's
+// export_coops.py eave_of), made once for each house as a part of their own: little bulbs in turn red, gold, green, blue and
+// white, lit at night like the lanterns
+const XMAS_BULBS = ['#ff5a4f', '#ffd25c', '#5fd36b', '#5aa2ff', '#ffffff'].map(h => new THREE.Color(h));
+function xmasLights(house) {
+  const key = 'xmas_lights:' + house; if (key in parts) return parts[key] ? key : null;
+  const P = ((COOPS.dress || {}).xmas || {}).lights?.[house]; if (!P || !P.length) { parts[key] = null; return null; }
+  const base = new THREE.IcosahedronGeometry(0.014, 0).toNonIndexed(), bp = base.attributes.position.array, n = bp.length / 3;
+  const pos = new Float32Array(P.length * n * 3), col = new Float32Array(P.length * n * 3);
+  P.forEach((q, i) => { const c = XMAS_BULBS[i % XMAS_BULBS.length]; for (let k = 0; k < n; k++) { const o = (i * n + k) * 3; pos[o] = bp[3 * k] + q[0]; pos[o + 1] = bp[3 * k + 1] * 1.2 + q[1]; pos[o + 2] = bp[3 * k + 2] + q[2]; col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b; } });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.35 }); m.name = 'glowc'; lightUp(m);
+  const grp = new THREE.Group(); grp.add(new THREE.Mesh(g, m)); grp.updateMatrixWorld(true); parts[key] = grp; return key;
+}
+// the Christmas dress's tree: where it stands in this coop's pen (coops.json dress), or none (no room, or not dressed)
+function dressTree(plot) {
+  if (plot.dress !== 'xmas' || !COOPS.dress || !parts.xmas_tree) return null;
+  const L = coopLook(plot); return ((COOPS.dress.xmas.tree[plot.breed] || {})[L.penT < 0 ? 2 : L.penT]) || null;
+}
+// its pen with the tree in the way (the birds walk round it)
+function dressedPen(plot, pen) {
+  const tr = dressTree(plot); if (!tr) return pen;
+  return { ...pen, obstacles: [...pen.obstacles, [tr[0], 0, tr[1], COOPS.dress.xmas.tree_r * (tr[2] || 1)]] };
 }
 // the coops in their styles' batches (made again when one's moved; the one being moved is drawn on its own meanwhile)
 const COOP_BATCH = [];
@@ -4268,11 +4301,11 @@ function tryUpgrade(p) {
 // what's in it, its play things, its feeder's grain, its lanterns, the walking grid and the grass round it
 function retier(p) {
   p.gc = game.coop(p.gc.id) || p.gc;
-  p.tier = p.gc.tier; p.rustic = p.gc.tier === 0; p.deluxe = p.gc.tier >= 4;
+  p.tier = p.gc.tier; p.rustic = p.gc.tier === 0; p.deluxe = p.gc.tier >= 4; p.dress = p.gc.dress || null;
   for (const b of p.birds) if (b.play) endPlay(b, true);
   if (p.toys) { p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
   const L = coopLook(p);
-  p.pen = L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN;
+  p.pen = dressedPen(p, L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN);
   p.block = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
   if (penOf(p).play && parts.swing_seat) addToys(p, penOf(p).play, part);

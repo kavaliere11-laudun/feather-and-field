@@ -28,13 +28,58 @@ def top_of(name):
     TOPS[name] = [round(best.x, 4), round(best.z, 4), round(-best.y, 4)]
 
 
+EAVES = {}
+
+
+def eave_of(name):
+    """The Christmas dress's fairy lights along a house's front eave: rays straight down across the front of its roof find
+    the eave's front edge at each x (a lantern or a pot in front left out: each point near its neighbours'), the bulbs
+    hung under it in little swags (glTF axes; where the edge breaks, so does the string: a porch hood has its own)."""
+    from mathutils import Vector
+    import statistics
+    dg = bpy.context.evaluated_depsgraph_get(); dg.update(); scn = bpy.context.scene
+    W = coops.W2 + 0.1; N = 30; edge = []
+    for i in range(N + 1):
+        x = -W + i * 2 * W / N; e = None
+        for j in range(100):
+            y = -1.35 + j * 0.0135
+            hit, loc, nrm, idx, ob, mw = scn.ray_cast(dg, Vector((x, y, 6.0)), Vector((0, 0, -1)))
+            if hit and loc.z > 0.55 and nrm.z > 0.2: e = loc.copy(); break
+        edge.append(e)
+    keep = []
+    for i, e in enumerate(edge):                                   # (each point near its neighbours: a lantern's top isn't an eave)
+        near = [q for q in edge[max(0, i - 3):i + 4] if q is not None]
+        if e is None or len(near) < 4: keep.append(None); continue
+        my, mz = statistics.median(q.y for q in near), statistics.median(q.z for q in near)
+        keep.append(e if abs(e.y - my) < 0.04 and abs(e.z - mz) < 0.05 else None)
+    bulbs = []; run = []
+    def flush():
+        if len(run) < 3: return
+        L = sum((b - a).length for a, b in zip(run, run[1:])); n = max(2, int(L / 0.065)); hooks = max(1, round(L / 0.24))
+        for k in range(n + 1):
+            u = k / n; d = u * L; acc = 0.0
+            for a, b in zip(run, run[1:]):
+                sl = (b - a).length
+                if acc + sl >= d - 1e-9:
+                    q = a.lerp(b, (d - acc) / sl if sl else 0); break
+                acc += sl
+            sw = 0.03 + 0.035 * math.sin(math.pi * ((u * hooks) % 1.0))
+            bulbs.append([round(q.x, 3), round(q.z - sw, 3), round(-(q.y - 0.012), 3)])
+    for i, e in enumerate(keep):
+        if e is not None and run and (abs(e.z - run[-1].z) > 0.08 or abs(e.y - run[-1].y) > 0.08): flush(); run = []
+        if e is None: flush(); run = []
+        else: run.append(e)
+    flush()
+    EAVES[name] = bulbs
+
+
 def one(name, fn):
     fresh(); coops.reset_mats(); coop.PEN = dict(farm_layout.NEW['pen'])
     fn(); light(1, bevel_segments=1)
     for o in bpy.context.scene.objects:          # shingles: plain boxes (their bevels can't be seen from the game's camera)
         if o.name.startswith('sh'):
             for md in [m for m in o.modifiers if m.type == 'BEVEL']: o.modifiers.remove(md)
-    if name.startswith(('house_', 'rustic_', 'box_', 'shed_', 'cosy_', 'deluxe_')): top_of(name)
+    if name.startswith(('house_', 'rustic_', 'box_', 'shed_', 'cosy_', 'deluxe_')): top_of(name); eave_of(name)
     bake_and_export(name)
 
 
@@ -88,10 +133,18 @@ _keep = dict(coops.NESTS['house_bra'])
 for n_, fn in (('box_bra', coops.box_bra), ('shed_bra', coops.shed_bra), ('cosy_bra', coops.cosy_bra), ('deluxe_bra', coops.deluxe_bra)): one(n_, fn); LOOKS.append(n_)
 assert coops.NESTS['house_bra'] == _keep, 'the looks must keep the Timber Lodge\'s nest'
 for t in (0, 1, 3, 4): one('pen_t%d_bra' % t, lambda t=t: coops.pen_tier(t, 'bra')); LOOKS.append('pen_t%d_bra' % t)
+# the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
+GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
+BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})
+for t in range(5): one('xmas_fence_t%d' % t, lambda t=t: coops.xmas_fence(t)); LOOKS.append('xmas_fence_t%d' % t)
+one('xmas_tree', coops.xmas_tree); one('xmas_star', coops.xmas_star); LOOKS += ['xmas_tree', 'xmas_star']
 PENS = {k: {t: dict(coops.pen_info(t, k), play=coops.play_info(t, k)) for t in range(5)} for k in coops.PENS_BY}       # each breed's pens by look          # each look's pen for the birds (glTF axes)
 names = LOOKS + ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get(k, []))]          # what the birds walk round in front of each house (once each: the rustic barn builds the Red Barn again)
 lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in coops.LIGHTS.items()}      # (once each: a rustic house builds its house again)
-json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+DRESS = {'xmas': dict(tree_r=coops.XMAS_TREE_R, tree={k: {t: coops.xmas_tree_spot(t, k) for t in range(5)} for k in coops.PENS_BY}, lights=EAVES)}
+print('XMAS LIGHTS', json.dumps({k: len(v) for k, v in EAVES.items()}))
+print('XMAS TREES', json.dumps(DRESS['xmas']['tree']))
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, dress=DRESS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))
