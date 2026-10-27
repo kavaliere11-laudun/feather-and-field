@@ -12,6 +12,7 @@ sed "s/src=\"app.js\"/src=\"app.js?v=$BUST\"/" index.html > dist/index.html
 sed -e "s/src=\"app.js\"/src=\"app.js?v=$BUST\"/" -e "s/<body>/<body class=\"game\">/" -e "s/<title>[^<]*<\/title>/<title>Feather \&amp; Field<\/title>/" -e "s/Loading the village…/Loading your farm…/" -e "s|<link rel=\"apple-touch-icon\" href=\"icon-180.png\">|&\n<link rel=\"manifest\" href=\"play.webmanifest\">|" index.html > dist/play.html
 rm -rf dist/models && mkdir -p dist/models
 cp models/plants.glb models/flock.glb models/flock.json models/coops.glb models/coops.json models/silkie_hair.jpg models/village.glb models/village.json models/layout.json models/meadow.jpg models/interiors.glb models/interiors.json models/beasts.glb models/beasts.json models/fauna.glb models/geese.glb models/geese.json models/farmer.glb models/farmer.json models/decor.glb models/decor.json models/fields.json models/showground.glb models/showground.json models/judge.glb models/judge.json dist/models/
+for m in coops village interiors decor showground fauna; do node slim.mjs models/$m.glb dist/models/$m.glb > /dev/null; done      # (the still models made smaller: slim.mjs, ~6 MB off the first load; main.js unslim)
 cp models/outfit_*.glb models/outfit_*.json dist/models/          # (the farmers' outfits, each loaded only when worn: farmer.js loadOutfit)
 rm -rf dist/fonts && cp -r fonts dist/fonts          # (the replay's title cards: IM Fell English, with its licence)
 cp welcome.jpg dist/welcome.jpg                      # (the game's welcome picture: main.js ?poster, rendered by posterpic.mjs)

@@ -382,6 +382,11 @@ def _farmer_torso(chest, Mt):
          ('ELLIPSOID', (0.0, 0, 0.25), 0.058 * K, (1, 1, 1.2), 2.0)]
     torso = metaball_mesh('torso', E, res=0.008, m=Mt['shirt'], parent=chest)
     torso.data.materials.append(Mt['denim'])
+    import bmesh                                                    # (cut along the waist and the bib's edges first, so where
+    bm = bmesh.new(); bm.from_mesh(torso.data)                      # the shirt meets the denim is a clean line: a plain shirt
+    for co, no in (((0, 0, -0.05), (0, 0, 1)), ((0, 0, 0.11), (0, 0, 1)), ((0, 0.085, 0), (0, 1, 0)), ((0, -0.085, 0), (0, 1, 0))):
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=co, plane_no=no)      # showed it jagged
+    bm.to_mesh(torso.data); bm.free(); torso.data.update()
     for poly in torso.data.polygons:
         c = poly.center
         bib = c.x > 0.02 and abs(c.y) < 0.085 and c.z < 0.11
@@ -617,9 +622,10 @@ def hair(look, hd, hr, surf, Mt):
         for sd in (1, -1):                                          # locks in front of the ears
             p, n = surf((0.35, sd * 0.95, -0.2)); E.append(('ELLIPSOID', tuple(p - n * 0.004), 0.02 * K, (0.7, 0.7, 2.0), 2.0))
         metaball_mesh('hair', E, res=0.006, m=Mt['hair'], parent=hd)
-        # a long plait over her right shoulder, tied with a ribbon
+        # a long plait over her right shoulder, tied with a ribbon: down her front, inside the shoulder (it used to fall over
+        # the top of her arm, through the sleeve)
         p0, n0 = surf((-0.4, -0.85, -0.35))
-        pts = [p0, p0 + Vector((0.03, -0.04, -0.1)), p0 + Vector((0.09, -0.05, -0.2)), p0 + Vector((0.14, -0.04, -0.3)), p0 + Vector((0.17, -0.03, -0.38))]
+        pts = [p0] + [Vector(q) for q in PLAIT]
         beads = []
         for i in range(14):
             t = i / 13; seg = min(3, int(t * 4)); f = t * 4 - seg
@@ -632,6 +638,10 @@ def hair(look, hd, hr, surf, Mt):
         for sd in (1, -1):
             r = sphere('bow', 1.0, tuple(tip + Vector((0.005, sd * 0.02, 0.022))), (0.012, 0.02, 0.01), (sd * 0.4, 0, 0), m=Mt['band'], parent=hd, seg=14, rings=8)
         metaball_mesh('plaitend', [('ELLIPSOID', tuple(tip + Vector((0.004, 0, -0.03))), 0.016 * K, (0.9, 0.9, 1.5), 2.0)], res=0.004, m=Mt['hair'], parent=hd)
+
+
+PLAIT = [tuple(float(v) for v in q.split(',')) for q in os.environ['PLAIT'].split(';')] if os.environ.get('PLAIT') else \
+    [(-0.03, -0.165, -0.145), (0.062, -0.115, -0.235), (0.12, -0.108, -0.325), (0.138, -0.1, -0.41)]          # (the head's own place: 1.165 up)
 
 
 def hair_top(look, hd, surf, Mt):

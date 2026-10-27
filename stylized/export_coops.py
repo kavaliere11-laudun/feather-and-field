@@ -16,15 +16,19 @@ BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'hous
 TOPS = {}
 
 
+LEAN_TO = {'shed_rir'}                     # (a roof of one slope: its top is its high back edge, not its middle)
+
+
 def top_of(name):
     """The highest point near the middle of the roof (not a chimney), in glTF axes."""
     dg = bpy.context.evaluated_depsgraph_get(); dg.update(); best = None
+    wy = 1.5 if name in LEAN_TO else 0.2
     for o in bpy.context.scene.objects:
         if o.type != 'MESH': continue
         me = o.evaluated_get(dg).to_mesh()
         for v in me.vertices:
             p = o.matrix_world @ v.co
-            if abs(p.x) < 0.2 and abs(p.y) < 0.2 and (best is None or p.z > best.z + 0.01 or (p.z > best.z - 0.01 and abs(p.x) + abs(p.y) < abs(best.x) + abs(best.y))): best = p.copy()
+            if abs(p.x) < 0.2 and abs(p.y) < wy and (best is None or p.z > best.z + 0.01 or (p.z > best.z - 0.01 and abs(p.x) + abs(p.y) < abs(best.x) + abs(best.y))): best = p.copy()
     TOPS[name] = [round(best.x, 4), round(best.z, 4), round(-best.y, 4)]
 
 

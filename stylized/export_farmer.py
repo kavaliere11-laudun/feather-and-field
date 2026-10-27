@@ -163,6 +163,14 @@ def bake(look, root, budget, info, only=None, store=None, keep=()):
         if ratio >= 0.98: total += n; continue
         tmp = bpy.data.objects.new('tmp', me); bpy.context.scene.collection.objects.link(tmp)
         md = tmp.modifiers.new('dec', 'DECIMATE'); md.ratio = ratio; md.use_collapse_triangulate = True
+        if len(me.materials) > 1:                       # (where one colour meets another kept as made: simplified, the line
+            seen = {}                                   # between the shirt and the dungarees came out jagged)
+            for poly in me.polygons:
+                for v in poly.vertices: seen.setdefault(v, set()).add(poly.material_index)
+            edge = [v for v, s in seen.items() if len(s) > 1]
+            if edge:
+                vg = tmp.vertex_groups.new(name='simplify'); vg.add(range(len(me.vertices)), 1.0, 'REPLACE'); vg.add(edge, 0.0, 'REPLACE')
+                md.vertex_group = 'simplify'; md.vertex_group_factor = 100.0
         dg.update()
         me2 = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg), preserve_all_data_layers=True, depsgraph=dg)
         bpy.data.objects.remove(tmp); me2.calc_loop_triangles(); rec[1] = me2; rec[2] = len(me2.loop_triangles); total += rec[2]

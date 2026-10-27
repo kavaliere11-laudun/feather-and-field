@@ -294,9 +294,34 @@ function showProgress() {
   bar.style.width = Math.round(100 * got / Math.max(1, total)) + '%';
 }
 function loadGLB(name) {
-  return new Promise((resolve, reject) => new GLTFLoader().load(MODELS + name + BUST, resolve,
+  return new Promise((resolve, reject) => new GLTFLoader().load(MODELS + name + BUST, glb => { unslim(glb); resolve(glb); },
     e => { progress[name] = [e.loaded, e.total || 1]; showProgress(); }, reject));
 }
+// a slimmed model (slim.mjs, as build.sh copies it: a still mesh's corners as whole numbers on a grid its node scales and
+// moves back, its normals as bytes) made ordinary numbers again as it loads, its node put back where it was: everything after
+// sees the model just as it was made
+function unslim(glb) {
+  const nodes = new Set();
+  glb.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const g = o.geometry, p = g.attributes.position;
+    if (!p || (p.array instanceof Float32Array && !p.isInterleavedBufferAttribute)) return;
+    const nd = (o.scale.x !== 1 || o.position.lengthSq() > 0) ? o : o.parent, s = nd.scale.x, t = nd.position;
+    const P = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) { P[i * 3] = p.getX(i) * s + t.x; P[i * 3 + 1] = p.getY(i) * s + t.y; P[i * 3 + 2] = p.getZ(i) * s + t.z; }
+    g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+    const n = g.attributes.normal;
+    if (n && !(n.array instanceof Float32Array && !n.isInterleavedBufferAttribute)) {
+      const N = new Float32Array(n.count * 3);
+      for (let i = 0; i < n.count; i++) { _un.set(n.getX(i), n.getY(i), n.getZ(i)).normalize(); N[i * 3] = _un.x; N[i * 3 + 1] = _un.y; N[i * 3 + 2] = _un.z; }
+      g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+    }
+    g.boundingBox = null; g.boundingSphere = null; nodes.add(nd);
+  });
+  for (const nd of nodes) { nd.position.set(0, 0, 0); nd.scale.set(1, 1, 1); nd.updateMatrix(); }
+  glb.scene.updateMatrixWorld(true);
+}
+const _un = new THREE.Vector3();
 function loadJSON(name) { return fetch(MODELS + name + BUST).then(r => { if (!r.ok) throw new Error(name); return r.json(); }); }
 function loadImage(name) {
   return new Promise((resolve, reject) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = reject; im.src = MODELS + name + BUST; });

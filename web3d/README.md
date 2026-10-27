@@ -2595,3 +2595,30 @@ the birds already had.
   and `dresstest.mjs` (EN upright, FR sideways: the shelf, bought, the coop's card, dressed (its parts), its birds clear
   of the tree, in a Cosy look, a reload, off and on, out of season); `geesebuy.mjs` (the shop's four shelves).
   Pictures: `barnlooks.mjs DRESS=xmas`.
+
+## Small fixes (27 Oct 2026; Audrey, on the list of eight small fixes: "Yes")
+
+- **Rosie's plait** (character/farmer.py `PLAIT`): down her front, inside her right shoulder, instead of over the top of
+  her arm and through her sleeve (checked in Blender: clear of her arms and her chest standing, and with her head turned
+  as in the line-up's look; pictures with `rosieshot.mjs`).
+- **The shirt's edge** (farmer.py `_farmer_torso`, export_farmer.py `bake`): the torso is cut along the waist and the bib's
+  edges before the denim is given, and where one colour meets another is kept as made when it's simplified, so a plain
+  shirt (the show's white, the rodeo's chambray) meets the dungarees in a clean line, not a jagged one.
+- **The Red Barn's nest window** (coop.py `wall_boards`; coops.py `BARN_EAVE`, `BARN_PEAK`, coop.py `OVER_FRONT`): since 21
+  Oct a whole board had been laid over every opening of a boarded wall (the window and the hens' door showed only a
+  sliver); fixed, and the barn's walls a little taller and its front overhang shorter, so its nest and straw show from
+  the game's view in every look.
+- **A hen going to bed while you're inside** (main.js `insideArrive`, `arriveStep`): she comes in through the pop hole,
+  walks across the straw and hops onto a free perch spot (a chick to its corner), instead of waiting outside until you
+  leave. Test: `insidebed.mjs`.
+- **The Deluxe's rose arch and Rusty**: checked from the game's camera at every Deluxe coop (rays from the camera to Rusty
+  at its ramp): since the Deluxe gardens grew in release 4 nothing hides him; no change.
+- **The Christmas star** (coops.py `xmas_star`: a second star crossed with the first, so it shows from every side;
+  export_coops.py `LEAN_TO`: on the Mended Red Barn's one-slope roof it stands on the high back edge, not half in the roof).
+- **The Christmas lights along the whole eave** (export_coops.py `NOT_EAVES`: the rays pass a lantern, a bird box, a pot or
+  a plant in front of a roof instead of stopping there): the Cosy Timber Lodge's lights now reach its left end, past the
+  lantern post.
+- **A lighter first load** (`slim.mjs`, run by build.sh; main.js `unslim`): the still models (coops, village, interiors,
+  decor, showground, fauna) keep each mesh's corners as 16-bit whole numbers on a grid fitted to it and its normals as
+  bytes (KHR_mesh_quantization), turned back into ordinary numbers as they load, so everything after sees the very same
+  models (to within a twentieth of a millimetre on a coop). The coops file 15.3 → 10.5 MB, about 6 MB off the first load.
