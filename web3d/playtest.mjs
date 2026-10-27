@@ -30,7 +30,7 @@ for (const look of [3, 4]) {
       const started = f.startPlay(b, kind);
       if (!started) return { err: 'not started' };
       window.__pb = b;
-      const out = { phases: [], maxSwing: 0, onPerchY: 0, minY: 9, spin: 0, maxY: 0, fx: 0, time: 0 };
+      const out = { phases: [], maxSwing: 0, onPerchY: 0, minY: 9, spin: 0, maxY: 0, fx: 0, time: 0, sandY: T.P.dust.y };
       for (let i = 0; i < 60 * 30 && b.play; i++) {
         f.step(1 / 30, 1); out.time += 1 / 30;
         const ph = b.play && b.play.phase; if (ph && out.phases[out.phases.length - 1] !== ph) out.phases.push(ph);
@@ -48,7 +48,7 @@ for (const look of [3, 4]) {
     ok(!r.end.playing && r.time < 45, `look ${look} ${kind}: played and done in ${r.time.toFixed(1)} s (${r.phases.join(' → ')})`);
     ok(r.end.y === 0.015 && r.end.free && r.end.byFree, `look ${look} ${kind}: back on the ground in the yard, the ${kind} free again (${JSON.stringify(r.end)})`);
     if (kind === 'swing') ok(r.phases.includes('ride') && r.maxSwing > 0.12 && r.onPerchY > 0.1, `look ${look} swing: on the perch and swinging (up to ${r.maxSwing.toFixed(2)} rad, ${r.onPerchY.toFixed(2)} m up)`);
-    if (kind === 'dust') ok(r.phases.includes('bathe') && r.minY > 0.06 && r.minY < 0.13 && r.fx > 2, `look ${look} dust: in the sand (${r.minY.toFixed(3)} m), puffs (${r.fx} at once)`);
+    if (kind === 'dust') ok(r.phases.includes('bathe') && Math.abs(r.minY - r.sandY) < 0.03 && r.fx > 2, `look ${look} dust: in the sand (${r.minY.toFixed(3)} m, its sand at ${r.sandY}), puffs (${r.fx} at once)`);
     if (kind === 'cabbage') ok(r.spin > 1, `look ${look} cabbage: it spun (${r.spin.toFixed(1)} rad/s)`);
     if (kind === 'ladder') ok(r.phases.includes('top') && r.maxY > 0.4, `look ${look} ladder: up to the top (${r.maxY.toFixed(2)} m)`);
     if (kind === 'xylo') ok(r.fx > 0, `look ${look} xylophone: notes (${r.fx} at once)`);

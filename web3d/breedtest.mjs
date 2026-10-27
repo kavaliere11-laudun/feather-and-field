@@ -87,7 +87,7 @@ if (!m.ok) { await p.evaluate(() => window.__farm.move.to(-33, -23, 90)); await 
 await p.tap('.gmove-go'); await run(1.5);
 const sil = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.breed === 'sil'); return P && { n: P.birds.length, white: P.birds.every(b => b.colour === 'white'), models: f.coopModels() }; });
 s = await st();
-ok('"Place their coop now": the white Silkies on the farm in their rustic Pagoda', s.coops === 'rir,orp,sil' && sil && sil.n === 3 && sil.white && sil.models.includes('rustic_sil') && !s.dot, { s, sil });
+ok('"Place their coop now": the white Silkies on the farm in their rustic Pagoda', s.coops === 'rir,orp,sil' && sil && sil.n === 3 && sil.white && sil.models.includes('box_sil') && !s.dot, { s, sil });
 // a save changed outside: a breed's coop before its level, a breed twice
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d;
   const add = (id, breed, x) => { d.coops.push({ ...d.coops[0], id, breed, x, eggs: 0, brood: null }); for (const [k, sex] of [['r', 'r'], ['h', 'h'], ['i', 'h']]) d.birds.push({ id: 'b9' + id.slice(1) + (k === 'r' ? 1 : k === 'h' ? 2 : 3), name: 'Zed', sex, breed, pers: 'diva', coop: id, since: 1, exp: 0, trust: 0, laid: 1 }); };

@@ -1,7 +1,7 @@
 // The coops' looks in the game's rules (release 4; src/game.js UPGRADE, lookLays, kidsOf, cuddle, the automatic doors):
 // node looktest.mjs   (no browser)
 // Over 300 days a Red Barn hen lays about 1.67 eggs a day in a Rustic coop, 1.83 Mended, 2 Snug, 2.25 Cosy, 2.5 Deluxe
-// (her own times each day, the extra evening ones between 19:30 and 21:00); a Stone Cottage's (its looks not made yet)
+// (her own times each day, the extra evening ones between 19:30 and 21:00); a Timber Lodge's (its looks not made yet)
 // 2 whatever its tier; a Thatched Cottage has its looks too. A farm from before a breed's looks: that breed's coops Snug. The chicks' ratings: a little lower Rustic, higher Cosy and Deluxe. A cuddle counts again after 6,
 // 5, 4 hours. The automatic door: none below Cosy; sticks about one night in thirty; on such a night Rusty comes for that
 // coop even when he wouldn't have; shut by hand, he finds it shut. The upgrade: the price, the XP, no further than Deluxe,
@@ -23,8 +23,12 @@ const want = [1.667, 1.833, 2, 2.25, 2.5], got = [0, 1, 2, 3, 4].map(perDay);
 ok('eggs a day: Rustic 1.67, Mended 1.83, Snug 2, Cosy 2.25, Deluxe 2.5 (roughly)', got.every((x, t) => Math.abs(x.a - want[t]) < 0.1), got.map(x => x.a.toFixed(2)));
 ok('the extra eggs come in the evening (19:30 to 21:00), only in a Cosy or Deluxe coop', got[0].eve === 0 && got[2].eve === 0 && got[3].eve > 40 && got[4].eve > got[3].eve, got.map(x => x.eve));
 // another breed's coop: as Snug whatever its tier
-const leg = { id: 'c9', breed: 'leg', tier: 0 };
+const leg = { id: 'c9', breed: 'bra', tier: 0 };
 ok('a coop whose looks aren\'t made yet: as Snug, no upgrade, no automatic door', G.lookOf(leg) === 2 && g.coopNext(leg) === null && !G.autoDoor({ ...leg, tier: 4 }));
+const stc = { id: 'c6', breed: 'leg', tier: 0 };
+ok('a Stone Cottage: its looks too', G.lookOf(stc) === 0 && g.coopNext(stc) && g.coopNext(stc).look === 'mended');
+const sil = { id: 'c7', breed: 'sil_blue', tier: 0 };
+ok('a Pagoda (any Silkie colour\'s): its looks too', G.lookOf(sil) === 0 && g.coopNext(sil) && g.coopNext(sil).look === 'mended' && G.autoDoor({ ...sil, tier: 3 }));
 const orp = { id: 'c8', breed: 'orp', tier: 0 };
 ok('a Thatched Cottage: its looks too (Rustic as it comes, its upgrade to Mended, the automatic door from Cosy)', G.lookOf(orp) === 0 && g.coopNext(orp) && g.coopNext(orp).look === 'mended' && !G.autoDoor(orp) && G.autoDoor({ ...orp, tier: 3 }));
 // loading a farm: one from before a breed's looks has that breed's coops Snug (nothing changes for them); later ones as saved
@@ -37,10 +41,11 @@ ok('a Thatched Cottage: its looks too (Rustic as it comes, its upgrade to Mended
   };
   const r = { 'before any looks, a barn': mk(0, 'rir', 0), 'before any, a cottage': mk(0, 'orp', 0), 'before any, a Stone Cottage': mk(0, 'leg', 0),
               'after the barn\'s, a barn': mk(1, 'rir', 0), 'after the barn\'s, a cottage': mk(1, 'orp', 0), 'after the barn\'s, a Stone Cottage': mk(1, 'leg', 0),
-              'now, a cottage': mk(2, 'orp', 0), 'now, a Deluxe cottage': mk(2, 'orp', 4) };
-  const want = [2, 2, 2, 0, 2, 0, 0, 4], got = Object.values(r);
-  ok('a farm from before any looks: its coops Snug; from the Red Barn\'s: its Thatched Cottages Snug, the rest as saved; a new farm: as saved; none flagged',
-    got.every((x, i) => x.tier === want[i] && x.cv === 2 && !x.edited), r);
+              'after the cottage\'s, a cottage': mk(2, 'orp', 0), 'after the cottage\'s, a Pagoda': mk(2, 'sil', 0), 'after the cottage\'s, a Black Silkies\' Pagoda': mk(2, 'sil_black', 0),
+              'after the Pagoda\'s, a Pagoda': mk(3, 'sil', 0), 'after the Pagoda\'s, a Stone Cottage': mk(3, 'leg', 0), 'now, a Stone Cottage': mk(4, 'leg', 0), 'now, a Deluxe cottage': mk(4, 'orp', 4) };
+  const want = [2, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 0, 4], got = Object.values(r);
+  ok('a farm from before any looks: its coops Snug; from before a breed\'s: that breed\'s coops Snug (every Silkie colour\'s Pagoda), the rest as saved; a new farm: as saved; none flagged',
+    got.every((x, i) => x.tier === want[i] && x.cv === 4 && !x.edited), r);
 }
 // chicks
 const rate = tier => { c.tier = tier; let sum = 0, n = 0; for (let k = 0; k < 200; k++) { const kids = g.kidsOf(c, { hen: hen.id, start: NOW + k * 7919, n: 3 }); for (const x of kids) { sum += x.stars; n++; } } return sum / n; };

@@ -69,6 +69,25 @@ for n_, fn in (('box_orp', coops.box_orp), ('shed_orp', coops.shed_orp), ('cosy_
 assert coops.NESTS['house_orp'] == _keep, 'the looks must keep the cottage\'s nest'
 BUDGET.update({'pen_t0_orp': 4200, 'pen_t1_orp': 4600, 'pen_t3_orp': 8500, 'pen_t4_orp': 10500})
 for t in (0, 1, 3, 4): one('pen_t%d_orp' % t, lambda t=t: coops.pen_tier(t, 'orp')); LOOKS.append('pen_t%d_orp' % t)      # (its own garden)
+# the Pagoda's five looks (Rustic box_sil, Mended shed_sil, Snug house_sil, Cosy cosy_sil, Deluxe deluxe_sil: the browser tints
+# each in its Silkie colour) and its own gardens
+BUDGET.update({'box_sil': 15000, 'shed_sil': 15000, 'cosy_sil': 19500, 'deluxe_sil': 23500, 'pen_t0_sil': 4200, 'pen_t1_sil': 4600, 'pen_t3_sil': 8500, 'pen_t4_sil': 11000})
+_keep = dict(coops.NESTS['house_sil'])
+for n_, fn in (('box_sil', coops.box_sil), ('shed_sil', coops.shed_sil), ('cosy_sil', coops.cosy_sil), ('deluxe_sil', coops.deluxe_sil)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_sil'] == _keep, 'the looks must keep the Pagoda\'s nest'
+for t in (0, 1, 3, 4): one('pen_t%d_sil' % t, lambda t=t: coops.pen_tier(t, 'sil')); LOOKS.append('pen_t%d_sil' % t)
+# the Stone Cottage's five looks (Rustic box_leg, Mended shed_leg, Snug house_leg, Cosy cosy_leg, Deluxe deluxe_leg) and its own gardens
+BUDGET.update({'box_leg': 16000, 'shed_leg': 19000, 'cosy_leg': 21000, 'deluxe_leg': 24000, 'pen_t0_leg': 4200, 'pen_t1_leg': 4600, 'pen_t3_leg': 8500, 'pen_t4_leg': 11000})
+_keep = dict(coops.NESTS['house_leg'])
+for n_, fn in (('box_leg', coops.box_leg), ('shed_leg', coops.shed_leg), ('cosy_leg', coops.cosy_leg), ('deluxe_leg', coops.deluxe_leg)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_leg'] == _keep, 'the looks must keep the Stone Cottage\'s nest'
+for t in (0, 1, 3, 4): one('pen_t%d_leg' % t, lambda t=t: coops.pen_tier(t, 'leg')); LOOKS.append('pen_t%d_leg' % t)
+# the Timber Lodge's five looks (Rustic box_bra, Mended shed_bra, Snug house_bra, Cosy cosy_bra, Deluxe deluxe_bra) and its own gardens
+BUDGET.update({'box_bra': 17000, 'shed_bra': 17000, 'cosy_bra': 21000, 'deluxe_bra': 25000, 'pen_t0_bra': 4200, 'pen_t1_bra': 4600, 'pen_t3_bra': 8500, 'pen_t4_bra': 11000})
+_keep = dict(coops.NESTS['house_bra'])
+for n_, fn in (('box_bra', coops.box_bra), ('shed_bra', coops.shed_bra), ('cosy_bra', coops.cosy_bra), ('deluxe_bra', coops.deluxe_bra)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_bra'] == _keep, 'the looks must keep the Timber Lodge\'s nest'
+for t in (0, 1, 3, 4): one('pen_t%d_bra' % t, lambda t=t: coops.pen_tier(t, 'bra')); LOOKS.append('pen_t%d_bra' % t)
 PENS = {k: {t: dict(coops.pen_info(t, k), play=coops.play_info(t, k)) for t in range(5)} for k in coops.PENS_BY}       # each breed's pens by look          # each look's pen for the birds (glTF axes)
 names = LOOKS + ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)

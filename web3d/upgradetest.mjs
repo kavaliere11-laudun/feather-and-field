@@ -64,7 +64,7 @@ if (B !== 'rir') {                                 // a coop of that breed place
   await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); });
 }
 let s = await state();
-ok('a new farm: its coop comes Rustic (a tiny pen), the farm marked as after the looks, unflagged', s.tier === 0 && s.house === LOOKS[0] && s.pen === PENN(0) && s.cv === 2 && !s.edited, s);
+ok('a new farm: its coop comes Rustic (a tiny pen), the farm marked as after the looks, unflagged', s.tier === 0 && s.house === LOOKS[0] && s.pen === PENN(0) && s.cv === 4 && !s.edited, s);
 let c = await card();
 ok('its card: Rustic; next Mended, what it brings, 300 coins; not enough coins yet: says so, the button off', c.kind === 'coop' && (fr ? /Rustique/ : /Rustic/).test(c.text) && (fr ? /style Rafistolé/ : /Upgrade to Mended/).test(c.up) && (fr ? /Pas assez de pièces \(300\)/ : /Not enough coins \(300\)/).test(c.btn) && c.dis === true, c);
 await shoot(0);
@@ -113,7 +113,7 @@ await p.evaluate(() => {
 });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await state();
-ok('a farm from before the looks: its coop Snug (the house and pen as they were), unflagged', s.tier === 2 && s.house === LOOKS[2] && s.pen === 'pen_base' && s.cv === 2 && !s.edited, s);
+ok('a farm from before the looks: its coop Snug (the house and pen as they were), unflagged', s.tier === 2 && s.house === LOOKS[2] && s.pen === 'pen_base' && s.cv === 4 && !s.edited, s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? `${fails} FAILED` : 'ALL PASS');
 await b.close();

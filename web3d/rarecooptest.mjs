@@ -62,7 +62,7 @@ await p.evaluate(() => window.__farm.move.place()); await run(1.5);
 const built = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'sil_paint'), P = f.coopPlots().find(q => q.line === 'sil_paint');
   return c && P && { coins: g.data.coins, basket: g.basket().length, birds: g.birdsIn(c.id).map(b => b.name).sort().join(), colours: P.birds.filter(b => b.gid).map(b => b.colour).join(), models: f.coopModels(), hint: document.getElementById('hint').textContent }; });
 ok('built: a rustic Pagoda in the Paint colours, 2,500 paid, Pip and Paddy moved in from the basket, "Welcome home, ...!"',
-  built && built.coins === 3500 && built.basket === 0 && built.birds === 'Paddy,Pip' && built.colours === 'paint,paint' && built.models.includes('rustic_sil@paint') && T.home.test(built.hint), built);
+  built && built.coins === 3500 && built.basket === 0 && built.birds === 'Paddy,Pip' && built.colours === 'paint,paint' && built.models.includes('box_sil@paint') && T.home.test(built.hint), built);
 if (SHOTS) { await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.line === 'sil_paint'); f.lookAt(P.centre.x, P.centre.z, 2.6); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 await shot('2_coop');
 // a Silkie hen's card: about an egg a day
@@ -97,7 +97,7 @@ ok('kept: she joins the Paint coop ("... has joined Pagoda Coop"), the trio comp
 // a reload keeps it
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 const again = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'sil_paint'); return { edited: g.edited, birds: c && g.birdsIn(c.id).length, models: f.coopModels() }; });
-ok('a reload: the Paint coop and its trio as they were, not flagged', !again.edited && again.birds === 3 && again.models.includes('rustic_sil@paint'), again);
+ok('a reload: the Paint coop and its trio as they were, not flagged', !again.edited && again.birds === 3 && again.models.includes('box_sil@paint'), again);
 // a save changed outside
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d, c = d.coops.find(x => x.breed === 'sil_paint');
   d.coops.push({ ...c, id: 'c950', x: c.x - 8 });

@@ -275,6 +275,92 @@ def trough(objs, x, y, m):
     objs.append(cyl('pdrip', 0.007, 0.2, (px - 0.135, y, 0.24), m=m['water'], verts=5, bevel=0.0))
 
 
+def koi_pond(objs, x, y, m):
+    """A little koi pond edged with rounded stones, lily pads, two koi, a bamboo spout trickling into it."""
+    stone = mat('fkstone', '#9a958a', rough=0.85, var=0.1); stone2 = mat('fkstone2', '#86817a', rough=0.85, var=0.1)
+    R = 0.4
+    objs.append(cyl('kbed', R, 0.02, (x, y, 0.01), m=mat('fkbed', '#3e5a55', rough=0.9), verts=24, bevel=0.0))
+    objs.append(cyl('kwater', R - 0.01, 0.01, (x, y, 0.045), m=m['water'], verts=24, bevel=0.0))
+    for k in range(14):
+        a = k / 14 * math.tau + random.uniform(-0.08, 0.08); rr = random.uniform(0.05, 0.075)
+        objs.append(sphere('kstone', rr, (x + math.cos(a) * (R + 0.02), y + math.sin(a) * (R + 0.02), 0.04), (1.25, 1, 0.75), (0, 0, a), m=stone if k % 3 else stone2, ico=2, disp=0.25, seed=k + 3))
+    pad = mat('fkpad', '#4f8a3a', rough=0.7, var=0.08)
+    for k, (dx, dy, r_) in enumerate(((-0.12, 0.14, 0.06), (0.15, 0.05, 0.05), (-0.02, -0.18, 0.045))):
+        objs.append(cyl('kpad', r_, 0.006, (x + dx, y + dy, 0.052), (0, 0, k), m=pad, verts=12, bevel=0.0))
+    objs.append(sphere('kflower', 0.02, (x - 0.12, y + 0.14, 0.065), (1, 1, 0.7), m=mat('fkflower', '#f3a6c0', rough=0.6), ico=1))
+    for k, (dx, dy, a, col) in enumerate(((0.05, -0.05, 0.6, '#f08a2c'), (-0.15, -0.02, 2.4, '#f4efe4'))):
+        objs.append(sphere('koi', 0.05, (x + dx, y + dy, 0.04), (1.0, 0.38, 0.22), (0, 0, a), m=mat('fkoi%d' % k, col, rough=0.5), seg=10, rings=6))
+        objs.append(cyl('koitail', 0.022, 0.035, (x + dx - math.cos(a) * 0.06, y + dy - math.sin(a) * 0.06, 0.04), (0, math.radians(90), a), m=mat('fkoi%d' % k, col, rough=0.5), verts=3, r2=0.0, bevel=0.0))
+    bam = mat('fkbam', '#bba96b', rough=0.8, var=0.06); node = mat('fknode', '#8d7b45', rough=0.8)
+    sx, sy = x + R * 0.55, y + R * 0.75                        # the spout at its back, on two crossed canes
+    for d in (-1, 1):
+        objs.append(cyl('kstand', 0.014, 0.3, (sx + d * 0.04, sy, 0.15), (0, math.radians(15 * d), 0), m=bam, verts=6, bevel=0.0))
+    a_, b_ = Vector((sx + 0.06, sy + 0.04, 0.27)), Vector((sx - 0.12, sy - 0.12, 0.2))
+    objs.append(cyl('kspout', 0.022, (b_ - a_).length, (a_ + b_) / 2, (b_ - a_).normalized().to_track_quat('Z', 'Y').to_euler(), m=bam, verts=8, bevel=0.0))
+    objs.append(cyl('knode', 0.025, 0.01, a_.lerp(b_, 0.5), (b_ - a_).normalized().to_track_quat('Z', 'Y').to_euler(), m=node, verts=8, bevel=0.0))
+    objs.append(cyl('ktrickle', 0.006, 0.15, (b_.x - 0.01, b_.y - 0.01, 0.125), m=m['water'], verts=5, bevel=0.0))
+
+
+def stone_sink(objs, x, y, m):
+    """An old stone sink set on the ground for water."""
+    stone = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60)
+    L, Wd, H, T = 0.34, 0.26, 0.12, 0.04
+    objs.append(box('sink', (L, Wd, H - 0.04), (x, y, (H - 0.04) / 2), m=stone, bevel=0.012, segs=2, jitter=0.002))
+    for (sx_, sy_, lx, ly) in ((0, 1, L, T), (0, -1, L, T), (1, 0, T, Wd - 2 * T), (-1, 0, T, Wd - 2 * T)):
+        objs.append(box('sink', (lx, ly, 0.05), (x + sx_ * (L - T) / 2, y + sy_ * (Wd - T) / 2, H - 0.025), m=stone, bevel=0.01, segs=2, jitter=0.002))
+    objs.append(box('swater', (L - 2 * T + 0.01, Wd - 2 * T + 0.01, 0.01), (x, y, H - 0.03), m=m['water'], bevel=0.0))
+    objs.append(sphere('smoss', 0.03, (x - L / 2 + 0.02, y + Wd / 2 - 0.02, H), (1.4, 1, 0.4), m=mat('fsmoss', '#6b7a46', rough=0.95), ico=1, disp=0.3, seed=3))
+
+
+def water_butt(objs, x, y, m):
+    """A water butt (an oak barrel on a stone stand) behind a low stone basin, its brass tap dripping into it."""
+    oak = mat('fbutt', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fbiron', '#2b2824', rough=0.5, metal=0.6)
+    stone = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60); brass = mat('fbrass', '#c99a3c', rough=0.3, metal=0.9)
+    bx, by = x, y + 0.17
+    objs.append(box('bstand', (0.3, 0.3, 0.1), (bx, by, 0.05), m=stone, bevel=0.01, segs=1))
+    objs.append(cyl('butt', 0.13, 0.38, (bx, by, 0.29), m=oak, verts=16, bevel=0.01))
+    for z in (0.15, 0.43): objs.append(cyl('bhoop', 0.134, 0.02, (bx, by, z), m=iron, verts=16, bevel=0.0))
+    objs.append(cyl('blid', 0.125, 0.015, (bx, by, 0.485), m=oak, verts=16, bevel=0.003))
+    objs.append(cyl('btap', 0.01, 0.07, (bx, by - 0.16, 0.16), (math.radians(90), 0, 0), m=brass, verts=6, bevel=0.0))
+    objs.append(cyl('basin', 0.15, 0.07, (x, y - 0.06, 0.035), m=stone, verts=16, bevel=0.008))
+    objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.06, 0.068), m=m['water'], verts=16, bevel=0.0))
+    objs.append(cyl('bdrip', 0.005, 0.08, (bx, by - 0.2, 0.11), m=m['water'], verts=5, bevel=0.0))
+
+
+def half_log(objs, name, x, y, zc, R, L, axis, m, end_m):
+    """A half log lying along x or y, its round side down (its middle at height zc), hollowed: open on top, its sawn ends
+    closed with end grain (a trough for water, a bath of sand)."""
+    def at(u, a, r):                                       # u along the log, a round it (pi..2pi: its lower half), r out
+        c, s_ = math.cos(a), math.sin(a)
+        return (x + u, y + r * c, zc + r * s_) if axis == 'x' else (x + r * c, y + u, zc + r * s_)
+    segs = 12; me = bpy.data.meshes.new(name); bm = bmesh.new()
+    rings = [[bm.verts.new(at(u, math.pi + math.pi * k / segs, R)) for k in range(segs + 1)] for u in (-L / 2, L / 2)]
+    for k in range(segs): bm.faces.new((rings[0][k], rings[0][k + 1], rings[1][k + 1], rings[1][k]))
+    bm.normal_update(); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.035; so.offset = 0; objs.append(o)
+    for u in (-L / 2, L / 2):                              # its ends: half discs of end grain
+        me = bpy.data.meshes.new(name + 'end'); bm = bmesh.new()
+        bm.faces.new([bm.verts.new(at(u, math.pi + math.pi * k / segs, R + 0.018)) for k in range(segs + 1)]); bm.normal_update(); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new(name + 'end', me)); setmat(o, end_m); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02; so.offset = 0; objs.append(o)
+
+
+def log_flume(objs, x, y, m):
+    """A hollow half log full of water, a split-log flume on crossed sticks trickling into it from behind."""
+    log = mat('fflog', '#8d5b34', rough=0.8, var=0.08, grain=0.3, grain_scale=(1.5, 26, 26)); endg = mat('ffend', '#cfa268', rough=0.8)
+    bark = mat('ffbark', '#5e4a3a', rough=0.85, var=0.08)
+    L, R, zc = 0.62, 0.15, 0.15
+    half_log(objs, 'ftrough', x, y, zc, R, L, 'x', log, endg)
+    objs.append(box('fwater', (L - 0.03, 2 * R - 0.04, 0.01), (x, y, zc - 0.02), m=m['water'], bevel=0.0))
+    a, b = Vector((x + 0.16, y + 0.5, 0.46)), Vector((x + 0.1, y + 0.06, 0.22))     # the flume, from behind, its water along it
+    nrm = Vector((0, -(a.z - b.z), (a.y - b.y))).normalized()    # (up off its slope)
+    objs.append(plank('flume', a, b, 0.09, 0.025, nrm, bark, jitter=0.4))
+    objs.append(plank('flumew', a + nrm * 0.016, b + nrm * 0.016, 0.05, 0.006, nrm, m['water'], jitter=0.0, bevel=0.0))
+    for sx in (-1, 1):                                     # crossed sticks holding it up
+        p, q = Vector((x + 0.16 + sx * 0.13, y + 0.36, 0.0)), Vector((x + 0.16 - sx * 0.05, y + 0.36, 0.43))
+        objs.append(cyl('fstick', 0.014, (q - p).length, (p + q) / 2, (q - p).normalized().to_track_quat('Z', 'Y').to_euler(), m=bark, verts=6, bevel=0.0))
+    objs.append(cyl('ftrickle', 0.006, 0.1, (b.x, b.y - 0.03, zc + 0.03), m=m['water'], verts=5, bevel=0.0))
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
@@ -330,7 +416,62 @@ def build_pen(root, m):
     # for the deluxe please": an eight-sided cream hopper with windows of grain, a green copper roof like the barn's and a
     # gold ball on top, over a copper tray; the tray and its grain where the browser's grain sits)
     fx, fy = PEN['feeder']
-    if PEN.get('feeder_style') == 'cottage':                # (the Deluxe cottage's: a little barrel hopper under a cap of thatch)
+    if PEN.get('feeder_style') == 'stonehouse':             # (the Deluxe stone cottage's: a tiny stone house with a slate roof)
+        st = mat('fd_stone', '#a59b88', rough=0.85, var=0.06); slate = mat('fd_slate', '#57657a', rough=0.65, var=0.08); trimw = mat('fd_trim', '#9ec9c2', rough=0.55)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=st, verts=20, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(box('fbody', (0.17, 0.15, 0.24), (fx, fy, 0.18), m=st, bevel=0.008, segs=1))
+        objs.append(box('fwin', (0.08, 0.004, 0.08), (fx, fy - 0.076, 0.22), m=m['grain_'], bevel=0.0))
+        objs.append(box('fwinf', (0.095, 0.006, 0.095), (fx, fy - 0.074, 0.22), m=trimw, bevel=0.0))
+        for sx in (-1, 1):
+            a, b = Vector((fx, fy, 0.39)), Vector((fx + sx * 0.12, fy, 0.29))
+            objs.append(plank('froof', (a + b) / 2 + Vector((0, -0.11, 0)), (a + b) / 2 + Vector((0, 0.11, 0)), (b - a).length + 0.02, 0.02, Vector((sx * 0.1, 0, 0.12)).normalized(), slate, jitter=0.0, bevel=0.004))
+        for yy in (fy - 0.075, fy + 0.075):
+            me = bpy.data.meshes.new('fgable'); bm = bmesh.new()
+            vs = [bm.verts.new(v) for v in ((fx - 0.085, yy, 0.3), (fx + 0.085, yy, 0.3), (fx, yy, 0.38))]; bm.faces.new(vs); bm.normal_update(); bm.to_mesh(me); bm.free()
+            o = link(bpy.data.objects.new('fgable', me)); setmat(o, st); objs.append(o)
+        objs.append(box('fchim', (0.035, 0.035, 0.08), (fx + 0.05, fy + 0.03, 0.4), m=st, bevel=0.004, segs=1))
+    elif PEN.get('feeder_style') == 'cabin':                  # (the Deluxe lodge's: a tiny log cabin with a green shingle roof)
+        log = mat('fd_log', '#8d5b34', rough=0.8, var=0.08); endg = mat('fd_endg', '#cfa268', rough=0.8); green = mat('fd_green', '#4b7a48', rough=0.7, var=0.06)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=log, verts=20, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        for k in range(5):                                  # its walls: little logs crossing at the corners
+            z = 0.075 + k * 0.048
+            for sy in (-1, 1): objs.append(cyl('flog', 0.022, 0.22, (fx, fy + sy * 0.07, z), (0, math.radians(90), 0), m=log, verts=8, bevel=0.0))
+            for sx in (-1, 1): objs.append(cyl('flog', 0.022, 0.19, (fx + sx * 0.085, fy, z + 0.024), (math.radians(90), 0, 0), m=log, verts=8, bevel=0.0))
+            for sx in (-1, 1): objs.append(cyl('fend', 0.019, 0.006, (fx + sx * 0.112, fy - 0.07, z), (0, math.radians(90), 0), m=endg, verts=8, bevel=0.0))
+        objs.append(box('fwin', (0.07, 0.006, 0.07), (fx, fy - 0.093, 0.2), m=m['grain_'], bevel=0.0))
+        objs.append(box('fwinf', (0.085, 0.004, 0.085), (fx, fy - 0.091, 0.2), m=endg, bevel=0.0))
+        for sx in (-1, 1):
+            a, b = Vector((fx, fy, 0.42)), Vector((fx + sx * 0.15, fy, 0.3))
+            objs.append(plank('froof', (a + b) / 2 + Vector((0, -0.13, 0)), (a + b) / 2 + Vector((0, 0.13, 0)), (b - a).length + 0.02, 0.02, Vector((sx * 0.12, 0, 0.15)).normalized(), green, jitter=0.0, bevel=0.004))
+        for yy in (fy - 0.07, fy + 0.07):
+            me = bpy.data.meshes.new('fgable'); bm = bmesh.new()
+            vs = [bm.verts.new(v) for v in ((fx - 0.1, yy, 0.31), (fx + 0.1, yy, 0.31), (fx, yy, 0.4))]; bm.faces.new(vs); bm.normal_update(); bm.to_mesh(me); bm.free()
+            o = link(bpy.data.objects.new('fgable', me)); setmat(o, log); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02; objs.append(o)
+    elif PEN.get('feeder_style') == 'pagoda':                 # (the Deluxe Pagoda's: dark lacquered wood, a little curved roof, a bronze knob)
+        ink = mat('fd_ink', '#2e2622', rough=0.45, coat=0.3, var=0.04); bronze = mat('fd_bronze', '#9c7a3c', rough=0.35, metal=0.8)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 6), m=ink, verts=6, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.08, 0.27, (fx, fy, 0.215), (0, 0, math.pi / 6), m=ink, verts=6, bevel=0.006))
+        for z in (0.12, 0.31): objs.append(cyl('fband', 0.086, 0.018, (fx, fy, z), (0, 0, math.pi / 6), m=bronze, verts=6, bevel=0.0))
+        me = bpy.data.meshes.new('froof'); bm = bmesh.new(); rings = []
+        for j in range(6):                                  # its roof: four sides sweeping out to upturned corners
+            v = j / 5; ring = []
+            for i in range(16):
+                a = i / 16 * math.tau + math.pi / 4; c_, s_ = math.cos(a), math.sin(a); sq = 1 / max(abs(c_), abs(s_))
+                rr = (0.17 * (1 - v) + 0.015 * v) * sq; corner = (abs(abs(c_) - abs(s_)) < 0.2) * (1 - v) ** 2
+                ring.append(bm.verts.new((fx + c_ * rr, fy + s_ * rr, 0.37 + 0.12 * v ** 0.6 + 0.04 * corner)))
+            rings.append(ring)
+        for j in range(5):
+            for i in range(16): bm.faces.new((rings[j][i], rings[j][(i + 1) % 16], rings[j + 1][(i + 1) % 16], rings[j + 1][i]))
+        bm.faces.new(rings[-1]); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        for f in bm.faces:
+            if f.normal.z < 0: f.normal_flip()
+        bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('froof', me)); setmat(o, ink); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02; so.offset = -1; objs.append(o)
+        objs.append(sphere('fball', 0.025, (fx, fy, 0.51), m=bronze, seg=10, rings=6))
+    elif PEN.get('feeder_style') == 'cottage':                # (the Deluxe cottage's: a little barrel hopper under a cap of thatch)
         oak = mat('fd_oak', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
         thatch = mat('fd_thatch', '#c7a866', rough=0.9, var=0.07)
         objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=oak, verts=20, bevel=0.01))
@@ -366,6 +507,10 @@ def build_pen(root, m):
     wx, wy = PEN['dish']
     if PEN.get('fountain'): fountain(objs, wx, wy, m)
     elif PEN.get('water') == 'trough': trough(objs, wx, wy, m)
+    elif PEN.get('water') == 'pond': koi_pond(objs, wx, wy, m)
+    elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
+    elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
+    elif PEN.get('water') == 'flume': log_flume(objs, wx, wy, m)
     else:
       bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
       rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)

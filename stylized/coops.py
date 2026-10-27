@@ -210,7 +210,8 @@ def thatched(seed=5, eave=0.9, peak=1.5, name='house_orp'):
 
 
 # ------------------------------------------------------------------ Stone Cottage (Cream Legbar)
-def stone(seed=6):
+def stone(seed=6, eave=0.86, peak=1.4, name='house_leg'):
+    """(eave, peak, name: the Deluxe look's taller cottage, release 4)"""
     random.seed(seed); objs = []
     mortar = C('mortar', '#6f685e', rough=0.95)
     stones = [C('st%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#a59b88', '#928a7b', '#b3a891', '#877f72', '#9c8f7a'))]
@@ -218,10 +219,10 @@ def stone(seed=6):
     barge = C('barge2', '#3e4652', rough=0.7)
     blue = C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G); trim = C('trimw', '#efe9dc', rough=0.6)
     lint = C('lintel', '#d2c8b2', rough=0.85); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
-    EAVE, PEAK, FL = 0.86, 1.4, 0.18
+    EAVE, PEAK, FL = eave, peak, 0.18
     core = box('core', (2 * W2 - 0.02, 2 * D2 - 0.02, EAVE), (0, 0, EAVE / 2), m=mortar, bevel=0.0); objs.append(core)
     for sx in (-1, 1): objs.append(prism_gable(sx * (W2 - 0.01), EAVE - 0.01, PEAK - 0.06, D2 - 0.01, 0.03, mortar))
-    holes = {'front': [(-0.31 - POP_W / 2 - 0.04, -0.31 + POP_W / 2 + 0.04, 0.0, FL + POP_H + 0.05), (-0.11, 0.22, 0.0, 0.66), (0.44 - WIN_W / 2 - 0.02, 0.44 + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)], 'right': [(-0.13, 0.13, 0.42, 0.68), (-0.11, 0.11, 0.96, 1.17)], 'left': [], 'back': []}
+    holes = {'front': [(-0.31 - POP_W / 2 - 0.04, -0.31 + POP_W / 2 + 0.04, 0.0, FL + POP_H + 0.05), (-0.11, 0.22, 0.0, 0.66), (0.44 - WIN_W / 2 - 0.02, 0.44 + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)], 'right': [(-0.13, 0.13, 0.42, 0.68), (-0.11, 0.11, EAVE + 0.1, EAVE + 0.31)], 'left': [], 'back': []}
     def wall(side, length, place, top=lambda u: EAVE):
         z = 0.0; row = 0
         while z < PEAK:
@@ -263,7 +264,7 @@ def stone(seed=6):
         objs.append(sphere('blueegg', 0.028, (BX + 0.045 * math.cos(k * 1.3), BY + 0.045 * math.sin(k * 1.3), 0.115), (1, 1, 1.3), m=C('blueegg', '#9fcfc6', rough=0.45), seg=10, rings=7))
     pop_door(objs, FL, trim, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18, 0.0)
-    return finish(objs, 'house_leg')
+    return finish(objs, name)
 
 
 # ------------------------------------------------------------------ Pagoda Coop (Silkie)
@@ -316,7 +317,8 @@ def curved_roof(objs, X, Y, z0, z1, top, up, m, m_hip, name='proof', thick=0.035
             objs.append(sphere('tip', 0.024, tip + Vector((0, 0, 0.01)), m=m_hip, seg=10, rings=6))
 
 
-def pagoda(seed=7):
+def pagoda(seed=7, tiers=2, name='house_sil'):
+    """(tiers=3, name: the Deluxe look's three-tiered pagoda, release 4)"""
     random.seed(seed); objs = []
     white = C('plaster', '#f3eee2', rough=0.85); red = C('lacquer', '#b0312a', rough=0.4, coat=0.3)
     teal = C('teal', '#2f7d70', rough=0.55, var=0.03); teal_d = C('teal_d', '#1f5d54', rough=0.55)
@@ -361,29 +363,43 @@ def pagoda(seed=7):
         for sy in (-1, 1):
             objs.append(cyl('pillar2', 0.028, 0.24, (sx * 0.26, sy * 0.19, 1.11), m=red, verts=10, bevel=0.003))
     lattice(0.0, -0.18 - 0.012, 1.11, 0.2, 0.12, (0, -1))
-    curved_roof(objs, 0.42, 0.33, 1.21, 1.45, (0.05, 0.05), 0.11, teal, teal_d, 'roof2')
-    objs.append(cyl('finial', 0.025, 0.14, (0, 0, 1.52), m=gold, verts=10, bevel=0.0))
-    objs.append(sphere('finball', 0.04, (0, 0, 1.6), m=gold, seg=14, rings=8))
+    if tiers == 3:                                  # (the Deluxe: a third storey and roof, a tall gold finial with rings)
+        curved_roof(objs, 0.42, 0.33, 1.21, 1.37, (0.24, 0.17), 0.11, teal, teal_d, 'roof2')
+        objs.append(box('upper', (0.36, 0.26, 0.17), (0, 0, 1.45), m=white, bevel=0.01, segs=1))
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                objs.append(cyl('pillar2', 0.022, 0.19, (sx * 0.19, sy * 0.14, 1.45), m=red, verts=10, bevel=0.003))
+        lattice(0.0, -0.13 - 0.012, 1.45, 0.14, 0.09, (0, -1))
+        curved_roof(objs, 0.33, 0.27, 1.53, 1.74, (0.04, 0.04), 0.09, teal, teal_d, 'roof3')
+        objs.append(cyl('finial', 0.018, 0.34, (0, 0, 1.9), m=gold, verts=10, bevel=0.0))
+        for k in range(5): objs.append(cyl('finring', 0.05 - k * 0.006, 0.014, (0, 0, 1.8 + k * 0.05), m=gold, verts=14, bevel=0.0))
+        objs.append(sphere('finball', 0.035, (0, 0, 2.09), m=gold, seg=14, rings=8))
+    else:
+        curved_roof(objs, 0.42, 0.33, 1.21, 1.45, (0.05, 0.05), 0.11, teal, teal_d, 'roof2')
+        objs.append(cyl('finial', 0.025, 0.14, (0, 0, 1.52), m=gold, verts=10, bevel=0.0))
+        objs.append(sphere('finball', 0.04, (0, 0, 1.6), m=gold, seg=14, rings=8))
     objs.append(cyl('cord', 0.004, 0.1, (W2 + 0.2, -D2 - 0.2, EAVE - 0.0), m=dark, verts=5, bevel=0.0))
-    block('sil', W2 + 0.2, -D2 - 0.2, 0.11); light_at('house_sil', W2 + 0.2, -D2 - 0.2, EAVE - 0.12)
+    block('sil', W2 + 0.2, -D2 - 0.2, 0.11); light_at(name, W2 + 0.2, -D2 - 0.2, EAVE - 0.12)
     objs.append(sphere('lantern', 0.065, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12), (1, 1, 1.25), m=C('lanternred', '#dc4b2e', rough=0.5), seg=14, rings=10))
     for dz in (-0.075, 0.075):
         objs.append(cyl('lcap', 0.03, 0.02, (W2 + 0.2, -D2 - 0.2, EAVE - 0.12 + dz), m=gold, verts=10, bevel=0.0))
     pop_door(objs, FL, red, None, None, steps=2)
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18, 0.0)
-    return finish(objs, 'house_sil')
+    return finish(objs, name)
 
 
 # ------------------------------------------------------------------ Timber Lodge (Light Brahma)
-def lodge(seed=8):
+def lodge(seed=8, eave=0.88, peak=1.44, name='house_bra', up=()):
+    """(eave, peak, name: the Deluxe look's taller lodge, release 4; up: the x of each window upstairs in its front)"""
     random.seed(seed); objs = []
     log = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G); endg = C('endgrain', '#cfa268', rough=0.8, var=0.05)
     roof_m = C('greensh', '#4b7a48', rough=0.7, var=0.12, hue_var=0.01); ridge = C('greenridge', '#355a35', rough=0.7)
     barge = C('lodgebarge', '#6e4428', rough=0.8, grain=0.3, grain_scale=G)
     door_m = C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G); trim = C('lodgetrim', '#e8dcc0', rough=0.7)
     glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
-    EAVE, PEAK, r = 0.88, 1.44, 0.055
+    EAVE, PEAK, r = eave, peak, 0.055
     gaps = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, 0.24, 0.26 + POP_H + 0.05), (-0.09, 0.25, 0.0, 0.64), (0.44 - WIN_W / 2 - 0.03, 0.44 + WIN_W / 2 + 0.03, 0.2, 0.24 + WIN_H + 0.06)]   # pop door, door, nest window
+    gaps += [(x - 0.12, x + 0.12, 0.84, 1.1) for x in up]          # (the Deluxe's windows upstairs)
     z = r; row = 0
     while z < EAVE:
         for y in (-D2, D2):                       # logs along x (front and back); the front is cut round its door and window
@@ -429,12 +445,13 @@ def lodge(seed=8):
     block('bra', -0.62, -D2 - 0.28, 0.1)
     objs.append(cyl('lpost', 0.022, 0.95, (-0.62, -D2 - 0.28, 0.475), m=barge, verts=8, bevel=0.0))          # lantern post left of the ramp
     objs.append(box('larm', (0.14, 0.025, 0.025), (-0.56, -D2 - 0.28, 0.92), m=iron, bevel=0.004, segs=1))
-    light_at('house_bra', -0.5, -D2 - 0.28, 0.85)
+    light_at(name, -0.5, -D2 - 0.28, 0.85)
     objs.append(box('lantern', (0.07, 0.07, 0.09), (-0.5, -D2 - 0.28, 0.85), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
     objs.append(box('lcap', (0.09, 0.09, 0.02), (-0.5, -D2 - 0.28, 0.905), m=iron, bevel=0.004, segs=1))
     pop_door(objs, 0.26, trim, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
     straw_bits(objs, (-0.31, -D2 - 0.04, 0.27), 0.08, 18, 0.0)
-    return finish(objs, 'house_bra')
+    for x in up: window(objs, x, -D2 - 0.03, 0.97, 0.2, 0.22, trim, glass)
+    return finish(objs, name)
 
 
 # ------------------------------------------------------------------ the pen, shared by every style
@@ -1576,14 +1593,23 @@ def xylophone(objs, x, y):
 def play_things(objs, t, k='rir'):
     P = PLAY_BY[k].get(t)
     if not P: return
-    swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
-    (cabbage_tripod if P.get('tripod') else cabbage_post)(objs, *P['cabbage'])
+    if P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
+    elif P.get('frame') == 'tree': tree_swing(objs, *P['swing'])
+    elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
+    else: swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
+    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
     if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
     if 'pit' in P: sand_pit(objs, *P['pit'])
+    if 'sbowl' in P: sand_bowl(objs, *P['sbowl'])
+    if 'zen' in P: zen_garden(objs, *P['zen'])
+    if 'barrow' in P: wheelbarrow(objs, *P['barrow'])
+    if 'boat' in P: sand_boat(objs, *P['boat'])
+    if 'halflog' in P: sand_log(objs, *P['halflog'])
+    if 'crib' in P: sand_crib(objs, *P['crib'])
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
-    if 'xylo' in P: xylophone(objs, *P['xylo'])
+    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):
@@ -1594,6 +1620,12 @@ def play_info(t, k='rir'):
     if 'tub' in P: dust = dict(at=g(P['tub']), r=0.235, y=0.075)
     elif 'pit' in P: dust = dict(at=g(P['pit']), r=PIT_R, y=0.085)
     elif 'tinbath' in P: dust = dict(at=g(P['tinbath']), w=TIN_W, d=TIN_D, y=0.105)
+    elif 'sbowl' in P: dust = dict(at=g(P['sbowl']), r=SBOWL_R, y=0.09)
+    elif 'zen' in P: dust = dict(at=g(P['zen']), w=ZEN_W, d=ZEN_D, y=0.062)
+    elif 'barrow' in P: dust = dict(at=g(P['barrow']), w=BARROW_W - 0.1, d=BARROW_D - 0.08, y=BARROW_Y)
+    elif 'boat' in P: dust = dict(at=g(P['boat']), w=BOAT_W - 0.1, d=BOAT_D - 0.1, y=0.1)
+    elif 'halflog' in P: dust = dict(at=g(P['halflog']), w=2 * LOGBATH_R - 0.1, d=LOGBATH_L - 0.12, y=LOGBATH_Z + 0.01)
+    elif 'crib' in P: dust = dict(at=g(P['crib']), w=CRIB_W - 0.14, d=CRIB_D - 0.14, y=0.115)
     else: dust = dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105)
     out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dust,
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
@@ -1602,10 +1634,19 @@ def play_info(t, k='rir'):
     if 'tub' in P: sand = [g(P['tub']) + [0.29]]
     elif 'pit' in P: sand = [g(P['pit']) + [PIT_R + 0.07]]
     elif 'tinbath' in P: sand = [g((P['tinbath'][0] + sx * (TIN_W - TIN_D) / 2, P['tinbath'][1])) + [TIN_D / 2 + 0.08] for sx in (-1, 1)]
+    elif 'sbowl' in P: sand = [g(P['sbowl']) + [SBOWL_R + 0.07]]
+    elif 'zen' in P: sand = [g((P['zen'][0] + sx * (ZEN_W - ZEN_D) / 2, P['zen'][1])) + [ZEN_D / 2 + 0.08] for sx in (-1, 1)]
+    elif 'barrow' in P: bx_, by_ = P['barrow']; sand = [g((bx_, by_)) + [BARROW_D / 2 + 0.1], g((bx_ - 0.4, by_)) + [0.12], g((bx_ + 0.29, by_)) + [0.1]]
+    elif 'boat' in P: sand = [g((P['boat'][0] + sx * (BOAT_W - BOAT_D) / 2, P['boat'][1])) + [BOAT_D / 2 + 0.08] for sx in (-1, 1)]
+    elif 'halflog' in P: sand = [g((P['halflog'][0], P['halflog'][1] + sy * (LOGBATH_L - 2 * LOGBATH_R) / 2)) + [LOGBATH_R + 0.1] for sy in (-1, 1)]
+    elif 'crib' in P: sand = [g((P['crib'][0] + sx * (CRIB_W - CRIB_D) / 2, P['crib'][1])) + [CRIB_D / 2 + 0.1] for sx in (-1, 1)]
     else: dx, dy = P['dust']; sand = [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
     cx, cy = P['cabbage']
-    holder = [[round(cx + lx, 3), round(-(cy + ly), 3), 0.06] for (lx, ly) in TRIPOD] if P.get('tripod') else [[cx, round(-(cy + 0.28), 3), 0.08]]
+    holder = [[round(cx + lx, 3), round(-(cy + ly), 3), 0.06] for (lx, ly) in TRIPOD] if P.get('tripod') else [[cx, round(-(cy + 0.28), 3), 0.12 if P.get('holder') == 'stump' else 0.08]]
     keep = [g(P['swing']) + [0.38], *sand, g(P['cabbage']) + [0.13], *holder]
+    if P.get('frame') == 'tree': keep.append(g((P['swing'][0] + TREE_DX, P['swing'][1])) + [0.12])          # (the apple tree's trunk)
+    if P.get('frame') == 'logs': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.13] for sx in (-1, 1)]   # (its posts, braced)
+    if 'crib' in P: keep.append(g((P['crib'][0] + CRIB_PINE[0], P['crib'][1] + CRIB_PINE[1])) + [0.17])            # (the crib's young pine)
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
     if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
     out['keep'] = keep
@@ -1620,7 +1661,15 @@ def pen_tier(t, bk='rir'):
     try: root = pen_base()
     finally: coop.PEN = keep
     random.seed(40 + t + (0 if bk == 'rir' else 7 * len(bk) + ord(bk[0])))
-    if L.get('bowl') == 'enamel':
+    if L.get('bowl') in ('clay', 'celadon'):               # (the Pagoda's: a brown clay bowl, a celadon-glazed one)
+        _swap(root, {'bowl'}, mat('cs_bowl_' + L['bowl'], CS['clay'] if L['bowl'] == 'clay' else CS['celadon'], rough=0.35, spec=0.5, var=0.02))
+    elif L.get('bowl') == 'wood':                           # (the Timber Lodge's: a turned wooden bowl; a copper one in the Cosy)
+        _swap(root, {'bowl'}, mat('cb_bowl_wood', CB['bowl'], rough=0.7, var=0.04, grain=0.3, grain_scale=G))
+    elif L.get('bowl') == 'copper':
+        _swap(root, {'bowl'}, mat('cb_bowl_copper', CB['copper'], rough=0.35, spec=0.5, metal=0.6, var=0.03))
+    elif L.get('bowl') == 'stone':                          # (the Stone Cottage's: a carved stone bowl)
+        _swap(root, {'bowl'}, mat('cl_bowl_stone', '#aaa395', rough=0.85, var=0.04, bump=0.15, bump_scale=60))
+    elif L.get('bowl') == 'enamel':
         _swap(root, {'bowl'}, mat('ct_enamel', '#ece6d6', rough=0.3, spec=0.5, var=0.02))
         dx, dy = L['dish']; objs = []
         bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.012, major_segments=28, minor_segments=6, location=(dx, dy, 0.072))
@@ -1697,7 +1746,7 @@ def pen_info(t, k='rir'):
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') == 'trough' else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume') else 0.5 if P.get('water') == 'pond' else 0.3 if P.get('water') == 'butt' else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
 
@@ -2195,3 +2244,1371 @@ def cabbage_tripod(objs, x, y):
         a = Vector((x + lx, y + ly, 0.0)); b = top + (top - a).normalized() * 0.06
         objs.append(cyl('tpole', 0.016, (b - a).length, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=pole, verts=6, bevel=0.0))
     objs.append(sphere('tknot', 0.03, top, (1, 1, 0.8), m=twine, ico=1))
+
+
+# ---- release 4, the Pagoda's five looks (Audrey, 27 Oct: "Yes, five looks too": each in its Silkie colour, the Silkies
+# themselves unchanged; the browser tints each look's lacquer, roof and trim like the Pagoda's, its rustic hints faded).
+# Rustic (box_sil): a shelter of bamboo poles and old reed mats, a sagging mat roof weighed with stones; an old paper lantern
+#   on a bamboo pole, the nest's lattice faded (the hint of its colour).
+# Mended (shed_sil): a little hut of bamboo canes on a stone base, a roof of halved bamboo, its front pillars and beam half
+#   painted in its colour (the pot of lacquer by it), new paper in the lattice, a paper lantern on a pole.
+# Snug (house_sil): today's Pagoda.
+# Cosy (cosy_sil): a cherry tree in blossom by its left side, a stone lantern, a second paper lantern at the other corner,
+#   azaleas along its base, the automatic door's box and its solar panel, glazed pots by the steps, stepping stones.
+# Deluxe (deluxe_sil): three tiers and a tall gold finial with rings, little gold bells at the roofs' corners; the cosy
+#   touches, the cherry tree on its right.
+# The hens come, go and lay the same way in every look (NESTS['house_sil']: the floor 0.14, the two steps, the low nest
+# window with its lattice slid up); something stands where the Pagoda's lantern does (the birds walk round it).
+CS = dict(bamboo='#bba96b', bamboo2='#a8975a', node='#8d7b45', reed='#c9b37e', reed2='#b19b66', cord='#5a4632', faded='#a0625b',
+          stone='#a7a196', stone2='#8f897e', moss='#6e7a4c', blossom='#f6b9cb', blossom2='#f9d3de', blossom3='#ef9db7', trunk='#5b3d2e',
+          azalea='#e0457a', azalea2='#f07fa6', celadon='#8fb9a8', celadon2='#a9cbbd', clay='#8a5a3c', bronze='#9c7a3c', koi='#f08a2c',
+          koi2='#f4f0e6', pad='#4f8a3a', ink='#2a2420', sand='#ece2c8', raked='#d9cdb0')
+
+
+def _cs(key, rough=0.8, **kw):
+    return C('cs_' + key, CS[key], rough=rough, **kw)
+
+
+def _cane(objs, a, b, r, m, node_m, nodes=2):
+    """A bamboo cane from a to b, with a node ring or two."""
+    a, b = Vector(a), Vector(b); d = b - a
+    objs.append(cyl('cane', r, d.length, (a + b) / 2, d.normalized().to_track_quat('Z', 'Y').to_euler(), m=m, verts=7, bevel=0.0))
+    for k in range(nodes):
+        c = a + d * ((k + 1) / (nodes + 1) + random.uniform(-0.06, 0.06))
+        objs.append(cyl('node', r * 1.18, 0.012, c, d.normalized().to_track_quat('Z', 'Y').to_euler(), m=node_m, verts=7, bevel=0.0))
+
+
+def _paper_lantern(objs, name, x, y, z, m, cap, torn=False):
+    """A round paper lantern hanging at (x, y, z), its caps; torn: an old one, a flap of paper hanging off."""
+    objs.append(sphere('lantern', 0.065, (x, y, z), (1, 1, 1.25), m=m, seg=14, rings=10))
+    for dz in (-0.075, 0.075): objs.append(cyl('lcap', 0.03, 0.02, (x, y, z + dz), m=cap, verts=10, bevel=0.0))
+    if torn: objs.append(box('ltear', (0.05, 0.004, 0.06), (x + 0.04, y - 0.05, z - 0.06), (0.3, 0, 0.6), m=m, bevel=0.0))
+    light_at(name, x, y, z)
+
+
+SIL_FL, SIL_WX, SIL_WW, SIL_WH, SIL_NF = 0.14, 0.42, 0.26, 0.3, 0.06
+LANT = (W2 + 0.2, -D2 - 0.2)                                    # where the Pagoda's lantern hangs (and its block)
+
+
+def box_sil(seed=51):
+    """Rustic: a shelter of bamboo poles and old reed mats."""
+    random.seed(seed)
+    FL, TOP = SIL_FL, 0.66
+    root = empty('box_sil'); objs = []
+    bam, node = _cs('bamboo', var=0.08), _cs('node')
+    reed, reed2, cord = _cs('reed', rough=0.9, var=0.05), _cs('reed2', rough=0.9), _cs('cord', rough=0.9)
+    lines = C('cs_reedline', '#8f7a4c', rough=0.9); old = C('cs_oldmat', '#a99a74', rough=0.95, var=0.06); old2 = C('cs_oldmat2', '#958762', rough=0.95, var=0.06)
+    stone = _cs('stone', rough=0.9, var=0.1); faded = _cs('faded', rough=0.7)
+    dark = C('hall_dark', '#1d1510', rough=1.0)
+    for (x, y) in ((-W2 + 0.05, -D2 + 0.05), (W2 - 0.05, -D2 + 0.05), (-W2 + 0.05, D2 - 0.05), (W2 - 0.05, D2 - 0.05), (0.0, -D2 + 0.05), (0.0, D2 - 0.05)):
+        objs.append(sphere('fstone', 0.08, (x, y, 0.045), (1.2, 1.1, 0.6), (0, 0, random.uniform(0, 3)), m=stone, ico=2, disp=0.25, seed=int(x * 10 + y * 7 + 20)))
+    for i in range(9):                                             # a floor of split bamboo
+        y = -D2 + 0.05 + i * (2 * D2 - 0.1) / 8
+        _cane(objs, (-W2 - 0.02, y, FL - 0.02), (W2 + 0.02, y, FL - 0.02), 0.026, bam, node, nodes=1)
+    for (x, y) in ((-W2, -D2), (W2, -D2), (-W2, D2), (W2, D2)):    # corner poles, the front ones taller (the roof slopes back)
+        _cane(objs, (x, y, 0.0), (x, y, TOP + (0.08 if y < 0 else 0.0)), 0.026, bam, node)
+    WL, WR = SIL_WX - SIL_WW / 2, SIL_WX + SIL_WW / 2
+    POPH = (-0.31 - POP_W / 2 - 0.0225, -0.31 + POP_W / 2 + 0.0225, FL, FL + POP_H + 0.0225)
+    WINH = (WL - 0.02, WR + 0.02, 0.06, SIL_NF + 0.04 + SIL_WH + 0.01)
+    def mats(u0, u1, place, out, ztop, holes=(), torn=None):
+        """Reed mats hung between the poles: a mat, its cords down it, a few darker reeds across it."""
+        pieces = [(u0, u1, FL, ztop)]
+        for (h0, h1, hz0, hz1) in holes:
+            nxt = []
+            for (a, b, za, zb) in pieces:
+                if a < h1 and b > h0 and za < hz1 and zb > hz0:
+                    if a < h0: nxt.append((a, h0, za, zb))
+                    if b > h1: nxt.append((h1, b, za, zb))
+                    c0, c1 = max(a, h0), min(b, h1)
+                    if hz0 > za: nxt.append((c0, c1, za, hz0))
+                    if hz1 < zb: nxt.append((c0, c1, hz1, zb))
+                else: nxt.append((a, b, za, zb))
+            pieces = nxt
+        for (a, b, za, zb) in pieces:
+            if b - a < 0.02 or zb - za < 0.02: continue
+            if torn and a < torn[0] < b: zb2 = zb - torn[1]                          # (a corner torn off: the mat shorter there)
+            else: zb2 = zb
+            objs.append(plank('mat', place((a + b) / 2, za), place((a + b) / 2, zb2), (b - a), 0.012, out, random.choice((reed, reed, reed2)), jitter=0.6, bevel=0.0))
+            z = za + 0.03
+            while z < zb2 - 0.02:                                  # the reeds: darker lines across it
+                objs.append(plank('mline', Vector(place(a + 0.005, z)) + Vector(out) * 0.007, Vector(place(b - 0.005, z)) + Vector(out) * 0.007, 0.006, 0.003, out, lines, jitter=0.3, bevel=0.0))
+                z += random.uniform(0.04, 0.06)
+            n = max(1, int((b - a) / 0.14))
+            for k in range(n):
+                u = a + (k + 0.5) * (b - a) / n
+                objs.append(plank('mcord', place(u, za), place(u, zb2), 0.008, 0.006, out, cord, jitter=0.4, bevel=0.0))
+    fy = lambda u, z: (u, -D2 - 0.004, z); by = lambda u, z: (u, D2 + 0.004, z)
+    mats(-W2, W2, fy, (0, -1, 0), TOP + 0.04, holes=(POPH, WINH), torn=(-0.55, 0.12))
+    mats(-W2, W2, by, (0, 1, 0), TOP - 0.02)
+    mats(-D2, D2, lambda u, z: (-W2 - 0.004, u, z), (-1, 0, 0), TOP, torn=(0.2, 0.15))
+    mats(-D2, D2, lambda u, z: (W2 + 0.004, u, z), (1, 0, 0), TOP)
+    for (size, loc) in (((2 * W2 - 0.06, 0.01, TOP - FL), (0, D2 - 0.03, (FL + TOP) / 2)), ((0.01, 2 * D2 - 0.06, TOP - FL), (W2 - 0.03, 0, (FL + TOP) / 2)),
+                        ((0.01, 2 * D2 - 0.06, TOP - FL), (-W2 + 0.03, 0, (FL + TOP) / 2))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    # the roof: two old mats over a ridge pole and its rafters, sagging, a few stones on them, frayed reeds at the edges
+    zf, zb_, zr = TOP + 0.1, TOP + 0.02, TOP + 0.3
+    _cane(objs, (-W2 - 0.12, 0.02, zr - 0.03), (W2 + 0.12, 0.02, zr - 0.03), 0.024, bam, node, nodes=3)
+    for x in (-W2, 0.0, W2):
+        for (ya, za) in ((-D2 - 0.12, zf - 0.03), (D2 + 0.1, zb_ - 0.03)):
+            _cane(objs, (x, 0.02, zr - 0.03), (x, ya, za), 0.016, bam, node, nodes=1)
+    for (ya, za) in ((-D2 - 0.16, zf), (D2 + 0.14, zb_)):
+        for k in range(3):                                         # each mat in three strips so it sags between the rafters
+            x0, x1 = -W2 - 0.16 + k * (2 * W2 + 0.32) / 3, -W2 - 0.16 + (k + 1) * (2 * W2 + 0.32) / 3
+            sag = 0.025 if k == 1 else 0.012
+            a, b = Vector(((x0 + x1) / 2, 0.02, zr - sag)), Vector(((x0 + x1) / 2, ya, za - sag))
+            nrm = Vector((0, a.z - b.z, b.y - a.y)).normalized()
+            if nrm.z < 0: nrm = -nrm
+            objs.append(plank('rmat', a + nrm * 0.012, b + nrm * 0.012, (x1 - x0) + 0.01, 0.012, nrm, random.choice((old, old2)), jitter=1.2, bevel=0.0))
+            for k2 in range(1, 9):                                  # its reeds, along the ridge
+                q = a.lerp(b, k2 / 9) + nrm * 0.02
+                objs.append(plank('rline', q + Vector((x0 - (x0 + x1) / 2 + 0.01, 0, 0)), q + Vector((x1 - (x0 + x1) / 2 - 0.01, 0, 0)), 0.007, 0.003, nrm, lines, jitter=0.4, bevel=0.0))
+            for k2 in range(3):                                     # its cords, down the slope
+                xx = x0 + (k2 + 0.5) * (x1 - x0) / 3 - (x0 + x1) / 2
+                objs.append(plank('rcord', a + nrm * 0.021 + Vector((xx, 0, 0)), b + nrm * 0.021 + Vector((xx, 0, 0)), 0.008, 0.004, nrm, cord, jitter=0.4, bevel=0.0))
+    for (x, y) in ((-0.4, -0.2), (0.3, -0.25), (0.45, 0.22), (-0.2, 0.25)):
+        z = zr + (zf - zr if y < 0 else zb_ - zr) * abs(y - 0.02) / (D2 + 0.14) + 0.03
+        objs.append(sphere('rstone', 0.06, (x, y, z), (1.2, 1, 0.65), (0, 0, random.uniform(0, 3)), m=stone, ico=2, disp=0.3, seed=int(x * 30 + 60)))
+    straw = coop.M()['straw']
+    for k in range(22):
+        x = random.uniform(-W2 - 0.1, W2 + 0.1); side = random.choice((-1, 1))
+        p = Vector((x, side * (D2 + 0.14) + 0.02, (zf if side < 0 else zb_) - 0.01)); d = Vector((random.uniform(-0.2, 0.2), side * 0.4, -1)).normalized(); L = random.uniform(0.04, 0.1)
+        objs.append(cyl('straw', 0.0025, L, p + d * L / 2, d.to_track_quat('Z', 'Y').to_euler(), straw, verts=5, bevel=0))
+    # the hens' door, its steps, the nest window (its lattice faded), an old lantern on a pole where the Pagoda's hangs
+    pop_door(objs, FL, bam, None, None, steps=2)
+    nest_window(objs, 'sil', FL, SIL_WX, bam, ww=SIL_WW, wh=SIL_WH, hollow=True, steps=2, nest_floor=SIL_NF, door='lattice', door_m=faded)
+    lx, ly = LANT
+    _cane(objs, (lx + 0.07, ly + 0.02, 0.0), (lx + 0.07, ly + 0.02, 0.86), 0.022, bam, node, nodes=3)
+    _cane(objs, (lx + 0.07, ly + 0.02, 0.82), (lx - 0.02, ly, 0.84), 0.012, bam, node, nodes=0)
+    objs.append(cyl('cord', 0.004, 0.1, (lx - 0.02, ly, 0.78), m=cord, verts=5, bevel=0.0))
+    _paper_lantern(objs, 'box_sil', lx - 0.02, ly, 0.66, faded, _cs('node'), torn=True)
+    _own(objs, root)
+    return root
+
+
+def shed_sil(seed=53):
+    """Mended: a little hut of bamboo canes on a stone base, a roof of halved bamboo, half painted in its colour."""
+    random.seed(seed)
+    FL, EAVE, PEAK = SIL_FL, 0.75, 1.07                        # (high enough for the nest's lattice slid up above its window)
+    root = empty('shed_sil'); objs = []
+    bam, bam2, node = _cs('bamboo', var=0.06), _cs('bamboo2', var=0.06), _cs('node')
+    stone = _cs('stone', rough=0.9, var=0.1); red = C('lacquer', '#b0312a', rough=0.4, coat=0.3)
+    paper = C('paper', '#f3e3bd', rough=0.8); dark = C('hall_dark', '#1d1510', rough=1.0)
+    WL, WR = SIL_WX - SIL_WW / 2, SIL_WX + SIL_WW / 2
+    # a low base of flat stones
+    objs.append(box('sbase', (2 * W2 + 0.1, 2 * D2 + 0.1, FL - 0.02), (0, 0, (FL - 0.02) / 2), m=_cs('stone2', rough=0.9), bevel=0.015, segs=1))
+    for i in range(12):
+        x = -W2 - 0.02 + i * (2 * W2 + 0.04) / 11
+        if WL - 0.06 < x < WR + 0.06: continue
+        objs.append(box('sface', (0.1, 0.03, 0.09), (x, -D2 - 0.05, 0.05), (0, 0, math.radians(random.uniform(-4, 4))), m=stone, bevel=0.01, segs=1, jitter=0.004))
+    # the walls: bamboo canes standing side by side (the nest window and the hens' door left open); the back plain
+    POPH = (-0.31 - POP_W / 2 - 0.0225, -0.31 + POP_W / 2 + 0.0225, FL, FL + POP_H + 0.0225)
+    WINH = (WL - 0.02, WR + 0.02, 0.0, SIL_NF + 0.04 + SIL_WH + 0.01)
+    R = 0.021
+    def canes(u0, u1, place, holes=()):
+        n = int((u1 - u0) / (2 * R + 0.003))
+        for i in range(n):
+            u = u0 + (i + 0.5) * (u1 - u0) / n; zs = [FL - 0.02, EAVE]
+            for (h0, h1, hz0, hz1) in holes:
+                if h0 - R < u < h1 + R: zs = [FL - 0.02, max(FL - 0.02, hz0), hz1, EAVE]
+            for z0, z1 in zip(zs[::2], zs[1::2]):
+                if z1 - z0 > 0.03:
+                    a, b = place(u, z0), place(u, z1)
+                    objs.append(cyl('cane', R, z1 - z0, ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (z0 + z1) / 2), m=random.choice((bam, bam, bam2)), verts=6, bevel=0.0))
+                    if z1 - z0 > 0.2:
+                        for f in (0.33, 0.7):
+                            zz = z0 + (z1 - z0) * (f + random.uniform(-0.05, 0.05))
+                            objs.append(cyl('node', R * 1.15, 0.01, ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, zz), m=node, verts=6, bevel=0.0))
+    canes(-W2, W2, lambda u, z: (u, -D2 + R, z), holes=(POPH, WINH))
+    canes(-D2 + 0.03, D2 - 0.03, lambda u, z: (-W2 + R, u, z)); canes(-D2 + 0.03, D2 - 0.03, lambda u, z: (W2 - R, u, z))
+    objs.append(box('backw', (2 * W2, 0.03, EAVE - FL), (0, D2 - 0.015, (FL + EAVE) / 2), m=bam2, bevel=0.0))
+    for (size, loc) in (((0.01, 2 * D2 - 0.1, EAVE - FL), (W2 - 0.05, 0, (FL + EAVE) / 2)), ((0.01, 2 * D2 - 0.1, EAVE - FL), (-W2 + 0.05, 0, (FL + EAVE) / 2))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    # posts at the corners and a beam along the top: the left ones painted in its colour, the right still bare (half done)
+    for (x, y) in ((-W2 - 0.01, -D2 - 0.01), (W2 + 0.01, -D2 - 0.01), (-W2 - 0.01, D2 + 0.01), (W2 + 0.01, D2 + 0.01)):
+        objs.append(cyl('post', 0.035, EAVE - FL + 0.06, (x, y, (FL + EAVE) / 2), m=red if x < 0 else bam2, verts=10, bevel=0.003))
+    objs.append(box('beam', (W2 + 0.06, 0.05, 0.05), (-W2 / 2 - 0.03, -D2 - 0.02, EAVE - 0.02), m=red, bevel=0.006, segs=1))
+    objs.append(box('beam', (W2 + 0.06, 0.05, 0.05), (W2 / 2 + 0.03, -D2 - 0.02, EAVE - 0.02), m=bam2, bevel=0.006, segs=1))
+    for x in (-W2 - 0.04, W2 + 0.04): objs.append(box('beams', (0.05, 2 * D2 + 0.1, 0.05), (x, 0, EAVE - 0.02), m=red if x < 0 else bam2, bevel=0.006, segs=1))
+    for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.04, D2, 0.03, bam2))
+    # the roof: halved bamboo laid in rows down the slopes, a cane along the ridge
+    for sy in (-1, 1):
+        e = Vector((0, sy * (D2 + 0.17), EAVE - 0.05)); r_ = Vector((0, 0, PEAK)); nrm = Vector((0, sy * (PEAK - EAVE + 0.05), D2 + 0.17)).normalized()
+        L = (e - r_).length; th = 0.03
+        o = box('rboard', (2 * W2 + 0.3, L + 0.04, th), (0, 0, 0), m=bam2, bevel=0.006, segs=1)
+        o.rotation_euler = (-sy * math.atan2(PEAK - EAVE + 0.05, D2 + 0.17), 0, 0); o.location = (r_ + e) / 2 + nrm * (th / 2); objs.append(o)
+        n = 17
+        for k in range(n):
+            x = -W2 - 0.13 + (k + 0.5) * (2 * W2 + 0.26) / n
+            a, b = r_ + nrm * th + Vector((x, 0, 0)), e + nrm * th + Vector((x, 0, 0)) + (e - r_).normalized() * 0.03
+            objs.append(cyl('rcane', 0.03 if k % 2 else 0.026, (b - a).length, (a + b) / 2 + nrm * (0.004 if k % 2 else -0.004), (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=bam if k % 2 else node, verts=8, bevel=0.0))
+    _cane(objs, (-W2 - 0.17, 0, PEAK + 0.05), (W2 + 0.17, 0, PEAK + 0.05), 0.04, bam, node, nodes=4)
+    # the hens' door, its steps, the nest window (new paper, its lattice painted)
+    pop_door(objs, FL, bam2, None, None, steps=2)
+    nest_window(objs, 'sil', FL, SIL_WX, bam2, ww=SIL_WW, wh=SIL_WH, hollow=True, steps=2, nest_floor=SIL_NF, door='lattice', door_m=red)
+    # a small lattice window with new paper by the door; the pot of lacquer and its brush; a paper lantern on its pole
+    objs.append(box('paper', (0.16, 0.02, 0.14), (0.05, -D2 - 0.004, 0.46), m=paper, bevel=0.0))
+    for k in (-1, 0, 1):
+        objs.append(box('lat', (0.01, 0.015, 0.14), (0.05 + k * 0.053, -D2 - 0.015, 0.46), m=bam2, bevel=0.0))
+        objs.append(box('lat', (0.16, 0.015, 0.01), (0.05, -D2 - 0.015, 0.46 + k * 0.047), m=bam2, bevel=0.0))
+    px, py = -W2 - 0.2, -D2 + 0.1
+    objs.append(cyl('ppot', 0.06, 0.1, (px, py, 0.05), m=_cs('ink', rough=0.4), verts=14, bevel=0.005))
+    objs.append(cyl('ppaint', 0.055, 0.006, (px, py, 0.101), m=red, verts=14, bevel=0.0))
+    objs.append(box('pdrip', (0.02, 0.004, 0.05), (px + 0.02, py - 0.058, 0.08), m=red, bevel=0.002, segs=1))
+    objs.append(box('brush', (0.025, 0.16, 0.01), (px + 0.1, py + 0.02, 0.01), (0, 0, math.radians(25)), m=bam2, bevel=0.003, segs=1))
+    objs.append(box('bristle', (0.04, 0.04, 0.016), (px + 0.14, py - 0.05, 0.012), (0, 0, math.radians(25)), m=red, bevel=0.004, segs=1))
+    lx, ly = LANT
+    _cane(objs, (lx + 0.07, ly + 0.02, 0.0), (lx + 0.07, ly + 0.02, 0.86), 0.022, bam, node, nodes=3)
+    _cane(objs, (lx + 0.07, ly + 0.02, 0.82), (lx - 0.02, ly, 0.84), 0.012, bam, node, nodes=0)
+    objs.append(cyl('cord', 0.004, 0.1, (lx - 0.02, ly, 0.78), m=_cs('cord'), verts=5, bevel=0.0))
+    _paper_lantern(objs, 'shed_sil', lx - 0.02, ly, 0.66, C('lanternred', '#dc4b2e', rough=0.5), C('gold', '#d4a640', rough=0.3, metal=0.9))
+    _own(objs, root)
+    return root
+
+
+def cherry_tree(objs, x, y, h=1.25, spread=0.42, seed=60):
+    """A little cherry tree in blossom: a crooked trunk, branches, clouds of pink blossom, petals fallen round it."""
+    random.seed(seed)
+    trunk = _cs('trunk', rough=0.9, var=0.06, grain=0.3, grain_scale=G)
+    bl = [_cs('blossom', rough=0.7, var=0.04), _cs('blossom2', rough=0.7, var=0.04), _cs('blossom3', rough=0.7, var=0.04)]
+    pts = [Vector((x, y, 0.0)), Vector((x + 0.04, y - 0.02, h * 0.35)), Vector((x - 0.03, y + 0.02, h * 0.62))]
+    for k, (a, b) in enumerate(zip(pts, pts[1:])):
+        objs.append(cyl('trunk', 0.055 - k * 0.012, (b - a).length + 0.02, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=trunk, verts=9, r2=0.045 - k * 0.012, bevel=0.0))
+    top = pts[-1]; tips = []
+    for k in range(5):
+        a = k / 5 * math.tau + 0.3; d = Vector((math.cos(a) * spread * 0.8, math.sin(a) * spread * 0.6, h * 0.28))
+        tip = top + d; tips.append(tip)
+        objs.append(cyl('branch', 0.022, d.length, top + d / 2, d.normalized().to_track_quat('Z', 'Y').to_euler(), m=trunk, verts=6, r2=0.012, bevel=0.0))
+    clouds = tips + [top + Vector((0, 0, h * 0.36))]
+    for k, c in enumerate(clouds):
+        objs.append(sphere('blossom', spread * 0.42, c, (1.15, 1.05, 0.75), (0, 0, k), m=bl[k % 3], ico=2, disp=0.35, seed=k + seed))
+        for j in range(3):
+            q = c + Vector((random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-0.4, 0.6))) * spread * 0.35
+            objs.append(sphere('blossom', spread * 0.22, q, (1, 1, 0.8), m=bl[(k + j + 1) % 3], ico=1, disp=0.3, seed=k * 3 + j + seed))
+    for k in range(26):                                            # petals on the ground
+        a = random.uniform(0, math.tau); d = random.uniform(0.1, spread * 1.3)
+        objs.append(cyl('petal', 0.014, 0.003, (x + math.cos(a) * d, y + math.sin(a) * d, 0.004), (0, 0, a), m=bl[k % 3], verts=6, bevel=0.0))
+
+
+def stone_lantern(objs, name, x, y):
+    """A little stone lantern (a toro): a foot, a post, the firebox with its light, a roof, a knob."""
+    st, st2 = _cs('stone', rough=0.9, var=0.06), _cs('stone2', rough=0.9, var=0.06)
+    lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    objs.append(cyl('tbase', 0.1, 0.06, (x, y, 0.03), m=st2, verts=6, bevel=0.006))
+    objs.append(cyl('tpost', 0.04, 0.26, (x, y, 0.19), m=st, verts=8, bevel=0.004))
+    objs.append(cyl('tshelf', 0.085, 0.04, (x, y, 0.34), m=st2, verts=6, bevel=0.005))
+    objs.append(box('tfire', (0.11, 0.11, 0.11), (x, y, 0.415), m=st, bevel=0.008, segs=1))
+    objs.append(box('tglow', (0.06, 0.115, 0.06), (x, y, 0.415), m=lamp, bevel=0.0))
+    objs.append(box('tglow', (0.115, 0.06, 0.06), (x, y, 0.415), m=lamp, bevel=0.0))
+    objs.append(cyl('troof', 0.13, 0.08, (x, y, 0.51), (0, 0, math.pi / 6), m=st2, verts=6, r2=0.03, bevel=0.006))
+    objs.append(sphere('tknob', 0.03, (x, y, 0.57), (1, 1, 1.3), m=st, ico=1))
+    for k in range(3):
+        a = k * 2.0 + 0.5
+        objs.append(sphere('tmoss', 0.03, (x + math.cos(a) * 0.08, y + math.sin(a) * 0.08, 0.06), (1.3, 1, 0.5), m=_cs('moss', rough=0.95), ico=1, disp=0.3, seed=k))
+    light_at(name, x, y, 0.415)
+
+
+def _pagoda_bits(r, name, t, eave=0.74, roof=(W2 + 0.28, D2 + 0.26, 1.02), tree=(-1.15, 0.1), tree_h=1.25, bells=()):
+    """What makes the Pagoda cosy (and stays on the Deluxe): a cherry tree in blossom, a stone lantern by its left side, a
+    second paper lantern at the other front corner, azaleas along its base, the automatic door's box and its solar panel,
+    glazed pots by the steps, flat stepping stones to the gate; bells: little gold bells at these roof corners."""
+    random.seed(57 + t); objs = []
+    cherry_tree(objs, *tree, h=tree_h, seed=60 + t)
+    stone_lantern(objs, name, -W2 - 0.33, -0.2)
+    lx, ly = -LANT[0], LANT[1]                                     # (the second lantern, mirrored: the birds walk round it)
+    objs.append(cyl('cord', 0.004, 0.1, (lx, ly, eave), m=C('dark', '#2a1d16', rough=1.0), verts=5, bevel=0.0))
+    _paper_lantern(objs, name, lx, ly, eave - 0.12, C('lanternred', '#dc4b2e', rough=0.5), C('gold', '#d4a640', rough=0.3, metal=0.9))
+    BLOCKS.setdefault(name, []).append([round(lx, 3), round(-ly, 3), 0.11])
+    az = [_cs('azalea', rough=0.6), _cs('azalea2', rough=0.6)]; leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    for (x, y) in ((W2 + 0.16, -0.2), (W2 + 0.16, 0.18), (-W2 - 0.16, 0.25), (0.0, D2 + 0.16), (0.4, D2 + 0.16)):
+        objs.append(sphere('azbush', 0.09, (x, y, 0.07), (1.2, 1, 0.75), m=leaf[0], ico=2, disp=0.3, seed=int(x * 10 + y * 13 + 70)))
+        for k in range(7):
+            a = k / 7 * math.tau
+            objs.append(sphere('azflower', 0.022, (x + math.cos(a) * 0.07, y + math.sin(a) * 0.06, 0.1 + 0.03 * (k % 2)), m=az[k % 2], ico=1))
+    # the automatic door: its box over the hens' door (a green light), its solar panel on the lower roof's front
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    zb = SIL_FL + POP_H + 0.07
+    objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.045, zb), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, zb), m=led, seg=8, rings=4))
+    X, Y, z1 = roof; e0 = Vector((0, -Y, eave + 0.02)); t0 = Vector((0, -0.24, z1))
+    dn = (e0 - t0).normalized(); nrm = Vector((0, -(z1 - eave - 0.02), Y - 0.24)).normalized()
+    c = t0.lerp(e0, 0.5) + nrm * 0.06 + Vector((0.34, 0, 0))
+    objs.append(plank('solarframe', c - dn * 0.09, c + dn * 0.09, 0.23, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for i in range(2):
+        for j in range(3):
+            cc = c + nrm * 0.012 + dn * (-0.045 + i * 0.09) + Vector((-0.072 + j * 0.072, 0, 0))
+            objs.append(plank('solarcell', cc - dn * 0.04, cc + dn * 0.04, 0.065, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # glazed pots of little pines either side of the foot of the steps (the birds walk round them)
+    pot = _cs('celadon', rough=0.35, spec=0.5); pine = C('rleaf1', '#3f7a35', rough=0.8)
+    for (x, y) in ((-0.66, -0.86), (0.04, -0.86)):
+        objs.append(cyl('gpot', 0.07, 0.1, (x, y, 0.05), m=pot, verts=14, r2=0.06, bevel=0.006))
+        objs.append(cyl('ptrunk', 0.012, 0.12, (x, y, 0.14), (0.2, 0, 0), m=_cs('trunk'), verts=6, bevel=0.0))
+        for k in range(3):
+            objs.append(sphere('ppine', 0.05 - k * 0.008, (x + 0.02 * (k - 1), y - 0.01 * k, 0.17 + k * 0.035), (1.4, 1.2, 0.5), m=pine, ico=1, disp=0.25, seed=k + 80))
+        BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.12])
+    # flat stepping stones from the foot of the steps to the gate
+    stone = _barn_m('stone', rough=0.9, grain=0.0, bump=0.2, bump_scale=60, var=0.12)
+    gx, gy = _gate_of(t, 'sil'); a, b = Vector((-0.31, -1.0)), Vector((gx, gy + 0.32)); n = max(3, round((b - a).length / 0.25))
+    for k in range(n + 1):
+        q = a.lerp(b, k / n); x, y = q.x + 0.05 * math.sin(k * 2.1), q.y
+        objs.append(cyl('stepstone', 0.085 + random.uniform(-0.01, 0.015), 0.025, (x, y, 0.012), (0, 0, random.uniform(0, 3)), m=stone, verts=9, bevel=0.006))
+    gold = C('gold', '#d4a640', rough=0.3, metal=0.9)
+    for (bx, by, bz) in bells:                                     # little bells at the roofs' corners
+        objs.append(cyl('bcord', 0.003, 0.05, (bx, by, bz - 0.025), m=gold, verts=4, bevel=0.0))
+        objs.append(cyl('bell', 0.022, 0.04, (bx, by, bz - 0.07), m=gold, verts=10, r2=0.012, bevel=0.0))
+    _own(objs, r)
+    return r
+
+
+def cosy_sil():
+    r = pagoda(name='cosy_sil'); _pagoda_bits(r, 'cosy_sil', 3)
+    return r
+
+
+def deluxe_sil():
+    r = pagoda(tiers=3, name='deluxe_sil')
+    bells = [(sx * (W2 + 0.28), sy * (D2 + 0.26), 0.74 + 0.02 + 0.15) for sx in (-1, 1) for sy in (-1, 1)] + [(sx * 0.42, sy * 0.33, 1.21 + 0.11) for sx in (-1, 1) for sy in (-1, 1)]
+    _pagoda_bits(r, 'deluxe_sil', 4, tree=(1.3, 0.35), tree_h=1.45, bells=bells)
+    return r
+
+
+# ---- the Pagoda's gardens (its own: Audrey, 27 Oct): a clay bowl for water in the small pens, a celadon one in the Cosy;
+# Cosy: a swing under a little red torii, a big glazed bowl of sand, the cabbage hanging from a bamboo pole; Deluxe: a zen
+# garden of raked sand with three stones for the sand bath, a koi pond with a bamboo spout for water, a feeder of dark
+# lacquered wood under a little curved roof, a xylophone of bamboo, the swing.
+PENS_BY['sil'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(-0.7, -1.05), dish=(0.6, -1.05), bowl='clay', hay=None, hay_rot=0, sack=None,
+            straw=((0.1, -1.3, 0.25, 22), (-0.5, -1.45, 0.2, 15))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(0.55, -1.6), dish=(-0.85, -0.95), bowl='clay', hay=None, hay_rot=0, sack=(1.12, 0.3),
+            straw=((-0.6, -1.5, 0.3, 28), (0.9, -1.0, 0.25, 20))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(-1.25, -1.25), dish=(0.55, -1.55), bowl='celadon', hay=(1.6, 0.55), hay_rot=0, sack=None,
+            straw=((1.6, 0.55, 0.4, 35), (-0.4, -1.6, 0.35, 35), (1.2, -2.0, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(0.95, -1.75), feeder_style='pagoda', dish=(-1.6, -0.1), water='pond', hay=(-2.0, 0.55), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.4, -1.3, 0.3, 25), (-2.0, 0.55, 0.4, 35))),
+}
+PLAY_BY['sil'] = {3: dict(swing=(1.35, -1.1), sbowl=(-1.3, -2.2), cabbage=(0.95, -2.25), frame='torii', holder='bamboo'),
+                  4: dict(swing=(1.55, -2.4), zen=(-1.35, -2.45), cabbage=(1.6, -1.0), xylo=(-1.35, -1.25), frame='torii', holder='bamboo', bars='bamboo')}
+SBOWL_R = 0.26                                                  # the Cosy Pagoda's glazed bowl of sand
+ZEN_W, ZEN_D = 0.9, 0.6                                         # the Deluxe Pagoda's zen garden (x, y)
+
+
+def sand_bowl(objs, x, y):
+    """The Cosy Pagoda's sand bath: a big shallow glazed bowl full of sand on a low wooden ring, a little spilt round it."""
+    gl, gl2 = _cs('celadon', rough=0.3, spec=0.5), _cs('celadon2', rough=0.3, spec=0.5)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    objs.append(cyl('sbfoot', SBOWL_R - 0.05, 0.03, (x, y, 0.015), m=_cs('trunk'), verts=16, bevel=0.004))
+    objs.append(cyl('sbowl', SBOWL_R - 0.04, 0.07, (x, y, 0.065), m=gl, verts=24, r2=SBOWL_R + 0.02, bevel=0.01))
+    bpy.ops.mesh.primitive_torus_add(major_radius=SBOWL_R + 0.015, minor_radius=0.015, major_segments=28, minor_segments=6, location=(x, y, 0.1))
+    o = bpy.context.object; setmat(o, gl2); objs.append(o)
+    objs.append(sphere('sbsand', SBOWL_R - 0.005, (x, y, 0.088), (1, 1, 0.06), m=sand, ico=3, disp=0.1, seed=17))
+    for k in range(5):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (SBOWL_R + 0.1), y + math.sin(a) * (SBOWL_R + 0.1), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 23))
+
+
+def zen_garden(objs, x, y):
+    """The Deluxe Pagoda's sand bath: a low frame of dark wood round raked pale sand, three mossy stones at its corners."""
+    wood = _cs('ink', rough=0.6, var=0.05); sand = _cs('sand', rough=0.95, var=0.03); raked = _cs('raked', rough=0.95)
+    hw, hd, H = ZEN_W / 2, ZEN_D / 2, 0.07
+    for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
+                      ((x - hw, y - hd), (x - hw, y + hd), (-1, 0, 0)), ((x + hw, y - hd), (x + hw, y + hd), (1, 0, 0))):
+        objs.append(plank('zframe', (a[0], a[1], H / 2), (b[0], b[1], H / 2), H, 0.035, n, wood, jitter=0.2))
+    objs.append(box('zsand', (ZEN_W - 0.04, ZEN_D - 0.04, 0.05), (x, y, 0.035), m=sand, bevel=0.0))
+    for k in range(7):                                             # the raked lines, along x
+        yy = y - hd + 0.06 + k * (ZEN_D - 0.12) / 6
+        objs.append(box('zline', (ZEN_W - 0.1, 0.012, 0.008), (x, yy, 0.062), m=raked, bevel=0.0))
+    st = _cs('stone2', rough=0.9, var=0.08); moss = _cs('moss', rough=0.95)
+    for k, (sx, sy, r_) in enumerate(((-0.8, 0.65, 0.07), (0.85, -0.6, 0.055), (0.7, 0.7, 0.045))):
+        cx_, cy_ = x + sx * hw, y + sy * hd
+        objs.append(sphere('zstone', r_, (cx_, cy_, 0.06), (1.2, 1, 0.9), (0, 0, k), m=st, ico=2, disp=0.25, seed=k + 31))
+        objs.append(sphere('zmoss', r_ * 0.6, (cx_, cy_, 0.06 + r_ * 0.7), (1.3, 1.1, 0.4), m=moss, ico=1, disp=0.2, seed=k))
+        bpy.ops.mesh.primitive_torus_add(major_radius=r_ * 1.5, minor_radius=0.006, major_segments=16, minor_segments=4, location=(cx_, cy_, 0.062))
+        o = bpy.context.object; setmat(o, raked); objs.append(o)
+
+
+def torii_swing(objs, x, y):
+    """The Pagoda's swing frame: a little red torii, its lower beam the swing's bar."""
+    red = C('lanternred', '#dc4b2e', rough=0.5); ink = _cs('ink', rough=0.6)
+    for sx in (-1, 1):
+        objs.append(cyl('tpost', 0.026, SWING_TOP + 0.1, (x + sx * SWING_HALF, y, (SWING_TOP + 0.1) / 2), m=red, verts=10, bevel=0.003))
+        objs.append(cyl('tfoot', 0.034, 0.05, (x + sx * SWING_HALF, y, 0.025), m=ink, verts=10, bevel=0.003))
+    objs.append(cyl('swbar', 0.022, 2 * SWING_HALF + 0.06, (x, y, SWING_TOP), (0, math.radians(90), 0), m=red, verts=10, bevel=0.0))
+    me = bpy.data.meshes.new('kasagi'); bm = bmesh.new(); L = SWING_HALF + 0.17; vs = []
+    for k in range(9):                                             # the top beam, its ends sweeping up
+        u = -1 + 2 * k / 8; xx = x + u * L; zz = SWING_TOP + 0.13 + 0.05 * u ** 4
+        vs.append([bm.verts.new((xx, y + dy, zz + dz)) for (dy, dz) in ((-0.035, -0.02), (0.035, -0.02), (0.035, 0.02), (-0.035, 0.02))])
+    for a, b in zip(vs, vs[1:]):
+        for i in range(4): bm.faces.new((a[i], a[(i + 1) % 4], b[(i + 1) % 4], b[i]))
+    bm.faces.new(vs[0][::-1]); bm.faces.new(vs[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('kasagi', me)); setmat(o, ink); soften(o, 0.006, 1); objs.append(o)
+    objs.append(box('shimaki', (2 * L - 0.08, 0.06, 0.03), (x, y, SWING_TOP + 0.085), m=red, bevel=0.004, segs=1))
+
+
+def cabbage_bamboo(objs, x, y):
+    """The Pagoda's way of hanging the cabbage: a bamboo post and an arm of bamboo out over the yard."""
+    bam, node = _cs('bamboo', var=0.06), _cs('node')
+    px, py = x, y + 0.28
+    _cane(objs, (px, py, 0.0), (px, py, CAB_TOP + 0.05), 0.025, bam, node, nodes=2)
+    _cane(objs, (px, py + 0.03, CAB_TOP), (px, y - 0.03, CAB_TOP), 0.018, bam, node, nodes=1)
+    objs.append(sphere('tknot', 0.026, (px, py, CAB_TOP), m=coop.M()['twine'], ico=1))
+    for k in range(3):
+        a = k * 2.1 + 0.4
+        objs.append(sphere('cstone', 0.035, (px + math.cos(a) * 0.06, py + math.sin(a) * 0.06, 0.012), (1.2, 1, 0.6), m=_cs('stone', rough=0.9), ico=1, disp=0.2, seed=k))
+
+
+def bamboo_xylophone(objs, x, y):
+    """A xylophone of bamboo: six canes across a low frame, shorter towards one end, for pecking."""
+    bam, node, ink = _cs('bamboo', var=0.05), _cs('node'), _cs('ink', rough=0.6)
+    for sy in (-1, 1):
+        objs.append(box('xrail', (0.26, 0.03, 0.025), (x, y + sy * 0.16, 0.085), m=ink, bevel=0.005, segs=1))
+        for sx in (-1, 1):
+            objs.append(box('xleg', (0.03, 0.03, 0.08), (x + sx * 0.1, y + sy * 0.16, 0.04), m=ink, bevel=0.004, segs=1))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.26 - k * 0.025
+        objs.append(cyl('xbar', 0.018, L, (x, yy, 0.108), (0, math.radians(90), 0), m=bam, verts=8, bevel=0.0))
+        objs.append(cyl('xnode', 0.0205, 0.008, (x + L * 0.2, yy, 0.108), (0, math.radians(90), 0), m=node, verts=8, bevel=0.0))
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.2, 0.015), (math.radians(90), 0, math.radians(30)), m=ink, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=bam, seg=8, rings=6))
+
+
+# ---- release 4, the Stone Cottage's five looks (Audrey, 27 Oct: "The other four coops", one at a time, shown first).
+# Rustic (box_leg): a hut of dry-stone walls, its front an old blue door laid on its side (the paint faded, holes cut for
+#   the hens), a roof of a few big old slates on two planks, moss and stones on it (the hint: the cottage's blue door).
+# Mended (shed_leg): a little stone hut newly pointed, its roof slated half way (battens bare above, a stack of slates by
+#   it), a new pine door, a pot of blue paint.
+# Snug (house_leg): today's cottage.
+# Cosy (cosy_leg): window frames painted duck-egg blue, wisteria along the front, a window box of red geraniums, a dovecote
+#   on a pole with two white doves, blue hydrangeas by the ramp, a lantern, the automatic door's box and its solar panel,
+#   square flagstones to the gate.
+# Deluxe (deluxe_leg): a storey taller, two dormer windows in the slates, a slated porch hood over the blue door on stone
+#   brackets, stone balls on the gables, a chimney at each end; the cosy touches.
+# The hens come, go and lay the same way in every look (NESTS['house_leg']: the floor 0.18, the ramp, the nest window with
+# its door let down).
+CL = dict(drystone=('#a39a88', '#8f8778', '#b2a893', '#857e71'), faded='#7f9db3', faded2='#93abbd', bare='#9a8670', slab='#6d7378',
+          slab2='#5d6369', moss='#6b7a46', pine='#d4b07a', pine2='#c39f6a', mortar='#b9b0a0', duck='#9ec9c2', wist='#9a7fc4',
+          wist2='#b49ad6', gera='#d8383f', hydr='#7fa3d8', hydr2='#9bb8e6', dove='#f4f2ee', flag='#a49d90', flag2='#918a7d', iron='#2b2926')
+
+
+def _cl(key, rough=0.85, **kw):
+    v = CL[key]
+    return C('cl_' + key, v if isinstance(v, str) else v[0], rough=rough, **kw)
+
+
+def _drystone(objs, u0, u1, place, z0, top, ms, holes=(), seed=0):
+    """A wall of rough stones stacked without mortar from z0 up to top(u) (uneven), leaving holes (u0, u1, z0, z1)."""
+    z, row = z0, 0
+    while True:
+        h = random.uniform(0.08, 0.12); u = u0 - (0.06 if row % 2 else 0.0)
+        if z + h * 0.5 > max(top(u0), top(u1), top((u0 + u1) / 2)) + 0.05: break
+        while u < u1:
+            w = random.uniform(0.13, 0.24); ub = min(u1, u + w); um = (u + ub) / 2
+            if ub - u > 0.05 and z + h * 0.5 < top(um) + random.uniform(-0.06, 0.02) and not any(a < um < b and c < z + h / 2 < d for (a, b, c, d) in holes):
+                o = box('dstone', (ub - u - 0.02, 0.07, h - 0.012), (0, 0, 0), m=random.choice(ms), bevel=0.02, segs=1, jitter=0.012)
+                place(o, um, z + h / 2); objs.append(o)
+            u = ub
+        z += h; row += 1
+
+
+def box_leg(seed=61):
+    """Rustic: a dry-stone hut, an old blue door for its front, a roof of old slates."""
+    random.seed(seed)
+    FL, WX, TOP = 0.18, 0.44, 0.72
+    root = empty('box_leg'); objs = []
+    ms = [C('cl_ds%d' % i, h, rough=0.9, var=0.08) for i, h in enumerate(CL['drystone'])]
+    faded, faded2, bare = _cl('faded', rough=0.8, var=0.05), _cl('faded2', rough=0.8, var=0.05), _cl('bare', rough=0.85, var=0.08, grain=0.3, grain_scale=G)
+    iron = _cl('iron', rough=0.5, metal=0.5); dark = C('hall_dark', '#1d1510', rough=1.0)
+    WL, WR = WX - WIN_W / 2, WX + WIN_W / 2
+    # three walls of dry stone (the back and the sides), dark inside; under the front a row of stones
+    def side(o, u, v, sx): o.location = (sx * (W2 - 0.03), u, v); o.rotation_euler = (0, 0, math.radians(90))
+    _drystone(objs, -D2, D2, lambda o, u, v: side(o, u, v, -1), 0.0, lambda u: TOP - 0.04 * (u + D2) / D2, ms)
+    _drystone(objs, -D2, D2, lambda o, u, v: side(o, u, v, 1), 0.0, lambda u: TOP - 0.04 * (u + D2) / D2, ms)
+    def back(o, u, v): o.location = (u, D2 - 0.03, v)
+    _drystone(objs, -W2 + 0.04, W2 - 0.04, back, 0.0, lambda u: TOP - 0.08, ms)
+    def front(o, u, v): o.location = (u, -D2 + 0.03, v)
+    _drystone(objs, -W2, W2, front, 0.0, lambda u: FL if not (WL - 0.02 < u < WR + 0.02) else 0.2, ms)
+    for (size, loc) in (((2 * W2 - 0.16, 0.01, TOP - FL), (0, D2 - 0.08, (FL + TOP) / 2)), ((0.01, 2 * D2 - 0.12, TOP - FL), (W2 - 0.08, 0, (FL + TOP) / 2)),
+                        ((0.01, 2 * D2 - 0.12, TOP - FL), (-W2 + 0.08, 0, (FL + TOP) / 2))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    # the front: an old door laid on its side, boards across (holes cut for the hens' door and the nest), the paint flaking
+    POPH = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H); WINH = (WL, WR, FL + 0.04, FL + 0.04 + WIN_H)
+    z, k = FL, 0
+    while z < TOP + 0.04:
+        h = 0.135 if k < 4 else TOP + 0.06 - z
+        spans = [(-W2 - 0.02, W2 + 0.02)]
+        for (h0, h1, hz0, hz1) in (POPH, WINH):
+            if z + h > hz0 + 0.01 and z < hz1 - 0.01: spans = [p for s_ in spans for p in ((s_[0], min(s_[1], h0)), (max(s_[0], h1), s_[1])) if p[1] - p[0] > 0.03]
+        for (a, b) in spans:
+            m_ = bare if (k == 2 and a > 0) else random.choice((faded, faded, faded2))
+            objs.append(plank('dboard', (a, -D2 - 0.012, z + h / 2), (b, -D2 - 0.012, z + h / 2), h * 0.96, 0.03, (0, -1, 0), m_, jitter=0.4))
+        z += h; k += 1
+    for (x0, x1) in ((-0.6, -0.5), (0.0, 0.08)):                   # its ledges (upright now it's on its side) and a brace
+        objs.append(plank('dledge', ((x0 + x1) / 2, -D2 - 0.032, FL + 0.02), ((x0 + x1) / 2, -D2 - 0.032, TOP), 0.07, 0.02, (0, -1, 0), faded2, jitter=0.5))
+    objs.append(plank('dbrace', (-0.5, -D2 - 0.034, FL + 0.05), (0.0, -D2 - 0.034, TOP - 0.03), 0.06, 0.018, (0, -1, 0), faded2, jitter=0.5))
+    objs.append(sphere('dknob', 0.022, (0.16, -D2 - 0.05, FL + 0.48), m=C('brass', '#c99a3c', rough=0.3, metal=0.9), seg=10, rings=6))
+    for zz in (FL + 0.08, TOP - 0.05): objs.append(box('dhinge', (0.16, 0.012, 0.03), (-0.65 + 0.08, -D2 - 0.03, zz), m=iron, bevel=0.003, segs=1))
+    # the roof: two old planks from front to back, big old slates on them (a gap where one slipped), moss, stones on top
+    slab, slab2, moss = _cl('slab', rough=0.7, var=0.1), _cl('slab2', rough=0.7, var=0.1), _cl('moss', rough=0.95)
+    zf, zb = TOP + 0.08, TOP + 0.0
+    for x in (-0.38, 0.38):
+        objs.append(plank('rplank', (x, -D2 - 0.12, zf), (x, D2 + 0.1, zb), 0.12, 0.03, (0, 0, 1), bare, jitter=0.6))
+    nrm = Vector((0, zf - zb, 2 * D2 + 0.22)).normalized()
+    for row in range(3):
+        for col in range(4):
+            if (row, col) == (1, 2): continue                       # (one slipped off: it lies on the ground by the wall)
+            x = -W2 - 0.08 + (col + 0.5) * (2 * W2 + 0.16) / 4 + (0.04 if row % 2 else 0)
+            y0 = -D2 - 0.14 + row * 0.33; y1 = y0 + 0.4
+            za = zf + (zb - zf) * (y0 + D2 + 0.14) / (2 * D2 + 0.24) + 0.03 + 0.012 * (2 - row); zb_ = zf + (zb - zf) * (y1 + D2 + 0.14) / (2 * D2 + 0.24) + 0.03 + 0.012 * (2 - row)
+            objs.append(plank('rslate', (x, y0, za), (x, y1, zb_), (2 * W2 + 0.16) / 4 * random.uniform(0.9, 1.0), 0.018, nrm, random.choice((slab, slab2)), jitter=2.0, bevel=0.004))
+    gx, gy = -0.05, D2 + 0.06                                      # (the gap: dark underneath)
+    objs.append(plank('gapdark', (gx, gy - 0.3, zb + 0.035), (gx, gy, zb + 0.02), 0.28, 0.005, nrm, dark, jitter=0.0, bevel=0.0))
+    objs.append(plank('fallen', (-W2 - 0.25, 0.1, 0.012), (-W2 - 0.25, 0.48, 0.012), 0.3, 0.018, (0, 0, 1), slab2, jitter=4.0, bevel=0.004))
+    for (x, y, r_) in ((-0.35, -0.2, 0.06), (0.4, 0.05, 0.07), (0.1, 0.3, 0.05)):
+        z = zf + (zb - zf) * (y + D2 + 0.14) / (2 * D2 + 0.24) + 0.07
+        objs.append(sphere('rstone', r_, (x, y, z), (1.2, 1, 0.7), (0, 0, x), m=random.choice(ms), ico=2, disp=0.3, seed=int(x * 50 + 80)))
+    for k in range(8):
+        x, y = random.uniform(-0.55, 0.55), random.uniform(-0.45, 0.4)
+        z = zf + (zb - zf) * (y + D2 + 0.14) / (2 * D2 + 0.24) + 0.06
+        objs.append(sphere('rmoss', random.uniform(0.03, 0.05), (x, y, z), (1.4, 1.1, 0.35), m=moss, ico=1, disp=0.3, seed=k + 50))
+    # the hens' door (no frame: the hole in the old door), a short plank for a ramp, the nest window (its door an old board)
+    _ramp(objs, FL, bare, bare, w=0.17, slats=2)
+    nest_window(objs, 'leg', FL, WX, faded2, hollow=True, door='drop', door_m=bare)
+    straw_bits(objs, (-0.2, -D2 - 0.15, 0), 0.25, 20, 0.0)
+    _own(objs, root)
+    return root
+
+
+def shed_leg(seed=63):
+    """Mended: a little stone hut newly pointed, its roof slated half way, a new pine door, a pot of blue paint."""
+    random.seed(seed)
+    FL, WX, EAVE, PEAK = 0.18, 0.44, 0.76, 1.16
+    root = empty('shed_leg'); objs = []
+    mortar = _cl('mortar', rough=0.95); stones = [C('st%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#a59b88', '#928a7b', '#b3a891', '#877f72', '#9c8f7a'))]
+    pine, pine2 = _cl('pine', rough=0.75, var=0.08, grain=0.35, grain_scale=G), _cl('pine2', rough=0.75, var=0.08, grain=0.35, grain_scale=G)
+    slate = C('slate2', '#57657a', rough=0.65, var=0.12, hue_var=0.01); ridge = C('ridge2', '#46525f', rough=0.6)
+    blue = C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G); dark = C('hall_dark', '#1d1510', rough=1.0)
+    core = box('core', (2 * W2 - 0.02, 2 * D2 - 0.02, EAVE), (0, 0, EAVE / 2), m=mortar, bevel=0.0); objs.append(core)
+    for sx in (-1, 1): objs.append(prism_gable(sx * (W2 - 0.01), EAVE - 0.01, PEAK - 0.06, D2 - 0.01, 0.03, mortar))
+    holes = {'front': [(-0.31 - POP_W / 2 - 0.04, -0.31 + POP_W / 2 + 0.04, 0.0, FL + POP_H + 0.05), (-0.1, 0.2, 0.0, 0.62), (WX - WIN_W / 2 - 0.02, WX + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)], 'right': [], 'left': [], 'back': []}
+    def wall(side, length, place, top=lambda u: EAVE):
+        z = 0.0; row = 0
+        while z < PEAK:
+            h = random.uniform(0.095, 0.125); u = -length / 2 - (0.07 if row % 2 else 0.0)
+            while u < length / 2:
+                w = random.uniform(0.15, 0.27); u1 = min(length / 2, u + w); um = (u + u1) / 2
+                if u1 - u > 0.05 and z + h * 0.5 < top(um) and not any(a < um < b and c < z + h / 2 < d for (a, b, c, d) in holes[side]):
+                    o = box('stone', (u1 - u - 0.016, 0.04, h - 0.016), (0, 0, 0), m=random.choice(stones), bevel=0.012, segs=1, jitter=0.002)
+                    place(o, um, z + h / 2); objs.append(o)
+                u = u1
+            z += h; row += 1
+    def front(o, u, v): o.location = (u, -D2 - 0.005, v)
+    def back(o, u, v): o.location = (u, D2 + 0.005, v)
+    def right(o, u, v): o.location = (W2 + 0.005, u, v); o.rotation_euler = (0, 0, math.radians(90))
+    def left(o, u, v): o.location = (-W2 - 0.005, u, v); o.rotation_euler = (0, 0, math.radians(90))
+    gtop = lambda u: EAVE + (PEAK - 0.08 - EAVE) * (1 - abs(u) / D2)
+    wall('front', 2 * W2 + 0.04, front); wall('back', 2 * W2 + 0.04, back)
+    wall('right', 2 * D2 + 0.04, right, gtop); wall('left', 2 * D2 + 0.04, left, gtop)
+    # the roof: battens across both slopes, slates on the front slope's lower half, the rest still bare; a ridge board
+    over = 0.13
+    for sy in (-1, 1):
+        e0 = Vector((0, sy * (D2 + over), EAVE - 0.04)); r0 = Vector((0, 0, PEAK + 0.02)); nrm = Vector((0, sy * (PEAK - EAVE + 0.06), D2 + over)).normalized()
+        for x in (-W2 - 0.1, -0.2, 0.2, W2 + 0.1):                 # rafters
+            objs.append(plank('rafter', r0 + Vector((x, 0, 0)), e0 + Vector((x, 0, 0)), 0.05, 0.04, (1, 0, 0), pine2, jitter=0.3))
+        n = 9
+        for k in range(n + 1):                                     # battens
+            q = r0.lerp(e0, k / n) + nrm * 0.03
+            objs.append(plank('batten', q + Vector((-W2 - 0.12, 0, 0)), q + Vector((W2 + 0.12, 0, 0)), 0.03, 0.02, nrm, pine, jitter=0.3))
+        if sy < 0:                                                  # slates on the lower rows, left to right, the top rows to come
+            rows = 6
+            for rr in range(rows):
+                t = 1 - rr / 11
+                if rr == rows - 1: xs_end = 0.15                    # (the last row half done)
+                else: xs_end = W2 + 0.12
+                base = r0.lerp(e0, t) + nrm * (0.05 + 0.006 * rr); x = -W2 - 0.12 + (0.06 if rr % 2 else 0)
+                while x < xs_end:
+                    w = 0.12
+                    a, b = base + Vector((x + w / 2, 0, 0)) - (e0 - r0).normalized() * 0.07, base + Vector((x + w / 2, 0, 0)) + (e0 - r0).normalized() * 0.07
+                    objs.append(plank('sh', a, b, w * 0.94, 0.016, nrm, slate, jitter=1.2, bevel=0.004))
+                    x += w
+    objs.append(plank('ridgeb', (-W2 - 0.12, 0, PEAK + 0.05), (W2 + 0.12, 0, PEAK + 0.05), 0.08, 0.025, (0, 0, 1), pine2, jitter=0.2))
+    for x in (-W2 - 0.11, W2 + 0.11):
+        for sy in (-1, 1):
+            objs.append(plank('barge', (x, 0, PEAK + 0.05), (x, sy * (D2 + over), EAVE - 0.05), 0.07, 0.025, (1 if x > 0 else -1, 0, 0), pine2, jitter=0.2))
+    objs.append(box('inside', (2 * W2 - 0.2, 2 * D2 - 0.2, 0.01), (0, 0, EAVE - 0.02), m=dark, bevel=0.0))
+    # a new pine door (not painted yet), the nest window, the hens' door and ramp, the pot of blue paint by the door
+    arched_door(objs, 0.05, -D2 - 0.01, 0.0, 0.25, 0.6, pine, pine2, _cl('iron', rough=0.5, metal=0.5))
+    nest_window(objs, 'leg', FL, WX, pine2, solids=[core], door='drop', door_m=pine)
+    pop_door(objs, FL, pine2, pine, pine2)
+    px, py = 0.2, -D2 - 0.12
+    objs.append(cyl('ptin', 0.06, 0.11, (px - 0.0, py - 0.02, 0.055), m=C('bx_painttin', '#c9cdcf', rough=0.4, metal=0.7), verts=14, bevel=0.005))
+    objs.append(cyl('ppaint', 0.055, 0.006, (px, py - 0.02, 0.111), m=blue, verts=14, bevel=0.0))
+    objs.append(box('pdrip', (0.02, 0.004, 0.05), (px + 0.02, py - 0.078, 0.08), m=blue, bevel=0.002, segs=1))
+    # a stack of slates waiting by the left gable, a few stones
+    for k in range(7):
+        objs.append(box('slatestack', (0.26, 0.17, 0.014), (-W2 - 0.25 + random.uniform(-0.01, 0.01), 0.05 + random.uniform(-0.01, 0.01), 0.008 + k * 0.015), (0, 0, random.uniform(-0.08, 0.08)), m=slate, bevel=0.003, segs=1))
+    for k in range(3):
+        objs.append(sphere('dstone', 0.05, (-W2 - 0.25 + k * 0.1, 0.35, 0.03), (1.2, 1, 0.6), m=random.choice(stones), ico=2, disp=0.3, seed=k + 90))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    _own(objs, root)
+    return root
+
+
+def dovecote(objs, x, y, h=1.05):
+    """A white dovecote on a pole: three round doors, a slate roof, two white doves on its ledge."""
+    white = C('cupwhite', '#f1ece2', rough=0.6, var=0.03); dark = C('hall_dark', '#1d1510', rough=1.0)
+    pole = C('darkwood', '#6d4a31', rough=0.8); slate = C('slate2', '#57657a', rough=0.65, var=0.12, hue_var=0.01); dove = _cl('dove', rough=0.6)
+    objs.append(cyl('dpole', 0.025, h, (x, y, h / 2), m=pole, verts=8, bevel=0.0))
+    objs.append(box('dbox', (0.22, 0.18, 0.16), (x, y, h + 0.08), m=white, bevel=0.01, segs=1))
+    objs.append(box('dledge', (0.26, 0.05, 0.015), (x, y - 0.11, h + 0.02), m=white, bevel=0.004, segs=1))
+    for k in (-1, 0, 1):
+        objs.append(cyl('dhole', 0.022, 0.01, (x + k * 0.065, y - 0.091, h + 0.09), (math.radians(90), 0, 0), m=dark, verts=10, bevel=0.0))
+    for sx in (-1, 1):
+        a, b = Vector((x, y, h + 0.26)), Vector((x + sx * 0.15, y, h + 0.15))
+        objs.append(plank('droof', (a + b) / 2 + Vector((0, -0.13, 0)), (a + b) / 2 + Vector((0, 0.13, 0)), (b - a).length + 0.02, 0.02, (sx * 0.11, 0, 0.15), slate, jitter=0.0, bevel=0.004))
+    for yy in (y - 0.09, y + 0.09): objs.append(_tri('dgable', (x - 0.11, yy, h + 0.16), (x + 0.11, yy, h + 0.16), (x, yy, h + 0.25), (0, 1, 0), 0.01, white))
+    for k, dx in enumerate((-0.07, 0.06)):                          # two doves on the ledge
+        cx = x + dx
+        objs.append(sphere('dove', 0.03, (cx, y - 0.115, h + 0.055), (1.3, 0.9, 0.9), (0, 0, 0.3 * (1 - 2 * k)), m=dove, seg=10, rings=6))
+        objs.append(sphere('dovehead', 0.016, (cx + 0.025 * (1 - 2 * k), y - 0.125, h + 0.085), m=dove, seg=8, rings=5))
+        objs.append(cyl('dovebeak', 0.005, 0.012, (cx + 0.04 * (1 - 2 * k), y - 0.125, h + 0.083), (0, math.radians(90 * (1 - 2 * k)), 0), m=C('lanternred', '#dc4b2e', rough=0.5), verts=4, r2=0.0, bevel=0.0))
+
+
+def _stone_bits(r, name, t, eave=0.86, peak=1.4, seed=65, panel_x=-0.3):
+    """What makes the Stone Cottage cosy (and stays on the Deluxe): its window frames duck-egg blue, wisteria hanging along
+    the front eave, a window box of red geraniums on its side window, a dovecote on a pole by its right side, a lantern by
+    the hens' door, the automatic door's box and its solar panel, blue hydrangeas by the ramp, square flagstones to the gate."""
+    random.seed(seed); objs = []
+    _swap(r, {'trimw'}, _cl('duck', rough=0.55, var=0.03))
+    wist, wist2 = _cl('wist', rough=0.6), _cl('wist2', rough=0.6); leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    ye, ze = -D2 - 0.14, eave - 0.06                               # (the front eave's edge)
+    x = -W2 - 0.08
+    while x < W2 + 0.08:
+        objs.append(sphere('wleaf', 0.045, (x, ye, ze), (1.3, 0.8, 0.6), m=random.choice(leaf), ico=1, disp=0.3, seed=int(x * 100) + 200))
+        if random.random() < 0.8:                                   # a raceme hanging from the vine
+            L = random.uniform(0.1, 0.17)
+            for j in range(4):
+                objs.append(sphere('wflower', 0.024 - j * 0.004, (x + random.uniform(-0.01, 0.01), ye - 0.005, ze - 0.03 - j * L / 4), (1, 1, 1.3), m=wist if (j + int(x * 50)) % 2 else wist2, ico=1))
+        x += random.uniform(0.07, 0.1)
+    for k in range(10):                                            # its old stem up the front right corner
+        objs.append(sphere('wleaf', 0.04, (W2 + 0.03, -D2 - 0.04, 0.05 + k * (ze - 0.05) / 9), (1, 0.7, 1.2), m=leaf[k % 2], ico=1, disp=0.3, seed=k + 220))
+    # a window box of red geraniums under the side window
+    gera = _cl('gera', rough=0.55)
+    objs.append(box('flowerbox', (0.09, 0.3, 0.07), (W2 + 0.09, 0.0, 0.41), m=_cl('duck', rough=0.55, var=0.03), bevel=0.008, segs=1))
+    for k in range(7):
+        y = -0.12 + k * 0.04
+        objs.append(sphere('leafp', 0.03, (W2 + 0.09, y, 0.455), (1, 1, 0.8), m=leaf[k % 2], ico=1, disp=0.2, seed=k + 240))
+        objs.append(sphere('flower', 0.022, (W2 + 0.1, y + 0.01, 0.48), m=gera, ico=1))
+    dovecote(objs, W2 + 0.4, -0.12)
+    # a lantern by the hens' door
+    iron = _cl('iron', rough=0.5, metal=0.5); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    lx, ly, lz = -0.545, -D2 - 0.1, 0.56
+    objs.append(box('larm', (0.025, 0.09, 0.025), (lx, -D2 - 0.045, lz + 0.07), m=iron, bevel=0.004, segs=1))
+    objs.append(box('lanternb', (0.07, 0.07, 0.1), (lx, ly, lz), m=iron, bevel=0.006, segs=1))
+    objs.append(box('lanterng', (0.076, 0.076, 0.065), (lx, ly, lz), m=lamp, bevel=0.0))
+    objs.append(cyl('lroof', 0.06, 0.05, (lx, ly, lz + 0.075), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+    light_at(name, lx, ly, lz)
+    # the automatic door: its box over the hens' door, its solar panel on the slates
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    zb = 0.18 + POP_H + 0.07
+    objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.045, zb), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, zb), m=led, seg=8, rings=4))
+    e0 = Vector((0, -(D2 + 0.13), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); dn = (e0 - r0).normalized()
+    nrm = Vector((0, -(peak - eave + 0.08), D2 + 0.13)).normalized()
+    c = r0 + (e0 - r0) * 0.6 + nrm * 0.06 + Vector((panel_x, 0, 0))
+    objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for i in range(2):
+        for j in range(3):
+            cc = c + nrm * 0.012 + dn * (-0.05 + i * 0.1) + Vector((-0.08 + j * 0.08, 0, 0))
+            objs.append(plank('solarcell', cc - dn * 0.044, cc + dn * 0.044, 0.072, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # blue hydrangeas in pots either side of the foot of the ramp (the birds walk round them)
+    potm = C('terra', '#b0603a', rough=0.8); hy = [_cl('hydr', rough=0.6), _cl('hydr2', rough=0.6)]
+    for (x, y) in ((-0.64, -0.92), (0.02, -0.92)):
+        objs.append(cyl('pot', 0.075, 0.12, (x, y, 0.06), m=potm, verts=14, r2=0.06, bevel=0.006))
+        objs.append(sphere('hleaf', 0.07, (x, y, 0.15), (1.2, 1.2, 0.7), m=leaf[0], ico=2, disp=0.25, seed=int(x * 10) + 250))
+        for k in range(5):
+            aa = k / 5 * math.tau
+            objs.append(sphere('hydr', 0.04, (x + math.cos(aa) * 0.045, y + math.sin(aa) * 0.045, 0.19 + 0.02 * (k % 2)), m=hy[k % 2], ico=2, disp=0.35, seed=k + 260))
+        BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.12])
+    # square flagstones from the foot of the ramp to the gate
+    fl = [_cl('flag', rough=0.9, var=0.08), _cl('flag2', rough=0.9, var=0.08)]
+    gx, gy = _gate_of(t, 'leg'); a, b = Vector((-0.31, -1.02)), Vector((gx, gy + 0.32)); n = max(3, round((b - a).length / 0.24))
+    for k in range(n + 1):
+        q = a.lerp(b, k / n)
+        objs.append(box('flagstone', (0.16, 0.16, 0.02), (q.x + random.uniform(-0.02, 0.02), q.y, 0.01), (0, 0, math.radians(random.uniform(-12, 12))), m=random.choice(fl), bevel=0.008, segs=1))
+    _own(objs, r)
+    return r
+
+
+def cosy_leg():
+    r = stone(name='cosy_leg'); _stone_bits(r, 'cosy_leg', 3)
+    return r
+
+
+def deluxe_leg():
+    """Deluxe: a storey taller, two dormers in the slates, a slated porch hood over the blue door, stone balls on the gables,
+    a chimney at each end; the cosy touches."""
+    EAVE, PEAK = 1.15, 1.8
+    r = stone(eave=EAVE, peak=PEAK, name='deluxe_leg')
+    random.seed(67); objs = []
+    stones = [C('st%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#a59b88', '#928a7b', '#b3a891', '#877f72', '#9c8f7a'))]
+    slate = C('slate2', '#57657a', rough=0.65, var=0.12, hue_var=0.01); ridge = C('ridge2', '#46525f', rough=0.6); barge = C('barge2', '#3e4652', rough=0.7)
+    lint = C('lintel', '#d2c8b2', rough=0.85); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); trim = C('trimw', '#efe9dc', rough=0.6)
+    # a second chimney on the right gable, stone balls on both gables' tops
+    for i in range(int((PEAK + 0.35) / 0.1)):
+        objs.append(box('chst', (0.24, 0.22, 0.095), (W2 + 0.11, 0.28, 0.05 + i * 0.1), m=random.choice(stones), bevel=0.012, segs=1, jitter=0.004))
+    objs.append(cyl('chimpot', 0.05, 0.12, (W2 + 0.11, 0.28, PEAK + 0.4), m=C('terra', '#b0603a', rough=0.8), verts=10, bevel=0.0))
+    # windows upstairs in the front wall (under the eave) and in the left gable
+    window(objs, -W2 - 0.04, 0.0, 1.2, 0.2, 0.2, trim, glass, normal=(-1, 0, 0))
+    # two dormers on the front slope: stone cheeks, a little slate gable roof, a window
+    e0 = Vector((0, -(D2 + 0.13), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02)); slope = (PEAK - EAVE + 0.08) / (D2 + 0.13)
+    zr = lambda y: PEAK + 0.02 + y * slope + 0.05                   # (the slates' face, y < 0)
+    for xd in (-0.45, 0.12):
+        yf = -D2 + 0.02; zf0 = zr(yf); h = 0.3
+        objs.append(box('dormer', (0.3, 0.46, h + 0.25), (xd, yf + 0.23, zf0 + (h - 0.25) / 2), m=random.choice(stones), bevel=0.01, segs=1))
+        window(objs, xd, yf - 0.005, zf0 + h * 0.45, 0.16, 0.16, trim, glass)
+        top = zf0 + h + 0.13
+        for sx in (-1, 1):
+            a, b = Vector((xd, yf - 0.06, top)), Vector((xd + sx * 0.2, yf - 0.06, zf0 + h - 0.02))
+            objs.append(plank('dslate', (a + b) / 2, (a + b) / 2 + Vector((0, 0.55, 0)), (b - a).length + 0.03, 0.03, Vector((sx * (top - b.z), 0, abs(b.x - a.x))).normalized(), slate, jitter=0.0, bevel=0.006))
+        objs.append(_tri('dface', (xd - 0.15, yf - 0.002, zf0 + h - 0.03), (xd + 0.15, yf - 0.002, zf0 + h - 0.03), (xd, yf - 0.002, top - 0.02), (0, 1, 0), 0.02, random.choice(stones)))
+        objs.append(cyl('dridge', 0.025, 0.56, (xd, yf + 0.22, top + 0.01), (math.radians(90), 0, 0), m=ridge, verts=8, bevel=0.0))
+    # a slated porch hood over the blue door on two stone brackets
+    px, ph, pz = 0.055, 0.42, 0.74
+    for sx in (-1, 1):
+        a, b = Vector((px, -D2 - 0.02, pz + 0.17)), Vector((px + sx * 0.24, -D2 - 0.02, pz))
+        objs.append(plank('hood', (a + b) / 2, (a + b) / 2 + Vector((0, -0.3, 0)), (b - a).length + 0.03, 0.03, Vector((sx * 0.17, 0, 0.24)).normalized(), slate, jitter=0.0, bevel=0.006))
+        objs.append(box('corbel', (0.06, 0.24, 0.1), (px + sx * 0.18, -D2 - 0.12, pz - 0.07), m=lint, bevel=0.01, segs=1))
+    objs.append(cyl('hridge', 0.022, 0.33, (px, -D2 - 0.17, pz + 0.18), (math.radians(90), 0, 0), m=ridge, verts=8, bevel=0.0))
+    objs.append(box('hgable', (0.42, 0.03, 0.03), (px, -D2 - 0.31, pz + 0.01), m=lint, bevel=0.006, segs=1))
+    for sx in (-1, 1):                                             # stone balls on the gables' tops
+        objs.append(sphere('gball', 0.05, (sx * (W2 + 0.02), 0, PEAK + 0.03), m=lint, seg=12, rings=8))
+    _own(objs, r)
+    _stone_bits(r, 'deluxe_leg', 4, eave=EAVE, peak=PEAK, panel_x=0.5)
+    r.name = 'deluxe_leg'
+    return r
+
+
+# ---- the Stone Cottage's gardens (its own: Audrey, 27 Oct): an old stone sink for water in the small pens, a stone bowl in
+# the Cosy; Cosy: a swing from the low branch of an old apple tree, a wheelbarrow full of sand, the cabbage hanging from an
+# iron shepherd's crook; Deluxe: a little blue rowing boat full of sand, a water butt dripping into a stone basin, a feeder
+# like a tiny stone house with a slate roof, the apple-tree swing, the crook, the xylophone.
+PENS_BY['leg'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(0.6, -0.95), dish=(-0.62, -1.42), water='sink', hay=None, hay_rot=0, sack=None,
+            straw=((-0.2, -1.1, 0.25, 22), (0.4, -1.45, 0.2, 15))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(-0.35, -1.62), dish=(0.95, -1.15), water='sink', hay=None, hay_rot=0, sack=None,
+            straw=((-0.8, -1.0, 0.3, 28), (0.5, -1.7, 0.25, 20))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(0.55, -1.35), dish=(-0.5, -2.35), bowl='stone', hay=(-1.7, 0.45), hay_rot=0, sack=None,
+            straw=((-1.7, 0.45, 0.4, 35), (0.2, -1.9, 0.35, 35), (-0.9, -1.0, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(0.6, -1.5), feeder_style='stonehouse', dish=(1.85, -1.55), water='butt', hay=(-1.95, 0.5), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.1, -2.0, 0.3, 25), (-1.95, 0.5, 0.4, 35))),
+}
+PLAY_BY['leg'] = {3: dict(swing=(-1.2, -1.55), barrow=(1.25, -2.3), cabbage=(1.3, -0.95), frame='tree', holder='crook'),
+                  4: dict(swing=(1.5, -2.45), boat=(-1.4, -2.3), cabbage=(1.55, -0.95), xylo=(-1.4, -1.15), frame='tree', holder='crook')}
+BARROW_W, BARROW_D, BARROW_Y = 0.46, 0.32, 0.17                 # the Cosy cottage's wheelbarrow of sand (x, y; the sand's height)
+BOAT_W, BOAT_D = 0.8, 0.42                                      # the Deluxe cottage's rowing boat of sand
+TREE_DX = -0.45                                                 # the apple tree's trunk, beside its swing
+
+
+def _frustum(name, cx, cy, z0, z1, w0, d0, w1, d1, m, pointed=0.0):
+    """A tub: a box wider at the top (w1 x d1 at z1) than its floor (w0 x d0 at z0), open; pointed: its ends drawn to a point
+    (a boat), by that much."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rings = []
+    for (z, w, d) in ((z0, w0, d0), (z1, w1, d1)):
+        pts = [(-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2)] if not pointed else \
+              [(-w / 2 + pointed, -d / 2), (w / 2 - pointed, -d / 2), (w / 2, 0), (w / 2 - pointed, d / 2), (-w / 2 + pointed, d / 2), (-w / 2, 0)]
+        rings.append([bm.verts.new((cx + px, cy + py, z)) for (px, py) in pts])
+    n = len(rings[0])
+    bm.faces.new(rings[0][::-1])
+    for i in range(n): bm.faces.new((rings[0][i], rings[0][(i + 1) % n], rings[1][(i + 1) % n], rings[1][i]))
+    bm.normal_update(); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02; so.offset = 1
+    soften(o, 0.006, 1)
+    return o
+
+
+def wheelbarrow(objs, x, y):
+    """The Cosy cottage's sand bath: an old wheelbarrow full of sand, its wheel at one end, its handles at the other."""
+    tray = _cl('faded', rough=0.6, metal=0.3); wood = coop.M()['wood']; iron = _cl('iron', rough=0.5, metal=0.5)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    objs.append(_frustum('btray', x, y, 0.08, BARROW_Y + 0.03, BARROW_W - 0.12, BARROW_D - 0.1, BARROW_W, BARROW_D, tray))
+    objs.append(box('bsand', (BARROW_W - 0.06, BARROW_D - 0.05, 0.02), (x, y, BARROW_Y - 0.005), m=sand, bevel=0.01, segs=1))
+    for sy in (-1, 1):
+        objs.append(plank('bhandle', (x - 0.48, y + sy * 0.13, 0.15), (x + 0.24, y + sy * 0.1, 0.07), 0.03, 0.025, (0, 0, 1), wood, jitter=0.3))
+        objs.append(plank('bleg', (x - 0.16, y + sy * 0.12, 0.0), (x - 0.16, y + sy * 0.12, 0.1), 0.025, 0.025, (1, 0, 0), iron, jitter=0.2))
+    objs.append(cyl('bwheel', 0.075, 0.035, (x + 0.29, y, 0.075), (math.radians(90), 0, 0), m=C('rubber', '#2c2c2c', rough=0.8), verts=16, bevel=0.006))
+    objs.append(cyl('bhub', 0.03, 0.045, (x + 0.29, y, 0.075), (math.radians(90), 0, 0), m=iron, verts=10, bevel=0.0))
+    for k in range(5):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * 0.3, y + math.sin(a) * 0.26, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 33))
+
+
+def sand_boat(objs, x, y):
+    """The Deluxe cottage's sand bath: a little blue rowing boat full of sand, a white stripe along it, an oar beside it."""
+    blue = C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G); white = C('trimw', '#efe9dc', rough=0.6)
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); wood = coop.M()['wood']
+    objs.append(_frustum('hull', x, y, 0.0, 0.13, BOAT_W - 0.24, BOAT_D - 0.2, BOAT_W, BOAT_D, blue, pointed=0.18))
+    objs.append(_frustum('stripe', x, y, 0.09, 0.115, BOAT_W - 0.03, BOAT_D - 0.02, BOAT_W + 0.005, BOAT_D + 0.004, white, pointed=0.18))
+    objs.append(_frustum('bsand', x, y, 0.06, 0.1, BOAT_W - 0.14, BOAT_D - 0.12, BOAT_W - 0.04, BOAT_D - 0.04, sand, pointed=0.16))
+    me = bpy.data.meshes.new('bsandtop'); bm = bmesh.new(); w, d, pt = BOAT_W - 0.05, BOAT_D - 0.05, 0.17
+    vs = [bm.verts.new((x + px, y + py, 0.1)) for (px, py) in ((-w / 2 + pt, -d / 2), (w / 2 - pt, -d / 2), (w / 2, 0), (w / 2 - pt, d / 2), (-w / 2 + pt, d / 2), (-w / 2, 0))]
+    bm.faces.new(vs); bm.normal_update(); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('bsandtop', me)); setmat(o, sand); objs.append(o)
+    objs.append(box('seat', (0.06, BOAT_D - 0.06, 0.02), (x - 0.2, y, 0.115), m=wood, bevel=0.004, segs=1))
+    objs.append(cyl('oar', 0.012, 0.6, (x + 0.05, y - BOAT_D / 2 - 0.1, 0.014), (0, math.radians(90), math.radians(8)), m=wood, verts=6, bevel=0.0))
+    objs.append(box('oarblade', (0.14, 0.06, 0.012), (x + 0.38, y - BOAT_D / 2 - 0.06, 0.012), (0, 0, math.radians(8)), m=wood, bevel=0.003, segs=1))
+    objs.append(cyl('bucket', 0.04, 0.06, (x - 0.45, y + 0.2, 0.03), m=C('lanternred', '#dc4b2e', rough=0.5), verts=10, r2=0.05, bevel=0.0))
+
+
+def tree_swing(objs, x, y):
+    """The Stone Cottage's swing: from the low branch of an old apple tree beside it."""
+    bark = C('cs_trunk', CS['trunk'], rough=0.9, var=0.06, grain=0.3, grain_scale=G)
+    leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]; apple = C('apple', '#d23b2c', rough=0.5)
+    tx = x + TREE_DX
+    pts = [Vector((tx, y, 0.0)), Vector((tx + 0.03, y + 0.02, 0.45)), Vector((tx - 0.02, y - 0.01, 0.95))]
+    for k, (a, b) in enumerate(zip(pts, pts[1:])):
+        objs.append(cyl('trunk', 0.06 - k * 0.012, (b - a).length + 0.03, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=bark, verts=9, r2=0.05 - k * 0.012, bevel=0.0))
+    a, b = Vector((tx + 0.02, y, SWING_TOP + 0.06)), Vector((x + SWING_HALF + 0.06, y, SWING_TOP + 0.02))       # the low branch the swing hangs from
+    objs.append(cyl('swbar', 0.026, (b - a).length, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=bark, verts=8, r2=0.016, bevel=0.0))
+    for k in range(6):                                             # the crown, over the trunk and along the branch
+        c = Vector((tx + random.uniform(-0.15, 0.35), y + random.uniform(-0.2, 0.2), 1.0 + random.uniform(0.0, 0.2)))
+        objs.append(sphere('crown', random.uniform(0.17, 0.24), c, (1.1, 1.05, 0.85), (0, 0, k), m=leaf[k % 2], ico=2, disp=0.3, seed=k + 270))
+    for k in range(8):
+        objs.append(sphere('apple', 0.025, (tx + random.uniform(-0.2, 0.45), y + random.uniform(-0.25, 0.25), random.uniform(0.85, 1.05)), m=apple, ico=1))
+    for k in range(3):
+        objs.append(sphere('apple', 0.024, (tx + random.uniform(-0.3, 0.3), y + random.uniform(-0.3, 0.3), 0.02), m=apple, ico=1))
+
+
+def cabbage_crook(objs, x, y):
+    """The Stone Cottage's way of hanging the cabbage: an iron shepherd's crook, its hook curled over it."""
+    iron = _cl('iron', rough=0.5, metal=0.5)
+    px, py = x, y + 0.28
+    objs.append(cyl('crook', 0.012, CAB_TOP + 0.08, (px, py, (CAB_TOP + 0.08) / 2), m=iron, verts=8, bevel=0.0))
+    prev = Vector((px, py, CAB_TOP + 0.08))
+    for k in range(1, 8):                                          # the hook: up, over and down to the cabbage's string
+        a = math.pi * k / 7
+        q = Vector((px, py - 0.14 + 0.14 * math.cos(a), CAB_TOP + 0.08 + 0.1 * math.sin(a)))
+        objs.append(cyl('crook', 0.011, (q - prev).length + 0.004, (prev + q) / 2, (q - prev).normalized().to_track_quat('Z', 'Y').to_euler(), m=iron, verts=6, bevel=0.0)); prev = q
+    q = Vector((px, y, CAB_TOP))
+    objs.append(cyl('crook', 0.011, (q - prev).length, (prev + q) / 2, (q - prev).normalized().to_track_quat('Z', 'Y').to_euler(), m=iron, verts=6, bevel=0.0))
+    objs.append(sphere('cfoot', 0.03, (px, py, 0.01), (1.3, 1.3, 0.4), m=iron, ico=1))
+
+
+# ---- release 4, the Timber Lodge's five looks (Audrey, 27 Oct: "The other four coops", one at a time, shown first).
+# Rustic (box_bra): a woodpile hut: split firewood stacked for its sides and back, rough bark-edged slab boards for its front
+#   on an old log, a roof of bark sheets on three poles under pine boughs, two logs on top to hold them down; a chopping
+#   stump by it (the hint: the lodge's logs and its green roof).
+# Mended (shed_bra): a little cabin of new peeled logs, chinked on one side so far (the bucket of chinking by it), a roof of
+#   rough slab boards weighed down with stones, a new plank door, fresh logs stacked by its side.
+# Snug (house_bra): today's lodge.
+# Cosy (cosy_bra): a woodpile under a little roof against its left side, a wreath of pine and cones on its door, a birdhouse
+#   on the lantern post, a mossy stump with red toadstools and ferns in a hollow log by the ramp, the automatic door's box and
+#   its solar panel, rounds of log for stepping stones to the gate.
+# Deluxe (deluxe_bra): a storey taller, a gable over the door with a window and crossed logs at its peak (and at the gables'
+#   peaks), a window with green shutters in its side, a tall chimney of river stones, a shingled hood over the door with a
+#   lantern, a carved wooden bear by its corner; the cosy touches.
+# The hens come, go and lay the same way in every look (NESTS['house_bra']: the floor 0.26, the ramp, the nest window with
+# its door let down); something stands where the lodge's lantern post does (the birds walk round it).
+CB = dict(bark='#5e4a3a', bark2='#6e5846', endg='#cfa268', split='#dcb985', fresh='#dcb27a', fresh2='#cba06a', slab='#9b7a58',
+          slab2='#86684a', pine='#3f6b3a', pine2='#4f7e45', cone='#7a5232', chink='#e6dfcc', green='#4b7a48', shutter='#3e6b47',
+          copper='#c27a4a', bowl='#9a6b43', toad='#d23b2c', spot='#f6f0e6', moss='#6b7a46', fern='#5b8c3e', fern2='#47773a',
+          bear='#7a5230', bear2='#5a3a22', rstone=('#9a948a', '#a8a093', '#857f76', '#b3ab9c'), bow='#c8283c', bird='#b54a3a',
+          iron='#2b2926', log='#8d5b34', mortar='#5d554b')
+
+
+def _cb(key, rough=0.85, **kw):
+    v = CB[key]
+    return C('cb_' + key, v if isinstance(v, str) else v[0], rough=rough, **kw)
+
+
+def _log(objs, a, b, r, m, end_m=None, verts=10, name='log', ends=(True, True), r2=None):
+    """A log from a to b, its sawn ends showing (end_m)."""
+    a, b = Vector(a), Vector(b); d = b - a; rot = d.normalized().to_track_quat('Z', 'Y').to_euler()
+    objs.append(cyl(name, r, d.length, (a + b) / 2, rot, m=m, verts=verts, r2=r2, bevel=0.0))
+    if end_m:
+        for p, s, rr, on in ((a, -1, r, ends[0]), (b, 1, r2 or r, ends[1])):
+            if on: objs.append(cyl(name + 'end', rr * 0.86, 0.01, p + d.normalized() * s * 0.004, rot, m=end_m, verts=verts, bevel=0.0))
+
+
+def _log_walls(objs, EAVE, r, ms, endg, gaps, over=0.1, side_win=True):
+    """A cabin's walls the lodge's way: logs along x front and back, along y on the sides half a log higher, their ends
+    crossing at the corners; the front cut round gaps (x0, x1, z0, z1), the right side round its little window."""
+    z = r; row = 0
+    while z < EAVE:
+        for y in (-D2, D2):
+            zz = z if row % 2 == 0 else z + r
+            spans = [(-W2 - over, W2 + over)]
+            if y < 0:
+                for (a, b, c, d) in gaps:
+                    if c < zz < d:
+                        spans = [s for sp in spans for s in ((sp[0], min(sp[1], a)), (max(sp[0], b), sp[1])) if s[1] - s[0] > 0.04]
+            for a, b in spans:
+                objs.append(cyl('log', r, b - a, ((a + b) / 2, y, zz), (0, math.radians(90), 0), random.choice(ms), verts=10, bevel=0.0))
+            for x in (-W2 - over, W2 + over):
+                objs.append(cyl('end', r * 0.9, 0.012, (x + (0.008 if x > 0 else -0.008), y, zz), (0, math.radians(90), 0), endg, verts=10, bevel=0.0))
+        for x in (-W2, W2):
+            zz = z + r if row % 2 == 0 else z
+            if side_win and x > 0 and 0.38 < zz < 0.62:
+                for a, b in ((-D2 - over, -0.14), (0.14, D2 + over)):
+                    objs.append(cyl('log', r, b - a, (x, (a + b) / 2, zz), (math.radians(90), 0, 0), random.choice(ms), verts=10, bevel=0.0))
+            else:
+                objs.append(cyl('log', r, 2 * D2 + 2 * over, (x, 0, zz), (math.radians(90), 0, 0), random.choice(ms), verts=10, bevel=0.0))
+            for y in (-D2 - over, D2 + over):
+                objs.append(cyl('end', r * 0.9, 0.012, (x, y + (0.008 if y > 0 else -0.008), zz), (math.radians(90), 0, 0), endg, verts=10, bevel=0.0))
+        z += 2 * r; row += 1
+
+
+def box_bra(seed=71):
+    """Rustic: a woodpile hut, a slab-board front on an old log, a roof of bark sheets and pine boughs."""
+    random.seed(seed)
+    FL, WX, ZF, ZB = 0.26, 0.44, 0.8, 0.9                         # the hens' floor, the nest window, the roof's front and back
+    root = empty('box_bra'); objs = []
+    bark = [_cb('bark', var=0.08, grain=0.3, grain_scale=G), _cb('bark2', var=0.08, grain=0.3, grain_scale=G)]
+    endg, split = _cb('endg', var=0.06), _cb('split', var=0.06)
+    slab, slab2 = _cb('slab', var=0.08, grain=0.35, grain_scale=G), _cb('slab2', var=0.08, grain=0.35, grain_scale=G)
+    pine = [_cb('pine', rough=0.9), _cb('pine2', rough=0.9)]; cone = _cb('cone'); dark = C('hall_dark', '#1d1510', rough=1.0)
+    top = lambda y: ZF + (ZB - ZF) * (y + D2) / (2 * D2) - 0.05      # (the walls stop under the roof)
+    # its sides: split firewood stacked front to back, two pieces deep, their ends showing; its back the same, along x
+    for sx in (-1, 1):
+        z, row = 0.05, 0
+        while z < top(0) + 0.02:
+            for j in range(2 if z < 0.45 else 1):                  # (stepped: two deep low down, one higher up)
+                xc = sx * (W2 + 0.03 + j * 0.1) + (0.015 if row % 2 else -0.01) * sx
+                for (y0, y1) in ((-D2 - 0.02, -0.01), (0.01, D2 + 0.02)):
+                    if z > top((y0 + y1) / 2) + 0.03: continue
+                    rr = random.uniform(0.045, 0.058)
+                    _log(objs, (xc, y0 + random.uniform(-0.015, 0.015), z), (xc, y1 + random.uniform(-0.015, 0.015), z), rr, random.choice(bark),
+                         split if random.random() < 0.35 else endg, verts=7, name='fw', ends=(y0 < -0.1, y1 > 0.1))
+            z += 0.092; row += 1
+    z = 0.05
+    while z < ZB - 0.06:
+        for k in range(3):
+            _log(objs, (-W2 + 0.12 + k * 0.4, D2 - 0.05, z), (-W2 + 0.12 + (k + 1) * 0.4 - 0.02, D2 - 0.05, z), random.uniform(0.045, 0.055), random.choice(bark), None, verts=7, name='fw')
+        z += 0.095
+    for (size, loc) in (((2 * W2 - 0.08, 0.01, ZB - FL), (0, D2 - 0.11, (FL + ZB) / 2)), ((0.01, 2 * D2 - 0.12, ZB - FL), (W2 - 0.03, 0, (FL + ZB) / 2)),
+                        ((0.01, 2 * D2 - 0.12, ZB - FL), (-W2 + 0.03, 0, (FL + ZB) / 2)), ((2 * W2 - 0.08, 2 * D2 - 0.1, 0.01), (0, 0, ZF - 0.04))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    # its front: an old log along the bottom, rough slab boards standing on it (bark on their edges), cut round the hens'
+    # door and the nest window
+    _log(objs, (-W2 - 0.12, -D2 + 0.05, 0.09), (W2 + 0.12, -D2 + 0.05, 0.09), 0.09, bark[0], endg, verts=12, name='sill')
+    POPH = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H); WINH = (WX - WIN_W / 2, WX + WIN_W / 2, 0.2, 0.24 + WIN_H)
+    x = -W2 + 0.01
+    while x < W2 - 0.03:
+        w = min(random.uniform(0.1, 0.15), W2 - 0.01 - x); xm = x + w / 2; zt = ZF + random.uniform(-0.03, 0.03)
+        spans = [(0.17, zt)]
+        for (h0, h1, hz0, hz1) in (POPH, WINH):
+            if h0 - 0.01 < xm < h1 + 0.01:
+                new = []
+                for (a, b) in spans:
+                    if b > hz0 and a < hz1:
+                        if hz0 - a > 0.03: new.append((a, hz0))
+                        if b - hz1 > 0.03: new.append((hz1, b))
+                    else: new.append((a, b))
+                spans = new
+        for (za, zb) in spans:
+            m_ = slab if random.random() < 0.6 else slab2
+            objs.append(plank('slab', (xm, -D2 - 0.012, za), (xm, -D2 - 0.012, zb), w * 0.94, 0.03, (0, -1, 0), m_, jitter=0.5))
+            if random.random() < 0.5:                               # (its bark edge)
+                objs.append(plank('slabbark', (x + 0.012, -D2 - 0.03, za + 0.02), (x + 0.012, -D2 - 0.03, zb - 0.01), 0.022, 0.012, (0, -1, 0), bark[1], jitter=0.4))
+        x += w
+    for (a, b) in ((-W2 + 0.01, POPH[0] - 0.02), (POPH[1] + 0.02, WINH[0] - 0.02)):      # two rails nailed across it
+        objs.append(plank('rail', (a, -D2 - 0.035, 0.32), (b, -D2 - 0.035, 0.32), 0.05, 0.02, (0, -1, 0), slab2, jitter=0.6))
+    objs.append(plank('rail', (-W2 + 0.01, -D2 - 0.035, ZF - 0.045), (W2 - 0.01, -D2 - 0.035, ZF - 0.045), 0.05, 0.02, (0, -1, 0), slab2, jitter=0.6))
+    # the roof: three poles across, sheets of bark on them front to back, pine boughs over the bark, two logs to hold it all down
+    for (y, zz) in ((-D2 - 0.08, ZF), (0.0, (ZF + ZB) / 2), (D2 + 0.04, ZB)):
+        _log(objs, (-W2 - 0.24, y, zz), (W2 + 0.24, y, zz + 0.01), 0.035, bark[0], endg, verts=8, name='pole')
+    nrm = Vector((0, -(ZB - ZF), 2 * D2 + 0.12)).normalized()
+    n = 6; RW = 2 * W2 + 0.44
+    for k in range(n):
+        xc = -RW / 2 + (k + 0.5) * RW / n + random.uniform(-0.02, 0.02)
+        a = Vector((xc, -D2 - 0.16, ZF - 0.012 + 0.04)); b = Vector((xc, D2 + 0.12, ZB + 0.008 + 0.04))
+        objs.append(plank('barksheet', a + nrm * (0.006 * (k % 2)), b + nrm * (0.006 * (k % 2)), RW / n * 1.12, 0.022, nrm, random.choice(bark), jitter=1.4, bevel=0.006))
+    fir = [C('cb_fir1', '#2f5a30', rough=0.9), C('cb_fir2', '#3d6b38', rough=0.9), C('cb_fir3', '#4a7a40', rough=0.9)]
+    for k in range(9):                                              # (each bough a few bushy tufts along its branch)
+        u = -W2 + 0.05 + k * (2 * W2 - 0.1) / 8 + random.uniform(-0.05, 0.05); v0 = random.uniform(-D2 - 0.05, 0.05); a = random.uniform(-0.6, 0.6)
+        for j in range(4):
+            v = v0 + j * 0.09; uu = u + math.sin(a) * j * 0.09; zz = ZF + (ZB - ZF) * (v + D2) / (2 * D2) + 0.06 + 0.012 * j
+            objs.append(sphere('bough', random.uniform(0.065, 0.085), (uu, v, zz), (1.1, 1.0, 0.4), (0, 0, random.uniform(0, 3)), m=random.choice(fir), ico=2, disp=0.6, disp_scale=6.0, seed=k * 5 + j + 300))
+    for k in range(3):
+        objs.append(sphere('cone', 0.025, (random.uniform(-0.5, 0.5), random.uniform(-0.3, 0.2), ZF + 0.14), (1, 1, 1.5), (math.radians(80), 0, k), m=cone, ico=1, disp=0.3, seed=k + 320))
+    for (y, zz) in ((-0.22, ZF + 0.12), (0.22, ZB + 0.09)):
+        _log(objs, (-W2 - 0.1, y, zz), (W2 + 0.12, y, zz + 0.01), 0.05, bark[1], endg, verts=9, name='weight')
+    # the hens' door (just the hole), a slab for a ramp, the nest window (its door a slab board)
+    _ramp(objs, FL, slab2, bark[0], w=0.17, slats=3)
+    nest_window(objs, 'bra', FL, WX, slab2, hollow=True, nest_floor=0.2, door='drop', door_m=slab)
+    # the chopping stump where the lodge's lantern post stands, a split piece on it, two more by it
+    sx_, sy_ = -0.62, -D2 - 0.28
+    objs.append(cyl('stump', 0.1, 0.22, (sx_, sy_, 0.11), m=bark[0], verts=12, r2=0.095, bevel=0.0))
+    objs.append(cyl('stumptop', 0.088, 0.012, (sx_, sy_, 0.222), m=endg, verts=12, bevel=0.0))
+    _log(objs, (sx_ - 0.05, sy_ - 0.01, 0.255), (sx_ + 0.07, sy_ + 0.02, 0.255), 0.032, bark[1], split, verts=6, name='piece')
+    for k, (dx, dy, a) in enumerate(((0.16, -0.06, 0.4), (-0.12, -0.15, 1.9))):
+        c = Vector((sx_ + dx, sy_ + dy, 0.03)); d = Vector((math.cos(a), math.sin(a), 0)) * 0.09
+        _log(objs, c - d, c + d, 0.03, bark[k], split, verts=6, name='piece')
+    straw_bits(objs, (-0.2, -D2 - 0.15, 0), 0.25, 20, 0.0)
+    _own(objs, root)
+    return root
+
+
+def shed_bra(seed=73):
+    """Mended: a little cabin of new peeled logs, chinked on one side so far, a roof of slab boards weighed down with stones."""
+    random.seed(seed)
+    FL, WX, EAVE, PEAK = 0.26, 0.44, 0.8, 1.2
+    root = empty('shed_bra'); objs = []
+    fresh = [_cb('fresh', var=0.06, grain=0.35, grain_scale=G), _cb('fresh2', var=0.06, grain=0.35, grain_scale=G)]
+    endg = _cb('endg', var=0.05); slab, slab2 = _cb('slab', var=0.08, grain=0.35, grain_scale=G), _cb('slab2', var=0.08, grain=0.35, grain_scale=G)
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); chink = _cb('chink', rough=0.95)
+    stones = [C('cb_rs%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(CB['rstone'])]
+    # inside: chinked white on the left so far, the right still dark between its logs
+    coreL = box('core', (W2 + 0.02 - 0.03, 2 * D2 - 0.06, EAVE), ((-W2 + 0.03 + 0.02) / 2, 0, EAVE / 2), m=chink, bevel=0.0)
+    coreR = box('core', (W2 - 0.03 - 0.02, 2 * D2 - 0.06, EAVE), ((0.02 + W2 - 0.03) / 2, 0, EAVE / 2), m=C('lodgeinside', '#3a2a1e', rough=1.0), bevel=0.0)
+    objs += [coreL, coreR]
+    gaps = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, 0.24, FL + POP_H + 0.05), (-0.07, 0.23, 0.0, 0.63), (WX - WIN_W / 2 - 0.03, WX + WIN_W / 2 + 0.03, 0.2, 0.24 + WIN_H + 0.06)]
+    _log_walls(objs, EAVE, 0.05, fresh, endg, gaps, over=0.09)
+    for sx in (-1, 1):                                              # plank gables, new
+        n = 7
+        for i in range(n):
+            y = -D2 + (i + 0.5) * 2 * D2 / n
+            zt = EAVE + (PEAK - EAVE) * (1 - abs(y) / D2) - 0.03
+            objs.append(plank('gable', (sx * W2, y, EAVE - 0.02), (sx * W2, y, zt), 2 * D2 / n * 0.96, 0.03, (sx, 0, 0), fresh[1], jitter=0.5))
+    # the roof: rough slab boards from the ridge down each side, bark up on every other one, a few stones to hold them
+    over = 0.16
+    for sy in (-1, 1):
+        e0 = Vector((0, sy * (D2 + over), EAVE - 0.05)); r0 = Vector((0, 0, PEAK + 0.03)); nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + over)).normalized()
+        x, k = -W2 - 0.15, 0
+        while x < W2 + 0.13:
+            Wd = min(random.uniform(0.12, 0.2), W2 + 0.15 - x); xc = x + Wd / 2
+            lift = nrm * (0.03 + 0.012 * (k % 2))
+            m_ = bark if random.random() < 0.25 else random.choice((slab, slab, slab2))
+            objs.append(plank('rslab', r0 + Vector((xc, 0, 0)) + lift, e0 + Vector((xc, 0, 0)) + lift, Wd * 1.06, 0.025, nrm, m_, jitter=0.8, bevel=0.006))
+            x += Wd; k += 1
+        if sy < 0:
+            for k, (x, t) in enumerate(((-0.45, 0.55), (0.05, 0.7), (0.5, 0.5))):
+                c = r0.lerp(e0, t) + nrm * 0.085 + Vector((x, 0, 0))
+                objs.append(sphere('rstone', 0.06, c, (1.3, 1, 0.65), (0, 0, k), m=random.choice(stones), ico=2, disp=0.3, seed=k + 330))
+    _log(objs, (-W2 - 0.2, 0, PEAK + 0.07), (W2 + 0.2, 0, PEAK + 0.07), 0.04, bark, endg, verts=9, name='ridgelog')
+    # a new plank door with a Z brace, the nest window, the hens' door and ramp
+    for k in range(4):
+        u = -0.07 + 0.0375 + k * 0.075
+        objs.append(plank('ldoor', (u, -D2 - 0.04, 0.02), (u, -D2 - 0.04, 0.6), 0.072, 0.03, (0, -1, 0), fresh[k % 2], jitter=0.3))
+    for zz in (0.12, 0.5): objs.append(plank('zh', (-0.06, -D2 - 0.06, zz), (0.22, -D2 - 0.06, zz), 0.045, 0.02, (0, -1, 0), fresh[1], jitter=0.3))
+    objs.append(plank('zb', (-0.04, -D2 - 0.06, 0.13), (0.2, -D2 - 0.06, 0.49), 0.04, 0.02, (0, -1, 0), fresh[1], jitter=0.3))
+    objs.append(sphere('knob', 0.016, (0.18, -D2 - 0.08, 0.32), m=C('iron', '#26231f', rough=0.5, metal=0.6), seg=8, rings=5))
+    nest_window(objs, 'bra', FL, WX, fresh[1], solids=[coreL, coreR], nest_floor=0.2, door='drop', door_m=fresh[0])
+    pop_door(objs, FL, fresh[1], fresh[0], slab2)
+    # where the lantern post will stand: the bucket of chinking, a trowel on it
+    bx, by = -0.62, -D2 - 0.28
+    objs.append(cyl('cbucket', 0.075, 0.13, (bx, by, 0.065), m=C('bx_painttin', '#c9cdcf', rough=0.4, metal=0.7), verts=14, r2=0.065, bevel=0.005))
+    objs.append(cyl('cmix', 0.07, 0.008, (bx, by, 0.128), m=chink, verts=14, bevel=0.0))
+    objs.append(box('trowel', (0.05, 0.1, 0.006), (bx + 0.02, by - 0.02, 0.136), (0, 0, 0.5), m=C('trowel', '#9aa0a2', rough=0.35, metal=0.8), bevel=0.002, segs=1))
+    objs.append(cyl('trowelh', 0.01, 0.07, (bx - 0.02, by + 0.06, 0.15), (math.radians(90), 0, 0.5), m=C('darkwood', '#6d4a31', rough=0.8), verts=6, bevel=0.0))
+    # fresh logs stacked by its right side, waiting
+    for k, (dx, zz) in enumerate(((-0.1, 0.05), (0.0, 0.05), (0.1, 0.05), (-0.05, 0.135), (0.05, 0.135), (0.0, 0.22))):
+        _log(objs, (W2 + 0.33 + dx, -0.22, zz), (W2 + 0.33 + dx, 0.24, zz), 0.048, fresh[k % 2], endg, verts=10, name='newlog')
+    BLOCKS.setdefault('shed_bra', []).append([round(W2 + 0.33, 3), 0.0, 0.26])
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    _own(objs, root)
+    return root
+
+
+def _lodge_bits(r, name, t, eave=0.88, peak=1.44, seed=75, wood_y=(-0.32, 0.3), panel_x=-0.32):
+    """What makes the lodge cosy (and stays on the Deluxe): a woodpile under a little roof against its left side, a wreath on
+    its door, a birdhouse on the lantern post, a mossy stump with toadstools and ferns in a hollow log either side of the foot
+    of the ramp, the automatic door's box and its solar panel, rounds of log for stepping stones to the gate."""
+    random.seed(seed); objs = []
+    bark = [_cb('bark', var=0.08, grain=0.3, grain_scale=G), _cb('bark2', var=0.08, grain=0.3, grain_scale=G)]
+    endg, split = _cb('endg', var=0.06), _cb('split', var=0.06); green = C('greensh', '#4b7a48', rough=0.7, var=0.12, hue_var=0.01)
+    pinem = [_cb('pine', rough=0.9), _cb('pine2', rough=0.9)]; cone = _cb('cone'); log = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G)
+    # the woodpile: logs along the wall, their ends to the front, under a little roof of green shingles on two posts
+    y0, y1 = wood_y; X0 = -W2 - 0.16
+    for row in range(6):
+        for j in range(3 if row < 5 else 2):
+            x = X0 - 0.055 - j * 0.105 - (0.05 if row % 2 else 0.0)
+            if x < X0 - 0.33: continue
+            _log(objs, (x, y0 + random.uniform(-0.02, 0.02), 0.05 + row * 0.088), (x, y1 + random.uniform(-0.02, 0.02), 0.05 + row * 0.088), random.uniform(0.042, 0.052),
+                 random.choice(bark), split if random.random() < 0.4 else endg, verts=8, name='wpile')
+    for y in (y0 - 0.04, y1 + 0.04):
+        objs.append(cyl('wpost', 0.025, 0.66, (X0 - 0.36, y, 0.33), m=bark[0], verts=8, bevel=0.0))
+    a, b = Vector((-W2 - 0.1, (y0 + y1) / 2, 0.78)), Vector((X0 - 0.42, (y0 + y1) / 2, 0.66))
+    objs.append(plank('wroof', a, b, y1 - y0 + 0.2, 0.03, Vector((-(a.z - b.z), 0, a.x - b.x)).normalized(), green, jitter=0.0, bevel=0.006))
+    for k in range(int((y1 - y0 + 0.2) / 0.09)):                    # (its shingles' lower edges)
+        yy = y0 - 0.1 + (k + 0.5) * 0.09
+        objs.append(plank('wsh', (b.x + 0.06, yy, b.z + 0.03), (b.x + 0.01, yy, b.z + 0.012), 0.085, 0.012, (-(a.z - b.z), 0, (a.x - b.x)), green, jitter=1.5, bevel=0.003))
+    for yy in (y0 - 0.15, (y0 + y1) / 2, y1 + 0.15): BLOCKS.setdefault(name, []).append([round(X0 - 0.17, 3), round(-yy, 3), 0.2])
+    # a wreath of pine and cones on the door, a red bow
+    wx, wy, wz = 0.08, -D2 - 0.075, 0.44
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.065, minor_radius=0.024, major_segments=16, minor_segments=6, location=(wx, wy, wz), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, pinem[0]); objs.append(o)
+    for k in range(7):
+        aa = k / 7 * math.tau
+        objs.append(sphere('wsprig', 0.026, (wx + math.cos(aa) * 0.065, wy - 0.012, wz + math.sin(aa) * 0.065), (1.3, 0.6, 0.8), (0, aa, 0), m=pinem[1], ico=1, disp=0.3, seed=k + 340))
+    for aa in (3.6, 4.3, 5.2):
+        objs.append(sphere('wcone', 0.016, (wx + math.cos(aa) * 0.065, wy - 0.03, wz + math.sin(aa) * 0.065), (1, 1, 1.4), m=cone, ico=1))
+    bow = _cb('bow', rough=0.5)
+    for sx in (-1, 1): objs.append(sphere('wbow', 0.022, (wx + sx * 0.024, wy - 0.03, wz + 0.075), (1.3, 0.6, 0.8), (0, sx * 0.4, 0), m=bow, seg=8, rings=5))
+    objs.append(sphere('wknot', 0.012, (wx, wy - 0.035, wz + 0.075), m=bow, seg=8, rings=5))
+    # a birdhouse on the lantern post
+    px, py = -0.62, -D2 - 0.28 - 0.045
+    objs.append(box('bhouse', (0.08, 0.07, 0.09), (px, py - 0.01, 0.6), m=_cb('bird', rough=0.6), bevel=0.006, segs=1))
+    objs.append(cyl('bhole', 0.016, 0.006, (px, py - 0.047, 0.61), (math.radians(90), 0, 0), m=C('hall_dark', '#1d1510', rough=1.0), verts=10, bevel=0.0))
+    objs.append(cyl('bperch', 0.004, 0.03, (px, py - 0.06, 0.57), (math.radians(90), 0, 0), m=log, verts=5, bevel=0.0))
+    for sx in (-1, 1):
+        a_, b_ = Vector((px, py - 0.01, 0.695)), Vector((px + sx * 0.06, py - 0.01, 0.64))
+        objs.append(plank('broof', (a_ + b_) / 2 + Vector((0, -0.05, 0)), (a_ + b_) / 2 + Vector((0, 0.05, 0)), (b_ - a_).length + 0.02, 0.012, Vector((sx * 0.055, 0, 0.06)).normalized(), green, jitter=0.0, bevel=0.003))
+    # a mossy stump with red toadstools left of the foot of the ramp, ferns in a hollow log right of it (the birds walk round)
+    moss = _cb('moss', rough=0.95); toad, spot = _cb('toad', rough=0.5), _cb('spot', rough=0.6); fern = [_cb('fern', rough=0.8), _cb('fern2', rough=0.8)]
+    sx_, sy_ = -0.66, -0.95
+    objs.append(cyl('mstump', 0.085, 0.17, (sx_, sy_, 0.085), m=bark[0], verts=11, r2=0.08, bevel=0.0))
+    objs.append(cyl('mstumptop', 0.072, 0.01, (sx_, sy_, 0.172), m=endg, verts=11, bevel=0.0))
+    objs.append(sphere('mmoss', 0.06, (sx_ - 0.03, sy_ + 0.02, 0.17), (1.3, 1.1, 0.35), m=moss, ico=2, disp=0.3, seed=350))
+    for k, (dx, dy, h, rr) in enumerate(((0.07, -0.06, 0.06, 0.03), (0.11, 0.0, 0.04, 0.022), (-0.08, -0.07, 0.05, 0.026), (0.03, 0.06, 0.12 + 0.17, 0.02))):
+        base = 0.0 if k < 3 else 0.17; hh = h if k < 3 else 0.05
+        objs.append(cyl('tstalk', 0.008, hh, (sx_ + dx, sy_ + dy, base + hh / 2), m=spot, verts=6, bevel=0.0))
+        objs.append(sphere('tcap', rr, (sx_ + dx, sy_ + dy, base + hh), (1, 1, 0.6), m=toad, seg=10, rings=5))
+        for j in range(3):
+            aa = j * 2.1 + k
+            objs.append(sphere('tspot', rr * 0.22, (sx_ + dx + math.cos(aa) * rr * 0.55, sy_ + dy + math.sin(aa) * rr * 0.55, base + hh + rr * 0.45), m=spot, ico=1))
+    fx, fy = 0.02, -0.95
+    hl = log
+    _log(objs, (fx - 0.15, fy, 0.065), (fx + 0.15, fy, 0.065), 0.07, hl, endg, verts=12, name='hlog')
+    objs.append(cyl('hlogin', 0.05, 0.31, (fx, fy, 0.075), (0, math.radians(90), 0), m=C('hall_dark', '#1d1510', rough=1.0), verts=10, bevel=0.0))
+    for k in range(9):                                             # its ferns: fronds arching out of it
+        aa = k / 9 * math.tau + 0.3; L = random.uniform(0.13, 0.18)
+        c = Vector((fx + math.cos(aa) * 0.04, fy + math.sin(aa) * 0.03, 0.12))
+        d = Vector((math.cos(aa) * 0.8, math.sin(aa) * 0.8, 0.9)).normalized()
+        objs.append(sphere('frond', L / 2, c + d * L / 2, (0.22, 0.06, 1.0), tuple(d.to_track_quat('Z', 'Y').to_euler()), m=fern[k % 2], ico=1))
+    for (x, y, rr) in ((sx_, sy_, 0.12), (fx, fy, 0.16)): BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), rr])
+    # the automatic door: its box over the hens' door, its solar panel on the shingles
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    zb = 0.26 + POP_H + 0.07
+    objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.075, zb), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.102, zb), m=led, seg=8, rings=4))
+    over = 0.2
+    e0 = Vector((0, -(D2 + over), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); dn = (e0 - r0).normalized()
+    nrm = Vector((0, -(peak - eave + 0.08), D2 + over)).normalized()
+    c = r0 + (e0 - r0) * 0.55 + nrm * 0.06 + Vector((panel_x, 0, 0))
+    objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for i in range(2):
+        for j in range(3):
+            cc = c + nrm * 0.012 + dn * (-0.05 + i * 0.1) + Vector((-0.08 + j * 0.08, 0, 0))
+            objs.append(plank('solarcell', cc - dn * 0.044, cc + dn * 0.044, 0.072, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # rounds of log for stepping stones from the foot of the ramp to the gate
+    gx, gy = _gate_of(t, 'bra'); a, b = Vector((-0.31, -1.04)), Vector((gx, gy + 0.32)); n = max(3, round((b - a).length / 0.25))
+    for k in range(n + 1):
+        q = a.lerp(b, k / n) + Vector((random.uniform(-0.03, 0.03), 0))
+        rr = random.uniform(0.075, 0.09)
+        objs.append(cyl('round', rr, 0.03, (q.x, q.y, 0.015), m=bark[k % 2], verts=12, bevel=0.0))
+        objs.append(cyl('roundtop', rr * 0.88, 0.006, (q.x, q.y, 0.031), m=endg, verts=12, bevel=0.0))
+        objs.append(cyl('roundring', rr * 0.45, 0.004, (q.x, q.y, 0.035), m=split, verts=10, bevel=0.0))
+    _own(objs, r)
+    return r
+
+
+def cosy_bra():
+    r = lodge(name='cosy_bra'); _lodge_bits(r, 'cosy_bra', 3)
+    return r
+
+
+def deluxe_bra():
+    """Deluxe: a storey taller, a gable over the door with a window, crossed logs at the peaks, a window with green shutters
+    in its side, a chimney of river stones, a shingled hood over the door with a lantern, a carved wooden bear by its corner;
+    the cosy touches."""
+    EAVE, PEAK = 1.2, 1.86
+    r = lodge(eave=EAVE, peak=PEAK, name='deluxe_bra')
+    random.seed(77); objs = []
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); endg = _cb('endg', var=0.06)
+    log = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G); green = C('greensh', '#4b7a48', rough=0.7, var=0.12, hue_var=0.01)
+    barge = C('lodgebarge', '#6e4428', rough=0.8, grain=0.3, grain_scale=G); ridge = C('greenridge', '#355a35', rough=0.7)
+    trim = C('lodgetrim', '#e8dcc0', rough=0.7); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    shut = _cb('shutter', rough=0.6, var=0.04); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    # a gable over the door, its face at the eave's edge: boards, a window, crossed logs at its peak, its own roof back into
+    # the slates
+    over = 0.2; kz = (PEAK + 0.02 - (EAVE - 0.06)) / (D2 + over)
+    roofz = lambda y: PEAK + 0.02 + y * kz + 0.035                 # (the shingles' face, front slope)
+    roofy = lambda z: (z - PEAK - 0.02 - 0.035) / kz
+    gx, gw, yf = 0.08, 0.3, -D2 - over + 0.03
+    zb, zs, zp = EAVE - 0.1, EAVE + 0.2, EAVE + 0.46
+    n = 8
+    for i in range(n):
+        u = gx - gw + (i + 0.5) * 2 * gw / n; zt = zs + (zp - zs) * (1 - abs(u - gx) / gw) - 0.02
+        objs.append(plank('dgboard', (u, yf, zb), (u, yf, zt), 2 * gw / n * 0.96, 0.03, (0, -1, 0), barge, jitter=0.4))
+    window(objs, gx, yf - 0.02, zs + 0.0, 0.2, 0.2, trim, glass)
+    for sx in (-1, 1):
+        x = gx + sx * gw
+        objs.append(_tri('dgcheek', (x, yf, zb), (x, yf, zs), (x, roofy(zs), zs), (1, 0, 0), 0.03, barge))
+        objs.append(plank('dgcorner', (x, yf - 0.005, zb), (x, yf - 0.005, zs), 0.05, 0.035, (0, -1, 0), log, jitter=0.2))
+        ea, ri = Vector((gx + sx * (gw + 0.08), 0, zs - 0.04)), Vector((gx, 0, zp + 0.03))
+        yb = roofy(zp) + 0.05; nrm = Vector((sx * (ri.z - ea.z), 0, abs(ri.x - ea.x))).normalized(); dn = (ea - ri).normalized(); SL = (ea - ri).length
+        objs.append(plank('dgroof', (ea + ri) / 2 + Vector((0, yf - 0.1, 0)), (ea + ri) / 2 + Vector((0, yb, 0)), SL + 0.03, 0.03, nrm, green, jitter=0.0, bevel=0.006))
+        rows = 4
+        for rr in range(rows):                                     # (its shingles, like the big roof's)
+            base = ri.lerp(ea, (rr + 0.55) / rows) + nrm * (0.022 + 0.005 * (rr % 2)); y = yf - 0.1 + (0.045 if rr % 2 else 0.0)
+            while y < yb - 0.04:
+                q = base + Vector((0, y + 0.045, 0))
+                objs.append(plank('dgsh', q - dn * SL / rows * 0.62, q + dn * SL / rows * 0.62, 0.085, 0.016, nrm, green, jitter=1.2, bevel=0.004))
+                y += 0.09
+        _log(objs, (gx - sx * 0.1, yf - 0.08, zp - 0.05), (gx + sx * 0.07, yf - 0.08, zp + 0.11), 0.02, bark, endg, verts=8, name='xlog')
+    objs.append(cyl('dgridge', 0.035, roofy(zp) - yf + 0.12, (gx, (yf - 0.1 + roofy(zp)) / 2, zp + 0.07), (math.radians(90), 0, 0), m=ridge, verts=10, bevel=0.0))
+    # crossed logs at both gables' peaks
+    for sx in (-1, 1):
+        xg = sx * (W2 + 0.22)
+        for sy in (-1, 1):
+            a = Vector((xg, sy * 0.2, PEAK - 0.12)); b = Vector((xg, -sy * 0.12, PEAK + 0.2))
+            _log(objs, a, b, 0.03, bark, endg, verts=8, name='xlog')
+    # a window with green shutters in the right gable
+    window(objs, W2 + 0.03, 0.0, EAVE + 0.2, 0.2, 0.2, trim, glass, normal=(1, 0, 0))
+    for sy in (-1, 1):
+        for k in range(2):
+            v = sy * (0.15 + (k - 0.5) * 0.034)
+            objs.append(plank('shutter', (W2 + 0.06, v, EAVE + 0.07), (W2 + 0.06, v, EAVE + 0.33), 0.032, 0.02, (1, 0, 0), shut, jitter=0.2))
+    # a tall chimney of river stones against the left gable, behind the woodpile
+    stones = [C('cb_rs%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(CB['rstone'])]
+    cx, cy, cw, cd = -W2 - 0.25, 0.24, 0.32, 0.3
+    top = PEAK + 0.3
+    objs.append(box('chcore', (cw - 0.04, cd - 0.04, top), (cx, cy, top / 2), m=_cb('mortar', rough=0.95), bevel=0.0))
+    z, row = 0.04, 0
+    while z < top:
+        w_ = cw if z < EAVE + 0.1 else cw - 0.06
+        for k in range(3):                                         # its front and its outer side
+            u = -w_ / 2 + (k + 0.5) * w_ / 3 + (0.03 if row % 2 else -0.02)
+            objs.append(sphere('rstone', random.uniform(0.05, 0.062), (cx + u, cy - cd / 2 + 0.015, z), (1.25, 0.8, 0.85), (0, 0, random.uniform(-0.3, 0.3)), m=random.choice(stones), ico=1, disp=0.15, seed=row * 7 + k))
+            u = -cd / 2 + (k + 0.5) * cd / 3 + (0.02 if row % 2 else -0.02)
+            objs.append(sphere('rstone', random.uniform(0.05, 0.062), (cx - w_ / 2 + 0.015, cy + u, z), (0.8, 1.25, 0.85), (0, 0, random.uniform(-0.3, 0.3)), m=random.choice(stones), ico=1, disp=0.15, seed=row * 7 + k + 3))
+            if z > EAVE + 0.15:                                    # (its inner side too, where it rises clear of the roof)
+                objs.append(sphere('rstone', random.uniform(0.05, 0.062), (cx + w_ / 2 - 0.015, cy + u, z), (0.8, 1.25, 0.85), (0, 0, random.uniform(-0.3, 0.3)), m=random.choice(stones), ico=1, disp=0.15, seed=row * 7 + k + 5))
+        z += 0.085; row += 1
+    objs.append(box('chcap', (cw - 0.02, cd + 0.02, 0.04), (cx, cy, top + 0.02), m=_cb('mortar', rough=0.95), bevel=0.01, segs=1))
+    # a hood of green shingles over the door on two log brackets, a lantern hanging from it
+    hx, hz = 0.08, 0.76
+    for sx in (-1, 1):
+        a = Vector((hx, -D2 - 0.04, hz + 0.16)); b = Vector((hx + sx * 0.27, -D2 - 0.04, hz))
+        objs.append(plank('hood', (a + b) / 2, (a + b) / 2 + Vector((0, -0.32, 0)), (b - a).length + 0.03, 0.03, Vector((sx * 0.16, 0, 0.27)).normalized(), green, jitter=0.0, bevel=0.006))
+        _log(objs, (hx + sx * 0.2, -D2 - 0.05, hz - 0.2), (hx + sx * 0.2, -D2 - 0.3, hz - 0.01), 0.022, log, endg, verts=8, name='bracket')
+    _log(objs, (hx, -D2 - 0.04, hz + 0.18), (hx, -D2 - 0.36, hz + 0.17), 0.025, log, endg, verts=8, name='hridge')
+    lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    lx, ly, lz = hx, -D2 - 0.24, hz + 0.02
+    objs.append(cyl('lchain', 0.004, 0.06, (lx, ly, lz + 0.075), m=iron, verts=5, bevel=0.0))
+    objs.append(box('lanternb', (0.06, 0.06, 0.08), (lx, ly, lz), m=iron, bevel=0.005, segs=1))
+    objs.append(box('lanterng', (0.066, 0.066, 0.055), (lx, ly, lz), m=lamp, bevel=0.0))
+    objs.append(cyl('lroof', 0.052, 0.04, (lx, ly, lz + 0.06), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+    light_at('deluxe_bra', lx, ly, lz)
+    # a carved wooden bear sitting by the front right corner
+    bear, bear2 = _cb('bear', rough=0.75, grain=0.35, grain_scale=G, var=0.05), _cb('bear2', rough=0.75)
+    bx, by = W2 + 0.3, -D2 - 0.2
+    objs.append(cyl('bstump', 0.11, 0.06, (bx, by, 0.03), m=bark, verts=12, bevel=0.0))
+    objs.append(sphere('bbody', 0.105, (bx, by, 0.17), (1.0, 0.9, 1.2), m=bear, ico=2, disp=0.12, seed=360))
+    objs.append(sphere('bhead', 0.068, (bx - 0.005, by - 0.03, 0.33), (1, 0.95, 0.95), m=bear, ico=2, disp=0.1, seed=361))
+    objs.append(sphere('bsnout', 0.03, (bx - 0.01, by - 0.09, 0.315), (1, 1.1, 0.8), m=_cb('split', var=0.04), seg=10, rings=6))
+    objs.append(sphere('bnose', 0.012, (bx - 0.01, by - 0.12, 0.325), m=bear2, seg=8, rings=5))
+    for sx in (-1, 1):
+        objs.append(sphere('bear', 0.022, (bx + sx * 0.05, by - 0.015, 0.395), (1, 0.6, 1), m=bear, seg=8, rings=5))
+        objs.append(sphere('beye', 0.008, (bx + sx * 0.026, by - 0.088, 0.35), m=bear2, seg=6, rings=4))
+        objs.append(sphere('bpaw', 0.034, (bx + sx * 0.06, by - 0.085, 0.19), (0.9, 1.2, 0.9), m=bear, ico=1, disp=0.1, seed=362 + sx))
+        objs.append(sphere('bfoot', 0.04, (bx + sx * 0.065, by - 0.07, 0.075), (0.9, 1.4, 0.7), m=bear, ico=1, disp=0.1, seed=364 + sx))
+    BLOCKS.setdefault('deluxe_bra', []).append([round(bx, 3), round(-by, 3), 0.15])
+    _own(objs, r)
+    _lodge_bits(r, 'deluxe_bra', 4, eave=EAVE, peak=PEAK, wood_y=(-0.42, 0.0), panel_x=-0.5)
+    r.name = 'deluxe_bra'
+    return r
+
+
+# ---- the Timber Lodge's gardens (its own: Audrey, 27 Oct): a wooden bowl for water in the small pens, a copper one in the
+# Cosy; Cosy: a swing on two log posts beside the lodge, a big half log full of sand, the cabbage hanging from a crooked
+# branch stood in a stump; Deluxe: a crib of logs full of sand with a young pine at its corner, water from a split-log flume
+# into a hollow log, a feeder like a tiny log cabin, the log swing, the stump, a xylophone of round branches.
+PENS_BY['bra'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(-0.62, -1.4), dish=(0.7, -1.1), bowl='wood', hay=None, hay_rot=0, sack=None,
+            straw=((0.2, -1.25, 0.25, 22), (-0.75, -0.95, 0.2, 15))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(0.95, -1.05), dish=(-0.95, -1.6), bowl='wood', hay=None, hay_rot=0, sack=None,
+            straw=((0.5, -1.6, 0.3, 28), (-0.95, -1.0, 0.25, 20))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(-0.9, -2.4), dish=(1.45, -1.75), bowl='copper', hay=(-1.75, 0.45), hay_rot=90, sack=None,
+            straw=((-1.75, 0.45, 0.4, 35), (0.6, -1.3, 0.35, 35), (-0.6, -1.75, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(0.95, -2.0), feeder_style='cabin', dish=(-1.75, -0.15), water='flume', hay=(2.0, 0.5), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.4, -1.3, 0.3, 25), (2.0, 0.5, 0.4, 35))),
+}
+PLAY_BY['bra'] = {3: dict(swing=(1.5, -0.45), halflog=(-1.5, -1.3), cabbage=(0.8, -2.3), frame='logs', holder='stump'),
+                  4: dict(swing=(1.65, -1.25), crib=(-1.3, -2.5), cabbage=(1.45, -2.6), xylo=(-1.55, -1.3), frame='logs', holder='stump', bars='logs')}
+LOGBATH_L, LOGBATH_R, LOGBATH_Z = 0.8, 0.19, 0.17                # the Cosy lodge's half log of sand (along y; its rim's height)
+CRIB_W, CRIB_D = 0.86, 0.66                                     # the Deluxe lodge's crib of logs (x, y)
+CRIB_PINE = (-CRIB_W / 2 - 0.1, CRIB_D / 2 + 0.04)              # its young pine, at its back left corner
+
+
+def log_swing(objs, x, y):
+    """The lodge's swing: two log posts, braced, a log across their tops with its sawn ends showing."""
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); endg = _cb('endg', var=0.06)
+    stones = [C('cb_rs%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(CB['rstone'])]
+    for sx in (-1, 1):
+        px = x + sx * (SWING_HALF + 0.05)
+        _log(objs, (px, y, 0.0), (px, y, SWING_TOP + 0.07), 0.038, bark, endg, verts=9, name='swpost', ends=(False, True))
+        for sy in (-1, 1):
+            _log(objs, (px, y + sy * 0.2, 0.0), (px, y + sy * 0.02, 0.3), 0.018, bark, None, verts=6, name='swbrace')
+        for k in range(2):
+            objs.append(sphere('swstone', 0.035, (px + 0.05 * (1 - 2 * k), y - 0.04 + 0.08 * k, 0.012), (1.3, 1, 0.5), m=stones[k], ico=1, disp=0.2, seed=k + 370))
+    _log(objs, (x - SWING_HALF - 0.15, y, SWING_TOP + 0.01), (x + SWING_HALF + 0.15, y, SWING_TOP + 0.015), 0.032, bark, endg, verts=9, name='swbar')
+
+
+def cabbage_stump(objs, x, y):
+    """The lodge's way of hanging the cabbage: from a crooked branch stood in an old stump."""
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); endg = _cb('endg', var=0.06); moss = _cb('moss', rough=0.95)
+    leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    px, py = x, y + 0.28
+    objs.append(cyl('cstump', 0.1, 0.2, (px, py, 0.1), m=bark, verts=12, r2=0.09, bevel=0.0))
+    objs.append(cyl('cstumptop', 0.078, 0.01, (px, py, 0.202), m=endg, verts=12, bevel=0.0))
+    objs.append(sphere('cmoss', 0.05, (px + 0.07, py + 0.03, 0.08), (0.6, 1.1, 1.2), m=moss, ico=2, disp=0.3, seed=375))
+    pts = [Vector((px + 0.02, py + 0.03, 0.18)), Vector((px - 0.015, py, 0.4)), Vector((px + 0.01, py - 0.06, CAB_TOP + 0.04)),
+           Vector((px, py - 0.18, CAB_TOP + 0.07)), Vector((x, y, CAB_TOP))]
+    for k, (a, b) in enumerate(zip(pts, pts[1:])):
+        objs.append(cyl('cbranch', 0.026 - k * 0.004, (b - a).length + 0.02, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=bark, verts=7, r2=0.022 - k * 0.004, bevel=0.0))
+    for k in range(4):
+        objs.append(sphere('cleaf', 0.024, pts[2] + Vector((random.uniform(-0.05, 0.05), random.uniform(-0.03, 0.05), random.uniform(0.0, 0.05))), (1.4, 0.8, 0.4), (0, 0, k), m=leaf[k % 2], ico=1))
+
+
+def sand_log(objs, x, y):
+    """The Cosy lodge's sand bath: a big half log lying along the yard, hollowed and full of sand, a little spilt round it."""
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); endg = _cb('endg', var=0.06)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    L, R, zc = LOGBATH_L, LOGBATH_R, LOGBATH_Z
+    coop.half_log(objs, 'slog', x, y, zc, R, L, 'y', bark, endg)
+    objs.append(box('lsand', (2 * R - 0.03, L - 0.04, 0.02), (x, y, zc - 0.002), m=sand, bevel=0.008, segs=1))
+    for k, (dy, s_) in enumerate(((-0.18, 0.09), (0.15, 0.08))):
+        objs.append(sphere('lmound', s_, (x + 0.03 * (1 - 2 * k), y + dy, zc - 0.01), (1.0, 1.3, 0.22), (0, 0, k), m=sand, ico=2, disp=0.15, seed=k + 380))
+    for k in range(6):
+        aa = random.uniform(0, math.tau)
+        objs.append(sphere('lspill', random.uniform(0.04, 0.06), (x + math.cos(aa) * (R + 0.1), y + math.sin(aa) * (L / 2 + 0.05), 0.012), (1.4, 1, 0.12), (0, 0, aa), m=sand, ico=2, disp=0.2, seed=k + 383))
+
+
+def sand_crib(objs, x, y):
+    """The Deluxe lodge's sand bath: a little crib of logs, notched at its corners, full of sand, cones on it, a young pine at
+    its back corner."""
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); log = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G); endg = _cb('endg', var=0.06)
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    hw, hd, r = CRIB_W / 2, CRIB_D / 2, 0.055
+    for sy in (-1, 1): _log(objs, (x - hw - 0.08, y + sy * hd, r), (x + hw + 0.08, y + sy * hd, r), r, log, endg, verts=10, name='crib')
+    for sx in (-1, 1): _log(objs, (x + sx * hw, y - hd - 0.08, 2.2 * r), (x + sx * hw, y + hd + 0.08, 2.2 * r), r, log, endg, verts=10, name='crib')
+    objs.append(box('csand', (CRIB_W - 0.05, CRIB_D - 0.05, 0.03), (x, y, 0.1), m=sand, bevel=0.01, segs=1))
+    for k, (dx, dy, s_) in enumerate(((-0.17, 0.06, 0.12), (0.2, -0.07, 0.1))):
+        objs.append(sphere('cmound', s_, (x + dx, y + dy, 0.11), (1.3, 1.0, 0.2), (0, 0, k), m=sand2 if k else sand, ico=2, disp=0.15, seed=k + 390))
+    cone = _cb('cone')
+    for k, (dx, dy) in enumerate(((0.05, 0.12), (0.28, 0.1), (-0.3, -0.15))):
+        objs.append(sphere('ccone', 0.025, (x + dx, y + dy, 0.13), (1, 1.5, 1), (0, 0, k), m=cone, ico=1, disp=0.3, seed=k + 393))
+    for k in range(5):
+        aa = random.uniform(0, math.tau)
+        objs.append(sphere('cspill', random.uniform(0.04, 0.06), (x + math.cos(aa) * (hw + 0.1), y + math.sin(aa) * (hd + 0.1), 0.012), (1.4, 1, 0.12), (0, 0, aa), m=sand, ico=2, disp=0.2, seed=k + 396))
+    tx, ty = x + CRIB_PINE[0], y + CRIB_PINE[1]                    # the young pine
+    pinem = [_cb('pine', rough=0.9), _cb('pine2', rough=0.9)]
+    objs.append(cyl('ptrunk', 0.025, 0.2, (tx, ty, 0.1), m=bark, verts=7, bevel=0.0))
+    for k, (z0, rr, h) in enumerate(((0.12, 0.17, 0.24), (0.26, 0.13, 0.2), (0.38, 0.09, 0.17))):
+        objs.append(cyl('ptier', rr, h, (tx, ty, z0 + h / 2), (0, 0, k * 0.4), m=pinem[k % 2], verts=9, r2=0.0, bevel=0.0))
+
+
+def log_xylophone(objs, x, y):
+    """A xylophone of round branches painted in rainbow colours across two little logs, a stick with a pine cone to play it."""
+    bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); endg = _cb('endg', var=0.06); cone = _cb('cone')
+    cols = ['#e2453c', '#ff8c42', '#f4c430', '#5bb04a', '#3d7fd1', '#9b6bd1']
+    for sx in (-1, 1): _log(objs, (x + sx * 0.09, y - 0.2, 0.05), (x + sx * 0.09, y + 0.2, 0.05), 0.04, bark, endg, verts=9, name='xlog')
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.28 - k * 0.025
+        _log(objs, (x - L / 2, yy, 0.106), (x + L / 2, yy, 0.106), 0.018, C('xbar%d' % k, cols[k], rough=0.35, metal=0.4), endg, verts=8, name='xbar')
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.24, 0.015), (math.radians(90), 0, math.radians(30)), m=bark, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.022, (x + 0.12, y + 0.31, 0.02), (1, 1.4, 1), m=cone, ico=1, disp=0.3, seed=399))

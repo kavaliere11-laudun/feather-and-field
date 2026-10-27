@@ -2476,3 +2476,55 @@ the birds already had.
   pit), `looktest.mjs` (the cottage's upgrades; loading farms from before each breed's looks), `barnlooks.mjs` `BREED`,
   `NTH` (a breed's second coop on the test page, turned the other way), `SHIFT` (the view along the screen's up; main.js
   `lookFree`: past the map's edge, for pictures).
+
+## Release 4, step 4: the Pagoda's five looks (27 Oct 2026; Audrey: "Yes, five looks too (Recommended)", each in its Silkie colour, the Silkies themselves unchanged; then "It's perfect and so adorable I love it")
+
+- **The looks** (stylized/coops.py `box_sil`, `shed_sil`, `pagoda`, `cosy_sil` with `_pagoda_bits`, `deluxe_sil`): Rustic,
+  a shelter of bamboo poles and old reed mats (their reeds and cords drawn on, one corner torn), a sagging mat roof over a
+  ridge pole weighed with stones, an old torn paper lantern on a bamboo pole where the Pagoda's lantern hangs, the nest's
+  lattice faded. Mended, a little hut of bamboo canes on a stone base, a roof of halved bamboo in rows, its left posts and
+  half its front beam lacquered in its colour (the pot of lacquer and the brush beside it), a new paper window, a paper
+  lantern on a pole. Snug, the Pagoda. Cosy, the Pagoda with a cherry tree in blossom by its left side (`cherry_tree`,
+  petals on the ground), a stone lantern (`stone_lantern`, lit at night), a second paper lantern at the other front corner,
+  azaleas along its base, the automatic door's box and its solar panel on the lower roof, glazed pots of little pines by
+  the steps, flat stepping stones. Deluxe, `pagoda(tiers=3)`: a third storey and roof, a tall gold finial with rings,
+  little gold bells at the two lower roofs' corners, the cherry tree on its right; the cosy touches. Every look keeps the
+  Pagoda's nest (`NESTS['house_sil']` asserted: the floor 0.14, two steps, the low window with its lattice slid up).
+- **Its gardens**: a clay bowl for water in the small pens, a celadon one in the Cosy; Cosy: a swing under a little red
+  torii (`torii_swing`), a big glazed bowl of sand (`sand_bowl`, a round sand bath), the cabbage from a bamboo pole
+  (`cabbage_bamboo`); Deluxe: a zen garden of raked sand with three mossy stones (`zen_garden`, a box sand bath), a koi pond
+  with lily pads, two koi and a bamboo spout for water (coop.py `koi_pond`), a feeder of dark lacquered wood under a little
+  curved roof (`feeder_style='pagoda'`), a bamboo xylophone (`bamboo_xylophone`), the torii swing.
+- **In its Silkie colour** (main.js `SIL_FROM`, `SIL_MODELS`, `keepSilkieColours`, `tintedPart`, `inColour`): each Pagoda
+  model's own colours (its lacquer, trim and roof; the rustic hints faded) swapped for the colour's, now made the first
+  time a coop of that colour needs one (it used to make every colour's at the start), matching colours within a few steps
+  (the roofs' shades vary a little). Test hook `tintCoop` and `pagodacolours.mjs` (each look in a few colours).
+- **In the game**: `LOOKS_CV.sil = 3` (every Silkie colour's Pagoda, the rare ones too); `up_sil_*` in English and French;
+  farms from before have their Pagodas Snug. Tests: `upgradetest.mjs BREED=sil` (both ways), `playtest.mjs BREED=sil` (the
+  sand bowl, the zen garden), `looktest.mjs`. Balance (`balsim.mjs`): with every Silkie coop upgradable the game is a
+  little quicker (once a day level 30 on day 338, twice a day 283, every 3 hours 235); to look at again once all five coops
+  have their looks.
+
+## Release 4, step 5: the Stone Cottage's five looks (27 Oct 2026; Audrey: "The other four coops", one at a time, shown first; then "Perfect go ahead")
+
+- **The looks** (stylized/coops.py `box_leg`, `shed_leg`, `stone`, `cosy_leg` with `_stone_bits`, `deluxe_leg`): Rustic, a
+  hut of dry-stone walls (`_drystone`), its front an old blue door laid on its side with holes cut for the hens (the hint:
+  the cottage's blue door), a roof of a few big old slates on two planks (one slipped off, lying by the wall), moss and
+  stones on it. Mended, a little stone hut newly pointed, its front slope slated half way (bare battens above, a stack of
+  slates by its gable), a new pine door, a pot of blue paint. Snug, the Stone Cottage (`stone()` now takes the eave, the
+  peak and the name). Cosy, the cottage with its window frames duck-egg blue, wisteria hanging along the front eave, a
+  window box of red geraniums, a white dovecote on a pole with two doves (`dovecote`), a lantern by the hens' door, blue
+  hydrangeas in pots by the ramp, the automatic door's box and its solar panel, square flagstones to the gate. Deluxe, a
+  storey taller: two stone dormers in the slates, a slated porch hood over the blue door on stone brackets, stone balls
+  on the gables, a chimney at each end, a window in the left gable; the cosy touches. Every look keeps the cottage's nest
+  (`NESTS['house_leg']` asserted: the floor 0.18, the ramp, the nest window with its door let down).
+- **Its gardens**: an old stone sink for water in the small pens (coop.py `stone_sink`), a stone bowl in the Cosy; Cosy: a
+  swing from the low branch of an old apple tree (`tree_swing`, the trunk kept clear), a wheelbarrow full of sand
+  (`wheelbarrow`, a box sand bath), the cabbage from an iron shepherd's crook (`cabbage_crook`); Deluxe: a little blue
+  rowing boat full of sand (`sand_boat`), a water butt dripping into a stone basin (coop.py `water_butt`), a feeder like a
+  tiny stone house with a slate roof (`feeder_style='stonehouse'`), the apple-tree swing, the crook, the xylophone.
+- **In the game**: `LOOKS_CV.leg = 4` (`CV` 4); `up_leg_*` in English and French; farms from before have their Stone
+  Cottages Snug. Tests: `upgradetest.mjs BREED=leg` (both ways), `playtest.mjs BREED=leg` (the wheelbarrow, the boat),
+  `looktest.mjs`. Released together with the Pagoda (step 4). Balance (`balsim.mjs`, now with the Stone Cottage's
+  upgrade days): once a day level 30 on day 337, twice a day 283, every 3 hours 235 (the Stone Cottage's Mended comes
+  around day 85, its Deluxe around day 186); to look at again once all five coops have their looks.

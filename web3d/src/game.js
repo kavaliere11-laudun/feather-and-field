@@ -79,6 +79,12 @@ const TEXT = {
     up_orp_mended: 'A little woven hazel hut, half daubed with clay, under new thatch, in a bigger pen.', up_orp_snug: 'The Thatched Cottage, in a roomier pen.',
     up_orp_cosy: 'Hollyhocks, roses, a bench under a rose arch, a lantern, and a bigger garden with a swing, a tin bath of sand and a cabbage to peck.',
     up_orp_deluxe: 'A taller cottage in Suffolk pink with windows in its thatch and a straw pheasant on the roof, a pump and trough, a sand pit under a thatched parasol, a xylophone and the biggest garden, with white pickets and roses.',
+    up_sil_mended: 'A little bamboo hut with a roof of split bamboo, half painted in its colour, in a bigger pen.', up_sil_snug: 'The Pagoda Coop, in a roomier pen.',
+    up_sil_cosy: 'A cherry tree in blossom, a stone lantern, paper lanterns, and a bigger garden with a swing under a little red gate, a glazed bowl of sand and a cabbage to peck.',
+    up_sil_deluxe: 'Three tiers with little gold bells, a koi pond, a zen garden of raked sand, a bamboo xylophone and the biggest garden, with white pickets and roses.',
+    up_leg_mended: 'A little stone hut with its roof slated half way and a new door, in a bigger pen.', up_leg_snug: 'The Stone Cottage, in a roomier pen.',
+    up_leg_cosy: 'Duck-egg blue windows, wisteria, a dovecote, blue hydrangeas, and a bigger garden with a swing from an apple tree, a wheelbarrow of sand and a cabbage to peck.',
+    up_leg_deluxe: 'A storey taller with dormers, a slate porch and two chimneys, a little blue boat full of sand, a water butt, a xylophone and the biggest garden, with white pickets and roses.',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -275,6 +281,12 @@ const TEXT = {
     up_orp_mended: 'Une petite hutte de noisetier tressé, à moitié enduite d’argile, sous un chaume neuf, dans un enclos plus grand.', up_orp_snug: 'La Chaumière, dans un enclos plus spacieux.',
     up_orp_cosy: 'Des roses trémières, des roses, un banc sous une arche fleurie, une lanterne, et un jardin plus grand avec une balançoire, une bassine de sable et un chou à picorer.',
     up_orp_deluxe: 'Une chaumière plus haute, peinte en rose pâle, avec des fenêtres dans le chaume et un faisan de paille sur le toit, une pompe et son abreuvoir, un bac à sable sous un parasol de chaume, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
+    up_sil_mended: 'Une petite cabane de bambou au toit de bambous fendus, à moitié peinte de sa couleur, dans un enclos plus grand.', up_sil_snug: 'Le Poulailler pagode, dans un enclos plus spacieux.',
+    up_sil_cosy: 'Un cerisier en fleurs, une lanterne de pierre, des lanternes de papier, et un jardin plus grand avec une balançoire sous un petit portique rouge, une coupe de sable et un chou à picorer.',
+    up_sil_deluxe: 'Trois toits avec de petites clochettes dorées, un bassin à carpes koï, un jardin zen de sable ratissé, un xylophone de bambou et le plus grand jardin, avec palissade blanche et roses.',
+    up_leg_mended: 'Une petite cabane de pierre au toit à moitié couvert d’ardoises et à la porte neuve, dans un enclos plus grand.', up_leg_snug: 'La Maison de pierre, dans un enclos plus spacieux.',
+    up_leg_cosy: 'Des fenêtres bleu pâle, une glycine, un pigeonnier, des hortensias bleus, et un jardin plus grand avec une balançoire sous un pommier, une brouette de sable et un chou à picorer.',
+    up_leg_deluxe: 'Un étage de plus avec des lucarnes, un auvent d’ardoise et deux cheminées, une petite barque bleue pleine de sable, un récupérateur d’eau, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -718,13 +730,14 @@ export const FEED_DAYS = 2;                           // a full feeder keeps its
 // nothing changes"), Cosy, Deluxe. Each look helps a little: the eggs (Rustic: the afternoon egg missed one day in three,
 // Mended one in six; Snug: two a day; Cosy: an evening egg too one day in four, Deluxe one in two), the chicks' ratings
 // (a little lower in a Rustic coop, a little higher in a Cosy or Deluxe one), and a cuddle counting again sooner (Cosy 5
-// hours, Deluxe 4, else 6). So far the Red Barn and the Thatched Cottage have their five looks: the others stay as they were
+// hours, Deluxe 4, else 6). So far the Red Barn, the Thatched Cottage, the Pagoda and the Stone Cottage have their five looks: the others stay as they were
 // (their rustic look new, else the plain one; the eggs, chicks and cuddles of a Snug coop) until theirs are made.
 export const COOP_LOOKS = ['rustic', 'mended', 'snug', 'cosy', 'deluxe'];
 export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 100], kids: [-0.2, -0.1, 0, 0.15, 0.3], happyH: [6, 6, 6, 5, 4], skip: [1 / 3, 1 / 6, 0, 0, 0], extra: [0, 0, 0, 0.25, 0.5] };
 // each breed's looks came with a version of the save (cv): a farm from before them has that breed's coops Snug (nothing
-// changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct)
-export const LOOKS_CV = { rir: 1, orp: 2 }, CV = 2;
+// changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct), the Pagoda's (27 Oct: every Silkie colour's),
+// the Stone Cottage's (27 Oct)
+export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4 }, CV = 4;
 export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed

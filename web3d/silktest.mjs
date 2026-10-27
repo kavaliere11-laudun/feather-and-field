@@ -56,7 +56,7 @@ const blk = await p.evaluate(() => { const f = window.__farm, g = f.game(), P = 
   return P && c && { n: P.birds.length, colours: P.birds.map(b => b.colour).join(), breeds: g.birdsIn(c.id).map(b => b.breed).join(), models: f.coopModels(), hint: document.getElementById('hint').textContent, tier: c.tier }; });
 if (SHOTS) { await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.line === 'sil_black'); f.lookAt(P.centre.x, P.centre.z, 2.6); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 await shot('2_coop');
-ok('placed: a rustic Pagoda in black with a black trio, "Welcome, ...!"', !s.move && /sil_black/.test(s.coops) && blk && blk.n === 3 && blk.colours === 'black,black,black' && blk.breeds === 'sil_black,sil_black,sil_black' && blk.models.includes('rustic_sil@black') && T.welcome.test(blk.hint) && blk.tier === 0, { s, blk });
+ok('placed: a rustic Pagoda in black with a black trio, "Welcome, ...!"', !s.move && /sil_black/.test(s.coops) && blk && blk.n === 3 && blk.colours === 'black,black,black' && blk.breeds === 'sil_black,sil_black,sil_black' && blk.models.includes('box_sil@black') && T.welcome.test(blk.hint) && blk.tier === 0, { s, blk });
 // a black hen's card
 await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.line === 'sil_black'); f.openBirdCard(P.birds.find(b => b.kind === 'hen')); }); await run(0.3);
 t = await sheet();
@@ -81,7 +81,7 @@ ok('a Silkies-only County show: a black Silkie can enter it (the show says "Silk
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
 const again = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.line === 'sil_black'); return P && { colours: P.birds.filter(b => b.gid).map(b => b.colour).join(), models: f.coopModels() }; });
-ok('a reload: the black Silkies and their coop as they were, not flagged', !s.edited && /sil_black/.test(s.coops) && again && again.colours === 'black,black,black' && again.models.includes('rustic_sil@black'), { s, again });
+ok('a reload: the black Silkies and their coop as they were, not flagged', !s.edited && /sil_black/.test(s.coops) && again && again.colours === 'black,black,black' && again.models.includes('box_sil@black'), { s, again });
 // a save changed outside: the Buff Silkies' coop at level 8, the Black Silkies twice
 const before = s.coops;
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d;
