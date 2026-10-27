@@ -10,7 +10,7 @@ os.makedirs(OUT, exist_ok=True)
 sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
-GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred'})       # the lanterns light up at night (the rustic coops' too)
+GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred', 'autoled'})       # the lanterns light up at night (the rustic coops' too)
 BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
@@ -34,7 +34,7 @@ def one(name, fn):
     for o in bpy.context.scene.objects:          # shingles: plain boxes (their bevels can't be seen from the game's camera)
         if o.name.startswith('sh'):
             for md in [m for m in o.modifiers if m.type == 'BEVEL']: o.modifiers.remove(md)
-    if name.startswith('house_') or name.startswith('rustic_'): top_of(name)
+    if name.startswith(('house_', 'rustic_', 'box_', 'shed_', 'cosy_', 'deluxe_')): top_of(name)
     bake_and_export(name)
 
 
@@ -50,9 +50,22 @@ RUSTIC_K = ['orp', 'leg', 'sil', 'bra']                  # the other breeds' coo
 BUDGET.update({'rustic_orp': 13500, 'rustic_leg': 18000, 'rustic_sil': 14500, 'rustic_bra': 15500})
 for k in RUSTIC_K: one('rustic_' + k, lambda k=k: coops.rustic_house(k))
 for k in coops.HOUSES: BUDGET['popdoor_' + k] = 900; one('popdoor_' + k, lambda k=k: coops.pop_slider(k))       # the sliding pop doors
-names = ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
+# release 4: the Red Barn's five looks (coops.py): Rustic box_rir in pen_t0 + fence_t0, Mended shed_rir (pen_t1, fence_t1),
+# Snug house_rir (pen_base, fence), Cosy cosy_rir (pen_t3, fence_t3), Deluxe deluxe_rir (pen_t4, fence_t4: white pickets, roses)
+BUDGET.update({'box_rir': 14000, 'shed_rir': 12500, 'cosy_rir': 17000, 'deluxe_rir': 18500, 'pen_t0': 4200, 'pen_t1': 4600, 'pen_t3': 8000,
+               'pen_t4': 10500, 'fence_t0': 2600, 'fence_t1': 3300, 'fence_t3': 6500, 'fence_t4': 10500})
+_keep = dict(coops.NESTS['house_rir'])
+one('box_rir', coops.box_barn); one('shed_rir', coops.shed_barn); one('cosy_rir', coops.cosy_barn); one('deluxe_rir', coops.deluxe_barn)
+LOOKS = ['box_rir', 'shed_rir', 'cosy_rir', 'deluxe_rir']
+for t in (0, 1, 3, 4):
+    one('pen_t%d' % t, lambda t=t: coops.pen_tier(t)); one('fence_t%d' % t, lambda t=t: coops.fence_tier(t)); LOOKS += ['pen_t%d' % t, 'fence_t%d' % t]
+assert coops.NESTS['house_rir'] == _keep, 'the looks must keep the barn\'s nest'
+BUDGET.update({'swing_seat': 600, 'cabbage': 900})
+one('swing_seat', coops.swing_seat); one('cabbage', coops.cabbage); LOOKS += ['swing_seat', 'cabbage']        # (the moving play things)
+PENS = {t: dict(coops.pen_info(t), play=coops.play_info(t)) for t in range(5)}          # each look's pen for the birds (glTF axes)
+names = LOOKS + ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get(k, []))]          # what the birds walk round in front of each house (once each: the rustic barn builds the Red Barn again)
 lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in coops.LIGHTS.items()}      # (once each: a rustic house builds its house again)
-json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, blocks={k: coops.BLOCKS[k] for k in ('cosy_rir', 'deluxe_rir') if k in coops.BLOCKS}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

@@ -32,6 +32,7 @@ import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
+import { initPlay, addToys, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -74,6 +75,7 @@ renderer.shadowMap.autoUpdate = false;                    // redrawn only when t
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
 
 const scene = new THREE.Scene();
+initPlay({ scene, fxTexture64: (size, draw) => fxTexture64(size, draw) });
 scene.background = new THREE.Color('#8cb85c');
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 300);
 const view = { target: new THREE.Vector3(), size: 4.4, min: 1.4, max: 9 };
@@ -483,7 +485,7 @@ function addLampPools() {
   }
   for (const pl of plots) {
     if (pl.kind !== 'coop') continue;
-    const L = [...(COOPS.lights['house_' + pl.breed] || []), ...(pl.deluxe ? COOPS.lights.fence_dx || [] : [])];
+    const lk = coopLook(pl), L = [...(COOPS.lights[lk.house] || COOPS.lights['house_' + pl.breed] || []), ...(COOPS.lights[lk.fence] || [])];
     pl.pools = { from: lampPools.spots.length, L };
     for (const l of L) { v.set(l[0], 0, l[2]); pl.frame.localToWorld(v); lampPools.add(v.x, v.z, 0.75); }
   }
@@ -1041,23 +1043,26 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   if (plot.kind === 'coop') {
     const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
     plot.frame = frame;
-    const look = params.has('looks') ? Math.floor(i / BREEDS.length) % 3 : -1;      // (the test page's ?looks: rows of rustic, plain, Deluxe)
-    plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 2 : Math.floor(i / BREEDS.length) % 2 === 1;
-    plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look === 0;     // (a new breed's coop comes rustic)
+    const look = params.has('looks') ? (params.get('looks') ? +params.get('looks') : Math.floor(i / BREEDS.length)) % 5 : -1;      // (the test page's ?looks: rows of the five looks, Rustic to Deluxe; ?looks=N: all in look N)
+    plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / BREEDS.length) % 2 === 1;
+    plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
+    plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
+    plot.pen = coopLook(plot).penT >= 0 ? tierPen(coopLook(plot).penT) : PEN;      // (its pen: the birds' yard, what's in it, its gate)
     addNest(frame, plot);
+    if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
     let k = 0;
     const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
     if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
-      const henAt = PEN.hens.filter(h => h.model === 'hen'), rooAt = PEN.hens.find(h => h.model === 'rooster'); let k = 0;
+      const henAt = penOf(plot).hens.filter(h => h.model === 'hen'), rooAt = penOf(plot).hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
         const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, r);      // (a Silkie in her own colour)
         b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
       }
     } else {
-      for (const h of PEN.hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
+      for (const h of penOf(plot).hens) plot.birds.push(new Bird(plot, plot.breed, h.model, colour(), h.pos, -h.yaw * DEG + Math.PI, r));
       plot.birds.filter(b => b.kind === 'hen').forEach((h, k) => { h.pers = PERS_IDS[(i * 2 + k) % PERS_IDS.length]; h.layIn = 6 + r() * 70; });
       const mum = plot.birds.find(b => b.kind === 'hen');
       for (let c = 0; c < 2; c++) {
@@ -1081,11 +1086,38 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   g.matrixAutoUpdate = false;
   return plot;
 }
+// release 4 (Audrey: "Coops to work on", the Red Barn first): a coop's five looks by its tier, the pen growing with each
+// (Audrey: "the size of the parc around the coop perhaps"): 0 Rustic (the old crate, a tiny pen), 1 Mended (a little
+// lean-to shed, a small pen), 2 Snug (the barn and pen as they were), 3 Cosy (a porch, lanterns, flowers; a bigger pen),
+// 4 Deluxe (a cupola and the vane; the biggest pen, white pickets and roses): [house, fence, yard]. So far only the test
+// page's ?looks shows them; the other coops keep their rustic, plain and Deluxe looks
+const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence_t1', 'pen_t1'], ['house_rir', 'fence', 'pen_base'], ['cosy_rir', 'fence_t3', 'pen_t3'], ['deluxe_rir', 'fence_t4', 'pen_t4']] };
+const LOOKS5 = !GAME_MODE && params.has('looks');
+function coopLook(plot) {
+  const t = Math.max(0, Math.min(4, plot.tier || 0)), T = LOOKS5 && TIER_LOOK[plot.breed] && parts[TIER_LOOK[plot.breed][0][0]] ? TIER_LOOK[plot.breed][t] : null;
+  if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4, penT: t };
+  return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
+}
+// a coop's pen for its birds (where they may walk, what's in the way, the feeder, the gate, where they start): the Snug
+// one is the farm's own (layout.json); the others from coops.json's pens (stylized/coops.py PENS), in the same shape
+const TIER_PENS = {};
+const penOf = plot => (plot && plot.pen) || PEN;
+function tierPen(t) {
+  const P = COOPS.pens && COOPS.pens[t];
+  if (t === 2 || !P) return PEN;
+  if (TIER_PENS[t]) return TIER_PENS[t];
+  const yard = { min: [P.min[0] + 0.2, 0, 0.6], max: [P.max[0] - 0.2, 0, P.max[1] - 0.15] }, Y0 = PEN.yard;
+  const obstacles = [...P.hay.map(h => [h[0], 0, h[1], 0.38]), [P.feeder[0], 0, P.feeder[1], 0.22], [P.dish[0], 0, P.dish[1], P.dish_r || 0.22], [-0.31, 0, 0.75, 0.18], [-0.31, 0, 1.0, 0.16], ...(P.sack ? [[P.sack[0], 0, P.sack[1], 0.2]] : [])];
+  const fit = (v, a0, a1, b0, b1) => b0 + (v - a0) / (a1 - a0) * (b1 - b0);      // (the Snug pen's start spots, fitted into this yard)
+  const hens = PEN.hens.map(h => ({ ...h, pos: [fit(h.pos[0], Y0.min[0], Y0.max[0], yard.min[0], yard.max[0]), h.pos[1], fit(h.pos[2], Y0.min[2], Y0.max[2], yard.min[2], yard.max[2])] }));
+  if (P.play) obstacles.push(...P.play.keep.map(k => [k[0], 0, k[1], k[2]]));        // (the play things: release 4's Cosy and Deluxe)
+  return (TIER_PENS[t] = { ...PEN, pen: { min: [P.min[0] - 0.05, 0, P.min[1] - 0.05], max: [P.max[0] + 0.05, 0, P.max[1] + 0.05] }, yard, obstacles, feeder: [P.feeder[0], 0, P.feeder[1]], gate: [P.gate - 0.1, 0, P.max[1]], hens, play: P.play || null });
+}
 // a coop's parts drawn in its style's batch: [model, where in its frame]
 function coopParts(plot) {
-  const house = (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, I = new THREE.Matrix4();
-  const out = [[house + (parts[house + tintOf(plot)] ? tintOf(plot) : ''), I], ['pen_base', I], [plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', I]];
-  if (plot.deluxe) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
+  const L = coopLook(plot), house = L.house, I = new THREE.Matrix4();
+  const out = [[house + (parts[house + tintOf(plot)] ? tintOf(plot) : ''), I], [L.pen, I], [L.fence, I]];
+  if (L.vane) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
   return out;
 }
 // the coops in their styles' batches (made again when one's moved; the one being moved is drawn on its own meanwhile)
@@ -1112,10 +1144,10 @@ function addNest(frame, plot) {
   eggs.userData.moves = true; eggs.receiveShadow = true; eggs.castShadow = false;
   frame.add(eggs);
   plot.nest = { eggs, count: 0, pop: 1, by: null };
-  plot.block = (nestOf(plot) || {}).block || [];         // things in front of the house to walk round (a let-down door, a pot...)
+  plot.block = [...((nestOf(plot) || {}).block || []), ...((COOPS.blocks || {})[coopLook(plot).house] || [])];         // things in front of the house to walk round (a let-down door, a pot...)
   plot.nest.count = GAME_MODE ? (plot.gc ? plot.gc.eggs : 0) : 2;      // (the game: its save; on the test page a couple already laid this morning)
   showEggs(plot);
-  const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(PEN.feeder[0], 0.065, PEN.feeder[2]);
+  const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(penOf(plot).feeder[0], 0.065, penOf(plot).feeder[2]);
   grain.receiveShadow = true; grain.userData.moves = true;
   frame.add(grain); plot.feedMesh = grain;
   if (GAME_MODE && plot.gc) setFeed(plot, game.feedLeft(plot.gc));
@@ -1567,10 +1599,10 @@ const henEls = { box: document.getElementById('henbtns'), cuddle: document.getEl
 let henBird = null, henBtnLeft = 0;
 const FEEDER_LOW = 0.04, FEEDER_FULL = 0.065;
 // a spot in the yard a grain can land on: inside the fence, off the feeder, the water and the hay
-function yardFree(x, z) {
-  const Y = PEN.yard;
+function yardFree(x, z, plot) {
+  const P = penOf(plot), Y = P.yard;
   if (x < Y.min[0] + 0.06 || x > Y.max[0] - 0.06 || z < Y.min[2] + 0.06 || z > Y.max[2] - 0.06) return false;
-  for (const o of PEN.obstacles) if (Math.hypot(x - o[0], z - o[2]) < o[3] + 0.03) return false;
+  for (const o of P.obstacles) if (Math.hypot(x - o[0], z - o[2]) < o[3] + 0.03) return false;
   return true;
 }
 function penSpec(plot) {
@@ -1578,7 +1610,7 @@ function penSpec(plot) {
   const inv = new THREE.Matrix4().copy(f.matrixWorld).invert(), v = new THREE.Vector3();
   const W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; };
   const H = (a, b) => { const A = W(a[0], a[1]), B = W(b[0], b[1]); return Math.atan2(B[0] - A[0], B[1] - A[1]); };
-  const gx = PEN.gate[0], gz = PEN.pen.max[2], o = W(gx, gz + 0.6), out = navGrid().nearestIn(farmReach(), o[0], o[1], 0.6);
+  const PEN = penOf(plot), gx = PEN.gate[0], gz = PEN.pen.max[2], o = W(gx, gz + 0.6), out = navGrid().nearestIn(farmReach(), o[0], o[1], 0.6);
   if (!out) return null;
   // (pen frame) just inside the gate, a step on (clear of the water dish), beside the feeder; then where he stands at the
   // back of the yard and where the corn goes (or where the hen settles), of three ways round the one that faces the player.
@@ -1673,7 +1705,8 @@ function tickPenFx(dt) {
     n.sprite.position.x += n.drift[0] * dt; n.sprite.position.y += n.drift[1] * dt; n.sprite.position.z += n.drift[2] * dt;
     const s = n.size * Math.min(1, t * 6); n.sprite.scale.set(s, s, s); n.sprite.material.opacity = Math.min(1, (1 - t) * 2.5);
   }
-  for (const p of plots) if (p.corn) p.corn.update(dt);
+  for (const p of plots) { if (p.corn) p.corn.update(dt); if (p.toys) tickToys(p, dt); }
+  tickPlayFx(dt);
   tickDecor(dt);
 }
 // the buttons after tapping a hen (by day, the farmer out and about, she not laying or off to bed)
@@ -1978,9 +2011,9 @@ class Bird {
   }
   free(x, z, notFarmer = false) {
     if (this.plot.kind === 'lineup') return true;
-    const Y = PEN.yard;
+    const P = penOf(this.plot), Y = P.yard;
     if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
-    for (const o of PEN.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
+    for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
     return !this.inBlock(x, z, notFarmer);
   }
   inBlock(x, z, notFarmer = false) {
@@ -1991,7 +2024,7 @@ class Bird {
   // or into what stands in front of the house
   clearAhead(x, z, yaw) {
     if (this.plot.kind === 'lineup') return true;
-    const reach = 0.22 * this.rig.scale / 0.5, Y = PEN.yard, m = 0.12;
+    const reach = 0.22 * this.rig.scale / 0.5, Y = penOf(this.plot).yard, m = 0.12;
     const px = x + Math.sin(yaw) * reach, pz = z + Math.cos(yaw) * reach;
     if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
     return !this.inBlock(px, pz, this.cuddle && !this.cuddle.greet ? true : false);      // (the hen he's called: her beak may come up to him, he's reaching for her)
@@ -2007,7 +2040,7 @@ class Bird {
     return true;
   }
   pickTarget() {
-    const p = this.root.position, startFree = this.free(p.x, p.z), Y = PEN.yard;
+    const p = this.root.position, startFree = this.free(p.x, p.z), Y = penOf(this.plot).yard;
     if (this.stay) { this.target.copy(p); return; }
     const mum = this.mum && this.mum.root.position;
     let best = null, bestRoom = -1;
@@ -2072,7 +2105,7 @@ class Bird {
     this.rig.indoor(null);
   }
   wakeUp() {                               // out again: from just inside the pop door, down the ramp into the yard
-    const G = nestOf(this.plot), ground = 0.015, Y = PEN.yard;
+    const G = nestOf(this.plot), ground = 0.015, Y = penOf(this.plot).yard;
     this.asleep = false; this.root.visible = true; this.rig.indoor(this.houseBox());
     let spot = null;
     for (let k = 0; k < 20 && !spot; k++) {
@@ -2113,7 +2146,7 @@ class Bird {
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
-  busy() { return this.laying || this.roost || this.asleep || this.leaving; }
+  busy() { return this.laying || this.roost || this.asleep || this.leaving || this.play; }
   // grown and off to a new farm (main.js chicksGo, tickFarewell): to her place in the line just inside the gate ('gather'),
   // turning to face out, hopping for joy there ('party': tickFarewell's hops; the flaps here), then out of the gate along
   // the way out ('exit'), and gone down the lane ('fade')
@@ -2447,7 +2480,7 @@ class Bird {
   // after the song: each personality has her own way of being pleased with herself
   celebrate() {
     this.laying = null; this.layIn = GAME_MODE ? undefined : 240 + this.r() * 240; this.rig.indoor(null); this.shadowY = undefined;
-    const Y = PEN.yard, p = this.root.position, cx = (Y.min[0] + Y.max[0]) / 2, cz = (Y.min[2] + Y.max[2]) / 2;
+    const PEN = penOf(this.plot), Y = PEN.yard, p = this.root.position, cx = (Y.min[0] + Y.max[0]) / 2, cz = (Y.min[2] + Y.max[2]) / 2;
     // the nearest free spot in the yard to (x, z)
     const ok = (x, z) => {
       x = Math.max(Y.min[0] + 0.15, Math.min(Y.max[0] - 0.15, x)); z = Math.max(Y.min[2] + 0.15, Math.min(Y.max[2] - 0.15, z));
@@ -2518,11 +2551,11 @@ class Bird {
       const night = this.nightNow();
       if (!this.looked) { this.looked = true; if (night && !this.laying) this.sleepNow(); }
       if (this.asleep) { if (night || !doorOpen(this.plot)) return; this.wakeUp(); }          // the door shut: they wait
-      else if (night && !this.roost && !this.laying && !this.leaving) this.goToBed();
+      else if (night && !this.roost && !this.laying && !this.leaving) { if (this.play) endPlay(this, true); this.goToBed(); }
     }
     if (this.plot.kind === 'coop' && !this.stay) this.penStep(dt);          // the farmer in the pen: keeping clear, corn, a cuddle
     // time to lay? (hens in a coop, one in the nest box at a time; not just before bedtime)
-    if (this.layIn !== undefined && !this.laying && !this.roost && !this.stay && this.plot.nest && !this.cuddle && !this.called && !this.plot.farmer) {
+    if (this.layIn !== undefined && !this.laying && !this.roost && !this.stay && !this.play && this.plot.nest && !this.cuddle && !this.called && !this.plot.farmer) {
       this.layIn -= dt;
       if (this.layIn <= 0) { if (!this.plot.nest.by && !this.route && !this.nightNow(0.25)) this.startLaying(); else this.layIn = 8 + this.r() * 12; }
     }
@@ -2537,6 +2570,10 @@ class Bird {
     } else if (this.leaving) {
       const o = this.leaveStep(dt);
       if (o && typeof o === 'object') { walking = o.walking; flap = o.flap; } else walking = !!o;
+    } else if (this.play) {                          // on the swing, in the dust bath... (play.js)
+      const o = playStep(this, dt);
+      walking = !!o.walking; sitGoal = o.sit || 0; flap = o.flap || 0; peckGoal = o.peck || 0; ruffle = o.ruffle || 0; kick = o.kick || 0; crow = o.crow || 0;
+      if (kick) { A.kickLeg = (A.t % 1.2) < 0.6 ? 0 : 1; A.kickT += dt; }
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
@@ -2569,7 +2606,9 @@ class Bird {
       if (this.held) { this.wait = Math.max(this.wait, 0.6); const t = this.turnTo(Math.atan2(VIEW_DIR.x, VIEW_DIR.z) - this.plot.group.rotation.y, dt * 0.8); walking = t.walking; }     // (her card's open: she stays and faces you)
       if (this.wait > 0.3 && this.tooClose()) this.wait = 0.3;
       this.wait -= dt;
-      if (this.wait <= 0 && !this.route) {
+      const toy = this.wait <= 0 && !this.route && !this.acted && !this.held ? wantPlay(this) : null;
+      if (toy && startPlay(this, toy)) this.wait = 0;                // off to play (play.js)
+      else if (this.wait <= 0 && !this.route) {
         const next = this.acted ? null : this.chooseAct();          // after doing something, she walks on
         this.acted = false;
         if (next && !(next.type !== 'flap' && next.type !== 'crow' && this.tooClose())) { this.act = next; this.wait = 0.4 + this.r() * 1.0; }
@@ -2960,7 +2999,7 @@ function tapAt(x, y) {
     // the game: a coop's feeder (its card: how full, fill it)
     if (GAME_MODE) for (const p of livePlots()) {
       if (!p.gc) continue;
-      const f = PEN.feeder;
+      const f = penOf(p).feeder;
       nb.min.set(f[0] - 0.2, 0, f[2] - 0.2); nb.max.set(f[0] + 0.2, 0.55, f[2] + 0.2);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { feederCard(p); return; }
@@ -3072,13 +3111,13 @@ function greetFarmer(at) {
   for (const p of gamePlots()) { const d = Math.hypot(p.centre.x - at[0], p.centre.z - at[1]); if (d < best) { best = d; plot = p; } }
   if (!plot) return;
   const f = plot.frame, v = new THREE.Vector3(at[0], 0, at[1]); f.updateMatrixWorld(true); f.worldToLocal(v);
-  const Y = PEN.yard, fx = Math.max(Y.min[0] + 0.25, Math.min(Y.max[0] - 0.25, v.x)), fz = Y.max[2] - 0.2;
+  const Y = penOf(plot).yard, fx = Math.max(Y.min[0] + 0.25, Math.min(Y.max[0] - 0.25, v.x)), fz = Y.max[2] - 0.2;
   let k = 0;
   for (const b of plot.birds) {
     const gb = b.gid && game.bird(b.gid);
     if (!gb || game.trustLevel(gb) < 2 || b.busy() || b.asleep || b.cuddle || b.nightNow(0.3)) continue;
     const off = [0, 0.32, -0.32, 0.6][k++] || 0, x = Math.max(Y.min[0] + 0.15, Math.min(Y.max[0] - 0.15, fx + off)), z = fz - (k > 2 ? 0.25 : 0);
-    if (!yardFree(x, z)) continue;
+    if (!yardFree(x, z, plot)) continue;
     if (b.comeForCuddle([x, z], Math.atan2(v.x - x, v.z - z))) b.cuddle.greet = { t: 0 };      // (a heart when she's there, then off she goes)
   }
 }
@@ -3229,7 +3268,7 @@ function placeBubbles() {
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
       e.hidden = false; e.style.left = sx.toFixed(1) + 'px'; e.style.top = sy.toFixed(1) + 'px';
     };
-    const G = nestOf(p), f = PEN.feeder;
+    const G = nestOf(p), f = penOf(p).feeder;
     put(B.eggs, B.n > 0, G.win[0], G.win[2] - 0.05, 0.52);            // (its tail on the nest window)
     put(B.feed, !!B.f, f[0], 0.46, f[2]);
     put(B.brood, !!B.b, G.win[0] - 0.55, G.win[2] - 0.05, 0.52);
@@ -3383,7 +3422,7 @@ function syncRare(plot) {
   for (const b of plot.birds.filter(b => b.pendingId && !W.some(w => w.id === b.pendingId))) { heartOver(b); removeBird(b); }      // (decided)
   for (const w of W) {
     if (plot.birds.some(b => b.pendingId === w.id)) continue;
-    const mum = plot.birds.find(b => b.gid === w.mum), at = PEN.feeder, x = at[0] + 0.5 - w.i * 0.25, z = at[2] - 0.6;
+    const mum = plot.birds.find(b => b.gid === w.mum), at = penOf(plot).feeder, x = at[0] + 0.5 - w.i * 0.25, z = at[2] - 0.6;
     const y = addYoung(plot, mum || null, w.sex, x, z, null, !!(mum && mum.asleep), w.i, null, w.line);
     y.pendingId = w.id; if (!y.free(x, z)) { y.pickTarget(); y.root.position.copy(y.target); }
   }
@@ -3414,7 +3453,7 @@ function gateOf(plot, kid) {
   const f = plot.frame; f.updateMatrixWorld(true);
   const v = new THREE.Vector3(), inv = new THREE.Matrix4().copy(f.matrixWorld).invert();
   const W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; }, L = (x, z) => { v.set(x, 0, z).applyMatrix4(inv); return [v.x, v.z]; };
-  const gx = PEN.gate[0], gz = PEN.pen.max[2], nav = navGrid(), o = W(gx, gz + 0.95);
+  const gx = penOf(plot).gate[0], gz = penOf(plot).pen.max[2], nav = navGrid(), o = W(gx, gz + 0.95);
   const away = plot.exitWay || (plot.exitWay = farmExit(o[0], o[1]) || []);
   const route = away.map(q => L(q[0], q[1])), way = [[gx, gz + 0.3], ...(route.length > 1 ? route : [[gx, gz + 1.7]])];
   const clear = (x, z) => { let m = 9; for (let i = 1; i < way.length; i++) { const a = way[i - 1], c = way[i], dx = c[0] - a[0], dz = c[1] - a[1], l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / l2)); m = Math.min(m, Math.hypot(x - a[0] - dx * t, z - a[1] - dz * t)); } return m; };
@@ -4400,7 +4439,7 @@ function farmhouseAt(r) {
 const joinNames = n => n.length > 1 ? n.slice(0, -1).join(', ') + ' ' + game.t('and') + ' ' + n[n.length - 1] : n[0] || '';
 // a forever bird joining her coop on the farm (a rare one kept, her colour's coop there already): as makePlot draws them
 function addGameBird(plot, gb) {
-  const h = gb.sex === 'r' ? PEN.hens.find(x => x.model === 'rooster') : PEN.hens.filter(x => x.model === 'hen')[plot.birds.filter(b => b.gid && b.kind === 'hen').length % 2];
+  const h = gb.sex === 'r' ? penOf(plot).hens.find(x => x.model === 'rooster') : penOf(plot).hens.filter(x => x.model === 'hen')[plot.birds.filter(b => b.gid && b.kind === 'hen').length % 2];
   const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, rng(311 + plots.indexOf(plot) * 17 + allBirds.length));
   b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
@@ -5754,7 +5793,7 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles,
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive,
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard,
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled

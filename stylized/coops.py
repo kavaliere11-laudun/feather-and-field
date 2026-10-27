@@ -559,10 +559,11 @@ def weathervane():
     return finish(objs, 'vane')
 
 
-def red_barn():
-    """The Red Barn (coop.build) with its nests inside, behind a window right of the barn door."""
+def red_barn(**kw):
+    """The Red Barn (coop.build) with its nests inside, behind a window right of the barn door (kw: coop.build's eave,
+    peak and roof, for the two-storey Deluxe)."""
     wx, FL = 0.445, 0.40
-    r = coop.build((0, 0, 0), 0.0, seed=5, pen=False, window=(wx - WIN_W / 2, wx + WIN_W / 2, FL + 0.05, FL + 0.05 + WIN_H))
+    r = coop.build((0, 0, 0), 0.0, seed=5, pen=False, window=(wx - WIN_W / 2, wx + WIN_W / 2, FL + 0.05, FL + 0.05 + WIN_H), **kw)
     objs = []; nest_window(objs, 'rir', FL, wx, coop.M()['white'], hollow=True, ramp_len=0.67, door='drop', door_m=coop.M()['red'])
     for o in objs:
         mw = o.matrix_basis.copy(); o.parent = r; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
@@ -967,3 +968,645 @@ def rustic_house(k, seed=21):
         mw = o.matrix_basis.copy(); o.parent = r; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
     r.name = 'rustic_' + k
     return r
+
+
+
+
+# ---- release 4 (Audrey: "Coops to work on", the Red Barn first): its five looks, Rustic -> Mended -> Snug -> Cosy -> Deluxe.
+# Audrey on the first try (26 Oct): "They are all far too similar. Be creative, the size of the parc around the coop
+# perhaps"; then "Yes, build that": the pen grows with every step and each step's building is clearly different.
+# Rustic (box_rir, pen_t0, fence_t0): a tiny pen with a broken fence, the old crate (Audrey, 25 Oct: "literally a box and a
+#   nest something quite miserable"), the barn's hint two faded red planks; a tin basin for water, no hay.
+# Mended (shed_rir, pen_t1, fence_t1): a small pen, its fence patched with new rails; a little lean-to shed, new boards, half
+#   painted red (a paint tin and brush by it), a felt roof.
+# Snug (house_rir, pen_base, fence): today's pen and Red Barn.
+# Cosy (cosy_rir, pen_t3, fence_t3): a bigger pen with grass at its edges and flowers along the fence; the barn's trim
+#   painted sage green, a covered porch on its side with a bench and a hanging lantern, a window box, flower pots, a lantern
+#   by the hens' door, stepping stones.
+# Deluxe (deluxe_rir, pen_t4, fence_t4): the biggest pen, white pickets, roses over the gate, flower borders, bunting; the
+#   Cosy barn with a cupola on its roof (the weathervane on top).
+# The hens come, go and lay the same way in every look: the same floor, pop door, nest window and ramp foot (nest_window).
+# Each pen's layout (box, gate, feeder, dish, hay, sack) goes to coops.json for the browser.
+BARN = dict(grey='#9a8f80', grey2='#857a6c', grey3='#b0a48f', red='#9e5244', red2='#874437', brick='#9c5a43', block='#8e8d88',
+            stump='#6e5440', cut='#c9b18a', pine='#d6b47e', pine2='#c7a26b', felt='#3e3d3b', sage='#93b49a', pot='#c06a43',
+            stone='#aba596', tinbowl='#9aa0a2', grass='#7da34f', grass2='#6a9444', cupola='#f1e9d8', louvre='#5b4a3a')
+PENS = {
+    0: dict(box=(-1.05, 1.1, -1.72, 0.62), gate=1, feeder=(0.66, -1.2), dish=(-0.78, -1.32), hay=None, hay_rot=0, sack=None,
+            straw=((-0.6, -0.95, 0.25, 25), (0.3, -1.4, 0.25, 20))),
+    1: dict(box=(-1.36, 1.46, -2.05, 0.7), gate=2, feeder=(0.98, -1.38), dish=(-0.9, -1.55), hay=None, hay_rot=0, sack=(1.08, 0.25),
+            straw=((-0.8, -1.2, 0.3, 30), (0.4, -1.75, 0.3, 25))),
+    3: dict(box=(-2.0, 2.15, -2.85, 0.85), gate=3, feeder=(1.5, -1.6), dish=(0.55, -2.35), hay=(-1.45, -2.25), hay_rot=12, sack=(1.5, 0.3),
+            straw=((-1.45, -2.25, 0.4, 70), (-0.3, -1.25, 0.35, 40), (0.9, -0.8, 0.5, 40), (1.3, -2.35, 0.35, 30))),
+    4: dict(box=(-2.3, 2.45, -3.2, 0.95), gate=4, feeder=(1.75, -1.7), dish=(1.0, -2.55), fountain=True, hay=(-1.75, -2.55), hay_rot=12, sack=(1.75, 0.35),
+            bales=((-1.85, -2.05, 80),), straw=((-1.75, -2.55, 0.45, 80), (-0.3, -1.4, 0.4, 40), (1.0, -0.9, 0.5, 40), (1.5, -2.6, 0.4, 30))),
+}
+
+
+def _barn_m(key, rough=0.85, **kw):
+    return mat('bx_' + key, BARN[key], rough=rough, var=kw.pop('var', 0.1), grain=kw.pop('grain', 0.3), grain_scale=G, **kw)
+
+
+def _own(objs, root):
+    for o in objs:
+        mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
+
+
+def _swap(root, names, m):
+    """Each part made of one of the materials `names` (by name) in material m instead."""
+    for o in root.children_recursive:
+        if o.type != 'MESH': continue
+        for i, mm in enumerate(o.data.materials):
+            if mm is not None and mm.name.split('.')[0] in names: o.data.materials[i] = m
+
+
+def pen_layout(t):
+    """A look's pen (t: 0..4; 2 is the Snug pen, the farm's own layout)."""
+    import farm_layout
+    return dict(farm_layout.NEW['pen']) if t == 2 else dict(PENS[t])
+
+
+def _gate_of(t):
+    """The middle of a look's gate and its front fence's line (Blender x, y)."""
+    keep = coop.PEN; coop.PEN = pen_layout(t)
+    try: return coop.gate_span()[1], coop.PEN['box'][2]
+    finally: coop.PEN = keep
+
+
+def box_barn(seed=31):
+    """Rustic: an old crate and a nest."""
+    random.seed(seed)
+    FL, TOP = 0.40, 0.95
+    root = empty('box_rir'); objs = []
+    greys = [_barn_m('grey'), _barn_m('grey2'), _barn_m('grey3')]; reds = [_barn_m('red'), _barn_m('red2')]
+    dark = C('hall_dark', '#1d1510', rough=1.0)
+    blockm = _barn_m('block', rough=0.95, grain=0.0, bump=0.3, bump_scale=60); brick = _barn_m('brick', rough=0.9, grain=0.0, bump=0.2, bump_scale=80)
+    for (x, y) in ((-W2 + 0.1, -D2 + 0.1), (-W2 + 0.1, D2 - 0.1), (W2 - 0.1, D2 - 0.1)):
+        if y < 0:
+            for k in range(6):
+                objs.append(box('brick', (0.19, 0.09, 0.065), (x + random.uniform(-0.015, 0.015), y + random.uniform(-0.01, 0.01), 0.0325 + k * 0.066), (0, 0, math.radians(random.uniform(-6, 6))), m=brick, bevel=0.006, segs=1))
+        else:
+            for k in range(2):
+                objs.append(box('cblock', (0.2, 0.2, 0.198), (x, y, 0.1 + k * 0.2), (0, 0, math.radians(random.uniform(-5, 5))), m=blockm, bevel=0.01, segs=1))
+    sx, sy = W2 - 0.11, -D2 + 0.11
+    objs.append(cyl('stump', 0.1, FL, (sx, sy, FL / 2), m=_barn_m('stump', grain=0.5), verts=12, bevel=0.01))
+    objs.append(cyl('stumptop', 0.098, 0.006, (sx, sy, FL - 0.002), m=_barn_m('cut', grain=0.0), verts=12, bevel=0.0))
+    for i in range(6):
+        y = -D2 + 0.07 + i * (2 * D2 - 0.14) / 5
+        objs.append(plank('floor', (-W2 - 0.02, y, FL), (W2 + 0.02, y, FL), 0.12 + random.uniform(-0.02, 0.02), 0.04, (0, 0, 1), random.choice(greys)))
+    I = 0.035
+    for (size, loc) in (((2 * W2 - 2 * I, 0.01, TOP - FL), (0, -D2 + I, (FL + TOP) / 2)), ((2 * W2 - 2 * I, 0.01, TOP - FL), (0, D2 - I, (FL + TOP) / 2)),
+                        ((0.01, 2 * D2 - 2 * I, TOP - FL), (W2 - I, 0, (FL + TOP) / 2)), ((0.01, 2 * D2 - 2 * I, TOP - FL), (-W2 + I, 0, (FL + TOP) / 2))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    POPH = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H)
+    WINH = (0.445 - WIN_W / 2 - 0.01, 0.445 + WIN_W / 2 + 0.01, FL + 0.04, FL + 0.04 + WIN_H)
+    def boards(u0, u1, place, out, holes=(), red_rows=(), skip=()):
+        z, row = FL + 0.01, 0
+        while z < TOP - 0.03:
+            h = random.uniform(0.075, 0.105); g = random.uniform(0.008, 0.024)
+            zc = z + h / 2
+            if row not in skip:
+                spans = [(u0, u1)]
+                for hx0, hx1, hz0, hz1 in holes:
+                    if zc + h / 2 > hz0 and zc - h / 2 < hz1:
+                        spans = [s_ for sp in spans for s_ in ((sp[0], min(sp[1], hx0)), (max(sp[0], hx1), sp[1])) if s_[1] - s_[0] > 0.04]
+                for (a, b) in spans:
+                    m = random.choice(reds) if row in red_rows else random.choice(greys)
+                    tilt = random.uniform(-0.008, 0.008)
+                    objs.append(plank('board', place(a, zc - tilt), place(b, zc + tilt), h, 0.022, out, m, jitter=0.5))
+            z += h + g; row += 1
+    boards(-W2, W2, lambda u, v: (u, -D2 - 0.01, v), (0, -1, 0), holes=(POPH, WINH), red_rows=(1, 4))
+    boards(-W2, W2, lambda u, v: (u, D2 + 0.01, v), (0, 1, 0), skip=(3,))
+    boards(-D2, D2, lambda u, v: (W2 + 0.01, u, v), (1, 0, 0), red_rows=(2,))
+    boards(-D2, D2, lambda u, v: (-W2 - 0.01, u, v), (-1, 0, 0), skip=(4,), red_rows=(1,))
+    for (x, y) in ((-W2, -D2), (W2, -D2), (-W2, D2), (W2, D2)):
+        objs.append(box('cpost', (0.045, 0.045, TOP - FL + random.uniform(-0.04, 0.02)), (x, y, (FL + TOP) / 2), m=random.choice(greys), bevel=0.006, segs=1))
+    objs.append(plank('loose', (0.1, D2 + 0.035, 0.74), (0.5, D2 + 0.035, 0.62), 0.085, 0.02, (0, 1, 0), greys[1], jitter=1.0))
+    tin = mat('bx_tin', '#a9aeac', rough=0.75, var=0.04); tin2 = mat('bx_tin2', '#939997', rough=0.75, var=0.04); rust = mat('bx_rust', '#94603f', rough=0.9)
+    ya, yb, za, zb, xa, xb = -D2 - 0.12, D2 + 0.1, TOP + 0.075, TOP + 0.005, -W2 - 0.09, W2 + 0.06
+    nrm = Vector((0, za - zb, yb - ya)).normalized(); n = 18
+    for k in range(n):
+        x = xa + (k + 0.5) * (xb - xa) / n; tw = 0.012 * (k / n - 0.5)
+        objs.append(plank('tin', (x, ya, za + tw), (x, yb, zb - tw), (xb - xa) / n * 1.02, 0.008, nrm, tin if k % 2 else tin2, jitter=0.0, bevel=0.0))
+    for (x, y, s) in ((-0.3, -0.2, 0.09), (0.25, 0.15, 0.06), (0.5, -0.35, 0.05), (-0.45, 0.3, 0.07)):
+        z = za + (zb - za) * (y - ya) / (yb - ya) + 0.011
+        objs.append(plank('rust', (x - s / 2, y, z), (x + s / 2, y, z), s * 1.1, 0.003, nrm, rust, jitter=0.0, bevel=0.001))
+    zt = za + (zb - za) * (0.1 - ya) / (yb - ya)
+    objs.append(box('brick', (0.19, 0.09, 0.065), (0.15, 0.1, zt + 0.045), (math.atan2(za - zb, yb - ya), 0, math.radians(20)), m=brick, bevel=0.006, segs=1))
+    objs.append(sphere('rock', 0.06, (-0.42, -0.05, zt + 0.05), (1.2, 1, 0.7), m=_barn_m('block', rough=0.95, grain=0.0), ico=2, disp=0.3, seed=4))
+    ra, rb = Vector((-0.31, -D2 - 0.05, FL + 0.02)), Vector((-0.31, -D2 - 0.72, 0.03))
+    pn = Vector((0, -0.5, 0.86)).normalized()
+    objs.append(plank('ramp', ra, rb, 0.17, 0.03, pn, greys[2], jitter=0.6))
+    for t in (0.35, 0.7):
+        c = ra.lerp(rb, t) + pn * 0.02
+        objs.append(plank('slat', c + Vector((-0.07, 0, 0)), c + Vector((0.07, 0, 0)), 0.022, 0.016, pn, greys[1], jitter=3.0))
+    nest_window(objs, 'rir', FL, 0.445, greys[1], hollow=True, ramp_len=0.67, door='drop', door_m=greys[0])
+    _own(objs, root)
+    return root
+
+
+def shed_barn(seed=33):
+    """Mended: a little lean-to shed of new boards, half painted red, a felt roof sloping to the front."""
+    random.seed(seed)
+    FL, ZF, ZB = 0.40, 1.0, 1.27
+    root = empty('shed_rir'); objs = []
+    red = coop.M()['red']; pine = _barn_m('pine', rough=0.75, var=0.08); pine2 = _barn_m('pine2', rough=0.75, var=0.08)
+    felt = _barn_m('felt', rough=0.9, grain=0.0, bump=0.25, bump_scale=90, var=0.05); dark = C('hall_dark', '#1d1510', rough=1.0)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            objs.append(box('leg', (0.075, 0.075, FL), (sx * (W2 - 0.05), sy * (D2 - 0.05), FL / 2), m=pine2, bevel=0.01))
+    for i in range(7):
+        y = -D2 + 0.06 + i * (2 * D2 - 0.12) / 6
+        objs.append(plank('floor', (-W2 - 0.03, y, FL), (W2 + 0.03, y, FL), 0.13, 0.045, (0, 0, 1), coop.M()['wood']))
+    top = lambda y: ZF + (ZB - ZF) * (y + D2) / (2 * D2)          # the walls' tops, following the roof
+    POPH = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H)
+    WINH = (0.445 - WIN_W / 2, 0.445 + WIN_W / 2, FL + 0.04, FL + 0.04 + WIN_H)
+    BW = 0.105
+    def wall(u0, u1, place, out, ztop, painted, holes=()):
+        n = int(round((u1 - u0) / BW)); w = (u1 - u0) / n
+        for i in range(n):
+            u = u0 + (i + 0.5) * w; ul, ur = u - w / 2, u + w / 2; z1 = ztop(u)
+            m = red if painted(u, i) else (pine if i % 3 else pine2)
+            pieces = [(ul, ur, FL + 0.02, z1)]
+            for (hx0, hx1, hz0, hz1) in holes:
+                nxt = []
+                for (a, b, za, zb) in pieces:
+                    if a < hx1 and b > hx0:
+                        if a < hx0: nxt.append((a, hx0, za, zb))
+                        if b > hx1: nxt.append((hx1, b, za, zb))
+                        c0, c1 = max(a, hx0), min(b, hx1)
+                        nxt += [(c0, c1, za, hz0), (c0, c1, hz1, zb)]
+                    else: nxt.append((a, b, za, zb))
+                pieces = nxt
+            for (a, b, za, zb) in pieces:
+                if b - a > 0.012 and zb - za > 0.01:
+                    objs.append(plank('wall', place((a + b) / 2, za), place((a + b) / 2, zb), (b - a) * 0.96, 0.03, out, m, jitter=0.4))
+    edge = lambda u, i: u < 0.02 + 0.05 * math.sin(u * 9)          # (the paint stops at a wavy line: half done)
+    wall(-W2, W2, lambda u, v: (u, -D2, v), (0, -1, 0), lambda u: ZF, edge, holes=(POPH, WINH))
+    wall(-W2, W2, lambda u, v: (u, D2, v), (0, 1, 0), lambda u: ZB, lambda u, i: u < -0.1)
+    wall(-D2, D2, lambda u, v: (-W2 - 0.015, u, v), (-1, 0, 0), top, lambda u, i: True)
+    wall(-D2, D2, lambda u, v: (W2 + 0.015, u, v), (1, 0, 0), top, lambda u, i: u > 0.12)
+    for (size, loc) in (((2 * W2 - 0.08, 0.01, 0.55), (0, D2 - 0.04, FL + 0.28)), ((0.01, 2 * D2 - 0.08, 0.5), (W2 - 0.04, 0, FL + 0.26)), ((0.01, 2 * D2 - 0.08, 0.5), (-W2 + 0.04, 0, FL + 0.26))):
+        objs.append(box('inside', size, loc, m=dark, bevel=0.0))
+    for (x, y) in ((-W2, -D2), (W2, -D2), (-W2, D2), (W2, D2)):
+        objs.append(box('cpost', (0.06, 0.06, top(y) - FL), (x + 0.01 * (1 if x > 0 else -1), y + 0.01 * (1 if y > 0 else -1), (FL + top(y)) / 2), m=pine2, bevel=0.008))
+    # the roof: boards under black felt in three strips, battens over the joins, a fascia board along the front
+    a0, b0 = Vector((0, -D2 - 0.17, ZF + 0.02)), Vector((0, D2 + 0.12, ZB + 0.06)); ax = b0 - a0; nr = Vector((0, -(ZB - ZF + 0.04), D2 * 2 + 0.29)).normalized()
+    for k in range(3):
+        p0 = a0 + ax * (k / 3) - ax.normalized() * 0.02; p1 = a0 + ax * ((k + 1) / 3) + ax.normalized() * 0.02
+        c = (p0 + p1) / 2 + nr * (0.012 * k)
+        objs.append(plank('felt', c + Vector((-W2 - 0.12, 0, 0)), c + Vector((W2 + 0.12, 0, 0)), (p1 - p0).length, 0.03, nr, felt, jitter=0.0, bevel=0.004))
+    for k in range(4):
+        x = -W2 - 0.1 + k * (2 * W2 + 0.2) / 3
+        objs.append(plank('batten', a0 + Vector((x, 0, 0)) + nr * 0.05, b0 + Vector((x, 0, 0)) + nr * 0.05, 0.035, 0.02, nr, pine2, jitter=0.3))
+    objs.append(plank('fascia', (-W2 - 0.13, -D2 - 0.18, ZF - 0.02), (W2 + 0.13, -D2 - 0.18, ZF - 0.02), 0.08, 0.025, (0, -1, 0), pine, jitter=0.2))
+    # the hens' door: a plain frame, a ramp with slats
+    pop_trim(objs, FL, pine2, D2)
+    ra, rb = Vector((-0.31, -D2 - 0.05, FL + 0.02)), Vector((-0.31, -D2 - 0.72, 0.03))
+    objs.append(plank('ramp', ra, rb, 0.2, 0.03, (0, -0.5, 0.86), pine, jitter=0.3))
+    pn = Vector((0, -0.5, 0.86)).normalized()
+    for k in range(5):
+        c = ra.lerp(rb, (k + 0.6) / 5.6) + pn * 0.022
+        objs.append(plank('slat', c + Vector((-0.09, 0, 0)), c + Vector((0.09, 0, 0)), 0.022, 0.018, pn, pine2, jitter=1.5))
+    nest_window(objs, 'rir', FL, 0.445, pine2, hollow=True, ramp_len=0.67, door='drop', door_m=pine)
+    # the paint tin and its brush on the ground behind, a drip of red down its side
+    tin = mat('bx_painttin', '#c9cdcf', rough=0.4, metal=0.7)
+    px, py = W2 + 0.2, D2 + 0.12
+    objs.append(cyl('ptin', 0.07, 0.13, (px, py, 0.065), m=tin, verts=16, bevel=0.005))
+    objs.append(cyl('ppaint', 0.064, 0.006, (px, py, 0.131), m=red, verts=16, bevel=0.0))
+    objs.append(box('pdrip', (0.022, 0.004, 0.06), (px + 0.03, py - 0.068, 0.1), m=red, bevel=0.002, segs=1))
+    objs.append(box('brush', (0.03, 0.2, 0.012), (px - 0.08, py + 0.14, 0.012), (0, 0, math.radians(30)), m=pine2, bevel=0.003, segs=1))
+    objs.append(box('bristle', (0.05, 0.05, 0.02), (px - 0.13, py + 0.05, 0.014), (0, 0, math.radians(30)), m=red, bevel=0.004, segs=1))
+    _own(objs, root)
+    return root
+
+
+def _cosy_bits(r, name, t, seed=35, porch=True, eave=1.02, peak=1.46, box_z=0.98):
+    """What makes the barn cosy: sage trim, a porch with a bench and a lantern on its left side (not on the two-storey
+    Deluxe), a window box (at box_z) on the right gable, a lantern by the hens' door, the automatic door's box over it and
+    its little solar panel on the roof (Audrey, 27 Oct: "starting at cosy the coop door are automatic"), flower pots,
+    stepping stones."""
+    random.seed(seed)
+    sage = mat('bx_sage', BARN['sage'], rough=0.6, spec=0.25, var=0.04, grain=0.12, grain_scale=G)
+    _swap(r, {'trim'}, sage)
+    objs = []
+    fl = [C('dxf%d' % i, FLOWERS[i], rough=0.5) for i in range(6)]
+    leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    wood = coop.M()['wood']; dark = coop.M()['darkwood']; slate = coop.M()['roof']
+    # the porch: a little roof of slates out from the left gable on two posts, a bench under it, a lantern hanging from it
+    x0, x1, zh, zl, yy = -W2 - 0.03, -W2 - 0.82, 0.98, 0.76, 0.56
+    if porch: _porch(objs, name, sage, wood, dark, slate, iron, lamp, x0, x1, zh, zl, yy)
+    # the automatic door: its motor box over the hens' door (a little green light), its solar panel on the front slope
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.045, 0.925), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, 0.925), m=led, seg=8, rings=4))
+    objs.append(cyl('autocable', 0.005, eave - 0.96, (-0.36, -D2 - 0.03, (eave + 0.96) / 2), m=box_m, verts=5, bevel=0.0))
+    e0 = Vector((0, -(D2 + 0.16), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); dn = (e0 - r0).normalized()
+    nrm = Vector((0, -(peak - eave + 0.08), D2 + 0.16)).normalized()
+    c = r0 + (e0 - r0) * 0.62 + nrm * 0.075 + Vector((-0.34, 0, 0))
+    objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for i in range(2):
+        for j in range(3):
+            cc = c + nrm * 0.012 + dn * (-0.05 + i * 0.1) + Vector((-0.08 + j * 0.08, 0, 0))
+            objs.append(plank('solarcell', cc - dn * 0.044, cc + dn * 0.044, 0.072, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # a window box under the round window in the right gable (under the upstairs window on the Deluxe)
+    bxw, bzw = W2 + 0.07, box_z
+    objs.append(box('flowerbox', (0.09, 0.32, 0.07), (bxw, 0.0, bzw), m=sage, bevel=0.008, segs=1))
+    for k in range(8):
+        y = -0.13 + k * 0.037
+        objs.append(sphere('leafp', 0.03, (bxw, y, bzw + 0.045), (1, 1, 0.8), m=leaf[k % 2], ico=1, disp=0.2, seed=k))
+        objs.append(sphere('flower', 0.021, (bxw + 0.01, y + 0.01, bzw + 0.07), m=fl[k % 6], ico=1))
+    # a lantern by the hens' door
+    lx, ly, lz = -0.545, -D2 - 0.1, 0.72
+    objs.append(box('larm', (0.025, 0.1, 0.025), (lx, -D2 - 0.05, lz + 0.07), m=iron, bevel=0.004, segs=1))
+    objs.append(box('lanternb', (0.07, 0.07, 0.1), (lx, ly, lz), m=iron, bevel=0.006, segs=1))
+    objs.append(box('lanterng', (0.076, 0.076, 0.065), (lx, ly, lz), m=lamp, bevel=0.0))
+    objs.append(cyl('lroof', 0.06, 0.05, (lx, ly, lz + 0.075), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+    light_at(name, lx, ly, lz)
+    # flower pots either side of the foot of the ramp (the birds walk round them)
+    potm = _barn_m('pot', rough=0.8, grain=0.0)
+    for (x, y) in ((-0.62, -D2 - 0.62), (0.02, -D2 - 0.62)):
+        objs.append(cyl('pot', 0.07, 0.11, (x, y, 0.055), m=potm, verts=14, r2=0.055, bevel=0.006))
+        for k in range(6):
+            aa = k / 6 * math.tau
+            objs.append(sphere('potleaf', 0.035, (x + math.cos(aa) * 0.035, y + math.sin(aa) * 0.035, 0.13), (1, 1, 0.8), m=leaf[k % 2], ico=1, disp=0.25, seed=k + 10))
+            objs.append(sphere('potflower', 0.022, (x + math.cos(aa + 0.5) * 0.04, y + math.sin(aa + 0.5) * 0.04, 0.16), m=fl[(k + 2) % 6], ico=1))
+        BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.12])
+    # stepping stones from the foot of the ramp across the yard
+    stone = _barn_m('stone', rough=0.9, grain=0.0, bump=0.2, bump_scale=60, var=0.12)
+    gx, gy = _gate_of(t); a, b = Vector((-0.31, -1.3)), Vector((gx, gy + 0.32)); n = max(3, round((b - a).length / 0.25))
+    for k in range(n + 1):
+        q = a.lerp(b, k / n); x, y = q.x + 0.06 * math.sin(k * 1.7), q.y
+        objs.append(sphere('stepstone', 0.085, (x + random.uniform(-0.02, 0.02), y, 0.014), (1.15 + random.uniform(-0.15, 0.15), 0.95, 0.12), (0, 0, random.uniform(0, 3)), m=stone, ico=2, disp=0.18, seed=k + 40))
+    _own(objs, r)
+    return r
+
+
+def _porch(objs, name, sage, wood, dark, slate, iron, lamp, x0, x1, zh, zl, yy):
+    for sy in (-1, 1):
+        objs.append(box('ppost', (0.07, 0.07, zl), (x1 + 0.06, sy * (yy - 0.08), zl / 2), m=sage, bevel=0.01))
+    objs.append(plank('pbeam', (x1 + 0.06, -yy, zl - 0.02), (x1 + 0.06, yy, zl - 0.02), 0.07, 0.05, (0, 0, 1), sage, jitter=0.2))
+    a, b = Vector((x0, 0, zh)), Vector((x1, 0, zl)); dn = (b - a); nr = Vector((-(zh - zl), 0, -(x0 - x1))).normalized()
+    if nr.z < 0: nr = -nr
+    objs.append(plank('pboards', a - dn.normalized() * 0.02 + nr * 0.012, b + dn.normalized() * 0.03 + nr * 0.012, 2 * yy + 0.02, 0.02, nr, wood, jitter=0.0))
+    rows = 5; hl = dn.length / rows * 0.66
+    for rr in range(rows):
+        u = (rr + 0.5) / rows; base = a + dn * u + nr * (0.025 + 0.008 * (rows - rr))
+        n = 9; w = 2 * yy / n
+        for i in range(n + (1 if rr % 2 else 0)):
+            y = -yy + (i + 0.5) * w - (w / 2 if rr % 2 else 0)
+            yc = max(-yy + w * 0.25, min(yy - w * 0.25, y)); ww = w - 2 * abs(y - yc)
+            objs.append(plank('sh', base + Vector((0, yc, 0)) - dn.normalized() * hl, base + Vector((0, yc, 0)) + dn.normalized() * hl, ww * 0.95, 0.018, nr, slate, jitter=1.2, bevel=0.006))
+    for sy in (-1, 1):
+        objs.append(plank('pbarge', a + Vector((0, sy * (yy + 0.02), 0.03)), b + Vector((0, sy * (yy + 0.02), 0.03)), 0.07, 0.025, (0, sy, 0), sage, jitter=0.2))
+    bx = (x0 + x1) / 2 - 0.02
+    objs.append(box('bench', (0.2, 0.7, 0.04), (bx, 0.0, 0.25), m=wood, bevel=0.01, segs=1))
+    objs.append(box('benchback', (0.03, 0.7, 0.16), (bx + 0.09, 0.0, 0.42), (0, math.radians(-10), 0), m=wood, bevel=0.008, segs=1))
+    for sy in (-1, 1):
+        objs.append(box('benchleg', (0.18, 0.04, 0.25), (bx, sy * 0.3, 0.125), m=dark, bevel=0.006, segs=1))
+    objs.append(cyl('pchain', 0.006, 0.1, (x1 + 0.06, 0.0, zl - 0.09), m=iron, verts=6, bevel=0.0))
+    objs.append(box('lanternb', (0.07, 0.07, 0.1), (x1 + 0.06, 0.0, zl - 0.19), m=iron, bevel=0.006, segs=1))
+    objs.append(box('lanterng', (0.076, 0.076, 0.065), (x1 + 0.06, 0.0, zl - 0.19), m=lamp, bevel=0.0))
+    light_at(name, x1 + 0.06, 0.0, zl - 0.19)
+
+
+def cosy_barn():
+    r = red_barn(); _cosy_bits(r, 'cosy_rir', 3); r.name = 'cosy_rir'
+    return r
+
+
+# the Deluxe's roof (Audrey, 27 Oct: "change the material of the roof to something more noble"): three to choose from,
+# each with its cupola roof to match: copper gone green with standing seams, cedar shakes, fish-scale slates
+NOBLE = dict(copper=('#5c9a86', '#77b29e', '#4d8574'), cedar=('#b98652', '#a0703f', '#8a5d33'), scallop=('#454b55', '#565d68', '#373c44'))
+DELUXE_ROOF = os.environ.get('DELUXE_ROOF', 'copper')
+
+
+def _noble_m(kind, k):
+    c = NOBLE[kind][k]
+    if kind == 'copper': return mat('nr_cu%d' % k, c, rough=0.42, spec=0.45, metal=0.25, var=0.06)
+    if kind == 'cedar': return mat('nr_ce%d' % k, c, rough=0.85, var=0.16, hue_var=0.01, grain=0.4, grain_scale=G)
+    return mat('nr_sl%d' % k, c, rough=0.6, spec=0.35, var=0.1)
+
+
+def noble_roof(kind):
+    def roof(objs, W2, D2, EAVE, PEAK):
+        m0, m1, m2 = (_noble_m(kind, k) for k in range(3)); trim = coop.M()['white']
+        X0, X1 = -W2 - 0.16, W2 + 0.16
+        for sy in (-1, 1):
+            e0 = Vector((0, sy * (D2 + 0.16), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02))
+            down = e0 - r0; slope = down.length; dn = down.normalized()
+            nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + 0.16)).normalized()
+            if kind != 'copper':                                   # boards under the shakes or the slates
+                objs.append(plank('rboards', r0 + nrm * 0.02 - dn * 0.01, e0 + nrm * 0.02 + dn * 0.02, X1 - X0, 0.02, nrm, m2, jitter=0.0, bevel=0.0))
+            if kind == 'copper':                                   # long panels, raised seams between them, a rolled edge at the eave
+                n = 10; w = (X1 - X0) / n
+                for i in range(n):
+                    x = X0 + (i + 0.5) * w
+                    objs.append(plank('cu', r0 + Vector((x, 0, 0)) + nrm * 0.03, e0 + Vector((x, 0, 0)) + nrm * 0.03, w * 1.002, 0.02, nrm, m0 if i % 3 else m2, jitter=0.0, bevel=0.003))
+                for i in range(n + 1):
+                    x = X0 + i * w
+                    objs.append(plank('seam', r0 + Vector((x, 0, 0)) + nrm * 0.055, e0 + Vector((x, 0, 0)) + nrm * 0.055, 0.04, 0.014, (1, 0, 0), m1, jitter=0.0, bevel=0.004))
+                objs.append(cyl('cuedge', 0.02, X1 - X0 + 0.02, e0 + nrm * 0.035, (0, math.radians(90), 0), m=m1, verts=8, bevel=0.0))
+            elif kind == 'cedar':                                  # rows of shakes, each its own length and shade
+                rows = int(slope / 0.07)
+                for r_ in range(rows + 1):
+                    base = r0 + down * (1 - r_ / rows) + nrm * (0.035 + 0.005 * (r_ % 2))
+                    x = X0
+                    while x < X1 - 0.02:
+                        w = random.uniform(0.07, 0.13); w = min(w, X1 - x)
+                        L = random.uniform(0.11, 0.14)
+                        a = base + Vector((x + w / 2, 0, 0)) - dn * L / 2; b = base + Vector((x + w / 2, 0, 0)) + dn * L / 2
+                        objs.append(plank('sh', a, b, w * 0.93, 0.02, nrm, random.choice((m0, m0, m1, m2)), jitter=2.2, bevel=0.004))
+                        x += w
+            else:                                                  # fish-scale slates: round-bottomed, each row on top of the one below
+                rows = int(slope / 0.058); n = 13; w = (X1 - X0) / n; rr = w * 0.56
+                for r_ in range(rows + 1):
+                    t = 1 - r_ / rows
+                    if t * slope < rr * 0.6: continue
+                    base = r0 + down * t + nrm * (0.03 + 0.0025 * r_)
+                    off = w / 2 if r_ % 2 else 0
+                    for i in range(n + 1):
+                        x = X0 + i * w + off
+                        if x < X0 + w * 0.3 or x > X1 - w * 0.3: continue
+                        c = base + Vector((x, 0, 0)); me = bpy.data.meshes.new('scale'); bm = bmesh.new()
+                        vs = [bm.verts.new(c + (Vector((math.cos(a), 0, 0)) * rr + (-dn) * (math.sin(a) * rr))) for a in [k / 10 * math.tau for k in range(10)]]
+                        f = bm.faces.new(vs)
+                        bm.normal_update()
+                        if f.normal.dot(nrm) < 0: f.normal_flip()
+                        bm.to_mesh(me); bm.free()
+                        o = link(bpy.data.objects.new('scale', me)); setmat(o, random.choice((m0, m0, m1))); objs.append(o)
+            for sx in (-1, 1):
+                objs.append(plank('barge', r0 + Vector((sx * (W2 + 0.17), 0, 0.05)), e0 + Vector((sx * (W2 + 0.17), 0, 0)), 0.09, 0.03, (sx, 0, 0), trim, jitter=0.2))
+        objs.append(cyl('ridgecap', 0.045, 2 * W2 + 0.36, (0, 0, PEAK + 0.065), (0, math.radians(90), 0), m1 if kind == 'copper' else m2, verts=14, bevel=0.0))
+    return roof
+
+
+def deluxe_barn(kind=None):
+    """Deluxe (Audrey, 27 Oct: "Instead of the extension the coop can have a second floor"): the barn a storey taller (a
+    belt of trim between the floors, a hayloft door with a hoist beam above the barn door, a window upstairs on the right
+    gable with its flowers), a noble roof, a cupola on the ridge (the weathervane on its top: export's top_of); the cosy
+    touches but no porch."""
+    kind = kind or DELUXE_ROOF
+    EAVE, PEAK = 1.5, 1.94
+    r = red_barn(eave=EAVE, peak=PEAK, roof=noble_roof(kind))
+    m = coop.M(); trim, red, dark = m['white'], m['red'], m['darkwood']
+    objs = []
+    for sy in (-1, 1):                                             # the belt between the floors
+        objs.append(plank('belt', (-W2 - 0.05, sy * (D2 + 0.035), 1.06), (W2 + 0.05, sy * (D2 + 0.035), 1.06), 0.05, 0.025, (0, sy, 0), trim))
+    for sx in (-1, 1):
+        objs.append(plank('belt', (sx * (W2 + 0.035), -D2 - 0.05, 1.06), (sx * (W2 + 0.035), D2 + 0.05, 1.06), 0.05, 0.025, (sx, 0, 0), trim))
+    lx0, lx1, lz0, lz1, yd = -0.08, 0.23, 1.13, 1.42, -D2 - 0.03     # the hayloft door, above the barn door
+    for i in range(3):
+        x = lx0 + (i + 0.5) * (lx1 - lx0) / 3
+        objs.append(plank('ldoor', (x, yd, lz0), (x, yd, lz1), (lx1 - lx0) / 3 * 0.95, 0.025, (0, -1, 0), red, jitter=0.3))
+    yt = yd - 0.022
+    for (p, q) in [((lx0, yt, lz0), (lx1, yt, lz0)), ((lx0, yt, lz1), (lx1, yt, lz1)), ((lx0, yt, lz0), (lx0, yt, lz1)), ((lx1, yt, lz0), (lx1, yt, lz1)),
+                   ((lx0, yt - 0.004, lz0), (lx1, yt - 0.004, lz1)), ((lx1, yt - 0.008, lz0), (lx0, yt - 0.008, lz1))]:
+        objs.append(plank('xtrim', p, q, 0.045, 0.022, (0, -1, 0), trim, jitter=0.2))
+    hx = (lx0 + lx1) / 2                                           # the hoist: a beam out over it, a pulley, a rope and hook
+    objs.append(box('hoist', (0.05, 0.3, 0.05), (hx, -D2 - 0.12, 1.47), m=dark, bevel=0.008, segs=1))
+    objs.append(cyl('pulley', 0.032, 0.02, (hx, -D2 - 0.24, 1.42), (0, math.radians(90), 0), m=coop.M()['metal'], verts=12, bevel=0.0))
+    objs.append(cyl('rope', 0.006, 0.26, (hx, -D2 - 0.27, 1.29), m=coop.M()['twine'], verts=5, bevel=0.0))
+    objs.append(box('hook', (0.03, 0.012, 0.04), (hx, -D2 - 0.27, 1.15), m=coop.M()['metal'], bevel=0.004, segs=1))
+    for sx in (-1, 1):                                             # a window upstairs in each gable, flowers under it
+        window(objs, sx * (W2 + 0.035), 0.0, 1.27, 0.22, 0.24, trim, m['glass'], normal=(sx, 0, 0), box_flowers=(trim,) + tuple(C('dxf%d' % i, FLOWERS[i], rough=0.5) for i in range(6)) if sx < 0 else None)
+    _own(objs, r)
+    _cosy_bits(r, 'deluxe_rir', 4, porch=False, eave=EAVE, peak=PEAK, box_z=1.1)
+    objs = []
+    white = mat('bx_cupola', BARN['cupola'], rough=0.6, var=0.04, grain=0.12, grain_scale=G); louvre = _barn_m('louvre', rough=0.85)
+    z0 = PEAK + 0.02; s = 0.3; h = 0.26
+    objs.append(box('cbase', (s + 0.06, s + 0.1, 0.12), (0, 0, z0 - 0.02), m=white, bevel=0.01))          # (its saddle over the ridge)
+    objs.append(box('cbody', (s, s, h), (0, 0, z0 + 0.04 + h / 2), m=white, bevel=0.012))
+    for (nx, ny) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        for k in range(4):
+            z = z0 + 0.09 + k * 0.045
+            if nx: objs.append(box('louvre', (0.012, s * 0.62, 0.022), (nx * (s / 2 + 0.004), 0, z), m=louvre, bevel=0.002, segs=1))
+            else: objs.append(box('louvre', (s * 0.62, 0.012, 0.022), (0, ny * (s / 2 + 0.004), z), m=louvre, bevel=0.002, segs=1))
+    zt = z0 + 0.04 + h
+    objs.append(box('ccap', (s + 0.08, s + 0.08, 0.03), (0, 0, zt + 0.015), m=white, bevel=0.008))
+    objs.append(cyl('croof', (s + 0.12) / math.sqrt(2), 0.2, (0, 0, zt + 0.13), (0, 0, math.pi / 4), m=_noble_m(kind, 0), verts=4, r2=0.0, bevel=0.0))
+    objs.append(sphere('cball', 0.022, (0, 0, zt + 0.235), m=_noble_m(kind, 1) if kind == 'copper' else C('gold', '#d4a640', rough=0.3, metal=0.9), seg=10, rings=6))
+    # two little lanterns either side of the hayloft door
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    for x in (lx0 - 0.09, lx1 + 0.09):
+        objs.append(box('lanternb', (0.06, 0.06, 0.085), (x, -D2 - 0.08, 1.3), m=iron, bevel=0.005, segs=1))
+        objs.append(box('lanterng', (0.066, 0.066, 0.055), (x, -D2 - 0.08, 1.3), m=lamp, bevel=0.0))
+        objs.append(cyl('lroof', 0.05, 0.04, (x, -D2 - 0.08, 1.363), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+        objs.append(box('larm', (0.02, 0.06, 0.02), (x, -D2 - 0.045, 1.37), m=iron, bevel=0.003, segs=1))
+        light_at('deluxe_rir', x, -D2 - 0.08, 1.3)
+    _own(objs, r)
+    r.name = 'deluxe_rir'
+    return r
+
+
+# ---- the hens' play things (Audrey, 27 Oct: "Starting at the cosy one, add a swing in their garden that they can perch on.
+# Come with ideas like this cute fun that they interact with"; she chose all four: "Dust bath", "Hanging treat ball",
+# "Climbing perch ladder", "Pecking xylophone"). Cosy and Deluxe: the swing, the dust bath, a cabbage hanging from a post;
+# Deluxe also: a climbing ladder of perches and a little xylophone. The swing's perch and the cabbage move (their own
+# models, swing_seat and cabbage, hung from their pivot at the origin); PLAY gives where each is (Blender x, y) and
+# play_info what the browser needs (glTF axes).
+PLAY = {3: dict(swing=(-1.3, -1.15), dust=(1.45, -2.35), cabbage=(1.0, -0.95)),
+        4: dict(swing=(-1.45, -1.15), dust=(1.9, -2.6), cabbage=(1.05, -0.95), ladder=(-0.85, -2.45), xylo=(-1.05, -1.75))}
+SWING_TOP, SWING_PERCH, SWING_HALF = 0.56, 0.14, 0.32           # the top bar, the perch's height, half the frame's width
+CAB_TOP, CAB_Z = 0.56, 0.21                                     # the arm the cabbage hangs from, the cabbage's middle
+LADDER = ((-0.17, 0.13), (-0.09, 0.27), (0.0, 0.42))            # its perches on the front face: (y from its middle, height)
+
+
+def swing_frame(objs, x, y):
+    wood = coop.M()['wood']; dark = coop.M()['darkwood']
+    for sx in (-1, 1):                                          # an A each side, the bar along x across their tops
+        top = Vector((x + sx * SWING_HALF, y, SWING_TOP))
+        for sy in (-1, 1):
+            objs.append(plank('swleg', Vector((x + sx * SWING_HALF, y + sy * 0.2, 0.0)), top + Vector((0, 0, 0.02)), 0.04, 0.035, (sx, 0, 0), wood, jitter=0.4))
+        objs.append(plank('swbrace', Vector((x + sx * SWING_HALF, y - 0.1, 0.27)), Vector((x + sx * SWING_HALF, y + 0.1, 0.27)), 0.03, 0.025, (sx, 0, 0), dark, jitter=0.4))
+    objs.append(cyl('swbar', 0.022, 2 * SWING_HALF + 0.1, (x, y, SWING_TOP), (0, math.radians(90), 0), m=dark, verts=10, bevel=0.0))
+
+
+def swing_seat():
+    """The swing's perch on its two ropes, hanging from the bar (its pivot at the origin)."""
+    objs = []; rope = coop.M()['twine']; pale = _barn_m('pine', rough=0.75, var=0.05)
+    L = SWING_TOP - SWING_PERCH
+    for sx in (-1, 1):
+        objs.append(cyl('swrope', 0.007, L, (sx * 0.17, 0, -L / 2), m=rope, verts=6, bevel=0.0))
+        objs.append(cyl('swknot', 0.016, 0.03, (sx * 0.17, 0, -L + 0.01), m=rope, verts=8, bevel=0.0))
+        objs.append(cyl('swloop', 0.026, 0.012, (sx * 0.17, 0, -0.005), (0, math.radians(90), 0), m=rope, verts=10, bevel=0.0))
+    objs.append(cyl('swperch', 0.02, 0.42, (0, 0, -L), (0, math.radians(90), 0), m=pale, verts=10, bevel=0.004))
+    return finish(objs, 'swing_seat')
+
+
+def dust_bath(objs, x, y):
+    """A low half-barrel of fine sand, a little spilt round it."""
+    staves = [_barn_m('stump', grain=0.5), _barn_m('cut', grain=0.3)]; sand = mat('dsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    n = 16
+    for k in range(n):
+        a = k / n * math.tau; c, s_ = math.cos(a), math.sin(a)
+        objs.append(plank('stave', (x + c * 0.25, y + s_ * 0.25, 0.0), (x + c * 0.25, y + s_ * 0.25, 0.11), 0.1, 0.025, (c, s_, 0), staves[k % 2], jitter=0.5))
+    for z in (0.03, 0.09):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.262, minor_radius=0.008, major_segments=24, minor_segments=5, location=(x, y, z))
+        o = bpy.context.object; setmat(o, iron); objs.append(o)
+    objs.append(sphere('dsand', 0.235, (x, y, 0.06), (1, 1, 0.14), m=sand, ico=3, disp=0.12, seed=7))
+    for k in range(7):
+        a = random.uniform(0, math.tau); d = random.uniform(0.28, 0.38)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.07), (x + math.cos(a) * d, y + math.sin(a) * d, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 3))
+
+
+def cabbage_post(objs, x, y):
+    """The post and arm the cabbage hangs from (the arm out over the yard)."""
+    dark = coop.M()['darkwood']
+    px, py = x, y + 0.28
+    objs.append(box('cpost', (0.05, 0.05, CAB_TOP + 0.04), (px, py, (CAB_TOP + 0.04) / 2), m=dark, bevel=0.008))
+    objs.append(box('carm', (0.04, 0.32, 0.04), (px, py - 0.14, CAB_TOP), m=dark, bevel=0.006))
+    objs.append(box('cbrace', (0.03, 0.16, 0.03), (px, py - 0.06, CAB_TOP - 0.08), (math.radians(-40), 0, 0), m=dark, bevel=0.005, segs=1))
+    for k in range(3):                                         # its foot in the ground: a few stones
+        a = k * 2.1 + 0.4
+        objs.append(sphere('cstone', 0.035, (px + math.cos(a) * 0.06, py + math.sin(a) * 0.06, 0.012), (1.2, 1, 0.6), m=_barn_m('stone', rough=0.9, grain=0.0), ico=1, disp=0.2, seed=k))
+
+
+def cabbage():
+    """A cabbage on a string (the string's top at the origin)."""
+    objs = []; L = CAB_TOP - CAB_Z
+    leaf = [C('cab1', '#7fbf5a', rough=0.7), C('cab2', '#a6d47a', rough=0.7), C('cab3', '#5f9e45', rough=0.75)]
+    objs.append(cyl('cstring', 0.005, L - 0.07, (0, 0, -(L - 0.07) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    objs.append(sphere('cabheart', 0.075, (0, 0, -L), (1, 1, 0.92), m=leaf[1], ico=2, disp=0.15, seed=2))
+    for k in range(7):                                         # loose outer leaves cupped round it
+        a = k / 7 * math.tau; c, s_ = math.cos(a), math.sin(a)
+        o = sphere('cableaf', 0.06, (c * 0.055, s_ * 0.055, -L - 0.01), (0.35, 1.0, 0.9), (0, math.radians(18), a), m=leaf[k % 3 if k % 3 != 1 else 0], ico=2, disp=0.12, seed=k + 5)
+        objs.append(o)
+    return finish(objs, 'cabbage')
+
+
+def ladder(objs, x, y):
+    """A little A-frame with perches up its front, the top one at its peak."""
+    wood = coop.M()['wood']; pale = _barn_m('pine', rough=0.75, var=0.05); top = LADDER[-1][1] + 0.03
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            objs.append(plank('lleg', Vector((x + sx * 0.3, y + sy * 0.24, 0.0)), Vector((x + sx * 0.3, y, top + 0.02)), 0.04, 0.03, (sx, 0, 0), wood, jitter=0.3))
+    for (dy, z) in LADDER:
+        objs.append(cyl('lperch', 0.018, 0.64, (x, y + dy, z), (0, math.radians(90), 0), m=pale, verts=10, bevel=0.0))
+        if dy:
+            objs.append(cyl('lperch', 0.018, 0.64, (x, y - dy, z), (0, math.radians(90), 0), m=pale, verts=10, bevel=0.0))
+
+
+def xylophone(objs, x, y):
+    """A child's xylophone on low legs, its bars along y in rainbow colours, for pecking."""
+    wood = coop.M()['darkwood']; pale = _barn_m('pine', rough=0.75, var=0.05)
+    cols = ['#e2453c', '#ff8c42', '#f4c430', '#5bb04a', '#3d7fd1', '#9b6bd1']
+    for sy in (-1, 1):
+        objs.append(box('xrail', (0.26, 0.03, 0.025), (x, y + sy * 0.16, 0.085), (0, 0, 0), m=pale, bevel=0.005, segs=1))
+        for sx in (-1, 1):
+            objs.append(box('xleg', (0.03, 0.03, 0.08), (x + sx * 0.1, y + sy * 0.16, 0.04), m=wood, bevel=0.004, segs=1))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.26 - k * 0.025
+        objs.append(box('xbar', (L, 0.042, 0.016), (x, yy, 0.105), m=C('xbar%d' % k, cols[k], rough=0.35, metal=0.4), bevel=0.004, segs=1))
+        for sx in (-1, 1):
+            objs.append(sphere('xpin', 0.007, (x + sx * (L / 2 - 0.02), yy, 0.115), m=coop.M()['metal'], seg=6, rings=4))
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.2, 0.015), (math.radians(90), 0, math.radians(30)), m=wood, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=C('xbar0', cols[0], rough=0.35, metal=0.4), seg=8, rings=6))
+
+
+def play_things(objs, t):
+    P = PLAY.get(t)
+    if not P: return
+    swing_frame(objs, *P['swing']); dust_bath(objs, *P['dust']); cabbage_post(objs, *P['cabbage'])
+    if 'ladder' in P: ladder(objs, *P['ladder'])
+    if 'xylo' in P: xylophone(objs, *P['xylo'])
+
+
+def play_info(t):
+    """For the browser (glTF axes: x, z = Blender x, -y): each play thing's place, and the spots the birds keep clear of."""
+    P = PLAY.get(t)
+    if not P: return None
+    g = lambda q: [q[0], round(-q[1], 3)]
+    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dict(at=g(P['dust']), r=0.235),
+               cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
+    if 'ladder' in P: out['ladder'] = dict(at=g(P['ladder']), perches=[[round(-dy, 3), z] for (dy, z) in LADDER])
+    if 'xylo' in P: out['xylo'] = dict(at=g(P['xylo']), bars=[round(0.13 - k * 0.052, 3) for k in range(6)])
+    keep = [g(P['swing']) + [0.38], g(P['dust']) + [0.29], g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
+    if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
+    if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
+    out['keep'] = keep
+    return out
+
+
+def pen_tier(t):
+    """A look's yard and what's in it (pen_t0, pen_t1, pen_t3, pen_t4): the dirt pad, feeder, water, hay, sack, straw; in the
+    smallest pens a tin basin for water and no hay; in the bigger ones grass round the edges."""
+    keep = coop.PEN; coop.PEN = pen_layout(t)
+    try: root = pen_base()
+    finally: coop.PEN = keep
+    random.seed(40 + t)
+    if t <= 1: _swap(root, {'bowl'}, _barn_m('tinbowl', rough=0.45, grain=0.0, metal=0.5))
+    if t >= 3:                                     # grass in the corners and along the sides, inside the fence
+        x0, x1, y0, y1 = PENS[t]['box']; g = [_barn_m('grass', rough=0.95, grain=0.0, var=0.1), _barn_m('grass2', rough=0.95, grain=0.0, var=0.1)]
+        objs = []
+        for k in range(26 if t == 3 else 36):
+            side = k % 4
+            if side == 0: x, y = random.uniform(x0 + 0.12, x0 + 0.35), random.uniform(y0 + 0.2, y1 - 0.3)
+            elif side == 1: x, y = random.uniform(x1 - 0.35, x1 - 0.12), random.uniform(y0 + 0.2, y1 - 0.3)
+            elif side == 2: x, y = random.uniform(x0 + 0.2, x1 - 0.2), random.uniform(y0 + 0.1, y0 + 0.28)
+            else: x, y = random.uniform(x0 + 0.15, x0 + 0.9), random.uniform(y0 + 0.15, y0 + 0.6)
+            m_ = random.choice(g)
+            for j in range(5):
+                aa = random.uniform(0, math.tau); d = random.uniform(0, 0.05); tilt = random.uniform(0.15, 0.5); h = random.uniform(0.06, 0.11)
+                objs.append(cyl('ygrass', 0.012, h, (x + math.cos(aa) * d + math.cos(aa) * math.sin(tilt) * h / 2, y + math.sin(aa) * d + math.sin(aa) * math.sin(tilt) * h / 2, 0.015 + h / 2 * math.cos(tilt)),
+                                (math.sin(aa) * -tilt, math.cos(aa) * tilt, 0), m=m_, verts=3, r2=0.0, bevel=0.0))
+        play_things(objs, t)
+        _own(objs, root)
+    root.name = 'pen_t%d' % t
+    return root
+
+
+def fence_tier(t, seed=37):
+    """A look's fence: broken (t0), mended (t1), the standard one with flowers along its front (t3), white pickets (t4)."""
+    keep = coop.PEN; coop.PEN = pen_layout(t)
+    try:
+        if t == 4:
+            n0 = len(LIGHTS.get('fence_dx', [])); root = deluxe_fence()
+            LIGHTS['fence_t4'] = LIGHTS['fence_dx'][n0:]; del LIGHTS['fence_dx'][n0:]     # (its lanterns, where this pen's gate is)
+            if not LIGHTS['fence_dx']: del LIGHTS['fence_dx']
+        else:
+            root = rustic_fence(seed) if t <= 1 else wood_fence()
+    finally: coop.PEN = keep
+    random.seed(seed + t)
+    rails = lambda: [o for o in root.children_recursive if o.type == 'MESH' and o.name.split('.')[0] == 'rail']
+    if t == 0:                                     # rails down, one end dropped, posts leaning
+        for o in random.sample(rails(), min(2, len(rails()))): bpy.data.objects.remove(o, do_unlink=True)
+        for o in random.sample(rails(), min(2, len(rails()))):
+            o.rotation_euler.rotate_axis('Y', math.radians(random.choice((-17, 17)))); o.location.z -= 0.06
+        posts = [o for o in root.children_recursive if o.type == 'MESH' and o.name.split('.')[0] == 'post']
+        for o in random.sample(posts, min(2, len(posts))): o.rotation_euler.x += math.radians(random.choice((-8, 8)))
+    elif t == 1:                                   # the old grey fence with new pale rails and a few new posts
+        pine = _barn_m('pine', rough=0.75, var=0.08); pine2 = _barn_m('pine2', rough=0.75, var=0.08)
+        for o in rails():
+            if random.random() < 0.5: o.data.materials.clear(); o.data.materials.append(pine)
+        posts = [o for o in root.children_recursive if o.type == 'MESH' and o.name.split('.')[0] in ('post', 'cap')]
+        for o in posts:
+            if random.random() < 0.3: o.data.materials.clear(); o.data.materials.append(pine2)
+    elif t == 3:                                   # painted sage, flowers along the outside of the front fence
+        _swap(root, {'wood'}, mat('bx_sagefence', BARN['sage'], rough=0.65, var=0.05, grain=0.15, grain_scale=G))
+        _swap(root, {'capwood'}, mat('bx_cupola', BARN['cupola'], rough=0.6, var=0.04, grain=0.12, grain_scale=G))
+        x0, x1, y0, y1 = PENS[3]['box']; leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+        objs = []
+        gx = _gate_of(3)[0]
+        for i in range(90):
+            x = random.uniform(x0 + 0.05, x1 - 0.05)
+            if abs(x - gx) < 0.5: continue      # (the gate kept clear)
+            y = y0 - random.uniform(0.08, 0.2)
+            if random.random() < 0.5: objs.append(sphere('bleaf', 0.05, (x, y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            objs.append(sphere('bflower', 0.026, (x, y, 0.08 + random.uniform(0, 0.07)), m=C('dxf%d' % (i % 6), FLOWERS[i % 6], rough=0.5), ico=1))
+        _own(objs, root)
+    root.name = 'fence_t%d' % t
+    return root
+
+
+def pen_info(t):
+    """For the browser (glTF axes): the pen's box, its gate's middle, the feeder, the water, the hay and sack (or none)."""
+    keep = coop.PEN; coop.PEN = pen_layout(t)
+    try:
+        x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
+        P = coop.PEN
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') else 0.22,
+                    hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
+    finally: coop.PEN = keep

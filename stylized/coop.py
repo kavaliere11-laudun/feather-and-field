@@ -76,12 +76,14 @@ def pop_trim(objs, z0, trim, D2, x=-0.31):
         objs.append(plank('ptrim', p, q, 0.045, 0.02, (0, -1, 0), trim, jitter=0.3))
 
 
-def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
-    """window: (x0, x1, z0, z1), an opening left in the front boards (the nest window; coops.red_barn adds the rest)."""
+def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None, eave=1.02, peak=1.46, roof=None):
+    """window: (x0, x1, z0, z1), an opening left in the front boards (the nest window; coops.red_barn adds the rest).
+    eave, peak: taller for a second floor (the barn door stays its height); roof: fn(objs, W2, D2, EAVE, PEAK) instead of
+    the slates (release 4's Deluxe)."""
     random.seed(seed); m = M()
     objs = []
     W2, D2 = 0.62, 0.44          # half width (x) and half depth (y) of the house
-    FL, EAVE, PEAK = 0.40, 1.02, 1.46      # floor, eave and ridge heights
+    FL, EAVE, PEAK = 0.40, eave, peak      # floor, eave and ridge heights
     # ---- legs and floor
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -136,7 +138,7 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
         for a, b in spans:
             objs.append(plank('btrim', (a, sy * (D2 + 0.035), FL + 0.04), (b, sy * (D2 + 0.035), FL + 0.04), 0.06, 0.025, (0, sy, 0), m['white']))
     # ---- big barn door on the front, white frame with the X brace
-    dx0, dx1, dz0, dz1 = (-0.09, 0.24, FL + 0.06, EAVE - 0.1) if window else (0.0, 0.42, FL + 0.06, EAVE - 0.1)
+    dx0, dx1, dz0, dz1 = (-0.09, 0.24, FL + 0.06, min(EAVE, 1.02) - 0.1) if window else (0.0, 0.42, FL + 0.06, min(EAVE, 1.02) - 0.1)
     yd = -D2 - 0.03
     for i in range(4):
         x = dx0 + (i + 0.5) * (dx1 - dx0) / 4
@@ -178,8 +180,10 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None):
         # bargeboards
         for sx in (-1, 1):
             objs.append(plank('barge', r0 + Vector((sx * (W2 + 0.17), 0, 0.05)) + nrm * 0.0, e0 + Vector((sx * (W2 + 0.17), 0, 0)), 0.09, 0.03, (sx, 0, 0), m['white'], jitter=0.2))
-    roof_side(-1); roof_side(1)
-    objs.append(cyl('ridgecap', 0.045, 2 * W2 + 0.36, (0, 0, PEAK + 0.06), (0, math.radians(90), 0), m['ridge'], verts=14, bevel=0.0))
+    if roof: roof(objs, W2, D2, EAVE, PEAK)
+    else:
+        roof_side(-1); roof_side(1)
+        objs.append(cyl('ridgecap', 0.045, 2 * W2 + 0.36, (0, 0, PEAK + 0.06), (0, math.radians(90), 0), m['ridge'], verts=14, bevel=0.0))
     # ---- round window in the +x gable
     wx = W2 + 0.04; wz = EAVE + 0.12
     ring = bpy.data.meshes.new('ring'); bm = bmesh.new()
@@ -231,6 +235,25 @@ def gate_span():
     x0, x1 = PEN['box'][0], PEN['box'][1]
     n = max(1, int((x1 - x0) / 0.55)); g = PEN['gate']
     return x0 + (g + 1) * (x1 - x0) / n, x0 + (g + 0.5) * (x1 - x0) / n
+
+
+def fountain(objs, x, y, m):
+    """A little stone fountain the hens can drink from: a low basin, a pedestal, a bowl spilling over into it."""
+    stone = mat('fstone', '#ddd5c4', rough=0.8, var=0.06, bump=0.12, bump_scale=60); stone2 = mat('fstone2', '#c9bfac', rough=0.8, var=0.06)
+    objs.append(cyl('fbasin', 0.3, 0.12, (x, y, 0.06), m=stone, verts=12, bevel=0.012))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.285, minor_radius=0.03, major_segments=24, minor_segments=8, location=(x, y, 0.12))
+    rim = bpy.context.object; setmat(rim, stone2); objs.append(rim)
+    objs.append(cyl('fwater', 0.262, 0.01, (x, y, 0.118), m=m['water'], verts=24, bevel=0.0))
+    objs.append(cyl('fped', 0.05, 0.32, (x, y, 0.27), m=stone2, verts=10, bevel=0.008))
+    objs.append(cyl('fbowl', 0.06, 0.07, (x, y, 0.45), m=stone, verts=12, r2=0.14, bevel=0.008))
+    objs.append(cyl('fwater2', 0.125, 0.008, (x, y, 0.481), m=m['water'], verts=16, bevel=0.0))
+    objs.append(cyl('fstem', 0.022, 0.08, (x, y, 0.52), m=stone2, verts=8, bevel=0.0))
+    objs.append(sphere('ftop', 0.035, (x, y, 0.575), m=stone, seg=10, rings=6))
+    for k in range(8):                                     # water spilling over the bowl's rim into the basin
+        a = k / 8 * math.tau + 0.2; c, s_ = math.cos(a), math.sin(a)
+        pts = [Vector((x + c * (0.14 + 0.07 * t * t ** 0.3 + 0.02 * t), y + s_ * (0.14 + 0.07 * t * t ** 0.3 + 0.02 * t), 0.485 - 0.36 * t * t)) for t in (0.0, 0.35, 0.7, 1.0)]
+        for p, q in zip(pts, pts[1:]):
+            objs.append(cyl('fspill', 0.009, (q - p).length, (p + q) / 2, (q - p).to_track_quat('Z', 'Y').to_euler(), m['water'], verts=5, bevel=0.0))
 
 
 def build_pen(root, m):
@@ -292,17 +315,20 @@ def build_pen(root, m):
     objs.append(cyl('hat', 0.12, 0.08, (fx, fy, 0.4), m=m['metal'], verts=24, r2=0.02, bevel=0.01))
     for z in (0.12, 0.28):
         objs.append(cyl('band', 0.093, 0.015, (fx, fy, z), m=mat('band', '#9aa3a8', rough=0.3, metal=0.9), verts=24, bevel=0.003))
-    # water dish
+    # water dish (a fountain in the Deluxe pen: Audrey, 27 Oct: "the water pot can become a fountain")
     wx, wy = PEN['dish']
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
-    rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)
-    objs.append(cyl('dishbase', 0.16, 0.03, (wx, wy, 0.02), m=m['bowl'], verts=32, bevel=0.008))
-    objs.append(cyl('water', 0.135, 0.008, (wx, wy, 0.05), m=m['water'], verts=32, bevel=0.0))
-    # hay bale with twine, a little loose hay
-    hx, hy = PEN['hay']; hr = math.radians(PEN['hay_rot'])
-    hb = box('bale', (0.55, 0.32, 0.3), (hx, hy, 0.15), (0, 0, hr), m=m['hay'], bevel=0.04, segs=4, jitter=0.006); objs.append(hb)
-    for k in (-0.14, 0.14):
-        objs.append(box('twine', (0.025, 0.335, 0.305), (hx + k * math.cos(hr), hy + k * math.sin(hr), 0.15), (0, 0, hr), m=m['twine'], bevel=0.005))
+    if PEN.get('fountain'): fountain(objs, wx, wy, m)
+    else:
+      bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
+      rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)
+      objs.append(cyl('dishbase', 0.16, 0.03, (wx, wy, 0.02), m=m['bowl'], verts=32, bevel=0.008))
+      objs.append(cyl('water', 0.135, 0.008, (wx, wy, 0.05), m=m['water'], verts=32, bevel=0.0))
+    # hay bale with twine, a little loose hay (none in the smallest pens: release 4's looks)
+    for hx, hy, hrd in ([(PEN['hay'][0], PEN['hay'][1], PEN['hay_rot'])] if PEN.get('hay') else []) + list(PEN.get('bales', [])):
+        hr = math.radians(hrd)
+        hb = box('bale', (0.55, 0.32, 0.3), (hx, hy, 0.15), (0, 0, hr), m=m['hay'], bevel=0.04, segs=4, jitter=0.006); objs.append(hb)
+        for k in (-0.14, 0.14):
+            objs.append(box('twine', (0.025, 0.335, 0.305), (hx + k * math.cos(hr), hy + k * math.sin(hr), 0.15), (0, 0, hr), m=m['twine'], bevel=0.005))
     for sx, sy, sr, sn in PEN['straw']:
         straw_bits(objs, (sx, sy, 0), sr, sn, 0.016)
     peb = mat('ypebble', '#b9b1a3', rough=0.8, var=0.2)
@@ -311,10 +337,11 @@ def build_pen(root, m):
         r = random.uniform(0.012, 0.028)
         objs.append(sphere('ypeb', r, (x, y, 0.015 + r * 0.1), (1.2, 1.0, 0.5), (0, 0, random.uniform(0, 6)), peb, ico=2, disp=0.25, seed=i + 40))
     # feed sack slumped by the house
-    kx, ky = PEN['sack']
-    sk = sphere('sack', 0.16, (kx, ky, 0.17), (0.85, 0.7, 1.1), (0, math.radians(-8), math.radians(20)), m['sack'], ico=3, disp=0.12, seed=3)
-    objs.append(sk)
-    objs.append(sphere('sacktop', 0.06, (kx, ky, 0.36), (1.2, 0.8, 0.6), m=m['sack'], ico=2, disp=0.2, seed=4))
+    if PEN.get('sack'):
+        kx, ky = PEN['sack']
+        sk = sphere('sack', 0.16, (kx, ky, 0.17), (0.85, 0.7, 1.1), (0, math.radians(-8), math.radians(20)), m['sack'], ico=3, disp=0.12, seed=3)
+        objs.append(sk)
+        objs.append(sphere('sacktop', 0.06, (kx, ky, 0.36), (1.2, 0.8, 0.6), m=m['sack'], ico=2, disp=0.2, seed=4))
     for o in objs:
         mw = o.matrix_basis.copy(); o.parent = root; o.matrix_parent_inverse = Matrix.Identity(4); o.matrix_basis = mw
     return objs
