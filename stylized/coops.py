@@ -577,9 +577,14 @@ def weathervane():
     return finish(objs, 'vane')
 
 
+BARN_EAVE, BARN_PEAK = 1.14, 1.58          # the Red Barn's walls 12 cm taller than at first, its front roof shorter (coop.OVER_FRONT):
+                                          # its nest window clear of the roof from the game's camera (Audrey's polish list, 27 Oct)
+
+
 def red_barn(**kw):
     """The Red Barn (coop.build) with its nests inside, behind a window right of the barn door (kw: coop.build's eave,
     peak and roof, for the two-storey Deluxe)."""
+    kw.setdefault('eave', BARN_EAVE); kw.setdefault('peak', BARN_PEAK)
     wx, FL = 0.445, 0.40
     r = coop.build((0, 0, 0), 0.0, seed=5, pen=False, window=(wx - WIN_W / 2, wx + WIN_W / 2, FL + 0.05, FL + 0.05 + WIN_H), **kw)
     objs = []; nest_window(objs, 'rir', FL, wx, coop.M()['white'], hollow=True, ramp_len=0.67, door='drop', door_m=coop.M()['red'])
@@ -824,7 +829,7 @@ def rustic_barn(seed=11):
     """The Red Barn as it first comes, rustic."""
     r = red_barn()
     M_ = _weather(r, seed)
-    W2, D2, FL, EAVE, PEAK = 0.62, 0.44, 0.40, 1.02, 1.46
+    W2, D2, FL, EAVE, PEAK = 0.62, 0.44, 0.40, BARN_EAVE, BARN_PEAK
     objs = []
     bare = M_['bare']
     # boards nailed over the cracks: on the front left of the pop door, and along both gable ends
@@ -835,8 +840,8 @@ def rustic_barn(seed=11):
         objs.append(coop.plank('patch', (x, 0.05, 0.83), (x, 0.3, 0.8), 0.07, 0.02, (sx, 0, 0), bare, jitter=0.6))
     # a sheet of corrugated tin over part of the front slope, with a few rust spots
     sy = -1
-    e0 = Vector((0, sy * (D2 + 0.16), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02)); down = e0 - r0; dn = down.normalized()
-    nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + 0.16)).normalized()
+    e0 = Vector((0, sy * (D2 + coop.OVER_FRONT), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02)); down = e0 - r0; dn = down.normalized()
+    nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + coop.OVER_FRONT)).normalized()
     tin = mat('r_tin', RUSTIC['tin'], rough=0.7, var=0.04); tin2 = mat('r_tin2', RUSTIC['tin2'], rough=0.7, var=0.04)     # (light and shade of the corrugations)
     rust = mat('r_rust', RUSTIC['rust'], rough=0.9)
     xa, xb, ta, tb = 0.08, 0.5, 0.3, 0.78
@@ -1198,12 +1203,13 @@ def shed_barn(seed=33):
     return root
 
 
-def _cosy_bits(r, name, t, seed=35, porch=True, eave=1.02, peak=1.46, box_z=0.98):
+def _cosy_bits(r, name, t, seed=35, porch=True, eave=None, peak=None, box_z=None, over=None):
     """What makes the barn cosy: sage trim, a porch with a bench and a lantern on its left side (not on the two-storey
     Deluxe), a window box (at box_z) on the right gable, a lantern by the hens' door, the automatic door's box over it and
     its little solar panel on the roof (Audrey, 27 Oct: "starting at cosy the coop door are automatic"), flower pots,
     stepping stones."""
     random.seed(seed)
+    eave = BARN_EAVE if eave is None else eave; peak = BARN_PEAK if peak is None else peak; box_z = eave - 0.04 if box_z is None else box_z
     sage = mat('bx_sage', BARN['sage'], rough=0.6, spec=0.25, var=0.04, grain=0.12, grain_scale=G)
     _swap(r, {'trim'}, sage)
     objs = []
@@ -1219,8 +1225,9 @@ def _cosy_bits(r, name, t, seed=35, porch=True, eave=1.02, peak=1.46, box_z=0.98
     objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.045, 0.925), m=box_m, bevel=0.008, segs=1))
     objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, 0.925), m=led, seg=8, rings=4))
     objs.append(cyl('autocable', 0.005, eave - 0.96, (-0.36, -D2 - 0.03, (eave + 0.96) / 2), m=box_m, verts=5, bevel=0.0))
-    e0 = Vector((0, -(D2 + 0.16), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); dn = (e0 - r0).normalized()
-    nrm = Vector((0, -(peak - eave + 0.08), D2 + 0.16)).normalized()
+    ov = coop.OVER_FRONT if over is None else over                 # (the slates' overhang at the front; the Deluxe's copper roof its own)
+    e0 = Vector((0, -(D2 + ov), eave - 0.06)); r0 = Vector((0, 0, peak + 0.02)); dn = (e0 - r0).normalized()
+    nrm = Vector((0, -(peak - eave + 0.08), D2 + ov)).normalized()
     c = r0 + (e0 - r0) * 0.62 + nrm * 0.075 + Vector((-0.34, 0, 0))
     objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
     cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
@@ -1390,7 +1397,7 @@ def deluxe_barn(kind=None):
     for sx in (-1, 1):                                             # a window upstairs in each gable, flowers under it
         window(objs, sx * (W2 + 0.035), 0.0, 1.27, 0.22, 0.24, trim, m['glass'], normal=(sx, 0, 0), box_flowers=(trim,) + tuple(C('dxf%d' % i, FLOWERS[i], rough=0.5) for i in range(6)) if sx < 0 else None)
     _own(objs, r)
-    _cosy_bits(r, 'deluxe_rir', 4, porch=False, eave=EAVE, peak=PEAK, box_z=1.1)
+    _cosy_bits(r, 'deluxe_rir', 4, porch=False, eave=EAVE, peak=PEAK, box_z=1.1, over=0.16)
     objs = []
     white = mat('bx_cupola', BARN['cupola'], rough=0.6, var=0.04, grain=0.12, grain_scale=G); louvre = _barn_m('louvre', rough=0.85)
     z0 = PEAK + 0.02; s = 0.3; h = 0.26
@@ -3750,6 +3757,7 @@ def xmas_star():
     objs = []; gold = C('xm_star', XMAS['gold'], rough=0.3, emission=(XMAS['gold'], 0.5))
     objs.append(cyl('xsrod', 0.01, 0.16, (0, 0, 0.08), m=C('gold', '#d4a640', rough=0.3, metal=0.9), verts=6, bevel=0.0))
     star(objs, 0, 0, 0.3, 0.15, gold, th=0.04)
+    star(objs, 0, 0, 0.3, 0.15, gold, th=0.04); objs[-1].rotation_euler.z = math.radians(90)      # (a second, crossed: a star from every side)
     return finish(objs, 'xmas_star')
 
 

@@ -7,8 +7,10 @@ import coops, coop, farm_layout
 from mathutils import Vector
 name, out = sys.argv[-2], sys.argv[-1]
 import common; common.OUT = os.path.dirname(out); out = os.path.basename(out)
+if os.environ.get('OVER'): coop.OVER_FRONT = float(os.environ['OVER'])          # (the barn's front overhang, to compare)
 reset(); coops.reset_mats(); coop.PEN = dict(farm_layout.NEW['pen'])
-getattr(coops, name)()
+ALIAS = {'box_rir': 'box_barn', 'shed_rir': 'shed_barn', 'cosy_rir': 'cosy_barn', 'deluxe_rir': 'deluxe_barn'}       # (the Red Barn's looks' own names)
+(coops.HOUSES[name[6:]] if name.startswith('house_') else getattr(coops, ALIAS.get(name, name)))()
 scn = bpy.context.scene; lighting(scn)
 for k, yaw in enumerate([float(a) for a in os.environ.get('YAWS', '45,-30,120').split(',')]):
     p, y = math.radians(float(os.environ.get('PITCH', 42))), math.radians(yaw)

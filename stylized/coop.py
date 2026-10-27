@@ -76,6 +76,10 @@ def pop_trim(objs, z0, trim, D2, x=-0.31):
         objs.append(plank('ptrim', p, q, 0.045, 0.02, (0, -1, 0), trim, jitter=0.3))
 
 
+OVER_FRONT = 0.1                          # the Red Barn's roof over its front (0.16 behind; Audrey's polish list, 27 Oct: from some
+                                          # sides its roof hid most of the nest window)
+
+
 def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None, eave=1.02, peak=1.46, roof=None):
     """window: (x0, x1, z0, z1), an opening left in the front boards (the nest window; coops.red_barn adds the rest).
     eave, peak: taller for a second floor (the barn door stays its height); roof: fn(objs, W2, D2, EAVE, PEAK) instead of
@@ -112,7 +116,7 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None, eave=1.02, peak
             for (xa, xb, za, zb) in pieces:
                 if xb - xa > 0.012 and zb - za > 0.01:
                     objs.append(plank('wall', ((xa + xb) / 2, y, za), ((xa + xb) / 2, y, zb), (xb - xa) * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
-                continue
+            continue                                        # (not a whole board over the opening too: the window and the hens' door open)
             objs.append(plank('wall', (x, y, FL + 0.02), (x, y, z1), w * 0.96, 0.03, (0, out, 0), m['red'], jitter=0.4))
     # front (-y) and back (+y): straight tops at the eave
     POP = (-0.31 - POP_W / 2, -0.31 + POP_W / 2, FL, FL + POP_H) if window else (-0.42, -0.2, FL, FL + 0.27)   # the hens' pop door
@@ -164,9 +168,10 @@ def build(loc=(0, 0, 0), yaw=0.0, seed=5, pen=True, window=None, eave=1.02, peak
         objs.append(plank('slat', c + Vector((-0.09, 0, 0)), c + Vector((0.09, 0, 0)), 0.022, 0.018, nrm, m['darkwood'], jitter=1.5))
     # ---- roof: rows of slate shingles, staggered, with a ridge cap and white bargeboards
     def roof_side(sy):
-        e0 = Vector((0, sy * (D2 + 0.16), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02))
+        ov = OVER_FRONT if sy < 0 else 0.16                # (the front's overhang shorter: the nest window under it in sight)
+        e0 = Vector((0, sy * (D2 + ov), EAVE - 0.06)); r0 = Vector((0, 0, PEAK + 0.02))
         down = (e0 - r0); slope = down.length; dn = down.normalized()
-        nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + 0.16)).normalized()
+        nrm = Vector((0, sy * (PEAK - EAVE + 0.08), D2 + ov)).normalized()
         rows = int(slope / 0.075)
         for r in range(rows + 1):
             t = 1 - r / rows

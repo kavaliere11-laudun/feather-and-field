@@ -29,6 +29,9 @@ def top_of(name):
 
 
 EAVES = {}
+NOT_EAVES = {'lantern', 'lanternb', 'lanterng', 'lcap', 'larm', 'lroof', 'lpost', 'lchain', 'lamp', 'bhouse', 'broof', 'bhole', 'bperch',
+             'dpole', 'dbox', 'droof', 'dledge', 'dhole', 'dgable', 'dove', 'dovehead', 'dovebeak', 'wsprig', 'wcone', 'wbow', 'wknot',
+             'plant', 'pot', 'flower', 'leafp', 'hleaf', 'hydr', 'crown', 'apple', 'trunk', 'swbar'}      # (in front of a roof, not its eave)
 
 
 def eave_of(name):
@@ -42,8 +45,11 @@ def eave_of(name):
     for i in range(N + 1):
         x = -W + i * 2 * W / N; e = None
         for j in range(100):
-            y = -1.35 + j * 0.0135
-            hit, loc, nrm, idx, ob, mw = scn.ray_cast(dg, Vector((x, y, 6.0)), Vector((0, 0, -1)))
+            y = -1.35 + j * 0.0135; z0 = 6.0
+            for _ in range(6):                                     # (looking past a lantern, its post, a birdhouse, a dovecote...)
+                hit, loc, nrm, idx, ob, mw = scn.ray_cast(dg, Vector((x, y, z0)), Vector((0, 0, -1)))
+                if not (hit and ob and ob.name.split('.')[0] in NOT_EAVES): break
+                z0 = loc.z - 0.002
             if hit and loc.z > 0.55 and nrm.z > 0.2: e = loc.copy(); break
         edge.append(e)
     keep = []

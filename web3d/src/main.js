@@ -2175,6 +2175,7 @@ class Bird {
     this.roost = null; this.asleep = true; this.act = null; this.route = null; this.then = null;
     this.root.position.set(G.pop[0], G.house, D2 - 0.3); this.root.rotation.y = 0; this.root.visible = false;
     this.rig.indoor(null);
+    if (inside.open && !inside.busy && inside.plot === this.plot) insideArrive(this);      // (you're inside: she comes in where you see her)
   }
   wakeUp() {                               // out again: from just inside the pop door, down the ramp into the yard
     const G = nestOf(this.plot), ground = 0.015, Y = penOf(this.plot).yard;
@@ -5600,13 +5601,59 @@ function openInside(plot) {
     if (inside.panMax > 0.05 && !inside.hinted) { inside.hinted = true; hint(vt('inside_drag')); }
   }, 300);
 }
+// a bird of the coop you're looking inside comes in for the night while you watch: in at the pop door, across the straw,
+// a hop up onto a free spot on a perch (the chicks to their corner, anyone else in the straw), then she settles and dozes
+// off (Audrey's polish list, 27 Oct: she used to wait outside till you came out)
+function insideArrive(b) {
+  const R = inside.rooms[inside.plot.breed]; if (!R || !R.pop) return false;
+  const low = R.perches[0], high = R.perches[1], mid = (low.x0 + low.x1) / 2, gap = 0.29;
+  const taken = (x, y) => inside.birds.some(o => Math.abs(o.root.position.x - x) < 0.14 && Math.abs((o.arrive ? o.arrive.to.y : o.root.position.y) - y) < 0.06);
+  let to;
+  if (b.kind === 'chick') { const n = inside.birds.filter(o => o.kind === 'chick').length; to = [R.chicks[0] + ((n % 3) - 1) * 0.12, R.chicks[1] + 0.02, R.chicks[2] + (n % 2) * 0.05]; }
+  else {
+    const spots = [...[0, -1, 1].map(k => [mid + k * gap, low.top, low.z]), ...[0.5, -0.5, 1.5, -1.5].map(k => [Math.max(high.x0, Math.min(high.x1, mid + k * gap)), high.top, high.z])];
+    to = spots.find(c => !taken(c[0], c[1])) || [-0.24 + (inside.birds.length % 3) * 0.27, 0.03, 0.08 + Math.floor(inside.birds.length / 3) * 0.06];
+  }
+  inside.saved.push({ b, parent: b.root.parent, pos: b.root.position.clone(), rot: b.root.rotation.y });
+  inside.group.add(b.root); b.root.position.set(R.pop[0] + 0.1, 0.02, R.pop[2] - 0.04); b.root.rotation.y = -Math.PI / 2;
+  b.root.visible = true; b.rig.indoor(null); b.rig.sleepy(false); b.woken = 99;
+  const A = b.A; A.walk = 0; A.peck = 0; A.flap = 0; A.crow = 0; A.kick = 0; A.ruffle = 0; A.turn = 0; A.sing = 0; A.cluck = 0; A.kawk = 0;
+  A.proud = 0; A.duck = 0; A.stretch = 0; A.hopT = -1; A.sit = 0; A.brood = 0; A.sleep = 0; A.lookYaw = 0; A.lookTilt = 0;
+  b.arrive = { phase: 'walk', t: 0, to: new THREE.Vector3(...to) };
+  inside.birds.push(b);
+  insideEls.title.textContent = vt(inside.birds.length === 1 ? 'inside1' : 'insiden', { coop: GAME_MODE && inside.plot.gc ? game.coopName(inside.plot.gc) : STYLE_NAMES[inside.plot.breed], n: inside.birds.length });
+  wake(4000);
+  return true;
+}
+function arriveStep(b, dt) {
+  const M = b.arrive, A = b.A, p = b.root.position, up = M.to.y > 0.1;
+  M.t += dt;
+  if (M.phase === 'walk') {                              // across the straw to just in front of her spot
+    const gx = M.to.x, gz = M.to.z + (up ? 0.13 : 0), dx = gx - p.x, dz = gz - p.z, L = Math.hypot(dx, dz);
+    if (L > 0.012 && M.t < 12) {
+      const want = Math.atan2(dx, dz); let d = want - b.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
+      b.root.rotation.y += d * Math.min(1, dt * 6);
+      const k = Math.min(L, dt * 0.3) / L; p.x += dx * k; p.z += dz * k; p.y = 0.02;
+      A.walk += (1 - A.walk) * Math.min(1, dt * 10); A.phase = (A.phase || 0) + dt * (b.stepRate || 7);
+    } else { M.phase = up ? 'hop' : 'settle'; M.t = 0; M.from = p.clone(); }
+  } else if (M.phase === 'hop') {                        // a flap and a hop up onto the perch
+    const k = Math.min(1, M.t / 0.55);
+    A.walk *= 0.8; A.flap = Math.sin(k * Math.PI);
+    p.x = M.from.x + (M.to.x - M.from.x) * k; p.z = M.from.z + (M.to.z - M.from.z) * k; p.y = M.from.y + (M.to.y - M.from.y) * k + Math.sin(k * Math.PI) * 0.12;
+    if (k >= 1) { M.phase = 'settle'; M.t = 0; A.flap = 0; }
+  } else {                                               // turned to the room, sits down, a ruffle, then dozes off
+    let d = -b.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); b.root.rotation.y += d * Math.min(1, dt * 4);
+    A.walk *= 0.8; A.sit += (1 - A.sit) * Math.min(1, dt * 3); A.brood = A.sit;
+    if (M.t > 1.3) { b.arrive = null; b.woken = 0.8; A.sit = 1; A.brood = 1; b.root.rotation.y = 0; }
+  }
+}
 function closeInside(note) {
   if (!inside.open || inside.busy) return;
   inside.busy = true; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;
   setTimeout(() => {
     for (const s of inside.saved) {
       s.parent.add(s.b.root); s.b.root.position.copy(s.pos); s.b.root.rotation.y = s.rot;
-      s.b.root.visible = !s.b.asleep; s.b.A.sleep = 0; s.b.rig.sleepy(false);
+      s.b.root.visible = !s.b.asleep; s.b.A.sleep = 0; s.b.rig.sleepy(false); s.b.arrive = null;
     }
     for (const f of inside.fx) f.sprite.removeFromParent();
     inside.fx = []; inside.birds = []; inside.saved = [];
@@ -5634,6 +5681,7 @@ function updateInside(dt) {
   const v = new THREE.Vector3();
   for (const b of inside.birds) {
     const A = b.A, awake = b.woken > 0;
+    if (b.arrive) { A.t += dt; A.dt = dt; arriveStep(b, dt); b.rig.pose(A); continue; }      // (coming in for the night as you watch)
     b.woken -= dt;
     A.t += dt; A.dt = dt;
     A.sleep += ((awake ? 0 : 1) - A.sleep) * Math.min(1, dt * (awake ? 5 : 1.2));
