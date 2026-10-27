@@ -3427,29 +3427,29 @@ def deluxe_bra():
     over = 0.2; kz = (PEAK + 0.02 - (EAVE - 0.06)) / (D2 + over)
     roofz = lambda y: PEAK + 0.02 + y * kz + 0.035                 # (the shingles' face, front slope)
     roofy = lambda z: (z - PEAK - 0.02 - 0.035) / kz
-    gx, gw, yf = 0.08, 0.3, -D2 - over + 0.03
-    zb, zs, zp = EAVE - 0.1, EAVE + 0.2, EAVE + 0.46
+    gx, gw, yf = 0.08, 0.27, -D2 - 0.06                          # (set up the slope, clear of the eave: the window in sight)
+    zb = roofz(yf) - 0.04; zs = zb + 0.24; zp = zs + 0.24
     n = 8
     for i in range(n):
         u = gx - gw + (i + 0.5) * 2 * gw / n; zt = zs + (zp - zs) * (1 - abs(u - gx) / gw) - 0.02
         objs.append(plank('dgboard', (u, yf, zb), (u, yf, zt), 2 * gw / n * 0.96, 0.03, (0, -1, 0), barge, jitter=0.4))
-    window(objs, gx, yf - 0.02, zs + 0.0, 0.2, 0.2, trim, glass)
+    window(objs, gx, yf - 0.02, zb + 0.14, 0.2, 0.18, trim, glass)
     for sx in (-1, 1):
         x = gx + sx * gw
         objs.append(_tri('dgcheek', (x, yf, zb), (x, yf, zs), (x, roofy(zs), zs), (1, 0, 0), 0.03, barge))
         objs.append(plank('dgcorner', (x, yf - 0.005, zb), (x, yf - 0.005, zs), 0.05, 0.035, (0, -1, 0), log, jitter=0.2))
         ea, ri = Vector((gx + sx * (gw + 0.08), 0, zs - 0.04)), Vector((gx, 0, zp + 0.03))
         yb = roofy(zp) + 0.05; nrm = Vector((sx * (ri.z - ea.z), 0, abs(ri.x - ea.x))).normalized(); dn = (ea - ri).normalized(); SL = (ea - ri).length
-        objs.append(plank('dgroof', (ea + ri) / 2 + Vector((0, yf - 0.1, 0)), (ea + ri) / 2 + Vector((0, yb, 0)), SL + 0.03, 0.03, nrm, green, jitter=0.0, bevel=0.006))
+        objs.append(plank('dgroof', (ea + ri) / 2 + Vector((0, yf - 0.06, 0)), (ea + ri) / 2 + Vector((0, yb, 0)), SL + 0.03, 0.03, nrm, green, jitter=0.0, bevel=0.006))
         rows = 4
         for rr in range(rows):                                     # (its shingles, like the big roof's)
-            base = ri.lerp(ea, (rr + 0.55) / rows) + nrm * (0.022 + 0.005 * (rr % 2)); y = yf - 0.1 + (0.045 if rr % 2 else 0.0)
+            base = ri.lerp(ea, (rr + 0.55) / rows) + nrm * (0.022 + 0.005 * (rr % 2)); y = yf - 0.06 + (0.045 if rr % 2 else 0.0)
             while y < yb - 0.04:
                 q = base + Vector((0, y + 0.045, 0))
                 objs.append(plank('dgsh', q - dn * SL / rows * 0.62, q + dn * SL / rows * 0.62, 0.085, 0.016, nrm, green, jitter=1.2, bevel=0.004))
                 y += 0.09
         _log(objs, (gx - sx * 0.1, yf - 0.08, zp - 0.05), (gx + sx * 0.07, yf - 0.08, zp + 0.11), 0.02, bark, endg, verts=8, name='xlog')
-    objs.append(cyl('dgridge', 0.035, roofy(zp) - yf + 0.12, (gx, (yf - 0.1 + roofy(zp)) / 2, zp + 0.07), (math.radians(90), 0, 0), m=ridge, verts=10, bevel=0.0))
+    objs.append(cyl('dgridge', 0.035, roofy(zp) - yf + 0.08, (gx, (yf - 0.06 + roofy(zp)) / 2, zp + 0.07), (math.radians(90), 0, 0), m=ridge, verts=10, bevel=0.0))
     # crossed logs at both gables' peaks
     for sx in (-1, 1):
         xg = sx * (W2 + 0.22)
