@@ -27,7 +27,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -1047,7 +1047,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / BREEDS.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
-    plot.pen = coopLook(plot).penT >= 0 ? tierPen(coopLook(plot).penT) : PEN;      // (its pen: the birds' yard, what's in it, its gate)
+    plot.pen = coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN;      // (its pen: the birds' yard, what's in it, its gate)
     addNest(frame, plot);
     if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
@@ -1091,27 +1091,32 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
 // lean-to shed, a small pen), 2 Snug (the barn and pen as they were), 3 Cosy (a porch, lanterns, flowers; a bigger pen),
 // 4 Deluxe (a second floor, a cupola and the vane; the biggest pen, white pickets and roses): [house, fence, yard]. The
 // game's Red Barns by their tier, and the test page's ?looks; the other coops keep their rustic, plain and Deluxe looks
-const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence_t1', 'pen_t1'], ['house_rir', 'fence', 'pen_base'], ['cosy_rir', 'fence_t3', 'pen_t3'], ['deluxe_rir', 'fence_t4', 'pen_t4']] };
+const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence_t1', 'pen_t1'], ['house_rir', 'fence', 'pen_base'], ['cosy_rir', 'fence_t3', 'pen_t3'], ['deluxe_rir', 'fence_t4', 'pen_t4']],
+  orp: [['box_orp', 'fence_t0', 'pen_t0_orp'], ['shed_orp', 'fence_t1', 'pen_t1_orp'], ['house_orp', 'fence', 'pen_base'], ['cosy_orp', 'fence_t3', 'pen_t3_orp'], ['deluxe_orp', 'fence_t4', 'pen_t4_orp']] };      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
 const LOOKS5 = !GAME_MODE && params.has('looks');
+// (a breed's looks in the game once its upgrades are (game.js UPGRADES); on the test page's ?looks as soon as they're made)
+const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5));
 function coopLook(plot) {
-  const t = Math.max(0, Math.min(4, plot.tier || 0)), T = (GAME_MODE || LOOKS5) && TIER_LOOK[plot.breed] && parts[TIER_LOOK[plot.breed][0][0]] ? TIER_LOOK[plot.breed][t] : null;
+  const t = Math.max(0, Math.min(4, plot.tier || 0)), T = hasLooks(plot.breed) ? TIER_LOOK[plot.breed][t] : null;
   if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4, penT: t };
   return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
 }
 // a coop's pen for its birds (where they may walk, what's in the way, the feeder, the gate, where they start): the Snug
 // one is the farm's own (layout.json); the others from coops.json's pens (stylized/coops.py PENS), in the same shape
+// (each breed's coop its own garden: coops.json pens[breed][t])
 const TIER_PENS = {};
 const penOf = plot => (plot && plot.pen) || PEN;
-function tierPen(t) {
-  const P = COOPS.pens && COOPS.pens[t];
+const pensOf = breed => (COOPS.pens && (COOPS.pens[breed] || COOPS.pens.rir)) || {};
+function tierPen(breed, t) {
+  const P = pensOf(breed)[t];
   if (t === 2 || !P) return PEN;
-  if (TIER_PENS[t]) return TIER_PENS[t];
+  if (TIER_PENS[breed + t]) return TIER_PENS[breed + t];
   const yard = { min: [P.min[0] + 0.2, 0, 0.6], max: [P.max[0] - 0.2, 0, P.max[1] - 0.15] }, Y0 = PEN.yard;
   const obstacles = [...P.hay.map(h => [h[0], 0, h[1], 0.38]), [P.feeder[0], 0, P.feeder[1], 0.22], [P.dish[0], 0, P.dish[1], P.dish_r || 0.22], [-0.31, 0, 0.75, 0.18], [-0.31, 0, 1.0, 0.16], ...(P.sack ? [[P.sack[0], 0, P.sack[1], 0.2]] : [])];
   const fit = (v, a0, a1, b0, b1) => b0 + (v - a0) / (a1 - a0) * (b1 - b0);      // (the Snug pen's start spots, fitted into this yard)
   const hens = PEN.hens.map(h => ({ ...h, pos: [fit(h.pos[0], Y0.min[0], Y0.max[0], yard.min[0], yard.max[0]), h.pos[1], fit(h.pos[2], Y0.min[2], Y0.max[2], yard.min[2], yard.max[2])] }));
   if (P.play) obstacles.push(...P.play.keep.map(k => [k[0], 0, k[1], k[2]]));        // (the play things: release 4's Cosy and Deluxe)
-  return (TIER_PENS[t] = { ...PEN, pen: { min: [P.min[0] - 0.05, 0, P.min[1] - 0.05], max: [P.max[0] + 0.05, 0, P.max[1] + 0.05] }, yard, obstacles, feeder: [P.feeder[0], 0, P.feeder[1]], gate: [P.gate - 0.1, 0, P.max[1]], hens, play: P.play || null });
+  return (TIER_PENS[breed + t] = { ...PEN, pen: { min: [P.min[0] - 0.05, 0, P.min[1] - 0.05], max: [P.max[0] + 0.05, 0, P.max[1] + 0.05] }, yard, obstacles, feeder: [P.feeder[0], 0, P.feeder[1]], gate: [P.gate - 0.1, 0, P.max[1]], hens, play: P.play || null });
 }
 // a coop's parts drawn in its style's batch: [model, where in its frame]
 function coopParts(plot) {
@@ -4101,16 +4106,17 @@ const APRON = { x0: -0.3, z0: 1.67, x1: 0.66, z1: 2.45 };    // the ground just 
 // (release 4: a coop's pen by its look, bigger with each: the Snug one is FOOT and APRON; c: a coop in the save, or
 // { breed, tier } for one to come)
 const FOOTS = {}, APRONS = {};
-function penTierOf(c) { const t = c && TIER_LOOK[baseBreed(c.breed)] && parts[TIER_LOOK[baseBreed(c.breed)][0][0]] ? Math.max(0, Math.min(4, c.tier || 0)) : 2; return t !== 2 && COOPS.pens && COOPS.pens[t] ? t : 2; }
+function penTierOf(c) { const t = c && hasLooks(baseBreed(c.breed)) ? Math.max(0, Math.min(4, c.tier || 0)) : 2; return t !== 2 && pensOf(baseBreed(c.breed))[t] ? t : 2; }
+const penKey = c => { const t = penTierOf(c); return t === 2 ? 2 : baseBreed(c.breed) + t; };
 function footOf(c) {
   const t = penTierOf(c); if (t === 2) return FOOT;
-  const P = COOPS.pens[t];
-  return FOOTS[t] || (FOOTS[t] = { x0: P.min[0] - 0.065 + COOP_SHIFT.x, z0: P.min[1] - 0.07 + COOP_SHIFT.z, x1: P.max[0] + 0.065 + COOP_SHIFT.x, z1: P.max[1] + 0.07 + COOP_SHIFT.z });
+  const P = pensOf(baseBreed(c.breed))[t], key = penKey(c);
+  return FOOTS[key] || (FOOTS[key] = { x0: P.min[0] - 0.065 + COOP_SHIFT.x, z0: P.min[1] - 0.07 + COOP_SHIFT.z, x1: P.max[0] + 0.065 + COOP_SHIFT.x, z1: P.max[1] + 0.07 + COOP_SHIFT.z });
 }
 function apronOf(c) {
   const t = penTierOf(c); if (t === 2) return APRON;
-  const F = footOf(c), g = COOPS.pens[t].gate + COOP_SHIFT.x;
-  return APRONS[t] || (APRONS[t] = { x0: g - 0.58, z0: F.z1, x1: g + 0.38, z1: F.z1 + 0.78 });
+  const F = footOf(c), g = pensOf(baseBreed(c.breed))[t].gate + COOP_SHIFT.x, key = penKey(c);
+  return APRONS[key] || (APRONS[key] = { x0: g - 0.58, z0: F.z1, x1: g + 0.38, z1: F.z1 + 0.78 });
 }
 const spotOf = c => ({ x: c.x, z: c.z, deg: c.deg });
 function inSpot(sp, x, z) { const a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a), dx = x - sp.x, dz = z - sp.z; return [dx * c - dz * s, dx * s + dz * c]; }
@@ -4257,7 +4263,7 @@ function retier(p) {
   for (const b of p.birds) if (b.play) endPlay(b, true);
   if (p.toys) { p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
   const L = coopLook(p);
-  p.pen = L.penT >= 0 ? tierPen(L.penT) : PEN;
+  p.pen = L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN;
   p.block = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
   if (penOf(p).play && parts.swing_seat) addToys(p, penOf(p).play, part);
@@ -4294,7 +4300,7 @@ function viewAbove(x, z, size) {
 }
 const FOOT_TEXS = {};
 function footMark(gc) {
-  const FOOT = footOf(gc), APRON = apronOf(gc), key = penTierOf(gc);
+  const FOOT = footOf(gc), APRON = apronOf(gc), key = penKey(gc);
   const X0 = FOOT.x0 - 0.25, X1 = FOOT.x1 + 0.25, Z0 = FOOT.z0 - 0.25, Z1 = APRON.z1 + 0.15, w = X1 - X0, h = Z1 - Z0;
   let FOOT_TEX = FOOT_TEXS[key];
   if (!FOOT_TEX) {
@@ -5865,6 +5871,7 @@ window.__farm = {
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
+  lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },

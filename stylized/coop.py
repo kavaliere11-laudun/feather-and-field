@@ -256,6 +256,25 @@ def fountain(objs, x, y, m):
             objs.append(cyl('fspill', 0.009, (q - p).length, (p + q) / 2, (q - p).to_track_quat('Z', 'Y').to_euler(), m['water'], verts=5, bevel=0.0))
 
 
+def trough(objs, x, y, m):
+    """An old stone trough with a cast-iron pump at its end, a drip from the spout."""
+    stone = mat('ftrough', '#a9a396', rough=0.85, var=0.06, bump=0.15, bump_scale=60); iron = mat('fpump', '#2f4a3c', rough=0.45, metal=0.5)
+    L, Wd, H, T = 0.56, 0.28, 0.17, 0.045
+    x = x - 0.05                                           # (trough and pump about the middle of its spot)
+    objs.append(box('trough', (L, Wd, H - 0.05), (x, y, (H - 0.05) / 2), m=stone, bevel=0.015, segs=2, jitter=0.003))
+    for (sx_, sy_, lx, ly) in ((0, 1, L, T), (0, -1, L, T), (1, 0, T, Wd - 2 * T), (-1, 0, T, Wd - 2 * T)):      # its sides, the water between
+        objs.append(box('trough', (lx, ly, 0.06), (x + sx_ * (L - T) / 2, y + sy_ * (Wd - T) / 2, H - 0.03), m=stone, bevel=0.012, segs=2, jitter=0.003))
+    objs.append(box('twater', (L - 2 * T + 0.01, Wd - 2 * T + 0.01, 0.01), (x, y, H - 0.03), m=m['water'], bevel=0.0))
+    px = x + L / 2 + 0.07
+    objs.append(box('pbase', (0.12, 0.12, 0.05), (px, y, 0.025), m=stone, bevel=0.008, segs=1))
+    objs.append(cyl('pbody', 0.042, 0.46, (px, y, 0.28), m=iron, verts=12, bevel=0.006))
+    objs.append(cyl('pcap', 0.05, 0.04, (px, y, 0.53), m=iron, verts=12, r2=0.03, bevel=0.004))
+    objs.append(sphere('pknob', 0.02, (px, y, 0.56), m=iron, seg=8, rings=5))
+    objs.append(cyl('pspout', 0.016, 0.13, (px - 0.07, y, 0.37), (0, math.radians(-100), 0), m=iron, verts=8, bevel=0.0))
+    objs.append(cyl('phandle', 0.01, 0.28, (px + 0.1, y, 0.56), (0, math.radians(-60), 0), m=iron, verts=6, bevel=0.0))
+    objs.append(cyl('pdrip', 0.007, 0.2, (px - 0.135, y, 0.24), m=m['water'], verts=5, bevel=0.0))
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
@@ -311,7 +330,17 @@ def build_pen(root, m):
     # for the deluxe please": an eight-sided cream hopper with windows of grain, a green copper roof like the barn's and a
     # gold ball on top, over a copper tray; the tray and its grain where the browser's grain sits)
     fx, fy = PEN['feeder']
-    if PEN.get('feeder_style') == 'deluxe':
+    if PEN.get('feeder_style') == 'cottage':                # (the Deluxe cottage's: a little barrel hopper under a cap of thatch)
+        oak = mat('fd_oak', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
+        thatch = mat('fd_thatch', '#c7a866', rough=0.9, var=0.07)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=oak, verts=20, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.085, 0.27, (fx, fy, 0.215), m=oak, verts=14, r2=0.075, bevel=0.008))
+        for z in (0.12, 0.31): objs.append(cyl('fhoop', 0.088 - (z - 0.12) * 0.05, 0.016, (fx, fy, z), m=iron, verts=14, bevel=0.0))
+        objs.append(cyl('froof', 0.15, 0.14, (fx, fy, 0.42), m=thatch, verts=14, r2=0.015, bevel=0.012))
+        objs.append(cyl('ffringe', 0.155, 0.035, (fx, fy, 0.36), m=thatch, verts=14, r2=0.15, bevel=0.006))
+        objs.append(sphere('fball', 0.025, (fx, fy, 0.5), m=thatch, seg=10, rings=6))
+    elif PEN.get('feeder_style') == 'deluxe':
         cu = mat('fd_cu', '#5c9a86', rough=0.42, spec=0.45, metal=0.25, var=0.06); cu2 = mat('fd_cu2', '#77b29e', rough=0.42, spec=0.45, metal=0.25, var=0.06)
         cream = mat('fd_cream', '#f1e9d8', rough=0.6, var=0.04, grain=0.12, grain_scale=(1.5, 26, 26)); gold = mat('fd_gold', '#d4a640', rough=0.3, metal=0.9)
         objs.append(cyl('tray', 0.17, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 8), m=cu, verts=8, bevel=0.01))
@@ -336,6 +365,7 @@ def build_pen(root, m):
     # water dish (a fountain in the Deluxe pen: Audrey, 27 Oct: "the water pot can become a fountain")
     wx, wy = PEN['dish']
     if PEN.get('fountain'): fountain(objs, wx, wy, m)
+    elif PEN.get('water') == 'trough': trough(objs, wx, wy, m)
     else:
       bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
       rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)

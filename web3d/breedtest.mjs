@@ -2,7 +2,7 @@
 // A fresh farm on a fake clock: nothing waiting, no red dot, Your coops lists the Red Barn and what level 5 brings. Level 5
 // (four fields): its card says a new breed has come (the Buff Orpingtons), "Place their coop now" and "Later" in sight;
 // Later: the red dot, Your coops offers it; placing it: a new rustic coop with its trio appears where it can stand; Cancel:
-// gone, still waiting; placed: on the farm with its trio for good (the dot gone, "Welcome, ...!", its rustic house, a full
+// gone, still waiting; placed: on the farm with its trio for good (the dot gone, "Welcome, ...!", its rustic house (the straw-bale hut, release 4), a full
 // feeder, each bird's card); a reload keeps it; level 6 straight from its card: the white Silkies; a save changed outside
 // (a breed's coop before its level, a breed twice) is checked and flagged.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
@@ -67,10 +67,10 @@ await p.tap('.gmove-go'); await run(1.5);
 s = await st();
 const after = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'orp'); return { hint: document.getElementById('hint').textContent, models: f.coopModels(), feed: +g.feedLeft(c).toFixed(2), trio: g.birdsIn(c.id).map(b => b.sex).sort().join(), tier: c.tier }; });
 ok('put down: on the farm for good with its trio, the red dot gone, "Welcome, ...!", its rustic house, a full feeder',
-  !s.move && s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && !s.dot && s.waiting === '' && T.welcome.test(after.hint) && after.models.includes('rustic_orp') && after.feed === 1 && after.trio === 'h,h,r' && after.tier === 0, { s, after });
+  !s.move && s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && !s.dot && s.waiting === '' && T.welcome.test(after.hint) && after.models.includes('box_orp') && after.feed === 1 && after.trio === 'h,h,r' && after.tier === 0, { s, after });
 await p.evaluate(() => { const f = window.__farm, i = f.coopPlots().findIndex(q => q.breed === 'orp'); f.coopCard(i); }); await run(0.3);
 t = await sheet();
-ok('its coop card: the Thatched Cottage, rustic, who lives there', T.thatched.test(t) && (fr ? /rustique/ : /rustic/).test(t), t);
+ok('its coop card: the Thatched Cottage, rustic, who lives there', T.thatched.test(t) && (fr ? /rustique/i : /rustic/i).test(t), t);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a reload keeps it
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();

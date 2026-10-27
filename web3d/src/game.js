@@ -76,6 +76,9 @@ const TEXT = {
     up_rir_mended: 'A little shed, half painted red, in a bigger pen.', up_rir_snug: 'The Red Barn, in a roomier pen.',
     up_rir_cosy: 'A porch with a bench, lanterns, flowers, and a bigger garden with a swing, a sand bath and a cabbage to peck.',
     up_rir_deluxe: 'A second floor, a copper roof with a cupola, a fountain, a xylophone, a sandbox and the biggest garden, with white pickets and roses.',
+    up_orp_mended: 'A little woven hazel hut, half daubed with clay, under new thatch, in a bigger pen.', up_orp_snug: 'The Thatched Cottage, in a roomier pen.',
+    up_orp_cosy: 'Hollyhocks, roses, a bench under a rose arch, a lantern, and a bigger garden with a swing, a tin bath of sand and a cabbage to peck.',
+    up_orp_deluxe: 'A taller cottage in Suffolk pink with windows in its thatch and a straw pheasant on the roof, a pump and trough, a sand pit under a thatched parasol, a xylophone and the biggest garden, with white pickets and roses.',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -269,6 +272,9 @@ const TEXT = {
     up_rir_mended: 'Une petite cabane, à moitié peinte en rouge, dans un enclos plus grand.', up_rir_snug: 'La Grange rouge, dans un enclos plus spacieux.',
     up_rir_cosy: 'Un porche avec un banc, des lanternes, des fleurs, et un jardin plus grand avec une balançoire, un bain de sable et un chou à picorer.',
     up_rir_deluxe: 'Un étage de plus, un toit de cuivre et un lanternon, une fontaine, un xylophone, un bac à sable et le plus grand jardin, avec palissade blanche et roses.',
+    up_orp_mended: 'Une petite hutte de noisetier tressé, à moitié enduite d’argile, sous un chaume neuf, dans un enclos plus grand.', up_orp_snug: 'La Chaumière, dans un enclos plus spacieux.',
+    up_orp_cosy: 'Des roses trémières, des roses, un banc sous une arche fleurie, une lanterne, et un jardin plus grand avec une balançoire, une bassine de sable et un chou à picorer.',
+    up_orp_deluxe: 'Une chaumière plus haute, peinte en rose pâle, avec des fenêtres dans le chaume et un faisan de paille sur le toit, une pompe et son abreuvoir, un bac à sable sous un parasol de chaume, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -712,11 +718,14 @@ export const FEED_DAYS = 2;                           // a full feeder keeps its
 // nothing changes"), Cosy, Deluxe. Each look helps a little: the eggs (Rustic: the afternoon egg missed one day in three,
 // Mended one in six; Snug: two a day; Cosy: an evening egg too one day in four, Deluxe one in two), the chicks' ratings
 // (a little lower in a Rustic coop, a little higher in a Cosy or Deluxe one), and a cuddle counting again sooner (Cosy 5
-// hours, Deluxe 4, else 6). So far only the Red Barn has its five looks: the others stay as they were (their rustic look
-// new, else the plain one; the eggs, chicks and cuddles of a Snug coop) until theirs are made.
+// hours, Deluxe 4, else 6). So far the Red Barn and the Thatched Cottage have their five looks: the others stay as they were
+// (their rustic look new, else the plain one; the eggs, chicks and cuddles of a Snug coop) until theirs are made.
 export const COOP_LOOKS = ['rustic', 'mended', 'snug', 'cosy', 'deluxe'];
 export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 100], kids: [-0.2, -0.1, 0, 0.15, 0.3], happyH: [6, 6, 6, 5, 4], skip: [1 / 3, 1 / 6, 0, 0, 0], extra: [0, 0, 0, 0.25, 0.5] };
-export const UPGRADES = ['rir'];
+// each breed's looks came with a version of the save (cv): a farm from before them has that breed's coops Snug (nothing
+// changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct)
+export const LOOKS_CV = { rir: 1, orp: 2 }, CV = 2;
+export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
 export const CATCH_UP = 2 * 86400e3;                  // away longer than two days: only the last two count
@@ -763,7 +772,7 @@ export function checkFarm(d, now = Date.now()) {
   out.lang = d.lang === 'fr' ? 'fr' : 'en';
   out.coins = int(d.coins, 0, 1e9, 0);
   out.xp = int(d.xp, 0, 1e9, 0);
-  if (d.cv === 1) out.cv = 1;                         // (a farm from after the coops' looks came: load() makes the older ones' coops Snug)
+  if (Number.isInteger(d.cv) && d.cv >= 1 && d.cv <= CV) out.cv = d.cv;      // (which breeds' looks the farm has had: load() makes the coops of later ones Snug)
   const look = d.farmer && d.farmer.look === 'f' ? 'f' : 'm';
   out.farmer = { look, name: cleanName(d.farmer && d.farmer.name) };
   // the outfits bought (known ones, once each, from their level) and the one worn (one bought, or the classic)
@@ -1422,7 +1431,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = lang === 'fr' ? 'fr' : 'en';
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: 1, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
@@ -1629,7 +1638,8 @@ export class Game {
     if (!d) return null;
     this.edited = raw.s !== seal(JSON.stringify(raw.d)) || !fits(d, raw.d);
     for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
-    if (d.cv !== 1) { for (const c of d.coops) c.tier = Math.max(2, c.tier); d.cv = 1; }      // (a farm from before the coops' looks: its coops are Snug, release 4)
+    const cv = d.cv || 0;                              // (a farm from before the coops' looks: its coops are Snug, release 4; from before a breed's: that breed's)
+    if (cv < CV) { for (const c of d.coops) if (cv === 0 || (LOOKS_CV[baseBreed(c.breed)] || 0) > cv) c.tier = Math.max(2, c.tier); d.cv = CV; }
     return d;
   }
   wipe() { try { this.store && this.store.removeItem(SAVE_KEY); } catch (e) { /* */ } this.data = null; }

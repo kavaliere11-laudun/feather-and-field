@@ -62,10 +62,17 @@ for t in (0, 1, 3, 4):
 assert coops.NESTS['house_rir'] == _keep, 'the looks must keep the barn\'s nest'
 BUDGET.update({'swing_seat': 600, 'cabbage': 900})
 one('swing_seat', coops.swing_seat); one('cabbage', coops.cabbage); LOOKS += ['swing_seat', 'cabbage']        # (the moving play things)
-PENS = {t: dict(coops.pen_info(t), play=coops.play_info(t)) for t in range(5)}          # each look's pen for the birds (glTF axes)
+# the Thatched Cottage's five looks (Rustic box_orp, Mended shed_orp, Snug house_orp, Cosy cosy_orp, Deluxe deluxe_orp) in the same pens
+BUDGET.update({'box_orp': 15000, 'shed_orp': 14000, 'cosy_orp': 18500, 'deluxe_orp': 20000})
+_keep = dict(coops.NESTS['house_orp'])
+for n_, fn in (('box_orp', coops.box_orp), ('shed_orp', coops.shed_orp), ('cosy_orp', coops.cosy_orp), ('deluxe_orp', coops.deluxe_orp)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_orp'] == _keep, 'the looks must keep the cottage\'s nest'
+BUDGET.update({'pen_t0_orp': 4200, 'pen_t1_orp': 4600, 'pen_t3_orp': 8500, 'pen_t4_orp': 10500})
+for t in (0, 1, 3, 4): one('pen_t%d_orp' % t, lambda t=t: coops.pen_tier(t, 'orp')); LOOKS.append('pen_t%d_orp' % t)      # (its own garden)
+PENS = {k: {t: dict(coops.pen_info(t, k), play=coops.play_info(t, k)) for t in range(5)} for k in coops.PENS_BY}       # each breed's pens by look          # each look's pen for the birds (glTF axes)
 names = LOOKS + ['house_' + k for k in coops.HOUSES] + ['pen_base', 'fence', 'fence_dx', 'vane', 'rustic_rir', 'fence_rustic'] + ['rustic_' + k for k in RUSTIC_K] + ['popdoor_' + k for k in coops.HOUSES]
 write_glb(os.path.join(OUT, 'coops.glb'), names)
 for k, v in coops.NESTS.items(): v['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get(k, []))]          # what the birds walk round in front of each house (once each: the rustic barn builds the Red Barn again)
 lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in coops.LIGHTS.items()}      # (once each: a rustic house builds its house again)
-json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, blocks={k: coops.BLOCKS[k] for k in ('cosy_rir', 'deluxe_rir') if k in coops.BLOCKS}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

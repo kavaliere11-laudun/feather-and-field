@@ -139,14 +139,15 @@ def finish(objs, name):
 
 
 # ------------------------------------------------------------------ Thatched Cottage (Buff Orpington)
-def thatched(seed=5):
+def thatched(seed=5, eave=0.9, peak=1.5, name='house_orp'):
+    """(eave, peak, name: the Deluxe look's taller cottage, release 4)"""
     random.seed(seed); objs = []
     brick = C('brick', '#9b5239', rough=0.85, var=0.1); cream = C('limewash', '#f1e8d2', rough=0.8, var=0.02)
     oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G)
     thatch = C('thatch', '#c7a866', rough=0.9, var=0.07, hue_var=0.01); thatch_d = C('thatch_d', '#a3864a', rough=0.9)
     green = C('greendoor', '#2f6a46', rough=0.6, var=0.06, grain=0.2, grain_scale=G); brass = C('brass', '#c99a3c', rough=0.3, metal=0.9)
     glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
-    FL, EAVE, PEAK = 0.2, 0.9, 1.5
+    FL, EAVE, PEAK = 0.2, eave, peak
     plinth = box('plinth', (2 * W2 + 0.08, 2 * D2 + 0.08, FL), (0, 0, FL / 2), m=brick, bevel=0.02, segs=2); objs.append(plinth)
     WX, NF = 0.415, 0.08                           # the nest window, low in the plinth (the thatch hides anything higher)
     for row in range(2):                           # brick courses on the plinth's front and side
@@ -205,7 +206,7 @@ def thatched(seed=5):
         objs.append(cyl('lav', 0.012, 0.16, (LX + 0.035 * math.cos(a), -D2 - 0.17 + 0.035 * math.sin(a), 0.22), m=C('lavender', '#7f5fb0', rough=0.7), verts=5, bevel=0.0))
     pop_door(objs, FL, oak, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), oak)
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18, 0.0)
-    return finish(objs, 'house_orp')
+    return finish(objs, name)
 
 
 # ------------------------------------------------------------------ Stone Cottage (Cream Legbar)
@@ -1019,15 +1020,15 @@ def _swap(root, names, m):
             if mm is not None and mm.name.split('.')[0] in names: o.data.materials[i] = m
 
 
-def pen_layout(t):
-    """A look's pen (t: 0..4; 2 is the Snug pen, the farm's own layout)."""
+def pen_layout(t, k='rir'):
+    """A look's pen (t: 0..4; 2 is the Snug pen, the farm's own layout) for breed k's coop."""
     import farm_layout
-    return dict(farm_layout.NEW['pen']) if t == 2 else dict(PENS[t])
+    return dict(farm_layout.NEW['pen']) if t == 2 else dict(PENS_BY[k][t])
 
 
-def _gate_of(t):
+def _gate_of(t, k='rir'):
     """The middle of a look's gate and its front fence's line (Blender x, y)."""
-    keep = coop.PEN; coop.PEN = pen_layout(t)
+    keep = coop.PEN; coop.PEN = pen_layout(t, k)
     try: return coop.gate_span()[1], coop.PEN['box'][2]
     finally: coop.PEN = keep
 
@@ -1408,6 +1409,10 @@ def deluxe_barn(kind=None):
 # play_info what the browser needs (glTF axes).
 PLAY = {3: dict(swing=(-1.3, -1.15), tub=(1.45, -2.35), cabbage=(1.0, -0.95)),
         4: dict(swing=(-1.55, -1.5), dust=(-1.5, -0.12), cabbage=(1.05, -0.95), xylo=(-1.2, -2.45))}
+# (each breed's coop its own garden: Audrey, 27 Oct, on the Thatched Cottage: "try not to get the same configuration of the
+# toys/accessories for each coop": the same pens, fences and gates, their things in other places and other styles)
+PENS_BY = {'rir': PENS}
+PLAY_BY = {'rir': PLAY}
 # (Audrey, 27 Oct, on the Deluxe: "a weird egg on its right? Its garden looks too messy and busy. We can probably get rid
 # of the perchoir. The send bath should be bigger and a bit more obvious that it's a send bath. Use the left space next to
 # the coop": no feed sack in the Cosy and Deluxe pens, no ladder, one bale tucked behind the barn, few straws and
@@ -1420,8 +1425,19 @@ CAB_TOP, CAB_Z = 0.56, 0.21                                     # the arm the ca
 LADDER = ((-0.17, 0.13), (-0.09, 0.27), (0.0, 0.42))            # its perches on the front face: (y from its middle, height)
 
 
-def swing_frame(objs, x, y):
+def swing_frame(objs, x, y, rustic=False):
+    """(rustic: the cottage's, of round hazel poles lashed with twine)"""
     wood = coop.M()['wood']; dark = coop.M()['darkwood']
+    if rustic:
+        pole = C('ct_hazel', CT['hazel'], rough=0.85, var=0.12, grain=0.3, grain_scale=G); twine = coop.M()['twine']
+        for sx in (-1, 1):
+            top = Vector((x + sx * SWING_HALF, y, SWING_TOP + 0.02))
+            for sy in (-1, 1):
+                a = Vector((x + sx * SWING_HALF, y + sy * 0.2, 0.0)); b = top + Vector((0, -sy * 0.03, 0.05))
+                objs.append(cyl('swpole', 0.02, (b - a).length, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=pole, verts=7, bevel=0.0))
+            objs.append(cyl('swlash', 0.03, 0.05, top, (0, math.radians(90), 0), m=twine, verts=8, bevel=0.0))
+        objs.append(cyl('swbar', 0.022, 2 * SWING_HALF + 0.14, (x, y, SWING_TOP), (0, math.radians(90), 0), m=pole, verts=8, bevel=0.0))
+        return
     for sx in (-1, 1):                                          # an A each side, the bar along x across their tops
         top = Vector((x + sx * SWING_HALF, y, SWING_TOP))
         for sy in (-1, 1):
@@ -1557,45 +1573,63 @@ def xylophone(objs, x, y):
     objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=C('xbar0', cols[0], rough=0.35, metal=0.4), seg=8, rings=6))
 
 
-def play_things(objs, t):
-    P = PLAY.get(t)
+def play_things(objs, t, k='rir'):
+    P = PLAY_BY[k].get(t)
     if not P: return
-    swing_frame(objs, *P['swing']); cabbage_post(objs, *P['cabbage'])
+    swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
+    (cabbage_tripod if P.get('tripod') else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
+    if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
+    if 'pit' in P: sand_pit(objs, *P['pit'])
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
     if 'xylo' in P: xylophone(objs, *P['xylo'])
 
 
-def play_info(t):
+def play_info(t, k='rir'):
     """For the browser (glTF axes: x, z = Blender x, -y): each play thing's place, and the spots the birds keep clear of."""
-    P = PLAY.get(t)
+    P = PLAY_BY[k].get(t)
     if not P: return None
     g = lambda q: [q[0], round(-q[1], 3)]
-    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF),
-               dust=dict(at=g(P['tub']), r=0.235, y=0.075) if 'tub' in P else dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105),
+    if 'tub' in P: dust = dict(at=g(P['tub']), r=0.235, y=0.075)
+    elif 'pit' in P: dust = dict(at=g(P['pit']), r=PIT_R, y=0.085)
+    elif 'tinbath' in P: dust = dict(at=g(P['tinbath']), w=TIN_W, d=TIN_D, y=0.105)
+    else: dust = dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105)
+    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dust,
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
     if 'ladder' in P: out['ladder'] = dict(at=g(P['ladder']), perches=[[round(-dy, 3), z] for (dy, z) in LADDER])
     if 'xylo' in P: out['xylo'] = dict(at=g(P['xylo']), bars=[round(0.13 - k * 0.052, 3) for k in range(6)])
-    dx, dy = P.get('dust') or P['tub']
-    sand = [g(P['tub']) + [0.29]] if 'tub' in P else [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
-    keep = [g(P['swing']) + [0.38], *sand, g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
+    if 'tub' in P: sand = [g(P['tub']) + [0.29]]
+    elif 'pit' in P: sand = [g(P['pit']) + [PIT_R + 0.07]]
+    elif 'tinbath' in P: sand = [g((P['tinbath'][0] + sx * (TIN_W - TIN_D) / 2, P['tinbath'][1])) + [TIN_D / 2 + 0.08] for sx in (-1, 1)]
+    else: dx, dy = P['dust']; sand = [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
+    cx, cy = P['cabbage']
+    holder = [[round(cx + lx, 3), round(-(cy + ly), 3), 0.06] for (lx, ly) in TRIPOD] if P.get('tripod') else [[cx, round(-(cy + 0.28), 3), 0.08]]
+    keep = [g(P['swing']) + [0.38], *sand, g(P['cabbage']) + [0.13], *holder]
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
     if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
     out['keep'] = keep
     return out
 
 
-def pen_tier(t):
-    """A look's yard and what's in it (pen_t0, pen_t1, pen_t3, pen_t4): the dirt pad, feeder, water, hay, sack, straw; in the
-    smallest pens a tin basin for water and no hay; in the bigger ones grass round the edges."""
-    keep = coop.PEN; coop.PEN = pen_layout(t)
+def pen_tier(t, bk='rir'):
+    """A look's yard and what's in it (pen_t0, pen_t1, pen_t3, pen_t4; another breed's: pen_t3_orp...): the dirt pad, feeder,
+    water, hay, sack, straw; in the smallest pens a tin basin (an enamel one) for water and no hay; in the bigger ones grass
+    round the edges."""
+    L = pen_layout(t, bk); keep = coop.PEN; coop.PEN = L
     try: root = pen_base()
     finally: coop.PEN = keep
-    random.seed(40 + t)
-    if t <= 1: _swap(root, {'bowl'}, _barn_m('tinbowl', rough=0.45, grain=0.0, metal=0.5))
+    random.seed(40 + t + (0 if bk == 'rir' else 7 * len(bk) + ord(bk[0])))
+    if L.get('bowl') == 'enamel':
+        _swap(root, {'bowl'}, mat('ct_enamel', '#ece6d6', rough=0.3, spec=0.5, var=0.02))
+        dx, dy = L['dish']; objs = []
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.012, major_segments=28, minor_segments=6, location=(dx, dy, 0.072))
+        o = bpy.context.object; setmat(o, mat('ct_enamelrim', '#3f5f8e', rough=0.3, spec=0.5)); objs.append(o)
+        objs.append(sphere('chip', 0.012, (dx + 0.15, dy + 0.02, 0.068), (1.3, 1, 0.8), m=C('iron', '#26231f', rough=0.5, metal=0.6), ico=1))
+        _own(objs, root)
+    elif t <= 1: _swap(root, {'bowl'}, _barn_m('tinbowl', rough=0.45, grain=0.0, metal=0.5))
     if t >= 3:                                     # grass in the corners and along the sides, inside the fence
-        x0, x1, y0, y1 = PENS[t]['box']; g = [_barn_m('grass', rough=0.95, grain=0.0, var=0.1), _barn_m('grass2', rough=0.95, grain=0.0, var=0.1)]
+        x0, x1, y0, y1 = L['box']; g = [_barn_m('grass', rough=0.95, grain=0.0, var=0.1), _barn_m('grass2', rough=0.95, grain=0.0, var=0.1)]
         objs = []
         for k in range(26 if t == 3 else 36):
             side = k % 4
@@ -1608,9 +1642,9 @@ def pen_tier(t):
                 aa = random.uniform(0, math.tau); d = random.uniform(0, 0.05); tilt = random.uniform(0.15, 0.5); h = random.uniform(0.06, 0.11)
                 objs.append(cyl('ygrass', 0.012, h, (x + math.cos(aa) * d + math.cos(aa) * math.sin(tilt) * h / 2, y + math.sin(aa) * d + math.sin(aa) * math.sin(tilt) * h / 2, 0.015 + h / 2 * math.cos(tilt)),
                                 (math.sin(aa) * -tilt, math.cos(aa) * tilt, 0), m=m_, verts=3, r2=0.0, bevel=0.0))
-        play_things(objs, t)
+        play_things(objs, t, bk)
         _own(objs, root)
-    root.name = 'pen_t%d' % t
+    root.name = 'pen_t%d' % t + ('' if bk == 'rir' else '_' + bk)
     return root
 
 
@@ -1657,12 +1691,507 @@ def fence_tier(t, seed=37):
     return root
 
 
-def pen_info(t):
+def pen_info(t, k='rir'):
     """For the browser (glTF axes): the pen's box, its gate's middle, the feeder, the water, the hay and sack (or none)."""
-    keep = coop.PEN; coop.PEN = pen_layout(t)
+    keep = coop.PEN; coop.PEN = pen_layout(t, k)
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') == 'trough' else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
+
+
+# ---- release 4, the Thatched Cottage's five looks (Audrey, 27 Oct: "The other four coops", one at a time, shown first).
+# Rustic (box_orp): a hut of straw bales, an old board roof under a ragged heap of straw and a patched tarpaulin, a rope over
+#   it weighed down with bricks (the hint: its thatch to come).
+# Mended (shed_orp): a little wattle hut on a few courses of brick, its woven hazel walls half daubed with clay (the bucket of
+#   daub by it), a thin roof of new thatch.
+# Snug (house_orp): today's cottage.
+# Cosy (cosy_orp): the cottage with hollyhocks, a rose by its corner, a rose arbour with a bench on its left gable under a
+#   window with flowers, a lantern by the hens' door, the automatic door's box and its solar panel, pots by the ramp, a
+#   doorstep, stepping stones to the gate.
+# Deluxe (deluxe_orp): a taller cottage limewashed Suffolk pink, two eyebrow windows in its thatch, a decorated ridge (points
+#   and crossed hazel rods) with a straw pheasant on it, a taller chimney; the cosy touches.
+# The hens come, go and lay the same way in every look: the same floor (0.2), pop door, nest window (low, its door let down
+# onto the ground) and short ramp (nest_window: NESTS['house_orp'] the same).
+CT = dict(bale='#d6c07a', bale2='#c8b16a', twine='#74583a', old='#9a8558', old2='#857550', tarp='#6c7352', patch='#8b6a48',
+          rope='#a3906a', hazel='#8a6a48', hazel2='#73573a', stake='#5c4431', daub='#e6d9bb', newthatch='#d6b56e', reed='#c9a057',
+          ridge='#e3c98a', ligger='#76552f', pink='#f0c9bd', stem='#4f7d3a', holly1='#ec8db5', holly2='#f7eef0', holly3='#bf3a52',
+          holly4='#f3d36e', terra='#b0603a', terraold='#9c7462', dry='#8b7d63', stone='#aba596', mat='#9a4f3a', trellis='#efe8d8')
+
+
+def _ct(key, rough=0.85, **kw):
+    return C('ct_' + key, CT[key], rough=rough, **kw)
+
+
+def _dprism(name, cx, y0, y1, zb, R, m, segs=12, bevel=0.02):
+    """A half-round prism lying along y from y0 to y1, its flat side down at zb (an eyebrow of thatch, a door hood)."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rings = []
+    for y in (y0, y1):
+        rings.append([bm.verts.new((cx + R * math.cos(math.pi * k / segs), y, zb + R * math.sin(math.pi * k / segs))) for k in range(segs + 1)])
+    bm.faces.new(rings[0]); bm.faces.new(rings[1][::-1])
+    for k in range(segs): bm.faces.new((rings[0][k], rings[0][k + 1], rings[1][k + 1], rings[1][k]))
+    bm.faces.new((rings[0][segs], rings[0][0], rings[1][0], rings[1][segs]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); soften(o, bevel, 2)
+    return o
+
+
+def _tri(name, a, b, c, n, th, m):
+    """A flat triangle (a, b, c) th thick along n."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); n = Vector(n).normalized() * th / 2
+    v0 = [bm.verts.new(Vector(p) - n) for p in (a, b, c)]; v1 = [bm.verts.new(Vector(p) + n) for p in (a, b, c)]
+    bm.faces.new(v0); bm.faces.new(v1[::-1])
+    for i in range(3):
+        j = (i + 1) % 3; bm.faces.new((v0[i], v0[j], v1[j], v1[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m); soften(o, 0.006, 1)
+    return o
+
+
+def _ramp(objs, FL, m, slat_m, w=0.17, slats=2):
+    """The hens' short ramp from the pop door (the cottage's: 0.34 long, as nest_window's foot)."""
+    L = max(0.3, FL * 1.7)
+    ra, rb = Vector((-0.31, -D2 - 0.05, FL + 0.02)), Vector((-0.31, -D2 - 0.05 - L, 0.03))
+    d = rb - ra; pn = Vector((0, -d.z, d.y)).normalized()
+    if pn.z < 0: pn = -pn
+    objs.append(plank('ramp', ra, rb, w, 0.03, pn, m, jitter=0.6))
+    for k in range(slats):
+        c = ra.lerp(rb, (k + 0.6) / (slats + 0.4)) + pn * 0.02
+        objs.append(plank('slat', c + Vector((-w / 2 + 0.02, 0, 0)), c + Vector((w / 2 - 0.02, 0, 0)), 0.022, 0.016, pn, slat_m, jitter=2.5))
+
+
+def box_orp(seed=41):
+    """Rustic: a hut of straw bales."""
+    random.seed(seed)
+    FL, WX, NF = 0.2, 0.415, 0.08
+    root = empty('box_orp'); objs = []
+    bales = [_ct('bale', var=0.07, bump=0.35, bump_scale=120), _ct('bale2', var=0.07, bump=0.35, bump_scale=120)]
+    twine = _ct('twine', rough=0.9, var=0.05)
+    greys = [_barn_m('grey'), _barn_m('grey2'), _barn_m('grey3')]
+    brick = C('brick', '#9b5239', rough=0.85, var=0.1)
+    def bale(x0, x1, y0, y1, z0, z1):
+        along_x = x1 - x0 >= y1 - y0
+        objs.append(box('bale', (x1 - x0 - 0.01, y1 - y0 - 0.01, z1 - z0 - 0.008), ((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), (0, 0, math.radians(random.uniform(-1.5, 1.5))),
+                        m=random.choice(bales), bevel=0.028, segs=2, jitter=0.005))
+        L = max(x1 - x0, y1 - y0)
+        for f in ((0.27, 0.73) if L > 0.3 else (0.5,)):
+            if along_x: objs.append(box('twine', (0.016, y1 - y0 + 0.002, z1 - z0 + 0.002), (x0 + (x1 - x0) * f, (y0 + y1) / 2, (z0 + z1) / 2), m=twine, bevel=0.003, segs=1))
+            else: objs.append(box('twine', (x1 - x0 + 0.002, 0.016, z1 - z0 + 0.002), ((x0 + x1) / 2, y0 + (y1 - y0) * f, (z0 + z1) / 2), m=twine, bevel=0.003, segs=1))
+    Z = [(0.0, 0.2), (0.2, 0.44), (0.44, 0.69), (0.69, 0.89)]
+    XS, XO, YF, YB = 0.59, 0.8, -D2 + 0.21, D2 - 0.21
+    WL, WR = WX - WIN_W / 2, WX + WIN_W / 2
+    front = [[(-XS, -0.16), (-0.16, WL)], [(-XS, -0.46), (-0.16, WL)], [(-XS, -0.46), (-0.16, WL)], [(-XS, 0.02), (0.02, XS)]]
+    for c, (z0, z1) in enumerate(Z):
+        for (a, b) in front[c]: bale(a, b, -D2, YF, z0, z1)
+        for sx in (-1, 1):
+            for (a, b) in ([(-D2, 0.0), (0.0, D2)] if c % 2 == 0 else [(-D2, -0.22), (-0.22, 0.2), (0.2, D2)]):
+                bale(min(sx * XS, sx * XO), max(sx * XS, sx * XO), a, b, z0, z1)
+        for (a, b) in ([(-XS, -0.1), (-0.1, XS)] if c % 2 == 0 else [(-XS, 0.15), (0.15, XS)]): bale(a, b, YB, D2, z0, z1)
+    for row in range(2):                                           # old bricks under the nest window
+        for i in range(3):
+            objs.append(box('brick', (0.1, 0.06, 0.05), (WL + 0.055 + i * 0.1 + (0.03 if row else 0) - 0.015, -D2 + 0.03, 0.026 + row * 0.052), (0, 0, math.radians(random.uniform(-4, 4))), m=brick, bevel=0.006, segs=1))
+    # lintels: old boards over the hens' door and over the nest window, two boards filling the gap above the window
+    objs.append(plank('lintel', (-0.5, (-D2 + YF) / 2, 0.677), (-0.12, (-D2 + YF) / 2, 0.677), 0.21, 0.025, (0, 0, 1), greys[0], jitter=0.8))
+    objs.append(plank('lintel', (WL - 0.03, (-D2 + YF) / 2, 0.535), (XS + 0.01, (-D2 + YF) / 2, 0.535), 0.21, 0.025, (0, 0, 1), greys[2], jitter=0.8))
+    for k, z in enumerate((0.585, 0.652)):
+        objs.append(plank('wboard', (WL - 0.01, -D2 - 0.005, z), (XS + 0.01, -D2 - 0.005, z), 0.064, 0.022, (0, -1, 0), greys[k % 2], jitter=1.0))
+    # the roof: old boards across, a ragged heap of straw on them, a tarpaulin with a patch over one end, a rope over it all
+    # with a brick hanging at each end
+    x = -XO - 0.02
+    while x < XO + 0.02:
+        w = random.uniform(0.11, 0.15); xc = x + w / 2
+        objs.append(plank('rboard', (xc, -D2 - 0.12, 0.905), (xc, D2 + 0.1, 0.9), w * 0.94, 0.028, (0, 0, 1), random.choice(greys), jitter=0.9))
+        x += w
+    old, old2 = _ct('old', rough=0.95, var=0.06, bump=0.4, bump_scale=90), _ct('old2', rough=0.95, var=0.06, bump=0.4, bump_scale=90)
+    objs.append(sphere('heap', 0.5, (-0.16, 0.0, 0.915), (1.32, 1.08, 0.16), m=old, ico=3, disp=0.3, seed=2))
+    for k, (x, y, rr, m_) in enumerate(((-0.6, 0.26, 0.2, old2), (0.16, -0.3, 0.22, old2), (-0.46, -0.34, 0.18, old), (0.22, 0.3, 0.2, old), (-0.2, 0.05, 0.22, old2))):
+        objs.append(sphere('heap', rr, (x, y, 0.94), (1.25, 1.0, 0.3), (0, 0, random.uniform(0, 3)), m=m_, ico=2, disp=0.35, seed=8 + k))
+    straw = coop.M()['straw']
+    for k in range(30):                                            # straws sticking up out of it, every which way
+        x, y = random.uniform(-0.7, 0.35), random.uniform(-0.42, 0.42); d = Vector((random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0.2, 0.8))).normalized(); L = random.uniform(0.07, 0.13)
+        objs.append(cyl('straw', 0.003, L, Vector((x, y, 0.97)) + d * L / 2, d.to_track_quat('Z', 'Y').to_euler(), straw, verts=5, bevel=0))
+    for k in range(26):                                            # straws hanging over the edges
+        x = random.uniform(-0.75, 0.3); side = random.choice((-1, 1))
+        p = Vector((x, side * random.uniform(0.47, 0.55), 0.93)); d = Vector((random.uniform(-0.3, 0.3), side * 0.5, -1.0)).normalized(); L = random.uniform(0.07, 0.14)
+        objs.append(cyl('straw', 0.003, L, p + d * L / 2, d.to_track_quat('Z', 'Y').to_euler(), straw, verts=5, bevel=0))
+    tarp, patch = _ct('tarp', rough=0.8, var=0.04), _ct('patch', rough=0.85)
+    objs.append(plank('tarp', (0.6, -D2 - 0.13, 0.932), (0.6, D2 + 0.11, 0.928), 0.5, 0.012, (0, 0, 1), tarp, jitter=0.6, bevel=0.004))
+    objs.append(plank('tarp', (XO + 0.035, -D2 - 0.1, 0.93), (XO + 0.035, -D2 - 0.1, 0.72), 0.2, 0.012, (1, 0, 0), tarp, jitter=3.0, bevel=0.004))
+    objs.append(plank('tarp', (XO + 0.035, 0.15, 0.93), (XO + 0.04, 0.15, 0.76), 0.34, 0.012, (1, 0, 0), tarp, jitter=3.0, bevel=0.004))
+    objs.append(plank('patch', (0.55, -0.12, 0.941), (0.55, 0.06, 0.941), 0.16, 0.006, (0, 0, 1), patch, jitter=4.0, bevel=0.002))
+    rope = _ct('rope', rough=0.9)
+    rx = -0.66
+    pts = [Vector((rx, -D2 - 0.12, 0.74)), Vector((rx, -D2 - 0.12, 0.92)), Vector((rx, -0.28, 1.02)), Vector((rx, 0.25, 1.03)), Vector((rx, D2 + 0.1, 0.92)), Vector((rx, D2 + 0.1, 0.74))]
+    for a, b in zip(pts, pts[1:]):
+        objs.append(cyl('rope', 0.008, (b - a).length + 0.01, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), rope, verts=6, bevel=0.0))
+    for y in (-D2 - 0.12, D2 + 0.1):
+        objs.append(box('brick', (0.09, 0.065, 0.18), (rx, y, 0.66), (0, 0, math.radians(random.uniform(-8, 8))), m=brick, bevel=0.006, segs=1))
+    # the hens' door (a rough frame), its little ramp, the nest window (an old frame, its door let down)
+    pop_trim(objs, FL, greys[1], D2)
+    _ramp(objs, FL, greys[2], greys[1])
+    nest_window(objs, 'orp', FL, WX, greys[1], hollow=True, nest_floor=NF, door='drop', door_m=greys[0])
+    # where the cottage's lavender will be: a cracked old pot, a few dry stems
+    LX, LY = W2 + 0.06, -D2 - 0.17
+    objs.append(cyl('pot', 0.065, 0.13, (LX, LY, 0.065), (math.radians(4), 0, 0), m=_ct('terraold', rough=0.9, var=0.05), verts=12, r2=0.078, bevel=0.006))
+    for k in range(5):
+        a = k * 1.3; d = Vector((math.cos(a) * 0.25, math.sin(a) * 0.25, 1.0)).normalized()
+        objs.append(cyl('dry', 0.005, 0.13, Vector((LX, LY, 0.12)) + d * 0.065, d.to_track_quat('Z', 'Y').to_euler(), _ct('dry', rough=0.9), verts=5, bevel=0.0))
+    objs.append(box('shard', (0.07, 0.05, 0.012), (LX - 0.12, LY - 0.06, 0.008), (0, 0, 0.7), m=_ct('terraold', rough=0.9, var=0.05), bevel=0.003, segs=1))
+    straw_bits(objs, (-0.1, -D2 - 0.12, 0), 0.25, 24, 0.0)
+    _own(objs, root)
+    return root
+
+
+def shed_orp(seed=43):
+    """Mended: a little wattle hut on bricks, half daubed with clay, a thin roof of new thatch."""
+    random.seed(seed)
+    FL, WX, NF, EAVE, PEAK = 0.2, 0.415, 0.08, 0.8, 1.2
+    root = empty('shed_orp'); objs = []
+    brick = C('brick', '#9b5239', rough=0.85, var=0.1); brickd = C('brickdark', '#7e3f2b', rough=0.85)
+    hz = [_ct('hazel', var=0.12, grain=0.3, grain_scale=G), _ct('hazel2', var=0.12, grain=0.3, grain_scale=G)]
+    stake = _ct('stake', var=0.08, grain=0.3, grain_scale=G)
+    daub = _ct('daub', rough=0.9, var=0.012, bump=0.3, bump_scale=70)
+    thatch = _ct('newthatch', rough=0.9, var=0.05, hue_var=0.01)
+    pine = _barn_m('pine', rough=0.75, var=0.08); pine2 = _barn_m('pine2', rough=0.75, var=0.08)
+    WL, WR = WX - WIN_W / 2, WX + WIN_W / 2
+    # the base: a few courses of brick, round the sides and back a low wall, under the nest window two courses
+    for row, (z0, z1) in enumerate(((0.0, 0.06), (0.06, 0.12), (0.12, 0.2))):
+        x = -W2 - (0.06 if row % 2 else 0.0)
+        while x < W2 - 0.01:
+            a, b = max(x, -W2), min(x + 0.12, W2); x += 0.124
+            if row == 2 and b > WL and a < WR:                      # (the window's sill)
+                if a < WL - 0.02: b = WL
+                elif b > WR + 0.02: a = WR
+                else: continue
+            if b - a < 0.02: continue
+            objs.append(box('brick', (b - a - 0.006, 0.06, z1 - z0 - 0.006), ((a + b) / 2, -D2 + 0.026, (z0 + z1) / 2), m=brick if random.random() < 0.75 else brickd, bevel=0.005, segs=1, jitter=0.002))
+    for sx in (-1, 1): objs.append(box('base', (0.06, 2 * D2, FL), (sx * (W2 - 0.03), 0, FL / 2), m=brickd, bevel=0.006, segs=1))
+    objs.append(box('base', (2 * W2, 0.06, FL), (0, D2 - 0.03, FL / 2), m=brickd, bevel=0.006, segs=1))
+    # the walls: hazel rods woven between stakes; daubed with clay on the left of the front (a wavy edge: half done), the left
+    # side and the back; the right side still bare
+    POPH = (-0.31 - POP_W / 2 - 0.0225, -0.31 + POP_W / 2 + 0.0225, FL, FL + POP_H + 0.0225)
+    WINH = (WL - 0.0175, WR + 0.0175, 0.1, NF + 0.04 + WIN_H + 0.0175)
+    def wall(u0, u1, place, out, holes=(), daub_at=None):
+        daubed = (lambda u, z: False) if daub_at is None else (lambda u, z: daub_at[0] - 0.02 < u < daub_at[1] + 0.02)
+        us = [u0 + i * (u1 - u0) / round((u1 - u0) / 0.1) for i in range(round((u1 - u0) / 0.1) + 1)]
+        def cut(a, b, z0, z1):                                     # (a..b at z0..z1 less the holes)
+            out_ = [(a, b)]
+            for (h0, h1, hz0, hz1) in holes:
+                if z1 > hz0 and z0 < hz1: out_ = [p for s_ in out_ for p in ((s_[0], min(s_[1], h0)), (max(s_[0], h1), s_[1])) if p[1] - p[0] > 0.012]
+            return out_
+        for i, u in enumerate(us[1:-1], 1):                        # the stakes (not across the holes)
+            zs = [FL, EAVE]
+            for (h0, h1, hz0, hz1) in holes:
+                if h0 - 0.01 < u < h1 + 0.01: zs = [FL, hz0, hz1, EAVE]
+            for z0, z1 in zip(zs[::2], zs[1::2]):
+                if z1 - z0 > 0.02 and not daubed(u, (z0 + z1) / 2): objs.append(cyl('stake', 0.011, z1 - z0, place(u, (z0 + z1) / 2, 0.0), m=stake, verts=6, bevel=0.0))
+        z, r = FL + 0.024, 0
+        while z < EAVE - 0.01:
+            for k in range(len(us) - 1):
+                for (a, b) in cut(us[k], us[k + 1], z - 0.02, z + 0.02):
+                    if daubed((a + b) / 2, z): continue
+                    s0 = 0.009 if (k + r) % 2 else -0.009
+                    pa, pb = place(a, z, s0 * (1 - 2 * (a - us[k]) / (us[k + 1] - us[k]))), place(b, z, s0 * (1 - 2 * (b - us[k]) / (us[k + 1] - us[k])))
+                    objs.append(plank('rod', pa, pb, 0.036, 0.016, out, hz[r % 2], jitter=1.0, bevel=0.0))
+            z += 0.044; r += 1
+        # the daub: smooth panels over the rods up to a ragged edge (lumps of clay along it)
+        if daub_at is None: return
+        lo, hi = daub_at
+        zs_ = sorted({FL, EAVE} | {h for (h0, h1, hz0, hz1) in holes for h in (hz0, hz1) if FL < h < EAVE})
+        for z0, z1 in zip(zs_, zs_[1:]):
+            for (a, b) in cut(max(u0, lo), min(u1, hi), z0 + 0.001, z1 - 0.001):
+                objs.append(box('daub', (b - a, 0.03, z1 - z0) if out[1] else (0.03, b - a, z1 - z0), place((a + b) / 2, (z0 + z1) / 2, 0.008), m=daub, bevel=0.006, segs=1))
+        e_ = hi if lo <= u0 + 1e-6 else lo
+        z = FL + 0.03
+        while z < EAVE - 0.02:
+            u = e_ + random.uniform(-0.035, 0.035)
+            if not any(h0 - 0.03 < u < h1 + 0.03 and hz0 - 0.03 < z < hz1 + 0.03 for (h0, h1, hz0, hz1) in holes):
+                objs.append(sphere('daubblob', 0.045, place(u, z, 0.012), (1.0, 0.35, 1.2) if out[1] else (0.35, 1.0, 1.2), m=daub, ico=2, disp=0.35, seed=int(z * 100)))
+            z += random.uniform(0.05, 0.08)
+    fr = lambda u, z, d=0.0: (u, -D2 - d, z)
+    wall(-W2, W2, fr, (0, -1, 0), holes=(POPH, WINH), daub_at=(-W2, 0.0))
+    for sx in (-1, 1):                                             # the sides: their back halves daubed, their front halves still bare
+        wall(-D2, D2, lambda u, z, d=0.0, sx=sx: (sx * (W2 + d), u, z), (sx, 0, 0), daub_at=(0.02, D2))
+    objs.append(box('daub', (2 * W2, 0.04, EAVE - FL), (0, D2 + 0.004, (FL + EAVE) / 2), m=daub, bevel=0.01, segs=1))
+    objs.append(box('inside', (2 * W2 - 0.1, 2 * D2 - 0.1, 0.01), (0, 0, FL - 0.005), m=C('hall_dark', '#1d1510', rough=1.0), bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(box('inside', (0.01, 2 * D2 - 0.06, EAVE - FL), (sx * 0.592, 0.01, (FL + EAVE) / 2), m=C('hall_dark', '#1d1510', rough=1.0), bevel=0.0))
+        objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.04, D2, 0.03, pine))
+    for (x, y) in ((-W2 + 0.02, -D2 + 0.02), (W2 - 0.02, -D2 + 0.02), (-W2 + 0.02, D2 - 0.02), (W2 - 0.02, D2 - 0.02), (0.06, -D2 + 0.0)):
+        objs.append(cyl('pole', 0.03, EAVE - FL + 0.05, (x, y, (FL + EAVE) / 2), m=stake, verts=8, bevel=0.004))
+    for sy in (-1, 1):                                             # a wall plate along the top
+        objs.append(plank('plate', (-W2 - 0.03, sy * (D2 + 0.005), EAVE - 0.02), (W2 + 0.03, sy * (D2 + 0.005), EAVE - 0.02), 0.045, 0.04, (0, sy, 0), stake, jitter=0.4))
+    # the roof: one thin layer of new thatch, hazel spars along it near the ridge, a small ridge roll
+    for sy in (-1, 1):
+        e = Vector((0, sy * (D2 + 0.17), EAVE - 0.07)); r_ = Vector((0, 0, PEAK)); nrm = Vector((0, sy * (PEAK - EAVE + 0.07), D2 + 0.17)).normalized()
+        th = 0.095; L = (e - r_).length
+        o = box('thatch', (2 * W2 + 0.3, L + 0.06, th), (0, 0, 0), m=thatch, bevel=0.035, segs=3)
+        o.rotation_euler = (-sy * math.atan2(PEAK - EAVE + 0.07, D2 + 0.17), 0, 0); o.location = (r_ + e) / 2 + nrm * (th / 2); objs.append(o)
+        for t in (0.12, 0.22):
+            c = r_.lerp(e, t) + nrm * (th + 0.006)
+            objs.append(cyl('spar', 0.008, 2 * W2 + 0.22, c, (0, math.radians(90), 0), m=hz[0], verts=6, bevel=0.0))
+    objs.append(cyl('ridgeroll', 0.065, 2 * W2 + 0.32, (0, 0, PEAK + 0.07), (0, math.radians(90), 0), _ct('newthatch', rough=0.9, var=0.05, hue_var=0.01), verts=14, bevel=0.02))
+    # the hens' door with a new pine frame and ramp, the nest window
+    pop_door(objs, FL, pine2, pine, pine2)
+    nest_window(objs, 'orp', FL, WX, pine2, hollow=True, nest_floor=NF, door='drop', door_m=pine)
+    # the bucket of daub by the corner (where the lavender will be), a trowel in it; a bundle of hazel rods along the back
+    LX, LY = W2 + 0.06, -D2 - 0.17
+    wood = _barn_m('stump', grain=0.5); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    objs.append(cyl('bucket', 0.075, 0.13, (LX, LY, 0.065), m=wood, verts=14, r2=0.085, bevel=0.006))
+    for z in (0.03, 0.1): objs.append(cyl('hoop', 0.08 + z * 0.08, 0.012, (LX, LY, z), m=iron, verts=14, bevel=0.0))
+    objs.append(cyl('bdaub', 0.078, 0.01, (LX, LY, 0.128), m=daub, verts=14, bevel=0.0))
+    objs.append(box('trowel', (0.06, 0.09, 0.008), (LX + 0.03, LY - 0.02, 0.15), (math.radians(60), 0, math.radians(20)), m=C('metal', '#b9bfc2', rough=0.35, metal=0.8), bevel=0.003, segs=1))
+    objs.append(cyl('trhandle', 0.01, 0.08, (LX + 0.05, LY - 0.08, 0.2), (math.radians(60), 0, math.radians(20)), m=pine2, verts=6, bevel=0.0))
+    for k in range(7):
+        objs.append(cyl('rods', 0.01, 0.9, (W2 + 0.2 + (k % 3) * 0.02, 0.05 + (k // 3) * 0.02, 0.012 + (k % 2) * 0.012), (math.radians(90), 0, math.radians(random.uniform(-2, 2))), m=hz[k % 2], verts=6, bevel=0.0))
+    objs.append(sphere('splat', 0.07, (LX - 0.12, LY - 0.05, 0.004), (1.3, 1, 0.08), m=daub, ico=2, disp=0.3, seed=3))
+    _own(objs, root)
+    return root
+
+
+def _hollyhock(objs, x, y, h, col, seed):
+    """A hollyhock: a tall stem of round cup flowers, smaller towards its top, big leaves at its foot."""
+    stem = _ct('stem', rough=0.8); leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    objs.append(cyl('hhstem', 0.009, h, (x, y, h / 2), m=stem, verts=6, bevel=0.0))
+    for k in range(3):
+        a = seed + k * 2.1
+        objs.append(sphere('hhleaf', 0.055, (x + math.cos(a) * 0.05, y + math.sin(a) * 0.05, 0.06 + k * 0.07), (1, 1, 0.35), (0.3, 0, a), m=leaf[k % 2], ico=1, disp=0.25, seed=seed + k))
+    n = 7
+    for k in range(n):
+        u = k / (n - 1); a = seed * 1.7 + k * 2.3; s_ = 0.036 - 0.02 * u
+        objs.append(sphere('hhflower', s_, (x + math.cos(a) * 0.02, y + math.sin(a) * 0.02, h * (0.42 + 0.53 * u)), (1, 1, 0.8), m=col, ico=1))
+    objs.append(sphere('hhbud', 0.012, (x, y, h + 0.01), m=leaf[1], ico=1))
+
+
+def _cottage_bits(r, name, t, eave=0.9, peak=1.5, seed=45, arbour=True):
+    """What makes the cottage cosy (and stays on the Deluxe): hollyhocks along its gables, a climbing rose at its corner, a window
+    with flowers on its left gable (a rose arbour and a bench under it, not on the Deluxe, whose sandbox is there), a lantern by
+    the hens' door, the automatic door's box over it and its solar panel on the thatch, pots by the foot of the ramp, a
+    doorstep, stepping stones to the gate."""
+    random.seed(seed); objs = []
+    oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    fl = [C('dxf%d' % i, FLOWERS[i], rough=0.5) for i in range(6)]
+    leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    hh = [_ct('holly1', rough=0.55), _ct('holly2', rough=0.55), _ct('holly3', rough=0.55), _ct('holly4', rough=0.55)]
+    for i, (x, y, h) in enumerate(((-0.76, -0.34, 0.8), (-0.78, 0.36, 0.72), (W2 + 0.13, -0.3, 0.78), (W2 + 0.12, 0.3, 0.86))):
+        _hollyhock(objs, x, y, h, hh[i % 4], i + 3)
+    # a climbing rose up the front left corner post
+    rx, ry = -W2 - 0.09, -D2 - 0.05
+    for k in range(9):
+        z = 0.08 + k * 0.075; a = k * 2.4
+        objs.append(sphere('roseleaf', 0.045, (rx + math.cos(a) * 0.03, ry + math.sin(a) * 0.03, z), (1, 1, 0.9), m=leaf[k % 2], ico=1, disp=0.25, seed=k + 20))
+        if k > 1: objs.append(sphere('rose', 0.022, (rx + math.cos(a + 1) * 0.045, ry + math.sin(a + 1) * 0.045 - 0.01, z + 0.02), m=fl[2] if k % 3 else fl[3], ico=1))
+    # the left gable: a window with a box of flowers, a rose arbour over a bench under it
+    window(objs, -W2 - 0.02, 0.0, 0.58, 0.22, 0.18, oak, glass, normal=(-1, 0, 0), box_flowers=[C('fbox', '#6d4a31', rough=0.85)] + fl[:4])
+    if arbour:
+        tr = _ct('trellis', rough=0.6, var=0.03); wood = coop.M()['wood']; dark = coop.M()['darkwood']
+        ax, Y, H = -W2 - 0.38, 0.33, 0.78
+        for sy in (-1, 1):
+            for dx in (-0.11, 0.11):
+                objs.append(box('apost', (0.035, 0.035, H), (ax + dx, sy * Y, H / 2), m=tr, bevel=0.006, segs=1))
+            for z in (0.25, 0.45, 0.65):
+                objs.append(box('alath', (0.24, 0.02, 0.02), (ax, sy * Y, z), m=tr, bevel=0.003, segs=1))
+        for k in range(11):                                        # the arch over the top
+            a0, a1 = math.pi * k / 11, math.pi * (k + 1) / 11
+            for dx in (-0.11, 0.11):
+                objs.append(plank('aarch', (ax + dx, -math.cos(a0) * Y, H + math.sin(a0) * 0.2), (ax + dx, -math.cos(a1) * Y, H + math.sin(a1) * 0.2), 0.03, 0.03, (1, 0, 0), tr, jitter=0.2, bevel=0.004))
+        for k in range(14):                                        # roses all over it
+            a = math.pi * (k + 0.5) / 14
+            p = Vector((ax + random.uniform(-0.1, 0.1), -math.cos(a) * Y, H + math.sin(a) * 0.2 + 0.02))
+            objs.append(sphere('aleaf', 0.05, p, (1, 1, 0.8), m=leaf[k % 2], ico=1, disp=0.25, seed=k + 30))
+            objs.append(sphere('arose', 0.024, p + Vector((random.uniform(-0.04, 0.04), 0, 0.035)), m=fl[2] if k % 3 else fl[0], ico=1))
+        for sy in (-1, 1):
+            for k in range(4):
+                objs.append(sphere('aleaf', 0.045, (ax - 0.12, sy * Y, 0.2 + k * 0.17), (1, 1, 0.9), m=leaf[k % 2], ico=1, disp=0.25, seed=k + 50))
+                objs.append(sphere('arose', 0.022, (ax - 0.15, sy * Y + 0.02, 0.24 + k * 0.17), m=fl[2], ico=1))
+        objs.append(box('bench', (0.17, 0.56, 0.035), (ax + 0.02, 0.0, 0.23), m=wood, bevel=0.008, segs=1))
+        objs.append(box('benchback', (0.03, 0.56, 0.15), (ax + 0.1, 0.0, 0.38), (0, math.radians(-10), 0), m=wood, bevel=0.008, segs=1))
+        for sy in (-1, 1): objs.append(box('benchleg', (0.15, 0.035, 0.23), (ax + 0.02, sy * 0.24, 0.115), m=dark, bevel=0.005, segs=1))
+        can = C('can', '#6e9aa8', rough=0.4, metal=0.5)               # a watering can by the bench
+        objs.append(cyl('can', 0.05, 0.1, (ax - 0.02, -Y + 0.12, 0.05), m=can, verts=12, bevel=0.005))
+        objs.append(cyl('spout', 0.009, 0.12, (ax - 0.08, -Y + 0.12, 0.09), (0, math.radians(-55), 0), m=can, verts=6, bevel=0.0))
+    # a lantern on the corner post by the hens' door
+    lx, ly, lz = -W2 + 0.02, -D2 - 0.11, 0.5
+    objs.append(box('larm', (0.025, 0.1, 0.025), (lx, -D2 - 0.06, lz + 0.07), m=iron, bevel=0.004, segs=1))
+    objs.append(box('lanternb', (0.07, 0.07, 0.1), (lx, ly, lz), m=iron, bevel=0.006, segs=1))
+    objs.append(box('lanterng', (0.076, 0.076, 0.065), (lx, ly, lz), m=lamp, bevel=0.0))
+    objs.append(cyl('lroof', 0.06, 0.05, (lx, ly, lz + 0.075), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+    light_at(name, lx, ly, lz)
+    # the automatic door: its motor box over the hens' door (a little green light), its solar panel on the thatch
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    zb = 0.2 + POP_H + 0.07
+    objs.append(box('autobox', (0.13, 0.05, 0.065), (-0.31, -D2 - 0.045, zb), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, zb), m=led, seg=8, rings=4))
+    objs.append(cyl('autocable', 0.005, eave - 0.03 - zb, (-0.36, -D2 - 0.03, (eave - 0.03 + zb) / 2), m=box_m, verts=5, bevel=0.0))
+    e0 = Vector((0, -(D2 + 0.22), eave - 0.1)); r0 = Vector((0, 0, peak)); dn = (e0 - r0).normalized()
+    nrm = Vector((0, -(peak - eave + 0.1), D2 + 0.22)).normalized()
+    c = r0.lerp(e0, 0.74) + nrm * 0.165 + Vector((0.42, 0, 0))
+    objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for i in range(2):
+        for j in range(3):
+            cc = c + nrm * 0.012 + dn * (-0.05 + i * 0.1) + Vector((-0.08 + j * 0.08, 0, 0))
+            objs.append(plank('solarcell', cc - dn * 0.044, cc + dn * 0.044, 0.072, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # a doorstep and a mat at the front door
+    stone = _ct('stone', rough=0.9, var=0.1)
+    objs.append(box('doorstep', (0.32, 0.12, 0.04), (0.045, -D2 - 0.07, 0.02), m=stone, bevel=0.01, segs=1))
+    objs.append(box('doormat', (0.2, 0.09, 0.01), (0.045, -D2 - 0.075, 0.045), m=_ct('mat', rough=0.95), bevel=0.003, segs=1))
+    # flower pots either side of the foot of the ramp (the birds walk round them)
+    potm = _ct('terra', rough=0.8)
+    for (x, y) in ((-0.64, -0.98), (0.02, -0.98)):
+        objs.append(cyl('pot', 0.07, 0.11, (x, y, 0.055), m=potm, verts=14, r2=0.055, bevel=0.006))
+        for k in range(6):
+            aa = k / 6 * math.tau
+            objs.append(sphere('potleaf', 0.035, (x + math.cos(aa) * 0.035, y + math.sin(aa) * 0.035, 0.13), (1, 1, 0.8), m=leaf[k % 2], ico=1, disp=0.25, seed=k + 10))
+            objs.append(sphere('potflower', 0.022, (x + math.cos(aa + 0.5) * 0.04, y + math.sin(aa + 0.5) * 0.04, 0.16), m=fl[(k + 2) % 6], ico=1))
+        BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.12])
+    # stepping stones from the foot of the ramp across the yard
+    stone = _barn_m('stone', rough=0.9, grain=0.0, bump=0.2, bump_scale=60, var=0.12)
+    gx, gy = _gate_of(t); a, b = Vector((-0.31, -1.05)), Vector((gx, gy + 0.32)); n = max(3, round((b - a).length / 0.25))
+    for k in range(n + 1):
+        q = a.lerp(b, k / n); x, y = q.x + 0.06 * math.sin(k * 1.7), q.y
+        objs.append(sphere('stepstone', 0.085, (x + random.uniform(-0.02, 0.02), y, 0.014), (1.15 + random.uniform(-0.15, 0.15), 0.95, 0.12), (0, 0, random.uniform(0, 3)), m=stone, ico=2, disp=0.18, seed=k + 40))
+    _own(objs, r)
+    return r
+
+
+def cosy_orp():
+    r = thatched(name='cosy_orp'); _cottage_bits(r, 'cosy_orp', 3)
+    return r
+
+
+def deluxe_orp():
+    """Deluxe: a taller cottage in Suffolk pink, eyebrow windows, a decorated ridge with a straw pheasant."""
+    EAVE, PEAK = 1.1, 1.85
+    r = thatched(eave=EAVE, peak=PEAK, name='deluxe_orp')
+    random.seed(47); objs = []
+    oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    pink = _ct('pink', rough=0.8, var=0.02); _swap(r, {'limewash'}, pink)
+    thatch = C('thatch', '#c7a866', rough=0.9, var=0.07, hue_var=0.01)
+    for o in list(r.children):                                     # the scallops make way for the decorated ridge; a second chimney pot
+        if o.name.split('.')[0] == 'scallop': bpy.data.objects.remove(o, do_unlink=True)
+        elif o.name.split('.')[0] == 'chimpot': o.location.x -= 0.045
+    objs.append(cyl('chimpot', 0.045, 0.12, (-0.375, 0.2, PEAK + 0.34), m=C('terra', '#b0603a', rough=0.8), verts=10, bevel=0.0))
+    for sy in (-1, 1):                                             # a rail where the upstairs floor is
+        objs.append(plank('rail', (-W2, sy * (D2 + 0.016), 0.86), (W2, sy * (D2 + 0.016), 0.86), 0.05, 0.03, (0, sy, 0), oak, jitter=0.3))
+    for sx in (-1, 1):
+        objs.append(plank('srail', (sx * (W2 + 0.016), -D2, 0.86), (sx * (W2 + 0.016), D2, 0.86), 0.05, 0.03, (sx, 0, 0), oak, jitter=0.3))
+        window(objs, sx * (W2 + 0.02), 0.0, 1.0, 0.2, 0.16, oak, glass, normal=(sx, 0, 0), box_flowers=[C('fbox', '#6d4a31', rough=0.85)] + [C('dxf%d' % i, FLOWERS[i], rough=0.5) for i in (0, 2, 3, 4)])
+    # the decorated ridge: a band of paler straw each side, cut into points along its foot, crossed hazel rods pinning it
+    ridge = _ct('ridge', rough=0.9, var=0.04); lig = _ct('ligger', rough=0.8, var=0.08)
+    X0, X1 = -W2 - 0.19, W2 + 0.19
+    for sy in (-1, 1):
+        e = Vector((0, sy * (D2 + 0.22), EAVE - 0.1)); top = Vector((0, 0, PEAK)); nrm = Vector((0, sy * (PEAK - EAVE + 0.1), D2 + 0.22)).normalized()
+        dn = (e - top).normalized(); L = (e - top).length
+        lift = nrm * 0.235
+        a, b = top + lift, top + dn * (L * 0.3) + lift
+        objs.append(plank('rband', (a + b) / 2 + Vector((X0, 0, 0)), (a + b) / 2 + Vector((X1, 0, 0)), (b - a).length + 0.04, 0.04, nrm, ridge, jitter=0.0, bevel=0.012))
+        n = 11; w = (X1 - X0) / n
+        for k in range(n):
+            x = X0 + (k + 0.5) * w
+            objs.append(_tri('rpoint', b + Vector((x - w / 2, 0, 0)), b + Vector((x + w / 2, 0, 0)), b + dn * 0.1 + Vector((x, 0, 0)), nrm, 0.04, ridge))
+        for f in (0.35, 0.85):
+            c = a.lerp(b, f) + nrm * 0.026
+            objs.append(cyl('ligger', 0.008, X1 - X0 - 0.04, c, (0, math.radians(90), 0), m=lig, verts=6, bevel=0.0))
+        ca, cb = a.lerp(b, 0.35) + nrm * 0.03, a.lerp(b, 0.85) + nrm * 0.03
+        for k in range(n):
+            x0, x1 = X0 + k * w + 0.02, X0 + (k + 1) * w - 0.02
+            for (p, q) in ((ca + Vector((x0, 0, 0)), cb + Vector((x1, 0, 0))), (cb + Vector((x0, 0, 0)), ca + Vector((x1, 0, 0)))):
+                objs.append(plank('cross', p, q, 0.014, 0.012, nrm, lig, jitter=0.0, bevel=0.0))
+    objs.append(sphere('ridgeknot', 0.07, (0, 0, PEAK + 0.2), (1.1, 1, 0.9), m=ridge, ico=2, disp=0.1, seed=6))     # (the vane stands on it)
+    # a straw pheasant on the ridge
+    ph = _ct('reed', rough=0.9, var=0.04); px, pz, hd = W2 - 0.12, PEAK + 0.2, -1          # (facing the middle, its tail out)
+    objs.append(sphere('phbody', 0.075, (px, 0, pz + 0.07), (1.35, 0.75, 0.85), m=ph, ico=2, disp=0.12, seed=4))
+    objs.append(sphere('phneck', 0.035, (px + hd * 0.09, 0, pz + 0.13), (1, 0.9, 1.4), (0, math.radians(25 * hd), 0), m=ph, ico=2))
+    objs.append(sphere('phhead', 0.033, (px + hd * 0.12, 0, pz + 0.19), (1.2, 0.9, 1), m=ph, ico=2))
+    objs.append(cyl('phbeak', 0.012, 0.04, (px + hd * 0.155, 0, pz + 0.19), (0, math.radians(90 * hd), 0), m=_ct('ligger', rough=0.8), verts=6, r2=0.0, bevel=0.0))
+    tail_a, tail_b = Vector((px - hd * 0.07, 0, pz + 0.09)), Vector((px - hd * 0.32, 0, pz + 0.22))
+    objs.append(cyl('phtail', 0.024, (tail_b - tail_a).length, (tail_a + tail_b) / 2, (tail_b - tail_a).normalized().to_track_quat('Z', 'Y').to_euler(), m=ph, verts=8, r2=0.004, bevel=0.0))
+    # two eyebrow windows in the front of the thatch
+    e = Vector((0, -(D2 + 0.22), EAVE - 0.1)); top = Vector((0, 0, PEAK)); nrm = Vector((0, -(PEAK - EAVE + 0.1), D2 + 0.22)).normalized()
+    s0 = top.lerp(e, 0.72) + nrm * 0.15                            # (the thatch's face there)
+    zs = lambda y: s0.z + (y - s0.y) * (PEAK - EAVE + 0.1) / (D2 + 0.22)
+    for xd in (-0.36, 0.08):
+        R, yf = 0.16, s0.y - 0.01
+        zc = zs(yf) + 0.17
+        objs.append(box('dormer', (2 * R - 0.01, 0.42, zc - zs(yf) + 0.06), (xd, yf + 0.21, (zc + zs(yf) - 0.06) / 2), m=pink, bevel=0.01, segs=1))
+        window(objs, xd, yf - 0.012, (zc + zs(yf)) / 2 + 0.005, 0.17, 0.12, oak, glass)
+        objs.append(_dprism('eyebrow', xd, yf - 0.07, yf + 0.5, zc - 0.01, R + 0.03, thatch, segs=12, bevel=0.03))
+    _own(objs, r)
+    _cottage_bits(r, 'deluxe_orp', 4, eave=EAVE, peak=PEAK, arbour=False)
+    r.name = 'deluxe_orp'
+    return r
+
+
+# ---- the Thatched Cottage's gardens (its own, not the Red Barn's: Audrey, 27 Oct): the feeder and water on the other sides,
+# an enamel basin for water in the small pens; Cosy: the swing (of hazel poles) on the right, a tin bath of sand at the front
+# left, the cabbage hanging from a hazel tripod by the house's left corner, the hay behind the arbour; Deluxe: a round sand
+# pit with a thatched parasol beside the house's right gable, a stone trough with a pump for water, a feeder with a little
+# thatched roof, the xylophone on the right, the swing at the front right.
+PENS_BY['orp'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(-0.6, -1.25), dish=(0.62, -1.32), bowl='enamel', hay=None, hay_rot=0, sack=None,
+            straw=((0.35, -0.95, 0.25, 25), (-0.35, -1.42, 0.25, 20))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(-0.95, -1.42), dish=(0.95, -1.5), bowl='enamel', hay=None, hay_rot=0, sack=(-1.1, 0.25),
+            straw=((0.75, -1.15, 0.3, 30), (-0.4, -1.75, 0.3, 25))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(-0.75, -1.65), dish=(1.4, -1.15), hay=(-1.6, 0.45), hay_rot=90, sack=None,
+            straw=((-1.6, 0.45, 0.4, 40), (0.35, -1.3, 0.35, 40), (-0.9, -0.85, 0.4, 30))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(-0.95, -1.75), feeder_style='cottage', dish=(-1.35, -2.45), water='trough', hay=(-1.95, 0.45), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.3, -1.4, 0.3, 25), (-1.95, 0.45, 0.4, 40))),
+}
+PLAY_BY['orp'] = {3: dict(swing=(1.25, -2.1), tinbath=(-1.3, -2.35), cabbage=(-1.1, -0.95), tripod=True, rustic=True),
+                  4: dict(swing=(1.5, -2.3), pit=(1.6, -0.25), cabbage=(-1.0, -0.95), xylo=(0.95, -1.35), tripod=True, rustic=True)}
+PIT_R = 0.4                                                     # the Deluxe cottage's round sand pit
+TIN_W, TIN_D = 0.62, 0.4                                        # the Cosy cottage's tin bath (x, y)
+TRIPOD = ((0.0, 0.32), (-0.28, 0.1), (0.28, 0.1))               # the cabbage's tripod: its feet round the cabbage (Blender x, y)
+
+
+def tin_bath(objs, x, y):
+    """The Cosy cottage's sand bath: an old oval tin bath full of sand, a handle at each end, a little spilt round it."""
+    tin = mat('ct_tinbath', '#c3c9ca', rough=0.5, metal=0.3, var=0.04); sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    sy = TIN_D / TIN_W
+    o = cyl('tbath', TIN_W / 2 - 0.004, 0.104, (x, y, 0.052), m=tin, verts=24, r2=TIN_W / 2 - 0.035, bevel=0.006); o.scale = (1, sy, 1); objs.append(o)
+    bpy.ops.mesh.primitive_torus_add(major_radius=TIN_W / 2 - 0.006, minor_radius=0.014, major_segments=28, minor_segments=6, location=(x, y, 0.118))
+    o = bpy.context.object; o.scale = (1, sy * 1.03, 1); setmat(o, tin); objs.append(o)
+    o = sphere('tsand', TIN_W / 2 - 0.03, (x, y, 0.104), (1, sy, 0.035), m=sand, ico=3, disp=0.1, seed=11); objs.append(o)
+    for sx in (-1, 1):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.035, minor_radius=0.007, major_segments=10, minor_segments=4, location=(x + sx * (TIN_W / 2 + 0.02), y, 0.1), rotation=(math.radians(90), 0, 0))
+        o = bpy.context.object; setmat(o, tin); objs.append(o)
+    for k in range(6):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (TIN_W / 2 + 0.08), y + math.sin(a) * (TIN_D / 2 + 0.07), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 13))
+
+
+def sand_pit(objs, x, y):
+    """The Deluxe cottage's sand bath: a round pit of pale sand edged with old bricks, a parasol of thatch on a pole over its
+    back, a little wooden rake."""
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    brick = C('brick', '#9b5239', rough=0.85, var=0.1)
+    n = 22
+    for k in range(n):                                          # bricks on edge round it
+        a = k / n * math.tau; c, s_ = math.cos(a), math.sin(a)
+        objs.append(box('pbrick', (0.1, 0.05, 0.1), (x + c * (PIT_R + 0.02), y + s_ * (PIT_R + 0.02), 0.04), (0, math.radians(random.uniform(-6, 6)), a + math.pi / 2), m=brick, bevel=0.006, segs=1, jitter=0.002))
+    objs.append(sphere('psand', PIT_R, (x, y, 0.05), (1, 1, 0.09), m=sand, ico=3, disp=0.08, seed=15))
+    for k in range(3):                                          # hollows where they've bathed
+        a = k * 2.2 + 0.5
+        objs.append(sphere('phollow', 0.1, (x + math.cos(a) * 0.17, y + math.sin(a) * 0.17, 0.083), (1.2, 1, 0.12), m=sand2, ico=2, disp=0.1, seed=k + 16))
+    oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); thatch = C('thatch', '#c7a866', rough=0.9, var=0.07, hue_var=0.01)
+    px, py = x + 0.26, y + 0.28                                 # (its pole at the back of the pit, out of their way)
+    objs.append(cyl('ppole', 0.02, 0.86, (px, py, 0.43), m=oak, verts=8, bevel=0.0))
+    objs.append(cyl('pthatch', 0.46, 0.2, (px, py, 0.93), m=thatch, verts=16, r2=0.03, bevel=0.02))
+    objs.append(cyl('pfringe', 0.47, 0.06, (px, py, 0.82), m=thatch, verts=16, r2=0.45, bevel=0.01))
+    objs.append(sphere('pknot', 0.045, (px, py, 1.05), m=_ct('ridge', rough=0.9), ico=2))
+    objs.append(cyl('rake', 0.008, 0.36, (x - 0.12, y - PIT_R - 0.1, 0.012), (math.radians(90), 0, math.radians(70)), m=oak, verts=6, bevel=0.0))
+    objs.append(box('rakeh', (0.13, 0.025, 0.02), (x - 0.29, y - PIT_R - 0.04, 0.012), (0, 0, math.radians(-20)), m=oak, bevel=0.003, segs=1))
+
+
+def cabbage_tripod(objs, x, y):
+    """The cottage's way of hanging the cabbage: three hazel poles tied at the top, the cabbage on a string under them."""
+    pole = C('ct_hazel', CT['hazel'], rough=0.85, var=0.12, grain=0.3, grain_scale=G); twine = coop.M()['twine']
+    top = Vector((x, y, CAB_TOP + 0.03))
+    for (lx, ly) in TRIPOD:
+        a = Vector((x + lx, y + ly, 0.0)); b = top + (top - a).normalized() * 0.06
+        objs.append(cyl('tpole', 0.016, (b - a).length, (a + b) / 2, (b - a).normalized().to_track_quat('Z', 'Y').to_euler(), m=pole, verts=6, bevel=0.0))
+    objs.append(sphere('tknot', 0.03, top, (1, 1, 0.8), m=twine, ico=1))

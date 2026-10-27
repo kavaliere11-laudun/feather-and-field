@@ -2439,3 +2439,40 @@ the birds already had.
   no browser): each look's eggs, chicks and cuddles, the doors' nights, the upgrades' prices and XP.
 - Balance (`balsim.mjs`, which now buys the upgrades): the same pace as before (once a day level 29 at a year, twice a
   day level 30 on day 296, every 3 hours day 244); the Red Barn Deluxe around day 110.
+
+## Release 4, step 3: the Thatched Cottage's five looks (27 Oct 2026; Audrey: "The other four coops (Recommended)", one at a time, shown first; then "All good, just try not to get the same configuration of the toys/ accessories for each coop")
+
+- **The looks** (stylized/coops.py `box_orp`, `shed_orp`, `thatched`, `cosy_orp` with `_cottage_bits`, `deluxe_orp`):
+  Rustic, a hut of straw bales (twine round each), an old board roof under a ragged heap of straw and a patched tarpaulin,
+  a rope over it with a brick hanging at each end, a cracked pot of dry stems where the lavender will be. Mended, a little
+  wattle hut (hazel rods woven between stakes) on a few courses of brick, daubed with clay on the left of its front and the
+  backs of its sides (lumps of clay along the edge), the rest still bare, a thin roof of new thatch with hazel spars, a
+  bucket of daub with a trowel in it. Snug, the cottage. Cosy, the cottage with hollyhocks along its gables, a climbing rose
+  at its corner, a window with flowers on its left gable and a rose arch over a bench there (a watering can), a lantern by
+  the hens' door, the automatic door's box and its solar panel on the thatch, a doorstep and mat, pots by the ramp, stepping
+  stones. Deluxe, `thatched(eave=1.1, peak=1.85)`: a storey taller, limewashed Suffolk pink, a rail at the upstairs floor,
+  windows upstairs in both gables with flowers, two eyebrow windows in the front thatch (`_dprism`: a half-round hood of
+  thatch over a little dormer), a decorated ridge (a band of paler straw cut into points, crossed hazel rods pinning it), a
+  straw pheasant on the ridge, a knot of straw in the middle for the vane, a second chimney pot; the cosy touches but no
+  arch (its sand pit is there). Every look keeps the cottage's nest: the same floor (0.2), pop door, nest window (low, its
+  door let down onto the ground), short ramp (`NESTS['house_orp']` asserted in export), and something where the lavender
+  pot stands (the birds walk round it in every look).
+- **Its own gardens** (`PENS_BY['orp']`, `PLAY_BY['orp']`; the same pens, fences and gates as the Red Barn's, their things
+  elsewhere and in other styles): an enamel basin (blue rim) in the small pens, the feeder and water on the other sides;
+  Cosy: the swing of hazel poles on the right, a tin bath of sand at the front left (`tin_bath`), the cabbage hanging from a
+  hazel tripod (`cabbage_tripod`) by the house's left corner, the hay behind the arch; Deluxe: a round sand pit edged with
+  bricks under a thatched parasol beside the right gable (`sand_pit`), a stone trough with a cast-iron pump for water
+  (coop.py `trough`), a feeder with a little thatched roof (`feeder_style='cottage'`), the xylophone on the right, the swing
+  at the front right. coops.json `pens[breed][t]`; models `pen_t0_orp` .. `pen_t4_orp` (the Red Barn's keep their names).
+  main.js `tierPen(breed, t)`, `pensOf`, `penKey` (footprints and aprons by breed and look); play.js: a round sand bath of
+  any size (`dust.r`).
+- **In the game** (game.js `LOOKS_CV = { rir: 1, orp: 2 }`, `CV`, `UPGRADES` from it): the cottage's upgrades and its
+  texts (`up_orp_*`, English and French). A farm from before a breed's looks has that breed's coops Snug (load(), once;
+  `cv` 1 to 2 checked, not counted as an edit): a farm from the Red Barn's looks has its Thatched Cottages Snug (a rustic
+  one gets the cottage, the same eggs as before), its barn as it was. main.js `hasLooks`: a breed's looks in the game only
+  once it's in `UPGRADES` (on the test page's `?looks` as soon as its models are made).
+- Tests: `upgradetest.mjs` `BREED=orp` (a Thatched Cottage placed, first in the save: each upgrade, moved where its pen
+  fits and its gate opens onto the farm, the reload, a farm from before), `playtest.mjs` `BREED=orp` (the tin bath, the sand
+  pit), `looktest.mjs` (the cottage's upgrades; loading farms from before each breed's looks), `barnlooks.mjs` `BREED`,
+  `NTH` (a breed's second coop on the test page, turned the other way), `SHIFT` (the view along the screen's up; main.js
+  `lookFree`: past the map's edge, for pictures).

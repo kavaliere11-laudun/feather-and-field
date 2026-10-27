@@ -1,5 +1,5 @@
 // The Red Barn's five looks side by side (release 4: Rustic, Mended, Snug, Cosy, Deluxe): ./withserver.sh node barnlooks.mjs
-// [OUT]   (OUT: a folder; ONLY=3,4: just those looks; TIME=21:30 for an evening; BREED=rir; SIZE, OX, OZ: the framing; W, H: the screen, 874x402 for
+// [OUT]   (OUT: a folder; ONLY=3,4: just those looks; TIME=21:30 for an evening; BREED=rir, NTH=1 its second coop (turned the other way); SIZE, OX, OZ: the framing; W, H: the screen, 874x402 for
 // the phone on its side: then the five one under the other)
 // The test page with one coop in each look in turn (?looks=N), seen from the game's camera, then one picture of all five
 // (looks.png) with their names under them.
@@ -17,11 +17,12 @@ for (const t of ONLY) {
   await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&looks=${t}&time=${TIME}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #tag, #foxbtn, #replaybtn, #farmerbtn { display: none !important; }' });
-  const info = await p.evaluate(([breed, sz, ox, oz]) => {
-    const f = window.__farm, P = f.coopPlots().find(q => q.breed === breed); f.pause(true);
-    const c = P.frame.localToWorld(new f.THREE.Vector3(ox, 0, oz)); f.lookAt(c.x, c.z, sz); f.step(1 / 30, 20); f.draw();
+  await p.evaluate(v => { window.__SHIFT = v; }, process.env.SHIFT || 0);          // (SHIFT: the view moved along the screen's up, in metres: below 0 the coop sits lower)
+  const info = await p.evaluate(([breed, sz, ox, oz, nth]) => {
+    const f = window.__farm, P = f.coopPlots().filter(q => q.breed === breed)[nth]; f.pause(true);
+    const c = P.frame.localToWorld(new f.THREE.Vector3(ox, 0, oz)), sh = +(window.__SHIFT || 0); f.lookFree(c.x + sh, c.z + sh, sz); f.step(1 / 30, 20); f.draw();
     return { tier: P.tier };
-  }, [process.env.BREED || 'rir', +(process.env.SIZE || 1.75), +(process.env.OX || 0.1), +(process.env.OZ || 0.7)]);
+  }, [process.env.BREED || 'rir', +(process.env.SIZE || 1.75), +(process.env.OX || 0.1), +(process.env.OZ || 0.7), +(process.env.NTH || 0)]);
   await p.waitForTimeout(300);
   const file = `${OUT}/look_${t}.png`; await p.screenshot({ path: file, timeout: 180000 }); shots.push([file, t]);
   console.log(NAMES[t], info);

@@ -28,7 +28,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0`, { wai
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 }); await p.tap('.gsheet .gbtn');
 await load();
 // a farm a little on: coins, land, the guide done; its coop where the Deluxe pen fits, the view on it
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 60000; g.data.lvSeen = 30; g.data.coins = 13000; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.data.first = null; g.save(); sessionStorage.setItem('__T', window.__T); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 60000; g.data.lvSeen = 27; g.data.coins = 13000; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.data.first = null; g.save(); sessionStorage.setItem('__T', window.__T); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.setHour(10.5); });
 const VIEW = process.env.VIEW ? JSON.parse(process.env.VIEW) : [0, 0, 3.6];
