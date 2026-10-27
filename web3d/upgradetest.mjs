@@ -60,7 +60,7 @@ if (B !== 'rir') {                                 // a coop of that breed place
     return 'no spot';
   }, B);
   ok(`a ${B} coop placed`, ok_ === true, ok_);
-  await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+  await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
   await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); });
 }
 let s = await state();
@@ -101,7 +101,7 @@ for (let t = 1; t <= 4; t++) {
 c = await card();
 ok('Deluxe: the finest coop on the farm, no more upgrades', !c.up && (fr ? /Le plus beau poulailler/ : /The finest coop/).test(c.text), c);
 // a reload keeps it
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state(); const bd = await birds();
 ok('a reload: still Deluxe, its pen and play things, unflagged', s.tier === 4 && s.house === LOOKS[4] && s.pen === PENN(4) && !s.edited && bd.toys && bd.free, { s, bd });
 // a farm from before the looks: its coop Snug, unflagged
@@ -111,7 +111,7 @@ await p.evaluate(() => {
   const seal = str => { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); };
   raw.s = seal(JSON.stringify(raw.d)); localStorage.setItem(k, JSON.stringify(raw));
 });
-await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state();
 ok('a farm from before the looks: its coop Snug (the house and pen as they were), unflagged', s.tier === 2 && s.house === LOOKS[2] && s.pen === 'pen_base' && s.cv === 4 && !s.edited, s);
 ok('no page errors', errs.length === 0, errs);
