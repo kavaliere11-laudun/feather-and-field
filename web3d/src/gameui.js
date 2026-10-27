@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -454,6 +454,13 @@ export class GameUI {
       });
       c.append(b, why); body.append(c);
     } else if (up && UPGRADES.includes(g.baseOf(coop.breed))) body.append(el('p', 'gnote', this.t('up_top')));
+    for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
+      const on = coop.dress === id, name = g.dressName(id);
+      if (on) body.append(el('p', 'gnote', this.t('dress_card', { name })));
+      const d = el('button', 'gbtn' + (on ? ' galt' : ''), this.t(on ? 'dress_off' : 'dress_on', { name })); d.type = 'button'; d.dataset.dress = id;
+      d.addEventListener('click', () => up.onDress(on ? null : id));
+      body.append(d);
+    }
     body.append(el('p', 'gnote', this.t('move_body')));
     const go = el('button', 'gbtn', this.t('move_btn')); go.type = 'button';
     go.addEventListener('click', () => onMove());
@@ -635,6 +642,7 @@ export class GameUI {
       c.append(hd);
       const won1 = r.place === 1 && r.id[0] !== 'v' && b && g.rosettesOf(b)[SHOW_TIERS.indexOf(r.id[0]) * 3] === 1;      // (her first win there: a champion now)
       if (won1) c.append(el('p', 'gtext gchamp', '🏆 ' + this.t('res_champ', { name }, f)));
+      if (r.dress) c.append(el('p', 'gtext gchamp', '🎄 ' + this.t('res_dress', { name: g.dressName(r.dress) })));
       body.append(c); coins += r.coins; xp += r.xp;
     }
     body.append(el('p', 'gtotal', this.t('congrats_total', { c: coins, xp })));
@@ -651,9 +659,9 @@ export class GameUI {
     const fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
     const top = el('div', 'gshop-top'), pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins)));
     top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
-    if (h.outfits) {                                    // (three shelves: the decorations, the animals, the farmer's outfits)
+    if (h.outfits) {                                    // (four shelves: the decorations, the animals, the farmer's outfits, the seasons' dresses)
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label] of [['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits']]) {
+      for (const [k, label] of [['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits'], ['seasons', 'shop_seasons']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), this.t(label)); c.type = 'button'; c.dataset.tab = k;
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
         tabs.append(c);
@@ -661,6 +669,7 @@ export class GameUI {
       b.append(tabs);
     }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
+    if (tab === 'seasons') { this.dressCards(b, h, fmt); return; }
     if (tab === 'animals') { this.animalCards(b, h, fmt); return; }
     for (const id of Object.keys(DECOR)) {
       const D = DECOR[id], own = g.decorOwned(id), lock = g.level < D.level, broke = !own && !lock && g.data.coins < D.price;
@@ -729,6 +738,28 @@ export class GameUI {
       if (!own && !lock) {
         const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyOutfit(id); });
+        info.append(go);
+      }
+      card.append(pic, info); b.append(card);
+    }
+  }
+  // the seasons' dresses for the coops (the shop's fourth shelf, release 4): each with its picture, what it is, and Buy
+  // (h.buyDress) in its season, or when it's on sale; one owned: yours for good (dressed from a coop's card)
+  dressCards(b, h, fmt) {
+    const g = this.g, cap = x => x.charAt(0).toUpperCase() + x.slice(1);
+    b.append(el('p', 'gnote', this.t('seasons_note')));
+    for (const id of Object.keys(DRESSES)) {
+      const D = DRESSES[id], own = g.dressOwned(id), on = inSeason(id), broke = !own && on && g.data.coins < D.price;
+      const card = el('div', 'gcard gpage gdec gdress' + (!own && !on ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.dress = id;
+      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const info = el('div', 'gpage-i');
+      info.append(el('span', 'gcard-t', cap(g.dressName(id))), el('p', 'gnote gdec-l', this.t('dressl_' + id)));
+      if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('dress_owned')));
+      else if (!on) info.append(el('p', 'gpage-s', this.t('dress_when_' + id)));
+      else {
+        const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(D.price) + ' · ' + this.t('dec_xp', { xp: dressXp(id) }))); info.append(pr);
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
+        go.addEventListener('click', () => { if (!go.disabled) h.buyDress(id); });
         info.append(go);
       }
       card.append(pic, info); b.append(card);

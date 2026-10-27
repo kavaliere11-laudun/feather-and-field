@@ -4273,7 +4273,20 @@ function moveBusy(p) {
 }
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p) });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id) });
+}
+// ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
+function dressCoop(p, id) {
+  if (!p || !p.gc || MOVE.plot || !game.dressCoop(p.gc.id, id)) return false;
+  gameUI.close(); retier(p);
+  hint(id ? game.t('dress_done', { coop: game.coopName(p.gc), name: game.dressName(id) }) : game.t('dress_gone', { coop: game.coopName(p.gc) }));
+  return true;
+}
+function buyDress(id) {
+  const r = game.buyDress(id); if (!r) return false;
+  gameUI.refresh(); gameUI.bumpCoins(); gameUI.close();
+  hint(game.t('dress_bought', { name: game.dressName(id), xp: r.xp }));
+  return true;
 }
 // ---- a coop's next look (release 4: Rustic, Mended, Snug, Cosy, Deluxe; game.js coopNext, upgradeCoop): its bigger pen
 // where it stands, if there's room (else: move it first); what's in the way cleared (in a puff, for good), the price paid;
@@ -4887,7 +4900,7 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id),
+function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
   moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
@@ -5940,7 +5953,7 @@ window.__farm = {
   geeseTrust: { why: () => { window.__gateWhy = {}; pondGates(); return window.__gateWhy; }, card: () => geeseCard(), greet: () => { const GF = geeseFence(); if (GF) greetGeese(GF); return !!GF; },
     alarm: () => guardAlarm(geeseFlock, null), brave: () => !!(geeseFlock && geeseFlock.brave), visit: () => geeseVisit(), start: k => startGeeseVisit(k), V: () => GVISIT, corn: () => CORN.list.filter(c => c.landed).length,
     gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
-  land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]),
+  land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]), dressCoop: (i, id) => dressCoop(gamePlots()[i], id), coopParts: i => coopParts(gamePlots()[i]).map(x => x[0]), shopSheet: tab => shopSheet(tab),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm

@@ -63,7 +63,7 @@ for (const look of [3, 4]) {
       const c = P.frame.localToWorld(b.root.position.clone()); f.lookAt(c.x, c.z, 1.2); f.step(1 / 30, 1); f.draw();
     }, [kind, BREED]);
     await p.waitForTimeout(200);
-    await p.screenshot({ path: `${OUT}/play_${BREED === 'rir' ? '' : BREED + '_'}${look}_${kind}.png` });
+    await p.screenshot({ path: `${OUT}/play_${BREED === 'rir' ? '' : BREED + '_'}${look}_${kind}.png`, timeout: 180000 });
   }
 }
 ok(errs.length === 0, 'no page errors ' + JSON.stringify(errs));

@@ -127,6 +127,12 @@ const TEXT = {
     dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_way: 'It would block the way to a coop.',
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: buy the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
     shop_decor: 'Decorations', shop_outfits: 'Outfits', outfits_note: 'New clothes for {farmer}. Each one gives XP when you buy it.',
+    shop_seasons: 'Seasons', seasons_note: 'Dresses for your coops: each on sale in its season, then yours for good.',
+    dress_xmas: 'Christmas dress', dressl_xmas: 'A garland with coloured lights along the fence, wreaths at the gate, fairy lights on the roof, a gold star and a little tree with presents.',
+    dress_when_xmas: 'On sale from 1 December to 6 January.', dress_owned: 'Yours for good: dress a coop from its card.', dress_buy: 'Buy · {c}',
+    dress_bought: 'The {name} is yours (+{xp} XP)! Tap a coop to dress it.', dress_on: '🎄 Put on the {name}', dress_off: 'Take off the {name}',
+    dress_done: 'Merry Christmas! {coop} is in its {name}.', dress_gone: '{coop} has its everyday look again.', dress_card: 'It wears the {name}.',
+    res_dress: 'And a prize on top: the {name}!',
     shop_animals: 'Animals', ani_geese: 'Gertrude and Hector, the geese', anil_geese: 'A pair of geese for the pond: they graze, swim, honk at everything and squabble now and then.',
     ani_dog: '{name}, the farm dog', anil_dog: 'A Border Collie with his kennel and his ball: he does his rounds of the coops, plays, teases the geese, and you choose his name.',
     ani_dog_owned: 'On your farm', ani_see_dog: 'See him', ani_move_kennel: 'Move his kennel', ani_rename: 'Rename', kennel_name: 'Kennel',
@@ -332,6 +338,12 @@ const TEXT = {
     dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
     shop_decor: 'Décorations', shop_outfits: 'Tenues', outfits_note: 'De nouveaux habits pour {farmer}. Chacun rapporte de l’XP à l’achat.',
+    shop_seasons: 'Saisons', seasons_note: 'Des parures pour vos poulaillers : chacune en vente pendant sa saison, puis à vous pour toujours.',
+    dress_xmas: 'parure de Noël', dressl_xmas: 'Une guirlande de lumières de couleur le long de la clôture, des couronnes au portail, des guirlandes lumineuses sur le toit, une étoile dorée et un petit sapin avec des cadeaux.',
+    dress_when_xmas: 'En vente du 1er décembre au 6 janvier.', dress_owned: 'À vous pour toujours : parez un poulailler depuis sa fiche.', dress_buy: 'Acheter · {c}',
+    dress_bought: 'La {name} est à vous (+{xp} XP) ! Touchez un poulailler pour la lui mettre.', dress_on: '🎄 Mettre la {name}', dress_off: 'Retirer la {name}',
+    dress_done: 'Joyeux Noël ! {coop} porte sa {name}.', dress_gone: '{coop} retrouve son allure de tous les jours.', dress_card: 'Il porte la {name}.',
+    res_dress: 'Et en prime : la {name} !',
     shop_animals: 'Animaux', ani_geese: 'Gertrude et Hector, les oies', anil_geese: 'Un couple d’oies pour l’étang : elles broutent, nagent, cacardent après tout le monde et se chamaillent de temps en temps.',
     ani_dog: '{name}, le chien de la ferme', anil_dog: 'Un border collie avec sa niche et sa balle : il fait le tour des poulaillers, joue, taquine les oies, et c’est vous qui choisissez son nom.',
     ani_dog_owned: 'Dans votre ferme', ani_see_dog: 'Le voir', ani_move_kennel: 'Déplacer sa niche', ani_rename: 'Renommer', kennel_name: 'Niche',
@@ -664,6 +676,18 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // little things to do on a new farm, one at a time, each a few coins; the last a bonus
 export const GUIDE = ['eggs', 'cuddle', 'sow', 'jobs', 'shop'];
 export const GUIDE_COINS = 10, GUIDE_BONUS = 30;
+// ---- seasonal dresses for the coops (release 4; Audrey, 27 Oct: seasonal coops, "The next one will be Christmas and should
+// only be a dress for any coop", "In season, kept forever (Recommended)", "1,500 coins (Recommended)", "1 Dec to 6 Jan
+// (Recommended)"): on sale in the farm shop in its season (from..to, month and day on the phone's own calendar, both
+// days in), or won (a first place at the County show or the National Championship judged in its season); then yours for
+// good: put on any coop, or taken off, from its card, any time of year. What it looks like: main.js coopParts
+export const DRESSES = { xmas: { price: 1500, from: [12, 1], to: [1, 6] } };
+export const dressXp = id => Math.round(DRESSES[id].price / 50);
+export function inSeason(id, now = Date.now()) {
+  const D = DRESSES[id]; if (!D) return false;
+  const d = new Date(now), k = (d.getMonth() + 1) * 100 + d.getDate(), a = D.from[0] * 100 + D.from[1], b = D.to[0] * 100 + D.to[1];
+  return a <= b ? k >= a && k <= b : k >= a || k <= b;         // (Christmas runs over the new year)
+}
 // the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
 export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
 export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
@@ -803,6 +827,8 @@ export function checkFarm(d, now = Date.now()) {
   out.lvSeen = int(d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
   out.coops = [];
   const seen = new Set();
+  const dresses = Array.isArray(d.dresses) ? d.dresses.filter((x, i, a) => typeof x === 'string' && DRESSES[x] && a.indexOf(x) === i) : [];       // (the seasonal dresses owned: known ones, once each)
+  out.dresses = dresses;
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
     if (!BREED_INFO[c.breed] || levelOf(out.xp) < (BREED_LEVEL[c.breed] || BREED_LEVEL.sil) || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come, one each; a rare colour's once the Silkies have)
@@ -817,6 +843,7 @@ export function checkFarm(d, now = Date.now()) {
           ...(k && k.rare && ((k.rare === RARE_FROM[c.breed] && hash01(String(c.brood.hen) + '|' + c.brood.start + '|' + i + '|rare') < rareMost()) || (k.rare === c.breed && RARE_LINES.includes(c.breed))) ? { rare: k.rare } : {}) })) : null } : null,      // (a rare one: only its own colour's, only where the luck could have given it)
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
       ...(typeof c.shut === 'string' && /^\d{8}$/.test(c.shut) && c.shut <= nightKey(now + TZ_SLACK) ? { shut: c.shut } : {}),      // (its pop door shut for that night)
+      ...(typeof c.dress === 'string' && dresses.includes(c.dress) ? { dress: c.dress } : {}),      // (a seasonal dress it wears: one owned)
       ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
   }
   out.birds = [];
@@ -872,7 +899,8 @@ export function checkFarm(d, now = Date.now()) {
     const T = SHOWS[r.id[0]], of = T.rivals + 1, place = int(r.place, 1, of, of), t = int(r.t, 0, now, -1);
     if (t < 0 || Math.abs(t - showJudged(r.id)) > TZ_SLACK) continue;
     const O = SHOWS_25OCT[r.id[0]], was = place <= 3 && r.coins === O.prize[place - 1] && r.xp === XP_SHOW + O.xp[place - 1];
-    out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? (was ? O : T).prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? (was ? O : T).xp[place - 1] : 0), t, seen: r.seen === true });
+    const won = typeof r.dress === 'string' && DRESSES[r.dress] && place === 1 && r.id[0] !== 'v' && inSeason(r.dress, t) && dresses.includes(r.dress);      // (a dress won with it)
+    out.shows.res.push({ id: r.id, bird: r.bird, place, of, coins: place <= 3 ? (was ? O : T).prize[place - 1] : 0, xp: XP_SHOW + (place <= 3 ? (was ? O : T).xp[place - 1] : 0), t, seen: r.seen === true, ...(won ? { dress: r.dress } : {}) });
   }
   // the decorations bought: each known one once, from its level, where it stands (on the quarter-metre; the duck house on the
   // pond, no spot); the farm (main.js) then makes sure each stands where one can
@@ -1152,6 +1180,7 @@ export class Game {
       if (place <= 3) { b.ros = (b.ros && b.ros.length === 9 ? b.ros : [0, 0, 0, 0, 0, 0, 0, 0, 0]).slice(); b.ros[SHOW_TIERS.indexOf(e.id[0]) * 3 + place - 1]++; }
       this.data.coins += coins; this.data.xp += xp;
       const r = { id: e.id, bird: e.bird, place, of, coins, xp, t, seen: false };
+      if (place === 1 && e.id[0] !== 'v') for (const k of Object.keys(DRESSES)) if (inSeason(k, t) && !this.dressOwned(k)) { this.data.dresses.push(k); r.dress = k; break; }      // (a top prize in its season: a seasonal dress)
       S.res = [...S.res, r].slice(-6);
       out.push({ ...r, champ: !champ0 && this.champion(b) });
     }
@@ -1369,6 +1398,22 @@ export class Game {
     return { away: Math.max(0, now - from), paused: now - from > CATCH_UP, eggs, items };
   }
   seenNow(now = Date.now()) { this.data.lastSeen = now; this.save(); }
+  // ---- the seasonal dresses: bought in their season (a little XP), kept; a coop dressed, or undressed (id null)
+  dressOwned(id) { return (this.data.dresses || []).includes(id); }
+  dressNext(id, now = Date.now()) { return !!DRESSES[id] && !this.dressOwned(id) && inSeason(id, now); }
+  buyDress(id, now = Date.now()) {
+    const D = DRESSES[id]; if (!D || !this.dressNext(id, now) || this.data.coins < D.price) return null;
+    this.data.coins -= D.price; const xp = dressXp(id); this.data.xp += xp;
+    (this.data.dresses || (this.data.dresses = [])).push(id);
+    this.save();
+    return { price: D.price, xp };
+  }
+  dressCoop(cid, id) {
+    const c = this.coop(cid); if (!c || (id && !this.dressOwned(id))) return false;
+    if (id) c.dress = id; else delete c.dress;
+    this.save(); return true;
+  }
+  dressName(id) { return this.t('dress_' + id); }
   // ---- the farmer's outfits: bought (and put on at once), worn
   outfitOwned(id) { return id === 'classic' || (this.data.farmer.outfits || []).includes(id); }
   outfitNext(id) { return OUTFITS[id] && !this.outfitOwned(id) && this.level >= OUTFITS[id].level; }
@@ -1459,6 +1504,7 @@ export class Game {
     this.data.news = [];
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
+    this.data.dresses = [];
     this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
     this.edited = false;
     this.save();

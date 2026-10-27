@@ -56,7 +56,7 @@ const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText
 const animals = async () => { await p.evaluate(() => { window.__farm.deco.shop(); document.querySelector('.gshop-tabs .gchip[data-tab="animals"]').click(); }); await run(0.3); return p.evaluate(() => { const c = document.querySelector('.gsheet [data-animal="geese"]'), btn = c && c.querySelector('button'); return c && { text: c.innerText, btn: btn && btn.textContent, off: btn && btn.disabled, tabs: [...document.querySelectorAll('.gshop-tabs .gchip')].map(x => x.textContent).join('|'), title: document.querySelector('.gsheet').innerText.split('\n')[0] }; }); };
 const T = { lvl4: fr ? /Arrive au niveau 4/ : /Comes at level 4/, newbuy: fr ? /Nouveau à acheter : Gertrude et Hector, les oies/ : /New to buy: Gertrude and Hector, the geese/,
   broke: fr ? /Pas encore assez de pièces/ : /Not enough coins yet/, buy: fr ? /^Acheter · 1\s200$/ : /^Buy · 1,200$/, came: fr ? /Gertrude et Hector viennent vivre au bord de l’étang ! \+24 XP/ : /Gertrude and Hector have come to live by the pond! \+24 XP/,
-  tabs: fr ? 'Décorations|Animaux|Tenues' : 'Decorations|Animals|Outfits', title: fr ? /La boutique de la ferme/ : /The farm shop/, at: fr ? /À l’étang/ : /At the pond/, see: fr ? 'Les voir' : 'See them', tag: fr ? /^(Gertrude · oie d'Embden|Hector · jars de Toulouse)$/ : /^(Gertrude · Embden goose|Hector · Toulouse gander)$/ };
+  tabs: fr ? 'Décorations|Animaux|Tenues|Saisons' : 'Decorations|Animals|Outfits|Seasons', title: fr ? /La boutique de la ferme/ : /The farm shop/, at: fr ? /À l’étang/ : /At the pond/, see: fr ? 'Les voir' : 'See them', tag: fr ? /^(Gertrude · oie d'Embden|Hector · jars de Toulouse)$/ : /^(Gertrude · Embden goose|Hector · Toulouse gander)$/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
@@ -67,7 +67,7 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 let s = await st(), a = await animals();
 await shot('1_level3');
-ok('level 3: no geese on the farm; the shop ("The farm shop": Decorations, Animals, Outfits) says the geese come at level 4', s.level === 3 && !s.owned && s.geese === 0 && !s.shown && a && T.lvl4.test(a.text) && !a.btn && a.tabs === T.tabs && T.title.test(a.title), { s, a });
+ok('level 3: no geese on the farm; the shop ("The farm shop": Decorations, Animals, Outfits, Seasons) says the geese come at level 4', s.level === 3 && !s.owned && s.geese === 0 && !s.shown && a && T.lvl4.test(a.text) && !a.btn && a.tabs === T.tabs && T.title.test(a.title), { s, a });
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 4: its card
 await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.land.push(3); g.save(); }, xpAt(4)); await run(1.6);
