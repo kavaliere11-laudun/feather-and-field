@@ -2563,3 +2563,35 @@ the birds already had.
   days): unchanged, once a day level 30 on day 337, twice a day 283, every 3 hours 236 (the lodge's Mended around day
   153 once a day, its Deluxe around day 235). A quick look at a model in Blender, without the browser:
   `stylized/view_model.py` (`YAWS`, `PITCH`, `AT`, `ORTHO`).
+
+## Release 4, step 7: the Christmas dress (27 Oct 2026; Audrey, on seasonal coops: "We will need both as some of them can be paid content (the ones fully reworked) but that can come when the time is right, no need to plan too far in advance. The next one will be Christmas and should only be a dress for any coop", "In season, kept forever (Recommended)", "1,500 coins (Recommended)"; then "Perfect, put it in", "1 Dec to 6 Jan (Recommended)")
+
+- **What it is**: a dress for any coop in any look (stylized/coops.py "the Christmas dress"): a garland of fir along the top
+  of its pen's fence (front and sides, sagging from post to post) with little bulbs in red, gold, green, blue and white,
+  a red bow on each post (`_garland`, `_bow`, `xmas_fence(t)`: `xmas_fence_t0`..`t4`, one for each pen size, the same for
+  every breed); a wreath with berries and a bow on each gate post (the Deluxe: one hung under its rose arch); a little
+  Christmas tree in a red pot with baubles, a string of lights, a gold star and three presents (`xmas_tree`), where
+  there's room in front of the house (`xmas_tree_spot`: clear of the feeder, the water, the hay, the play things, the
+  house's blocks, the ramp and the way to the gate, as near a front corner as it can; smaller in the tiny Rustic pens:
+  coops.json `dress.xmas.tree[breed][look]` = [x, z, size]); a lit gold star on the roof's top (`xmas_star`, at
+  `tops`; on a Deluxe above its weathervane); fairy lights along the front eave of every house in every look
+  (export_coops.py `eave_of`: rays straight down across the front of its roof find its front edge, a lantern or a pot
+  in front left out by comparing each point with its neighbours, the bulbs hung under it in little swags; coops.json
+  `dress.xmas.lights[house]`; main.js `xmasLights` makes them once per house, in turn red, gold, green, blue, white).
+  At night every bulb glows in its own colour (webglb.py `GLOWC`, the 'glowc' bucket; main.js `lightUp`: its own
+  colour, not the lanterns' warm one) and the tree casts a little pool of light. The shop's picture
+  (`decor/xmas.webp`) from `stylized/xmas_pic.py`.
+- **The rules** (game.js `DRESSES`, `inSeason`, `buyDress`, `dressCoop`): on sale from 1 December to 6 January (both days
+  in, on the phone's calendar) on the farm shop's fourth shelf, Seasons ("Saisons"), for 1,500 coins (+30 XP); out of
+  its season the shelf says when it's on sale. Bought, it's yours for good ("Yours for good: dress a coop from its
+  card"): a coop's card has "🎄 Put on the Christmas dress" (or "Take off the Christmas dress"), any time of year; put
+  on, the coop is dressed there and then (`dressCoop` in main.js: `retier`, its birds walking round the tree). Won too:
+  a first place at the County show or the National Championship judged in its season gives it (once), "And a prize on
+  top: the Christmas dress!" on the results.
+- **The save**: `dresses` (known ones, once each), a coop's `dress` (only one owned), a result's `dress` (only a County or
+  National first place judged in its season, and owned); anything else flagged and dropped; a farm from before the
+  dresses has none, unflagged.
+- **Tests**: `dressrules.mjs` (no browser: the season's days, the price and XP, kept for good, the save, the shows' prize)
+  and `dresstest.mjs` (EN upright, FR sideways: the shelf, bought, the coop's card, dressed (its parts), its birds clear
+  of the tree, in a Cosy look, a reload, off and on, out of season); `geesebuy.mjs` (the shop's four shelves).
+  Pictures: `barnlooks.mjs DRESS=xmas`.
