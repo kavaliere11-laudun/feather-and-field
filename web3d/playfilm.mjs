@@ -1,7 +1,7 @@
-// A film of the hens at play (release 4, play.js): node playfilm.mjs OUTDIR [look]   (look 4: Deluxe, all five play
+// A film of the hens at play (release 4, play.js): node playfilm.mjs OUTDIR [look]   (look 4: Deluxe, all four play
 // things; 3: Cosy; FPS (12), SECS (22), W, H (874x402: the phone on its side), SIZE (the view), PORT)
-// The test page's ?looks=N, the Red Barn's pen: one bird sent to each play thing a moment apart (the rooster up the
-// ladder), the view still on the pen. Prints the frame count.
+// The test page's ?looks=N, the Red Barn's pen: one bird sent to each play thing a moment apart (the rooster at the
+// cabbage), the view still on the pen. Prints the frame count.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const [OUT = 'playfilm', look = '4'] = process.argv.slice(2);
@@ -19,7 +19,7 @@ await p.evaluate(([size, ox, oz]) => {
   for (const x of P.birds) x.layIn = 9999;
   const c = P.frame.localToWorld(new f.THREE.Vector3(ox, 0, oz)); f.lookAt(c.x, c.z, size); f.step(1 / 30, 10); f.draw();
 }, [+(process.env.SIZE || 1.45), +(process.env.OX || -0.1), +(process.env.OZ || 1.6)]);
-const plan = look === '4' ? [['swing', 'hen', 0.2], ['ladder', 'rooster', 1.2], ['dust', 'hen', 2.5], ['xylo', 'hen', 4.0], ['cabbage', 'hen', 5.5]] : [['swing', 'hen', 0.2], ['dust', 'hen', 1.5], ['cabbage', 'rooster', 3.0]];
+const plan = look === '4' ? [['dust', 'hen', 0.2], ['swing', 'hen', 1.0], ['xylo', 'hen', 3.0], ['cabbage', 'rooster', 4.5]] : [['swing', 'hen', 0.2], ['dust', 'hen', 1.5], ['cabbage', 'rooster', 3.0]];
 let n = 0;
 for (let i = 0; i < FPS * SECS; i++) {
   const t = i / FPS;
@@ -32,7 +32,7 @@ for (let i = 0; i < FPS * SECS; i++) {
     }
     f.step(1 / 30, Math.round(30 / fps)); f.draw();
   }, [t, FPS, plan]);
-  await p.screenshot({ path: `${OUT}/f_${String(n++).padStart(4, '0')}.png` });
+  await p.screenshot({ path: `${OUT}/f_${String(n++).padStart(4, '0')}.png`, timeout: 180000 });
 }
 console.log('frames', n, 'errors', errs);
 await b.close();

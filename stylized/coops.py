@@ -995,10 +995,10 @@ PENS = {
             straw=((-0.6, -0.95, 0.25, 25), (0.3, -1.4, 0.25, 20))),
     1: dict(box=(-1.36, 1.46, -2.05, 0.7), gate=2, feeder=(0.98, -1.38), dish=(-0.9, -1.55), hay=None, hay_rot=0, sack=(1.08, 0.25),
             straw=((-0.8, -1.2, 0.3, 30), (0.4, -1.75, 0.3, 25))),
-    3: dict(box=(-2.0, 2.15, -2.85, 0.85), gate=3, feeder=(1.5, -1.6), dish=(0.55, -2.35), hay=(-1.45, -2.25), hay_rot=12, sack=(1.5, 0.3),
-            straw=((-1.45, -2.25, 0.4, 70), (-0.3, -1.25, 0.35, 40), (0.9, -0.8, 0.5, 40), (1.3, -2.35, 0.35, 30))),
-    4: dict(box=(-2.3, 2.45, -3.2, 0.95), gate=4, feeder=(1.75, -1.7), dish=(1.0, -2.55), fountain=True, hay=(-1.75, -2.55), hay_rot=12, sack=(1.75, 0.35),
-            bales=((-1.85, -2.05, 80),), straw=((-1.75, -2.55, 0.45, 80), (-0.3, -1.4, 0.4, 40), (1.0, -0.9, 0.5, 40), (1.5, -2.6, 0.4, 30))),
+    3: dict(box=(-2.0, 2.15, -2.85, 0.85), gate=3, feeder=(1.5, -1.6), dish=(0.55, -2.35), hay=(1.7, 0.45), hay_rot=90, sack=None,
+            straw=((1.7, 0.45, 0.4, 40), (-0.3, -1.25, 0.35, 40), (0.9, -0.8, 0.4, 30))),
+    4: dict(box=(-2.3, 2.45, -3.2, 0.95), gate=4, feeder=(1.75, -1.7), feeder_style='deluxe', dish=(1.0, -2.55), fountain=True, hay=(1.95, 0.45), hay_rot=90,
+            sack=None, pebbles=10, straw=((-0.3, -1.4, 0.3, 25), (1.95, 0.45, 0.4, 40))),
 }
 
 
@@ -1406,8 +1406,13 @@ def deluxe_barn(kind=None):
 # Deluxe also: a climbing ladder of perches and a little xylophone. The swing's perch and the cabbage move (their own
 # models, swing_seat and cabbage, hung from their pivot at the origin); PLAY gives where each is (Blender x, y) and
 # play_info what the browser needs (glTF axes).
-PLAY = {3: dict(swing=(-1.3, -1.15), dust=(1.45, -2.35), cabbage=(1.0, -0.95)),
-        4: dict(swing=(-1.45, -1.15), dust=(1.9, -2.6), cabbage=(1.05, -0.95), ladder=(-0.85, -2.45), xylo=(-1.05, -1.75))}
+PLAY = {3: dict(swing=(-1.3, -1.15), dust=(-1.35, -2.3), cabbage=(1.0, -0.95)),
+        4: dict(swing=(-1.55, -1.5), dust=(-1.5, -0.12), cabbage=(1.05, -0.95), xylo=(-1.2, -2.45))}
+# (Audrey, 27 Oct, on the Deluxe: "a weird egg on its right? Its garden looks too messy and busy. We can probably get rid
+# of the perchoir. The send bath should be bigger and a bit more obvious that it's a send bath. Use the left space next to
+# the coop": no feed sack in the Cosy and Deluxe pens, no ladder, one bale tucked behind the barn, few straws and
+# pebbles; the sand bath a sandbox with a beach umbrella, a bucket and spade: in the Deluxe, beside the barn on its left)
+SAND_W, SAND_D = 0.9, 0.7                                       # the sandbox (x, y)
 SWING_TOP, SWING_PERCH, SWING_HALF = 0.56, 0.14, 0.32           # the top bar, the perch's height, half the frame's width
 CAB_TOP, CAB_Z = 0.56, 0.21                                     # the arm the cabbage hangs from, the cabbage's middle
 LADDER = ((-0.17, 0.13), (-0.09, 0.27), (0.0, 0.42))            # its perches on the front face: (y from its middle, height)
@@ -1436,20 +1441,47 @@ def swing_seat():
 
 
 def dust_bath(objs, x, y):
-    """A low half-barrel of fine sand, a little spilt round it."""
-    staves = [_barn_m('stump', grain=0.5), _barn_m('cut', grain=0.3)]; sand = mat('dsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
-    iron = C('iron', '#26231f', rough=0.5, metal=0.6)
-    n = 16
+    """The sand bath: a low wooden sandbox full of pale sand (a few hollows where they've bathed), a striped beach umbrella
+    over its back corner, a little bucket and spade."""
+    wood = _barn_m('pine2', rough=0.75, var=0.08); dark = coop.M()['darkwood']
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    hw, hd, H = SAND_W / 2, SAND_D / 2, 0.11
+    for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
+                      ((x - hw, y - hd), (x - hw, y + hd), (-1, 0, 0)), ((x + hw, y - hd), (x + hw, y + hd), (1, 0, 0))):
+        objs.append(plank('sbox', (a[0], a[1], H / 2), (b[0], b[1], H / 2), H, 0.035, n, wood, jitter=0.3))
+        objs.append(plank('sboxtop', (a[0], a[1], H + 0.008), (b[0], b[1], H + 0.008), 0.06, 0.016, (0, 0, 1), wood, jitter=0.2))
+    for (cx, cy) in ((x - hw, y - hd), (x + hw, y - hd), (x - hw, y + hd), (x + hw, y + hd)):
+        objs.append(box('sbcorner', (0.05, 0.05, H + 0.03), (cx, cy, (H + 0.03) / 2), m=dark, bevel=0.006, segs=1))
+    objs.append(box('sand', (SAND_W - 0.04, SAND_D - 0.04, 0.02), (x, y, H - 0.02), m=sand, bevel=0.01, segs=2))
+    for k, (dx, dy, s_) in enumerate(((-0.18, 0.05, 0.13), (0.2, -0.08, 0.11), (0.0, 0.17, 0.09))):         # little heaps and hollows
+        objs.append(sphere('smound', s_, (x + dx, y + dy, H - 0.015), (1.3, 1.0, 0.22), (0, 0, k), m=sand2 if k == 1 else sand, ico=2, disp=0.15, seed=k + 11))
+    for k in range(6):                                          # a little spilt over the edge
+        a = random.uniform(0, math.tau)
+        px, py = x + math.cos(a) * (hw + 0.08), y + math.sin(a) * (hd + 0.08)
+        objs.append(sphere('sspill', random.uniform(0.04, 0.06), (px, py, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 3))
+    # the beach umbrella: a pole at the back left corner, a striped canopy over the box
+    cx_, cy_ = -1, 1                                            # (its back left corner: the sand in front of it stays in sight)
+    ux, uy, uz, R = x + cx_ * (hw - 0.12), y + cy_ * (hd - 0.12), 0.72, 0.42
+    objs.append(cyl('upole', 0.012, uz + 0.04, (ux, uy, (uz + 0.04) / 2), m=C('upole', '#f4efe4', rough=0.5), verts=8, bevel=0.0))
+    tilt = Vector((-cx_ * 0.18, -cy_ * 0.12, 1)).normalized(); cent = Vector((ux, uy, uz)); top = cent + tilt * 0.12
+    stripes = [C('ustripe1', '#e2574c', rough=0.6), C('ustripe2', '#fbf6ee', rough=0.6)]
+    q = tilt.to_track_quat('Z', 'Y')
+    n = 12
     for k in range(n):
-        a = k / n * math.tau; c, s_ = math.cos(a), math.sin(a)
-        objs.append(plank('stave', (x + c * 0.25, y + s_ * 0.25, 0.0), (x + c * 0.25, y + s_ * 0.25, 0.11), 0.1, 0.025, (c, s_, 0), staves[k % 2], jitter=0.5))
-    for z in (0.03, 0.09):
-        bpy.ops.mesh.primitive_torus_add(major_radius=0.262, minor_radius=0.008, major_segments=24, minor_segments=5, location=(x, y, z))
-        o = bpy.context.object; setmat(o, iron); objs.append(o)
-    objs.append(sphere('dsand', 0.235, (x, y, 0.06), (1, 1, 0.14), m=sand, ico=3, disp=0.12, seed=7))
-    for k in range(7):
-        a = random.uniform(0, math.tau); d = random.uniform(0.28, 0.38)
-        objs.append(sphere('dspill', random.uniform(0.04, 0.07), (x + math.cos(a) * d, y + math.sin(a) * d, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 3))
+        a0, a1 = k / n * math.tau, (k + 1) / n * math.tau
+        p0 = cent + q @ Vector((math.cos(a0) * R, math.sin(a0) * R, -0.02)); p1 = cent + q @ Vector((math.cos(a1) * R, math.sin(a1) * R, -0.02))
+        me = bpy.data.meshes.new('canopy'); bm = bmesh.new()
+        f = bm.faces.new([bm.verts.new(top), bm.verts.new(p0), bm.verts.new(p1)]); bm.normal_update()
+        if f.normal.dot(tilt) < 0: f.normal_flip()
+        bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('canopy', me)); setmat(o, stripes[k % 2]); objs.append(o)
+        so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.008
+    objs.append(sphere('utop', 0.018, top + tilt * 0.01, m=C('upole', '#f4efe4', rough=0.5), seg=8, rings=6))
+    # a red bucket and a yellow spade on the sand
+    objs.append(cyl('bucket', 0.04, 0.07, (x + 0.27, y - 0.17, H + 0.02), m=C('bucket', '#d8443a', rough=0.5), verts=12, r2=0.052, bevel=0.004))
+    objs.append(cyl('bucketin', 0.046, 0.005, (x + 0.27, y - 0.17, H + 0.054), m=sand, verts=12, bevel=0.0))
+    objs.append(box('spade', (0.05, 0.06, 0.008), (x + 0.12, y - 0.22, H + 0.01), (0, math.radians(8), math.radians(35)), m=C('spade', '#f2c14e', rough=0.5), bevel=0.003, segs=1))
+    objs.append(cyl('spadeh', 0.008, 0.14, (x + 0.05, y - 0.27, H + 0.02), (math.radians(80), 0, math.radians(125)), m=C('spade', '#f2c14e', rough=0.5), verts=6, bevel=0.0))
 
 
 def cabbage_post(objs, x, y):
@@ -1519,11 +1551,12 @@ def play_info(t):
     P = PLAY.get(t)
     if not P: return None
     g = lambda q: [q[0], round(-q[1], 3)]
-    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dict(at=g(P['dust']), r=0.235),
+    out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105),
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
     if 'ladder' in P: out['ladder'] = dict(at=g(P['ladder']), perches=[[round(-dy, 3), z] for (dy, z) in LADDER])
     if 'xylo' in P: out['xylo'] = dict(at=g(P['xylo']), bars=[round(0.13 - k * 0.052, 3) for k in range(6)])
-    keep = [g(P['swing']) + [0.38], g(P['dust']) + [0.29], g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
+    dx, dy = P['dust']
+    keep = [g(P['swing']) + [0.38], g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42], g(P['cabbage']) + [0.13], [P['cabbage'][0], round(-(P['cabbage'][1] + 0.28), 3), 0.08]]
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
     if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
     out['keep'] = keep

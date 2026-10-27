@@ -307,14 +307,32 @@ def build_pen(root, m):
         p = hinge + d * t_
         objs.append(plank('gatev', p + Vector((0, 0, 0.1)), p + Vector((0, 0, 0.48)), 0.06, 0.03, nrm, m['wood'], jitter=0.5))
     objs.append(plank('gated', hinge + d * 0.12 + Vector((0, 0, 0.14)), hinge + d * 0.95 + Vector((0, 0, 0.44)), 0.05, 0.028, nrm, m['wood'], jitter=0.5))
-    # galvanised feeder: tray, tube and cone hat
+    # galvanised feeder: tray, tube and cone hat (the Deluxe's: Audrey, 27 Oct: "the seed dispenser should look different
+    # for the deluxe please": an eight-sided cream hopper with windows of grain, a green copper roof like the barn's and a
+    # gold ball on top, over a copper tray; the tray and its grain where the browser's grain sits)
     fx, fy = PEN['feeder']
-    objs.append(cyl('tray', 0.16, 0.05, (fx, fy, 0.03), m=m['metal'], verts=28, bevel=0.01))
-    objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
-    objs.append(cyl('tube', 0.09, 0.32, (fx, fy, 0.2), m=m['metal'], verts=24, bevel=0.01))
-    objs.append(cyl('hat', 0.12, 0.08, (fx, fy, 0.4), m=m['metal'], verts=24, r2=0.02, bevel=0.01))
-    for z in (0.12, 0.28):
-        objs.append(cyl('band', 0.093, 0.015, (fx, fy, z), m=mat('band', '#9aa3a8', rough=0.3, metal=0.9), verts=24, bevel=0.003))
+    if PEN.get('feeder_style') == 'deluxe':
+        cu = mat('fd_cu', '#5c9a86', rough=0.42, spec=0.45, metal=0.25, var=0.06); cu2 = mat('fd_cu2', '#77b29e', rough=0.42, spec=0.45, metal=0.25, var=0.06)
+        cream = mat('fd_cream', '#f1e9d8', rough=0.6, var=0.04, grain=0.12, grain_scale=(1.5, 26, 26)); gold = mat('fd_gold', '#d4a640', rough=0.3, metal=0.9)
+        objs.append(cyl('tray', 0.17, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 8), m=cu, verts=8, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbase', 0.1, 0.04, (fx, fy, 0.075), (0, 0, math.pi / 8), m=cu2, verts=8, bevel=0.005))
+        objs.append(cyl('fbody', 0.088, 0.25, (fx, fy, 0.215), (0, 0, math.pi / 8), m=cream, verts=8, bevel=0.006))
+        for k in range(4):                                  # windows on four faces, the grain showing through
+            a = k * math.pi / 2; c, s_ = math.cos(a), math.sin(a)
+            objs.append(plank('fwin', (fx + c * 0.083, fy + s_ * 0.083, 0.15), (fx + c * 0.083, fy + s_ * 0.083, 0.29), 0.05, 0.01, (c, s_, 0), m['grain_'], jitter=0.0, bevel=0.0))
+            for (z0, z1) in ((0.143, 0.143), (0.297, 0.297)):
+                objs.append(plank('fwinf', (fx + c * 0.087 - s_ * 0.03, fy + s_ * 0.087 + c * 0.03, z0), (fx + c * 0.087 + s_ * 0.03, fy + s_ * 0.087 - c * 0.03, z1), 0.012, 0.008, (c, s_, 0), cu2, jitter=0.0, bevel=0.0))
+        objs.append(cyl('fband', 0.098, 0.025, (fx, fy, 0.34), (0, 0, math.pi / 8), m=cu2, verts=8, bevel=0.004))
+        objs.append(cyl('froof', 0.13, 0.13, (fx, fy, 0.415), (0, 0, math.pi / 8), m=cu, verts=8, r2=0.0, bevel=0.0))
+        objs.append(sphere('fball', 0.022, (fx, fy, 0.49), m=gold, seg=10, rings=6))
+    else:
+        objs.append(cyl('tray', 0.16, 0.05, (fx, fy, 0.03), m=m['metal'], verts=28, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('tube', 0.09, 0.32, (fx, fy, 0.2), m=m['metal'], verts=24, bevel=0.01))
+        objs.append(cyl('hat', 0.12, 0.08, (fx, fy, 0.4), m=m['metal'], verts=24, r2=0.02, bevel=0.01))
+        for z in (0.12, 0.28):
+            objs.append(cyl('band', 0.093, 0.015, (fx, fy, z), m=mat('band', '#9aa3a8', rough=0.3, metal=0.9), verts=24, bevel=0.003))
     # water dish (a fountain in the Deluxe pen: Audrey, 27 Oct: "the water pot can become a fountain")
     wx, wy = PEN['dish']
     if PEN.get('fountain'): fountain(objs, wx, wy, m)
@@ -332,7 +350,7 @@ def build_pen(root, m):
     for sx, sy, sr, sn in PEN['straw']:
         straw_bits(objs, (sx, sy, 0), sr, sn, 0.016)
     peb = mat('ypebble', '#b9b1a3', rough=0.8, var=0.2)
-    for i in range(28):
+    for i in range(PEN.get('pebbles', 28)):
         x, y = random.uniform(x0 + 0.15, x1 - 0.15), random.uniform(y0 + 0.15, y1 - 0.15)
         r = random.uniform(0.012, 0.028)
         objs.append(sphere('ypeb', r, (x, y, 0.015 + r * 0.1), (1.2, 1.0, 0.5), (0, 0, random.uniform(0, 6)), peb, ico=2, disp=0.25, seed=i + 40))

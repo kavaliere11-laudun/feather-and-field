@@ -59,32 +59,38 @@ export function wantPlay(b) {
 
 // off to play: where she goes first (the pen's frame), and which way she'll face there
 export function startPlay(b, kind) {
-  const T = b.plot.toys, P = T.P, p = b.root.position;
-  let spot, face;
-  if (kind === 'swing') { spot = [P.swing.at[0] + (b.r() - 0.5) * 0.08, P.swing.at[1] + 0.46]; face = Math.PI; }
-  else if (kind === 'dust') {                         // from the side she's on, just outside the tub
-    const D = P.dust.at, a = Math.atan2(p.x - D[0], p.z - D[1]);
-    let best = null;
-    for (const da of [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9, 2.6, -2.6, Math.PI]) { const q = [D[0] + Math.sin(a + da) * 0.42, D[1] + Math.cos(a + da) * 0.42]; if (b.free(q[0], q[1])) { best = q; break; } }
-    if (!best) return false;
-    spot = best; face = Math.atan2(D[0] - spot[0], D[1] - spot[1]);
-  } else if (kind === 'cabbage') { spot = [P.cabbage.at[0], P.cabbage.at[1] + 0.2]; face = Math.PI; }
-  else if (kind === 'ladder') { spot = [P.ladder.at[0] + (b.r() - 0.5) * 0.12, P.ladder.at[1] + 0.44]; face = Math.PI; }
-  else { spot = [P.xylo.at[0] + 0.25, P.xylo.at[1] + (b.r() - 0.5) * 0.08]; face = -Math.PI / 2; }
-  if (!b.free(spot[0], spot[1])) return false;
-  let route = b.plan([spot]);
-  if (!route.length || route[route.length - 1] !== spot) {         // no straight way: by the middle of the yard
-    const Y = b.plot.pen && b.plot.pen.yard, mid = Y && [(Y.min[0] + Y.max[0]) / 2, (Y.min[2] + Y.max[2]) / 2];
-    for (const m of mid ? [mid, [mid[0], mid[1] + 0.4], [mid[0] - 0.5, mid[1]], [mid[0] + 0.5, mid[1]]] : []) {
+  const T = b.plot.toys, P = T.P, j = b.r() - 0.5;
+  let C;                                             // where she might go first ({ spot, face, bath }), in order
+  if (kind === 'swing') C = [{ spot: [P.swing.at[0] + j * 0.08, P.swing.at[1] + 0.46], face: Math.PI }];
+  else if (kind === 'dust') {                        // beside the sandbox (its front if she can), then a hop in to a spot of her own
+    const D = P.dust, hw = D.w / 2, hd = D.d / 2;
+    C = [[0, 1], [-1, 0], [1, 0], [0, -1]].map(([sx, sz]) => ({
+      spot: [D.at[0] + (sx ? sx * (hw + 0.2) : j * hw * 0.8), D.at[1] + (sz ? sz * (hd + 0.2) : j * hd * 0.6)], face: Math.atan2(-sx, -sz),
+      bath: [D.at[0] + (sx ? sx * hw * 0.35 : j * hw * 0.7), D.at[1] + (sz ? sz * hd * 0.3 : j * hd * 0.4)] }));
+  } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
+  else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
+  else C = [{ spot: [P.xylo.at[0] + 0.25, P.xylo.at[1] + j * 0.08], face: -Math.PI / 2 }];
+  const Y = b.plot.pen && b.plot.pen.yard, mid = Y && [(Y.min[0] + Y.max[0]) / 2, (Y.min[2] + Y.max[2]) / 2];
+  const reach = spot => {                            // a way there: straight, or by a step out in front of it, or by the middle of the yard
+    let r = b.plan([spot]);
+    if (r.length && r[r.length - 1] === spot) return r;
+    const vias = [[spot[0], spot[1] + 0.4], [spot[0] + 0.45, spot[1] + 0.15], [spot[0] - 0.45, spot[1] + 0.15], ...(mid ? [mid, [mid[0], mid[1] + 0.4], [mid[0] - 0.5, mid[1]], [mid[0] + 0.5, mid[1]]] : [])];
+    for (const m of vias) {
       if (!b.free(m[0], m[1])) continue;
-      route = b.plan([m, spot]); if (route.length && route[route.length - 1] === spot) break;
+      r = b.plan([m, spot]); if (r.length && r[r.length - 1] === spot) return r;
     }
-    if (!route.length || route[route.length - 1] !== spot) return false;
+    return null;
+  };
+  for (const c of C) {
+    if (!b.free(c.spot[0], c.spot[1])) continue;
+    const route = reach(c.spot);
+    if (!route) continue;
+    T[kind].by = b;
+    b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot: c.spot, face: c.face, stuck: 0, bath: c.bath };
+    b.act = null; b.route = null; b.then = null; b.wait = 0; b.eatAt = null;
+    return true;
   }
-  T[kind].by = b;
-  b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot, face, stuck: 0 };
-  b.act = null; b.route = null; b.then = null; b.wait = 0; b.eatAt = null;
-  return true;
+  return false;
 }
 
 // done (or called away): back on the ground, the play thing free again after a little while
@@ -175,13 +181,14 @@ function swingStep(b, P, T, Q, o, next, dt) {
 }
 
 function dustStep(b, P, T, Q, o, next, dt) {
-  const p = b.root.position, c = new THREE.Vector3(Q.at[0], 0.075, Q.at[1]);
+  const p = b.root.position, c = new THREE.Vector3(P.bath[0], Q.y, P.bath[1]);
   if (P.phase === 'in') {
-    if (hop(b, P, P.from, c, 0.75, 0.04, dt)) next('bathe', { left: 8 + b.r() * 5, wr: 0, rest: 0.6 });
+    o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0;
+    if (hop(b, P, P.from, c, 0.8, 0.07, dt)) next('bathe', { left: 8 + b.r() * 5, wr: 0, rest: 0.6 });
     return o;
   }
   if (P.phase === 'bathe') {                         // down low in the sand: bursts of wriggling and kicking, rests between
-    p.set(c.x, c.y, c.z); b.shadowY = 0.07; o.sit = 1;
+    p.set(c.x, c.y, c.z); b.shadowY = Q.y - 0.005; o.sit = 1;
     if (P.wr > 0) {
       P.wr -= dt; const w = Math.sin(P.t * 11);
       b.visual.rotation.z = 0.28 * w; o.ruffle = 0.7; o.kick = (P.t % 0.9) < 0.35 ? 1 : 0;
@@ -199,7 +206,7 @@ function dustStep(b, P, T, Q, o, next, dt) {
   if (P.phase === 'out') {
     b.visual.rotation.z = 0;
     if (!P.land) P.land = new THREE.Vector3(P.spot[0], 0.015, P.spot[1]);
-    if (hop(b, P, P.from, P.land, 0.75, 0.04, dt)) next('shake');
+    if (hop(b, P, P.from, P.land, 0.8, 0.06, dt)) next('shake');
     return o;
   }
   if (P.phase === 'shake') {                         // a big shake: the dust flies off her
