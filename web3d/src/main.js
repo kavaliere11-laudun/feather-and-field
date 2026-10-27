@@ -5632,7 +5632,7 @@ function openInside(plot) {
 function insideArrive(b) {
   const R = inside.rooms[inside.plot.breed]; if (!R || !R.pop) return false;
   const low = R.perches[0], high = R.perches[1], mid = (low.x0 + low.x1) / 2, gap = 0.29;
-  const taken = (x, y) => inside.birds.some(o => Math.abs(o.root.position.x - x) < 0.14 && Math.abs((o.arrive ? o.arrive.to.y : o.root.position.y) - y) < 0.06);
+  const taken = (x, y) => inside.birds.some(o => { const q = o.arrive ? o.arrive.to : o.root.position; return Math.abs(q.x - x) < 0.14 && Math.abs(q.y - y) < 0.06; });      // (one still on her way: where she's going)
   let to;
   if (b.kind === 'chick') { const n = inside.birds.filter(o => o.kind === 'chick').length; to = [R.chicks[0] + ((n % 3) - 1) * 0.12, R.chicks[1] + 0.02, R.chicks[2] + (n % 2) * 0.05]; }
   else {
