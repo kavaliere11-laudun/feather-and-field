@@ -714,16 +714,16 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 3, river: 8, free: 5, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
+export const FISHING = { pond: 3, river: 8, free: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
 export const FISH_RULES = {
-  rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 2, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 2, cm: [12, 25] },
-  perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 2, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 3, cm: [20, 45] },
-  golden_tench: { water: 'pond', rare: 1, w: 4.5, price: 70, xp: 10, cm: [20, 40] }, koi: { water: 'pond', rare: 1, w: 4, price: 90, xp: 10, cm: [30, 60] },
-  big_bertha: { water: 'pond', rare: 2, w: 1.5, price: 300, xp: 40, cm: [85, 95] },
-  minnow: { water: 'river', rare: 0, w: 30, price: 6, xp: 2, cm: [5, 10] }, gudgeon: { water: 'river', rare: 0, w: 26, price: 8, xp: 2, cm: [8, 15] },
-  dace: { water: 'river', rare: 0, w: 22, price: 10, xp: 2, cm: [15, 25] }, chub: { water: 'river', rare: 0, w: 12, price: 15, xp: 3, cm: [30, 50] },
-  brown_trout: { water: 'river', rare: 1, w: 4.5, price: 80, xp: 10, cm: [25, 50] }, grayling: { water: 'river', rare: 1, w: 4, price: 90, xp: 10, cm: [25, 45] },
-  old_snapjaw: { water: 'river', rare: 2, w: 1.5, price: 400, xp: 40, cm: [100, 110] },
+  rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 1, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 1, cm: [12, 25] },
+  perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 1, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 2, cm: [20, 45] },
+  golden_tench: { water: 'pond', rare: 1, w: 4.5, price: 70, xp: 6, cm: [20, 40] }, koi: { water: 'pond', rare: 1, w: 4, price: 90, xp: 6, cm: [30, 60] },
+  big_bertha: { water: 'pond', rare: 2, w: 1.5, price: 300, xp: 25, cm: [85, 95] },
+  minnow: { water: 'river', rare: 0, w: 30, price: 6, xp: 1, cm: [5, 10] }, gudgeon: { water: 'river', rare: 0, w: 26, price: 8, xp: 1, cm: [8, 15] },
+  dace: { water: 'river', rare: 0, w: 22, price: 10, xp: 1, cm: [15, 25] }, chub: { water: 'river', rare: 0, w: 12, price: 15, xp: 2, cm: [30, 50] },
+  brown_trout: { water: 'river', rare: 1, w: 4.5, price: 80, xp: 6, cm: [25, 50] }, grayling: { water: 'river', rare: 1, w: 4, price: 90, xp: 6, cm: [25, 45] },
+  old_snapjaw: { water: 'river', rare: 2, w: 1.5, price: 400, xp: 25, cm: [100, 110] },
 };
 export const FISH_IDS = Object.keys(FISH_RULES);
 export const fishLevel = id => FISHING[FISH_RULES[id].water];

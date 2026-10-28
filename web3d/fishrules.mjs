@@ -1,6 +1,6 @@
 // Fishing in the game's rules (release 5; src/game.js FISHING, FISH_RULES, castWorm, landFish, buyWorms, the save check):
 // node fishrules.mjs   (no browser)
-// The pond opens at level 3, the river at 8. Five free worms each morning, used first, then those from tins (10 for 60
+// The pond opens at level 3, the river at 8. Four free worms each morning, used first, then those from tins (10 for 60
 // coins); no worm, no cast. A cast decides the fish (only that water's, by their weights: the commons most of the time, a
 // legendary one now and then), its size within its sizes; landed: sold (a little more the bigger, a legendary one's photo
 // at its fixed price), its XP (+10 for a fish new to you), counted, the biggest kept; lost: nothing. The save: kept and
@@ -17,21 +17,22 @@ const g = new G.Game(store); g.newFarm({ lang: 'en', look: 'f', name: 'Test' });
 ok('a new farm: no fishing yet (level 1), nothing saved for it', !g.fishOpen('pond') && !g.fishOpen('river') && g.castWorm('pond') === null && !('fish' in g.data));
 g.data.xp = G.xpFor(3);
 ok('level 3: the pond opens, not the river', g.fishOpen('pond') && !g.fishOpen('river') && g.castWorm('river') === null);
-ok('five free worms this morning', g.worms() === 5);
+const FREE = G.FISHING.free;
+ok('four free worms this morning', g.worms() === FREE && FREE === 4);
 // a seeded random
 let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 const casts = [];
-for (let i = 0; i < 5; i++) { casts.push(g.castWorm('pond', NOW, rnd)); g.landFish(); }
-ok('five casts, each a pond fish within its sizes; then no worms, no cast', casts.every(c => c && G.FISH_RULES[c.id].water === 'pond' && c.cm >= G.FISH_RULES[c.id].cm[0] && c.cm <= G.FISH_RULES[c.id].cm[1]) && g.worms() === 0 && g.castWorm('pond', NOW, rnd) === null, casts.map(c => c && c.id));
+for (let i = 0; i < FREE; i++) { casts.push(g.castWorm('pond', NOW, rnd)); g.landFish(); }
+ok('four casts, each a pond fish within its sizes; then no worms, no cast', casts.every(c => c && G.FISH_RULES[c.id].water === 'pond' && c.cm >= G.FISH_RULES[c.id].cm[0] && c.cm <= G.FISH_RULES[c.id].cm[1]) && g.worms() === 0 && g.castWorm('pond', NOW, rnd) === null, casts.map(c => c && c.id));
 NOW += 86400e3;
-ok('the next morning: five again', g.worms() === 5);
+ok('the next morning: four again', g.worms() === FREE);
 g.data.coins = 50;
 ok('a tin of worms: not without 60 coins', g.buyWorms() === null && g.data.coins === 50);
 g.data.coins = 200;
 const t = g.buyWorms();
-ok('a tin of worms: 10 for 60 coins', t && t.n === 10 && t.price === 60 && g.data.coins === 140 && g.worms() === 15 && g.data.fish.worms === 10, t);
+ok('a tin of worms: 10 for 60 coins', t && t.n === 10 && t.price === 60 && g.data.coins === 140 && g.worms() === FREE + 10 && g.data.fish.worms === 10, t);
 g.castWorm('pond', NOW, rnd); g.loseFish();
-ok('the free ones used first', g.data.fish.free === 4 && g.data.fish.worms === 10);
+ok('the free ones used first', g.data.fish.free === FREE - 1 && g.data.fish.worms === 10);
 ok('lost: nothing to land', g.landFish() === null);
 // the draw: many casts (worms given), the commons most of the time, a legendary one now and then
 const count = {}; g.data.fish.worms = 999;
@@ -42,13 +43,13 @@ ok('the draw: commons about 90%, the rare ones about 8.5%, Big Bertha about 1.5%
 g.data.fish.got = {}; const c0 = g.data.coins, x0 = g.data.xp;
 g.bite = { id: 'perch', cm: 20, water: 'pond', rare: 0 };
 let r = g.landFish();
-ok('a first perch, 20 cm: sold (its price for its size), XP +2 and +10 for a new fish, counted', r && r.first && !r.best && r.coins === G.fishPrice('perch', 20) && g.data.coins === c0 + r.coins && r.xp === 12 && g.data.xp === x0 + 12 && g.fishGot('perch').n === 1 && g.fishGot('perch').best === 20, r);
+ok('a first perch, 20 cm: sold (its price for its size), XP +1 and +10 for a new fish, counted', r && r.first && !r.best && r.coins === G.fishPrice('perch', 20) && g.data.coins === c0 + r.coins && r.xp === 11 && g.data.xp === x0 + 11 && g.fishGot('perch').n === 1 && g.fishGot('perch').best === 20, r);
 g.bite = { id: 'perch', cm: 31, water: 'pond', rare: 0 }; r = g.landFish();
-ok('a bigger one: "your biggest yet", 2 XP, a little more for its size', r && !r.first && r.best && r.xp === 2 && r.coins > G.fishPrice('perch', 20) && g.fishGot('perch').n === 2 && g.fishGot('perch').best === 31, r);
+ok('a bigger one: "your biggest yet", 1 XP, a little more for its size', r && !r.first && r.best && r.xp === 1 && r.coins > G.fishPrice('perch', 20) && g.fishGot('perch').n === 2 && g.fishGot('perch').best === 31, r);
 g.bite = { id: 'perch', cm: 18, water: 'pond', rare: 0 }; r = g.landFish();
 ok('a smaller one: not the biggest; the biggest kept', r && !r.best && g.fishGot('perch').best === 31 && g.fishGot('perch').n === 3, r);
 g.bite = { id: 'big_bertha', cm: 90, water: 'pond', rare: 2 }; r = g.landFish();
-ok('Big Bertha: her photo, 300 coins, 40 XP and 10 for a new fish, legendary', r && r.legend && r.coins === 300 && r.xp === 50, r);
+ok('Big Bertha: her photo, 300 coins, 25 XP and 10 for a new fish, legendary', r && r.legend && r.coins === 300 && r.xp === 35, r);
 // the river at level 8
 g.data.xp = G.xpFor(8);
 const rc = g.castWorm('river', NOW, rnd);

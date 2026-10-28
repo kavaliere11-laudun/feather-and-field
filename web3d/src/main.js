@@ -6118,6 +6118,7 @@ window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separat
 window.__farm = {
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
+  viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)

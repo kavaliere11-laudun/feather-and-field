@@ -1,7 +1,7 @@
 // The balance (release 1 step 11): simulated players over a year, through the game's own rules (src/game.js), on a
 // fake clock. node balsim.mjs [days=365] [profile=all] [seeds=3]
 // Profiles: 'daily' (once a day, 19:00), 'twice' (8:00 and 19:00), 'often' (every 3 hours, 8:00 to 23:00). At each visit
-// the player does everything a keen player would: collects the eggs and the honey, fills the feeders (grain first), sows
+// the player does everything a keen player would: collects the eggs and the honey, goes fishing with the day's free worms (release 5), fills the feeders (grain first), sows
 // and harvests the wheat, cuddles every bird, enters the best bird in each open show, collects the jobs, buys the next field
 // when it can, places a new breed's coop, upgrades the coops (release 4), and buys decorations, the geese and the dog, and outfits once they leave a reserve
 // for feed and land.
@@ -23,7 +23,7 @@ function simulate(name, seed) {
   g.newFarm({ lang: 'en', look: 'f', name: 'Sim' });
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
-  const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
+  const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
   const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
   let spot = 0;
@@ -46,6 +46,12 @@ function simulate(name, seed) {
       for (const c of g.data.coops) { const r = track('eggs', () => g.collect(c.id)); if (r) earn.eggs += r.coins; }
       const hr = track('honey', () => g.collectHoney(NOW)); if (hr) earn.honey += hr.coins;
       if (g.wheatStage(NOW) === 'ripe') track('wheat', () => g.harvestWheat(NOW));
+      // fishing (release 5): the day's free worms at the first visit (the river half the time once it's open), most fish
+      // landed (fewer of the rare ones, fewer still of the legendary)
+      if (h === hours[0]) while (g.fishOpen('pond') && g.worms(NOW) > 0) {
+        const b = g.castWorm(g.fishOpen('river') && R() < 0.5 ? 'river' : 'pond', NOW, R); if (!b) break;
+        if (R() < [0.85, 0.75, 0.6][b.rare]) { const r = track('fish', () => g.landFish()); if (r) earn.fish += r.coins; } else g.loseFish();
+      }
       if (g.wheatStage(NOW) === 'soil' && g.data.coins >= WHEAT.sow + 40) { g.sowWheat(NOW); spend.wheat += WHEAT.sow; }
       // the feeders (when below half: the grain first)
       for (const c of g.data.coops) if (g.feedLeft(c, NOW) < 0.5) { const q = track('feed', () => g.fillFeeder(c.id, NOW)); if (q && q.cost) spend.feed += q.cost; }

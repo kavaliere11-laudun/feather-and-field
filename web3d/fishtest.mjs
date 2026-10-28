@@ -1,7 +1,7 @@
 // Fishing in the game (release 5: the pond; game.js, fishing.js, farmlife.js fishAt, main.js the dock): ./withserver.sh
 // node fishtest.mjs [OUT]   (LANG=fr; W, H: the screen, e.g. W=874 H=402; PORT)
 // A new farm on a fake clock. Level 2: the dock's card says fishing opens at level 3, no button. Level 3: the pond's seven
-// fish (none caught), 5 worms, Go fishing, a tin of worms. Go: the farmer off to the dock (by its gate in the wild meadow's
+// fish (none caught), 4 worms, Go fishing, a tin of worms. Go: the farmer off to the dock (by its gate in the wild meadow's
 // fence, opening as he goes in), out to its end on the deck, the rod out; the worms and Stop at the bottom. A tap on the
 // water: a worm used, the float out on its line, "Watch the float". A tap too soon: "Too soon!". The bite: a tap, the
 // gauge; reeling (a player keeping it in the green): landed, into his hands, turned to us; a fish new to us: held up high;
@@ -52,17 +52,26 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { window.__T = Math.round(window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 70; g.data.lvSeen = 2; g.save(); f.gameUI().close(); });
-await run(0.5);
+await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 70; g.data.lvSeen = 2; g.save(); f.gameUI().close(); });
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();      // (the first day's pictures done with)
+await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 // level 2: not yet
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 let sh = await sheet();
 ok('level 2: the dock\'s card: the pond, fishing opens at level 3, no button', sh && sh.kind === 'dock' && (fr ? /niveau 3/ : /level 3/).test(sh.text) && !sh.go && sh.fish === 7, sh);
-// level 3
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 400; g.data.lvSeen = 3; g.save(); f.gameUI().close(); }); await run(1);
+// level 3: its card says fishing's open, with a look at the pond
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 400; g.save(); f.gameUI().close(); }); await run(1.5);
+await p.waitForTimeout(1600); await p.evaluate(() => window.__farm.showNews()); await run(0.2);      // (news waits a moment and a half after the farm opens)
+sh = await sheet();
+const lvl = await p.evaluate(() => { const c = document.querySelector('.gsheet:not([hidden]) .gfishnew'); return c && c.innerText; });
+ok('level 3: its card: fishing at the pond, a look at it', sh && sh.kind === 'levelup' && lvl && (fr ? /pêche à l’étang/ : /Fishing at the pond/).test(lvl) && (fr ? /Voir l’étang/ : /Show me the pond/).test(lvl), { kind: sh && sh.kind, lvl });
+await settle(); await p.tap('.gsheet button[data-fish=show]'); await run(1.2);
+const va = await p.evaluate(() => { const f = window.__farm, v = f.viewAt(), D = f.dock(); return { v, d: Math.hypot(v[0] - D.end[0], v[1] - D.end[1]) }; });
+ok('"Show me the pond": the view over to the dock', va.d < 0.5 && !(await sheet()), va);
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 3; g.save(); f.gameUI().close(); }); await run(0.5);
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 sh = await sheet();
-ok('level 3: the pond\'s seven fish (none caught yet), 5 worms, Go fishing, a tin of worms', sh && sh.go && sh.tin && sh.fish === 7 && sh.got === 0 && /5/.test(sh.text) && (fr ? /Aller pêcher/ : /Go fishing/).test(sh.text), sh);
+ok('level 3: the pond\'s seven fish (none caught yet), 4 worms, Go fishing, a tin of worms', sh && sh.go && sh.tin && sh.fish === 7 && sh.got === 0 && /4/.test(sh.text) && (fr ? /Aller pêcher/ : /Go fishing/).test(sh.text), sh);
 await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();
 ok('Go: the farmer off to the dock', s.seq && (fr ? /part au ponton/ : /off to the dock/).test(s.hint), s.hint);

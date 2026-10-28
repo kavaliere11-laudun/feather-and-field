@@ -16,6 +16,7 @@
 // farmlife.js fishAt; main.js puts it on the dock, its gate and the taps.
 import * as THREE from 'three';
 import { Fish } from './fish.js';
+import { FISHING } from './game.js';
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const sm = u => u * u * (3 - 2 * u);
@@ -156,7 +157,7 @@ export class Fishing {
     for (let k = 0; k < 12 && !this.o.inWater(tx, tz); k++) { d = Math.max(r0, d - 0.25); a *= 0.8; tx = S.stand[0] + Math.sin(h + a) * d; tz = S.stand[1] + Math.cos(h + a) * d; }
     if (!this.o.inWater(tx, tz)) return false;
     const bite = this.o.game.castWorm(this.o.water);
-    if (!bite) { this.o.hint(this.o.t('fish_noworms', { n: 5 })); return true; }
+    if (!bite) { this.o.hint(this.o.t('fish_noworms', { n: FISHING.free })); return true; }
     this.bite = bite; this.refreshBar();
     this.target = new THREE.Vector3(tx, this.o.waterY, tz); this.state = 'cast'; this.t = 0; this.glass.hidden = false;
     this.o.wake(3000);
