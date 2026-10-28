@@ -429,6 +429,8 @@ export class FrogPond {
   // ---- what a frog does next
   next(f) {
     const R = this.r, night = f.night;
+    // (while the froglet has her moment, the others nearby keep still: nobody hops past them)
+    if (this.loveOn && f !== this.her && f.state !== 'water' && Math.hypot(f.pos.x - this.her.pos.x, f.pos.z - this.her.pos.z) < 1.4) return this.sit(f, 2 + R() * 2);
     if (f.state === 'pad') {
       // the froglet on her lily pad: sitting a good while, looking about, a croak; then back into the water
       const p = R();
@@ -684,6 +686,7 @@ export class FrogPond {
     if (!force) {
       if (hour < 6.5 || hour >= 21.5) return null;
       if (near.some(([x, z]) => Math.hypot(x - f.pos.x, z - f.pos.z) < 1.6)) return null;
+      if (this.frogs.some(g => g !== f && g.root.visible && (g.task && /^(hop|hopAlong|dive|climbOut)$/.test(g.task.name)) && Math.hypot(g.pos.x - f.pos.x, g.pos.z - f.pos.z) < 1.4)) return null;
       if (this.o.busy && this.o.busy()) return null;
       if (this.o.onScreen && !this.o.onScreen(f.pos.x, f.pos.z)) return null;
     }

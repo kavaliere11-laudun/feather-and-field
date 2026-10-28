@@ -16,13 +16,15 @@ let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
 await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=${SHOTS ? 0 : 3}&geese&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
-await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 60); });
+// (the ducks kept out of it: where they happen to wander decides now and then whether there's room for a squabble or a
+// make-up, so a change anywhere round the pond could make this test fail by chance)
+await p.evaluate(() => { const f = window.__farm, D = f.ducks && f.ducks(); if (D) { D.update = () => {}; D.group.visible = false; for (const d of D.ducks) d.pos.set(500, 0, 500); } f.pause(true); f.step(1 / 30, 60); });
 for (const kind of kinds) {
   // a calm moment (they may be off for a swim first: up to a few minutes), then the squabble
   const r = await p.evaluate(async kind => {
     const f = window.__farm, F = f.geese(), nav = f.nav(), [G, H] = F.geese, out = { stages: [], blocked: 0, closest: 9, wet: 0, hearts: 0, eaten: null, started: false, overIt: 9 };
     let tries = 0;
-    while (!F.duet && tries++ < 30 * 400) { F.force = kind; F.loveIn = 0; f.step(1 / 30, 1); }
+    while (!F.duet && tries++ < 30 * 900) { F.force = kind; F.loveIn = 0; f.step(1 / 30, 1); }
     out.started = !!F.duet; if (!F.duet) { out.state = { G: [G.task && G.task.name, G.act, +G.vs.toFixed(3), +G.wet.toFixed(2), +G.pos.x.toFixed(2), +G.pos.z.toFixed(2)], H: [H.task && H.task.name, H.act, +H.wet.toFixed(2)], d: +Math.hypot(G.pos.x - H.pos.x, G.pos.z - H.pos.z).toFixed(2), guarding: F.guarding, hour: F.hour, can: F.squabble(kind) }; if (F.duet) F.endDuet(); return out; }
     out.start = { G: [+G.pos.x.toFixed(2), +G.pos.z.toFixed(2)], H: [+H.pos.x.toFixed(2), +H.pos.z.toFixed(2)], at: F.duet.at.map(v => +v.toFixed(2)), gp: F.duet.gp.map(v => +v.toFixed(2)), hp: F.duet.hp.map(v => +v.toFixed(2)), gway: JSON.stringify(F.duet.gway), hway: JSON.stringify(F.duet.hway) };
     const S = F.duet, H0 = f.heartsLive ? f.heartsLive() : null;
