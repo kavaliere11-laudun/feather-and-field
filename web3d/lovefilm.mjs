@@ -32,7 +32,8 @@ for (const where of WHERE) {
       if (w === 'pad' && h.state !== 'pad' && h.root.visible && (!h.task || /^(sit|look|float)$/.test(h.task.name))) { const P = F.herPad; h.pos.set(P.x, 0.0095, P.z); h.state = 'pad'; h.task = null; h.wait = 0; }
       if (w === 'bank' && h.state !== 'bank' && h.root.visible && (!h.task || /^(sit|look|float)$/.test(h.task.name))) {      // (onto the bank nearest her)
         const [, t0] = F.where(h.pos.x, h.pos.z); for (const d of [0, 0.2, -0.2, 0.4, -0.4, 0.7, -0.7]) { const t = t0 + d; if (F.okAt(t) && F.roomAt(h, t)) { const [x, z] = F.at(t, 1.045); h.pos.set(x, 0.003, z); h.heading = F.inward(t); h.state = 'bank'; h.task = null; h.wait = 0; break; } } }
-      return h.state === w && h.root.visible && (!h.task || /^(sit|look)$/.test(h.task.name)) && F.loveNow(); }, where);
+      const still = F.frogs.every(g => g === h || !g.task || !/^(hop|hopAlong|dive|climbOut)$/.test(g.task.name) || Math.hypot(g.pos.x - h.pos.x, g.pos.z - h.pos.z) > 1.6);      // (as in the game: nobody hopping by)
+      return h.state === w && h.root.visible && (!h.task || /^(sit|look)$/.test(h.task.name)) && still && F.loveNow(); }, where);
     if (!go) await run(0.5);
   }
   if (!go) { console.log('no moment', where); continue; }
