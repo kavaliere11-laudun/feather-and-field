@@ -219,6 +219,23 @@ const TEXT = {
     wheat_cutting: '{farmer} is on the way to harvest the wheat', wheat_done: 'Wheat harvested: +{g} grain for the feeders · +{xp} XP', wheat_full: 'Wheat harvested · +{xp} XP (your grain store is full)',
     honey_title: 'Honey', honey_jars: '{n} jars of honey', honey_jar: 'A jar of honey', honey_none: 'No honey yet: the next jar in {t}.', honey_going: '{farmer} is on the way to the beehives',
     honey_sold: '{n} jars of honey sold · +{c} coins', honey_sold1: 'A jar of honey sold · +{c} coins',
+    // fishing (release 5)
+    fish_rudd: 'Rudd', fish_roach: 'Roach', fish_perch: 'Perch', fish_tench: 'Tench', fish_golden_tench: 'Golden tench', fish_koi: 'Koi', fish_big_bertha: 'Big Bertha',
+    fish_minnow: 'Minnow', fish_gudgeon: 'Gudgeon', fish_dace: 'Dace', fish_chub: 'Chub', fish_brown_trout: 'Brown trout', fish_grayling: 'Grayling', fish_old_snapjaw: 'Old Snapjaw',
+    fish_new: 'Fishing at the pond: tap its dock', fish_new_river: 'Fishing in the river', fish_show: 'Show me the pond',
+    dock_title: 'Fishing at the pond', dock_body: 'Rudd, roach, perch and tench live in the pond, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.',
+    fish_worms: '{n} worms', fish_worms1: '1 worm', fish_worms0: 'No worms left', fish_free: '{n} free worms every morning', fish_go: 'Go fishing',
+    fish_noworms: 'No worms left: {n} more tomorrow morning, or a tin of worms below.', fish_level: 'Fishing opens at level {n}.',
+    fish_tin: 'A tin of {n} worms', fish_tin_buy: 'Buy · {c} coins', fish_tin_bought: '{n} worms in the tin · −{c} coins',
+    fish_going: '{farmer} is off to the dock', fish_night: '{farmer} is asleep: fishing in the morning', fish_busy: '{farmer} is busy: try again in a moment',
+    fish_cast: 'Tap the water to cast', fish_wait: 'Watch the float…', fish_bite: 'Now! Tap!', fish_soon: 'Too soon! Wait till the float goes under',
+    fish_missed: 'Too late: it got away with the worm', fish_reel: 'Hold to reel in. Keep the line in the green',
+    fish_snap: 'Too hard: the line snapped and it swam off', fish_slip: 'Too slack: it slipped off the hook', fish_stop: 'Stop fishing', fish_keep: 'Keep fishing',
+    fish_size: '{cm} cm', fish_first: 'New fish for your book!', fish_best: 'Your biggest yet!', fish_xp: '+{xp} XP',
+    fish_sold: 'Off to the village aquarium shop, live and well · +{c} coins',
+    fish_photo_big_bertha: 'Her photo for your book, then back into the pond she goes. The village paper buys your photo · +{c} coins',
+    fish_photo_old_snapjaw: 'His photo for your book, then back into the river he goes. The village paper buys your photo · +{c} coins',
+    fish_caught_n: 'Caught {n} times', fish_caught_1: 'Caught once', fish_tap_dock: 'The pond',
     fill_btn: 'Fill it · {c} coins', fill_part: 'Fill what you can · {c} coins', fill_scraps: 'Kitchen scraps (free)', fill_full: 'It’s full', fill_broke: 'Sell some eggs first',
     filled: 'Feeder filled · −{c} coins', filled_scraps: 'Kitchen scraps in the feeder: enough for a few hours.',
     farmer_feed: '{farmer} is on the way with the feed · −{c} coins', farmer_scraps: '{farmer} is on the way with some kitchen scraps',
@@ -430,6 +447,23 @@ const TEXT = {
     wheat_cutting: '{farmer} va récolter le blé', wheat_done: 'Blé récolté : +{g} de grain pour les mangeoires · +{xp} XP', wheat_full: 'Blé récolté · +{xp} XP (votre réserve de grain est pleine)',
     honey_title: 'Miel', honey_jars: '{n} pots de miel', honey_jar: 'Un pot de miel', honey_none: 'Pas encore de miel : le prochain pot dans {t}.', honey_going: '{farmer} va aux ruches',
     honey_sold: '{n} pots de miel vendus · +{c} pièces', honey_sold1: 'Un pot de miel vendu · +{c} pièces',
+    // la pêche (version 5)
+    fish_rudd: 'Rotengle', fish_roach: 'Gardon', fish_perch: 'Perche', fish_tench: 'Tanche', fish_golden_tench: 'Tanche dorée', fish_koi: 'Koï', fish_big_bertha: 'Grosse Berthe',
+    fish_minnow: 'Vairon', fish_gudgeon: 'Goujon', fish_dace: 'Vandoise', fish_chub: 'Chevesne', fish_brown_trout: 'Truite fario', fish_grayling: 'Ombre', fish_old_snapjaw: 'Vieux Claquemâchoire',
+    fish_new: 'La pêche à l’étang : touchez son ponton', fish_new_river: 'La pêche à la rivière', fish_show: 'Voir l’étang',
+    dock_title: 'La pêche à l’étang', dock_body: 'Rotengles, gardons, perches et tanches vivent dans l’étang, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme.',
+    fish_worms: '{n} vers', fish_worms1: '1 ver', fish_worms0: 'Plus de vers', fish_free: '{n} vers offerts chaque matin', fish_go: 'Aller pêcher',
+    fish_noworms: 'Plus de vers : {n} de plus demain matin, ou une boîte de vers ci-dessous.', fish_level: 'La pêche ouvre au niveau {n}.',
+    fish_tin: 'Une boîte de {n} vers', fish_tin_buy: 'Acheter · {c} pièces', fish_tin_bought: '{n} vers dans la boîte · −{c} pièces',
+    fish_going: '{farmer} part au ponton', fish_night: '{farmer} dort : la pêche, ce sera demain matin', fish_busy: '{farmer} est occupé : réessayez dans un instant',
+    fish_cast: 'Touchez l’eau pour lancer', fish_wait: 'Surveillez le bouchon…', fish_bite: 'Maintenant ! Touchez !', fish_soon: 'Trop tôt ! Attendez que le bouchon plonge',
+    fish_missed: 'Trop tard : il est parti avec le ver', fish_reel: 'Maintenez pour remonter. Gardez la ligne dans le vert',
+    fish_snap: 'Trop fort : la ligne a cassé et il s’est sauvé', fish_slip: 'Trop mou : il s’est décroché', fish_stop: 'Arrêter de pêcher', fish_keep: 'Continuer à pêcher',
+    fish_size: '{cm} cm', fish_first: 'Un nouveau poisson pour votre livre !', fish_best: 'Votre plus beau !', fish_xp: '+{xp} XP',
+    fish_sold: 'Direction l’animalerie du village, en pleine forme · +{c} pièces',
+    fish_photo_big_bertha: 'Sa photo pour votre livre, puis elle retourne dans l’étang. Le journal du village achète votre photo · +{c} pièces',
+    fish_photo_old_snapjaw: 'Sa photo pour votre livre, puis il retourne dans la rivière. Le journal du village achète votre photo · +{c} pièces',
+    fish_caught_n: 'Pêché {n} fois', fish_caught_1: 'Pêché une fois', fish_tap_dock: 'L’étang',
     fill_btn: 'La remplir · {c} pièces', fill_part: 'Remplir ce que vous pouvez · {c} pièces', fill_scraps: 'Des restes de cuisine (gratuit)', fill_full: 'Elle est pleine', fill_broke: 'Vendez d’abord quelques œufs',
     filled: 'Mangeoire remplie · −{c} pièces', filled_scraps: 'Des restes de cuisine dans la mangeoire : de quoi tenir quelques heures.',
     farmer_feed: '{farmer} arrive avec le grain · −{c} pièces', farmer_scraps: '{farmer} arrive avec des restes de cuisine',
@@ -472,7 +506,8 @@ const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', gee
     res_champ: '{name} est championne maintenant !', ros_none: 'Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut).',
     champ_c: 'Championne régionale', champ_n: 'Championne nationale',
     fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !',
-    geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne.' } };
+    geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne.',
+    fish_busy: '{farmer} est occupée : réessayez dans un instant' } };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -672,6 +707,28 @@ export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120 };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
+// ---- fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; the legendary ones "Photo,
+// then let go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little
+// celebration"): the pond from level 3, the river from level 8, seven fish in each (four common, two rare, one legendary
+// with a name), drawn by weight (w, out of 100 in each water). A worm a cast: a few free each morning, more in tins of ten.
+// A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
+// a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
+// for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
+export const FISHING = { pond: 3, river: 8, free: 5, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
+export const FISH_RULES = {
+  rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 2, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 2, cm: [12, 25] },
+  perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 2, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 3, cm: [20, 45] },
+  golden_tench: { water: 'pond', rare: 1, w: 4.5, price: 70, xp: 10, cm: [20, 40] }, koi: { water: 'pond', rare: 1, w: 4, price: 90, xp: 10, cm: [30, 60] },
+  big_bertha: { water: 'pond', rare: 2, w: 1.5, price: 300, xp: 40, cm: [85, 95] },
+  minnow: { water: 'river', rare: 0, w: 30, price: 6, xp: 2, cm: [5, 10] }, gudgeon: { water: 'river', rare: 0, w: 26, price: 8, xp: 2, cm: [8, 15] },
+  dace: { water: 'river', rare: 0, w: 22, price: 10, xp: 2, cm: [15, 25] }, chub: { water: 'river', rare: 0, w: 12, price: 15, xp: 3, cm: [30, 50] },
+  brown_trout: { water: 'river', rare: 1, w: 4.5, price: 80, xp: 10, cm: [25, 50] }, grayling: { water: 'river', rare: 1, w: 4, price: 90, xp: 10, cm: [25, 45] },
+  old_snapjaw: { water: 'river', rare: 2, w: 1.5, price: 400, xp: 40, cm: [100, 110] },
+};
+export const FISH_IDS = Object.keys(FISH_RULES);
+export const fishLevel = id => FISHING[FISH_RULES[id].water];
+// a fish's price for its size (a legendary one: the photo's fixed price)
+export function fishPrice(id, cm) { const R = FISH_RULES[id]; return R.rare === 2 ? R.price : Math.round(R.price * (0.8 + 0.4 * (cm - R.cm[0]) / (R.cm[1] - R.cm[0]))); }
 // ---- the first day's guide (release 1 step 10; Audrey: "Scenes from the 3D farm" for the pictures before it): five
 // little things to do on a new farm, one at a time, each a few coins; the last a bonus
 export const GUIDE = ['eggs', 'cuddle', 'sow', 'jobs', 'shop'];
@@ -988,6 +1045,18 @@ export function checkFarm(d, now = Date.now()) {
     }
   }
   for (const x of [...(out.rare || []), ...(out.basket || [])]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
+  // fishing (release 5): the day the free worms were last given (never ahead of today), those left (at most a day's), the
+  // worms from tins, and of each fish caught (known fish only, from a water the farm's level has opened): how many and the
+  // biggest (within its sizes)
+  const fs = d.fish && typeof d.fish === 'object' ? d.fish : null;
+  if (fs) {
+    const got = {}, raw = fs.got && typeof fs.got === 'object' ? fs.got : {};
+    for (const id of FISH_IDS) {
+      const g = raw[id], R = FISH_RULES[id];
+      if (Array.isArray(g) && g.length === 2 && Number.isInteger(g[0]) && g[0] >= 1 && g[0] <= 1e6 && Number.isInteger(g[1]) && g[1] >= R.cm[0] && g[1] <= R.cm[1] && L >= fishLevel(id)) got[id] = [g[0], g[1]];
+    }
+    out.fish = { day: typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now), free: int(fs.free, 0, FISHING.free, 0), worms: int(fs.worms, 0, FISHING.maxWorms, 0), got };
+  }
   return out;
 }
 
@@ -1368,6 +1437,47 @@ export class Game {
     H.at = H.n + k >= HONEY.max ? now : H.at + k * HONEY.every; H.n = 0;
     const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
     return { n, coins, xp };
+  }
+  // ---- fishing: open at the pond (level 3) and the river (8); the worms (the day's free ones first, then those from tins);
+  // a cast (a worm on the hook: the fish that will bite decided there and then, kept till it's landed or lost); landed
+  // (sold live, or a legendary one's photo; the count and the biggest kept); a tin of worms
+  fishOpen(water) { return water in FISHING && typeof FISHING[water] === 'number' && this.level >= FISHING[water]; }
+  fishBag(now = Date.now()) {
+    const k = dayKey(now); let f = this.data.fish;
+    if (!f) f = this.data.fish = { day: k, free: FISHING.free, worms: 0, got: {} };
+    else if (f.day !== k) { f.day = k; f.free = FISHING.free; }
+    return f;
+  }
+  worms(now = Date.now()) { const f = this.fishBag(now); return f.free + f.worms; }
+  fishGot(id) { const g = this.data.fish && this.data.fish.got[id]; return g ? { n: g[0], best: g[1] } : null; }
+  fishName(id) { return this.t('fish_' + id); }
+  castWorm(water, now = Date.now(), r = Math.random) {
+    if (!this.fishOpen(water)) return null;
+    const f = this.fishBag(now); if (f.free + f.worms <= 0) return null;
+    if (f.free > 0) f.free--; else f.worms--;
+    const list = FISH_IDS.filter(id => FISH_RULES[id].water === water);
+    let x = r() * list.reduce((a, id) => a + FISH_RULES[id].w, 0), id = list[0];
+    for (const k of list) { x -= FISH_RULES[k].w; if (x < 0) { id = k; break; } }
+    const R = FISH_RULES[id], cm = Math.round(R.cm[0] + (R.cm[1] - R.cm[0]) * Math.pow(r(), 1.6));
+    this.bite = { id, cm, water, rare: R.rare };
+    this.save();
+    return { ...this.bite };
+  }
+  landFish() {
+    const b = this.bite; if (!b) return null;
+    this.bite = null;
+    const R = FISH_RULES[b.id], f = this.fishBag(), g = f.got[b.id], first = !g, best = !first && b.cm > g[1];
+    f.got[b.id] = [g ? g[0] + 1 : 1, g ? Math.max(g[1], b.cm) : b.cm];
+    const coins = fishPrice(b.id, b.cm), xp = R.xp + (first ? FISHING.firstXp : 0);
+    this.data.coins += coins; this.data.xp += xp; this.save();
+    return { id: b.id, cm: b.cm, water: b.water, rare: R.rare, legend: R.rare === 2, first, best, coins, xp, n: f.got[b.id][0] };
+  }
+  loseFish() { const had = !!this.bite; this.bite = null; return had; }
+  buyWorms(now = Date.now()) {
+    const T = FISHING.tin, f = this.fishBag(now);
+    if (this.data.coins < T.price || f.worms + T.n > FISHING.maxWorms) return null;
+    this.data.coins -= T.price; f.worms += T.n; this.save();
+    return { n: T.n, price: T.price, worms: f.free + f.worms };
   }
   // ---- the first day's guide: the step now ('eggs', 'cuddle', …, or null: done or skipped); a step done (k: only if it's
   // the one now): its coins, the next; skipped: done, no more coins

@@ -124,6 +124,16 @@ export const POSES = {
   judge_pin: { chest: [0, 10, 0], head: [0, 4, 0], shR: [-6, -82, 0], elR: -10, wrR: [0, -8, 0], shL: [10, -4, 0], elL: -14, hand: ['relax', 'hold'], hipR: [0, -14, 0], kneeR: 8 },
   clap: { head: [0, -8, 0], chest: [0, -3, 0], shL: [-8, -44, -30], elL: [0, -80, 0], shR: [8, -44, 30], elR: [0, -80, 0], hand: ['open', 'open'] },
   judge_carry: { shL: [0, -15, -40], elL: [0, -100, 0], wrL: [-90, 0, 90], hand: ['hold', 'relax'] },
+  // (3D only) fishing (release 5): the rod held up and out in the right hand, the left by its reel; drawn back over the
+  // shoulder to cast; leaning back reeling in, the left hand winding; a fish held out in both hands to look at; hooray, a
+  // new fish: held out in the left hand, the right fist punching the air; crouched at the edge, letting one go
+  rod: { shR: [-12, -50, 0], elR: -40, wrR: [0, 0, 0], shL: [16, -40, 0], elL: [-35, -58, 0], hand: ['hold', 'fist'] },
+  cast: { shR: [-16, -150, 0], elR: -48, wrR: [0, 24, 0], shL: [12, -22, 0], elL: -40, chest: [0, -7, 0], hand: ['relax', 'fist'] },
+  reel: { shR: [-12, -44, 0], elR: -46, wrR: [0, 8, 0], shL: [18, -46, 0], elL: [-42, -62, 0], chest: [0, -9, 0], hipL: [0, -14, 0], kneeL: 8, hand: ['hold', 'fist'] },
+  showfish: { shL: [8, -64, 0], elL: [-22, -44, 0], shR: [-8, -64, 0], elR: [22, -44, 0], hand: ['hold', 'hold'], head: [0, 12, 0] },
+  trophy: { shL: [8, -66, 0], elL: [-22, -46, 0], shR: [-34, -150, 0], elR: -26, hand: ['hold', 'fist'], chest: [0, -4, 0], head: [-6, -8, 0] },
+  release: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 30, 0], head: [0, 4, 0],
+    shL: [10, -70, 0], elL: [-15, -18, 0], shR: [-10, -70, 0], elR: [15, -18, 0], hand: ['hold', 'hold'] },
 };
 // faces (farmer.py's FACE): the upper and lower lids' edges (-1..1 of the eye's height), the lids slanted (degrees), where the
 // eyes look, the brows' slant (+ worried, - cross) and height, the mouth, the blush
@@ -206,6 +216,32 @@ function farmerMaterial(look, grade) {
   return m;
 }
 
+// ------------------------------------------------------------------ the fishing rod (release 5): an old cane rod held in the right fist
+// (on the wrist's bone, pointing forward out of the fist when the arm hangs, so the raised arm holds it up and out): a cork
+// grip, a little reel under it, the cane in three lengths with darker joints that bend (props.rodBend: 0 straight .. 1 a
+// fish pulling hard), a ring at its tip (FarmerRig.rodTip)
+function makeRod(grade) {
+  const root = new THREE.Group(); root.position.set(0, -0.074, 0.012); root.rotation.x = 0.8;
+  const mat = c => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 }); if (grade) grade(m); return m; };
+  const cane = mat('#cfa95e'), joint = mat('#7a5a2c'), cork = mat('#b98c58'), metal = mat('#3d4248');
+  const add = (g, m, x, y, z, par = root) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = true; par.add(o); return o; };
+  add(new THREE.CylinderGeometry(0.018, 0.016, 0.27, 10).rotateX(Math.PI / 2), cork, 0, 0, -0.04);
+  add(new THREE.CylinderGeometry(0.032, 0.032, 0.024, 14).rotateZ(Math.PI / 2), metal, 0, -0.04, 0.12);
+  add(new THREE.BoxGeometry(0.008, 0.03, 0.03), metal, 0, -0.022, 0.12);
+  const lens = [0.56, 0.5, 0.44], r = [0.012, 0.0092, 0.0066, 0.0036], segs = [];
+  let par = root, z = 0.09;
+  for (let i = 0; i < 3; i++) {
+    const j = new THREE.Group(); j.position.z = z; par.add(j); segs.push(j);
+    add(new THREE.CylinderGeometry(r[i + 1], r[i], lens[i], 7).rotateX(Math.PI / 2).translate(0, 0, lens[i] / 2), cane, 0, 0, 0, j);
+    add(new THREE.CylinderGeometry(r[i] * 1.35, r[i] * 1.35, 0.022, 8).rotateX(Math.PI / 2), joint, 0, 0, 0.011, j);
+    par = j; z = lens[i];
+  }
+  const tip = new THREE.Object3D(); tip.position.z = lens[2]; par.add(tip);
+  add(new THREE.TorusGeometry(0.008, 0.002, 4, 8), metal, 0, 0, lens[2], par);
+  root.userData = { segs, tip };
+  return root;
+}
+
 // ------------------------------------------------------------------ one farmer's body and face, posed from a pose and a face
 const _e = new THREE.Euler(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _hm = new THREE.Matrix4();
 const _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _s2 = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
@@ -219,7 +255,7 @@ export class FarmerRig {
       B[j.name] = b; list.push(b); if (j.parent) B[j.parent].add(b);
       this.rest[j.name] = { p: b.position.clone(), q: b.quaternion.clone(), s: b.scale.clone() };
     }
-    this.mesh = new THREE.SkinnedMesh(MODELS[look], farmerMaterial(look, grade));
+    this.grade = grade; this.mesh = new THREE.SkinnedMesh(MODELS[look], farmerMaterial(look, grade));
     this.mesh.add(B.root); B.root.updateMatrixWorld(true); this.mesh.bind(new THREE.Skeleton(list));
     this.mesh.frustumCulled = false; this.mesh.castShadow = true;
     // (three.js refreshes a skin once a frame, but counts a shadow redraw as that frame's refresh, so the picture just after
@@ -280,6 +316,8 @@ export class FarmerRig {
     for (const m of MOUTHS) { const b = B['mouth_' + m]; if (b) b.scale.setScalar(m === F.mouth ? 1 : 1e-4); }
     this.blush.value = F.blush;
     B.torch.scale.setScalar(props.torch ? 1 : 1e-4); B.pail.scale.setScalar(props.pail ? 1 : 1e-4);
+    if (props.rod && !this.rod) { this.rod = makeRod(this.grade); B.wristR.add(this.rod); }      // (the fishing rod: made the first time it's wanted)
+    if (this.rod) { this.rod.visible = !!props.rod; const k = props.rodBend || 0; this.rod.userData.segs.forEach((j, i) => { j.rotation.x = k * [0.1, 0.2, 0.32][i]; }); }
     if (B.clipboard) { B.clipboard.scale.setScalar(props.clipboard ? 1 : 1e-4); B.pencil.scale.setScalar(props.pencil ? 1 : 1e-4); }     // (the judge's)
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
     const ht = (typeof window !== 'undefined' && window.__HAT) || {}, hs = this.hatSit;          // (each outfit's hat its own way: HAT_SIT)
@@ -299,6 +337,8 @@ export class FarmerRig {
       _m.premultiply(_hm.copy(par.matrixWorld).invert()).decompose(B.hat.position, B.hat.quaternion, B.hat.scale);
     }
   }
+  // the rod's tip in the world (the line hangs from it), as posed now; null with no rod
+  rodTip() { if (!this.rod || !this.rod.visible) return null; const t = this.rod.userData.tip; t.updateWorldMatrix(true, false); return t.getWorldPosition(new THREE.Vector3()); }
   // where the hat is now, in the world (to knock it off from)
   hatMatrix() { this.B.hat.updateWorldMatrix(true, false); return this.B.hat.matrixWorld.clone(); }
   jointOf(k) { return { shL: 'shoulderL', shR: 'shoulderR', elL: 'elbowL', elR: 'elbowR', wrL: 'wristL', wrR: 'wristR', hipL: 'hipL', hipR: 'hipR', chest: 'chest', head: 'head' }[k]; }
@@ -404,7 +444,7 @@ export class FarmerLineup {
     this.t += dt;
     for (const f of this.farmers) {
       if (f.row === 'face') { const k = Math.floor(this.t / 3) % FACE_CYCLE.length; f.want = { pose: 'turn', face: FACE_CYCLE[k], props: {}, anim: (P, F, t) => { if (FACE_CYCLE[k] === 'stern') F.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'frown'; } }; }
-      else if (this.pose) f.want = { pose: this.pose, face: 'neutral', props: {} };
+      else if (this.pose) f.want = { pose: this.pose, face: this.pose === 'trophy' ? 'happy' : 'neutral', props: { rod: ['rod', 'cast', 'reel'].includes(this.pose), rodBend: this.pose === 'reel' ? 0.8 : 0 } };
       else f.want = Object.assign({ props: {} }, LINE[f.row === 'mood' ? this.mood || MOOD_CYCLE[Math.floor(this.t / 4) % MOOD_CYCLE.length] : f.row]);
       f.update(dt);
     }

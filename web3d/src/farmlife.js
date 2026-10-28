@@ -31,6 +31,7 @@ export const FARMER_TEXT = {
   tomorrow: ['Maybe tomorrow…', 'Demain, peut-être…'],
   corn: ['Some corn for you!', 'Du grain pour vous !'],
   there: ['There you are!', 'Vous voilà !'],
+  fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
@@ -427,6 +428,28 @@ export class FarmLife {
     seq.visit = V;
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return true;
+  }
+  // ---- fishing (release 5; main.js startFishing, fishing.js): he hurries to F.start (outside the dock's gate while its
+  // field is wild meadow, else the end of the dock on the bank), through the gate (F.gate: opened as he goes in, shut
+  // behind him on his way out) and out along the dock (F.inPts: as into a pen, the water either side), turns to the water,
+  // F.arrived(); then F.drive(life, dt) poses him each frame until he's done (true); back along the dock and off with the
+  // pail (F.outPts), F.done(). Named 'pen': he isn't called away meanwhile; never got there: F.done(false)
+  fishAt(F) {
+    if (this.home || this.running) return false;
+    const self = this;
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - F.start[0], Lf.pos.z - F.start[1]) > 0.8) { seq.aborted = true; F.done(false); } return true; } };
+    const gate = on => () => { if (on) { self.pen = F; F.enter(); } else if (self.pen === F) { F.leave(); self.pen = null; } return null; };
+    const pail = (t, set) => ({ name: t.name, run(Lf, dt) { const r = t.run(Lf, dt); if (set) { Lf.want.props.pail = true; if (Lf.want.pose === 'turn') { Lf.want.pose = 'carry'; Lf.want.keepArms = 'R'; } } return r; } });
+    const L = [TK.path(F.start[0], F.start[1], 'hurry'), there, TK.face(F.toIn), gate(true)];
+    if (F.gate) L.push(TK.act('open', 0.6, W => { W.pose = 'turn'; W.face = 'happy'; W.look = [0, -0.2]; }));
+    L.push(TK.walk(F.inPts), TK.face(F.face), () => { F.arrived(); return null; },
+      { name: 'fishing', run: (Lf, dt) => F.drive(Lf, dt) },
+      pail(TK.walk(F.outPts), true), gate(false), () => { F.done(true); return null; });
+    const seq = TK.seq('pen', L), run = seq.run.bind(seq);
+    seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
+    seq.fishing = F;
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
+    return seq;
   }
   // his hat knocked off (the geese chasing him out): up off his head and down at `to` ([x, z]), tumbling; back on (hatHome
   // 0..1 as he picks it up and puts it on: farmer.js), on (hatOn)

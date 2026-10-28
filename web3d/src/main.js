@@ -23,12 +23,13 @@ import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
 import { FrogLineup, FrogPond } from './pond.js';
 import { FishLineup } from './fish.js';
+import { Fishing } from './fishing.js';
 import { DuckFlock } from './ducks.js';
 import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
@@ -405,7 +406,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -1614,6 +1615,8 @@ function onBridge(x, z) {
   return false;
 }
 function groundY(x, z) {
+  const D = DOCK || null;
+  if (D && Math.abs(x - D.mid[0]) < 2 && Math.abs(z - D.mid[1]) < 2) { deckV.set(x, 0, z).applyMatrix4(D.inv); if (deckV.x > D.box.min.x - 0.02 && deckV.x < D.box.max.x + 0.02 && deckV.z > D.box.min.z - 0.02 && deckV.z < D.box.max.z + 0.02) return D.deck; }
   for (const B of bridgeDecks()) {
     if (Math.abs(x - B.pos[0]) > 1.5 || Math.abs(z - B.pos[2]) > 1.5) continue;
     deckV.set(x, 0, z).applyMatrix4(B.inv);
@@ -1853,7 +1856,7 @@ function tickFoxes(dt) {
   if (frogPond) frogPond.update(dt, clockHour());
   if (duckFlock) duckFlock.update(dt, clockHour());
   if (farmLife) farmLife.update(dt, clockHour());
-  if (GAME_MODE) { tickGates(dt); tickCorn(dt); }
+  if (GAME_MODE) { tickGates(dt); tickCorn(dt); tickFishing(dt); }
   if (!foxes) return;
   foxes.update(dt, clockHour(), params.has('foxes'));
   if (foxLineup) foxLineup.update(dt);
@@ -3034,6 +3037,10 @@ function tapAt(x, y) {
   if (SHOWDAY) return;                                   // (the show day: watch, or Skip)
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
+  if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond casts there)
+    const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -POND_Y), new THREE.Vector3());
+    if (gp && fishWater(gp.x, gp.z, -1.2) && FISHING.tapWater(gp.x, gp.z)) return;
+  }
   let best = null, bestD = Infinity;
   const s = new THREE.Sphere(), w = new THREE.Vector3();
   for (const G of [...foxGroups(), ...(farmDog ? [farmDog] : [])]) for (const f of G.foxes) {
@@ -3120,6 +3127,8 @@ function tapAt(x, y) {
       nb.min.set(-0.8, 0, -0.6); nb.max.set(0.8, 1.9, 0.7);         // (a decoration hit too: the coop only if its house is in front of it)
       if (loc.intersectBox(nb, hitP) && hitP.applyMatrix4(p.frame.matrixWorld).distanceTo(ray.ray.origin) < gdd) { coopCard(p); return; }
     }
+    // the game: the pond's dock (fishing: its card)
+    if (GAME_MODE && game.data && dockInfo()) { loc.copy(ray.ray).applyMatrix4(inv.copy(DOCK.inv)); nb.copy(DOCK.box); nb.max.y += 0.4; if (loc.intersectBox(nb, hitP)) { dockCard(); return; } }
     // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it); a
     // decoration or the wheat field in front of it: theirs (the field's card, or the harvest; the hives' honey)
     const hd = GAME_MODE && game.data && farmhouseAt(ray.ray) ? farmhouseAt.dist : Infinity;
@@ -3808,12 +3817,12 @@ function pondGates() {
 }
 // the fence's lines with a gap at each gate (its posts stand at the ends)
 function cutGates(lines) {
-  if (!GATES.length) return lines;
+  const ALL = allGates(); if (!ALL.length) return lines;
   const out = [];
   for (const pts of lines) {
     const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
     const cuts = [];
-    for (const G of GATES) {
+    for (const G of ALL) {
       let bs = -1, bd = 0.08;
       for (let i = 1; i < pts.length; i++) {
         const a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz || 1, u = Math.max(0, Math.min(1, ((G.p[0] - a[0]) * dx + (G.p[1] - a[1]) * dz) / l2));
@@ -3845,7 +3854,7 @@ function gateMesh(G) {
 }
 function setGate(G) { const th = G.open * 1.75, dx = G.t[0] * Math.cos(th) + G.n[0] * Math.sin(th), dz = G.t[1] * Math.cos(th) + G.n[1] * Math.sin(th); G.pivot.rotation.y = Math.atan2(dx, dz); }
 function tickGates(dt) {
-  for (const G of GATES) {
+  for (const G of allGates()) {
     // (the geese out of its way as it swings: anyone in the reach of its leaf on the field's side steps clear of it)
     if (G.open > 0 && geeseFlock) for (const g of geeseFlock.geese) {
       const hx = G.p[0] - G.t[0] * (GATE_HALF - 0.06), hz = G.p[1] - G.t[1] * (GATE_HALF - 0.06), dx = g.pos.x - hx, dz = g.pos.z - hz, d = Math.hypot(dx, dz);
@@ -3961,6 +3970,112 @@ function geeseFence() {
   return gate ? [gate.out[0], gate.out[1], gate.toIn, gate] : null;
 }
 function greetGeese(s) { if (geeseFlock && s[3]) geeseFlock.greetAt(s[3].gin[0], s[3].gin[1], s[3].toIn + Math.PI); }
+// ------------------------------------------------------------------ fishing (release 5; fishing.js, game.js FISHING, farmlife.js
+// fishAt): tap the pond's dock for its card (the pond's fish, the worms, Go fishing, a tin of worms); the farmer walks out
+// to its end (by a gate in the fence while the field round it is wild meadow) and fishes there till you say Stop
+let DOCK = null, DGATE = null, FISHING = null, FSEQ = null;
+const allGates = () => (DGATE && !DGATE.shared ? [...GATES, DGATE] : GATES);
+const POND_Y = 0.008;
+// the dock: its bank end and its far end, the way out along it, its deck's height, where the farmer stands to fish (at its
+// end, facing the water) and his bucket
+function dockInfo() {
+  if (DOCK) return DOCK;
+  const p = V && V.props.find(q => q.model === 'dock'); if (!p || !parts.dock) return null;
+  const box = new THREE.Box3().setFromObject(parts.dock), sc = p.s || 1, m = place(p.pos[0], 0, p.pos[2], p.deg, sc), inv = m.clone().invert();
+  const long = box.max.x - box.min.x > box.max.z - box.min.z, cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+  const e1 = (long ? new THREE.Vector3(box.min.x, 0, cz) : new THREE.Vector3(cx, 0, box.min.z)).applyMatrix4(m), e2 = (long ? new THREE.Vector3(box.max.x, 0, cz) : new THREE.Vector3(cx, 0, box.max.z)).applyMatrix4(m);
+  const P = V.pond, far = q => Math.hypot(q.x - P.center[0], q.z - P.center[2]);
+  const [land, end] = far(e1) > far(e2) ? [e1, e2] : [e2, e1];
+  const dir = end.clone().sub(land).setY(0).normalize(), side = new THREE.Vector3(dir.z, 0, -dir.x);
+  parts.dock.updateMatrixWorld(true);                      // (the deck's height: straight down onto the model at its middle)
+  const hit = new THREE.Raycaster(new THREE.Vector3(cx, 5, cz), new THREE.Vector3(0, -1, 0)).intersectObjects(meshesOf(parts.dock), false)[0];
+  const deck = (hit ? hit.point.y : box.max.y * 0.5) * sc;
+  const stand = end.clone().addScaledVector(dir, -0.34), bucket = stand.clone().addScaledVector(side, 0.3).addScaledVector(dir, -0.2);
+  return (DOCK = { m, inv, box, mid: [p.pos[0], p.pos[2]], land: [land.x, land.z], end: [end.x, end.z], dir, face: Math.atan2(dir.x, dir.z), deck, stand: [stand.x, stand.z], bucket: [bucket.x, bucket.z] });
+}
+// the pond's water at (x, z), at least m in from its bank, and not the dock
+function fishWater(x, z, m = 0.35) {
+  const P = V.pond, dx = x - P.center[0], dz = z - P.center[2], lu = Math.hypot(P.axisU[0], P.axisU[2]), lv = Math.hypot(P.axisV[0], P.axisV[2]);
+  const u = (dx * P.axisU[0] + dz * P.axisU[2]) / lu, v = (dx * P.axisV[0] + dz * P.axisV[2]) / lv;
+  if ((u / Math.max(0.1, lu - m)) ** 2 + (v / Math.max(0.1, lv - m)) ** 2 > 1) return false;
+  const D = dockInfo(); if (!D || m < 0) return true;
+  const ax = D.land[0], az = D.land[1], bx = D.end[0] - ax, bz = D.end[1] - az, L2 = bx * bx + bz * bz || 1, t = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / L2));
+  return Math.hypot(x - ax - bx * t, z - az - bz * t) > 0.45;
+}
+// the dock's gate: while the field round its bank end is wild meadow, a gate in that field's fence where the way in to the
+// dock is shortest, from a place the farmer can get to (one of the geese's gates on that field, if it has one)
+function dockGate() {
+  const D = dockInfo(); if (!GAME_MODE || !game.data || !FIELDS || !D || !game.fishOpen('pond')) return null;
+  const n = game.data.land.length, inl = [D.land[0] - D.dir.x * 0.7, D.land[1] - D.dir.z * 0.7], id = fieldAt(inl[0], inl[1]);
+  if (id < n) return null;                                  // (a lane, the water's edge, your own field: no fence in the way)
+  const own = GATES.find(G => G.field === id); if (own) return Object.assign({}, own, { shared: true, gate: own });
+  const nav = navGrid(), R = farmReach();
+  const roomy = (q, r) => nav.freeAt(q[0], q[1]) && [0, 1, 2, 3, 4, 5].every(k => nav.freeAt(q[0] + Math.cos(k * 1.047) * r, q[1] + Math.sin(k * 1.047) * r));
+  let best = null;
+  for (const L of FIELDS.fields[id].lines) {
+    if (!(L.by === 'lane' || (typeof L.by === 'number' && L.by < n))) continue;
+    const pts = smoothLine(L.pts), cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const total = cum[cum.length - 1];
+    for (let sAt = 1.0; sAt <= total - 1.0; sAt += 0.25) {
+      let i = 1; while (i < pts.length - 1 && cum[i] < sAt) i++;
+      const a = pts[i - 1], b = pts[i], u = (sAt - cum[i - 1]) / Math.max(1e-6, cum[i] - cum[i - 1]), q = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, t = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+      let nn = [-t[1], t[0]]; if (fieldAt(q[0] + nn[0] * 0.8, q[1] + nn[1] * 0.8) !== id) nn = [-nn[0], -nn[1]];
+      if (fieldAt(q[0] + nn[0] * 0.8, q[1] + nn[1] * 0.8) !== id) continue;
+      const o = [q[0] - nn[0] * 0.75, q[1] - nn[1] * 0.75], gin = [q[0] + nn[0] * 0.7, q[1] + nn[1] * 0.7];
+      if (!roomy(o, 0.22) || !roomy(gin, 0.3) || !R[nav.iz(o[1]) * nav.nx + nav.ix(o[0])]) continue;
+      if (V.trees.some(tr => Math.hypot(tr.pos[0] - q[0], tr.pos[2] - q[1]) < 1.2)) continue;
+      const d = Math.hypot(gin[0] - inl[0], gin[1] - inl[1]) + 0.02 * Math.hypot(o[0] - farmDoor()[0], o[1] - farmDoor()[1]);
+      if (!best || d < best.d) best = { d, field: id, p: q, t, n: nn, out: o, gin, toIn: Math.atan2(nn[0], nn[1]), open: 0, want: 0, dock: true };
+    }
+  }
+  return best;
+}
+// the farmer's way out to the dock's end and back (by its gate, if it has one)
+function fishRoute() {
+  const D = dockInfo(); if (!D) return null;
+  const nav = navGrid(), inl = [D.land[0] - D.dir.x * 0.7, D.land[1] - D.dir.z * 0.7], deckIn = [D.land[0] + D.dir.x * 0.3, D.land[1] + D.dir.z * 0.3];
+  if (DGATE) {
+    const way = nav.find(DGATE.gin[0], DGATE.gin[1], inl[0], inl[1]); if (!way) return null;
+    const inPts = [DGATE.gin, ...way.slice(1).map(q => [q[0], q[1]]), deckIn, D.stand];
+    return { start: DGATE.out, toIn: DGATE.toIn, gate: DGATE.shared ? DGATE.gate : DGATE, inPts, outPts: [...inPts.slice(0, -1).reverse(), DGATE.out], face: D.face };
+  }
+  const st = nav.nearestIn(farmReach(), inl[0], inl[1], 3); if (!st) return null;
+  return { start: st, toIn: Math.atan2(D.dir.x, D.dir.z), gate: null, inPts: [deckIn, D.stand], outPts: [deckIn, st], face: D.face };
+}
+function startFishing() {
+  const D = dockInfo();
+  if (!D || !farmLife || !GAME_MODE || !game.fishOpen('pond')) return 'none';
+  if (farmerAsleep() || DAY.hour >= 21.6) return 'night';
+  if (FSEQ || (FISHING && FISHING.on)) return 'on';
+  if (farmLife.running || farmLife.home || farmLife.pending) return 'busy';          // (out of the door, or busy in a pen: off to the dock straight after)
+  if (!game.worms()) return 'worms';
+  const R = fishRoute(); if (!R) return 'none';
+  if (!FISHING) FISHING = new Fishing({ scene, grade: nightGrade, water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck, bucket: D.bucket },
+    inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2], game, t: (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f'),
+    hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
+  const F = Object.assign({}, R, { enter() { if (R.gate) { R.gate.want = 1; wake(1000); } }, leave() { if (R.gate) { R.gate.want = 0; wake(1000); } }, hens: () => [], at() {},
+    arrived: () => FISHING.start(), drive: (Lf, dt) => FISHING.drive(Lf, dt), done: () => { FSEQ = null; if (FISHING.on) FISHING.end(); } });
+  const seq = farmLife.fishAt(F); if (!seq) return 'busy';
+  FSEQ = seq; wake(1500);
+  return 'ok';
+}
+function dockCard() {
+  holdBird(null); henOff();
+  const open = game.fishOpen('pond'), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
+  gameUI.dockCard({ open, worms: open ? game.worms() : 0, state: st }, {
+    go: () => { const r = startFishing(); gameUI.close(); hint(game.t(r === 'ok' ? 'fish_going' : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName(), n: FISHING_RULE.free }, game.data.farmer.look === 'f')); },
+    buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(); } } });
+}
+// each frame: the fishing (called away, by Rusty say: put away; night falling: wound in and home)
+function tickFishing(dt) {
+  if (!FSEQ && !(FISHING && FISHING.on)) return;
+  if (FSEQ && farmLife && farmLife.task !== FSEQ && farmLife.pending !== FSEQ) { FSEQ = null; if (FISHING && FISHING.on) FISHING.end(); }
+  if (!FISHING || !FISHING.on) return;
+  if (DAY.hour >= 22.15 && !gameUI.isOpen && ['ready', 'wait', 'nibble'].includes(FISHING.state)) { FISHING.stop(); hint(game.t('fish_night', { farmer: farmerName() })); }
+  FISHING.update(dt, VIEW_DIR);
+}
 const SALE = { sign: null, stakes: null, field: -1, at: null };
 const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
 const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
@@ -4113,7 +4228,7 @@ let landOwned = -1;
 function syncLand(fresh = false) {
   if (!GAME_MODE || !game.data || !FIELDS) return;
   const n = game.data.land.length, sale = game.landForSale(), saleF = sale ? sale.field : -1;
-  const gk = geeseOwned() ? 'geese' : '';                   // (the geese's gates: once they're on the farm)
+  const gk = (geeseOwned() ? 'geese' : '') + (game.fishOpen('pond') ? '+fish' : '');      // (the geese's gates: once they're on the farm; the dock's, once fishing's open)
   if (fresh || n !== landOwned || gk !== LAND.gk) {
     const bought = !fresh && landOwned >= 0 && n > landOwned ? landOwned : -1;
     landOwned = n; LAND.gk = gk;
@@ -4121,8 +4236,9 @@ function syncLand(fresh = false) {
     for (const m of LAND.grass) { m.removeFromParent(); const i = grassTiles.findIndex(g => g.mesh === m); if (i >= 0) grassTiles.splice(i, 1); }
     for (const m of LAND.fence) { m.removeFromParent(); m.geometry.dispose(); }
     rebuildNav();
-    for (const G of GATES) G.mesh.removeFromParent();
+    for (const G of allGates()) if (G.mesh && !G.shared) G.mesh.removeFromParent();
     GATES = pondGates(); for (const G of GATES) G.mesh = gateMesh(G);
+    DGATE = dockGate(); if (DGATE && !DGATE.shared) DGATE.mesh = gateMesh(DGATE);
     LAND.fence = buildFence(cutGates(fenceLines()));
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
@@ -6014,7 +6130,7 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard,
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled

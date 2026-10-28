@@ -7,9 +7,9 @@ fs.mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
 const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup=fish&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup=fish&time=11:00${process.env.BACKDROP ? '&backdrop' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
-await p.addStyleTag({ content: '#hint, #readout, #tag, .top, #ui, .hud { display: none !important; }' });
+await p.addStyleTag({ content: '#hint, #readout, #tag, .top, #ui, .hud, .vignette { display: none !important; }' });
 const ids = await p.evaluate(() => window.__farm.fishLineup().fish.map(f => f.id));
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
 for (let i = 0; i < ids.length; i++) {

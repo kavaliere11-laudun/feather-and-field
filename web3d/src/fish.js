@@ -422,7 +422,15 @@ export class FishLineup {
       const f = new Fish(id, grade);
       f.root.quaternion.copy(q); f.root.position.copy(right.clone().multiplyScalar((i - 6.5) * 1.5)).add(new THREE.Vector3(0, 0.9, 0));
       this.group.add(f.root); return f;
-    });
+      if (typeof location !== 'undefined' && /[?&]backdrop\b/.test(location.search)) {      // (&backdrop: plain cream behind them, for the cards' pictures)
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), new THREE.MeshBasicMaterial({ color: '#fffdf7' })); m.material.userData.noGrade = true;
+      m.position.copy(back.clone().multiplyScalar(-0.7)).add(new THREE.Vector3(0, 0.9, 0)); m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, back)); this.group.add(m);
+    }
+  });
+    if (typeof location !== 'undefined' && /[?&]backdrop\b/.test(location.search)) {      // (&backdrop: plain cream behind them, for the cards' pictures)
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), new THREE.MeshBasicMaterial({ color: '#fffdf7' })); m.material.userData.noGrade = true;
+      m.position.copy(back.clone().multiplyScalar(-0.7)).add(new THREE.Vector3(0, 0.9, 0)); m.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, back)); this.group.add(m);
+    }
   }
   update(dt) { for (const f of this.fish) f.update(dt); }
   // where fish i is (to frame a picture of it)

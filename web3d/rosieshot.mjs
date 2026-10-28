@@ -4,7 +4,7 @@ const shots = JSON.parse(process.env.SHOTS || '[{"i":1,"rot":-0.3,"size":0.3}]')
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-const o = process.env.OUTFIT ? `&outfit=${process.env.OUTFIT}` : '';
+const o = (process.env.OUTFIT ? `&outfit=${process.env.OUTFIT}` : '') + (process.env.EXTRA || '');
 await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup=farmer${o}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.addStyleTag({ content: '#hint, #readout, #tag, .top { display: none !important; }' });

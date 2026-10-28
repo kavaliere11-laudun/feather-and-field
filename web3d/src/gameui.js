@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -111,6 +111,7 @@ export class GameUI {
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
     if (this.kind === 'levelup' && this.levelShown) { this.g.seenLevel(); this.levelShown = 0; }
     if (this.kind === 'showres') { this.g.seenShows(); this.refresh(); this.bumpCoins(); }
+    if (this.kind === 'fish' && this.fishThen) { const f = this.fishThen; this.fishThen = null; f(this.g.worms() > 0); }      // (closed: on fishing while there are worms)
     this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the welcome: language, your farmer (him or her, a name), start
@@ -388,6 +389,11 @@ export class GameUI {
       else { const n = body.querySelector('.gdecnew .gnote'); if (n) { n.remove(); c.append(n); } }      // (where to buy them said once, under the last)
     }
     if (L === FOX.level) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
+    for (const w of ['pond', 'river']) if (FISHING[w] === L) {              // (fishing opens: the pond at 3, the river at 8; a look at it)
+      const c = el('div', 'gcard gfishnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎣'), el('span', 'gcard-t', this.t(w === 'pond' ? 'fish_new' : 'fish_new_river'))); c.append(hd);
+      if (w === 'pond' && this.o.showPond) { const b = el('button', 'gbtn galt gsmallbtn', this.t('fish_show')); b.type = 'button'; b.dataset.fish = 'show'; b.addEventListener('click', () => { this.close(); this.o.showPond(); }); c.append(b); }
+      body.append(c);
+    }
     const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') }))); c.append(hd); body.append(c); }
@@ -839,6 +845,47 @@ export class GameUI {
     if (!DECOR[id].pond) info.append(el('p', 'gnote', this.t('dec_card_body')));
     card.append(pic, info); body.append(card);
     if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
+  }
+  // ---- fishing (release 5): the dock's card (tapped): the pond's fish (those caught in colour, the others dark), the worms
+  // left (free each morning), Go fishing; a tin of worms. o: { open, worms, state: 'ok'|'night'|'on' }; h: { go, buy }
+  dockCard(o, h) {
+    const g = this.g, body = this.open('dock', this.t('dock_title')), farmer = g.farmerName();
+    this.bird = null;
+    const row = el('div', 'gfishrow');
+    for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === 'pond')) { const im = el('img', g.fishGot(id) ? 'got' : ''); im.alt = ''; im.src = 'fish/' + id + '.webp' + (this.o.bust || ''); row.append(im); }
+    body.append(row, el('p', 'gtext', this.t('dock_body')));
+    if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING.pond }))); return; }
+    const n = o.worms;
+    body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0')) + ' · ' + this.t('fish_free', { n: FISHING.free })));
+    if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
+    else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
+    else if (!n) body.append(el('p', 'gnote', this.t('fish_noworms', { n: FISHING.free })));
+    else { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => h.go()); body.append(b); }
+    const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
+    th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
+    const bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke ? ' galt' : ''), broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke; bb.dataset.fish = 'tin';
+    bb.addEventListener('click', () => { if (!bb.disabled) h.buy(); });
+    tc.append(th, bb); body.append(tc);
+  }
+  // ---- a fish caught (fishing.js): its picture, its name and size, new to you or your biggest yet, sold live to the
+  // village aquarium shop (or a legendary one's photo, and back into the water), the coins and XP; Keep fishing, or Stop.
+  // then(keep): once it's closed
+  fishCard(r, then) {
+    const g = this.g, body = this.open('fish', g.fishName(r.id));
+    this.bird = null; this.fishThen = then;
+    const card = el('div', 'gcard gpage gdec gfishcard' + (r.legend ? ' glegend' : '')), pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.src = 'fish/' + r.id + '.webp' + (this.o.bust || ''); pic.append(img);
+    const info = el('div', 'gpage-i');
+    info.append(el('p', 'gfishsize', this.t('fish_size', { cm: r.cm })));
+    if (r.first) info.append(el('p', 'gtext gfishnew', '✨ ' + this.t('fish_first')));
+    else if (r.best) info.append(el('p', 'gtext gfishnew', '🏆 ' + this.t('fish_best')));
+    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
+    card.append(pic, info); body.append(card);
+    const left = g.worms(), row = el('div', 'gstick');
+    const done = keep => { const f = this.fishThen; this.fishThen = null; this.close(); if (f) f(keep); };
+    if (left) { const k = el('button', 'gbtn', '🎣 ' + this.t('fish_keep') + ' · 🪱 ' + left); k.type = 'button'; k.dataset.fish = 'keep'; k.addEventListener('click', () => done(true)); row.append(k); }
+    const s = el('button', 'gbtn' + (left ? ' galt' : ''), this.t('fish_stop')); s.type = 'button'; s.dataset.fish = 'stop'; s.addEventListener('click', () => done(false)); row.append(s);
+    body.append(row);
+    this.refresh(); this.bumpCoins();
   }
   // ---- Gertrude and Hector (release 3): who they are, their trust (cross .. friends: hearts, what it means, days of visits to
   // the next), a visit (h.visit; friends: a cuddle, or how long they're happy after one; at night, in the morning)
