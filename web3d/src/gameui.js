@@ -969,6 +969,15 @@ export class GameUI {
       chips.append(c);
     }
     langRow.append(chips); b.append(langRow);
+    // the music (sound.js): on or off, at once (Audrey, 28 Oct: "Now and then")
+    const musicRow = el('div', 'grow gmusic'); musicRow.append(el('span', 'glabel', this.t('settings_music')));
+    const mchips = el('div', 'gchips');
+    for (const on of [true, false]) {
+      const c = el('button', 'gchip' + (g.musicOn() === on ? ' on' : ''), this.t(on ? 'music_on' : 'music_off')); c.type = 'button';
+      c.addEventListener('click', () => { if (g.musicOn() === on) return; g.setMusic(on); for (const x of mchips.children) x.classList.toggle('on', x === c); if (this.o.music) this.o.music(on); });
+      mchips.append(c);
+    }
+    musicRow.append(mchips); b.append(musicRow, el('p', 'gnote', this.t('settings_music_note')));
     b.append(el('p', 'gnote', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of
     // the code rather than waiting for it); shown to select by hand if copying isn't allowed; paste one and load it (two

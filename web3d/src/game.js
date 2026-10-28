@@ -190,6 +190,7 @@ const TEXT = {
     champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry {f}, 1st prize {p} coins', show_new_n: 'The National Championship: entry {f}, 1st prize {p} coins',
     book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
+    settings_music: 'Music', music_on: 'On', music_off: 'Off', settings_music_note: 'Now and then, by day and of an evening. With your phone on silent, the game is silent too.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
     settings_version: 'Version {v}',
@@ -426,6 +427,7 @@ const TEXT = {
     champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription {f}, 1er prix {p} pièces', show_new_n: 'Le championnat national : inscription {f}, 1er prix {p} pièces',
     book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
+    settings_music: 'Musique', music_on: 'Oui', music_off: 'Non', settings_music_note: 'De temps en temps, le jour et le soir. Si votre téléphone est en mode silencieux, le jeu l’est aussi.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
     settings_version: 'Version {v}',
@@ -890,6 +892,7 @@ export function checkFarm(d, now = Date.now()) {
   const out = { v: SAVE_V };
   out.made = int(d.made, 0, now, now);
   out.lang = d.lang === 'fr' ? 'fr' : 'en';
+  if (d.music === false) out.music = false;                       // (the music switched off in the settings; on unless)
   out.coins = int(d.coins, 0, 1e9, 0);
   out.xp = int(d.xp, 0, 1e9, 0);
   if (Number.isInteger(d.cv) && d.cv >= 1 && d.cv <= CV) out.cv = d.cv;      // (which breeds' looks the farm has had: load() makes the coops of later ones Snug)
@@ -1826,6 +1829,8 @@ export class Game {
     return q;
   }
   setLang(l) { this.lang = l === 'fr' ? 'fr' : 'en'; if (this.data) { this.data.lang = this.lang; this.save(); } }
+  musicOn() { return !this.data || this.data.music !== false; }
+  setMusic(on) { if (!this.data) return; if (on) delete this.data.music; else this.data.music = false; this.save(); }
   // ---- saving: on the phone, sealed; every load checked
   save() {
     if (!this.data || !this.store) return;

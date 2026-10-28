@@ -21,5 +21,6 @@ rm -rf dist/intro && cp -r intro dist/intro          # (the onboarding pictures,
 rm -rf dist/outfits && cp -r outfits dist/outfits        # (the shop's pictures of the farmer's outfits: the 2D game's own, game2/img/farmer)
 rm -rf dist/decor && cp -r decor dist/decor          # (the shop's pictures of the decorations: the 2D game's own, game2/img/decor)
 rm -rf dist/fish && cp -r fish dist/fish              # (the fish pictures for their cards: fishpics.mjs BACKDROP=1, cropped)
+rm -rf dist/audio && cp -r audio dist/audio            # (the music, release 7: sound.js; its credits and licences in audio/CREDITS.txt)
 cp icon-180.png icon-192.png icon-512.png play.webmanifest dist/     # (added to the Home Screen: the game opens full screen, the rooster as its icon)
 echo "built: $(du -sh dist | cut -f1)"
