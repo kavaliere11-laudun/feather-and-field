@@ -49,6 +49,9 @@ The licences, checked 28 Oct:
   - TRG Banks, Farmhouse loaf: from the SoundSafari CC0 collection only. Check its original Free Music Archive page before using it.
 - Credits: a thank-you line for all of them anyway.
 
+When the music plays (Audrey, 28 Oct): "Now and then". One track, then a few quiet minutes of just the farm, then again;
+softer in the evening, none at night.
+
 Already here and fine:
 - sfx/: CC0 water splashes and coins, for fishing and the shop.
 - music/: 15 CC0 tracks. A fresh preview of them went to Audrey on 28 Oct: 14 s of each, with the number on screen.
