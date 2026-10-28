@@ -217,6 +217,28 @@
   .gcooprow { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
   .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
+  /* fishing (release 5; fishing.js): the worms and Stop along the bottom; the line's pull while reeling (the green part to
+     keep it in, the needle, how far the fish has come); a sheet of glass over the farm from the cast to the catch */
+  .fishbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 18px); z-index: 16; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .fishbar[hidden], .fishgauge[hidden], .fishglass[hidden] { display: none; }
+  .fishworms { background: var(--glass-top, rgba(255,253,247,0.93)); border-radius: 999px; padding: 10px 14px; font: 800 15px Nunito, system-ui, sans-serif; color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); }
+  .fishstop { border: 0; border-radius: 999px; padding: 11px 18px; font: 800 15px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
+  .fishglass { position: fixed; inset: 0; z-index: 15; touch-action: none; }
+  .fishgauge { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 16; width: min(300px, calc(100vw - 48px));
+               background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 10px 14px 12px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); pointer-events: none; }
+  .fishprog { height: 6px; border-radius: 99px; background: #e5e9dc; overflow: hidden; margin-bottom: 9px; }
+  .fishprogfill { height: 100%; width: 0; background: #4f9bc4; border-radius: 99px; }
+  .fishtrack { position: relative; height: 18px; border-radius: 99px; background: #e9b4a4; }
+  .fishgreen { position: absolute; top: 0; bottom: 0; background: #7cc56e; border-radius: 4px; }
+  .fishneedle { position: absolute; top: -5px; bottom: -5px; width: 6px; margin-left: -3px; border-radius: 3px; background: #1e3426; transition: background .15s; }
+  .fishneedle.ok { background: #1f6b2c; } .fishneedle.hot { background: #d2402f; }
+  .gfishrow { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: -2px 0 2px; }
+  .gfishrow img { width: 46px; height: 30px; object-fit: contain; filter: brightness(0) opacity(0.22); }
+  .gfishrow img.got { filter: none; }
+  .gfishsize { margin: 0; font: 600 22px var(--display, Fredoka, sans-serif); color: var(--ink); }
+  .gfishnew { color: #b8860b; font-weight: 800; }
+  .gfishcard .gpic img { object-fit: contain; }
+  .gfishbtns { flex-wrap: wrap; } .gfishbtns .gbtn { white-space: nowrap; }
   /* rare babies (release 2 step 2): keep or sell, side by side under her row; her card's line */
   .grow.grare-row { justify-content: flex-start; flex-wrap: nowrap; padding: 2px 0 4px; } .gkids .grow.grare-row { padding: 2px 0 8px 34px; }
   .grare-row .gbtn, .gsheet.gcongrats .grare-row .gbtn { position: static; box-shadow: none; margin: 0; padding: 8px 14px; font-size: 15px; flex: none; }
@@ -476,6 +498,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793144534"></script>
+<script src="app.js?v=1793183268"></script>
 </body>
 </html>
