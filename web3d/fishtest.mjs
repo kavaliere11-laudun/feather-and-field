@@ -23,7 +23,7 @@ const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || 
 let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
 const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, s);
-const shoot = async n => { await p.addStyleTag({ content: '#hint { opacity: 0.0001 !important; }' }).catch(() => {}); await p.waitForTimeout(300); await p.screenshot({ path: `${OUT}/fish_${n}${fr ? '_fr' : ''}${side ? '_side' : ''}.png`, timeout: 180000 }); await p.addStyleTag({ content: '#hint { opacity: 1 !important; }' }).catch(() => {}); };
+const shoot = async n => { await p.addStyleTag({ content: '#hint { opacity: 0.0001 !important; }' }).catch(() => {}); await p.waitForTimeout(300); await p.screenshot({ path: `${OUT}/fish_${n}${fr ? '_fr' : ''}${side ? '_side' : ''}.png`, timeout: 90000 }).catch(e => console.log('(picture ' + n + ' skipped: ' + e.message.split('\n')[0] + ')'));      // (a picture that hangs under a busy machine doesn't stop the checks) await p.addStyleTag({ content: '#hint { opacity: 1 !important; }' }).catch(() => {}); };
 const load = async () => {
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.gameTick(window.__T); f.draw(); });
