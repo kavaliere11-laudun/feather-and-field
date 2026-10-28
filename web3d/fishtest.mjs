@@ -71,6 +71,8 @@ ok('"Show me the pond": the view over to the dock', va.d < 0.5 && !(await sheet(
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 3; g.save(); f.gameUI().close(); }); await run(0.5);
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 sh = await sheet();
+const props0 = await p.evaluate(() => { const F = window.__farm.fishing(); return F && { rod: F.deckRod.visible, bucket: F.bucket.visible }; });
+ok('level 3: his rod lying on the dock and his bucket by it', props0 && props0.rod && props0.bucket, props0);
 ok('level 3: the pond\'s seven fish (none caught yet), 4 worms, Go fishing, a tin of worms', sh && sh.go && sh.tin && sh.fish === 7 && sh.got === 0 && /4/.test(sh.text) && (fr ? /Aller pêcher/ : /Go fishing/).test(sh.text), sh);
 await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();
@@ -78,6 +80,8 @@ ok('Go: the farmer off to the dock', s.seq && (fr ? /part au ponton/ : /off to t
 let gateOpened = false;
 for (let i = 0; i < 120; i++) { await run(1); s = await st(); if (s.gate > 0.5) gateOpened = true; if (s.state === 'ready') break; }
 ok('through the dock\'s gate in the wild meadow\'s fence (it opened as he went in)', gateOpened && s.gate !== null, s.gate);
+const rodNow = await p.evaluate(() => { const F = window.__farm.fishing(), L = window.__farm.farmer(); return { onDeck: F.deckRod.visible, inHand: F.rodIn && !!L.f.rig.rod && L.f.rig.rod.visible }; });
+ok('he picked his rod up off the dock (it\'s in his hand now)', !rodNow.onDeck && rodNow.inHand, rodNow);
 ok('out at the dock\'s end, up on its deck, ready: the worms and Stop at the bottom, "Tap the water to cast"', s.state === 'ready' && Math.hypot(s.pos[0] - s.D.stand[0], s.pos[2] - s.D.stand[1]) < 0.15 && Math.abs(s.pos[1] - s.D.deck) < 0.02 && s.bar && (fr ? /Touchez l’eau/ : /Tap the water/).test(s.hint), s);
 await p.evaluate(() => { const f = window.__farm, D = f.dock(); f.lookAt(D.stand[0] - Math.sin(D.face) * 0.3, D.stand[1] - Math.cos(D.face) * 0.3, 2.0); });
 await run(0.3); await shoot('1_dock');
@@ -96,16 +100,22 @@ await run(0.6); await shoot('3_reel');
 const c0 = (await st()).coins, x0 = (await st()).xp;
 let end = await reel('good');
 ok('kept in the green: landed', end === 'lift', end);
-let sawTrophy = false;
-for (let i = 0; i < 40; i++) { await run(0.2); const q = await p.evaluate(() => window.__farm.fishing().state); if (q === 'show' && i === 4) await shoot('4_show'); if (q === 'trophy') { if (!sawTrophy) { await run(0.6); await shoot('5_trophy'); } sawTrophy = true; } if (q === 'card') break; }
+let sawTrophy = false, sawRodDown = false, sawUnhook = false;
+for (let i = 0; i < 40; i++) { await run(0.2); const q = await p.evaluate(() => window.__farm.fishing().state); if (q === 'unhook') sawUnhook = true; if (await p.evaluate(() => { const F = window.__farm.fishing(); return F.deckRod.visible && F.state !== 'lift'; })) sawRodDown = true; if (q === 'show' && i === 4) await shoot('4_show'); if (q === 'trophy') { if (!sawTrophy) { await run(0.6); await shoot('5_trophy'); } sawTrophy = true; } if (q === 'card') break; }
 s = await st(); sh = await sheet();
 const R = await p.evaluate(() => window.__farm.fishing().result);
+const held = await p.evaluate(() => { const f = window.__farm, F = f.fishing(), L = f.farmer(), r = F.fish.root.position, h = L.heading, fwd = (r.x - L.pos.x) * Math.sin(h) + (r.z - L.pos.z) * Math.cos(h), B = L.f.rig.B, T = f.THREE, a = B.handL.getWorldPosition(new T.Vector3()), b = B.handR.getWorldPosition(new T.Vector3());
+  return { fwd: +fwd.toFixed(2), above: +(r.y - a.y).toFixed(3), aboveR: +(r.y - b.y).toFixed(3), rodOnDeck: F.deckRod.visible }; });
+ok('taken off the hook in his hand, the rod laid down on the dock; held out in front of him, resting on his hands (not through them)', sawUnhook && sawRodDown && held.rodOnDeck && held.fwd > 0.22 && held.above > 0.02, held);
 ok('a fish new to us: held up high, hooray ("A new fish!")', sawTrophy && s.said.includes('fishnew'), s.said);
 ok('its card: its name, its size, new to the book, sold live, coins and XP; Keep fishing with the worms left', sh && sh.kind === 'fish' && sh.text.includes(R.cm + ' cm') && (fr ? /nouveau poisson/ : /New fish/).test(sh.text) && (fr ? /animalerie/ : /aquarium shop/).test(sh.text) && sh.keep && sh.keep.includes(String(s.worms)) && sh.stop, { sh, R });
 ok('paid: its coins and its XP', s.coins === c0 + R.coins && s.xp === x0 + R.xp && R.xp === R.xp && s.got.includes(R.id), { c0, s, R });
 await shoot('6_card');
 await settle(); await p.tap('.gsheet button[data-fish=keep]');
-ok('Keep fishing: into the bucket, ready again', await until(() => window.__farm.fishing().state === 'ready', 5));
+let sawLower = false;
+for (let i = 0; i < 40 && (await p.evaluate(() => window.__farm.fishing().state)) !== 'ready'; i++) { await run(0.2); if (await p.evaluate(() => window.__farm.farmer().f.want.pose === 'release')) sawLower = true; }
+const back = await p.evaluate(() => { const F = window.__farm.fishing(); return { state: F.state, fish: !!F.fish, rodIn: F.rodIn, onDeck: F.deckRod.visible }; });
+ok('Keep fishing: he crouches and lowers it into the bucket, picks his rod up again, ready', sawLower && back.state === 'ready' && !back.fish && back.rodIn && !back.onDeck, { sawLower, back });
 // a bite missed
 let w0 = (await st()).worms, cc = (await st()).coins;
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25);
@@ -134,7 +144,7 @@ const rel = await p.evaluate(() => { const L = window.__farm.farmer(); return L.
 await shoot('7_release');
 ok('let go: he crouches at the edge and she slips back into the water', rel === 'release', rel);
 // Stop: back off the dock with the pail
-ok('then back along the dock and off with the pail, the gate shut behind him, the bar gone', await until(() => { const f = window.__farm; return !f.fishSeq() && f.fishing().state === 'off'; }, 60, 0.5) && (await run(1.5), (await st()).gate === 0) && !(await st()).bar && Math.hypot((await st()).pos[0] - (await st()).D.stand[0], (await st()).pos[2] - (await st()).D.stand[1]) > 2, await st());
+ok('then back along the dock and off, his rod left lying on the dock, the gate shut behind him, the bar gone', (await p.evaluate(() => window.__farm.fishing().deckRod.visible)) && await until(() => { const f = window.__farm; return !f.fishSeq() && f.fishing().state === 'off'; }, 60, 0.5) && (await run(1.5), (await st()).gate === 0) && !(await st()).bar && Math.hypot((await st()).pos[0] - (await st()).D.stand[0], (await st()).pos[2] - (await st()).D.stand[1]) > 2, await st());
 // a reload
 const got = await p.evaluate(() => JSON.stringify(window.__farm.game().data.fish.got));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();

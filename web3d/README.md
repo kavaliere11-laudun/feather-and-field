@@ -2658,8 +2658,9 @@ the birds already had.
   At level 3 the level's card says "Fishing at the pond: tap its dock", with "Show me the pond" (the view over to it:
   never by itself).
 - **The fishing** (`src/fishing.js`; farmlife.js `fishAt`): he hurries to the dock (through its gate), out to its end,
-  his old cane rod out (farmer.js `makeRod`: a cork grip, a little reel, the cane in three lengths that bend), a zinc
-  bucket of water by his feet; the worms and Stop along the bottom. A tap on the water casts there (as near as the rod
+  where his old cane rod (farmer.js `makeRod`: a cork grip, a little reel, the cane in three lengths that bend) lies on
+  the boards by a zinc bucket of water (both there from level 3); he crouches and picks the rod up; the worms and Stop
+  along the bottom. A tap on the water casts there (as near as the rod
   reaches): drawn back over his shoulder and swung, the float flies out on its line (a thin ribbon turned to the
   camera) and lands with a ring. "Watch the float": it bobs, a nibble or two, then it's pulled under with a splash and a
   "!" over it: tap now (a tap before: "Too soon!", the fish wary a moment more; too slow: "Too late: it got away with
@@ -2667,15 +2668,20 @@ the birds already had.
   still for a legendary one) and how far the fish has come; holding reels in (the pull rising), letting go eases off;
   the fish pulls in surges (harder the rarer and bigger). In the green it comes in, quicker while reeling; held too hard
   for too long the line snaps ("Too hard"), too slack it slips the hook ("Too slack"). Its shadow comes in under the
-  water, weaving, rings where it splashes. Landed: out of the water on the line into his hands; he turns round to show
-  you ("Got one!"); a fish new to you: held out in his left hand, a hop and his right fist punched in the air ("A new
-  fish!"). Its card (`gameUI.fishCard`): its picture, its name and size, new to your book or your biggest yet, sold
-  live (or a legendary one's photo), the coins and XP, how many caught; Keep fishing (with the worms left) or Stop.
-  Then into the bucket with a splash; a legendary one: he turns to the water, crouches at the edge and lets her slip
-  back in. Stop: back along the dock and off with the pail ("for the aquarium shop"). Night falling (22:15): he winds in
-  and goes home; Rusty: put away.
+  water, weaving, rings where it splashes. Landed: out of the water on the line, swinging up in front of him ("Got
+  one!"); he takes it off the hook in his left hand, crouches and lays the rod down on the boards with his right, stands
+  and cradles it on both palms (resting on them, never through them), turns round to show you; a fish new to you: on
+  his left palm, a hop and his right fist punched in the air ("A new fish!"). Its card (`gameUI.fishCard`): its
+  picture, its name and size, new to your book or your biggest yet, sold live (or a legendary one's photo), the coins
+  and XP, how many caught; Keep fishing (with the worms left) or Stop. Then he turns to the bucket, crouches and lowers
+  it into the water with a little splash; a legendary one: he turns to the water, crouches at the edge and lets her
+  slip back in. Keep fishing: he picks the rod up again. Stop: the rod left lying on the dock by the bucket, back along
+  the dock and away. Night falling (22:15): he winds in and goes home; Rusty: put away. (Audrey, 28 Oct, on the first
+  version: the fish went through his hands, the rod just vanished, the fish flew into the bucket: now it's all done by
+  hand. `fishclose.mjs` takes close-up pictures of each moment, straight off the canvas.)
 - **Tests**: `fishrules.mjs` (no browser: the levels, the worms, the draw, landing, the save) and `fishtest.mjs` (EN
   upright, FR sideways: the dock's card at levels 2 and 3, the level card's look at the pond, the walk out through the
   gate, a cast, too soon, the bite, the reel, the new fish's hooray and card, paid, keep, a bite missed, the line
-  snapped, slipped off, Big Bertha's photo and release, the last worm, Stop and the walk back, a reload, the evening).
+  snapped, slipped off, Big Bertha's photo and release, the last worm, Stop and the walk back, a reload, the evening;
+  the rod and bucket on the dock, picked up, laid down to unhook, the fish resting on his hands, into the bucket).
   `fishfilm.mjs` makes a short film of it.

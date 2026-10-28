@@ -125,13 +125,18 @@ export const POSES = {
   clap: { head: [0, -8, 0], chest: [0, -3, 0], shL: [-8, -44, -30], elL: [0, -80, 0], shR: [8, -44, 30], elR: [0, -80, 0], hand: ['open', 'open'] },
   judge_carry: { shL: [0, -15, -40], elL: [0, -100, 0], wrL: [-90, 0, 90], hand: ['hold', 'relax'] },
   // (3D only) fishing (release 5): the rod held up and out in the right hand, the left by its reel; drawn back over the
-  // shoulder to cast; leaning back reeling in, the left hand winding; a fish held out in both hands to look at; hooray, a
-  // new fish: held out in the left hand, the right fist punching the air; crouched at the edge, letting one go
+  // shoulder to cast; leaning back reeling in, the left hand winding; a fish held out in both hands (cradled on the palms) to
+  // look at; hooray, a new fish: held out on the left palm, the right fist punching the air; crouched at the edge, letting
+  // one go; reaching with the left hand for the fish on the line; crouched to lay the rod down or pick it up (or a fish into
+  // the bucket)
   rod: { shR: [-12, -50, 0], elR: -40, wrR: [0, 0, 0], shL: [16, -40, 0], elL: [-35, -58, 0], hand: ['hold', 'fist'] },
   cast: { shR: [-16, -150, 0], elR: -48, wrR: [0, 24, 0], shL: [12, -22, 0], elL: -40, chest: [0, -7, 0], hand: ['relax', 'fist'] },
   reel: { shR: [-12, -44, 0], elR: -46, wrR: [0, 8, 0], shL: [18, -46, 0], elL: [-42, -62, 0], chest: [0, -9, 0], hipL: [0, -14, 0], kneeL: 8, hand: ['hold', 'fist'] },
-  showfish: { shL: [8, -64, 0], elL: [-22, -44, 0], shR: [-8, -64, 0], elR: [22, -44, 0], hand: ['hold', 'hold'], head: [0, 12, 0] },
+  showfish: { shL: [10, -70, 0], elL: [-26, -40, 0], shR: [-10, -70, 0], elR: [26, -40, 0], hand: ['open', 'open'], wrL: [0, 0, -20], wrR: [0, 0, 20], head: [0, 12, 0] },
   trophy: { shL: [8, -66, 0], elL: [-22, -46, 0], shR: [-34, -150, 0], elR: -26, hand: ['hold', 'fist'], chest: [0, -4, 0], head: [-6, -8, 0] },
+  take: { shR: [-12, -58, 0], elR: -42, wrR: [0, 0, 0], shL: [12, -78, 0], elL: [-16, -24, 0], hand: ['hold', 'fist'] },
+  kneel: { root_z: -0.22, hipL: [10, -84, 0], hipR: [-10, -84, 0], kneeL: 120, kneeR: 120, ankleL: -38, ankleR: -38, chest: [0, 24, 0], head: [0, 2, 0],
+    shR: [-24, -34, 0], elR: -14, wrR: [0, 14, 0], shL: [12, -46, 0], elL: [-28, -52, 0], hand: ['hold', 'hold'] },
   release: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 30, 0], head: [0, 4, 0],
     shL: [10, -70, 0], elL: [-15, -18, 0], shR: [-10, -70, 0], elR: [15, -18, 0], hand: ['hold', 'hold'] },
 };
@@ -220,7 +225,7 @@ function farmerMaterial(look, grade) {
 // (on the wrist's bone, pointing forward out of the fist when the arm hangs, so the raised arm holds it up and out): a cork
 // grip, a little reel under it, the cane in three lengths with darker joints that bend (props.rodBend: 0 straight .. 1 a
 // fish pulling hard), a ring at its tip (FarmerRig.rodTip)
-function makeRod(grade) {
+export function makeRod(grade) {
   const root = new THREE.Group(); root.position.set(0, -0.074, 0.012); root.rotation.x = 0.8;
   const mat = c => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 }); if (grade) grade(m); return m; };
   const cane = mat('#cfa95e'), joint = mat('#7a5a2c'), cork = mat('#b98c58'), metal = mat('#3d4248');
@@ -316,7 +321,7 @@ export class FarmerRig {
     for (const m of MOUTHS) { const b = B['mouth_' + m]; if (b) b.scale.setScalar(m === F.mouth ? 1 : 1e-4); }
     this.blush.value = F.blush;
     B.torch.scale.setScalar(props.torch ? 1 : 1e-4); B.pail.scale.setScalar(props.pail ? 1 : 1e-4);
-    if (props.rod && !this.rod) { this.rod = makeRod(this.grade); B.wristR.add(this.rod); }      // (the fishing rod: made the first time it's wanted)
+    if (props.rod) this.ensureRod();                                  // (the fishing rod: made the first time it's wanted)
     if (this.rod) { this.rod.visible = !!props.rod; const k = props.rodBend || 0; this.rod.userData.segs.forEach((j, i) => { j.rotation.x = k * [0.1, 0.2, 0.32][i]; }); }
     if (B.clipboard) { B.clipboard.scale.setScalar(props.clipboard ? 1 : 1e-4); B.pencil.scale.setScalar(props.pencil ? 1 : 1e-4); }     // (the judge's)
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
@@ -337,6 +342,7 @@ export class FarmerRig {
       _m.premultiply(_hm.copy(par.matrixWorld).invert()).decompose(B.hat.position, B.hat.quaternion, B.hat.scale);
     }
   }
+  ensureRod() { if (!this.rod) { this.rod = makeRod(this.grade); this.B.wristR.add(this.rod); this.rod.visible = false; } return this.rod; }
   // the rod's tip in the world (the line hangs from it), as posed now; null with no rod
   rodTip() { if (!this.rod || !this.rod.visible) return null; const t = this.rod.userData.tip; t.updateWorldMatrix(true, false); return t.getWorldPosition(new THREE.Vector3()); }
   // where the hat is now, in the world (to knock it off from)

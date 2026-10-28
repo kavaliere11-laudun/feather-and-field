@@ -32,13 +32,12 @@ await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load()
 await p.evaluate(() => window.__farm.gameUI().close()); await run(1);
 await p.addStyleTag({ content: '.vignette { opacity: 0.6; }' });
 const r = await p.evaluate(() => window.__farm.startFishing());
-for (let i = 0; i < 120 && (await p.evaluate(() => window.__farm.fishing().state)) !== 'ready'; i++) await run(1);
+for (let i = 0; i < 240 && !(await p.evaluate(() => { const F = window.__farm.fishing(); return F && F.state === 'pickup'; })); i++) await run(0.5);      // (out at the dock's end: he picks his rod up)
 // the view: the farmer at the bottom, the water he casts on above him
 const aim = await p.evaluate(() => { const f = window.__farm, D = f.dock(); const tx = D.stand[0] + Math.sin(D.face + 0.25) * 2.4, tz = D.stand[1] + Math.cos(D.face + 0.25) * 2.4;
   f.lookAt(D.stand[0] * 0.55 + tx * 0.45, D.stand[1] * 0.55 + tz * 0.45, 2.1); f.draw();
   const T = f.THREE, cam = f.camera, v = new T.Vector3(tx, 0.008, tz).project(cam); return { tx, tz, sx: (v.x + 1) / 2 * innerWidth, sy: (1 - v.y) / 2 * innerHeight }; });
-await run(0.5);
-await film(1.2);
+await film(2.2);
 await finger(aim.sx, aim.sy);
 await p.evaluate(a => window.__farm.fishing().tapWater(a.tx, a.tz), aim);
 await film(1.3);                                                  // (the cast)
@@ -62,7 +61,7 @@ await p.evaluate(() => document.getAnimations().forEach(a => a.finish()));
 await film(2.6);
 const keep = await p.evaluate(() => { const k = document.querySelector('.gsheet button[data-fish=keep]'); if (!k) return null; const r = k.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
 if (keep) { await finger(keep[0], keep[1]); await film(0.3); await p.evaluate(() => document.querySelector('.gsheet button[data-fish=keep]').click()); }
-await film(2.2);                                                   // (into the bucket, ready again)
+await film(5);                                                     // (into the bucket, the rod picked up, ready again)
 console.log('frames', n, 'errors', errs);
 await b.close();
 execSync(`ffmpeg -y -loglevel error -framerate ${FPS} -i ${OUT}/frames/%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -crf 22 -preset slow -movflags +faststart ${OUT}/fishing${fr ? '_fr' : ''}.mp4`);

@@ -4044,6 +4044,15 @@ function fishRoute() {
   const st = nav.nearestIn(farmReach(), inl[0], inl[1], 3); if (!st) return null;
   return { start: st, toIn: Math.atan2(D.dir.x, D.dir.z), gate: null, inPts: [deckIn, D.stand], outPts: [deckIn, st], face: D.face };
 }
+// the fishing's things on the dock (his rod lying there, his bucket) from the day the pond opens, and the fishing itself
+function fishingRig() {
+  const D = dockInfo(); if (!D || FISHING) return FISHING;
+  FISHING = new Fishing({ scene, grade: nightGrade, water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck },
+    inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2], game, t: (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f'),
+    hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
+  renderer.shadowMap.needsUpdate = true;
+  return FISHING;
+}
 function startFishing() {
   const D = dockInfo();
   if (!D || !farmLife || !GAME_MODE || !game.fishOpen('pond')) return 'none';
@@ -4052,9 +4061,7 @@ function startFishing() {
   if (farmLife.running || farmLife.home || farmLife.pending) return 'busy';          // (out of the door, or busy in a pen: off to the dock straight after)
   if (!game.worms()) return 'worms';
   const R = fishRoute(); if (!R) return 'none';
-  if (!FISHING) FISHING = new Fishing({ scene, grade: nightGrade, water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck, bucket: D.bucket },
-    inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2], game, t: (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f'),
-    hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
+  fishingRig();
   const F = Object.assign({}, R, { enter() { if (R.gate) { R.gate.want = 1; wake(1000); } }, leave() { if (R.gate) { R.gate.want = 0; wake(1000); } }, hens: () => [], at() {},
     arrived: () => FISHING.start(), drive: (Lf, dt) => FISHING.drive(Lf, dt), done: () => { FSEQ = null; if (FISHING.on) FISHING.end(); } });
   const seq = farmLife.fishAt(F); if (!seq) return 'busy';
@@ -4239,6 +4246,7 @@ function syncLand(fresh = false) {
     for (const G of allGates()) if (G.mesh && !G.shared) G.mesh.removeFromParent();
     GATES = pondGates(); for (const G of GATES) G.mesh = gateMesh(G);
     DGATE = dockGate(); if (DGATE && !DGATE.shared) DGATE.mesh = gateMesh(DGATE);
+    if (game.fishOpen('pond')) fishingRig();
     LAND.fence = buildFence(cutGates(fenceLines()));
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });

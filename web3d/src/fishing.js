@@ -1,6 +1,7 @@
 // Fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; a legendary fish: "Photo, then let
 // go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little celebration").
-// The farmer out at the end of the pond's dock with an old cane rod (farmer.js makeRod), a bucket of water by his feet.
+// The farmer out at the end of the pond's dock, where his old cane rod lies (farmer.js makeRod) and his bucket of water
+// stands: he crouches and picks the rod up (and lays it down again when he's done: never just there or gone).
 //  1. Tap the water to cast: the rod drawn back over the shoulder and swung, the float flying out on its line to where you
 //     tapped (as near as the rod reaches), a little ring where it lands.
 //  2. Watch the float: it bobs; a nibble or two (little dips); then it's pulled under with a splash and a "!": tap now.
@@ -8,14 +9,16 @@
 //  3. Reel in by holding: the line's pull on a gauge, keep it in the green while the fish pulls (it comes in while the pull's
 //     in the green, quicker while you're reeling; rare fish pull harder, a legendary one hardest). Too hard for too long and the line snaps; too slack and it slips the hook. Its shadow comes in
 //     under the water as you reel, now and then a rare one leaps.
-//  4. Out it comes on the line into the farmer's hands, turned round to show you; a fish new to you: held out in one hand, a
-//     hop and a fist punched in the air, hooray ("A new fish!").
-//     Its card (main.js gameUI.fishCard); then into the bucket for the village aquarium shop, or, a legendary one, a crouch
-//     at the edge and back into the water it goes.
+//  4. Out it comes on the line, up in front of him; he takes it in his left hand, crouches to lay the rod down, and holds it
+//     cradled on both palms, turned round to show you; a fish new to you: held out on his left palm, a hop and a fist
+//     punched in the air, hooray ("A new fish!"). Its card (main.js gameUI.fishCard); then he turns to the bucket, crouches
+//     and lowers it into the water there for the village aquarium shop (a legendary one: at the dock's edge, back into the
+//     pond), and picks his rod up again (or leaves it lying there and goes).
 // The game's side (the worms, which fish, the coins and XP, the save) is game.js; the farmer's walk out and back,
 // farmlife.js fishAt; main.js puts it on the dock, its gate and the taps.
 import * as THREE from 'three';
 import { Fish } from './fish.js';
+import { makeRod } from './farmer.js';
 import { FISHING } from './game.js';
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -93,21 +96,37 @@ function makeBucket(grade) {
   return g;
 }
 
+// the rod's places: lying on the dock by his right foot (its grip by his foot, pointing back along the dock), or in his
+// right fist; moving between them as he crouches to lay it down or pick it up (never just there or gone)
+const _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _s1 = new THREE.Vector3(), _s2 = new THREE.Vector3();
+function lerpMatrix(A, B, k, out) { A.decompose(_p1, _q1, _s1); B.decompose(_p2, _q2, _s2); return out.compose(_p1.lerp(_p2, k), _q1.slerp(_q2, k), _s1.lerp(_s2, k)); }
+
 export class Fishing {
-  // o: { scene, grade, camera, water ('pond'), waterY, spot: { stand: [x, z], face (heading out over the water), deck (its
-  // height), bucket: [x, z] }, inWater(x, z), reach: [nearest, farthest] a cast can land, game, t(key, vars), hint(text),
-  // say(key) (the farmer's lines), card(result, then(keep)), wake(ms), onEnd() }
+  // o: { scene, grade, water ('pond'), waterY, spot: { stand: [x, z], face (heading out over the water), deck (its
+  // height) }, inWater(x, z), reach: [nearest, farthest] a cast can land, game, t(key, vars), hint(text), say(key) (the
+  // farmer's lines), card(result, then(keep)), wake(ms) }
   constructor(o) {
-    this.o = o; this.state = 'off'; this.t = 0; this.hold = false; this.T = 0; this.p = 0;
+    this.o = o; this.state = 'off'; this.t = 0; this.hold = false; this.T = 0; this.p = 0; this.rodIn = false;
     this.float = makeFloat(o.grade); o.scene.add(this.float);
     this.line = new Line(o.scene); this.rings = ringPool(o.scene, 8, o.waterY + 0.003);
     this.bang = bangSprite(); o.scene.add(this.bang);
+    const S = o.spot, h = S.face, f = new THREE.Vector3(Math.sin(h), 0, Math.cos(h)), left = new THREE.Vector3(Math.cos(h), 0, -Math.sin(h));
+    this.fwd = f; this.left = left;
+    // the bucket on his left, the rod lying on his right: both stay on the dock (they're his, kept there)
     this.bucket = makeBucket(o.grade); o.scene.add(this.bucket);
+    const B = new THREE.Vector3(S.stand[0], S.deck, S.stand[1]).addScaledVector(left, 0.36).addScaledVector(f, -0.04); this.bucket.position.copy(B);
+    this.bucketAt = B;
+    this.deckRod = new THREE.Group(); this.deckRod.matrixAutoUpdate = false; const inner = makeRod(o.grade); inner.position.set(0, 0, 0); inner.rotation.set(0, 0, 0); this.deckRod.add(inner); o.scene.add(this.deckRod);
+    const rp = new THREE.Vector3(S.stand[0], S.deck + 0.02, S.stand[1]).addScaledVector(left, -0.3).addScaledVector(f, 0.12);
+    const z = f.clone().negate(), y = left.clone().negate(), x = new THREE.Vector3().crossVectors(y, z);          // (along the dock towards the bank, its reel to the side)
+    this.rodRest = new THREE.Matrix4().makeBasis(x, y, z).setPosition(rp);
+    this.deckRod.matrix.copy(this.rodRest); this.deckRod.updateMatrixWorld(true);
     const sh = new THREE.Mesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#203747', transparent: true, opacity: 0, depthWrite: false }));
     sh.material.userData.noGrade = true; sh.renderOrder = 2; sh.visible = false; o.scene.add(sh); this.shadow = sh;
-    this.fish = null; this.ui();
+    this.fish = null; this.ui(); this.props(true);
   }
   get on() { return this.state !== 'off'; }
+  props(on) { this.bucket.visible = on; this.deckRod.visible = on && !this.rodIn; }
   // ---- the screen's part: the worms and Stop at the bottom; the gauge while reeling; a sheet of glass over the farm from
   // the cast to the catch (a tap or a hold anywhere is the player's; the view stays put)
   ui() {
@@ -128,22 +147,21 @@ export class Fishing {
     this.wormsEl.textContent = '🪱 ' + (n === 1 ? t('fish_worms1') : n ? t('fish_worms', { n }) : t('fish_worms0'));
     this.stopBtn.textContent = t('fish_stop');
   }
-  // ---- out on the dock: ready to cast (main.js, once the farmer's there)
-  start() {
-    this.state = 'ready'; this.t = 0; this.bar.hidden = false; this.refreshBar();
-    const B = this.o.spot.bucket; this.bucket.position.set(B[0], this.o.spot.deck, B[1]); this.bucket.visible = true;
-    this.o.hint(this.o.t('fish_cast')); this.o.wake(1500);
-  }
-  stop() {                                         // (Stop, or night falling: he winds in and walks back)
-    if (this.state === 'off' || this.state === 'leaving') return;
-    if (this.state === 'reel' || this.state === 'bite' || this.state === 'wait' || this.state === 'nibble' || this.state === 'cast') this.o.game.loseFish();
-    this.clearWater(); this.state = 'leaving'; this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true; this.bucket.visible = false;
+  // ---- out at the dock's end (main.js, once the farmer's there): he crouches and picks his rod up, then he's ready
+  start() { this.state = 'pickup'; this.t = 0; this.then = 'ready'; this.o.wake(1500); }
+  ready() { this.state = 'ready'; this.t = 0; this.bar.hidden = false; this.refreshBar(); this.o.hint(this.o.t(this.o.game.worms() ? 'fish_cast' : 'fish_worms0')); }
+  stop() {                                         // (Stop, or night falling: the line wound in, the rod laid down, off he goes)
+    if (['off', 'laydown', 'leaving'].includes(this.state)) return;
+    if (['reel', 'bite', 'wait', 'nibble', 'cast'].includes(this.state)) this.o.game.loseFish();
+    this.clearWater(); this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true;
+    if (this.fish) { this.keep = false; return; }   // (a fish in his hands: into the bucket first; he stops after)
+    if (this.rodIn) { this.state = 'laydown'; this.t = 0; this.then = 'leaving'; } else this.state = 'leaving';
     this.o.wake(1000);
   }
-  end() { this.clearWater(); this.state = 'off'; this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true; this.bucket.visible = false; if (this.o.onEnd) this.o.onEnd(); }
+  end() { this.clearWater(); if (this.fish) { this.fish.root.removeFromParent(); this.fish = null; } this.result = null; this.state = 'off'; this.rodIn = false; this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true; this.deckRod.matrix.copy(this.rodRest); this.deckRod.updateMatrixWorld(true); this.props(true); }
   clearWater() {
     this.float.visible = false; this.line.mesh.visible = false; this.shadow.visible = false; this.bang.visible = false; this.rings.hide();
-    if (this.fish) { this.fish.root.removeFromParent(); this.fish = null; }
+    if (this.fish && !['lift', 'unhook', 'show', 'trophy', 'card', 'away'].includes(this.state)) { this.fish.root.removeFromParent(); this.fish = null; }
   }
   // ---- a tap on the farm while ready: the water where it hit (x, z) cast to (as near as the rod reaches); true if taken
   tapWater(x, z) {
@@ -184,7 +202,7 @@ export class Fishing {
     this.o.game.loseFish(); this.clearWater(); this.gauge.hidden = true; this.glass.hidden = true;
     this.state = 'ready'; this.t = 0; this.o.hint(this.o.t(key)); this.refreshBar(); this.o.wake(1500);
   }
-  // ---- each frame
+  // ---- each frame (the water's part; the farmer's own, and the fish in his hands, in drive)
   update(dt, camDir) {
     if (this.state === 'off') return;
     this.t += dt; this.rings.update(dt);
@@ -228,8 +246,8 @@ export class Fishing {
       this.needle.classList.toggle('hot', this.T > 1.0); this.needle.classList.toggle('ok', inGreen);
       if (this.over > SNAP_T) { this.lose('fish_snap'); return; }
       if (this.slack > SLIP_T) { this.lose('fish_slip'); return; }
-      // its shadow coming in under the water, weaving; a ring now and then; a rare one leaps
-      const end = new THREE.Vector3(S.stand[0] + Math.sin(S.face) * 0.5, W, S.stand[1] + Math.cos(S.face) * 0.5);
+      // its shadow coming in under the water, weaving; a ring now and then
+      const end = new THREE.Vector3(S.stand[0] + Math.sin(S.face) * 0.6, W, S.stand[1] + Math.cos(S.face) * 0.6);
       const at = this.target.clone().lerp(end, sm(this.p)), side = new THREE.Vector3(Math.cos(S.face), 0, -Math.sin(S.face));
       at.addScaledVector(side, 0.25 * (1 - this.p) * Math.sin(this.t * 1.7));
       const dir = at.clone().sub(this.fishAt); this.fishAt.copy(at);
@@ -240,41 +258,13 @@ export class Fishing {
       if (tip) this.line.set(tip, new THREE.Vector3(at.x, W, at.z), 0.04 * (1.2 - this.T), camDir);
       if (this.p >= 1) this.landed();
       this.o.wake(200);
-    } else if (this.state === 'lift') {
-      // (out of the water on the line, wriggling, up into his hands)
-      const u = clamp(this.t / 0.7, 0, 1), from = this.liftFrom, hands = this.handsAt;
-      const p = from.clone().lerp(hands, sm(u)); p.y += 0.35 * Math.sin(u * Math.PI);
-      this.fish.root.position.copy(p); this.fish.amp = 0.16; this.fish.rate = 16; this.fish.update(dt);
-      if (tip) this.line.set(tip, p.clone().add(new THREE.Vector3(0, this.fish.spec.L * 0.5, 0)), 0.0, camDir);
-      if (u >= 1) { this.line.mesh.visible = false; this.state = 'show'; this.t = 0; this.o.say(this.result.legend ? 'fishbig' : this.result.first ? 'fishnew' : 'fishgot'); }
+    } else if (this.state === 'lift' || this.state === 'unhook') {
+      // (the line from the rod's tip to its mouth, till he takes it off the hook)
+      if (this.fish) { this.fish.amp = this.state === 'lift' ? 0.2 : 0.12; this.fish.rate = 15; this.fish.update(dt); }
+      if (tip && this.mouth && (this.state === 'lift' || this.t < 0.75)) this.line.set(tip, this.mouth, 0, camDir); else this.line.mesh.visible = false;
       this.o.wake(200);
-    } else if (this.state === 'show' || this.state === 'card' || this.state === 'trophy') {
-      if (this.fish) { this.fish.amp = 0.07; this.fish.rate = 9; this.fish.update(dt); }
-      if (this.state === 'show' && this.t > (this.result.first ? 1.0 : 1.6)) {
-        if (this.result.first) { this.state = 'trophy'; this.t = 0; }
-        else this.showCard();
-      }
-      if (this.state === 'trophy' && this.t > 2.6) this.showCard();
-      this.o.wake(200);
-    } else if (this.state === 'away') {
-      // (into the bucket with a splash; a legendary one, crouched at the edge, slipped back into the water)
-      const u = clamp(this.t / (this.result.legend ? 1.6 : 0.9), 0, 1);
-      if (this.fish) {
-        this.fish.update(dt);
-        if (this.result.legend) {
-          if (u > 0.45) { const k = (u - 0.45) / 0.55, p = this.relFrom.clone().lerp(this.relTo, sm(k)); p.y -= 0.12 * k; this.fish.root.position.copy(p); }
-          if (u > 0.85 && !this.splashed) { this.splashed = true; this.rings.add(this.relTo.x, this.relTo.z, 0.45, 1.2); this.rings.add(this.relTo.x, this.relTo.z, 0.25, 0.9); }
-        } else {
-          const B = this.bucket.position, p = this.awayFrom.clone().lerp(new THREE.Vector3(B.x, B.y + 0.12, B.z), sm(u)); p.y += 0.2 * Math.sin(u * Math.PI);
-          this.fish.root.position.copy(p);
-          if (u >= 1 && !this.splashed) { this.splashed = true; this.rings.add(B.x, B.z, 0.12, 0.6); }
-        }
-      }
-      if (u >= 1) {
-        if (this.fish) { this.fish.root.removeFromParent(); this.fish = null; }
-        if (this.keep) { this.state = 'ready'; this.t = 0; this.refreshBar(); this.o.hint(this.o.t(this.o.game.worms() ? 'fish_cast' : 'fish_worms0')); this.bar.hidden = false; }
-        else this.stop();
-      }
+    } else {
+      if (this.fish) { this.fish.amp = 0.06; this.fish.rate = 9; this.fish.update(dt); }
       this.o.wake(200);
     }
   }
@@ -283,62 +273,152 @@ export class Fishing {
     this.gauge.hidden = true; this.shadow.visible = false; this.hold = false;
     if (!this.result) { this.lose('fish_slip'); return; }
     const f = new Fish(this.result.id, this.o.grade); this.fish = f;
-    const L = f.spec.L, show = Math.max(0.3, Math.min(0.75, L * 1.7)) * (0.9 + 0.2 * (this.result.cm - f.spec.cm[0]) / Math.max(1, f.spec.cm[1] - f.spec.cm[0]));      // (larger than life in his hands, so it reads on a phone; a bigger one a little bigger)
-    f.root.scale.setScalar(show / L);
+    const L = f.spec.L, show = Math.max(0.3, Math.min(0.72, L * 1.7)) * (0.9 + 0.2 * (this.result.cm - f.spec.cm[0]) / Math.max(1, f.spec.cm[1] - f.spec.cm[0]));      // (larger than life in his hands, so it reads on a phone; a bigger one a little bigger)
+    f.root.scale.setScalar(show / L); this.fishLen = show;
+    f.mesh.geometry.computeBoundingBox(); const bb = f.mesh.geometry.boundingBox; this.fishHalfH = (bb.max.y - bb.min.y) / 2 * show / L * 0.8; this.fishMid = (bb.max.y + bb.min.y) / 2 * show / L;
     this.o.scene.add(f.root);
-    this.liftFrom = this.fishAt.clone(); this.handsAt = this.liftFrom.clone();
-    this.state = 'lift'; this.t = 0; this.rings.add(this.fishAt.x, this.fishAt.z, 0.35, 1.0);
+    this.state = 'lift'; this.t = 0; this.rings.add(this.fishAt.x, this.fishAt.z, 0.35, 1.0); this.splashed = false;
     this.o.wake(2000);
   }
   showCard() {
     this.state = 'card'; this.t = 0; this.glass.hidden = true; this.bar.hidden = true;
-    this.o.card(this.result, keep => {
-      this.keep = keep; this.state = 'away'; this.t = 0; this.splashed = false;
-      this.awayFrom = this.fish ? this.fish.root.position.clone() : new THREE.Vector3();
-      const S = this.o.spot; this.relFrom = this.awayFrom.clone(); this.relTo = new THREE.Vector3(S.stand[0] + Math.sin(S.face) * 0.55, this.o.waterY, S.stand[1] + Math.cos(S.face) * 0.55);
-      this.o.wake(2000);
-    });
+    this.o.card(this.result, keep => { this.keep = keep; this.state = 'away'; this.t = 0; this.splashed = false; this.o.wake(2000); });
   }
-  // ---- the farmer, each frame while he's out on the dock (farmlife.js fishAt): his pose for where things are; the fish in
-  // his hands (between his wrists, along his shoulders, belly down; up high for a new one); true once he's done
+  // ---- the fish in his hands: cradled on both palms (along his shoulders, belly down, a little out from him), or on his
+  // left palm (the same way, its side to you); dangling from the hook (head up)
+  hands(rig, Lf, how) {
+    const B = rig.B, f = new THREE.Vector3(Math.sin(Lf.heading), 0, Math.cos(Lf.heading)), up = new THREE.Vector3(0, 1, 0), left = new THREE.Vector3(Math.cos(Lf.heading), 0, -Math.sin(Lf.heading));
+    const lift = up.clone().multiplyScalar(this.fishHalfH + 0.025 - this.fishMid);
+    if (how === 'left') {
+      const pos = B.handL.getWorldPosition(new THREE.Vector3()).addScaledVector(f, 0.06).addScaledVector(left, -0.04).add(lift);
+      return { pos, quat: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.clone().negate(), up, left)) };
+    }
+    const a = B.handL.getWorldPosition(new THREE.Vector3()), b = B.handR.getWorldPosition(new THREE.Vector3());
+    const pos = a.add(b).multiplyScalar(0.5).addScaledVector(f, 0.04).add(lift);
+    return { pos, quat: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(f.clone().negate(), up, left)) };
+  }
+  hung(mouth, Lf) {                                // (head up under the hook, its back to him)
+    const up = new THREE.Vector3(0, 1, 0), left = new THREE.Vector3(Math.cos(Lf.heading), 0, -Math.sin(Lf.heading)), back = new THREE.Vector3(-Math.sin(Lf.heading), 0, -Math.cos(Lf.heading));
+    return { pos: mouth.clone().addScaledVector(up, -this.fishLen * 0.5), quat: new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(left, back, up)) };
+  }
+  place(P, Q, k = 1) {
+    const r = this.fish.root;
+    if (k >= 1) { r.position.copy(P); r.quaternion.copy(Q); } else { r.position.lerp(P, k); r.quaternion.slerp(Q, k); }
+  }
+  // the rod: in his hand or on the dock, or on its way between (k: 0 lying there .. 1 in his hand)
+  rodBetween(rig, k) {
+    const R = rig.ensureRod(); R.updateWorldMatrix(true, false);
+    if (k >= 1) { this.rodIn = true; this.deckRod.visible = false; return; }
+    this.rodIn = false; this.deckRod.visible = true;
+    lerpMatrix(this.rodRest, R.matrixWorld, sm(k), this.deckRod.matrix); this.deckRod.matrixWorldNeedsUpdate = true; this.deckRod.updateMatrixWorld(true);
+  }
+  // ---- the farmer, each frame while he's out on the dock (farmlife.js fishAt): his pose for where things are, the rod
+  // laid down and picked up, the fish in his hands; true once he's done
   drive(Lf, dt) {
-    const W = Lf.want, rig = Lf.f.rig;
-    W.face = 'neutral'; W.pose = 'rod'; W.props.rod = true; W.props.rodBend = 0;
-    const st = this.state;
-    if (st === 'leaving' || st === 'off') { W.props.rod = false; W.props.pail = true; W.pose = 'carry'; return true; }
-    if (!['show', 'card', 'trophy', 'away'].includes(st)) Lf.turnTo(this.o.spot.face, dt, 2.5);
-    if (st === 'cast') { const u = this.t; W.pose = u < 0.4 ? 'cast' : 'rod'; W.face = 'happy'; }
-    else if (st === 'wait' || st === 'nibble') { W.look = [0, -0.25]; }
-    else if (st === 'bite') { W.face = 'happy'; W.look = [0, -0.25]; }
-    else if (st === 'reel') {
-      W.pose = 'reel'; W.face = this.T > 0.95 ? 'worried' : 'happy'; W.props.rodBend = 0.25 + 0.7 * this.T; W.look = [0, -0.3];
-      const crank = this.hold ? Math.sin(this.t * 14) : 0;
-      W.anim = (P) => { P.elL[1] += 14 * crank; P.shL[0] += 6 * crank; };
-    } else if (st === 'lift') { W.pose = 'reel'; W.props.rodBend = 0.3; W.face = 'happy'; }
-    else if (st === 'show' || st === 'card' || st === 'trophy' || st === 'away') {
-      const rel = st === 'away' && this.result && this.result.legend;
-      W.props.rod = false; W.pose = st === 'trophy' ? 'trophy' : rel ? (this.t < 1.3 ? 'release' : 'turn') : st === 'away' ? 'turn' : 'showfish';
-      // (turned round to show it to you; a legendary one: back to the water to let it go)
-      Lf.turnTo(rel ? this.o.spot.face : Lf.o.toCamera ? Lf.o.toCamera(Lf.pos.x, Lf.pos.z) : this.o.spot.face + Math.PI, dt, 3);
-      W.face = st === 'trophy' ? 'happy' : 'happy';
-      if (st === 'trophy') { const t = this.t; W.anim = (P) => { const k = Math.sin(t * 8); P.rootZ += 0.045 * Math.max(0, k); P.shR[1] += 22 * k; P.elR[1] -= 14 * k; }; }      // (a hop and a fist pumped, hooray)
-      // the fish held in his hands
-      if (this.fish && (st !== 'away' || (rel && this.t < 0.75))) {
-        const B = rig.B, a = B.wristL.getWorldPosition(new THREE.Vector3()), b = B.wristR.getWorldPosition(new THREE.Vector3());
-        const mid = st === 'trophy' ? a.clone().add(new THREE.Vector3(Math.sin(Lf.heading) * 0.05, 0.02, Math.cos(Lf.heading) * 0.05)) : a.clone().add(b).multiplyScalar(0.5).add(new THREE.Vector3(0, -0.05, 0));      // (hooray: in the left hand)
-        const along = st === 'trophy' ? new THREE.Vector3(Math.cos(Lf.heading), 0, -Math.sin(Lf.heading)) : a.clone().sub(b); along.y = 0; if (along.lengthSq() < 1e-6) along.set(Math.cos(Lf.heading), 0, -Math.sin(Lf.heading)); along.normalize();
-        this.fish.root.position.copy(mid);
-        this.fish.root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(Math.sin(Lf.heading), 0, Math.cos(Lf.heading)).negate(), new THREE.Vector3(0, 1, 0), along));
-        this.awayFrom = mid.clone(); this.relFrom = mid.clone();
-        if (st === 'lift') this.handsAt.copy(mid);
+    const W = Lf.want, rig = Lf.f.rig, st = this.state, t = this.t;
+    W.face = 'neutral'; W.pose = this.rodIn ? 'rod' : 'turn'; W.props.rod = this.rodIn; W.props.rodBend = 0;
+    if (st === 'off' || st === 'leaving') { W.props.rod = false; return true; }
+    const faceTo = (h, rate = 2.5) => Lf.turnTo(h, dt, rate), water = this.o.spot.face, toCam = Lf.o.toCamera ? Lf.o.toCamera(Lf.pos.x, Lf.pos.z) : water + Math.PI;
+    const toBucket = Math.atan2(this.bucketAt.x - Lf.pos.x, this.bucketAt.z - Lf.pos.z);
+    // (the rod: picked up from the dock, or laid down on it: a crouch, the right hand down to it)
+    const rodMove = (up, then) => {
+      faceTo(water); W.pose = t > 0.25 && t < 1.25 ? 'kneel' : up && t >= 1.25 ? 'rod' : 'turn'; W.face = 'neutral'; W.look = [0, -0.4];
+      const k = clamp((t - 0.55) / 0.45, 0, 1), m = up ? k : 1 - k;
+      W.props.rod = m >= 1; this.rodBetween(rig, m >= 1 ? 1 : m);
+      if (t >= 1.7) { this.state = then; this.t = 0; if (then === 'ready') this.ready(); }
+    };
+    if (st === 'pickup') { rodMove(true, this.then || 'ready'); this.tip = rig.rodTip(); return false; }
+    if (st === 'laydown') { rodMove(false, this.then || 'leaving'); this.tip = null; return false; }
+    if (['ready', 'cast', 'wait', 'nibble', 'bite', 'reel'].includes(st)) {
+      faceTo(water); this.rodIn = true; W.props.rod = true;
+      if (st === 'cast') { W.pose = t < 0.4 ? 'cast' : 'rod'; W.face = 'happy'; }
+      else if (st === 'wait' || st === 'nibble') W.look = [0, -0.25];
+      else if (st === 'bite') { W.face = 'happy'; W.look = [0, -0.25]; }
+      else if (st === 'reel') {
+        W.pose = 'reel'; W.face = this.T > 0.95 ? 'worried' : 'happy'; W.props.rodBend = 0.25 + 0.7 * this.T; W.look = [0, -0.3];
+        const crank = this.hold ? Math.sin(t * 14) : 0;
+        W.anim = (P) => { P.elL[1] += 14 * crank; P.shL[0] += 6 * crank; };
       }
+      this.tip = rig.rodTip();
+      return false;
     }
-    if (st === 'lift') {                             // (where his hands will be: the fish comes up to them)
-      const B = rig.B, a = B.wristL.getWorldPosition(new THREE.Vector3()), b = B.wristR.getWorldPosition(new THREE.Vector3());
-      this.handsAt.copy(a).add(b).multiplyScalar(0.5); this.handsAt.y -= 0.05;
-      if (this.fish) this.fish.root.quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2 + 0.3);
+    // ---- the catch: out of the water on the line, up in front of him; he takes it in his left hand, lays the rod down, holds it
+    // in both; turns round to show it; hooray for a new one (on his left palm, a fist in the air); its card; into the bucket
+    // (or back into the water), the rod picked up again
+    if (st === 'lift') {
+      faceTo(water); W.pose = 'rod'; W.props.rod = true; W.props.rodBend = 0.35; W.face = 'happy'; W.look = [0, -0.2];
+      this.tip = rig.rodTip();
+      const u = clamp(t / 0.9, 0, 1), hang = this.tip.clone().add(new THREE.Vector3(0, -0.55 - this.fishLen * 0.1, 0)).addScaledVector(this.fwd, -0.15);
+      const from = new THREE.Vector3(this.fishAt.x, this.o.waterY, this.fishAt.z), m = from.clone().lerp(hang, sm(u)); m.y += 0.12 * Math.sin(u * Math.PI);
+      m.addScaledVector(this.left, 0.05 * Math.sin(t * 6) * (1 - u * 0.5));          // (swinging a little)
+      this.mouth = m; const H = this.hung(m, Lf); this.place(H.pos, H.quat);
+      if (u >= 1) { this.state = 'unhook'; this.t = 0; this.o.say(this.result.legend ? 'fishbig' : this.result.first ? 'fishnew' : 'fishgot'); }
+      return false;
     }
-    this.tip = rig.rodTip();
+    if (st === 'unhook') {
+      faceTo(water);
+      this.tip = rig.rodTip();
+      if (t < 0.75) {                                // (his left hand to it; off the hook)
+        W.pose = 'take'; W.props.rod = true; W.props.rodBend = 0.2; W.face = 'happy';
+        const H = this.hung(this.mouth, Lf), L = this.hands(rig, Lf, 'left'), k = sm(clamp(t / 0.7, 0, 1));
+        this.place(H.pos.clone().lerp(L.pos, k), H.quat.clone().slerp(L.quat, k));
+        this.mouth.copy(this.fish.root.position).addScaledVector(new THREE.Vector3(0, 1, 0), this.fishLen * 0.5 * (1 - k));
+      } else if (t < 1.75) {                         // (crouched, the rod laid down on the dock with his right hand)
+        W.pose = 'kneel'; W.look = [0, -0.4];
+        const k = clamp((t - 1.05) / 0.45, 0, 1); W.props.rod = k <= 0; this.rodBetween(rig, 1 - k);
+        const L = this.hands(rig, Lf, 'left'); this.place(L.pos, L.quat);
+      } else {                                       // (up again, both hands to it)
+        W.pose = 'showfish'; W.face = 'happy'; W.look = [0, -0.35];
+        const a = this.hands(rig, Lf, 'left'), b = this.hands(rig, Lf, 'two'), k = sm(clamp((t - 1.75) / 0.45, 0, 1));
+        this.place(a.pos.lerp(b.pos, k), a.quat.slerp(b.quat, k));
+        if (t >= 2.25) { this.state = 'show'; this.t = 0; }
+      }
+      return false;
+    }
+    if (st === 'show' || st === 'card' || st === 'trophy') {
+      faceTo(toCam, 3);                              // (turned round to show it to you)
+      W.face = 'happy'; W.pose = st === 'trophy' ? 'trophy' : 'showfish';
+      const two = this.hands(rig, Lf, 'two'), one = this.hands(rig, Lf, 'left');
+      if (st === 'trophy') {
+        W.anim = (P) => { const k = Math.sin(t * 8); P.rootZ += 0.045 * Math.max(0, k); P.shR[1] += 22 * k; P.elR[1] -= 14 * k; };      // (a hop and a fist pumped, hooray)
+        const k = sm(clamp(t / 0.35, 0, 1)) * sm(clamp((2.6 - t) / 0.35, 0, 1)); this.place(two.pos.lerp(one.pos, k), two.quat.slerp(one.quat, k));
+        if (t > 2.6) this.showCard();
+      } else {
+        this.place(two.pos, two.quat);
+        if (st === 'show' && t > (this.result.first ? 1.0 : 1.6)) { if (this.result.first) { this.state = 'trophy'; this.t = 0; } else this.showCard(); }
+      }
+      return false;
+    }
+    if (st === 'away') {
+      const legend = this.result && this.result.legend;
+      if (legend) {
+        // (back to the water, crouched at the edge, lowered in; she slips out of his hands and away)
+        faceTo(water, 3); W.face = 'happy';
+        W.pose = t < 0.55 ? 'showfish' : t < 2.4 ? 'release' : 'turn';
+        if (this.fish) {
+          const two = this.hands(rig, Lf, 'two');
+          if (t < 1.5) this.place(two.pos, two.quat);
+          else {
+            const k = clamp((t - 1.5) / 0.8, 0, 1), to = two.pos.clone().addScaledVector(this.fwd, 0.45); to.y = this.o.waterY - 0.05;
+            this.place(two.pos.lerp(to, sm(k)), two.quat);
+            if (k > 0.55 && !this.splashed) { this.splashed = true; this.rings.add(to.x, to.z, 0.45, 1.2); this.rings.add(to.x, to.z, 0.25, 0.9); }
+            if (k >= 1) { this.fish.root.removeFromParent(); this.fish = null; }
+          }
+        }
+      } else {
+        // (turned to the bucket, crouched, the fish lowered into the water in it with a little splash)
+        faceTo(toBucket, 3); W.face = 'happy';
+        W.pose = t < 0.6 ? 'showfish' : t < 2.0 ? 'release' : 'turn';
+        if (this.fish) {
+          const two = this.hands(rig, Lf, 'two'), B = this.bucketAt, k = clamp((t - 1.05) / 0.5, 0, 1);
+          const into = new THREE.Vector3(B.x, B.y + 0.09, B.z);
+          if (k <= 0) this.place(two.pos, two.quat); else this.place(two.pos.lerp(into, sm(k)), two.quat);
+          if (k >= 1) { if (!this.splashed) { this.splashed = true; this.rings.add(B.x, B.z, 0.1, 0.5); } this.fish.root.removeFromParent(); this.fish = null; }
+        }
+      }
+      if (t >= (legend ? 2.9 : 2.5)) { this.result = null; this.t = 0; if (this.keep) { this.state = 'pickup'; this.then = 'ready'; } else { this.state = 'leaving'; this.bar.hidden = true; } }      // (on fishing: the rod picked up again; or off he goes, the rod left lying on the dock)
+      return false;
+    }
     return false;
   }
 }
