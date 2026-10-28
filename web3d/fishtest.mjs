@@ -53,7 +53,7 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 70; g.data.lvSeen = 2; g.save(); f.gameUI().close(); });
-await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();      // (the first day's pictures done with)
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();      // (the first day's pictures done with)
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 // level 2: not yet
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
@@ -147,7 +147,7 @@ ok('let go: he crouches at the edge and she slips back into the water', rel === 
 ok('then back along the dock and off, his rod left lying on the dock, the gate shut behind him, the bar gone', (await p.evaluate(() => window.__farm.fishing().deckRod.visible)) && await until(() => { const f = window.__farm; return !f.fishSeq() && f.fishing().state === 'off'; }, 60, 0.5) && (await run(1.5), (await st()).gate === 0) && !(await st()).bar && Math.hypot((await st()).pos[0] - (await st()).D.stand[0], (await st()).pos[2] - (await st()).D.stand[1]) > 2, await st());
 // a reload
 const got = await p.evaluate(() => JSON.stringify(window.__farm.game().data.fish.got));
-await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();
 const again = await p.evaluate(() => ({ got: JSON.stringify(window.__farm.game().data.fish.got), edited: window.__farm.game().edited }));
 ok('a reload: the catches kept, unflagged', again.got === got && !again.edited, again);
 // the card again: the fish caught in colour

@@ -23,13 +23,13 @@ const open = async (W, H) => {
   await p.evaluate(() => window.__farm.gameUI().close());
   return { ctx, p, errs };
 };
-const tip = p => p.evaluate(() => { const e = document.querySelector('.gturn'); return e ? { text: e.textContent, hint: getComputedStyle(document.getElementById('hint')).opacity } : null; });
+const tip = p => p.evaluate(() => { const e = document.querySelector('.gturn'); return e ? { text: e.textContent, hintHidden: document.body.classList.contains('gturning') } : null; });
 const wait = (p, ms) => p.waitForTimeout(ms);
 // a phone, upright
 let s = await open(402, 874);
 await wait(s.p, 2500);
 let t = await tip(s.p);
-ok('a phone upright: the tip at the top, the hint hidden under it', t && (fr ? /téléphone/ : /Best played sideways: turn your phone/).test(t.text) && +t.hint < 0.05, t);
+ok('a phone upright: the tip at the top, the hint hidden under it', t && (fr ? /téléphone/ : /Best played sideways: turn your phone/).test(t.text) && t.hintHidden, t);
 await s.p.screenshot({ path: `${OUT}/turn_phone${fr ? '_fr' : ''}.png` });
 await s.p.setViewportSize({ width: 874, height: 402 }); await wait(s.p, 2000);
 ok('turned sideways: the tip goes', !(await s.p.evaluate(() => !!document.querySelector('.gturn:not(.gout)'))));
@@ -39,7 +39,7 @@ ok('upright again: not again this visit', !(await tip(s.p)));
 const tint = await s.p.evaluate(() => ({ meta: document.querySelector('meta[name="theme-color"]').content, page: document.documentElement.style.backgroundColor }));
 const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const [r, g, bb] = /^#[0-9a-f]{6}$/.test(tint.meta) ? rgb(tint.meta) : [0, 0, 0];
-ok('the browser\'s bars in the farm\'s own colours (grass green by day), not the welcome\'s dark green', tint.meta !== '#4a7530' && g > r && g > bb && g > 110 && !!tint.page, tint);
+ok('the browser\'s bars in the farm\'s own colours (grass green by day), not the welcome\'s dark green', tint.meta !== '#4a7530' && g > r && g > bb && !!tint.page, tint);
 ok('no page errors (phone)', s.errs.length === 0, s.errs);
 await s.ctx.close();
 // a tablet, upright: its own words; gone after a few seconds

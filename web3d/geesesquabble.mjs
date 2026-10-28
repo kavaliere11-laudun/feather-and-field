@@ -21,7 +21,9 @@ await p.waitForFunction(() => window.__farm && document.getElementById('loading'
 await p.evaluate(() => { const f = window.__farm, D = f.ducks && f.ducks(); if (D) { D.update = () => {}; D.group.visible = false; for (const d of D.ducks) d.pos.set(500, 0, 500); } f.pause(true); f.step(1 / 30, 60); });
 for (const kind of kinds) {
   // a calm moment (they may be off for a swim first: up to a few minutes), then the squabble
-  const r = await p.evaluate(async kind => {
+  // (one called off on the way (somebody in the way of their places, given up after 25 s, as in the game): another go)
+  let r = null;
+  for (let attempt = 0; attempt < 3 && (!r || (r.started && r.stages.join() === 'go')); attempt++) r = await p.evaluate(async kind => {
     const f = window.__farm, F = f.geese(), nav = f.nav(), [G, H] = F.geese, out = { stages: [], blocked: 0, closest: 9, wet: 0, hearts: 0, eaten: null, started: false, overIt: 9 };
     let tries = 0;
     while (!F.duet && tries++ < 30 * 900) { F.force = kind; F.loveIn = 0; f.step(1 / 30, 1); }
