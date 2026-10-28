@@ -252,17 +252,22 @@ const lampPools = {
   update() { if (!this.mesh) return; const g = DAY.glow.value; this.mesh.material.opacity = 0.42 * g; this.mesh.visible = g > 0.01; },
 };
 
+// (the canvas sized by its page, filling the whole screen; the picture drawn to the size it really is. It used to be given
+// the window's inner size, which a phone can report short of the screen (a Home Screen app on an iPhone, just after
+// turning it round), leaving a strip of the page's green showing: Audrey, 28 Oct, "no more green bar")
 function resize() {
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = Math.round(canvas.clientWidth || window.innerWidth), h = Math.round(canvas.clientHeight || window.innerHeight);
   if (GAME_MODE && wasSide !== null && sideways() !== wasSide) { wasSide = !wasSide; sideScale(wasSide ? SIDE_K : 1 / SIDE_K); applyGrass(); }
   renderer.setSize(w, h, false);
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   placeCamera();
   furDetail();
   if (inside.open) insideFrameCamera();
   wake(400);
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 300); setTimeout(resize, 900); });
+if (window.visualViewport) visualViewport.addEventListener('resize', resize);
+if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(canvas);
 // how much fur and fluff to draw: from how big birds are on screen, and the quality level
 function furDetail() { setFurDetail(renderer.getPixelRatio() * (canvas.clientHeight || window.innerHeight) / (2 * view.size), QUALITY[q].fur); }
 
@@ -6276,6 +6281,24 @@ function replayFrame(now) {
   wake(300);
 }
 
+// the browser's bars the colour of the farm next to them (Audrey, 28 Oct: "no more green bar"): Safari and Chrome paint
+// their bars in the page's theme colour (it was the welcome's dark green all the time). Every second and a half, just
+// drawn, a few points along the picture's top edge and its bottom: the theme colour is the top's, the page's own colour
+// the bottom's (so turning the farm, night falling, inside a coop, the bars follow). Not while the welcome's picture is up.
+const barTint = { at: 0, top: '', bottom: '', px: new Uint8Array(4), meta: document.querySelector('meta[name="theme-color"]') };
+function tintBars(now) {
+  barTint.at = now;
+  if (document.documentElement.classList.contains('gwelcoming')) {          // (the welcome's own colours back)
+    if (barTint.top) { barTint.top = barTint.bottom = ''; if (barTint.meta) barTint.meta.setAttribute('content', '#4a7530'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = ''; }
+    return;
+  }
+  const gl = renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, P = barTint.px;
+  const avg = y => { let r = 0, g = 0, b = 0; for (const fx of [0.12, 0.5, 0.88]) { gl.readPixels(Math.floor(W * fx), y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, P); r += P[0]; g += P[1]; b += P[2]; }
+    const h = v => Math.round(v / 3).toString(16).padStart(2, '0'); return '#' + h(r) + h(g) + h(b); };
+  const top = avg(Math.max(0, H - 2)), bottom = avg(1);
+  if (top !== barTint.top && barTint.meta) { barTint.top = top; barTint.meta.setAttribute('content', top); }
+  if (bottom !== barTint.bottom) { barTint.bottom = bottom; document.documentElement.style.backgroundColor = bottom; document.body.style.backgroundColor = bottom; }
+}
 let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false, paused = false;
 function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }
 const meter = { frames: 0, late: 0, since: 0, fps: 0, slow: 0 };
@@ -6299,6 +6322,7 @@ function frame(now) {
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
   else renderer.render(scene, camera);
+  if (GAME_MODE && now - barTint.at > 1500) tintBars(now);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
   // that were still smooth)
