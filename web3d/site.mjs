@@ -16,7 +16,7 @@ once('<link rel="manifest" href="play.webmanifest">', '<link rel="manifest" href
 fs.writeFileSync(`${out}/index.html`, page);
 const pm = JSON.parse(fs.readFileSync(`${out}/3d/play.webmanifest`, 'utf8'));
 fs.writeFileSync(`${out}/manifest.webmanifest`, JSON.stringify({
-  name: pm.name, short_name: pm.short_name, id: './', start_url: './', scope: './', display: 'standalone', orientation: 'any',
+  name: pm.name, short_name: pm.short_name, id: './', start_url: './', scope: './', display: 'standalone', orientation: pm.orientation || 'any',
   background_color: pm.background_color, theme_color: pm.theme_color, description: 'Raise, breed and show chickens on your own farm.',
   icons: pm.icons.map(i => ({ ...i, src: '3d/' + i.src })),
 }, null, 1) + '\n');

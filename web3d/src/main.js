@@ -5705,6 +5705,27 @@ function fieldBubbles(w, h) {
 // player's tap; the view never moves by itself). Skip: no more guide. Hidden while a card's open (unless the arrow points
 // into it), while something's being moved, inside a coop, on show day
 const GUIDE_UI = { card: null, n: null, text: null, show: null, arrow: null, on: false, intro: false, k: '' };
+// ---- "Best played sideways" (Audrey, 28 Oct: "Sideway for phones and tablets"; a website can't turn the screen round
+// itself, the stores' app will lock it): a phone or tablet held upright, the farm open with nothing else up, gets a gentle
+// tip at the top, a little phone turning, once a visit; gone after a few seconds, at a tap, or once it's turned
+const TURN = { el: null, shown: false, at: 0, hideAt: 0 };
+function tickTurnTip(now) {
+  if (TURN.shown && !TURN.el) return;
+  if (now - TURN.at < 1000) return; TURN.at = now;
+  const upright = innerHeight > innerWidth * 1.05;
+  if (TURN.el) { if (!upright || now > TURN.hideAt || document.querySelector('.gsheet:not([hidden])')) hideTurnTip(); return; }      // (gone too when a card opens)
+  if (!upright || !(window.matchMedia && matchMedia('(pointer: coarse)').matches) || (navigator.webdriver && !params.has('turntip'))) return;
+  try { if (sessionStorage.getItem('ff3d.turntip')) { TURN.shown = true; return; } } catch (e) { /* */ }
+  if (document.getElementById('loading') || !openedAt || now < newsFrom + 800) return;          // (the farm opened, and a moment to look at it first)
+  if (document.querySelector('.gsheet:not([hidden])') || document.documentElement.classList.contains('gwelcoming') || inside.open || (replay && replay.on) || SHOWDAY || GUIDE_UI.intro) return;
+  TURN.shown = true; try { sessionStorage.setItem('ff3d.turntip', '1'); } catch (e) { /* */ }
+  const tablet = Math.min(innerWidth, innerHeight) >= 600, e = TURN.el = document.createElement('div'); e.className = 'gturn';
+  e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>';
+  const t = document.createElement('span'); t.textContent = game.t(tablet ? 'turn_tip_tablet' : 'turn_tip_phone'); e.append(t);
+  e.addEventListener('click', hideTurnTip); document.body.append(e); document.body.classList.add('gturning');
+  TURN.hideAt = now + 7000;
+}
+function hideTurnTip() { if (!TURN.el) return; const e = TURN.el; TURN.el = null; document.body.classList.remove('gturning'); e.classList.add('gout'); setTimeout(() => e.remove(), 400); }
 const GUIDE_OFF = params.has('q') && !params.has('firstday');      // (the automated tests' pages: none, unless asked for)
 function guideEls() {
   if (GUIDE_UI.card) return GUIDE_UI;
@@ -6317,7 +6338,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
-  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); placeBubbles(); }
+  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
@@ -6422,6 +6443,7 @@ window.__farm = {
     wheat: { tap: () => wheatTap(), sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => startDecor('wheat'),
       state: () => { const it = DEC.items.wheat; return { stage: game.wheatStage(), shown: FIELD.shown, hold: FIELD.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: FIELD.bub && !FIELD.bub.hidden ? FIELD.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },
     away: { at: t => { AWAY = { from: t }; newsFrom = 0; }, pending: () => !!AWAY, collectAll: () => collectAll() },
+    turnTip: () => TURN, barTint: () => barTint,
     guide: { state: () => ({ step: game.guideStep(), on: GUIDE_UI.on, intro: GUIDE_UI.intro, card: GUIDE_UI.card && !GUIDE_UI.card.hidden ? GUIDE_UI.text.textContent : null, n: GUIDE_UI.card ? GUIDE_UI.n.textContent : null, arrow: GUIDE_UI.arrow && !GUIDE_UI.arrow.hidden ? [parseFloat(GUIDE_UI.arrow.style.left), parseFloat(GUIDE_UI.arrow.style.top)] : null, show: GUIDE_UI.show && !GUIDE_UI.show.hidden }), target: () => { const T = guideTarget(game.guideStep()); return T && { el: T.el ? T.el.className : null, world: T.world ? [T.world.x, T.world.y, T.world.z] : null }; } },
     honey: { tap: () => honeyTap(), n: () => game.honeyAt(), state: () => ({ n: game.honeyAt(), going: FIELD.honey, work: FIELD.work && FIELD.work.kind, frame: FIELD.frameOn, bub: FIELD.hbub && !FIELD.hbub.hidden ? FIELD.hbub.textContent : null }) } },
   place: b => startPlace(b), coopsSheet: () => coopsSheet(), showsSheet: () => showsSheet(), jobsSheet: () => jobsSheet(), showSpot: () => showSpot(), showWhy: () => SHOW_WHY, showDay: () => SHOWDAY, showDayAt: (r) => startShowDay(r, game.unseenShows()), coopModels: () => [...new Set(COOP_BATCH.map(m => m.userData.model))].sort(),

@@ -2791,3 +2791,30 @@ the birds already had.
 - **Tests**: `lovetest.mjs` (the pads, from the bank and from her pad, a tap, someone near, by itself when its time comes,
   not at night, not off the screen, not in the catch; close pictures); `lovefilm.mjs` films it (and a close version).
 
+## Release 7, step 1: every screen, full screen, sideways (28 Oct 2026; Audrey's list before the stores: "how does the game show on iPhones, Samsungs, and all sort of other phones, as well as tablet, very important. The game should just go full screen no more green bar or anything. Also we might want to consider the game by default sideway"; then "Every screen, full screen (Recommended)", "Sideway for phones and tablets")
+
+- **Every phone and tablet** (`screens.mjs`): fourteen of them, each upright and sideways (iPhone SE, mini, 16, 16 Pro,
+  Pro Max; Galaxy S24, a Pixel or Galaxy A, a small old Android, a Galaxy Fold shut and open; iPad mini, iPad, iPad Pro
+  13, Galaxy Tab): the welcome, the farm, a hen's card, the shop, the Breed Book, a picture of each and checks (the bar's
+  buttons all on the screen and apart, a card's head, close button and buttons on the screen, no sideways scrolling).
+  The phones were right. Tablets (any screen at least 700 by 700): the bar, the cards and the buttons a third bigger
+  (`zoom: 1.3`: they were phone-sized, the writing small), a card held upright no wider than reads well (540) in the
+  middle instead of edge to edge, the welcome's title clear of its card sideways. The narrowest phones (under 356 wide,
+  a Fold shut): the bar a little tighter, so the settings button isn't cut off.
+- **Full screen** (Audrey: the green bar, in Safari and in the Home Screen app): the farm's picture sized by the page
+  (`#farm` fills the screen; `resize()` reads its real size, again on turning, on the visual viewport changing and by a
+  ResizeObserver) instead of the window's reported inner size, which an iPhone's Home Screen app can give short of the
+  screen just after turning, leaving a strip of the page's green. The browser's bars (Safari's, Chrome's) take the
+  farm's own colours (`tintBars`: every second and a half, a few points along the top and bottom edges of the picture
+  just drawn: the theme colour from the top, the page's colour from the bottom), not the welcome's dark green; the
+  welcome keeps its own. A website can't hide Safari's bars on an iPhone; the stores' app will have none.
+- **Sideways** (Audrey: "Sideway for phones and tablets"): a website can't turn the screen round itself, so a phone or
+  tablet held upright gets a gentle tip once a visit, at the top when the farm is open with nothing else up ("Best
+  played sideways: turn your phone" / "tablet", "Plus agréable à l'horizontale : tournez votre téléphone" / "tablette",
+  a little phone turning): gone at a tap, once it's turned, when a card opens, or after seven seconds. The Home Screen
+  app on Android asked to stay sideways (`play.webmanifest` and the usual address's manifest: `orientation: landscape`;
+  an iPhone's ignores it). The stores' app will lock phones and tablets sideways. (The tests' own browser never sees
+  the tip, so it can't get in their way; `?turntip` shows it there.)
+- **Tests**: `screens.mjs`, `turntest.mjs` (the tip on a phone and a tablet, turned, not again, a card, the bars'
+  colour, the manifest; both languages).
+
