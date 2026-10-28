@@ -2824,3 +2824,29 @@ the birds already had.
 - **Tests**: `screens.mjs`, `turntest.mjs` (the tip on a phone and a tablet, turned, not again, a card, the bars'
   colour, the manifest; both languages).
 
+
+## Release 7, step 2: the music (28 Oct 2026; Audrey: the sound "very ai generated" last time; "Free recordings only"; the music "Now and then"; her tracks "Musics 2 and 4")
+
+- **Real music only, free and clear**: Audrey's two picks from a preview of fifteen public-domain tracks: Komiku's
+  "Champ de tournesol" (Free Music Archive and the Internet Archive both list it as CC0 1.0) and Rafael Krux's "Happy
+  Whistling Ukulele" (FreePD, CC0 1.0). `audio/` holds them, evened out to the same gentle loudness (-18 LUFS, 128 kbps
+  MP3s, about 2 MB each), with `audio/CREDITS.txt`. The candidates and the licence checks are in the source's
+  `audio/CANDIDATES.md`.
+- **Now and then** (`src/sound.js`): a phone only lets a page make sound after a tap, so it waits for the first one
+  (the welcome's Play, or any tap on the farm). A few seconds later one of the two tracks fades in. When it ends there
+  are 2½ to 5 minutes of just the farm, then the other track. It's softer at dawn and of an evening; at night it fades
+  away and no new track starts until morning. When the game is put away (another app, the phone locked) it stops and
+  picks up where it was on coming back. The page's audio session is "ambient": a phone on silent keeps the game silent,
+  as other games do, and the game plays alongside the phone's own music or a podcast instead of stopping it. The
+  music streams from its file through one `<audio>` (a whole track decoded would take about 45 MB of the phone's
+  memory), fed into Web Audio for its volume, which a phone ignores on an `<audio>`.
+- **Settings**: Music, On / Off (Musique, Oui / Non), with a note: "Now and then, by day and of an evening. With your
+  phone on silent, the game is silent too." Off fades it away at once. It's kept in the farm (`data.music: false`, only
+  when off; anything else in a save is dropped by `checkFarm`), so it travels with the farm code.
+- **Tests**: `soundtest.mjs`, in a browser that, like a phone, only plays after a tap. Silent before the first tap; a
+  track a few seconds after it, really sounding (an analyser on the game's own output); then a quiet spell and the other
+  track; softer of an evening; gone at night, none new; back in the morning; paused when put away; Settings On / Off,
+  kept after a reload; a save with the music typed in wrong is checked. Run in English upright and French sideways. The
+  tests' own browser hears nothing unless it asks (`?sound`).
+- **Next** (Audrey's recordings): her own hens for the everyday chatting. The voices are taken out of her videos, and
+  37 short clucks are kept and cleaned. Then the rest of the farm's sounds from the free recordings she picks.
