@@ -1,7 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -402,7 +402,8 @@ export class GameUI {
     for (const w of ['pond', 'river']) if (FISHING[w] === L) {              // (fishing opens: the pond at 3, the river at 8; a look at it)
       const c = el('div', 'gcard gfishnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎣'), el('span', 'gcard-t', this.t(w === 'pond' ? 'fish_new' : 'fish_new_river'))); c.append(hd);
       if (w === 'pond') c.append(el('p', 'gnote', this.t('fish_hens', { farmer: this.g.farmerName() })));      // (where the worms come from)
-      if (w === 'pond' && this.o.showPond) { const b = el('button', 'gbtn galt gsmallbtn', this.t('fish_show')); b.type = 'button'; b.dataset.fish = 'show'; b.addEventListener('click', () => { this.close(); this.o.showPond(); }); c.append(b); }
+      const show = w === 'pond' ? this.o.showPond : this.o.showRiver;
+      if (show) { const b = el('button', 'gbtn galt gsmallbtn', this.t(w === 'pond' ? 'fish_show' : 'fish_show_river')); b.type = 'button'; b.dataset.fish = 'show'; b.addEventListener('click', () => { this.close(); show(); }); c.append(b); }
       body.append(c);
     }
     const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
@@ -554,6 +555,12 @@ export class GameUI {
     const g = this.g, pages = g.bookPages(), found = pages.filter(x => x.found).length;
     const b = this.open('book', this.t('book_title'));
     this.bird = null; b.scrollTop = 0;
+    // (once fishing's open: the breeds, or the fish: two tabs)
+    if (g.fishOpen('pond')) {
+      const tabs = el('div', 'gbooktabs'), tab = (k, label) => { const t = el('button', 'gbtn gsmallbtn' + ((this.bookTab || 'birds') === k ? ' gon' : ' galt'), label); t.type = 'button'; t.dataset.tab = k; t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
+      tabs.append(tab('birds', '🐔 ' + this.t('book_tab_birds')), tab('fish', '🐟 ' + this.t('book_tab_fish'))); b.append(tabs);
+      if (this.bookTab === 'fish') { this.fishPages(b); return; }
+    }
     b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
     const list = names => names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] || '';
     for (const pg of pages) {
@@ -576,6 +583,25 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
     b.append(el('p', 'gnote gcenter', this.t('book_more')));
+  }
+  // ---- the Book's fish pages (release 5): the pond's seven and the river's, each its picture (dark till you've caught one),
+  // its name, how rare it is, how many you've caught and your biggest (or where and from what level), its sizes, its price
+  fishPages(b) {
+    const g = this.g, got = FISH_IDS.filter(id => g.fishGot(id)).length;
+    b.append(el('p', 'gsub', this.t('book_fish_found', { n: got, all: FISH_IDS.length })));
+    for (const w of ['pond', 'river']) {
+      b.append(el('div', 'glabel gbookwater', this.t(w === 'pond' ? 'book_fish_pond' : 'book_fish_river')));
+      for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) {
+        const R = FISH_RULES[id], c = g.fishGot(id), open = g.fishOpen(w);
+        const card = el('div', 'gcard gpage gfishpage' + (c ? '' : ' gpage-no')); card.dataset.fish = id;
+        const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'fish/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+        const info = el('div', 'gpage-i');
+        info.append(el('span', 'gcard-t', g.fishName(id)), el('p', 'gnote gpage-l gfishrare', this.t('fish_rare' + R.rare)));
+        info.append(el('p', 'gpage-s' + (c ? ' gfound' : ''), c ? (c.n === 1 ? this.t('book_fish_caught1', { cm: c.best }) : this.t('book_fish_caught', { n: c.n, cm: c.best })) : open ? this.t('book_fish_not') : this.t('book_fish_level', { n: FISHING[w] })));
+        info.append(el('p', 'gnote gpage-l', this.t('book_fish_size', { a: R.cm[0], b: R.cm[1] }) + ' · ' + (R.rare === 2 ? this.t('book_fish_photo', { c: R.price }) : this.t('book_fish_price', { c: fishPrice(id, Math.round((R.cm[0] + R.cm[1]) / 2)) }))));
+        card.append(pic, info); b.append(card);
+      }
+    }
   }
 
   // ---- Shows (release 1 step 9): today's shows (the Village, then from level 4 the County and from 9 the National), who may
@@ -860,12 +886,12 @@ export class GameUI {
   // ---- fishing (release 5): the dock's card (tapped): the pond's fish (those caught in colour, the others dark), the worms
   // in the bag (and where they come from: the chickens who love the farmer), Go fishing; a tin of worms. o: { open, worms, state: 'ok'|'night'|'on' }; h: { go, buy }
   dockCard(o, h) {
-    const g = this.g, body = this.open('dock', this.t('dock_title')), farmer = g.farmerName();
+    const g = this.g, w = o.water === 'river' ? 'river' : 'pond', body = this.open('dock', this.t(w === 'river' ? 'river_title' : 'dock_title')), farmer = g.farmerName();
     this.bird = null;
-    const row = el('div', 'gfishrow');
-    for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === 'pond')) { const im = el('img', g.fishGot(id) ? 'got' : ''); im.alt = ''; im.src = 'fish/' + id + '.webp' + (this.o.bust || ''); row.append(im); }
-    body.append(row, el('p', 'gtext', this.t('dock_body')));
-    if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING.pond }))); return; }
+    const row = el('div', 'gfishrow'); row.dataset.water = w;
+    for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) { const im = el('img', g.fishGot(id) ? 'got' : ''); im.alt = ''; im.src = 'fish/' + id + '.webp' + (this.o.bust || ''); row.append(im); }
+    body.append(row, el('p', 'gtext', this.t(w === 'river' ? 'river_body' : 'dock_body')));
+    if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING[w] }))); return; }
     const n = o.worms;
     body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0'))), el('p', 'gnote', this.t('fish_hens', { farmer })));
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));

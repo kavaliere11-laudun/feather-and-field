@@ -1,12 +1,12 @@
 // A short film of fishing at the pond, for Audrey: ./withserver.sh node fishfilm.mjs [OUT]   (LANG=fr; W, H; FPS; LOOK=f
-// for Rosie). A new farm at level 3, the farmer out on the dock; the view held on him and the water: a tap on the water (a
+// for Rosie; WATER=river: at level 8 on the river's footbridge, the film river.mp4). A new farm at level 3, the farmer out on the dock; the view held on him and the water: a tap on the water (a
 // ring where the finger went), the cast, the float, a nibble, the bite, a tap, the reel (holding while the needle's low),
 // the fish out of the water and into his hands, hooray, its card, Keep fishing, into the bucket. Frames into OUT/frames,
 // then OUT/fishing.mp4 (ffmpeg).
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 import { execSync } from 'child_process';
-const OUT = process.argv[2] || '/tmp/claude-0/farmer/fishfilm', fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), FPS = +(process.env.FPS || 15);
+const RIVER = process.env.WATER === 'river', OUT = process.argv[2] || '/tmp/claude-0/farmer/fishfilm', fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), FPS = +(process.env.FPS || 15);
 fs.rmSync(OUT + '/frames', { recursive: true, force: true }); fs.mkdirSync(OUT + '/frames', { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London', deviceScaleFactor: 1.5 });
@@ -23,18 +23,19 @@ const finger = (x, y, hold = false) => p.evaluate(([x, y, hold]) => {          /
   const d = document.createElement('div'); d.className = 'ffinger'; d.style.cssText = `position:fixed;left:${x - 22}px;top:${y - 22}px;width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,0.95);background:rgba(255,255,255,0.35);z-index:99;pointer-events:none;box-shadow:0 0 8px rgba(0,0,0,0.25)`;
   document.body.append(d); if (!hold) setTimeout(() => d.remove(), 700); return true; }, [x, y, hold]);
 const unfinger = () => p.evaluate(() => document.querySelectorAll('.ffinger').forEach(e => e.remove()));
+if (RIVER) await ctx.addInitScript(() => { window.__river = true; });
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:30${process.env.LOOK === 'f' ? '&farmer=f' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 if (process.env.LOOK === 'f') await p.evaluate(() => { const b = [...document.querySelectorAll('.gsheet button')].find(x => /Rosie|Rose/.test(x.textContent)); if (b) b.click(); });
 await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const g = window.__farm.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 400; g.data.lvSeen = 3; g.fishBag().worms = 4; g.save(); });
+await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const g = window.__farm.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = window.__river ? 3600 : 400; g.data.lvSeen = window.__river ? 8 : 3; g.fishBag().worms = 4; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close()); await run(1);
 await p.addStyleTag({ content: '.vignette { opacity: 0.6; }' });
-const r = await p.evaluate(() => window.__farm.startFishing());
+const r = await p.evaluate(() => window.__farm.startFishing(window.__river ? 'river' : 'pond'));
 for (let i = 0; i < 240 && !(await p.evaluate(() => { const F = window.__farm.fishing(); return F && F.state === 'pickup'; })); i++) await run(0.5);      // (out at the dock's end: he picks his rod up)
 // the view: the farmer at the bottom, the water he casts on above him
-const aim = await p.evaluate(() => { const f = window.__farm, D = f.dock(); const tx = D.stand[0] + Math.sin(D.face + 0.25) * 2.4, tz = D.stand[1] + Math.cos(D.face + 0.25) * 2.4;
+const aim = await p.evaluate(() => { const f = window.__farm, D = window.__river ? f.river() : f.dock(), a = window.__river ? 0.06 : 0.25, d = window.__river ? 1.8 : 2.4; const tx = D.stand[0] + Math.sin(D.face + a) * d, tz = D.stand[1] + Math.cos(D.face + a) * d;
   f.lookAt(D.stand[0] * 0.55 + tx * 0.45, D.stand[1] * 0.55 + tz * 0.45, 2.1); f.draw();
   const T = f.THREE, cam = f.camera, v = new T.Vector3(tx, 0.008, tz).project(cam); return { tx, tz, sx: (v.x + 1) / 2 * innerWidth, sy: (1 - v.y) / 2 * innerHeight }; });
 await film(2.2);
@@ -64,5 +65,6 @@ if (keep) { await finger(keep[0], keep[1]); await film(0.3); await p.evaluate(()
 await film(5);                                                     // (into the bucket, the rod picked up, ready again)
 console.log('frames', n, 'errors', errs);
 await b.close();
-execSync(`ffmpeg -y -loglevel error -framerate ${FPS} -i ${OUT}/frames/%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -crf 22 -preset slow -movflags +faststart ${OUT}/fishing${fr ? '_fr' : ''}.mp4`);
-console.log('film', OUT + `/fishing${fr ? '_fr' : ''}.mp4`, fs.statSync(OUT + `/fishing${fr ? '_fr' : ''}.mp4`).size);
+const NAME = (RIVER ? 'river' : 'fishing') + (fr ? '_fr' : '');
+execSync(`ffmpeg -y -loglevel error -framerate ${FPS} -i ${OUT}/frames/%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p" -c:v libx264 -crf 22 -preset slow -movflags +faststart ${OUT}/${NAME}.mp4`);
+console.log('film', OUT + `/${NAME}.mp4`, fs.statSync(OUT + `/${NAME}.mp4`).size);

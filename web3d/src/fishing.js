@@ -1,7 +1,8 @@
 // Fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; a legendary fish: "Photo, then let
 // go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little celebration").
-// The farmer out at the end of the pond's dock, where his old cane rod lies (farmer.js makeRod) and his bucket of water
-// stands: he crouches and picks the rod up (and lays it down again when he's done: never just there or gone).
+// The farmer out at the end of the pond's dock (or, from level 8, on the river's footbridge), where his old cane rod lies
+// (farmer.js makeRod) and his bucket of water stands: he crouches and picks the rod up (and lays it down again when he's
+// done: never just there or gone). On the river the float drifts off downstream with the current (o.drift).
 //  1. Tap the water to cast: the rod drawn back over the shoulder and swung, the float flying out on its line to where you
 //     tapped (as near as the rod reaches), a little ring where it lands.
 //  2. Watch the float: it bobs; a nibble or two (little dips); then it's pulled under with a splash and a "!": tap now.
@@ -101,9 +102,11 @@ const _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _q1 = new THREE.Quat
 function lerpMatrix(A, B, k, out) { A.decompose(_p1, _q1, _s1); B.decompose(_p2, _q2, _s2); return out.compose(_p1.lerp(_p2, k), _q1.slerp(_q2, k), _s1.lerp(_s2, k)); }
 
 export class Fishing {
-  // o: { scene, grade, water ('pond'), waterY, spot: { stand: [x, z], face (heading out over the water), deck (its
-  // height) }, inWater(x, z), reach: [nearest, farthest] a cast can land, game, t(key, vars), hint(text), say(key) (the
-  // farmer's lines), card(result, then(keep)), wake(ms) }
+  // o: { scene, grade, water ('pond' or 'river'), waterY, spot: { stand: [x, z], face (heading out over the water), deck
+  // (its height) }, inWater(x, z), reach: [nearest, farthest] a cast can land, game, t(key, vars), hint(text), say(key) (the
+  // farmer's lines), card(result, then(keep)), wake(ms); and where it's not a dock's end: bucketAt (Vector3), rodRest
+  // (Matrix4: the rod lying there, along its +z), castTo(x, z) ([x, z] the float goes to for a tap there, or null),
+  // drift(target, dt) (the float carried along) }
   constructor(o) {
     this.o = o; this.state = 'off'; this.t = 0; this.hold = false; this.T = 0; this.p = 0; this.rodIn = false;
     this.float = makeFloat(o.grade); o.scene.add(this.float);
@@ -113,12 +116,12 @@ export class Fishing {
     this.fwd = f; this.left = left;
     // the bucket on his left, the rod lying on his right: both stay on the dock (they're his, kept there)
     this.bucket = makeBucket(o.grade); o.scene.add(this.bucket);
-    const B = new THREE.Vector3(S.stand[0], S.deck, S.stand[1]).addScaledVector(left, 0.36).addScaledVector(f, -0.04); this.bucket.position.copy(B);
+    const B = o.bucketAt ? o.bucketAt.clone() : new THREE.Vector3(S.stand[0], S.deck, S.stand[1]).addScaledVector(left, 0.36).addScaledVector(f, -0.04); this.bucket.position.copy(B);
     this.bucketAt = B;
     this.deckRod = new THREE.Group(); this.deckRod.matrixAutoUpdate = false; const inner = makeRod(o.grade); inner.position.set(0, 0, 0); inner.rotation.set(0, 0, 0); this.deckRod.add(inner); o.scene.add(this.deckRod);
     const rp = new THREE.Vector3(S.stand[0], S.deck + 0.02, S.stand[1]).addScaledVector(left, -0.3).addScaledVector(f, 0.12);
     const z = f.clone().negate(), y = left.clone().negate(), x = new THREE.Vector3().crossVectors(y, z);          // (along the dock towards the bank, its reel to the side)
-    this.rodRest = new THREE.Matrix4().makeBasis(x, y, z).setPosition(rp);
+    this.rodRest = o.rodRest ? o.rodRest.clone() : new THREE.Matrix4().makeBasis(x, y, z).setPosition(rp);
     this.deckRod.matrix.copy(this.rodRest); this.deckRod.updateMatrixWorld(true);
     const sh = new THREE.Mesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#203747', transparent: true, opacity: 0, depthWrite: false }));
     sh.material.userData.noGrade = true; sh.renderOrder = 2; sh.visible = false; o.scene.add(sh); this.shadow = sh;
@@ -166,13 +169,17 @@ export class Fishing {
   tapWater(x, z) {
     if (this.state !== 'ready') return false;
     const S = this.o.spot, h = S.face, fx = Math.sin(h), fz = Math.cos(h);
-    let dx = x - S.stand[0], dz = z - S.stand[1], d = Math.hypot(dx, dz);
-    if (d < 1e-3) { dx = fx; dz = fz; d = 1; }
-    let a = Math.atan2(dx, dz) - h; a = Math.atan2(Math.sin(a), Math.cos(a)); a = clamp(a, -1.0, 1.0);      // (out in front, not behind him)
-    const [r0, r1] = this.o.reach; d = clamp(d, r0, r1);
-    let tx = S.stand[0] + Math.sin(h + a) * d, tz = S.stand[1] + Math.cos(h + a) * d;
-    for (let k = 0; k < 12 && !this.o.inWater(tx, tz); k++) { d = Math.max(r0, d - 0.25); a *= 0.8; tx = S.stand[0] + Math.sin(h + a) * d; tz = S.stand[1] + Math.cos(h + a) * d; }
-    if (!this.o.inWater(tx, tz)) return false;
+    let tx, tz;
+    if (this.o.castTo) { const c = this.o.castTo(x, z); if (!c) return false; [tx, tz] = c; }      // (the river: on the stream, downstream)
+    else {
+      let dx = x - S.stand[0], dz = z - S.stand[1], d = Math.hypot(dx, dz);
+      if (d < 1e-3) { dx = fx; dz = fz; d = 1; }
+      let a = Math.atan2(dx, dz) - h; a = Math.atan2(Math.sin(a), Math.cos(a)); a = clamp(a, -1.0, 1.0);      // (out in front, not behind him)
+      const [r0, r1] = this.o.reach; d = clamp(d, r0, r1);
+      tx = S.stand[0] + Math.sin(h + a) * d; tz = S.stand[1] + Math.cos(h + a) * d;
+      for (let k = 0; k < 12 && !this.o.inWater(tx, tz); k++) { d = Math.max(r0, d - 0.25); a *= 0.8; tx = S.stand[0] + Math.sin(h + a) * d; tz = S.stand[1] + Math.cos(h + a) * d; }
+      if (!this.o.inWater(tx, tz)) return false;
+    }
     const bite = this.o.game.castWorm(this.o.water);
     if (!bite) { this.o.hint(this.o.t('fish_noworms')); return true; }
     this.bite = bite; this.refreshBar();
@@ -215,6 +222,7 @@ export class Fishing {
       }
     } else if (this.state === 'wait' || this.state === 'nibble' || this.state === 'bite') {
       let dip = 0;
+      if (this.o.drift) this.o.drift(this.target, dt);          // (the river: carried off downstream, as far as the line lets it)
       if (this.state === 'wait' && this.t > this.waitFor) { this.state = 'nibble'; this.t = 0; }
       if (this.state === 'nibble') {
         const k = Math.floor(this.t / 0.7), u = (this.t % 0.7) / 0.7;

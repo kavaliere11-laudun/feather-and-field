@@ -2713,3 +2713,28 @@ the birds already had.
   (EN upright, FR sideways: the cards at levels 2 and 3, shy, friendly, asked, the visit watched: her beak, his palm,
   his pocket, nothing left lying about; the rooster's three; the dock's card; the next day; the night; a reload);
   `wormclose.mjs` takes pictures of each moment (VIEW=game: from the game's camera).
+
+## Release 5, step 2: the river and the Book's fish pages (28 Oct 2026; Audrey, on the fixed catch: "Perfect, carry on")
+
+- **The river** (main.js `riverInfo`, `riverRig`, `riverRoute`, `riverCast`, `riverDrift`; fishing.js with `bucketAt`,
+  `rodRest`, `castTo`, `drift`): from level 8, fished from the footbridge on the west stream (the one at -15.2, -7.0).
+  From level 8 his second rod lies along the bridge's deck on his right (its grip by his foot, down the arch's slope,
+  resting on it) and a bucket stands by his left foot. Tap the footbridge for its card (the river's seven fish: minnow,
+  gudgeon, dace, chub, the brown trout and the grayling, and Old Snapjaw the pike; the worms; Go fishing; a tin). He
+  walks onto it from its end nearer the farm, to the middle of its downstream side, up on the arch, and picks the rod
+  up, facing down the stream. A tap on the water downstream casts there: on the stream, in its banks, 0.9 to 3.6 m down
+  from the bridge (a tap upstream or off the water: nothing); the float then drifts down with the current (0.09 m a
+  second, as far as the line lets it, a little over 4 m). The bite, the reel and the catch as at the pond; Old Snapjaw
+  goes back into the river from the bridge. The level-8 card: "Fishing in the river: tap its footbridge", with "Show me
+  the river". FISHERS holds each water's fishing (each its own rod and bucket); FISHING the one he's at.
+- **The footbridges' decks** (`bridgeDecks`): measured on the model with fresh matrices, and with a few rays across the
+  deck at each step (one between two planks found no deck: the farmer dipped 4 cm in the middle of the bridge).
+- **The Breed Book's fish pages** (`gameUI.fishPages`): from level 3 the Book has two tabs, Breeds and Fish. Fish: "2 of
+  14 fish caught", the pond's seven and the river's: each its picture (dark till you've caught one), its name, how rare
+  (Common, ✦ Rare, ✦✦ Legendary), caught (how many, your biggest) or not yet (or from which level), its sizes and about
+  what it sells for (a legendary one: its photo's price).
+- **Tests**: `rivertest.mjs` (EN upright, FR sideways: the footbridge's card at levels 7 and 8, the level card's look at
+  the river, the rod and bucket, the walk out, the cast on the stream and the drift, a river fish landed and its card,
+  into the bucket, Old Snapjaw back into the river, Stop, a reload, the Book's fish pages); `fishclose.mjs` and
+  `fishfilm.mjs` with WATER=river.
+

@@ -406,7 +406,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -1595,12 +1595,16 @@ function buildNav(wild = false) {
 let BRIDGES = null;
 function bridgeDecks() {
   if (BRIDGES || !parts.bridge) return BRIDGES || [];
+  parts.bridge.updateMatrixWorld(true);                  // (measured on the model as it is, however early this is first asked)
   const box = new THREE.Box3().setFromObject(parts.bridge), rc = new THREE.Raycaster(), prof = [], N = 24;
   const meshes = meshesOf(parts.bridge);
-  for (let k = 0; k <= N; k++) {
-    const x = box.min.x + (box.max.x - box.min.x) * k / N;
-    rc.set(new THREE.Vector3(x, 3, 0), new THREE.Vector3(0, -1, 0));
-    const hit = rc.intersectObjects(meshes, false)[0]; prof.push(hit ? Math.max(0, hit.point.y) : 0);
+  for (let k = 0; k <= N; k++) {                          // (the highest of a few rays across the deck: one between two planks finds no deck)
+    const x = box.min.x + (box.max.x - box.min.x) * k / N; let y = 0;
+    for (const dz of [-0.16, -0.08, 0, 0.08, 0.16]) for (const dx of [-0.015, 0, 0.015]) {
+      rc.set(new THREE.Vector3(x + dx, 3, dz), new THREE.Vector3(0, -1, 0));
+      const hit = rc.intersectObjects(meshes, false)[0]; if (hit) y = Math.max(y, hit.point.y);
+    }
+    prof.push(y);
   }
   BRIDGES = V.props.filter(p => p.model === 'bridge').map(p => {
     const m = place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1);
@@ -3092,9 +3096,9 @@ function tapAt(x, y) {
   if (SHOWDAY) return;                                   // (the show day: watch, or Skip)
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond casts there)
-    const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -POND_Y), new THREE.Vector3());
-    if (gp && fishWater(gp.x, gp.z, -1.2) && FISHING.tapWater(gp.x, gp.z)) return;
+  if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond, or the river, casts there)
+    const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -FISHING.o.waterY), new THREE.Vector3());
+    if (gp && (FISHING.o.water === 'river' ? riverWater(gp.x, gp.z, -1.2) : fishWater(gp.x, gp.z, -1.2)) && FISHING.tapWater(gp.x, gp.z)) return;
   }
   let best = null, bestD = Infinity;
   const s = new THREE.Sphere(), w = new THREE.Vector3();
@@ -3184,6 +3188,8 @@ function tapAt(x, y) {
     }
     // the game: the pond's dock (fishing: its card)
     if (GAME_MODE && game.data && dockInfo()) { loc.copy(ray.ray).applyMatrix4(inv.copy(DOCK.inv)); nb.copy(DOCK.box); nb.max.y += 0.4; if (loc.intersectBox(nb, hitP)) { dockCard(); return; } }
+    // (the river's footbridge: its card)
+    if (GAME_MODE && game.data && riverInfo()) { const R = riverInfo(); loc.copy(ray.ray).applyMatrix4(R.B.inv); nb.min.set(R.B.x0, -0.05, -R.B.half - 0.1); nb.max.set(R.B.x1, 1.0, R.B.half + 0.1); if (loc.intersectBox(nb, hitP)) { riverCard(); return; } }
     // the game: the farmhouse, the Breed Book on its shelf (after the birds and the coops, before the land behind it); a
     // decoration or the wheat field in front of it: theirs (the field's card, or the harvest; the hives' honey)
     const hd = GAME_MODE && game.data && farmhouseAt(ray.ray) ? farmhouseAt.dist : Infinity;
@@ -4042,8 +4048,11 @@ function geeseFence() {
 function greetGeese(s) { if (geeseFlock && s[3]) geeseFlock.greetAt(s[3].gin[0], s[3].gin[1], s[3].toIn + Math.PI); }
 // ------------------------------------------------------------------ fishing (release 5; fishing.js, game.js FISHING, farmlife.js
 // fishAt): tap the pond's dock for its card (the pond's fish, the worms, Go fishing, a tin of worms); the farmer walks out
-// to its end (by a gate in the fence while the field round it is wild meadow) and fishes there till you say Stop
+// to its end (by a gate in the fence while the field round it is wild meadow) and fishes there till you say Stop. From
+// level 8 the same on the river, from the footbridge on the west stream (riverInfo). FISHERS: the two places' fishing,
+// each with its rod and bucket; FISHING: the one he's at (or was last)
 let DOCK = null, DGATE = null, FISHING = null, FSEQ = null;
+const FISHERS = {};
 const allGates = () => (DGATE && !DGATE.shared ? [...GATES, DGATE] : GATES);
 const POND_Y = 0.008;
 // the dock: its bank end and its far end, the way out along it, its deck's height, where the farmer stands to fish (at its
@@ -4115,35 +4124,130 @@ function fishRoute() {
   return { start: st, toIn: Math.atan2(D.dir.x, D.dir.z), gate: null, inPts: [deckIn, D.stand], outPts: [deckIn, st], face: D.face };
 }
 // the fishing's things on the dock (his rod lying there, his bucket) from the day the pond opens, and the fishing itself
+const fishText = (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f');
+const fishCommon = () => ({ scene, grade: nightGrade, game, t: fishText, hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
 function fishingRig() {
-  const D = dockInfo(); if (!D || FISHING) return FISHING;
-  FISHING = new Fishing({ scene, grade: nightGrade, water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck },
-    inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2], game, t: (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f'),
-    hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
+  const D = dockInfo(); if (!D || FISHERS.pond) return FISHERS.pond;
+  FISHERS.pond = new Fishing(Object.assign(fishCommon(), { water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck }, inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2] }));
+  if (!FISHING) FISHING = FISHERS.pond;
   renderer.shadowMap.needsUpdate = true;
-  return FISHING;
+  return FISHERS.pond;
 }
-function startFishing() {
-  const D = dockInfo();
-  if (!D || !farmLife || !GAME_MODE || !game.fishOpen('pond')) return 'none';
+// off to fish (water: 'pond' or 'river'): 'ok', or why not ('none', 'night', 'on': already fishing, 'busy', 'worms': none)
+function startFishing(water = 'pond') {
+  const D = water === 'river' ? riverInfo() : dockInfo();
+  if (!D || !farmLife || !GAME_MODE || !game.fishOpen(water)) return 'none';
   if (farmerAsleep() || DAY.hour >= 21.6) return 'night';
   if (FSEQ || (FISHING && FISHING.on)) return 'on';
   if (farmLife.running || farmLife.home || farmLife.pending) return 'busy';          // (out of the door, or busy in a pen: off to the dock straight after)
   if (!game.worms()) return 'worms';
-  const R = fishRoute(); if (!R) return 'none';
-  fishingRig();
+  const R = water === 'river' ? riverRoute() : fishRoute(); if (!R) return 'none';
+  const Fz = water === 'river' ? riverRig() : fishingRig(); FISHING = Fz;
   const F = Object.assign({}, R, { enter() { if (R.gate) { R.gate.want = 1; wake(1000); } }, leave() { if (R.gate) { R.gate.want = 0; wake(1000); } }, hens: () => [], at() {},
-    arrived: () => FISHING.start(), drive: (Lf, dt) => FISHING.drive(Lf, dt), done: () => { FSEQ = null; if (FISHING.on) FISHING.end(); } });
+    arrived: () => Fz.start(), drive: (Lf, dt) => Fz.drive(Lf, dt), done: () => { FSEQ = null; if (Fz.on) Fz.end(); } });
   const seq = farmLife.fishAt(F); if (!seq) return 'busy';
   FSEQ = seq; wake(1500);
   return 'ok';
 }
-function dockCard() {
+// the card of the pond's dock (or the river's footbridge): its fish, the worms, Go fishing, a tin of worms
+function dockCard(water = 'pond') {
   holdBird(null); henOff();
-  const open = game.fishOpen('pond'), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
-  gameUI.dockCard({ open, worms: open ? game.worms() : 0, state: st }, {
-    go: () => { const r = startFishing(); gameUI.close(); hint(game.t(r === 'ok' ? 'fish_going' : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
-    buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(); } } });
+  const open = game.fishOpen(water), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
+  gameUI.dockCard({ water, open, worms: open ? game.worms() : 0, state: st }, {
+    go: () => { const r = startFishing(water); gameUI.close(); hint(game.t(r === 'ok' ? (water === 'river' ? 'fish_going_river' : 'fish_going') : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
+    buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(water); } } });
+}
+const riverCard = () => dockCard('river');
+// ---- the river (release 5 step 2): the footbridge on the west stream; he stands at the middle of its downstream side,
+// facing down the stream, his rod lying along the deck on his right and his bucket by his left foot. A tap on the water
+// downstream casts there (on the stream, 0.9 to 3.6 m down from the bridge); the float drifts down with the current
+let RIVER = null;
+const RIVER_Y = 0.0075, RIVER_BRIDGE = [-15.246, -6.97], RIVER_DRIFT = 0.09;
+function riverInfo() {
+  if (RIVER) return RIVER;
+  const B = bridgeDecks().find(b => Math.hypot(b.pos[0] - RIVER_BRIDGE[0], b.pos[2] - RIVER_BRIDGE[1]) < 0.5); if (!B || !V.streams) return null;
+  const m = B.inv.clone().invert(), mid = new THREE.Vector3(0, 0, 0).applyMatrix4(m), axis = new THREE.Vector3(1, 0, 0).transformDirection(m).setY(0).normalize();
+  // the stream under it: the nearest of the streams, its line measured along (metres), flowing from its first point to its last
+  let best = null;
+  V.streams.forEach((st, k) => { for (let i = 1; i < st.length; i++) { const q = segNear(st[i - 1], st[i], mid.x, mid.z); if (!best || q.d < best.d) best = { k, i, ...q }; } });
+  const pts = V.streams[best.k].map(q => [q[0], q[2]]), cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  const S = { pts, cum, half: V.streamHalf };
+  const s0 = cum[best.i - 1] + best.u * (cum[best.i] - cum[best.i - 1]);
+  const at = sAt(S, s0), flow = new THREE.Vector3(at.dx, 0, at.dz);
+  const n = new THREE.Vector3(-axis.z, 0, axis.x); if (n.dot(flow) < 0) n.negate();          // (the bridge's downstream side)
+  const face = Math.atan2(flow.x, flow.z), f = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)), left = new THREE.Vector3(Math.cos(face), 0, -Math.sin(face));
+  const standV = mid.clone().addScaledVector(n, B.half * B.s - 0.24), stand = [standV.x, standV.z];
+  // his bucket by his left foot along the rail, his rod lying along the deck on his right, its grip by his foot, pointing off
+  // to the bridge's end and down its slope (resting on the deck, not through it)
+  const along = axis.dot(left) > 0 ? axis.clone() : axis.clone().negate();               // (along the bridge to his left)
+  const bk = standV.clone().addScaledVector(along, 0.38); bk.y = groundY(bk.x, bk.z);
+  const g0 = standV.clone().addScaledVector(along, -0.3).addScaledVector(n, -0.04); g0.y = groundY(g0.x, g0.z) + 0.02;
+  let tipV = g0.clone().addScaledVector(along, -1.55); tipV.y = groundY(tipV.x, tipV.z) + 0.02;
+  for (let k = 1; k < 10; k++) { const u = k / 10, q = g0.clone().lerp(tipV, u), gy = groundY(q.x, q.z) + 0.02; if (q.y < gy) tipV.y += (gy - q.y) / u; }      // (lifted where the arch would be in the way)
+  const zA = tipV.clone().sub(g0).normalize(), yA = new THREE.Vector3().crossVectors(zA, new THREE.Vector3(0, 1, 0)).normalize(), xA = new THREE.Vector3().crossVectors(yA, zA);      // (its reel to the side, as on the dock)
+  const rodRest = new THREE.Matrix4().makeBasis(xA, yA, zA).setPosition(g0);
+  // the bridge's two ends (on the ground) and the way onto it from the farm
+  const e1 = new THREE.Vector3(B.x0, 0, 0).applyMatrix4(m), e2 = new THREE.Vector3(B.x1, 0, 0).applyMatrix4(m);
+  return (RIVER = { B, m, mid: [mid.x, mid.z], axis, n, S, s0, stand, face, deck: groundY(stand[0], stand[1]), bucket: bk, rodRest, ends: [[e1.x, e1.z], [e2.x, e2.z]] });
+}
+// a stream's line: the point s metres along it (and its way), the nearest point on it to (x, z) (s, and how far across)
+function segNear(a, b, x, z) { const ax = a[0], az = a[2], bx = b[0] - ax, bz = b[2] - az, L2 = bx * bx + bz * bz || 1, u = Math.max(0, Math.min(1, ((x - ax) * bx + (z - az) * bz) / L2)); return { u, d: Math.hypot(x - ax - bx * u, z - az - bz * u) }; }
+function sAt(S, s) {
+  const { pts, cum } = S; s = Math.max(0, Math.min(cum[cum.length - 1], s));
+  let i = 1; while (i < pts.length - 1 && cum[i] < s) i++;
+  const a = pts[i - 1], b = pts[i], L = cum[i] - cum[i - 1] || 1, u = (s - cum[i - 1]) / L;
+  return { x: a[0] + (b[0] - a[0]) * u, z: a[1] + (b[1] - a[1]) * u, dx: (b[0] - a[0]) / L, dz: (b[1] - a[1]) / L };
+}
+function streamNear(S, x, z) {
+  const { pts, cum } = S; let best = null;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], bx = pts[i][0] - a[0], bz = pts[i][1] - a[1], L2 = bx * bx + bz * bz || 1, u = Math.max(0, Math.min(1, ((x - a[0]) * bx + (z - a[1]) * bz) / L2));
+    const px = a[0] + bx * u, pz = a[1] + bz * u, d = Math.hypot(x - px, z - pz);
+    if (!best || d < best.d) { const L = Math.sqrt(L2); best = { d, s: cum[i - 1] + u * L, lat: ((x - px) * -bz + (z - pz) * bx) / L }; }      // (lat: + to its left)
+  }
+  return best;
+}
+const RIVER_CAST = [0.9, 3.6];
+// the river's water near (x, z) (for a tap: within m of the stream's banks, downstream of the bridge a little way)
+function riverWater(x, z, m = 0) {
+  const R = riverInfo(); if (!R) return false;
+  const q = streamNear(R.S, x, z), ds = q.s - R.s0;
+  return q.d < R.S.half - m && ds > RIVER_CAST[0] - 0.6 + Math.min(0, m) && ds < RIVER_CAST[1] + 1.2;
+}
+// a tap's cast: on the stream, 0.9 to 3.6 m down from the bridge, a little to one side of its middle as tapped
+function riverCast(x, z) {
+  const R = riverInfo(); if (!R) return null;
+  const q = streamNear(R.S, x, z), ds = q.s - R.s0; if (ds < RIVER_CAST[0] - 0.8 || q.d > R.S.half + 1.2) return null;
+  const s = R.s0 + Math.max(RIVER_CAST[0], Math.min(RIVER_CAST[1], ds)), lat = Math.max(-1, Math.min(1, q.lat)) * (R.S.half - 0.17), p = sAt(R.S, s);
+  return [p.x - p.dz * lat, p.z + p.dx * lat];
+}
+// the current: the float carried down the stream, as far as the line lets it (a little over 4 m from the bridge)
+function riverDrift(t, dt) {
+  const R = riverInfo(); if (!R) return;
+  const q = streamNear(R.S, t.x, t.z), s = Math.min(R.s0 + RIVER_CAST[1] + 0.6, q.s + RIVER_DRIFT * dt), lat = Math.max(-(R.S.half - 0.15), Math.min(R.S.half - 0.15, q.lat)), p = sAt(R.S, s);
+  t.x = p.x - p.dz * lat; t.z = p.z + p.dx * lat;
+}
+function riverRig() {
+  const R = riverInfo(); if (!R || FISHERS.river) return FISHERS.river;
+  FISHERS.river = new Fishing(Object.assign(fishCommon(), { water: 'river', waterY: RIVER_Y, spot: { stand: R.stand, face: R.face, deck: R.deck }, inWater: (x, z) => riverWater(x, z, 0.12),
+    reach: [RIVER_CAST[0], RIVER_CAST[1] + 0.8], bucketAt: R.bucket, rodRest: R.rodRest, castTo: (x, z) => riverCast(x, z), drift: (t, dt) => riverDrift(t, dt) }));
+  if (!FISHING) FISHING = FISHERS.river;
+  renderer.shadowMap.needsUpdate = true;
+  return FISHERS.river;
+}
+// the farmer's way onto the footbridge and out to the middle of it (from its end nearer the farm), and back
+function riverRoute() {
+  const R = riverInfo(); if (!R) return null;
+  const nav = navGrid(), reach = farmReach(), door = farmDoor();
+  let best = null;
+  for (const e of R.ends) {
+    const out = [e[0] + (e[0] - R.mid[0]) * 0.35, e[1] + (e[1] - R.mid[1]) * 0.35], st = nav.nearestIn(reach, out[0], out[1], 3); if (!st) continue;
+    const d = Math.hypot(st[0] - door[0], st[1] - door[1]); if (!best || d < best.d) best = { d, e, st };
+  }
+  if (!best) return null;
+  const onto = [best.e[0] + (R.mid[0] - best.e[0]) * 0.12, best.e[1] + (R.mid[1] - best.e[1]) * 0.12], mid = [R.mid[0] + R.n.x * 0.05, R.mid[1] + R.n.z * 0.05];
+  return { start: best.st, toIn: Math.atan2(R.mid[0] - best.st[0], R.mid[1] - best.st[1]), gate: null, inPts: [onto, mid, R.stand], outPts: [mid, onto, best.st], face: R.face };
 }
 // each frame: the fishing (called away, by Rusty say: put away; night falling: wound in and home)
 function tickFishing(dt) {
@@ -4305,7 +4409,7 @@ let landOwned = -1;
 function syncLand(fresh = false) {
   if (!GAME_MODE || !game.data || !FIELDS) return;
   const n = game.data.land.length, sale = game.landForSale(), saleF = sale ? sale.field : -1;
-  const gk = (geeseOwned() ? 'geese' : '') + (game.fishOpen('pond') ? '+fish' : '');      // (the geese's gates: once they're on the farm; the dock's, once fishing's open)
+  const gk = (geeseOwned() ? 'geese' : '') + (game.fishOpen('pond') ? '+fish' : '') + (game.fishOpen('river') ? '+river' : '');      // (the geese's gates: once they're on the farm; the dock's, once fishing's open; the river's rod and bucket)
   if (fresh || n !== landOwned || gk !== LAND.gk) {
     const bought = !fresh && landOwned >= 0 && n > landOwned ? landOwned : -1;
     landOwned = n; LAND.gk = gk;
@@ -4317,6 +4421,7 @@ function syncLand(fresh = false) {
     GATES = pondGates(); for (const G of GATES) G.mesh = gateMesh(G);
     DGATE = dockGate(); if (DGATE && !DGATE.shared) DGATE.mesh = gateMesh(DGATE);
     if (game.fishOpen('pond')) fishingRig();
+    if (game.fishOpen('river')) riverRig();
     LAND.fence = buildFence(cutGates(fenceLines()));
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
@@ -6209,9 +6314,9 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
-  game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b),
+  game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; },
