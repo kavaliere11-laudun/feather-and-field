@@ -536,6 +536,7 @@ export class FarmLife {
       if (W.pour) { P.shL[1] -= 45 * W.pour; P.elL[1] -= 25 * W.pour; P.wrL[1] += 70 * W.pour; P.chest[1] += 8 * W.pour; }      // the pail tipped
       if (W.scatter !== undefined) { const k = Math.sin(((W.scatter * 1.1) % 1) * Math.PI); P.shR[1] += -30 * k; P.elR[1] += 20 * k; P.wrR[1] += -30 * k; }
       if (W.talk) Fc.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'o';
+      if (W.anim) W.anim(P, Fc, t);                           // (a task's own movement: the fishing's reel wound, a hop and a fist pumped)
     };
     f.want = A;
     f.root.rotation.y = this.heading;

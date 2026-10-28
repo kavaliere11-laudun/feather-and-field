@@ -2678,7 +2678,8 @@ the birds already had.
   slip back in. Keep fishing: he picks the rod up again. Stop: the rod left lying on the dock by the bucket, back along
   the dock and away. Night falling (22:15): he winds in and goes home; Rusty: put away. (Audrey, 28 Oct, on the first
   version: the fish went through his hands, the rod just vanished, the fish flew into the bucket: now it's all done by
-  hand. `fishclose.mjs` takes close-up pictures of each moment, straight off the canvas.)
+  hand; and the reel's winding and the hooray's hop and pumped fist now really move: a task's own movement, `want.anim`,
+  is passed on to the rig. `fishclose.mjs` takes close-up pictures of each moment, straight off the canvas.)
 - **Tests**: `fishrules.mjs` (no browser: the levels, the worms, the draw, landing, the save) and `fishtest.mjs` (EN
   upright, FR sideways: the dock's card at levels 2 and 3, the level card's look at the pond, the walk out through the
   gate, a cast, too soon, the bite, the reel, the new fish's hooray and card, paid, keep, a bite missed, the line

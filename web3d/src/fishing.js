@@ -377,15 +377,20 @@ export class Fishing {
     }
     if (st === 'show' || st === 'card' || st === 'trophy') {
       faceTo(toCam, 3);                              // (turned round to show it to you)
-      W.face = 'happy'; W.pose = st === 'trophy' ? 'trophy' : 'showfish';
+      W.face = 'happy'; W.pose = st === 'trophy' && t < 2.1 ? 'trophy' : 'showfish';
       const two = this.hands(rig, Lf, 'two'), one = this.hands(rig, Lf, 'left');
+      // (a new fish: slid onto his left palm while both hands are still under it; then up goes the right fist, pumped, with a
+      // hop; the arm down again before the fish is back on both palms: it never follows the fist up)
       if (st === 'trophy') {
-        W.anim = (P) => { const k = Math.sin(t * 8); P.rootZ += 0.045 * Math.max(0, k); P.shR[1] += 22 * k; P.elR[1] -= 14 * k; };      // (a hop and a fist pumped, hooray)
-        const k = sm(clamp(t / 0.35, 0, 1)) * sm(clamp((2.6 - t) / 0.35, 0, 1)); this.place(two.pos.lerp(one.pos, k), two.quat.slerp(one.quat, k));
-        if (t > 2.6) this.showCard();
+        if (t < 2.1) W.anim = (P) => { const k = Math.sin(t * 8) * sm(clamp(t / 0.4, 0, 1)) * sm(clamp((2.0 - t) / 0.3, 0, 1)); P.rootZ += 0.04 * Math.max(0, k); P.shR[1] += 20 * k; P.elR[1] -= 14 * k; };      // (hooray)
+        const k = sm(clamp((t - 2.45) / 0.35, 0, 1)); this.place(one.pos.lerp(two.pos, k), one.quat.slerp(two.quat, k));
+        if (t > 2.85) this.showCard();
+      } else if (st === 'show' && this.result.first) {
+        const k = sm(clamp((t - 0.55) / 0.45, 0, 1)); this.place(two.pos.lerp(one.pos, k), two.quat.slerp(one.quat, k));
+        if (t > 1.05) { this.state = 'trophy'; this.t = 0; }
       } else {
         this.place(two.pos, two.quat);
-        if (st === 'show' && t > (this.result.first ? 1.0 : 1.6)) { if (this.result.first) { this.state = 'trophy'; this.t = 0; } else this.showCard(); }
+        if (st === 'show' && t > 1.6) this.showCard();
       }
       return false;
     }
