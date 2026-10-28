@@ -416,8 +416,15 @@ export class Fishing {
         W.pose = t < 0.6 ? 'showfish' : t < 2.0 ? 'release' : 'turn';
         if (this.fish) {
           const two = this.hands(rig, Lf, 'two'), B = this.bucketAt, k = clamp((t - 1.05) / 0.5, 0, 1);
-          const into = new THREE.Vector3(B.x, B.y + 0.09, B.z);
-          if (k <= 0) this.place(two.pos, two.quat); else this.place(two.pos.lerp(into, sm(k)), two.quat);
+          const into = new THREE.Vector3(B.x, B.y + 0.12, B.z);
+          // (slipping off his palms head first: turned nose forwards and down into the water, side on to you as he faces the
+          // bucket, rather than end on; back to a size the bucket holds as it goes, from larger than life in his hands)
+          const L = this.fish.spec.L, s0 = this.fishLen / L, s1 = Math.min(this.fishLen, 0.26) / L;
+          this.fish.root.scale.setScalar(s0 + (s1 - s0) * sm(k));
+          const f = new THREE.Vector3(Math.sin(Lf.heading), 0, Math.cos(Lf.heading)), up = new THREE.Vector3(0, 1, 0), lf = new THREE.Vector3(Math.cos(Lf.heading), 0, -Math.sin(Lf.heading)), a = 0.85;
+          const dive = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(lf, up.clone().multiplyScalar(Math.cos(a)).addScaledVector(f, Math.sin(a)), f.clone().multiplyScalar(Math.cos(a)).addScaledVector(up, -Math.sin(a))));
+          const turn = sm(clamp((t - 0.95) / 0.45, 0, 1));
+          if (k <= 0) this.place(two.pos, two.quat.slerp(dive, turn * 0.35)); else this.place(two.pos.lerp(into, sm(k)), two.quat.slerp(dive, Math.max(turn * 0.35, sm(k))));
           if (k >= 1) { if (!this.splashed) { this.splashed = true; this.rings.add(B.x, B.z, 0.1, 0.5); } this.fish.root.removeFromParent(); this.fish = null; }
         }
       }

@@ -2,7 +2,7 @@
 // fishclose.mjs [OUT]   (AZ: the view's turn in degrees, default 0 = the game's view; DIST; PORT)
 // A new farm at level 3, out on the dock, a cast, a bite, reeled in; then a close look at each moment: on the line, taken
 // in his left hand, the rod laid down, both hands, shown to us, hooray, the card, lowered into the bucket, the rod picked up.
-// Pictures OUT/close_NN_<moment>.png.
+// Pictures OUT/close_NN_<moment>.png (EL: the camera's height in degrees, default 18; AT_Y: the height looked at; DPR).
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/fishclose', AZ = +(process.env.AZ || 0), DIST = +(process.env.DIST || 5.5), W = 402, H = 874;
@@ -17,11 +17,12 @@ const load = async () => { await p.waitForFunction(() => window.__farm && docume
 let n = 0;
 const close = async name => {      // (the picture straight off the canvas, just drawn: no waiting on the page for a screenshot)
   const url = await p.evaluate(([az, dist]) => { const f = window.__farm, L = f.farmer();
-    f.closeShot({ at: [L.pos.x, L.pos.y + +(window.__atY || 0.6), L.pos.z], az, el: 18, dist, fov: 30 }); return document.querySelector('canvas').toDataURL('image/png'); }, [AZ, DIST]);
+    f.closeShot({ at: [L.pos.x, L.pos.y + +(window.__atY || 0.6), L.pos.z], az, el: +(window.__el || 18), dist, fov: 30 }); return document.querySelector('canvas').toDataURL('image/png'); }, [AZ, DIST]);
   fs.writeFileSync(`${OUT}/close_${String(n++).padStart(2, '0')}_${name}.png`, Buffer.from(url.split(',')[1], 'base64'));
 };
 const state = () => p.evaluate(() => { const F = window.__farm.fishing(); return F ? F.state : null; });
 const until = async (want, secs) => { for (let t = 0; t < secs * 10 && (await state()) !== want; t++) await run(0.1); return (await state()) === want; };
+if (process.env.EL) await ctx.addInitScript(e => { window.__el = e; }, +process.env.EL);
 if (process.env.AT_Y) await ctx.addInitScript(y => { window.__atY = y; }, +process.env.AT_Y);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });

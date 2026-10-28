@@ -2674,7 +2674,8 @@ the birds already had.
   his left palm, a hop and his right fist punched in the air ("A new fish!"). Its card (`gameUI.fishCard`): its
   picture, its name and size, new to your book or your biggest yet, sold live (or a legendary one's photo), the coins
   and XP, how many caught; Keep fishing (with the worms left) or Stop. Then he turns to the bucket, crouches and lowers
-  it into the water with a little splash; a legendary one: he turns to the water, crouches at the edge and lets her
+  it in: it slips off his palms head first into the water with a little splash (back to a size the bucket holds as it
+  goes: it's larger than life in his hands, to read on a phone); a legendary one: he turns to the water, crouches at the edge and lets her
   slip back in. Keep fishing: he picks the rod up again. Stop: the rod left lying on the dock by the bucket, back along
   the dock and away. Night falling (22:15): he winds in and goes home; Rusty: put away. (Audrey, 28 Oct, on the first
   version: the fish went through his hands, the rod just vanished, the fish flew into the bucket: now it's all done by
