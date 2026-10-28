@@ -81,8 +81,12 @@ initPlay({ scene, fxTexture64: (size, draw) => fxTexture64(size, draw) });
 scene.background = new THREE.Color('#8cb85c');
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 300);
 const view = { target: new THREE.Vector3(), size: 4.4, min: 1.4, max: 9 };
-// the game's view: 42 degrees down, 45 degrees round
+// the game's view: 42 degrees down, 45 degrees round (view.az: turned round by two fingers, release 6; VIEW_DIR, the way
+// to the camera, follows it, and everything that faces the player with it)
+const VIEW_AZ0 = 45 * DEG;
+view.az = VIEW_AZ0;
 const VIEW_DIR = new THREE.Vector3(Math.sin(45 * DEG) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(45 * DEG) * Math.cos(42 * DEG)).normalize();
+function setViewDir() { VIEW_DIR.set(Math.sin(view.az) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(view.az) * Math.cos(42 * DEG)).normalize(); }
 const PITCH_SIN = Math.sin(42 * DEG);
 // the game played sideways first (Audrey, 24 Oct): held sideways the farm comes a little closer (its views, and how near
 // and far a pinch goes), so it fills the shorter height as it fills the width upright; turning the phone swaps it over
@@ -3016,14 +3020,14 @@ function livePlots() {
 
 // ------------------------------------------------------------------ touch, mouse and trackpad: drag to move, pinch or scroll to zoom, tap a hen
 const pointers = new Map();
-let drag = null, pinch = 0;
+let drag = null, pinch = 0, twist = null;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 canvas.addEventListener('pointerdown', e => {
   if (replay && replay.on) return;                       // (the morning replay films itself)
-  canvas.setPointerCapture(e.pointerId);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* (a pointer the page made itself, in a test) */ }
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
-  if (pointers.size === 2) { drag = null; pinch = spread(); MOVE.drag = null; DMOVE.drag = null; }
+  if (pointers.size === 2) { drag = null; pinch = spread(); twist = { a: fingersAngle(), sum: 0, on: false }; MOVE.drag = null; DMOVE.drag = null; viewTurn = null; }
   if (MOVE.plot && pointers.size === 1 && moveGrab(e)) drag = { moved: false, coop: true };      // (moving a coop: a finger on it carries it)
   if (DMOVE.id && pointers.size === 1 && decGrab(e)) drag = { moved: false, coop: true };       // (and a decoration)
   wake(1000);
@@ -3038,6 +3042,12 @@ canvas.addEventListener('pointermove', e => {
   }
   if (pointers.size >= 2) {
     const s = spread(); if (pinch > 0 && s > 0) zoomBy(pinch / s); pinch = s;
+    // (two fingers turning: the farm turns with them, round the middle of the screen, once they've turned a little way:
+    // a pinch alone doesn't turn it)
+    if (twist && !inside.open && !SHOWDAY && !(replay && replay.on)) {
+      const a = fingersAngle(), da = Math.atan2(Math.sin(a - twist.a), Math.cos(a - twist.a)); twist.a = a; twist.sum += da;
+      if (!twist.on && Math.abs(twist.sum) > 0.14) { twist.on = true; turnView(twist.sum); } else if (twist.on) turnView(da);
+    }
   } else if (MOVE.drag && MOVE.drag.id === e.pointerId) {
     if (Math.hypot(p.x - p.x0, p.y - p.y0) > 6 && drag) drag.moved = true;
     if (!drag || drag.moved) moveDrag(p.x, p.y);
@@ -3056,7 +3066,7 @@ function endPointer(e) {
   if (MOVE.drag && MOVE.drag.id === e.pointerId) MOVE.drag = null;
   if (DMOVE.drag && DMOVE.drag.id === e.pointerId) DMOVE.drag = null;
   if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : DMOVE.id ? decTap : tapAt)(e.clientX, e.clientY);
-  if (pointers.size < 2) pinch = 0;
+  if (pointers.size < 2) { pinch = 0; twist = null; }
   if (pointers.size === 0) drag = null;
 }
 canvas.addEventListener('pointerup', endPointer);
@@ -3065,6 +3075,43 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); if (replay && replay
 document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
+function fingersAngle() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.atan2(a[1].y - a[0].y, a[1].x - a[0].x); }
+// ---- the view turned (release 6, Audrey: "Release 6: turn the farm"; the plan: "Two fingers turn the view 360°, and a
+// compass button brings back the usual view"): turned by da (radians, the way the fingers turn on the screen), round the
+// middle of the screen; only ever by the player's fingers (or the compass, or keys Q and E on a computer), never by itself
+let viewTurn = null;
+function turnView(da) {
+  view.az = Math.atan2(Math.sin(view.az + da), Math.cos(view.az + da));
+  setViewDir(); placeCamera(); compassShow(); wake(800);
+}
+function setViewAz(az) { view.az = az; setViewDir(); placeCamera(); compassShow(); }
+const viewOff = () => Math.atan2(Math.sin(view.az - VIEW_AZ0), Math.cos(view.az - VIEW_AZ0));
+// the compass (top right, once the view's turned): its needle points the usual way up; a tap turns the view back to it
+const compassEl = document.getElementById('compass'), needleEl = compassEl && compassEl.querySelector('.needle');
+function compassShow() {
+  if (!compassEl) return;
+  const on = GAME_MODE && Math.abs(viewOff()) > 3 * DEG && !inside.open;
+  compassEl.hidden = !on; compassEl.setAttribute('aria-label', LANG === 'fr' ? 'Revenir à la vue habituelle' : 'Back to the usual view');
+  if (on && needleEl) {
+    const t = view.target, p0 = t.clone().project(camera), p1 = t.clone().add(new THREE.Vector3(-Math.sin(VIEW_AZ0), 0, -Math.cos(VIEW_AZ0))).project(camera);
+    needleEl.style.transform = 'rotate(' + Math.atan2(p1.x - p0.x, (p1.y - p0.y) * (canvas.clientHeight / Math.max(1, canvas.clientWidth))) + 'rad)';
+  }
+}
+if (compassEl) compassEl.addEventListener('click', () => { const off = viewOff(); viewTurn = { from: view.az, by: -off, t: 0, T: 0.35 + 0.35 * Math.abs(off) / Math.PI }; wake(1200); });
+let compassInside = false;
+function tickViewTurn(dt) {
+  if (inside.open !== compassInside) { compassInside = inside.open; compassShow(); }      // (no compass inside a coop)
+  if (!viewTurn) return;
+  if (pointers.size >= 2) { viewTurn = null; return; }          // (fingers turning it again: theirs)
+  const V = viewTurn; V.t += dt; const u = Math.min(1, V.t / V.T), e = u * u * (3 - 2 * u);
+  setViewAz(V.from + V.by * e);
+  if (u >= 1) { viewTurn = null; setViewAz(VIEW_AZ0); }
+  wake(300);
+}
+window.addEventListener('keydown', e => {                       // (on a computer: Q and E turn it, as two fingers would)
+  if (!GAME_MODE || e.target && /INPUT|TEXTAREA/.test(e.target.tagName) || inside.open || SHOWDAY || (replay && replay.on)) return;
+  if (e.key === 'q' || e.key === 'Q') turnView(-12 * DEG); else if (e.key === 'e' || e.key === 'E') turnView(12 * DEG);
+});
 function zoomBy(f) {
   const before = view.size;
   view.size = Math.min(view.max, Math.max(view.min, view.size * f));
@@ -4868,7 +4915,7 @@ async function startShowDay(r, list) {
   { const wo = game.outfitWorn(); if (wo !== 'classic' && outfitLoaded(wo)) SHOWDAY.farmer.wear(wo); }      // (in the outfit he wears on the farm)
   SHOWDAY.real = real; if (real) real.root.visible = false;
   if (farmLife) farmLife.group.visible = false;
-  showFrom = [view.target.x, view.target.z, view.size];
+  showFrom = [view.target.x, view.target.z, view.size, view.az]; setViewAz(VIEW_AZ0); viewTurn = null;      // (the tent from the usual view)
   const c = SHOWDAY.centre(), asp = innerWidth / Math.max(1, innerHeight); focusOn(c.x, c.z, Math.min(view.max, Math.max(2.25, 6.2 / (2 * asp))));      // (the whole tent across the screen, upright too)
   gameUI.skipBtn(true, () => { if (SHOWDAY) SHOWDAY.skip(); });
   wake(1000);
@@ -4878,7 +4925,7 @@ function endShowDay() {
   if (SHOWDAY.real) SHOWDAY.real.root.visible = true;
   if (farmLife) farmLife.group.visible = true;
   SHOWDAY.dispose(); SHOWDAY = null; gameUI.skipBtn(false);
-  if (showFrom) { focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was)
+  if (showFrom) { setViewAz(showFrom[3] ?? VIEW_AZ0); focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was, turned as it was)
   wake(300);
 }
 // ---- Today's jobs (release 1 step 9c; game.js jobs): the clipboard up top; a job done: Collect its reward
@@ -6157,7 +6204,8 @@ function castFor(rec) {
 function replayLive(on, rec) {
   const castGroups = c => [c.fam.group, c.geese && c.geese.group, c.dog && c.dog.group].filter(Boolean);
   if (on) {
-    replaySaved = { target: view.target.clone(), size: view.size, override: DAY.override, birds: [], doors: [] };
+    replaySaved = { target: view.target.clone(), size: view.size, az: view.az, override: DAY.override, birds: [], doors: [] };
+    setViewAz(VIEW_AZ0); viewTurn = null;                     // (the film: from the usual view; the player's own turn back after)
     for (const p of plots) for (const b of p.birds) { replaySaved.birds.push([b, b.root.visible]); b.root.visible = false; placeBlob(b); }
     for (const p of plots) if (p.door) replaySaved.doors.push([p, p.door.s, p.door.goal, p.door.shut]);
     const t = plots.find(p => p.index === rec.coop);
@@ -6180,7 +6228,7 @@ function replayLive(on, rec) {
     document.body.classList.remove('replaying');
     if (S.override === undefined) delete DAY.override; else DAY.override = S.override;
     DAY.shadowAt = 0; applyDaylight(clockHour()); tickDoors(0);
-    view.target.copy(S.target); view.size = S.size; clampView(); applyGrass(); placeCamera(); furDetail();
+    view.target.copy(S.target); view.size = S.size; clampView(); applyGrass(); setViewAz(S.az ?? VIEW_AZ0); furDetail();
     replaySaved = null; lastSim = 0; wake(800);
   }
 }
@@ -6242,7 +6290,7 @@ function frame(now) {
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
-  tickFocus(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
+  tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
   if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); placeBubbles(); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
@@ -6303,6 +6351,7 @@ window.__farm = {
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
+  turnView: deg => turnView(deg * DEG), viewAz: () => view.az / DEG, setViewAz: deg => setViewAz(deg * DEG), viewTurning: () => !!viewTurn, compass: () => compassEl && !compassEl.hidden,
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
@@ -6312,8 +6361,8 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
-  decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),

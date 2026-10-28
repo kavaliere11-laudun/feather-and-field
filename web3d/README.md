@@ -2738,3 +2738,21 @@ the birds already had.
   into the bucket, Old Snapjaw back into the river, Stop, a reload, the Book's fish pages); `fishclose.mjs` and
   `fishfilm.mjs` with WATER=river.
 
+## Release 6, step 1: turning the farm (28 Oct 2026; Audrey: next "Release 6: turn the farm (Recommended)")
+
+- **The turn** (main.js `turnView`, `view.az`, `setViewDir`): two fingers turning on the screen turn the farm with them, the
+  same way and as far, round the middle of the screen (the ground seen slanting, a spot under a finger goes round on an
+  ellipse, not quite under the finger). It only starts once the fingers have turned 8 degrees between them, so a pinch
+  that hardly turns just zooms. `VIEW_DIR` (the way to the camera, 42 degrees down) follows `view.az`, and everything
+  that faces the player follows it (the farmer turning to you, a hen whose card is open, the geese, the dog; they already
+  asked where the camera was). It never turns by itself; on a computer, keys Q and E turn it 12 degrees.
+- **The compass** (`#compass`, `compassShow`): once the view's turned more than 3 degrees, a round compass at the top right
+  under the bar, its needle pointing the usual way up (measured on the screen, so it stays true however it's turned). A
+  tap turns the view back to the usual one, smoothly (a third of a second, longer for a bigger turn); fingers on the
+  screen stop it. Hidden inside a coop and under a card.
+- **Films and the show**: the morning replay and the show day play from the usual view (they were framed for it), and
+  the player's own turn comes back after.
+- **Tests**: `viewtest.mjs` (EN upright, FR sideways: the usual view; two fingers turning; a pinch that hardly turns; the
+  compass and its label; it stays turned; a drag while turned; a hen tapped while turned turns to you; keys; all the way
+  round, pictures each quarter; the compass back); `viewfilm.mjs` makes a short film of it.
+
