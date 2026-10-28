@@ -880,10 +880,10 @@ export class GameUI {
     else if (r.best) info.append(el('p', 'gtext gfishnew', '🏆 ' + this.t('fish_best')));
     info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
     card.append(pic, info); body.append(card);
-    const left = g.worms(), row = el('div', 'gstick');
+    const left = g.worms(), row = el('div', 'gstick gfishbtns');
     const done = keep => { const f = this.fishThen; this.fishThen = null; this.close(); if (f) f(keep); };
     if (left) { const k = el('button', 'gbtn', '🎣 ' + this.t('fish_keep') + ' · 🪱 ' + left); k.type = 'button'; k.dataset.fish = 'keep'; k.addEventListener('click', () => done(true)); row.append(k); }
-    const s = el('button', 'gbtn' + (left ? ' galt' : ''), this.t('fish_stop')); s.type = 'button'; s.dataset.fish = 'stop'; s.addEventListener('click', () => done(false)); row.append(s);
+    const s = el('button', 'gbtn' + (left ? ' galt' : ''), this.t(left ? 'fish_stop1' : 'fish_stop')); s.type = 'button'; s.dataset.fish = 'stop'; s.addEventListener('click', () => done(false)); row.append(s);
     body.append(row);
     this.refresh(); this.bumpCoins();
   }

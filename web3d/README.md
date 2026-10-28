@@ -2622,3 +2622,60 @@ the birds already had.
   decor, showground, fauna) keep each mesh's corners as 16-bit whole numbers on a grid fitted to it and its normals as
   bytes (KHR_mesh_quantization), turned back into ordinary numbers as they load, so everything after sees the very same
   models (to within a twentieth of a millimetre on a coop). The coops file 15.3 → 10.5 MB, about 6 MB off the first load.
+
+## Release 5, step 1: fishing at the pond (28 Oct 2026; Audrey: "Release 5: fishing (Recommended)"; on the fish shown: "Perfect, carry on"; the legendary ones: "Photo, then let go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little celebration")
+
+- **The fish** (`src/fish.js`, built in code like the frogs: no model file): fourteen species, seven in each water,
+  four common, two rare, one legendary with a name. Pond: rudd, roach, perch, tench; the golden tench and the koi; Big
+  Bertha, the giant mirror carp. River (step 2): minnow, gudgeon, dace, chub; the brown trout and the grayling; Old
+  Snapjaw, the pike. A body lofted nose to tail from rings (each species its own depth, hump, width, mouth up or under,
+  a pike's long flat snout), thin fins as little fans (forked, notched, square or rounded tails, the perch's spiny
+  dorsal with its black spot, the grayling's sail, the trout's and grayling's adipose fin), eyes with their own iris
+  colours and a catch-light, a smiling mouth line, barbels on the tench, the carp, the koi and the gudgeon. The body's
+  colours and marks drawn per pixel (crisp close up): countershading, scales, a gill line, the perch's bars, the
+  trout's black and red spots with pale rings, the pike's pale beans, the koi's patches, Big Bertha's mirror plates. It
+  swims in place (a wave down to the tail; a curl). `?lineup=fish` shows all fourteen; `fishpics.mjs` takes a picture
+  of each (`BACKDROP=1`: on cream, for the cards: `fishcards.py` makes `fish/<id>.webp`, see-through round the fish).
+- **The rules** (game.js `FISHING`, `FISH_RULES`, `castWorm`, `landFish`, `buyWorms`): the pond from level 3, the river
+  from level 8. A worm a cast: four free each morning (on the phone's calendar), used first, then those from tins (10
+  for 60 coins, on the dock's card). A cast decides the fish there and then, by weight (roach 30, rudd 26, perch 20, tench
+  14, the golden tench 4.5, the koi 4, Big Bertha 1.5 in each hundred), its size within its sizes (most of them
+  smallish). Landed: sold live to the village aquarium shop (its price a little more the bigger it is: rudd 9, roach 8,
+  perch 11, tench 14, golden tench 70, koi 90), 1 XP (2 for a tench, 6 for a rare one), +10 XP for a fish new to you;
+  a legendary one has its photo taken and goes back into the water (the village paper buys the photo: 300 coins for Big
+  Bertha, 400 for Old Snapjaw; 25 XP); the count and the biggest of each kept. Balance (`balsim.mjs`, the day's free
+  worms fished each morning): once a day level 30 on day 327 (337 before fishing), twice a day 279, every 3 hours 229;
+  fishing about 21,000 coins in a year, against eggs 116,000: it pays, but it can't replace the hens.
+- **The save**: `fish` (made the first time it's used): the day the free worms were given (never ahead), those left (at
+  most a day's), the worms from tins (at most 999), and each fish caught (known fish only, from a water the level has
+  opened): [how many, the biggest in cm, within its sizes]; anything else flagged and put right. A farm from before
+  fishing has none, unflagged.
+- **The dock** (main.js `dockInfo`): the pond's dock, its bank end and its far end, its deck's height (the farmer walks
+  up on it: `groundY`); tap it for its card (`gameUI.dockCard`): the pond's seven fish (those caught in colour), the
+  worms, Go fishing, a tin of worms. The pond lies in two wild fields at first, so while the dock's field is wild meadow
+  it has a gate in its fence (`dockGate`, as the geese's gates: where the way in to the dock is shortest from a place the
+  farmer can get to; a geese's gate on that field does instead), opening as he goes in, shut behind him on his way out.
+  At level 3 the level's card says "Fishing at the pond: tap its dock", with "Show me the pond" (the view over to it:
+  never by itself).
+- **The fishing** (`src/fishing.js`; farmlife.js `fishAt`): he hurries to the dock (through its gate), out to its end,
+  his old cane rod out (farmer.js `makeRod`: a cork grip, a little reel, the cane in three lengths that bend), a zinc
+  bucket of water by his feet; the worms and Stop along the bottom. A tap on the water casts there (as near as the rod
+  reaches): drawn back over his shoulder and swung, the float flies out on its line (a thin ribbon turned to the
+  camera) and lands with a ring. "Watch the float": it bobs, a nibble or two, then it's pulled under with a splash and a
+  "!" over it: tap now (a tap before: "Too soon!", the fish wary a moment more; too slow: "Too late: it got away with
+  the worm"). Then the reel: a gauge, the line's pull with a green part to keep it in (smaller for a rare fish, smaller
+  still for a legendary one) and how far the fish has come; holding reels in (the pull rising), letting go eases off;
+  the fish pulls in surges (harder the rarer and bigger). In the green it comes in, quicker while reeling; held too hard
+  for too long the line snaps ("Too hard"), too slack it slips the hook ("Too slack"). Its shadow comes in under the
+  water, weaving, rings where it splashes. Landed: out of the water on the line into his hands; he turns round to show
+  you ("Got one!"); a fish new to you: held out in his left hand, a hop and his right fist punched in the air ("A new
+  fish!"). Its card (`gameUI.fishCard`): its picture, its name and size, new to your book or your biggest yet, sold
+  live (or a legendary one's photo), the coins and XP, how many caught; Keep fishing (with the worms left) or Stop.
+  Then into the bucket with a splash; a legendary one: he turns to the water, crouches at the edge and lets her slip
+  back in. Stop: back along the dock and off with the pail ("for the aquarium shop"). Night falling (22:15): he winds in
+  and goes home; Rusty: put away.
+- **Tests**: `fishrules.mjs` (no browser: the levels, the worms, the draw, landing, the save) and `fishtest.mjs` (EN
+  upright, FR sideways: the dock's card at levels 2 and 3, the level card's look at the pond, the walk out through the
+  gate, a cast, too soon, the bite, the reel, the new fish's hooray and card, paid, keep, a bite missed, the line
+  snapped, slipped off, Big Bertha's photo and release, the last worm, Stop and the walk back, a reload, the evening).
+  `fishfilm.mjs` makes a short film of it.
