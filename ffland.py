@@ -178,6 +178,16 @@ def barn_pen():
         box('bale', (x, y, 0.13), (0.3, 0.5, 0.26), straw, bevel=0.03)
 
 
+def sidewindow(X, y, z, sx, glass, trim):
+    """A window in a gable end (x = sx * X), as the front's: the glass, then its frame and cross in front of it (a solid
+    frame plate over the glass showed as a blank pale square, the glass lost behind it)."""
+    box('sidewin', (sx * (X + 0.02), y, z), (0.03, 0.4, 0.4), glass)
+    box('sidewinframe_h', (sx * (X + 0.04), y, z), (0.02, 0.44, 0.04), trim); box('sidewinframe_v', (sx * (X + 0.04), y, z), (0.02, 0.04, 0.44), trim)
+    for d in (-0.22, 0.22):
+        box('sidewinframe', (sx * (X + 0.04), y, z + d), (0.025, 0.48, 0.04), trim)
+        box('sidewinframe', (sx * (X + 0.04), y + d, z), (0.025, 0.04, 0.48), trim)
+
+
 def farmhouse():
     """Whitewashed farmhouse with a clay-tile roof, chimney, flower boxes and a porch."""
     plaster = principled('plaster', (0.74, 0.7, 0.6), 0.9)
@@ -231,13 +241,39 @@ def farmhouse():
             bpy.context.object.data.materials.append(flowers_m[k % 2])
     for wx in (-0.75, 0.75):  # windows on the visible right gable too
         pass
-    box('sidewin', (X + 0.02, 0.0, 0.62), (0.03, 0.4, 0.4), glass)
-    box('sidewinframe', (X + 0.035, 0.0, 0.62), (0.02, 0.46, 0.46), trim)
+    sidewindow(X, 0.0, 0.62, 1, glass, trim)
     # firewood stack and a bench
     for i in range(3):
         for j in range(4 - i):
             cyl('log', (-X - 0.25, -0.5 + j * 0.13 + i * 0.065, 0.07 + i * 0.12), 0.06, 0.5, timber, rot=(0, math.radians(90), 0), v=10)
     box('bench', (0.62, -Y - 0.32, 0.22), (0.5, 0.18, 0.04), timber)
+    # ---- the back and the far gable (release 6, the farm turned all the way round: they show now): the kitchen door
+    # with its step, two windows (flowers under one), a window in the far gable above the logs, a round attic window in
+    # each gable, a drainpipe and a water butt at the back corner
+    box('backdoor', (-0.5, Y + 0.02, 0.44), (0.38, 0.04, 0.76), door_m)
+    box('backdoorframe', (-0.5, Y + 0.035, 0.84), (0.46, 0.03, 0.06), trim)
+    box('backstep', (-0.5, Y + 0.16, 0.05), (0.56, 0.28, 0.1), stone)
+    box('backknob', (-0.36, Y + 0.05, 0.44), (0.04, 0.03, 0.04), trim)
+    for wx in (0.15, 0.75):
+        box('win', (wx, Y + 0.02, 0.62), (0.44, 0.03, 0.42), glass)
+        box('winframe_h', (wx, Y + 0.04, 0.62), (0.48, 0.02, 0.04), trim); box('winframe_v', (wx, Y + 0.04, 0.62), (0.04, 0.02, 0.46), trim)
+        for dz in (-0.23, 0.23): box('winframe', (wx, Y + 0.04, 0.62 + dz), (0.5, 0.025, 0.04), trim)
+    box('flowerbox', (0.15, Y + 0.1, 0.36), (0.5, 0.14, 0.1), timber)
+    for k in range(7):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=0.04, location=(0.15 - 0.18 + k * 0.06, Y + 0.1 + random.uniform(-.03, .03), 0.44 + random.uniform(0, 0.04)))
+        bpy.context.object.data.materials.append(flowers_m[(k + 1) % 2])
+    sidewindow(X, 0.3, 0.68, -1, glass, trim)
+    for sx in (-1, 1):
+        cyl('atticframe', (sx * (X + 0.03), 0, 1.4), 0.15, 0.03, trim, rot=(0, math.radians(90), 0), v=14)
+        cyl('attic', (sx * (X + 0.045), 0, 1.4), 0.115, 0.03, glass, rot=(0, math.radians(90), 0), v=14)
+    pipe = principled('pipe', (0.2, 0.2, 0.2), 0.5)
+    box('gutter', (0, Y + over - 0.04, 0.93), (2 * X + 0.2, 0.06, 0.05), pipe)
+    cyl('drainpipe', (X - 0.05, Y + 0.05, 0.52), 0.03, 0.84, pipe, v=8)
+    box('drainbend', (X - 0.05, Y + 0.05 + (over - 0.09) / 2, 0.93), (0.05, over - 0.09 + 0.05, 0.05), pipe)
+    cyl('waterbutt', (X - 0.12, Y + 0.24, 0.2), 0.15, 0.36, timber, v=14)
+    cyl('butthoop', (X - 0.12, Y + 0.24, 0.3), 0.155, 0.03, pipe, v=14)
+    cyl('butthoop', (X - 0.12, Y + 0.24, 0.1), 0.155, 0.03, pipe, v=14)
+    cyl('buttwater', (X - 0.12, Y + 0.24, 0.375), 0.13, 0.01, principled('buttwater', (0.08, 0.16, 0.2), 0.1, coat=0.5), v=14)
 
 
 def egg_stall():

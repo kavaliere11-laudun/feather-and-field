@@ -1,5 +1,5 @@
 // A walk round everything on the farm from all four sides (release 6: now the view turns, the backs show): ./withserver.sh
-// node sidetour.mjs [OUT]   (ONLY=props,decor,coops; LOOKS=0,4: those coop looks; PORT)
+// node sidetour.mjs [OUT]   (ONLY=props,decor,coops; LOOKS=0,4: those coop looks; MODELS=farmhouse,duckhouse: just those; PORT)
 // The test village: each kind of thing in it (the farmhouse, the stall, the well, the bridges...), each decoration, and
 // each breed's coop in each look (Rustic, Mended, Snug, Cosy, Deluxe), seen close from the usual side and turned a
 // quarter, a half and three quarters round: four pictures side by side, OUT/<name>.jpg, then OUT/index.html of them all.
@@ -11,7 +11,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 480, height: 480 }, deviceScaleFactor: 1 });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-const done = [];
+const done = [], PICK = process.env.MODELS ? process.env.MODELS.split(',') : null, picked = m => !PICK || PICK.includes(m);
 const open = async q => {
   await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&time=11:00${q}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
@@ -34,12 +34,12 @@ if (ONLY.includes('props') || ONLY.includes('decor')) {
   if (ONLY.includes('props')) {
     const props = await p.evaluate(() => window.__farm.props());
     const seen = new Set();
-    for (const q of props) { if (seen.has(q.model) || q.model === 'pasture' || q.model === 'wheat_field') continue; seen.add(q.model); await four('prop_' + q.model, q.pos[0], q.pos[2], q.h, q.w); }
+    for (const q of props) { if (seen.has(q.model) || q.model === 'pasture' || q.model === 'wheat_field' || !picked(q.model)) continue; seen.add(q.model); await four('prop_' + q.model, q.pos[0], q.pos[2], q.h, q.w); }
   }
   if (ONLY.includes('decor')) {
     const list = await p.evaluate(() => window.__farm.decor().map(d => ({ model: d.model, x: d.pos[0], z: d.pos[1], h: d.box.max.y - d.box.min.y, w: Math.max(d.box.max.x - d.box.min.x, d.box.max.z - d.box.min.z) })));
     const seen = new Set();
-    for (const d of list) { if (seen.has(d.model)) continue; seen.add(d.model); await four('decor_' + d.model, d.x, d.z, d.h, d.w); }
+    for (const d of list) { if (seen.has(d.model) || !picked(d.model)) continue; seen.add(d.model); await four('decor_' + d.model, d.x, d.z, d.h, d.w); }
   }
 }
 if (ONLY.includes('coops')) {

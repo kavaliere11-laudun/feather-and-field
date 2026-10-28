@@ -2756,3 +2756,17 @@ the birds already had.
   compass and its label; it stays turned; a drag while turned; a hen tapped while turned turns to you; keys; all the way
   round, pictures each quarter; the compass back); `viewfilm.mjs` makes a short film of it.
 
+## Release 6, steps 2 and 3: everything seen from all sides, the backs finished (28 Oct 2026)
+
+- **The tour** (`sidetour.mjs`): each kind of thing in the village, each decoration and each breed's coop in each look,
+  seen close from the usual side and turned a quarter, a half and three quarters round (four pictures in a strip; `MODELS=`
+  just some). The coops (built whole in Blender), the well, the bandstand, the greenhouse, the windmill, the bridges, the
+  dock and the small things were already finished all round.
+- **The farmhouse** (`ffland.farmhouse`): its back was a blank wall. Now the kitchen door (dark green, a brass knob, a stone
+  step), two windows (flowers under one), a gutter and drainpipe, a water butt at the corner; a window in the far gable
+  above the logs; a round attic window in each gable. Its gable windows were a solid frame plate over the glass (a
+  blank pale square, cream on cream in the sun): now glass with a frame and cross in front, as the front's
+  (`sidewindow`). The back windows glow at night with the others. (The house stands at the village's corner, its back to
+  the woods: the walking grid behind it is a little wider, nothing on the way.)
+- **The duck house** (`decor_sprites.duckhouse`): a white-rimmed round window at the back and in each side.
+

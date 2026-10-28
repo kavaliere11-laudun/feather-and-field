@@ -183,6 +183,13 @@ def duckhouse():
     box('step', (0, -0.26, 0.09), (0.28, 0.12, 0.03), planks())
     box('ramp', (0, -0.62, 0.0), (0.24, 0.45, 0.03), planks(), rot=(math.radians(-16), 0, 0))
     for k in range(4): box('cleat', (0, -0.5 - k * 0.09, 0.03 - k * 0.025), (0.22, 0.02, 0.02), planks())
+    # (the back and the sides, seen now the 3D farm turns all the way round: a round window in each, white rimmed)
+    rim = mat('duckrim', '#f1ede2', 0.6)
+    cyl('rimb', (0, 0.325, 0.33), 0.075, 0.02, rim, rot=(math.radians(90), 0, 0), v=20)
+    cyl('winb', (0, 0.333, 0.33), 0.055, 0.02, dark(), rot=(math.radians(90), 0, 0), v=20)
+    for sx in (-1, 1):
+        cyl('rims', (sx * 0.255, 0.08, 0.33), 0.065, 0.02, rim, rot=(0, math.radians(90), 0), v=20)
+        cyl('wins', (sx * 0.263, 0.08, 0.33), 0.047, 0.02, dark(), rot=(0, math.radians(90), 0), v=20)
     group_turn(built_since(before))
 
 def greenhouse():
