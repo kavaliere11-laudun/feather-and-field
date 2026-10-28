@@ -1,7 +1,7 @@
 // The pond's frogs (pond.js): node frogtest.mjs
 // By day (4 minutes) and by night (3 minutes), every frame: each frog on the bank at the water's edge, in the water, or in
 // the middle of a hop or a dive (never left standing in the shallows or out on the grass, never on or under the dock),
-// no two frogs sitting on top of each other; between them they sit, look about, croak, hop along the bank, dive in, float
+// (or the froglet on her lily pad) no two frogs sitting on top of each other; between them they sit, look about, croak, hop along the bank, dive in, float
 // and paddle and climb out again; more croaking at night. A goose walking up to a frog on the bank: in it jumps. A tap on a
 // frog (a real tap on the screen): it jumps in with a "Ribbit!". No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
@@ -22,8 +22,8 @@ const run = (hour, mins) => p.evaluate(([hour, mins]) => {
       if (n) { if (!out.did[n]) out.did[n] = 0; if (fr._last !== n) { out.did[n]++; if (n === 'croak') out.croaks++; } }
       fr._last = n;
       if (!fr.root.visible) continue;
-      const [s] = F.where(fr.pos.x, fr.pos.z), moving = /^(hop|hopAlong|dive|climbOut)$/.test(n);
-      const ok = moving ? s < 1.25 : fr.state === 'water' ? s < 0.95 : s > 0.98 && s < 1.13;
+      const [s] = F.where(fr.pos.x, fr.pos.z), moving = /^(hop|hopAlong|dive|climbOut|toPad)$/.test(n);
+      const ok = moving ? s < 1.25 : fr.state === 'water' ? s < 0.95 : fr.state === 'pad' ? fr === F.her && Math.hypot(fr.pos.x - F.herPad.x, fr.pos.z - F.herPad.z) < F.herPad.r : s > 0.98 && s < 1.13;      // (the froglet on her lily pad)
       if (!ok) { out.bad++; if (out.badAt.length < 4) out.badAt.push([n, fr.state, +s.toFixed(2)]); }
       for (const [ax, az, ar] of avoid) if (Math.hypot(fr.pos.x - ax, fr.pos.z - az) < ar) { out.dock++; out.dockAt = out.dockAt || {}; out.dockAt[n + '/' + fr.state] = (out.dockAt[n + '/' + fr.state] || 0) + 1; }
     }

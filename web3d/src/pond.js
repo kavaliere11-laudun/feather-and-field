@@ -10,6 +10,7 @@
 // reaching, the body's pitch, the throat, the lids, the head turned.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { Fish } from './fish.js';
 
 const FR = new URLSearchParams(location.search).get('lang') === 'fr';
 export const FROG_S = 1.15;                   // larger than life
@@ -312,6 +313,50 @@ function dropTexture() {
 }
 const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
 const sstep = (u) => u * u * (3 - 2 * u);
+const clamp01 = u => Math.min(1, Math.max(0, u));
+const lcg = seed => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+// ---- the lily pads (the pond's secret, Audrey 28 Oct: "the froglet will be on her lily pad"): four round leaves floating out
+// on the pond, each with its notch, darker veins running out from the middle and a paler rim; the biggest is hers; a
+// pink water lily open on one
+const PAD_Y = WATER_Y + 0.0025;
+function padGeometry(r, flower) {
+  const parts = [], c = new THREE.Color(), deep = new THREE.Color('#3f6f26'), pale = new THREE.Color('#77a843'), vein = new THREE.Color('#2f5a1c'), rim = new THREE.Color('#5e8f34');
+  const g = new THREE.RingGeometry(0.004, r, 30, 4, 0.3, Math.PI * 2 - 0.6).rotateX(-Math.PI / 2);
+  const p = g.attributes.position, col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i), d = Math.hypot(x, z) / r, a = Math.atan2(z, x);
+    c.copy(deep).lerp(pale, 0.55 * (1 - d) + 0.15 * Math.sin(a * 3 + 1.2));
+    if (Math.abs(Math.sin(a * 5.5)) < 0.16 && d > 0.15) c.lerp(vein, 0.55);
+    if (d > 0.93) c.lerp(rim, 0.6);
+    col.set([c.r, c.g, c.b], i * 3);
+    p.setY(i, 0.0015 * (1 - d * d));                            // (a little domed)
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.deleteAttribute('uv'); g.computeVertexNormals(); parts.push(g.toNonIndexed());
+  if (flower) {                                                  // the water lily: two rings of petals cupped round a gold heart
+    const ox = r * 0.25, oz = -r * 0.2;
+    const petal = (a, tilt, len, colour) => {
+      const q = new THREE.SphereGeometry(1, 8, 6).scale(len * 0.36, len * 0.12, len * 0.5).translate(0, 0, len * 0.42).rotateX(-tilt).rotateY(a).translate(ox, 0.012, oz);
+      const qc = new Float32Array(q.attributes.position.count * 3), cc = new THREE.Color(colour);
+      for (let i = 0; i < q.attributes.position.count; i++) { const k = q.attributes.position.getY(i) > 0.014 ? 1 : 0.86; qc.set([cc.r * k, cc.g * k, cc.b * k], i * 3); }
+      q.setAttribute('color', new THREE.BufferAttribute(qc, 3)); q.deleteAttribute('uv'); parts.push(q.index ? q.toNonIndexed() : q);
+    };
+    for (let k = 0; k < 8; k++) petal(k / 8 * Math.PI * 2, 0.35, 0.05, '#f7d3df');
+    for (let k = 0; k < 6; k++) petal((k + 0.5) / 6 * Math.PI * 2, 0.85, 0.038, '#f2a9c0');
+    const h = new THREE.SphereGeometry(0.011, 8, 6).scale(1, 0.6, 1).translate(ox, 0.02, oz), hc = new Float32Array(h.attributes.position.count * 3), gold = new THREE.Color('#f2c230');
+    for (let i = 0; i < h.attributes.position.count; i++) hc.set([gold.r, gold.g, gold.b], i * 3);
+    h.setAttribute('color', new THREE.BufferAttribute(hc, 3)); h.deleteAttribute('uv'); parts.push(h.toNonIndexed());
+  }
+  return mergeGeometries(parts);
+}
+// little hearts (theirs: drawn here, so nobody else's are counted)
+function heartTexture() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d');
+  const gr = c.createLinearGradient(0, 10, 0, 56); gr.addColorStop(0, '#ff8aa8'); gr.addColorStop(1, '#e83a62');
+  c.fillStyle = gr; c.beginPath(); c.moveTo(32, 56); c.bezierCurveTo(2, 34, 8, 6, 32, 21); c.bezierCurveTo(56, 6, 62, 34, 32, 56); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.75)'; c.beginPath(); c.ellipse(21, 22, 6, 4, -0.6, 0, Math.PI * 2); c.fill();
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
 
 export class FrogPond {
   // o: { pond: V.pond, avoid: [[x, z, r]] (the dock), mouths: [[x, z]] (where the streams meet it), spots: [[x, y, z]],
@@ -341,6 +386,30 @@ export class FrogPond {
       return f;
     });
     this.time = 0; this.chorus = 0;
+    // ---- the secret (Audrey, 28 Oct): the lily pads, the froglet (a little smaller than the others) and her pad, and now and
+    // then a salmon in love with her (love(): never mentioned, he can't be fished, nothing is won when it happens)
+    this.pads = []; const rp = lcg(4242), P3 = o.pond;
+    const ends = [[P3.center[0] + P3.axisU[0] * 0.42, P3.center[2] + P3.axisU[2] * 0.42], [P3.center[0] - P3.axisU[0] * 0.42, P3.center[2] - P3.axisU[2] * 0.42]];      // (where a duck house would float)
+    for (const [r, flower] of [[0.14, false], [0.1, true], [0.085, false], [0.07, false]]) {
+      let spot = null;
+      for (let k = 0; k < 120 && !spot; k++) {
+        const a = rp() * Math.PI * 2, kk = (this.pads.length ? 0.42 : 0.55) + rp() * 0.3, [x, z] = this.at(a, kk);
+        if (!this.wetOk(x, z) || this.where(x, z)[0] > 0.82) continue;
+        if ((o.avoid || []).some(([ax, az, ar]) => Math.hypot(x - ax, z - az) < ar + 0.5)) continue;
+        if ((o.mouths || []).some(([mx, mz]) => Math.hypot(x - mx, z - mz) < 1.1) || ends.some(([ex, ez]) => Math.hypot(x - ex, z - ez) < 1.0)) continue;
+        if (this.pads.some(q => Math.hypot(x - q.x, z - q.z) < 0.6)) continue;
+        spot = [x, z];
+      }
+      if (!spot) continue;
+      const mesh = new THREE.Mesh(padGeometry(r, flower), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, side: THREE.DoubleSide }));
+      if (o.grade) o.grade(mesh.material);
+      mesh.position.set(spot[0], PAD_Y - 0.0015, spot[1]); mesh.rotation.y = rp() * Math.PI * 2; mesh.receiveShadow = true; this.group.add(mesh);
+      this.pads.push({ x: spot[0], z: spot[1], r, mesh, yaw0: mesh.rotation.y, ph: rp() * 6 });
+    }
+    this.her = this.frogs[0]; this.herPad = this.pads[0] || null;
+    if (this.her) { this.her.root.scale.setScalar(0.86); this.her.small = 0.86; }
+    this.hearts = []; this.heartTex = null;
+    this.loveR = lcg(777); this.loveIn = 150 + this.loveR() * 210; this.loveCheck = 0; this.salmon = null;
   }
   // ---- the pond's shape: the ellipse with its wobble (as drawn), where a point is against it
   wob(t) { return 1 + 0.035 * Math.sin(t * 5 + 1) + 0.02 * Math.sin(t * 9); }
@@ -360,9 +429,19 @@ export class FrogPond {
   // ---- what a frog does next
   next(f) {
     const R = this.r, night = f.night;
+    if (f.state === 'pad') {
+      // the froglet on her lily pad: sitting a good while, looking about, a croak; then back into the water
+      const p = R();
+      if (p < 0.1) return this.offPad(f, false);
+      if (p < (night ? 0.45 : 0.25)) return this.croak(f);
+      if (p < 0.45) return this.look(f);
+      return this.sit(f, 4 + R() * 8);
+    }
     if (f.state === 'water') {
-      // floating a while, paddling about a little, then out onto the bank at a spot with room
+      // floating a while, paddling about a little, then out onto the bank at a spot with room (the froglet: often up onto
+      // her lily pad instead)
       if (!f.floated) { f.floated = true; return this.float(f, 3 + R() * 4); }
+      if (f === this.her && this.herPad && R() < 0.5) { f.paddled = false; f.floated = false; const t = this.toPad(f); if (t) return t; }
       if (R() < 0.6 && !f.paddled) { f.paddled = true; const [, t] = this.where(f.pos.x, f.pos.z), a = t + (R() - 0.5) * 1.2, k = 0.55 + R() * 0.3, [x, z] = this.at(a, k); if (this.wetOk(x, z) && this.clearSwim(f.pos.x, f.pos.z, x, z)) return this.swimTo(f, x, z); }
       f.paddled = false; f.floated = false;
       for (let i = 0; i < 16; i++) {
@@ -496,6 +575,31 @@ export class FrogPond {
       return false;
     } };
   }
+  // ---- her lily pad: swimming to its edge and up onto it; off it into the water
+  onAnyPad(x, z, m = 0.05) { return this.pads.some(q => Math.hypot(x - q.x, z - q.z) < q.r + m); }
+  toPad(f) {
+    const P = this.herPad, dx = f.pos.x - P.x, dz = f.pos.z - P.z, d = Math.hypot(dx, dz) || 1, ex = P.x + dx / d * (P.r + 0.07), ez = P.z + dz / d * (P.r + 0.07);
+    if (!this.wetOk(ex, ez) || !this.clearSwim(f.pos.x, f.pos.z, ex, ez)) return null;
+    let sw = null, hp = null;
+    return { name: 'toPad', run: (f, dt) => {
+      if (!sw) sw = this.swimTo(f, ex, ez);
+      if (!hp) { if (sw.run(f, dt)) { hp = this.hop(f, P.x, P.z, 0.05, { y: PAD_Y }); f.state = 'pad'; f.pos.y = WATER_Y - 0.01; this.ring(f.pos.x, f.pos.z, 0.3); } return false; }
+      if (hp.run(f, dt)) { this.drip(f); return true; }
+      return false;
+    } };
+  }
+  offPad(f, startled) {
+    const P = this.herPad, R = this.r; let spot = null;
+    for (let i = 0; i < 16 && !spot; i++) { const a = R() * Math.PI * 2, x = P.x + Math.sin(a) * (P.r + 0.17), z = P.z + Math.cos(a) * (P.r + 0.17); if (this.wetOk(x, z) && !this.onAnyPad(x, z)) spot = [x, z]; }
+    if (!spot) spot = [P.x + P.r + 0.17, P.z];
+    let jump = null;
+    return { name: 'dive', run: (f, dt) => {                 // (a dive, to everyone watching: off the pad with a splash)
+      jump = jump || this.hop(f, spot[0], spot[1], startled ? 0.11 : 0.06, { y: WATER_Y - 0.03 });
+      if (!jump.run(f, dt)) return false;
+      this.splash(f.pos.x, f.pos.z, startled ? 0.8 : 0.45); f.state = 'water'; f.pos.y = WATER_Y; f.floated = false; f.paddled = false;
+      return true;
+    } };
+  }
   // ---- a frog in the water or on the bank: its pose each moment
   pose(f, dt) {
     const P = f.P;
@@ -509,7 +613,7 @@ export class FrogPond {
     f.root.rotation.y = f.heading;
     f.pose(dt);
     f.shadow.visible = f.root.visible && f.state !== 'water' && f.pos.y < 0.4;
-    if (f.shadow.visible) { f.shadow.position.set(f.pos.x, 0.004, f.pos.z); f.shadow.rotation.y = f.heading; const k = 1 - Math.min(0.5, f.pos.y * 3); f.shadow.scale.setScalar(k); }
+    if (f.shadow.visible) { f.shadow.position.set(f.pos.x, f.state === 'pad' ? PAD_Y + 0.0012 : 0.004, f.pos.z); f.shadow.rotation.y = f.heading; const k = 1 - Math.min(0.5, f.pos.y * 3); f.shadow.scale.setScalar(k); }
   }
   // ---- each moment
   update(dt, hour) {
@@ -525,10 +629,13 @@ export class FrogPond {
       if (f.task.run(f, dt)) { f.task = null; f.wait = 0.4 + this.r() * (night ? 1.5 : 2.5); }
       this.pose(f, dt);
     }
-    this.tickFx(dt);
+    this.tickLove(dt, hour, near);
+    for (const q of this.pads) { q.mesh.position.y = PAD_Y - 0.0015 + 0.0007 * Math.sin(this.time * 1.3 + q.ph); q.mesh.rotation.y = q.yaw0 + 0.04 * Math.sin(this.time * 0.21 + q.ph); }
+    this.tickFx(dt); this.tickHearts(dt);
   }
   startle(f, tapped) {
     f.goal = null;
+    if (f.task && f.task.name === 'love') { f.task = null; this.loveStop(f); }
     if (f.state === 'water') {                           // a plop: under, and up elsewhere
       if (!f.root.visible) return;
       this.ring(f.pos.x, f.pos.z, 0.5); f.root.visible = false;
@@ -542,9 +649,179 @@ export class FrogPond {
       return;
     }
     if (tapped) this.say(f);
+    if (f.state === 'pad') { f.task = this.offPad(f, true); return; }
     f.task = this.dive(f, true);
   }
-  tapped(f) { if (f.task && /^(hop|dive)$/.test(f.task.name)) return; this.startle(f, true); }
+  tapped(f) { if (f.task && /^(hop|dive|love)$/.test(f.task.name)) return; this.startle(f, true); }
+  // ---- the secret: the salmon and the froglet (Audrey, 28 Oct: "A salmon and a frog are in love ... sometimes, in the
+  // pond, the froglet will be on her lily pad and the salmon will take his head out of the water. Both of them will look at
+  // each other in love, you can add little hearts, and kiss. After that they both separate. This can happen from a lily
+  // pad, or from the side of the lake"). Now and then (a few minutes apart, by day and evening), when she sits on her pad
+  // or on the bank, nobody near, nobody fishing the pond and the pond on the screen: his shadow comes gliding in under the
+  // water; she turns to him (at the water's very edge, from the bank); up comes his head; they gaze at each other, little
+  // hearts rising between them, her eyes gone dreamy, her throat fluttering, his cheeks blushing; they lean in and kiss (a
+  // little burst of hearts, her eyes shut); he sinks back and glides away, and she watches him go. Never mentioned, nothing
+  // won; tapping her doesn't spoil it; someone coming near does (he's gone, she jumps in).
+  tickLove(dt, hour, near) {
+    const L = this.loveOn;
+    if (L) {
+      if (L.stage !== 'on' && !L.aborting) return;          // (she's still on her way to the water's edge)
+      if (L.aborting) this.salmonAway(L, dt); else { L.t += dt; this.salmonStep(L, dt); }
+      return;
+    }
+    if (!this.her || (this.loveIn -= dt) > 0 || (this.loveCheck -= dt) > 0) return;
+    this.loveCheck = 1;
+    const plan = this.canLove(hour, near, false);
+    if (plan) this.startLove(plan);
+  }
+  // (tests and the film: now, if she's sitting on the bank or her pad)
+  loveNow() { const plan = this.canLove(12, [], true); if (!plan) return false; this.startLove(plan); return true; }
+  startLove(plan) { const f = this.her; if (!this.salmon) this.salmon = this.makeSalmon(); this.loveOn = { plan, stage: 'go', t: 0, hop: null, once: {}, beat: 0 }; f.task = { name: 'love', run: (ff, dt) => this.loveRun(ff, dt) }; f.wait = 0; f.goal = null; }
+  canLove(hour, near, force) {
+    const f = this.her;
+    if (!f || !f.root.visible || !(f.state === 'bank' || f.state === 'pad') || this.loveOn) return null;
+    if (f.task && !/^(sit|look)$/.test(f.task.name)) return null;
+    if (!force) {
+      if (hour < 6.5 || hour >= 21.5) return null;
+      if (near.some(([x, z]) => Math.hypot(x - f.pos.x, z - f.pos.z) < 1.6)) return null;
+      if (this.o.busy && this.o.busy()) return null;
+      if (this.o.onScreen && !this.o.onScreen(f.pos.x, f.pos.z)) return null;
+    }
+    return this.lovePlan(f);
+  }
+  // where: the way she faces (side on to you if it can), where she sits for it, where he comes up, his way in and out
+  lovePlan(f) {
+    const ac = this.o.across ? this.o.across() : [1, 0], onPad = f.state === 'pad';
+    const hs = [];
+    if (onPad) for (let k = 0; k < 16; k++) hs.push(k / 16 * Math.PI * 2);
+    else { const [, t] = this.where(f.pos.x, f.pos.z), h0 = this.inward(t); for (const d of [0, 0.15, -0.15, 0.3, -0.3, 0.45, -0.45]) hs.push(h0 + d); }
+    let best = null;
+    for (const h of hs) {
+      const fx = Math.sin(h), fz = Math.cos(h); let stand = [f.pos.x, f.pos.z];
+      if (!onPad) {                                            // (up to the water's very edge)
+        stand = null;
+        for (let k = 0; k <= 30; k++) { const q = [f.pos.x + fx * k * 0.01, f.pos.z + fz * k * 0.01]; if (this.where(q[0], q[1])[0] <= 1.006) { stand = q; break; } }
+        if (!stand) continue;
+      }
+      const X = [stand[0] + fx * 0.21, stand[1] + fz * 0.21], deep = [stand[0] + fx * 0.42, stand[1] + fz * 0.42];
+      const clear = (x, z) => !(this.o.avoid || []).some(([ax, az, ar]) => Math.hypot(x - ax, z - az) < ar + 0.25);
+      if (!clear(X[0], X[1]) || !clear(deep[0], deep[1]) || this.where(X[0], X[1])[0] > 0.975 || this.where(deep[0], deep[1])[0] > 0.95) continue;
+      if (this.pads.some(q => q !== (onPad ? this.herPad : null) && Math.hypot(X[0] - q.x, X[1] - q.z) < q.r + 0.12)) continue;
+      // his way in: from out in the pond, curving in; and out again the other way
+      const side = [fz, -fx]; let start = null, end = null;
+      for (const L of [1.5, 1.2, 0.9]) {
+        const a = [X[0] + fx * L + side[0] * 0.5, X[1] + fz * L + side[1] * 0.5], b = [X[0] + fx * L - side[0] * 0.6, X[1] + fz * L - side[1] * 0.6];
+        if (!start && this.wetOk(a[0], a[1]) && this.clearSwim(a[0], a[1], X[0], X[1])) start = a;
+        if (!end && this.wetOk(b[0], b[1]) && this.clearSwim(X[0], X[1], b[0], b[1])) end = b;
+      }
+      if (!start || !end) continue;
+      const score = Math.abs(fx * ac[0] + fz * ac[1]) - 0.2 * Math.abs(wrapA(h - f.heading));
+      if (!best || score > best.score) best = { score, face: h, stand, hop: !onPad && Math.hypot(stand[0] - f.pos.x, stand[1] - f.pos.z) > 0.01, X, start, end, onPad };
+    }
+    return best;
+  }
+  makeSalmon() {
+    const S = new Fish('salmon', this.o.grade); S.root.visible = false; S.mesh.castShadow = false; S.rate = 4; S.amp = 0.025; this.group.add(S.root);
+    const sh = new THREE.Mesh(new THREE.CircleGeometry(1, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: '#203747', transparent: true, opacity: 0, depthWrite: false }));
+    sh.material.userData.noGrade = true; sh.renderOrder = 2; sh.visible = false; sh.scale.set(0.075, 1, 0.24); this.group.add(sh); this.sShadow = sh;
+    return S;
+  }
+  loveLean(t) { return t < 6 ? 0 : t < 6.6 ? sstep((t - 6) / 0.6) : t < 7.4 ? 1 : t < 8 ? 1 - sstep((t - 7.4) / 0.6) : 0; }
+  loveRise(t) { return t < 2.6 ? 0 : t < 3.4 ? sstep((t - 2.6) / 0.8) : t < 8 ? 1 : t < 8.9 ? 1 - sstep((t - 8) / 0.9) : 0; }
+  // where her mouth is (sitting, as she sits for this: on her pad or the bank)
+  mouthOf(f, fx, fz) { const sc = f.small || 1; return new THREE.Vector3(f.pos.x + fx * 0.078 * FROG_S * sc, f.pos.y + 0.052 * FROG_S * sc, f.pos.z + fz * 0.078 * FROG_S * sc); }
+  // him: his head up out of the water in front of her (rise 0 under, 1 up), leaning in to kiss (lean 0..1)
+  placeSalmon(pl, rise, lean, t) {
+    const S = this.salmon, f = this.her, fx = Math.sin(pl.face), fz = Math.cos(pl.face);
+    const mouth = this.mouthOf(f, fx, fz), gap = 0.06 + (0.004 - 0.06) * lean, up = 0.032 + (0.006 - 0.032) * lean, pitch = (52 - 10 * lean) * Math.PI / 180;
+    const target = mouth.add(new THREE.Vector3(fx * gap, up, fz * gap));
+    const d = new THREE.Vector3(-fx * Math.cos(pitch), Math.sin(pitch), -fz * Math.cos(pitch));
+    const nose = target.clone().addScaledVector(d, -0.36 * (1 - rise));
+    const c = nose.clone().addScaledVector(d, -S.spec.L / 2);
+    const Y = new THREE.Vector3(0, 1, 0).addScaledVector(d, -d.y).normalize(), roll = 0.07 * Math.sin(t * 1.6);
+    Y.applyAxisAngle(d, roll); const X = new THREE.Vector3().crossVectors(Y, d);
+    S.root.position.copy(c); S.root.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, d));
+    S.root.visible = rise > 0.003;
+    return target;
+  }
+  salmonStep(L, dt) {
+    const t = L.t, pl = L.plan, S = this.salmon, sh = this.sShadow, f = this.her, once = k => (L.once[k] ? false : (L.once[k] = true));
+    const rise = this.loveRise(t), lean = this.loveLean(t); L.rise = rise;
+    const nose = this.placeSalmon(pl, rise, lean, t);
+    S.amp = rise > 0.5 ? 0.018 : 0.04; S.update(dt);
+    S.U.blush.value = t < 3.4 ? 0 : t < 4.4 ? t - 3.4 : t < 8.4 ? 1 : Math.max(0, 1 - (t - 8.4) / 0.8);
+    // his shadow: gliding in, under him while he's up, gliding away
+    const bez = (a, c, b, u) => [a[0] * (1 - u) * (1 - u) + 2 * c[0] * u * (1 - u) + b[0] * u * u, a[1] * (1 - u) * (1 - u) + 2 * c[1] * u * (1 - u) + b[1] * u * u];
+    const fx = Math.sin(pl.face), fz = Math.cos(pl.face), deep = [pl.X[0] + fx * 0.16, pl.X[1] + fz * 0.16];
+    let at = null, prev = null, op = 0;
+    if (t < 2.7) { const c = [(pl.start[0] + deep[0]) / 2 + fz * 0.3, (pl.start[1] + deep[1]) / 2 - fx * 0.3], u = sstep(clamp01(t / 2.6)), u0 = sstep(clamp01((t - 0.05) / 2.6)); at = bez(pl.start, c, deep, u); prev = bez(pl.start, c, deep, u0); op = Math.min(0.3, t * 0.35); }
+    else if (t < 8.9) { at = deep; op = 0.16; }
+    else { const c = [(deep[0] + pl.end[0]) / 2 - fz * 0.3, (deep[1] + pl.end[1]) / 2 + fx * 0.3], u = sstep(clamp01((t - 8.9) / 2.1)), u0 = sstep(clamp01((t - 8.95) / 2.1)); at = bez(deep, c, pl.end, u); prev = bez(deep, c, pl.end, u0); op = 0.3 * (1 - u); }
+    sh.visible = op > 0.005; sh.material.opacity = op; sh.position.set(at[0], WATER_Y + 0.0015, at[1]);
+    if (prev && Math.hypot(at[0] - prev[0], at[1] - prev[1]) > 1e-5) sh.rotation.y = Math.atan2(at[0] - prev[0], at[1] - prev[1]); else if (!prev) sh.rotation.y = pl.face;
+    // the water: rings as he comes up and goes down, a little one now and then while he's up
+    if (t >= 2.65 && once('up')) this.ring(pl.X[0], pl.X[1], 0.45);
+    if (t >= 8.35 && once('down')) this.ring(pl.X[0], pl.X[1], 0.42);
+    if (rise > 0.9 && (L.beat -= dt) <= 0) { L.beat = 1.4; this.ring(pl.X[0] + fx * 0.02, pl.X[1] + fz * 0.02, 0.16); }
+    // hearts: rising between them as they gaze; a little burst as they kiss; one more from her as he goes
+    const eyes = this.mouthOf(f, fx, fz).lerp(nose, 0.5); eyes.y += 0.03;
+    if (t > 3.5 && t < 6.0 && (L.hb = (L.hb || 0) - dt) <= 0) { L.hb = 0.42; this.heart(eyes.x, eyes.y, eyes.z, 0.048 + Math.random() * 0.018, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, 0.14); }
+    if (t >= 6.62 && once('kiss')) {
+      this.heart(eyes.x, eyes.y + 0.025, eyes.z, 0.11, 0, 0, 0.11);
+      for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + 0.3; this.heart(eyes.x, eyes.y, eyes.z, 0.04 + Math.random() * 0.014, Math.cos(a) * 0.14, Math.sin(a) * 0.14, 0.17); }
+    }
+    if (t >= 9.4 && once('last')) this.heart(f.pos.x, f.pos.y + 0.13 * (f.small || 1), f.pos.z, 0.05, 0, 0, 0.11);
+    if (t >= 11.2) this.loveEnd(true);
+  }
+  // someone came near (or she was startled): he's gone back under at once, and away
+  salmonAway(L, dt) {
+    L.at = (L.at || 0) + dt; const k = clamp01(L.at / 0.35), S = this.salmon, pl = L.plan;
+    if (S) { this.placeSalmon(pl, (L.rise || 0) * (1 - sstep(k)), 0, L.t); S.update(dt); S.U.blush.value *= 1 - Math.min(1, dt * 4); }
+    if ((L.rise || 0) > 0.05 && !L.once.gone) { L.once.gone = true; this.ring(pl.X[0], pl.X[1], 0.5); }
+    if (this.sShadow) { this.sShadow.material.opacity = Math.max(0, 0.3 * (1 - L.at / 0.9)); this.sShadow.position.x += Math.sin(pl.face) * dt * 0.9; this.sShadow.position.z += Math.cos(pl.face) * dt * 0.9; this.sShadow.visible = L.at < 0.9; }
+    if (L.at > 1.0) this.loveEnd(false);
+  }
+  loveStop(f) { const L = this.loveOn; if (L && !L.aborting) { L.aborting = true; L.at = 0; if (L.stage !== 'on') this.loveEnd(false); } this.calm(f); }
+  calm(f) { const P = f.P; P.blink = 0; P.nod = 0; P.pitch = 0; P.reach = 0; }
+  loveEnd(done) {
+    if (this.salmon) { this.salmon.root.visible = false; this.salmon.U.blush.value = 0; }
+    if (this.sShadow) this.sShadow.visible = false;
+    this.loveOn = null; this.loveIn = done ? 300 + this.loveR() * 420 : 90 + this.loveR() * 120; this.loveCheck = 0;
+    if (done) this.loves = (this.loves || 0) + 1;
+    if (this.her && (!this.her.task || this.her.task.name !== 'love')) this.calm(this.her);
+  }
+  // her side of it: to the water's edge (from the bank), turned to him; looking, dreamy, leaning in, eyes shut for the kiss
+  loveRun(f, dt) {
+    const L = this.loveOn; if (!L || L.aborting) { this.calm(f); return true; }
+    const P = f.P, pl = L.plan;
+    if (L.stage === 'go') { if (pl.hop) { L.hop = L.hop || this.hop(f, pl.stand[0], pl.stand[1], 0.035); if (!L.hop.run(f, dt)) return false; } L.stage = 'turn'; }
+    if (L.stage === 'turn') { if (!this.turnTo(f, pl.face, dt)) return false; L.stage = 'on'; L.t = 0; return false; }
+    const t = L.t, lean = this.loveLean(t), ease = (k, v, r = 5) => k + (v - k) * Math.min(1, dt * r);
+    let yaw = 0;
+    if (this.sShadow && this.sShadow.visible && (t < 2.6 || t > 8.9)) { const a = Math.atan2(this.sShadow.position.x - f.pos.x, this.sShadow.position.z - f.pos.z); yaw = Math.max(-0.55, Math.min(0.55, wrapA(a - f.heading))); }
+    else if (t >= 3.4 && t < 8) yaw = 0.06 * Math.sin(t * 1.3);
+    P.yaw = ease(P.yaw, yaw, 4);
+    P.nod = ease(P.nod, t > 2.6 && t < 8.6 ? -0.14 - 0.06 * lean : 0, 4);
+    P.pitch = ease(P.pitch, -0.1 * lean, 6); P.reach = ease(P.reach, 0.3 * lean, 6);
+    P.blink = ease(P.blink, t > 6.45 && t < 7.45 ? 1 : t > 3.4 && t < 8.6 ? 0.42 : 0, 8);
+    if (t > 3.4 && t < 8) P.pouch = Math.max(P.pouch, 0.16 * Math.pow(Math.max(0, Math.sin(t * 6.5)), 6));      // (a fluttering heart)
+    if (t >= 11.2) { this.calm(f); return true; }
+    return false;
+  }
+  heart(x, y, z, size, vx = 0, vz = 0, vy = 0.12) {
+    if (!this.heartTex) this.heartTex = heartTexture();
+    let h = this.hearts.find(q => q.life <= 0);
+    if (!h) { if (this.hearts.length > 24) return; h = { sp: new THREE.Sprite(new THREE.SpriteMaterial({ map: this.heartTex, transparent: true, depthWrite: false })), life: 0 }; h.sp.material.userData.noGrade = true; h.sp.renderOrder = 12; this.group.add(h.sp); this.hearts.push(h); }
+    h.p = new THREE.Vector3(x, y, z); h.v = new THREE.Vector3(vx, vy, vz); h.size = size; h.life = h.full = 1.7; h.ph = Math.random() * 6; h.sp.visible = true;
+  }
+  tickHearts(dt) {
+    for (const h of this.hearts) {
+      if (h.life <= 0) continue; h.life -= dt; if (h.life <= 0) { h.sp.visible = false; continue; }
+      const u = 1 - h.life / h.full; h.p.addScaledVector(h.v, dt); h.v.x *= 1 - Math.min(1, dt * 2); h.v.z *= 1 - Math.min(1, dt * 2); h.v.y = Math.max(0.06, h.v.y * (1 - dt * 0.6));
+      h.sp.position.set(h.p.x + 0.01 * Math.sin(h.ph + u * 8), h.p.y, h.p.z);
+      const sc = h.size * Math.min(1, u * 6) * (1 + 0.12 * Math.sin(u * 22)); h.sp.scale.set(sc, sc, sc); h.sp.material.opacity = Math.min(1, (1 - u) * 2.5);
+    }
+  }
   // ---- the water's answers: rings, a splash, drips; and the croak's "Ribbit!"
   ring(x, z, size) {
     let s = this.fx.rings.find(q => q.life <= 0);

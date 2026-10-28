@@ -2770,3 +2770,24 @@ the birds already had.
   the woods: the walking grid behind it is a little wider, nothing on the way.)
 - **The duck house** (`decor_sprites.duckhouse`): a white-rimmed round window at the back and in each side.
 
+## The pond's secret: the salmon and the froglet (28 Oct 2026; Audrey: "A salmon and a frog are in love ... no need to mention it anywhere, the salmon cannot be fished")
+
+- **The lily pads** (pond.js `padGeometry`, `FrogPond.pads`): four round leaves out on the pond, notched, darker veins, a
+  paler rim, a little domed, bobbing and turning slowly; a pink water lily open on one; placed clear of the dock, the
+  stream mouths and where a duck house floats. The biggest is the froglet's.
+- **The froglet** (`FrogPond.her`, the first of the five frogs, a little smaller): from the water she often swims to her
+  pad and climbs onto it (`toPad`); there she sits a good while, looks about, croaks, and later hops off with a splash
+  (`offPad`, startled off it too). The frogs' test allows her on her pad.
+- **Their moment** (`FrogPond.love`, `tickLove`, `lovePlan`, `salmonStep`, `loveRun`; the salmon in fish.js `SECRET`, in
+  no water's catch, never in the Book): now and then (first 2½ to 6 minutes in, then 5 to 12 minutes apart; when its time
+  has come it waits until all's right), by day and evening (6:30 to 21:30), when she sits on her pad or on the bank,
+  nobody near her, nobody fishing the pond, and the pond on the screen (not zoomed far out): from the bank she hops to
+  the water's very edge; she turns to face him (side on to you if she can); his shadow glides in under the water; up
+  comes his head in front of her, rings spreading; they gaze at each other, little hearts rising between them, her eyes
+  gone dreamy, her throat fluttering, his cheeks blushing (the fish material's `blush`); they lean in and kiss, his nose
+  at her mouth, her eyes shut, a burst of hearts; he sinks back with a ring and glides away, and she watches him go, one
+  more heart. Their hearts are their own (no one else's counted). Never mentioned, nothing won, no news. A tap on her
+  doesn't spoil it; someone coming near does (he's gone at once, she jumps in), and it comes again sooner.
+- **Tests**: `lovetest.mjs` (the pads, from the bank and from her pad, a tap, someone near, by itself when its time comes,
+  not at night, not off the screen, not in the catch; close pictures); `lovefilm.mjs` films it (and a close version).
+

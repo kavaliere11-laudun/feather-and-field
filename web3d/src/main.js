@@ -1395,7 +1395,10 @@ function buildGeese() {
     if (nightVisit && nightVisit.fox.root.visible) out.push([nightVisit.fox.pos.x, nightVisit.fox.pos.z]);
     if (farmLife && !farmLife.home) out.push([farmLife.pos.x, farmLife.pos.z]);
     return out;
-  }, heard: (x, z) => { if (duckFlock) duckFlock.heard(x, z); } }, rng(81));
+  }, heard: (x, z) => { if (duckFlock) duckFlock.heard(x, z); }, across,
+    // (the pond's secret: only when it's on the screen and near enough to see, and nobody's fishing it)
+    onScreen: (x, z) => { if (view.size > 7) return false; const v = new THREE.Vector3(x, 0.05, z).project(camera); return Math.abs(v.x) < 0.8 && v.y > -0.7 && v.y < 0.75; },
+    busy: () => !!(FISHERS.pond && /^(cast|wait|nibble|bite|reel|lift)$/.test(FISHERS.pond.state || '')) }, rng(81));
   // the pond's mallards (ducks.js): Rocco, Daisy and Dot; they keep clear of the geese, Biscuit and Rusty
   // their house, if it's on the pond (a decoration): its own frame, to and from the world
   const dh = decorList.find(d => d.model === 'duckhouse'), hv = new THREE.Vector3(), hinv = dh ? dh.m.clone().invert() : null;

@@ -111,6 +111,18 @@ export const FISH = {
     beans: [0.6, 0.016, -0.3, 0.92], beanCol: '#d8d78e', scale: [60, 0.06], gill: 0.2, mottle: [6, 0.12] },
 };
 export const FISH_IDS = Object.keys(FISH);
+// ---- and one more, in no water's catch and never in the Book: the pond's secret (Audrey, 28 Oct: "A salmon and a frog are
+// in love ... the salmon cannot be fished"; pond.js FrogPond.love). A silver salmon, a blue-grey back with black spots,
+// his sides a little rosy, big soft eyes; his cheeks blush when he sees her (the material's blush)
+export const SECRET = {
+  salmon: { water: null, rare: 0, L: 0.46, cm: [60, 80], names: ['Salmon', 'Saumon'],
+    body: { H: 0.25, sH: 0.4, p: 0.62, ped: 0.3, hump: 0.55, W: 0.4, mouth: 0.02, tail: 0.17 },
+    dorsal: [[0.38, 0.52, 0.18]], adipose: 0.83, anal: [0.68, 0.79, 0.14], pelvic: 0.5, pect: 0.23, tailShape: 'notch',
+    eye: { k: 0.058, iris: '#d8bf72' },
+    col: { back: '#3d5872', side: '#ddd1d7', belly: '#f8f3f2' }, fins: { all: '#7d8a99', t: '#5b6c80', d: '#5f7085' },
+    spotA: [0.42, 0.014, 0.22, 1.0], spotACol: '#1f2530', scale: [44, 0.1], gill: 0.24, line: [0.5, 0.05] },
+};
+const specOf = id => FISH[id] || SECRET[id];
 const NS = 48, NA = 32;
 const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const hash = (a, b) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -168,7 +180,7 @@ function solid(g, colour, out) {
 const GEO = {};
 export function fishGeometry(id) {
   if (GEO[id]) return GEO[id];
-  const sp = FISH[id], M = measures(sp), { B, L, Lb, zN, ring, at } = M, parts = [];
+  const sp = specOf(id), M = measures(sp), { B, L, Lb, zN, ring, at } = M, parts = [];
   const finCol = k => C((sp.fins && (sp.fins[k] || sp.fins.all)) || '#999999');
   const big = sp.bigFins || 1;
   // ---- the body: rings nose to tail, each round its middle (a little squarer than an ellipse); the tail's root closed
@@ -269,7 +281,7 @@ export function fishGeometry(id) {
 
 // ---- the material: the body's colours and marks per pixel, the fins' rays, the swim
 export function fishMaterial(id, grade) {
-  const sp = FISH[id], B = sp.body, L = sp.L, Lb = L * (1 - B.tail);
+  const sp = specOf(id), B = sp.body, L = sp.L, Lb = L * (1 - B.tail);
   const v4 = (a, d) => new THREE.Vector4(...(a ? a.concat([0, 0, 0, 0]).slice(0, 4) : d));
   const U = {
     swimT: { value: 0 }, swimA: { value: 0.05 }, curl: { value: 0 }, fishL: { value: L }, zNose: { value: L / 2 }, lb: { value: Lb / L },
@@ -283,7 +295,7 @@ export function fishMaterial(id, grade) {
     koiP: { value: v4(sp.patch, [0, 0, 0, 0]) }, patchCol: { value: C(sp.patchCol || '#000000') }, patch2Col: { value: C(sp.patch2Col || '#000000') },
     mirror: { value: new THREE.Vector2(...(sp.mirror || [0, 0])) }, mirrorCol: { value: C(sp.mirrorCol || '#ffffff') },
     mottle: { value: new THREE.Vector2(...(sp.mottle || [0, 0])) }, lline: { value: new THREE.Vector2(...(sp.line || [0, 0])) },
-    stripes: { value: new THREE.Vector2(...(sp.stripes || [0, 0])) },
+    stripes: { value: new THREE.Vector2(...(sp.stripes || [0, 0])) }, blush: { value: 0 },
   };
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.0, side: THREE.DoubleSide });
   m.name = 'fish'; m.userData.fish = U;
@@ -301,7 +313,7 @@ vFd = fd; vLP = position / fishL;
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
 varying vec3 vFd; varying vec3 vLP;
-uniform float lb, gill, spotAFront, hasHalo;
+uniform float lb, gill, spotAFront, hasHalo, blush;
 uniform vec3 cBack, cSide, cBelly, barCol, blotchCol, spotACol, spotBCol, halo, beanCol, patchCol, patch2Col, mirrorCol;
 uniform vec2 scl, mirror, mottle, lline, stripes;
 uniform vec4 bars, blotch, spotA, spotB, beans, koiP;
@@ -394,6 +406,8 @@ const BODY_GLSL = `
   if (lline.x > 0.0) { float ll = abs(v - lline.y); col *= 1.0 - lline.x * 0.4 * (1.0 - smoothstep(0.015, 0.04, ll)) * step(0.0, sin(s * 300.0)) * smoothstep(0.22, 0.28, s); }
   // the gill cover's edge: a curved line behind the head
   { float gl = abs(s - gill + 0.06 * v * v); float aa = fwidth(s) * 1.2; float on = (1.0 - smoothstep(0.004, 0.006 + aa, gl)) * (1.0 - smoothstep(0.78, 0.92, abs(v))); col *= 1.0 - 0.38 * on; }
+  // a blush on his cheeks, under and behind the eye (the salmon, when he sees her)
+  if (blush > 0.0) { float d = length(vec2((s - 0.215) / 0.05, (v + 0.06) / 0.3)); col = mix(col, vec3(0.97, 0.47, 0.56), blush * 0.85 * (1.0 - smoothstep(0.45, 1.0, d))); }
   diffuseColor.rgb = col;
 } else if (vFd.z < 1.5) {               // a fin: its rays, paler and a little see-through towards its edge
   float ray = abs(sin(vFd.y * 3.14159 * 11.0)); diffuseColor.rgb *= 1.0 - 0.14 * smoothstep(0.75, 1.0, ray) * smoothstep(0.1, 0.4, vFd.x);
@@ -403,7 +417,7 @@ const BODY_GLSL = `
 // one fish to show or to swim: its mesh in a group (the group placed and turned, the fish swimming in it)
 export class Fish {
   constructor(id, grade) {
-    this.id = id; this.spec = FISH[id];
+    this.id = id; this.spec = specOf(id);
     this.mesh = new THREE.Mesh(fishGeometry(id), fishMaterial(id, grade)); this.mesh.castShadow = true;
     this.root = new THREE.Group(); this.root.add(this.mesh);
     this.U = this.mesh.material.userData.fish; this.t = Math.random() * 6; this.rate = 7; this.amp = 0.05; this.curl = 0;
@@ -418,7 +432,8 @@ export class FishLineup {
     this.group = new THREE.Group(); this.group.position.copy(centre); scene.add(this.group);
     const back = viewDir.clone().normalize(), up = new THREE.Vector3(0, 1, 0).addScaledVector(back, -back.y).normalize(), right = new THREE.Vector3().crossVectors(up, back);
     const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(back, up, right.clone().negate()));
-    this.fish = FISH_IDS.map((id, i) => {
+    const ids = typeof location !== 'undefined' && /[?&]salmon\b/.test(location.search) ? ['salmon'] : FISH_IDS;      // (&salmon: the secret one alone)
+    this.fish = ids.map((id, i) => {
       const f = new Fish(id, grade);
       f.root.quaternion.copy(q); f.root.position.copy(right.clone().multiplyScalar((i - 6.5) * 1.5)).add(new THREE.Vector3(0, 0.9, 0));
       this.group.add(f.root); return f;
