@@ -1,0 +1,9 @@
+Feather & Field: the sounds and music
+
+Music (Audrey's picks, 28 Oct 2026). Both CC0 1.0 Universal (public domain): free for a paid game, no credit required.
+Credited anyway, with thanks.
+- "Champ de tournesol" by Komiku, from the album "It's time for adventure!". Free Music Archive and the Internet Archive both
+  list it as CC0 1.0 Universal. The copy used here came from FreePD.com.
+- "Happy Whistling Ukulele" by Rafael Krux, from FreePD.com ("CC0 1.0 Universal Public Domain Dedication", "Free for Commercial
+  Use").
+Both were made quieter and evened out to the same loudness (-18 LUFS), and saved as 128 kbps MP3s.
