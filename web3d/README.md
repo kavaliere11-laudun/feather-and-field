@@ -2637,19 +2637,20 @@ the birds already had.
   swims in place (a wave down to the tail; a curl). `?lineup=fish` shows all fourteen; `fishpics.mjs` takes a picture
   of each (`BACKDROP=1`: on cream, for the cards: `fishcards.py` makes `fish/<id>.webp`, see-through round the fish).
 - **The rules** (game.js `FISHING`, `FISH_RULES`, `castWorm`, `landFish`, `buyWorms`): the pond from level 3, the river
-  from level 8. A worm a cast: four free each morning (on the phone's calendar), used first, then those from tins (10
-  for 60 coins, on the dock's card). A cast decides the fish there and then, by weight (roach 30, rudd 26, perch 20, tench
+  from level 8. A worm a cast: found by the chickens who love the farmer (below: "Worms from the chickens"; at first,
+  four came free each morning), or from tins (10 for 60 coins, on the dock's card). A cast decides the fish there and then, by weight (roach 30, rudd 26, perch 20, tench
   14, the golden tench 4.5, the koi 4, Big Bertha 1.5 in each hundred), its size within its sizes (most of them
   smallish). Landed: sold live to the village aquarium shop (its price a little more the bigger it is: rudd 9, roach 8,
   perch 11, tench 14, golden tench 70, koi 90), 1 XP (2 for a tench, 6 for a rare one), +10 XP for a fish new to you;
   a legendary one has its photo taken and goes back into the water (the village paper buys the photo: 300 coins for Big
-  Bertha, 400 for Old Snapjaw; 25 XP); the count and the biggest of each kept. Balance (`balsim.mjs`, the day's free
-  worms fished each morning): once a day level 30 on day 327 (337 before fishing), twice a day 279, every 3 hours 229;
-  fishing about 21,000 coins in a year, against eggs 116,000: it pays, but it can't replace the hens.
-- **The save**: `fish` (made the first time it's used): the day the free worms were given (never ahead), those left (at
-  most a day's), the worms from tins (at most 999), and each fish caught (known fish only, from a water the level has
-  opened): [how many, the biggest in cm, within its sizes]; anything else flagged and put right. A farm from before
-  fishing has none, unflagged.
+  Bertha, 400 for Old Snapjaw; 25 XP); the count and the biggest of each kept. Balance (`balsim.mjs`, the chickens asked
+  for their worms and up to 8 fished each morning): once a day level 30 on day 312 (327 with four free worms a day, 337
+  before fishing), twice a day 269, every 3 hours 220; fishing about 45,000 coins in a year, against eggs 123,000 and
+  chicks 128,000: it pays, but it can't replace the hens.
+- **The save**: `fish` (made the first time it's used): the worms (at most 999), and each fish caught (known fish only,
+  from a water the level has opened): [how many, the biggest in cm, within its sizes]; anything else flagged and put
+  right. A farm from before fishing has none, unflagged; one saved while worms came free each morning (`day`, `free`, at
+  most four): checked as it was, then those left kept as worms.
 - **The dock** (main.js `dockInfo`): the pond's dock, its bank end and its far end, its deck's height (the farmer walks
   up on it: `groundY`); tap it for its card (`gameUI.dockCard`): the pond's seven fish (those caught in colour), the
   worms, Go fishing, a tin of worms. The pond lies in two wild fields at first, so while the dock's field is wild meadow
@@ -2687,3 +2688,28 @@ the birds already had.
   snapped, slipped off, Big Bertha's photo and release, the last worm, Stop and the walk back, a reload, the evening;
   the rod and bucket on the dock, picked up, laid down to unhook, the fish resting on his hands, into the bucket).
   `fishfilm.mjs` makes a short film of it.
+
+## Worms from the chickens (28 Oct 2026; Audrey: "How do you get the worms? I thought that would be cute if the chickens get them to the farmer up to 3 a day per chicken if the chicken loves the farmer and the farmer goes and asks for it"; then "Replace them", "1, 2 or 3 by love", "One visit, all her worms")
+
+- **The rules** (game.js `FISHING.byTrust`, `wormsOf`, `wormsGiven`, `askWorms`): no more free worms each morning. Once
+  fishing is open (level 3), each chicken (hen or rooster) finds worms for the farmer every day, by how much she loves
+  him: Shy none, Friendly 1, Trusting 2, Best friend 3. Asked (her card), all of today's go into the bag at once (at most
+  999); once a day each. Tins of ten stay on the dock's card.
+- **Her card** (`gameUI.birdCard`): "🪱 Ask for worms · 🪱 2" under the cuddle; asked today: "found worms for Arthur
+  today. More tomorrow!"; shy: "still shy: no worms for Arthur yet. Cuddles help."; at night, in the morning. Her trust
+  card says how many each level finds. The dock's card and the level-3 card say where worms come from ("Your chickens
+  who love Arthur find worms every day: tap one and ask"); no worms: "No worms left" said once (it was twice).
+- **The visit** (main.js `gameWorms`, farmlife.js `penTask` 'worms', `penSpec` `callHen(b, true)`, `dig`): the farmer
+  into the pen, crouched, his hand held out low, palm up (farmer.js poses `cup`, `cupL`); she comes and stands beside
+  his hand, side on to him so you see her beak (to his right, or his left if that's where there's room and a way,
+  else in front of him); for each worm two kicks back, her beak down to the ground, up with a worm wriggling in it, then
+  dropped into his palm, where they wait side by side; "Thank you, my lovely!" ("Thanks, old chap!" to a rooster), a
+  heart; his hand closes round them, he stands and puts them in the pocket on his bib (`pocket`, `pocketL`). A hen who
+  can't find a way through to him (stuck behind him by the fence, say) flutters over, wings going (this helps cuddles
+  too).
+- **The save**: each bird's `worm`: the day she last found worms for him (never ahead of today; anything else flagged
+  and dropped).
+- **Tests**: `fishrules.mjs` (the worms by trust, once a day, the bag, the old free worms kept, the save), `wormtest.mjs`
+  (EN upright, FR sideways: the cards at levels 2 and 3, shy, friendly, asked, the visit watched: her beak, his palm,
+  his pocket, nothing left lying about; the rooster's three; the dock's card; the next day; the night; a reload);
+  `wormclose.mjs` takes pictures of each moment (VIEW=game: from the game's camera).

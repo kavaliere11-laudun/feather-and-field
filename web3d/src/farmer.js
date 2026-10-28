@@ -104,6 +104,14 @@ export const POSES = {
   panic: { chest: [0, 18, -6], head: [0, -6, -4], shR: [-10, -75, 0], elR: -15, shL: [8, 40, 0], elL: -50, hand: ['fist', 'hold'], hipL: [0, -32, 0], kneeL: 14, hipR: [0, 26, 0], kneeR: 34, root_z: -0.01 },
   cuddle: { head: [-6, 10, 0], chest: [0, -4, 0], shL: [6, -50, 0], elL: [-45, -72, 0], shR: [-6, -50, 0], elR: [45, -72, 0], hand: ['relax', 'relax'], wrL: [0, 0, -20], wrR: [0, 0, 20] },
   pet: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 10, 0], head: [0, -4, 0], shR: [-10, -78, 0], elR: -14, wrR: [0, 6, 0], shL: [14, -30, 0], elL: -60, hand: ['relax', 'open'] },
+  // (3D only) worms from a hen (farmlife.js, Audrey's idea): crouched in front of her, his right hand held out low, palm up,
+  // for her to drop them in; then up, his hand closed round them, to the pocket on his bib
+  cup: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 14, 0], head: [0, -10, 0],
+    shR: [-10, -40, 0], elR: [26, -30, 0], wrR: [0, 0, 20], shL: [14, -30, 0], elL: -60, hand: ['relax', 'cup'] },
+  pocket: { chest: [0, 4, 0], head: [0, 6, 0], shR: [15, -15, 20], elR: [0, -100, 0], wrR: [0, 10, 0], shL: [6, 0, 0], elL: -10, hand: ['relax', 'fist'] },
+  cupL: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 14, 0], head: [0, -10, 0],
+    shL: [10, -40, 0], elL: [-26, -30, 0], wrL: [0, 0, -20], shR: [-14, -30, 0], elR: -60, hand: ['cup', 'relax'] },      // (the same with the left hand, when she's on his left)
+  pocketL: { chest: [0, 4, 0], head: [0, 6, 0], shL: [-15, -15, -20], elL: [0, -100, 0], wrL: [0, 10, 0], shR: [-6, 0, 0], elR: -10, hand: ['fist', 'relax'] },
   feed: { chest: [0, 4, 12], head: [0, 8, 14], shR: [-62, -40, 0], elR: -25, shL: [10, -12, 0], elL: -20, hand: ['hold', 'hold'] },      // (3D: the left hand round the pail's handle)
   // (3D only) hands on hips, looking at the hens; the torch held out in front; a big stretch in the morning
   hips: { shL: [38, 18, 0], elL: [-70, -20, 0], shR: [-38, 18, 0], elR: [70, -20, 0], hand: ['fist', 'fist'], chest: [0, -3, 0] },
@@ -153,7 +161,7 @@ export const FACES = {
   // (3D only) the judge weighing a bird up: eyes narrowed, brows down a little, lips pressed
   peer: { up: 0.5, lo: -0.55, look: [0, -0.15], brow: -0.3, browH: 0.05, mouth: 'smile', blush: 0.3 },
 };
-const HANDS = { relax: [25, 18, 20, 4], open: [5, 0, 20, 14], point: [95, 0, 20, 4], fist: [105, 110, 40, 4], hold: [85, 85, 40, 4] };      // knuckles, index, thumb, spread
+const HANDS = { relax: [25, 18, 20, 4], open: [5, 0, 20, 14], cup: [28, 22, 26, 8], point: [95, 0, 20, 4], fist: [105, 110, 40, 4], hold: [85, 85, 40, 4] };      // knuckles, index, thumb, spread
 const MOUTHS = ['smile', 'grin', 'talk', 'o', 'wavy', 'frown'];
 
 // a whole pose from one of POSES (every joint given; the elbows' and knees' single angles as farmer.py reads them; the ankles

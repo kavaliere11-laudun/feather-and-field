@@ -31,6 +31,7 @@ export const FARMER_TEXT = {
   tomorrow: ['Maybe tomorrow…', 'Demain, peut-être…'],
   corn: ['Some corn for you!', 'Du grain pour vous !'],
   there: ['There you are!', 'Vous voilà !'],
+  wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 };
@@ -255,16 +256,17 @@ export class FarmLife {
     if (this.o.inView && this.o.inView(this.pos.x, this.pos.z)) return TK.seq('wave', [TK.face('camera'), TK.say('hello'), TK.act('wave', 2.4, STAND.wave)]);
     return TK.seq('about', [TK.act('about', 3 + R() * 3, STAND.about)]);
   }
-  // ---- into a pen (main.js penSpec: P): a cuddle for `hen`, or filling the feeder and scattering corn. If he's in the middle
-  // of coming out, going in or another pen, straight after it. False when he can't (indoors, or out after Rusty)
-  visitPen(P, kind, hen) {
+  // ---- into a pen (main.js penSpec: P): a cuddle for `hen`, her worms (n of them), or filling the feeder and scattering
+  // corn. If he's in the middle of coming out, going in or another pen, straight after it. False when he can't (indoors, or
+  // out after Rusty)
+  visitPen(P, kind, hen, n) {
     if (!P || this.home || this.running) return false;
-    const t = this.penTask(P, kind, hen);
-    if (kind === 'cuddle' && P.reserve) P.reserve(hen);
+    const t = this.penTask(P, kind, hen, n);
+    if ((kind === 'cuddle' || kind === 'worms') && P.reserve) P.reserve(hen);
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = t; else this.task = t;
     return true;
   }
-  penTask(P, kind, hen) {
+  penTask(P, kind, hen, n) {
     const self = this, pen = on => () => { if (on) { self.pen = P; P.enter(); } else { P.leave(); self.pen = null; } return null; };
     // (never got to the gate after all: no visit)
     const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - P.out[0], Lf.pos.z - P.out[1]) > 0.7) { seq.aborted = true; if (P.letGo) P.letGo(hen); } return true; } };
@@ -280,6 +282,29 @@ export class FarmLife {
           const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
         }),
         TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
+    } else if (kind === 'worms') {
+      // worms from her (Audrey, 28 Oct: "that would be cute if the chickens get them to the farmer ... if the chicken loves the
+      // farmer and the farmer goes and asks for it"): a crouch, she hurries over and he holds his hand out low, palm up; for
+      // each worm she scratches, pecks it up out of the ground and drops it in his palm (P.dig); "Thank you, my lovely!", a
+      // heart; his hand closed round them, up, and into the pocket on his bib
+      let ready = null, hearted = false;
+      const N = Math.max(1, n || 1), DIG = 2.4, all = DIG * N, rooster = hen && hen.kind === 'rooster';
+      const L2 = () => P.henAt && P.henAt.hand === 'L', cup = () => L2() ? 'cupL' : 'cup', close = P2 => { P2[L2() ? 'handL' : 'handR'] = [105, 110, 40, 4]; };      // (the hand on her side)
+      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        () => { ready = P.callHen(hen, true); return null; },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 12; } },
+        // (she couldn't come after all, gone in to lay, say: he gets up again)
+        () => ready && ready() ? TK.seq('worms', [
+          TK.act('hand', 0.6, W => { W.pose = cup(); W.face = 'happy'; W.look = [0, -0.5]; }),
+          TK.act('dig', all, (W, u, Lf) => { W.pose = cup(); W.face = 'happy'; W.look = [0, -0.5]; P.dig(hen, u, DIG, N, Lf); }),
+          TK.say(rooster ? 'wormsR' : 'wormsH'),
+          TK.act('thanks', 1.3, (W, u, Lf) => { W.pose = cup(); W.face = 'happy'; W.look = [0, -0.3]; P.dig(hen, all, DIG, N, Lf); if (u > 0.25 && !hearted) { hearted = true; P.heart(hen); } }),
+          TK.act('close', 0.45, (W, u, Lf) => { W.pose = cup(); W.face = 'happy'; W.anim = close; P.dig(hen, all, DIG, N, Lf); if (u > 0.3) P.wormsClosed(); }),
+          TK.act('pocket', 1.1, (W, u) => { W.pose = L2() ? 'pocketL' : 'pocket'; W.face = 'happy'; if (u > 0.85) W.anim = P2 => { P2[L2() ? 'handL' : 'handR'] = [5, 0, 20, 14]; }; }),
+          () => { P.wormsDone(hen); return null; },
+        ]) : null,
+        () => { P.wormsDone(hen); P.letGo(hen); return null; },
+        TK.act('up', 0.6, W => { W.pose = 'turn'; W.face = 'happy'; }));
     } else {
       // a proper cuddle (Audrey, 25 Oct: "Could you do a proper cuddle?"): a crouch, she hurries over and settles in front of
       // him; he scoops her up in both hands and stands with her held against his chest, stroking her back and swaying a

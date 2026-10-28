@@ -1,7 +1,7 @@
 // The balance (release 1 step 11): simulated players over a year, through the game's own rules (src/game.js), on a
 // fake clock. node balsim.mjs [days=365] [profile=all] [seeds=3]
 // Profiles: 'daily' (once a day, 19:00), 'twice' (8:00 and 19:00), 'often' (every 3 hours, 8:00 to 23:00). At each visit
-// the player does everything a keen player would: collects the eggs and the honey, goes fishing with the day's free worms (release 5), fills the feeders (grain first), sows
+// the player does everything a keen player would: collects the eggs and the honey, asks the chickens for their worms and goes fishing with up to 8 a day (release 5), fills the feeders (grain first), sows
 // and harvests the wheat, cuddles every bird, enters the best bird in each open show, collects the jobs, buys the next field
 // when it can, places a new breed's coop, upgrades the coops (release 4), and buys decorations, the geese and the dog, and outfits once they leave a reserve
 // for feed and land.
@@ -46,9 +46,11 @@ function simulate(name, seed) {
       for (const c of g.data.coops) { const r = track('eggs', () => g.collect(c.id)); if (r) earn.eggs += r.coins; }
       const hr = track('honey', () => g.collectHoney(NOW)); if (hr) earn.honey += hr.coins;
       if (g.wheatStage(NOW) === 'ripe') track('wheat', () => g.harvestWheat(NOW));
-      // fishing (release 5): the day's free worms at the first visit (the river half the time once it's open), most fish
+      // fishing (release 5): the chickens asked for their worms (Friendly 1, Trusting 2, Best friend 3 a day), then up to 8
+      // worms fished at the first visit (a keen player's few minutes; the river half the time once it's open), most fish
       // landed (fewer of the rare ones, fewer still of the legendary)
-      if (h === hours[0]) while (g.fishOpen('pond') && g.worms(NOW) > 0) {
+      if (h === hours[0]) for (const b of g.data.birds) g.askWorms(b.id, NOW);
+      if (h === hours[0]) for (let k = 0; k < 8 && g.fishOpen('pond') && g.worms() > 0; k++) {
         const b = g.castWorm(g.fishOpen('river') && R() < 0.5 ? 'river' : 'pond', NOW, R); if (!b) break;
         if (R() < [0.85, 0.75, 0.6][b.rare]) { const r = track('fish', () => g.landFish()); if (r) earn.fish += r.coins; } else g.loseFish();
       }

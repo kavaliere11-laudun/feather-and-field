@@ -1,7 +1,7 @@
 // Fishing in the game (release 5: the pond; game.js, fishing.js, farmlife.js fishAt, main.js the dock): ./withserver.sh
 // node fishtest.mjs [OUT]   (LANG=fr; W, H: the screen, e.g. W=874 H=402; PORT)
 // A new farm on a fake clock. Level 2: the dock's card says fishing opens at level 3, no button. Level 3: the pond's seven
-// fish (none caught), 4 worms, Go fishing, a tin of worms. Go: the farmer off to the dock (by its gate in the wild meadow's
+// fish (none caught), 4 worms (from the hens), Go fishing, a tin of worms. Go: the farmer off to the dock (by its gate in the wild meadow's
 // fence, opening as he goes in), out to its end on the deck, the rod out; the worms and Stop at the bottom. A tap on the
 // water: a worm used, the float out on its line, "Watch the float". A tap too soon: "Too soon!". The bite: a tap, the
 // gauge; reeling (a player keeping it in the green): landed, into his hands, turned to us; a fish new to us: held up high;
@@ -68,7 +68,7 @@ ok('level 3: its card: fishing at the pond, a look at it', sh && sh.kind === 'le
 await settle(); await p.tap('.gsheet button[data-fish=show]'); await run(1.2);
 const va = await p.evaluate(() => { const f = window.__farm, v = f.viewAt(), D = f.dock(); return { v, d: Math.hypot(v[0] - D.end[0], v[1] - D.end[1]) }; });
 ok('"Show me the pond": the view over to the dock', va.d < 0.5 && !(await sheet()), va);
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 3; g.save(); f.gameUI().close(); }); await run(0.5);
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 3; g.fishBag().worms = 4; g.save(); f.gameUI().close(); }); await run(0.5);      // (four worms the hens found: wormtest.mjs)
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 sh = await sheet();
 const props0 = await p.evaluate(() => { const F = window.__farm.fishing(); return F && { rod: F.deckRod.visible, bucket: F.bucket.visible }; });
@@ -129,7 +129,7 @@ await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25)
 end = await reel('slack'); s = await st();
 ok('too slack: it slips the hook', end === 'ready' && (fr ? /décroché/ : /slipped/).test(s.hint), { end, h: s.hint });
 // Big Bertha
-await p.evaluate(() => { const g = window.__farm.game(); g.data.fish.worms = 1; g.data.fish.free = 0; g.save(); window.__farm.fishing().refreshBar(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.fish.worms = 1; g.save(); window.__farm.fishing().refreshBar(); });
 cc = (await st()).coins;
 await castOut(); await p.evaluate(() => { const F = window.__farm.fishing(), g = window.__farm.game(); g.bite = { id: 'big_bertha', cm: 91, water: 'pond', rare: 2 }; F.bite = { ...g.bite }; });
 await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));

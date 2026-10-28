@@ -406,7 +406,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -1719,6 +1719,10 @@ function penSpec(plot) {
   // the hen settles a little in front of him and to his right, under his stroking hand
   const fl = Math.hypot(ahead[0] - CB[0], ahead[1] - CB[1]), fx = (ahead[0] - CB[0]) / fl, fz = (ahead[1] - CB[1]) / fl;
   const spot = [CB[0] + fx * 0.44 - fz * 0.04, CB[1] + fz * 0.44 + fx * 0.04];      // (clear of his knees as he crouches)
+  // (for worms: beside his hand held out to his right (or his left, if that's where there's room), side on to him, her beak
+  // to his palm, so you see her peck them up and drop them in; the cuddle's spot if neither is clear)
+  const wside = s => ({ hand: s > 0 ? 'R' : 'L', at: [CB[0] + fx * 0.27 - s * fz * 0.3, CB[1] + fz * 0.27 + s * fx * 0.3], palm: [CB[0] + fx * 0.36 - s * fz * 0.17, CB[1] + fz * 0.36 + s * fx * 0.17] });      // (her a little behind his hand, so it's in front of her beak from where you look)
+  const roomFor = q => q[0] > Yp.min[0] + 0.1 && q[0] < Yp.max[0] - 0.1 && q[1] > Yp.min[2] - 0.05 && q[1] < Yp.max[2] - 0.08 && !PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.1) && !base.some(o => Math.hypot(q[0] - o[0], q[1] - o[1]) < o[2] + 0.1);
   const base = plot.block || [];
   const P = {
     plot, out,
@@ -1733,7 +1737,7 @@ function penSpec(plot) {
       if (pail) { v.copy(pail).applyMatrix4(inv); plot.farmer.px = plot.pb[0] = v.x; plot.farmer.pz = plot.pb[1] = v.z; plot.pb[2] = 0.2; }
       else { plot.farmer.px = undefined; plot.pb[2] = 0; }
     },
-    leave() { plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; },
+    leave() { plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; P.wormsDone(); },
     reserve(b) { if (b) b.called = true; },                  // (sent for: she doesn't go off to lay meanwhile)
     // the hens and the rooster, where he must mind them (world)
     hens() { return plot.birds.filter(b => b.root.visible && !(b.laying && b.laying.inside)).map(b => ({ pos: b.root.getWorldPosition(new THREE.Vector3()), R: 0.32, noPush: true })); },
@@ -1744,12 +1748,20 @@ function penSpec(plot) {
       C.handful(v.copy(hand).applyMatrix4(inv), SC[0], SC[1], 0.42, n, F ? [F.x, F.z, 0.55] : null);
       if (first) for (const b of plot.birds) if (!b.busy() && !b.cuddle) b.feedIn = b.pers === 'glutton' ? 0.45 : 0.6 + b.r() * 0.9;      // corn! off they go
     },
-    callHen(b) {
+    callHen(b, worms) {
       if (!plot.farmer || !b || b.busy()) return null;
-      plot.farmer.hen = b; plot.block = [...plot.block, [spot[0], spot[1], 0.22, b]];
-      for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - spot[0], o.root.position.z - spot[1]) < 0.4) o.shooFrom(spot[0], spot[1]);      // (anyone sitting where she'll be: up and off)
-      return b.comeForCuddle(spot, Math.atan2(CB[0] - spot[0], CB[1] - spot[1]), [plot.farmer.x, plot.farmer.z])
-        ? () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.root.position.x - spot[0], b.root.position.z - spot[1]) < 0.16) : null;      // (there in front of him: only then is she picked up)
+      // (a side she can get to from where she is, round him if need be, as comeForCuddle goes: else in front of him)
+      const reach = at => { const was = b.cuddle; b.cuddle = { spot: at }; let r = b.plan([at]), ok = r[r.length - 1] === at;
+        const ux = at[0] - plot.farmer.x, uz = at[1] - plot.farmer.z, ul = Math.hypot(ux, uz) || 1, sideP = a => { const c = Math.cos(a), s = Math.sin(a); return [plot.farmer.x + (ux * c - uz * s) / ul * 0.66, plot.farmer.z + (ux * s + uz * c) / ul * 0.66]; };
+        for (const via of [[sideP(1.15)], [sideP(-1.15)], [sideP(2.4), sideP(1.15)], [sideP(-2.4), sideP(-1.15)]]) { if (ok) break; if (!via.every(q => b.free(q[0], q[1]))) continue; r = b.plan([...via, at]); ok = r[r.length - 1] === at && r.length >= via.length + 1; }
+        b.cuddle = was; return ok; };
+      const sides = worms ? [wside(1), wside(-1)].filter(o => roomFor(o.at)) : [];
+      // (no way on foot to either side: beside him all the same, she flutters over)
+      const w = sides.find(o => reach(o.at)) || sides[0] || null, at = w ? w.at : spot, face = w ? Math.atan2(w.palm[0] - at[0], w.palm[1] - at[1]) : Math.atan2(CB[0] - at[0], CB[1] - at[1]);
+      plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b]]; P.henAt = { side: !!w, hand: w ? w.hand : 'R', at, sides: [wside(1), wside(-1)].map(o => o.at.map(v => +v.toFixed(2))), room: sides.length };      // (which hand he holds out; the tests)
+      for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - at[0], o.root.position.z - at[1]) < 0.4) o.shooFrom(at[0], at[1]);      // (anyone sitting where she'll be: up and off)
+      return b.comeForCuddle(at, face, [plot.farmer.x, plot.farmer.z])
+        ? () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.root.position.x - at[0], b.root.position.z - at[1]) < 0.16) : null;      // (there in front of him: only then is she picked up)
     },
     letGo(b) { if (b) { b.called = false; if (b.cuddle) { b.cuddle.carry = null; b.cuddle.done = true; } b.shadowY = undefined; b.root.position.y = 0.015; if (b.rig.shut) b.rig.sleepy(false); } },
     // lifted k of the way from where she settled (0) into his arms (1): in front of his chest, across his arms with her head
@@ -1766,9 +1778,42 @@ function penSpec(plot) {
       b.rig.sleepy(k > 0.9);
     },
     heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.rig.scale * 0.8; spawnHeart(p); },
+    // worms from her (farmlife.js 'worms'; Audrey's idea): u the time since she started, each worm DIG of it, n of them. Each:
+    // two kicks back, her beak down to the ground (the worm's there in it), up with it wriggling, then dropped into his palm
+    // (his right hand held out, palm up), where it stays with the others; closed in his hand (wormsClosed); gone (wormsDone)
+    dig(b, u, DIG, n, Lf) {
+      const C = b.cuddle; if (!C || !Lf) return;
+      const W = P.worms || (P.worms = []);
+      while (W.length < n) { const m = new THREE.Mesh(wormGeo(), wormMat()); m.castShadow = true; m.visible = false; m.userData.moves = true; scene.add(m); W.push(m); }
+      const done = u >= DIG * n, i = done ? n : Math.floor(u / DIG), t = done ? 9 : u - i * DIG, wig = DAY_T();
+      C.dig = { t };
+      const h = Lf.heading, fw = wv1.set(Math.sin(h), 0, Math.cos(h)), lf = wv2.set(Math.cos(h), 0, -Math.sin(h));
+      const palm = Lf.f.rig.B[P.henAt && P.henAt.hand === 'L' ? 'handL' : 'handR'].getWorldPosition(new THREE.Vector3()).addScaledVector(fw, 0.045); palm.y += 0.022;
+      const inPalm = k => palm.clone().addScaledVector(fw, (k - (n - 1) / 2) * 0.017).addScaledVector(lf, (k % 2) * 0.01);      // (side by side)
+      W.forEach((m, k) => {
+        if (k < i) { m.visible = true; m.position.copy(inPalm(k)); m.rotation.set(0, h + 0.35 * Math.sin(wig * 5 + k * 2), 0.15 * Math.sin(wig * 7 + k)); return; }      // (lying across his palm)
+        if (k > i || t < 1.1) { m.visible = false; return; }
+        const bill = billTip(b); m.visible = true;
+        if (t < 1.75) { m.position.copy(bill); m.position.y -= 0.03 * Math.min(1, (t - 1.1) / 0.2); m.rotation.set(0, h, Math.PI / 2 + 0.35 * Math.sin(wig * 9)); return; }      // (hanging from her beak)
+        const q = sm01(Math.min(1, (t - 1.75) / 0.45)), at = bill.clone(); at.y -= 0.03;
+        m.position.copy(at.lerp(inPalm(k), q)); m.position.y += Math.sin(q * Math.PI) * 0.03;
+        m.rotation.set(0, h, (Math.PI / 2) * (1 - q) + 0.3 * Math.sin(wig * 9));
+      });
+    },
+    wormsClosed() { for (const m of P.worms || []) m.visible = false; },
+    wormsDone(b) { for (const m of P.worms || []) m.removeFromParent(); P.worms = null; if (b && b.cuddle) b.cuddle.dig = null; },
   };
   return P;
 }
+// a worm (from a hen, for the farmer: penSpec dig): a little wriggly pink tube, along x
+let WORM_GEO = null, WORM_MAT = null;
+const wv1 = new THREE.Vector3(), wv2 = new THREE.Vector3(), sm01 = u => u * u * (3 - 2 * u), DAY_T = () => performance.now() / 1000;
+function wormGeo() {
+  if (!WORM_GEO) { const c = new THREE.CatmullRomCurve3([[-0.034, 0, 0], [-0.013, 0.006, 0.002], [0.01, -0.005, -0.002], [0.034, 0.002, 0]].map(q => new THREE.Vector3(...q)));
+    WORM_GEO = new THREE.TubeGeometry(c, 14, 0.0058, 7, false); }
+  return WORM_GEO;
+}
+function wormMat() { if (!WORM_MAT) { WORM_MAT = new THREE.MeshStandardMaterial({ color: '#cf7a72', roughness: 0.45 }); nightGrade(WORM_MAT); } return WORM_MAT; }
 // hearts floating up (a cuddle): sprites from a little pool, as the song's notes
 const HEARTS = []; let heartMat = null;
 let heartsMade = 0;                                     // (how many so far: for the tests)
@@ -2376,7 +2421,7 @@ class Bird {
         const r = this.plan([...via, spot]); if (r[r.length - 1] === spot && r.length >= via.length + 1) { route = r; break; }
       }
     }
-    this.route = route; this.pace = 1.9; this.nextLeg();
+    this.route = route; this.pace = 1.9; this.cuddle.reach = route[route.length - 1] === spot; this.nextLeg();
     return true;
   }
   // walk towards (tx, tz): turn first, then step; obey: keep to the yard and round obstacles
@@ -2683,14 +2728,24 @@ class Bird {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
-        const C = this.cuddle, G = C && C.greet; sitGoal = G ? 0 : 1;
+        const C = this.cuddle, G = C && C.greet; sitGoal = G || (C && C.dig) ? 0 : 1;
         if (C && !C.done) {
           const p = this.root.position, off = G || C.carry ? 0 : Math.hypot(C.spot[0] - p.x, C.spot[1] - p.z);
           if (C.carry) { const K = C.carry; p.set(K.x, K.y, K.z); this.root.rotation.y = K.yaw; }      // (in his arms, or on the way up or down)
-          else if (off > 0.06) {                   // (not quite there yet: the last little steps up to him)
+          else if (C.hop) {                        // (no way through on foot: a flutter over to him, wings going)
+            const H = C.hop, u = Math.min(1, (H.t += dt) / 0.75), e = u * u * (3 - 2 * u);
+            p.x = H.from[0] + (C.spot[0] - H.from[0]) * e; p.z = H.from[1] + (C.spot[1] - H.from[1]) * e; p.y = 0.015 + Math.sin(u * Math.PI) * 0.26;
+            this.root.rotation.y = Math.atan2(C.spot[0] - H.from[0], C.spot[1] - H.from[1]); flap = 1; sitGoal = 0; this.shadowY = 0.015;
+            if (u >= 1) { C.hop = null; p.y = 0.015; this.shadowY = undefined; }
+          } else if (off > 0.06) {                 // (not quite there yet: the last little steps up to him)
             const r = this.stepToward(C.spot[0], C.spot[1], dt, 0.8, !(C.stuck > 1.2)); walking = r.walking; C.stuck = r.blocked || C.stuck > 1.2 ? (C.stuck || 0) + dt : 0; sitGoal = 0;
+            if (C.stuck > 2.2 && !G) { C.hop = { t: 0, from: [p.x, p.z] }; C.stuck = 0; C.hopped = (C.hopped || 0) + 1; }      // (stuck behind him or something: hop it)
           } else this.turnTo(C.face, dt);
           C.ready = off < 0.12; if (G) { if (!G.t) heartOver(this); G.t += dt; if (G.t > 2.6) C.done = true; }
+          if (C.dig && !C.carry) {                 // (worms for him, penSpec dig: two kicks back, head down to peck one up, head up with it)
+            const t = C.dig.t;
+            if (t < 0.9) { kick = 1; A.kickLeg = t < 0.45 ? 0 : 1; A.kickT += dt; } else if (t < 1.3) peckGoal = 1;
+          }
         } else act.left = 0;
       }
       if (act.type === 'peck') peckGoal = (act.left % 0.55) > 0.24 ? 1 : 0.3;
@@ -3188,6 +3243,21 @@ function holdBird(b) {                       // a bird whose card is open stays 
 // hearts floating up (by day, out and about: at night "Cuddles in the morning"). A new trust level or star: a word.
 // Trusting birds come to the front fence to greet the farmer when he stops to look at their coop.
 function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 || DAY.hour < 6.3; }
+// ---- worms from the chickens (Audrey, 28 Oct; game.js askWorms): "Ask for worms" on a bird's card: her worms for the day
+// at once (Friendly 1, Trusting 2, Best friend 3), into the bag; the farmer comes into the pen and crouches with his hand out,
+// she scratches, pecks them up and drops them in his palm (by day, out and about: at night, in the morning)
+function gameWorms(id) {
+  if (farmerAsleep()) return null;
+  const r = game.askWorms(id); if (!r) return null;
+  const b = allBirds.find(x => x.gid === id), gb = game.bird(id);
+  gameUI.close(); holdBird(null);
+  if (b && farmLife && !farmLife.home && !farmLife.running && !b.busy() && !b.nightNow(0.3)) {
+    const P = penSpec(b.plot);
+    if (P && farmLife.visitPen(P, 'worms', b, r.n)) wake(1500);
+  }
+  hint(game.t(r.n === 1 ? 'worms_done1' : 'worms_done', { name: gb.name, farmer: farmerName(), n: r.n }));
+  return r;
+}
 function gameCuddle(id) {
   const r = game.cuddle(id); if (!r || r.happy) return r;
   const b = allBirds.find(x => x.gid === id), gb = game.bird(id), farmer = farmerName();
@@ -4072,7 +4142,7 @@ function dockCard() {
   holdBird(null); henOff();
   const open = game.fishOpen('pond'), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
   gameUI.dockCard({ open, worms: open ? game.worms() : 0, state: st }, {
-    go: () => { const r = startFishing(); gameUI.close(); hint(game.t(r === 'ok' ? 'fish_going' : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName(), n: FISHING_RULE.free }, game.data.farmer.look === 'f')); },
+    go: () => { const r = startFishing(); gameUI.close(); hint(game.t(r === 'ok' ? 'fish_going' : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
     buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(); } } });
 }
 // each frame: the fishing (called away, by Rusty say: put away; night falling: wound in and home)
@@ -6141,7 +6211,7 @@ window.__farm = {
   decor: () => decorList, sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
-  game: () => game, gameUI: () => gameUI, openBirdCard,
+  game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => k.plot.birds.includes(k)).length } : null; },

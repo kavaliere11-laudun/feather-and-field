@@ -207,6 +207,15 @@ export class GameUI {
     if (left > 0) body.append(el('p', 'gtext ghappy', '♥ ' + this.t('happy_left', { when: g.howLong(left) }, f)));
     else if (state === 'night') body.append(el('p', 'gnote', this.t('cuddle_night', { farmer: g.farmerName() })));
     else { const cb = el('button', 'gbtn gcuddle', this.t('cuddle_btn')); cb.type = 'button'; cb.addEventListener('click', () => { if (this.o.cuddle) this.o.cuddle(b.id); }); body.append(cb); }
+    // worms (once fishing's open; Audrey's idea): what she finds for the farmer each day, by how much she loves him; "Ask
+    // for worms": all of today's at once (given today: more tomorrow; shy: cuddles help; at night: in the morning)
+    if (g.fishOpen('pond')) {
+      const wn = g.wormsOf(b), farmer = g.farmerName();
+      if (g.wormsGiven(b)) body.append(el('p', 'gtext gfound gwormsgot', this.t('worms_given', { name: b.name, farmer })));
+      else if (!wn) body.append(el('p', 'gnote gwormsshy', this.t('worms_shy', { name: b.name, farmer })));
+      else if (state === 'night') { if (left > 0) body.append(el('p', 'gnote', this.t('worms_night', { farmer }))); }
+      else { const wb = el('button', 'gbtn galt gworms', this.t('worms_ask', { n: wn })); wb.type = 'button'; wb.dataset.worms = 'ask'; wb.addEventListener('click', () => { if (this.o.askWorms) this.o.askWorms(b.id); }); body.append(wb); }
+    }
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
@@ -230,6 +239,7 @@ export class GameUI {
     if (lv < 3) { const need = TRUST_AT[lv + 1] - b.trust; tc.append(el('p', 'gtext', this.t(need === 1 ? 'trust_next1' : 'trust_next', { n: need, level: this.t('trust_lv' + (lv + 1)) }))); }
     if (lv >= 2) tc.append(el('p', 'gtext', this.t('trust_greets', { farmer })));
     tc.append(el('p', 'gnote', this.t('trust_body')));
+    if (g.fishOpen('pond')) tc.append(el('p', 'gnote', this.t('worms_how')));
     body.append(tc);
     // shows: her rosettes (by show and place), a champion, the show she's entered in
     const sc = el('div', 'gcard'), ros = g.rosettesOf(b), ent = g.showOf(b.id);
@@ -391,6 +401,7 @@ export class GameUI {
     if (L === FOX.level) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
     for (const w of ['pond', 'river']) if (FISHING[w] === L) {              // (fishing opens: the pond at 3, the river at 8; a look at it)
       const c = el('div', 'gcard gfishnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎣'), el('span', 'gcard-t', this.t(w === 'pond' ? 'fish_new' : 'fish_new_river'))); c.append(hd);
+      if (w === 'pond') c.append(el('p', 'gnote', this.t('fish_hens', { farmer: this.g.farmerName() })));      // (where the worms come from)
       if (w === 'pond' && this.o.showPond) { const b = el('button', 'gbtn galt gsmallbtn', this.t('fish_show')); b.type = 'button'; b.dataset.fish = 'show'; b.addEventListener('click', () => { this.close(); this.o.showPond(); }); c.append(b); }
       body.append(c);
     }
@@ -847,7 +858,7 @@ export class GameUI {
     if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
   }
   // ---- fishing (release 5): the dock's card (tapped): the pond's fish (those caught in colour, the others dark), the worms
-  // left (free each morning), Go fishing; a tin of worms. o: { open, worms, state: 'ok'|'night'|'on' }; h: { go, buy }
+  // in the bag (and where they come from: the chickens who love the farmer), Go fishing; a tin of worms. o: { open, worms, state: 'ok'|'night'|'on' }; h: { go, buy }
   dockCard(o, h) {
     const g = this.g, body = this.open('dock', this.t('dock_title')), farmer = g.farmerName();
     this.bird = null;
@@ -856,11 +867,10 @@ export class GameUI {
     body.append(row, el('p', 'gtext', this.t('dock_body')));
     if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING.pond }))); return; }
     const n = o.worms;
-    body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0')) + ' · ' + this.t('fish_free', { n: FISHING.free })));
+    body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0'))), el('p', 'gnote', this.t('fish_hens', { farmer })));
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
-    else if (!n) body.append(el('p', 'gnote', this.t('fish_noworms', { n: FISHING.free })));
-    else { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => h.go()); body.append(b); }
+    else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => h.go()); body.append(b); }
     const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
     th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
     const bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke ? ' galt' : ''), broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke; bb.dataset.fish = 'tin';

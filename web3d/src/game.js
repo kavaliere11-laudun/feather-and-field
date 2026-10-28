@@ -224,8 +224,11 @@ const TEXT = {
     fish_minnow: 'Minnow', fish_gudgeon: 'Gudgeon', fish_dace: 'Dace', fish_chub: 'Chub', fish_brown_trout: 'Brown trout', fish_grayling: 'Grayling', fish_old_snapjaw: 'Old Snapjaw',
     fish_new: 'Fishing at the pond: tap its dock', fish_new_river: 'Fishing in the river', fish_show: 'Show me the pond',
     dock_title: 'Fishing at the pond', dock_body: 'Rudd, roach, perch and tench live in the pond, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.',
-    fish_worms: '{n} worms', fish_worms1: '1 worm', fish_worms0: 'No worms left', fish_free: '{n} free worms every morning', fish_go: 'Go fishing',
-    fish_noworms: 'No worms left: {n} more tomorrow morning, or a tin of worms below.', fish_level: 'Fishing opens at level {n}.',
+    fish_worms: '{n} worms', fish_worms1: '1 worm', fish_worms0: 'No worms left', fish_hens: 'Your chickens who love {farmer} find worms every day: tap one and ask.', fish_go: 'Go fishing',
+    fish_noworms: 'No worms left: ask your chickens who love {farmer} (tap one), or buy a tin at the dock.',
+    worms_ask: 'Ask for worms · 🪱 {n}', worms_given: '🪱 {name} found worms for {farmer} today. More tomorrow!',
+    worms_shy: '🪱 {name} is still shy: no worms for {farmer} yet. Cuddles help.', worms_how: 'Worms found each day: Friendly 1 · Trusting 2 · Best friend 3.',
+    worms_done: '{name} is finding {n} worms for {farmer} 🪱', worms_done1: '{name} is finding a worm for {farmer} 🪱', worms_night: '{farmer} is asleep: worms in the morning', fish_level: 'Fishing opens at level {n}.',
     fish_tin: 'A tin of {n} worms', fish_tin_buy: 'Buy · {c} coins', fish_tin_bought: '{n} worms in the tin · −{c} coins',
     fish_going: '{farmer} is off to the dock', fish_night: '{farmer} is asleep: fishing in the morning', fish_busy: '{farmer} is busy: try again in a moment',
     fish_cast: 'Tap the water to cast', fish_wait: 'Watch the float…', fish_bite: 'Now! Tap!', fish_soon: 'Too soon! Wait till the float goes under',
@@ -452,8 +455,11 @@ const TEXT = {
     fish_minnow: 'Vairon', fish_gudgeon: 'Goujon', fish_dace: 'Vandoise', fish_chub: 'Chevesne', fish_brown_trout: 'Truite fario', fish_grayling: 'Ombre', fish_old_snapjaw: 'Vieux Claquemâchoire',
     fish_new: 'La pêche à l’étang : touchez son ponton', fish_new_river: 'La pêche à la rivière', fish_show: 'Voir l’étang',
     dock_title: 'La pêche à l’étang', dock_body: 'Rotengles, gardons, perches et tanches vivent dans l’étang, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme.',
-    fish_worms: '{n} vers', fish_worms1: '1 ver', fish_worms0: 'Plus de vers', fish_free: '{n} vers offerts chaque matin', fish_go: 'Aller pêcher',
-    fish_noworms: 'Plus de vers : {n} de plus demain matin, ou une boîte de vers ci-dessous.', fish_level: 'La pêche ouvre au niveau {n}.',
+    fish_worms: '{n} vers', fish_worms1: '1 ver', fish_worms0: 'Plus de vers', fish_hens: 'Vos poules qui aiment {farmer} lui trouvent des vers chaque jour : touchez-en une et demandez.', fish_go: 'Aller pêcher',
+    fish_noworms: 'Plus de vers : demandez à vos poules qui aiment {farmer} (touchez-en une), ou achetez une boîte au ponton.',
+    worms_ask: 'Demander des vers · 🪱 {n}', worms_given: '🪱 {name} a trouvé des vers pour {farmer} aujourd’hui. D’autres demain !',
+    worms_shy: '🪱 {name} est encore farouche : pas de vers pour {farmer} pour l’instant. Les câlins aident.', worms_how: 'Vers trouvés chaque jour : Sociable 1 · En confiance 2 · Inséparable 3.',
+    worms_done: '{name} cherche {n} vers pour {farmer} 🪱', worms_done1: '{name} cherche un ver pour {farmer} 🪱', worms_night: '{farmer} dort : les vers, ce sera demain matin', fish_level: 'La pêche ouvre au niveau {n}.',
     fish_tin: 'Une boîte de {n} vers', fish_tin_buy: 'Acheter · {c} pièces', fish_tin_bought: '{n} vers dans la boîte · −{c} pièces',
     fish_going: '{farmer} part au ponton', fish_night: '{farmer} dort : la pêche, ce sera demain matin', fish_busy: '{farmer} est occupé : réessayez dans un instant',
     fish_cast: 'Touchez l’eau pour lancer', fish_wait: 'Surveillez le bouchon…', fish_bite: 'Maintenant ! Touchez !', fish_soon: 'Trop tôt ! Attendez que le bouchon plonge',
@@ -710,11 +716,15 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // ---- fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; the legendary ones "Photo,
 // then let go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little
 // celebration"): the pond from level 3, the river from level 8, seven fish in each (four common, two rare, one legendary
-// with a name), drawn by weight (w, out of 100 in each water). A worm a cast: a few free each morning, more in tins of ten.
+// with a name), drawn by weight (w, out of 100 in each water). A worm a cast: found by the chickens who love the farmer
+// (Audrey, 28 Oct: "that would be cute if the chickens get them to the farmer up to 3 a day per chicken if the chicken loves
+// the farmer and the farmer goes and asks for it"; then "Replace them", "1, 2 or 3 by love", "One visit, all her worms"):
+// Friendly 1 a day, Trusting 2, Best friend 3, all given in one visit; more in tins of ten. (Before: 4 free each morning,
+// oldFree: what an older save may still hold of them, kept as worms.)
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 3, river: 8, free: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
+export const FISHING = { pond: 3, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
 export const FISH_RULES = {
   rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 1, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 1, cm: [12, 25] },
   perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 1, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 2, cm: [20, 45] },
@@ -916,6 +926,7 @@ export function checkFarm(d, now = Date.now()) {
     const nb = { id: b.id, name, sex, breed: coop.breed, pers, coop: coop.id, since: int(b.since, 0, now, now), exp: int(b.exp, 0, 1e7, 0), trust: int(b.trust, 0, 15, 0) };
     if (sex === 'h') nb.laid = int(b.laid, 0, now, now);          // (when she last laid, or was due to: never ahead of now)
     nb.happy = int(b.happy, 0, now + HAPPY_MS, 0);                     // (happy after a cuddle till then: at most 6 hours on)
+    if (typeof b.worm === 'string' && /^\d{8}$/.test(b.worm) && b.worm <= dayKey(now + TZ_SLACK)) nb.worm = b.worm;      // (the day she last found worms for the farmer: never ahead of today)
     // her rosettes (1st, 2nd, 3rd at the Village, County and National): a show a day at most since she came
     const most = Math.floor((now - nb.since) / DAY_MS) + 1, ros = Array.isArray(b.ros) && b.ros.length === 9 && b.ros.every(n => Number.isInteger(n) && n >= 0) ? b.ros : null;
     nb.ros = ros && ros.reduce((a, n) => a + n, 0) <= most ? ros.slice() : [0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -1045,9 +1056,10 @@ export function checkFarm(d, now = Date.now()) {
     }
   }
   for (const x of [...(out.rare || []), ...(out.basket || [])]) out.next = Math.max(out.next, parseInt(x.id.slice(1), 10) + 1);
-  // fishing (release 5): the day the free worms were last given (never ahead of today), those left (at most a day's), the
-  // worms from tins, and of each fish caught (known fish only, from a water the farm's level has opened): how many and the
-  // biggest (within its sizes)
+  // fishing (release 5): the worms (found by the chickens or from tins; at most a bag's), and of each fish caught (known
+  // fish only, from a water the farm's level has opened): how many and the biggest (within its sizes). A farm saved while
+  // there were free worms each morning: the day they were given (never ahead of today) and those left (at most a day's),
+  // checked as they were, then kept as worms (load)
   const fs = d.fish && typeof d.fish === 'object' ? d.fish : null;
   if (fs) {
     const got = {}, raw = fs.got && typeof fs.got === 'object' ? fs.got : {};
@@ -1055,7 +1067,8 @@ export function checkFarm(d, now = Date.now()) {
       const g = raw[id], R = FISH_RULES[id];
       if (Array.isArray(g) && g.length === 2 && Number.isInteger(g[0]) && g[0] >= 1 && g[0] <= 1e6 && Number.isInteger(g[1]) && g[1] >= R.cm[0] && g[1] <= R.cm[1] && L >= fishLevel(id)) got[id] = [g[0], g[1]];
     }
-    out.fish = { day: typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now), free: int(fs.free, 0, FISHING.free, 0), worms: int(fs.worms, 0, FISHING.maxWorms, 0), got };
+    out.fish = { worms: int(fs.worms, 0, FISHING.maxWorms, 0), got };
+    if ('day' in fs || 'free' in fs) { out.fish.day = typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now); out.fish.free = int(fs.free, 0, FISHING.oldFree, 0); }
   }
   return out;
 }
@@ -1438,23 +1451,29 @@ export class Game {
     const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
     return { n, coins, xp };
   }
-  // ---- fishing: open at the pond (level 3) and the river (8); the worms (the day's free ones first, then those from tins);
+  // ---- fishing: open at the pond (level 3) and the river (8); the worms (found by the chickens, or from tins);
   // a cast (a worm on the hook: the fish that will bite decided there and then, kept till it's landed or lost); landed
   // (sold live, or a legendary one's photo; the count and the biggest kept); a tin of worms
   fishOpen(water) { return water in FISHING && typeof FISHING[water] === 'number' && this.level >= FISHING[water]; }
-  fishBag(now = Date.now()) {
-    const k = dayKey(now); let f = this.data.fish;
-    if (!f) f = this.data.fish = { day: k, free: FISHING.free, worms: 0, got: {} };
-    else if (f.day !== k) { f.day = k; f.free = FISHING.free; }
-    return f;
+  fishBag() { return this.data.fish || (this.data.fish = { worms: 0, got: {} }); }
+  worms() { return this.data.fish ? this.data.fish.worms : 0; }
+  // the worms a bird finds for the farmer each day (by how much she loves him: none while she's shy), whether she's given
+  // them today; asked (her card's "Ask for worms"): all of today's at once, into the bag (null: fishing not open yet, shy,
+  // or already given today)
+  wormsOf(b) { return FISHING.byTrust[this.trustLevel(b)]; }
+  wormsGiven(b, now = Date.now()) { return b.worm === dayKey(now); }
+  askWorms(id, now = Date.now()) {
+    const b = this.bird(id); if (!b || !this.fishOpen('pond')) return null;
+    const n = this.wormsOf(b); if (!n || this.wormsGiven(b, now)) return null;
+    const f = this.fishBag(); f.worms = Math.min(FISHING.maxWorms, f.worms + n); b.worm = dayKey(now); this.save();
+    return { n, worms: f.worms };
   }
-  worms(now = Date.now()) { const f = this.fishBag(now); return f.free + f.worms; }
   fishGot(id) { const g = this.data.fish && this.data.fish.got[id]; return g ? { n: g[0], best: g[1] } : null; }
   fishName(id) { return this.t('fish_' + id); }
   castWorm(water, now = Date.now(), r = Math.random) {
     if (!this.fishOpen(water)) return null;
-    const f = this.fishBag(now); if (f.free + f.worms <= 0) return null;
-    if (f.free > 0) f.free--; else f.worms--;
+    const f = this.fishBag(); if (f.worms <= 0) return null;
+    f.worms--;
     const list = FISH_IDS.filter(id => FISH_RULES[id].water === water);
     let x = r() * list.reduce((a, id) => a + FISH_RULES[id].w, 0), id = list[0];
     for (const k of list) { x -= FISH_RULES[k].w; if (x < 0) { id = k; break; } }
@@ -1474,10 +1493,10 @@ export class Game {
   }
   loseFish() { const had = !!this.bite; this.bite = null; return had; }
   buyWorms(now = Date.now()) {
-    const T = FISHING.tin, f = this.fishBag(now);
+    const T = FISHING.tin, f = this.fishBag();
     if (this.data.coins < T.price || f.worms + T.n > FISHING.maxWorms) return null;
     this.data.coins -= T.price; f.worms += T.n; this.save();
-    return { n: T.n, price: T.price, worms: f.free + f.worms };
+    return { n: T.n, price: T.price, worms: f.worms };
   }
   // ---- the first day's guide: the step now ('eggs', 'cuddle', …, or null: done or skipped); a step done (k: only if it's
   // the one now): its coins, the next; skipped: done, no more coins
@@ -1813,6 +1832,7 @@ export class Game {
     if (!d) return null;
     this.edited = raw.s !== seal(JSON.stringify(raw.d)) || !fits(d, raw.d);
     for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
+    if (d.fish && 'free' in d.fish) { d.fish.worms = Math.min(FISHING.maxWorms, d.fish.worms + d.fish.free); delete d.fish.free; delete d.fish.day; }      // (from when worms came free each morning: those left kept)
     const cv = d.cv || 0;                              // (a farm from before the coops' looks: its coops are Snug, release 4; from before a breed's: that breed's)
     if (cv < CV) { for (const c of d.coops) if (cv === 0 || (LOOKS_CV[baseBreed(c.breed)] || 0) > cv) c.tier = Math.max(2, c.tier); d.cv = CV; }
     return d;
