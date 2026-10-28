@@ -6304,21 +6304,21 @@ function replayFrame(now) {
 
 // the browser's bars the colour of the farm next to them (Audrey, 28 Oct: "no more green bar"): Safari and Chrome paint
 // their bars in the page's theme colour (it was the welcome's dark green all the time). Every second and a half, just
-// drawn, a few points along the picture's top edge and its bottom: the theme colour is the top's, the page's own colour
-// the bottom's (so turning the farm, night falling, inside a coop, the bars follow). Not while the welcome's picture is up.
+// drawn, a few points along the picture's top edge: the theme colour and the page's own colour (so turning the farm,
+// night falling, inside a coop, the bars follow). Not while the welcome's picture is up.
 const barTint = { at: 0, top: '', bottom: '', px: new Uint8Array(4), meta: document.querySelector('meta[name="theme-color"]') };
 function tintBars(now) {
   barTint.at = now;
   if (document.documentElement.classList.contains('gwelcoming')) {          // (the welcome's own colours back)
-    if (barTint.top) { barTint.top = barTint.bottom = ''; if (barTint.meta) barTint.meta.setAttribute('content', '#4a7530'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = ''; }
+    if (barTint.top) { barTint.top = barTint.bottom = ''; if (barTint.meta) barTint.meta.setAttribute('content', '#557230'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = ''; }
     return;
   }
   const gl = renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, P = barTint.px;
   const avg = y => { let r = 0, g = 0, b = 0; for (const fx of [0.12, 0.5, 0.88]) { gl.readPixels(Math.floor(W * fx), y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, P); r += P[0]; g += P[1]; b += P[2]; }
     const h = v => Math.round(v / 3).toString(16).padStart(2, '0'); return '#' + h(r) + h(g) + h(b); };
-  const top = avg(Math.max(0, H - 2)), bottom = avg(1);
+  const top = avg(Math.max(0, H - 2));
   if (top !== barTint.top && barTint.meta) { barTint.top = top; barTint.meta.setAttribute('content', top); }
-  if (bottom !== barTint.bottom) { barTint.bottom = bottom; document.documentElement.style.backgroundColor = bottom; document.body.style.backgroundColor = bottom; }
+  if (top !== barTint.bottom) { barTint.bottom = top; document.documentElement.style.backgroundColor = top; document.body.style.backgroundColor = top; }      // (the page's colour the top's too: an iPhone's Home Screen app paints the strip under the clock in it)
 }
 let awakeUntil = 0, lastFrame = 0, lastSim = 0, frozen = false, paused = false;
 function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }

@@ -39,7 +39,7 @@ ok('upright again: not again this visit', !(await tip(s.p)));
 const tint = await s.p.evaluate(() => ({ meta: document.querySelector('meta[name="theme-color"]').content, page: document.documentElement.style.backgroundColor }));
 const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const [r, g, bb] = /^#[0-9a-f]{6}$/.test(tint.meta) ? rgb(tint.meta) : [0, 0, 0];
-ok('the browser\'s bars in the farm\'s own colours (grass green by day), not the welcome\'s dark green', tint.meta !== '#4a7530' && g > r && g > bb && !!tint.page, tint);
+ok('the browser\'s bars in the farm\'s own colours (grass green by day), not just the page\'s own', tint.meta !== '#557230' && g > r && g > bb && !!tint.page, tint);
 ok('no page errors (phone)', s.errs.length === 0, s.errs);
 await s.ctx.close();
 // a tablet, upright: its own words; gone after a few seconds

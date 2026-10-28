@@ -2807,7 +2807,13 @@ the birds already had.
   screen just after turning, leaving a strip of the page's green. The browser's bars (Safari's, Chrome's) take the
   farm's own colours (`tintBars`: every second and a half, a few points along the top and bottom edges of the picture
   just drawn: the theme colour from the top, the page's colour from the bottom), not the welcome's dark green; the
-  welcome keeps its own. A website can't hide Safari's bars on an iPhone; the stores' app will have none.
+  welcome keeps its own. A website can't hide Safari's bars on an iPhone; the stores' app will have none. Then Audrey's
+  screenshot of the Home Screen app: a flat light-green strip under the clock, the game starting below it. That's Apple's
+  bug since iOS 26.1 (WebKit bug 301994, still open on 26.5 and the iOS 27 beta): a Home Screen web app can no longer draw
+  under the clock, whatever the page asks for. iOS paints the strip in the page's colour as it opens (it was the loading
+  screen's light green). So the page's own green is now the farm's top edge, deep grass under trees (`#557230`: the page,
+  the loading screen's top, the welcome's top and its shading, the theme colour, both manifests), and `tintBars` gives the
+  page the top's colour too: the strip runs on into the picture instead of standing out.
 - **Sideways** (Audrey: "Sideway for phones and tablets"): a website can't turn the screen round itself, so a phone or
   tablet held upright gets a gentle tip once a visit, at the top when the farm is open with nothing else up ("Best
   played sideways: turn your phone" / "tablet", "Plus agréable à l'horizontale : tournez votre téléphone" / "tablette",
