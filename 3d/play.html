@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#4a7530">
+<meta name="theme-color" content="#557230">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +16,10 @@
 <style>
   :root { --ink: #1e3426; --meringue: #fffdf7; --yolk: #f5b92e; --barn: #d2462f; --meadow: #3f8f4e; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #8cb85c; overscroll-behavior: none; }
+  /* (the page's own green: the farm's top edge, deep grass under trees. An iPhone's Home Screen app paints the strip it
+     keeps under the clock in it (Apple's bug since iOS 26.1: a web app can no longer draw under the clock), and Safari its
+     bars: it should run on into the picture, not stand out as a green bar; Audrey, 28 Oct, a screenshot) */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #557230; overscroll-behavior: none; }
   body { font-family: Nunito, system-ui, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; }
   #farm { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(20, 40, 15, 0.22) 100%); }
@@ -35,7 +38,7 @@
          box-shadow: 0 2px 8px rgba(30, 52, 38, 0.2); opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
   #tag.on { opacity: 1; }
   #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-             background: #8cb85c; transition: opacity .5s; }
+             background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 16px), #8cb85c 42%); transition: opacity .5s; }
   #loading.done { opacity: 0; pointer-events: none; }
   #loading .msg { font-family: Fredoka, Nunito, sans-serif; font-weight: 600; font-size: 20px; color: var(--meringue); text-align: center; padding: 0 24px; }
   #loading .bar { width: 200px; height: 10px; border-radius: 99px; background: rgba(255, 253, 247, 0.35); overflow: hidden; }
@@ -401,14 +404,14 @@
      geese and the hens always show above the sheet (or beside the card, sideways). Safari paints the strip under the
      clock in this background colour, so the picture's top fades into that same colour: one picture up to the top. Opened
      from the Home Screen the page runs under the clock itself and the top is only lightly shaded. */
-  html.gwelcoming, html.gwelcoming body { background: #4a7530; }
+  html.gwelcoming, html.gwelcoming body { background: #557230; }
   .ghero { position: fixed; z-index: 18; inset: 0; overflow: hidden; padding-left: env(safe-area-inset-left);      /* (the padding: read by fitHero, clear of a notch) */
-           background: #4a7530 linear-gradient(#4a7530, #4a7530 calc(env(safe-area-inset-top) + 24px), #79aa48 50%, #8bbb55); }   /* (a solid colour too: Safari reads a fixed layer's background colour for its bars) */
+           background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 24px), #79aa48 50%, #8bbb55); }   /* (a solid colour too: Safari reads a fixed layer's background colour for its bars) */
   .ghero[hidden] { display: none; }
   .ghero img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.4s; }
   .ghero img.on { opacity: 1; }
   .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 150px);
-                   background: linear-gradient(#4a7530, rgba(74, 117, 48, 0.82) 38%, rgba(74, 117, 48, 0)); }
+                   background: linear-gradient(#557230, rgba(85, 114, 48, 0.82) 38%, rgba(85, 114, 48, 0)); }
   .standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
   @media (display-mode: standalone), (display-mode: fullscreen) { .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
   .glogo, .gtag { z-index: 2; }
@@ -534,6 +537,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793225501"></script>
+<script src="app.js?v=1793226925"></script>
 </body>
 </html>

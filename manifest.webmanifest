@@ -6,8 +6,8 @@
  "scope": "./",
  "display": "standalone",
  "orientation": "landscape",
- "background_color": "#4a7530",
- "theme_color": "#4a7530",
+ "background_color": "#557230",
+ "theme_color": "#557230",
  "description": "Raise, breed and show chickens on your own farm.",
  "icons": [
   {
