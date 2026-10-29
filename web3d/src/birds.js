@@ -257,16 +257,12 @@ const FUR = {
   // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
   hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
   orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
-  // the Polish: the hens' short fluff over the feathers, and on the crest long soft hair like a Silkie's (regions: that
-  // region's own style; Audrey, on the first try's spiky feathers: "The hair of the polish chicken are really not great"):
-  // a hen's standing out in a round pompom, a rooster's longer and falling over like a mop
-  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.05, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06,
-         regions: { [R.crest]: { shells: 18, clump: 0.6, fine: 1.0, wave: 1.2, locks: 0.11, comb: 0.3 } } },
-  pol_r: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.062, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06,
-           regions: { [R.crest]: { shells: 18, clump: 0.65, fine: 1.0, wave: 1.3, locks: 0.11, comb: 0.5 } } },
+  // the Polish: a hen's short fluff over the feathers, its crest's modelled feathers too (Audrey, 29 Oct, on the second
+  // try's long hair: "it looks like the silkies too much": the crest is feathers again, broad and soft, wrapping a ball)
+  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.01, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? FUR.pol : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;

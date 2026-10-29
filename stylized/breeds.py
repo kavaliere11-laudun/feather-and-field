@@ -252,17 +252,43 @@ def feathered(B, rooster, root, body_rig, seed):
 
 
 def polish_crest(B, rooster, hd, seed):
-    """A Polish's crest (Audrey, 29 Oct, on the first try's spiky feathers: "The hair of the polish chicken are really not
-    great"): a round soft core on top of the head, a little lumpy, that the browser covers in long hair like a Silkie's
-    (birds.js FUR.pol: a hen's standing out in a round pompom, a rooster's longer and falling like a mop), down to the eyes
-    in front and lower behind. Head space (the bird faces +x)."""
+    """A Polish's crest, made of feathers (Audrey, 29 Oct: the first try's spiky feathers "really not great"; the second's
+    hair "needs more volume and it looks like the silkies too much"): a big round core, and rows of broad soft feathers
+    wrapping it from the crown down, each one curving over the ball and lifting away from it towards its tip, overlapping
+    like a dahlia's petals: a full, feathery pompom. A hen's round-tipped and neat; a rooster's longer, narrower and
+    pointed, flaring out and falling like a mop. In front they stop above the eyes, so the eyes peep from under the edge.
+    Head space (the bird faces +x)."""
     cm = flat('crest', B.get('crestc', '#f4f1ea'), 0.85)
     rnd = random.Random(seed * 13 + (5 if rooster else 0))
-    c0 = (-0.016, 0, 0.05 if not rooster else 0.052); rc = 0.043 if not rooster else 0.045
-    S = (1.15, 1.1, 0.95) if not rooster else (1.2, 1.12, 0.92)
-    E = [('ELLIPSOID', c0, rc * K, S, 2.0)]
-    E += bumps(rnd, c0, (rc * S[0], rc * S[1], rc * S[2]), 10, 0.014, 0.019, zmin=-0.35, skip=lambda d: d.x > 0.5 and d.z < 0.1)
-    tag(metaball_mesh('crest_core', E, res=0.0045, m=cm, parent=hd), 'head', 'crest')
+    c0 = Vector((-0.018, 0, 0.064 if not rooster else 0.068)); rc = 0.06 if not rooster else 0.062      # (big: Audrey, "needs more volume")
+    S = Vector((1.2, 1.15, 1.1)) if not rooster else Vector((1.25, 1.16, 1.05))
+    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(c0), rc * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
+    at = lambda th, ph, r: c0 + Vector((math.sin(th) * math.cos(ph) * S.x, math.sin(th) * math.sin(ph) * S.y, math.cos(th) * S.z)) * r
+    rows = ([(10, 7), (32, 12), (55, 15), (78, 17), (100, 17)] if not rooster else [(10, 8), (32, 13), (55, 16), (78, 18), (100, 18)])
+    if LO: rows = [(20, 5), (60, 8), (95, 9)]
+    seg = 6 if not LO else 3
+    for ri, (th0, cnt) in enumerate(rows):
+        for k in range(cnt):
+            ph = (k + 0.5 * (ri % 2)) / cnt * math.tau + rnd.uniform(-0.12, 0.12)
+            front = math.cos(ph)                               # 1 straight ahead (over the beak), -1 behind
+            span = math.radians((52 if not rooster else 70) * rnd.uniform(0.88, 1.12) * (1.2 if front < -0.3 else 1.0))
+            t0 = math.radians(th0 + rnd.uniform(-4, 4))
+            if front > 0.45: span = min(span, math.radians(112) - t0)      # (stop above the eyes and the beak)
+            if span < math.radians(12): continue
+            lift = (0.55 if not rooster else 0.75) * rnd.uniform(0.85, 1.15)
+            w = (0.04 if not rooster else 0.025) * (1.0 if ri else 0.8)
+            pts, ws, wds = [], [], []
+            for i in range(seg + 1):
+                u = i / seg
+                th = t0 + span * u
+                r = rc * (0.96 + lift * u ** 1.4)               # lifting away from the ball towards its tip: the volume
+                p = at(th, ph, r)
+                if rooster: p.z -= 0.012 * u * u * (1.0 - 0.5 * max(0.0, front))      # (a rooster's falling a little more)
+                side = Vector((-math.sin(ph), math.cos(ph), 0.0))
+                if rooster: wk = w * min(1.0, u / 0.15 + 0.3) * (1 - u) ** 0.85
+                else: wk = w * min(1.0, u / 0.12 + 0.35) * (1 - u ** 3) ** 0.5 + 0.002
+                pts.append(p); ws.append(wk); wds.append(side)
+            tag(ribbon('crestf', pts, ws, wds, cm, hd), 'head', 'crest')
 
 
 # ------------------------------------------------------------------ the Silkie: a soft cloud of fluff with a pompom crest
