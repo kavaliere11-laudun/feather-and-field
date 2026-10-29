@@ -1092,6 +1092,7 @@ function buildPlots(nCoops) {
   batchCoops();
   buildDoors();
 }
+const TEST_COOPS = (() => { const l = !GAME_MODE && params.get('coopbreeds') ? params.get('coopbreeds').split(',').filter(b => ALL_BREEDS.includes(b)) : []; return l.length ? l : BREEDS; })();
 function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   const g = new THREE.Group();
   g.position.set(pos[0], 0, pos[2]); g.rotation.y = deg * DEG;
@@ -1101,16 +1102,18 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   if (plot.kind === 'coop') {
     const frame = new THREE.Group(); frame.position.copy(COOP_SHIFT); g.add(frame);
     plot.frame = frame;
-    const look = params.has('looks') ? (params.get('looks') ? +params.get('looks') : Math.floor(i / BREEDS.length)) % 5 : -1;      // (the test page's ?looks: rows of the five looks, Rustic to Deluxe; ?looks=N: all in look N)
-    plot.breed = gc ? baseBreed(gc.breed) : BREEDS[i % BREEDS.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / BREEDS.length) % 2 === 1;
+    const TB = TEST_COOPS;          // (the test page's coops: ?coopbreeds=pol,aya for just those, the new breeds' coops)
+    const look = params.has('looks') ? (params.get('looks') ? +params.get('looks') : Math.floor(i / TB.length)) % 5 : -1;      // (the test page's ?looks: rows of the five looks, Rustic to Deluxe; ?looks=N: all in look N)
+    plot.breed = gc ? baseBreed(gc.breed) : TB[i % TB.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / TB.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
     plot.dress = gc ? gc.dress || null : params.get('dress');       // (a seasonal dress: the game's, or the test page's ?dress=xmas)
     plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN);      // (its pen: the birds' yard, what's in it, its gate)
     addNest(frame, plot);
     if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
+    addSails(plot);                                       // (the Little Windmill's sails)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
-    const silk = plot.breed === 'sil' ? Math.floor(i / BREEDS.length) : 0;
+    const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
     let k = 0;
     const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
     if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
@@ -1179,6 +1182,24 @@ function tierPen(breed, t) {
   const hens = PEN.hens.map(h => ({ ...h, pos: [fit(h.pos[0], Y0.min[0], Y0.max[0], yard.min[0], yard.max[0]), h.pos[1], fit(h.pos[2], Y0.min[2], Y0.max[2], yard.min[2], yard.max[2])] }));
   if (P.play) obstacles.push(...P.play.keep.map(k => [k[0], 0, k[1], k[2]]));        // (the play things: release 4's Cosy and Deluxe)
   return (TIER_PENS[breed + t] = { ...PEN, pen: { min: [P.min[0] - 0.05, 0, P.min[1] - 0.05], max: [P.max[0] + 0.05, 0, P.max[1] + 0.05] }, yard, obstacles, feeder: [P.feeder[0], 0, P.feeder[1]], gate: [P.gate - 0.1, 0, P.max[1]], hens, play: P.play || null });
+}
+// release 7, the Little Windmill (the Polish's coop; Audrey: "A little windmill (Recommended)"): its sails are their own
+// model (coops.glb sails_pol: stylized/coops.py mill_sails) on the coop's frame at its hub (coops.json mills), turning
+// slowly counter-clockwise as real mills do, slower by night; each coop's a little out of step with the others. They cast
+// no shadow (the shadows are drawn only when the view moves on: a still shadow under turning sails would be wrong)
+function addSails(plot) {
+  if (plot.sails) { plot.sails.mesh.removeFromParent(); plot.sails = null; }
+  const M = COOPS.mills && COOPS.mills[coopLook(plot).house];
+  if (!M || !parts[M.sails]) return;
+  const m = part(M.sails); m.position.set(M.hub[0], M.hub[1], M.hub[2]);
+  m.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = true; } c.userData.moves = true; });
+  plot.frame.add(m); plot.sails = { mesh: m, a: (plot.index * 1.7) % (2 * Math.PI), speed: M.speed || 0.5 };
+  m.rotation.z = plot.sails.a;
+}
+function tickSails(p, dt) {
+  const S = p.sails, h = clockHour(), night = h < 6 || h >= 21.5;
+  S.v = (S.v ?? S.speed) + ((night ? 0.12 : 1) * S.speed - (S.v ?? S.speed)) * Math.min(1, dt * 0.3);
+  S.a = (S.a + S.v * dt) % (2 * Math.PI); S.mesh.rotation.z = S.a;
 }
 // a coop's parts drawn in its style's batch: [model, where in its frame]
 function coopParts(plot) {
@@ -1868,7 +1889,7 @@ function tickPenFx(dt) {
     n.sprite.position.x += n.drift[0] * dt; n.sprite.position.y += n.drift[1] * dt; n.sprite.position.z += n.drift[2] * dt;
     const s = n.size * Math.min(1, t * 6); n.sprite.scale.set(s, s, s); n.sprite.material.opacity = Math.min(1, (1 - t) * 2.5);
   }
-  for (const p of plots) { if (p.corn) p.corn.update(dt); if (p.toys) tickToys(p, dt); }
+  for (const p of plots) { if (p.corn) p.corn.update(dt); if (p.toys) tickToys(p, dt); if (p.sails) tickSails(p, dt); }
   tickPlayFx(dt);
   tickDecor(dt);
 }
@@ -4770,6 +4791,7 @@ function retier(p) {
   p.block = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
   if (penOf(p).play && parts.swing_seat) addToys(p, penOf(p).play, part);
+  addSails(p);
   p.exitWay = null;
   for (const b of p.birds) if (b.root.visible && !b.busy() && !b.cuddle && !b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
   batchCoops(); rebuildPools(); rebuildNav(); buildNature(); buildGrass(); hidePebbles(); clearWalkers(p);
@@ -5965,7 +5987,7 @@ function jobsDone(done) { if (!done || !done.length) return; for (const j of don
 // asleep in a row on the perch, heads tucked in, the chicks curled up in the straw by the nest boxes, a lantern turned low,
 // the night sky in the window, the odd "z" floating up. Tap a bird and she wakes for a cuddle (hearts), then dozes off
 // again; tap the nest boxes to collect the eggs. "Back to the farm", or the time to get up, brings you out again.
-const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop' };
+const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill' };
 const inside = { open: false, busy: false, plot: null, scene: null, camera: null, rooms: null, rooms3d: {}, birds: [], saved: [], eggs: null, fx: [], zIn: 0.6, pan: 0, panMax: 0, mPerPx: 0.002, hinted: false };
 const insideEls = { top: document.getElementById('inside-top'), title: document.getElementById('inside-title'), back: document.getElementById('inside-back'), fade: document.getElementById('fade') };
 insideEls.back.addEventListener('click', () => closeInside());

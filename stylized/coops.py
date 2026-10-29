@@ -454,6 +454,193 @@ def lodge(seed=8, eave=0.88, peak=1.44, name='house_bra', up=()):
     return finish(objs, name)
 
 
+# ------------------------------------------------------------------ the Little Windmill (Polish, release 7: Audrey, 29 Oct:
+# "A little windmill (Recommended)"; the Polish came from the Netherlands): a brick ground floor (the hens' house, its pop
+# door, a little green door and the nest window in front), a skirt of slates round its top, a white weatherboarded smock
+# tower rising from it, a dark boat-shaped cap; its sails are their own model (mill_sails) the browser turns slowly at the
+# hub (coops.json mills)
+MILL = dict(base=0.78, z0=0.94, z1=1.78, r0=0.46, r1=0.3, hub=1.94, hub_y=-0.56, sail=0.84)
+MILLS = {}                                        # per model: its sails' hub (glTF axes) and which sails
+
+
+def mill_base_pts(out=0.0):
+    """The ground floor's outline (Blender x, y; counter-clockwise from above, its wide flat front facing -y)."""
+    P = [(-0.56, -D2), (0.56, -D2), (W2, -0.3), (W2, 0.22), (0.4, D2), (-0.4, D2), (-W2, 0.22), (-W2, -0.3)]
+    if not out: return P
+    res = []
+    for i, (x, y) in enumerate(P):                 # pushed out along the average of its two edges' normals
+        a, b = P[i - 1], P[(i + 1) % len(P)]
+        n1 = Vector((y - a[1], -(x - a[0]), 0)).normalized(); n2 = Vector((b[1] - y, -(b[0] - x), 0)).normalized()
+        n = (n1 + n2).normalized(); k = out / max(0.5, n.dot(n1))
+        res.append((x + n.x * k, y + n.y * k))
+    return res
+
+
+def octa(r, flat_front=True):
+    """A regular octagon of radius r (to its corners), its flat face to the front (-y), in the same order as mill_base_pts."""
+    return [(r * math.cos(math.radians(a)), r * math.sin(math.radians(a))) for a in (-112.5, -67.5, -22.5, 22.5, 67.5, 112.5, 157.5, -157.5)]
+
+
+def ring_mesh(name, ringA, zA, ringB, zB, m, cap_a=False, cap_b=False):
+    """A band joining two rings of points (the same count, in order): a prism or a frustum, its ends closed if asked."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    A = [bm.verts.new((x, y, zA)) for x, y in ringA]; B = [bm.verts.new((x, y, zB)) for x, y in ringB]
+    n = len(A)
+    for i in range(n): bm.faces.new((A[i], A[(i + 1) % n], B[(i + 1) % n], B[i]))
+    if cap_a: bm.faces.new(list(reversed(A)))
+    if cap_b: bm.faces.new(B)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def _face_frame(a, b):
+    """For a wall from a to b (counter-clockwise): its direction along, its length and its outward normal (Blender x, y)."""
+    d = Vector((b[0] - a[0], b[1] - a[1], 0)); L = d.length; d.normalize()
+    return d, L, Vector((d.y, -d.x, 0))
+
+
+def mill_bricks(objs, pts, z_top, holes, bricks, seed=3):
+    """Brick courses over each wall of the ground floor; the front's left round its pop door, door and nest window."""
+    rnd = random.Random(seed)
+    for i in range(len(pts)):
+        a, b = pts[i], pts[(i + 1) % len(pts)]
+        d, L, n = _face_frame(a, b)
+        front = abs(n.y + 1) < 1e-3
+        z = 0.0; row = 0
+        while z < z_top - 0.02:
+            h = min(0.085, z_top - z); u = -0.05 if row % 2 else 0.0
+            while u < L:
+                w = rnd.uniform(0.15, 0.22); u1 = min(L, u + w); u0 = max(0.0, u)
+                if u1 - u0 > 0.05:
+                    um = (u0 + u1) / 2; p = Vector((a[0], a[1], 0)) + d * um
+                    if not (front and any(x0 < p.x < x1 and z0 < z + h / 2 < z1 for (x0, x1, z0, z1) in holes)):
+                        o = box('brick', (u1 - u0 - 0.012, 0.035, h - 0.012), (p.x + n.x * 0.012, p.y + n.y * 0.012, z + h / 2), (0, 0, math.atan2(d.y, d.x)),
+                                m=rnd.choice(bricks), bevel=0.008, segs=1, jitter=0.002)
+                        objs.append(o)
+                u = u1
+            z += h; row += 1
+
+
+def windmill(seed=13, name='house_pol'):
+    random.seed(seed); objs = []
+    M_ = MILL; FL = 0.2; WX = 0.36
+    bricks = [C('mbrick%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#b0624a', '#a35a43', '#bd7056', '#97513e'))]
+    mortar = C('mmortar', '#d6c8b0', rough=0.95)
+    board = C('millboard', '#f2ede2', rough=0.7, var=0.03); post = C('millpost', '#dcd4c3', rough=0.7)
+    slate = C('millslate', '#454c57', rough=0.65, var=0.1, hue_var=0.01); slated = C('millslated', '#353b45', rough=0.65)
+    green = C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G); trim = C('trimw', '#efe9dc', rough=0.6)
+    glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    shaft = C('millshaft', '#5a3a26', rough=0.7, grain=0.3, grain_scale=G)
+    pts = mill_base_pts()
+    # the ground floor: a solid core (the nest and the passage are cut from it) under brick courses
+    core = ring_mesh('core', mill_base_pts(-0.012), 0.0, mill_base_pts(-0.012), M_['base'], mortar, cap_a=True, cap_b=True); objs.append(core)
+    holes = [(-0.31 - POP_W / 2 - 0.04, -0.31 + POP_W / 2 + 0.04, 0.0, FL + POP_H + 0.05), (-0.135, 0.135, 0.0, 0.62),
+             (WX - WIN_W / 2 - 0.02, WX + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)]
+    mill_bricks(objs, pts, M_['base'], holes, bricks, seed)
+    for i in range(len(pts)):                      # a white band along the top of the brick
+        a, b = pts[i], pts[(i + 1) % len(pts)]; d, L, n = _face_frame(a, b)
+        objs.append(plank('mband', (a[0] - d.x * 0.02 + n.x * 0.03, a[1] - d.y * 0.02 + n.y * 0.03, M_['base'] - 0.03), (b[0] + d.x * 0.02 + n.x * 0.03, b[1] + d.y * 0.02 + n.y * 0.03, M_['base'] - 0.03), 0.06, 0.03, n, trim, jitter=0.1))
+    # a skirt of slates from the brick's top up to the tower
+    outer = mill_base_pts(0.08); inner = octa(M_['r0'] + 0.03)
+    objs.append(ring_mesh('skirt', outer, M_['base'] - 0.02, inner, M_['z0'] + 0.02, slated))
+    for i in range(8):                             # its rows of slates
+        for t in (0.08, 0.32, 0.56, 0.8):
+            a = Vector((*outer[i], M_['base'] - 0.02)).lerp(Vector((*inner[i], M_['z0'] + 0.02)), t)
+            b = Vector((*outer[(i + 1) % 8], M_['base'] - 0.02)).lerp(Vector((*inner[(i + 1) % 8], M_['z0'] + 0.02)), t)
+            ia = Vector((*inner[i], M_['z0'])); oa = Vector((*outer[i], M_['base']))
+            up = (ia - oa).normalized(); along = (b - a).normalized(); nrm = along.cross(up)
+            if nrm.z < 0: nrm = -nrm
+            objs.append(plank('sh', a + nrm * 0.012 - along * 0.01, b + nrm * 0.012 + along * 0.01, 0.075, 0.016, nrm, slate, jitter=0.8, bevel=0.004))
+    # the smock tower: white weatherboards on its eight faces, a corner post at each corner
+    Z0, Z1, R0, R1 = M_['z0'], M_['z1'], M_['r0'], M_['r1']
+    objs.append(ring_mesh('tower', octa(R0 - 0.02), Z0 - 0.04, octa(R1 - 0.02), Z1, board, cap_b=True))
+    rad = lambda z: R0 + (R1 - R0) * (z - Z0) / (Z1 - Z0)
+    tilt = math.atan2((R0 - R1) * math.cos(math.radians(22.5)), Z1 - Z0)
+    z = Z0; rows = 0
+    while z < Z1 - 0.01:
+        h = 0.06; zc = z + h / 2; R = rad(zc) + 0.004
+        P = octa(R)
+        for i in range(8):
+            a, b = P[i], P[(i + 1) % 8]; d, L, n = _face_frame(a, b)
+            nn = (n * math.cos(tilt) + Vector((0, 0, math.sin(tilt)))).normalized()
+            objs.append(plank('mboard', (a[0] - d.x * 0.01, a[1] - d.y * 0.01, zc), (b[0] + d.x * 0.01, b[1] + d.y * 0.01, zc), h + 0.008, 0.014, nn, board, jitter=0.12, bevel=0.003))
+        z += h; rows += 1
+    for i, (x, y) in enumerate(octa(1.0)):
+        objs.append(plank('mpost', (x * (R0 + 0.012), y * (R0 + 0.012), Z0 - 0.02), (x * (R1 + 0.012), y * (R1 + 0.012), Z1), 0.04, 0.03, (x, y, 0.15), post, jitter=0.1))
+    fy = -rad(1.33) * math.cos(math.radians(22.5))
+    window(objs, 0.0, fy - 0.03, 1.33, 0.13, 0.17, trim, glass)
+    for side in (1, -1):                           # little windows on its sides too
+        x = side * (rad(1.12) * math.cos(math.radians(22.5)) + 0.03)
+        window(objs, x, 0.0, 1.12, 0.12, 0.15, trim, glass, normal=(side, 0, 0))
+    # the cap: a dark boat-shaped dome on a curb, a knob on top, the windshaft out to the front
+    objs.append(cyl('curb', R1 + 0.05, 0.05, (0, 0, Z1 + 0.02), m=shaft, verts=16, bevel=0.006))
+    me = bpy.data.meshes.new('cap'); bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=20, v_segments=12, radius=1.0)
+    bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0), plane_no=(0, 0, 1), clear_inner=True)
+    bm.to_mesh(me); bm.free()
+    capo = link(bpy.data.objects.new('cap', me)); setmat(capo, slate); capo.location = (0, 0.03, Z1 + 0.04); capo.scale = (R1 + 0.05, R1 + 0.12, 0.34)
+    for p_ in capo.data.polygons: p_.use_smooth = True
+    objs.append(capo)
+    for k, t in enumerate((0.25, 0.55, 0.8)):      # courses of shingles on it
+        bpy.ops.mesh.primitive_torus_add(major_radius=1.0, minor_radius=0.03, major_segments=24, minor_segments=4, location=(0, 0.03, Z1 + 0.04 + 0.34 * t))
+        tr = bpy.context.object; tr.scale = ((R1 + 0.055) * math.sqrt(1 - t * t), (R1 + 0.125) * math.sqrt(1 - t * t), 0.6); setmat(tr, slated)
+        for p_ in tr.data.polygons: p_.use_smooth = True
+        objs.append(tr)
+    objs.append(sphere('capknob', 0.04, (0, 0.03, Z1 + 0.4), m=shaft, seg=12, rings=8))
+    objs.append(cyl('windshaft', 0.05, 0.36, (0, M_['hub_y'] + 0.2, M_['hub']), (math.radians(90), 0, 0), m=shaft, verts=12, bevel=0.004))
+    # the hens' pop door and ramp, a little arched green door, the nest window, a lantern on a post
+    arched_door(objs, 0.0, -D2 - 0.01, 0.0, 0.23, 0.58, green, trim, C('brass', '#c99a3c', rough=0.3, metal=0.9))
+    nest_window(objs, 'pol', FL, WX, trim, solids=[core], door='drop', door_m=green)
+    pop_door(objs, FL, trim, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18, 0.0)
+    block('pol', -0.66, -D2 - 0.26, 0.1)
+    objs.append(cyl('lpost', 0.022, 0.95, (-0.66, -D2 - 0.26, 0.475), m=shaft, verts=8, bevel=0.0))
+    objs.append(box('larm', (0.14, 0.025, 0.025), (-0.6, -D2 - 0.26, 0.92), m=iron, bevel=0.004, segs=1))
+    light_at(name, -0.54, -D2 - 0.26, 0.85)
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (-0.54, -D2 - 0.26, 0.85), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(box('lcap', (0.09, 0.09, 0.02), (-0.54, -D2 - 0.26, 0.905), m=iron, bevel=0.004, segs=1))
+    # a millstone leaning on its right wall and two sacks of flour (the hint: it grinds corn)
+    stone_m = C('millstone', '#a39d93', rough=0.9, var=0.05)
+    objs.append(cyl('millstone', 0.17, 0.07, (W2 + 0.06, -0.04, 0.17), (0, math.radians(78), 0), m=stone_m, verts=20, bevel=0.01))
+    objs.append(cyl('millhole', 0.035, 0.08, (W2 + 0.065, -0.04, 0.17), (0, math.radians(78), 0), m=C('millhole', '#4d4740', rough=0.9), verts=10, bevel=0.0))
+    sack = C('floursack', '#e9dfc9', rough=0.95, var=0.04)
+    for k, (x, y) in enumerate(((W2 + 0.09, 0.2), (W2 + 0.05, 0.33))):
+        objs.append(sphere('sack', 0.09, (x, y, 0.09), (0.9, 0.8, 1.15), m=sack, ico=2, disp=0.12, seed=k))
+        objs.append(cyl('sacktie', 0.03, 0.03, (x, y, 0.2), m=sack, verts=8, r2=0.012, bevel=0.0))
+    block('pol', W2 + 0.07, -0.04, 0.16); block('pol', W2 + 0.07, 0.26, 0.15)
+    MILLS[name] = dict(hub=[0.0, round(M_['hub'], 3), round(-M_['hub_y'], 3)], sails='sails_pol')
+    return finish(objs, name)
+
+
+def mill_sails(name='sails_pol', canvas=(0, 1, 2, 3), broken=(), stock_c='#6b4029', lat_c='#f2ede2', cloth_c='#ece0c4'):
+    """The windmill's four sails round their hub, at the origin facing -y (they turn about y, the browser's z): a stock for
+    each, a lattice of bars along it on its trailing side, canvas spread over the lattice (canvas: which sails have it);
+    broken: sails missing (the Rustic look's)."""
+    random.seed(17); objs = []
+    stock = C('sailstock', stock_c, rough=0.7, grain=0.3, grain_scale=G); lat = C('saillat', lat_c, rough=0.7, var=0.03)
+    cloth = C('sailcloth', cloth_c, rough=0.95, var=0.03)
+    R = MILL['sail']
+    objs.append(cyl('hub', 0.075, 0.09, (0, 0.0, 0), (math.radians(90), 0, 0), m=stock, verts=14, bevel=0.01))
+    objs.append(sphere('hubcap', 0.05, (0, -0.05, 0), (1, 0.6, 1), m=stock, seg=12, rings=8))
+    for i in range(4):
+        if i in broken: continue
+        a = math.radians(i * 90 + 15)
+        d = Vector((math.cos(a), 0, math.sin(a))); p = Vector((-math.sin(a), 0, math.cos(a)))       # along the sail; across (its trailing side)
+        objs.append(plank('stock', d * 0.03 + Vector((0, -0.03, 0)), d * (R + 0.03) + Vector((0, -0.03, 0)), 0.05, 0.04, (0, -1, 0), stock, jitter=0.2))
+        r0, r1, w = 0.2, R, 0.24
+        for off in (0.025, w):                     # the long laths
+            objs.append(plank('lath', d * r0 + p * off + Vector((0, -0.05, 0)), d * r1 + p * off + Vector((0, -0.05, 0)), 0.02, 0.018, (0, -1, 0), lat, jitter=0.1, bevel=0.003))
+        k = 0; r = r0
+        while r <= r1 + 1e-6:                      # the bars across
+            objs.append(plank('bar', d * r + Vector((0, -0.055, 0)), d * r + p * (w + 0.01) + Vector((0, -0.055, 0)), 0.016, 0.014, (0, -1, 0), lat, jitter=0.2, bevel=0.002))
+            r += (r1 - r0) / 9; k += 1
+        if i in canvas:
+            c = d * ((r0 + r1) / 2) + p * ((0.025 + w) / 2) + Vector((0, -0.035, 0))
+            o = box('cloth', (r1 - r0 - 0.02, 0.006, w - 0.03), (c.x, c.y, c.z), (0, -a, 0), m=cloth, bevel=0.0); objs.append(o)
+    return finish(objs, name)
+
+
 # ------------------------------------------------------------------ the pen, shared by every style
 def pen_base():
     """The dirt yard with its feeder, water dish, hay bale, feed sack, pebbles and straw (coop.build_pen, without the fence)."""
@@ -593,7 +780,8 @@ def red_barn(**kw):
     return r
 
 
-HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge}
+HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill}
+LATER = ['pol']                                   # (release 7's coops: exported after the rest)
 
 
 def pop_slider(style):
@@ -605,7 +793,8 @@ def pop_slider(style):
     m, trim = {'rir': (cm['red'], cm['white']), 'orp': (C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G), C('oakdark', '#47301f', rough=0.8)),
                'leg': (C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
                'bra': (C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G), C('lodgetrim', '#e8dcc0', rough=0.7)),
-               'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None)}[style]
+               'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None),
+               'pol': (C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6))}[style]
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))

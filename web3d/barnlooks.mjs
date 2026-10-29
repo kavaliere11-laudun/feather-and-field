@@ -1,5 +1,5 @@
 // The Red Barn's five looks side by side (release 4: Rustic, Mended, Snug, Cosy, Deluxe): ./withserver.sh node barnlooks.mjs
-// [OUT]   (OUT: a folder; ONLY=3,4: just those looks; DRESS=xmas: in the Christmas dress; TIME=21:30 for an evening; BREED=rir, NTH=1 its second coop (turned the other way); SIZE, OX, OZ: the framing; W, H: the screen, 874x402 for
+// [OUT]   (OUT: a folder; ONLY=3,4: just those looks; EXTRA='&coopbreeds=pol': more for the page's address; DRESS=xmas: in the Christmas dress; TIME=21:30 for an evening; BREED=rir, NTH=1 its second coop (turned the other way); SIZE, OX, OZ: the framing; W, H: the screen, 874x402 for
 // the phone on its side: then the five one under the other)
 // The test page with one coop in each look in turn (?looks=N), seen from the game's camera, then one picture of all five
 // (looks.png) with their names under them.
@@ -14,7 +14,7 @@ const errs = []; p.on('pageerror', e => errs.push(e.message));
 const shots = [];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',').map(Number) : [0, 1, 2, 3, 4];
 for (const t of ONLY) {
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&looks=${t}&time=${TIME}${process.env.DRESS ? '&dress=' + process.env.DRESS : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&looks=${t}&time=${TIME}${process.env.DRESS ? '&dress=' + process.env.DRESS : ''}${process.env.EXTRA || ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #tag, #foxbtn, #replaybtn, #farmerbtn { display: none !important; }' });
   await p.evaluate(v => { window.__SHIFT = v; }, process.env.SHIFT || 0);          // (SHIFT: the view moved along the screen's up, in metres: below 0 the coop sits lower)
