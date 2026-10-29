@@ -20,7 +20,7 @@
 // The online side (cloud.js, Firebase: Google sign-in, the Firestore document) is its own file, loaded only once it's
 // needed (signed in, or Settings opened); ?account=fake on the game's page puts a pretend one in its place, for the tests.
 import { SAVE_KEY, checkFarm, levelOf } from './game.js';
-import { FIREBASE } from './firebase-config.js';
+import { FIREBASE, ACCOUNT_LIVE } from './firebase-config.js';
 
 export const DEBOUNCE = 45e3;             // a change goes up this long after (sooner when the game is put away)
 const MAX = 800000;                        // the most a farm may weigh online (the rules allow a little more)
@@ -91,7 +91,7 @@ export class Account {
   // o: { bust, say(text), loaded() (the page opens the farm just put on the phone), ask(here, online) -> Promise<'here'|'online'> }
   constructor(game, o = {}) {
     this.g = game; this.o = o;
-    this.on = FAKE || !!FIREBASE;          // (no project yet: nothing of the account anywhere)
+    this.on = FAKE || (!!FIREBASE && ACCOUNT_LIVE);          // (no project yet: nothing of the account anywhere)
     this.cloud = null; this.user = null; this.status = 'out'; this.savedAt = 0; this.timer = 0;
     this.busy = false; this.again = false; this.asking = false; this.taking = false; this.subs = [];
     this.st = readSync();
