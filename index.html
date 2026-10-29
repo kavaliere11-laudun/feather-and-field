@@ -392,6 +392,8 @@
   .gchips { display: flex; gap: 8px; flex-wrap: wrap; }
   .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
   .gchip.on { border-color: var(--meadow); background: #e5f1df; }
+  /* the language list (lang.js: more than three languages): a chip that opens the phone's own picker */
+  .gselect { -webkit-appearance: none; appearance: none; padding-right: 34px; border-color: var(--meadow); background: #e5f1df url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23355e2b' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center; }
   .gwho { gap: 10px; }
   .gwho .gchip { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 18px; font-size: 17px; }
   .ginput { font: 700 17px Nunito, system-ui, sans-serif; padding: 11px 13px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink);
@@ -538,6 +540,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793268554"></script>
+<script src="app.js?v=1793271671"></script>
 </body>
 </html>
