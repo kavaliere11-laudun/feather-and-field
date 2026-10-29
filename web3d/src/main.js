@@ -31,7 +31,7 @@ import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE } from './game.js';
 import { GameUI } from './gameui.js';
-import { Sound } from './sound.js';
+import { Sound, FARM } from './sound.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
@@ -51,7 +51,7 @@ const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
-const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard() }) : null;
+const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard() }) : null;
 const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 // (the game: the geese and the dog once bought, release 3)
@@ -1411,7 +1411,7 @@ function buildGeese() {
   // their house, if it's on the pond (a decoration): its own frame, to and from the world
   const dh = decorList.find(d => d.model === 'duckhouse'), hv = new THREE.Vector3(), hinv = dh ? dh.m.clone().invert() : null;
   const house = dh ? { local: (x, z) => { hv.set(x, 0, z).applyMatrix4(hinv); return [hv.x, hv.z]; }, world: (lx, lz) => { hv.set(lx, 0, lz).applyMatrix4(dh.m); return [hv.x, hv.z]; } } : null;
-  duckFlock = new DuckFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, lang: LANG, geeseBed: geeseFlock.bed, fx: () => frogPond, house,
+  duckFlock = new DuckFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, lang: LANG, sound: (k, x, z) => farmSound(k, x, z, 1.4), geeseBed: geeseFlock.bed, fx: () => frogPond, house,
     light: () => 0.35 + 0.65 * WATER_DAY.value,
     others: () => [...geeseFlock.geese, ...(farmDog && farmDog.group.visible ? [farmDog.dog] : []), ...(nightVisit && nightVisit.fox.root.visible ? [nightVisit.fox] : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])] }, rng(91));
 }
@@ -1450,7 +1450,7 @@ function buildDog(joints) {
 function makeDog() {
   if (params.get('lineup') || farmDog || !DOG_JOINTS) return;      // (not on the line-up pages)
   const joints = DOG_JOINTS;
-  farmDog = new FarmDog(scene, { joints, name: dogName, kennel: KENNEL_AT, nav: navGrid(), groundY, spots: farmSpots, geese: () => geeseFlock,
+  farmDog = new FarmDog(scene, { joints, name: dogName, kennel: KENNEL_AT, nav: navGrid(), groundY, spots: farmSpots, geese: () => geeseFlock, sound: (k, x, z) => farmSound(k, x, z, 1.5),
     foxes: () => foxes, toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z),
     visit: () => params.has('noguard') || params.has('nodog') ? null : nightVisit, den: FOX_DEN }, rng(61));         // (?noguard: he sleeps through it too; ?nodog: just him, as if the farm had only the geese)
   if (nightVisit) nightVisit.dogName = () => dogName;
@@ -1890,7 +1890,7 @@ function guardAlarm(F, D) {
 }
 function buildNightVisit() {
   const fh = V.props.find(p => p.model === 'farmhouse'), house = fh ? [fh.pos[0], fh.pos[2]] : [V.house[0], V.house[2]];
-  nightVisit = new NightVisit({ door: farmDoor(), farmerName,
+  nightVisit = new NightVisit({ door: farmDoor(), farmerName, sound: (k, x, z) => farmSound(k, x, z, 2),
     scene, fam: foxes, nav: navWild(), fences: meadowFences, alarm: () => guardAlarm(geeseFlock && geeseFlock.geese.length ? geeseFlock : null, farmDog), coops: () => plots.filter(p => p.kind === 'coop'), doorOpen, nestOf, D2, house,
     grade: nightGrade, text: VISIT_TEXT, lang: LANG, r: rng(41), penObstacles: PEN.obstacles, penOf, groundY,
     busyPlot: p => inside.open && inside.plot === p,
@@ -2111,6 +2111,15 @@ const ROOM = 0.5, PERSONAL = 0.34, BODY = 0.32, CHICK_BODY = 0.2;
 const PERS_IDS = ['diva', 'brave', 'glutton', 'mum', 'rebel'];
 const PERS_NAMES = { diva: 'Diva', brave: 'Brave', glutton: 'Glutton', mum: 'Good mum', rebel: 'Rebel' };
 const SONG = { diva: [4.5, 1.2], brave: [3.6, 1.1], glutton: [2.2, 0.9], mum: [2.6, 0.65], rebel: [2.0, 1.0] };   // seconds, how loud
+// each personality's song as recorded (audio/farm/egg_<personality>.mp3, from BigSoundBank's "Hen lays #1", farm.json): the
+// moments of her clucks and her ba-KAWKs, seconds from the start (the song's bobs and notes follow them, sound or not)
+const SONG_CLIP = {
+  rebel: { clucks: [0.34, 0.6, 0.86, 1.13], kawks: [[1.38, 1.86]] },
+  glutton: { clucks: [0.28, 0.52, 0.78, 1.05, 1.3], kawks: [[1.56, 2.07]] },
+  mum: { clucks: [0.37, 0.65, 0.89, 1.13, 1.39, 1.68], kawks: [[1.94, 2.47]] },
+  brave: { clucks: [0.14, 0.43, 1.68, 1.92, 2.18, 2.45, 2.7], kawks: [[0.69, 1.22], [2.96, 3.47]] },
+  diva: { clucks: [0.39, 0.65, 0.91, 1.18, 2.27, 2.55, 2.79, 3.03, 3.29, 3.58], kawks: [[1.43, 1.91], [3.84, 4.37]] },
+};
 // going in to lay: the rebel and the brave jump straight in at the nest window (and jump out of it after); the others behave
 // and go up the ramp and in at the pop door
 const JUMPERS = { rebel: true, brave: true };
@@ -2628,19 +2637,28 @@ class Bird {
         break;
       }
       case 'sing': {                                         // "buk buk buk buk ba-KAWK", her head bobbing, notes rising
-        const [dur, loud] = SONG[this.pers] || SONG.mum;
+        // her song as the recording sings it (sound.js 'egg_<personality>', SONG_CLIP): a bob of the head on each cluck,
+        // the beak wide on each ba-KAWK, a note for each (every other one for the quieter ones), a big one for the KAWK
+        const [dur, loud] = SONG[this.pers] || SONG.mum, C = SONG_CLIP[this.pers] || SONG_CLIP.mum;
+        if (!L.sang) { L.sang = true; this.root.getWorldPosition(_cv); farmSound('egg_' + (SONG_CLIP[this.pers] ? this.pers : 'mum'), _cv.x, _cv.z, 1.3, FARM.level.egg * Math.min(1, loud)); }
         o.sing = Math.min(1, L.t / 0.3) * Math.min(1, (dur - L.t) / 0.3);
-        const c = L.t % 1.5, cyc = Math.floor(L.t / 1.5), beats = [0, 0.22, 0.44, 0.66, 0.86];
-        beats.forEach((b, i) => { const u = (c - b) / 0.13; if (u >= 0 && u < 1) o.cluck = Math.sin(u * Math.PI) * (i === 4 ? 0.6 : 1) * Math.min(1, loud); });
-        if (c >= 0.98 && c < 1.4) o.kawk = Math.sin((c - 0.98) / 0.42 * Math.PI) * Math.min(1, loud);
-        const beat = cyc * 6 + (c >= 0.98 ? 5 : beats.filter(b => c >= b).length - 1);
-        if (beat !== L.beat && L.t < dur - 0.2) { L.beat = beat; if (beat % 6 === 5 || loud > 0.8 || beat % 2 === 0) spawnNote(this, beat % 6 === 5, loud); }
+        for (const c of C.clucks) { const u = (L.t - c) / 0.13; if (u >= 0 && u < 1) o.cluck = Math.sin(u * Math.PI) * Math.min(1, loud); }
+        for (const [a, b] of C.kawks) if (L.t >= a && L.t < b) o.kawk = Math.sin((L.t - a) / (b - a) * Math.PI) * Math.min(1, loud);
+        const ev = C.ev || (C.ev = [...C.clucks.map(c => [c, false]), ...C.kawks.map(k => [k[0], true])].sort((a, b) => a[0] - b[0]));
+        const beat = ev.filter(e => L.t >= e[0]).length - 1;
+        if (beat >= 0 && beat !== L.beat && L.t < dur - 0.2) { L.beat = beat; if (ev[beat][1] || loud > 0.8 || beat % 2 === 0) spawnNote(this, ev[beat][1], loud); }
         if (this.pers === 'diva' && L.t > dur - 0.8) o.flap = Math.sin((L.t - dur + 0.8) / 0.8 * Math.PI);
         if (L.t > dur) this.celebrate();
         break;
       }
     }
     return o;
+  }
+  // his cock-a-doodle-doo (sound.js 'crow'), heard from further off than the hens; not more than one every 15 seconds
+  crowSound() {
+    if (!sound || this.kind !== 'rooster') return; const now = performance.now();
+    if (now - (this.crowAt ?? -1e9) < 15000) return; this.crowAt = now;
+    this.root.getWorldPosition(_cv); farmSound('crow', _cv.x, _cv.z, 1.8);
   }
   answer() {                                                 // the rooster sometimes joins in with a crow
     const roo = this.flock.find(b => b.kind === 'rooster');
@@ -2773,7 +2791,7 @@ class Bird {
       }
       if (!act.dur) act.dur = act.left + dt;
       if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
-      if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); }
+      if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); if (t >= 0.3 && !act.heard) { act.heard = true; this.crowSound(); } }
       if (act.type === 'rest') { sitGoal = 1; wag = 0; }
       if (act.type === 'ruffle') ruffle = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.left <= 0) {
@@ -3306,21 +3324,30 @@ function holdBird(b) {                       // a bird whose card is open stays 
 // at once (happy for 6 hours, trust and a little experience); the farmer comes into the pen, crouches and strokes her,
 // hearts floating up (by day, out and about: at night "Cuddles in the morning"). A new trust level or star: a word.
 // Trusting birds come to the front fence to greet the farmer when he stops to look at their coop.
-// the hens chatting (sound.js): the coop nearest the middle of the view with birds up, how near (louder as the view comes
-// close, softer zoomed out) and its side of the screen
-const _hv = new THREE.Vector3();
+// a sound from where it happens (sound.js): as loud as the view is near it (reach: how far it carries; zoomed out, softer)
+// and from its side of the screen
+const _hv = new THREE.Vector3(), _cv = new THREE.Vector3();
+function heardAt(x, z, reach = 1) {
+  const d = Math.hypot(x - view.target.x, z - view.target.z), R = (view.size * 1.3 + 1.5) * reach, k = Math.min(1, Math.max(0, (7.5 - view.size) / 5.5));
+  const near = Math.pow(Math.max(0, 1 - d / R), 1.4) * (0.3 + 0.7 * k * k * (3 - 2 * k));
+  _hv.set(x, 0.2, z).project(camera); return { near, pan: Math.max(-0.7, Math.min(0.7, _hv.x * 0.7)) };
+}
+function farmSound(kind, x, z, reach = 1, level) { if (sound && game && game.data) sound.play(kind, heardAt(x, z, reach), level); }
+// the hens chatting: the coop nearest the middle of the view with birds up (and whether it has a brood: a mummy hen sitting,
+// or her chicks out)
 function henHeard() {
   let best = null;
   for (const p of plots) {
     if (p.kind !== 'coop' || !p.birds.some(b => !b.asleep && b.root.visible)) continue;
-    p.frame.getWorldPosition(_hv);
-    const d = Math.hypot(_hv.x - view.target.x, _hv.z - view.target.z), R = view.size * 1.3 + 1.5, z = Math.min(1, Math.max(0, (7.5 - view.size) / 5.5));
-    const near = Math.pow(Math.max(0, 1 - d / R), 1.4) * (0.3 + 0.7 * z * z * (3 - 2 * z));
-    if (best && near <= best.near) continue;
-    _hv.project(camera); best = { near, pan: Math.max(-0.7, Math.min(0.7, _hv.x * 0.7)) };
+    p.frame.getWorldPosition(_cv); const h = heardAt(_cv.x, _cv.z);
+    if (best && h.near <= best.near) continue;
+    h.brood = p.birds.some(b => b.kind === 'chick' && !b.asleep) ? 'chicks' : p.birds.some(b => b.laying && b.laying.broody) ? 'sitting' : null;
+    best = h;
   }
   return best;
 }
+// the pond's frogs and water: how near the pond is
+function pondHeard() { return V && V.pond ? heardAt(V.pond.center[0], V.pond.center[2], 1.4) : null; }
 function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 || DAY.hour < 6.3; }
 // ---- worms from the chickens (Audrey, 28 Oct; game.js askWorms): "Ask for worms" on a bird's card: her worms for the day
 // at once (Friendly 1, Trusting 2, Best friend 3), into the bag; the farmer comes into the pen and crouches with his hand out,

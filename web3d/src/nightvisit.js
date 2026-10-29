@@ -598,6 +598,7 @@ export class NightVisit {
     const roof = this.W(p, -0.2, 1.35, 0.55), roof2 = this.W(p, 0.4, 1.25, 0.6);
     this.fx.pop('bang', roof, 0.26, 1.8); setTimeout(() => this.fx.pop('bang', roof2, 0.22, 1.5), 250);
     this.say(this.T('squawk'), this.W(p, 0, 2.0, 0), 2.2);
+    if (this.sound) { const w = this.W(p, 0, 0, 0); this.sound('flurry', w.x, w.z); }      // (the game's sound: a henhouse in a flurry)
     this.note('flurry ' + p.index);
   }
   // back down the ramp in a hurry (a hop backwards), a feather stuck on his nose, a sneeze and a shake
@@ -646,6 +647,7 @@ export class NightVisit {
   grab(p) {
     const self = this, G = this.nestOf(p), lz = G.pop[1] + 0.42;
     return { name: 'grab', t: 0, run(f, dt) {
+      if (!this.heard) { this.heard = true; if (self.sound) { const w0 = self.W(p, 0, 0, 0); self.sound('flurry', w0.x, w0.z); } }      // (the hens squawking: the game's sound)
       this.t += dt; const k = smooth(0, 0.45, this.t) - smooth(0.75, 1.1, this.t), z = lz - 0.07 * k;
       self.lean(f, p, z); self.lz = z;
       const w = self.W(p, G.pop[0], 0, z); f.pos.x = w.x; f.pos.z = w.z;

@@ -86,7 +86,7 @@ const DK = {
   act: (name, secs, fn) => TK.act(name, secs, fn || DACT[name]),
   // n quacks, with "Quack!" over her head
   quack: (n = 2) => ({ name: 'quack', act: 'quack', t: 0, run(g, dt) {
-    if (this.t === 0) g.flock.say(g);
+    if (this.t === 0) { g.flock.say(g); if (g.flock.o && g.flock.o.sound) g.flock.o.sound('quack', g.pos.x, g.pos.z); }      // (sound.js: a real quack or two)
     this.t += dt; DACT.quack(g, this.t, n); return this.t >= 0.42 * n + 0.7;
   } }),
   // up-ending for secs: a ring as she goes under and another as she comes up

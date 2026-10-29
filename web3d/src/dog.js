@@ -27,7 +27,7 @@ export class FarmDog {
   constructor(scene, opts, r) {
     this.r = r; this.nav = opts.nav; this.groundY = opts.groundY; this.spotsOf = opts.spots; this.geeseOf = opts.geese || (() => null);
     this.foxesOf = opts.foxes || (() => null); this.toCamera = opts.toCamera || (() => 0); this.joints = opts.joints; this.out = true;
-    this.visitOf = opts.visit || (() => null); this.guard = null; this.heard = 0; this.barkT = 0;
+    this.visitOf = opts.visit || (() => null); this.guard = null; this.heard = 0; this.barkT = 0; this.soundOf = opts.sound || null;
     this.wakeOn = opts.wakeOn || null;                       // (the morning replay: he wakes when the film says, replay.js)
     this.den = opts.den || null;                             // (where the foxes' den is: he sees Rusty that far and no further)
     this.group = new THREE.Group(); scene.add(this.group);
@@ -330,6 +330,7 @@ export class FarmDog {
         this.stage = 1; this.t0 = this.t;
       }
       const u = this.t - this.t0;
+      if (pounce && u < 0.7 && !this.woofed) { this.woofed = true; self.woof(); }      // (got it!)
       if (pounce && u < 0.7) { f.A.bowGoal = 1; f.A.wagGoal = 1; f.A.lookPitchGoal = 1.3; playFace(f, 0.7); return false; }      // paws on it!
       const v = u - (pounce ? 0.7 : 0);
       // down to it, mouth open wide, and right round it: the jaws close on it, head up with it (Audrey: "he needs to
@@ -431,6 +432,7 @@ export class FarmDog {
       name: 'then', run(f, dt) {                              // she hissed: oh! a bounce back, a play bow at her, off happily
         if (!this.L) this.L = st.teased ? seq(T.wait(0.5, f => { f.A.crouchGoal = 0.6; f.A.wideGoal = 1; f.A.earsGoal = -0.5; f.A.lidTiltGoal = -0.4; }),
           { name: 'boing', t: 0, run(f, dt) {
+            if (this.t === 0) self.woof();                     // (a happy woof as he bounces)
             this.t += dt; const u = this.t / 0.45, back = 0.9 * dt / 0.45, bx = f.pos.x - Math.sin(f.heading) * back, bz = f.pos.z - Math.cos(f.heading) * back;
             if (!self.nav || self.nav.freeAt(bx, bz)) { f.pos.x = bx; f.pos.z = bz; }
             f.A.lift = Math.sin(clamp01(u) * Math.PI) * 0.16; f.A.airGoal = 0.5; f.A.earsGoal = -0.6; f.A.wideGoal = 0.8;
@@ -476,9 +478,11 @@ export class FarmDog {
     d.todo = []; d.task = this.wrap(this.guardTask(V));
     V.hint(V.T(geese ? 'dogToo' : 'dogHeard'));
   }
+  // a woof (sound.js 'bark', the game's sound): his mouth opens with it
+  woof() { this.barkT = 0.28; if (this.soundOf) this.soundOf('bark', this.dog.pos.x, this.dog.pos.z); }
   bark(V) {
     if (!V || !V.fx) return;
-    this.barkT = 0.28; const h = this.dog.q.bones.head.getWorldPosition(new THREE.Vector3());
+    this.woof(); const h = this.dog.q.bones.head.getWorldPosition(new THREE.Vector3());
     V.fx.pop(V.lang === 'fr' ? 'ouaf' : 'woof', h.add(new THREE.Vector3(0, 0.34, 0)), 0.32, 1.1);
   }
   guardTask(V) {

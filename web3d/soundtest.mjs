@@ -5,7 +5,8 @@
 // fades away and no new track starts; morning: it comes back. Put away: quiet, the music paused; back: it carries on.
 // Settings: Music On / Off (Oui / Non in French), the note under it; Off: it fades away at once and stays off after a
 // reload; On: a track within seconds. Her hens chatting (29 Oct): close to a coop, clear; zoomed out and away, much softer;
-// one real moment after another; the birds in bed, none. Sounds On / Off: off, the hens stop and the music carries on. A save
+// one real moment after another; the birds in bed, none. The farm's own sounds: all loaded; the time of day's bed by the
+// hour; the pond's near it; the rooster's crow and a hen's egg song heard when they happen. Sounds On / Off: off, the hens stop and the music carries on. A save
 // with the music or the sounds typed in wrong: checked (on). No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
@@ -92,6 +93,37 @@ await p.evaluate(() => { window.__farm.pause(true); for (const c of window.__far
 h = await until(async () => { const i = await hen(); return i.near === 0 && (!i.playing || i.gain < 0.02) ? i : null; }, 15000);
 ok('the birds in bed: no chatting', !!h, h || await hen());
 await p.evaluate(() => { for (const c of window.__farm.coopPlots()) for (const b of c.birds) b.asleep = !!b._was; window.__farm.pause(false); });
+// the farm's own sounds (Audrey, 29 Oct: "All good, put them in"): all loaded; the time of day's bed by the hour; the pond's
+// near the pond; the rooster's crow and a hen's egg song when they happen; a one-shot from where it happens
+const farm = () => p.evaluate(() => window.__farm.sound().info().farm);
+const KINDS = ['egg_rebel', 'egg_glutton', 'egg_mum', 'egg_brave', 'egg_diva', 'crow', 'flurry', 'mum', 'chicks', 'quack', 'bark'];
+let F = await until(async () => { const f = await farm(); return Object.keys(f.beds).length === 5 && KINDS.every(k => f.groups[k]) ? f : null; }, 45000);
+ok('the farm\'s sounds all loaded (eleven kinds, five beds)', !!F, F || await farm());
+for (const [h, bed, name] of [[11, 'day', 'by day'], [7, 'dawn', 'at dawn'], [20, 'evening', 'of an evening'], [23.2, 'night', 'at night']]) {
+  await p.evaluate(h => window.__farm.setHour(h), h);
+  F = await until(async () => { const f = await farm(); return f.beds[bed] > 0.2 && Object.entries(f.beds).every(([k, v]) => k === bed || k === 'pond' || v < 0.03) ? f : null; }, 25000);
+  ok(name + ': its own bed, the others silent', !!F, F ? F.beds : (await farm()).beds);
+}
+await p.evaluate(() => window.__farm.setHour(11));
+await p.evaluate(() => { const f = window.__farm, c = f.plan().pond.center; f.lookAt(c[0], c[2], 2.6); });
+F = await until(async () => { const f = await farm(); return f.beds.pond > 0.3 ? f : null; }, 20000);
+ok('near the pond: its frogs', !!F, (F || await farm()).beds);
+await p.evaluate(() => { const f = window.__farm, c = f.plan().pond.center; f.lookAt(c[0] + 14, c[2] + 14, 3); });
+F = await until(async () => { const f = await farm(); return f.beds.pond < 0.08 ? f : null; }, 20000);
+ok('far from the pond: hardly', !!F, (F || await farm()).beds);
+await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x, v.z, 2.6); });
+const before = (await farm()).played;
+// (the rooster up and about again after the night: then a crow)
+await until(() => p.evaluate(() => { const r = window.__farm.coopPlots()[0].birds.find(b => b.kind === 'rooster'); return !r.asleep && r.root.visible && !r.route && !r.roost; }), 60000);
+F = await until(async () => {
+  await p.evaluate(() => { const r = window.__farm.coopPlots()[0].birds.find(b => b.kind === 'rooster'); if (!r.act || r.act.type !== 'crow') { r.crowAt = -1e9; r.act = { type: 'crow', left: 2.0 }; r.wait = 2.2; } });
+  const f = await farm(); return (f.played.crow || 0) > (before.crow || 0) ? f : null; }, 20000, 700);
+ok('the rooster crows: heard', !!F, F && F.last);
+const pers = await p.evaluate(() => { const h = window.__farm.coopPlots()[0].birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(30); Object.assign(h.laying, { phase: 'sing', t: 0, inside: false, beat: -1 }); return h.pers; });
+F = await until(async () => { const f = await farm(); return (f.played['egg_' + pers] || 0) > (before['egg_' + pers] || 0) ? f : null; }, 15000);
+ok('a hen sings over her egg: her personality\'s song (' + pers + ')', !!F, F && F.last);
+const shot = await p.evaluate(() => ['bark', 'quack', 'flurry'].map(k => !!window.__farm.sound().play(k, { near: 0.8, pan: 0.3 })));
+ok('a woof, a quack, a flurry from where they happen', shot.every(Boolean), shot);
 // the settings: Music On / Off
 await p.evaluate(() => window.__farm.gameUI().settings()); await wait(700);
 const row = await p.evaluate(() => { const r = document.querySelector('.gmusic'); return r ? { label: r.querySelector('.glabel').textContent, chips: [...r.querySelectorAll('.gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), note: document.querySelector('.gsound-note').textContent, sounds: [...document.querySelectorAll('.gsounds .gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')).join() } : null; });
@@ -124,6 +156,8 @@ h = await until(async () => { const i = await hen(); return !i.playing ? i : nul
 ok('Sounds Off: the hens stop', !!h, h || await hen());
 await wait(6000); h = await hen(); s = await info();
 ok('Sounds Off: no more, and the music carries on', !h.playing && s.state === 'playing', { hens: h, music: s.state });
+F = await farm();
+ok('Sounds Off: the beds silent, and no one-shot', Object.values(F.beds).every(v => v < 0.02) && !(await p.evaluate(() => window.__farm.sound().play('bark', { near: 1, pan: 0 }))), F.beds);
 ok('Sounds Off: kept in the farm', await p.evaluate(() => window.__farm.game().data.sounds === false));
 await p.tap('.gsounds .gchip:nth-child(1)');
 h = await until(async () => { const i = await hen(); return i.playing ? i : null; }, 15000);
