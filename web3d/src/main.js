@@ -51,7 +51,7 @@ const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
-const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard() }) : null;
+const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
 const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 // (the game: the geese and the dog once bought, release 3)
@@ -1389,7 +1389,7 @@ function buildGeese() {
   const across = () => [VIEW_DIR.z, -VIEW_DIR.x].map(v => v / Math.hypot(VIEW_DIR.x, VIEW_DIR.z));      // (the way across the screen)
   GEESE_OPTS = { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, across };
   setGooseLang(LANG);                                  // (the game: the player's language for their names)
-  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, across, heart: (x, y, z) => spawnHeart(new THREE.Vector3(x, y, z)), watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null,
+  geeseFlock = new GeeseFlock(scene, { pond: P, nav: navGrid(), avoid, mouths, groundY, inView, across, sound: (k, x, z) => farmSound(k, x, z, 1.6), heart: (x, y, z) => spawnHeart(new THREE.Vector3(x, y, z)), watch: () => params.has('noguard') || params.has('nogeese') ? null : nightVisit, dog: () => farmDog ? farmDog.dog : null,
     others: () => [...(duckFlock ? duckFlock.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])] }, rng(57));      // (?noguard: they sleep through it, for the fox's own tests)
   geeseFlock.pair = geeseFlock.geese;
   if (geeseOwned()) geeseFlock.update(1 / 60, clockHour());
@@ -3348,6 +3348,12 @@ function henHeard() {
 }
 // the pond's frogs and water: how near the pond is
 function pondHeard() { return V && V.pond ? heardAt(V.pond.center[0], V.pond.center[2], 1.4) : null; }
+// sounds of places, now and then: a bee buzzing past the hives while the bees are out (by day)
+function spotsHeard() {
+  const out = [];
+  if (decorLife && decorLife.bees && decorLife.bees.out > 0) for (const d of decorList) if (d.model === 'beehives') { const h = heardAt(d.pos[0], d.pos[1], 0.9); h.kind = 'buzz'; out.push(h); }
+  return out;
+}
 function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 || DAY.hour < 6.3; }
 // ---- worms from the chickens (Audrey, 28 Oct; game.js askWorms): "Ask for worms" on a bird's card: her worms for the day
 // at once (Friendly 1, Trusting 2, Best friend 3), into the bag; the farmer comes into the pen and crouches with his hand out,

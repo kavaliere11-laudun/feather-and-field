@@ -60,3 +60,7 @@ bed('dawn', '0222', 30); bed('day', '1911', 20, notch=4700); bed('evening', '185
 json.dump(M, open(f'{OUT}/farm.json', 'w'), indent=0)
 for k, v in M.items(): print(k, v)
 print(subprocess.run(['du', '-sh', OUT], capture_output=True, text=True).stdout)
+
+# 29 Oct, after Audrey allowed www.nps.gov: the geese (honk1-3) and the bee (buzz1-2) from the US National Park Service's
+# sound gallery (public domain), cut by sfxwork/nps_clips.py:
+#   honk: nri-CanadaGoose.mp3 0.3-0.95, 1.4-1.85, 2.3-3.05 s, -19 LUFS; buzz: nri-BeeYOSE.mp3 0-2.8, 0.6-1.75 s, -22 LUFS

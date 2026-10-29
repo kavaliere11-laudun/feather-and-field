@@ -17,7 +17,8 @@
 // hens' chatting, at a coop with a brood), the ducks' quacks, Biscuit's woof, each from where it happens (play: as loud
 // as the view is near, from its side of the screen); and under it all the time of day (dawn's birds, the day's crickets
 // and birds, the evening's last birds, the night's insects, crossfading by the hour) and the pond's frogs near the pond.
-// The beds are decoded at 22 kHz (half the memory: about 4 MB each).
+// The beds are decoded at 22 kHz (half the memory: about 4 MB each). The geese honk and a bee buzzes past the hives: the US
+// National Park Service's recordings (public domain), once Audrey allowed www.nps.gov (29 Oct).
 
 const smooth = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
 export const MUSIC = ['champ-de-tournesol', 'happy-whistling-ukulele'];
@@ -44,7 +45,8 @@ export const HENS = {
 
 export const FARM = {
   // each one-shot's volume close up (the files: -17 to -24 LUFS); a bed's volume (the files: -22 LUFS)
-  level: { egg: 0.6, crow: 0.55, flurry: 0.7, mum: 0.75, chicks: 0.8, quack: 0.5, bark: 0.5 },
+  level: { egg: 0.6, crow: 0.55, flurry: 0.7, mum: 0.75, chicks: 0.8, quack: 0.5, bark: 0.5, honk: 0.5, buzz: 0.5 },
+  spotGap: { buzz: [2.5, 7] },     // seconds between one and the next, at a place (o.spots)
   beds: ['dawn', 'day', 'evening', 'night'], bedLevel: 0.28, pondLevel: 0.6,
 };
 // the time of day's bed by the hour: night, dawn from 5 (full 6 to 8:30), day from 8:30 (full 9:30 to 18), evening from 18
@@ -136,7 +138,7 @@ export class Sound {
   }
   tick() {
     if (!this.ctx || this.hidden) return;
-    this.tickHens(); this.tickBeds();
+    this.tickHens(); this.tickBeds(); this.tickSpots();
     const lv = this.level(), on = !!this.o.music();
     if (this.state === 'playing') {
       if (!on) { this.stop(0.8, 'switched off'); return; }
@@ -217,6 +219,15 @@ export class Sound {
     s.onended = () => { try { g.disconnect(); } catch (e) { /* */ } };
     s.start(); this.farm.played[kind] = (this.farm.played[kind] || 0) + 1; this.farm.lastPlayed = { kind, gain: +lev.toFixed(3) };
     return s;
+  }
+  // places heard now and then (o.spots(): [{kind, near, pan}]): the nearest of each kind, every few seconds
+  tickSpots() {
+    if (!this.o.spots) return; const F = this.farm, now = this.now(); F.spotAt = F.spotAt || {};
+    const best = {}; for (const s of this.o.spots() || []) if (!best[s.kind] || s.near > best[s.kind].near) best[s.kind] = s;
+    for (const [kind, at] of Object.entries(best)) {
+      if (now < (F.spotAt[kind] || 0) || at.near < 0.05) continue;
+      if (this.play(kind, at)) { const g = FARM.spotGap[kind] || [4, 10]; F.spotAt[kind] = now + g[0] + Math.random() * (g[1] - g[0]); }
+    }
   }
   // the beds: each loops from the start (silent until it's its hour), the time of day's crossfading, the pond's by how near
   tickBeds() {

@@ -18,3 +18,7 @@ BigSoundBank.com"). Cut, made gentler where needed and evened out by the source'
 - a mummy hen with her chicks: "Hens worried"; chicks: "Chick that chirp"; ducks: "Ducks"; Biscuit: "Old dog barking #1";
 - the pond: "Pond in a Field"; dawn: "Birds Waking #1"; day: "Countryside #3"; evening: "Evening Birds"; night:
   "Campaign at night #1".
+
+The geese and the bee (29 Oct 2026), audio/farm/honk1-3.mp3, buzz1-2.mp3: the US National Park Service's sound gallery
+("Canada Geese", "Bee", Yosemite), public domain ("The files are in the public domain and may be downloaded. Enjoy, and
+please give the appropriate credit."). Credit: National Park Service.

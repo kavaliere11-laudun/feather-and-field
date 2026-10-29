@@ -355,6 +355,10 @@ export class Goose {
       A.tuckGoal *= 0.3; A.squintGoal = 0; A.upGoal = 0.7; A.upendGoal = 0; A.sitGoal *= 0.5; A.honkGoal = honk ? 0.8 : 0; A.wingLiftGoal = honk ? 0.5 : 0;
       A.jawGoal = honk && Math.sin((u - 0.3) * Math.PI * 4) > 0 ? 1 : 0; A.wagGoal = u > 1.35 ? 1 : 0; A.tailUpGoal = honk ? 0.6 : 0;
     }
+    // a honk (the game's sound, a goose's, not a duck's: theirs is a quack): as the bill opens on one, not more than one in 2.5 s
+    const honking = !this.isDuck && (A.honkGoal || 0) >= 0.6 && (A.jawGoal || 0) > 0.5;
+    if (honking && !this.honking && this.flock && this.flock.soundOf && this.clock - (this.honkAt ?? -9) > 2.5) { this.honkAt = this.clock; this.flock.soundOf('honk', this.pos.x, this.pos.z); }
+    this.honking = honking;
     if (!this.turned) this.av *= Math.max(0, 1 - dt * 10);
     if (!this.moved) this.spd = Math.max(0, this.spd - 2.5 * dt);
     if ((this.blinkIn -= dt) <= 0) { this.blinkT = 0.16; this.blinkIn = 2 + this.r() * 4; }
@@ -697,6 +701,7 @@ export class GeeseFlock extends PondBirds {
   constructor(scene, opts, r) {
     super(); this.setPond(opts, r);
     this.watch = opts.watch; this.others = opts.others || (() => []); this.inView = opts.inView || (() => true); this.guarding = false; this.heard = 0; this.dogOf = opts.dog || (() => null);
+    this.soundOf = opts.sound || null;                 // (the game's sound: their honks, sound.js)
     this.wakeOn = opts.wakeOn || null;                 // (the morning replay: they wake when the film says, replay.js)
     this.across = opts.across || null;                 // (the way across the screen: a squabble side-on to you, () => [x, z])
     this.group = new THREE.Group(); scene.add(this.group);

@@ -96,9 +96,9 @@ await p.evaluate(() => { for (const c of window.__farm.coopPlots()) for (const b
 // the farm's own sounds (Audrey, 29 Oct: "All good, put them in"): all loaded; the time of day's bed by the hour; the pond's
 // near the pond; the rooster's crow and a hen's egg song when they happen; a one-shot from where it happens
 const farm = () => p.evaluate(() => window.__farm.sound().info().farm);
-const KINDS = ['egg_rebel', 'egg_glutton', 'egg_mum', 'egg_brave', 'egg_diva', 'crow', 'flurry', 'mum', 'chicks', 'quack', 'bark'];
+const KINDS = ['egg_rebel', 'egg_glutton', 'egg_mum', 'egg_brave', 'egg_diva', 'crow', 'flurry', 'mum', 'chicks', 'quack', 'bark', 'honk', 'buzz'];
 let F = await until(async () => { const f = await farm(); return Object.keys(f.beds).length === 5 && KINDS.every(k => f.groups[k]) ? f : null; }, 45000);
-ok('the farm\'s sounds all loaded (eleven kinds, five beds)', !!F, F || await farm());
+ok('the farm\'s sounds all loaded (thirteen kinds, five beds)', !!F, F || await farm());
 const bedAt = async (h, bed, name) => {
   await p.evaluate(h => window.__farm.setHour(h), h);
   F = await until(async () => { const f = await farm(); return f.beds[bed] > 0.2 && Object.entries(f.beds).every(([k, v]) => k === bed || k === 'pond' || v < 0.03) ? f : null; }, 25000);
@@ -123,8 +123,8 @@ ok('the rooster crows: heard', !!F, F && F.last);
 const pers = await p.evaluate(() => { const h = window.__farm.coopPlots()[0].birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(30); Object.assign(h.laying, { phase: 'sing', t: 0, inside: false, beat: -1 }); return h.pers; });
 F = await until(async () => { const f = await farm(); return (f.played['egg_' + pers] || 0) > (before['egg_' + pers] || 0) ? f : null; }, 15000);
 ok('a hen sings over her egg: her personality\'s song (' + pers + ')', !!F, F && F.last);
-const shot = await p.evaluate(() => ['bark', 'quack', 'flurry'].map(k => !!window.__farm.sound().play(k, { near: 0.8, pan: 0.3 })));
-ok('a woof, a quack, a flurry from where they happen', shot.every(Boolean), shot);
+const shot = await p.evaluate(() => ['bark', 'quack', 'flurry', 'honk', 'buzz'].map(k => !!window.__farm.sound().play(k, { near: 0.8, pan: 0.3 })));
+ok('a woof, a quack, a flurry, a goose\'s honk, a bee from where they happen', shot.every(Boolean), shot);
 // the settings: Music On / Off
 await p.evaluate(() => window.__farm.gameUI().settings()); await wait(700);
 const row = await p.evaluate(() => { const r = document.querySelector('.gmusic'); return r ? { label: r.querySelector('.glabel').textContent, chips: [...r.querySelectorAll('.gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), note: document.querySelector('.gsound-note').textContent, sounds: [...document.querySelectorAll('.gsounds .gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')).join() } : null; });
