@@ -10,5 +10,6 @@ export const FIREBASE = {
   appId: '1:705093854658:web:53ab097a6431c2ddb1a25b',
 };
 // the account shown in the game: only once the online side (dist/cloud.js) is built and tested, and the rules are in
-// (false: nothing of the account anywhere, as before)
-export const ACCOUNT_LIVE = false;
+// (false: nothing of the account anywhere; on for everyone since 29 Oct, after Audrey signed in from Safari: "On for
+// everyone now")
+export const ACCOUNT_LIVE = true;
