@@ -208,11 +208,18 @@ export class GameUI {
         input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         b.append(go);
         const A = this.o.account;
-        if (A && A.on) {                                 // (a farm saved online: signed in, it comes to this phone: account.js)
-          A.prepare().catch(() => {});
+        // a farm saved online: "Sign in" there brings it to this phone (account.js). Google's sign-in is got ready only
+        // once that's tapped (privacy: a new phone's welcome doesn't reach Google by itself), then "Sign in with Google"
+        if (A && A.on) {
           const si = el('button', 'glink gwelcome-signin', this.t('welcome_signin')); si.type = 'button';
-          si.addEventListener('click', () => A.signIn());
-          const stop = A.watch(st => { if (!si.isConnected) { stop(); return; } if (st === 'empty') { stop(); si.replaceWith(el('p', 'gnote gwelcome-empty', this.t('acct_empty'))); } });
+          si.addEventListener('click', () => {
+            const box = el('div', 'gwelcome-acct'), go = el('button', 'gbtn galt gacct-in', this.t('acct_google')); go.type = 'button';
+            go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });
+            go.addEventListener('click', () => A.signIn());
+            box.append(go, el('p', 'gnote gacct-privacy', this.t('acct_privacy')), this.privacyLink());
+            si.replaceWith(box);
+            const stop = A.watch(st => { if (!box.isConnected) { stop(); return; } if (st === 'empty') { stop(); box.replaceWith(el('p', 'gnote gwelcome-empty', this.t('acct_empty'))); } });
+          });
           b.append(si);
         }
         this.fitHero();
@@ -1019,7 +1026,7 @@ export class GameUI {
         });
         row.append(out, del); card.append(row);
       }
-      card.append(el('p', 'gnote gacct-privacy', this.t('acct_privacy')));
+      card.append(el('p', 'gnote gacct-privacy', this.t('acct_privacy')), this.privacyLink());
     };
     draw();
     const stop = A.watch(() => { if (!card.isConnected) { stop(); return; } draw(); });
@@ -1044,6 +1051,8 @@ export class GameUI {
       }
     });
   }
+  // the privacy page (privacy.mjs), in the game's language, opened beside the game
+  privacyLink() { const a = el('a', 'glink gprivacy', this.t('privacy')); a.href = 'privacy.html?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
   // the once-only suggestion, a few days into a farm (main.js showNews; account.js nudgeDue)
   accountNudge() {
     const A = this.o.account, b = this.open('acctask', '☁️ ' + this.t('nudge_t'));
@@ -1123,5 +1132,6 @@ export class GameUI {
     });
     b.append(fresh);
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
+    b.append(this.privacyLink());
   }
 }

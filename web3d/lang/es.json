@@ -908,5 +908,6 @@
  "text.nudge_how": "Inicia sesión con Google y tu granja también se guardará en línea. No la perderás si cambias de teléfono, y podrás seguir jugando en otro teléfono.",
  "text.nudge_later": "Ahora no",
  "text.nudge_note": "Tú decides: puedes iniciar sesión cuando quieras en Ajustes.",
- "text.welcome_signin": "¿Tienes una granja guardada en línea? Inicia sesión"
+ "text.welcome_signin": "¿Tienes una granja guardada en línea? Inicia sesión",
+ "text.privacy": "Privacidad"
 }

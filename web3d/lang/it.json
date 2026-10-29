@@ -913,5 +913,6 @@
  "text.nudge_how": "Accedi con Google e la tua fattoria verrà salvata anche online. Così non la perderai se cambi telefono, e potrai giocarci anche su un altro telefono.",
  "text.nudge_later": "Non ora",
  "text.nudge_note": "Decidi tu: puoi accedere quando vuoi nelle Impostazioni.",
- "text.welcome_signin": "Hai una fattoria salvata online? Accedi"
+ "text.welcome_signin": "Hai una fattoria salvata online? Accedi",
+ "text.privacy": "Privacy"
 }

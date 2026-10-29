@@ -65,8 +65,9 @@ await still(A);
 // 2. B, new
 const B = await phone('B');
 await B.waitForSelector('.gsheet:not([hidden]) .gwelcome-signin', { timeout: 120000 });
-await B.waitForTimeout(1500);                                  // (the online side loading)
 await B.evaluate(() => document.querySelector('.gwelcome-signin').click());
+await B.waitForFunction(() => !!document.querySelector('.gwelcome-acct .gacct-in:not([disabled])'), null, { timeout: 30000 });      // (Google's sign-in got ready only now)
+await B.evaluate(() => document.querySelector('.gwelcome-acct .gacct-in').click());
 await B.waitForTimeout(800);
 ok('B (new phone): the welcome\'s sign in brings A\'s farm', await opened(B) && (await coins(B)) === 400, { coins: await coins(B).catch(() => null), acct: await acct(B).catch(() => null) });
 await still(B);

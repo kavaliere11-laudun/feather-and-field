@@ -214,6 +214,7 @@ export const TEXT = {
     two_here: 'On this phone', two_online: 'Saved online', two_farmer: '{name}’s farm', two_sum: 'Level {lv} · {c} coins', two_when: 'Last played: {when}', two_keep: 'Keep this farm',
     nudge_t: 'Keep your farm safe', nudge_how: 'Sign in with Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.',
     nudge_later: 'Not now', nudge_note: 'It’s up to you: you can sign in any time in Settings.', welcome_signin: 'Have a farm saved online? Sign in',
+    privacy: 'Privacy',                                            // (the privacy page: privacy.mjs)
     loading: 'Loading your farm…',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.', lays_sil: 'Lays about an egg a day, {p} coins each: Silkies are better mums than layers.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
@@ -462,6 +463,7 @@ export const TEXT = {
     two_here: 'Sur ce téléphone', two_online: 'Enregistrée en ligne', two_farmer: 'La ferme de {name}', two_sum: 'Niveau {lv} · {c} pièces', two_when: 'Dernière partie : {when}', two_keep: 'Garder cette ferme',
     nudge_t: 'Mettez votre ferme à l’abri', nudge_how: 'Connectez-vous avec Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.',
     nudge_later: 'Plus tard', nudge_note: 'C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages.', welcome_signin: 'Une ferme enregistrée en ligne ? Connectez-vous',
+    privacy: 'Confidentialité',
     loading: 'Chargement de votre ferme…',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.', lays_sil: 'Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',

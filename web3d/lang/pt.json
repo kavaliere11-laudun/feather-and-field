@@ -913,5 +913,6 @@
  "text.nudge_how": "Faça login com o Google e sua fazenda também fica salva online. Você não vai perdê-la se trocar de celular, e vai poder continuar jogando em outro celular.",
  "text.nudge_later": "Agora não",
  "text.nudge_note": "Você decide: dá para fazer login quando quiser nos Ajustes.",
- "text.welcome_signin": "Tem uma fazenda salva online? Faça login"
+ "text.welcome_signin": "Tem uma fazenda salva online? Faça login",
+ "text.privacy": "Privacidade"
 }

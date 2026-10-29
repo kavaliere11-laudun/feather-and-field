@@ -2324,6 +2324,11 @@
   "fr": "Une ferme enregistrée en ligne ? Connectez-vous"
  },
  {
+  "id": "text.privacy",
+  "en": "Privacy",
+  "fr": "Confidentialité"
+ },
+ {
   "id": "text.loading",
   "en": "Loading your farm…",
   "fr": "Chargement de votre ferme…"

@@ -1,0 +1,60 @@
+{
+ "title": "Privacy",
+ "updated": "Updated {date}",
+ "intro": "Feather & Field is a cosy farm game made by {owner}. This page says simply what the game keeps about you, and why. In short: your farm lives on your phone, and nothing about you leaves it unless you choose to sign in.",
+ "sections": [
+  {
+   "h": "On your phone",
+   "p": [
+    "The game keeps your farm on your phone or tablet, in the storage your browser or the app gives it: your birds, coins, level, settings and the language you chose. The game needs it to work, and it stays on your device.",
+    "You can copy it as a farm code in Settings, and delete it whenever you like with “Start a new farm”, or by clearing the site’s data in your browser."
+   ]
+  },
+  {
+   "h": "If you sign in with Google (optional)",
+   "p": [
+    "My account is optional. If you sign in with Google, the game uses Google’s Firebase service to:",
+    "• sign you in: Google gives the game your account’s ID, your name and your email address. The game never sees your password;",
+    "• keep a copy of your farm online, so you don’t lose it and can play it on another phone or tablet. It’s kept in Google’s Firebase database {where}, linked to your account, and only you can open it.",
+    "Why: to give you what you asked for, your farm kept safe and on all your devices (the service you chose to use).",
+    "How long: until you delete your account. In Settings, My account, “Delete my account” deletes your account and your farm online straight away; your farm stays on your phone.",
+    "To get Google’s sign-in ready, the game connects to Google only when you open Settings, the sign-in suggestion or “Sign in” on the welcome screen, and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>."
+   ]
+  },
+  {
+   "h": "Where the game comes from",
+   "p": [
+    "The game is served by GitHub Pages (GitHub, Inc.). Like any website, GitHub’s servers see your device’s internet address when the game loads, and GitHub may keep it in its logs for a short time for security. More: <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">GitHub’s privacy statement</a>.",
+    "Everything else, the fonts, pictures, music and sounds, comes with the game itself: nothing is loaded from any other company."
+   ]
+  },
+  {
+   "h": "What the game never does",
+   "p": [
+    "No adverts, no tracking, no analytics, and your data is never sold or shared. No cookies for tracking or adverts: the only things kept on your device are those the game needs to work.",
+    "There’s nothing to buy with real money for now. If that changes, this page will explain how it works first."
+   ]
+  },
+  {
+   "h": "Children",
+   "p": [
+    "Feather & Field is made for adults and young adults. Signing in needs a Google account, and Google sets its own minimum age. The game doesn’t knowingly collect anything from children under 13."
+   ]
+  },
+  {
+   "h": "Your rights",
+   "p": [
+    "You can ask to see, correct or delete what’s kept about you, or object to how it’s used, by writing to {email}. You can delete your account and your farm online yourself at any time in Settings. Nothing is decided about you automatically.",
+    "If you’re unhappy with how your data is handled, you can complain to {authority}."
+   ]
+  },
+  {
+   "h": "Changes",
+   "p": [
+    "If this page changes, the date at the top changes too, and anything important will be said in the game."
+   ]
+  }
+ ],
+ "contact": "Contact: {owner}, {email}",
+ "back": "Back to the game"
+}

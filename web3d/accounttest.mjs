@@ -87,6 +87,8 @@ const B = await phone('B');
 await B.waitForSelector('.gsheet:not([hidden]) .gwelcome-signin', { timeout: 120000 });
 await shot(B, '3_welcome');
 await B.evaluate(() => document.querySelector('.gwelcome-signin').click());
+await B.waitForFunction(() => !!document.querySelector('.gwelcome-acct .gacct-in:not([disabled])'), null, { timeout: 30000 });      // (Google's sign-in got ready only now)
+await B.evaluate(() => document.querySelector('.gwelcome-acct .gacct-in').click());
 await B.waitForTimeout(500);
 await until(B, () => window.__farm && window.__farm.game && window.__farm.game().data && document.getElementById('loading') === null && ['saved'].includes(window.__farm.account().status), null, 180000);
 const hintB = await B.evaluate(() => document.getElementById('hint').textContent);
