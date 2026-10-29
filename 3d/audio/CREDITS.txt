@@ -10,3 +10,11 @@ Both were made quieter and evened out to the same loudness (-18 LUFS), and saved
 
 The hens chatting (29 Oct 2026): Audrey's own hens, from her own videos. Every voice was taken out; seven of their real
 moments were kept whole and in order, gently cleaned (some of the garden's air left in). audio/hens/hen1-7.mp3.
+
+The farm's sounds (29 Oct 2026; Audrey: "All good, put them in"), audio/farm/: real recordings by Joseph Sardin,
+BigSoundBank.com, CC0 1.0 Universal (public domain; credit optional, given with thanks: "Additional sounds: Joseph SARDIN -
+BigSoundBank.com"). Cut, made gentler where needed and evened out by the source's audio/farm_clips.py:
+- the egg songs: "Hen lays #1"; the rooster: "Cock Song #1", "Rooster Song"; the fox's visit: "Henhouse";
+- a mummy hen with her chicks: "Hens worried"; chicks: "Chick that chirp"; ducks: "Ducks"; Biscuit: "Old dog barking #1";
+- the pond: "Pond in a Field"; dawn: "Birds Waking #1"; day: "Countryside #3"; evening: "Evening Birds"; night:
+  "Campaign at night #1".
