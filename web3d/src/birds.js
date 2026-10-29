@@ -28,8 +28,8 @@ const ADULT = {
   // beetle-green and purple sheen (sheen: its body and wings catch it too, not only the long feathers)
   pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#201f25', prim: '#17161b', tail: '#121115' },
   pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
-  aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
-  aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
+  aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#2f8f78', sheen2: '#3e5fae' },
+  aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#2f8f78', sheen2: '#3e5fae' },
 };
 const SIL = {
   white: { body: '#f5f2eb' },
@@ -472,7 +472,7 @@ function birdMaterial(indoor, goose) {
           return b * smoothstep(3.0, 7.0, want);                   // too few to read as strands: none
         }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
-        float furShade = 1.0;
+        float furShade = 1.0, sheenMul = 1.0;
         if (vStyle.w != 0.0) {
           // painted hair: the tile wrapped round the body from three sides (strands falling down the sides, back over the top);
           // red: how light the hair is, green: how far it stands out, blue: green squared
@@ -627,6 +627,9 @@ function birdMaterial(indoor, goose) {
           furShade *= (0.86 + 0.2 * (1.0 - t * t)) * (0.9 + 0.16 * smoothstep(-0.3, 0.95, along)) * (1.0 + 0.1 * rim) * mix(1.0, 0.8 - 0.12 * boost, edge)
                     * mix(1.0, 0.6 - 0.2 * boost, shadow * shadow) * (0.88 - 0.06 * boost + (0.24 + 0.12 * boost) * id)
                     * (1.0 + 0.17 * barb * smoothstep(-0.6, 0.2, along)) * (1.0 + 0.2 * quill) * (1.0 - 0.3 * split);
+          // (6, an Ayam Cemani: the sheen catches each feather across its middle towards the tip, not the edges or where
+          // the next feather lies over it, so a black bird shows its feathers as in Audrey's photos rather than a smooth gloss)
+          if (vMode > 5.5) sheenMul = (0.25 + 0.95 * (1.0 - t * t) * smoothstep(-0.75, 0.35, along)) * mix(1.0, 0.6, edge) * mix(1.0, 0.35, shadow * shadow) * (0.55 + 0.9 * id * id);
           // where the coverts end, a soft shadow over the flight feathers
           if (wingT > 0.0) furShade *= mix(0.72, 1.0, smoothstep(0.54, 0.62, wingT) + (1.0 - flight));
           #ifdef GOOSE
@@ -656,10 +659,10 @@ function birdMaterial(indoor, goose) {
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        if (vMode > 4.5) roughnessFactor = vMode > 5.5 ? 0.46 : 0.34;`)
+        if (vMode > 4.5) roughnessFactor = vMode > 5.5 ? 0.64 : 0.34;`)
       .replace('#include <opaque_fragment>', `if (vMode > 4.5) {        // glossy tail feathers: a coloured sheen at glancing angles
           float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
-          outgoingLight += vPat.rgb * vPat.a * (0.04 + fr * fr * 0.6);
+          outgoingLight += vPat.rgb * vPat.a * (vMode > 5.5 ? (0.05 + fr * fr * 0.5) * sheenMul : 0.04 + fr * fr * 0.6);
         }
         if (vFurLen > 0.0) {
           float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));

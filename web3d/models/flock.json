@@ -1517,20 +1517,20 @@
    "verts": 1536
   },
   "aya_h": {
-   "tris": 2982,
-   "verts": 1761
+   "tris": 2988,
+   "verts": 1764
   },
   "aya_h_lo": {
-   "tris": 1478,
-   "verts": 881
+   "tris": 1840,
+   "verts": 1062
   },
   "aya_r": {
-   "tris": 3784,
-   "verts": 2776
+   "tris": 4314,
+   "verts": 3043
   },
   "aya_r_lo": {
-   "tris": 1758,
-   "verts": 1191
+   "tris": 2492,
+   "verts": 1560
   },
   "sil_h": {
    "tris": 2286,

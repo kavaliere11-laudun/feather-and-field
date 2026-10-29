@@ -31,7 +31,8 @@ BREEDS = {
                 # a tail: Audrey's photo)
     # the Ayam Cemani: black all over, even the comb, the face, the beak, the legs and the eyes; tall and slender, the tail
     # carried high
-    'aya': dict(scale=1.0, body=(1.48, 0.74, 0.8), r=0.114, comb=1.05, tail='fan', tail_up=16, shank=0.135, lift=0.055,
+    'aya': dict(scale=1.0, body=(1.48, 0.74, 0.8), r=0.114, comb=1.05, serrated=True, saddle_len=1.2, tail_up_h=30, tail_len=1.3, wattle_r=0.95, fullneck=True,
+                tail='fan', tail_up=16, shank=0.135, lift=0.055,
                 legs='#1e1d23', beak='#25232b', eye='#1a1214', combc='#2b2531', face='#2e2a34', lid='#28252d', lobe='#2b2531',
                 plum='#131217', wing='#15141a', tailc='#0e0d11', saddle='#131217'),
     'sil': dict(scale=0.86, silkie=True, shank=0.08,
@@ -167,7 +168,7 @@ def feathered(B, rooster, root, body_rig, seed):
     ]
     if B.get('cushion'): E.append(('ELLIPSOID', (-0.13, 0, 0.17), 0.085 * K, (1.1, by * 1.1, 0.9), 2.0))     # an Orpington's fluffy rear
     if rooster: E.append(('ELLIPSOID', tuple(neck + Vector((-0.02, 0, -0.02))), 0.065 * K, (1.1, 1.05, 1.3), 2.0))   # hackle ruff
-    elif B.get('polish'): E.append(('ELLIPSOID', tuple(neck + Vector((-0.016, 0, 0.004))), 0.056 * K, (1.05, 1.0, 1.4), 2.0))   # a Polish hen's full neck (her photo)
+    elif B.get('polish') or B.get('fullneck'): E.append(('ELLIPSOID', tuple(neck + Vector((-0.016, 0, 0.004))), 0.056 * K, (1.05, 1.0, 1.4), 2.0))   # a Polish hen's full neck (her photo)
     tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
     body_rig.location.z = B.get('lift', 0.0)          # the whole body held higher, on longer legs (bigger birds looked bulky)
     pivot('body', (0.0, 0, 0.17), body_rig)
@@ -181,6 +182,8 @@ def feathered(B, rooster, root, body_rig, seed):
         tag(sphere('lobe', 0.011, (0.004, sd * 0.045, -0.012), (1, 0.45, 1.2), m=flat('lobe_b', B['lobe']) if B.get('lobe') else cm if not B.get('pea') else flat('lobe_w', '#efe6da'), parent=hd, seg=12, rings=8), 'head')
     cs = (1.5 if rooster else 1.0) * B['comb']
     if B.get('polish'): pass   # (the Polish's tiny V comb is hidden in its crest)
+    elif B.get('serrated'):      # an Ayam Cemani's single comb: a tall blade with clear points (Audrey's photos)
+        serrated_comb(rooster, hd, cm)
     elif B.get('pea'):           # a Brahma's pea comb: three low ridges
         el = [('BALL', (0.045 - i * 0.02, dy, 0.046), 0.012 * K * (1.2 if rooster else 1.0), None, 2.0) for i in range(3) for dy in (-0.008, 0, 0.008)]
         tag(metaball_mesh('comb', el, res=0.004, m=cm, parent=hd), 'head')
@@ -189,7 +192,9 @@ def feathered(B, rooster, root, body_rig, seed):
                              + [('ELLIPSOID', (0.0, 0, 0.042), 0.02 * K, (2.2, 0.5, 0.5), 2.0)], res=0.004, m=cm, parent=hd)
         comb.scale = (1, 0.55, 1); tag(comb, 'head')
     wk = (1.0 if rooster else 0.8) * (0.6 if B.get('pea') else 1.0) * B.get('wattle_r' if rooster and 'wattle_r' in B else 'wattle', 1.0)
-    if B.get('polish'):        # (a Polish's two wattles hang apart, long and rounded: his photo)
+    if B.get('serrated'):      # (an Ayam Cemani's: long and broad, a rooster's hanging well down: Audrey's photos)
+        tag(keep(metaball_mesh('wattles', [('ELLIPSOID', (0.048, sd * 0.011, -0.048 - (0.004 if rooster else 0)), 0.012 * K * wk * (1.5 if rooster else 1), (0.85, 0.42, 1.4), 2.0) for sd in (1, -1)], res=0.003, m=cm, parent=hd)), 'head')
+    elif B.get('polish'):      # (a Polish's two wattles hang apart, long and rounded: his photo)
         tag(keep(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.0125, -0.046), 0.011 * K * wk * (1.5 if rooster else 1), (0.75, 0.5, 1.6), 2.0) for sd in (1, -1)], res=0.0028, m=cm, parent=hd)), 'head')
     else: tag(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.009, -0.042), 0.013 * K * wk * (1.5 if rooster else 1), (0.8, 0.6, 1.3), 2.0) for sd in (1, -1)], res=0.004, m=cm, parent=hd), 'head')
     if B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
@@ -211,7 +216,7 @@ def feathered(B, rooster, root, body_rig, seed):
     tb = empty('tail', (-0.2, 0, 0.33), (0, 0, 0), body_rig)
     pivot('tail', (-0.19, 0, 0.32), body_rig)
     short = B['tail'] == 'short'
-    up = B.get('tail_up', 0)
+    up = B.get('tail_up_h', B.get('tail_up', 0)) if not rooster else B.get('tail_up', 0)
     k = 0.74 if short else 1.0
     rnd = random.Random(seed * 7 + (1 if rooster else 0))
     seg = 4 if LO else 8
@@ -237,7 +242,7 @@ def feathered(B, rooster, root, body_rig, seed):
             for i in range(7 if not LO else 3):
                 f = i / 6 if not LO else i / 2
                 start = (-0.07 - 0.06 * f, sd * (0.025 + 0.04 * f + rnd.uniform(-0.004, 0.004)), 0.318 - 0.012 * f)
-                feather('saddleh', sad, body_rig, start, -6 - 10 * f, 22, 0.11 - 0.015 * f, 0.016, sd, spread=0.012, twist=78, seg=6 if not LO else 3,
+                feather('saddleh', sad, body_rig, start, -6 - 10 * f, 22, (0.11 - 0.015 * f) * B.get('saddle_len', 1.0), 0.016, sd, spread=0.012, twist=78, seg=6 if not LO else 3,
                         part='body', paint='saddle', pointed=True)
     # legs and feet (their own bones: they stay planted while the body tilts)
     sh = B['shank'] + B.get('lift', 0.0)
@@ -254,6 +259,38 @@ def feathered(B, rooster, root, body_rig, seed):
             F += bumps(rnd, (-0.004, sd * 0.014, sh * 0.5), (0.014, 0.016, 0.03), 5, 0.009, 0.012)
             tag(metaball_mesh('legfluff', F, res=0.0045, m=pl, parent=lg_), nm, 'legfeather')
     return True
+
+
+def serrated_comb(rooster, hd, cm):
+    """A single comb as a blade with clear points along its top (an Ayam Cemani's, from Audrey's photos: a rooster's tall with
+    five spikes and a leader behind, a hen's small and upright). Built as a thick outline over the top of the head (head
+    space: the bird faces +x, the head a ball of radius 0.058)."""
+    s = 1.0 if rooster else 0.5
+    top = lambda x: math.sqrt(max(0.0, 0.058 ** 2 - x * x))
+    xs = [-0.024, -0.007, 0.01, 0.026, 0.04] if rooster else [-0.016, -0.004, 0.008, 0.02, 0.031]      # (from just behind the beak back over the head)
+    hs = [0.036, 0.048, 0.052, 0.045, 0.031] if rooster else [0.03, 0.038, 0.04, 0.035, 0.025]
+    out = [(-0.048 if rooster else -0.03, 0.012 if rooster else 0.006)]          # the leader at the back
+    for i, (x, h) in enumerate(zip(xs, hs)):
+        if i: out.append(((x + xs[i - 1]) / 2, 0.012 * s + 0.003))              # the valleys between the points
+        else: out.append((x - 0.01 * (0.6 + 0.4 * s), 0.013 * s + 0.002))
+        out.append((x, h * s))
+    out.append((xs[-1] + 0.012 * (0.6 + 0.4 * s), 0.008 * s + 0.002)); out.append((xs[-1] + 0.02 * (0.6 + 0.4 * s), 0.0))
+    poly = [(x, top(x) + h) for x, h in out]
+    for k in range(6):                                                           # the base, sunk into the head
+        x = out[-1][0] + (out[0][0] - out[-1][0]) * k / 5
+        poly.append((x, top(x) - 0.012))
+    t = 0.0075 if rooster else 0.0055
+    me = bpy.data.meshes.new('comb'); bm = bmesh.new()
+    A = [bm.verts.new((x, t / 2, z)) for x, z in poly]; Bv = [bm.verts.new((x, -t / 2, z)) for x, z in poly]
+    bm.faces.new(A); bm.faces.new(list(reversed(Bv)))
+    n = len(poly)
+    for i in range(n): bm.faces.new((A[i], A[(i + 1) % n], Bv[(i + 1) % n], Bv[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('comb', me)); setmat(o, cm); o.parent = hd
+    soften(o, 0.0022, 1)
+    tag(keep(o), 'head')
 
 
 def polish_crest(B, rooster, hd, seed):
