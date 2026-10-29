@@ -83,7 +83,7 @@ ok('close to the coop: her hens chatting, all seven moments loaded, near and cle
 lv = await until(async () => { const i = await hen(); if (!i.playing || i.gain < 0.5) return null; const l = await loud('fx'); return l > 0.005 ? l : null; }, 30000, 400);
 ok('really sounding', !!lv, lv);
 await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x + 6, v.z + 6, 8.5); });
-h = await until(async () => { const i = await hen(); return i.near < 0.2 ? i : null; }, 30000);
+h = await until(async () => { const i = await hen(); return i.near < 0.2 && (!i.playing || i.gain < 0.35) ? i : null; }, 30000);      // (the volume follows within a second or two)
 ok('zoomed out and away: much softer', !!h && h.near < 0.2 && (!h.playing || h.gain < 0.35), h || await hen());
 await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x, v.z, 2.6); });
 const seen = new Set(); for (let i = 0; i < 40 && seen.size < 3; i++) { const x = await hen(); if (x.playing) seen.add(x.which); await wait(1000); }
