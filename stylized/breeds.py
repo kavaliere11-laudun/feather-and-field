@@ -252,43 +252,51 @@ def feathered(B, rooster, root, body_rig, seed):
 
 
 def polish_crest(B, rooster, hd, seed):
-    """A Polish's crest, made of feathers (Audrey, 29 Oct: the first try's spiky feathers "really not great"; the second's
-    hair "needs more volume and it looks like the silkies too much"): a big round core, and rows of broad soft feathers
-    wrapping it from the crown down, each one curving over the ball and lifting away from it towards its tip, overlapping
-    like a dahlia's petals: a full, feathery pompom. A hen's round-tipped and neat; a rooster's longer, narrower and
-    pointed, flaring out and falling like a mop. In front they stop above the eyes, so the eyes peep from under the edge.
-    Head space (the bird faces +x)."""
+    """A Polish's crest, as in real photos (Audrey, 29 Oct, on three tries: spiky, then "looks like the silkies", then
+    "this looks like a hat. take inspiration of real photos please"): a ball of feathers growing from a knob on top of the
+    skull and enveloping the top of the head, not sitting on it: it comes down low in front, just over the beak, and over
+    the eyes at the sides, and back over the nape, so the face peeps from under it. Every feather springs outwards from the
+    knob and its tip turns down along the ball's surface, a little untidy, like a chrysanthemum; a hen's broad and round-
+    tipped (a neat globe), a rooster's long, narrow and pointed, spilling down all round like a mop. White-crested Black:
+    a narrow band of black feathers at the crest's front, by the beak. Head space (the bird faces +x)."""
     cm = flat('crest', B.get('crestc', '#f4f1ea'), 0.85)
     rnd = random.Random(seed * 13 + (5 if rooster else 0))
-    c0 = Vector((-0.018, 0, 0.064 if not rooster else 0.068)); rc = 0.06 if not rooster else 0.062      # (big: Audrey, "needs more volume")
-    S = Vector((1.2, 1.15, 1.1)) if not rooster else Vector((1.25, 1.16, 1.05))
-    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(c0), rc * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
-    at = lambda th, ph, r: c0 + Vector((math.sin(th) * math.cos(ph) * S.x, math.sin(th) * math.sin(ph) * S.y, math.cos(th) * S.z)) * r
-    rows = ([(10, 7), (32, 12), (55, 15), (78, 17), (100, 17)] if not rooster else [(10, 8), (32, 13), (55, 16), (78, 18), (100, 18)])
-    if LO: rows = [(20, 5), (60, 8), (95, 9)]
+    C = Vector((-0.006, 0, 0.04 if not rooster else 0.042))            # the ball's middle: low, round the top of the head
+    Rb = 0.082 if not rooster else 0.086                               # (about twice the head's width)
+    S = Vector((1.12, 1.08, 0.98))
+    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(C + Vector((-0.004, 0, 0.008))), Rb * 0.7 * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
+    n = (130 if not rooster else 140) if not LO else 30
+    golden = math.pi * (3 - math.sqrt(5))
     seg = 6 if not LO else 3
-    for ri, (th0, cnt) in enumerate(rows):
-        for k in range(cnt):
-            ph = (k + 0.5 * (ri % 2)) / cnt * math.tau + rnd.uniform(-0.12, 0.12)
-            front = math.cos(ph)                               # 1 straight ahead (over the beak), -1 behind
-            span = math.radians((52 if not rooster else 70) * rnd.uniform(0.88, 1.12) * (1.2 if front < -0.3 else 1.0))
-            t0 = math.radians(th0 + rnd.uniform(-4, 4))
-            if front > 0.45: span = min(span, math.radians(112) - t0)      # (stop above the eyes and the beak)
-            if span < math.radians(12): continue
-            lift = (0.55 if not rooster else 0.75) * rnd.uniform(0.85, 1.15)
-            w = (0.04 if not rooster else 0.025) * (1.0 if ri else 0.8)
-            pts, ws, wds = [], [], []
-            for i in range(seg + 1):
-                u = i / seg
-                th = t0 + span * u
-                r = rc * (0.96 + lift * u ** 1.4)               # lifting away from the ball towards its tip: the volume
-                p = at(th, ph, r)
-                if rooster: p.z -= 0.012 * u * u * (1.0 - 0.5 * max(0.0, front))      # (a rooster's falling a little more)
-                side = Vector((-math.sin(ph), math.cos(ph), 0.0))
-                if rooster: wk = w * min(1.0, u / 0.15 + 0.3) * (1 - u) ** 0.85
-                else: wk = w * min(1.0, u / 0.12 + 0.35) * (1 - u ** 3) ** 0.5 + 0.002
-                pts.append(p); ws.append(wk); wds.append(side)
-            tag(ribbon('crestf', pts, ws, wds, cm, hd), 'head', 'crest')
+    for i in range(n):
+        z = 1 - 2 * (i + 0.5) / n
+        r = math.sqrt(max(0.0, 1 - z * z)); th = i * golden
+        d = Vector((r * math.cos(th), r * math.sin(th), z))
+        side = abs(d.y)
+        if d.z < -0.62: continue                                  # (underneath: the neck)
+        if d.x > 0.1 and d.z < (0.1 if side < 0.45 else -0.02): continue      # (the face: the beak in front and the eyes at the sides peep from under its edge)
+        d = (d + Vector((rnd.uniform(-0.08, 0.08), rnd.uniform(-0.08, 0.08), rnd.uniform(-0.05, 0.08)))).normalized()
+        band = d.x > 0.6 and 0.08 < d.z < 0.5                     # (the black band at its front)
+        Lr = Rb * rnd.uniform(0.95, 1.1) * (1.25 if rooster else 1.0)
+        turn = math.radians((32 if not rooster else 65) * rnd.uniform(0.8, 1.2))       # how far its tip turns down the ball
+        down = Vector((0, 0, -1)) - d * (-d.z)                    # the way down the ball's surface from here
+        down = down.normalized() if down.length > 1e-3 else Vector((-1, 0, 0))
+        pts, ws, wds = [], [], []
+        for k in range(seg + 1):
+            u = k / seg
+            a = turn * u ** 1.6
+            dirk = (d * math.cos(a) + down * math.sin(a)).normalized()
+            rad = Rb * 0.42 + Lr * 0.62 * u
+            p = C + Vector((dirk.x * S.x, dirk.y * S.y, dirk.z * S.z)) * rad
+            if rooster: p.z -= 0.014 * u ** 2                     # (a rooster's falling)
+            sd = dirk.cross(down) if dirk.cross(down).length > 1e-3 else Vector((0, 1, 0))
+            sd.normalize()
+            w = (0.036 if not rooster else 0.02) * rnd.uniform(0.85, 1.15)
+            if rooster: wk = w * min(1.0, u / 0.15 + 0.3) * (1 - u) ** 0.8
+            else: wk = w * min(1.0, u / 0.12 + 0.35) * (1 - u ** 3) ** 0.5 + 0.002
+            pts.append(p); ws.append(wk); wds.append(sd)
+        f = ribbon('crestf', pts, ws, wds, flat('crestblk', '#1d1c21', 0.85) if band else cm, hd)
+        tag(f, 'head', 'body' if band else 'crest')
 
 
 # ------------------------------------------------------------------ the Silkie: a soft cloud of fluff with a pompom crest
