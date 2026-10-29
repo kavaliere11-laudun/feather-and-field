@@ -7,3 +7,6 @@ Credited anyway, with thanks.
 - "Happy Whistling Ukulele" by Rafael Krux, from FreePD.com ("CC0 1.0 Universal Public Domain Dedication", "Free for Commercial
   Use").
 Both were made quieter and evened out to the same loudness (-18 LUFS), and saved as 128 kbps MP3s.
+
+The hens chatting (29 Oct 2026): Audrey's own hens, from her own videos. Every voice was taken out; seven of their real
+moments were kept whole and in order, gently cleaned (some of the garden's air left in). audio/hens/hen1-7.mp3.
