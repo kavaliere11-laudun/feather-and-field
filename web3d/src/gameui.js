@@ -472,7 +472,7 @@ export class GameUI {
     this.bird = null;
     body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
     const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
-    if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] })));
+    if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: this.g.andList(names) })));
     const n = up && g.coopNext(coop);
     if (n) {
       const c = el('div', 'gcard gup'), hd = el('div', 'gcard-h');
@@ -578,7 +578,7 @@ export class GameUI {
       if (this.bookTab === 'fish') { this.fishPages(b); return; }
     }
     b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
-    const list = names => names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + this.t('and') + ' ' + names[names.length - 1] : names[0] || '';
+    const list = names => this.g.andList(names);
     for (const pg of pages) {
       const card = el('div', 'gcard gpage' + (pg.found ? '' : ' gpage-no')); card.dataset.breed = pg.breed;
       const pic = el('div', 'gpic'), img = el('img');

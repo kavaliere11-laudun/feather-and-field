@@ -5016,7 +5016,7 @@ function farmhouseAt(r) {
   farmhouseAt.dist = p ? p.applyMatrix4(HOUSE_HIT.m).distanceTo(r.origin) : Infinity;
   return !!p;
 }
-const joinNames = n => n.length > 1 ? n.slice(0, -1).join(', ') + ' ' + game.t('and') + ' ' + n[n.length - 1] : n[0] || '';
+const joinNames = n => game.andList(n);
 // a forever bird joining her coop on the farm (a rare one kept, her colour's coop there already): as makePlot draws them
 function addGameBird(plot, gb) {
   const h = gb.sex === 'r' ? penOf(plot).hens.find(x => x.model === 'rooster') : penOf(plot).hens.filter(x => x.model === 'hen')[plot.birds.filter(b => b.gid && b.kind === 'hen').length % 2];

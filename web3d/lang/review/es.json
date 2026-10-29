@@ -1,0 +1,92 @@
+[
+ {
+  "id": "text.move_body",
+  "now": "Ponlo donde quieras en tus tierras. Los árboles, arbustos y rocas que estorben se despejan.",
+  "problem": "'despejar' clears a place, not the trees and rocks themselves; reads oddly",
+  "fix": "Ponlo donde quieras en tus tierras. Se quitarán los árboles, arbustos y rocas que estorben."
+ },
+ {
+  "id": "text.move_clear",
+  "now": "¡Buen lugar! Se despejará lo que estorbe.",
+  "problem": "'despejar lo que estorbe' misuses 'despejar'; 'quitar' is the natural verb",
+  "fix": "¡Buen lugar! Se quitará lo que estorbe."
+ },
+ {
+  "id": "text.dec_ok_clear",
+  "now": "¡Buen lugar! Se despejará lo que estorbe.",
+  "problem": "same misuse of 'despejar' as text.move_clear",
+  "fix": "¡Buen lugar! Se quitará lo que estorbe."
+ },
+ {
+  "id": "text.geese_today",
+  "now": "La visita de hoy ya cuenta: vuelve mañana.",
+  "problem": "ambiguous: 'ya cuenta' can read as 'this visit counts'; it means it has already been counted",
+  "fix": "La visita de hoy ya está contada: vuelve mañana."
+ },
+ {
+  "id": "text.geese_again",
+  "now": "{farmer} vuelve a ver a Gertrude y Hector (la visita de hoy ya cuenta).",
+  "problem": "ambiguous: '(la visita de hoy ya cuenta)' suggests this visit counts, the opposite of the English",
+  "fix": "{farmer} vuelve a ver a Gertrude y Hector (la visita de hoy ya estaba contada)."
+ },
+ {
+  "id": "text.book_fish_found",
+  "now": "Peces pescados: {n} de {all}",
+  "problem": "'Peces pescados' is a clumsy echo; 'capturados' is the natural word",
+  "fix": "Peces capturados: {n} de {all}"
+ },
+ {
+  "id": "text.eggs_fresh",
+  "now": "{n} huevos vendidos · +{c} monedas · {f} frescos: +{xp} XP",
+  "problem": "{f} can be 1 while {n} is more, giving '1 frescos'; make it number-neutral",
+  "fix": "{n} huevos vendidos · +{c} monedas · frescos: {f} (+{xp} XP)"
+ },
+ {
+  "id": "door.door_stuck",
+  "now": "{coop}: ¡su puerta automática está atascada y esta noche no cierra! Toca la luna de encima para cerrarla a mano.",
+  "problem": "'la luna de encima' is awkward",
+  "fix": "{coop}: ¡su puerta automática está atascada y esta noche no cierra! Toca la luna que hay encima para cerrarla a mano."
+ },
+ {
+  "id": "text.rare_waiting",
+  "now": "Un bebé raro espera tu decisión",
+  "problem": "'un bebé raro' reads as 'a weird baby'; use 'ejemplar raro' as in rare_card_t",
+  "fix": "Un ejemplar raro espera tu decisión"
+ },
+ {
+  "id": "text.rare_chick",
+  "now": "✨ Un pollito raro: {line}",
+  "problem": "'un pollito raro' reads as 'a strange chick'; use 'ejemplar raro' as elsewhere",
+  "fix": "✨ Pollito de {line}, un ejemplar raro"
+ },
+ {
+  "id": "text.rare_home",
+  "now": "¡Bienvenidos a casa, {names}!",
+  "problem": "{names} can be one bird or only hens, so 'Bienvenidos' can be wrong in number and gender",
+  "fix": "¡Por fin en casa, {names}!"
+ },
+ {
+  "id": "text.coop_lives",
+  "now": "{names} viven aquí.",
+  "problem": "a coop can hold a single bird ('Ivy viven aquí'); make it number-neutral (the English has the same flaw)",
+  "fix": "En este gallinero: {names}."
+ },
+ {
+  "id": "text.rare_kept_home",
+  "now": "{name} se une a {coop}.",
+  "problem": "'unirse a' a coop's name sounds odd; match 'Vive en: {coop}'",
+  "fix": "{name} ya vive en {coop}."
+ },
+ {
+  "id": "text.fish_reel",
+  "now": "Mantén presionado para recoger. Deja el sedal en la zona verde",
+  "problem": "'Deja el sedal en la zona verde' sounds like 'put/leave the line'; the meaning is 'keep it in the green'",
+  "fix": "Mantén presionado para recoger, sin salir de la zona verde"
+ },
+ {
+  "id": "text.and",
+  "now": "y",
+  "problem": "Spanish needs 'e' before a name starting with an 'i' sound: the hen name Ivy gives 'Clover y Ivy' (should be 'Clover e Ivy'). Needs a small code rule where names are joined (also door.out2, door.outn); the text itself is right",
+  "fix": "y"
+ }
+]

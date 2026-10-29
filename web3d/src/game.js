@@ -1106,6 +1106,13 @@ export class Game {
   }
   locale() { return LOCALE[this.lang] || 'en-GB'; }                      // (numbers and dates: "1,250", "1 250", "1.250")
   tr(id, vars) { return tr(this.lang, id, vars); }                       // (a registered pair's word: lang.js)
+  // names in a list: "Basil, Margot and Ginger" (Spanish: "y" becomes "e" before an "i" sound: "Clover e Ivy")
+  andList(names) {
+    if (names.length < 2) return names[0] || '';
+    const last = names[names.length - 1]; let and = this.t('and');
+    if (this.lang === 'es' && and === 'y' && /^h?[iíIÍ](?![aeouáéóú])/.test(last)) and = 'e';
+    return names.slice(0, -1).join(', ') + ' ' + and + ' ' + last;
+  }
   // how long, in words: "about 6 hours", "a day", "2 days"
   howLong(ms) {
     const h = ms / 3600e3;
