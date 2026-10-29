@@ -1501,20 +1501,20 @@
    "verts": 1222
   },
   "pol_h": {
-   "tris": 3278,
-   "verts": 1909
+   "tris": 4578,
+   "verts": 3599
   },
   "pol_h_lo": {
-   "tris": 1538,
-   "verts": 911
+   "tris": 1864,
+   "verts": 1294
   },
   "pol_r": {
-   "tris": 4086,
-   "verts": 2929
+   "tris": 5690,
+   "verts": 4851
   },
   "pol_r_lo": {
-   "tris": 1792,
-   "verts": 1210
+   "tris": 2122,
+   "verts": 1595
   },
   "aya_h": {
    "tris": 2982,
