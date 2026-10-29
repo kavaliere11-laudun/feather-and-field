@@ -24,9 +24,11 @@ BREEDS = {
     # (29 Oct 2026, Audrey's two new breeds for levels 26 and 29: "Polish (Recommended)", "Ayam Cemani")
     # the Polish: White-crested Black, the great round crest falling over the eyes (a rooster's of long pointed feathers
     # spilling outwards), a tiny V comb hidden in it, white earlobes, slate legs
-    'pol': dict(scale=0.95, body=(1.42, 0.78, 0.82), r=0.116, comb=0.0, polish=True, tail='fan', tail_up=6, shank=0.11, lift=0.04,
-                legs='#6c7383', beak='#4b4852', eye='#c26a2c', combc='#d8352b', lobe='#efe9de', plum='#1b1a1f', wing='#1f1e24', tailc='#141317',
-                crestc='#f4f1ea', wattle=0.55),
+    'pol': dict(scale=0.95, body=(1.42, 0.78, 0.82), r=0.116, comb=0.0, polish=True, tail='fan', tail_up=30, shank=0.11, lift=0.04,
+                legs='#6c7383', beak='#7a7680', eye='#c26a2c', combc='#d8352b', lobe='#efe9de', plum='#1b1a1f', wing='#1f1e24', tailc='#141317',
+                crestc='#f4f1ea', face='#2c2930', lid='#25232a', wattle=0.85, wattle_r=0.95, head=(0.188, 0, 0.39), head_r=(0.18, 0, 0.415), tilt=4, tail_len=1.25),
+                # (her head low and forward, bowed a little, so the crest sits on her shoulders over her face, and a tall fan of
+                # a tail: Audrey's photo)
     # the Ayam Cemani: black all over, even the comb, the face, the beak, the legs and the eyes; tall and slender, the tail
     # carried high
     'aya': dict(scale=1.0, body=(1.48, 0.74, 0.8), r=0.114, comb=1.05, tail='fan', tail_up=16, shank=0.135, lift=0.055,
@@ -152,7 +154,7 @@ def feathered(B, rooster, root, body_rig, seed):
     cm = flat('comb', B['combc'], 0.45); bk = flat('beak', B['beak'], 0.4); lg = flat('legs', B['legs'], 0.45)
     ey = flat('eye', B['eye'], 0.15); pu = flat('pupil', '#0b0a09', 0.05)
     bx, by, bz = B['body']; R = B['r']
-    head = Vector((0.16, 0, 0.455)); neck = (head + Vector((0.08, 0, 0.28))) / 2      # the head held up on a clear neck
+    head = Vector(B.get('head_r' if rooster and 'head_r' in B else 'head', (0.16, 0, 0.455))); neck = (head + Vector((0.08, 0, 0.28))) / 2      # the head held up on a clear neck
     th = B.get('thigh', 1.0)
     E = [
         ('ELLIPSOID', (-0.02, 0, 0.215), R * K, (bx, by, bz), 2.0),                     # body
@@ -165,13 +167,14 @@ def feathered(B, rooster, root, body_rig, seed):
     ]
     if B.get('cushion'): E.append(('ELLIPSOID', (-0.13, 0, 0.17), 0.085 * K, (1.1, by * 1.1, 0.9), 2.0))     # an Orpington's fluffy rear
     if rooster: E.append(('ELLIPSOID', tuple(neck + Vector((-0.02, 0, -0.02))), 0.065 * K, (1.1, 1.05, 1.3), 2.0))   # hackle ruff
+    elif B.get('polish'): E.append(('ELLIPSOID', tuple(neck + Vector((-0.016, 0, 0.004))), 0.056 * K, (1.05, 1.0, 1.4), 2.0))   # a Polish hen's full neck (her photo)
     tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
     body_rig.location.z = B.get('lift', 0.0)          # the whole body held higher, on longer legs (bigger birds looked bulky)
     pivot('body', (0.0, 0, 0.17), body_rig)
     pivot('head', (0.085, 0, 0.3), body_rig)
     pivot('headc', tuple(head), body_rig)
     # head details (all ride on the head bone)
-    hd = empty('head', tuple(head), (0, math.radians(-10), 0), body_rig)
+    hd = empty('head', tuple(head), (0, math.radians(B.get('tilt', -10) if not rooster else -10), 0), body_rig)
     tag(cyl('beak', 0.019, 0.048, (0.07, 0, -0.008), (0, math.radians(90 + 12), 0), bk, verts=12, r2=0.002, bevel=0.002, parent=hd), 'head')
     for sd in (1, -1):
         natural_eye(hd, sd, B)
@@ -185,8 +188,10 @@ def feathered(B, rooster, root, body_rig, seed):
         comb = metaball_mesh('comb', [('BALL', (0.045 - i * 0.022, 0, 0.05 + 0.012 * math.sin(i * 1.1) * cs + (0.006 if i in (1, 2) else 0)), (0.017 - 0.0015 * abs(i - 1.5)) * K * cs, None, 2.0) for i in range(4)]
                              + [('ELLIPSOID', (0.0, 0, 0.042), 0.02 * K, (2.2, 0.5, 0.5), 2.0)], res=0.004, m=cm, parent=hd)
         comb.scale = (1, 0.55, 1); tag(comb, 'head')
-    wk = (1.0 if rooster else 0.8) * (0.6 if B.get('pea') else 1.0) * B.get('wattle', 1.0)
-    tag(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.009, -0.042), 0.013 * K * wk * (1.5 if rooster else 1), (0.8, 0.6, 1.3), 2.0) for sd in (1, -1)], res=0.004, m=cm, parent=hd), 'head')
+    wk = (1.0 if rooster else 0.8) * (0.6 if B.get('pea') else 1.0) * B.get('wattle_r' if rooster and 'wattle_r' in B else 'wattle', 1.0)
+    if B.get('polish'):        # (a Polish's two wattles hang apart, long and rounded: his photo)
+        tag(keep(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.0125, -0.046), 0.011 * K * wk * (1.5 if rooster else 1), (0.75, 0.5, 1.6), 2.0) for sd in (1, -1)], res=0.0028, m=cm, parent=hd)), 'head')
+    else: tag(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.009, -0.042), 0.013 * K * wk * (1.5 if rooster else 1), (0.8, 0.6, 1.3), 2.0) for sd in (1, -1)], res=0.004, m=cm, parent=hd), 'head')
     if B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
         for i in range(5):
             a = math.radians(-50 + 25 * i)
@@ -215,7 +220,7 @@ def feathered(B, rooster, root, body_rig, seed):
         for i in range(n):                                   # main tail feathers (rectrices): a fan, fairly straight
             f = i / (n - 1)
             feather('tailf', tl, tb, (0.01, sd * (0.006 + 0.004 * i), -0.01 + 0.006 * i), 32 + 34 * f + up + (8 if short else 0), 18,
-                    (0.15 if rooster else 0.135) * k * (1.0 - 0.18 * abs(f - 0.6)), 0.05 if not short else 0.056, sd, spread=0.012 + 0.012 * f, twist=35, seg=seg)
+                    (0.15 if rooster else 0.135 * B.get('tail_len', 1.0)) * k * (1.0 - 0.18 * abs(f - 0.6)), 0.05 if not short else 0.056, sd, spread=0.012 + 0.012 * f, twist=35, seg=seg)
     if rooster:
         for sd in (1, -1):
             m_ = 6 if not LO else 3
@@ -252,51 +257,19 @@ def feathered(B, rooster, root, body_rig, seed):
 
 
 def polish_crest(B, rooster, hd, seed):
-    """A Polish's crest, as in real photos (Audrey, 29 Oct, on three tries: spiky, then "looks like the silkies", then
-    "this looks like a hat. take inspiration of real photos please"): a ball of feathers growing from a knob on top of the
-    skull and enveloping the top of the head, not sitting on it: it comes down low in front, just over the beak, and over
-    the eyes at the sides, and back over the nape, so the face peeps from under it. Every feather springs outwards from the
-    knob and its tip turns down along the ball's surface, a little untidy, like a chrysanthemum; a hen's broad and round-
-    tipped (a neat globe), a rooster's long, narrow and pointed, spilling down all round like a mop. White-crested Black:
-    a narrow band of black feathers at the crest's front, by the beak. Head space (the bird faces +x)."""
+    """A Polish's crest, from Audrey's photos (29 Oct 19:13, after "this looks like a hat. take inspiration of real
+    photos please"): a big round core perched forward over the face (the browser covers it in fine soft plumage standing
+    out all round: birds.js FUR.pol), so it hides the eyes and the beak and wattles peep out underneath; a hen's a round
+    powder puff, a rooster's bigger and spilling down all round like a mop. Its front is black, by the beak (a hen's a
+    little, a rooster's a mane round his face: birds.js crestFront). Head space (the bird faces +x)."""
     cm = flat('crest', B.get('crestc', '#f4f1ea'), 0.85)
     rnd = random.Random(seed * 13 + (5 if rooster else 0))
-    C = Vector((-0.006, 0, 0.04 if not rooster else 0.042))            # the ball's middle: low, round the top of the head
-    Rb = 0.082 if not rooster else 0.086                               # (about twice the head's width)
-    S = Vector((1.12, 1.08, 0.98))
-    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(C + Vector((-0.004, 0, 0.008))), Rb * 0.7 * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
-    n = (130 if not rooster else 140) if not LO else 30
-    golden = math.pi * (3 - math.sqrt(5))
-    seg = 6 if not LO else 3
-    for i in range(n):
-        z = 1 - 2 * (i + 0.5) / n
-        r = math.sqrt(max(0.0, 1 - z * z)); th = i * golden
-        d = Vector((r * math.cos(th), r * math.sin(th), z))
-        side = abs(d.y)
-        if d.z < -0.62: continue                                  # (underneath: the neck)
-        if d.x > 0.1 and d.z < (0.1 if side < 0.45 else -0.02): continue      # (the face: the beak in front and the eyes at the sides peep from under its edge)
-        d = (d + Vector((rnd.uniform(-0.08, 0.08), rnd.uniform(-0.08, 0.08), rnd.uniform(-0.05, 0.08)))).normalized()
-        band = d.x > 0.6 and 0.08 < d.z < 0.5                     # (the black band at its front)
-        Lr = Rb * rnd.uniform(0.95, 1.1) * (1.25 if rooster else 1.0)
-        turn = math.radians((32 if not rooster else 65) * rnd.uniform(0.8, 1.2))       # how far its tip turns down the ball
-        down = Vector((0, 0, -1)) - d * (-d.z)                    # the way down the ball's surface from here
-        down = down.normalized() if down.length > 1e-3 else Vector((-1, 0, 0))
-        pts, ws, wds = [], [], []
-        for k in range(seg + 1):
-            u = k / seg
-            a = turn * u ** 1.6
-            dirk = (d * math.cos(a) + down * math.sin(a)).normalized()
-            rad = Rb * 0.42 + Lr * 0.62 * u
-            p = C + Vector((dirk.x * S.x, dirk.y * S.y, dirk.z * S.z)) * rad
-            if rooster: p.z -= 0.014 * u ** 2                     # (a rooster's falling)
-            sd = dirk.cross(down) if dirk.cross(down).length > 1e-3 else Vector((0, 1, 0))
-            sd.normalize()
-            w = (0.036 if not rooster else 0.02) * rnd.uniform(0.85, 1.15)
-            if rooster: wk = w * min(1.0, u / 0.15 + 0.3) * (1 - u) ** 0.8
-            else: wk = w * min(1.0, u / 0.12 + 0.35) * (1 - u ** 3) ** 0.5 + 0.002
-            pts.append(p); ws.append(wk); wds.append(sd)
-        f = ribbon('crestf', pts, ws, wds, flat('crestblk', '#1d1c21', 0.85) if band else cm, hd)
-        tag(f, 'head', 'body' if band else 'crest')
+    C = (0.02, 0, 0.044) if not rooster else (0.004, 0, 0.046)
+    Rb = 0.064 if not rooster else 0.06
+    S = (1.08, 1.04, 1.12) if not rooster else (1.08, 1.2, 1.12)     # (round, as tall as wide; a rooster's wider: Audrey's photos)
+    E = [('ELLIPSOID', C, Rb * K, S, 2.0)]
+    E += bumps(rnd, C, (Rb * S[0], Rb * S[1], Rb * S[2]), 14, 0.016, 0.022, zmin=-0.5, skip=lambda d: d.x > 0.6 and d.z < -0.15)
+    tag(metaball_mesh('crest_core', E, res=0.0045, m=cm, parent=hd), 'head', 'crest')
 
 
 # ------------------------------------------------------------------ the Silkie: a soft cloud of fluff with a pompom crest

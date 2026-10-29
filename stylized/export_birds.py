@@ -141,7 +141,7 @@ def write_bird_glb(path, names):
 
 
 LOW = {'h': 1200, 'r': 1500, 'chick': 420}
-CREST_EXTRA = {'h': 2000, 'r': 2300}      # (a Polish's crest: its feathers are kept whole)
+CREST_EXTRA = {'h': 500, 'r': 500}        # (a Polish's crest: a round core the browser covers in plumage)
 SIL_BUDGET = {'h': 2300, 'r': 2600}     # Silkies: no long tail or bare-skin eyes, and their fluff shells multiply them      # a light version of each bird for when the view is zoomed far out
 names = []
 for b in ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'):

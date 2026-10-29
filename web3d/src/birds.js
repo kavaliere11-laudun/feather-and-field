@@ -26,8 +26,8 @@ const ADULT = {
   bra_r: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#29292c', saddle: '#f2eee6', head: '#f4f0e8', wing: '#ece7dd', prim: '#5a5a5f', tail: '#1a1919', legfeather: '#ece8df', pattern: 'stripes' },
   // the Polish: White-crested Black (black with a green gloss, the great crest white); the Ayam Cemani: black all over with a
   // beetle-green and purple sheen (sheen: its body and wings catch it too, not only the long feathers)
-  pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', wing: '#201f25', prim: '#17161b', tail: '#121115' },
-  pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
+  pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#201f25', prim: '#17161b', tail: '#121115' },
+  pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
   aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
   aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
 };
@@ -94,6 +94,10 @@ const FEAT = { c: new THREE.Color(), mode: 0, amt: 0 };
 function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   const key = reg === R.wing ? 'wing' : reg === R.prim ? 'prim' : reg === R.tail ? 'tail' : reg === R.crest ? 'crest' : reg === R.legfeather ? 'legfeather' : reg === R.saddle ? 'saddle' : 'body';
   let c = key === 'saddle' ? S.saddle || S.hackle || S.body : S[key] || S.body;
+  if (key === 'crest' && S.crestFront && hc) {          // (a White-crested Black Polish: black at its crest's front, by the beak)
+    const dx = x - hc[0], dy = y - hc[1], dz = z - hc[2], dl = Math.hypot(dx, dy, dz) || 1;
+    if (dz / dl > S.crestFront[0] && dy / dl < S.crestFront[1]) c = S.head || S.body;
+  }
   const h = y / top;                                                      // 0 at the feet, 1 at the top of the head or tail
   if (key === 'body') {
     if (hw > 0.97) c = S.head || S.hackle || S.body;
@@ -257,12 +261,16 @@ const FUR = {
   // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
   hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
   orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
-  // the Polish: a hen's short fluff over the feathers, its crest's modelled feathers too (Audrey, 29 Oct, on the second
-  // try's long hair: "it looks like the silkies too much": the crest is feathers again, broad and soft, wrapping a ball)
-  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.01, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
+  // the Polish (from Audrey's photos, 29 Oct): a hen's short fluff over the feathers, and on the crest fine soft plumage
+  // standing straight out all round (a round powder puff, not a Silkie's falling hair: "it looks like the silkies too
+  // much"); a rooster's longer and falling over like a mop. Fine and straight: wispier than a Silkie's locks
+  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.046, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06, face: 0.85, faceR: 1.15, beak: 0.9,
+         regions: { [R.crest]: { shells: 18, clump: 0.35, fine: 1.5, wave: 0.5, locks: 0.085, comb: 0.0 } } },
+  pol_r: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.078, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06, face: 0.9, faceR: 1.2, beak: 0.9,
+           regions: { [R.crest]: { shells: 18, clump: 0.55, fine: 1.5, wave: 0.9, locks: 0.085, comb: 0.12 } } },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? FUR.pol : FUR.hen;
+const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -275,6 +283,10 @@ function addFur(g, src, spec, headc, eyes) {
       const d = Math.hypot(Pp[i * 3] - headc[0], Pp[i * 3 + 1] - headc[1] + 0.004, Pp[i * 3 + 2] - headc[2] - 0.022);
       const fr = spec.faceR || 1;                   // (a bigger face: the dog's)
       len[i] *= 1 - spec.face * (1 - smooth(0.03 * fr, 0.075 * fr, d));
+    }
+    if (spec.beak && headc && (paint[i] === R.body || paint[i] === R.crest)) {        // (a Polish: the hair kept off its beak, so the beak peeps out)
+      const fr = spec.faceR || 1, d = Math.hypot(Pp[i * 3] - headc[0], Pp[i * 3 + 1] - headc[1] - 0.002, Pp[i * 3 + 2] - headc[2] - 0.06 * fr);
+      len[i] *= 1 - spec.beak * (1 - smooth(0.018 * fr, 0.05 * fr, d));
     }
     if (spec.eyeClear && eyes) for (const e of eyes) {        // the hair round the eyes kept short, so the eyes show clearly
       const d = Math.hypot(Pp[i * 3] - e[0], Pp[i * 3 + 1] - e[1], Pp[i * 3 + 2] - e[2]);
