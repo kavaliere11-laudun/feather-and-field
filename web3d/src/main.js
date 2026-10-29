@@ -32,6 +32,8 @@ import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Sound, FARM } from './sound.js';
+import { register, tr, urlLang, registered } from './lang.js';
+import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS } from './game.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
@@ -830,11 +832,12 @@ function place(x, y, z, deg, s) {
 // grass near it (never on a path, a plot, the pond, a stream, a tree or anything else), turned to face the player. They
 // join the village's props: batched like them, and everyone walks round them. The windmill's sails turn; the duck house
 // floats on the pond (the geese, the ducks and the frogs swim round it). Tap one: its name.
-const DECOR_NAMES = {
+register('ui', { compass: ['Back to the usual view', 'Revenir à la vue habituelle'] });
+const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'],
-};
+});
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
 const decorList = [];                                          // { model, pos, deg, box (its own frame), m (world matrix) }
@@ -1329,9 +1332,9 @@ function cleanName(s, fallback) {
 }
 function loadDogName() { try { return cleanName(localStorage.getItem(DOG_KEY), DOG_DEFAULT); } catch (e) { return DOG_DEFAULT; } }
 let dogName = GAME_MODE ? DOG_DEFAULT : loadDogName();          // (the game: the save's, once it's open)
-const DOG_TEXT = { rename: ['Rename {n}', 'Renommer {n}'], label: ["Your dog's name", 'Le nom de votre chien'], save: ['Save', 'Enregistrer'], cancel: ['Cancel', 'Annuler'],
-  named: ['Your dog is called {n}', 'Votre chien s’appelle {n}'] };
-const dogT = (k, n) => DOG_TEXT[k][LANG === 'fr' ? 1 : 0].replace('{n}', n || '');
+const DOG_TEXT = register('dog', { rename: ['Rename {n}', 'Renommer {n}'], label: ["Your dog's name", 'Le nom de votre chien'], save: ['Save', 'Enregistrer'], cancel: ['Cancel', 'Annuler'],
+  named: ['Your dog is called {n}', 'Votre chien s’appelle {n}'] });
+const dogT = (k, n) => tr(LANG, 'dog.' + k).replace('{n}', n || '');
 const dogEls = { btn: document.getElementById('dogbtn'), form: document.getElementById('dogname'), input: document.getElementById('dogname-in'),
   label: document.getElementById('dogname-label'), save: document.getElementById('dogname-save'), cancel: document.getElementById('dogname-cancel') };
 let dogBtnLeft = 0;
@@ -1500,7 +1503,8 @@ function farmSpots() {
 // coop (one left open, if there is one), pokes his nose in and gets pecked, or finds the door shut; "Send the farmer" brings
 // the farmer's torch from the farmhouse and Rusty bolts home. ?visit starts one at once (at 23:30 unless ?time says), and
 // another 25 s after each; ?visit=N sends him to coop N. Texts in English, or French with ?lang=fr.
-const VISIT_TEXT = {
+const VISIT_TEXT = register('visit', {
+  thefarmer: ['the farmer', 'le fermier'],
   out: ['Rusty the fox has slipped out of his den…', 'Rusty le renard est sorti de son terrier…'],
   btnFox: ['Fox!', 'Renard !'],
   send: ['Send {farmer}', 'Envoyer {farmer}'],
@@ -1525,9 +1529,9 @@ const VISIT_TEXT = {
   geeseToo: ['The geese have heard {dog} barking! They\'re coming too, honking…', 'Les oies ont entendu {dog} aboyer ! Elles arrivent aussi en cacardant…'],
   teamSafe: ['The geese and {dog} chased Rusty all the way home!', 'Les oies et {dog} ont chassé Rusty jusque chez lui !'],
   teamProud: ['Victory! The geese and {dog} are so proud of themselves, they\'re parading round the farm.', 'Victoire ! Les oies et {dog} sont si fiers d\'eux qu\'ils paradent dans la ferme.'],
-};
+});
 const VISIT_PLOT = /^\d+$/.test(params.get('visit') || '') ? parseInt(params.get('visit'), 10) : undefined;
-let LANG = GAME_MODE ? game.lang : params.get('lang') === 'fr' ? 'fr' : 'en';
+let LANG = GAME_MODE ? game.lang : urlLang();
 const farmerBtn = document.getElementById('farmerbtn');
 let nightVisit = null;
 // the village as a grid for finding a way round: trees, bushes, rocks, buildings and props, pens and plots, the den, the
@@ -1649,7 +1653,7 @@ function groundY(x, z) {
 // ?farmer=f (in the game, the player's own choice and name). The farmhouse door: in front of the porch, facing out over
 // the farm. ?farmer starts the view on the farmer.
 let FARMER_LOOK = GAME_MODE ? (game.data ? game.data.farmer.look : 'm') : params.get('farmer') === 'f' ? 'f' : 'm';
-const farmerName = () => GAME_MODE ? game.farmerName() : FARMER_NAME[FARMER_LOOK][LANG === 'fr' ? 1 : 0];
+const farmerName = () => GAME_MODE ? game.farmerName() : tr(LANG, 'name.' + FARMER_LOOK);
 let farmLife = null, DOOR = null;
 function farmDoor() {
   if (DOOR) return DOOR;
@@ -1690,9 +1694,9 @@ function buildFarmer() {
 // "There, there…", hearts float up) or tips the pail into the feeder and scatters corn ("Dinner time!"), the hens rushing
 // over to peck it up grain by grain; then out by the gate again. The other birds keep out of his way. (In the game the
 // effect is the game's; this is only the show.) Everything here is in the pen's own frame (plot.frame).
-const HEN_TEXT = { cuddle: ['♥ Cuddle', '♥ Faire un câlin'], fill: ['Fill the feeder', 'Remplir la mangeoire'],
-  coming: ['{farmer} is on the way…', '{farmer} arrive…'] };
-const henT = k => HEN_TEXT[k][LANG === 'fr' ? 1 : 0].replace('{farmer}', farmerName());
+const HEN_TEXT = register('hentext', { cuddle: ['♥ Cuddle', '♥ Faire un câlin'], fill: ['Fill the feeder', 'Remplir la mangeoire'],
+  coming: ['{farmer} is on the way…', '{farmer} arrive…'] });
+const henT = k => tr(LANG, 'hentext.' + k).replace('{farmer}', farmerName());
 const henEls = { box: document.getElementById('henbtns'), cuddle: document.getElementById('cuddlebtn'), fill: document.getElementById('feedbtn') };
 let henBird = null, henBtnLeft = 0;
 const FEEDER_LOW = 0.04, FEEDER_FULL = 0.065;
@@ -3120,7 +3124,7 @@ const compassEl = document.getElementById('compass'), needleEl = compassEl && co
 function compassShow() {
   if (!compassEl) return;
   const on = GAME_MODE && Math.abs(viewOff()) > 3 * DEG && !inside.open;
-  compassEl.hidden = !on; compassEl.setAttribute('aria-label', LANG === 'fr' ? 'Revenir à la vue habituelle' : 'Back to the usual view');
+  compassEl.hidden = !on; compassEl.setAttribute('aria-label', tr(LANG, 'ui.compass'));
   if (on && needleEl) {
     const t = view.target, p0 = t.clone().project(camera), p1 = t.clone().add(new THREE.Vector3(-Math.sin(VIEW_AZ0), 0, -Math.cos(VIEW_AZ0))).project(camera);
     needleEl.style.transform = 'rotate(' + Math.atan2(p1.x - p0.x, (p1.y - p0.y) * (canvas.clientHeight / Math.max(1, canvas.clientWidth))) + 'rad)';
@@ -3286,7 +3290,7 @@ function tapAt(x, y) {
     const dc = decorAt(ray.ray);
     if (dc && GAME_MODE) { decorCard(dc.model); return; }
     if (dc) {
-      tagBird = null; tag.textContent = DECOR_NAMES[dc.model][LANG === 'fr' ? 1 : 0]; tag.classList.add('on'); fieldTag = 2.8;
+      tagBird = null; tag.textContent = tr(LANG, 'decor.' + dc.model); tag.classList.add('on'); fieldTag = 2.8;
       if (dc.model === 'bandstand' && decorLife) decorLife.play();          // (and a little tune)
       dc.box.getCenter(tagSpot); tagSpot.y = dc.box.max.y + 0.1; tagSpot.applyMatrix4(dc.m);
       return;
@@ -5924,7 +5928,7 @@ function moveTag(v) {          // v: the spot on screen (-1..1) the label stands
 }
 
 // the village's own words (the coop doors, inside a coop at night), in English and French
-const VT = {
+const VT = register('door', {
   door_open: ['Door open', 'Porte ouverte'], door_morning: ['Good morning! Door open', 'Bonjour ! Porte ouverte'],
   door_day: ['The door stays open in the daytime', 'La porte reste ouverte la journée'],
   door_notyet: ['Not everyone’s in yet: {who}', 'Tout le monde n’est pas rentré : {who}'], door_shut: ['Door shut. Sleep well!', 'Porte fermée. Dormez bien !'],
@@ -5936,8 +5940,8 @@ const VT = {
   inside_morning: ['Morning! Tap the pop door to let them out.', 'C’est le matin ! Touchez la trappe pour les faire sortir.'],
   inside_up: ['Good morning! Everyone is getting up.', 'Bonjour ! Tout le monde se lève.'],
   sleepy: ['sleepy', 'zzz'], no_eggs_here: ['No eggs here', 'Pas d’œufs ici'], eggs1: ['Collected 1 egg', '1 œuf ramassé'], eggsn: ['Collected {n} eggs', '{n} œufs ramassés'],
-};
-const vt = (k, v = {}) => VT[k][LANG === 'fr' ? 1 : 0].replace(/\{(\w+)\}/g, (m, x) => (v[x] !== undefined ? v[x] : m));
+});
+const vt = (k, v = {}) => tr(LANG, 'door.' + k, v);
 const hintEl = document.getElementById('hint');
 let hintLeft = 0;
 const HINT_NEXT = [];                                    // (words to say once the one showing has had its time: a job done)
@@ -6324,7 +6328,7 @@ function setupReplay() {
       card: el('film-card'), title: el('film-title'), sub: el('film-sub'), skip: el('film-skip'), canvas },
   });
   replay.onClose = () => { if (GAME_MODE) { game.foxWatched(); return; } try { localStorage.setItem(REPLAY_KEY, dayKey()); } catch (e) {} replayDone = true; seenCheck.at = -1e9; };
-  if (replayBtn) { replayBtn.textContent = '🎞 ' + REPLAY_TEXT.btn[LANG === 'fr' ? 1 : 0]; replayBtn.addEventListener('click', () => startReplay()); }
+  if (replayBtn) { replayBtn.textContent = '🎞 ' + tr(LANG, 'replay.btn'); replayBtn.addEventListener('click', () => startReplay()); }
 }
 let replayDone = false;
 function startReplay() {
@@ -6454,6 +6458,7 @@ window.__farm = {
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
+  words: () => ({ text: { en: TEXT.en, fr: TEXT.fr }, textF: { en: TEXT_F.en, fr: TEXT_F.fr }, reg: registered(), pers: Object.fromEntries(Object.entries(PERS_WORDS).map(([k, v]) => [k, { name: v.name, line: v.line }])) }),      // (the translation catalogue: lang/catalogue.mjs)
   sound: () => sound, henHeard: () => henHeard(),            // (the music and the hens: sound.info(), and tests may set its times)
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },

@@ -9,6 +9,7 @@
 // grid (nightvisit.js NavGrid), over the footbridges' decks as Rusty goes. Tap him: he looks at you, hops and bows, wagging
 // (asleep: one eye opens and his tail thumps).
 import * as THREE from 'three';
+import { tr } from './lang.js';
 import { Fox, T, seq, look, playFace, sitWatch, lieDown, yawn, hop, bowAt, tailChase, roll } from './beasts.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -483,7 +484,7 @@ export class FarmDog {
   bark(V) {
     if (!V || !V.fx) return;
     this.woof(); const h = this.dog.q.bones.head.getWorldPosition(new THREE.Vector3());
-    V.fx.pop(V.lang === 'fr' ? 'ouaf' : 'woof', h.add(new THREE.Vector3(0, 0.34, 0)), 0.32, 1.1);
+    V.fx.pop(tr(V.lang, 'beast.woof'), h.add(new THREE.Vector3(0, 0.34, 0)), 0.32, 1.1);
   }
   guardTask(V) {
     const self = this, f = V.fox, G = this.guard, door = this.K(1.2, 0);

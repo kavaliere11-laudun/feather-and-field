@@ -1,6 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
+import { READY, LANG_NAME } from './lang.js';
 import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
@@ -27,6 +28,26 @@ const JOB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+// the language picker (the welcome, Settings): the languages as chips while there are few, a list once there are more (a
+// phone shows its own picker: six chips wouldn't fit a welcome held sideways)
+function langPicker(cur, pick) {
+  if (READY.length <= 3) {
+    const chips = el('div', 'gchips');
+    for (const l of READY) {
+      const c = el('button', 'gchip' + (cur === l ? ' on' : ''), LANG_NAME[l]); c.type = 'button'; c.lang = l;
+      c.addEventListener('click', () => { if (cur !== l) pick(l); });
+      chips.append(c);
+    }
+    return chips;
+  }
+  const sel = el('select', 'gchip gselect'); sel.setAttribute('aria-label', 'Language');
+  for (const l of READY) { const o = el('option', '', LANG_NAME[l]); o.value = l; o.lang = l; if (l === cur) o.selected = true; sel.append(o); }
+  sel.addEventListener('change', () => { if (sel.value !== cur) pick(sel.value); });
+  return sel;
+}
+// the third onboarding picture has words in it (the sale sign): its own picture in each language (intropics.mjs)
+const INTRO_PIC = ['fr'];
 
 export class GameUI {
   constructor(game, o = {}) {
@@ -86,7 +107,7 @@ export class GameUI {
     this.brand.textContent = this.t('brand');
     this.lvlNum.textContent = L; this.lvl.setAttribute('aria-label', this.t('level') + ' ' + L);
     this.ring.style.setProperty('--p', L >= TOP_LEVEL ? 100 : Math.round(100 * (d.xp - lo) / Math.max(1, hi - lo)));
-    this.coinNum.textContent = d.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB');
+    this.coinNum.textContent = d.coins.toLocaleString(this.g.locale());
     this.coins.setAttribute('aria-label', this.t('coins') + ' ' + d.coins);
     this.gear.setAttribute('aria-label', this.t('settings')); this.x.setAttribute('aria-label', this.t('close'));
     const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
@@ -164,13 +185,7 @@ export class GameUI {
         b.append(el('p', 'gtext', this.t('welcome_body')));
         const langRow = el('div', 'grow');
         langRow.append(el('span', 'glabel', this.t('lang')));
-        const chips = el('div', 'gchips');
-        for (const [l, name] of [['en', 'English'], ['fr', 'Français']]) {
-          const c = el('button', 'gchip' + (this.g.lang === l ? ' on' : ''), name); c.type = 'button';
-          c.addEventListener('click', () => { if (this.g.lang !== l) { this.g.lang = l; draw(); } });
-          chips.append(c);
-        }
-        langRow.append(chips); b.append(langRow);
+        langRow.append(langPicker(this.g.lang, l => { this.g.lang = l; draw(); })); b.append(langRow);
         b.append(el('div', 'glabel gsec', this.t('your_farmer')));
         const who = el('div', 'gchips gwho');
         const lookBtns = [['m', '👨‍🌾', this.t('him')], ['f', '👩‍🌾', this.t('her')]].map(([k, icon, word]) => {
@@ -269,7 +284,7 @@ export class GameUI {
     // where and since when
     const where = coop ? (coop.tier === 0 && !coop.name ? this.t('coop_rustic', { coop: g.coopName(coop) }) : g.coopName(coop)) : '';
     body.append(el('p', 'gnote', this.t('lives_in', { coop: where })));
-    const date = new Date(b.since).toLocaleDateString(g.lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const date = new Date(b.since).toLocaleDateString(g.locale(), { day: 'numeric', month: 'long', year: 'numeric' });
     body.append(el('p', 'gnote', this.t('since', { date })));
   }
   // ---- a chick: whose she is, when she's grown and off to a new farm
@@ -323,7 +338,7 @@ export class GameUI {
   rareChoice(e, then) {
     const row = el('div', 'grow grare-row'), f = e.sex === 'h';
     const keep = el('button', 'gbtn gsmallbtn grare-keep', this.t(f ? 'rare_keep_h' : 'rare_keep_r')); keep.type = 'button';
-    const sell = el('button', 'gbtn galt gsmallbtn grare-sell', this.t('rare_sell', { c: rarePrice(e.stars).toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') })); sell.type = 'button';
+    const sell = el('button', 'gbtn galt gsmallbtn grare-sell', this.t('rare_sell', { c: rarePrice(e.stars).toLocaleString(this.g.locale()) })); sell.type = 'button';
     keep.addEventListener('click', () => { this.o.rare.keep(e.id); if (then) then(); });
     sell.addEventListener('click', () => { this.o.rare.sell(e.id); if (then) then(); });
     row.append(keep, sell);
@@ -408,7 +423,7 @@ export class GameUI {
     }
     const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
-    for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB') }))); c.append(hd); body.append(c); }
+    for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.locale()) }))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
         const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
@@ -452,7 +467,7 @@ export class GameUI {
   // 'ok', or why not: 'room' (its bigger pen doesn't fit there: move it first), 'coins', 'busy'); move it (onMove:
   // main.js startMove)
   coopCard(coop, onMove, up) {
-    const g = this.g, body = this.open('coop', g.coopName(coop)), fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
+    const g = this.g, body = this.open('coop', g.coopName(coop)), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
     body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
     const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
@@ -524,7 +539,7 @@ export class GameUI {
       b.append(c);
     }
     if (g.basket().length) {                            // (each rare colour's: its birds, and its own coop to build: release 2 step 3)
-      const c = el('div', 'gcard gbasket'), hd = el('div', 'gcard-h'), price = RARE.coop.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
+      const c = el('div', 'gcard gbasket'), hd = el('div', 'gcard-h'), price = RARE.coop.toLocaleString(g.locale());
       hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t('basket_t')));
       c.append(hd);
       for (const line of [...new Set(g.basket().map(x => x.breed))]) {
@@ -699,7 +714,7 @@ export class GameUI {
   shopSheet(h, tab = 'decor') {
     const g = this.g, b = this.open('shop', this.t('shop_title'));
     this.bird = null; b.scrollTop = 0; this.shopTab = tab;
-    const fmt = n => n.toLocaleString(g.lang === 'fr' ? 'fr-FR' : 'en-GB');
+    const fmt = n => n.toLocaleString(g.locale());
     const top = el('div', 'gshop-top'), pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins)));
     top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
     if (h.outfits) {                                    // (four shelves: the decorations, the animals, the farmer's outfits, the seasons' dresses)
@@ -819,7 +834,7 @@ export class GameUI {
     const draw = () => {
       const b = this.open('intro', this.t('intro_' + (i + 1)), true);
       this.bird = null; this.dim.hidden = true; this.sheet.classList.add('gintro');
-      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + (i === 2 && this.g.lang === 'fr' ? '-fr' : '') + '.webp' + (this.o.bust || '');      // (the third has words on its sign: À VENDRE in French)
+      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + (i === 2 && INTRO_PIC.includes(this.g.lang) ? '-' + this.g.lang : '') + '.webp' + (this.o.bust || '');      // (the third has words on its sign: À VENDRE in French)
       img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
       pic.addEventListener('pointerdown', e => { x0 = e.clientX; });
       pic.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (dx < -40 && i < N - 1) { i++; draw(); } else if (dx > 40 && i > 0) { i--; draw(); } });
@@ -956,19 +971,13 @@ export class GameUI {
     row.append(w, ok); body.append(row);
   }
   coinSheet() {
-    const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.lang === 'fr' ? 'fr-FR' : 'en-GB'));
+    const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.locale()));
     b.append(el('p', 'gtext', this.t('coins_body')));
   }
   settings() {
     const g = this.g, b = this.open('settings', this.t('settings'));
     const langRow = el('div', 'grow'); langRow.append(el('span', 'glabel', this.t('settings_lang')));
-    const chips = el('div', 'gchips');
-    for (const [l, name] of [['en', 'English'], ['fr', 'Français']]) {
-      const c = el('button', 'gchip' + (g.lang === l ? ' on' : ''), name); c.type = 'button';
-      c.addEventListener('click', () => { if (g.lang !== l) { g.setLang(l); if (this.o.reload) this.o.reload(); } });
-      chips.append(c);
-    }
-    langRow.append(chips); b.append(langRow);
+    langRow.append(langPicker(g.lang, l => { g.setLang(l); if (this.o.reload) this.o.reload(); })); b.append(langRow);
     // the music and the farm's sounds (sound.js): each on or off, at once (Audrey, 28 Oct: the music "Now and then"; 29 Oct:
     // her own hens chatting)
     for (const [key, cls, isOn, set, tell] of [['settings_music', 'gmusic', () => g.musicOn(), on => g.setMusic(on), 'music'], ['settings_sounds', 'gsounds', () => g.soundsOn(), on => g.setSounds(on), 'sounds']]) {

@@ -10,10 +10,12 @@
 // - ShowLineup: the test page's ?lineup=show: the show ground on open grass, a bird of each breed in the coops, the four
 //   rosettes pinned, the judge in front going through his poses in turn, Arthur standing by.
 import * as THREE from 'three';
+import { register, tr, urlLang } from './lang.js';
 import { addLook, Farmer, POSES } from './farmer.js';
 
 const DEG = Math.PI / 180;
-const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
+const LANG = urlLang();
+register('ground', { sign: ['Poultry Show', 'Concours avicole'] });
 export let SHOW = null;                       // showground.json, once loaded
 const PARTS = {};
 let HOLD = { palm: [0, -0.059, 0], pinch: [0, -0.105, 0.045] };     // (judge.json: where a held thing goes in his hand)
@@ -163,7 +165,7 @@ export class ShowLineup {
     const params = ctx.params || new URLSearchParams();
     this.ground = new ShowGround(ctx.scene, { x: ctx.centre.x, z: ctx.centre.z, deg: 45, grade: ctx.grade });
     const G = this.ground, I = SHOW, r = ctx.r || Math.random;
-    G.sign(FR ? 'Concours avicole' : 'Poultry Show', 'Feather & Field');
+    G.sign(tr(LANG, 'ground.sign'), 'Feather & Field');
     // the birds in their pens (a plot of their own, so the village's frame loop wakes them as any line-up's)
     const plot = this.plot = { kind: 'lineup', frame: G.group, birds: [], centre: G.world(0, 0, I.pens[0].front - 0.4) };
     I.pens.forEach((p, i) => {

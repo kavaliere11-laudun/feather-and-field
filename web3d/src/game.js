@@ -33,11 +33,12 @@
 // 24 Oct: "In the logic that the chickens from the coop gains experience and produce better and better babies"); a brood
 // gives its parents experience.
 
+import { PACKS, LOCALE, langOk, phoneLang, register, tr, ordinal } from './lang.js';
 export const SAVE_KEY = 'ff3d.farm';
 const SAVE_V = 1;
 
 // ---- the words
-const TEXT = {
+export const TEXT = {
   en: {
     brand: 'Feather & Field', tagline: 'A flock to love for good',
     level: 'Level', coins: 'Coins', settings: 'Settings', close: 'Close',
@@ -516,7 +517,7 @@ const TEXT = {
 // a word of the game's in a language, outside a game (the onboarding pictures' sale sign: main.js ?intro)
 export const gameText = (lang, key) => (TEXT[lang] || TEXT.en)[key] || TEXT.en[key] || key;
 // in French "Just arrived" agrees with the bird
-const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', geese_b0: 'They don’t like {farmer} yet: they hiss and chase her out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once she steps back.' },
+export const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', geese_b0: 'They don’t like {farmer} yet: they hiss and chase her out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once she steps back.' },
   fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
     exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.',
     show_in: '{name} est inscrite : résultats à 7 h, dans {when}', show_entered: '{name} est inscrite au {show} !',
@@ -526,6 +527,10 @@ const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', gee
     fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !',
     geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne.',
     fish_busy: '{farmer} est occupée : réessayez dans un instant' } };
+
+// the other languages' words (lang.js: German, Spanish, Portuguese, Italian), by the same keys
+for (const [L, P] of Object.entries(PACKS)) { TEXT[L] = P.text || {}; TEXT_F[L] = P.textF || {}; }
+export { LOCALE };
 
 export const BREED_INFO = {
   rir: { name: ['Rhode Island Red', 'Rhode Island Red'], coop: ['Red Barn', 'Grange rouge'] },
@@ -547,6 +552,7 @@ export const BREED_INFO = {
   sil_splash: { name: ['Splash Silkie', 'Poule soie splash'], kind: ['Silkie', 'Poule soie'], col: ['Splash', 'splash'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
   sil_cuckoo: { name: ['Cuckoo Silkie', 'Poule soie coucou'], kind: ['Silkie', 'Poule soie'], col: ['Cuckoo', 'coucou'], coop: ['Pagoda Coop', 'Poulailler pagode'], rare: true },
 };
+register('breed', BREED_INFO);                       // (each's name, kind, colour and coop in every language: lang.js, 'breed.sil_black.col')
 // ---- rare Silkie babies (release 2 step 2, game-plan-v2.md §4; Audrey: "Every month or two" a Silkie coop, "When it's
 // grown"): each rare colour only from breeding, from its own colour; a chick's chance grows a little with her parents' stars
 // (rare all the same). She hatches in her colour; grown, she's yours to keep (into the basket by the farmhouse fire, until
@@ -580,7 +586,7 @@ export const PERS_INFO = {
 const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Nutmeg', 'Poppy', 'Pearl', 'Ginger',
   'Olive', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus'];
-const FARMER_DEFAULT = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'] };
+const FARMER_DEFAULT = register('farmer', { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'] });
 export const TRUST_AT = [0, 3, 8, 15];                 // cuddles for Shy, Friendly, Trusting, Best friend
 // experience (release 1 step 7): 100 a star, up to 5; it comes with time on the farm (a little each day, up to two and a
 // half stars' worth), cuddles (each one that counts while trust is still growing) and raising chicks (the mum more than
@@ -891,7 +897,7 @@ export function checkFarm(d, now = Date.now()) {
   if (!d || typeof d !== 'object' || d.v !== SAVE_V) return null;
   const out = { v: SAVE_V };
   out.made = int(d.made, 0, now, now);
-  out.lang = d.lang === 'fr' ? 'fr' : 'en';
+  out.lang = langOk(d.lang);                                      // (a language the game speaks; else English)
   if (d.music === false) out.music = false;                       // (the music switched off in the settings; on unless)
   if (d.sounds === false) out.sounds = false;                     // (the farm's sounds switched off; on unless)
   out.coins = int(d.coins, 0, 1e9, 0);
@@ -1091,14 +1097,15 @@ export class Game {
   constructor(store = (() => { try { return window.localStorage; } catch (e) { return null; } })()) {
     this.store = store; this.edited = false; this.listeners = [];
     this.data = this.load();
-    this.lang = this.data ? this.data.lang : ((navigator.language || '').toLowerCase().startsWith('fr') ? 'fr' : 'en');
+    this.lang = this.data ? this.data.lang : phoneLang();
   }
   // ---- words
   t(key, vars = {}, sexF = false) {
-    const L = this.lang, s = (sexF && TEXT_F[L] && TEXT_F[L][key]) || TEXT[L][key] || TEXT.en[key] || key;
+    const L = this.lang, s = (sexF && TEXT_F[L] && TEXT_F[L][key]) || (TEXT[L] && TEXT[L][key]) || (sexF && TEXT_F.en[key]) || TEXT.en[key] || key;
     return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
   }
-  li() { return this.lang === 'fr' ? 1 : 0; }
+  locale() { return LOCALE[this.lang] || 'en-GB'; }                      // (numbers and dates: "1,250", "1 250", "1.250")
+  tr(id, vars) { return tr(this.lang, id, vars); }                       // (a registered pair's word: lang.js)
   // how long, in words: "about 6 hours", "a day", "2 days"
   howLong(ms) {
     const h = ms / 3600e3;
@@ -1107,16 +1114,17 @@ export class Game {
     const d = Math.round(h / 24);
     return d <= 1 ? this.t('days1') : this.t('days', { n: d });
   }
-  breedName(b) { return BREED_INFO[b].name[this.li()]; }                  // (a line's: "Black Silkie")
-  kindName(b) { const I = BREED_INFO[b]; return (I.kind || I.name)[this.li()]; }      // (the breed's: "Silkie", for the shows)
+  breedName(b) { return tr(this.lang, 'breed.' + b + '.name'); }                  // (a line's: "Black Silkie")
+  kindName(b) { return tr(this.lang, 'breed.' + b + (BREED_INFO[b].kind ? '.kind' : '.name')); }      // (the breed's: "Silkie", for the shows)
   baseOf(b) { return baseBreed(b); }
-  coopName(c) { return c.name || BREED_INFO[c.breed].coop[this.li()]; }
+  coopName(c) { return c.name || tr(this.lang, 'breed.' + c.breed + '.coop'); }
   // a new trio's title: a new breed, or a new Silkie colour
-  trioTitle(b) { return silColour(b) && b !== 'sil' ? this.t('trio_new_col', { col: BREED_INFO[b].col[this.li()] }) : this.t('trio_new', { breed: this.breedName(b) }); }
-  persName(p, sex) { const n = PERS_INFO[p].name[this.lang]; return n[sex === 'r' && n[1] ? 1 : 0]; }
-  persLine(p, sex) { const n = PERS_INFO[p].line[this.lang]; return n[sex === 'r' && n[1] ? 1 : 0]; }
-  farmerName() { const f = this.data ? this.data.farmer : { look: 'm', name: '' }; return f.name || FARMER_DEFAULT[f.look][this.li()]; }
-  defaultFarmer(look) { return FARMER_DEFAULT[look][this.li()]; }
+  trioTitle(b) { return silColour(b) && b !== 'sil' ? this.t('trio_new_col', { col: tr(this.lang, 'breed.' + b + '.col') }) : this.t('trio_new', { breed: this.breedName(b) }); }
+  // a personality's name and line, for a hen or a rooster (the packs: pers[p].name / .line, [hen, rooster])
+  persName(p, sex) { const n = PERS_INFO[p].name[this.lang] || (PACKS[this.lang] && PACKS[this.lang].pers && PACKS[this.lang].pers[p] && PACKS[this.lang].pers[p].name) || PERS_INFO[p].name.en; return n[sex === 'r' && n[1] ? 1 : 0]; }
+  persLine(p, sex) { const n = PERS_INFO[p].line[this.lang] || (PACKS[this.lang] && PACKS[this.lang].pers && PACKS[this.lang].pers[p] && PACKS[this.lang].pers[p].line) || PERS_INFO[p].line.en; return n[sex === 'r' && n[1] ? 1 : 0]; }
+  farmerName() { const f = this.data ? this.data.farmer : { look: 'm', name: '' }; return f.name || tr(this.lang, 'farmer.' + f.look); }
+  defaultFarmer(look) { return tr(this.lang, 'farmer.' + look); }
   // ---- the farm
   get level() { return levelOf(this.data.xp); }
   trustLevel(b) { return TRUST_AT.filter(n => b.trust >= n).length - 1; }
@@ -1226,7 +1234,7 @@ export class Game {
     const town = TOWNS[Math.floor(hash01(id + '|town') * TOWNS.length)];
     return k === 'v' ? this.t(this.lang === 'fr' && /^[AEIOU]/.test(town) ? 'show_v2' : 'show_v', { town }) : k === 'c' ? this.t('show_c', { county: COUNTIES[Math.floor(hash01(id + '|county') * COUNTIES.length)] }) : this.t('show_n');
   }
-  place(n, sexF = false) { return this.lang === 'fr' ? (n === 1 ? (sexF ? '1re' : '1er') : n + 'e') : n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'); }
+  place(n, sexF = false) { return ordinal(this.lang, n, sexF); }
   showScore(b, id) { const s = 50 + 9 * Math.min(MAX_STARS, this.expOf(b, showJudged(id)) / 100) + 2 * this.trustLevel(b); return b.pers === 'diva' ? s * 1.08 : s; }
   showLuck(id, birdId) { return (hash01(id + '|' + birdId + '|luck') * 2 - 1) * SHOW_LUCK; }
   // her chance of a rosette (and of 1st), over the luck of the day: each of the others beats her with the chance their spread gives
@@ -1637,7 +1645,7 @@ export class Game {
   }
   newFarm({ lang, look, name }) {
     const now = Date.now();
-    this.lang = lang === 'fr' ? 'fr' : 'en';
+    this.lang = langOk(lang);
     this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
@@ -1829,7 +1837,7 @@ export class Game {
     q.done = this.job('feed', 1, now);
     return q;
   }
-  setLang(l) { this.lang = l === 'fr' ? 'fr' : 'en'; if (this.data) { this.data.lang = this.lang; this.save(); } }
+  setLang(l) { this.lang = langOk(l); if (this.data) { this.data.lang = this.lang; this.save(); } }
   musicOn() { return !this.data || this.data.music !== false; }
   setMusic(on) { if (!this.data) return; if (on) delete this.data.music; else this.data.music = false; this.save(); }
   soundsOn() { return !this.data || this.data.sounds !== false; }

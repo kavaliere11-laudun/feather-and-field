@@ -1,0 +1,4195 @@
+[
+ {
+  "id": "text.brand",
+  "en": "Feather & Field",
+  "fr": "Feather & Field"
+ },
+ {
+  "id": "text.tagline",
+  "en": "A flock to love for good",
+  "fr": "Une basse-cour à aimer pour toujours"
+ },
+ {
+  "id": "text.level",
+  "en": "Level",
+  "fr": "Niveau"
+ },
+ {
+  "id": "text.coins",
+  "en": "Coins",
+  "fr": "Pièces"
+ },
+ {
+  "id": "text.settings",
+  "en": "Settings",
+  "fr": "Réglages"
+ },
+ {
+  "id": "text.close",
+  "en": "Close",
+  "fr": "Fermer"
+ },
+ {
+  "id": "text.welcome_title",
+  "en": "Welcome to your farm",
+  "fr": "Bienvenue dans votre ferme"
+ },
+ {
+  "id": "text.welcome_body",
+  "en": "Three Rhode Island Reds are waiting for you: a rooster and two hens. They’re yours for good, so get to know them!",
+  "fr": "Trois Rhode Island Red vous attendent : un coq et deux poules. Ils sont à vous pour toujours, apprenez à les connaître !"
+ },
+ {
+  "id": "text.lang",
+  "en": "Language",
+  "fr": "Langue"
+ },
+ {
+  "id": "text.your_farmer",
+  "en": "Your farmer",
+  "fr": "Votre fermier"
+ },
+ {
+  "id": "text.him",
+  "en": "Him",
+  "fr": "Lui"
+ },
+ {
+  "id": "text.her",
+  "en": "Her",
+  "fr": "Elle"
+ },
+ {
+  "id": "text.name",
+  "en": "Name",
+  "fr": "Prénom"
+ },
+ {
+  "id": "text.start",
+  "en": "Start my farm",
+  "fr": "Commencer ma ferme"
+ },
+ {
+  "id": "text.hint_start",
+  "en": "Tap a bird to meet it. Drag to look around, pinch to zoom.",
+  "fr": "Touchez une volaille pour faire connaissance. Glissez pour regarder, pincez pour zoomer."
+ },
+ {
+  "id": "text.hint_move",
+  "en": "Drag to look around, pinch to zoom, tap a bird.",
+  "fr": "Glissez pour regarder, pincez pour zoomer, touchez une volaille."
+ },
+ {
+  "id": "text.turn_tip_phone",
+  "en": "Best played sideways: turn your phone",
+  "fr": "Plus agréable à l’horizontale : tournez votre téléphone"
+ },
+ {
+  "id": "text.turn_tip_tablet",
+  "en": "Best played sideways: turn your tablet",
+  "fr": "Plus agréable à l’horizontale : tournez votre tablette"
+ },
+ {
+  "id": "text.hen",
+  "en": "Hen",
+  "fr": "Poule"
+ },
+ {
+  "id": "text.rooster",
+  "en": "Rooster",
+  "fr": "Coq"
+ },
+ {
+  "id": "text.forever_h",
+  "en": "In your flock for good",
+  "fr": "Dans votre basse-cour pour toujours"
+ },
+ {
+  "id": "text.forever_r",
+  "en": "In your flock for good",
+  "fr": "Dans votre basse-cour pour toujours"
+ },
+ {
+  "id": "text.personality",
+  "en": "Personality",
+  "fr": "Caractère"
+ },
+ {
+  "id": "text.experience",
+  "en": "Experience",
+  "fr": "Expérience"
+ },
+ {
+  "id": "text.trust",
+  "en": "Trust",
+  "fr": "Confiance"
+ },
+ {
+  "id": "text.exp_none",
+  "en": "Just arrived: experience grows with time on the farm and with the love you give.",
+  "fr": "Tout juste arrivé : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.",
+  "gender": true,
+  "f_en": "Just arrived: experience grows with time on the farm and with the love you give.",
+  "f_fr": "Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez."
+ },
+ {
+  "id": "text.trust_lv0",
+  "en": "Shy",
+  "fr": "Farouche"
+ },
+ {
+  "id": "text.trust_lv1",
+  "en": "Friendly",
+  "fr": "Sociable"
+ },
+ {
+  "id": "text.trust_lv2",
+  "en": "Trusting",
+  "fr": "En confiance"
+ },
+ {
+  "id": "text.trust_lv3",
+  "en": "Best friend",
+  "fr": "Inséparable"
+ },
+ {
+  "id": "text.trust_body",
+  "en": "Cuddles build trust: one counts every 6 hours.",
+  "fr": "Les câlins donnent confiance : un compte toutes les 6 heures."
+ },
+ {
+  "id": "text.exp_how",
+  "en": "Stars come with time on the farm, cuddles and raising chicks.",
+  "fr": "Les étoiles viennent avec le temps passé à la ferme, les câlins et les poussins élevés."
+ },
+ {
+  "id": "text.exp_top",
+  "en": "All five stars!",
+  "fr": "Les cinq étoiles !"
+ },
+ {
+  "id": "text.exp_eggs",
+  "en": "Each star makes her eggs a coin dearer.",
+  "fr": "Chaque étoile rend ses œufs une pièce plus chers."
+ },
+ {
+  "id": "text.exp_chicks",
+  "en": "The more stars, the better his chicks.",
+  "fr": "Plus il a d’étoiles, meilleurs sont ses poussins.",
+  "gender": true,
+  "f_en": "The more stars, the better her chicks.",
+  "f_fr": "Plus elle a d’étoiles, meilleurs sont ses poussins."
+ },
+ {
+  "id": "text.trust_next",
+  "en": "{n} more cuddles to “{level}”",
+  "fr": "Encore {n} câlins avant « {level} »"
+ },
+ {
+  "id": "text.trust_next1",
+  "en": "1 more cuddle to “{level}”",
+  "fr": "Encore 1 câlin avant « {level} »"
+ },
+ {
+  "id": "text.trust_greets",
+  "en": "Comes to the fence to greet {farmer}.",
+  "fr": "Vient saluer {farmer} à la clôture."
+ },
+ {
+  "id": "text.cuddle_btn",
+  "en": "♥ Cuddle",
+  "fr": "♥ Faire un câlin"
+ },
+ {
+  "id": "text.happy_left",
+  "en": "Happy after a cuddle: {when} left",
+  "fr": "Heureux après un câlin : encore {when}",
+  "gender": true,
+  "f_en": "Happy after a cuddle: {when} left",
+  "f_fr": "Heureuse après un câlin : encore {when}"
+ },
+ {
+  "id": "text.cuddle_night",
+  "en": "Cuddles in the morning: {farmer} is asleep.",
+  "fr": "Les câlins, ce sera demain matin : {farmer} dort."
+ },
+ {
+  "id": "text.cuddle_done",
+  "en": "{farmer} gives {name} a cuddle ♥ +{xp} XP",
+  "fr": "{farmer} fait un câlin à {name} ♥ +{xp} XP"
+ },
+ {
+  "id": "text.trust_up1",
+  "en": "{name} is getting friendly with {farmer}.",
+  "fr": "{name} devient sociable avec {farmer}."
+ },
+ {
+  "id": "text.trust_up2",
+  "en": "{name} trusts {farmer} now, and comes to the fence to say hello.",
+  "fr": "{name} a confiance en {farmer} et vient lui dire bonjour à la clôture."
+ },
+ {
+  "id": "text.trust_up3",
+  "en": "{name} and {farmer} are best friends! +{xp} XP",
+  "fr": "{name} et {farmer} sont inséparables ! +{xp} XP"
+ },
+ {
+  "id": "text.star_up",
+  "en": "★ {name} has earned a new star!",
+  "fr": "★ {name} gagne une nouvelle étoile !"
+ },
+ {
+  "id": "text.lives_in",
+  "en": "Lives in: {coop}",
+  "fr": "Habite : {coop}"
+ },
+ {
+  "id": "text.since",
+  "en": "On your farm since {date}",
+  "fr": "À la ferme depuis le {date}"
+ },
+ {
+  "id": "text.coop_rustic",
+  "en": "{coop} (rustic)",
+  "fr": "{coop} (rustique)"
+ },
+ {
+  "id": "text.level_title",
+  "en": "Level {n}",
+  "fr": "Niveau {n}"
+ },
+ {
+  "id": "text.level_xp",
+  "en": "{xp} of {need} XP to level {next}",
+  "fr": "{xp} sur {need} XP pour le niveau {next}"
+ },
+ {
+  "id": "text.level_top",
+  "en": "Top level!",
+  "fr": "Niveau maximum !"
+ },
+ {
+  "id": "text.level_how",
+  "en": "Look after your birds to earn XP.",
+  "fr": "Prenez soin de vos volailles pour gagner de l’XP."
+ },
+ {
+  "id": "text.level_up",
+  "en": "Level {n}!",
+  "fr": "Niveau {n} !"
+ },
+ {
+  "id": "text.level_up_sub",
+  "en": "Your farm is growing.",
+  "fr": "Votre ferme s’agrandit."
+ },
+ {
+  "id": "text.level_new",
+  "en": "New at this level",
+  "fr": "Nouveau à ce niveau"
+ },
+ {
+  "id": "text.land_new",
+  "en": "A new field is for sale: {c} coins",
+  "fr": "Un nouveau terrain est à vendre : {c} pièces"
+ },
+ {
+  "id": "text.land_show",
+  "en": "See the field",
+  "fr": "Voir le terrain"
+ },
+ {
+  "id": "text.level_next_land",
+  "en": "At level {n}: a new field for sale",
+  "fr": "Au niveau {n} : un nouveau terrain à vendre"
+ },
+ {
+  "id": "text.land_count",
+  "en": "Your land: {n} fields",
+  "fr": "Vos terrains : {n}"
+ },
+ {
+  "id": "text.land_count1",
+  "en": "Your land: 1 field",
+  "fr": "Votre terrain : 1"
+ },
+ {
+  "id": "text.land_all",
+  "en": "All the land is yours!",
+  "fr": "Tous les terrains sont à vous !"
+ },
+ {
+  "id": "text.land_title",
+  "en": "A field",
+  "fr": "Un terrain"
+ },
+ {
+  "id": "text.land_body",
+  "en": "Wild meadow with room for a coop or two. Buy it and it’s yours for good: the grass is cut and your fence moves out round it.",
+  "fr": "Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : l’herbe est coupée et votre clôture l’entoure."
+ },
+ {
+  "id": "text.land_buy",
+  "en": "Buy for {c} coins",
+  "fr": "Acheter pour {c} pièces"
+ },
+ {
+  "id": "text.land_broke",
+  "en": "Not enough coins yet ({c})",
+  "fr": "Pas encore assez de pièces ({c})"
+ },
+ {
+  "id": "text.land_bought",
+  "en": "The new field is yours!",
+  "fr": "Le nouveau terrain est à vous !"
+ },
+ {
+  "id": "text.land_wild",
+  "en": "Wild meadow · for sale at level {n}",
+  "fr": "Pré sauvage · à vendre au niveau {n}"
+ },
+ {
+  "id": "text.sale_sign",
+  "en": "FOR SALE",
+  "fr": "À VENDRE"
+ },
+ {
+  "id": "text.bub_sale",
+  "en": "For sale",
+  "fr": "À vendre"
+ },
+ {
+  "id": "text.coop_lives",
+  "en": "{names} live here.",
+  "fr": "{names} vivent ici."
+ },
+ {
+  "id": "text.and",
+  "en": "and",
+  "fr": "et"
+ },
+ {
+  "id": "text.rustic",
+  "en": "rustic",
+  "fr": "rustique"
+ },
+ {
+  "id": "text.look_rustic",
+  "en": "Rustic",
+  "fr": "Rustique"
+ },
+ {
+  "id": "text.look_mended",
+  "en": "Mended",
+  "fr": "Rafistolé"
+ },
+ {
+  "id": "text.look_snug",
+  "en": "Snug",
+  "fr": "Confortable"
+ },
+ {
+  "id": "text.look_cosy",
+  "en": "Cosy",
+  "fr": "Douillet"
+ },
+ {
+  "id": "text.look_deluxe",
+  "en": "Deluxe",
+  "fr": "De luxe"
+ },
+ {
+  "id": "text.up_next",
+  "en": "Upgrade to {look}",
+  "fr": "Améliorer : style {look}"
+ },
+ {
+  "id": "text.up_btn",
+  "en": "Upgrade · {c} coins",
+  "fr": "Améliorer · {c} pièces"
+ },
+ {
+  "id": "text.up_broke",
+  "en": "Not enough coins ({c})",
+  "fr": "Pas assez de pièces ({c})"
+ },
+ {
+  "id": "text.up_top",
+  "en": "The finest coop on the farm.",
+  "fr": "Le plus beau poulailler de la ferme."
+ },
+ {
+  "id": "text.up_rir_mended",
+  "en": "A little shed, half painted red, in a bigger pen.",
+  "fr": "Une petite cabane, à moitié peinte en rouge, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_rir_snug",
+  "en": "The Red Barn, in a roomier pen.",
+  "fr": "La Grange rouge, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_rir_cosy",
+  "en": "A porch with a bench, lanterns, flowers, and a bigger garden with a swing, a sand bath and a cabbage to peck.",
+  "fr": "Un porche avec un banc, des lanternes, des fleurs, et un jardin plus grand avec une balançoire, un bain de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_rir_deluxe",
+  "en": "A second floor, a copper roof with a cupola, a fountain, a xylophone, a sandbox and the biggest garden, with white pickets and roses.",
+  "fr": "Un étage de plus, un toit de cuivre et un lanternon, une fontaine, un xylophone, un bac à sable et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.up_orp_mended",
+  "en": "A little woven hazel hut, half daubed with clay, under new thatch, in a bigger pen.",
+  "fr": "Une petite hutte de noisetier tressé, à moitié enduite d’argile, sous un chaume neuf, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_orp_snug",
+  "en": "The Thatched Cottage, in a roomier pen.",
+  "fr": "La Chaumière, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_orp_cosy",
+  "en": "Hollyhocks, roses, a bench under a rose arch, a lantern, and a bigger garden with a swing, a tin bath of sand and a cabbage to peck.",
+  "fr": "Des roses trémières, des roses, un banc sous une arche fleurie, une lanterne, et un jardin plus grand avec une balançoire, une bassine de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_orp_deluxe",
+  "en": "A taller cottage in Suffolk pink with windows in its thatch and a straw pheasant on the roof, a pump and trough, a sand pit under a thatched parasol, a xylophone and the biggest garden, with white pickets and roses.",
+  "fr": "Une chaumière plus haute, peinte en rose pâle, avec des fenêtres dans le chaume et un faisan de paille sur le toit, une pompe et son abreuvoir, un bac à sable sous un parasol de chaume, un xylophone et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.up_sil_mended",
+  "en": "A little bamboo hut with a roof of split bamboo, half painted in its colour, in a bigger pen.",
+  "fr": "Une petite cabane de bambou au toit de bambous fendus, à moitié peinte de sa couleur, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_sil_snug",
+  "en": "The Pagoda Coop, in a roomier pen.",
+  "fr": "Le Poulailler pagode, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_sil_cosy",
+  "en": "A cherry tree in blossom, a stone lantern, paper lanterns, and a bigger garden with a swing under a little red gate, a glazed bowl of sand and a cabbage to peck.",
+  "fr": "Un cerisier en fleurs, une lanterne de pierre, des lanternes de papier, et un jardin plus grand avec une balançoire sous un petit portique rouge, une coupe de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_sil_deluxe",
+  "en": "Three tiers with little gold bells, a koi pond, a zen garden of raked sand, a bamboo xylophone and the biggest garden, with white pickets and roses.",
+  "fr": "Trois toits avec de petites clochettes dorées, un bassin à carpes koï, un jardin zen de sable ratissé, un xylophone de bambou et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.up_leg_mended",
+  "en": "A little stone hut with its roof slated half way and a new door, in a bigger pen.",
+  "fr": "Une petite cabane de pierre au toit à moitié couvert d’ardoises et à la porte neuve, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_leg_snug",
+  "en": "The Stone Cottage, in a roomier pen.",
+  "fr": "La Maison de pierre, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_leg_cosy",
+  "en": "Duck-egg blue windows, wisteria, a dovecote, blue hydrangeas, and a bigger garden with a swing from an apple tree, a wheelbarrow of sand and a cabbage to peck.",
+  "fr": "Des fenêtres bleu pâle, une glycine, un pigeonnier, des hortensias bleus, et un jardin plus grand avec une balançoire sous un pommier, une brouette de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_leg_deluxe",
+  "en": "A storey taller with dormers, a slate porch and two chimneys, a little blue boat full of sand, a water butt, a xylophone and the biggest garden, with white pickets and roses.",
+  "fr": "Un étage de plus avec des lucarnes, un auvent d’ardoise et deux cheminées, une petite barque bleue pleine de sable, un récupérateur d’eau, un xylophone et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.up_bra_mended",
+  "en": "A little cabin of new peeled logs under a roof of rough boards, in a bigger pen.",
+  "fr": "Une petite cabane de rondins neufs sous un toit de planches brutes, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_bra_snug",
+  "en": "The Timber Lodge, in a roomier pen.",
+  "fr": "Le Chalet en rondins, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_bra_cosy",
+  "en": "A woodpile under its own little roof, a wreath on the door, a birdhouse, toadstools and ferns, and a bigger garden with a swing on log posts, a half log full of sand and a cabbage to peck.",
+  "fr": "Une pile de bois sous son petit toit, une couronne sur la porte, un nichoir, des champignons et des fougères, et un jardin plus grand avec une balançoire sur des rondins, un demi-tronc plein de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_bra_deluxe",
+  "en": "A storey taller with a gable over the door, a chimney of river stones and a carved bear, a crib of logs full of sand, water from a log flume, a xylophone and the biggest garden, with white pickets and roses.",
+  "fr": "Un étage de plus avec un pignon au-dessus de la porte, une cheminée de galets et un ours sculpté, un bac de rondins plein de sable, de l’eau qui coule d’une rigole en bois, un xylophone et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.upfx_mended",
+  "en": "Fewer days without an afternoon egg.",
+  "fr": "Moins de jours sans l’œuf de l’après-midi."
+ },
+ {
+  "id": "text.upfx_snug",
+  "en": "Two eggs a day, every day.",
+  "fr": "Deux œufs par jour, tous les jours."
+ },
+ {
+  "id": "text.upfx_cosy",
+  "en": "Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.",
+  "fr": "De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures."
+ },
+ {
+  "id": "text.upfx_deluxe",
+  "en": "An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.",
+  "fr": "Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures."
+ },
+ {
+  "id": "text.up_room",
+  "en": "Its bigger pen needs more room here: move the coop first.",
+  "fr": "Son enclos plus grand a besoin de plus de place ici : déplacez d’abord le poulailler."
+ },
+ {
+  "id": "text.up_done",
+  "en": "{coop} is now {look}! +{xp} XP",
+  "fr": "{coop} passe au style {look} ! +{xp} XP"
+ },
+ {
+  "id": "text.up_busy",
+  "en": "{farmer} is in the pen: try again in a moment.",
+  "fr": "{farmer} est dans l’enclos : réessayez dans un instant."
+ },
+ {
+  "id": "text.move_body",
+  "en": "Put it anywhere on your land. Trees, bushes and rocks in the way are cleared.",
+  "fr": "Installez-le où vous voulez sur votre terrain. Les arbres, buissons et rochers qui gênent sont dégagés."
+ },
+ {
+  "id": "text.move_btn",
+  "en": "Move this coop",
+  "fr": "Déplacer ce poulailler"
+ },
+ {
+  "id": "text.move_hint",
+  "en": "Drag the coop, or tap where it should go.",
+  "fr": "Faites glisser le poulailler, ou touchez l’endroit voulu."
+ },
+ {
+  "id": "text.move_ok",
+  "en": "A good spot!",
+  "fr": "Bel emplacement !"
+ },
+ {
+  "id": "text.move_clear",
+  "en": "A good spot! What’s in the way will be cleared.",
+  "fr": "Bel emplacement ! Ce qui gêne sera dégagé."
+ },
+ {
+  "id": "text.move_land",
+  "en": "Only on your own land.",
+  "fr": "Seulement sur votre terrain."
+ },
+ {
+  "id": "text.move_lane",
+  "en": "Not on a lane or in the water.",
+  "fr": "Pas sur un chemin ni dans l’eau."
+ },
+ {
+  "id": "text.move_room",
+  "en": "Not enough room here.",
+  "fr": "Pas assez de place ici."
+ },
+ {
+  "id": "text.move_coop",
+  "en": "Too close to another coop.",
+  "fr": "Trop près d’un autre poulailler."
+ },
+ {
+  "id": "text.move_gate",
+  "en": "Its gate would be shut in here.",
+  "fr": "Sa porte serait bloquée ici."
+ },
+ {
+  "id": "text.move_turn",
+  "en": "Turn",
+  "fr": "Tourner"
+ },
+ {
+  "id": "text.move_cancel",
+  "en": "Cancel",
+  "fr": "Annuler"
+ },
+ {
+  "id": "text.move_place",
+  "en": "Put it here",
+  "fr": "Le mettre ici"
+ },
+ {
+  "id": "text.moved",
+  "en": "The coop is in its new place!",
+  "fr": "Le poulailler est à sa nouvelle place !"
+ },
+ {
+  "id": "text.move_busy",
+  "en": "Not just now: try again in a moment.",
+  "fr": "Pas tout de suite : réessayez dans un instant."
+ },
+ {
+  "id": "text.coops_title",
+  "en": "Your coops",
+  "fr": "Vos poulaillers"
+ },
+ {
+  "id": "text.coops_aria",
+  "en": "Your coops",
+  "fr": "Vos poulaillers"
+ },
+ {
+  "id": "text.coops_waiting",
+  "en": "A new coop is waiting for you",
+  "fr": "Un nouveau poulailler vous attend"
+ },
+ {
+  "id": "text.coops_new",
+  "en": "New!",
+  "fr": "Nouveau !"
+ },
+ {
+  "id": "text.trio_new",
+  "en": "New breed: {breed}!",
+  "fr": "Nouvelle race : {breed} !"
+ },
+ {
+  "id": "text.trio_new_col",
+  "en": "New Silkie colour: {col}!",
+  "fr": "Nouvelle couleur de poule soie : {col} !"
+ },
+ {
+  "id": "text.trio_body",
+  "en": "A rooster and two hens, yours for good, with their own coop. Put it anywhere on your land.",
+  "fr": "Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain."
+ },
+ {
+  "id": "text.place_now",
+  "en": "Place their coop now",
+  "fr": "Installer leur poulailler"
+ },
+ {
+  "id": "text.later",
+  "en": "Later",
+  "fr": "Plus tard"
+ },
+ {
+  "id": "text.later_note",
+  "en": "It waits for you in Your coops (the little barn up top).",
+  "fr": "Il vous attend dans Vos poulaillers (la petite grange en haut)."
+ },
+ {
+  "id": "text.place_btn",
+  "en": "Place it",
+  "fr": "L’installer"
+ },
+ {
+  "id": "text.move_short",
+  "en": "Move",
+  "fr": "Déplacer"
+ },
+ {
+  "id": "text.coops_next",
+  "en": "At level {n}: {breed}",
+  "fr": "Au niveau {n} : {breed}"
+ },
+ {
+  "id": "text.coops_all",
+  "en": "Every breed is on your farm!",
+  "fr": "Toutes les races sont dans votre ferme !"
+ },
+ {
+  "id": "text.no_room",
+  "en": "No room on your land for another coop yet: buy the next field.",
+  "fr": "Pas encore de place sur votre terrain pour un autre poulailler : achetez le prochain terrain."
+ },
+ {
+  "id": "text.welcome_trio",
+  "en": "Welcome, {names}!",
+  "fr": "Bienvenue, {names} !"
+ },
+ {
+  "id": "text.book_title",
+  "en": "Breed Book",
+  "fr": "Livre des races"
+ },
+ {
+  "id": "text.book_btn",
+  "en": "📖 Breed Book",
+  "fr": "📖 Livre des races"
+ },
+ {
+  "id": "text.book_found",
+  "en": "{n} of {all} breeds found",
+  "fr": "{n} races trouvées sur {all}"
+ },
+ {
+  "id": "text.book_found1",
+  "en": "1 of {all} breeds found",
+  "fr": "1 race trouvée sur {all}"
+ },
+ {
+  "id": "text.book_on_farm",
+  "en": "On your farm: {names}",
+  "fr": "Dans votre ferme : {names}"
+ },
+ {
+  "id": "text.book_at_level",
+  "en": "Comes at level {n}",
+  "fr": "Arrive au niveau {n}"
+ },
+ {
+  "id": "text.book_waiting",
+  "en": "Their coop is waiting for you in Your coops",
+  "fr": "Leur poulailler vous attend dans Vos poulaillers"
+ },
+ {
+  "id": "text.book_price",
+  "en": "{p} coins an egg, plus a coin for each star of the hen",
+  "fr": "{p} pièces l’œuf, plus une pièce par étoile de la poule"
+ },
+ {
+  "id": "text.book_coop",
+  "en": "{coop}, rustic to start",
+  "fr": "{coop}, rustique pour commencer"
+ },
+ {
+  "id": "text.book_more",
+  "en": "More pages to come.",
+  "fr": "D’autres pages à venir."
+ },
+ {
+  "id": "text.shows_title",
+  "en": "Shows",
+  "fr": "Concours"
+ },
+ {
+  "id": "text.shows_aria",
+  "en": "Shows",
+  "fr": "Concours"
+ },
+ {
+  "id": "text.shows_new",
+  "en": "a new show is open",
+  "fr": "un nouveau concours est ouvert"
+ },
+ {
+  "id": "text.shows_how1",
+  "en": "Enter one bird in each show. The judge looks at its stars, and at how calm it is in the judge’s hands (trust). A Diva shines a little more.",
+  "fr": "Inscrivez une volaille par concours. Le juge regarde ses étoiles, et son calme quand il la prend en main (la confiance). Une diva brille un peu plus."
+ },
+ {
+  "id": "text.shows_how2",
+  "en": "Results the next morning at 7:00. 1st, 2nd and 3rd win a rosette, coins and XP, and the rosette stays on the bird’s card for good.",
+  "fr": "Résultats le lendemain à 7 h. Les 1er, 2e et 3e gagnent une cocarde, des pièces et de l’XP, et la cocarde reste pour toujours sur sa fiche."
+ },
+ {
+  "id": "text.shows_how3",
+  "en": "A win at the County show or the National Championship makes your bird a champion.",
+  "fr": "Gagner le concours régional ou le championnat national fait de votre volaille un champion."
+ },
+ {
+  "id": "text.show_v",
+  "en": "{town} Village Show",
+  "fr": "Concours de {town}"
+ },
+ {
+  "id": "text.show_c",
+  "en": "{county} County Show",
+  "fr": "Concours régional du {county}"
+ },
+ {
+  "id": "text.show_n",
+  "en": "National Poultry Championship",
+  "fr": "Championnat national avicole"
+ },
+ {
+  "id": "text.show_any",
+  "en": "Any breed can enter",
+  "fr": "Toutes les races"
+ },
+ {
+  "id": "text.show_only",
+  "en": "{breed}s only",
+  "fr": "Race : {breed} uniquement"
+ },
+ {
+  "id": "text.show_locked",
+  "en": "From level {n}",
+  "fr": "À partir du niveau {n}"
+ },
+ {
+  "id": "text.show_when",
+  "en": "Results at 7:00, in {when}",
+  "fr": "Résultats à 7 h, dans {when}"
+ },
+ {
+  "id": "text.show_prizes",
+  "en": "Prizes: 1st {a} · 2nd {b} · 3rd {c} coins",
+  "fr": "Prix : 1er {a} · 2e {b} · 3e {c} pièces"
+ },
+ {
+  "id": "text.show_chance",
+  "en": "{name} · chance of a rosette: {word} ({p}%)",
+  "fr": "{name} · chances de cocarde : {word} ({p} %)"
+ },
+ {
+  "id": "text.chance0",
+  "en": "slim",
+  "fr": "faibles"
+ },
+ {
+  "id": "text.chance1",
+  "en": "fair",
+  "fr": "moyennes"
+ },
+ {
+  "id": "text.chance2",
+  "en": "good",
+  "fr": "bonnes"
+ },
+ {
+  "id": "text.chance3",
+  "en": "great",
+  "fr": "excellentes"
+ },
+ {
+  "id": "text.show_enter",
+  "en": "Enter {name} · {fee}",
+  "fr": "Inscrire {name} · {fee}"
+ },
+ {
+  "id": "text.show_other",
+  "en": "Choose another bird",
+  "fr": "Choisir une autre volaille"
+ },
+ {
+  "id": "text.show_pick",
+  "en": "Enter",
+  "fr": "Inscrire"
+ },
+ {
+  "id": "text.show_in",
+  "en": "{name} is entered: results at 7:00, in {when}",
+  "fr": "{name} est inscrit : résultats à 7 h, dans {when}",
+  "gender": true,
+  "f_en": "{name} is entered: results at 7:00, in {when}",
+  "f_fr": "{name} est inscrite : résultats à 7 h, dans {when}"
+ },
+ {
+  "id": "text.show_none_breed",
+  "en": "None of your birds is a {breed}.",
+  "fr": "Aucune de vos volailles n’est de la race {breed}."
+ },
+ {
+  "id": "text.show_none_busy",
+  "en": "All your birds are entered in other shows.",
+  "fr": "Toutes vos volailles sont déjà inscrites à d’autres concours."
+ },
+ {
+  "id": "text.show_broke",
+  "en": "Not enough coins: the entry is {fee}",
+  "fr": "Pas assez de pièces : l’inscription coûte {fee}"
+ },
+ {
+  "id": "text.show_entered",
+  "en": "{name} is entered in the {show}!",
+  "fr": "{name} est inscrit au {show} !",
+  "gender": true,
+  "f_en": "{name} is entered in the {show}!",
+  "f_fr": "{name} est inscrite au {show} !"
+ },
+ {
+  "id": "text.show_card_in",
+  "en": "In the {show}: results at 7:00, in {when}",
+  "fr": "Au {show} : résultats à 7 h, dans {when}"
+ },
+ {
+  "id": "text.results_title",
+  "en": "Show results",
+  "fr": "Résultats des concours"
+ },
+ {
+  "id": "text.res_place",
+  "en": "{name} came {place} in the {show}!",
+  "fr": "{name} prend la {place} place au {show} !"
+ },
+ {
+  "id": "text.res_none",
+  "en": "{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.",
+  "fr": "{name} n’est pas classé au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.",
+  "gender": true,
+  "f_en": "{name} didn’t place in the {show} this time ({place} of {of}). Time on the farm and cuddles will help.",
+  "f_fr": "{name} n’est pas classée au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront."
+ },
+ {
+  "id": "text.res_champ",
+  "en": "{name} is a champion now!",
+  "fr": "{name} est champion maintenant !",
+  "gender": true,
+  "f_en": "{name} is a champion now!",
+  "f_fr": "{name} est championne maintenant !"
+ },
+ {
+  "id": "text.res_in",
+  "en": "The show results are in!",
+  "fr": "Les résultats des concours sont arrivés !"
+ },
+ {
+  "id": "text.rosettes",
+  "en": "Rosettes",
+  "fr": "Cocardes"
+ },
+ {
+  "id": "text.ros_none",
+  "en": "No rosettes yet: enter a show (the rosette at the top).",
+  "fr": "Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).",
+  "gender": true,
+  "f_en": "No rosettes yet: enter a show (the rosette at the top).",
+  "f_fr": "Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut)."
+ },
+ {
+  "id": "text.tier_v",
+  "en": "Village",
+  "fr": "Village"
+ },
+ {
+  "id": "text.tier_c",
+  "en": "County",
+  "fr": "Régional"
+ },
+ {
+  "id": "text.tier_n",
+  "en": "National",
+  "fr": "National"
+ },
+ {
+  "id": "text.shop_title",
+  "en": "The farm shop",
+  "fr": "La boutique de la ferme"
+ },
+ {
+  "id": "text.shop_coins",
+  "en": "Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:",
+  "fr": "Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :"
+ },
+ {
+  "id": "text.dec_flowers",
+  "en": "Cottage flower bed",
+  "fr": "Massif de fleurs"
+ },
+ {
+  "id": "text.dec_birdbath",
+  "en": "Bird bath",
+  "fr": "Bain d’oiseaux"
+ },
+ {
+  "id": "text.dec_beehives",
+  "en": "Beehives",
+  "fr": "Ruches"
+ },
+ {
+  "id": "text.dec_duckhouse",
+  "en": "Duck house",
+  "fr": "Maison des canards"
+ },
+ {
+  "id": "text.dec_greenhouse",
+  "en": "Greenhouse",
+  "fr": "Serre"
+ },
+ {
+  "id": "text.dec_windmill",
+  "en": "Windmill",
+  "fr": "Moulin à vent"
+ },
+ {
+  "id": "text.dec_bandstand",
+  "en": "Bandstand",
+  "fr": "Kiosque à musique"
+ },
+ {
+  "id": "text.dec_statue",
+  "en": "Golden cockerel",
+  "fr": "Coq d’or"
+ },
+ {
+  "id": "text.decl_flowers",
+  "en": "Butterflies come to it.",
+  "fr": "Les papillons y viennent."
+ },
+ {
+  "id": "text.decl_birdbath",
+  "en": "Little birds drop in for a bath.",
+  "fr": "Les petits oiseaux viennent s’y baigner."
+ },
+ {
+  "id": "text.decl_beehives",
+  "en": "Bees busy over the lavender, and honey to sell: a jar every 8 hours.",
+  "fr": "Des abeilles affairées sur la lavande, et du miel à vendre : un pot toutes les 8 heures."
+ },
+ {
+  "id": "text.decl_duckhouse",
+  "en": "The ducks sleep in it, on the pond.",
+  "fr": "Les canards y dorment, sur l’étang."
+ },
+ {
+  "id": "text.decl_greenhouse",
+  "en": "Tomatoes under glass.",
+  "fr": "Des tomates sous verre."
+ },
+ {
+  "id": "text.decl_windmill",
+  "en": "Its sails turn in the wind.",
+  "fr": "Ses ailes tournent au vent."
+ },
+ {
+  "id": "text.decl_bandstand",
+  "en": "Music of an evening, and when you tap it.",
+  "fr": "De la musique le soir, et quand vous le touchez."
+ },
+ {
+  "id": "text.decl_statue",
+  "en": "He catches the sun.",
+  "fr": "Il attrape le soleil."
+ },
+ {
+  "id": "text.dec_buy",
+  "en": "Buy and place · {c}",
+  "fr": "Acheter et placer · {c}"
+ },
+ {
+  "id": "text.dec_buy_pond",
+  "en": "Buy · {c}",
+  "fr": "Acheter · {c}"
+ },
+ {
+  "id": "text.dec_level",
+  "en": "Comes at level {n}",
+  "fr": "Arrive au niveau {n}"
+ },
+ {
+  "id": "text.dec_broke",
+  "en": "Not enough coins yet",
+  "fr": "Pas encore assez de pièces"
+ },
+ {
+  "id": "text.dec_owned",
+  "en": "On your farm",
+  "fr": "Dans votre ferme"
+ },
+ {
+  "id": "text.dec_move",
+  "en": "Move",
+  "fr": "Déplacer"
+ },
+ {
+  "id": "text.dec_xp",
+  "en": "+{xp} XP",
+  "fr": "+{xp} XP"
+ },
+ {
+  "id": "text.dec_place_hint",
+  "en": "Drag it, or tap where it should go.",
+  "fr": "Faites-le glisser, ou touchez l’endroit voulu."
+ },
+ {
+  "id": "text.dec_ok",
+  "en": "A good spot!",
+  "fr": "Bel emplacement !"
+ },
+ {
+  "id": "text.dec_ok_clear",
+  "en": "A good spot! What’s in the way will be cleared.",
+  "fr": "Bel emplacement ! Ce qui gêne sera dégagé."
+ },
+ {
+  "id": "text.dec_bad_land",
+  "en": "Only on your own land.",
+  "fr": "Seulement sur votre terrain."
+ },
+ {
+  "id": "text.dec_bad_lane",
+  "en": "Not on a lane or in the water.",
+  "fr": "Pas sur un chemin ni dans l’eau."
+ },
+ {
+  "id": "text.dec_bad_room",
+  "en": "Not enough room here.",
+  "fr": "Pas assez de place ici."
+ },
+ {
+  "id": "text.dec_bad_way",
+  "en": "It would block the way to a coop.",
+  "fr": "Cela bloquerait le chemin d’un poulailler."
+ },
+ {
+  "id": "text.dec_placed",
+  "en": "New on the farm: {name}! +{xp} XP",
+  "fr": "Nouveau dans la ferme : {name} ! +{xp} XP"
+ },
+ {
+  "id": "text.dec_moved",
+  "en": "{name}: moved!",
+  "fr": "{name} : c’est déplacé !"
+ },
+ {
+  "id": "text.dec_new",
+  "en": "New to buy: {names}",
+  "fr": "Nouveau à acheter : {names}"
+ },
+ {
+  "id": "text.dec_card_body",
+  "en": "Move it anywhere on your land.",
+  "fr": "Déplacez-le où vous voulez sur votre terrain."
+ },
+ {
+  "id": "text.dec_new_where",
+  "en": "In the shop: tap your coins at the top.",
+  "fr": "Dans la boutique : touchez vos pièces en haut."
+ },
+ {
+  "id": "text.dec_no_room",
+  "en": "No room for it on your land just now: buy the next field, or move things about.",
+  "fr": "Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses."
+ },
+ {
+  "id": "text.dec_pond_hint",
+  "en": "Your duck house is on the pond! The ducks will sleep in it tonight.",
+  "fr": "Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir."
+ },
+ {
+  "id": "text.shop_decor",
+  "en": "Decorations",
+  "fr": "Décorations"
+ },
+ {
+  "id": "text.shop_outfits",
+  "en": "Outfits",
+  "fr": "Tenues"
+ },
+ {
+  "id": "text.outfits_note",
+  "en": "New clothes for {farmer}. Each one gives XP when you buy it.",
+  "fr": "De nouveaux habits pour {farmer}. Chacun rapporte de l’XP à l’achat."
+ },
+ {
+  "id": "text.shop_seasons",
+  "en": "Seasons",
+  "fr": "Saisons"
+ },
+ {
+  "id": "text.seasons_note",
+  "en": "Dresses for your coops: each on sale in its season, then yours for good.",
+  "fr": "Des parures pour vos poulaillers : chacune en vente pendant sa saison, puis à vous pour toujours."
+ },
+ {
+  "id": "text.dress_xmas",
+  "en": "Christmas dress",
+  "fr": "parure de Noël"
+ },
+ {
+  "id": "text.dressl_xmas",
+  "en": "A garland with coloured lights along the fence, wreaths at the gate, fairy lights on the roof, a gold star and a little tree with presents.",
+  "fr": "Une guirlande de lumières de couleur le long de la clôture, des couronnes au portail, des guirlandes lumineuses sur le toit, une étoile dorée et un petit sapin avec des cadeaux."
+ },
+ {
+  "id": "text.dress_when_xmas",
+  "en": "On sale from 1 December to 6 January.",
+  "fr": "En vente du 1er décembre au 6 janvier."
+ },
+ {
+  "id": "text.dress_owned",
+  "en": "Yours for good: dress a coop from its card.",
+  "fr": "À vous pour toujours : parez un poulailler depuis sa fiche."
+ },
+ {
+  "id": "text.dress_buy",
+  "en": "Buy · {c}",
+  "fr": "Acheter · {c}"
+ },
+ {
+  "id": "text.dress_bought",
+  "en": "The {name} is yours (+{xp} XP)! Tap a coop to dress it.",
+  "fr": "La {name} est à vous (+{xp} XP) ! Touchez un poulailler pour la lui mettre."
+ },
+ {
+  "id": "text.dress_on",
+  "en": "🎄 Put on the {name}",
+  "fr": "🎄 Mettre la {name}"
+ },
+ {
+  "id": "text.dress_off",
+  "en": "Take off the {name}",
+  "fr": "Retirer la {name}"
+ },
+ {
+  "id": "text.dress_done",
+  "en": "Merry Christmas! {coop} is in its {name}.",
+  "fr": "Joyeux Noël ! {coop} porte sa {name}."
+ },
+ {
+  "id": "text.dress_gone",
+  "en": "{coop} has its everyday look again.",
+  "fr": "{coop} retrouve son allure de tous les jours."
+ },
+ {
+  "id": "text.dress_card",
+  "en": "It wears the {name}.",
+  "fr": "Il porte la {name}."
+ },
+ {
+  "id": "text.res_dress",
+  "en": "And a prize on top: the {name}!",
+  "fr": "Et en prime : la {name} !"
+ },
+ {
+  "id": "text.shop_animals",
+  "en": "Animals",
+  "fr": "Animaux"
+ },
+ {
+  "id": "text.ani_geese",
+  "en": "Gertrude and Hector, the geese",
+  "fr": "Gertrude et Hector, les oies"
+ },
+ {
+  "id": "text.anil_geese",
+  "en": "A pair of geese for the pond: they graze, swim, honk at everything and squabble now and then.",
+  "fr": "Un couple d’oies pour l’étang : elles broutent, nagent, cacardent après tout le monde et se chamaillent de temps en temps."
+ },
+ {
+  "id": "text.ani_dog",
+  "en": "{name}, the farm dog",
+  "fr": "{name}, le chien de la ferme"
+ },
+ {
+  "id": "text.anil_dog",
+  "en": "A Border Collie with his kennel and his ball: he does his rounds of the coops, plays, teases the geese, and you choose his name.",
+  "fr": "Un border collie avec sa niche et sa balle : il fait le tour des poulaillers, joue, taquine les oies, et c’est vous qui choisissez son nom."
+ },
+ {
+  "id": "text.ani_dog_owned",
+  "en": "On your farm",
+  "fr": "Dans votre ferme"
+ },
+ {
+  "id": "text.ani_see_dog",
+  "en": "See him",
+  "fr": "Le voir"
+ },
+ {
+  "id": "text.ani_move_kennel",
+  "en": "Move his kennel",
+  "fr": "Déplacer sa niche"
+ },
+ {
+  "id": "text.ani_rename",
+  "en": "Rename",
+  "fr": "Renommer"
+ },
+ {
+  "id": "text.kennel_name",
+  "en": "Kennel",
+  "fr": "Niche"
+ },
+ {
+  "id": "text.dog_came",
+  "en": "{name} has come to live on your farm! +{xp} XP",
+  "fr": "{name} vient vivre dans votre ferme ! +{xp} XP"
+ },
+ {
+  "id": "text.kennel_moved",
+  "en": "{name}’s kennel: moved!",
+  "fr": "La niche de {name} : c’est déplacé !"
+ },
+ {
+  "id": "text.ani_buy",
+  "en": "Buy · {c}",
+  "fr": "Acheter · {c}"
+ },
+ {
+  "id": "text.ani_owned",
+  "en": "At the pond",
+  "fr": "À l’étang"
+ },
+ {
+  "id": "text.ani_see",
+  "en": "See them",
+  "fr": "Les voir"
+ },
+ {
+  "id": "text.geese_sub",
+  "en": "Embden goose and Toulouse gander · by the pond",
+  "fr": "Oie d’Embden et jars de Toulouse · au bord de l’étang"
+ },
+ {
+  "id": "text.geese_visit",
+  "en": "Visit them",
+  "fr": "Leur rendre visite"
+ },
+ {
+  "id": "text.geese_lv0",
+  "en": "Cross",
+  "fr": "Fâchés"
+ },
+ {
+  "id": "text.geese_lv1",
+  "en": "Wary",
+  "fr": "Méfiants"
+ },
+ {
+  "id": "text.geese_lv2",
+  "en": "Curious",
+  "fr": "Curieux"
+ },
+ {
+  "id": "text.geese_lv3",
+  "en": "Friends",
+  "fr": "Amis"
+ },
+ {
+  "id": "text.geese_b0",
+  "en": "They don’t like {farmer} yet: they hiss and chase him out of their field.",
+  "fr": "Ils n’aiment pas encore {farmer} : ils sifflent et le chassent de leur pré.",
+  "gender": true,
+  "f_en": "They don’t like {farmer} yet: they hiss and chase her out of their field.",
+  "f_fr": "Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré."
+ },
+ {
+  "id": "text.geese_b1",
+  "en": "They put up with {farmer} now, from a distance, and eat the corn once he steps back.",
+  "fr": "Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand il s’éloigne.",
+  "gender": true,
+  "f_en": "They put up with {farmer} now, from a distance, and eat the corn once she steps back.",
+  "f_fr": "Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne."
+ },
+ {
+  "id": "text.geese_b2",
+  "en": "They come right up to eat the corn by {farmer}.",
+  "fr": "Ils viennent manger le grain tout près de {farmer}."
+ },
+ {
+  "id": "text.geese_b3",
+  "en": "They let {farmer} cuddle them, come to the fence to say hello, and chase Rusty off quicker.",
+  "fr": "Ils se laissent câliner par {farmer}, viennent dire bonjour à la clôture et chassent Rusty plus vite."
+ },
+ {
+  "id": "text.geese_next",
+  "en": "{n} more days of visits to “{level}”",
+  "fr": "Encore {n} jours de visites avant « {level} »"
+ },
+ {
+  "id": "text.geese_next1",
+  "en": "1 more day of visits to “{level}”",
+  "fr": "Encore 1 jour de visites avant « {level} »"
+ },
+ {
+  "id": "text.geese_how",
+  "en": "A visit counts once a day.",
+  "fr": "Une visite compte une fois par jour."
+ },
+ {
+  "id": "text.geese_today",
+  "en": "Today’s visit has counted: come back tomorrow.",
+  "fr": "La visite d’aujourd’hui a compté : revenez demain."
+ },
+ {
+  "id": "text.geese_night",
+  "en": "Visits in the morning: {farmer} is asleep.",
+  "fr": "Les visites, ce sera demain matin : {farmer} dort."
+ },
+ {
+  "id": "text.geese_visited",
+  "en": "{farmer} goes to see Gertrude and Hector. +{xp} XP",
+  "fr": "{farmer} va voir Gertrude et Hector. +{xp} XP"
+ },
+ {
+  "id": "text.geese_again",
+  "en": "{farmer} goes to see Gertrude and Hector again (today’s visit has already counted).",
+  "fr": "{farmer} retourne voir Gertrude et Hector (la visite d’aujourd’hui a déjà compté)."
+ },
+ {
+  "id": "text.geese_up1",
+  "en": "Gertrude and Hector are getting used to {farmer}. +{xp} XP",
+  "fr": "Gertrude et Hector s’habituent à {farmer}. +{xp} XP"
+ },
+ {
+  "id": "text.geese_up2",
+  "en": "Gertrude and Hector are curious about {farmer} now. +{xp} XP",
+  "fr": "Gertrude et Hector s’intéressent à {farmer} maintenant. +{xp} XP"
+ },
+ {
+  "id": "text.geese_up3",
+  "en": "Gertrude and Hector trust {farmer} now! +{xp} XP",
+  "fr": "Gertrude et Hector ont confiance en {farmer} ! +{xp} XP"
+ },
+ {
+  "id": "text.geese_cuddled",
+  "en": "{farmer} gives Gertrude and Hector a cuddle ♥ +{xp} XP",
+  "fr": "{farmer} fait un câlin à Gertrude et Hector ♥ +{xp} XP"
+ },
+ {
+  "id": "text.geese_happy",
+  "en": "Happy after a cuddle: {when} left",
+  "fr": "Heureux après un câlin : encore {when}"
+ },
+ {
+  "id": "text.geese_gate",
+  "en": "The geese’s gate",
+  "fr": "Le portail des oies"
+ },
+ {
+  "id": "text.fox_title",
+  "en": "Last night on the farm",
+  "fr": "La nuit dernière à la ferme"
+ },
+ {
+  "id": "text.fox_watch",
+  "en": "🎞 Watch it",
+  "fr": "🎞 Le voir"
+ },
+ {
+  "id": "text.fox_ok",
+  "en": "OK",
+  "fr": "OK"
+ },
+ {
+  "id": "text.fox_eggs",
+  "en": "Rusty the fox found the door of {hen}’s coop open and took {n} eggs from the nest. The hens are fine, just a little ruffled.",
+  "fr": "Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris {n} œufs dans le nid. Les poules vont bien, juste un peu ébouriffées."
+ },
+ {
+  "id": "text.fox_eggs1",
+  "en": "Rusty the fox found the door of {hen}’s coop open and took an egg from the nest. The hens are fine, just a little ruffled.",
+  "fr": "Rusty le renard a trouvé ouverte la porte du poulailler {dehen} et a pris un œuf dans le nid. Les poules vont bien, juste un peu ébouriffées."
+ },
+ {
+  "id": "text.fox_empty",
+  "en": "Rusty the fox found the door of {hen}’s coop open, but the nest was empty: {hen} pecked him on the nose and he went home.",
+  "fr": "Rusty le renard a trouvé ouverte la porte du poulailler {dehen}, mais le nid était vide : {hen} lui a pincé le nez et il est rentré chez lui."
+ },
+ {
+  "id": "text.fox_shut",
+  "en": "Rusty the fox came for the eggs, but the doors were shut. He went home empty-handed.",
+  "fr": "Rusty le renard est venu pour les œufs, mais les portes étaient fermées. Il est rentré bredouille."
+ },
+ {
+  "id": "text.fox_stuck",
+  "en": "An automatic door stuck open last night.",
+  "fr": "Une porte automatique est restée coincée ouverte cette nuit."
+ },
+ {
+  "id": "text.fox_geese",
+  "en": "Rusty the fox came for the eggs in {hen}’s coop, but the geese heard him and chased him all the way home!",
+  "fr": "Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies l’ont entendu et l’ont chassé jusque chez lui !"
+ },
+ {
+  "id": "text.fox_dog",
+  "en": "Rusty the fox came for the eggs in {hen}’s coop, but {dog} heard him and chased him all the way home!",
+  "fr": "Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {dog} l’a entendu et l’a chassé jusque chez lui !"
+ },
+ {
+  "id": "text.fox_team",
+  "en": "Rusty the fox came for the eggs in {hen}’s coop, but the geese and {dog} heard him and chased him all the way home!",
+  "fr": "Rusty le renard est venu pour les œufs du poulailler {dehen}, mais les oies et {dog} l’ont entendu et l’ont chassé jusque chez lui !"
+ },
+ {
+  "id": "text.fox_farmer",
+  "en": "Rusty the fox came for the eggs in {hen}’s coop, but {farmer} came out with the torch and sent him home!",
+  "fr": "Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sorti avec sa lampe et l’a renvoyé chez lui !",
+  "gender": true,
+  "f_en": "Rusty the fox came for the eggs in {hen}’s coop, but {farmer} came out with the torch and sent him home!",
+  "f_fr": "Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !"
+ },
+ {
+  "id": "text.fox_tip",
+  "en": "To keep the eggs safe, shut the coops’ doors at night (tap the moon over each door), or get the geese (the shop, Animals).",
+  "fr": "Pour protéger les œufs, fermez les portes des poulaillers la nuit (touchez la lune au-dessus de chaque porte), ou prenez les oies (la boutique, Animaux)."
+ },
+ {
+  "id": "text.fox_new",
+  "en": "From now on Rusty the fox may come at night for the eggs: shut the coops’ doors, or get the geese.",
+  "fr": "Désormais, Rusty le renard peut venir la nuit chercher les œufs : fermez les portes des poulaillers, ou prenez les oies."
+ },
+ {
+  "id": "text.geese_came",
+  "en": "Gertrude and Hector have come to live by the pond! +{xp} XP",
+  "fr": "Gertrude et Hector viennent vivre au bord de l’étang ! +{xp} XP"
+ },
+ {
+  "id": "text.geese_hello",
+  "en": "Tap a goose to say hello.",
+  "fr": "Touchez une oie pour lui dire bonjour."
+ },
+ {
+  "id": "text.of_classic",
+  "en": "Classic",
+  "fr": "Classique"
+ },
+ {
+  "id": "text.of_market",
+  "en": "Market day",
+  "fr": "Jour de marché"
+ },
+ {
+  "id": "text.of_garden",
+  "en": "Garden party",
+  "fr": "Garden-party"
+ },
+ {
+  "id": "text.of_winter",
+  "en": "Winter woollies",
+  "fr": "Lainages d’hiver"
+ },
+ {
+  "id": "text.of_rodeo",
+  "en": "Rodeo",
+  "fr": "Rodéo"
+ },
+ {
+  "id": "text.of_show",
+  "en": "Show day",
+  "fr": "Jour de concours"
+ },
+ {
+  "id": "text.ofd_classic",
+  "en": "Straw hat and a checked shirt.",
+  "fr": "Chapeau de paille et chemise à carreaux."
+ },
+ {
+  "id": "text.ofd_market",
+  "en": "Tweed flat cap and a blue checked shirt.",
+  "fr": "Casquette en tweed et chemise à carreaux bleus."
+ },
+ {
+  "id": "text.ofd_garden",
+  "en": "Flowery sun hat and a yellow gingham shirt.",
+  "fr": "Chapeau fleuri et chemise vichy jaune."
+ },
+ {
+  "id": "text.ofd_winter",
+  "en": "Bobble hat and a green jumper.",
+  "fr": "Bonnet à pompon et pull vert."
+ },
+ {
+  "id": "text.ofd_rodeo",
+  "en": "Cowboy hat, chambray shirt and a neckerchief.",
+  "fr": "Chapeau de cow-boy, chemise en chambray et foulard."
+ },
+ {
+  "id": "text.ofd_show",
+  "en": "Top hat, white shirt and a prize rosette.",
+  "fr": "Haut-de-forme, chemise blanche et cocarde de champion."
+ },
+ {
+  "id": "text.out_buy",
+  "en": "Buy and wear · {c}",
+  "fr": "Acheter et porter · {c}"
+ },
+ {
+  "id": "text.out_wear",
+  "en": "Wear",
+  "fr": "Porter"
+ },
+ {
+  "id": "text.out_wearing",
+  "en": "Wearing",
+  "fr": "Portée"
+ },
+ {
+  "id": "text.out_bought",
+  "en": "{farmer} tries on the {name} outfit! +{xp} XP",
+  "fr": "{farmer} enfile la tenue {name} ! +{xp} XP"
+ },
+ {
+  "id": "text.out_worn",
+  "en": "{farmer} is wearing the {name} outfit.",
+  "fr": "{farmer} porte la tenue {name}."
+ },
+ {
+  "id": "text.out_new",
+  "en": "New outfit for {farmer}: {names}",
+  "fr": "Nouvelle tenue pour {farmer} : {names}"
+ },
+ {
+  "id": "text.away_title",
+  "en": "While you were away",
+  "fr": "Pendant votre absence"
+ },
+ {
+  "id": "text.away_for",
+  "en": "You were away {t}.",
+  "fr": "Vous étiez loin de la ferme pendant {t}."
+ },
+ {
+  "id": "text.away_paused",
+  "en": "You were away more than 2 days: your hens laid for the last two.",
+  "fr": "Plus de 2 jours loin de la ferme : vos poules ont pondu pour les deux derniers."
+ },
+ {
+  "id": "text.away_eggs",
+  "en": "{n} eggs are waiting in your nests",
+  "fr": "{n} œufs vous attendent dans les pondoirs"
+ },
+ {
+  "id": "text.away_eggs1",
+  "en": "An egg is waiting in a nest",
+  "fr": "Un œuf vous attend dans un pondoir"
+ },
+ {
+  "id": "text.away_full",
+  "en": "{n} nests are full: those hens have stopped laying",
+  "fr": "{n} pondoirs sont pleins : ces poules ont arrêté de pondre"
+ },
+ {
+  "id": "text.away_full1",
+  "en": "A nest is full: those hens have stopped laying",
+  "fr": "Un pondoir est plein : ces poules ont arrêté de pondre"
+ },
+ {
+  "id": "text.away_hatched",
+  "en": "{name} hatched {n} chicks",
+  "fr": "{name} a fait éclore {n} poussins"
+ },
+ {
+  "id": "text.away_grown",
+  "en": "{name}’s chicks have grown up: their card is next",
+  "fr": "Les poussins de {name} ont grandi : leur carte arrive"
+ },
+ {
+  "id": "text.away_honey",
+  "en": "{n} jars of honey in the hives",
+  "fr": "{n} pots de miel dans les ruches"
+ },
+ {
+  "id": "text.away_honey1",
+  "en": "A jar of honey in the hives",
+  "fr": "Un pot de miel dans les ruches"
+ },
+ {
+  "id": "text.away_wheat",
+  "en": "Your wheat is ripe: tap the field to harvest it",
+  "fr": "Votre blé est mûr : touchez le champ pour le récolter"
+ },
+ {
+  "id": "text.away_wheat_grow",
+  "en": "Your wheat is growing: ripe in {t}",
+  "fr": "Votre blé pousse : mûr dans {t}"
+ },
+ {
+  "id": "text.away_feed",
+  "en": "{coop}: the feeder is empty",
+  "fr": "{coop} : la mangeoire est vide"
+ },
+ {
+  "id": "text.away_feed_low",
+  "en": "{coop}: the feeder is low",
+  "fr": "{coop} : la mangeoire est presque vide"
+ },
+ {
+  "id": "text.away_show",
+  "en": "The show results are in: they’re next",
+  "fr": "Les résultats des concours sont arrivés : ils arrivent juste après"
+ },
+ {
+  "id": "text.away_jobs",
+  "en": "New jobs for today",
+  "fr": "De nouvelles tâches aujourd’hui"
+ },
+ {
+  "id": "text.away_jobs_ready",
+  "en": "{n} job rewards to collect",
+  "fr": "{n} récompenses de tâches à récupérer"
+ },
+ {
+  "id": "text.away_jobs_ready1",
+  "en": "A job reward to collect",
+  "fr": "Une récompense de tâche à récupérer"
+ },
+ {
+  "id": "text.away_collect",
+  "en": "Collect all eggs ({n})",
+  "fr": "Ramasser les œufs ({n})"
+ },
+ {
+  "id": "text.away_ok",
+  "en": "Off to the farm",
+  "fr": "À la ferme"
+ },
+ {
+  "id": "text.away_sold",
+  "en": "{n} eggs sold · +{c} coins",
+  "fr": "{n} œufs vendus · +{c} pièces"
+ },
+ {
+  "id": "text.intro_1",
+  "en": "Your forever flock",
+  "fr": "Votre basse-cour pour toujours"
+ },
+ {
+  "id": "text.intro_1b",
+  "en": "Your three Rhode Island Reds are yours for good. Cuddle them: they trust you more, earn stars and lay better eggs.",
+  "fr": "Vos trois Rhode Island Red sont à vous pour toujours. Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs."
+ },
+ {
+  "id": "text.intro_2",
+  "en": "Eggs and chicks",
+  "fr": "Œufs et poussins"
+ },
+ {
+  "id": "text.intro_2b",
+  "en": "Each hen lays about two eggs a day: collect them to sell. Now and then a hen raises chicks; grown up, they leave for a new farm and you earn coins.",
+  "fr": "Chaque poule pond environ deux œufs par jour : ramassez-les pour les vendre. De temps en temps, une poule élève des poussins ; une fois grands, ils partent pour une nouvelle ferme et vous gagnez des pièces."
+ },
+ {
+  "id": "text.intro_3",
+  "en": "Land and new breeds",
+  "fr": "Terres et nouvelles races"
+ },
+ {
+  "id": "text.intro_3b",
+  "en": "Each level brings a field to buy, and new breeds arrive as trios with their own coop. Put everything where you like.",
+  "fr": "Chaque niveau apporte un terrain à acheter, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez."
+ },
+ {
+  "id": "text.intro_4",
+  "en": "Shows, honey and more",
+  "fr": "Concours, miel et plus encore"
+ },
+ {
+  "id": "text.intro_4b",
+  "en": "Win rosettes at shows, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.",
+  "fr": "Gagnez des cocardes aux concours, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour."
+ },
+ {
+  "id": "text.intro_next",
+  "en": "Next",
+  "fr": "Suivant"
+ },
+ {
+  "id": "text.intro_go",
+  "en": "Let’s go!",
+  "fr": "C’est parti !"
+ },
+ {
+  "id": "text.intro_skip",
+  "en": "Skip",
+  "fr": "Passer"
+ },
+ {
+  "id": "text.guide_n",
+  "en": "First day · {n} of {of}",
+  "fr": "Premier jour · {n} sur {of}"
+ },
+ {
+  "id": "text.guide_skip",
+  "en": "Skip",
+  "fr": "Passer"
+ },
+ {
+  "id": "text.guide_show",
+  "en": "Show me",
+  "fr": "Montrer"
+ },
+ {
+  "id": "text.guide_eggs",
+  "en": "Collect your first egg: tap the egg over the Red Barn.",
+  "fr": "Ramassez votre premier œuf : touchez l’œuf au-dessus de la Grange rouge."
+ },
+ {
+  "id": "text.guide_eggs_wait",
+  "en": "Your first egg is on its way: a hen will go in to lay in a moment.",
+  "fr": "Votre premier œuf arrive : une poule va aller pondre dans un instant."
+ },
+ {
+  "id": "text.guide_cuddle",
+  "en": "Give a hen a cuddle: tap a hen, then ♥ Cuddle.",
+  "fr": "Faites un câlin à une poule : touchez une poule, puis ♥ Faire un câlin."
+ },
+ {
+  "id": "text.guide_cuddle_card",
+  "en": "Now tap ♥ Cuddle.",
+  "fr": "Touchez maintenant ♥ Faire un câlin."
+ },
+ {
+  "id": "text.guide_sow",
+  "en": "Sow your wheat field: tap its sign, then Sow.",
+  "fr": "Semez votre champ de blé : touchez son panneau, puis Semer."
+ },
+ {
+  "id": "text.guide_sow_card",
+  "en": "Tap Sow: the wheat will feed your hens.",
+  "fr": "Touchez Semer : le blé nourrira vos poules."
+ },
+ {
+  "id": "text.guide_jobs",
+  "en": "Today’s jobs: tap the clipboard at the top.",
+  "fr": "Les tâches du jour : touchez le presse-papiers en haut."
+ },
+ {
+  "id": "text.guide_shop",
+  "en": "Tap your coins: the shop for decorations, animals and outfits.",
+  "fr": "Touchez vos pièces : la boutique des décorations, des animaux et des tenues."
+ },
+ {
+  "id": "text.guide_did",
+  "en": "Well done! +{c} coins",
+  "fr": "Bravo ! +{c} pièces"
+ },
+ {
+  "id": "text.guide_done",
+  "en": "Your first day is done! +{c} coins. A new field comes at level 2.",
+  "fr": "Votre premier jour est terminé ! +{c} pièces. Un nouveau terrain arrive au niveau 2."
+ },
+ {
+  "id": "text.jobs_title",
+  "en": "Today’s jobs",
+  "fr": "Les tâches du jour"
+ },
+ {
+  "id": "text.jobs_aria",
+  "en": "Today’s jobs",
+  "fr": "Les tâches du jour"
+ },
+ {
+  "id": "text.jobs_new",
+  "en": "new jobs today",
+  "fr": "nouvelles tâches aujourd’hui"
+ },
+ {
+  "id": "text.jobs_ready",
+  "en": "{n} to collect",
+  "fr": "{n} à récupérer"
+ },
+ {
+  "id": "text.job_eggs",
+  "en": "Collect {n} eggs",
+  "fr": "Ramasser {n} œufs"
+ },
+ {
+  "id": "text.job_eggs1",
+  "en": "Collect an egg",
+  "fr": "Ramasser un œuf"
+ },
+ {
+  "id": "text.job_cuddle",
+  "en": "Give {n} cuddles",
+  "fr": "Faire {n} câlins"
+ },
+ {
+  "id": "text.job_cuddle1",
+  "en": "Give a cuddle",
+  "fr": "Faire un câlin"
+ },
+ {
+  "id": "text.job_feed",
+  "en": "Fill a feeder",
+  "fr": "Remplir une mangeoire"
+ },
+ {
+  "id": "text.job_show",
+  "en": "Enter a bird in a show",
+  "fr": "Inscrire une volaille à un concours"
+ },
+ {
+  "id": "text.job_reward",
+  "en": "+{c} coins · +{xp} XP",
+  "fr": "+{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.job_claim",
+  "en": "Collect",
+  "fr": "Récupérer"
+ },
+ {
+  "id": "text.job_paid",
+  "en": "Done ✓",
+  "fr": "Fait ✓"
+ },
+ {
+  "id": "text.jobs_note",
+  "en": "New jobs every day at midnight.",
+  "fr": "De nouvelles tâches chaque jour à minuit."
+ },
+ {
+  "id": "text.job_done",
+  "en": "Job done: {job}! Collect your reward in Today’s jobs.",
+  "fr": "Tâche faite : {job} ! Récupérez la récompense dans Les tâches du jour."
+ },
+ {
+  "id": "text.job_claimed",
+  "en": "+{c} coins · +{xp} XP",
+  "fr": "+{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.show_sign_v",
+  "en": "Village Show",
+  "fr": "Concours de village"
+ },
+ {
+  "id": "text.show_sign_c",
+  "en": "County Show",
+  "fr": "Concours régional"
+ },
+ {
+  "id": "text.show_sign_n",
+  "en": "National Championship",
+  "fr": "Championnat national"
+ },
+ {
+  "id": "text.showday_title",
+  "en": "Show day!",
+  "fr": "Jour de concours !"
+ },
+ {
+  "id": "text.showday_body",
+  "en": "The results of the {show} are in: the judge is looking at the birds.",
+  "fr": "Les résultats du {show} sont arrivés : le juge regarde les volailles."
+ },
+ {
+  "id": "text.showday_watch",
+  "en": "Watch the judging",
+  "fr": "Regarder le jugement"
+ },
+ {
+  "id": "text.showday_results",
+  "en": "Just the results",
+  "fr": "Juste les résultats"
+ },
+ {
+  "id": "text.skip",
+  "en": "Skip",
+  "fr": "Passer"
+ },
+ {
+  "id": "text.sd_arrive",
+  "en": "{farmer} brings {name} to the show…",
+  "fr": "{farmer} amène {name} au concours…"
+ },
+ {
+  "id": "text.sd_judge",
+  "en": "The judge looks at every bird…",
+  "fr": "Le juge regarde chaque volaille…"
+ },
+ {
+  "id": "text.sd_rosettes",
+  "en": "And now, the rosettes!",
+  "fr": "Et maintenant, les cocardes !"
+ },
+ {
+  "id": "text.champ_c",
+  "en": "County champion",
+  "fr": "Champion régional",
+  "gender": true,
+  "f_en": "County champion",
+  "f_fr": "Championne régionale"
+ },
+ {
+  "id": "text.champ_n",
+  "en": "National champion",
+  "fr": "Champion national",
+  "gender": true,
+  "f_en": "National champion",
+  "f_fr": "Championne nationale"
+ },
+ {
+  "id": "text.show_new_c",
+  "en": "The County show: entry {f}, 1st prize {p} coins",
+  "fr": "Le concours régional : inscription {f}, 1er prix {p} pièces"
+ },
+ {
+  "id": "text.show_new_n",
+  "en": "The National Championship: entry {f}, 1st prize {p} coins",
+  "fr": "Le championnat national : inscription {f}, 1er prix {p} pièces"
+ },
+ {
+  "id": "text.book_sil",
+  "en": "White Silkie",
+  "fr": "Poule soie blanche"
+ },
+ {
+  "id": "text.egg_rir",
+  "en": "Brown eggs",
+  "fr": "Œufs bruns"
+ },
+ {
+  "id": "text.egg_orp",
+  "en": "Light brown eggs",
+  "fr": "Œufs brun clair"
+ },
+ {
+  "id": "text.egg_sil",
+  "en": "Cream-tinted eggs",
+  "fr": "Œufs teintés crème"
+ },
+ {
+  "id": "text.egg_leg",
+  "en": "Blue eggs",
+  "fr": "Œufs bleus"
+ },
+ {
+  "id": "text.egg_bra",
+  "en": "Light brown eggs",
+  "fr": "Œufs brun clair"
+ },
+ {
+  "id": "text.coins_body",
+  "en": "Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.",
+  "fr": "Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore."
+ },
+ {
+  "id": "text.settings_music",
+  "en": "Music",
+  "fr": "Musique"
+ },
+ {
+  "id": "text.settings_sounds",
+  "en": "Sounds",
+  "fr": "Sons"
+ },
+ {
+  "id": "text.music_on",
+  "en": "On",
+  "fr": "Oui"
+ },
+ {
+  "id": "text.music_off",
+  "en": "Off",
+  "fr": "Non"
+ },
+ {
+  "id": "text.settings_music_note",
+  "en": "The music comes now and then, by day and of an evening. With your phone on silent, the game is silent too.",
+  "fr": "La musique vient de temps en temps, le jour et le soir. Si votre téléphone est en mode silencieux, le jeu l’est aussi."
+ },
+ {
+  "id": "text.settings_lang",
+  "en": "Language",
+  "fr": "Langue"
+ },
+ {
+  "id": "text.settings_new",
+  "en": "Start a new farm",
+  "fr": "Commencer une nouvelle ferme"
+ },
+ {
+  "id": "text.settings_new_sure",
+  "en": "Tap again to start again from nothing",
+  "fr": "Touchez encore pour tout recommencer"
+ },
+ {
+  "id": "text.settings_edited",
+  "en": "This farm was changed outside the game: everything in it has been checked.",
+  "fr": "Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié."
+ },
+ {
+  "id": "text.settings_version",
+  "en": "Version {v}",
+  "fr": "Version {v}"
+ },
+ {
+  "id": "text.saved_here",
+  "en": "Your farm is saved on this phone.",
+  "fr": "Votre ferme est enregistrée sur ce téléphone."
+ },
+ {
+  "id": "text.code_t",
+  "en": "Your farm code",
+  "fr": "Le code de votre ferme"
+ },
+ {
+  "id": "text.code_how",
+  "en": "Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.",
+  "fr": "Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez."
+ },
+ {
+  "id": "text.code_copy",
+  "en": "Copy my farm code",
+  "fr": "Copier le code de ma ferme"
+ },
+ {
+  "id": "text.code_paste",
+  "en": "Paste a farm code here",
+  "fr": "Collez un code de ferme ici"
+ },
+ {
+  "id": "text.code_load",
+  "en": "Load this farm",
+  "fr": "Charger cette ferme"
+ },
+ {
+  "id": "text.code_load_sure",
+  "en": "Tap again to replace this farm",
+  "fr": "Touchez encore pour remplacer cette ferme"
+ },
+ {
+  "id": "text.code_note",
+  "en": "Loading a farm replaces the one on this phone.",
+  "fr": "Charger une ferme remplace celle de ce téléphone."
+ },
+ {
+  "id": "text.code_copied",
+  "en": "Farm code copied. Paste it into Notes to keep it safe.",
+  "fr": "Code copié. Collez-le dans Notes pour le garder."
+ },
+ {
+  "id": "text.code_select",
+  "en": "Here is your farm code: select it all and copy it.",
+  "fr": "Voici le code de votre ferme : sélectionnez-le en entier et copiez-le."
+ },
+ {
+  "id": "text.code_bad",
+  "en": "That farm code doesn’t work. Copy it again, all of it.",
+  "fr": "Ce code ne fonctionne pas. Copiez-le à nouveau, en entier."
+ },
+ {
+  "id": "text.code_old",
+  "en": "That code is from the first Feather & Field: this new farm starts fresh.",
+  "fr": "Ce code vient du premier Feather & Field : cette nouvelle ferme repart de zéro."
+ },
+ {
+  "id": "text.code_loaded",
+  "en": "Farm loaded: level {n}. Welcome back!",
+  "fr": "Ferme chargée : niveau {n}. Bon retour !"
+ },
+ {
+  "id": "text.first_t",
+  "en": "The first Feather & Field",
+  "fr": "Le premier Feather & Field"
+ },
+ {
+  "id": "text.first_how",
+  "en": "Your farm from the first game is kept just as it was. Open it whenever you like.",
+  "fr": "Votre ferme du premier jeu est gardée telle quelle. Ouvrez-la quand vous voulez."
+ },
+ {
+  "id": "text.first_open",
+  "en": "Open the first game",
+  "fr": "Ouvrir le premier jeu"
+ },
+ {
+  "id": "text.welcome_first",
+  "en": "Your farm from the first game is safe in Settings.",
+  "fr": "Votre ferme du premier jeu est dans les Réglages."
+ },
+ {
+  "id": "text.loading",
+  "en": "Loading your farm…",
+  "fr": "Chargement de votre ferme…"
+ },
+ {
+  "id": "text.eggs",
+  "en": "Eggs",
+  "fr": "Œufs"
+ },
+ {
+  "id": "text.lays",
+  "en": "Lays about 2 eggs a day, {p} coins each.",
+  "fr": "Pond environ 2 œufs par jour, à {p} pièces l’œuf."
+ },
+ {
+  "id": "text.lays_sil",
+  "en": "Lays about an egg a day, {p} coins each: Silkies are better mums than layers.",
+  "fr": "Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses."
+ },
+ {
+  "id": "text.eggs_sold1",
+  "en": "1 egg sold · +{c} coins",
+  "fr": "1 œuf vendu · +{c} pièces"
+ },
+ {
+  "id": "text.eggs_sold",
+  "en": "{n} eggs sold · +{c} coins",
+  "fr": "{n} œufs vendus · +{c} pièces"
+ },
+ {
+  "id": "text.eggs_fresh1",
+  "en": "1 fresh egg sold · +{c} coins · +{xp} XP",
+  "fr": "1 œuf tout frais vendu · +{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.eggs_fresh",
+  "en": "{n} eggs sold · +{c} coins · {f} fresh: +{xp} XP",
+  "fr": "{n} œufs vendus · +{c} pièces · {f} tout frais : +{xp} XP"
+ },
+ {
+  "id": "text.no_eggs",
+  "en": "No eggs yet",
+  "fr": "Pas encore d’œufs"
+ },
+ {
+  "id": "text.laying",
+  "en": "{name} is laying…",
+  "fr": "{name} est en train de pondre…"
+ },
+ {
+  "id": "text.first_egg",
+  "en": "{name} has laid your first egg! Tap the nest to collect it.",
+  "fr": "{name} a pondu votre premier œuf ! Touchez le nid pour le ramasser."
+ },
+ {
+  "id": "text.nest_full",
+  "en": "The nest is full: collect the eggs so your hens can lay again.",
+  "fr": "Le nid est plein : ramassez les œufs pour que vos poules pondent à nouveau."
+ },
+ {
+  "id": "text.feeder_title",
+  "en": "Feeder · {coop}",
+  "fr": "Mangeoire · {coop}"
+ },
+ {
+  "id": "text.feed_full",
+  "en": "Full",
+  "fr": "Pleine"
+ },
+ {
+  "id": "text.feed_pct",
+  "en": "{p}% full",
+  "fr": "Pleine à {p} %"
+ },
+ {
+  "id": "text.feed_empty",
+  "en": "Empty",
+  "fr": "Vide"
+ },
+ {
+  "id": "text.feed_hours",
+  "en": "Enough for about {h} hours.",
+  "fr": "De quoi tenir environ {h} heures."
+ },
+ {
+  "id": "text.feed_hour",
+  "en": "Enough for about an hour.",
+  "fr": "De quoi tenir environ une heure."
+ },
+ {
+  "id": "text.feed_days",
+  "en": "Enough for about two days.",
+  "fr": "De quoi tenir environ deux jours."
+ },
+ {
+  "id": "text.feed_empty_line",
+  "en": "Your hens stop laying until it’s filled.",
+  "fr": "Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie."
+ },
+ {
+  "id": "text.feed_how",
+  "en": "Your hens lay while there’s food in it. Full, it feeds your trio for two days.",
+  "fr": "Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+ },
+ {
+  "id": "text.fill_grain",
+  "en": "Fill it with your grain (free)",
+  "fr": "La remplir avec votre grain (gratuit)"
+ },
+ {
+  "id": "text.fill_grain_c",
+  "en": "Fill it · {c} coins + your grain",
+  "fr": "La remplir · {c} pièces + votre grain"
+ },
+ {
+  "id": "text.feed_grain",
+  "en": "Your grain from the wheat field: {n} (used first).",
+  "fr": "Votre grain du champ de blé : {n} (utilisé d’abord)."
+ },
+ {
+  "id": "text.filled_grain",
+  "en": "Feeder filled with your own grain",
+  "fr": "Mangeoire remplie avec votre propre grain"
+ },
+ {
+  "id": "text.farmer_grain",
+  "en": "{farmer} is on the way with your grain",
+  "fr": "{farmer} arrive avec votre grain"
+ },
+ {
+  "id": "text.wheat_title",
+  "en": "Your wheat field",
+  "fr": "Votre champ de blé"
+ },
+ {
+  "id": "text.wheat_soil",
+  "en": "Ploughed and ready to sow.",
+  "fr": "Labouré et prêt à semer."
+ },
+ {
+  "id": "text.wheat_sown",
+  "en": "Sown: the first shoots soon.",
+  "fr": "Semé : les premières pousses bientôt."
+ },
+ {
+  "id": "text.wheat_sprouts",
+  "en": "The first green shoots.",
+  "fr": "Les premières pousses vertes."
+ },
+ {
+  "id": "text.wheat_growing",
+  "en": "Growing tall and green.",
+  "fr": "Il pousse, haut et vert."
+ },
+ {
+  "id": "text.wheat_ripe",
+  "en": "Golden and ready to harvest!",
+  "fr": "Doré et prêt à récolter !"
+ },
+ {
+  "id": "text.wheat_how",
+  "en": "Sow it for {c} coins; 4 hours later it’s ripe. Harvested, it gives {g} grain for your feeders (they use it before coins) and {xp} XP.",
+  "fr": "Semez-le pour {c} pièces ; 4 heures plus tard, il est mûr. Récolté, il donne {g} de grain pour vos mangeoires (utilisé avant les pièces) et {xp} XP."
+ },
+ {
+  "id": "text.wheat_left",
+  "en": "Ripe in {t}",
+  "fr": "Mûr dans {t}"
+ },
+ {
+  "id": "text.wheat_store",
+  "en": "Grain in store: {n} of {max}",
+  "fr": "Grain en réserve : {n} sur {max}"
+ },
+ {
+  "id": "text.wheat_sow",
+  "en": "Sow · {c} coins",
+  "fr": "Semer · {c} pièces"
+ },
+ {
+  "id": "text.wheat_harvest",
+  "en": "Harvest",
+  "fr": "Récolter"
+ },
+ {
+  "id": "text.wheat_move",
+  "en": "Move the field",
+  "fr": "Déplacer le champ"
+ },
+ {
+  "id": "text.wheat_broke",
+  "en": "Not enough coins to sow yet",
+  "fr": "Pas encore assez de pièces pour semer"
+ },
+ {
+  "id": "text.bub_sow",
+  "en": "Sow",
+  "fr": "Semer"
+ },
+ {
+  "id": "text.bub_harvest",
+  "en": "Harvest",
+  "fr": "Récolter"
+ },
+ {
+  "id": "text.wheat_sowing",
+  "en": "{farmer} is on the way to sow the wheat · −{c} coins",
+  "fr": "{farmer} va semer le blé · −{c} pièces"
+ },
+ {
+  "id": "text.wheat_sowed",
+  "en": "Wheat sown · −{c} coins. Ripe in 4 hours.",
+  "fr": "Blé semé · −{c} pièces. Mûr dans 4 heures."
+ },
+ {
+  "id": "text.wheat_cutting",
+  "en": "{farmer} is on the way to harvest the wheat",
+  "fr": "{farmer} va récolter le blé"
+ },
+ {
+  "id": "text.wheat_done",
+  "en": "Wheat harvested: +{g} grain for the feeders · +{xp} XP",
+  "fr": "Blé récolté : +{g} de grain pour les mangeoires · +{xp} XP"
+ },
+ {
+  "id": "text.wheat_full",
+  "en": "Wheat harvested · +{xp} XP (your grain store is full)",
+  "fr": "Blé récolté · +{xp} XP (votre réserve de grain est pleine)"
+ },
+ {
+  "id": "text.honey_title",
+  "en": "Honey",
+  "fr": "Miel"
+ },
+ {
+  "id": "text.honey_jars",
+  "en": "{n} jars of honey",
+  "fr": "{n} pots de miel"
+ },
+ {
+  "id": "text.honey_jar",
+  "en": "A jar of honey",
+  "fr": "Un pot de miel"
+ },
+ {
+  "id": "text.honey_none",
+  "en": "No honey yet: the next jar in {t}.",
+  "fr": "Pas encore de miel : le prochain pot dans {t}."
+ },
+ {
+  "id": "text.honey_going",
+  "en": "{farmer} is on the way to the beehives",
+  "fr": "{farmer} va aux ruches"
+ },
+ {
+  "id": "text.honey_sold",
+  "en": "{n} jars of honey sold · +{c} coins",
+  "fr": "{n} pots de miel vendus · +{c} pièces"
+ },
+ {
+  "id": "text.honey_sold1",
+  "en": "A jar of honey sold · +{c} coins",
+  "fr": "Un pot de miel vendu · +{c} pièces"
+ },
+ {
+  "id": "text.fish_rudd",
+  "en": "Rudd",
+  "fr": "Rotengle"
+ },
+ {
+  "id": "text.fish_roach",
+  "en": "Roach",
+  "fr": "Gardon"
+ },
+ {
+  "id": "text.fish_perch",
+  "en": "Perch",
+  "fr": "Perche"
+ },
+ {
+  "id": "text.fish_tench",
+  "en": "Tench",
+  "fr": "Tanche"
+ },
+ {
+  "id": "text.fish_golden_tench",
+  "en": "Golden tench",
+  "fr": "Tanche dorée"
+ },
+ {
+  "id": "text.fish_koi",
+  "en": "Koi",
+  "fr": "Koï"
+ },
+ {
+  "id": "text.fish_big_bertha",
+  "en": "Big Bertha",
+  "fr": "Grosse Berthe"
+ },
+ {
+  "id": "text.fish_minnow",
+  "en": "Minnow",
+  "fr": "Vairon"
+ },
+ {
+  "id": "text.fish_gudgeon",
+  "en": "Gudgeon",
+  "fr": "Goujon"
+ },
+ {
+  "id": "text.fish_dace",
+  "en": "Dace",
+  "fr": "Vandoise"
+ },
+ {
+  "id": "text.fish_chub",
+  "en": "Chub",
+  "fr": "Chevesne"
+ },
+ {
+  "id": "text.fish_brown_trout",
+  "en": "Brown trout",
+  "fr": "Truite fario"
+ },
+ {
+  "id": "text.fish_grayling",
+  "en": "Grayling",
+  "fr": "Ombre"
+ },
+ {
+  "id": "text.fish_old_snapjaw",
+  "en": "Old Snapjaw",
+  "fr": "Vieux Claquemâchoire"
+ },
+ {
+  "id": "text.fish_new",
+  "en": "Fishing at the pond: tap its dock",
+  "fr": "La pêche à l’étang : touchez son ponton"
+ },
+ {
+  "id": "text.fish_new_river",
+  "en": "Fishing in the river: tap its footbridge",
+  "fr": "La pêche à la rivière : touchez sa passerelle"
+ },
+ {
+  "id": "text.fish_show_river",
+  "en": "Show me the river",
+  "fr": "Voir la rivière"
+ },
+ {
+  "id": "text.book_tab_birds",
+  "en": "Breeds",
+  "fr": "Races"
+ },
+ {
+  "id": "text.book_tab_fish",
+  "en": "Fish",
+  "fr": "Poissons"
+ },
+ {
+  "id": "text.book_fish_found",
+  "en": "{n} of {all} fish caught",
+  "fr": "{n} poissons pêchés sur {all}"
+ },
+ {
+  "id": "text.book_fish_pond",
+  "en": "The pond",
+  "fr": "L’étang"
+ },
+ {
+  "id": "text.book_fish_river",
+  "en": "The river",
+  "fr": "La rivière"
+ },
+ {
+  "id": "text.fish_rare0",
+  "en": "Common",
+  "fr": "Commun"
+ },
+ {
+  "id": "text.fish_rare1",
+  "en": "✦ Rare",
+  "fr": "✦ Rare"
+ },
+ {
+  "id": "text.fish_rare2",
+  "en": "✦✦ Legendary",
+  "fr": "✦✦ Légendaire"
+ },
+ {
+  "id": "text.book_fish_caught",
+  "en": "Caught {n} times · your biggest {cm} cm",
+  "fr": "Pêché {n} fois · votre plus gros : {cm} cm"
+ },
+ {
+  "id": "text.book_fish_caught1",
+  "en": "Caught once · {cm} cm",
+  "fr": "Pêché une fois · {cm} cm"
+ },
+ {
+  "id": "text.book_fish_not",
+  "en": "Not caught yet",
+  "fr": "Pas encore pêché"
+ },
+ {
+  "id": "text.book_fish_level",
+  "en": "Fishing here opens at level {n}",
+  "fr": "La pêche ici ouvre au niveau {n}"
+ },
+ {
+  "id": "text.book_fish_size",
+  "en": "{a} to {b} cm",
+  "fr": "De {a} à {b} cm"
+ },
+ {
+  "id": "text.book_fish_price",
+  "en": "about {c} coins",
+  "fr": "environ {c} pièces"
+ },
+ {
+  "id": "text.book_fish_photo",
+  "en": "its photo {c} coins",
+  "fr": "sa photo {c} pièces"
+ },
+ {
+  "id": "text.fish_going_river",
+  "en": "{farmer} is off to the footbridge",
+  "fr": "{farmer} part à la passerelle"
+ },
+ {
+  "id": "text.river_title",
+  "en": "Fishing in the river",
+  "fr": "La pêche à la rivière"
+ },
+ {
+  "id": "text.river_body",
+  "en": "Minnows, gudgeon, dace and chub live in the river, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.",
+  "fr": "Vairons, goujons, vandoises et chevesnes vivent dans la rivière, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme."
+ },
+ {
+  "id": "text.fish_show",
+  "en": "Show me the pond",
+  "fr": "Voir l’étang"
+ },
+ {
+  "id": "text.dock_title",
+  "en": "Fishing at the pond",
+  "fr": "La pêche à l’étang"
+ },
+ {
+  "id": "text.dock_body",
+  "en": "Rudd, roach, perch and tench live in the pond, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.",
+  "fr": "Rotengles, gardons, perches et tanches vivent dans l’étang, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme."
+ },
+ {
+  "id": "text.fish_worms",
+  "en": "{n} worms",
+  "fr": "{n} vers"
+ },
+ {
+  "id": "text.fish_worms1",
+  "en": "1 worm",
+  "fr": "1 ver"
+ },
+ {
+  "id": "text.fish_worms0",
+  "en": "No worms left",
+  "fr": "Plus de vers"
+ },
+ {
+  "id": "text.fish_hens",
+  "en": "Your chickens who love {farmer} find worms every day: tap one and ask.",
+  "fr": "Vos poules qui aiment {farmer} lui trouvent des vers chaque jour : touchez-en une et demandez."
+ },
+ {
+  "id": "text.fish_go",
+  "en": "Go fishing",
+  "fr": "Aller pêcher"
+ },
+ {
+  "id": "text.fish_noworms",
+  "en": "No worms left: ask your chickens who love {farmer} (tap one), or buy a tin at the dock.",
+  "fr": "Plus de vers : demandez à vos poules qui aiment {farmer} (touchez-en une), ou achetez une boîte au ponton."
+ },
+ {
+  "id": "text.worms_ask",
+  "en": "Ask for worms · 🪱 {n}",
+  "fr": "Demander des vers · 🪱 {n}"
+ },
+ {
+  "id": "text.worms_given",
+  "en": "🪱 {name} found worms for {farmer} today. More tomorrow!",
+  "fr": "🪱 {name} a trouvé des vers pour {farmer} aujourd’hui. D’autres demain !"
+ },
+ {
+  "id": "text.worms_shy",
+  "en": "🪱 {name} is still shy: no worms for {farmer} yet. Cuddles help.",
+  "fr": "🪱 {name} est encore farouche : pas de vers pour {farmer} pour l’instant. Les câlins aident."
+ },
+ {
+  "id": "text.worms_how",
+  "en": "Worms found each day: Friendly 1 · Trusting 2 · Best friend 3.",
+  "fr": "Vers trouvés chaque jour : Sociable 1 · En confiance 2 · Inséparable 3."
+ },
+ {
+  "id": "text.worms_done",
+  "en": "{name} is finding {n} worms for {farmer} 🪱",
+  "fr": "{name} cherche {n} vers pour {farmer} 🪱"
+ },
+ {
+  "id": "text.worms_done1",
+  "en": "{name} is finding a worm for {farmer} 🪱",
+  "fr": "{name} cherche un ver pour {farmer} 🪱"
+ },
+ {
+  "id": "text.worms_night",
+  "en": "{farmer} is asleep: worms in the morning",
+  "fr": "{farmer} dort : les vers, ce sera demain matin"
+ },
+ {
+  "id": "text.fish_level",
+  "en": "Fishing opens at level {n}.",
+  "fr": "La pêche ouvre au niveau {n}."
+ },
+ {
+  "id": "text.fish_tin",
+  "en": "A tin of {n} worms",
+  "fr": "Une boîte de {n} vers"
+ },
+ {
+  "id": "text.fish_tin_buy",
+  "en": "Buy · {c} coins",
+  "fr": "Acheter · {c} pièces"
+ },
+ {
+  "id": "text.fish_tin_bought",
+  "en": "{n} worms in the tin · −{c} coins",
+  "fr": "{n} vers dans la boîte · −{c} pièces"
+ },
+ {
+  "id": "text.fish_going",
+  "en": "{farmer} is off to the dock",
+  "fr": "{farmer} part au ponton"
+ },
+ {
+  "id": "text.fish_night",
+  "en": "{farmer} is asleep: fishing in the morning",
+  "fr": "{farmer} dort : la pêche, ce sera demain matin"
+ },
+ {
+  "id": "text.fish_busy",
+  "en": "{farmer} is busy: try again in a moment",
+  "fr": "{farmer} est occupé : réessayez dans un instant",
+  "gender": true,
+  "f_en": "{farmer} is busy: try again in a moment",
+  "f_fr": "{farmer} est occupée : réessayez dans un instant"
+ },
+ {
+  "id": "text.fish_cast",
+  "en": "Tap the water to cast",
+  "fr": "Touchez l’eau pour lancer"
+ },
+ {
+  "id": "text.fish_wait",
+  "en": "Watch the float…",
+  "fr": "Surveillez le bouchon…"
+ },
+ {
+  "id": "text.fish_bite",
+  "en": "Now! Tap!",
+  "fr": "Maintenant ! Touchez !"
+ },
+ {
+  "id": "text.fish_soon",
+  "en": "Too soon! Wait till the float goes under",
+  "fr": "Trop tôt ! Attendez que le bouchon plonge"
+ },
+ {
+  "id": "text.fish_missed",
+  "en": "Too late: it got away with the worm",
+  "fr": "Trop tard : il est parti avec le ver"
+ },
+ {
+  "id": "text.fish_reel",
+  "en": "Hold to reel in. Keep the line in the green",
+  "fr": "Maintenez pour remonter. Gardez la ligne dans le vert"
+ },
+ {
+  "id": "text.fish_snap",
+  "en": "Too hard: the line snapped and it swam off",
+  "fr": "Trop fort : la ligne a cassé et il s’est sauvé"
+ },
+ {
+  "id": "text.fish_slip",
+  "en": "Too slack: it slipped off the hook",
+  "fr": "Trop mou : il s’est décroché"
+ },
+ {
+  "id": "text.fish_stop",
+  "en": "Stop fishing",
+  "fr": "Arrêter de pêcher"
+ },
+ {
+  "id": "text.fish_keep",
+  "en": "Keep fishing",
+  "fr": "Continuer"
+ },
+ {
+  "id": "text.fish_stop1",
+  "en": "Stop",
+  "fr": "Arrêter"
+ },
+ {
+  "id": "text.fish_size",
+  "en": "{cm} cm",
+  "fr": "{cm} cm"
+ },
+ {
+  "id": "text.fish_first",
+  "en": "New fish for your book!",
+  "fr": "Un nouveau poisson pour votre livre !"
+ },
+ {
+  "id": "text.fish_best",
+  "en": "Your biggest yet!",
+  "fr": "Votre plus beau !"
+ },
+ {
+  "id": "text.fish_xp",
+  "en": "+{xp} XP",
+  "fr": "+{xp} XP"
+ },
+ {
+  "id": "text.fish_sold",
+  "en": "Off to the village aquarium shop, live and well · +{c} coins",
+  "fr": "Direction l’animalerie du village, en pleine forme · +{c} pièces"
+ },
+ {
+  "id": "text.fish_photo_big_bertha",
+  "en": "Her photo for your book, then back into the pond she goes. The village paper buys your photo · +{c} coins",
+  "fr": "Sa photo pour votre livre, puis elle retourne dans l’étang. Le journal du village achète votre photo · +{c} pièces"
+ },
+ {
+  "id": "text.fish_photo_old_snapjaw",
+  "en": "His photo for your book, then back into the river he goes. The village paper buys your photo · +{c} coins",
+  "fr": "Sa photo pour votre livre, puis il retourne dans la rivière. Le journal du village achète votre photo · +{c} pièces"
+ },
+ {
+  "id": "text.fish_caught_n",
+  "en": "Caught {n} times",
+  "fr": "Pêché {n} fois"
+ },
+ {
+  "id": "text.fish_caught_1",
+  "en": "Caught once",
+  "fr": "Pêché une fois"
+ },
+ {
+  "id": "text.fish_tap_dock",
+  "en": "The pond",
+  "fr": "L’étang"
+ },
+ {
+  "id": "text.fill_btn",
+  "en": "Fill it · {c} coins",
+  "fr": "La remplir · {c} pièces"
+ },
+ {
+  "id": "text.fill_part",
+  "en": "Fill what you can · {c} coins",
+  "fr": "Remplir ce que vous pouvez · {c} pièces"
+ },
+ {
+  "id": "text.fill_scraps",
+  "en": "Kitchen scraps (free)",
+  "fr": "Des restes de cuisine (gratuit)"
+ },
+ {
+  "id": "text.fill_full",
+  "en": "It’s full",
+  "fr": "Elle est pleine"
+ },
+ {
+  "id": "text.fill_broke",
+  "en": "Sell some eggs first",
+  "fr": "Vendez d’abord quelques œufs"
+ },
+ {
+  "id": "text.filled",
+  "en": "Feeder filled · −{c} coins",
+  "fr": "Mangeoire remplie · −{c} pièces"
+ },
+ {
+  "id": "text.filled_scraps",
+  "en": "Kitchen scraps in the feeder: enough for a few hours.",
+  "fr": "Des restes de cuisine dans la mangeoire : de quoi tenir quelques heures."
+ },
+ {
+  "id": "text.farmer_feed",
+  "en": "{farmer} is on the way with the feed · −{c} coins",
+  "fr": "{farmer} arrive avec le grain · −{c} pièces"
+ },
+ {
+  "id": "text.farmer_scraps",
+  "en": "{farmer} is on the way with some kitchen scraps",
+  "fr": "{farmer} arrive avec des restes de cuisine"
+ },
+ {
+  "id": "text.bub_low",
+  "en": "Feed low",
+  "fr": "Presque vide"
+ },
+ {
+  "id": "text.bub_empty",
+  "en": "Feeder empty",
+  "fr": "Mangeoire vide"
+ },
+ {
+  "id": "text.broody",
+  "en": "{name} has gone broody: she’s sitting on {n} eggs.",
+  "fr": "{name} est devenue couveuse : elle couve {n} œufs."
+ },
+ {
+  "id": "text.hatched",
+  "en": "{n} chicks have hatched! {name} is a mum.",
+  "fr": "{n} poussins sont nés ! {name} est maman."
+ },
+ {
+  "id": "text.sold",
+  "en": "{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins",
+  "fr": "Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces"
+ },
+ {
+  "id": "text.young_going",
+  "en": "{name}’s youngsters are off to a new farm!",
+  "fr": "Les jeunes de {name} partent pour une nouvelle ferme !"
+ },
+ {
+  "id": "text.sitting",
+  "en": "Sitting on {n} eggs: they hatch in about {when}.",
+  "fr": "Couve {n} œufs : ils éclosent dans environ {when}."
+ },
+ {
+  "id": "text.raising",
+  "en": "Raising {n} chicks: young hens and roosters in about {when}.",
+  "fr": "Élève {n} poussins : jeunes poules et coqs dans environ {when}."
+ },
+ {
+  "id": "text.raising_y",
+  "en": "Raising {n} young hens and roosters: off to a new farm in about {when}.",
+  "fr": "Élève {n} jeunes poules et coqs : ils partent pour une nouvelle ferme dans environ {when}."
+ },
+ {
+  "id": "text.hatch_soon",
+  "en": "Sitting on {n} eggs: they hatch very soon.",
+  "fr": "Couve {n} œufs : ils vont éclore très bientôt."
+ },
+ {
+  "id": "text.grow_soon",
+  "en": "Raising {n} youngsters: off to a new farm very soon.",
+  "fr": "Élève {n} jeunes : ils partent très bientôt pour une nouvelle ferme."
+ },
+ {
+  "id": "text.no_lay_brood",
+  "en": "She lays no eggs for sale while she’s busy with her chicks.",
+  "fr": "Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses petits."
+ },
+ {
+  "id": "text.chick",
+  "en": "Chick",
+  "fr": "Poussin"
+ },
+ {
+  "id": "text.chick_of",
+  "en": "{breed} · {name}’s chick",
+  "fr": "{breed} · poussin de {name}"
+ },
+ {
+  "id": "text.chick_grows",
+  "en": "A young hen or rooster in about {when}.",
+  "fr": "Jeune poule ou jeune coq dans environ {when}."
+ },
+ {
+  "id": "text.chick_soon",
+  "en": "Almost a young hen or rooster!",
+  "fr": "Bientôt une jeune poule ou un jeune coq !"
+ },
+ {
+  "id": "text.h",
+  "en": "{n} h",
+  "fr": "{n} h"
+ },
+ {
+  "id": "text.h1",
+  "en": "an hour",
+  "fr": "une heure"
+ },
+ {
+  "id": "text.hours",
+  "en": "{n} hours",
+  "fr": "{n} heures"
+ },
+ {
+  "id": "text.days1",
+  "en": "a day",
+  "fr": "un jour"
+ },
+ {
+  "id": "text.days",
+  "en": "{n} days",
+  "fr": "{n} jours"
+ },
+ {
+  "id": "text.min",
+  "en": "{n} min",
+  "fr": "{n} min"
+ },
+ {
+  "id": "text.young_h",
+  "en": "Young hen",
+  "fr": "Jeune poule"
+ },
+ {
+  "id": "text.young_r",
+  "en": "Young rooster",
+  "fr": "Jeune coq"
+ },
+ {
+  "id": "text.young_of",
+  "en": "{breed} · {name}’s {kid}",
+  "fr": "{breed} · {kid} de {name}"
+ },
+ {
+  "id": "text.daughter",
+  "en": "daughter",
+  "fr": "fille"
+ },
+ {
+  "id": "text.son",
+  "en": "son",
+  "fr": "fils"
+ },
+ {
+  "id": "text.young_leaves",
+  "en": "Off to a new farm in about {when}. Her rating comes when she leaves.",
+  "fr": "Part pour une nouvelle ferme dans environ {when}. Sa note viendra à son départ."
+ },
+ {
+  "id": "text.young_leaves_r",
+  "en": "Off to a new farm in about {when}. His rating comes when he leaves.",
+  "fr": "Part pour une nouvelle ferme dans environ {when}. Sa note viendra à son départ."
+ },
+ {
+  "id": "text.young_soon",
+  "en": "Off to a new farm very soon.",
+  "fr": "Part très bientôt pour une nouvelle ferme."
+ },
+ {
+  "id": "text.turned",
+  "en": "{name}’s chicks are turning into young hens and roosters!",
+  "fr": "Les poussins de {name} deviennent de jeunes poules et coqs !"
+ },
+ {
+  "id": "text.congrats",
+  "en": "Congratulations!",
+  "fr": "Félicitations !"
+ },
+ {
+  "id": "text.congrats_sub",
+  "en": "{name}’s babies have grown up",
+  "fr": "Les petits de {name} ont grandi"
+ },
+ {
+  "id": "text.congrats_away",
+  "en": "While you were away, {name}’s babies grew up",
+  "fr": "Pendant votre absence, les petits de {name} ont grandi"
+ },
+ {
+  "id": "text.congrats_total",
+  "en": "+{c} coins · +{xp} XP",
+  "fr": "+{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.congrats_exp",
+  "en": "{mum} and {dad} gain experience: their next chicks will be even better.",
+  "fr": "{mum} et {dad} gagnent de l’expérience : leurs prochains poussins seront encore meilleurs."
+ },
+ {
+  "id": "text.congrats_exp1",
+  "en": "{mum} gains experience: her next chicks will be even better.",
+  "fr": "{mum} gagne de l’expérience : ses prochains poussins seront encore meilleurs."
+ },
+ {
+  "id": "text.congrats_ok",
+  "en": "Lovely!",
+  "fr": "Super !"
+ },
+ {
+  "id": "text.hatched_rare",
+  "en": "{n} chicks have hatched, and one is a rare {line}! ✨",
+  "fr": "{n} poussins sont nés, dont un rare : {line} ! ✨"
+ },
+ {
+  "id": "text.rare_chick",
+  "en": "✨ A rare {line} chick",
+  "fr": "✨ Un poussin rare : {line}"
+ },
+ {
+  "id": "text.rare_young_h",
+  "en": "✨ A rare {line}: a young hen",
+  "fr": "✨ Rare : {line}, une jeune poule"
+ },
+ {
+  "id": "text.rare_young_r",
+  "en": "✨ A rare {line}: a young rooster",
+  "fr": "✨ Rare : {line}, un jeune coq"
+ },
+ {
+  "id": "text.rare_keep_h",
+  "en": "Keep her",
+  "fr": "La garder"
+ },
+ {
+  "id": "text.rare_keep_r",
+  "en": "Keep him",
+  "fr": "Le garder"
+ },
+ {
+  "id": "text.rare_sell",
+  "en": "Sell · {c}",
+  "fr": "Vendre · {c}"
+ },
+ {
+  "id": "text.rare_kept",
+  "en": "{name} is snug in the basket by the farmhouse fire.",
+  "fr": "{name} est bien au chaud dans le panier près du feu de la ferme."
+ },
+ {
+  "id": "text.rare_kept_r",
+  "en": "{name} is snug in the basket by the farmhouse fire.",
+  "fr": "{name} est bien au chaud dans le panier près du feu de la ferme."
+ },
+ {
+  "id": "text.rare_sold",
+  "en": "Sold for {c} coins",
+  "fr": "Vendu {c} pièces"
+ },
+ {
+  "id": "text.rare_full",
+  "en": "Your {line} trio is complete: this one is sold for you",
+  "fr": "Votre trio {line} est complet : celui-ci est vendu pour vous"
+ },
+ {
+  "id": "text.rare_card_t",
+  "en": "A rare {line}!",
+  "fr": "Une {line} rare !"
+ },
+ {
+  "id": "text.rare_card_body",
+  "en": "Born in {coop}. Keep her, and she lives in a basket by the farmhouse fire until she has a coop of her own; or sell her for a lot.",
+  "fr": "Née à {coop}. Gardez-la : elle vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-la pour beaucoup."
+ },
+ {
+  "id": "text.rare_card_body_r",
+  "en": "Born in {coop}. Keep him, and he lives in a basket by the farmhouse fire until he has a coop of his own; or sell him for a lot.",
+  "fr": "Né à {coop}. Gardez-le : il vivra dans un panier près du feu de la ferme en attendant son propre poulailler. Ou vendez-le pour beaucoup."
+ },
+ {
+  "id": "text.rare_waiting",
+  "en": "A rare baby is waiting for your choice",
+  "fr": "Un bébé rare attend votre choix"
+ },
+ {
+  "id": "text.basket_t",
+  "en": "The basket by the fire",
+  "fr": "Le panier près du feu"
+ },
+ {
+  "id": "text.basket_note",
+  "en": "Build their own coop for {c} coins: they move in, and a rare pair can raise more of their colour.",
+  "fr": "Construisez leur poulailler pour {c} pièces : ils s’y installent, et un couple rare peut avoir d’autres petits de sa couleur."
+ },
+ {
+  "id": "text.rare_of",
+  "en": "{line} · {kind}",
+  "fr": "{line} · {kind}"
+ },
+ {
+  "id": "text.rare_build",
+  "en": "Build their coop · {c}",
+  "fr": "Construire leur poulailler · {c}"
+ },
+ {
+  "id": "text.rare_build_no",
+  "en": "Their coop: {c} coins",
+  "fr": "Leur poulailler : {c} pièces"
+ },
+ {
+  "id": "text.rare_home",
+  "en": "Welcome home, {names}!",
+  "fr": "Bienvenue chez vous, {names} !"
+ },
+ {
+  "id": "text.rare_kept_home",
+  "en": "{name} has joined {coop}.",
+  "fr": "{name} rejoint {coop}."
+ },
+ {
+  "id": "text.book_rare",
+  "en": "Rare: hatched by a {from}",
+  "fr": "Rare : naît d’une {from}"
+ },
+ {
+  "id": "text.book_or",
+  "en": " or a ",
+  "fr": " ou d’une "
+ },
+ {
+  "id": "text.farewell",
+  "en": "Off you go, and good luck!",
+  "fr": "Allez, bonne route !"
+ },
+ {
+  "id": "beast.dog",
+  "en": "Border Collie",
+  "fr": "border collie"
+ },
+ {
+  "id": "beast.cub",
+  "en": "fox cub",
+  "fr": "renardeau"
+ },
+ {
+  "id": "beast.dad",
+  "en": "red fox, the dad",
+  "fr": "renard roux, le papa"
+ },
+ {
+  "id": "beast.mum",
+  "en": "red fox, the mum",
+  "fr": "renarde, la maman"
+ },
+ {
+  "id": "beast.woof",
+  "en": "woof",
+  "fr": "ouaf"
+ },
+ {
+  "id": "goose.embden",
+  "en": "Embden goose",
+  "fr": "oie d'Embden"
+ },
+ {
+  "id": "goose.toulouse",
+  "en": "Toulouse gander",
+  "fr": "jars de Toulouse"
+ },
+ {
+  "id": "goose.mallard_m",
+  "en": "mallard drake",
+  "fr": "canard colvert"
+ },
+ {
+  "id": "goose.mallard_f",
+  "en": "mallard duck",
+  "fr": "cane colvert"
+ },
+ {
+  "id": "replay.thehens",
+  "en": "the hens",
+  "fr": "les poules"
+ },
+ {
+  "id": "replay.btn",
+  "en": "Last night",
+  "fr": "La nuit dernière"
+ },
+ {
+  "id": "replay.skip",
+  "en": "Skip",
+  "fr": "Passer"
+ },
+ {
+  "id": "replay.open",
+  "en": "Last night, on the farm…",
+  "fr": "La nuit dernière, à la ferme…"
+ },
+ {
+  "id": "replay.plan",
+  "en": "{time}. Rusty had a plan.",
+  "fr": "{time}. Rusty avait un plan."
+ },
+ {
+  "id": "replay.sneak",
+  "en": "Nothing could possibly go wrong.",
+  "fr": "Rien ne pouvait mal tourner."
+ },
+ {
+  "id": "replay.pecked",
+  "en": "He had not planned for {hen}.",
+  "fr": "Il n'avait pas prévu {hen}."
+ },
+ {
+  "id": "replay.shut",
+  "en": "The door was shut. He had not planned for that.",
+  "fr": "La porte était fermée. Ça, il ne l'avait pas prévu."
+ },
+ {
+  "id": "replay.heard",
+  "en": "But someone had heard everything…",
+  "fr": "Mais quelqu'un avait tout entendu…"
+ },
+ {
+  "id": "replay.run",
+  "en": "Run, Rusty, run!",
+  "fr": "Cours, Rusty, cours !"
+ },
+ {
+  "id": "replay.heroes",
+  "en": "The heroes of the night.",
+  "fr": "Les héros de la nuit."
+ },
+ {
+  "id": "replay.hero",
+  "en": "The hero of the night.",
+  "fr": "Le héros de la nuit."
+ },
+ {
+  "id": "replay.feather",
+  "en": "Rusty went home… with a feather on his nose.",
+  "fr": "Rusty est rentré chez lui… avec une plume sur le nez."
+ },
+ {
+  "id": "replay.empty",
+  "en": "Rusty went home empty-handed, and very puzzled.",
+  "fr": "Rusty est rentré bredouille, et très perplexe."
+ },
+ {
+  "id": "replay.end",
+  "en": "The End",
+  "fr": "Fin"
+ },
+ {
+  "id": "replay.safe",
+  "en": "Everyone is safe and sound.",
+  "fr": "Tout le monde est sain et sauf."
+ },
+ {
+  "id": "replay.took",
+  "en": "This time, nothing went wrong.",
+  "fr": "Cette fois, rien n'a mal tourné."
+ },
+ {
+  "id": "replay.eggsHome",
+  "en": "Rusty went home… with the eggs.",
+  "fr": "Rusty est rentré chez lui… avec les œufs."
+ },
+ {
+  "id": "replay.safeEggs",
+  "en": "The hens are safe and sound. The eggs, not so much.",
+  "fr": "Les poules sont saines et sauves. Les œufs, beaucoup moins."
+ },
+ {
+  "id": "pond.ribbit",
+  "en": "Ribbit!",
+  "fr": "Croâ !"
+ },
+ {
+  "id": "pond.frog",
+  "en": "Frog",
+  "fr": "Grenouille"
+ },
+ {
+  "id": "name.m",
+  "en": "Arthur",
+  "fr": "Arthur"
+ },
+ {
+  "id": "name.f",
+  "en": "Rosie",
+  "fr": "Rose"
+ },
+ {
+  "id": "name.j",
+  "en": "The judge",
+  "fr": "Le juge"
+ },
+ {
+  "id": "duck.quack",
+  "en": "Quack!",
+  "fr": "Coin coin !"
+ },
+ {
+  "id": "say.hi",
+  "en": "Hello, girls!",
+  "fr": "Coucou, les filles !"
+ },
+ {
+  "id": "say.morning",
+  "en": "Good morning, girls!",
+  "fr": "Bonjour, les filles !"
+ },
+ {
+  "id": "say.night",
+  "en": "Goodnight, girls!",
+  "fr": "Bonne nuit, les filles !"
+ },
+ {
+  "id": "say.hello",
+  "en": "Hello!",
+  "fr": "Coucou !"
+ },
+ {
+  "id": "say.dog",
+  "en": "Good boy, {dog}!",
+  "fr": "Brave chien, {dog} !"
+ },
+ {
+  "id": "say.ducks",
+  "en": "Hello, ducks!",
+  "fr": "Bonjour, les canards !"
+ },
+ {
+  "id": "say.feed",
+  "en": "Dinner time!",
+  "fr": "À table !"
+ },
+ {
+  "id": "say.cuddle",
+  "en": "There, there…",
+  "fr": "Là, là…"
+ },
+ {
+  "id": "say.chicks",
+  "en": "Off to your new home, little ones!",
+  "fr": "En route pour votre nouvelle maison, mes petits !"
+ },
+ {
+  "id": "say.farewell",
+  "en": "Off you go, and good luck!",
+  "fr": "Allez, bonne route !"
+ },
+ {
+  "id": "say.sow",
+  "en": "Grow tall and golden!",
+  "fr": "Pousse bien, mon blé !"
+ },
+ {
+  "id": "say.harvest",
+  "en": "What a harvest!",
+  "fr": "Quelle belle récolte !"
+ },
+ {
+  "id": "say.honey",
+  "en": "Thank you, bees!",
+  "fr": "Merci, les abeilles !"
+ },
+ {
+  "id": "say.geese",
+  "en": "Hello, you two!",
+  "fr": "Coucou, vous deux !"
+ },
+ {
+  "id": "say.whoa",
+  "en": "Whoa!",
+  "fr": "Oh là là !"
+ },
+ {
+  "id": "say.tomorrow",
+  "en": "Maybe tomorrow…",
+  "fr": "Demain, peut-être…"
+ },
+ {
+  "id": "say.corn",
+  "en": "Some corn for you!",
+  "fr": "Du grain pour vous !"
+ },
+ {
+  "id": "say.there",
+  "en": "There you are!",
+  "fr": "Vous voilà !"
+ },
+ {
+  "id": "say.wormsH",
+  "en": "Thank you, my lovely!",
+  "fr": "Merci, ma belle !"
+ },
+ {
+  "id": "say.wormsR",
+  "en": "Thanks, old chap!",
+  "fr": "Merci, mon brave !"
+ },
+ {
+  "id": "say.fishgot",
+  "en": "Got one!",
+  "fr": "Attrapé !"
+ },
+ {
+  "id": "say.fishnew",
+  "en": "A new fish!",
+  "fr": "Un nouveau poisson !"
+ },
+ {
+  "id": "say.fishbig",
+  "en": "What a beauty!",
+  "fr": "Quelle beauté !"
+ },
+ {
+  "id": "say.role.m",
+  "en": "farmer",
+  "fr": "fermier"
+ },
+ {
+  "id": "say.role.f",
+  "en": "farmer",
+  "fr": "fermière"
+ },
+ {
+  "id": "breed.rir.name",
+  "en": "Rhode Island Red",
+  "fr": "Rhode Island Red"
+ },
+ {
+  "id": "breed.rir.coop",
+  "en": "Red Barn",
+  "fr": "Grange rouge"
+ },
+ {
+  "id": "breed.orp.name",
+  "en": "Buff Orpington",
+  "fr": "Orpington fauve"
+ },
+ {
+  "id": "breed.orp.coop",
+  "en": "Thatched Cottage",
+  "fr": "Chaumière"
+ },
+ {
+  "id": "breed.sil.name",
+  "en": "White Silkie",
+  "fr": "Poule soie blanche"
+ },
+ {
+  "id": "breed.sil.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil.col",
+  "en": "White",
+  "fr": "blanche"
+ },
+ {
+  "id": "breed.sil.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.leg.name",
+  "en": "Cream Legbar",
+  "fr": "Legbar crème"
+ },
+ {
+  "id": "breed.leg.coop",
+  "en": "Stone Cottage",
+  "fr": "Maison de pierre"
+ },
+ {
+  "id": "breed.bra.name",
+  "en": "Light Brahma",
+  "fr": "Brahma herminé"
+ },
+ {
+  "id": "breed.bra.coop",
+  "en": "Timber Lodge",
+  "fr": "Chalet en rondins"
+ },
+ {
+  "id": "breed.sil_black.name",
+  "en": "Black Silkie",
+  "fr": "Poule soie noire"
+ },
+ {
+  "id": "breed.sil_black.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_black.col",
+  "en": "Black",
+  "fr": "noire"
+ },
+ {
+  "id": "breed.sil_black.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_buff.name",
+  "en": "Buff Silkie",
+  "fr": "Poule soie fauve"
+ },
+ {
+  "id": "breed.sil_buff.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_buff.col",
+  "en": "Buff",
+  "fr": "fauve"
+ },
+ {
+  "id": "breed.sil_buff.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_blue.name",
+  "en": "Blue Silkie",
+  "fr": "Poule soie bleue"
+ },
+ {
+  "id": "breed.sil_blue.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_blue.col",
+  "en": "Blue",
+  "fr": "bleue"
+ },
+ {
+  "id": "breed.sil_blue.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_partridge.name",
+  "en": "Partridge Silkie",
+  "fr": "Poule soie perdrix"
+ },
+ {
+  "id": "breed.sil_partridge.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_partridge.col",
+  "en": "Partridge",
+  "fr": "perdrix"
+ },
+ {
+  "id": "breed.sil_partridge.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_grey.name",
+  "en": "Grey Silkie",
+  "fr": "Poule soie grise"
+ },
+ {
+  "id": "breed.sil_grey.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_grey.col",
+  "en": "Grey",
+  "fr": "grise"
+ },
+ {
+  "id": "breed.sil_grey.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_paint.name",
+  "en": "Paint Silkie",
+  "fr": "Poule soie pie"
+ },
+ {
+  "id": "breed.sil_paint.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_paint.col",
+  "en": "Paint",
+  "fr": "pie"
+ },
+ {
+  "id": "breed.sil_paint.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_lavender.name",
+  "en": "Lavender Silkie",
+  "fr": "Poule soie lavande"
+ },
+ {
+  "id": "breed.sil_lavender.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_lavender.col",
+  "en": "Lavender",
+  "fr": "lavande"
+ },
+ {
+  "id": "breed.sil_lavender.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_red.name",
+  "en": "Red Silkie",
+  "fr": "Poule soie rouge"
+ },
+ {
+  "id": "breed.sil_red.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_red.col",
+  "en": "Red",
+  "fr": "rouge"
+ },
+ {
+  "id": "breed.sil_red.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_splash.name",
+  "en": "Splash Silkie",
+  "fr": "Poule soie splash"
+ },
+ {
+  "id": "breed.sil_splash.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_splash.col",
+  "en": "Splash",
+  "fr": "splash"
+ },
+ {
+  "id": "breed.sil_splash.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "breed.sil_cuckoo.name",
+  "en": "Cuckoo Silkie",
+  "fr": "Poule soie coucou"
+ },
+ {
+  "id": "breed.sil_cuckoo.kind",
+  "en": "Silkie",
+  "fr": "Poule soie"
+ },
+ {
+  "id": "breed.sil_cuckoo.col",
+  "en": "Cuckoo",
+  "fr": "coucou"
+ },
+ {
+  "id": "breed.sil_cuckoo.coop",
+  "en": "Pagoda Coop",
+  "fr": "Poulailler pagode"
+ },
+ {
+  "id": "farmer.m",
+  "en": "Arthur",
+  "fr": "Arthur"
+ },
+ {
+  "id": "farmer.f",
+  "en": "Rosie",
+  "fr": "Rose"
+ },
+ {
+  "id": "ground.sign",
+  "en": "Poultry Show",
+  "fr": "Concours avicole"
+ },
+ {
+  "id": "ui.compass",
+  "en": "Back to the usual view",
+  "fr": "Revenir à la vue habituelle"
+ },
+ {
+  "id": "decor.flowers",
+  "en": "Cottage flower bed",
+  "fr": "Massif de fleurs"
+ },
+ {
+  "id": "decor.birdbath",
+  "en": "Bird bath",
+  "fr": "Bain d’oiseaux"
+ },
+ {
+  "id": "decor.beehives",
+  "en": "Beehives",
+  "fr": "Ruches"
+ },
+ {
+  "id": "decor.duckhouse",
+  "en": "Duck house",
+  "fr": "Maison des canards"
+ },
+ {
+  "id": "decor.greenhouse",
+  "en": "Greenhouse",
+  "fr": "Serre"
+ },
+ {
+  "id": "decor.windmill",
+  "en": "Windmill",
+  "fr": "Moulin à vent"
+ },
+ {
+  "id": "decor.bandstand",
+  "en": "Bandstand",
+  "fr": "Kiosque à musique"
+ },
+ {
+  "id": "decor.statue",
+  "en": "Golden cockerel",
+  "fr": "Coq d’or"
+ },
+ {
+  "id": "dog.rename",
+  "en": "Rename {n}",
+  "fr": "Renommer {n}"
+ },
+ {
+  "id": "dog.label",
+  "en": "Your dog's name",
+  "fr": "Le nom de votre chien"
+ },
+ {
+  "id": "dog.save",
+  "en": "Save",
+  "fr": "Enregistrer"
+ },
+ {
+  "id": "dog.cancel",
+  "en": "Cancel",
+  "fr": "Annuler"
+ },
+ {
+  "id": "dog.named",
+  "en": "Your dog is called {n}",
+  "fr": "Votre chien s’appelle {n}"
+ },
+ {
+  "id": "visit.thefarmer",
+  "en": "the farmer",
+  "fr": "le fermier"
+ },
+ {
+  "id": "visit.out",
+  "en": "Rusty the fox has slipped out of his den…",
+  "fr": "Rusty le renard est sorti de son terrier…"
+ },
+ {
+  "id": "visit.btnFox",
+  "en": "Fox!",
+  "fr": "Renard !"
+ },
+ {
+  "id": "visit.send",
+  "en": "Send {farmer}",
+  "fr": "Envoyer {farmer}"
+ },
+ {
+  "id": "visit.squawk",
+  "en": "Squawk! Squawk!",
+  "fr": "Cot cot codet !"
+ },
+ {
+  "id": "visit.shut",
+  "en": "The door is shut!",
+  "fr": "La porte est fermée !"
+ },
+ {
+  "id": "visit.sent",
+  "en": "{farmer} is on the way with the torch…",
+  "fr": "{farmer} arrive avec sa lampe…"
+ },
+ {
+  "id": "visit.shoo",
+  "en": "Shoo! Off you go, Rusty!",
+  "fr": "Ouste ! File, Rusty !"
+ },
+ {
+  "id": "visit.safe",
+  "en": "Rusty ran home. The hens can go back to sleep.",
+  "fr": "Rusty est rentré chez lui. Les poules peuvent se rendormir."
+ },
+ {
+  "id": "visit.feather",
+  "en": "Rusty went home with a feather on his nose.",
+  "fr": "Rusty est rentré avec une plume sur le nez."
+ },
+ {
+  "id": "visit.allShut",
+  "en": "Rusty went home: the doors were shut.",
+  "fr": "Rusty est rentré : les portes étaient fermées."
+ },
+ {
+  "id": "visit.grabbed",
+  "en": "Rusty has taken the eggs!",
+  "fr": "Rusty a pris les œufs !"
+ },
+ {
+  "id": "visit.eggsGone",
+  "en": "Rusty went home with the eggs.",
+  "fr": "Rusty est rentré avec les œufs."
+ },
+ {
+  "id": "visit.atDoor",
+  "en": "Rusty the fox is at the door!",
+  "fr": "Rusty le renard est à la porte !"
+ },
+ {
+  "id": "visit.inWay",
+  "en": "Rusty's nose is in the way!",
+  "fr": "Le nez de Rusty est dans le passage !"
+ },
+ {
+  "id": "visit.geeseHeard",
+  "en": "The geese have heard Rusty! They're raising the alarm…",
+  "fr": "Les oies ont entendu Rusty ! Elles donnent l'alerte…"
+ },
+ {
+  "id": "visit.geeseSafe",
+  "en": "The geese chased Rusty all the way home!",
+  "fr": "Les oies ont chassé Rusty jusque chez lui !"
+ },
+ {
+  "id": "visit.geeseProud",
+  "en": "Victory! The geese are so proud of themselves, they're parading round the farm.",
+  "fr": "Victoire ! Les oies sont si fières d'elles qu'elles paradent dans la ferme."
+ },
+ {
+  "id": "visit.dogHeard",
+  "en": "{dog} has heard Rusty! Woof! He's off after him…",
+  "fr": "{dog} a entendu Rusty ! Ouaf ! Il file après lui…"
+ },
+ {
+  "id": "visit.dogToo",
+  "en": "{dog} is up too, barking! He's off after Rusty…",
+  "fr": "{dog} est réveillé aussi, il aboie ! Il file après Rusty…"
+ },
+ {
+  "id": "visit.dogSafe",
+  "en": "{dog} chased Rusty all the way home!",
+  "fr": "{dog} a chassé Rusty jusque chez lui !"
+ },
+ {
+  "id": "visit.bothHeard",
+  "en": "The geese and {dog} have heard Rusty! Honking and barking, they're off after him…",
+  "fr": "Les oies et {dog} ont entendu Rusty ! En cacardant et en aboyant, ils filent après lui…"
+ },
+ {
+  "id": "visit.geeseToo",
+  "en": "The geese have heard {dog} barking! They're coming too, honking…",
+  "fr": "Les oies ont entendu {dog} aboyer ! Elles arrivent aussi en cacardant…"
+ },
+ {
+  "id": "visit.teamSafe",
+  "en": "The geese and {dog} chased Rusty all the way home!",
+  "fr": "Les oies et {dog} ont chassé Rusty jusque chez lui !"
+ },
+ {
+  "id": "visit.teamProud",
+  "en": "Victory! The geese and {dog} are so proud of themselves, they're parading round the farm.",
+  "fr": "Victoire ! Les oies et {dog} sont si fiers d'eux qu'ils paradent dans la ferme."
+ },
+ {
+  "id": "hentext.cuddle",
+  "en": "♥ Cuddle",
+  "fr": "♥ Faire un câlin"
+ },
+ {
+  "id": "hentext.fill",
+  "en": "Fill the feeder",
+  "fr": "Remplir la mangeoire"
+ },
+ {
+  "id": "hentext.coming",
+  "en": "{farmer} is on the way…",
+  "fr": "{farmer} arrive…"
+ },
+ {
+  "id": "door.door_open",
+  "en": "Door open",
+  "fr": "Porte ouverte"
+ },
+ {
+  "id": "door.door_morning",
+  "en": "Good morning! Door open",
+  "fr": "Bonjour ! Porte ouverte"
+ },
+ {
+  "id": "door.door_day",
+  "en": "The door stays open in the daytime",
+  "fr": "La porte reste ouverte la journée"
+ },
+ {
+  "id": "door.door_notyet",
+  "en": "Not everyone’s in yet: {who}",
+  "fr": "Tout le monde n’est pas rentré : {who}"
+ },
+ {
+  "id": "door.door_shut",
+  "en": "Door shut. Sleep well!",
+  "fr": "Porte fermée. Dormez bien !"
+ },
+ {
+  "id": "door.door_stuck",
+  "en": "The automatic door of the {coop} has stuck open tonight! Tap the moon over it to shut it by hand.",
+  "fr": "La porte automatique du poulailler ({coop}) est restée coincée ouverte ce soir ! Touchez la lune au-dessus pour la fermer à la main."
+ },
+ {
+  "id": "door.out1",
+  "en": "{a} is still out",
+  "fr": "{a} est encore dehors"
+ },
+ {
+  "id": "door.out2",
+  "en": "{a} and {b} are still out",
+  "fr": "{a} et {b} sont encore dehors"
+ },
+ {
+  "id": "door.outn",
+  "en": "{a}, {b} and {n} more are still out",
+  "fr": "{a}, {b} et {n} autres sont encore dehors"
+ },
+ {
+  "id": "door.inside1",
+  "en": "Inside the {coop} · 1 asleep",
+  "fr": "{coop} · 1 endormi"
+ },
+ {
+  "id": "door.insiden",
+  "en": "Inside the {coop} · {n} asleep",
+  "fr": "{coop} · {n} endormis"
+ },
+ {
+  "id": "door.inside_drag",
+  "en": "Drag sideways to look around the coop",
+  "fr": "Glissez sur le côté pour regarder le poulailler"
+ },
+ {
+  "id": "door.inside_morning",
+  "en": "Morning! Tap the pop door to let them out.",
+  "fr": "C’est le matin ! Touchez la trappe pour les faire sortir."
+ },
+ {
+  "id": "door.inside_up",
+  "en": "Good morning! Everyone is getting up.",
+  "fr": "Bonjour ! Tout le monde se lève."
+ },
+ {
+  "id": "door.sleepy",
+  "en": "sleepy",
+  "fr": "zzz"
+ },
+ {
+  "id": "door.no_eggs_here",
+  "en": "No eggs here",
+  "fr": "Pas d’œufs ici"
+ },
+ {
+  "id": "door.eggs1",
+  "en": "Collected 1 egg",
+  "fr": "1 œuf ramassé"
+ },
+ {
+  "id": "door.eggsn",
+  "en": "Collected {n} eggs",
+  "fr": "{n} œufs ramassés"
+ },
+ {
+  "id": "pers.mum.name",
+  "en": [
+   "Good mum"
+  ],
+  "fr": [
+   "Mère poule"
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.mum.line",
+  "en": [
+   "A born mother: her chicks are the best looked after."
+  ],
+  "fr": [
+   "Une vraie mère : ses poussins sont les mieux soignés."
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.rebel.name",
+  "en": [
+   "Rebel",
+   "Rebel"
+  ],
+  "fr": [
+   "Rebelle",
+   "Rebelle"
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.rebel.line",
+  "en": [
+   "Adventurous: she’ll slip out now and then, and may bring something back.",
+   "Adventurous: he’ll slip out now and then, and may bring something back."
+  ],
+  "fr": [
+   "Aventurière : elle fera parfois le mur, et rapportera peut-être une trouvaille.",
+   "Aventurier : il fera parfois le mur, et rapportera peut-être une trouvaille."
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.diva.name",
+  "en": [
+   "Diva",
+   "Diva"
+  ],
+  "fr": [
+   "Diva",
+   "Diva"
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.diva.line",
+  "en": [
+   "Loves the limelight, and the best feed.",
+   "Loves the limelight, and the best feed."
+  ],
+  "fr": [
+   "Adore les projecteurs, et la meilleure nourriture.",
+   "Adore les projecteurs, et la meilleure nourriture."
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.glutton.name",
+  "en": [
+   "Glutton",
+   "Glutton"
+  ],
+  "fr": [
+   "Gourmande",
+   "Gourmand"
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.glutton.line",
+  "en": [
+   "Always first at the feeder.",
+   "Always first at the feeder."
+  ],
+  "fr": [
+   "Toujours la première à la mangeoire.",
+   "Toujours le premier à la mangeoire."
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.brave.name",
+  "en": [
+   "Brave",
+   "Brave"
+  ],
+  "fr": [
+   "Courageuse",
+   "Courageux"
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.brave.line",
+  "en": [
+   "Afraid of nothing: keeps watch over the coop at night.",
+   "Afraid of nothing: keeps watch over the coop at night."
+  ],
+  "fr": [
+   "N’a peur de rien : veille sur le poulailler la nuit.",
+   "N’a peur de rien : veille sur le poulailler la nuit."
+  ],
+  "pair": true,
+  "note": "[hen, rooster]"
+ }
+]

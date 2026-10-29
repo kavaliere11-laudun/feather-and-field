@@ -6,6 +6,7 @@
 // one mouth shape at a time (smile, grin, talk, shout, worried, frown), cheeks that blush. The torch and the feed pail come
 // out when wanted. The checked shirt is drawn per pixel (as the Blender material: bands both ways, darker where they cross).
 import * as THREE from 'three';
+import { register, tr, urlLang } from './lang.js';
 
 let MODELS = {}, INFO = null;
 export function initFarmer(gltf, json) {
@@ -87,8 +88,8 @@ function dressed(look, id) {
   g.userData.outfit = id; g.userData.baseCount = nb;          // (the farmer's own vertices first, then the outfit's)
   return (DRESSED[key] = g);
 }
-const FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
-export const FARMER_NAME = { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'] };
+const LANG = urlLang();                 // (the test page's language: ?lang=; the game names its farmer itself)
+export const FARMER_NAME = register('name', { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'] });
 const DEG = Math.PI / 180;
 const ease = (a, b, k) => a + (b - a) * k;
 
@@ -368,7 +369,7 @@ export class Farmer {
     this.rig = new FarmerRig(look, grade); this.root.add(this.rig.mesh);
     this.P = fullPose(POSES.turn); this.F = fullFace(); this.t = r() * 10; this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.want = { pose: 'turn', face: 'neutral', walk: 0, run: 0, talk: 0, props: {} };
-    this.label = FARMER_NAME[look][FR ? 1 : 0];
+    this.label = tr(LANG, 'name.' + look);
     this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.6;
     const m = this.rig.mesh.material; m.transparent = true; this.opacity = 1;          // (fading in and out at the farmhouse door)
   }

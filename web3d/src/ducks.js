@@ -9,11 +9,12 @@
 // the middle of the pond and sleep there afloat, heads tucked in, drifting a little; in the morning a stretch, a flap and
 // a quack. Tap one: it turns to you and quacks.
 import * as THREE from 'three';
+import { register, tr } from './lang.js';
 import { Goose, ACT, TK, PondBirds } from './geese.js';
 import { shadowDisc } from './beasts.js';
 import { bubbleTexture } from './pond.js';
 
-const QUACK = ['Quack!', 'Coin coin !'];
+register('duck', { quack: ['Quack!', 'Coin coin !'] });
 const WATER_Y = 0.007;
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -187,7 +188,7 @@ export class DuckFlock extends PondBirds {
   // streams meet it), groundY(x, z), lang, others(): the geese, Biscuit and Rusty (to keep clear of: each with pos, and
   // isGoose for a goose), fx(): the frogs' pond (its splashes), light(): 0..1 how bright the wakes show }
   constructor(scene, opts, r) {
-    super(); this.setPond(opts, r); this.o = opts; this.lang = opts.lang === 'fr' ? 1 : 0;
+    super(); this.setPond(opts, r); this.o = opts; this.lang = opts.lang || 'en';
     this.group = new THREE.Group(); scene.add(this.group);
     this.ducks = [['mallard_m', null], ['mallard_f', null], ['mallard_f', 'Dot']].map(([k, nm], i) => {
       const d = new Goose(this.group, k, r, nm); d.flock = this; d.idx = i; d.trail = []; d.tk = 0; d.peekOk = 0;
@@ -202,7 +203,7 @@ export class DuckFlock extends PondBirds {
     this.near = this.ducks; this.plan = null; this.placed = false; this.restedAt = -60;
     this.wakes = new Wakes(this.group, this.ducks.length);
     this.rings = new Ripples(this.group, new THREE.RingGeometry(0.93, 1, 40).rotateX(-Math.PI / 2), 24);
-    this.bubbleTex = bubbleTexture(QUACK[this.lang], '#24508f'); this.bubbles = [];
+    this.bubbleTex = bubbleTexture(tr(this.lang, 'duck.quack'), '#24508f'); this.bubbles = [];
   }
   night(h) { return h >= 21.25 || h < 6.35; }
   // ---- their house (the duck house on the pond, bought in the game; main.js says where): house.local(x, z) gives a

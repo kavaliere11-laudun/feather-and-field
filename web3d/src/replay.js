@@ -9,8 +9,10 @@
 // "The End". Skip any time. The texts are in English and French; the hen's and the dog's names are only ever shown as
 // text (textContent).
 import * as THREE from 'three';
+import { register, tr } from './lang.js';
 
-export const REPLAY_TEXT = {
+export const REPLAY_TEXT = register('replay', {
+  thehens: ['the hens', 'les poules'],
   btn: ['Last night', 'La nuit dernière'],
   skip: ['Skip', 'Passer'],
   open: ['Last night, on the farm…', 'La nuit dernière, à la ferme…'],
@@ -30,7 +32,7 @@ export const REPLAY_TEXT = {
   took: ['This time, nothing went wrong.', 'Cette fois, rien n\'a mal tourné.'],
   eggsHome: ['Rusty went home… with the eggs.', 'Rusty est rentré chez lui… avec les œufs.'],
   safeEggs: ['The hens are safe and sound. The eggs, not so much.', 'Les poules sont saines et sauves. Les œufs, beaucoup moins.'],
-};
+});
 const STEP = 1 / 30;                  // the farm's own step
 const FPS = 16;                       // a silent film's pictures a second
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -47,9 +49,9 @@ export class Replay {
     if (this.els.skip) { this.els.skip.textContent = this.T('skip'); this.els.skip.addEventListener('click', () => this.close()); }
   }
   T(k) {
-    const t = REPLAY_TEXT[k]; let s = t ? t[this.lang === 'fr' ? 1 : 0] : k;
+    let s = REPLAY_TEXT[k] ? tr(this.lang, 'replay.' + k) : k;
     const r = this.rec || {};
-    return s.replace('{time}', clock(r.hour || 23.5, this.lang)).replace('{hen}', r.hen || 'the hens').replace('{dog}', this.dogName ? this.dogName() : 'Biscuit');
+    return s.replace('{time}', clock(r.hour || 23.5, this.lang)).replace('{hen}', r.hen || tr(this.lang, 'replay.thehens')).replace('{dog}', this.dogName ? this.dogName() : 'Biscuit');
   }
 
   // ---- the showing
@@ -260,6 +262,7 @@ export class Replay {
 function clock(h, lang) {
   const t = ((h % 24) + 24) % 24, hh = Math.floor(t), mm = Math.min(59, Math.floor((t - hh) * 60));
   if (lang === 'fr') return `${hh} h ${String(mm).padStart(2, '0')}`;
+  if (lang !== 'en') return `${hh}:${String(mm).padStart(2, '0')}`;      // (24 hours: German, Spanish, Portuguese, Italian)
   return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'am' : 'pm'}`;
 }
 export { clock };

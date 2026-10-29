@@ -9,10 +9,11 @@
 // "Hello!". The farmer walks round the geese, the ducks and Biscuit (and they step aside); everything said is in a bubble,
 // in English or French.
 import * as THREE from 'three';
+import { register, tr } from './lang.js';
 import { Farmer, FARMER_NAME } from './farmer.js';
 import { Torch } from './nightvisit.js';
 
-export const FARMER_TEXT = {
+export const FARMER_TEXT = register('say', {
   hi: ['Hello, girls!', 'Coucou, les filles !'],                       // (the 2D game's own line)
   morning: ['Good morning, girls!', 'Bonjour, les filles !'],
   night: ['Goodnight, girls!', 'Bonne nuit, les filles !'],
@@ -34,7 +35,7 @@ export const FARMER_TEXT = {
   wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
-};
+});
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
 const SPEED = { walk: 1.0, hurry: 1.45, run: 2.15 };
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -125,11 +126,11 @@ export class FarmLife {
   // Biscuit's FarmDog, visit(): the night visit, others(): the geese, the ducks, Biscuit (to walk round: each with pos),
   // grade, lang, toCamera(x, z), inView(x, z), dogName(), say(text) (the farmer's lines, for the tests) }
   constructor(scene, o, r) {
-    this.o = o; this.r = r; this.L = o.lang === 'fr' ? 1 : 0;
+    this.o = o; this.r = r; this.lang = o.lang || 'en';
     this.group = new THREE.Group(); scene.add(this.group);
     this.f = new Farmer(this.group, o.look, o.grade, r);
-    this.name = o.name || FARMER_NAME[o.look][this.L];
-    this.f.label = this.name + ' · ' + FARMER_TEXT.role[o.look][this.L]; this.f.isFarmer = true; this.f.life = this;
+    this.name = o.name || tr(this.lang, 'name.' + o.look);
+    this.f.label = this.name + ' · ' + tr(this.lang, 'say.role.' + o.look); this.f.isFarmer = true; this.f.life = this;
     this.torch = new Torch(scene);
     this.torch.glowAt = () => this.torchTip();
     const bm = new THREE.SpriteMaterial({ map: bubbleTexture('…'), transparent: true, depthWrite: false, depthTest: false }); bm.userData.noGrade = true;
@@ -140,7 +141,7 @@ export class FarmLife {
   }
   get pos() { return this.f.pos; }
   wear(id) { return this.f.wear(id); }          // a bought outfit (loaded first: farmer.js loadOutfit), or Classic (null)
-  T(key) { return FARMER_TEXT[key][this.L].replace('{dog}', this.o.dogName ? this.o.dogName() : 'Biscuit'); }
+  T(key) { return tr(this.lang, 'say.' + key).replace('{dog}', this.o.dogName ? this.o.dogName() : 'Biscuit'); }
   say(key, secs = 2.6) {
     const text = this.T(key), m = this.bubble.material; m.map = bubbleTexture(text); m.needsUpdate = true;
     this.bubbleT = secs; this.said.push(key); if (this.said.length > 40) this.said.shift();

@@ -6,7 +6,7 @@
 // scrolling); then OUT/index.html of them all.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
-const OUT = process.argv[2] || '/tmp/claude-0/farmer/screens', fr = process.env.LANG === 'fr', ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
+const OUT = process.argv[2] || '/tmp/claude-0/farmer/screens', LG = process.env.LANG || 'en', fr = LG === 'fr', LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', pt: 'pt-BR', it: 'it-IT' }[LG] || 'en-GB', SUF = LG === 'en' ? '' : '_' + LG, ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 fs.mkdirSync(OUT, { recursive: true });
 const DEVICES = [
   ['iphone-se', 375, 667, 2], ['iphone-mini', 375, 812, 3], ['iphone-16', 393, 852, 3], ['iphone-16-pro', 402, 874, 3], ['iphone-pro-max', 440, 956, 3],
@@ -39,12 +39,12 @@ for (const [name, w0, h0, dpr] of DEVICES) {
   if (ONLY && !ONLY.includes(name)) continue;
   for (const way of ['up', 'side']) {
     const W = way === 'up' ? Math.min(w0, h0) : Math.max(w0, h0), H = way === 'up' ? Math.max(w0, h0) : Math.min(w0, h0), tag = `${name}_${way}_${W}x${H}`;
-    const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London', deviceScaleFactor: 1 });
+    const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC, timezoneId: 'Europe/London', deviceScaleFactor: 1 });
     const T0 = new Date('2026-11-03T11:00:00+00:00').getTime();
     await ctx.addInitScript(t0 => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || t0); Date.now = () => window.__T; }, T0);
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));
-    const shot = async scr => { await settle(); await p.waitForTimeout(200); const file = `${OUT}/${tag}_${scr}${fr ? '_fr' : ''}.jpg`;
+    const shot = async scr => { await settle(); await p.waitForTimeout(200); const file = `${OUT}/${tag}_${scr}${SUF}.jpg`;
       await p.screenshot({ path: file, type: 'jpeg', quality: 80, timeout: 90000 }).then(() => shots.push([tag, scr, file])).catch(e => console.log('(picture skipped ' + tag + ' ' + scr + ')')); };
     try {
       await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });

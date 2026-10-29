@@ -4,6 +4,7 @@
 // exporter, and bones: the body; the neck in four and the head; the lower bill; the eyes; each wing folded and open; the
 // tail; each leg's thigh, heel and webbed foot. Feathered here with the birds' feather drawing and a little fluff.
 import * as THREE from 'three';
+import { register, tr, urlLang } from './lang.js';
 import { addFur, R, gooseMaterial, furHooks } from './birds.js';
 import { shadowDisc } from './beasts.js';
 
@@ -19,10 +20,10 @@ export function initGeese(gltf, json) {
   }
 }
 export const gooseName = kind => NAMES[kind] || kind;
-let FR = typeof location !== 'undefined' && /[?&]lang=fr\b/.test(location.search);
-export const setGooseLang = lang => { FR = lang === 'fr'; };          // (the game: the player's language, before they're made)
-const BREED = { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'],
-  mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'] };
+let LANG = urlLang();
+export const setGooseLang = lang => { LANG = lang || 'en'; };          // (the game: the player's language, before they're made)
+const BREED = register('goose', { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'],
+  mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'] });
 const isDuck = kind => /^mallard/.test(kind);
 
 // feather sizes (cm) per region: broad on the body and wings, small on the head (the neck's are made smaller by the drawing);
@@ -280,7 +281,7 @@ export class Goose {
     this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.hitR = 0.3; this.hitY = 0.4; this.tagY = 0.88; this.isGoose = true; this.react = 0; this.reactYaw = 0;
     if (this.isDuck) { this.hitR = 0.2; this.hitY = 0.2; this.tagY = 0.5; }
-    this.label = this.name + ' · ' + BREED[kind][FR ? 1 : 0];
+    this.label = this.name + ' · ' + tr(LANG, 'goose.' + kind);
     this.av = 0; this.spd = 0; this.vs = 0; this.turn = 0; this.wet = 0; this.flock = null; this.act = ''; this.actT = 0; this.seed = r() * 10;
   }
   get pos() { return this.root.position; }

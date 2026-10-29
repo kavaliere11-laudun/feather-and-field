@@ -9,10 +9,11 @@
 // frog is one draw; its pose comes from a few numbers: the hind legs stretched (0 folded, 1 out behind), the front legs
 // reaching, the body's pitch, the throat, the lids, the head turned.
 import * as THREE from 'three';
+import { register, tr, urlLang } from './lang.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Fish } from './fish.js';
 
-const FR = new URLSearchParams(location.search).get('lang') === 'fr';
+const LANG = urlLang();
 export const FROG_S = 1.15;                   // larger than life
 const BONES = ['root', 'body', 'head', 'lidL', 'lidR', 'throat', 'armL1', 'armL2', 'handL', 'armR1', 'armR2', 'handR', 'legL1', 'legL2', 'footL', 'legR1', 'legR2', 'footR'];
 const PARENT = { body: 'root', head: 'body', lidL: 'head', lidR: 'head', throat: 'head', armL1: 'body', armL2: 'armL1', handL: 'armL2', armR1: 'body', armR2: 'armR1', handR: 'armR2',
@@ -215,7 +216,7 @@ export class Frog {
     this.P = { ext: 0, reach: 0, pitch: 0, pouch: 0, blink: 0, yaw: 0, nod: 0, lift: 0, breath: 0 };
     this.t = r() * 10; this.blinkIn = 1 + r() * 4;
     this.hitR = 0.09; this.hitY = 0.05; this.tagY = 0.22;
-    this.label = FR ? 'Grenouille' : 'Frog';
+    this.label = tr(LANG, 'pond.frog');
   }
   get pos() { return this.root.position; }
   // a chain of bones aimed so its joints lie where the pose wants them (each bone turned the least way to point at the next)
@@ -291,7 +292,7 @@ export class FrogLineup {
 // about and climb out onto the bank again. A goose, Biscuit or Rusty coming near: in they go. Tap one and it jumps (into
 // the water, with a "Ribbit!"; one in the water dives and pops up elsewhere).
 const WATER_Y = 0.007, BANK_K = 1.045;
-const TXT = { ribbit: ['Ribbit!', 'Croâ !'] };
+const TXT = register('pond', { ribbit: ['Ribbit!', 'Croâ !'], frog: ['Frog', 'Grenouille'] });
 export function bubbleTexture(text, ink = '#2e5a1c') {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 112; const c = cv.getContext('2d');
   c.font = '800 46px Nunito, system-ui, sans-serif'; const w = Math.min(236, c.measureText(text).width + 44);
@@ -362,12 +363,12 @@ export class FrogPond {
   // o: { pond: V.pond, avoid: [[x, z, r]] (the dock), mouths: [[x, z]] (where the streams meet it), spots: [[x, y, z]],
   //      near(): [[x, z], ...] (geese, Biscuit, Rusty: anyone who'd make a frog jump in), grade, lang, toCamera(x, z) }
   constructor(scene, o, r) {
-    this.o = o; this.r = r; this.lang = o.lang === 'fr' ? 1 : 0;
+    this.o = o; this.r = r; this.lang = o.lang || 'en';
     const P = o.pond; this.c = [P.center[0], P.center[2]]; this.U = [P.axisU[0], P.axisU[2]]; this.V = [P.axisV[0], P.axisV[2]];
     this.u2 = this.U[0] ** 2 + this.U[1] ** 2; this.v2 = this.V[0] ** 2 + this.V[1] ** 2;
     this.group = new THREE.Group(); scene.add(this.group);
     this.fx = { rings: [], drops: [], bubbles: [] };
-    this.ringTex = ringTexture(); this.dropTex = dropTexture(); this.bubbleTex = bubbleTexture(TXT.ribbit[this.lang]);
+    this.ringTex = ringTexture(); this.dropTex = dropTexture(); this.bubbleTex = bubbleTexture(tr(this.lang, 'pond.ribbit'));
     // the frogs: on the bank, spread round the pond
     const angles = [];
     for (let i = 0; i < 5; i++) {

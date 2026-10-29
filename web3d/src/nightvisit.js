@@ -8,6 +8,7 @@
 // The way there is found on a grid of the village (NavGrid): round trees, bushes, rocks, buildings, other pens, the pond
 // and the streams (crossed only on the bridges).
 import * as THREE from 'three';
+import { tr } from './lang.js';
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const clamp01 = x => Math.min(1, Math.max(0, x));
@@ -340,7 +341,7 @@ export class NightVisit {
     this.nose = null;               // the feather stuck on his nose
     this.v = new THREE.Vector3(); this.w = new THREE.Vector3();
   }
-  T(k) { const t = this.text[k]; return t ? t[this.lang === 'fr' ? 1 : 0].replace('{dog}', this.dogName ? this.dogName() : 'Biscuit').replace('{farmer}', this.farmerName ? this.farmerName() : (this.lang === 'fr' ? 'le fermier' : 'the farmer')) : k; }
+  T(k) { const t = this.text[k]; return t ? tr(this.lang, 'visit.' + k).replace('{dog}', this.dogName ? this.dogName() : 'Biscuit').replace('{farmer}', this.farmerName ? this.farmerName() : tr(this.lang, 'visit.thefarmer')) : k; }
   note(s) { this.log.push(s); if (this.log.length > 60) this.log.shift(); }
   active() { return this.state === 'out' || this.state === 'fleeing'; }
   canSend() { return this.state === 'out' && !this.farmer && this.fox.root.visible; }
