@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
+import { BREEDS, ALL_BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
 import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog, setBeastLang } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE, setGooseLang } from './geese.js';
@@ -1232,7 +1232,7 @@ function batchCoops() {
 // where the eggs lie, from her seat: under her breast, towards the window (further in, the window's top would hide them)
 const NEST_SLOTS = [[0, 0.08], [0.06, 0.06], [-0.06, 0.07], [0.045, 0.12], [-0.045, 0.12], [0.0, 0.03]];
 const nestOf = plot => COOPS.nests['house_' + plot.breed];
-const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', sil: '#efe4cf' };
+const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf' };      // (a Polish's white; an Ayam Cemani's cream, not black)
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
 const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
 function addNest(frame, plot) {
@@ -2891,11 +2891,13 @@ function buildLineup() {
     const b = new Bird(lineup, breed, kind, colour, [(i - (list.length - 1) / 2) * step, 0, z], yaw + (r() - 0.5) * 0.6, r);
     b.stay = true; lineup.birds.push(b);
   });
-  const breeds = BREEDS.filter(b => b !== 'sil');
+  const only = params.get('breeds'), breeds = ALL_BREEDS.filter(b => b !== 'sil' && (!only || only.split(',').includes(b)));      // (?breeds=pol,aya: just those)
   row(1.2, breeds.flatMap(b => [[b, 'hen'], [b, 'rooster'], [b, 'chick']]), 0.45);
-  row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
-  row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
-  row(-0.75, SILKIE.map(c => ['sil', 'rooster', c]), 0.45);
+  if (!only) {
+    row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
+    row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
+    row(-0.75, SILKIE.map(c => ['sil', 'rooster', c]), 0.45);
+  }
   allBirds.push(...lineup.birds);
   frame.updateMatrixWorld(true);
 }

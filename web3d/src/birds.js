@@ -4,8 +4,9 @@
 import * as THREE from 'three';
 
 export const BREEDS = ['rir', 'orp', 'leg', 'bra', 'sil'];
+export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'];      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
 export const SILKIE = ['white', 'black', 'blue', 'buff', 'partridge', 'grey', 'splash', 'cuckoo', 'red', 'paint', 'lavender'];
-export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', sil: 'Silkie' };
+export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', sil: 'Silkie' };
 const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
@@ -23,6 +24,12 @@ const ADULT = {
   leg_r: { body: '#bab4a7', bars: '#8a857a', hackle: '#efe3c0', saddle: '#ebdfbb', head: '#eee2c3', crest: '#e9ddbb', wing: '#b2ac9e', prim: '#8e887c', tail: '#e1dccf', pattern: 'bars' },
   bra_h: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#29292c', head: '#f4f0e8', wing: '#ece7dd', prim: '#7d7d82', tail: '#1c1b1b', legfeather: '#ece8df', pattern: 'stripes' },
   bra_r: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#29292c', saddle: '#f2eee6', head: '#f4f0e8', wing: '#ece7dd', prim: '#5a5a5f', tail: '#1a1919', legfeather: '#ece8df', pattern: 'stripes' },
+  // the Polish: White-crested Black (black with a green gloss, the great crest white); the Ayam Cemani: black all over with a
+  // beetle-green and purple sheen (sheen: its body and wings catch it too, not only the long feathers)
+  pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', wing: '#201f25', prim: '#17161b', tail: '#121115' },
+  pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
+  aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
+  aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3f8a6a', sheen2: '#6a4f9a' },
 };
 const SIL = {
   white: { body: '#f5f2eb' },
@@ -43,6 +50,8 @@ const CHICK = {
   orp: { down: '#f1d06a', top: '#ebc65b', face: '#f6dc84', wing: '#e6c25a', leg: '#e8c2ad', beak: '#e8c49a' },
   leg: { down: '#b88f60', top: '#a37b4e', face: '#e3cd9e', wing: '#9f794f', stripe: '#5a3e25', pattern: 'chipmunk' },
   bra: { down: '#f0e8cc', top: '#e8e0c4', face: '#f5efd9', wing: '#d6d2c6' },
+  pol: { down: '#2b2a30', top: '#2b2a30', face: '#ebe5d5', wing: '#25242a', leg: '#7a8090', beak: '#6a6670' },      // (dark down, a pale crest bump)
+  aya: { down: '#1c1b21', face: '#232228', wing: '#18171d', leg: '#232228', beak: '#2c2a32' },
 };
 const SIL_CHICK = {
   white: { down: '#f6f3e6' }, black: { down: '#33333b', face: '#45454f' }, blue: { down: '#8792a5' }, buff: { down: '#efd38a' },
@@ -50,7 +59,7 @@ const SIL_CHICK = {
   splash: { down: '#ebe9e3', spot: '#8a96a8', pattern: 'splash' }, cuckoo: { down: '#8e9095', spot: '#d8d8d4', pattern: 'splash' },
   red: { down: '#c56a33' }, paint: { down: '#f4f1e8', spot: '#2a2a30', pattern: 'paint' }, lavender: { down: '#c1bbcb' },
 };
-const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', sil: '#5c5868' };
+const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sil: '#5c5868' };
 
 // ------------------------------------------------------------------ a little value noise for patterns (splashes, spots, mottling)
 function hash(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
@@ -97,7 +106,9 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
   FEAT.mode = 4; FEAT.amt = lum > 0.5 ? 0.14 : 0.3; FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
   const n = noise(x * 60, y * 60, z * 60);
-  if (key === 'tail' || key === 'saddle' || key === 'prim') {      // long glossy feathers: a sheen (green-black on dark tails, as in life)
+  if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: beetle-green over its body and wings, purple in places)
+    FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.4 : 0.34;      // (6: a softer gloss than the long feathers')
+  } else if (key === 'tail' || key === 'saddle' || key === 'prim') {      // long glossy feathers: a sheen (green-black on dark tails, as in life)
     FEAT.mode = 5; FEAT.c.copy(lum < 0.06 ? lin('#2f7d58') : lum < 0.35 ? lin('#ffcf7a') : lin('#ffffff')); FEAT.amt = lum < 0.06 ? 0.3 : lum < 0.35 ? 0.16 : 0.1;
     if (S.pattern === 'stripes' && key === 'saddle') out.lerp(lin(S.stripe), smooth(0.3, 0.8, Math.sin(Math.atan2(x, -z) * 22)) * 0.75);
   }
@@ -209,7 +220,7 @@ export function paintedGeometry(model, breed, colour) {
     const reg = paint ? paint.array[i] : 0;
     let hw = 0;
     for (let j = 0; j < 4; j++) if (si.array[i * 4 + j] === 2) hw += sw.array[i * 4 + j] / (sw.normalized ? 255 : 1);
-    fs[i] = chick || breed === 'sil' ? 0 : FEATHER[reg] || 0; fh[i] = hw;      // Silkies and chicks are all fluff
+    fs[i] = chick || breed === 'sil' || (breed === 'pol' && reg === R.crest) ? 0 : FEATHER[reg] || 0; fh[i] = hw;      // Silkies and chicks are all fluff (and a Polish's crest)
   }
   g.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); g.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
   g.setAttribute('featherPattern', new THREE.BufferAttribute(fpat, 4)); g.setAttribute('featherMode', new THREE.BufferAttribute(fmode, 1));
@@ -246,9 +257,11 @@ const FUR = {
   // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
   hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
   orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
+  // the Polish: the hens' short fluff, and a longer soft fluff over the crest, so it reads as a pompom
+  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.034, [R.legfeather]: 0.016 }, shells: 8, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : FUR.hen;
+const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? FUR.pol : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -563,7 +576,7 @@ function birdMaterial(indoor, goose) {
           float onTop = 1.0 + 0.8 * boost;
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
-          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));
+          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vMode > 5.5 ? diffuseColor.rgb * 0.55 : vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));      // (6, a sheen over the body: the overlap darker, not the sheen's colour)
           // the vane's barbs: thin strands slanting from the quill towards the tip, lying side by side (the two halves of the
           // vane meet at the quill in a V); their ends make the feather's edge finely ragged
           float ph = (along * 0.85 - abs(across)) * 30.0;
@@ -615,7 +628,7 @@ function birdMaterial(indoor, goose) {
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        if (vMode > 4.5) roughnessFactor = 0.34;`)
+        if (vMode > 4.5) roughnessFactor = vMode > 5.5 ? 0.46 : 0.34;`)
       .replace('#include <opaque_fragment>', `if (vMode > 4.5) {        // glossy tail feathers: a coloured sheen at glancing angles
           float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += vPat.rgb * vPat.a * (0.04 + fr * fr * 0.6);

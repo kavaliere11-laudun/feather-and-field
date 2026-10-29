@@ -21,6 +21,17 @@ BREEDS = {
                 legs='#e9bd45', beak='#e3c07a', eye='#d9842a', combc='#d8352b', plum='#bdb6a6', wing='#9c968a', tailc='#d8d2c2'),
     'bra': dict(scale=1.13, body=(1.34, 0.88, 0.98), r=0.125, comb=0.5, pea=True, tail='short', shank=0.1, lift=0.035, feathered=True, thigh=1.1,
                 legs='#efc24a', beak='#e9c46a', eye='#d9842a', combc='#d8352b', plum='#f1ede3', wing='#ece7dc', tailc='#1d1b1a'),
+    # (29 Oct 2026, Audrey's two new breeds for levels 26 and 29: "Polish (Recommended)", "Ayam Cemani")
+    # the Polish: White-crested Black, the great round crest falling over the eyes (a rooster's of long pointed feathers
+    # spilling outwards), a tiny V comb hidden in it, white earlobes, slate legs
+    'pol': dict(scale=0.95, body=(1.42, 0.78, 0.82), r=0.116, comb=0.0, polish=True, tail='fan', tail_up=6, shank=0.11, lift=0.04,
+                legs='#6c7383', beak='#4b4852', eye='#c26a2c', combc='#d8352b', lobe='#efe9de', plum='#1b1a1f', wing='#1f1e24', tailc='#141317',
+                crestc='#f4f1ea', wattle=0.55),
+    # the Ayam Cemani: black all over, even the comb, the face, the beak, the legs and the eyes; tall and slender, the tail
+    # carried high
+    'aya': dict(scale=1.0, body=(1.48, 0.74, 0.8), r=0.114, comb=1.05, tail='fan', tail_up=16, shank=0.135, lift=0.055,
+                legs='#1e1d23', beak='#25232b', eye='#1a1214', combc='#2b2531', face='#2e2a34', lid='#28252d', lobe='#2b2531',
+                plum='#131217', wing='#15141a', tailc='#0e0d11', saddle='#131217'),
     'sil': dict(scale=0.86, silkie=True, shank=0.08,
                 legs='#5c5868', beak='#757688', eye='#2c2222', combc='#4b2032', lobe='#3fa6b8', plum='#f4f1ea', wing='#ece8df', tailc='#f4f1ea'),
 }
@@ -108,7 +119,7 @@ def natural_eye(hd, sd, B, R=0.057):
     and a small catch-light."""
     d = Vector((0.42, sd * 0.86, 0.22)).normalized()
     rot = d.to_track_quat('Z', 'Y').to_euler()
-    skin = flat('face', '#cf4a3c', 0.55); lid = flat('lid', '#a93a30', 0.5)
+    skin = flat('face', B.get('face', '#cf4a3c'), 0.55); lid = flat('lid', B.get('lid', '#a93a30'), 0.5)
     iris = flat('iris', B['eye'], 0.12); pupil = flat('pupil', '#0a0807', 0.05); glint = flat('glint', '#ffffff', 0.1)
     face = sphere('face', 0.02, tuple(d * (R - 0.0065) + Vector((0.01, 0, -0.005))), (1.1, 0.95, 0.3), rot, m=skin, parent=hd, seg=10, rings=6)
     eye_c = d * (R - 0.0035)
@@ -164,21 +175,23 @@ def feathered(B, rooster, root, body_rig, seed):
     tag(cyl('beak', 0.019, 0.048, (0.07, 0, -0.008), (0, math.radians(90 + 12), 0), bk, verts=12, r2=0.002, bevel=0.002, parent=hd), 'head')
     for sd in (1, -1):
         natural_eye(hd, sd, B)
-        tag(sphere('lobe', 0.011, (0.004, sd * 0.045, -0.012), (1, 0.45, 1.2), m=cm if not B.get('pea') else flat('lobe_w', '#efe6da'), parent=hd, seg=12, rings=8), 'head')
+        tag(sphere('lobe', 0.011, (0.004, sd * 0.045, -0.012), (1, 0.45, 1.2), m=flat('lobe_b', B['lobe']) if B.get('lobe') else cm if not B.get('pea') else flat('lobe_w', '#efe6da'), parent=hd, seg=12, rings=8), 'head')
     cs = (1.5 if rooster else 1.0) * B['comb']
-    if B.get('pea'):           # a Brahma's pea comb: three low ridges
+    if B.get('polish'): pass   # (the Polish's tiny V comb is hidden in its crest)
+    elif B.get('pea'):           # a Brahma's pea comb: three low ridges
         el = [('BALL', (0.045 - i * 0.02, dy, 0.046), 0.012 * K * (1.2 if rooster else 1.0), None, 2.0) for i in range(3) for dy in (-0.008, 0, 0.008)]
         tag(metaball_mesh('comb', el, res=0.004, m=cm, parent=hd), 'head')
     else:
         comb = metaball_mesh('comb', [('BALL', (0.045 - i * 0.022, 0, 0.05 + 0.012 * math.sin(i * 1.1) * cs + (0.006 if i in (1, 2) else 0)), (0.017 - 0.0015 * abs(i - 1.5)) * K * cs, None, 2.0) for i in range(4)]
                              + [('ELLIPSOID', (0.0, 0, 0.042), 0.02 * K, (2.2, 0.5, 0.5), 2.0)], res=0.004, m=cm, parent=hd)
         comb.scale = (1, 0.55, 1); tag(comb, 'head')
-    wk = (1.0 if rooster else 0.8) * (0.6 if B.get('pea') else 1.0)
+    wk = (1.0 if rooster else 0.8) * (0.6 if B.get('pea') else 1.0) * B.get('wattle', 1.0)
     tag(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.009, -0.042), 0.013 * K * wk * (1.5 if rooster else 1), (0.8, 0.6, 1.3), 2.0) for sd in (1, -1)], res=0.004, m=cm, parent=hd), 'head')
     if B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
         for i in range(5):
             a = math.radians(-50 + 25 * i)
             tag(feat_uv(paddle('crest', 0.06, 0.022, 0.008, pl, hd, (-0.03, 0.012 * math.sin(a), 0.035), (math.radians(20 * math.sin(a)), math.radians(-150), 0), curve=0.15), 0.06, 0.022), 'head', 'crest')
+    if B.get('polish'): polish_crest(B, rooster, hd, seed)
     # wings: soft folded shapes with feather tips at the back
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
         w = empty('wing', (0.0, sd * 0.093 * by / 0.92, 0.24), (math.radians(sd * -6), math.radians(-12), math.radians(sd * -4)), body_rig)
@@ -236,6 +249,44 @@ def feathered(B, rooster, root, body_rig, seed):
             F += bumps(rnd, (-0.004, sd * 0.014, sh * 0.5), (0.014, 0.016, 0.03), 5, 0.009, 0.012)
             tag(metaball_mesh('legfluff', F, res=0.0045, m=pl, parent=lg_), nm, 'legfeather')
     return True
+
+
+def polish_crest(B, rooster, hd, seed):
+    """A Polish's crest: a round core with feathers springing out all round it (Fibonacci-spread over the top of the
+    head), down over the forehead and the eyes in front and lower behind; a hen's broad and round-tipped, curling in to a
+    neat ball; a rooster's long and pointed, spilling outwards and down like a mop. Head space (the bird faces +x)."""
+    cm = flat('crest', B.get('crestc', '#f4f1ea'), 0.85)
+    c0 = Vector((-0.012, 0, 0.058 if not rooster else 0.062)); rc = 0.058 if not rooster else 0.06      # (as big as the head: the eyes peep from under its edge)
+    S = Vector((1.15, 1.12, 0.95))
+    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(c0), rc * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
+    rnd = random.Random(seed * 13 + (5 if rooster else 0))
+    n = (48 if rooster else 34) if not LO else 16
+    golden = math.pi * (3 - math.sqrt(5)); made = 0
+    for i in range(n * 2):
+        if made >= n: break
+        z = 0.94 - (made + 0.5) / n * 1.39                  # from near the top (none straight up: seen end-on from above, a dark dot) down to below the crest's middle
+        r = math.sqrt(max(0.0, 1 - z * z)); th = i * golden
+        d = Vector((r * math.cos(th), r * math.sin(th), z))
+        if d.x > 0.45 and d.z < -0.25: continue             # (clear of the face and the beak)
+        made += 1
+        L = (0.075 if rooster else 0.048) * rnd.uniform(0.85, 1.12) * (1.15 if d.x < -0.2 else 1.0)
+        w = 0.015 if rooster else 0.026
+        droop = 1.35 if rooster else 0.55
+        p = c0 + Vector((d.x * S.x, d.y * S.y, d.z * S.z)) * rc * 0.72
+        pts, ws, wds = [], [], []
+        seg = 5 if not LO else 3
+        out = Vector((d.x * S.x, d.y * S.y, d.z * S.z)).normalized()
+        for k in range(seg + 1):
+            t = k / seg
+            dirk = (out + Vector((0, 0, -droop * t)) + (-out * 0.35 * t if not rooster else Vector((0, 0, 0)))).normalized()      # a hen's curl back in; a rooster's falling
+            if k: p = p + dirk * (L / seg)
+            side = dirk.cross(Vector((0, 0, 1)))
+            if side.length < 1e-3: side = dirk.cross(Vector((1, 0, 0)))
+            side.normalize()
+            wk = (w * min(1.0, t / 0.15 + 0.25) * (1 - t) ** 0.9) if rooster else (w * min(1.0, t / 0.12 + 0.3) * (1 - t * t) ** 0.5 + 0.002)
+            pts.append(p.copy()); ws.append(wk); wds.append(side)
+        f = tag(ribbon('crestf', pts, ws, wds, cm, hd), 'head', 'crest')
+        if not rooster: f.data.uv_layers.remove(f.data.uv_layers['feat'])      # (a hen's: soft fluff, no quills drawn on it)
 
 
 # ------------------------------------------------------------------ the Silkie: a soft cloud of fluff with a pompom crest
@@ -351,7 +402,7 @@ if __name__ == '__main__':          # a line-up close-up: [ONLY=sil,orp] python 
     samples = int(sys.argv[-1]) if sys.argv[-1].isdigit() else 32
     scn = reset()
     cyl('ground', 4.0, 0.04, (0, 0, -0.02), m=mat('grass_g', '#6fae4b', rough=0.9), verts=64, bevel=0.0)
-    only = [b for b in os.environ.get('ONLY', 'rir,orp,leg,bra,sil').split(',') if b]
+    only = [b for b in os.environ.get('ONLY', 'rir,orp,leg,bra,pol,aya,sil').split(',') if b]
     x = 0.0
     for b in only:
         for s in ('h', 'r'):

@@ -1,4 +1,5 @@
-"""Export every breed for the browser (flock.glb + flock.json): Rhode Island Red, Buff Orpington, Cream Legbar, Light Brahma
+"""Export every breed for the browser (flock.glb + flock.json): Rhode Island Red, Buff Orpington, Cream Legbar, Light Brahma,
+Polish, Ayam Cemani
 and Silkie hens and roosters, and the chick. Each model is one mesh with vertex colours, bone weights (root, body, head,
 wings, tail, legs: the browser animates them) and a paint region per vertex (the browser repaints plumage for each breed
 and Silkie colour). flock.json gives each model's bone pivots. glTF's (x, y, z) = Blender's (x, z, -y); birds face +z.
@@ -140,14 +141,15 @@ def write_bird_glb(path, names):
 
 
 LOW = {'h': 1200, 'r': 1500, 'chick': 420}
+CREST_EXTRA = {'h': 900, 'r': 1100}       # (a Polish's crest: its feathers are kept whole)
 SIL_BUDGET = {'h': 2300, 'r': 2600}     # Silkies: no long tail or bare-skin eyes, and their fluff shells multiply them      # a light version of each bird for when the view is zoomed far out
 names = []
-for b in ('rir', 'orp', 'leg', 'bra', 'sil'):
+for b in ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'):
     for sx in ('h', 'r'):
         for lo in (False, True):
             fresh(); r = breeds.build(b, sx, seed=3, lo=lo); light(1)
             nm = '%s_%s' % (b, sx) + ('_lo' if lo else '')
-            bake_bird(nm, r, (LOW[sx] if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx])) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
+            bake_bird(nm, r, (LOW[sx] if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx] + (CREST_EXTRA[sx] if b == 'pol' else 0))) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
 for lo in (False, True):
     fresh(); r = breeds.chick(seed=3); light(1)
     nm = 'chick' + ('_lo' if lo else ''); bake_bird(nm, r, LOW['chick'] if lo else BUDGET_BIRD['chick'], *((20, 0.02) if lo else ())); names.append(nm)
