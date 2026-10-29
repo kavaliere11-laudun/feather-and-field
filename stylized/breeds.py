@@ -252,41 +252,17 @@ def feathered(B, rooster, root, body_rig, seed):
 
 
 def polish_crest(B, rooster, hd, seed):
-    """A Polish's crest: a round core with feathers springing out all round it (Fibonacci-spread over the top of the
-    head), down over the forehead and the eyes in front and lower behind; a hen's broad and round-tipped, curling in to a
-    neat ball; a rooster's long and pointed, spilling outwards and down like a mop. Head space (the bird faces +x)."""
+    """A Polish's crest (Audrey, 29 Oct, on the first try's spiky feathers: "The hair of the polish chicken are really not
+    great"): a round soft core on top of the head, a little lumpy, that the browser covers in long hair like a Silkie's
+    (birds.js FUR.pol: a hen's standing out in a round pompom, a rooster's longer and falling like a mop), down to the eyes
+    in front and lower behind. Head space (the bird faces +x)."""
     cm = flat('crest', B.get('crestc', '#f4f1ea'), 0.85)
-    c0 = Vector((-0.012, 0, 0.058 if not rooster else 0.062)); rc = 0.058 if not rooster else 0.06      # (as big as the head: the eyes peep from under its edge)
-    S = Vector((1.15, 1.12, 0.95))
-    tag(metaball_mesh('crest_core', [('ELLIPSOID', tuple(c0), rc * K, tuple(S), 2.0)], res=0.0045, m=cm, parent=hd), 'head', 'crest')
     rnd = random.Random(seed * 13 + (5 if rooster else 0))
-    n = (48 if rooster else 34) if not LO else 16
-    golden = math.pi * (3 - math.sqrt(5)); made = 0
-    for i in range(n * 2):
-        if made >= n: break
-        z = 0.94 - (made + 0.5) / n * 1.39                  # from near the top (none straight up: seen end-on from above, a dark dot) down to below the crest's middle
-        r = math.sqrt(max(0.0, 1 - z * z)); th = i * golden
-        d = Vector((r * math.cos(th), r * math.sin(th), z))
-        if d.x > 0.45 and d.z < -0.25: continue             # (clear of the face and the beak)
-        made += 1
-        L = (0.075 if rooster else 0.048) * rnd.uniform(0.85, 1.12) * (1.15 if d.x < -0.2 else 1.0)
-        w = 0.015 if rooster else 0.026
-        droop = 1.35 if rooster else 0.55
-        p = c0 + Vector((d.x * S.x, d.y * S.y, d.z * S.z)) * rc * 0.72
-        pts, ws, wds = [], [], []
-        seg = 5 if not LO else 3
-        out = Vector((d.x * S.x, d.y * S.y, d.z * S.z)).normalized()
-        for k in range(seg + 1):
-            t = k / seg
-            dirk = (out + Vector((0, 0, -droop * t)) + (-out * 0.35 * t if not rooster else Vector((0, 0, 0)))).normalized()      # a hen's curl back in; a rooster's falling
-            if k: p = p + dirk * (L / seg)
-            side = dirk.cross(Vector((0, 0, 1)))
-            if side.length < 1e-3: side = dirk.cross(Vector((1, 0, 0)))
-            side.normalize()
-            wk = (w * min(1.0, t / 0.15 + 0.25) * (1 - t) ** 0.9) if rooster else (w * min(1.0, t / 0.12 + 0.3) * (1 - t * t) ** 0.5 + 0.002)
-            pts.append(p.copy()); ws.append(wk); wds.append(side)
-        f = tag(ribbon('crestf', pts, ws, wds, cm, hd), 'head', 'crest')
-        if not rooster: f.data.uv_layers.remove(f.data.uv_layers['feat'])      # (a hen's: soft fluff, no quills drawn on it)
+    c0 = (-0.016, 0, 0.05 if not rooster else 0.052); rc = 0.043 if not rooster else 0.045
+    S = (1.15, 1.1, 0.95) if not rooster else (1.2, 1.12, 0.92)
+    E = [('ELLIPSOID', c0, rc * K, S, 2.0)]
+    E += bumps(rnd, c0, (rc * S[0], rc * S[1], rc * S[2]), 10, 0.014, 0.019, zmin=-0.35, skip=lambda d: d.x > 0.5 and d.z < 0.1)
+    tag(metaball_mesh('crest_core', E, res=0.0045, m=cm, parent=hd), 'head', 'crest')
 
 
 # ------------------------------------------------------------------ the Silkie: a soft cloud of fluff with a pompom crest

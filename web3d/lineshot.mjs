@@ -8,6 +8,6 @@ await p.goto('http://localhost:8770/index.html?lineup&q=0' + (process.argv[4] ||
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.evaluate((s) => { const f = window.__farm; f.view.size = s; f.lookAt(f.view.target.x, f.view.target.z, s); }, size);
 await p.waitForTimeout(parseInt(process.argv[5] || '2500'));
-await p.screenshot({ path: out });
+await p.screenshot({ path: out, timeout: 180000 });
 if (errs.length) console.log('ERRORS', errs.join(' | '));
 await b.close();

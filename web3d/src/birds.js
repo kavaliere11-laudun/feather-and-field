@@ -257,11 +257,16 @@ const FUR = {
   // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
   hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
   orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
-  // the Polish: the hens' short fluff, and a longer soft fluff over the crest, so it reads as a pompom
-  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.034, [R.legfeather]: 0.016 }, shells: 8, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
+  // the Polish: the hens' short fluff over the feathers, and on the crest long soft hair like a Silkie's (regions: that
+  // region's own style; Audrey, on the first try's spiky feathers: "The hair of the polish chicken are really not great"):
+  // a hen's standing out in a round pompom, a rooster's longer and falling over like a mop
+  pol: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.05, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06,
+         regions: { [R.crest]: { shells: 18, clump: 0.6, fine: 1.0, wave: 1.2, locks: 0.11, comb: 0.3 } } },
+  pol_r: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.062, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06,
+           regions: { [R.crest]: { shells: 18, clump: 0.65, fine: 1.0, wave: 1.3, locks: 0.11, comb: 0.5 } } },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? FUR.pol : FUR.hen;
+const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -285,6 +290,10 @@ function addFur(g, src, spec, headc, eyes) {
   const map = new Int32Array(n).fill(-1), furVerts = [];
   for (const v of furTris) if (map[v] < 0) { map[v] = furVerts.length; furVerts.push(v); }
   const K = spec.shells, m = furVerts.length, total = n + K * m;
+  // (a region may have more layers than the rest, spec.regions[r].shells, the rest spec.baseShells: a Polish's long crest
+  // hair needs many, its body's short fluff few, and every layer over the feathers costs a lot to draw)
+  const Kv = new Float32Array(m);
+  for (let j = 0; j < m; j++) { const R_ = spec.regions && spec.regions[paint[furVerts[j]]]; Kv[j] = R_ && R_.shells ? R_.shells : spec.baseShells || K; }
   const A = name => g.attributes[name];
   const pos = new Float32Array(total * 3), nrm = new Float32Array(total * 3), col = new Float32Array(total * 3);
   const si = new Uint8Array(total * 4), sw = new Uint8Array(total * 4), furT = new Float32Array(total), furLen = new Float32Array(total);
@@ -302,12 +311,23 @@ function addFur(g, src, spec, headc, eyes) {
     fu.set(FU.subarray(from * 3, from * 3 + 3), dst * 3); ea.set(EA.subarray(from * 4, from * 4 + 4), dst * 4);
   };
   for (let i = 0; i < n; i++) copy(i, i);
-  for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = k / K; }
+  for (let k = 1; k <= K; k++) for (let j = 0; j < m; j++) { const d = n + (k - 1) * m + j; copy(d, furVerts[j]); furT[d] = Math.min(1, k / Kv[j]); }
   // painted hair: tex (chicks) only shades the down; locks (Silkies) also shapes the fluff layers (a negative size marks it)
   for (let i = 0; i < total; i++) style[i * 4 + 3] = furLen[i] > 0 ? (spec.locks ? -spec.locks : spec.tex || 0) : 0;
-  const index = new (total > 65535 ? Uint32Array : Uint16Array)(idx.length + K * furTris.length);
+  // a region with its own style (a Polish's crest: Silkie hair on a feathered bird)
+  if (spec.regions) for (let i = 0; i < total; i++) {
+    const R_ = spec.regions[paint[i < n ? i : furVerts[(i - n) % m]]]; if (!R_) continue;
+    style[i * 4] = R_.clump; style[i * 4 + 1] = R_.fine; style[i * 4 + 2] = R_.wave; style[i * 4 + 3] = furLen[i] > 0 ? -R_.locks : 0; comb[i] = R_.comb;
+  }
+  // each layer: the triangles that have that many (a triangle: the most of its corners'), layer after layer
+  const triK = new Float32Array(furTris.length / 3), offsets = [0];
+  for (let t = 0; t < furTris.length; t += 3) triK[t / 3] = Math.max(Kv[map[furTris[t]]], Kv[map[furTris[t + 1]]], Kv[map[furTris[t + 2]]]);
+  let count = 0;
+  for (let k = 1; k <= K; k++) { for (let t = 0; t < triK.length; t++) if (triK[t] >= k) count += 3; offsets.push(count); }
+  const index = new (total > 65535 ? Uint32Array : Uint16Array)(idx.length + count);
   index.set(idx, 0);
-  for (let k = 1; k <= K; k++) for (let t = 0; t < furTris.length; t++) index[idx.length + (k - 1) * furTris.length + t] = n + (k - 1) * m + map[furTris[t]];
+  let w = idx.length;
+  for (let k = 1; k <= K; k++) for (let t = 0; t < triK.length; t++) if (triK[t] >= k) for (let c = 0; c < 3; c++) index[w++] = n + (k - 1) * m + map[furTris[t * 3 + c]];
   const f = new THREE.BufferGeometry();
   f.setAttribute('position', new THREE.BufferAttribute(pos, 3)); f.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   f.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -326,7 +346,7 @@ function addFur(g, src, spec, headc, eyes) {
   }
   f.setIndex(new THREE.BufferAttribute(index, 1));
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
-  f.userData.fur = { base: idx.length, shell: furTris.length, shells: K, droop: spec.droop };
+  f.userData.fur = { base: idx.length, offsets, shells: K, droop: spec.droop };
   FURRY.push(f); showShells(f);
   return f;
 }
@@ -371,7 +391,7 @@ export function setHairTexture(t) {
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace; t.anisotropy = 4; t.needsUpdate = true;
   furLook.tex.value = t;
 }     // cut: how much of a strand's soft edge is kept
-function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + Math.max(Math.min(2, u.shells), Math.round(u.shells * furLook.shown)) * u.shell); }
+function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + u.offsets[Math.max(Math.min(2, u.shells), Math.round(u.shells * furLook.shown))]); }
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
   // change while zooming
