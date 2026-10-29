@@ -1,6 +1,6 @@
 {
- "owner": "TODO-owner",
- "email": "TODO@example.com",
+ "owner": "Audrey Bellegarde",
+ "email": "contact.featherfield@gmail.com",
  "date": {
   "en": "29 October 2026",
   "fr": "29 octobre 2026",
@@ -14,7 +14,11 @@
   "fr": "TODO-where"
  },
  "authority": {
-  "en": "TODO-authority",
-  "fr": "TODO-authority"
+  "en": "the Information Commissioner’s Office (ICO, ico.org.uk), the UK’s data protection authority",
+  "fr": "l’Information Commissioner’s Office (ICO, ico.org.uk), l’autorité britannique de protection des données",
+  "de": "Information Commissioner’s Office (ICO, ico.org.uk) im Vereinigten Königreich",
+  "es": "Information Commissioner’s Office (ICO, ico.org.uk), en el Reino Unido",
+  "pt": "Information Commissioner’s Office (ICO, ico.org.uk), no Reino Unido",
+  "it": "Information Commissioner’s Office (ICO, ico.org.uk), nel Regno Unito"
  }
 }
