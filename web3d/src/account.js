@@ -22,12 +22,12 @@
 import { SAVE_KEY, checkFarm, levelOf } from './game.js';
 import { FIREBASE } from './firebase-config.js';
 
-const SYNC_KEY = 'ff3d.cloud';            // { uid, n, s, fresh? }: the account, the save's number and the farm's seal then
 export const DEBOUNCE = 45e3;             // a change goes up this long after (sooner when the game is put away)
 const MAX = 800000;                        // the most a farm may weigh online (the rules allow a little more)
 const params = new URLSearchParams(location.search);
 const FAKE = params.get('account') === 'fake';
 const EMU = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') && params.get('emu');      // (the Firebase emulators, only from a test page)
+const SYNC_KEY = FAKE ? 'ff3d.cloud.fake' : 'ff3d.cloud';      // { uid, n, s, fresh? }: the account, the save's number and the farm's seal then (the pretend account's kept apart)
 
 function readSync() {
   try {

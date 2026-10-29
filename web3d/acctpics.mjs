@@ -23,7 +23,7 @@ for (const L of LANGS) for (const [W, H, way] of SIZES) {
   await p.waitForFunction(() => window.__farm && window.__farm.game && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 420; g.data.coins = 380; g.save(); f.gameUI().close(); f.gameUI().refresh(); f.draw(); });
   // a different farm already online (another phone's, further on)
-  await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 5200; raw.d.coins = 2450; raw.d.made -= 9 * 86400e3; raw.d.farmer.name = 'Rosie'; raw.d.farmer.look = 'f';
+  await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 5200; raw.d.coins = 2450; raw.d.made -= 9 * 86400e3; raw.d.farmer.name = 'Rosie'; raw.d.farmer.look = 'f'; raw.s = 'feedf00d';
     localStorage.setItem('ff3d.fakecloud', JSON.stringify({ 'fake-farmer-1': { farm: JSON.stringify(raw), n: 12, at: Date.now() - 26 * 3600e3, lv: 9, coins: 2450, made: raw.d.made } })); });
   await p.evaluate(() => window.__farm.gameUI().settings()); await p.waitForFunction(() => !!document.querySelector('.gacct-in:not([disabled])'));
   ok(`${L} ${way}: the card signed out, nothing off it`, !(await off(p)).length, await off(p));
