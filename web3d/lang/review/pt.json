@@ -1,0 +1,38 @@
+[
+ {
+  "id": "text.tagline",
+  "now": "Um galinheiro para amar a vida inteira",
+  "problem": "“galinheiro” is the coop everywhere else; the tagline means the flock",
+  "fix": "Galinhas para amar a vida inteira"
+ },
+ {
+  "id": "text.trust_body",
+  "now": "Os carinhos criam confiança: conta um a cada 6 horas.",
+  "problem": "“conta um a cada 6 horas” reads like an instruction (“count one”); unclear",
+  "fix": "Carinhos criam confiança: só um conta a cada 6 horas."
+ },
+ {
+  "id": "text.land_broke",
+  "now": "Ainda faltam moedas ({c})",
+  "problem": "“faltam moedas (500)” reads as “500 coins missing”, but {c} is the price",
+  "fix": "Ainda sem moedas suficientes ({c})"
+ },
+ {
+  "id": "text.up_broke",
+  "now": "Faltam moedas ({c})",
+  "problem": "same: “faltam moedas ({c})” reads as the amount missing, not the price",
+  "fix": "Moedas insuficientes ({c})"
+ },
+ {
+  "id": "text.young_leaves",
+  "now": "Parte para uma nova fazenda em cerca de {when}. A nota dela sai na partida.",
+  "problem": "“sai na partida” is stiff and “partida” can read as “match”",
+  "fix": "Parte para uma nova fazenda em cerca de {when}. A nota dela sai quando ela partir."
+ },
+ {
+  "id": "text.young_leaves_r",
+  "now": "Parte para uma nova fazenda em cerca de {when}. A nota dele sai na partida.",
+  "problem": "same as young_leaves",
+  "fix": "Parte para uma nova fazenda em cerca de {when}. A nota dele sai quando ele partir."
+ }
+]

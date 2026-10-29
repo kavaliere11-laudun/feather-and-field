@@ -1,0 +1,92 @@
+[
+ {
+  "id": "text.trust_lv2",
+  "now": "In confidenza",
+  "problem": "ambiguous: “in confidenza” on its own reads as “confidentially”; “confidente” is the usual word for a tame, trusting animal",
+  "fix": "Confidente"
+ },
+ {
+  "id": "text.worms_how",
+  "now": "Vermi trovati ogni giorno: Socievole 1 · In confidenza 2 · Inseparabile 3.",
+  "problem": "keep the trust level name consistent with text.trust_lv2",
+  "fix": "Vermi trovati ogni giorno: Socievole 1 · Confidente 2 · Inseparabile 3."
+ },
+ {
+  "id": "text.shows_how1",
+  "now": "Iscrivi un pennuto a ogni concorso. Il giudice guarda le sue stelle e quanto resta calmo quando lo prende in mano (la fiducia). Una Diva brilla un po’ di più.",
+  "problem": "reads as “enter a bird in every show”; loses the one-bird-per-show rule",
+  "fix": "Iscrivi un pennuto per concorso. Il giudice guarda le sue stelle e quanto resta calmo quando lo prende in mano (la fiducia). Una Diva brilla un po’ di più."
+ },
+ {
+  "id": "text.intro_1b",
+  "now": "I tuoi tre Rhode Island Red sono tuoi per sempre. Coccolali: si fideranno di più, guadagneranno stelle e faranno uova migliori.",
+  "problem": "clumsy repetition “I tuoi… sono tuoi”",
+  "fix": "I tre Rhode Island Red sono tuoi per sempre. Coccolali: si fideranno di più, guadagneranno stelle e faranno uova migliori."
+ },
+ {
+  "id": "text.geese_sub",
+  "now": "Oca di Emden e papero di Tolosa · vicino allo stagno",
+  "problem": "“papero” reads as a duck (the ducks are “paperelle” elsewhere); a gander is an “oca maschio”, and the breed is “oca di Tolosa”",
+  "fix": "Oca di Emden e oca di Tolosa maschio · vicino allo stagno"
+ },
+ {
+  "id": "goose.toulouse",
+  "now": "papero di Tolosa",
+  "problem": "“papero” reads as a duck/duckling; use the breed name with “maschio”, consistent with text.geese_sub",
+  "fix": "oca di Tolosa maschio"
+ },
+ {
+  "id": "text.trio_new_col",
+  "now": "Nuovo colore di Moroseta: {col}!",
+  "problem": "agreement: feminine colour (“nera”, “fulva”) after masculine “colore”; put the colour back on “Moroseta”",
+  "fix": "Nuovo colore: Moroseta {col}!"
+ },
+ {
+  "id": "text.up_done",
+  "now": "{coop} passa allo stile {look}! +{xp} XP",
+  "problem": "{coop} is a bare name (“Fienile rosso”, “Casetta di paglia”) and needs an article as a subject; a label form avoids it",
+  "fix": "{coop}: ora in stile {look}! +{xp} XP"
+ },
+ {
+  "id": "text.dress_done",
+  "now": "Buon Natale! {coop} sfoggia il suo {name}.",
+  "problem": "bare coop name as subject without article; label form reads naturally",
+  "fix": "Buon Natale! {coop}: ora sfoggia il suo {name}."
+ },
+ {
+  "id": "text.dress_gone",
+  "now": "{coop} torna al suo aspetto di tutti i giorni.",
+  "problem": "bare coop name as subject without article; label form reads naturally",
+  "fix": "{coop}: torna l’aspetto di tutti i giorni."
+ },
+ {
+  "id": "say.whoa",
+  "now": "Ohilà!",
+  "problem": "“Ohilà!” reads as a jaunty hello, right after “Ciao, voi due!”; here the farmer is startled as the geese charge",
+  "fix": "Ehi, calma!"
+ },
+ {
+  "id": "text.away_paused",
+  "now": "Mancavi da più di 2 giorni: le tue galline hanno deposto solo per gli ultimi due.",
+  "problem": "“per gli ultimi due” is a calque; “negli ultimi due” is natural",
+  "fix": "Mancavi da più di 2 giorni: le tue galline hanno deposto solo negli ultimi due."
+ },
+ {
+  "id": "text.young_going",
+  "now": "I giovani di {name} partono per una nuova fattoria!",
+  "problem": "“i giovani di {name}” sounds like “{name}’s young people”; “piccoli” matches text.congrats_sub",
+  "fix": "I piccoli di {name} partono per una nuova fattoria!"
+ },
+ {
+  "id": "text.grow_soon",
+  "now": "Alleva {n} giovani: partono prestissimo per una nuova fattoria.",
+  "problem": "“alleva 3 giovani” sounds like people; use “piccoli” as elsewhere",
+  "fix": "Alleva {n} piccoli: partono prestissimo per una nuova fattoria."
+ },
+ {
+  "id": "text.up_bra_cosy",
+  "now": "Una catasta di legna sotto il suo tettuccio, una ghirlanda sulla porta, una casetta per uccellini, funghetti e felci, e un giardino più grande con un’altalena su pali di tronco, un mezzo tronco pieno di sabbia e un cavolo da beccare.",
+  "problem": "“pali di tronco” is awkward",
+  "fix": "Una catasta di legna sotto il suo tettuccio, una ghirlanda sulla porta, una casetta per uccellini, funghetti e felci, e un giardino più grande con un’altalena tra due tronchi, un mezzo tronco pieno di sabbia e un cavolo da beccare."
+ }
+]
