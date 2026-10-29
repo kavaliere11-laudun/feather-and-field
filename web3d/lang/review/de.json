@@ -1,0 +1,132 @@
+[
+ {
+  "id": "text.shows_title",
+  "now": "Schauen",
+  "problem": "Title reads first as the verb “schauen” (to look); use the clear word, as on the showground sign",
+  "fix": "Geflügelschauen"
+ },
+ {
+  "id": "text.shows_aria",
+  "now": "Schauen",
+  "problem": "Same as shows_title: “Schauen” alone reads as “looking”",
+  "fix": "Geflügelschauen"
+ },
+ {
+  "id": "text.shows_how3",
+  "now": "Wer bei der Regionalschau oder der Nationalen Meisterschaft gewinnt, holt sich einen Meistertitel.",
+  "problem": "“Wer … gewinnt” makes the player the winner; it’s the bird that wins",
+  "fix": "Gewinnt dein Huhn bei der Regionalschau oder der Nationalen Meisterschaft, holt es sich einen Meistertitel."
+ },
+ {
+  "id": "text.seasons_note",
+  "now": "Festschmuck für deine Ställe: jeweils in seiner Saison zu haben, danach für immer deiner.",
+  "problem": "“für immer deiner” sounds like a love-letter sign-off; unnatural here",
+  "fix": "Festschmuck für deine Ställe: jeweils in seiner Saison erhältlich, danach gehört er dir für immer."
+ },
+ {
+  "id": "text.dress_owned",
+  "now": "Für immer deiner: Schmücke einen Stall über seine Karte.",
+  "problem": "“Für immer deiner” is unnatural as a status line; the rest of the game says “gehört dir für immer”",
+  "fix": "Gehört dir für immer: Schmücke einen Stall über seine Karte."
+ },
+ {
+  "id": "text.geese_next",
+  "now": "Noch {n} Tage mit Besuch bis „{level}“",
+  "problem": "“Tage mit Besuch” is awkward; natural compound exists",
+  "fix": "Noch {n} Besuchstage bis „{level}“"
+ },
+ {
+  "id": "text.geese_next1",
+  "now": "Noch 1 Tag mit Besuch bis „{level}“",
+  "problem": "Same as geese_next",
+  "fix": "Noch 1 Besuchstag bis „{level}“"
+ },
+ {
+  "id": "text.away_paused",
+  "now": "Du warst länger als 2 Tage weg: Deine Hennen haben für die letzten zwei gelegt.",
+  "problem": "“für die letzten zwei” is elliptical and unclear in German",
+  "fix": "Du warst länger als 2 Tage weg: Deine Hennen haben nur in den letzten zwei Tagen gelegt."
+ },
+ {
+  "id": "text.away_full",
+  "now": "{n} Nester sind voll: Diese Hennen legen nicht mehr",
+  "problem": "“legen nicht mehr” sounds permanent (no longer lay at all)",
+  "fix": "{n} Nester sind voll: Diese Hennen legen vorerst nicht mehr"
+ },
+ {
+  "id": "text.away_full1",
+  "now": "Ein Nest ist voll: Diese Hennen legen nicht mehr",
+  "problem": "Same as away_full: sounds permanent",
+  "fix": "Ein Nest ist voll: Diese Hennen legen vorerst nicht mehr"
+ },
+ {
+  "id": "text.away_grown",
+  "now": "Die Küken von {name} sind groß: Ihre Karte kommt gleich",
+  "problem": "Sentence-initial “Ihre” reads as formal “your” in a du game",
+  "fix": "Die Küken von {name} sind groß geworden: Gleich kommt ihre Karte"
+ },
+ {
+  "id": "text.intro_4",
+  "now": "Schauen, Honig und mehr",
+  "problem": "“Schauen” at the start reads as “looking”",
+  "fix": "Geflügelschauen, Honig und mehr"
+ },
+ {
+  "id": "text.code_how",
+  "now": "Kopiere deinen Hofcode und bewahre ihn sicher auf (zum Beispiel in Notizen). Füge ihn hier auf einem anderen Handy ein oder nachdem du Safari geleert hast – so machst du genau da weiter, wo du aufgehört hast.",
+  "problem": "“Safari geleert” isn’t idiomatic; you clear Safari’s data",
+  "fix": "Kopiere deinen Hofcode und bewahre ihn sicher auf (zum Beispiel in Notizen). Füge ihn hier auf einem anderen Handy ein oder nachdem du die Safari-Daten gelöscht hast – so machst du genau da weiter, wo du aufgehört hast."
+ },
+ {
+  "id": "text.welcome_first",
+  "now": "Dein Hof aus dem ersten Spiel ist sicher in den Einstellungen.",
+  "problem": "“ist sicher in den Einstellungen” reads as “is surely in Settings”; the “safe” meaning is lost",
+  "fix": "Dein Hof aus dem ersten Spiel ist in den Einstellungen gut aufgehoben."
+ },
+ {
+  "id": "text.bub_empty",
+  "now": "Futter leer",
+  "problem": "“Futter leer” is unnatural (the food can’t be empty)",
+  "fix": "Kein Futter mehr"
+ },
+ {
+  "id": "text.young_leaves",
+  "now": "Noch etwa {when}, dann geht’s auf einen neuen Hof. Ihre Bewertung gibt’s beim Abschied.",
+  "problem": "Sentence-initial “Ihre” reads as formal “your rating”",
+  "fix": "Noch etwa {when}, dann geht’s auf einen neuen Hof. Beim Abschied gibt’s ihre Bewertung."
+ },
+ {
+  "id": "text.congrats_exp",
+  "now": "{mum} und {dad} sammeln Erfahrung: Ihre nächsten Küken werden noch besser.",
+  "problem": "Capital “Ihre” after the colon reads as formal “your next chicks”",
+  "fix": "{mum} und {dad} sammeln Erfahrung, und ihre nächsten Küken werden noch besser."
+ },
+ {
+  "id": "text.congrats_exp1",
+  "now": "{mum} sammelt Erfahrung: Ihre nächsten Küken werden noch besser.",
+  "problem": "Capital “Ihre” after the colon reads as formal “your next chicks”",
+  "fix": "{mum} sammelt Erfahrung, und ihre nächsten Küken werden noch besser."
+ },
+ {
+  "id": "text.rare_build",
+  "now": "Ihren Stall bauen · {c}",
+  "problem": "Button “Ihren Stall bauen” reads as formal “Build your coop”",
+  "fix": "Eigenen Stall bauen · {c}"
+ },
+ {
+  "id": "text.rare_build_no",
+  "now": "Ihr Stall: {c} Münzen",
+  "problem": "“Ihr Stall:” reads as formal “Your coop:”",
+  "fix": "Eigener Stall: {c} Münzen"
+ },
+ {
+  "id": "pers.mum.line",
+  "now": [
+   "Die geborene Mutter: Ihre Küken sind am besten versorgt."
+  ],
+  "problem": "Capital “Ihre” after the colon reads as formal “your chicks”",
+  "fix": [
+   "Die geborene Mutter – ihre Küken sind am besten versorgt."
+  ]
+ }
+]
