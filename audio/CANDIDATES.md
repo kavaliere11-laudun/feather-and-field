@@ -52,6 +52,11 @@ The licences, checked 28 Oct:
 When the music plays (Audrey, 28 Oct): "Now and then". One track, then a few quiet minutes of just the farm, then again;
 softer in the evening, none at night.
 
+29 Oct: Audrey added bigsoundbank.com to the session's allowed sites (Settings > Capabilities), and the twelve picks and
+their backups were downloaded (21 files). None has a human voice (Silero). Audrey: "Hens worried" is for mummy hens.
+For the dog, "Old dog barking #1" (2352) replaces "Barking dog #3" (2955), which is one bark and then a howl. The farm
+sounds preview went to her, 12 parts. www.nps.gov was still blocked (geese, bee).
+
 Already here and fine:
 - sfx/: CC0 water splashes and coins, for fishing and the shop.
 - music/: 15 CC0 tracks. A fresh preview of them went to Audrey on 28 Oct: 14 s of each, with the number on screen.
