@@ -459,7 +459,7 @@ def lodge(seed=8, eave=0.88, peak=1.44, name='house_bra', up=()):
 # door, a little green door and the nest window in front), a skirt of slates round its top, a white weatherboarded smock
 # tower rising from it, a dark boat-shaped cap; its sails are their own model (mill_sails) the browser turns slowly at the
 # hub (coops.json mills)
-MILL = dict(base=0.78, z0=0.94, z1=1.78, r0=0.46, r1=0.3, hub=1.94, hub_y=-0.56, sail=0.84)
+MILL = dict(base=0.78, z0=0.94, z1=1.78, r0=0.46, r1=0.3, hub=1.94, hub_y=-0.56, sail=0.84, win=1.33, swin=1.12)
 MILLS = {}                                        # per model: its sails' hub (glTF axes) and which sails
 
 
@@ -501,8 +501,10 @@ def _face_frame(a, b):
     return d, L, Vector((d.y, -d.x, 0))
 
 
-def mill_bricks(objs, pts, z_top, holes, bricks, seed=3):
-    """Brick courses over each wall of the ground floor; the front's left round its pop door, door and nest window."""
+def mill_bricks(objs, pts, z_top, holes, bricks, seed=3, top=None, missing=0.0):
+    """Brick courses over each wall of the ground floor; the front's left round its pop door, door and nest window.
+    top(i, u): a ragged top (the Rustic's broken stump: the highest a brick may reach on wall i at u along it); missing: the
+    share of bricks fallen out."""
     rnd = random.Random(seed)
     for i in range(len(pts)):
         a, b = pts[i], pts[(i + 1) % len(pts)]
@@ -515,7 +517,9 @@ def mill_bricks(objs, pts, z_top, holes, bricks, seed=3):
                 w = rnd.uniform(0.15, 0.22); u1 = min(L, u + w); u0 = max(0.0, u)
                 if u1 - u0 > 0.05:
                     um = (u0 + u1) / 2; p = Vector((a[0], a[1], 0)) + d * um
-                    if not (front and any(x0 < p.x < x1 and z0 < z + h / 2 < z1 for (x0, x1, z0, z1) in holes)):
+                    if top and z + h / 2 > top(i, um): pass
+                    elif missing and z > 0.1 and rnd.random() < missing: pass
+                    elif not (front and any(x0 < p.x < x1 and z0 < z + h / 2 < z1 for (x0, x1, z0, z1) in holes)):
                         o = box('brick', (u1 - u0 - 0.012, 0.035, h - 0.012), (p.x + n.x * 0.012, p.y + n.y * 0.012, z + h / 2), (0, 0, math.atan2(d.y, d.x)),
                                 m=rnd.choice(bricks), bevel=0.008, segs=1, jitter=0.002)
                         objs.append(o)
@@ -523,9 +527,10 @@ def mill_bricks(objs, pts, z_top, holes, bricks, seed=3):
             z += h; row += 1
 
 
-def windmill(seed=13, name='house_pol'):
+def windmill(seed=13, name='house_pol', M=None, sails='sails_pol'):
+    """(name, M: the Deluxe look's taller mill, release 7: its own tower top, hub and sails)"""
     random.seed(seed); objs = []
-    M_ = MILL; FL = 0.2; WX = 0.36
+    M_ = dict(MILL, **(M or {})); FL = 0.2; WX = 0.36
     bricks = [C('mbrick%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#b0624a', '#a35a43', '#bd7056', '#97513e'))]
     mortar = C('mmortar', '#d6c8b0', rough=0.95)
     board = C('millboard', '#f2ede2', rough=0.7, var=0.03); post = C('millpost', '#dcd4c3', rough=0.7)
@@ -569,11 +574,11 @@ def windmill(seed=13, name='house_pol'):
         z += h; rows += 1
     for i, (x, y) in enumerate(octa(1.0)):
         objs.append(plank('mpost', (x * (R0 + 0.012), y * (R0 + 0.012), Z0 - 0.02), (x * (R1 + 0.012), y * (R1 + 0.012), Z1), 0.04, 0.03, (x, y, 0.15), post, jitter=0.1))
-    fy = -rad(1.33) * math.cos(math.radians(22.5))
-    window(objs, 0.0, fy - 0.03, 1.33, 0.13, 0.17, trim, glass)
+    fy = -rad(M_['win']) * math.cos(math.radians(22.5))
+    window(objs, 0.0, fy - 0.03, M_['win'], 0.13, 0.17, trim, glass)
     for side in (1, -1):                           # little windows on its sides too
-        x = side * (rad(1.12) * math.cos(math.radians(22.5)) + 0.03)
-        window(objs, x, 0.0, 1.12, 0.12, 0.15, trim, glass, normal=(side, 0, 0))
+        x = side * (rad(M_['swin']) * math.cos(math.radians(22.5)) + 0.03)
+        window(objs, x, 0.0, M_['swin'], 0.12, 0.15, trim, glass, normal=(side, 0, 0))
     # the cap: a dark boat-shaped dome on a curb, a knob on top, the windshaft out to the front
     objs.append(cyl('curb', R1 + 0.05, 0.05, (0, 0, Z1 + 0.02), m=shaft, verts=16, bevel=0.006))
     me = bpy.data.meshes.new('cap'); bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=20, v_segments=12, radius=1.0)
@@ -609,18 +614,18 @@ def windmill(seed=13, name='house_pol'):
         objs.append(sphere('sack', 0.09, (x, y, 0.09), (0.9, 0.8, 1.15), m=sack, ico=2, disp=0.12, seed=k))
         objs.append(cyl('sacktie', 0.03, 0.03, (x, y, 0.2), m=sack, verts=8, r2=0.012, bevel=0.0))
     block('pol', W2 + 0.07, -0.04, 0.16); block('pol', W2 + 0.07, 0.26, 0.15)
-    MILLS[name] = dict(hub=[0.0, round(M_['hub'], 3), round(-M_['hub_y'], 3)], sails='sails_pol')
+    MILLS[name] = dict(hub=[0.0, round(M_['hub'], 3), round(-M_['hub_y'], 3)], sails=sails)
     return finish(objs, name)
 
 
-def mill_sails(name='sails_pol', canvas=(0, 1, 2, 3), broken=(), stock_c='#6b4029', lat_c='#f2ede2', cloth_c='#ece0c4'):
+def mill_sails(name='sails_pol', canvas=(0, 1, 2, 3), broken=(), stock_c='#6b4029', lat_c='#f2ede2', cloth_c='#ece0c4', R=None, width=0.24):
     """The windmill's four sails round their hub, at the origin facing -y (they turn about y, the browser's z): a stock for
     each, a lattice of bars along it on its trailing side, canvas spread over the lattice (canvas: which sails have it);
     broken: sails missing (the Rustic look's)."""
     random.seed(17); objs = []
     stock = C('sailstock', stock_c, rough=0.7, grain=0.3, grain_scale=G); lat = C('saillat', lat_c, rough=0.7, var=0.03)
     cloth = C('sailcloth', cloth_c, rough=0.95, var=0.03)
-    R = MILL['sail']
+    R = R or MILL['sail']
     objs.append(cyl('hub', 0.075, 0.09, (0, 0.0, 0), (math.radians(90), 0, 0), m=stock, verts=14, bevel=0.01))
     objs.append(sphere('hubcap', 0.05, (0, -0.05, 0), (1, 0.6, 1), m=stock, seg=12, rings=8))
     for i in range(4):
@@ -628,7 +633,7 @@ def mill_sails(name='sails_pol', canvas=(0, 1, 2, 3), broken=(), stock_c='#6b402
         a = math.radians(i * 90 + 15)
         d = Vector((math.cos(a), 0, math.sin(a))); p = Vector((-math.sin(a), 0, math.cos(a)))       # along the sail; across (its trailing side)
         objs.append(plank('stock', d * 0.03 + Vector((0, -0.03, 0)), d * (R + 0.03) + Vector((0, -0.03, 0)), 0.05, 0.04, (0, -1, 0), stock, jitter=0.2))
-        r0, r1, w = 0.2, R, 0.24
+        r0, r1, w = 0.2, R, width
         for off in (0.025, w):                     # the long laths
             objs.append(plank('lath', d * r0 + p * off + Vector((0, -0.05, 0)), d * r1 + p * off + Vector((0, -0.05, 0)), 0.02, 0.018, (0, -1, 0), lat, jitter=0.1, bevel=0.003))
         k = 0; r = r0
@@ -1792,8 +1797,9 @@ def play_things(objs, t, k='rir'):
     if P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
     elif P.get('frame') == 'tree': tree_swing(objs, *P['swing'])
     elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
+    elif P.get('frame') == 'dutch': dutch_swing(objs, *P['swing'])
     else: swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
-    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_post)(objs, *P['cabbage'])
+    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
     if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
     if 'pit' in P: sand_pit(objs, *P['pit'])
@@ -1803,9 +1809,11 @@ def play_things(objs, t, k='rir'):
     if 'boat' in P: sand_boat(objs, *P['boat'])
     if 'halflog' in P: sand_log(objs, *P['halflog'])
     if 'crib' in P: sand_crib(objs, *P['crib'])
+    if 'clog' in P: sand_clog(objs, *P['clog'])
+    if 'delft' in P: sand_delft(objs, *P['delft'])
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
-    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else xylophone)(objs, *P['xylo'])
+    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):
@@ -1822,6 +1830,8 @@ def play_info(t, k='rir'):
     elif 'boat' in P: dust = dict(at=g(P['boat']), w=BOAT_W - 0.1, d=BOAT_D - 0.1, y=0.1)
     elif 'halflog' in P: dust = dict(at=g(P['halflog']), w=2 * LOGBATH_R - 0.1, d=LOGBATH_L - 0.12, y=LOGBATH_Z + 0.01)
     elif 'crib' in P: dust = dict(at=g(P['crib']), w=CRIB_W - 0.14, d=CRIB_D - 0.14, y=0.115)
+    elif 'clog' in P: dust = dict(at=g((P['clog'][0] + 0.03, P['clog'][1])), w=CLOG_L - 0.26, d=CLOG_W - 0.16, y=CLOG_Y + 0.005)
+    elif 'delft' in P: dust = dict(at=g(P['delft']), w=DELFT_W - 0.14, d=DELFT_D - 0.14, y=0.105)
     else: dust = dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105)
     out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dust,
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
@@ -1836,6 +1846,8 @@ def play_info(t, k='rir'):
     elif 'boat' in P: sand = [g((P['boat'][0] + sx * (BOAT_W - BOAT_D) / 2, P['boat'][1])) + [BOAT_D / 2 + 0.08] for sx in (-1, 1)]
     elif 'halflog' in P: sand = [g((P['halflog'][0], P['halflog'][1] + sy * (LOGBATH_L - 2 * LOGBATH_R) / 2)) + [LOGBATH_R + 0.1] for sy in (-1, 1)]
     elif 'crib' in P: sand = [g((P['crib'][0] + sx * (CRIB_W - CRIB_D) / 2, P['crib'][1])) + [CRIB_D / 2 + 0.1] for sx in (-1, 1)]
+    elif 'clog' in P: sand = [g((P['clog'][0] + sx * (CLOG_L - CLOG_W) / 2, P['clog'][1])) + [CLOG_W / 2 + 0.1] for sx in (-1, 1)]
+    elif 'delft' in P: sand = [g((P['delft'][0] + sx * (DELFT_W - DELFT_D) / 2, P['delft'][1])) + [DELFT_D / 2 + 0.1] for sx in (-1, 1)]
     else: dx, dy = P['dust']; sand = [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
     cx, cy = P['cabbage']
     holder = [[round(cx + lx, 3), round(-(cy + ly), 3), 0.06] for (lx, ly) in TRIPOD] if P.get('tripod') else [[cx, round(-(cy + 0.28), 3), 0.12 if P.get('holder') == 'stump' else 0.08]]
@@ -1865,6 +1877,17 @@ def pen_tier(t, bk='rir'):
         _swap(root, {'bowl'}, mat('cb_bowl_copper', CB['copper'], rough=0.35, spec=0.5, metal=0.6, var=0.03))
     elif L.get('bowl') == 'stone':                          # (the Stone Cottage's: a carved stone bowl)
         _swap(root, {'bowl'}, mat('cl_bowl_stone', '#aaa395', rough=0.85, var=0.04, bump=0.15, bump_scale=60))
+    elif L.get('bowl') == 'terracotta':                     # (the Little Windmill's: a terracotta bowl; a Delft one in the Cosy)
+        _swap(root, {'bowl'}, mat('cw_bowl_terra', CW_TERRA, rough=0.7, var=0.04))
+    elif L.get('bowl') == 'delft':
+        _swap(root, {'bowl'}, mat('cw_bowl_delft', '#f4f2ec', rough=0.3, spec=0.5, var=0.02))
+        dx, dy = L['dish']; objs = []
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.012, major_segments=28, minor_segments=6, location=(dx, dy, 0.072))
+        o = bpy.context.object; setmat(o, mat('cw_delftrim', '#2f5aa8', rough=0.3, spec=0.5)); objs.append(o)
+        for k in range(6):
+            aa = k / 6 * math.tau
+            objs.append(sphere('dbpaint', 0.022, (dx + math.cos(aa) * 0.172, dy + math.sin(aa) * 0.172, 0.035), (0.3, 0.9, 0.7), (0, 0, aa), m=mat('cw_delftrim', '#2f5aa8', rough=0.3, spec=0.5), seg=8, rings=5))
+        _own(objs, root)
     elif L.get('bowl') == 'enamel':
         _swap(root, {'bowl'}, mat('ct_enamel', '#ece6d6', rough=0.3, spec=0.5, var=0.02))
         dx, dy = L['dish']; objs = []
@@ -1942,7 +1965,7 @@ def pen_info(t, k='rir'):
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume') else 0.5 if P.get('water') == 'pond' else 0.3 if P.get('water') == 'butt' else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') == 'butt' else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
 
@@ -3985,3 +4008,435 @@ def _tree_spot(t, k, TR):
             d = min(math.hypot(x - (x0 + 0.4), z - (z1 - 0.4)), math.hypot(x - (x1 - 0.4), z - (z1 - 0.4)))
             if best is None or d < best[0]: best = (d, round(x, 3), round(z, 3))
     return [best[1], best[2]] if best else None
+
+
+# ---- release 7, the Little Windmill's five looks (the Polish's coop; Audrey, 29 Oct, on its everyday look: "Yes, do the
+# other looks (Recommended)").
+# Rustic (box_pol): the stump of an old mill: a short brick ring broken off unevenly, bricks fallen out, moss, old boards
+#   across its top under a broken old sail laid over them and a sack, weighed down with bricks (the hint: its sails to come).
+# Mended (shed_pol): the brick rebuilt (new bricks among the old), a stubby tower of new pine boards, the lowest painted white
+#   so far (the pot of white paint by it), a little cap of wooden shingles, a first pair of bare sails turning, a ladder.
+# Snug (house_pol): the Little Windmill.
+# Cosy (cosy_pol): tulips along its sides, blue-and-white Delft pots of tulips by the ramp, a pair of painted clogs on a
+#   doorstep, a window box of geraniums on the tower, the automatic door's box and its solar panel, a brick path to the gate.
+# Deluxe (deluxe_pol): a taller tower with a gallery round it on brackets (a white rail), striped shutters on its windows, a
+#   fantail at the back of its cap, bigger sails with red stocks; the cosy touches.
+# The hens come, go and lay the same way in every look: the same floor (0.2), pop door, nest window and ramp (NESTS['house_pol']).
+CW_TERRA = '#c0673f'
+CW = dict(old=('#8f6a58', '#86604f', '#9a7562', '#7a5748'), oldmortar='#b7ab97', moss='#6b7a45', moss2='#7f8f50', sack='#b39a6e',
+          oldwood='#8e8676', oldwood2='#7b7466', oldlat='#c9c3b5', newbrick=('#c4704f', '#b9644a'), pine='#d8b886', pine2='#cba872',
+          felt='#3e3d3b', tulip=('#e2453c', '#f4c430', '#f08bb0', '#fbf6ee', '#ff8c42', '#c8283c'), delft='#2f5aa8', delftw='#f4f2ec',
+          clog='#e8c46a', clog2='#d9a441', red='#9e3b2e', soil='#5b4332', paver=('#9c5a43', '#8a4f3c', '#a8664b'), stem='#4f8a3a')
+
+
+def _cw(key, i=None, rough=0.85, **kw):
+    v = CW[key] if i is None else CW[key][i]
+    return C('cw_' + key + ('' if i is None else str(i)), v, rough=rough, **kw)
+
+
+def box_pol(seed=81):
+    """Rustic: the stump of an old mill, broken off, an old broken sail and a sack over boards for its roof."""
+    random.seed(seed); root = empty('box_pol'); objs = []
+    FL, WX = 0.2, 0.36
+    bricks = [_cw('old', i, var=0.08) for i in range(4)]; mortar = _cw('oldmortar', rough=0.95)
+    old, old2 = _cw('oldwood', var=0.08, grain=0.3, grain_scale=G), _cw('oldwood2', var=0.08, grain=0.3, grain_scale=G)
+    lat = _cw('oldlat', rough=0.85, var=0.05); sack = _cw('sack', rough=0.95, var=0.04); moss = [_cw('moss', rough=0.95), _cw('moss2', rough=0.95)]
+    pts = mill_base_pts(); TOP = 0.72
+    core = ring_mesh('core', mill_base_pts(-0.012), 0.0, mill_base_pts(-0.012), TOP, mortar, cap_a=True, cap_b=True); objs.append(core)
+    holes = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, 0.0, FL + POP_H + 0.04), (WX - WIN_W / 2 - 0.02, WX + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)]
+    rag = random.Random(seed + 1); ragged = {}
+    def top(i, u):                                   # (broken off: higher and lower along each wall, lowest at the back)
+        k = (i, round(u, 1))
+        if k not in ragged: ragged[k] = (0.86 if i in (0, 1, 7) else 0.8) - (0.1 if i in (4, 5) else 0.0) + rag.uniform(-0.07, 0.05)
+        return ragged[k]
+    mill_bricks(objs, pts, 0.92, holes, bricks, seed, top=top, missing=0.05)
+    for k in range(9):                               # moss on the old bricks, low down and on the broken top
+        i = k % 8; a, b = pts[i], pts[(i + 1) % 8]; d, L, n = _face_frame(a, b); u = random.uniform(0.15, L - 0.15)
+        p = Vector((a[0], a[1], 0)) + d * u + n * 0.03
+        z = random.choice((random.uniform(0.04, 0.2), top(i, u) - 0.04))
+        if i == 0 and any(x0 - 0.05 < p.x < x1 + 0.05 for (x0, x1, z0, z1) in holes): continue
+        objs.append(sphere('moss', random.uniform(0.04, 0.07), (p.x, p.y, z), (1.4, 0.5, 0.7), (0, 0, math.atan2(d.y, d.x)), m=random.choice(moss), ico=2, disp=0.3, seed=k + 400))
+    # its roof: old grey boards across the top, the broken old sail laid over them (a lath snapped, bars gone), a sack
+    # thrown over a corner, bricks to weigh it all down
+    for k in range(7):
+        y = -D2 + 0.06 + k * 0.13
+        objs.append(plank('oldboard', (-W2 - 0.04, y, TOP + 0.03 + 0.01 * (k % 2)), (W2 + 0.04, y + random.uniform(-0.02, 0.02), TOP + 0.03), 0.12, 0.025, (0, 0, 1), random.choice((old, old2)), jitter=1.2))
+    a0 = math.radians(-24); d = Vector((math.cos(a0), math.sin(a0), 0)); q = Vector((-math.sin(a0), math.cos(a0), 0))
+    c0 = Vector((-0.42, 0.12, TOP + 0.08))
+    for off, L in ((0.0, 0.95), (0.24, 0.62)):        # its two long laths, one snapped short
+        objs.append(plank('oldlath', c0 + q * off, c0 + q * off + d * L, 0.024, 0.02, (0, 0, 1), lat, jitter=1.0, bevel=0.003))
+    objs.append(plank('oldstock', c0 - q * 0.04 - d * 0.1, c0 - q * 0.04 + d * 1.05, 0.05, 0.04, (0, 0, 1), old2, jitter=0.5))
+    for k in range(9):
+        if k in (3, 6): continue                    # (bars gone)
+        u = 0.06 + k * 0.1; w_ = 0.24 if u < 0.62 else 0.12
+        objs.append(plank('oldbar', c0 + d * u + Vector((0, 0, 0.018)), c0 + d * u + q * w_ + Vector((0, 0, 0.018)), 0.018, 0.014, (0, 0, 1), lat, jitter=3.0, bevel=0.002))
+    s0 = Vector((0.3, -0.05, TOP + 0.075))
+    objs.append(box('sackcloth', (0.48, 0.42, 0.012), tuple(s0), (math.radians(4), math.radians(-3), math.radians(15)), m=sack, bevel=0.004, segs=1))
+    for k in range(5):                               # its folds
+        objs.append(sphere('sackfold', 0.05, (s0.x - 0.18 + k * 0.09, s0.y + random.uniform(-0.12, 0.12), s0.z + 0.01), (1.6, 0.4, 0.25), (0, 0, math.radians(15 + random.uniform(-20, 20))), m=sack, ico=1, disp=0.2, seed=k + 410))
+    for (x, y) in ((-0.5, -0.25), (0.45, 0.22), (-0.05, 0.3)):
+        objs.append(box('roofbrick', (0.17, 0.08, 0.06), (x, y, TOP + 0.1), (0, 0, random.uniform(-0.5, 0.5)), m=random.choice(bricks), bevel=0.01, segs=1, jitter=0.004))
+    # the hens' door (just its hole), an old board for a ramp, the nest window (its door an old board)
+    _ramp(objs, FL, old2, old, w=0.17, slats=2)
+    nest_window(objs, 'pol', FL, WX, old, solids=[core], door='drop', door_m=old2)
+    # fallen bricks about its foot, an old millstone half sunk in the ground where the millstone will lean
+    for k, (x, y) in enumerate(((-0.75, -0.2), (-0.7, 0.1), (0.75, 0.32), (-0.1, 0.55), (0.5, 0.52))):
+        objs.append(box('fallen', (0.17, 0.08, 0.06), (x, y, 0.03), (random.uniform(-0.3, 0.3), 0, random.uniform(0, 3)), m=random.choice(bricks), bevel=0.01, segs=1, jitter=0.004))
+    objs.append(cyl('oldstone', 0.18, 0.07, (W2 + 0.22, -0.05, 0.015), (math.radians(8), 0, 0), m=C('millstone', '#a39d93', rough=0.9, var=0.05), verts=20, bevel=0.01))
+    objs.append(cyl('oldhole', 0.035, 0.075, (W2 + 0.22, -0.05, 0.02), (math.radians(8), 0, 0), m=C('millhole', '#4d4740', rough=0.9), verts=10, bevel=0.0))
+    objs.append(sphere('oldmoss', 0.06, (W2 + 0.15, -0.12, 0.05), (1.4, 1, 0.4), m=moss[0], ico=2, disp=0.3, seed=420))
+    BLOCKS.setdefault('box_pol', []).append([round(W2 + 0.22, 3), 0.05, 0.2])
+    straw_bits(objs, (-0.2, -D2 - 0.15, 0), 0.25, 18, 0.0)
+    _own(objs, root)
+    return root
+
+
+def shed_pol(seed=83):
+    """Mended: the brick rebuilt, a stubby tower of new pine boards (the lowest painted white so far), a little cap of wooden
+    shingles, a first pair of bare sails turning, a ladder against it, a pot of white paint where the lantern will be."""
+    random.seed(seed); root = empty('shed_pol'); objs = []
+    FL, WX = 0.2, 0.36
+    M_ = dict(MILL, z0=0.9, z1=1.36, r0=0.44, r1=0.35, hub=1.5, hub_y=-0.47, sail=0.6)
+    bricks = [_cw('old', 0, var=0.08), _cw('old', 2, var=0.08), _cw('newbrick', 0, var=0.06), _cw('newbrick', 1, var=0.06)]
+    mortar = C('mmortar', '#d6c8b0', rough=0.95)
+    pine, pine2 = _cw('pine', var=0.06, grain=0.3, grain_scale=G), _cw('pine2', var=0.06, grain=0.3, grain_scale=G)
+    white = C('millboard', '#f2ede2', rough=0.7, var=0.03); felt = _cw('felt', rough=0.8, var=0.05)
+    shaft = C('millshaft', '#5a3a26', rough=0.7, grain=0.3, grain_scale=G)
+    pts = mill_base_pts()
+    core = ring_mesh('core', mill_base_pts(-0.012), 0.0, mill_base_pts(-0.012), M_['base'], mortar, cap_a=True, cap_b=True); objs.append(core)
+    holes = [(-0.31 - POP_W / 2 - 0.04, -0.31 + POP_W / 2 + 0.04, 0.0, FL + POP_H + 0.05), (-0.135, 0.135, 0.0, 0.62),
+             (WX - WIN_W / 2 - 0.02, WX + WIN_W / 2 + 0.02, FL + 0.03, FL + 0.04 + WIN_H + 0.02)]
+    mill_bricks(objs, pts, M_['base'], holes, bricks, seed)
+    # a skirt of tarred felt for now, over its top
+    objs.append(ring_mesh('feltskirt', mill_base_pts(0.06), M_['base'] - 0.01, octa(M_['r0'] + 0.03), M_['z0'] + 0.01, felt))
+    # the tower: new pine boards, the lowest rows on its front painted white so far
+    Z0, Z1, R0, R1 = M_['z0'], M_['z1'], M_['r0'], M_['r1']
+    objs.append(ring_mesh('tower', octa(R0 - 0.02), Z0 - 0.04, octa(R1 - 0.02), Z1, pine2, cap_b=True))
+    rad = lambda z: R0 + (R1 - R0) * (z - Z0) / (Z1 - Z0)
+    tilt = math.atan2((R0 - R1) * math.cos(math.radians(22.5)), Z1 - Z0)
+    z = Z0
+    while z < Z1 - 0.01:
+        h = 0.06; zc = z + h / 2; P = octa(rad(zc) + 0.004)
+        for i in range(8):
+            a, b = P[i], P[(i + 1) % 8]; d, L, n = _face_frame(a, b)
+            nn = (n * math.cos(tilt) + Vector((0, 0, math.sin(tilt)))).normalized()
+            m_ = white if (i in (0, 7, 1) and zc < 1.08) or (i == 0 and zc < 1.2) else random.choice((pine, pine, pine2))
+            objs.append(plank('mboard', (a[0] - d.x * 0.01, a[1] - d.y * 0.01, zc), (b[0] + d.x * 0.01, b[1] + d.y * 0.01, zc), h + 0.008, 0.014, nn, m_, jitter=0.3, bevel=0.003))
+        z += h
+    for (x, y) in octa(1.0):
+        objs.append(plank('mpost', (x * (R0 + 0.012), y * (R0 + 0.012), Z0 - 0.02), (x * (R1 + 0.012), y * (R1 + 0.012), Z1), 0.04, 0.03, (x, y, 0.15), pine, jitter=0.1))
+    # its cap: an eight-sided little roof of wooden shingles, a knob, the windshaft out to the front
+    objs.append(cyl('curb', R1 + 0.04, 0.04, (0, 0, Z1 + 0.02), m=shaft, verts=16, bevel=0.006))
+    objs.append(cyl('woodcap', R1 + 0.09, 0.3, (0, 0, Z1 + 0.19), (0, 0, math.radians(22.5)), m=pine2, verts=8, r2=0.03, bevel=0.006))
+    for k, t_ in enumerate((0.2, 0.45, 0.7)):        # its rows of shingles
+        objs.append(cyl('capshingle', (R1 + 0.09) * (1 - t_) + 0.03 * t_ + 0.012, 0.03, (0, 0, Z1 + 0.04 + 0.3 * t_), (0, 0, math.radians(22.5)), m=pine if k % 2 else pine2, verts=8, r2=(R1 + 0.09) * (1 - t_ - 0.08) + 0.03 * (t_ + 0.08), bevel=0.0))
+    objs.append(sphere('capknob', 0.035, (0, 0, Z1 + 0.36), m=shaft, seg=10, rings=6))
+    objs.append(cyl('windshaft', 0.045, 0.3, (0, M_['hub_y'] + 0.17, M_['hub']), (math.radians(90), 0, 0), m=shaft, verts=12, bevel=0.004))
+    MILLS['shed_pol'] = dict(hub=[0.0, round(M_['hub'], 3), round(-M_['hub_y'], 3)], sails='sails_pol_t1')
+    # a plain new door of pine boards, the nest window, the hens' door and ramp
+    for k in range(3):
+        u = -0.1 + k * 0.1
+        objs.append(plank('pdoor', (u, -D2 - 0.03, 0.02), (u, -D2 - 0.03, 0.6), 0.095, 0.03, (0, -1, 0), pine if k % 2 else pine2, jitter=0.3))
+    for zz in (0.12, 0.5): objs.append(plank('zh', (-0.14, -D2 - 0.05, zz), (0.14, -D2 - 0.05, zz), 0.045, 0.02, (0, -1, 0), pine2, jitter=0.3))
+    objs.append(plank('zb', (-0.12, -D2 - 0.05, 0.13), (0.12, -D2 - 0.05, 0.49), 0.04, 0.02, (0, -1, 0), pine2, jitter=0.3))
+    objs.append(sphere('knob', 0.016, (0.09, -D2 - 0.07, 0.32), m=C('iron', '#26231f', rough=0.5, metal=0.6), seg=8, rings=5))
+    nest_window(objs, 'pol', FL, WX, pine, solids=[core], door='drop', door_m=pine2)
+    pop_door(objs, FL, pine, pine2, C('darkwood', '#6d4a31', rough=0.8))
+    # a ladder up its right side to the felt; where the lantern post will be, a pot of white paint and its brush
+    for sx in (-1, 1):
+        objs.append(plank('ladrail', (W2 + 0.3, sx * 0.13, 0.0), (W2 + 0.05, sx * 0.13, 1.0), 0.04, 0.03, (1, 0, 0.25), pine2, jitter=0.2))
+    for k in range(6):
+        t_ = (k + 0.7) / 6.6
+        objs.append(cyl('ladrung', 0.013, 0.28, (W2 + 0.3 - 0.25 * t_, 0.0, t_ * 1.0), (math.radians(90), 0, 0), m=pine, verts=6, bevel=0.0))
+    BLOCKS.setdefault('shed_pol', []).append([round(W2 + 0.26, 3), 0.0, 0.18])
+    px, py = -0.66, -D2 - 0.26
+    objs.append(cyl('painttin', 0.07, 0.12, (px, py, 0.06), m=C('bx_painttin', '#c9cdcf', rough=0.4, metal=0.7), verts=14, bevel=0.005))
+    objs.append(cyl('paint', 0.064, 0.006, (px, py, 0.122), m=white, verts=14, bevel=0.0))
+    objs.append(cyl('brushh', 0.009, 0.12, (px + 0.03, py + 0.02, 0.17), (math.radians(30), 0, math.radians(40)), m=pine2, verts=6, bevel=0.0))
+    objs.append(box('brushb', (0.045, 0.014, 0.04), (px + 0.005, py - 0.01, 0.13), (math.radians(30), 0, math.radians(40)), m=white, bevel=0.003, segs=1))
+    objs.append(sphere('splat', 0.06, (px + 0.1, py - 0.06, 0.004), (1.3, 1, 0.08), m=white, ico=2, disp=0.3, seed=430))
+    block('pol', -0.66, -D2 - 0.26, 0.1)
+    # a pallet of new bricks where the millstone will lean
+    objs.append(box('pallet', (0.32, 0.36, 0.05), (W2 + 0.22, 0.25, 0.025), m=pine2, bevel=0.005, segs=1))
+    for k in range(3):
+        for j in range(2):
+            for l in range(2):
+                objs.append(box('newbrick', (0.15, 0.07, 0.06), (W2 + 0.15 + l * 0.15, 0.13 + j * 0.24 - (0.04 if k % 2 else 0), 0.08 + k * 0.062), m=bricks[2 + (k + j + l) % 2], bevel=0.008, segs=1))
+    BLOCKS.setdefault('shed_pol', []).append([round(W2 + 0.22, 3), -0.25, 0.22])
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    _own(objs, root)
+    return root
+
+
+def _tulip(objs, x, y, col, h=0.16, seed=0):
+    rnd = random.Random(seed); lean = Vector((rnd.uniform(-0.15, 0.15), rnd.uniform(-0.15, 0.15), 1)).normalized()
+    stem = _cw('stem', rough=0.8); top = Vector((x, y, 0)) + lean * h
+    objs.append(cyl('tstem', 0.005, h, (Vector((x, y, 0)) + top) / 2, lean.to_track_quat('Z', 'Y').to_euler(), m=stem, verts=5, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(sphere('tleaf', 0.05, (x + sx * 0.015, y, 0.05), (0.2, 0.08, 1.0), (0, sx * 0.35, rnd.uniform(0, 3)), m=stem, ico=1))
+    objs.append(sphere('tulip', 0.024, tuple(top + Vector((0, 0, 0.012))), (0.85, 0.85, 1.25), m=_cw('tulip', col, rough=0.5), seg=8, rings=6))
+
+
+def _mill_bits(r, name, t, tower=None, seed=85):
+    """What makes the windmill cosy (and stays on the Deluxe): tulips along its sides, Delft pots of tulips by the ramp, a pair
+    of painted clogs on a doorstep by its green door, a window box of geraniums on the tower, the automatic door's box and its
+    solar panel on the skirt, a path of red bricks to the gate."""
+    random.seed(seed); objs = []; M_ = dict(MILL, **(tower or {}))
+    soil = _cw('soil', rough=0.95, var=0.05); leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+    pts = mill_base_pts()
+    # tulip beds along its two sides and the back corners (clear of the millstone and sacks on the right)
+    beds = [(6, 0.1, 0.9), (7, 0.15, 0.85), (2, 0.2, 0.8)]
+    k = 0
+    for (i, u0, u1) in beds:
+        a, b = pts[i], pts[(i + 1) % 8]; d, L, n = _face_frame(a, b)
+        c = Vector((a[0], a[1], 0)) + d * (L * (u0 + u1) / 2) + n * 0.1
+        objs.append(box('tbed', (L * (u1 - u0) + 0.06, 0.15, 0.03), (c.x, c.y, 0.015), (0, 0, math.atan2(d.y, d.x)), m=soil, bevel=0.01, segs=1))
+        for j in range(int(L * (u1 - u0) / 0.07)):
+            p = Vector((a[0], a[1], 0)) + d * (L * u0 + 0.04 + j * 0.07) + n * (0.07 + 0.05 * (j % 2))
+            _tulip(objs, p.x, p.y, (k // 3) % 5, h=0.13 + 0.04 * (j % 3) / 2, seed=k + 500); k += 1
+        BLOCKS.setdefault(name, []).append([round(c.x, 3), round(-c.y, 3), 0.16])
+    # blue-and-white Delft pots of tulips either side of the foot of the ramp
+    blue, whitep = _cw('delft', rough=0.3, spec=0.5), _cw('delftw', rough=0.3, spec=0.5)
+    for j, (x, y) in enumerate(((-0.64, -0.95), (0.02, -0.95))):
+        objs.append(cyl('dpot', 0.075, 0.13, (x, y, 0.065), m=whitep, verts=16, r2=0.06, bevel=0.006))
+        for z in (0.03, 0.11):
+            bpy.ops.mesh.primitive_torus_add(major_radius=0.071 - z * 0.08, minor_radius=0.007, major_segments=16, minor_segments=4, location=(x, y, z))
+            o = bpy.context.object; setmat(o, blue); objs.append(o)
+        for kk in range(4):                          # its blue flourishes
+            aa = kk / 4 * math.tau + 0.4
+            objs.append(sphere('dpaint', 0.016, (x + math.cos(aa) * 0.068, y + math.sin(aa) * 0.068, 0.07), (0.4, 0.4, 1.2), (0, 0, aa), m=blue, ico=1))
+        for kk in range(5):
+            aa = kk / 5 * math.tau
+            _tulip(objs, x + math.cos(aa) * 0.035, y + math.sin(aa) * 0.035, (j * 2 + kk) % 3 * 2 % 6, h=0.17, seed=520 + kk + j * 5)
+        BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.12])
+    # a stone doorstep before the green door, a pair of yellow clogs on it, a red tulip painted on each
+    objs.append(box('doorstep', (0.32, 0.14, 0.035), (0.0, -D2 - 0.08, 0.0175), m=C('stepstone', '#a8a194', rough=0.85, var=0.12), bevel=0.008, segs=1))
+    clog, clog2 = _cw('clog', rough=0.6), _cw('clog2', rough=0.6)
+    for sx in (-1, 1):
+        cx = sx * 0.06; cy = -D2 - 0.09
+        objs.append(sphere('clog', 0.07, (cx, cy, 0.075), (0.5, 1.15, 0.45), (0, 0, sx * 0.1), m=clog, seg=12, rings=8))
+        objs.append(sphere('cloghole', 0.032, (cx, cy + 0.03, 0.098), (0.75, 1.0, 0.3), m=C('hall_dark', '#1d1510', rough=1.0), seg=10, rings=6))
+        objs.append(sphere('clogtoe', 0.025, (cx, cy - 0.065, 0.09), (0.8, 0.7, 0.5), m=clog2, seg=8, rings=5))
+        objs.append(sphere('clogtulip', 0.012, (cx + sx * 0.034, cy - 0.02, 0.08), (0.3, 1.0, 1.0), m=_cw('tulip', 0, rough=0.5), seg=6, rings=4))
+    BLOCKS.setdefault(name, []).append([0.0, round(D2 + 0.09, 3), 0.12])
+    # a window box of red geraniums under the tower's front window
+    Z0, Z1, R0, R1 = M_['z0'], M_['z1'], M_['r0'], M_['r1']
+    rad = lambda z: R0 + (R1 - R0) * (z - Z0) / (Z1 - Z0)
+    wz = M_['win']
+    fy = -rad(wz - 0.13) * math.cos(math.radians(22.5)) - 0.07
+    objs.append(box('flowerbox', (0.22, 0.08, 0.07), (0.0, fy, wz - 0.13), m=C('milldoor', '#2f6a4f', rough=0.55, var=0.05), bevel=0.008, segs=1))
+    gera = C('gera', '#d8343a', rough=0.55)
+    for kk in range(6):
+        x = -0.085 + kk * 0.034
+        objs.append(sphere('leafp', 0.026, (x, fy, wz - 0.08), (1, 1, 0.8), m=leaf[kk % 2], ico=1, disp=0.2, seed=kk + 540))
+        objs.append(sphere('flower', 0.019, (x + 0.008, fy - 0.01, wz - 0.06), m=gera, ico=1))
+    # the automatic door: its box over the hens' door, its solar panel on the skirt's front left
+    box_m = C('autobox', '#3f4a45', rough=0.5); led = C('autoled', '#7dff8a', rough=0.3, emission=('#5dff6e', 1.5))
+    zb = 0.2 + POP_H + 0.065
+    objs.append(box('autobox', (0.13, 0.05, 0.06), (-0.31, -D2 - 0.04, zb), m=box_m, bevel=0.008, segs=1))
+    objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.067, zb), m=led, seg=8, rings=4))
+    outer = mill_base_pts(0.08); inner = octa(M_['r0'] + 0.03)
+    oa, ob = Vector((*outer[0], M_['base'] - 0.02)), Vector((*outer[1], M_['base'] - 0.02)); ia, ib = Vector((*inner[0], M_['z0'] + 0.02)), Vector((*inner[1], M_['z0'] + 0.02))
+    c = (oa.lerp(ia, 0.5) * 0.6 + ob.lerp(ib, 0.5) * 0.4) + Vector((-0.12, 0, 0))
+    up = (ia - oa).normalized(); along = (ob - oa).normalized(); nrm = along.cross(up)
+    if nrm.z < 0: nrm = -nrm
+    c = c + nrm * 0.04
+    objs.append(plank('solarframe', c - up * 0.07, c + up * 0.07, 0.22, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
+    cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
+    for ii in range(2):
+        for jj in range(3):
+            cc = c + nrm * 0.012 + up * (-0.033 + ii * 0.066) + along * (-0.07 + jj * 0.07)
+            objs.append(plank('solarcell', cc - up * 0.028, cc + up * 0.028, 0.062, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
+    # a path of red bricks, laid in pairs, from the foot of the ramp to the gate
+    pav = [_cw('paver', i, var=0.06) for i in range(3)]
+    gx, gy = _gate_of(t, 'pol'); a, b = Vector((-0.31, -1.02)), Vector((gx, gy + 0.3)); n = max(3, round((b - a).length / 0.2))
+    dirn = (b - a).normalized(); ang = math.atan2(dirn.y, dirn.x)
+    for kk in range(n + 1):
+        q = a.lerp(b, kk / n)
+        for sx in (-1, 1):
+            p = q + Vector((-dirn.y, dirn.x)) * (sx * 0.05 + (0.025 if kk % 2 else -0.025))
+            objs.append(box('paver', (0.09, 0.18, 0.025), (p.x, p.y, 0.0125), (0, 0, ang + math.pi / 2 + math.radians(random.uniform(-4, 4))), m=random.choice(pav), bevel=0.006, segs=1))
+    _own(objs, r)
+    return r
+
+
+def cosy_pol():
+    r = windmill(name='cosy_pol'); _mill_bits(r, 'cosy_pol', 3)
+    return r
+
+
+DX_MILL = dict(z1=2.12, r1=0.31, hub=2.29, hub_y=-0.6, sail=1.0, win=1.5, swin=1.4)
+
+
+def deluxe_pol():
+    """Deluxe: a taller tower with a gallery round it (a white rail), striped shutters on its windows, a fantail at the back of
+    its cap, bigger sails with red stocks; the cosy touches."""
+    r = windmill(name='deluxe_pol', M=DX_MILL, sails='sails_pol_dx')
+    random.seed(87); objs = []; M_ = dict(MILL, **DX_MILL)
+    white = C('trimw', '#efe9dc', rough=0.6); deck = C('millstage', '#7a5a40', rough=0.8, var=0.08, grain=0.3, grain_scale=G)
+    shaft = C('millshaft', '#5a3a26', rough=0.7, grain=0.3, grain_scale=G); green = C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G)
+    Z0, Z1, R0, R1 = M_['z0'], M_['z1'], M_['r0'], M_['r1']
+    rad = lambda z: R0 + (R1 - R0) * (z - Z0) / (Z1 - Z0)
+    # the gallery: a deck of boards round the tower on brackets, a white rail round its edge
+    GZ = 1.08; GR = rad(GZ) + 0.2; inner = octa(rad(GZ) + 0.01); outer = octa(GR)
+    for i in range(8):
+        a, b, ia, ib = outer[i], outer[(i + 1) % 8], inner[i], inner[(i + 1) % 8]
+        for k in range(3):
+            t_ = (k + 0.5) / 3
+            p0 = Vector(ia).lerp(Vector(a), t_); p1 = Vector(ib).lerp(Vector(b), t_)
+            objs.append(plank('gboard', (p0.x, p0.y, GZ), (p1.x, p1.y, GZ), (GR - rad(GZ)) / 3 * 1.05, 0.025, (0, 0, 1), deck, jitter=0.6, bevel=0.003))
+        m_ = Vector(a).lerp(Vector(b), 0.5); mi = Vector(ia).lerp(Vector(ib), 0.5)
+        objs.append(plank('gbracket', (mi.x, mi.y, GZ - 0.22), (m_.x * 0.92, m_.y * 0.92, GZ - 0.02), 0.035, 0.03, (m_.y, -m_.x, 0), shaft, jitter=0.2))
+        objs.append(box('grailpost', (0.025, 0.025, 0.14), (a[0], a[1], GZ + 0.07), m=white, bevel=0.004, segs=1))
+        objs.append(plank('grail', (a[0], a[1], GZ + 0.135), (b[0], b[1], GZ + 0.135), 0.025, 0.02, (0, 0, 1), white, jitter=0.0, bevel=0.003))
+        objs.append(plank('grail2', (a[0], a[1], GZ + 0.07), (b[0], b[1], GZ + 0.07), 0.018, 0.014, (0, 0, 1), white, jitter=0.0, bevel=0.002))
+    # striped shutters either side of the tower's windows (green and white, as on Dutch mills)
+    for (wz, normal, x0) in ((M_['win'], (0, -1, 0), 0.0), (M_['swin'], (1, 0, 0), None), (M_['swin'], (-1, 0, 0), None)):
+        if normal[1]:
+            fy = -rad(wz) * math.cos(math.radians(22.5)) - 0.035
+            for sx in (-1, 1):
+                objs.append(box('shutter', (0.07, 0.015, 0.18), (sx * 0.11, fy, wz), m=green, bevel=0.003, segs=1))
+                objs.append(box('shutstripe', (0.075, 0.017, 0.03), (sx * 0.11, fy - 0.001, wz), (0, sx * 0.9, 0), m=white, bevel=0.0))
+        else:
+            fx = normal[0] * (rad(wz) * math.cos(math.radians(22.5)) + 0.04)
+            for sy in (-1, 1):
+                objs.append(box('shutter', (0.015, 0.065, 0.16), (fx, sy * 0.1, wz), m=green, bevel=0.003, segs=1))
+                objs.append(box('shutstripe', (0.017, 0.07, 0.028), (fx + normal[0] * 0.001, sy * 0.1, wz), (sy * 0.9, 0, 0), m=white, bevel=0.0))
+    # the fantail at the back of the cap: a little wheel of white blades on a frame (it keeps the sails to the wind)
+    fy_, fz_ = R1 + 0.38, Z1 + 0.12
+    for sx in (-1, 1):
+        objs.append(plank('fanframe', (sx * 0.12, 0.15, Z1 + 0.06), (sx * 0.02, fy_, fz_), 0.03, 0.025, (sx, 0, 0), shaft, jitter=0.2))
+    objs.append(cyl('fanhub', 0.03, 0.06, (0, fy_, fz_), (0, math.radians(90), 0), m=shaft, verts=10, bevel=0.0))
+    for k in range(6):
+        a = k / 6 * math.tau
+        d = Vector((0, math.cos(a), math.sin(a)))
+        objs.append(plank('fanblade', Vector((0, fy_, fz_)) + d * 0.03, Vector((0, fy_, fz_)) + d * 0.2, 0.06, 0.008, (0.6, 0, 0), white, jitter=0.0, bevel=0.002))
+    _own(objs, r)
+    _mill_bits(r, 'deluxe_pol', 4, tower=DX_MILL)
+    r.name = 'deluxe_pol'
+    return r
+
+
+# ---- the Little Windmill's gardens (its own): a terracotta bowl for water in the small pens, a blue-and-white Delft one in
+# the Cosy; Cosy: a swing on Dutch-green posts, a giant wooden clog full of sand, the cabbage hanging from the arm of a post
+# with a little toy windmill on top; Deluxe: a sandbox of blue-and-white tiles, a little canal with a white drawbridge for
+# water, a feeder like a tiny windmill, the swing, the post, a xylophone of tulip-coloured bars on a green stand.
+PENS_BY['pol'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(-0.72, -1.38), dish=(0.78, -1.5), bowl='terracotta', hay=None, hay_rot=0, sack=None,
+            straw=((0.1, -1.3, 0.25, 22), (0.7, -0.9, 0.2, 14))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(-1.0, -1.55), dish=(0.98, -1.5), bowl='terracotta', hay=None, hay_rot=0, sack=None,
+            straw=((0.3, -1.65, 0.3, 26), (-0.9, -1.05, 0.25, 20))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(1.55, -2.2), dish=(-0.8, -2.35), bowl='delft', hay=(-1.7, 0.4), hay_rot=90, sack=None,
+            straw=((-1.7, 0.4, 0.4, 35), (0.7, -1.4, 0.35, 30), (-0.5, -1.8, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(-1.85, -1.95), feeder_style='mill', dish=(1.55, -2.5), water='canal', hay=(2.0, 0.5), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.6, -1.3, 0.3, 25), (2.0, 0.5, 0.4, 35))),
+}
+PLAY_BY['pol'] = {3: dict(swing=(1.45, -0.8), clog=(-1.35, -1.3), cabbage=(0.85, -2.35), frame='dutch', holder='mill'),
+                  4: dict(swing=(1.6, -0.9), delft=(-1.45, -0.95), cabbage=(-0.95, -2.6), xylo=(0.95, -1.6), frame='dutch', holder='mill', bars='tulip')}
+CLOG_L, CLOG_W, CLOG_Y = 0.92, 0.44, 0.13                         # the Cosy windmill's giant clog of sand (along x; its sand's height)
+DELFT_W, DELFT_D = 0.86, 0.66                                     # the Deluxe windmill's tiled sandbox (x, y)
+
+
+def dutch_swing(objs, x, y):
+    """The windmill's swing: two Dutch-green A frames, white tops shaped like little tulips, a white bar across."""
+    green = C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G); white = C('trimw', '#efe9dc', rough=0.6)
+    for sx in (-1, 1):
+        top = Vector((x + sx * SWING_HALF, y, SWING_TOP))
+        for sy in (-1, 1):
+            objs.append(plank('swleg', Vector((x + sx * SWING_HALF, y + sy * 0.2, 0.0)), top + Vector((0, 0, 0.02)), 0.04, 0.035, (sx, 0, 0), green, jitter=0.3))
+        objs.append(plank('swbrace', Vector((x + sx * SWING_HALF, y - 0.1, 0.27)), Vector((x + sx * SWING_HALF, y + 0.1, 0.27)), 0.03, 0.025, (sx, 0, 0), white, jitter=0.3))
+        objs.append(sphere('swtulip', 0.032, (x + sx * (SWING_HALF + 0.07), y, SWING_TOP + 0.02), (0.85, 0.85, 1.2), m=_cw('tulip', 0, rough=0.5), seg=10, rings=7))
+    objs.append(cyl('swbar', 0.022, 2 * SWING_HALF + 0.1, (x, y, SWING_TOP), (0, math.radians(90), 0), m=white, verts=10, bevel=0.0))
+
+
+def cabbage_mill(objs, x, y):
+    """The windmill's way of hanging the cabbage: a white post with a little toy windmill on its top, an arm out to it."""
+    white = C('trimw', '#efe9dc', rough=0.6); green = C('milldoor', '#2f6a4f', rough=0.55, var=0.05)
+    px, py = x, y + 0.28
+    objs.append(box('cpost', (0.05, 0.05, CAB_TOP + 0.04), (px, py, (CAB_TOP + 0.04) / 2), m=white, bevel=0.008))
+    objs.append(box('carm', (0.04, 0.32, 0.04), (px, py - 0.14, CAB_TOP), m=green, bevel=0.006))
+    objs.append(box('cbrace', (0.03, 0.16, 0.03), (px, py - 0.06, CAB_TOP - 0.08), (math.radians(-40), 0, 0), m=green, bevel=0.005, segs=1))
+    tz = CAB_TOP + 0.04                                            # the toy windmill on top
+    objs.append(cyl('tmill', 0.04, 0.14, (px, py, tz + 0.07), (0, 0, math.pi / 8), m=C('millboard', '#f2ede2', rough=0.7, var=0.03), verts=8, r2=0.028, bevel=0.003))
+    objs.append(cyl('tmcap', 0.036, 0.05, (px, py, tz + 0.165), m=C('millslate', '#454c57', rough=0.65), verts=10, r2=0.01, bevel=0.003))
+    hub = Vector((px, py - 0.045, tz + 0.12))
+    for k in range(4):
+        a = math.radians(30 + k * 90); d = Vector((math.cos(a), 0, math.sin(a))); q = Vector((-math.sin(a), 0, math.cos(a)))
+        objs.append(plank('tmsail', hub + d * 0.015 + q * 0.012, hub + d * 0.085 + q * 0.012, 0.026, 0.004, (0, -1, 0), C('cw_cloth', '#ece0c4', rough=0.9), jitter=0.0, bevel=0.0))
+    for k in range(3):
+        a = k * 2.1 + 0.4
+        objs.append(sphere('cstone', 0.035, (px + math.cos(a) * 0.06, py + math.sin(a) * 0.06, 0.012), (1.2, 1, 0.6), m=_barn_m('stone', rough=0.9, grain=0.0), ico=1, disp=0.2, seed=k + 560))
+
+
+def sand_clog(objs, x, y):
+    """The Cosy windmill's sand bath: a giant wooden clog (its toe turned up) full of sand, a red tulip painted on its side."""
+    clog, clog2 = _cw('clog', rough=0.6, var=0.03), _cw('clog2', rough=0.6)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    L, W, H = CLOG_L, CLOG_W, 0.16
+    def outline(t):                                                # its rim round from the heel (t=0) by the toe (t=0.5)
+        a = t * math.tau; c, s_ = math.cos(a), math.sin(a)
+        rx = L / 2 * (1.0 if c < 0 else 1.12); ry = W / 2 * (1.0 if c < 0 else 0.86 - 0.18 * c)
+        return Vector((x - c * rx * 0.98, y + s_ * ry, 0))
+    N = 28; me = bpy.data.meshes.new('clogside'); bm = bmesh.new(); low, high = [], []
+    for k in range(N):
+        p = outline(k / N); toe = max(0.0, math.cos(k / N * math.tau)) ** 3
+        low.append(bm.verts.new((p.x, p.y, 0.02))); high.append(bm.verts.new((p.x, p.y, H + 0.09 * toe)))
+    for k in range(N): bm.faces.new((low[k], low[(k + 1) % N], high[(k + 1) % N], high[k]))
+    bm.faces.new(list(reversed(low))); bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('clogside', me)); setmat(o, clog); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.03; so.offset = -1
+    for p_ in o.data.polygons: p_.use_smooth = True
+    objs.append(o)
+    objs.append(cyl('clogsole', 0.5, 0.03, (x, y, 0.015), m=clog2, verts=24, bevel=0.0)); objs[-1].scale = (L / 2 * 1.04 / 0.5, W / 2 / 0.5, 1)
+    objs.append(cyl('clogsand', 0.5, 0.02, (x + 0.03, y, CLOG_Y - 0.01), m=sand, verts=24, bevel=0.0)); objs[-1].scale = ((L / 2 - 0.08) / 0.5, (W / 2 - 0.05) / 0.5, 1)
+    for k, (dx, s_) in enumerate(((-0.17, 0.1), (0.15, 0.08))):
+        objs.append(sphere('cmound', s_, (x + dx, y + 0.02 * (1 - 2 * k), CLOG_Y), (1.3, 1.0, 0.22), (0, 0, k), m=sand, ico=2, disp=0.15, seed=k + 570))
+    for sy in (-1, 1):                                             # a red tulip painted on each side
+        objs.append(sphere('cpaint', 0.028, (x + 0.05, y + sy * (W / 2 + 0.008), 0.11), (1.0, 0.2, 1.3), m=_cw('tulip', 0, rough=0.5), seg=8, rings=6))
+        objs.append(sphere('cpaintl', 0.03, (x + 0.05, y + sy * (W / 2 + 0.006), 0.06), (0.25, 0.2, 1.0), m=_cw('stem', rough=0.8), seg=6, rings=4))
+    for k in range(6):
+        aa = random.uniform(0, math.tau)
+        objs.append(sphere('cspill', random.uniform(0.04, 0.06), (x + math.cos(aa) * (L / 2 + 0.1), y + math.sin(aa) * (W / 2 + 0.1), 0.012), (1.4, 1, 0.12), (0, 0, aa), m=sand, ico=2, disp=0.2, seed=k + 575))
+
+
+def sand_delft(objs, x, y):
+    """The Deluxe windmill's sand bath: a low sandbox faced with blue-and-white Delft tiles, full of sand, a little toy boat."""
+    blue, whitep = _cw('delft', rough=0.3, spec=0.5), _cw('delftw', rough=0.3, spec=0.5)
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    hw, hd, H = DELFT_W / 2, DELFT_D / 2, 0.11
+    objs.append(box('dcore', (DELFT_W - 0.02, DELFT_D - 0.02, H - 0.01), (x, y, (H - 0.01) / 2), m=whitep, bevel=0.0))
+    for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
+                      ((x - hw, y - hd), (x - hw, y + hd), (-1, 0, 0)), ((x + hw, y - hd), (x + hw, y + hd), (1, 0, 0))):
+        A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B - A).length; nt = max(3, round(L / 0.11))
+        for k in range(nt):                                         # tiles along it, a blue flower painted on each
+            c = A.lerp(B, (k + 0.5) / nt) + Vector(n) * 0.006 + Vector((0, 0, H / 2))
+            objs.append(box('dtile', (L / nt - 0.008 if n[1] else 0.006, 0.006 if n[1] else L / nt - 0.008, H - 0.012), tuple(c), m=whitep, bevel=0.002, segs=1))
+            objs.append(sphere('dtpaint', 0.022, tuple(c + Vector(n) * 0.004), (0.9 if n[1] else 0.2, 0.2 if n[1] else 0.9, 0.9), m=blue, seg=8, rings=5))
+        objs.append(plank('dtrim', (a[0], a[1], H + 0.008), (b[0], b[1], H + 0.008), 0.045, 0.016, (0, 0, 1), blue, jitter=0.0, bevel=0.003))
+    objs.append(box('sand', (DELFT_W - 0.05, DELFT_D - 0.05, 0.02), (x, y, H - 0.02), m=sand, bevel=0.01, segs=2))
+    for k, (dx, dy, s_) in enumerate(((-0.18, 0.06, 0.12), (0.2, -0.08, 0.1))):
+        objs.append(sphere('smound', s_, (x + dx, y + dy, H - 0.015), (1.3, 1.0, 0.22), (0, 0, k), m=sand2 if k else sand, ico=2, disp=0.15, seed=k + 580))
+    bx, by = x + 0.24, y + 0.16                                   # a little toy boat with a white sail
+    objs.append(sphere('tboat', 0.07, (bx, by, H + 0.01), (1.3, 0.55, 0.4), m=_cw('red', rough=0.5), seg=10, rings=6))
+    objs.append(cyl('tmast', 0.005, 0.13, (bx, by, H + 0.08), m=C('millshaft', '#5a3a26', rough=0.7), verts=5, bevel=0.0))
+    objs.append(_tri('tsail', (bx + 0.005, by, H + 0.04), (bx + 0.005, by, H + 0.14), (bx + 0.07, by, H + 0.045), (0, -1, 0), 0.004, C('trimw', '#efe9dc', rough=0.6)))
+    for k in range(5):
+        aa = random.uniform(0, math.tau)
+        objs.append(sphere('sspill', random.uniform(0.04, 0.06), (x + math.cos(aa) * (hw + 0.08), y + math.sin(aa) * (hd + 0.08), 0.012), (1.4, 1, 0.12), (0, 0, aa), m=sand, ico=2, disp=0.2, seed=k + 585))
+
+
+def tulip_xylophone(objs, x, y):
+    """A xylophone of bars in tulip colours on a little green stand, a red tulip at each end of it, a mallet."""
+    green = C('milldoor', '#2f6a4f', rough=0.55, var=0.05); white = C('trimw', '#efe9dc', rough=0.6)
+    cols = ['#e2453c', '#ff8c42', '#f4c430', '#f08bb0', '#9b6bd1', '#fbf6ee']
+    for sy in (-1, 1):
+        objs.append(box('xrail', (0.26, 0.03, 0.025), (x, y + sy * 0.16, 0.085), m=green, bevel=0.005, segs=1))
+        for sx in (-1, 1):
+            objs.append(box('xleg', (0.03, 0.03, 0.08), (x + sx * 0.1, y + sy * 0.16, 0.04), m=green, bevel=0.004, segs=1))
+        objs.append(sphere('xtulip', 0.022, (x, y + sy * 0.21, 0.1), (0.85, 0.85, 1.2), m=_cw('tulip', 0, rough=0.5), seg=8, rings=6))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.26 - k * 0.025
+        objs.append(box('xbar', (L, 0.042, 0.016), (x, yy, 0.105), m=C('txbar%d' % k, cols[k], rough=0.4, metal=0.3), bevel=0.004, segs=1))
+        for sx in (-1, 1):
+            objs.append(sphere('xpin', 0.007, (x + sx * (L / 2 - 0.02), yy, 0.115), m=white, seg=6, rings=4))
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.2, 0.015), (math.radians(90), 0, math.radians(30)), m=green, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=_cw('tulip', 1, rough=0.5), seg=8, rings=6))

@@ -148,6 +148,16 @@ for t in (0, 1, 3, 4): one('pen_t%d_bra' % t, lambda t=t: coops.pen_tier(t, 'bra
 # coops.json mills)
 for k in coops.LATER: one('house_' + k, coops.HOUSES[k])
 one('sails_pol', coops.mill_sails); LOOKS.append('sails_pol')
+# its five looks (Rustic box_pol, Mended shed_pol, Snug house_pol, Cosy cosy_pol, Deluxe deluxe_pol), its other sails (the
+# Mended's first bare pair, the Deluxe's bigger ones with red stocks) and its own gardens
+BUDGET.update({'box_pol': 15000, 'shed_pol': 17000, 'cosy_pol': 21000, 'deluxe_pol': 25000, 'sails_pol_t1': 1400, 'sails_pol_dx': 2800,
+               'pen_t0_pol': 4200, 'pen_t1_pol': 4600, 'pen_t3_pol': 9000, 'pen_t4_pol': 11500})
+_keep = dict(coops.NESTS['house_pol'])
+for n_, fn in (('box_pol', coops.box_pol), ('shed_pol', coops.shed_pol), ('cosy_pol', coops.cosy_pol), ('deluxe_pol', coops.deluxe_pol)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_pol'] == _keep, 'the looks must keep the Little Windmill\'s nest'
+one('sails_pol_t1', lambda: coops.mill_sails(name='sails_pol_t1', canvas=(), broken=(1, 3), lat_c='#d8b886', stock_c='#cba872', R=0.6, width=0.18))
+one('sails_pol_dx', lambda: coops.mill_sails(name='sails_pol_dx', stock_c='#9e3b2e', R=1.0, width=0.28)); LOOKS += ['sails_pol_t1', 'sails_pol_dx']
+for t in (0, 1, 3, 4): one('pen_t%d_pol' % t, lambda t=t: coops.pen_tier(t, 'pol')); LOOKS.append('pen_t%d_pol' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

@@ -366,6 +366,34 @@ def log_flume(objs, x, y, m):
     objs.append(cyl('ftrickle', 0.006, 0.1, (b.x, b.y - 0.03, zc + 0.03), m=m['water'], verts=5, bevel=0.0))
 
 
+def canal(objs, x, y, m):
+    """A little canal edged with bricks along x (the Deluxe windmill's water, release 7), a white drawbridge over its middle:
+    a deck on low brick piers, two white posts with a beam across their tops and chains down to the deck."""
+    L, W = 0.92, 0.34
+    bricks = [mat('fc_brick%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#b0624a', '#a35a43', '#bd7056'))]
+    white = mat('fc_white', '#f2ede2', rough=0.6, var=0.03); iron = mat('fc_iron', '#2b2824', rough=0.5, metal=0.6)
+    objs.append(box('cbed', (L, W, 0.02), (x, y, 0.02), m=mat('fc_bed', '#3f5a52', rough=0.9), bevel=0.0))
+    objs.append(box('cwater', (L - 0.02, W - 0.02, 0.01), (x, y, 0.055), m=m['water'], bevel=0.0))
+    k = 0
+    for sy in (-1, 1):                                     # its brick edges, along it and across its ends
+        u = -L / 2 - 0.05
+        while u < L / 2 + 0.05:
+            w = min(0.13, L / 2 + 0.05 - u)
+            objs.append(box('cbrick', (w - 0.01, 0.07, 0.07), (x + u + w / 2, y + sy * (W / 2 + 0.035), 0.035), m=bricks[k % 3], bevel=0.008, segs=1, jitter=0.002)); u += w; k += 1
+    for sx in (-1, 1):
+        for j in range(3):
+            objs.append(box('cbrick', (0.07, W / 3 - 0.01, 0.07), (x + sx * (L / 2 + 0.035), y - W / 3 + j * W / 3, 0.035), m=bricks[(k + j) % 3], bevel=0.008, segs=1, jitter=0.002))
+    for sy in (-1, 1):                                     # the bridge's piers, its deck across, its posts, beam and chains
+        objs.append(box('cpier', (0.16, 0.09, 0.1), (x, y + sy * (W / 2 + 0.07), 0.05), m=bricks[1], bevel=0.008, segs=1))
+    for j in range(5):
+        objs.append(plank('cdeck', (x - 0.075 + j * 0.0375, y - W / 2 - 0.07, 0.112), (x - 0.075 + j * 0.0375, y + W / 2 + 0.07, 0.112), 0.034, 0.018, (0, 0, 1), white, jitter=0.3, bevel=0.003))
+    for sx in (-1, 1):
+        objs.append(box('cpost', (0.03, 0.03, 0.34), (x + sx * 0.09, y + W / 2 + 0.07, 0.27), m=white, bevel=0.005, segs=1))
+        objs.append(cyl('cchain', 0.004, 0.33, (x + sx * 0.09, y + 0.06, 0.28), (math.radians(-62), 0, 0), m=iron, verts=4, bevel=0.0))
+    objs.append(box('cbeam', (0.24, 0.035, 0.03), (x, y + W / 2 + 0.07, 0.45), m=white, bevel=0.005, segs=1))
+    objs.append(box('ccounter', (0.03, 0.34, 0.03), (x, y + W / 2 + 0.07 + 0.12, 0.45), m=white, bevel=0.005, segs=1))
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
@@ -486,6 +514,23 @@ def build_pen(root, m):
         objs.append(cyl('froof', 0.15, 0.14, (fx, fy, 0.42), m=thatch, verts=14, r2=0.015, bevel=0.012))
         objs.append(cyl('ffringe', 0.155, 0.035, (fx, fy, 0.36), m=thatch, verts=14, r2=0.15, bevel=0.006))
         objs.append(sphere('fball', 0.025, (fx, fy, 0.5), m=thatch, seg=10, rings=6))
+    elif PEN.get('feeder_style') == 'mill':                   # (the Deluxe windmill's: a tiny white windmill with a dark cap and four little sails, release 7)
+        white = mat('fd_millw', '#f2ede2', rough=0.7, var=0.03); cap = mat('fd_millcap', '#454c57', rough=0.65, var=0.06)
+        brick = mat('fd_millbrick', '#b0624a', rough=0.85, var=0.06); sailw = mat('fd_millsail', '#ece0c4', rough=0.9); stock = mat('fd_millstock', '#6b4029', rough=0.7)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 8), m=brick, verts=8, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.085, 0.27, (fx, fy, 0.2), (0, 0, math.pi / 8), m=white, verts=8, r2=0.062, bevel=0.005))
+        objs.append(box('fwin', (0.06, 0.006, 0.07), (fx, fy - 0.075, 0.2), m=m['grain_'], bevel=0.0))
+        me = bpy.data.meshes.new('fcap'); bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=8, radius=1.0)
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, 0), plane_no=(0, 0, 1), clear_inner=True); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('fcap', me)); setmat(o, cap); o.location = (fx, fy, 0.335); o.scale = (0.075, 0.09, 0.08); [setattr(p_, 'use_smooth', True) for p_ in o.data.polygons]; objs.append(o)
+        hub = Vector((fx, fy - 0.1, 0.37))
+        objs.append(cyl('fhub', 0.014, 0.03, tuple(hub), (math.radians(90), 0, 0), m=stock, verts=8, bevel=0.0))
+        for k in range(4):
+            a = math.radians(20 + k * 90); d = Vector((math.cos(a), 0, math.sin(a))); q = Vector((-math.sin(a), 0, math.cos(a)))
+            objs.append(plank('fstock', hub + d * 0.01, hub + d * 0.15, 0.012, 0.01, (0, -1, 0), stock, jitter=0.0, bevel=0.0))
+            c = hub + d * 0.095 + q * 0.025 + Vector((0, 0.004, 0))
+            objs.append(plank('fsail', c - d * 0.05, c + d * 0.05, 0.04, 0.004, (0, -1, 0), sailw, jitter=0.0, bevel=0.0))
     elif PEN.get('feeder_style') == 'deluxe':
         cu = mat('fd_cu', '#5c9a86', rough=0.42, spec=0.45, metal=0.25, var=0.06); cu2 = mat('fd_cu2', '#77b29e', rough=0.42, spec=0.45, metal=0.25, var=0.06)
         cream = mat('fd_cream', '#f1e9d8', rough=0.6, var=0.04, grain=0.12, grain_scale=(1.5, 26, 26)); gold = mat('fd_gold', '#d4a640', rough=0.3, metal=0.9)
@@ -516,6 +561,7 @@ def build_pen(root, m):
     elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
     elif PEN.get('water') == 'flume': log_flume(objs, wx, wy, m)
+    elif PEN.get('water') == 'canal': canal(objs, wx, wy, m)
     else:
       bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
       rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)
