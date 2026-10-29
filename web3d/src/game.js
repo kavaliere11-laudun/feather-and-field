@@ -90,6 +90,12 @@ export const TEXT = {
     up_bra_mended: 'A little cabin of new peeled logs under a roof of rough boards, in a bigger pen.', up_bra_snug: 'The Timber Lodge, in a roomier pen.',
     up_bra_cosy: 'A woodpile under its own little roof, a wreath on the door, a birdhouse, toadstools and ferns, and a bigger garden with a swing on log posts, a half log full of sand and a cabbage to peck.',
     up_bra_deluxe: 'A storey taller with a gable over the door, a chimney of river stones and a carved bear, a crib of logs full of sand, water from a log flume, a xylophone and the biggest garden, with white pickets and roses.',
+    up_pol_mended: 'Its brick rebuilt, a stubby pine tower half painted and a first pair of sails turning, in a bigger pen.', up_pol_snug: 'The Little Windmill, in a roomier pen.',
+    up_pol_cosy: 'Painted Dutch green under red tiles, striped sails, tulips, clogs by the door, and a bigger garden with a swing, a giant clog full of sand and a cabbage to peck.',
+    up_pol_deluxe: 'A taller mill in cream and Delft blue with a copper cap and a gallery, a tiled sandbox, a canal with a drawbridge, a windmill feeder, a xylophone and the biggest garden, with white pickets and roses.',
+    up_aya_mended: 'Walls of woven bamboo on a stone base and new clay tiles half laid, in a bigger pen.', up_aya_snug: 'The Javanese House, in a roomier pen.',
+    up_aya_cosy: 'Green glazed tiles, a frangipani in flower, a banana plant and orchids, and a bigger garden with a swing under a tiled roof, a woven tray of sand and a cabbage to peck.',
+    up_aya_deluxe: 'Taller, black and gold, with cream walls, red posts and ceremonial umbrellas, a sand pit of temple stone, a water jar, a little gamelan and the biggest garden, with white pickets and roses.',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -189,7 +195,7 @@ export const TEXT = {
     showday_title: 'Show day!', showday_body: 'The results of the {show} are in: the judge is looking at the birds.', showday_watch: 'Watch the judging', showday_results: 'Just the results', skip: 'Skip',
     sd_arrive: '{farmer} brings {name} to the show…', sd_judge: 'The judge looks at every bird…', sd_rosettes: 'And now, the rosettes!',
     champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry {f}, 1st prize {p} coins', show_new_n: 'The National Championship: entry {f}, 1st prize {p} coins',
-    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs',
+    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs', egg_pol: 'White eggs', egg_aya: 'Cream eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_music: 'Music', settings_sounds: 'Sounds', music_on: 'On', music_off: 'Off', settings_music_note: 'The music comes now and then, by day and of an evening. With your phone on silent, the game is silent too.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
@@ -340,6 +346,12 @@ export const TEXT = {
     up_bra_mended: 'Une petite cabane de rondins neufs sous un toit de planches brutes, dans un enclos plus grand.', up_bra_snug: 'Le Chalet en rondins, dans un enclos plus spacieux.',
     up_bra_cosy: 'Une pile de bois sous son petit toit, une couronne sur la porte, un nichoir, des champignons et des fougères, et un jardin plus grand avec une balançoire sur des rondins, un demi-tronc plein de sable et un chou à picorer.',
     up_bra_deluxe: 'Un étage de plus avec un pignon au-dessus de la porte, une cheminée de galets et un ours sculpté, un bac de rondins plein de sable, de l’eau qui coule d’une rigole en bois, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
+    up_pol_mended: 'Ses briques remontées, une petite tour de pin à moitié peinte et une première paire d’ailes qui tourne, dans un enclos plus grand.', up_pol_snug: 'Le Petit moulin, dans un enclos plus spacieux.',
+    up_pol_cosy: 'Peint en vert hollandais sous des tuiles rouges, des ailes rayées, des tulipes, des sabots devant la porte, et un jardin plus grand avec une balançoire, un sabot géant plein de sable et un chou à picorer.',
+    up_pol_deluxe: 'Un moulin plus haut, crème et bleu de Delft, au chapeau de cuivre et à la galerie, un bac à sable carrelé, un canal et son pont-levis, une mangeoire en moulin, un xylophone et le plus grand jardin, avec palissade blanche et roses.',
+    up_aya_mended: 'Des murs de bambou tressé sur un socle de pierre et des tuiles neuves à moitié posées, dans un enclos plus grand.', up_aya_snug: 'La Maison javanaise, dans un enclos plus spacieux.',
+    up_aya_cosy: 'Des tuiles vernissées vertes, un frangipanier en fleurs, un bananier et des orchidées, et un jardin plus grand avec une balançoire sous un petit toit de tuiles, un plateau tressé plein de sable et un chou à picorer.',
+    up_aya_deluxe: 'Plus haute, noire et or, aux murs crème, aux piliers rouges et aux ombrelles d’apparat, un bac à sable en pierre de temple, une jarre à eau, un petit gamelan et le plus grand jardin, avec palissade blanche et roses.',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -439,7 +451,7 @@ export const TEXT = {
     showday_title: 'Jour de concours !', showday_body: 'Les résultats du {show} sont arrivés : le juge regarde les volailles.', showday_watch: 'Regarder le jugement', showday_results: 'Juste les résultats', skip: 'Passer',
     sd_arrive: '{farmer} amène {name} au concours…', sd_judge: 'Le juge regarde chaque volaille…', sd_rosettes: 'Et maintenant, les cocardes !',
     champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription {f}, 1er prix {p} pièces', show_new_n: 'Le championnat national : inscription {f}, 1er prix {p} pièces',
-    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair',
+    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair', egg_pol: 'Œufs blancs', egg_aya: 'Œufs crème',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_music: 'Musique', settings_sounds: 'Sons', music_on: 'Oui', music_off: 'Non', settings_music_note: 'La musique vient de temps en temps, le jour et le soir. Si votre téléphone est en mode silencieux, le jeu l’est aussi.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
@@ -563,6 +575,9 @@ export const BREED_INFO = {
   sil: { name: ['White Silkie', 'Poule soie blanche'], kind: ['Silkie', 'Poule soie'], col: ['White', 'blanche'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
   leg: { name: ['Cream Legbar', 'Legbar crème'], coop: ['Stone Cottage', 'Maison de pierre'] },
   bra: { name: ['Light Brahma', 'Brahma herminé'], coop: ['Timber Lodge', 'Chalet en rondins'] },
+  // (release 7, Audrey, 29 Oct: "Polish (Recommended)", "Ayam Cemani", at levels 26 and 29, each with its own coop)
+  pol: { name: ['Polish', 'Padoue'], coop: ['Little Windmill', 'Petit moulin'] },
+  aya: { name: ['Ayam Cemani', 'Ayam Cemani'], coop: ['Javanese House', 'Maison javanaise'] },
   // the other Silkie colours by level (release 2, game-plan-v2.md §4): each its own forever trio and Pagoda Coop with a touch
   // of its colour; a "line" of the Silkie breed (the key `sil_<colour>` on its coop and birds; the white ones keep `sil`)
   sil_black: { name: ['Black Silkie', 'Poule soie noire'], kind: ['Silkie', 'Poule soie'], col: ['Black', 'noire'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
@@ -634,9 +649,11 @@ export const FIELDS = 30;
 export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
 // the breeds by level (release 1 step 6; game-plan-v2.md): each a forever trio with its own rustic coop, the player's to
 // place; the other Silkie colours by level with release 2 (Black at 8, Buff 13, Blue 15, Partridge 20, Grey 23)
-export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23 };
+export const BREED_LEVEL = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
 // (the County show's breed of the day: from the breeds themselves, as before the Silkie colours, so a day's show is the same)
 const SHOW_BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
+// (and from the day after the Polish and the Ayam Cemani came, release 7, with them: the shows of the days before as they were)
+const SHOW_BREED_LEVEL_7 = { ...SHOW_BREED_LEVEL, pol: 26, aya: 29 }, SHOW_7_FROM = '20261030';
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
@@ -671,7 +688,8 @@ function showIdAt(tier, now) {                         // the show of that tier 
 // the player's level, so it can be one of theirs)
 function showBreed(id, level) {
   if (id[0] !== 'c' || hash01(id + '|any') < 0.5) return null;
-  const come = Object.keys(SHOW_BREED_LEVEL).filter(b => SHOW_BREED_LEVEL[b] <= Math.max(level, SHOWS.c.level));
+  const SB = id.slice(1) >= SHOW_7_FROM ? SHOW_BREED_LEVEL_7 : SHOW_BREED_LEVEL;
+  const come = Object.keys(SB).filter(b => SB[b] <= Math.max(level, SHOWS.c.level));
   return come[Math.floor(hash01(id + '|breed') * come.length)];
 }
 // the day's other entries (the same for everyone): each a score round the show's middle
@@ -856,7 +874,7 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
-export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7 };        // coins an egg sells for (the Legbar's blue eggs the dearest)
+export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 10 };        // coins an egg sells for (the Legbar's blue eggs the dearest)
 // XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
 // each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
 export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, jobL: 0.3 };      // (26 Oct, with the Silkie colours and the rare ones' coops: a year to level 30 once a day still)
@@ -877,7 +895,8 @@ export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 1
 // each breed's looks came with a version of the save (cv): a farm from before them has that breed's coops Snug (nothing
 // changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct), the Pagoda's (27 Oct: every Silkie colour's),
 // the Stone Cottage's (27 Oct)
-export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5 }, CV = 5;
+// (release 7's breeds came with their looks: no farm can have one of their coops from before, so nothing to change: 1)
+export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5, pol: 1, aya: 1 }, CV = 5;
 export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
@@ -885,7 +904,7 @@ export const CATCH_UP = 2 * 86400e3;                  // away longer than two da
 const DAY_MS = 86400e3;
 // ---- chicks (starting values)
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
-export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26 };   // coins for each grown chick
+export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 34 };   // coins for each grown chick
 export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
 export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
 export const kidPrice = (base, stars) => Math.round(base * (0.6 + 0.2 * stars));        // 1 star: 0.8 of the price; 5 stars: 1.6

@@ -4899,7 +4899,7 @@ PENS_BY['aya'] = {
     4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(1.75, -2.45), feeder_style='joglo', dish=(-1.75, -1.85), water='padasan', hay=(2.0, 0.5), hay_rot=90,
             sack=None, pebbles=10, straw=((0.5, -1.4, 0.3, 25), (2.0, 0.5, 0.4, 35))),
 }
-PLAY_BY['aya'] = {3: dict(swing=(-1.4, -2.2), tampah=(1.35, -1.25), cabbage=(-1.2, -1.02), frame='joglo', holder='kentongan'),
+PLAY_BY['aya'] = {3: dict(swing=(-1.4, -1.95), tampah=(1.35, -1.25), cabbage=(-1.2, -1.02), frame='joglo', holder='kentongan'),
                   4: dict(swing=(-1.65, -0.8), candi=(1.55, -1.15), cabbage=(0.9, -2.55), xylo=(-1.1, -2.6), frame='joglo', holder='kentongan', bars='gamelan')}
 TAMPAH_R = 0.33                                                   # the Cosy Javanese house's woven tray of sand
 CANDI_W, CANDI_D = 0.9, 0.7                                       # the Deluxe's stone-edged sand pit (x, y)

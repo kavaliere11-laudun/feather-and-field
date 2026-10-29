@@ -914,5 +914,19 @@
  "text.nudge_later": "Agora não",
  "text.nudge_note": "Você decide: dá para fazer login quando quiser nos Ajustes.",
  "text.welcome_signin": "Tem uma fazenda salva online? Faça login",
- "text.privacy": "Privacidade"
+ "text.privacy": "Privacidade",
+ "text.up_pol_mended": "Os tijolos refeitos, uma torre baixinha de pinho meio pintada e um primeiro par de pás girando, num cercado maior.",
+ "text.up_pol_snug": "O Moinhozinho, num cercado mais espaçoso.",
+ "text.up_pol_cosy": "Pintado de verde holandês sob telhas vermelhas, pás listradas, tulipas, tamancos na porta, e um jardim maior com balanço, um tamanco gigante cheio de areia e um repolho para bicar.",
+ "text.up_pol_deluxe": "Um moinho mais alto, creme e azul de Delft, com capota de cobre e galeria, uma caixa de areia de azulejos, um canal com ponte levadiça, um comedouro em forma de moinho, um xilofone e o maior jardim, com cerquinha branca e rosas.",
+ "text.up_aya_mended": "Paredes de bambu trançado sobre uma base de pedra e telhas novas meio assentadas, num cercado maior.",
+ "text.up_aya_snug": "A Casa Javanesa, num cercado mais espaçoso.",
+ "text.up_aya_cosy": "Telhas verdes vitrificadas, uma plumeria em flor, uma bananeira e orquídeas, e um jardim maior com balanço sob um telhadinho de telhas, uma peneira trançada cheia de areia e um repolho para bicar.",
+ "text.up_aya_deluxe": "Mais alta, preta e dourada, com paredes creme, pilares vermelhos e sombrinhas cerimoniais, uma caixa de areia de pedra de templo, um pote de água, um pequeno gamelão e o maior jardim, com cerquinha branca e rosas.",
+ "text.egg_pol": "Ovos brancos",
+ "text.egg_aya": "Ovos creme",
+ "breed.pol.name": "Polonesa",
+ "breed.pol.coop": "Moinhozinho",
+ "breed.aya.name": "Ayam Cemani",
+ "breed.aya.coop": "Casa Javanesa"
 }

@@ -12,7 +12,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 const OUT = process.argv[2] || fileURLToPath(new URL('./book/', import.meta.url));
 const SIZE = +(process.env.SIZE || 320), PREVIEW = process.env.PREVIEW || '';
-const BREEDS = (process.env.ONLY || 'rir,orp,sil,leg,bra,sil_black,sil_buff,sil_blue,sil_partridge,sil_grey').split(',');
+const BREEDS = (process.env.ONLY || 'rir,orp,sil,leg,bra,sil_black,sil_buff,sil_blue,sil_partridge,sil_grey,pol,aya').split(',');
 // the pair's places on the line-up's ground (metres; +z towards the camera), which way each faces (0: at the camera; less:
 // turned to the left of the picture), the head turned (lookYaw) and tilted, and the camera
 const STAGE = { hen: { x: -0.07, z: 0.1, yaw: -1.0, look: 0.32, tilt: 0.05 }, roo: { x: 0.12, z: -0.1, yaw: -0.82, look: 0.22, tilt: -0.03, proud: 0.5 },

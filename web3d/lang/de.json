@@ -914,5 +914,19 @@
  "text.nudge_later": "Jetzt nicht",
  "text.nudge_note": "Ganz wie du willst: Du kannst dich jederzeit in den Einstellungen anmelden.",
  "text.welcome_signin": "Schon einen Hof online gespeichert? Anmelden",
- "text.privacy": "Datenschutz"
+ "text.privacy": "Datenschutz",
+ "text.up_pol_mended": "Sein Backstein neu gemauert, ein kleiner Turm aus Kiefernholz, halb gestrichen, und ein erstes Flügelpaar, das sich dreht, in einem größeren Gehege.",
+ "text.up_pol_snug": "Die Kleine Windmühle, in einem geräumigeren Gehege.",
+ "text.up_pol_cosy": "In Holländisch-Grün unter roten Ziegeln, gestreifte Flügel, Tulpen, Holzschuhe an der Tür und ein größerer Garten mit einer Schaukel, einem riesigen Holzschuh voll Sand und einem Kohlkopf zum Picken.",
+ "text.up_pol_deluxe": "Eine höhere Mühle in Creme und Delfter Blau mit Kupferhaube und Galerie, ein gekachelter Sandkasten, ein Kanal mit Zugbrücke, ein Futterhaus als Windmühle, ein Xylophon und der größte Garten, mit weißem Lattenzaun und Rosen.",
+ "text.up_aya_mended": "Wände aus geflochtenem Bambus auf einem Steinsockel und neue Tonziegel, halb verlegt, in einem größeren Gehege.",
+ "text.up_aya_snug": "Das Javanische Haus, in einem geräumigeren Gehege.",
+ "text.up_aya_cosy": "Grün glasierte Ziegel, ein blühender Frangipani, eine Bananenstaude und Orchideen und ein größerer Garten mit einer Schaukel unter einem Ziegeldach, einem geflochtenen Tablett voll Sand und einem Kohlkopf zum Picken.",
+ "text.up_aya_deluxe": "Höher, in Schwarz und Gold, mit cremefarbenen Wänden, roten Pfosten und Zeremonienschirmen, ein Sandbett aus Tempelstein, ein Wasserkrug, ein kleines Gamelan und der größte Garten, mit weißem Lattenzaun und Rosen.",
+ "text.egg_pol": "Weiße Eier",
+ "text.egg_aya": "Cremefarbene Eier",
+ "breed.pol.name": "Paduaner",
+ "breed.pol.coop": "Kleine Windmühle",
+ "breed.aya.name": "Ayam Cemani",
+ "breed.aya.coop": "Javanisches Haus"
 }

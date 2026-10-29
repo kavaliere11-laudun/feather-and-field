@@ -519,6 +519,46 @@
   "fr": "Un étage de plus avec un pignon au-dessus de la porte, une cheminée de galets et un ours sculpté, un bac de rondins plein de sable, de l’eau qui coule d’une rigole en bois, un xylophone et le plus grand jardin, avec palissade blanche et roses."
  },
  {
+  "id": "text.up_pol_mended",
+  "en": "Its brick rebuilt, a stubby pine tower half painted and a first pair of sails turning, in a bigger pen.",
+  "fr": "Ses briques remontées, une petite tour de pin à moitié peinte et une première paire d’ailes qui tourne, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_pol_snug",
+  "en": "The Little Windmill, in a roomier pen.",
+  "fr": "Le Petit moulin, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_pol_cosy",
+  "en": "Painted Dutch green under red tiles, striped sails, tulips, clogs by the door, and a bigger garden with a swing, a giant clog full of sand and a cabbage to peck.",
+  "fr": "Peint en vert hollandais sous des tuiles rouges, des ailes rayées, des tulipes, des sabots devant la porte, et un jardin plus grand avec une balançoire, un sabot géant plein de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_pol_deluxe",
+  "en": "A taller mill in cream and Delft blue with a copper cap and a gallery, a tiled sandbox, a canal with a drawbridge, a windmill feeder, a xylophone and the biggest garden, with white pickets and roses.",
+  "fr": "Un moulin plus haut, crème et bleu de Delft, au chapeau de cuivre et à la galerie, un bac à sable carrelé, un canal et son pont-levis, une mangeoire en moulin, un xylophone et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
+  "id": "text.up_aya_mended",
+  "en": "Walls of woven bamboo on a stone base and new clay tiles half laid, in a bigger pen.",
+  "fr": "Des murs de bambou tressé sur un socle de pierre et des tuiles neuves à moitié posées, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_aya_snug",
+  "en": "The Javanese House, in a roomier pen.",
+  "fr": "La Maison javanaise, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_aya_cosy",
+  "en": "Green glazed tiles, a frangipani in flower, a banana plant and orchids, and a bigger garden with a swing under a tiled roof, a woven tray of sand and a cabbage to peck.",
+  "fr": "Des tuiles vernissées vertes, un frangipanier en fleurs, un bananier et des orchidées, et un jardin plus grand avec une balançoire sous un petit toit de tuiles, un plateau tressé plein de sable et un chou à picorer."
+ },
+ {
+  "id": "text.up_aya_deluxe",
+  "en": "Taller, black and gold, with cream walls, red posts and ceremonial umbrellas, a sand pit of temple stone, a water jar, a little gamelan and the biggest garden, with white pickets and roses.",
+  "fr": "Plus haute, noire et or, aux murs crème, aux piliers rouges et aux ombrelles d’apparat, un bac à sable en pierre de temple, une jarre à eau, un petit gamelan et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
   "id": "text.upfx_mended",
   "en": "Fewer days without an afternoon egg.",
   "fr": "Moins de jours sans l’œuf de l’après-midi."
@@ -2032,6 +2072,16 @@
   "id": "text.egg_bra",
   "en": "Light brown eggs",
   "fr": "Œufs brun clair"
+ },
+ {
+  "id": "text.egg_pol",
+  "en": "White eggs",
+  "fr": "Œufs blancs"
+ },
+ {
+  "id": "text.egg_aya",
+  "en": "Cream eggs",
+  "fr": "Œufs crème"
  },
  {
   "id": "text.coins_body",
@@ -3705,6 +3755,26 @@
   "id": "breed.bra.coop",
   "en": "Timber Lodge",
   "fr": "Chalet en rondins"
+ },
+ {
+  "id": "breed.pol.name",
+  "en": "Polish",
+  "fr": "Padoue"
+ },
+ {
+  "id": "breed.pol.coop",
+  "en": "Little Windmill",
+  "fr": "Petit moulin"
+ },
+ {
+  "id": "breed.aya.name",
+  "en": "Ayam Cemani",
+  "fr": "Ayam Cemani"
+ },
+ {
+  "id": "breed.aya.coop",
+  "en": "Javanese House",
+  "fr": "Maison javanaise"
  },
  {
   "id": "breed.sil_black.name",

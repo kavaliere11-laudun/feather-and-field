@@ -52,7 +52,7 @@ await load();
 if (B !== 'rir') {                                 // a coop of that breed placed on the farm (its level reached), first in the save
   const ok_ = await p.evaluate(B => {
     window.__T = Math.round(window.__T);           // (whole milliseconds, as a real clock: the save keeps them so)
-    const f = window.__farm, g = f.game(); g.data.xp = 60000; g.data.lvSeen = 27; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.data.first = null;
+    const f = window.__farm, g = f.game(); g.data.xp = 70000; g.data.lvSeen = 29; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.data.first = null;
     const c = g.data.coops[0];
     for (let r = 6; r < 30; r += 0.5) for (let k = 0; k < r * 6; k++) { const a = k / (r * 6) * 6.28, at = { x: Math.round((c.x + Math.cos(a) * r) * 4) / 4, z: Math.round((c.z + Math.sin(a) * r) * 4) / 4, deg: 90 };
       const S = f.coopSpotAt(at, 0); if (!S || !S.ok) continue;
@@ -80,7 +80,7 @@ for (let t = 1; t <= 4; t++) {
   if (s.tier === t - 1 && c.why) {           // no room for the bigger pen here: the card says so; moved somewhere roomier
     ok(`${look}: no room for its pen here, the card says to move the coop first, nothing paid`, (fr ? /déplacez d’abord le poulailler/ : /move the coop first/).test(c.why) && s.coins === s0.coins, { c, s });
     const spot = await p.evaluate(t => {          // (moved there: room for the pen, its gate onto the farm; else the next)
-      const f = window.__farm, g = f.game(); g.data.xp = Math.max(g.data.xp, 60000); if (g.data.land.length < 5) g.data.land = [0, 1, 2, 3, 4]; g.save();
+      const f = window.__farm, g = f.game(); g.data.xp = Math.max(g.data.xp, 70000); if (g.data.land.length < 5) g.data.land = [0, 1, 2, 3, 4]; g.save();
       const c = g.data.coops[0]; let tries = 0; f.gameUI().close();
       for (let r = 0; r < 30; r += 0.5) for (let k = 0; k < Math.max(1, r * 6); k++) { const a = k / Math.max(1, r * 6) * 6.28, x = Math.round((c.x + Math.cos(a) * r) * 4) / 4, z = Math.round((c.z + Math.sin(a) * r) * 4) / 4;
         for (const deg of [90, 0, 180, 270]) { const o = { x, z, deg }; const S = f.coopSpotAt(o, t); if (!(S && S.ok)) continue;

@@ -14,7 +14,7 @@ const errs = []; p.on('pageerror', e => errs.push(e.message));
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 const KINDS = { 3: ['swing', 'dust', 'cabbage'], 4: ['swing', 'dust', 'cabbage', 'xylo'] };
 for (const look of [3, 4]) {
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&looks=${look}&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&looks=${look}&time=11:00${process.env.EXTRA || ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #tag, #foxbtn, #replaybtn, #farmerbtn { display: none !important; }' });
   const has = await p.evaluate(breed => { const f = window.__farm; f.pause(true); const P = f.coopPlots().find(q => q.breed === breed); return P && P.toys ? Object.keys(P.toys).filter(k => P.toys[k] && P.toys[k].by !== undefined) : null; }, BREED);

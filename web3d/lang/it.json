@@ -914,5 +914,19 @@
  "text.nudge_later": "Non ora",
  "text.nudge_note": "Decidi tu: puoi accedere quando vuoi nelle Impostazioni.",
  "text.welcome_signin": "Hai una fattoria salvata online? Accedi",
- "text.privacy": "Privacy"
+ "text.privacy": "Privacy",
+ "text.up_pol_mended": "I mattoni rimessi in piedi, una torretta di pino dipinta a metà e un primo paio di pale che gira, in un recinto più grande.",
+ "text.up_pol_snug": "Il Piccolo mulino, in un recinto più spazioso.",
+ "text.up_pol_cosy": "Dipinto di verde olandese sotto tegole rosse, pale a righe, tulipani, zoccoli accanto alla porta, e un giardino più grande con un’altalena, uno zoccolo gigante pieno di sabbia e un cavolo da beccare.",
+ "text.up_pol_deluxe": "Un mulino più alto, crema e blu di Delft, con il cappello di rame e la balconata, una sabbiera di piastrelle, un canale con il ponte levatoio, una mangiatoia a forma di mulino, uno xilofono e il giardino più grande, con staccionata bianca e rose.",
+ "text.up_aya_mended": "Pareti di bambù intrecciato su una base di pietra e tegole nuove posate a metà, in un recinto più grande.",
+ "text.up_aya_snug": "La Casa giavanese, in un recinto più spazioso.",
+ "text.up_aya_cosy": "Tegole smaltate verdi, un frangipane in fiore, un banano e orchidee, e un giardino più grande con un’altalena sotto un tettuccio di tegole, un vassoio intrecciato pieno di sabbia e un cavolo da beccare.",
+ "text.up_aya_deluxe": "Più alta, nera e oro, con pareti crema, pali rossi e ombrelli cerimoniali, una sabbiera di pietra da tempio, una giara d’acqua, un piccolo gamelan e il giardino più grande, con staccionata bianca e rose.",
+ "text.egg_pol": "Uova bianche",
+ "text.egg_aya": "Uova color crema",
+ "breed.pol.name": "Padovana",
+ "breed.pol.coop": "Piccolo mulino",
+ "breed.aya.name": "Ayam Cemani",
+ "breed.aya.coop": "Casa giavanese"
 }

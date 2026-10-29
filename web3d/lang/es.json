@@ -909,5 +909,19 @@
  "text.nudge_later": "Ahora no",
  "text.nudge_note": "Tú decides: puedes iniciar sesión cuando quieras en Ajustes.",
  "text.welcome_signin": "¿Tienes una granja guardada en línea? Inicia sesión",
- "text.privacy": "Privacidad"
+ "text.privacy": "Privacidad",
+ "text.up_pol_mended": "Su ladrillo levantado de nuevo, una torre baja de pino a medio pintar y un primer par de aspas que gira, en un corral más grande.",
+ "text.up_pol_snug": "El Molinito, en un corral más amplio.",
+ "text.up_pol_cosy": "Pintado de verde holandés bajo tejas rojas, aspas a rayas, tulipanes, zuecos junto a la puerta, y un jardín más grande con un columpio, un zueco gigante lleno de arena y un repollo para picotear.",
+ "text.up_pol_deluxe": "Un molino más alto, crema y azul de Delft, con capota de cobre y galería, un arenero de azulejos, un canal con puente levadizo, un comedero con forma de molino, un xilófono y el jardín más grande, con valla blanca y rosas.",
+ "text.up_aya_mended": "Paredes de bambú trenzado sobre una base de piedra y tejas nuevas a medio poner, en un corral más grande.",
+ "text.up_aya_snug": "La Casa javanesa, en un corral más amplio.",
+ "text.up_aya_cosy": "Tejas vidriadas verdes, un frangipani en flor, una mata de plátano y orquídeas, y un jardín más grande con un columpio bajo un techito de tejas, una bandeja trenzada llena de arena y un repollo para picotear.",
+ "text.up_aya_deluxe": "Más alta, negra y dorada, con paredes crema, postes rojos y sombrillas ceremoniales, un arenero de piedra de templo, una tinaja de agua, un pequeño gamelán y el jardín más grande, con valla blanca y rosas.",
+ "text.egg_pol": "Huevos blancos",
+ "text.egg_aya": "Huevos color crema",
+ "breed.pol.name": "Polaca",
+ "breed.pol.coop": "Molinito",
+ "breed.aya.name": "Ayam Cemani",
+ "breed.aya.coop": "Casa javanesa"
 }

@@ -12,7 +12,8 @@ import { SHOW, ShowGround } from './showground.js';
 import { Farmer } from './farmer.js';
 
 const RIVALS = [['rir', 'hen'], ['orp', 'hen'], ['leg', 'hen'], ['bra', 'hen'], ['rir', 'rooster'], ['orp', 'rooster'], ['leg', 'rooster'], ['bra', 'rooster'],
-  ['sil', 'hen', 'white'], ['sil', 'hen', 'black'], ['sil', 'hen', 'buff'], ['sil', 'hen', 'blue'], ['sil', 'rooster', 'partridge'], ['sil', 'hen', 'grey']];
+  ['sil', 'hen', 'white'], ['sil', 'hen', 'black'], ['sil', 'hen', 'buff'], ['sil', 'hen', 'blue'], ['sil', 'rooster', 'partridge'], ['sil', 'hen', 'grey'],
+  ['pol', 'hen'], ['pol', 'rooster'], ['aya', 'hen'], ['aya', 'rooster']];      // (release 7's breeds too)
 const KINDS = ['first', 'second', 'third'];
 const sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
 

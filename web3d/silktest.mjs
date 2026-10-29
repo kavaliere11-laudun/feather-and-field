@@ -71,7 +71,7 @@ const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_black"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('4_book');
 ok('the Breed Book: fifteen pages (the rare colours last), the Black Silkies found with their names and picture, the Buff Silkies at level 13',
-  book.n === 15 && book.order === 'rir,orp,sil,sil_black,leg,sil_buff,sil_blue,bra,sil_partridge,sil_grey,sil_paint,sil_lavender,sil_red,sil_splash,sil_cuckoo' && book.black.found && T.black.test(book.black.text) && book.black.img > 0 && !book.buff.found && T.at13.test(book.buff.text), book);
+  book.n === 17 && book.order === 'rir,orp,sil,sil_black,leg,sil_buff,sil_blue,bra,sil_partridge,sil_grey,pol,aya,sil_paint,sil_lavender,sil_red,sil_splash,sil_cuckoo' && book.black.found && T.black.test(book.black.text) && book.black.img > 0 && !book.buff.found && T.at13.test(book.buff.text), book);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a Silkies-only County show takes a black Silkie
 const show = await p.evaluate(() => { const g = window.__farm.game(), hen = g.data.birds.find(b => b.breed === 'sil_black' && b.sex === 'h'), s = { id: 'c20261026', tier: 'c', breed: 'sil', locked: false };
