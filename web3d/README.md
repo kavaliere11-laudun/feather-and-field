@@ -2872,3 +2872,31 @@ the birds already had.
   moment after another; none with the birds in bed; Sounds Off and On.
 - "Hens worried" (BigSoundBank) is for mummy hens, when a hen is broody or has chicks (Audrey: "that's the sound they
   make to talk to their baby. Keep it for mummy hens"), once she sends it.
+
+## Release 7, step 4: the farm's sounds (29 Oct 2026; Audrey: "Can you download these sounds yourself?", then she allowed bigsoundbank.com for the session; on the twelve: "All good, put them in")
+
+- **Twelve real recordings** from BigSoundBank (Joseph Sardin, CC0; `audio/CREDITS.txt`), checked for voices (none) and
+  cut by the source's `audio/farm_clips.py` into `audio/farm/` (2.7 MB, with `farm.json`):
+  - one-shots: five egg songs, two crows, two flurries, four mummy hens, four chicks, five quacks, five woofs. Mono,
+    evened out to -17 to -24 LUFS, with soft ends.
+  - beds: dawn, day, evening, night and the pond. 45-second loops whose ends are faded into their starts, at -22 LUFS,
+    with the rumble cut; the day's steady cricket whistle is made gentler. They're decoded at 22 kHz to use half the
+    memory.
+- **Where each is heard** (`sound.js` `play`, `tickBeds`; `main.js` `heardAt`, `farmSound`): from where it happens, as
+  loud as the view is near it and from its side of the screen, some carrying further than others:
+  - a hen's egg song as she sings it. Each personality has her own part of "Hen lays #1", and her head bobs, beak wide
+    on each ba-KAWK, and the notes over her head follow the recording's own clucks (`SONG_CLIP`, sound or not);
+  - the rooster's cock-a-doodle-doo whenever he crows (one every 15 seconds at most);
+  - the henhouse in a flurry when the fox looks in or takes an egg (`nightvisit.js`);
+  - Biscuit's woof when he barks at the fox, bounces off Gertrude's hiss, or pounces on his ball (`dog.js` `woof`);
+  - the ducks' quacks with their quacking (`ducks.js`);
+  - at a coop with a brood, among her own hens' chatting: a mummy hen talking to her chicks (the "Hens worried"
+    recording: Audrey, "Keep it for mummy hens"), and the chicks peeping once they're out.
+- **Under it all**, crossfading by the hour: dawn's birds (from 5, full 6 to 8:30), the day's crickets and birds (full
+  9:30 to 18), the evening's last birds (full 19 to 21) and the night's insects (from 22). The pond's frogs and water
+  near the pond. Sounds Off silences all of it, and the music carries on.
+- **Tests**: `soundtest.mjs` also checks that all eleven kinds and five beds are loaded; each hour's bed, the others
+  silent; the pond near and far; the rooster's crow and a hen's egg song heard when they happen; a woof, a quack and a
+  flurry; Sounds Off.
+- Still to come: the geese and the bees (the US park service's public-domain recordings). That needs `www.nps.gov`
+  allowed too.
