@@ -531,7 +531,8 @@ MILL_PAL = dict(board='#f2ede2', post='#dcd4c3', skirt='#454c57', skirtd='#353b4
                 door='#2f6a4f', knob='#5a3a26', gold=False)
 # (Audrey, 29 Oct 21:59, on the five looks: "windmeal 3, 4 and 5 are too similar": the Cosy painted Dutch green with white
 # trim, its skirt and cap of red pantiles, red-and-white striped sails; the Deluxe cream with Delft-blue trim, a cap and skirt
-# of green copper, a gold knob, a gallery and a little miller's house with a stepped gable beside it)
+# of green copper, a gold knob, a gallery; its little miller's house beside it taken off again: Audrey, 22:12, "Remove the
+# little house on the left of the deluxe coop please")
 COSY_PAL = dict(MILL_PAL, board='#5f9468', post='#f4efe4', skirt='#c0603f', skirtd='#a14b31', cap='#c0603f', capd='#a14b31', trim='#f4efe4')
 DX_PAL = dict(MILL_PAL, board='#f3e8d2', post='#2f5aa8', skirt='#5c9a86', skirtd='#4d8574', cap='#5c9a86', capd='#77b29e', trim='#f4efe4',
               door='#2f5aa8', knob='#d4a640', gold=True)
@@ -4280,72 +4281,6 @@ def cosy_pol():
     return r
 
 
-def miller_house(objs, name, x0=-1.5, x1=-0.64, y0=-0.22, y1=0.42, eave=0.62, peak=1.16):
-    """The Deluxe windmill's little miller's house against its left side: brick walls, a stepped Dutch gable to the front with
-    white copings, a window with Delft-blue shutters and a box of tulips, a round window up in the gable, a roof of red
-    pantiles, a chimney at the back."""
-    rnd = random.Random(91)
-    bricks = [C('mbrick%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#b0624a', '#a35a43', '#bd7056', '#97513e'))]
-    mortar = C('mmortar', '#d6c8b0', rough=0.95); white = C('trimw', DX_PAL['trim'], rough=0.6); blue = C('millblue', DX_PAL['door'], rough=0.55, var=0.04)
-    tile, tiled = C('pantile', '#c0603f', rough=0.7, var=0.1), C('pantiled', '#a14b31', rough=0.7); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
-    cx = (x0 + x1) / 2; hw = (x1 - x0) / 2
-    objs.append(box('mhcore', (x1 - x0, y1 - y0, eave), (cx, (y0 + y1) / 2, eave / 2), m=mortar, bevel=0.0))
-    steps = [(hw, eave), (hw * 0.72, eave + (peak - eave) * 0.34), (hw * 0.44, eave + (peak - eave) * 0.68), (hw * 0.18, peak)]   # (half width, top) of each step
-    for k in range(1, len(steps)):                   # the gable's core, stepped
-        w_, zt = steps[k][0], steps[k][1]; zb_ = steps[k - 1][1]
-        objs.append(box('mhgcore', (2 * steps[k - 1][0] * 0.98 if k == 1 else 2 * steps[k - 1][0], 0.06, zt - zb_), (cx, y0 + 0.03, (zb_ + zt) / 2), m=mortar, bevel=0.0))
-    def gtop(u):                                     # the gable's top at u across it
-        for (w_, z_) in reversed(steps):
-            if abs(u) <= w_: return z_
-        return 0.0
-    for face in ('front', 'side'):                   # brick courses: its front up its stepped gable, its outer side
-        z = 0.0; row = 0
-        while z < peak:
-            h = 0.075; u = -hw - (0.05 if row % 2 else 0.0) if face == 'front' else y0 - (0.05 if row % 2 else 0.0)
-            end = hw if face == 'front' else y1
-            while u < end:
-                w_ = rnd.uniform(0.15, 0.2); u1 = min(end, u + w_); um = (u + max(u, -hw if face == 'front' else y0) + u1) / 2 if False else (max(u, -hw if face == 'front' else y0) + u1) / 2
-                top = gtop(um) if face == 'front' else eave
-                win = face == 'front' and abs(um) < 0.15 and 0.24 < z + h / 2 < 0.52
-                if u1 - max(u, -hw if face == 'front' else y0) > 0.05 and z + h / 2 < top and not win:
-                    L_ = u1 - max(u, -hw if face == 'front' else y0) - 0.01
-                    if face == 'front': o = box('mhbrick', (L_, 0.03, h - 0.01), (cx + um, y0 - 0.012, z + h / 2), m=rnd.choice(bricks), bevel=0.006, segs=1, jitter=0.002)
-                    else: o = box('mhbrick', (0.03, L_, h - 0.01), (x0 - 0.012, um, z + h / 2), m=rnd.choice(bricks), bevel=0.006, segs=1, jitter=0.002)
-                    objs.append(o)
-                u = u1
-            z += h; row += 1
-    for k, (w_, z_) in enumerate(steps):              # white copings on each step
-        for sx in (-1, 1) if k < len(steps) - 1 else (0,):
-            ux = cx + sx * (w_ + steps[k + 1][0]) / 2 if k < len(steps) - 1 else cx
-            ww = (w_ - steps[k + 1][0]) + 0.05 if k < len(steps) - 1 else 2 * w_ + 0.05
-            objs.append(box('mhcoping', (ww, 0.09, 0.035), (ux, y0 + 0.01, z_ + 0.017), m=white, bevel=0.006, segs=1))
-    objs.append(sphere('mhfinial', 0.03, (cx, y0 + 0.01, peak + 0.06), m=C('millgold', DX_PAL['knob'], rough=0.3, metal=0.9), seg=10, rings=6))
-    # the roof: two slopes of red pantiles from the side walls up to a ridge along it, behind the gable
-    for sx in (-1, 1):
-        e = Vector((cx + sx * (hw + 0.06), 0, eave - 0.03)); rdg = Vector((cx, 0, peak - 0.06)); nrm = Vector((sx * (peak - eave), 0, hw + 0.06)).normalized()
-        dn = (e - rdg)
-        for k in range(5):
-            q = rdg + dn * ((k + 0.5) / 5) + nrm * (0.02 + 0.006 * (k % 2))
-            objs.append(plank('pantile', (q.x, y0 + 0.05, q.z), (q.x, y1 + 0.08, q.z), dn.length / 5 * 1.25, 0.03, nrm, tile if k % 2 else tiled, jitter=0.6, bevel=0.006))
-    objs.append(cyl('mhridge', 0.035, y1 - y0 + 0.02, (cx, (y0 + y1) / 2 + 0.05, peak - 0.03), (math.radians(90), 0, 0), m=tiled, verts=10, bevel=0.0))
-    objs.append(box('mhchim', (0.13, 0.13, 0.36), (cx - 0.15, y1 - 0.12, peak - 0.02), m=bricks[3], bevel=0.008, segs=1))
-    objs.append(box('mhchimcap', (0.16, 0.16, 0.03), (cx - 0.15, y1 - 0.12, peak + 0.17), m=white, bevel=0.006, segs=1))
-    # its window with blue shutters and a box of tulips, a round window up in the gable
-    window(objs, cx, y0 - 0.035, 0.38, 0.2, 0.24, white, glass)
-    for sx in (-1, 1):
-        objs.append(box('mhshutter', (0.1, 0.018, 0.25), (cx + sx * 0.16, y0 - 0.04, 0.38), m=blue, bevel=0.003, segs=1))
-        objs.append(box('mhshutstripe', (0.105, 0.02, 0.03), (cx + sx * 0.16, y0 - 0.042, 0.38), (0, sx * 0.9, 0), m=white, bevel=0.0))
-    objs.append(box('flowerbox', (0.28, 0.08, 0.07), (cx, y0 - 0.08, 0.22), m=blue, bevel=0.008, segs=1))
-    for k in range(6):
-        _tulip(objs, cx - 0.11 + k * 0.044, y0 - 0.08, k % 5, h=0.09, seed=600 + k)
-    for o in objs[-30:]:
-        if o.name.startswith(('tstem', 'tleaf', 'tulip')) and o.location.z < 0.2: o.location.z += 0.25
-    objs.append(cyl('mhround', 0.06, 0.02, (cx, y0 - 0.025, eave + (peak - eave) * 0.42), (math.radians(90), 0, 0), m=glass, verts=16, bevel=0.0))
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.065, minor_radius=0.014, major_segments=20, minor_segments=6, location=(cx, y0 - 0.035, eave + (peak - eave) * 0.42), rotation=(math.radians(90), 0, 0))
-    t_ = bpy.context.object; setmat(t_, white); objs.append(t_)
-    for (bx, by, rr) in ((cx, y0 + 0.2, 0.36), (cx, y1 - 0.12, 0.36)): BLOCKS.setdefault(name, []).append([round(bx, 3), round(-by, 3), rr])
-
-
 DX_MILL = dict(z1=2.12, r1=0.31, hub=2.29, hub_y=-0.6, sail=1.0, win=1.5, swin=1.4)
 
 
@@ -4392,9 +4327,8 @@ def deluxe_pol():
         a = k / 6 * math.tau
         d = Vector((0, math.cos(a), math.sin(a)))
         objs.append(plank('fanblade', Vector((0, fy_, fz_)) + d * 0.03, Vector((0, fy_, fz_)) + d * 0.2, 0.06, 0.008, (0.6, 0, 0), white, jitter=0.0, bevel=0.002))
-    miller_house(objs, 'deluxe_pol')
     _own(objs, r)
-    _mill_bits(r, 'deluxe_pol', 4, tower=DX_MILL, beds=((7, 0.15, 0.85), (2, 0.2, 0.8)), box_c=DX_PAL['door'])
+    _mill_bits(r, 'deluxe_pol', 4, tower=DX_MILL, box_c=DX_PAL['door'])
     r.name = 'deluxe_pol'
     return r
 
