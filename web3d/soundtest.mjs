@@ -99,11 +99,12 @@ const farm = () => p.evaluate(() => window.__farm.sound().info().farm);
 const KINDS = ['egg_rebel', 'egg_glutton', 'egg_mum', 'egg_brave', 'egg_diva', 'crow', 'flurry', 'mum', 'chicks', 'quack', 'bark'];
 let F = await until(async () => { const f = await farm(); return Object.keys(f.beds).length === 5 && KINDS.every(k => f.groups[k]) ? f : null; }, 45000);
 ok('the farm\'s sounds all loaded (eleven kinds, five beds)', !!F, F || await farm());
-for (const [h, bed, name] of [[11, 'day', 'by day'], [7, 'dawn', 'at dawn'], [20, 'evening', 'of an evening'], [23.2, 'night', 'at night']]) {
+const bedAt = async (h, bed, name) => {
   await p.evaluate(h => window.__farm.setHour(h), h);
   F = await until(async () => { const f = await farm(); return f.beds[bed] > 0.2 && Object.entries(f.beds).every(([k, v]) => k === bed || k === 'pond' || v < 0.03) ? f : null; }, 25000);
   ok(name + ': its own bed, the others silent', !!F, F ? F.beds : (await farm()).beds);
-}
+};
+for (const [h, bed, name] of [[11, 'day', 'by day'], [7, 'dawn', 'at dawn'], [20, 'evening', 'of an evening']]) await bedAt(h, bed, name);      // (the night's at the end: the birds go to bed)
 await p.evaluate(() => window.__farm.setHour(11));
 await p.evaluate(() => { const f = window.__farm, c = f.plan().pond.center; f.lookAt(c[0], c[2], 2.6); });
 F = await until(async () => { const f = await farm(); return f.beds.pond > 0.3 ? f : null; }, 20000);
@@ -168,6 +169,8 @@ await p.evaluate(() => { const k = 'ff3d.farm', raw = JSON.parse(localStorage.ge
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 ok('a save with the music and the sounds typed in wrong: checked (both on)', await p.evaluate(() => { const g = window.__farm.game(); return g.data.music === undefined && g.data.sounds === undefined && g.musicOn() && g.soundsOn(); }));
+await p.evaluate(() => window.__farm.gameUI().close()); await p.tap('#farm', { position: { x: W / 2, y: H * 0.6 } }).catch(() => p.mouse.click(W / 2, H * 0.6));
+await until(async () => Object.keys((await farm()).beds).length === 5, 45000); await bedAt(23.2, 'night', 'at night');
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
