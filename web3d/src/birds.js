@@ -28,8 +28,8 @@ const ADULT = {
   // beetle-green and purple sheen (sheen: its body and wings catch it too, not only the long feathers)
   pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#201f25', prim: '#17161b', tail: '#121115' },
   pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
-  aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#2f8f78', sheen2: '#3e5fae' },
-  aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#2f8f78', sheen2: '#3e5fae' },
+  aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
+  aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
 };
 const SIL = {
   white: { body: '#f5f2eb' },
@@ -110,10 +110,10 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
   FEAT.mode = 4; FEAT.amt = lum > 0.5 ? 0.14 : 0.3; FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
   const n = noise(x * 60, y * 60, z * 60);
-  if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: beetle-green over its body and wings, purple in places)
-    FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.4 : 0.34;      // (6: a softer gloss than the long feathers')
+  if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: a blue-black sheen over its body and wings, not too green: Audrey, 29 Oct)
+    FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.32 : 0.27;      // (6: a softer gloss than the long feathers')
   } else if (key === 'tail' || key === 'saddle' || key === 'prim') {      // long glossy feathers: a sheen (green-black on dark tails, as in life)
-    FEAT.mode = 5; FEAT.c.copy(lum < 0.06 ? lin('#2f7d58') : lum < 0.35 ? lin('#ffcf7a') : lin('#ffffff')); FEAT.amt = lum < 0.06 ? 0.3 : lum < 0.35 ? 0.16 : 0.1;
+    FEAT.mode = 5; FEAT.c.copy(S.tailSheen ? lin(S.tailSheen) : lum < 0.06 ? lin('#2f7d58') : lum < 0.35 ? lin('#ffcf7a') : lin('#ffffff')); FEAT.amt = S.tailSheen ? 0.24 : lum < 0.06 ? 0.3 : lum < 0.35 ? 0.16 : 0.1;
     if (S.pattern === 'stripes' && key === 'saddle') out.lerp(lin(S.stripe), smooth(0.3, 0.8, Math.sin(Math.atan2(x, -z) * 22)) * 0.75);
   }
   switch (S.pattern) {

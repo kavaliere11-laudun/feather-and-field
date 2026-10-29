@@ -265,21 +265,21 @@ def serrated_comb(rooster, hd, cm):
     """A single comb as a blade with clear points along its top (an Ayam Cemani's, from Audrey's photos: a rooster's tall with
     five spikes and a leader behind, a hen's small and upright). Built as a thick outline over the top of the head (head
     space: the bird faces +x, the head a ball of radius 0.058)."""
-    s = 1.0 if rooster else 0.5
+    s = 1.0 if rooster else 0.5      # (a rooster's bigger: Audrey, 29 Oct 20:40 "Can the rooster comb be bigger please?")
     top = lambda x: math.sqrt(max(0.0, 0.058 ** 2 - x * x))
-    xs = [-0.024, -0.007, 0.01, 0.026, 0.04] if rooster else [-0.016, -0.004, 0.008, 0.02, 0.031]      # (from just behind the beak back over the head)
-    hs = [0.036, 0.048, 0.052, 0.045, 0.031] if rooster else [0.03, 0.038, 0.04, 0.035, 0.025]
-    out = [(-0.048 if rooster else -0.03, 0.012 if rooster else 0.006)]          # the leader at the back
+    xs = [-0.03, -0.01, 0.01, 0.029, 0.046] if rooster else [-0.016, -0.004, 0.008, 0.02, 0.031]      # (from just behind the beak back over the head)
+    hs = [0.05, 0.066, 0.072, 0.062, 0.044] if rooster else [0.03, 0.038, 0.04, 0.035, 0.025]
+    out = [(-0.058 if rooster else -0.03, 0.016 if rooster else 0.006)]          # the leader at the back
     for i, (x, h) in enumerate(zip(xs, hs)):
-        if i: out.append(((x + xs[i - 1]) / 2, 0.012 * s + 0.003))              # the valleys between the points
-        else: out.append((x - 0.01 * (0.6 + 0.4 * s), 0.013 * s + 0.002))
+        if i: out.append(((x + xs[i - 1]) / 2, 0.03 if rooster else 0.009))       # the valleys between the points (a rooster's a broad blade under them)
+        else: out.append((x - 0.01 * (0.6 + 0.4 * s), 0.028 if rooster else 0.008))
         out.append((x, h * s))
     out.append((xs[-1] + 0.012 * (0.6 + 0.4 * s), 0.008 * s + 0.002)); out.append((xs[-1] + 0.02 * (0.6 + 0.4 * s), 0.0))
     poly = [(x, top(x) + h) for x, h in out]
     for k in range(6):                                                           # the base, sunk into the head
         x = out[-1][0] + (out[0][0] - out[-1][0]) * k / 5
         poly.append((x, top(x) - 0.012))
-    t = 0.0075 if rooster else 0.0055
+    t = 0.0085 if rooster else 0.0055
     me = bpy.data.meshes.new('comb'); bm = bmesh.new()
     A = [bm.verts.new((x, t / 2, z)) for x, z in poly]; Bv = [bm.verts.new((x, -t / 2, z)) for x, z in poly]
     bm.faces.new(A); bm.faces.new(list(reversed(Bv)))
