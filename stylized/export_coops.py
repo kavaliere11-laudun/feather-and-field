@@ -158,6 +158,12 @@ assert coops.NESTS['house_pol'] == _keep, 'the looks must keep the Little Windmi
 one('sails_pol_t1', lambda: coops.mill_sails(name='sails_pol_t1', canvas=(), broken=(1, 3), lat_c='#d8b886', stock_c='#cba872', R=0.6, width=0.18))
 one('sails_pol_dx', lambda: coops.mill_sails(name='sails_pol_dx', stock_c='#9e3b2e', R=1.0, width=0.28)); LOOKS += ['sails_pol_t1', 'sails_pol_dx']
 BUDGET['sails_pol_cosy'] = 2800; one('sails_pol_cosy', lambda: coops.mill_sails(name='sails_pol_cosy', stripe='#c8283c')); LOOKS.append('sails_pol_cosy')     # (the Cosy's striped canvas)
+# the Javanese House's five looks (Rustic box_aya, Mended shed_aya, Snug house_aya, Cosy cosy_aya, Deluxe deluxe_aya) and its own gardens
+BUDGET.update({'box_aya': 16000, 'shed_aya': 18000, 'cosy_aya': 22000, 'deluxe_aya': 25000, 'pen_t0_aya': 4200, 'pen_t1_aya': 4600, 'pen_t3_aya': 9500, 'pen_t4_aya': 12000})
+_keep = dict(coops.NESTS['house_aya'])
+for n_, fn in (('box_aya', coops.box_aya), ('shed_aya', coops.shed_aya), ('cosy_aya', coops.cosy_aya), ('deluxe_aya', coops.deluxe_aya)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_aya'] == _keep, 'the looks must keep the Javanese House\'s nest'
+for t in (0, 1, 3, 4): one('pen_t%d_aya' % t, lambda t=t: coops.pen_tier(t, 'aya')); LOOKS.append('pen_t%d_aya' % t)
 for t in (0, 1, 3, 4): one('pen_t%d_pol' % t, lambda t=t: coops.pen_tier(t, 'pol')); LOOKS.append('pen_t%d_pol' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')

@@ -394,6 +394,22 @@ def canal(objs, x, y, m):
     objs.append(box('ccounter', (0.03, 0.34, 0.03), (x, y + W / 2 + 0.07 + 0.12, 0.45), m=white, bevel=0.005, segs=1))
 
 
+def padasan(objs, x, y, m):
+    """A padasan (the Deluxe Javanese house's water, release 7): a big clay jar on a stone stand behind a carved stone basin,
+    water trickling from a bamboo spout in its side down into the basin."""
+    clay = mat('fp_clay', '#b8643c', rough=0.75, var=0.04); stone = mat('fp_stone', '#77736b', rough=0.9, var=0.06)
+    bamboo = mat('fp_bamboo', '#c9b56e', rough=0.6); gold = mat('fp_gold', '#c9a24a', rough=0.35, metal=0.7)
+    jx, jy = x, y + 0.2
+    objs.append(box('pstand', (0.3, 0.3, 0.14), (jx, jy, 0.07), m=stone, bevel=0.012, segs=1))
+    objs.append(sphere('pjar', 0.15, (jx, jy, 0.3), (1, 1, 1.1), m=clay, seg=16, rings=10))
+    objs.append(cyl('pneck', 0.075, 0.08, (jx, jy, 0.47), m=clay, verts=14, r2=0.09, bevel=0.005))
+    objs.append(cyl('pband', 0.152, 0.02, (jx, jy, 0.33), m=gold, verts=16, bevel=0.0))
+    objs.append(cyl('pspout', 0.014, 0.16, (jx, jy - 0.2, 0.26), (math.radians(80), 0, 0), m=bamboo, verts=6, bevel=0.0))
+    objs.append(cyl('pbasin', 0.16, 0.08, (x, y - 0.08, 0.04), (0, 0, math.pi / 8), m=stone, verts=8, bevel=0.01))
+    objs.append(cyl('pwater', 0.135, 0.01, (x, y - 0.08, 0.078), m=m['water'], verts=16, bevel=0.0))
+    objs.append(cyl('ptrickle', 0.005, 0.15, (jx, jy - 0.28, 0.17), m=m['water'], verts=5, bevel=0.0))
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
@@ -531,6 +547,16 @@ def build_pen(root, m):
             objs.append(plank('fstock', hub + d * 0.01, hub + d * 0.15, 0.012, 0.01, (0, -1, 0), stock, jitter=0.0, bevel=0.0))
             c = hub + d * 0.095 + q * 0.025 + Vector((0, 0.004, 0))
             objs.append(plank('fsail', c - d * 0.05, c + d * 0.05, 0.04, 0.004, (0, -1, 0), sailw, jitter=0.0, bevel=0.0))
+    elif PEN.get('feeder_style') == 'joglo':                  # (the Deluxe Javanese house's: a tiny teak house under a black-and-gold roof, release 7)
+        teak = mat('fd_jteak', '#8a5a33', rough=0.8, var=0.06); black = mat('fd_jblack', '#2b2a2e', rough=0.45, spec=0.55, coat=0.4); gold = mat('fd_jgold', '#c9a24a', rough=0.35, metal=0.7)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 4), m=mat('fd_jstone', '#6b675f', rough=0.9), verts=4, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(box('fbody', (0.15, 0.13, 0.22), (fx, fy, 0.17), m=teak, bevel=0.006, segs=1))
+        objs.append(box('fwin', (0.07, 0.006, 0.08), (fx, fy - 0.066, 0.19), m=m['grain_'], bevel=0.0))
+        objs.append(box('fband', (0.16, 0.14, 0.018), (fx, fy, 0.27), m=gold, bevel=0.003, segs=1))
+        objs.append(cyl('froof', 0.17, 0.08, (fx, fy, 0.32), (0, 0, math.pi / 4), m=black, verts=4, r2=0.07, bevel=0.004))
+        objs.append(cyl('froof2', 0.075, 0.12, (fx, fy, 0.42), (0, 0, math.pi / 4), m=black, verts=4, r2=0.0, bevel=0.0))
+        objs.append(sphere('fball', 0.02, (fx, fy, 0.49), m=gold, seg=8, rings=5))
     elif PEN.get('feeder_style') == 'deluxe':
         cu = mat('fd_cu', '#5c9a86', rough=0.42, spec=0.45, metal=0.25, var=0.06); cu2 = mat('fd_cu2', '#77b29e', rough=0.42, spec=0.45, metal=0.25, var=0.06)
         cream = mat('fd_cream', '#f1e9d8', rough=0.6, var=0.04, grain=0.12, grain_scale=(1.5, 26, 26)); gold = mat('fd_gold', '#d4a640', rough=0.3, metal=0.9)
@@ -562,6 +588,7 @@ def build_pen(root, m):
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
     elif PEN.get('water') == 'flume': log_flume(objs, wx, wy, m)
     elif PEN.get('water') == 'canal': canal(objs, wx, wy, m)
+    elif PEN.get('water') == 'padasan': padasan(objs, wx, wy, m)
     else:
       bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
       rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)
