@@ -10,8 +10,12 @@
   "it": "29 ottobre 2026"
  },
  "where": {
-  "en": "TODO-where",
-  "fr": "TODO-where"
+  "en": "in London, in the UK",
+  "fr": "à Londres, au Royaume-Uni",
+  "de": "in London im Vereinigten Königreich",
+  "es": "en Londres (Reino Unido)",
+  "pt": "em Londres, no Reino Unido",
+  "it": "a Londra, nel Regno Unito"
  },
  "authority": {
   "en": "the Information Commissioner’s Office (ICO, ico.org.uk), the UK’s data protection authority",
