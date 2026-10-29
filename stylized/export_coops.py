@@ -11,7 +11,7 @@ sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
 GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred', 'autoled'})       # the lanterns light up at night (the rustic coops' too)
-BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600,
+BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600, 'house_aya': 17000,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
 

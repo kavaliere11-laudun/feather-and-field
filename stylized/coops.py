@@ -665,6 +665,157 @@ def mill_sails(name='sails_pol', canvas=(0, 1, 2, 3), broken=(), stock_c='#6b402
     return finish(objs, name)
 
 
+# ------------------------------------------------------------------ the Javanese House (Ayam Cemani, release 7: Audrey, 29 Oct:
+# "A Javanese house (Recommended)"; the Ayam Cemani comes from Java): a joglo on a raised plinth of dark volcanic stone, its
+# walls of teak boards with a band of carving in gold along the top, carved double doors, a tall roof of terracotta tiles in
+# two tiers (a wide low skirt, then a steep crown over the middle) with curled ends on its ridge, teak posts on stone pads at
+# its front corners, a brass lantern hanging from the eave, a big terracotta water jar by its side.
+JOGLO = dict(FL=0.24, WX=0.42, eave=0.96, brk=1.2, peak=1.9, over=0.2, front=0.1)      # (a short overhang in front: from the game's camera a deep one hid the doors and the carving)
+JG = dict(teak='#8a5a33', teak2='#7a4c2a', teakd='#5e3a20', gold='#c9a24a', stone=('#77736b', '#6b675f', '#837e74'), tile='#b5502e',
+          tile2='#a3462a', ridge='#8f3c24', jar='#b8643c', inside='#2e2018', brass='#b88a3a')
+
+
+def _jg(key, i=None, rough=0.8, **kw):
+    v = JG[key] if i is None else JG[key][i]
+    return C('jg_' + key + ('' if i is None else str(i)), v, rough=rough, **kw)
+
+
+def tile_rows(objs, a0, a1, b0, b1, rows, m, m2, width=0.07, lift=0.012):
+    """Rows of tiles over a roof face whose lower edge runs a0..a1 and upper edge b0..b1 (each row a plank along the face)."""
+    for k in range(rows):
+        t = (k + 0.4) / rows
+        a, b = a0.lerp(b0, t), a1.lerp(b1, t)
+        if (b - a).length < 0.03: continue
+        up = (b0.lerp(b1, 0.5) - a0.lerp(a1, 0.5)).normalized(); along = (b - a).normalized(); nrm = along.cross(up)
+        if nrm.z < 0: nrm = -nrm
+        objs.append(plank('sh', a + nrm * lift - along * 0.008, b + nrm * lift + along * 0.008, width, 0.016, nrm, m if k % 2 else m2, jitter=0.6, bevel=0.003))
+
+
+def hip_tier(objs, name, outer, z0, inner, z1, m, m2, rows, hip=None, spacing=0.075):
+    """One tier of a hipped roof of clay tiles: from a rectangle's outline at z0 up to a smaller one (or a ridge) at z1; the
+    tiles' ribs running down each face, the courses across it, a rounded cap down each hip."""
+    objs.append(ring_mesh(name, outer, z0, inner, z1, m))
+    for i in range(4):
+        a0, a1 = Vector((*outer[i], z0)), Vector((*outer[(i + 1) % 4], z0)); b0, b1 = Vector((*inner[i], z1)), Vector((*inner[(i + 1) % 4], z1))
+        up = (b0.lerp(b1, 0.5) - a0.lerp(a1, 0.5)).normalized(); along = (a1 - a0).normalized(); nrm = along.cross(up)
+        if nrm.z < 0: nrm = -nrm
+        L = (a1 - a0).length; n = max(2, int(L / spacing))
+        for k in range(1, n):                        # the ribs, down the slope
+            t = k / n; p, q = a0.lerp(a1, t), b0.lerp(b1, t)
+            if (q - p).length < 0.04: continue
+            objs.append(cyl('trib', 0.011, (q - p).length, (p + q) / 2 + nrm * 0.009, (q - p).normalized().to_track_quat('Z', 'Y').to_euler(), m=m2, verts=5, bevel=0.0))
+        for k in range(rows):                        # the courses, across it
+            t = (k + 0.6) / (rows + 0.2); p, q = a0.lerp(b0, t), a1.lerp(b1, t)
+            if (q - p).length < 0.04: continue
+            objs.append(plank('tcourse', p + nrm * 0.016, q + nrm * 0.016, 0.018, 0.012, nrm, m2, jitter=0.2, bevel=0.0))
+        objs.append(plank('tedge', a0 + nrm * 0.012 - up * 0.01, a1 + nrm * 0.012 - up * 0.01, 0.035, 0.022, nrm, m2, jitter=0.0, bevel=0.003))
+    for i in range(4):                               # the hips
+        p, q = Vector((*outer[i], z0)), Vector((*inner[i], z1))
+        objs.append(cyl('thip', 0.022, (q - p).length + 0.03, (p + q) / 2 + Vector((0, 0, 0.018)), (q - p).normalized().to_track_quat('Z', 'Y').to_euler(), m=hip or m2, verts=8, bevel=0.0))
+
+
+def joglo(seed=15, name='house_aya', J=None):
+    random.seed(seed); objs = []
+    J_ = dict(JOGLO, **(J or {})); FL, WX, EAVE, BRK, PEAK, OV, OF = J_['FL'], J_['WX'], J_['eave'], J_['brk'], J_['peak'], J_['over'], J_['front']
+    teak, teak2, teakd = _jg('teak', var=0.08, grain=0.35, grain_scale=G), _jg('teak2', var=0.08, grain=0.35, grain_scale=G), _jg('teakd', var=0.06, grain=0.3, grain_scale=G)
+    gold = _jg('gold', rough=0.35, metal=0.7); stones = [_jg('stone', i, rough=0.9, var=0.06) for i in range(3)]
+    tile, tile2, ridge = _jg('tile', rough=0.7, var=0.1), _jg('tile2', rough=0.7, var=0.08), _jg('ridge', rough=0.7)
+    glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    # the plinth of dark stone the house stands on, a step up to its doors
+    PX, PY = W2 + 0.06, D2 + 0.06
+    objs.append(box('plinthcore', (2 * PX - 0.02, 2 * PY - 0.02, FL - 0.01), (0, 0, (FL - 0.01) / 2), m=stones[1], bevel=0.0))
+    for (a, b, n) in (((-PX, -PY), (PX, -PY), (0, -1)), ((PX, -PY), (PX, PY), (1, 0)), ((-PX, PY), (-PX, -PY), (-1, 0))):
+        A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B - A).length; d = (B - A).normalized()
+        for row in range(2):
+            u = -0.06 if row % 2 else 0.0
+            while u < L:
+                w = min(random.uniform(0.18, 0.28), L - max(u, 0)); u0 = max(u, 0.0); u1 = min(L, u + w)
+                if u1 - u0 > 0.05:
+                    c = A + d * ((u0 + u1) / 2) + Vector((n[0], n[1], 0)) * 0.012
+                    objs.append(box('pstone', (u1 - u0 - 0.012 if n[1] else 0.03, 0.03 if n[1] else u1 - u0 - 0.012, FL / 2 - 0.012), (c.x, c.y, FL / 4 + row * FL / 2), m=random.choice(stones), bevel=0.008, segs=1, jitter=0.002))
+                u += w
+    objs.append(box('pstep', (0.34, 0.14, FL / 2), (0.03, -PY - 0.07, FL / 4), m=stones[2], bevel=0.01, segs=1))
+    # the walls: a dark core (the nest and passage cut from it) under teak boards running up, cut round the doors and window
+    core = box('core', (2 * W2 - 0.04, 2 * D2 - 0.04, EAVE - FL), (0, 0, (EAVE + FL) / 2), m=_jg('inside', rough=1.0), bevel=0.0); objs.append(core)
+    holes = [(-0.31 - POP_W / 2 - 0.02, -0.31 + POP_W / 2 + 0.02, FL + POP_H + 0.04), (-0.12, 0.18, FL + 0.6), (WX - WIN_W / 2 - 0.02, WX + WIN_W / 2 + 0.02, FL + 0.04 + WIN_H + 0.03)]
+    def boards(u0, u1, place, front=False):
+        n = max(2, round((u1 - u0) / 0.1)); w = (u1 - u0) / n
+        for k in range(n):
+            u = u0 + (k + 0.5) * w; z0 = FL
+            for (h0, h1, top) in (holes if front else ()):
+                if h0 - 0.01 < u < h1 + 0.01: z0 = top
+            if EAVE - 0.02 - z0 > 0.03: place(u, z0, w, random.choice((teak, teak, teak2)))
+    boards(-W2, W2, lambda u, z0, w, m: objs.append(plank('board', (u, -D2 - 0.012, z0), (u, -D2 - 0.012, EAVE - 0.02), w * 0.96, 0.024, (0, -1, 0), m, jitter=0.3)), front=True)
+    boards(-W2, W2, lambda u, z0, w, m: objs.append(plank('board', (u, D2 + 0.012, z0), (u, D2 + 0.012, EAVE - 0.02), w * 0.96, 0.024, (0, 1, 0), m, jitter=0.3)))
+    for sx in (-1, 1):
+        boards(-D2, D2, lambda u, z0, w, m, sx=sx: objs.append(plank('board', (sx * (W2 + 0.012), u, z0), (sx * (W2 + 0.012), u, EAVE - 0.02), w * 0.96, 0.024, (sx, 0, 0), m, jitter=0.3)))
+    # a band of carving in gold along the top of the front: a rail, little diamonds and leaves between
+    zc = EAVE - 0.1
+    objs.append(plank('carvrail', (-W2 - 0.02, -D2 - 0.035, zc - 0.06), (W2 + 0.02, -D2 - 0.035, zc - 0.06), 0.03, 0.02, (0, -1, 0), teakd, jitter=0.0))
+    objs.append(plank('carvrail', (-W2 - 0.02, -D2 - 0.035, zc + 0.06), (W2 + 0.02, -D2 - 0.035, zc + 0.06), 0.03, 0.02, (0, -1, 0), teakd, jitter=0.0))
+    for k in range(12):
+        x = -W2 + 0.06 + k * (2 * W2 - 0.12) / 11
+        objs.append(box('carving', (0.05, 0.012, 0.05), (x, -D2 - 0.04, zc), (0, math.radians(45), 0), m=gold, bevel=0.004, segs=1))
+        if k < 11: objs.append(sphere('carvleaf', 0.022, (x + (2 * W2 - 0.12) / 22, -D2 - 0.038, zc), (1.4, 0.3, 0.6), m=teakd, seg=8, rings=5))
+    # carved double doors of dark teak, a gold boss on each, a frame round them
+    for sx in (-1, 1):
+        cx = 0.03 + sx * 0.075
+        objs.append(box('jdoor', (0.145, 0.03, 0.58), (cx, -D2 - 0.02, FL + 0.29), m=teakd, bevel=0.006, segs=1))
+        for zz in (FL + 0.17, FL + 0.42):
+            objs.append(box('jpanel', (0.1, 0.012, 0.16), (cx, -D2 - 0.04, zz), m=teak, bevel=0.004, segs=1))
+            objs.append(box('jcarve', (0.035, 0.008, 0.035), (cx, -D2 - 0.048, zz), (0, math.radians(45), 0), m=gold, bevel=0.002, segs=1))
+        objs.append(sphere('jboss', 0.012, (0.03 + sx * 0.02, -D2 - 0.045, FL + 0.3), m=gold, seg=8, rings=5))
+    for (a, b) in (((-0.135, FL), (-0.135, FL + 0.62)), ((0.195, FL), (0.195, FL + 0.62)), ((-0.16, FL + 0.62), (0.22, FL + 0.62))):
+        objs.append(plank('jframe', (a[0], -D2 - 0.03, a[1]), (b[0], -D2 - 0.03, b[1]), 0.045, 0.03, (0, -1, 0), teak2, jitter=0.1))
+    # the roof: a wide low skirt of tiles from the eaves, then the steep crown over the middle up to a short ridge
+    outer = [(-W2 - OV, -D2 - OF), (W2 + OV, -D2 - OF), (W2 + OV, D2 + OV), (-W2 - OV, D2 + OV)]
+    mid = [(-0.44, -0.28), (0.44, -0.28), (0.44, 0.32), (-0.44, 0.32)]
+    hip_tier(objs, 'skirtroof', outer, EAVE, mid, BRK, tile, tile2, 4, hip=ridge)
+    objs.append(box('roofbreak', (0.9, 0.62, 0.05), (0, 0.02, BRK - 0.01), m=teakd, bevel=0.006, segs=1))       # (a beam round the break)
+    mid2 = [(-0.42, -0.26), (0.42, -0.26), (0.42, 0.3), (-0.42, 0.3)]; top = [(-0.17, 0.02), (0.17, 0.02), (0.17, 0.02), (-0.17, 0.02)]
+    hip_tier(objs, 'crownroof', mid2, BRK + 0.02, top, PEAK, tile, tile2, 8, hip=ridge)
+    objs.append(cyl('jridge', 0.035, 0.42, (0, 0.02, PEAK + 0.02), (0, math.radians(90), 0), m=ridge, verts=10, bevel=0.0))
+    for sx in (-1, 1):                               # its ends curled up, a gold tip on each
+        p0 = Vector((sx * 0.2, 0.02, PEAK + 0.02)); p1 = Vector((sx * 0.3, 0.02, PEAK + 0.13))
+        objs.append(cyl('jcurl', 0.03, (p1 - p0).length + 0.02, (p0 + p1) / 2, (p1 - p0).normalized().to_track_quat('Z', 'Y').to_euler(), m=ridge, verts=8, r2=0.018, bevel=0.0))
+        objs.append(sphere('jtip', 0.022, tuple(p1 + Vector((sx * 0.01, 0, 0.012))), m=gold, seg=8, rings=5))
+    objs.append(cyl('jmustaka', 0.03, 0.08, (0, 0.02, PEAK + 0.09), m=gold, verts=8, r2=0.008, bevel=0.0))
+    for (a, b) in ((outer[0], outer[1]), (outer[1], outer[2]), (outer[3], outer[0])):     # a fascia board along the eaves
+        objs.append(plank('fascia', (a[0], a[1], EAVE - 0.03), (b[0], b[1], EAVE - 0.03), 0.06, 0.025, (b[1] - a[1], -(b[0] - a[0]), 0), teakd, jitter=0.1))
+    # teak posts on stone pads at the front corners, under the eaves
+    for sx in (-1, 1):
+        x, y = sx * (W2 + OV - 0.06), -D2 - OF + 0.03
+        objs.append(cyl('umpak', 0.06, 0.07, (x, y, 0.035), m=stones[0], verts=8, r2=0.045, bevel=0.006))
+        objs.append(cyl('soko', 0.032, EAVE - 0.08, (x, y, 0.07 + (EAVE - 0.08) / 2), m=teak2, verts=8, bevel=0.0))
+        objs.append(box('sokocap', (0.08, 0.08, 0.03), (x, y, EAVE - 0.01), m=teakd, bevel=0.004, segs=1))
+        block('aya', x, y, 0.08)
+    # the nest window (a carved shutter let down), the hens' door and ramp, side windows with carved grilles
+    nest_window(objs, 'aya', FL, WX, teak2, solids=[core], door='drop', door_m=teakd)
+    pop_door(objs, FL, teak2, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 16, 0.0)
+    for sx in (-1, 1):
+        x = sx * (W2 + 0.03)
+        window(objs, x, 0.0, FL + 0.32, 0.2, 0.2, teakd, glass, normal=(sx, 0, 0), cross=False)
+        for k in range(3):
+            objs.append(box('grille', (0.01, 0.012, 0.2), (x + sx * 0.012, -0.07 + k * 0.07, FL + 0.32), m=teakd, bevel=0.0))
+    # a brass lantern hanging from the eave at the front left, a big terracotta water jar by its right side with a dipper
+    brass = _jg('brass', rough=0.35, metal=0.8); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    lx, ly, lz = -0.62, -D2 - 0.17, 0.6
+    objs.append(cyl('lchain', 0.004, EAVE - 0.04 - lz - 0.06, (lx, ly, (EAVE - 0.04 + lz + 0.06) / 2), m=iron, verts=5, bevel=0.0))
+    objs.append(cyl('lanternb', 0.045, 0.1, (lx, ly, lz), m=brass, verts=6, r2=0.035, bevel=0.004))
+    objs.append(cyl('lanterng', 0.038, 0.07, (lx, ly, lz), m=lamp, verts=6, bevel=0.0))
+    objs.append(cyl('lroof', 0.055, 0.05, (lx, ly, lz + 0.07), m=brass, verts=6, r2=0.0, bevel=0.0))
+    light_at(name, lx, ly, lz)
+    jar = _jg('jar', rough=0.75, var=0.04); jx, jy = W2 + 0.2, -0.12
+    objs.append(sphere('gentong', 0.14, (jx, jy, 0.14), (1, 1, 1.05), m=jar, seg=16, rings=10))
+    objs.append(cyl('gentlip', 0.095, 0.04, (jx, jy, 0.285), m=jar, verts=16, bevel=0.006))
+    objs.append(cyl('gentlid', 0.1, 0.02, (jx, jy, 0.31), m=teakd, verts=16, bevel=0.004))
+    objs.append(sphere('dipper', 0.045, (jx + 0.02, jy - 0.02, 0.33), (1, 1, 0.5), m=C('coconut', '#5b3f28', rough=0.8), seg=10, rings=6))
+    objs.append(cyl('dipperh', 0.007, 0.14, (jx + 0.08, jy - 0.06, 0.34), (0, math.radians(80), math.radians(-30)), m=teak2, verts=6, bevel=0.0))
+    block('aya', jx, jy, 0.18)
+    return finish(objs, name)
+
+
 # ------------------------------------------------------------------ the pen, shared by every style
 def pen_base():
     """The dirt yard with its feeder, water dish, hay bale, feed sack, pebbles and straw (coop.build_pen, without the fence)."""
@@ -804,8 +955,8 @@ def red_barn(**kw):
     return r
 
 
-HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill}
-LATER = ['pol']                                   # (release 7's coops: exported after the rest)
+HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo}
+LATER = ['pol', 'aya']                                   # (release 7's coops: exported after the rest)
 
 
 def pop_slider(style):
@@ -818,7 +969,8 @@ def pop_slider(style):
                'leg': (C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
                'bra': (C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G), C('lodgetrim', '#e8dcc0', rough=0.7)),
                'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None),
-               'pol': (C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6))}[style]
+               'pol': (C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
+               'aya': (C('jg_teakd', '#5e3a20', rough=0.8, var=0.06, grain=0.3, grain_scale=G), C('jg_gold', '#c9a24a', rough=0.35, metal=0.7))}[style]
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))
