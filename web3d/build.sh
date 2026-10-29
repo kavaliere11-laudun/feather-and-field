@@ -9,7 +9,7 @@ BUST="$(date +%s)"                 # each version asks for its own files (a phon
 node_modules/.bin/esbuild src/main.js --bundle --minify --format=iife --target=es2019,safari14 --outfile=dist/app.js --log-level=warning --define:__BUILD__="\"$STAMP\"" --define:__BUST__="\"$BUST\""
 sed "s/src=\"app.js\"/src=\"app.js?v=$BUST\"/" index.html > dist/index.html
 # My account's online side (release 7: src/cloud.js, Firebase), its own file, loaded only when it's needed (account.js)
-if [ -d node_modules/firebase ]; then node_modules/.bin/esbuild src/cloud.js --bundle --minify --format=iife --target=es2019,safari14 --outfile=dist/cloud.js --log-level=warning
+if [ -d node_modules/firebase ]; then node_modules/.bin/esbuild src/cloud.js --bundle --minify --format=iife --target=es2020,safari15 --outfile=dist/cloud.js --log-level=warning
 else echo "(no Firebase package here: dist/cloud.js not built; npm install firebase)"; fi
 # the game (release 1 of the new game play): the same page and code, as the game rather than the test village
 sed -e "s/src=\"app.js\"/src=\"app.js?v=$BUST\"/" -e "s/<body>/<body class=\"game\">/" -e "s/<title>[^<]*<\/title>/<title>Feather \&amp; Field<\/title>/" -e "s/Loading the village…/Loading your farm…/" -e "s|<link rel=\"apple-touch-icon\" href=\"icon-180.png\">|&\n<link rel=\"manifest\" href=\"play.webmanifest\">|" index.html > dist/play.html

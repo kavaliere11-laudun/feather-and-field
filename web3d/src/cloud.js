@@ -4,10 +4,11 @@
 // its own copy on the phone).
 // The rules that keep each farm its owner's own are in web3d/firestore.rules (rulestest.mjs tries them on the emulator).
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, signOut, deleteUser, onAuthStateChanged, connectAuthEmulator } from 'firebase/auth';
+import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithCredential, reauthenticateWithCredential, signOut, deleteUser, onAuthStateChanged, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, getDoc, runTransaction, deleteDoc, serverTimestamp, connectFirestoreEmulator } from 'firebase/firestore/lite';
 
 function make(config, emu) {
+  if (emu) config = { ...config, projectId: 'demo-feather-and-field' };      // (the emulators: a pretend project, nothing reaches the real one)
   const app = initializeApp(config);
   // (the popup's helper set up at once: on an iPhone, Google's window must open straight from the tap)
   const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence], popupRedirectResolver: browserPopupRedirectResolver });
@@ -16,9 +17,11 @@ function make(config, emu) {
   const google = new GoogleAuthProvider(); google.setCustomParameters({ prompt: 'select_account' });
   const userOf = u => (u ? { uid: u.uid, name: u.displayName || '', email: u.email || '' } : null);
   const ref = () => doc(db, 'farms', auth.currentUser.uid);
+  // (the emulators' tests: a pretend Google account handed straight to the emulator, in place of Google's window)
+  const emuCred = () => (emu && window.__emuGoogle ? GoogleAuthProvider.credential(JSON.stringify(window.__emuGoogle)) : null);
   return {
     onUser(f) { onAuthStateChanged(auth, u => f(userOf(u))); },
-    async signIn() { const r = await signInWithPopup(auth, google); return userOf(r.user); },
+    async signIn() { const c = emuCred(), r = c ? await signInWithCredential(auth, c) : await signInWithPopup(auth, google); return userOf(r.user); },
     signOut: () => signOut(auth),
     async get() {
       const s = await getDoc(ref()); if (!s.exists()) return null;
@@ -36,7 +39,7 @@ function make(config, emu) {
       });
     },
     // the account deleted: Google asks who it is again first, then the farm online, then the account
-    async drop() { const u = auth.currentUser; await reauthenticateWithPopup(u, google); await deleteDoc(ref()); await deleteUser(u); },
+    async drop() { const u = auth.currentUser, c = emuCred(); await (c ? reauthenticateWithCredential(u, c) : reauthenticateWithPopup(u, google)); await deleteDoc(ref()); await deleteUser(u); },
   };
 }
 window.FFCloud = { make };

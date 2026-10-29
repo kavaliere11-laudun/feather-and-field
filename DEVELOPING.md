@@ -157,7 +157,13 @@ Optional, in Settings: sign in with Google and the farm is kept online too (Audr
   `farms/<uid>`, readable and writable only by them; its fields checked; its number one more each time; a save at most
   every 2 seconds; nothing else in the database open to anyone.
 - Tests: `accounttest.mjs` (the whole flow over four pretend phones, with the pretend account); `rulestest.mjs` (the
-  rules, on the Firestore emulator: `java -jar cloud-firestore-emulator-*.jar --host=127.0.0.1 --port=8080`).
+  rules on the Firestore emulator) and `emutest.mjs` (the real Firebase code, `?emu=127.0.0.1`, against the Auth and
+  Firestore emulators with the real rules: two phones, sign-in, the farm brought to a new phone, delete). The emulators:
+  `npm install firebase-tools@14` somewhere outside the repo (e.g. `../vendor/fbtools`), then in `web3d/`
+  `firebase emulators:start --only auth,firestore --project demo-feather-and-field` (`firebase.json`: ports 9099 and
+  8080; needs Java). Through the workspace's proxy npm needs `npm_config_noproxy=localhost`.
+- Trying it before it's on for everyone: `?account=1` on the game's address turns My account on for that browser (kept),
+  `?account=0` off; `ACCOUNT_LIVE` in `firebase-config.js` turns it on for all.
 
 ## Security (Audrey's standing request: "take security of the game into account")
 
