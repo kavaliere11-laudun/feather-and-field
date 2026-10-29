@@ -51,7 +51,7 @@ const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
-const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn() }) : null;
+const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard() }) : null;
 const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 // (the game: the geese and the dog once bought, release 3)
@@ -418,7 +418,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -3306,6 +3306,21 @@ function holdBird(b) {                       // a bird whose card is open stays 
 // at once (happy for 6 hours, trust and a little experience); the farmer comes into the pen, crouches and strokes her,
 // hearts floating up (by day, out and about: at night "Cuddles in the morning"). A new trust level or star: a word.
 // Trusting birds come to the front fence to greet the farmer when he stops to look at their coop.
+// the hens chatting (sound.js): the coop nearest the middle of the view with birds up, how near (louder as the view comes
+// close, softer zoomed out) and its side of the screen
+const _hv = new THREE.Vector3();
+function henHeard() {
+  let best = null;
+  for (const p of plots) {
+    if (p.kind !== 'coop' || !p.birds.some(b => !b.asleep && b.root.visible)) continue;
+    p.frame.getWorldPosition(_hv);
+    const d = Math.hypot(_hv.x - view.target.x, _hv.z - view.target.z), R = view.size * 1.3 + 1.5, z = Math.min(1, Math.max(0, (7.5 - view.size) / 5.5));
+    const near = Math.pow(Math.max(0, 1 - d / R), 1.4) * (0.3 + 0.7 * z * z * (3 - 2 * z));
+    if (best && near <= best.near) continue;
+    _hv.project(camera); best = { near, pan: Math.max(-0.7, Math.min(0.7, _hv.x * 0.7)) };
+  }
+  return best;
+}
 function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 || DAY.hour < 6.3; }
 // ---- worms from the chickens (Audrey, 28 Oct; game.js askWorms): "Ask for worms" on a bird's card: her worms for the day
 // at once (Friendly 1, Trusting 2, Best friend 3), into the bag; the farmer comes into the pen and crouches with his hand out,
@@ -6406,7 +6421,7 @@ window.__farm = {
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
-  sound: () => sound,                                       // (the music: sound.info(), and tests may set its times)
+  sound: () => sound, henHeard: () => henHeard(),            // (the music and the hens: sound.info(), and tests may set its times)
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },
   wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; }, water: (t) => { WATER_T.value = t; },

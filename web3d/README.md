@@ -2850,3 +2850,25 @@ the birds already had.
   tests' own browser hears nothing unless it asks (`?sound`).
 - **Next** (Audrey's recordings): her own hens for the everyday chatting. The voices are taken out of her videos, and
   37 short clucks are kept and cleaned. Then the rest of the farm's sounds from the free recordings she picks.
+
+## Release 7, step 3: Audrey's own hens chatting (29 Oct 2026; Audrey, on her three videos: "Try these but you will need to remove the human voice"; on the first try, "Her clucks sound a bit cut/edited"; on take 2: "The version 2 is good. The background noises are natural")
+
+- **Her own hens** (her three videos of her Silkies and a barred hen): only the sound, every voice taken out. The
+  voice was found with a voice detector (Silero VAD, run with onnxruntime) and by leaving out every long sound (words
+  are longer than a cluck), each with a margin round it. A bump of the phone was left out too. The first try was 37
+  single clucks shuffled into a new scene, each cut tight, cleaned to dead silence and set to the same volume, and it
+  sounded edited. Take 2, the one she liked, keeps her real moments whole and in the order they happened: seven
+  voice-free stretches of 1 to 14 seconds, gently cleaned (some of the garden's air, birds and insects left in, the
+  rumble cut), soft fades. `audio/hens/hen1-7.mp3`, mono, 376 KB in all. The work files (her videos, the scripts
+  `passages.py` and `make_clucks.py`) stay out of the public repository, because her voice is in the videos.
+- **In the game** (`sound.js` `tickHens`, `main.js` `henHeard`): one of her moments after another, with little pauses
+  (1½ to 6 s), never the same one twice running. They come from the coop nearest the middle of the view whose birds
+  are up: louder as the view comes close, softer zoomed out (and almost nothing far away), from its side of the screen.
+  None at night, with the birds in bed.
+- **Settings**: Sounds, On / Off (Sons, Oui / Non), beside Music; off, the hens stop and the music carries on. It's
+  kept in the farm (`data.sounds: false`, checked like the music). The note: "The music comes now and then, by day and
+  of an evening. With your phone on silent, the game is silent too."
+- **Tests**: `soundtest.mjs` now also checks her hens: close to the coop, clear; zoomed out and away, much softer; one
+  moment after another; none with the birds in bed; Sounds Off and On.
+- "Hens worried" (BigSoundBank) is for mummy hens, when a hen is broody or has chicks (Audrey: "that's the sound they
+  make to talk to their baby. Keep it for mummy hens"), once she sends it.

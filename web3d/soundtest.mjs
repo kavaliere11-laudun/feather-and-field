@@ -4,7 +4,9 @@
 // tracks. A track over: a few minutes of just the farm (2½ to 5), then the other track. Of an evening, softer; at night, it
 // fades away and no new track starts; morning: it comes back. Put away: quiet, the music paused; back: it carries on.
 // Settings: Music On / Off (Oui / Non in French), the note under it; Off: it fades away at once and stays off after a
-// reload; On: a track within seconds. A save with the music typed in wrong: checked (on). No page errors.
+// reload; On: a track within seconds. Her hens chatting (29 Oct): close to a coop, clear; zoomed out and away, much softer;
+// one real moment after another; the birds in bed, none. Sounds On / Off: off, the hens stop and the music carries on. A save
+// with the music or the sounds typed in wrong: checked (on). No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/soundtest', fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
@@ -18,12 +20,13 @@ const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name
 const info = () => p.evaluate(() => { const s = window.__farm && window.__farm.sound(); return s ? s.info() : null; });
 const wait = ms => p.waitForTimeout(ms);
 // how loud the game's own output is just now (an analyser on its master volume)
-const loud = () => p.evaluate(() => new Promise(res => {
+// (node: 'master' all of it, 'gain' the music alone, 'fx' the farm's sounds alone)
+const loud = (node = 'master') => p.evaluate(node => new Promise(res => {
   const s = window.__farm.sound(); if (!s.ctx) return res(0);
-  if (!s.an) { s.an = s.ctx.createAnalyser(); s.an.fftSize = 2048; s.master.connect(s.an); }
+  s.ans = s.ans || {}; if (!s.ans[node]) { const a = s.ctx.createAnalyser(); a.fftSize = 2048; s[node].connect(a); s.ans[node] = a; }
   const d = new Float32Array(2048); let m = 0, n = 0;
-  const go = () => { s.an.getFloatTimeDomainData(d); for (const v of d) m = Math.max(m, Math.abs(v)); if (++n < 8) setTimeout(go, 60); else res(+m.toFixed(4)); }; go();
-}));
+  const go = () => { s.ans[node].getFloatTimeDomainData(d); for (const v of d) m = Math.max(m, Math.abs(v)); if (++n < 8) setTimeout(go, 60); else res(+m.toFixed(4)); }; go();
+}), node);
 const until = async (f, ms, step = 250) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const r = await f(); if (r) return r; await wait(step); } return null; };
 // a new farm: the welcome's Play is the first tap
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -40,14 +43,14 @@ s = await until(async () => { const i = await info(); return i.state === 'playin
 ok('a few seconds later: one of the two tracks starts', !!s && /champ-de-tournesol|happy-whistling-ukulele/.test(s.track), s);
 const first = s && s.track;
 await wait(3500);
-s = await info(); let lv = await loud();
+s = await info(); let lv = await loud('gain');
 ok('fading in to its volume, and really sounding', s.gain > 0.3 && s.gain < 0.5 && lv > 0.02, { gain: s.gain, peak: lv });
 // to the end of the track: a few minutes of just the farm, then the other
 await p.evaluate(() => window.__farm.sound().el.dispatchEvent(new Event('ended')));      // (as if it had played to its end)
 s = await until(async () => { const i = await info(); return i.state === 'idle' ? i : null; }, 8000);
 ok('the track over: a quiet spell of 2½ to 5 minutes before the next', !!s && s.next >= 145 && s.next <= 300 && s.track !== first, s);
-await wait(1200); lv = await loud();
-ok('quiet meanwhile', lv < 0.002, lv);
+await wait(1200); lv = await loud('gain');
+ok('quiet meanwhile (the music)', lv < 0.002, lv);
 await p.evaluate(() => { const S = window.__farm.sound(); S.nextAt = S.now(); });
 s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused && i.at > 0.3 ? i : null; }, 25000);
 ok('then the other track', !!s && s.track !== first, s);
@@ -72,10 +75,27 @@ ok('put away: paused, the sound asleep', s.paused && s.ctx !== 'running', s);
 await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => false }); document.dispatchEvent(new Event('visibilitychange')); });
 await wait(1500); s = await info();
 ok('back: it carries on', !s.paused && s.ctx === 'running' && s.state === 'playing', s);
+// the hens chatting (Audrey's own, 29 Oct): from the coop near the middle of the view, while its birds are up
+const hen = () => p.evaluate(() => window.__farm.sound().info().hens);
+await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x, v.z, 2.6); });
+let h = await until(async () => { const i = await hen(); return i.loaded === 7 && i.playing && i.gain > 0.5 ? i : null; }, 30000);
+ok('close to the coop: her hens chatting, all seven moments loaded, near and clear', !!h && h.near > 0.6, h || await hen());
+lv = await until(async () => { const i = await hen(); if (!i.playing || i.gain < 0.5) return null; const l = await loud('fx'); return l > 0.005 ? l : null; }, 30000, 400);
+ok('really sounding', !!lv, lv);
+await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x + 6, v.z + 6, 8.5); });
+h = await until(async () => { const i = await hen(); return i.near < 0.2 ? i : null; }, 30000);
+ok('zoomed out and away: much softer', !!h && h.near < 0.2 && (!h.playing || h.gain < 0.35), h || await hen());
+await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x, v.z, 2.6); });
+const seen = new Set(); for (let i = 0; i < 40 && seen.size < 3; i++) { const x = await hen(); if (x.playing) seen.add(x.which); await wait(1000); }
+ok('one moment after another, not the same one again and again', seen.size >= 2, [...seen]);
+await p.evaluate(() => { window.__farm.pause(true); for (const c of window.__farm.coopPlots()) for (const b of c.birds) { b._was = b.asleep; b.asleep = true; } });      // (held still, so nobody wakes them)
+h = await until(async () => { const i = await hen(); return i.near === 0 && (!i.playing || i.gain < 0.02) ? i : null; }, 15000);
+ok('the birds in bed: no chatting', !!h, h || await hen());
+await p.evaluate(() => { for (const c of window.__farm.coopPlots()) for (const b of c.birds) b.asleep = !!b._was; window.__farm.pause(false); });
 // the settings: Music On / Off
 await p.evaluate(() => window.__farm.gameUI().settings()); await wait(700);
-const row = await p.evaluate(() => { const r = document.querySelector('.gmusic'); return r ? { label: r.querySelector('.glabel').textContent, chips: [...r.querySelectorAll('.gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), note: r.nextElementSibling.textContent } : null; });
-ok('Settings: the music row, On chosen', row && row.label === (fr ? 'Musique' : 'Music') && row.chips.join() === (fr ? 'Oui*,Non' : 'On*,Off') && /silen/.test(row.note), row);
+const row = await p.evaluate(() => { const r = document.querySelector('.gmusic'); return r ? { label: r.querySelector('.glabel').textContent, chips: [...r.querySelectorAll('.gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), note: document.querySelector('.gsound-note').textContent, sounds: [...document.querySelectorAll('.gsounds .gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')).join() } : null; });
+ok('Settings: the music row and the sounds row, both on', row && row.label === (fr ? 'Musique' : 'Music') && row.chips.join() === (fr ? 'Oui*,Non' : 'On*,Off') && row.sounds === row.chips.join() && /silen/.test(row.note), row);
 await p.screenshot({ path: `${OUT}/settings_${W}x${H}${fr ? '_fr' : ''}.png` });
 await p.tap('.gmusic .gchip:nth-child(2)');
 s = await until(async () => { const i = await info(); return i.state === 'idle' ? i : null; }, 10000) || await info();
@@ -96,11 +116,24 @@ await p.tap('.gmusic .gchip:nth-child(1)');
 s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused && i.at > 0.3 ? i : null; }, 25000);
 ok('On: a track within seconds', !!s, s || await info());
 ok('On: the farm keeps no "off"', await p.evaluate(() => window.__farm.game().data.music === undefined));
+// the sounds switch: off, the hens stop; the music carries on; kept after a reload
+await p.evaluate(() => { const f = window.__farm, c = f.coopPlots()[0], v = new f.THREE.Vector3(); c.frame.getWorldPosition(v); f.lookAt(v.x, v.z, 2.6); });
+await until(async () => (await hen()).playing, 20000);
+await p.tap('.gsounds .gchip:nth-child(2)');
+h = await until(async () => { const i = await hen(); return !i.playing ? i : null; }, 8000);
+ok('Sounds Off: the hens stop', !!h, h || await hen());
+await wait(6000); h = await hen(); s = await info();
+ok('Sounds Off: no more, and the music carries on', !h.playing && s.state === 'playing', { hens: h, music: s.state });
+ok('Sounds Off: kept in the farm', await p.evaluate(() => window.__farm.game().data.sounds === false));
+await p.tap('.gsounds .gchip:nth-child(1)');
+h = await until(async () => { const i = await hen(); return i.playing ? i : null; }, 15000);
+ok('Sounds On: the hens again', !!h, h || await hen());
+ok('Sounds On: the farm keeps no "off"', await p.evaluate(() => window.__farm.game().data.sounds === undefined));
 // a save with the music typed in wrong: checked (on)
-await p.evaluate(() => { const k = 'ff3d.farm', raw = JSON.parse(localStorage.getItem(k)); raw.d.music = 'nope'; localStorage.setItem(k, JSON.stringify(raw)); });
+await p.evaluate(() => { const k = 'ff3d.farm', raw = JSON.parse(localStorage.getItem(k)); raw.d.music = 'nope'; raw.d.sounds = 0; localStorage.setItem(k, JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
-ok('a save with the music typed in wrong: checked (on)', await p.evaluate(() => window.__farm.game().data.music === undefined && window.__farm.game().musicOn()));
+ok('a save with the music and the sounds typed in wrong: checked (both on)', await p.evaluate(() => { const g = window.__farm.game(); return g.data.music === undefined && g.data.sounds === undefined && g.musicOn() && g.soundsOn(); }));
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
