@@ -77,7 +77,7 @@ const insideTitle = await p.evaluate(() => { const t = document.getElementById('
 await p.waitForFunction(() => !window.__farm.inside.open && !window.__farm.inside.busy, null, { timeout: 20000 });
 // ---- Settings: the other language, then a new farm (tap twice)
 await p.evaluate(() => { window.__farm.gameUI().close(); document.querySelector('.gbar .ggear').click(); });
-await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(fr => [...document.querySelectorAll('.gsheet .gchip')].find(c => c.textContent === (fr ? 'English' : 'Français')).click(), fr)]);
+await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(fr => { const sel = document.querySelector('.gsheet .gselect'); if (sel) { sel.value = fr ? 'en' : 'fr'; sel.dispatchEvent(new Event('change')); } else [...document.querySelectorAll('.gsheet .gchip')].find(c => c.textContent === (fr ? 'English' : 'Français')).click(); }, fr)]);
 await ready();
 const other = await p.evaluate(() => { const g = window.__farm.game(); document.querySelector('.gbar .ggear').click(); return { lang: g.lang, html: document.documentElement.lang, title: document.querySelector('.gsheet h2').textContent }; });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn.galt').click());

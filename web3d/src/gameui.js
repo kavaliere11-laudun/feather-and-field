@@ -47,7 +47,7 @@ function langPicker(cur, pick) {
   return sel;
 }
 // the third onboarding picture has words in it (the sale sign): its own picture in each language (intropics.mjs)
-const INTRO_PIC = ['fr'];
+const INTRO_PIC = ['fr', 'de', 'es', 'pt', 'it'];
 
 export class GameUI {
   constructor(game, o = {}) {
