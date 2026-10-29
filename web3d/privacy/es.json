@@ -1,0 +1,60 @@
+{
+ "title": "Privacidad",
+ "updated": "Última actualización: {date}",
+ "intro": "Feather & Field es un acogedor juego de granja creado por {owner}. Esta página explica de forma sencilla qué guarda el juego sobre ti y por qué. En resumen: tu granja vive en tu teléfono, y nada sobre ti sale de él, a menos que decidas iniciar sesión.",
+ "sections": [
+  {
+   "h": "En tu teléfono",
+   "p": [
+    "El juego guarda tu granja en tu teléfono o tableta, en el almacenamiento que le da tu navegador o la aplicación: tus aves, monedas, nivel, ajustes y el idioma elegido. El juego lo necesita para funcionar, y todo se queda en tu dispositivo.",
+    "Puedes copiarla como código de granja en Ajustes y eliminarla cuando quieras con «Empezar una granja nueva» o borrando los datos del sitio en tu navegador."
+   ]
+  },
+  {
+   "h": "Si inicias sesión con Google (opcional)",
+   "p": [
+    "Mi cuenta es opcional. Si inicias sesión con Google, el juego usa el servicio Firebase de Google para:",
+    "• iniciar tu sesión: Google le da al juego el ID de tu cuenta, tu nombre y tu dirección de correo electrónico. El juego nunca ve tu contraseña;",
+    "• guardar una copia de tu granja en línea, para que no la pierdas y puedas seguir jugando en otro teléfono o tableta. Se conserva en la base de datos de Firebase de Google {where}, vinculada a tu cuenta, y solo tú puedes abrirla.",
+    "Por qué: para darte lo que pediste, tu granja a salvo y en todos tus dispositivos (el servicio que decidiste usar).",
+    "Cuánto tiempo: hasta que elimines tu cuenta. En Ajustes, en Mi cuenta, «Eliminar cuenta» elimina al instante tu cuenta y tu granja en línea; tu granja sigue en tu teléfono.",
+    "Para tener listo el inicio de sesión de Google, el juego solo se conecta con Google cuando abres Ajustes o la sugerencia para iniciar sesión, o tocas «Inicia sesión» en la pantalla de bienvenida, y, una vez que has iniciado sesión, cada vez que se abre el juego. Los servidores de inicio de sesión de Google pueden estar fuera del Reino Unido y de Europa; Google gestiona esos datos en nuestro nombre según sus condiciones de Firebase, con las garantías que exige la ley. Más información: <a href=\"https://firebase.google.com/support/privacy\">Privacidad y seguridad en Firebase</a>."
+   ]
+  },
+  {
+   "h": "De dónde viene el juego",
+   "p": [
+    "El juego está alojado en GitHub Pages (GitHub, Inc.). Como en cualquier sitio web, los servidores de GitHub ven la dirección IP de tu dispositivo cuando se carga el juego, y GitHub puede guardarla en sus registros durante poco tiempo por motivos de seguridad. Más información: <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">Declaración de privacidad de GitHub</a>.",
+    "Todo lo demás (los tipos de letra, las imágenes, la música y los sonidos) viene con el propio juego: no se carga nada de ninguna otra empresa."
+   ]
+  },
+  {
+   "h": "Lo que el juego nunca hace",
+   "p": [
+    "Sin anuncios, sin rastreo, sin estadísticas de uso, y tus datos nunca se venden ni se comparten. Sin cookies de rastreo ni de publicidad: en tu dispositivo solo se guarda lo que el juego necesita para funcionar.",
+    "Por ahora no hay nada que comprar con dinero real. Si eso cambia, esta página te explicará antes cómo funciona."
+   ]
+  },
+  {
+   "h": "Niños",
+   "p": [
+    "Feather & Field está pensado para adultos y jóvenes adultos. Para iniciar sesión se necesita una cuenta de Google, y Google fija su propia edad mínima. El juego no recopila a sabiendas ningún dato de niños menores de 13 años."
+   ]
+  },
+  {
+   "h": "Tus derechos",
+   "p": [
+    "Puedes pedir ver, corregir o eliminar lo que se guarda sobre ti, u oponerte a cómo se usa, escribiendo a {email}. Además, puedes eliminar tu cuenta y tu granja en línea directamente en Ajustes, cuando quieras. Nada se decide sobre ti de forma automática.",
+    "Si no te parece bien cómo se tratan tus datos, puedes presentar una queja ante la autoridad de protección de datos: {authority}."
+   ]
+  },
+  {
+   "h": "Cambios",
+   "p": [
+    "Si esta página cambia, también cambia la fecha de arriba, y cualquier cambio importante se anunciará en el juego."
+   ]
+  }
+ ],
+ "contact": "Contacto: {owner}, {email}",
+ "back": "Volver al juego"
+}

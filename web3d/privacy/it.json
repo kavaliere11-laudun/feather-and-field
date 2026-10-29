@@ -1,0 +1,60 @@
+{
+ "title": "Privacy",
+ "updated": "Ultimo aggiornamento: {date}",
+ "intro": "Feather & Field è un rilassante gioco di fattoria creato da {owner}. Questa pagina spiega in modo semplice cosa conserva il gioco su di te, e perché. In breve: la tua fattoria vive sul tuo telefono, e niente che ti riguardi ne esce, a meno che tu non scelga di accedere.",
+ "sections": [
+  {
+   "h": "Sul tuo telefono",
+   "p": [
+    "Il gioco conserva la tua fattoria sul tuo telefono o tablet, nello spazio che gli mette a disposizione il browser o l’app: i tuoi pennuti, le monete, il livello, le impostazioni e la lingua che hai scelto. Il gioco ne ha bisogno per funzionare, e tutto resta sul tuo dispositivo.",
+    "Puoi copiarla come codice della fattoria nelle Impostazioni, ed eliminarla quando vuoi con “Inizia una nuova fattoria” o cancellando i dati del sito nel browser."
+   ]
+  },
+  {
+   "h": "Se accedi con Google (facoltativo)",
+   "p": [
+    "Il mio account è facoltativo. Se accedi con Google, il gioco usa il servizio Firebase di Google per:",
+    "• farti accedere: Google fornisce al gioco l’ID del tuo account, il tuo nome e il tuo indirizzo email. Il gioco non vede mai la tua password;",
+    "• conservare una copia della tua fattoria online, così non la perdi e puoi giocarci su un altro telefono o tablet. Si trova nel database Firebase di Google {where}, è collegata al tuo account e solo tu puoi aprirla.",
+    "Perché: per darti ciò che hai chiesto, la tua fattoria al sicuro e su tutti i tuoi dispositivi (il servizio che hai scelto di usare).",
+    "Per quanto tempo: finché non elimini il tuo account. Nelle Impostazioni, alla voce Il mio account, “Elimina account” elimina subito il tuo account e la tua fattoria online; la tua fattoria resta sul tuo telefono.",
+    "Per preparare l’accesso con Google, il gioco si collega a Google solo quando apri le Impostazioni o il suggerimento di accesso, o tocchi “Accedi” nella schermata di benvenuto, e, una volta effettuato l’accesso, ogni volta che il gioco si apre. I server di accesso di Google possono trovarsi fuori dal Regno Unito e dall’Europa; Google gestisce questi dati per nostro conto secondo i termini di Firebase, con le garanzie richieste dalla legge. Per saperne di più: <a href=\"https://firebase.google.com/support/privacy\">Privacy e sicurezza in Firebase</a>."
+   ]
+  },
+  {
+   "h": "Da dove arriva il gioco",
+   "p": [
+    "Il gioco è ospitato su GitHub Pages (GitHub, Inc.). Come per qualsiasi sito, i server di GitHub vedono l’indirizzo IP del tuo dispositivo quando il gioco si carica, e GitHub può conservarlo per poco tempo nei suoi registri, per motivi di sicurezza. Per saperne di più: <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">Informativa sulla privacy di GitHub</a>.",
+    "Tutto il resto (i font, le immagini, la musica e i suoni) arriva insieme al gioco: niente viene caricato da altre aziende."
+   ]
+  },
+  {
+   "h": "Cosa il gioco non fa mai",
+   "p": [
+    "Niente pubblicità, niente tracciamento, niente statistiche di utilizzo, e i tuoi dati non vengono mai venduti né condivisi. Nessun cookie di tracciamento o pubblicitario: sul tuo dispositivo resta solo ciò che serve al gioco per funzionare.",
+    "Per ora non c’è niente da comprare con soldi veri. Se le cose cambieranno, questa pagina spiegherà prima come funziona."
+   ]
+  },
+  {
+   "h": "Bambini",
+   "p": [
+    "Feather & Field è pensato per adulti e giovani adulti. Per accedere serve un account Google, e Google stabilisce la propria età minima. Il gioco non raccoglie consapevolmente nessun dato di bambini con meno di 13 anni."
+   ]
+  },
+  {
+   "h": "I tuoi diritti",
+   "p": [
+    "Puoi chiedere di vedere, correggere o cancellare ciò che viene conservato su di te, oppure opporti al modo in cui viene usato, scrivendo a {email}. Puoi anche eliminare direttamente il tuo account e la tua fattoria online in qualsiasi momento, nelle Impostazioni. Nessuna decisione che ti riguarda viene presa in modo automatico.",
+    "Se non sei d’accordo con il modo in cui vengono trattati i tuoi dati, puoi presentare un reclamo all’autorità per la protezione dei dati: {authority}."
+   ]
+  },
+  {
+   "h": "Modifiche",
+   "p": [
+    "Se questa pagina cambia, cambia anche la data in alto, e ogni novità importante verrà comunicata nel gioco."
+   ]
+  }
+ ],
+ "contact": "Contatti: {owner}, {email}",
+ "back": "Torna al gioco"
+}
