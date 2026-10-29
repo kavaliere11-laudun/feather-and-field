@@ -2903,3 +2903,53 @@ the birds already had.
   as her bill opens on a honk (not more than one every 2½ seconds; `geese.js`), so on a tap, a proud honk, the ta-da, an
   alarm. A bee buzzes past the hives now and then while the bees are out (`main.js` `spotsHeard`, `sound.js` `tickSpots`).
   Their hiss has no recording yet, so it stays silent.
+
+## Release 7, step 5: German, Spanish, Portuguese and Italian (29 Oct 2026; Audrey: "which languages should I add", then "Go for your recommendation but I will not have any native speaker reviewing it")
+
+- **The machinery** (`src/lang.js`): six languages (`LANGS`), their names and number/date formats (`LOCALE`), and the
+  packs (`src/lang/<code>.js`), each with:
+  - `text` and `textF`: game.js's words by key;
+  - `words`: every [English, French] pair by its id;
+  - `pers`: the personalities as [hen, rooster].
+
+  How the code reaches the words:
+  - English and French stay written in the code, side by side. Each table of pairs is registered with an id prefix
+    (`register('say', FARMER_TEXT)`), so `tr(lang, 'say.hi')` finds a pair's word in any language.
+  - game.js keeps `t(key, vars, sexF)`. `TEXT[lang]` comes from the pack, and a missing word falls back to English.
+  - `ordinal()` gives each language's 1st / 1er / 1. / 1.º / 1ª.
+  - `andList()` joins names ("Clover e Ivy" in Spanish).
+
+  Choosing the language:
+  - A new phone starts in its own language if the game speaks it (`phoneLang`). The test pages take `?lang=de`.
+  - A save's language is checked: one the game doesn't speak becomes English.
+  - The welcome and Settings list the languages as chips while there are three or fewer, and as a list (the phone's own
+    picker) once there are more.
+  - The third onboarding picture's sale sign is rendered in each language (`intropics.mjs` with `LANGS=de,es,pt,it`).
+- **The words** (`lang/`):
+  - `catalogue.mjs` lists every word from the game itself into `catalogue.json`: 815 entries, about 5,000 English
+    words, with the French beside each, the 14 that change for a hen or a woman marked, and the personalities as
+    [hen, rooster] pairs.
+  - `BRIEF.md` is the translators' brief: tone, the forms of address (du, tú, você, tu), typography, names kept,
+    breeds and fish by their usual local names, short buttons.
+  - Each language was translated by Claude (`lang/<code>.json`). With no native speaker to check it, each then had an
+    independent second reading (`REVIEW.md`, `review/<code>.json`), which back-translated every entry and flagged
+    anything wrong, unnatural, inconsistent or too long. German had 21 fixes, Spanish 15, Italian 15 and Portuguese 6,
+    applied by `apply_review.py`.
+  - `node lang/catalogue.mjs pack <code>` turns a translation into its pack, checking every entry is there and every
+    placeholder is kept.
+  - Key words in each:
+    - German: Stall, Gehege, Kuscheln, Vertrauen, Rassenbuch, Geflügelschauen; Rhodeländer, Seidenhuhn.
+    - Spanish: gallinero, corral, mimo, Libro de razas; Sedosa.
+    - Portuguese: galinheiro, cercado, carinho, Livro das raças; Sedosa.
+    - Italian: pollaio, recinto, coccola, Libro delle razze; Moroseta.
+- **Adding a language later** (Japanese next):
+  1. Add its code to `LANGS`, `LANG_NAME` and `LOCALE`.
+  2. Translate `catalogue.json` with `BRIEF.md`, give it a second reading, then pack it.
+  3. Render its onboarding picture.
+  4. Run `langtest.mjs` and `screens.mjs` in it.
+- **Tests**:
+  - `langtest.mjs` (`LANGS=de,es,pt,it`) checks each language from a new phone: the welcome in it, every card (a hen,
+    the coop, the shop, the Breed Book, the level, the coops, the shows, Settings) with no English sentence left and
+    nothing off the card, the list in Settings, and a save with an unknown language.
+  - `screens.mjs` with `LANG=de` (or es, pt, it) checks the small phones and a tablet.
+  - `gametest.mjs` now switches language with the list.
