@@ -11,8 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="play.webmanifest">
 <title>Feather &amp; Field</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
   :root { --ink: #1e3426; --meringue: #fffdf7; --yolk: #f5b92e; --barn: #d2462f; --meadow: #3f8f4e; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -345,6 +344,8 @@
   .gtwo .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gwelcome-signin { align-self: center; margin-top: -2px; }
   .gwelcome-empty { text-align: center; }
+  .gwelcome-acct { display: flex; flex-direction: column; gap: 6px; }
+  .gwelcome-acct .gbtn { margin-top: 0; }
   /* the farm code (release 1 step 9g) */
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
@@ -550,6 +551,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793280853"></script>
+<script src="app.js?v=1793283320"></script>
 </body>
 </html>
