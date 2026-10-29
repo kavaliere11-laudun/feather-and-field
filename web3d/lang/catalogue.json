@@ -2174,6 +2174,156 @@
   "fr": "Votre ferme du premier jeu est dans les Réglages."
  },
  {
+  "id": "text.acct_t",
+  "en": "My account",
+  "fr": "Mon compte"
+ },
+ {
+  "id": "text.acct_how",
+  "en": "Sign in with Google to save your farm online too: you won’t lose it if you change phones or clear Safari, and you can play it on another phone.",
+  "fr": "Connectez-vous avec Google pour enregistrer aussi votre ferme en ligne : vous ne la perdrez pas en changeant de téléphone ou en vidant Safari, et vous pourrez y jouer sur un autre téléphone."
+ },
+ {
+  "id": "text.acct_google",
+  "en": "Sign in with Google",
+  "fr": "Se connecter avec Google"
+ },
+ {
+  "id": "text.acct_privacy",
+  "en": "Your farm is kept on Google’s Firebase servers in Europe, linked to your Google account. Only you can open it, and the game never sees your password.",
+  "fr": "Votre ferme est conservée sur les serveurs Firebase de Google, en Europe, et liée à votre compte Google. Elle n’est accessible qu’à vous, et le jeu ne voit jamais votre mot de passe."
+ },
+ {
+  "id": "text.acct_who",
+  "en": "Google account: {name}",
+  "fr": "Compte Google : {name}"
+ },
+ {
+  "id": "text.acct_saved",
+  "en": "Saved online: {when}",
+  "fr": "Enregistrée en ligne : {when}"
+ },
+ {
+  "id": "text.acct_saving",
+  "en": "Saving online…",
+  "fr": "Enregistrement en ligne…"
+ },
+ {
+  "id": "text.acct_offline",
+  "en": "Not saved online just now: no connection. It will be as soon as you’re back online.",
+  "fr": "Pas encore enregistrée en ligne : pas de connexion. Elle le sera dès votre retour en ligne."
+ },
+ {
+  "id": "text.acct_empty",
+  "en": "Nothing saved with this account yet: your new farm will be saved online once it’s started.",
+  "fr": "Rien n’est encore enregistré avec ce compte : votre nouvelle ferme sera enregistrée en ligne dès qu’elle sera commencée."
+ },
+ {
+  "id": "text.acct_out",
+  "en": "Sign out",
+  "fr": "Se déconnecter"
+ },
+ {
+  "id": "text.acct_out_done",
+  "en": "Signed out. Your farm stays on this phone.",
+  "fr": "Compte déconnecté. Votre ferme reste sur ce téléphone."
+ },
+ {
+  "id": "text.acct_del",
+  "en": "Delete my account",
+  "fr": "Supprimer mon compte"
+ },
+ {
+  "id": "text.acct_del_sure",
+  "en": "Tap again to delete your account and your farm online",
+  "fr": "Touchez encore pour supprimer votre compte et votre ferme en ligne"
+ },
+ {
+  "id": "text.acct_deleted",
+  "en": "Your account is deleted, with your farm online. Your farm stays on this phone.",
+  "fr": "Votre compte est supprimé, avec votre ferme en ligne. Votre ferme reste sur ce téléphone."
+ },
+ {
+  "id": "text.acct_failed",
+  "en": "Signing in didn’t work. Please try again.",
+  "fr": "La connexion n’a pas fonctionné. Veuillez réessayer."
+ },
+ {
+  "id": "text.acct_popup",
+  "en": "Your browser blocked Google’s window: allow pop-ups for this site, then try again.",
+  "fr": "Votre navigateur a bloqué la fenêtre de Google : autorisez les fenêtres pop-up pour ce site, puis réessayez."
+ },
+ {
+  "id": "text.acct_new_sure",
+  "en": "Tap again to start again from nothing, here and online",
+  "fr": "Touchez encore pour tout recommencer, ici et en ligne"
+ },
+ {
+  "id": "text.two_t",
+  "en": "Which farm to keep?",
+  "fr": "Quelle ferme garder ?"
+ },
+ {
+  "id": "text.two_how",
+  "en": "This phone and your account each have a different farm. Choose the one to keep: it replaces the other.",
+  "fr": "Ce téléphone et votre compte ont chacun une ferme différente. Choisissez celle à garder : elle remplacera l’autre."
+ },
+ {
+  "id": "text.two_here",
+  "en": "On this phone",
+  "fr": "Sur ce téléphone"
+ },
+ {
+  "id": "text.two_online",
+  "en": "Saved online",
+  "fr": "Enregistrée en ligne"
+ },
+ {
+  "id": "text.two_farmer",
+  "en": "{name}’s farm",
+  "fr": "La ferme de {name}"
+ },
+ {
+  "id": "text.two_sum",
+  "en": "Level {lv} · {c} coins",
+  "fr": "Niveau {lv} · {c} pièces"
+ },
+ {
+  "id": "text.two_when",
+  "en": "Last played: {when}",
+  "fr": "Dernière partie : {when}"
+ },
+ {
+  "id": "text.two_keep",
+  "en": "Keep this farm",
+  "fr": "Garder cette ferme"
+ },
+ {
+  "id": "text.nudge_t",
+  "en": "Keep your farm safe",
+  "fr": "Mettez votre ferme à l’abri"
+ },
+ {
+  "id": "text.nudge_how",
+  "en": "Sign in with Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.",
+  "fr": "Connectez-vous avec Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone."
+ },
+ {
+  "id": "text.nudge_later",
+  "en": "Not now",
+  "fr": "Plus tard"
+ },
+ {
+  "id": "text.nudge_note",
+  "en": "It’s up to you: you can sign in any time in Settings.",
+  "fr": "C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages."
+ },
+ {
+  "id": "text.welcome_signin",
+  "en": "Have a farm saved online? Sign in",
+  "fr": "Une ferme enregistrée en ligne ? Connectez-vous"
+ },
+ {
   "id": "text.loading",
   "en": "Loading your farm…",
   "fr": "Chargement de votre ferme…"

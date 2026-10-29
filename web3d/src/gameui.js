@@ -120,6 +120,7 @@ export class GameUI {
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
   open(kind, title, modal = false) {
+    if (this.twoResolve && kind !== 'twofarms') { const r = this.twoResolve; this.twoResolve = null; r(null); }      // (the two farms' choice not made: asked again later)
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
@@ -129,6 +130,7 @@ export class GameUI {
   }
   close() {
     if (this.sheet.hidden) return;
+    if (this.twoResolve) { const r = this.twoResolve; this.twoResolve = null; r(null); }
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
     if (this.kind === 'levelup' && this.levelShown) { this.g.seenLevel(); this.levelShown = 0; }
     if (this.kind === 'showres') { this.g.seenShows(); this.refresh(); this.bumpCoins(); }
@@ -205,6 +207,14 @@ export class GameUI {
         go.addEventListener('click', () => { const name = cleanName(input.value); this.sheet.classList.remove('gwelcome'); this.hero(false); this.close(); resolve({ lang: this.g.lang, look, name }); });
         input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
         b.append(go);
+        const A = this.o.account;
+        if (A && A.on) {                                 // (a farm saved online: signed in, it comes to this phone: account.js)
+          A.prepare().catch(() => {});
+          const si = el('button', 'glink gwelcome-signin', this.t('welcome_signin')); si.type = 'button';
+          si.addEventListener('click', () => A.signIn());
+          const stop = A.watch(st => { if (!si.isConnected) { stop(); return; } if (st === 'empty') { stop(); si.replaceWith(el('p', 'gnote gwelcome-empty', this.t('acct_empty'))); } });
+          b.append(si);
+        }
         this.fitHero();
       };
       draw();
@@ -975,6 +985,76 @@ export class GameUI {
     const b = this.open('coins', this.t('coins') + ' · ' + this.g.data.coins.toLocaleString(this.g.locale()));
     b.append(el('p', 'gtext', this.t('coins_body')));
   }
+  // when, in words: today's time ("14:05"), or the day and time ("28 Oct, 14:05")
+  when(ms) {
+    if (!ms) return '–';
+    const d = new Date(ms), L = this.g.locale(), time = d.toLocaleTimeString(L, { hour: '2-digit', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString() ? time : d.toLocaleDateString(L, { day: 'numeric', month: 'short' }) + ', ' + time;
+  }
+  // ---- My account (release 7: account.js). Signed out: what it's for, Sign in with Google, where the farm's kept. Signed
+  // in: whose account, the farm's last save online, Sign out, and Delete my account (two taps, then Google asks who it is)
+  accountCard() {
+    const A = this.o.account, card = el('div', 'gcard gacct');
+    const draw = () => {
+      card.replaceChildren();
+      const hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '☁️'), el('span', 'gcard-t', this.t('acct_t'))); card.append(hd);
+      if (!A.user) {
+        card.append(el('p', 'gnote', this.t('acct_how')));
+        const go = el('button', 'gbtn gsmallbtn gacct-in', this.t('acct_google')); go.type = 'button';
+        go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });      // (ready before the tap: Google's window opens straight from it)
+        go.addEventListener('click', () => A.signIn());
+        card.append(go);
+      } else {
+        card.append(el('p', 'gtext gacct-who', this.t('acct_who', { name: A.name() })));
+        const S = A.status, line = S === 'saved' ? this.t('acct_saved', { when: this.when(A.savedAt) }) : S === 'syncing' ? this.t('acct_saving') : S === 'offline' ? this.t('acct_offline') : S === 'empty' ? this.t('acct_empty') : '';
+        if (line) card.append(el('p', 'gnote gacct-state', line));
+        const row = el('div', 'gacct-row');
+        const out = el('button', 'gbtn galt gsmallbtn gacct-out', this.t('acct_out')); out.type = 'button';
+        out.addEventListener('click', () => A.signOut());
+        const del = el('button', 'gbtn galt gsmallbtn gacct-del', this.t('acct_del')); del.type = 'button';
+        let sure = false;
+        del.addEventListener('click', () => {
+          if (!sure) { sure = true; del.textContent = this.t('acct_del_sure'); del.classList.add('gdanger'); setTimeout(() => { sure = false; del.textContent = this.t('acct_del'); del.classList.remove('gdanger'); }, 4000); return; }
+          A.drop();
+        });
+        row.append(out, del); card.append(row);
+      }
+      card.append(el('p', 'gnote gacct-privacy', this.t('acct_privacy')));
+    };
+    draw();
+    const stop = A.watch(() => { if (!card.isConnected) { stop(); return; } draw(); });
+    return card;
+  }
+  // a different farm on this phone and online, both changed since: which one to keep (it has to be chosen: no ✕; left
+  // open when another card takes its place, it's asked again later). Resolves 'here', 'online' or null
+  twoFarms(here, online) {
+    return new Promise(resolve => {
+      const b = this.open('twofarms', this.t('two_t'), true);
+      this.twoResolve = resolve;
+      b.append(el('p', 'gtext', this.t('two_how')));
+      for (const [k, f] of [['here', here], ['online', online]]) {
+        const c = el('div', 'gcard gtwo gtwo-' + k), hd = el('div', 'gcard-h');
+        hd.append(el('span', 'gemoji', k === 'here' ? '📱' : '☁️'), el('span', 'gcard-t', this.t(k === 'here' ? 'two_here' : 'two_online'))); c.append(hd);
+        c.append(el('p', 'gtext gtwo-name', this.t('two_farmer', { name: f.name || this.g.defaultFarmer(f.look) })));
+        c.append(el('p', 'gnote', this.t('two_sum', { lv: f.lv, c: f.coins.toLocaleString(this.g.locale()) })));
+        c.append(el('p', 'gnote', this.t('two_when', { when: this.when(k === 'online' && f.at ? f.at : f.seen) })));
+        const keep = el('button', 'gbtn gsmallbtn gtwo-keep', this.t('two_keep')); keep.type = 'button';
+        keep.addEventListener('click', () => { this.twoResolve = null; this.close(); resolve(k); });
+        c.append(keep); b.append(c);
+      }
+    });
+  }
+  // the once-only suggestion, a few days into a farm (main.js showNews; account.js nudgeDue)
+  accountNudge() {
+    const A = this.o.account, b = this.open('acctask', '☁️ ' + this.t('nudge_t'));
+    b.append(el('p', 'gtext', this.t('nudge_how')));
+    const row = el('div', 'gfox-row'), go = el('button', 'gbtn gacct-in', this.t('acct_google')), later = el('button', 'gbtn galt', this.t('nudge_later'));
+    go.type = later.type = 'button';
+    go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });
+    go.addEventListener('click', async () => { const ok = await A.signIn(); if (ok && this.kind === 'acctask') this.close(); });
+    later.addEventListener('click', () => this.close());
+    row.append(go, later); b.append(row, el('p', 'gnote', this.t('nudge_note')));
+  }
   settings() {
     const g = this.g, b = this.open('settings', this.t('settings'));
     const langRow = el('div', 'grow'); langRow.append(el('span', 'glabel', this.t('settings_lang')));
@@ -992,6 +1072,7 @@ export class GameUI {
       row.append(ch); b.append(row);
     }
     b.append(el('p', 'gnote gsound-note', this.t('settings_music_note')));
+    if (this.o.account && this.o.account.on) b.append(this.accountCard());
     b.append(el('p', 'gnote', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of
     // the code rather than waiting for it); shown to select by hand if copying isn't allowed; paste one and load it (two
@@ -1035,7 +1116,9 @@ export class GameUI {
     let sure = false;
     const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button';
     fresh.addEventListener('click', () => {
-      if (!sure) { sure = true; fresh.textContent = this.t('settings_new_sure'); fresh.classList.add('gdanger'); setTimeout(() => { sure = false; fresh.textContent = this.t('settings_new'); fresh.classList.remove('gdanger'); }, 4000); return; }
+      const A = this.o.account && this.o.account.user ? this.o.account : null;      // (signed in: the new farm replaces the one online too)
+      if (!sure) { sure = true; fresh.textContent = this.t(A ? 'acct_new_sure' : 'settings_new_sure'); fresh.classList.add('gdanger'); setTimeout(() => { sure = false; fresh.textContent = this.t('settings_new'); fresh.classList.remove('gdanger'); }, 4000); return; }
+      if (A) A.freshFarm();
       g.wipe(); if (this.o.reload) this.o.reload();
     });
     b.append(fresh);

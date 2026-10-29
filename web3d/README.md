@@ -2953,3 +2953,41 @@ the birds already had.
     nothing off the card, the list in Settings, and a save with an unknown language.
   - `screens.mjs` with `LANG=de` (or es, pt, it) checks the small phones and a tablet.
   - `gametest.mjs` now switches language with the list.
+
+## Release 7, step 6: My account (29 Oct 2026; Audrey: "Next step should be my account"; "Firebase, by Google (Recommended)", "Google now, Apple later (Recommended)", "Optional, in Settings (Recommended)")
+
+- **What it is.** Optional: in Settings, "Sign in with Google" and the farm is kept online as well as on the phone, so
+  it isn't lost with a phone or a cleared Safari, and plays on another phone. Suggested once, three days into a farm (a
+  card with "Sign in with Google" and "Not now"; the saved field `acctAsk`, checked). A new phone's welcome has "Have a
+  farm saved online? Sign in". Sign in with Apple comes with the stores' app (Apple asks for it when Google is offered).
+- **How** (`src/account.js`): the farm goes online exactly as the phone keeps it (the farm and its seal, as a farm code),
+  one document a player (`farms/<account>`), numbered one more each save, with the level, coins and when the farm was
+  started to tell two farms apart. When the farm opens, comes back on screen, or the player signs in:
+  - nothing online yet: this phone's farm goes up;
+  - online as this phone left it: this phone's goes up if it changed;
+  - online newer and nothing new here since: the online farm comes (the page opens it, "Farm loaded");
+  - no farm here (a new phone): the online farm comes;
+  - a different farm on each, both changed: "Which farm to keep?", each with the farmer's name, level, coins and when
+    last played; no ✕ (left open, it's asked again later).
+  While playing a change goes up 45 seconds later, at once when the game's put away. No connection: the card says so
+  and it goes up later. "Start a new farm" while signed in replaces the online one too (the button says "here and
+  online"). Sign out keeps the farm on the phone. Delete my account: two taps, Google asks who it is again, then the
+  farm online and the account are deleted; the farm stays on the phone.
+- **Firebase** (`src/cloud.js`, built on its own into `dist/cloud.js` and loaded only when needed): Google's sign-in in
+  its own window (a popup: the redirect way breaks on Safari for a site on github.io), Firestore "lite" (plain requests).
+  `src/firebase-config.js` holds the project's web settings (public by design); `null` until Audrey's project exists,
+  so nothing of the account shows yet in the published game. Needs the Firebase package (`npm install firebase`;
+  blocked here on 29 Oct: Audrey asked to allow registry.npmjs.org).
+- **Security** (her standing rule): `firestore.rules`: only the owner reads, writes or deletes their farm; nobody lists
+  farms; every field's type and size checked (the farm under 900 KB, no extra fields); the number exactly one more each
+  save (two phones can't overwrite each other unseen); the server's own time; a save at most every 2 seconds; nothing
+  else in the database open to anyone. A farm coming back goes through the same checks as any save or farm code
+  (`checkFarm`); one that doesn't pass is never taken (this phone's goes up in its place). No password ever reaches the
+  game. Tested by `rulestest.mjs` on the Firestore emulator (to run once the emulator can be fetched).
+- **Words**: 30 new texts in English and French; German, Spanish, Portuguese and Italian translated, then given an
+  independent second reading (3, 0, 1 and 0 fixes; German uses Google's own "Über Google anmelden").
+- **Tests**: `accounttest.mjs` with the pretend account (`?account=fake`, its "online" farms kept by the test and shared
+  by four pretend phones): signing in puts the farm online; a new phone's welcome brings it; a phone coming back takes
+  the newer farm; both changed (one offline meanwhile) asks, and each answer does what it says; a phone with its own farm
+  signing in is asked; a spoilt online farm is never taken; the closed Google window; sign out; delete; a new farm while
+  signed in; the suggestion once, not after a reload; `acctAsk` checked.

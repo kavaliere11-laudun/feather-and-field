@@ -141,10 +141,30 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
   (see `web3d/README.md`, "the switch"; `switchtest.mjs` checks a phone that had the 2D game).
 - `stylized/extras/`: small helper scripts kept for reference (farmer map sprites, the Silkie hair tile, face sheets).
 
+## My account (release 7: the farm saved online, Firebase)
+
+Optional, in Settings: sign in with Google and the farm is kept online too (Audrey, 29 Oct 2026: "Firebase, by Google",
+"Google now, Apple later", "Optional, in Settings"; suggested once, a few days into a farm).
+
+- `web3d/src/account.js`: keeping the phone's farm and the online one in step (who's newer, asking when both changed),
+  the sign-in, sign-out and delete; `?account=fake` puts a pretend account in Firebase's place for the tests.
+- `web3d/src/cloud.js`: the Firebase side (Google sign-in in a popup, Firestore "lite"), built on its own into
+  `dist/cloud.js` and loaded only when needed. It needs the Firebase package: `npm install firebase` in `web3d/` (build.sh
+  skips it, saying so, when it's missing).
+- `web3d/src/firebase-config.js`: the project's web settings from the Firebase console (public by design: the rules are what
+  protect the farms). `null` until the project exists: then nothing of the account shows anywhere.
+- `web3d/firestore.rules`: the security rules, pasted into the console (Firestore Database, Rules). One document a player,
+  `farms/<uid>`, readable and writable only by them; its fields checked; its number one more each time; a save at most
+  every 2 seconds; nothing else in the database open to anyone.
+- Tests: `accounttest.mjs` (the whole flow over four pretend phones, with the pretend account); `rulestest.mjs` (the
+  rules, on the Firestore emulator: `java -jar cloud-firestore-emulator-*.jar --host=127.0.0.1 --port=8080`).
+
 ## Security (Audrey's standing request: "take security of the game into account")
 
 - Saves are sanitised on load: types, clamped numbers, names stripped of markup.
 - XP, feed and trophies are validated.
 - Edited saves are flagged with a signature.
 - If the clock goes backwards, the player gains nothing; time away is capped at 2 days.
-- No secrets in this repo; keep it that way (the repo is public).
+- No secrets in this repo; keep it that way (the repo is public). The Firebase web settings are not secrets.
+- My account: a farm coming from online goes through the same checks as any save; the rules keep each farm its owner's;
+  the game never sees a password (Google's own window signs in).

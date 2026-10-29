@@ -202,6 +202,18 @@ export const TEXT = {
     code_old: 'That code is from the first Feather & Field: this new farm starts fresh.', code_loaded: 'Farm loaded: level {n}. Welcome back!',
     first_t: 'The first Feather & Field', first_how: 'Your farm from the first game is kept just as it was. Open it whenever you like.', first_open: 'Open the first game',
     welcome_first: 'Your farm from the first game is safe in Settings.',
+    // My account (release 7: account.js): the farm saved online with a Google account
+    acct_t: 'My account', acct_how: 'Sign in with Google to save your farm online too: you won’t lose it if you change phones or clear Safari, and you can play it on another phone.',
+    acct_google: 'Sign in with Google', acct_privacy: 'Your farm is kept on Google’s Firebase servers in Europe, linked to your Google account. Only you can open it, and the game never sees your password.',
+    acct_who: 'Google account: {name}', acct_saved: 'Saved online: {when}', acct_saving: 'Saving online…', acct_offline: 'Not saved online just now: no connection. It will be as soon as you’re back online.',
+    acct_empty: 'Nothing saved with this account yet: your new farm will be saved online once it’s started.',
+    acct_out: 'Sign out', acct_out_done: 'Signed out. Your farm stays on this phone.', acct_del: 'Delete my account', acct_del_sure: 'Tap again to delete your account and your farm online',
+    acct_deleted: 'Your account is deleted, with your farm online. Your farm stays on this phone.', acct_failed: 'Signing in didn’t work. Please try again.',
+    acct_popup: 'Your browser blocked Google’s window: allow pop-ups for this site, then try again.', acct_new_sure: 'Tap again to start again from nothing, here and online',
+    two_t: 'Which farm to keep?', two_how: 'This phone and your account each have a different farm. Choose the one to keep: it replaces the other.',
+    two_here: 'On this phone', two_online: 'Saved online', two_farmer: '{name}’s farm', two_sum: 'Level {lv} · {c} coins', two_when: 'Last played: {when}', two_keep: 'Keep this farm',
+    nudge_t: 'Keep your farm safe', nudge_how: 'Sign in with Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.',
+    nudge_later: 'Not now', nudge_note: 'It’s up to you: you can sign in any time in Settings.', welcome_signin: 'Have a farm saved online? Sign in',
     loading: 'Loading your farm…',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.', lays_sil: 'Lays about an egg a day, {p} coins each: Silkies are better mums than layers.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
@@ -439,6 +451,17 @@ export const TEXT = {
     code_old: 'Ce code vient du premier Feather & Field : cette nouvelle ferme repart de zéro.', code_loaded: 'Ferme chargée : niveau {n}. Bon retour !',
     first_t: 'Le premier Feather & Field', first_how: 'Votre ferme du premier jeu est gardée telle quelle. Ouvrez-la quand vous voulez.', first_open: 'Ouvrir le premier jeu',
     welcome_first: 'Votre ferme du premier jeu est dans les Réglages.',
+    acct_t: 'Mon compte', acct_how: 'Connectez-vous avec Google pour enregistrer aussi votre ferme en ligne : vous ne la perdrez pas en changeant de téléphone ou en vidant Safari, et vous pourrez y jouer sur un autre téléphone.',
+    acct_google: 'Se connecter avec Google', acct_privacy: 'Votre ferme est conservée sur les serveurs Firebase de Google, en Europe, et liée à votre compte Google. Elle n’est accessible qu’à vous, et le jeu ne voit jamais votre mot de passe.',
+    acct_who: 'Compte Google : {name}', acct_saved: 'Enregistrée en ligne : {when}', acct_saving: 'Enregistrement en ligne…', acct_offline: 'Pas encore enregistrée en ligne : pas de connexion. Elle le sera dès votre retour en ligne.',
+    acct_empty: 'Rien n’est encore enregistré avec ce compte : votre nouvelle ferme sera enregistrée en ligne dès qu’elle sera commencée.',
+    acct_out: 'Se déconnecter', acct_out_done: 'Compte déconnecté. Votre ferme reste sur ce téléphone.', acct_del: 'Supprimer mon compte', acct_del_sure: 'Touchez encore pour supprimer votre compte et votre ferme en ligne',
+    acct_deleted: 'Votre compte est supprimé, avec votre ferme en ligne. Votre ferme reste sur ce téléphone.', acct_failed: 'La connexion n’a pas fonctionné. Veuillez réessayer.',
+    acct_popup: 'Votre navigateur a bloqué la fenêtre de Google : autorisez les fenêtres pop-up pour ce site, puis réessayez.', acct_new_sure: 'Touchez encore pour tout recommencer, ici et en ligne',
+    two_t: 'Quelle ferme garder ?', two_how: 'Ce téléphone et votre compte ont chacun une ferme différente. Choisissez celle à garder : elle remplacera l’autre.',
+    two_here: 'Sur ce téléphone', two_online: 'Enregistrée en ligne', two_farmer: 'La ferme de {name}', two_sum: 'Niveau {lv} · {c} pièces', two_when: 'Dernière partie : {when}', two_keep: 'Garder cette ferme',
+    nudge_t: 'Mettez votre ferme à l’abri', nudge_how: 'Connectez-vous avec Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.',
+    nudge_later: 'Plus tard', nudge_note: 'C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages.', welcome_signin: 'Une ferme enregistrée en ligne ? Connectez-vous',
     loading: 'Chargement de votre ferme…',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.', lays_sil: 'Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
@@ -900,6 +923,7 @@ export function checkFarm(d, now = Date.now()) {
   out.lang = langOk(d.lang);                                      // (a language the game speaks; else English)
   if (d.music === false) out.music = false;                       // (the music switched off in the settings; on unless)
   if (d.sounds === false) out.sounds = false;                     // (the farm's sounds switched off; on unless)
+  if (d.acctAsk === 1) out.acctAsk = 1;                            // (My account suggested once, a few days in: account.js nudgeDue)
   out.coins = int(d.coins, 0, 1e9, 0);
   out.xp = int(d.xp, 0, 1e9, 0);
   if (Number.isInteger(d.cv) && d.cv >= 1 && d.cv <= CV) out.cv = d.cv;      // (which breeds' looks the farm has had: load() makes the coops of later ones Snug)

@@ -333,6 +333,17 @@
   @keyframes garrowb { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
   .garrow.up { margin: 6px 0 0 -17px; rotate: 180deg; animation-name: garrowu; }      /* (under something at the top, pointing up at it) */
   @keyframes garrowu { 0%, 100% { translate: 0 0; } 50% { translate: 0 9px; } }
+  /* My account (release 7: account.js) */
+  .gacct .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gacct-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+  .gacct .gacct-row .gsmallbtn { margin: 0; flex: 0 1 auto; max-width: 100%; background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }      /* ("Tap again to delete…" wraps inside its button) */
+  .gacct .gacct-row .gsmallbtn.gdanger { background: var(--barn); color: #fff; box-shadow: none; }
+  .gacct-who { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .gacct-privacy { font-size: 12.5px; font-weight: 500; }
+  .gtwo .gtwo-name { margin: 0; font-weight: 700; }
+  .gtwo .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gwelcome-signin { align-self: center; margin-top: -2px; }
+  .gwelcome-empty { text-align: center; }
   /* the farm code (release 1 step 9g) */
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }

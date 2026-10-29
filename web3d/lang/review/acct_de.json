@@ -1,0 +1,20 @@
+[
+ {
+  "id": "text.acct_google",
+  "now": "Mit Google anmelden",
+  "problem": "Google's own German button says „Über Google anmelden“, not „Mit Google anmelden“",
+  "fix": "Über Google anmelden"
+ },
+ {
+  "id": "text.acct_offline",
+  "now": "Gerade nicht online gespeichert: keine Verbindung. Wird nachgeholt, sobald du wieder online bist.",
+  "problem": "'Gerade nicht' reads oddly ('just now not'); 'noch nicht' is natural, and 'Wird nachgeholt' needs a subject",
+  "fix": "Noch nicht online gespeichert: keine Verbindung. Das wird nachgeholt, sobald du wieder online bist."
+ },
+ {
+  "id": "text.acct_empty",
+  "now": "Mit diesem Konto ist noch nichts gespeichert: Dein neuer Hof wird online gespeichert, sobald du loslegst.",
+  "problem": "'mit diesem Konto ... gespeichert' is awkward; 'in diesem Konto' is natural and matches text.two_how",
+  "fix": "In diesem Konto ist noch nichts gespeichert: Dein neuer Hof wird online gespeichert, sobald du loslegst."
+ }
+]

@@ -31,6 +31,7 @@ import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE } from './game.js';
 import { GameUI } from './gameui.js';
+import { Account } from './account.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS } from './game.js';
@@ -51,6 +52,10 @@ const params = new URLSearchParams(location.search);
 const GAME_MODE = document.body.classList.contains('game');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
+// My account (release 7: account.js): the farm saved online with a Google account (only once the game has its Firebase
+// project, or ?account=fake for the tests); a farm brought from online opens the way a farm code does (the page again)
+const farmLoaded = () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); };
+const account = GAME_MODE && !params.has('poster') ? new Account(game, { bust: BUST, say: t => hint(t), loaded: farmLoaded, ask: (here, online) => gameUI.twoFarms(here, online) }) : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
@@ -420,7 +425,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); }, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -518,7 +523,8 @@ async function start() {
   if (GAME_MODE) {
     openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); if (!welcome) hint(game.t('hint_move'));
     startFirstDay(!!welcome);                              // (a new farm: the pictures, then the first day's guide)
-    try { if (sessionStorage.getItem('ff3d.loaded')) { sessionStorage.removeItem('ff3d.loaded'); hint(game.t('code_loaded', { n: game.level })); } } catch (e) { /* */ }      // (a farm code just loaded)
+    try { if (sessionStorage.getItem('ff3d.loaded')) { sessionStorage.removeItem('ff3d.loaded'); hint(game.t('code_loaded', { n: game.level })); } } catch (e) { /* */ }      // (a farm code just loaded, or the farm from online)
+    if (account) account.start();                          // (signed in here before: the farm kept in step with the one online)
     if (!welcome && game.data.lastSeen && openedAt - game.data.lastSeen >= AWAY_MIN) AWAY = { from: game.data.lastSeen };      // (away a while: the summary first)
     gameTick(Date.now(), true);                            // (the eggs laid while away, at once)
   }
@@ -3910,6 +3916,7 @@ function showNews() {
     holdBird(null); syncLand(); gameUI.refresh();
     gameUI.levelUpCard(L, game.landForSale(), () => { if (SALE.at) focusOn(SALE.at.x, SALE.at.z, Math.min(view.size, sideways() ? 2.4 : 3.2)); }, game.newAt(L, game.data.lvSeen || 1), b => startPlace(b));
   }
+  else if (account && account.nudgeDue()) { holdBird(null); account.nudged(); gameUI.accountNudge(); }      // (a few days in: My account suggested, once)
 }
 // ---- levels and land (release 1 step 5; game.js landForSale, buyLand; the fields: fields.py, models/fields.json). The
 // farm is split into fields along its lanes and the stream. Your land is the mown farm you know; the rest is wild meadow
@@ -6450,6 +6457,8 @@ document.addEventListener('visibilitychange', () => {
 
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
 window.__farm = {
+  accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
+  account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],

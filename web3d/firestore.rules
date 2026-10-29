@@ -1,0 +1,37 @@
+rules_version = '2';
+// Feather & Field, My account (release 7): each player has one document, farms/<their account>, and only they can read,
+// write or delete it. Nothing else in the database can be read or written by anyone.
+//   farm:  the farm as the phone keeps it (text: the farm and its seal); the game checks it as it loads, as every save
+//   n:     the save's number: 1 for the first, then exactly one more each time (two phones can't overwrite each other unseen)
+//   at:    when it was saved (the server's time)
+//   lv, coins, made: the farm's level, coins and when it was started, to tell two farms apart
+// A save at most every 2 seconds. Paste these into the Firebase console (Firestore Database, Rules) and Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /farms/{uid} {
+      function mine() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+      function farmOk(d) {
+        return d.keys().hasOnly(['farm', 'n', 'at', 'lv', 'coins', 'made'])
+          && d.keys().hasAll(['farm', 'n', 'at', 'lv', 'coins', 'made'])
+          && d.farm is string && d.farm.size() >= 20 && d.farm.size() <= 900000
+          && d.n is int
+          && d.at == request.time
+          && d.lv is int && d.lv >= 1 && d.lv <= 999
+          && d.coins is int && d.coins >= 0 && d.coins <= 1000000000
+          && d.made is int && d.made >= 0 && d.made <= request.time.toMillis() + 86400000;
+      }
+      allow get: if mine();
+      allow list: if false;
+      allow create: if mine() && farmOk(request.resource.data) && request.resource.data.n == 1;
+      allow update: if mine() && farmOk(request.resource.data)
+        && request.resource.data.n == resource.data.n + 1
+        && request.time > resource.data.at + duration.value(2, 's');
+      allow delete: if mine();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

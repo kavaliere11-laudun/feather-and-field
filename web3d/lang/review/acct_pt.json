@@ -1,0 +1,8 @@
+[
+ {
+  "id": "text.acct_offline",
+  "now": "Sua fazenda ainda não foi salva online: sem conexão. Isso vai acontecer assim que a internet voltar.",
+  "problem": "'Isso vai acontecer' is vague and clumsy; say what will happen",
+  "fix": "Sua fazenda ainda não foi salva online: sem conexão. Ela vai ser salva assim que a internet voltar."
+ }
+]
