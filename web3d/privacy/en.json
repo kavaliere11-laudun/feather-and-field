@@ -18,7 +18,7 @@
     "• keep a copy of your farm online, so you don’t lose it and can play it on another phone or tablet. It’s kept in Google’s Firebase database {where}, linked to your account, and only you can open it.",
     "Why: to give you what you asked for, your farm kept safe and on all your devices (the service you chose to use).",
     "How long: until you delete your account. In Settings, My account, “Delete my account” deletes your account and your farm online straight away; your farm stays on your phone.",
-    "To get Google’s sign-in ready, the game connects to Google only when you open Settings, the sign-in suggestion or “Sign in” on the welcome screen, and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>."
+    "To get Google’s sign-in ready, the game connects to Google only when you open Settings or tap “Sign in” on the welcome screen, when the game suggests signing in (once, a few days into a farm), and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>."
    ]
   },
   {

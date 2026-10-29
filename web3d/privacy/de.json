@@ -13,12 +13,12 @@
   {
    "h": "Wenn du dich mit Google anmeldest (freiwillig)",
    "p": [
-    "Mein Konto ist freiwillig. Wenn du dich mit Google anmeldest, nutzt das Spiel den Firebase-Dienst von Google, um:",
+    "Mein Konto ist optional. Wenn du dich mit Google anmeldest, nutzt das Spiel den Firebase-Dienst von Google, um:",
     "• dich anzumelden: Google gibt dem Spiel deine Konto-ID, deinen Namen und deine E-Mail-Adresse. Dein Passwort sieht das Spiel nie;",
     "• eine Kopie deines Hofs online aufzubewahren, damit er nicht verloren geht und du auf einem anderen Handy oder Tablet weiterspielen kannst. Sie liegt in der Firebase-Datenbank von Google {where}, ist mit deinem Konto verknüpft, und nur du kannst sie öffnen.",
     "Warum: Du hast darum gebeten, dass dein Hof sicher aufbewahrt wird und auf all deinen Geräten verfügbar ist – das ist der Dienst, den du selbst gewählt hast.",
-    "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löscht „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten.",
-    "Damit die Anmeldung über Google bereitsteht, verbindet sich das Spiel nur dann mit Google, wenn du die Einstellungen oder den Vorschlag zur Anmeldung öffnest oder auf dem Willkommensbildschirm auf „Anmelden“ tippst – und, sobald du angemeldet bist, bei jedem Start des Spiels. Die Anmeldeserver von Google können außerhalb des Vereinigten Königreichs und Europas liegen; Google kümmert sich in unserem Auftrag um diese Daten, nach den Bedingungen von Firebase und mit den Schutzmaßnahmen, die das Gesetz verlangt. Mehr dazu: <a href=\"https://firebase.google.com/support/privacy\">Datenschutz und Sicherheit in Firebase</a>."
+    "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löschst du mit „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten.",
+    "Damit die Anmeldung über Google bereitsteht, verbindet sich das Spiel nur dann mit Google, wenn du die Einstellungen öffnest oder auf dem Willkommensbildschirm auf „Anmelden“ tippst, wenn das Spiel dir die Anmeldung vorschlägt (einmal, ein paar Tage nach dem Start deines Hofs) – und, sobald du angemeldet bist, bei jedem Start des Spiels. Die Anmeldeserver von Google können außerhalb des Vereinigten Königreichs und Europas liegen; Google kümmert sich in unserem Auftrag um diese Daten, nach den Bedingungen von Firebase und mit den Schutzmaßnahmen, die das Gesetz verlangt. Mehr dazu: <a href=\"https://firebase.google.com/support/privacy\">Datenschutz und Sicherheit in Firebase</a>."
    ]
   },
   {

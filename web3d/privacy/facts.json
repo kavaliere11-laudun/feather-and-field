@@ -1,7 +1,20 @@
 {
  "owner": "TODO-owner",
  "email": "TODO@example.com",
- "date": { "en": "29 October 2026", "fr": "29 octobre 2026" },
- "where": { "en": "TODO-where", "fr": "TODO-where" },
- "authority": { "en": "TODO-authority", "fr": "TODO-authority" }
+ "date": {
+  "en": "29 October 2026",
+  "fr": "29 octobre 2026",
+  "de": "29. Oktober 2026",
+  "es": "29 de octubre de 2026",
+  "pt": "29 de outubro de 2026",
+  "it": "29 ottobre 2026"
+ },
+ "where": {
+  "en": "TODO-where",
+  "fr": "TODO-where"
+ },
+ "authority": {
+  "en": "TODO-authority",
+  "fr": "TODO-authority"
+ }
 }

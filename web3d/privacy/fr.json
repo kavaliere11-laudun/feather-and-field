@@ -3,29 +3,57 @@
  "updated": "Mise à jour le {date}",
  "intro": "Feather & Field est un jeu de ferme tout doux créé par {owner}. Cette page explique simplement ce que le jeu garde sur vous, et pourquoi. En bref : votre ferme vit sur votre téléphone, et rien ne vous concernant n’en sort, sauf si vous choisissez de vous connecter.",
  "sections": [
-  { "h": "Sur votre téléphone", "p": [
-   "Le jeu garde votre ferme sur votre téléphone ou votre tablette, dans l’espace que lui donne votre navigateur ou l’application : vos oiseaux, vos pièces, votre niveau, vos réglages et la langue choisie. Le jeu en a besoin pour fonctionner, et tout reste sur votre appareil.",
-   "Vous pouvez la copier sous forme de code de ferme dans les Réglages, et la supprimer quand vous voulez avec « Commencer une nouvelle ferme », ou en effaçant les données du site dans votre navigateur." ] },
-  { "h": "Si vous vous connectez avec Google (facultatif)", "p": [
-   "Mon compte est facultatif. Si vous vous connectez avec Google, le jeu utilise le service Firebase de Google pour :",
-   "• vous connecter : Google transmet au jeu l’identifiant de votre compte, votre nom et votre adresse e-mail. Le jeu ne voit jamais votre mot de passe ;",
-   "• garder une copie de votre ferme en ligne, pour que vous ne la perdiez pas et puissiez y jouer sur un autre téléphone ou une autre tablette. Elle est conservée dans la base de données Firebase de Google {where}, liée à votre compte, et elle n’est accessible qu’à vous.",
-   "Pourquoi : pour vous rendre le service que vous avez demandé, votre ferme gardée en sécurité et sur tous vos appareils.",
-   "Combien de temps : jusqu’à ce que vous supprimiez votre compte. Dans les Réglages, Mon compte, « Supprimer mon compte » supprime aussitôt votre compte et votre ferme en ligne ; votre ferme reste sur votre téléphone.",
-   "Pour préparer la connexion Google, le jeu ne contacte Google que lorsque vous ouvrez les Réglages, la suggestion de connexion ou « Connectez-vous » sur l’écran d’accueil, et, une fois la connexion faite, à chaque ouverture du jeu. Les serveurs de connexion de Google peuvent se trouver hors du Royaume-Uni et de l’Europe ; Google s’occupe de ces données pour nous selon les conditions de Firebase, avec les garanties prévues par la loi. En savoir plus : <a href=\"https://firebase.google.com/support/privacy\">Confidentialité et sécurité dans Firebase</a>." ] },
-  { "h": "D’où vient le jeu", "p": [
-   "Le jeu est servi par GitHub Pages (GitHub, Inc.). Comme pour tout site, les serveurs de GitHub voient l’adresse internet de votre appareil quand le jeu se charge, et GitHub peut la garder un peu de temps dans ses journaux, pour la sécurité. En savoir plus : <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">la déclaration de confidentialité de GitHub</a>.",
-   "Tout le reste, les polices, les images, la musique et les sons, vient avec le jeu lui-même : rien n’est chargé depuis une autre entreprise." ] },
-  { "h": "Ce que le jeu ne fait jamais", "p": [
-   "Pas de publicité, pas de pistage, pas de statistiques, et vos données ne sont jamais vendues ni partagées. Pas de cookies de pistage ou de publicité : seul ce dont le jeu a besoin pour fonctionner est gardé sur votre appareil.",
-   "Il n’y a rien à acheter avec de l’argent réel pour l’instant. Si cela change, cette page expliquera d’abord comment cela fonctionne." ] },
-  { "h": "Les enfants", "p": [
-   "Feather & Field est fait pour les adultes et les jeunes adultes. Se connecter demande un compte Google, et Google fixe son propre âge minimum. Le jeu ne collecte sciemment aucune information auprès d’enfants de moins de 13 ans." ] },
-  { "h": "Vos droits", "p": [
-   "Vous pouvez demander à voir, corriger ou supprimer ce qui est gardé sur vous, ou vous opposer à son utilisation, en écrivant à {email}. Vous pouvez aussi supprimer vous-même votre compte et votre ferme en ligne à tout moment dans les Réglages. Aucune décision vous concernant n’est prise automatiquement.",
-   "Si la façon dont vos données sont traitées ne vous convient pas, vous pouvez vous adresser à {authority}." ] },
-  { "h": "Changements", "p": [
-   "Si cette page change, la date en haut change aussi, et tout changement important sera annoncé dans le jeu." ] }
+  {
+   "h": "Sur votre téléphone",
+   "p": [
+    "Le jeu garde votre ferme sur votre téléphone ou votre tablette, dans l’espace que lui donne votre navigateur ou l’application : vos oiseaux, vos pièces, votre niveau, vos réglages et la langue choisie. Le jeu en a besoin pour fonctionner, et tout reste sur votre appareil.",
+    "Vous pouvez la copier sous forme de code de ferme dans les Réglages, et la supprimer quand vous voulez avec « Commencer une nouvelle ferme », ou en effaçant les données du site dans votre navigateur."
+   ]
+  },
+  {
+   "h": "Si vous vous connectez avec Google (facultatif)",
+   "p": [
+    "Mon compte est facultatif. Si vous vous connectez avec Google, le jeu utilise le service Firebase de Google pour :",
+    "• vous connecter : Google transmet au jeu l’identifiant de votre compte, votre nom et votre adresse e-mail. Le jeu ne voit jamais votre mot de passe ;",
+    "• garder une copie de votre ferme en ligne, pour que vous ne la perdiez pas et puissiez y jouer sur un autre téléphone ou une autre tablette. Elle est conservée dans la base de données Firebase de Google {where}, liée à votre compte, et elle n’est accessible qu’à vous.",
+    "Pourquoi : pour vous rendre le service que vous avez demandé, votre ferme gardée en sécurité et sur tous vos appareils.",
+    "Combien de temps : jusqu’à ce que vous supprimiez votre compte. Dans les Réglages, Mon compte, « Supprimer mon compte » supprime aussitôt votre compte et votre ferme en ligne ; votre ferme reste sur votre téléphone.",
+    "Pour préparer la connexion Google, le jeu ne contacte Google que lorsque vous ouvrez les Réglages ou touchez « Connectez-vous » sur l’écran d’accueil, quand le jeu vous propose de vous connecter (une seule fois, quelques jours après le début d’une ferme), et, une fois la connexion faite, à chaque ouverture du jeu. Les serveurs de connexion de Google peuvent se trouver hors du Royaume-Uni et de l’Europe ; Google s’occupe de ces données pour nous selon les conditions de Firebase, avec les garanties prévues par la loi. En savoir plus : <a href=\"https://firebase.google.com/support/privacy\">Confidentialité et sécurité dans Firebase</a>."
+   ]
+  },
+  {
+   "h": "D’où vient le jeu",
+   "p": [
+    "Le jeu est servi par GitHub Pages (GitHub, Inc.). Comme pour tout site, les serveurs de GitHub voient l’adresse internet de votre appareil quand le jeu se charge, et GitHub peut la garder un peu de temps dans ses journaux, pour la sécurité. En savoir plus : <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">la déclaration de confidentialité de GitHub</a>.",
+    "Tout le reste, les polices, les images, la musique et les sons, vient avec le jeu lui-même : rien n’est chargé depuis une autre entreprise."
+   ]
+  },
+  {
+   "h": "Ce que le jeu ne fait jamais",
+   "p": [
+    "Pas de publicité, pas de pistage, pas de statistiques, et vos données ne sont jamais vendues ni partagées. Pas de cookies de pistage ou de publicité : seul ce dont le jeu a besoin pour fonctionner est gardé sur votre appareil.",
+    "Il n’y a rien à acheter avec de l’argent réel pour l’instant. Si cela change, cette page expliquera d’abord comment cela fonctionne."
+   ]
+  },
+  {
+   "h": "Les enfants",
+   "p": [
+    "Feather & Field est fait pour les adultes et les jeunes adultes. Se connecter demande un compte Google, et Google fixe son propre âge minimum. Le jeu ne collecte sciemment aucune information auprès d’enfants de moins de 13 ans."
+   ]
+  },
+  {
+   "h": "Vos droits",
+   "p": [
+    "Vous pouvez demander à voir, corriger ou supprimer ce qui est gardé sur vous, ou vous opposer à son utilisation, en écrivant à {email}. Vous pouvez aussi supprimer vous-même votre compte et votre ferme en ligne à tout moment dans les Réglages. Aucune décision vous concernant n’est prise automatiquement.",
+    "Si la façon dont vos données sont traitées ne vous convient pas, vous pouvez vous adresser à {authority}."
+   ]
+  },
+  {
+   "h": "Changements",
+   "p": [
+    "Si cette page change, la date en haut change aussi, et tout changement important sera annoncé dans le jeu."
+   ]
+  }
  ],
  "contact": "Contact : {owner}, {email}",
  "back": "Retour au jeu"

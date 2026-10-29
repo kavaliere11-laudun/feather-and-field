@@ -1,0 +1,14 @@
+[
+ {
+  "path": "sections[1].p[0]",
+  "now": "Mein Konto ist freiwillig. Wenn du dich mit Google anmeldest, nutzt das Spiel den Firebase-Dienst von Google, um:",
+  "problem": "'freiwillig' (voluntary) is odd for a feature; 'optional' is the usual word",
+  "fix": "Mein Konto ist optional. Wenn du dich mit Google anmeldest, nutzt das Spiel den Firebase-Dienst von Google, um:"
+ },
+ {
+  "path": "sections[1].p[4]",
+  "now": "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löscht „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten.",
+  "problem": "subject „Konto löschen“ after the verb is hard to follow; say what the player does",
+  "fix": "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löschst du mit „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten."
+ }
+]

@@ -18,7 +18,7 @@
     "• guardar uma cópia da sua fazenda online, para você não perdê-la e poder continuar jogando em outro celular ou tablet. Ela fica armazenada no banco de dados Firebase do Google {where}, vinculada à sua conta, e só você pode abri-la.",
     "Por quê: para oferecer o que você pediu, sua fazenda em segurança e em todos os seus aparelhos (o serviço que você escolheu usar).",
     "Por quanto tempo: até você excluir sua conta. Nos Ajustes, em Minha conta, “Excluir conta” exclui imediatamente sua conta e sua fazenda online; sua fazenda continua no seu celular.",
-    "Para deixar o login do Google pronto, o jogo só se conecta ao Google quando você abre os Ajustes ou a sugestão de login, ou toca em “Faça login” na tela de boas-vindas, e, depois que você faz login, sempre que o jogo é aberto. Os servidores de login do Google podem ficar fora do Reino Unido e da Europa; o Google cuida desses dados em nosso nome, de acordo com os termos do Firebase e com as garantias que a lei exige. Saiba mais: <a href=\"https://firebase.google.com/support/privacy\">Privacidade e segurança no Firebase</a>."
+    "Para deixar o login do Google pronto, o jogo só se conecta ao Google quando você abre os Ajustes ou toca em “Faça login” na tela de boas-vindas, quando o jogo sugere que você faça login (uma única vez, alguns dias depois de começar uma fazenda) e, depois que você faz login, sempre que o jogo é aberto. Os servidores de login do Google podem ficar fora do Reino Unido e da Europa; o Google cuida desses dados em nosso nome, de acordo com os termos do Firebase e com as garantias que a lei exige. Saiba mais: <a href=\"https://firebase.google.com/support/privacy\">Privacidade e segurança no Firebase</a>."
    ]
   },
   {
