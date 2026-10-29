@@ -181,6 +181,7 @@ export class GameUI {
       const draw = () => {
         this.hero(true);
         const b = this.open('welcome', this.t('welcome_title'), true);
+        try { document.documentElement.lang = this.g.lang; } catch (e) { /* */ }      // (the page's language from the start)
         this.dim.hidden = true; this.sheet.classList.add('gwelcome');
         b.append(el('p', 'gtext', this.t('welcome_body')));
         const langRow = el('div', 'grow');
