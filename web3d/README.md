@@ -2991,3 +2991,96 @@ the birds already had.
   the newer farm; both changed (one offline meanwhile) asks, and each answer does what it says; a phone with its own farm
   signing in is asked; a spoilt online farm is never taken; the closed Google window; sign out; delete; a new farm while
   signed in; the suggestion once, not after a reload; `acctAsk` checked.
+
+## Release 7, the new breeds' coops: the Little Windmill (29 Oct 2026; Audrey: "A little windmill (Recommended)" for the Polish; on its everyday look: "Yes, do the other looks (Recommended)")
+
+- **The Little Windmill** (stylized/coops.py `windmill`, `mill_sails`; the Polish came from the Netherlands): a brick ground
+  floor with the hens' pop door and ramp, a little arched green door and the nest window in front (the shared footprint
+  and nest: `NESTS['house_pol']`, floor 0.2, window at 0.36, its door let down), a skirt of slates round its top, a white
+  weatherboarded smock tower on eight corner posts, a dark boat-shaped cap, a millstone and sacks of flour by its right side,
+  a lantern on a post. Its sails are their own model (`sails_pol`: four lattice sails with canvas on red-brown stocks) the
+  browser turns slowly counter-clockwise at the hub (coops.json `mills`; main.js `addSails`, `tickSails`; slower by night;
+  no shadow, as the shadows are drawn only when the view moves on). Exported after the other coops (`coops.LATER`) so
+  their random bits stay as they were. Test page: `?coopbreeds=pol` (just those breeds' coops), `&coops=1`, `&looks=N`;
+  barnlooks.mjs `EXTRA`.
+- **Its five looks** (`box_pol`, `shed_pol`, `house_pol`, `cosy_pol` with `_mill_bits`, `deluxe_pol`): Rustic, the stump of
+  an old mill broken off unevenly (`mill_bricks` `top`, `missing`), moss, old boards across its top under a broken old sail
+  and a sack, bricks on them, fallen bricks, an old millstone half sunk; Mended, the brick rebuilt (new among the old), a
+  felt skirt, a stubby tower of new pine boards, the lowest painted white so far, a cap of wooden shingles, a first pair of
+  bare sails turning (`sails_pol_t1`), a ladder, a pot of white paint, a pallet of new bricks; Snug, the windmill; Cosy,
+  tulip beds along its sides, blue-and-white Delft pots of tulips by the ramp, a pair of yellow clogs on a doorstep, a window
+  box of geraniums on the tower, the automatic door's box and its solar panel, a path of red bricks to the gate; Deluxe
+  (`DX_MILL`), a taller tower with a gallery round it on brackets (white rail), green-and-white striped shutters, a fantail
+  at the back of its cap, bigger sails with red stocks (`sails_pol_dx`); the cosy touches. main.js `TIER_LOOK.pol`.
+- **Its gardens** (`PENS_BY['pol']`, `PLAY_BY['pol']`): a terracotta bowl in the small pens, a Delft one in the Cosy;
+  Cosy: a swing on Dutch-green A frames with tulip tops (`dutch_swing`), a giant wooden clog full of sand (`sand_clog`), the
+  cabbage from the arm of a white post with a toy windmill on top (`cabbage_mill`); Deluxe: a sandbox faced with Delft
+  tiles with a toy boat (`sand_delft`), a little canal with a white drawbridge for water (coop.py `canal`), a feeder like a
+  tiny windmill (`feeder_style='mill'`), a xylophone of tulip-coloured bars (`tulip_xylophone`), the swing and the post.
+- Five looks sent (a sheet with the phone on its side, a closer Cosy and Deluxe). Audrey: "Small changes", then (21:59)
+  "windmeal 3, 4 and 5 are too similar". Redone (live 22:30), the Snug as it was: the Cosy painted Dutch green with white
+  posts and frames, its skirt and cap of red pantiles, red-and-white striped sails (`COSY_PAL`, `sails_pol_cosy`:
+  `mill_sails` `stripe`); the Deluxe cream with Delft-blue posts, frames, door and shutters, its skirt and cap of green
+  copper with a gold knob (`DX_PAL`), the gallery, and a little miller's house against its left side (`miller_house`: brick,
+  a stepped Dutch gable with white copings and a gold finial, a window with blue shutters and tulips, a round window, a
+  roof of red pantiles, a chimney; the birds walk round it). The solar panel now on top of the lantern post (on the steep
+  skirt it stood up like a card). Sent again.
+- Audrey (22:12): "Remove the little house on the left of the deluxe coop please": the miller's house taken off (the tulip
+  bed on that side back); the Deluxe is the cream and Delft-blue mill with its copper cap, gold knob and gallery.
+- Audrey (22:17): the windmill done, "Yes crack on".
+
+## Release 7, the Javanese House (29 Oct 2026; Audrey: "A Javanese house (Recommended)" for the Ayam Cemani)
+
+- **The Javanese House** (stylized/coops.py `joglo`, `JOGLO`, `JG`, `hip_tier`; the Ayam Cemani comes from Java): a joglo on
+  a plinth of dark volcanic stone (a step up to its doors), walls of teak boards up from the floor (0.24: `NESTS['house_aya']`,
+  the nest window at 0.42, its carved shutter let down), a band of carving in gold along the top of the front, carved
+  double doors with gold diamonds, a roof of terracotta tiles in two tiers (a wide low skirt from the eaves, a beam at the
+  break, then the steep crown up to a short ridge; the tiles' ribs down each face, courses across, a rounded cap down each
+  hip), curled ridge ends with gold tips and a gold point in the middle, teak posts on stone pads at its front corners, side
+  windows with grilles, a brass lantern hanging from the eave, a big terracotta water jar with a lid and a coconut dipper.
+  First with deep eaves all round; from the game's camera they hid the doors and the carving, so the eaves went up (0.96)
+  and the front overhang down to 0.1. Exported after the others (`coops.LATER`). Test page `?coopbreeds=aya&coops=1&looks=2`.
+  Its everyday look sent.
+- Audrey (22:25), on its everyday look: "Yes". **Its five looks** (`box_aya`, `shed_aya`, `house_aya`, `cosy_aya` with
+  `_joglo_bits`, `deluxe_aya`; each clearly its own, after the windmill's "3, 4 and 5 are too similar"): Rustic, a hut of
+  salvaged planks of every colour on piles of stones, a roof of rusty corrugated tin sheets under a palm frond, stones on it,
+  an old carved panel with gold left in its carving leaning on its side (the hint), a cracked old jar; Mended, walls of new
+  woven bamboo (a checker of two shades) on a low stone base, bamboo poles at its corners, a hipped roof of battens half laid
+  with new clay tiles, stacks of tiles waiting; Snug, the joglo; Cosy (`COSY_JG`), green-glazed tiles, a frangipani in flower
+  by its left side (`frangipani`), a banana plant at its back right, orchids in clay pots by the ramp, the automatic door's
+  box and its solar panel on the roof's skirt, flat river stones to the gate; Deluxe (`DX_JG`, `DX_JOGLO`), taller, cream
+  walls, red posts with gold rings, a third tier of roof, black-glazed tiles with gold hips and beams (`joglo` `pal`, `brk2`),
+  two red-and-gold ceremonial umbrellas (payung) at its front; the cosy touches. main.js `TIER_LOOK.aya`.
+- **Its gardens** (`PENS_BY['aya']`, `PLAY_BY['aya']`): a coconut-shell bowl in the small pens, a brass one in the Cosy;
+  Cosy: a swing between two teak posts under a little roof of clay tiles (`joglo_swing`), a big round woven bamboo tray of
+  sand (`sand_tampah`, a round sand bath), the cabbage from the arm of a post with a slit drum hanging on it
+  (`cabbage_kentongan`); Deluxe: a sand pit edged with carved stone in two steps with little stupas at its corners
+  (`sand_candi`), a padasan for water (coop.py `padasan`: a clay jar on a stand, a bamboo spout into a stone basin), a feeder
+  like a tiny teak house with a black-and-gold roof (`feeder_style='joglo'`), a little gamelan of bronze bars on a red case
+  (`gamelan`), the swing and the post. The new breeds' yards seeded before they're made (`pen_tier`: `LATER`), so nothing
+  made before them changes them.
+- Five looks sent.
+
+## Release 7, the new breeds in the game (29 Oct 2026; Audrey: "Let's go")
+
+- **The Polish at level 26, the Ayam Cemani at level 29** (`game.js` `BREED_LEVEL`): the level's card says "New breed:
+  Polish!" (or Ayam Cemani), "Place their coop now" / "Later"; their coop comes Rustic like every new breed's and goes up
+  Mended, Snug, Cosy, Deluxe for 300 / 1,000 / 3,000 / 8,000 coins (`up_pol_*`, `up_aya_*`: what each brings, in six
+  languages). Eggs: the Polish white, 9 coins; the Ayam Cemani cream, 10 (`EGG_PRICE`, `egg_pol`, `egg_aya`); chicks 30 and 34
+  (`CHICK_PRICE`). `LOOKS_CV` 1 for both (their farms are after the looks: always five).
+- **Names**: Polish / Padoue / Paduaner / Polaca / Polonesa / Padovana; Ayam Cemani everywhere. The coops: Little Windmill /
+  Petit moulin / Kleine Windmühle / Molinito / Moinhozinho / Piccolo mulino; Javanese House / Maison javanaise / Javanisches
+  Haus / Casa javanesa / Casa Javanesa / Casa giavanese (`BREED_INFO`; `lang/*.json`, catalogue 860 entries).
+- **The Breed Book**: 17 pages (`book/pol.webp`, `book/aya.webp` from `bookpics.mjs`), in level order between the Grey
+  Silkie and the rare Silkies.
+- **Shows**: Polish and Ayam Cemani rivals (`showday.js` `RIVALS`); a show's breed of the day can be one of them from
+  30 Oct (`SHOW_BREED_LEVEL_7`, `SHOW_7_FROM`: shows already drawn keep their breed).
+- **Saves**: nothing new saved (a coop's breed is checked against `BREED_LEVEL` as before: a Polish coop before level 26 is
+  flagged).
+- **The Javanese House's Cosy swing** moved to (-1.4, -1.95): a hen getting off it landed just outside the yard.
+- **Balance** (`balsim.mjs 365 all 3`): level 30 comes 1 to 3 days earlier; the windmill's Deluxe around day 241-261, the
+  Javanese House's around day 247-300.
+- **Tests**: booktest and silktest (17 breeds, levels 26 and 29), upgradetest `BREED=pol` (English upright) and `BREED=aya`
+  (French sideways), playtest with `EXTRA`, breedtest, gametest both ways, langtest (de, es, pt, it), eggtest, chicktest,
+  movetest, visittest, doors, codetest: all pass. Pictures (the level's card, the coop placed, the Book page; the five looks
+  upgrading) sent.
