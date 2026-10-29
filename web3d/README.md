@@ -2898,5 +2898,8 @@ the birds already had.
 - **Tests**: `soundtest.mjs` also checks that all eleven kinds and five beds are loaded; each hour's bed, the others
   silent; the pond near and far; the rooster's crow and a hen's egg song heard when they happen; a woof, a quack and a
   flurry; Sounds Off.
-- Still to come: the geese and the bees (the US park service's public-domain recordings). That needs `www.nps.gov`
-  allowed too.
+- **The geese and a bee** (29 Oct, once Audrey allowed www.nps.gov): the US National Park Service's "Canada Geese" and
+  "Bee" (public domain, credited), cut into three honks and two buzzes (`audio/farm/honk1-3`, `buzz1-2`). A goose honks
+  as her bill opens on a honk (not more than one every 2½ seconds; `geese.js`), so on a tap, a proud honk, the ta-da, an
+  alarm. A bee buzzes past the hives now and then while the bees are out (`main.js` `spotsHeard`, `sound.js` `tickSpots`).
+  Their hiss has no recording yet, so it stays silent.
