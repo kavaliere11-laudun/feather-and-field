@@ -322,8 +322,9 @@ export class Goose {
     let ax = dx / d, az = dz / d, slow = 1;
     for (const o of this.flock ? this.flock.near : []) {
       if (o === this || (!o.isGoose && pace === 'charge')) continue;        // (charging at the fox: straight at him)
-      if (this.isDuck && o.isDuck && o.idx > this.idx) continue;              // (a duck never waits for those behind her in the line)
-      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isGoose ? (this.isDuck ? (o.isDuck ? 0.36 : 0.5) : o.isDuck ? 0.4 : 0.46) : o.isFarmer && this.flock && this.flock.calmBy ? 0.74 : 0.85;      // (the fox: well clear; the farmer they trust, up to him)
+      if (this.isDuck && o.isDuck && o.idx > this.idx && !o.isDuckling) continue;      // (a duck never waits for those behind her in the line; round a duckling, always)
+      if (o.inHouse || (o.root && !o.root.visible)) continue;
+      const rx = o.pos.x - p.x, rz = o.pos.z - p.z, rd = Math.hypot(rx, rz), R = o.isDuckling ? 0.22 : o.isGoose ? (this.isDuck ? (o.isDuck ? 0.36 : 0.5) : o.isDuck ? 0.4 : 0.46) : o.isFarmer && this.flock && this.flock.calmBy ? 0.74 : 0.85;      // (the fox: well clear; the farmer they trust, up to him; a duckling: round it)
       if (rd > R + 0.45 || rd > d + R) continue;
       const ahead = (rx * ax + rz * az) / Math.max(1e-3, rd); if (ahead < 0.2) continue;
       const k = Math.min(1, (R + 0.45 - rd) / 0.55) * ahead, cross = ax * rz - az * rx, th = -(cross >= 0 ? 1 : -1) * 1.2 * k;

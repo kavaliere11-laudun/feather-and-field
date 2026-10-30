@@ -1270,12 +1270,16 @@ function addCallDucks(plot, r, trio = null) {
   plot.nestG = nestOf(plot); plot.callR = r;
   if (plot.callPen) { plot.callPen.group.removeFromParent(); if (heldBird && heldBird.pen === plot.callPen) heldBird = null; }      // (a new look: the pen made again)
   const gbs = plot.gc ? [...(trio || game.birdsIn(plot.gc.id))].sort((a, b) => (b.sex === 'r') - (a.sex === 'r')) : null;
-  plot.callPen = new CallPen(plot, { birds: gbs ? gbs.map(b => ({ kind: b.sex === 'r' ? 'call_m' : 'call_f', name: b.name, gid: b.id })) : null, game: !!(GAME_MODE && plot.gc),
+  plot.callPen = new CallPen(plot, { house: L.house, birds: gbs ? gbs.map(b => ({ kind: b.sex === 'r' ? 'call_m' : 'call_f', name: b.name, gid: b.id })) : null, game: !!(GAME_MODE && plot.gc),
     toCam: () => Math.atan2(VIEW_DIR.x, VIEW_DIR.z) - plot.group.rotation.y, heart: d => heartsOver(d, 1), pond: (COOPS.ponds || {})[L.house] || [0, 0.17, 0.98, 0.7, 0.032], path: (COOPS.paths || {})[L.house] || null,
     yard: { min: [box.min[0] + 0.18, 0, box.min[2] + 0.18], max: [box.max[0] - 0.18, 0, box.max[2] - 0.2] }, obstacles: (pen.obstacles || []).filter(q => Math.abs(q[0] + 0.31) > 0.01), block: plot.block || [],      // (not the hens' ramp: theirs is the gangplank)
     ball: (COOPS.balls || {})[L.house] || null, hour: clockHour, doorOpen: () => doorOpen(plot),
     laid: d => { if (!plot.nest) return; if (GAME_MODE) { if (plot.gc) gameLaid(d); } else plot.nest.count = Math.min(plot.nest.count + 1, NEST_SLOTS.length); plot.nest.pop = 1; showEggs(plot); },
     sound: (k, x, z) => { const v = plot.frame.localToWorld(new THREE.Vector3(x, 0, z)); farmSound(k, v.x, v.z, 1.4); } }, r);
+  if (!GAME_MODE && params.get('brood')) {      // (the test page's ?brood=sit: Puddle on her eggs; ?brood=raise: her three ducklings out with her)
+    const C = plot.callPen, mum = C.ducks.find(d => d.kind === 'call_f');
+    if (mum) { C.startSit(mum); if (params.get('brood') === 'raise') C.hatch(mum, 3); }
+  }
 }
 function addNest(frame, plot) {
   const m = EGG_MATS[plot.breed] || (EGG_MATS[plot.breed] = new THREE.MeshStandardMaterial({ color: EGG_COLOUR[plot.breed], roughness: 0.45 }));
@@ -3241,7 +3245,7 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = f; } }
   }
-  for (const g of [...(geeseLineup ? geeseLineup.geese : []), ...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks : []), ...plots.flatMap(p => p.callPen ? p.callPen.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])]) {
+  for (const g of [...(geeseLineup ? geeseLineup.geese : []), ...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks : []), ...plots.flatMap(p => p.callPen ? p.callPen.all() : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])]) {
     if (!g.root.visible) continue;
     g.root.getWorldPosition(w); s.center.set(w.x, w.y + g.hitY, w.z); s.radius = g.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());

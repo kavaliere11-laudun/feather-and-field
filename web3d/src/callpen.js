@@ -19,6 +19,9 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const RAFT = { x: 0.63, z0: -0.45, z1: 0.5 };       // the raft and the house on it (k as big: stylized/coops.py FLOAT raft), kept clear
 const HOUSE = { x: 0.44, z: 0.31 }, DECK = 0.072;    // the house on it (its walls), the deck's height
 const BED = [20.75, 6.6];                            // to bed from, up from
+// what stands in the water besides the raft (stylized/coops.py floating: the Cosy's rowing boat moored by the raft, the
+// Deluxe's fountain), as [x0, z0, x1, z1, r]: a capsule from above (the coop's frame; Blender's y is -z here)
+const IN_WATER = { cosy_call: [[-0.8, 0.13, -0.8, 0.39, 0.095]], deluxe_call: [[1.22, -0.28, 1.22, -0.28, 0.14]] };
 const BALL_R = 0.085;
 // a duck's body seen from above (measured off the call ducks' models: tail to bill tip -0.136 to 0.161 along her heading,
 // 0.062 to each side): a capsule from just in front of the tail to the breast, as wide as she is. Nobody goes through
@@ -32,7 +35,8 @@ const ARGUE = 0.55, ARGUE_GAP = 25;                       // the chance two at t
 // the ball where it is: afloat (pondS under 0.86), on the bank's stones (to 1.12: it rolls back down into the water unless
 // it's going well), or out on the yard
 const zoneAt = s => s < 0.86 ? 'water' : s < 1.12 ? 'bank' : 'land';
-const capOf = d => { const s = Math.sin(d.heading), c = Math.cos(d.heading), x = d.pos.x, z = d.pos.z; return [x + s * CAP.back, z + c * CAP.back, x + s * CAP.front, z + c * CAP.front]; };
+const capK = d => d.isDuckling ? 0.475 : 1;              // (a duckling's body: a call duck's at about half the size)
+const capOf = d => { const s = Math.sin(d.heading), c = Math.cos(d.heading), x = d.pos.x, z = d.pos.z, k = capK(d); return [x + s * CAP.back * k, z + c * CAP.back * k, x + s * CAP.front * k, z + c * CAP.front * k]; };
 const near = (px, pz, S) => { const dx = S[2] - S[0], dz = S[3] - S[1], L = dx * dx + dz * dz, u = L ? Math.max(0, Math.min(1, ((px - S[0]) * dx + (pz - S[1]) * dz) / L)) : 0; return [S[0] + dx * u, S[1] + dz * u]; };
 // (the closest points of two capsules' middles: each end of one against the other, and back)
 function closest(A, B) {
@@ -79,8 +83,10 @@ export class CallPen {
       d.shadow = shadowDisc(0.085); this.group.add(d.shadow);
       return d;
     });
+    this.kids = []; this.brood = null;      // (a duck's ducklings, once they've hatched: CallPen.hatch)
     this.near = this.ducks;
     this.nav = { freeAt: (x, z) => !this.inRaft(x, z, 0.02) || this.onRamp(x, z) !== null };      // (moveTo's: the raft's no way to go)
+    this.wetThings = IN_WATER[o.house] || [];
     this.ring = this.makeRing();
     if (o.ball) {
       this.ball = { mesh: beachBall(), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion(), zone: 'water', out: false };
@@ -96,7 +102,7 @@ export class CallPen {
     this.wasBed = this.bedtime(h);
   }
   bedtime(h) { return h >= BED[0] || h < BED[1]; }
-  onTap(d) { if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); }      // (a tap: she quacks, bobs her head and wiggles: geese.js tapped)
+  onTap(d) { if (this.o.sound) this.o.sound(d.isDuckling ? 'chicks' : 'quack', d.pos.x, d.pos.z); }      // (a tap: she quacks, bobs her head and wiggles: geese.js tapped)
   // ---- where things are
   pondS(x, z) { const P = this.P; return Math.hypot((x - P.cx) / P.a, (z - P.cz) / P.b); }
   onRamp(x, z) {
@@ -119,6 +125,11 @@ export class CallPen {
     return this.pondS(x, z) < 1.0 ? this.P.wy : 0;
   }
   inRaft(x, z, m = 0) { return Math.abs(x) < RAFT.x + m && z > RAFT.z0 - m && z < RAFT.z1 + m; }
+  // in the boat or the fountain (m: more room round it): the way out of it, [nx, nz, how far], or null
+  inThing(x, z, m = 0) {
+    for (const T of this.wetThings) { const q = near(x, z, T), dx = x - q[0], dz = z - q[1], d = Math.hypot(dx, dz); if (d < T[4] + m) return d > 1e-5 ? [dx / d, dz / d, T[4] + m - d] : [1, 0, T[4] + m]; }
+    return null;
+  }
   underPlank(x, z, m = 0) { return Math.abs(x - this.pop[0]) < this.plankW() + m && z > this.pop[1] - 0.05 && z < this.foot[1] + 0.04 + m; }
   plankW() { return this.o.path ? 0.135 : 0.1; }      // (half its width: the gangplank's; the Deluxe's bridge with its railings, stylized/coops.py monet_bridge)
   // the swimming ring: points round the raft, out in the water, the raft and the gangplank kept clear; split by the
@@ -129,7 +140,7 @@ export class CallPen {
       const t = k / 48 * Math.PI * 2;
       for (const s of [0.66, 0.76, 0.84]) {
         const x = P.cx + P.a * s * Math.cos(t), z = P.cz + P.b * s * Math.sin(t);
-        if (this.inRaft(x, z, 0.12) || this.underPlank(x, z, 0.08)) continue;
+        if (this.inRaft(x, z, 0.12) || this.underPlank(x, z, 0.08) || this.inThing(x, z, 0.12)) continue;
         out.push({ x, z, t, s });
       }
     }
@@ -182,7 +193,15 @@ export class CallPen {
   onLand(d) { return d.wet < 0.3 && this.pondS(d.pos.x, d.pos.z) > 1.08 && this.onRamp(d.pos.x, d.pos.z) === null && !d.inHouse; }
   // round the raft's corner (on her side of the gangplank) if the straight swim from a to b would clip it: the corner's spot
   viaCorner(a, b) {
-    let clip = false; for (let k = 1; k < 14; k++) { const u = k / 14; if (this.inRaft(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, 0.08)) { clip = true; break; } }
+    let clip = false, thing = null;
+    for (let k = 1; k < 14; k++) { const u = k / 14, x = a[0] + (b[0] - a[0]) * u, z = a[1] + (b[1] - a[1]) * u; if (this.inRaft(x, z, 0.08)) { clip = true; break; } if (!thing && this.inThing(x, z, 0.1)) thing = [x, z]; }
+    if (!clip && thing) {                              // (round the boat or the fountain: out to the side of it, the nearer way, in the water)
+      for (const T of this.wetThings) {
+        const q = near(thing[0], thing[1], T); if (Math.hypot(thing[0] - q[0], thing[1] - q[1]) > T[4] + 0.12) continue;
+        const ex = b[0] - a[0], ez = b[1] - a[1], el = Math.hypot(ex, ez) || 1, px = -ez / el, pz = ex / el;
+        for (const sg of [1, -1]) { const w = [q[0] + px * sg * (T[4] + 0.16), q[1] + pz * sg * (T[4] + 0.16)]; if (this.pondS(w[0], w[1]) < 0.92 && !this.inRaft(w[0], w[1], 0.08) && !this.underPlank(w[0], w[1], 0.06)) return w; }
+      }
+    }
     if (!clip) return null;
     const C = [[RAFT.x + 0.09, RAFT.z1 + 0.09], [-RAFT.x - 0.09, RAFT.z1 + 0.09], [RAFT.x + 0.09, RAFT.z0 - 0.09], [-RAFT.x - 0.09, RAFT.z0 - 0.09]].filter(c => this.pondS(c[0], c[1]) < 1.02 && this.side(c[0]) === this.side(b[0]));
     const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -199,8 +218,9 @@ export class CallPen {
   dayTask(d) {
     const L = [], h = this.o.hour(), dry = d.wet < 0.5, r = this.r();
     if (!dry) return this.swimTask(d, true);
+    if (this.brood && this.brood.mum === d) return this.mumTask(d);      // (with her ducklings: gentle walks, swims and long rests, never the ball)
     if (!this.o.game && d.kind === 'call_f' && d.laidOn !== this.day && h >= 8 && h < 17 && r < 0.18) return this.layTask(d);      // (the ducks lay; Pip doesn't. The game's: when it says, layNow)
-    if (d.idx === 0 && r < 0.12 && this.ducks.every(o => this.onLand(o) && (!o.task || !/^(lay|parade)/.test(o.task.name))) && this.parade()) return d.task;
+    if (d.idx === 0 && !this.brood && r < 0.12 && this.ducks.every(o => this.onLand(o) && (!o.task || !/^(lay|parade)/.test(o.task.name))) && this.parade()) return d.task;
     if (r < 0.45) return this.swimTask(d, false);
     if (this.ball && this.ball.zone === 'water' && r < 0.6) return this.swimTask(d, false, true);      // (not while it's out on the yard: that's fetching)
     const s = this.yardSpot(); if (!this.walkTo(L, s[0], s[1], 'walk', d)) return TK.act('look', 2 + this.r() * 2);
@@ -376,7 +396,8 @@ export class CallPen {
   goBed() {
     const order = this.ducks.map((_, i) => i).reverse();
     order.forEach((i, k) => {
-      const d = this.ducks[i]; if (d.inHouse) { d.task = this.sleepTask(); return; }
+      const d = this.ducks[i]; if (d.broody) return;      // (a duck sitting on her eggs stays on them)
+      if (d.inHouse) { d.task = this.sleepTask(); return; }
       const L = [TK.act('wait', k * 2.5, ACT.look)];
       if (d.wet > 0.3) {                                  // (out of the water first)
         const fr = this.ring.filter(p => this.side(p.x) === this.side(d.pos.x) && p.s > 0.8 && Math.sin(p.t) > 0.45);
@@ -390,16 +411,16 @@ export class CallPen {
   // the morning: out one after another (Pip first), down to the yard, a stretch and a quack
   getUp() {
     this.ducks.forEach((d, k) => {
-      if (!d.inHouse) return;
+      if (!d.inHouse || d.broody) return;
       d.task = TK.seq('morning', [TK.act('wait', 0.5 + k * 2.2, () => {}), () => { this.inside(d, false); return null; },
         this.rampTask(false), S(this.foot[0] + (k - 1) * 0.25, this.foot[1] + 0.35, 'walk', false, 0.08),
         TK.act('stretch', 3.6, ACT.stretch), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2))]);
     });
   }
   // ---- the game's: her lay when it's due (main.js gameTick), her card open, a cuddle, a hello to the farmer
-  busy(d, parade = true) { return d.inHouse || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet|argue|fetch)/ : /^(lay|bed|morning|held|cuddle|greet|argue|fetch)/).test(d.task.name)); }
+  busy(d, parade = true) { return d.inHouse || d.broody || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet|argue|fetch|sit|lead)/ : /^(lay|bed|morning|held|cuddle|greet|argue|fetch|sit|lead)/).test(d.task.name)); }
   canLay(d) {        // (by day, up and about on the yard, nobody else in the nest)
-    return d.kind === 'call_f' && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying);
+    return d.kind === 'call_f' && !d.broody && !(this.brood && this.brood.mum === d) && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying || o.broody);
   }
   layNow(d) { d.task = this.layTask(d); }
   hold(d, yes) {     // her card's open: she stays where she is (on the yard or afloat), facing you
@@ -421,6 +442,127 @@ export class CallPen {
     L.push(TK.face(yaw), () => { if (this.o.heart) this.o.heart(d); if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); return null; }, TK.act('bob', 3.4, BOB), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2)));
     d.task = TK.seq('greet', L);
     return true;
+  }
+  // ---- a brood (30 Oct; Audrey: the call ducks' ducklings): a duck sitting on her eggs in the nest at the window, day and
+  // night; then her ducklings: out of the house after her one by one, down the gangplank, following her in a line on the
+  // yard and across the pond (each on the trail of the one ahead, a little gap between), gathering round her and snuggling
+  // in when she rests, peeping; in bed with her at night and out after her in the morning
+  all() { return this.kids.length ? [...this.ducks, ...this.kids] : this.ducks; }
+  // a mother whose ducklings have fallen behind (out and about, not going in or out of the house): she waits for them
+  waitFor() {
+    const B = this.brood; if (!B || !this.kids.length) return null;
+    const m = B.mum; if (m.inHouse || !m.root.visible || this.onRamp(m.pos.x, m.pos.z) !== null || !m.task || !/^(yard|swim)$/.test(m.task.name)) { B.waiting = false; return null; }
+    const out = this.kids.filter(k => !k.inHouse); if (!out.length) return null;
+    const far = Math.max(...out.map(k => Math.hypot(k.pos.x - m.pos.x, k.pos.z - m.pos.z)));
+    B.waiting = B.waiting ? far > 0.55 : far > 0.95;      // (stops once they're well behind; on again once they're close)
+    return B.waiting ? m : null;
+  }
+  startSit(d) {
+    d.broody = true;
+    const G = this.G, L = d.inHouse ? [] : this.upTask(d);
+    if (d.inHouse) this.inside(d, true);
+    L.push({ name: 'sit', act: 'rest', t: 0, run(g, dt) {
+      if (this.t === 0) { g.root.visible = true; g.pos.set(G.seat[0], (G.bed ?? G.floor) - 0.012, G.seat[1] + 0.06); g.heading = 0; g.lastPos = g.pos.clone(); g.A.sit = 1; }
+      this.t += dt; const A = g.A; A.sitGoal = 1; A.upGoal = 0.15; ACT.look(g, this.t * 0.3); A.squintGoal = (this.t % 14) > 9 ? 0.85 : 0;      // (snug on her eggs, now and then dozing)
+      return !g.broody;
+    } });
+    d.task = TK.seq('sit', L);
+  }
+  // her eggs hatch: n ducklings (names: theirs, the game's), in the nest with her; she gets up and leads them out
+  hatch(d, n, names = []) {
+    for (const k of this.kids) { k.root.removeFromParent(); k.shadow.removeFromParent(); }
+    this.kids = [];
+    d.broody = false; this.brood = { mum: d };
+    if (!d.inHouse) this.inside(d, true);              // (she's on the nest with them when they hatch)
+    for (let i = 0; i < n; i++) {
+      const k = new Goose(this.group, 'call_d', this.r, names[i] || ['Pipkin', 'Dot', 'Bean', 'Sunny', 'Button'][i % 5]);
+      k.flock = this; k.pen = this; k.plot = this.plot; k.idx = 10 + i; k.mum = d; k.trail = []; k.trailBase = 0; k.isDuckling = true;
+      k.shadow = shadowDisc(0.042); this.group.add(k.shadow);
+      k.root.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; }); k.shadow.userData.moves = true;
+      this.inside(k, true); k.task = this.kidTask();
+      this.kids.push(k);
+    }
+    this.near = this.all();
+    d.trail = []; d.trailBase = 0;
+    if (d.inHouse) d.task = TK.seq('lead', [TK.act('wait', 1.2, () => {}), () => { g_hide(d); return null; }, TK.act('wait', 0.6, () => {}), () => { this.inside(d, false); return null; },
+      this.rampTask(false), S(this.foot[0], this.foot[1] + 0.35, 'slow', false, 0.06), TK.act('look', 4, (g, u) => { const yaw = Math.PI; g.A.lookYawGoal = 0.9 * Math.sin(u * 1.2); g.A.upGoal = 0.4; })]);
+  }
+  // her day with them: a walk about the yard (slowly), a swim, a long rest with them round her
+  mumTask(d) {
+    const r = this.r();
+    if (r < 0.4) return this.swimTask(d, false);
+    if (r < 0.65) return TK.seq('yard', [TK.act('rest', 10 + this.r() * 10, DACT.rest)]);
+    const L = [], sp = this.yardSpot(); if (!this.walkTo(L, sp[0], sp[1], 'walk', d)) return TK.act('look', 2);
+    L.push(this.r() < 0.6 ? TK.act('graze', 5 + this.r() * 5) : TK.act('look', 3));
+    return TK.seq('yard', L);
+  }
+  // a duckling: following the one ahead of it (its mother for the first) along its trail, gap behind; round her when she's
+  // still; in and out of the house after her
+  kidTask() {
+    const pen = this;
+    return { name: 'kid', act: 'walk', t: 0, run(g, dt) {
+      this.t += dt; const B = pen.brood, A = g.A; if (!B) return true;
+      const mum = B.mum, i = pen.kids.indexOf(g), lead = i <= 0 ? mum : pen.kids[i - 1], gap = i <= 0 ? 0.25 : 0.165;
+      const pathTo = (T, from) => { let a = 0; for (let j = from; j < T.length - 1; j++) a += Math.hypot(T[j + 1][0] - T[j][0], T[j + 1][1] - T[j][1]); return a + (T.length ? Math.hypot(lead.pos.x - T[T.length - 1][0], lead.pos.z - T[T.length - 1][1]) : 0); };
+      if (g.inHouse) {                                   // (inside: out after the one ahead, once it's a gap down the plank)
+        if (lead.inHouse || !lead.root.visible || pen.bedtime(pen.o.hour())) return false;
+        const T = lead.trail; let j = T.length - 1; while (j > 0 && Math.hypot(T[j][0] - pen.pop[0], T[j][1] - pen.pop[1]) > 0.04) j--;
+        if (pathTo(T, Math.max(0, j)) < gap) return false;
+        pen.inside(g, false); g.trail = [[g.pos.x, g.pos.z]]; g.trailBase = 0; this.k = (lead.trailBase || 0) + Math.max(0, j); this.still = 0;
+        return false;
+      }
+      if (mum.inHouse && lead.inHouse && Math.hypot(g.pos.x - pen.pop[0], g.pos.z - pen.pop[1]) < 0.09) { pen.inside(g, true); return false; }      // (in at the door after the one ahead)
+      // round her when she's been still a while (snuggled up beside her on the yard, or bobbing about near her afloat)
+      const still = mum.vs < 0.02 && !mum.inHouse && pen.onRamp(mum.pos.x, mum.pos.z) === null && !pen.inHouseAt(mum.pos.x, mum.pos.z);
+      this.still = still ? (this.still || 0) + dt : 0;
+      const ashore = mum.wet < 0.3 && g.wet > 0.3;          // (she's resting on the bank, they're still afloat: up her trail to her first)
+      if (this.still > 2.5 && !ashore) {
+        const SL = [[0.13, -0.02], [-0.13, -0.03], [0.07, -0.19], [-0.08, -0.2], [0.17, -0.14]][i % 5], s = Math.sin(mum.heading), c = Math.cos(mum.heading);
+        const tx = mum.pos.x + c * SL[0] + s * SL[1], tz = mum.pos.z - s * SL[0] + c * SL[1];
+        const dx = tx - g.pos.x, dz = tz - g.pos.z, d = Math.hypot(dx, dz);
+        if (d > 0.02 && pen.okAt(g, g.pos.x + dx / d * 0.01, g.pos.z + dz / d * 0.01)) { const st = Math.min(d, 0.12 * dt); g.pos.x += dx / d * st; g.pos.z += dz / d * st; g.turnTo(Math.atan2(dx, dz), dt, 3); }
+        else { g.turnTo(mum.heading, dt, 1.5); if (mum.act === 'rest' && g.wet < 0.3) { A.sitGoal = 1; A.squintGoal = mum.A.shut > 0.5 ? 0.9 : 0; } else DACT.float(g, this.t); }
+        this.k = undefined; return false;
+      }
+      // along the trail of the one ahead, from the point nearest it, a gap behind
+      const T = lead.trail, base = lead.trailBase || 0; if (!T.length) return false;
+      if (this.k === undefined || this.k < base || this.k - base >= T.length) {
+        let bj = 0, bd = Infinity; for (let j = Math.max(0, T.length - 400); j < T.length; j++) { const dd = Math.hypot(T[j][0] - g.pos.x, T[j][1] - g.pos.z); if (dd < bd) { bd = dd; bj = j; } }
+        this.k = base + bj;
+      }
+      let j = this.k - base; const want = this.still > 2.5 ? gap * 0.5 : gap;
+      while (j < T.length - 1 && Math.hypot(T[j][0] - g.pos.x, T[j][1] - g.pos.z) < 0.035 && pathTo(T, j + 1) > want) j++;
+      // (a short cut where the trail loops about: on to the furthest point a little way along it that's close by in a
+      // straight line, clear of the raft and the gangplank, not in and out of the water; never closer than the gap)
+      if (!this.cut || this.t - this.cut > 0.3) {
+        this.cut = this.t;
+        for (let q = Math.min(T.length - 1, j + 80); q > j + 3; q--) {
+          if (Math.hypot(T[q][0] - g.pos.x, T[q][1] - g.pos.z) > 0.3 || pathTo(T, q) < want) continue;
+          let ok = true; const wet0 = pen.wetAt(g.pos.x, g.pos.z) > 0.3;
+          for (let u = 0.2; u <= 1 && ok; u += 0.2) { const x = g.pos.x + (T[q][0] - g.pos.x) * u, z = g.pos.z + (T[q][1] - g.pos.z) * u; if (pen.inRaft(x, z, 0.05) || pen.underPlank(x, z, 0.04) || (pen.wetAt(x, z) > 0.3) !== wet0) ok = false; }
+          if (ok) { j = q; break; }
+        }
+      }
+      this.k = base + j;
+      const rest = pathTo(T, j), p = T[j], dx = p[0] - g.pos.x, dz = p[1] - g.pos.z, d = Math.hypot(dx, dz);
+      if (lead.inHouse && mum.inHouse && j >= T.length - 1 && d < 0.04 && Math.hypot(g.pos.x - pen.pop[0], g.pos.z - pen.pop[1]) < 0.2) { pen.inside(g, true); return false; }      // (at the end of its trail, by the door: in)
+      if (rest > want * 0.85 && d > 0.004) {
+        const sp = (rest > gap * 1.8 ? 0.34 : rest > gap * 1.2 ? 0.24 : 0.17) * (g.wet > 0.5 ? 0.85 : 1), st = Math.min(d, sp * dt);
+        g.pos.x += dx / d * st; g.pos.z += dz / d * st; g.turnTo(Math.atan2(dx, dz), dt, 5);
+      } else g.turnTo(lead.heading, dt, 1.5);
+      A.wagGoal = 0.25; A.upGoal = 0.25; A.lookYawGoal = 0.25 * Math.sin(this.t * 1.7 + g.seed);
+      return false;
+    } };
+  }
+  // (each moment: the trails they follow, from where each is; kept to the last few metres)
+  trails() {
+    if (!this.brood) return;
+    for (const d of [this.brood.mum, ...this.kids]) {
+      if (!d.trail || d.inHouse || !d.root.visible || this.inHouseAt(d.pos.x, d.pos.z)) continue;
+      const q = d.trail[d.trail.length - 1];
+      if (!q || Math.hypot(q[0] - d.pos.x, q[1] - d.pos.z) > 0.02) d.trail.push([d.pos.x, d.pos.z]);
+      if (d.trail.length > 600) { d.trail.splice(0, 200); d.trailBase = (d.trailBase || 0) + 200; }
+    }
   }
   // ---- the ball: floating, bobbing, drifting where it's sent, slowing, off the pond's edge, the raft and the gangplank;
   // a big kick sends it over the bank onto the yard, where it rolls and stops (off the fence and what's in the yard)
@@ -454,6 +596,8 @@ export class CallPen {
       if (dx < Math.min(dz0, dz1)) { B.x = Math.sign(B.x || 1) * (RAFT.x + m); B.vx = Math.abs(B.vx) * Math.sign(B.x) * 0.6; }
       else if (dz1 < dz0) { B.z = RAFT.z1 + m; B.vz = Math.abs(B.vz) * 0.6; } else { B.z = RAFT.z0 - m; B.vz = -Math.abs(B.vz) * 0.6; }
     }
+    const th = this.inThing(B.x, B.z, BALL_R + 0.01);
+    if (th) { B.x += th[0] * th[2]; B.z += th[1] * th[2]; const dot = B.vx * th[0] + B.vz * th[1]; if (dot < 0) { B.vx -= 1.6 * dot * th[0]; B.vz -= 1.6 * dot * th[1]; } B.hit = true; }      // (off the boat, the fountain)
     const bm = BALL_R + (this.o.path ? 0.16 : 0);       // (well clear of the bridge: its tall railings never seem to cut into it)
     if (this.underPlank(B.x, B.z, bm)) { const sd = B.x < this.pop[0] ? -1 : 1; B.x = this.pop[0] + sd * (this.plankW() + bm + 0.01); B.vx = Math.abs(B.vx) * sd * 0.6; B.hit = true; }
     return zoneAt(this.pondS(B.x, B.z));
@@ -580,7 +724,15 @@ export class CallPen {
     if (bed && !this.wasBed) this.goBed();
     if (!bed && this.wasBed && this.o.doorOpen()) { this.getUp(); this.wasBed = false; }
     if (bed) this.wasBed = true;
+    const wait = this.waitFor();
     for (const d of this.ducks) {
+      if (d === wait) {                                    // (a mother waiting for her ducklings to catch up: turned to them, calling)
+        const t = d.task; d.task = null; d.update(dt); d.task = t;
+        const k = this.kids.find(q => !q.inHouse) || this.kids[0]; d.turnTo(Math.atan2(k.pos.x - d.pos.x, k.pos.z - d.pos.z), dt, 1.5);
+        d.A.upGoal = 0.45; d.A.lookYawGoal = 0.3 * Math.sin(this.time * 2); d.shadow.visible = d.root.visible && !d.inHouse;
+        if (d.shadow.visible) d.shadow.position.set(d.pos.x, (d.wet > 0.5 ? this.P.wy : this.groundY(d.pos.x, d.pos.z)) + 0.004, d.pos.z);
+        continue;
+      }
       if (!d.task && !bed && !d.inHouse && d.held) this.hold(d, true);
       if (!d.task && !bed && !d.inHouse) d.task = this.dayTask(d);
       if (d.inHouse && !d.task) d.task = this.sleepTask();
@@ -589,7 +741,13 @@ export class CallPen {
       d.shadow.visible = d.root.visible && !d.inHouse;
       if (d.shadow.visible) { d.shadow.position.set(d.pos.x, (d.wet > 0.5 ? this.P.wy : this.groundY(d.pos.x, d.pos.z)) + 0.004, d.pos.z); d.shadow.rotation.y = d.heading; }
     }
-    for (const d of this.ducks) this.keepOff(d);
+    for (const k of this.kids) {
+      k.update(dt);
+      k.shadow.visible = k.root.visible && !k.inHouse;
+      if (k.shadow.visible) { k.shadow.position.set(k.pos.x, (k.wet > 0.5 ? this.P.wy : this.groundY(k.pos.x, k.pos.z)) + 0.004, k.pos.z); k.shadow.rotation.y = k.heading; }
+    }
+    this.trails();
+    for (const d of this.all()) this.keepOff(d);
     this.apart();
     if (this.ball) {
       this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt);
@@ -608,9 +766,9 @@ export class CallPen {
   okAt(d, x, z) {
     if (this.inRaft(x, z, 0.02) || this.underPlank(x, z, -0.02)) return false;
     if (d.wet > 0.5) {          // (afloat: her whole body, tail to breast, clear of the raft and the gangplank too)
-      const S = capOf(d), dx = x - d.pos.x, dz = z - d.pos.z, r = CAP.r - 0.008, hw = this.plankW();
+      const S = capOf(d), dx = x - d.pos.x, dz = z - d.pos.z, r = CAP.r * capK(d) - 0.008, hw = this.plankW();
       for (const [px, pz] of [[S[0] + dx, S[1] + dz], [(S[0] + S[2]) / 2 + dx, (S[1] + S[3]) / 2 + dz], [S[2] + dx, S[3] + dz]]) {
-        if (this.inRaft(px, pz, r)) return false;
+        if (this.inRaft(px, pz, r) || this.inThing(px, pz, r)) return false;
         if (Math.abs(px - this.pop[0]) < hw + r && pz > this.pop[1] - 0.05 && pz < this.foot[1] + 0.04) return false;
       }
       return this.pondS(x, z) < 0.97;
@@ -626,8 +784,9 @@ export class CallPen {
   // afloat, her whole body clear of the raft and the gangplank (the bridge): its tail, middle and breast
   keepOff(d) {
     if (!(d.wet > 0.5) || !this.solid(d)) return;
-    const S = capOf(d), r = CAP.r, hw = this.plankW(), sd = this.side(d.pos.x);
+    const S = capOf(d), r = CAP.r * capK(d), hw = this.plankW(), sd = this.side(d.pos.x);
     for (const [px, pz] of [[S[0], S[1]], [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], [S[2], S[3]]]) {
+      const th = this.inThing(px, pz, r); if (th) { d.pos.x += th[0] * th[2]; d.pos.z += th[1] * th[2]; }      // (round the boat, the fountain)
       if (this.inRaft(px, pz, r)) {
         const dx = RAFT.x + r - Math.abs(px), dz0 = pz - (RAFT.z0 - r), dz1 = RAFT.z1 + r - pz, m = Math.min(dx, dz0, dz1);
         if (m === dx) d.pos.x += Math.sign(px || 1) * dx; else if (m === dz1) d.pos.z += dz1; else d.pos.z -= dz0;
@@ -639,13 +798,13 @@ export class CallPen {
   }
   // two ducks never in each other: each moved half the overlap apart (all of it the other, if one can't go)
   apart() {
-    const D = this.ducks.filter(d => this.solid(d));
+    const D = this.all().filter(d => this.solid(d));
     for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) {
-      const a = D[i], b = D[j], c = closest(capOf(a), capOf(b)), need = 2 * CAP.r + 0.004;
+      const a = D[i], b = D[j], c = closest(capOf(a), capOf(b)), need = CAP.r * (capK(a) + capK(b)) + 0.004;
       if (c.d >= need) continue;
       let nx = c.p[0] - c.q[0], nz = c.p[1] - c.q[1], l = Math.hypot(nx, nz);
       if (l < 1e-5) { nx = Math.cos(a.heading); nz = -Math.sin(a.heading); l = 1; }      // (right on top: sideways)
-      nx /= l; nz /= l; const ov = need - c.d;
+      nx /= l; nz /= l; const ov = Math.min(need - c.d, 0.04);      // (a big overlap, someone stepping off the gangplank into another: eased apart over a few moments, no jump)
       const ka = this.shove(a, nx * ov / 2, nz * ov / 2), kb = this.shove(b, -nx * ov / 2, -nz * ov / 2);
       if (!ka && kb) this.shove(b, -nx * ov / 2, -nz * ov / 2);
       else if (ka && !kb) this.shove(a, nx * ov / 2, nz * ov / 2);
@@ -656,9 +815,9 @@ export class CallPen {
   // gives way (yield: after the ball has been kept on its pond)
   bump(yield_, dt) {
     const B = this.ball;
-    for (const d of this.ducks) {
+    for (const d of this.all()) {
       if (!this.solid(d)) continue;
-      const q = near(B.x, B.z, capOf(d)), dist = Math.hypot(B.x - q[0], B.z - q[1]), need = CAP.r + BALL_R + 0.003;
+      const q = near(B.x, B.z, capOf(d)), dist = Math.hypot(B.x - q[0], B.z - q[1]), need = CAP.r * capK(d) + BALL_R + 0.003;
       if (dist >= need) continue;
       let nx = B.x - q[0], nz = B.z - q[1], l = Math.hypot(nx, nz);
       if (l < 1e-5) { nx = Math.sin(d.heading); nz = Math.cos(d.heading); l = 1; }

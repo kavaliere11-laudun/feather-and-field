@@ -3325,6 +3325,27 @@ the birds already had.
   doing the same (the parade row: the ducklings behind their mother in a line, well spaced: 1.35 and 2.15 radians behind
   her round its little oval, at least 9 cm between her and the first, 3.5 cm between the two; Audrey: "clipping", a
   duckling's bill in her tail at first).
-- Next: Audrey's look at the ducklings; then a duck sitting on her eggs, the ducklings following her on land and water, in the game; then the peacock at 30.
+- **The call ducklings in their pen** (30 Oct; Audrey: "perfect"; test page `?coopbreeds=call&looks=N&brood=sit` or
+  `&brood=raise`; `callpen.js`): a duck sitting on her eggs in the nest at the window, day and night, dozing now and then
+  (`startSit`, `broody`: the others' bedtime and morning leave her be; no laying meanwhile). They hatch (`hatch(mum, n,
+  names)`: ducklings, `Goose('call_d')`, in the house with her): she gets up, out of the door and down the gangplank, and
+  they come out after her one by one, each once the one ahead is a gap down the plank. Each follows the trail of the one
+  ahead (its mother for the first: `kidTask`, the trails kept as they go, `trails`), a little gap behind (0.25 m after
+  her, 0.165 m between them), hurrying to catch up, cutting across where her trail loops about (never across the raft or
+  the gangplank, nor in and out of the water); in a line on the yard and across the pond. When she stops a while they
+  gather round her (snuggled at her sides and tail on the yard, sitting, dozing when she does; bobbing about her afloat;
+  out of the water up her trail first if she's resting on the bank). If they fall behind she waits for them, turned to
+  them (`waitFor`). Her day with them (`mumTask`): gentle walks, swims and long rests, never the ball, no parade, no
+  squabbles. At dusk she goes up and in, and they follow her up the plank and in at the door (at the end of the trail
+  ahead); in the morning out after her again. Nobody through anybody: their bodies the call ducks' capsules at about half
+  the size (`capK` 0.475), the grown ducks steering round them (geese.js `moveTo`: `isDuckling`), a big overlap eased
+  apart over a few moments (`apart`: at most 4 cm a moment). Soaked 600 s in the Snug, the Cosy and the Deluxe (a day,
+  dusk and the next morning): never more than 2 cm into each other, none in the raft, all in at night. A tap on a
+  duckling: a peep (`chicks`).
+- **Round the boat and the fountain**: the Cosy's rowing boat moored by the raft and the Deluxe's fountain stand in the
+  water (`IN_WATER`, from stylized/coops.py `floating`: capsules from above), so the ducks, the ducklings and the ball keep
+  out of them as they do the raft (`inThing`: the swimming ring, `keepOff`, `okAt`, `ballStep`; a swim that would clip one
+  goes round it, `viaCorner`); before, a duck could swim through the boat. Soaked: none in them.
+- Next: the ducklings in the game (a duck going broody, sitting a day, hatching, raising them two days, grown and gone, as the hens' broods), then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
