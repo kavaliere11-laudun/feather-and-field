@@ -1082,7 +1082,7 @@ Order, one live piece at a time: (1) wind and the wheat field's stages, (2) day 
 - Up-ending (`upend` in the rig's pose, 0..1): tipped forward (1.2 rad), sunk so only the back end shows, the tail cocked
   up, the feet kicking at the surface either side, bobbing a little (`window.__UP` overrides the numbers for tuning).
 - `?lineup=ducks`: both in eight poses (looking about, the waddle, a quack, preening, a wing-flap, swimming, up-ending,
-  asleep). `duckpose.mjs OUTDIR [who,..] [secs]` takes close-ups of chosen ones (`VARS` tries `__UP` settings).
+  asleep). `?lineup=ducks&call`: the call ducks (30 Oct) the same. `duckpose.mjs OUTDIR [who,..] [secs]` takes close-ups of chosen ones (`VARS` tries `__UP` settings).
 
 ## The pond: the ducks' life (24 Oct, Audrey chose the names Rocco, Daisy and Dot)
 
@@ -3151,3 +3151,25 @@ the birds already had.
   rarecooptest (14 pages, the Cuckoo from the Partridge); gametest, firstdaytest, showtest, showdaytest, showgroundtest,
   jobtest, landtest, chicktest, eggtest, awaytest, codetest, accounttest, langtest, dectest, playtest, upgradetest (Ayam,
   Polish), looktest: pass.
+
+## The call ducks' look (30 Oct 2026; Audrey: "call duck (new type of eggs!)", "Is the duck gone? I still want it", then "ok carry on"; her four photos of white call ducks)
+
+- Two new models in the geese file (`stylized/geese.py` `GEESE['call_m']` Pip the drake, `GEESE['call_f']` Puddle the
+  duck; `export_geese.py` exports them white like the Embden, 12000 and 11800 triangles): little plump white ducks, a full
+  round breast, a body a little longer than a mallard's for its size (`BL` 0.88), a rounded head held up on a short thick
+  neck that slims under it (`neck` 0.44, `neck_rs`), the head a third bigger for the bird (`head_k` 1.32, a fourth ball so
+  the face runs into the bill), a broad orange wedge of a bill, deep where it meets the face (`bill_k` 1.4, its own
+  profile and lower bill), a small dark eye; the drake's curl over his tail. The goose neck's furrows kept off their heads
+  (`gn.z` + 0.35).
+- Smooth white, as in her photos (`geese.js`): their body feathers in a soft mode of their own (7: the feathers' rows only
+  a faint texture, 85% softened, the overlap shadow at 40%; `birds.js`, the Brahma's mode 8 unchanged, no chicken uses 7),
+  broader drawn feathers (0.8 of a goose's) and a shorter fluff (`CALL_FUR`).
+- Spliced into the geese model in use with `stylized/extras/splice_glb.py` (named models replaced or appended; the export
+  isn't byte-for-byte the same twice, so the geese and mallards stay exactly as they were).
+- `?lineup=ducks&call`: the two in the eight poses (all work: looking about, the waddle, a quack, preening, wings, swimming,
+  up-ending, asleep).
+- First tries: a round ball of a head on a short neck and a little stubby bill (cute, but a duckling; next to her photos
+  the neck too short, the bill too small); then a longer neck and a bigger wedge bill, smooth feathers instead of the
+  goose's knitted look. Picture sent next to her photos. ducktest, gametest: pass.
+- Next (after her yes): their house with a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
+  pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
