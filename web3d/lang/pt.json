@@ -928,5 +928,24 @@
  "breed.pol.name": "Polonesa",
  "breed.pol.coop": "Moinhozinho",
  "breed.aya.name": "Ayam Cemani",
- "breed.aya.coop": "Casa Javanesa"
+ "breed.aya.coop": "Casa Javanesa",
+ "text.duck": "Pata",
+ "text.drake": "Pato",
+ "text.exp_ducklings": {
+  "t": "Quanto mais estrelas, melhores os patinhos dele.",
+  "f": "Quanto mais estrelas, melhores os patinhos dela."
+ },
+ "text.up_call_mended": "Tábuas novas de pinho meio pintadas de azul ovo de pata, meio telhado de telhas de madeira novas, o laguinho limpo e pedras meio assentadas, num cercado maior.",
+ "text.up_call_snug": "A Casa Flutuante na sua jangada, num cercado mais espaçoso.",
+ "text.up_call_cosy": "Um pequeno barco-casa amarelo com telhado curvo azul-petróleo, bandeirinhas, floreiras, um barco a remo, um laguinho mais largo e uma bola de praia para brincar.",
+ "text.up_call_deluxe": "Branca e azul-marinho sob um telhado vermelho, um pequeno farol, a ponte verde de Monet até a porta, uma fonte, ninfeias por toda parte, uma bola de praia e o maior jardim, com cerquinha branca e rosas.",
+ "text.egg_call": "Ovos de pata verde-claros",
+ "goose.call_m": "pato Call macho",
+ "goose.call_f": "pato Call fêmea",
+ "breed.call.name": "Pato Call",
+ "breed.call.coop": "Casa Flutuante",
+ "text.book_price_duck": "{p} moedas por ovo, mais uma moeda por estrela da pata",
+ "text.feed_how_duck": "Suas patas botam enquanto houver comida nele. Cheio, alimenta seu trio por dois dias.",
+ "text.feed_empty_line_duck": "Suas patas param de botar até você encher de novo.",
+ "text.trio_body_duck": "Um pato e duas patas, seus para sempre, com a própria casa num laguinho. Coloque-a onde quiser nas suas terras."
 }

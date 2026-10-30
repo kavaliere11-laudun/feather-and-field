@@ -928,5 +928,24 @@
  "breed.pol.name": "Padovana",
  "breed.pol.coop": "Piccolo mulino",
  "breed.aya.name": "Ayam Cemani",
- "breed.aya.coop": "Casa giavanese"
+ "breed.aya.coop": "Casa giavanese",
+ "text.duck": "Anatra",
+ "text.drake": "Anatra maschio",
+ "text.exp_ducklings": {
+  "t": "Più stelle ha, migliori saranno i suoi anatroccoli.",
+  "f": "Più stelle ha, migliori saranno i suoi anatroccoli."
+ },
+ "text.up_call_mended": "Assi nuove di pino mezze dipinte di azzurro uovo d’anatra, mezzo tetto di scandole nuove, lo stagno pulito e pietre posate a metà, in un recinto più grande.",
+ "text.up_call_snug": "La Casa galleggiante sulla sua zattera, in un recinto più spazioso.",
+ "text.up_call_cosy": "Una piccola casa-barca gialla con il tetto curvo verde petrolio, bandierine, fioriere, una barca a remi, uno stagno più largo e un pallone da spiaggia per giocare.",
+ "text.up_call_deluxe": "Bianca e blu marino sotto un tetto rosso, un piccolo faro, il ponte verde di Monet fino alla porta, una fontana, ninfee dappertutto, un pallone da spiaggia e il giardino più grande, con staccionata bianca e rose.",
+ "text.egg_call": "Uova d’anatra verde pallido",
+ "goose.call_m": "anatra Call maschio",
+ "goose.call_f": "anatra Call femmina",
+ "breed.call.name": "Anatra Call",
+ "breed.call.coop": "Casa galleggiante",
+ "text.book_price_duck": "{p} monete a uovo, più una moneta per ogni stella dell’anatra",
+ "text.feed_how_duck": "Le tue anatre depongono finché c’è cibo dentro. Piena, sfama il tuo trio per due giorni.",
+ "text.feed_empty_line_duck": "Le tue anatre smettono di deporre finché non viene riempita.",
+ "text.trio_body_duck": "Un maschio e due anatre, tuoi per sempre, con la loro casa su uno stagno. Mettila dove vuoi sui tuoi terreni."
 }

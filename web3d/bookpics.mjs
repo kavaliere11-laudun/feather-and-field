@@ -6,7 +6,8 @@
 // them, on black and then on white, and cut out from the two shots (so their fur's soft edges and their soft shadow on the
 // ground come out see-through), cropped round them, shrunk to SIZE x SIZE and saved as <breed>.webp (a Silkie colour's:
 // sil_black.webp... from that colour's pair; ONLY=sil_black,sil_buff makes just those). The birds are only
-// stood and posed for the picture: no model, colour or look is changed.
+// stood and posed for the picture: no model, colour or look is changed. The call ducks (ONLY=call): the duck line-up's
+// pair (index.html?lineup=ducks&call), the duck in front, the drake a step behind, posed the same way.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { mkdirSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -18,33 +19,34 @@ const BREEDS = (process.env.ONLY || 'rir,orp,sil,leg,bra,sil_black,sil_buff,sil_
 const STAGE = { hen: { x: -0.07, z: 0.1, yaw: -1.0, look: 0.32, tilt: 0.05 }, roo: { x: 0.12, z: -0.1, yaw: -0.82, look: 0.22, tilt: -0.03, proud: 0.5 },
   cam: { el: 9, az: 0, dist: 7, fov: 10, at: [0.03, 0.22, 0] }, margin: 0.05 };
 // (the round, fluffy Silkies a little further apart, so the two of them read as two)
-const APART = { sil: { hen: { x: -0.125, z: 0.12 }, roo: { x: 0.14, z: -0.11 } } };
+const APART = { sil: { hen: { x: -0.125, z: 0.12 }, roo: { x: 0.14, z: -0.11 } }, cal: { hen: { x: -0.08, z: 0.09, yaw: -0.6, look: 0.45, up: 0.3 }, roo: { x: 0.09, z: -0.1, yaw: -0.4, look: 0.3, up: 0.45 }, cam: { ...STAGE.cam, fov: 6, at: [0.02, 0.13, 0] } } };
+const DUCKS = BREEDS.includes('call');
 mkdirSync(OUT, { recursive: true }); if (PREVIEW) mkdirSync(PREVIEW, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 640, height: 640 }, deviceScaleFactor: 2 });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup&coops=0&time=12:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup${DUCKS ? '=ducks&call' : ''}&coops=0&time=12:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 for (const breed of BREEDS) {
   const res = await p.evaluate(([breed, S, SIZE]) => {
-    const f = window.__farm, T = f.THREE, line = f.allBirds.filter(x => x.plot.kind === 'lineup');
+    const f = window.__farm, T = f.THREE, duck = breed === 'call', DL = duck && f.geeseLineup(), line = duck ? DL.ducks : f.allBirds.filter(x => x.plot.kind === 'lineup');
     f.pause(true);
     const base = breed.startsWith('sil') ? 'sil' : breed, col = breed === 'sil' ? 'white' : breed.slice(4);
-    const pick = kind => line.find(x => x.breed === base && x.kind === kind && (base !== 'sil' || x.colour === col));
+    const pick = kind => duck ? line.find(x => x.linePose === 'look' && x.kind === (kind === 'hen' ? 'call_f' : 'call_m')) : line.find(x => x.breed === base && x.kind === kind && (base !== 'sil' || x.colour === col));
     const hen = pick('hen'), roo = pick('rooster');
     // stood together, posed (held each frame, as the welcome picture's birds), everyone else out of sight
-    const stand = (x, s) => {
+    const stand = duck ? (x, s) => { x.pos.set(s.x, 0, s.z); x.heading = s.yaw; x.linePose = 'book'; x.bookPose = s; } : (x, s) => {
       x.root.position.set(s.x, 0.015, s.z); x.root.rotation.y = s.yaw; x.target.copy(x.root.position); x.act = null; x.hopT = -1;
       x.posterPose = A => Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0,
         brood: 0, duck: 0, stretch: 0, sleep: 0, proud: s.proud || 0, lookYaw: s.look, lookTilt: s.tilt });
     };
     for (const x of line) x.root.visible = x === hen || x === roo;
     stand(hen, S.hen); stand(roo, S.roo);
-    const frame = hen.plot.frame; frame.updateMatrixWorld(true);
+    const frame = duck ? DL.group : hen.plot.frame; frame.updateMatrixWorld(true);
     const at = frame.localToWorld(new T.Vector3(...S.cam.at));
     f.view.min = 0.2; f.lookAt(at.x, at.z, 0.5);              // (the finest fur, the full models)
     f.step(1 / 30, 45); f.draw();
-    for (const x of [hen, roo]) { x.root.position.set(x === hen ? S.hen.x : S.roo.x, 0.015, x === hen ? S.hen.z : S.roo.z); x.root.rotation.y = x === hen ? S.hen.yaw : S.roo.yaw; }
+    if (!duck) for (const x of [hen, roo]) { x.root.position.set(x === hen ? S.hen.x : S.roo.x, 0.015, x === hen ? S.hen.z : S.roo.z); x.root.rotation.y = x === hen ? S.hen.yaw : S.roo.yaw; }
     f.step(1 / 30, 2); f.draw();
     const keep = new Set(); for (const x of [hen, roo]) x.root.traverse(o => keep.add(o));
     const blobs = o => o.isInstancedMesh && o.geometry && o.geometry.type === 'CircleGeometry' && o.material && o.material.map;     // (the birds' soft shadows)
@@ -88,7 +90,7 @@ for (const breed of BREEDS) {
       if (dark) { gr.addColorStop(0, '#f8f9f3'); gr.addColorStop(1, '#e4e9db'); } else { gr.addColorStop(0, '#fffbea'); gr.addColorStop(0.4, '#f6f1dc'); gr.addColorStop(1, '#dbe7c6'); }
       q.fillStyle = gr; q.fillRect(0, 0, SIZE, SIZE); if (dark) q.filter = 'brightness(0) opacity(0.4)'; q.drawImage(o, 0, 0); return c.toDataURL('image/png'); };
     return { names: [hen.name, roo.name], crop: [sx, sy, side, W, H], webp: o.toDataURL('image/webp', 0.9), found: prev(false), not: prev(true) };
-  }, [breed, { ...STAGE, hen: { ...STAGE.hen, ...(APART[breed.slice(0, 3)] || {}).hen }, roo: { ...STAGE.roo, ...(APART[breed.slice(0, 3)] || {}).roo } }, SIZE]);
+  }, [breed, { ...STAGE, hen: { ...STAGE.hen, ...(APART[breed.slice(0, 3)] || {}).hen }, roo: { ...STAGE.roo, ...(APART[breed.slice(0, 3)] || {}).roo }, cam: (APART[breed.slice(0, 3)] || {}).cam || STAGE.cam }, SIZE]);
   const buf = Buffer.from(res.webp.split(',')[1], 'base64');
   writeFileSync(OUT + '/' + breed + '.webp', buf);
   if (PREVIEW) { writeFileSync(PREVIEW + '/' + breed + '.png', Buffer.from(res.found.split(',')[1], 'base64')); writeFileSync(PREVIEW + '/' + breed + '_no.png', Buffer.from(res.not.split(',')[1], 'base64')); }

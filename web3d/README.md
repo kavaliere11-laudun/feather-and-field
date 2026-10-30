@@ -3262,7 +3262,26 @@ the birds already had.
   ring of swimming spots split by the gangplank into its two sides (`makeRing`), the plank itself one behind the other
   (`rampTask`). A tap: a quack, the head bob and the wiggle. The Cosy's pond made wider (1.2: room for the ball at its side,
   `FLOAT_POND[3]`, `FLOAT_BALL`); the eggs drawn the house's size (`showEggs`: `G.scale`).
-- Next: the call ducks in the game at level 10 (their coop's place, duck eggs, ducklings, names in six languages, the Breed
-  Book, the save's checks, tests).
+- **The call ducks in the game, at level 10** (30 Oct; Audrey: "Yes, put them in", then "Carry on"): `game.js`
+  `BREED_INFO.call` (`duck: true`; "Call duck", "Floating House"; `isDuck`), `BREED_LEVEL.call = 10`, 10 coins an egg
+  (`EGG_PRICE`), their trio a drake and two ducks with their own names (`DRAKE_NAMES`, `DUCK_NAMES`: Pip, Puddle, Dimple...).
+  Level 10's card and Your coops: "New breed: Call duck!", "A drake and two ducks, yours for good, with their own house on a
+  pond" (`trio_body_duck`, a duck 🦆); placed: the rustic Floating House with its pond, the five looks by its upgrades as
+  the hens' (`TIER_LOOK.call`, `hasLooks`: always). In their pen (`addCallDucks`: the save's three, the drake first,
+  `CallPen` `o.birds`): their game names; they lay when the game says (`dueLays`, `birdOf`; `CallPen.canLay` / `layNow`:
+  by day, on the yard, one at a time, up the gangplank into the nest; `o.game` stops their own laying), the egg into the
+  save and the straw (`gameLaid`); a pale green duck egg (`EGG_COLOUR.call`). A tap: her card ("Call duck · Duck" or
+  "Drake", "the better her ducklings"); she stops where she is and faces you (`holdBird` → `CallPen.hold`); Cuddle: hearts
+  over her, she turns to you, a happy bob and a quack (`cuddled`; no farmer visit for them); worms: the same bob; trusting
+  ones come to the front of their yard to say hello to the farmer when he stops by (`greet`, a heart). The feeder's card:
+  "Your ducks lay while there's food in it" (`feed_how_duck`). An upgrade makes the pen again round the same three
+  (`retier` → `addCallDucks`). Not for them (yet): the shows (poultry shows: `canEnter`, `showBirds`), Rusty (their house
+  is out on a pond: `foxCoop`), broods (`broodTick`: ducklings are the next step). The Breed Book: their page after the
+  Ayam Cemani ("1 of 15 breeds found"; `bookPages` from both orders), their picture `book/call.webp` (bookpics.mjs
+  `ONLY=call`: the duck line-up's pair, the `book` pose), "a coin for each star of the duck" (`book_price_duck`). All
+  their words in the six languages (lang/*.json, packed). The save's checks as for every breed: a call coop before level
+  10 is flagged. Tests: **calltest.mjs** (level 9 to 10, placing, the pen, a tap and her card, cuddle, a lay, the feeder,
+  the book, the Snug look, no shows, a reload, a coop put in from outside), booktest and silktest (15 pages).
+- Next: ducklings (a duck sitting, fluffy yellow ducklings following her on land and water), then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

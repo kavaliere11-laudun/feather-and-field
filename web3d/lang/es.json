@@ -923,5 +923,24 @@
  "breed.pol.name": "Polaca",
  "breed.pol.coop": "Molinito",
  "breed.aya.name": "Ayam Cemani",
- "breed.aya.coop": "Casa javanesa"
+ "breed.aya.coop": "Casa javanesa",
+ "text.duck": "Pata",
+ "text.drake": "Pato",
+ "text.exp_ducklings": {
+  "t": "Cuantas más estrellas, mejores serán sus patitos.",
+  "f": "Cuantas más estrellas, mejores serán sus patitos."
+ },
+ "text.up_call_mended": "Tablas nuevas de pino medio pintadas de azul huevo de pato, medio tejado de tejuelas nuevas, el estanque limpio y piedras a medio poner, en un corral más grande.",
+ "text.up_call_snug": "La Casa flotante sobre su balsa, en un corral más amplio.",
+ "text.up_call_cosy": "Un pequeño barco vivienda amarillo con tejado curvo verde azulado, banderines, jardineras, una barca de remos, un estanque más ancho y una pelota de playa para jugar.",
+ "text.up_call_deluxe": "Blanca y azul marino bajo un tejado rojo, un pequeño faro, el puente verde de Monet hasta la puerta, una fuente, nenúfares por todas partes, una pelota de playa y el jardín más grande, con valla blanca y rosas.",
+ "text.egg_call": "Huevos de pata verde pálido",
+ "goose.call_m": "pato Call macho",
+ "goose.call_f": "pato Call hembra",
+ "breed.call.name": "Pato Call",
+ "breed.call.coop": "Casa flotante",
+ "text.book_price_duck": "{p} monedas por huevo, más una moneda por cada estrella de la pata",
+ "text.feed_how_duck": "Tus patas ponen mientras haya comida. Lleno, alimenta a tu trío durante dos días.",
+ "text.feed_empty_line_duck": "Tus patas no pondrán hasta que lo llenes.",
+ "text.trio_body_duck": "Un pato y dos patas, tuyos para siempre, con su propia casa en un estanque. Ponla donde quieras en tus tierras."
 }

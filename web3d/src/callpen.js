@@ -39,16 +39,20 @@ function beachBall() {
 export class CallPen {
   // plot: its coop (frame, nest); o: { pond: [cx, cz, a, b, waterY], path: the Deluxe's way over its bridge ([x, y, z]...)
   // or null, yard: { min, max } (frame), obstacles: [[x, 0, z, r]], block: [[x, z, r]], ball: [x, z] or null (the Cosy's,
-  // the Deluxe's), hour(), doorOpen(), laid(): a duck has laid, sound(kind, x, z), names: [drake, duck, duck] }
+  // the Deluxe's), hour(), doorOpen(), laid(duck): a duck has laid, sound(kind, x, z), birds: [{ kind, name, gid }] (the
+  // drake first: he leads; the test page's Pip, Puddle and Pebble if none), game: the game says when each lays (layNow),
+  // toCam(): the way to the camera (her card's open: she faces you), heart(duck): a heart over her (a hello) }
   constructor(plot, o, r) {
     this.plot = plot; this.o = o; this.r = r; this.time = 0;
     const [cx, cz, a, b, wy] = o.pond; this.P = { cx, cz, a, b, wy };
     const G = plot.nestG; this.G = G;
     this.pop = [G.pop[0], G.pop[1]]; this.foot = [G.foot[0], G.foot[1]];
     this.group = new THREE.Group(); this.group.userData.moves = true; plot.frame.add(this.group);
-    const N = o.names || ['Pip', 'Puddle', 'Pebble'];
-    this.ducks = [['call_m', N[0]], ['call_f', N[1]], ['call_f', N[2]]].map(([k, nm], i) => {
-      const d = new Goose(this.group, k, r, nm); d.flock = this; d.idx = i; d.pen = this; d.laidOn = -1; d.trail = [];
+    const B = o.birds || [{ kind: 'call_m', name: 'Pip' }, { kind: 'call_f', name: 'Puddle' }, { kind: 'call_f', name: 'Pebble' }];
+    this.ducks = B.map((q, i) => {
+      const d = new Goose(this.group, q.kind, r, q.name); d.flock = this; d.idx = i; d.pen = this; d.laidOn = -1; d.trail = [];
+      d.gid = q.gid; d.plot = plot; d.held = false;
+      Object.defineProperty(d, 'laying', { get: () => !!(d.task && d.task.name === 'lay') });      // (off to lay, or in the nest)
       d.shadow = shadowDisc(0.085); this.group.add(d.shadow);
       return d;
     });
@@ -171,7 +175,7 @@ export class CallPen {
   dayTask(d) {
     const L = [], h = this.o.hour(), dry = d.wet < 0.5, r = this.r();
     if (!dry) return this.swimTask(d, true);
-    if (d.kind === 'call_f' && d.laidOn !== this.day && h >= 8 && h < 17 && r < 0.18) return this.layTask(d);      // (the ducks lay; Pip doesn't)
+    if (!this.o.game && d.kind === 'call_f' && d.laidOn !== this.day && h >= 8 && h < 17 && r < 0.18) return this.layTask(d);      // (the ducks lay; Pip doesn't. The game's: when it says, layNow)
     if (d.idx === 0 && r < 0.12 && this.ducks.every(o => this.onLand(o) && (!o.task || !/^(lay|parade)/.test(o.task.name))) && this.parade()) return d.task;
     if (r < 0.45) return this.swimTask(d, false);
     if (this.ball && r < 0.6) return this.swimTask(d, false, true);
@@ -256,6 +260,7 @@ export class CallPen {
   // the parade: Pip leads them round the yard in a little line, his ducks one behind the other on his trail
   parade() {
     const [Pip, ...rest] = this.ducks, L = [];
+    if (!rest.length) return false;
     const join = rest.map(d => this.landWay([d.pos.x, d.pos.z], [Pip.pos.x, Pip.pos.z]));      // (each to his side by the bank's way first)
     if (join.some(w => !w)) return false;
     let at = [Pip.pos.x, Pip.pos.z];
@@ -263,7 +268,7 @@ export class CallPen {
     L.push(TK.act('bob', 3.4, BOB));
     for (const d of this.ducks) d.trail = [[d.pos.x, d.pos.z]];      // (each one's trail, from here)
     Pip.task = TK.seq('parade', L);
-    rest.forEach((d, i) => { d.task = TK.seq('parade-follow', [...join[i].slice(0, -1).map(q => S(q[0], q[1], 'hurry', true, 0.12)), this.followTask(d, i === 0 ? Pip : rest[0], 0.32)]); });
+    rest.forEach((d, i) => { d.task = TK.seq('parade-follow', [...join[i].slice(0, -1).map(q => S(q[0], q[1], 'hurry', true, 0.12)), this.followTask(d, i === 0 ? Pip : rest[i - 1], 0.32)]); });
     return true;
   }
   followTask(d, lead, gap) {
@@ -327,7 +332,7 @@ export class CallPen {
   sleepTask() { return TK.act('sleep', 1e9, () => {}); }
   // to bed: one after another (the ducks first, Pip last), up the gangplank and in
   goBed() {
-    const order = [2, 1, 0];
+    const order = this.ducks.map((_, i) => i).reverse();
     order.forEach((i, k) => {
       const d = this.ducks[i]; if (d.inHouse) { d.task = this.sleepTask(); return; }
       const L = [TK.act('wait', k * 2.5, ACT.look)];
@@ -348,6 +353,32 @@ export class CallPen {
         this.rampTask(false), S(this.foot[0] + (k - 1) * 0.25, this.foot[1] + 0.35, 'walk', false, 0.08),
         TK.act('stretch', 3.6, ACT.stretch), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2))]);
     });
+  }
+  // ---- the game's: her lay when it's due (main.js gameTick), her card open, a cuddle, a hello to the farmer
+  busy(d) { return d.inHouse || !d.root.visible || (d.task && /^(lay|bed|morning|parade|held|cuddle|greet)/.test(d.task.name)); }
+  canLay(d) {        // (by day, up and about on the yard, nobody else in the nest)
+    return d.kind === 'call_f' && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying);
+  }
+  layNow(d) { d.task = this.layTask(d); }
+  hold(d, yes) {     // her card's open: she stays where she is (on the yard or afloat), facing you
+    d.held = yes; if (!yes || this.busy(d)) return;
+    d.task = TK.seq('held', [{ name: 'hold', act: 'look', t: 0, run(g, dt) { this.t += dt; if (g.pen.o.toCam) g.turnTo(g.pen.o.toCam(), dt, 2); g.A.upGoal = 0.25; return g.held ? false : true; } }]);
+  }
+  cuddled(d) {       // a cuddle: she turns to you, a happy bob and a wiggle, a quack
+    if (d.inHouse || !d.root.visible || d.laying) return false;
+    const L = [];
+    if (this.o.toCam) L.push(TK.face(this.o.toCam()));
+    L.push(TK.act('bob', 3.4, BOB), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2)));
+    d.task = TK.seq('cuddle', L);
+    if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z);
+    return true;
+  }
+  greet(d, x, z, yaw) {      // a trusting duck to the front of the yard to say hello to the farmer: a heart, a bob, a quack
+    if (d.held || this.busy(d) || !this.onLand(d) || !this.free(x, z, 0.08)) return false;
+    const L = []; if (!this.walkTo(L, x, z, 'hurry', d)) return false;
+    L.push(TK.face(yaw), () => { if (this.o.heart) this.o.heart(d); if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); return null; }, TK.act('bob', 3.4, BOB), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2)));
+    d.task = TK.seq('greet', L);
+    return true;
   }
   // ---- the ball: floating, bobbing, drifting where it's sent, slowing, off the pond's edge, the raft and the gangplank
   placeBall(dt) {
@@ -375,6 +406,7 @@ export class CallPen {
     if (!bed && this.wasBed && this.o.doorOpen()) { this.getUp(); this.wasBed = false; }
     if (bed) this.wasBed = true;
     for (const d of this.ducks) {
+      if (!d.task && !bed && !d.inHouse && d.held) this.hold(d, true);
       if (!d.task && !bed && !d.inHouse) d.task = this.dayTask(d);
       if (d.inHouse && !d.task) d.task = this.sleepTask();
       d.update(dt);

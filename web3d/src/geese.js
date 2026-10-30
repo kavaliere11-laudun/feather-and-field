@@ -461,6 +461,7 @@ const DUCK_LINE = {
   // walking round in a little line)
   bob: (g) => { const u = ((g.clock % 4.5) + 4.5) % 4.5, A = g.A; if (u < 1.5) { A.bobGoal = 1; A.upGoal = 0.3; } else if (u < 2.4) { A.wagGoal = 1; A.tailUpGoal = 0.4; } else { A.lookYawGoal = 0.7 * Math.sin(u * 1.4); A.tiltGoal = 0.25; } },
   parade: (g) => { const A = g.A; A.wagGoal = 0.35; A.lookYawGoal = 0.25 * Math.sin(g.clock * 1.3); A.upGoal = 0.2; },
+  book: (g) => { const s = g.bookPose || {}, A = g.A; A.lookYawGoal = s.look || 0; A.tiltGoal = s.tilt || 0; A.upGoal = s.up ?? 0.25; A.proudGoal = s.proud || 0; },      // (still, for the Breed Book's picture: bookpics.mjs)
   look: (g) => { const u = ((g.clock % 6) + 6) % 6, A = g.A; A.lookYawGoal = u < 2.5 ? 1.1 : 0.5 * Math.sin(u * 1.2); A.tiltGoal = u < 2.5 ? 0.35 : 0; A.wagGoal = u > 2.5 && u < 3.2 ? 1 : 0; },
   walk: (g) => { const A = g.A; A.walkGoal = 1; A.wagGoal = 0.3; A.lookYawGoal = 0.3 * Math.sin(g.clock * 1.1); },
   quack: (g) => { const u = ((g.clock % 2.6) + 2.6) % 2.6, A = g.A; if (u < 1.2) { A.honkGoal = 0.6; A.upGoal = 0.4; A.jawGoal = Math.sin(u / 1.2 * 3 * Math.PI) > 0.1 ? 1 : 0; A.wagGoal = 0.6; } else { A.lookYawGoal = 0.6; A.tiltGoal = 0.2; } },

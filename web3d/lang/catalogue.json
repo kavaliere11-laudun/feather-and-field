@@ -100,6 +100,16 @@
   "fr": "Coq"
  },
  {
+  "id": "text.duck",
+  "en": "Duck",
+  "fr": "Cane"
+ },
+ {
+  "id": "text.drake",
+  "en": "Drake",
+  "fr": "Canard"
+ },
+ {
   "id": "text.forever_h",
   "en": "In your flock for good",
   "fr": "Dans votre basse-cour pour toujours"
@@ -179,6 +189,14 @@
   "gender": true,
   "f_en": "The more stars, the better her chicks.",
   "f_fr": "Plus elle a d’étoiles, meilleurs sont ses poussins."
+ },
+ {
+  "id": "text.exp_ducklings",
+  "en": "The more stars, the better his ducklings.",
+  "fr": "Plus il a d’étoiles, meilleurs sont ses canetons.",
+  "gender": true,
+  "f_en": "The more stars, the better her ducklings.",
+  "f_fr": "Plus elle a d’étoiles, meilleurs sont ses canetons."
  },
  {
   "id": "text.trust_next",
@@ -559,6 +577,26 @@
   "fr": "Plus haute, noire et or, aux murs crème, aux piliers rouges et aux ombrelles d’apparat, un bac à sable en pierre de temple, une jarre à eau, un petit gamelan et le plus grand jardin, avec palissade blanche et roses."
  },
  {
+  "id": "text.up_call_mended",
+  "en": "New pine boards half painted duck-egg blue, half a roof of new shingles, its pond cleaned and stones being laid, in a bigger pen.",
+  "fr": "Des planches de pin neuves à moitié peintes en bleu œuf de cane, la moitié du toit en bardeaux neufs, la mare nettoyée et des pierres qu’on pose, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_call_snug",
+  "en": "The Floating House on its raft, in a roomier pen.",
+  "fr": "La Maison flottante sur son radeau, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_call_cosy",
+  "en": "A little yellow houseboat with a curved teal roof, bunting, flower boxes, a rowing boat, a wider pond and a beach ball to play with.",
+  "fr": "Une petite péniche jaune au toit arrondi bleu canard, des fanions, des jardinières, une barque, une mare plus large et un ballon de plage pour jouer."
+ },
+ {
+  "id": "text.up_call_deluxe",
+  "en": "White and navy under a red roof, a little lighthouse, Monet’s green bridge to the door, a fountain, water lilies everywhere, a beach ball and the biggest garden, with white pickets and roses.",
+  "fr": "Blanche et bleu marine sous un toit rouge, un petit phare, le pont vert de Monet jusqu’à la porte, une fontaine, des nénuphars partout, un ballon de plage et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
   "id": "text.upfx_mended",
   "en": "Fewer days without an afternoon egg.",
   "fr": "Moins de jours sans l’œuf de l’après-midi."
@@ -787,6 +825,11 @@
   "id": "text.book_price",
   "en": "{p} coins an egg, plus a coin for each star of the hen",
   "fr": "{p} pièces l’œuf, plus une pièce par étoile de la poule"
+ },
+ {
+  "id": "text.book_price_duck",
+  "en": "{p} coins an egg, plus a coin for each star of the duck",
+  "fr": "{p} pièces l’œuf, plus une pièce par étoile de la cane"
  },
  {
   "id": "text.book_coop",
@@ -2084,6 +2127,11 @@
   "fr": "Œufs crème"
  },
  {
+  "id": "text.egg_call",
+  "en": "Pale green duck eggs",
+  "fr": "Œufs de cane vert pâle"
+ },
+ {
   "id": "text.coins_body",
   "en": "Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.",
   "fr": "Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore."
@@ -2479,9 +2527,19 @@
   "fr": "Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie."
  },
  {
+  "id": "text.feed_empty_line_duck",
+  "en": "Your ducks stop laying until it’s filled.",
+  "fr": "Vos canes ne pondent plus jusqu’à ce qu’elle soit remplie."
+ },
+ {
   "id": "text.feed_how",
   "en": "Your hens lay while there’s food in it. Full, it feeds your trio for two days.",
   "fr": "Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+ },
+ {
+  "id": "text.feed_how_duck",
+  "en": "Your ducks lay while there’s food in it. Full, it feeds your trio for two days.",
+  "fr": "Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
  },
  {
   "id": "text.fill_grain",
@@ -3447,6 +3505,16 @@
   "fr": "cane colvert"
  },
  {
+  "id": "goose.call_m",
+  "en": "call drake",
+  "fr": "canard Call"
+ },
+ {
+  "id": "goose.call_f",
+  "en": "call duck",
+  "fr": "cane Call"
+ },
+ {
   "id": "replay.thehens",
   "en": "the hens",
   "fr": "les poules"
@@ -3775,6 +3843,16 @@
   "id": "breed.aya.coop",
   "en": "Javanese House",
   "fr": "Maison javanaise"
+ },
+ {
+  "id": "breed.call.name",
+  "en": "Call duck",
+  "fr": "Canard Call"
+ },
+ {
+  "id": "breed.call.coop",
+  "en": "Floating House",
+  "fr": "Maison flottante"
  },
  {
   "id": "breed.sil_black.name",

@@ -49,14 +49,14 @@ export const TEXT = {
     hint_start: 'Tap a bird to meet it. Drag to look around, pinch to zoom.',
     hint_move: 'Drag to look around, pinch to zoom, tap a bird.',
     turn_tip_phone: 'Best played sideways: turn your phone', turn_tip_tablet: 'Best played sideways: turn your tablet',
-    hen: 'Hen', rooster: 'Rooster',
+    hen: 'Hen', rooster: 'Rooster', duck: 'Duck', drake: 'Drake',
     forever_h: 'In your flock for good', forever_r: 'In your flock for good',
     personality: 'Personality', experience: 'Experience', trust: 'Trust',
     exp_none: 'Just arrived: experience grows with time on the farm and with the love you give.',
     trust_lv0: 'Shy', trust_lv1: 'Friendly', trust_lv2: 'Trusting', trust_lv3: 'Best friend',
     trust_body: 'Cuddles build trust: one counts every 6 hours.',
     exp_how: 'Stars come with time on the farm, cuddles and raising chicks.', exp_top: 'All five stars!',
-    exp_eggs: 'Each star makes her eggs a coin dearer.', exp_chicks: 'The more stars, the better his chicks.',
+    exp_eggs: 'Each star makes her eggs a coin dearer.', exp_chicks: 'The more stars, the better his chicks.', exp_ducklings: 'The more stars, the better his ducklings.',
     trust_next: '{n} more cuddles to “{level}”', trust_next1: '1 more cuddle to “{level}”', trust_greets: 'Comes to the fence to greet {farmer}.',
     cuddle_btn: '♥ Cuddle', happy_left: 'Happy after a cuddle: {when} left', cuddle_night: 'Cuddles in the morning: {farmer} is asleep.',
     cuddle_done: '{farmer} gives {name} a cuddle ♥ +{xp} XP', trust_up1: '{name} is getting friendly with {farmer}.',
@@ -96,6 +96,9 @@ export const TEXT = {
     up_aya_mended: 'Walls of woven bamboo on a stone base and new clay tiles half laid, in a bigger pen.', up_aya_snug: 'The Javanese House, in a roomier pen.',
     up_aya_cosy: 'Green glazed tiles, a frangipani in flower, a banana plant and orchids, and a bigger garden with a swing under a tiled roof, a woven tray of sand and a cabbage to peck.',
     up_aya_deluxe: 'Taller, black and gold, with cream walls, red posts and ceremonial umbrellas, a sand pit of temple stone, a water jar, a little gamelan and the biggest garden, with white pickets and roses.',
+    up_call_mended: 'New pine boards half painted duck-egg blue, half a roof of new shingles, its pond cleaned and stones being laid, in a bigger pen.', up_call_snug: 'The Floating House on its raft, in a roomier pen.',
+    up_call_cosy: 'A little yellow houseboat with a curved teal roof, bunting, flower boxes, a rowing boat, a wider pond and a beach ball to play with.',
+    up_call_deluxe: 'White and navy under a red roof, a little lighthouse, Monet’s green bridge to the door, a fountain, water lilies everywhere, a beach ball and the biggest garden, with white pickets and roses.',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -106,13 +109,13 @@ export const TEXT = {
     move_gate: 'Its gate would be shut in here.', move_turn: 'Turn', move_cancel: 'Cancel', move_place: 'Put it here', moved: 'The coop is in its new place!',
     move_busy: 'Not just now: try again in a moment.',
     coops_title: 'Your coops', coops_aria: 'Your coops', coops_waiting: 'A new coop is waiting for you', coops_new: 'New!', trio_new: 'New breed: {breed}!', trio_new_col: 'New Silkie colour: {col}!',
-    trio_body: 'A rooster and two hens, yours for good, with their own coop. Put it anywhere on your land.',
+    trio_body: 'A rooster and two hens, yours for good, with their own coop. Put it anywhere on your land.', trio_body_duck: 'A drake and two ducks, yours for good, with their own house on a pond. Put it anywhere on your land.',
     place_now: 'Place their coop now', later: 'Later', later_note: 'It waits for you in Your coops (the little barn up top).', place_btn: 'Place it',
     move_short: 'Move', coops_next: 'At level {n}: {breed}', coops_all: 'Every breed is on your farm!',
     no_room: 'No room on your land for another coop yet: buy the next field.', welcome_trio: 'Welcome, {names}!',
     book_title: 'Breed Book', book_btn: '📖 Breed Book', book_found: '{n} of {all} breeds found', book_found1: '1 of {all} breeds found',
     book_on_farm: 'On your farm: {names}', book_at_level: 'Comes at level {n}', book_waiting: 'Their coop is waiting for you in Your coops',
-    book_price: '{p} coins an egg, plus a coin for each star of the hen', book_coop: '{coop}, rustic to start', book_more: 'More pages to come.',
+    book_price: '{p} coins an egg, plus a coin for each star of the hen', book_price_duck: '{p} coins an egg, plus a coin for each star of the duck', book_coop: '{coop}, rustic to start', book_more: 'More pages to come.',
     shows_title: 'Shows', shows_aria: 'Shows', shows_new: 'a new show is open',
     shows_how1: 'Enter one bird in each show. The judge looks at its stars, and at how calm it is in the judge’s hands (trust). A Diva shines a little more.',
     shows_how2: 'Results the next morning at 7:00. 1st, 2nd and 3rd win a rosette, coins and XP, and the rosette stays on the bird’s card for good.',
@@ -195,7 +198,7 @@ export const TEXT = {
     showday_title: 'Show day!', showday_body: 'The results of the {show} are in: the judge is looking at the birds.', showday_watch: 'Watch the judging', showday_results: 'Just the results', skip: 'Skip',
     sd_arrive: '{farmer} brings {name} to the show…', sd_judge: 'The judge looks at every bird…', sd_rosettes: 'And now, the rosettes!',
     champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry {f}, 1st prize {p} coins', show_new_n: 'The National Championship: entry {f}, 1st prize {p} coins',
-    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs', egg_pol: 'White eggs', egg_aya: 'Cream eggs',
+    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs', egg_pol: 'White eggs', egg_aya: 'Cream eggs', egg_call: 'Pale green duck eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_music: 'Music', settings_sounds: 'Sounds', music_on: 'On', music_off: 'Off', settings_music_note: 'The music comes now and then, by day and of an evening. With your phone on silent, the game is silent too.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
@@ -230,8 +233,8 @@ export const TEXT = {
     nest_full: 'The nest is full: collect the eggs so your hens can lay again.',
     feeder_title: 'Feeder · {coop}', feed_full: 'Full', feed_pct: '{p}% full', feed_empty: 'Empty',
     feed_hours: 'Enough for about {h} hours.', feed_hour: 'Enough for about an hour.', feed_days: 'Enough for about two days.',
-    feed_empty_line: 'Your hens stop laying until it’s filled.',
-    feed_how: 'Your hens lay while there’s food in it. Full, it feeds your trio for two days.',
+    feed_empty_line: 'Your hens stop laying until it’s filled.', feed_empty_line_duck: 'Your ducks stop laying until it’s filled.',
+    feed_how: 'Your hens lay while there’s food in it. Full, it feeds your trio for two days.', feed_how_duck: 'Your ducks lay while there’s food in it. Full, it feeds your trio for two days.',
     fill_grain: 'Fill it with your grain (free)', fill_grain_c: 'Fill it · {c} coins + your grain', feed_grain: 'Your grain from the wheat field: {n} (used first).',
     filled_grain: 'Feeder filled with your own grain', farmer_grain: '{farmer} is on the way with your grain',
     wheat_title: 'Your wheat field', wheat_soil: 'Ploughed and ready to sow.', wheat_sown: 'Sown: the first shoots soon.', wheat_sprouts: 'The first green shoots.', wheat_growing: 'Growing tall and green.', wheat_ripe: 'Golden and ready to harvest!',
@@ -305,14 +308,14 @@ export const TEXT = {
     hint_start: 'Touchez une volaille pour faire connaissance. Glissez pour regarder, pincez pour zoomer.',
     hint_move: 'Glissez pour regarder, pincez pour zoomer, touchez une volaille.',
     turn_tip_phone: 'Plus agréable à l’horizontale : tournez votre téléphone', turn_tip_tablet: 'Plus agréable à l’horizontale : tournez votre tablette',
-    hen: 'Poule', rooster: 'Coq',
+    hen: 'Poule', rooster: 'Coq', duck: 'Cane', drake: 'Canard',
     forever_h: 'Dans votre basse-cour pour toujours', forever_r: 'Dans votre basse-cour pour toujours',
     personality: 'Caractère', experience: 'Expérience', trust: 'Confiance',
     exp_none: 'Tout juste arrivé : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.',
     trust_lv0: 'Farouche', trust_lv1: 'Sociable', trust_lv2: 'En confiance', trust_lv3: 'Inséparable',
     trust_body: 'Les câlins donnent confiance : un compte toutes les 6 heures.',
     exp_how: 'Les étoiles viennent avec le temps passé à la ferme, les câlins et les poussins élevés.', exp_top: 'Les cinq étoiles !',
-    exp_eggs: 'Chaque étoile rend ses œufs une pièce plus chers.', exp_chicks: 'Plus il a d’étoiles, meilleurs sont ses poussins.',
+    exp_eggs: 'Chaque étoile rend ses œufs une pièce plus chers.', exp_chicks: 'Plus il a d’étoiles, meilleurs sont ses poussins.', exp_ducklings: 'Plus il a d’étoiles, meilleurs sont ses canetons.',
     trust_next: 'Encore {n} câlins avant « {level} »', trust_next1: 'Encore 1 câlin avant « {level} »', trust_greets: 'Vient saluer {farmer} à la clôture.',
     cuddle_btn: '♥ Faire un câlin', happy_left: 'Heureux après un câlin : encore {when}', cuddle_night: 'Les câlins, ce sera demain matin : {farmer} dort.',
     cuddle_done: '{farmer} fait un câlin à {name} ♥ +{xp} XP', trust_up1: '{name} devient sociable avec {farmer}.',
@@ -352,6 +355,9 @@ export const TEXT = {
     up_aya_mended: 'Des murs de bambou tressé sur un socle de pierre et des tuiles neuves à moitié posées, dans un enclos plus grand.', up_aya_snug: 'La Maison javanaise, dans un enclos plus spacieux.',
     up_aya_cosy: 'Des tuiles vernissées vertes, un frangipanier en fleurs, un bananier et des orchidées, et un jardin plus grand avec une balançoire sous un petit toit de tuiles, un plateau tressé plein de sable et un chou à picorer.',
     up_aya_deluxe: 'Plus haute, noire et or, aux murs crème, aux piliers rouges et aux ombrelles d’apparat, un bac à sable en pierre de temple, une jarre à eau, un petit gamelan et le plus grand jardin, avec palissade blanche et roses.',
+    up_call_mended: 'Des planches de pin neuves à moitié peintes en bleu œuf de cane, la moitié du toit en bardeaux neufs, la mare nettoyée et des pierres qu’on pose, dans un enclos plus grand.', up_call_snug: 'La Maison flottante sur son radeau, dans un enclos plus spacieux.',
+    up_call_cosy: 'Une petite péniche jaune au toit arrondi bleu canard, des fanions, des jardinières, une barque, une mare plus large et un ballon de plage pour jouer.',
+    up_call_deluxe: 'Blanche et bleu marine sous un toit rouge, un petit phare, le pont vert de Monet jusqu’à la porte, une fontaine, des nénuphars partout, un ballon de plage et le plus grand jardin, avec palissade blanche et roses.',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -362,13 +368,13 @@ export const TEXT = {
     move_gate: 'Sa porte serait bloquée ici.', move_turn: 'Tourner', move_cancel: 'Annuler', move_place: 'Le mettre ici', moved: 'Le poulailler est à sa nouvelle place !',
     move_busy: 'Pas tout de suite : réessayez dans un instant.',
     coops_title: 'Vos poulaillers', coops_aria: 'Vos poulaillers', coops_waiting: 'Un nouveau poulailler vous attend', coops_new: 'Nouveau !', trio_new: 'Nouvelle race : {breed} !', trio_new_col: 'Nouvelle couleur de poule soie : {col} !',
-    trio_body: 'Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain.',
+    trio_body: 'Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain.', trio_body_duck: 'Un canard et deux canes, à vous pour toujours, avec leur maison sur une mare. Installez-la où vous voulez sur votre terrain.',
     place_now: 'Installer leur poulailler', later: 'Plus tard', later_note: 'Il vous attend dans Vos poulaillers (la petite grange en haut).', place_btn: 'L’installer',
     move_short: 'Déplacer', coops_next: 'Au niveau {n} : {breed}', coops_all: 'Toutes les races sont dans votre ferme !',
     no_room: 'Pas encore de place sur votre terrain pour un autre poulailler : achetez le prochain terrain.', welcome_trio: 'Bienvenue, {names} !',
     book_title: 'Livre des races', book_btn: '📖 Livre des races', book_found: '{n} races trouvées sur {all}', book_found1: '1 race trouvée sur {all}',
     book_on_farm: 'Dans votre ferme : {names}', book_at_level: 'Arrive au niveau {n}', book_waiting: 'Leur poulailler vous attend dans Vos poulaillers',
-    book_price: '{p} pièces l’œuf, plus une pièce par étoile de la poule', book_coop: '{coop}, rustique pour commencer', book_more: 'D’autres pages à venir.',
+    book_price: '{p} pièces l’œuf, plus une pièce par étoile de la poule', book_price_duck: '{p} pièces l’œuf, plus une pièce par étoile de la cane', book_coop: '{coop}, rustique pour commencer', book_more: 'D’autres pages à venir.',
     shows_title: 'Concours', shows_aria: 'Concours', shows_new: 'un nouveau concours est ouvert',
     shows_how1: 'Inscrivez une volaille par concours. Le juge regarde ses étoiles, et son calme quand il la prend en main (la confiance). Une diva brille un peu plus.',
     shows_how2: 'Résultats le lendemain à 7 h. Les 1er, 2e et 3e gagnent une cocarde, des pièces et de l’XP, et la cocarde reste pour toujours sur sa fiche.',
@@ -451,7 +457,7 @@ export const TEXT = {
     showday_title: 'Jour de concours !', showday_body: 'Les résultats du {show} sont arrivés : le juge regarde les volailles.', showday_watch: 'Regarder le jugement', showday_results: 'Juste les résultats', skip: 'Passer',
     sd_arrive: '{farmer} amène {name} au concours…', sd_judge: 'Le juge regarde chaque volaille…', sd_rosettes: 'Et maintenant, les cocardes !',
     champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription {f}, 1er prix {p} pièces', show_new_n: 'Le championnat national : inscription {f}, 1er prix {p} pièces',
-    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair', egg_pol: 'Œufs blancs', egg_aya: 'Œufs crème',
+    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair', egg_pol: 'Œufs blancs', egg_aya: 'Œufs crème', egg_call: 'Œufs de cane vert pâle',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_music: 'Musique', settings_sounds: 'Sons', music_on: 'Oui', music_off: 'Non', settings_music_note: 'La musique vient de temps en temps, le jour et le soir. Si votre téléphone est en mode silencieux, le jeu l’est aussi.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
@@ -485,8 +491,8 @@ export const TEXT = {
     nest_full: 'Le nid est plein : ramassez les œufs pour que vos poules pondent à nouveau.',
     feeder_title: 'Mangeoire · {coop}', feed_full: 'Pleine', feed_pct: 'Pleine à {p} %', feed_empty: 'Vide',
     feed_hours: 'De quoi tenir environ {h} heures.', feed_hour: 'De quoi tenir environ une heure.', feed_days: 'De quoi tenir environ deux jours.',
-    feed_empty_line: 'Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie.',
-    feed_how: 'Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.',
+    feed_empty_line: 'Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie.', feed_empty_line_duck: 'Vos canes ne pondent plus jusqu’à ce qu’elle soit remplie.',
+    feed_how: 'Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.', feed_how_duck: 'Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.',
     fill_grain: 'La remplir avec votre grain (gratuit)', fill_grain_c: 'La remplir · {c} pièces + votre grain', feed_grain: 'Votre grain du champ de blé : {n} (utilisé d’abord).',
     filled_grain: 'Mangeoire remplie avec votre propre grain', farmer_grain: '{farmer} arrive avec votre grain',
     wheat_title: 'Votre champ de blé', wheat_soil: 'Labouré et prêt à semer.', wheat_sown: 'Semé : les premières pousses bientôt.', wheat_sprouts: 'Les premières pousses vertes.', wheat_growing: 'Il pousse, haut et vert.', wheat_ripe: 'Doré et prêt à récolter !',
@@ -554,9 +560,9 @@ export const TEXT = {
 // a word of the game's in a language, outside a game (the onboarding pictures' sale sign: main.js ?intro)
 export const gameText = (lang, key) => (TEXT[lang] || TEXT.en)[key] || TEXT.en[key] || key;
 // in French "Just arrived" agrees with the bird
-export const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', geese_b0: 'They don’t like {farmer} yet: they hiss and chase her out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once she steps back.' },
+export const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks.', exp_ducklings: 'The more stars, the better her ducklings.', geese_b0: 'They don’t like {farmer} yet: they hiss and chase her out of their field.', geese_b1: 'They put up with {farmer} now, from a distance, and eat the corn once she steps back.' },
   fr: { exp_none: 'Tout juste arrivée : l’expérience vient avec le temps passé à la ferme et l’affection que vous donnez.', happy_left: 'Heureuse après un câlin : encore {when}',
-    exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.',
+    exp_chicks: 'Plus elle a d’étoiles, meilleurs sont ses poussins.', exp_ducklings: 'Plus elle a d’étoiles, meilleurs sont ses canetons.',
     show_in: '{name} est inscrite : résultats à 7 h, dans {when}', show_entered: '{name} est inscrite au {show} !',
     res_none: '{name} n’est pas classée au {show} cette fois ({place} sur {of}). Le temps à la ferme et les câlins l’aideront.',
     res_champ: '{name} est championne maintenant !', ros_none: 'Pas encore de cocarde : inscrivez-la à un concours (la cocarde en haut).',
@@ -578,6 +584,10 @@ export const BREED_INFO = {
   // (release 7, Audrey, 29 Oct: "Polish (Recommended)", "Ayam Cemani", at levels 26 and 29, each with its own coop)
   pol: { name: ['Polish', 'Padoue'], coop: ['Little Windmill', 'Petit moulin'] },
   aya: { name: ['Ayam Cemani', 'Ayam Cemani'], coop: ['Javanese House', 'Maison javanaise'] },
+  // (30 Oct 2026, Audrey's call ducks: "call duck (new type of eggs!)", at level 10 in her own order; their Floating House:
+  // "a little wooden house on a raft in the middle of their pond". A drake and two ducks; duck eggs. `duck`: not chickens:
+  // no chicken shows, no ducklings yet (the next step), and Rusty can't reach a house out on a pond)
+  call: { name: ['Call duck', 'Canard Call'], coop: ['Floating House', 'Maison flottante'], duck: true },
   // the other Silkie colours by level (release 2, game-plan-v2.md §4): each its own forever trio and Pagoda Coop with a touch
   // of its colour; a "line" of the Silkie breed (the key `sil_<colour>` on its coop and birds; the white ones keep `sil`)
   sil_black: { name: ['Black Silkie', 'Poule soie noire'], kind: ['Silkie', 'Poule soie'], col: ['Black', 'noire'], coop: ['Pagoda Coop', 'Poulailler pagode'] },
@@ -609,6 +619,7 @@ export const RARE = { base: 0.018, star: 0.004, price: 400, starPrice: 50, baske
 const rareMost = () => RARE.base + RARE.star * 10;      // (the most a chick's chance can be: both parents five stars)
 export const rarePrice = stars => RARE.price + RARE.starPrice * stars;
 // a line's breed (the Silkie colours are all Silkies: their eggs, chicks, house and shows) and a Silkie line's colour
+export const isDuck = k => !!(BREED_INFO[k] && BREED_INFO[k].duck);      // (the call ducks: not chickens)
 export function baseBreed(k) { return typeof k === 'string' && k.startsWith('sil') ? 'sil' : k; }
 export function silColour(k) { return k === 'sil' ? 'white' : typeof k === 'string' && k.startsWith('sil_') ? k.slice(4) : null; }
 
@@ -630,6 +641,8 @@ export const PERS_INFO = {
 };
 const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Nutmeg', 'Poppy', 'Pearl', 'Ginger',
   'Olive', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
+const DUCK_NAMES = ['Puddle', 'Pebble', 'Dimple', 'Paddle', 'Splash', 'Lily', 'Bubbles', 'Wiggles', 'Button', 'Sunny', 'Daisy', 'Ripple'];
+const DRAKE_NAMES = ['Pip', 'Waddles', 'Captain', 'Bramble', 'Puddington', 'Noodle', 'Dabble'];      // (the call ducks')
 const ROO_NAMES = ['Rupert', 'Albert', 'Barnaby', 'Chester', 'Percy', 'Reginald', 'Gus', 'Hamish', 'Basil', 'Monty', 'Fergus'];
 const FARMER_DEFAULT = register('farmer', { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'] });
 export const TRUST_AT = [0, 3, 8, 15];                 // cuddles for Shy, Friendly, Trusting, Best friend
@@ -657,7 +670,7 @@ export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
 // come, "we might have too many silkies"; then her own order: "1 Rhode Island Red, 3 Buff Orpington, 5 White Silkie, 7 Ayam
 // Cemani, 10 Call ducks, 12 Buff Silkie, 15 Cream Legbar, 18 Polish, 21 Partridge Silkie, 24 Light Brahma, 27 Black Silkie,
 // 30 Peacock"; the call ducks and the peacock to come)
-export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, sil_buff: 12, leg: 15, pol: 18, sil_partridge: 21, bra: 24, sil_black: 27 };
+export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sil_buff: 12, leg: 15, pol: 18, sil_partridge: 21, bra: 24, sil_black: 27 };
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
 const breedCame = b => Math.min(BREED_LEVEL[b] ?? Infinity, BREED_LEVEL_29OCT[b] ?? Infinity);
@@ -887,7 +900,7 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
-export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 8 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range)
+export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 8, call: 10 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range)
 // XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
 // each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
 export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, jobL: 0.3 };      // (26 Oct, with the Silkie colours and the rare ones' coops: a year to level 30 once a day still)
@@ -909,7 +922,7 @@ export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 1
 // changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct), the Pagoda's (27 Oct: every Silkie colour's),
 // the Stone Cottage's (27 Oct)
 // (release 7's breeds came with their looks: no farm can have one of their coops from before, so nothing to change: 1)
-export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5, pol: 1, aya: 1 }, CV = 5;
+export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5, pol: 1, aya: 1, call: 1 }, CV = 5;
 export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
@@ -917,7 +930,7 @@ export const CATCH_UP = 2 * 86400e3;                  // away longer than two da
 const DAY_MS = 86400e3;
 // ---- chicks (starting values)
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
-export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 28 };   // coins for each grown chick
+export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 28, call: 32 };   // coins for each grown chick
 export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
 export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
 export const kidPrice = (base, stars) => Math.round(base * (0.6 + 0.2 * stars));        // 1 star: 0.8 of the price; 5 stars: 1.6
@@ -1182,6 +1195,7 @@ export class Game {
   breedName(b) { return tr(this.lang, 'breed.' + b + '.name'); }                  // (a line's: "Black Silkie")
   kindName(b) { return tr(this.lang, 'breed.' + b + (BREED_INFO[b].kind ? '.kind' : '.name')); }      // (the breed's: "Silkie", for the shows)
   baseOf(b) { return baseBreed(b); }
+  isDuck(b) { return isDuck(b); }
   coopName(c) { return c.name || tr(this.lang, 'breed.' + c.breed + '.coop'); }
   // a new trio's title: a new breed, or a new Silkie colour
   trioTitle(b) { return silColour(b) && b !== 'sil' ? this.t('trio_new_col', { col: tr(this.lang, 'breed.' + b + '.col') }) : this.t('trio_new', { breed: this.breedName(b) }); }
@@ -1240,7 +1254,7 @@ export class Game {
   bookPages() {
     const has = b => this.data.coops.some(c => c.breed === b) || this.basket().some(x => x.breed === b);
     const lv = b => BREED_LEVEL[b] ?? BREED_LEVEL_29OCT[b];
-    const breeds = Object.keys(BREED_LEVEL_29OCT).filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));
+    const breeds = [...new Set([...Object.keys(BREED_LEVEL_29OCT), ...Object.keys(BREED_LEVEL)])].filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));      // (the call ducks' too)
     return breeds.map(breed => {
       const coop = this.data.coops.find(c => c.breed === breed);
       const names = coop ? this.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name) : [];
@@ -1325,13 +1339,13 @@ export class Game {
   canEnter(b, s) {
     if (s.locked) return 'locked';
     if (this.shows().in.some(e => e.id === s.id)) return 'done';
-    if (s.breed && baseBreed(b.breed) !== s.breed) return 'breed';
+    if ((s.breed && baseBreed(b.breed) !== s.breed) || isDuck(b.breed)) return 'breed';      // (the shows are poultry shows: no ducks)
     if (this.showOf(b.id)) return 'busy';
     if (this.data.coins < SHOWS[s.tier].fee) return 'coins';
     return 'ok';
   }
   // the birds that could go in a show, best chance first
-  showBirds(s) { return this.data.birds.filter(b => (!s.breed || baseBreed(b.breed) === s.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
+  showBirds(s) { return this.data.birds.filter(b => (!s.breed || baseBreed(b.breed) === s.breed) && !isDuck(b.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
   enterShow(id, birdId, now = Date.now()) {
     const s = this.openShows(now).find(x => x.id === id), b = this.bird(birdId);
     if (!s || !b || this.canEnter(b, s) !== 'ok') return null;
@@ -1458,7 +1472,7 @@ export class Game {
     return c ? { key: k, t, coop: c.id, open: !shutFor(c, k) } : null;
   }
   foxCoop(k, t) {
-    const coops = this.data.coops.filter(c => this.birdsIn(c.id).length);
+    const coops = this.data.coops.filter(c => this.birdsIn(c.id).length && !isDuck(c.breed));      // (not the call ducks' house out on its pond)
     if (!coops.length) return null;
     const order = coops.slice().sort((a, b) => hash01('foxc|' + k + '|' + a.id) - hash01('foxc|' + k + '|' + b.id));
     return order.find(c => !shutFor(c, k)) || order[0];
@@ -1707,7 +1721,8 @@ export class Game {
     }
     const now = Date.now();
     return [['r', pers[0]], ['h', pers[1]], ['h', pers[2]]].map(([sex, p]) => {
-      const b = { id: this.id('b'), name: pick(sex === 'r' ? ROO_NAMES : HEN_NAMES), sex, breed, pers: p, coop: coopId, since: now, exp: 0, trust: 0 };
+      const duck = BREED_INFO[breed] && BREED_INFO[breed].duck;
+      const b = { id: this.id('b'), name: pick(sex === 'r' ? (duck ? DRAKE_NAMES : ROO_NAMES) : duck ? DUCK_NAMES : HEN_NAMES), sex, breed, pers: p, coop: coopId, since: now, exp: 0, trust: 0 };
       if (sex === 'h') b.laid = now;
       b.happy = 0; b.ros = [0, 0, 0, 0, 0, 0, 0, 0, 0];
       return b;
@@ -1857,6 +1872,7 @@ export class Game {
         c.checked = t; dirty = true;
         if (t < now - CATCH_UP || t < c.lastBrood + DAY_MS || t < this.data.made + DAY_MS || this.feedAt(c, t) <= 0) continue;
         const day = dayStart(t);
+        if (isDuck(c.breed)) continue;                                    // (the call ducks: no ducklings yet)
         for (const h of this.birdsIn(c.id).filter(x => x.sex === 'h')) {
           if (hash01(h.id + '|brood|' + day) >= (h.pers === 'mum' ? BROODY_P.mum : BROODY_P.other) * (BREED_INFO[c.breed] && BREED_INFO[c.breed].rare ? RARE.broody : 1)) continue;      // (a rare pair: less often)
           const n = (h.pers === 'mum' ? 3 : 2) + (hash01(h.id + '|n|' + day) < 0.5 ? 1 : 0);

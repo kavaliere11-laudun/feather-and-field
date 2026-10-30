@@ -928,5 +928,24 @@
  "breed.pol.name": "Paduaner",
  "breed.pol.coop": "Kleine Windmühle",
  "breed.aya.name": "Ayam Cemani",
- "breed.aya.coop": "Javanisches Haus"
+ "breed.aya.coop": "Javanisches Haus",
+ "text.duck": "Ente",
+ "text.drake": "Erpel",
+ "text.exp_ducklings": {
+  "t": "Je mehr Sterne, desto besser seine Entenküken.",
+  "f": "Je mehr Sterne, desto besser ihre Entenküken."
+ },
+ "text.up_call_mended": "Neue Kiefernbretter, halb enteneiblau gestrichen, ein halbes Dach aus neuen Schindeln, der Teich gesäubert und Steine halb verlegt, in einem größeren Gehege.",
+ "text.up_call_snug": "Das Schwimmende Haus auf seinem Floß, in einem geräumigeren Gehege.",
+ "text.up_call_cosy": "Ein kleines gelbes Hausboot mit gewölbtem petrolblauem Dach, Wimpelketten, Blumenkästen, einem Ruderboot, einem breiteren Teich und einem Wasserball zum Spielen.",
+ "text.up_call_deluxe": "Weiß und Marineblau unter einem roten Dach, ein kleiner Leuchtturm, Monets grüne Brücke bis zur Tür, ein Springbrunnen, überall Seerosen, ein Wasserball und der größte Garten, mit weißem Lattenzaun und Rosen.",
+ "text.egg_call": "Blassgrüne Enteneier",
+ "goose.call_m": "Call-Erpel",
+ "goose.call_f": "Call-Ente",
+ "breed.call.name": "Call-Ente",
+ "breed.call.coop": "Schwimmendes Haus",
+ "text.book_price_duck": "{p} Münzen pro Ei, plus eine Münze für jeden Stern der Ente",
+ "text.feed_how_duck": "Deine Enten legen, solange Futter darin ist. Voll reicht er deinem Trio für zwei Tage.",
+ "text.feed_empty_line_duck": "Deine Enten legen erst wieder, wenn er gefüllt ist.",
+ "text.trio_body_duck": "Ein Erpel und zwei Enten mit eigenem Haus auf einem Teich – sie gehören dir für immer. Stell es auf deinem Land auf, wo du willst."
 }
