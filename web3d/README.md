@@ -3282,6 +3282,18 @@ the birds already had.
   their words in the six languages (lang/*.json, packed). The save's checks as for every breed: a call coop before level
   10 is flagged. Tests: **calltest.mjs** (level 9 to 10, placing, the pen, a tap and her card, cuddle, a lay, the feeder,
   the book, the Snug look, no shows, a reload, a coop put in from outside), booktest and silktest (15 pages).
+- **No clipping with the ball, nor with each other** (30 Oct; Audrey, with a still from the film: "clipping with the
+  ball"): each duck's body seen from above is a capsule (callpen.js `CAP`: from just in front of the tail to the breast,
+  0.062 to each side, measured off the models: tail to bill tip -0.136 to 0.161). Every frame (`CallPen.apart`) two ducks
+  touching are moved apart, half each (all of it the other if one can't go: the raft, the gangplank, the pond's edge, the
+  yard; else a little to one side, `shoveOut`); a duck touching the ball bumps it on (it drifts off, `bump`), and where the
+  ball can't go (the raft, the edge) she gives way. She comes up to the ball only to touch it with her breast (`NUDGE`),
+  then a little push on with it. Afloat, her whole body (tail, middle, breast) is kept clear of the raft and the gangplank
+  (`keepOff`, and every push checked the same way, `okAt`); the Deluxe's bridge counted as wide as it is with its
+  railings (`plankW`: 0.135 each side, the gangplank's 0.1), and the ball kept well clear of it (0.16 more: from above,
+  its tall arched railings would otherwise seem to cut into the ball behind them). Not in the house or on the plank (one behind the other there
+  already). A soak of the Snug, the Cosy and the Deluxe over 400 s each: no duck in the ball, in another, in the raft or
+  the bridge, not once.
 - Next: ducklings (a duck sitting, fluffy yellow ducklings following her on land and water), then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

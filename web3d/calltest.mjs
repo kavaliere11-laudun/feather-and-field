@@ -120,10 +120,13 @@ const greet = await p.evaluate(() => { const f = window.__farm, g = f.game(), Q 
   for (const d of Q.callPen.ducks) { g.bird(d.gid).trust = 8; if (d.inHouse || d.laying) continue; const y = Q.callPen.yardSpot(); d.pos.set(y[0], 0, y[1]); d.wet = 0; d.task = null; }      // (out on the yard: not afloat)
   f.step(1 / 30, 2);
   const v = Q.frame.localToWorld(new f.THREE.Vector3(0.3, 0, Q.pen.pen.max[2] + 0.8)); f.greetAt(v.x, v.z); return Q.callPen.ducks.map(d => d.task && d.task.name); });
-await run(12);
-const greeted = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); return Q.callPen.ducks.map(d => ({ task: d.task && d.task.name, z: +d.pos.z.toFixed(2) })); });
 const front = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); return Q.pen.yard.max[2]; });
-ok('trusting ducks: the farmer at their fence, they come to the front of the yard to say hello', greet.filter(x => x === 'greet').length >= 2 && greeted.filter(d => d.z > front - 0.6).length >= 2, { greet, greeted, front });
+const greeted = new Set();
+for (let k = 0; k < 14; k++) {
+  await run(1);
+  for (const g of await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); return Q.callPen.ducks.map(d => ({ id: d.gid, task: d.task && d.task.name, z: d.pos.z })); })) if (g.task === 'greet' && g.z > front - 0.6) greeted.add(g.id);
+}
+ok('trusting ducks: the farmer at their fence, they come to the front of the yard to say hello', greet.filter(x => x === 'greet').length >= 2 && greeted.size >= 2, { greet, greeted: [...greeted], front });
 // the shows take no ducks
 const shows = await p.evaluate(() => { const g = window.__farm.game(), s = { id: 'c20261026', tier: 'c', breed: null, locked: false }; return g.showBirds(s).some(x => g.isDuck(x.b.breed)); });
 ok('the shows take no ducks', !shows);

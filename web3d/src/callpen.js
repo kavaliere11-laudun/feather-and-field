@@ -20,6 +20,21 @@ const RAFT = { x: 0.63, z0: -0.45, z1: 0.5 };       // the raft and the house on
 const HOUSE = { x: 0.44, z: 0.31 }, DECK = 0.072;    // the house on it (its walls), the deck's height
 const BED = [20.75, 6.6];                            // to bed from, up from
 const BALL_R = 0.085;
+// a duck's body seen from above (measured off the call ducks' models: tail to bill tip -0.136 to 0.161 along her heading,
+// 0.062 to each side): a capsule from just in front of the tail to the breast, as wide as she is. Nobody goes through
+// anybody: ducks kept apart by these, and off the ball (Audrey: "clipping with the ball")
+const CAP = { back: -0.075, front: 0.085, r: 0.062 };
+const NUDGE = CAP.front + CAP.r + BALL_R + 0.005;       // (from her middle to the ball's: her breast just touching it)
+const capOf = d => { const s = Math.sin(d.heading), c = Math.cos(d.heading), x = d.pos.x, z = d.pos.z; return [x + s * CAP.back, z + c * CAP.back, x + s * CAP.front, z + c * CAP.front]; };
+const near = (px, pz, S) => { const dx = S[2] - S[0], dz = S[3] - S[1], L = dx * dx + dz * dz, u = L ? Math.max(0, Math.min(1, ((px - S[0]) * dx + (pz - S[1]) * dz) / L)) : 0; return [S[0] + dx * u, S[1] + dz * u]; };
+// (the closest points of two capsules' middles: each end of one against the other, and back)
+function closest(A, B) {
+  let best = null;
+  const tryP = (p, q) => { const d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (!best || d < best.d) best = { d, p, q }; };
+  tryP([A[0], A[1]], near(A[0], A[1], B)); tryP([A[2], A[3]], near(A[2], A[3], B));
+  tryP(near(B[0], B[1], A), [B[0], B[1]]); tryP(near(B[2], B[3], A), [B[2], B[3]]);
+  return best;
+}
 const S = (x, z, pace, through, tol) => Object.assign(TK.straight(x, z, pace, through, tol), { to: [x, z] });      // (a straight walk or swim, knowing where to)
 
 // a beach ball: six panels in turn red, yellow and blue, white caps (stylized/coops.py beach_ball's look)
@@ -96,7 +111,8 @@ export class CallPen {
     return this.pondS(x, z) < 1.0 ? this.P.wy : 0;
   }
   inRaft(x, z, m = 0) { return Math.abs(x) < RAFT.x + m && z > RAFT.z0 - m && z < RAFT.z1 + m; }
-  underPlank(x, z, m = 0) { return Math.abs(x - this.pop[0]) < 0.1 + m && z > this.pop[1] - 0.05 && z < this.foot[1] + 0.04 + m; }
+  underPlank(x, z, m = 0) { return Math.abs(x - this.pop[0]) < this.plankW() + m && z > this.pop[1] - 0.05 && z < this.foot[1] + 0.04 + m; }
+  plankW() { return this.o.path ? 0.135 : 0.1; }      // (half its width: the gangplank's; the Deluxe's bridge with its railings, stylized/coops.py monet_bridge)
   // the swimming ring: points round the raft, out in the water, the raft and the gangplank kept clear; split by the
   // gangplank into arcs (a duck swims along one)
   makeRing() {
@@ -238,13 +254,13 @@ export class CallPen {
       if (!this.dir) {                                   // (the way she'll send it: one with room for her behind the ball, and water ahead of it)
         const ok = [];
         for (let k = 0; k < 16; k++) {
-          const a = k / 16 * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a), hx = B.x - dx * 0.16, hz = B.z - dz * 0.16, ax = B.x + dx * 0.25, az = B.z + dz * 0.25;
+          const a = k / 16 * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a), hx = B.x - dx * NUDGE, hz = B.z - dz * NUDGE, ax = B.x + dx * 0.25, az = B.z + dz * 0.25;
           if (pen.pondS(hx, hz) < 0.95 && !pen.inRaft(hx, hz, 0.06) && !pen.underPlank(hx, hz, 0.06) && pen.side(hx) === pen.side(B.x) && pen.pondS(ax, az) < 0.9 && !pen.inRaft(ax, az, 0.03)) ok.push([dx, dz]);
         }
         if (!ok.length) return true;                     // (nowhere to come at it from: another time)
         this.dir = ok[Math.floor(pen.r() * ok.length)];
       }
-      const bx = B.x - this.dir[0] * 0.16, bz = B.z - this.dir[1] * 0.16;
+      const bx = B.x - this.dir[0] * NUDGE, bz = B.z - this.dir[1] * NUDGE;
       if (this.t > 12) return true;
       if (this.via === undefined || (this.via && Math.hypot(this.via[0] - g.pos.x, this.via[1] - g.pos.z) < 0.08)) { const v = pen.viaCorner([g.pos.x, g.pos.z], [bx, bz]); this.via = v && this.via && Math.hypot(v[0] - this.via[0], v[1] - this.via[1]) < 0.05 ? null : v; }      // (round the corner once, then on)
       if (this.via && !this.go) { g.moveTo(this.via[0], this.via[1], dt, 'walk', true); return false; }
@@ -253,6 +269,7 @@ export class CallPen {
       if (!this.go) { this.go = 0; }
       this.go += dt; const A = g.A;
       if (g.turnTo(Math.atan2(B.x - g.pos.x, B.z - g.pos.z), dt, 3) < 0.4 && !this.hit) { this.hit = true; B.vx += this.dir[0] * 0.42; B.vz += this.dir[1] * 0.42; pen.splash = (pen.splash || 0) + 1; }
+      if (this.hit && this.go < 0.45) g.moveTo(B.x, B.z, dt, 'walk', true);      // (a little push on with her breast: the ball's bumped on, pen.bump)
       A.grazeGoal = 0.35; A.wagGoal = 0.8; A.bobGoal = this.go > 0.3 ? 1 : 0;
       return this.go > 1.6;
     } };
@@ -355,7 +372,7 @@ export class CallPen {
     });
   }
   // ---- the game's: her lay when it's due (main.js gameTick), her card open, a cuddle, a hello to the farmer
-  busy(d) { return d.inHouse || !d.root.visible || (d.task && /^(lay|bed|morning|parade|held|cuddle|greet)/.test(d.task.name)); }
+  busy(d, parade = true) { return d.inHouse || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet)/ : /^(lay|bed|morning|held|cuddle|greet)/).test(d.task.name)); }
   canLay(d) {        // (by day, up and about on the yard, nobody else in the nest)
     return d.kind === 'call_f' && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying);
   }
@@ -374,7 +391,7 @@ export class CallPen {
     return true;
   }
   greet(d, x, z, yaw) {      // a trusting duck to the front of the yard to say hello to the farmer: a heart, a bob, a quack
-    if (d.held || this.busy(d) || !this.onLand(d) || !this.free(x, z, 0.08)) return false;
+    if (d.held || this.busy(d, false) || !this.onLand(d) || !this.free(x, z, 0.08)) return false;      // (a parade's dropped for it)
     const L = []; if (!this.walkTo(L, x, z, 'hurry', d)) return false;
     L.push(TK.face(yaw), () => { if (this.o.heart) this.o.heart(d); if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); return null; }, TK.act('bob', 3.4, BOB), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2)));
     d.task = TK.seq('greet', L);
@@ -393,7 +410,8 @@ export class CallPen {
       if (dx < Math.min(dz0, dz1)) { B.x = Math.sign(B.x || 1) * (RAFT.x + m); B.vx = Math.abs(B.vx) * Math.sign(B.x) * 0.6; }
       else if (dz1 < dz0) { B.z = RAFT.z1 + m; B.vz = Math.abs(B.vz) * 0.6; } else { B.z = RAFT.z0 - m; B.vz = -Math.abs(B.vz) * 0.6; }
     }
-    if (this.underPlank(B.x, B.z, BALL_R)) { const sd = B.x < this.pop[0] ? -1 : 1; B.x = this.pop[0] + sd * (0.1 + BALL_R + 0.01); B.vx = Math.abs(B.vx) * sd * 0.6; }
+    const bm = BALL_R + (this.o.path ? 0.16 : 0);       // (well clear of the bridge: its tall railings never seem to cut into it)
+    if (this.underPlank(B.x, B.z, bm)) { const sd = B.x < this.pop[0] ? -1 : 1; B.x = this.pop[0] + sd * (this.plankW() + bm + 0.01); B.vx = Math.abs(B.vx) * sd * 0.6; }
     const v = Math.hypot(B.vx, B.vz);
     if (v > 1e-4) { const ax = new THREE.Vector3(B.vz, 0, -B.vx).normalize(); B.spin.premultiply(new THREE.Quaternion().setFromAxisAngle(ax, v * dt / BALL_R)); }
     B.mesh.position.set(B.x, P.wy + BALL_R * 0.78 + 0.005 * Math.sin(this.time * 1.7), B.z); B.mesh.quaternion.copy(B.spin);
@@ -414,7 +432,74 @@ export class CallPen {
       d.shadow.visible = d.root.visible && !d.inHouse;
       if (d.shadow.visible) { d.shadow.position.set(d.pos.x, (d.wet > 0.5 ? this.P.wy : this.groundY(d.pos.x, d.pos.z)) + 0.004, d.pos.z); d.shadow.rotation.y = d.heading; }
     }
-    if (this.ball) this.placeBall(Math.min(dt, 0.05));
+    for (const d of this.ducks) this.keepOff(d);
+    this.apart();
+    if (this.ball) { this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt); }
+  }
+  // ---- nobody through anybody
+  solid(d) { return d.root.visible && !d.inHouse && !this.inHouseAt(d.pos.x, d.pos.z) && this.onRamp(d.pos.x, d.pos.z) === null; }
+  // where she may be put: afloat, in the water clear of the raft and the gangplank; on land, off the raft, in the yard
+  okAt(d, x, z) {
+    if (this.inRaft(x, z, 0.02) || this.underPlank(x, z, -0.02)) return false;
+    if (d.wet > 0.5) {          // (afloat: her whole body, tail to breast, clear of the raft and the gangplank too)
+      const S = capOf(d), dx = x - d.pos.x, dz = z - d.pos.z, r = CAP.r - 0.008, hw = this.plankW();
+      for (const [px, pz] of [[S[0] + dx, S[1] + dz], [(S[0] + S[2]) / 2 + dx, (S[1] + S[3]) / 2 + dz], [S[2] + dx, S[3] + dz]]) {
+        if (this.inRaft(px, pz, r)) return false;
+        if (Math.abs(px - this.pop[0]) < hw + r && pz > this.pop[1] - 0.05 && pz < this.foot[1] + 0.04) return false;
+      }
+      return this.pondS(x, z) < 0.97;
+    }
+    const Y = this.o.yard; return !Y || (x > Y.min[0] - 0.12 && x < Y.max[0] + 0.12 && z > Y.min[2] - 0.12 && z < Y.max[2] + 0.12);
+  }
+  shove(d, dx, dz) { const x = d.pos.x + dx, z = d.pos.z + dz; if (!this.okAt(d, x, z)) return false; d.pos.x = x; d.pos.z = z; return true; }
+  // (straight away if she can, else a little to one side or the other: out of a corner)
+  shoveOut(d, nx, nz, ov) {
+    for (const [a, b] of [[1, 0], [0.7, 0.7], [0.7, -0.7], [0, 1.2], [0, -1.2]]) if (this.shove(d, (nx * a - nz * b) * ov, (nz * a + nx * b) * ov)) return true;
+    return false;
+  }
+  // afloat, her whole body clear of the raft and the gangplank (the bridge): its tail, middle and breast
+  keepOff(d) {
+    if (!(d.wet > 0.5) || !this.solid(d)) return;
+    const S = capOf(d), r = CAP.r, hw = this.plankW(), sd = this.side(d.pos.x);
+    for (const [px, pz] of [[S[0], S[1]], [(S[0] + S[2]) / 2, (S[1] + S[3]) / 2], [S[2], S[3]]]) {
+      if (this.inRaft(px, pz, r)) {
+        const dx = RAFT.x + r - Math.abs(px), dz0 = pz - (RAFT.z0 - r), dz1 = RAFT.z1 + r - pz, m = Math.min(dx, dz0, dz1);
+        if (m === dx) d.pos.x += Math.sign(px || 1) * dx; else if (m === dz1) d.pos.z += dz1; else d.pos.z -= dz0;
+      }
+      if (Math.abs(px - this.pop[0]) < hw + r && pz > this.pop[1] - 0.05 && pz < this.foot[1] + 0.04) {
+        const want = this.pop[0] + sd * (hw + r); if ((want - px) * sd > 0) d.pos.x += want - px;
+      }
+    }
+  }
+  // two ducks never in each other: each moved half the overlap apart (all of it the other, if one can't go)
+  apart() {
+    const D = this.ducks.filter(d => this.solid(d));
+    for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) {
+      const a = D[i], b = D[j], c = closest(capOf(a), capOf(b)), need = 2 * CAP.r + 0.004;
+      if (c.d >= need) continue;
+      let nx = c.p[0] - c.q[0], nz = c.p[1] - c.q[1], l = Math.hypot(nx, nz);
+      if (l < 1e-5) { nx = Math.cos(a.heading); nz = -Math.sin(a.heading); l = 1; }      // (right on top: sideways)
+      nx /= l; nz /= l; const ov = need - c.d;
+      const ka = this.shove(a, nx * ov / 2, nz * ov / 2), kb = this.shove(b, -nx * ov / 2, -nz * ov / 2);
+      if (!ka && kb) this.shove(b, -nx * ov / 2, -nz * ov / 2);
+      else if (ka && !kb) this.shove(a, nx * ov / 2, nz * ov / 2);
+      else if (!ka && !kb && !this.shoveOut(a, nx, nz, ov)) this.shoveOut(b, -nx, -nz, ov);
+    }
+  }
+  // the ball and a duck touching: the ball's bumped on (it drifts off), or, where it can't go (the raft, the edge), she
+  // gives way (yield: after the ball has been kept on its pond)
+  bump(yield_, dt) {
+    const B = this.ball;
+    for (const d of this.ducks) {
+      if (!this.solid(d)) continue;
+      const q = near(B.x, B.z, capOf(d)), dist = Math.hypot(B.x - q[0], B.z - q[1]), need = CAP.r + BALL_R + 0.003;
+      if (dist >= need) continue;
+      let nx = B.x - q[0], nz = B.z - q[1], l = Math.hypot(nx, nz);
+      if (l < 1e-5) { nx = Math.sin(d.heading); nz = Math.cos(d.heading); l = 1; }
+      nx /= l; nz /= l; const ov = need - dist;
+      if (!yield_) { B.x += nx * ov; B.z += nz * ov; const v = Math.min(0.3, ov / Math.max(dt, 1e-3) * 0.5); B.vx += nx * v * 0.2; B.vz += nz * v * 0.2; }
+      else this.shoveOut(d, -nx, -nz, ov);
+    }
   }
 }
 function g_hide(d) { d.root.visible = false; d.shadow.visible = false; }
