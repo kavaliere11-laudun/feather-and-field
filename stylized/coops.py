@@ -858,8 +858,22 @@ FLOAT_LOOK = {
     4: dict(wall='#f8f6f0', wall2='#eeebe3', trim='#2c4a7a', roof='#c9453b', ridge='#a5352d', door='#2c4a7a', flag='#2c4a7a',
             deck='#d9c19c', deck2='#ccb28b', water='#79c7e0', water2='#5fb3d0'),
 }
+FLOAT_BALL = {3: (0.92, -0.12), 4: (0.66, -0.62)}                # the beach ball's place on the pond (the Cosy's, the Deluxe's)
+
+
+def float_info():
+    """For the browser (glTF axes): each look's pond ([middle x, z, half-width across, out to the front, the water's height])
+    and its ball's place."""
+    names = ['box_call', 'shed_call', 'house_call', 'cosy_call', 'deluxe_call']; ponds = {}; balls = {}
+    for t, n in enumerate(names):
+        cx, cy, a, b = dict(FLOAT, **FLOAT_POND.get(t, {}))['pond']
+        ponds[n] = [cx, round(-cy, 3), a, b, FLOAT['water']]
+        if t in FLOAT_BALL: balls[n] = [FLOAT_BALL[t][0], round(-FLOAT_BALL[t][1], 3)]
+    return dict(ponds=ponds, balls=balls)
+
+
 FLOAT_PATH = {}                                                  # per look with its own way in: the ducks' way (points, glTF axes)
-FLOAT_POND = {0: dict(pond=(0.0, -0.17, 0.92, 0.68)), 4: dict(pond=(0.0, -0.02, 1.58, 0.85))}      # (the Rustic's smaller, the Deluxe's much wider: its front where the gangplank lands)
+FLOAT_POND = {0: dict(pond=(0.0, -0.17, 0.92, 0.68)), 3: dict(pond=(0.0, -0.17, 1.2, 0.7)), 4: dict(pond=(0.0, -0.02, 1.58, 0.85))}      # (the Rustic's smaller, the Cosy's wider (room for the ball), the Deluxe's much wider: its front where the gangplank lands)
 
 
 def pond_pts(F, wob=0.05, n=40, out=0.0):
@@ -948,7 +962,7 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
             objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
     if look == 3: rowing_boat(objs, -0.8, -0.26, F['water'])
     if look == 4: fountain(objs, 1.22, 0.28, F['water'], name)
-    if look >= 3: beach_ball(objs, {3: (0.52, -0.68), 4: (0.66, -0.62)}[look], F['water'])      # (the ducks' toy, from the Cosy: Audrey, "No ball level 3")
+    # (the ducks' toy, the beach ball, from the Cosy (Audrey: "No ball level 3"): the browser's, so they can play with it: FLOAT_BALL)
     # the birds keep out of the water (in front of and beside the house; the gangplank's line left free)
     for i in range(32):
         t = 2 * math.pi * i / 32; x, y = cx + a * 0.8 * math.cos(t), cy + b * 0.8 * math.sin(t)

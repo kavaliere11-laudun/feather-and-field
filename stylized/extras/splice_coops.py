@@ -1,6 +1,6 @@
 # Put the call ducks' coop (export_call.py's call.glb/call.json) into coops.glb/coops.json, keeping every other model byte for
 # byte (each mesh's primitives, their materials matched by bucket name) and merging the json's entries for its models.
-#   python3 stylized/extras/splice_coops.py OLD.glb OLD.json CALL.glb CALL.json OUT.glb OUT.json
+#   python3 stylized/extras/splice_coops.py OLD.glb OLD.json CALL.glb CALL.json OUT.glb OUT.json [name1,name2: just those models]
 import json, struct, sys
 def load(p):
     b = open(p, 'rb').read(); jl = struct.unpack('<I', b[12:16])[0]; js = json.loads(b[20:20 + jl]); bin_ = b[20 + jl + 8:]
@@ -16,7 +16,7 @@ def load(p):
         out[m['name']] = prims
     return js, out
 oj, old = load(sys.argv[1]); nj, new = load(sys.argv[3])
-TAKE = [m['name'] for m in nj['meshes']]
+TAKE = sys.argv[7].split(',') if len(sys.argv) > 7 else [m['name'] for m in nj['meshes']]      # (or just those named)
 mats = list(oj['materials']); mi = {m['name']: i for i, m in enumerate(mats)}
 for m in nj['materials']:
     if m['name'] not in mi: mi[m['name']] = len(mats); mats.append(m)
@@ -45,6 +45,7 @@ OJ, NJ = json.load(open(sys.argv[2])), json.load(open(sys.argv[4]))
 for key in ('tops', 'lights', 'nests', 'blocks', 'pens', 'stats'): OJ.setdefault(key, {}).update(NJ[key])
 OJ['dress']['xmas']['tree'].update(NJ['xmas_tree']); OJ['dress']['xmas']['lights'].update(NJ['xmas_lights'])
 OJ.setdefault('paths', {}).update(NJ['paths'])
+for key in ('ponds', 'balls'): OJ.setdefault(key, {}).update(NJ.get(key, {}))
 json.dump(OJ, open(sys.argv[6], 'w'), indent=1)
 _, chk = load(sys.argv[5])
 body = lambda prims: [[(k, d) for k, (a, d, t) in sorted(at.items())] + [mn] for at, mn in prims]

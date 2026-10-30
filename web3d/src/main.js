@@ -25,6 +25,7 @@ import { FrogLineup, FrogPond } from './pond.js';
 import { FishLineup } from './fish.js';
 import { Fishing } from './fishing.js';
 import { DuckFlock } from './ducks.js';
+import { CallPen } from './callpen.js';
 import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
@@ -1116,7 +1117,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
     let k = 0;
     const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
-    if (plot.breed === 'call') { /* the call ducks: their own life in their pen (to come) */ }
+    if (plot.breed === 'call') addCallDucks(plot, r);      // (the call ducks: their own life in their pen, callpen.js)
     else if (gc) {                                        // the game: this coop's forever birds, each with its own name and personality
       const henAt = penOf(plot).hens.filter(h => h.model === 'hen'), rooAt = penOf(plot).hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
@@ -1261,6 +1262,17 @@ const nestOf = plot => COOPS.nests['house_' + plot.breed];
 const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf', call: '#d3e8de' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
 const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
+// the call ducks in their pen (callpen.js): their pond (coops.json ponds), the Deluxe's way over its bridge (paths), the
+// yard (its fence's box), what's in the way, their ball (the Cosy's and the Deluxe's), the hour, the door, an egg laid
+function addCallDucks(plot, r) {
+  const L = coopLook(plot), pen = penOf(plot), box = pen.pen || { min: [-1.5, 0, -0.7], max: [1.6, 0, 2.3] };
+  plot.nestG = nestOf(plot);
+  plot.callPen = new CallPen(plot, { pond: (COOPS.ponds || {})[L.house] || [0, 0.17, 0.98, 0.7, 0.032], path: (COOPS.paths || {})[L.house] || null,
+    yard: { min: [box.min[0] + 0.18, 0, box.min[2] + 0.18], max: [box.max[0] - 0.18, 0, box.max[2] - 0.2] }, obstacles: (pen.obstacles || []).filter(q => Math.abs(q[0] + 0.31) > 0.01), block: plot.block || [],      // (not the hens' ramp: theirs is the gangplank)
+    ball: (COOPS.balls || {})[L.house] || null, hour: clockHour, doorOpen: () => doorOpen(plot),
+    laid: () => { if (!GAME_MODE && plot.nest) { plot.nest.count = Math.min(plot.nest.count + 1, NEST_SLOTS.length); plot.nest.pop = 1; showEggs(plot); } },
+    sound: (k, x, z) => { const v = plot.frame.localToWorld(new THREE.Vector3(x, 0, z)); farmSound(k, v.x, v.z, 1.4); } }, r);
+}
 function addNest(frame, plot) {
   const m = EGG_MATS[plot.breed] || (EGG_MATS[plot.breed] = new THREE.MeshStandardMaterial({ color: EGG_COLOUR[plot.breed], roughness: 0.45 }));
   const eggs = new THREE.InstancedMesh(EGG_GEO, m, NEST_SLOTS.length);
@@ -1285,10 +1297,10 @@ const eggM = new THREE.Matrix4(), eggQ = new THREE.Quaternion(), eggE = new THRE
 function showEggs(plot) {
   const n = plot.nest, k = Math.min(n.count, NEST_SLOTS.length), G = nestOf(plot);
   for (let i = 0; i < k; i++) {
-    const [dx, dz] = NEST_SLOTS[i], s = i === k - 1 ? n.pop : 1;       // the newest egg pops in
-    eggP.set(G.seat[0] + dx, (G.bed ?? G.floor + 0.05) + 0.004 + 0.012 * s, G.seat[1] + dz);      // nestled in the straw
+    const [dx, dz] = NEST_SLOTS[i], s = i === k - 1 ? n.pop : 1, sc = G.scale || 1;       // the newest egg pops in (sc: the call ducks' smaller house)
+    eggP.set(G.seat[0] + dx * sc, (G.bed ?? G.floor + 0.05) + 0.004 + 0.012 * s * sc, G.seat[1] + dz * sc);      // nestled in the straw
     eggQ.setFromEuler(eggE.set(1.2 + 0.3 * Math.sin(i * 3.1), i * 1.7, 0.2 * Math.cos(i * 2.3)));
-    n.eggs.setMatrixAt(i, eggM.compose(eggP, eggQ, eggS.set(0.05 * s, 0.064 * s, 0.05 * s)));
+    n.eggs.setMatrixAt(i, eggM.compose(eggP, eggQ, eggS.set(0.05 * s * sc * 1.08, 0.064 * s * sc * 1.08, 0.05 * s * sc * 1.08)));
   }
   n.eggs.count = k; n.eggs.instanceMatrix.needsUpdate = true; n.eggs.computeBoundingSphere();
 }
@@ -1955,6 +1967,7 @@ function tickFoxes(dt) {
   if (geeseFlock && geeseFlock.geese.length) geeseFlock.update(dt, clockHour());
   if (frogPond) frogPond.update(dt, clockHour());
   if (duckFlock) duckFlock.update(dt, clockHour());
+  for (const p of plots) if (p.callPen) p.callPen.update(dt, clockHour());      // (the call ducks in their pens)
   if (farmLife) farmLife.update(dt, clockHour());
   if (GAME_MODE) { tickGates(dt); tickCorn(dt); tickFishing(dt); }
   if (!foxes) return;
@@ -3224,7 +3237,7 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = f; } }
   }
-  for (const g of [...(geeseLineup ? geeseLineup.geese : []), ...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])]) {
+  for (const g of [...(geeseLineup ? geeseLineup.geese : []), ...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks : []), ...plots.flatMap(p => p.callPen ? p.callPen.ducks : []), ...(farmLife && !farmLife.home ? [farmLife.f] : [])]) {
     if (!g.root.visible) continue;
     g.root.getWorldPosition(w); s.center.set(w.x, w.y + g.hitY, w.z); s.radius = g.hitR;
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());

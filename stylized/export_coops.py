@@ -187,5 +187,5 @@ lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in c
 DRESS = {'xmas': dict(tree_r=coops.XMAS_TREE_R, tree={k: {t: coops.xmas_tree_spot(t, k) for t in range(5)} for k in coops.PENS_BY}, lights=EAVES)}
 print('XMAS LIGHTS', json.dumps({k: len(v) for k, v in EAVES.items()}))
 print('XMAS TREES', json.dumps(DRESS['xmas']['tree']))
-json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, mills=coops.MILLS, dress=DRESS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}, paths=coops.FLOAT_PATH), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, mills=coops.MILLS, dress=DRESS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}, paths=coops.FLOAT_PATH, **coops.float_info()), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

@@ -3244,8 +3244,25 @@ the birds already had.
   Deluxe's way over the bridge); `export_coops.py` makes them too in a full export. Tests: gametest, upgradetest, looktest,
   doortest (its farm now marked as already offered My account: the suggestion's card came first and the morning's door
   card waited behind it; the game's right, the test's setup was out of date): pass.
-- Next: the call ducks' life in their pen (walking, swimming, the gangplank or the bridge, the ball, sleeping in the house,
-  laying in the nest), then the game at level 10 (duck eggs, ducklings, names in six languages, the Breed Book, the save's
-  checks, tests).
+- **The call ducks' life in their pen** (test page, `?coopbreeds=call&looks=N`; `src/callpen.js` `CallPen`, made for each call
+  ducks' coop by main.js `addCallDucks`): Pip the drake, Puddle and Pebble (the Goose rig, their own models) in the coop's
+  frame. By day each in turn waddles about the yard (grazing, preening, a rest, a happy bob), swims on the pond round the
+  raft (in from the bank, dabbling, up-ending, a splashy bath, preening and floating, then out with a shake), and in the
+  Cosy and the Deluxe plays with the beach ball (now the browser's: `beachBall`, six panels, floating and bobbing; she
+  comes round behind it, a nudge with the breast sends it gliding off over the water, slowing, off the pond's edge, the
+  raft and the gangplank, spinning as it goes; a happy bob after); now and then Pip leads them round the yard in a little
+  line, each on the trail of the one ahead (`parade`, `followTask`); once a day each duck (not Pip) goes up the gangplank
+  and in, sits in the nest at the window a while (her face in it), a proud quack, an egg (the test page's nest count), and
+  out and down again (`layTask`). At dusk (20:45) they go up one by one, the ducks first, Pip last, and sleep inside; in
+  the morning, once the door's open, out one by one, down the plank, a stretch and a quack (`goBed`, `getUp`). Their own
+  little world: the pond (coops.json `ponds` per look: its middle, half-widths, the water's height; `stylized/coops.py
+  float_info`), the gangplank (the nest's pop and foot; the Deluxe's bridge from `paths`), the raft and the house (kept
+  clear: a wall for their steering, `nav`; swims round its corners, `viaCorner`), the yard (the fence's box, the feeder, the
+  water, the hay; the hens' ramp spots left out), their ways round the pond on the bank (`bankRing`, `landWay`), the
+  ring of swimming spots split by the gangplank into its two sides (`makeRing`), the plank itself one behind the other
+  (`rampTask`). A tap: a quack, the head bob and the wiggle. The Cosy's pond made wider (1.2: room for the ball at its side,
+  `FLOAT_POND[3]`, `FLOAT_BALL`); the eggs drawn the house's size (`showEggs`: `G.scale`).
+- Next: the call ducks in the game at level 10 (their coop's place, duck eggs, ducklings, names in six languages, the Breed
+  Book, the save's checks, tests).
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

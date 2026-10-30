@@ -14,6 +14,7 @@ exec(compile(head, 'export_coops_head', 'exec'), G)
 coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; write_glb = G['write_glb']
 BUDGET.update({'house_call': 17000, 'box_call': 15000, 'shed_call': 17000, 'cosy_call': 21000, 'deluxe_call': 26000, 'popdoor_call': 900,
                'pen_t0_call': 4200, 'pen_t1_call': 4600, 'pen_t2_call': 5200, 'pen_t3_call': 8500, 'pen_t4_call': 11000})
+ONLY = os.environ.get('ONLY', '').split(',') if os.environ.get('ONLY') else None      # (just these models: the rest as they are)
 names = []
 one('house_call', coops.floating); names.append('house_call')
 keep = dict(coops.NESTS['house_call']); keep_blocks = list(coops.BLOCKS.get('house_call', []))
@@ -30,6 +31,6 @@ pens = {'call': {t: dict(coops.pen_info(t, 'call'), play=coops.play_info(t, 'cal
 tree = {t: coops.xmas_tree_spot(t, 'call') for t in range(5)}
 json.dump(dict(names=names, tops={k: v for k, v in G['TOPS'].items() if k in names}, lights=lights, nests={'house_call': nest},
                blocks={k: v for k, v in coops.BLOCKS.items() if k in names and not k.startswith('house_')}, pens=pens, stats={n: STATS[n] for n in names},
-               xmas_tree={'call': tree}, xmas_lights={k: v for k, v in G['EAVES'].items() if k in names}, paths=coops.FLOAT_PATH),
+               xmas_tree={'call': tree}, xmas_lights={k: v for k, v in G['EAVES'].items() if k in names}, paths=coops.FLOAT_PATH, **coops.float_info()),
           open(os.path.join(OUT, 'call.json'), 'w'), indent=1)
 print('CALL', json.dumps({n: STATS[n] for n in names}))
