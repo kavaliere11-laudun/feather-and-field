@@ -3116,3 +3116,29 @@ the birds already had.
 - Checks: laycheck (Brahma: diva 4 samples, 1.5 cm; rebel 2.9-3.8 cm, as before: 1.3 and 3.6; a longer tail first poked
   through the wall above the pop door), insideshot, gametest both ways, booktest, visittest, nesttap: pass. A before/after
   sheet with her photos sent.
+
+## The arrivals' new order (30 Oct 2026; Audrey: "we might have too many silkies, I love them but not sure all the players will. Let's remove the blue, the grey, the red and see where we are after that in term of chickens arrivals"; then "come with a proposal where the ayam is relatively early in the game and the peacock is last", "Keep the Cream Legbar", the peacock "Yes, at level 30", the Splash "From the Buff", "Ayam at level 10")
+
+- Before (08:36), "For a good entertaining game, how many breeds should I have": about 12 forever trios for the first year
+  (one new arrival every few weeks; 36 named birds already; the phone's limits), then 2 to 4 new ones a year after level 30,
+  15 to 20 in all, each clearly different. She then thought of replacing the Legbar (a call duck with its new eggs, a
+  peacock whose dropped feathers sell, a third idea cut off) and of a new order; she kept the Legbar in the end.
+- **The order** (`game.js BREED_LEVEL`): Rhode Island Red 1, Buff Orpington 5, White Silkie 7, Ayam Cemani 10, Buff Silkie 12,
+  Cream Legbar 15, Black Silkie 18, Light Brahma 21, Partridge Silkie 24, Polish 27; the peacock at 30 (to build). From the
+  White Silkie on a Silkie colour and another breed in turn, light and dark birds alternating, the most special last. For a
+  once-a-day player a new arrival every 3 to 7 weeks.
+- **No more Blue or Grey Silkies, nor the rare Red**: a farm that has them keeps them (forever birds never leave): a coop is
+  good once its level has come by either order (`BREED_LEVEL_29OCT`, `breedCame`); their Book pages show on a farm that has
+  them; a Blue coop still hatches Splash, a Grey one Cuckoo, a Red pair Red. They never wait in Your coops. The Splash now from
+  the Buff (`RARE_FROM`; `rareFrom` takes the old too, so a Red on its way from a Buff coop is kept). The Breed Book: 14 pages
+  (the 10 by level, Paint, Lavender, Splash, Cuckoo); the pictures of the others kept for farms that have them.
+- Shows: the County show's breed of the day from the new levels from 31 Oct (`SHOW_BREED_LEVEL_8`; today's as drawn); no Blue
+  or Grey among the rivals on show day (`showday.js`).
+- Prices: the Ayam Cemani, now early, eggs 8 and chicks 28 (were 10, 34); the Polish, now the last, 10 and 34 (were 9, 30).
+- Balance (`balsim.mjs 365 all 3`): level 30 on day 340 once a day (was 311; 41 birds at the end, was 50), 285 twice a day
+  (266), 235 every few hours (217): nearer her "about a year" than before.
+- Tests: booktest (14 pages, the new levels), breedtest (the Silkies at 7), silktest (the Buff Silkies at 12; a farm from
+  before keeps its Blue and Black Silkies, unflagged, their pages, the Splash from the Buff or the Blue), raretest,
+  rarecooptest (14 pages, the Cuckoo from the Partridge); gametest, firstdaytest, showtest, showdaytest, showgroundtest,
+  jobtest, landtest, chicktest, eggtest, awaytest, codetest, accounttest, langtest, dectest, playtest, upgradetest (Ayam,
+  Polish), looktest: pass.

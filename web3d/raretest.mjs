@@ -1,5 +1,5 @@
 // Release 2 step 2 (rare babies): node raretest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402; SHOTS: a folder)
-// A farm at level 6 with the White Silkies: a brood whose luck gives a rare chick (a Paint Silkie, the White ones' rare
+// A farm at level 7 with the White Silkies (level 7 since 30 Oct): a brood whose luck gives a rare chick (a Paint Silkie, the White ones' rare
 // colour) hatches: "... one is a rare Paint Silkie! ✨", the chick in its own colour; her card says so. Grown: the
 // congratulations card with the rare one ("✨ Paint Silkie") and Keep / Sell; she stays in the pen meanwhile (the others
 // gone), the little barn's red dot. Keep: into the basket by the farmhouse fire (a name, her stars), "snug in the basket",
@@ -35,8 +35,8 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-// level 6, the White Silkies placed
-await p.evaluate(L6 => { const g = window.__farm.game(); g.data.xp = L6; g.data.lvSeen = 6; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(6));
+// level 7, the White Silkies placed
+await p.evaluate(L7 => { const g = window.__farm.game(); g.data.xp = L7; g.data.lvSeen = 7; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5, 6]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(7));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.place('sil'); f.step(1 / 30, 3); }); await run(0.3);
 let m = await p.evaluate(() => window.__farm.move.state());

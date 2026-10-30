@@ -1,8 +1,8 @@
 // Release 2 step 3 (the rare colours' own coops): node rarecooptest.mjs   (LANG=fr; W, H: the screen; SHOTS: a folder)
-// A farm at level 6 with the White Silkies and two Paint Silkies in the basket by the fire: Your coops lists them with
+// A farm at level 7 with the White Silkies (level 7 since 30 Oct) and two Paint Silkies in the basket by the fire: Your coops lists them with
 // "Their coop: 2,500 coins" (not enough coins) then "Build their coop · 2,500"; built: a rustic Pagoda in the Paint
 // colours, 2,500 coins paid, its birds from the basket ("Welcome home, ... and ...!"), the basket empty. The Breed Book has
-// fifteen pages: the Paint Silkies found, the Lavender ones "Rare: hatched by a Black Silkie". A brood of the Paint pair:
+// fourteen pages (no Red since 30 Oct): the Paint Silkies found, the Lavender ones "Rare: hatched by a Black Silkie". A brood of the Paint pair:
 // every chick a Paint Silkie; grown, a young hen waits for your choice (their trio's third hen), the others sold for you
 // for less; kept, she joins the Paint coop ("... has joined Pagoda Coop"). A Silkie hen's card: about an egg a day. A
 // reload keeps it all, unflagged; a save changed outside (the Paint coop twice, a Lavender one waiting in the Paint coop)
@@ -30,13 +30,13 @@ const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.d
 const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const T = { no: fr ? /Leur poulailler : 2[\s  ]500 pièces/ : /Their coop: 2,500 coins/, build: fr ? /Construire leur poulailler · 2[\s  ]500/ : /Build their coop · 2,500/, home: fr ? /Bienvenue chez vous, .+ et .+ !/ : /Welcome home, .+ and .+!/,
-  paint: fr ? /Poule soie pie/ : /Paint Silkie/, lav: fr ? /Rare : naît d’une Poule soie noire/ : /Rare: hatched by a Black Silkie/, cuckoo: fr ? /naît d’une Poule soie perdrix ou d’une Poule soie grise/ : /hatched by a Partridge Silkie or a Grey Silkie/,
+  paint: fr ? /Poule soie pie/ : /Paint Silkie/, lav: fr ? /Rare : naît d’une Poule soie noire/ : /Rare: hatched by a Black Silkie/, cuckoo: fr ? /naît d’une Poule soie perdrix$/m : /hatched by a Partridge Silkie$/m,
   joined: fr ? /rejoint Poulailler pagode/ : /has joined Pagoda Coop/, lays: fr ? /environ un œuf par jour/ : /about an egg a day/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(L6 => { const g = window.__farm.game(); g.data.xp = L6; g.data.lvSeen = 6; g.data.coins = 1000; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(6));
+await p.evaluate(L7 => { const g = window.__farm.game(); g.data.xp = L7; g.data.lvSeen = 7; g.data.coins = 1000; g.data.land = [0, 1, 2, 3, 4, 5, 6]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(7));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.place('sil'); f.step(1 / 30, 3); }); await run(0.3);
 let m = await p.evaluate(() => window.__farm.move.state());
@@ -70,12 +70,12 @@ await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.
 t = await sheet();
 ok('a Silkie hen\'s card: "about an egg a day"', T.lays.test(t), t.slice(0, 300));
 await p.evaluate(() => window.__farm.gameUI().close());
-// the Breed Book: fifteen pages
+// the Breed Book: fourteen pages
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('.gpage')], one = k => { const e = document.querySelector(`.gpage[data-breed="${k}"]`); return e && { found: !e.classList.contains('gpage-no'), text: e.innerText, img: e.querySelector('img').src.split('/').pop().split('?')[0] }; };
   return { n: pg.length, paint: one('sil_paint'), lav: one('sil_lavender'), cuckoo: one('sil_cuckoo') }; });
-ok('the Breed Book: fifteen pages, the Paint Silkies found (Pip and Paddy), the Lavender ones "Rare: hatched by a Black Silkie", the Cuckoo ones from Partridge or Grey',
-  book.n === 15 && book.paint.found && /Pip/.test(book.paint.text) && book.paint.img === 'sil_paint.webp' && !book.lav.found && T.lav.test(book.lav.text) && T.cuckoo.test(book.cuckoo.text), book);
+ok('the Breed Book: fourteen pages, the Paint Silkies found (Pip and Paddy), the Lavender ones "Rare: hatched by a Black Silkie", the Cuckoo ones from the Partridge (no Grey since 30 Oct)',
+  book.n === 14 && book.paint.found && /Pip/.test(book.paint.text) && book.paint.img === 'sil_paint.webp' && !book.lav.found && T.lav.test(book.lav.text) && T.cuckoo.test(book.cuckoo.text), book);
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_paint"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('3_book');
 await p.evaluate(() => window.__farm.gameUI().close());

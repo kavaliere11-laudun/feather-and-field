@@ -1,10 +1,10 @@
 // The game, release 1 step 8 (the Breed Book): node booktest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402; SHOTS: a folder for pictures)
-// A fresh farm on a fake clock: a real tap on the farmhouse opens the Breed Book: "1 of 17 breeds found", a page for each
+// A fresh farm on a fake clock: a real tap on the farmhouse opens the Breed Book: "1 of 14 breeds found", a page for each
 // breed in level order, each with its picture; the Rhode Island Reds found (the Red Barn's trio named, the rooster first),
 // the others "Comes at level N" with their picture a dark silhouette; each page's eggs (colour, price, a coin more a star)
 // and coop (rustic to start); "More pages to come". All in sight: nothing under the top bar, no text cut off. Your coops'
 // "Breed Book" opens it too. At night a tap on the farmhouse still opens it. Level 5: the Orpingtons waiting (Place it from
-// the book); placed: "2 of 17", their trio named. Names are set as text (a name with code in it shows as text); opening
+// the book); placed: "2 of 14", their trio named. Names are set as text (a name with code in it shows as text); opening
 // the book saves nothing.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { mkdirSync } from 'fs';
@@ -27,9 +27,9 @@ const load = async () => {
 };
 const tag = (fr ? 'fr' : 'en') + '_' + W + 'x' + H;
 const shot = async (n) => { if (!SHOTS) return; await p.evaluate(() => document.getAnimations().forEach(a => a.finish())); await p.screenshot({ path: `${SHOTS}/book_${tag}_${n}.png`, timeout: 240000 }); };
-const L = fr ? { title: 'Livre des races', found: n => n === 1 ? '1 race trouvée sur 17' : n + ' races trouvées sur 17', farm: 'Dans votre ferme : ', at: n => 'Arrive au niveau ' + n, and: ' et ', price: '6 pièces l’œuf, plus une pièce par étoile de la poule',
+const L = fr ? { title: 'Livre des races', found: n => n === 1 ? '1 race trouvée sur 14' : n + ' races trouvées sur 14', farm: 'Dans votre ferme : ', at: n => 'Arrive au niveau ' + n, and: ' et ', price: '6 pièces l’œuf, plus une pièce par étoile de la poule',
     coop: 'Grange rouge, rustique pour commencer', more: 'D’autres pages à venir.', eggs: 'Œufs bruns', waiting: 'Leur poulailler vous attend dans Vos poulaillers', btn: '📖 Livre des races', sil: 'Poule soie blanche' }
-  : { title: 'Breed Book', found: n => n + ' of 17 breeds found', farm: 'On your farm: ', at: n => 'Comes at level ' + n, and: ' and ', price: '6 coins an egg, plus a coin for each star of the hen',
+  : { title: 'Breed Book', found: n => n + ' of 14 breeds found', farm: 'On your farm: ', at: n => 'Comes at level ' + n, and: ' and ', price: '6 coins an egg, plus a coin for each star of the hen',
     coop: 'Red Barn, rustic to start', more: 'More pages to come.', eggs: 'Brown eggs', waiting: 'Their coop is waiting for you in Your coops', btn: '📖 Breed Book', sil: 'White Silkie' };
 // the book as shown: its title, the count, each page (breed, name, its lines, the picture's look and whether it loaded),
 // and how it sits on the screen (the top bar, the sheet, anything wider than its box)
@@ -63,10 +63,10 @@ const at = await tapHouse();
 let k = await book();
 const trio = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return g.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(x => x.name); });
 ok('a real tap on the farmhouse opens the Breed Book', k.kind === 'book' && k.title === L.title, { at, kind: k.kind, title: k.title });
-ok('"1 of 17 breeds found" (the breeds and Silkie colours, then the rare ones), a page for each in order, each picture loaded', k.sub === L.found(1) && k.pages.map(x => x.breed).join() === 'rir,orp,sil,sil_black,leg,sil_buff,sil_blue,bra,sil_partridge,sil_grey,pol,aya,sil_paint,sil_lavender,sil_red,sil_splash,sil_cuckoo' && k.pages.every(x => x.w === 320) && k.imgs === 17, { sub: k.sub, pages: k.pages.map(x => [x.breed, x.w]) });
+ok('"1 of 14 breeds found" (the breeds and Silkie colours in the order of 30 Oct, then the rare ones), a page for each in order, each picture loaded', k.sub === L.found(1) && k.pages.map(x => x.breed).join() === 'rir,orp,sil,aya,sil_buff,leg,sil_black,bra,sil_partridge,pol,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && k.pages.every(x => x.w === 320) && k.imgs === 14, { sub: k.sub, pages: k.pages.map(x => [x.breed, x.w]) });
 const rir = k.pages[0];
 ok('the Rhode Island Reds found: the Red Barn\'s trio named (the rooster first), their picture in colour', rir.status === L.farm + trio[0] + ', ' + trio[1] + L.and + trio[2] && !rir.dark && !rir.go, rir);
-ok('the others not yet: "Comes at level N" (the rare ones: "Rare: hatched by a ..."), a dark silhouette', k.pages.slice(1, 12).every((x, i) => x.status === L.at([5, 6, 8, 11, 13, 15, 17, 20, 23, 26, 29][i]) && x.dark && !x.go) && k.pages.slice(12).every(x => (fr ? /^Rare : naît d’une / : /^Rare: hatched by a /).test(x.status) && x.dark && !x.go), k.pages.slice(1).map(x => [x.breed, x.status, x.dark]));
+ok('the others not yet: "Comes at level N" (the rare ones: "Rare: hatched by a ..."), a dark silhouette', k.pages.slice(1, 10).every((x, i) => x.status === L.at([5, 7, 10, 12, 15, 18, 21, 24, 27][i]) && x.dark && !x.go) && k.pages.slice(10).every(x => (fr ? /^Rare : naît d’une / : /^Rare: hatched by a /).test(x.status) && x.dark && !x.go), k.pages.slice(1).map(x => [x.breed, x.status, x.dark]));
 ok('each page\'s eggs and coop: brown, 6 coins and a coin a star; the Red Barn, rustic to start; the Silkies\' page the white one\'s', rir.lines[0] === L.eggs + ' · ' + L.price && rir.lines[1] === L.coop && k.pages[2].name === L.sil && k.pages.every(x => x.lines.length === 2 && /\d/.test(x.lines[0])) && k.pages[3].egg !== k.pages[0].egg, k.pages.map(x => [x.name, ...x.lines, x.egg]));
 ok('"More pages to come"', k.more === L.more, k.more);
 ok('all in sight: the sheet under the top bar, its close button on screen, no text cut off', inSight(k), { sheet: k.sheet, bar: k.barBottom, x: k.x, wide: k.wide, cut: k.cut });
@@ -95,7 +95,7 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 1110; g.dat
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 k = await book();
-ok('level 5: the Orpingtons waiting in Your coops ("Place it"), still a silhouette, the Silkies at level 6', k.sub === L.found(1) && k.pages[1].status === L.waiting && k.pages[1].go && k.pages[1].dark && k.pages[2].status === L.at(6), k.pages.slice(1, 3));
+ok('level 5: the Orpingtons waiting in Your coops ("Place it"), still a silhouette, the Silkies at level 7', k.sub === L.found(1) && k.pages[1].status === L.waiting && k.pages[1].go && k.pages[1].dark && k.pages[2].status === L.at(7), k.pages.slice(1, 3));
 ok('level 5: all in sight', inSight(k), { sheet: k.sheet, cut: k.cut });
 await p.evaluate(() => { const c = document.querySelector('.gpage[data-breed="orp"]'); c.scrollIntoView({ block: 'center' }); });
 await shot('5_waiting');
@@ -107,13 +107,13 @@ await p.evaluate(() => window.__farm.move.place()); await run(1.5);
 const orp = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops.find(x => x.breed === 'orp'); return c && g.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(x => x.name); });
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 k = await book();
-ok('placed: "2 of 17", the Orpingtons found, their trio named, in colour', orp && orp.length === 3 && k.sub === L.found(2) && k.pages[1].status === L.farm + orp[0] + ', ' + orp[1] + L.and + orp[2] && !k.pages[1].dark && !k.pages[1].go && k.pages.slice(2).every(x => x.dark), { orp, sub: k.sub, page: k.pages[1] });
+ok('placed: "2 of 14", the Orpingtons found, their trio named, in colour', orp && orp.length === 3 && k.sub === L.found(2) && k.pages[1].status === L.farm + orp[0] + ', ' + orp[1] + L.and + orp[2] && !k.pages[1].dark && !k.pages[1].go && k.pages.slice(2).every(x => x.dark), { orp, sub: k.sub, page: k.pages[1] });
 await shot('6_two');
 // ---- names are set as text: a name with code in it (as if it got past the checks) shows as text
 const safe = await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.birds[0].name = '<img src=x onerror="window.__hacked=1">Zed'; f.book(); const S = document.querySelector('.gsheet');
   return { imgs: S.querySelectorAll('img').length, shown: S.querySelector('.gpage-s').textContent.includes('<img'), hacked: !!window.__hacked }; });
 await run(0.2);
-ok('names are set as text, never as HTML', safe.imgs === 17 && safe.shown && !safe.hacked && !(await p.evaluate(() => !!window.__hacked)), safe);
+ok('names are set as text, never as HTML', safe.imgs === 14 && safe.shown && !safe.hacked && !(await p.evaluate(() => !!window.__hacked)), safe);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

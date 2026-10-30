@@ -3,7 +3,7 @@
 // (four fields): its card says a new breed has come (the Buff Orpingtons), "Place their coop now" and "Later" in sight;
 // Later: the red dot, Your coops offers it; placing it: a new rustic coop with its trio appears where it can stand; Cancel:
 // gone, still waiting; placed: on the farm with its trio for good (the dot gone, "Welcome, ...!", its rustic house (the straw-bale hut, release 4), a full
-// feeder, each bird's card); a reload keeps it; level 6 straight from its card: the white Silkies; a save changed outside
+// feeder, each bird's card); a reload keeps it; level 7 straight from its card: the white Silkies (level 7 since 30 Oct); a save changed outside
 // (a breed's coop before its level, a breed twice) is checked and flagged.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
@@ -77,10 +77,10 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
 const kept = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.breed === 'orp'); return P && P.birds.filter(b => b.gid).length; });
 ok('a reload: both coops and their birds, not flagged', s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && kept === 3 && !s.edited && !s.dot, { s, kept });
-// level 6 straight from its card: the white Silkies
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 1800; g.save(); }); await run(1.6);
+// level 7 straight from its card: the white Silkies
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 2600; g.save(); }); await run(1.6);
 t = await sheet();
-ok('level 6: the Silkies come', T.sil.test(t), t);
+ok('level 7: the Silkies come', T.sil.test(t), t);
 await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
 m = await p.evaluate(() => window.__farm.move.state());
 if (!m.ok) { await p.evaluate(() => window.__farm.move.to(-33, -23, 90)); await run(0.1); m = await p.evaluate(() => window.__farm.move.state()); }
@@ -95,7 +95,7 @@ await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
   localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
-ok('a save changed outside (a Legbar coop at level 6, the Orpingtons twice): checked and flagged', s.edited && s.coops === 'rir,orp,sil' && s.birds === 9 && s.plots === 3, s);
+ok('a save changed outside (a Legbar coop at level 7, the Orpingtons twice): checked and flagged', s.edited && s.coops === 'rir,orp,sil' && s.birds === 9 && s.plots === 3, s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
