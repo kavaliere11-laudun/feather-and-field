@@ -3358,6 +3358,25 @@ the birds already had.
   water (`IN_WATER`, from stylized/coops.py `floating`: capsules from above), so the ducks, the ducklings and the ball keep
   out of them as they do the raft (`inThing`: the swimming ring, `keepOff`, `okAt`, `ballStep`; a swim that would clip one
   goes round it, `viaCorner`); before, a duck could swim through the boat. Soaked: none in them.
-- Next: the ducklings in the game (a duck going broody, sitting a day, hatching, raising them two days, grown and gone, as the hens' broods), then the peacock at 30.
+- **The call ducklings in the game** (30 Oct; Audrey: "all good carry on"): their broods are the hens' (game.js
+  `broodTick`, no longer skipping the ducks): now and then a duck goes broody in the morning (a good mum more often), sits a
+  day, 2 to 4 ducklings hatch, raised two days (young ducks and drakes after one), grown and off to a new farm, their
+  coins in (`CHICK_PRICE.call` 32 a star-rated youngster), the parents' experience. Seen in their pen (main.js
+  `syncDuckBrood`, instead of the hens' `syncBrood`; callpen.js): gone broody just now, in view, she walks up into the
+  nest (`canSit`, `startSit`; else in a moment), or she's simply on it (`sitNow`); hatched just now, out she comes with
+  them after her (`hatch`: the lead-out waits for the door to be open), or they're out with her already, or in bed with
+  her (`placeKids`); a day on, each duckling turns into a young duck or drake where it stands (`makeYoung`: the grown
+  birds' models, 0.62 of their size, a heart over it in view; "...turning into young ducks and drakes!"), growing (0.62 to
+  0.85; the ducklings 1 to 1.4), still following her, the gaps and their bodies as big as they've grown (`capK` by
+  `size`; geese.js: a youngster's stride and float by its size, `size`/`appear` scaling it); grown: a heart over each and
+  they fade away (`farewell`), then the congratulations card. A duckling or a young one tapped: its card (`chickCard`:
+  "Duckling", "Call duck · Pebble's duckling", "A young duck or drake in about…"; "Young duck"/"Young drake", 🦆). Every
+  brood word in the duck version where there is one (game.js `dk(key, duck)`: `hatched_duck`, `raising_duck`,
+  `raising_y_duck`, `no_lay_brood_duck`, `duckling`, `chick_of_duck`, `chick_grows_duck`, `chick_soon_duck`,
+  `young_h_duck`, `young_r_duck`, `turned_duck`, `congrats_exp_duck`, `congrats_exp1_duck`, `away_hatched_duck`,
+  `away_grown_duck`), in all six languages. The save: no new field (the brood's own checks). Tests: **ducklingtest.mjs**
+  (broody, sitting, hatching, out after her, the cards, a reload while raising, young ducks and drakes, grown and gone,
+  the congratulations, up again; English and French); chicktest and calltest still pass.
+- Next: the peacock at level 30 (Audrey's order), unless she wants more for the ducks.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

@@ -943,5 +943,20 @@
  "text.feed_how_duck": "Tus patas ponen mientras haya comida. Lleno, alimenta a tu trío durante dos días.",
  "text.feed_empty_line_duck": "Tus patas no pondrán hasta que lo llenes.",
  "text.trio_body_duck": "Un pato y dos patas, tuyos para siempre, con su propia casa en un estanque. Ponla donde quieras en tus tierras.",
- "goose.call_d": "patito Call"
+ "goose.call_d": "patito Call",
+ "text.hatched_duck": "¡{n} patitos acaban de nacer! {name} es mamá.",
+ "text.raising_duck": "Cría {n} patitos: serán patas y patos jóvenes en {when}, más o menos.",
+ "text.raising_y_duck": "Cría {n} patas y patos jóvenes: se irán a una nueva granja en {when}, más o menos.",
+ "text.no_lay_brood_duck": "No pone huevos para vender mientras cuida de sus patitos.",
+ "text.duckling": "Patito",
+ "text.chick_of_duck": "{breed} · patito de {name}",
+ "text.chick_grows_duck": "Pata o pato joven en {when}, más o menos.",
+ "text.chick_soon_duck": "¡Ya casi es una pata o un pato joven!",
+ "text.young_h_duck": "Pata joven",
+ "text.young_r_duck": "Pato joven",
+ "text.turned_duck": "¡Los patitos de {name} se están convirtiendo en patas y patos jóvenes!",
+ "text.congrats_exp_duck": "{mum} y {dad} ganan experiencia: sus próximos patitos serán aún mejores.",
+ "text.congrats_exp1_duck": "{mum} gana experiencia: sus próximos patitos serán aún mejores.",
+ "text.away_hatched_duck": "A {name} le han nacido {n} patitos",
+ "text.away_grown_duck": "Los patitos de {name} ya son mayores: su ficha viene a continuación"
 }

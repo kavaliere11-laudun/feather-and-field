@@ -3685,7 +3685,8 @@ function broodNews(news, now) {
   if (!e) return;
   gameUI.refresh();
   const c = e.type === 'hatch' && game.coop(e.coop), rare = c && c.brood && (c.brood.kids || []).find(k => k.rare);
-  hint(rare ? game.t('hatched_rare', { n: e.n, line: game.breedName(rare.rare) }) : game.t(e.type === 'hatch' ? 'hatched' : 'broody', { name: sayName(e.hen), n: e.n }));
+  const duck = game.isDuck((game.coop(e.coop) || {}).breed);      // (the call ducks: ducklings)
+  hint(rare ? game.t('hatched_rare', { n: e.n, line: game.breedName(rare.rare) }) : game.t(e.type === 'hatch' ? game.dk('hatched', duck) : 'broody', { name: sayName(e.hen), n: e.n }));
   if (gameUI.kind === 'bird' && gameUI.bird) { const b = game.bird(gameUI.bird); if (b) gameUI.birdCard(b); }
 }
 function sitNow(b, secs) {                   // on the nest, sitting on her eggs, as if she'd been there all along
@@ -3742,6 +3743,7 @@ function hatchOut(mum) {
   wake(2000);
 }
 function syncBrood(plot, now, live, news) {
+  if (plot.callPen) return syncDuckBrood(plot, now, live, news);         // (the call ducks: in their pen, callpen.js)
   if (inside.open && inside.plot === plot) return;                        // (not while you're looking inside: when you come out)
   const c = game.coop(plot.gc.id), br = c && c.brood, mum = br && plot.birds.find(b => b.gid === br.hen);
   const chicks = gameChicks(plot);
@@ -3786,6 +3788,38 @@ function syncBrood(plot, now, live, news) {
   syncRare(plot);
   plot.synced = true;
 }
+// the call ducks' brood (30 Oct; Audrey: the ducklings, "carry on"): the game's (game.js broodTick: as the hens'), seen
+// in their pen (callpen.js). A duck gone broody walks up into the nest (just now, in view) or is simply sitting there;
+// hatched: out she comes with her ducklings after her (just now, in view), or they're out with her already (or in bed
+// with her); a day on, young ducks and drakes (a heart over each, in view), growing; grown and gone: a heart over each
+// and away they fade (their coins and the news card: the game's)
+const DUCKLING_NAMES = ['Pipkin', 'Dot', 'Bean', 'Sunny', 'Button', 'Fluff'];
+function syncDuckBrood(plot, now, live, news) {
+  const C = plot.callPen, c = game.coop(plot.gc.id), br = c && c.brood, mum = br && C.ducks.find(d => d.gid === br.hen);
+  if (br && !br.hatched && mum) {                                         // sitting on her eggs
+    if (!mum.broody) {
+      if (plot.synced && now - br.start < LIVE_LAY) { if (live && C.canSit(mum)) { C.startSit(mum); wake(1500); } }      // (just now: up she goes, if she can; else in a moment)
+      else C.sitNow(mum);
+    }
+  } else if (br && br.hatched && mum) {                                   // raising her ducklings, then her young ducks and drakes
+    const kids = br.kids && br.kids.length === br.n ? br.kids : game.kidsOf(c, br), youngAt = game.youngAt(c), young = now >= youngAt;
+    const names = Array.from({ length: br.n }, (_, i) => DUCKLING_NAMES[(hash01s(br.hen + '|' + br.start) * 97 + i) % DUCKLING_NAMES.length | 0]);
+    if (C.kids.length < br.n || C.brood?.mum !== mum) {
+      if (mum.broody && live && plot.synced && now - game.hatchAt(c) < LIVE_LAY) { C.hatch(mum, br.n, names); wake(2000); }      // (just now: out she comes, they after her)
+      else C.placeKids(mum, br.n, names);
+    }
+    if (young) {
+      const pop = live && plot.synced && now - youngAt < LIVE_LAY; let turned = 0;
+      for (const k of [...C.kids]) if (!k.young && !k.leaving) { C.makeYoung(k, (kids[k.kidI] && kids[k.kidI].sex) || 'h', pop); turned++; }
+      if (turned && pop) { hint(game.t(game.dk('turned', true), { name: mum.name })); wake(1500); }
+    }
+    const gc = Math.max(0, Math.min(1, (now - game.hatchAt(c)) / YOUNG_MS)), gy = Math.max(0, Math.min(1, (now - youngAt) / Math.max(1, game.grownAt(c) - youngAt)));
+    for (const k of C.kids) k.size = k.young ? 0.62 + 0.23 * gy : 1 + 0.4 * gc;
+  } else if (!br && C.kids.length && !C.kids.some(k => k.leaving) && MOVE.plot !== plot) C.farewell();
+  if (!br && C.ducks.some(d => d.broody)) { for (const d of C.ducks) if (d.broody) { d.broody = false; d.task = null; } if (!C.bedtime(clockHour())) C.getUp(); }      // (a brood ended some other way: she's up again)
+  plot.synced = true;
+}
+const hash01s = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967296; };
 // rare babies grown and waiting for your choice (release 2 step 2): each in her mum's pen in her own colour, a young bird
 // with a sparkle, till you keep her (off to the basket by the farmhouse fire: a heart) or sell her; tap her for her card
 function syncRare(plot) {

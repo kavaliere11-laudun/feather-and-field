@@ -390,13 +390,13 @@ export class Goose {
       const spin = Math.min(1, Math.abs(this.turn) / 2) * (1 - clamp01(this.vs / 0.12));
       A.walk += (Math.max(clamp01(this.vs / 0.05), 0.6 * spin) - A.walk) * Math.min(1, dt * 8);
       A.run += (smooth(0.4, 0.7, this.vs) - A.run) * Math.min(1, dt * 5);
-      const stride = (0.22 + 0.12 * A.run) * (1 - 0.25 * (A.proud || 0)) * (this.isDuck ? this.rig.by / 0.29 : 1);      // (strutting: short proud steps; a duck's short ones)
+      const stride = (0.22 + 0.12 * A.run) * (1 - 0.25 * (A.proud || 0)) * (this.isDuck ? this.rig.by / 0.29 : 1) * (this.size || 1);      // (strutting: short proud steps; a duck's short ones; a youngster's as big as it is)
       A.phase += (moved + 0.1 * spin * dt) / stride * Math.PI * 2;
       A.stride = stride; A.turn = this.turn;
       // in the pond: lower and lower as she wades in, floating once it's deep (the water hides her feet, paddling)
       this.wet = this.flock.wetAt(this.pos.x, this.pos.z);
       A.swim += (smooth(0.35, 0.85, this.wet) - A.swim) * Math.min(1, dt * 4);
-      this.pos.y = (this.flock.groundY ? this.flock.groundY(this.pos.x, this.pos.z) : 0) - this.wet * (this.rig.by - 0.037);      // (up over a footbridge)
+      this.pos.y = (this.flock.groundY ? this.flock.groundY(this.pos.x, this.pos.z) : 0) - this.wet * (this.rig.by - 0.037) * (this.size || 1);      // (up over a footbridge; a growing youngster's as big as it is)
     } else {
       ease('walk', 6); ease('run', 4);
       A.phase += dt * (A.walk || 0) * (6 + 6 * (A.run || 0));
@@ -405,6 +405,7 @@ export class Goose {
     this.lastPos.copy(this.pos);
     A.flapPhase = (A.flapPhase || 0) + dt * 13.5 * Math.min(1, (A.flap || 0) * 4 + 0.2);
     this.root.rotation.y = this.heading;
+    const sz = (this.size || 1) * (this.appear ?? 1); if (Math.abs(this.root.scale.x - sz) > 1e-3) this.root.scale.setScalar(sz);      // (a youngster growing; one leaving, fading away)
     this.rig.pose(A);
   }
 }

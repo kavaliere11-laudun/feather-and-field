@@ -3170,6 +3170,81 @@
   "fr": "{n} poussins sont nés ! {name} est maman."
  },
  {
+  "id": "text.hatched_duck",
+  "en": "{n} ducklings have hatched! {name} is a mum.",
+  "fr": "{n} canetons sont nés ! {name} est maman."
+ },
+ {
+  "id": "text.raising_duck",
+  "en": "Raising {n} ducklings: young ducks and drakes in about {when}.",
+  "fr": "Élève {n} canetons : jeunes canes et canards dans environ {when}."
+ },
+ {
+  "id": "text.raising_y_duck",
+  "en": "Raising {n} young ducks and drakes: off to a new farm in about {when}.",
+  "fr": "Élève {n} jeunes canes et canards : ils partent pour une nouvelle ferme dans environ {when}."
+ },
+ {
+  "id": "text.no_lay_brood_duck",
+  "en": "She lays no eggs for sale while she’s busy with her ducklings.",
+  "fr": "Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses canetons."
+ },
+ {
+  "id": "text.duckling",
+  "en": "Duckling",
+  "fr": "Caneton"
+ },
+ {
+  "id": "text.chick_of_duck",
+  "en": "{breed} · {name}’s duckling",
+  "fr": "{breed} · caneton de {name}"
+ },
+ {
+  "id": "text.chick_grows_duck",
+  "en": "A young duck or drake in about {when}.",
+  "fr": "Jeune cane ou jeune canard dans environ {when}."
+ },
+ {
+  "id": "text.chick_soon_duck",
+  "en": "Almost a young duck or drake!",
+  "fr": "Bientôt une jeune cane ou un jeune canard !"
+ },
+ {
+  "id": "text.young_h_duck",
+  "en": "Young duck",
+  "fr": "Jeune cane"
+ },
+ {
+  "id": "text.young_r_duck",
+  "en": "Young drake",
+  "fr": "Jeune canard"
+ },
+ {
+  "id": "text.turned_duck",
+  "en": "{name}’s ducklings are turning into young ducks and drakes!",
+  "fr": "Les canetons de {name} deviennent de jeunes canes et canards !"
+ },
+ {
+  "id": "text.congrats_exp_duck",
+  "en": "{mum} and {dad} gain experience: their next ducklings will be even better.",
+  "fr": "{mum} et {dad} gagnent de l’expérience : leurs prochains canetons seront encore meilleurs."
+ },
+ {
+  "id": "text.congrats_exp1_duck",
+  "en": "{mum} gains experience: her next ducklings will be even better.",
+  "fr": "{mum} gagne de l’expérience : ses prochains canetons seront encore meilleurs."
+ },
+ {
+  "id": "text.away_hatched_duck",
+  "en": "{name} hatched {n} ducklings",
+  "fr": "{name} a fait éclore {n} canetons"
+ },
+ {
+  "id": "text.away_grown_duck",
+  "en": "{name}’s ducklings have grown up: their card is next",
+  "fr": "Les canetons de {name} ont grandi : leur carte arrive"
+ },
+ {
   "id": "text.sold",
   "en": "{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins",
   "fr": "Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces"

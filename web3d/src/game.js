@@ -274,6 +274,12 @@ export const TEXT = {
     bub_low: 'Feed low', bub_empty: 'Feeder empty',
     broody: '{name} has gone broody: she’s sitting on {n} eggs.',
     hatched: '{n} chicks have hatched! {name} is a mum.',
+    hatched_duck: '{n} ducklings have hatched! {name} is a mum.', raising_duck: 'Raising {n} ducklings: young ducks and drakes in about {when}.',
+    raising_y_duck: 'Raising {n} young ducks and drakes: off to a new farm in about {when}.', no_lay_brood_duck: 'She lays no eggs for sale while she’s busy with her ducklings.',
+    duckling: 'Duckling', chick_of_duck: '{breed} · {name}’s duckling', chick_grows_duck: 'A young duck or drake in about {when}.', chick_soon_duck: 'Almost a young duck or drake!',
+    young_h_duck: 'Young duck', young_r_duck: 'Young drake', turned_duck: '{name}’s ducklings are turning into young ducks and drakes!',
+    congrats_exp_duck: '{mum} and {dad} gain experience: their next ducklings will be even better.', congrats_exp1_duck: '{mum} gains experience: her next ducklings will be even better.',
+    away_hatched_duck: '{name} hatched {n} ducklings', away_grown_duck: '{name}’s ducklings have grown up: their card is next',
     sold: '{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins', young_going: '{name}’s youngsters are off to a new farm!',
     sitting: 'Sitting on {n} eggs: they hatch in about {when}.', raising: 'Raising {n} chicks: young hens and roosters in about {when}.',
     raising_y: 'Raising {n} young hens and roosters: off to a new farm in about {when}.',
@@ -532,6 +538,12 @@ export const TEXT = {
     bub_low: 'Presque vide', bub_empty: 'Mangeoire vide',
     broody: '{name} est devenue couveuse : elle couve {n} œufs.',
     hatched: '{n} poussins sont nés ! {name} est maman.',
+    hatched_duck: '{n} canetons sont nés ! {name} est maman.', raising_duck: 'Élève {n} canetons : jeunes canes et canards dans environ {when}.',
+    raising_y_duck: 'Élève {n} jeunes canes et canards : ils partent pour une nouvelle ferme dans environ {when}.', no_lay_brood_duck: 'Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses canetons.',
+    duckling: 'Caneton', chick_of_duck: '{breed} · caneton de {name}', chick_grows_duck: 'Jeune cane ou jeune canard dans environ {when}.', chick_soon_duck: 'Bientôt une jeune cane ou un jeune canard !',
+    young_h_duck: 'Jeune cane', young_r_duck: 'Jeune canard', turned_duck: 'Les canetons de {name} deviennent de jeunes canes et canards !',
+    congrats_exp_duck: '{mum} et {dad} gagnent de l’expérience : leurs prochains canetons seront encore meilleurs.', congrats_exp1_duck: '{mum} gagne de l’expérience : ses prochains canetons seront encore meilleurs.',
+    away_hatched_duck: '{name} a fait éclore {n} canetons', away_grown_duck: 'Les canetons de {name} ont grandi : leur carte arrive',
     sold: 'Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces', young_going: 'Les jeunes de {name} partent pour une nouvelle ferme !',
     sitting: 'Couve {n} œufs : ils éclosent dans environ {when}.', raising: 'Élève {n} poussins : jeunes poules et coqs dans environ {when}.',
     raising_y: 'Élève {n} jeunes poules et coqs : ils partent pour une nouvelle ferme dans environ {when}.',
@@ -586,7 +598,7 @@ export const BREED_INFO = {
   aya: { name: ['Ayam Cemani', 'Ayam Cemani'], coop: ['Javanese House', 'Maison javanaise'] },
   // (30 Oct 2026, Audrey's call ducks: "call duck (new type of eggs!)", at level 10 in her own order; their Floating House:
   // "a little wooden house on a raft in the middle of their pond". A drake and two ducks; duck eggs. `duck`: not chickens:
-  // no chicken shows, no ducklings yet (the next step), and Rusty can't reach a house out on a pond)
+  // no chicken shows (their ducklings: as the hens' chicks, 30 Oct), and Rusty can't reach a house out on a pond)
   call: { name: ['Call duck', 'Canard Call'], coop: ['Floating House', 'Maison flottante'], duck: true },
   // the other Silkie colours by level (release 2, game-plan-v2.md §4): each its own forever trio and Pagoda Coop with a touch
   // of its colour; a "line" of the Silkie breed (the key `sil_<colour>` on its coop and birds; the white ones keep `sil`)
@@ -1175,6 +1187,7 @@ export class Game {
     const L = this.lang, s = (sexF && TEXT_F[L] && TEXT_F[L][key]) || (TEXT[L] && TEXT[L][key]) || (sexF && TEXT_F.en[key]) || TEXT.en[key] || key;
     return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
   }
+  dk(key, duck) { return duck && TEXT.en[key + '_duck'] ? key + '_duck' : key; }      // (the call ducks' version of a brood word: ducklings, young ducks and drakes)
   locale() { return LOCALE[this.lang] || 'en-GB'; }                      // (numbers and dates: "1,250", "1 250", "1.250")
   tr(id, vars) { return tr(this.lang, id, vars); }                       // (a registered pair's word: lang.js)
   // names in a list: "Basil, Margot and Ginger" (Spanish: "y" becomes "e" before an "i" sound: "Clover e Ivy")
@@ -1623,8 +1636,8 @@ export class Game {
     const eggs = d.coops.reduce((a, c) => a + (c.eggs || 0), 0), full = d.coops.filter(c => c.eggs >= NEST_MAX).length;
     if (eggs) items.push({ k: 'eggs', n: eggs });
     if (full) items.push({ k: 'full', n: full });
-    for (const c of d.coops) { const br = c.brood; if (br && br.hatched && this.hatchAt(c) > from) items.push({ k: 'hatched', name: name(br.hen), n: br.n }); }
-    for (const n of this.unseenNews()) if (n.type === 'grown' && n.t > from) items.push({ k: 'grown', name: name(n.hen) });
+    for (const c of d.coops) { const br = c.brood; if (br && br.hatched && this.hatchAt(c) > from) items.push({ k: 'hatched', name: name(br.hen), n: br.n, duck: isDuck(c.breed) }); }
+    for (const n of this.unseenNews()) if (n.type === 'grown' && n.t > from) items.push({ k: 'grown', name: name(n.hen), duck: isDuck((this.coop(n.coop) || {}).breed) }); 
     const h = this.honeyAt(now); if (h) items.push({ k: 'honey', n: h });
     if (this.wheatStage(now) === 'ripe') items.push({ k: 'wheat' }); else if (this.wheat().ripe) items.push({ k: 'wheat_grow', ms: this.wheatLeft(now) });
     for (const c of d.coops) { const l = this.feedLeft(c, now); if (l <= 0) items.push({ k: 'feed', coop: this.coopName(c) }); else if (l < 0.25) items.push({ k: 'feed_low', coop: this.coopName(c) }); }
@@ -1872,7 +1885,6 @@ export class Game {
         c.checked = t; dirty = true;
         if (t < now - CATCH_UP || t < c.lastBrood + DAY_MS || t < this.data.made + DAY_MS || this.feedAt(c, t) <= 0) continue;
         const day = dayStart(t);
-        if (isDuck(c.breed)) continue;                                    // (the call ducks: no ducklings yet)
         for (const h of this.birdsIn(c.id).filter(x => x.sex === 'h')) {
           if (hash01(h.id + '|brood|' + day) >= (h.pers === 'mum' ? BROODY_P.mum : BROODY_P.other) * (BREED_INFO[c.breed] && BREED_INFO[c.breed].rare ? RARE.broody : 1)) continue;      // (a rare pair: less often)
           const n = (h.pers === 'mum' ? 3 : 2) + (hash01(h.id + '|n|' + day) < 0.5 ? 1 : 0);

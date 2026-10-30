@@ -948,5 +948,20 @@
  "text.feed_how_duck": "Suas patas botam enquanto houver comida nele. Cheio, alimenta seu trio por dois dias.",
  "text.feed_empty_line_duck": "Suas patas param de botar até você encher de novo.",
  "text.trio_body_duck": "Um pato e duas patas, seus para sempre, com a própria casa num laguinho. Coloque-a onde quiser nas suas terras.",
- "goose.call_d": "patinho Call"
+ "goose.call_d": "patinho Call",
+ "text.hatched_duck": "{n} patinhos nasceram! {name} virou mamãe.",
+ "text.raising_duck": "Criando {n} patinhos: viram patas e patos jovens em cerca de {when}.",
+ "text.raising_y_duck": "Criando {n} patas e patos jovens: partem para uma nova fazenda em cerca de {when}.",
+ "text.no_lay_brood_duck": "Ela não bota ovos para vender enquanto cuida dos patinhos.",
+ "text.duckling": "Patinho",
+ "text.chick_of_duck": "{breed} · patinho de {name}",
+ "text.chick_grows_duck": "Vira pata ou pato jovem em cerca de {when}.",
+ "text.chick_soon_duck": "Quase uma pata ou um pato jovem!",
+ "text.young_h_duck": "Pata jovem",
+ "text.young_r_duck": "Pato jovem",
+ "text.turned_duck": "Os patinhos de {name} estão virando patas e patos jovens!",
+ "text.congrats_exp_duck": "{mum} e {dad} ganham experiência: os próximos patinhos deles serão ainda melhores.",
+ "text.congrats_exp1_duck": "{mum} ganha experiência: os próximos patinhos dela serão ainda melhores.",
+ "text.away_hatched_duck": "Os {n} patinhos de {name} nasceram",
+ "text.away_grown_duck": "Os patinhos de {name} cresceram: a ficha deles vem a seguir"
 }

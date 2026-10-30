@@ -295,9 +295,9 @@ export class GameUI {
       const kc = el('div', 'gcard'), br = coop.brood && coop.brood.hen === b.id ? coop.brood : null, now = Date.now();
       kc.append(el('div', 'glabel', this.t('eggs')));
       if (br && !br.hatched) { const ms = g.hatchAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('hatch_soon', { n: br.n }) : this.t('sitting', { n: br.n, when: g.howLong(ms) }))); }
-      else if (br && now < g.youngAt(coop)) kc.append(el('p', 'gtext', this.t('raising', { n: br.n, when: g.howLong(Math.max(60e3, g.youngAt(coop) - now)) })));
-      else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t('raising_y', { n: br.n, when: g.howLong(ms) }))); }
-      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t('no_lay_brood') : this.t(g.baseOf(b.breed) === 'sil' ? 'lays_sil' : 'lays', { p: g.henEggPrice(b) })));
+      else if (br && now < g.youngAt(coop)) kc.append(el('p', 'gtext', this.t(g.dk('raising', duck), { n: br.n, when: g.howLong(Math.max(60e3, g.youngAt(coop) - now)) })));
+      else if (br) { const ms = g.grownAt(coop) - now; kc.append(el('p', 'gtext', ms < 1800e3 ? this.t('grow_soon', { n: br.n }) : this.t(g.dk('raising_y', duck), { n: br.n, when: g.howLong(ms) }))); }
+      kc.append(el('p', br ? 'gnote' : 'gtext', br ? this.t(g.dk('no_lay_brood', duck)) : this.t(g.baseOf(b.breed) === 'sil' ? 'lays_sil' : 'lays', { p: g.henEggPrice(b) })));
       body.append(kc);
     }
     // where and since when
@@ -310,10 +310,11 @@ export class GameUI {
   chickCard(name, coop, mum, ms, rare) {
     const g = this.g, body = this.open('chick', name);
     this.bird = null;
-    body.append(el('p', 'gsub', this.t('chick_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
+    const duck = g.isDuck(coop.breed);      // (a call duckling)
+    body.append(el('p', 'gsub', this.t(g.dk('chick_of', duck), { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
     if (rare) body.append(el('p', 'gtext grare', this.t('rare_chick', { line: g.breedName(rare) })));
     const cc = el('div', 'gcard');
-    cc.append(el('div', 'glabel', this.t('chick')), el('p', 'gtext', ms > 1800e3 ? this.t('chick_grows', { when: g.howLong(ms) }) : this.t('chick_soon')));
+    cc.append(el('div', 'glabel', this.t(duck ? 'duckling' : 'chick')), el('p', 'gtext', ms > 1800e3 ? this.t(g.dk('chick_grows', duck), { when: g.howLong(ms) }) : this.t(g.dk('chick_soon', duck))));
     body.append(cc);
   }
   // ---- a young hen or rooster (a day after hatching): whose, when off to a new farm (the rating then: congratsCard)
@@ -322,8 +323,8 @@ export class GameUI {
     this.bird = null;
     body.append(el('p', 'gsub', this.t('young_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '', kid: this.t(f ? 'daughter' : 'son') })));
     if (rare) body.append(el('p', 'gtext grare', this.t(f ? 'rare_young_h' : 'rare_young_r', { line: g.breedName(rare) })));
-    const cc = el('div', 'gcard'), ch = el('div', 'gcard-h');
-    ch.append(el('span', 'gemoji', f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(f ? 'young_h' : 'young_r')));
+    const cc = el('div', 'gcard'), ch = el('div', 'gcard-h'), duck = g.isDuck(coop.breed);
+    ch.append(el('span', 'gemoji', duck ? '🦆' : f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(g.dk(f ? 'young_h' : 'young_r', duck))));
     cc.append(ch, el('p', 'gtext', ms > 1800e3 ? this.t(f ? 'young_leaves' : 'young_leaves_r', { when: g.howLong(ms) }) : this.t('young_soon')));
     body.append(cc);
   }
@@ -339,8 +340,8 @@ export class GameUI {
       st.setAttribute('aria-label', k.stars + ' / ' + MAX_STARS);
       for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < k.stars ? 'on' : '', i < k.stars ? '★' : '☆'));
       const c = el('span', 'gkid-c'); c.append(el('span', 'gcoin gcoin-s'), document.createTextNode('+' + k.coins));
-      const what = k.rare ? '✨ ' + g.breedName(k.rare) : this.t(k.sex === 'h' ? 'young_h' : 'young_r');
-      row.append(el('span', 'gemoji', k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', what), st, k.wait ? el('span', 'gkid-c') : c);
+      const duck = g.isDuck((g.coop(n.coop) || {}).breed || (mum && mum.breed)), what = k.rare ? '✨ ' + g.breedName(k.rare) : this.t(g.dk(k.sex === 'h' ? 'young_h' : 'young_r', duck));
+      row.append(el('span', 'gemoji', duck ? '🦆' : k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', what), st, k.wait ? el('span', 'gkid-c') : c);
       list.append(row);
       // a rare one: kept or sold for you (its trio complete), or yours to choose now (still waiting)
       if (k.rare && k.full) list.append(el('p', 'gnote gkid-n', this.t('rare_full', { line: g.breedName(k.rare) })));
@@ -348,7 +349,8 @@ export class GameUI {
       if (e && this.o.rare) list.append(this.rareChoice(e, () => this.congratsCard(n, away)));
     }
     body.append(list, el('p', 'gtotal', this.t('congrats_total', { c: n.coins, xp: n.xp })));
-    if (mum) body.append(el('p', 'gnote', dad ? this.t('congrats_exp', { mum: mum.name, dad: dad.name }) : this.t('congrats_exp1', { mum: mum.name })));
+    const dk = k => g.dk(k, g.isDuck(mum && mum.breed));
+    if (mum) body.append(el('p', 'gnote', dad ? this.t(dk('congrats_exp'), { mum: mum.name, dad: dad.name }) : this.t(dk('congrats_exp1'), { mum: mum.name })));
     const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button';
     ok.addEventListener('click', () => this.close());
     body.append(ok);
@@ -878,7 +880,7 @@ export class GameUI {
     const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
     const list = el('div', 'gcard gaway');
     for (const it of sum.items) {
-      const one = it.n === 1 && ['eggs', 'full', 'honey', 'jobs_ready'].includes(it.k), txt = this.t('away_' + it.k + (one ? '1' : ''), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
+      const one = it.n === 1 && ['eggs', 'full', 'honey', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
       const row = el('div', 'gaway-r' + (it.k === 'feed' || it.k === 'full' ? ' gwarn' : '')); row.dataset.k = it.k;
       row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
     }

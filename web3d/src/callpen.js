@@ -23,6 +23,7 @@ const BED = [20.75, 6.6];                            // to bed from, up from
 // Deluxe's fountain), as [x0, z0, x1, z1, r]: a capsule from above (the coop's frame; Blender's y is -z here)
 const IN_WATER = { cosy_call: [[-0.8, 0.13, -0.8, 0.39, 0.095]], deluxe_call: [[1.22, -0.28, 1.22, -0.28, 0.14]] };
 const BALL_R = 0.085;
+const KID_NAMES = ['Pipkin', 'Dot', 'Bean', 'Sunny', 'Button', 'Fluff'];
 // a duck's body seen from above (measured off the call ducks' models: tail to bill tip -0.136 to 0.161 along her heading,
 // 0.062 to each side): a capsule from just in front of the tail to the breast, as wide as she is. Nobody goes through
 // anybody: ducks kept apart by these, and off the ball (Audrey: "clipping with the ball")
@@ -35,7 +36,7 @@ const ARGUE = 0.55, ARGUE_GAP = 25;                       // the chance two at t
 // the ball where it is: afloat (pondS under 0.86), on the bank's stones (to 1.12: it rolls back down into the water unless
 // it's going well), or out on the yard
 const zoneAt = s => s < 0.86 ? 'water' : s < 1.12 ? 'bank' : 'land';
-const capK = d => d.isDuckling ? 0.475 : 1;              // (a duckling's body: a call duck's at about half the size)
+const capK = d => (d.isDuckling ? 0.475 : 1) * (d.size || 1);      // (a duckling's body: a call duck's at about half the size; a youngster's as big as it's grown)
 const capOf = d => { const s = Math.sin(d.heading), c = Math.cos(d.heading), x = d.pos.x, z = d.pos.z, k = capK(d); return [x + s * CAP.back * k, z + c * CAP.back * k, x + s * CAP.front * k, z + c * CAP.front * k]; };
 const near = (px, pz, S) => { const dx = S[2] - S[0], dz = S[3] - S[1], L = dx * dx + dz * dz, u = L ? Math.max(0, Math.min(1, ((px - S[0]) * dx + (pz - S[1]) * dz) / L)) : 0; return [S[0] + dx * u, S[1] + dz * u]; };
 // (the closest points of two capsules' middles: each end of one against the other, and back)
@@ -102,7 +103,7 @@ export class CallPen {
     this.wasBed = this.bedtime(h);
   }
   bedtime(h) { return h >= BED[0] || h < BED[1]; }
-  onTap(d) { if (this.o.sound) this.o.sound(d.isDuckling ? 'chicks' : 'quack', d.pos.x, d.pos.z); }      // (a tap: she quacks, bobs her head and wiggles: geese.js tapped)
+  onTap(d) { if (this.o.sound) this.o.sound(d.isDuckling ? 'chicks' : 'quack', d.pos.x, d.pos.z); }      // (a duckling: a peep)      // (a tap: she quacks, bobs her head and wiggles: geese.js tapped)
   // ---- where things are
   pondS(x, z) { const P = this.P; return Math.hypot((x - P.cx) / P.a, (z - P.cz) / P.b); }
   onRamp(x, z) {
@@ -490,8 +491,8 @@ export class CallPen {
     d.broody = false; this.brood = { mum: d };
     if (!d.inHouse) this.inside(d, true);              // (she's on the nest with them when they hatch)
     for (let i = 0; i < n; i++) {
-      const k = new Goose(this.group, 'call_d', this.r, names[i] || ['Pipkin', 'Dot', 'Bean', 'Sunny', 'Button'][i % 5]);
-      k.flock = this; k.pen = this; k.plot = this.plot; k.idx = 10 + i; k.mum = d; k.trail = []; k.trailBase = 0; k.isDuckling = true;
+      const k = new Goose(this.group, 'call_d', this.r, names[i] || KID_NAMES[i % KID_NAMES.length]);
+      k.flock = this; k.pen = this; k.plot = this.plot; k.idx = 10 + i; k.mum = d; k.trail = []; k.trailBase = 0; k.isDuckling = true; k.kidI = i; k.gameChick = !!this.o.game;
       k.shadow = shadowDisc(0.042); this.group.add(k.shadow);
       k.root.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; }); k.shadow.userData.moves = true;
       this.inside(k, true); k.task = this.kidTask();
@@ -499,8 +500,35 @@ export class CallPen {
     }
     this.near = this.all();
     d.trail = []; d.trailBase = 0;
-    if (d.inHouse) d.task = TK.seq('lead', [TK.act('wait', 1.2, () => {}), () => { g_hide(d); return null; }, TK.act('wait', 0.6, () => {}), () => { this.inside(d, false); return null; },
+    if (d.inHouse) d.task = TK.seq('lead', [{ name: 'door', act: 'rest', t: 0, run(g, dt) { this.t += dt; return g.pen.o.doorOpen() && !g.pen.bedtime(g.pen.o.hour()) && this.t > 1.2; } }, () => { g_hide(d); return null; }, TK.act('wait', 0.6, () => {}), () => { this.inside(d, false); return null; },
       this.rampTask(false), S(this.foot[0], this.foot[1] + 0.35, 'slow', false, 0.06), TK.act('look', 4, (g, u) => { const yaw = Math.PI; g.A.lookYawGoal = 0.9 * Math.sin(u * 1.2); g.A.upGoal = 0.4; })]);
+  }
+  // (the game's: game.js broods, main.js syncDuckBrood) on her eggs as if she'd been there all along
+  sitNow(d) { this.inside(d, true); this.startSit(d); }
+  canSit(d) { return !d.held && !this.busy(d) && this.onLand(d) && !this.bedtime(this.o.hour()) && !this.ducks.some(o => o.laying || (o !== d && o.broody)); }
+  // her ducklings there already (the page opened while she's raising them): round her, or in bed with her
+  placeKids(d, n, names = []) {
+    this.hatch(d, n, names);
+    d.task = null;
+    if (this.bedtime(this.o.hour())) { d.task = this.sleepTask(); return; }      // (all in bed)
+    this.inside(d, false); d.pos.set(this.foot[0], 0, this.foot[1] + 0.4); d.heading = 0; d.lastPos = d.pos.clone(); d.trail = [[this.pop[0], this.pop[1]], [this.foot[0], this.foot[1]], [d.pos.x, d.pos.z]];
+    this.kids.forEach((k, i) => { this.inside(k, false); const a = 2.4 + i * 0.9; k.pos.set(d.pos.x + Math.sin(a) * 0.22, 0, d.pos.z + Math.cos(a) * 0.22); k.heading = 0; k.lastPos = k.pos.clone(); k.trail = [[k.pos.x, k.pos.z]]; });
+  }
+  // a duckling growing into a young duck or drake (a day old): the grown birds' models, smaller, where it stands
+  makeYoung(k, sex, pop) {
+    const y = new Goose(this.group, sex === 'r' ? 'call_m' : 'call_f', this.r, k.name);
+    Object.assign(y, { flock: this, pen: this, plot: this.plot, idx: k.idx, mum: k.mum, kidI: k.kidI, gameChick: k.gameChick, young: sex === 'r' ? 'r' : 'h', kidOf: k.mum, trail: k.trail, trailBase: k.trailBase, size: 0.62, held: false });
+    y.pos.copy(k.pos); y.heading = k.heading; y.lastPos = y.pos.clone(); y.shadow = k.shadow; y.shadow.scale.setScalar(1.6);
+    if (k.inHouse) this.inside(y, true);
+    y.root.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; });
+    k.root.removeFromParent(); this.kids[this.kids.indexOf(k)] = y; this.near = this.all();
+    y.task = this.kidTask();
+    if (pop && this.o.heart && !y.inHouse) this.o.heart(y);
+    return y;
+  }
+  // grown and off to a new farm: a heart over each, and they fade away (their coins are the game's)
+  farewell() {
+    for (const k of this.kids) { if (this.o.heart && k.root.visible && !k.inHouse) this.o.heart(k); k.leaving = { t: 0 }; }
   }
   // her day with them: a walk about the yard (slowly), a swim, a long rest with them round her
   // (Audrey, 30 Oct: "They should go where there is more water ... they keep going in and out the water": a long swim out
@@ -520,7 +548,7 @@ export class CallPen {
     const pen = this;
     return { name: 'kid', act: 'walk', t: 0, run(g, dt) {
       this.t += dt; const B = pen.brood, A = g.A; if (!B) return true;
-      const mum = B.mum, i = pen.kids.indexOf(g), lead = i <= 0 ? mum : pen.kids[i - 1], gap = i <= 0 ? 0.25 : 0.165;
+      const mum = B.mum, i = pen.kids.indexOf(g), lead = i <= 0 ? mum : pen.kids[i - 1], kk = capK(g), gap = i <= 0 ? 0.16 + 0.19 * kk : 0.35 * Math.max(kk, capK(lead));      // (a little gap: wider as they grow)
       const pathTo = (T, from) => { let a = 0; for (let j = from; j < T.length - 1; j++) a += Math.hypot(T[j + 1][0] - T[j][0], T[j + 1][1] - T[j][1]); return a + (T.length ? Math.hypot(lead.pos.x - T[T.length - 1][0], lead.pos.z - T[T.length - 1][1]) : 0); };
       if (g.inHouse) {                                   // (inside: out after the one ahead, once it's a gap down the plank)
         if (lead.inHouse || !lead.root.visible || pen.bedtime(pen.o.hour())) return false;
@@ -535,8 +563,8 @@ export class CallPen {
       this.still = still ? (this.still || 0) + dt : 0;
       const ashore = mum.wet < 0.3 && g.wet > 0.3;          // (she's resting on the bank, they're still afloat: up her trail to her first)
       if (this.still > 2.5 && !ashore) {
-        const SL = [[0.13, -0.02], [-0.13, -0.03], [0.07, -0.19], [-0.08, -0.2], [0.17, -0.14]][i % 5], s = Math.sin(mum.heading), c = Math.cos(mum.heading);
-        const tx = mum.pos.x + c * SL[0] + s * SL[1], tz = mum.pos.z - s * SL[0] + c * SL[1], ts = pen.pondS(tx, tz);
+        const SL = [[0.13, -0.02], [-0.13, -0.03], [0.07, -0.19], [-0.08, -0.2], [0.17, -0.14]][i % 5], s = Math.sin(mum.heading), c = Math.cos(mum.heading), sk = 0.6 + 0.85 * kk;      // (further out as they grow)
+        const tx = mum.pos.x + (c * SL[0] + s * SL[1]) * sk, tz = mum.pos.z + (-s * SL[0] + c * SL[1]) * sk, ts = pen.pondS(tx, tz);
         const dx = tx - g.pos.x, dz = tz - g.pos.z, d = Math.hypot(dx, dz), there = mum.wet > 0.5 ? ts < 0.82 : ts > 1.14;      // (her side of the bank: never on the stones, half in)
         if (d > 0.02 && there && pen.okAt(g, g.pos.x + dx / d * 0.01, g.pos.z + dz / d * 0.01)) { const st = Math.min(d, 0.12 * dt); g.pos.x += dx / d * st; g.pos.z += dz / d * st; g.turnTo(Math.atan2(dx, dz), dt, 3); }
         else { g.turnTo(mum.heading, dt, 1.5); if (mum.act === 'rest' && g.wet < 0.3) { A.sitGoal = 1; A.squintGoal = mum.A.shut > 0.5 ? 0.9 : 0; } else DACT.float(g, this.t); }
@@ -761,7 +789,12 @@ export class CallPen {
       d.shadow.visible = d.root.visible && !d.inHouse;
       if (d.shadow.visible) { d.shadow.position.set(d.pos.x, (d.wet > 0.5 ? this.P.wy : this.groundY(d.pos.x, d.pos.z)) + 0.004, d.pos.z); d.shadow.rotation.y = d.heading; }
     }
-    for (const k of this.kids) {
+    for (const k of [...this.kids]) {
+      if (k.leaving) {                                     // (fading away, off to their new farm)
+        k.leaving.t += dt; k.appear = Math.max(0, 1 - k.leaving.t / 1.4);
+        if (k.leaving.t > 1.4) { k.root.removeFromParent(); k.shadow.removeFromParent(); this.kids.splice(this.kids.indexOf(k), 1); this.near = this.all(); if (!this.kids.length) this.brood = null; continue; }
+      }
+      if (!k.task) k.task = this.kidTask();
       k.update(dt);
       k.shadow.visible = k.root.visible && !k.inHouse;
       if (k.shadow.visible) { k.shadow.position.set(k.pos.x, (k.wet > 0.5 ? this.P.wy : this.groundY(k.pos.x, k.pos.z)) + 0.004, k.pos.z); k.shadow.rotation.y = k.heading; }

@@ -948,5 +948,20 @@
  "text.feed_how_duck": "Le tue anatre depongono finché c’è cibo dentro. Piena, sfama il tuo trio per due giorni.",
  "text.feed_empty_line_duck": "Le tue anatre smettono di deporre finché non viene riempita.",
  "text.trio_body_duck": "Un maschio e due anatre, tuoi per sempre, con la loro casa su uno stagno. Mettila dove vuoi sui tuoi terreni.",
- "goose.call_d": "anatroccolo Call"
+ "goose.call_d": "anatroccolo Call",
+ "text.hatched_duck": "Sono nati {n} anatroccoli! {name} è diventata mamma.",
+ "text.raising_duck": "Alleva {n} anatroccoli: giovani anatre e maschi tra circa {when}.",
+ "text.raising_y_duck": "Alleva {n} giovani anatre e maschi: partono per una nuova fattoria tra circa {when}.",
+ "text.no_lay_brood_duck": "Non depone uova da vendere finché si occupa dei suoi anatroccoli.",
+ "text.duckling": "Anatroccolo",
+ "text.chick_of_duck": "{breed} · anatroccolo di {name}",
+ "text.chick_grows_duck": "Giovane anatra o giovane maschio tra circa {when}.",
+ "text.chick_soon_duck": "Quasi una giovane anatra o un giovane maschio!",
+ "text.young_h_duck": "Giovane anatra",
+ "text.young_r_duck": "Giovane maschio",
+ "text.turned_duck": "Gli anatroccoli di {name} stanno diventando giovani anatre e maschi!",
+ "text.congrats_exp_duck": "{mum} e {dad} guadagnano esperienza: i loro prossimi anatroccoli saranno ancora migliori.",
+ "text.congrats_exp1_duck": "{mum} guadagna esperienza: i suoi prossimi anatroccoli saranno ancora migliori.",
+ "text.away_hatched_duck": "A {name} sono nati {n} anatroccoli",
+ "text.away_grown_duck": "Gli anatroccoli di {name} sono cresciuti: la loro scheda arriva subito dopo"
 }

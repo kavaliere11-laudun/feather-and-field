@@ -948,5 +948,20 @@
  "text.feed_how_duck": "Deine Enten legen, solange Futter darin ist. Voll reicht er deinem Trio für zwei Tage.",
  "text.feed_empty_line_duck": "Deine Enten legen erst wieder, wenn er gefüllt ist.",
  "text.trio_body_duck": "Ein Erpel und zwei Enten mit eigenem Haus auf einem Teich – sie gehören dir für immer. Stell es auf deinem Land auf, wo du willst.",
- "goose.call_d": "Call-Entenküken"
+ "goose.call_d": "Call-Entenküken",
+ "text.hatched_duck": "{n} Entenküken sind geschlüpft! {name} ist jetzt Mama.",
+ "text.raising_duck": "Zieht {n} Entenküken groß: noch etwa {when}, dann sind es junge Enten und Erpel.",
+ "text.raising_y_duck": "Zieht {n} junge Enten und Erpel groß: noch etwa {when}, dann geht’s auf einen neuen Hof.",
+ "text.no_lay_brood_duck": "Solange sie sich um ihre Entenküken kümmert, legt sie keine Eier zum Verkaufen.",
+ "text.duckling": "Entenküken",
+ "text.chick_of_duck": "{breed} · Entenküken von {name}",
+ "text.chick_grows_duck": "Noch etwa {when}, dann ist es eine junge Ente oder ein junger Erpel.",
+ "text.chick_soon_duck": "Fast schon eine junge Ente oder ein junger Erpel!",
+ "text.young_h_duck": "Junge Ente",
+ "text.young_r_duck": "Junger Erpel",
+ "text.turned_duck": "Die Entenküken von {name} werden zu jungen Enten und Erpeln!",
+ "text.congrats_exp_duck": "{mum} und {dad} sammeln Erfahrung, und ihre nächsten Entenküken werden noch besser.",
+ "text.congrats_exp1_duck": "{mum} sammelt Erfahrung, und ihre nächsten Entenküken werden noch besser.",
+ "text.away_hatched_duck": "Bei {name} sind {n} Entenküken geschlüpft",
+ "text.away_grown_duck": "Die Entenküken von {name} sind groß geworden: Gleich kommt ihre Karte"
 }
