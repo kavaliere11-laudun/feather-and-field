@@ -440,7 +440,7 @@ export class DuckLineup {
       for (const [k, x] of (kids ? [['call_f', 0.3], ['call_d', -0.02], ['call_d', -0.28]] : call ? [['call_m', -0.3], ['call_f', 0.3]] : [['mallard_m', -0.3], ['mallard_f', 0.3]])) {
         const d = new Goose(this.group, k, r);
         d.pos.set(x, 0, -1.4 + i * 0.56); d.heading = -0.95; d.linePose = p;
-        if (p === 'parade') { d.flock = { wetAt: () => 0 }; d.lag = kids ? (k === 'call_f' ? 0 : x > -0.1 ? 0.62 : 1.15) : x > 0 ? 1.05 : 0; d.loopZ = -1.4 + (i + 0.3) * 0.56; }      // (its feet stepping as far as it goes)
+        if (p === 'parade') { d.flock = { wetAt: () => 0 }; d.lag = kids ? (k === 'call_f' ? 0 : x > -0.1 ? 1.35 : 2.15) : x > 0 ? 1.05 : 0; d.loopZ = -1.4 + (i + 0.3) * 0.56; }      // (its feet stepping as far as it goes; the ducklings well behind her: never a bill in her tail, nor in each other's)
         this.ducks.push(d);
       }
     });
