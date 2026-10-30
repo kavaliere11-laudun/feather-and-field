@@ -3322,7 +3322,9 @@ the birds already had.
   `splice_glb.py`). In the browser (geese.js): all soft down, the feathers' rows gone (`fm` 7, `fp` alpha 0.08, feathers
   half size) and a fluffy uncombed fur (`DUCKLING_FUR`); a smaller tap target; named "call duckling" / "caneton Call" (and
   in the other four languages). On the test page: `?lineup=ducks&call&ducklings`, each row a duck and two ducklings
-  doing the same (the parade row: the ducklings behind their mother in a line).
+  doing the same (the parade row: the ducklings behind their mother in a line, well spaced: 1.35 and 2.15 radians behind
+  her round its little oval, at least 9 cm between her and the first, 3.5 cm between the two; Audrey: "clipping", a
+  duckling's bill in her tail at first).
 - Next: Audrey's look at the ducklings; then a duck sitting on her eggs, the ducklings following her on land and water, in the game; then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
