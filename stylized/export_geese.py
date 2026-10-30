@@ -1,5 +1,5 @@
 """Export the geese for the browser (geese.glb + geese.json): Gertrude the Embden ('embden') and Hector the Toulouse
-('toulouse'). Like the foxes: one mesh each with vertex colours, bone weights and a feather region per vertex; and, for the
+('toulouse'), the pond's mallards and the call ducks ('call_m', 'call_f'). Like the foxes: one mesh each with vertex colours, bone weights and a feather region per vertex; and, for the
 birds' feather drawing, everything decided here: each vertex's feather pattern (colour, amount and kind: Hector's grey feathers
 edged pale, Gertrude's white ones only a shade darker where they overlap), the modelled feathers' own coordinates (across,
 along), and where each vertex sits in the feathers' two lattices: round the body (gb: across, up from the body's middle,
@@ -19,7 +19,7 @@ from mathutils import Vector
 
 flat_info = g['flat_info']
 JOINTS = geese.JOINTS
-BUDGET = {'embden': 14000, 'toulouse': 14300, 'mallard_m': 13000, 'mallard_f': 12500}
+BUDGET = {'embden': 14000, 'toulouse': 14300, 'mallard_m': 13000, 'mallard_f': 12500, 'call_m': 12000, 'call_f': 11800}      # (the call ducks: their feathers ~9,900 kept as they are, the rest for the body)
 PIVOTS, MODELS, STATS = {}, {}, {}
 
 
@@ -83,7 +83,7 @@ def bake(name, root, budget):
     pv = {k: np.array(v[:], np.float32) for k, v in piv.items()}
     N, H = geese.neck_points(B)
     neck = [np.array(v[:], np.float32) for v in N] + [np.array(H[:], np.float32), pv['bill']]
-    neck_r = np.array([0.066, 0.053, 0.046, 0.042, 0.039, 0.036], np.float32) * S
+    neck_r = np.array(B.get('neck_rs', (0.066, 0.053, 0.046, 0.042, 0.039, 0.036)), np.float32) * S
     P_, N_, C_, J_, W_, A_, F_, FP_, FM_, GB_, GN_, HW_ = [], [], [], [], [], [], [], [], [], [], [], []
     for o, me, n in meshes:
         prt = o['part']; paint = int(o.get('paint', 0)); mode = o.get('col')
@@ -182,7 +182,7 @@ def bake(name, root, budget):
             c = c * (1.0 + 0.035 * rnd[:, None])
         elif mode == 'goose':
             up = nrm[:, 2]
-            if name == 'embden':
+            if name == 'embden' or name.startswith('call'):      # (white all over, only a shade darker underneath and where feathers overlap; the call ducks too)
                 shade = ss(-0.1, -0.7, up) * 0.55 + (paint == PAINT['wing']) * 0.12 * ss(0.2, -0.4, up)
                 c = C['white'][None, :] * (1 - shade[:, None]) + C['shade'][None, :] * shade[:, None]
                 fpat[:] = np.concatenate([C['shade'] * 0.62, [0.16]]); fmode[:] = 4
@@ -222,7 +222,9 @@ def bake(name, root, budget):
         # the feathers' lattices: round the body, and round the neck's line (across, forward of it, how far up it)
         gb = np.stack([y, z - zc, x], 1)
         side = np.array([0, 1, 0], np.float32); perp = np.cross(side[None, :], tg); perp /= np.maximum(1e-6, np.linalg.norm(perp, axis=1, keepdims=True))
-        d = p - cp; gn = np.stack([d @ side, np.sum(d * perp, 1), s_len], 1)
+        # (a call duck's neck is short and its big head starts low on the line: the whole of it moved past the stretch where a
+        # goose's neck has its furrows (birds.js: up to 0.31 along), which on a call duck ran over its head as stripes)
+        d = p - cp; gn = np.stack([d @ side, np.sum(d * perp, 1), s_len + (0.35 if B.get('call') else 0.0)], 1)
         fuv = np.zeros((len(p), 2), np.float32)
         if 'feat' in me.uv_layers:
             lu = np.zeros(len(me.loops) * 2, np.float32); me.uv_layers['feat'].data.foreach_get('uv', lu)
@@ -287,7 +289,7 @@ def write(path, names):
 
 
 names = []
-for k in [a for a in (sys.argv[2].split(',') if len(sys.argv) > 2 else ('embden', 'toulouse', 'mallard_m', 'mallard_f'))]:
+for k in [a for a in (sys.argv[2].split(',') if len(sys.argv) > 2 else ('embden', 'toulouse', 'mallard_m', 'mallard_f', 'call_m', 'call_f'))]:
     fresh(); r = geese.goose(k, seed=3); light(1)
     bake(k, r, BUDGET[k]); names.append(k)
 write(os.path.join(OUT, 'geese.glb'), names)

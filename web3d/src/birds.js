@@ -680,7 +680,7 @@ function birdMaterial(indoor, goose) {
           furShade *= 1.0 + furrow * (0.2 * ridge - 0.08 * smoothstep(0.7, 1.0, abs(ridge)));
           #endif
           furShade *= fluff;
-          furShade = mix(furShade, 1.0, 0.7 * smoothstep(6.0, 7.0, vMode) * (1.0 - smoothstep(0.05, 0.3, capeA)));      // (7, 8: a Brahma's soft white plumage)
+          furShade = mix(furShade, 1.0, (vMode < 7.5 ? 0.85 : 0.7) * smoothstep(6.0, 7.0, vMode) * (1.0 - smoothstep(0.05, 0.3, capeA)));      // (8: a Brahma's soft white plumage; 7: the call ducks' smooth white)
         }
         if (vFUV.x > 0.01 && vFeather <= 0.0) {
           // a modelled feather (tail, sickles, saddle hackles, flight feathers, crest): a pale quill down the middle, barbs
