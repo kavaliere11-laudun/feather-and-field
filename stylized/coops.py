@@ -831,6 +831,198 @@ def joglo(seed=15, name='house_aya', J=None, pal=None):
 
 
 # ------------------------------------------------------------------ the pen, shared by every style
+# ------------------------------------------------------------------ the Floating House (the call ducks, 30 Oct 2026: Audrey's
+# "Floating house (Recommended)": a little wooden house on a raft in the middle of their pond, a ramp up to it). Its pond
+# lies where a house stands in the other pens (the back of the pen, a little wider and deeper than a house), the raft
+# floating in it; the ducks' gangplank runs straight from their little door down over the deck and the water to the bank
+# in front (NESTS['house_call']: one long ramp, its foot on the bank), so they come and go and lay as the hens do. Duck-egg
+# blue weatherboards with white trim, a roof of coral shingles, a porthole window, a life ring, a pennant on the ridge, a
+# lantern at the raft's corner, pots of flowers on the deck; round the pond, stones, reeds and bulrushes, water lilies
+FLOAT = dict(FL=0.24, WX=0.36, deck=0.1, eave=0.84, peak=1.36, water=0.032, pond=(0.0, -0.17, 0.98, 0.7), raft=(-0.78, 0.78, -0.6, 0.52), ramp=0.87, k=0.72)
+# (k: the house and its raft drawn smaller than a hen's house, a duck's size, so the water shows all round it; the pond
+# full size. ramp: the gangplank's length before that, so its foot lands on the bank)
+FLOAT_PAL = dict(wall='#b6ddd5', wall2='#a6d2ca', trim='#fbf7ee', roof='#e07a5f', ridge='#c2604a', deck='#c9a47a', deck2='#b48f66',
+                 log='#8a6440', door='#e07a5f', ring='#fbf7ee', ringr='#d9473a', flag='#f6c945', water='#7cc6dc', water2='#62b3cd')
+
+
+def pond_pts(F, wob=0.05, n=40, out=0.0):
+    """The pond's outline (Blender x, y): an oval a little wobbly, `out` further out."""
+    cx, cy, a, b = F['pond']; P = []
+    for i in range(n):
+        t = 2 * math.pi * i / n
+        k = 1 + wob * math.sin(3 * t + 0.7) + 0.6 * wob * math.cos(5 * t + 1.9)
+        P.append((cx + (a * k + out) * math.cos(t), cy + (b * k + out) * math.sin(t)))
+    return P
+
+
+def flat_poly(name, pts, z, m):
+    """A flat shape at height z (a fan from its middle)."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    cx = sum(p[0] for p in pts) / len(pts); cy = sum(p[1] for p in pts) / len(pts)
+    c = bm.verts.new((cx, cy, z)); vs = [bm.verts.new((x, y, z)) for x, y in pts]
+    for i in range(len(vs)): bm.faces.new((c, vs[i], vs[(i + 1) % len(vs)]))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def pond(objs, F, P, seed=3, stones=True, lilies=4, reeds=True, name='call'):
+    """The pond round a floating house: the water, a darker band at its edge, stones round it, reeds and bulrushes at the back
+    corners, water lilies; the birds keep out of it (BLOCKS) but for the ramp's line."""
+    random.seed(seed)
+    water = C('pondwater', P['water'], rough=0.08, spec=0.6, coat=0.4); water2 = C('pondedge', P['water2'], rough=0.1, spec=0.5)
+    objs.append(flat_poly('pondedge', pond_pts(F), F['water'] - 0.004, water2))
+    objs.append(flat_poly('pond', pond_pts(F, out=-0.07), F['water'], water))
+    if stones:
+        greys = [C('pstone%d' % i, h, rough=0.9, var=0.08) for i, h in enumerate(('#a7a299', '#8f8b84', '#b9b3a8', '#9a958c'))]
+        ring = pond_pts(F, n=46, out=0.03)
+        for i, (x, y) in enumerate(ring):
+            if y < F['pond'][1] - 0.5 and abs(x + 0.31) < 0.16: continue           # (the ramp's foot on the bank: a gap)
+            r = random.uniform(0.045, 0.075)
+            objs.append(sphere('pstone', r, (x + random.uniform(-0.015, 0.015), y + random.uniform(-0.015, 0.015), r * 0.3), (1.2, 1.0, 0.6), m=greys[i % 4], ico=1, disp=0.25, seed=i))
+    if reeds:
+        reed = C('reed', '#5d8a3e', rough=0.8, var=0.12); reed2 = C('reed2', '#7a9a4a', rough=0.8, var=0.1); rush = C('bulrush', '#6b4527', rough=0.85)
+        cx, cy, a, b = F['pond']
+        for (x0, y0) in ((cx - a * 0.86, cy + b * 0.42), (cx + a * 0.84, cy + b * 0.5), (cx + a * 0.95, cy - b * 0.15)):
+            for k in range(9):
+                x, y = x0 + random.uniform(-0.07, 0.07), y0 + random.uniform(-0.06, 0.06); h = random.uniform(0.22, 0.42)
+                tilt = (random.uniform(-0.18, 0.18), random.uniform(-0.18, 0.18), 0)
+                objs.append(cyl('reed', 0.009, h, (x, y, F['water'] + h / 2), tilt, m=reed if k % 2 else reed2, verts=5, r2=0.002, bevel=0.0))
+                if k % 4 == 0:
+                    objs.append(cyl('rush', 0.016, 0.07, (x + math.sin(tilt[1]) * h * 0.5, y - math.sin(tilt[0]) * h * 0.5, F['water'] + h * 0.98), tilt, m=rush, verts=8, bevel=0.0))
+    pad = C('lilypad', '#5c9a45', rough=0.6, var=0.1); flower = C('lilyflower', '#f6c3d5', rough=0.6); heart = C('lilyheart', '#f4cf4a', rough=0.6)
+    spots = [(-0.86, -0.42), (0.86, -0.36), (0.6, -0.78), (-0.66, 0.38), (0.9, 0.12)][:lilies]
+    for k, (x, y) in enumerate(spots):
+        r = random.uniform(0.055, 0.08)
+        objs.append(cyl('lilypad', r, 0.006, (x, y, F['water'] + 0.004), (0, 0, random.uniform(0, 6.28)), m=pad, verts=12, bevel=0.0))
+        if k % 2 == 0:
+            for j in range(5):
+                a_ = j * 2 * math.pi / 5
+                objs.append(sphere('lilypetal', 0.02, (x + math.cos(a_) * 0.014, y + math.sin(a_) * 0.014, F['water'] + 0.02), (1.4, 0.7, 0.6), (0, 0.5, a_), m=flower, seg=8, rings=5))
+            objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
+    # the birds keep out of the water (in front of and beside the house; the ramp's line left free)
+    cx, cy, a, b = F['pond']
+    for i in range(28):
+        t = 2 * math.pi * i / 28; x, y = cx + a * 0.8 * math.cos(t), cy + b * 0.8 * math.sin(t)
+        if y < -D2 - 0.05 and abs(x + 0.31) < 0.24: continue
+        if abs(x) < W2 + 0.05 and -D2 < y: continue                         # (under the house: it's the house)
+        block(name, x, y, 0.2)
+
+
+def life_ring(objs, x, y, z, normal, white, red):
+    """A white life ring with four red bands, hanging on a wall facing `normal` (side: +-x)."""
+    n = Vector(normal).normalized(); up = Vector((0, 0, 1)); u = up.cross(n).normalized()
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.085, minor_radius=0.026, major_segments=24, minor_segments=8, location=(x, y, z))
+    tr = bpy.context.object; tr.name = 'lifering'; tr.rotation_euler = n.to_track_quat('Z', 'Y').to_euler(); setmat(tr, white)
+    for p_ in tr.data.polygons: p_.use_smooth = True
+    objs.append(tr)
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2; c = Vector((x, y, z)) + (u * math.cos(a) + up * math.sin(a)) * 0.085
+        tg = (-u * math.sin(a) + up * math.cos(a))
+        o = cyl('ringband', 0.029, 0.035, tuple(c), m=red, verts=10, bevel=0.0); o.rotation_euler = tg.to_track_quat('Z', 'Y').to_euler(); objs.append(o)
+    objs.append(cyl('ringrope', 0.006, 0.12, (x + n.x * 0.01, y + n.y * 0.01, z + 0.13), m=C('rope', '#d8c49a', rough=0.9), verts=6, bevel=0.0))
+
+
+def floating(seed=17, name='house_call', F=None, pal=None):
+    random.seed(seed); objs = []; pobjs = []
+    F = dict(FLOAT, **(F or {})); P = dict(FLOAT_PAL, **(pal or {})); FL, WX, DK, EAVE, PEAK = F['FL'], F['WX'], F['deck'], F['eave'], F['peak']
+    k = F['k']; wl = F['water'] / k                      # (the house is drawn full size, then made k as big; wl: the water's level for it)
+    LIGHTS.pop(name, None); before = set(bpy.data.objects)
+    wall = C('fwall', P['wall'], rough=0.7, var=0.04); wall2 = C('fwall2', P['wall2'], rough=0.7, var=0.04)
+    trim = C('ftrim', P['trim'], rough=0.6); roof_m = C('fshingle', P['roof'], rough=0.7, var=0.1, hue_var=0.01); ridge = C('fridge', P['ridge'], rough=0.7)
+    deck = C('fdeck', P['deck'], rough=0.8, var=0.12, grain=0.35, grain_scale=G); deck2 = C('fdeck2', P['deck2'], rough=0.8, var=0.1, grain=0.35, grain_scale=G)
+    log = C('flog', P['log'], rough=0.85, var=0.08, grain=0.3, grain_scale=G); door_m = C('fdoor', P['door'], rough=0.6, var=0.05)
+    glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    brass = C('brass', '#c99a3c', rough=0.3, metal=0.9)
+    # the pond, and the raft floating in it: three logs under a deck of boards
+    pond(pobjs, F, P, seed)
+    x0, x1, y0, y1 = F['raft']
+    for y in (y0 + 0.12, (y0 + y1) / 2, y1 - 0.12):
+        objs.append(cyl('rlog', 0.06, x1 - x0 - 0.06, (0, y, wl + 0.01), (0, math.radians(90), 0), log, verts=12, bevel=0.0))
+    n = int((y1 - y0) / 0.1); w = (y1 - y0) / n
+    for i in range(n):
+        y = y0 + (i + 0.5) * w
+        objs.append(plank('rdeck', (x0, y, DK - 0.012), (x1, y, DK - 0.012), w * 0.94, 0.024, (0, 0, 1), deck if i % 2 else deck2, jitter=0.4))
+    for x in (x0 + 0.05, x1 - 0.05):                      # the battens across its ends
+        objs.append(plank('rbatten', (x, y0 - 0.01, DK - 0.035), (x, y1 + 0.01, DK - 0.035), 0.06, 0.03, (1, 0, 0), log, jitter=0.2))
+    # a rope rail round its back and sides on little posts (the front open for the ducks)
+    rope = C('rope', '#d8c49a', rough=0.9)
+    posts = [(x0 + 0.04, y0 + 0.06), (x0 + 0.04, y1 - 0.04), (x1 - 0.04, y1 - 0.04), (x1 - 0.04, y0 + 0.06)]
+    for (x, y) in posts:
+        objs.append(cyl('rpost', 0.02, 0.22, (x, y, DK + 0.11), m=log, verts=8, bevel=0.0))
+        objs.append(sphere('rknob', 0.026, (x, y, DK + 0.225), m=log, seg=8, rings=5))
+    for (a, b) in zip(posts, posts[1:]):
+        L = math.hypot(b[0] - a[0], b[1] - a[1]); c = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        for kr in range(6):                                 # (sagging a little between the posts)
+            t0, t1 = kr / 6, (kr + 1) / 6; za = DK + 0.19 - 0.035 * math.sin(math.pi * t0); zb = DK + 0.19 - 0.035 * math.sin(math.pi * t1)
+            objs.append(plank('rrope', (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0, za), (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1, zb), 0.012, 0.012, (0, 0, 1), rope, jitter=0.0, bevel=0.002))
+    # the house on the deck: duck-egg blue weatherboards (cut round the ducks' door and the nest window), white corner boards
+    gaps = [(-0.31 - POP_W / 2 - 0.03, -0.31 + POP_W / 2 + 0.03, FL - 0.02, FL + POP_H + 0.05), (WX - WIN_W / 2 - 0.03, WX + WIN_W / 2 + 0.03, FL + 0.02, FL + 0.48)]
+    z = DK; row = 0; h = 0.07
+    while z < EAVE - 0.01:
+        zc = z + h / 2
+        for y, sgn in ((-D2, -1), (D2, 1)):
+            spans = [(-W2, W2)]
+            if sgn < 0:
+                for (a, b, c, d) in gaps:
+                    if c < zc < d: spans = [s for sp in spans for s in ((sp[0], min(sp[1], a)), (max(sp[0], b), sp[1])) if s[1] - s[0] > 0.03]
+            for a, b in spans:
+                objs.append(plank('fboard', (a, y + sgn * 0.012, zc), (b, y + sgn * 0.012, zc), h + 0.008, 0.016, (0, sgn, 0.14), wall if row % 2 else wall2, jitter=0.1, bevel=0.003))
+        for x, sgn in ((-W2, -1), (W2, 1)):
+            objs.append(plank('fboard', (x + sgn * 0.012, -D2, zc), (x + sgn * 0.012, D2, zc), h + 0.008, 0.016, (sgn, 0, 0.14), wall if row % 2 else wall2, jitter=0.1, bevel=0.003))
+        z += h; row += 1
+    core = box('core', (2 * W2 - 0.03, 2 * D2 - 0.03, EAVE - DK), (0, 0, (EAVE + DK) / 2), m=C('finside', '#3a2e26', rough=1.0), bevel=0.0); objs.append(core)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            objs.append(plank('fcorner', (sx * (W2 + 0.02), sy * (D2 + 0.02), DK), (sx * (W2 + 0.02), sy * (D2 + 0.02), EAVE), 0.06, 0.03, (sx, sy, 0), trim, jitter=0.1))
+    # plank gables, a porthole in each, the roof of coral shingles, white bargeboards
+    for sx in (-1, 1):
+        ng = 8
+        for i in range(ng):
+            y = -D2 + (i + 0.5) * 2 * D2 / ng; top = EAVE + (PEAK - EAVE) * (1 - abs(y) / D2) - 0.03
+            objs.append(plank('fgable', (sx * W2, y, EAVE - 0.02), (sx * W2, y, top), 2 * D2 / ng * 0.96, 0.03, (sx, 0, 0), wall2, jitter=0.4))
+    shingle_roof(objs, EAVE, PEAK, roof_m, trim, ridge, over=0.16, gable_over=0.13)
+    for sx in (-1, 1):                                    # a round porthole window on each side, brass-rimmed
+        zp = 0.52; xp = sx * (W2 + 0.03)
+        objs.append(cyl('porthole', 0.075, 0.02, (xp, 0.08, zp), (0, math.radians(90), 0), m=glass, verts=20, bevel=0.0))
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.08, minor_radius=0.016, major_segments=20, minor_segments=6, location=(xp + sx * 0.008, 0.08, zp))
+        tr = bpy.context.object; tr.name = 'portrim'; tr.rotation_euler = (0, math.radians(90), 0); setmat(tr, brass); objs.append(tr)
+    life_ring(objs, -W2 - 0.05, -0.18, 0.5, (-1, 0, 0), C('ringwhite', P['ring'], rough=0.6), C('ringred', P['ringr'], rough=0.6))
+    # a pennant on a little mast at the ridge's right end
+    objs.append(cyl('mast', 0.012, 0.36, (W2 + 0.04, 0, PEAK + 0.2), m=trim, verts=8, bevel=0.0))
+    objs.append(sphere('mastknob', 0.02, (W2 + 0.04, 0, PEAK + 0.385), m=brass, seg=8, rings=5))
+    me = bpy.data.meshes.new('pennant'); bm = bmesh.new()
+    vs = [bm.verts.new(v) for v in ((W2 + 0.05, 0, PEAK + 0.36), (W2 + 0.05, 0, PEAK + 0.25), (W2 + 0.27, 0.03, PEAK + 0.31))]
+    bm.faces.new(vs); bm.to_mesh(me); bm.free()
+    pn = link(bpy.data.objects.new('pennant', me)); setmat(pn, C('pennant', P['flag'], rough=0.7)); objs.append(pn)
+    # the ducks' door and their gangplank, straight down over the deck and the water to the bank; the nest window, its
+    # little door let down
+    nest_window(objs, 'call', FL, WX, trim, solids=[core], ramp_len=F['ramp'])
+    pop_door(objs, FL, trim, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8), length=F['ramp'])
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    # a lantern on a post at the raft's front left corner, pots of flowers at its front right
+    lx, ly = x0 + 0.16, y0 + 0.08
+    objs.append(cyl('lpost', 0.022, 0.8, (lx, ly, DK + 0.4), m=log, verts=8, bevel=0.0))
+    objs.append(box('larm', (0.12, 0.025, 0.025), (lx + 0.05, ly, DK + 0.77), m=iron, bevel=0.004, segs=1))
+    light_at(name, lx + 0.1, ly, DK + 0.7)
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (lx + 0.1, ly, DK + 0.7), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(box('lcap', (0.09, 0.09, 0.02), (lx + 0.1, ly, DK + 0.755), m=iron, bevel=0.004, segs=1))
+    pot = C('fpot', '#c8734a', rough=0.85, var=0.08)
+    for kp, (x, y, r) in enumerate(((x1 - 0.1, y0 + 0.1, 0.06), (x1 - 0.1, y0 + 0.27, 0.05))):
+        objs.append(cyl('pot', r, r * 1.5, (x, y, DK + r * 0.75), m=pot, verts=12, r2=r * 0.78, bevel=0.004))
+        objs.append(sphere('leafp', r * 0.95, (x, y, DK + r * 1.6), (1, 1, 0.75), m=C('fleaf', '#4f8a3a', rough=0.8), ico=1, disp=0.25, seed=kp))
+        for j in range(5):
+            a_ = j * 2 * math.pi / 5 + kp
+            objs.append(sphere('flower', 0.02, (x + math.cos(a_) * r * 0.6, y + math.sin(a_) * r * 0.6, DK + r * 1.95), m=C('fflower%d' % (j % 2), ('#f4c430', '#fbf6ee')[j % 2], rough=0.6), ico=1))
+    # all of it but the pond k as big (about the middle), and what the browser is told of it the same
+    for o in objs + [c for c in bpy.data.objects if c not in before and c.name.startswith('cut_')]:      # (the nest's cutters too)
+        o.location = o.location * k; o.scale = o.scale * k
+    sc = lambda v: round(v * k, 3) if isinstance(v, (int, float)) else [sc(u) for u in v] if isinstance(v, list) else v
+    NESTS['house_call'] = {kk: sc(v) for kk, v in NESTS['house_call'].items()}
+    LIGHTS[name] = [sc(v) for v in LIGHTS.get(name, [])]
+    return finish(objs + pobjs, name)
+
+
 def pen_base():
     """The dirt yard with its feeder, water dish, hay bale, feed sack, pebbles and straw (coop.build_pen, without the fence)."""
     root = empty('pen_base'); m = coop.M()

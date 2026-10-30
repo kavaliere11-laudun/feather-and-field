@@ -705,6 +705,7 @@ function birdMaterial(indoor, goose) {
           float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += vPat.rgb * vPat.a * (vMode > 5.5 ? (0.05 + fr * fr * 0.5) * sheenMul : 0.04 + fr * fr * 0.6);
         }
+        if (vMode > 6.5 && vMode < 7.5) outgoingLight = max(outgoingLight, diffuseColor.rgb * 0.42);      // (7, the call ducks: white all over, never dark in a fold or under the tail)
         if (vFurLen > 0.0) {
           float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += diffuseColor.rgb * rim * rim * (0.08 + 0.16 * vFur) * step(0.001, vStyle.x);

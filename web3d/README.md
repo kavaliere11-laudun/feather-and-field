@@ -3173,5 +3173,31 @@ the birds already had.
   goose's knitted look. Picture sent next to her photos. ducktest, gametest: pass.
 - Audrey (30 Oct 11:23): "can you make is a touch smaller it needs to be cute. the rest is good": both an eighth smaller
   (`S` 0.42 for Pip, 0.4 for Puddle; were 0.48, 0.46), live 30 Oct; the poses all still work.
-- Next (after her yes): their house with a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
+- Audrey (30 Oct 11:31): "what can you do to make the ducks cuter?"; she chose all four: "Rounder head, chubby cheeks
+  (Recommended)", "Shorter, stubbier bill", "Bigger, sparkly eyes", "Cute moves". **Cuter** (live 30 Oct): the head half
+  as big again for the bird (`head_k` 1.5) with a high round forehead and chubby cheeks (two more balls), on a shorter,
+  thicker neck (`neck` 0.36, `neck_rs`); a short stubby bill, still broad (`bill_k` 1.02); the eyes 30% bigger (were 10%),
+  a little lower and more forward, with a bigger catch-light and a second little sparkle low on the other side. The moves
+  (`geese.js`): a happy head bob (`bob` in the rig's pose, quick nods pumping the head up and down), a bigger, quicker tail
+  wiggle with a wiggle of the rump (`wag`, call ducks only), a tap on one: a quack, then the bob and the wiggle; walking
+  round in a little line is the mallards' following, for their pen. `?lineup=ducks&call` has two more rows: the bob then
+  the wiggle (`DUCK_LINE.bob`), and the two waddling round a little oval one behind the other (`parade`). A short film sent
+  (`cutefilm.mjs` in the session's scratch: the bob, the wiggle from behind, the parade).
+- Behind them, a dark fold showed: the drake's curl (white, but curled so it caught no light) left out for the call drake,
+  the tail held up perkily (call ducks), and nothing of theirs ever darker than 42% of its colour (mode 7 in `birds.js`'s
+  light: white all over, never dark in a fold or under the tail); the head bob a little bigger.
+- **The Floating House, a first look** (`stylized/coops.py` `floating`, `FLOAT`, `FLOAT_PAL`, `pond`, `pond_pts`, `flat_poly`,
+  `life_ring`; Blender pictures, not yet in the game): a pond where a house stands in the other pens (an oval a little
+  wobbly, 1.96 by 1.4 m, light blue with a darker band at its edge, stones round it, reeds and bulrushes at its back corners
+  and right side, water lilies, two in flower), and on it a raft (three logs, a deck of boards, a sagging rope rail on little
+  posts round its back and sides) carrying the house: duck-egg blue weatherboards, white corner boards and bargeboards, a
+  roof of coral shingles, a brass-rimmed porthole in each side, a red-and-white life ring on its left, a yellow pennant on
+  a mast at the ridge's right end, pots of yellow and white flowers and a lantern at the deck's front corners. The house
+  and raft drawn at 0.72 of a hen's house (`k`: a duck's size, the water showing all round); the nest window (no door) and
+  the ducks' door as every coop's, the gangplank from their door straight over the deck and the water to the bank in front
+  (`ramp` 0.87 before the scaling: its foot on the bank, a gap in the stones there), so `NESTS['house_call']` (scaled the
+  same) has them come, go and lay as the hens do; the pond kept to by `BLOCKS` (the gangplank's line left free).
+- Audrey (30 Oct): their home: "Floating house (Recommended)" (a little wooden house on a raft in the middle of their pond,
+  a ramp up to it).
+- Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

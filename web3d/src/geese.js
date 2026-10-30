@@ -182,7 +182,8 @@ export class GooseRig {
   }
   // pose: walk 0..1, phase, stride (m), run 0..1, turn (rad/s), the neck's shapes (up, honk, low, graze, preen, tuck: 0..1;
   // side: which way to preen or tuck), lookYaw, lookPitch, jaw 0..1, wings 0..1 (open), flap 0..1, wingLift 0..1 (the folded
-  // wings lifted, as when shaking out), wag 0..1, tailUp, sit 0..1, shake 0..1, shut 0..1 (eyes), lift (m), t, dt
+  // wings lifted, as when shaking out), wag 0..1, tailUp, sit 0..1, shake 0..1, shut 0..1 (eyes), lift (m), bob 0..1 (a happy
+  // head bob), t, dt
   pose(s) {
     const B = this.bones, Rr = this.rest, t = s.t || 0, dt = Math.min(0.05, s.dt || 1 / 30);
     for (const nm in B) { B[nm].rotation.set(0, 0, 0); B[nm].position.copy(Rr[nm]); B[nm].scale.set(1, 1, 1); }
@@ -190,8 +191,8 @@ export class GooseRig {
     // ---- the body: the waddle (rolling onto each foot as it takes the weight, a little rise over each step), a lean
     // forward running, lowered to the ground sitting
     // swimming (swim 0..1): no waddle, gliding level and bobbing a little on the water, the tail up
-    const sw = s.swim || 0, dry = 1 - sw;
-    const roll = (-0.11 * g * (1 - 0.4 * run) * (1 + 0.9 * (s.proud || 0)) * Math.sin(ph) - 0.06 * turn * g) * dry + 0.03 * sw * Math.sin(t * 1.3) + (s.roll || 0) + 0.22 * (s.shake || 0) * Math.sin(t * 34);
+    const sw = s.swim || 0, dry = 1 - sw, call = this.name.startsWith('call');
+    const roll = (-0.11 * g * (1 - 0.4 * run) * (1 + 0.9 * (s.proud || 0)) * Math.sin(ph) - 0.06 * turn * g) * dry + 0.03 * sw * Math.sin(t * 1.3) + (s.roll || 0) + 0.22 * (s.shake || 0) * Math.sin(t * 34) + (call ? 0.07 * (s.wag || 0) * Math.sin(t * 15) : 0);      // (a call duck wiggles her rump with her tail)
     const stance = (this.name === 'embden' ? -0.17 : -0.04) * (1 - 0.6 * sw);
     // proud (0..1): chest puffed out and up, head high, high steps, swaying (the victory parade)
     const pr = s.proud || 0;
@@ -218,6 +219,8 @@ export class GooseRig {
     B.neck1.rotation.x -= (pitch - (s.pitch || 0)) * 0.75;                  // (the neck stays up when the body leans into a run or stands tall)
     B.neck2.rotation.x += 0.04 * g * Math.sin(2 * ph);                     // a little nod with each step
     B.neck4.rotation.x += 0.09 * pr * g * Math.sin(2 * ph); B.head.rotation.x -= 0.06 * pr * g * Math.sin(2 * ph);       // (proud: a jaunty bob)
+    const bb = s.bob || 0;           // a happy head bob (the call ducks, 30 Oct: Audrey's "Cute moves"): quick nods, pumping the head up and down
+    if (bb > 0.001) { const w = Math.sin(t * 12.5); B.neck2.rotation.x += 0.18 * bb * w; B.neck3.rotation.x += 0.1 * bb * w; B.neck4.rotation.x -= 0.3 * bb * w; B.head.rotation.x += 0.2 * bb * Math.sin(t * 12.5 - 0.8); }
     if (s.billAt && (s.billW || 0) > 0.01) { B.root.updateMatrixWorld(true); this.neckTo(s.billAt, Math.min(1, s.billW)); }
     // ---- the bill: open for a honk or a hiss; the eyes blink
     B.jaw.rotation.x = 0.55 * clamp01(s.jaw || 0);
@@ -243,7 +246,7 @@ export class GooseRig {
       hd.rotation.z = sd * (-0.12 * o * (1 - ck) + fl * 0.22 * lag - 0.45 * ck);
     }
     // ---- the tail: on a spring, wagging side to side (a goose's happy shake), up when alert
-    const T = this.tail, gy = (s.wag || 0) * 0.38 * Math.sin(t * 11) + 0.08 * g * (1 - (s.swim || 0)) * Math.sin(ph) - 0.06 * turn;
+    const T = this.tail, gy = (s.wag || 0) * (call ? 0.6 : 0.38) * Math.sin(t * (call ? 15 : 11)) + 0.08 * g * (1 - (s.swim || 0)) * Math.sin(ph) - 0.06 * turn;
     T.yv += ((gy - T.y) * 140 - T.yv * 10) * dt; T.y += T.yv * dt;
     B.tail.rotation.set(((s.tailUp || 0) + 0.35 * (s.swim || 0)) * 0.3 + 0.05 * Math.sin(t * 1.3) + (UP.tail ?? 0.9) * ues, T.y, 0);       // (+ x lifts it)
     // ---- the legs: each foot on the ground under the hip, stepping (duty: the share of the step on the ground), lifted a
@@ -346,7 +349,7 @@ export class Goose {
   }
   update(dt) {
     const A = this.A; A.t += dt; A.dt = dt; this.clock += dt;
-    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak', 'proud', 'upend']) A[k + 'Goal'] = 0;
+    for (const k of ['walk', 'run', 'up', 'honk', 'low', 'graze', 'preen', 'tuck', 'jaw', 'wings', 'flap', 'wingLift', 'wag', 'tailUp', 'sit', 'shake', 'squint', 'billW', 'tilt', 'lift', 'cloak', 'proud', 'upend', 'bob']) A[k + 'Goal'] = 0;
     A.lookYawGoal = 0; A.lookPitchGoal = 0;
     this.turned = false; this.moved = false; this.turn = 0;
     const was = this.lastPos || (this.lastPos = this.pos.clone()), fx0 = was.x, fz0 = was.z;
@@ -359,6 +362,7 @@ export class Goose {
       A.lookYawGoal = this.reactYaw; A.lookPitchGoal = -0.1; A.tiltGoal = 0; A.grazeGoal = 0; A.preenGoal = 0; A.lowGoal = 0; A.billWGoal = 0;
       A.tuckGoal *= 0.3; A.squintGoal = 0; A.upGoal = 0.7; A.upendGoal = 0; A.sitGoal *= 0.5; A.honkGoal = honk ? 0.8 : 0; A.wingLiftGoal = honk ? 0.5 : 0;
       A.jawGoal = honk && Math.sin((u - 0.3) * Math.PI * 4) > 0 ? 1 : 0; A.wagGoal = u > 1.35 ? 1 : 0; A.tailUpGoal = honk ? 0.6 : 0;
+      if (this.kind.startsWith('call')) A.bobGoal = u > 1.35 ? 1 : 0;       // (a call duck: a happy head bob with it)
     }
     // a honk (the game's sound, a goose's, not a duck's: theirs is a quack): as the bill opens on one, not more than one in 2.5 s
     const honking = !this.isDuck && (A.honkGoal || 0) >= 0.6 && (A.jawGoal || 0) > 0.5;
@@ -371,6 +375,7 @@ export class Goose {
     const ease = (k, rate) => { A[k] = (A[k] || 0) + ((A[k + 'Goal'] || 0) - (A[k] || 0)) * Math.min(1, dt * rate); };
     for (const k of ['up', 'honk', 'low', 'graze', 'preen', 'tuck', 'sit', 'wingLift', 'tailUp', 'lookYaw', 'lookPitch', 'tilt', 'lift']) ease(k, 5);
     for (const k of ['jaw', 'wag', 'shake', 'squint']) ease(k, 12);
+    ease('bob', 8);
     ease('wings', 6); ease('flap', 6); ease('cloak', 6); ease('billW', 4); ease('proud', 3); ease('upend', 4);
     A.shut = Math.max(blink, A.squint || 0);
     if (this.flock) {
@@ -418,18 +423,21 @@ export class GeeseLineup {
 }
 // ------------------------------------------------------------------ ?lineup=ducks: the pond's mallards (Rocco the drake and Daisy the
 // duck) in a row of poses, for a close look: looking about, the waddle, a quack, preening, a wing-flap, swimming, up-ending
-// (tail and paddling feet in the air) and asleep; ?lineup=ducks&call: the call ducks (a drake and a duck) the same
+// (tail and paddling feet in the air) and asleep; ?lineup=ducks&call: the call ducks (a drake and a duck) the same, and two
+// more rows: a happy head bob (and the tail wiggle), and the two walking round in a little line, one behind the other
 export class DuckLineup {
   constructor(scene, centre, yaw, grade, r) {
     this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
-    const poses = ['look', 'walk', 'quack', 'preen', 'wings', 'swim', 'upend', 'sleep'];
+    const call = /[?&]call\b/.test(typeof location !== 'undefined' ? location.search : '');
+    const poses = ['look', 'walk', 'quack', 'preen', 'wings', 'swim', 'upend', 'sleep', ...(call ? ['bob', 'parade'] : [])];
     const water = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#4a9cc0', roughness: 0.15 }));
     water.position.set(0, 0.007, -1.4 + 5.5 * 0.56); this.group.add(water); if (grade) grade(water.material);
     this.ducks = [];
     poses.forEach((p, i) => {
-      for (const [k, x] of (/[?&]call\b/.test(typeof location !== 'undefined' ? location.search : '') ? [['call_m', -0.3], ['call_f', 0.3]] : [['mallard_m', -0.3], ['mallard_f', 0.3]])) {
+      for (const [k, x] of (call ? [['call_m', -0.3], ['call_f', 0.3]] : [['mallard_m', -0.3], ['mallard_f', 0.3]])) {
         const d = new Goose(this.group, k, r);
         d.pos.set(x, 0, -1.4 + i * 0.56); d.heading = -0.95; d.linePose = p;
+        if (p === 'parade') { d.flock = { wetAt: () => 0 }; d.lag = x > 0 ? 1.05 : 0; d.loopZ = -1.4 + (i + 0.3) * 0.56; }      // (its feet stepping as far as it goes)
         this.ducks.push(d);
       }
     });
@@ -440,11 +448,19 @@ export class DuckLineup {
       const A = d.A, c = d.clock - (d.kind === 'mallard_f' || d.kind === 'call_f' ? 0.4 : 0), sk = d.rig.by - 0.037, k = d.rig.by / 0.29;
       d.task = DUCK_LINE[d.linePose];
       if (d.linePose === 'swim' || d.linePose === 'upend') { A.swim = 1; d.pos.y = -sk; }
+      if (d.linePose === 'parade') {        // round a little oval, the duck following the drake
+        const a = (d.parT = (d.parT ?? 0) + dt) * 0.55 - d.lag, x = 0.34 * Math.sin(a), z = d.loopZ + 0.2 * Math.cos(a);
+        d.heading = Math.atan2(0.34 * Math.cos(a), -0.2 * Math.sin(a)); d.pos.set(x, 0, z);
+      }
       d.update(dt);
     }
   }
 }
 const DUCK_LINE = {
+  // (the call ducks' cute moves, 30 Oct, Audrey's "Cute moves": a happy head bob, then the tail wiggle, then a look about;
+  // walking round in a little line)
+  bob: (g) => { const u = ((g.clock % 4.5) + 4.5) % 4.5, A = g.A; if (u < 1.5) { A.bobGoal = 1; A.upGoal = 0.3; } else if (u < 2.4) { A.wagGoal = 1; A.tailUpGoal = 0.4; } else { A.lookYawGoal = 0.7 * Math.sin(u * 1.4); A.tiltGoal = 0.25; } },
+  parade: (g) => { const A = g.A; A.wagGoal = 0.35; A.lookYawGoal = 0.25 * Math.sin(g.clock * 1.3); A.upGoal = 0.2; },
   look: (g) => { const u = ((g.clock % 6) + 6) % 6, A = g.A; A.lookYawGoal = u < 2.5 ? 1.1 : 0.5 * Math.sin(u * 1.2); A.tiltGoal = u < 2.5 ? 0.35 : 0; A.wagGoal = u > 2.5 && u < 3.2 ? 1 : 0; },
   walk: (g) => { const A = g.A; A.walkGoal = 1; A.wagGoal = 0.3; A.lookYawGoal = 0.3 * Math.sin(g.clock * 1.1); },
   quack: (g) => { const u = ((g.clock % 2.6) + 2.6) % 2.6, A = g.A; if (u < 1.2) { A.honkGoal = 0.6; A.upGoal = 0.4; A.jawGoal = Math.sin(u / 1.2 * 3 * Math.PI) > 0.1 ? 1 : 0; A.wagGoal = 0.6; } else { A.lookYawGoal = 0.6; A.tiltGoal = 0.2; } },
