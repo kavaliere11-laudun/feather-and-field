@@ -947,5 +947,6 @@
  "text.book_price_duck": "{p} monete a uovo, più una moneta per ogni stella dell’anatra",
  "text.feed_how_duck": "Le tue anatre depongono finché c’è cibo dentro. Piena, sfama il tuo trio per due giorni.",
  "text.feed_empty_line_duck": "Le tue anatre smettono di deporre finché non viene riempita.",
- "text.trio_body_duck": "Un maschio e due anatre, tuoi per sempre, con la loro casa su uno stagno. Mettila dove vuoi sui tuoi terreni."
+ "text.trio_body_duck": "Un maschio e due anatre, tuoi per sempre, con la loro casa su uno stagno. Mettila dove vuoi sui tuoi terreni.",
+ "goose.call_d": "anatroccolo Call"
 }

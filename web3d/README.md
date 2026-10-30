@@ -3313,6 +3313,16 @@ the birds already had.
   quack. About a quarter of a minute from the kick to the ball afloat again. At
   night it waits on the yard for the morning. If twice nobody can manage it, it rolls back by itself (`roll`). Each nudge
   now picks a way to send the ball that she's nearly behind already (not round the ball in a narrow bit of water).
-- Next: ducklings (a duck sitting, fluffy yellow ducklings following her on land and water), then the peacock at 30.
+- **The call ducklings' look** (30 Oct; next after Audrey's "looks perfect!" on the ball games): `stylized/geese.py`
+  `GEESE['call_d']` (a call duck's build with `duckling=True`): a little ball of bright yellow down (`coat` #ffde59, shaded
+  #f3c43f), smaller than a call duck by half (S 0.19, a shorter rounder body BL 0.66), a big round head (`head_k` 2.3) on
+  almost no neck, bigger eyes (1.5), a broad soft orange bill bigger for its size (`bill_s` 1.4: the bill's own scale,
+  `Sb`), stubby down wings (no coverts or flight feathers, folded or open), no tail feathers (a downy point, `_tuft`),
+  short legs (LG 0.5). Exported on its own and spliced into geese.glb (`export_geese.py ... call_d`, `BUDGET` 7,000;
+  `splice_glb.py`). In the browser (geese.js): all soft down, the feathers' rows gone (`fm` 7, `fp` alpha 0.08, feathers
+  half size) and a fluffy uncombed fur (`DUCKLING_FUR`); a smaller tap target; named "call duckling" / "caneton Call" (and
+  in the other four languages). On the test page: `?lineup=ducks&call&ducklings`, each row a duck and two ducklings
+  doing the same (the parade row: the ducklings behind their mother in a line).
+- Next: Audrey's look at the ducklings; then a duck sitting on her eggs, the ducklings following her on land and water, in the game; then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

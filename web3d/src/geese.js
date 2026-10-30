@@ -23,7 +23,7 @@ export const gooseName = kind => NAMES[kind] || kind;
 let LANG = urlLang();
 export const setGooseLang = lang => { LANG = lang || 'en'; };          // (the game: the player's language, before they're made)
 const BREED = register('goose', { embden: ['Embden goose', "oie d'Embden"], toulouse: ['Toulouse gander', 'jars de Toulouse'],
-  mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'], call_m: ['call drake', 'canard Call'], call_f: ['call duck', 'cane Call'] });
+  mallard_m: ['mallard drake', 'canard colvert'], mallard_f: ['mallard duck', 'cane colvert'], call_m: ['call drake', 'canard Call'], call_f: ['call duck', 'cane Call'], call_d: ['call duckling', 'caneton Call'] });
 const isDuck = kind => /^(mallard|call)/.test(kind);      // (the call ducks, 30 Oct 2026: little white ducks, the call ducks' coop's)
 
 // feather sizes (cm) per region: broad on the body and wings, small on the head (the neck's are made smaller by the drawing);
@@ -35,6 +35,8 @@ const FUR = { len: { [R.body]: 0.012, [R.wing]: 0.006, [R.crest]: 0.003, [R.legf
 const DUCK_FUR = { len: { [R.body]: 0.007, [R.wing]: 0.004, [R.crest]: 0.002, [R.legfeather]: 0.007 }, shells: 4, comb: 0.9, fine: 1.3, under: 1.0, fluff: 0.05 };
 // the call ducks: smooth white, a shorter softer fluff (Audrey's photos)
 const CALL_FUR = { len: { [R.body]: 0.004, [R.wing]: 0.003, [R.crest]: 0.0015, [R.legfeather]: 0.004 }, shells: 4, comb: 0.9, fine: 1.0, under: 1.0, fluff: 0.03 };
+// a call duckling: all soft down, fluffy and uncombed
+const DUCKLING_FUR = { len: { [R.body]: 0.0045, [R.wing]: 0.004, [R.crest]: 0.003, [R.legfeather]: 0.004 }, shells: 5, comb: 0.35, fine: 1.4, under: 1.0, fluff: 0.12 };
 
 function gooseGeometry(name) {
   const M = MODELS[name];
@@ -43,10 +45,10 @@ function gooseGeometry(name) {
   const col = new Float32Array(n * 3), fs = new Float32Array(n), fh = new Float32Array(n), fp = new Float32Array(n * 4), fm = new Float32Array(n);
   const fuv = new Float32Array(n * 3), paint = A._paint.array, pos = A.position.array, si = A.skinIndex.array;
   const P = A._fpat, PM = A._fmode, HW = A._headw, F = A._feat;
-  const call = /^call/.test(name);      // (the call ducks: smooth white, as in Audrey's photos)
+  const call = /^call/.test(name), down = name === 'call_d';      // (the call ducks: smooth white, as in Audrey's photos; a duckling all down)
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < 3; j++) col[i * 3 + j] = base.array[i * base.itemSize + j] * k;
-    fs[i] = (FEATHER[paint[i]] || 0) * (call ? 0.8 : isDuck(name) ? 0.62 : 1); fh[i] = HW.getX(i);
+    fs[i] = (FEATHER[paint[i]] || 0) * (down ? 0.5 : call ? 0.8 : isDuck(name) ? 0.62 : 1); fh[i] = HW.getX(i);
     if (paint[i] === R.body && fh[i] < 0.5) {            // small and fine on the breast and belly, broad on the flanks and back
       const ny = A.normal.getY(i), nz = A.normal.getZ(i), z = pos[i * 3 + 2];
       const breast = smooth(0.0, 0.1, z) * smooth(0.1, 0.55, nz), belly = smooth(-0.15, -0.6, ny);
@@ -54,7 +56,7 @@ function gooseGeometry(name) {
     }
     for (let j = 0; j < 4; j++) fp[i * 4 + j] = P.getComponent(i, j);
     fm[i] = PM.getX(i);
-    if (call && fm[i] === 4) { fm[i] = 7; fp[i * 4 + 3] *= 0.4; }      // (7: smooth white plumage, the feathers' rows only faint)
+    if (call && fm[i] === 4) { fm[i] = 7; fp[i * 4 + 3] *= down ? 0.08 : 0.4; }      // (7: smooth white plumage, the feathers' rows only faint; a duckling's down: none)
     fuv[i * 3] = F.getX(i); fuv[i * 3 + 1] = F.getY(i);
   }
   // the wings' rows: how far back along each wing a point is (0.02 at the front .. 1 at the back, where the flight feathers
@@ -75,7 +77,7 @@ function gooseGeometry(name) {
   g.setAttribute('gooseN', A._gn);
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox.clone(); g.computeBoundingSphere();
-  g = addFur(g, src, /^call/.test(name) ? CALL_FUR : isDuck(name) ? DUCK_FUR : FUR, M.piv.headc);
+  g = addFur(g, src, down ? DUCKLING_FUR : /^call/.test(name) ? CALL_FUR : isDuck(name) ? DUCK_FUR : FUR, M.piv.headc);
   return (M.built = g);
 }
 
@@ -288,6 +290,7 @@ export class Goose {
     this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.hitR = 0.3; this.hitY = 0.4; this.tagY = 0.88; this.isGoose = true; this.react = 0; this.reactYaw = 0;
     if (this.isDuck) { this.hitR = 0.2; this.hitY = 0.2; this.tagY = 0.5; }
+    if (kind === 'call_d') { this.hitR = 0.12; this.hitY = 0.1; this.tagY = 0.3; this.isDuckling = true; }
     this.label = this.name + ' · ' + tr(LANG, 'goose.' + kind);
     this.av = 0; this.spd = 0; this.vs = 0; this.turn = 0; this.wet = 0; this.flock = null; this.act = ''; this.actT = 0; this.seed = r() * 10;
   }
@@ -428,16 +431,16 @@ export class GeeseLineup {
 export class DuckLineup {
   constructor(scene, centre, yaw, grade, r) {
     this.group = new THREE.Group(); this.group.position.copy(centre); this.group.rotation.y = yaw; scene.add(this.group);
-    const call = /[?&]call\b/.test(typeof location !== 'undefined' ? location.search : '');
+    const call = /[?&]call\b/.test(typeof location !== 'undefined' ? location.search : ''), kids = /[?&]ducklings\b/.test(typeof location !== 'undefined' ? location.search : '');      // (&ducklings: a duck and two ducklings in each row)
     const poses = ['look', 'walk', 'quack', 'preen', 'wings', 'swim', 'upend', 'sleep', ...(call ? ['bob', 'parade'] : [])];
     const water = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.3).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#4a9cc0', roughness: 0.15 }));
     water.position.set(0, 0.007, -1.4 + 5.5 * 0.56); this.group.add(water); if (grade) grade(water.material);
     this.ducks = [];
     poses.forEach((p, i) => {
-      for (const [k, x] of (call ? [['call_m', -0.3], ['call_f', 0.3]] : [['mallard_m', -0.3], ['mallard_f', 0.3]])) {
+      for (const [k, x] of (kids ? [['call_f', 0.3], ['call_d', -0.02], ['call_d', -0.28]] : call ? [['call_m', -0.3], ['call_f', 0.3]] : [['mallard_m', -0.3], ['mallard_f', 0.3]])) {
         const d = new Goose(this.group, k, r);
         d.pos.set(x, 0, -1.4 + i * 0.56); d.heading = -0.95; d.linePose = p;
-        if (p === 'parade') { d.flock = { wetAt: () => 0 }; d.lag = x > 0 ? 1.05 : 0; d.loopZ = -1.4 + (i + 0.3) * 0.56; }      // (its feet stepping as far as it goes)
+        if (p === 'parade') { d.flock = { wetAt: () => 0 }; d.lag = kids ? (k === 'call_f' ? 0 : x > -0.1 ? 0.62 : 1.15) : x > 0 ? 1.05 : 0; d.loopZ = -1.4 + (i + 0.3) * 0.56; }      // (its feet stepping as far as it goes)
         this.ducks.push(d);
       }
     });

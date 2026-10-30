@@ -947,5 +947,6 @@
  "text.book_price_duck": "{p} Münzen pro Ei, plus eine Münze für jeden Stern der Ente",
  "text.feed_how_duck": "Deine Enten legen, solange Futter darin ist. Voll reicht er deinem Trio für zwei Tage.",
  "text.feed_empty_line_duck": "Deine Enten legen erst wieder, wenn er gefüllt ist.",
- "text.trio_body_duck": "Ein Erpel und zwei Enten mit eigenem Haus auf einem Teich – sie gehören dir für immer. Stell es auf deinem Land auf, wo du willst."
+ "text.trio_body_duck": "Ein Erpel und zwei Enten mit eigenem Haus auf einem Teich – sie gehören dir für immer. Stell es auf deinem Land auf, wo du willst.",
+ "goose.call_d": "Call-Entenküken"
 }

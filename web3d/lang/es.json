@@ -942,5 +942,6 @@
  "text.book_price_duck": "{p} monedas por huevo, más una moneda por cada estrella de la pata",
  "text.feed_how_duck": "Tus patas ponen mientras haya comida. Lleno, alimenta a tu trío durante dos días.",
  "text.feed_empty_line_duck": "Tus patas no pondrán hasta que lo llenes.",
- "text.trio_body_duck": "Un pato y dos patas, tuyos para siempre, con su propia casa en un estanque. Ponla donde quieras en tus tierras."
+ "text.trio_body_duck": "Un pato y dos patas, tuyos para siempre, con su propia casa en un estanque. Ponla donde quieras en tus tierras.",
+ "goose.call_d": "patito Call"
 }

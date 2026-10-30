@@ -19,7 +19,7 @@ from mathutils import Vector
 
 flat_info = g['flat_info']
 JOINTS = geese.JOINTS
-BUDGET = {'embden': 14000, 'toulouse': 14300, 'mallard_m': 13000, 'mallard_f': 12500, 'call_m': 12000, 'call_f': 11800}      # (the call ducks: their feathers ~9,900 kept as they are, the rest for the body)
+BUDGET = {'embden': 14000, 'toulouse': 14300, 'mallard_m': 13000, 'mallard_f': 12500, 'call_m': 12000, 'call_f': 11800, 'call_d': 7000}      # (the call ducks: their feathers ~9,900 kept as they are, the rest for the body)
 PIVOTS, MODELS, STATS = {}, {}, {}
 
 

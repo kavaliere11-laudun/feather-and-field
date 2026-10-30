@@ -742,6 +742,11 @@
   "fr": "Un coq et deux poules, à vous pour toujours, avec leur poulailler. Installez-le où vous voulez sur votre terrain."
  },
  {
+  "id": "text.trio_body_duck",
+  "en": "A drake and two ducks, yours for good, with their own house on a pond. Put it anywhere on your land.",
+  "fr": "Un canard et deux canes, à vous pour toujours, avec leur maison sur une mare. Installez-la où vous voulez sur votre terrain."
+ },
+ {
   "id": "text.place_now",
   "en": "Place their coop now",
   "fr": "Installer leur poulailler"
@@ -3513,6 +3518,11 @@
   "id": "goose.call_f",
   "en": "call duck",
   "fr": "cane Call"
+ },
+ {
+  "id": "goose.call_d",
+  "en": "call duckling",
+  "fr": "caneton Call"
  },
  {
   "id": "replay.thehens",

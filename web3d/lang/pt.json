@@ -947,5 +947,6 @@
  "text.book_price_duck": "{p} moedas por ovo, mais uma moeda por estrela da pata",
  "text.feed_how_duck": "Suas patas botam enquanto houver comida nele. Cheio, alimenta seu trio por dois dias.",
  "text.feed_empty_line_duck": "Suas patas param de botar até você encher de novo.",
- "text.trio_body_duck": "Um pato e duas patas, seus para sempre, com a própria casa num laguinho. Coloque-a onde quiser nas suas terras."
+ "text.trio_body_duck": "Um pato e duas patas, seus para sempre, com a própria casa num laguinho. Coloque-a onde quiser nas suas terras.",
+ "goose.call_d": "patinho Call"
 }
