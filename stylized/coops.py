@@ -858,7 +858,7 @@ FLOAT_LOOK = {
     4: dict(wall='#f8f6f0', wall2='#eeebe3', trim='#2c4a7a', roof='#c9453b', ridge='#a5352d', door='#2c4a7a', flag='#2c4a7a',
             deck='#d9c19c', deck2='#ccb28b', water='#79c7e0', water2='#5fb3d0'),
 }
-FLOAT_POND = {0: dict(pond=(0.0, -0.17, 0.92, 0.68)), 4: dict(pond=(0.0, -0.06, 1.2, 0.81))}      # (the Rustic's smaller, the Deluxe's bigger: its front where the gangplank lands)
+FLOAT_POND = {0: dict(pond=(0.0, -0.17, 0.92, 0.68)), 4: dict(pond=(0.0, -0.02, 1.58, 0.85))}      # (the Rustic's smaller, the Deluxe's much wider: its front where the gangplank lands)
 
 
 def pond_pts(F, wob=0.05, n=40, out=0.0):
@@ -929,7 +929,8 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
                 objs.append(sphere('lilypetal', 0.02, (x + math.cos(a_) * 0.014, y + math.sin(a_) * 0.014, F['water'] + 0.02), (1.4, 0.7, 0.6), (0, 0.5, a_), m=flower, seg=8, rings=5))
             objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
     if look == 3: rowing_boat(objs, -0.8, -0.26, F['water'])
-    if look == 4: fountain(objs, 0.98, 0.3, F['water'], name)
+    if look == 4: fountain(objs, 1.22, 0.28, F['water'], name)
+    if look >= 2: beach_ball(objs, {2: (0.5, -0.66), 3: (0.52, -0.68), 4: (0.95, -0.55)}[look], F['water'])      # (the ducks' toy, from the Snug)
     # the birds keep out of the water (in front of and beside the house; the gangplank's line left free)
     for i in range(32):
         t = 2 * math.pi * i / 32; x, y = cx + a * 0.8 * math.cos(t), cy + b * 0.8 * math.sin(t)
@@ -969,6 +970,68 @@ def fountain(objs, x, y, wz, name):
         a_ = j * 2 * math.pi / 8
         objs.append(cyl('fspill', 0.006, 0.12, (x + math.cos(a_) * 0.062, y + math.sin(a_) * 0.062, wz + 0.28), m=fw, verts=5, bevel=0.0))
         objs.append(cyl('fspill', 0.006, 0.17, (x + math.cos(a_ + 0.4) * 0.128, y + math.sin(a_ + 0.4) * 0.128, wz + 0.11), m=fw, verts=5, bevel=0.0))
+
+
+def beach_ball(objs, at, wz, r=0.085, name='ball'):
+    """The ducks' toy (Audrey, 30 Oct: "add a balloon toy so the ducks play"): a beach ball floating on the pond, six bright
+    panels, white caps."""
+    x, y = at; cols = ['#e2453c', '#f4c430', '#3d8fd1', '#e2453c', '#f4c430', '#3d8fd1']
+    for i in range(6):
+        me = bpy.data.meshes.new('ballpanel'); bm = bmesh.new(); nu, nv = 5, 10; vs = []
+        for a_ in range(nu + 1):
+            lon = (i + a_ / nu) * 2 * math.pi / 6
+            vs.append([bm.verts.new((x + r * math.sin(math.pi * b_ / nv) * math.cos(lon), y + r * math.sin(math.pi * b_ / nv) * math.sin(lon), wz + r * 0.8 + r * math.cos(math.pi * b_ / nv))) for b_ in range(nv + 1)])
+        for a_ in range(nu):
+            for b_ in range(nv): 
+                q = (vs[a_][b_], vs[a_ + 1][b_], vs[a_ + 1][b_ + 1], vs[a_][b_ + 1])
+                if len(set(q)) == 4:
+                    try: bm.faces.new(q)
+                    except ValueError: pass
+        bmesh.ops.remove_doubles(bm, verts=bm.verts[:], dist=1e-6); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new(name + 'panel', me)); setmat(o, C('ballc_' + cols[i], cols[i], rough=0.35, spec=0.5)); objs.append(o)
+        for p_ in o.data.polygons: p_.use_smooth = True
+    for zz in (r * 1.8, -r * 0.2):
+        objs.append(sphere(name + 'cap', r * 0.22, (x, y, wz + r * 0.8 + (r if zz > 0 else -r) * 0.98), (1, 1, 0.35), m=C('ballwhite', '#fbf6ee', rough=0.4), seg=10, rings=5))
+
+
+def houseboat_hull(objs, x0, x1, y0, y1, DK, wl, red, white, deckm):
+    """The Cosy's: the raft a little boat, a hull under its deck, flat at the stern (left), a pointed bow out to the right,
+    red with a white band, the bow's deck boarded."""
+    me = bpy.data.meshes.new('hull'); bm = bmesh.new(); yc = (y0 + y1) / 2
+    top = [(x0 - 0.03, y0 - 0.04), (x1 - 0.05, y0 - 0.04), (x1 + 0.34, yc), (x1 - 0.05, y1 + 0.04), (x0 - 0.03, y1 + 0.04)]
+    bot = [(x0 + 0.06, y0 + 0.08), (x1 - 0.1, y0 + 0.08), (x1 + 0.12, yc), (x1 - 0.1, y1 - 0.08), (x0 + 0.06, y1 - 0.08)]
+    vt = [bm.verts.new((x, y, DK - 0.02)) for x, y in top]; vb = [bm.verts.new((x, y, wl - 0.08)) for x, y in bot]
+    for i in range(5):
+        j = (i + 1) % 5
+        bm.faces.new((vt[i], vt[j], vb[j], vb[i]))
+    bm.faces.new(vb[::-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    h = link(bpy.data.objects.new('hull', me)); setmat(h, red); objs.append(h)
+    for i in range(4):                                    # the white band just under the deck
+        a, b = Vector((*top[i], DK - 0.045)), Vector((*top[i + 1], DK - 0.045))
+        d = (b - a).normalized(); n = Vector((d.y, -d.x, 0))
+        objs.append(plank('hullband', a, b, 0.035, 0.012, n, white, jitter=0.0, bevel=0.002))
+    me = bpy.data.meshes.new('bowdeck'); bm = bmesh.new()
+    vs = [bm.verts.new((x, y, DK - 0.005)) for x, y in ((x1 - 0.02, y0 - 0.03), (x1 + 0.33, yc), (x1 - 0.02, y1 + 0.03))]
+    bm.faces.new(vs); bm.to_mesh(me); bm.free()
+    bd = link(bpy.data.objects.new('bowdeck', me)); setmat(bd, deckm); objs.append(bd)
+    objs.append(cyl('bowpost', 0.02, 0.12, (x1 + 0.2, yc, DK + 0.06), m=white, verts=8, bevel=0.0))
+
+
+def barrel_roof(objs, eave, Zr, m, m2, trim, over=0.16, go=0.13, n=14):
+    """The Cosy's curved houseboat roof: boards along x over a half-ellipse (across y: D2 + over, up: Zr), white arched trim
+    at its ends."""
+    Y = D2 + over; z0 = eave - 0.06; L = 2 * W2 + 2 * go
+    pts = [(Y * math.cos(math.pi * i / n), z0 + Zr * math.sin(math.pi * i / n)) for i in range(n + 1)]
+    for i in range(n):
+        (ya, za), (yb, zb) = pts[i], pts[i + 1]; ym, zm = (ya + yb) / 2, (za + zb) / 2
+        th = math.pi * (i + 0.5) / n; nrm = Vector((0, math.cos(th) / Y, math.sin(th) / Zr)).normalized()
+        w = math.hypot(yb - ya, zb - za)
+        objs.append(plank('broof', (-L / 2, ym, zm), (L / 2, ym, zm), w * 1.04, 0.025, nrm, m if i % 2 else m2, jitter=0.2, bevel=0.004))
+    for sx in (-1, 1):
+        for i in range(n):
+            (ya, za), (yb, zb) = pts[i], pts[i + 1]
+            objs.append(plank('barch', (sx * (L / 2 + 0.01), ya, za), (sx * (L / 2 + 0.01), yb, zb), 0.05, 0.03, (sx, 0, 0), trim, jitter=0.0, bevel=0.004))
 
 
 def life_ring(objs, x, y, z, normal, white, red):
@@ -1070,6 +1133,8 @@ def floating(seed=17, name='house_call', look=2, F=None):
     """The Floating House (look 0..4: Rustic, Mended, Snug, Cosy, Deluxe; name: its model's)."""
     random.seed(seed); objs = []; pobjs = []; t = look; sx = '_%d' % t
     F = dict(FLOAT, **FLOAT_POND.get(t, {}), **(F or {})); P = dict(FLOAT_PAL, **FLOAT_LOOK[t]); FL, WX, DK, EAVE, PEAK = F['FL'], F['WX'], F['deck'], F['eave'], F['peak']
+    BZ = 0.46                                            # (the Cosy's curved roof: its height over the eaves)
+    if t == 3: PEAK = EAVE - 0.06 + BZ
     k = F['k']; wl = F['water'] / k                      # (the house is drawn full size, then made k as big; wl: the water's level for it)
     LIGHTS.pop(name, None); BLOCKS.pop(name, None); before = set(bpy.data.objects)
     wall = C('fwall' + sx, P['wall'], rough=0.8 if t == 0 else 0.7, var=0.1 if t == 0 else 0.04, grain=0.3 if t < 2 else 0.0, grain_scale=G)
@@ -1088,6 +1153,8 @@ def floating(seed=17, name='house_call', look=2, F=None):
             objs.append(cyl('barrel', 0.13, x1 - x0 - 0.2, (0, y, wl + 0.02), (0, math.radians(90), 0), C('fbarrel', '#5d6f86', rough=0.7, var=0.1), verts=16, bevel=0.0))
             for xx in (-0.45, 0.0, 0.45):
                 objs.append(cyl('barrelhoop', 0.134, 0.03, (xx, y, wl + 0.02), (0, math.radians(90), 0), C('frust', '#8e5d3e', rough=0.9), verts=16, bevel=0.0))
+    elif t == 3:
+        houseboat_hull(objs, x0, x1, y0, y1, DK, wl, C('fhull', '#c2453a', rough=0.55, var=0.03), C('fhullw', '#fbf7ee', rough=0.6), deck)
     else:
         for y in (y0 + 0.12, (y0 + y1) / 2, y1 - 0.12):
             objs.append(cyl('rlog', 0.06, x1 - x0 - 0.06, (0, y, wl + 0.01), (0, math.radians(90), 0), log, verts=12, bevel=0.0))
@@ -1150,11 +1217,16 @@ def floating(seed=17, name='house_call', look=2, F=None):
         ng = 8
         for i in range(ng):
             y = -D2 + (i + 0.5) * 2 * D2 / ng; top = EAVE + (PEAK - EAVE) * (1 - abs(y) / D2) - 0.03
+            if t == 3: top = EAVE - 0.06 + BZ * math.sqrt(max(0.0, 1 - (abs(y) + D2 / ng / 2) ** 2 / (D2 + 0.16) ** 2)) - 0.02      # (under the Cosy's curved roof)
             gm = (bare if i % 3 == 0 else wall2) if t == 0 else wall2
             objs.append(plank('fgable', (sx_ * W2, y, EAVE - 0.02), (sx_ * W2, y, top), 2 * D2 / ng * 0.96, 0.03, (sx_, 0, 0), gm, jitter=0.8 if t == 0 else 0.4))
     roof_m = C('fshingle' + sx, P['roof'] if P['roof'] not in ('tin', 'half') else FLOAT_PAL['roof'], rough=0.7, var=0.1, hue_var=0.01)
     if t == 0: tin_roof(objs, EAVE, PEAK)
     elif t == 1: felt_roof(objs, EAVE, PEAK, roof_m, C('ffelt', '#4a4f55', rough=0.9, var=0.04), ridge)
+    elif t == 3:
+        barrel_roof(objs, EAVE, BZ, roof_m, C('fshingle3b', '#4a9ba7', rough=0.7, var=0.08), trim)
+        objs.append(cyl('stovepipe', 0.035, 0.32, (-0.38, 0.22, EAVE - 0.06 + BZ * 0.85 + 0.12), m=C('fpipe', '#9ea4a6', rough=0.4, metal=0.7), verts=12, bevel=0.0))
+        objs.append(cyl('pipecap', 0.06, 0.05, (-0.38, 0.22, EAVE - 0.06 + BZ * 0.85 + 0.3), m=C('fpipe', '#9ea4a6', rough=0.4, metal=0.7), verts=12, r2=0.02, bevel=0.0))
     else: shingle_roof(objs, EAVE, PEAK, roof_m, trim, ridge, over=0.16, gable_over=0.13)
     # the windows in its sides: a porthole each (the Rustic's: a square hole boarded across)
     for s in (-1, 1):
@@ -1224,6 +1296,11 @@ def floating(seed=17, name='house_call', look=2, F=None):
         objs.append(sphere('autoled', 0.009, (-0.265, -D2 - 0.072, zb), m=led, seg=8, rings=4))
         r0, down, nrm = _slope(-1, EAVE, PEAK, 0.16); dn = down.normalized()
         c = r0 + down * 0.45 + nrm * 0.06 + Vector((0.32, 0, 0))
+        if t == 3:                                       # (on the curved roof, its front, high up)
+            th = math.radians(118); Y = D2 + 0.16
+            nrm = Vector((0, math.cos(th) / Y, math.sin(th) / BZ)).normalized(); dn = Vector((0, math.sin(th) * Y, -math.cos(th) * BZ)).normalized()
+            if dn.z > 0: dn = -dn
+            c = Vector((0.32, Y * math.cos(th), EAVE - 0.06 + BZ * math.sin(th))) + nrm * 0.035
         objs.append(plank('solarframe', c - dn * 0.1, c + dn * 0.1, 0.25, 0.02, nrm, C('solarframe', '#b8bec2', rough=0.4, metal=0.6), jitter=0.0, bevel=0.004))
         cell = C('solarcell', '#24365c', rough=0.25, spec=0.6)
         for i in range(2):

@@ -3215,5 +3215,11 @@ the birds already had.
   lit at night: `lighthouse`, `LIGHTS`), a bigger pond edged with pale cobbles and a fountain (`fountain`). The gangplank,
   the doors and the nest the same in all five (`NESTS['house_call']`). The pond's `BLOCKS` per look (the model's name).
   The five sent together.
+- Audrey (30 Oct): "add a balloon toy so the ducks play. make the pond pond of the deluxe wider and create bigger difference
+  between 3 and 4 please". A beach ball floating on the pond from the Snug (`beach_ball`: six panels red, yellow and blue,
+  white caps; to be its own model the ducks nudge about); the Deluxe's pond much wider (3.16 m across, `FLOAT_POND[4]`, the
+  fountain out at its right); the Cosy now a little houseboat: its raft a red hull with a white band, flat at the stern and
+  pointed at the bow out to the right, the bow's deck boarded (`houseboat_hull`), a curved roof of teal boards with white
+  arched ends (`barrel_roof`, the gables under its curve), a stovepipe, the solar panel on the curve. Sent again.
 - Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
