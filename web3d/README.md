@@ -3171,5 +3171,7 @@ the birds already had.
 - First tries: a round ball of a head on a short neck and a little stubby bill (cute, but a duckling; next to her photos
   the neck too short, the bill too small); then a longer neck and a bigger wedge bill, smooth feathers instead of the
   goose's knitted look. Picture sent next to her photos. ducktest, gametest: pass.
+- Audrey (30 Oct 11:23): "can you make is a touch smaller it needs to be cute. the rest is good": both an eighth smaller
+  (`S` 0.42 for Pip, 0.4 for Puddle; were 0.48, 0.46), live 30 Oct; the poses all still work.
 - Next (after her yes): their house with a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
