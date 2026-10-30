@@ -3342,6 +3342,18 @@ the birds already had.
   apart over a few moments (`apart`: at most 4 cm a moment). Soaked 600 s in the Snug, the Cosy and the Deluxe (a day,
   dusk and the next morning): never more than 2 cm into each other, none in the raft, all in at night. A tap on a
   duckling: a peep (`chicks`).
+- **Out in the open water, not in and out** (30 Oct; Audrey, with a picture of them by the bridge: "They should go where
+  there is more water that's a bit confusing they keep going in and out the water"): each swimming spot knows how much
+  open water is round it (`roomAt`: to the bank, the raft, the gangplank or bridge, the boat, the fountain); the widest
+  third are `roomy`. A mother's swim with her ducklings (`swimTask(..., roomy)`) goes in on the side with more open
+  water, from the bank straight out from a roomy spot, and stays out among the roomy spots (never round the raft's thin
+  corners; nowhere further to go, she floats where she is), a long swim (6 to 8 spots), then a long rest on the bank
+  together (`mumTask`: `swam`), not straight back in. A mother on the water carries on in the open water; she never
+  squabbles nor fetches the ball; she doesn't steer round her own ducklings (they make way). The ducklings: when they
+  pick up her trail again, from its last metre and a half only (not back along an old stretch, out of the water and in);
+  gathered round her, wholly on the water with her afloat, wholly on land with her ashore (never on the stones, half
+  in). Soaked 600 s: the Deluxe, about one in-and-out a minute (her swims and rests), 24 cm of open water round her afloat
+  (21 before); the narrower Snug and Cosy ponds about two.
 - **Round the boat and the fountain**: the Cosy's rowing boat moored by the raft and the Deluxe's fountain stand in the
   water (`IN_WATER`, from stylized/coops.py `floating`: capsules from above), so the ducks, the ducklings and the ball keep
   out of them as they do the raft (`inThing`: the swimming ring, `keepOff`, `okAt`, `ballStep`; a swim that would clip one
