@@ -3226,5 +3226,10 @@ the birds already had.
   the raft or the gangplank) and a footbridge like Monet's at Giverny (`monet_bridge`: a gentle green arch of wood over the
   right of the pond from the front bank to the back, a deck of boards across, a railing each side, capped posts at its
   ends), the fountain moved to the pond's left. Sent again.
+- Audrey (30 Oct): "No the bridge replace the existing path": the Deluxe's Monet bridge is now its way in, in place of the
+  gangplank: from the ducks' door (its sill) over the deck's edge and the water down to the bank where the gangplank's foot
+  is, a little green arch with its railings (`monet_bridge` built at the pond's scale; `FLOAT_PATH['deluxe_call']`: the
+  ducks' way over it, points in glTF axes, for their walk); the bridge across the pond's right gone, the fountain back on
+  the right. Sent again.
 - Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

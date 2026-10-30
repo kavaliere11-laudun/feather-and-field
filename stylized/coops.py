@@ -858,6 +858,7 @@ FLOAT_LOOK = {
     4: dict(wall='#f8f6f0', wall2='#eeebe3', trim='#2c4a7a', roof='#c9453b', ridge='#a5352d', door='#2c4a7a', flag='#2c4a7a',
             deck='#d9c19c', deck2='#ccb28b', water='#79c7e0', water2='#5fb3d0'),
 }
+FLOAT_PATH = {}                                                  # per look with its own way in: the ducks' way (points, glTF axes)
 FLOAT_POND = {0: dict(pond=(0.0, -0.17, 0.92, 0.68)), 4: dict(pond=(0.0, -0.02, 1.58, 0.85))}      # (the Rustic's smaller, the Deluxe's much wider: its front where the gangplank lands)
 
 
@@ -946,7 +947,7 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
                 objs.append(sphere('lilypetal', 0.02, (x + math.cos(a_) * 0.014, y + math.sin(a_) * 0.014, F['water'] + 0.02), (1.4, 0.7, 0.6), (0, 0.5, a_), m=flower, seg=8, rings=5))
             objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
     if look == 3: rowing_boat(objs, -0.8, -0.26, F['water'])
-    if look == 4: fountain(objs, -1.24, 0.18, F['water'], name); monet_bridge(objs, 1.15, -0.8, 0.72, F['water'], name)
+    if look == 4: fountain(objs, 1.22, 0.28, F['water'], name)
     if look >= 3: beach_ball(objs, {3: (0.52, -0.68), 4: (0.66, -0.62)}[look], F['water'])      # (the ducks' toy, from the Cosy: Audrey, "No ball level 3")
     # the birds keep out of the water (in front of and beside the house; the gangplank's line left free)
     for i in range(32):
@@ -956,33 +957,34 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
         BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.2])
 
 
-def monet_bridge(objs, x, ya, yb, wz, name, w=0.34, rise=0.3):
-    """The Deluxe's footbridge (Audrey: "a nice bridge like the one in money painting": Monet's at Giverny): a gentle green arch
-    of wood over the water lilies, from the front bank to the back, its deck of boards across, a railing each side (posts, a
-    top rail and a middle one), taller posts with caps at its ends."""
+def monet_bridge(objs, x, ya, za, yb, zb, name, w=0.22, rise=0.12, hr=0.13, n=18):
+    """The Deluxe's way in (Audrey: "a nice bridge like the one in money painting", then "the bridge replace the existing path":
+    Monet's at Giverny): a little green arched footbridge of wood from the ducks' door over the deck's edge and the water
+    down to the bank, in place of the gangplank; its deck of boards across, a railing each side (posts, a top rail and a
+    middle one), taller posts with caps at its ends. (ya, za) to (yb, zb), rising `rise` over the straight line between."""
     green = C('monetgreen', '#5f9a6a', rough=0.6, var=0.04); green2 = C('monetgreen2', '#4f8a5b', rough=0.6, var=0.04)
     deckm = C('monetdeck', '#6aa676', rough=0.7, var=0.06, grain=0.3, grain_scale=G)
-    L = yb - ya; n = 22
-    zf = lambda u: wz + 0.03 + rise * math.sin(math.pi * u) ** 0.85
+    L = yb - ya
+    zf = lambda u: za + (zb - za) * u + rise * math.sin(math.pi * u) ** 0.85
     P = [(ya + L * i / n, zf(i / n)) for i in range(n + 1)]
+    FLOAT_PATH[name] = [[round(x, 3), round(z, 3), round(-y, 3)] for y, z in P[::3] + ([P[-1]] if n % 3 else [])]      # (the ducks' way over it, glTF axes)
     for i in range(n):                                    # the deck: boards across, on a stringer each side
         (y0, z0), (y1, z1) = P[i], P[i + 1]; ym, zm = (y0 + y1) / 2, (z0 + z1) / 2
         nrm = Vector((0, -(z1 - z0), y1 - y0)).normalized()
-        objs.append(plank('mdeck', (x - w / 2, ym, zm + 0.012), (x + w / 2, ym, zm + 0.012), math.hypot(y1 - y0, z1 - z0) * 0.9, 0.02, nrm, deckm, jitter=0.2, bevel=0.003))
+        if nrm.z < 0: nrm = -nrm
+        objs.append(plank('mdeck', (x - w / 2, ym, zm + 0.008), (x + w / 2, ym, zm + 0.008), math.hypot(y1 - y0, z1 - z0) * 0.9, 0.014, nrm, deckm, jitter=0.2, bevel=0.002))
         for sx in (-1, 1):
-            objs.append(plank('mstring', (x + sx * w / 2, y0, z0 - 0.02), (x + sx * w / 2, y1, z1 - 0.02), 0.06, 0.03, (sx, 0, 0), green2, jitter=0.0, bevel=0.003))
+            objs.append(plank('mstring', (x + sx * w / 2, y0, z0 - 0.012), (x + sx * w / 2, y1, z1 - 0.012), 0.04, 0.022, (sx, 0, 0), green2, jitter=0.0, bevel=0.002))
     for sx in (-1, 1):                                    # the railings
         for i in range(0, n + 1, 2):
             y, z = P[i]; end = i in (0, n)
-            hgt = 0.26 if end else 0.18
-            objs.append(box('mpost', (0.035 if end else 0.025, 0.035 if end else 0.025, hgt), (x + sx * (w / 2 + 0.01), y, z + hgt / 2), m=green, bevel=0.004, segs=1))
-            if end: objs.append(box('mcap', (0.05, 0.05, 0.02), (x + sx * (w / 2 + 0.01), y, z + hgt + 0.01), m=green2, bevel=0.004, segs=1))
-        for (dz, th) in ((0.17, 0.025), (0.09, 0.018)):
+            hgt = hr * 1.35 if end else hr
+            objs.append(box('mpost', (0.024 if end else 0.017, 0.024 if end else 0.017, hgt), (x + sx * (w / 2 + 0.008), y, z + hgt / 2), m=green, bevel=0.003, segs=1))
+            if end: objs.append(box('mcap', (0.034, 0.034, 0.014), (x + sx * (w / 2 + 0.008), y, z + hgt + 0.007), m=green2, bevel=0.003, segs=1))
+        for (dz, th) in ((hr * 0.94, 0.017), (hr * 0.5, 0.012)):
             for i in range(n):
                 (y0, z0), (y1, z1) = P[i], P[i + 1]
-                objs.append(plank('mrail', (x + sx * (w / 2 + 0.01), y0, z0 + dz), (x + sx * (w / 2 + 0.01), y1, z1 + dz), th, th, (0, 0, 1), green, jitter=0.0, bevel=0.002))
-    for y in (ya - 0.04, yb + 0.04):                      # (the birds keep off its ends' posts)
-        BLOCKS.setdefault(name, []).append([round(x - w / 2, 3), round(-y, 3), 0.06]); BLOCKS.setdefault(name, []).append([round(x + w / 2, 3), round(-y, 3), 0.06])
+                objs.append(plank('mrail', (x + sx * (w / 2 + 0.008), y0, z0 + dz), (x + sx * (w / 2 + 0.008), y1, z1 + dz), th, th, (0, 0, 1), green, jitter=0.0, bevel=0.002))
 
 
 def rowing_boat(objs, x, y, wz):
@@ -1294,7 +1296,11 @@ def floating(seed=17, name='house_call', look=2, F=None):
     # the nest window and the ducks' door with their gangplank, straight down over the deck and the water to the bank
     nest_window(objs, 'call', FL, WX, trim, solids=[core], ramp_len=F['ramp'])
     rampw = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G) if t else C('fdeck_0', P['deck'], rough=0.8, var=0.12, grain=0.35, grain_scale=G)
-    pop_door(objs, FL, trim, rampw, C('darkwood', '#6d4a31', rough=0.8), length=F['ramp'])
+    if t == 4:                                            # (the Deluxe: Monet's bridge from the door to the bank, in its place)
+        pop_trim(objs, FL, trim, D2)
+        foot = -(D2 + 0.05 + F['ramp']) * k
+        monet_bridge(pobjs, -0.31 * k, -(D2 + 0.03) * k, (FL + 0.012) * k, foot, 0.03, name)
+    else: pop_door(objs, FL, trim, rampw, C('darkwood', '#6d4a31', rough=0.8), length=F['ramp'])
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
     if t >= 2:
         life_ring(objs, -W2 - 0.05, -0.18, 0.5, (-1, 0, 0), C('ringwhite', P['ring'], rough=0.6), C('ringred', P['ringr'], rough=0.6))
