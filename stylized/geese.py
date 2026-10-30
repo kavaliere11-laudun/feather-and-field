@@ -47,9 +47,9 @@ GEESE = {
     # little plump ducks, a full round breast, the head held up on a short neck, a rounded head and a broad orange bill; white
     # all over, orange feet, a small dark eye; the drake's curl over his tail. head_k: the head's size for the bird's, bill_k:
     # the bill's length, neck_rs: the neck's thickness up it
-    'call_m': dict(name='Pip', S=0.48, BL=0.88, low=0.075, LG=0.55, paunch=False, dewlap=False, neck=0.44, duck=True, drake=True, call=True, head_k=1.32, bill_k=1.4, neck_rs=(0.07, 0.056, 0.046, 0.04, 0.036, 0.034),
+    'call_m': dict(name='Pip', S=0.42, BL=0.88, low=0.075, LG=0.55, paunch=False, dewlap=False, neck=0.44, duck=True, drake=True, call=True, head_k=1.32, bill_k=1.4, neck_rs=(0.07, 0.056, 0.046, 0.04, 0.036, 0.034),
                    coat=dict(white='#fcfbf7', shade='#e7e4db'), iris='#1d1512', ring='#f2efe8', ringw=1.0, bill='#f2a23a', nail='#e8b45c', feet='#f28a2a', web='#e2782a'),
-    'call_f': dict(name='Puddle', S=0.46, BL=0.88, low=0.075, LG=0.55, paunch=False, dewlap=False, neck=0.44, duck=True, drake=False, call=True, head_k=1.32, bill_k=1.4, neck_rs=(0.07, 0.056, 0.046, 0.04, 0.036, 0.034),
+    'call_f': dict(name='Puddle', S=0.4, BL=0.88, low=0.075, LG=0.55, paunch=False, dewlap=False, neck=0.44, duck=True, drake=False, call=True, head_k=1.32, bill_k=1.4, neck_rs=(0.07, 0.056, 0.046, 0.04, 0.036, 0.034),
                    coat=dict(white='#fcfbf7', shade='#e7e4db'), iris='#1d1512', ring='#f2efe8', ringw=1.0, bill='#f0a640', nail='#e9b867', feet='#f28a2a', web='#e2782a'),
 }
 
