@@ -25,6 +25,13 @@ const BALL_R = 0.085;
 // anybody: ducks kept apart by these, and off the ball (Audrey: "clipping with the ball")
 const CAP = { back: -0.075, front: 0.085, r: 0.062 };
 const NUDGE = CAP.front + CAP.r + BALL_R + 0.005;       // (from her middle to the ball's: her breast just touching it)
+// (Audrey, 30 Oct: "sometimes the ducks will 'argue' to play with the ball. Sometimes they will send the ball out of the
+// pond and will need to get out to roll it back in")
+const BIG_KICK = 0.2, KICK = 1.2;                         // a nudge's chance of being a big kick (out onto the yard, if it can land there well), its speed
+const ARGUE = 0.55, ARGUE_GAP = 25;                       // the chance two at the ball squabble over it, and not again for a while (s)
+// the ball where it is: afloat (pondS under 0.86), on the bank's stones (to 1.12: it rolls back down into the water unless
+// it's going well), or out on the yard
+const zoneAt = s => s < 0.86 ? 'water' : s < 1.12 ? 'bank' : 'land';
 const capOf = d => { const s = Math.sin(d.heading), c = Math.cos(d.heading), x = d.pos.x, z = d.pos.z; return [x + s * CAP.back, z + c * CAP.back, x + s * CAP.front, z + c * CAP.front]; };
 const near = (px, pz, S) => { const dx = S[2] - S[0], dz = S[3] - S[1], L = dx * dx + dz * dz, u = L ? Math.max(0, Math.min(1, ((px - S[0]) * dx + (pz - S[1]) * dz) / L)) : 0; return [S[0] + dx * u, S[1] + dz * u]; };
 // (the closest points of two capsules' middles: each end of one against the other, and back)
@@ -59,6 +66,7 @@ export class CallPen {
   // toCam(): the way to the camera (her card's open: she faces you), heart(duck): a heart over her (a hello) }
   constructor(plot, o, r) {
     this.plot = plot; this.o = o; this.r = r; this.time = 0;
+    this.chance = { big: BIG_KICK, argue: ARGUE, gap: ARGUE_GAP };      // (the test page's films can make them sure)
     const [cx, cz, a, b, wy] = o.pond; this.P = { cx, cz, a, b, wy };
     const G = plot.nestG; this.G = G;
     this.pop = [G.pop[0], G.pop[1]]; this.foot = [G.foot[0], G.foot[1]];
@@ -75,7 +83,7 @@ export class CallPen {
     this.nav = { freeAt: (x, z) => !this.inRaft(x, z, 0.02) || this.onRamp(x, z) !== null };      // (moveTo's: the raft's no way to go)
     this.ring = this.makeRing();
     if (o.ball) {
-      this.ball = { mesh: beachBall(), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion() };
+      this.ball = { mesh: beachBall(), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion(), zone: 'water', out: false };
       this.group.add(this.ball.mesh); this.placeBall(0);
     }
     this.group.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; });
@@ -194,7 +202,7 @@ export class CallPen {
     if (!this.o.game && d.kind === 'call_f' && d.laidOn !== this.day && h >= 8 && h < 17 && r < 0.18) return this.layTask(d);      // (the ducks lay; Pip doesn't. The game's: when it says, layNow)
     if (d.idx === 0 && r < 0.12 && this.ducks.every(o => this.onLand(o) && (!o.task || !/^(lay|parade)/.test(o.task.name))) && this.parade()) return d.task;
     if (r < 0.45) return this.swimTask(d, false);
-    if (this.ball && r < 0.6) return this.swimTask(d, false, true);
+    if (this.ball && this.ball.zone === 'water' && r < 0.6) return this.swimTask(d, false, true);      // (not while it's out on the yard: that's fetching)
     const s = this.yardSpot(); if (!this.walkTo(L, s[0], s[1], 'walk', d)) return TK.act('look', 2 + this.r() * 2);
     const k = this.r();
     L.push(k < 0.45 ? TK.act('graze', 5 + this.r() * 7) : k < 0.65 ? TK.act('preen', 4 + this.r() * 4, (g, u) => { g.preenSide = g.preenSide || 1; DACT.preen(g, u); })
@@ -218,7 +226,7 @@ export class CallPen {
         L.push(S(p.x, p.z, 'walk', true, 0.1));
       } else { if (!this.walkTo(L, bank[0], bank[1], 'walk', d)) return TK.act('look', 2); L.push(S(s.x, s.z, 'walk', true, 0.1)); }
     }
-    if (ball) { for (let k = 0; k < 2 + Math.floor(this.r() * 3); k++) L.push(() => this.nudgeTask(d)); L.push(TK.act('bob', 3.4, BOB)); }
+    if (ball) { for (let k = 0; k < 2 + Math.floor(this.r() * 3); k++) L.push(() => this.argueOrNudge(d)); L.push(() => d.sulk > this.time ? null : TK.act('bob', 3.4, BOB)); }
     else {
       const n = 2 + Math.floor(this.r() * 3);
       for (let k = 0; k < n; k++) {
@@ -237,7 +245,7 @@ export class CallPen {
       const c = this.viaCorner([d.pos.x, d.pos.z], [p.x, p.z]);
       return TK.seq('out', [...(c ? [S(c[0], c[1], 'walk', true, 0.08)] : []), S(p.x, p.z, 'walk', true, 0.1), S(bank[0], bank[1], 'walk', false, 0.08), TK.act('shake', 1.4)]);
     });
-    return TK.seq('swim', L);
+    return TK.seq(ball ? 'ball' : 'swim', L);
   }
   // the next spot along her arc of the ring (not far: round the raft step by step)
   nextOnArc(d, sd) {
@@ -252,13 +260,20 @@ export class CallPen {
       this.t += dt; DACT.swim(g, this.t);
       const pen = g.pen;
       if (!this.dir) {                                   // (the way she'll send it: one with room for her behind the ball, and water ahead of it)
-        const ok = [];
+        if (B.zone !== 'water') return true;            // (it's out: fetching it's another job)
+        const ok = [], big = [], tryBig = pen.r() < pen.chance.big && pen.o.hour() < 19;      // (now and then a big kick: out over the bank, onto the yard)
         for (let k = 0; k < 16; k++) {
           const a = k / 16 * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a), hx = B.x - dx * NUDGE, hz = B.z - dz * NUDGE, ax = B.x + dx * 0.25, az = B.z + dz * 0.25;
-          if (pen.pondS(hx, hz) < 0.95 && !pen.inRaft(hx, hz, 0.06) && !pen.underPlank(hx, hz, 0.06) && pen.side(hx) === pen.side(B.x) && pen.pondS(ax, az) < 0.9 && !pen.inRaft(ax, az, 0.03)) ok.push([dx, dz]);
+          if (!(pen.pondS(hx, hz) < 0.95 && !pen.inRaft(hx, hz, 0.06) && !pen.underPlank(hx, hz, 0.06) && pen.side(hx) === pen.side(B.x))) continue;
+          const far = Math.hypot(hx - g.pos.x, hz - g.pos.z);      // (how far she'd have to go round to it)
+          if (pen.pondS(ax, az) < 0.9 && !pen.inRaft(ax, az, 0.03)) ok.push([dx, dz, far]);
+          if (tryBig && pen.landsWell(B.x, B.z, dx * KICK, dz * KICK)) big.push([dx, dz, far]);
         }
-        if (!ok.length) return true;                     // (nowhere to come at it from: another time)
-        this.dir = ok[Math.floor(pen.r() * ok.length)];
+        // (one of the ways she's nearly behind already: sent on away from her, not round the ball in a narrow bit of water)
+        const pick = L => { L.sort((a, b) => a[2] - b[2]); return L[Math.floor(pen.r() * Math.min(3, L.length))]; };
+        if (big.length) { this.dir = pick(big); this.big = true; }
+        else if (!ok.length) return true;                // (nowhere to come at it from: another time)
+        else this.dir = pick(ok);
       }
       const bx = B.x - this.dir[0] * NUDGE, bz = B.z - this.dir[1] * NUDGE;
       if (this.t > 12) return true;
@@ -268,7 +283,17 @@ export class CallPen {
       if (Math.hypot(bx - g.pos.x, bz - g.pos.z) > 0.06 && !this.go) { g.moveTo(bx, bz, dt, 'walk', true); return false; }
       if (!this.go) { this.go = 0; }
       this.go += dt; const A = g.A;
-      if (g.turnTo(Math.atan2(B.x - g.pos.x, B.z - g.pos.z), dt, 3) < 0.4 && !this.hit) { this.hit = true; B.vx += this.dir[0] * 0.42; B.vz += this.dir[1] * 0.42; pen.splash = (pen.splash || 0) + 1; }
+      if (g.turnTo(Math.atan2(B.x - g.pos.x, B.z - g.pos.z), dt, 3) < 0.4 && !this.hit) {
+        this.hit = true;
+        if (this.big && !pen.landsWell(B.x, B.z, this.dir[0] * KICK, this.dir[1] * KICK)) this.big = false;      // (not from here after all: an ordinary nudge)
+        if (this.big) { B.vx = this.dir[0] * KICK; B.vz = this.dir[1] * KICK; } else { B.vx += this.dir[0] * 0.42; B.vz += this.dir[1] * 0.42; }
+        if (this.big) { B.out = true; B.by = g; if (pen.o.sound) pen.o.sound('quack', g.pos.x, g.pos.z); }
+      }
+      if (this.big) {                                    // (a big one: up on her tail, a flap of the wings, a whack; then she watches it go, "oops")
+        if (this.go < 0.9) { A.upGoal = 0.7; A.wingsGoal = 1; A.flapGoal = 1; A.tailUpGoal = 0.7; A.grazeGoal = this.go > 0.25 ? 0.5 : 0; }
+        else { const yaw = Math.atan2(B.x - g.pos.x, B.z - g.pos.z) - g.heading; A.lookYawGoal = Math.max(-1.2, Math.min(1.2, Math.atan2(Math.sin(yaw), Math.cos(yaw)))); A.tiltGoal = 0.35; A.upGoal = 0.6; }
+        return this.go > 3.2;
+      }
       if (this.hit && this.go < 0.45) g.moveTo(B.x, B.z, dt, 'walk', true);      // (a little push on with her breast: the ball's bumped on, pen.bump)
       A.grazeGoal = 0.35; A.wagGoal = 0.8; A.bobGoal = this.go > 0.3 ? 1 : 0;
       return this.go > 1.6;
@@ -372,7 +397,7 @@ export class CallPen {
     });
   }
   // ---- the game's: her lay when it's due (main.js gameTick), her card open, a cuddle, a hello to the farmer
-  busy(d, parade = true) { return d.inHouse || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet)/ : /^(lay|bed|morning|held|cuddle|greet)/).test(d.task.name)); }
+  busy(d, parade = true) { return d.inHouse || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet|argue|fetch)/ : /^(lay|bed|morning|held|cuddle|greet|argue|fetch)/).test(d.task.name)); }
   canLay(d) {        // (by day, up and about on the yard, nobody else in the nest)
     return d.kind === 'call_f' && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying);
   }
@@ -397,24 +422,156 @@ export class CallPen {
     d.task = TK.seq('greet', L);
     return true;
   }
-  // ---- the ball: floating, bobbing, drifting where it's sent, slowing, off the pond's edge, the raft and the gangplank
-  placeBall(dt) {
-    const B = this.ball, P = this.P;
+  // ---- the ball: floating, bobbing, drifting where it's sent, slowing, off the pond's edge, the raft and the gangplank;
+  // a big kick sends it over the bank onto the yard, where it rolls and stops (off the fence and what's in the yard)
+  // one moment of the ball (B: x, z, vx, vz, out: a big kick's, over the edge): also used to see where a kick would end
+  ballStep(B, dt) {
+    const P = this.P;
     B.x += B.vx * dt; B.z += B.vz * dt;
-    const f = Math.exp(-0.7 * dt); B.vx *= f; B.vz *= f;
-    const s = this.pondS(B.x, B.z), lim = 0.8;
-    if (s > lim) { const nx = (B.x - P.cx) / (P.a * P.a), nz = (B.z - P.cz) / (P.b * P.b), l = Math.hypot(nx, nz), ux = nx / l, uz = nz / l, dot = B.vx * ux + B.vz * uz;
-      if (dot > 0) { B.vx -= 1.6 * dot * ux; B.vz -= 1.6 * dot * uz; } B.x = P.cx + (B.x - P.cx) * lim / s; B.z = P.cz + (B.z - P.cz) * lim / s; }
+    let s = this.pondS(B.x, B.z); const zone = zoneAt(s);
+    const f = Math.exp(-(zone === 'water' ? 0.7 : zone === 'bank' ? 1.3 : 1.9) * dt); B.vx *= f; B.vz *= f;
+    const gx = (B.x - P.cx) / (P.a * P.a), gz = (B.z - P.cz) / (P.b * P.b), gl = Math.hypot(gx, gz) || 1, ux = gx / gl, uz = gz / gl;      // (outwards)
+    if (zone === 'water' && !B.out && s > 0.8) {          // (kept on the water: off the edge, gently)
+      const dot = B.vx * ux + B.vz * uz; if (dot > 0) { B.vx -= 1.6 * dot * ux; B.vz -= 1.6 * dot * uz; }
+      const k = (s - (s - 0.8) * Math.min(1, dt * 10)) / s; B.x = P.cx + (B.x - P.cx) * k; B.z = P.cz + (B.z - P.cz) * k;
+    }
+    if (zone === 'bank') { B.vx -= ux * 0.4 * dt; B.vz -= uz * 0.4 * dt; }      // (the bank slopes down into the water)
+    if (zone === 'land' && B.roll) { B.vx -= ux * 0.25 * dt; B.vz -= uz * 0.25 * dt; }      // (nobody could fetch it: it rolls back by itself)
+    if (B.out && zone === 'water' && Math.hypot(B.vx, B.vz) < 0.06) B.out = false;
+    if (zone !== 'water') {                                // (on the yard: inside the fence, off what's in it)
+      const Y = this.o.yard;
+      if (Y) for (const [i, lo, hi] of [[0, Y.min[0] + BALL_R, Y.max[0] - BALL_R], [2, Y.min[2] + BALL_R, Y.max[2] - BALL_R]]) {
+        const key = i ? 'z' : 'x', vk = i ? 'vz' : 'vx';
+        if (B[key] < lo) { B[key] = lo; B[vk] = Math.abs(B[vk]) * 0.5; B.hit = true; } else if (B[key] > hi) { B[key] = hi; B[vk] = -Math.abs(B[vk]) * 0.5; B.hit = true; }
+      }
+      for (const q of this.things()) {
+        const dx = B.x - q[0], dz = B.z - q[1], d = Math.hypot(dx, dz), m = q[2] + BALL_R;
+        if (d < m && d > 1e-5) { const nx = dx / d, nz = dz / d, dot = B.vx * nx + B.vz * nz; B.x = q[0] + nx * m; B.z = q[1] + nz * m; if (dot < 0) { B.vx -= 1.5 * dot * nx; B.vz -= 1.5 * dot * nz; } B.hit = true; }
+      }
+    }
     if (this.inRaft(B.x, B.z, BALL_R + 0.02)) {           // (off the raft: pushed out the nearest way)
       const m = BALL_R + 0.02, dx = RAFT.x + m - Math.abs(B.x), dz0 = B.z - (RAFT.z0 - m), dz1 = RAFT.z1 + m - B.z;
       if (dx < Math.min(dz0, dz1)) { B.x = Math.sign(B.x || 1) * (RAFT.x + m); B.vx = Math.abs(B.vx) * Math.sign(B.x) * 0.6; }
       else if (dz1 < dz0) { B.z = RAFT.z1 + m; B.vz = Math.abs(B.vz) * 0.6; } else { B.z = RAFT.z0 - m; B.vz = -Math.abs(B.vz) * 0.6; }
     }
     const bm = BALL_R + (this.o.path ? 0.16 : 0);       // (well clear of the bridge: its tall railings never seem to cut into it)
-    if (this.underPlank(B.x, B.z, bm)) { const sd = B.x < this.pop[0] ? -1 : 1; B.x = this.pop[0] + sd * (this.plankW() + bm + 0.01); B.vx = Math.abs(B.vx) * sd * 0.6; }
-    const v = Math.hypot(B.vx, B.vz);
+    if (this.underPlank(B.x, B.z, bm)) { const sd = B.x < this.pop[0] ? -1 : 1; B.x = this.pop[0] + sd * (this.plankW() + bm + 0.01); B.vx = Math.abs(B.vx) * sd * 0.6; B.hit = true; }
+    return zoneAt(this.pondS(B.x, B.z));
+  }
+  // what's in the yard for the ball to roll into: the feeder, the dish, the hay..., what's in front of the house: [x, z, r]
+  things() { return this._things || (this._things = [...(this.o.obstacles || []).map(q => [q[0], q[2], q[3]]), ...(this.o.block || []).filter(q => this.pondS(q[0], q[1]) > 1.05).map(q => [q[0], q[1], q[2]])]); }
+  // the shortest way from (x, z) into the water (the pond's edge's normal, inwards)
+  inward(x, z) { const P = this.P, gx = (x - P.cx) / (P.a * P.a), gz = (z - P.cz) / (P.b * P.b), l = Math.hypot(gx, gz) || 1; return [-gx / l, -gz / l]; }
+  clearOfThings(x, z, r) { return !this.things().some(q => Math.hypot(x - q[0], z - q[1]) < q[2] + r); }
+  // where a kick from (x, z) at (vx, vz) would end: out on the yard, somewhere a duck can get behind it and roll it straight
+  // back down into the water (nothing in the way, not by the gangplank), without it hitting anything on its way
+  landsWell(x, z, vx, vz) { return this.landsAt(x, z, vx, vz) && this.landsAt(x, z, vx * 0.9, vz * 0.9); }      // (and a little softer too: sure to get over)
+  landsAt(x, z, vx, vz) {
+    const B = { x, z, vx, vz, out: true, hit: false };
+    for (let t = 0; t < 10 && Math.hypot(B.vx, B.vz) > 0.02; t += 0.05) { this.ballStep(B, 0.05); if (B.hit) return false; }
+    const s = this.pondS(B.x, B.z); if (zoneAt(s) !== 'land' || s > 1.75 || !this.free(B.x, B.z, BALL_R + 0.04) || this.underPlank(B.x, B.z, 0.3)) return false;
+    if (B.z < -0.15) return false;                        // (not behind the house: out where you see it, at its front or sides)
+    const [nx, nz] = this.inward(B.x, B.z);
+    if (!this.free(B.x - nx * 0.27, B.z - nz * 0.27, 0.07)) return false;      // (room for her behind it)
+    for (let u = 0; u < 1.2; u += 0.05) { const px = B.x + nx * u, pz = B.z + nz * u; if (this.pondS(px, pz) < 0.9) break; if (!this.clearOfThings(px, pz, BALL_R) || this.underPlank(px, pz, BALL_R + 0.05)) return false; }
+    return true;
+  }
+  placeBall(dt) {
+    const B = this.ball, P = this.P;
+    B.hit = false; const zone = B.zone = this.ballStep(B, dt), v = Math.hypot(B.vx, B.vz);
+    B.still = zone === 'land' && v < 0.03 ? (B.still || 0) + dt : 0;
     if (v > 1e-4) { const ax = new THREE.Vector3(B.vz, 0, -B.vx).normalize(); B.spin.premultiply(new THREE.Quaternion().setFromAxisAngle(ax, v * dt / BALL_R)); }
-    B.mesh.position.set(B.x, P.wy + BALL_R * 0.78 + 0.005 * Math.sin(this.time * 1.7), B.z); B.mesh.quaternion.copy(B.spin);
+    const s = this.pondS(B.x, B.z), u = smooth(0.86, 1.12, s), afloat = P.wy + BALL_R * 0.78 + 0.005 * Math.sin(this.time * 1.7) * (1 - u);
+    B.mesh.position.set(B.x, afloat + (BALL_R + 0.002 - afloat) * u + 0.035 * Math.sin(Math.PI * u), B.z); B.mesh.quaternion.copy(B.spin);      // (afloat, up over the bank's stones, rolling on the ground)
+  }
+  // ---- the ball out on the yard: a duck climbs out and rolls it back down into the water with her breast (the one who
+  // kicked it, if she's free, else whoever's nearest); then a happy bob. Not at night: it waits for the morning
+  fetchTask(d) {
+    const pen = this, B = this.ball, L = [];
+    if (d.wet > 0.3) {                                   // (out of the water first: onto the bank nearest the ball)
+      const P = this.P, sd = this.side(d.pos.x);
+      let best = null;
+      for (const p of this.ring) {
+        if (this.side(p.x) !== sd || p.s < 0.8) continue;
+        const bank = [P.cx + P.a * 1.24 * Math.cos(p.t), P.cz + P.b * 1.24 * Math.sin(p.t)];
+        if (!this.free(bank[0], bank[1], 0.05) || Math.hypot(bank[0] - B.x, bank[1] - B.z) < 0.38) continue;      // (near it, not into it)
+        const c = Math.hypot(bank[0] - B.x, bank[1] - B.z) + 0.5 * Math.hypot(p.x - d.pos.x, p.z - d.pos.z);
+        if (!best || c < best.c) best = { p, bank, c };
+      }
+      if (!best) return null;
+      const via = this.viaCorner([d.pos.x, d.pos.z], [best.p.x, best.p.z]);
+      L.push(...(via ? [S(via[0], via[1], 'walk', true, 0.08)] : []), S(best.p.x, best.p.z, 'walk', true, 0.1), S(best.bank[0], best.bank[1], 'walk', false, 0.08), TK.act('shake', 1.2));
+    }
+    L.push(() => {                                       // (over to it by the bank's ways: to its side, not through it)
+      const [nx, nz] = this.inward(B.x, B.z), sd = (d.pos.x - B.x) * nz - (d.pos.z - B.z) * nx >= 0 ? 1 : -1, Q = [];
+      let tx = B.x + nz * sd * 0.34, tz = B.z - nx * sd * 0.34;
+      if (!this.free(tx, tz, 0.05)) { tx = B.x - nx * 0.3; tz = B.z - nz * 0.3; }
+      if (!this.walkTo(Q, tx, tz, 'hurry', d)) return null;
+      return TK.seq('round', Q);
+    });
+    L.push({ name: 'push', act: 'walk', t: 0, run(g, dt) {       // (rolling it: behind it, facing the water, a slow shove with her breast, head bobbing)
+      this.t += dt; const A = g.A, P = pen.P;
+      if (B.zone === 'water') { B.vx += this.dir ? this.dir[0] * 0.25 : 0; B.vz += this.dir ? this.dir[1] * 0.25 : 0; return true; }
+      if (this.t > 45) { B.fails = (B.fails || 0) + 1; if (B.fails >= 2) B.roll = true; return true; }
+      const [nx, nz] = pen.inward(B.x, B.z); this.dir = [nx, nz];
+      const rx = g.pos.x - B.x, rz = g.pos.z - B.z, along = rx * nx + rz * nz;
+      if (along > -0.15) {                               // (she's beside it or on its far side: round it, out to its side first)
+        const sd = rx * nz - rz * nx >= 0 ? 1 : -1, back = along > 0.05 ? 0 : 0.25, px = B.x + nz * sd * 0.34 - nx * back, pz = B.z - nx * sd * 0.34 - nz * back;
+        g.moveTo(px, pz, dt, 'walk', true); A.wagGoal = 0.3; return false;
+      }
+      const bx = B.x - nx * (NUDGE - 0.01), bz = B.z - nz * (NUDGE - 0.01);
+      if (Math.hypot(bx - g.pos.x, bz - g.pos.z) > 0.07 && !this.on) { g.moveTo(bx, bz, dt, 'walk', true); return false; }
+      this.on = true;
+      if (g.turnTo(Math.atan2(nx, nz), dt, 3) < 0.35) {      // (the shove: pen.bump rolls it on ahead of her, a little roll on each push)
+        g.moveTo(B.x + nx * 0.3, B.z + nz * 0.3, dt, 'walk', true);
+        if (Math.hypot(B.x - g.pos.x, B.z - g.pos.z) < NUDGE + 0.02 && Math.hypot(B.vx, B.vz) < 0.22) { B.vx += nx * 0.7 * dt; B.vz += nz * 0.7 * dt; }
+      }
+      if (Math.hypot(bx - g.pos.x, bz - g.pos.z) > 0.2) this.on = false;
+      A.grazeGoal = 0.4; A.wagGoal = 0.6; A.bobGoal = (this.t % 1.2) < 0.5 ? 1 : 0;
+      return false;
+    } });
+    L.push(() => { if (B.zone !== 'water') return null; if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); return TK.act('bob', 3.4, BOB); });
+    return TK.seq('fetch', L);
+  }
+  // ---- two at the ball: a squabble over it now and then. They turn to each other and quack in turn, heads stretched out
+  // at each other, wings a little up (the other sitting up, indignant), a little nearer each time; then one gives in: a
+  // huff, nose in the air and a tail wiggle, and she swims off; the other bobs happily and plays on. All talk: nobody's hurt
+  argueOrNudge(d) {
+    if (d.sulk > this.time) return null;               // (she's lost one: not playing now)
+    const B = this.ball;
+    const o = this.ducks.find(x => x !== d && x.wet > 0.5 && !x.held && x.task && (x.task.name === 'ball' || (x.task.name === 'swim' && Math.hypot(x.pos.x - B.x, x.pos.z - B.z) < 0.5))
+      && Math.hypot(x.pos.x - B.x, x.pos.z - B.z) < 0.8 && Math.hypot(x.pos.x - d.pos.x, x.pos.z - d.pos.z) < 1.2 && this.side(x.pos.x) === this.side(d.pos.x));
+    if (!o || B.zone !== 'water' || this.time < (this.argueAt ?? -1e9) + this.chance.gap || this.r() > this.chance.argue) return this.nudgeTask(d);
+    this.argueAt = this.time;
+    const F = { a: d, b: o, win: this.r() < 0.5 ? d : o };
+    const lose = g => [{ name: 'huff', act: 'swim', t: 0, run(q, dt) {      // (turned away from the winner, nose up, a tail wiggle)
+        this.t += dt; const w = F.win, A = q.A; q.turnTo(Math.atan2(q.pos.x - w.pos.x, q.pos.z - w.pos.z), dt, 3);
+        A.upGoal = 0.85; A.lookPitchGoal = -0.3; A.tailUpGoal = 0.6; A.wagGoal = this.t > 0.7 ? 1 : 0; return this.t > 1.9;
+      } }, () => {                                       // (off to the far side of her arc)
+        const L = this.ring.filter(p => this.side(p.x) === this.side(g.pos.x) && Math.hypot(p.x - g.pos.x, p.z - g.pos.z) < 1.0);
+        if (!L.length) return null;
+        const p = L.reduce((a, q) => Math.hypot(q.x - B.x, q.z - B.z) > Math.hypot(a.x - B.x, a.z - B.z) ? q : a); const Q = []; this.swimTo(Q, p.x, p.z); return Q[0](g);
+      }, TK.act('float', 2.5, DACT.float)];
+    if (F.win !== d) d.sulk = this.time + 40; else o.sulk = this.time + 40;
+    o.task = TK.seq('argue', [this.argueTask(o, d, F), ...(F.win === o ? [TK.act('bob', 2.4, BOB), () => this.nudgeTask(o), () => this.nudgeTask(o), TK.act('bob', 3.4, BOB)] : lose(o))]);
+    return TK.seq('argue', [this.argueTask(d, o, F), ...(F.win === d ? [TK.act('bob', 2.4, BOB)] : lose(d))]);
+  }
+  argueTask(g, other, F) {
+    const pen = this;
+    return { name: 'argue', act: 'swim', t: 0, run(d, dt) {
+      this.t += dt; const t = this.t, A = d.A, o = other;
+      const dx = o.pos.x - d.pos.x, dz = o.pos.z - d.pos.z, dist = Math.hypot(dx, dz) || 1;
+      d.turnTo(Math.atan2(dx, dz), dt, 4);
+      const u = t - 0.8, k = Math.floor(u / 0.7), turn = u > 0 && u < 4.2 ? k % 2 : -1, mine = turn === (d === F.a ? 0 : 1);
+      const near = mine && (u % 0.7) < 0.25 ? 0.3 : 0.36;      // (a little nearer on each word)
+      if (dist > near) { const sp = 0.1 * dt, x = d.pos.x + dx / dist * sp, z = d.pos.z + dz / dist * sp; if (pen.okAt(d, x, z)) { d.pos.x = x; d.pos.z = z; } }
+      if (mine) {
+        A.lowGoal = 0.55; A.upGoal = 0.05; A.honkGoal = 0.8; A.jawGoal = Math.sin(u * 15) > 0 ? 1 : 0.1; A.wingLiftGoal = 0.5; A.wagGoal = 0.7; A.bobGoal = (u % 0.7) < 0.3 ? 1 : 0;
+        if (this.said !== k) { this.said = k; if (pen.o.sound) pen.o.sound('quack', d.pos.x, d.pos.z); }
+      } else if (turn >= 0) { A.upGoal = 0.8; A.tiltGoal = 0.3 * Math.sin(u * 3); A.tailUpGoal = 0.4; A.wagGoal = 0.2; }
+      else DACT.swim(d, t);
+      return t > 5.2;
+    } };
   }
   // ---- each moment
   update(dt, hour) {
@@ -434,7 +591,16 @@ export class CallPen {
     }
     for (const d of this.ducks) this.keepOff(d);
     this.apart();
-    if (this.ball) { this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt); }
+    if (this.ball) {
+      this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt);
+      const B = this.ball;
+      if (B.zone === 'land' && B.still > 1.2 && !bed && this.time > (B.nextTry || 0) && !this.ducks.some(d => d.task && d.task.name === 'fetch')) {
+        const free = this.ducks.filter(d => !d.held && !this.busy(d) && !(d.task && /^(argue|fetch)/.test(d.task.name)));
+        const pick = free.includes(B.by) ? B.by : free.reduce((a, d) => !a || Math.hypot(d.pos.x - B.x, d.pos.z - B.z) < Math.hypot(a.pos.x - B.x, a.pos.z - B.z) ? d : a, null);
+        if (pick) { const t = this.fetchTask(pick); if (t) pick.task = t; }
+        B.nextTry = this.time + 6;
+      }
+    }
   }
   // ---- nobody through anybody
   solid(d) { return d.root.visible && !d.inHouse && !this.inHouseAt(d.pos.x, d.pos.z) && this.onRamp(d.pos.x, d.pos.z) === null; }

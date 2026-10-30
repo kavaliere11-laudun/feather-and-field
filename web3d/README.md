@@ -3294,6 +3294,25 @@ the birds already had.
   its tall arched railings would otherwise seem to cut into the ball behind them). Not in the house or on the plank (one behind the other there
   already). A soak of the Snug, the Cosy and the Deluxe over 400 s each: no duck in the ball, in another, in the raft or
   the bridge, not once.
+- **Squabbles over the ball, and the ball out on the yard** (30 Oct; Audrey: "sometimes the ducks will 'argue' to play
+  with the ball. Sometimes they will send the ball out of the pond and will need to get out to roll it back in"). Two at
+  the ball (playing, or one swimming near it), now and then (`ARGUE` 55%, then not again for 25 s): `argueOrNudge` turns
+  both to a squabble (`argueTask`): they swim up to each other and quack in turn, heads stretched out and bobbing, wings a
+  little up, a little nearer on each word (the other sitting up, indignant); after five seconds one gives in (a huff, nose
+  in the air, a tail wiggle, and she swims off to the far side of her arc and won't play for 40 s, `sulk`), the other bobs
+  happily and plays on. All talk: `apart` keeps them a duck's width apart. A nudge is now and then a big kick
+  (`BIG_KICK` 20%, by day): she rears up with a flap and a whack (`KICK` 1 m/s) and watches it go with her head on one side,
+  but only where it would land well (`landsWell`: the ball's own physics run ahead, `ballStep`: it must get over the
+  bank, stop on the yard without hitting anything, in front of the house or at its sides where you see it, not behind it,
+  with room behind it and a clear way straight back down into the water, away from the gangplank). The ball's three places (`zoneAt`): afloat, up over the bank's stones (a little hop; the bank
+  slopes back down into the water), rolling on the yard (more friction, off the fence and what's in the yard, `things`).
+  Once it lies still on the yard, the one who kicked it (if free, else the nearest) fetches it (`fetchTask`): out onto
+  the bank near it (not right by it) with a shake, over to its side by the bank's ways (not through it), round behind
+  it, then rolls it the shortest way back down into the water (the pond edge's normal, `inward`) with her breast, head
+  bobbing, a little roll on each push, going round it again if it veers off; a last push into the water, a happy bob and a
+  quack. About a quarter of a minute from the kick to the ball afloat again. At
+  night it waits on the yard for the morning. If twice nobody can manage it, it rolls back by itself (`roll`). Each nudge
+  now picks a way to send the ball that she's nearly behind already (not round the ball in a narrow bit of water).
 - Next: ducklings (a duck sitting, fluffy yellow ducklings following her on land and water), then the peacock at 30.
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
