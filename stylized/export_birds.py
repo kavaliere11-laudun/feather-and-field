@@ -142,6 +142,7 @@ def write_bird_glb(path, names):
 
 LOW = {'h': 1200, 'r': 1500, 'chick': 420}
 CREST_EXTRA = {'h': 500, 'r': 500}        # (a Polish's crest: a round core the browser covers in plumage)
+BRA_EXTRA = {'h': 500, 'r': 500, 'lo': 150}     # (a Brahma's leg feathers and the black line along its wings: Audrey's photos, 29 Oct)
 SIL_BUDGET = {'h': 2300, 'r': 2600}     # Silkies: no long tail or bare-skin eyes, and their fluff shells multiply them      # a light version of each bird for when the view is zoomed far out
 names = []
 for b in ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'):
@@ -149,7 +150,7 @@ for b in ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'):
         for lo in (False, True):
             fresh(); r = breeds.build(b, sx, seed=3, lo=lo); light(1)
             nm = '%s_%s' % (b, sx) + ('_lo' if lo else '')
-            bake_bird(nm, r, (LOW[sx] if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx] + (CREST_EXTRA[sx] if b == 'pol' else 0))) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
+            bake_bird(nm, r, (LOW[sx] + (BRA_EXTRA['lo'] if b == 'bra' else 0) if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx] + (CREST_EXTRA[sx] if b == 'pol' else BRA_EXTRA[sx] if b == 'bra' else 0))) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
 for lo in (False, True):
     fresh(); r = breeds.chick(seed=3); light(1)
     nm = 'chick' + ('_lo' if lo else ''); bake_bird(nm, r, LOW['chick'] if lo else BUDGET_BIRD['chick'], *((20, 0.02) if lo else ())); names.append(nm)

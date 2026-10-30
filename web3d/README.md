@@ -3084,3 +3084,35 @@ the birds already had.
   (French sideways), playtest with `EXTRA`, breedtest, gametest both ways, langtest (de, es, pt, it), eggtest, chicktest,
   movetest, visittest, doors, codetest: all pass. Pictures (the level's card, the coop placed, the Book page; the five looks
   upgrading) sent.
+
+## The Light Brahma redone from Audrey's photos (29-30 Oct 2026; Audrey: "I will give you some brama chicken photos and when you'll be done I want you to review the design of the existing brama. Use all that you learned from the previous chickens")
+
+- Her four photos (a rooster three-quarters, a rooster side on, two hens from behind, a hen three-quarters) against ours at the
+  same angles: ours had a striped collar ring round a long thin neck, a slim egg of a body with feathers drawn like scales, a
+  hen's tail sticking out like a black fan, a rooster's tail too long, bare legs with a puff at the feet, a grey stub for wing
+  tips. Told her the list first, then:
+- **Shape** (`stylized/breeds.py` `bra`, `brahma=True`): a smaller head (`head_s` 0.9, the head empty scaled) held lower on a
+  short thick neck; a hackle cape flaring over the shoulders; a broader body (`body` 1.36, 0.95, 0.98); fluffy trousers down to
+  the hocks; a big soft cushion rising to the tail; a hen's tail short, narrow and turned to face back (`tail_len` 0.95,
+  `tail_up_h` 6, `tail_spread` 0.5, `tail_twist` 62), a rooster's short and upright (`sickle_len` 0.62, `tail_up` 22), longer
+  saddle hackles; a tiny low pea comb, red lobes, an orange-red eye, a horn beak, a beetle brow over each eye (`brow`);
+  thicker shanks; a thick feathered boot and broad feathers lying down the outside of each shank in two rows like shingles,
+  flaring out lower down, and a fringe along the outer and middle toes (`brahma_legs`; budgets +500, light +150:
+  `export_birds.py BRA_EXTRA`).
+- **Painting** (`src/birds.js`): the cape (`stripes`, feather mode 3 + the black's width): from the nape down over the
+  shoulders, the throat and breast white; long narrow hackle feathers hanging down, each black down its middle with a white
+  edge all round, a hen's heavy (`capeW` 0.44), a rooster's finer (0.22); each feather wholly in the cape or not, so its edge is
+  ragged feather by feather; its lattice laid round a line leaning up the neck (no point where it gathers at the nape) and parted
+  at the white throat. Soft white plumage (mode 8: the feathers' shading softened 70%, the overlap shade 0.05), a fluffier
+  fur layer (`FUR.bra`: 2.4 cm, more underneath); black flight feathers and tail; and the black of the folded wing's flight
+  feathers drawn as a line along the side under the wing (the wing itself sinks into a Brahma's fluff: pushing it out made it
+  poke through the coop walls when a hen leapt out of the nest window). No new vertex attribute: the birds' shader is at the
+  graphics chip's limit (one more, tried first, broke the inside-the-coop shader: "Too many attributes").
+- **Only the Brahma's models changed**: `export_birds.py` doesn't make byte-identical models twice, so the new `bra_*` models
+  were spliced into the flock in use (`stylized/extras/splice_birds.py`), every other bird byte for byte as before (the
+  Silkies untouched). Breed Book picture redone (`book/bra.webp`). The welcome picture and onboarding picture 4 still show the
+  old Brahma, small (redone, the new hen faced straight at the camera in picture 4 and her cape hardly showed): to redo if
+  Audrey wants.
+- Checks: laycheck (Brahma: diva 4 samples, 1.5 cm; rebel 2.9-3.8 cm, as before: 1.3 and 3.6; a longer tail first poked
+  through the wall above the pop door), insideshot, gametest both ways, booktest, visittest, nesttap: pass. A before/after
+  sheet with her photos sent.

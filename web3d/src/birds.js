@@ -22,8 +22,10 @@ const ADULT = {
   orp_r: { body: '#d4923b', top: '#e3a850', hackle: '#ecb65c', saddle: '#e9b058', head: '#e4a64d', wing: '#cf8b36', prim: '#c08234', tail: '#c98637' },
   leg_h: { body: '#b1ab9e', bars: '#857f74', breast: '#c98f6c', hackle: '#e2d9c4', head: '#dad1bb', crest: '#d7cdb6', wing: '#a8a194', prim: '#888276', tail: '#c7c0b0', pattern: 'bars' },
   leg_r: { body: '#bab4a7', bars: '#8a857a', hackle: '#efe3c0', saddle: '#ebdfbb', head: '#eee2c3', crest: '#e9ddbb', wing: '#b2ac9e', prim: '#8e887c', tail: '#e1dccf', pattern: 'bars' },
-  bra_h: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#29292c', head: '#f4f0e8', wing: '#ece7dd', prim: '#7d7d82', tail: '#1c1b1b', legfeather: '#ece8df', pattern: 'stripes' },
-  bra_r: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#29292c', saddle: '#f2eee6', head: '#f4f0e8', wing: '#ece7dd', prim: '#5a5a5f', tail: '#1a1919', legfeather: '#ece8df', pattern: 'stripes' },
+  // the Light Brahma (Audrey's photos, 29 Oct): white, the cape of hackle feathers each black down its middle with a white
+  // edge (capeW: how wide the black is; a hen's heavy, a rooster's finer), black flight feathers and tail
+  bra_h: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#1f1f23', head: '#f4f0e8', wing: '#ece7dd', prim: '#1e1d21', tail: '#19181b', legfeather: '#ece8df', pattern: 'stripes', capeW: 0.44, capeTone: 0.55, overlap: 0.05, wingLine: true, soft: true },
+  bra_r: { body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#1f1f23', saddle: '#f2eee6', head: '#f4f0e8', wing: '#ece7dd', prim: '#1c1b1f', tail: '#151417', legfeather: '#ece8df', pattern: 'stripes', capeW: 0.22, capeTone: 0.28, overlap: 0.05, wingLine: true, soft: true },
   // the Polish: White-crested Black (black with a green gloss, the great crest white); the Ayam Cemani: black all over with a
   // beetle-green and purple sheen (sheen: its body and wings catch it too, not only the long feathers)
   pol_h: { body: '#1d1c21', top: '#25242a', hackle: '#222127', head: '#1d1c21', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#201f25', prim: '#17161b', tail: '#121115' },
@@ -91,7 +93,7 @@ export function initFlock(gltf, json) {
 // edges (a Brahma's cape), 4 darker towards the feather's base, where the next feather overlaps it
 const FEAT = { c: new THREE.Color(), mode: 0, amt: 0 };
 // the colour of one vertex of a grown bird
-function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
+function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
   const key = reg === R.wing ? 'wing' : reg === R.prim ? 'prim' : reg === R.tail ? 'tail' : reg === R.crest ? 'crest' : reg === R.legfeather ? 'legfeather' : reg === R.saddle ? 'saddle' : 'body';
   let c = key === 'saddle' ? S.saddle || S.hackle || S.body : S[key] || S.body;
   if (key === 'crest' && S.crestFront && hc) {          // (a White-crested Black Polish: black at its crest's front, by the beak)
@@ -108,7 +110,11 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
   }
   out.copy(lin(c));
   const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
-  FEAT.mode = 4; FEAT.amt = lum > 0.5 ? 0.14 : 0.3; FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
+  FEAT.mode = 4; FEAT.amt = S.overlap ?? (lum > 0.5 ? 0.14 : 0.3); FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
+  // (a Brahma, Audrey's photos: 8, its white plumage soft, not scales (as 4, the feathers' shading softened), with the black
+  // line of its folded wing's flight feathers along its side. No new attribute for it: the birds' shader has as many as it may)
+  if (S.soft && (key === 'body' || key === 'legfeather')) FEAT.mode = 8;
+  if (key === 'wing' && S.soft) FEAT.mode = 8;
   const n = noise(x * 60, y * 60, z * 60);
   if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: a blue-black sheen over its body and wings, not too green: Audrey, 29 Oct)
     FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.32 : 0.27;      // (6: a softer gloss than the long feathers')
@@ -123,11 +129,18 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc) {
       if (!hackle) { const b = Math.sin((y + 0.012 * Math.sin(x * 40 + z * 30)) * 2 * Math.PI / 0.03); out.lerp(lin(S.bars), smooth(0.2, 0.7, b) * 0.2); }
     } break;
     case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / 0.034); out.lerp(lin(S.bars), smooth(0.0, 0.8, b) * 0.75); } break;
-    case 'stripes': if (key === 'body' && hw < 0.97) {                           // a Brahma's cape: black feathers edged in white, round the neck
-      const k = top / 0.55, mx = (nb[0] + hc[0]) / 2, my = (nb[1] + hc[1]) / 2 - 0.01, mz = (nb[2] + hc[2]) / 2;
-      const d = Math.hypot(x - mx, (y - my) * 0.75, z - mz) / k, cape = 1 - smooth(0.075, 0.12, d);
-      if (cape > 0) { out.lerp(lin(S.stripe), 0.3 * cape); FEAT.mode = 2; FEAT.c.copy(lin(S.stripe)); FEAT.amt = Math.min(1, cape * 1.3); }
-      else if (rooster && c === S.saddle) { FEAT.mode = 2; FEAT.c.copy(lin(S.stripe)); FEAT.amt = 0.4; }
+    case 'stripes': if (key === 'body') {
+      // a Brahma's cape (Audrey's photos): from the nape down over the shoulders, its hackle feathers each black down the middle
+      // with a white edge, the throat and breast white; a hen's tail coverts the same. Mode 3: long pointed hackle feathers
+      // there, each wholly in the cape or not, so its edge is ragged feather by feather (featherMode 3 + how wide the black is)
+      const k = top / 0.55, ax = hc[0] - nb[0], ay = hc[1] - nb[1], az = hc[2] - nb[2], al = Math.hypot(ax, ay, az) || 1;
+      const px = x - nb[0], py = y - nb[1], pz = z - nb[2], u = (px * ax + py * ay + pz * az) / (al * al);
+      const ox = px - ax * u, oy = py - ay * u, oz = pz - az * u, front = oz / (Math.hypot(ox, oy, oz) || 1);
+      let cape = u > 0 ? 1 - smooth(0.7, 0.96, u) : 1 - smooth(0.075 * k, 0.135 * k, Math.hypot(px, py * 0.8, pz));      // (up to the nape)
+      cape *= 1 - 0.95 * smooth(0.0, 0.55, front);
+      if (!rooster && S.coverts && tp) cape = Math.max(cape, S.coverts * (1 - smooth(0.035 * k, 0.08 * k, Math.hypot(x - tp[0], (y - tp[1]) * 1.2, z - tp[2]))) * smooth(-0.03 * k, 0.0, y - tp[1]));
+      if (rooster && c === S.saddle) cape = Math.max(cape, 0.55);
+      if (cape > 0.01) { out.lerp(lin(S.stripe), (S.capeTone || 0.3) * cape); FEAT.mode = 3 + (S.capeW || 0.3); FEAT.c.copy(lin(S.stripe)); FEAT.amt = Math.min(1, cape); }
     } break;
     case 'splash': { const m = noise(x * 22 + 3, y * 22, z * 22); out.lerp(lin(S.spot), smooth(0.56, 0.66, m) * 0.9); } break;
     case 'paint': { const m = noise(x * 14 + 7, y * 14, z * 14 + 2); out.lerp(lin(S.spot), smooth(0.58, 0.64, m)); } break;
@@ -210,7 +223,7 @@ export function paintedGeometry(model, breed, colour) {
       for (let j = 0; j < 4; j++) if (si.array[i * 4 + j] === 2) hw += sw.array[i * 4 + j] / (sw.normalized ? 255 : 1);
       const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
       if (chick) chickColour(S, legHex, beakHex, reg, x, y, z, hw, M.top, c);
-      else adultColour(S, rooster, reg, x, y, z, hw, M.top, c, M.piv.head, M.piv.headc || M.piv.head);
+      else adultColour(S, rooster, reg, x, y, z, hw, M.top, c, M.piv.head, M.piv.headc || M.piv.head, M.piv.tail);
     }
     col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     if (feathered && FEAT.mode) { fpat[i * 4] = FEAT.c.r; fpat[i * 4 + 1] = FEAT.c.g; fpat[i * 4 + 2] = FEAT.c.b; fpat[i * 4 + 3] = FEAT.amt; fmode[i] = FEAT.mode; }
@@ -225,8 +238,10 @@ export function paintedGeometry(model, breed, colour) {
     let hw = 0;
     for (let j = 0; j < 4; j++) if (si.array[i * 4 + j] === 2) hw += sw.array[i * 4 + j] / (sw.normalized ? 255 : 1);
     fs[i] = chick || breed === 'sil' || (breed === 'pol' && reg === R.crest) ? 0 : FEATHER[reg] || 0; fh[i] = hw;      // Silkies and chicks are all fluff (and a Polish's crest)
+    if (reg === R.legfeather && src.attributes._feat && src.attributes._feat.getX(i) > 0.01) fs[i] = 0;      // (a Brahma's modelled leg feathers)
   }
   g.setAttribute('featherSize', new THREE.BufferAttribute(fs, 1)); g.setAttribute('featherHead', new THREE.BufferAttribute(fh, 1));
+
   g.setAttribute('featherPattern', new THREE.BufferAttribute(fpat, 4)); g.setAttribute('featherMode', new THREE.BufferAttribute(fmode, 1));
   // featherUV: across and along each modelled feather (tail, sickles, flight feathers, crest; 0 elsewhere), and for the folded
   // wing how far back along it (0.02 at the shoulder .. 1 at the back, 0 off the wing), for its rows of feathers
@@ -236,6 +251,15 @@ export function paintedGeometry(model, breed, colour) {
     let z0 = Infinity, z1 = -Infinity;
     for (let i = 0; i < n; i++) if (paint.array[i] === R.wing) { z0 = Math.min(z0, pos[i * 3 + 2]); z1 = Math.max(z1, pos[i * 3 + 2]); }
     for (let i = 0; i < n; i++) if (paint.array[i] === R.wing) fuv[i * 3 + 2] = 0.02 + 0.98 * (z1 - pos[i * 3 + 2]) / Math.max(1e-4, z1 - z0);
+    if (S.wingLine) {         // (a Brahma: the black line along its side, under the folded wing (sunk in its fluff): where each
+      // feather is from that line, across and along it (both straight, so drawn crisply whatever the mesh), from the wing's pivot
+      const P = M.piv.wingL, k = M.top / 0.55, z0 = P[2] - 0.02 * k;
+      for (let i = 0; i < n; i++) {
+        const r = paint.array[i], y = pos[i * 3 + 1], z = pos[i * 3 + 2];
+        if (r === R.body || r === R.wing) { fuv[i * 3] = (y - (P[1] - 0.03 * k + 0.12 * (z - z0))) / k; fuv[i * 3 + 1] = (z0 - z) / k; }
+        else if (r === R.legfeather && fuv[i * 3] <= 0.01) fuv[i * 3 + 1] = -1;
+      }
+    }
   }
   g.setAttribute('featherUV', new THREE.BufferAttribute(fuv, 3));
   g.setAttribute('eyeAt', new THREE.BufferAttribute(eyeSpots(src, base, k, paint, si, sw), 4));
@@ -261,6 +285,8 @@ const FUR = {
   // 6 cm): short over the body, longer underneath and round the thighs, wispy at the outline; Orpingtons fluffiest)
   hen: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.008, [R.legfeather]: 0.016 }, shells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06 },
   orp: { len: { [R.body]: 0.022, [R.wing]: 0.011, [R.legfeather]: 0.016 }, shells: 6, comb: 0.75, fine: 1.15, under: 1.8, fluff: 0.06 },
+  // the Light Brahma (Audrey's photos): the fluffiest of the feathered breeds, above all underneath, round the trousers and legs
+  bra: { len: { [R.body]: 0.024, [R.wing]: 0.011, [R.legfeather]: 0.02 }, shells: 6, comb: 0.75, fine: 1.15, under: 2.3, fluff: 0.06 },
   // the Polish (from Audrey's photos, 29 Oct): a hen's short fluff over the feathers, and on the crest fine soft plumage
   // standing straight out all round (a round powder puff, not a Silkie's falling hair: "it looks like the silkies too
   // much"); a rooster's longer and falling over like a mop. Fine and straight: wispier than a Silkie's locks
@@ -270,7 +296,7 @@ const FUR = {
            regions: { [R.crest]: { shells: 18, clump: 0.55, fine: 1.5, wave: 0.9, locks: 0.085, comb: 0.12 } } },
 };
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -537,7 +563,9 @@ function birdMaterial(indoor, goose) {
           // overlapping feathers like roof tiles, in rows running back along the body: the front feather lies on top, so each
           // shows its tip. Body feathers are rounded with a slight point; down the neck the hackles are long, narrow and
           // pointed; the folded wing has small coverts over the shoulder and a band of long flight feathers behind
-          float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : smoothstep(0.15, 0.45, vHead);
+          // (mode 3, a Brahma's cape: long pointed hackle feathers over the shoulders too)
+          float capeA = (vMode > 2.5 && vMode < 3.5) ? vPat.a : 0.0;
+          float wingT = vFUV.z, neck = wingT > 0.0 ? 0.0 : max(smoothstep(0.15, 0.45, vHead), smoothstep(0.02, 0.12, capeA));
           float flight = wingT > 0.0 ? smoothstep(0.52, 0.56, wingT) : 0.0;
           #ifdef GOOSE
           float size = vFeather * mix(1.0, 0.17, neck) * 0.017 * mix(1.0, 0.72, step(0.001, wingT) * (1.0 - flight));
@@ -556,6 +584,10 @@ function birdMaterial(indoor, goose) {
           float stretch = mix(mix(1.0, 0.5, neck), 1.0, flight), point = mix(mix(0.15, 1.2, neck), 0.3, flight);
           vec2 pb = vec2(atan(vRest.x, vRest.y - 0.2) * 0.11, -vRest.z);
           vec2 pn = vec2(atan(vRest.x, vRest.z - 0.1) * 0.05, -vRest.y * 0.55);
+          // (a Brahma's cape: round the neck by distance, not angle, so its feathers keep their size out over the shoulders,
+          // and parted at the throat (white) rather than down the back)
+          // (round a line leaning forward up the neck, as a Brahma's neck does, so the pattern never gathers into a point at the nape)
+          if (capeA > 0.0) { float zc = 0.1 + (vRest.y - 0.4) * 0.6; pn = vec2(atan(vRest.x, zc - vRest.z) * max(length(vec2(vRest.x, vRest.z - zc)), 0.045) * 1.5, -vRest.y * 0.34); }      // (long and narrow, hanging down)
           #endif
           vec2 pp = mix(pb, pn, neck) / size;
           pp *= mix(vec2(1.0), vec2(0.62, 0.3), flight);          // flight feathers: wider apart and three times as long
@@ -604,6 +636,14 @@ function birdMaterial(indoor, goose) {
           float onTop = 1.0 + 0.8 * boost;
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
           else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
+          else if (capeA > 0.0) {          // each cape feather black down its middle, edged white all round (its tip too)
+            float w = clamp(vMode - 3.0, 0.1, 0.49), on = step(0.1 + 0.8 * fract(id * 5.37), capeA);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, on * smoothstep(w + 0.09, w - 0.04, abs(across)) * smoothstep(0.9, 0.74, t) * smoothstep(-0.99, -0.7, along));
+          }
+          if (vMode > 7.5 && vMode < 8.5) {     // a Brahma: the black of its folded wing's flight feathers, a line along its side
+            float band = smoothstep(0.017, 0.008, abs(vFUV.x)) * smoothstep(0.0, 0.03, vFUV.y) * smoothstep(0.16, 0.12, vFUV.y) * smoothstep(0.05, 0.08, abs(vRest.x));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012), band * smoothstep(0.74, 0.5, abs(across)) * smoothstep(0.97, 0.84, t));
+          }
           else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vMode > 5.5 ? diffuseColor.rgb * 0.55 : vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));      // (6, a sheen over the body: the overlap darker, not the sheen's colour)
           // the vane's barbs: thin strands slanting from the quill towards the tip, lying side by side (the two halves of the
           // vane meet at the quill in a V); their ends make the feather's edge finely ragged
@@ -640,6 +680,7 @@ function birdMaterial(indoor, goose) {
           furShade *= 1.0 + furrow * (0.2 * ridge - 0.08 * smoothstep(0.7, 1.0, abs(ridge)));
           #endif
           furShade *= fluff;
+          furShade = mix(furShade, 1.0, 0.7 * smoothstep(6.0, 7.0, vMode) * (1.0 - smoothstep(0.05, 0.3, capeA)));      // (7, 8: a Brahma's soft white plumage)
         }
         if (vFUV.x > 0.01 && vFeather <= 0.0) {
           // a modelled feather (tail, sickles, saddle hackles, flight feathers, crest): a pale quill down the middle, barbs
