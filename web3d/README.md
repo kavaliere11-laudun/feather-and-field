@@ -3199,5 +3199,21 @@ the birds already had.
   same) has them come, go and lay as the hens do; the pond kept to by `BLOCKS` (the gangplank's line left free).
 - Audrey (30 Oct): their home: "Floating house (Recommended)" (a little wooden house on a raft in the middle of their pond,
   a ramp up to it).
+- Audrey (30 Oct 12:24): "hold on the ducks need to have a 5 steps house like the chickens please I only see one?". **Its five
+  looks** (`floating(look=0..4)`, `box_call`, `shed_call`, `house_call`, `cosy_call`, `deluxe_call`; `FLOAT_LOOK` their
+  colours, `FLOAT_POND` their ponds; Blender pictures, each clearly its own): Rustic, an old grey shack (a few bare boards,
+  two gone on its right, a square hole boarded across in each side) under rusty corrugated tin (`tin_roof`), on a raft of
+  grey planks (two gone) over two old blue barrels, an old bucket and a coil of rope, in a smaller murky green pond with a
+  stone here and there and more reeds; Mended, new pine boards, the lower rows painted duck-egg blue so far, a pot of paint
+  and its brush, a stack of new boards, a ladder against its right side, roofing felt with new coral shingles on the lower
+  half of the front and a bundle waiting (`felt_roof`), white-rimmed portholes, a clean pond, its stones laid along the left
+  so far and a pile waiting on the bank; Snug, the Floating House; Cosy, buttercup yellow under teal shingles, a red
+  pennant, bunting along the rope rail, teal flower boxes under the portholes, three pots, the automatic door's box and
+  its solar panel, more lilies in flower, a little red rowing boat with its oars moored beside the raft (`rowing_boat`);
+  Deluxe, white walls and navy trim under red shingles, a navy pennant, a white rail round the deck, a ship's wheel on its
+  right side, a brass bell on a post, a little lighthouse at the raft's back left (red and white bands, a gallery, its lamp
+  lit at night: `lighthouse`, `LIGHTS`), a bigger pond edged with pale cobbles and a fountain (`fountain`). The gangplank,
+  the doors and the nest the same in all five (`NESTS['house_call']`). The pond's `BLOCKS` per look (the model's name).
+  The five sent together.
 - Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
