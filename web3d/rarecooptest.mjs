@@ -1,5 +1,5 @@
 // Release 2 step 3 (the rare colours' own coops): node rarecooptest.mjs   (LANG=fr; W, H: the screen; SHOTS: a folder)
-// A farm at level 7 with the White Silkies (level 7 since 30 Oct) and two Paint Silkies in the basket by the fire: Your coops lists them with
+// A farm at level 7 with the White Silkies (their level is 5 since 30 Oct) and two Paint Silkies in the basket by the fire: Your coops lists them with
 // "Their coop: 2,500 coins" (not enough coins) then "Build their coop · 2,500"; built: a rustic Pagoda in the Paint
 // colours, 2,500 coins paid, its birds from the basket ("Welcome home, ... and ...!"), the basket empty. The Breed Book has
 // fourteen pages (no Red since 30 Oct): the Paint Silkies found, the Lavender ones "Rare: hatched by a Black Silkie". A brood of the Paint pair:

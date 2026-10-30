@@ -3137,6 +3137,15 @@ the birds already had.
 - Prices: the Ayam Cemani, now early, eggs 8 and chicks 28 (were 10, 34); the Polish, now the last, 10 and 34 (were 9, 30).
 - Balance (`balsim.mjs 365 all 3`): level 30 on day 340 once a day (was 311; 41 birds at the end, was 50), 285 twice a day
   (266), 235 every few hours (217): nearer her "about a year" than before.
+- **Then her own order** (30 Oct 10:04, Audrey, happy with the Brahma: "Is the duck gone? I still want it"; the call ducks had
+  never been in: they were the Legbar's replacement she didn't take. Asked where they go, she wrote the order herself): Rhode
+  Island Red 1, Buff Orpington 3, White Silkie 5, Ayam Cemani 7, **call ducks 10** (to build, first: "[No preference]" on
+  ducks or peacock first, so the ducks, the earlier), Buff Silkie 12, Cream Legbar 15, Polish 18, Partridge Silkie 21, Light
+  Brahma 24, Black Silkie 27, **the peacock 30** (to build). `BREED_LEVEL` and `SHOW_BREED_LEVEL_8` so (no show drawn yet with
+  the morning's); the morning's order needs nothing kept (each of its levels at or after the lower of the order before it and
+  this one). Prices: the Polish back to 9 and 30. Balance: level 30 on day 336 once a day, 281 twice, 226 every few hours.
+  Tests: booktest (the Orpingtons waiting at 3, the Silkies at 5), breedtest (the Orpingtons at 3, the Silkies at 5, five
+  fields for room), silktest (the Black Silkies at 27).
 - Tests: booktest (14 pages, the new levels), breedtest (the Silkies at 7), silktest (the Buff Silkies at 12; a farm from
   before keeps its Blue and Black Silkies, unflagged, their pages, the Splash from the Buff or the Blue), raretest,
   rarecooptest (14 pages, the Cuckoo from the Partridge); gametest, firstdaytest, showtest, showdaytest, showgroundtest,

@@ -654,10 +654,10 @@ export const FIELDS = 30;
 export const HOME_COOP = { x: -28, z: -13.75, deg: 90 };
 // the breeds by level (release 1 step 6; game-plan-v2.md): each a forever trio with its own rustic coop, the player's to
 // place; the other Silkie colours by level with release 2. Since 30 Oct 2026 (Audrey: the Blue and Grey Silkies no longer
-// come, "a proposal where the ayam is relatively early in the game and the peacock is last", "Ayam at level 10"): a Silkie
-// colour and another breed in turn from the White Silkie on, light and dark birds alternating, the most special last (the
-// peacock, at 30, to come)
-export const BREED_LEVEL = { rir: 1, orp: 5, sil: 7, aya: 10, sil_buff: 12, leg: 15, sil_black: 18, bra: 21, sil_partridge: 24, pol: 27 };
+// come, "we might have too many silkies"; then her own order: "1 Rhode Island Red, 3 Buff Orpington, 5 White Silkie, 7 Ayam
+// Cemani, 10 Call ducks, 12 Buff Silkie, 15 Cream Legbar, 18 Polish, 21 Partridge Silkie, 24 Light Brahma, 27 Black Silkie,
+// 30 Peacock"; the call ducks and the peacock to come)
+export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, sil_buff: 12, leg: 15, pol: 18, sil_partridge: 21, bra: 24, sil_black: 27 };
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
 const breedCame = b => Math.min(BREED_LEVEL[b] ?? Infinity, BREED_LEVEL_29OCT[b] ?? Infinity);
@@ -666,7 +666,7 @@ const SHOW_BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 // (and from the day after the Polish and the Ayam Cemani came, release 7, with them: the shows of the days before as they were;
 // then from 31 Oct at their new levels)
 const SHOW_BREED_LEVEL_7 = { ...SHOW_BREED_LEVEL, pol: 26, aya: 29 }, SHOW_7_FROM = '20261030';
-const SHOW_BREED_LEVEL_8 = { rir: 1, orp: 5, sil: 7, aya: 10, leg: 15, bra: 21, pol: 27 }, SHOW_8_FROM = '20261031';
+const SHOW_BREED_LEVEL_8 = { rir: 1, orp: 3, sil: 5, aya: 7, leg: 15, pol: 18, bra: 24 }, SHOW_8_FROM = '20261031';
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
 export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
@@ -887,7 +887,7 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
-export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 10, aya: 8 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range, the Polish's, now the last, the dearest)
+export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 8 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range)
 // XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
 // each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
 export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, jobL: 0.3 };      // (26 Oct, with the Silkie colours and the rare ones' coops: a year to level 30 once a day still)
@@ -917,7 +917,7 @@ export const CATCH_UP = 2 * 86400e3;                  // away longer than two da
 const DAY_MS = 86400e3;
 // ---- chicks (starting values)
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
-export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 34, aya: 28 };   // coins for each grown chick
+export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 28 };   // coins for each grown chick
 export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
 export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
 export const kidPrice = (base, stars) => Math.round(base * (0.6 + 0.2 * stars));        // 1 star: 0.8 of the price; 5 stars: 1.6

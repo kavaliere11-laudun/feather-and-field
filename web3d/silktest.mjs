@@ -1,9 +1,9 @@
-// Release 2 step 1 (the Silkie colours by level; their order since 30 Oct 2026: White 7, Buff 12, Black 18, Partridge 24, no
+// Release 2 step 1 (the Silkie colours by level; their order since 30 Oct 2026: White 5, Buff 12, Partridge 21, Black 27, no
 // Blue or Grey): node silktest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402)
 // A farm at level 11: Your coops says what level 12 brings (the Buff Silkies). Level 12: its card says a new Silkie colour
 // has come ("New Silkie colour: Buff!"), "Place their coop now": a rustic Pagoda in buff with a buff trio, "Welcome, ...!";
 // a buff hen's card says "Buff Silkie"; the Breed Book has fourteen pages, the Buff Silkies found with their names and
-// picture, the Black Silkies at level 18; a Silkies-only County show takes a buff Silkie; a reload keeps it all, unflagged;
+// picture, the Black Silkies at level 27; a Silkies-only County show takes a buff Silkie; a reload keeps it all, unflagged;
 // the Partridge Silkies' coop at level 12 or the Buff Silkies twice, put in from outside: checked and flagged. A farm
 // from before the new order (Blue Silkies at level 16, Black ones from level 9) keeps them, unflagged: their pages in the
 // book, the Splash "hatched by a Buff Silkie or a Blue Silkie"; no Blue or Grey ever waiting. No page errors.
@@ -31,7 +31,7 @@ const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const T = { next: fr ? /Au niveau 12 : Poule soie fauve/ : /At level 12: Buff Silkie/, col: fr ? /Nouvelle couleur de poule soie : fauve !/ : /New Silkie colour: Buff!/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
-  welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, buff: fr ? /Poule soie fauve/ : /Buff Silkie/, at18: fr ? /niveau 18/ : /level 18/,
+  welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, buff: fr ? /Poule soie fauve/ : /Buff Silkie/, at27: fr ? /niveau 27/ : /level 27/,
   splash: fr ? /Poule soie fauve.*Poule soie bleue/ : /Buff Silkie.*Blue Silkie/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -73,8 +73,8 @@ const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('
   return { n: pg.length, order: pg.map(x => x.dataset.breed).join(), mine: bl && { found: !bl.classList.contains('gpage-no'), text: bl.innerText, img: bl.querySelector('img').naturalWidth }, next: bu && { found: !bu.classList.contains('gpage-no'), text: bu.innerText } }; });
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_buff"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('4_book');
-ok('the Breed Book: fourteen pages (the rare colours last), the Buff Silkies found with their names and picture, the Black Silkies at level 18',
-  book.n === 14 && book.order === 'rir,orp,sil,aya,sil_buff,leg,sil_black,bra,sil_partridge,pol,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at18.test(book.next.text), book);
+ok('the Breed Book: fourteen pages (the rare colours last), the Buff Silkies found with their names and picture, the Black Silkies at level 27',
+  book.n === 14 && book.order === 'rir,orp,sil,aya,sil_buff,leg,pol,sil_partridge,bra,sil_black,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at27.test(book.next.text), book);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a Silkies-only County show takes a buff Silkie
 const show = await p.evaluate(() => { const g = window.__farm.game(), hen = g.data.birds.find(b => b.breed === 'sil_buff' && b.sex === 'h'), s = { id: 'c20261026', tier: 'c', breed: 'sil', locked: false };

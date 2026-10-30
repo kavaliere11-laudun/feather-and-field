@@ -1,5 +1,5 @@
 // Release 2 step 2 (rare babies): node raretest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402; SHOTS: a folder)
-// A farm at level 7 with the White Silkies (level 7 since 30 Oct): a brood whose luck gives a rare chick (a Paint Silkie, the White ones' rare
+// A farm at level 7 with the White Silkies (their level is 5 since 30 Oct): a brood whose luck gives a rare chick (a Paint Silkie, the White ones' rare
 // colour) hatches: "... one is a rare Paint Silkie! ✨", the chick in its own colour; her card says so. Grown: the
 // congratulations card with the rare one ("✨ Paint Silkie") and Keep / Sell; she stays in the pen meanwhile (the others
 // gone), the little barn's red dot. Keep: into the basket by the farmhouse fire (a name, her stars), "snug in the basket",

@@ -1,9 +1,9 @@
 // The game, release 1 step 6 (new breeds by level): node breedtest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402)
-// A fresh farm on a fake clock: nothing waiting, no red dot, Your coops lists the Red Barn and what level 5 brings. Level 5
+// A fresh farm on a fake clock: nothing waiting, no red dot, Your coops lists the Red Barn and what level 3 brings (the Orpingtons' level since 30 Oct). Level 3
 // (four fields): its card says a new breed has come (the Buff Orpingtons), "Place their coop now" and "Later" in sight;
 // Later: the red dot, Your coops offers it; placing it: a new rustic coop with its trio appears where it can stand; Cancel:
 // gone, still waiting; placed: on the farm with its trio for good (the dot gone, "Welcome, ...!", its rustic house (the straw-bale hut, release 4), a full
-// feeder, each bird's card); a reload keeps it; level 7 straight from its card: the white Silkies (level 7 since 30 Oct); a save changed outside
+// feeder, each bird's card); a reload keeps it; level 5 straight from its card: the white Silkies (level 5 since 30 Oct); a save changed outside
 // (a breed's coop before its level, a breed twice) is checked and flagged.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
@@ -27,7 +27,7 @@ const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); retur
   plots: f.coopPlots().length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const T = { orp: fr ? /Nouvelle race : Orpington fauve/ : /New breed: Buff Orpington/, sil: fr ? /Nouvelle race : Poule soie blanche/ : /New breed: White Silkie/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
-  later: fr ? /Plus tard/ : /Later/, next5: fr ? /Au niveau 5 : Orpington fauve/ : /At level 5: Buff Orpington/, red: fr ? /Grange rouge/ : /Red Barn/, welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/,
+  later: fr ? /Plus tard/ : /Later/, next5: fr ? /Au niveau 3 : Orpington fauve/ : /At level 3: Buff Orpington/, red: fr ? /Grange rouge/ : /Red Barn/, welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/,
   thatched: fr ? /Chaumière/ : /Thatched Cottage/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -37,18 +37,18 @@ let s = await st();
 ok('a new farm: nothing waiting, no red dot', s.level === 1 && s.waiting === '' && !s.dot && s.coops === 'rir', s);
 await p.tap('.gcoops'); await run(0.3);
 let t = await sheet();
-ok('Your coops (the little barn up top): the Red Barn to move, and what level 5 brings', T.red.test(t) && T.next5.test(t) && (await p.evaluate(() => window.__farm.gameUI().kind)) === 'coops', t);
+ok('Your coops (the little barn up top): the Red Barn to move, and what level 3 brings', T.red.test(t) && T.next5.test(t) && (await p.evaluate(() => window.__farm.gameUI().kind)) === 'coops', t);
 await p.evaluate(() => window.__farm.gameUI().close());
-// level 5, four fields
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 700; g.data.lvSeen = 4; g.data.coins = 3000; g.data.land = [0, 1, 2, 3]; g.save(); });
+// level 3, three fields
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 100; g.data.lvSeen = 2; g.data.coins = 3000; g.data.land = [0, 1]; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 1110; g.save(); }); await run(1.6);
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 300; g.save(); }); await run(1.6);
 s = await st(); t = await sheet();
 const btns = await p.evaluate(() => [...document.querySelectorAll('.gsheet .gstick .gbtn')].map(b => { const r = b.getBoundingClientRect(); return { t: b.textContent, top: Math.round(r.top), bottom: Math.round(r.bottom) }; }));
-ok('level 5: its card says a new breed has come, "Place their coop now" and "Later" in sight', s.level === 5 && s.card === 'levelup' && T.orp.test(t) && btns.length === 2 && T.place.test(btns[0].t) && T.later.test(btns[1].t) && btns.every(x => x.bottom <= H && x.top >= 0) && s.dot, { s, btns });
+ok('level 3: its card says a new breed has come, "Place their coop now" and "Later" in sight', s.level === 3 && s.card === 'levelup' && T.orp.test(t) && btns.length === 2 && T.place.test(btns[0].t) && T.later.test(btns[1].t) && btns.every(x => x.bottom <= H && x.top >= 0) && s.dot, { s, btns });
 await p.tap('.gsheet .gstick .gbtn:nth-child(2)'); await run(0.4);
 s = await st();
-ok('Later: the card gone (seen), the red dot on the little barn, the Orpingtons waiting', !s.card && s.dot && s.waiting === 'orp' && (await p.evaluate(() => window.__farm.game().data.lvSeen)) === 5, s);
+ok('Later: the card gone (seen), the red dot on the little barn, the Orpingtons waiting', !s.card && s.dot && s.waiting === 'orp' && (await p.evaluate(() => window.__farm.game().data.lvSeen)) === 3, s);
 await p.tap('.gcoops'); await run(0.3);
 t = await sheet();
 ok('Your coops: the new breed with "New!" and Place it, the Red Barn', T.orp.test(t) && T.red.test(t) && (await p.evaluate(() => !!document.querySelector('.gnewcoop .gbadge'))), t);
@@ -77,10 +77,10 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
 const kept = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.breed === 'orp'); return P && P.birds.filter(b => b.gid).length; });
 ok('a reload: both coops and their birds, not flagged', s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && kept === 3 && !s.edited && !s.dot, { s, kept });
-// level 7 straight from its card: the white Silkies
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 2600; g.save(); }); await run(1.6);
+// level 5 straight from its card: the white Silkies (five fields, room for their coop)
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 1110; g.data.land = [0, 1, 2, 3, 4]; g.save(); }); await run(1.6);
 t = await sheet();
-ok('level 7: the Silkies come', T.sil.test(t), t);
+ok('level 5: the Silkies come', T.sil.test(t), t);
 await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
 m = await p.evaluate(() => window.__farm.move.state());
 if (!m.ok) { await p.evaluate(() => window.__farm.move.to(-33, -23, 90)); await run(0.1); m = await p.evaluate(() => window.__farm.move.state()); }
@@ -95,7 +95,7 @@ await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
   localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
-ok('a save changed outside (a Legbar coop at level 7, the Orpingtons twice): checked and flagged', s.edited && s.coops === 'rir,orp,sil' && s.birds === 9 && s.plots === 3, s);
+ok('a save changed outside (a Legbar coop at level 5, the Orpingtons twice): checked and flagged', s.edited && s.coops === 'rir,orp,sil' && s.birds === 9 && s.plots === 3, s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
