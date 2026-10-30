@@ -32,7 +32,7 @@ await p.goto(URL, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.lvSeen = 4; g.data.coins = 500; g.data.land = [0, 1, 2, 3]; g.data.guide = { step: 5, done: true }; g.data.coops[0].tier = 3; g.save(); }, xpAt(4));
+await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.lvSeen = 4; g.data.coins = 500; g.data.land = [0, 1, 2, 3]; g.data.guide = { step: 5, done: true }; g.data.acctAsk = 1; g.data.coops[0].tier = 3; g.save(); }, xpAt(4));      // (acctAsk: My account already suggested, so its card doesn't come before the morning's)
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 // the nights to come: one it works (and no visit), two it sticks

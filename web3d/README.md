@@ -3231,5 +3231,21 @@ the birds already had.
   is, a little green arch with its railings (`monet_bridge` built at the pond's scale; `FLOAT_PATH['deluxe_call']`: the
   ducks' way over it, points in glTF axes, for their walk); the bridge across the pond's right gone, the fountain back on
   the right. Sent again.
-- Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
+- Audrey (30 Oct): "Yes, put them in (Recommended)". **The Floating House in the game, step 1: on the test page** (live 30 Oct,
+  `?coopbreeds=call&looks=N`, N 0..4): its five looks (`box_call`, `shed_call`, `house_call`, `cosy_call`, `deluxe_call`),
+  its pop door (`popdoor_call`, the ducks' coral, drawn at the house's size: `NESTS.house_call.scale` 0.72 and `wall`, its
+  front wall: main.js `popAt`, the door's badge and tag spots by them), its own yards (`pen_t0_call` .. `pen_t4_call`, the
+  Snug's too: `coops.PENS_BY['call']` with a [2], `pen_layout`; main.js `tierPen` for the call ducks' Snug); `TIER_LOOK.call`,
+  its looks always (`hasLooks`), no weathervane on its Deluxe (the lighthouse and the pennant), `STYLE_NAMES.call` Floating
+  House, its eggs a pale green-blue (`EGG_COLOUR.call`), no hens in it (`makePlot`: the ducks' own life to come). Exported on
+  their own (`stylized/extras/export_call.py`: export_coops.py's `one()` for just these) and spliced into coops.glb/json
+  (`stylized/extras/splice_coops.py`: every other model byte for byte, each mesh's primitives with their materials matched
+  by name; the json's tops, lights, nests, blocks, pens, stats, the Christmas tree's spots and eave lights, and `paths`, the
+  Deluxe's way over the bridge); `export_coops.py` makes them too in a full export. Tests: gametest, upgradetest, looktest,
+  doortest (its farm now marked as already offered My account: the suggestion's card came first and the morning's door
+  card waited behind it; the game's right, the test's setup was out of date): pass.
+- Next: the call ducks' life in their pen (walking, swimming, the gangplank or the bridge, the ball, sleeping in the house,
+  laying in the nest), then the game at level 10 (duck eggs, ducklings, names in six languages, the Breed Book, the save's
+  checks, tests).
+, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

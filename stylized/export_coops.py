@@ -11,7 +11,7 @@ sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
 GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred', 'autoled'})       # the lanterns light up at night (the rustic coops' too)
-BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600, 'house_aya': 17000,
+BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600, 'house_aya': 17000, 'house_call': 17000,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
 
@@ -165,6 +165,15 @@ for n_, fn in (('box_aya', coops.box_aya), ('shed_aya', coops.shed_aya), ('cosy_
 assert coops.NESTS['house_aya'] == _keep, 'the looks must keep the Javanese House\'s nest'
 for t in (0, 1, 3, 4): one('pen_t%d_aya' % t, lambda t=t: coops.pen_tier(t, 'aya')); LOOKS.append('pen_t%d_aya' % t)
 for t in (0, 1, 3, 4): one('pen_t%d_pol' % t, lambda t=t: coops.pen_tier(t, 'pol')); LOOKS.append('pen_t%d_pol' % t)
+# the call ducks' Floating House (30 Oct 2026): its five looks (Rustic box_call, Mended shed_call, Snug house_call, Cosy
+# cosy_call, Deluxe deluxe_call) and its own yards, the Snug's too (pen_t2_call: its pond where the shared yard has straw);
+# coops.json paths: the Deluxe's way in over Monet's bridge. (stylized/extras/export_call.py exports just these to splice in)
+BUDGET.update({'box_call': 15000, 'shed_call': 17000, 'cosy_call': 21000, 'deluxe_call': 26000, 'pen_t0_call': 4200, 'pen_t1_call': 4600,
+               'pen_t2_call': 5200, 'pen_t3_call': 8500, 'pen_t4_call': 11000})
+_keep = dict(coops.NESTS['house_call'])
+for n_, fn in (('box_call', coops.box_call), ('shed_call', coops.shed_call), ('cosy_call', coops.cosy_call), ('deluxe_call', coops.deluxe_call)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_call'] == _keep, "the looks must keep the Floating House's nest"
+for t in range(5): one('pen_t%d_call' % t, lambda t=t: coops.pen_tier(t, 'call')); LOOKS.append('pen_t%d_call' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})
@@ -178,5 +187,5 @@ lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in c
 DRESS = {'xmas': dict(tree_r=coops.XMAS_TREE_R, tree={k: {t: coops.xmas_tree_spot(t, k) for t in range(5)} for k in coops.PENS_BY}, lights=EAVES)}
 print('XMAS LIGHTS', json.dumps({k: len(v) for k, v in EAVES.items()}))
 print('XMAS TREES', json.dumps(DRESS['xmas']['tree']))
-json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, mills=coops.MILLS, dress=DRESS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
+json.dump(dict(tops=TOPS, lights=lights, nests=coops.NESTS, mills=coops.MILLS, dress=DRESS, blocks={k: v for k, v in coops.BLOCKS.items() if not k.startswith('house_')}, pens=PENS, stats={n: STATS[n] for n in names}, paths=coops.FLOAT_PATH), open(os.path.join(OUT, 'coops.json'), 'w'), indent=1)
 print('STATS', json.dumps({n: STATS[n] for n in names}))

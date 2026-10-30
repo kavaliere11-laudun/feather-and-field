@@ -1092,7 +1092,7 @@ function buildPlots(nCoops) {
   batchCoops();
   buildDoors();
 }
-const TEST_COOPS = (() => { const l = !GAME_MODE && params.get('coopbreeds') ? params.get('coopbreeds').split(',').filter(b => ALL_BREEDS.includes(b)) : []; return l.length ? l : BREEDS; })();
+const TEST_COOPS = (() => { const l = !GAME_MODE && params.get('coopbreeds') ? params.get('coopbreeds').split(',').filter(b => ALL_BREEDS.includes(b) || b === 'call') : []; return l.length ? l : BREEDS; })();      // (?coopbreeds=call: the call ducks' Floating House)
 function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   const g = new THREE.Group();
   g.position.set(pos[0], 0, pos[2]); g.rotation.y = deg * DEG;
@@ -1116,7 +1116,8 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
     let k = 0;
     const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
-    if (gc) {                                             // the game: this coop's forever birds, each with its own name and personality
+    if (plot.breed === 'call') { /* the call ducks: their own life in their pen (to come) */ }
+    else if (gc) {                                        // the game: this coop's forever birds, each with its own name and personality
       const henAt = penOf(plot).hens.filter(h => h.model === 'hen'), rooAt = penOf(plot).hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
@@ -1159,13 +1160,15 @@ const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence
   leg: [['box_leg', 'fence_t0', 'pen_t0_leg'], ['shed_leg', 'fence_t1', 'pen_t1_leg'], ['house_leg', 'fence', 'pen_base'], ['cosy_leg', 'fence_t3', 'pen_t3_leg'], ['deluxe_leg', 'fence_t4', 'pen_t4_leg']],
   bra: [['box_bra', 'fence_t0', 'pen_t0_bra'], ['shed_bra', 'fence_t1', 'pen_t1_bra'], ['house_bra', 'fence', 'pen_base'], ['cosy_bra', 'fence_t3', 'pen_t3_bra'], ['deluxe_bra', 'fence_t4', 'pen_t4_bra']],
   pol: [['box_pol', 'fence_t0', 'pen_t0_pol'], ['shed_pol', 'fence_t1', 'pen_t1_pol'], ['house_pol', 'fence', 'pen_base'], ['cosy_pol', 'fence_t3', 'pen_t3_pol'], ['deluxe_pol', 'fence_t4', 'pen_t4_pol']],      // (release 7: the Little Windmill's)
-  aya: [['box_aya', 'fence_t0', 'pen_t0_aya'], ['shed_aya', 'fence_t1', 'pen_t1_aya'], ['house_aya', 'fence', 'pen_base'], ['cosy_aya', 'fence_t3', 'pen_t3_aya'], ['deluxe_aya', 'fence_t4', 'pen_t4_aya']] };      // (and the Javanese House's)      // (the Stone Cottage's)      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
+  aya: [['box_aya', 'fence_t0', 'pen_t0_aya'], ['shed_aya', 'fence_t1', 'pen_t1_aya'], ['house_aya', 'fence', 'pen_base'], ['cosy_aya', 'fence_t3', 'pen_t3_aya'], ['deluxe_aya', 'fence_t4', 'pen_t4_aya']],
+  // (the call ducks' Floating House, 30 Oct: its five looks from the start, its own Snug yard: the pond where the shared one has straw)
+  call: [['box_call', 'fence_t0', 'pen_t0_call'], ['shed_call', 'fence_t1', 'pen_t1_call'], ['house_call', 'fence', 'pen_t2_call'], ['cosy_call', 'fence_t3', 'pen_t3_call'], ['deluxe_call', 'fence_t4', 'pen_t4_call']] };      // (and the Javanese House's)      // (the Stone Cottage's)      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
 const LOOKS5 = !GAME_MODE && params.has('looks');
 // (a breed's looks in the game once its upgrades are (game.js UPGRADES); on the test page's ?looks as soon as they're made)
-const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5));
+const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (breed === 'call' || (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5)));      // (the call ducks': always)
 function coopLook(plot) {
   const t = Math.max(0, Math.min(4, plot.tier || 0)), T = hasLooks(plot.breed) ? TIER_LOOK[plot.breed][t] : null;
-  if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4, penT: t };
+  if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4 && plot.breed !== 'call', penT: t };      // (no rooster on the ducks' roof: their lighthouse and pennant)
   return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
 }
 // a coop's pen for its birds (where they may walk, what's in the way, the feeder, the gate, where they start): the Snug
@@ -1176,7 +1179,7 @@ const penOf = plot => (plot && plot.pen) || PEN;
 const pensOf = breed => (COOPS.pens && (COOPS.pens[breed] || COOPS.pens.rir)) || {};
 function tierPen(breed, t) {
   const P = pensOf(breed)[t];
-  if (t === 2 || !P) return PEN;
+  if ((t === 2 && breed !== 'call') || !P) return PEN;      // (the call ducks' Snug yard its own)
   if (TIER_PENS[breed + t]) return TIER_PENS[breed + t];
   const yard = { min: [P.min[0] + 0.2, 0, 0.6], max: [P.max[0] - 0.2, 0, P.max[1] - 0.15] }, Y0 = PEN.yard;
   const obstacles = [...P.hay.map(h => [h[0], 0, h[1], 0.38]), [P.feeder[0], 0, P.feeder[1], 0.22], [P.dish[0], 0, P.dish[1], P.dish_r || 0.22], [-0.31, 0, 0.75, 0.18], [-0.31, 0, 1.0, 0.16], ...(P.sack ? [[P.sack[0], 0, P.sack[1], 0.2]] : [])];
@@ -1255,7 +1258,7 @@ function batchCoops() {
 // where the eggs lie, from her seat: under her breast, towards the window (further in, the window's top would hide them)
 const NEST_SLOTS = [[0, 0.08], [0.06, 0.06], [-0.06, 0.07], [0.045, 0.12], [-0.045, 0.12], [0.0, 0.03]];
 const nestOf = plot => COOPS.nests['house_' + plot.breed];
-const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf' };      // (a Polish's white; an Ayam Cemani's cream, not black)
+const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf', call: '#d3e8de' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
 const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
 function addNest(frame, plot) {
@@ -1995,6 +1998,8 @@ function doorShader(mat) {
   mat.customProgramCacheKey = () => 'popdoor';
   mat.needsUpdate = true;
 }
+// (where a house's pop door sits: its front wall, the door drawn the house's size: the call ducks' Floating House's smaller)
+const popAt = G => new THREE.Matrix4().makeTranslation(G.pop[0], G.house, G.wall ?? D2).multiply(new THREE.Matrix4().makeScale(G.scale || 1, G.scale || 1, G.scale || 1));
 function buildDoors() {
   for (const p of plots) if (p.kind === 'coop') {
     const st = inColour('popdoor_' + p.breed, p).slice(8), S = DOORS.styles[st] = DOORS.styles[st] || { meshes: [], plots: [] };
@@ -2013,7 +2018,7 @@ function buildDoors() {
       const inst = new THREE.InstancedMesh(geo, mat, S.plots.length);
       S.plots.forEach((p, i) => {
         const G = nestOf(p);
-        inst.setMatrixAt(i, p.frame.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(G.pop[0], G.house, D2)));
+        inst.setMatrixAt(i, p.frame.matrixWorld.clone().multiply(popAt(G)));
       });
       inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN;
       inst.castShadow = false; inst.receiveShadow = true; inst.matrixAutoUpdate = false; inst.visible = false;
@@ -2028,7 +2033,7 @@ function rebuildDoors() {                                  // (a coop more, or l
 }
 function placeDoor(p) {                                    // (its coop moved)
   const S = DOORS.styles[inColour('popdoor_' + p.breed, p).slice(8)]; if (!S || !p.door) return;
-  const G = nestOf(p), M = p.frame.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(G.pop[0], G.house, D2));
+  const G = nestOf(p), M = p.frame.matrixWorld.clone().multiply(popAt(G));
   for (const inst of S.meshes) { inst.setMatrixAt(p.door.i, M); inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.boundingSphere.radius += DOOR_RUN; }
 }
 const doorOpen = p => !p.door || p.door.s >= 1;
@@ -2100,7 +2105,7 @@ function tickDoors(dt, now = performance.now()) {
         if (kind) {
           if (d.kind !== kind) { d.kind = kind; d.badge.material.map = BADGE_TEX[kind]; d.badge.material.needsUpdate = true; }
           const G = nestOf(p), sz = Math.min(1.2, Math.max(0.3, view.size * 0.13));          // about 40 points across on screen
-          doorV.set(G.pop[0], G.house + POP_H + 0.1 + sz * 0.45 + 0.03 * Math.sin(now / 1000 * 2.4 + p.index), D2 + 0.3); p.frame.localToWorld(doorV);
+          doorV.set(G.pop[0], G.house + POP_H * (G.scale || 1) + 0.1 + sz * 0.45 + 0.03 * Math.sin(now / 1000 * 2.4 + p.index), (G.wall ?? D2) + 0.3); p.frame.localToWorld(doorV);
           d.badge.position.copy(doorV); d.badge.scale.set(sz, sz, sz);
         }
       }
@@ -2130,7 +2135,7 @@ function doorTap(p, at) {
   }
   tag.textContent = msg; tagBird = null; tag.classList.add('on'); fieldTag = 2.6;
   if (at) tagSpot.copy(at);
-  else { const G = nestOf(p); tagSpot.set(G.pop[0], G.house + POP_H + 0.12, D2 + 0.1); p.frame.localToWorld(tagSpot); }
+  else { const G = nestOf(p); tagSpot.set(G.pop[0], G.house + POP_H * (G.scale || 1) + 0.12, (G.wall ?? D2) + 0.1); p.frame.localToWorld(tagSpot); }
 }
 
 // ------------------------------------------------------------------ birds: walk, stop, peck, waddle, and keep a little room round each other
@@ -3246,7 +3251,7 @@ function tapAt(x, y) {
       const bd = p.door.badge;
       if (bd && bd.visible && ray.ray.intersectSphere(new THREE.Sphere(bd.position, bd.scale.x * 0.62), hitP)) { doorTap(p); return; }
       const G = nestOf(p);
-      nb.min.set(G.pop[0] - 0.22, G.house - 0.06, D2 - 0.12); nb.max.set(G.pop[0] + 0.22, G.house + POP_H + 0.08, D2 + 0.3);
+      nb.min.set(G.pop[0] - 0.22, G.house - 0.06, (G.wall ?? D2) - 0.12); nb.max.set(G.pop[0] + 0.22, G.house + POP_H * (G.scale || 1) + 0.08, (G.wall ?? D2) + 0.3);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { doorTap(p); return; }
     }
@@ -5989,7 +5994,7 @@ function jobsDone(done) { if (!done || !done.length) return; for (const j of don
 // asleep in a row on the perch, heads tucked in, the chicks curled up in the straw by the nest boxes, a lantern turned low,
 // the night sky in the window, the odd "z" floating up. Tap a bird and she wakes for a cuddle (hearts), then dozes off
 // again; tap the nest boxes to collect the eggs. "Back to the farm", or the time to get up, brings you out again.
-const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House' };
+const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House', call: 'Floating House' };
 const inside = { open: false, busy: false, plot: null, scene: null, camera: null, rooms: null, rooms3d: {}, birds: [], saved: [], eggs: null, fx: [], zIn: 0.6, pan: 0, panMax: 0, mPerPx: 0.002, hinted: false };
 const insideEls = { top: document.getElementById('inside-top'), title: document.getElementById('inside-title'), back: document.getElementById('inside-back'), fade: document.getElementById('fade') };
 insideEls.back.addEventListener('click', () => closeInside());
@@ -6033,7 +6038,7 @@ function openInside(plot) {
   if (inside.open || inside.busy) return;
   if (nightVisit && nightVisit.active() && nightVisit.target === plot) {
     const G = nestOf(plot); tag.textContent = nightVisit.T('atDoor'); tagBird = null; tag.classList.add('on'); fieldTag = 2.4;
-    tagSpot.set(G.pop[0], G.house + POP_H + 0.12, D2 + 0.1); plot.frame.localToWorld(tagSpot); return;
+    tagSpot.set(G.pop[0], G.house + POP_H * (G.scale || 1) + 0.12, (G.wall ?? D2) + 0.1); plot.frame.localToWorld(tagSpot); return;
   }
   if (!inside.scene) buildInside();
   inside.busy = true; inside.morning = false; insideEls.fade.classList.add('on'); tag.classList.remove('on'); tagBird = null; fieldTag = 0;

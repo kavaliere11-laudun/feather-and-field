@@ -1376,6 +1376,7 @@ def floating(seed=17, name='house_call', look=2, F=None):
         o.location = o.location * k; o.scale = o.scale * k
     sc = lambda v: round(v * k, 3) if isinstance(v, (int, float)) else [sc(u) for u in v] if isinstance(v, list) else v
     NESTS['house_call'] = {kk: sc(v) for kk, v in NESTS['house_call'].items()}
+    NESTS['house_call'].update(wall=round(D2 * k, 3), scale=k)          # (for the browser: its front wall, and the pop door drawn k as big)
     LIGHTS[name] = [sc(v) for v in LIGHTS.get(name, [])]
     return finish(objs + pobjs, name)
 
@@ -1524,8 +1525,8 @@ def red_barn(**kw):
     return r
 
 
-HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo}
-LATER = ['pol', 'aya']                                   # (release 7's coops: exported after the rest)
+HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo, 'call': floating}
+LATER = ['pol', 'aya', 'call']                           # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct)
 
 
 def pop_slider(style):
@@ -1539,7 +1540,8 @@ def pop_slider(style):
                'bra': (C('lodgedoor', '#6d4326', rough=0.75, var=0.08, grain=0.3, grain_scale=G), C('lodgetrim', '#e8dcc0', rough=0.7)),
                'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None),
                'pol': (C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
-               'aya': (C('jg_teakd', '#5e3a20', rough=0.8, var=0.06, grain=0.3, grain_scale=G), C('jg_gold', '#c9a24a', rough=0.35, metal=0.7))}[style]
+               'aya': (C('jg_teakd', '#5e3a20', rough=0.8, var=0.06, grain=0.3, grain_scale=G), C('jg_gold', '#c9a24a', rough=0.35, metal=0.7)),
+               'call': (C('fdoor_2', FLOAT_PAL['door'], rough=0.6, var=0.05), C('ftrim_2', FLOAT_PAL['trim'], rough=0.6))}[style]      # (the browser draws the ducks' k as big)
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))
@@ -1977,8 +1979,10 @@ def _swap(root, names, m):
 
 
 def pen_layout(t, k='rir'):
-    """A look's pen (t: 0..4; 2 is the Snug pen, the farm's own layout) for breed k's coop."""
+    """A look's pen (t: 0..4; 2 is the Snug pen, the farm's own layout) for breed k's coop (the call ducks' Snug its own: its
+    pond where the shared one has straw)."""
     import farm_layout
+    if t == 2 and 2 in PENS_BY.get(k, {}): return dict(PENS_BY[k][2])
     return dict(farm_layout.NEW['pen']) if t == 2 else dict(PENS_BY[k][t])
 
 
@@ -5454,6 +5458,20 @@ PENS_BY['aya'] = {
     4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(1.75, -2.45), feeder_style='joglo', dish=(-1.75, -1.85), water='padasan', hay=(2.0, 0.5), hay_rot=90,
             sack=None, pebbles=10, straw=((0.5, -1.4, 0.3, 25), (2.0, 0.5, 0.4, 35))),
 }
+# the Floating House's yards (its pond where a house stands: the feeder, the water, the hay and the straw in front of it or
+# beside it, never in the water; the Snug's its own, the shared one has straw where the pond is); no play things in the yard:
+# the ducks' toy is the beach ball on their pond (from the Cosy)
+PENS_BY['call'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(-0.72, -1.4), dish=(0.76, -1.45), hay=None, hay_rot=0, sack=None, straw=((0.2, -1.38, 0.2, 14),)),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(-1.0, -1.58), dish=(0.98, -1.6), hay=None, hay_rot=0, sack=None, straw=((0.3, -1.72, 0.25, 20),)),
+    2: dict(box=(-1.6, 1.75, -2.45, 0.75), gate=3, feeder=(1.2, -1.5), dish=(0.25, -1.95), hay=(-1.1, -1.9), hay_rot=12, sack=(1.4, -2.15),
+            straw=((-1.1, -1.9, 0.4, 60), (0.55, -1.55, 0.3, 30))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(1.55, -2.2), dish=(-0.8, -2.35), hay=(-1.72, 0.45), hay_rot=90, sack=None,
+            straw=((-1.72, 0.45, 0.4, 35), (0.7, -1.6, 0.35, 30))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(-1.85, -2.0), dish=(1.55, -2.5), hay=(2.05, 0.55), hay_rot=90, sack=None, pebbles=10,
+            straw=((0.6, -1.55, 0.3, 25), (2.05, 0.55, 0.4, 35))),
+}
+PLAY_BY['call'] = {}
 PLAY_BY['aya'] = {3: dict(swing=(-1.4, -1.95), tampah=(1.35, -1.25), cabbage=(-1.2, -1.02), frame='joglo', holder='kentongan'),
                   4: dict(swing=(-1.65, -0.8), candi=(1.55, -1.15), cabbage=(0.9, -2.55), xylo=(-1.1, -2.6), frame='joglo', holder='kentongan', bars='gamelan')}
 TAMPAH_R = 0.33                                                   # the Cosy Javanese house's woven tray of sand
