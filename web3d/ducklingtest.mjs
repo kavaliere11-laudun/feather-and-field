@@ -107,6 +107,7 @@ await setStart(-SIT - YOUNG + 1500); await run(3);
 k = await K();
 ok('a day on: young ducks and drakes, "turning into young ducks and drakes"', k.kids.length === 3 && k.kids.every(x => x.young && /^call_[mf]$/.test(x.kind) && x.size >= 0.6) && (fr ? /deviennent de jeunes canes et canards/ : /turning into young ducks and drakes/).test(k.hint), k);
 await run(20);
+if (SHOTS) { await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), C = Q.callPen; const w = C.kids[0].root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z + 0.25, 1.2); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.chickCard(Q.callPen.kids[0]); }); await run(0.3);
 t = await sheet();
 await shot('4_young');
@@ -119,6 +120,7 @@ k = await K();
 const gone = k;
 await run(3);
 k = await K();
+if (SHOTS) { await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.lookAt(Q.centre.x, Q.centre.z, 1.6); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 const card = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, t: document.querySelector('.gsheet') ? document.querySelector('.gsheet').innerText : '' }));
 await shot('5_congrats');
 ok('grown: off to a new farm (they fade away), the coins in, the brood over', !k.brood && k.kids.length === 0 && k.coins > coins0 && gone.kids.every(x => x.leaving), { gone, k, coins0 });
