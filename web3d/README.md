@@ -3221,5 +3221,10 @@ the birds already had.
   fountain out at its right); the Cosy now a little houseboat: its raft a red hull with a white band, flat at the stern and
   pointed at the bow out to the right, the bow's deck boarded (`houseboat_hull`), a curved roof of teal boards with white
   arched ends (`barrel_roof`, the gables under its curve), a stovepipe, the solar panel on the curve. Sent again.
+- Audrey (30 Oct): "No ball level 3, add Lily pad level 5, also for level 5 add a nice bridge like the one in money painting".
+  The ball from the Cosy; the Deluxe's pond covered in water lilies (34 pads, a third in flower, pink and white, none under
+  the raft or the gangplank) and a footbridge like Monet's at Giverny (`monet_bridge`: a gentle green arch of wood over the
+  right of the pond from the front bank to the back, a deck of boards across, a railing each side, capped posts at its
+  ends), the fountain moved to the pond's left. Sent again.
 - Next (after her yes): their floating house on a little pond and its five looks, duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

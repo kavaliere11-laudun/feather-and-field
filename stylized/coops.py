@@ -919,7 +919,24 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
                 objs.append(cyl('rush', 0.016, 0.07, (x + math.sin(tilt[1]) * h * 0.5, y - math.sin(tilt[0]) * h * 0.5, F['water'] + h * 0.98), tilt, m=rush, verts=8, bevel=0.0))
     pad = C('lilypad', '#5c9a45', rough=0.6, var=0.1); flower = C('lilyflower', '#f6c3d5', rough=0.6); heart = C('lilyheart', '#f4cf4a', rough=0.6)
     spots = [(-0.88, -0.42), (0.88, -0.36), (0.6, -0.76), (-0.68, 0.4), (0.92, 0.12), (-0.5, -0.74)]
-    nl, nf = {0: (0, 0), 1: (1, 0), 2: (4, 2), 3: (6, 4), 4: (5, 4)}[look]
+    nl, nf = {0: (0, 0), 1: (1, 0), 2: (4, 2), 3: (6, 4), 4: (0, 0)}[look]
+    if look == 4:                                        # (the Deluxe: water lilies all over, as in Monet's garden: Audrey, "add Lily pad level 5")
+        white = C('lilywhite', '#fbf6ee', rough=0.6); n_ = 0
+        for kk in range(400):
+            if n_ >= 34: break
+            u, v = random.uniform(-1, 1), random.uniform(-1, 1)
+            if u * u + v * v > 0.72: continue
+            x, y = cx + a * u, cy + b * v
+            if abs(x) < 0.66 and -0.5 < y < 0.45: continue                       # (not under the raft)
+            if abs(x + 0.22) < 0.14 and y < -0.3: continue                       # (nor under the gangplank)
+            r = random.uniform(0.045, 0.085); n_ += 1
+            objs.append(cyl('lilypad', r, 0.006, (x, y, F['water'] + 0.004), (0, 0, random.uniform(0, 6.28)), m=pad, verts=12, bevel=0.0))
+            if n_ % 3 == 0:
+                fm = flower if n_ % 2 else white
+                for j in range(5):
+                    a_ = j * 2 * math.pi / 5
+                    objs.append(sphere('lilypetal', 0.02, (x + math.cos(a_) * 0.014, y + math.sin(a_) * 0.014, F['water'] + 0.02), (1.4, 0.7, 0.6), (0, 0.5, a_), m=fm, seg=8, rings=5))
+                objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
     for kk, (u, v) in enumerate(spots[:nl]):
         x, y = u * a / 0.98, cy + (v + 0.17) * b / 0.7; r = random.uniform(0.055, 0.08)
         objs.append(cyl('lilypad', r, 0.006, (x, y, F['water'] + 0.004), (0, 0, random.uniform(0, 6.28)), m=pad, verts=12, bevel=0.0))
@@ -929,14 +946,43 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
                 objs.append(sphere('lilypetal', 0.02, (x + math.cos(a_) * 0.014, y + math.sin(a_) * 0.014, F['water'] + 0.02), (1.4, 0.7, 0.6), (0, 0.5, a_), m=flower, seg=8, rings=5))
             objs.append(sphere('lilyheart', 0.01, (x, y, F['water'] + 0.026), m=heart, seg=8, rings=5))
     if look == 3: rowing_boat(objs, -0.8, -0.26, F['water'])
-    if look == 4: fountain(objs, 1.22, 0.28, F['water'], name)
-    if look >= 2: beach_ball(objs, {2: (0.5, -0.66), 3: (0.52, -0.68), 4: (0.95, -0.55)}[look], F['water'])      # (the ducks' toy, from the Snug)
+    if look == 4: fountain(objs, -1.24, 0.18, F['water'], name); monet_bridge(objs, 1.15, -0.8, 0.72, F['water'], name)
+    if look >= 3: beach_ball(objs, {3: (0.52, -0.68), 4: (0.66, -0.62)}[look], F['water'])      # (the ducks' toy, from the Cosy: Audrey, "No ball level 3")
     # the birds keep out of the water (in front of and beside the house; the gangplank's line left free)
     for i in range(32):
         t = 2 * math.pi * i / 32; x, y = cx + a * 0.8 * math.cos(t), cy + b * 0.8 * math.sin(t)
         if y < -D2 - 0.05 and abs(x + 0.31) < 0.24: continue
         if abs(x) < W2 + 0.05 and -D2 < y: continue                         # (under the house: it's the house)
         BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), 0.2])
+
+
+def monet_bridge(objs, x, ya, yb, wz, name, w=0.34, rise=0.3):
+    """The Deluxe's footbridge (Audrey: "a nice bridge like the one in money painting": Monet's at Giverny): a gentle green arch
+    of wood over the water lilies, from the front bank to the back, its deck of boards across, a railing each side (posts, a
+    top rail and a middle one), taller posts with caps at its ends."""
+    green = C('monetgreen', '#5f9a6a', rough=0.6, var=0.04); green2 = C('monetgreen2', '#4f8a5b', rough=0.6, var=0.04)
+    deckm = C('monetdeck', '#6aa676', rough=0.7, var=0.06, grain=0.3, grain_scale=G)
+    L = yb - ya; n = 22
+    zf = lambda u: wz + 0.03 + rise * math.sin(math.pi * u) ** 0.85
+    P = [(ya + L * i / n, zf(i / n)) for i in range(n + 1)]
+    for i in range(n):                                    # the deck: boards across, on a stringer each side
+        (y0, z0), (y1, z1) = P[i], P[i + 1]; ym, zm = (y0 + y1) / 2, (z0 + z1) / 2
+        nrm = Vector((0, -(z1 - z0), y1 - y0)).normalized()
+        objs.append(plank('mdeck', (x - w / 2, ym, zm + 0.012), (x + w / 2, ym, zm + 0.012), math.hypot(y1 - y0, z1 - z0) * 0.9, 0.02, nrm, deckm, jitter=0.2, bevel=0.003))
+        for sx in (-1, 1):
+            objs.append(plank('mstring', (x + sx * w / 2, y0, z0 - 0.02), (x + sx * w / 2, y1, z1 - 0.02), 0.06, 0.03, (sx, 0, 0), green2, jitter=0.0, bevel=0.003))
+    for sx in (-1, 1):                                    # the railings
+        for i in range(0, n + 1, 2):
+            y, z = P[i]; end = i in (0, n)
+            hgt = 0.26 if end else 0.18
+            objs.append(box('mpost', (0.035 if end else 0.025, 0.035 if end else 0.025, hgt), (x + sx * (w / 2 + 0.01), y, z + hgt / 2), m=green, bevel=0.004, segs=1))
+            if end: objs.append(box('mcap', (0.05, 0.05, 0.02), (x + sx * (w / 2 + 0.01), y, z + hgt + 0.01), m=green2, bevel=0.004, segs=1))
+        for (dz, th) in ((0.17, 0.025), (0.09, 0.018)):
+            for i in range(n):
+                (y0, z0), (y1, z1) = P[i], P[i + 1]
+                objs.append(plank('mrail', (x + sx * (w / 2 + 0.01), y0, z0 + dz), (x + sx * (w / 2 + 0.01), y1, z1 + dz), th, th, (0, 0, 1), green, jitter=0.0, bevel=0.002))
+    for y in (ya - 0.04, yb + 0.04):                      # (the birds keep off its ends' posts)
+        BLOCKS.setdefault(name, []).append([round(x - w / 2, 3), round(-y, 3), 0.06]); BLOCKS.setdefault(name, []).append([round(x + w / 2, 3), round(-y, 3), 0.06])
 
 
 def rowing_boat(objs, x, y, wz):
