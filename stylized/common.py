@@ -174,8 +174,9 @@ def subsurf(o, lv=2):
     s = o.modifiers.new('sub', 'SUBSURF'); s.levels = lv; s.render_levels = lv; return o
 
 
-def metaball_mesh(name, elems, res=0.012, threshold=0.6, m=None, parent=None):
-    """Blobby organic shapes (bodies, combs): elems = [(type, (x,y,z), radius, (sx,sy,sz), stiffness), ...]."""
+def metaball_mesh(name, elems, res=0.012, threshold=0.6, m=None, parent=None, smooth=0):
+    """Blobby organic shapes (bodies, combs): elems = [(type, (x,y,z), radius, (sx,sy,sz), stiffness), ...]. smooth: that
+    many passes of smoothing over the surface after (the peafowl's: no bumps where the blobs meet)."""
     mb = bpy.data.metaballs.new(name); mb.resolution = res; mb.render_resolution = res; mb.threshold = threshold
     for typ, co, r, sz, stiff in elems:
         e = mb.elements.new(type=typ); e.co = co; e.radius = r; e.stiffness = stiff
@@ -184,6 +185,11 @@ def metaball_mesh(name, elems, res=0.012, threshold=0.6, m=None, parent=None):
     dg = bpy.context.evaluated_depsgraph_get(); dg.update()
     ev = o.evaluated_get(dg); me = bpy.data.meshes.new_from_object(ev)
     bpy.data.objects.remove(o)
+    if smooth:
+        import bmesh
+        bm = bmesh.new(); bm.from_mesh(me)
+        for _ in range(smooth): bmesh.ops.smooth_vert(bm, verts=bm.verts, factor=0.6, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+        bm.to_mesh(me); bm.free()
     for p in me.polygons: p.use_smooth = True
     out = link(bpy.data.objects.new(name, me))
     if m: setmat(out, m)

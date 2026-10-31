@@ -300,21 +300,21 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
     # high and full, the back sloping down to the tail; the neck rising out of the breast, not from the middle of the body,
     # shorter, its front hollowed under the chin and its back bowed, the head held a little forward)
     head = Vector((0.2 * k, 0, 0.69 * k)); nb = Vector((0.11 * k, 0, 0.46 * k))
-    E = [
-        ('ELLIPSOID', (-0.035 * k, 0, 0.335 * k), 0.1 * k * K, (1.55, 0.7, 0.74), 2.0),           # body: long and slim
-        ('ELLIPSOID', (0.065 * k, 0, 0.385 * k), 0.066 * k * K, (1.0, 0.95, 1.05), 2.0),           # the breast, high and full
-        ('ELLIPSOID', (0.098 * k, 0, 0.44 * k), 0.042 * k * K, (1.0, 0.9, 1.25), 2.0),            # the base of the neck, out of the breast
-        ('ELLIPSOID', (-0.165 * k, 0, 0.345 * k), 0.058 * k * K, (1.45, 0.82, 0.68), 2.0),        # the back, sloping down to the tail
-        ('ELLIPSOID', (-0.03 * k, 0, 0.285 * k), 0.056 * k * K, (1.5, 0.85, 0.55), 2.0),          # the belly
-        ('ELLIPSOID', (0.0, 0.038, 0.24 * k), 0.03 * k * K, (1.15, 0.9, 1.7), 2.0), ('ELLIPSOID', (0.0, -0.038, 0.24 * k), 0.03 * k * K, (1.15, 0.9, 1.7), 2.0),     # the thighs, feathered down to the hock
-    ]
+    # the body: one smooth shape (31 Oct, Audrey: "body shape needs rework to look more smooth"): a chain of overlapping
+    # ellipsoids along its spine from the tail coverts up to the base of the neck, their widths and depths rising and
+    # falling smoothly (deepest at the belly, the breast full and high), smoothed over after
+    SP = [(-0.27, 0.362, 0.03, 0.026), (-0.21, 0.355, 0.054, 0.048), (-0.15, 0.346, 0.072, 0.066), (-0.09, 0.336, 0.084, 0.08),
+          (-0.03, 0.33, 0.088, 0.088), (0.025, 0.338, 0.086, 0.087), (0.07, 0.365, 0.076, 0.078), (0.1, 0.402, 0.058, 0.06), (0.112, 0.44, 0.042, 0.045)]
+    if not rooster: SP[0] = (-0.28, 0.36, 0.036, 0.028)      # (a peahen's tail coverts over the root of her tail)
+    E = [('ELLIPSOID', (x * k, 0, z * k), 0.06 * k * K, (1.0, ry / 0.06, rz / 0.06), 2.0) for (x, z, ry, rz) in SP]
+    E += [('ELLIPSOID', (0.0, sd * 0.035, 0.235 * k), 0.03 * k * K, (1.15, 0.95, 2.0), 2.0) for sd in (1, -1)]      # the thighs, feathered down to the hock
     for i in range(7):                                  # the neck: up out of the breast, its back bowed a little, the head forward at its top
         t = i / 6
         c = Vector((nb.x + (head.x - nb.x) * t ** 1.8 - 0.012 * k * math.sin(t * math.pi), 0, nb.z + (head.z - nb.z) * t - 0.012 * k * t * t))
-        E.append(('ELLIPSOID', tuple(c), (0.029 - 0.008 * t) * k * K, (1.0, 0.88, 1.45), 2.0))
+        E.append(('ELLIPSOID', tuple(c), (0.032 - 0.009 * t) * k * K, (1.0, 0.9, 1.45), 2.0))
     E.append(('BALL', tuple(head), 0.038 * k * K, None, 2.0))
     E.append(('ELLIPSOID', tuple(head + Vector((0.012 * k, 0, -0.006 * k))), 0.03 * k * K, (1.3, 0.85, 0.9), 2.0))      # (the face, a little long)
-    tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
+    tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig, smooth=4), 'body', 'body')
     pivot('body', (0.0, 0, 0.24 * k), body_rig)
     pivot('head', tuple(nb), body_rig)
     pivot('headc', tuple(head), body_rig)
@@ -337,8 +337,8 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
         tag(keep(sphere('cresttip', 0.0075 * k, tuple(p0 + d * (L + 0.003 * k)), (0.5, 1.0, 1.3), d.to_track_quat('Z', 'Y').to_euler(), m=tuft, parent=hd, seg=8, rings=5)), 'head')
     # wings: long folded wings along the sides, the flight feathers at their tips (a peacock's rusty, under barred coverts)
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
-        w = empty('wing', (-0.035 * k, sd * 0.052 * k, 0.355 * k), (math.radians(sd * -4), math.radians(-12), math.radians(sd * -2)), body_rig)      # (folded close along the side, its front up with the body)
-        pivot(nm, (0.0, sd * 0.07 * k, 0.38 * k), body_rig)
+        w = empty('wing', (-0.035 * k, sd * 0.074 * k, 0.36 * k), (math.radians(sd * -4), math.radians(-12), math.radians(sd * -2)), body_rig)      # (folded close along the side, its front up with the body)
+        pivot(nm, (0.0, sd * 0.08 * k, 0.385 * k), body_rig)
         tag(sphere('wingbase', 0.1 * k, (0, 0, 0), (1.25, 0.16, 0.44), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
         for j in range(4):                              # (the flight feathers tucked under its back edge: only their tips show)
             e = math.radians(-8 - j * 3)
@@ -347,10 +347,10 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
     tb = empty('tail', (-0.27 * k, 0, 0.36 * k), (0, 0, 0), body_rig)
     pivot('tail', (-0.25 * k, 0, 0.35 * k), body_rig)
     if not rooster:
-        for i in range(7):                              # a peahen's short brown tail: closed, sloping down a little (31 Oct, Audrey: "The peahen's tail" lower and softer)
-            f = i / 6 - 0.5
-            feather('tailf', tl, tb, (0.012 - 0.01 * abs(f), f * 0.016, -0.014 + 0.006 * (0.5 - abs(f))), -20 + 3 * (0.5 - abs(f)), 6, 0.2 * (1.0 - 0.25 * abs(f)), 0.05, 1 if f >= 0 else -1,
-                    spread=0.012 * abs(f), twist=14, seg=6 if LO else 8)
+        for i in range(9):                              # a peahen's tail: closed, broad and rounded, carrying on the line of her back down
+            f = i / 8 - 0.5                             # (31 Oct, Audrey: "peahen tail is odd": no thin blade sticking out)
+            feather('tailf', tl, tb, (0.03 - 0.012 * abs(f), f * 0.03, -0.004 + 0.008 * (0.5 - abs(f))), -16 + 4 * (0.5 - abs(f)), 8, 0.23 * (1.0 - 0.18 * (2 * f) ** 2), 0.062, 1 if f >= 0 else -1,
+                    spread=0.02 * abs(f), twist=8 + 20 * abs(f), seg=6 if LO else 8)
     else: peacock_train(tl, tb, rnd, fan)
     # long legs, long toes (a peacock's little spur behind)
     sh = B['shank'] * k
