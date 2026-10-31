@@ -36,8 +36,8 @@ const ADULT = {
   // bronze-green scales, his wings barred buff and black, rusty flight feathers, a dark belly, his long green train with its
   // eyes (peacock: mode 9 on the train, birds' shader); the peahen grey-brown and scaled, her lower neck metallic green, her
   // breast and belly pale
-  pea_h: { body: '#7d6d5d', top: '#86766a', hackle: '#2f6a58', head: '#8a7a68', breast: '#e6ddcc', wing: '#7a6a5a', prim: '#5d4f43', tail: '#7a6a5a', sheenNeck: '#3f7fb0' },
-  pea_r: { body: '#1d2b3e', top: '#4f7a3c', hackle: '#1f4fbf', saddle: '#5a8a3e', head: '#2356c8', breast: '#1f4cb8', wing: '#d8c39a', wingBars: '#2b2620', prim: '#b4612b', tail: '#2f6b37', peacock: true, sheenNeck: '#5aa0ff' },
+  pea_h: { body: '#7d6d5d', top: '#86766a', hackle: '#2f6a58', head: '#8a7a68', breast: '#e6ddcc', wing: '#7a6a5a', prim: '#5d4f43', tail: '#8c7c6a', sheenNeck: '#3f7fb0' },
+  pea_r: { body: '#1d2b3e', top: '#4f7a3c', hackle: '#1f4fbf', saddle: '#5a8a3e', head: '#2356c8', breast: '#1f4cb8', wing: '#d8c39a', wingBars: '#4a3b2c', prim: '#b4612b', tail: '#3a8438', peacock: true, sheenNeck: '#5aa0ff' },
 };
 const SIL = {
   white: { body: '#f5f2eb' },
@@ -92,7 +92,9 @@ export function initFlock(gltf, json) {
     if (!mesh) continue;
     const geo = mesh.geometry;
     geo.computeBoundingBox();
-    MODELS[child.name] = { geo, piv: json.models[child.name], top: geo.boundingBox.max.y, painted: {} };
+    let top = geo.boundingBox.max.y;
+    if (geo.morphAttributes.position) { top = 0; const a = geo.attributes.position; for (let i = 0; i < a.count; i++) top = Math.max(top, a.getY(i)); }      // (the peacock: his height standing, not with his fan up)
+    MODELS[child.name] = { geo, piv: json.models[child.name], top, painted: {} };
   }
 }
 
@@ -125,7 +127,7 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
   if (key === 'wing' && S.soft) FEAT.mode = 8;
   const n = noise(x * 60, y * 60, z * 60);
   if (S.sheenNeck && key === 'body' && hw > 0.04) { FEAT.mode = 5; FEAT.c.copy(lin(S.sheenNeck)); FEAT.amt = 0.3; }      // (a peafowl's shining neck)
-  else if (S.wingBars && key === 'wing') { FEAT.mode = 1; FEAT.c.copy(lin(S.wingBars)); FEAT.amt = 0.85; }      // (a peacock's barred wing coverts)
+  else if (S.wingBars && key === 'wing') { FEAT.mode = 1; FEAT.c.copy(lin(S.wingBars)); FEAT.amt = 0.6; }      // (a peacock's barred wing coverts)
   else if (S.peacock && key === 'tail') { FEAT.mode = 9; FEAT.c.copy(lin('#ffd27a')); FEAT.amt = 0.2; }      // (his train: the eyes drawn by the shader, a golden gloss)
   else if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: a blue-black sheen over its body and wings, not too green: Audrey, 29 Oct)
     FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.32 : 0.27;      // (6: a softer gloss than the long feathers')
@@ -723,12 +725,12 @@ function birdMaterial(indoor, goose) {
             // eye is the same size): a blue heart in green-teal, in gold, in copper; below it the loose bronze-green barbs
             float dm = length(vec2(ac * 0.08, (al - 0.9067) * 0.75 * 0.86)), ea = max(fwidth(dm), 0.0006);      // (ac: across in metres of 8 cm, the feather's 'feat' u made so; the eye a little taller than wide)
             // the vane: bronze-green, golden towards the eye (31 Oct: "A fuller fan")
-            vec3 eyeC = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.3, 1.15, 0.55), smoothstep(0.45, 0.85, al) * 0.38 * (1.0 - smoothstep(0.042, 0.06, dm)));
+            vec3 eyeC = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.3, 1.15, 0.55), smoothstep(0.45, 0.85, al) * 0.5 * (1.0 - smoothstep(0.042, 0.06, dm)));
             // the eye, from outside in (her photos): a thin golden-green ring, bronze, turquoise, the deep blue heart
-            eyeC = mix(eyeC, vec3(0.42, 0.42, 0.06), 1.0 - smoothstep(0.036 - ea, 0.036 + ea, dm));
-            eyeC = mix(eyeC, vec3(0.24, 0.1, 0.018), 1.0 - smoothstep(0.0315 - ea, 0.0315 + ea, dm));
-            eyeC = mix(eyeC, vec3(0.02, 0.3, 0.3), 1.0 - smoothstep(0.024 - ea, 0.024 + ea, dm));
-            eyeC = mix(eyeC, vec3(0.01, 0.035, 0.28), 1.0 - smoothstep(0.0145 - ea, 0.0145 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.6, 0.56, 0.06), 1.0 - smoothstep(0.036 - ea, 0.036 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.34, 0.12, 0.012), 1.0 - smoothstep(0.0315 - ea, 0.0315 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.012, 0.45, 0.4), 1.0 - smoothstep(0.024 - ea, 0.024 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.008, 0.04, 0.42), 1.0 - smoothstep(0.0145 - ea, 0.0145 + ea, dm));
             diffuseColor.rgb = eyeC;
           }
         }
@@ -742,7 +744,8 @@ function birdMaterial(indoor, goose) {
         if (vMode > 8.5 && vMode < 9.5 && vFUV.x > 0.01) {      // (a peacock's train: a shimmer, green to gold, moving as he turns)
           float fr9 = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           float sh9 = 0.5 + 0.5 * sin(fr9 * 7.0 + vFUV.y * 11.0 + vRest.x * 23.0);
-          outgoingLight += mix(vec3(0.02, 0.13, 0.08), vec3(0.13, 0.12, 0.03), sh9) * (0.35 + 0.65 * fr9) * 0.5;
+          outgoingLight += mix(vec3(0.02, 0.13, 0.08), vec3(0.13, 0.12, 0.03), sh9) * (0.35 + 0.65 * fr9) * 0.8;
+          outgoingLight = max(outgoingLight, diffuseColor.rgb * 0.55);      // (his fan stood up in the light: never dull)
         }
         if (vMode > 6.5 && vMode < 7.5) outgoingLight = max(outgoingLight, diffuseColor.rgb * 0.42);      // (7, the call ducks: white all over, never dark in a fold or under the tail)
         if (vFurLen > 0.0) {

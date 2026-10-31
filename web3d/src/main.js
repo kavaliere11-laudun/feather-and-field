@@ -2276,7 +2276,7 @@ class Bird {
     this.visual.add(this.rig.mesh); if (this.rig.lo) this.visual.add(this.rig.lo);
     const small = kind === 'chick', size = this.rig.scale / 0.5;
     this.blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, -0.011, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
-      new THREE.Vector3(small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), 1));      // (the peafowl: tall, not as wide as they're tall)
+      new THREE.Vector3(small ? 0.55 : size * (breed === 'pea' ? 0.7 : 1), small ? 0.55 : size * (breed === 'pea' ? 0.7 : 1), 1));      // (the peafowl: tall, not as wide as they're tall)
     if (breed === 'pea' && kind === 'rooster') {        // (a peacock's train lying on the grass behind him: its own soft shadow under it, gone as he raises his fan)
       const t = this.trainShadow = new THREE.Mesh(blobGeo, blobMat.clone());
       t.rotation.x = -Math.PI / 2; t.position.set(0, -0.011, -0.66); t.scale.set(1.25, 3.1, 1); t.renderOrder = 1; this.root.add(t);      // (he faces +z)

@@ -296,17 +296,22 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
     pl = flat('plum', B['plum'] if rooster else B['plum_h'], 0.85); wg = flat('wing', B['wing'] if rooster else B['wing_h'], 0.85)
     tl = flat('tailc', B['tailc'] if rooster else B['tailc_h'], 0.55); bk = flat('beak', B['beak'], 0.45); lg = flat('legs', B['legs'], 0.5)
     k = 1.0 if rooster else 0.92
-    head = Vector((0.205 * k, 0, 0.7 * k)); nb = Vector((0.12 * k, 0, 0.37 * k))
+    # (31 Oct, Audrey: "The posture and shape of peacock are not natural": the body carried tilted up at the front, the breast
+    # high and full, the back sloping down to the tail; the neck rising out of the breast, not from the middle of the body,
+    # shorter, its front hollowed under the chin and its back bowed, the head held a little forward)
+    head = Vector((0.2 * k, 0, 0.69 * k)); nb = Vector((0.11 * k, 0, 0.46 * k))
     E = [
-        ('ELLIPSOID', (-0.035 * k, 0, 0.31 * k), 0.108 * k * K, (1.7, 0.66, 0.7), 2.0),           # body: long and slim (31 Oct: slimmer, Audrey's "A slimmer peacock")
-        ('BALL', (0.075 * k, 0, 0.305 * k), 0.068 * k * K, None, 2.0),                             # breast
-        ('ELLIPSOID', (-0.15 * k, 0, 0.345 * k), 0.062 * k * K, (1.4, 0.82, 0.72), 2.0),          # the back, down to the tail
-        ('ELLIPSOID', (0.0, 0.046, 0.235 * k), 0.045 * k * K, (1.1, 0.9, 1.0), 2.0), ('ELLIPSOID', (0.0, -0.046, 0.235 * k), 0.045 * k * K, (1.1, 0.9, 1.0), 2.0),     # thighs
+        ('ELLIPSOID', (-0.035 * k, 0, 0.335 * k), 0.1 * k * K, (1.55, 0.7, 0.74), 2.0),           # body: long and slim
+        ('ELLIPSOID', (0.065 * k, 0, 0.385 * k), 0.066 * k * K, (1.0, 0.95, 1.05), 2.0),           # the breast, high and full
+        ('ELLIPSOID', (0.098 * k, 0, 0.44 * k), 0.042 * k * K, (1.0, 0.9, 1.25), 2.0),            # the base of the neck, out of the breast
+        ('ELLIPSOID', (-0.165 * k, 0, 0.345 * k), 0.058 * k * K, (1.45, 0.82, 0.68), 2.0),        # the back, sloping down to the tail
+        ('ELLIPSOID', (-0.03 * k, 0, 0.285 * k), 0.056 * k * K, (1.5, 0.85, 0.55), 2.0),          # the belly
+        ('ELLIPSOID', (0.0, 0.038, 0.24 * k), 0.03 * k * K, (1.15, 0.9, 1.7), 2.0), ('ELLIPSOID', (0.0, -0.038, 0.24 * k), 0.03 * k * K, (1.15, 0.9, 1.7), 2.0),     # the thighs, feathered down to the hock
     ]
-    for i in range(7):                                  # the neck: slender and graceful, a little S, a little thicker at its base
+    for i in range(7):                                  # the neck: up out of the breast, its back bowed a little, the head forward at its top
         t = i / 6
-        c = nb.lerp(head, t) + Vector((0.022 * math.sin(t * math.pi) * k, 0, -0.025 * t * k))
-        E.append(('ELLIPSOID', tuple(c), (0.036 - 0.013 * t) * k * K, (1.0, 0.86, 1.5), 2.0))
+        c = Vector((nb.x + (head.x - nb.x) * t ** 1.8 - 0.012 * k * math.sin(t * math.pi), 0, nb.z + (head.z - nb.z) * t - 0.012 * k * t * t))
+        E.append(('ELLIPSOID', tuple(c), (0.029 - 0.008 * t) * k * K, (1.0, 0.88, 1.45), 2.0))
     E.append(('BALL', tuple(head), 0.038 * k * K, None, 2.0))
     E.append(('ELLIPSOID', tuple(head + Vector((0.012 * k, 0, -0.006 * k))), 0.03 * k * K, (1.3, 0.85, 0.9), 2.0))      # (the face, a little long)
     tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
@@ -319,26 +324,26 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
     for sd in (1, -1):
         natural_eye(hd, sd, B, R=0.034 * k)
         # the white stripes: one above the eye, one below it, curving back
-        for (dz, sc_) in ((0.017, (2.3, 0.4, 0.55)), (-0.015, (2.0, 0.4, 0.7))):
-            tag(keep(sphere('facestripe', 0.012 * k, (0.002 * k, sd * 0.031 * k, dz * k), sc_, (math.radians(sd * 8), math.radians(-10 if dz > 0 else 12), math.radians(sd * -10)), m=white, parent=hd, seg=10, rings=6)), 'head')
+        for (dz, dx, sc_, pitch) in ((0.02, -0.006, (2.2, 0.4, 0.5), 8), (-0.015, -0.002, (2.0, 0.4, 0.65), 10)):      # (the upper one rising to the front over the eye: not a frown)
+            tag(keep(sphere('facestripe', 0.012 * k, (dx * k, sd * 0.031 * k, dz * k), sc_, (math.radians(sd * 8), math.radians(pitch), math.radians(sd * -10)), m=white, parent=hd, seg=10, rings=6)), 'head')
     # the crest: a little fan of bare shafts, each with a tuft at its tip (a peacock's blue, a peahen's brown edged green)
-    shaft = flat('pv_shaft', '#3b3a40' if rooster else '#5c4c3c', 0.6); tuft = flat('pv_tuft', '#1d4fb3' if rooster else '#6d5a44', 0.45)
-    n = 9
+    shaft = flat('pv_shaft', '#3b3a40' if rooster else '#5c4c3c', 0.6); tuft = flat('pv_tuft', '#1e62d0' if rooster else '#6d5a44', 0.45)
+    n = 11
     for i in range(n):                                  # (a fan across the head, the tufts apart: a crown, as in her photos)
-        a = math.radians(-46 + 92 * i / (n - 1))
-        d = Vector((-0.22, math.sin(a) * 0.95, math.cos(a) * 1.0)).normalized(); L = (0.062 if rooster else 0.056) * k * (1 - 0.12 * abs(i - n // 2) / (n // 2))
+        a = math.radians(-50 + 100 * i / (n - 1))
+        d = Vector((-0.2, math.sin(a) * 0.95, math.cos(a) * 1.0)).normalized(); L = (0.074 if rooster else 0.064) * k * (1 - 0.12 * abs(i - n // 2) / (n // 2))
         p0 = Vector((-0.004 * k, 0, 0.032 * k))
         tag(keep(cyl('crest', 0.0018, L, tuple(p0 + d * L / 2), d.to_track_quat('Z', 'Y').to_euler(), m=shaft, verts=4, bevel=0.0, parent=hd)), 'head')
-        tag(keep(sphere('cresttip', 0.0062 * k, tuple(p0 + d * (L + 0.003 * k)), (0.5, 1.0, 1.25), d.to_track_quat('Z', 'Y').to_euler(), m=tuft, parent=hd, seg=8, rings=5)), 'head')
+        tag(keep(sphere('cresttip', 0.0075 * k, tuple(p0 + d * (L + 0.003 * k)), (0.5, 1.0, 1.3), d.to_track_quat('Z', 'Y').to_euler(), m=tuft, parent=hd, seg=8, rings=5)), 'head')
     # wings: long folded wings along the sides, the flight feathers at their tips (a peacock's rusty, under barred coverts)
     for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
-        w = empty('wing', (-0.03 * k, sd * 0.074 * k, 0.335 * k), (math.radians(sd * -6), math.radians(-10), math.radians(sd * -3)), body_rig)
-        pivot(nm, (0.0, sd * 0.084 * k, 0.37 * k), body_rig)
-        tag(sphere('wingbase', 0.1 * k, (0, 0, 0), (1.12, 0.2, 0.42), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
-        for j in range(4):
-            e = math.radians(-6 - j * 4)
-            tag(feat_uv(paddle('prim', (0.11 - j * 0.01) * k, 0.03 * k, 0.01, wg, w, (-0.062 * k, sd * (0.008 - j * 0.002), -0.012 * k - j * 0.01 * k),
-                       (0, e - math.pi, math.radians(sd * (3 + j * 2))), curve=-sd * 0.1), (0.11 - j * 0.01) * k, 0.03 * k), nm, 'prim')
+        w = empty('wing', (-0.035 * k, sd * 0.052 * k, 0.355 * k), (math.radians(sd * -4), math.radians(-12), math.radians(sd * -2)), body_rig)      # (folded close along the side, its front up with the body)
+        pivot(nm, (0.0, sd * 0.07 * k, 0.38 * k), body_rig)
+        tag(sphere('wingbase', 0.1 * k, (0, 0, 0), (1.25, 0.16, 0.44), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
+        for j in range(4):                              # (the flight feathers tucked under its back edge: only their tips show)
+            e = math.radians(-8 - j * 3)
+            tag(feat_uv(paddle('prim', (0.085 - j * 0.008) * k, 0.028 * k, 0.008, wg, w, (-0.07 * k, sd * (0.004 - j * 0.002), -0.016 * k - j * 0.008 * k),
+                       (0, e - math.pi, math.radians(sd * (2 + j * 1.5))), curve=-sd * 0.08), (0.085 - j * 0.008) * k, 0.028 * k), nm, 'prim')
     tb = empty('tail', (-0.27 * k, 0, 0.36 * k), (0, 0, 0), body_rig)
     pivot('tail', (-0.25 * k, 0, 0.35 * k), body_rig)
     if not rooster:
