@@ -2789,15 +2789,15 @@ class Bird {
       }
     }
     if (F && !this.busy() && this !== F.hen && !(this.shooT > 0)) {        // right by him: a few quick steps out of his way
-      const p = this.root.position, dx = p.x - F.x, dz = p.z - F.z, d = Math.hypot(dx, dz);
-      if (d < 0.42) {
+      const p = this.root.position, dx = p.x - F.x, dz = p.z - F.z, d = Math.hypot(dx, dz), wide = F.hen && F.hen.train && F.hen.cuddle;      // (him with the peacock: the others give them room)
+      if (d < (wide ? 0.85 : 0.42)) {
         let a0 = d > 1e-3 ? Math.atan2(dx, dz) : this.r() * 6.28, das = [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.2, -2.2];
         if (F.mv && F.dir !== undefined) {         // (he's walking her way: aside, off his line, not on ahead of him to be herded along)
           const rel = Math.atan2(Math.sin(a0 - F.dir), Math.cos(a0 - F.dir));
           if (Math.abs(rel) < 1.9) { const s = rel >= 0 ? 1 : -1, d0 = a0 - F.dir; a0 = F.dir; das = [s * 1.57, s * 1.15, s * 2.0, s * 0.8, s * 2.5, -s * 1.57, -s * 2.0, -s * 1.15, ...das.map(x => x + d0)]; }      // (or, hemmed in, any way out)
         }
         for (const da of das) {
-          const x = F.x + Math.sin(a0 + da) * 0.75, z = F.z + Math.cos(a0 + da) * 0.75;
+          const x = F.x + Math.sin(a0 + da) * (wide ? 1.1 : 0.75), z = F.z + Math.cos(a0 + da) * (wide ? 1.1 : 0.75);
           if (!this.free(x, z)) continue;
           this.act = null; this.wait = 0; this.then = null; this.eatAt = null; this.route = this.plan([[x, z]]); this.pace = 1.5; this.nextLeg();
           this.shooT = 0.9; if (this.plot.corn && this.plot.corn.left) this.feedIn = 1.0 + this.r() * 0.5;

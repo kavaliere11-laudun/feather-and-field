@@ -89,18 +89,21 @@ await shot('4_peacock_card');
 ok('a tap on the peacock: his card ("Indian Blue peafowl · Peacock")', cock.card === 'bird' && T.cock.test(cock.t) && !T.hen.test(cock.t), { card: cock.card, t: cock.t.slice(0, 400) });
 // Cuddle the peacock: the farmer comes, crouches by him and strokes him where he stands (never lifted), hearts
 await p.tap('.gsheet .gcuddle'); await run(0.4);
-const seen = new Set(); let lifted = 0, happy = false;
+const seen = new Set(); let lifted = 0, happy = false, closest = 9;
 for (let k = 0; k < 60; k++) {
   await run(0.5);
-  const q = await p.evaluate(gid => { const f = window.__farm, g = f.game(), Q = f.gamePlots().find(q => q.breed === 'pea'), x = Q.birds.find(y => y.gid === gid); return { carry: !!(x.cuddle && x.cuddle.carry), y: x.root.position.y, happy: g.happyLeft(g.bird(gid)) > 0 }; }, cock.gid);
+  const q = await p.evaluate(gid => { const f = window.__farm, g = f.game(), Q = f.gamePlots().find(q => q.breed === 'pea'), x = Q.birds.find(y => y.gid === gid), L = f.farmer();
+    const others = Q.birds.filter(y => y !== x && y.root.visible).map(y => { const w = y.root.getWorldPosition(new f.THREE.Vector3()); return Math.hypot(w.x - L.pos.x, w.z - L.pos.z); });
+    return { carry: !!(x.cuddle && x.cuddle.carry), y: x.root.position.y, happy: g.happyLeft(g.bird(gid)) > 0, others: Math.min(9, ...others) }; }, cock.gid);
   const d = await doing(); for (const n of d.split('/')) seen.add(n);
+  if (d.endsWith('stroke')) closest = Math.min(closest, q.others);
   if (q.carry) lifted++;
   happy = q.happy;
   if (seen.has('stroke') && k === [...seen].length) { /* */ }
   if (SHOTS && d.endsWith('stroke') && !seen.has('_shot')) { seen.add('_shot'); const w = await p.evaluate(gid => { const f = window.__farm, Q = f.gamePlots().find(q => q.breed === 'pea'), x = Q.birds.find(y => y.gid === gid); const v = x.root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(v.x, v.z, 1.6); f.step(1 / 30, 1); return 1; }, cock.gid); await p.waitForTimeout(200); await shot('5_stroke'); }
   if (seen.has('stroke') && !d.includes('stroke') && !d.includes('cuddling')) break;
 }
-ok('Cuddle the peacock: the farmer comes, crouches and strokes him where he stands (never picked up), the cuddle counted', seen.has('stroke') && !seen.has('hug') && lifted === 0 && happy, { seen: [...seen], lifted, happy });
+ok('Cuddle the peacock: the farmer comes, crouches and strokes him where he stands (never picked up), the cuddle counted, the peahens giving them room', seen.has('stroke') && !seen.has('hug') && lifted === 0 && happy && closest > 0.6, { seen: [...seen], lifted, happy, closest: +closest.toFixed(2) });
 // a peahen: picked up and held, as a hen is
 await run(4);
 const hen2 = await tapOn('hen');
