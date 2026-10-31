@@ -3458,6 +3458,17 @@ the birds already had.
   softer wing bars, a brighter train and fan with bolder eyes and a shimmer (never dull when stood up). A bug found on
   the way: a model with a morph had its height measured with the fan up (birds.js: `top` now from the standing shape), so
   his colours (blue breast) and his size-based things were off. Pictures sent; waiting for her verdict.
+- Audrey (31 Oct, on take three): "Peacock is better but peahen tail is odd and body shape needs rework to look more
+  smooth". **Take four**: the body one smooth shape, a chain of overlapping ellipsoids along the spine from the tail
+  coverts to the base of the neck (`SP`: widths and depths rising and falling smoothly, deepest at the belly, the breast
+  full and high), smoothed over after (common.py `metaball_mesh(smooth=4)`), fuller; the peahen's tail broad, closed and
+  rounded (nine feathers), carrying on the line of her back down, her tail coverts over its root.
+- Audrey (31 Oct, on take four): "Review the legs of both peacock and peahen the junction with the body is poor and the
+  shape of the legs and feet needs rework". **The legs**: the feathered thigh tapers down in the body's own shape to the
+  hock (`LEG_Y`, the leg's pivot there), where the bare leg starts with a knuckle; the tarsus stout, scaled down its
+  front, slanting forward from the hock to the foot; a foot pad, three long front toes and a short hind one, each in two
+  jointed parts with knuckles, thick at the base, with a dark claw; the foot turned out a little; his spur behind; the
+  flight feathers tucked further under the wing. Pictures sent; waiting for her verdict.
 - **The Garden Pavilion's five looks** (31 Oct; Audrey on its everyday look: "Yes, do the other looks (Recommended)"; on
   the five: "Yes, carry on (Recommended)"): coops.py `pavilion(look)`, `PV_LOOK`, `box_pea`, `shed_pea`, `cosy_pea`,
   `deluxe_pea`, `_pavilion_bits`, `thatch_roof`, `dome_frame`, `scaffold`, `minaret`, `inlay_flower`, `old_arch`.
