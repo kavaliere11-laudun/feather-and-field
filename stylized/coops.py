@@ -1136,25 +1136,25 @@ def pavilion(seed=19, name='house_pea', look=2):
         light_at(name, lx, ly, lz)
     # ---- the peacock's perch beside it on the right: a tall turned post on a stone foot, a crossbar on top (the Rustic's:
     # a forked branch stuck in the ground, a stick across; the Mended's: a plain new post)
-    qx, qy = W2 + 0.3, 0.12
+    qx, qy = W2 + 0.42, 0.12                            # (its bar across, so he perches on it facing the yard: main.js PEA_PERCH)
     if t == 0:
         objs.append(cyl('perchpost', 0.03, 0.98, (qx, qy, 0.47), (0.05, -0.04, 0), m=perch, verts=7, r2=0.022, bevel=0.0))
-        for sy in (-1, 1):
-            d = Vector((0, sy * 0.45, 1.0)).normalized()
-            objs.append(cyl('perchfork', 0.018, 0.16, Vector((qx + 0.02, qy, 0.94)) + d * 0.08, d.to_track_quat('Z', 'Y').to_euler(), m=perch, verts=6, r2=0.012, bevel=0.0))
-        objs.append(cyl('perchbar', 0.018, 0.46, (qx + 0.02, qy, 1.01), (math.radians(90), 0, 0.06), m=perch2, verts=7, bevel=0.0))
-        objs.append(cyl('perchtwine', 0.022, 0.03, (qx + 0.02, qy, 1.01), m=C('twinecord', '#74583a', rough=0.9), verts=6, bevel=0.0))
+        for sx in (-1, 1):
+            d = Vector((sx * 0.45, 0, 1.0)).normalized()
+            objs.append(cyl('perchfork', 0.018, 0.16, Vector((qx, qy + 0.02, 0.94)) + d * 0.08, d.to_track_quat('Z', 'Y').to_euler(), m=perch, verts=6, r2=0.012, bevel=0.0))
+        objs.append(cyl('perchbar', 0.018, 0.46, (qx, qy + 0.02, 1.01), (0.06, math.radians(90), 0), m=perch2, verts=7, bevel=0.0))
+        objs.append(cyl('perchtwine', 0.022, 0.03, (qx, qy + 0.02, 1.01), m=C('twinecord', '#74583a', rough=0.9), verts=6, bevel=0.0))
     else:
         if t > 1: objs.append(cyl('perchfoot', 0.08, 0.06, (qx, qy, 0.03), m=red2, verts=10, r2=0.06, bevel=0.005))
         objs.append(cyl('perchpost', 0.03, 0.95, (qx, qy, 0.06 + 0.475), m=perch, verts=10 if t > 1 else 4, bevel=0.0))
         if t > 1:
             for z in (0.3, 0.62):
                 objs.append(cyl('perchring', 0.036, 0.03, (qx, qy, z), m=perch2 if t < 4 else gold, verts=10, bevel=0.0))
-        objs.append(cyl('perchbar', 0.024, 0.5, (qx, qy, 1.02), (math.radians(90), 0, 0), m=perch, verts=10 if t > 1 else 4, bevel=0.0))
+        objs.append(cyl('perchbar', 0.024, 0.5, (qx, qy, 1.02), (0, math.radians(90), 0), m=perch, verts=10 if t > 1 else 4, bevel=0.0))
         if t > 1:
-            for sy in (-1, 1): objs.append(sphere('perchend', 0.03, (qx, qy + sy * 0.25, 1.02), m=gold, seg=8, rings=6))
-        objs.append(cyl('perchbrace', 0.012, 0.2, (qx, qy - 0.08, 0.95), (math.radians(-45), 0, 0), m=perch2, verts=6, bevel=0.0))
-        objs.append(cyl('perchbrace', 0.012, 0.2, (qx, qy + 0.08, 0.95), (math.radians(45), 0, 0), m=perch2, verts=6, bevel=0.0))
+            for sx in (-1, 1): objs.append(sphere('perchend', 0.03, (qx + sx * 0.25, qy, 1.02), m=gold, seg=8, rings=6))
+        objs.append(cyl('perchbrace', 0.012, 0.2, (qx - 0.08, qy, 0.95), (0, math.radians(45), 0), m=perch2, verts=6, bevel=0.0))
+        objs.append(cyl('perchbrace', 0.012, 0.2, (qx + 0.08, qy, 0.95), (0, math.radians(-45), 0), m=perch2, verts=6, bevel=0.0))
     block('pea', qx, qy, 0.12)
     # ---- at the plinth's front corners: terracotta urns with clipped round shrubs (the Rustic's: a cracked urn with a weed
     # at the left, the old carved arch leaning at the right; the Mended's: a bucket of plaster, a stack of new tiles; the
@@ -2055,8 +2055,8 @@ def red_barn(**kw):
     return r
 
 
-HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo, 'call': floating}
-LATER = ['pol', 'aya', 'call']                           # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct)
+HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo, 'call': floating, 'pea': pavilion}
+LATER = ['pol', 'aya', 'call', 'pea']                    # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct; the Garden Pavilion, 31 Oct)
 
 
 def pop_slider(style):
@@ -2071,7 +2071,8 @@ def pop_slider(style):
                'sil': (C('lacquer', '#b0312a', rough=0.4, coat=0.3), None),
                'pol': (C('milldoor', '#2f6a4f', rough=0.55, var=0.05, grain=0.2, grain_scale=G), C('trimw', '#efe9dc', rough=0.6)),
                'aya': (C('jg_teakd', '#5e3a20', rough=0.8, var=0.06, grain=0.3, grain_scale=G), C('jg_gold', '#c9a24a', rough=0.35, metal=0.7)),
-               'call': (C('fdoor_2', FLOAT_PAL['door'], rough=0.6, var=0.05), C('ftrim_2', FLOAT_PAL['trim'], rough=0.6))}[style]      # (the browser draws the ducks' k as big)
+               'call': (C('fdoor_2', FLOAT_PAL['door'], rough=0.6, var=0.05), C('ftrim_2', FLOAT_PAL['trim'], rough=0.6)),
+               'pea': (C('pv_red2', PV['red2'], rough=0.85, var=0.07), C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5))}[style]      # (the browser draws the ducks' k as big)
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))
@@ -3082,8 +3083,9 @@ def play_things(objs, t, k='rir'):
     elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
     elif P.get('frame') == 'dutch': dutch_swing(objs, *P['swing'])
     elif P.get('frame') == 'joglo': joglo_swing(objs, *P['swing'])
+    elif P.get('frame') == 'jhula': jhula_swing(objs, *P['swing'])
     else: swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
-    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_post)(objs, *P['cabbage'])
+    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
     if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
     if 'pit' in P: sand_pit(objs, *P['pit'])
@@ -3097,9 +3099,11 @@ def play_things(objs, t, k='rir'):
     if 'delft' in P: sand_delft(objs, *P['delft'])
     if 'tampah' in P: sand_tampah(objs, *P['tampah'])
     if 'candi' in P: sand_candi(objs, *P['candi'])
+    if 'kund' in P: sand_kund(objs, *P['kund'])
+    if 'mkund' in P: sand_kund(objs, *P['mkund'], marble=True)
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
-    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else xylophone)(objs, *P['xylo'])
+    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):
@@ -3120,6 +3124,7 @@ def play_info(t, k='rir'):
     elif 'delft' in P: dust = dict(at=g(P['delft']), w=DELFT_W - 0.14, d=DELFT_D - 0.14, y=0.105)
     elif 'tampah' in P: dust = dict(at=g(P['tampah']), r=TAMPAH_R - 0.04, y=0.075)
     elif 'candi' in P: dust = dict(at=g(P['candi']), w=CANDI_W - 0.2, d=CANDI_D - 0.2, y=0.135)
+    elif 'kund' in P or 'mkund' in P: dust = dict(at=g(P.get('kund') or P['mkund']), r=KUND_R - 0.04, y=0.1)
     else: dust = dict(at=g(P['dust']), w=SAND_W, d=SAND_D, y=0.105)
     out = dict(swing=dict(at=g(P['swing']), top=SWING_TOP, perch=SWING_PERCH, half=SWING_HALF), dust=dust,
                cabbage=dict(at=g(P['cabbage']), top=CAB_TOP, z=CAB_Z))
@@ -3138,6 +3143,7 @@ def play_info(t, k='rir'):
     elif 'delft' in P: sand = [g((P['delft'][0] + sx * (DELFT_W - DELFT_D) / 2, P['delft'][1])) + [DELFT_D / 2 + 0.1] for sx in (-1, 1)]
     elif 'tampah' in P: sand = [g(P['tampah']) + [TAMPAH_R + 0.07]]
     elif 'candi' in P: sand = [g((P['candi'][0] + sx * (CANDI_W - CANDI_D) / 2, P['candi'][1])) + [CANDI_D / 2 + 0.1] for sx in (-1, 1)]
+    elif 'kund' in P or 'mkund' in P: sand = [g(P.get('kund') or P['mkund']) + [KUND_R + 0.1]]
     else: dx, dy = P['dust']; sand = [g((dx - 0.22, dy)) + [0.42], g((dx + 0.22, dy)) + [0.42]]
     cx, cy = P['cabbage']
     holder = [[round(cx + lx, 3), round(-(cy + ly), 3), 0.06] for (lx, ly) in TRIPOD] if P.get('tripod') else [[cx, round(-(cy + 0.28), 3), 0.12 if P.get('holder') == 'stump' else 0.08]]
@@ -3145,6 +3151,7 @@ def play_info(t, k='rir'):
     if P.get('frame') == 'tree': keep.append(g((P['swing'][0] + TREE_DX, P['swing'][1])) + [0.12])          # (the apple tree's trunk)
     if P.get('frame') == 'logs': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.13] for sx in (-1, 1)]   # (its posts, braced)
     if P.get('frame') == 'joglo': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.1] for sx in (-1, 1)]   # (its posts)
+    if P.get('frame') == 'jhula': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.08] for sx in (-1, 1)]   # (its posts)
     if 'crib' in P: keep.append(g((P['crib'][0] + CRIB_PINE[0], P['crib'][1] + CRIB_PINE[1])) + [0.17])            # (the crib's young pine)
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
     if 'xylo' in P: keep.append(g(P['xylo']) + [0.2])
@@ -3212,9 +3219,10 @@ def pen_tier(t, bk='rir'):
     return root
 
 
-def fence_tier(t, seed=37):
-    """A look's fence: broken (t0), mended (t1), the standard one with flowers along its front (t3), white pickets (t4)."""
-    keep = coop.PEN; coop.PEN = pen_layout(t)
+def fence_tier(t, seed=37, bk='rir'):
+    """A look's fence: broken (t0), mended (t1), the standard one with flowers along its front (t3), white pickets (t4) (bk: a
+    breed's own yard, if it's not the shared one's size: the peafowl's Rustic and Mended, fence_t0_pea)."""
+    keep = coop.PEN; coop.PEN = pen_layout(t, bk)
     try:
         if t == 4:
             n0 = len(LIGHTS.get('fence_dx', [])); root = deluxe_fence()
@@ -3251,7 +3259,7 @@ def fence_tier(t, seed=37):
             if random.random() < 0.5: objs.append(sphere('bleaf', 0.05, (x, y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
             objs.append(sphere('bflower', 0.026, (x, y, 0.08 + random.uniform(0, 0.07)), m=C('dxf%d' % (i % 6), FLOWERS[i % 6], rough=0.5), ico=1))
         _own(objs, root)
-    root.name = 'fence_t%d' % t
+    root.name = 'fence_t%d' % t + ('' if bk == 'rir' else '_' + bk)
     return root
 
 
@@ -3261,7 +3269,7 @@ def pen_info(t, k='rir'):
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan') else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume', 'hauz') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan') else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
 
@@ -6067,18 +6075,103 @@ def deluxe_pea():
     return r
 
 
-# ---- the Garden Pavilion's gardens (its own, to come: for now the shared pens' places)
+# ---- the Garden Pavilion's gardens (its own): a terracotta bowl in the small pens, a brass one in the Cosy; Cosy: a jhula
+# (a swing on two sandstone posts under a cusped arch, a little dome over it), a round sandstone basin of sand (a kund), the
+# cabbage from the arm of a brass lamp-post; Deluxe: a white marble basin of sand inlaid with flowers, a hauz for water (an
+# eight-sided marble pool, a lotus in its middle with a little jet), a feeder like a tiny marble kiosk with a white dome, a
+# jaltarang of porcelain cups to peck, the swing, the lamp-post. Room kept clear right of the house for the peacock's perch
+# and his train
+# (the Rustic's and the Mended's yards as big as the Snug's, 31 Oct: room for the peacock's train; their own fences)
 PENS_BY['pea'] = {
-    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(0.75, -1.32), dish=(-0.75, -1.45), hay=None, hay_rot=0, sack=None,
-            straw=((0.0, -1.3, 0.25, 22), (-0.7, -0.95, 0.2, 14))),
-    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(1.05, -1.25), dish=(-1.0, -1.48), hay=None, hay_rot=0, sack=None,
-            straw=((0.35, -1.6, 0.3, 26), (-0.95, -1.0, 0.25, 20))),
-    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(1.5, -2.3), dish=(0.75, -2.3), hay=(1.7, 0.45), hay_rot=90, sack=None,
-            straw=((1.7, 0.45, 0.4, 35), (-0.6, -1.6, 0.35, 30), (0.6, -1.3, 0.3, 25))),
-    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(1.75, -2.45), dish=(-1.75, -1.85), hay=(2.0, 0.5), hay_rot=90,
-            sack=None, pebbles=10, straw=((0.5, -1.4, 0.3, 25), (2.0, 0.5, 0.4, 35))),
+    0: dict(box=(-1.6, 1.75, -2.45, 0.75), gate=3, feeder=(-1.05, -1.75), dish=(0.25, -2.05), bowl='terracotta', hay=None, hay_rot=0, sack=None,
+            straw=((-0.3, -1.4, 0.3, 26), (-1.0, -1.0, 0.25, 18))),
+    1: dict(box=(-1.6, 1.75, -2.45, 0.75), gate=3, feeder=(-1.1, -1.7), dish=(0.2, -2.05), bowl='terracotta', hay=None, hay_rot=0, sack=(-1.25, 0.3),
+            straw=((-0.35, -1.5, 0.3, 28), (-1.0, -1.0, 0.25, 20))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(1.5, -2.3), dish=(0.75, -2.3), bowl='brass', hay=(-1.72, 0.45), hay_rot=90, sack=None,
+            straw=((-1.72, 0.45, 0.4, 35), (-0.6, -1.6, 0.35, 30), (0.6, -1.3, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(1.75, -2.45), feeder_style='chhatri', dish=(-1.75, -1.85), water='hauz', hay=(-2.0, 0.5), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.5, -1.4, 0.3, 25), (-2.0, 0.5, 0.4, 35))),
 }
-PLAY_BY['pea'] = {}
+PLAY_BY['pea'] = {3: dict(swing=(-1.4, -1.95), kund=(1.45, -1.3), cabbage=(-1.2, -1.02), frame='jhula', holder='lamp'),
+                  4: dict(swing=(-1.65, -0.8), mkund=(1.55, -1.25), cabbage=(0.9, -2.55), xylo=(-1.1, -2.6), frame='jhula', holder='lamp', bars='jaltarang')}
+KUND_R = 0.33                                                     # the Cosy pavilion's round sandstone basin of sand (and the Deluxe's marble one)
+
+
+def jhula_swing(objs, x, y):
+    """The Garden Pavilion's swing: two slender red sandstone posts on stepped bases, a beam across under a cusped arch, a
+    little white dome with a gold finial over its middle."""
+    red, red2 = C('pv_red', PV['red'], rough=0.85, var=0.08), C('pv_red2', PV['red2'], rough=0.85, var=0.07)
+    marble = C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5); gold = C('pv_gold', PV['gold'], rough=0.3, metal=0.75)
+    for sx in (-1, 1):
+        px = x + sx * (SWING_HALF + 0.05)
+        objs.append(box('jbase', (0.1, 0.1, 0.06), (px, y, 0.03), m=red2, bevel=0.006, segs=1))
+        objs.append(cyl('jpost', 0.028, SWING_TOP + 0.04, (px, y, 0.06 + (SWING_TOP + 0.04) / 2), m=red, verts=8, bevel=0.0))
+        objs.append(cyl('jcap', 0.045, 0.04, (px, y, SWING_TOP + 0.1), m=red2, verts=8, r2=0.032, bevel=0.0))
+        objs.append(sphere('jknob', 0.022, (px, y, SWING_TOP + 0.14), m=gold, seg=8, rings=5))
+    objs.append(box('jbeam', (2 * SWING_HALF + 0.2, 0.06, 0.045), (x, y, SWING_TOP + 0.08), m=red2, bevel=0.005, segs=1))
+    objs.append(cyl('swbar', 0.02, 2 * SWING_HALF + 0.1, (x, y, SWING_TOP), (0, math.radians(90), 0), m=red2, verts=10, bevel=0.0))
+    cusped_arch(objs, x, y + 0.02, SWING_TOP - 0.15, 2 * SWING_HALF + 0.06, 0.14, marble, t=0.02, lobes=5)
+    onion(objs, 'jdome', x, y, SWING_TOP + 0.1, 0.06, 0.12, marble, None, n=12, ribs=0)
+    kalash(objs, x, y, SWING_TOP + 0.215, 0.55, gold)
+
+
+def cabbage_lamp(objs, x, y):
+    """The Garden Pavilion's way of hanging the cabbage: a brass lamp-post on a lotus base, an arm at the top, a little brass
+    lamp (a diya under a dome) on its head."""
+    brass = C('pv_brass', '#c99a3c', rough=0.3, metal=0.85); red2 = C('pv_red2', PV['red2'], rough=0.85, var=0.07)
+    px, py = x, y + 0.28
+    objs.append(cyl('lbase', 0.07, 0.05, (px, py, 0.025), m=red2, verts=8, r2=0.055, bevel=0.004))
+    for k in range(8):                                   # its lotus
+        a = k / 8 * math.tau
+        objs.append(sphere('llotus', 0.028, (px + math.cos(a) * 0.035, py + math.sin(a) * 0.035, 0.065), (1.3, 0.5, 0.7), (0, math.radians(35), a), m=brass, seg=8, rings=5))
+    objs.append(cyl('lpole', 0.016, CAB_TOP + 0.02, (px, py, 0.06 + (CAB_TOP + 0.02) / 2), m=brass, verts=10, r2=0.012, bevel=0.0))
+    for z in (0.22, 0.42): objs.append(sphere('lring', 0.024, (px, py, z), (1, 1, 0.6), m=brass, seg=10, rings=6))
+    objs.append(cyl('carm', 0.012, 0.3, (px, py - 0.14, CAB_TOP), (math.radians(90), 0, 0), m=brass, verts=8, bevel=0.0))
+    objs.append(cyl('cbrace', 0.008, 0.16, (px, py - 0.06, CAB_TOP - 0.07), (math.radians(-40), 0, 0), m=brass, verts=6, bevel=0.0))
+    objs.append(cyl('ldiya', 0.035, 0.03, (px, py, CAB_TOP + 0.09), m=brass, verts=10, r2=0.05, bevel=0.0))
+    objs.append(sphere('lflame', 0.012, (px, py, CAB_TOP + 0.125), (0.7, 0.7, 1.4), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), seg=8, rings=5))
+    onion(objs, 'ldome', px, py, CAB_TOP + 0.16, 0.04, 0.08, brass, None, n=10, ribs=0)
+
+
+def sand_kund(objs, x, y, marble=False):
+    """The Cosy pavilion's sand bath: a round basin of red sandstone with a stepped rim, full of sand (the Deluxe's: white
+    marble, a ring of inlaid flowers, a gold edge)."""
+    st, st2 = (C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5), C('pv_marble2', '#efebe2', rough=0.4, var=0.02)) if marble else (C('pv_red', PV['red'], rough=0.85, var=0.08), C('pv_red2', PV['red2'], rough=0.85, var=0.07))
+    sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    R = KUND_R
+    objs.append(cyl('kstep', R + 0.06, 0.05, (x, y, 0.025), m=st2, verts=24, bevel=0.006))
+    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.04, major_segments=32, minor_segments=8, location=(x, y, 0.08))
+    o = bpy.context.object; setmat(o, st); [setattr(p_, 'use_smooth', True) for p_ in o.data.polygons]; objs.append(o)
+    if marble:
+        bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.008, major_segments=32, minor_segments=4, location=(x, y, 0.12))
+        o = bpy.context.object; setmat(o, C('pv_gold', PV['gold'], rough=0.3, metal=0.75)); objs.append(o)
+        g, r = C('pv_inlay', '#2f6e4e', rough=0.3, spec=0.5), C('pv_inlay2', '#a8323a', rough=0.3, spec=0.5)
+        for k in range(10):                              # flowers round its side
+            a = k / 10 * math.tau; cx_, cy_ = x + math.cos(a) * (R + 0.062), y + math.sin(a) * (R + 0.062)
+            objs.append(sphere('kinlay', 0.016, (cx_, cy_, 0.03), (0.35, 1.0, 0.8), (0, 0, a), m=r if k % 2 else g, seg=8, rings=4))
+    objs.append(cyl('ksand', R - 0.01, 0.03, (x, y, 0.085), m=sand, verts=28, bevel=0.0))
+    for k, (dx, dy, s_) in enumerate(((-0.1, 0.06, 0.1), (0.12, -0.05, 0.09))):
+        objs.append(sphere('kmound', s_, (x + dx, y + dy, 0.095), (1.3, 1.0, 0.2), (0, 0, k), m=sand2 if k else sand, ico=2, disp=0.15, seed=k + 760))
+    for k in range(4):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('kspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (R + 0.14), y + math.sin(a) * (R + 0.14), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 770))
+
+
+def jaltarang(objs, x, y):
+    """The Deluxe pavilion's jaltarang to peck at: six white porcelain cups in a row, biggest to smallest, each with a little
+    water and a blue rim, on a low carved teak board; a slim beater by it."""
+    teak = C('pv_teak', '#6b4428', rough=0.7, var=0.06, grain=0.3, grain_scale=G); por = C('pv_porcelain', '#f8f6f1', rough=0.25, spec=0.6)
+    blue = C('pv_porblue', '#2f5aa8', rough=0.3, spec=0.5); water = mat('water', '#7fb8c8', rough=0.05, spec=0.8)
+    objs.append(box('jboard', (0.22, 0.38, 0.05), (x, y, 0.025), m=teak, bevel=0.008, segs=1))
+    for sy in (-1, 1): objs.append(sphere('jend', 0.03, (x, y + sy * 0.2, 0.03), (1.4, 0.6, 0.8), m=teak, seg=10, rings=6))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; r = 0.025 - k * 0.002; h = 0.05 - k * 0.004
+        objs.append(cyl('xbar', r * 0.7, h, (x, yy, 0.05 + h / 2), m=por, verts=14, r2=r, bevel=0.0))
+        bpy.ops.mesh.primitive_torus_add(major_radius=r, minor_radius=0.0025, major_segments=16, minor_segments=4, location=(x, yy, 0.05 + h))
+        o = bpy.context.object; setmat(o, blue); objs.append(o)
+        objs.append(cyl('jwater', r * 0.85, 0.004, (x, yy, 0.05 + h * 0.7), m=water, verts=12, bevel=0.0))
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.09, y + 0.24, 0.012), (math.radians(90), 0, math.radians(30)), m=teak, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.014, (x + 0.13, y + 0.31, 0.014), m=C('pv_brass', '#c99a3c', rough=0.3, metal=0.85), seg=8, rings=5))
 PLAY_BY['aya'] = {3: dict(swing=(-1.4, -1.95), tampah=(1.35, -1.25), cabbage=(-1.2, -1.02), frame='joglo', holder='kentongan'),
                   4: dict(swing=(-1.65, -0.8), candi=(1.55, -1.15), cabbage=(0.9, -2.55), xylo=(-1.1, -2.6), frame='joglo', holder='kentongan', bars='gamelan')}
 TAMPAH_R = 0.33                                                   # the Cosy Javanese house's woven tray of sand

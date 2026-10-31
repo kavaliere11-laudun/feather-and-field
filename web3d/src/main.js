@@ -1163,13 +1163,15 @@ const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence
   pol: [['box_pol', 'fence_t0', 'pen_t0_pol'], ['shed_pol', 'fence_t1', 'pen_t1_pol'], ['house_pol', 'fence', 'pen_base'], ['cosy_pol', 'fence_t3', 'pen_t3_pol'], ['deluxe_pol', 'fence_t4', 'pen_t4_pol']],      // (release 7: the Little Windmill's)
   aya: [['box_aya', 'fence_t0', 'pen_t0_aya'], ['shed_aya', 'fence_t1', 'pen_t1_aya'], ['house_aya', 'fence', 'pen_base'], ['cosy_aya', 'fence_t3', 'pen_t3_aya'], ['deluxe_aya', 'fence_t4', 'pen_t4_aya']],
   // (the call ducks' Floating House, 30 Oct: its five looks from the start, its own Snug yard: the pond where the shared one has straw)
-  call: [['box_call', 'fence_t0', 'pen_t0_call'], ['shed_call', 'fence_t1', 'pen_t1_call'], ['house_call', 'fence', 'pen_t2_call'], ['cosy_call', 'fence_t3', 'pen_t3_call'], ['deluxe_call', 'fence_t4', 'pen_t4_call']] };      // (and the Javanese House's)      // (the Stone Cottage's)      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
+  call: [['box_call', 'fence_t0', 'pen_t0_call'], ['shed_call', 'fence_t1', 'pen_t1_call'], ['house_call', 'fence', 'pen_t2_call'], ['cosy_call', 'fence_t3', 'pen_t3_call'], ['deluxe_call', 'fence_t4', 'pen_t4_call']],      // (and the Javanese House's)      // (the Stone Cottage's)      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
+  // (the peafowl's Garden Pavilion, 31 Oct: its five looks and its own gardens)
+  pea: [['box_pea', 'fence_t0_pea', 'pen_t0_pea'], ['shed_pea', 'fence_t1_pea', 'pen_t1_pea'], ['house_pea', 'fence', 'pen_base'], ['cosy_pea', 'fence_t3', 'pen_t3_pea'], ['deluxe_pea', 'fence_t4', 'pen_t4_pea']] };
 const LOOKS5 = !GAME_MODE && params.has('looks');
 // (a breed's looks in the game once its upgrades are (game.js UPGRADES); on the test page's ?looks as soon as they're made)
 const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (breed === 'call' || (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5)));      // (the call ducks': always)
 function coopLook(plot) {
   const t = Math.max(0, Math.min(4, plot.tier || 0)), T = hasLooks(plot.breed) ? TIER_LOOK[plot.breed][t] : null;
-  if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4 && plot.breed !== 'call', penT: t };      // (no rooster on the ducks' roof: their lighthouse and pennant)
+  if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4 && plot.breed !== 'call' && plot.breed !== 'pea', penT: t };      // (no rooster on the ducks' roof: their lighthouse and pennant; nor on the Garden Pavilion's dome: its gold finial)
   return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
 }
 // a coop's pen for its birds (where they may walk, what's in the way, the feeder, the gate, where they start): the Snug
@@ -1259,7 +1261,7 @@ function batchCoops() {
 // where the eggs lie, from her seat: under her breast, towards the window (further in, the window's top would hide them)
 const NEST_SLOTS = [[0, 0.08], [0.06, 0.06], [-0.06, 0.07], [0.045, 0.12], [-0.045, 0.12], [0.0, 0.03]];
 const nestOf = plot => COOPS.nests['house_' + plot.breed];
-const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf', call: '#d3e8de' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
+const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sil: '#efe4cf', call: '#d3e8de', pea: '#eadcbc' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
 const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
 // the call ducks in their pen (callpen.js): their pond (coops.json ponds), the Deluxe's way over its bridge (paths), the
@@ -2266,6 +2268,15 @@ function placeBlob(b) {
 }
 
 // a bird: walks where there's room, pecks, scratches, looks round, stretches her wings, rests; roosters crow; chicks keep near mum
+// the peacock (31 Oct): his perch beside the Garden Pavilion (stylized/coops.py pavilion: the same spot in every look; the
+// pen's frame, glTF axes: x, its bar's top, z), the points down his train and out to its sides (how far along 0..1, how wide)
+const PEA_PERCH = [1.04, 1.045, -0.12];
+const TRAIN_SAMPLES = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.85, 1].map(t => [t, t < 0.1 ? 0 : 0.05 + 0.1 * t]);
+function trainBack(rig) {                // how far behind his feet his train reaches, lying (his model's, without the fan)
+  const a = rig.mesh.geometry.attributes.position; let z = 0;
+  for (let i = 0; i < a.count; i++) z = Math.min(z, a.getZ(i));
+  return -z;
+}
 class Bird {
   constructor(plot, breed, kind, colour, pos, yaw, r) {
     this.plot = plot; this.breed = breed; this.kind = kind; this.colour = colour; this.r = r;
@@ -2281,6 +2292,7 @@ class Bird {
       const t = this.trainShadow = new THREE.Mesh(blobGeo, blobMat.clone());
       t.rotation.x = -Math.PI / 2; t.position.set(0, -0.011, -0.66); t.scale.set(1.25, 3.1, 1); t.renderOrder = 1; this.root.add(t);      // (he faces +z)
     }
+    if (breed === 'pea' && kind === 'rooster') this.train = { back: trainBack(this.rig) };      // (31 Oct: how far behind him his train lies)
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
@@ -2307,7 +2319,70 @@ class Bird {
     const P = penOf(this.plot), Y = P.yard;
     if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
     for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
+    if (!this.train) for (const b of this.flock) if (b.train && b !== this && b.onTrain(x, z)) return false;      // (nobody walks over the peacock's train)
     return !this.inBlock(x, z, notFarmer);
+  }
+  // ---- a peacock's train (31 Oct, the peafowl): it lies a long way behind him, so he never turns or steps where it would go
+  // through the fence, the house, what stands in the yard or one of the others; nor walks where it would; they keep off it.
+  // (x, z) facing yaw: the points down its middle and out to its sides
+  trainEach(x, z, yaw, fn) {
+    const s = Math.sin(yaw), c = Math.cos(yaw), L = this.train.back;
+    for (const [t, w] of TRAIN_SAMPLES) {
+      const d = 0.42 + (L - 0.42) * t;           // (from where it comes down low behind him: nearer, it's up over a bowl or a sand pit's edge)
+      for (const sd of w ? [-1, 0, 1] : [0]) if (fn(x - s * d + c * sd * w, z - c * d - s * sd * w)) return true;
+    }
+    return false;
+  }
+  trainClear(x, z, yaw, birds = true) {     // (birds: nor over one of the others' feet)
+    if (!this.train || this.plot.kind !== 'coop' || this.stay) return true;
+    const P = penOf(this.plot), Y = P.yard, m = 0.1;
+    return !this.trainEach(x, z, yaw, (px, pz) => {
+      if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return true;
+      for (const o of P.obstacles) { const dx = px - o[0], dz = pz - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return true; }
+      if (this.inBlock(px, pz, true)) return true;
+      if (birds) for (const b of this.flock) if (b !== this && b.root.visible && !b.asleep && Math.hypot(b.root.position.x - px, b.root.position.z - pz) < 0.08) return true;
+      return false;
+    });
+  }
+  // which way to face to show off his fan: nearest to the way he's facing, with room for it, turning round to it without his
+  // train going through anything (null: nowhere)
+  displayYaw() {
+    const p = this.root.position, y0 = this.root.rotation.y;
+    for (const da of [0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6, 2.1, -2.1, 2.6, -2.6]) {
+      if (!this.fanClear(y0 + da)) continue;
+      let ok = true;
+      for (let k = 1, n = Math.ceil(Math.abs(da) / 0.2); k <= n && ok; k++) ok = this.trainClear(p.x, p.z, y0 + da * k / n, false);
+      if (ok) return y0 + da;
+    }
+    return null;
+  }
+  settleTrain() {                          // (just put in his yard: turned so his train lies clear, or moved over to where it does)
+    const p = this.root.position, Y = penOf(this.plot).yard;
+    for (let k = 0; k < 400; k++) {
+      const near = k < 16, x = near ? p.x : Y.min[0] + this.r() * (Y.max[0] - Y.min[0]), z = near ? p.z : Y.min[2] + this.r() * (Y.max[2] - Y.min[2]);
+      const y = near ? this.root.rotation.y + k * Math.PI / 8 : this.r() * 2 * Math.PI;
+      if ((near || this.free(x, z)) && this.trainClear(x, z, y)) { p.x = x; p.z = z; this.root.rotation.y = y; this.lastYaw = y; this.trainOk = y; this.trainAt = [x, z]; this.target.copy(p); return true; }
+    }
+    return false;
+  }
+  onTrain(x, z) {                          // (x, z) on his train, lying where it is now?
+    if (this.asleep || this.roost) return false;
+    const p = this.root.position, y = this.root.rotation.y, s = Math.sin(y), c = Math.cos(y), dx = x - p.x, dz = z - p.z;
+    const back = -(dx * s + dz * c), side = Math.abs(dx * c - dz * s);
+    if (this.A.fan > 0.3) return back > 0.05 && back < 0.55 && side < 1.15;      // (his fan up: not under it)
+    return back > 0.2 && back < this.train.back + 0.08 && side < 0.07 + 0.13 * Math.min(1, back / this.train.back);
+  }
+  // his fan up: room for it all round, a great half circle across behind him (facing y)
+  fanClear(y = this.root.rotation.y) {
+    if (!this.train || this.plot.kind !== 'coop') return true;
+    const P = penOf(this.plot), Y = P.yard, p = this.root.position, s = Math.sin(y), c = Math.cos(y), m = 0.12;
+    for (const w of [-1.05, -0.75, -0.4, 0, 0.4, 0.75, 1.05]) {
+      const px = p.x - s * 0.3 + c * w, pz = p.z - c * 0.3 - s * w;
+      if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
+      for (const o of P.obstacles) { const dx = px - o[0], dz = pz - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
+      if (this.inBlock(px, pz, true)) return false;
+    }
+    return true;
   }
   inBlock(x, z, notFarmer = false) {
     for (const o of this.plot.block || []) { if (o[3] === this || (notFarmer && o === this.plot.pb) || (notFarmer === true && o === this.plot.fb)) continue; const dx = x - o[0], dz = z - o[1], r = o === this.plot.fb && this.cuddle && !this.cuddle.greet ? 0.3 : o[2]; if (dx * dx + dz * dz < r * r) return true; }      // (notFarmer: him and his pail, or 'pail': just that; the hen he's called may come up close in front of him)
@@ -2320,6 +2395,7 @@ class Bird {
     const reach = 0.22 * this.rig.scale / 0.5, Y = penOf(this.plot).yard, m = 0.12;
     const px = x + Math.sin(yaw) * reach, pz = z + Math.cos(yaw) * reach;
     if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
+    if (this.train) { const p = this.root.position; if (this.trainClear(p.x, p.z, yaw, false) && !this.trainClear(x, z, yaw, false)) return false; }      // (the peacock: nor a step that takes his train's edge into something)
     return !this.inBlock(px, pz, this.cuddle && !this.cuddle.greet ? true : false);      // (the hen he's called: her beak may come up to him, he's reaching for her)
   }
   roomAt(x, z) {
@@ -2342,6 +2418,7 @@ class Bird {
       if (mum && i < 20) { const a = this.r() * 6.28, d = 0.28 + this.r() * 0.3; x = mum.x + Math.cos(a) * d; z = mum.z + Math.sin(a) * d; }     // chicks keep near mum
       else { x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]); z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]); }
       if (!this.free(x, z) || (startFree && !this.clearPath(p.x, p.z, x, z))) continue;
+      if (this.train && i < 26) { const a = Math.atan2(x - p.x, z - p.z); if (!this.trainClear(p.x, p.z, a) || !this.trainClear(x, z, a)) continue; }      // (the peacock: his train clear as he sets off and where he stops)
       const room = this.roomAt(x, z), need = this.kind === 'chick' ? 0.3 : ROOM;
       if (room >= need) { this.target.set(x, p.y, z); return; }
       if (room > bestRoom) { bestRoom = room; best = [x, z]; }
@@ -2368,7 +2445,8 @@ class Bird {
     if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
     if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
     if (x < 0.55) return { type: 'flap', left: 0.9 };
-    if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
+    if (this.train) { const p = this.root.position, f = x < 0.64 && this.trainClear(p.x, p.z, this.root.rotation.y) ? this.displayYaw() : null; if (f !== null) return { type: 'display', left: 6 + this.r() * 5, face: f }; }      // (a peacock doesn't crow: he raises his fan and shows it off)
+    else if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
     if (x < (rooster ? 0.69 : 0.59) && !this.mum) return { type: 'rest', left: 3 + this.r() * 4 };
     if (x < (rooster ? 0.74 : 0.65)) return { type: 'ruffle', left: 0.75 };             // a quick shake of the feathers
     return null;
@@ -2389,9 +2467,10 @@ class Bird {
   houseBox() { const f = this.plot.frame; f.updateMatrixWorld(true); return { inv: new THREE.Matrix4().copy(f.matrixWorld).invert(), lo: HOUSE_LO, hi: HOUSE_HI }; }
   goToBed() {
     this.act = null; this.route = null; this.then = null; this.wait = 0; this.proudGoal = 0;
-    this.roost = { phase: 'go', t: 0 };
+    this.roost = { phase: 'go', t: 0, perch: !!this.train };
   }
   sleepNow() {                             // inside for the night: out of sight, just inside the pop door
+    if (this.train) return this.perchSleep();
     const G = nestOf(this.plot);
     this.roost = null; this.asleep = true; this.act = null; this.route = null; this.then = null;
     this.root.position.set(G.pop[0], G.house, D2 - 0.3); this.root.rotation.y = 0; this.root.visible = false;
@@ -2399,6 +2478,7 @@ class Bird {
     if (inside.open && !inside.busy && inside.plot === this.plot) insideArrive(this);      // (you're inside: she comes in where you see her)
   }
   wakeUp() {                               // out again: from just inside the pop door, down the ramp into the yard
+    if (this.perched) { this.asleep = false; this.perched = false; this.roost = { phase: 'stand', t: 0, perch: true }; return; }
     const G = nestOf(this.plot), ground = 0.015, Y = penOf(this.plot).yard;
     this.asleep = false; this.root.visible = true; this.rig.indoor(this.houseBox());
     let spot = null;
@@ -2409,7 +2489,53 @@ class Bird {
     spot = spot || [G.foot[0], G.foot[1] + 0.3];
     this.roost = { phase: 'out', t: 0, path: [[G.pop[0], G.pop[1] + 0.02, G.house], [G.foot[0], G.foot[1], ground], [spot[0], spot[1], ground]] };
   }
+  // the peacock's night (31 Oct; Audrey: "On his perch (Recommended)"): at bedtime over to the foot of his perch by the house,
+  // up onto it with a beat of his wings, round to face the yard and settled down on it, his train hanging straight down; in
+  // the morning up on his feet, down into the yard with a flutter, and his fan up
+  perchSleep() {
+    this.roost = null; this.asleep = true; this.perched = true; this.act = null; this.route = null; this.then = null;
+    this.root.position.set(PEA_PERCH[0], PEA_PERCH[1], PEA_PERCH[2]); this.root.rotation.y = 0; this.root.visible = true; this.shadowY = 0.015;
+    const A = this.A; this.hangGoal = 1; this.fanGoal = 0;
+    Object.assign(A, { hang: 1, fan: 0, sit: 1, sleep: 0, brood: 1, walk: 0, flap: 0, peck: 0, crow: 0, ruffle: 0, kick: 0, lookYaw: 0, lookTilt: 0, turn: 0, hopT: -1 });
+    if (this.trainShadow) this.trainShadow.visible = false;
+    this.rig.pose(A);      // (dozing, settled down on it, his neck drawn in: not the shut-eyed look, the shader for it has no room for his train's shapes)
+  }
+  perchStep(dt) {
+    const R = this.roost, p = this.root.position, o = { walking: false, sit: 0, flap: 0, ruffle: 0, sing: 0, cluck: 0, kawk: 0 };
+    const Y = penOf(this.plot).yard, foot = [Math.min(Math.max(PEA_PERCH[0], Y.min[0] + 0.1), Y.max[0] - 0.1), Y.min[2] + 0.12];
+    R.t += dt;
+    if (R.phase === 'go') {                  // over to the foot of his perch
+      const r = this.stepToward(foot[0], foot[1], dt); o.walking = r.walking;
+      if (r.arrived || R.t > 20 || (r.blocked && R.t > 4)) { R.phase = 'up'; R.t = 0; R.from = p.clone(); R.to = PEA_PERCH; }
+    } else if (R.phase === 'up' || R.phase === 'down') {      // a flutter up onto it, or down off it
+      const u = Math.min(1, R.t / 1.1), e = u * u * (3 - 2 * u), to = R.to;
+      p.x = R.from.x + (to[0] - R.from.x) * e; p.z = R.from.z + (to[2] - R.from.z) * e;
+      p.y = R.from.y + (to[1] - R.from.y) * e + Math.sin(u * Math.PI) * 0.3;
+      this.root.rotation.y = Math.atan2(to[0] - R.from.x, to[2] - R.from.z);
+      o.flap = u < 0.9 ? 1 : 0; this.shadowY = 0.015;
+      this.hangGoal = R.phase === 'up' ? (u > 0.3 ? 1 : 0) : (u > 0.45 ? 0 : 1);
+      if (u >= 1) {
+        if (R.phase === 'up') { R.phase = 'turn'; R.t = 0; }
+        else {
+          p.y = 0.015; this.shadowY = undefined; this.roost = null; this.wait = 0.4; this.trainOk = this.root.rotation.y; this.trainAt = [p.x, p.z];
+          const fy = this.displayYaw(); if (fy !== null) { this.act = { type: 'display', left: 6 + this.r() * 2, face: fy }; this.wait = 6; }      // good morning: his fan
+        }
+      }
+    } else if (R.phase === 'turn') {         // round on his perch to face the yard
+      const t = this.turnTo(0, dt * 0.6); o.walking = t.walking;
+      if (t.diff < 0.05 || R.t > 3) this.perchSleep();
+    } else if (R.phase === 'stand') {        // the morning: up on his feet
+      o.sit = Math.max(0, 1 - R.t / 0.8); o.brood = R.t < 0.5; this.hangGoal = 1; this.shadowY = 0.015;
+      if (R.t > 1.0) {
+        let sp = [foot[0], foot[1] + 0.5];
+        for (let k = 0; k < 12; k++) { const x = foot[0] + (this.r() - 0.5) * 0.6, z = foot[1] + 0.35 + this.r() * 0.4; if (this.free(x, z) && this.trainClear(x, z, Math.atan2(x - p.x, z - p.z))) { sp = [x, z]; break; } }
+        R.phase = 'down'; R.t = 0; R.from = p.clone(); R.to = [sp[0], 0.015, sp[1]];
+      }
+    }
+    return o;
+  }
   roostStep(dt) {
+    if (this.roost.perch) return this.perchStep(dt);
     const R = this.roost, p = this.root.position, o = { walking: false, sit: 0, flap: 0, ruffle: 0, sing: 0, cluck: 0, kawk: 0 };
     const G = nestOf(this.plot), FL = G.house, ground = 0.015;
     const atPop = p.y > FL - 0.12 && p.z > D2 - 0.36 && p.z < D2 + 0.34;
@@ -2436,7 +2562,9 @@ class Bird {
   tapped() {                               // a hop and a flap (a rooster may crow)
     if (this.laying || this.roost || this.asleep) return;      // a laying hen isn't disturbed, nor one going to bed
     this.hopT = 0;
-    if (this.kind === 'rooster' && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
+    const fy = this.train && this.r() < 0.6 ? this.displayYaw() : null;
+    if (fy !== null) { this.hopT = -1; this.act = { type: 'display', left: 6, face: fy }; this.wait = Math.max(this.wait, 6); }      // (the peacock: his fan)
+    else if (this.kind === 'rooster' && !this.train && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
@@ -2485,7 +2613,7 @@ class Bird {
         const a0 = d > 1e-4 ? Math.atan2(dx, dz) : this.r() * 6.28;
         for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.4, -2.4]) {        // (squeezed against the feeder, say: round him)
           const tx = F.x + Math.sin(a0 + da) * min, tz = F.z + Math.cos(a0 + da) * min;
-          if (!this.free(tx, tz, true)) continue;
+          if (!this.free(tx, tz, true) || !this.trainClear(tx, tz, this.root.rotation.y, false)) continue;
           const k = Math.min(1, dt * 20); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
         }
       }
@@ -2496,7 +2624,7 @@ class Bird {
         const a0 = d > 1e-4 ? Math.atan2(dx, dz) : this.r() * 6.28;
         for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.4, -2.4]) {
           const tx = F.px + Math.sin(a0 + da) * min, tz = F.pz + Math.cos(a0 + da) * min;
-          if (!this.free(tx, tz, 'pail') || Math.hypot(tx - F.x, tz - F.z) < (this.kind === 'chick' ? 0.27 : 0.33)) continue;      // (never into his boots instead)
+          if (!this.free(tx, tz, 'pail') || !this.trainClear(tx, tz, this.root.rotation.y, false) || Math.hypot(tx - F.x, tz - F.z) < (this.kind === 'chick' ? 0.27 : 0.33)) continue;      // (never into his boots instead)
           const k = Math.min(1, dt * 30); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
         }
       }
@@ -2853,7 +2981,7 @@ class Bird {
     if (this.plot.kind === 'coop' && !this.stay) {
       const night = this.nightNow();
       if (!this.looked) { this.looked = true; if (night && !this.laying) this.sleepNow(); }
-      if (this.asleep) { if (night || !doorOpen(this.plot)) return; this.wakeUp(); }          // the door shut: they wait
+      if (this.asleep) { if (night || (!this.perched && !doorOpen(this.plot))) return; this.wakeUp(); }          // the door shut: they wait (not the peacock up on his perch)
       else if (night && !this.roost && !this.laying && !this.leaving) { if (this.play) endPlay(this, true); this.goToBed(); }
     }
     if (this.plot.kind === 'coop' && !this.stay) this.penStep(dt);          // the farmer in the pen: keeping clear, corn, a cuddle
@@ -2869,7 +2997,7 @@ class Bird {
       song = this.layStep(dt);
       walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle;
     } else if (this.roost) {
-      song = this.roostStep(dt); walking = song.walking;
+      song = this.roostStep(dt); walking = song.walking; sitGoal = song.sit || 0; flap = song.flap || 0;
     } else if (this.leaving) {
       const o = this.leaveStep(dt);
       if (o && typeof o === 'object') { walking = o.walking; flap = o.flap; } else walking = !!o;
@@ -2879,7 +3007,7 @@ class Bird {
       if (kick) { A.kickLeg = (A.t % 1.2) < 0.6 ? 0 : 1; A.kickT += dt; }
     } else if (act) {
       act.left -= dt;
-      if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && this.tooClose()) act.left = Math.min(act.left, 0.05);
+      if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && act.type !== 'display' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
         const C = this.cuddle, G = C && C.greet; sitGoal = G || (C && C.dig) ? 0 : 1;
         if (C && !C.done) {
@@ -2909,6 +3037,10 @@ class Bird {
       if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); if (t >= 0.3 && !act.heard) { act.heard = true; this.crowSound(); } }
       if (act.type === 'rest') { sitGoal = 1; wag = 0; }
+      if (act.type === 'display' && !act.ready) {         // (round to face the way he'll show it off, first)
+        const t = act.face === undefined ? { diff: 0, walking: false } : this.turnTo(act.face, dt * 0.6); walking = t.walking; act.left += dt;
+        if (t.diff < 0.03 || (act.turning = (act.turning || 0) + dt) > 4) act.ready = true;
+      }
       if (act.type === 'ruffle') ruffle = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.left <= 0) {
         this.act = null; this.wait = Math.min(this.wait, 0.2 + this.r() * 0.6); this.acted = true;
@@ -2980,8 +3112,27 @@ class Bird {
     A.stretch = (A.stretch || 0) + ((song && song.stretch ? 1 : 0) - (A.stretch || 0)) * Math.min(1, dt * 14);
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
+    if (this.train && this.plot.kind === 'coop') {
+      this.fanGoal = this.act && this.act.type === 'display' && this.act.ready && this.act.left > 1.0 && !this.roost && this.fanClear() ? 1 : 0;      // (his fan up while he shows off, down again a second before the end)
+      if (!this.trainSettled && !this.roost && !this.asleep && !this.stay) { this.trainSettled = true; this.settleTrain(); }
+      const p = this.root.position, y = this.root.rotation.y;
+      if (!this.roost && !this.asleep && !this.stay) {      // (he never swings his train through the fence, the house, a hen...: if he would, he doesn't turn)
+        const y0 = this.trainOk, q0 = this.trainAt;      // (where he was and faced a moment ago)
+        let clamp = false;
+        if (A.fan <= 0.3 && y0 !== undefined && (y0 !== y || q0[0] !== p.x || q0[1] !== p.z)) {
+          const st = this.trainClear(p.x, p.z, y, false), full = st && this.trainClear(p.x, p.z, y);
+          if (!full) { const s0 = this.trainClear(q0[0], q0[1], y0, false), f0 = s0 && this.trainClear(q0[0], q0[1], y0); clamp = (!st && s0) || (st && f0); }      // (through the fence, the house, the swing...; or over one of the others: not if it wasn't a moment ago)
+        }
+        if (clamp) {
+          this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1];
+          if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying && !this.cuddle && !this.called) { this.trainStuck = 0; this.route = null; this.target.copy(p); this.wait = 0.2; }
+        } else this.trainStuck = 0;
+        this.trainOk = this.root.rotation.y; this.trainAt = [p.x, p.z];
+      }
+    }
     A.fan = (A.fan || 0) + ((this.fanGoal || 0) - (A.fan || 0)) * Math.min(1, dt * 2.2);      // (a peacock showing off: his train raised in a fan)
-    if (this.trainShadow) { this.trainShadow.material.opacity = 0.85 * (1 - A.fan); this.trainShadow.visible = A.fan < 0.98; }
+    A.hang = (A.hang || 0) + ((this.hangGoal || 0) - (A.hang || 0)) * Math.min(1, dt * 3);      // (roosting: his train hanging from his perch)
+    if (this.trainShadow) { this.trainShadow.material.opacity = 0.85 * (1 - A.fan) * (1 - A.hang); this.trainShadow.visible = A.fan < 0.98 && A.hang < 0.9; }
     if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);
   }
@@ -3002,6 +3153,7 @@ function buildLineup() {
   const only = params.get('breeds'), breeds = ALL_BREEDS.filter(b => b !== 'sil' && (!only || only.split(',').includes(b)));      // (?breeds=pol,aya: just those)
   row(1.2, breeds.flatMap(b => [[b, 'hen'], [b, 'rooster'], [b, 'chick']]), only ? 0.75 : 0.45);
   if (params.has('fan')) for (const b of lineup.birds) if (b.breed === 'pea' && b.kind === 'rooster') b.fanGoal = 1;      // (?lineup&breeds=pea&fan: the peacock showing off)
+  if (params.has('hang')) for (const b of lineup.birds) if (b.breed === 'pea' && b.kind === 'rooster') b.hangGoal = 1;      // (&hang: his train as it hangs from his perch)
   if (!only) {
     row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
     row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
@@ -3149,7 +3301,7 @@ function separate(flock, dt) {
     const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
     const lead = q => q.cuddle && !q.cuddle.greet && !q.cuddle.done;      // (the hen on her way up to him for a cuddle: the others make way)
     if (lead(flock[i]) !== lead(flock[j])) { const o = lead(flock[i]) ? b : a, sg = lead(flock[i]) ? 1 : -1; o.x += dx * push * 2 * sg; o.z += dz * push * 2 * sg; continue; }
-    const aFree = flock[i].free(ax, az), bFree = flock[j].free(bx, bz);
+    const aFree = flock[i].free(ax, az) && flock[i].trainClear(ax, az, flock[i].root.rotation.y, false), bFree = flock[j].free(bx, bz) && flock[j].trainClear(bx, bz, flock[j].root.rotation.y, false);      // (the peacock: not where his train would go through something)
     if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
     if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }
   }
@@ -6184,7 +6336,7 @@ function jobsDone(done) { if (!done || !done.length) return; for (const j of don
 // asleep in a row on the perch, heads tucked in, the chicks curled up in the straw by the nest boxes, a lantern turned low,
 // the night sky in the window, the odd "z" floating up. Tap a bird and she wakes for a cuddle (hearts), then dozes off
 // again; tap the nest boxes to collect the eggs. "Back to the farm", or the time to get up, brings you out again.
-const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House', call: 'Floating House' };
+const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House', call: 'Floating House', pea: 'Garden Pavilion' };
 const inside = { open: false, busy: false, plot: null, scene: null, camera: null, rooms: null, rooms3d: {}, birds: [], saved: [], eggs: null, fx: [], zIn: 0.6, pan: 0, panMax: 0, mPerPx: 0.002, hinted: false };
 const insideEls = { top: document.getElementById('inside-top'), title: document.getElementById('inside-title'), back: document.getElementById('inside-back'), fade: document.getElementById('fade') };
 insideEls.back.addEventListener('click', () => closeInside());
@@ -6243,7 +6395,7 @@ function openInside(plot) {
     inside.moon.position.set(R.window[0] - 1.5, R.window[1] + 0.9, R.window[2] + 0.4); inside.moon.target.position.set(0.1, 0.3, -0.1);
     // the sleepers: up to three hens along the lower bar; the rooster and the other hens on the top bar in the gaps between
     // them, so every one shows; anyone left over beds down in the straw in front; the chicks in their corner by the nest boxes
-    const sleepers = plot.birds.filter(b => b.asleep), adults = sleepers.filter(b => b.kind !== 'chick'), chicks = sleepers.filter(b => b.kind === 'chick');
+    const sleepers = plot.birds.filter(b => b.asleep && !b.perched), adults = sleepers.filter(b => b.kind !== 'chick'), chicks = sleepers.filter(b => b.kind === 'chick');
     const roo = adults.filter(b => b.kind === 'rooster'), hens = adults.filter(b => b.kind !== 'rooster');
     const low = R.perches[0], high = R.perches[1], mid = (low.x0 + low.x1) / 2, gap = 0.29;
     const lowBirds = hens.slice(0, 3), rest = [...roo, ...hens.slice(3)];
@@ -6697,7 +6849,7 @@ window.__farm = {
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
-  decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
+  decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),

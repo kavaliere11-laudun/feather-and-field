@@ -410,6 +410,25 @@ def padasan(objs, x, y, m):
     objs.append(cyl('ptrickle', 0.005, 0.15, (jx, jy - 0.28, 0.17), m=m['water'], verts=5, bevel=0.0))
 
 
+def hauz(objs, x, y, m):
+    """A hauz (the Deluxe Garden Pavilion's water, 31 Oct): a little eight-sided pool of white marble, a carved lotus in its
+    middle with a jet of water rising from it and falling back."""
+    marble = mat('fd_pmarble', '#f7f4ee', rough=0.35, spec=0.5, var=0.02); marble2 = mat('fd_pmarble2', '#ebe6dc', rough=0.4, var=0.02)
+    pink = mat('fd_plotus', '#f2c9cf', rough=0.5)
+    objs.append(cyl('hbasin', 0.31, 0.1, (x, y, 0.05), (0, 0, math.pi / 8), m=marble2, verts=8, bevel=0.01))
+    objs.append(cyl('hrim', 0.33, 0.03, (x, y, 0.1), (0, 0, math.pi / 8), m=marble, verts=8, r2=0.32, bevel=0.004))
+    objs.append(cyl('hwater', 0.28, 0.01, (x, y, 0.104), (0, 0, math.pi / 8), m=m['water'], verts=8, bevel=0.0))
+    for k in range(8):                                     # the lotus
+        a = k / 8 * math.tau
+        objs.append(sphere('hpetal', 0.04, (x + math.cos(a) * 0.04, y + math.sin(a) * 0.04, 0.125), (1.3, 0.55, 0.7), (0, math.radians(30), a), m=pink, seg=8, rings=5))
+    objs.append(cyl('hjet', 0.008, 0.14, (x, y, 0.19), m=m['water'], verts=6, r2=0.004, bevel=0.0))
+    for k in range(6):                                     # falling back
+        a = k / 6 * math.tau
+        pts = [Vector((x + math.cos(a) * (0.01 + 0.07 * t), y + math.sin(a) * (0.01 + 0.07 * t), 0.26 - 0.15 * t * t)) for t in (0.0, 0.4, 0.75, 1.0)]
+        for p, q in zip(pts, pts[1:]):
+            objs.append(cyl('hspill', 0.005, (q - p).length, (p + q) / 2, (q - p).to_track_quat('Z', 'Y').to_euler(), m['water'], verts=4, bevel=0.0))
+
+
 def build_pen(root, m):
     """A fenced dirt yard in front of the house, with a feeder, water dish, hay bale and feed sack."""
     objs = []
@@ -557,6 +576,23 @@ def build_pen(root, m):
         objs.append(cyl('froof', 0.17, 0.08, (fx, fy, 0.32), (0, 0, math.pi / 4), m=black, verts=4, r2=0.07, bevel=0.004))
         objs.append(cyl('froof2', 0.075, 0.12, (fx, fy, 0.42), (0, 0, math.pi / 4), m=black, verts=4, r2=0.0, bevel=0.0))
         objs.append(sphere('fball', 0.02, (fx, fy, 0.49), m=gold, seg=8, rings=5))
+    elif PEN.get('feeder_style') == 'chhatri':                # (the Deluxe Garden Pavilion's: a tiny marble kiosk, jali windows of grain, a white dome and a gold finial)
+        marble = mat('fd_pmarble', '#f7f4ee', rough=0.35, spec=0.5, var=0.02); marble2 = mat('fd_pmarble2', '#ebe6dc', rough=0.4, var=0.02)
+        gold = mat('fd_pgold', '#d1a640', rough=0.3, metal=0.75)
+        objs.append(cyl('tray', 0.17, 0.05, (fx, fy, 0.03), (0, 0, math.pi / 8), m=marble2, verts=8, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.08, 0.2, (fx, fy, 0.16), (0, 0, math.pi / 8), m=marble, verts=8, bevel=0.004))
+        for k in range(4):                                  # windows of grain on four faces, behind little posts
+            a = k * math.pi / 2; c, s_ = math.cos(a), math.sin(a)
+            objs.append(plank('fwin', (fx + c * 0.075, fy + s_ * 0.075, 0.1), (fx + c * 0.075, fy + s_ * 0.075, 0.22), 0.05, 0.01, (c, s_, 0), m['grain_'], jitter=0.0, bevel=0.0))
+            for sd in (-1, 1): objs.append(cyl('fpost', 0.007, 0.13, (fx + c * 0.084 - s_ * sd * 0.03, fy + s_ * 0.084 + c * sd * 0.03, 0.16), m=marble2, verts=5, bevel=0.0))
+        objs.append(cyl('fband', 0.095, 0.03, (fx, fy, 0.275), (0, 0, math.pi / 8), m=marble2, verts=8, bevel=0.004))
+        T_ = (0, .1, .25, .42, .58, .72, .84, .93, 1.0); Rk = (.9, 1.05, 1.12, 1.05, .85, .6, .35, .15, .01)
+        prof = [(max(0.075 * r, 0.003), 0.29 + 0.15 * t) for t, r in zip(T_, Rk)]
+        for (ra, za), (rb, zb) in zip(prof, prof[1:]):
+            objs.append(cyl('fdome', ra, zb - za, (fx, fy, (za + zb) / 2), m=marble, verts=14, r2=rb, bevel=0.0))
+        objs.append(sphere('fball', 0.016, (fx, fy, 0.45), m=gold, seg=8, rings=5))
+        objs.append(cyl('fspike', 0.006, 0.05, (fx, fy, 0.48), m=gold, verts=5, r2=0.0, bevel=0.0))
     elif PEN.get('feeder_style') == 'deluxe':
         cu = mat('fd_cu', '#5c9a86', rough=0.42, spec=0.45, metal=0.25, var=0.06); cu2 = mat('fd_cu2', '#77b29e', rough=0.42, spec=0.45, metal=0.25, var=0.06)
         cream = mat('fd_cream', '#f1e9d8', rough=0.6, var=0.04, grain=0.12, grain_scale=(1.5, 26, 26)); gold = mat('fd_gold', '#d4a640', rough=0.3, metal=0.9)
@@ -589,6 +625,7 @@ def build_pen(root, m):
     elif PEN.get('water') == 'flume': log_flume(objs, wx, wy, m)
     elif PEN.get('water') == 'canal': canal(objs, wx, wy, m)
     elif PEN.get('water') == 'padasan': padasan(objs, wx, wy, m)
+    elif PEN.get('water') == 'hauz': hauz(objs, wx, wy, m)
     else:
       bpy.ops.mesh.primitive_torus_add(major_radius=0.15, minor_radius=0.028, major_segments=36, minor_segments=12, location=(wx, wy, 0.045))
       rim = bpy.context.object; setmat(rim, m['bowl']); [setattr(p, 'use_smooth', True) for p in rim.data.polygons]; objs.append(rim)

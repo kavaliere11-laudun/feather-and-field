@@ -52,7 +52,7 @@ BREEDS = {
 ROOSTER = 1.12
 LO = False
 LEG_Y = 0.046        # (the peafowl's legs: how far out from the middle)
-FAN = False          # (the peacock built with his train fanned: the browser's display pose, a morph of the same feathers)
+FAN = False          # (True: the peacock built with his train fanned; 'hang': hanging down from his perch, roosting: the browser's display pose, a morph of the same feathers)
 
 _mats = {}
 
@@ -428,7 +428,14 @@ def peacock_train(tl, tb, rnd, fan):
                 if dt < tipr: w = we * math.sqrt(max(0.0, 1 - ((tipr - dt) / tipr) ** 2))
                 else: w = TRAIN['cover'] * (off + s_) * S / n * (0.85 + 0.15 * smooth01(1 - (dt - tipr) / 0.2))
                 w = max(min(w, we), 0.005)
-                if fan:                                     # a full fan: leaning back a little, dished (its edges come forward)
+                if fan == 'hang':                           # roosting on his perch (31 Oct): over the perch behind him and hanging straight down
+                    u = s_; R = 0.15; a_ = min(u / R, math.pi / 2)
+                    lay = (0.0016 * abs(i - (n - 1) / 2) * (30 / n) + 0.003 * (i % 2) + 0.006 * r_) * smooth01(u / 0.2)      # (the shorter on the outside, every eye showing)
+                    if u <= R * math.pi / 2: p = Vector((0.08 - R * math.sin(a_), 0, -(R - R * math.cos(a_))))
+                    else: p = Vector((0.08 - R, 0, -R - (u - R * math.pi / 2)))
+                    p += Vector((-lay, f * (0.035 + 0.15 * smooth01(u / 0.7)), 0.012 - 0.003 * r_))
+                    th_ = 0.45 * f * smooth01(u / 0.4); wd = Vector((-math.sin(th_), math.cos(th_), 0))
+                elif fan:                                   # a full fan: leaning back a little, dished (its edges come forward)
                     phi = f * S
                     up, side = math.cos(phi), math.sin(phi)
                     lean = math.radians(10 - 2 * r_)
@@ -443,13 +450,14 @@ def peacock_train(tl, tb, rnd, fan):
                     hgt = (0.355 + z0) * (1 - drop) + (0.012 + 0.007 * r_ + lay) * drop
                     p = Vector((0.08 - u * 0.975, f * (0.035 + 0.3 * smooth01(u / 0.75)), hgt - 0.355 + 0.012 * (1 - drop)))      # (from under the feathers of his lower back)
                     th_ = 0.55 * f * drop; wd = Vector((0, math.cos(th_), -math.sin(th_)))      # (its sides sloping down)
-                pts.append(p); ws.append(w if fan else w * 0.62); wds.append(wd); vs.append(max(0.0, 1.0 - dt / TRAIN['vlen'])); hus.append(0.45 * min(1.0, w / 2 / TRAIN['hw']))      # (trailing, the barbs lie closer: narrower, its eye an oval; 'feat' as the fan's, so the fan's eyes are round)
+                pts.append(p); ws.append(w if fan is True else w * 0.62); wds.append(wd); vs.append(max(0.0, 1.0 - dt / TRAIN['vlen'])); hus.append(0.45 * min(1.0, w / 2 / TRAIN['hw']))      # (trailing, the barbs lie closer: narrower, its eye an oval; 'feat' as the fan's, so the fan's eyes are round)
             tag(ribbon('train', pts, ws, wds, tl, tb, thick=0.0024, vs=vs, us=hus), 'tail', 'tail')
     # under the train: the stiff grey-brown tail feathers that hold it up (hidden when trailing, a fan behind the fan when shown)
     tf = flat('pv_tailf', '#6d6255', 0.6)
     for i in range(6):
         f = (i + 0.5) / 6 - 0.5
-        if fan: feather('tailf', tf, tb, (-0.03, f * 0.02, -0.03), 72 - abs(f) * 90, 4, 0.34, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.5, twist=10, seg=6)
+        if fan == 'hang': feather('tailf', tf, tb, (0.04, f * 0.02, -0.03), -78, 4, 0.13, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.06, twist=10, seg=6)
+        elif fan: feather('tailf', tf, tb, (-0.03, f * 0.02, -0.03), 72 - abs(f) * 90, 4, 0.34, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.5, twist=10, seg=6)
         else: feather('tailf', tf, tb, (0.06, f * 0.02, -0.025), -12, 6, 0.13, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.06, twist=10, seg=6)      # (under the train)
 
 

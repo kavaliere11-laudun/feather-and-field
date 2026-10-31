@@ -11,7 +11,7 @@ sys.path.insert(0, HERE)
 from webglb import *
 import coops, coop, farm_layout
 GLOW.update({'lamp', 'lanternred', 'rw_lamp', 'rw_lanternred', 'autoled'})       # the lanterns light up at night (the rustic coops' too)
-BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600, 'house_aya': 17000, 'house_call': 17000,
+BUDGET.update({'house_rir': 13500, 'house_orp': 12500, 'house_leg': 17000, 'house_sil': 13500, 'house_bra': 14500, 'house_pol': 17000, 'sails_pol': 2600, 'house_aya': 17000, 'house_call': 17000, 'house_pea': 17000,
                'pen_base': 5000, 'fence': 3500, 'fence_dx': 9000, 'vane': 900})
 TOPS = {}
 
@@ -174,6 +174,16 @@ _keep = dict(coops.NESTS['house_call'])
 for n_, fn in (('box_call', coops.box_call), ('shed_call', coops.shed_call), ('cosy_call', coops.cosy_call), ('deluxe_call', coops.deluxe_call)): one(n_, fn); LOOKS.append(n_)
 assert coops.NESTS['house_call'] == _keep, "the looks must keep the Floating House's nest"
 for t in range(5): one('pen_t%d_call' % t, lambda t=t: coops.pen_tier(t, 'call')); LOOKS.append('pen_t%d_call' % t)
+# the peafowl's Garden Pavilion (31 Oct 2026): its five looks (Rustic box_pea, Mended shed_pea, Snug house_pea, Cosy cosy_pea,
+# Deluxe deluxe_pea) and its own gardens; its Rustic and Mended yards as big as the Snug's (the peacock's train), their own
+# fences. (stylized/extras/export_pea_coop.py exports just these to splice in)
+BUDGET.update({'box_pea': 16000, 'shed_pea': 18000, 'cosy_pea': 22000, 'deluxe_pea': 26000, 'pen_t0_pea': 4200, 'pen_t1_pea': 4600, 'pen_t3_pea': 9500,
+               'pen_t4_pea': 12000, 'fence_t0_pea': 3000, 'fence_t1_pea': 3800})
+_keep = dict(coops.NESTS['house_pea'])
+for n_, fn in (('box_pea', coops.box_pea), ('shed_pea', coops.shed_pea), ('cosy_pea', coops.cosy_pea), ('deluxe_pea', coops.deluxe_pea)): one(n_, fn); LOOKS.append(n_)
+assert coops.NESTS['house_pea'] == _keep, "the looks must keep the Garden Pavilion's nest"
+for t in (0, 1, 3, 4): one('pen_t%d_pea' % t, lambda t=t: coops.pen_tier(t, 'pea')); LOOKS.append('pen_t%d_pea' % t)
+for t in (0, 1): one('fence_t%d_pea' % t, lambda t=t: coops.fence_tier(t, bk='pea')); LOOKS.append('fence_t%d_pea' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

@@ -11,7 +11,7 @@ import common; common.OUT = os.path.dirname(out); out = os.path.basename(out)
 scn = reset()
 cyl('ground', 3.0, 0.02, (0, 0, -0.01), m=mat('grass_g', '#7fb45a', rough=0.9), verts=48, bevel=0.0)
 for i, b in enumerate(birds):
-    parts = b.split('_'); breeds.FAN = len(parts) > 2 and parts[2] == 'fan'
+    parts = b.split('_'); breeds.FAN = 'hang' if len(parts) > 2 and parts[2] == 'hang' else len(parts) > 2 and parts[2] == 'fan'
     r = breeds.build(parts[0], parts[1], seed=3)
     r.location = ((i - (len(birds) - 1) / 2) * float(os.environ.get('STEP', 0.9)), 0, 0)
     r.rotation_euler = (0, 0, math.radians(float(os.environ.get('TURN', 0))))

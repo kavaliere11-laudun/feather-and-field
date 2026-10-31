@@ -51,7 +51,7 @@ export function tickToys(plot, dt) {
 // a free play thing for her now and then (none for chicks, nor by night, nor while the farmer's in the pen)
 export function wantPlay(b) {
   const T = b.plot.toys;
-  if (!T || b.kind === 'chick' || b.mum || b.plot.farmer || b.cuddle || b.called || b.laying || b.stay || b.nightNow(0.6)) return null;
+  if (!T || b.kind === 'chick' || b.train || b.mum || b.plot.farmer || b.cuddle || b.called || b.laying || b.stay || b.nightNow(0.6)) return null;      // (not the peacock: his train)
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
   const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !(k === 'xylo' && b.kind === 'rooster'));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;

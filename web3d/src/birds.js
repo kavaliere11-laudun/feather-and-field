@@ -843,6 +843,7 @@ export class Rig {
   }
   // inside a house: box = { inv (world to the house's frame), lo, hi } shades her darker the deeper in she is; null: outside again
   indoor(box) {
+    if (box && this.mesh.morphTargetInfluences) box = null;      // (nor the indoor shader: the peacock never goes in)
     if (box) {
       if (!this.inMat) { this.inMat = birdMaterial(true); if (materialHook) materialHook(this.inMat); syncIndoor(this.inMat); INDOOR.add(this.inMat); }
       const u = this.inMat.userData.inU; u.inMat.value.copy(box.inv); u.inLo.value.copy(box.lo); u.inHi.value.copy(box.hi);
@@ -853,6 +854,7 @@ export class Rig {
   }
   // eyes shut (asleep) or open again
   sleepy(on) {
+    if (on && this.mesh.morphTargetInfluences) return;      // (not the peacock: the shut-eyed shader has no room for his train's shapes; he tucks his head away)
     if (!!on === !!this.shut) return;
     if (on && !SLEEP_MAT) { SLEEP_MAT = birdMaterial(false); if (materialHook) materialHook(SLEEP_MAT); syncSleep(); }
     this.shut = !!on;
@@ -913,7 +915,8 @@ export class Rig {
     B.legL.scale.setScalar(fold); B.legR.scale.setScalar(fold);
     if (this.mesh.morphTargetInfluences) {      // (a peacock showing off: his train raised in a fan, 0 trailing .. 1 fanned; a little shiver at full)
       const fan = Math.max(0, Math.min(1, s.fan || 0));
-      for (const m of [this.mesh, this.lo]) if (m && m.morphTargetInfluences) m.morphTargetInfluences[0] = fan;
+      const hang = Math.max(0, Math.min(1, s.hang || 0));      // (roosting on his perch: his train hanging straight down)
+      for (const m of [this.mesh, this.lo]) if (m && m.morphTargetInfluences) { m.morphTargetInfluences[0] = fan * (1 - hang); if (m.morphTargetInfluences.length > 1) m.morphTargetInfluences[1] = hang; }
       if (fan > 0) B.tail.rotation.x -= 0.15 * fan * (1 - fan) + 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan);
     }
   }
