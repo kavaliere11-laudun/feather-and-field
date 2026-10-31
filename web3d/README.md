@@ -3518,9 +3518,18 @@ the birds already had.
   picking the floor. Imagine it's long and heavy", then "The tail doesn't move anymore that's not ok"; birds.js `heavy`,
   the end of `pose`, `trainSpring`): rooted where it lies whatever his body does (a peck lifts it only a little, never
   down into the ground), it sways slowly from side to side with his strides, a little behind them, with a soft lift at
-  each step; it swings out on his turns and settles on a slow heavy spring when he sets off or stops; standing, a slow
-  drift and his breathing. Swung round behind him (`bend`), raised in his fan with its shiver; he rests standing. His fan
-  now keeps its edges inside the fence too (`fanClear`: they reach 10 cm past its points).
+  each step, the sway running on down it a little behind (a slow wave); it swings out on his turns and settles on a slow
+  heavy spring when he sets off or stops; standing, a slow drift and his breathing. Swung round behind him (`bend`) it
+  curves smoothly away from his rump instead of bending sharply where it leaves him (Audrey: "Tail gets weird turns"): it's
+  bound to three bones along it (birds.js `peacockTrain`, the bones `tail2` and `tail3`, `TRAIN_J` 30 and 62 cm behind the
+  tail's pivot, each part taking `TRAIN_SPLIT` of the swing, 30/35/35%), and the game's train lies along the same curve
+  (main.js `trainCurve`: `trainEach`, `onTrain`, its soft shadow). Lifted at the rump, it lies down again further back.
+  Raised in his fan with its shiver; he rests standing. His fan keeps its edges inside the fence too (`fanClear`: they reach
+  10 cm past its points). The peahens keep 10 cm off his train, so their pecks don't land on it (`onTrain(x, z, m)`).
+  Wedged and stepping back or on a little (`wayOut`), he then goes somewhere else, not back to where he'd only be wedged
+  again, to and fro on the spot (unless the farmer's called him).
+- **Sleek feathers** (Audrey, 31 Oct: "the peacock has a weird blurry layer around his feathers"): the peafowl have no
+  fluff over their feathers (birds.js `furOf`: the hens' soft fluff layer, not for them); the peachicks keep their down.
 - **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
   where the peacock parade with his tail opened"): now and then he turns to where there's room and raises his train into
   his fan, with a little shiver, then parades with it open: round slowly one way and the other as far as there's room for
@@ -3545,7 +3554,8 @@ the birds already had.
   train, by a way round what's in the yard), half crouches beside him and strokes his back where he stands, hearts
   (Audrey: "the farmer doesn't touch the peacock": his back is 48 cm up, so farmer.js `petTall`, a half crouch; his right
   hand `PEA_HAND` ahead and to his right, put so that it rests on the middle of his back, `PEA_BACK`; a last shuffle of a
-  few centimetres to the very spot, the 'snug' step, `handSpot`; the stroke goes 17 cm along his back, from behind his
+  few centimetres to the very spot, the 'snug' step, `handSpot`; if he's busy a moment, fluttering over say, the farmer
+  asks him again for a few seconds, the 'wait' step; the stroke goes 17 cm along his back, from behind his
   neck to where the train starts, the hand kept down on it, `backK`; measured on the drawn bird: within 2 cm of his
   feathers all the way). The peahens give them room: sent off out of the way, he waits for them to go first (`crowded`,
   the 'room' step); no way to him (his train across the yard by the gate,

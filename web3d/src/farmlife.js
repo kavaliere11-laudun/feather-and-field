@@ -319,7 +319,9 @@ export class FarmLife {
       L.push(() => { near = P.nearHim ? P.nearHim(hen) : null; return TK.seq('come', [TK.walk(near ? [...near.via, near.at] : P.around ? P.around([P.crouchAt]) : [P.crouchAt]), TK.face(near ? near.face : P.toHen)]); },
         TK.act('crouch', 0.8, W => { W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen, false, near); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
+        { name: 'wait', t: 0, again: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; W.look = [0, -0.4];
+          if (!ready && near && this.t < 5) { if ((this.again -= dt) <= 0) { this.again = 0.5; ready = P.callHen(hen, false, near); } return false; }      // (the peacock busy a moment: asked again)
+          return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() && P.noLift && P.noLift(hen) ? TK.seq('cuddling', [      // (the peacock, 31 Oct: too long to pick up with his train: he strokes him, crouched by him)
           { name: 'room', t: 0, run(Lf, dt) { this.t += dt; Lf.want.pose = 'petTall'; Lf.want.face = 'happy'; return !P.crowded || !P.crowded(hen) || this.t > 3; } },      // (a peahen by him: she goes first)

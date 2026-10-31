@@ -10,6 +10,27 @@ export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg
 const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
+// the peacock's train (Audrey, 31 Oct: "Tail gets weird turns"): bound to three bones along it, not one, so that swung round
+// behind him it curves smoothly away from his rump instead of bending sharply where it leaves him. TRAIN_J: where the two
+// joints along it are, behind the tail's pivot (m); TRAIN_SPLIT: how much of its swing each part takes, rump first (the
+// game's train, main.js trainEach, lies the same way)
+export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
+function peacockTrain(g, src, tailZ) {
+  const n = src.attributes.position.count, P = src.attributes.position.array, si0 = src.attributes.skinIndex, sw0 = src.attributes.skinWeight;
+  const T = JOINTS.indexOf('tail'), T2 = JOINTS.length, T3 = JOINTS.length + 1, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    const inf = [];
+    for (let j = 0; j < 4; j++) { const w = sw0.getComponent(i, j); if (w > 0) inf.push([si0.getComponent(i, j), w]); }
+    const t = inf.find(q => q[0] === T);
+    if (t) {
+      const d = tailZ - P[i * 3 + 2], s1 = smooth(TRAIN_J[0] - 0.09, TRAIN_J[0] + 0.09, d), s2 = smooth(TRAIN_J[1] - 0.09, TRAIN_J[1] + 0.09, d), w = t[1];
+      t[1] = w * (1 - s1); inf.push([T2, w * s1 * (1 - s2)], [T3, w * s1 * s2]);
+    }
+    const top = inf.filter(q => q[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 4), tot = top.reduce((a, q) => a + q[1], 0) || 1;
+    for (let j = 0; j < 4; j++) { si[i * 4 + j] = top[j] ? top[j][0] : 0; sw[i * 4 + j] = top[j] ? top[j][1] / tot : 0; }
+  }
+  g.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+}
 
 // ------------------------------------------------------------------ colours (sRGB, as a painter would mix them)
 // body: main plumage; top: lighter back; hackle: neck feathers; head; saddle: a rooster's back by the tail; breast;
@@ -243,6 +264,7 @@ export function paintedGeometry(model, breed, colour) {
   }
   let g = new THREE.BufferGeometry();
   for (const a of ['position', 'normal', 'skinIndex', 'skinWeight']) g.setAttribute(a, src.attributes[a]);
+  if (base_ === 'pea_r') peacockTrain(g, src, M.piv.tail[2]);
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   // feather size (cm) per vertex for the scalloped feather texture (0: comb, beak, eyes, legs), and how much it belongs to the head
   const fs = new Float32Array(n), fh = new Float32Array(n);
@@ -309,8 +331,9 @@ const FUR = {
   pol_r: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.078, [R.legfeather]: 0.016 }, shells: 18, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06, face: 0.9, faceR: 1.2, beak: 0.9,
            regions: { [R.crest]: { shells: 18, clump: 0.55, fine: 1.5, wave: 0.9, locks: 0.085, comb: 0.12 } } },
 };
+// (the peafowl: sleek, glossy, no fluff over their feathers: Audrey, 31 Oct, "a weird blurry layer around his feathers")
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+const furOf = (model, breed) => breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -818,14 +841,16 @@ export class Rig {
     this.lo = MODELS[this.model + '_lo'] ? new THREE.SkinnedMesh(paintedGeometry(this.model + '_lo', breed, colour), BIRD_MAT) : null;
     for (const m of [this.mesh, this.lo]) if (m) { m.onBeforeRender = keepAlpha; m.onAfterRender = writeAlpha; }
     this.bones = {}; this.rest = {};
-    const list = JOINTS.map(name => {
+    const names = this.heavy ? [...JOINTS, 'tail2', 'tail3'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2' };      // (the peacock's train: two more bones along it)
+    const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : P[name] || P.root;
+    const list = names.map(name => {
       const b = new THREE.Bone(); b.name = name;
-      const p = P[name] || P.root, q = PARENT[name] ? (P[PARENT[name]] || P.root) : [0, 0, 0];
+      const p = at(name), q = par[name] ? at(par[name]) : [0, 0, 0];
       b.position.set(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
       this.bones[name] = b; this.rest[name] = b.position.clone();
       return b;
     });
-    for (const name of JOINTS) if (PARENT[name]) this.bones[PARENT[name]].add(this.bones[name]);
+    for (const name of names) if (par[name]) this.bones[par[name]].add(this.bones[name]);
     this.mesh.add(this.bones.root);
     this.mesh.updateMatrixWorld(true);
     const skeleton = new THREE.Skeleton(list);
@@ -933,13 +958,19 @@ export class Rig {
       const lift = Math.max(0, body.rotation.x) * 0.18;      // (a little of his peck in it)
       // walking: a slow sway from side to side with his strides, a little behind them, and a soft lift at each step; at rest a
       // slow heavy drift and his breathing (not in his fan: raised, it shivers)
-      const rest = (1 - w) * (1 - fan), sway = 0.075 * w * Math.sin(ph - 0.9) + rest * (0.022 * Math.sin(s.t * 1.05) + 0.012 * Math.sin(s.t * 0.43 + 1.3));
+      const rest = (1 - w) * (1 - fan), sway = 0.055 * w * Math.sin(ph - 0.9) + rest * (0.016 * Math.sin(s.t * 1.05) + 0.01 * Math.sin(s.t * 0.43 + 1.3));
       const bob = 0.022 * w * (0.5 - 0.5 * Math.cos(2 * ph - 1.4)) + rest * 0.01 * (0.5 + 0.5 * Math.sin(s.t * 1.7));
-      HQ.setFromEuler(HE.set(Math.max(0, V.p + bob) + lift - 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), (s.bend || 0) + (V.y + sway) * (1 - fan), 0));      // (never down into the ground)
+      const bend = s.bend || 0, pitch = Math.max(0, V.p + bob) + lift;
+      HQ.setFromEuler(HE.set(pitch - 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), TRAIN_SPLIT[0] * bend + (0.5 * V.y + sway) * (1 - fan), 0));      // (never down into the ground)
       HQ2.copy(body.quaternion).invert(); HQ.premultiply(HQ2);
       B.tail.quaternion.slerp(HQ, k);
       HV.copy(Rr.root).add(Rr.body).add(Rr.tail).sub(B.root.position).sub(body.position).applyQuaternion(HQ2);      // (where it's rooted, as if he stood still)
       B.tail.position.copy(Rr.tail).lerp(HV, k);
+      // along it: the rest of its swing round behind him, so it curves; the sway running on down it a little behind (a slow
+      // wave); lifted at the rump, it lies down again further back (its far end stays on the ground)
+      const u = k * (1 - fan), wave = j => (0.25 * V.y + 0.032 * w * Math.sin(ph - 0.9 - 1.0 * j) + rest * 0.012 * Math.sin(s.t * 1.05 - 0.9 * j)) * (1 - fan);      // (its swing on his turns spread along it too)
+      B.tail2.rotation.set(-0.7 * pitch * u, (TRAIN_SPLIT[1] * bend + wave(1)) * u, 0);
+      B.tail3.rotation.set(-0.3 * pitch * u, (TRAIN_SPLIT[2] * bend + wave(2)) * u, 0);
     }
   }
 }

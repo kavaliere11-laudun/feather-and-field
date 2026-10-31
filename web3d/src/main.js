@@ -15,7 +15,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BREEDS, ALL_BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook } from './birds.js';
+import { BREEDS, ALL_BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook, TRAIN_J, TRAIN_SPLIT } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
 import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog, setBeastLang } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE, setGooseLang } from './geese.js';
@@ -1898,6 +1898,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
         return () => !b.cuddle || b.cuddle.ready;
       }
       if (near && b.train) {      // (the peacock, the farmer come over to him: he stays where he is, as he is)
+        if (b.busy()) return null;      // (fluttering over somewhere just then, say: the farmer asks again in a moment)
         const at = [b.root.position.x, b.root.position.z], F = [plot.farmer.x, plot.farmer.z], mid = [(at[0] + F[0]) / 2, (at[1] + F[1]) / 2];
         plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b], [mid[0], mid[1], 0.32, b]]; P.henAt = { side: false, hand: 'R', at, sides: [], room: 0, near: true, h: near.face };
         for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - mid[0], o.root.position.z - mid[1]) < 0.75) {      // (nobody between them: off out of their way, straight out if need be)
@@ -2383,6 +2384,15 @@ function farmerLanes(plot) {
   const [g, i, s] = P.in.map(L), at = q => { const a = L(q); return [...a, ...a]; };
   return (plot.lanes = [[...g, ...i], [...i, ...s], at(P.feederAt), at(P.throwAt), at(P.crouchAt), ...(P.clear ? [at(P.clear)] : [])]);
 }
+// the middle of his train d along it from its root (behind his body, facing body), lying the way yaw: it curves from his
+// rump round to the way it lies, in three straight parts as the bird is drawn (birds.js TRAIN_J, TRAIN_SPLIT; Audrey 31 Oct,
+// "Tail gets weird turns"). [x, z, sin, cos of the way that part of it goes]
+function trainCurve(x, z, yaw, body) {
+  const b = wrapA(yaw - body), [j1, j2] = TRAIN_J, A = [body + TRAIN_SPLIT[0] * b, body + (TRAIN_SPLIT[0] + TRAIN_SPLIT[1]) * b, body + b];
+  const S = A.map(Math.sin), C = A.map(Math.cos), r0 = [x - Math.sin(body) * TRAIN_ROOT, z - Math.cos(body) * TRAIN_ROOT];
+  const r1 = [r0[0] - S[0] * j1, r0[1] - C[0] * j1], r2 = [r1[0] - S[1] * (j2 - j1), r1[1] - C[1] * (j2 - j1)];
+  return d => { const k = d < j1 ? 0 : d < j2 ? 1 : 2, o = k === 0 ? r0 : k === 1 ? r1 : r2, e = d - (k === 0 ? 0 : k === 1 ? j1 : j2); return [o[0] - S[k] * e, o[1] - C[k] * e, S[k], C[k]]; };
+}
 const TRAIN_SAMPLES = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.85, 1].map(t => [t, t < 0.1 ? 0 : 0.05 + 0.1 * t]);
 function trainBack(rig) {                // how far behind his feet his train reaches, lying (his model's, without the fan)
   const a = rig.mesh.geometry.attributes.position; let z = 0;
@@ -2439,10 +2449,10 @@ class Bird {
   // through the fence, the house, what stands in the yard or one of the others; nor walks where it would; they keep off it.
   // (x, z) facing yaw: the points down its middle and out to its sides
   trainEach(x, z, yaw, fn, body = yaw) {   // (yaw: the train's way, from its root behind his body facing body)
-    const s = Math.sin(yaw), c = Math.cos(yaw), L = this.train.back, P = TRAIN_ROOT, ox = x - Math.sin(body) * P, oz = z - Math.cos(body) * P;
+    const L = this.train.back, P = TRAIN_ROOT, T = trainCurve(x, z, yaw, body);
     for (const [t, w] of TRAIN_SAMPLES) {
-      const d = 0.42 - P + (L - 0.42) * t;       // (from where it comes down low behind him: nearer, it's up over a bowl or a sand pit's edge)
-      for (const sd of w ? [-1, 0, 1] : [0]) if (fn(ox - s * d + c * sd * w, oz - c * d - s * sd * w)) return true;
+      const [cx, cz, s, c] = T(0.42 - P + (L - 0.42) * t);       // (from where it comes down low behind him: nearer, it's up over a bowl or a sand pit's edge)
+      for (const sd of w ? [-1, 0, 1] : [0]) if (fn(cx + c * sd * w, cz - s * sd * w)) return true;
     }
     return false;
   }
@@ -2523,12 +2533,15 @@ class Bird {
     }
     return false;
   }
-  onTrain(x, z) {                          // (x, z) on his train, lying where it is now?
+  onTrain(x, z, m = 0.1) {                 // (x, z) on his train, lying where it is now? (m: with room to spare)
     if (this.asleep || this.roost) return false;
     const p = this.root.position, by = this.root.rotation.y, y = this.A.fan > 0.3 ? by : this.trainY, s = Math.sin(y), c = Math.cos(y);
     const dx = x - (p.x - Math.sin(by) * TRAIN_ROOT), dz = z - (p.z - Math.cos(by) * TRAIN_ROOT), back = -(dx * s + dz * c) + TRAIN_ROOT, side = Math.abs(dx * c - dz * s);
     if (this.A.fan > 0.3) return back > 0.05 && back < 0.55 && side < 1.15;      // (his fan up: not under it)
-    return back > 0.2 && back < this.train.back + 0.08 && side < 0.07 + 0.13 * Math.min(1, back / this.train.back);
+    // (lying: along its curve, as it's drawn; 10 cm to spare, so that a peahen's peck stays off it too, Audrey 31 Oct)
+    const L = this.train.back, T = trainCurve(p.x, p.z, y, by);
+    for (let bk = 0.2; bk < L + 0.08; bk += 0.05) { const [cx, cz] = T(bk - TRAIN_ROOT); if (Math.hypot(x - cx, z - cz) < 0.07 + m + 0.13 * Math.min(1, bk / L)) return true; }
+    return false;
   }
   // his fan up: room for it all round, a great half circle across behind him (facing y)
   // wedged where his train lies only the one way (by the fence, say): a few steps on along the way it lies, so that he
@@ -3348,8 +3361,10 @@ class Bird {
           if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying) {
             const q = this.wayOut();      // (wedged, his train only lying the one way: a few steps on first, then on where he was going: called over by the farmer, say)
             if (!q && A.t - (this.stillSince ?? A.t) > 6 && this.flyOut()) this.trainStuck = 0;      // (boxed in for good, stuck there a while: a flutter over to somewhere roomier)
-            else if (q && q.back) { this.trainStuck = 0; this.backing = { to: q.back, t: 0 }; }
-            else if (q) { this.trainStuck = 0; if (Math.hypot(this.target.x - p.x, this.target.z - p.z) > 0.1) this.route = [[this.target.x, this.target.z], ...(this.route || [])]; this.target.set(q[0], p.y, q[1]); }
+            // (then on where he was going if the farmer's called him; else somewhere else: back to the same place, he'd only be
+            // wedged again, to and fro on the spot, Audrey 31 Oct: "Tail gets weird turns")
+            else if (q && q.back) { this.trainStuck = 0; this.backing = { to: q.back, t: 0 }; if (!this.cuddle && !this.called) { this.route = null; this.target.set(q.back[0], p.y, q.back[1]); } }
+            else if (q) { this.trainStuck = 0; if (Math.hypot(this.target.x - p.x, this.target.z - p.z) > 0.1 && (this.cuddle || this.called)) this.route = [[this.target.x, this.target.z], ...(this.route || [])]; else if (!this.cuddle && !this.called) this.route = null; this.target.set(q[0], p.y, q[1]); }
             else if (!this.cuddle && !this.called) { this.trainStuck = 0; this.route = null; this.target.copy(p); this.wait = 0.2; }
           }
         } else { this.trainStuck = 0; this.trainYaw = t1; }
@@ -3364,7 +3379,8 @@ class Bird {
     if (this.train) { if (this.roost || this.asleep || A.fan > 0.3) this.trainYaw = this.root.rotation.y; A.bend = wrapA(this.trainY - this.root.rotation.y); }      // (his train swung round behind him)
     if (this.trainShadow) {
       const T = this.trainShadow, b = A.bend || 0; T.material.opacity = 0.85 * (1 - A.fan) * (1 - A.hang); T.visible = A.fan < 0.98 && A.hang < 0.9;
-      T.position.set(-Math.sin(b) * 0.38, -0.011, -TRAIN_ROOT - Math.cos(b) * 0.38); T.rotation.set(-Math.PI / 2, 0, b);      // (swung round with it)
+      const a0 = TRAIN_SPLIT[0] * b, a1 = (TRAIN_SPLIT[0] + TRAIN_SPLIT[1]) * b, j = TRAIN_J[0], e = 0.38 - j;      // (swung round with it, along its curve)
+      T.position.set(-Math.sin(a0) * j - Math.sin(a1) * e, -0.011, -TRAIN_ROOT - Math.cos(a0) * j - Math.cos(a1) * e); T.rotation.set(-Math.PI / 2, 0, a1);
     }
     if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);

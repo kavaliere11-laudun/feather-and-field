@@ -18,7 +18,7 @@ for (const t of LOOKS) {
     for (let i = 0; i < secs * 30; i++) {
       f.step(1 / 30, 1);
       for (const P of plots) for (const B of P.birds) {
-        if (!B.train) { if (B.root.visible && !B.asleep) henFrames++; for (const C of P.birds) if (C.train && C.onTrain(B.root.position.x, B.root.position.z) && !B.laying && !B.roost && !B.play) onTrainHen++; continue; }
+        if (!B.train) { if (B.root.visible && !B.asleep) henFrames++; for (const C of P.birds) if (C.train && C.onTrain(B.root.position.x, B.root.position.z, 0) && !B.laying && !B.roost && !B.play) onTrainHen++; continue; }
         if (B.roost || B.asleep) continue;
         if (!B.trainSettled) { unsettled++; continue; }      // (a pen out of view isn't brought to life yet: he's put down in his yard once it is)
         frames++;
