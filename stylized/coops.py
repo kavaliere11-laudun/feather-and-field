@@ -830,6 +830,220 @@ def joglo(seed=15, name='house_aya', J=None, pal=None):
     return finish(objs, name)
 
 
+# ------------------------------------------------------------------ the Garden Pavilion (the peafowl, 31 Oct 2026: Audrey's
+# "Garden pavilion (Recommended)" for an Indian blue peacock and his two peahens, level 30): a little Mughal garden
+# pavilion on a plinth of red sandstone, its walls of ivory plaster with red sandstone pilasters at the corners, the doors
+# and the nest window under cusped arches of white marble, a frieze of peacock-blue tiles, a peacock's eye painted over the
+# middle, a jali screen at each side, a sloping stone eave (chhajja) on little brackets, a parapet of leaf-shaped merlons,
+# an onion dome of turquoise tiles on a drum with a lotus and a gold finial, little domed kiosks (chhatris) at the corners,
+# a brass lantern, and a tall wooden perch beside it where the peacock roosts and shows his train
+PAV = dict(FL=0.24, WX=0.38, eave=0.96, par=1.06, dome=(0.25, 0.62), over=0.12, front=0.05)      # (a short overhang in front: from the game's camera a deep one hides the arches and the frieze)
+PV = dict(plaster='#efe3c8', plaster2='#e8dabd', red='#b5603f', red2='#a3532f', marble='#f7f2e8', dome='#2f8f8c', dome2='#3aa39f',
+          domeb='#25726f', gold='#d1a640', blue='#1d5a86', teal='#2e8f86', perch='#8a5a33', perch2='#6e4527', inside='#2b2016')
+
+
+def onion(objs, name, cx, cy, z0, R, H, m, m2=None, n=20, ribs=8, rib_m=None):
+    """An onion dome over (cx, cy) from z0: bulging out to 1.12 R a third of the way up, then drawn in to a point H above;
+    ribs of a darker tile running up it."""
+    T_ = (0, .08, .18, .3, .42, .55, .66, .76, .85, .92, .97, 1.0); Rk = (.86, .98, 1.1, 1.15, 1.12, 1.0, .82, .6, .38, .2, .08, .01)
+    prof = [(max(R * r, 0.004), z0 + H * t) for t, r in zip(T_, Rk)]
+    rings = [[(cx + r * math.cos(2 * math.pi * k / n), cy + r * math.sin(2 * math.pi * k / n)) for k in range(n)] for r, _ in prof]
+    for i in range(len(prof) - 1):
+        objs.append(ring_mesh(name, rings[i], prof[i][1], rings[i + 1], prof[i + 1][1], m if (m2 is None or i % 3) else m2))
+    if ribs and rib_m:
+        for k in range(ribs):
+            a = 2 * math.pi * (k + 0.5) / ribs
+            for i in range(len(prof) - 2):
+                (r0, z0_), (r1, z1_) = prof[i], prof[i + 1]
+                p = Vector((cx + (r0 + 0.004) * math.cos(a), cy + (r0 + 0.004) * math.sin(a), z0_)); q = Vector((cx + (r1 + 0.004) * math.cos(a), cy + (r1 + 0.004) * math.sin(a), z1_))
+                objs.append(cyl('drib', 0.007, (q - p).length + 0.004, (p + q) / 2, (q - p).normalized().to_track_quat('Z', 'Y').to_euler(), m=rib_m, verts=5, bevel=0.0))
+    return prof
+
+
+def kalash(objs, x, y, z, s, gold):
+    """A gold finial: a lotus cup, two balls one on the other and a spike."""
+    objs.append(cyl('klotus', 0.03 * s, 0.03 * s, (x, y, z + 0.015 * s), m=gold, verts=10, r2=0.012 * s, bevel=0.0))
+    objs.append(sphere('kball', 0.028 * s, (x, y, z + 0.055 * s), m=gold, seg=10, rings=7))
+    objs.append(sphere('kball2', 0.019 * s, (x, y, z + 0.1 * s), m=gold, seg=10, rings=7))
+    objs.append(cyl('kspike', 0.008 * s, 0.09 * s, (x, y, z + 0.16 * s), m=gold, verts=6, r2=0.0, bevel=0.0))
+
+
+def cusped_arch(objs, x, y, z_spring, w, rise, m, normal=(0, -1), fill=None, t=0.03, lobes=5):
+    """A cusped (lobed) pointed arch over an opening w wide on a wall facing `normal`: its outline in `m`, little round lobes
+    along its inside, the space under it filled with `fill` (a flat panel) if given."""
+    nx, ny = normal
+    def at(u, v, d):
+        if ny: return Vector((x + u, y + ny * d, z_spring + v))
+        return Vector((x + nx * d, y + u, z_spring + v))
+    # a pointed arch: two arcs meeting at the top, `rise` above the springing
+    R = (w / 2) ** 2 / (2 * rise) + rise / 2 if rise < w / 2 else w / 2 + 0.0001
+    pts = []
+    N = 9
+    for side in (-1, 1):
+        cu = side * (R - w / 2) * -1                    # each arc's centre, on the other side
+        seg = []
+        for i in range(N + 1):
+            a0 = math.atan2(0, side * w / 2 - cu); a1 = math.atan2(rise, -cu)
+            a = a0 + (a1 - a0) * i / N
+            seg.append((cu + R * math.cos(a), R * math.sin(a)))
+        pts.append(seg)
+    left, right = pts[0], pts[1]
+    if fill is not None:                               # the tympanum under the arch
+        poly = [(u, v) for (u, v) in left] + [(u, v) for (u, v) in reversed(right)][1:]
+        me = bpy.data.meshes.new('archfill'); bm = bmesh.new()
+        c = bm.verts.new(tuple(at(0, rise * 0.4, 0.008))); vs = [bm.verts.new(tuple(at(u, v, 0.008))) for (u, v) in poly]
+        for i in range(len(vs) - 1): bm.faces.new((c, vs[i], vs[i + 1]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('archfill', me)); setmat(o, fill); objs.append(o)
+    for seg in (left, right):
+        for i in range(len(seg) - 1):
+            (u0, v0), (u1, v1) = seg[i], seg[i + 1]
+            objs.append(plank('arch', at(u0, v0, 0.02), at(u1, v1, 0.02), t, 0.022, (nx, ny, 0), m, jitter=0.0, bevel=0.003))
+    for k in range(lobes):                             # the cusps: little half-discs along the inside
+        f = (k + 1) / (lobes + 1); seg = left if f < 0.5 else right; ff = (f * 2) if f < 0.5 else (2 - f * 2)
+        i = min(N - 1, int((1 - ff) * N)); (u, v) = seg[i]
+        objs.append(sphere('cusp', 0.02, tuple(at(u * 0.9, v * 0.88, 0.022)), (1, 0.4, 1) if ny else (0.4, 1, 1), m=m, seg=8, rings=5))
+
+
+def pavilion(seed=19, name='house_pea', look=2, pal=None):
+    """The Garden Pavilion (the peafowl's; look 0..4 to come: Rustic, Mended, Snug, Cosy, Deluxe)."""
+    random.seed(seed); objs = []
+    A = dict(PAV); FL, WX, EAVE, PAR, OV, OF = A['FL'], A['WX'], A['eave'], A['par'], A['over'], A['front']
+    P_ = dict(PV, **(pal or {}))
+    mk = lambda key, **kw: C('pv_' + key, P_[key], **kw)
+    plaster, plaster2 = mk('plaster', rough=0.85, var=0.04), mk('plaster2', rough=0.85, var=0.04)
+    red, red2 = mk('red', rough=0.85, var=0.08), mk('red2', rough=0.85, var=0.07)
+    marble = mk('marble', rough=0.35, var=0.02, spec=0.5); gold = mk('gold', rough=0.3, metal=0.75)
+    dome, dome2, domeb = mk('dome', rough=0.35, var=0.05, spec=0.55, coat=0.3), mk('dome2', rough=0.35, var=0.05, spec=0.55, coat=0.3), mk('domeb', rough=0.4, spec=0.5)
+    blue, teal = mk('blue', rough=0.4, spec=0.5, coat=0.3), mk('teal', rough=0.4, spec=0.5, coat=0.3)
+    perch, perch2 = mk('perch', var=0.08, grain=0.35, grain_scale=G), mk('perch2', var=0.06, grain=0.3, grain_scale=G)
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    # the plinth of red sandstone, a marble edge on its top, a moulding at its foot
+    PX, PY = W2 + 0.07, D2 + 0.07
+    objs.append(box('plinth', (2 * PX, 2 * PY, FL - 0.02), (0, 0, (FL - 0.02) / 2), m=red, bevel=0.01, segs=1))
+    objs.append(box('plinthtop', (2 * PX + 0.02, 2 * PY + 0.02, 0.025), (0, 0, FL - 0.012), m=marble, bevel=0.006, segs=1))
+    objs.append(box('plinthfoot', (2 * PX + 0.04, 2 * PY + 0.04, 0.04), (0, 0, 0.02), m=red2, bevel=0.008, segs=1))
+    for k in range(7):                                  # sunk panels along its front
+        x = -PX + 0.1 + k * (2 * PX - 0.2) / 6
+        if abs(x + 0.31) < 0.16: continue               # (not under the hens' ramp)
+        objs.append(box('plpanel', (0.12, 0.012, FL - 0.11), (x, -PY - 0.004, FL / 2), m=red2, bevel=0.003, segs=1))
+    # the walls: a solid core of ivory plaster (the nest and passage cut from it)
+    core = box('core', (2 * W2, 2 * D2, EAVE - FL), (0, 0, (EAVE + FL) / 2), m=plaster, bevel=0.006, segs=1); objs.append(core)
+    # red sandstone pilasters at the corners: a base, a slim octagonal shaft, a capital
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = sx * (W2 + 0.005), sy * (D2 + 0.005)
+            objs.append(box('pilbase', (0.11, 0.11, 0.06), (x, y, FL + 0.03), m=red2, bevel=0.006, segs=1))
+            objs.append(cyl('pilshaft', 0.04, EAVE - FL - 0.12, (x, y, FL + 0.06 + (EAVE - FL - 0.12) / 2), m=red, verts=8, bevel=0.0))
+            objs.append(cyl('pilcap', 0.06, 0.05, (x, y, EAVE - 0.04), m=red2, verts=8, r2=0.045, bevel=0.0))
+    # the frieze: a band of peacock-blue tiles along the top of each wall, little white diamonds on it
+    zf = EAVE - 0.11
+    for (a, b, n) in (((-W2, -D2), (W2, -D2), (0, -1)), ((W2, -D2), (W2, D2), (1, 0)), ((-W2, D2), (-W2, -D2), (-1, 0)), ((W2, D2), (-W2, D2), (0, 1))):
+        A_, B_ = Vector((a[0], a[1], zf)), Vector((b[0], b[1], zf)); nv = Vector((n[0], n[1], 0))
+        objs.append(plank('frieze', A_ + nv * 0.008, B_ + nv * 0.008, 0.07, 0.012, nv, blue, jitter=0.0, bevel=0.002))
+        L = (B_ - A_).length; d = (B_ - A_).normalized(); m_ = int(L / 0.09)
+        for k in range(m_):
+            c = A_ + d * ((k + 0.5) * L / m_) + nv * 0.016
+            objs.append(box('fdiam', (0.026, 0.026, 0.026) if not n[0] else (0.026, 0.026, 0.026), tuple(c), (0, math.radians(45), 0) if n[1] else (math.radians(45), 0, 0), m=marble if k % 2 else gold, bevel=0.0))
+    # the hens' door and the nest window under cusped marble arches (the openings cut by nest_window)
+    nest_window(objs, 'pea', FL, WX, marble, solids=[core], door='drop', door_m=red2, door_lattice='panel')
+    pop_door(objs, FL, marble, red2, marble)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    cusped_arch(objs, -0.31, -D2, FL + POP_H, POP_W + 0.04, 0.1, marble, fill=blue)
+    cusped_arch(objs, WX, -D2, FL + 0.04 + WIN_H + 0.01, WIN_W + 0.04, 0.09, marble, fill=blue)
+    # between them a tall blind arch, a peacock's eye painted in it: blue in green in gold in bronze
+    mid = (-0.31 + POP_W / 2 + WX - WIN_W / 2) / 2
+    objs.append(box('niche', (0.14, 0.012, 0.42), (mid, -D2 - 0.004, FL + 0.32), m=plaster2, bevel=0.003, segs=1))
+    for (u0, v0, u1, v1) in ((-0.07, 0, -0.07, 0.42), (0.07, 0, 0.07, 0.42)):
+        objs.append(plank('nframe', (mid + u0, -D2 - 0.02, FL + 0.11 + v0), (mid + u1, -D2 - 0.02, FL + 0.11 + v1), 0.022, 0.02, (0, -1, 0), marble, jitter=0.0, bevel=0.003))
+    cusped_arch(objs, mid, -D2, FL + 0.53, 0.16, 0.09, marble, fill=plaster2, t=0.022, lobes=3)
+    eye = [(0.062, 0.12, C('pv_eye_bronze', '#8a6a2e', rough=0.5)), (0.05, 0.095, C('pv_eye_gold', '#d9b24a', rough=0.45)), (0.038, 0.072, teal), (0.024, 0.045, C('pv_eye_blue', '#183f86', rough=0.4, spec=0.5))]
+    for k, (rx, rz, m_) in enumerate(eye):
+        objs.append(sphere('peye', 1.0, (mid, -D2 - 0.012 - k * 0.003, FL + 0.31 + (0.065 - rx) * 0.5), (rx, 0.004, rz), m=m_, seg=16, rings=6))
+    # each side: a jali screen (a lattice of marble) under a cusped arch
+    for sx in (-1, 1):
+        x = sx * (W2 + 0.006)
+        objs.append(box('jalibg', (0.012, 0.3, 0.34), (x, 0.0, FL + 0.33), m=C('pv_jalidark', '#3a2c20', rough=1.0), bevel=0.0))
+        for k in range(7):
+            u = -0.135 + k * 0.045
+            objs.append(box('jali', (0.016, 0.012, 0.34), (x + sx * 0.006, u, FL + 0.33), m=marble, bevel=0.0))
+        for k in range(8):
+            v = FL + 0.17 + k * 0.045
+            objs.append(box('jali', (0.016, 0.3, 0.012), (x + sx * 0.006, 0.0, v), m=marble, bevel=0.0))
+        cusped_arch(objs, x, 0.0, FL + 0.5, 0.34, 0.12, marble, normal=(sx, 0), fill=plaster2)
+    # the chhajja: a thin stone eave sloping out all round on little brackets
+    out = [(-W2 - OV, -D2 - OF), (W2 + OV, -D2 - OF), (W2 + OV, D2 + OV), (-W2 - OV, D2 + OV)]
+    inn = [(-W2, -D2), (W2, -D2), (W2, D2), (-W2, D2)]
+    objs.append(ring_mesh('chhajja', out, EAVE - 0.05, inn, EAVE + 0.01, red, cap_a=False))
+    objs.append(ring_mesh('chhajjae', out, EAVE - 0.075, out, EAVE - 0.05, red2))
+    for (a, b, n) in (((-W2, -D2), (W2, -D2), (0, -1)), ((W2, -D2), (W2, D2), (1, 0)), ((-W2, D2), (-W2, -D2), (-1, 0))):
+        A_, B_ = Vector((a[0], a[1], EAVE - 0.06)), Vector((b[0], b[1], EAVE - 0.06)); L = (B_ - A_).length; d = (B_ - A_).normalized()
+        for k in range(1, int(L / 0.2)):
+            c = A_ + d * (k * L / int(L / 0.2)) + Vector((n[0], n[1], 0)) * 0.04
+            objs.append(box('bracket', (0.03, 0.07, 0.05) if n[1] else (0.07, 0.03, 0.05), tuple(c), m=red2, bevel=0.004, segs=1))
+    # the flat roof, a parapet of leaf-shaped merlons round it
+    objs.append(box('roofslab', (2 * W2 + 0.02, 2 * D2 + 0.02, 0.05), (0, 0, EAVE + 0.035), m=plaster2, bevel=0.004, segs=1))
+    for (a, b) in (((-W2, -D2), (W2, -D2)), ((W2, -D2), (W2, D2)), ((W2, D2), (-W2, D2)), ((-W2, D2), (-W2, -D2))):
+        A_, B_ = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B_ - A_).length; d = (B_ - A_).normalized()
+        objs.append(plank('parapet', A_ + Vector((0, 0, EAVE + 0.06)), B_ + Vector((0, 0, EAVE + 0.06)), 0.035, 0.035, (0, 0, 1), red, jitter=0.0, bevel=0.004))
+        for k in range(int(L / 0.09)):
+            c = A_ + d * ((k + 0.5) * L / int(L / 0.09))
+            objs.append(sphere('merlon', 0.024, (c.x, c.y, PAR - 0.005), (1, 1, 1.5), m=red, seg=8, rings=6))
+            objs.append(cyl('merlontip', 0.01, 0.025, (c.x, c.y, PAR + 0.028), m=red, verts=6, r2=0.0, bevel=0.0))
+    # the dome: a drum with little arched windows, a band of gold, the onion of turquoise tiles, a lotus and the finial
+    R, H = A['dome']; zd = EAVE + 0.06
+    objs.append(cyl('drum', R + 0.02, 0.1, (0, 0.02, zd + 0.05), m=plaster, verts=20, bevel=0.0))
+    for k in range(10):
+        a = 2 * math.pi * k / 10
+        objs.append(box('drumwin', (0.035, 0.012, 0.05), (math.sin(a) * (R + 0.025), 0.02 - math.cos(a) * (R + 0.025), zd + 0.05), (0, 0, a), m=C('pv_drumwin', '#3a2c20', rough=1.0), bevel=0.0))
+    objs.append(cyl('drumband', R + 0.035, 0.025, (0, 0.02, zd + 0.11), m=gold, verts=20, bevel=0.0))
+    prof = onion(objs, 'dome', 0, 0.02, zd + 0.11, R, H, dome, dome2, rib_m=domeb)
+    top = zd + 0.11 + H
+    for k in range(10):                                 # the lotus at its top
+        a = 2 * math.pi * k / 10
+        objs.append(sphere('lotus', 0.022, (math.cos(a) * 0.03, 0.02 + math.sin(a) * 0.03, top - 0.01), (1.4, 0.5, 0.6), (0, math.radians(30), a), m=marble, seg=8, rings=5))
+    kalash(objs, 0, 0.02, top - 0.005, 1.3, gold)
+    # the chhatris: little domed kiosks on four posts at the roof's corners
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = sx * (W2 - 0.06), sy * (D2 - 0.06); z0 = EAVE + 0.06
+            objs.append(box('chbase', (0.15, 0.15, 0.03), (x, y, z0 + 0.015), m=red2, bevel=0.004, segs=1))
+            for px in (-1, 1):
+                for py in (-1, 1):
+                    objs.append(cyl('chpost', 0.009, 0.15, (x + px * 0.05, y + py * 0.05, z0 + 0.03 + 0.075), m=marble, verts=6, bevel=0.0))
+            objs.append(box('chtop', (0.15, 0.15, 0.02), (x, y, z0 + 0.19), m=red2, bevel=0.004, segs=1))
+            onion(objs, 'chdome', x, y, z0 + 0.2, 0.06, 0.11, dome, None, n=12, ribs=0)
+            kalash(objs, x, y, z0 + 0.305, 0.5, gold)
+    # a brass lantern hanging from the eave at the front left
+    brass = C('pv_brass', '#c99a3c', rough=0.3, metal=0.85); lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0))
+    lx, ly, lz = -W2 - 0.06, -D2 - 0.02, 0.64
+    objs.append(cyl('lchain', 0.004, EAVE - 0.08 - lz - 0.06, (lx, ly, (EAVE - 0.08 + lz + 0.06) / 2), m=iron, verts=5, bevel=0.0))
+    objs.append(cyl('lanternb', 0.04, 0.1, (lx, ly, lz), m=brass, verts=8, r2=0.03, bevel=0.003))
+    objs.append(cyl('lanterng', 0.034, 0.07, (lx, ly, lz), m=lamp, verts=8, bevel=0.0))
+    onion(objs, 'lroof', lx, ly, lz + 0.05, 0.045, 0.07, brass, None, n=8, ribs=0)
+    light_at(name, lx, ly, lz)
+    # the peacock's perch beside it on the right: a tall turned post on a stone foot, a crossbar on top
+    qx, qy = W2 + 0.3, 0.12
+    objs.append(cyl('perchfoot', 0.08, 0.06, (qx, qy, 0.03), m=red2, verts=10, r2=0.06, bevel=0.005))
+    objs.append(cyl('perchpost', 0.03, 0.95, (qx, qy, 0.06 + 0.475), m=perch, verts=10, bevel=0.0))
+    for z in (0.3, 0.62):
+        objs.append(cyl('perchring', 0.036, 0.03, (qx, qy, z), m=perch2, verts=10, bevel=0.0))
+    objs.append(cyl('perchbar', 0.024, 0.5, (qx, qy, 1.02), (math.radians(90), 0, 0), m=perch, verts=10, bevel=0.0))
+    for sy in (-1, 1): objs.append(sphere('perchend', 0.03, (qx, qy + sy * 0.25, 1.02), m=gold, seg=8, rings=6))
+    objs.append(cyl('perchbrace', 0.012, 0.2, (qx, qy - 0.08, 0.95), (math.radians(-45), 0, 0), m=perch2, verts=6, bevel=0.0))
+    objs.append(cyl('perchbrace', 0.012, 0.2, (qx, qy + 0.08, 0.95), (math.radians(45), 0, 0), m=perch2, verts=6, bevel=0.0))
+    block('pea', qx, qy, 0.12)
+    # terracotta urns with clipped round shrubs at the plinth's front corners
+    urn = C('pv_urn', '#c46a3c', rough=0.8, var=0.06); leaf = C('pv_box', '#4f7d3a', rough=0.85, var=0.08)
+    for sx in (-1, 1):
+        ux, uy = sx * (PX + 0.12), -PY + 0.12
+        objs.append(cyl('urn', 0.075, 0.13, (ux, uy, 0.065), m=urn, verts=14, r2=0.05, bevel=0.004))
+        objs.append(cyl('urnlip', 0.085, 0.025, (ux, uy, 0.14), m=urn, verts=14, bevel=0.004))
+        objs.append(sphere('topiary', 0.105, (ux, uy, 0.25), (1, 1, 1.05), m=leaf, ico=2, disp=0.12, seed=5 + sx))
+        block('pea', ux, uy, 0.12)
+    return finish(objs, name)
+
+
 # ------------------------------------------------------------------ the pen, shared by every style
 # ------------------------------------------------------------------ the Floating House (the call ducks, 30 Oct 2026: Audrey's
 # "Floating house (Recommended)": a little wooden house on a raft in the middle of their pond, a ramp up to it). Its pond
@@ -1614,7 +1828,7 @@ def cutter(name, size, loc):
 
 
 def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=None, steps=None, lining_c='#3b2b20', nest_floor=None,
-                door=None, door_m=None, ww=None, wh=None):
+                door=None, door_m=None, ww=None, wh=None, door_lattice=False):
     """FL: the house's floor (the pop door); nest_floor: the nest's, lower where the roof's overhang would hide the window.
     door: the little nest door, open: 'drop' (hinged at the sill and let down: hanging against the wall below a high window,
     resting on the ground like a little ramp below a low one) or 'lattice' (a lattice screen slid up). Anything above the
@@ -1678,7 +1892,7 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
     for (u0, v0, u1, v1) in [(-WIN_W / 2 - t / 2, z1, WIN_W / 2 + t / 2, z1), (-WIN_W / 2, z0, -WIN_W / 2, z1), (WIN_W / 2, z0, WIN_W / 2, z1)]:
         objs.append(plank('nwframe', (wx + u0, -D2 - 0.022, v0), (wx + u1, -D2 - 0.022, v1), t, 0.026, (0, -1, 0), frame_m, jitter=0.2, bevel=0.004))
     objs.append(box('nwsill', (WIN_W + 0.09, 0.08, 0.03), (wx, -D2 - 0.02, z0 - 0.012), m=frame_m, bevel=0.006, segs=1))
-    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m, WIN_W, WIN_H)
+    nest_door(objs, door, wx, z0, z1, door_m or frame_m, frame_m, WIN_W, WIN_H, lattice=door_lattice)
     if door == 'drop' and z0 - 0.074 < WIN_H + 0.04:                       # a let-down door lying on the ground: walk round it
         for dx in (-0.08, 0.08): block(house, wx + dx, -D2 - 0.28, 0.2)
     # for the browser (glTF axes): floor, window, the nest seat, the way in, the ramp
@@ -1689,16 +1903,25 @@ def nest_window(objs, house, FL, wx, frame_m, solids=(), hollow=False, ramp_len=
                                    bed=round(NF + T + 0.04, 3), door=door)
 
 
-def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W, WIN_H):
+def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W, WIN_H, lattice=False):
     """The nest window's little door, open. Planks run across it; it is a little bigger than the opening."""
     if not kind: return
     w, h, th = WIN_W + (0.03 if kind == 'lattice' else 0.05), WIN_H + 0.04, 0.025
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     def panel(origin, along_w, along_h, out, lattice=False):
         """Planks (or a lattice) over a w x h panel from `origin`, spanning along_w and along_h (unit vectors), facing `out`."""
+        if lattice == 'panel':                                # (the Garden Pavilion's: a sandstone panel in a marble frame, a gold boss)
+            objs.append(plank('ndpanel', origin + along_w * (w / 2) + along_h * 0.01, origin + along_w * (w / 2) + along_h * (h - 0.01), w - 0.01, th, out, m, jitter=0.0, bevel=0.004))
+            for (p, q) in ((origin, origin + along_w * w), (origin + along_h * h, origin + along_h * h + along_w * w), (origin, origin + along_h * h), (origin + along_w * w, origin + along_w * w + along_h * h)):
+                objs.append(plank('ndframe', p + out * (th + 0.004), q + out * (th + 0.004), 0.03, 0.016, out, trim, jitter=0.0, bevel=0.004))
+            ctr = origin + along_w * (w / 2) + along_h * (h / 2) + out * (th + 0.01)
+            objs.append(sphere('ndboss', 1.0, tuple(ctr), (0.05, 0.05, 0.05), m=C('pv_gold', '#d1a640', rough=0.3, metal=0.75), seg=12, rings=8))
+            objs.append(sphere('ndboss2', 1.0, tuple(ctr + out * 0.01), (0.03, 0.03, 0.03), m=C('pv_eye_blue', '#183f86', rough=0.4, spec=0.5), seg=12, rings=8))
+            return
         if lattice:
             ctr = origin + along_w * (w / 2) + along_h * (h / 2)
-            objs.append(box('ndpaper', (w - 0.03, 0.012, h - 0.03), ctr - out * 0.002, m=C('paper', '#f3e3bd', rough=0.8), bevel=0.0))
+            if along_h.z > 0.99: objs.append(box('ndpaper', (w - 0.03, 0.012, h - 0.03), ctr - out * 0.002, m=C('paper', '#f3e3bd', rough=0.8), bevel=0.0))
+            else: objs.append(plank('ndpaper', origin + along_w * (w / 2) + along_h * 0.015 - out * 0.002, origin + along_w * (w / 2) + along_h * (h - 0.015) - out * 0.002, w - 0.03, 0.012, out, C('pv_jalidark', '#3a2c20', rough=1.0), jitter=0.0, bevel=0.0))      # (let down, the Garden Pavilion's jali: dark behind it)
             for k in (1, 2):
                 for (p, q, ww) in ((origin + along_w * (w * k / 3), origin + along_w * (w * k / 3) + along_h * h, 0.012), (origin + along_h * (h * k / 3), origin + along_h * (h * k / 3) + along_w * w, 0.012)):
                     objs.append(plank('ndlat', p + out * 0.008, q + out * 0.008, ww, 0.012, out, m, jitter=0.1, bevel=0.0))
@@ -1719,7 +1942,7 @@ def nest_door(objs, kind, wx, z0, z1, m, trim, WIN_W, WIN_H):
         d = Vector((0, -max(c_, 0.12), -s_)).normalized()                  # down the door, from the hinge
         out = Vector((0, -abs(d.z), abs(d.y))).normalized()               # its inner face, now facing up and out
         top = Vector((x0, yf - 0.02, z0 - 0.03))
-        panel(top, Vector((1, 0, 0)), d, out)
+        panel(top, Vector((1, 0, 0)), d, out, lattice=lattice)      # (lattice: the Garden Pavilion's, a marble jali)
         for x in (wx - w / 3, wx + w / 3):
             objs.append(cyl('ndhinge', 0.012, 0.05, (x, yf - 0.02, z0 - 0.03), (0, math.radians(90), 0), iron, verts=8, bevel=0.0))
     else:                       # a lattice screen slid up just above the opening

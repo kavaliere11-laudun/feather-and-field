@@ -4,9 +4,9 @@
 import * as THREE from 'three';
 
 export const BREEDS = ['rir', 'orp', 'leg', 'bra', 'sil'];
-export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'];      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
+export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'pea', 'sil'];      // (the peafowl, 31 Oct: in the line-up)      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
 export const SILKIE = ['white', 'black', 'blue', 'buff', 'partridge', 'grey', 'splash', 'cuckoo', 'red', 'paint', 'lavender'];
-export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', sil: 'Silkie' };
+export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', pea: 'Indian blue peafowl', sil: 'Silkie' };
 const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
@@ -32,6 +32,12 @@ const ADULT = {
   pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
   aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
   aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
+  // the Indian blue peafowl (Audrey's photos, 31 Oct): the peacock's neck, head and breast shining cobalt blue, his back of
+  // bronze-green scales, his wings barred buff and black, rusty flight feathers, a dark belly, his long green train with its
+  // eyes (peacock: mode 9 on the train, birds' shader); the peahen grey-brown and scaled, her lower neck metallic green, her
+  // breast and belly pale
+  pea_h: { body: '#7d6d5d', top: '#86766a', hackle: '#2f6a58', head: '#8a7a68', breast: '#e6ddcc', wing: '#7a6a5a', prim: '#5d4f43', tail: '#6a5a4a', sheenNeck: '#3f7fb0' },
+  pea_r: { body: '#1d2b3e', top: '#4f7a3c', hackle: '#1f4fbf', saddle: '#5a8a3e', head: '#2356c8', breast: '#1f4cb8', wing: '#d8c39a', wingBars: '#2b2620', prim: '#b4612b', tail: '#3c6a2a', peacock: true, sheenNeck: '#5aa0ff' },
 };
 const SIL = {
   white: { body: '#f5f2eb' },
@@ -54,6 +60,7 @@ const CHICK = {
   bra: { down: '#f0e8cc', top: '#e8e0c4', face: '#f5efd9', wing: '#d6d2c6' },
   pol: { down: '#2b2a30', top: '#2b2a30', face: '#ebe5d5', wing: '#25242a', leg: '#7a8090', beak: '#6a6670' },      // (dark down, a pale crest bump)
   aya: { down: '#1c1b21', face: '#232228', wing: '#18171d', leg: '#232228', beak: '#2c2a32' },
+  pea: { down: '#b48a5c', top: '#9c7448', face: '#e8d3a8', wing: '#8f6a43', stripe: '#6a4a2c', pattern: 'chipmunk', leg: '#b8a898', beak: '#9a8f82' },      // (the peachicks: buff, striped: her photo)
 };
 const SIL_CHICK = {
   white: { down: '#f6f3e6' }, black: { down: '#33333b', face: '#45454f' }, blue: { down: '#8792a5' }, buff: { down: '#efd38a' },
@@ -61,7 +68,7 @@ const SIL_CHICK = {
   splash: { down: '#ebe9e3', spot: '#8a96a8', pattern: 'splash' }, cuckoo: { down: '#8e9095', spot: '#d8d8d4', pattern: 'splash' },
   red: { down: '#c56a33' }, paint: { down: '#f4f1e8', spot: '#2a2a30', pattern: 'paint' }, lavender: { down: '#c1bbcb' },
 };
-const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sil: '#5c5868' };
+const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', pea: '#a99a8a', sil: '#5c5868' };
 
 // ------------------------------------------------------------------ a little value noise for patterns (splashes, spots, mottling)
 function hash(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
@@ -108,6 +115,7 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
     else if (S.breast && z > 0.03 && h < 0.62 && h > 0.2) c = S.breast;
     else if (S.top && h > 0.55) c = S.top;
   }
+  if (S.peacock && key === 'body' && hw <= 0.04) c = z > -0.012 && h > 0.3 ? S.breast : y > 0.3 ? S.top : S.body;      // (a peacock: blue right down his breast, his back green-bronze, his belly dark)
   out.copy(lin(c));
   const lum = 0.2126 * out.r + 0.7152 * out.g + 0.0722 * out.b;
   FEAT.mode = 4; FEAT.amt = S.overlap ?? (lum > 0.5 ? 0.14 : 0.3); FEAT.c.copy(out).multiplyScalar(0.55);      // light plumage: only a hint
@@ -116,7 +124,10 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
   if (S.soft && (key === 'body' || key === 'legfeather')) FEAT.mode = 8;
   if (key === 'wing' && S.soft) FEAT.mode = 8;
   const n = noise(x * 60, y * 60, z * 60);
-  if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: a blue-black sheen over its body and wings, not too green: Audrey, 29 Oct)
+  if (S.sheenNeck && key === 'body' && hw > 0.04) { FEAT.mode = 5; FEAT.c.copy(lin(S.sheenNeck)); FEAT.amt = 0.3; }      // (a peafowl's shining neck)
+  else if (S.wingBars && key === 'wing') { FEAT.mode = 1; FEAT.c.copy(lin(S.wingBars)); FEAT.amt = 0.85; }      // (a peacock's barred wing coverts)
+  else if (S.peacock && key === 'tail') { FEAT.mode = 9; FEAT.c.copy(lin('#ffd27a')); FEAT.amt = 0.2; }      // (his train: the eyes drawn by the shader, a golden gloss)
+  else if (S.sheen && (key === 'body' || key === 'wing')) {      // (an Ayam Cemani: a blue-black sheen over its body and wings, not too green: Audrey, 29 Oct)
     FEAT.mode = 6; FEAT.c.copy(lin(S.sheen)).lerp(lin(S.sheen2 || S.sheen), smooth(0.45, 0.7, noise(x * 9 + 4, y * 9, z * 9))); FEAT.amt = key === 'wing' ? 0.32 : 0.27;      // (6: a softer gloss than the long feathers')
   } else if (key === 'tail' || key === 'saddle' || key === 'prim') {      // long glossy feathers: a sheen (green-black on dark tails, as in life)
     FEAT.mode = 5; FEAT.c.copy(S.tailSheen ? lin(S.tailSheen) : lum < 0.06 ? lin('#2f7d58') : lum < 0.35 ? lin('#ffcf7a') : lin('#ffffff')); FEAT.amt = S.tailSheen ? 0.24 : lum < 0.06 ? 0.3 : lum < 0.35 ? 0.16 : 0.1;
@@ -263,6 +274,7 @@ export function paintedGeometry(model, breed, colour) {
   }
   g.setAttribute('featherUV', new THREE.BufferAttribute(fuv, 3));
   g.setAttribute('eyeAt', new THREE.BufferAttribute(eyeSpots(src, base, k, paint, si, sw), 4));
+  if (src.morphAttributes.position) { g.morphAttributes = src.morphAttributes; g.morphTargetsRelative = src.morphTargetsRelative; }      // (the peacock's fan)
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
   const fur = furOf(model, breed);
@@ -379,6 +391,15 @@ function addFur(g, src, spec, headc, eyes) {
     f.setAttribute(name, new THREE.BufferAttribute(dst, k, a.normalized));
   }
   f.setIndex(new THREE.BufferAttribute(index, 1));
+  if (g.morphAttributes.position) {        // (the peacock's fan: the shells follow their own vertices; they're never on the train)
+    for (const key of ['position', 'normal']) {
+      if (!g.morphAttributes[key]) continue;
+      f.morphAttributes[key] = g.morphAttributes[key].map(a => { const src = a.array, dst = new Float32Array(total * 3); dst.set(src.subarray(0, n * 3), 0);
+        for (let s = 1; s <= K; s++) for (let j = 0; j < m; j++) dst.set(src.subarray(furVerts[j] * 3, furVerts[j] * 3 + 3), (n + (s - 1) * m + j) * 3);
+        return new THREE.BufferAttribute(dst, 3); });
+    }
+    f.morphTargetsRelative = g.morphTargetsRelative;
+  }
   f.boundingBox = g.boundingBox; f.computeBoundingSphere(); f.boundingSphere.radius += 0.04;
   f.userData.fur = { base: idx.length, offsets, shells: K, droop: spec.droop };
   FURRY.push(f); showShells(f);
@@ -697,13 +718,24 @@ function birdMaterial(indoor, goose) {
           float barb = barbs(al - abs(ac) * 0.06, 260.0, step(0.0, ac) + floor(vRest.y * 300.0));
           furShade *= (1.0 + 0.2 * barb) * mix(1.0, 0.82, smoothstep(0.4, 0.9, abs(ac))) * (0.92 + 0.12 * al) * (1.0 - 0.35 * split);
           diffuseColor.rgb = mix(diffuseColor.rgb, min(diffuseColor.rgb * 1.5 + 0.07, vec3(1.0)), 0.6 * quill + 0.35 * rimL);
+          if (vMode > 8.5 && vMode < 9.5) {
+            // a peacock's train feather (31 Oct): its eye at the broad tip (its v runs back from the tip, 0.75 m to 1, so every
+            // eye is the same size): a blue heart in green-teal, in gold, in copper; below it the loose bronze-green barbs
+            float dm = length(vec2(ac * 0.05, (al - 0.927) * 0.75)), ea = max(fwidth(dm), 0.0006);      // (ac: across in metres of 5 cm, the feather's 'feat' u made so)
+            vec3 eyeC = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.15, 1.05, 0.55), smoothstep(0.05, 0.12, 0.927 - al) * 0.5);
+            eyeC = mix(eyeC, vec3(0.25, 0.085, 0.012), 1.0 - smoothstep(0.0245 - ea, 0.0245 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.66, 0.4, 0.035), 1.0 - smoothstep(0.019 - ea, 0.019 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.016, 0.26, 0.16), 1.0 - smoothstep(0.0145 - ea, 0.0145 + ea, dm));
+            eyeC = mix(eyeC, vec3(0.012, 0.035, 0.27), 1.0 - smoothstep(0.0095 - ea, 0.0095 + ea, dm));
+            diffuseColor.rgb = eyeC;
+          }
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        if (vMode > 4.5) roughnessFactor = vMode > 5.5 ? 0.64 : 0.34;`)
+        if (vMode > 4.5) roughnessFactor = (vMode > 5.5 && vMode < 8.5) ? 0.64 : 0.34;`)
       .replace('#include <opaque_fragment>', `if (vMode > 4.5) {        // glossy tail feathers: a coloured sheen at glancing angles
           float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
-          outgoingLight += vPat.rgb * vPat.a * (vMode > 5.5 ? (0.05 + fr * fr * 0.5) * sheenMul : 0.04 + fr * fr * 0.6);
+          outgoingLight += vPat.rgb * vPat.a * ((vMode > 5.5 && vMode < 8.5) ? (0.05 + fr * fr * 0.5) * sheenMul : 0.04 + fr * fr * 0.6);
         }
         if (vMode > 6.5 && vMode < 7.5) outgoingLight = max(outgoingLight, diffuseColor.rgb * 0.42);      // (7, the call ducks: white all over, never dark in a fold or under the tail)
         if (vFurLen > 0.0) {
@@ -869,5 +901,10 @@ export class Rig {
     B.legR.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);
     B.legL.scale.setScalar(fold); B.legR.scale.setScalar(fold);
+    if (this.mesh.morphTargetInfluences) {      // (a peacock showing off: his train raised in a fan, 0 trailing .. 1 fanned; a little shiver at full)
+      const fan = Math.max(0, Math.min(1, s.fan || 0));
+      for (const m of [this.mesh, this.lo]) if (m && m.morphTargetInfluences) m.morphTargetInfluences[0] = fan;
+      if (fan > 0) B.tail.rotation.x -= 0.15 * fan * (1 - fan) + 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan);
+    }
   }
 }

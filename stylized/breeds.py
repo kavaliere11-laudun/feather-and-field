@@ -39,11 +39,19 @@ BREEDS = {
                 tail='fan', tail_up=16, shank=0.135, lift=0.055,
                 legs='#1e1d23', beak='#25232b', eye='#1a1214', combc='#2b2531', face='#2e2a34', lid='#28252d', lobe='#2b2531',
                 plum='#131217', wing='#15141a', tailc='#0e0d11', saddle='#131217'),
+    # the Indian blue peafowl (level 30, 31 Oct 2026: Audrey's "Indian blue (Recommended)", "Peacock + 2 peahens", her photos):
+    # a long slender neck, a small head with a fan of a crest, white stripes above and below the eye; the peacock's neck and
+    # breast shining cobalt blue, his back of green-bronze scales, barred wings, rusty flight feathers, his long green train
+    # with its eyes (the browser draws them: birds.js), fanned when he shows off; the peahen brown-grey, scaled, her lower
+    # neck metallic green, her belly white, a short brown tail
+    'pea': dict(scale=1.0, peafowl=True, shank=0.17, lift=0.0, legs='#a99a8a', beak='#8f8578', eye='#2a1d16', face='#f3f0e8', lid='#e9e5dc',
+                plum='#1f45a8', wing='#c9b08a', tailc='#2f6d3a', plum_h='#8a7b6a', wing_h='#7f705f', tailc_h='#6e5f4f'),
     'sil': dict(scale=0.86, silkie=True, shank=0.08,
                 legs='#5c5868', beak='#757688', eye='#2c2222', combc='#4b2032', lobe='#3fa6b8', plum='#f4f1ea', wing='#ece8df', tailc='#f4f1ea'),
 }
 ROOSTER = 1.12
 LO = False
+FAN = False          # (the peacock built with his train fanned: the browser's display pose, a morph of the same feathers)
 
 _mats = {}
 
@@ -67,8 +75,9 @@ def keep(o):
     o['keep'] = True; return o
 
 
-def ribbon(name, pts, widths, wdirs, m, parent, thick=0.0028):
-    """A thin feather: a strip along points, `widths` wide across `wdirs`, with a little thickness."""
+def ribbon(name, pts, widths, wdirs, m, parent, thick=0.0028, vs=None, us=None):
+    """A thin feather: a strip along points, `widths` wide across `wdirs`, with a little thickness. vs: each row's v (along),
+    if not evenly 0 at the root .. 1 at the tip (a peacock's train feathers: measured back from the tip, for the eye there)"""
     me = bpy.data.meshes.new(name); bm = bmesh.new(); rows = []
     for p, w, wd in zip(pts, widths, wdirs):
         rows.append((bm.verts.new(p - wd * (w / 2)), bm.verts.new(p + wd * (w / 2))))
@@ -81,7 +90,8 @@ def ribbon(name, pts, widths, wdirs, m, parent, thick=0.0028):
     for poly in me.polygons:
         for li in poly.loop_indices:
             vi = me.loops[li].vertex_index
-            uv.data[li].uv = (0.05 if vi % 2 == 0 else 0.95, (vi // 2) / max(1, n - 1))
+            hu = us[vi // 2] if us else 0.45                    # (us: each row's half-span across, if not the whole 0.05 .. 0.95: a train feather's in metres)
+            uv.data[li].uv = (0.5 - hu if vi % 2 == 0 else 0.5 + hu, vs[vi // 2] if vs else (vi // 2) / max(1, n - 1))
     o = link(bpy.data.objects.new(name, me)); setmat(o, m)
     so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = thick; so.offset = 0; so.use_rim = False      # two faces, no edges
     for p_ in o.data.polygons: p_.use_smooth = True
@@ -147,6 +157,7 @@ def build(breed='rir', sex='h', seed=1, lo=False):
     root = empty('bird_%s_%s' % (breed, sex))
     body_rig = empty('body', (0, 0, 0), (0, 0, 0), root)
     if B.get('silkie'): parts = silkie(B, rooster, root, body_rig, seed)
+    elif B.get('peafowl'): parts = peafowl(B, rooster, root, body_rig, seed, fan=FAN)
     else: parts = feathered(B, rooster, root, body_rig, seed)
     s = B['scale'] * (ROOSTER if rooster else 1.0)
     root.scale = (s, s, s)
@@ -275,6 +286,132 @@ def feathered(B, rooster, root, body_rig, seed):
             tag(metaball_mesh('legfluff', F, res=0.0045, m=pl, parent=lg_), nm, 'legfeather')
             if B.get('brahma'): brahma_legs(sd, nm, sh, lg_, pl)
     return True
+
+
+def peafowl(B, rooster, root, body_rig, seed, fan=False):
+    """An Indian blue peafowl (the bird faces +x): a long body, a long slender neck up to a small head, long legs; the peacock's
+    train of long feathers from his lower back, trailing to the ground behind him (fan: raised and spread in a great fan
+    behind him, the same feathers in the same order)."""
+    rnd = random.Random(seed * 13 + (1 if rooster else 0))
+    pl = flat('plum', B['plum'] if rooster else B['plum_h'], 0.85); wg = flat('wing', B['wing'] if rooster else B['wing_h'], 0.85)
+    tl = flat('tailc', B['tailc'] if rooster else B['tailc_h'], 0.55); bk = flat('beak', B['beak'], 0.45); lg = flat('legs', B['legs'], 0.5)
+    k = 1.0 if rooster else 0.92
+    head = Vector((0.205 * k, 0, 0.7 * k)); nb = Vector((0.12 * k, 0, 0.37 * k))
+    E = [
+        ('ELLIPSOID', (-0.03 * k, 0, 0.305 * k), 0.12 * k * K, (1.62, 0.74, 0.76), 2.0),          # body: long and slim
+        ('BALL', (0.085 * k, 0, 0.3 * k), 0.085 * k * K, None, 2.0),                               # breast
+        ('ELLIPSOID', (-0.15 * k, 0, 0.345 * k), 0.072 * k * K, (1.35, 0.92, 0.78), 2.0),         # the back, down to the tail
+        ('ELLIPSOID', (0.0, 0.052, 0.235 * k), 0.052 * k * K, (1.1, 0.9, 1.0), 2.0), ('ELLIPSOID', (0.0, -0.052, 0.235 * k), 0.052 * k * K, (1.1, 0.9, 1.0), 2.0),     # thighs
+    ]
+    for i in range(6):                                  # the neck: slender, a little S, thick at its base
+        t = i / 5
+        c = nb.lerp(head, t) + Vector((0.02 * math.sin(t * math.pi) * k, 0, -0.025 * t * k))
+        E.append(('ELLIPSOID', tuple(c), (0.05 - 0.022 * t) * k * K, (1.0, 0.92, 1.6), 2.0))
+    E.append(('BALL', tuple(head), 0.038 * k * K, None, 2.0))
+    E.append(('ELLIPSOID', tuple(head + Vector((0.012 * k, 0, -0.006 * k))), 0.03 * k * K, (1.3, 0.85, 0.9), 2.0))      # (the face, a little long)
+    tag(metaball_mesh('body_mb', E, res=0.008, m=pl, parent=body_rig), 'body', 'body')
+    pivot('body', (0.0, 0, 0.24 * k), body_rig)
+    pivot('head', tuple(nb), body_rig)
+    pivot('headc', tuple(head), body_rig)
+    hd = empty('head', tuple(head), (0, math.radians(-8), 0), body_rig)
+    tag(cyl('beak', 0.012 * k, 0.05 * k, (0.052 * k, 0, -0.008 * k), (0, math.radians(90 + 14), 0), bk, verts=10, r2=0.002, bevel=0.002, parent=hd), 'head')
+    white = flat('pv_white', '#f3f1ea', 0.6)
+    for sd in (1, -1):
+        natural_eye(hd, sd, B, R=0.034 * k)
+        # the white stripes: one above the eye, one below it, curving back
+        for (dz, sc_) in ((0.017, (2.3, 0.4, 0.55)), (-0.015, (2.0, 0.4, 0.7))):
+            tag(keep(sphere('facestripe', 0.012 * k, (0.002 * k, sd * 0.031 * k, dz * k), sc_, (math.radians(sd * 8), math.radians(-10 if dz > 0 else 12), math.radians(sd * -10)), m=white, parent=hd, seg=10, rings=6)), 'head')
+    # the crest: a little fan of bare shafts, each with a tuft at its tip (a peacock's blue, a peahen's brown edged green)
+    shaft = flat('pv_shaft', '#3b3a40' if rooster else '#5c4c3c', 0.6); tuft = flat('pv_tuft', '#1d4fb3' if rooster else '#6d5a44', 0.45)
+    n = 9
+    for i in range(n):                                  # (a fan across the head, the tufts apart: a crown, as in her photos)
+        a = math.radians(-46 + 92 * i / (n - 1))
+        d = Vector((-0.22, math.sin(a) * 0.95, math.cos(a) * 1.0)).normalized(); L = (0.062 if rooster else 0.056) * k * (1 - 0.12 * abs(i - n // 2) / (n // 2))
+        p0 = Vector((-0.004 * k, 0, 0.032 * k))
+        tag(keep(cyl('crest', 0.0018, L, tuple(p0 + d * L / 2), d.to_track_quat('Z', 'Y').to_euler(), m=shaft, verts=4, bevel=0.0, parent=hd)), 'head')
+        tag(keep(sphere('cresttip', 0.0062 * k, tuple(p0 + d * (L + 0.003 * k)), (0.5, 1.0, 1.25), d.to_track_quat('Z', 'Y').to_euler(), m=tuft, parent=hd, seg=8, rings=5)), 'head')
+    # wings: long folded wings along the sides, the flight feathers at their tips (a peacock's rusty, under barred coverts)
+    for sd, nm in ((1, 'wingL'), (-1, 'wingR')):
+        w = empty('wing', (-0.03 * k, sd * 0.088 * k, 0.33 * k), (math.radians(sd * -6), math.radians(-10), math.radians(sd * -3)), body_rig)
+        pivot(nm, (0.0, sd * 0.084 * k, 0.37 * k), body_rig)
+        tag(sphere('wingbase', 0.112 * k, (0, 0, 0), (1.12, 0.2, 0.42), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
+        for j in range(4):
+            e = math.radians(-6 - j * 4)
+            tag(feat_uv(paddle('prim', (0.12 - j * 0.01) * k, 0.034 * k, 0.01, wg, w, (-0.07 * k, sd * (0.008 - j * 0.002), -0.012 * k - j * 0.01 * k),
+                       (0, e - math.pi, math.radians(sd * (3 + j * 2))), curve=-sd * 0.1), (0.12 - j * 0.01) * k, 0.034 * k), nm, 'prim')
+    tb = empty('tail', (-0.27 * k, 0, 0.36 * k), (0, 0, 0), body_rig)
+    pivot('tail', (-0.25 * k, 0, 0.35 * k), body_rig)
+    if not rooster:
+        for sd in (1, -1):                              # a peahen's short brown tail
+            for i in range(4):
+                f = i / 3
+                feather('tailf', tl, tb, (0.01, sd * (0.006 + 0.005 * i), -0.012 + 0.004 * i), -6 + 8 * f, 8, 0.22 * (1.0 - 0.15 * abs(f - 0.5)), 0.058, sd, spread=0.016 + 0.02 * f, twist=55, seg=6 if LO else 8)
+    else: peacock_train(tl, tb, rnd, fan)
+    # long legs, long toes (a peacock's little spur behind)
+    sh = B['shank'] * k
+    for sd, nm in ((1, 'legL'), (-1, 'legR')):
+        lg_ = empty('leg', (0.0, sd * 0.052 * k, 0), (0, 0, 0), root)
+        pivot(nm, (0.0, sd * 0.052 * k, sh), root)
+        tag(cyl('shank', 0.011, sh, (0, 0, sh / 2), (0, math.radians(5), 0), lg, verts=8, r2=0.0095, bevel=0, parent=lg_), nm)
+        for ang, L in ((0, 0.075), (34, 0.062), (-34, 0.062), (180, 0.04)):
+            a = math.radians(ang + sd * 6)
+            tag(cyl('toe', 0.0065, L * k, (math.cos(a) * L * k / 2, math.sin(a) * L * k / 2, 0.006), (0, math.radians(90), a), lg, verts=6, r2=0.0035, bevel=0, parent=lg_), nm)
+        if rooster: tag(cyl('spur', 0.004, 0.018, (-0.012, 0, 0.05), (0, math.radians(-110), 0), lg, verts=5, r2=0.0008, bevel=0, parent=lg_), nm)
+    return True
+
+
+TRAIN = dict(rows=((0.0, 21, 0.98, 0.1), (0.012, 18, 0.82, 0.095), (0.024, 15, 0.66, 0.09), (0.036, 12, 0.5, 0.085), (0.048, 9, 0.36, 0.08)), vlen=0.75, eye=0.055, hw=0.05)
+# (hw: half the widest feather; 'feat' u runs across in metres of it, so the eye is round whatever the feather's width)
+# the train's feathers, in rows from the longest (on top) down: (start height, how many, length, width at the eye). Each feather's
+# 'feat' v runs back from its tip (vlen metres = 1), so the browser can draw its eye the same size on every one (eye: from the tip)
+
+
+def peacock_train(tl, tb, rnd, fan):
+    """The peacock's train: rows of long feathers from the tail's base, each a thin shaft with sparse barbs widening to a broad
+    rounded tip where the eye is (painted by the browser). Trailing: lying back along the ground behind him, a little spread,
+    the longest on top down the middle. Fanned: raised behind him in a great half circle, the longest at the back, leaning
+    back a little, each feather's front facing forward. Both from the same points in the same order (one morphs into the
+    other in the browser)."""
+    TIP = (0.27, 0.2, 0.14, 0.09, 0.055, 0.03, 0.014, 0.004, 0.0)      # (rows close together at the rounded tip, where the eye is)
+    for r_, (z0, n, L, we) in enumerate(TRAIN['rows']):
+        for i in range(n):
+            f = (i + 0.5) / n - 0.5                         # -0.5 .. 0.5 across
+            Lf = L * (1.0 - 0.22 * (2 * f) ** 2) * (0.97 + 0.06 * rnd.random()) * (1 - 0.085 * (i % 2))      # (every other one shorter: its eye shows past its neighbours' tips)
+            pts, ws, wds, vs, hus = [], [], [], [], []
+            us = [(Lf - TIP[0]) * j / (3 if LO else 6) for j in range(3 if LO else 6)] + [Lf - d for d in TIP]
+            for u_ in us:
+                t = u_ / Lf
+                if fan:                                    # the fan: a half circle, leaning back 12 degrees
+                    phi = math.radians(f * (184 - 14 * r_))
+                    up, side = math.cos(phi), math.sin(phi)
+                    lean = math.radians(14 - 3 * r_)       # (the shorter rows in front of the longer, so their eyes show in rings)
+                    d = Vector((-math.sin(lean) * up - 0.12, side, math.cos(lean) * up)).normalized()
+                    bend = Vector((-0.06 * t * t, 0, 0))   # (the tips curving back a little)
+                    p = Vector((0.014 * r_, 0, -0.02 * r_ + z0)) + d * (Lf * t) + bend * Lf
+                    wd = Vector((0, math.cos(phi), -math.sin(phi)))       # across: in the fan's plane
+                else:                                      # trailing: back and down to the ground, then lying along it, a little spread
+                    u = Lf * t                             # (metres along)
+                    p = Vector((-u * 0.985, f * (0.03 + 0.55 * (u / 0.95) ** 1.3), 0.0))
+                    drop = smooth01(u / 0.42)
+                    lay = 0.0035 * (n / 2 - abs(i - (n - 1) / 2)) + 0.004 * (i % 2)      # (each lying a little over the next one out from the middle: never two in one place; the shorter ones on top)
+                    p.z = (0.355 + z0) * (1 - drop) + (0.022 + 0.016 * r_ + 0.035 * (1 - (2 * f) ** 2) + lay) * drop - 0.355     # (tb's height: 0.36 k; a soft mound, the middle highest; the shorter feathers on top, their eyes all along it)
+                    th_ = 0.9 * f * drop; wd = Vector((0, math.cos(th_), -math.sin(th_)))      # (its sides sloping down)
+                # its width: a narrow shaft with loose barbs, widening to the broad rounded tip with the eye
+                dt = Lf * (1 - t)                            # metres back from the tip
+                tipr = 0.04                                  # (the rounded tip; then the broad end with the eye, the loose barbs below it, the bare base)
+                w = we * math.sqrt(max(0.0, 1 - ((tipr - dt) / tipr) ** 2)) if dt < tipr else we * (0.62 + 0.38 * smooth01(1 - (dt - 0.12) / 0.16)) * (0.35 + 0.65 * smooth01(u_ / 0.22))
+                w = max(w, 0.004); pts.append(p); ws.append(w); wds.append(wd); vs.append(max(0.0, 1.0 - dt / TRAIN['vlen'])); hus.append(0.45 * min(1.0, w / 2 / TRAIN['hw']))
+            tag(ribbon('train', pts, ws, wds, tl, tb, thick=0.0024, vs=vs, us=hus), 'tail', 'tail')
+    # under the train: the stiff grey-brown tail feathers that hold it up (hidden when trailing, a fan behind the fan when shown)
+    tf = flat('pv_tailf', '#6d6255', 0.6)
+    for i in range(6):
+        f = (i + 0.5) / 6 - 0.5
+        if fan: feather('tailf', tf, tb, (-0.03, f * 0.02, -0.03), 72 - abs(f) * 90, 4, 0.34, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.5, twist=10, seg=6)
+        else: feather('tailf', tf, tb, (0.0, f * 0.02, -0.06), -8, 6, 0.24, 0.03, 1 if f > 0 else -1, spread=abs(f) * 0.06, twist=10, seg=6)
+
+
+def smooth01(x):
+    x = max(0.0, min(1.0, x)); return x * x * (3 - 2 * x)
 
 
 def brahma_legs(sd, nm, sh, lg_, pl):

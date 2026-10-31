@@ -2276,7 +2276,7 @@ class Bird {
     this.visual.add(this.rig.mesh); if (this.rig.lo) this.visual.add(this.rig.lo);
     const small = kind === 'chick', size = this.rig.scale / 0.5;
     this.blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, -0.011, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
-      new THREE.Vector3(small ? 0.55 : size, small ? 0.55 : size, 1));
+      new THREE.Vector3(small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), 1));      // (the peafowl: tall, not as wide as they're tall)
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
@@ -2976,6 +2976,7 @@ class Bird {
     A.stretch = (A.stretch || 0) + ((song && song.stretch ? 1 : 0) - (A.stretch || 0)) * Math.min(1, dt * 14);
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
+    A.fan = (A.fan || 0) + ((this.fanGoal || 0) - (A.fan || 0)) * Math.min(1, dt * 2.2);      // (a peacock showing off: his train raised in a fan)
     if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);
   }
@@ -2994,7 +2995,8 @@ function buildLineup() {
     b.stay = true; lineup.birds.push(b);
   });
   const only = params.get('breeds'), breeds = ALL_BREEDS.filter(b => b !== 'sil' && (!only || only.split(',').includes(b)));      // (?breeds=pol,aya: just those)
-  row(1.2, breeds.flatMap(b => [[b, 'hen'], [b, 'rooster'], [b, 'chick']]), 0.45);
+  row(1.2, breeds.flatMap(b => [[b, 'hen'], [b, 'rooster'], [b, 'chick']]), only ? 0.75 : 0.45);
+  if (params.has('fan')) for (const b of lineup.birds) if (b.breed === 'pea' && b.kind === 'rooster') b.fanGoal = 1;      // (?lineup&breeds=pea&fan: the peacock showing off)
   if (!only) {
     row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
     row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
