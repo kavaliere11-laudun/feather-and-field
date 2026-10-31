@@ -3417,3 +3417,30 @@ the birds already had.
 - Next: the peacock at level 30 (Audrey's order).
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).
+
+## The peacock, step 1: the look (31 Oct 2026; Audrey: "Carry on" after the ducks; she chose "Indian blue (Recommended)", "Peacock + 2 peahens (Recommended)", "Garden pavilion (Recommended)" and "I'll send photos", then sent five photos)
+
+- **Her photos**: Indian blue peacocks on a perch, a peacock's head close up, a green peafowl with his fan up (a
+  different kind: kept for the fan's shape only), a peahen with her peachicks, a peacock fanning beside a peahen.
+- **The peafowl** (stylized/breeds.py `peafowl`, `peacock_train`, `TRAIN`, `ribbon(vs, us)`; BREEDS `pea`): their own body,
+  not a hen's: a long S-shaped neck, a small head with white stripes round the eye, a fan of a crest (nine shafts with
+  tufts), long grey legs (a spur on him). **The peacock**: blue neck and breast, a bronze-green back, barred buff wings,
+  rusty flight feathers; his train of five rows of long feathers lying behind him (staggered lengths, shorter rows on top,
+  so the eyes show), each with its eye (birds.js painter mode 9: copper, gold, teal and a dark blue heart), stiff grey
+  tail feathers under it. **Showing off**: one shape key, `fan`, lifts the train into a big round fan behind him
+  (glTF morph target; `rig.pose` sets it from `A.fan`, which eases to `b.fanGoal`; a little shiver). **The peahen**:
+  brown-grey, a green neck, a white belly, a short brown tail. **The peachick**: buff with a chipmunk stripe.
+  Bake: stylized/extras/export_pea.py (`pea_h`, `pea_r`, their `_lo`; the fan baked as a morph), splice_birds.py now
+  adds new meshes and their morphs to flock.glb. Viewer: `index.html?lineup&breeds=pea` (`&fan` for the fan);
+  stylized/extras/view_bird.py for a Blender still.
+- **The Garden Pavilion** (stylized/coops.py `pavilion`, `onion`, `kalash`, `cusped_arch`): their house, Mughal, on the hens'
+  house footprint (the nest window and pop door as the others; a lattice drop door, `door_lattice='panel'`): a red
+  sandstone plinth, ivory walls, a blue tile frieze, cusped arches, a niche with a peacock-eye medallion, side jalis, a
+  white onion dome with a lotus and a brass finial, four little domed kiosks at the corners, a brass lantern, a perch at
+  its side, urns with clipped topiary. Not in `HOUSES` yet (one everyday look so far).
+- Pictures sent: the pavilion's everyday look, the peafowl's first look (a peahen, the peacock, a peachick; his train
+  down; his fan up). Waiting for her verdict. Nothing deployed: but flock.glb on the source branch has the peafowl in it
+  now (about 1 MB more), so any deploy takes them.
+- Next, once she approves: the pavilion's five looks and its pen; the peafowl in the game at level 30 (a peacock and two
+  peahens, names in six languages, the Breed Book, the save checks), eggs and peachicks, his display in the pen, and the
+  feathers he drops to sell.
