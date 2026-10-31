@@ -51,6 +51,7 @@ BREEDS = {
 }
 ROOSTER = 1.12
 LO = False
+LEG_Y = 0.046        # (the peafowl's legs: how far out from the middle)
 FAN = False          # (the peacock built with his train fanned: the browser's display pose, a morph of the same feathers)
 
 _mats = {}
@@ -307,7 +308,10 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
           (-0.03, 0.33, 0.088, 0.088), (0.025, 0.338, 0.086, 0.087), (0.07, 0.365, 0.076, 0.078), (0.1, 0.402, 0.058, 0.06), (0.112, 0.44, 0.042, 0.045)]
     if not rooster: SP[0] = (-0.28, 0.36, 0.036, 0.028)      # (a peahen's tail coverts over the root of her tail)
     E = [('ELLIPSOID', (x * k, 0, z * k), 0.06 * k * K, (1.0, ry / 0.06, rz / 0.06), 2.0) for (x, z, ry, rz) in SP]
-    E += [('ELLIPSOID', (0.0, sd * 0.035, 0.235 * k), 0.03 * k * K, (1.15, 0.95, 2.0), 2.0) for sd in (1, -1)]      # the thighs, feathered down to the hock
+    for sd in (1, -1):                                  # the thighs, feathered, tapering down to the hock where the bare leg starts
+        E += [('ELLIPSOID', (-0.002 * k, sd * 0.036 * k, 0.262 * k), 0.03 * k * K, (1.2, 0.95, 1.35), 2.0),
+              ('ELLIPSOID', (-0.008 * k, sd * 0.042 * k, 0.212 * k), 0.022 * k * K, (1.1, 0.95, 1.35), 2.0),
+              ('ELLIPSOID', (-0.012 * k, sd * LEG_Y * k, B['shank'] * k + 0.02), 0.0175 * k * K, (1.0, 1.0, 1.35), 2.0)]
     for i in range(7):                                  # the neck: up out of the breast, its back bowed a little, the head forward at its top
         t = i / 6
         c = Vector((nb.x + (head.x - nb.x) * t ** 1.8 - 0.012 * k * math.sin(t * math.pi), 0, nb.z + (head.z - nb.z) * t - 0.012 * k * t * t))
@@ -342,8 +346,8 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
         tag(sphere('wingbase', 0.1 * k, (0, 0, 0), (1.25, 0.16, 0.44), m=wg, parent=w, seg=24, rings=14), nm, 'wing')
         for j in range(4):                              # (the flight feathers tucked under its back edge: only their tips show)
             e = math.radians(-8 - j * 3)
-            tag(feat_uv(paddle('prim', (0.085 - j * 0.008) * k, 0.028 * k, 0.008, wg, w, (-0.07 * k, sd * (0.004 - j * 0.002), -0.016 * k - j * 0.008 * k),
-                       (0, e - math.pi, math.radians(sd * (2 + j * 1.5))), curve=-sd * 0.08), (0.085 - j * 0.008) * k, 0.028 * k), nm, 'prim')
+            tag(feat_uv(paddle('prim', (0.07 - j * 0.007) * k, 0.026 * k, 0.008, wg, w, (-0.07 * k, sd * (0.002 - j * 0.002), -0.008 * k - j * 0.006 * k),
+                       (0, e - math.pi, math.radians(sd * (2 + j * 1.5))), curve=-sd * 0.08), (0.07 - j * 0.007) * k, 0.026 * k), nm, 'prim')
     tb = empty('tail', (-0.27 * k, 0, 0.36 * k), (0, 0, 0), body_rig)
     pivot('tail', (-0.25 * k, 0, 0.35 * k), body_rig)
     if not rooster:
@@ -352,16 +356,42 @@ def peafowl(B, rooster, root, body_rig, seed, fan=False):
             feather('tailf', tl, tb, (0.03 - 0.012 * abs(f), f * 0.03, -0.004 + 0.008 * (0.5 - abs(f))), -16 + 4 * (0.5 - abs(f)), 8, 0.23 * (1.0 - 0.18 * (2 * f) ** 2), 0.062, 1 if f >= 0 else -1,
                     spread=0.02 * abs(f), twist=8 + 20 * abs(f), seg=6 if LO else 8)
     else: peacock_train(tl, tb, rnd, fan)
-    # long legs, long toes (a peacock's little spur behind)
-    sh = B['shank'] * k
+    # the legs (31 Oct, Audrey: "the junction with the body is poor and the shape of the legs and feet needs rework"): the
+    # feathered thigh tapers down (in the body's own shape) to the hock, the ankle, where the bare leg starts with a knuckle;
+    # the tarsus stout and scaled down its front, slanting forward a little from the hock to the foot; three long front toes
+    # and a short hind one, each jointed, thick at its base, raised a little at its knuckles, with a dark claw; a peacock's
+    # spur behind
+    sh = B['shank'] * k; claw = flat('pv_claw', '#4a4038', 0.45)
+    def seg_(name, a_, b_, r1, r2, m, parent, verts=8):
+        d_ = b_ - a_
+        return cyl(name, r1, d_.length, tuple((a_ + b_) / 2), d_.normalized().to_track_quat('Z', 'Y').to_euler(), m, verts=verts, r2=r2, bevel=0, parent=parent)
     for sd, nm in ((1, 'legL'), (-1, 'legR')):
-        lg_ = empty('leg', (0.0, sd * 0.052 * k, 0), (0, 0, 0), root)
-        pivot(nm, (0.0, sd * 0.052 * k, sh), root)
-        tag(cyl('shank', 0.011, sh, (0, 0, sh / 2), (0, math.radians(5), 0), lg, verts=8, r2=0.0095, bevel=0, parent=lg_), nm)
-        for ang, L in ((0, 0.075), (34, 0.062), (-34, 0.062), (180, 0.04)):
-            a = math.radians(ang + sd * 6)
-            tag(cyl('toe', 0.0065, L * k, (math.cos(a) * L * k / 2, math.sin(a) * L * k / 2, 0.006), (0, math.radians(90), a), lg, verts=6, r2=0.0035, bevel=0, parent=lg_), nm)
-        if rooster: tag(cyl('spur', 0.004, 0.018, (-0.012, 0, 0.05), (0, math.radians(-110), 0), lg, verts=5, r2=0.0008, bevel=0, parent=lg_), nm)
+        ly = sd * LEG_Y * k
+        lg_ = empty('leg', (0.0, ly, 0), (0, 0, math.radians(sd * 7)), root)       # (the foot turned out a little)
+        hock = Vector((-0.012 * k, 0, sh)); foot = Vector((0.006 * k, 0, 0.012))
+        pivot(nm, (-0.012 * k, ly, sh), root)
+        tag(sphere('hock', 0.0148 * k, tuple(hock), (1.15, 1.0, 1.25), m=lg, parent=lg_, seg=10, rings=7), nm)
+        tag(seg_('shank', foot, hock, 0.0112 * k, 0.0135 * k, lg, lg_), nm)
+        up = (hock - foot).normalized()
+        for j in range(7):                              # the scutes down its front
+            c = foot.lerp(hock, (j + 0.6) / 7.6) + Vector((0.0094 * k, 0, 0))
+            tag(sphere('scute', 0.0075 * k, tuple(c), (0.28, 1.45, 0.5), m=lg, parent=lg_, seg=6, rings=3), nm)
+        tag(sphere('footpad', 0.012 * k, tuple(foot + Vector((0.004, 0, -0.004))), (1.35, 1.15, 0.6), m=lg, parent=lg_, seg=8, rings=5), nm)
+        for ang, L in ((0, 0.074), (32, 0.06), (-32, 0.06), (180, 0.03)):
+            a = math.radians(ang); d = Vector((math.cos(a), math.sin(a), 0)) * k
+            hind = ang == 180
+            p0 = foot + d * 0.006 + Vector((0, 0, 0.004 if hind else -0.004))
+            p1 = p0 + d * L * 0.45 + Vector((0, 0, 0.002 if hind else 0.004))
+            p2 = p1 + d * L * 0.38 + Vector((0, 0, -0.004 if hind else -0.002))
+            tip = p2 + d * L * 0.17 + Vector((0, 0, -0.005))
+            tag(seg_('toe', p0, p1, 0.0072 * k, 0.006 * k, lg, lg_, 7), nm)
+            tag(sphere('knuckle', 0.0063 * k, tuple(p1), m=lg, parent=lg_, seg=6, rings=4), nm)
+            tag(seg_('toe', p1, p2, 0.006 * k, 0.0048 * k, lg, lg_, 7), nm)
+            tag(sphere('knuckle', 0.005 * k, tuple(p2), m=lg, parent=lg_, seg=6, rings=4), nm)
+            tag(seg_('claw', p2, tip, 0.0042 * k, 0.0008, claw, lg_, 6), nm)
+        if rooster:                                     # his spur: a short horn behind, a third of the way up
+            sp = foot.lerp(hock, 0.32) + Vector((-0.008, 0, 0))
+            tag(seg_('spur', sp, sp + Vector((-0.02, 0, -0.004)), 0.0048, 0.0008, claw, lg_, 6), nm)
     return True
 
 
