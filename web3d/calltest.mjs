@@ -107,7 +107,7 @@ await p.waitForFunction(() => { const i = document.querySelector('.gpage[data-br
 const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('.gpage')], c = document.querySelector('.gpage[data-breed="call"]'); return { n: pg.length, order: pg.map(x => x.dataset.breed).join(), found: c && !c.classList.contains('gpage-no'), text: c && c.innerText, img: c && c.querySelector('img').naturalWidth }; });
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="call"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('6_book');
-ok('the Breed Book: the call ducks\' page after the Ayam Cemani, found, with their eggs, their Floating House and their picture', book.n === 15 && /^rir,orp,sil,aya,call,sil_buff/.test(book.order) && book.found && T.egg.test(book.text) && T.coop.test(book.text) && book.img > 0, book);
+ok('the Breed Book: the call ducks\' page after the Ayam Cemani, found, with their eggs, their Floating House and their picture', book.n === 16 && /^rir,orp,sil,aya,call,sil_buff/.test(book.order) && book.found && T.egg.test(book.text) && T.coop.test(book.text) && book.img > 0, book);
 await p.evaluate(() => window.__farm.gameUI().close());
 // the Snug look: the pen made again round the same three
 const before = P.ducks.map(d => d.gid).join();

@@ -974,5 +974,40 @@
  "pers.brave.duck": [
   "Hat vor nichts Angst: Hält Wache am Teich.",
   "Hat vor nichts Angst: Hält Wache am Teich."
+ ],
+ "text.peahen": "Pfauenhenne",
+ "text.peacock": "Pfau",
+ "text.peachick": "Pfauenküken",
+ "text.up_pea_mended": "Neue Ziegel, halb verputzt, die Marmorbögen eingesetzt und die Kuppel ein Bambusgerüst unter einer blauen Plane, in einem größeren Gehege.",
+ "text.up_pea_snug": "Der Gartenpavillon unter seiner türkisen Kuppel, in einem geräumigeren Gehege.",
+ "text.up_pea_cosy": "Rosa wie Jaipur unter einer rosenroten Kuppel, Ringelblumengirlanden, Jasmin in Messingtöpfen und ein größerer Garten mit einer Schaukel unter einer kleinen Kuppel, einem Sandsteinbecken voll Sand und einem Kohlkopf an einer Messinglaterne.",
+ "text.up_pea_deluxe": "Weißer Marmor mit eingelegten Blumen, eine Kuppel in Weiß und Gold, vier schlanke Minarette, ein Marmorbecken mit Springbrunnen, eine Marmorschale voll Sand, Porzellanschälchen zum Erklingen und der größte Garten, mit weißem Lattenzaun und Rosen.",
+ "text.trio_body_pea": "Ein Pfau und zwei Pfauenhennen mit eigenem Gartenpavillon – sie gehören dir für immer. Stell ihn auf deinem Land auf, wo du willst.",
+ "text.book_price_pea": "{p} Münzen pro Ei, plus eine Münze für jeden Stern der Pfauenhenne",
+ "text.egg_pea": "Große cremefarbene Pfaueneier",
+ "text.feed_empty_line_pea": "Deine Pfauenhennen legen erst wieder, wenn er gefüllt ist.",
+ "text.feed_how_pea": "Deine Pfauenhennen legen, solange Futter darin ist. Voll reicht er deinem Trio für zwei Tage.",
+ "text.hatched_pea": "{n} Pfauenküken sind geschlüpft! {name} ist jetzt Mama.",
+ "text.raising_pea": "Zieht {n} Pfauenküken groß: noch etwa {when}, dann sind es junge Pfauenhennen und Pfauen.",
+ "text.raising_y_pea": "Zieht {n} junge Pfauenhennen und Pfauen groß: noch etwa {when}, dann geht’s auf einen neuen Hof.",
+ "text.no_lay_brood_pea": "Solange sie sich um ihre Pfauenküken kümmert, legt sie keine Eier zum Verkaufen.",
+ "text.chick_of_pea": "{breed} · Pfauenküken von {name}",
+ "text.chick_grows_pea": "Noch etwa {when}, dann ist es eine junge Pfauenhenne oder ein junger Pfau.",
+ "text.chick_soon_pea": "Fast schon eine junge Pfauenhenne oder ein junger Pfau!",
+ "text.young_h_pea": "Junge Pfauenhenne",
+ "text.young_r_pea": "Junger Pfau",
+ "text.turned_pea": "Die Pfauenküken von {name} werden zu jungen Pfauenhennen und Pfauen!",
+ "text.congrats_exp_pea": "{mum} und {dad} sammeln Erfahrung, und ihre nächsten Pfauenküken werden noch besser.",
+ "text.congrats_exp1_pea": "{mum} sammelt Erfahrung, und ihre nächsten Pfauenküken werden noch besser.",
+ "text.away_hatched_pea": "Bei {name} sind {n} Pfauenküken geschlüpft",
+ "text.away_grown_pea": "Die Pfauenküken von {name} sind groß geworden: Gleich kommt ihre Karte",
+ "breed.pea.name": "Blauer Pfau",
+ "breed.pea.coop": "Gartenpavillon",
+ "text.exp_peachicks": {
+  "t": "Je mehr Sterne, desto besser seine Pfauenküken.",
+  "f": "Je mehr Sterne, desto besser ihre Pfauenküken."
+ },
+ "pers.mum.pea": [
+  "Die geborene Mutter – ihre Pfauenküken sind am besten versorgt."
  ]
 }

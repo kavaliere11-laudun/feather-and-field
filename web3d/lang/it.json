@@ -974,5 +974,40 @@
  "pers.brave.duck": [
   "Non ha paura di niente: veglia sullo stagno.",
   "Non ha paura di niente: veglia sullo stagno."
+ ],
+ "text.peahen": "Pavonessa",
+ "text.peacock": "Pavone",
+ "text.peachick": "Pavoncino",
+ "text.up_pea_mended": "Mattoni nuovi mezzi intonacati, gli archi di marmo al loro posto e la cupola, un’intelaiatura di bambù sotto un telo blu, in un recinto più grande.",
+ "text.up_pea_snug": "Il Padiglione da giardino sotto la sua cupola turchese, in un recinto più spazioso.",
+ "text.up_pea_cosy": "Rosa come Jaipur sotto una cupola rosa, ghirlande di calendule, gelsomino in vasi d’ottone e un giardino più grande con un’altalena sotto una piccola cupola, una vasca d’arenaria piena di sabbia e un cavolo su un lampione d’ottone.",
+ "text.up_pea_deluxe": "Marmo bianco intarsiato di fiori, una cupola bianca e oro, quattro minareti slanciati, una vasca di marmo con fontana, una conca di marmo piena di sabbia, tazze di porcellana da far suonare e il giardino più grande, con staccionata bianca e rose.",
+ "text.trio_body_pea": "Un pavone e due pavonesse, tuoi per sempre, con il loro padiglione da giardino. Mettilo dove vuoi sui tuoi terreni.",
+ "text.book_price_pea": "{p} monete a uovo, più una moneta per ogni stella della pavonessa",
+ "text.egg_pea": "Grandi uova di pavonessa color crema",
+ "text.feed_empty_line_pea": "Le tue pavonesse smettono di deporre finché non viene riempita.",
+ "text.feed_how_pea": "Le tue pavonesse depongono finché c’è cibo dentro. Piena, sfama il tuo trio per due giorni.",
+ "text.hatched_pea": "Sono nati {n} pavoncini! {name} è diventata mamma.",
+ "text.raising_pea": "Alleva {n} pavoncini: giovani pavonesse e pavoni tra circa {when}.",
+ "text.raising_y_pea": "Alleva {n} giovani pavonesse e pavoni: partono per una nuova fattoria tra circa {when}.",
+ "text.no_lay_brood_pea": "Non depone uova da vendere finché si occupa dei suoi pavoncini.",
+ "text.chick_of_pea": "{breed} · pavoncino di {name}",
+ "text.chick_grows_pea": "Giovane pavonessa o giovane pavone tra circa {when}.",
+ "text.chick_soon_pea": "Quasi una giovane pavonessa o un giovane pavone!",
+ "text.young_h_pea": "Giovane pavonessa",
+ "text.young_r_pea": "Giovane pavone",
+ "text.turned_pea": "I pavoncini di {name} stanno diventando giovani pavonesse e pavoni!",
+ "text.congrats_exp_pea": "{mum} e {dad} guadagnano esperienza: i loro prossimi pavoncini saranno ancora migliori.",
+ "text.congrats_exp1_pea": "{mum} guadagna esperienza: i suoi prossimi pavoncini saranno ancora migliori.",
+ "text.away_hatched_pea": "A {name} sono nati {n} pavoncini",
+ "text.away_grown_pea": "I pavoncini di {name} sono cresciuti: la loro scheda arriva subito dopo",
+ "breed.pea.name": "Pavone blu",
+ "breed.pea.coop": "Padiglione da giardino",
+ "text.exp_peachicks": {
+  "t": "Più stelle ha, migliori saranno i suoi pavoncini.",
+  "f": "Più stelle ha, migliori saranno i suoi pavoncini."
+ },
+ "pers.mum.pea": [
+  "Una mamma nata: i suoi pavoncini sono i più accuditi."
  ]
 }

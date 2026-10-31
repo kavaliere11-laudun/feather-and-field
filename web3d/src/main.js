@@ -1109,7 +1109,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
     plot.dress = gc ? gc.dress || null : params.get('dress');       // (a seasonal dress: the game's, or the test page's ?dress=xmas)
-    plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN);      // (its pen: the birds' yard, what's in it, its gate)
+    plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN); plot.lanes = null;      // (its pen: the birds' yard, what's in it, its gate; the farmer's ways in it worked out again)
     addNest(frame, plot);
     if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
     addSails(plot);                                       // (the Little Windmill's sails)
@@ -1164,8 +1164,9 @@ const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence
   aya: [['box_aya', 'fence_t0', 'pen_t0_aya'], ['shed_aya', 'fence_t1', 'pen_t1_aya'], ['house_aya', 'fence', 'pen_base'], ['cosy_aya', 'fence_t3', 'pen_t3_aya'], ['deluxe_aya', 'fence_t4', 'pen_t4_aya']],
   // (the call ducks' Floating House, 30 Oct: its five looks from the start, its own Snug yard: the pond where the shared one has straw)
   call: [['box_call', 'fence_t0', 'pen_t0_call'], ['shed_call', 'fence_t1', 'pen_t1_call'], ['house_call', 'fence', 'pen_t2_call'], ['cosy_call', 'fence_t3', 'pen_t3_call'], ['deluxe_call', 'fence_t4', 'pen_t4_call']],      // (and the Javanese House's)      // (the Stone Cottage's)      // (the Thatched Cottage's: a straw-bale hut, a wattle hut, the cottage, roses and hollyhocks, a taller pink cottage)
-  // (the peafowl's Garden Pavilion, 31 Oct: its five looks and its own gardens)
-  pea: [['box_pea', 'fence_t0_pea', 'pen_t0_pea'], ['shed_pea', 'fence_t1_pea', 'pen_t1_pea'], ['house_pea', 'fence', 'pen_base'], ['cosy_pea', 'fence_t3', 'pen_t3_pea'], ['deluxe_pea', 'fence_t4', 'pen_t4_pea']] };
+  // (the peafowl's Garden Pavilion, 31 Oct: its five looks and its own gardens, half as big again as the hens' biggest, its own fences:
+  // room for the peacock's train)
+  pea: [['box_pea', 'fence_t0_pea', 'pen_t0_pea'], ['shed_pea', 'fence_t1_pea', 'pen_t1_pea'], ['house_pea', 'fence_t2_pea', 'pen_t2_pea'], ['cosy_pea', 'fence_t3_pea', 'pen_t3_pea'], ['deluxe_pea', 'fence_t4_pea', 'pen_t4_pea']] };
 const LOOKS5 = !GAME_MODE && params.has('looks');
 // (a breed's looks in the game once its upgrades are (game.js UPGRADES); on the test page's ?looks as soon as they're made)
 const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (breed === 'call' || (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5)));      // (the call ducks': always)
@@ -1182,7 +1183,7 @@ const penOf = plot => (plot && plot.pen) || PEN;
 const pensOf = breed => (COOPS.pens && (COOPS.pens[breed] || COOPS.pens.rir)) || {};
 function tierPen(breed, t) {
   const P = pensOf(breed)[t];
-  if ((t === 2 && breed !== 'call') || !P) return PEN;      // (the call ducks' Snug yard its own)
+  if ((t === 2 && breed !== 'call' && breed !== 'pea') || !P) return PEN;      // (the call ducks' Snug yard its own; the peafowl's)
   if (TIER_PENS[breed + t]) return TIER_PENS[breed + t];
   const yard = { min: [P.min[0] + 0.2, 0, 0.6], max: [P.max[0] - 0.2, 0, P.max[1] - 0.15] }, Y0 = PEN.yard;
   const obstacles = [...P.hay.map(h => [h[0], 0, h[1], 0.38]), [P.feeder[0], 0, P.feeder[1], 0.22], [P.dish[0], 0, P.dish[1], P.dish_r || 0.22], [-0.31, 0, 0.75, 0.18], [-0.31, 0, 1.0, 0.16], ...(P.sack ? [[P.sack[0], 0, P.sack[1], 0.2]] : [])];
@@ -1797,12 +1798,12 @@ function duckPenSpots(C, gx, gz, FD, off, H, R, side) {
   if (!cud) cud = { CB: S, ahead: [S[0], S[1] - 0.9] };
   return { IN, S, CLEAR: thr.B, FS, B: thr.B, SC: thr.SC, CB: cud.CB, ahead: cud.ahead };
 }
-function penSpec(plot) {
+function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he goes in it, the way to it from the farm not needed: farmerLanes)
   const f = plot.frame; f.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(f.matrixWorld).invert(), v = new THREE.Vector3();
   const W = (x, z) => { v.set(x, 0, z).applyMatrix4(f.matrixWorld); return [v.x, v.z]; };
   const H = (a, b) => { const A = W(a[0], a[1]), B = W(b[0], b[1]); return Math.atan2(B[0] - A[0], B[1] - A[1]); };
-  const PEN = penOf(plot), gx = PEN.gate[0], gz = PEN.pen.max[2], o = W(gx, gz + 0.6), out = navGrid().nearestIn(farmReach(), o[0], o[1], 0.6);
+  const PEN = penOf(plot), gx = PEN.gate[0], gz = PEN.pen.max[2], o = W(gx, gz + 0.6), out = spotsOnly ? o : navGrid().nearestIn(farmReach(), o[0], o[1], 0.6);
   if (!out) return null;
   // (pen frame) just inside the gate, a step on (clear of the water dish), beside the feeder; then where he stands at the
   // back of the yard and where the corn goes (or where the hen settles), of three ways round the one that faces the player.
@@ -1876,9 +1877,28 @@ function penSpec(plot) {
       if (first) for (const b of plot.birds) if (!b.busy() && !b.cuddle) b.feedIn = b.pers === 'glutton' ? 0.45 : 0.6 + b.r() * 0.9;      // corn! off they go
       if (first && DK) DK.cornOut();
     },
-    callHen(b, worms) {
+    callHen(b, worms, near) {
       if (b && b.isGoose) return callDuck(b, worms);
       if (!plot.farmer || !b || b.busy()) return null;
+      if (b.train && !near) {      // (the peacock, no way for the farmer to get to him: he flutters over to the farmer, landing beside him side on, his train clear)
+        const F = [plot.farmer.x, plot.farmer.z], p0 = b.root.position; let best = null;
+        for (let k = 0; k < 24; k++) for (const d of [0.62, 0.74]) {
+          const a = k / 24 * 2 * Math.PI, q = [F[0] + Math.sin(a) * d, F[1] + Math.cos(a) * d];
+          const Yd = PEN.yard; if (q[0] < Yd.min[0] + 0.3 || q[0] > Yd.max[0] - 0.3 || q[1] < Yd.min[2] + 0.3 || q[1] > Yd.max[2] - 0.3 || PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.15)) continue;
+          for (const y of [a + Math.PI / 2, a - Math.PI / 2]) if (b.trainClear(q[0], q[1], y, true, y, false)) {      /* (by him, he's there now: off his ways' spots no matter) */ const L = Math.hypot(q[0] - p0.x, q[1] - p0.z); if (!best || L < best.L) best = { q, y, L }; }
+        }
+        if (!best) return null;
+        plot.farmer.hen = b; plot.block = [...plot.block, [best.q[0], best.q[1], 0.22, b]]; P.henAt = { side: false, hand: 'R', at: best.q, sides: [], room: 0, flew: true };
+        if (!b.comeForCuddle(best.q, best.y)) return null;
+        b.route = null; b.flyTo(best.q[0], best.q[1], best.y); b.then = { type: 'cuddle', left: 60 };      // (and settles there for it once down)
+        return () => !b.cuddle || b.cuddle.ready;
+      }
+      if (near && b.train) {      // (the peacock, the farmer come over to him: he stays where he is, as he is)
+        const at = [b.root.position.x, b.root.position.z], F = [plot.farmer.x, plot.farmer.z], mid = [(at[0] + F[0]) / 2, (at[1] + F[1]) / 2];
+        plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b], [mid[0], mid[1], 0.32, b]]; P.henAt = { side: false, hand: 'R', at, sides: [], room: 0, near: true };
+        for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - mid[0], o.root.position.z - mid[1]) < 0.6) o.shooFrom(mid[0], mid[1]);      // (nobody between them)
+        return b.comeForCuddle(at, b.root.rotation.y) ? () => !b.cuddle || b.cuddle.ready : null;      // (facing as he was: stroked along his side)
+      }
       // (a side she can get to from where she is, round him if need be, as comeForCuddle goes: else in front of him)
       const reach = at => { const was = b.cuddle; b.cuddle = { spot: at }; let r = b.plan([at]), ok = r[r.length - 1] === at;
         const ux = at[0] - plot.farmer.x, uz = at[1] - plot.farmer.z, ul = Math.hypot(ux, uz) || 1, sideP = a => { const c = Math.cos(a), s = Math.sin(a); return [plot.farmer.x + (ux * c - uz * s) / ul * 0.66, plot.farmer.z + (ux * s + uz * c) / ul * 0.66]; };
@@ -1891,6 +1911,57 @@ function penSpec(plot) {
       for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - at[0], o.root.position.z - at[1]) < 0.4) o.shooFrom(at[0], at[1]);      // (anyone sitting where she'll be: up and off)
       return b.comeForCuddle(at, face, [plot.farmer.x, plot.farmer.z])
         ? () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.root.position.x - at[0], b.root.position.z - at[1]) < 0.16) : null;      // (there in front of him: only then is she picked up)
+    },
+    noLift(b) { return !!(b && b.train); },      // (the peacock: stroked where he stands, not picked up)
+    headingTo(b) { const F = plot.farmer; return F && b ? H([F.x, F.z], [b.root.position.x, b.root.position.z]) : P.toHen; },      // (the way from the farmer to her)
+    // his way on from where he is to pts[0] (world), round the peacock's train if it lies across it: a spot in the yard to go
+    // by first (never through it: it keeps off where he stands, farmerLanes)
+    around(pts) {
+      const pk = plot.birds.find(b => b.train && b.root.visible && !b.asleep);
+      if (!pk || !plot.farmer || !pts.length) return pts;
+      const p = pk.root.position, T = [], F = [plot.farmer.x, plot.farmer.z];
+      pk.trainEach(p.x, p.z, pk.trainY, (x, z) => { T.push([x, z]); return false; }, pk.root.rotation.y);
+      v.set(pts[0][0], 0, pts[0][1]).applyMatrix4(inv); const q = [v.x, v.z];
+      const hit = (a, c, obst) => { for (let k = 1; k <= 14; k++) { const s = [a[0] + (c[0] - a[0]) * k / 14, a[1] + (c[1] - a[1]) * k / 14]; if (T.some(t => Math.hypot(s[0] - t[0], s[1] - t[1]) < 0.42) || Math.hypot(s[0] - p.x, s[1] - p.z) < 0.45 || (obst && PEN.obstacles.some(o => Math.hypot(s[0] - o[0], s[1] - o[2]) < o[3] + 0.15))) return true; } return false; };
+      if (!hit(F, q, false)) return pts;
+      let best = null, bl = Infinity;
+      for (let gx = Yp.min[0] + 0.2; gx < Yp.max[0] - 0.15; gx += 0.2) for (let gz = Yp.min[2] + 0.15; gz < Yp.max[2] - 0.1; gz += 0.2) {
+        const m = [gx, gz], L = Math.hypot(m[0] - F[0], m[1] - F[1]) + Math.hypot(q[0] - m[0], q[1] - m[1]);
+        if (L < bl && !hit(F, m, true) && !hit(m, q, true)) { bl = L; best = m; }
+      }
+      return best ? [W(best[0], best[1]), ...pts] : pts;
+    },
+    // the peacock (31 Oct): his train too long for him to come round and settle in front of the farmer, so the farmer goes
+    // over to him: beside him best, else in front (never on his train), with room to crouch there in the yard clear of
+    // what's in it, by a straight way from his step inside the gate (or by way of his usual crouching spot) round what's in
+    // the yard and off the train. He waits there for him meanwhile. { at, face, via } (world), or null: called over as a hen
+    nearHim(b) {
+      if (!b || !b.train || !b.root.visible || b.busy()) return null;
+      const p = b.root.position, y = b.root.rotation.y, train = [], F = plot.farmer ? [plot.farmer.x, plot.farmer.z] : S;
+      b.trainEach(p.x, p.z, b.trainY, (x, z) => { train.push([x, z]); return false; }, y);
+      let TR = 0.5;      // (how far off the train he crouches: then, if there's nowhere, a little less)
+      const room = q => q[0] > Yp.min[0] + 0.2 && q[0] < Yp.max[0] - 0.2 && q[1] > Yp.min[2] + 0.15 && q[1] < Yp.max[2] - 0.2 && !PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.25) && !train.some(s => Math.hypot(q[0] - s[0], q[1] - s[1]) < TR);
+      const way = (a, c) => { for (let k = 1; k <= 12; k++) { const q = [a[0] + (c[0] - a[0]) * k / 12, a[1] + (c[1] - a[1]) * k / 12]; if (PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.18) || train.some(s => Math.hypot(q[0] - s[0], q[1] - s[1]) < 0.42) || (k < 12 && Math.hypot(q[0] - p.x, q[1] - p.z) < 0.45)) return false; } return true; };
+      const rump = [p.x - Math.sin(y) * 0.3, p.z - Math.cos(y) * 0.3];      // (where his train leaves him: the farmer's knees well clear of it)
+      for (const [angles, R0, tr] of [[[0.85, -0.85, 1.1, -1.1, 0.55, -0.55, 1.4, -1.4], 0.75, 0.5], [[1.7, -1.7, 0.3, -0.3, 2.0, -2.0], 0.62, 0.44]]) {      // (by his chest, a little in front, best: stroking his neck and back, his head not in his face, well off his train)
+        TR = tr;
+        for (const a of angles) for (const d of [0.66, 0.74]) {
+          const q = [p.x + Math.sin(y + a) * d, p.z + Math.cos(y + a) * d];
+          if (!room(q) || Math.hypot(q[0] - rump[0], q[1] - rump[1]) < R0) continue;
+          let via = way(F, q) ? [] : null;
+          if (!via) {      // (else by way of one spot in the yard, the shortest)
+            let best = Infinity;
+            for (let gx = Yp.min[0] + 0.25; gx < Yp.max[0] - 0.2; gx += 0.25) for (let gz = Yp.min[2] + 0.2; gz < Yp.max[2] - 0.2; gz += 0.25) {
+              const m = [gx, gz], L = Math.hypot(m[0] - F[0], m[1] - F[1]) + Math.hypot(q[0] - m[0], q[1] - m[1]);
+              if (L < best && room(m) && way(F, m) && way(m, q)) { best = L; via = [m]; }
+            }
+          }
+          if (!via) continue;
+          b.route = null; b.target.copy(p); b.wait = Math.max(b.wait || 0, 20); if (b.act) b.act = null; b.fanGoal = 0;      // (he waits for him)
+          return { at: W(q[0], q[1]), face: H(q, [p.x, p.z]), via: via.map(v => W(v[0], v[1])) };
+        }
+      }
+      return null;
     },
     letGo(b) { if (b && b.isGoose) { b.pen.release(b); return; } if (b) { b.called = false; if (b.cuddle) { b.cuddle.carry = null; b.cuddle.done = true; } b.shadowY = undefined; b.root.position.y = 0.015; if (b.rig.shut) b.rig.sleepy(false); } },
     // lifted k of the way from where she settled (0) into his arms (1): in front of his chest, across his arms with her head
@@ -2271,6 +2342,22 @@ function placeBlob(b) {
 // the peacock (31 Oct): his perch beside the Garden Pavilion (stylized/coops.py pavilion: the same spot in every look; the
 // pen's frame, glTF axes: x, its bar's top, z), the points down his train and out to its sides (how far along 0..1, how wide)
 const PEA_PERCH = [1.04, 1.045, -0.12];
+const TRAIN_BEND = 65 * DEG, TRAIN_ROOT = 0.28;      // (and where it's rooted, behind his feet)              // (how far round his train can lie from straight behind him)
+const wrapA = a => ((a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+// the farmer's way in at the gate to his step inside, and the spots he stands at in a pen (penSpec: by the feeder, where he
+// throws the corn, where he crouches, where he steps round the feeder), in the pen's frame: the peacock's train keeps off
+// them, so the farmer never stands on it (between them he goes round it: penSpec around). Worked out once for the pen's
+// look: plot.lanes, cleared when it's made again
+const laneDist = (x, z, L) => { const dx = L[2] - L[0], dz = L[3] - L[1], l2 = dx * dx + dz * dz || 1e-9, u = Math.max(0, Math.min(1, ((x - L[0]) * dx + (z - L[1]) * dz) / l2)); return Math.hypot(x - L[0] - dx * u, z - L[1] - dz * u); };
+function farmerLanes(plot) {
+  if (plot.lanes) return plot.lanes;
+  const now = performance.now(); if (plot.lanesTried && now - plot.lanesTried < 3000) return [];
+  let P = null; try { P = penSpec(plot, true); } catch (e) { P = null; plot.lanesErr = String(e && e.message); }
+  if (!P) { plot.lanesTried = now; return []; }      // (the farm's ways not ready yet: again in a while)
+  const inv = new THREE.Matrix4().copy(plot.frame.matrixWorld).invert(), v = new THREE.Vector3(), L = q => { v.set(q[0], 0, q[1]).applyMatrix4(inv); return [v.x, v.z]; };
+  const [g, i, s] = P.in.map(L), at = q => { const a = L(q); return [...a, ...a]; };
+  return (plot.lanes = [[...g, ...i], [...i, ...s], at(P.feederAt), at(P.throwAt), at(P.crouchAt), ...(P.clear ? [at(P.clear)] : [])]);
+}
 const TRAIN_SAMPLES = [0, 0.14, 0.28, 0.42, 0.56, 0.7, 0.85, 1].map(t => [t, t < 0.1 ? 0 : 0.05 + 0.1 * t]);
 function trainBack(rig) {                // how far behind his feet his train reaches, lying (his model's, without the fan)
   const a = rig.mesh.geometry.attributes.position; let z = 0;
@@ -2316,66 +2403,138 @@ class Bird {
   }
   free(x, z, notFarmer = false) {
     if (this.plot.kind === 'lineup') return true;
-    const P = penOf(this.plot), Y = P.yard;
-    if (x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
-    for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return false; }
-    if (!this.train) for (const b of this.flock) if (b.train && b !== this && b.onTrain(x, z)) return false;      // (nobody walks over the peacock's train)
+    const P = penOf(this.plot), Y = P.yard, e = this.train ? 0.3 : 0;      // (the peacock keeps off the fence: room for his tail end as he turns round)
+    if (x < Y.min[0] + e || x > Y.max[0] - e || z < Y.min[2] + e || z > Y.max[2] - e) return false;
+    for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2], r = o[3] + e * 0.4; if (dx * dx + dz * dz < r * r) return false; }
+    if (!this.train) { for (const b of this.flock) if (b.train && b !== this && b.onTrain(x, z)) return false; }      // (nobody walks over the peacock's train)
+    else if (farmerLanes(this.plot).some(L => laneDist(x, z, L) < 0.35)) return false;      // (and he keeps off the farmer's way in and his spots)
     return !this.inBlock(x, z, notFarmer);
   }
   // ---- a peacock's train (31 Oct, the peafowl): it lies a long way behind him, so he never turns or steps where it would go
   // through the fence, the house, what stands in the yard or one of the others; nor walks where it would; they keep off it.
   // (x, z) facing yaw: the points down its middle and out to its sides
-  trainEach(x, z, yaw, fn) {
-    const s = Math.sin(yaw), c = Math.cos(yaw), L = this.train.back;
+  trainEach(x, z, yaw, fn, body = yaw) {   // (yaw: the train's way, from its root behind his body facing body)
+    const s = Math.sin(yaw), c = Math.cos(yaw), L = this.train.back, P = TRAIN_ROOT, ox = x - Math.sin(body) * P, oz = z - Math.cos(body) * P;
     for (const [t, w] of TRAIN_SAMPLES) {
-      const d = 0.42 + (L - 0.42) * t;           // (from where it comes down low behind him: nearer, it's up over a bowl or a sand pit's edge)
-      for (const sd of w ? [-1, 0, 1] : [0]) if (fn(x - s * d + c * sd * w, z - c * d - s * sd * w)) return true;
+      const d = 0.42 - P + (L - 0.42) * t;       // (from where it comes down low behind him: nearer, it's up over a bowl or a sand pit's edge)
+      for (const sd of w ? [-1, 0, 1] : [0]) if (fn(ox - s * d + c * sd * w, oz - c * d - s * sd * w)) return true;
     }
     return false;
   }
-  trainClear(x, z, yaw, birds = true) {     // (birds: nor over one of the others' feet)
+  // his train trails behind him: it swings round into line as he walks on, and stays where it lies while he turns on the
+  // spot, till he's turned so far it's pulled round with him (TRAIN_BEND); its way (the way he'd face, were it straight
+  // behind him) after a body facing y has gone ds further
+  trainNext(t0, y, ds) {
+    let t = t0 + wrapA(y - t0) * Math.min(1, ds / 0.45);
+    const b = wrapA(y - t);
+    if (Math.abs(b) > TRAIN_BEND) t = y - Math.sign(b) * TRAIN_BEND;
+    return t;
+  }
+  get trainY() { return this.trainYaw ?? this.root.rotation.y; }
+  trainClear(x, z, yaw, birds = true, body = yaw, ways = true) {     // (yaw: the train's way; birds: nor over one of the others' feet; body: the way he faces; ways: nor across the farmer's)
     if (!this.train || this.plot.kind !== 'coop' || this.stay) return true;
-    const P = penOf(this.plot), Y = P.yard, m = 0.1;
+    const P = penOf(this.plot), Y = P.yard, m = 0.1, lanes = ways ? farmerLanes(this.plot) : [];
     return !this.trainEach(x, z, yaw, (px, pz) => {
       if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return true;
       for (const o of P.obstacles) { const dx = px - o[0], dz = pz - o[2]; if (dx * dx + dz * dz < o[3] * o[3]) return true; }
       if (this.inBlock(px, pz, true)) return true;
+      for (const L of lanes) if (laneDist(px, pz, L) < 0.42) return true;      // (nor across the farmer's ways in the pen, with room for him)
       if (birds) for (const b of this.flock) if (b !== this && b.root.visible && !b.asleep && Math.hypot(b.root.position.x - px, b.root.position.z - pz) < 0.08) return true;
       return false;
-    });
+    }, body);
   }
   // which way to face to show off his fan: nearest to the way he's facing, with room for it, turning round to it without his
   // train going through anything (null: nowhere)
   displayYaw() {
     const p = this.root.position, y0 = this.root.rotation.y;
     for (const da of [0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6, 2.1, -2.1, 2.6, -2.6]) {
-      if (!this.fanClear(y0 + da)) continue;
-      let ok = true;
-      for (let k = 1, n = Math.ceil(Math.abs(da) / 0.2); k <= n && ok; k++) ok = this.trainClear(p.x, p.z, y0 + da * k / n, false);
-      if (ok) return y0 + da;
+      if (!this.fanClear(y0 + da) || !this.trainClear(p.x, p.z, this.trainNext(this.trainY, y0 + da, 0), false, y0 + da) || !this.trainClear(p.x, p.z, y0 + da, false)) continue;
+      return y0 + da;
     }
     return null;
   }
-  settleTrain() {                          // (just put in his yard: turned so his train lies clear, or moved over to where it does)
+  // boxed in for good (wayOut: nowhere to go, twice): a flutter up and over to somewhere roomier, his train streaming
+  // behind him (peafowl fly up onto roofs and branches: a hop like that); false: nowhere
+  flyOut() {
+    const p = this.root.position, Y = penOf(this.plot).yard;
+    let best = null, bd = 0;
+    for (let k = 0; k < 80; k++) {
+      const x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]), z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]), d = Math.hypot(x - p.x, z - p.z);
+      if (d < 0.6 || d > 2.4 || !this.free(x, z)) continue;
+      const y = Math.atan2(x - p.x, z - p.z);
+      if (!this.trainClear(x, z, y, true)) continue;
+      const room = this.trainRoom(x, z); if (room > bd) { bd = room; best = [x, z, y]; if (room >= 6) break; }
+    }
+    if (!best) return false;
+    this.flyTo(best[0], best[1], best[2]); return true;
+  }
+  flyTo(x, z, y) {      // (a flutter over to (x, z), landing facing y)
+    const p = this.root.position;
+    this.flight = { from: [p.x, p.z, this.root.rotation.y], to: [x, z, y], t: 0, dur: 0.7 + 0.25 * Math.hypot(x - p.x, z - p.z) };
+    this.route = null; this.act = null; this.fanGoal = 0; this.target.set(x, p.y, z);
+  }
+  // can he turn round on the spot to face a, his train swung round with him where it must be, without it going through anything
+  canTurn(a) {
+    const p = this.root.position, y0 = this.root.rotation.y, t0 = this.trainY, turn = wrapA(a - y0), n = Math.ceil(Math.abs(turn) / 0.2);
+    for (let k = 1; k <= n; k++) { const yk = y0 + turn * k / n; if (!this.trainClear(p.x, p.z, this.trainNext(t0, yk, 0), k === n, yk)) return false; }
+    return true;
+  }
+  // and walk on from there straight to (x, z), his train trailing after, clear all the way
+  walkClear(x, z) {
+    const p = this.root.position, a = Math.atan2(x - p.x, z - p.z), d = Math.hypot(x - p.x, z - p.z);
+    if (!this.canTurn(a)) return false;
+    let t = this.trainNext(this.trainY, a, 0);
+    for (let s = 0.1; s < d + 0.099; s += 0.1) { const u = Math.min(s, d); t = this.trainNext(t, a, 0.1); if (!this.trainClear(p.x + Math.sin(a) * u, p.z + Math.cos(a) * u, t, false, a)) return false; }
+    return true;
+  }
+  // how many ways (of 12) his train could lie at (x, z): a few, he's boxed in there
+  trainRoom(x, z) { let n = 0; for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; if (this.trainClear(x, z, a, false)) n++; } return n; }
+  settleTrain() {                          // (just put in his yard: turned so his train lies clear, or moved over to where it does, where there's room to turn)
     const p = this.root.position, Y = penOf(this.plot).yard;
     for (let k = 0; k < 400; k++) {
       const near = k < 16, x = near ? p.x : Y.min[0] + this.r() * (Y.max[0] - Y.min[0]), z = near ? p.z : Y.min[2] + this.r() * (Y.max[2] - Y.min[2]);
       const y = near ? this.root.rotation.y + k * Math.PI / 8 : this.r() * 2 * Math.PI;
-      if ((near || this.free(x, z)) && this.trainClear(x, z, y)) { p.x = x; p.z = z; this.root.rotation.y = y; this.lastYaw = y; this.trainOk = y; this.trainAt = [x, z]; this.target.copy(p); return true; }
+      if (this.free(x, z) && this.trainClear(x, z, y) && (k >= 300 || this.trainRoom(x, z) >= 4)) { p.x = x; p.z = z; this.root.rotation.y = y; this.lastYaw = y; this.trainOk = y; this.trainYaw = y; this.trainAt = [x, z]; this.target.copy(p); return true; }
     }
     return false;
   }
   onTrain(x, z) {                          // (x, z) on his train, lying where it is now?
     if (this.asleep || this.roost) return false;
-    const p = this.root.position, y = this.root.rotation.y, s = Math.sin(y), c = Math.cos(y), dx = x - p.x, dz = z - p.z;
-    const back = -(dx * s + dz * c), side = Math.abs(dx * c - dz * s);
+    const p = this.root.position, by = this.root.rotation.y, y = this.A.fan > 0.3 ? by : this.trainY, s = Math.sin(y), c = Math.cos(y);
+    const dx = x - (p.x - Math.sin(by) * TRAIN_ROOT), dz = z - (p.z - Math.cos(by) * TRAIN_ROOT), back = -(dx * s + dz * c) + TRAIN_ROOT, side = Math.abs(dx * c - dz * s);
     if (this.A.fan > 0.3) return back > 0.05 && back < 0.55 && side < 1.15;      // (his fan up: not under it)
     return back > 0.2 && back < this.train.back + 0.08 && side < 0.07 + 0.13 * Math.min(1, back / this.train.back);
   }
   // his fan up: room for it all round, a great half circle across behind him (facing y)
-  fanClear(y = this.root.rotation.y) {
+  // wedged where his train lies only the one way (by the fence, say): a few steps on along the way it lies, so that he
+  // can turn after (null: nowhere to go)
+  wayOut() {      // (tried as he'd go: round on the spot to it, his train staying put, then step by step with it trailing after)
+    const p = this.root.position, t0 = this.trainY, y0 = this.root.rotation.y, on = [];
+    for (const a of [0, 0.3, -0.3, 0.6, -0.6, 0.9, -0.9, 1.1, -1.1]) {
+      const y = t0 + a, turn = wrapA(y - y0), n = Math.ceil(Math.abs(turn) / 0.15);
+      let ok = true;
+      for (let k = 1; k <= n && ok; k++) { const yk = y0 + turn * k / n; ok = this.trainClear(p.x, p.z, this.trainNext(t0, yk, 0), false, yk); }      // (the hens get out of the way)
+      if (!ok) continue;
+      let t = this.trainNext(t0, y, 0), q = null;
+      for (let s = 0.05; s <= 0.6001; s += 0.05) {
+        const nx = p.x + Math.sin(y) * s, nz = p.z + Math.cos(y) * s, nt = this.trainNext(t, y, 0.05);
+        if (!this.free(nx, nz) || !this.trainClear(nx, nz, nt, false, y)) break;
+        t = nt; if (s >= 0.25) q = [nx, nz];
+      }
+      if (q) { if (this.trainRoom(q[0], q[1]) >= 4) return q; on.push(q); }      // (somewhere he can turn round: not on into a corner)
+    }
+    // (else, facing the fence say, a few small steps back along his train, shifted straight back with him: room to turn there)
+    const by = t0 + Math.PI; let back = null;
+    for (let s = 0.05; s <= 0.4001; s += 0.05) {
+      const nx = p.x + Math.sin(by) * s, nz = p.z + Math.cos(by) * s;
+      if (!this.free(nx, nz) || !this.trainClear(nx, nz, t0, false, y0)) break;
+      if (s >= 0.15) back = [nx, nz];
+    }
+    return back ? { back } : on[0] || null;
+  }
+  fanClear(y = this.root.rotation.y, at = null) {      // (at: [x, z] somewhere else he'd stand)
     if (!this.train || this.plot.kind !== 'coop') return true;
-    const P = penOf(this.plot), Y = P.yard, p = this.root.position, s = Math.sin(y), c = Math.cos(y), m = 0.12;
+    const P = penOf(this.plot), Y = P.yard, p = at ? { x: at[0], z: at[1] } : this.root.position, s = Math.sin(y), c = Math.cos(y), m = 0.12;
     for (const w of [-1.05, -0.75, -0.4, 0, 0.4, 0.75, 1.05]) {
       const px = p.x - s * 0.3 + c * w, pz = p.z - c * 0.3 - s * w;
       if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
@@ -2395,7 +2554,7 @@ class Bird {
     const reach = 0.22 * this.rig.scale / 0.5, Y = penOf(this.plot).yard, m = 0.12;
     const px = x + Math.sin(yaw) * reach, pz = z + Math.cos(yaw) * reach;
     if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
-    if (this.train) { const p = this.root.position; if (this.trainClear(p.x, p.z, yaw, false) && !this.trainClear(x, z, yaw, false)) return false; }      // (the peacock: nor a step that takes his train's edge into something)
+    if (this.train) { const p = this.root.position, t0 = this.trainY, t1 = this.trainNext(t0, yaw, Math.hypot(x - p.x, z - p.z)); if (this.trainClear(p.x, p.z, t0, false, this.root.rotation.y) && !this.trainClear(x, z, t1, false, yaw)) return false; }      // (the peacock: nor a step that takes his train into something)
     return !this.inBlock(px, pz, this.cuddle && !this.cuddle.greet ? true : false);      // (the hen he's called: her beak may come up to him, he's reaching for her)
   }
   roomAt(x, z) {
@@ -2418,7 +2577,7 @@ class Bird {
       if (mum && i < 20) { const a = this.r() * 6.28, d = 0.28 + this.r() * 0.3; x = mum.x + Math.cos(a) * d; z = mum.z + Math.sin(a) * d; }     // chicks keep near mum
       else { x = Y.min[0] + this.r() * (Y.max[0] - Y.min[0]); z = Y.min[2] + this.r() * (Y.max[2] - Y.min[2]); }
       if (!this.free(x, z) || (startFree && !this.clearPath(p.x, p.z, x, z))) continue;
-      if (this.train && i < 26) { const a = Math.atan2(x - p.x, z - p.z); if (!this.trainClear(p.x, p.z, a) || !this.trainClear(x, z, a)) continue; }      // (the peacock: his train clear as he sets off and where he stops)
+      if (this.train && i < 26) { const a = Math.atan2(x - p.x, z - p.z); if (!this.walkClear(x, z) || (i < 20 && !this.free(x + Math.sin(a) * 0.45, z + Math.cos(a) * 0.45) && this.trainRoom(x, z) < 4)) continue; }      // (the peacock: his train clear as he turns to set off and where he stops, and room there to go on or turn round: not boxed in by the fence)
       const room = this.roomAt(x, z), need = this.kind === 'chick' ? 0.3 : ROOM;
       if (room >= need) { this.target.set(x, p.y, z); return; }
       if (room > bestRoom) { bestRoom = room; best = [x, z]; }
@@ -2445,7 +2604,7 @@ class Bird {
     if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
     if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
     if (x < 0.55) return { type: 'flap', left: 0.9 };
-    if (this.train) { const p = this.root.position, f = x < 0.64 && this.trainClear(p.x, p.z, this.root.rotation.y) ? this.displayYaw() : null; if (f !== null) return { type: 'display', left: 6 + this.r() * 5, face: f }; }      // (a peacock doesn't crow: he raises his fan and shows it off)
+    if (this.train) { const f = x < 0.74 && !this.plot.farmer && !this.called && !this.cuddle ? this.displayYaw() : null; if (f !== null) return { type: 'display', left: 8 + this.r() * 6, face: f }; }      // (a peacock doesn't crow: he raises his fan and shows it off)
     else if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
     if (x < (rooster ? 0.69 : 0.59) && !this.mum) return { type: 'rest', left: 3 + this.r() * 4 };
     if (x < (rooster ? 0.74 : 0.65)) return { type: 'ruffle', left: 0.75 };             // a quick shake of the feathers
@@ -2517,8 +2676,8 @@ class Bird {
       if (u >= 1) {
         if (R.phase === 'up') { R.phase = 'turn'; R.t = 0; }
         else {
-          p.y = 0.015; this.shadowY = undefined; this.roost = null; this.wait = 0.4; this.trainOk = this.root.rotation.y; this.trainAt = [p.x, p.z];
-          const fy = this.displayYaw(); if (fy !== null) { this.act = { type: 'display', left: 6 + this.r() * 2, face: fy }; this.wait = 6; }      // good morning: his fan
+          p.y = 0.015; this.shadowY = undefined; this.roost = null; this.wait = 0.4; this.trainOk = this.trainYaw = this.root.rotation.y; this.trainAt = [p.x, p.z];
+          const fy = this.plot.farmer ? null : this.displayYaw(); if (fy !== null) { this.act = { type: 'display', left: 6 + this.r() * 2, face: fy }; this.wait = 6; }      // good morning: his fan
         }
       }
     } else if (R.phase === 'turn') {         // round on his perch to face the yard
@@ -2562,13 +2721,13 @@ class Bird {
   tapped() {                               // a hop and a flap (a rooster may crow)
     if (this.laying || this.roost || this.asleep) return;      // a laying hen isn't disturbed, nor one going to bed
     this.hopT = 0;
-    const fy = this.train && this.r() < 0.6 ? this.displayYaw() : null;
+    const fy = this.train && this.r() < 0.6 && !this.plot.farmer && !this.called && !this.cuddle ? this.displayYaw() : null;
     if (fy !== null) { this.hopT = -1; this.act = { type: 'display', left: 6, face: fy }; this.wait = Math.max(this.wait, 6); }      // (the peacock: his fan)
     else if (this.kind === 'rooster' && !this.train && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
-  busy() { return this.laying || this.roost || this.asleep || this.leaving || this.play; }
+  busy() { return this.laying || this.roost || this.asleep || this.leaving || this.play || this.flight; }      // (the peacock: or fluttering over, flyOut)
   // grown and off to a new farm (main.js chicksGo, tickFarewell): to her place in the line just inside the gate ('gather'),
   // turning to face out, hopping for joy there ('party': tickFarewell's hops; the flaps here), then out of the gate along
   // the way out ('exit'), and gone down the lane ('fade')
@@ -2613,7 +2772,7 @@ class Bird {
         const a0 = d > 1e-4 ? Math.atan2(dx, dz) : this.r() * 6.28;
         for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.4, -2.4]) {        // (squeezed against the feeder, say: round him)
           const tx = F.x + Math.sin(a0 + da) * min, tz = F.z + Math.cos(a0 + da) * min;
-          if (!this.free(tx, tz, true) || !this.trainClear(tx, tz, this.root.rotation.y, false)) continue;
+          if (!this.free(tx, tz, true) || !this.trainClear(tx, tz, this.trainY, false, this.root.rotation.y)) continue;
           const k = Math.min(1, dt * 20); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
         }
       }
@@ -2624,7 +2783,7 @@ class Bird {
         const a0 = d > 1e-4 ? Math.atan2(dx, dz) : this.r() * 6.28;
         for (const da of [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.4, -2.4]) {
           const tx = F.px + Math.sin(a0 + da) * min, tz = F.pz + Math.cos(a0 + da) * min;
-          if (!this.free(tx, tz, 'pail') || !this.trainClear(tx, tz, this.root.rotation.y, false) || Math.hypot(tx - F.x, tz - F.z) < (this.kind === 'chick' ? 0.27 : 0.33)) continue;      // (never into his boots instead)
+          if (!this.free(tx, tz, 'pail') || !this.trainClear(tx, tz, this.trainY, false, this.root.rotation.y) || Math.hypot(tx - F.x, tz - F.z) < (this.kind === 'chick' ? 0.27 : 0.33)) continue;      // (never into his boots instead)
           const k = Math.min(1, dt * 30); p.x += (tx - p.x) * k; p.z += (tz - p.z) * k; break;
         }
       }
@@ -3005,11 +3164,24 @@ class Bird {
       const o = playStep(this, dt);
       walking = !!o.walking; sitGoal = o.sit || 0; flap = o.flap || 0; peckGoal = o.peck || 0; ruffle = o.ruffle || 0; kick = o.kick || 0; crow = o.crow || 0;
       if (kick) { A.kickLeg = (A.t % 1.2) < 0.6 ? 0 : 1; A.kickT += dt; }
+    } else if (this.flight) {                        // (the peacock boxed in: a flutter up and over to somewhere roomier, flyOut)
+      const F = this.flight, p = this.root.position, u = Math.min(1, (F.t += dt) / F.dur), e = u * u * (3 - 2 * u);
+      p.x = F.from[0] + (F.to[0] - F.from[0]) * e; p.z = F.from[1] + (F.to[1] - F.from[1]) * e; p.y = 0.015 + Math.sin(u * Math.PI) * 0.38;
+      const k = Math.max(0, Math.min(1, (u - 0.12) / 0.3)); this.root.rotation.y = F.from[2] + wrapA(F.to[2] - F.from[2]) * k * k * (3 - 2 * k); this.trainYaw = this.root.rotation.y;      // (round once he's up, his train streaming behind)
+      flap = u < 0.9 ? 1 : 0; this.shadowY = 0.015;
+      if (u >= 1) {
+        p.y = 0.015; this.shadowY = undefined; this.flight = null; this.wait = 0.6; this.trainOk = this.trainYaw = F.to[2]; this.trainAt = [p.x, p.z]; this.target.copy(p);
+        if (this.cuddle && !this.cuddle.ready && this.then) { this.route = this.plan([this.cuddle.spot]); this.wait = 0.2; this.nextLeg(); }      // (on his way to the farmer: on again from here)
+      }
+    } else if (this.backing) {                       // (the peacock wedged, facing the fence say: a few small steps backwards first, wayOut)
+      const B = this.backing, p = this.root.position, dx = B.to[0] - p.x, dz = B.to[1] - p.z, d = Math.hypot(dx, dz);
+      if (d < 0.02 || (B.t += dt) > 4) { this.backing = null; this.wait = Math.min(this.wait, 0.3); }
+      else { const s = Math.min(d, this.speed * 0.4 * dt); p.x += dx / d * s; p.z += dz / d * s; walking = true; }
     } else if (act) {
       act.left -= dt;
       if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && act.type !== 'display' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
-        const C = this.cuddle, G = C && C.greet; sitGoal = G || (C && C.dig) ? 0 : 1;
+        const C = this.cuddle, G = C && C.greet; sitGoal = G || (C && C.dig) || this.train ? 0 : 1;      // (the peacock stands to be stroked)
         if (C && !C.done) {
           const p = this.root.position, off = G || C.carry ? 0 : Math.hypot(C.spot[0] - p.x, C.spot[1] - p.z);
           if (C.carry) { const K = C.carry; p.set(K.x, K.y, K.z); this.root.rotation.y = K.yaw; }      // (in his arms, or on the way up or down)
@@ -3036,10 +3208,29 @@ class Bird {
       if (!act.dur) act.dur = act.left + dt;
       if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); if (t >= 0.3 && !act.heard) { act.heard = true; this.crowSound(); } }
-      if (act.type === 'rest') { sitGoal = 1; wag = 0; }
+      if (act.type === 'rest') { sitGoal = this.train ? 0 : 1; wag = 0; }      // (the peacock rests standing: his heavy train lies as it is)
       if (act.type === 'display' && !act.ready) {         // (round to face the way he'll show it off, first)
         const t = act.face === undefined ? { diff: 0, walking: false } : this.turnTo(act.face, dt * 0.6); walking = t.walking; act.left += dt;
         if (t.diff < 0.03 || (act.turning = (act.turning || 0) + dt) > 4) act.ready = true;
+      } else if (act.type === 'display' && this.A.fan > 0.85 && act.left > 2.2) {      // (on parade with his fan open, Audrey 31 Oct: round slowly to show it off one way and the other, a few proud steps)
+        const M = act.move || (act.move = { t: 0.8 + this.r() * 1.2 }), p = this.root.position, y0 = this.root.rotation.y;
+        if (M.yaw === undefined && !M.to && (M.t -= dt) <= 0) {
+          M.t = 1.0 + this.r() * 1.6;
+          if (this.r() < 0.55) {      // (round, slowly, as far as there's room for his fan all the way)
+            const da = (this.r() < 0.5 ? -1 : 1) * (0.6 + this.r() * 0.9);
+            let ok = this.trainClear(p.x, p.z, y0 + da, false); for (let k = 1; k <= 6 && ok; k++) ok = this.fanClear(y0 + da * k / 6);      // (and room for his train to come down there after)
+            if (ok) M.yaw = y0 + da;
+          } else {      // (a few slow steps on)
+            const d = 0.25 + this.r() * 0.25, q = [p.x + Math.sin(y0) * d, p.z + Math.cos(y0) * d];
+            if (this.free(q[0], q[1]) && this.fanClear(y0, q) && this.fanClear(y0, [(p.x + q[0]) / 2, (p.z + q[1]) / 2]) && this.trainClear(q[0], q[1], y0, false)) M.to = q;
+          }
+        }
+        if (M.yaw !== undefined) { const t = this.turnTo(M.yaw, dt * 0.18); walking = t.walking; if (t.done) M.yaw = undefined; }
+        else if (M.to) {
+          const dx = M.to[0] - p.x, dz = M.to[1] - p.z, d = Math.hypot(dx, dz), s = Math.min(d, this.speed * 0.35 * dt);
+          if (d < 0.02) M.to = null; else { p.x += dx / d * s; p.z += dz / d * s; walking = true; this.proudGoal = 1; }
+        }
+        if (!M.to) this.proudGoal = 0.6;
       }
       if (act.type === 'ruffle') ruffle = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.left <= 0) {
@@ -3079,8 +3270,8 @@ class Bird {
               const a = this.root.rotation.y + da, sx = p.x + Math.sin(a) * s, sz = p.z + Math.cos(a) * s;
               if (this.free(sx, sz) && this.clearAhead(sx, sz, this.root.rotation.y)) { p.x = sx; p.z = sz; walking = true; break; }
             }
-            if (!walking) this.wait = 0.3;
-          } else this.wait = 0.5;
+            if (!walking) { this.wait = 0.3; if (this.train && this.legTime > 2) this.nextLeg(); }      // (the peacock: on to the next leg sooner, his train in the way)
+          } else { this.wait = 0.5; if (this.train && (this.blockedN = (this.blockedN || 0) + 1) > 2) { this.blockedN = 0; this.target.copy(p); } }      // (the peacock, his train in the way of getting there: somewhere else)
         } else walking = Math.abs(diff) > 2 * DEG;      // little steps on the spot while turning
       }
     }
@@ -3113,26 +3304,42 @@ class Bird {
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
     if (this.train && this.plot.kind === 'coop') {
-      this.fanGoal = this.act && this.act.type === 'display' && this.act.ready && this.act.left > 1.0 && !this.roost && this.fanClear() ? 1 : 0;      // (his fan up while he shows off, down again a second before the end)
+      this.fanGoal = this.act && this.act.type === 'display' && this.act.ready && this.act.left > 1.0 && !this.roost && !this.plot.farmer && !this.called && !this.cuddle && this.fanClear() ? 1 : 0;      // (down again when the farmer comes into the pen)      // (his fan up while he shows off, down again a second before the end)
       if (!this.trainSettled && !this.roost && !this.asleep && !this.stay) { this.trainSettled = true; this.settleTrain(); }
       const p = this.root.position, y = this.root.rotation.y;
-      if (!this.roost && !this.asleep && !this.stay) {      // (he never swings his train through the fence, the house, a hen...: if he would, he doesn't turn)
-        const y0 = this.trainOk, q0 = this.trainAt;      // (where he was and faced a moment ago)
+      if (!this.roost && !this.asleep && !this.stay && !this.flight) {      // (he never swings his train through the fence, the house, a hen...: if he would, he doesn't turn)
+        const y0 = this.trainOk, q0 = this.trainAt, t0 = this.trainY;      // (where he was and faced a moment ago, and his train lay)
+        const an = this.anchor || (this.anchor = [p.x, p.z, y]);      // (where he last got to: stillSince, how long he's been stuck there)
+        if (this.stillSince === undefined || Math.hypot(p.x - an[0], p.z - an[1]) > 0.1 || Math.abs(wrapA(y - an[2])) > 0.35) { an[0] = p.x; an[1] = p.z; an[2] = y; this.stillSince = A.t; }
+        const t1 = A.fan > 0.3 ? y : this.backing ? t0 : q0 ? this.trainNext(t0, y, Math.hypot(p.x - q0[0], p.z - q0[1])) : y;      // (stepping back: his train shifted straight back)
         let clamp = false;
-        if (A.fan <= 0.3 && y0 !== undefined && (y0 !== y || q0[0] !== p.x || q0[1] !== p.z)) {
-          const st = this.trainClear(p.x, p.z, y, false), full = st && this.trainClear(p.x, p.z, y);
-          if (!full) { const s0 = this.trainClear(q0[0], q0[1], y0, false), f0 = s0 && this.trainClear(q0[0], q0[1], y0); clamp = (!st && s0) || (st && f0); }      // (through the fence, the house, the swing...; or over one of the others: not if it wasn't a moment ago)
+        if (A.fan <= 0.3 && y0 !== undefined && (t1 !== t0 || y !== y0 || q0[0] !== p.x || q0[1] !== p.z)) {
+          const st = this.trainClear(p.x, p.z, t1, false, y), full = st && this.trainClear(p.x, p.z, t1, true, y);
+          if (!full) { const s0 = this.trainClear(q0[0], q0[1], t0, false, y0), f0 = s0 && this.trainClear(q0[0], q0[1], t0, true, y0); clamp = (!st && s0) || (st && f0); }      // (through the fence, the house, the swing...; or over one of the others: not if it wasn't a moment ago)
         }
         if (clamp) {
           this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1];
-          if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying && !this.cuddle && !this.called) { this.trainStuck = 0; this.route = null; this.target.copy(p); this.wait = 0.2; }
-        } else this.trainStuck = 0;
+          if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying) {
+            const q = this.wayOut();      // (wedged, his train only lying the one way: a few steps on first, then on where he was going: called over by the farmer, say)
+            if (!q && A.t - (this.stillSince ?? A.t) > 6 && this.flyOut()) this.trainStuck = 0;      // (boxed in for good, stuck there a while: a flutter over to somewhere roomier)
+            else if (q && q.back) { this.trainStuck = 0; this.backing = { to: q.back, t: 0 }; }
+            else if (q) { this.trainStuck = 0; if (Math.hypot(this.target.x - p.x, this.target.z - p.z) > 0.1) this.route = [[this.target.x, this.target.z], ...(this.route || [])]; this.target.set(q[0], p.y, q[1]); }
+            else if (!this.cuddle && !this.called) { this.trainStuck = 0; this.route = null; this.target.copy(p); this.wait = 0.2; }
+          }
+        } else { this.trainStuck = 0; this.trainYaw = t1; }
+        // (his train somewhere it shouldn't be all the same, a while (put down there, the farmer's spots worked out after): a flutter over)
+        if (!this.trainClear(p.x, p.z, this.trainY, false, this.root.rotation.y)) { if ((this.unclearT = (this.unclearT || 0) + dt) > 3 && !this.cuddle && !this.called && !this.laying && this.flyOut()) this.unclearT = 0; }
+        else this.unclearT = 0;
         this.trainOk = this.root.rotation.y; this.trainAt = [p.x, p.z];
       }
     }
     A.fan = (A.fan || 0) + ((this.fanGoal || 0) - (A.fan || 0)) * Math.min(1, dt * 2.2);      // (a peacock showing off: his train raised in a fan)
     A.hang = (A.hang || 0) + ((this.hangGoal || 0) - (A.hang || 0)) * Math.min(1, dt * 3);      // (roosting: his train hanging from his perch)
-    if (this.trainShadow) { this.trainShadow.material.opacity = 0.85 * (1 - A.fan) * (1 - A.hang); this.trainShadow.visible = A.fan < 0.98 && A.hang < 0.9; }
+    if (this.train) { if (this.roost || this.asleep || A.fan > 0.3) this.trainYaw = this.root.rotation.y; A.bend = wrapA(this.trainY - this.root.rotation.y); }      // (his train swung round behind him)
+    if (this.trainShadow) {
+      const T = this.trainShadow, b = A.bend || 0; T.material.opacity = 0.85 * (1 - A.fan) * (1 - A.hang); T.visible = A.fan < 0.98 && A.hang < 0.9;
+      T.position.set(-Math.sin(b) * 0.38, -0.011, -TRAIN_ROOT - Math.cos(b) * 0.38); T.rotation.set(-Math.PI / 2, 0, b);      // (swung round with it)
+    }
     if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);
   }
@@ -3301,7 +3508,7 @@ function separate(flock, dt) {
     const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
     const lead = q => q.cuddle && !q.cuddle.greet && !q.cuddle.done;      // (the hen on her way up to him for a cuddle: the others make way)
     if (lead(flock[i]) !== lead(flock[j])) { const o = lead(flock[i]) ? b : a, sg = lead(flock[i]) ? 1 : -1; o.x += dx * push * 2 * sg; o.z += dz * push * 2 * sg; continue; }
-    const aFree = flock[i].free(ax, az) && flock[i].trainClear(ax, az, flock[i].root.rotation.y, false), bFree = flock[j].free(bx, bz) && flock[j].trainClear(bx, bz, flock[j].root.rotation.y, false);      // (the peacock: not where his train would go through something)
+    const aFree = flock[i].free(ax, az) && flock[i].trainClear(ax, az, flock[i].trainY, false, flock[i].root.rotation.y), bFree = flock[j].free(bx, bz) && flock[j].trainClear(bx, bz, flock[j].trainY, false, flock[j].root.rotation.y);      // (the peacock: not where his train would go through something)
     if (aFree) { a.x = ax; a.z = az; } else if (bFree) { b.x += dx * push; b.z += dz * push; }
     if (bFree) { b.x = bx; b.z = bz; } else if (aFree) { a.x -= dx * push; a.z -= dz * push; }
   }
@@ -3909,7 +4116,7 @@ function broodNews(news, now) {
   if (!e) return;
   gameUI.refresh();
   const c = e.type === 'hatch' && game.coop(e.coop), rare = c && c.brood && (c.brood.kids || []).find(k => k.rare);
-  const duck = game.isDuck((game.coop(e.coop) || {}).breed);      // (the call ducks: ducklings)
+  const duck = game.kindOf((game.coop(e.coop) || {}).breed);      // (the call ducks: ducklings; the peafowl: peachicks)
   hint(rare ? game.t('hatched_rare', { n: e.n, line: game.breedName(rare.rare) }) : game.t(e.type === 'hatch' ? game.dk('hatched', duck) : 'broody', { name: sayName(e.hen), n: e.n }));
   if (gameUI.kind === 'bird' && gameUI.bird) { const b = game.bird(gameUI.bird); if (b) gameUI.birdCard(b); }
 }
@@ -3933,7 +4140,7 @@ function addChick(plot, mum, x, z, asleep, i, kid) {
 // a young hen (sex 'h') or rooster ('r'): her own bird, smaller than the grown ones and growing, her mum's for the card
 function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name, rare) {
   const r = kidRng(plot);
-  const y = new Bird(plot, plot.breed, sex === 'r' ? 'rooster' : 'hen', rare ? silColour(rare) : plot.breed === 'sil' && mum ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);
+  const y = new Bird(plot, plot.breed, sex === 'r' && plot.breed !== 'pea' ? 'rooster' : 'hen', rare ? silColour(rare) : plot.breed === 'sil' && mum ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);      // (a young peacock looks like a peahen: his train comes later)
   if (name) y.name = name;
   y.gameChick = true; y.young = sex === 'r' ? 'r' : 'h'; y.kidOf = mum; y.kidI = i; y.rare = rare || null; y.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   y.size = 0.62; y.appear = 1; y.root.scale.setScalar(0.62); y.stepRate = 22;
@@ -3998,7 +4205,7 @@ function syncBrood(plot, now, live, news) {
       const pop = live && plot.synced && now - youngAt < LIVE_LAY;
       let turned = 0;
       for (const ch of gameChicks(plot)) if (!ch.young) { turnYoung(ch, sexOf(ch.kidI), pop && !ch.asleep); turned++; }
-      if (turned && pop) { hint(game.t('turned', { name: mum.name })); wake(1500); }
+      if (turned && pop) { hint(game.t(game.dk('turned', game.kindOf(plot.breed)), { name: mum.name })); wake(1500); }
     }
     const gc = Math.max(0, Math.min(1, (now - game.hatchAt(c)) / YOUNG_MS)), gy = Math.max(0, Math.min(1, (now - youngAt) / Math.max(1, game.grownAt(c) - youngAt)));
     for (const ch of gameChicks(plot)) ch.size = ch.young ? 0.62 + 0.23 * gy : 1 + 0.4 * gc;
@@ -4965,7 +5172,7 @@ const APRON = { x0: -0.3, z0: 1.67, x1: 0.66, z1: 2.45 };    // the ground just 
 // (release 4: a coop's pen by its look, bigger with each: the Snug one is FOOT and APRON; c: a coop in the save, or
 // { breed, tier } for one to come)
 const FOOTS = {}, APRONS = {};
-function penTierOf(c) { const t = c && hasLooks(baseBreed(c.breed)) ? Math.max(0, Math.min(4, c.tier || 0)) : 2; return t !== 2 && pensOf(baseBreed(c.breed))[t] ? t : 2; }
+function penTierOf(c) { const t = c && hasLooks(baseBreed(c.breed)) ? Math.max(0, Math.min(4, c.tier || 0)) : 2; return (t !== 2 || (c && c.breed === 'pea')) && pensOf(baseBreed(c.breed))[t] ? t : 2; }      // (the peafowl's Snug yard its own size: bigger)
 const penKey = c => { const t = penTierOf(c); return t === 2 ? 2 : baseBreed(c.breed) + t; };
 function footOf(c) {
   const t = penTierOf(c); if (t === 2) return FOOT;
@@ -6840,7 +7047,7 @@ window.__farm = {
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
-  words: () => ({ text: { en: TEXT.en, fr: TEXT.fr }, textF: { en: TEXT_F.en, fr: TEXT_F.fr }, reg: registered(), pers: Object.fromEntries(Object.entries(PERS_WORDS).map(([k, v]) => [k, { name: v.name, line: v.line, ...(v.duck ? { duck: v.duck } : {}) }])) }),      // (the translation catalogue: lang/catalogue.mjs)
+  words: () => ({ text: { en: TEXT.en, fr: TEXT.fr }, textF: { en: TEXT_F.en, fr: TEXT_F.fr }, reg: registered(), pers: Object.fromEntries(Object.entries(PERS_WORDS).map(([k, v]) => [k, { name: v.name, line: v.line, ...(v.duck ? { duck: v.duck } : {}), ...(v.pea ? { pea: v.pea } : {}) }])) }),      // (the translation catalogue: lang/catalogue.mjs)
   sound: () => sound, henHeard: () => henHeard(),            // (the music and the hens: sound.info(), and tests may set its times)
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
   hop: () => { for (const b of allBirds) b.tapped(); },
@@ -6850,7 +7057,7 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled

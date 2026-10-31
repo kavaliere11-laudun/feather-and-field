@@ -233,8 +233,8 @@ export class GameUI {
     const body = this.open('bird', b.name);
     this.bird = b.id;
     const champ = g.champion(b);
-    const duck = g.isDuck(b.breed);      // (a call duck: a duck or the drake)
-    body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(duck ? (f ? 'duck' : 'drake') : f ? 'hen' : 'rooster') + (champ ? ' · 🏆 ' + this.t('champ_' + champ, {}, f) : '')));
+    const duck = g.kindOf(b.breed);      // (a call duck: a duck or the drake; a peahen or the peacock)
+    body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(duck === 'duck' ? (f ? 'duck' : 'drake') : duck === 'pea' ? (f ? 'peahen' : 'peacock') : f ? 'hen' : 'rooster') + (champ ? ' · 🏆 ' + this.t('champ_' + champ, {}, f) : '')));
     const forever = el('p', 'gforever'); forever.append(el('span', 'gheart', '♥'), document.createTextNode(' ' + this.t(f ? 'forever_h' : 'forever_r'))); body.append(forever);
     // a cuddle (or how long she's happy after one; at night, in the morning)
     const left = g.happyLeft(b), state = this.o.cuddleState ? this.o.cuddleState(b) : 'ok';
@@ -253,7 +253,7 @@ export class GameUI {
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
-    pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex, g.isDuck(b.breed))));
+    pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex, g.kindOf(b.breed))));
     body.append(pc);
     // experience: the stars, the way to the next, how they come and what they do
     const ec = el('div', 'gcard'), s = g.stars(b), part = g.starPart(b);
@@ -262,7 +262,7 @@ export class GameUI {
     ec.append(el('div', 'glabel', this.t('experience')), st);
     if (s < MAX_STARS) { const bar = el('div', 'gbar-xp gstarbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(part * 100) + '%'; bar.append(fill); ec.append(bar); }
     ec.append(el('p', 'gtext', !s && part < 0.05 ? this.t('exp_none', {}, f) : s >= MAX_STARS ? this.t('exp_top') : this.t('exp_how')));
-    ec.append(el('p', 'gnote', (f ? this.t('exp_eggs', { p: g.henEggPrice(b) }) + ' ' : '') + this.t(duck ? 'exp_ducklings' : 'exp_chicks', {}, f)));
+    ec.append(el('p', 'gnote', (f ? this.t('exp_eggs', { p: g.henEggPrice(b) }) + ' ' : '') + this.t(duck === 'duck' ? 'exp_ducklings' : duck === 'pea' ? 'exp_peachicks' : 'exp_chicks', {}, f)));
     body.append(ec);
     // trust: the hearts, cuddles to the next level, what it does; a cuddle (or how long she's happy after one)
     const tc = el('div', 'gcard', ), lv = g.trustLevel(b), farmer = g.farmerName();
@@ -310,11 +310,11 @@ export class GameUI {
   chickCard(name, coop, mum, ms, rare) {
     const g = this.g, body = this.open('chick', name);
     this.bird = null;
-    const duck = g.isDuck(coop.breed);      // (a call duckling)
+    const duck = g.kindOf(coop.breed);      // (a call duckling, a peachick)
     body.append(el('p', 'gsub', this.t(g.dk('chick_of', duck), { breed: g.breedName(coop.breed), name: mum ? mum.name : '' })));
     if (rare) body.append(el('p', 'gtext grare', this.t('rare_chick', { line: g.breedName(rare) })));
     const cc = el('div', 'gcard');
-    cc.append(el('div', 'glabel', this.t(duck ? 'duckling' : 'chick')), el('p', 'gtext', ms > 1800e3 ? this.t(g.dk('chick_grows', duck), { when: g.howLong(ms) }) : this.t(g.dk('chick_soon', duck))));
+    cc.append(el('div', 'glabel', this.t(duck === 'duck' ? 'duckling' : duck === 'pea' ? 'peachick' : 'chick')), el('p', 'gtext', ms > 1800e3 ? this.t(g.dk('chick_grows', duck), { when: g.howLong(ms) }) : this.t(g.dk('chick_soon', duck))));
     body.append(cc);
   }
   // ---- a young hen or rooster (a day after hatching): whose, when off to a new farm (the rating then: congratsCard)
@@ -323,8 +323,8 @@ export class GameUI {
     this.bird = null;
     body.append(el('p', 'gsub', this.t('young_of', { breed: g.breedName(coop.breed), name: mum ? mum.name : '', kid: this.t(f ? 'daughter' : 'son') })));
     if (rare) body.append(el('p', 'gtext grare', this.t(f ? 'rare_young_h' : 'rare_young_r', { line: g.breedName(rare) })));
-    const cc = el('div', 'gcard'), ch = el('div', 'gcard-h'), duck = g.isDuck(coop.breed);
-    ch.append(el('span', 'gemoji', duck ? '🦆' : f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(g.dk(f ? 'young_h' : 'young_r', duck))));
+    const cc = el('div', 'gcard'), ch = el('div', 'gcard-h'), duck = g.kindOf(coop.breed);
+    ch.append(el('span', 'gemoji', duck === 'duck' ? '🦆' : duck === 'pea' ? '🦚' : f ? '🐔' : '🐓'), el('span', 'gcard-t', this.t(g.dk(f ? 'young_h' : 'young_r', duck))));
     cc.append(ch, el('p', 'gtext', ms > 1800e3 ? this.t(f ? 'young_leaves' : 'young_leaves_r', { when: g.howLong(ms) }) : this.t('young_soon')));
     body.append(cc);
   }
@@ -340,8 +340,8 @@ export class GameUI {
       st.setAttribute('aria-label', k.stars + ' / ' + MAX_STARS);
       for (let i = 0; i < MAX_STARS; i++) st.append(el('span', i < k.stars ? 'on' : '', i < k.stars ? '★' : '☆'));
       const c = el('span', 'gkid-c'); c.append(el('span', 'gcoin gcoin-s'), document.createTextNode('+' + k.coins));
-      const duck = g.isDuck((g.coop(n.coop) || {}).breed || (mum && mum.breed)), what = k.rare ? '✨ ' + g.breedName(k.rare) : this.t(g.dk(k.sex === 'h' ? 'young_h' : 'young_r', duck));
-      row.append(el('span', 'gemoji', duck ? '🦆' : k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', what), st, k.wait ? el('span', 'gkid-c') : c);
+      const duck = g.kindOf((g.coop(n.coop) || {}).breed || (mum && mum.breed)), what = k.rare ? '✨ ' + g.breedName(k.rare) : this.t(g.dk(k.sex === 'h' ? 'young_h' : 'young_r', duck));
+      row.append(el('span', 'gemoji', duck === 'duck' ? '🦆' : duck === 'pea' ? '🦚' : k.sex === 'h' ? '🐔' : '🐓'), el('span', 'gkid-t', what), st, k.wait ? el('span', 'gkid-c') : c);
       list.append(row);
       // a rare one: kept or sold for you (its trio complete), or yours to choose now (still waiting)
       if (k.rare && k.full) list.append(el('p', 'gnote gkid-n', this.t('rare_full', { line: g.breedName(k.rare) })));
@@ -349,7 +349,7 @@ export class GameUI {
       if (e && this.o.rare) list.append(this.rareChoice(e, () => this.congratsCard(n, away)));
     }
     body.append(list, el('p', 'gtotal', this.t('congrats_total', { c: n.coins, xp: n.xp })));
-    const dk = k => g.dk(k, g.isDuck(mum && mum.breed));
+    const dk = k => g.dk(k, g.kindOf(mum && mum.breed));
     if (mum) body.append(el('p', 'gnote', dad ? this.t(dk('congrats_exp'), { mum: mum.name, dad: dad.name }) : this.t(dk('congrats_exp1'), { mum: mum.name })));
     const ok = el('button', 'gbtn', this.t('congrats_ok')); ok.type = 'button';
     ok.addEventListener('click', () => this.close());
@@ -381,8 +381,8 @@ export class GameUI {
     const pct = Math.round(left * 100);
     const bar = el('div', 'gbar-xp gfeedbar' + (left < 0.25 ? ' low' : '')); const fill = el('div', 'gbar-fill'); fill.style.width = Math.max(0, Math.min(100, pct)) + '%'; bar.append(fill);
     b.append(el('p', 'gtext gfeedpct', pct >= 99 ? this.t('feed_full') : pct <= 0 ? this.t('feed_empty') : this.t('feed_pct', { p: pct })), bar);
-    b.append(el('p', 'gtext', left <= 0 ? this.t(g.isDuck(coop.breed) ? 'feed_empty_line_duck' : 'feed_empty_line') : h >= 47 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
-    b.append(el('p', 'gnote', this.t(g.isDuck(coop.breed) ? 'feed_how_duck' : 'feed_how')));
+    b.append(el('p', 'gtext', left <= 0 ? this.t(g.dk('feed_empty_line', g.kindOf(coop.breed))) : h >= 47 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
+    b.append(el('p', 'gnote', this.t(g.dk('feed_how', g.kindOf(coop.breed)))));
     if (g.data.grain >= 0.5) b.append(el('p', 'gnote gfound', '🌾 ' + this.t('feed_grain', { n: Math.floor(g.data.grain) })));
     const grain = q.grain >= 0.01 && !q.full && !q.broke && !q.scraps;
     const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : grain && !q.cost ? this.t('fill_grain') : grain && !q.partial ? this.t('fill_grain_c', { c: q.cost }) : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
@@ -448,8 +448,8 @@ export class GameUI {
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       for (const b of trios) {
         const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
-        h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
-        c.append(h, el('p', 'gtext', this.t(this.g.isDuck(b) ? 'trio_body_duck' : 'trio_body')));
+        h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : this.g.kindOf(b) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
+        c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
         body.append(c);
       }
       if (sale) { const c = el('div', 'gcard'), h = el('div', 'gcard-h'); h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('land_new', { c: sale.price }))); c.append(h); body.append(c); }
@@ -546,8 +546,8 @@ export class GameUI {
     this.bird = null;
     for (const breed of g.waitingCoops()) {
       const c = el('div', 'gcard gnewcoop'), hd = el('div', 'gcard-h');
-      hd.append(el('span', 'gemoji', g.isDuck(breed) ? '🦆' : '🐔'), el('span', 'gcard-t', g.trioTitle(breed)), el('span', 'gbadge', this.t('coops_new')));
-      c.append(hd, el('p', 'gtext', this.t(g.isDuck(breed) ? 'trio_body_duck' : 'trio_body')));
+      hd.append(el('span', 'gemoji', g.isDuck(breed) ? '🦆' : g.kindOf(breed) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', g.trioTitle(breed)), el('span', 'gbadge', this.t('coops_new')));
+      c.append(hd, el('p', 'gtext', this.t(g.dk('trio_body', g.kindOf(breed)))));
       const go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(breed));
       c.append(go); b.append(c);
     }
@@ -609,7 +609,7 @@ export class GameUI {
       info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : '') + (pg.rare ? ' grare' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.rare ? this.t('book_rare', { from: pg.from.map(k => g.breedName(k)).join(this.t('book_or')) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
       const eggs = el('p', 'gnote gpage-l'), ei = el('span', 'gegg-i'), et = el('span');
       if (h.egg && h.egg[pg.base]) ei.style.setProperty('--egg', h.egg[pg.base]);
-      et.append(el('span', 'gpage-k', this.t('egg_' + pg.base)), document.createTextNode(' · ' + this.t(g.isDuck(pg.breed) ? 'book_price_duck' : 'book_price', { p: pg.price })));
+      et.append(el('span', 'gpage-k', this.t('egg_' + pg.base)), document.createTextNode(' · ' + this.t(g.dk('book_price', g.kindOf(pg.breed)), { p: pg.price })));
       eggs.append(ei, et);
       const coop = el('p', 'gnote gpage-l'), ci = el('span', 'gpage-c');
       ci.innerHTML = BARN;                              // (the little barn of Your coops: a fixed drawing, nothing of the save)

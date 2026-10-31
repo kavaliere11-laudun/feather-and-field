@@ -974,5 +974,40 @@
  "pers.brave.duck": [
   "Não tem medo de nada: vigia o laguinho.",
   "Não tem medo de nada: vigia o laguinho."
+ ],
+ "text.peahen": "Pavoa",
+ "text.peacock": "Pavão",
+ "text.peachick": "Filhote de pavão",
+ "text.up_pea_mended": "Tijolos novos meio rebocados, os arcos de mármore no lugar e a cúpula, uma armação de bambu sob uma lona azul, num cercado maior.",
+ "text.up_pea_snug": "O Pavilhão do Jardim sob sua cúpula turquesa, num cercado mais espaçoso.",
+ "text.up_pea_cosy": "Rosa como Jaipur sob uma cúpula rosa, guirlandas de calêndulas, jasmim em vasos de latão e um jardim maior com um balanço sob uma pequena cúpula, uma bacia de arenito cheia de areia e um repolho num poste de luz de latão.",
+ "text.up_pea_deluxe": "Mármore branco com flores incrustadas, uma cúpula branca e dourada, quatro minaretes esguios, um espelho d’água de mármore com chafariz, uma bacia de mármore cheia de areia, xícaras de porcelana para tocar e o maior jardim, com cerquinha branca e rosas.",
+ "text.trio_body_pea": "Um pavão e duas pavoas, seus para sempre, com o próprio pavilhão de jardim. Coloque-o onde quiser nas suas terras.",
+ "text.book_price_pea": "{p} moedas por ovo, mais uma moeda por estrela da pavoa",
+ "text.egg_pea": "Ovos grandes de pavoa cor de creme",
+ "text.feed_empty_line_pea": "Suas pavoas param de botar até você encher de novo.",
+ "text.feed_how_pea": "Suas pavoas botam enquanto houver comida nele. Cheio, alimenta seu trio por dois dias.",
+ "text.hatched_pea": "{n} filhotes de pavão nasceram! {name} virou mamãe.",
+ "text.raising_pea": "Criando {n} filhotes de pavão: viram pavoas e pavões jovens em cerca de {when}.",
+ "text.raising_y_pea": "Criando {n} pavoas e pavões jovens: partem para uma nova fazenda em cerca de {when}.",
+ "text.no_lay_brood_pea": "Ela não bota ovos para vender enquanto cuida dos filhotes.",
+ "text.chick_of_pea": "{breed} · filhote de {name}",
+ "text.chick_grows_pea": "Vira pavoa ou pavão jovem em cerca de {when}.",
+ "text.chick_soon_pea": "Quase uma pavoa ou um pavão jovem!",
+ "text.young_h_pea": "Pavoa jovem",
+ "text.young_r_pea": "Pavão jovem",
+ "text.turned_pea": "Os filhotes de {name} estão virando pavoas e pavões jovens!",
+ "text.congrats_exp_pea": "{mum} e {dad} ganham experiência: os próximos filhotes deles serão ainda melhores.",
+ "text.congrats_exp1_pea": "{mum} ganha experiência: os próximos filhotes dela serão ainda melhores.",
+ "text.away_hatched_pea": "Os {n} filhotes de {name} nasceram",
+ "text.away_grown_pea": "Os filhotes de {name} cresceram: a ficha deles vem a seguir",
+ "breed.pea.name": "Pavão-azul",
+ "breed.pea.coop": "Pavilhão do Jardim",
+ "text.exp_peachicks": {
+  "t": "Quanto mais estrelas, melhores os filhotes dele.",
+  "f": "Quanto mais estrelas, melhores os filhotes dela."
+ },
+ "pers.mum.pea": [
+  "Uma mãe nata: os filhotes dela são os mais bem cuidados."
  ]
 }

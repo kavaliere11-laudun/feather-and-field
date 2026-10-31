@@ -3483,5 +3483,67 @@ the birds already had.
   finial, four slender minarets at its corners, white marble stepping stones; the cosy touches. The things in front of it
   stand in the same spots in every look (the urns' corners, the perch). Its gardens (`PENS_BY['pea']`) are the shared
   pens' places for now. Not exported yet.
-- Next: her verdict on take three; then the pavilion's gardens, its export into coops.glb and the peafowl into the game at
-  level 30.
+- Audrey (31 Oct, on the legs): "Yes, carry on (Recommended)"; where he sleeps: "On his perch (Recommended)". Then step 2.
+
+## The peacock, step 2: his gardens, his life in the pen, the game (31 Oct 2026; Audrey: "Yes, carry on (Recommended)" on the legs, "On his perch (Recommended)" for where he sleeps)
+
+- **The gardens** (stylized/coops.py `PENS_BY['pea']`, `PLAY_BY['pea']`; coop.py `hauz`, the `chhatri` feeder): every
+  look's yard half as big again as the hens' biggest (`PEA_BOX`, `PEA_BOX4` for the Deluxe; Audrey, 31 Oct: "Bigger
+  garden (Recommended)": in hen-sized yards his train boxed him in, he hardly turned or showed his fan, and the farmer
+  couldn't get round him), the feeder and water to one side (front right), the play things round the edges, its own
+  fences in every look (`fence_tier(t, bk='pea')`: `fence_t0_pea` .. `fence_t4_pea`; the Cosy's flowers along its
+  front, the Deluxe's lanterns `LIGHTS['fence_t4_pea']`), its own Snug yard (`pen_t2_pea`: the hay bale by the house,
+  out of his way). Rustic: a terracotta water bowl. Mended: the same, a sack by
+  the house. Cosy: a brass bowl, a swing under a little dome (`jhula_swing`), a sandstone basin of sand (`sand_kund`), a
+  cabbage on a brass lamp-post (`cabbage_lamp`). Deluxe: a feeder under a little marble dome (`chhatri`), a marble pool
+  with a fountain (`hauz`), a marble basin of sand, porcelain cups to ring (`jaltarang`), white pickets and roses. In
+  every look: his perch beside the pavilion (a bar on two posts), the pavers to the gate.
+  Export: `bl/bin/python stylized/extras/export_pea_coop.py OUT` (the five looks, the pop door, `pen_t0..4_pea`,
+  `fence_t0..4_pea`; OUT/pea.glb and pea.json), then `python3 stylized/extras/splice_coops.py web3d/models/coops.glb
+  web3d/models/coops.json OUT/pea.glb OUT/pea.json web3d/models/coops.glb web3d/models/coops.json` (every other model kept
+  byte for byte). main.js `TIER_LOOK.pea`.
+- **His train in the pen** (main.js Bird `train`, `trainEach`, `trainNext`, `trainClear`, `TRAIN_BEND`, `TRAIN_ROOT`):
+  his train trails behind him, swinging round into line as he walks on and staying where it lies while he turns on the
+  spot, till he has turned so far (65 degrees) it's pulled round with him (birds.js: the tail bone turned by `bend`; its
+  soft shadow too). It never goes through the fence, the house, the feeder, the swing or over one of the others' feet:
+  if a turn or a step would take it there, he doesn't make it (the clamp in `update`); put down in his yard he's turned
+  or moved to where it lies clear (`settleTrain`, somewhere with room to turn); he only sets off for places where it
+  lies clear and where he isn't boxed in (`pickTarget`, `trainRoom`); he keeps 30 cm off the fence and the house and a
+  little further off what's in the yard than the hens (`free`: room for his tail end as he turns round); boxed in all
+  the same, a few steps on the way it lies or a few small steps back first (`wayOut`, `backing`), and boxed in for good,
+  stuck there 6 seconds, a flutter up and over to somewhere roomier, his train streaming behind (`flyOut`, `stillSince`:
+  now and then, every few minutes, more often in the fuller Cosy and Deluxe gardens). A target his train won't let him
+  reach: somewhere else. The others keep off it (`onTrain` in `free`).
+- **His train is long and heavy** (Audrey, 31 Oct: "The tail should not really move when the peacock is picking the floor.
+  Imagine it's long and heavy"; birds.js `heavy`, the end of `pose`): it lies where it lies on the ground whatever his body
+  does (a peck, his steps, a shake), only swung round behind him and raised in his fan; he rests standing.
+- **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
+  where the peacock parade with his tail opened"): now and then he turns to where there's room and raises his train into
+  his fan, with a little shiver, then parades with it open: round slowly one way and the other as far as there's room for
+  it, a few slow proud steps on (8 to 14 seconds; a tap on him too). Not while the farmer's in the pen, and it comes down
+  when he comes in.
+- **Night: on his perch** (`perchSleep`, `perchStep`, `PEA_PERCH`; the 'hang' morph): at bedtime the peahens go in, he
+  walks to his perch, flutters up onto it, turns to face out and settles, his head tucked in (the brood pose: the
+  shut-eyed shader has no room for his train's shapes), his train hanging straight down behind the bar; in the morning
+  a flutter down. Never inside (the indoor shader the same).
+- **In the game at level 30** (game.js `BREED_INFO.pea`, `BREED_LEVEL.pea` 30, `isPea`, `kindOf`, `dk(key, kind)`): the
+  Indian Blue peafowl: a peacock and two peahens (their own names: `PEACOCK_NAMES`, `PEAHEN_NAMES`), the Garden
+  Pavilion, rustic to start; big cream eggs at 14 coins; their words their own everywhere a duck's or a hen's would be
+  (the level card and Your coops with 🦚, the trio's text, a bird's card "Indian Blue peafowl · Peahen / Peacock", the
+  feeder's card, the Breed Book's price line, the brood words: peachicks, young peahens and peacocks, the away news,
+  the congratulations card, a Good mum's line, the experience line), in all six languages (lang/*.json, the catalogue).
+  Peachicks: the chick model in buff with a stripe; a young peacock looks like a peahen (no train yet). No poultry
+  shows for them. The Breed Book: their page after the Black Silkie, their picture the peacock fanned behind the peahen
+  (bookpics.mjs `ONLY=pea`). The save checks: a pea coop before level 30 is flagged, as any breed's.
+- **The farmer with them** (main.js `penSpec` `nearHim`, `noLift`, `callHen(b, worms, near)`; farmlife.js): a peahen is
+  cuddled as a hen (picked up and held). The peacock is too long to pick up, and too long to come round and settle in
+  front of the farmer: the farmer walks over to him (by his chest, a little in front, his knees well clear of the
+  train, by a way round what's in the yard), crouches and strokes his neck and back where he stands, hearts; no way to him (his train across the yard by the gate,
+  say): he flutters over to the farmer and lands beside him, side on, his train clear (`callHen`, `flyTo`), and the farmer
+  turns to him (`headingTo`). His worms the same way. The farmer never walks through the train or the peacock (Audrey: "the tail clips with the farmer"): the train keeps
+  off his way in at the gate and the spots he stands at (`farmerLanes`, `plot.lanes`), and between them he goes round
+  the peacock and his train (`around`).
+- Tests: **peacocktest.mjs** (the test page, every look: his train never through anything, the hens off it, displays,
+  the perch at night and down in the morning), **peatest.mjs** (the game: level 29 and 30, placing the coop, the cards,
+  the cuddles, a lay, the feeder, the Breed Book, no shows, a brood of peachicks and young ones, the Snug look, the
+  perch at night, a reload, a pea coop put in early flagged; LANG=fr). booktest and calltest count 16 pages.

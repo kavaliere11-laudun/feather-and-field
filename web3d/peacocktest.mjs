@@ -1,6 +1,7 @@
 // The peacock in his pen (31 Oct): his train never through the fence, the house, what's in the yard or the others, in every
 // look of the Garden Pavilion, by day; showing off his fan; at bedtime up onto his perch, his train hanging down, and in the
-// morning down again. ./withserver.sh node peacocktest.mjs  (SECS=120: how long by day; LOOKS=0,2,4)
+// morning down again; boxed in, a flutter over now and then (`flights`, counted). ./withserver.sh node peacocktest.mjs
+// (SECS=120: how long by day; LOOKS=0,2,4)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 402, height: 874 } });
@@ -13,20 +14,22 @@ for (const t of LOOKS) {
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   const r = await p.evaluate(secs => {
     const f = window.__farm; f.pause(true);
-    const plots = f.coopPlots().filter(q => q.breed === 'pea'); let frames = 0, unclear = 0, worst = [], displays = 0, fanned = 0, onTrainHen = 0, henFrames = 0;
+    const plots = f.coopPlots().filter(q => q.breed === 'pea'); let frames = 0, unsettled = 0, unclear = 0, flights = 0, worst = [], displays = 0, fanned = 0, onTrainHen = 0, henFrames = 0;
     for (let i = 0; i < secs * 30; i++) {
       f.step(1 / 30, 1);
       for (const P of plots) for (const B of P.birds) {
         if (!B.train) { if (B.root.visible && !B.asleep) henFrames++; for (const C of P.birds) if (C.train && C.onTrain(B.root.position.x, B.root.position.z) && !B.laying && !B.roost && !B.play) onTrainHen++; continue; }
         if (B.roost || B.asleep) continue;
+        if (!B.trainSettled) { unsettled++; continue; }      // (a pen out of view isn't brought to life yet: he's put down in his yard once it is)
         frames++;
         const q = B.root.position;
-        if (B.A.fan < 0.3 && !B.trainClear(q.x, q.z, B.root.rotation.y, false)) { unclear++; if (worst.length < 4) worst.push([+q.x.toFixed(2), +q.z.toFixed(2), +B.root.rotation.y.toFixed(2), B.act && B.act.type]); }
+        if (B.flight && !B.wasFlying) flights++; B.wasFlying = !!B.flight;
+        if (B.A.fan < 0.3 && !(B.flight && B.root.position.y > 0.1) && !B.trainClear(q.x, q.z, B.trainY, false, B.root.rotation.y)) { unclear++; if (worst.length < 4) worst.push([+q.x.toFixed(2), +q.z.toFixed(2), +B.root.rotation.y.toFixed(2), B.act && B.act.type]); }
         if (B.act && B.act.type === 'display' && !B.act.counted) { B.act.counted = true; displays++; }
         if (B.A.fan > 0.95) fanned++;
       }
     }
-    return { frames, unclear, worst, displays, fanned, onTrainHen, henFrames, peacocks: plots.map(P => P.birds.filter(B => B.train).length) };
+    return { frames, unsettled, unclear, flights, worst, displays, fanned, onTrainHen, henFrames, peacocks: plots.map(P => P.birds.filter(B => B.train).length) };
   }, SECS);
   console.log('look', t, JSON.stringify(r));
   if (!r.peacocks.some(n => n > 0)) fail('look ' + t + ': no peacock');

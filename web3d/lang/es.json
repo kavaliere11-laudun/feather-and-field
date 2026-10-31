@@ -969,5 +969,40 @@
  "pers.brave.duck": [
   "No le teme a nada: vigila el estanque.",
   "No le teme a nada: vigila el estanque."
+ ],
+ "text.peahen": "Pava real",
+ "text.peacock": "Pavo real",
+ "text.peachick": "Pavito",
+ "text.up_pea_mended": "Ladrillo nuevo a medio enlucir, los arcos de mármol puestos y la cúpula, un armazón de bambú bajo una lona azul, en un corral más grande.",
+ "text.up_pea_snug": "El Pabellón de jardín bajo su cúpula turquesa, en un corral más amplio.",
+ "text.up_pea_cosy": "Rosa como Jaipur bajo una cúpula rosa, guirnaldas de caléndulas, jazmín en macetas de latón y un jardín más grande con un columpio bajo una pequeña cúpula, una pila de arenisca llena de arena y una col en una farola de latón.",
+ "text.up_pea_deluxe": "De mármol blanco con flores incrustadas, una cúpula blanca y dorada, cuatro esbeltos minaretes, un estanque de mármol con fuente, una pila de mármol llena de arena, tazas de porcelana para hacer sonar y el jardín más grande, con valla blanca y rosas.",
+ "text.trio_body_pea": "Un pavo real y dos pavas reales, tuyos para siempre, con su propio pabellón de jardín. Ponlo donde quieras en tus tierras.",
+ "text.book_price_pea": "{p} monedas por huevo, más una moneda por cada estrella de la pava real",
+ "text.egg_pea": "Grandes huevos de pava real color crema",
+ "text.feed_empty_line_pea": "Tus pavas reales no pondrán hasta que lo llenes.",
+ "text.feed_how_pea": "Tus pavas reales ponen mientras haya comida. Lleno, alimenta a tu trío durante dos días.",
+ "text.hatched_pea": "¡{n} pavitos acaban de nacer! {name} es mamá.",
+ "text.raising_pea": "Cría {n} pavitos: serán pavas y pavos reales jóvenes en {when}, más o menos.",
+ "text.raising_y_pea": "Cría {n} pavas y pavos reales jóvenes: se irán a una nueva granja en {when}, más o menos.",
+ "text.no_lay_brood_pea": "No pone huevos para vender mientras cuida de sus pavitos.",
+ "text.chick_of_pea": "{breed} · pavito de {name}",
+ "text.chick_grows_pea": "Pava o pavo real joven en {when}, más o menos.",
+ "text.chick_soon_pea": "¡Ya casi es una pava o un pavo real joven!",
+ "text.young_h_pea": "Pava real joven",
+ "text.young_r_pea": "Pavo real joven",
+ "text.turned_pea": "¡Los pavitos de {name} se están convirtiendo en pavas y pavos reales jóvenes!",
+ "text.congrats_exp_pea": "{mum} y {dad} ganan experiencia: sus próximos pavitos serán aún mejores.",
+ "text.congrats_exp1_pea": "{mum} gana experiencia: sus próximos pavitos serán aún mejores.",
+ "text.away_hatched_pea": "A {name} le han nacido {n} pavitos",
+ "text.away_grown_pea": "Los pavitos de {name} ya son mayores: su ficha viene a continuación",
+ "breed.pea.name": "Pavo real azul",
+ "breed.pea.coop": "Pabellón de jardín",
+ "text.exp_peachicks": {
+  "t": "Cuantas más estrellas, mejores serán sus pavitos.",
+  "f": "Cuantas más estrellas, mejores serán sus pavitos."
+ },
+ "pers.mum.pea": [
+  "Una madre nata: sus pavitos son los mejor cuidados."
  ]
 }

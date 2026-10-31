@@ -13,7 +13,7 @@ G = {'__name__': 'export_coops_head', '__file__': os.path.join(HERE, 'export_coo
 exec(compile(head, 'export_coops_head', 'exec'), G)
 coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; write_glb = G['write_glb']
 BUDGET.update({'house_pea': 17000, 'box_pea': 16000, 'shed_pea': 18000, 'cosy_pea': 22000, 'deluxe_pea': 26000, 'popdoor_pea': 900,
-               'pen_t0_pea': 4200, 'pen_t1_pea': 4600, 'pen_t3_pea': 9500, 'pen_t4_pea': 12000})
+               'pen_t0_pea': 7500, 'pen_t1_pea': 8000, 'pen_t2_pea': 9000, 'pen_t3_pea': 11000, 'pen_t4_pea': 14000})
 names = []
 one('house_pea', coops.pavilion); names.append('house_pea')
 keep = dict(coops.NESTS['house_pea']); keep_blocks = list(coops.BLOCKS.get('house_pea', []))
@@ -22,9 +22,9 @@ for n_, fn in (('box_pea', coops.box_pea), ('shed_pea', coops.shed_pea), ('cosy_
 assert coops.NESTS['house_pea'] == keep, "the looks must keep the Garden Pavilion's nest"
 coops.BLOCKS['house_pea'] = keep_blocks
 one('popdoor_pea', lambda: coops.pop_slider('pea')); names.append('popdoor_pea')
-for t in (0, 1, 3, 4): one('pen_t%d_pea' % t, lambda t=t: coops.pen_tier(t, 'pea')); names.append('pen_t%d_pea' % t)
-BUDGET.update({'fence_t0_pea': 3000, 'fence_t1_pea': 3800})
-for t in (0, 1): one('fence_t%d_pea' % t, lambda t=t: coops.fence_tier(t, bk='pea')); names.append('fence_t%d_pea' % t)      # (its bigger Rustic and Mended yards' fences)
+for t in (0, 1, 2, 3, 4): one('pen_t%d_pea' % t, lambda t=t: coops.pen_tier(t, 'pea')); names.append('pen_t%d_pea' % t)
+BUDGET.update({'fence_t0_pea': 5200, 'fence_t1_pea': 6000, 'fence_t2_pea': 7000, 'fence_t3_pea': 8500, 'fence_t4_pea': 13000})
+for t in range(5): one('fence_t%d_pea' % t, lambda t=t: coops.fence_tier(t, bk='pea')); names.append('fence_t%d_pea' % t)      # (its own bigger yards' fences, every look)
 write_glb(os.path.join(OUT, 'pea.glb'), names)
 nest = dict(coops.NESTS['house_pea']); nest['block'] = [list(t) for t in dict.fromkeys(tuple(x) for x in coops.BLOCKS.get('house_pea', []))]
 lights = {k: [list(t) for t in dict.fromkeys(tuple(x) for x in v)] for k, v in coops.LIGHTS.items() if k in names}

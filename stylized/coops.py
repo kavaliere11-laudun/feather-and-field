@@ -3226,7 +3226,7 @@ def fence_tier(t, seed=37, bk='rir'):
     try:
         if t == 4:
             n0 = len(LIGHTS.get('fence_dx', [])); root = deluxe_fence()
-            LIGHTS['fence_t4'] = LIGHTS['fence_dx'][n0:]; del LIGHTS['fence_dx'][n0:]     # (its lanterns, where this pen's gate is)
+            LIGHTS['fence_t4' + ('' if bk == 'rir' else '_' + bk)] = LIGHTS['fence_dx'][n0:]; del LIGHTS['fence_dx'][n0:]     # (its lanterns, where this pen's gate is)
             if not LIGHTS['fence_dx']: del LIGHTS['fence_dx']
         else:
             root = rustic_fence(seed) if t <= 1 else wood_fence()
@@ -3249,10 +3249,10 @@ def fence_tier(t, seed=37, bk='rir'):
     elif t == 3:                                   # painted sage, flowers along the outside of the front fence
         _swap(root, {'wood'}, mat('bx_sagefence', BARN['sage'], rough=0.65, var=0.05, grain=0.15, grain_scale=G))
         _swap(root, {'capwood'}, mat('bx_cupola', BARN['cupola'], rough=0.6, var=0.04, grain=0.12, grain_scale=G))
-        x0, x1, y0, y1 = PENS[3]['box']; leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
+        x0, x1, y0, y1 = pen_layout(3, bk)['box']; leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
         objs = []
-        gx = _gate_of(3)[0]
-        for i in range(90):
+        gx = _gate_of(3, bk)[0]
+        for i in range(int(90 * (x1 - x0) / 4.15)):      # (a breed's own, bigger yard: as thick along its front)
             x = random.uniform(x0 + 0.05, x1 - 0.05)
             if abs(x - gx) < 0.5: continue      # (the gate kept clear)
             y = y0 - random.uniform(0.08, 0.2)
@@ -6082,18 +6082,24 @@ def deluxe_pea():
 # jaltarang of porcelain cups to peck, the swing, the lamp-post. Room kept clear right of the house for the peacock's perch
 # and his train
 # (the Rustic's and the Mended's yards as big as the Snug's, 31 Oct: room for the peacock's train; their own fences)
+# (31 Oct, later: the peafowl's own gardens, half as big again as the hens' biggest (Audrey: "Bigger garden (Recommended)"):
+#  his train is so long that in a hen-sized yard he could hardly turn; the feeder and water to one side, the play things
+#  round the edges)
+PEA_BOX, PEA_BOX4 = (-2.4, 2.55, -3.6, 0.85), (-2.7, 2.85, -3.95, 0.95)
 PENS_BY['pea'] = {
-    0: dict(box=(-1.6, 1.75, -2.45, 0.75), gate=3, feeder=(-1.05, -1.75), dish=(0.25, -2.05), bowl='terracotta', hay=None, hay_rot=0, sack=None,
-            straw=((-0.3, -1.4, 0.3, 26), (-1.0, -1.0, 0.25, 18))),
-    1: dict(box=(-1.6, 1.75, -2.45, 0.75), gate=3, feeder=(-1.1, -1.7), dish=(0.2, -2.05), bowl='terracotta', hay=None, hay_rot=0, sack=(-1.25, 0.3),
-            straw=((-0.35, -1.5, 0.3, 28), (-1.0, -1.0, 0.25, 20))),
-    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(1.5, -2.3), dish=(0.75, -2.3), bowl='brass', hay=(-1.72, 0.45), hay_rot=90, sack=None,
-            straw=((-1.72, 0.45, 0.4, 35), (-0.6, -1.6, 0.35, 30), (0.6, -1.3, 0.3, 25))),
-    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(1.75, -2.45), feeder_style='chhatri', dish=(-1.75, -1.85), water='hauz', hay=(-2.0, 0.5), hay_rot=90,
-            sack=None, pebbles=10, straw=((0.5, -1.4, 0.3, 25), (-2.0, 0.5, 0.4, 35))),
+    0: dict(box=PEA_BOX, gate=4, feeder=(2.0, -3.0), dish=(1.3, -3.15), bowl='terracotta', hay=None, hay_rot=0, sack=None,
+            straw=((-0.3, -1.6, 0.3, 26), (-1.2, -1.1, 0.25, 18), (0.9, -2.2, 0.25, 16))),
+    1: dict(box=PEA_BOX, gate=4, feeder=(2.0, -3.0), dish=(1.3, -3.15), bowl='terracotta', hay=None, hay_rot=0, sack=(-1.25, 0.3),
+            straw=((-0.35, -1.7, 0.3, 28), (-1.2, -1.1, 0.25, 20), (0.9, -2.3, 0.25, 18))),
+    2: dict(box=PEA_BOX, gate=4, feeder=(2.0, -3.0), dish=(1.3, -3.15), hay=(-1.72, 0.45), hay_rot=90, sack=None,
+            straw=((-1.72, 0.45, 0.4, 35), (-0.5, -1.7, 0.35, 30), (0.5, -1.3, 0.3, 22))),
+    3: dict(box=PEA_BOX, gate=4, feeder=(2.0, -3.0), dish=(1.3, -3.15), bowl='brass', hay=(-1.72, 0.45), hay_rot=90, sack=None,
+            straw=((-1.72, 0.45, 0.4, 35), (-0.6, -1.8, 0.35, 30), (0.6, -1.4, 0.3, 25))),
+    4: dict(box=PEA_BOX4, gate=4, feeder=(2.2, -3.3), feeder_style='chhatri', dish=(-2.0, -2.25), water='hauz', hay=(-2.3, 0.5), hay_rot=90,
+            sack=None, pebbles=14, straw=((0.5, -1.6, 0.3, 25), (-2.3, 0.5, 0.4, 35))),
 }
-PLAY_BY['pea'] = {3: dict(swing=(-1.4, -1.95), kund=(1.45, -1.3), cabbage=(-1.2, -1.02), frame='jhula', holder='lamp'),
-                  4: dict(swing=(-1.65, -0.8), mkund=(1.55, -1.25), cabbage=(0.9, -2.55), xylo=(-1.1, -2.6), frame='jhula', holder='lamp', bars='jaltarang')}
+PLAY_BY['pea'] = {3: dict(swing=(-1.8, -2.75), kund=(1.85, -1.45), cabbage=(-1.75, -1.15), frame='jhula', holder='lamp'),
+                  4: dict(swing=(-2.0, -1.05), mkund=(2.05, -1.55), cabbage=(0.75, -3.5), xylo=(-2.05, -3.4), frame='jhula', holder='lamp', bars='jaltarang')}
 KUND_R = 0.33                                                     # the Cosy pavilion's round sandstone basin of sand (and the Deluxe's marble one)
 
 

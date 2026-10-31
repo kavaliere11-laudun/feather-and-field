@@ -811,7 +811,7 @@ const keepAlpha = r => { if (soft) r.getContext().colorMask(true, true, true, fa
 
 export class Rig {
   constructor(breed, kind, colour) {
-    this.model = modelFor(breed, kind);
+    this.model = modelFor(breed, kind); this.heavy = this.model === 'pea_r';      // (heavy: the peacock's long train, pose)
     const M = MODELS[this.model], P = M.piv;
     this.mesh = new THREE.SkinnedMesh(paintedGeometry(this.model, breed, colour), BIRD_MAT);
     this.mesh.receiveShadow = true;
@@ -900,7 +900,7 @@ export class Rig {
     const goalY = -0.09 * Math.max(-3, Math.min(3, s.turn || 0)) + w * 0.09 * Math.sin(ph) + 0.25 * shake;
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
-    B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y, 0);
+    B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y + (s.bend || 0), 0);      // (bend: a peacock's train trailing round behind him)
     const A = 0.5 * w * (1 + 0.5 * pr);
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
     const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash - 0.35 * dk;
@@ -919,5 +919,18 @@ export class Rig {
       for (const m of [this.mesh, this.lo]) if (m && m.morphTargetInfluences) { m.morphTargetInfluences[0] = fan * (1 - hang); if (m.morphTargetInfluences.length > 1) m.morphTargetInfluences[1] = hang; }
       if (fan > 0) B.tail.rotation.x -= 0.15 * fan * (1 - fan) + 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan);
     }
+    // the peacock's train (Audrey, 31 Oct: "The tail should not really move when the peacock is picking the floor. Imagine
+    // it's long and heavy"): it stays where it lies on the ground whatever his body does (a peck, his steps, a shake, a
+    // hop), only swung round behind him (bend) and raised in his fan, with its little shiver at full; hanging from his perch
+    // it goes with him as before
+    if (this.heavy) {
+      const k = 1 - Math.max(0, Math.min(1, s.hang || 0)), fan = Math.max(0, Math.min(1, s.fan || 0));
+      HQ.setFromEuler(HE.set(-0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), s.bend || 0, 0));
+      HQ2.copy(body.quaternion).invert(); HQ.premultiply(HQ2);
+      B.tail.quaternion.slerp(HQ, k);
+      HV.copy(Rr.root).add(Rr.body).add(Rr.tail).sub(B.root.position).sub(body.position).applyQuaternion(HQ2);      // (where it's rooted, as if he stood still)
+      B.tail.position.copy(Rr.tail).lerp(HV, k);
+    }
   }
 }
+const HQ = new THREE.Quaternion(), HQ2 = new THREE.Quaternion(), HE = new THREE.Euler(), HV = new THREE.Vector3();

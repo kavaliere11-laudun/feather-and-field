@@ -275,9 +275,9 @@ export class FarmLife {
     if (kind === 'fill') {
       // the pail into the feeder, then corn for everyone, four handfuls ("Dinner time!"), and a moment watching them peck
       let thrown = 0;
-      L.push(TK.walk([P.feederAt]), TK.face(P.toFeeder),
+      L.push(() => TK.walk(P.around ? P.around([P.feederAt]) : [P.feederAt]), TK.face(P.toFeeder),      // (round the peacock's train, if it's in his way)
         TK.act('pour', 2.6, (W, u) => { W.pose = 'feed'; W.face = 'feeding'; W.pour = Math.min(1, u / 0.6) * Math.min(1, Math.max(0, (2.6 - u) / 0.5)); P.fill((u - 0.5) / 1.5); }),
-        TK.walk([P.throwAt]), TK.face(P.toCorn), TK.say('feed'),
+        () => TK.walk(P.around ? P.around([P.throwAt]) : [P.throwAt]), TK.face(P.toCorn), TK.say('feed'),
         TK.act('scatter', 3.9, (W, u, Lf) => {
           W.pose = 'feed'; W.face = 'feeding'; W.scatter = u;
           const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
@@ -291,8 +291,10 @@ export class FarmLife {
       let ready = null, hearted = false;
       const N = Math.max(1, n || 1), DIG = 2.4, all = DIG * N, rooster = hen && hen.kind === 'rooster';
       const L2 = () => P.henAt && P.henAt.hand === 'L', cup = () => L2() ? 'cupL' : 'cup', close = P2 => { P2[L2() ? 'handL' : 'handR'] = [105, 110, 40, 4]; };      // (the hand on her side)
-      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
-        () => { ready = P.callHen(hen, true); return null; },
+      let near = null;      // (the peacock: he goes over to him, P.nearHim)
+      L.push(() => { near = P.nearHim ? P.nearHim(hen) : null; return TK.seq('come', [TK.walk(near ? [...near.via, near.at] : P.around ? P.around([P.crouchAt]) : [P.crouchAt]), TK.face(near ? near.face : P.toHen)]); },
+        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        () => { ready = P.callHen(hen, true, near); return null; },
         { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() ? TK.seq('worms', [
@@ -313,11 +315,17 @@ export class FarmLife {
       // (P.lift: how far up she is, 0 on the ground .. 1 in his arms; where his arms are, from him)
       let ready = null, heart = 0.3;
       const sm = u => u * u * (3 - 2 * u), step = (a, b, u) => Math.max(0, Math.min(1, (u - a) / (b - a)));
-      L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
-        () => { ready = P.callHen(hen); return null; },
+      let near = null;      // (the peacock: he goes over to him, P.nearHim)
+      L.push(() => { near = P.nearHim ? P.nearHim(hen) : null; return TK.seq('come', [TK.walk(near ? [...near.via, near.at] : P.around ? P.around([P.crouchAt]) : [P.crouchAt]), TK.face(near ? near.face : P.toHen)]); },
+        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        () => { ready = P.callHen(hen, false, near); return null; },
         { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
-        () => ready && ready() ? TK.seq('cuddling', [
+        () => ready && ready() && P.noLift && P.noLift(hen) ? TK.seq('cuddling', [      // (the peacock, 31 Oct: too long to pick up with his train: he strokes him, crouched by him)
+          TK.face(P.headingTo ? P.headingTo(hen) : P.toHen),
+          TK.say('cuddle'),
+          TK.act('stroke', 4.8, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; if (u > heart) { heart += 0.55; P.heart(hen); } }),
+        ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
           TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
           TK.say('cuddle'),
@@ -328,7 +336,7 @@ export class FarmLife {
         () => { P.letGo(hen); return null; },
         TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }));
     }
-    L.push(TK.walk([...(kind === 'fill' && P.clear ? [P.clear] : []), ...P.back.slice(0, 3)]), pen(false), TK.walk(P.back.slice(3)));      // (with the pail: round the feeder's far side of it)
+    L.push(() => { const pts = [...(kind === 'fill' && P.clear ? [P.clear] : []), ...P.back.slice(0, 3)]; return TK.walk(P.around ? P.around(pts) : pts); }, pen(false), TK.walk(P.back.slice(3)));      // (with the pail: round the feeder's far side of it)
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => {
       if (seq.aborted) return true;

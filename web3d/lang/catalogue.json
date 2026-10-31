@@ -110,6 +110,16 @@
   "fr": "Canard"
  },
  {
+  "id": "text.peahen",
+  "en": "Peahen",
+  "fr": "Paonne"
+ },
+ {
+  "id": "text.peacock",
+  "en": "Peacock",
+  "fr": "Paon"
+ },
+ {
   "id": "text.forever_h",
   "en": "In your flock for good",
   "fr": "Dans votre basse-cour pour toujours"
@@ -197,6 +207,14 @@
   "gender": true,
   "f_en": "The more stars, the better her ducklings.",
   "f_fr": "Plus elle a d’étoiles, meilleurs sont ses canetons."
+ },
+ {
+  "id": "text.exp_peachicks",
+  "en": "The more stars, the better his peachicks.",
+  "fr": "Plus il a d’étoiles, meilleurs sont ses paonneaux.",
+  "gender": true,
+  "f_en": "The more stars, the better her peachicks.",
+  "f_fr": "Plus elle a d’étoiles, meilleurs sont ses paonneaux."
  },
  {
   "id": "text.trust_next",
@@ -597,6 +615,26 @@
   "fr": "Blanche et bleu marine sous un toit rouge, un petit phare, le pont vert de Monet jusqu’à la porte, une fontaine, des nénuphars partout, un ballon de plage et le plus grand jardin, avec palissade blanche et roses."
  },
  {
+  "id": "text.up_pea_mended",
+  "en": "New brick half plastered, the marble arches in and the dome a bamboo frame under a blue sheet, in a bigger pen.",
+  "fr": "Des briques neuves à moitié enduites, les arcs de marbre posés et le dôme, une armature de bambou sous une bâche bleue, dans un enclos plus grand."
+ },
+ {
+  "id": "text.up_pea_snug",
+  "en": "The Garden Pavilion under its turquoise dome, in a roomier pen.",
+  "fr": "Le Pavillon de jardin sous son dôme turquoise, dans un enclos plus spacieux."
+ },
+ {
+  "id": "text.up_pea_cosy",
+  "en": "Pink as Jaipur under a rose dome, marigold garlands, jasmine in brass pots, and a bigger garden with a swing under a little dome, a sandstone basin of sand and a cabbage on a brass lamp-post.",
+  "fr": "Rose comme Jaipur sous un dôme rose, des guirlandes de soucis, du jasmin en pots de laiton, et un jardin plus grand avec une balançoire sous un petit dôme, un bassin de grès plein de sable et un chou à un réverbère de laiton."
+ },
+ {
+  "id": "text.up_pea_deluxe",
+  "en": "White marble inlaid with flowers, a white and gold dome, four slender minarets, a marble pool with a fountain, a marble basin of sand, porcelain cups to ring and the biggest garden, with white pickets and roses.",
+  "fr": "En marbre blanc incrusté de fleurs, un dôme blanc et or, quatre minarets élancés, un bassin de marbre et sa fontaine, une vasque de marbre pleine de sable, des tasses de porcelaine à faire chanter et le plus grand jardin, avec palissade blanche et roses."
+ },
+ {
   "id": "text.upfx_mended",
   "en": "Fewer days without an afternoon egg.",
   "fr": "Moins de jours sans l’œuf de l’après-midi."
@@ -747,6 +785,11 @@
   "fr": "Un canard et deux canes, à vous pour toujours, avec leur maison sur une mare. Installez-la où vous voulez sur votre terrain."
  },
  {
+  "id": "text.trio_body_pea",
+  "en": "A peacock and two peahens, yours for good, with their own garden pavilion. Put it anywhere on your land.",
+  "fr": "Un paon et deux paonnes, à vous pour toujours, avec leur pavillon de jardin. Installez-le où vous voulez sur votre terrain."
+ },
+ {
   "id": "text.place_now",
   "en": "Place their coop now",
   "fr": "Installer leur poulailler"
@@ -835,6 +878,11 @@
   "id": "text.book_price_duck",
   "en": "{p} coins an egg, plus a coin for each star of the duck",
   "fr": "{p} pièces l’œuf, plus une pièce par étoile de la cane"
+ },
+ {
+  "id": "text.book_price_pea",
+  "en": "{p} coins an egg, plus a coin for each star of the peahen",
+  "fr": "{p} pièces l’œuf, plus une pièce par étoile de la paonne"
  },
  {
   "id": "text.book_coop",
@@ -2137,6 +2185,11 @@
   "fr": "Œufs de cane vert pâle"
  },
  {
+  "id": "text.egg_pea",
+  "en": "Big cream peafowl eggs",
+  "fr": "Gros œufs de paonne crème"
+ },
+ {
   "id": "text.coins_body",
   "en": "Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.",
   "fr": "Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore."
@@ -2537,6 +2590,11 @@
   "fr": "Vos canes ne pondent plus jusqu’à ce qu’elle soit remplie."
  },
  {
+  "id": "text.feed_empty_line_pea",
+  "en": "Your peahens stop laying until it’s filled.",
+  "fr": "Vos paonnes ne pondent plus jusqu’à ce qu’elle soit remplie."
+ },
+ {
   "id": "text.feed_how",
   "en": "Your hens lay while there’s food in it. Full, it feeds your trio for two days.",
   "fr": "Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
@@ -2545,6 +2603,11 @@
   "id": "text.feed_how_duck",
   "en": "Your ducks lay while there’s food in it. Full, it feeds your trio for two days.",
   "fr": "Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+ },
+ {
+  "id": "text.feed_how_pea",
+  "en": "Your peahens lay while there’s food in it. Full, it feeds your trio for two days.",
+  "fr": "Vos paonnes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
  },
  {
   "id": "text.fill_grain",
@@ -3245,6 +3308,81 @@
   "fr": "Les canetons de {name} ont grandi : leur carte arrive"
  },
  {
+  "id": "text.hatched_pea",
+  "en": "{n} peachicks have hatched! {name} is a mum.",
+  "fr": "{n} paonneaux sont nés ! {name} est maman."
+ },
+ {
+  "id": "text.raising_pea",
+  "en": "Raising {n} peachicks: young peahens and peacocks in about {when}.",
+  "fr": "Élève {n} paonneaux : jeunes paonnes et jeunes paons dans environ {when}."
+ },
+ {
+  "id": "text.raising_y_pea",
+  "en": "Raising {n} young peahens and peacocks: off to a new farm in about {when}.",
+  "fr": "Élève {n} jeunes paonnes et jeunes paons : ils partent pour une nouvelle ferme dans environ {when}."
+ },
+ {
+  "id": "text.no_lay_brood_pea",
+  "en": "She lays no eggs for sale while she’s busy with her peachicks.",
+  "fr": "Elle ne pond pas d’œufs à vendre tant qu’elle s’occupe de ses paonneaux."
+ },
+ {
+  "id": "text.peachick",
+  "en": "Peachick",
+  "fr": "Paonneau"
+ },
+ {
+  "id": "text.chick_of_pea",
+  "en": "{breed} · {name}’s peachick",
+  "fr": "{breed} · paonneau de {name}"
+ },
+ {
+  "id": "text.chick_grows_pea",
+  "en": "A young peahen or peacock in about {when}.",
+  "fr": "Jeune paonne ou jeune paon dans environ {when}."
+ },
+ {
+  "id": "text.chick_soon_pea",
+  "en": "Almost a young peahen or peacock!",
+  "fr": "Bientôt une jeune paonne ou un jeune paon !"
+ },
+ {
+  "id": "text.young_h_pea",
+  "en": "Young peahen",
+  "fr": "Jeune paonne"
+ },
+ {
+  "id": "text.young_r_pea",
+  "en": "Young peacock",
+  "fr": "Jeune paon"
+ },
+ {
+  "id": "text.turned_pea",
+  "en": "{name}’s peachicks are turning into young peahens and peacocks!",
+  "fr": "Les paonneaux de {name} deviennent de jeunes paonnes et de jeunes paons !"
+ },
+ {
+  "id": "text.congrats_exp_pea",
+  "en": "{mum} and {dad} gain experience: their next peachicks will be even better.",
+  "fr": "{mum} et {dad} gagnent de l’expérience : leurs prochains paonneaux seront encore meilleurs."
+ },
+ {
+  "id": "text.congrats_exp1_pea",
+  "en": "{mum} gains experience: her next peachicks will be even better.",
+  "fr": "{mum} gagne de l’expérience : ses prochains paonneaux seront encore meilleurs."
+ },
+ {
+  "id": "text.away_hatched_pea",
+  "en": "{name} hatched {n} peachicks",
+  "fr": "{name} a fait éclore {n} paonneaux"
+ },
+ {
+  "id": "text.away_grown_pea",
+  "en": "{name}’s peachicks have grown up: their card is next",
+  "fr": "Les paonneaux de {name} ont grandi : leur carte arrive"
+ },
+ {
   "id": "text.sold",
   "en": "{name}’s {n} chicks have grown up and gone to a new farm · +{c} coins",
   "fr": "Les {n} poussins de {name} ont grandi et partent pour une nouvelle ferme · +{c} pièces"
@@ -3940,6 +4078,16 @@
   "fr": "Maison flottante"
  },
  {
+  "id": "breed.pea.name",
+  "en": "Indian Blue peafowl",
+  "fr": "Paon bleu"
+ },
+ {
+  "id": "breed.pea.coop",
+  "en": "Garden Pavilion",
+  "fr": "Pavillon de jardin"
+ },
+ {
   "id": "breed.sil_black.name",
   "en": "Black Silkie",
   "fr": "Poule soie noire"
@@ -4486,6 +4634,17 @@
   ],
   "pair": true,
   "note": "[duck, drake]: a call duck's line"
+ },
+ {
+  "id": "pers.mum.pea",
+  "en": [
+   "A born mother: her peachicks are the best looked after."
+  ],
+  "fr": [
+   "Une vraie mère : ses paonneaux sont les mieux soignés."
+  ],
+  "pair": true,
+  "note": "[peahen, peacock]: a peafowl's line"
  },
  {
   "id": "pers.rebel.name",
