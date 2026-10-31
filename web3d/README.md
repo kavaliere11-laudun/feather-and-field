@@ -3441,6 +3441,36 @@ the birds already had.
 - Pictures sent: the pavilion's everyday look, the peafowl's first look (a peahen, the peacock, a peachick; his train
   down; his fan up). Waiting for her verdict. Nothing deployed: but flock.glb on the source branch has the peafowl in it
   now (about 1 MB more), so any deploy takes them.
-- Next, once she approves: the pavilion's five looks and its pen; the peafowl in the game at level 30 (a peacock and two
-  peahens, names in six languages, the Breed Book, the save checks), eggs and peachicks, his display in the pen, and the
-  feathers he drops to sell.
+- Audrey (31 Oct, on the first look): "Changes needed": she chose all four of my fixes, "A fuller fan (Recommended)",
+  "His train lying down", "A slimmer peacock", "The peahen's tail". **Take two** (breeds.py `peacock_train`, `TRAIN`): six
+  rows of wedge-shaped feathers (30, 26, 22, 18, 14, 10), each as wide as its share of the fan and overlapping (`cover`
+  1.4), so the fan is full, its sides drooping a little (204 degrees), a little dished; each feather's root set out so its
+  eye sits in its row's ring (`off`), neat rings; the eyes bigger and a little taller than wide (birds.js mode 9, `hw`
+  0.08); trailing, a long gentle sweep from under his lower back down to the grass, widening, every other feather shorter
+  and lying over its neighbours, the shorter rows on top, so the eyes show like scales, narrower there (0.62: the eyes
+  ovals); a soft shadow under the train that goes as he raises it (main.js `trainShadow`); a slimmer body and neck,
+  smaller wings; the peahen's tail closed and sloping down.
+- Audrey (31 Oct, on take two): "More changes", then no pick of my list; then "The posture and shape of peacock are not
+  natural". **Take three**: the body carried tilted up at the front, the breast high and full, the back sloping down
+  into the train, the neck rising out of the breast (shorter, its front hollowed under the chin, its back bowed, the head
+  a little forward), feathered thighs down to the hock, the wings folded close along the sides with the flight feathers
+  tucked under; a bigger crest (11 shafts), kinder faces (the white stripe over the eye rising to the front, not a frown),
+  softer wing bars, a brighter train and fan with bolder eyes and a shimmer (never dull when stood up). A bug found on
+  the way: a model with a morph had its height measured with the fan up (birds.js: `top` now from the standing shape), so
+  his colours (blue breast) and his size-based things were off. Pictures sent; waiting for her verdict.
+- **The Garden Pavilion's five looks** (31 Oct; Audrey on its everyday look: "Yes, do the other looks (Recommended)"; on
+  the five: "Yes, carry on (Recommended)"): coops.py `pavilion(look)`, `PV_LOOK`, `box_pea`, `shed_pea`, `cosy_pea`,
+  `deluxe_pea`, `_pavilion_bits`, `thatch_roof`, `dome_frame`, `scaffold`, `minaret`, `inlay_flower`, `old_arch`.
+  Rustic: an old mud-brick shelter with patches of whitewash under a ragged palm thatch on bamboo poles, old stone blocks
+  (one fallen), a cracked urn with a weed, a piece of a carved marble arch with a faded peacock's eye leaning on its side
+  (the hint), a forked branch for a perch, an old tin lamp. Mended: a new sandstone plinth, new brick plastered halfway
+  up, the marble arches in, the parapet half done, one kiosk built, the dome a frame of bamboo ribs half under a blue
+  sheet, bamboo scaffolding and a ladder by its left side, a bucket of plaster, new blue tiles stacked, a jali waiting.
+  Snug: as before. Cosy: pink as Jaipur, a rose dome with white ribs, marigold garlands with mango leaves along its front,
+  marigolds in its urns, jasmine in brass pots by the ramp, the automatic door and its solar panel, sandstone stepping
+  stones to the gate. Deluxe: white marble inlaid with green and red flowers, a white dome with gold ribs and a big gold
+  finial, four slender minarets at its corners, white marble stepping stones; the cosy touches. The things in front of it
+  stand in the same spots in every look (the urns' corners, the perch). Its gardens (`PENS_BY['pea']`) are the shared
+  pens' places for now. Not exported yet.
+- Next: her verdict on take three; then the pavilion's gardens, its export into coops.glb and the peafowl into the game at
+  level 30.
