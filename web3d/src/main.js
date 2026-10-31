@@ -2277,6 +2277,10 @@ class Bird {
     const small = kind === 'chick', size = this.rig.scale / 0.5;
     this.blobLocal = new THREE.Matrix4().compose(new THREE.Vector3(0, -0.011, 0), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
       new THREE.Vector3(small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), small ? 0.55 : size * (breed === 'pea' ? 0.6 : 1), 1));      // (the peafowl: tall, not as wide as they're tall)
+    if (breed === 'pea' && kind === 'rooster') {        // (a peacock's train lying on the grass behind him: its own soft shadow under it, gone as he raises his fan)
+      const t = this.trainShadow = new THREE.Mesh(blobGeo, blobMat.clone());
+      t.rotation.x = -Math.PI / 2; t.position.set(0, -0.011, -0.66); t.scale.set(1.25, 3.1, 1); t.renderOrder = 1; this.root.add(t);      // (he faces +z)
+    }
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
@@ -2977,6 +2981,7 @@ class Bird {
     if (A.sing > 0) { A.lookYaw *= 0.8; A.lookTilt *= 0.8; }
     A.proud = (A.proud || 0) + ((this.proudGoal || 0) - (A.proud || 0)) * Math.min(1, dt * 3);
     A.fan = (A.fan || 0) + ((this.fanGoal || 0) - (A.fan || 0)) * Math.min(1, dt * 2.2);      // (a peacock showing off: his train raised in a fan)
+    if (this.trainShadow) { this.trainShadow.material.opacity = 0.85 * (1 - A.fan); this.trainShadow.visible = A.fan < 0.98; }
     if (this.posterPose) this.posterPose(A, dt);            // (the welcome picture: a pose held just so)
     this.rig.pose(A);
   }

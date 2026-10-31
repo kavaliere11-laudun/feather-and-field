@@ -1745,20 +1745,20 @@
    "verts": 239
   },
   "pea_h_lo": {
-   "tris": 2600,
-   "verts": 1532
+   "tris": 2514,
+   "verts": 1473
   },
   "pea_r_lo": {
-   "tris": 5932,
-   "verts": 5120
+   "tris": 3712,
+   "verts": 2828
   },
   "pea_h": {
-   "tris": 3588,
-   "verts": 2058
+   "tris": 3578,
+   "verts": 2033
   },
   "pea_r": {
-   "tris": 7704,
-   "verts": 6456
+   "tris": 8548,
+   "verts": 7588
   }
  }
 }
