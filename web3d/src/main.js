@@ -2418,6 +2418,7 @@ class Bird {
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
+    if (this.rig.peafowl) { this.speed = 0.4; this.stepRate = 9; }      // (the peafowl, 31 Oct: long slow strides, each step carrying them on, Audrey: "walking but not moving")
     this.hitR = small ? 0.12 : 0.17 * size; this.hitY = small ? 0.08 : 0.17 * size;
     this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hopT = -1;
     this.act = null;                       // what she's doing while standing: peck, scratch, flap, crow, rest, ruffle
@@ -3322,9 +3323,13 @@ class Bird {
       this.look.yaw = busy ? 0 : (this.r() - 0.5) * 1.3; this.look.tilt = busy ? 0 : (this.r() < 0.35 ? (this.r() - 0.5) * 0.7 : 0);
     }
     A.lookYaw += (this.look.yaw - A.lookYaw) * Math.min(1, dt * 8); A.lookTilt += (this.look.tilt - A.lookTilt) * Math.min(1, dt * 6);
+    if (this.trainBlocked > 0) { this.trainBlocked -= dt; walking = false; }      // (the peacock held up by his train a moment: he stands, he doesn't step on the spot)
     A.walk += ((walking ? 1 : 0) - A.walk) * Math.min(1, dt * 10);
     const pace = this.pace || 1;
-    if (walking) A.phase += dt * this.stepRate * (pace > 1 ? pace : 0.6 + 0.4 * pace);
+    const dph = walking ? dt * this.stepRate * (pace > 1 ? pace : 0.6 + 0.4 * pace) : 0;
+    A.phase += dph;
+    { const q = this.root.position, L = this.lastStepAt || (this.lastStepAt = [q.x, q.z]), mv = Math.hypot(q.x - L[0], q.z - L[1]); L[0] = q.x; L[1] = q.z;      // (how far he goes per step: the peafowl's strides as long, birds.js)
+      A.vpr = (A.vpr || 0) + ((dph > 0 ? Math.min(0.1, mv / dph) : 0) - (A.vpr || 0)) * Math.min(1, dt * 8); }
     A.peck += (peckGoal - A.peck) * Math.min(1, dt * (peckGoal > A.peck ? 22 : 12));
     A.sit += (sitGoal - A.sit) * Math.min(1, dt * 3.5);
     A.kick += (kick - A.kick) * k; if (!kick) A.kickT = 0;
@@ -3357,7 +3362,7 @@ class Bird {
           if (!full) { const s0 = this.trainClear(q0[0], q0[1], t0, false, y0), f0 = s0 && this.trainClear(q0[0], q0[1], t0, true, y0); clamp = (!st && s0) || (st && f0); }      // (through the fence, the house, the swing...; or over one of the others: not if it wasn't a moment ago)
         }
         if (clamp) {
-          this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1];
+          this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1]; this.trainBlocked = 0.3;
           if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying) {
             const q = this.wayOut();      // (wedged, his train only lying the one way: a few steps on first, then on where he was going: called over by the farmer, say)
             if (!q && A.t - (this.stillSince ?? A.t) > 6 && this.flyOut()) this.trainStuck = 0;      // (boxed in for good, stuck there a while: a flutter over to somewhere roomier)

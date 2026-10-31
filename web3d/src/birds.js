@@ -15,6 +15,22 @@ const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: '
 // joints along it are, behind the tail's pivot (m); TRAIN_SPLIT: how much of its swing each part takes, rump first (the
 // game's train, main.js trainEach, lies the same way)
 export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
+// the peafowl's feet (Audrey, 31 Oct: "The legs need to fold at each step"): the toes on a bone of their own at the ankle
+// (FOOT_Y up), so that they lie flat on the ground through a step and curl down as the foot is lifted
+const FOOT_Y = 0.025;
+function peaFeet(g, n, P) {
+  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR'), base = JOINTS.length + 2;
+  const SI = new Uint16Array(n * 4), SW = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    const inf = [];
+    for (let j = 0; j < 4; j++) { const w = sw.getComponent(i, j); if (w > 0) inf.push([si.getComponent(i, j), w]); }
+    const t = smooth(FOOT_Y + 0.016, FOOT_Y - 0.004, P[i * 3 + 1]);
+    for (const q of inf.slice()) if ((q[0] === L || q[0] === R) && t > 0) { const w = q[1]; q[1] = w * (1 - t); inf.push([base + (q[0] === L ? 0 : 1), w * t]); }
+    const top = inf.filter(q => q[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 4), tot = top.reduce((a, q) => a + q[1], 0) || 1;
+    for (let j = 0; j < 4; j++) { SI[i * 4 + j] = top[j] ? top[j][0] : 0; SW[i * 4 + j] = top[j] ? top[j][1] / tot : 0; }
+  }
+  g.setAttribute('skinIndex', new THREE.BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
+}
 function peacockTrain(g, src, tailZ) {
   const n = src.attributes.position.count, P = src.attributes.position.array, si0 = src.attributes.skinIndex, sw0 = src.attributes.skinWeight;
   const T = JOINTS.indexOf('tail'), T2 = JOINTS.length, T3 = JOINTS.length + 1, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
@@ -265,6 +281,7 @@ export function paintedGeometry(model, breed, colour) {
   let g = new THREE.BufferGeometry();
   for (const a of ['position', 'normal', 'skinIndex', 'skinWeight']) g.setAttribute(a, src.attributes[a]);
   if (base_ === 'pea_r') peacockTrain(g, src, M.piv.tail[2]);
+  if (base_ === 'pea_r' || base_ === 'pea_h') peaFeet(g, n, pos);
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   // feather size (cm) per vertex for the scalloped feather texture (0: comb, beak, eyes, legs), and how much it belongs to the head
   const fs = new Float32Array(n), fh = new Float32Array(n);
@@ -841,8 +858,9 @@ export class Rig {
     this.lo = MODELS[this.model + '_lo'] ? new THREE.SkinnedMesh(paintedGeometry(this.model + '_lo', breed, colour), BIRD_MAT) : null;
     for (const m of [this.mesh, this.lo]) if (m) { m.onBeforeRender = keepAlpha; m.onAfterRender = writeAlpha; }
     this.bones = {}; this.rest = {};
-    const names = this.heavy ? [...JOINTS, 'tail2', 'tail3'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2' };      // (the peacock's train: two more bones along it)
-    const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : P[name] || P.root;
+    this.peafowl = this.model === 'pea_r' || this.model === 'pea_h';      // (their own walk: longer slower strides, the legs folding, the toes curling)
+    const names = this.peafowl ? [...JOINTS, 'tail2', 'tail3', 'footL', 'footR'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2', footL: 'legL', footR: 'legR' };      // (the peacock's train: two more bones along it; the peafowl's feet)
+    const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : name === 'footL' || name === 'footR' ? [P[name === 'footL' ? 'legL' : 'legR'][0], FOOT_Y, 0.01] : P[name] || P.root;
     const list = names.map(name => {
       const b = new THREE.Bone(); b.name = name;
       const p = at(name), q = par[name] ? at(par[name]) : [0, 0, 0];
@@ -926,7 +944,7 @@ export class Rig {
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
     B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y + (s.bend || 0), 0);      // (bend: a peacock's train trailing round behind him)
-    const A = 0.5 * w * (1 + 0.5 * pr);
+    const A = this.peafowl ? 0 : 0.5 * w * (1 + 0.5 * pr), lf = this.peafowl ? 0 : 1;      // (the peafowl's steps their own, below)
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
     const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash - 0.35 * dk;
     B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? 1.0 * kick * s.kick : 0) + legX, 0, 0);
@@ -934,8 +952,28 @@ export class Rig {
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
     // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
     const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank - 0.22 * this.shank * dk;
-    B.legL.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
-    B.legR.position.y += w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
+    B.legL.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
+    B.legR.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
+    if (this.peafowl) {
+      // the peafowl's steps (Audrey, 31 Oct: "the peacock is walking but not moving. The legs need to fold at each step"):
+      // each foot planted flat while the body passes over it (its toes kept flat, never sliding: the stride is as long as
+      // the ground he covers, s.vpr), then lifted, the leg folding up under him, the foot trailing and its toes curling
+      // down, swung forward and set down again; turning on the spot, steps on the spot
+      const Lg = Rr.legL.y - FOOT_Y, beta = 0.6, S = Math.min(0.6 * Lg, (s.vpr || 0) * beta * Math.PI);
+      for (const [leg, foot, off, kl] of [[B.legL, B.footL, 0, 0], [B.legR, B.footR, 0.5, 1]]) {
+        const u = ((ph / (2 * Math.PI) + off) % 1 + 1) % 1;
+        let x, q = 0, e = 0;
+        if (u < beta) x = S * (1 - 2 * u / beta);
+        else { q = (u - beta) / (1 - beta); e = Math.sin(Math.PI * q); x = -S + 2 * S * smooth(0.1, 0.95, q); }
+        const th = Math.asin(Math.max(-0.95, Math.min(0.95, x / Lg))) - 0.85 * e;      // (the leg's lean, forward +; lifted, folded back under him)
+        const drop = Lg * (1 - Math.cos(th)), ay = u < beta ? 0 : Math.max(0.045 * e, drop - 0.02 * (1 - e));      // (the foot's height: on the ground, or lifted clear)
+        const sp = s.kickLeg === kl ? 1 - Math.min(1, kick * s.kick * 3) : 1;      // (scratching: that leg's own kick)
+        leg.rotation.x -= w * sp * th;
+        leg.position.y += w * sp * (ay - drop + 0.012 * e);      // (planted, the hip lower as the leg leans; lifted, the knee drawn up and forward)
+        leg.position.z += w * sp * 0.03 * e;
+        foot.rotation.set(w * sp * (th + 1.1 * e), 0, 0);      // (its toes flat on the ground; lifted, curled down)
+      }
+    }
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);
     B.legL.scale.setScalar(fold); B.legR.scale.setScalar(fold);
     if (this.mesh.morphTargetInfluences) {      // (a peacock showing off: his train raised in a fan, 0 trailing .. 1 fanned; a little shiver at full)
@@ -955,23 +993,38 @@ export class Rig {
       const gp = 0.02 * w + 0.05 * rf, gy = -0.07 * Math.max(-3, Math.min(3, s.turn || 0)) + 0.06 * shake;      // (on the spring: his turns, a ruffle, setting off and stopping)
       V.pv += ((gp - V.p) * 26 - V.pv * 6.5) * dt; V.p += V.pv * dt;
       V.yv += ((gy - V.y) * 22 - V.yv * 5.5) * dt; V.y += V.yv * dt;
-      const lift = Math.max(0, body.rotation.x) * 0.18;      // (a little of his peck in it)
       // walking: a slow sway from side to side with his strides, a little behind them, and a soft lift at each step; at rest a
       // slow heavy drift and his breathing (not in his fan: raised, it shivers)
       const rest = (1 - w) * (1 - fan), sway = 0.055 * w * Math.sin(ph - 0.9) + rest * (0.016 * Math.sin(s.t * 1.05) + 0.01 * Math.sin(s.t * 0.43 + 1.3));
       const bob = 0.022 * w * (0.5 - 0.5 * Math.cos(2 * ph - 1.4)) + rest * 0.01 * (0.5 + 0.5 * Math.sin(s.t * 1.7));
-      const bend = s.bend || 0, pitch = Math.max(0, V.p + bob) + lift;
-      HQ.setFromEuler(HE.set(pitch - 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), TRAIN_SPLIT[0] * bend + (0.5 * V.y + sway) * (1 - fan), 0));      // (never down into the ground)
-      HQ2.copy(body.quaternion).invert(); HQ.premultiply(HQ2);
-      B.tail.quaternion.slerp(HQ, k);
-      HV.copy(Rr.root).add(Rr.body).add(Rr.tail).sub(B.root.position).sub(body.position).applyQuaternion(HQ2);      // (where it's rooted, as if he stood still)
-      B.tail.position.copy(Rr.tail).lerp(HV, k);
-      // along it: the rest of its swing round behind him, so it curves; the sway running on down it a little behind (a slow
-      // wave); lifted at the rump, it lies down again further back (its far end stays on the ground)
-      const u = k * (1 - fan), wave = j => (0.25 * V.y + 0.032 * w * Math.sin(ph - 0.9 - 1.0 * j) + rest * 0.012 * Math.sin(s.t * 1.05 - 0.9 * j)) * (1 - fan);      // (its swing on his turns spread along it too)
-      B.tail2.rotation.set(-0.7 * pitch * u, (TRAIN_SPLIT[1] * bend + wave(1)) * u, 0);
-      B.tail3.rotation.set(-0.3 * pitch * u, (TRAIN_SPLIT[2] * bend + wave(2)) * u, 0);
+      const bend = s.bend || 0, u = k * (1 - fan);
+      // its root on his rump, going with his body as it bobs, sways, turns and pecks (Audrey, 31 Oct: "The tail doesn't look
+      // like it's part of the peacock it's not following the movements")
+      HQ.setFromEuler(HE.set(Math.max(0, V.p + bob) * (1 - fan) - 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), TRAIN_SPLIT[0] * bend + (0.5 * V.y + sway) * (1 - fan), 0));
+      B.tail.quaternion.slerp(HQ, k); B.tail.position.copy(Rr.tail);
+      // further along, heavy on the ground: its joints between where they'd be going with him and where they'd lie were he
+      // standing still, the first a third of the way, the second nearly where it lies; the part between them laid from one
+      // to the other; along it, the rest of its swing round behind him (a curve) and its sway running on down it, a little
+      // behind (a slow wave)
+      const wave = j => (0.25 * V.y + 0.032 * w * Math.sin(ph - 0.9 - 1.0 * j) + rest * 0.012 * Math.sin(s.t * 1.05 - 0.9 * j)) * (1 - fan);
+      B.root.updateMatrix(); body.updateMatrix(); B.tail.updateMatrix();
+      TM.A.multiplyMatrices(B.root.matrix, body.matrix).multiply(B.tail.matrix);
+      TM.S.compose(HV.copy(Rr.root).add(Rr.body).add(Rr.tail), HQ, TM.one);
+      TM.l2.compose(Rr.tail2, HQ2.setFromEuler(HE.set(0, TRAIN_SPLIT[1] * bend + wave(1), 0)), TM.one);
+      TM.l3.compose(Rr.tail3, HQ2.setFromEuler(HE.set(0, TRAIN_SPLIT[2] * bend + wave(2), 0)), TM.one);
+      TM.a2.multiplyMatrices(TM.A, TM.l2); TM.s2.multiplyMatrices(TM.S, TM.l2); TM.a3.multiplyMatrices(TM.a2, TM.l3); TM.s3.multiplyMatrices(TM.s2, TM.l3);
+      TM.p1.setFromMatrixPosition(TM.a2).lerp(HV.setFromMatrixPosition(TM.s2), 0.65);
+      TM.p2.setFromMatrixPosition(TM.a3).lerp(HV.setFromMatrixPosition(TM.s3), 0.92);
+      TM.q2.setFromUnitVectors(TM.back, HV.subVectors(TM.p2, TM.p1).normalize());
+      TM.d2.compose(TM.p1, TM.q2, TM.one); TM.s3.decompose(HV, TM.q3, TM.sc); TM.d3.compose(TM.p2, TM.q3, TM.one);
+      TM.loc.copy(TM.A).invert().multiply(TM.d2).decompose(TM.p1, TM.q2, TM.sc);
+      B.tail2.position.lerpVectors(Rr.tail2, TM.p1, u); B.tail2.quaternion.slerpQuaternions(TM.id, TM.q2, u);
+      TM.loc.copy(TM.d2).invert().multiply(TM.d3).decompose(TM.p2, TM.q3, TM.sc);
+      B.tail3.position.lerpVectors(Rr.tail3, TM.p2, u); B.tail3.quaternion.slerpQuaternions(TM.id, TM.q3, u);
     }
   }
 }
 const HQ = new THREE.Quaternion(), HQ2 = new THREE.Quaternion(), HE = new THREE.Euler(), HV = new THREE.Vector3();
+const TM = { A: new THREE.Matrix4(), S: new THREE.Matrix4(), l2: new THREE.Matrix4(), l3: new THREE.Matrix4(), a2: new THREE.Matrix4(), s2: new THREE.Matrix4(), a3: new THREE.Matrix4(), s3: new THREE.Matrix4(),
+  d2: new THREE.Matrix4(), d3: new THREE.Matrix4(), loc: new THREE.Matrix4(), p1: new THREE.Vector3(), p2: new THREE.Vector3(), q2: new THREE.Quaternion(), q3: new THREE.Quaternion(), sc: new THREE.Vector3(),
+  one: new THREE.Vector3(1, 1, 1), back: new THREE.Vector3(0, 0, -1), id: new THREE.Quaternion() };

@@ -3530,6 +3530,17 @@ the birds already had.
   again, to and fro on the spot (unless the farmer's called him).
 - **Sleek feathers** (Audrey, 31 Oct: "the peacock has a weird blurry layer around his feathers"): the peafowl have no
   fluff over their feathers (birds.js `furOf`: the hens' soft fluff layer, not for them); the peachicks keep their down.
+- **His train part of him** (Audrey, 31 Oct 22:22: "The tail doesn't look like it's part of the peacock it's not following
+  the movements"): its root is on his rump and goes with his body as it bobs, sways, turns and pecks; further along it lies
+  heavy on the ground: its first joint a third of the way between where it would be going with him and where it would lie
+  were he standing still, its second nearly where it lies, the part between laid from one to the other (birds.js, the end
+  of `pose`: `TM`).
+- **The peafowl's walk** (Audrey: "the peacock is walking but not moving. The legs need to fold at each step"): longer,
+  slower strides (main.js: `speed` 0.4, `stepRate` 9), each foot planted flat while the body passes over it, never
+  sliding (the stride as long as the ground covered: `A.vpr`, metres per step), then lifted, the leg folding back under
+  him, the knee drawn up and forward, the toes curling down (their own bones, `footL`/`footR`, birds.js `peaFeet`), swung
+  forward and set down again. Held up by his train a moment, he stands rather than stepping on the spot
+  (`trainBlocked`).
 - **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
   where the peacock parade with his tail opened"): now and then he turns to where there's room and raises his train into
   his fan, with a little shiver, then parades with it open: round slowly one way and the other as far as there's room for
