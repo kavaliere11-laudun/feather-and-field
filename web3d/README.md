@@ -3377,6 +3377,43 @@ the birds already had.
   `away_grown_duck`), in all six languages. The save: no new field (the brood's own checks). Tests: **ducklingtest.mjs**
   (broody, sitting, hatching, out after her, the cards, a reload while raising, young ducks and drakes, grown and gone,
   the congratulations, up again; English and French); chicktest and calltest still pass.
-- Next: the peacock at level 30 (Audrey's order), unless she wants more for the ducks.
+- **The call ducks finished properly** (30 Oct; Audrey, after the ducklings: "Finish the ducks properly first", before the
+  peacock). Three steps, each live:
+  - **Their young ones' send-off at the gate, as the hens'** (main.js `ducksGo`, `tickDuckFarewell`; callpen.js `sendOff`,
+    `gatherTask`, `joy`, `cheer`, `goOut`): grown, seen by day in view with the farmer out and about, each young duck or
+    drake comes out of the water (`ashore`) and over to her place in the line just inside the gate (`gateOf`, with the pen's
+    `free`), facing out; the farmer hurries to the gate outside it (`cheerAt`: "Off you go, and good luck!"); a hop for joy
+    each (`JOY`: up off the ground, wings beating, a quack; a heart over each), three times; their mother and father flap
+    and quack where they are (`cheer`); then one after another out through the gate and along the way off the farm
+    (`gateOf` path, `farmExit`), a waddling run (`moveTo` 'run', `lone`: minding only the one ahead), fading away past the
+    farm's edge; the farmer watching them go; then the congratulations card. Unseen (night, in bed, the farmer away...):
+    a heart over each and they fade away, as before (`farewell`). The ground out of the pen is the farm's (`o.ground`: a
+    footbridge too). `__farm.farewell(i)` says `duck`.
+  - **The farmer in their pen** (main.js `duckPenSpots`, `penSpec` with `plot.callPen`, `callDuck`, `duckVisitOk`;
+    callpen.js `keepFromFarmer`, `cornOut`, `eatTask`, `comeTo`, `carried`, `release`). Before, filling their feeder sent
+    him into the hens' spots, on the pond's stones and its edge, and his corn went half into the water with the ducks
+    taking no notice; a cuddle or worms was a bob where she stood. Now every spot of his is dry land round their pond, as
+    big as he is, clear of the feeder, the dish and the rest, and every straight walk between them dry too: just inside
+    the gate, a step on, where he pours (round the feeder at his reach, the one facing you most), where he throws the corn
+    from and where it lands (most of a handful on the dry yard; the grains only land where a duck could stand), where he
+    crouches for a cuddle and where she settles. Corn: they hurry over out of the water and round the pond (the Glutton
+    first, at a run) and peck it up grain by grain (`Corn.pick`, `eat`). Nobody in his boots or his pail. A cuddle: he
+    crouches, she comes over to him and settles facing him, he scoops her up and holds her, her eyes shut, hearts, and sets
+    her down; her worms (a trusting duck): she comes to his side, dabbles in the grass, comes up with a worm and drops it
+    in his palm (`dig`: `cuddle.dig`, `cuddle.palm`; `billTip` for a call duck: her rig's bill). Not her with her
+    ducklings, nor one sitting or laying, nor at night: then the bob and the hearts where she is, as before.
+  - **Their personalities** (callpen.js `pleased`, `dayTask`, `watchSpot`; game.js `PERS_INFO[p].duck`, `persLine(p, sex,
+    duck)`): their cards' lines a duck's where they differ (the Good mum: "her ducklings are the best looked after"; the
+    Rebel: "always first into the pond, and loves a big splash"; the Brave: "keeps watch over the pond"), in all six
+    languages (`pers.<p>.duck`, lang/*.json, the catalogue). After laying each is pleased with herself her own way, as the
+    hens: the Diva a slow proud strut along the yard and a shake; the Brave a march round the yard stopping to look about,
+    and a flap; the Glutton straight to the feeder for a snack; the Rebel a hop and a flap, a run and a jump into the pond
+    and a big splashy bath; the Good mum a shake, a quack and a sit down. Their days too: the Rebel swims more, the Glutton
+    grazes more, the Diva preens more, the Brave now and then stands watch on the bank looking out over the pond.
+  - Tests: **duckfarmertest.mjs** (each of the five looks: the feed, his walk on dry land only, the corn on the dry yard
+    and all eaten, nobody in his boots, a cuddle with her in his arms, her worms; each personality's words and after-laying
+    ways), **ducklingtest.mjs** (the send-off: lined up out of the water, the farmer's cheer, the hops, out one by one past
+    the farm's edge, the farmer watching, the view never moved; English and French).
+- Next: the peacock at level 30 (Audrey's order).
 , duck eggs (a new kind), ducklings, life in their
   pen, arriving at level 10 (names in the six languages, a Breed Book page, the save's checks, tests).

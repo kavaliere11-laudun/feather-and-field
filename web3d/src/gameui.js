@@ -253,7 +253,7 @@ export class GameUI {
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
-    pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex)));
+    pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex, g.isDuck(b.breed))));
     body.append(pc);
     // experience: the stars, the way to the next, how they come and what they do
     const ec = el('div', 'gcard'), s = g.stars(b), part = g.starPart(b);

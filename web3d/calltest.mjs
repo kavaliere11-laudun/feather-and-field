@@ -3,7 +3,7 @@
 // A farm at level 9: Your coops says what level 10 brings (the call ducks). Level 10: its card says a new breed has come,
 // "Place their coop now": the rustic Floating House with its trio (Pip-style drake first) living in their pen, their game
 // names over them; a tap on a duck: her card ("Call duck · Duck", "her ducklings"), she stops and faces you; Cuddle:
-// hearts and a happy bob, the cuddle counted; her lay when it's due: up the gangplank into the nest, the egg in the save
+// the farmer comes for her (duckfarmertest), the cuddle counted; her lay when it's due: up the gangplank into the nest, the egg in the save
 // and in the straw; the feeder's card speaks of ducks; the Breed Book: the call ducks' page found with its picture; the
 // Snug look: the pen made again round the same three; the shows take no ducks; a reload keeps it all unflagged; a call
 // coop before level 10, put in from outside: flagged. No page errors.
@@ -69,7 +69,7 @@ if (SHOTS) { await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots()
 await shot('2_pen');
 // a tap on a duck: her card; she stays and faces you
 const tapAt = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks[1];
-  d.task = null; const w = d.root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z, 1.6); f.step(1 / 30, 30); f.draw(); const v = d.root.getWorldPosition(new f.THREE.Vector3()); const q = f.screenOf(v.x, v.z, v.y + 0.14); return { x: q.x, y: q.y, gid: d.gid }; });
+  d.task = { name: 'look', act: 'look', t: 0, run() { return false; } }; /* (standing still to be tapped) */ const w = d.root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z, 1.6); f.step(1 / 30, 30); f.draw(); const v = d.root.getWorldPosition(new f.THREE.Vector3()); const q = f.screenOf(v.x, v.z, v.y + 0.14); return { x: q.x, y: q.y, gid: d.gid }; });
 await p.touchscreen.tap(tapAt.x, tapAt.y); await run(0.6);
 t = await sheet();
 const held = await p.evaluate(gid => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks.find(x => x.gid === gid); return { held: d.held, task: d.task && d.task.name, card: f.gameUI().kind }; }, tapAt.gid);
@@ -77,9 +77,9 @@ await shot('3_card');
 ok('a tap on a duck: her card ("Call duck · Duck", her ducklings), she stays and faces you', held.card === 'bird' && T.card.test(t) && T.ducklings.test(t) && held.held && held.task === 'held', { held, t: t.slice(0, 400) });
 // Cuddle: hearts, a happy bob, the cuddle counted
 await p.tap('.gsheet .gcuddle'); await run(0.4);
-const cud = await p.evaluate(gid => { const f = window.__farm, g = f.game(), Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks.find(x => x.gid === gid); return { held: d.held, task: d.task && d.task.name, happy: g.happyLeft(g.bird(gid)) > 0, card: f.gameUI().kind }; }, tapAt.gid);
+const cud = await p.evaluate(gid => { const f = window.__farm, g = f.game(), Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks.find(x => x.gid === gid); return { held: d.held, task: d.task && d.task.name, called: !!d.called, happy: g.happyLeft(g.bird(gid)) > 0, card: f.gameUI().kind }; }, tapAt.gid);
 await shot('4_cuddle');
-ok('Cuddle: the card closes, she turns to you for a happy bob and a quack, the cuddle counted', !cud.held && cud.task === 'cuddle' && cud.happy && cud.card !== 'bird', cud);
+ok('Cuddle: the card closes, the farmer comes for her (or she turns to you for a happy bob and a quack), the cuddle counted', !cud.held && (cud.task === 'cuddle' || cud.called) && cud.happy && cud.card !== 'bird', cud);      // (30 Oct: the farmer's cuddle, duckfarmertest)
 await run(8);
 // her lay when it's due: up the gangplank and into the nest, the egg in the save and in the straw
 const hen = await p.evaluate(() => { const f = window.__farm, g = f.game(), Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks.find(x => x.kind === 'call_f'); g.data.first = { hen: d.gid, t: window.__T - 500 }; g.save(); return d.gid; });

@@ -3,9 +3,10 @@
 // A farm at level 10 with its call ducks placed. A duck goes broody: she walks up into the nest and sits (her card: sitting
 // on 3 eggs). They hatch: "3 ducklings have hatched!", out she comes and her ducklings after her, following her (a
 // duckling's card: a duckling, hers; her card: raising 3 ducklings). A reload while she's raising them: they're out with
-// her. A day on: young ducks and drakes ("turning into young ducks and drakes"; a young one's card). Grown: off to a new
-// farm (they fade away), the coins in, the congratulations card (young ducks and drakes, "her next ducklings"); she's
-// up and about again. No page errors.
+// her. A day on: young ducks and drakes ("turning into young ducks and drakes"; a young one's card). Grown: the coins in,
+// their send-off at the gate as the hens' (lined up inside it out of the water, the farmer outside cheering, a hop of
+// joy each, then out one by one and off the farm past its edge, the farmer watching, the view never moved), then the
+// congratulations card (young ducks and drakes, "her next ducklings"); she's up and about again. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
@@ -113,17 +114,37 @@ t = await sheet();
 await shot('4_young');
 ok('a young one\'s card: a young duck or drake', (fr ? /Jeune cane|Jeune canard/ : /Young duck|Young drake/).test(t), t.slice(0, 400));
 await p.evaluate(() => window.__farm.gameUI().close());
-// ---- grown: off to a new farm, the coins in, the congratulations card
+// ---- grown: off to a new farm (Audrey, 30 Oct: "Finish the ducks properly"): their send-off at the gate, as the hens'
 const coins0 = (await K()).coins;
-await setStart(-SIT - GROW + 1500); await run(4);
+const gi = await p.evaluate(() => window.__farm.coopPlots().filter(q => q.gc).findIndex(q => q.breed === 'call'));
+const view0 = await p.evaluate(() => window.__farm.view.target.toArray().join());
+await setStart(-SIT - GROW + 1500);
+let fw = null;
+for (let i = 0; i < 12 && !fw; i++) { await run(0.5); fw = await p.evaluate(i => window.__farm.farewell(i), gi); }
 k = await K();
-const gone = k;
-await run(3);
+ok('grown: their coins in, the brood over, a send-off begins ("off to a new farm"), each heading for the gate', !k.brood && k.coins > coins0 && fw && fw.duck && fw.left === 3 && k.kids.every(x => x.leaving) && (fr ? /partent pour une nouvelle ferme/ : /off to a new farm/).test(k.hint), { k, fw, coins0 });
+let ready = false, party = false, lined = null;
+for (let i = 0; i < 40 && !(fw && fw.phase === 'exit'); i++) {
+  await run(1); fw = await p.evaluate(i => window.__farm.farewell(i), gi); ready = ready || !!(fw && fw.ready);
+  if (fw && fw.phase === 'party' && !party) {
+    party = true;
+    lined = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), C = Q.callPen; return C.kids.map(k => ({ x: +k.pos.x.toFixed(2), z: +k.pos.z.toFixed(2), there: !!k.leaving.there, dry: k.wet < 0.1, onLand: C.onLand(k) })); });
+    if (SHOTS) { await run(1.5); await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), C = Q.callPen, w = C.kids[1].root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z + 0.3, 1.5); f.step(1 / 30, 3); }); await p.waitForTimeout(300); await shot('5_sendoff'); await p.evaluate(v => { const f = window.__farm, a = v.split(',').map(Number); f.lookAt(a[0], a[2], 1.6); }, view0); }
+  }
+}
+ok('the farmer comes to the gate and cheers; lined up inside it, out of the water, for a hop of joy each; then out they go', ready && party && fw && fw.phase === 'exit' && lined && lined.length === 3 && lined.every(q => q.there && q.dry && q.onLand), { fw, lined });
+if (SHOTS) { await run(4); await p.evaluate(() => { const f = window.__farm, L = f.farmer(); f.lookAt(L.pos.x, L.pos.z + 0.6, 1.8); f.step(1 / 30, 3); }); await p.waitForTimeout(300); await shot('6_off'); }
+let gone = false, s2 = null;
+for (let i = 0; i < 90 && !gone; i++) { await run(1); s2 = await p.evaluate(i => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); return { kids: Q.callPen.kids.length, fw: f.farewell(i) }; }, gi); gone = s2.kids === 0 && !s2.fw; }
+const ex = await p.evaluate(i => window.__farm.lastExit(i), gi);
+ok('one by one out of the gate and all the way off the farm (past its edge), the farmer watching them go, then gone', gone && ex && ex.past >= 1.0 && ex.look <= 45, { ex, s2 });
+if (SHOTS) await p.evaluate(v => { const f = window.__farm, a = v.split(',').map(Number); f.lookAt(a[0], a[2], 1.6); f.step(1 / 30, 3); }, view0);
+ok('the view never moved by itself', SHOTS || view0 === await p.evaluate(() => window.__farm.view.target.toArray().join()), view0);
+await run(2);
 k = await K();
 if (SHOTS) { await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.lookAt(Q.centre.x, Q.centre.z, 1.6); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 const card = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, t: document.querySelector('.gsheet') ? document.querySelector('.gsheet').innerText : '' }));
-await shot('5_congrats');
-ok('grown: off to a new farm (they fade away), the coins in, the brood over', !k.brood && k.kids.length === 0 && k.coins > coins0 && gone.kids.every(x => x.leaving), { gone, k, coins0 });
+await shot('7_congrats');
 ok('the congratulations card: young ducks and drakes, her next ducklings', card.kind === 'congrats' && (fr ? /Jeune cane|Jeune canard/ : /Young duck|Young drake/).test(card.t) && (fr ? /prochains canetons/ : /next ducklings/).test(card.t), card);
 await p.evaluate(() => window.__farm.gameUI().close()); await run(5);
 k = await K();

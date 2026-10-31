@@ -4477,6 +4477,17 @@
   "note": "[hen, rooster]"
  },
  {
+  "id": "pers.mum.duck",
+  "en": [
+   "A born mother: her ducklings are the best looked after."
+  ],
+  "fr": [
+   "Une vraie mère : ses canetons sont les mieux soignés."
+  ],
+  "pair": true,
+  "note": "[duck, drake]: a call duck's line"
+ },
+ {
   "id": "pers.rebel.name",
   "en": [
    "Rebel",
@@ -4501,6 +4512,19 @@
   ],
   "pair": true,
   "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.rebel.duck",
+  "en": [
+   "Adventurous: always first into the pond, and loves a big splash.",
+   "Adventurous: always first into the pond, and loves a big splash."
+  ],
+  "fr": [
+   "Aventurière : toujours la première à l’eau, et adore faire de grandes éclaboussures.",
+   "Aventurier : toujours le premier à l’eau, et adore faire de grandes éclaboussures."
+  ],
+  "pair": true,
+  "note": "[duck, drake]: a call duck's line"
  },
  {
   "id": "pers.diva.name",
@@ -4579,5 +4603,18 @@
   ],
   "pair": true,
   "note": "[hen, rooster]"
+ },
+ {
+  "id": "pers.brave.duck",
+  "en": [
+   "Afraid of nothing: keeps watch over the pond.",
+   "Afraid of nothing: keeps watch over the pond."
+  ],
+  "fr": [
+   "N’a peur de rien : veille sur la mare.",
+   "N’a peur de rien : veille sur la mare."
+  ],
+  "pair": true,
+  "note": "[duck, drake]: a call duck's line"
  }
 ]

@@ -958,5 +958,16 @@
  "text.congrats_exp_duck": "{mum} y {dad} ganan experiencia: sus próximos patitos serán aún mejores.",
  "text.congrats_exp1_duck": "{mum} gana experiencia: sus próximos patitos serán aún mejores.",
  "text.away_hatched_duck": "A {name} le han nacido {n} patitos",
- "text.away_grown_duck": "Los patitos de {name} ya son mayores: su ficha viene a continuación"
+ "text.away_grown_duck": "Los patitos de {name} ya son mayores: su ficha viene a continuación",
+ "pers.mum.duck": [
+  "Una madre nata: sus patitos son los mejor cuidados."
+ ],
+ "pers.rebel.duck": [
+  "Aventurera: siempre la primera en meterse en el estanque, y le encanta salpicar.",
+  "Aventurero: siempre el primero en meterse en el estanque, y le encanta salpicar."
+ ],
+ "pers.brave.duck": [
+  "No le teme a nada: vigila el estanque.",
+  "No le teme a nada: vigila el estanque."
+ ]
 }

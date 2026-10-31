@@ -47,7 +47,7 @@ for (const [k, en] of Object.entries(W.text.en)) {
   cat.push(e);
 }
 for (const [id, [en, fr]] of Object.entries(W.reg)) cat.push({ id, en, fr: fr ?? null });
-for (const [p, v] of Object.entries(W.pers)) for (const f of ['name', 'line']) cat.push({ id: `pers.${p}.${f}`, en: v[f].en, fr: v[f].fr, pair: true, note: '[hen, rooster]' });
+for (const [p, v] of Object.entries(W.pers)) for (const f of ['name', 'line', 'duck']) if (v[f]) cat.push({ id: `pers.${p}.${f}`, en: v[f].en, fr: v[f].fr, pair: true, note: f === 'duck' ? '[duck, drake]: a call duck\'s line' : '[hen, rooster]' });
 fs.writeFileSync(DIR + 'catalogue.json', JSON.stringify(cat, null, 1));
 const words = cat.reduce((n, e) => n + [].concat(e.en).join(' ').split(/\s+/).length, 0);
 console.log('catalogue', cat.length, 'entries,', words, 'English words;', cat.filter(e => e.gender).length, 'with a feminine form');

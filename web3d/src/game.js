@@ -639,17 +639,21 @@ export function silColour(k) { return k === 'sil' ? 'white' : typeof k === 'stri
 export const PERS = ['mum', 'rebel', 'diva', 'glutton', 'brave'];
 export const PERS_INFO = {
   mum: { icon: '🐣', name: { en: ['Good mum'], fr: ['Mère poule'] },
-    line: { en: ['A born mother: her chicks are the best looked after.'], fr: ['Une vraie mère : ses poussins sont les mieux soignés.'] } },
+    line: { en: ['A born mother: her chicks are the best looked after.'], fr: ['Une vraie mère : ses poussins sont les mieux soignés.'] },
+    duck: { en: ['A born mother: her ducklings are the best looked after.'], fr: ['Une vraie mère : ses canetons sont les mieux soignés.'] } },
   rebel: { icon: '🏃', name: { en: ['Rebel', 'Rebel'], fr: ['Rebelle', 'Rebelle'] },
     line: { en: ['Adventurous: she’ll slip out now and then, and may bring something back.', 'Adventurous: he’ll slip out now and then, and may bring something back.'],
-            fr: ['Aventurière : elle fera parfois le mur, et rapportera peut-être une trouvaille.', 'Aventurier : il fera parfois le mur, et rapportera peut-être une trouvaille.'] } },
+            fr: ['Aventurière : elle fera parfois le mur, et rapportera peut-être une trouvaille.', 'Aventurier : il fera parfois le mur, et rapportera peut-être une trouvaille.'] },
+    duck: { en: ['Adventurous: always first into the pond, and loves a big splash.', 'Adventurous: always first into the pond, and loves a big splash.'],
+            fr: ['Aventurière : toujours la première à l’eau, et adore faire de grandes éclaboussures.', 'Aventurier : toujours le premier à l’eau, et adore faire de grandes éclaboussures.'] } },
   diva: { icon: '👑', name: { en: ['Diva', 'Diva'], fr: ['Diva', 'Diva'] },
     line: { en: ['Loves the limelight, and the best feed.', 'Loves the limelight, and the best feed.'], fr: ['Adore les projecteurs, et la meilleure nourriture.', 'Adore les projecteurs, et la meilleure nourriture.'] } },
   glutton: { icon: '🌽', name: { en: ['Glutton', 'Glutton'], fr: ['Gourmande', 'Gourmand'] },
     line: { en: ['Always first at the feeder.', 'Always first at the feeder.'], fr: ['Toujours la première à la mangeoire.', 'Toujours le premier à la mangeoire.'] } },
   brave: { icon: '🛡️', name: { en: ['Brave', 'Brave'], fr: ['Courageuse', 'Courageux'] },
     line: { en: ['Afraid of nothing: keeps watch over the coop at night.', 'Afraid of nothing: keeps watch over the coop at night.'],
-            fr: ['N’a peur de rien : veille sur le poulailler la nuit.', 'N’a peur de rien : veille sur le poulailler la nuit.'] } },
+            fr: ['N’a peur de rien : veille sur le poulailler la nuit.', 'N’a peur de rien : veille sur le poulailler la nuit.'] },
+    duck: { en: ['Afraid of nothing: keeps watch over the pond.', 'Afraid of nothing: keeps watch over the pond.'], fr: ['N’a peur de rien : veille sur la mare.', 'N’a peur de rien : veille sur la mare.'] } },
 };
 const HEN_NAMES = ['Henrietta', 'Clover', 'Mabel', 'Peggy', 'Dotty', 'Hazel', 'Maple', 'Willow', 'Nutmeg', 'Poppy', 'Pearl', 'Ginger',
   'Olive', 'Marigold', 'Bramble', 'Truffle', 'Pippa', 'Dumpling', 'Ivy', 'Cosette', 'Margot', 'Brioche', 'Lulu', 'Fern', 'Juniper'];
@@ -1214,7 +1218,9 @@ export class Game {
   trioTitle(b) { return silColour(b) && b !== 'sil' ? this.t('trio_new_col', { col: tr(this.lang, 'breed.' + b + '.col') }) : this.t('trio_new', { breed: this.breedName(b) }); }
   // a personality's name and line, for a hen or a rooster (the packs: pers[p].name / .line, [hen, rooster])
   persName(p, sex) { const n = PERS_INFO[p].name[this.lang] || (PACKS[this.lang] && PACKS[this.lang].pers && PACKS[this.lang].pers[p] && PACKS[this.lang].pers[p].name) || PERS_INFO[p].name.en; return n[sex === 'r' && n[1] ? 1 : 0]; }
-  persLine(p, sex) { const n = PERS_INFO[p].line[this.lang] || (PACKS[this.lang] && PACKS[this.lang].pers && PACKS[this.lang].pers[p] && PACKS[this.lang].pers[p].line) || PERS_INFO[p].line.en; return n[sex === 'r' && n[1] ? 1 : 0]; }
+  persLine(p, sex, duck) {      // (duck: a call duck's, where it's her own: her ducklings, the pond)
+    const f = duck && PERS_INFO[p].duck ? 'duck' : 'line', P = PACKS[this.lang] && PACKS[this.lang].pers && PACKS[this.lang].pers[p];
+    const n = PERS_INFO[p][f][this.lang] || (P && P[f]) || (f === 'duck' && (PERS_INFO[p].line[this.lang] || (P && P.line))) || PERS_INFO[p][f].en; return n[sex === 'r' && n[1] ? 1 : 0]; }
   farmerName() { const f = this.data ? this.data.farmer : { look: 'm', name: '' }; return f.name || tr(this.lang, 'farmer.' + f.look); }
   defaultFarmer(look) { return tr(this.lang, 'farmer.' + look); }
   // ---- the farm

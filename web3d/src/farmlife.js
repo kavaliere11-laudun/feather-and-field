@@ -293,7 +293,7 @@ export class FarmLife {
       const L2 = () => P.henAt && P.henAt.hand === 'L', cup = () => L2() ? 'cupL' : 'cup', close = P2 => { P2[L2() ? 'handL' : 'handR'] = [105, 110, 40, 4]; };      // (the hand on her side)
       L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen, true); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 12; } },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() ? TK.seq('worms', [
           TK.act('hand', 0.6, W => { W.pose = cup(); W.face = 'happy'; W.look = [0, -0.5]; }),
@@ -315,7 +315,7 @@ export class FarmLife {
       const sm = u => u * u * (3 - 2 * u), step = (a, b, u) => Math.max(0, Math.min(1, (u - a) / (b - a)));
       L.push(TK.walk([P.crouchAt]), TK.face(P.toHen), TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > 12; } },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),

@@ -963,5 +963,16 @@
  "text.congrats_exp_duck": "{mum} und {dad} sammeln Erfahrung, und ihre nächsten Entenküken werden noch besser.",
  "text.congrats_exp1_duck": "{mum} sammelt Erfahrung, und ihre nächsten Entenküken werden noch besser.",
  "text.away_hatched_duck": "Bei {name} sind {n} Entenküken geschlüpft",
- "text.away_grown_duck": "Die Entenküken von {name} sind groß geworden: Gleich kommt ihre Karte"
+ "text.away_grown_duck": "Die Entenküken von {name} sind groß geworden: Gleich kommt ihre Karte",
+ "pers.mum.duck": [
+  "Die geborene Mutter – ihre Entenküken sind am besten versorgt."
+ ],
+ "pers.rebel.duck": [
+  "Abenteuerlustig: Sie ist immer die Erste im Teich und liebt es, ordentlich zu planschen.",
+  "Abenteuerlustig: Er ist immer der Erste im Teich und liebt es, ordentlich zu planschen."
+ ],
+ "pers.brave.duck": [
+  "Hat vor nichts Angst: Hält Wache am Teich.",
+  "Hat vor nichts Angst: Hält Wache am Teich."
+ ]
 }

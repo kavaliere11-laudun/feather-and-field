@@ -78,7 +78,7 @@ export class CallPen {
     this.group = new THREE.Group(); this.group.userData.moves = true; plot.frame.add(this.group);
     const B = o.birds || [{ kind: 'call_m', name: 'Pip' }, { kind: 'call_f', name: 'Puddle' }, { kind: 'call_f', name: 'Pebble' }];
     this.ducks = B.map((q, i) => {
-      const d = new Goose(this.group, q.kind, r, q.name); d.flock = this; d.idx = i; d.pen = this; d.laidOn = -1; d.trail = [];
+      const d = new Goose(this.group, q.kind, r, q.name); d.flock = this; d.idx = i; d.pen = this; d.laidOn = -1; d.trail = []; d.pers = q.pers || null;
       d.gid = q.gid; d.plot = plot; d.held = false;
       Object.defineProperty(d, 'laying', { get: () => !!(d.task && d.task.name === 'lay') });      // (off to lay, or in the nest)
       d.shadow = shadowDisc(0.085); this.group.add(d.shadow);
@@ -120,6 +120,7 @@ export class CallPen {
   wetAt(x, z) { if (this.onRamp(x, z) !== null || this.inRaft(x, z)) return 0; return smooth(0.98, 0.84, this.pondS(x, z)); }
   // the ground under her: the gangplank (the bridge), the nest's straw in the house, the raft's deck, the water, the yard
   groundY(x, z) {
+    const Y = this.o.yard; if (this.o.ground && Y && (x < Y.min[0] - 0.3 || x > Y.max[0] + 0.3 || z < Y.min[2] - 0.3 || z > Y.max[2] + 0.3)) return this.o.ground(x, z);      // (out of the pen: the farm's ground, a footbridge)
     const rp = this.onRamp(x, z); if (rp !== null) return rp;
     if (this.inHouseAt(x, z)) return (this.G.bed ?? this.G.floor) - 0.012;
     if (this.inRaft(x, z)) return DECK;
@@ -167,6 +168,12 @@ export class CallPen {
     if ((this.o.obstacles || []).some(q => Math.hypot(x - q[0], z - q[2]) < q[3] + r)) return false;
     if ((this.o.block || []).some(q => Math.hypot(x - q[0], z - q[1]) < q[2] + r * 0.5 && this.pondS(q[0], q[1]) > 1.05)) return false;
     return true;
+  }
+  // a spot on the bank looking out over the pond (the Brave's watch): [x, z, facing the water]
+  watchSpot() {
+    const P = this.P;
+    for (let k = 0; k < 20; k++) { const t = this.r() * Math.PI * 2, x = P.cx + P.a * 1.3 * Math.cos(t), z = P.cz + P.b * 1.3 * Math.sin(t); if (this.free(x, z, 0.08)) return [x, z, Math.atan2(P.cx - x, P.cz - z)]; }
+    return null;
   }
   yardSpot() {
     const Y = this.o.yard;
@@ -229,14 +236,19 @@ export class CallPen {
   // ---- what they do
   dayTask(d) {
     const L = [], h = this.o.hour(), dry = d.wet < 0.5, r = this.r();
+    if (d.called && dry) return TK.act('look', 1.5, ACT.look);      // (the farmer's on his way for her: she stays about the yard)
+    if (this.plot.corn && this.plot.corn.left > 0 && !d.called) return this.eatTask(d, 0.3 + this.r() * 0.5);      // (corn still lying on the yard: theirs)
     if (!dry) return this.swimTask(d, true, false, !!(this.brood && this.brood.mum === d));      // (a mother on the water: on out in the open water)
     if (this.brood && this.brood.mum === d) return this.mumTask(d);      // (with her ducklings: gentle walks, swims and long rests, never the ball)
     if (!this.o.game && d.kind === 'call_f' && d.laidOn !== this.day && h >= 8 && h < 17 && r < 0.18) return this.layTask(d);      // (the ducks lay; Pip doesn't. The game's: when it says, layNow)
-    if (d.idx === 0 && !this.brood && r < 0.12 && this.ducks.every(o => this.onLand(o) && (!o.task || !/^(lay|parade)/.test(o.task.name))) && this.parade()) return d.task;
-    if (r < 0.45) return this.swimTask(d, false);
-    if (this.ball && this.ball.zone === 'water' && r < 0.6) return this.swimTask(d, false, true);      // (not while it's out on the yard: that's fetching)
+    if (d.idx === 0 && !this.brood && !this.plot.farmer && r < 0.12 && this.ducks.every(o => this.onLand(o) && !o.held && !o.called && !o.cuddle && (!o.task || !/^(lay|parade|eat|pleased|cuddle|cheer|held|greet)/.test(o.task.name))) && this.parade()) return d.task;      // (not while the farmer's in, nor taking anyone from what she's doing)
+    // (each in her own way: the Rebel always off for a swim, the Glutton grazing, the Diva preening, the Brave on watch by the pond)
+    const swim = d.pers === 'rebel' ? 0.62 : 0.45;
+    if (r < swim) return this.swimTask(d, false);
+    if (this.ball && this.ball.zone === 'water' && r < swim + 0.15) return this.swimTask(d, false, true);      // (not while it's out on the yard: that's fetching)
+    if (d.pers === 'brave' && r > 0.82) { const w = this.watchSpot(); if (w && this.walkTo(L, w[0], w[1], 'walk', d)) { L.push(TK.face(w[2]), TK.act('watch', 6 + this.r() * 5, (g, u) => { g.A.upGoal = 0.95; g.A.lookYawGoal = 0.7 * Math.sin(u * 0.9 + g.seed); g.A.tiltGoal = 0.25 * Math.max(0, Math.sin(u * 0.6)); })); return TK.seq('yard', L); } }
     const s = this.yardSpot(); if (!this.walkTo(L, s[0], s[1], 'walk', d)) return TK.act('look', 2 + this.r() * 2);
-    const k = this.r();
+    const k = d.pers === 'glutton' ? this.r() * 0.6 : d.pers === 'diva' ? 0.45 + this.r() * 0.35 : this.r();
     L.push(k < 0.45 ? TK.act('graze', 5 + this.r() * 7) : k < 0.65 ? TK.act('preen', 4 + this.r() * 4, (g, u) => { g.preenSide = g.preenSide || 1; DACT.preen(g, u); })
       : k < 0.8 ? TK.act('rest', 6 + this.r() * 8, DACT.rest) : k < 0.9 ? TK.act('bob', 3.4, BOB) : TK.act('look', 3 + this.r() * 3));
     return TK.seq('yard', L);
@@ -404,8 +416,39 @@ export class CallPen {
       return this.t > 10;
     } });
     L.push(() => { g_hide(d); return null; }, TK.act('wait', 1 + this.r(), () => {}), () => { this.inside(d, false); return null; });
-    L.push(this.rampTask(false), S(this.foot[0], this.foot[1] + 0.25, 'walk', false, 0.08), TK.act('stretch', 2.4, ACT.shake));
+    L.push(this.rampTask(false), S(this.foot[0], this.foot[1] + 0.25, 'walk', false, 0.08), g => { g.pleasedNext = true; return null; });      // (then pleased with herself: update)
     return TK.seq('lay', L);
+  }
+  // after laying (as the hens': main.js celebrate; Audrey, 30 Oct: "Finish the ducks properly"), each personality her own
+  // way of being pleased with herself: the Diva a slow proud strut along the yard, chest out and head high, then a shake;
+  // the Brave a march round the yard, stopping to look about, then a flap of the wings; the Glutton straight to the feeder
+  // for a well-earned snack; the Rebel a hop and a flap, then a run and a jump into the pond and a big splashy bath; the
+  // Good mum a contented shake, a quack and a sit down
+  pleased(d) {
+    const Y = this.o.yard, L = [], k = this.r() < 0.5 ? -1 : 1;
+    const ok = (x, z) => { x = Math.max(Y.min[0] + 0.12, Math.min(Y.max[0] - 0.12, x)); z = Math.max(Y.min[2] + 0.1, Math.min(Y.max[2] - 0.08, z)); if (this.free(x, z, 0.1)) return [x, z];
+      for (let r = 0.08; r < 1.2; r += 0.08) for (let a = 0; a < 6.28; a += 0.45) { const qx = x + Math.cos(a) * r, qz = z + Math.sin(a) * r; if (this.free(qx, qz, 0.1)) return [qx, qz]; } return null; };
+    if (!d.pers) return [TK.act('stretch', 2.4, ACT.shake)];      // (the test page's ducks: no personalities)
+    const go = (q, pace, also) => { if (q) L.push(g => { const W = []; if (!this.walkTo(W, q[0], q[1], pace, g)) return null; return TK.seq('walk', also ? W.map(also) : W); }); };
+    const proud = t => ({ name: t.name, act: 'walk', t: 0, run(g, dt) { this.t += dt; g.A.proudGoal = 1; g.A.upGoal = 0.85; g.A.tailUpGoal = 0.6; return t.run(g, dt); } });
+    if (d.pers === 'diva') {
+      go(ok(this.foot[0] + k * 0.45, this.foot[1] + 0.3), 'strut', proud); go(ok(this.foot[0] - k * 0.35, this.foot[1] + 0.45), 'strut', proud);
+      L.push(TK.act('proud', 1.6, (g, u) => { g.A.proudGoal = 1; g.A.upGoal = 1; g.A.lookPitchGoal = 0.25; g.A.tailUpGoal = 0.8; }), TK.act('shake', 1.4, ACT.shake));
+    } else if (d.pers === 'brave') {
+      const round = [ok(Y.max[0], Y.max[2]), ok(Y.min[0], Y.max[2]), ok(this.foot[0], this.foot[1] + 0.4)]; if (k < 0) round.reverse();
+      for (const q of round) { go(q, 'hurry'); L.push(TK.act('watch', 1.6, (g, u) => { g.A.upGoal = 1; g.A.lookYawGoal = 0.8 * Math.sin(u * 2.2); g.A.tiltGoal = 0.2 * Math.sin(u * 3); })); }
+      L.push(TK.act('flap', 2.8, DACT.stretch));
+    } else if (d.pers === 'glutton' && this.o.feeder) {
+      const F = this.o.feeder, cx = (Y.min[0] + Y.max[0]) / 2, a = Math.atan2(cx - F[0], Y.max[2] - F[1]), at = ok(F[0] + Math.sin(a) * 0.3, F[1] + Math.cos(a) * 0.3);
+      if (at) { go(at, 'run'); L.push(g => TK.face(Math.atan2(F[0] - g.pos.x, F[1] - g.pos.z)), TK.act('snack', 4.5, (g, u) => { const A = g.A; A.grazeGoal = 0.8; A.jawGoal = Math.sin(u * 14) > 0.2 ? 0.6 : 0; A.billAt = A.billAt || new THREE.Vector3(); A.billAt.set(0, 0.07, 0.17); A.billWGoal = 1; A.wagGoal = 0.7; })); }
+    } else if (d.pers === 'rebel') {
+      L.push(TK.act('hop', 1.3, JOY), () => { if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); return null; });
+      const P = this.P, fr = this.ring.filter(p => p.s > 0.8 && Math.sin(p.t) > 0.45);
+      const p = fr.length ? fr.reduce((a, q) => Math.hypot(q.x - d.pos.x, q.z - d.pos.z) < Math.hypot(a.x - d.pos.x, a.z - d.pos.z) ? q : a) : null;
+      if (p) { const bank = [P.cx + P.a * 1.24 * Math.cos(p.t), P.cz + P.b * 1.24 * Math.sin(p.t)]; go(bank, 'run'); L.push(S(p.x, p.z, 'run', true, 0.1), TK.act('bathe', 3.9, DACT.bathe), TK.act('bathe', 3.9, DACT.bathe)); }
+    } else L.push(TK.act('shake', 1.4, ACT.shake), TK.act('quack', 1.6, (g, u) => DACT.quack(g, u, 2)), TK.act('rest', 6, DACT.rest));
+    if (!L.length) L.push(TK.act('stretch', 2.4, ACT.shake));
+    return L;
   }
   sleepTask() { return TK.act('sleep', 1e9, () => {}); }
   // to bed: one after another (the ducks first, Pip last), up the gangplank and in
@@ -434,7 +477,7 @@ export class CallPen {
     });
   }
   // ---- the game's: her lay when it's due (main.js gameTick), her card open, a cuddle, a hello to the farmer
-  busy(d, parade = true) { return d.inHouse || d.broody || !d.root.visible || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet|argue|fetch|sit|lead)/ : /^(lay|bed|morning|held|cuddle|greet|argue|fetch|sit|lead)/).test(d.task.name)); }
+  busy(d, parade = true) { return d.inHouse || d.broody || !d.root.visible || !!d.leaving || !!d.called || (d.task && (parade ? /^(lay|bed|morning|parade|held|cuddle|greet|argue|fetch|sit|lead|cheer|pleased)/ : /^(lay|bed|morning|held|cuddle|greet|argue|fetch|sit|lead|cheer|pleased)/).test(d.task.name)); }
   canLay(d) {        // (by day, up and about on the yard, nobody else in the nest)
     return d.kind === 'call_f' && !d.broody && !(this.brood && this.brood.mum === d) && !this.bedtime(this.o.hour()) && !d.held && !this.busy(d) && this.onLand(d) && !this.ducks.some(o => o.laying || o.broody);
   }
@@ -468,7 +511,7 @@ export class CallPen {
   waitFor() {
     const B = this.brood; if (!B || !this.kids.length) return null;
     const m = B.mum; if (m.inHouse || !m.root.visible || this.onRamp(m.pos.x, m.pos.z) !== null || !m.task || !/^(yard|swim)$/.test(m.task.name)) { B.waiting = false; return null; }
-    const out = this.kids.filter(k => !k.inHouse); if (!out.length) return null;
+    const out = this.kids.filter(k => !k.inHouse && !k.leaving); if (!out.length) return null;
     const far = Math.max(...out.map(k => Math.hypot(k.pos.x - m.pos.x, k.pos.z - m.pos.z)));
     B.waiting = B.waiting ? far > 0.55 : far > 0.95;      // (stops once they're well behind; on again once they're close)
     return B.waiting ? m : null;
@@ -526,9 +569,148 @@ export class CallPen {
     if (pop && this.o.heart && !y.inHouse) this.o.heart(y);
     return y;
   }
-  // grown and off to a new farm: a heart over each, and they fade away (their coins are the game's)
+  // grown and off to a new farm, unseen (at night, in bed, the farmer away...): a heart over each, and they fade away (their
+  // coins are the game's)
   farewell() {
-    for (const k of this.kids) { if (this.o.heart && k.root.visible && !k.inHouse) this.o.heart(k); k.leaving = { t: 0 }; }
+    for (const k of this.kids) { if (this.o.heart && k.root.visible && !k.inHouse) this.o.heart(k); k.leaving = { phase: 'fade', t: 0 }; k.task = null; }
+  }
+  // grown and off to a new farm, seen (Audrey, 30 Oct: "Finish the ducks properly"; main.js ducksGo and tickDuckFarewell, as
+  // the hens' farewell at the gate): each young duck or drake out of the water and over to her place in the line just
+  // inside the gate (G.line, G.faceIn: main.js gateOf), turned to face out ('gather'); a hop, a flap and a quack for joy
+  // there, three times (main.js: hearts over them; joy()); then one after another out through the gate and along the way
+  // off the farm, a waddling run, never into the one ahead (goOut); fading away past its edge ('fade')
+  sendOff(G) {
+    this.kids.forEach((k, i) => { k.leaving = { phase: 'gather', t: 0, i, spot: G.line[i], face: G.faceIn[i] }; k.held = false; k.task = this.gatherTask(k); });
+  }
+  // out of the water first (if she's in it), up the bank at the front: its steps
+  ashore(k) {
+    const L = [], P = this.P;
+    if (k.wet > 0.3 || this.pondS(k.pos.x, k.pos.z) < 1.08) {
+      const fr = this.ring.filter(p => this.side(p.x) === this.side(k.pos.x) && p.s > 0.8 && Math.sin(p.t) > 0.45);
+      const p = fr.length ? fr.reduce((a, q) => Math.hypot(q.x - k.pos.x, q.z - k.pos.z) < Math.hypot(a.x - k.pos.x, a.z - k.pos.z) ? q : a) : null;
+      if (p) { const c = this.viaCorner([k.pos.x, k.pos.z], [p.x, p.z]); if (c) L.push(S(c[0], c[1], 'walk', true, 0.08)); L.push(S(p.x, p.z, 'walk', true, 0.1), S(P.cx + P.a * 1.24 * Math.cos(p.t), P.cz + P.b * 1.24 * Math.sin(p.t), 'walk', false, 0.08)); }
+    }
+    return L;
+  }
+  gatherTask(k) {
+    const L = this.ashore(k), [x, z] = k.leaving.spot;
+    L.push(g => { const Q = []; if (!this.walkTo(Q, x, z, 'hurry', g)) Q.push(S(x, z, 'hurry', false, 0.05)); return TK.seq('to-line', Q); });
+    L.push(g => TK.face(g.leaving.face));
+    L.push({ name: 'line', act: 'look', t: 0, run(g, dt) {      // (in her place, waiting; a hop for joy when it's time)
+      this.t += dt; const Lv = g.leaving; Lv.there = true;
+      if (Lv.joyT !== undefined && Lv.joyT < 1.3) { Lv.joyT += dt; JOY(g, Lv.joyT); } else { ACT.look(g, this.t * 0.7); g.turnTo(Lv.face, dt, 2); }
+      return Lv.phase === 'exit';
+    } });
+    return TK.seq('leave', L);
+  }
+  joy(k) { if (k.leaving) k.leaving.joyT = 0; if (this.o.sound) this.o.sound('quack', k.pos.x, k.pos.z); }
+  // her mother and her father seeing them off: a flap of the wings and a quack or two, where they are
+  cheer(d) {
+    if (d.held || d.inHouse || !d.root.visible || d.broody || d.laying || (d.task && /^(bed|morning|greet|cuddle|lay|sit)/.test(d.task.name))) return false;
+    d.task = TK.seq('cheer', [TK.act('flap', 2.2, (g, u) => { DACT.stretch(g, Math.min(2.1, 0.4 + u)); if (u > 0.3 && u < 1.3) { g.A.honkGoal = 0.6; g.A.jawGoal = Math.sin(u * 9) > 0.1 ? 1 : 0; } }), TK.act('quack', 1.3, (g, u) => DACT.quack(g, u, 2))]);
+    if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z);
+    return true;
+  }
+  // ---- the farmer in their pen (Audrey, 30 Oct: "Finish the ducks properly"; main.js penSpec, farmlife.js visitPen):
+  // plot.farmer is where he is in the pen's frame (and his pail): nobody in his boots or his pail (keepFromFarmer). Corn
+  // thrown on the yard: they hurry over (the glutton first) and peck it up grain by grain (cornOut, eatTask). Called over
+  // to him (a cuddle, her worms: comeTo): out of the water, round the pond to her spot in front of him and settled there
+  // facing him; in his arms (main.js lift: cuddle.carry, where she is; carried, below), her worms (cuddle.dig: dabbling
+  // in the grass, up with one in her bill, over to his palm); set down again and off about her day (release)
+  keepFromFarmer(d) {
+    const F = this.plot.farmer; if (!F || !this.solid(d) || (d.cuddle && d.cuddle.carry)) return;
+    for (const [x, z, r] of [[F.x, F.z, 0.27], ...(F.px !== undefined ? [[F.px, F.pz, 0.16]] : [])]) {
+      const dx = d.pos.x - x, dz = d.pos.z - z, l = Math.hypot(dx, dz), need = r + CAP.r * capK(d);
+      if (l >= need) continue;
+      const nx = l > 1e-4 ? dx / l : Math.sin(d.heading), nz = l > 1e-4 ? dz / l : Math.cos(d.heading), ov = Math.min(need - l, 0.08);      // (as fast as he walks)
+      if (this.shove(d, nx * ov, nz * ov) || this.shoveOut(d, nx, nz, ov)) continue;
+      const Y = this.o.yard;      // (pinned against the fence by him, coming in at the gate, say: out of his way all the same, a little further out)
+      for (const [a, b] of [[1, 0], [0.7, 0.7], [0.7, -0.7], [0, 1.2], [0, -1.2]]) {
+        const x = d.pos.x + (nx * a - nz * b) * ov, z = d.pos.z + (nz * a + nx * b) * ov;
+        if (this.inRaft(x, z, 0.02) || this.underPlank(x, z, -0.02) || x < Y.min[0] - 0.25 || x > Y.max[0] + 0.25 || z < Y.min[2] - 0.25 || z > Y.max[2] + 0.25) continue;
+        d.pos.x = x; d.pos.z = z; break;
+      }
+    }
+  }
+  cornOut() {      // (corn! off they go: from a parade, a swim, the ball...; not from the nest, bed, his arms)
+    this.ducks.forEach(d => {
+      if (d.held || d.called || d.leaving || d.broody || d.inHouse || !d.root.visible || d.laying || (d.task && /^(eat|cuddle|lay|sit|lead|bed|morning|greet|cheer)/.test(d.task.name))) return;
+      d.task = this.eatTask(d, d.pers === 'glutton' ? 0.15 : 0.5 + this.r() * 0.9);
+    });
+  }
+  eatTask(d, wait = 0) {
+    const pen = this, L = [TK.act('look', wait, (g, u) => { g.A.upGoal = 0.7; g.A.lookYawGoal = 0.4 * Math.sin(u * 5); })];      // (corn! heads up)
+    L.push(...this.ashore(d));
+    L.push({ name: 'peck', act: 'walk', t: 0, run(g, dt) {
+      this.t += dt; const C = pen.plot.corn; if (!C || this.t > 90) { g.eatAt = null; return true; }
+      if (!this.at) {
+        const q = C.pick(g.pos.x, g.pos.z, g, pen.ducks);
+        if (!q) { g.eatAt = null; if (C.flying && this.t < 10) { this.act = 'look'; ACT.look(g, this.t); return false; } return true; }
+        const dx = q[0] - g.pos.x, dz = q[1] - g.pos.z, l = Math.hypot(dx, dz) || 1, reach = 0.11 * (g.size || 1);
+        this.at = q; g.eatAt = q; this.peck = 0; this.stand = [q[0] - dx / l * reach, q[1] - dz / l * reach];
+        this.way = pen.landWay([g.pos.x, g.pos.z], this.stand) || [this.stand];
+      }
+      const q = this.at;
+      if (this.way.length) {                                // (on her way, round the pond: a hurry, the glutton a run)
+        const w = this.way[0]; this.act = 'walk';
+        if (g.moveTo(w[0], w[1], dt, g.pers === 'glutton' ? 'run' : 'hurry', this.way.length > 1) || Math.hypot(w[0] - g.pos.x, w[1] - g.pos.z) < (this.way.length > 1 ? 0.12 : 0.05)) this.way.shift();
+        if (this.t > 30) this.way = [];
+        return false;
+      }
+      this.act = 'graze'; this.peck += dt; g.turnTo(Math.atan2(q[0] - g.pos.x, q[1] - g.pos.z), dt, 3);
+      const A = g.A, k = g.size || 1; A.grazeGoal = 1; A.jawGoal = Math.sin(this.peck * 16) > 0.2 ? 0.5 : 0; A.billAt = A.billAt || new THREE.Vector3(); A.billAt.set(0, 0.02 * k, 0.12 * k); A.billWGoal = 1; A.wagGoal = 0.5;
+      if (this.peck > 0.9 + pen.r() * 0.6) { C.eat(q[0], q[1], 0.1, 4); this.at = null; g.eatAt = null; }
+      return false;
+    } });
+    return TK.seq('eat', L);
+  }
+  comeTo(d, at, face) {
+    if (d.inHouse || d.broody || d.leaving || !d.root.visible || d.laying || (d.task && /^(sit|lead|bed|morning|lay)/.test(d.task.name))) return false;
+    const pen = this; d.cuddle = { spot: at, face, ready: false };
+    const L = this.ashore(d);
+    L.push(g => { const far = Math.hypot(at[0] - g.pos.x, at[1] - g.pos.z) > 1.2 ? 'run' : 'hurry', Q = []; if (!this.walkTo(Q, at[0], at[1], far, g)) Q.push(S(at[0], at[1], far, false, 0.04)); else Q[Q.length - 1] = S(at[0], at[1], far, false, 0.03); return TK.seq('to-him', Q); });      // (from afar, a waddling run)
+    L.push(g => TK.face(face));
+    L.push({ name: 'with-him', act: 'look', t: 0, run(g, dt) {
+      this.t += dt; const C = g.cuddle; if (!C || C.done) { g.cuddle = null; return true; }
+      C.ready = true; const A = g.A;
+      if (C.carry) { A.sitGoal = 1; A.upGoal = 0.15; A.squintGoal = C.carry.k > 0.9 ? 0.95 : 0; A.wagGoal = C.carry.k > 0.9 ? 0.3 * (Math.sin(this.t * 2) > 0.6 ? 1 : 0) : 0; return false; }
+      if (C.dig) {                                          // her worms: dabbling in the grass, up with one, over to his palm
+        const t = C.dig.t;
+        if (t < 1.1) { A.grazeGoal = 1; A.jawGoal = Math.sin(t * 15) > 0.2 ? 0.5 : 0; A.billAt = A.billAt || new THREE.Vector3(); A.billAt.set(0.02 * Math.sin(t * 7), 0.02, 0.13); A.billWGoal = 1; A.wagGoal = 0.4; }
+        else if (t < 1.75) { A.upGoal = 0.45; A.lookPitchGoal = -0.15; }
+        else if (t < 2.25 && C.palm) { const v = g.root.worldToLocal(C.palm.clone()); A.billAt = A.billAt || new THREE.Vector3(); A.billAt.copy(v); A.billWGoal = 0.9; A.upGoal = 0.3; }
+        else { A.upGoal = 0.4; A.wagGoal = 0.6; }
+        return false;
+      }
+      ACT.look(g, this.t * 0.4); A.upGoal = 0.5; A.lookPitchGoal = 0.2; A.lookYawGoal *= 0.3; A.wagGoal = (this.t % 2.4) < 0.4 ? 0.8 : 0.1;      // (looking up at him, a waggle now and then)
+      return false;
+    } });
+    d.task = TK.seq('cuddle', L);
+    for (const o of this.ducks) if (o !== d && !this.busy(o) && !o.held && this.onLand(o) && Math.hypot(o.pos.x - at[0], o.pos.z - at[1]) < 0.3) { const s = this.yardSpot(), Q = []; if (this.walkTo(Q, s[0], s[1], 'walk', o)) o.task = TK.seq('yard', Q); }      // (anyone sitting where she'll be: up and off)
+    return true;
+  }
+  release(d) { d.called = false; if (d.cuddle) { d.cuddle.carry = null; d.cuddle.done = true; } }
+  // where she's been reached for: up there in his arms (main.js lift sets cuddle.carry)
+  carried(d) {
+    const c = d.cuddle && d.cuddle.carry; if (!c) return false;
+    d.pos.set(c.x, c.y, c.z); d.heading = c.yaw; d.root.rotation.y = c.yaw; d.lastPos.copy(d.pos); d.spd = 0;
+    d.shadow.visible = true; d.shadow.position.set(c.x, this.groundY(c.x, c.z) + 0.004, c.z);
+    return true;
+  }
+  // out through the gate and off the farm (path: the pen frame's points; ahead: the one going before her)
+  goOut(k, path, ahead) {
+    const pen = this, Lv = k.leaving; Lv.phase = 'exit'; Lv.t = 0; Lv.path = path.map(q => [...q]); Lv.ahead = ahead || null;
+    k.task = { name: 'leave-out', act: 'walk', t: 0, run(g, dt) {
+      this.t += dt; const L = g.leaving, q = L.path[0];
+      if (!q || this.t > 150) { L.phase = 'fade'; L.t = 0; return true; }
+      if (Math.hypot(q[0] - g.pos.x, q[1] - g.pos.z) < 0.1) { L.path.shift(); if (!L.path.length) { L.phase = 'fade'; L.t = 0; L.on = 0.3; return true; } return false; }
+      const A = L.ahead && pen.kids.includes(L.ahead) && L.ahead.leaving && L.ahead.leaving.phase !== 'fade' ? L.ahead : null;
+      const close = A && Math.hypot(A.pos.x - g.pos.x, A.pos.z - g.pos.z) < 0.3 * (g.size || 1) + 0.08 && (A.pos.x - g.pos.x) * (q[0] - g.pos.x) + (A.pos.z - g.pos.z) * (q[1] - g.pos.z) > 0;      // (the one ahead: never into her)
+      if (close) { this.act = 'look'; g.spd = 0; g.turnTo(Math.atan2(q[0] - g.pos.x, q[1] - g.pos.z), dt, 2); return false; }
+      this.act = 'walk'; g.lone = true; g.moveTo(q[0], q[1], dt, 'run', true); g.lone = false;      // (a waddling run: off they go)
+      g.A.wagGoal = 0.4; g.A.upGoal = 0.35;
+      return false;
+    } };
   }
   // her day with them: a walk about the yard (slowly), a swim, a long rest with them round her
   // (Audrey, 30 Oct: "They should go where there is more water ... they keep going in and out the water": a long swim out
@@ -782,25 +964,28 @@ export class CallPen {
         continue;
       }
       if (!d.task && !bed && !d.inHouse && d.held) this.hold(d, true);
+      if (d.pleasedNext) { d.pleasedNext = false; if (!d.task && !bed && !d.inHouse) d.task = TK.seq('pleased', this.pleased(d)); }      // (just laid: her own way of being pleased with herself)
       if (!d.task && !bed && !d.inHouse) d.task = this.dayTask(d);
       if (d.inHouse && !d.task) d.task = this.sleepTask();
       d.update(dt);
+      if (this.carried(d)) continue;
       if (d === this.ducks[0] && d.task && /^parade/.test(d.task.name)) { const q = d.trail[d.trail.length - 1]; if (!q || Math.hypot(q[0] - d.pos.x, q[1] - d.pos.z) > 0.03) { d.trail.push([d.pos.x, d.pos.z]); } }
       d.shadow.visible = d.root.visible && !d.inHouse;
       if (d.shadow.visible) { d.shadow.position.set(d.pos.x, (d.wet > 0.5 ? this.P.wy : this.groundY(d.pos.x, d.pos.z)) + 0.004, d.pos.z); d.shadow.rotation.y = d.heading; }
     }
     for (const k of [...this.kids]) {
-      if (k.leaving) {                                     // (fading away, off to their new farm)
-        k.leaving.t += dt; k.appear = Math.max(0, 1 - k.leaving.t / 1.4);
-        if (k.leaving.t > 1.4) { k.root.removeFromParent(); k.shadow.removeFromParent(); this.kids.splice(this.kids.indexOf(k), 1); this.near = this.all(); if (!this.kids.length) this.brood = null; continue; }
-      }
-      if (!k.task) k.task = this.kidTask();
+      if (k.leaving && k.leaving.phase === 'fade') {       // (fading away, off to their new farm: walking on as they go, if they were)
+        const L = k.leaving, dur = L.on ? 0.9 : 1.4; L.t += dt; k.appear = Math.max(0, 1 - L.t / dur);
+        if (L.on) { k.pos.x += Math.sin(k.heading) * L.on * dt; k.pos.z += Math.cos(k.heading) * L.on * dt; k.spd = L.on; k.moved = true; }
+        if (L.t > dur) { L.gone = true; k.root.removeFromParent(); k.shadow.removeFromParent(); this.kids.splice(this.kids.indexOf(k), 1); this.near = this.all(); if (!this.kids.length) this.brood = null; continue; }
+      } else if (k.leaving) k.leaving.t += dt;
+      if (!k.task && !k.leaving) k.task = this.kidTask();
       k.update(dt);
       k.shadow.visible = k.root.visible && !k.inHouse;
       if (k.shadow.visible) { k.shadow.position.set(k.pos.x, (k.wet > 0.5 ? this.P.wy : this.groundY(k.pos.x, k.pos.z)) + 0.004, k.pos.z); k.shadow.rotation.y = k.heading; }
     }
     this.trails();
-    for (const d of this.all()) this.keepOff(d);
+    for (const d of this.all()) { this.keepOff(d); this.keepFromFarmer(d); }
     this.apart();
     if (this.ball) {
       this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt);
@@ -814,7 +999,7 @@ export class CallPen {
     }
   }
   // ---- nobody through anybody
-  solid(d) { return d.root.visible && !d.inHouse && !this.inHouseAt(d.pos.x, d.pos.z) && this.onRamp(d.pos.x, d.pos.z) === null; }
+  solid(d) { return d.root.visible && !d.inHouse && !(d.cuddle && d.cuddle.carry) && !this.inHouseAt(d.pos.x, d.pos.z) && this.onRamp(d.pos.x, d.pos.z) === null; }
   // where she may be put: afloat, in the water clear of the raft and the gangplank; on land, off the raft, in the yard
   okAt(d, x, z) {
     if (this.inRaft(x, z, 0.02) || this.underPlank(x, z, -0.02)) return false;
@@ -882,4 +1067,9 @@ export class CallPen {
 }
 function g_hide(d) { d.root.visible = false; d.shadow.visible = false; }
 // a happy bob of the head, then the tail wiggle (geese.js's bob and the call ducks' wag)
+// a hop for joy (a young one off to a new farm): down, up off the ground with the wings open and beating, a quack, down again
+const JOY = (g, u) => { const A = g.A, k = g.size || 1;
+  if (u < 0.18) { A.upGoal = 0.1; A.tailUpGoal = 0.3; }
+  else if (u < 0.62) { A.liftGoal = 0.06 * k * Math.sin((u - 0.18) / 0.44 * Math.PI); A.wingsGoal = 0.9; A.flapGoal = 1; A.upGoal = 0.8; A.tailUpGoal = 0.7; A.honkGoal = 0.5; A.jawGoal = 1; }
+  else { A.upGoal = 0.45; A.wagGoal = 1; A.jawGoal = u < 0.9 ? 1 : 0; A.honkGoal = u < 0.9 ? 0.4 : 0; } };
 const BOB = (g, u) => { const A = g.A; if (u < 1.6) { A.bobGoal = 1; A.upGoal = 0.3; } else { A.wagGoal = 1; A.tailUpGoal = 0.4; } };

@@ -320,7 +320,7 @@ export class Goose {
     if (this.isDuck && this.wet <= 0.5) sp *= 0.78;                         // (a duck's shorter legs)
     if (this.wet > 0.5) sp = Math.min(sp, pace === 'walk' ? 0.16 : 0.3);
     let ax = dx / d, az = dz / d, slow = 1;
-    for (const o of this.flock ? this.flock.near : []) {
+    for (const o of this.flock && !this.lone ? this.flock.near : []) {      // (lone: a young call duck off to a new farm, minding only the one ahead: callpen.js goOut)
       if (o === this || (!o.isGoose && pace === 'charge')) continue;        // (charging at the fox: straight at him)
       if (this.isDuck && o.isDuck && o.idx > this.idx && !o.isDuckling) continue;      // (a duck never waits for those behind her in the line; round a duckling, always)
       if (o.inHouse || (o.root && !o.root.visible) || o.mum === this) continue;      // (her own ducklings: they make way for her, apart)

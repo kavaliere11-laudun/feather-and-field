@@ -963,5 +963,16 @@
  "text.congrats_exp_duck": "{mum} e {dad} guadagnano esperienza: i loro prossimi anatroccoli saranno ancora migliori.",
  "text.congrats_exp1_duck": "{mum} guadagna esperienza: i suoi prossimi anatroccoli saranno ancora migliori.",
  "text.away_hatched_duck": "A {name} sono nati {n} anatroccoli",
- "text.away_grown_duck": "Gli anatroccoli di {name} sono cresciuti: la loro scheda arriva subito dopo"
+ "text.away_grown_duck": "Gli anatroccoli di {name} sono cresciuti: la loro scheda arriva subito dopo",
+ "pers.mum.duck": [
+  "Una mamma nata: i suoi anatroccoli sono i più accuditi."
+ ],
+ "pers.rebel.duck": [
+  "Avventurosa: sempre la prima a tuffarsi nello stagno, e adora fare grandi schizzi.",
+  "Avventuroso: sempre il primo a tuffarsi nello stagno, e adora fare grandi schizzi."
+ ],
+ "pers.brave.duck": [
+  "Non ha paura di niente: veglia sullo stagno.",
+  "Non ha paura di niente: veglia sullo stagno."
+ ]
 }
