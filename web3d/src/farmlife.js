@@ -293,9 +293,9 @@ export class FarmLife {
       const L2 = () => P.henAt && P.henAt.hand === 'L', cup = () => L2() ? 'cupL' : 'cup', close = P2 => { P2[L2() ? 'handL' : 'handR'] = [105, 110, 40, 4]; };      // (the hand on her side)
       let near = null;      // (the peacock: he goes over to him, P.nearHim)
       L.push(() => { near = P.nearHim ? P.nearHim(hen) : null; return TK.seq('come', [TK.walk(near ? [...near.via, near.at] : P.around ? P.around([P.crouchAt]) : [P.crouchAt]), TK.face(near ? near.face : P.toHen)]); },
-        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        TK.act('crouch', 0.8, W => { W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen, true, near); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() ? TK.seq('worms', [
           TK.act('hand', 0.6, W => { W.pose = cup(); W.face = 'happy'; W.look = [0, -0.5]; }),
@@ -317,14 +317,20 @@ export class FarmLife {
       const sm = u => u * u * (3 - 2 * u), step = (a, b, u) => Math.max(0, Math.min(1, (u - a) / (b - a)));
       let near = null;      // (the peacock: he goes over to him, P.nearHim)
       L.push(() => { near = P.nearHim ? P.nearHim(hen) : null; return TK.seq('come', [TK.walk(near ? [...near.via, near.at] : P.around ? P.around([P.crouchAt]) : [P.crouchAt]), TK.face(near ? near.face : P.toHen)]); },
-        TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; }),
+        TK.act('crouch', 0.8, W => { W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; }),
         () => { ready = P.callHen(hen, false, near); return null; },
-        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
+        { name: 'wait', t: 0, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = near ? 'petTall' : 'pet'; W.face = 'happy'; W.look = [0, -0.4]; return !ready || ready() || this.t > (P.waitMax || 12); } },
         // (she couldn't come after all, gone in to lay, say: he gets up again)
         () => ready && ready() && P.noLift && P.noLift(hen) ? TK.seq('cuddling', [      // (the peacock, 31 Oct: too long to pick up with his train: he strokes him, crouched by him)
+          { name: 'room', t: 0, run(Lf, dt) { this.t += dt; Lf.want.pose = 'petTall'; Lf.want.face = 'happy'; return !P.crowded || !P.crowded(hen) || this.t > 3; } },      // (a peahen by him: she goes first)
           TK.face(P.headingTo ? P.headingTo(hen) : P.toHen),
+          // (then a shuffle of a few centimetres, so that his hand rests right on his back: P.handSpot)
+          { name: 'snug', t: 0, run(Lf, dt) { this.t += dt; Lf.want.pose = 'petTall'; Lf.want.face = 'happy';
+            const q = P.handSpot && P.handSpot(hen, Lf.heading); if (!q) return true;
+            const dx = q[0] - Lf.pos.x, dz = q[1] - Lf.pos.z, d = Math.hypot(dx, dz); if (d < 0.004 || d > 0.35) return true;
+            const s = Math.min(d, dt * 0.3); Lf.pos.x += dx / d * s; Lf.pos.z += dz / d * s; return this.t > 1.5; } },
           TK.say('cuddle'),
-          TK.act('stroke', 4.8, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; if (u > heart) { heart += 0.55; P.heart(hen); } }),
+          TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; if (u > heart) { heart += 0.55; P.heart(hen); } }),
         ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
           TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
@@ -563,7 +569,7 @@ export class FarmLife {
       if (W.patting) { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); }
       if (W.hug !== undefined) {                              // her back stroked, a gentle sway from side to side
         const st = Math.sin(t * 2.4), sw = Math.sin(t * 1.25);
-        P.shR[0] += 7 * st; P.elR[0] += 10 * st; P.wrR[0] += 12 * st; P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
+        P.shR[0] += 7 * st; P.elR[0] += 10 * st; P.wrR[0] += 12 * st; if (W.backK) P.shR[1] += W.backK * st;      /* (the peacock's back: the hand kept down on it as it goes along) */ P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
       }
       if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }

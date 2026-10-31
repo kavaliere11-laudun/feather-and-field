@@ -105,6 +105,9 @@ export const POSES = {
   panic: { chest: [0, 18, -6], head: [0, -6, -4], shR: [-10, -75, 0], elR: -15, shL: [8, 40, 0], elL: -50, hand: ['fist', 'hold'], hipL: [0, -32, 0], kneeL: 14, hipR: [0, 26, 0], kneeR: 34, root_z: -0.01 },
   cuddle: { head: [-6, 10, 0], chest: [0, -4, 0], shL: [6, -50, 0], elL: [-45, -72, 0], shR: [-6, -50, 0], elR: [45, -72, 0], hand: ['relax', 'relax'], wrL: [0, 0, -20], wrR: [0, 0, 20] },
   pet: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 10, 0], head: [0, -4, 0], shR: [-10, -78, 0], elR: -14, wrR: [0, 6, 0], shL: [14, -30, 0], elL: -60, hand: ['relax', 'open'] },
+  // (3D only) the peacock stroked (31 Oct, Audrey: "the farmer doesn't touch the peacock"): his back is higher than a hen's, so
+  // a half crouch, the right hand out on it
+  petTall: { root_z: -0.22, hipL: [10, -84, 0], hipR: [-10, -84, 0], kneeL: 120, kneeR: 120, ankleL: -38, ankleR: -38, chest: [0, 10, 0], head: [0, -4, 0], shR: [-10, -78, 0], elR: -14, wrR: [0, 6, 0], shL: [14, -30, 0], elL: -60, hand: ['relax', 'open'] },
   // (3D only) worms from a hen (farmlife.js, Audrey's idea): crouched in front of her, his right hand held out low, palm up,
   // for her to drop them in; then up, his hand closed round them, to the pocket on his bib
   cup: { root_z: -0.285, hipL: [10, -100, 0], hipR: [-10, -100, 0], kneeL: 150, kneeR: 150, ankleL: -50, ankleR: -50, chest: [0, 14, 0], head: [0, -10, 0],

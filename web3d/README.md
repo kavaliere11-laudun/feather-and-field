@@ -3514,9 +3514,13 @@ the birds already had.
   stuck there 6 seconds, a flutter up and over to somewhere roomier, his train streaming behind (`flyOut`, `stillSince`:
   now and then, every few minutes, more often in the fuller Cosy and Deluxe gardens). A target his train won't let him
   reach: somewhere else. The others keep off it (`onTrain` in `free`).
-- **His train is long and heavy** (Audrey, 31 Oct: "The tail should not really move when the peacock is picking the floor.
-  Imagine it's long and heavy"; birds.js `heavy`, the end of `pose`): it lies where it lies on the ground whatever his body
-  does (a peck, his steps, a shake), only swung round behind him and raised in his fan; he rests standing.
+- **His train is long and heavy, and alive** (Audrey, 31 Oct: "The tail should not really move when the peacock is
+  picking the floor. Imagine it's long and heavy", then "The tail doesn't move anymore that's not ok"; birds.js `heavy`,
+  the end of `pose`, `trainSpring`): rooted where it lies whatever his body does (a peck lifts it only a little, never
+  down into the ground), it sways slowly from side to side with his strides, a little behind them, with a soft lift at
+  each step; it swings out on his turns and settles on a slow heavy spring when he sets off or stops; standing, a slow
+  drift and his breathing. Swung round behind him (`bend`), raised in his fan with its shiver; he rests standing. His fan
+  now keeps its edges inside the fence too (`fanClear`: they reach 10 cm past its points).
 - **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
   where the peacock parade with his tail opened"): now and then he turns to where there's room and raises his train into
   his fan, with a little shiver, then parades with it open: round slowly one way and the other as far as there's room for
@@ -3538,7 +3542,13 @@ the birds already had.
 - **The farmer with them** (main.js `penSpec` `nearHim`, `noLift`, `callHen(b, worms, near)`; farmlife.js): a peahen is
   cuddled as a hen (picked up and held). The peacock is too long to pick up, and too long to come round and settle in
   front of the farmer: the farmer walks over to him (by his chest, a little in front, his knees well clear of the
-  train, by a way round what's in the yard), crouches and strokes his neck and back where he stands, hearts; no way to him (his train across the yard by the gate,
+  train, by a way round what's in the yard), half crouches beside him and strokes his back where he stands, hearts
+  (Audrey: "the farmer doesn't touch the peacock": his back is 48 cm up, so farmer.js `petTall`, a half crouch; his right
+  hand `PEA_HAND` ahead and to his right, put so that it rests on the middle of his back, `PEA_BACK`; a last shuffle of a
+  few centimetres to the very spot, the 'snug' step, `handSpot`; the stroke goes 17 cm along his back, from behind his
+  neck to where the train starts, the hand kept down on it, `backK`; measured on the drawn bird: within 2 cm of his
+  feathers all the way). The peahens give them room: sent off out of the way, he waits for them to go first (`crowded`,
+  the 'room' step); no way to him (his train across the yard by the gate,
   say): he flutters over to the farmer and lands beside him, side on, his train clear (`callHen`, `flyTo`), and the farmer
   turns to him (`headingTo`). His worms the same way. The farmer never walks through the train or the peacock (Audrey: "the tail clips with the farmer"): the train keeps
   off his way in at the gate and the spots he stands at (`farmerLanes`, `plot.lanes`), and between them he goes round

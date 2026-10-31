@@ -920,12 +920,22 @@ export class Rig {
       if (fan > 0) B.tail.rotation.x -= 0.15 * fan * (1 - fan) + 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan);
     }
     // the peacock's train (Audrey, 31 Oct: "The tail should not really move when the peacock is picking the floor. Imagine
-    // it's long and heavy"): it stays where it lies on the ground whatever his body does (a peck, his steps, a shake, a
-    // hop), only swung round behind him (bend) and raised in his fan, with its little shiver at full; hanging from his perch
-    // it goes with him as before
+    // it's long and heavy"; then "The tail doesn't move anymore that's not ok"): heavy, not stiff. Rooted where it lies
+    // whatever his body does (a peck lifts it only a little, never down into the ground), it sways slowly with his steps and
+    // swings out a little on his turns, on a slow heavy spring (it lags and settles); swung round behind him (bend), raised
+    // in his fan with its shiver at full; hanging from his perch it goes with him as before
     if (this.heavy) {
       const k = 1 - Math.max(0, Math.min(1, s.hang || 0)), fan = Math.max(0, Math.min(1, s.fan || 0));
-      HQ.setFromEuler(HE.set(-0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), s.bend || 0, 0));
+      const V = this.trainSpring || (this.trainSpring = { p: 0, pv: 0, y: 0, yv: 0 });
+      const gp = 0.02 * w + 0.05 * rf, gy = -0.07 * Math.max(-3, Math.min(3, s.turn || 0)) + 0.06 * shake;      // (on the spring: his turns, a ruffle, setting off and stopping)
+      V.pv += ((gp - V.p) * 26 - V.pv * 6.5) * dt; V.p += V.pv * dt;
+      V.yv += ((gy - V.y) * 22 - V.yv * 5.5) * dt; V.y += V.yv * dt;
+      const lift = Math.max(0, body.rotation.x) * 0.18;      // (a little of his peck in it)
+      // walking: a slow sway from side to side with his strides, a little behind them, and a soft lift at each step; at rest a
+      // slow heavy drift and his breathing (not in his fan: raised, it shivers)
+      const rest = (1 - w) * (1 - fan), sway = 0.075 * w * Math.sin(ph - 0.9) + rest * (0.022 * Math.sin(s.t * 1.05) + 0.012 * Math.sin(s.t * 0.43 + 1.3));
+      const bob = 0.022 * w * (0.5 - 0.5 * Math.cos(2 * ph - 1.4)) + rest * 0.01 * (0.5 + 0.5 * Math.sin(s.t * 1.7));
+      HQ.setFromEuler(HE.set(Math.max(0, V.p + bob) + lift - 0.02 * fan * Math.sin(s.t * 31) * smooth(0.9, 1, fan), (s.bend || 0) + (V.y + sway) * (1 - fan), 0));      // (never down into the ground)
       HQ2.copy(body.quaternion).invert(); HQ.premultiply(HQ2);
       B.tail.quaternion.slerp(HQ, k);
       HV.copy(Rr.root).add(Rr.body).add(Rr.tail).sub(B.root.position).sub(body.position).applyQuaternion(HQ2);      // (where it's rooted, as if he stood still)

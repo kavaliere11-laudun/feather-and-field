@@ -4,7 +4,7 @@
 // "Place their coop now": the rustic Garden Pavilion with its trio (the peacock first, with his train) in their pen, their
 // game names over them; a tap on a peahen: her card ("Indian Blue peafowl · Peahen", "her peachicks"); on the peacock: his
 // ("Peacock"); Cuddle the peacock: the farmer comes and crouches by him and strokes him where he stands (never picked up:
-// his train), hearts; a peahen: picked up and held as a hen is; her lay when it's due: the egg in the save; the feeder's
+// his train), his hand on his back (measured on the drawn farmer and bird), hearts; a peahen: picked up and held as a hen is; her lay when it's due: the egg in the save; the feeder's
 // card speaks of peahens; the Breed Book: the peafowl's page found with its picture; the shows take no peafowl; a brood:
 // peachicks round their mother (a peachick's card), then young peahens and peacocks (a young peacock is a peahen to look
 // at, no train yet); the Snug look: the pen made again round the same three; at night the peacock up on his perch, the
@@ -89,14 +89,23 @@ await shot('4_peacock_card');
 ok('a tap on the peacock: his card ("Indian Blue peafowl · Peacock")', cock.card === 'bird' && T.cock.test(cock.t) && !T.hen.test(cock.t), { card: cock.card, t: cock.t.slice(0, 400) });
 // Cuddle the peacock: the farmer comes, crouches by him and strokes him where he stands (never lifted), hearts
 await p.tap('.gsheet .gcuddle'); await run(0.4);
-const seen = new Set(); let lifted = 0, happy = false, closest = 9;
+const seen = new Set(), touch = []; let lifted = 0, happy = false, closest = 9;
+// (the farmer's right hand as drawn, its lowest point, against the top of the peacock's back under it, as drawn: Audrey, "the
+// farmer doesn't touch the peacock"; where on him: along his back from his middle, and to the side)
+const handOn = gid => p.evaluate(gid => { const f = window.__farm, T = f.THREE, L = f.farmer(), Q = f.gamePlots().find(q => q.breed === 'pea'), x = Q.birds.find(y => y.gid === gid), v = new T.Vector3();
+  const M = L.f.rig.mesh, hi = M.skeleton.bones.indexOf(L.f.rig.B.handR), g = M.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight; let lo = 9, n = 0; const c = new T.Vector3(); M.updateMatrixWorld(); M.skeleton.update();
+  for (let i = 0; i < si.count; i++) { let w = 0; for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === hi) w += sw.getComponent(i, k); if (w < 0.5) continue; M.getVertexPosition(i, v); v.applyMatrix4(M.matrixWorld); lo = Math.min(lo, v.y); c.add(v); n++; }
+  c.multiplyScalar(1 / Math.max(1, n)); let top = -9;
+  x.root.traverse(m => { if (!m.isSkinnedMesh || !m.visible) return; m.updateMatrixWorld(); m.skeleton.update(); const P = m.geometry.attributes.position; for (let i = 0; i < P.count; i++) { m.getVertexPosition(i, v); v.applyMatrix4(m.matrixWorld); if (Math.hypot(v.x - c.x, v.z - c.z) < 0.035) top = Math.max(top, v.y); } });
+  const R = x.root.getWorldPosition(new T.Vector3()), fv = new T.Vector3(0, 0, 1).applyQuaternion(x.root.getWorldQuaternion(new T.Quaternion())), dx = c.x - R.x, dz = c.z - R.z, r = q => +q.toFixed(3);
+  return { gap: r(lo - top), along: r(dx * fv.x + dz * fv.z), lat: r(-dx * fv.z + dz * fv.x) }; }, gid);
 for (let k = 0; k < 60; k++) {
   await run(0.5);
   const q = await p.evaluate(gid => { const f = window.__farm, g = f.game(), Q = f.gamePlots().find(q => q.breed === 'pea'), x = Q.birds.find(y => y.gid === gid), L = f.farmer();
     const others = Q.birds.filter(y => y !== x && y.root.visible).map(y => { const w = y.root.getWorldPosition(new f.THREE.Vector3()); return Math.hypot(w.x - L.pos.x, w.z - L.pos.z); });
     return { carry: !!(x.cuddle && x.cuddle.carry), y: x.root.position.y, happy: g.happyLeft(g.bird(gid)) > 0, others: Math.min(9, ...others) }; }, cock.gid);
   const d = await doing(); for (const n of d.split('/')) seen.add(n);
-  if (d.endsWith('stroke')) closest = Math.min(closest, q.others);
+  if (d.endsWith('stroke')) { closest = Math.min(closest, q.others); touch.push(await handOn(cock.gid)); }
   if (q.carry) lifted++;
   happy = q.happy;
   if (seen.has('stroke') && k === [...seen].length) { /* */ }
@@ -104,6 +113,7 @@ for (let k = 0; k < 60; k++) {
   if (seen.has('stroke') && !d.includes('stroke') && !d.includes('cuddling')) break;
 }
 ok('Cuddle the peacock: the farmer comes, crouches and strokes him where he stands (never picked up), the cuddle counted, the peahens giving them room', seen.has('stroke') && !seen.has('hug') && lifted === 0 && happy && closest > 0.6, { seen: [...seen], lifted, happy, closest: +closest.toFixed(2) });
+ok('…his hand on the peacock\'s back as he strokes him (within 4 cm of his feathers, along the middle of his back)', touch.length >= 3 && touch.every(h => Math.abs(h.gap) < 0.04 && h.along > -0.26 && h.along < 0.06 && Math.abs(h.lat) < 0.09), touch);
 // a peahen: picked up and held, as a hen is
 await run(4);
 const hen2 = await tapOn('hen');

@@ -1798,6 +1798,10 @@ function duckPenSpots(C, gx, gz, FD, off, H, R, side) {
   if (!cud) cud = { CB: S, ahead: [S[0], S[1] - 0.9] };
   return { IN, S, CLEAR: thr.B, FS, B: thr.B, SC: thr.SC, CB: cud.CB, ahead: cud.ahead };
 }
+// the peacock stroked (31 Oct, Audrey: "the farmer doesn't touch the peacock"): half crouched in 'petTall', the farmer's
+// right hand is PEA_HAND ahead of him and to his right (m, the middle of its stroke); it strokes the peacock's back about
+// PEA_BACK from where he stands (behind: the middle of his back, 48 cm up, his neck in front, his train behind)
+const PEA_HAND = [0.43, 0.26], PEA_BACK = -0.1;
 function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he goes in it, the way to it from the farm not needed: farmerLanes)
   const f = plot.frame; f.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(f.matrixWorld).invert(), v = new THREE.Vector3();
@@ -1881,22 +1885,30 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       if (b && b.isGoose) return callDuck(b, worms);
       if (!plot.farmer || !b || b.busy()) return null;
       if (b.train && !near) {      // (the peacock, no way for the farmer to get to him: he flutters over to the farmer, landing beside him side on, his train clear)
-        const F = [plot.farmer.x, plot.farmer.z], p0 = b.root.position; let best = null;
-        for (let k = 0; k < 24; k++) for (const d of [0.62, 0.74]) {
-          const a = k / 24 * 2 * Math.PI, q = [F[0] + Math.sin(a) * d, F[1] + Math.cos(a) * d];
+        const F = [plot.farmer.x, plot.farmer.z], p0 = b.root.position, [HF, HR] = PEA_HAND; let best = null;
+        for (let k = 0; k < 24; k++) for (const d of [0]) {      // (landing where the farmer's hand, crouched, rests on his back: HF ahead, HR to his right)
+          const hh = k / 24 * 2 * Math.PI, q = [F[0] + HF * Math.sin(hh) - HR * Math.cos(hh), F[1] + HF * Math.cos(hh) + HR * Math.sin(hh)], a = Math.atan2(q[0] - F[0], q[1] - F[1]);
           const Yd = PEN.yard; if (q[0] < Yd.min[0] + 0.3 || q[0] > Yd.max[0] - 0.3 || q[1] < Yd.min[2] + 0.3 || q[1] > Yd.max[2] - 0.3 || PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.15)) continue;
-          for (const y of [a + Math.PI / 2, a - Math.PI / 2]) if (b.trainClear(q[0], q[1], y, true, y, false)) {      /* (by him, he's there now: off his ways' spots no matter) */ const L = Math.hypot(q[0] - p0.x, q[1] - p0.z); if (!best || L < best.L) best = { q, y, L }; }
+          for (const y of [a + Math.PI / 2, a - Math.PI / 2]) if (b.trainClear(q[0], q[1], y, true, y, false)) {      /* (by him, he's there now: off his ways' spots no matter) */ const L = Math.hypot(q[0] - p0.x, q[1] - p0.z); if (!best || L < best.L) best = { q, y, L, hh }; }
         }
         if (!best) return null;
-        plot.farmer.hen = b; plot.block = [...plot.block, [best.q[0], best.q[1], 0.22, b]]; P.henAt = { side: false, hand: 'R', at: best.q, sides: [], room: 0, flew: true };
+        plot.farmer.hen = b; plot.block = [...plot.block, [best.q[0], best.q[1], 0.22, b]]; P.henAt = { side: false, hand: 'R', at: best.q, sides: [], room: 0, flew: true, h: H(F, [F[0] + Math.sin(best.hh), F[1] + Math.cos(best.hh)]) };
         if (!b.comeForCuddle(best.q, best.y)) return null;
         b.route = null; b.flyTo(best.q[0], best.q[1], best.y); b.then = { type: 'cuddle', left: 60 };      // (and settles there for it once down)
         return () => !b.cuddle || b.cuddle.ready;
       }
       if (near && b.train) {      // (the peacock, the farmer come over to him: he stays where he is, as he is)
         const at = [b.root.position.x, b.root.position.z], F = [plot.farmer.x, plot.farmer.z], mid = [(at[0] + F[0]) / 2, (at[1] + F[1]) / 2];
-        plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b], [mid[0], mid[1], 0.32, b]]; P.henAt = { side: false, hand: 'R', at, sides: [], room: 0, near: true };
-        for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - mid[0], o.root.position.z - mid[1]) < 0.6) o.shooFrom(mid[0], mid[1]);      // (nobody between them)
+        plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b], [mid[0], mid[1], 0.32, b]]; P.henAt = { side: false, hand: 'R', at, sides: [], room: 0, near: true, h: near.face };
+        for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - mid[0], o.root.position.z - mid[1]) < 0.75) {      // (nobody between them: off out of their way, straight out if need be)
+          const a0 = Math.atan2(o.root.position.x - mid[0], o.root.position.z - mid[1]);
+          for (const da of [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8, 2.5, -2.5]) {
+            const x = mid[0] + Math.sin(a0 + da) * 1.15, z = mid[1] + Math.cos(a0 + da) * 1.15;
+            if (!o.free(x, z) || Math.hypot(x - F[0], z - F[1]) < 0.85) continue;
+            const r = o.plan([[x, z]]); o.act = null; o.wait = 0; o.then = null; o.eatAt = null; o.route = r.length ? r : [[x, z]]; o.pace = 1.5; o.nextLeg(); o.shooT = 0.9;
+            break;
+          }
+        }
         return b.comeForCuddle(at, b.root.rotation.y) ? () => !b.cuddle || b.cuddle.ready : null;      // (facing as he was: stroked along his side)
       }
       // (a side she can get to from where she is, round him if need be, as comeForCuddle goes: else in front of him)
@@ -1913,7 +1925,16 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
         ? () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.root.position.x - at[0], b.root.position.z - at[1]) < 0.16) : null;      // (there in front of him: only then is she picked up)
     },
     noLift(b) { return !!(b && b.train); },      // (the peacock: stroked where he stands, not picked up)
-    headingTo(b) { const F = plot.farmer; return F && b ? H([F.x, F.z], [b.root.position.x, b.root.position.z]) : P.toHen; },      // (the way from the farmer to her)
+    // where the farmer crouches, facing h (world), for his right hand to rest on the peacock's back (his 'petTall' pose: the
+    // hand HAND ahead of him and to his right; on the back BACK behind where he stands, a little to the farmer's side)
+    handSpot(b, h) {
+      if (!b || !b.train || !plot.farmer) return null;
+      const p = b.root.position, y = b.root.rotation.y, F = [plot.farmer.x, plot.farmer.z], c = [p.x + Math.sin(y) * PEA_BACK, p.z + Math.cos(y) * PEA_BACK];
+      const sd = Math.sign((F[0] - p.x) * Math.cos(y) - (F[1] - p.z) * Math.sin(y)) || 1, t = W(c[0] + Math.cos(y) * 0.025 * sd, c[1] - Math.sin(y) * 0.025 * sd);
+      return [t[0] - (PEA_HAND[0] * Math.sin(h) - PEA_HAND[1] * Math.cos(h)), t[1] - (PEA_HAND[0] * Math.cos(h) + PEA_HAND[1] * Math.sin(h))];
+    },
+    crowded(b) { const F = plot.farmer; return !!F && plot.birds.some(o => o !== b && o.root.visible && !o.asleep && Math.hypot(o.root.position.x - F.x, o.root.position.z - F.z) < 0.62); },      // (one of the others by him: he waits for her to go before he strokes the peacock)
+    headingTo(b) { const F = plot.farmer; return P.henAt && P.henAt.h !== undefined ? P.henAt.h : F && b ? H([F.x, F.z], [b.root.position.x, b.root.position.z]) : P.toHen; },      // (the peacock: so that his hand rests on his back)      // (the way from the farmer to her)
     // his way on from where he is to pts[0] (world), round the peacock's train if it lies across it: a spot in the yard to go
     // by first (never through it: it keeps off where he stands, farmerLanes)
     around(pts) {
@@ -1943,10 +1964,14 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       const room = q => q[0] > Yp.min[0] + 0.2 && q[0] < Yp.max[0] - 0.2 && q[1] > Yp.min[2] + 0.15 && q[1] < Yp.max[2] - 0.2 && !PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.25) && !train.some(s => Math.hypot(q[0] - s[0], q[1] - s[1]) < TR);
       const way = (a, c) => { for (let k = 1; k <= 12; k++) { const q = [a[0] + (c[0] - a[0]) * k / 12, a[1] + (c[1] - a[1]) * k / 12]; if (PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.18) || train.some(s => Math.hypot(q[0] - s[0], q[1] - s[1]) < 0.42) || (k < 12 && Math.hypot(q[0] - p.x, q[1] - p.z) < 0.45)) return false; } return true; };
       const rump = [p.x - Math.sin(y) * 0.3, p.z - Math.cos(y) * 0.3];      // (where his train leaves him: the farmer's knees well clear of it)
-      for (const [angles, R0, tr] of [[[0.85, -0.85, 1.1, -1.1, 0.55, -0.55, 1.4, -1.4], 0.75, 0.5], [[1.7, -1.7, 0.3, -0.3, 2.0, -2.0], 0.62, 0.44]]) {      // (by his chest, a little in front, best: stroking his neck and back, his head not in his face, well off his train)
+      // (crouched in his 'pet' pose, his right hand is HAND ahead of him and to his right: he's put so that it rests on the
+      // peacock's back just behind his neck, Audrey: "the farmer doesn't touch the peacock")
+      const [HF, HR] = PEA_HAND, back = [p.x + Math.sin(y) * PEA_BACK, p.z + Math.cos(y) * PEA_BACK], turn = Math.atan2(HR, HF);
+      for (const [angles, R0, tr] of [[[0.9, -0.9, 1.25, -1.25, 0.55, -0.55, 1.6, -1.6], 0.6, 0.5], [[1.9, -1.9, 0.25, -0.25], 0.5, 0.44]]) {      // (by his chest, a little in front, best: his head not in his face, well off his train)
         TR = tr;
-        for (const a of angles) for (const d of [0.66, 0.74]) {
-          const q = [p.x + Math.sin(y + a) * d, p.z + Math.cos(y + a) * d];
+        for (const a of angles) for (const d of [0]) {
+          const u = [Math.sin(y + a), Math.cos(y + a)], h = Math.atan2(-u[0], -u[1]) + turn;      // (from the peacock out to him; the way he faces)
+          const q = [back[0] - (HF * Math.sin(h) - HR * Math.cos(h)), back[1] - (HF * Math.cos(h) + HR * Math.sin(h))];
           if (!room(q) || Math.hypot(q[0] - rump[0], q[1] - rump[1]) < R0) continue;
           let via = way(F, q) ? [] : null;
           if (!via) {      // (else by way of one spot in the yard, the shortest)
@@ -1958,7 +1983,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
           }
           if (!via) continue;
           b.route = null; b.target.copy(p); b.wait = Math.max(b.wait || 0, 20); if (b.act) b.act = null; b.fanGoal = 0;      // (he waits for him)
-          return { at: W(q[0], q[1]), face: H(q, [p.x, p.z]), via: via.map(v => W(v[0], v[1])) };
+          return { at: W(q[0], q[1]), face: H(q, back) + turn, via: via.map(v => W(v[0], v[1])) };
         }
       }
       return null;
@@ -2534,7 +2559,7 @@ class Bird {
   }
   fanClear(y = this.root.rotation.y, at = null) {      // (at: [x, z] somewhere else he'd stand)
     if (!this.train || this.plot.kind !== 'coop') return true;
-    const P = penOf(this.plot), Y = P.yard, p = at ? { x: at[0], z: at[1] } : this.root.position, s = Math.sin(y), c = Math.cos(y), m = 0.12;
+    const P = penOf(this.plot), Y = P.yard, p = at ? { x: at[0], z: at[1] } : this.root.position, s = Math.sin(y), c = Math.cos(y), m = 0;      // (its edges reach 10 cm past these)
     for (const w of [-1.05, -0.75, -0.4, 0, 0.4, 0.75, 1.05]) {
       const px = p.x - s * 0.3 + c * w, pz = p.z - c * 0.3 - s * w;
       if (px < Y.min[0] - m || px > Y.max[0] + m || pz < Y.min[2] - m || pz > Y.max[2] + m) return false;
@@ -2790,7 +2815,7 @@ class Bird {
     }
     if (F && !this.busy() && this !== F.hen && !(this.shooT > 0)) {        // right by him: a few quick steps out of his way
       const p = this.root.position, dx = p.x - F.x, dz = p.z - F.z, d = Math.hypot(dx, dz), wide = F.hen && F.hen.train && F.hen.cuddle;      // (him with the peacock: the others give them room)
-      if (d < (wide ? 0.85 : 0.42)) {
+      if (d < (wide ? 0.85 : 0.42) && !(wide && this.route && Math.hypot(this.target.x - F.x, this.target.z - F.z) > 0.85)) {      // (already on her way off: not sent again, her steps begun anew each time)
         let a0 = d > 1e-3 ? Math.atan2(dx, dz) : this.r() * 6.28, das = [0, 0.5, -0.5, 1.0, -1.0, 1.6, -1.6, 2.2, -2.2];
         if (F.mv && F.dir !== undefined) {         // (he's walking her way: aside, off his line, not on ahead of him to be herded along)
           const rel = Math.atan2(Math.sin(a0 - F.dir), Math.cos(a0 - F.dir));
@@ -2799,7 +2824,8 @@ class Bird {
         for (const da of das) {
           const x = F.x + Math.sin(a0 + da) * (wide ? 1.1 : 0.75), z = F.z + Math.cos(a0 + da) * (wide ? 1.1 : 0.75);
           if (!this.free(x, z)) continue;
-          this.act = null; this.wait = 0; this.then = null; this.eatAt = null; this.route = this.plan([[x, z]]); this.pace = 1.5; this.nextLeg();
+          const r = this.plan([[x, z]]);
+          this.act = null; this.wait = 0; this.then = null; this.eatAt = null; this.route = r.length || !wide ? r : [[x, z]]; this.pace = 1.5; this.nextLeg();      // (squeezed in by him and the peacock: straight out)
           this.shooT = 0.9; if (this.plot.corn && this.plot.corn.left) this.feedIn = 1.0 + this.r() * 0.5;
           break;
         }
