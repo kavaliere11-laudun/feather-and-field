@@ -1283,13 +1283,13 @@ def egg_stall_v(seed=114, name='egg_stall'):
         objs.append(box('vstray', (0.22, 0.28, 0.03), (ex, -0.03, 0.51), m=tray, bevel=0.004, segs=1))
         for i in range(3):
             for j in range(4):
-                objs.append(sphere('vsegg', 0.026, (ex - 0.07 + i * 0.07, -0.135 + j * 0.07, 0.548), (1, 1, 1.3), m=eggs[(k + i + j) % 3 if k else k], seg=10, rings=7))
+                objs.append(sphere('vsegg', 0.026, (ex - 0.07 + i * 0.07, -0.135 + j * 0.07, 0.548), (1, 1, 1.3), m=eggs[(k + i + j) % 3 if k else k], seg=8, rings=6))
     bx, by = 0.25, -0.05                                 # the basket: woven rim, eggs heaped
     objs.append(lathe('vsbasket', [(0.07, 0.495), (0.1, 0.5), (0.115, 0.58), (0.105, 0.58), (0.088, 0.51), (0.0, 0.51)], straw, verts=14))
     objs[-1].location = (bx, by, 0)
     for k in range(7):
         a = k / 7 * math.tau
-        objs.append(sphere('vsegg', 0.026, (bx + math.cos(a) * 0.055, by + math.sin(a) * 0.055, 0.575), (1, 1, 1.3), m=eggs[k % 3], seg=10, rings=7))
+        objs.append(sphere('vsegg', 0.026, (bx + math.cos(a) * 0.055, by + math.sin(a) * 0.055, 0.575), (1, 1, 1.3), m=eggs[k % 3], seg=8, rings=6))
     objs.append(sphere('vsegg', 0.026, (bx, by, 0.6), (1, 1, 1.3), m=eggs[1], seg=10, rings=7))
     polyline(objs, 'vshandle', arc_pts((bx, by, 0.58), 0.1, 0, math.pi, 8, plane='xz'), 0.014, 0.01, (0, 1, 0), straw)
     objs.append(box('vshonesty', (0.1, 0.08, 0.09), (0.33, 0.14, 0.54), m=green, bevel=0.006, segs=1))
@@ -1420,7 +1420,7 @@ def wheelbarrow_v(seed=122, name='wheelbarrow'):
         z = 0.3 + r * 0.8 + (0.08 if r < 0.09 else 0)
         for k in range(6):                               # ribbed: six lobes
             a = k / 6 * math.tau
-            objs.append(sphere('vwbpump', r * 0.62, (x + math.cos(a) * r * 0.38, y + math.sin(a) * r * 0.38, z), (1, 1, 0.82), m=pump, seg=12, rings=8))
+            objs.append(sphere('vwbpump', r * 0.62, (x + math.cos(a) * r * 0.38, y + math.sin(a) * r * 0.38, z), (1, 1, 0.82), m=pump, seg=8, rings=6))
         objs.append(cyl('vwbstalk', 0.012, 0.05, (x, y, z + r * 0.75), m=stalk, verts=6, r2=0.008, bevel=0.0))
     objs.append(plank('vwbtrowel', (0.22, -0.12, 0.42), (0.36, -0.14, 0.48), 0.05, 0.006, (0, 0, 1), C('vwbsteel', '#a9aca8', rough=0.35, metal=0.8), jitter=0.0, bevel=0.0))
     objs.append(cyl('vwbtrowelh', 0.014, 0.1, (0.15, -0.11, 0.39), (0, math.radians(68), math.radians(-8)), m=wood, verts=8, bevel=0.0))
@@ -1709,7 +1709,7 @@ def veg_patch_v(w=2.6, d=1.8, seed=135, name='veg_patch'):
                 for q in range(5):                       # outer leaves splayed, a round heart
                     a = q / 5 * math.tau + random.uniform(0, 0.5)
                     objs.append(sphere('vvcabl', 0.07, (x + math.cos(a) * 0.06, y + math.sin(a) * 0.06, 0.15), (1.2, 0.8, 0.35), (0, math.radians(-20), a), m=random.choice(leaf), ico=1, seed=q))
-                objs.append(sphere('vvcab', 0.075, (x, y, 0.19), (1, 1, 0.9), m=random.choice(cab), ico=2, disp=0.08, seed=i))
+                objs.append(sphere('vvcab', 0.075, (x, y, 0.19), (1, 1, 0.9), m=random.choice(cab), seg=10, rings=7))
             elif kind == 'carrot':
                 objs.append(cyl('vvcarrot', 0.018, 0.02, (x, y, 0.13), m=C('vvorange', '#e8792a', rough=0.6), verts=8, bevel=0.0))
                 tuft(objs, x, y, 6, 0.05, 0.12, leaf, z0=0.13, width=0.014)
@@ -1717,7 +1717,7 @@ def veg_patch_v(w=2.6, d=1.8, seed=135, name='veg_patch'):
                 if i % 2 == 0:
                     for k in range(6):
                         a = k / 6 * math.tau
-                        objs.append(sphere('vvpump', 0.065, (x + math.cos(a) * 0.04, y + math.sin(a) * 0.04, 0.19), (1, 1, 0.8), m=pump, seg=10, rings=7))
+                        objs.append(sphere('vvpump', 0.065, (x + math.cos(a) * 0.04, y + math.sin(a) * 0.04, 0.19), (1, 1, 0.8), m=pump, seg=8, rings=6))
                     objs.append(cyl('vvstalk', 0.01, 0.04, (x, y, 0.27), m=vine, verts=6, bevel=0.0))
                 else:
                     for k in range(3):
