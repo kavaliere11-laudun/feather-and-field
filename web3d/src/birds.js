@@ -18,8 +18,15 @@ export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
 // the peafowl's legs (Audrey, 31 Oct: "The legs need to fold at each step", "the leg should move at the top and at the
 // ankle"): each leg bends at the top, where it leaves the body, and at the ankle part way down (a bird's ankle, bending
 // backwards: the shin bones `shinL`/`shinR`, ANKLE of the way down), and the toes have their own bones at the foot (FOOT_Y
-// up: `footL`/`footR`), lying flat on the ground through a step and curling as the foot is lifted
+// up: `footL`/`footR`), lying flat on the ground through a step and curling as the foot is lifted. Then the hens' and
+// roosters' the same (Audrey, 1 Nov: "Same walk for hens and roosters"): every grown bird's but the Silkies' (theirs as
+// they are, hidden in their fluff) and the chicks'; a hen's ankle just under her feathers, as a real hen's is
 const FOOT_Y = 0.025, ANKLE = 0.46, ankleY = hip => hip - ANKLE * (hip - FOOT_Y);
+export const bendsLegs = model => /^(rir|orp|leg|bra|pol|aya|pea)_[hr](_lo)?$/.test(model);
+const isPea = model => /^pea_[hr]/.test(model);
+// a rig's bones, in order: every bird's, then the peacock's train's two (on the peahens too, unused: the same for both), then
+// the ankles and toes of the birds whose legs bend
+const bonesOf = model => [...JOINTS, ...(isPea(model) ? ['tail2', 'tail3'] : []), ...(bendsLegs(model) ? ['shinL', 'shinR', 'footL', 'footR'] : [])];
 // a geometry with its triangles that cross the height y (those keep(a, b, c) says, by their corners) cut in two there, a
 // ring of new corners along the cut, every attribute (and the shape keys) carried across (whole numbers from the nearer end)
 const legOnly = g => { const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR');
@@ -45,8 +52,8 @@ function cutAt(g, y0, keep) {
   h.boundingBox = g.boundingBox; h.computeBoundingSphere();
   return h;
 }
-function peaLegs(g, n, P, hip, lo) {      // (lo: the light model, its legs with nothing part way down: bent along their whole length)
-  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR'), base = JOINTS.length + 2, ky = ankleY(hip);
+function bendLegs(g, n, P, hip, base) {      // (base: the left shin's bone)
+  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR'), ky = ankleY(hip);
   const SI = new Uint16Array(n * 4), SW = new Float32Array(n * 4);
   for (let i = 0; i < n; i++) {
     const inf = [], y = P[i * 3 + 1];
@@ -348,13 +355,16 @@ export function paintedGeometry(model, breed, colour) {
   if (src.morphAttributes.position) { g.morphAttributes = src.morphAttributes; g.morphTargetsRelative = src.morphTargetsRelative; }      // (the peacock's fan)
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
-  if (base_ === 'pea_r' || base_ === 'pea_h') {      // (the peafowl's legs: rings cut in at the ankle, where they now bend, then their bones)
+  let furSrc = src;
+  if (bendsLegs(model)) {      // (legs that bend: rings cut in at the ankle, then their bones; the fluff over the feathers grown on the cut model)
+    if (paint) g.setAttribute('_paint', new THREE.BufferAttribute(Uint8Array.from(paint.array), 1));
     const ky = ankleY(M.piv.legL[1]);
     for (const y of [ky + 0.009, ky - 0.009]) g = cutAt(g, y, legOnly(g));
-    peaLegs(g, g.attributes.position.count, g.attributes.position.array, M.piv.legL[1], model !== base_);
+    bendLegs(g, g.attributes.position.count, g.attributes.position.array, M.piv.legL[1], bonesOf(model).indexOf('shinL'));
+    if (paint) { furSrc = { attributes: { position: g.attributes.position, _paint: g.attributes._paint }, index: g.index }; g.deleteAttribute('_paint'); }
   }
   const fur = furOf(model, breed);
-  if (fur) g = addFur(g, src, fur, M.piv.headc);
+  if (fur) g = addFur(g, furSrc, fur, M.piv.headc);
   return (M.painted[key] = g);
 }
 
@@ -423,7 +433,8 @@ function addFur(g, src, spec, headc, eyes) {
   const fs = new Float32Array(total), fh = new Float32Array(total), comb = new Float32Array(total).fill(spec.comb || 0);
   const style = new Float32Array(total * 4);
   for (let i = 0; i < total; i++) { style[i * 4] = spec.locks && spec.crisp ? -spec.crisp : spec.clump || 0; style[i * 4 + 1] = spec.fine || 1; style[i * 4 + 2] = spec.fluff ? -spec.fluff : spec.wave || 0; style[i * 4 + 3] = len[i % n] > 0 ? spec.tex || 0 : 0; }
-  const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW = A('skinWeight').array;
+  const P = A('position').array, N = A('normal').array, Cc = A('color').array, SI = A('skinIndex').array, SW0 = A('skinWeight').array;
+  const SW = SW0 instanceof Float32Array ? Uint8Array.from(SW0, v => Math.round(v * 255)) : SW0;      // (weights in whole 255ths: bending legs' bones set in fractions)
   const FS = A('featherSize').array, FH = A('featherHead').array, FP = A('featherPattern').array, FM = A('featherMode').array, FU = A('featherUV').array;
   const fp = new Float32Array(total * 4), fm = new Float32Array(total), fu = new Float32Array(total * 3);
   const EA = A('eyeAt').array, ea = new Float32Array(total * 4);
@@ -893,8 +904,9 @@ export class Rig {
     this.lo = MODELS[this.model + '_lo'] ? new THREE.SkinnedMesh(paintedGeometry(this.model + '_lo', breed, colour), BIRD_MAT) : null;
     for (const m of [this.mesh, this.lo]) if (m) { m.onBeforeRender = keepAlpha; m.onAfterRender = writeAlpha; }
     this.bones = {}; this.rest = {};
-    this.peafowl = this.model === 'pea_r' || this.model === 'pea_h';      // (their own walk: longer slower strides, the legs folding, the toes curling)
-    const names = this.peafowl ? [...JOINTS, 'tail2', 'tail3', 'shinL', 'shinR', 'footL', 'footR'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2', shinL: 'legL', shinR: 'legR', footL: 'shinL', footR: 'shinR' };      // (the peacock's train: two more bones along it; the peafowl's ankles and feet)
+    this.peafowl = isPea(this.model);      // (their own walk: longer slower strides)
+    this.bends = bendsLegs(this.model);      // (the legs folding at the top and the ankle, the feet planted, the toes curling)
+    const names = bonesOf(this.model), par = { ...PARENT, tail2: 'tail', tail3: 'tail2', shinL: 'legL', shinR: 'legR', footL: 'shinL', footR: 'shinR' };      // (the peacock's train: two more bones along it; the ankles and feet)
     const side = name => P[/L$/.test(name) ? 'legL' : 'legR'];
     const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : /^shin/.test(name) ? [side(name)[0], ankleY(side(name)[1]), 0.005] : /^foot/.test(name) ? [side(name)[0], FOOT_Y, 0.01] : P[name] || P.root;
     const list = names.map(name => {
@@ -980,37 +992,42 @@ export class Rig {
     T.pv += ((goalP - T.p) * 160 - T.pv * 11) * dt; T.p += T.pv * dt;
     T.yv += ((goalY - T.y) * 160 - T.yv * 11) * dt; T.y += T.yv * dt;
     B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y + (s.bend || 0), 0);      // (bend: a peacock's train trailing round behind him)
-    const A = this.peafowl ? 0 : 0.5 * w * (1 + 0.5 * pr), lf = this.peafowl ? 0 : 1;      // (the peafowl's steps their own, below)
+    const A = this.bends ? 0 : 0.5 * w * (1 + 0.5 * pr), lf = this.bends ? 0 : 1;      // (steps with bending legs their own, below)
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
     const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash - 0.35 * dk;
-    B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? 1.0 * kick * s.kick : 0) + legX, 0, 0);
-    B.legR.rotation.set(-A * Math.sin(ph) + (s.kickLeg === 1 ? 1.0 * kick * s.kick : 0) + legX * 0.92, 0, 0);
+    const kq = this.bends ? 0.95 : 1.0;      // (legs that bend: a scratch a rake along the ground, below)
+    B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? kq * kick * s.kick : 0) + legX, 0, 0);
+    B.legR.rotation.set(-A * Math.sin(ph) + (s.kickLeg === 1 ? kq * kick * s.kick : 0) + legX * 0.92, 0, 0);
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
     // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
     const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank - 0.22 * this.shank * dk;
     B.legL.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
     B.legR.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
-    if (this.peafowl) {
-      // the peafowl's steps (Audrey, 31 Oct: "the peacock is walking but not moving. The legs need to fold at each step", "the
-      // leg should move at the top and at the ankle"): walking a little crouched, each foot planted flat while the body passes
-      // over it (never sliding: the stride as long as the ground covered, s.vpr), then lifted, the leg bending at the top and
-      // at the ankle (bending backwards, as a bird's does), the toes curling, swung forward and set down again; turning on the
-      // spot, steps on the spot. Each leg's two parts found from where its foot is to be (two-bone IK, the ankle behind)
-      const hip = Rr.legL.y, L = hip - FOOT_Y, l1 = ANKLE * L, l2 = L - l1, c = 0.12 * L * w, beta = 0.6, S = Math.min(0.48 * L, (s.vpr || 0) * beta * Math.PI);
+    if (this.bends) {
+      // the steps (Audrey, 31 Oct, the peafowl: "the peacock is walking but not moving. The legs need to fold at each step",
+      // "the leg should move at the top and at the ankle"; 1 Nov: the hens and roosters the same): walking a little crouched,
+      // each foot planted flat while the body passes over it (never sliding: the stride as long as the ground covered, s.vpr),
+      // then lifted, the leg bending at the top and at the ankle (bending backwards, as a bird's does), the toes curling,
+      // swung forward and set down again; turning on the spot, steps on the spot; a rooster on parade stepping high. Each leg's
+      // two parts found from where its foot is to be (two-bone IK, the ankle behind)
+      const hip = Rr.legL.y, L = hip - FOOT_Y, l1 = ANKLE * L, l2 = L - l1, c = (this.peafowl ? 0.12 : 0.1) * L * w, beta = 0.6, S = Math.min(0.48 * L, (s.vpr || 0) * beta * Math.PI);
+      const up = (this.peafowl ? 0.33 : 0.3) * L * (1 + 0.8 * pr);
       body.position.y -= c;
       for (const [leg, shin, foot, off, kl] of [[B.legL, B.shinL, B.footL, 0, 0], [B.legR, B.shinR, B.footR, 0.5, 1]]) {
         const u = ((ph / (2 * Math.PI) + off) % 1 + 1) % 1;
         let fz, e = 0;
         if (u < beta) fz = S * (1 - 2 * u / beta);
         else { const q = (u - beta) / (1 - beta); e = Math.sin(Math.PI * q); fz = -S + 2 * S * smooth(0.1, 0.95, q); }
-        let fy = -(L - c) + 0.33 * L * e;      // (where the foot is to be, from the top of the leg: on the ground, or lifted)
+        let fy = -(L - c) + up * e;      // (where the foot is to be, from the top of the leg: on the ground, or lifted)
         let d = Math.hypot(fz, fy); const dm = (l1 + l2) * 0.998; if (d > dm) { fz *= dm / d; fy *= dm / d; d = dm; }
         const phi = Math.atan2(fz, -fy), bk = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
         const t1 = phi - bk, kz = l1 * Math.sin(t1), ky = -l1 * Math.cos(t1), t2 = Math.atan2(fz - kz, -(fy - ky));      // (the top part's lean, forward +, the ankle behind; the lower part's)
-        const sp = s.kickLeg === kl ? 1 - Math.min(1, kick * s.kick * 3) : 1, k = w * sp;      // (scratching: that leg's own kick)
+        const kk = s.kickLeg === kl ? kick * s.kick : 0, sp = 1 - Math.min(1, kk * 3), k = w * sp;      // (scratching: that leg's own kick)
         leg.rotation.x -= k * t1; leg.position.y -= w * c;
-        shin.rotation.set(-k * (t2 - t1), 0, 0);
-        foot.rotation.set(k * (t2 + 1.1 * e), 0, 0);      // (its toes flat on the ground; lifted, curled down)
+        // (a scratch: the leg swung back from the top, the ankle bent so the foot rakes back low along the ground, the toes
+        // digging in)
+        shin.rotation.set(-k * (t2 - t1) - 0.75 * kk, 0, 0);
+        foot.rotation.set(k * (t2 + 1.1 * e) + 0.45 * kk, 0, 0);      // (its toes flat on the ground; lifted, curled down)
       }
     }
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);

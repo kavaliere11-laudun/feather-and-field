@@ -3542,7 +3542,7 @@ the birds already had.
   backwards as a bird's does, the toes curling down, swung forward and set down again; each leg's two parts found from
   where its foot is to be (two-bone IK). The models' legs had nothing part way down, so rings are cut into them at the
   ankle (birds.js `cutAt`, `ANKLE` 46% of the way down), the lower leg on its own bone (`shinL`/`shinR`) and the toes on
-  theirs (`footL`/`footR`; `peaLegs`, which also sorts each leg by its side). Held up by his train a moment, he stands
+  theirs (`footL`/`footR`; `peaLegs`, now `bendLegs`, which also sorts each leg by its side). Held up by his train a moment, he stands
   rather than stepping on the spot (`trainBlocked`), and once he's on his way again his legs walk at once (Audrey, 1 Nov:
   "he walks for a second and then just slides": `blockedAt`).
 - **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
@@ -3594,3 +3594,22 @@ the birds already had.
   the cuddles, a lay, the feeder, the Breed Book, no shows, a brood of peachicks and young ones, the Snug look, the
   perch at night, a reload, his feathers: none at first, two after 25 hours, one tapped and sold, kept on a reload, fifty
   put in from outside checked and flagged; a pea coop put in early flagged; LANG=fr). booktest and calltest count 16 pages.
+
+## The hens' and roosters' walk (1 Nov 2026; Audrey: "Same walk for hens and roosters (Recommended)", after the peafowl's: "The walk is good")
+
+- **Every grown hen and rooster walks as the peafowl do** (birds.js `bendsLegs`: the Rhode Island Reds, Orpingtons, Cream
+  Legbars, Light Brahmas, Polish and Ayam Cemani, grown and young, their light models too; not the Silkies, theirs as they
+  are in their fluff, nor the chicks): each foot planted flat while the body passes over it (the stride as long as the
+  ground covered, `A.vpr`; a young bird's by her own size), then lifted, the leg bending at the top and at the ankle (just
+  under her feathers, as a real hen's, `ANKLE` 46% of the way down), the toes curling, swung forward and set down again;
+  a little crouched as she walks; turning on the spot, steps on the spot; a rooster on parade steps higher. A little
+  longer strides than before (main.js `stepRate` 13 for them, was 17; the Silkies keep 17). Standing, sitting, hopping and
+  being held: as before. Measured: a planted foot slides about a tenth of what the body goes (dbg: under a millimetre a
+  frame).
+- **Scratching**: the leg swung back from the top, the ankle bent so the foot rakes back low along the ground, the toes
+  digging in (was a stiff kick, the leg straight).
+- How (birds.js): the legs' rings cut in at the ankle on every model that bends (`cutAt`), the lower leg and the toes on
+  their own bones (`bendLegs`, was `peaLegs`; `bonesOf(model)`: the joints every bird has, the peafowl's two train
+  bones, then `shinL`, `shinR`, `footL`, `footR`); the soft fluff over the feathers now grown on the cut model (`addFur`
+  given it, its weights in 255ths); the steps in `pose` (`this.bends`; the peafowl's `this.peafowl` only for their
+  slower strides and deeper crouch). Inside the house at night her walk to her spot the same (`arriveStep` sets `A.vpr`).

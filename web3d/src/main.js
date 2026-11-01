@@ -2418,7 +2418,7 @@ class Bird {
     if (breed === 'pea' && kind === 'rooster') this.train = { back: trainBack(this.rig) };      // (31 Oct: how far behind him his train lies)
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
-    this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
+    this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : this.rig.bends ? 13 : 17;      // (the hens and roosters whose legs bend, 1 Nov: a little longer strides, the feet planted)
     if (this.rig.peafowl) { this.speed = 0.36; this.stepRate = 9; }      // (the peafowl, 31 Oct: long slow strides, each step carrying them on, Audrey: "walking but not moving")
     this.hitR = small ? 0.12 : 0.17 * size; this.hitY = small ? 0.08 : 0.17 * size;
     this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hopT = -1;
@@ -3333,7 +3333,7 @@ class Bird {
     const dph = walking ? dt * this.stepRate * (pace > 1 ? pace : 0.6 + 0.4 * pace) : 0;
     A.phase += dph;
     { const q = this.root.position, L = this.lastStepAt || (this.lastStepAt = [q.x, q.z]), mv = Math.hypot(q.x - L[0], q.z - L[1]); L[0] = q.x; L[1] = q.z;      // (how far he goes per step: the peafowl's strides as long, birds.js)
-      A.vpr = (A.vpr || 0) + ((dph > 0 ? Math.min(0.1, mv / dph) : 0) - (A.vpr || 0)) * Math.min(1, dt * 8); }
+      A.vpr = (A.vpr || 0) + ((dph > 0 ? Math.min(0.1, mv / dph / (this.root.scale.x || 1)) : 0) - (A.vpr || 0)) * Math.min(1, dt * 8); }      // (a young bird's: by her own size)
     A.peck += (peckGoal - A.peck) * Math.min(1, dt * (peckGoal > A.peck ? 22 : 12));
     A.sit += (sitGoal - A.sit) * Math.min(1, dt * 3.5);
     A.kick += (kick - A.kick) * k; if (!kick) A.kickT = 0;
@@ -6827,7 +6827,7 @@ function arriveStep(b, dt) {
       const want = Math.atan2(dx, dz); let d = want - b.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d));
       b.root.rotation.y += d * Math.min(1, dt * 6);
       const k = Math.min(L, dt * 0.3) / L; p.x += dx * k; p.z += dz * k; p.y = 0.02;
-      A.walk += (1 - A.walk) * Math.min(1, dt * 10); A.phase = (A.phase || 0) + dt * (b.stepRate || 7);
+      A.walk += (1 - A.walk) * Math.min(1, dt * 10); A.phase = (A.phase || 0) + dt * (b.stepRate || 7); A.vpr = 0.3 / (b.stepRate || 7);      // (her strides as long as she goes)
     } else { M.phase = up ? 'hop' : 'settle'; M.t = 0; M.from = p.clone(); }
   } else if (M.phase === 'hop') {                        // a flap and a hop up onto the perch
     const k = Math.min(1, M.t / 0.55);
