@@ -2418,7 +2418,7 @@ class Bird {
     this.root.position.set(pos[0], 0.015, pos[2]); this.root.rotation.y = yaw;
     for (const o of [this.root, this.visual]) o.userData.moves = true;
     this.speed = small ? 0.26 : 0.32; this.turn = 260 * DEG; this.stepRate = small ? 26 : 17;
-    if (this.rig.peafowl) { this.speed = 0.4; this.stepRate = 9; }      // (the peafowl, 31 Oct: long slow strides, each step carrying them on, Audrey: "walking but not moving")
+    if (this.rig.peafowl) { this.speed = 0.36; this.stepRate = 9; }      // (the peafowl, 31 Oct: long slow strides, each step carrying them on, Audrey: "walking but not moving")
     this.hitR = small ? 0.12 : 0.17 * size; this.hitY = small ? 0.08 : 0.17 * size;
     this.target = this.root.position.clone(); this.wait = 0.2 + r() * 2.3; this.phase = r() * 10; this.hopT = -1;
     this.act = null;                       // what she's doing while standing: peck, scratch, flap, crow, rest, ruffle

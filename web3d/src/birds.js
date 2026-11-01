@@ -15,22 +15,53 @@ const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: '
 // joints along it are, behind the tail's pivot (m); TRAIN_SPLIT: how much of its swing each part takes, rump first (the
 // game's train, main.js trainEach, lies the same way)
 export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
-// the peafowl's feet (Audrey, 31 Oct: "The legs need to fold at each step"): the toes on a bone of their own at the ankle
-// (FOOT_Y up), so that they lie flat on the ground through a step and curl down as the foot is lifted
-const FOOT_Y = 0.025;
-function peaFeet(g, n, P) {
-  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR'), base = JOINTS.length + 2;
+// the peafowl's legs (Audrey, 31 Oct: "The legs need to fold at each step", "the leg should move at the top and at the
+// ankle"): each leg bends at the top, where it leaves the body, and at the ankle part way down (a bird's ankle, bending
+// backwards: the shin bones `shinL`/`shinR`, ANKLE of the way down), and the toes have their own bones at the foot (FOOT_Y
+// up: `footL`/`footR`), lying flat on the ground through a step and curling as the foot is lifted
+const FOOT_Y = 0.025, ANKLE = 0.46, ankleY = hip => hip - ANKLE * (hip - FOOT_Y);
+// a geometry with its triangles that cross the height y (those keep(a, b, c) says, by their corners) cut in two there, a
+// ring of new corners along the cut, every attribute (and the shape keys) carried across (whole numbers from the nearer end)
+const legOnly = g => { const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR');
+  const leg = i => { let w = 0; for (let k = 0; k < 4; k++) { const b = si.getComponent(i, k); if (b === L || b === R) w += sw.getComponent(i, k); } return w > 0.5; };
+  return (a, b, c) => leg(a) && leg(b) && leg(c); };
+function cutAt(g, y0, keep) {
+  const P = g.attributes.position, idx = g.index.array, n = P.count, out = [], extra = [], seen = new Map();
+  const mid = (a, b) => { const k = a < b ? a + ',' + b : b + ',' + a; if (seen.has(k)) return seen.get(k); const ya = P.getY(a), yb = P.getY(b), t = (y0 - ya) / (yb - ya), v = n + extra.length; extra.push([a, b, t]); seen.set(k, v); return v; };
+  for (let t = 0; t < idx.length; t += 3) {
+    const v = [idx[t], idx[t + 1], idx[t + 2]], up = v.map(i => P.getY(i) >= y0), nu = up.filter(Boolean).length;
+    if (nu === 0 || nu === 3 || !keep(v[0], v[1], v[2])) { out.push(...v); continue; }
+    const k = up.findIndex(u => nu === 1 ? u : !u), A = v[k], B = v[(k + 1) % 3], C = v[(k + 2) % 3], ab = mid(A, B), ac = mid(A, C);      // (A alone on its side)
+    out.push(A, ab, ac, ab, B, C, ab, C, ac);
+  }
+  if (!extra.length) return g;
+  const grow = (att) => { const k = att.itemSize, A = att.array, N = new A.constructor((n + extra.length) * k), whole = !(A instanceof Float32Array || A instanceof Float64Array); N.set(A.subarray(0, n * k));
+    extra.forEach(([a, b, t], j) => { for (let c = 0; c < k; c++) { const x = A[a * k + c], y = A[b * k + c]; N[(n + j) * k + c] = whole ? (t < 0.5 ? x : y) : x + (y - x) * t; } });
+    const na = new THREE.BufferAttribute(N, k, att.normalized); return na; };
+  const h = new THREE.BufferGeometry();
+  for (const name of Object.keys(g.attributes)) h.setAttribute(name, grow(g.attributes[name]));
+  if (g.morphAttributes.position) { h.morphAttributes.position = g.morphAttributes.position.map(grow); h.morphTargetsRelative = g.morphTargetsRelative; }
+  h.setIndex(new THREE.BufferAttribute(new Uint32Array(out), 1));
+  h.boundingBox = g.boundingBox; h.computeBoundingSphere();
+  return h;
+}
+function peaLegs(g, n, P, hip, lo) {      // (lo: the light model, its legs with nothing part way down: bent along their whole length)
+  const si = g.attributes.skinIndex, sw = g.attributes.skinWeight, L = JOINTS.indexOf('legL'), R = JOINTS.indexOf('legR'), base = JOINTS.length + 2, ky = ankleY(hip);
   const SI = new Uint16Array(n * 4), SW = new Float32Array(n * 4);
   for (let i = 0; i < n; i++) {
-    const inf = [];
+    const inf = [], y = P[i * 3 + 1];
     for (let j = 0; j < 4; j++) { const w = sw.getComponent(i, j); if (w > 0) inf.push([si.getComponent(i, j), w]); }
-    const t = smooth(FOOT_Y + 0.016, FOOT_Y - 0.004, P[i * 3 + 1]);
-    for (const q of inf.slice()) if ((q[0] === L || q[0] === R) && t > 0) { const w = q[1]; q[1] = w * (1 - t); inf.push([base + (q[0] === L ? 0 : 1), w * t]); }
+    const ts = smooth(ky + 0.012, ky - 0.012, y), tf = smooth(FOOT_Y + 0.016, FOOT_Y - 0.004, y);      // (the light model the same: its legs cut at the ankle too)
+    // (which leg by which side it's on: the models' legs are skinned to either leg's bone, the same at the hip but not now
+    // they bend part way down)
+    const wl = inf.reduce((a, q) => a + (q[0] === L || q[0] === R ? q[1] : 0), 0), r = P[i * 3] >= 0 ? 0 : 1;
+    if (wl > 0) { for (let k = inf.length - 1; k >= 0; k--) if (inf[k][0] === L || inf[k][0] === R) inf.splice(k, 1); inf.push([r ? R : L, wl * (1 - ts)], [base + r, wl * ts * (1 - tf)], [base + 2 + r, wl * ts * tf]); }
     const top = inf.filter(q => q[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 4), tot = top.reduce((a, q) => a + q[1], 0) || 1;
     for (let j = 0; j < 4; j++) { SI[i * 4 + j] = top[j] ? top[j][0] : 0; SW[i * 4 + j] = top[j] ? top[j][1] / tot : 0; }
   }
   g.setAttribute('skinIndex', new THREE.BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
 }
+
 function peacockTrain(g, src, tailZ) {
   const n = src.attributes.position.count, P = src.attributes.position.array, si0 = src.attributes.skinIndex, sw0 = src.attributes.skinWeight;
   const T = JOINTS.indexOf('tail'), T2 = JOINTS.length, T3 = JOINTS.length + 1, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
@@ -281,7 +312,6 @@ export function paintedGeometry(model, breed, colour) {
   let g = new THREE.BufferGeometry();
   for (const a of ['position', 'normal', 'skinIndex', 'skinWeight']) g.setAttribute(a, src.attributes[a]);
   if (base_ === 'pea_r') peacockTrain(g, src, M.piv.tail[2]);
-  if (base_ === 'pea_r' || base_ === 'pea_h') peaFeet(g, n, pos);
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   // feather size (cm) per vertex for the scalloped feather texture (0: comb, beak, eyes, legs), and how much it belongs to the head
   const fs = new Float32Array(n), fh = new Float32Array(n);
@@ -318,6 +348,11 @@ export function paintedGeometry(model, breed, colour) {
   if (src.morphAttributes.position) { g.morphAttributes = src.morphAttributes; g.morphTargetsRelative = src.morphTargetsRelative; }      // (the peacock's fan)
   g.setIndex(src.index);
   g.boundingBox = src.boundingBox; g.computeBoundingSphere();
+  if (base_ === 'pea_r' || base_ === 'pea_h') {      // (the peafowl's legs: rings cut in at the ankle, where they now bend, then their bones)
+    const ky = ankleY(M.piv.legL[1]);
+    for (const y of [ky + 0.009, ky - 0.009]) g = cutAt(g, y, legOnly(g));
+    peaLegs(g, g.attributes.position.count, g.attributes.position.array, M.piv.legL[1], model !== base_);
+  }
   const fur = furOf(model, breed);
   if (fur) g = addFur(g, src, fur, M.piv.headc);
   return (M.painted[key] = g);
@@ -859,8 +894,9 @@ export class Rig {
     for (const m of [this.mesh, this.lo]) if (m) { m.onBeforeRender = keepAlpha; m.onAfterRender = writeAlpha; }
     this.bones = {}; this.rest = {};
     this.peafowl = this.model === 'pea_r' || this.model === 'pea_h';      // (their own walk: longer slower strides, the legs folding, the toes curling)
-    const names = this.peafowl ? [...JOINTS, 'tail2', 'tail3', 'footL', 'footR'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2', footL: 'legL', footR: 'legR' };      // (the peacock's train: two more bones along it; the peafowl's feet)
-    const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : name === 'footL' || name === 'footR' ? [P[name === 'footL' ? 'legL' : 'legR'][0], FOOT_Y, 0.01] : P[name] || P.root;
+    const names = this.peafowl ? [...JOINTS, 'tail2', 'tail3', 'shinL', 'shinR', 'footL', 'footR'] : JOINTS, par = { ...PARENT, tail2: 'tail', tail3: 'tail2', shinL: 'legL', shinR: 'legR', footL: 'shinL', footR: 'shinR' };      // (the peacock's train: two more bones along it; the peafowl's ankles and feet)
+    const side = name => P[/L$/.test(name) ? 'legL' : 'legR'];
+    const at = name => name === 'tail2' || name === 'tail3' ? [0, 0.1, P.tail[2] - TRAIN_J[name === 'tail2' ? 0 : 1]] : /^shin/.test(name) ? [side(name)[0], ankleY(side(name)[1]), 0.005] : /^foot/.test(name) ? [side(name)[0], FOOT_Y, 0.01] : P[name] || P.root;
     const list = names.map(name => {
       const b = new THREE.Bone(); b.name = name;
       const p = at(name), q = par[name] ? at(par[name]) : [0, 0, 0];
@@ -955,23 +991,26 @@ export class Rig {
     B.legL.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
     B.legR.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
     if (this.peafowl) {
-      // the peafowl's steps (Audrey, 31 Oct: "the peacock is walking but not moving. The legs need to fold at each step"):
-      // each foot planted flat while the body passes over it (its toes kept flat, never sliding: the stride is as long as
-      // the ground he covers, s.vpr), then lifted, the leg folding up under him, the foot trailing and its toes curling
-      // down, swung forward and set down again; turning on the spot, steps on the spot
-      const Lg = Rr.legL.y - FOOT_Y, beta = 0.6, S = Math.min(0.6 * Lg, (s.vpr || 0) * beta * Math.PI);
-      for (const [leg, foot, off, kl] of [[B.legL, B.footL, 0, 0], [B.legR, B.footR, 0.5, 1]]) {
+      // the peafowl's steps (Audrey, 31 Oct: "the peacock is walking but not moving. The legs need to fold at each step", "the
+      // leg should move at the top and at the ankle"): walking a little crouched, each foot planted flat while the body passes
+      // over it (never sliding: the stride as long as the ground covered, s.vpr), then lifted, the leg bending at the top and
+      // at the ankle (bending backwards, as a bird's does), the toes curling, swung forward and set down again; turning on the
+      // spot, steps on the spot. Each leg's two parts found from where its foot is to be (two-bone IK, the ankle behind)
+      const hip = Rr.legL.y, L = hip - FOOT_Y, l1 = ANKLE * L, l2 = L - l1, c = 0.12 * L * w, beta = 0.6, S = Math.min(0.48 * L, (s.vpr || 0) * beta * Math.PI);
+      body.position.y -= c;
+      for (const [leg, shin, foot, off, kl] of [[B.legL, B.shinL, B.footL, 0, 0], [B.legR, B.shinR, B.footR, 0.5, 1]]) {
         const u = ((ph / (2 * Math.PI) + off) % 1 + 1) % 1;
-        let x, q = 0, e = 0;
-        if (u < beta) x = S * (1 - 2 * u / beta);
-        else { q = (u - beta) / (1 - beta); e = Math.sin(Math.PI * q); x = -S + 2 * S * smooth(0.1, 0.95, q); }
-        const th = Math.asin(Math.max(-0.95, Math.min(0.95, x / Lg))) - 0.85 * e;      // (the leg's lean, forward +; lifted, folded back under him)
-        const drop = Lg * (1 - Math.cos(th)), ay = u < beta ? 0 : Math.max(0.045 * e, drop - 0.02 * (1 - e));      // (the foot's height: on the ground, or lifted clear)
-        const sp = s.kickLeg === kl ? 1 - Math.min(1, kick * s.kick * 3) : 1;      // (scratching: that leg's own kick)
-        leg.rotation.x -= w * sp * th;
-        leg.position.y += w * sp * (ay - drop + 0.012 * e);      // (planted, the hip lower as the leg leans; lifted, the knee drawn up and forward)
-        leg.position.z += w * sp * 0.03 * e;
-        foot.rotation.set(w * sp * (th + 1.1 * e), 0, 0);      // (its toes flat on the ground; lifted, curled down)
+        let fz, e = 0;
+        if (u < beta) fz = S * (1 - 2 * u / beta);
+        else { const q = (u - beta) / (1 - beta); e = Math.sin(Math.PI * q); fz = -S + 2 * S * smooth(0.1, 0.95, q); }
+        let fy = -(L - c) + 0.33 * L * e;      // (where the foot is to be, from the top of the leg: on the ground, or lifted)
+        let d = Math.hypot(fz, fy); const dm = (l1 + l2) * 0.998; if (d > dm) { fz *= dm / d; fy *= dm / d; d = dm; }
+        const phi = Math.atan2(fz, -fy), bk = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
+        const t1 = phi - bk, kz = l1 * Math.sin(t1), ky = -l1 * Math.cos(t1), t2 = Math.atan2(fz - kz, -(fy - ky));      // (the top part's lean, forward +, the ankle behind; the lower part's)
+        const sp = s.kickLeg === kl ? 1 - Math.min(1, kick * s.kick * 3) : 1, k = w * sp;      // (scratching: that leg's own kick)
+        leg.rotation.x -= k * t1; leg.position.y -= w * c;
+        shin.rotation.set(-k * (t2 - t1), 0, 0);
+        foot.rotation.set(k * (t2 + 1.1 * e), 0, 0);      // (its toes flat on the ground; lifted, curled down)
       }
     }
     const fold = 1 - 0.88 * smooth(0.15, 0.9, s.sit);
