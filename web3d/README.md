@@ -3855,3 +3855,17 @@ the birds already had.
   background that gives an idea of the game. Maybe a baby chick with her too"; round 2 "I don't like them I will ask
   another ai to create it". When it comes: 1024 x 1024 PNG, opaque, square (Apple rounds the corners), into
   `app/art/` and `app/icons.py`.
+
+## The app icon, round 3: chosen (1 Nov 2026; Audrey, of ChatGPT's pictures: "I quite like these but the chicken needs to be the same as in the game. Can you do that? Only you really have the design"; then "A Mum and her chick (Recommended)")
+
+- `web3d/iconstudio.mjs`: the game's own white Silkie hen and chick (the line-up's, with the fur only the game draws)
+  taken out onto the farm's grass in front of the Red Barn's pen (`SET=a`: spot 0, 5.4 in the barn's frame) and shot
+  low and close like a photo (5° up, 1.35 m, 26°; what's within 0.7 m of the lens left out: a fence), a warm key light
+  from the front left and a rim from behind added for the close-up, a few daisies in the grass (for the picture only);
+  three shots: the birds alone (see-through), the farm without them (the sky see-through), and how far each pixel is.
+  `VP=1024 DSF=2`: shot at 2048 and shrunk.
+- `app/art/compose_studio.py`: a blue sky with soft clouds, the farm softened by its distance from the birds (as a
+  camera's background), the birds sharp on top, a touch of warmth and a soft vignette. `BIRD_BRIGHT=1.08`.
+- `app/art/icon-1024.png` is the icon; `app/icons.py` puts it in the iPhone app and makes the web game's Home Screen
+  icons (`web3d/icon-180/192/512.png`, live). Checked at 180, 120, 87, 60 and 40 px: the hen and chick read at each.
+- Set-up B (the hen and two chicks) stays in `iconstudio.mjs` (`SET=b`).
