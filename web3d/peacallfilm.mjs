@@ -23,17 +23,17 @@ await step(FPS * 2);
 const at = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.breed === 'pea'), pk = P.birds.find(b => b.train);
   window.__pk = pk; pk.stay = true; pk.route = null; pk.act = { type: 'rest', left: 3 }; pk.wait = 3; pk.fanGoal = 0; if (pk.A) pk.A.fan = 0;      // (calm, his train down)
   const v = pk.root.getWorldPosition(new f.THREE.Vector3()); return [v.x, v.z, pk.root.rotation.y + P.group.rotation.y]; });
-const CALLS = [0.6, 4.2, 7.6], LEN = 10.2, CLIPS = ['peacall1', 'peacall2', 'peacall3'];
+const CALLS = [0.6, 4.2, 7.6], LEN = +(process.env.LEN || 10.2), CLIPS = ['peacall1', 'peacall2', 'peacall3'];
 let k = 0, heard = [];
 await step(FPS * 1.5);
 for (let i = 0; i < Math.round(LEN * FPS); i++) {
   const t = i / FPS, c = CALLS.findIndex(x => Math.abs(x - t) < 0.5 / FPS);
-  const now = await p.evaluate(([call, yaw]) => { const f = window.__farm, pk = window.__pk;
+  const now = await p.evaluate(([call, yaw, AZ, EL]) => { const f = window.__farm, pk = window.__pk;
     if (call) { pk.route = null; pk.act = { type: 'call', left: 2.6 }; pk.wait = 2.7; }
     else if (!pk.act) { pk.act = { type: 'rest', left: 1 }; pk.wait = 1; pk.route = null; }      // (he stays put between his calls)
     const v = pk.root.getWorldPosition(new f.THREE.Vector3());
-    f.closeShot({ at: [v.x, 0.62, v.z], az: yaw * 57.3 + 70, el: 12, dist: 3.4, fov: 30 });
-    return !!(pk.act && pk.act.type === 'call' && pk.act.heard); }, [c >= 0, at[2]]);
+    f.closeShot({ at: [v.x, 0.55, v.z], az: +(AZ ?? 45), el: EL, dist: 2.6, fov: 30 });      // (from the player's side, a little above the fence)
+    return !!(pk.act && pk.act.type === 'call' && pk.act.heard); }, [c >= 0, at[2], process.env.AZ === undefined ? null : +process.env.AZ, +(process.env.EL || 26)]);
   if (now && heard.length < CALLS.length && (!heard.length || t - heard[heard.length - 1] > 1.5)) heard.push(t);
   await p.screenshot({ path: `${DIR}/${String(k++).padStart(4, '0')}.jpg`, type: 'jpeg', quality: 90 });
   await step(1);
