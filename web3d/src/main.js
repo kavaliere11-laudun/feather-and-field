@@ -4180,7 +4180,7 @@ function featherMat() {
   eye(23, 36, '#4f9a3c'); eye(19, 29, '#d6a83e'); eye(15, 23, '#2fc0b4', 2); eye(9.5, 15, '#1a2a8c', 5); eye(3.5, 4.5, '#6a8ae8', 2);
   x.strokeStyle = '#f2e8c8'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(32, 254); x.lineTo(32, 84); x.stroke();      // (the shaft)
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  FEATHER_MAT = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.3, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });
+  FEATHER_MAT = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.2, transparent: true, alphaTest: 0.3, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });      // (a slow shimmer, so it's seen: tickFeathers)
   return FEATHER_MAT;
 }
 function featherSpots(plot) {
@@ -4197,13 +4197,14 @@ function featherSpots(plot) {
 }
 function tickFeathers(dt) {
   if (!game.data) return;
+  if (FEATHER_MAT) { const t = performance.now() / 1000; FEATHER_MAT.emissiveIntensity = 0.18 + 0.22 * Math.pow(0.5 + 0.5 * Math.sin(t * 2.2), 3); }      // (its eye catching the light now and then)
   for (const p of plots) {
     if (p.breed !== 'pea' || !p.gc || p.kind !== 'coop') { if (p.feathers) for (const F of p.feathers) F.mesh.visible = false; continue; }
     const n = game.feathersAt(p.gc), S = featherSpots(p), F = p.feathers || (p.feathers = []);
     for (let i = 0; i < FEATHERS.max; i++) {
       if (!S[i]) continue;
       let f = F[i];
-      if (!f) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.44), featherMat()); m.rotation.order = 'YXZ'; m.receiveShadow = true; m.renderOrder = 1; p.frame.add(m); f = F[i] = { mesh: m, fly: 0 }; }
+      if (!f) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.52), featherMat()); m.rotation.order = 'YXZ'; m.receiveShadow = true; m.renderOrder = 1; p.frame.add(m); f = F[i] = { mesh: m, fly: 0 }; }
       const m = f.mesh;
       if (f.fly) {      // (picked up: it lifts, turning over, and is gone; the coins fly from it)
         f.fly += dt; const u = Math.min(1, f.fly / 0.6);

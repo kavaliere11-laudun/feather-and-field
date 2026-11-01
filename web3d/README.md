@@ -3581,7 +3581,7 @@ the birds already had.
 - **His feathers** (Audrey, 1 Nov: "His dropped feathers (Recommended)"; game.js `FEATHERS`, `feathersAt`, `pickFeather`;
   main.js `tickFeathers`, `featherSpots`, `featherTap`): now and then (one every 12 hours) he drops a feather from his train
   in his yard, three lying there at most: each a train feather flat on the ground, its eye at one end (a texture drawn on
-  a canvas, `featherMat`), at a spot of its own (clear of what's in the yard, of the farmer's ways and of the other
+  a canvas, `featherMat`; half a metre long, its eye catching the light now and then so it's seen), at a spot of its own (clear of what's in the yard, of the farmer's ways and of the other
   feathers, the same each time for that coop). A tap on one: it lifts, turns over and flies to the coins (`.gfeather`):
   sold, 40 coins and 5 XP ("A peacock feather sold · +40 coins"); the others stay where they lie. A tap on a feather under
   a bird standing over it picks whichever the tap is nearer the middle of. The welcome-back card says how many are lying
