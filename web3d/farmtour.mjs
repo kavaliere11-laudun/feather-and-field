@@ -147,20 +147,22 @@ if (!RESTORE && (PH.includes('grow') || PH.some(x => ['tour', 'night', 'ui'].inc
 const farmBox = () => p.evaluate(() => { const f = window.__farm, P = f.gamePlots(); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const q of P) { x0 = Math.min(x0, q.centre.x); x1 = Math.max(x1, q.centre.x); z0 = Math.min(z0, q.centre.z); z1 = Math.max(z1, q.centre.z); } return { x0, x1, z0, z1, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2 }; });
 if (PH.includes('tour')) {
   await p.evaluate(() => window.__farm.setHour(10.5)); await run(0.5);
-  const B = await farmBox();
+  const B = await farmBox(), SPOTS = process.env.SPOTS ? process.env.SPOTS.split(',') : null;      // (SPOTS=farmhouse,decor_windmill: only those, close)
+  if (!SPOTS) {
   await look(B.cx, B.cz, 9); await shot('farm_far', 'the whole farm, zoomed right out');
   for (const [k, dx, dz] of [['nw', -1, -1], ['ne', 1, -1], ['sw', -1, 1], ['se', 1, 1]]) { await look(B.cx + dx * (B.x1 - B.x0) / 4, B.cz + dz * (B.z1 - B.z0) / 4, 4.4); await shot('farm_' + k, 'a quarter of the farm, the usual zoom'); }
   const P = await p.evaluate(() => window.__farm.gamePlots().map(q => q.gc.breed + '_t' + q.gc.tier));
   for (let i = 0; i < P.length; i++) { await lookPlot(i, 2.6); await shot('coop_' + P[i], 'a coop, the usual zoom'); await lookPlot(i, 1.4); await shot('coop_' + P[i] + '_close', 'a coop, closest'); }
+  }
   // the farmhouse, the pond, the dog, the decorations, the wheat
   const spots = await p.evaluate(() => { const f = window.__farm, o = []; const fh = f.farmhouseSpot(); o.push(['farmhouse', fh[0], fh[2]]);
     const g = f.game(); for (const d of g.data.decor || []) if (d.x !== undefined && d.x !== null) o.push(['decor_' + d.id, d.x, d.z]);
     const W = (g.data.decor || []).find(d => d.id === 'wheat') || g.data.wheat; if (W && W.x !== undefined) o.push(['wheat', W.x, W.z]);
     const K = g.data.animals && g.data.animals.dog; if (K) o.push(['kennel_dog', K.x, K.z]);
     return o; });
-  for (const [k, x, z] of spots) { await look(x, z, 2.2); await shot(k, k.replace('_', ' ')); await look(x, z, 1.4); await shot(k + '_close', k.replace('_', ' ') + ', closest'); }
+  for (const [k, x, z] of spots.filter(q => !SPOTS || SPOTS.includes(q[0]))) { await look(x, z, 2.2); await shot(k, k.replace('_', ' ')); await look(x, z, 1.4); await shot(k + '_close', k.replace('_', ' ') + ', closest'); }
   // the view turned round
-  for (const deg of [90, 180, 270]) { await p.evaluate(d => window.__farm.setViewAz(d + 45), deg); await look(B.cx, B.cz, 5.5); await shot('turned' + deg, 'the view turned ' + deg + ' degrees'); }
+  if (!SPOTS) for (const deg of [90, 180, 270]) { await p.evaluate(d => window.__farm.setViewAz(d + 45), deg); await look(B.cx, B.cz, 5.5); await shot('turned' + deg, 'the view turned ' + deg + ' degrees'); }
   await p.evaluate(() => window.__farm.setViewAz(45)); await run(0.3);
 }
 // ---------------------------------------------------------------- night
