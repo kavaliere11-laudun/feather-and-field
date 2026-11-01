@@ -3323,7 +3323,10 @@ class Bird {
       this.look.yaw = busy ? 0 : (this.r() - 0.5) * 1.3; this.look.tilt = busy ? 0 : (this.r() < 0.35 ? (this.r() - 0.5) * 0.7 : 0);
     }
     A.lookYaw += (this.look.yaw - A.lookYaw) * Math.min(1, dt * 8); A.lookTilt += (this.look.tilt - A.lookTilt) * Math.min(1, dt * 6);
-    if (this.trainBlocked > 0) { this.trainBlocked -= dt; walking = false; }      // (the peacock held up by his train a moment: he stands, he doesn't step on the spot)
+    if (this.trainBlocked > 0) {      // (the peacock held up by his train a moment: he stands, he doesn't step on the spot; on his way again, his legs at once, Audrey 1 Nov: "he walks for a second and then just slides")
+      const q = this.root.position, at = this.blockedAt;
+      if (at && Math.hypot(q.x - at[0], q.z - at[1]) > 0.008) this.trainBlocked = 0; else { this.trainBlocked -= dt; walking = false; }
+    }
     A.walk += ((walking ? 1 : 0) - A.walk) * Math.min(1, dt * 10);
     const pace = this.pace || 1;
     const dph = walking ? dt * this.stepRate * (pace > 1 ? pace : 0.6 + 0.4 * pace) : 0;
@@ -3362,7 +3365,7 @@ class Bird {
           if (!full) { const s0 = this.trainClear(q0[0], q0[1], t0, false, y0), f0 = s0 && this.trainClear(q0[0], q0[1], t0, true, y0); clamp = (!st && s0) || (st && f0); }      // (through the fence, the house, the swing...; or over one of the others: not if it wasn't a moment ago)
         }
         if (clamp) {
-          this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1]; this.trainBlocked = 0.3;
+          this.root.rotation.y = y0; this.lastYaw = y0; p.x = q0[0]; p.z = q0[1]; this.trainBlocked = 0.3; this.blockedAt = [q0[0], q0[1]];
           if ((this.trainStuck = (this.trainStuck || 0) + dt) > 0.6 && !this.act && !this.laying) {
             const q = this.wayOut();      // (wedged, his train only lying the one way: a few steps on first, then on where he was going: called over by the farmer, say)
             if (!q && A.t - (this.stillSince ?? A.t) > 6 && this.flyOut()) this.trainStuck = 0;      // (boxed in for good, stuck there a while: a flutter over to somewhere roomier)
