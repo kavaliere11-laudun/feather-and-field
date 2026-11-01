@@ -3764,3 +3764,30 @@ the birds already had.
 - **Biscuit's kennel** (`beasts.py` `kennel`, exported through `export_village3d.py` and spliced into `fauna.glb`):
   clay tiles row on row on its roof (`tile_slope`), a rounder ridge; its walls and doorway as before (kennelclip passes).
 - Tested: landtest, gametest, movetest, firstdaytest, kennelclip.
+
+## The store app, step 1: the game as an iPhone app (1 Nov 2026; Audrey: "Get ready for the app stores (Recommended)")
+
+- **The wrapper** (`app/`, Capacitor 8.6, see `app/README.md`): the web game kept inside the app (works offline; nothing
+  asked of the internet), no rewrite. `app/make-www.mjs` makes the app's web folder from the built game (`web3d/dist`, or
+  main's `3d/` in the cloud): the game's page as `index.html`, told it's the app (`window.__ffApp = true`), no Home
+  Screen manifest, no test village, no `cloud.js`.
+- **In the game, only when it's the app**: no account yet (`account.js` APP: Google's sign-in page can't open inside an
+  app; it waits for the app's own sign-in, Sign in with Apple and Google, Apple's rule 4.8); the privacy link goes to the
+  site's page (`gameui.js` PRIVACY_ONLINE: a new window in the app opens in Safari, which can't reach the app's own
+  files); the farm code's note speaks of reinstalling the game rather than clearing Safari (`code_how_app`, six
+  languages); the page treated as full screen (`standalone`, as from the Home Screen).
+- **The iPhone project** (`app/ios`, Swift packages, no CocoaPods): `com.featherandfield.game`, "Feather & Field",
+  iPhone only (an iPad runs it as an iPhone app, so no iPad pictures needed for the store), iOS 16 and later (the page's
+  `:has()` needs 15.4), upright and sideways, six languages declared (`CFBundleLocalizations`: a French iPhone's
+  `navigator.languages` says French, so the game opens in French), no encryption of its own
+  (`ITSAppUsesNonExemptEncryption` false), the clock's text white over the farm (status bar plugin, DARK).
+- **Its pictures** (`app/icons.py`): the icon, the rooster crowing on a bale rendered from the game at 1280 px with the
+  Home Screen icon's camera (`app/art/icon-render.png`, 1024 px, no transparency); the launch screen the loading green
+  (#557230 down to #8cb85c), so the app opens straight into "Loading your farm…".
+- **Built and tried on GitHub's Macs** (`.github/workflows/ios.yml`, on each push to `app/`; free for a public
+  repository): Xcode builds it for the iPhone simulator, installs it, opens it in English then French (a new phone:
+  the welcome), then with a test farm (`app/test/farm30.json`, put in for that check only, `FARM=`), and keeps the
+  pictures, a 20-second film and the app's log with the run (Artifacts: iphone-check). Unsigned; nothing secret.
+- Tested here: `app/test/wwwcheck.mjs` (English and French, upright and sideways: told it's the app, no sign-in, the
+  welcome in its language, no account card, the privacy link the site's, the credits, no errors, nothing from the
+  internet); the web game's own accounttest and langtest still pass (the changes only act inside the app).

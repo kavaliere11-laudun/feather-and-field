@@ -1,6 +1,7 @@
 # Feather & Field as an iPhone app: built on one of GitHub's Macs (free for a public repository) and tried on an iPhone
 # simulator there. The game inside is the published one (main's 3d/ folder), wrapped by app/ (Capacitor; app/README.md).
-# The pictures and a short film of the app running are kept with the run ("Artifacts": iphone-check).
+# The pictures, a short film of the app running and the logs are kept with the run ("Artifacts": iphone-check) and on the
+# branch app-check (replaced each time), where Claude can read them.
 # No secrets here: this build is unsigned and never leaves GitHub. Sending a build to Apple (TestFlight) will be its own
 # job, using a key Audrey adds in the repository's settings (Settings > Secrets), never written in this repository.
 name: iPhone app
@@ -9,12 +10,19 @@ on:
     branches: [source]
     paths: ['app/**', '.github/workflows/ios.yml']
   workflow_dispatch:
+    inputs:
+      testflight:
+        description: 'Also send a build to Apple (TestFlight)'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   simulator:
     runs-on: macos-26
     timeout-minutes: 50
+    permissions:
+      contents: write      # (only to put the pictures on the branch app-check)
     steps:
       - name: The app's project (source branch)
         uses: actions/checkout@v4
@@ -31,6 +39,7 @@ jobs:
           node-version: 22
       - name: Xcode
         run: |
+          mkdir -p shots
           xcodebuild -version
           xcrun simctl list runtimes
       - name: The app's web folder and the iPhone project
@@ -56,12 +65,14 @@ jobs:
         run: |
           xcodebuild -list -project App.xcodeproj
           xcodebuild -project App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator \
-            -destination "id=$UDID" -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | tail -n 40
+            -destination "id=$UDID" -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build > ../../../shots/build-log.txt 2>&1 \
+            || { tail -n 80 ../../../shots/build-log.txt; exit 1; }
+          tail -n 15 ../../../shots/build-log.txt
           test -d "$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
       - name: Try it on the simulator (English, then French)
+        timeout-minutes: 15
         run: |
           set -x
-          mkdir -p shots
           APP="$RUNNER_TEMP/dd/Build/Products/Debug-iphonesimulator/App.app"
           ID=com.featherandfield.game
           xcrun simctl boot "$UDID"; xcrun simctl bootstatus "$UDID" -b
@@ -76,6 +87,7 @@ jobs:
             xcrun simctl terminate "$UDID" $ID || true
           done
       - name: A farm in the app (a test farm put in for this check only)
+        timeout-minutes: 15
         working-directory: app
         run: |
           set -x
@@ -101,3 +113,70 @@ jobs:
           name: iphone-check
           path: shots/
           retention-days: 14
+      - name: Keep the pictures on the branch app-check
+        if: always()
+        working-directory: shots
+        run: |
+          echo "iPhone check: run ${{ github.run_number }} (${{ github.run_id }}) of ${{ github.sha }}, $(date -u)" > README.md
+          git init -q -b app-check && git config user.name "iPhone check" && git config user.email "actions@users.noreply.github.com"
+          git add -A && git commit -q -m "iPhone check, run ${{ github.run_number }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" app-check
+
+  # A signed build sent to App Store Connect, for TestFlight and then the store: run by hand ("Run workflow", tick
+  # TestFlight) or by a push whose message has [testflight]. It needs four secrets Audrey adds herself in the repository's
+  # Settings > Secrets and variables > Actions (never written here, never sent to anyone): ASC_KEY_ID, ASC_ISSUER_ID and
+  # ASC_KEY_P8 (an App Store Connect API key, Admin, its .p8 file's text) and APPLE_TEAM_ID. Xcode signs in the cloud with
+  # them (automatic signing); the build number is the run's number.
+  testflight:
+    if: (github.event_name == 'workflow_dispatch' && inputs.testflight) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[testflight]'))
+    runs-on: macos-26
+    timeout-minutes: 50
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: The key from Apple is there
+        run: |
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 APPLE_TEAM_ID; do [ -n "${!v}" ] || { echo "missing secret: $v"; exit 1; }; done
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: app
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: site
+          sparse-checkout: 3d
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: The app's web folder and the iPhone project
+        working-directory: app
+        run: |
+          npm ci
+          node make-www.mjs ../site/3d
+          npx cap sync ios
+      - name: Build, sign and send to App Store Connect
+        working-directory: app/ios/App
+        run: |
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$KEY"
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} "${AUTH[@]}" archive | tail -n 30
+          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+            -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 30
+          rm -f "$KEY"
