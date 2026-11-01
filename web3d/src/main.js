@@ -195,6 +195,7 @@ function applyDaylight(h) {
   hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7);
   scene.background.copy(A[8]).lerp(B[8], u);
   DAY.glow.value = mix(9); lampPools.update(); WATER_DAY.value = Math.max(0, 1 - DAY.glow.value * 1.4);
+  if (METALS.length) { const k = metalK(); for (const m of METALS) m.envMapIntensity = k; }
   GRADE.value = DAY.glow.value * (inside.open ? 0.22 : 0.6);          // inside, by the lantern, colours keep more of themselves
   // where the light comes from: its height and how far round from midday
   const el = mix(3) * DEG, turn = mix(4) * DEG;
@@ -226,9 +227,25 @@ function lightUp(mat) {
 // night colours: by moonlight the eye sees little colour, so as night falls every material greys towards a moonlit blue
 // (the lamps and lit windows keep their warm colour). One line added to each material's shader, after its own changes.
 const NIGHT_TINT = { value: new THREE.Vector3(0.78, 0.92, 1.32) }, GRADE = { value: 0 };     // how far (0-1)
+// metal (the feeders, bowls and pails, lanterns, the statue's bronze plaque): with nothing round it to reflect it showed
+// nearly black (1 Nov, the play-through); a soft sky over green ground for it to shine with, dimmer as the light goes
+let METAL_ENV = null; const METALS = [];
+function metalShine(mat) {
+  if (!mat || !mat.isMeshStandardMaterial || mat.metalness < 0.5 || mat.envMap) return;
+  if (!METAL_ENV) {
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 32; const cx = cv.getContext('2d'), g = cx.createLinearGradient(0, 0, 0, 32);
+    g.addColorStop(0, '#9cc4e4'); g.addColorStop(0.38, '#eef4f6'); g.addColorStop(0.47, '#ffffff'); g.addColorStop(0.53, '#8f9a70'); g.addColorStop(0.62, '#4c6232'); g.addColorStop(1, '#26331a');
+    cx.fillStyle = g; cx.fillRect(0, 0, 64, 32);
+    const t = new THREE.CanvasTexture(cv); t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace;
+    const pm = new THREE.PMREMGenerator(renderer); METAL_ENV = pm.fromEquirectangular(t).texture; pm.dispose(); t.dispose();
+  }
+  mat.envMap = METAL_ENV; mat.envMapIntensity = metalK(); METALS.push(mat); mat.needsUpdate = true;
+}
+const metalK = () => 0.75 * (1 - 0.85 * Math.min(1, DAY.glow.value));
 function nightGrade(mat) {
   if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'glowc' || mat.name === 'window') return;
   mat.userData.graded = true;
+  metalShine(mat);
   const prev = mat.onBeforeCompile, prevKey = mat.customProgramCacheKey;
   mat.onBeforeCompile = (sh, r) => {
     if (prev) prev.call(mat, sh, r);
@@ -817,7 +834,8 @@ function batchOne(name, matrices, opts) {
   if (!matrices.length) return out;
   for (const m of meshesOf(parts[name])) {
     let mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
-    if (opts.wind) mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind);      // its own copy: other models may share the material
+    if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
+    nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
     inst.userData.model = name; inst.userData.ownMat = mat !== m.material;
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
@@ -1291,7 +1309,7 @@ function addNest(frame, plot) {
   eggs.userData.moves = true; eggs.receiveShadow = true; eggs.castShadow = false;
   frame.add(eggs);
   plot.nest = { eggs, count: 0, pop: 1, by: null };
-  plot.block = [...((nestOf(plot) || {}).block || []), ...((COOPS.blocks || {})[coopLook(plot).house] || [])];         // things in front of the house to walk round (a let-down door, a pot...)
+  plot.block = plot.block0 = [...((nestOf(plot) || {}).block || []), ...((COOPS.blocks || {})[coopLook(plot).house] || [])];         // things in front of the house to walk round (a let-down door, a pot...)
   plot.nest.count = GAME_MODE ? (plot.gc ? plot.gc.eggs : 0) : 2;      // (the game: its save; on the test page a couple already laid this morning)
   showEggs(plot);
   const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(penOf(plot).feeder[0], 0.065, penOf(plot).feeder[2]);
@@ -1843,7 +1861,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
   // to his palm, so you see her peck them up and drop them in; the cuddle's spot if neither is clear)
   const wside = s => ({ hand: s > 0 ? 'R' : 'L', at: [CB[0] + fx * 0.27 - s * fz * 0.3, CB[1] + fz * 0.27 + s * fx * 0.3], palm: [CB[0] + fx * 0.36 - s * fz * 0.17, CB[1] + fz * 0.36 + s * fx * 0.17] });      // (her a little behind his hand, so it's in front of her beak from where you look)
   const roomFor = q => DK ? DK.free(q[0], q[1], 0.09) : q[0] > Yp.min[0] + 0.1 && q[0] < Yp.max[0] - 0.1 && q[1] > Yp.min[2] - 0.05 && q[1] < Yp.max[2] - 0.08 && !PEN.obstacles.some(o => Math.hypot(q[0] - o[0], q[1] - o[2]) < o[3] + 0.1) && !base.some(o => Math.hypot(q[0] - o[0], q[1] - o[1]) < o[2] + 0.1);
-  const base = plot.block || [];
+  const base = plot.block0 || plot.block || [];      // (its own, never a visit's: 1 Nov, a visit asked for while the farmer was still in the pen kept the last one's spots blocked, a peahen couldn't get to him)
   // a call duck called over (callpen.js comeTo): to his side for her worms (the side she can get to round the pond), else in front of him
   const callDuck = (b, worms) => {
     if (!plot.farmer || !b || b.inHouse || b.broody || b.leaving || !b.root.visible) return null;
@@ -5490,7 +5508,7 @@ function retier(p) {
   if (p.toys) { p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
   const L = coopLook(p);
   p.pen = dressedPen(p, L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN);
-  p.block = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
+  p.block = p.block0 = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
   if (penOf(p).play && parts.swing_seat) addToys(p, penOf(p).play, part);
   addSails(p);
@@ -5762,28 +5780,70 @@ function addGameBird(plot, gb) {
 }
 function startPlace(breed) {
   if (MOVE.plot || DMOVE.id || inside.open || !game.placeable(breed)) return false;
-  const at = placeSpot(breed); if (!at) { hint(game.t('no_room')); return false; }
+  const spots = placeSpots(breed), at = spots[0]; if (!at) { hint(game.t('no_room')); return false; }
   const d = game.draftCoop(breed, at); if (!d) return false;
   const p = makePlot(Math.max(-1, ...plots.map(q => q.index)) + 1, [at.x, 0, at.z], at.deg, d.coop, rng(97 + plots.length), 'coop', d.birds);
   p.draft = d;
   for (const b of p.birds) b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   rebuildDoors(); rebuildPools();
   startMove(p);
+  // (offered only where "Put it here" will take it: its gate opening onto the farm with it there, as placeCoop checks; else
+  // the next nearest. 1 Nov: the peafowl's pavilion at level 30 was offered a spot with its gate shut in)
+  if (MOVE.plot === p && !gateOpen(p)) {
+    let found = false;
+    for (const c of spots.slice(1)) { moveTo(c.x, c.z, c.deg, true); if (gateOpen(p)) { found = true; break; } }
+    if (!found) moveTo(at.x, at.z, at.deg, true);
+    const size = Math.max(view.size, sideways() ? 3.4 : 4.4), v = viewAbove(p.centre.x, p.centre.z, size); focusOn(v[0], v[1], size);
+  }
   return true;
 }
-// where a new coop first appears: the nearest spot to the middle of the view where it can stand, facing you, best with
-// nothing to clear
-function placeSpot(breed) {
+// room for a coop at sp to grow to its Deluxe look where it stands, and the coops already there to grow to theirs (1 Nov,
+// the play-through: coops put where the game suggested were boxed in, and every new look said to move them first)
+function roomToGrow(sp, breed) {
+  if (!hasLooks(baseBreed(breed))) return true;
+  if (!coopSpot(sp, { breed, tier: 4 }).ok) return false;
+  const F = footOf({ breed, tier: 4 }), a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a);
+  for (let lz = F.z0; lz < F.z1 + 0.249; lz += 0.5) for (let lx = F.x0; lx < F.x1 + 0.249; lx += 0.5) {
+    const px = Math.min(lx, F.x1), pz = Math.min(lz, F.z1), x = sp.x + px * c + pz * s, z = sp.z - px * s + pz * c;
+    for (const o of game.data.coops) { if ((o.tier || 0) >= 4 || !hasLooks(baseBreed(o.breed))) continue; const [ox, oz] = inSpot(o, x, z); if (rectGap(footOf({ ...o, tier: 4 }), ox, oz) < 0.35) return false; }
+  }
+  return true;
+}
+// clear of where the coops will grow to (a decoration offered a spot: not where a coop's next looks would need)
+function clearOfGrowth(id, x, z) {
+  const f = DECOR_INFO.foot[id], rad = f ? 0.75 * Math.max(-f[0], f[2], -f[1], f[3]) : 0.5;
+  return !game.data.coops.some(o => { if ((o.tier || 0) >= 4 || !hasLooks(baseBreed(o.breed))) return false; const [ox, oz] = inSpot(o, x, z); return rectGap(footOf({ ...o, tier: 4 }), ox, oz) < 0.3 + rad; });
+}
+// whether the coop being placed has its gate open onto the farm where it is now: as placeCoop checks it (what's in its way
+// gone, the walking grid made with it there), then the grid as it was
+function gateOpen(p) {
+  const S = MOVE.spot; if (!S || !S.ok) return false;
+  const ids = new Set(S.clear.map(o => o.id)), keep = [V.trees, V.bushes, V.rocks];
+  V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
+  rebuildNav(); const ok = !!penSpec(p);
+  [V.trees, V.bushes, V.rocks] = keep; rebuildNav();
+  return ok;
+}
+// where a new coop first appears: the nearest spots to the middle of the view where it can stand, facing you, best with
+// nothing to clear and its gate onto open ground (a quick look: gateOpen makes sure)
+function placeSpots(breed, n = 8) {
   const self = { breed }, cx = Math.round(view.target.x * 4) / 4, cz = Math.round(view.target.z * 4) / 4;
   const Fq = footOf({ breed, tier: 0 }), quick = (x, z) => [[0, 0], [Fq.x0 + 0.04, Fq.z0 + 0.07], [Fq.x1 - 0.04, Fq.z0 + 0.07], [Fq.x0 + 0.04, Fq.z1 - 0.07], [Fq.x1 - 0.04, Fq.z1 - 0.07]].every(([dx, dz]) => owned(fieldAt(x + dx, z + dz)));
-  let best = null;
-  for (let r = 0; r < 40 && !best; r += 1) for (let k = 0, n = Math.max(1, Math.round(r * 6)); k < n; k++) {
-    const a = k / n * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
+  const PQ = hasLooks(breed) ? tierPen(breed, 0) : PEN, gl = [PQ.gate[0] + COOP_SHIFT.x, PQ.pen.max[2] + 0.6 + COOP_SHIFT.z], nav = navGrid(), R = farmReach();
+  const gateOk = (x, z, deg) => { const c = Math.cos(deg * DEG), sn = Math.sin(deg * DEG); return !!nav.nearestIn(R, x + gl[0] * c + gl[1] * sn, z - gl[0] * sn + gl[1] * c, 0.6); };
+  const found = []; let r0 = -1, open = 0, roomy = 0;
+  for (let r = 0; r < 40 && !(r0 >= 0 && (r > r0 + 8 || (roomy >= 2 && r > r0 + 1) || (open >= 3 && !roomy && r > r0 + 6))); r += 1) for (let k = 0, m = Math.max(1, Math.round(r * 6)); k < m; k++) {
+    const a = k / m * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
     if (!quick(x, z)) continue;
-    for (const deg of [90, 0]) { const S = coopSpot({ x, z, deg }, self); if (S.ok && (!best || S.clear.length < best.n)) best = { x, z, deg, n: S.clear.length }; if (best && !best.n) break; }
-    if (best && !best.n) break;
+    for (const deg of [90, 0]) {
+      const S = coopSpot({ x, z, deg }, self); if (!S.ok) continue;
+      if (r0 < 0) r0 = r;
+      const g = gateOk(x, z, deg), w = g && roomToGrow({ x, z, deg }, breed); if (g) open++; if (w) roomy++;
+      found.push({ x, z, deg, r, n: S.clear.length, g, w });
+    }
   }
-  return best && { x: best.x, z: best.z, deg: best.deg };
+  found.sort((a, b) => (b.g - a.g) || (b.w - a.w) || (a.r - b.r) || (a.n - b.n));
+  return found.slice(0, n).map(o => ({ x: o.x, z: o.z, deg: o.deg }));
 }
 function dropPlot(p) {
   for (const b of [...p.birds]) removeBird(b);
@@ -5890,7 +5950,9 @@ function decorSpot(id, x, z, deg = 45) {
 }
 // the nearest good spot to (cx, cz), best with nothing to clear, and (way: when it's offered to be put down) the way to
 // every coop's gate still open with it there
-function decorFreeNear(id, cx, cz, far = 40, way = false, degs = [45]) {
+function decorFreeNear(id, cx, cz, far = 40, way = false, degs = [45], grow = false) {
+  // (grow: a spot offered for a new one: best clear of where the coops will grow, nearby; else the nearest as before)
+  if (grow === true) return decorFreeNear(id, cx, cz, Math.min(far, 16), way, degs, 'only') || decorFreeNear(id, cx, cz, far, way, degs);
   cx = Math.round(cx * 4) / 4; cz = Math.round(cz * 4) / 4;
   const no = new Set();
   for (let tries = 0; tries < 6; tries++) {
@@ -5900,7 +5962,7 @@ function decorFreeNear(id, cx, cz, far = 40, way = false, degs = [45]) {
       if (!owned(fieldAt(x, z)) || no.has(x + ',' + z)) continue;
       for (const deg of degs) {                             // (the wheat field: either way round)
         const S = decorSpot(id, x, z, deg);
-        if (S.ok && (!best || S.clear.length < best.n)) { if (!best) until = r + 3; best = { x, z, deg, n: S.clear.length }; if (!best.n) break; }      // (a few steps further for one with nothing to clear)
+        if (S.ok && (grow !== 'only' || clearOfGrowth(id, x, z)) && (!best || S.clear.length < best.n)) { if (!best) until = r + 3; best = { x, z, deg, n: S.clear.length }; if (!best.n) break; }      // (a few steps further for one with nothing to clear)
       }
     }
     if (!best) return null;
@@ -6166,7 +6228,7 @@ function startDecor(id) {
   if (!own && (isK ? !game.animalNext('dog') || game.data.coins < ANIMALS.dog.price : !game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
   gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   let at = own && own.x !== null ? { x: own.x, z: own.z, deg: own.deg || 45 } : null;
-  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : isK ? [KENNEL_DEG] : [45]); if (!at) { hint(game.t('dec_no_room')); return false; } }
+  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : isK ? [KENNEL_DEG] : [45], true); if (!at) { hint(game.t('dec_no_room')); return false; } }
   DMOVE.id = id; DMOVE.buy = !own; DMOVE.from = own && own.x !== null ? { ...at } : null; DMOVE.at = { ...at }; DMOVE.moved = false; DMOVE.nav = false;
   DMOVE.item = addDecor(id, at.x, at.z, at.deg);
   decorLifeAgain(id);                                       // (its bees and birds wait till it's down)

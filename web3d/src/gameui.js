@@ -12,7 +12,7 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHO
 const FIRST_SAVE = 'feather-field-save-v1';
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
-export const HERO = { w: 3300, h: 1500, key: [0.262, 0.285, 0.642, 0.79] };
+export const HERO = { w: 3300, h: 1500, key: [0.236, 0.285, 0.642, 0.79] };      // (1 Nov: a little room left of the farmer, sideways his arm was cut)
 // the little barn (as on Your coops' button): the Breed Book's coop lines
 const BARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
 
@@ -426,6 +426,12 @@ export class GameUI {
     this.bird = null; this.levelShown = L;
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    for (const b of trios) {                           // a new breed first, the biggest news (1 Nov: sideways it was out of sight under the rest)
+      const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
+      h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : this.g.kindOf(b) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
+      c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
+      body.append(c);
+    }
     const decs = Object.keys(DECOR).filter(id => DECOR[id].level === L);      // (a decoration to buy now: the shop, the coins at the top)
     if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const id of Object.keys(ANIMALS).filter(k => ANIMALS[k].level === L && !this.g.animalOwned(k))) {      // (an animal to buy now: the shop's Animals shelf)
@@ -446,12 +452,6 @@ export class GameUI {
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.locale()) }))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
-      for (const b of trios) {
-        const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
-        h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : this.g.kindOf(b) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
-        c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
-        body.append(c);
-      }
       if (sale) { const c = el('div', 'gcard'), h = el('div', 'gcard-h'); h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('land_new', { c: sale.price }))); c.append(h); body.append(c); }
       const go = el('button', 'gbtn', this.t('place_now')); go.type = 'button';
       go.addEventListener('click', () => { this.close(); if (onPlace) onPlace(trios[0]); });
@@ -851,11 +851,13 @@ export class GameUI {
   // last, Skip; then done()
   introCards(done) {
     const N = 4; let i = 0, x0 = null;
+    const src = k => 'intro/' + (k + 1) + (k === 2 && INTRO_PIC.includes(this.g.lang) ? '-' + this.g.lang : '') + '.webp' + (this.o.bust || '');
+    this.introPics = Array.from({ length: N }, (_, k) => { const im = new Image(); im.decoding = 'async'; im.src = src(k); return im; });      // (all four on their way at once: the next one there when Next is tapped)
     const finish = () => { this.introDone = done; this.close(); };
     const draw = () => {
       const b = this.open('intro', this.t('intro_' + (i + 1)), true);
       this.bird = null; this.dim.hidden = true; this.sheet.classList.add('gintro');
-      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'intro/' + (i + 1) + (i === 2 && INTRO_PIC.includes(this.g.lang) ? '-' + this.g.lang : '') + '.webp' + (this.o.bust || '');      // (the third has words on its sign: À VENDRE in French)
+      const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = src(i);      // (the third has words on its sign: À VENDRE in French)
       img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
       pic.addEventListener('pointerdown', e => { x0 = e.clientX; });
       pic.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (dx < -40 && i < N - 1) { i++; draw(); } else if (dx > 40 && i > 0) { i--; draw(); } });

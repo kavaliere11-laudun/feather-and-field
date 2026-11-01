@@ -3613,3 +3613,36 @@ the birds already had.
   bones, then `shinL`, `shinR`, `footL`, `footR`); the soft fluff over the feathers now grown on the cut model (`addFur`
   given it, its weights in 255ths); the steps in `pose` (`this.bends`; the peafowl's `this.peafowl` only for their
   slower strides and deeper crouch). Inside the house at night her walk to her spot the same (`arriveStep` sets `A.vpr`).
+
+## The full play-through, part 1 (1 Nov 2026; Audrey: "Full play through please. Pay extra attention to the details of the graphics, I want things to look good and properly made")
+
+- **How**: `farmtour.mjs OUT` (new, kept for next time): a new farm at phone size on its side (874x402, as she plays),
+  the welcome, the four first-day pictures, the guide, then level by level to 30 as a player goes (each level's card,
+  the next field bought, each new breed's coop put where the game suggests, the decorations, geese and dog bought as they
+  come, the coops' looks bought a step at a time, the wheat sown), then the finished farm: from far, in quarters, every
+  coop at the usual zoom and the closest, the farmhouse and every decoration close, the view turned round, sunset,
+  bedtime, night, morning, inside a coop, and the cards and sheets (Your coops, shows, jobs, the Breed Book, the shop's
+  tabs, Settings, the level, a bird's and a coop's card). `FARM=file` keeps the grown farm so the later parts can be run
+  again on it quickly; LANG=fr in French (the farm switched to French). Then OUT/index.html of the pictures.
+- **Fixed from it**:
+  - The first-day pictures, sideways: shown as a thin strip across the card they lost the hens and the farmer; now the
+    whole picture beside its words (index.html `.gsheet.gintro`, a wider card), all four loading at once.
+  - A level's card, sideways: a new breed's news came last, out of sight under the decorations and the rest; now first.
+  - The welcome picture, sideways: the farmer's arm was cut by the screen's edge (gameui.js `HERO.key` from 0.236).
+  - Metal (the feeders, bowls and pails, lanterns, the statue's bronze plaque) showed nearly black, with nothing round it
+    to reflect: now a soft sky over green ground to shine with, dimmer as the light goes (main.js `metalShine`).
+  - The bushes and trees stayed bright green all night once a coop or decoration had been put down (their swaying copies
+    lost the night colours): dimmed at night again (`batchOne`).
+  - A new breed's coop could be offered a spot with its gate shut in ("Put it here" then only said to move it: the
+    peafowl's pavilion at level 30): now offered only where it can go (`placeSpots`, `gateOpen`).
+  - Coops put where the game suggested were boxed in by the next coops and decorations: every new look said to move
+    the coop first. A new coop is now offered a spot with room to grow to its Deluxe look where it stands, clear of the
+    other coops' room to grow (`roomToGrow`); a decoration is offered a spot clear of it too, nearby if there is one
+    (`clearOfGrowth`, `decorFreeNear(..., grow)`).
+  - A peahen sometimes couldn't get to the farmer for her cuddle (he crouched, waited and got up again): a visit asked
+    for while he was still in the pen kept the last visit's spots blocked (`penSpec`'s base now the pen's own,
+    `plot.block0`).
+  - The language list in French: "Français" ran into its arrow (`.gselect`).
+- **Seen, for later** (the next steps, Audrey to choose): the decorations from the first game (windmill, bandstand,
+  greenhouse, statue, beehives, flower bed, bird bath, duck house) and the farmhouse look plain next to the coops (flat
+  colours, no boards, tiles or trims); the first day's guide card sideways sits over the Red Barn's roof.

@@ -321,7 +321,15 @@
   .gdots { display: flex; justify-content: center; gap: 7px; margin: 6px 0 10px; }
   .gdots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(30, 52, 38, 0.18); }
   .gdots span.on { background: var(--meadow); width: 20px; border-radius: 4px; }
-  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gintro-pic { aspect-ratio: auto; height: 42vh; } }
+  /* sideways: the picture whole beside its words (1 Nov: as a thin strip across the card it lost the hens and the farmer) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet.gintro { width: min(640px, 76vw); }
+    .gsheet.gintro .gsheet-body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; row-gap: 4px; align-items: center; }
+    .gsheet.gintro .gintro-pic { grid-row: 1 / span 2; width: auto; height: min(calc(100vh - 236px), 240px); aspect-ratio: 4 / 3; }
+    .gsheet.gintro .gintro-t { grid-column: 2; align-self: end; margin: 0; }
+    .gsheet.gintro .gdots { grid-column: 2; align-self: start; justify-content: flex-start; margin: 6px 0 0 2px; }
+    .gsheet.gintro .gstick { grid-column: 1 / -1; margin-top: 6px; }
+  }
   .gguide { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(92vw, 380px); box-sizing: border-box;
             background: #fffdf3; border-radius: 18px; padding: 10px 14px 11px; box-shadow: 0 6px 18px rgba(30, 52, 38, 0.22), 0 0 0 2px #f2c94c; font-family: var(--body); }
   .gguide[hidden] { display: none; }
@@ -408,7 +416,7 @@
   .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
   .gchip.on { border-color: var(--meadow); background: #e5f1df; }
   /* the language list (lang.js: more than three languages): a chip that opens the phone's own picker */
-  .gselect { -webkit-appearance: none; appearance: none; padding-right: 34px; border-color: var(--meadow); background: #e5f1df url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23355e2b' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center; }
+  .gselect { -webkit-appearance: none; appearance: none; padding-right: 36px; min-width: 136px; text-align: left; border-color: var(--meadow); background: #e5f1df url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23355e2b' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center; }
   .gwho { gap: 10px; }
   .gwho .gchip { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 18px; font-size: 17px; }
   .ginput { font: 700 17px Nunito, system-ui, sans-serif; padding: 11px 13px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink);
