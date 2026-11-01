@@ -7196,6 +7196,7 @@ function wake(ms) { awakeUntil = Math.max(awakeUntil, performance.now() + ms); }
 const meter = { frames: 0, late: 0, since: 0, fps: 0, slow: 0 };
 const readout = document.getElementById('readout');
 let details = params.has('details');
+if (params.has('fps') || details) document.body.classList.add('showfps');      // (?fps: the smoothness readout in the game too, to check it on a phone)
 readout.addEventListener('click', () => { details = !details; showReadout(); });
 
 function frame(now) {

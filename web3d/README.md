@@ -3734,3 +3734,14 @@ the birds already had.
     their vines, a trowel).
 - Each keeps the old one's place and size on the village grid (within a few centimetres; the scarecrow turned to face
   the player).
+## Small fixes and smoothness (1 Nov 2026; Audrey: "Small fixes + smoothness (Recommended)")
+
+- **The first day's guide, sideways**: its card sat over the Red Barn's roof (top left); now in the bottom left corner
+  (index.html `.gguide`, landscape), and while it's up the hint along the bottom moves into the room beside it
+  (`body.game:has(.gguide:not([hidden])) #hint`). firstdaytest sideways (874x402) in English and French: all pass, the
+  steps' arrows clear of the card.
+- **Smoothness**: on the grown farm (level 30, every coop and decoration), the day's rebuilds (farmhouse, windmill, the
+  eight decorations, the village's small things) add 2% triangles at the usual zoom (228k to 232k), 11% zoomed right out
+  (1.41M to 1.57M) and 15 draws (581 to 596); the farm's own quality steps still take care of a slower phone.
+  `?fps` (e.g. the usual address with ?fps) now shows the smoothness readout in the game too, under the title, to check
+  on a phone.
