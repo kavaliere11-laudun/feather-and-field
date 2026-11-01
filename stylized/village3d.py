@@ -349,3 +349,290 @@ def windmill_sails(name='sails', R=3.0, width=0.66):
             c = d * ((r0 + r1) / 2) + p * 0.1 + Vector((0, -0.12, 0))
             objs.append(cyl('furled', 0.06, r1 - r0 - 0.1, (c.x, c.y, c.z), (0, math.pi / 2 - a, 0), m=cloth, verts=8, bevel=0.0))
     return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the bandstand
+def bandstand_dec(seed=41, name='bandstand'):
+    """A Victorian bandstand: an octagonal base of white lattice panels between posts under a wooden coping, a boarded
+    deck, white steps up the front with iron handrails, eight green iron columns with capitals and curly brackets, green
+    railings with balusters (open at the steps), a cream beam with a scalloped valance, a red shingled roof on eight
+    facets with cream ribs, a gold finial; a lantern hanging inside, two music stands, pots of red flowers by the steps.
+    (Its footprint as before.)"""
+    random.seed(seed); objs = []
+    R, DECK, COLH, ROOF_Z, ROOF_TOP = 1.32, 0.56, 2.62, 2.78, 3.75
+    white = C('bwhite', '#f2eee4', rough=0.6, var=0.02); green = C('bgreen', '#2e5a40', rough=0.5, var=0.03)
+    dark = C('bdark', '#26372c', rough=0.8); wood = C('bwood', '#9a6a43', rough=0.7, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26))
+    cream = C('bcream', '#f3e7c9', rough=0.6); red = [C('broof%d' % i, h, rough=0.65, var=0.06) for i, h in enumerate(('#b2392f', '#a8332a', '#ba4136'))]
+    gold = C('bgold', '#d4a640', rough=0.35); stone = C('bstep', '#e9e4d8', rough=0.8, var=0.03)
+    P = octa(R + 0.08)
+    objs.append(ring_mesh('base', octa(R + 0.02), 0.0, octa(R + 0.02), DECK - 0.06, dark, cap_a=True, cap_b=True))
+    for i in range(8):
+        a, b = P[i], P[(i + 1) % 8]; d, L, n = _face_frame(a, b); front = n.y < -0.9
+        A = Vector((a[0], a[1], 0)); B = Vector((b[0], b[1], 0))
+        objs.append(plank('bpost', A + Vector((0, 0, 0)), A + Vector((0, 0, DECK - 0.04)), 0.09, 0.09, (n.x, n.y, 0), white, jitter=0.1))
+        if not front:                                # a lattice panel: laths crossing on the slant
+            for k in range(-4, 9):
+                u0 = k * 0.16; p0 = A + d * u0 + n * 0.02; p1 = p0 + d * 0.42 + Vector((0, 0, 0.42))
+                q0 = A + d * (u0 + 0.42) + n * 0.03; q1 = q0 - d * 0.42 + Vector((0, 0, 0.42))
+                for (s, t) in ((p0, p1), (q0, q1)):
+                    # clipped to the panel
+                    def clip(s, t):
+                        us, ut = (s - A).dot(d), (t - A).dot(d); zs, zt = s.z + 0.04, t.z + 0.04
+                        lo, hi = 0.06, L - 0.06
+                        if max(us, ut) < lo or min(us, ut) > hi: return None
+                        fa, fb = sorted(((lo - us) / (ut - us), (hi - us) / (ut - us)))
+                        f0, f1 = max(0.0, fa), min(1.0, fb)
+                        if f1 - f0 < 0.15: return None
+                        return s.lerp(t, f0) + Vector((0, 0, 0.04)), s.lerp(t, f1) + Vector((0, 0, 0.04))
+                    c_ = clip(s, t)
+                    if c_: objs.append(plank('lattice', c_[0], c_[1], 0.035, 0.015, (n.x, n.y, 0), white, jitter=0.2, bevel=0.0))
+        objs.append(plank('coping', A + n * 0.06 - d * 0.04 + Vector((0, 0, DECK - 0.03)), B + n * 0.06 + d * 0.04 + Vector((0, 0, DECK - 0.03)), 0.08, 0.06, (0, 0, 1), wood, jitter=0.1))
+    for k in range(int(2 * R / 0.14)):               # the deck's boards
+        x = -R + 0.07 + k * 0.14; hw = math.sqrt(max(0.0, R * R - x * x)) * 0.98
+        objs.append(plank('deck', (x, -hw, DECK), (x, hw, DECK), 0.13, 0.03, (0, 0, 1), wood, jitter=0.1, bevel=0.0))
+    fy = -(R + 0.08) * math.cos(math.radians(22.5))
+    for k in range(3):                               # white steps up the front, iron handrails
+        objs.append(box('step', (0.94, 0.26, DECK - 0.14 * k - 0.12), (0, fy - 0.13 - 0.24 * k, (DECK - 0.14 * k - 0.12) / 2), m=stone, bevel=0.012, segs=1))
+    for sx in (-1, 1):
+        objs.append(plank('hrail', (sx * 0.5, fy - 0.72, 0.62), (sx * 0.5, fy, DECK + 0.62), 0.04, 0.04, (sx, 0, 0), green, jitter=0.1))
+        for t in (0.0, 0.5, 1.0):
+            y = fy - 0.72 * (1 - t); z0 = DECK - 0.42 * (1 - t) + 0.02
+            objs.append(cyl('hpost', 0.022, 0.62 - 0.02, (sx * 0.5, y, z0 + 0.3), m=green, verts=8, bevel=0.0))
+        objs.append(cyl('pot', 0.16, 0.26, (sx * 0.72, fy - 0.68, 0.13), m=C('bpot', '#b4603b', rough=0.8), verts=14, r2=0.12, bevel=0.01))
+        for kk in range(6):
+            aa = kk / 6 * math.tau
+            objs.append(sphere('pleaf', 0.07, (sx * 0.72 + math.cos(aa) * 0.07, fy - 0.68 + math.sin(aa) * 0.07, 0.3), (1, 1, 0.8), m=C('bleaf', '#4f8a3a', rough=0.8), ico=1, disp=0.2, seed=kk))
+            objs.append(sphere('pflower', 0.04, (sx * 0.72 + math.cos(aa + 0.5) * 0.08, fy - 0.68 + math.sin(aa + 0.5) * 0.08, 0.36), m=C('bred', '#c9283a', rough=0.6), ico=1))
+    # columns, capitals, brackets; railings between them (not at the front)
+    CP = octa(R)
+    for i in range(8):
+        x, y = CP[i]
+        objs.append(box('cbase', (0.14, 0.14, 0.1), (x, y, DECK + 0.05), m=green, bevel=0.01, segs=1))
+        objs.append(cyl('col', 0.045, COLH - DECK, (x, y, (DECK + COLH) / 2), m=green, verts=12, bevel=0.0))
+        objs.append(cyl('capital', 0.09, 0.1, (x, y, COLH - 0.03), m=green, verts=12, r2=0.05, bevel=0.0))
+        ni = Vector((x, y, 0)).normalized()
+        for sd in (-1, 1):                           # curly brackets to the beam either side
+            t_ = Vector((-ni.y, ni.x, 0)) * sd
+            for k in range(6):
+                a0, a1 = math.pi / 2 * k / 6, math.pi / 2 * (k + 1) / 6; rr = 0.22
+                p0 = Vector((x, y, COLH)) + t_ * (rr - rr * math.cos(a0)) + Vector((0, 0, -rr + rr * math.sin(a0)))
+                p1 = Vector((x, y, COLH)) + t_ * (rr - rr * math.cos(a1)) + Vector((0, 0, -rr + rr * math.sin(a1)))
+                objs.append(plank('bracket', p0, p1, 0.025, 0.02, ni, green, jitter=0.1, bevel=0.0))
+        a, b = CP[i], CP[(i + 1) % 8]; d, L, n = _face_frame(a, b)
+        if n.y < -0.9: continue
+        A = Vector((a[0], a[1], 0)); B = Vector((b[0], b[1], 0))
+        for z in (DECK + 0.12, DECK + 0.62): objs.append(plank('rail', A + Vector((0, 0, z)), B + Vector((0, 0, z)), 0.045, 0.035, (n.x, n.y, 0), green, jitter=0.1))
+        for k in range(1, 9):
+            p = A.lerp(B, k / 9); objs.append(cyl('baluster', 0.014, 0.5, (p.x, p.y, DECK + 0.37), m=green, verts=6, bevel=0.0))
+    # the beam and its scalloped valance
+    BP = octa(R + 0.05)
+    for i in range(8):
+        a, b = BP[i], BP[(i + 1) % 8]; d, L, n = _face_frame(a, b)
+        A = Vector((a[0], a[1], COLH + 0.08)); B = Vector((b[0], b[1], COLH + 0.08))
+        objs.append(plank('beam', A - d * 0.05, B + d * 0.05, 0.16, 0.08, (n.x, n.y, 0), cream, jitter=0.05))
+        for k in range(7):                           # flat round tabs hanging below the beam's edge
+            p = A.lerp(B, (k + 0.5) / 7) + n * 0.046 - Vector((0, 0, 0.08))
+            objs.append(cyl('scallop', 0.065, 0.02, (p.x, p.y, p.z), (math.pi / 2, 0, math.atan2(d.y, d.x)), m=cream, verts=14, bevel=0.0))
+    # the roof: eight facets of shingles from the eave up to the top, cream ribs along the hips, a gold finial
+    EP = octa(R + 0.38); ze = COLH + 0.12
+    objs.append(ring_mesh('roofcore', octa(R + 0.33), ze + 0.02, octa(0.06), ROOF_TOP - 0.02, red[1], cap_a=True))
+    for i in range(8):
+        a, b = EP[i], EP[(i + 1) % 8]
+        A = Vector((a[0], a[1], ze)); B = Vector((b[0], b[1], ze)); T = Vector((0, 0, ROOF_TOP))
+        rows = 9
+        for r in range(rows):
+            t0 = r / rows; t1 = (r + 1.25) / rows
+            pa = A.lerp(T, t0); pb = B.lerp(T, t0)
+            nrm = (B - A).cross(T - A).normalized()
+            if nrm.z < 0: nrm = -nrm
+            n_sh = max(2, int((pb - pa).length / 0.16))
+            for k in range(n_sh):
+                q0 = pa.lerp(pb, (k + 0.06 + (0.5 if r % 2 else 0) * 0) / n_sh); q1 = pa.lerp(pb, (k + 0.94) / n_sh)
+                mid = (q0 + q1) / 2; up = (T - mid).normalized(); ln = ((T - A).length / rows) * 1.3
+                objs.append(plank('rsh', mid + nrm * 0.03 + nrm * 0.004 * (r % 2), mid + up * ln + nrm * 0.02, (q1 - q0).length, 0.02, nrm, random.choice(red), jitter=0.3, bevel=0.0))
+        objs.append(plank('rib', A + Vector((0, 0, 0.06)), T + Vector((0, 0, 0.03)), 0.06, 0.05, (a[0], a[1], 0.8), cream, jitter=0.05))
+    objs.append(cyl('finbase', 0.1, 0.12, (0, 0, ROOF_TOP + 0.04), m=cream, verts=12, r2=0.07, bevel=0.0))
+    objs.append(sphere('fin', 0.11, (0, 0, ROOF_TOP + 0.2), m=gold, seg=14, rings=9))
+    objs.append(cyl('spike', 0.04, 0.42, (0, 0, ROOF_TOP + 0.48), m=gold, verts=10, r2=0.0, bevel=0.0))
+    # inside: a lantern hanging from the roof, two music stands
+    objs.append(cyl('chain', 0.008, 0.5, (0, 0, COLH - 0.05), m=dark, verts=6, bevel=0.0))
+    objs.append(box('lamp', (0.14, 0.14, 0.18), (0, 0, COLH - 0.38), m=C('lamp', '#ffd98a', rough=0.4), bevel=0.01, segs=1))
+    objs.append(cyl('lcap', 0.12, 0.06, (0, 0, COLH - 0.27), m=dark, verts=4, r2=0.02, bevel=0.0))
+    for sx in (-0.35, 0.35):
+        objs.append(cyl('stand', 0.012, 0.8, (sx, 0.25, DECK + 0.4), m=dark, verts=6, bevel=0.0))
+        objs.append(box('desk', (0.32, 0.02, 0.22), (sx, 0.24, DECK + 0.86), (math.radians(-20), 0, 0), m=dark, bevel=0.0))
+        objs.append(box('music', (0.26, 0.01, 0.18), (sx, 0.225, DECK + 0.87), (math.radians(-20), 0, 0), m=C('bpaper', '#f6f1e2', rough=0.9), bevel=0.0))
+        for tr in range(3): objs.append(cyl('leg', 0.008, 0.2, (sx + 0.07 * math.cos(tr * 2.1), 0.25 + 0.07 * math.sin(tr * 2.1), DECK + 0.08), m=dark, verts=5, bevel=0.0))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the greenhouse
+def greenhouse_dec(seed=51, name='greenhouse'):
+    """A Victorian greenhouse: a dwarf wall of red bricks in courses under a stone coping, white glazing bars on walls and
+    roof, a glass door in the middle of the front (wood below, panes above, a brass knob, a stone step), glass gables with
+    white barge boards, an iron cresting along the ridge with a finial at each end, one roof light propped open, a gutter
+    and a downpipe; inside a brick path, a slatted staging along the back with pots of geraniums and trays of seedlings,
+    tomatoes up canes at each end, ferns and a watering can. The glass ('ghglass') is see-through in the browser."""
+    random.seed(seed); objs = []
+    X, Y, WALL, COP, EAVE, RIDGE = 1.46, 0.88, 0.46, 0.52, 1.38, 2.02
+    bricks = [C('ghbrick%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#a9543a', '#9c4b33', '#b45f43', '#a24f37'))]
+    mortar = C('ghmortar', '#cbbda4', rough=0.9); coping = C('ghcoping', '#ddd5c4', rough=0.8, var=0.04)
+    white = C('ghwhite', '#f4f1e8', rough=0.5); glass = C('ghglass', '#d8ece6', rough=0.08)
+    wood = C('ghwood', '#9a6a43', rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)); iron = C('ghiron', '#2d3a33', rough=0.5)
+    gravel = C('ghgravel', '#c4b597', rough=0.95, var=0.06); terra = C('ghterra', '#b8653d', rough=0.8, var=0.05)
+    leaf = [C('ghleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4a8a38', '#3f7a32', '#5a9a40'))]
+    DOOR = 0.3
+    # the dwarf wall: a mortar core, bricks proud of its outer face in staggered courses, plain brick inside; the coping
+    runs = [((-X, -Y), (-DOOR - 0.05, -Y)), ((DOOR + 0.05, -Y), (X, -Y)), ((X, -Y), (X, Y)), ((X, Y), (-X, Y)), ((-X, Y), (-X, -Y))]
+    for (a, b) in runs:
+        A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); t = (B - A).normalized(); L = (B - A).length; n = Vector((t.y, -t.x, 0))
+        if n.dot((A + B) / 2) < 0: n = -n
+        c = (A + B) / 2; rot = (0, 0, math.atan2(t.y, t.x))
+        objs.append(box('ghcore', (L + 0.14, 0.12, WALL), (c.x, c.y, WALL / 2), rot, m=mortar, bevel=0.0))
+        objs.append(box('ghinner', (L + 0.1, 0.01, WALL), (c.x - n.x * 0.062, c.y - n.y * 0.062, WALL / 2), rot, m=bricks[0], bevel=0.0))
+        for row in range(int(WALL / 0.066)):
+            z0 = row * 0.066; s = -0.07 - (0.1 if row % 2 else 0.0)
+            while s < L + 0.07:
+                s0, s1 = max(s, -0.07), min(s + 0.2, L + 0.07)
+                if s1 - s0 > 0.04:
+                    p = A + t * ((s0 + s1) / 2) + n * 0.064
+                    objs.append(box('ghbrick', (s1 - s0 - 0.012, 0.012, 0.054), (p.x, p.y, z0 + 0.033), rot, m=random.choice(bricks), bevel=0.0, jitter=0.002))
+                s += 0.2
+        objs.append(box('ghcop', (L + 0.18, 0.18, 0.06), (c.x, c.y, WALL + 0.03), rot, m=coping, bevel=0.01, segs=1))
+    # inside: gravel and a brick path from the door to the back
+    objs.append(box('ghfloor', (2 * X - 0.12, 2 * Y - 0.12, 0.03), (0, 0, 0.015), m=gravel, bevel=0.0))
+    for k in range(13):                               # (laid in stretcher bond, every other row half a brick along)
+        for j in range(4):
+            x0, x1 = max(-0.24, -0.27 + j * 0.18 - (0.09 if k % 2 else 0)), min(0.24, -0.27 + j * 0.18 + 0.17 - (0.09 if k % 2 else 0))
+            if x1 - x0 > 0.04: objs.append(box('ghpath', (x1 - x0, 0.08, 0.02), ((x0 + x1) / 2, -Y + 0.1 + k * 0.09, 0.035), (0, 0, 0), m=random.choice(bricks), bevel=0.0))
+    objs.append(box('ghstep', (0.8, 0.16, 0.08), (0, -Y - 0.07, 0.04), m=coping, bevel=0.01, segs=1))
+    # the glass: walls, gables, two roof slopes
+    gz = (COP + EAVE) / 2
+    for sx in (-1, 1):
+        objs.append(box('ghglass', (2 * X - 2 * DOOR - 0.1, 0.012, EAVE - COP) if False else (X - DOOR - 0.04, 0.012, EAVE - COP), (sx * (X + DOOR + 0.04) / 2, -Y, gz), m=glass, bevel=0.0))
+    objs.append(box('ghglass', (2 * X, 0.012, EAVE - COP), (0, Y, gz), m=glass, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(box('ghglass', (0.012, 2 * Y, EAVE - COP), (sx * X, 0, gz), m=glass, bevel=0.0))
+        objs.append(prism_gable(sx * X, EAVE, RIDGE, Y, 0.012, glass, name='ghglass'))
+    ang = math.atan2(RIDGE - EAVE, Y); SL = math.hypot(RIDGE - EAVE, Y)
+    for sy in (-1, 1):
+        objs.append(box('ghglass', (2 * X + 0.04, SL + 0.02, 0.012), (0, sy * Y / 2, (EAVE + RIDGE) / 2), (-sy * ang, 0, 0), m=glass, bevel=0.0))
+    # the white frame: posts and bars, sill and wall plates, the rafters, the ridge, barge boards
+    nb = 8; xs = [-X + i * 2 * X / nb for i in range(nb + 1)]
+    for sy in (-1, 1):
+        for x in xs:
+            if sy < 0 and abs(x) < DOOR + 0.06: continue
+            w = 0.06 if abs(abs(x) - X) < 1e-6 else 0.035
+            objs.append(box('ghpost', (w, 0.05, EAVE - COP), (x, sy * Y, gz), m=white, bevel=0.006, segs=1))
+            objs.append(plank('ghraft', (x, sy * (Y + 0.03), EAVE + 0.03), (x, 0, RIDGE + 0.025), 0.04 if w < 0.05 else 0.06, 0.04, (0, sy * math.sin(ang), math.cos(ang)), white, jitter=0.05, bevel=0.004))
+        objs.append(box('ghsill', (2 * X + 0.06, 0.07, 0.04), (0, sy * Y, COP + 0.02), m=white, bevel=0.006, segs=1) if sy > 0 else None)
+        objs.append(box('ghplate', (2 * X + 0.08, 0.07, 0.06), (0, sy * Y, EAVE), m=white, bevel=0.006, segs=1))
+        objs.append(box('ghgutter', (2 * X + 0.12, 0.07, 0.05), (0, sy * (Y + 0.06), EAVE - 0.02), m=C('ghgutter', '#e4e1d8', rough=0.5), bevel=0.01, segs=1))
+    for sx in (-1, 1):
+        objs.append(box('ghsill', (X - DOOR - 0.04, 0.07, 0.04), (sx * (X + DOOR + 0.04) / 2, -Y, COP + 0.02), m=white, bevel=0.006, segs=1))
+        for y in [-Y + i * 2 * Y / 4 for i in range(1, 4)]:
+            objs.append(box('ghpost', (0.05, 0.035, EAVE - COP), (sx * X, y, gz), m=white, bevel=0.006, segs=1))
+            objs.append(box('ghgbar', (0.035, 0.03, (RIDGE - EAVE) * (1 - abs(y) / Y)), (sx * (X + 0.012), y, EAVE + (RIDGE - EAVE) * (1 - abs(y) / Y) / 2), m=white, bevel=0.0))
+        objs.append(box('ghsill', (0.07, 2 * Y + 0.06, 0.04), (sx * X, 0, COP + 0.02), m=white, bevel=0.006, segs=1))
+        objs.append(box('ghplate', (0.07, 2 * Y + 0.08, 0.06), (sx * X, 0, EAVE), m=white, bevel=0.006, segs=1))
+        for sy in (-1, 1):
+            objs.append(plank('ghbarge', (sx * (X + 0.03), sy * (Y + 0.08), EAVE - 0.04), (sx * (X + 0.03), 0, RIDGE + 0.05), 0.08, 0.03, (sx, 0, 0), white, jitter=0.05, bevel=0.004))
+        objs.append(cyl('ghfinb', 0.035, 0.12, (sx * (X + 0.03), 0, RIDGE + 0.1), m=white, verts=10, bevel=0.0))
+        objs.append(sphere('ghfin', 0.05, (sx * (X + 0.03), 0, RIDGE + 0.2), m=white, seg=12, rings=8))
+        objs.append(cyl('ghspike', 0.02, 0.14, (sx * (X + 0.03), 0, RIDGE + 0.3), m=white, verts=8, r2=0.0, bevel=0.0))
+    objs = [o for o in objs if o is not None]
+    objs.append(box('ghridge', (2 * X + 0.1, 0.07, 0.07), (0, 0, RIDGE + 0.02), m=white, bevel=0.008, segs=1))
+    for k in range(int(2 * X / 0.12)):                # the cresting: little iron spears and rings along the ridge
+        x = -X + 0.1 + k * 0.12
+        if x > X - 0.08: break
+        objs.append(cyl('ghcrest', 0.008, 0.12, (x, 0, RIDGE + 0.11), m=iron, verts=5, bevel=0.0))
+        objs.append(cyl('ghcrestt', 0.022, 0.05, (x, 0, RIDGE + 0.19), m=iron, verts=4, r2=0.0, bevel=0.0))
+    objs.append(box('ghcrestr', (2 * X - 0.1, 0.012, 0.012), (0, 0, RIDGE + 0.13), m=iron, bevel=0.0))
+    # a roof light on the front slope, propped open on its stay
+    rx0, rx1 = xs[5], xs[6]; t0 = 0.45
+    top = Vector((0, -Y * (1 - 0.95), EAVE + (RIDGE - EAVE) * 0.95)); bot = Vector((0, -Y * (1 - t0), EAVE + (RIDGE - EAVE) * t0))
+    lift = Vector((0, 0, 0.16)); bot2 = bot + lift + Vector((0, 0.04, 0))
+    for x in (rx0 + 0.03, rx1 - 0.03):
+        objs.append(plank('ghlight', top + Vector((x, 0, 0.04)), bot2 + Vector((x, 0, 0.04)), 0.035, 0.035, (0, -0.4, 1), white, jitter=0.05, bevel=0.0))
+    objs.append(plank('ghlight', bot2 + Vector((rx0 + 0.03, 0, 0.04)), bot2 + Vector((rx1 - 0.03, 0, 0.04)), 0.035, 0.035, (0, -0.4, 1), white, jitter=0.05, bevel=0.0))
+    mid = (top + bot2) / 2 + Vector(((rx0 + rx1) / 2, 0, 0.04)); ln = (top - bot2).length
+    objs.append(plank('ghglass', mid - (top - bot2).normalized() * ln / 2, mid + (top - bot2).normalized() * ln / 2, rx1 - rx0 - 0.06, 0.01, (0, -0.4, 1), glass, jitter=0.0, bevel=0.0))
+    objs.append(plank('ghstay', bot + Vector(((rx0 + rx1) / 2, 0, 0.02)), bot2 + Vector(((rx0 + rx1) / 2, 0, 0.03)), 0.012, 0.012, (0, -1, 0), iron, jitter=0.0, bevel=0.0))
+    # the downpipe at the front left corner, into a shoe on a little drain
+    objs.append(cyl('ghpipe', 0.025, EAVE - 0.08, (-X - 0.02, -Y - 0.08, (EAVE - 0.05) / 2 + 0.05), m=C('ghgutter', '#e4e1d8', rough=0.5), verts=10, bevel=0.0))
+    objs.append(box('ghdrain', (0.14, 0.14, 0.03), (-X - 0.02, -Y - 0.08, 0.015), m=coping, bevel=0.005, segs=1))
+    # the door: frame, a wooden lower panel, panes above with bars, a brass knob
+    for sx in (-1, 1):
+        objs.append(box('ghdoorpost', (0.06, 0.06, EAVE - 0.02), (sx * (DOOR + 0.03), -Y, (EAVE + 0.02) / 2), m=white, bevel=0.006, segs=1))
+    objs.append(box('ghdoorlow', (2 * DOOR - 0.02, 0.04, 0.46), (0, -Y, 0.27), m=white, bevel=0.006, segs=1))
+    for k in range(2):
+        objs.append(box('ghdoorpan', (DOOR - 0.12, 0.012, 0.32), (-DOOR / 2 + k * DOOR + 0.0 * k, -Y - 0.024, 0.27), m=C('ghwhite2', '#e9e4d6', rough=0.5), bevel=0.004, segs=1))
+    objs.append(box('ghglass', (2 * DOOR - 0.04, 0.012, EAVE - 0.56), (0, -Y, (EAVE + 0.5) / 2), m=glass, bevel=0.0))
+    objs.append(box('ghdoorrail', (2 * DOOR, 0.05, 0.05), (0, -Y, 0.5), m=white, bevel=0.005, segs=1))
+    objs.append(box('ghdoorbar', (0.03, 0.04, EAVE - 0.56), (0, -Y, (EAVE + 0.5) / 2), m=white, bevel=0.0))
+    objs.append(box('ghdoorbar', (2 * DOOR, 0.04, 0.03), (0, -Y, 0.95), m=white, bevel=0.0))
+    objs.append(sphere('ghknob', 0.022, (DOOR - 0.08, -Y - 0.04, 0.62), m=C('ghbrass', '#c99a3c', rough=0.3), seg=10, rings=6))
+    # the staging along the back: legs, rails, slats; pots of geraniums and trays of seedlings on it
+    SY, SZ, SD = Y - 0.27, 0.72, 0.36
+    for x in (-X + 0.15, -0.45, 0.45, X - 0.15):
+        for y in (SY - SD / 2 + 0.03, SY + SD / 2 - 0.03):
+            objs.append(box('ghleg', (0.04, 0.04, SZ), (x, y, SZ / 2), m=wood, bevel=0.004, segs=1))
+    for k in range(5):
+        y = SY - SD / 2 + 0.036 + k * (SD - 0.072) / 4
+        objs.append(plank('ghslat', (-X + 0.1, y, SZ), (X - 0.1, y, SZ), 0.06, 0.02, (0, 0, 1), wood, jitter=0.1, bevel=0.0))
+    objs.append(plank('ghshelf', (-X + 0.1, SY, 0.24), (X - 0.1, SY, 0.24), SD - 0.04, 0.02, (0, 0, 1), wood, jitter=0.1, bevel=0.0))
+    gcol = [C('ghgera%d' % i, h, rough=0.6) for i, h in enumerate(('#d63a3f', '#e9668c', '#c42c3a', '#f2f0ea'))]
+    for k in range(9):
+        x = -X + 0.28 + k * (2 * X - 0.56) / 8; y = SY + (0.06 if k % 2 else -0.06)
+        if k in (3, 5):                                 # trays of seedlings
+            objs.append(box('ghtray', (0.3, 0.2, 0.05), (x, SY, SZ + 0.035), m=C('ghtrayc', '#4b4038', rough=0.8), bevel=0.004, segs=1))
+            for i in range(5):
+                for j in range(3):
+                    objs.append(sphere('ghseed', 0.022, (x - 0.12 + i * 0.06, SY - 0.06 + j * 0.06, SZ + 0.075), (1, 1, 0.7), m=leaf[2], ico=1))
+            continue
+        objs.append(cyl('ghpot', 0.07, 0.11, (x, y, SZ + 0.065), m=terra, verts=12, r2=0.055, bevel=0.004))
+        for i in range(4):
+            a = i / 4 * math.tau + k
+            objs.append(sphere('ghgleaf', 0.055, (x + math.cos(a) * 0.05, y + math.sin(a) * 0.05, SZ + 0.16), (1, 1, 0.75), m=random.choice(leaf), ico=1, disp=0.2, seed=k * 4 + i))
+        cc = random.choice(gcol)
+        for i in range(3):
+            a = i / 3 * math.tau + k * 0.7
+            objs.append(sphere('ghflower', 0.034, (x + math.cos(a) * 0.035, y + math.sin(a) * 0.035, SZ + 0.23 + 0.02 * (i % 2)), m=cc, ico=1, disp=0.15, seed=i))
+    for k in range(5):                                  # spare pots stacked on the shelf beneath
+        x = -X + 0.3 + k * 0.55
+        for j in range(3): objs.append(cyl('ghspare', 0.065, 0.1, (x, SY, 0.3 + j * 0.035), m=terra, verts=12, r2=0.05, bevel=0.0))
+    # tomatoes up canes at each end, in big pots
+    for sx in (-1, 1):
+        for j, y in enumerate((-0.42, 0.02)):
+            x = sx * (X - 0.24)
+            objs.append(cyl('ghbigpot', 0.12, 0.2, (x, y, 0.1), m=terra, verts=14, r2=0.1, bevel=0.005))
+            objs.append(cyl('ghcane', 0.008, 1.2, (x, y, 0.75), m=C('ghcanec', '#c9b07a', rough=0.8), verts=5, bevel=0.0))
+            for i in range(7):
+                z = 0.32 + i * 0.13; a = i * 2.3 + j
+                objs.append(sphere('ghtleaf', 0.09 - i * 0.004, (x + math.cos(a) * 0.05, y + math.sin(a) * 0.05, z), (1, 1, 0.8), m=random.choice(leaf), ico=1, disp=0.3, seed=i + j * 7 + (sx > 0) * 20))
+                if i in (1, 2, 4):
+                    for q in range(2 if i != 4 else 1):
+                        objs.append(sphere('ghtom', 0.035, (x + math.cos(a + 2.5 + q) * 0.09, y + math.sin(a + 2.5 + q) * 0.09, z - 0.05), m=C('ghtomato', '#d9382c', rough=0.35), seg=10, rings=7))
+    # ferns either side of the path at the front, a watering can on the gravel
+    for sx in (-1, 1):
+        x, y = sx * 0.62, -Y + 0.3
+        objs.append(cyl('ghfpot', 0.1, 0.16, (x, y, 0.08), m=terra, verts=14, r2=0.08, bevel=0.004))
+        for i in range(8):
+            a = i / 8 * math.tau
+            objs.append(plank('ghfrond', (x, y, 0.17), (x + math.cos(a) * 0.2, y + math.sin(a) * 0.2, 0.26 + 0.04 * (i % 2)), 0.06, 0.01, (0, 0, 1), leaf[1], jitter=3.0, bevel=0.0))
+    cx, cy = 0.36, 0.05
+    can = C('ghcan', '#4f7f5b', rough=0.45)
+    objs.append(cyl('ghcan', 0.07, 0.15, (cx, cy, 0.105), m=can, verts=14, bevel=0.004))
+    objs.append(plank('ghspout', (cx - 0.05, cy, 0.08), (cx - 0.2, cy, 0.2), 0.02, 0.02, (0, -1, 0), can, jitter=0.0, bevel=0.0))
+    objs.append(cyl('ghrose', 0.025, 0.02, (cx - 0.205, cy, 0.205), (0, math.radians(-50), 0), m=can, verts=10, bevel=0.0))
+    for k in range(6):
+        a0, a1 = math.pi * k / 6, math.pi * (k + 1) / 6
+        objs.append(plank('ghhandle', (cx + 0.06 * math.cos(a0), cy, 0.18 + 0.07 * math.sin(a0)), (cx + 0.06 * math.cos(a1), cy, 0.18 + 0.07 * math.sin(a1)), 0.018, 0.012, (0, -1, 0), can, jitter=0.0, bevel=0.0))
+    # pots by the gable ends outside
+    for sx in (-1, 1):
+        objs.append(cyl('ghopot', 0.07, 0.12, (sx * (X + 0.1), 0.35, 0.06), m=terra, verts=12, r2=0.055, bevel=0.004))
+        for i in range(4):
+            a = i / 4 * math.tau
+            objs.append(sphere('ghoplant', 0.05, (sx * (X + 0.1) + math.cos(a) * 0.03, 0.35 + math.sin(a) * 0.03, 0.16), m=leaf[0], ico=1, disp=0.25, seed=i + 40))
+        objs.append(sphere('ghoflower', 0.03, (sx * (X + 0.1), 0.35, 0.21), m=C('ghyellow', '#f2c43c', rough=0.6), ico=1))
+    return finish(objs, name)

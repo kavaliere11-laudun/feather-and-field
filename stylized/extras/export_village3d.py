@@ -12,8 +12,17 @@ G = {'__name__': 'export_coops_head', '__file__': os.path.join(HERE, 'export_coo
 exec(compile(head, 'export_coops_head', 'exec'), G)
 one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; write_glb = G['write_glb']
 G['WINDOWS'].update({'glass'}); G['GLOW'].update({'lamp'})      # (the farmhouse's windows glow at night, its lantern lights up)
-import village3d
-BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windmill_dec, 26000), 'sails': (village3d.windmill_sails, 4000)}
+import village3d, webglb
+# the greenhouse's glass: its own 'glass' material (see-through in the browser: main.js makes decor.glb's 'glass' clear)
+webglb.BUCKETS['glass'] = (0.12, 0.0); _bucket = webglb.bucket_of
+def _bucket_glass(m):
+    if m is not None and m.name.split('.')[0].replace('FF_', '').rstrip('_012') in ('ghglass',) or (m is not None and m.name.split('.')[0].startswith('FF_ghglass')):
+        b = m.node_tree.nodes.get('Principled BSDF') if m.use_nodes else None
+        return 'glass', (list(b.inputs['Base Color'].default_value)[:3] if b else [0.85, 0.93, 0.9])
+    return _bucket(m)
+webglb.bucket_of = _bucket_glass
+BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windmill_dec, 26000), 'sails': (village3d.windmill_sails, 4000), 'bandstand': (village3d.bandstand_dec, 22000),
+         'greenhouse': (village3d.greenhouse_dec, 24000)}
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)
