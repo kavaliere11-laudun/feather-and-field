@@ -3787,7 +3787,16 @@ the birds already had.
 - **Built and tried on GitHub's Macs** (`.github/workflows/ios.yml`, on each push to `app/`; free for a public
   repository): Xcode builds it for the iPhone simulator, installs it, opens it in English then French (a new phone:
   the welcome), then with a test farm (`app/test/farm30.json`, put in for that check only, `FARM=`), and keeps the
-  pictures, a 20-second film and the app's log with the run (Artifacts: iphone-check). Unsigned; nothing secret.
+  pictures, a 20-second film, the build log and the app's log with the run (Artifacts: iphone-check) and on the branch
+  `app-check` (replaced each run: the run's own files are stored where Claude's workspace can't reach, the branch is
+  plain git). Unsigned; nothing secret. A second job, `testflight`, signs and sends a build to App Store Connect once
+  Audrey's four secrets are in (run by hand, or a push with [testflight]).
+- **First runs (1 Nov, 18:37 and 18:42)**: built in about a minute on macOS 26 (Xcode 26); on an iPhone 17 Pro simulator
+  the app opens on the welcome within 2 seconds, in English, and in French on a French phone; the test farm (level 30)
+  opens on the Red Barn, the clock's text white over the green, the hens about (about 43 frames a second in the film);
+  no errors in the app's log. To look at later (the game, not the app): in the film the rooster and his two hens
+  bunched together by the front fence for a few seconds, overlapping, then spread out again; not seen in the test
+  browser with the same farm.
 - Tested here: `app/test/wwwcheck.mjs` (English and French, upright and sideways: told it's the app, no sign-in, the
   welcome in its language, no account card, the privacy link the site's, the credits, no errors, nothing from the
   internet); the web game's own accounttest and langtest still pass (the changes only act inside the app).
