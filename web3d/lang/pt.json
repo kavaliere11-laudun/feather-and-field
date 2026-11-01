@@ -1009,5 +1009,8 @@
  },
  "pers.mum.pea": [
   "Uma mãe nata: os filhotes dela são os mais bem cuidados."
- ]
+ ],
+ "text.feather_sold1": "Uma pena de pavão vendida · +{c} moedas",
+ "text.away_feathers": "{n} penas de pavão para apanhar",
+ "text.away_feathers1": "Uma pena de pavão para apanhar"
 }

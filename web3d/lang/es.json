@@ -1004,5 +1004,8 @@
  },
  "pers.mum.pea": [
   "Una madre nata: sus pavitos son los mejor cuidados."
- ]
+ ],
+ "text.feather_sold1": "Una pluma de pavo real vendida · +{c} monedas",
+ "text.away_feathers": "{n} plumas de pavo real para recoger",
+ "text.away_feathers1": "Una pluma de pavo real para recoger"
 }

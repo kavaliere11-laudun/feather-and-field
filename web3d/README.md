@@ -3578,7 +3578,17 @@ the birds already had.
   turns to him (`headingTo`). His worms the same way. The farmer never walks through the train or the peacock (Audrey: "the tail clips with the farmer"): the train keeps
   off his way in at the gate and the spots he stands at (`farmerLanes`, `plot.lanes`), and between them he goes round
   the peacock and his train (`around`).
+- **His feathers** (Audrey, 1 Nov: "His dropped feathers (Recommended)"; game.js `FEATHERS`, `feathersAt`, `pickFeather`;
+  main.js `tickFeathers`, `featherSpots`, `featherTap`): now and then (one every 12 hours) he drops a feather from his train
+  in his yard, three lying there at most: each a train feather flat on the ground, its eye at one end (a texture drawn on
+  a canvas, `featherMat`), at a spot of its own (clear of what's in the yard, of the farmer's ways and of the other
+  feathers, the same each time for that coop). A tap on one: it lifts, turns over and flies to the coins (`.gfeather`):
+  sold, 40 coins and 5 XP ("A peacock feather sold · +40 coins"); the others stay where they lie. A tap on a feather under
+  a bird standing over it picks whichever the tap is nearer the middle of. The welcome-back card says how many are lying
+  there (🦚). The save: each pea coop's `fe` { n, at } (the feathers lying there, when the last one came), checked: three
+  at most, never ahead of now (an edit outside: flagged). In all six languages.
 - Tests: **peacocktest.mjs** (the test page, every look: his train never through anything, the hens off it, displays,
   the perch at night and down in the morning), **peatest.mjs** (the game: level 29 and 30, placing the coop, the cards,
   the cuddles, a lay, the feeder, the Breed Book, no shows, a brood of peachicks and young ones, the Snug look, the
-  perch at night, a reload, a pea coop put in early flagged; LANG=fr). booktest and calltest count 16 pages.
+  perch at night, a reload, his feathers: none at first, two after 25 hours, one tapped and sold, kept on a reload, fifty
+  put in from outside checked and flagged; a pea coop put in early flagged; LANG=fr). booktest and calltest count 16 pages.

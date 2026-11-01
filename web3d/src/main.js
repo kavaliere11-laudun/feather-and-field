@@ -30,7 +30,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife } from './decorlife.js';
-import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE } from './game.js';
+import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FEATHERS } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Sound, FARM } from './sound.js';
@@ -2059,6 +2059,7 @@ function spawnHeart(at) {
   return n;                                                 // (the onboarding pictures place theirs just so: intro.js)
 }
 function tickPenFx(dt) {
+  if (GAME_MODE) tickFeathers(dt);
   for (const n of HEARTS) {
     if (n.life <= 0) continue;
     n.life -= dt; if (n.life <= 0) { n.sprite.visible = false; continue; }
@@ -3734,6 +3735,17 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
+  // the game: a peacock feather lying in his yard: picked up (sold)
+  if (GAME_MODE) {      // (on it rather than on a bird standing over it: whichever the tap is nearer the middle of)
+    const k0 = best && best.root ? (best.root.getWorldPosition(w), w.y += best.hitY || 0, ray.ray.distanceToPoint(w) / (best.hitR || 0.2)) : Infinity;
+    let kf = k0;
+    for (const p of livePlots()) for (const [i, F] of (p.feathers || []).entries()) {
+      if (!F.mesh.visible || F.fly) continue;
+      F.mesh.getWorldPosition(w); w.y += 0.03; const k = ray.ray.distanceToPoint(w) / 0.16;
+      if (k < 1 && k < kf) { kf = k; best = { feather: i, plot: p }; }
+    }
+  }
+  if (best && best.feather !== undefined) { featherTap(best.plot, best.feather); return; }
   if (!best) {
     const loc = new THREE.Ray(), inv = new THREE.Matrix4(), hitP = new THREE.Vector3(), nb = new THREE.Box3();
     // a coop's pop door (or the badge over it): shut it for the night, open it in the morning
@@ -4141,6 +4153,76 @@ function collectAll() {
   if (n) { hint(game.t('away_sold', { n, c: coins })); guideDid('eggs'); }
   jobsDone(done);
   return { n, coins };
+}
+// ---- the peacock's feathers (Audrey, 1 Nov: "His dropped feathers (Recommended)"): those lying in his yard
+// (game.feathersAt), one to three, each a train feather flat on the ground, its eye at one end, at spots of their own in
+// the yard (clear of what's in it, of the farmer's ways and of each other); a tap on one: it lifts, turns over and flies
+// to the coins (sold: game.pickFeather)
+let FEATHER_MAT = null; const FEATHER_Y = 0.035;
+function featherMat() {
+  if (FEATHER_MAT) return FEATHER_MAT;
+  const c = document.createElement('canvas'); c.width = 64; c.height = 256; const x = c.getContext('2d'), R = rng(7);
+  x.lineCap = 'round';
+  // (the vane: a soft green body, fuller towards the eye; the barbs over it, bronze-green, wispy low down)
+  const half = y => { const u = Math.max(0, Math.min(1, (250 - y) / 175)); return 3 + 24 * Math.pow(u, 1.4); };
+  x.fillStyle = 'rgba(86, 140, 52, 0.55)'; x.beginPath(); x.moveTo(32, 254);
+  for (let y = 254; y >= 70; y -= 4) x.lineTo(32 + half(y), y);
+  for (let y = 70; y <= 254; y += 4) x.lineTo(32 - half(y), y);
+  x.closePath(); x.fill();
+  for (let y = 250; y > 66; y -= 1.5) {
+    const h = half(y), u = (250 - y) / 184;
+    for (const sd of [-1, 1]) { x.strokeStyle = ['#5f9a35', '#7fb043', '#a0923e', '#4a7d2c'][Math.floor(R() * 4)]; x.globalAlpha = 0.55 + 0.4 * u; x.lineWidth = 1.3;
+      x.beginPath(); x.moveTo(32, y); x.quadraticCurveTo(32 + sd * h * 0.55, y - 3, 32 + sd * h * (0.85 + 0.15 * R()), y - 8 - 6 * u); x.stroke(); }
+  }
+  x.globalAlpha = 1;
+  const eye = (rx, ry, col, dy = 0) => { x.fillStyle = col; x.beginPath(); x.ellipse(32, 52 + dy, rx, ry, 0, 0, Math.PI * 2); x.fill(); };
+  for (let k = 0; k < 120; k++) { const t = k / 120 * Math.PI * 2; x.strokeStyle = k % 3 ? '#6aa63e' : '#c2ad45'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(32 + Math.cos(t) * 16, 52 + Math.sin(t) * 24); x.lineTo(32 + Math.cos(t) * 31, 52 + Math.sin(t) * 47); x.stroke(); }      // (the fringe round the eye)
+  eye(23, 36, '#4f9a3c'); eye(19, 29, '#d6a83e'); eye(15, 23, '#2fc0b4', 2); eye(9.5, 15, '#1a2a8c', 5); eye(3.5, 4.5, '#6a8ae8', 2);
+  x.strokeStyle = '#f2e8c8'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(32, 254); x.lineTo(32, 84); x.stroke();      // (the shaft)
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  FEATHER_MAT = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.3, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });
+  return FEATHER_MAT;
+}
+function featherSpots(plot) {
+  const key = plot.tier + '/' + plot.gc.id;
+  if (plot.fSpots && plot.fSpots.key === key) return plot.fSpots.at;
+  const P = penOf(plot), Y = P.yard, r = rng(1 + (parseInt(plot.gc.id.slice(1), 10) || 0) * 7919), lanes = farmerLanes(plot), C = [];
+  for (let x = Y.min[0] + 0.35; x <= Y.max[0] - 0.35; x += 0.22) for (let z = Y.min[2] + 0.45; z <= Y.max[2] - 0.3; z += 0.22)
+    if (!P.obstacles.some(o => Math.hypot(x - o[0], z - o[2]) < o[3] + 0.22) && !lanes.some(L => laneDist(x, z, L) < 0.4)) C.push([x, z]);
+  for (let i = C.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [C[i], C[j]] = [C[j], C[i]]; }
+  const at = [];
+  for (const q of C) { if (at.length >= FEATHERS.max) break; if (at.every(a => Math.hypot(a[0] - q[0], a[1] - q[1]) > 0.75)) at.push([q[0], q[1], r() * Math.PI * 2]); }
+  plot.fSpots = { key: lanes.length ? key : null, at };      // (the farmer's ways not known yet: again later)
+  return at;
+}
+function tickFeathers(dt) {
+  if (!game.data) return;
+  for (const p of plots) {
+    if (p.breed !== 'pea' || !p.gc || p.kind !== 'coop') { if (p.feathers) for (const F of p.feathers) F.mesh.visible = false; continue; }
+    const n = game.feathersAt(p.gc), S = featherSpots(p), F = p.feathers || (p.feathers = []);
+    for (let i = 0; i < FEATHERS.max; i++) {
+      if (!S[i]) continue;
+      let f = F[i];
+      if (!f) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.44), featherMat()); m.rotation.order = 'YXZ'; m.receiveShadow = true; m.renderOrder = 1; p.frame.add(m); f = F[i] = { mesh: m, fly: 0 }; }
+      const m = f.mesh;
+      if (f.fly) {      // (picked up: it lifts, turning over, and is gone; the coins fly from it)
+        f.fly += dt; const u = Math.min(1, f.fly / 0.6);
+        m.position.set(S[i][0], FEATHER_Y + 0.32 * Math.sin(u * Math.PI / 2), S[i][1]); m.rotation.set(-Math.PI / 2 + 1.2 * u, S[i][2] + 3 * u, 0);
+        if (u >= 1) { f.fly = 0; m.visible = false; if (f.done) { const d = f.done; f.done = null; d(); } }
+        continue;
+      }
+      m.visible = i < n; m.position.set(S[i][0], FEATHER_Y, S[i][1]); m.rotation.set(-Math.PI / 2, S[i][2], 0);
+    }
+  }
+}
+function featherTap(plot, i) {
+  const n = game.feathersAt(plot.gc), r = game.pickFeather(plot.gc.id); if (!r) return;
+  const F = plot.feathers, S = plot.fSpots.at, last = n - 1;
+  if (i !== last && F[last] && S[last]) { [F[i], F[last]] = [F[last], F[i]]; [S[i], S[last]] = [S[last], S[i]]; }      // (the others stay where they lie)
+  const f = F[last]; f.fly = 1e-4;
+  f.done = () => { const v = f.mesh.getWorldPosition(new THREE.Vector3()); v.project(camera); gameUI.flyEggs({ x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }, 1, null, null, 'gfeather'); };
+  hint(game.t('feather_sold1', { c: r.coins }));
+  wake(1500);
 }
 // tap a nest (or its bubble): the eggs fly to the coins, sold
 function collectAt(plot) {

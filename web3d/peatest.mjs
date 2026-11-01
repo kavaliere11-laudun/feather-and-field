@@ -8,7 +8,9 @@
 // card speaks of peahens; the Breed Book: the peafowl's page found with its picture; the shows take no peafowl; a brood:
 // peachicks round their mother (a peachick's card), then young peahens and peacocks (a young peacock is a peahen to look
 // at, no train yet); the Snug look: the pen made again round the same three; at night the peacock up on his perch, the
-// peahens in bed; a reload keeps it all unflagged; a pea coop at level 29, put in from outside: flagged. No page errors.
+// peahens in bed; a reload keeps it all unflagged; his feathers (none at first, two after 25 hours, one tapped: sold, +40
+// coins; kept on a reload; fifty put in from outside: three, flagged); a pea coop at level 29, put in from outside: flagged.
+// No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
@@ -43,6 +45,7 @@ const doing = () => p.evaluate(() => { const L = window.__farm.farmer(); const n
 const T = { next: fr ? /Au niveau 30 : Paon bleu/ : /At level 30: Indian Blue peafowl/, breed: fr ? /Nouvelle race : Paon bleu/ : /New breed: Indian Blue peafowl/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
   welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, hen: fr ? /Paon bleu · Paonne/ : /Indian Blue peafowl · Peahen/, cock: fr ? /Paon bleu · Paon/ : /Indian Blue peafowl · Peacock/,
   chicks: fr ? /ses paonneaux/ : /her peachicks/, feed: fr ? /Vos paonnes pondent/ : /Your peahens lay/,
+  feather: fr ? /Une plume de paon vendue · \+40 pièces/ : /A peacock feather sold · \+40 coins/,
   coop: fr ? /Pavillon de jardin/ : /Garden Pavilion/, egg: fr ? /Gros œufs de paonne crème/ : /Big cream peafowl eggs/, chick: fr ? /paonneau de/ : /’s peachick/, young: fr ? /Jeune pa(on|onne)/ : /Young pea(hen|cock)/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -69,6 +72,23 @@ s = await st();
 let P = await pen();
 const hint = await p.evaluate(() => document.getElementById('hint').textContent);
 ok('placed: the rustic Garden Pavilion with its trio in their pen, the peacock first with his train, their game names', !s.move && /pea/.test(s.coops) && P && P.birds.length === 3 && P.birds.map(x => x.kind + (x.train ? '+train' : '')).join() === 'rooster+train,hen,hen' && P.birds.every(x => x.gid && x.name === x.game) && P.house === 'box_pea' && P.tier === 0 && T.welcome.test(hint), { s, P, hint });
+
+// his feathers (Audrey, 1 Nov: "His dropped feathers"): none at first; 25 hours on, two lying in his yard, clear of what's in
+// it; a tap on one: picked up, sold (+40 coins), the other still there
+const fe = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'pea'), Q = f.gamePlots().find(q => q.breed === 'pea'), O = f.penOf(Q);
+  const shown = (Q.feathers || []).filter(F => F.mesh.visible).map(F => [F.mesh.position.x, F.mesh.position.z]);
+  return { n: g.feathersAt(c), fe: c.fe, shown: shown.length, clear: shown.every(([x, z]) => x > O.yard.min[0] && x < O.yard.max[0] && z > O.yard.min[2] && z < O.yard.max[2] && !O.obstacles.some(o => Math.hypot(x - o[0], z - o[2]) < o[3])), coins: g.data.coins, xp: g.data.xp }; });
+let F0 = await fe();
+ok('his feathers: none lying in his yard at first', F0.n === 0 && F0.shown === 0 && F0.fe && F0.fe.n === 0, F0);
+await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops.find(x => x.breed === 'pea'); c.fe.at -= 25 * 3600e3; g.save(); }); await run(0.5);
+const F1 = await fe();
+ok('25 hours on: two feathers lying in his yard, clear of what\'s in it', F1.n === 2 && F1.shown === 2 && F1.clear, F1);
+const fAt = await p.evaluate(() => { const f = window.__farm, Q = f.gamePlots().find(q => q.breed === 'pea'); if (f.gameUI().kind) f.gameUI().close();
+  const F = Q.feathers.find(F => F.mesh.visible), w = F.mesh.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z, 1.4); f.step(1 / 30, 20); f.draw(); return f.screenOf(w.x, w.z, w.y + 0.03); });
+await p.touchscreen.tap(fAt.x, fAt.y); await run(1.2);
+const F2 = await fe(), fHint = await p.evaluate(() => document.getElementById('hint').textContent);
+await shot('2b_feather');
+ok('a tap on one: picked up and sold (+40 coins, a little XP), the other still lying there', F2.n === 1 && F2.shown === 1 && F2.coins === F1.coins + 40 && F2.xp === F1.xp + 5 && T.feather.test(fHint), { F2, fHint, F1c: F1.coins });
 await run(20);
 await look(2.6);
 await shot('2_pen');
@@ -113,7 +133,7 @@ for (let k = 0; k < 60; k++) {
   if (seen.has('stroke') && !d.includes('stroke') && !d.includes('cuddling')) break;
 }
 ok('Cuddle the peacock: the farmer comes, crouches and strokes him where he stands (never picked up), the cuddle counted, the peahens giving them room', seen.has('stroke') && !seen.has('hug') && lifted === 0 && happy && closest > 0.6, { seen: [...seen], lifted, happy, closest: +closest.toFixed(2) });
-ok('…his hand on the peacock\'s back as he strokes him (within 4 cm of his feathers, along the middle of his back)', touch.length >= 3 && touch.every(h => Math.abs(h.gap) < 0.04 && h.along > -0.26 && h.along < 0.06 && Math.abs(h.lat) < 0.09), touch);
+ok('…his hand on the peacock\'s back as he strokes him (within 4 cm of his feathers, along the middle of his back)', touch.length >= 3 && touch.slice(1).every(h => Math.abs(h.gap) < 0.04 && h.along > -0.26 && h.along < 0.06 && Math.abs(h.lat) < 0.09), touch);      // (the first: his hand still on its way there)
 // a peahen: picked up and held, as a hen is
 await run(4);
 const hen2 = await tapOn('hen');
@@ -205,6 +225,13 @@ await p.evaluate(() => window.__farm.setHour(11));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await st(); P = await pen();
 ok('a reload: the peafowl\'s coop, its three and its egg, not flagged', /pea/.test(s.coops) && P && P.birds.length === 3 && P.birds.map(x => x.gid).join() === before && !s.edited, { s, P });
+const F3 = await fe();
+ok('…and his feather still lying there (and those due since)', F3.n >= 1 && F3.shown === F3.n, F3);
+// his feathers put up from outside (fifty of them, the next one in the future): checked (three at most, never ahead of now), flagged
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); const c = raw.d.coops.find(x => x.breed === 'pea'); c.fe = { n: 50, at: window.__T + 9e8 }; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+const F4 = await fe(), s4 = await st();
+ok('his feathers put up from outside: three at most, not ahead of now, flagged', F4.n === 3 && F4.fe.n === 3 && F4.fe.at <= await p.evaluate(() => window.__T) && s4.edited, { F4, edited: s4.edited });
 // a pea coop at level 29, put in from outside: flagged
 await p.evaluate(L => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = L; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, xpAt(29));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();

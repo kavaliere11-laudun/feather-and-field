@@ -877,10 +877,10 @@ export class GameUI {
     this.bird = null;
     b.append(el('p', 'gsub', this.t('away_for', { t: this.longDur(sum.away) })));
     if (sum.paused) b.append(el('p', 'gnote', this.t('away_paused')));
-    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
+    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', feathers: '🦚', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
     const list = el('div', 'gcard gaway');
     for (const it of sum.items) {
-      const one = it.n === 1 && ['eggs', 'full', 'honey', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
+      const one = it.n === 1 && ['eggs', 'full', 'honey', 'feathers', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
       const row = el('div', 'gaway-r' + (it.k === 'feed' || it.k === 'full' ? ' gwarn' : '')); row.dataset.k = it.k;
       row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
     }

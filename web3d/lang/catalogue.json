@@ -1804,6 +1804,16 @@
   "fr": "Un pot de miel dans les ruches"
  },
  {
+  "id": "text.away_feathers",
+  "en": "{n} peacock feathers to pick up",
+  "fr": "{n} plumes de paon à ramasser"
+ },
+ {
+  "id": "text.away_feathers1",
+  "en": "A peacock feather to pick up",
+  "fr": "Une plume de paon à ramasser"
+ },
+ {
   "id": "text.away_wheat",
   "en": "Your wheat is ripe: tap the field to harvest it",
   "fr": "Votre blé est mûr : touchez le champ pour le récolter"
@@ -2758,6 +2768,11 @@
   "id": "text.honey_going",
   "en": "{farmer} is on the way to the beehives",
   "fr": "{farmer} va aux ruches"
+ },
+ {
+  "id": "text.feather_sold1",
+  "en": "A peacock feather sold · +{c} coins",
+  "fr": "Une plume de paon vendue · +{c} pièces"
  },
  {
   "id": "text.honey_sold",

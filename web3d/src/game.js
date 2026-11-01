@@ -178,7 +178,7 @@ export const TEXT = {
     out_buy: 'Buy and wear · {c}', out_wear: 'Wear', out_wearing: 'Wearing', out_bought: '{farmer} tries on the {name} outfit! +{xp} XP', out_worn: '{farmer} is wearing the {name} outfit.', out_new: 'New outfit for {farmer}: {names}',
     away_title: 'While you were away', away_for: 'You were away {t}.', away_paused: 'You were away more than 2 days: your hens laid for the last two.',
     away_eggs: '{n} eggs are waiting in your nests', away_eggs1: 'An egg is waiting in a nest', away_full: '{n} nests are full: those hens have stopped laying', away_full1: 'A nest is full: those hens have stopped laying',
-    away_hatched: '{name} hatched {n} chicks', away_grown: '{name}’s chicks have grown up: their card is next', away_honey: '{n} jars of honey in the hives', away_honey1: 'A jar of honey in the hives',
+    away_hatched: '{name} hatched {n} chicks', away_grown: '{name}’s chicks have grown up: their card is next', away_honey: '{n} jars of honey in the hives', away_honey1: 'A jar of honey in the hives', away_feathers: '{n} peacock feathers to pick up', away_feathers1: 'A peacock feather to pick up',
     away_wheat: 'Your wheat is ripe: tap the field to harvest it', away_wheat_grow: 'Your wheat is growing: ripe in {t}', away_feed: '{coop}: the feeder is empty', away_feed_low: '{coop}: the feeder is low',
     away_show: 'The show results are in: they’re next', away_jobs: 'New jobs for today', away_jobs_ready: '{n} job rewards to collect', away_jobs_ready1: 'A job reward to collect',
     away_collect: 'Collect all eggs ({n})', away_ok: 'Off to the farm', away_sold: '{n} eggs sold · +{c} coins',
@@ -246,6 +246,7 @@ export const TEXT = {
     bub_sow: 'Sow', bub_harvest: 'Harvest', wheat_sowing: '{farmer} is on the way to sow the wheat · −{c} coins', wheat_sowed: 'Wheat sown · −{c} coins. Ripe in 4 hours.',
     wheat_cutting: '{farmer} is on the way to harvest the wheat', wheat_done: 'Wheat harvested: +{g} grain for the feeders · +{xp} XP', wheat_full: 'Wheat harvested · +{xp} XP (your grain store is full)',
     honey_title: 'Honey', honey_jars: '{n} jars of honey', honey_jar: 'A jar of honey', honey_none: 'No honey yet: the next jar in {t}.', honey_going: '{farmer} is on the way to the beehives',
+    feather_sold1: 'A peacock feather sold · +{c} coins',
     honey_sold: '{n} jars of honey sold · +{c} coins', honey_sold1: 'A jar of honey sold · +{c} coins',
     // fishing (release 5)
     fish_rudd: 'Rudd', fish_roach: 'Roach', fish_perch: 'Perch', fish_tench: 'Tench', fish_golden_tench: 'Golden tench', fish_koi: 'Koi', fish_big_bertha: 'Big Bertha',
@@ -452,7 +453,7 @@ export const TEXT = {
     out_buy: 'Acheter et porter · {c}', out_wear: 'Porter', out_wearing: 'Portée', out_bought: '{farmer} enfile la tenue {name} ! +{xp} XP', out_worn: '{farmer} porte la tenue {name}.', out_new: 'Nouvelle tenue pour {farmer} : {names}',
     away_title: 'Pendant votre absence', away_for: 'Vous étiez loin de la ferme pendant {t}.', away_paused: 'Plus de 2 jours loin de la ferme : vos poules ont pondu pour les deux derniers.',
     away_eggs: '{n} œufs vous attendent dans les pondoirs', away_eggs1: 'Un œuf vous attend dans un pondoir', away_full: '{n} pondoirs sont pleins : ces poules ont arrêté de pondre', away_full1: 'Un pondoir est plein : ces poules ont arrêté de pondre',
-    away_hatched: '{name} a fait éclore {n} poussins', away_grown: 'Les poussins de {name} ont grandi : leur carte arrive', away_honey: '{n} pots de miel dans les ruches', away_honey1: 'Un pot de miel dans les ruches',
+    away_hatched: '{name} a fait éclore {n} poussins', away_grown: 'Les poussins de {name} ont grandi : leur carte arrive', away_honey: '{n} pots de miel dans les ruches', away_honey1: 'Un pot de miel dans les ruches', away_feathers: '{n} plumes de paon à ramasser', away_feathers1: 'Une plume de paon à ramasser',
     away_wheat: 'Votre blé est mûr : touchez le champ pour le récolter', away_wheat_grow: 'Votre blé pousse : mûr dans {t}', away_feed: '{coop} : la mangeoire est vide', away_feed_low: '{coop} : la mangeoire est presque vide',
     away_show: 'Les résultats des concours sont arrivés : ils arrivent juste après', away_jobs: 'De nouvelles tâches aujourd’hui', away_jobs_ready: '{n} récompenses de tâches à récupérer', away_jobs_ready1: 'Une récompense de tâche à récupérer',
     away_collect: 'Ramasser les œufs ({n})', away_ok: 'À la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
@@ -519,6 +520,7 @@ export const TEXT = {
     bub_sow: 'Semer', bub_harvest: 'Récolter', wheat_sowing: '{farmer} va semer le blé · −{c} pièces', wheat_sowed: 'Blé semé · −{c} pièces. Mûr dans 4 heures.',
     wheat_cutting: '{farmer} va récolter le blé', wheat_done: 'Blé récolté : +{g} de grain pour les mangeoires · +{xp} XP', wheat_full: 'Blé récolté · +{xp} XP (votre réserve de grain est pleine)',
     honey_title: 'Miel', honey_jars: '{n} pots de miel', honey_jar: 'Un pot de miel', honey_none: 'Pas encore de miel : le prochain pot dans {t}.', honey_going: '{farmer} va aux ruches',
+    feather_sold1: 'Une plume de paon vendue · +{c} pièces',
     honey_sold: '{n} pots de miel vendus · +{c} pièces', honey_sold1: 'Un pot de miel vendu · +{c} pièces',
     // la pêche (version 5)
     fish_rudd: 'Rotengle', fish_roach: 'Gardon', fish_perch: 'Perche', fish_tench: 'Tanche', fish_golden_tench: 'Tanche dorée', fish_koi: 'Koï', fish_big_bertha: 'Grosse Berthe',
@@ -842,6 +844,9 @@ export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120 };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
+// ---- the peacock's feathers (Audrey, 1 Nov: "His dropped feathers (Recommended)"): now and then (one every 12 hours) he
+// drops a feather from his train in his yard, three lying there at most; a tap on one: picked up and sold, a fine one
+export const FEATHERS = { every: 12 * 3600e3, max: 3, price: 40, xp: 5 };
 // ---- fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; the legendary ones "Photo,
 // then let go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little
 // celebration"): the pond from level 3, the river from level 8, seven fish in each (four common, two rare, one legendary
@@ -1043,7 +1048,8 @@ export function checkFarm(d, now = Date.now()) {
       lastBrood: int(c.lastBrood, 0, now, 0), checked: int(c.checked, 0, now, now),
       ...(typeof c.shut === 'string' && /^\d{8}$/.test(c.shut) && c.shut <= nightKey(now + TZ_SLACK) ? { shut: c.shut } : {}),      // (its pop door shut for that night)
       ...(typeof c.dress === 'string' && dresses.includes(c.dress) ? { dress: c.dress } : {}),      // (a seasonal dress it wears: one owned)
-      ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}) });      // (when its eggs were laid: fresh ones earn more)
+      ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}),      // (when its eggs were laid: fresh ones earn more)
+      ...(c.breed === 'pea' ? { fe: { n: int(c.fe && c.fe.n, 0, FEATHERS.max, 0), at: int(c.fe && c.fe.at, 0, now, now) } } : {}) });      // (the peacock's feathers lying in his yard, and when the last one came: never ahead of now)
   }
   out.birds = [];
   const ids = new Set();
@@ -1324,7 +1330,7 @@ export class Game {
       const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
       return { coop, birds: this.basket().filter(b => b.breed === breed).map(b => ({ ...b, coop: coop.id })), rare: true };
     }
-    const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
+    const now = Date.now(), coop = { id: this.id('c'), breed, tier: 0, x: at.x, z: at.z, deg: at.deg, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now, ...(breed === 'pea' ? { fe: { n: 0, at: now } } : {}) };
     return { coop, birds: this.trio(breed, coop.id, false) };
   }
   placeCoop(draft, at, clear = []) {
@@ -1603,6 +1609,16 @@ export class Game {
     const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
     return { n, coins, xp };
   }
+  // ---- the peacock's feathers: how many lie in his yard now; one picked up (sold)
+  feathersAt(c, now = Date.now()) { const F = c && c.breed === 'pea' && c.fe; if (!F) return 0; return Math.min(FEATHERS.max, F.n + Math.floor(Math.max(0, now - F.at) / FEATHERS.every)); }
+  pickFeather(coopId, now = Date.now()) {
+    const c = this.coop(coopId), F = c && c.breed === 'pea' && c.fe; if (!F) return null;
+    const k = Math.floor(Math.max(0, now - F.at) / FEATHERS.every), n = Math.min(FEATHERS.max, F.n + k);
+    if (!n) return null;
+    F.at = F.n + k >= FEATHERS.max ? now : F.at + k * FEATHERS.every; F.n = n - 1;
+    this.data.coins += FEATHERS.price; this.data.xp += FEATHERS.xp; this.save();
+    return { coins: FEATHERS.price, xp: FEATHERS.xp, left: n - 1 };
+  }
   // ---- fishing: open at the pond (level 3) and the river (8); the worms (found by the chickens, or from tins);
   // a cast (a worm on the hook: the fish that will bite decided there and then, kept till it's landed or lost); landed
   // (sold live, or a legendary one's photo; the count and the biggest kept); a tin of worms
@@ -1672,6 +1688,7 @@ export class Game {
     for (const c of d.coops) { const br = c.brood; if (br && br.hatched && this.hatchAt(c) > from) items.push({ k: 'hatched', name: name(br.hen), n: br.n, duck: kindOf(c.breed) }); }
     for (const n of this.unseenNews()) if (n.type === 'grown' && n.t > from) items.push({ k: 'grown', name: name(n.hen), duck: kindOf((this.coop(n.coop) || {}).breed) }); 
     const h = this.honeyAt(now); if (h) items.push({ k: 'honey', n: h });
+    const fe = d.coops.reduce((a, c) => a + this.feathersAt(c, now), 0); if (fe) items.push({ k: 'feathers', n: fe });
     if (this.wheatStage(now) === 'ripe') items.push({ k: 'wheat' }); else if (this.wheat().ripe) items.push({ k: 'wheat_grow', ms: this.wheatLeft(now) });
     for (const c of d.coops) { const l = this.feedLeft(c, now); if (l <= 0) items.push({ k: 'feed', coop: this.coopName(c) }); else if (l < 0.25) items.push({ k: 'feed_low', coop: this.coopName(c) }); }
     if (this.unseenShows().length) items.push({ k: 'show' });

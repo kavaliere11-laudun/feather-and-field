@@ -1009,5 +1009,8 @@
  },
  "pers.mum.pea": [
   "Die geborene Mutter – ihre Pfauenküken sind am besten versorgt."
- ]
+ ],
+ "text.feather_sold1": "Eine Pfauenfeder verkauft · +{c} Münzen",
+ "text.away_feathers": "{n} Pfauenfedern zum Aufheben",
+ "text.away_feathers1": "Eine Pfauenfeder zum Aufheben"
 }

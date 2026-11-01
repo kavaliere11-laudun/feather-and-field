@@ -1009,5 +1009,8 @@
  },
  "pers.mum.pea": [
   "Una mamma nata: i suoi pavoncini sono i più accuditi."
- ]
+ ],
+ "text.feather_sold1": "Una piuma di pavone venduta · +{c} monete",
+ "text.away_feathers": "{n} piume di pavone da raccogliere",
+ "text.away_feathers1": "Una piuma di pavone da raccogliere"
 }
