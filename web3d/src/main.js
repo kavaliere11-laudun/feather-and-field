@@ -3131,10 +3131,10 @@ class Bird {
   // heard from far off, as a real one is
   mayCall(soon) {
     const h = DAY.hour; if (!this.train || h < 6 || h > 20.5 || this.plot.farmer || this.cuddle) return false;
-    return performance.now() - (this.callAt ?? -1e9) > (soon ? 12000 : 50000);
+    return (this.A ? this.A.t : 0) - (this.callAt ?? -1e9) > (soon ? 12 : 50);      // (on the farm's own clock)
   }
   callSound() {
-    this.callAt = performance.now(); if (!sound) return;
+    this.callAt = this.A ? this.A.t : 0; this.calls = (this.calls || 0) + 1; if (!sound) return;
     this.root.getWorldPosition(_cv); farmSound('peacall', _cv.x, _cv.z, 2.4);
   }
   answer() {                                                 // the rooster sometimes joins in with a crow

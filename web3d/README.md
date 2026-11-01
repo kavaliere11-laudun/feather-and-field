@@ -3687,3 +3687,22 @@ the birds already had.
   grain, a coil of rope, a pot of marigolds; the deck, ramp and door where ducks.js walks them.
 - **Tested**: dectest, decortest (bees, butterflies, bird bath, glints, music), ducktest, duckfarmertest, gametest; the
   play-through's pictures of each again (`SPOTS=decor_x PHASES=tour FARM=... farmtour.mjs`).
+
+## The peacock's call (1 Nov 2026; Audrey, 11:21: "we probably need special noise for the peacock"; of two recordings: "Dartmoor, England is better but will need to be reworked a little to remove noise")
+
+- **The recording**: Keith Selmes's "Peacock.wav" (Freesound 397357, a peacock in woodland near Dartmoor, CC BY 4.0: free for
+  a paid game with a credit, `audio/CREDITS.txt`). Freesound refuses downloads from the cloud workspace even with
+  cdn.freesound.org allowed, so Audrey downloaded it and attached it. Cleaned by the source's `audio/peacock_clips.py`: the
+  cars' rumble cut below 520 Hz and the highest chirps above 8 kHz, the steady hiss taken out by spectral gating
+  (noisereduce, against a quiet stretch at 11-16 s), the gaps between his calls faded right down (no little birds), soft
+  ends, -18 LUFS: `audio/farm/peacall1-4.mp3` (two calls, one, two, one; 1.0 to 2.4 s). Not the calls at 3.85-6.2 s
+  (clicks and a chirp inside them).
+- **When he calls** (`main.js` `mayCall`, `callSound`; the act `call`): now and then by day (6:00 to 20:30) as one of
+  the things he does standing, at most one every 50 seconds; sometimes when tapped (instead of his fan); and as he comes
+  down from his perch in the morning, then his fan. Neck up, head back, beak open (the crow's pose without a flap); heard
+  from far off (`farmSound('peacall', ..., 2.4)`, sound.js `FARM.level.peacall`). Not when the farmer is in the pen or
+  during a cuddle.
+- **To do before the stores**: a visible credits line in the game (Settings) for the recordings, the peacock's
+  recording above all (CC BY asks for the credit where people will see it).
+- `peacallfilm.mjs OUT.mp4` (FARM=farmtour's saved farm): a short film of him calling three times with the sound laid
+  in (the test browser is silent).

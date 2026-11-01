@@ -22,3 +22,10 @@ BigSoundBank.com"). Cut, made gentler where needed and evened out by the source'
 The geese and the bee (29 Oct 2026), audio/farm/honk1-3.mp3, buzz1-2.mp3: the US National Park Service's sound gallery
 ("Canada Geese", "Bee", Yosemite), public domain ("The files are in the public domain and may be downloaded. Enjoy, and
 please give the appropriate credit."). Credit: National Park Service.
+
+The peacock's call (1 Nov 2026; Audrey chose it: "Dartmoor, England is better but will need to be reworked a little to
+remove noise"), audio/farm/peacall1-4.mp3: "Peacock.wav" by Keith Selmes (Freesound, https://freesound.org/s/397357/),
+licensed under Creative Commons Attribution 4.0 (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/): free for a paid
+game with this credit. Changes made: four clips of his calls cut from it, the low rumble of cars and the steady hiss taken
+out, the little birds and noise between his calls quietened, each made louder and evened out (the source's
+audio/peacock_clips.py).
