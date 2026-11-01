@@ -1071,6 +1071,35 @@ export class GameUI {
     later.addEventListener('click', () => this.close());
     row.append(go, later); b.append(row, el('p', 'gnote', this.t('nudge_note')));
   }
+  // the store app's reminders (notify.js), asked once the first day's guide is done: yes, and the phone asks the player
+  notesAsk() {
+    const N = this.o.notes, b = this.open('notesask', '🔔 ' + this.t('notes_ask_t'));
+    N.setPref('off');                                     // (asked: closed or "Not now" leaves them off; Settings turns them on)
+    b.append(el('p', 'gtext', this.t('notes_ask')));
+    const row = el('div', 'gfox-row'), yes = el('button', 'gbtn gnotes-yes', this.t('notes_yes')), later = el('button', 'gbtn galt gnotes-no', this.t('notes_no'));
+    yes.type = later.type = 'button';
+    yes.addEventListener('click', async () => { yes.disabled = true; await N.ask(); if (this.kind === 'notesask') this.close(); });
+    later.addEventListener('click', () => this.close());
+    row.append(yes, later); b.append(row, el('p', 'gnote', this.t('notes_ask_note')));
+  }
+  // Settings: Reminders On / Off (on: the phone asked, if it hasn't been; turned off in the phone's own settings: said so)
+  notesRow() {
+    const N = this.o.notes, row = el('div', 'grow gnotes'), ch = el('div', 'gchips'), note = el('p', 'gnote gnotes-note', this.t('notes_note'));
+    row.append(el('span', 'glabel', this.t('settings_notes')));
+    const show = on => { for (const x of ch.children) x.classList.toggle('on', (x.dataset.on === '1') === on); };
+    for (const on of [true, false]) {
+      const c = el('button', 'gchip', this.t(on ? 'music_on' : 'music_off')); c.type = 'button'; c.dataset.on = on ? '1' : '0';
+      c.addEventListener('click', async () => {
+        if (!on) { N.setPref('off'); show(false); note.textContent = this.t('notes_note'); return; }
+        show(true); const ok = await N.ask(); show(ok);
+        note.textContent = this.t(ok ? 'notes_note' : 'notes_denied');
+      });
+      ch.append(c);
+    }
+    show(N.pref() === 'on'); row.append(ch);
+    if (N.pref() === 'on') N.allowed().then(ok => { if (!ok) { show(false); note.textContent = this.t('notes_denied'); } });
+    return [row, note];
+  }
   settings() {
     const g = this.g, b = this.open('settings', this.t('settings'));
     const langRow = el('div', 'grow'); langRow.append(el('span', 'glabel', this.t('settings_lang')));
@@ -1088,6 +1117,7 @@ export class GameUI {
       row.append(ch); b.append(row);
     }
     b.append(el('p', 'gnote gsound-note', this.t('settings_music_note')));
+    if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
     if (this.o.account && this.o.account.on) b.append(this.accountCard());
     b.append(el('p', 'gnote', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of

@@ -3800,3 +3800,37 @@ the birds already had.
 - Tested here: `app/test/wwwcheck.mjs` (English and French, upright and sideways: told it's the app, no sign-in, the
   welcome in its language, no account card, the privacy link the site's, the credits, no errors, nothing from the
   internet); the web game's own accounttest and langtest still pass (the changes only act inside the app).
+
+## The bunching hens (1 Nov 2026; Audrey: "The bunching hens", after the iPhone simulator's film)
+
+- In the film the Red Barn's rooster and two hens stood in a heap by the front fence for a few seconds. Cause: the
+  birds' spacing (`separate`, main.js) moved two that were too close by a share of the gap each frame (`dt * 8`):
+  fine at the test browser's slow frames, too gentle at a phone's 60 a second, where birds heading the same way could
+  end up almost inside each other (the test village stepped at 1/60 s: two birds' centres 0.08 of a body apart).
+- Now each steps apart at up to `SEP_SPEED` (0.8 a second, quicker than they walk), whatever the frame rate: at 1/60 s
+  the closest two ever got is 0.63-0.95 of a body (a laying hen on her way in to the nest, who passes the others by
+  design, aside). pentest, cuddletest, chicktest, peacocktest and gametest pass.
+
+## The store app's reminders (1 Nov 2026; Audrey, 19:36: "we need to add the notification too"; her choices: eggs waiting, chicks hatched, the wheat and the honey ready, the show results, and "Yes, after 3 days (Recommended)" for a gentle note when the farm's been left)
+
+- `notify.js`: sent by the phone itself (the app's local notifications, `@capacitor/local-notifications` 8.3.1 in
+  `app/`; called through the app's bridge, `Capacitor.nativePromise`): no server, nothing leaves the phone. Only inside
+  the app; nothing on the website.
+- **What and when** (`plan`, from the game's own rules): the farm copied and run on ahead for two days (the hens'
+  lays as the game lays them: fed, room in the nest, not sitting; the broody hens and their hatching): "6 eggs are
+  waiting in the nests" (a day at most, two days ahead), "3 chicks have hatched! Maple is a mum."; the wheat ripe; the
+  hives full (6 jars); a show's results the morning after; three days on at 18:00, "Barnaby and Pippa miss you! Come
+  and say hello." (their two best friends). Never between 21:00 and 8:00 (moved to 8:00), two a day at most (chicks,
+  the show, the farm missing you, the wheat, the honey, the eggs, in that order), two due together a couple of minutes
+  apart, nothing within 5 minutes. Planned again each minute while playing, after a change and when the game is put
+  away, so what waits on the phone is the latest; the "miss you" only ever comes if the game isn't opened for 3 days.
+- **Asked once**: when the first day's guide is done, "🔔 Reminders?" (Yes please / Not now; the phone then asks
+  itself); Settings: Reminders On / Off (Off takes everything off the phone; the phone's own setting off: "Notifications
+  are turned off for Feather & Field on your phone: Settings > Notifications."). The choice is the phone's, not the
+  farm's (localStorage `ff3d.notes`, read back only as on or off; a farm code doesn't carry it).
+- Six languages (`nt_*`, `notes_*`, `settings_notes`).
+- `notetest.mjs` (a stand-in for the phone's notifications; `LANG_GAME=fr`): not asked before the guide is done, asked
+  once, Yes; the plan on the phone: never at night, two a day at most, the wheat when ripe, the show at 8:00, the eggs
+  from the hens' laying, a sitting hen's chicks with her name, the "miss you" at 18:00 three days on, the game's
+  language; Settings Off / On / the phone saying no; not asked again after a reload; on the website nothing. English
+  and French: all pass.

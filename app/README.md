@@ -8,6 +8,8 @@ it works offline.
   In the app: no account yet (Google's sign-in page can't open inside an app; it waits for the app's own sign-in, Sign in
   with Apple and Google), the privacy link goes to the site's page (opened in Safari), the farm code's note speaks of
   reinstalling the game rather than clearing Safari.
+- Plugins: the status bar, and local notifications (the reminders, `web3d/src/notify.js`: the phone sends them
+  itself; the game calls them through the app's bridge).
 - `capacitor.config.json`: the app's name and id (`com.featherandfield.game`), the green behind it, the clock's text
   white over the farm (status bar plugin).
 - `ios/`: the Xcode project (Swift packages, no CocoaPods). iPhone only (an iPad runs it as an iPhone app), iOS 16 and

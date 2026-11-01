@@ -33,6 +33,7 @@ import { DecorLife } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FEATHERS } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
+import { Notes } from './notify.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS } from './game.js';
@@ -57,6 +58,7 @@ let gameUI = null;
 // project, or ?account=fake for the tests); a farm brought from online opens the way a farm code does (the page again)
 const farmLoaded = () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); };
 const account = GAME_MODE && !params.has('poster') ? new Account(game, { bust: BUST, say: t => hint(t), loaded: farmLoaded, ask: (here, online) => gameUI.twoFarms(here, online) }) : null;
+const notes = GAME_MODE && !params.has('poster') ? new Notes(game) : null;      // (the store app's reminders: notify.js; nothing outside the app)
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
@@ -443,7 +445,7 @@ async function start() {
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -3582,9 +3584,11 @@ function makeBlob() {
   blobMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, color: '#20301a' });
 }
 
-// birds in the same pen never overlap: two that end up too close gently step apart
+// birds in the same pen never overlap: two that end up too close gently step apart, each at up to SEP_SPEED (quicker than
+// they walk, so whatever the frame rate they never end up in each other; 1 Nov, the iPhone simulator's film: at 60 frames
+// a second the old share of the gap, dt * 8, was too gentle, and the Red Barn's three stood in a heap by the fence)
+const SEP_SPEED = 0.8;
 function separate(flock, dt) {
-  const k = Math.min(1, dt * 8);
   for (let i = 0; i < flock.length; i++) for (let j = i + 1; j < flock.length; j++) {
     const off = b => (b.laying && b.laying.inside) || b.roost || b.asleep || (b.cuddle && b.cuddle.carry) || (b.leaving && (b.leaving.phase === 'exit' || b.leaving.phase === 'fade'));      // on a scripted walk, in bed, in his arms, or out of the gate
     if (off(flock[i]) || off(flock[j])) continue;
@@ -3593,7 +3597,7 @@ function separate(flock, dt) {
     let dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
     if (d >= min) continue;
     if (d < 1e-4) { dx = 1; dz = 0; d = 1; } else { dx /= d; dz /= d; }
-    const push = (min - Math.min(d, min)) * 0.5 * k;
+    const push = Math.min((min - Math.min(d, min)) * 0.5, SEP_SPEED * dt);
     const ax = a.x - dx * push, az = a.z - dz * push, bx = b.x + dx * push, bz = b.z + dz * push;
     const lead = q => q.cuddle && !q.cuddle.greet && !q.cuddle.done;      // (the hen on her way up to him for a cuddle: the others make way)
     if (lead(flock[i]) !== lead(flock[j])) { const o = lead(flock[i]) ? b : a, sg = lead(flock[i]) ? 1 : -1; o.x += dx * push * 2 * sg; o.z += dz * push * 2 * sg; continue; }
@@ -4680,6 +4684,7 @@ function showNews() {
     gameUI.levelUpCard(L, game.landForSale(), () => { if (SALE.at) focusOn(SALE.at.x, SALE.at.z, Math.min(view.size, sideways() ? 2.4 : 3.2)); }, game.newAt(L, game.data.lvSeen || 1), b => startPlace(b));
   }
   else if (account && account.nudgeDue()) { holdBird(null); account.nudged(); gameUI.accountNudge(); }      // (a few days in: My account suggested, once)
+  else if (notes && notes.askDue()) { holdBird(null); gameUI.notesAsk(); }      // (the store app, the first day's guide done: reminders? once)
 }
 // ---- levels and land (release 1 step 5; game.js landForSale, buyLand; the fields: fields.py, models/fields.json). The
 // farm is split into fields along its lanes and the stream. Your land is the mown farm you know; the rest is wild meadow
@@ -7275,6 +7280,7 @@ document.addEventListener('visibilitychange', () => {
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
 window.__farm = {
   accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
+  notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
