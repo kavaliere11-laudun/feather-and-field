@@ -209,7 +209,7 @@ export const TEXT = {
     settings_version: 'Version {v}',
     credits: 'Music: {music}. Sounds: {sounds}. The peacock’s call: {peacock} ({lic}), cleaned up.',                   // (Settings: thanks to whose music and sounds these are; the peacock's recording asks for it, CC BY)
     saved_here: 'Your farm is saved on this phone.',
-    code_t: 'Your farm code', code_how: 'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.',
+    code_t: 'Your farm code', code_how: 'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.', code_how_app: 'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after reinstalling the game, to carry on where you left off.',
     code_copy: 'Copy my farm code', code_paste: 'Paste a farm code here', code_load: 'Load this farm', code_load_sure: 'Tap again to replace this farm', code_note: 'Loading a farm replaces the one on this phone.',
     code_copied: 'Farm code copied. Paste it into Notes to keep it safe.', code_select: 'Here is your farm code: select it all and copy it.', code_bad: 'That farm code doesn’t work. Copy it again, all of it.',
     code_old: 'That code is from the first Feather & Field: this new farm starts fresh.', code_loaded: 'Farm loaded: level {n}. Welcome back!',
@@ -485,7 +485,7 @@ export const TEXT = {
     settings_version: 'Version {v}',
     credits: 'Musique : {music}. Sons : {sounds}. Le cri du paon : {peacock} ({lic}), nettoyé.',
     saved_here: 'Votre ferme est enregistrée sur ce téléphone.',
-    code_t: 'Le code de votre ferme', code_how: 'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez.',
+    code_t: 'Le code de votre ferme', code_how: 'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez.', code_how_app: 'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir réinstallé le jeu, pour reprendre là où vous en étiez.',
     code_copy: 'Copier le code de ma ferme', code_paste: 'Collez un code de ferme ici', code_load: 'Charger cette ferme', code_load_sure: 'Touchez encore pour remplacer cette ferme', code_note: 'Charger une ferme remplace celle de ce téléphone.',
     code_copied: 'Code copié. Collez-le dans Notes pour le garder.', code_select: 'Voici le code de votre ferme : sélectionnez-le en entier et copiez-le.', code_bad: 'Ce code ne fonctionne pas. Copiez-le à nouveau, en entier.',
     code_old: 'Ce code vient du premier Feather & Field : cette nouvelle ferme repart de zéro.', code_loaded: 'Ferme chargée : niveau {n}. Bon retour !',

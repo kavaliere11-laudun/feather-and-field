@@ -10,6 +10,7 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHO
 // the first Feather & Field's save on this phone (since the switch, 26 Oct 2026, the first game lives in the site's classic/
 // folder and the 3D game at the usual address): only whether it's there, to offer the way to it; never read or changed here
 const FIRST_SAVE = 'feather-field-save-v1';
+const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
 export const HERO = { w: 3300, h: 1500, key: [0.236, 0.285, 0.642, 0.79] };      // (1 Nov: a little room left of the farmer, sideways his arm was cut)
@@ -93,7 +94,7 @@ export class GameUI {
     this.jobsBtn.addEventListener('click', () => { if (this.o.jobs) this.o.jobs(); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
-    if (navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');
+    if (window.__ffApp === true || navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');      // (the store app too: app/make-www.mjs)
     const refit = () => this.fitHero();
     addEventListener('resize', refit); addEventListener('orientationchange', () => setTimeout(refit, 250));
     if (window.visualViewport) visualViewport.addEventListener('resize', refit);
@@ -1057,7 +1058,8 @@ export class GameUI {
     });
   }
   // the privacy page (privacy.mjs), in the game's language, opened beside the game
-  privacyLink() { const a = el('a', 'glink gprivacy', this.t('privacy')); a.href = 'privacy.html?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
+  // (in the store app, the site's copy: a new window there opens in Safari, which can't reach the app's own files)
+  privacyLink() { const a = el('a', 'glink gprivacy', this.t('privacy')); a.href = (window.__ffApp === true ? PRIVACY_ONLINE : 'privacy.html') + '?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
   // the once-only suggestion, a few days into a farm (main.js showNews; account.js nudgeDue)
   accountNudge() {
     const A = this.o.account, b = this.open('acctask', '☁️ ' + this.t('nudge_t'));
@@ -1091,7 +1093,7 @@ export class GameUI {
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of
     // the code rather than waiting for it); shown to select by hand if copying isn't allowed; paste one and load it (two
     // taps: it replaces this farm)
-    const card = el('div', 'gcard gcode'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🔑'), el('span', 'gcard-t', this.t('code_t'))); card.append(hd, el('p', 'gnote', this.t('code_how')));
+    const card = el('div', 'gcard gcode'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🔑'), el('span', 'gcard-t', this.t('code_t'))); card.append(hd, el('p', 'gnote', this.t(window.__ffApp === true ? 'code_how_app' : 'code_how')));
     const copy = el('button', 'gbtn gsmallbtn gcode-copy', this.t('code_copy')); copy.type = 'button'; card.append(copy);
     const shown = el('textarea', 'gcodebox gcode-out'); shown.readOnly = true; shown.rows = 3; shown.hidden = !this.codeShown; shown.value = this.codeShown || ''; shown.setAttribute('aria-label', this.t('code_t'));
     shown.addEventListener('focus', () => shown.select()); card.append(shown);

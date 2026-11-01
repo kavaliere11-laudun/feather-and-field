@@ -1,0 +1,18 @@
+{
+  "appId": "com.featherandfield.game",
+  "appName": "Feather & Field",
+  "webDir": "www",
+  "backgroundColor": "#557230",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "backgroundColor": "#557230",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#557230"
+  },
+  "plugins": {
+    "StatusBar": { "style": "DARK", "overlaysWebView": true }
+  }
+}

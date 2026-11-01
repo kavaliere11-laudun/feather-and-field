@@ -30,6 +30,9 @@ const EMU = (location.hostname === 'localhost' || location.hostname === '127.0.0
 // Audrey trying it first (before it's on for everyone): ?account=1 on the game's address turns it on for that phone and
 // browser (kept), ?account=0 off again
 const BETA = (() => { try { const v = params.get('account'); if (v === '1') localStorage.setItem('ff3d.acctbeta', '1'); if (v === '0') localStorage.removeItem('ff3d.acctbeta'); return localStorage.getItem('ff3d.acctbeta') === '1'; } catch (e) { return false; } })();
+// inside the store app (app/make-www.mjs sets window.__ffApp): Google's sign-in page can't open inside an app, so the
+// account waits there for the app's own sign-in (Sign in with Apple and Google, native); the farm code still works
+const APP = typeof window !== 'undefined' && window.__ffApp === true;
 const SYNC_KEY = FAKE ? 'ff3d.cloud.fake' : 'ff3d.cloud';      // { uid, n, s, fresh? }: the account, the save's number and the farm's seal then (the pretend account's kept apart)
 
 function readSync() {
@@ -94,7 +97,7 @@ export class Account {
   // o: { bust, say(text), loaded() (the page opens the farm just put on the phone), ask(here, online) -> Promise<'here'|'online'> }
   constructor(game, o = {}) {
     this.g = game; this.o = o;
-    this.on = FAKE || (!!FIREBASE && (ACCOUNT_LIVE || BETA || !!EMU));          // (no project yet: nothing of the account anywhere)
+    this.on = FAKE || (!!FIREBASE && (ACCOUNT_LIVE || BETA || !!EMU) && !APP);          // (no project yet: nothing of the account anywhere; in the app not yet: APP)
     this.cloud = null; this.user = null; this.status = 'out'; this.savedAt = 0; this.timer = 0;
     this.busy = false; this.again = false; this.asking = false; this.taking = false; this.subs = [];
     this.st = readSync();

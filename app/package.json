@@ -1,0 +1,19 @@
+{
+  "name": "feather-and-field-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Feather & Field as an iPhone (and later Android) app: the web game wrapped with Capacitor",
+  "scripts": {
+    "www": "node make-www.mjs",
+    "sync": "node make-www.mjs && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/ios": "8.6.0",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0"
+  }
+}
