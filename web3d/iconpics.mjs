@@ -28,12 +28,28 @@ const SHOTS = {
       { breed: 'rir', kind: 'hen', n: 1, x: 0.2, z: 0.12, yaw: 0.9, pose: { lookYaw: -0.35, lookTilt: 0.05 } }],
     cam: { el: 9, az: 0, dist: 7, fov: 9, at: [0.02, 0.2, 0] } },
 };
-const ONLY = (process.env.ONLY || Object.keys(SHOTS).join(',')).split(',');
+// Audrey (1 Nov 21:2x): "I like the silky, needs to be high quality. Maybe profile, and maybe with something else in the
+// background that gives an idea of the game. Maybe a baby chick with her too": the white Silkie hen side on, her chick at
+// her feet looking up at her (each shot on its own, silfam_0 the hen, silfam_1 the chick, the same camera)
+SHOTS.silfam = { apart: true, birds: [
+    { breed: 'sil', colour: 'white', kind: 'hen', x: 0.06, z: 0, yaw: -1.45, pose: { lookYaw: 0.35, lookTilt: 0.18 } },
+    { breed: 'sil', colour: 'white', kind: 'chick', x: -0.16, z: 0.09, yaw: 1.25, pose: { lookYaw: -0.2, lookTilt: -0.35 } }],
+  cam: { el: 7, az: 0, dist: 7, fov: 5.6, at: [0.04, 0.15, 0] } };
+// backgrounds, from the game itself (everything as it is, the birds out of sight), to be softened behind the birds:
+// page: the test village's address; plot: which coop; cam: as above, from that coop's front (its pen)
+const BGS = {
+  pagoda: { page: 'index.html?q=0&coopbreeds=sil&looks=3&time=11:30', plot: 0, cam: { el: 7, az: 18, dist: 5.2, fov: 34, at: [0.1, 0.55, 0.2] } },
+  farm: { page: 'index.html?q=0&time=17:30', plot: 0, cam: { el: 6, az: -25, dist: 6.5, fov: 40, at: [0, 0.6, 0.4] } },
+};
+const ONLY = (process.env.ONLY || Object.keys(SHOTS).join(',')).split(',').filter(k => SHOTS[k]);
+const ONLY_BG = (process.env.BG || '').split(',').filter(k => BGS[k]);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const p = await b.newPage({ viewport: { width: 640, height: 640 }, deviceScaleFactor: 2 });
+const p = await b.newPage({ viewport: { width: 640, height: 640 }, deviceScaleFactor: +(process.env.DSF || 2) });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup&coops=0&time=12:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
+if (ONLY.length) {
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup&coops=0&time=12:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
+}
 for (const name of ONLY) for (const [k, one] of (SHOTS[name].apart ? SHOTS[name].birds.map((x, i) => [i, { ...SHOTS[name], birds: [x] }]) : [[-1, SHOTS[name]]])) {
   const res = await p.evaluate(S => {
     const f = window.__farm, T = f.THREE, line = f.allBirds.filter(x => x.plot.kind === 'lineup');
@@ -74,6 +90,42 @@ for (const name of ONLY) for (const [k, one] of (SHOTS[name].apart ? SHOTS[name]
   const file = k < 0 ? name : `${name}_${k}`;
   writeFileSync(`${OUT}/${file}.png`, Buffer.from(res.png.split(',')[1], 'base64'));
   console.log(file, res.names.join(', '));
+}
+for (const name of ONLY_BG) {
+  const B = BGS[name];
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/${B.page}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
+  const png = await p.evaluate(B => {
+    const f = window.__farm, T = f.THREE, P = f.coopPlots()[B.plot], frame = P.frame;
+    f.pause(true); f.step(1 / 30, 60);
+    frame.updateMatrixWorld(true);
+    const at = frame.localToWorld(new T.Vector3(...B.cam.at));
+    f.view.min = 0.2; f.lookAt(at.x, at.z, 3); f.step(1 / 30, 30); f.draw();
+    for (const x of f.allBirds) x.root.visible = false;
+    const blobs = o => o.isInstancedMesh && o.geometry && o.geometry.type === 'CircleGeometry';
+    f.scene.traverse(o => { if (blobs(o)) o.visible = false; });
+    const cv = f.renderer.domElement, W = cv.width, H = cv.height;
+    const cam = new T.PerspectiveCamera(B.cam.fov, W / H, 0.05, 300), D = Math.PI / 180;
+    const rot = new T.Euler().setFromQuaternion(frame.getWorldQuaternion(new T.Quaternion())).y;
+    const dir = new T.Vector3(0, Math.sin(B.cam.el * D), Math.cos(B.cam.el * D)).applyAxisAngle(new T.Vector3(0, 1, 0), rot + B.cam.az * D);
+    cam.position.copy(at).addScaledVector(dir, B.cam.dist); cam.lookAt(at); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    // shot on black and on white: where the sky is comes out see-through (icons.py puts its own sky there)
+    const shots = [];
+    for (const c of [0, 1]) {
+      f.scene.background = new T.Color(c, c, c); f.renderer.shadowMap.needsUpdate = true; f.renderer.render(f.scene, cam);
+      const s = document.createElement('canvas'); s.width = W; s.height = H; s.getContext('2d').drawImage(cv, 0, 0); shots.push(s.getContext('2d').getImageData(0, 0, W, H).data);
+    }
+    const [K, Wt] = shots, img = new ImageData(W, H), px = img.data;
+    for (let i = 0; i < K.length; i += 4) {
+      const a = Math.max(0, Math.min(1, 1 - ((Wt[i] - K[i]) + (Wt[i + 1] - K[i + 1]) + (Wt[i + 2] - K[i + 2])) / 765));
+      if (a < 1 / 255) continue;
+      px[i] = Math.min(255, K[i] / a); px[i + 1] = Math.min(255, K[i + 1] / a); px[i + 2] = Math.min(255, K[i + 2] / a); px[i + 3] = Math.round(a * 255);
+    }
+    const o = document.createElement('canvas'); o.width = W; o.height = H; o.getContext('2d').putImageData(img, 0, 0);
+    return o.toDataURL('image/png');
+  }, B);
+  writeFileSync(`${OUT}/bg_${name}.png`, Buffer.from(png.split(',')[1], 'base64'));
+  console.log('bg', name);
 }
 console.log('errors', errs);
 await b.close();
