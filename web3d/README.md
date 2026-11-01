@@ -3747,3 +3747,20 @@ the birds already had.
   on a phone.
 - **On Audrey's iPhone** (17:42-17:47, in WhatsApp's browser): a new farm upright 29-48 fps; the test village (every
   coop and decoration) 59 fps upright, and sideways 47-60 fps over the pond, the bandstand and the coops: smooth.
+## The graphics pass (1 Nov 2026; Audrey: "Another graphics pass (Recommended)")
+
+- **Village models** (`village3d.py`, spliced into `village.glb`): `bush_v` (both bushes: seven leafy clumps in three
+  greens, the second kind with little pink and white blossoms; the old size, ~560 and 900 triangles for the 110 of them),
+  `rock_v` (lumpy boulders with a thin patch of moss and a pebble), `picket_fence_v` (pointed pickets, rails behind,
+  capped posts), `mushrooms_v` (toadstools with white spots, gills, skirts, grass round them), `sunflowers_v` (a bed with
+  board edges; heads of two rings of pointed petals (`star_disc`, the inner turned half a petal) round a dark centre with
+  a rim, a few nodding; broad leaves), `pasture_v` (split rails with a little sag between weathered posts, a five-bar
+  gate with its brace and latch where the opening was), `pasture_shelter_v` (upright boards, a shingled roof, straw, a
+  hay rack full of hay, a galvanised trough with water).
+- **The farm's own fences, gates and sign** (main.js): the field fences' posts now have a little pyramid cap
+  (`postGeo`), each post and rail in one of five weathered wood shades (`WOOD_TONES`, instance colours on `FENCE_WOOD`);
+  the gates' posts capped too; the For Sale sign framed between two capped posts (`saleBoard`, `BOARD`). WOOD,
+  FENCE_WOOD, BOARD, STAKE and RIBBON get the night colours (they're made after the scene is first graded).
+- **Biscuit's kennel** (`beasts.py` `kennel`, exported through `export_village3d.py` and spliced into `fauna.glb`):
+  clay tiles row on row on its roof (`tile_slope`), a rounder ridge; its walls and doorway as before (kennelclip passes).
+- Tested: landtest, gametest, movetest, firstdaytest, kennelclip.

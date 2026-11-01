@@ -388,7 +388,11 @@ def kennel():
     for sd in (1, -1):
         cy, cz = sd * run / 2, rz - rise / 2 + 0.012
         objs.append(box('kroof', (x1 - x0 + 2 * ov, L + 0.02, rt), ((x0 + x1) / 2, cy, cz), rot=(sd * -ang, 0, 0), m=roof, bevel=0.008))
-    objs.append(cyl('kridge', 0.028, x1 - x0 + 2 * ov + 0.02, ((x0 + x1) / 2, 0, rz + 0.008), rot=(0, math.radians(90), 0), m=ridge_m, verts=10))
+    from village3d import tile_slope                  # (the graphics pass, 1 Nov: clay tiles row on row, as on the farmhouse)
+    tiles = [mat('ktile%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#c4683f', '#b85f39', '#cc7348'))]
+    for sd in (1, -1):
+        tile_slope(objs, x0 - ov + 0.02, x1 + ov - 0.02, sd * run, wh - 0.008 + rt / 2, 0.0, rz + 0.012 + rt / 2, tiles, row_gap=0.07, tile_w=0.09, lift=0.006, name='ktile')
+    objs.append(cyl('kridge', 0.034, x1 - x0 + 2 * ov + 0.02, ((x0 + x1) / 2, 0, rz + 0.03), rot=(0, math.radians(90), 0), m=ridge_m, verts=10))
     # the name board over the door (the browser writes his name on it)
     bx, by, bz = K_['board']; bw, bh = K_['board_size']
     objs.append(box('kboard', (0.018, bw, bh), (bx - 0.006, by, bz), m=board_m, bevel=0.006))

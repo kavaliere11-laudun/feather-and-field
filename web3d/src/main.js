@@ -508,7 +508,7 @@ async function start() {
   if (allBirds.length) makeBlobs();
   buildGrass();
   addLampPools();
-  gradeScene(); setMaterialHook(nightGrade);           // the night colours, also for materials made later (a laying hen's own)
+  gradeScene(); setMaterialHook(nightGrade); for (const m of [WOOD, FENCE_WOOD, BOARD, STAKE, RIBBON]) nightGrade(m);      // (the fences, gates and signs made later too)           // the night colours, also for materials made later (a laying hen's own)
   for (const k in parts) if (k.startsWith('inside_')) parts[k].traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); });
   applyDaylight(clockHour());
   const s = V.plots[0].pos;
@@ -4797,7 +4797,7 @@ function cutGates(lines) {
 }
 // the gate: two posts and a leaf (two rails, two stiles, a brace) hinged on the first post
 function gateMesh(G) {
-  const g = new THREE.Group(), post = new THREE.BoxGeometry(0.095, 0.86, 0.095), W = 2 * GATE_HALF - 0.12;
+  const g = new THREE.Group(), post = postGeo(0.095, 0.86), W = 2 * GATE_HALF - 0.12;
   for (const sd of [-1, 1]) { const m = new THREE.Mesh(post, WOOD); m.position.set(G.p[0] + G.t[0] * sd * GATE_HALF, 0.43, G.p[1] + G.t[1] * sd * GATE_HALF); m.castShadow = true; m.receiveShadow = true; g.add(m); }
   const pivot = new THREE.Group(); pivot.position.set(G.p[0] - G.t[0] * (GATE_HALF - 0.06), 0, G.p[1] - G.t[1] * (GATE_HALF - 0.06));
   const part = (geo, y, z, rx = 0) => { const m = new THREE.Mesh(geo, WOOD); m.position.set(0, y, z); m.rotation.x = rx; m.castShadow = true; pivot.add(m); };
@@ -5139,7 +5139,7 @@ function tickFishing(dt) {
 }
 const SALE = { sign: null, stakes: null, field: -1, at: null };
 const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
-const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
+const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), FENCE_WOOD = new THREE.MeshLambertMaterial({ color: '#ffffff' }), BOARD = new THREE.MeshLambertMaterial({ color: '#c9a77a' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
 // the wild meadow's tint: a picture of the fields over the ground (soft-edged), warmer where it's wild
 function landTint() {
   const nx = FIELDS.nx, nz = FIELDS.nz, n = game.data.land.length;
@@ -5183,6 +5183,13 @@ function wildPlants(only = -1) {
   return made;
 }
 // the wild meadow's fence: posts every metre and a half or so, two rails between them
+// a fence post: a square post with a little pyramid cap (the graphics pass, 1 Nov), w wide, h tall, centred on its middle
+function postGeo(w, h) {
+  const shaft = new THREE.BoxGeometry(w, h - w * 1.1, w).translate(0, -w * 0.55, 0);
+  const cap = new THREE.ConeGeometry(w * 0.78, w * 1.1, 4, 1).rotateY(Math.PI / 4).translate(0, h / 2 - w * 0.55, 0);
+  return mergeGeometries([shaft.toNonIndexed(), cap.toNonIndexed()], false);
+}
+const WOOD_TONES = ['#9c7b56', '#8f7050', '#a8875f', '#94744f', '#a07e58'];
 function buildFence(lines) {
   const posts = [], rails = [], m = new THREE.Matrix4(), qn = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
   for (const pts of lines) {
@@ -5200,11 +5207,11 @@ function buildFence(lines) {
       }
     });
   }
-  const out = [];
-  for (const [geo, list] of [[new THREE.BoxGeometry(0.075, 0.72, 0.075), posts], [new THREE.BoxGeometry(0.045, 0.06, 1), rails]]) {
+  const out = [], tone = new THREE.Color(), v = new THREE.Vector3();
+  for (const [geo, list] of [[postGeo(0.075, 0.72), posts], [new THREE.BoxGeometry(0.045, 0.06, 1), rails]]) {
     if (!list.length) continue;
-    const inst = new THREE.InstancedMesh(geo, WOOD, list.length);
-    list.forEach((mx, i) => inst.setMatrixAt(i, mx));
+    const inst = new THREE.InstancedMesh(geo, FENCE_WOOD, list.length);
+    list.forEach((mx, i) => { inst.setMatrixAt(i, mx); v.setFromMatrixPosition(mx); inst.setColorAt(i, tone.set(WOOD_TONES[Math.abs(Math.floor(v.x * 7.3 + v.z * 3.1 + v.y * 11)) % WOOD_TONES.length])); });      // (each post and rail its own weathered shade)
     inst.castShadow = true; inst.receiveShadow = true; inst.instanceMatrix.needsUpdate = true; inst.computeBoundingSphere(); inst.matrixAutoUpdate = false;
     scene.add(inst); out.push(inst);
   }
@@ -5252,12 +5259,12 @@ function saleSign(F) {
   return g;
 }
 // the sign itself: a post, a board and its words, facing +z (also the onboarding pictures': intro.js)
-function saleBoard(text) {
-  const sign = new THREE.Group();
-  const post = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.95, 0.07), WOOD); post.position.y = 0.47; post.castShadow = true;
-  const board = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.34, 0.035), WOOD); board.position.set(0, 0.86, 0.04); board.castShadow = true;
-  const label = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.29), signLabel(text)); label.position.set(0, 0.86, 0.06);
-  sign.add(post, board, label);
+function saleBoard(text) {                                  // (the graphics pass, 1 Nov: two capped posts, the board framed between them)
+  const sign = new THREE.Group(), add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; sign.add(m); return m; };
+  for (const x of [-0.36, 0.36]) add(postGeo(0.065, 1.08), WOOD, x, 0.54, 0.0);
+  add(new THREE.BoxGeometry(0.64, 0.34, 0.03), BOARD, 0, 0.8, 0.02);
+  for (const [w, h, x, y] of [[0.7, 0.045, 0, 0.99], [0.7, 0.045, 0, 0.61], [0.045, 0.38, -0.33, 0.8], [0.045, 0.38, 0.33, 0.8]]) add(new THREE.BoxGeometry(w, h, 0.045), WOOD, x, y, 0.03);
+  add(new THREE.PlaneGeometry(0.58, 0.29), signLabel(text), 0, 0.8, 0.052).castShadow = false;
   return sign;
 }
 // stakes with red ribbons at each [x, z] (world), into g (else the scene)

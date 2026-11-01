@@ -1727,3 +1727,224 @@ def veg_patch_v(w=2.6, d=1.8, seed=135, name='veg_patch'):
     objs.append(plank('vvtrowel', (w / 2 - 0.25, -d / 2 + 0.12, 0.12), (w / 2 - 0.23, -d / 2 + 0.12, 0.2), 0.04, 0.006, (0, -1, 0), C('vvsteel', '#a9aca8', rough=0.35, metal=0.8), jitter=0.0, bevel=0.0))
     objs.append(cyl('vvtrowelh', 0.013, 0.1, (w / 2 - 0.225, -d / 2 + 0.12, 0.25), m=wood, verts=8, bevel=0.0))
     return finish(objs, name)
+
+
+# ================================================================== the graphics pass (Audrey, 1 Nov: "Another graphics
+# pass (Recommended)"): bushes, rocks, the pasture and its shelter, the picket fences, the mushrooms, the sunflowers
+def bush_v(seed=141, name='bush_a', flowers=False):
+    """A leafy bush (110 of them round the village: light): clumps of leaves in three greens, darker inside, lighter on
+    top; the second kind in flower (little pink and white blossoms)."""
+    random.seed(seed); objs = []
+    leaf = [C('vbuleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4f8f34', '#62a63e', '#76b84a'))]
+    for k in range(7):
+        a = k / 7 * math.tau + random.uniform(-0.3, 0.3); d = random.uniform(0.1, 0.22) if k else 0.0
+        r = random.uniform(0.18, 0.25) if k else 0.27; z = r * 0.75 + (0.1 if k == 0 else random.uniform(0.0, 0.07))      # (as big as the old bushes)
+        tone = leaf[0] if z < 0.2 else leaf[1] if z < 0.28 else leaf[2]
+        objs.append(sphere('vbuclump', r, (math.cos(a) * d, math.sin(a) * d, z), (1.05, 1.0, 0.88), (0, 0, a), m=tone, ico=2, disp=0.28, disp_scale=3.0, seed=seed * 10 + k))
+    if flowers:
+        cols = [C('vbupink', '#f08bb0', rough=0.6), C('vbuwhite', '#fbf6ee', rough=0.6)]
+        for k in range(14):
+            a = random.uniform(0, math.tau); el = random.uniform(0.15, 1.2); rr = 0.33
+            p = (math.cos(a) * rr * math.cos(el) * 1.05, math.sin(a) * rr * math.cos(el), 0.24 + rr * math.sin(el) * 0.75)
+            objs.append(sphere('vbubloom', 0.028, p, (1, 1, 0.7), m=cols[k % 2], ico=0, seg=6, rings=4))
+    return finish(objs, name)
+
+
+def rock_v(seed=142, name='rock_a'):
+    """A field stone: a lumpy grey boulder in two tones, a patch of moss on top, a pebble beside it."""
+    random.seed(seed); objs = []
+    grey = C('vrkgrey%d' % seed, ('#9a958a', '#8f8a80')[seed % 2], rough=0.85, var=0.1); moss = C('vrkmoss', '#7a9a4a', rough=0.9, var=0.1)
+    objs.append(sphere('vrkrock', 0.15, (0, 0, 0.06), (1.2, 1.0, 0.68), (0, 0, random.uniform(0, 3)), m=grey, ico=2, disp=0.22, disp_scale=2.5, seed=seed))
+    objs.append(sphere('vrkmoss', 0.06, (-0.03, 0.03, 0.125), (1.5, 1.1, 0.16), (0, math.radians(-12), 0), m=moss, ico=1, disp=0.2, seed=seed + 5))      # (a thin patch of moss, half sunk in its top)
+    objs.append(sphere('vrkpebble', 0.035, (0.17, -0.06, 0.012), (1.3, 1.0, 0.6), m=grey, ico=1, disp=0.15, seed=seed + 9))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the picket fence
+def picket_fence_v(seed=143, name='picket_fence', L=2.0, h=0.5):
+    """A white picket fence: pointed pickets (each a little different), two rails behind, a capped post at each end."""
+    random.seed(seed); objs = []
+    white = [C('vpfwhite%d' % i, h_, rough=0.6, var=0.03) for i, h_ in enumerate(('#f3f0e6', '#ebe7db'))]
+    n = int(L / 0.14)
+    for i in range(1, n):
+        x = -L / 2 + i * L / n; hh = h - 0.04 + random.uniform(-0.01, 0.01)
+        c = random.choice(white)
+        objs.append(box('vpfpicket', (0.06, 0.022, hh - 0.05), (x, 0, (hh - 0.05) / 2), (0, random.uniform(-0.02, 0.02), 0), m=c, bevel=0.004, segs=1))
+        me = bpy.data.meshes.new('vpftip'); bm = bmesh.new()
+        vs = [[bm.verts.new((x + dx, dy, z)) for (dx, z) in ((-0.03, hh - 0.05), (0.03, hh - 0.05), (0, hh))] for dy in (-0.011, 0.011)]
+        bm.faces.new(vs[0]); bm.faces.new(vs[1][::-1])
+        for k in range(3): bm.faces.new((vs[0][k], vs[1][k], vs[1][(k + 1) % 3], vs[0][(k + 1) % 3]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('vpftip', me)); setmat(o, c); objs.append(o)
+    for z in (0.14, 0.36):
+        objs.append(box('vpfrail', (L, 0.025, 0.05), (0, 0.022, z), m=white[1], bevel=0.004, segs=1))
+    for sx in (-1, 1):
+        objs.append(box('vpfpost', (0.07, 0.07, h + 0.04), (sx * L / 2, 0.01, (h + 0.04) / 2), m=white[0], bevel=0.006, segs=1))
+        objs.append(cyl('vpfcap', 0.03, 0.04, (sx * L / 2, 0.01, h + 0.06), m=white[0], verts=8, r2=0.01, bevel=0.0))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ toadstools
+def mushrooms_v(seed=144, name='mushrooms'):
+    """A ring of toadstools in the grass: red caps with white spots, pale gills beneath, cream stems with a little skirt;
+    moss and a few blades of grass round them."""
+    random.seed(seed); objs = []
+    red = C('vmsred', '#c8322c', rough=0.45); white = C('vmswhite', '#f6f1e2', rough=0.6); gill = C('vmsgill', '#e8dcc0', rough=0.8)
+    for (x, y, s) in ((0.0, 0.0, 1.0), (0.12, 0.05, 0.7), (-0.08, 0.1, 0.8), (0.06, -0.09, 0.55), (-0.13, -0.04, 0.45)):
+        h = 0.085 * s
+        objs.append(cyl('vmsstem', 0.018 * s, h, (x, y, h / 2), m=white, verts=8, r2=0.014 * s, bevel=0.0))
+        objs.append(cyl('vmsskirt', 0.024 * s, 0.008, (x, y, h * 0.7), m=white, verts=8, r2=0.016 * s, bevel=0.0))
+        objs.append(cyl('vmsgill', 0.055 * s, 0.006, (x, y, h + 0.002), m=gill, verts=12, bevel=0.0))
+        objs.append(sphere('vmscap', 0.06 * s, (x, y, h + 0.004), (1, 1, 0.62), m=red, seg=12, rings=6))
+        for k in range(6):                              # white spots on the cap
+            a = k / 6 * math.tau + random.uniform(0, 0.5); el = random.uniform(0.35, 1.2)
+            p = (x + math.cos(a) * 0.058 * s * math.cos(el), y + math.sin(a) * 0.058 * s * math.cos(el), h + 0.004 + 0.06 * s * 0.62 * math.sin(el))
+            objs.append(sphere('vmsspot', 0.009 * s, p, (1, 1, 0.5), m=white, ico=1))
+    for k in range(4):                                  # grass round them
+        a = k / 4 * math.tau + 0.4
+        tuft(objs, math.cos(a) * 0.17, math.sin(a) * 0.14, 7, 0.05, 0.1, [C('vmsgrass', '#5f9a3c', rough=0.8), C('vmsgrass2', '#4f8a33', rough=0.8)], width=0.016)
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the sunflowers
+def star_disc(name, r_out, r_in, n, c, tilt, m, t=0.012):
+    """A flat ring of n pointed petals (a star) round c, tilted back by tilt about x."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); R = Matrix.Rotation(tilt, 4, 'X'); C0 = Vector(c); rings = []
+    for dz in (-t / 2, t / 2):
+        ring = []
+        for k in range(2 * n):
+            a = k / (2 * n) * math.tau; rr = r_out if k % 2 == 0 else r_in
+            ring.append(bm.verts.new(C0 + R @ Vector((math.cos(a) * rr, dz, math.sin(a) * rr))))
+        rings.append(ring)
+    bm.faces.new(rings[0]); bm.faces.new(rings[1][::-1])
+    N = 2 * n
+    for k in range(N): bm.faces.new((rings[0][k], rings[0][(k + 1) % N], rings[1][(k + 1) % N], rings[1][k]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def sunflowers_v(seed=145, name='sunflowers', w=3.6, d=1.8):
+    """A bed of sunflowers: tall stems of different heights, broad leaves, heads of golden pointed petals in two rings
+    round a dark seed centre with a paler rim, most facing the sun (the player), a few nodding; a little edging of boards."""
+    random.seed(seed); objs = []
+    soil = C('vsfsoil', '#5a3f2c', rough=0.95, var=0.06); wood = C('vsfwood', '#8a5d3a', rough=0.75, var=0.1)
+    stem = C('vsfstem', '#4f7f2e', rough=0.7); leaf = [C('vsfleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#4f8a33', '#5f9a3c'))]
+    petal = [C('vsfpetal%d' % i, h, rough=0.5) for i, h in enumerate(('#f2b51e', '#f7c531', '#eaa514'))]
+    centre = C('vsfcentre', '#4a2a12', rough=0.85); rim = C('vsfrim', '#7a4a1e', rough=0.85)
+    objs.append(box('vsfbed', (w, d, 0.06), (0, 0, 0.03), m=soil, bevel=0.0))
+    for sy in (-1, 1): objs.append(box('vsfedge', (w + 0.04, 0.035, 0.09), (0, sy * d / 2, 0.045), m=wood, bevel=0.005, segs=1))
+    for sx in (-1, 1): objs.append(box('vsfedge', (0.035, d, 0.09), (sx * w / 2, 0, 0.045), m=wood, bevel=0.005, segs=1))
+    for r in range(int(d / 0.45)):
+        for i in range(int(w / 0.42)):
+            x = -w / 2 + 0.25 + i * 0.42 + random.uniform(-0.05, 0.05); y = -d / 2 + 0.25 + r * 0.45 + random.uniform(-0.04, 0.04)
+            h = random.uniform(0.85, 1.2); nod = random.random() < 0.2
+            objs.append(cyl('vsfstem', 0.02, h, (x, y, h / 2), m=stem, verts=6, r2=0.014, bevel=0.0))
+            for k in range(2):                          # broad leaves, either side
+                sd = 1 if k else -1; z = h * (0.35 + 0.25 * k)
+                objs.append(sphere('vsfleaf', 0.1, (x + sd * 0.09, y, z), (1.0, 0.65, 0.18), (0, math.radians(sd * -25), 0), m=random.choice(leaf), ico=1, seed=k + i))
+            tilt = math.radians(65 if nod else 15); c = Vector((x, y - 0.03, h + 0.02))
+            objs.append(star_disc('vsfpetals', 0.18, 0.11, 13, c, tilt, random.choice(petal)))
+            q = star_disc('vsfpetals2', 0.16, 0.1, 13, Vector((0, 0, 0)), 0.0, petal[2])      # (the inner ring turned half a petal: no gaps)
+            q.matrix_world = Matrix.Translation(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.006, 0))) @ Matrix.Rotation(tilt, 4, 'X') @ Matrix.Rotation(math.pi / 13, 4, 'Y'); objs.append(q)
+            q = cyl('vsfcentre', 0.075, 0.03, tuple(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.014, 0))), (math.radians(90) + tilt, 0, 0), m=centre, verts=14, bevel=0.0); objs.append(q)
+            q = cyl('vsfrim', 0.085, 0.02, tuple(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.008, 0))), (math.radians(90) + tilt, 0, 0), m=rim, verts=14, bevel=0.0); objs.append(q)
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the pasture and its shelter
+def pasture_v(seed=146, name='pasture', W=6.0, D=4.6, gate=0.9):
+    """The pasture's fence: split rails between weathered posts with rounded tops (the posts each a little different), and
+    a five-bar farm gate with its diagonal brace in the front (where the old one's opening was), its latch post."""
+    random.seed(seed); objs = []
+    woods = [C('vpawood%d' % i, h, rough=0.85, var=0.1) for i, h in enumerate(('#7a5a3e', '#6f5137', '#857049'))]
+    gx0, gx1 = -gate / 2 - 0.15, gate / 2 - 0.15
+    def run(x0, y0, x1, y1, skip=None):
+        L = math.hypot(x1 - x0, y1 - y0); n = max(1, round(L / 0.76)); ang = math.atan2(y1 - y0, x1 - x0)
+        P = [(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n) for i in range(n + 1)]
+        for (px, py) in P:
+            if skip and skip[0] + 0.06 < px < skip[1] - 0.06 and abs(py - y0) < 0.01: continue
+            hh = 0.4 + random.uniform(-0.03, 0.03)
+            objs.append(box('vpapost', (0.065, 0.065, hh), (px, py, hh / 2), (random.uniform(-.04, .04), random.uniform(-.04, .04), ang), m=random.choice(woods), bevel=0.012, segs=1))
+        for z in (0.13, 0.25, 0.36):
+            segs_ = [(x0, skip[0]), (skip[1], x1)] if skip else [(None, None)]
+            for (a, b_) in segs_:
+                if a is None: A, B = Vector((x0, y0, z)), Vector((x1, y1, z))
+                else: A, B = Vector((a, y0, z)), Vector((b_, y0, z))
+                if (B - A).length < 0.1: continue
+                k = max(1, round((B - A).length / 0.76))
+                for j in range(k):                   # rails post to post, each with a little sag
+                    p, q = A.lerp(B, j / k), A.lerp(B, (j + 1) / k)
+                    m_ = (p + q) / 2 - Vector((0, 0, random.uniform(0.0, 0.012)))
+                    objs.append(plank('vparail', p, m_, 0.05, 0.03, (-math.sin(ang), math.cos(ang), 0), random.choice(woods), jitter=0.3, bevel=0.004))
+                    objs.append(plank('vparail', m_, q, 0.05, 0.03, (-math.sin(ang), math.cos(ang), 0), random.choice(woods), jitter=0.3, bevel=0.004))
+    w, d = W / 2, D / 2
+    run(-w, -d, w, -d, skip=(gx0, gx1)); run(-w, d, w, d); run(-w, -d, -w, d); run(w, -d, w, d)
+    for gx in (gx0, gx1):                               # the gate posts, taller
+        objs.append(box('vpagatepost', (0.085, 0.085, 0.48), (gx, -d, 0.24), m=woods[1], bevel=0.012, segs=1))
+    gw = gx1 - gx0 - 0.1; g0 = gx0 + 0.05
+    for k in range(5):                                  # the five bars, the brace, the uprights
+        z = 0.08 + k * 0.07
+        objs.append(box('vpagate', (gw, 0.03, 0.035), (g0 + gw / 2, -d, z), m=woods[2], bevel=0.004, segs=1))
+    for x in (g0 + 0.02, g0 + gw / 2, g0 + gw - 0.02):
+        objs.append(box('vpagateup', (0.04, 0.032, 0.32), (x, -d, 0.22), m=woods[2], bevel=0.004, segs=1))
+    objs.append(plank('vpabrace', (g0 + 0.03, -d - 0.02, 0.08), (g0 + gw - 0.03, -d - 0.02, 0.36), 0.04, 0.025, (0, -1, 0), woods[2], jitter=0.0))
+    objs.append(box('vpalatch', (0.06, 0.02, 0.02), (gx1 - 0.02, -d - 0.03, 0.3), m=C('vpairon', '#3a3a38', rough=0.5), bevel=0.0))
+    return finish(objs, name)
+
+
+def pasture_shelter_v(seed=147, name='pasture_shelter'):
+    """A field shelter, open at the front: corner posts, walls of upright boards on three sides, a sloping roof of shingles
+    with a barge board, straw on the floor, a hay rack on the back wall full of hay; a galvanised trough beside it with water."""
+    random.seed(seed); objs = []
+    W, D, hf, hb = 1.6, 0.9, 0.95, 0.65
+    wood = [C('vpswood%d' % i, h, rough=0.8, var=0.1) for i, h in enumerate(('#7a5536', '#6b4a30', '#86603e'))]
+    roof = [C('vpsroof%d' % i, h, rough=0.7, var=0.06) for i, h in enumerate(('#5d6a6e', '#525e62', '#67757a'))]
+    ms = straw_ms(); galv = C('vpsgalv', '#9ea4a6', rough=0.35, metal=0.8); water = C('vpswater', '#5f8fa8', rough=0.1)
+    for sx in (-1, 1):
+        objs.append(box('vpspost', (0.08, 0.08, hf), (sx * W / 2, -D / 2, hf / 2), m=wood[1], bevel=0.008, segs=1))
+        objs.append(box('vpspost', (0.08, 0.08, hb), (sx * W / 2, D / 2, hb / 2), m=wood[1], bevel=0.008, segs=1))
+        n = 7
+        for k in range(n):                              # the side walls: boards up to the roof's slope
+            y = -D / 2 + 0.06 + k * (D - 0.12) / (n - 1); top = hf - (hf - hb) * (y + D / 2) / D - 0.02
+            objs.append(box('vpsboard', (0.025, (D - 0.12) / n - 0.006, top - 0.04), (sx * W / 2, y, (top + 0.04) / 2), m=random.choice(wood), bevel=0.003, segs=1))
+    for k in range(13):                                 # the back wall
+        x = -W / 2 + 0.06 + k * (W - 0.12) / 12
+        objs.append(box('vpsboard', ((W - 0.12) / 13 - 0.006, 0.025, hb - 0.06), (x, D / 2, (hb - 0.02) / 2), m=random.choice(wood), bevel=0.003, segs=1))
+    objs.append(box('vpsplate', (W + 0.08, 0.07, 0.07), (0, -D / 2, hf - 0.02), m=wood[0], bevel=0.006, segs=1))
+    # the roof: shingles in rows down the slope
+    a = math.atan2(hf - hb, D); SL = math.hypot(D, hf - hb) + 0.24; up = Vector((0, -math.cos(a), math.sin(a))); nrm = Vector((0, math.sin(a), math.cos(a)))
+    top = Vector((0, D / 2 + 0.1, hb + 0.04)); bot = top + up * SL
+    objs.append(box('vpsroofb', (W + 0.24, SL, 0.025), tuple((top + bot) / 2), (-a, 0, 0), m=roof[1], bevel=0.0))
+    rows = 7
+    for r in range(rows):
+        p0 = bot.lerp(top, r / rows)
+        for k in range(9):
+            x = -(W + 0.24) / 2 + (k + 0.5 + (0.5 if r % 2 else 0)) * (W + 0.24) / 9
+            if x > (W + 0.24) / 2: continue
+            q0 = p0 + Vector((x, 0, 0)) + nrm * (0.016 + 0.004 * (r % 2)); q1 = q0 - up * (SL / rows + 0.03)
+            objs.append(plank('vpssh', q0, q1, (W + 0.24) / 9 - 0.008, 0.014, tuple(nrm), random.choice(roof), jitter=0.5, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(plank('vpsbarge', top + Vector((sx * (W / 2 + 0.12), 0, 0.02)), bot + Vector((sx * (W / 2 + 0.12), 0, 0.02)), 0.06, 0.02, (sx, 0, 0), wood[0], jitter=0.1, bevel=0.0))
+    # straw on the floor, the hay rack and its hay
+    objs.append(box('vpsstraw', (W - 0.1, D - 0.1, 0.04), (0, 0.02, 0.02), m=ms[0], bevel=0.01, segs=1))
+    for k in range(30):
+        x, y = random.uniform(-W / 2 + 0.1, W / 2 - 0.1), random.uniform(-D / 2 + 0.08, D / 2 - 0.1)
+        objs.append(plank('vpsstrand', (x, y, 0.042), (x + random.uniform(-0.08, 0.08), y + random.uniform(-0.08, 0.08), 0.042), 0.01, 0.003, (0, 0, 1), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    rx = -0.3
+    objs.append(box('vpsrack', (0.7, 0.03, 0.03), (rx, D / 2 - 0.05, 0.62), m=wood[0], bevel=0.004, segs=1))
+    objs.append(box('vpsrack', (0.7, 0.03, 0.03), (rx, D / 2 - 0.22, 0.42), m=wood[0], bevel=0.004, segs=1))
+    for k in range(8):
+        x = rx - 0.33 + k * 0.094
+        objs.append(plank('vpsrackbar', (x, D / 2 - 0.22, 0.42), (x, D / 2 - 0.05, 0.62), 0.015, 0.015, (0, -1, 0), wood[0], jitter=0.0, bevel=0.0))
+    objs.append(sphere('vpshay', 0.18, (rx, D / 2 - 0.1, 0.56), (1.9, 0.6, 0.55), m=ms[0], ico=1, disp=0.3, seed=7))
+    for k in range(12):
+        x = rx + random.uniform(-0.3, 0.3)
+        objs.append(plank('vpshaystrand', (x, D / 2 - 0.2, 0.55), (x + random.uniform(-0.05, 0.05), D / 2 - 0.26, 0.45), 0.01, 0.004, (0, -1, 0), random.choice(ms[1:]), jitter=6.0, bevel=0.0))
+    # the trough beside it
+    tx, ty = W / 2 + 0.55, -0.4
+    objs.append(lathe('vpstrough', [(0.0, 0.02), (0.1, 0.02), (0.12, 0.2), (0.135, 0.22), (0.125, 0.235), (0.11, 0.22), (0.095, 0.05), (0.0, 0.05)], galv, verts=16))
+    objs[-1].scale = (2.6, 1.0, 1.0); objs[-1].location = (tx, ty, 0)
+    objs.append(cyl('vpswater', 0.11, 0.008, (tx, ty, 0.2), m=water, verts=16, bevel=0.0)); objs[-1].scale = (2.6, 1.0, 1.0)
+    for sx in (-1, 1): objs.append(box('vpsfoot', (0.04, 0.24, 0.03), (tx + sx * 0.22, ty, 0.015), m=galv, bevel=0.0))
+    return finish(objs, name)
