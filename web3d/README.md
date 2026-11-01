@@ -3646,3 +3646,44 @@ the birds already had.
 - **Seen, for later** (the next steps, Audrey to choose): the decorations from the first game (windmill, bandstand,
   greenhouse, statue, beehives, flower bed, bird bath, duck house) and the farmhouse look plain next to the coops (flat
   colours, no boards, tiles or trims); the first day's guide card sideways sits over the Red Barn's roof.
+
+## The farmhouse and the decorations rebuilt (1 Nov 2026; Audrey: "All, one at a time (Recommended)": the windmill, bandstand, greenhouse, statue, beehives, flower bed, bird bath, duck house and the farmhouse, starting with the farmhouse and the windmill, pictures of each)
+
+- **How**: built again in Blender with the coops' own detail and export (`stylized/village3d.py`: `farmhouse`,
+  `windmill_dec`, `windmill_sails`, `bandstand_dec`, `greenhouse_dec`, `statue_dec`, `beehives_dec`, `flowers_dec`,
+  `birdbath_dec`, `duckhouse_dec`; helpers `tile_slope`, `stone_row`, `sash`, `lathe`, `tuft`), exported with
+  `bl/bin/python stylized/extras/export_village3d.py OUT name[,name]` and put into `village.glb` / `decor.glb` with
+  `python3 stylized/extras/splice_models.py OLD.glb NEW.glb OUT.glb name[,name]` (only those models change; the others
+  stay byte for byte). Each keeps its old footprint (decor.json `foot`), so nothing on a saved farm moves. A close look
+  in the test village: `view.mjs OUT model [dist] [el] [azs] [fov] [hour]`; the shop's pictures from the game's models:
+  `ONLY=id node decorpics.mjs decor` (cut out from a black and a white shot).
+- **The farmhouse**: stone walls in courses, a clay-tile roof row on row, a brick chimney, white sash windows with
+  shutters and flower boxes (lit at night), a porch with a lantern, a log pile under a lean-to.
+- **The windmill**: a white clapboard smock tower on a brick base, a stage, a cap, new sails (`sails`, still turning
+  round decor.json `hub`).
+- **The bandstand**: white lattice round its base, a boarded deck, white steps with green handrails and pots of red
+  flowers, eight green iron columns with capitals and curly brackets, railings (open at the steps), a cream beam with a
+  scalloped valance, a red shingled roof with cream ribs and a gold finial; two music stands, a lantern that lights up
+  at night.
+- **The greenhouse**: a brick dwarf wall under a stone coping, white glazing bars, see-through glass (its own material
+  `ghglass`, exported as decor.glb's `glass`, which main.js makes clear), a glass door with a step, glass gables, an iron
+  cresting with finials, one roof light propped open, a gutter and downpipe; inside a brick path, staging with geraniums
+  and seedlings, tomatoes up canes, ferns, a watering can.
+- **The golden cockerel**: the character sheets' cockerel (`stylized/character/hen_char.py`), gilded, head up, smooth
+  statue eyes (no pupils), joined and thinned on his own so the stone stays crisp; on a stepped pedestal with sunk
+  panels, a cornice, a bronze plaque with a raised border and lettering, laurel wreaths; a gravel square in a stone kerb,
+  a clipped box hedge open at the front, tulips. His sun glints (decorlife.js) moved up with him (1.3 to 2.25).
+- **The beehives**: three WBC hives where the bees fly from as before (decorlife.js `HIVES`): paving slabs, splayed legs,
+  landing boards, the slot under a little porch, flared white lifts with hand-holds, gabled roofs (sage, slate blue,
+  honey) with a vent; real lavender tufts with purple spikes in front (where the bees go); a crate with a smoker and a
+  jar of honey.
+- **The flower bed**: rounded edging stones, a willow obelisk with sweet peas, delphiniums and foxgloves, daisies,
+  tulips, marigolds and lupins at the butterflies' height, leafy cover, alyssum and lobelia over the edge.
+- **The bird bath**: a slab and plinth, a turned baluster with ivy, a shallow bowl with a rolled lip and moss, the rim
+  and water where the visiting birds expect them (decorlife.js `BATH`), its own blue tit made properly (cap, cheeks, eye
+  stripe, bib, wings, tail), pebbles, primroses and ferns.
+- **The duck house**: a raft of boards on two logs, a duck-egg blue clapboard house with white corner boards, an arched
+  door, round windows, a shingled roof with white barge boards and a duck weathervane, a ramp with cleats; a dish of
+  grain, a coil of rope, a pot of marigolds; the deck, ramp and door where ducks.js walks them.
+- **Tested**: dectest, decortest (bees, butterflies, bird bath, glints, music), ducktest, duckfarmertest, gametest; the
+  play-through's pictures of each again (`SPOTS=decor_x PHASES=tour FARM=... farmtour.mjs`).

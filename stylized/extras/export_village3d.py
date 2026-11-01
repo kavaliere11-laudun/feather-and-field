@@ -22,7 +22,11 @@ def _bucket_glass(m):
     return _bucket(m)
 webglb.bucket_of = _bucket_glass
 BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windmill_dec, 26000), 'sails': (village3d.windmill_sails, 4000), 'bandstand': (village3d.bandstand_dec, 22000),
-         'greenhouse': (village3d.greenhouse_dec, 24000)}
+         'greenhouse': (village3d.greenhouse_dec, 24000),
+         'statue': (village3d.statue_dec, 26000),
+         'beehives': (village3d.beehives_dec, 16000),
+         'flowers': (village3d.flowers_dec, 16000), 'birdbath': (village3d.birdbath_dec, 9000),
+         'duckhouse': (village3d.duckhouse_dec, 9000)}
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)

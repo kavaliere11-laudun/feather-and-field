@@ -298,7 +298,7 @@ export class DecorLife {
     if (this.statue && day > 0.7 && (this.glintIn -= dt) <= 0) {
       this.glintIn = 1.8 + this.r() * 3.5;
       // (a point in him, brought towards the player along the line of sight: the same place on screen, over him)
-      const p = this._v.set(lerp(-0.22, 0.22, this.r()), lerp(1.0, 1.9, this.r()), lerp(-0.15, 0.15, this.r())).applyMatrix4(this.statue.m).addScaledVector(this.o.toCam, 0.9);
+      const p = this._v.set(lerp(-0.22, 0.22, this.r()), lerp(1.3, 2.25, this.r()), lerp(-0.15, 0.15, this.r())).applyMatrix4(this.statue.m).addScaledVector(this.o.toCam, 0.9);
       this.glints.spawn(p, 0.26 + this.r() * 0.14, 0.75, this._d.set(0, 0, 0), { pulse: true, glow: true });
     }
     // the bandstand's music: of an evening, or a tune when tapped; the notes come out at the front (towards the player)

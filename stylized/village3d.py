@@ -636,3 +636,476 @@ def greenhouse_dec(seed=51, name='greenhouse'):
             objs.append(sphere('ghoplant', 0.05, (sx * (X + 0.1) + math.cos(a) * 0.03, 0.35 + math.sin(a) * 0.03, 0.16), m=leaf[0], ico=1, disp=0.25, seed=i + 40))
         objs.append(sphere('ghoflower', 0.03, (sx * (X + 0.1), 0.35, 0.21), m=C('ghyellow', '#f2c43c', rough=0.6), ico=1))
     return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the golden cockerel
+def statue_dec(seed=61, name='statue'):
+    """The golden cockerel: a gilded cockerel (the character sheets' Rhode Island Red cockerel, head up) on a stone
+    pedestal: two steps, a moulded base, sunk panels, a cornice, a bronze plaque with a raised border and lines of
+    lettering in front, laurel wreaths on the sides; round it a gravel square in a stone kerb, a clipped box hedge open at
+    the front, and tulips between the hedge and the steps. (Its footprint as before.)"""
+    random.seed(seed); objs = []
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'character'))
+    stone = [C('ststone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#cbc3b2', '#c2b9a6', '#d3ccbc'))]
+    pale = C('stpale', '#ddd6c6', rough=0.8, var=0.03); bronze = C('stbronze', '#8a6a34', rough=0.35, metal=0.8)
+    gold = C('stgold', '#f2c14e', rough=0.22, metal=1.0); gravel = C('stgravel', '#d6cbb2', rough=0.95, var=0.06)
+    hedge = C('sthedge', '#3f7a35', rough=0.85, var=0.08); hedge2 = C('sthedge2', '#4a8a3c', rough=0.85, var=0.08)
+    E = 0.97
+    objs.append(box('stgravel', (2 * E - 0.1, 2 * E - 0.1, 0.03), (0, 0, 0.015), m=gravel, bevel=0.0))
+    for (a, b) in (((-E, -E), (E, -E)), ((E, -E), (E, E)), ((E, E), (-E, E)), ((-E, E), (-E, -E))):
+        stone_row(objs, a, b, 0.0, 0.07, stone, -0.03, depth=0.08, lens=(0.26, 0.4), name='stkerb')
+    # the box hedge: rounded clipped lengths with leafy bumps along the top
+    HX, HW, HH = 0.8, 0.2, 0.26
+    runs = [((-HX, -HX), (-0.28, -HX)), ((0.28, -HX), (HX, -HX)), ((HX, -HX), (HX, HX)), ((HX, HX), (-HX, HX)), ((-HX, HX), (-HX, -HX))]
+    for (a, b) in runs:
+        A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); t = (B - A).normalized(); L = (B - A).length; c = (A + B) / 2
+        objs.append(box('sthedge', (L + HW, HW, HH), (c.x, c.y, HH / 2 + 0.02), (0, 0, math.atan2(t.y, t.x)), m=hedge, bevel=0.06, segs=3))
+        n_ = max(2, int(L / 0.13))
+        for k in range(n_ + 1):
+            p = A + t * (L * k / n_)
+            for side in (-1, 1):
+                q = p + Vector((t.y, -t.x, 0)) * side * 0.06
+                objs.append(sphere('stleafb', 0.055, (q.x, q.y, HH + 0.0), (1, 1, 0.7), m=random.choice((hedge, hedge2)), ico=1, disp=0.3, seed=k * 2 + (side > 0)))
+    # tulips in the bed between the hedge and the steps
+    tul = [C('sttulip%d' % i, h, rough=0.5) for i, h in enumerate(('#d8303a', '#f2c43c', '#e9668c', '#d8303a'))]
+    stem = C('ststem', '#4f8a3a', rough=0.8)
+    for k in range(44):
+        side = k % 4; u = (k // 4) / 10.0 * 1.2 - 0.6
+        x, y = [(u, -0.62), (0.62, u), (u, 0.62), (-0.62, u)][side]
+        if side == 0 and abs(x) < 0.32: continue
+        x += random.uniform(-0.03, 0.03); y += random.uniform(-0.03, 0.03); h = random.uniform(0.18, 0.24)
+        objs.append(cyl('ststem', 0.008, h, (x, y, h / 2), m=stem, verts=5, bevel=0.0))
+        objs.append(plank('stleaf', (x, y, 0.03), (x + random.uniform(-0.06, 0.06), y + random.uniform(-0.06, 0.06), 0.13), 0.035, 0.008, (random.uniform(-1, 1), random.uniform(-1, 1), 0.3), stem, jitter=5, bevel=0.0))
+        objs.append(cyl('sttulip', 0.03, 0.06, (x, y, h + 0.025), m=tul[(k // 4 + side) % 4], verts=7, r2=0.036, bevel=0.0))
+    # the steps, the moulded base, the die with sunk panels, the cornice
+    objs.append(box('ststep', (1.08, 1.08, 0.12), (0, 0, 0.06), m=stone[0], bevel=0.015, segs=2))
+    objs.append(box('ststep', (0.9, 0.9, 0.12), (0, 0, 0.18), m=stone[1], bevel=0.015, segs=2))
+    objs.append(box('stbase', (0.78, 0.78, 0.1), (0, 0, 0.29), m=pale, bevel=0.02, segs=2))
+    objs.append(box('stbase2', (0.7, 0.7, 0.05), (0, 0, 0.365), m=pale, bevel=0.015, segs=2))
+    objs.append(box('stdie', (0.62, 0.62, 0.56), (0, 0, 0.67), m=stone[2], bevel=0.01, segs=1))
+    for (nx, ny) in ((0, -1), (1, 0), (0, 1), (-1, 0)):         # each face: a sunk panel framed by a fillet
+        for (u0, v0, u1, v1) in ((-0.22, 0.45, 0.22, 0.45), (-0.22, 0.89, 0.22, 0.89), (-0.22, 0.45, -0.22, 0.89), (0.22, 0.45, 0.22, 0.89)):
+            def at(u, v, d=0.315): return (u if ny else nx * d, ny * d if ny else u, v)
+            objs.append(plank('stfillet', at(u0 - 0.02 * (v0 == v1), v0), at(u1 + 0.02 * (v0 == v1), v1), 0.035, 0.02, (nx, ny, 0), pale, jitter=0.0, bevel=0.0))
+    objs.append(box('stcorn', (0.7, 0.7, 0.05), (0, 0, 0.975), m=pale, bevel=0.012, segs=2))
+    objs.append(box('stcorn2', (0.8, 0.8, 0.07), (0, 0, 1.035), m=stone[0], bevel=0.02, segs=2))
+    objs.append(box('stcorn3', (0.66, 0.66, 0.04), (0, 0, 1.09), m=pale, bevel=0.012, segs=2))
+    TOP = 1.11
+    # the bronze plaque on the front: a raised border and lines of lettering
+    objs.append(box('stplaque', (0.34, 0.02, 0.26), (0, -0.322, 0.67), m=bronze, bevel=0.006, segs=1))
+    for (u0, v0, u1, v1) in ((-0.17, 0.545, 0.17, 0.545), (-0.17, 0.795, 0.17, 0.795), (-0.165, 0.545, -0.165, 0.795), (0.165, 0.545, 0.165, 0.795)):
+        objs.append(plank('stpborder', (u0, -0.334, v0), (u1, -0.334, v1), 0.014, 0.008, (0, -1, 0), gold, jitter=0.0, bevel=0.0))
+    for k, w in enumerate((0.2, 0.24, 0.16, 0.12)):
+        v = 0.75 - k * 0.05
+        objs.append(box('stletters', (w, 0.006, 0.018 if k else 0.026), (0, -0.334, v), m=gold, bevel=0.0))
+    # laurel wreaths on the sides
+    for sx in (-1, 1):
+        cx, cz = sx * 0.322, 0.67
+        for k in range(14):
+            a = math.radians(-70 + k * 20) if k < 7 else math.radians(250 - (k - 7) * 20)
+            if 6 <= k <= 7: continue
+            y, z = math.cos(a) * 0.1, cz + math.sin(a) * 0.1
+            objs.append(sphere('stlaurel', 0.03, (cx + sx * 0.008, y, z), (0.5, 0.6, 1.4), (a + math.pi / 2 * 0, 0, 0), m=bronze, seg=8, rings=5))
+        objs.append(sphere('stribbon', 0.02, (cx + sx * 0.01, 0, cz - 0.1), (0.6, 1.4, 0.8), m=bronze, seg=8, rings=5))
+    # the cockerel himself, gilded, head up, on the cornice
+    import hen_char as HC
+    HC._M.clear()
+    before = set(bpy.data.objects)
+    root, hd = HC.build('rir_r', (0.02, 0.03, TOP), math.radians(-62), dict(up=0.72, lo=-0.7, eye=0.82, brow_h=0.45, beak=0.0, head=(0, -18, 0), fluff=1.04))
+    root.scale = (2.45, 2.45, 2.45)
+    bpy.context.view_layer.update()
+    for o in [o for o in bpy.data.objects if o not in before]:
+        if o.type in ('CURVE', 'META', 'SURFACE', 'FONT'):
+            bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active = o
+            try: bpy.ops.object.convert(target='MESH')
+            except Exception as e: print('CONVERT', o.name, e)
+    tris = 0
+    for o in [o for o in bpy.data.objects if o not in before]:
+        if o.type != 'MESH': continue
+        o.data.materials.clear(); o.data.materials.append(gold)
+        tris += sum(len(p.vertices) - 2 for p in o.data.polygons)
+    for o in [o for o in bpy.data.objects if o not in before and o.name.split('.')[0] in ('pupil', 'shine')]:
+        bpy.data.objects.remove(o)                                                        # (a statue's eyes: smooth, no pupils)
+    parts = [o for o in bpy.data.objects if o not in before and o.type == 'MESH']      # (the cockerel joined and thinned on
+    for o in parts:                                                                       # his own: the stone stays crisp)
+        for md in list(o.modifiers):
+            bpy.context.view_layer.objects.active = o; bpy.ops.object.select_all(action='DESELECT'); o.select_set(True)
+            try: bpy.ops.object.modifier_apply(modifier=md.name)
+            except Exception: o.modifiers.remove(md)
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in parts: o.select_set(True)
+    bpy.context.view_layer.objects.active = parts[0]; bpy.ops.object.join(); bird = bpy.context.view_layer.objects.active
+    t0 = sum(len(p.vertices) - 2 for p in bird.data.polygons)
+    md = bird.modifiers.new('thin', 'DECIMATE'); md.ratio = min(1.0, 11000 / t0); md.use_collapse_triangulate = True
+    bpy.ops.object.modifier_apply(modifier='thin')
+    bird.name = 'stbird'
+    print('COCKEREL tris', tris, t0, '->', len(bird.data.polygons))
+    objs.append(root)
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the beehives
+def beehives_dec(seed=71, name='beehives'):
+    """Three WBC hives (where the bees fly from: decorlife.js HIVES, each slot at x -0.85, 0, 0.85, 0.3 up, 0.32 out):
+    each on a paving slab, on splayed legs with braces, a floor with a sloping landing board and the entrance slot under a
+    little porch, white lifts flaring at the foot with a shadow line at each joint, a gabled roof (sage, slate blue, honey)
+    with a ridge, barge boards and a vent in the gable; a row of lavender in front (where the bees go: x -1.2..1.15,
+    0.5..0.74 out), a bee smoker and a jar of honey on a crate at the left end. (Its footprint as before.)"""
+    random.seed(seed); objs = []
+    white = C('bhwhite', '#f3f0e7', rough=0.6, var=0.03); seam = C('bhseam', '#bdb6a6', rough=0.8)
+    wood = C('bhwood', '#8c5f3c', rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)); dark = C('bhdark', '#2a2420', rough=0.9)
+    slab = C('bhslab', '#bfb8a8', rough=0.9, var=0.06)
+    roofs = [C('bhroof%d' % i, h, rough=0.6, var=0.03) for i, h in enumerate(('#7f9c86', '#7b93a8', '#cf9f52'))]
+    for i, x in enumerate((-0.85, 0.0, 0.85)):
+        objs.append(box('bhslab', (0.66, 0.62, 0.04), (x, 0.0, 0.02), (0, 0, math.radians(random.uniform(-3, 3))), m=slab, bevel=0.01, segs=1))
+        for lx in (-1, 1):
+            for ly in (-1, 1):
+                objs.append(plank('bhleg', (x + lx * 0.22, ly * 0.21, 0.04), (x + lx * 0.17, ly * 0.17, 0.24), 0.05, 0.05, (lx, 0, 0), wood, jitter=0.2))
+            objs.append(plank('bhbrace', (x + lx * 0.2, -0.19, 0.12), (x + lx * 0.2, 0.19, 0.12), 0.035, 0.025, (lx, 0, 0), wood, jitter=0.2))
+        objs.append(box('bhfloor', (0.5, 0.5, 0.05), (x, 0, 0.245), m=wood, bevel=0.006, segs=1))
+        objs.append(box('bhland', (0.42, 0.16, 0.02), (x, -0.31, 0.25), (math.radians(-14), 0, 0), m=white, bevel=0.004, segs=1))
+        objs.append(box('bhplinth', (0.46, 0.46, 0.09), (x, 0.0, 0.315), m=white, bevel=0.006, segs=1))
+        objs.append(box('bhslot', (0.24, 0.02, 0.03), (x, -0.232, 0.29), m=dark, bevel=0.0))
+        objs.append(box('bhporch', (0.32, 0.1, 0.018), (x, -0.27, 0.345), (math.radians(18), 0, 0), m=roofs[i], bevel=0.004, segs=1))
+        for sx in (-1, 1):
+            objs.append(box('bhporchs', (0.015, 0.06, 0.06), (x + sx * 0.15, -0.255, 0.32), m=white, bevel=0.0))
+        z = 0.36
+        for k in range(3 if i != 1 else 4):          # the lifts, each flaring out at its foot
+            objs.append(cyl('bhlift', 0.43, 0.18, (x, 0, z + 0.09), (0, 0, math.radians(45)), m=white, verts=4, r2=0.335, bevel=0.004))
+            objs.append(box('bhseam', (0.6, 0.6, 0.012), (x, 0, z + 0.004), m=seam, bevel=0.0))
+            for sy in (-1, 1):                       # its hand-holds
+                objs.append(box('bhhold', (0.12, 0.012, 0.025), (x, sy * 0.258, z + 0.12), (math.radians(sy * -20), 0, 0), m=seam, bevel=0.0))
+            z += 0.17
+        # the roof: an eave piece, two slopes, barge boards, a ridge, a vent in the front gable
+        objs.append(box('bheave', (0.52, 0.52, 0.05), (x, 0, z + 0.03), m=white, bevel=0.006, segs=1))
+        zr = z + 0.055; RH = 0.2; ang = math.atan2(RH, 0.3); SL = math.hypot(RH, 0.3)
+        for sy in (-1, 1):
+            objs.append(box('bhroof', (0.62, SL + 0.04, 0.03), (x, sy * 0.15, zr + RH / 2), (-sy * ang, 0, 0), m=roofs[i], bevel=0.006, segs=1))
+        for sx in (-1, 1):
+            objs.append(prism_gable(x + sx * 0.26, zr, zr + RH - 0.01, 0.29, 0.02, white, name='bhgable'))
+            for sy in (-1, 1):
+                objs.append(plank('bhbarge', (x + sx * 0.3, sy * 0.33, zr - 0.01), (x + sx * 0.3, 0, zr + RH + 0.02), 0.05, 0.015, (sx, 0, 0), roofs[i], jitter=0.1, bevel=0.0))
+        objs.append(cyl('bhridge', 0.025, 0.64, (x, 0, zr + RH + 0.02), (0, math.radians(90), 0), m=roofs[i], verts=8, bevel=0.0))
+        objs.append(box('bhvent', (0.012, 0.1, 0.05), (x - 0.272, 0, zr + 0.07), m=dark, bevel=0.0))
+        objs.append(box('bhvent', (0.012, 0.1, 0.05), (x + 0.272, 0, zr + 0.07), m=dark, bevel=0.0))
+    # lavender in front: grey-green mounds, purple spikes
+    lavleaf = [C('bhlavleaf%d' % i, h, rough=0.8, var=0.05) for i, h in enumerate(('#7f9a74', '#8aa37f'))]
+    lav = [C('bhlav%d' % i, h, rough=0.6) for i, h in enumerate(('#8f6fc4', '#7d5db6', '#a183d1'))]; stem = C('bhstem', '#6f8a62', rough=0.8)
+    xs = [-1.18 + k * 0.215 for k in range(12)]
+    for k, x0 in enumerate(xs):
+        for row in (0, 1):
+            x = x0 + (0.1 if row else 0) + random.uniform(-0.03, 0.03); y = -0.55 - row * 0.17 + random.uniform(-0.03, 0.03)
+            if x > 1.12: continue
+            objs.append(sphere('bhlavb', 0.07, (x, y, 0.05), (1.1, 1.0, 0.7), m=C('bhlavdark', '#5f7a58', rough=0.85), ico=1, disp=0.2, seed=k * 2 + row))
+            for q in range(16):                          # its narrow grey-green leaves, in a tuft
+                a = q / 16 * math.tau + random.uniform(-0.2, 0.2); rr = random.uniform(0.09, 0.13); h = random.uniform(0.09, 0.15)
+                objs.append(plank('bhlavl', (x + math.cos(a) * 0.02, y + math.sin(a) * 0.02, 0.01), (x + math.cos(a) * rr, y + math.sin(a) * rr, h), 0.022, 0.006, (math.cos(a), math.sin(a), 0.6), random.choice(lavleaf), jitter=4.0, bevel=0.0))
+            for q in range(7):
+                a = q / 7 * math.tau + k; rr = random.uniform(0.03, 0.08); h = random.uniform(0.2, 0.28)
+                b = (x + math.cos(a) * rr * 1.6, y + math.sin(a) * rr * 1.6, h)
+                objs.append(plank('bhlavs', (x + math.cos(a) * rr * 0.5, y + math.sin(a) * rr * 0.5, 0.1), b, 0.008, 0.008, (0, 0, 1), stem, jitter=0.0, bevel=0.0))
+                objs.append(cyl('bhlavh', 0.014, 0.07, (b[0], b[1], b[2] + 0.03), m=random.choice(lav), verts=5, r2=0.006, bevel=0.0))
+    # a crate at the left end with the smoker and a jar of honey on it
+    cx, cy = -1.22, -0.12
+    objs.append(box('bhcrate', (0.16, 0.22, 0.16), (cx, cy, 0.08), m=wood, bevel=0.006, segs=1))
+    for z in (0.04, 0.12): objs.append(box('bhcslat', (0.165, 0.225, 0.02), (cx, cy, z), m=C('bhwood2', '#a2724a', rough=0.75), bevel=0.0))
+    tin = C('bhtin', '#b8b9b4', rough=0.35, metal=0.8)
+    objs.append(cyl('bhsmoker', 0.04, 0.12, (cx, cy + 0.05, 0.22), m=tin, verts=12, bevel=0.003))
+    objs.append(cyl('bhsmtop', 0.04, 0.04, (cx, cy + 0.05, 0.3), m=tin, verts=12, r2=0.015, bevel=0.0))
+    objs.append(box('bhbellows', (0.02, 0.06, 0.1), (cx + 0.05, cy + 0.05, 0.22), m=C('bhleather', '#7a4b2c', rough=0.7), bevel=0.004, segs=1))
+    objs.append(cyl('bhjar', 0.033, 0.07, (cx, cy - 0.06, 0.195), m=C('bhhoney', '#e3a12a', rough=0.2), verts=12, bevel=0.003))
+    objs.append(cyl('bhlid', 0.036, 0.018, (cx, cy - 0.06, 0.238), m=C('bhcloth', '#d84c4c', rough=0.7), verts=12, bevel=0.0))
+    return finish(objs, name)
+
+
+import bmesh
+
+
+def lathe(name, prof, m, verts=24, cap_top=False, cap_bottom=False):
+    """A turned shape round the z axis from its profile [(r, z), ...] bottom to top (a baluster, a bowl)."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rings = []
+    for (r, z) in prof:
+        rings.append([bm.verts.new((r * math.cos(i / verts * math.tau), r * math.sin(i / verts * math.tau), z)) for i in range(verts)])
+    for a, b in zip(rings, rings[1:]):
+        for i in range(verts):
+            j = (i + 1) % verts
+            try: bm.faces.new((a[i], a[j], b[j], b[i]))
+            except ValueError: pass
+    if cap_bottom: bm.faces.new(rings[0][::-1])
+    if cap_top: bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    bm.to_mesh(me); bm.free()
+    for p in me.polygons: p.use_smooth = True
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def tuft(objs, x, y, n, r, h, ms, z0=0.0, width=0.02, seed=0):
+    """A tuft of narrow leaves from (x, y): n blades out to r, up to h."""
+    for q in range(n):
+        a = q / n * math.tau + random.uniform(-0.25, 0.25); rr = r * random.uniform(0.7, 1.1); hh = h * random.uniform(0.7, 1.1)
+        objs.append(plank('leafb', (x + math.cos(a) * 0.012, y + math.sin(a) * 0.012, z0 + 0.005), (x + math.cos(a) * rr, y + math.sin(a) * rr, z0 + hh), width, 0.005, (math.cos(a), math.sin(a), 0.6), random.choice(ms), jitter=4.0, bevel=0.0))
+
+
+# ------------------------------------------------------------------ the cottage flower bed
+def flowers_dec(seed=81, name='flowers'):
+    """A round cottage flower bed (the butterflies come down on its flowers, 0.33 to 0.38 up, within 0.6 of the middle): an
+    edge of rounded stones, a mound of dark soil; in the middle a little willow obelisk with pink sweet peas up it, round it
+    blue delphinium and pink foxglove spikes; then daisies, tulips, orange marigolds and lupins; white alyssum and blue
+    lobelia spilling over the stones at the front. (Its footprint as before.)"""
+    random.seed(seed); objs = []
+    stones = [C('fbstone%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#bdb5a3', '#a8a091', '#cbc4b4'))]
+    soil = C('fbsoil', '#5a3f2c', rough=0.95, var=0.08)
+    leaf = [C('fbleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4a8a38', '#3f7a32', '#5a9a40'))]
+    stem = C('fbstem', '#4f8a3a', rough=0.8)
+    for i in range(26):
+        a = i / 26 * math.tau + random.uniform(-0.03, 0.03)
+        objs.append(sphere('fbedge', 0.1, (math.cos(a) * 0.82, math.sin(a) * 0.8, 0.05), (1.25, 0.95, 0.7), (0, 0, a + math.pi / 2), m=random.choice(stones), ico=2, disp=0.12, seed=i))
+    objs.append(lathe('fbsoil', [(0.8, 0.0), (0.79, 0.06), (0.7, 0.1), (0.4, 0.13), (0.0, 0.14)], soil, verts=28))
+    def bloom(x, y, z, r, m, kind='ball'):
+        if kind == 'daisy':
+            for k in range(7):
+                a = k / 7 * math.tau
+                objs.append(plank('fbpetal', (x, y, z), (x + math.cos(a) * r, y + math.sin(a) * r, z + 0.004), r * 0.45, 0.004, (0, 0, 1), m, jitter=3.0, bevel=0.0))
+            objs.append(sphere('fbeye', r * 0.35, (x, y, z + 0.006), (1, 1, 0.6), m=C('fbyellow', '#f2c43c', rough=0.6), ico=1))
+        elif kind == 'tulip':
+            objs.append(cyl('fbtulip', r * 0.85, r * 1.7, (x, y, z), m=m, verts=7, r2=r, bevel=0.0))
+        else:
+            objs.append(sphere('fbbloom', r, (x, y, z), (1, 1, 0.8), m=m, ico=1, disp=0.25, seed=int(x * 100 + y * 37) % 50))
+    def plant(x, y, h, m, kind='ball', r=0.035, leaves=6):
+        tuft(objs, x, y, leaves, 0.07, 0.09, leaf, z0=0.1)
+        objs.append(cyl('fbstem', 0.006, h - 0.1, (x, y, 0.1 + (h - 0.1) / 2), m=stem, verts=5, bevel=0.0))
+        bloom(x, y, h, r, m, kind)
+    def spike(x, y, h, m, n=8, r0=0.03):
+        tuft(objs, x, y, 7, 0.08, 0.1, leaf, z0=0.12)
+        objs.append(cyl('fbstem', 0.007, h - 0.12, (x, y, 0.12 + (h - 0.12) / 2), m=stem, verts=5, bevel=0.0))
+        for k in range(n):
+            z = h - 0.24 + k * 0.03; rr = r0 * (1 - k / (n + 2))
+            objs.append(sphere('fbspike', rr, (x, y, z), (1, 1, 0.8), m=m, ico=1, seed=k))
+    # the obelisk with sweet peas
+    wil = C('fbwillow', '#8a6440', rough=0.8)
+    for k in range(4):
+        a = k / 4 * math.tau + math.pi / 4
+        objs.append(plank('fbob', (math.cos(a) * 0.12, math.sin(a) * 0.12, 0.12), (0, 0, 0.72), 0.018, 0.018, (math.cos(a), math.sin(a), 0), wil, jitter=0.5, bevel=0.0))
+    for z in (0.3, 0.5):
+        rr = 0.12 * (0.72 - z) / 0.6
+        for k in range(4):
+            a0, a1 = k / 4 * math.tau + math.pi / 4, (k + 1) / 4 * math.tau + math.pi / 4
+            objs.append(plank('fbobr', (math.cos(a0) * rr, math.sin(a0) * rr, z), (math.cos(a1) * rr, math.sin(a1) * rr, z), 0.014, 0.014, (0, 0, 1), wil, jitter=0.5, bevel=0.0))
+    objs.append(sphere('fbobtop', 0.025, (0, 0, 0.74), m=wil, ico=1))
+    pea = [C('fbpea%d' % i, h, rough=0.6) for i, h in enumerate(('#e98bb5', '#c96fd1', '#f4b6cf'))]
+    for k in range(22):
+        z = 0.16 + k * 0.025; rr = 0.12 * (0.72 - z) / 0.6 + 0.02; a = k * 1.3
+        objs.append(sphere('fbpealeaf', 0.03, (math.cos(a) * rr, math.sin(a) * rr, z), (1, 1, 0.7), m=random.choice(leaf), ico=1, disp=0.2, seed=k))
+        if k % 2: objs.append(sphere('fbpeaf', 0.022, (math.cos(a + 0.6) * (rr + 0.02), math.sin(a + 0.6) * (rr + 0.02), z + 0.02), (1, 0.6, 1), m=random.choice(pea), ico=1))
+    # round it: delphiniums and foxgloves
+    blue = C('fbdelph', '#4f6fd6', rough=0.5); fox = C('fbfox', '#d77bb5', rough=0.5)
+    for k in range(6):
+        a = k / 6 * math.tau + 0.3
+        spike(math.cos(a) * 0.27, math.sin(a) * 0.27, random.uniform(0.5, 0.6), blue if k % 2 else fox)
+    # the middle ring: daisies, tulips, marigolds, lupins
+    cols = {'daisy': C('fbdaisy', '#fbf6ee', rough=0.5), 'tulip': [C('fbtul%d' % i, h, rough=0.5) for i, h in enumerate(('#e2453c', '#f4c430', '#f08bb0'))],
+            'mari': C('fbmari', '#ff8c2a', rough=0.6), 'lup': [C('fblup%d' % i, h, rough=0.5) for i, h in enumerate(('#9b6bd1', '#f2e6a0'))]}
+    for k in range(22):
+        a = k / 22 * math.tau + random.uniform(-0.08, 0.08); d = 0.46 + random.uniform(-0.05, 0.05); x, y = math.cos(a) * d, math.sin(a) * d
+        kind = ('daisy', 'tulip', 'mari', 'daisy', 'tulip', 'lup')[k % 6]
+        if kind == 'daisy': plant(x, y, random.uniform(0.3, 0.36), cols['daisy'], 'daisy', r=0.04)
+        elif kind == 'tulip': plant(x, y, random.uniform(0.3, 0.36), random.choice(cols['tulip']), 'tulip', r=0.03)
+        elif kind == 'mari': plant(x, y, random.uniform(0.26, 0.32), cols['mari'], 'ball', r=0.04)
+        else: spike(x, y, random.uniform(0.42, 0.5), random.choice(cols['lup']), n=7, r0=0.026)
+    # leafy cover between them all, so no bare soil shows: low mounds of leaves, a few pale and dark
+    for k in range(46):
+        a = random.uniform(0, math.tau); d = 0.12 + math.sqrt(random.random()) * 0.5
+        objs.append(sphere('fbcover', random.uniform(0.06, 0.09), (math.cos(a) * d, math.sin(a) * d, 0.13 - d * 0.04), (1.2, 1.1, 0.6), (0, 0, a), m=random.choice(leaf), ico=1, disp=0.35, seed=k + 100))
+    # the edge: alyssum and lobelia spilling over the stones
+    aly = C('fbaly', '#f6f3ea', rough=0.7); lob = C('fblob', '#5267d8', rough=0.6)
+    for k in range(18):
+        a = k / 18 * math.tau + 0.1; x, y = math.cos(a) * 0.68, math.sin(a) * 0.67
+        objs.append(sphere('fbmat', 0.075, (x, y, 0.1), (1.2, 1.0, 0.55), m=random.choice(leaf), ico=1, disp=0.3, seed=k))
+        c = aly if k % 2 else lob
+        for q in range(5):
+            b = random.uniform(0, math.tau); rr = random.uniform(0.0, 0.07)
+            objs.append(sphere('fbtiny', 0.022, (x + math.cos(b) * rr, y + math.sin(b) * rr, 0.14), m=c, ico=1))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the bird bath
+def birdbath_dec(seed=91, name='birdbath'):
+    """A stone bird bath (the visiting birds stand on its rim: decorlife.js BATH, rim 0.705 up, 0.47 out, the water at
+    0.671): a square plinth on a slab, a turned baluster, a shallow bowl with a rolled lip and moss in places, the water;
+    its own blue tit on the rim (0.36, 0.3 towards the player); ivy up the pedestal, pebbles, primroses and ferns round the
+    foot. (Its footprint as before.)"""
+    random.seed(seed); objs = []
+    stone = C('bbstone', '#c9c2b2', rough=0.85, var=0.05); stone2 = C('bbstone2', '#b8b0a0', rough=0.85, var=0.06)
+    moss = C('bbmoss', '#7c9a4a', rough=0.9, var=0.1); water = C('bbwater', '#7fb6d8', rough=0.08)
+    leaf = [C('bbleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4a8a38', '#3f7a32', '#5a9a40'))]
+    objs.append(box('bbslab', (0.62, 0.62, 0.05), (0, 0, 0.025), (0, 0, math.radians(4)), m=stone2, bevel=0.01, segs=2))
+    objs.append(box('bbplinth', (0.36, 0.36, 0.1), (0, 0, 0.1), m=stone, bevel=0.012, segs=2))
+    objs.append(box('bbplinth2', (0.3, 0.3, 0.03), (0, 0, 0.165), m=stone, bevel=0.008, segs=2))
+    objs.append(lathe('bbbaluster', [(0.11, 0.18), (0.12, 0.2), (0.09, 0.23), (0.075, 0.27), (0.1, 0.33), (0.12, 0.38), (0.105, 0.44), (0.07, 0.5),
+                                      (0.06, 0.54), (0.085, 0.565), (0.085, 0.585), (0.07, 0.6)], stone, verts=20))
+    R = 0.5
+    objs.append(lathe('bbbowl', [(0.07, 0.585), (0.2, 0.6), (0.36, 0.64), (R - 0.03, 0.68), (R, 0.695), (R + 0.025, 0.71), (R + 0.01, 0.725), (R - 0.02, 0.722),
+                                  (R - 0.035, 0.705), (R - 0.04, 0.69), (0.3, 0.66), (0.0, 0.645)], stone, verts=40))
+    objs.append(cyl('bbwater', R - 0.035, 0.008, (0, 0, 0.671), m=water, verts=36, bevel=0.0))
+    for k in range(6):                                 # moss in patches on the lip
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('bbmossp', 0.04, (math.cos(a) * (R + 0.01), math.sin(a) * (R + 0.01), 0.715), (1.6, 0.8, 0.35), (0, 0, a + math.pi / 2), m=moss, ico=1, disp=0.2, seed=k))
+    # ivy up the pedestal
+    ivy = C('bbivy', '#2f6b34', rough=0.7)
+    for k in range(16):
+        a = k * 0.9; z = 0.2 + k * 0.024; r = 0.11 if z < 0.45 else 0.08
+        objs.append(sphere('bbivy', 0.028, (math.cos(a) * r, math.sin(a) * r, z), (1.2, 0.5, 1.0), (0, 0, a), m=ivy, ico=1, seed=k))
+    # the blue tit on the rim
+    tx, ty, tz = 0.36, -0.3, 0.725; yaw = math.atan2(-ty, -tx) + 0.6   # (looking in, a little to one side)
+    def T(dx, dy, dz):
+        c, s = math.cos(yaw), math.sin(yaw); return (tx + dx * c - dy * s, ty + dx * s + dy * c, tz + dz)
+    blu = C('bbtitblue', '#3f7fd0', rough=0.5); yel = C('bbtityel', '#f2d23c', rough=0.5); wht = C('bbtitwh', '#f6f3ea', rough=0.5)
+    grn = C('bbtitgrn', '#8aa84a', rough=0.5); blk = C('bbtitblk', '#1f2328', rough=0.5)
+    deg = math.degrees(yaw)
+    objs.append(sphere('bbtit', 0.05, T(0.0, 0, 0.045), (1.35, 0.95, 0.95), (0, math.radians(-12), yaw), m=yel, seg=14, rings=9))
+    objs.append(sphere('bbtitback', 0.048, T(-0.01, 0, 0.058), (1.3, 0.9, 0.7), (0, math.radians(-12), yaw), m=grn, seg=14, rings=9))
+    for sd in (-1, 1):
+        objs.append(sphere('bbtitwing', 0.035, T(-0.02, sd * 0.038, 0.05), (1.5, 0.35, 0.8), (0, math.radians(-15), yaw), m=blu, seg=12, rings=8))
+    objs.append(plank('bbtittail', T(-0.05, 0, 0.05), T(-0.11, 0, 0.065), 0.03, 0.008, (0, 0, 1), blu, jitter=0.0, bevel=0.0))
+    objs.append(sphere('bbtithead', 0.034, T(0.06, 0, 0.1), m=wht, seg=14, rings=9))
+    objs.append(sphere('bbtitcap', 0.034, T(0.058, 0, 0.108), (1.02, 1.02, 0.7), m=blu, seg=14, rings=9))
+    for sd in (-1, 1):
+        objs.append(plank('bbtitstripe', T(0.085, sd * 0.024, 0.104), T(0.035, sd * 0.03, 0.096), 0.01, 0.006, (0, sd, 0), blk, jitter=0.0, bevel=0.0))
+        objs.append(sphere('bbtiteye', 0.007, T(0.08, sd * 0.027, 0.106), m=blk, seg=8, rings=5))
+        objs.append(cyl('bbtitleg', 0.004, 0.03, T(0.0, sd * 0.015, 0.008), m=C('bbtitleg', '#5a6470', rough=0.6), verts=5, bevel=0.0))
+    objs.append(cyl('bbtitbeak', 0.009, 0.02, T(0.1, 0, 0.098), (0, math.radians(90), yaw), m=blk, verts=6, r2=0.0, bevel=0.0))
+    objs.append(plank('bbtitbib', T(0.055, 0, 0.078), T(0.04, 0, 0.04), 0.014, 0.006, (1, 0, 0), blk, jitter=0.0, bevel=0.0))
+    # round the foot: pebbles, primroses, ferns
+    for i in range(22):
+        a = random.random() * math.tau; d = random.uniform(0.36, 0.56)
+        objs.append(sphere('bbpeb', 0.035, (math.cos(a) * d, math.sin(a) * d, 0.012), (1.3, 1.0, 0.5), (0, 0, a), m=random.choice((stone, stone2)), ico=1, disp=0.1, seed=i))
+    prim = C('bbprim', '#f6e27a', rough=0.5); eye = C('bbprimeye', '#e2a72a', rough=0.5)
+    for i in range(7):
+        a = i / 7 * math.tau + 0.2; x, y = math.cos(a) * 0.55, math.sin(a) * 0.55
+        if i % 3 == 2:
+            for k in range(7):
+                b = k / 7 * math.tau + a
+                objs.append(plank('bbfrond', (x, y, 0.02), (x + math.cos(b) * 0.15, y + math.sin(b) * 0.15, 0.14 + 0.03 * (k % 2)), 0.05, 0.008, (0, 0, 1), leaf[1], jitter=3.0, bevel=0.0))
+            continue
+        for k in range(6):
+            b = k / 6 * math.tau
+            objs.append(sphere('bbprleaf', 0.045, (x + math.cos(b) * 0.05, y + math.sin(b) * 0.05, 0.03), (1.4, 0.7, 0.35), (0, 0, b), m=random.choice(leaf), ico=1, seed=k))
+        for k in range(4):
+            b = k / 4 * math.tau + 0.4
+            objs.append(sphere('bbprim', 0.025, (x + math.cos(b) * 0.035, y + math.sin(b) * 0.035, 0.065), (1, 1, 0.45), m=prim, ico=1))
+            objs.append(sphere('bbprimeye', 0.008, (x + math.cos(b) * 0.035, y + math.sin(b) * 0.035, 0.074), m=eye, ico=1))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the duck house
+def duckhouse_dec(seed=101, name='duckhouse'):
+    """The ducks' house on its raft (ducks.js walks them on it: the deck 0.075 up, 0.47 either side, 0.425 to the front and
+    0.43 back; the ramp 0.14 either side from the deck's front edge down into the water 0.92 out; the door at the front):
+    a deck of boards on two logs, a little clapboard house in duck-egg blue with white corner boards, an arched door, a
+    round window in the gable and one each side, a shingled roof with white barge boards and a duck on the ridge for a
+    weathervane; a ramp with cleats; a dish of grain, a coil of rope and a pot of marigolds on the deck. (Its footprint
+    as before.)"""
+    random.seed(seed); objs = []
+    wood = [C('dhwood%d' % i, h, rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)) for i, h in enumerate(('#9a6a43', '#8c5f3c', '#a77650'))]
+    log = C('dhlog', '#6b4a32', rough=0.85, var=0.1); blue = C('dhblue', '#7aa3b8', rough=0.7, var=0.04); white = C('dhwhite', '#f1ede2', rough=0.6)
+    dark = C('dhdark', '#2a2420', rough=0.9); roof = [C('dhroof%d' % i, h, rough=0.65, var=0.06) for i, h in enumerate(('#b2392f', '#a8332a', '#ba4136'))]
+    # the raft: two logs, two bearers, the deck boards
+    for sx in (-1, 1):
+        objs.append(cyl('dhlog', 0.075, 0.9, (sx * 0.3, 0.0, 0.0), (math.radians(90), 0, 0), m=log, verts=12, bevel=0.006))
+        objs.append(cyl('dhlogend', 0.06, 0.012, (sx * 0.3, -0.452, 0.0), (math.radians(90), 0, 0), m=C('dhlogend', '#c9a476', rough=0.8), verts=12, bevel=0.0))
+    n = 8; w = 0.855 / n
+    for k in range(n):
+        y = -0.425 + w * (k + 0.5)
+        objs.append(box('dhdeck', (0.95, w - 0.012, 0.03), (random.uniform(-0.01, 0.01), y, 0.06), m=random.choice(wood), bevel=0.004, segs=1, jitter=0.002))
+    # the house
+    X, Y0, Y1, Z0, ZE, ZR = 0.25, -0.16, 0.32, 0.075, 0.47, 0.74
+    objs.append(box('dhcore', (2 * X - 0.02, Y1 - Y0 - 0.02, ZE - Z0), (0, (Y0 + Y1) / 2, (Z0 + ZE) / 2), m=blue, bevel=0.0))
+    for k in range(7):                                  # clapboards on the walls: each board a little proud at its foot
+        z = Z0 + k * (ZE - Z0) / 7
+        for (a, b, nn) in (((-X, Y0), (X, Y0), (0, -1)), ((X, Y0), (X, Y1), (1, 0)), ((X, Y1), (-X, Y1), (0, 1)), ((-X, Y1), (-X, Y0), (-1, 0))):
+            A = Vector((a[0] + nn[0] * 0.006, a[1] + nn[1] * 0.006, z + 0.03)); B = Vector((b[0] + nn[0] * 0.006, b[1] + nn[1] * 0.006, z + 0.03))
+            if nn == (0, -1) and z + 0.06 < Z0 + 0.25:              # (the front boards stop either side of the door)
+                objs.append(plank('dhclap', A, Vector((-0.11, A.y, A.z)), 0.058, 0.012, (nn[0], nn[1], -0.15), blue, jitter=0.05, bevel=0.0))
+                objs.append(plank('dhclap', Vector((0.11, A.y, A.z)), B, 0.058, 0.012, (nn[0], nn[1], -0.15), blue, jitter=0.05, bevel=0.0))
+                continue
+            objs.append(plank('dhclap', A, B, 0.058, 0.012, (nn[0], nn[1], -0.15), blue, jitter=0.05, bevel=0.0))
+    for sx in (-1, 1):
+        for y in (Y0, Y1):
+            objs.append(box('dhcorner', (0.035, 0.035, ZE - Z0), (sx * X, y, (Z0 + ZE) / 2), m=white, bevel=0.004, segs=1))
+    objs.append(prism_gable(0, 0, 0, 0, 0.01, blue) if False else None)
+    # the front and back gables (ridge front to back)
+    for y in (Y0, Y1):
+        me = bpy.data.meshes.new('dhgable'); bm = bmesh.new()
+        vs = [[bm.verts.new((x_, y + dy, z_)) for (x_, z_) in ((-X, ZE), (X, ZE), (0, ZR))] for dy in (-0.006, 0.006)]
+        bm.faces.new(vs[0]); bm.faces.new(vs[1][::-1])
+        for i in range(3): bm.faces.new((vs[0][i], vs[1][i], vs[1][(i + 1) % 3], vs[0][(i + 1) % 3]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+        o = link(bpy.data.objects.new('dhgable', me)); setmat(o, blue); objs.append(o)
+    # the arched door, its white trim; a round window in the front gable and in each side
+    objs.append(box('dhdoor', (0.2, 0.012, 0.16), (0, Y0 - 0.004, Z0 + 0.08), m=dark, bevel=0.0))
+    objs.append(cyl('dhdoorarch', 0.1, 0.012, (0, Y0 - 0.004, Z0 + 0.16), (math.radians(90), 0, 0), m=dark, verts=20, bevel=0.0))
+    for k in range(9):
+        a0, a1 = math.pi * k / 9, math.pi * (k + 1) / 9
+        objs.append(plank('dhtrim', (math.cos(a0) * 0.12, Y0 - 0.014, Z0 + 0.16 + math.sin(a0) * 0.12), (math.cos(a1) * 0.12, Y0 - 0.014, Z0 + 0.16 + math.sin(a1) * 0.12), 0.03, 0.012, (0, -1, 0), white, jitter=0.0, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(plank('dhtrim', (sx * 0.12, Y0 - 0.014, Z0), (sx * 0.12, Y0 - 0.014, Z0 + 0.16), 0.03, 0.012, (0, -1, 0), white, jitter=0.0, bevel=0.0))
+    def round_window(c, axis, r=0.06):
+        rot = (math.radians(90), 0, 0) if axis == 'y' else (0, math.radians(90), 0)
+        sgn = 1 if (c[0] if axis == 'x' else c[1]) > 0 else -1; off = (0.006 * sgn, 0, 0) if axis == 'x' else (0, 0.006 * sgn, 0)
+        objs.append(cyl('dhrim', r + 0.02, 0.02, c, rot, m=white, verts=20, bevel=0.002))
+        objs.append(cyl('dhwin', r, 0.022, (c[0] + off[0], c[1] + off[1], c[2]), rot, m=C('dhglass', '#34516b', rough=0.08, spec=0.9, coat=1.0), verts=20, bevel=0.0))
+        for ang in (0, math.pi / 2):                     # the window's cross bars
+            d_ = Vector((math.cos(ang), 0, math.sin(ang))) if axis == 'y' else Vector((0, math.cos(ang), math.sin(ang)))
+            p = Vector(c) + Vector(off) * 2.2
+            objs.append(plank('dhbar', p - d_ * r, p + d_ * r, 0.012, 0.008, (sgn, 0, 0) if axis == 'x' else (0, sgn, 0), white, jitter=0.0, bevel=0.0))
+    round_window((0, Y0 - 0.006, 0.57), 'y', 0.05)
+    for sx in (-1, 1): round_window((sx * (X + 0.012), 0.08, 0.3), 'x')
+    round_window((0, Y1 + 0.006, 0.3), 'y')
+    # the roof: shingles on two slopes, barge boards, a ridge, the duck on top
+    ang = math.atan2(ZR - ZE, X); SL = math.hypot(ZR - ZE, X) + 0.07
+    objs.append(box('dhroofcore', (0.012, 0, 0), (0, 0, 0), m=roof[0], bevel=0.0) if False else None)
+    for sx in (-1, 1):
+        nrm = Vector((sx * math.sin(ang), 0, math.cos(ang)))
+        down = Vector((sx * math.cos(ang), 0, -math.sin(ang)))
+        top = Vector((0, 0, ZR + 0.02))
+        objs.append(box('dhroofb', (SL, Y1 - Y0 + 0.14, 0.02), tuple(top + down * SL / 2 + nrm * 0.0), (0, sx * ang, 0), m=roof[1], bevel=0.0))
+        rows = 5
+        for r in range(rows):
+            t0 = SL * (1 - (r + 1) / rows); a = top + down * (SL - r * SL / rows)
+            for k in range(8):
+                y = Y0 - 0.07 + (k + 0.5 + (0.5 if r % 2 else 0)) * (Y1 - Y0 + 0.14) / 8
+                if y > Y1 + 0.07: continue
+                p0 = a + Vector((0, y, 0)) + nrm * (0.014 + 0.004 * (r % 2)); p1 = p0 - down * (SL / rows + 0.03)
+                objs.append(plank('dhsh', p0, p1, (Y1 - Y0 + 0.14) / 8 - 0.008, 0.014, tuple(nrm), random.choice(roof), jitter=0.4, bevel=0.0))
+        for y in (Y0 - 0.075, Y1 + 0.075):
+            objs.append(plank('dhbarge', top + Vector((0, y, 0.0)), top + down * SL + Vector((0, y, 0.0)), 0.05, 0.016, (0, -1 if y < 0 else 1, 0), white, jitter=0.05, bevel=0.0))
+    objs.append(cyl('dhridge', 0.022, Y1 - Y0 + 0.16, (0, (Y0 + Y1) / 2, ZR + 0.035), (math.radians(90), 0, 0), m=roof[2], verts=8, bevel=0.0))
+    # a little duck weathervane on the ridge
+    iron = C('dhiron', '#2b2b2b', rough=0.5)
+    objs.append(cyl('dhvpost', 0.007, 0.16, (0, 0.24, ZR + 0.11), m=iron, verts=6, bevel=0.0))
+    objs.append(sphere('dhvduck', 0.035, (0, 0.24, ZR + 0.2), (1.5, 0.35, 0.8), m=iron, seg=10, rings=6))
+    objs.append(sphere('dhvhead', 0.018, (0, 0.24 - 0.0, ZR + 0.235), (1, 0.6, 1), m=iron, seg=8, rings=5))
+    objs[-1].location.x = 0.04
+    objs.append(cyl('dhvbill', 0.008, 0.025, (0.065, 0.24, ZR + 0.232), (0, math.radians(90), 0), m=iron, verts=5, r2=0.003, bevel=0.0))
+    # the ramp down into the water, with cleats
+    a = Vector((0, -0.425, 0.06)); b = Vector((0, -0.84, -0.045)); d = (b - a)
+    nr = Vector((0, -d.z, d.y)).normalized()
+    if nr.z < 0: nr = -nr
+    objs.append(plank('dhramp', a, b, 0.26, 0.025, tuple(nr), wood[0], jitter=0.1))
+    for k in range(4):
+        p = a.lerp(b, 0.15 + k * 0.22) + nr * 0.018
+        objs.append(plank('dhcleat', p - Vector((0.11, 0, 0)), p + Vector((0.11, 0, 0)), 0.022, 0.018, tuple(nr), wood[1], jitter=0.2, bevel=0.0))
+    # on the deck: a dish of grain, a coil of rope, a pot of marigolds
+    objs.append(cyl('dhdish', 0.07, 0.03, (-0.36, 0.3, 0.09), m=C('dhdishc', '#c9c4b8', rough=0.5), verts=16, r2=0.055, bevel=0.003))
+    objs.append(cyl('dhgrain', 0.062, 0.006, (-0.36, 0.3, 0.104), m=C('dhgrainc', '#e3c26a', rough=0.9), verts=16, bevel=0.0))
+    rope = C('dhrope', '#c9b48a', rough=0.9)
+    for k, (rr, zz) in enumerate(((0.06, 0.087), (0.042, 0.087), (0.05, 0.106))):      # (a coil lying flat, one turn on top)
+        bpy.ops.mesh.primitive_torus_add(major_radius=rr, minor_radius=0.011, major_segments=16, minor_segments=6, location=(0.37, -0.33, zz))
+        o = bpy.context.object; o.name = 'dhrope'; setmat(o, rope); objs.append(o)
+    objs.append(cyl('dhpot', 0.05, 0.08, (0.37, 0.3, 0.115), m=C('dhterra', '#b8653d', rough=0.8), verts=12, r2=0.04, bevel=0.003))
+    for k in range(5):
+        a_ = k / 5 * math.tau
+        objs.append(sphere('dhpleaf', 0.03, (0.37 + math.cos(a_) * 0.03, 0.3 + math.sin(a_) * 0.03, 0.17), m=C('dhleaf', '#4a8a38', rough=0.8), ico=1, disp=0.2, seed=k))
+        objs.append(sphere('dhmari', 0.018, (0.37 + math.cos(a_ + 0.6) * 0.03, 0.3 + math.sin(a_ + 0.6) * 0.03, 0.2), m=C('dhmaric', '#ff8c2a', rough=0.6), ico=1))
+    return finish([o for o in objs if o is not None], name)
