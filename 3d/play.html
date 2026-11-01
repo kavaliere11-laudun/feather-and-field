@@ -113,6 +113,7 @@
   body.game { --sage: #eef2e4; --ink-2: #5f6f5c; --line: #d9e1c9; --yolk-deep: #c98d0c; --glass-top: rgba(255, 253, 247, 0.93);
               --glass-line: rgba(255, 255, 255, 0.7); --shadow: 0 10px 30px rgba(20, 40, 20, 0.18); --display: 'Fredoka', system-ui, sans-serif; }
   body.game .top, body.game #readout { display: none !important; }
+  body.game.showfps #readout { display: block !important; z-index: 30; bottom: auto; top: calc(env(safe-area-inset-top) + 58px); left: calc(env(safe-area-inset-left) + 12px); transform: none; }      /* (?fps: under the title) */
   body.game #hint { top: calc(env(safe-area-inset-top) + 62px); }
   .gbar { position: fixed; z-index: 6; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px;
           padding: calc(10px + env(safe-area-inset-top)) 12px 0; pointer-events: none; }
@@ -340,7 +341,7 @@
   .gguide-row button { font: 700 14px var(--body); border: 0; background: none; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
   .gguide-row .gguide-show { background: #f2c94c; color: #3b2a00; border-radius: 999px; padding: 6px 14px; }
   .gguide-row .gguide-skip { margin-left: auto; text-decoration: underline; }
-  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: 12px; transform: none; bottom: auto; top: calc(env(safe-area-inset-top, 0px) + 52px); width: min(44vw, 360px); } }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: calc(env(safe-area-inset-left, 0px) + 12px); transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(42vw, 340px); } }      /* (sideways: the bottom left corner, off the Red Barn in the middle; Audrey's play-through, 1 Nov) */
   .garrow { position: fixed; z-index: 40; left: 0; top: 0; width: 34px; height: 40px; margin: -46px 0 0 -17px; pointer-events: none; animation: garrowb 0.9s ease-in-out infinite; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
   .garrow[hidden] { display: none; }
   @keyframes garrowb { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
@@ -472,6 +473,7 @@
     @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
+    body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }
   /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
@@ -564,6 +566,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793552726"></script>
+<script src="app.js?v=1793554444"></script>
 </body>
 </html>
