@@ -1,7 +1,7 @@
 """The app's own pictures: python3 icons.py
-- the icon (1024x1024, no transparency: Apple's rule), from art/icon-render.png: the rooster crowing on a bale, rendered from
-  the game itself (web3d/posterpic.mjs with the Home Screen icon's camera: AT=0.58,0.98,-1.25 EL=12 AZ=-75 DIST=1.75 FOV=26
-  W=320 H=320 DSF=4)
+- the icon (1024x1024, no transparency: Apple's rule): art/icon-1024.png, the game's own white Silkie and her chick on the
+  farm's grass in front of the Red Barn (Audrey's choice, 1 Nov 2026: "A Mum and her chick"; made by web3d/iconstudio.mjs
+  SET=a VP=1024 DSF=2 and art/compose_studio.py BIRD_BRIGHT=1.08); also the web game's Home Screen icons (web3d/icon-*.png)
 - the launch screen (2732x2732, shown filling the screen): the game's loading green (index.html #loading), so the app opens
   straight into "Loading your farm..." with no flash
 """
@@ -9,9 +9,11 @@ import os
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 IOS = f'{HERE}/ios/App/App/Assets.xcassets'
-ic = Image.open(f'{HERE}/art/icon-render.png').convert('RGB').resize((1024, 1024), Image.LANCZOS)
+ic = Image.open(f'{HERE}/art/icon-1024.png').convert('RGB')
+assert ic.size == (1024, 1024)
 ic.save(f'{IOS}/AppIcon.appiconset/AppIcon-512@2x.png', optimize=True)
-ic.save(f'{HERE}/art/icon-1024.png', optimize=True)
+WEB = f'{HERE}/../web3d'
+for n in (180, 192, 512): ic.resize((n, n), Image.LANCZOS).save(f'{WEB}/icon-{n}.png', optimize=True)      # (the Home Screen's)
 # the loading screen's green: #557230 at the top (under the clock), down to #8cb85c at 42%, then flat
 S = 2732
 top, low = (0x55, 0x72, 0x30), (0x8c, 0xb8, 0x5c)
