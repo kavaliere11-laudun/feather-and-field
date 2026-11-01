@@ -3543,7 +3543,8 @@ the birds already had.
   where its foot is to be (two-bone IK). The models' legs had nothing part way down, so rings are cut into them at the
   ankle (birds.js `cutAt`, `ANKLE` 46% of the way down), the lower leg on its own bone (`shinL`/`shinR`) and the toes on
   theirs (`footL`/`footR`; `peaLegs`, which also sorts each leg by its side). Held up by his train a moment, he stands
-  rather than stepping on the spot (`trainBlocked`).
+  rather than stepping on the spot (`trainBlocked`), and once he's on his way again his legs walk at once (Audrey, 1 Nov:
+  "he walks for a second and then just slides": `blockedAt`).
 - **Showing off, and on parade** (`chooseAct` 'display', `displayYaw`, `fanClear(y, at)`; Audrey: "We also need a scenario
   where the peacock parade with his tail opened"): now and then he turns to where there's room and raises his train into
   his fan, with a little shiver, then parades with it open: round slowly one way and the other as far as there's room for
