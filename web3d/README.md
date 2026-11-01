@@ -3702,7 +3702,35 @@ the birds already had.
   down from his perch in the morning, then his fan. Neck up, head back, beak open (the crow's pose without a flap); heard
   from far off (`farmSound('peacall', ..., 2.4)`, sound.js `FARM.level.peacall`). Not when the farmer is in the pen or
   during a cuddle.
-- **To do before the stores**: a visible credits line in the game (Settings) for the recordings, the peacock's
-  recording above all (CC BY asks for the credit where people will see it).
+- **Credits in the game**: a line at the bottom of Settings (gameui.js `credits`, the text `credits` in six languages):
+  the music, the sounds and the peacock's call, his recordist and the licence each a link (CC BY asks for the credit
+  where players see it).
 - `peacallfilm.mjs OUT.mp4` (FARM=farmtour's saved farm): a short film of him calling three times with the sound laid
   in (the test browser is silent).
+
+## The village's small things rebuilt (1 Nov 2026; Audrey: "Rebuild the small things (Recommended)")
+
+- **What**: every small model of the village from the first game made again with the decorations' care
+  (`stylized/village3d.py`, exported by `export_village3d.py`, spliced into `village.glb` with `splice_models.py`):
+  - `bench_v`: cast-iron ends in green (a curved front leg, the back leg sweeping up, an armrest ending in a scroll),
+    five seat slats and three back slats.
+  - `lamp_post_v`: a black iron post with a flared base and collars, a scrolled bracket, a four-sided lantern of glowing
+    glass ('lamp', lit at night) with a pointed cap, 0.24 out along x as before (main.js `addLampPools`).
+  - `well_v`: a round well of stones in courses with a coping and dark water, oak posts with knee braces, a winch with
+    its crank and rope, a hooped bucket, a shingled roof; moss and a fern.
+  - `egg_stall_v`: posts and a counter boarded in front with three eggs painted on a panel, a red and cream striped
+    awning with a scalloped edge (`half_disc`), trays and a basket of brown, cream and blue-green eggs, an honesty box, a
+    crate of straw, a little chalkboard.
+  - `bridge_v`: the deck arched exactly as before (main.js `bridgeDecks` measures it for walking over), two arched
+    stringers, railings with capped posts, a top and a lower rail and crossed braces.
+  - `barrels_v` (three oak barrels, one lying chocked, hoops, lids of boards, a watering can), `wheelbarrow_v` (a green
+    tray, a spoked wheel, three pumpkins and a trowel), `scarecrow_v` (a friendly one: checked shirt, dungarees, button
+    eyes and a stitched smile, a straw hat with a flower, a crow friend on his arm; now facing the way he's turned),
+    `log_pile_v` (bark and pale cut ends with rings between two stakes, kindling), `dock_v` (the deck 0.12 up as before,
+    boards each their own shade, bearers, piles and two mooring posts with rope, a coil of rope, a life ring),
+    `hay_stack_v` and `round_bale_v` (straw strands, twine, rolled rings on the ends, loose straw), `flower_pots_v`
+    (rimmed pots: geraniums, daisies, herbs), `planter_v` (a trough of boards: geraniums, lavender, alyssum, ivy
+    trailing over), `veg_patch_v` (both patches: a raised bed with ridged rows of cabbages, carrots and pumpkins on
+    their vines, a trowel).
+- Each keeps the old one's place and size on the village grid (within a few centimetres; the scarecrow turned to face
+  the player).
