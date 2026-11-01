@@ -20,7 +20,12 @@ export const MISS_AFTER = 3 * 86400e3, MISS_HOUR = 18; // the farm left alone th
 export const EGGS_AT = 6;                              // eggs waiting that are worth a note (a day at most, two days ahead)
 const LEAD = 5 * 60e3, STEP = 15 * 60e3;
 const KINDS = ['hatch', 'show', 'miss', 'wheat', 'honey', 'eggs'];      // (most important first)
-const PREF_KEY = 'ff3d.notes';
+// the player's choice of which (Audrey, 1 Nov 21:01: "choose which ones you want, for example eggs only. The one after 3
+// days inactivity shows if at least 1 notification is active"): four groups, all on at first; the "miss you" note comes
+// with any of them
+export const GROUPS = { eggs: ['eggs'], chicks: ['hatch'], crops: ['wheat', 'honey'], shows: ['show'] };
+const ALL = Object.keys(GROUPS);
+const PREF_KEY = 'ff3d.notes', KINDS_KEY = 'ff3d.notesKinds';
 
 const local = (t, h, m = 0) => { const d = new Date(t); d.setHours(h, m, 0, 0); return d.getTime(); };
 // out of the quiet hours: at night, to the next morning at QUIET_TO
@@ -32,10 +37,12 @@ export function notQuiet(t) {
 }
 const dayOf = t => { const d = new Date(t); return d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate(); };
 
-// what to send, from now: [{ id, kind, at, title, body }], in time order
-export function plan(game, now = Date.now()) {
-  const d = game.data; if (!d) return [];
-  const out = [], add = (kind, at, title, body) => { if (Number.isFinite(at) && at > now) out.push({ kind, at, title, body }); };
+// what to send, from now: [{ id, kind, at, title, body }], in time order; groups: the ones the player wants (none: nothing,
+// not even the "miss you")
+export function plan(game, now = Date.now(), groups = ALL) {
+  const d = game.data; if (!d || !groups.length) return [];
+  const wanted = new Set(['miss', ...groups.flatMap(k => GROUPS[k] || [])]);
+  const out = [], add = (kind, at, title, body) => { if (wanted.has(kind) && Number.isFinite(at) && at > now) out.push({ kind, at, title, body }); };
   const name = id => { const b = game.bird(id); return b ? b.name : ''; };
   // the shows: judged at 7 the morning after
   for (const e of game.shows().in) add('show', game.showJudgedAt(e.id), game.t('nt_show_t'), game.t('nt_show', { name: name(e.bird), show: game.showName(e.id) }));
@@ -91,7 +98,10 @@ export class Notes {
     setInterval(() => { if (!document.hidden) this.sync(); }, 60e3);
     setTimeout(() => this.sync(), 3000);
   }
-  planNow(now = Date.now()) { return plan(this.g, now); }      // (tests)
+  planNow(now = Date.now()) { return plan(this.g, now, this.kinds()); }      // (tests)
+  // which ones (this phone's choice, read back only as known groups; never chosen: all)
+  kinds() { try { const v = localStorage.getItem(KINDS_KEY); if (v === null) return ALL.slice(); return v.split(',').filter((k, i, a) => ALL.includes(k) && a.indexOf(k) === i); } catch (e) { return ALL.slice(); } }
+  setKinds(list) { try { localStorage.setItem(KINDS_KEY, ALL.filter(k => list.includes(k)).join(',')); } catch (e) { /* */ } this.last = ''; this.sync(); }
   pref() { try { const v = localStorage.getItem(PREF_KEY); return v === 'on' || v === 'off' ? v : ''; } catch (e) { return ''; } }
   setPref(v) { try { localStorage.setItem(PREF_KEY, v === 'on' ? 'on' : 'off'); } catch (e) { /* */ } this.last = ''; this.sync(); }
   // asked once: once the first day's guide is done (the player has seen eggs, the wheat and the shop)
@@ -106,10 +116,11 @@ export class Notes {
   async allowed() { try { const r = await this.LN.checkPermissions(); return !!r && r.display === 'granted'; } catch (e) { return false; } }
   // what's waiting on the phone made the latest: everything of ours taken off, the plan put on (only if it changed)
   async sync(now = Date.now()) {
-    if (!this.on || this.syncing) return;
+    if (!this.on) return;
+    if (this.syncing) { this.again = true; return; }      // (asked again meanwhile: once this one's done)
     this.syncing = true;
     try {
-      const want = this.pref() === 'on' && this.g.data ? plan(this.g, now) : [];
+      const want = this.pref() === 'on' && this.g.data ? plan(this.g, now, this.kinds()) : [];
       const key = JSON.stringify(want.map(n => [n.id, n.at, n.body]));
       if (key === this.last) return;
       const p = await this.LN.getPending().catch(() => ({ notifications: [] }));
@@ -118,6 +129,6 @@ export class Notes {
       if (want.length && await this.allowed()) await this.LN.schedule({ notifications: want.map(n => ({ id: n.id, title: n.title, body: n.body, schedule: { at: new Date(n.at), allowWhileIdle: true } })) });
       this.last = key;
     } catch (e) { this.last = ''; }
-    finally { this.syncing = false; }
+    finally { this.syncing = false; if (this.again) { this.again = false; this.sync(); } }
   }
 }

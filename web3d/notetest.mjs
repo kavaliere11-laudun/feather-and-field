@@ -87,6 +87,27 @@ const shot = async (p, name) => { await p.evaluate(() => document.getAnimations(
   ok(await until(p, () => window.__fakeNotes.pending.length === 0 && localStorage.getItem('ff3d.notes') === 'off'), 'Off: everything taken off the phone');
   await p.evaluate(() => document.querySelector('.gnotes .gchip[data-on="1"]').click());
   ok(await until(p, () => window.__fakeNotes.pending.length > 0 && localStorage.getItem('ff3d.notes') === 'on'), 'On again: back on the phone');
+  // which ones (Audrey: "for example eggs only"; the "miss you" with any of them): all four at first
+  ok(await p.evaluate(() => document.querySelectorAll('.gnotes-kind.on').length === 4 && !document.querySelector('.gnotes-kinds').hidden), 'Settings: the four kinds, all chosen');
+  const kinds = async () => p.evaluate(() => [...new Set(window.__fakeNotes.pending.map(n => n.title))]);
+  const tap = async ks => { for (const k of ks) { await p.evaluate(k => document.querySelector(`.gnotes-kind[data-k="${k}"]`).click(), k); await p.waitForTimeout(200); } };
+  await tap(['chicks', 'crops', 'shows']);       // eggs only
+  ok(await until(p, () => localStorage.getItem('ff3d.notesKinds') === 'eggs'), 'eggs only: kept');
+  const eggsOnly = await p.evaluate(() => window.__farm.notes().planNow(Date.now()).map(n => n.kind));
+  ok(eggsOnly.length && eggsOnly.every(k => k === 'eggs' || k === 'miss') && eggsOnly.includes('miss'), 'eggs only: just the eggs, and the "miss you"', eggsOnly);
+  await until(p, () => window.__fakeNotes.pending.every(n => /🥚|miss|manqu/i.test(n.title + n.body)), null, 8000);
+  ok((await kinds()).every(t => /🥚|misses|pense/.test(t)), 'eggs only: on the phone too', await kinds());
+  await shot(p, `${LANG}_kinds`);
+  await tap(['crops', 'eggs']);                  // wheat and honey only (crops on first: eggs alone off would leave none)
+  const crops = await p.evaluate(() => window.__farm.notes().planNow(Date.now()).map(n => n.kind));
+  ok(crops.every(k => k === 'wheat' || k === 'honey' || k === 'miss') && crops.includes('wheat'), 'wheat and honey only', crops);
+  await tap(['crops']);                          // none left: off, nothing on the phone, not even the "miss you"
+  ok(await until(p, () => localStorage.getItem('ff3d.notes') === 'off' && window.__fakeNotes.pending.length === 0 && !!document.querySelector('.gnotes .gchip.on[data-on="0"]') && document.querySelector('.gnotes-kinds').hidden), 'none left: Off, nothing on the phone (not even the "miss you")');
+  await p.evaluate(() => document.querySelector('.gnotes .gchip[data-on="1"]').click());
+  ok(await until(p, () => localStorage.getItem('ff3d.notes') === 'on' && document.querySelectorAll('.gnotes-kind.on').length === 4 && window.__fakeNotes.pending.length > 0), 'On again: all four');
+  await p.evaluate(() => localStorage.setItem('ff3d.notesKinds', 'eggs,<script>,eggs,shows'));
+  ok(await p.evaluate(() => JSON.stringify(window.__farm.notes().kinds()) === '["eggs","shows"]'), 'a choice changed outside the game: only known kinds, once');
+  await p.evaluate(() => localStorage.removeItem('ff3d.notesKinds'));
   // the phone saying no (turned off in its own settings)
   await p.evaluate(() => { window.__fakeNotes.perm = 'denied'; document.querySelector('.gnotes .gchip[data-on="0"]').click(); });
   await p.waitForTimeout(300);

@@ -10,6 +10,7 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHO
 // the first Feather & Field's save on this phone (since the switch, 26 Oct 2026, the first game lives in the site's classic/
 // folder and the 3D game at the usual address): only whether it's there, to offer the way to it; never read or changed here
 const FIRST_SAVE = 'feather-field-save-v1';
+const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' };      // (the reminders one can choose: notify.js GROUPS)
 const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
@@ -1082,23 +1083,36 @@ export class GameUI {
     later.addEventListener('click', () => this.close());
     row.append(yes, later); b.append(row, el('p', 'gnote', this.t('notes_ask_note')));
   }
-  // Settings: Reminders On / Off (on: the phone asked, if it hasn't been; turned off in the phone's own settings: said so)
+  // Settings: Reminders On / Off, and which (Audrey, 1 Nov: "choose which ones you want, for example eggs only"): eggs,
+  // chicks, the wheat and honey, the shows; none left: Off (and all four again next time it's turned on). On: the phone
+  // asked, if it hasn't been; turned off in the phone's own settings: said so
   notesRow() {
     const N = this.o.notes, row = el('div', 'grow gnotes'), ch = el('div', 'gchips'), note = el('p', 'gnote gnotes-note', this.t('notes_note'));
+    const pick = el('div', 'gchips gnotes-kinds');
     row.append(el('span', 'glabel', this.t('settings_notes')));
-    const show = on => { for (const x of ch.children) x.classList.toggle('on', (x.dataset.on === '1') === on); };
+    const show = on => { for (const x of ch.children) x.classList.toggle('on', (x.dataset.on === '1') === on); pick.hidden = !on; const K = N.kinds(); for (const x of pick.children) x.classList.toggle('on', K.includes(x.dataset.k)); };
     for (const on of [true, false]) {
       const c = el('button', 'gchip', this.t(on ? 'music_on' : 'music_off')); c.type = 'button'; c.dataset.on = on ? '1' : '0';
       c.addEventListener('click', async () => {
         if (!on) { N.setPref('off'); show(false); note.textContent = this.t('notes_note'); return; }
+        if (!N.kinds().length) N.setKinds(Object.keys(NOTE_KINDS));
         show(true); const ok = await N.ask(); show(ok);
         note.textContent = this.t(ok ? 'notes_note' : 'notes_denied');
       });
       ch.append(c);
     }
+    for (const [k, icon] of Object.entries(NOTE_KINDS)) {
+      const c = el('button', 'gchip gnotes-kind', icon + ' ' + this.t('notes_' + k)); c.type = 'button'; c.dataset.k = k;
+      c.addEventListener('click', () => {
+        const K = N.kinds(), now = K.includes(k) ? K.filter(x => x !== k) : [...K, k];
+        if (!now.length) { N.setKinds(Object.keys(NOTE_KINDS)); N.setPref('off'); show(false); return; }      // (none left: off)
+        N.setKinds(now); show(true);
+      });
+      pick.append(c);
+    }
     show(N.pref() === 'on'); row.append(ch);
     if (N.pref() === 'on') N.allowed().then(ok => { if (!ok) { show(false); note.textContent = this.t('notes_denied'); } });
-    return [row, note];
+    return [row, pick, note];
   }
   settings() {
     const g = this.g, b = this.open('settings', this.t('settings'));
