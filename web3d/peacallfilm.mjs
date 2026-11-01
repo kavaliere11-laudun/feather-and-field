@@ -43,8 +43,8 @@ await b.close();
 // the sound: each call where he opened his beak, over the day's countryside, quietly
 const A = '/home/claude/ff-source/web3d/audio/farm/';
 const ins = ['-i', A + 'day.mp3', ...CLIPS.flatMap(c => ['-i', A + c + '.mp3'])];
-const parts = ['[0:a]volume=0.22,atrim=0:' + LEN + '[bed]', ...heard.map((t, j) => `[${j + 1}:a]adelay=${Math.round(t * 1000)}|${Math.round(t * 1000)},volume=0.9[c${j}]`)];
+const parts = ['[0:v]scale=1280:-2[v]', '[1:a]volume=0.22,atrim=0:' + LEN + '[bed]', ...heard.map((t, j) => `[${j + 2}:a]adelay=${Math.round(t * 1000)}|${Math.round(t * 1000)},volume=0.9[c${j}]`)];
 const mix = parts.join(';') + ';[bed]' + heard.map((_, j) => `[c${j}]`).join('') + `amix=inputs=${heard.length + 1}:normalize=0,afade=t=out:st=${LEN - 0.6}:d=0.6[a]`;
-execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', `${DIR}/%04d.jpg`, ...ins, '-filter_complex', mix, '-map', '0:v', '-map', '[a]',
-  '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '22', '-c:a', 'aac', '-b:a', '128k', '-shortest', OUT]);
+execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', `${DIR}/%04d.jpg`, ...ins, '-filter_complex', mix, '-map', '[v]', '-map', '[a]',
+  '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '22', '-c:a', 'aac', '-b:a', '128k', '-shortest', OUT]);
 console.log('film', OUT);
