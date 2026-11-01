@@ -3834,3 +3834,24 @@ the birds already had.
   from the hens' laying, a sitting hen's chicks with her name, the "miss you" at 18:00 three days on, the game's
   language; Settings Off / On / the phone saying no; not asked again after a reload; on the website nothing. English
   and French: all pass.
+## Reminders: choose which (1 Nov 2026, 21:01; Audrey: "Add an option to disable the notifications and or to choose which ones you want for example, eggs only. The one after 3 days inactivity shows if at least 1 notification is active")
+
+- Settings: Reminders On / Off, and when on four to tap: 🥚 Eggs, 🐣 Chicks, 🌾 Wheat & honey, 🏆 Shows (`notify.js`
+  GROUPS; this phone's choice, `ff3d.notesKinds`, read back only as known kinds, once each; never chosen: all four).
+  The "miss you" note comes only with at least one on; the last one untapped turns Reminders off (all four again next
+  time). A change made while the phone is being updated waits for it (it used to be dropped).
+- notetest (English and French): eggs only (just the eggs and the "miss you", on the phone too), wheat and honey only,
+  none left (off, nothing on the phone, not even the "miss you"), on again (all four), a choice changed outside the
+  game: all pass.
+
+## The app icon, two rounds (1 Nov 2026; Audrey: "We need to work on the icon of the game too")
+
+- `web3d/iconpics.mjs`: the game's own birds from the line-up, posed and cut out (as bookpics.mjs), birds shot apart
+  when the line-up has one of them (the trio, the Silkie and her chick); backgrounds from the game itself with the sky
+  see-through (`BG=pagoda,farm`). `app/art/compose_icons.py` (round 1: sunrise rooster, white Silkie, the trio) and
+  `app/art/compose_silkie.py` (round 2: the white Silkie side on with her chick, in front of the Pagoda garden, the
+  farm, golden hour, or on green with a heart).
+- Audrey: round 1 "I like the silky, needs to be high quality. Maybe profile, and maybe with something else in the
+  background that gives an idea of the game. Maybe a baby chick with her too"; round 2 "I don't like them I will ask
+  another ai to create it". When it comes: 1024 x 1024 PNG, opaque, square (Apple rounds the corners), into
+  `app/art/` and `app/icons.py`.
