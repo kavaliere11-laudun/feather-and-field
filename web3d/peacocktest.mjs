@@ -14,7 +14,7 @@ for (const t of LOOKS) {
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   const r = await p.evaluate(secs => {
     const f = window.__farm; f.pause(true);
-    const plots = f.coopPlots().filter(q => q.breed === 'pea'); let frames = 0, unsettled = 0, unclear = 0, flights = 0, worst = [], displays = 0, fanned = 0, onTrainHen = 0, henFrames = 0, calls = 0, gap = 1e9, lastCall = null;
+    const plots = f.coopPlots().filter(q => q.breed === 'pea'); let frames = 0, unsettled = 0, unclear = 0, flights = 0, worst = [], displays = 0, fanned = 0, onTrainHen = 0, henFrames = 0, calls = 0, gap = 1e9;
     for (let i = 0; i < secs * 30; i++) {
       f.step(1 / 30, 1);
       for (const P of plots) for (const B of P.birds) {
@@ -27,7 +27,7 @@ for (const t of LOOKS) {
         if (B.A.fan < 0.3 && !(B.flight && B.root.position.y > 0.1) && !B.trainClear(q.x, q.z, B.trainY, false, B.root.rotation.y)) { unclear++; if (worst.length < 4) worst.push([+q.x.toFixed(2), +q.z.toFixed(2), +B.root.rotation.y.toFixed(2), B.act && B.act.type]); }
         if (B.act && B.act.type === 'display' && !B.act.counted) { B.act.counted = true; displays++; }
         if (B.A.fan > 0.95) fanned++;
-        if (B.act && B.act.type === 'call' && B.act.heard && !B.act.counted) { B.act.counted = true; calls++; if (lastCall !== null) gap = Math.min(gap, i / 30 - lastCall); lastCall = i / 30; }
+        if (B.act && B.act.type === 'call' && B.act.heard && !B.act.counted) { B.act.counted = true; calls++; if (B.lastCallT !== undefined) gap = Math.min(gap, i / 30 - B.lastCallT); B.lastCallT = i / 30; }      // (each peacock's own calls apart)
       }
     }
     return { calls, gap: +gap.toFixed(1), frames, unsettled, unclear, flights, worst, displays, fanned, onTrainHen, henFrames, peacocks: plots.map(P => P.birds.filter(B => B.train).length) };
@@ -38,7 +38,7 @@ for (const t of LOOKS) {
   if (r.onTrainHen > r.henFrames * 0.02) fail('look ' + t + ': a hen on his train ' + r.onTrainHen + ' of ' + r.henFrames);
   if (!r.displays) fail('look ' + t + ': he never showed off his fan');
   if (!r.calls) fail('look ' + t + ': he never called');
-  if (r.gap < 49) fail('look ' + t + ': two calls ' + r.gap + ' s apart (50 at least)');
+  if (r.gap < 49) fail('look ' + t + ': two of his calls ' + r.gap + ' s apart (50 at least)');
 }
 // bedtime and the morning (the Snug)
 await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&coopbreeds=pea&looks=2&time=22:44`, { waitUntil: 'domcontentloaded', timeout: 120000 });

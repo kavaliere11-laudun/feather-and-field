@@ -1109,3 +1109,621 @@ def duckhouse_dec(seed=101, name='duckhouse'):
         objs.append(sphere('dhpleaf', 0.03, (0.37 + math.cos(a_) * 0.03, 0.3 + math.sin(a_) * 0.03, 0.17), m=C('dhleaf', '#4a8a38', rough=0.8), ico=1, disp=0.2, seed=k))
         objs.append(sphere('dhmari', 0.018, (0.37 + math.cos(a_ + 0.6) * 0.03, 0.3 + math.sin(a_ + 0.6) * 0.03, 0.2), m=C('dhmaric', '#ff8c2a', rough=0.6), ico=1))
     return finish([o for o in objs if o is not None], name)
+
+
+# ================================================================== the village's small things (Audrey, 1 Nov: "Rebuild
+# the small things (Recommended)"), each the size and shape of the old one where the game measures it (the footbridge's
+# deck, the dock's deck, the lamp's head)
+def arc_pts(c, r, a0, a1, n, plane='yz'):
+    """Points round an arc (centre c, radius r, from angle a0 to a1) in the y-z plane (x fixed) or the x-z plane."""
+    out = []
+    for k in range(n + 1):
+        a = a0 + (a1 - a0) * k / n
+        out.append(Vector((c[0], c[1] + r * math.cos(a), c[2] + r * math.sin(a))) if plane == 'yz' else Vector((c[0] + r * math.cos(a), c[1], c[2] + r * math.sin(a))))
+    return out
+
+
+def polyline(objs, name, pts, w, t, normal, m):
+    for a, b in zip(pts, pts[1:]):
+        objs.append(plank(name, a, b, w, t, normal, m, jitter=0.0, bevel=0.0))
+
+
+# ------------------------------------------------------------------ a park bench
+def bench_v(seed=111, name='bench'):
+    """A park bench: two cast-iron ends in green (a curved front leg, the back leg sweeping up into the back, an armrest
+    ending in a scroll), five seat slats and three back slats of warm wood, little bolts."""
+    random.seed(seed); objs = []
+    iron = C('vbiron', '#2e4a3a', rough=0.45); wood = [C('vbwood%d' % i, h, rough=0.7, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)) for i, h in enumerate(('#a8743f', '#9c6a38', '#b07b45'))]
+    for sx in (-0.49, 0.49):
+        P = lambda y, z: Vector((sx, y, z))
+        polyline(objs, 'vbleg', [P(-0.15, 0.0), P(-0.135, 0.15), P(-0.13, 0.3), P(-0.135, 0.4)], 0.045, 0.03, (1, 0, 0), iron)
+        polyline(objs, 'vbleg', [P(0.16, 0.0), P(0.14, 0.2), P(0.12, 0.4), P(0.13, 0.55), P(0.16, 0.7), P(0.18, 0.8)], 0.045, 0.03, (1, 0, 0), iron)
+        polyline(objs, 'vbrail', [P(-0.16, 0.405), P(0.14, 0.415)], 0.04, 0.03, (1, 0, 0), iron)
+        polyline(objs, 'vbarm', [P(0.14, 0.6), P(0.0, 0.615), P(-0.12, 0.61), P(-0.17, 0.59)], 0.035, 0.035, (1, 0, 0), iron)
+        sc = arc_pts((sx, -0.17, 0.55), 0.04, math.pi / 2, math.pi * 2.2, 8)          # (the armrest's scroll at the front)
+        polyline(objs, 'vbscroll', sc, 0.025, 0.03, (1, 0, 0), iron)
+        polyline(objs, 'vbstay', [P(-0.14, 0.42), P(-0.15, 0.51)], 0.02, 0.025, (1, 0, 0), iron)
+        objs.append(cyl('vbfoot', 0.03, 0.02, (sx, -0.15, 0.01), m=iron, verts=8, bevel=0.0))
+        objs.append(cyl('vbfoot', 0.03, 0.02, (sx, 0.16, 0.01), m=iron, verts=8, bevel=0.0))
+    for k in range(5):                                   # the seat
+        y = -0.14 + k * 0.064
+        objs.append(box('vbseat', (1.1, 0.054, 0.028), (0, y, 0.43 + 0.002 * k), m=random.choice(wood), bevel=0.006, segs=1))
+    for k in range(3):                                   # the back, leaning back
+        z = 0.52 + k * 0.1; y = 0.13 + (z - 0.5) * 0.18
+        objs.append(box('vbback', (1.1, 0.026, 0.075), (0, y + 0.02, z), (math.radians(-12), 0, 0), m=random.choice(wood), bevel=0.006, segs=1))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ a lamp post (its lamp where main.js puts its pool of
+# light: 0.24 out along x)
+def lamp_post_v(seed=112, name='lamp_post'):
+    """A Victorian lamp post in black iron: a flared base with a collar, a slim fluted post, a scrolled bracket out to a
+    four-sided lantern of glowing glass (lit at night) with a pointed cap and a finial."""
+    random.seed(seed); objs = []
+    iron = C('vliron', '#23272a', rough=0.45); lamp = C('lamp', '#ffe2a0', rough=0.3)
+    objs.append(lathe('vlbase', [(0.085, 0.0), (0.085, 0.03), (0.07, 0.05), (0.06, 0.12), (0.045, 0.2), (0.05, 0.23), (0.04, 0.26)], iron, verts=8, cap_top=True))
+    objs.append(cyl('vlpost', 0.026, 1.18, (0, 0, 0.26 + 0.59), m=iron, verts=10, bevel=0.0))
+    for z in (0.62, 1.1, 1.44):
+        objs.append(cyl('vlring', 0.036, 0.025, (0, 0, z), m=iron, verts=10, bevel=0.0))
+    objs.append(sphere('vltop', 0.035, (0, 0, 1.47), m=iron, seg=10, rings=6))
+    polyline(objs, 'vlarm', [Vector((0, 0, 1.43)), Vector((0.12, 0, 1.45)), Vector((0.24, 0, 1.44))], 0.022, 0.022, (0, -1, 0), iron)
+    polyline(objs, 'vlscroll', arc_pts((0.07, 0, 1.36), 0.065, math.pi * 0.05, math.pi * 1.25, 8, plane='xz'), 0.016, 0.016, (0, -1, 0), iron)
+    # the lantern: glass between black corner posts, a base, a cap, a finial
+    objs.append(cyl('vlhook', 0.008, 0.06, (0.24, 0, 1.415), m=iron, verts=6, bevel=0.0))
+    objs.append(cyl('lamp', 0.07, 0.17, (0.24, 0, 1.31), (0, 0, math.radians(45)), m=lamp, verts=4, r2=0.085, bevel=0.0))
+    for k in range(4):
+        a = math.radians(45) + k * math.pi / 2
+        objs.append(plank('vlcorner', (0.24 + math.cos(a) * 0.072, math.sin(a) * 0.072, 1.225), (0.24 + math.cos(a) * 0.088, math.sin(a) * 0.088, 1.395), 0.012, 0.012, (math.cos(a), math.sin(a), 0), iron, jitter=0.0, bevel=0.0))
+    objs.append(cyl('vlbottom', 0.075, 0.025, (0.24, 0, 1.215), (0, 0, math.radians(45)), m=iron, verts=4, r2=0.06, bevel=0.0))
+    objs.append(cyl('vlcap', 0.11, 0.07, (0.24, 0, 1.43), (0, 0, math.radians(45)), m=iron, verts=4, r2=0.02, bevel=0.0))
+    objs.append(sphere('vlfinial', 0.014, (0.24, 0, 1.48), m=iron, seg=8, rings=5))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the well
+def well_v(seed=113, name='well'):
+    """A round stone well: courses of stones, a coping, dark water; two oak posts with knee braces, a winch with its crank
+    and rope, a wooden bucket with iron hoops hanging over the water, a shingled roof; moss and a fern at its foot."""
+    random.seed(seed); objs = []
+    stones = [C('vwstone%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#a59d8e', '#968f80', '#b3ab9b', '#8c8577'))]
+    oak = C('vwoak', '#7a5536', rough=0.75, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)); dark = C('vwdark', '#14232a', rough=0.15)
+    roof = [C('vwroof%d' % i, h, rough=0.7, var=0.06) for i, h in enumerate(('#7b4a33', '#86513a', '#6f432e'))]
+    iron = C('vwiron', '#3a3a38', rough=0.5); rope = C('vwrope', '#c9b48a', rough=0.9); moss = C('vwmoss', '#6f8f45', rough=0.9, var=0.1)
+    R = 0.42
+    objs.append(cyl('vwcore', R - 0.04, 0.38, (0, 0, 0.19), m=stones[1], verts=20, bevel=0.0))      # (below the water: it shows through the top)
+    for row in range(4):
+        n = 13; off = (0.5 if row % 2 else 0) * math.tau / n
+        for k in range(n):
+            a = k / n * math.tau + off; L = 2 * math.pi * R / n - 0.02
+            objs.append(box('vwstone', (L * random.uniform(0.9, 1.0), 0.12, 0.105), (math.cos(a) * R, math.sin(a) * R, 0.06 + row * 0.115), (0, 0, a + math.pi / 2), m=random.choice(stones), bevel=0.015, segs=1, jitter=0.004))
+    for k in range(10):                                  # the coping: flat stones round the top
+        a = k / 10 * math.tau
+        objs.append(box('vwcope', (0.3, 0.17, 0.05), (math.cos(a) * (R - 0.01), math.sin(a) * (R - 0.01), 0.505), (0, 0, a + math.pi / 2), m=stones[2], bevel=0.012, segs=1, jitter=0.003))
+    objs.append(cyl('vwwater', R - 0.08, 0.01, (0, 0, 0.42), m=dark, verts=20, bevel=0.0))
+    for sy in (-1, 1):                                   # the posts, braces, winch
+        objs.append(box('vwpost', (0.08, 0.08, 0.92), (0, sy * 0.47, 0.42 + 0.46 * 0 + 0.46), m=oak, bevel=0.008, segs=1))
+        objs.append(plank('vwbrace', (0, sy * 0.47, 1.05), (0, sy * 0.3, 1.25), 0.05, 0.04, (1, 0, 0), oak, jitter=0.2))
+    objs.append(box('vwbeam', (0.08, 1.06, 0.08), (0, 0, 1.28), m=oak, bevel=0.008, segs=1))
+    objs.append(cyl('vwroller', 0.05, 0.86, (0, 0, 0.95), (math.radians(90), 0, 0), m=oak, verts=12, bevel=0.0))
+    for k in range(6): objs.append(cyl('vwrope', 0.054, 0.02, (0, -0.1 + k * 0.025, 0.95), (math.radians(90), 0, 0), m=rope, verts=12, bevel=0.0))
+    objs.append(cyl('vwrope', 0.008, 0.12, (0, 0.0, 0.88), m=rope, verts=5, bevel=0.0))
+    polyline(objs, 'vwcrank', [Vector((0, 0.51, 0.95)), Vector((0, 0.535, 0.95)), Vector((0, 0.535, 0.84)), Vector((0, 0.565, 0.84))], 0.02, 0.02, (1, 0, 0), iron)
+    objs.append(lathe('vwbucket', [(0.07, 0.72), (0.08, 0.72), (0.095, 0.82), (0.088, 0.82), (0.064, 0.73)], oak, verts=12, cap_top=False))
+    objs.append(cyl('vwbucketb', 0.07, 0.01, (0, 0, 0.725), m=oak, verts=12, bevel=0.0))
+    for z in (0.745, 0.8): objs.append(cyl('vwhoop', 0.075 + (z - 0.72) * 0.17, 0.012, (0, 0, z), m=iron, verts=12, bevel=0.0))
+    polyline(objs, 'vwhandle', arc_pts((0, 0, 0.82), 0.09, 0, math.pi, 6, plane='xz'), 0.008, 0.008, (0, 1, 0), iron)
+    # the roof: two slopes of shingles along y, a ridge
+    ang = math.atan2(0.26, 0.42); SL = math.hypot(0.26, 0.42) + 0.06
+    for sx in (-1, 1):
+        nrm = Vector((sx * math.sin(ang), 0, math.cos(ang))); down = Vector((sx * math.cos(ang), 0, -math.sin(ang))); top = Vector((0, 0, 1.53))
+        objs.append(box('vwroofb', (SL, 1.12, 0.02), tuple(top + down * SL / 2 - nrm * 0.012), (0, sx * ang, 0), m=roof[0], bevel=0.0))
+        for r in range(5):
+            a = top + down * (SL - r * SL / 5)
+            for k in range(8):
+                y = -0.56 + (k + 0.5 + (0.5 if r % 2 else 0)) * 1.12 / 8
+                if y > 0.56: continue
+                p0 = a + Vector((0, y, 0)) + nrm * (0.01 + 0.004 * (r % 2)); p1 = p0 - down * (SL / 5 + 0.03)
+                objs.append(plank('vwsh', p0, p1, 1.12 / 8 - 0.008, 0.014, tuple(nrm), random.choice(roof), jitter=0.5, bevel=0.0))
+    objs.append(box('vwridge', (0.06, 1.16, 0.05), (0, 0, 1.54), m=roof[2], bevel=0.008, segs=1))
+    # moss and a fern at its foot
+    for k in range(5):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('vwmoss', 0.05, (math.cos(a) * (R + 0.02), math.sin(a) * (R + 0.02), 0.03), (1.6, 0.8, 0.5), (0, 0, a + math.pi / 2), m=moss, ico=1, disp=0.3, seed=k))
+    tuft(objs, 0.36, -0.38, 9, 0.17, 0.2, [C('vwfern', '#4a8a38', rough=0.8)], width=0.045)
+    return finish(objs, name)
+
+
+def half_disc(name, r, c, m, n=10, t=0.012):
+    """A half disc hanging down from c (its flat edge along x, facing -y): a scallop."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rings = []
+    for dy in (-t / 2, t / 2):
+        ring = [bm.verts.new((c[0] + r * math.cos(math.pi + math.pi * k / n), c[1] + dy, c[2] + r * math.sin(math.pi + math.pi * k / n))) for k in range(n + 1)]
+        rings.append(ring)
+    bm.faces.new(rings[0]); bm.faces.new(rings[1][::-1])
+    for k in range(n):
+        bm.faces.new((rings[0][k], rings[0][k + 1], rings[1][k + 1], rings[1][k]))
+    bm.faces.new((rings[0][n], rings[0][0], rings[1][0], rings[1][n]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+# ------------------------------------------------------------------ the egg stall
+def egg_stall_v(seed=114, name='egg_stall'):
+    """A roadside egg stall: four posts, a counter boarded in front with a painted panel, a striped awning (red and cream)
+    with a scalloped edge on a sloping frame; on the counter three trays of eggs (brown, cream, blue-green), a wicker basket
+    of eggs, an honesty box; a crate of straw beneath; a little chalkboard with an egg drawn on it by the front corner."""
+    random.seed(seed); objs = []
+    W, D = 0.9, 0.5
+    wood = C('vswood', '#9a6a43', rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)); wood2 = C('vswood2', '#8a5d3a', rough=0.75, var=0.12)
+    red = C('vsred', '#c8443a', rough=0.65); cream = C('vscream', '#f1e8d2', rough=0.65); green = C('vsgreen', '#5e8a5a', rough=0.6)
+    tray = C('vstray', '#c9b896', rough=0.95); straw = C('vsstraw', '#e2c46a', rough=0.9, var=0.1)
+    eggs = [C('vsegg%d' % i, h, rough=0.45) for i, h in enumerate(('#b0703f', '#efe6d2', '#9cc6bb'))]
+    for sx in (-1, 1):
+        objs.append(box('vspost', (0.06, 0.06, 1.2), (sx * W / 2, -D / 2 + 0.03, 0.6), m=wood, bevel=0.006, segs=1))
+        objs.append(box('vspost', (0.06, 0.06, 1.48), (sx * W / 2, D / 2 - 0.03, 0.74), m=wood, bevel=0.006, segs=1))
+        objs.append(plank('vsrail', (sx * W / 2, -D / 2 + 0.03, 1.19), (sx * W / 2, D / 2 - 0.03, 1.47), 0.05, 0.04, (sx, 0, 0), wood, jitter=0.1))
+        objs.append(box('vsside', (0.02, D - 0.06, 0.4), (sx * W / 2, 0, 0.24), m=wood2, bevel=0.004, segs=1))
+    objs.append(box('vscounter', (W + 0.1, D + 0.06, 0.05), (0, 0, 0.47), m=wood, bevel=0.008, segs=1))
+    for k in range(9):                                   # the front: upright boards
+        x = -W / 2 + 0.05 + k * (W - 0.1) / 8
+        objs.append(box('vsboard', ((W - 0.1) / 8 - 0.008, 0.02, 0.42), (x, -D / 2 - 0.005, 0.235), m=random.choice((wood, wood2)), bevel=0.003, segs=1))
+    objs.append(box('vspanel', (0.42, 0.012, 0.2), (0, -D / 2 - 0.02, 0.26), m=cream, bevel=0.004, segs=1))
+    for k in range(3):                                   # three eggs painted on the panel
+        objs.append(sphere('vspaint', 0.035, (-0.1 + k * 0.1, -D / 2 - 0.028, 0.26), (0.8, 0.25, 1.0), m=eggs[k], seg=10, rings=6))
+    # the awning: a sloping frame, stripes, a scalloped edge
+    ang = math.radians(16); front, back = Vector((0, -D / 2 - 0.2, 1.2)), Vector((0, D / 2 + 0.02, 1.49))
+    n = 9
+    for k in range(n):
+        x0 = -W / 2 - 0.15 + k * (W + 0.3) / n; x1 = x0 + (W + 0.3) / n; xm = (x0 + x1) / 2
+        objs.append(plank('vsstripe', front + Vector((xm, 0, 0)), back + Vector((xm, 0, 0)), x1 - x0 + 0.002, 0.012, (0, -math.sin(ang), math.cos(ang)), red if k % 2 == 0 else cream, jitter=0.0, bevel=0.0))
+        objs.append(half_disc('vsscallop', (x1 - x0) / 2 - 0.002, (xm, front.y - 0.006, front.z + 0.004), red if k % 2 == 0 else cream))      # (a scallop hanging below each stripe)
+    # on the counter: trays of eggs, a basket, the honesty box
+    for k, ex in enumerate((-0.3, -0.04)):
+        objs.append(box('vstray', (0.22, 0.28, 0.03), (ex, -0.03, 0.51), m=tray, bevel=0.004, segs=1))
+        for i in range(3):
+            for j in range(4):
+                objs.append(sphere('vsegg', 0.026, (ex - 0.07 + i * 0.07, -0.135 + j * 0.07, 0.548), (1, 1, 1.3), m=eggs[(k + i + j) % 3 if k else k], seg=10, rings=7))
+    bx, by = 0.25, -0.05                                 # the basket: woven rim, eggs heaped
+    objs.append(lathe('vsbasket', [(0.07, 0.495), (0.1, 0.5), (0.115, 0.58), (0.105, 0.58), (0.088, 0.51), (0.0, 0.51)], straw, verts=14))
+    objs[-1].location = (bx, by, 0)
+    for k in range(7):
+        a = k / 7 * math.tau
+        objs.append(sphere('vsegg', 0.026, (bx + math.cos(a) * 0.055, by + math.sin(a) * 0.055, 0.575), (1, 1, 1.3), m=eggs[k % 3], seg=10, rings=7))
+    objs.append(sphere('vsegg', 0.026, (bx, by, 0.6), (1, 1, 1.3), m=eggs[1], seg=10, rings=7))
+    polyline(objs, 'vshandle', arc_pts((bx, by, 0.58), 0.1, 0, math.pi, 8, plane='xz'), 0.014, 0.01, (0, 1, 0), straw)
+    objs.append(box('vshonesty', (0.1, 0.08, 0.09), (0.33, 0.14, 0.54), m=green, bevel=0.006, segs=1))
+    objs.append(box('vsslot', (0.05, 0.012, 0.004), (0.33, 0.14, 0.586), m=C('vsdark', '#1d1a17', rough=0.9), bevel=0.0))
+    # a crate of straw beneath, and the chalkboard by the front corner
+    objs.append(box('vscrate', (0.3, 0.22, 0.16), (0.1, 0.05, 0.08), m=wood2, bevel=0.006, segs=1))
+    for k in range(10):
+        objs.append(plank('vsstraw', (0.1 + random.uniform(-0.12, 0.12), 0.05 + random.uniform(-0.08, 0.08), 0.15), (0.1 + random.uniform(-0.14, 0.14), 0.05 + random.uniform(-0.1, 0.1), 0.2), 0.012, 0.004, (0, 0, 1), straw, jitter=8.0, bevel=0.0))
+    cx, cy = 0.62, -0.42
+    for sd in (-1, 1):
+        objs.append(plank('vsaframe', (cx + sd * 0.09, cy - 0.06, 0.0), (cx + sd * 0.08, cy, 0.42), 0.03, 0.02, (0, -1, 0.15), wood, jitter=0.1))
+        objs.append(plank('vsaframe', (cx + sd * 0.09, cy + 0.08, 0.0), (cx + sd * 0.08, cy + 0.01, 0.42), 0.03, 0.02, (0, 1, 0.15), wood, jitter=0.1))
+    objs.append(plank('vsboard', (cx, cy - 0.06, 0.06), (cx, cy - 0.005, 0.38), 0.16, 0.012, (0, -1, 0.17), C('vschalk', '#2b2f2c', rough=0.9), jitter=0.0, bevel=0.0))
+    objs.append(sphere('vschalkegg', 0.045, (cx, cy - 0.04, 0.24), (0.75, 0.15, 1.0), (math.radians(-10), 0, 0), m=C('vswhite', '#f2f0ea', rough=0.9), seg=10, rings=6))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ a footbridge (its deck arched exactly as before:
+# main.js measures it for walking over)
+def bridge_v(seed=115, name='bridge', L=1.9, W=0.8, rise=0.22):
+    """A rustic footbridge: two arched stringers under the deck, eleven planks across them (as before, each a little
+    different), railings each side: posts with caps, a top rail and a lower rail following the arch, crossed braces between
+    the posts; a newel post at each end."""
+    random.seed(seed); objs = []
+    planks_m = [C('vbrplank%d' % i, h, rough=0.75, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)) for i, h in enumerate(('#9a6a43', '#8f623d', '#a5744a'))]
+    dark = C('vbrdark', '#5d4029', rough=0.8, var=0.08); cap = C('vbrcap', '#4c3422', rough=0.8)
+    zf = lambda t: 0.06 + rise * math.sin(math.pi * t)
+    n = 11
+    for i in range(n):
+        t = (i + 0.5) / n; x = -L / 2 + t * L; ang = math.atan(rise * math.pi / L * math.cos(math.pi * t))
+        objs.append(box('vbrplank', (L / n - 0.015, W - random.uniform(0, 0.03), 0.04), (x, random.uniform(-0.01, 0.01), zf(t)), (0, -ang, 0), m=random.choice(planks_m), bevel=0.006, segs=1, jitter=0.002))
+    for sy in (-1, 1):                                   # the stringers under the deck's edges
+        pts = [Vector((-L / 2 + L * k / 10, sy * (W / 2 - 0.08), zf(k / 10) - 0.06)) for k in range(11)]
+        polyline(objs, 'vbrstringer', pts, 0.08, 0.06, (0, sy, 0), dark)
+    for sy in (-1, 1):
+        y = sy * (W / 2 - 0.0)
+        posts = [k / 4 for k in range(5)]
+        for t in posts:
+            x = -L / 2 + 0.03 + t * (L - 0.06); z0 = zf(min(max(t, 0.02), 0.98))
+            h = 0.5 if t in (0, 1) else 0.44
+            objs.append(box('vbrpost', (0.055, 0.055, h), (x, y, z0 + h / 2 - 0.02), m=dark, bevel=0.006, segs=1))
+            objs.append(cyl('vbrcap', 0.042, 0.04, (x, y, z0 + h), m=cap, verts=8, r2=0.012, bevel=0.0))
+        for (dz, w) in ((0.42, 0.05), (0.2, 0.035)):
+            pts = [Vector((-L / 2 + 0.03 + (L - 0.06) * k / 12, y, zf(k / 12) + dz)) for k in range(13)]
+            polyline(objs, 'vbrrail', pts, w, 0.035, (0, sy, 0), dark)
+        for k in range(4):                               # crossed braces between the posts
+            t0, t1 = k / 4, (k + 1) / 4
+            x0, x1 = -L / 2 + 0.03 + t0 * (L - 0.06), -L / 2 + 0.03 + t1 * (L - 0.06)
+            a0, a1 = Vector((x0 + 0.03, y, zf(t0) + 0.04)), Vector((x1 - 0.03, y, zf(t1) + 0.19))
+            b0, b1 = Vector((x0 + 0.03, y, zf(t0) + 0.19)), Vector((x1 - 0.03, y, zf(t1) + 0.04))
+            objs.append(plank('vbrbrace', a0, a1, 0.025, 0.02, (0, sy, 0), dark, jitter=0.2, bevel=0.0))
+            objs.append(plank('vbrbrace', b0, b1, 0.025, 0.02, (0, sy, 0), dark, jitter=0.2, bevel=0.0))
+    return finish(objs, name)
+
+
+def barrel(objs, c, m_wood, m_hoop, h=0.5, r=0.19, lying=False, lid=None):
+    """A barrel: bulging staves (a turned body with stave lines), three iron hoops, a lid of boards. Upright at c, or lying
+    along x."""
+    prof = [(r * 0.86, 0.0), (r * 0.95, h * 0.2), (r, h * 0.5), (r * 0.95, h * 0.8), (r * 0.86, h)]
+    o = lathe('vbarrel', prof, m_wood, verts=16, cap_top=True, cap_bottom=True); objs.append(o)
+    parts = [o]
+    for k in range(16):                                   # the staves' joints
+        a = k / 16 * math.tau
+        pts = [Vector((math.cos(a) * (rr + 0.002), math.sin(a) * (rr + 0.002), z)) for rr, z in prof]
+        for p0, p1 in zip(pts, pts[1:]):
+            q = plank('vbstave', p0, p1, 0.006, 0.004, (math.cos(a), math.sin(a), 0), C('vbjoint', '#4a3020', rough=0.9), jitter=0.0, bevel=0.0); objs.append(q); parts.append(q)
+    for z, rr in ((h * 0.12, r * 0.92), (h * 0.5 - 0.06, r * 1.0), (h * 0.88, r * 0.92)):
+        q = cyl('vbhoop', rr + 0.008, 0.03, (0, 0, z), m=m_hoop, verts=16, bevel=0.0); objs.append(q); parts.append(q)
+    for k in range(4):                                    # the lid's boards
+        x = -r * 0.62 + k * r * 0.41
+        q = box('vblid', (r * 0.39, 2 * math.sqrt(max(0.0, (r * 0.84) ** 2 - x * x)) - 0.01, 0.012), (x, 0, h + 0.004), m=lid or m_wood, bevel=0.0); objs.append(q); parts.append(q)
+    M = Matrix.Translation(c) @ (Matrix.Rotation(math.radians(90), 4, 'Y') @ Matrix.Translation((0, 0, -h / 2)) if lying else Matrix.Identity(4))
+    bpy.context.view_layer.update()                       # (each part's own place first)
+    for q in parts: q.matrix_world = M @ q.matrix_world
+    return parts
+
+
+# ------------------------------------------------------------------ barrels
+def barrels_v(seed=121, name='barrels'):
+    """Two oak barrels standing and one lying chocked in front, iron hoops, lids of boards; a watering can on one."""
+    random.seed(seed); objs = []
+    oak = C('vboak', '#8a5a34', rough=0.75, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)); oak2 = C('vboak2', '#7a4f2e', rough=0.75, var=0.1)
+    hoop = C('vbhoopc', '#3b3a36', rough=0.45)
+    barrel(objs, Vector((-0.34, 0.33, 0)), oak, hoop, h=0.52, r=0.2)
+    barrel(objs, Vector((0.08, 0.38, 0)), oak2, hoop, h=0.46, r=0.18)
+    barrel(objs, Vector((0.33, -0.0, 0.17)), oak, hoop, h=0.46, r=0.17, lying=True)
+    for sx in (-1, 1):
+        objs.append(box('vbchock', (0.06, 0.08, 0.05), (0.33 + sx * 0.0, -0.0 + sx * 0.15, 0.025), (0, 0, 0), m=oak2, bevel=0.004, segs=1))
+    can = C('vbcan', '#4f7f5b', rough=0.45); cx, cy, cz = -0.34, 0.33, 0.53
+    objs.append(cyl('vbcan', 0.07, 0.15, (cx, cy, cz + 0.075), m=can, verts=14, bevel=0.004))
+    objs.append(plank('vbspout', (cx + 0.05, cy, cz + 0.05), (cx + 0.2, cy, cz + 0.17), 0.02, 0.02, (0, -1, 0), can, jitter=0.0, bevel=0.0))
+    polyline(objs, 'vbcanh', arc_pts((cx - 0.02, cy, cz + 0.15), 0.06, 0, math.pi, 6, plane='xz'), 0.018, 0.012, (0, -1, 0), can)
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the wheelbarrow
+def wheelbarrow_v(seed=122, name='wheelbarrow'):
+    """An old wooden wheelbarrow: a tray of boards splayed out, a spoked iron-rimmed wheel at the front, two long handles,
+    two legs; a load of three pumpkins and a trowel."""
+    random.seed(seed); objs = []
+    wood = C('vwbwood', '#9a6a43', rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)); wood2 = C('vwbwood2', '#7f5534', rough=0.75, var=0.1)
+    green = C('vwbgreen', '#4f7a55', rough=0.6); iron = C('vwbiron', '#3a3a38', rough=0.45)
+    # the tray: bottom, splayed sides, back; boards painted green
+    objs.append(box('vwbbottom', (0.62, 0.36, 0.025), (0.0, 0, 0.27), m=wood2, bevel=0.004, segs=1))
+    for sy in (-1, 1):
+        objs.append(box('vwbside', (0.7, 0.025, 0.2), (0.02, sy * 0.2, 0.36), (math.radians(sy * 22), 0, 0), m=green, bevel=0.004, segs=1))
+        for k in range(2): objs.append(box('vwbline', (0.7, 0.03, 0.006), (0.02, sy * (0.205 + 0.0), 0.33 + k * 0.07), (math.radians(sy * 22), 0, 0), m=C('vwbline', '#3e6346', rough=0.7), bevel=0.0))
+    objs.append(box('vwbback', (0.025, 0.46, 0.2), (-0.32, 0, 0.36), (0, math.radians(-25), 0), m=green, bevel=0.004, segs=1))
+    objs.append(box('vwbfront', (0.025, 0.42, 0.16), (0.36, 0, 0.34), (0, math.radians(35), 0), m=green, bevel=0.004, segs=1))
+    # the handles and legs
+    for sy in (-1, 1):
+        objs.append(plank('vwbhandle', (0.48, sy * 0.1, 0.19), (-0.84, sy * 0.22, 0.42), 0.045, 0.04, (0, 0, 1), wood, jitter=0.1))
+        objs.append(cyl('vwbgrip', 0.022, 0.12, (-0.79, sy * 0.215, 0.41), (0, math.radians(80), 0), m=wood2, verts=8, bevel=0.0))
+        objs.append(plank('vwbleg', (-0.3, sy * 0.16, 0.27), (-0.34, sy * 0.18, 0.0), 0.04, 0.04, (sy, 0, 0), wood, jitter=0.1))
+    # the wheel
+    wx, wz, R = 0.47, 0.17, 0.17
+    objs.append(cyl('vwbtyre', R, 0.05, (wx, 0, wz), (math.radians(90), 0, 0), m=iron, verts=20, bevel=0.0))
+    objs.append(cyl('vwbrim', R - 0.025, 0.056, (wx, 0, wz), (math.radians(90), 0, 0), m=wood, verts=20, bevel=0.0))
+    objs.append(cyl('vwbhub', 0.035, 0.08, (wx, 0, wz), (math.radians(90), 0, 0), m=iron, verts=10, bevel=0.0))
+    for k in range(8):
+        a = k / 8 * math.pi
+        d = Vector((math.cos(a), 0, math.sin(a)))
+        objs.append(plank('vwbspoke', Vector((wx, -0.031, wz)) - d * (R - 0.03), Vector((wx, -0.031, wz)) + d * (R - 0.03), 0.018, 0.012, (0, -1, 0), wood2, jitter=0.0, bevel=0.0))
+        objs.append(plank('vwbspoke', Vector((wx, 0.031, wz)) - d * (R - 0.03), Vector((wx, 0.031, wz)) + d * (R - 0.03), 0.018, 0.012, (0, 1, 0), wood2, jitter=0.0, bevel=0.0))
+    # the load: pumpkins, a trowel
+    pump = C('vwbpump', '#e0802e', rough=0.55); stalk = C('vwbstalk', '#6b5a2e', rough=0.8)
+    for (x, y, r) in ((-0.12, -0.06, 0.11), (0.12, 0.07, 0.1), (0.0, 0.0, 0.085)):
+        z = 0.3 + r * 0.8 + (0.08 if r < 0.09 else 0)
+        for k in range(6):                               # ribbed: six lobes
+            a = k / 6 * math.tau
+            objs.append(sphere('vwbpump', r * 0.62, (x + math.cos(a) * r * 0.38, y + math.sin(a) * r * 0.38, z), (1, 1, 0.82), m=pump, seg=12, rings=8))
+        objs.append(cyl('vwbstalk', 0.012, 0.05, (x, y, z + r * 0.75), m=stalk, verts=6, r2=0.008, bevel=0.0))
+    objs.append(plank('vwbtrowel', (0.22, -0.12, 0.42), (0.36, -0.14, 0.48), 0.05, 0.006, (0, 0, 1), C('vwbsteel', '#a9aca8', rough=0.35, metal=0.8), jitter=0.0, bevel=0.0))
+    objs.append(cyl('vwbtrowelh', 0.014, 0.1, (0.15, -0.11, 0.39), (0, math.radians(68), math.radians(-8)), m=wood, verts=8, bevel=0.0))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the scarecrow (a friendly one)
+def scarecrow_v(seed=123, name='scarecrow'):
+    """A friendly scarecrow on his pole and cross-bar: a checked shirt with patches, blue dungarees, straw at his cuffs,
+    neck and ankles, a sack-cloth head with button eyes, a stitched smile and rosy cheeks, a straw hat with a red band and a
+    flower; a crow sitting on his arm (they're friends)."""
+    random.seed(seed); objs = []
+    pole = C('vscpole', '#7a5536', rough=0.8, var=0.1); straw = C('vscstraw', '#e2c46a', rough=0.9, var=0.12)
+    shirt = C('vscshirt', '#c0453a', rough=0.8); check = C('vsccheck', '#8e2f2a', rough=0.8); denim = C('vscdenim', '#4b6a9a', rough=0.85)
+    sack = C('vscsack', '#cfae7a', rough=0.95, var=0.06); dark = C('vscdark', '#2a2420', rough=0.6); cheek = C('vsccheek', '#e98a7a', rough=0.8)
+    patch = C('vscpatch', '#e2c35a', rough=0.85); band = C('vscband', '#b8382e', rough=0.6)
+    objs.append(box('vscpole', (0.06, 0.06, 1.42), (0, 0.04, 0.71), m=pole, bevel=0.006, segs=1))
+    objs.append(box('vscbar', (0.88, 0.05, 0.05), (0, 0.04, 1.06), m=pole, bevel=0.006, segs=1))
+    # the shirt: a body and two sleeves along the bar, checks, a patch; straw at the cuffs and neck
+    objs.append(box('vscshirt', (0.32, 0.18, 0.36), (0, 0.0, 0.98), m=shirt, bevel=0.04, segs=2))
+    for sx in (-1, 1):
+        objs.append(cyl('vscsleeve', 0.075, 0.26, (sx * 0.29, 0.0, 1.06), (0, math.radians(90), 0), m=shirt, verts=10, r2=0.065, bevel=0.0))
+        for k in range(7):
+            objs.append(plank('vscstraw', (sx * 0.42, 0.0, 1.06), (sx * (0.46 + random.uniform(0, 0.04)), random.uniform(-0.06, 0.06), 1.06 + random.uniform(-0.07, 0.05)), 0.012, 0.004, (0, 0, 1), straw, jitter=6.0, bevel=0.0))
+    for k in range(4):
+        objs.append(box('vsccheck', (0.33, 0.185, 0.012), (0, 0.0, 0.86 + k * 0.08), m=check, bevel=0.0))
+        objs.append(box('vsccheck', (0.012, 0.186, 0.37), (-0.12 + k * 0.08, 0.0, 0.98), m=check, bevel=0.0))
+    objs.append(box('vscpatch', (0.09, 0.012, 0.08), (0.07, -0.095, 0.92), (0, math.radians(8), 0), m=patch, bevel=0.0))
+    # dungarees: the bib and two legs hanging round the pole, straw at the ankles
+    objs.append(box('vscbib', (0.2, 0.012, 0.14), (0, -0.095, 0.9), m=denim, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(plank('vscstrap', (sx * 0.08, -0.096, 0.96), (sx * 0.1, -0.096, 1.14), 0.03, 0.008, (0, -1, 0), denim, jitter=0.0, bevel=0.0))
+        objs.append(cyl('vscleg', 0.07, 0.42, (sx * 0.08, 0.02, 0.56), (0, math.radians(sx * 3), 0), m=denim, verts=10, r2=0.06, bevel=0.0))
+        for k in range(6):
+            objs.append(plank('vscstraw', (sx * 0.08, 0.02, 0.36), (sx * 0.08 + random.uniform(-0.05, 0.05), 0.02 + random.uniform(-0.05, 0.05), 0.28), 0.012, 0.004, (0, 0, 1), straw, jitter=6.0, bevel=0.0))
+    objs.append(box('vscbelt', (0.3, 0.17, 0.05), (0, 0.0, 0.8), m=denim, bevel=0.02, segs=1))
+    # the head: a sack, button eyes, a stitched smile, cheeks; straw at the neck; the hat
+    objs.append(sphere('vschead', 0.13, (0, 0.0, 1.32), (1, 0.95, 1.05), m=sack, seg=16, rings=10))
+    for k in range(10): objs.append(plank('vscstraw', (0, 0.0, 1.2), (random.uniform(-0.1, 0.1), random.uniform(-0.1, 0.1), 1.15), 0.012, 0.004, (0, 0, 1), straw, jitter=8.0, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(cyl('vsceye', 0.022, 0.012, (sx * 0.045, -0.12, 1.35), (math.radians(90), 0, 0), m=dark, verts=10, bevel=0.0))
+        objs.append(sphere('vsccheek', 0.025, (sx * 0.075, -0.112, 1.29), (1, 0.4, 0.8), m=cheek, seg=8, rings=5))
+    sm = [Vector((0.06 * math.cos(a), -0.122 - 0.01 * math.sin(a), 1.285 - 0.03 * math.sin(a))) for a in [math.pi * (0.1 + 0.8 * k / 6) for k in range(7)]]
+    polyline(objs, 'vscsmile', sm, 0.008, 0.006, (0, -1, 0), dark)
+    objs.append(cyl('vscbrim', 0.22, 0.02, (0, 0.0, 1.43), m=straw, verts=20, bevel=0.0))
+    objs.append(cyl('vschat', 0.11, 0.14, (0, 0.0, 1.51), m=straw, verts=16, r2=0.095, bevel=0.0))
+    objs.append(cyl('vscband', 0.106, 0.03, (0, 0.0, 1.46), m=band, verts=16, bevel=0.0))
+    objs.append(sphere('vscflower', 0.025, (0.08, -0.07, 1.47), m=C('vscflowerc', '#f2c43c', rough=0.6), ico=1))
+    # the crow on his arm
+    crow = C('vsccrow', '#24262b', rough=0.5); beak = C('vscbeak', '#d9a640', rough=0.5)
+    bx, bz = -0.34, 1.12
+    objs.append(sphere('vsccrow', 0.045, (bx, 0.04, bz + 0.04), (1.0, 1.4, 0.95), (0, 0, 0), m=crow, seg=12, rings=8))
+    objs.append(sphere('vsccrowh', 0.03, (bx, -0.015, bz + 0.09), m=crow, seg=10, rings=7))
+    objs.append(cyl('vsccrowb', 0.01, 0.035, (bx, -0.05, bz + 0.088), (math.radians(90), 0, 0), m=beak, verts=6, r2=0.0, bevel=0.0))
+    objs.append(plank('vsccrowt', (bx, 0.09, bz + 0.03), (bx, 0.15, bz + 0.0), 0.04, 0.008, (0, 0, 1), crow, jitter=0.0, bevel=0.0))
+    for sx in (-1, 1): objs.append(sphere('vsccroweye', 0.006, (bx + sx * 0.02, -0.03, bz + 0.1), m=C('vscwhite', '#f2f0ea', rough=0.4), seg=6, rings=4))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the log pile
+def log_pile_v(seed=124, name='log_pile'):
+    """A stack of split and round logs between two stakes: bark, pale cut ends with rings; a few sticks of kindling."""
+    random.seed(seed); objs = []
+    bark = [C('vlpbark%d' % i, h, rough=0.9, var=0.12) for i, h in enumerate(('#5b3f2a', '#4f3624', '#6a4a31'))]
+    end = C('vlpend', '#d9b789', rough=0.85, var=0.06); ring = C('vlpring', '#b48d5e', rough=0.85)
+    rows = [(-0.21, 0.09), (-0.0, 0.09), (0.21, 0.09), (-0.105, 0.27), (0.105, 0.27), (0.0, 0.44)]
+    for (y, z) in rows:
+        r = random.uniform(0.085, 0.1); L = random.uniform(0.74, 0.82); x0 = random.uniform(-0.04, 0.04)
+        objs.append(cyl('vlplog', r, L, (x0, y, z), (0, math.radians(90), 0), m=random.choice(bark), verts=10, bevel=0.0))
+        for sx in (-1, 1):
+            objs.append(cyl('vlpend', r * 0.9, 0.012, (x0 + sx * L / 2, y, z), (0, math.radians(90), 0), m=end, verts=10, bevel=0.0))
+            objs.append(cyl('vlpring', r * 0.5, 0.014, (x0 + sx * L / 2, y, z), (0, math.radians(90), 0), m=ring, verts=8, bevel=0.0))
+    for sy in (-1, 1):
+        objs.append(box('vlpstake', (0.05, 0.05, 0.56), (0.0, sy * 0.3, 0.28), (math.radians(sy * -6), 0, 0), m=bark[1], bevel=0.006, segs=1))
+    for k in range(5):
+        objs.append(plank('vlpkindling', (0.2 + random.uniform(-0.05, 0.05), -0.27 + k * 0.012, 0.0), (0.42 + random.uniform(-0.02, 0.02), -0.25 + k * 0.01, 0.12), 0.03, 0.02, (0, -1, 0), random.choice(bark), jitter=4.0))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the dock (its deck as before, 0.12 up: main.js stands
+# the farmer and his rod on it)
+def dock_v(seed=125, name='dock', L=1.8):
+    """A little landing stage over the pond: boards across it (each its own shade, small gaps) on two bearers, four piles
+    and two taller mooring posts at the end with rope round them, a coil of rope, a life ring on a post."""
+    random.seed(seed); objs = []
+    planks_m = [C('vdkplank%d' % i, h, rough=0.75, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)) for i, h in enumerate(('#9a6a43', '#8f623d', '#a5744a'))]
+    dark = C('vdkdark', '#4f3624', rough=0.85, var=0.08); rope = C('vdkrope', '#c9b48a', rough=0.9)
+    n = 12; w = L / 7 * 7 / n
+    for i in range(n):
+        x = -0.12 + (i + 0.5) * (1.78 / n)
+        objs.append(box('vdkboard', (1.78 / n - 0.015, 0.8 - random.uniform(0, 0.02), 0.04), (x, random.uniform(-0.005, 0.005), 0.1), m=random.choice(planks_m), bevel=0.005, segs=1, jitter=0.002))
+    for sy in (-1, 1):
+        objs.append(box('vdkbearer', (1.8, 0.07, 0.07), (0.78, sy * 0.3, 0.045), m=dark, bevel=0.006, segs=1))
+    for x in (0.1, 1.68):
+        for sy in (-1, 1):
+            objs.append(cyl('vdkpile', 0.05, 0.42 if x < 1 else 0.62, (x, sy * 0.35, -0.0 if x < 1 else 0.1), m=dark, verts=10, bevel=0.0))
+    for sy in (-1, 1):                                    # the mooring posts' tops: caps and rope
+        objs.append(cyl('vdkcap', 0.055, 0.03, (1.68, sy * 0.35, 0.42), m=dark, verts=10, r2=0.03, bevel=0.0))
+        for k in range(3): objs.append(cyl('vdkropeband', 0.056, 0.016, (1.68, sy * 0.35, 0.26 + k * 0.022), m=rope, verts=10, bevel=0.0))
+    for k, (rr, zz) in enumerate(((0.07, 0.135), (0.05, 0.135), (0.06, 0.155))):      # a coil of rope by the end, off the middle
+        bpy.ops.mesh.primitive_torus_add(major_radius=rr, minor_radius=0.012, major_segments=16, minor_segments=6, location=(1.45, 0.26, zz))
+        o = bpy.context.object; o.name = 'vdkrope'; setmat(o, rope); objs.append(o)
+    # a life ring hung on the land-side pile
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.09, minor_radius=0.025, major_segments=20, minor_segments=8, location=(0.1, -0.41, 0.3), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; o.name = 'vdkring'; setmat(o, C('vdkringc', '#e8e2d4', rough=0.5)); objs.append(o)
+    for k in range(4):
+        a = k / 4 * math.tau + math.pi / 4
+        objs.append(box('vdkringband', (0.03, 0.06, 0.06), (0.1 + math.cos(a) * 0.09, -0.41, 0.3 + math.sin(a) * 0.09), (0, -a, 0), m=C('vdkred', '#c8443a', rough=0.5), bevel=0.0))
+    objs.append(cyl('vdkpile', 0.05, 0.32, (0.1, -0.35, 0.28), m=dark, verts=10, bevel=0.0))
+    return finish(objs, name)
+
+
+def bale(objs, c, size, yaw, ms, twine):
+    """A square straw bale: rounded block, straw strands on its faces, two twines round it."""
+    sx, sy, sz = size; R = Matrix.Rotation(yaw, 4, 'Z'); C0 = Vector(c)
+    objs.append(box('vhbale', size, tuple(C0), (0, 0, yaw), m=ms[0], bevel=0.035, segs=2, jitter=0.006))
+    for k in range(26):                                   # strands on the top and the long sides
+        face = random.choice(('top', 'front', 'back'))
+        u = random.uniform(-sx / 2 + 0.03, sx / 2 - 0.03)
+        if face == 'top': a = Vector((u, random.uniform(-sy / 2 + 0.03, sy / 2 - 0.03), sz / 2 + 0.004)); d = Vector((random.uniform(0.05, 0.1), random.uniform(-0.03, 0.03), 0)); n = (0, 0, 1)
+        else:
+            sg = -1 if face == 'front' else 1; a = Vector((u, sg * (sy / 2 + 0.004), random.uniform(-sz / 2 + 0.04, sz / 2 - 0.04))); d = Vector((random.uniform(0.05, 0.1), 0, random.uniform(-0.02, 0.02))); n = (0, sg, 0)
+        p0, p1 = C0 + R @ a, C0 + R @ (a + d)
+        objs.append(plank('vhstrand', p0, p1, 0.008, 0.003, tuple(R @ Vector(n)), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    for t in (-sx / 4, sx / 4):                           # the twines
+        pts = [Vector((t, -sy / 2 - 0.004, -sz / 2 + 0.02)), Vector((t, -sy / 2 - 0.004, sz / 2 + 0.002)), Vector((t, sy / 2 + 0.004, sz / 2 + 0.002)), Vector((t, sy / 2 + 0.004, -sz / 2 + 0.02))]
+        for p0, p1 in zip(pts, pts[1:]):
+            mid = (p0 + p1) / 2; nn = Vector((0, 0, 1)) if abs(p0.z - p1.z) < 1e-6 else Vector((0, -1 if p0.y < 0 else 1, 0))
+            objs.append(plank('vhtwine', C0 + R @ p0, C0 + R @ p1, 0.012, 0.004, tuple(R @ nn), twine, jitter=0.0, bevel=0.0))
+
+
+def straw_ms():
+    return [C('vhstraw', '#e3c46c', rough=0.9, var=0.08), C('vhstraw2', '#cfae55', rough=0.9), C('vhstraw3', '#f0d88a', rough=0.9), C('vhstraw4', '#b89748', rough=0.9)]
+
+
+# ------------------------------------------------------------------ the hay stack
+def hay_stack_v(seed=131, name='hay_stack'):
+    """Three straw bales (two below, one across the top), strands of straw on them, red twine, loose straw about."""
+    random.seed(seed); objs = []
+    ms = straw_ms(); twine = C('vhtwinec', '#b8382e', rough=0.7)
+    bale(objs, (0, 0, 0.14), (0.62, 0.34, 0.28), 0.0, ms, twine)
+    bale(objs, (0.05, 0.42, 0.14), (0.62, 0.34, 0.28), 0.12, ms, twine)
+    bale(objs, (0.03, 0.2, 0.42), (0.62, 0.34, 0.28), -0.08, ms, twine)
+    for k in range(18):
+        x, y = random.uniform(-0.3, 0.36), random.uniform(-0.2, 0.62)
+        objs.append(plank('vhloose', (x, y, 0.006), (x + random.uniform(-0.08, 0.08), y + random.uniform(-0.08, 0.08), 0.006), 0.008, 0.003, (0, 0, 1), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the round bale
+def round_bale_v(seed=132, name='round_bale'):
+    """A round bale lying on its side: its ends rolled in rings, straw strands round it, a net-wrap of twine, a little
+    loose straw at its foot."""
+    random.seed(seed); objs = []
+    ms = straw_ms(); R, L = 0.33, 0.6; yaw = 0.4
+    Rm = Matrix.Rotation(yaw, 4, 'Z')
+    o = cyl('vrbale', R, L, (0, 0, R), (math.pi / 2, 0, yaw), m=ms[0], verts=24, bevel=0.03); objs.append(o)
+    ax = Rm @ Vector((0, 1, 0))
+    for sd in (-1, 1):                                    # the rolled rings on each end
+        for k, rr in enumerate((0.27, 0.2, 0.13, 0.06)):
+            q = cyl('vrring', rr, 0.008, tuple(Vector((0, 0, R)) + ax * sd * (L / 2 + 0.002 + 0.001 * k)), (math.pi / 2, 0, yaw), m=ms[1 + k % 3], verts=20, bevel=0.0); objs.append(q)
+    for k in range(40):                                   # strands round it
+        a = random.uniform(0, math.tau); t = random.uniform(-L / 2 + 0.04, L / 2 - 0.04)
+        n = Rm @ Vector((math.cos(a), 0, math.sin(a))); p0 = Vector((0, 0, R)) + ax * t + n * (R + 0.003)
+        tang = Rm @ Vector((-math.sin(a), 0, math.cos(a)))
+        objs.append(plank('vrstrand', p0, p0 + tang * random.uniform(0.05, 0.1) + ax * random.uniform(-0.02, 0.02), 0.008, 0.003, tuple(n), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    for t in (-0.18, 0.0, 0.18):                          # the wrap
+        q = cyl('vrwrap', R + 0.004, 0.012, tuple(Vector((0, 0, R)) + ax * t), (math.pi / 2, 0, yaw), m=C('vrwrapc', '#e8e2d4', rough=0.7), verts=24, bevel=0.0); objs.append(q)
+    for k in range(12):
+        x, y = random.uniform(-0.4, 0.4), random.uniform(-0.4, 0.4)
+        objs.append(plank('vrloose', (x, y, 0.006), (x + random.uniform(-0.08, 0.08), y + random.uniform(-0.08, 0.08), 0.006), 0.008, 0.003, (0, 0, 1), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    return finish(objs, name)
+
+
+def pot_plant(objs, x, y, s, kind, leaf, cols):
+    """A terracotta pot with a rim and its plant: a geranium, daisies, or a little herb."""
+    terra = C('vpterra', '#b8653d', rough=0.8, var=0.05); rim = C('vpterra2', '#c47248', rough=0.8)
+    objs.append(cyl('vppot', 0.12 * s, 0.22 * s, (x, y, 0.11 * s), m=terra, verts=16, r2=0.095 * s, bevel=0.004))
+    objs.append(cyl('vprim', 0.135 * s, 0.045 * s, (x, y, 0.21 * s), m=rim, verts=16, bevel=0.004))
+    objs.append(cyl('vpsoil', 0.115 * s, 0.01, (x, y, 0.23 * s), m=C('vpsoilc', '#5a3f2c', rough=0.95), verts=14, bevel=0.0))
+    top = 0.24 * s
+    if kind == 'herb':
+        tuft(objs, x, y, 14, 0.1 * s, 0.16 * s, leaf, z0=top, width=0.018)
+        return
+    for k in range(7):
+        a = k / 7 * math.tau
+        objs.append(sphere('vpleaf', 0.05 * s, (x + math.cos(a) * 0.065 * s, y + math.sin(a) * 0.065 * s, top + 0.04 * s), (1.2, 1.2, 0.6), m=random.choice(leaf), ico=1, disp=0.2, seed=k))
+    if kind == 'geranium':
+        for k in range(4):
+            a = k / 4 * math.tau + 0.3; cx, cy = x + math.cos(a) * 0.05 * s, y + math.sin(a) * 0.05 * s
+            objs.append(cyl('vpstem', 0.005, 0.1 * s, (cx, cy, top + 0.08 * s), m=leaf[0], verts=5, bevel=0.0))
+            for q in range(5):
+                b = q / 5 * math.tau
+                objs.append(sphere('vpgeran', 0.017 * s, (cx + math.cos(b) * 0.02 * s, cy + math.sin(b) * 0.02 * s, top + 0.14 * s), m=cols[k % len(cols)], ico=1))
+    else:                                                 # daisies
+        for k in range(6):
+            a = k / 6 * math.tau + 0.2; cx, cy = x + math.cos(a) * 0.06 * s, y + math.sin(a) * 0.06 * s
+            for q in range(6):
+                b = q / 6 * math.tau
+                objs.append(plank('vppetal', (cx, cy, top + 0.1 * s), (cx + math.cos(b) * 0.03 * s, cy + math.sin(b) * 0.03 * s, top + 0.1 * s), 0.014 * s, 0.003, (0, 0, 1), C('vpwhite', '#fbf6ee', rough=0.5), jitter=3.0, bevel=0.0))
+            objs.append(sphere('vpeye', 0.01 * s, (cx, cy, top + 0.104 * s), (1, 1, 0.6), m=C('vpyellow', '#f2c43c', rough=0.6), ico=1))
+
+
+# ------------------------------------------------------------------ flower pots
+def flower_pots_v(seed=133, name='flower_pots'):
+    """Three terracotta pots with rims: red geraniums, daisies, a little pot of herbs."""
+    random.seed(seed); objs = []
+    leaf = [C('vpleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4a8a38', '#3f7a32', '#5a9a40'))]
+    reds = [C('vpred', '#d63a3f', rough=0.6), C('vppink', '#e9668c', rough=0.6)]
+    pot_plant(objs, 0.0, 0.0, 1.0, 'geranium', leaf, reds)
+    pot_plant(objs, 0.29, 0.1, 0.8, 'daisy', leaf, reds)
+    pot_plant(objs, 0.12, 0.32, 0.88, 'herb', leaf, reds)
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the planter
+def planter_v(seed=134, name='planter'):
+    """A wooden trough planter of boards with corner posts, full of flowers: geraniums, lavender, white alyssum, ivy
+    trailing over the front."""
+    random.seed(seed); objs = []
+    wood = C('vtwood', '#8a5d3a', rough=0.75, var=0.12, grain=0.35, grain_scale=(1.5, 26, 26)); wood2 = C('vtwood2', '#9a6a43', rough=0.75, var=0.1)
+    leaf = [C('vtleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4a8a38', '#3f7a32', '#5a9a40'))]
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            objs.append(box('vtpost', (0.06, 0.06, 0.34), (sx * 0.42, sy * 0.15, 0.17), m=wood, bevel=0.006, segs=1))
+    for k in range(3):
+        z = 0.06 + k * 0.1
+        for sy in (-1, 1): objs.append(box('vtboard', (0.84, 0.025, 0.09), (0, sy * 0.16, z), m=random.choice((wood, wood2)), bevel=0.004, segs=1))
+        for sx in (-1, 1): objs.append(box('vtboard', (0.025, 0.3, 0.09), (sx * 0.43, 0, z), m=random.choice((wood, wood2)), bevel=0.004, segs=1))
+    objs.append(box('vtsoil', (0.82, 0.29, 0.02), (0, 0, 0.3), m=C('vtsoilc', '#5a3f2c', rough=0.95), bevel=0.0))
+    red = C('vtred', '#d63a3f', rough=0.6); lav = C('vtlav', '#8f6fc4', rough=0.6); white = C('vtwhite', '#f6f3ea', rough=0.7)
+    for k in range(7):                                    # a row of geraniums and lavender behind
+        x = -0.34 + k * 0.113
+        for q in range(4):
+            a = q / 4 * math.tau
+            objs.append(sphere('vtleaf', 0.045, (x + math.cos(a) * 0.035, 0.05 + math.sin(a) * 0.03, 0.35), (1.1, 1.1, 0.7), m=random.choice(leaf), ico=1, disp=0.2, seed=k * 4 + q))
+        if k % 2 == 0:
+            objs.append(cyl('vtstem', 0.005, 0.08, (x, 0.05, 0.39), m=leaf[1], verts=5, bevel=0.0))
+            for q in range(5):
+                b = q / 5 * math.tau
+                objs.append(sphere('vtgeran', 0.018, (x + math.cos(b) * 0.022, 0.05 + math.sin(b) * 0.022, 0.43), m=red, ico=1))
+        else:
+            for q in range(4):
+                b = q / 4 * math.tau; px, py = x + math.cos(b) * 0.025, 0.05 + math.sin(b) * 0.02
+                objs.append(cyl('vtstem', 0.004, 0.07, (px, py, 0.385), m=leaf[1], verts=5, bevel=0.0))
+                objs.append(cyl('vtlav', 0.011, 0.07, (px, py, 0.45), m=lav, verts=5, r2=0.005, bevel=0.0))
+    ivy = C('vtivyc', '#2f6b34', rough=0.7)
+    for k in range(8):                                    # alyssum along the front: little white clouds on green
+        x = -0.36 + k * 0.103
+        objs.append(sphere('vtalyl', 0.04, (x, -0.09, 0.32), (1.3, 1, 0.5), m=random.choice(leaf), ico=1, disp=0.3, seed=k + 40))
+        for q in range(6):
+            a = random.uniform(0, math.tau); rr = random.uniform(0, 0.04)
+            objs.append(sphere('vtaly', 0.016, (x + math.cos(a) * rr, -0.09 + math.sin(a) * rr * 0.7, 0.345 + random.uniform(0, 0.015)), m=white, ico=1))
+    for x in (-0.3, -0.05, 0.22):                         # ivy trailing over the front, leaf by leaf
+        pts = [Vector((x, -0.15, 0.32)), Vector((x + 0.03, -0.185, 0.27)), Vector((x + 0.02, -0.19, 0.2)), Vector((x + 0.05, -0.19, 0.13)), Vector((x + 0.04, -0.19, 0.07))]
+        polyline(objs, 'vtivystem', pts, 0.006, 0.005, (0, -1, 0), leaf[1])
+        for j, p in enumerate(pts[1:]):
+            sd = 1 if j % 2 else -1
+            objs.append(sphere('vtivy', 0.022, tuple(p + Vector((sd * 0.018, -0.008, 0))), (1.1, 0.35, 1.0), (0, math.radians(sd * 25), 0), m=ivy, ico=1))
+    return finish(objs, name)
+
+
+# ------------------------------------------------------------------ the vegetable patch
+def veg_patch_v(w=2.6, d=1.8, seed=135, name='veg_patch'):
+    """A raised vegetable bed: board edges with corner pegs, soil in ridged rows; rows of cabbages (leaves in layers),
+    carrots (feathery tops), and pumpkins on their vines with big leaves; a little trowel stuck in the soil."""
+    random.seed(seed); objs = []
+    wood = C('vvwood', '#8a5d3a', rough=0.75, var=0.12); soil = C('vvsoil', '#5a3f2c', rough=0.95, var=0.06); soil2 = C('vvsoil2', '#6b4c35', rough=0.95)
+    leaf = [C('vvleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#6fa34a', '#5b9440', '#86b85a'))]
+    cab = [C('vvcab%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#8fbf6a', '#7aae58', '#a3cc7e'))]
+    pump = C('vvpump', '#e0802e', rough=0.55); vine = C('vvvine', '#4a7a32', rough=0.8)
+    objs.append(box('vvsoil', (w - 0.06, d - 0.06, 0.1), (0, 0, 0.05), m=soil, bevel=0.0))
+    for sy in (-1, 1): objs.append(box('vvedge', (w, 0.04, 0.12), (0, sy * (d / 2 - 0.02), 0.06), m=wood, bevel=0.006, segs=1))
+    for sx in (-1, 1): objs.append(box('vvedge', (0.04, d, 0.12), (sx * (w / 2 - 0.02), 0, 0.06), m=wood, bevel=0.006, segs=1))
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('vvpeg', (0.06, 0.06, 0.16), (sx * (w / 2 - 0.02), sy * (d / 2 - 0.02), 0.08), m=wood, bevel=0.006, segs=1))
+    rows = int((d - 0.2) / 0.32)
+    for r in range(rows):
+        y = -d / 2 + 0.2 + r * 0.32
+        objs.append(box('vvridge', (w - 0.16, 0.18, 0.04), (0, y, 0.11), m=soil2, bevel=0.02, segs=1))
+        kind = ('cab', 'carrot', 'pump')[r % 3]
+        n = int((w - 0.2) / (0.3 if kind != 'carrot' else 0.16))
+        for i in range(n):
+            x = -w / 2 + 0.18 + i * (w - 0.3) / max(1, n - 1) + random.uniform(-0.02, 0.02)
+            if kind == 'cab':
+                for q in range(5):                       # outer leaves splayed, a round heart
+                    a = q / 5 * math.tau + random.uniform(0, 0.5)
+                    objs.append(sphere('vvcabl', 0.07, (x + math.cos(a) * 0.06, y + math.sin(a) * 0.06, 0.15), (1.2, 0.8, 0.35), (0, math.radians(-20), a), m=random.choice(leaf), ico=1, seed=q))
+                objs.append(sphere('vvcab', 0.075, (x, y, 0.19), (1, 1, 0.9), m=random.choice(cab), ico=2, disp=0.08, seed=i))
+            elif kind == 'carrot':
+                objs.append(cyl('vvcarrot', 0.018, 0.02, (x, y, 0.13), m=C('vvorange', '#e8792a', rough=0.6), verts=8, bevel=0.0))
+                tuft(objs, x, y, 6, 0.05, 0.12, leaf, z0=0.13, width=0.014)
+            else:
+                if i % 2 == 0:
+                    for k in range(6):
+                        a = k / 6 * math.tau
+                        objs.append(sphere('vvpump', 0.065, (x + math.cos(a) * 0.04, y + math.sin(a) * 0.04, 0.19), (1, 1, 0.8), m=pump, seg=10, rings=7))
+                    objs.append(cyl('vvstalk', 0.01, 0.04, (x, y, 0.27), m=vine, verts=6, bevel=0.0))
+                else:
+                    for k in range(3):
+                        a = k / 3 * math.tau + i
+                        objs.append(sphere('vvbigleaf', 0.09, (x + math.cos(a) * 0.08, y + math.sin(a) * 0.08, 0.16), (1.2, 1.0, 0.25), (0, 0, a), m=random.choice(leaf), ico=1, seed=k + i))
+                polyline(objs, 'vvvine', [Vector((x - 0.1, y + 0.04, 0.135)), Vector((x, y - 0.03, 0.135)), Vector((x + 0.14, y + 0.03, 0.135))], 0.012, 0.008, (0, 0, 1), vine)
+    objs.append(plank('vvtrowel', (w / 2 - 0.25, -d / 2 + 0.12, 0.12), (w / 2 - 0.23, -d / 2 + 0.12, 0.2), 0.04, 0.006, (0, -1, 0), C('vvsteel', '#a9aca8', rough=0.35, metal=0.8), jitter=0.0, bevel=0.0))
+    objs.append(cyl('vvtrowelh', 0.013, 0.1, (w / 2 - 0.225, -d / 2 + 0.12, 0.25), m=wood, verts=8, bevel=0.0))
+    return finish(objs, name)

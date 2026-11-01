@@ -1137,6 +1137,17 @@ export class GameUI {
     });
     b.append(fresh);
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
-    b.append(this.privacyLink());
+    b.append(this.credits(), this.privacyLink());
+  }
+  // thanks to whose music and sounds these are (audio/CREDITS.txt); the peacock's recording (CC BY 4.0) asks for its
+  // credit where players see it: its recordist and the licence, each a link
+  credits() {
+    const p = el('p', 'gnote gcredits'), link = (txt, href) => { const a = el('a', 'glink', txt); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
+    const parts = { music: 'Komiku, Rafael Krux', sounds: 'Joseph Sardin (BigSoundBank), U.S. National Park Service',
+      peacock: link('Keith Selmes', 'https://freesound.org/s/397357/'), lic: link('CC BY 4.0', 'https://creativecommons.org/licenses/by/4.0/') };
+    for (const bit of this.t('credits').split(/(\{\w+\})/)) {
+      const k = bit.match(/^\{(\w+)\}$/); p.append(k ? (parts[k[1]] ?? '') : bit);
+    }
+    return p;
   }
 }

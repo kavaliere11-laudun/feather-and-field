@@ -207,6 +207,7 @@ export const TEXT = {
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
     settings_edited: 'This farm was changed outside the game: everything in it has been checked.',
     settings_version: 'Version {v}',
+    credits: 'Music: {music}. Sounds: {sounds}. The peacock’s call: {peacock} ({lic}), cleaned up.',                   // (Settings: thanks to whose music and sounds these are; the peacock's recording asks for it, CC BY)
     saved_here: 'Your farm is saved on this phone.',
     code_t: 'Your farm code', code_how: 'Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.',
     code_copy: 'Copy my farm code', code_paste: 'Paste a farm code here', code_load: 'Load this farm', code_load_sure: 'Tap again to replace this farm', code_note: 'Loading a farm replaces the one on this phone.',
@@ -482,6 +483,7 @@ export const TEXT = {
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
     settings_edited: 'Cette ferme a été modifiée hors du jeu : tout son contenu a été vérifié.',
     settings_version: 'Version {v}',
+    credits: 'Musique : {music}. Sons : {sounds}. Le cri du paon : {peacock} ({lic}), nettoyé.',
     saved_here: 'Votre ferme est enregistrée sur ce téléphone.',
     code_t: 'Le code de votre ferme', code_how: 'Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez.',
     code_copy: 'Copier le code de ma ferme', code_paste: 'Collez un code de ferme ici', code_load: 'Charger cette ferme', code_load_sure: 'Touchez encore pour remplacer cette ferme', code_note: 'Charger une ferme remplace celle de ce téléphone.',

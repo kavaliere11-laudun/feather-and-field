@@ -26,7 +26,14 @@ BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windm
          'statue': (village3d.statue_dec, 26000),
          'beehives': (village3d.beehives_dec, 16000),
          'flowers': (village3d.flowers_dec, 16000), 'birdbath': (village3d.birdbath_dec, 9000),
-         'duckhouse': (village3d.duckhouse_dec, 9000)}
+         'duckhouse': (village3d.duckhouse_dec, 9000),
+         'bench': (village3d.bench_v, 3000), 'lamp_post': (village3d.lamp_post_v, 2500), 'well': (village3d.well_v, 9000),
+         'egg_stall': (village3d.egg_stall_v, 9000), 'bridge': (village3d.bridge_v, 6000),
+         'barrels': (village3d.barrels_v, 7000), 'wheelbarrow': (village3d.wheelbarrow_v, 6000), 'scarecrow': (village3d.scarecrow_v, 5000),
+         'log_pile': (village3d.log_pile_v, 3000), 'dock': (village3d.dock_v, 5000),
+         'hay_stack': (village3d.hay_stack_v, 4000), 'round_bale': (village3d.round_bale_v, 3000), 'flower_pots': (village3d.flower_pots_v, 4000),
+         'planter': (village3d.planter_v, 5000), 'veg_patch': (lambda: village3d.veg_patch_v(2.6, 1.8, name='veg_patch'), 14000),
+         'veg_patch_sq': (lambda: village3d.veg_patch_v(2.4, 2.4, name='veg_patch_sq'), 14000)}
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)
