@@ -2662,7 +2662,10 @@ class Bird {
     if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
     if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
     if (x < 0.55) return { type: 'flap', left: 0.9 };
-    if (this.train) { const f = x < 0.74 && !this.plot.farmer && !this.called && !this.cuddle ? this.displayYaw() : null; if (f !== null) return { type: 'display', left: 8 + this.r() * 6, face: f }; }      // (a peacock doesn't crow: he raises his fan and shows it off)
+    if (this.train) {
+      const f = x < 0.74 && !this.plot.farmer && !this.called && !this.cuddle ? this.displayYaw() : null; if (f !== null) return { type: 'display', left: 8 + this.r() * 6, face: f };      // (a peacock doesn't crow: he raises his fan and shows it off)
+      if (x >= 0.74 && x < 0.8 && this.mayCall()) return { type: 'call', left: 2.6 };      // (and now and then by day, his call: Audrey, 1 Nov, "special noise for the peacock")
+    }
     else if (rooster && x < 0.66) return { type: 'crow', left: 2.0 };
     if (x < (rooster ? 0.69 : 0.59) && !this.mum) return { type: 'rest', left: 3 + this.r() * 4 };
     if (x < (rooster ? 0.74 : 0.65)) return { type: 'ruffle', left: 0.75 };             // a quick shake of the feathers
@@ -2736,6 +2739,7 @@ class Bird {
         else {
           p.y = 0.015; this.shadowY = undefined; this.roost = null; this.wait = 0.4; this.trainOk = this.trainYaw = this.root.rotation.y; this.trainAt = [p.x, p.z];
           const fy = this.plot.farmer ? null : this.displayYaw(); if (fy !== null) { this.act = { type: 'display', left: 6 + this.r() * 2, face: fy }; this.wait = 6; }      // good morning: his fan
+          if (this.mayCall(true)) { this.act = { type: 'call', left: 2.6, next: this.act }; this.wait = Math.max(this.wait, 2.6) + (this.act.next ? 6 : 0); }      // (after his call)
         }
       }
     } else if (R.phase === 'turn') {         // round on his perch to face the yard
@@ -2782,6 +2786,7 @@ class Bird {
     const fy = this.train && this.r() < 0.6 && !this.plot.farmer && !this.called && !this.cuddle ? this.displayYaw() : null;
     if (fy !== null) { this.hopT = -1; this.act = { type: 'display', left: 6, face: fy }; this.wait = Math.max(this.wait, 6); }      // (the peacock: his fan)
     else if (this.kind === 'rooster' && !this.train && this.r() < 0.5) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); }
+    else if (this.train && this.r() < 0.6 && this.mayCall(true)) { this.act = { type: 'call', left: 2.6 }; this.wait = Math.max(this.wait, 2.6); }      // (or he calls)
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
@@ -3122,6 +3127,16 @@ class Bird {
     if (now - (this.crowAt ?? -1e9) < 15000) return; this.crowAt = now;
     this.root.getWorldPosition(_cv); farmSound('crow', _cv.x, _cv.z, 1.8);
   }
+  // the peacock's call (sound.js 'peacall'): by day only, not more than one every 50 seconds (a tap or the morning: 12);
+  // heard from far off, as a real one is
+  mayCall(soon) {
+    const h = DAY.hour; if (!this.train || h < 6 || h > 20.5 || this.plot.farmer || this.cuddle) return false;
+    return performance.now() - (this.callAt ?? -1e9) > (soon ? 12000 : 50000);
+  }
+  callSound() {
+    this.callAt = performance.now(); if (!sound) return;
+    this.root.getWorldPosition(_cv); farmSound('peacall', _cv.x, _cv.z, 2.4);
+  }
   answer() {                                                 // the rooster sometimes joins in with a crow
     const roo = this.flock.find(b => b.kind === 'rooster');
     if (roo && !roo.laying && this.r() < 0.55) roo.answerIn = 1.0 + this.r() * 1.2;
@@ -3238,7 +3253,7 @@ class Bird {
       else { const s = Math.min(d, this.speed * 0.4 * dt); p.x += dx / d * s; p.z += dz / d * s; walking = true; }
     } else if (act) {
       act.left -= dt;
-      if (act.type !== 'crow' && act.type !== 'flap' && act.type !== 'cuddle' && act.type !== 'display' && this.tooClose()) act.left = Math.min(act.left, 0.05);
+      if (act.type !== 'crow' && act.type !== 'call' && act.type !== 'flap' && act.type !== 'cuddle' && act.type !== 'display' && this.tooClose()) act.left = Math.min(act.left, 0.05);
       if (act.type === 'cuddle') {                 // settled in front of the farmer, facing him, till he's done (greeting him at the fence: standing)
         const C = this.cuddle, G = C && C.greet; sitGoal = G || (C && C.dig) || this.train ? 0 : 1;      // (the peacock stands to be stroked)
         if (C && !C.done) {
@@ -3267,6 +3282,10 @@ class Bird {
       if (!act.dur) act.dur = act.left + dt;
       if (act.type === 'flap') flap = Math.sin(Math.max(0, Math.min(1, (act.dur - act.left) / act.dur)) * Math.PI);
       if (act.type === 'crow') { const t = act.dur - act.left; flap = t < 0.45 ? Math.sin(t / 0.45 * Math.PI) : 0; crow = t < 0.45 ? 0 : Math.min(1, (t - 0.45) / 0.25) * Math.min(1, act.left / 0.3); if (t >= 0.3 && !act.heard) { act.heard = true; this.crowSound(); } }
+      if (act.type === 'call') {                   // his call: neck up, head back, beak wide (the crow's pose, without a flap)
+        const t = act.dur - act.left; crow = Math.min(1, t / 0.3) * Math.min(1, act.left / 0.35);
+        if (t >= 0.25 && !act.heard) { act.heard = true; this.callSound(); }
+      }
       if (act.type === 'rest') { sitGoal = this.train ? 0 : 1; wag = 0; }      // (the peacock rests standing: his heavy train lies as it is)
       if (act.type === 'display' && !act.ready) {         // (round to face the way he'll show it off, first)
         const t = act.face === undefined ? { diff: 0, walking: false } : this.turnTo(act.face, dt * 0.6); walking = t.walking; act.left += dt;
@@ -3296,6 +3315,7 @@ class Bird {
         this.act = null; this.wait = Math.min(this.wait, 0.2 + this.r() * 0.6); this.acted = true;
         if (act.eat) this.ate();
         if (act.type === 'cuddle') { this.cuddle = null; this.act = { type: 'ruffle', left: 0.75 }; this.wait = 0.9; }      // a happy shake
+        if (act.next) { this.act = act.next; this.wait = Math.max(this.wait, act.next.left); }      // (what comes after: the morning's fan after his call)
       }
     } else if (this.wait > 0) {
       if (this.held) { this.wait = Math.max(this.wait, 0.6); const t = this.turnTo(Math.atan2(VIEW_DIR.x, VIEW_DIR.z) - this.plot.group.rotation.y, dt * 0.8); walking = t.walking; }     // (her card's open: she stays and faces you)

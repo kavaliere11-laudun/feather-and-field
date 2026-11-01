@@ -45,7 +45,7 @@ export const HENS = {
 
 export const FARM = {
   // each one-shot's volume close up (the files: -17 to -24 LUFS); a bed's volume (the files: -22 LUFS)
-  level: { egg: 0.6, crow: 0.55, flurry: 0.7, mum: 0.75, chicks: 0.8, quack: 0.5, bark: 0.5, honk: 0.5, buzz: 0.5 },
+  level: { egg: 0.6, crow: 0.55, flurry: 0.7, mum: 0.75, chicks: 0.8, quack: 0.5, bark: 0.5, honk: 0.5, buzz: 0.5, peacall: 0.5 },
   spotGap: { buzz: [2.5, 7] },     // seconds between one and the next, at a place (o.spots)
   beds: ['dawn', 'day', 'evening', 'night'], bedLevel: 0.28, pondLevel: 0.6,
 };
