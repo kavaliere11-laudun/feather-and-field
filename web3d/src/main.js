@@ -4161,26 +4161,40 @@ function collectAll() {
 let FEATHER_MAT = null; const FEATHER_Y = 0.035;
 function featherMat() {
   if (FEATHER_MAT) return FEATHER_MAT;
-  const c = document.createElement('canvas'); c.width = 64; c.height = 256; const x = c.getContext('2d'), R = rng(7);
+  // (drawn as a real one is, Audrey 1 Nov: "Make it lifelike": long loose strands, bronze-green, along the shaft, finer and
+  // wispier low down; at the tip the eye, heart-shaped and dark blue in the middle (the notch where the shaft comes in),
+  // ringed with turquoise, copper and golden green, a fringe of loose strands round it; the shaft a soft cream)
+  const c = document.createElement('canvas'); c.width = 128; c.height = 512; const x = c.getContext('2d'), R = rng(7), X = 64, E = 110, H = 1.4;
   x.lineCap = 'round';
-  // (the vane: a soft green body, fuller towards the eye; the barbs over it, bronze-green, wispy low down)
-  const half = y => { const u = Math.max(0, Math.min(1, (250 - y) / 175)); return 3 + 24 * Math.pow(u, 1.4); };
-  x.fillStyle = 'rgba(86, 140, 52, 0.55)'; x.beginPath(); x.moveTo(32, 254);
-  for (let y = 254; y >= 70; y -= 4) x.lineTo(32 + half(y), y);
-  for (let y = 70; y <= 254; y += 4) x.lineTo(32 - half(y), y);
-  x.closePath(); x.fill();
-  for (let y = 250; y > 66; y -= 1.5) {
-    const h = half(y), u = (250 - y) / 184;
-    for (const sd of [-1, 1]) { x.strokeStyle = ['#5f9a35', '#7fb043', '#a0923e', '#4a7d2c'][Math.floor(R() * 4)]; x.globalAlpha = 0.55 + 0.4 * u; x.lineWidth = 1.3;
-      x.beginPath(); x.moveTo(32, y); x.quadraticCurveTo(32 + sd * h * 0.55, y - 3, 32 + sd * h * (0.85 + 0.15 * R()), y - 8 - 6 * u); x.stroke(); }
+  const strand = (x0, y0, len, ang, bend, col, a, wdt) => { x.strokeStyle = col; x.globalAlpha = a; x.lineWidth = wdt;
+    const ex = x0 + Math.sin(ang) * len, ey = y0 - Math.cos(ang) * len; x.beginPath(); x.moveTo(x0, y0); x.quadraticCurveTo((x0 + ex) / 2 + Math.cos(ang) * bend, (y0 + ey) / 2 + Math.sin(ang) * bend, ex, ey); x.stroke(); };
+  const BARB = ['#6f9a3c', '#8aa443', '#a5923f', '#5b8536', '#b49a48', '#4f7a33'];
+  for (let y = 506; y > E + 30; y -= 1.6) {      // (the barbs, both sides: short and downy at the foot, long and loose up to the eye)
+    const u = (506 - y) / (506 - E - 30), len = 6 + 52 * Math.pow(u, 0.8), down = u < 0.12;
+    for (const sd of [-1, 1]) {
+      if (R() < (down ? 0.5 : 0.15)) continue;      // (gaps between them)
+      const ang = sd * (0.55 + 0.35 * R() - 0.15 * u), col = down ? '#d8cfa8' : BARB[Math.floor(R() * BARB.length)];
+      strand(X + sd * 1.2, y, len * (0.75 + 0.35 * R()), ang, sd * (3 + 4 * R()), col, down ? 0.45 : 0.55 + 0.35 * R(), down ? 1 : 1.1 + 0.6 * R());
+    }
+  }
+  for (let k = 0; k < 260; k++) {      // (the fringe round the eye: loose golden-green strands)
+    const t = R() * Math.PI * 2, r0 = (26 + 4 * R()) * H, len = 10 + 12 * R(), x0 = X + Math.cos(t) * r0 * 0.8, y0 = E + Math.sin(t) * r0;
+    strand(x0, y0, len, Math.atan2(Math.cos(t), -Math.sin(t)) + (R() - 0.5) * 0.4, (R() - 0.5) * 6, ['#9db63e', '#7fa63a', '#c2ad4a', '#6a9a38'][Math.floor(R() * 4)], 0.5 + 0.4 * R(), 1.2);
   }
   x.globalAlpha = 1;
-  const eye = (rx, ry, col, dy = 0) => { x.fillStyle = col; x.beginPath(); x.ellipse(32, 52 + dy, rx, ry, 0, 0, Math.PI * 2); x.fill(); };
-  for (let k = 0; k < 120; k++) { const t = k / 120 * Math.PI * 2; x.strokeStyle = k % 3 ? '#6aa63e' : '#c2ad45'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(32 + Math.cos(t) * 16, 52 + Math.sin(t) * 24); x.lineTo(32 + Math.cos(t) * 31, 52 + Math.sin(t) * 47); x.stroke(); }      // (the fringe round the eye)
-  eye(23, 36, '#4f9a3c'); eye(19, 29, '#d6a83e'); eye(15, 23, '#2fc0b4', 2); eye(9.5, 15, '#1a2a8c', 5); eye(3.5, 4.5, '#6a8ae8', 2);
-  x.strokeStyle = '#f2e8c8'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(32, 254); x.lineTo(32, 84); x.stroke();      // (the shaft)
+  // (the eye, a heart, its notch at the foot where the shaft comes in; drawn from the outside in)
+  const heart = (sx, sy, col, dy = 0) => { x.fillStyle = col; x.beginPath(); const cy = E + dy * H; sx *= H; sy *= H;
+    x.moveTo(X, cy + 30 * sy); x.bezierCurveTo(X - 10 * sx, cy + 36 * sy, X - 30 * sx, cy + 18 * sy, X - 29 * sx, cy - 4 * sy);
+    x.bezierCurveTo(X - 28 * sx, cy - 30 * sy, X + 28 * sx, cy - 30 * sy, X + 29 * sx, cy - 4 * sy);
+    x.bezierCurveTo(X + 30 * sx, cy + 18 * sy, X + 10 * sx, cy + 36 * sy, X, cy + 30 * sy); x.closePath(); x.fill(); };
+  heart(1.0, 1.0, '#7fa83c'); heart(0.86, 0.88, '#b88a3e', 1); heart(0.74, 0.76, '#c7783a', 2); heart(0.62, 0.64, '#27b3ad', 3); heart(0.5, 0.52, '#1f8f9a', 4);
+  heart(0.4, 0.4, '#1b2378', 6); heart(0.3, 0.3, '#28195e', 7);
+  x.fillStyle = 'rgba(140, 170, 255, 0.35)'; x.beginPath(); x.ellipse(X - 4, E + 4, 4, 5, 0, 0, Math.PI * 2); x.fill();      // (a glint)
+  // (the shaft: a soft cream, thinning towards the eye)
+  for (let y = 510; y > E + 30; y -= 2) { const u = (510 - y) / (510 - E - 30); x.strokeStyle = '#d9c99c'; x.globalAlpha = 0.85; x.lineWidth = 3.2 - 2 * u; x.beginPath(); x.moveTo(X, y); x.lineTo(X, y - 2.5); x.stroke(); }
+  x.globalAlpha = 1;
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
-  FEATHER_MAT = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.2, transparent: true, alphaTest: 0.3, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });      // (a slow shimmer, so it's seen: tickFeathers)
+  FEATHER_MAT = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.2, transparent: true, alphaTest: 0.12, roughness: 0.45, metalness: 0.1, side: THREE.DoubleSide });      // (a slow shimmer, so it's seen: tickFeathers)
   return FEATHER_MAT;
 }
 function featherSpots(plot) {
