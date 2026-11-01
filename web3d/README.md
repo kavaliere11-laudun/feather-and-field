@@ -3745,3 +3745,5 @@ the birds already had.
   (1.41M to 1.57M) and 15 draws (581 to 596); the farm's own quality steps still take care of a slower phone.
   `?fps` (e.g. the usual address with ?fps) now shows the smoothness readout in the game too, under the title, to check
   on a phone.
+- **On Audrey's iPhone** (17:42-17:47, in WhatsApp's browser): a new farm upright 29-48 fps; the test village (every
+  coop and decoration) 59 fps upright, and sideways 47-60 fps over the pond, the bandstand and the coops: smooth.
