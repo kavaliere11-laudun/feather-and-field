@@ -3869,3 +3869,12 @@ the birds already had.
 - `app/art/icon-1024.png` is the icon; `app/icons.py` puts it in the iPhone app and makes the web game's Home Screen
   icons (`web3d/icon-180/192/512.png`, live). Checked at 180, 120, 87, 60 and 40 px: the hen and chick read at each.
 - Set-up B (the hen and two chicks) stays in `iconstudio.mjs` (`SET=b`).
+
+## The final icon (2 Nov 2026, 08:38; Audrey: "Final one")
+
+- Audrey's own, painted with ChatGPT using the game's Silkie and chick (`iconstudio.mjs`'s pictures and the Breed Book's)
+  as its model: the white Silkie hen side on with her chick looking up at her, daisies, pink flowers, a red barn, a
+  fence, trees and a blue sky. 1024 x 1024, opaque: `app/art/icon-1024.png`, put in the iPhone app and the Home Screen
+  icons by `app/icons.py` (live). Reads at 180 down to 40 px.
+- Next, the app's opening screen: Audrey is having it painted in the same style (a prompt given: one picture for a
+  phone held upright and one sideways, no words; the title put on by the game in its own lettering, in every language).
