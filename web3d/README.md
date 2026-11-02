@@ -3907,3 +3907,18 @@ the birds already had.
   only the ones a player chooses". For real: Audrey's own ad account (her bank and tax details, set up by her), an
   `app-ads.txt` at the site, the reward given only once the ad company confirms the video was watched to the end, the
   day's count checked like any saved field.
+
+## Two reference pages: the shop and the breeds (2 Nov 2026; Audrey: "an artefact that's reference all the paid content of the app please, with visuals. Another one with all the chicken breeds, when, visuals and coops the 5 ones")
+
+- **Feather & Field Shop** (claude.ai/artifact/735V9Y6UcazkSPSpwdjzbq): everything a player can buy, with its picture
+  and price. Real money (the plan, not on sale yet): the four coin bags, the five rare Silkie trios at £6.99 and all five
+  at £19.99, free coins for a video (+150, 5 a day), seasonal coops later. Coins: the decorations, the geese and Biscuit,
+  the farmer's outfits, the Christmas dress, the coop looks (the Red Barn's five), the fields, the everyday costs.
+- **Feather & Field Breeds** (claude.ai/artifact/3cCDMPCwJsZ8djavzrejN6): every breed by the level it arrives at, its
+  Breed Book picture, its eggs and prices, whether it goes to the shows, its coop in its five looks with what each adds,
+  the Silkie colours and the rare ones.
+- **The coop pictures**: `coopcatalog.mjs OUT` (ONLY=rir,orp; LOOKS=0,4) photographs each breed's coop in each look
+  from the game's own camera (the test village with one coop of that breed, ?coopbreeds=B&coops=1&looks=N, 11:00),
+  framed a little wider as the pen grows: OUT/<breed>_<look>.png, 1120 px square.
+- **To decide**: the Red Silkie no longer hatches (since 30 Oct), so the "all five" bundle names a colour only older
+  farms can have; sell it as a trio anyway, or make the bundle four colours.
