@@ -3920,5 +3920,8 @@ the birds already had.
 - **The coop pictures**: `coopcatalog.mjs OUT` (ONLY=rir,orp; LOOKS=0,4) photographs each breed's coop in each look
   from the game's own camera (the test village with one coop of that breed, ?coopbreeds=B&coops=1&looks=N, 11:00),
   framed a little wider as the pen grows: OUT/<breed>_<look>.png, 1120 px square.
-- **To decide**: the Red Silkie no longer hatches (since 30 Oct), so the "all five" bundle names a colour only older
-  farms can have; sell it as a trio anyway, or make the bundle four colours.
+- **The rare bundle is four colours** (2 Nov; the Red Silkie no longer hatches since 30 Oct, so selling it would make a
+  bird only money can get; Audrey: "Four colours, keep £19.99"): Paint, Lavender, Splash and Cuckoo, four trios and their
+  Pagodas for £19.99 (£27.96 one by one); no Red trio for sale. In the preview (`DEMO_T` all_*: "All four rare colours",
+  "Adopt all four"; French "Les quatre couleurs rares", "Adopter les quatre"); the Book never shows a Red page on a farm
+  without Reds, so no Adopt there. iapdemo passes in English and French; the shop page updated.
