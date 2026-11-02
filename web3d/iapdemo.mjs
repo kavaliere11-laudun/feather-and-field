@@ -35,7 +35,7 @@ await p.evaluate(() => document.querySelector('.giap[data-bag="basket"] .giap-bu
 await p.evaluate(() => document.querySelector('.giap-ok').click()); await p.waitForTimeout(350); await p.screenshot({ path: `${OUT}/5-thanks.png` }); console.log('shot 5-thanks');
 await p.waitForTimeout(1500);
 await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.gameUI().bookSheet({}); }); await p.waitForTimeout(800);
-await p.evaluate(() => { const a = document.querySelector('.giap-adopt'); if (a) a.closest('.gcard').scrollIntoView({ block: 'center' }); });
+await p.evaluate(() => { const a = document.querySelector('.giap-adopt-all'); if (a) a.closest('.gcard').scrollIntoView({ block: 'start' }); document.querySelector('.gsheet:not([hidden]) .gsheet-b, .gsheet:not([hidden])').scrollBy && 0; });
 await shot('6-adopt');
 await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.gameUI().settings(); }); await p.waitForTimeout(700);
 await p.evaluate(() => { const r = document.querySelector('.giap-restore'); if (r) r.scrollIntoView({ block: 'center' }); });

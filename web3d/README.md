@@ -3878,3 +3878,22 @@ the birds already had.
   icons by `app/icons.py` (live). Reads at 180 down to 40 px.
 - Next, the app's opening screen: Audrey is having it painted in the same style (a prompt given: one picture for a
   phone held upright and one sideways, no words; the title put on by the game in its own lettering, in every language).
+
+## Things to buy for real money: the plan and its preview (2 Nov 2026; Audrey: "what's the strategy for the content to buy, show me how it looks: the elements themselves, the journey to buy them")
+
+- **The rule:** everything can still be earned by playing; money only saves time. No ads, no random paid boxes, no
+  countdown deals, one money in the game (coins). Apple's own payment (Face ID; a child's purchase waits for a parent's
+  OK), Apple's 15% (Small Business Program), VAT in the price; a small server checks each purchase before anything is
+  given; purchases kept with My account, Restore purchases in Settings.
+- **Audrey's choices** (2 Nov): coins and rare Silkie trios at launch, seasonal coops later; the coin bags "Good as a
+  start": a purse 1,000 coins £0.99, a basket 3,500 £2.99 (Most popular), a sack 6,500 £4.99, a cart 15,000 £9.99 (Best
+  value), to be balanced before launch. A rare Silkie trio (her question: what it includes; "Should be more expensive"):
+  a rooster, two hens of the rare colour (Paint, Lavender, Red, Splash, Cuckoo) and their own Pagoda in their colour,
+  their Breed Book page found, living as any trio (they start like any new trio: stars with time and care), one per
+  colour and only for colours not yet on the farm, kept for good: **£6.99**; all five together **£19.99** ("Yes").
+- **The preview** (`gameui.js` IAP_DEMO, only with `?shopdemo`; never charges or adds anything: `iapdemo.mjs` checks the
+  coins and birds unchanged): the shop's Coins shelf first (the four bags, coin piles for pictures, their tags), "Get
+  coins" under anything not yet affordable, the iPhone's payment as a stand-in, a thank-you with coins flying to the
+  purse, in the Breed Book "Adopt this trio · £6.99" on each rare page and "Adopt all five · £19.99" before them, in
+  Settings "Purchases: Restore purchases". Its words in English and French (`DEMO_T`) until it's built for real.
+  `iapdemo.mjs OUT` (LANG_GAME=fr) shoots the seven steps. dectest passes.

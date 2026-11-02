@@ -16,16 +16,16 @@ const FIRST_SAVE = 'feather-field-save-v1';
 // English and French, until it's chosen.
 const IAP_DEMO = typeof location !== 'undefined' && new URLSearchParams(location.search).has('shopdemo');
 const COIN_BAGS = [{ id: 'purse', coins: 1000, price: 0.99, pile: 2 }, { id: 'basket', coins: 3500, price: 2.99, pile: 5, tag: 'popular' }, { id: 'sack', coins: 6500, price: 4.99, pile: 8 }, { id: 'cart', coins: 15000, price: 9.99, pile: 12, tag: 'value' }];
-const RARE_PRICE = 2.99;
+const RARE_PRICE = 6.99, RARE_ALL = 19.99;      // (Audrey, 2 Nov: "£6.99" a trio; "Yes, £19.99 for all five")
 const DEMO_T = {
   en: { tab: 'Coins', note: 'Coins help you along. Everything in the game can also be earned by playing.', purse: 'A purse of coins', basket: 'A basket of coins', sack: 'A sack of coins', cart: 'A cart of coins', coins: '{n} coins', popular: 'Most popular', value: 'Best value',
     get: 'Get coins', pay_t: 'Your iPhone’s own payment', pay_how: 'Here the iPhone shows its own payment window: Face ID or your password. A child’s purchase waits for a parent’s OK (Ask to Buy).', pay_ok: 'Pay {p} (preview)', cancel: 'Cancel',
     thanks_t: 'Thank you!', thanks_coins: '{n} coins are in your purse.', thanks_rare: 'Welcome, {breed} trio! Their Pagoda is waiting in Your coops.', preview: 'Preview only: nothing was charged or added.',
-    adopt: 'Adopt this trio · {p}', adopt_note: 'Or hatch them for free by breeding.', restore_t: 'Purchases', restore: 'Restore purchases', restore_note: 'Bought on another phone, or after reinstalling: everything comes back (with My account).' },
+    adopt: 'Adopt this trio · {p}', adopt_note: 'A rooster, two hens and their own Pagoda. Or hatch them for free by breeding.', all_t: 'All five rare colours', all_l: 'Paint, Lavender, Red, Splash and Cuckoo: five trios and their five Pagodas.', all: 'Adopt all five · {p}', thanks_all: 'Welcome, all five rare trios! Their Pagodas are waiting in Your coops.', restore_t: 'Purchases', restore: 'Restore purchases', restore_note: 'Bought on another phone, or after reinstalling: everything comes back (with My account).' },
   fr: { tab: 'Pièces', note: 'Les pièces vous donnent un coup de pouce. Tout le jeu peut aussi se gagner en jouant.', purse: 'Une bourse de pièces', basket: 'Un panier de pièces', sack: 'Un sac de pièces', cart: 'Une charrette de pièces', coins: '{n} pièces', popular: 'Le plus choisi', value: 'Le meilleur prix',
     get: 'Obtenir des pièces', pay_t: 'Le paiement de votre iPhone', pay_how: 'Ici l’iPhone affiche sa propre fenêtre de paiement : Face ID ou votre mot de passe. L’achat d’un enfant attend l’accord d’un parent (Demander l’autorisation).', pay_ok: 'Payer {p} (aperçu)', cancel: 'Annuler',
     thanks_t: 'Merci !', thanks_coins: '{n} pièces sont dans votre bourse.', thanks_rare: 'Bienvenue au trio {breed} ! Leur Pagode vous attend dans Vos poulaillers.', preview: 'Aperçu seulement : rien n’a été payé ni ajouté.',
-    adopt: 'Adopter ce trio · {p}', adopt_note: 'Ou faites-les éclore gratuitement en élevant.', restore_t: 'Achats', restore: 'Restaurer mes achats', restore_note: 'Achetés sur un autre téléphone, ou après réinstallation : tout revient (avec Mon compte).' },
+    adopt: 'Adopter ce trio · {p}', adopt_note: 'Un coq, deux poules et leur propre Pagode. Ou faites-les éclore gratuitement en élevant.', all_t: 'Les cinq couleurs rares', all_l: 'Paint, Lavande, Rouge, Splash et Coucou : cinq trios et leurs cinq Pagodes.', all: 'Adopter les cinq · {p}', thanks_all: 'Bienvenue aux cinq trios rares ! Leurs Pagodes vous attendent dans Vos poulaillers.', restore_t: 'Achats', restore: 'Restaurer mes achats', restore_note: 'Achetés sur un autre téléphone, ou après réinstallation : tout revient (avec Mon compte).' },
 };
 const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' };      // (the reminders one can choose: notify.js GROUPS)
 const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
@@ -618,7 +618,16 @@ export class GameUI {
     }
     b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
     const list = names => this.g.andList(names);
+    let allShown = false;
     for (const pg of pages) {
+      if (IAP_DEMO && pg.rare && !allShown && pages.filter(x => x.rare && !x.found).length >= 2) {      // (the five together, before the first rare page)
+        allShown = true;
+        const card = el('div', 'gcard gpage giap-all'), info = el('div', 'gpage-i');
+        info.append(el('span', 'gcard-t', '✨ ' + this.dt('all_t')), el('p', 'gnote gpage-l', this.dt('all_l')));
+        const go = el('button', 'gbtn gsmallbtn gpage-go giap-adopt-all', this.dt('all', { p: this.money(RARE_ALL) })); go.type = 'button';
+        go.addEventListener('click', () => this.payDemo({ what: this.dt('all_t'), price: RARE_ALL, done: () => this.thanksDemo(this.dt('thanks_all')) }));
+        info.append(go); card.append(info); b.append(card);
+      }
       const card = el('div', 'gcard gpage' + (pg.found ? '' : ' gpage-no')); card.dataset.breed = pg.breed;
       const pic = el('div', 'gpic'), img = el('img');
       img.alt = ''; img.width = img.height = 320; img.decoding = 'async'; img.src = 'book/' + pg.breed + '.webp' + (this.o.bust || '');
