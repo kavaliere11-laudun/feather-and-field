@@ -1,7 +1,7 @@
 """The app's own pictures: python3 icons.py
-- the icon (1024x1024, no transparency: Apple's rule): art/icon-1024.png, the game's own white Silkie and her chick on the
-  farm's grass in front of the Red Barn (Audrey's choice, 1 Nov 2026: "A Mum and her chick"; made by web3d/iconstudio.mjs
-  SET=a VP=1024 DSF=2 and art/compose_studio.py BIRD_BRIGHT=1.08); also the web game's Home Screen icons (web3d/icon-*.png)
+- the icon (1024x1024, no transparency: Apple's rule): art/icon-1024.png, the white Silkie hen and her chick in a meadow
+  of daisies in front of a red barn, painted (Audrey, 2 Nov 2026, "Final one": made with ChatGPT from the game's own Silkie
+  and chick, web3d/iconstudio.mjs, as its model); also the web game's Home Screen icons (web3d/icon-*.png)
 - the launch screen (2732x2732, shown filling the screen): the game's loading green (index.html #loading), so the app opens
   straight into "Loading your farm..." with no flash
 """
