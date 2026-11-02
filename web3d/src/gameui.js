@@ -10,6 +10,23 @@ import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHO
 // the first Feather & Field's save on this phone (since the switch, 26 Oct 2026, the first game lives in the site's classic/
 // folder and the 3D game at the usual address): only whether it's there, to offer the way to it; never read or changed here
 const FIRST_SAVE = 'feather-field-save-v1';
+// ---- the shop's real-money preview (2 Nov 2026; Audrey: "what's the strategy for the content to buy, show me how it
+// looks: the elements themselves, the journey to buy them"): only with ?shopdemo, for her to see; it never charges anything
+// and never adds a coin or a bird (the real one comes with the stores' purchases, checked by a server). Its words here,
+// English and French, until it's chosen.
+const IAP_DEMO = typeof location !== 'undefined' && new URLSearchParams(location.search).has('shopdemo');
+const COIN_BAGS = [{ id: 'purse', coins: 1000, price: 0.99, pile: 2 }, { id: 'basket', coins: 3500, price: 2.99, pile: 5, tag: 'popular' }, { id: 'sack', coins: 6500, price: 4.99, pile: 8 }, { id: 'cart', coins: 15000, price: 9.99, pile: 12, tag: 'value' }];
+const RARE_PRICE = 2.99;
+const DEMO_T = {
+  en: { tab: 'Coins', note: 'Coins help you along. Everything in the game can also be earned by playing.', purse: 'A purse of coins', basket: 'A basket of coins', sack: 'A sack of coins', cart: 'A cart of coins', coins: '{n} coins', popular: 'Most popular', value: 'Best value',
+    get: 'Get coins', pay_t: 'Your iPhone’s own payment', pay_how: 'Here the iPhone shows its own payment window: Face ID or your password. A child’s purchase waits for a parent’s OK (Ask to Buy).', pay_ok: 'Pay {p} (preview)', cancel: 'Cancel',
+    thanks_t: 'Thank you!', thanks_coins: '{n} coins are in your purse.', thanks_rare: 'Welcome, {breed} trio! Their Pagoda is waiting in Your coops.', preview: 'Preview only: nothing was charged or added.',
+    adopt: 'Adopt this trio · {p}', adopt_note: 'Or hatch them for free by breeding.', restore_t: 'Purchases', restore: 'Restore purchases', restore_note: 'Bought on another phone, or after reinstalling: everything comes back (with My account).' },
+  fr: { tab: 'Pièces', note: 'Les pièces vous donnent un coup de pouce. Tout le jeu peut aussi se gagner en jouant.', purse: 'Une bourse de pièces', basket: 'Un panier de pièces', sack: 'Un sac de pièces', cart: 'Une charrette de pièces', coins: '{n} pièces', popular: 'Le plus choisi', value: 'Le meilleur prix',
+    get: 'Obtenir des pièces', pay_t: 'Le paiement de votre iPhone', pay_how: 'Ici l’iPhone affiche sa propre fenêtre de paiement : Face ID ou votre mot de passe. L’achat d’un enfant attend l’accord d’un parent (Demander l’autorisation).', pay_ok: 'Payer {p} (aperçu)', cancel: 'Annuler',
+    thanks_t: 'Merci !', thanks_coins: '{n} pièces sont dans votre bourse.', thanks_rare: 'Bienvenue au trio {breed} ! Leur Pagode vous attend dans Vos poulaillers.', preview: 'Aperçu seulement : rien n’a été payé ni ajouté.',
+    adopt: 'Adopter ce trio · {p}', adopt_note: 'Ou faites-les éclore gratuitement en élevant.', restore_t: 'Achats', restore: 'Restaurer mes achats', restore_note: 'Achetés sur un autre téléphone, ou après réinstallation : tout revient (avec Mon compte).' },
+};
 const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' };      // (the reminders one can choose: notify.js GROUPS)
 const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
@@ -618,6 +635,11 @@ export class GameUI {
       coop.append(ci, el('span', null, this.t('book_coop', { coop: g.coopName({ breed: pg.breed, name: '' }) })));
       info.append(eggs, coop);
       if (pg.waiting && h.place) { const go = el('button', 'gbtn gsmallbtn gpage-go', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(pg.breed)); info.append(go); }
+      if (IAP_DEMO && pg.rare && !pg.found) {
+        const go = el('button', 'gbtn gsmallbtn gpage-go giap-adopt', this.dt('adopt', { p: this.money(RARE_PRICE) })); go.type = 'button';
+        go.addEventListener('click', () => this.payDemo({ what: g.bookName(pg.breed), price: RARE_PRICE, done: () => this.thanksDemo(this.dt('thanks_rare', { breed: g.bookName(pg.breed) })) }));
+        info.append(go, el('p', 'gnote gpage-l', this.dt('adopt_note')));
+      }
       card.append(pic, info); b.append(card);
     }
     b.append(el('p', 'gnote gcenter', this.t('book_more')));
@@ -742,13 +764,14 @@ export class GameUI {
     top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
     if (h.outfits) {                                    // (four shelves: the decorations, the animals, the farmer's outfits, the seasons' dresses)
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label] of [['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits'], ['seasons', 'shop_seasons']]) {
-        const c = el('button', 'gchip' + (tab === k ? ' on' : ''), this.t(label)); c.type = 'button'; c.dataset.tab = k;
+      for (const [k, label] of [...(IAP_DEMO ? [['coins', '']] : []), ['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits'], ['seasons', 'shop_seasons']]) {
+        const c = el('button', 'gchip' + (tab === k ? ' on' : ''), k === 'coins' ? '🪙 ' + this.dt('tab') : this.t(label)); c.type = 'button'; c.dataset.tab = k;
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
         tabs.append(c);
       }
       b.append(tabs);
     }
+    if (tab === 'coins' && IAP_DEMO) { this.coinCards(b); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
     if (tab === 'seasons') { this.dressCards(b, h, fmt); return; }
     if (tab === 'animals') { this.animalCards(b, h, fmt); return; }
@@ -767,10 +790,50 @@ export class GameUI {
       if (!own && !lock) {
         const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buy(id); });
+        if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
       }
       card.append(pic, info); b.append(card);
     }
+  }
+  // ---- the real-money preview (IAP_DEMO): its words, a price in the phone's money (the stores give the real one), a pile of
+  // coins for a bag's picture, the Coins shelf, the iPhone's payment (shown as a stand-in), and the thank-you
+  getCoins(go, h) { const gc = el('button', 'gbtn gsmallbtn giap-get', '🪙 ' + this.dt('get')); gc.type = 'button'; gc.addEventListener('click', () => this.shopSheet(h, 'coins')); queueMicrotask(() => go.after(gc)); }      // (beside its button, once that's on the card)
+  dt(k, v = {}) { const T = DEMO_T[this.g.lang] || DEMO_T.en; return (T[k] || DEMO_T.en[k]).replace(/\{(\w+)\}/g, (m, x) => v[x] !== undefined ? v[x] : m); }
+  money(p) { try { return new Intl.NumberFormat(this.g.locale(), { style: 'currency', currency: 'GBP' }).format(p); } catch (e) { return '£' + p; } }
+  coinPile(n) {
+    const pic = el('div', 'gpic giap-pile');
+    for (let i = 0; i < n; i++) { const c = el('span', 'gcoin giap-c'), row = Math.floor(Math.sqrt(2 * i + 0.25) - 0.5), k = i - row * (row + 1) / 2; c.style.left = (50 + (k - row / 2) * 22 + (row % 2 ? 4 : 0)) + '%'; c.style.bottom = (18 + (n > 6 ? 6 : 10) * (Math.floor(Math.sqrt(2 * n) - 1) - row) + row * 2) + '%'; c.style.setProperty('--d', (i * 37 % 13) + 'deg'); pic.append(c); }
+    return pic;
+  }
+  coinCards(b) {
+    const fmt = n => n.toLocaleString(this.g.locale());
+    b.append(el('p', 'gnote', this.dt('note')));
+    for (const B of COIN_BAGS) {
+      const card = el('div', 'gcard gpage gdec giap'); card.dataset.bag = B.id;
+      const info = el('div', 'gpage-i'), t = el('span', 'gcard-t', this.dt(B.id));
+      info.append(t);
+      if (B.tag) info.append(el('span', 'gbadge giap-tag giap-' + B.tag, this.dt(B.tag)));
+      const amt = el('p', 'gpage-s gdec-p'); amt.append(el('span', 'gcoin gcoin-s'), document.createTextNode(this.dt('coins', { n: fmt(B.coins) }))); info.append(amt);
+      const go = el('button', 'gbtn gsmallbtn gpage-go giap-buy', this.money(B.price)); go.type = 'button';
+      go.addEventListener('click', () => this.payDemo({ what: this.dt(B.id), price: B.price, done: () => this.thanksDemo(this.dt('thanks_coins', { n: fmt(B.coins) })) }));
+      info.append(go); card.append(this.coinPile(B.pile), info); b.append(card);
+    }
+  }
+  payDemo(o) {
+    const b = this.open('paydemo', '🔒 ' + this.dt('pay_t'));
+    const box = el('div', 'gcard giap-pay'); box.append(el('span', 'gcard-t', 'Feather & Field'), el('p', 'gtext', o.what), el('p', 'giap-price', this.money(o.price)));
+    b.append(box, el('p', 'gnote', this.dt('pay_how')));
+    const row = el('div', 'gfox-row'), ok = el('button', 'gbtn giap-ok', this.dt('pay_ok', { p: this.money(o.price) })), no = el('button', 'gbtn galt', this.dt('cancel'));
+    ok.type = no.type = 'button'; ok.addEventListener('click', () => o.done()); no.addEventListener('click', () => this.close());
+    row.append(ok, no); b.append(row);
+  }
+  thanksDemo(line) {
+    const b = this.open('thanksdemo', '🎉 ' + this.dt('thanks_t'));
+    b.append(el('p', 'gtext', line), el('p', 'gnote', this.dt('preview')));
+    const r = this.coins.getBoundingClientRect(), from = { x: innerWidth / 2, y: innerHeight * 0.55 };
+    this.flyEggs(from, 6, null, null, 'gcoin giap-fly');      // (the coins flying up to the purse: the eggs' flight; nothing counted)
+    const ok = el('button', 'gbtn', 'OK'); ok.type = 'button'; ok.addEventListener('click', () => this.close()); b.append(ok);
   }
   // the animals (the shop's second shelf, release 3: the guardians): each with its picture, what it is, and Buy (h.buyAnimal:
   // the geese come at once; the dog's kennel is placed first, like a decoration), or its level to come, or not enough coins
@@ -796,6 +859,7 @@ export class GameUI {
       if (!own && !lock) {
         const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
+        if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
       }
       card.append(pic, info); b.append(card);
@@ -819,6 +883,7 @@ export class GameUI {
       if (!own && !lock) {
         const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.t('dec_broke') : this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyOutfit(id); });
+        if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
       }
       card.append(pic, info); b.append(card);
@@ -1132,6 +1197,7 @@ export class GameUI {
     }
     b.append(el('p', 'gnote gsound-note', this.t('settings_music_note')));
     if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
+    if (IAP_DEMO) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; c.append(hd, el('p', 'gnote', this.dt('restore_note')), r); b.append(c); }
     if (this.o.account && this.o.account.on) b.append(this.accountCard());
     b.append(el('p', 'gnote', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of

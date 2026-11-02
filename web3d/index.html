@@ -414,6 +414,14 @@
   }
   .grow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .gchips { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* the shop's real-money preview (?shopdemo): coin piles for the bags, their tags, the payment stand-in */
+  .giap-pile { position: relative; background: radial-gradient(circle at 50% 70%, #fff4c9, #f3e3a6 70%); }
+  .giap-c { position: absolute; width: 30px; height: 30px; transform: translateX(-50%) rotate(var(--d)); box-shadow: 0 2px 0 rgba(120, 80, 0, 0.35); }
+  .giap-c::after { inset: 9px; }
+  .giap-tag { margin: 2px 0 2px; align-self: flex-start; } .giap-value { background: #3f8a3a; }
+  .giap-get { margin-top: 6px; margin-left: 6px; }
+  .giap-pay { text-align: center; } .giap-price { font: 700 28px var(--display); margin: 2px 0 4px; color: var(--ink); }
+  .giap-fly { position: fixed; z-index: 60; pointer-events: none; }
   .gnotes-kinds { margin: -2px 0 10px; } .gnotes-kinds[hidden] { display: none; } .gnotes-kind { font-size: 14px; }      /* (the reminders one wants: notify.js) */
   .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
   .gchip.on { border-color: var(--meadow); background: #e5f1df; }
