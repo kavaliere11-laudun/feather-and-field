@@ -31,6 +31,11 @@ for (const tab of ['decor', 'animals', 'outfits']) {
 }
 await shot('2-not-enough');
 await p.evaluate(() => document.querySelector('.giap-get').click()); await p.waitForTimeout(600); await shot('3-coins');
+await p.evaluate(() => { document.querySelector('.giap-watch').click(); for (const a of document.querySelector('.giap-adfill').getAnimations()) { a.pause(); a.currentTime = 1300; } }); await p.waitForTimeout(400);      // (held part way for the picture: the test browser draws slowly)
+await p.screenshot({ path: `${OUT}/3b-video.png` }); console.log('shot 3b-video'); await p.screenshot({ path: `${OUT}/3b-video.png` }); console.log('shot 3b-video');
+await p.evaluate(() => { for (const a of document.querySelector('.giap-adfill').getAnimations()) a.play(); }); await p.waitForTimeout(3500); await p.screenshot({ path: `${OUT}/3c-video-done.png` }); console.log('shot 3c-video-done');
+await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.gameUI().coins.click(); }); await p.waitForTimeout(500);
+await p.evaluate(() => { const c = document.querySelector('.gshop-tabs .gchip[data-tab="coins"]'); if (c) c.click(); }); await p.waitForTimeout(500);
 await p.evaluate(() => document.querySelector('.giap[data-bag="basket"] .giap-buy').click()); await p.waitForTimeout(600); await shot('4-pay');
 await p.evaluate(() => document.querySelector('.giap-ok').click()); await p.waitForTimeout(350); await p.screenshot({ path: `${OUT}/5-thanks.png` }); console.log('shot 5-thanks');
 await p.waitForTimeout(1500);

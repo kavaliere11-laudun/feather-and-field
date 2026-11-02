@@ -16,16 +16,18 @@ const FIRST_SAVE = 'feather-field-save-v1';
 // English and French, until it's chosen.
 const IAP_DEMO = typeof location !== 'undefined' && new URLSearchParams(location.search).has('shopdemo');
 const COIN_BAGS = [{ id: 'purse', coins: 1000, price: 0.99, pile: 2 }, { id: 'basket', coins: 3500, price: 2.99, pile: 5, tag: 'popular' }, { id: 'sack', coins: 6500, price: 4.99, pile: 8 }, { id: 'cart', coins: 15000, price: 9.99, pile: 12, tag: 'value' }];
-const RARE_PRICE = 6.99, RARE_ALL = 19.99;      // (Audrey, 2 Nov: "£6.99" a trio; "Yes, £19.99 for all five")
+const RARE_PRICE = 6.99, RARE_ALL = 19.99;
+const AD_COINS = 150, AD_DAY = 5;      // (Audrey, 2 Nov: "Free coins in the shop", "5 a day", "Contextual for everyone")
+let adsLeft = AD_DAY;      // (the preview's count, this visit only)      // (Audrey, 2 Nov: "£6.99" a trio; "Yes, £19.99 for all five")
 const DEMO_T = {
   en: { tab: 'Coins', note: 'Coins help you along. Everything in the game can also be earned by playing.', purse: 'A purse of coins', basket: 'A basket of coins', sack: 'A sack of coins', cart: 'A cart of coins', coins: '{n} coins', popular: 'Most popular', value: 'Best value',
     get: 'Get coins', pay_t: 'Your iPhone’s own payment', pay_how: 'Here the iPhone shows its own payment window: Face ID or your password. A child’s purchase waits for a parent’s OK (Ask to Buy).', pay_ok: 'Pay {p} (preview)', cancel: 'Cancel',
     thanks_t: 'Thank you!', thanks_coins: '{n} coins are in your purse.', thanks_rare: 'Welcome, {breed} trio! Their Pagoda is waiting in Your coops.', preview: 'Preview only: nothing was charged or added.',
-    adopt: 'Adopt this trio · {p}', adopt_note: 'A rooster, two hens and their own Pagoda. Or hatch them for free by breeding.', all_t: 'All five rare colours', all_l: 'Paint, Lavender, Red, Splash and Cuckoo: five trios and their five Pagodas.', all: 'Adopt all five · {p}', thanks_all: 'Welcome, all five rare trios! Their Pagodas are waiting in Your coops.', restore_t: 'Purchases', restore: 'Restore purchases', restore_note: 'Bought on another phone, or after reinstalling: everything comes back (with My account).' },
+    adopt: 'Adopt this trio · {p}', adopt_note: 'A rooster, two hens and their own Pagoda. Or hatch them for free by breeding.', all_t: 'All five rare colours', all_l: 'Paint, Lavender, Red, Splash and Cuckoo: five trios and their five Pagodas.', all: 'Adopt all five · {p}', thanks_all: 'Welcome, all five rare trios! Their Pagodas are waiting in Your coops.', restore_t: 'Purchases', ad_t: 'Free coins', ad_l: 'Watch a short video: +{n} coins.', ad_left: '{n} left today', ad_none: 'Come back tomorrow for more', ad_btn: '🎬 Watch', ad_play_t: 'A short video', ad_play: 'Here the advert plays (15 to 30 seconds; child-safe adverts, nothing about you is used). The coins come once it has played to the end.', ad_done: '+{n} coins for watching!', restore: 'Restore purchases', restore_note: 'Bought on another phone, or after reinstalling: everything comes back (with My account).' },
   fr: { tab: 'Pièces', note: 'Les pièces vous donnent un coup de pouce. Tout le jeu peut aussi se gagner en jouant.', purse: 'Une bourse de pièces', basket: 'Un panier de pièces', sack: 'Un sac de pièces', cart: 'Une charrette de pièces', coins: '{n} pièces', popular: 'Le plus choisi', value: 'Le meilleur prix',
     get: 'Obtenir des pièces', pay_t: 'Le paiement de votre iPhone', pay_how: 'Ici l’iPhone affiche sa propre fenêtre de paiement : Face ID ou votre mot de passe. L’achat d’un enfant attend l’accord d’un parent (Demander l’autorisation).', pay_ok: 'Payer {p} (aperçu)', cancel: 'Annuler',
     thanks_t: 'Merci !', thanks_coins: '{n} pièces sont dans votre bourse.', thanks_rare: 'Bienvenue au trio {breed} ! Leur Pagode vous attend dans Vos poulaillers.', preview: 'Aperçu seulement : rien n’a été payé ni ajouté.',
-    adopt: 'Adopter ce trio · {p}', adopt_note: 'Un coq, deux poules et leur propre Pagode. Ou faites-les éclore gratuitement en élevant.', all_t: 'Les cinq couleurs rares', all_l: 'Paint, Lavande, Rouge, Splash et Coucou : cinq trios et leurs cinq Pagodes.', all: 'Adopter les cinq · {p}', thanks_all: 'Bienvenue aux cinq trios rares ! Leurs Pagodes vous attendent dans Vos poulaillers.', restore_t: 'Achats', restore: 'Restaurer mes achats', restore_note: 'Achetés sur un autre téléphone, ou après réinstallation : tout revient (avec Mon compte).' },
+    adopt: 'Adopter ce trio · {p}', adopt_note: 'Un coq, deux poules et leur propre Pagode. Ou faites-les éclore gratuitement en élevant.', all_t: 'Les cinq couleurs rares', all_l: 'Paint, Lavande, Rouge, Splash et Coucou : cinq trios et leurs cinq Pagodes.', all: 'Adopter les cinq · {p}', thanks_all: 'Bienvenue aux cinq trios rares ! Leurs Pagodes vous attendent dans Vos poulaillers.', restore_t: 'Achats', ad_t: 'Pièces gratuites', ad_l: 'Regardez une courte vidéo : +{n} pièces.', ad_left: 'Encore {n} aujourd’hui', ad_none: 'Revenez demain pour d’autres', ad_btn: '🎬 Regarder', ad_play_t: 'Une courte vidéo', ad_play: 'Ici passe la publicité (15 à 30 secondes ; des publicités adaptées aux enfants, rien sur vous n’est utilisé). Les pièces arrivent une fois qu’elle est allée jusqu’au bout.', ad_done: '+{n} pièces pour avoir regardé !', restore: 'Restaurer mes achats', restore_note: 'Achetés sur un autre téléphone, ou après réinstallation : tout revient (avec Mon compte).' },
 };
 const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' };      // (the reminders one can choose: notify.js GROUPS)
 const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
@@ -818,6 +820,12 @@ export class GameUI {
   coinCards(b) {
     const fmt = n => n.toLocaleString(this.g.locale());
     b.append(el('p', 'gnote', this.dt('note')));
+    // free coins for a short video (chosen by the player, never forced): AD_DAY a day
+    { const card = el('div', 'gcard gpage gdec giap giap-ad'), info = el('div', 'gpage-i'), pic = el('div', 'gpic giap-adpic', '🎬');
+      info.append(el('span', 'gcard-t', this.dt('ad_t')), el('p', 'gnote gdec-l', this.dt('ad_l', { n: AD_COINS })), el('p', 'gpage-s', adsLeft ? this.dt('ad_left', { n: adsLeft }) : this.dt('ad_none')));
+      const go = el('button', 'gbtn gsmallbtn gpage-go giap-watch', this.dt('ad_btn')); go.type = 'button'; go.disabled = !adsLeft; if (!adsLeft) go.classList.add('galt');
+      go.addEventListener('click', () => { if (adsLeft) this.adDemo(); });
+      info.append(go); card.append(pic, info); b.append(card); }
     for (const B of COIN_BAGS) {
       const card = el('div', 'gcard gpage gdec giap'); card.dataset.bag = B.id;
       const info = el('div', 'gpage-i'), t = el('span', 'gcard-t', this.dt(B.id));
@@ -836,6 +844,14 @@ export class GameUI {
     const row = el('div', 'gfox-row'), ok = el('button', 'gbtn giap-ok', this.dt('pay_ok', { p: this.money(o.price) })), no = el('button', 'gbtn galt', this.dt('cancel'));
     ok.type = no.type = 'button'; ok.addEventListener('click', () => o.done()); no.addEventListener('click', () => this.close());
     row.append(ok, no); b.append(row);
+  }
+  adDemo() {
+    const b = this.open('addemo', '🎬 ' + this.dt('ad_play_t'));
+    const screen = el('div', 'giap-adscreen'), bar = el('div', 'giap-adbar'), fill = el('div', 'giap-adfill'); bar.append(fill); screen.append(el('span', null, '▶'));
+    b.append(screen, bar, el('p', 'gnote', this.dt('ad_play')));
+    const a = fill.animate ? fill.animate([{ width: '0%' }, { width: '100%' }], { duration: 3000, fill: 'both' }) : null;
+    const end = () => { if (this.kind !== 'addemo') return; adsLeft = Math.max(0, adsLeft - 1); this.thanksDemo(this.dt('ad_done', { n: AD_COINS })); };
+    if (a) a.onfinish = end; else setTimeout(end, 3000);
   }
   thanksDemo(line) {
     const b = this.open('thanksdemo', '🎉 ' + this.dt('thanks_t'));

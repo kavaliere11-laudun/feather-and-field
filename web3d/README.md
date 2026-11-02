@@ -3897,3 +3897,13 @@ the birds already had.
   purse, in the Breed Book "Adopt this trio · £6.99" on each rare page and "Adopt all five · £19.99" before them, in
   Settings "Purchases: Restore purchases". Its words in English and French (`DEMO_T`) until it's built for real.
   `iapdemo.mjs OUT` (LANG_GAME=fr) shoots the seven steps. dectest passes.
+- **Rewarded videos** (2 Nov, 11:08; Audrey: "We need to offer to watch adds to earn money. How does it usually works and
+  remunerate"): explained (the player chooses to watch a 15-30 s advert for a reward; an ad company, AdMob say, pays per
+  thousand watched, about $20 on iPhone in the US, the UK similar, 4-10 times less elsewhere: roughly 1-3p a video;
+  children: contextual adverts only; not in the App Store's Kids category; the privacy page, the store's privacy answers
+  and a consent message for Europe). Her choices: "Free coins in the shop (Recommended)", "5 a day (Recommended)",
+  "Contextual for everyone (Recommended)": in the preview, a "Free coins" card first on the Coins shelf (Watch: +150
+  coins, 5 left today), a video stand-in with its progress bar, then the thank-you. The rule becomes "no forced ads:
+  only the ones a player chooses". For real: Audrey's own ad account (her bank and tax details, set up by her), an
+  `app-ads.txt` at the site, the reward given only once the ad company confirms the video was watched to the end, the
+  day's count checked like any saved field.
