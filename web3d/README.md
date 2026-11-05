@@ -3937,3 +3937,10 @@ the birds already had.
   (Admin; its .p8 downloaded once), her Team ID, and the four repository secrets (ASC_KEY_ID, ASC_ISSUER_ID,
   ASC_KEY_P8, APPLE_TEAM_ID). Then Claude runs the workflow's TestFlight job. `ITSAppUsesNonExemptEncryption` is already
   false, so no export question per build. No "Feather & Field" found on the App Store or Steam (5 Nov search).
+
+- **First build sent to Apple** (5 Nov, 22:23; build 10, version 1.0): the first try failed at signing ("Your team
+  has no devices": an archive signed for development needs a registered iPhone) yet showed green (no pipefail). Now the
+  archive is made unsigned and signed only at export, for the store (Apple's cloud signing with her key), and the step
+  fails loudly. "Upload succeeded"; Apple processes it, then it's in TestFlight. Audrey (5 Nov: "I want to play the game
+  on my phone but not publish it at first, as it still has bugs"): TestFlight internal testing only; nothing on the App
+  Store until she submits a version and releases it.
