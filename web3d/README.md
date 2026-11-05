@@ -3925,3 +3925,15 @@ the birds already had.
   Pagodas for £19.99 (£27.96 one by one); no Red trio for sale. In the preview (`DEMO_T` all_*: "All four rare colours",
   "Adopt all four"; French "Les quatre couleurs rares", "Adopter les quatre"); the Book never shows a Red page on a farm
   without Reds, so no Adopt there. iapdemo passes in English and French; the shop page updated.
+
+## Apple account ready; launch countries (5 Nov 2026)
+
+- **Audrey's Apple Developer account is set up** (5 Nov, 21:52, after Apple's licence check by email).
+- **Launch countries** (her words: "I want minimum fees so if I need to pay lawyers in EU, let's wait"): the UK and the
+  US first, the EU later. The US needs no representative and no trader page (COPPA and the states' app store age laws:
+  Apple's age-band check, in Claude's list in the legal check doc); the EU's representative and trader page wait.
+- **For TestFlight (hers, once):** register the app's ID `com.featherandfield.game` (developer.apple.com, Identifiers),
+  make the app in App Store Connect (Feather & Field, English (U.K.), SKU of her choice), an App Store Connect API key
+  (Admin; its .p8 downloaded once), her Team ID, and the four repository secrets (ASC_KEY_ID, ASC_ISSUER_ID,
+  ASC_KEY_P8, APPLE_TEAM_ID). Then Claude runs the workflow's TestFlight job. `ITSAppUsesNonExemptEncryption` is already
+  false, so no export question per build. No "Feather & Field" found on the App Store or Steam (5 Nov search).
