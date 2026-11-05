@@ -22,3 +22,13 @@ it works offline.
   with the run). Unsigned: nothing secret in it.
 
 Making it here: `cd web3d && ./build.sh && cd ../app && npm ci && node make-www.mjs && npx cap sync ios`.
+
+## TestFlight (from 5 Nov 2026)
+
+Audrey's Apple Developer account is set up (team 9XALR86388); the app's ID `com.featherandfield.game` is registered
+and the app made in App Store Connect ("Feather & Field", English (U.K.)); her API key and Team ID are in the
+repository's secrets (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, APPLE_TEAM_ID), added by her, never seen here. A push to
+`source` touching `app/` whose message has `[testflight]` (or "Run workflow" with TestFlight ticked, once the workflow
+is on the default branch) builds, signs and sends a build; its number is the run's number. TestFlight only: internal
+testing (Audrey and whoever she adds), nothing on the App Store until she submits a version for review and releases it.
+The plugins use none of the APIs Apple asks reasons for; Capacitor's own frameworks carry their privacy manifests.
