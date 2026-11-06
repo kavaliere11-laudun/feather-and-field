@@ -1,0 +1,31 @@
+{
+ "id": "winter",
+ "meshes": {
+  "m": [
+   "outfit_winter"
+  ],
+  "f": [
+   "outfit_winter",
+   "outfit_winter_hair_f"
+  ]
+ },
+ "hide": [
+  "hat"
+ ],
+ "shirt": {
+  "kind": "knit",
+  "col": "#3f7d4f"
+ },
+ "band": null,
+ "ribbon": {},
+ "stats": {
+  "outfit_winter": {
+   "tris": 2168,
+   "verts": 1092
+  },
+  "outfit_winter_hair_f": {
+   "tris": 1200,
+   "verts": 602
+  }
+ }
+}

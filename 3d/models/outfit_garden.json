@@ -1,0 +1,49 @@
+{
+ "id": "garden",
+ "meshes": {
+  "m": [
+   "outfit_garden_m"
+  ],
+  "f": [
+   "outfit_garden_f"
+  ]
+ },
+ "hide": [
+  "hat"
+ ],
+ "shirt": {
+  "kind": "check",
+  "cols": [
+   "#fffaf0",
+   "#f2c94c",
+   "#d0a124"
+  ],
+  "f": 230
+ },
+ "band": "#f08bb0",
+ "ribbon": {
+  "f": {
+   "joint": "headc",
+   "from": [
+    175,
+    9,
+    11
+   ],
+   "to": [
+    222,
+    66,
+    111
+   ]
+  }
+ },
+ "stats": {
+  "outfit_garden_m": {
+   "tris": 3486,
+   "verts": 1805
+  },
+  "outfit_garden_f": {
+   "tris": 3486,
+   "verts": 1805
+  }
+ }
+}

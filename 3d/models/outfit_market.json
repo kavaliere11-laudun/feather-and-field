@@ -1,0 +1,36 @@
+{
+ "id": "market",
+ "meshes": {
+  "m": [
+   "outfit_market"
+  ],
+  "f": [
+   "outfit_market",
+   "outfit_market_hair_f"
+  ]
+ },
+ "hide": [
+  "hat"
+ ],
+ "shirt": {
+  "kind": "check",
+  "cols": [
+   "#eef2f7",
+   "#3f6fb5",
+   "#1f3c6e"
+  ],
+  "f": 135.0
+ },
+ "band": null,
+ "ribbon": {},
+ "stats": {
+  "outfit_market": {
+   "tris": 1284,
+   "verts": 648
+  },
+  "outfit_market_hair_f": {
+   "tris": 1200,
+   "verts": 602
+  }
+ }
+}

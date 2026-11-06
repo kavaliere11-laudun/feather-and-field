@@ -320,6 +320,17 @@
   .gintro-pic.none img { display: none; }
   .gintro-t { margin: 10px 2px 4px; }
   .gdots { display: flex; justify-content: center; gap: 7px; margin: 6px 0 10px; }
+  /* the intro's card: swiped sideways (gameui.js swipe), up and down still the sheet's scrolling; the new card slides in; the
+     button row's cover reaching down and to the sides only, not over the dots just above it (6 Nov 2026: they were cut) */
+  .gsheet.gintro .gsheet-body { touch-action: pan-y; }
+  .gsheet.gintro .gintro-pic img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; }
+  .gsheet.gintro .gstick { box-shadow: 0 10px 0 14px var(--meringue); }
+  @media (prefers-reduced-motion: no-preference) {
+    .gsheet.gintro .gsheet-body.gin-l { animation: gslideL 0.24s ease-out; }
+    .gsheet.gintro .gsheet-body.gin-r { animation: gslideR 0.24s ease-out; }
+  }
+  @keyframes gslideL { from { transform: translateX(36px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+  @keyframes gslideR { from { transform: translateX(-36px); opacity: 0.4; } to { transform: none; opacity: 1; } }
   .gdots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(30, 52, 38, 0.18); }
   .gdots span.on { background: var(--meadow); width: 20px; border-radius: 4px; }
   /* sideways: the picture whole beside its words (1 Nov: as a thin strip across the card it lost the hens and the farmer) */
@@ -587,6 +598,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793988977"></script>
+<script src="app.js?v=1793987434"></script>
 </body>
 </html>
