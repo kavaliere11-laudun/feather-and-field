@@ -62,7 +62,7 @@ const notes = GAME_MODE && !params.has('poster') ? new Notes(game) : null;      
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
-const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(4, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-4: intro.js)
+const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(5, parseInt(params.get('intro') || '0', 10) || 0));      // (the onboarding pictures' stages, 1-5: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 // (the game: the geese and the dog once bought, release 3)
 const geeseOwned = () => GAME_MODE ? !!(game.data && game.animalOwned('geese')) : HAS_GEESE;
@@ -98,9 +98,14 @@ const view = { target: new THREE.Vector3(), size: 4.4, min: 1.4, max: 9 };
 // to the camera, follows it, and everything that faces the player with it)
 const VIEW_AZ0 = 45 * DEG;
 view.az = VIEW_AZ0;
+// and tilted up or down by two fingers moving up or down together (6 Nov 2026, Audrey: "We can move the camera 360 but I
+// would also allow it up and down to change the angle of the view"): from 26 degrees (looking across the farm) to 72
+// (nearly straight down); the compass brings back the usual 42 too
+const VIEW_EL0 = 42 * DEG, VIEW_EL_MIN = 26 * DEG, VIEW_EL_MAX = 72 * DEG;
+view.el = VIEW_EL0;
 const VIEW_DIR = new THREE.Vector3(Math.sin(45 * DEG) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(45 * DEG) * Math.cos(42 * DEG)).normalize();
-function setViewDir() { VIEW_DIR.set(Math.sin(view.az) * Math.cos(42 * DEG), Math.sin(42 * DEG), Math.cos(view.az) * Math.cos(42 * DEG)).normalize(); }
-const PITCH_SIN = Math.sin(42 * DEG);
+let PITCH_SIN = Math.sin(42 * DEG);
+function setViewDir() { VIEW_DIR.set(Math.sin(view.az) * Math.cos(view.el), Math.sin(view.el), Math.cos(view.az) * Math.cos(view.el)).normalize(); PITCH_SIN = Math.sin(view.el); }
 // the game played sideways first (Audrey, 24 Oct): held sideways the farm comes a little closer (its views, and how near
 // and far a pinch goes), so it fills the shorter height as it fills the width upright; turning the phone swaps it over
 const SIDE_K = 0.7, sideways = () => window.innerWidth > 1.25 * window.innerHeight;
@@ -132,7 +137,7 @@ function placeCamera() {
 // shadows for the area round the view: redrawn when the view has moved a good way, or zoomed out past what they cover
 function aimShadows(force) {
   const t = view.target;
-  const reach = Math.max(SHADOW_REACH, view.size * 2.4);
+  const reach = Math.max(SHADOW_REACH, view.size * 2.4 * Math.sin(VIEW_EL0) / PITCH_SIN);      // (tilted low, more ground in view)
   if (!force && shadowAt && shadowAt.p.distanceTo(t) < reach * 0.35 && shadowAt.reach >= reach * 0.99) return;
   shadowAt = { p: t.clone(), reach };
   sun.target.position.set(t.x, 0, t.z);
@@ -500,7 +505,7 @@ async function start() {
   if (params.get('lineup') === 'show') { await loadShow(loadGLB, loadJSON); new ShowLineup({ scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng(45), params }); view.min = 0.4; }
   if (POSTER) buildPoster(beastsInfo.joints);
   if (INTRO) intro = await buildIntro(INTRO, { scene, centre: villageCentre().add(new THREE.Vector3(32, 0, 32)), part, parts, batch,
-    newBird: (...a) => new Bird(...a), plots, allBirds, grade: nightGrade, heart: spawnHeart, rng, fence: buildFence, saleBoard: () => saleBoard(gameText(LANG, 'sale_sign')), saleStakes, honeyFrame, loadGLB, loadJSON });
+    newBird: (...a) => new Bird(...a), plots, allBirds, grade: nightGrade, heart: spawnHeart, rng, fence: buildFence, longGrass: () => longGrass(), beastJoints: beastsInfo.joints, saleBoard: () => saleBoard(gameText(LANG, 'sale_sign')), saleStakes, honeyFrame, loadGLB, loadJSON });
   buildFoxes(beastsInfo.joints);
   buildGeese();
   buildDog(beastsInfo.joints);
@@ -836,7 +841,9 @@ function batchOne(name, matrices, opts) {
   if (!matrices.length) return out;
   for (const m of meshesOf(parts[name])) {
     let mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
+    if (opts.tint && opts.lambert) mat.color.setRGB(...opts.tint);      // (its colours warmed or cooled: the wild meadow's long grass)
     if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
+    if (opts.bothLit) { const before = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { if (before) before.call(mat, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); }; mat.customProgramCacheKey = () => 'bothLit'; }      // (both sides of a blade lit as its front: the long grass, not half its blades in the dark)
     nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
     inst.userData.model = name; inst.userData.ownMat = mat !== m.material;
@@ -988,6 +995,9 @@ function buildProps() {
 // plants, short, the furrows still showing), growing tall and green, and ripe: golden stalks with ears. Everything sways
 // in the wind. ?wheat=soil|sprouts|growing|ripe picks one; tapping the field shows the next (in the test page)
 const WHEAT_STAGES = ['soil', 'sprouts', 'growing', 'ripe'];
+// the game's field lies with the farm's lines, like the coops (0 or 90 degrees: across the screen it looks laid on the ground;
+// square to the screen, 45 or 135, it had looked like a flat square stuck on it: Audrey, 6 Nov 2026)
+const WHEAT_DEGS = [0, 90];
 const WHEAT_NAMES = { soil: 'Ploughed, ready to sow', sprouts: 'The first green shoots', growing: 'Growing tall and green', ripe: 'Golden and ready' };
 const wheatField = { stage: GAME_MODE ? 'soil' : WHEAT_STAGES.includes(params.get('wheat')) ? params.get('wheat') : 'ripe', parts: {}, inverse: null, half: [0, 0] };
 function wheat(fieldMatrix, w, d, parent = null) {      // (parent: the game's own field, drawn in its frame: its parts back)
@@ -1617,7 +1627,7 @@ const navGrid = () => NAV || (NAV = buildNav());          // (one grid for every
 // (the game: the same without the wild meadow's fences, for Rusty, who leaps them on his way: nightvisit.js walk)
 let NAVW = null;
 const navWild = () => !GAME_MODE ? navGrid() : NAVW || (NAVW = buildNav(true));
-const meadowFences = () => GAME_MODE && FIELDS && game.data ? [...fenceLines(), ...fenceLines('edge')] : null;
+const meadowFences = () => GAME_MODE && FIELDS && game.data && LAND_FENCE ? [...fenceLines(), ...fenceLines('edge')] : null;      // (no fence drawn: Rusty just runs through the long grass)
 function buildNav(wild = false) {
   const c = V.bounds.corners, xs = c.map(p => p[0]), zs = c.map(p => p[2]);
   const nav = new NavGrid(Math.min(...xs) - 2, Math.min(...zs) - 2, Math.max(...xs) + 2, Math.max(...zs) + 2, 0.25);
@@ -3623,14 +3633,14 @@ function livePlots() {
 
 // ------------------------------------------------------------------ touch, mouse and trackpad: drag to move, pinch or scroll to zoom, tap a hen
 const pointers = new Map();
-let drag = null, pinch = 0, twist = null;
+let drag = null, pinch = 0, twist = null, tilt = null;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 canvas.addEventListener('pointerdown', e => {
   if (replay && replay.on) return;                       // (the morning replay films itself)
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* (a pointer the page made itself, in a test) */ }
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
-  if (pointers.size === 2) { drag = null; pinch = spread(); twist = { a: fingersAngle(), sum: 0, on: false }; MOVE.drag = null; DMOVE.drag = null; viewTurn = null; }
+  if (pointers.size === 2) { drag = null; pinch = spread(); twist = { a: fingersAngle(), sum: 0, on: false }; tilt = { y: fingersMidY(), sum: 0, s0: pinch, on: false }; for (const q of pointers.values()) { q.gx = q.x; q.gy = q.y; } MOVE.drag = null; DMOVE.drag = null; viewTurn = null; }
   if (MOVE.plot && pointers.size === 1 && moveGrab(e)) drag = { moved: false, coop: true };      // (moving a coop: a finger on it carries it)
   if (DMOVE.id && pointers.size === 1 && decGrab(e)) drag = { moved: false, coop: true };       // (and a decoration)
   wake(1000);
@@ -3649,7 +3659,13 @@ canvas.addEventListener('pointermove', e => {
     // a pinch alone doesn't turn it)
     if (twist && !inside.open && !SHOWDAY && !(replay && replay.on)) {
       const a = fingersAngle(), da = Math.atan2(Math.sin(a - twist.a), Math.cos(a - twist.a)); twist.a = a; twist.sum += da;
-      if (!twist.on && Math.abs(twist.sum) > 0.14) { twist.on = true; turnView(twist.sum); } else if (twist.on) turnView(da);
+      if (!twist.on && !(tilt && tilt.on) && Math.abs(twist.sum) > 0.14 && fingersMoved(6)) { twist.on = true; turnView(twist.sum); } else if (twist.on) turnView(da);      // (both fingers moving: not one finger ahead of the other in a slide)
+    }
+    // (two fingers sliding up or down together, not turning and not pinching much: the view tilts; up looks across the
+    // farm, down looks down on it)
+    if (tilt && !inside.open && !SHOWDAY && !(replay && replay.on) && !(twist && twist.on)) {
+      const y = fingersMidY(), dy = y - tilt.y; tilt.y = y; tilt.sum += dy;
+      if (!tilt.on && Math.abs(tilt.sum) > 22 && fingersSlid(10) && Math.abs(spread() - tilt.s0) < Math.abs(tilt.sum) * 0.8) { tilt.on = true; tiltView(tilt.sum); } else if (tilt.on) tiltView(dy);
     }
   } else if (MOVE.drag && MOVE.drag.id === e.pointerId) {
     if (Math.hypot(p.x - p.x0, p.y - p.y0) > 6 && drag) drag.moved = true;
@@ -3669,7 +3685,7 @@ function endPointer(e) {
   if (MOVE.drag && MOVE.drag.id === e.pointerId) MOVE.drag = null;
   if (DMOVE.drag && DMOVE.drag.id === e.pointerId) DMOVE.drag = null;
   if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : DMOVE.id ? decTap : tapAt)(e.clientX, e.clientY);
-  if (pointers.size < 2) { pinch = 0; twist = null; }
+  if (pointers.size < 2) { pinch = 0; twist = null; tilt = null; }
   if (pointers.size === 0) drag = null;
 }
 canvas.addEventListener('pointerup', endPointer);
@@ -3679,6 +3695,16 @@ document.addEventListener('gesturestart', e => e.preventDefault());
 
 function spread() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
 function fingersAngle() { const a = [...pointers.values()]; return a.length < 2 ? 0 : Math.atan2(a[1].y - a[0].y, a[1].x - a[0].x); }
+function fingersMidY() { const a = [...pointers.values()]; return a.length < 2 ? 0 : (a[0].y + a[1].y) / 2; }
+// since the second finger came down: both fingers moved m px or more; both slid up (or both down) m px or more, more up and down than across
+function fingersMoved(m) { const a = [...pointers.values()].slice(0, 2); return a.length === 2 && a.every(q => Math.hypot(q.x - (q.gx ?? q.x), q.y - (q.gy ?? q.y)) >= m); }
+function fingersSlid(m) { const a = [...pointers.values()].slice(0, 2); if (a.length < 2) return false; const d = a.map(q => [q.x - (q.gx ?? q.x), q.y - (q.gy ?? q.y)]); return Math.sign(d[0][1]) === Math.sign(d[1][1]) && d.every(([x, y]) => Math.abs(y) >= m && Math.abs(y) > Math.abs(x)); }
+// the view tilted by dy pixels of the fingers' slide (up: lower, looking across; down: higher, looking down), round the
+// middle of the screen, kept between VIEW_EL_MIN and VIEW_EL_MAX
+function tiltView(dy) {
+  view.el = Math.max(VIEW_EL_MIN, Math.min(VIEW_EL_MAX, view.el + dy * 0.003));
+  setViewDir(); placeCamera(); compassShow(); wake(800);
+}
 // ---- the view turned (release 6, Audrey: "Release 6: turn the farm"; the plan: "Two fingers turn the view 360°, and a
 // compass button brings back the usual view"): turned by da (radians, the way the fingers turn on the screen), round the
 // middle of the screen; only ever by the player's fingers (or the compass, or keys Q and E on a computer), never by itself
@@ -3687,33 +3713,34 @@ function turnView(da) {
   view.az = Math.atan2(Math.sin(view.az + da), Math.cos(view.az + da));
   setViewDir(); placeCamera(); compassShow(); wake(800);
 }
-function setViewAz(az) { view.az = az; setViewDir(); placeCamera(); compassShow(); }
+function setViewAz(az, el = view.el) { view.az = az; view.el = el; setViewDir(); placeCamera(); compassShow(); }
 const viewOff = () => Math.atan2(Math.sin(view.az - VIEW_AZ0), Math.cos(view.az - VIEW_AZ0));
 // the compass (top right, once the view's turned): its needle points the usual way up; a tap turns the view back to it
 const compassEl = document.getElementById('compass'), needleEl = compassEl && compassEl.querySelector('.needle');
 function compassShow() {
   if (!compassEl) return;
-  const on = GAME_MODE && Math.abs(viewOff()) > 3 * DEG && !inside.open;
+  const on = GAME_MODE && (Math.abs(viewOff()) > 3 * DEG || Math.abs(view.el - VIEW_EL0) > 2 * DEG) && !inside.open;
   compassEl.hidden = !on; compassEl.setAttribute('aria-label', tr(LANG, 'ui.compass'));
   if (on && needleEl) {
     const t = view.target, p0 = t.clone().project(camera), p1 = t.clone().add(new THREE.Vector3(-Math.sin(VIEW_AZ0), 0, -Math.cos(VIEW_AZ0))).project(camera);
     needleEl.style.transform = 'rotate(' + Math.atan2(p1.x - p0.x, (p1.y - p0.y) * (canvas.clientHeight / Math.max(1, canvas.clientWidth))) + 'rad)';
   }
 }
-if (compassEl) compassEl.addEventListener('click', () => { const off = viewOff(); viewTurn = { from: view.az, by: -off, t: 0, T: 0.35 + 0.35 * Math.abs(off) / Math.PI }; wake(1200); });
+if (compassEl) compassEl.addEventListener('click', () => { const off = viewOff(); viewTurn = { from: view.az, by: -off, fromEl: view.el, t: 0, T: 0.35 + 0.35 * Math.max(Math.abs(off) / Math.PI, Math.abs(view.el - VIEW_EL0) / (30 * DEG)) }; wake(1200); });      // (turned and tilted back)
 let compassInside = false;
 function tickViewTurn(dt) {
   if (inside.open !== compassInside) { compassInside = inside.open; compassShow(); }      // (no compass inside a coop)
   if (!viewTurn) return;
   if (pointers.size >= 2) { viewTurn = null; return; }          // (fingers turning it again: theirs)
   const V = viewTurn; V.t += dt; const u = Math.min(1, V.t / V.T), e = u * u * (3 - 2 * u);
-  setViewAz(V.from + V.by * e);
-  if (u >= 1) { viewTurn = null; setViewAz(VIEW_AZ0); }
+  setViewAz(V.from + V.by * e, V.fromEl + (VIEW_EL0 - V.fromEl) * e);
+  if (u >= 1) { viewTurn = null; setViewAz(VIEW_AZ0, VIEW_EL0); }
   wake(300);
 }
 window.addEventListener('keydown', e => {                       // (on a computer: Q and E turn it, as two fingers would)
   if (!GAME_MODE || e.target && /INPUT|TEXTAREA/.test(e.target.tagName) || inside.open || SHOWDAY || (replay && replay.on)) return;
   if (e.key === 'q' || e.key === 'Q') turnView(-12 * DEG); else if (e.key === 'e' || e.key === 'E') turnView(12 * DEG);
+  else if (e.key === 'r' || e.key === 'R') tiltView(-20); else if (e.key === 'f' || e.key === 'F') tiltView(20);      // (and R and F tilt it)
 });
 function zoomBy(f) {
   const before = view.size;
@@ -5144,6 +5171,11 @@ function tickFishing(dt) {
 }
 const SALE = { sign: null, stakes: null, field: -1, at: null };
 const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
+// the land's fences no more (6 Nov 2026, Audrey: "I would actually get rid of the fences and for the lands not bought yet
+// they should just be with high grass not cut and slightly different colour"; one had run through the well): the land not
+// yours yet is its warmer colour and long, uncut grass; the farmer still keeps to your land and the lanes, and the geese's
+// and the dock's gates still open for them, unseen
+const LAND_FENCE = false;
 const WOOD = new THREE.MeshLambertMaterial({ color: '#9c7b56' }), FENCE_WOOD = new THREE.MeshLambertMaterial({ color: '#ffffff' }), BOARD = new THREE.MeshLambertMaterial({ color: '#c9a77a' }), STAKE = new THREE.MeshLambertMaterial({ color: '#d8c39a' }), RIBBON = new THREE.MeshLambertMaterial({ color: '#d2402f', side: THREE.DoubleSide });
 // the wild meadow's tint: a picture of the fields over the ground (soft-edged), warmer where it's wild
 function landTint() {
@@ -5169,21 +5201,44 @@ function landTint() {
   c.filter = 'blur(2px)'; c.drawImage(LAND.tintCv, 0, 0); c.filter = 'none';
   LAND.tint.material.map.needsUpdate = true;
 }
+// a clump of long meadow grass (6 Nov 2026, for the land not yours yet: "high grass not cut"): two dozen tapering blades
+// in a little circle, leaning out a touch, dark green at the root to a pale, sunny green at the tip; made once, batched
+function longGrass() {
+  if (parts.long_grass) return;
+  const r = rng(271), pos = [], col = [], c0 = new THREE.Color(), c1 = new THREE.Color(), c = new THREE.Color();
+  for (let i = 0; i < 30; i++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.24, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    const h = 0.2 + r() * 0.22, w = 0.015 + r() * 0.012, face = r() * Math.PI, lean = 0.05 + r() * 0.12, la = a + (r() - 0.5) * 1.2;
+    const px = Math.cos(face) * w, pz = Math.sin(face) * w, tx = x + Math.cos(la) * lean, tz = z + Math.sin(la) * lean;
+    pos.push(x - px, 0, z - pz, x + px, 0, z + pz, tx, h, tz);
+    c0.setRGB(0.42 + r() * 0.06, 0.58 + r() * 0.06, 0.2, THREE.SRGBColorSpace);
+    c1.setRGB(0.78 + r() * 0.12, 0.84 + r() * 0.08, 0.44 + r() * 0.12, THREE.SRGBColorSpace);
+    for (const k of [0, 0, 1]) { c.copy(k ? c1 : c0); col.push(c.r, c.g, c.b); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.computeVertexNormals();
+  const n = geo.attributes.normal; for (let i = 0; i < n.count; i++) n.setXYZ(i, n.getX(i) * 0.3, 1, n.getZ(i) * 0.3);      // (lit like the ground, not like flat cards)
+  geo.normalizeNormals();
+  const g = new THREE.Group(), m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true })); g.add(m); g.updateMatrixWorld(true);
+  parts.long_grass = g;
+}
 // long grass and wildflowers over the wild fields (not under trees, bushes, rocks, props, the coops); `only`: just that
 // field's (for its mowing)
 function wildPlants(only = -1) {
   const nav = navGrid(), n = game.data.land.length, tufts = [[], [], []], flowers = { flower_daisy: [], flower_butter: [], flower_clover: [] }, fn = Object.keys(flowers);
-  const step = 0.85;
+  const step = 0.42;                                    // (thick, long grass: 6 Nov 2026, it had been a short tuft every 85 cm)
   for (let z = FIELDS.z0, zi = 0; z < FIELDS.z0 + FIELDS.nz * FIELDS.cell; z += step, zi++) for (let x = FIELDS.x0, xi = 0; x < FIELDS.x0 + FIELDS.nx * FIELDS.cell; x += step, xi++) {
     const r = rng(xi * 7919 + zi * 104729 + 13);         // (each spot its own: the meadow stays the same as fields are bought)
     const px = x + r() * step, pz = z + r() * step, f = fieldAt(px, pz);
     if (only >= 0 ? f !== only : f < n) continue;
     if (!nav.freeAt(px, pz)) continue;
-    tufts[Math.floor(r() * 3)].push(new THREE.Matrix4().compose(new THREE.Vector3(px, 0, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(1.3 + r() * 0.5, 1.9 + r() * 0.9, 1.3 + r() * 0.5)));
-    if (r() < 0.22) { const k = fn[Math.floor((Math.sin(px * 0.31) + Math.cos(pz * 0.27) + 2) * 0.75) % 3]; for (let j = 0; j < 3; j++) flowers[k].push(place(px + (r() - 0.5) * 0.5, 0, pz + (r() - 0.5) * 0.5, r() * 360, 1.4 + r() * 0.6)); }
+    const sc = 0.85 + r() * 0.45; tufts[Math.floor(r() * 3)].push(new THREE.Matrix4().compose(new THREE.Vector3(px, 0, pz), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(sc, sc * (0.85 + r() * 0.4), sc)));
+    if (r() < 0.09) { const k = fn[Math.floor((Math.sin(px * 0.31) + Math.cos(pz * 0.27) + 2) * 0.75) % 3]; for (let j = 0; j < 3; j++) flowers[k].push(place(px + (r() - 0.5) * 0.5, 0, pz + (r() - 0.5) * 0.5, r() * 360, 1.4 + r() * 0.6)); }
   }
   const made = [];
-  tufts.forEach((list, k) => made.push(...batch('grass_tuft_' + k, list, { lambert: true, tile: 6, twoSided: true, wind: 1.2 })));
+  longGrass();
+  made.push(...batch('long_grass', tufts.flat(), { lambert: true, tile: 6, twoSided: true, wind: 1.2, bothLit: true }));      // (a clump of long grass at each spot)
   for (const k of fn) made.push(...batch(k, flowers[k], { lambert: true, twoSided: true, wind: 1.2 }));
   return made;
 }
@@ -5310,11 +5365,11 @@ function syncLand(fresh = false) {
     for (const m of LAND.fence) { m.removeFromParent(); m.geometry.dispose(); }
     rebuildNav();
     for (const G of allGates()) if (G.mesh && !G.shared) G.mesh.removeFromParent();
-    GATES = pondGates(); for (const G of GATES) G.mesh = gateMesh(G);
-    DGATE = dockGate(); if (DGATE && !DGATE.shared) DGATE.mesh = gateMesh(DGATE);
+    GATES = pondGates(); for (const G of GATES) { G.mesh = gateMesh(G); G.mesh.visible = LAND_FENCE; }
+    DGATE = dockGate(); if (DGATE && !DGATE.shared) { DGATE.mesh = gateMesh(DGATE); DGATE.mesh.visible = LAND_FENCE; }
     if (game.fishOpen('pond')) fishingRig();
     if (game.fishOpen('river')) riverRig();
-    LAND.fence = buildFence(cutGates(fenceLines()));
+    LAND.fence = LAND_FENCE ? buildFence(cutGates(fenceLines())) : [];
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
     applyGrass();
@@ -5762,7 +5817,7 @@ async function startShowDay(r, list) {
   { const wo = game.outfitWorn(); if (wo !== 'classic' && outfitLoaded(wo)) SHOWDAY.farmer.wear(wo); }      // (in the outfit he wears on the farm)
   SHOWDAY.real = real; if (real) real.root.visible = false;
   if (farmLife) farmLife.group.visible = false;
-  showFrom = [view.target.x, view.target.z, view.size, view.az]; setViewAz(VIEW_AZ0); viewTurn = null;      // (the tent from the usual view)
+  showFrom = [view.target.x, view.target.z, view.size, view.az, view.el]; setViewAz(VIEW_AZ0, VIEW_EL0); viewTurn = null;      // (the tent from the usual view)
   const c = SHOWDAY.centre(), asp = innerWidth / Math.max(1, innerHeight); focusOn(c.x, c.z, Math.min(view.max, Math.max(2.25, 6.2 / (2 * asp))));      // (the whole tent across the screen, upright too)
   gameUI.skipBtn(true, () => { if (SHOWDAY) SHOWDAY.skip(); });
   wake(1000);
@@ -5772,7 +5827,7 @@ function endShowDay() {
   if (SHOWDAY.real) SHOWDAY.real.root.visible = true;
   if (farmLife) farmLife.group.visible = true;
   SHOWDAY.dispose(); SHOWDAY = null; gameUI.skipBtn(false);
-  if (showFrom) { setViewAz(showFrom[3] ?? VIEW_AZ0); focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was, turned as it was)
+  if (showFrom) { setViewAz(showFrom[3] ?? VIEW_AZ0, showFrom[4] ?? VIEW_EL0); focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was, turned as it was)
   wake(300);
 }
 // ---- Today's jobs (release 1 step 9c; game.js jobs): the clipboard up top; a job done: Collect its reward
@@ -6045,9 +6100,14 @@ function settleDecor() {
   if (DECOR_INFO.foot.wheat) {
     if (W.x === null || W.z === null || !decorSpot('wheat', W.x, W.z, W.deg).ok) {
       const fh = V.props.find(p => p.model === 'farmhouse'), vl = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), c = fh ? [fh.pos[0] + VIEW_DIR.x / vl * 6.5, fh.pos[2] + VIEW_DIR.z / vl * 6.5] : [HOME_COOP.x, HOME_COOP.z];      // (in front of the farmhouse as you look at it, so it shows)
-      const f = W.x !== null && W.z !== null ? decorFreeNear('wheat', W.x, W.z, 40, false, [W.deg, W.deg === 45 ? 135 : 45]) : decorFreeNear('wheat', c[0], c[1], 40, false, [45, 135]);
+      const f = W.x !== null && W.z !== null ? decorFreeNear('wheat', W.x, W.z, 40, false, WHEAT_DEGS) : decorFreeNear('wheat', c[0], c[1], 40, false, WHEAT_DEGS);
       if (f) { W.x = f.x; W.z = f.z; W.deg = f.deg; } else { W.x = W.z = null; }
       changed = true;
+    }
+    // (a field from before 6 Nov 2026 lay square to the screen, "like an actual square on the screen" (Audrey): turned to lie
+    // with the farm's lines, like the coops, where it fits there as it is, nothing to clear)
+    if (W.x !== null && !WHEAT_DEGS.includes(W.deg)) {
+      for (const d of W.deg === 45 ? [0, 90] : [90, 0]) { const S = decorSpot('wheat', W.x, W.z, d); if (S.ok && S.clear.every(t => gone.has(t.id))) { W.deg = d; changed = true; break; } }      // (nothing more to clear than it had)
     }
     if (W.x !== null) {
       for (const t of decorSpot('wheat', W.x, W.z, W.deg).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); changed = true; }
@@ -6260,12 +6320,12 @@ function startDecor(id) {
   if (!own && (isK ? !game.animalNext('dog') || game.data.coins < ANIMALS.dog.price : !game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
   gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   let at = own && own.x !== null ? { x: own.x, z: own.z, deg: own.deg || 45 } : null;
-  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? [45, 135] : isK ? [KENNEL_DEG] : [45], true); if (!at) { hint(game.t('dec_no_room')); return false; } }
+  if (!at) { at = decorFreeNear(id, view.target.x, view.target.z, 40, true, isW ? WHEAT_DEGS : isK ? [KENNEL_DEG] : [45], true); if (!at) { hint(game.t('dec_no_room')); return false; } }
   DMOVE.id = id; DMOVE.buy = !own; DMOVE.from = own && own.x !== null ? { ...at } : null; DMOVE.at = { ...at }; DMOVE.moved = false; DMOVE.nav = false;
   DMOVE.item = addDecor(id, at.x, at.z, at.deg);
   decorLifeAgain(id);                                       // (its bees and birds wait till it's down)
   DMOVE.foot = decorFootMark(id); DMOVE.item.group.add(DMOVE.foot);
-  gameUI.moveBar(true, { turn: isW ? () => { DMOVE.moved = true; decMoveTo(DMOVE.at.x, DMOVE.at.z, true, DMOVE.at.deg === 45 ? 135 : 45); } : null, cancel: () => endDecor(false), place: () => putDecor() });
+  gameUI.moveBar(true, { turn: isW ? () => { DMOVE.moved = true; decMoveTo(DMOVE.at.x, DMOVE.at.z, true, DMOVE.at.deg === 0 ? 90 : 0); } : null, cancel: () => endDecor(false), place: () => putDecor() });
   decMoveTo(at.x, at.z, true, at.deg);
   const tall = DMOVE.item.d.box.max.y, size = Math.max(view.size, sideways() ? 3.4 : 4.4, Math.min(view.max, tall * 0.62)), v = viewAbove(at.x, at.z, size);
   focusOn(v[0], v[1], size);                                // (the player's tap: room round it in view, above the bar)
@@ -7116,8 +7176,8 @@ function castFor(rec) {
 function replayLive(on, rec) {
   const castGroups = c => [c.fam.group, c.geese && c.geese.group, c.dog && c.dog.group].filter(Boolean);
   if (on) {
-    replaySaved = { target: view.target.clone(), size: view.size, az: view.az, override: DAY.override, birds: [], doors: [] };
-    setViewAz(VIEW_AZ0); viewTurn = null;                     // (the film: from the usual view; the player's own turn back after)
+    replaySaved = { target: view.target.clone(), size: view.size, az: view.az, el: view.el, override: DAY.override, birds: [], doors: [] };
+    setViewAz(VIEW_AZ0, VIEW_EL0); viewTurn = null;                     // (the film: from the usual view; the player's own turn and tilt back after)
     for (const p of plots) for (const b of p.birds) { replaySaved.birds.push([b, b.root.visible]); b.root.visible = false; placeBlob(b); }
     for (const p of plots) if (p.door) replaySaved.doors.push([p, p.door.s, p.door.goal, p.door.shut]);
     const t = plots.find(p => p.index === rec.coop);
@@ -7140,7 +7200,7 @@ function replayLive(on, rec) {
     document.body.classList.remove('replaying');
     if (S.override === undefined) delete DAY.override; else DAY.override = S.override;
     DAY.shadowAt = 0; applyDaylight(clockHour()); tickDoors(0);
-    view.target.copy(S.target); view.size = S.size; clampView(); applyGrass(); setViewAz(S.az ?? VIEW_AZ0); furDetail();
+    view.target.copy(S.target); view.size = S.size; clampView(); applyGrass(); setViewAz(S.az ?? VIEW_AZ0, S.el ?? VIEW_EL0); furDetail();
     replaySaved = null; lastSim = 0; wake(800);
   }
 }
@@ -7286,7 +7346,7 @@ window.__farm = {
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
-  turnView: deg => turnView(deg * DEG), viewAz: () => view.az / DEG, setViewAz: deg => setViewAz(deg * DEG), viewTurning: () => !!viewTurn, compass: () => compassEl && !compassEl.hidden,
+  turnView: deg => turnView(deg * DEG), viewAz: () => view.az / DEG, setViewAz: deg => setViewAz(deg * DEG), viewEl: () => view.el / DEG, tiltView: px => tiltView(px), viewTurning: () => !!viewTurn, compass: () => compassEl && !compassEl.hidden,
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
   plan: () => V, THREE,
@@ -7325,7 +7385,7 @@ window.__farm = {
   foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
     live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
-    spot: (id, x, z) => { const S = decorSpot(id, x, z, id === 'kennel' ? KENNEL_DEG : 45); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45]), way: (id, x, z) => decorWayOk(id, x, z),
+    spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45]), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,

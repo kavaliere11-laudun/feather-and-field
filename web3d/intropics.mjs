@@ -1,4 +1,4 @@
-// The onboarding pictures (main.js ?intro=1..4, staged in src/intro.js): ./withserver.sh node intropics.mjs [OUTDIR]
+// The onboarding pictures (main.js ?intro=1..5, staged in src/intro.js; 5, the fox, at dusk): ./withserver.sh node intropics.mjs [OUTDIR]
 // Each scene is shot through its own camera (intro.js `cam`) at 4:3, W x H css px at DSF (600 x 450 at 4: 2400 x 1800), shrunk
 // to 1200 x 900 for smooth edges and fur and saved as OUTDIR/<n>.webp (default intro/; quality 85, full colour, by Python's
 // PIL). Scene 3 has words on its sign, so it is made in French too: 3-fr.webp (NOFR=1: not; LANGS=fr,de,es,pt,it: in each). ONLY=1,3: just those scenes;
@@ -10,7 +10,8 @@ import { mkdirSync, rmSync } from 'fs';
 import { fileURLToPath } from 'url';
 const OUT = process.argv[2] || fileURLToPath(new URL('./intro/', import.meta.url));
 const W = +(process.env.W || 600), H = +(process.env.H || 450), DSF = +(process.env.DSF || 4), T = +(process.env.T || 3);
-const ONLY = (process.env.ONLY || '1,2,3,4').split(',').map(Number), PNG = process.env.PNG || '';
+const ONLY = (process.env.ONLY || '1,2,3,4,5').split(',').map(Number), PNG = process.env.PNG || '';
+const TIME = { 5: process.env.DUSK || '19:20' };            // (the fox's scene at dusk; the others in the late morning)
 const CAM = process.env.CAM ? JSON.parse(process.env.CAM) : {};            // (a look from elsewhere, for checking: {"at": [x, y, z], "dist": 2})
 const SHOTS = [];
 for (const n of ONLY) { if (!process.env.NOEN) SHOTS.push({ n, lang: 'en', name: String(n) }); if (n === 3 && !process.env.NOFR) for (const l of (process.env.LANGS || 'fr').split(',')) SHOTS.push({ n, lang: l, name: '3-' + l }); }      // (LANGS=fr,de,es,pt,it: the sign in each; NOEN=1: not the English)
@@ -21,7 +22,7 @@ const errs = [];
 for (const S of SHOTS) {
   const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: DSF });
   p.on('pageerror', e => errs.push(S.name + ': ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' / ')));
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&intro=${S.n}&coops=0&time=10:30${S.lang !== 'en' ? '&lang=' + S.lang : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&intro=${S.n}&coops=0&time=${TIME[S.n] || '10:30'}${S.lang !== 'en' ? '&lang=' + S.lang : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #replaybtn, #farmerbtn, #foxbtn, #tag, .vignette { display: none !important; }' });
   await p.evaluate(([T, aspect, CAM]) => {

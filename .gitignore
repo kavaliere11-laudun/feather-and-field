@@ -1,3 +1,9 @@
 
 # Firebase emulator logs
 *-debug.log
+
+# the 3D game's build, its packages and the private working notes: never in the repository (6 Nov 2026: a commit had
+# swept in web3d/node_modules and web3d/dist; run `npm ci` in web3d/ and `./build.sh` to have them again)
+web3d/node_modules/
+web3d/dist/
+web3d/_docs/

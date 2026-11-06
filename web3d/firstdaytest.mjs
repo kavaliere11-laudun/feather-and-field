@@ -1,5 +1,5 @@
 // The game, release 1 step 10 (the first day): node firstdaytest.mjs   (LANG=fr; W, H; SHOTS=folder)
-// A new farm (play.html?q=0&firstday: the tests' pages leave the first day out otherwise): the four pictures (titles, dots,
+// A new farm (play.html?q=0&firstday: the tests' pages leave the first day out otherwise): the five pictures (titles, dots,
 // Next, Let's go!); then the guide, "First day · 1 of 5": the first egg on its way, then collected (the arrow over its
 // bubble), +10 coins; a hen cuddled (the arrow over her, then over ♥ Cuddle in her card); the wheat sown ("Show me" when
 // its sign is off screen, then the arrow over it and over Sow); Today's jobs; the shop; "Your first day is done!" and the
@@ -41,17 +41,18 @@ const start = async () => {
   await p.tap('.gsheet .gbtn');
   await load();
 };
-const TT = fr ? ['Votre basse-cour pour toujours', 'Œufs et poussins', 'Terres et nouvelles races', 'Concours, miel et plus encore'] : ['Your forever flock', 'Eggs and chicks', 'Land and new breeds', 'Shows, honey and more'];
+const TT = fr ? ['Votre basse-cour pour toujours', 'Œufs et poussins', 'Terres et nouvelles races', 'Rusty le renard', 'Concours, miel et plus encore'] : ['Your forever flock', 'Eggs and chicks', 'Land and new breeds', 'Rusty the fox', 'Shows, honey and more'];
+const PIC = [1, 2, 3, 5, 4];      // (the fox's card, scene 5, fourth: 6 Nov 2026)
 await start();
 // the pictures
 const seen = [];
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < 5; i++) {
   await p.waitForFunction(() => { const i = document.querySelector('.gintro-pic img'); return i && i.complete; }, null, { timeout: 20000 }).catch(() => {});
   seen.push([await title(), await p.evaluate(() => document.querySelectorAll('.gdots span').length), await p.evaluate(() => document.querySelector('.gstick .gbtn').textContent), await p.evaluate(() => { const i = document.querySelector('.gintro-pic img'); return i.naturalWidth > 0 ? i.src.split('/').pop().split('?')[0] : 'none'; })]);
   if (i === 0) await shot('1_picture');
   await click('.gstick .gbtn'); await run(0.2);
 }
-ok('a new farm: the four pictures (each shown), Next, then Let\'s go!', seen.every((x, i) => x[0] === TT[i] && x[1] === 4 && x[3] === (i + 1) + (fr && i === 2 ? '-fr' : '') + '.webp') && (fr ? /C’est parti/ : /Let’s go/).test(seen[3][2]) && (await kind()) === null, seen);
+ok('a new farm: the five pictures (each shown), Next, then Let\'s go!', seen.every((x, i) => x[0] === TT[i] && x[1] === 5 && x[3] === PIC[i] + (fr && PIC[i] === 3 ? '-fr' : '') + '.webp') && (fr ? /C’est parti/ : /Let’s go/).test(seen[4][2]) && (await kind()) === null, seen);
 let g = await G();
 ok('then the guide: "First day · 1 of 5", the first egg on its way', g.on && g.step === 'eggs' && (fr ? /Premier jour · 1 sur 5/ : /First day · 1 of 5/).test(g.n) && (fr ? /premier œuf arrive/ : /first egg is on its way/).test(g.card), g);
 await shot('2_guide');

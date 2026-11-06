@@ -951,29 +951,59 @@ export class GameUI {
   }
   // a time to wait, in hours and minutes ("3 h 59 min", "25 min")
   dur(ms) { const m = Math.max(1, Math.ceil(ms / 60e3)), h = Math.floor(m / 60), r = m % 60; return h ? this.t('h', { n: h }) + (r ? ' ' + this.t('min', { n: r }) : '') : this.t('min', { n: m }); }
-  // ---- the pictures before the first day (release 1 step 10; Audrey: "Scenes from the 3D farm"): four, one at a time, a
-  // picture made from the game's own farm (intro/1-4.webp), a title and a line or two; Next (a swipe too), Let's go! on the
-  // last, Skip; then done()
+  // ---- the pictures before the first day (release 1 step 10; Audrey: "Scenes from the 3D farm"): five, one at a time, a
+  // picture made from the game's own farm (intro/1-5.webp), a title and a line or two; Next, Let's go! on the last, Skip; a
+  // swipe anywhere on the card goes on or back (6 Nov 2026, Audrey on her iPhone: "we need to allow people to scroll left /
+  // right to go next and backwards"), the card following the finger; then done()
   introCards(done) {
-    const N = 4; let i = 0, x0 = null;
-    const src = k => 'intro/' + (k + 1) + (k === 2 && INTRO_PIC.includes(this.g.lang) ? '-' + this.g.lang : '') + '.webp' + (this.o.bust || '');
+    // (five since 6 Nov 2026, Audrey: "Text + a fox card": the fox's, scene 5, shown fourth, so the shows' card, "a little each
+    // day", still ends it)
+    const ORDER = [1, 2, 3, 5, 4], N = ORDER.length; let i = 0;
+    const src = k => 'intro/' + ORDER[k] + (ORDER[k] === 3 && INTRO_PIC.includes(this.g.lang) ? '-' + this.g.lang : '') + '.webp' + (this.o.bust || '');
     this.introPics = Array.from({ length: N }, (_, k) => { const im = new Image(); im.decoding = 'async'; im.src = src(k); return im; });      // (all four on their way at once: the next one there when Next is tapped)
-    const finish = () => { this.introDone = done; this.close(); };
-    const draw = () => {
-      const b = this.open('intro', this.t('intro_' + (i + 1)), true);
+    const finish = () => { this.introNav = null; this.introDone = done; this.close(); };
+    const draw = dir => {
+      const b = this.open('intro', this.t('intro_' + ORDER[i]), true);
       this.bird = null; this.dim.hidden = true; this.sheet.classList.add('gintro');
       const pic = el('div', 'gintro-pic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = src(i);      // (the third has words on its sign: À VENDRE in French)
-      img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
-      pic.addEventListener('pointerdown', e => { x0 = e.clientX; });
-      pic.addEventListener('pointerup', e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (dx < -40 && i < N - 1) { i++; draw(); } else if (dx > 40 && i > 0) { i--; draw(); } });
+      img.draggable = false; img.addEventListener('error', () => pic.classList.add('none')); pic.append(img);
       const dots = el('div', 'gdots'); for (let k = 0; k < N; k++) dots.append(el('span', k === i ? 'on' : ''));
-      b.append(pic, el('p', 'gtext gintro-t', this.t('intro_' + (i + 1) + 'b')), dots);
+      b.append(pic, el('p', 'gtext gintro-t', this.t('intro_' + ORDER[i] + 'b')), dots);
       const row = el('div', 'gstick'), next = el('button', 'gbtn', this.t(i < N - 1 ? 'intro_next' : 'intro_go')); next.type = 'button';
-      next.addEventListener('click', () => { if (i < N - 1) { i++; draw(); } else finish(); });
-      const skip = el('button', 'gbtn galt', this.t('intro_skip')); skip.type = 'button'; skip.addEventListener('click', () => finish());
+      next.addEventListener('click', () => { if (Date.now() - (this.swiped || 0) < 450) return; if (i < N - 1) { i++; draw(1); } else finish(); });      // (not the end of a swipe)
+      const skip = el('button', 'gbtn galt', this.t('intro_skip')); skip.type = 'button'; skip.addEventListener('click', () => { if (Date.now() - (this.swiped || 0) >= 450) finish(); });
       row.append(next); if (i < N - 1) row.append(skip); b.append(row);
+      b.classList.remove('gin-l', 'gin-r'); if (dir) { void b.offsetWidth; b.classList.add(dir > 0 ? 'gin-l' : 'gin-r'); }      // (the new card slides in from the side it came from)
     };
-    draw();
+    this.introNav = d => { const j = i + d; if (j < 0 || j >= N) return false; i = j; draw(d); return true; };
+    if (!this.swipeOn) { this.swipeOn = true; this.swipe(this.body); }
+    draw(0);
+  }
+  // a swipe across the intro's card (introNav: on or back): the card follows the finger sideways, a little; let go past
+  // 40 px (more across than up and down) and it goes on (to the left) or back (to the right). Up and down stays the
+  // sheet's own scrolling. A finger's touches (a phone's own scrolling can't cancel them, as it would its pointer events:
+  // once a swipe is seen going sideways, the sheet doesn't scroll); a mouse's pointer events
+  swipe(b) {
+    let s = null;
+    const reset = () => { b.style.transform = ''; b.style.opacity = ''; };
+    const start = (x, y, id) => { if (this.kind !== 'intro' || !this.introNav) return; s = { x, y, id, h: null }; };
+    const move = (x, y) => {
+      const dx = x - s.x, dy = y - s.y;
+      if (s.h === null && Math.hypot(dx, dy) > 8) s.h = Math.abs(dx) > Math.abs(dy);
+      if (s.h) { b.style.transform = `translateX(${(dx * 0.5).toFixed(1)}px)`; b.style.opacity = (1 - Math.min(0.35, Math.abs(dx) / 700)).toFixed(3); }
+    };
+    const end = x => {
+      const dx = x - s.x, across = s.h; s = null; reset();
+      if (across && Math.abs(dx) > 40 && this.introNav && this.introNav(dx < 0 ? 1 : -1)) this.swiped = Date.now();
+    };
+    b.addEventListener('touchstart', e => { if (e.touches.length !== 1) { if (s) { s = null; reset(); } return; } const t = e.touches[0]; start(t.clientX, t.clientY, 'touch'); }, { passive: true });
+    b.addEventListener('touchmove', e => { if (!s || s.id !== 'touch') return; const t = e.touches[0]; move(t.clientX, t.clientY); if (s.h && e.cancelable) e.preventDefault(); }, { passive: false });
+    b.addEventListener('touchend', e => { if (!s || s.id !== 'touch') return; end(e.changedTouches[0].clientX); }, { passive: true });
+    b.addEventListener('touchcancel', () => { if (s && s.id === 'touch') { s = null; reset(); } });
+    b.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' && e.isPrimary) start(e.clientX, e.clientY, e.pointerId); });
+    b.addEventListener('pointermove', e => { if (s && e.pointerId === s.id) move(e.clientX, e.clientY); });
+    b.addEventListener('pointerup', e => { if (s && e.pointerId === s.id) end(e.clientX); });
+    b.addEventListener('pointercancel', e => { if (s && e.pointerId === s.id) { s = null; reset(); } });
   }
   // a long time away ("2 days 3 h", "9 h 12 min")
   longDur(ms) { const d = Math.floor(ms / 86400e3); if (!d) return this.dur(ms); const h = Math.floor((ms - d * 86400e3) / 3600e3); return (d === 1 ? this.t('days1') : this.t('days', { n: d })) + (h ? ' ' + this.t('h', { n: h }) : ''); }

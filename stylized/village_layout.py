@@ -191,7 +191,7 @@ for (cu, cv), name in zip(CLUSTERS, ['hay_stack', 'barrels', 'planter', 'round_b
         if free(cu + du, cv + dv, 0.6): put(name, cu + du, cv + dv, random.choice([0, 30, 60, 90])); break
 for k in range(0, 72, 9):                       # lamp posts round the green
     a = k / 72 * math.tau; u, v = loop_pt(a); put('lamp_post', u * 1.09, 9 + (v - 9) * 1.08, 180)
-for (u, v, deg) in [(0.0, 13.4, 135), (-3.6, 5.6, 45)]: put('bench', u, v, deg)
+for (u, v, deg) in [(0.0, 13.4, 45), (-3.6, 5.6, 182)]: put('bench', u, v, deg)      # (both looking out over the pond: Audrey, 6 Nov 2026, "they should face the water")
 for k in range(10):                             # flower beds round the green
     a = k / 10 * math.tau + 0.3; u, v = 6.0 * math.cos(a), 9.5 + 4.6 * math.sin(a)
     if free(u, v, 0.4): flower_spots.append(dict(pos=TU(u, v), r=0.35))

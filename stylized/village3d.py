@@ -1731,22 +1731,67 @@ def veg_patch_v(w=2.6, d=1.8, seed=135, name='veg_patch'):
 
 # ================================================================== the graphics pass (Audrey, 1 Nov: "Another graphics
 # pass (Recommended)"): bushes, rocks, the pasture and its shelter, the picket fences, the mushrooms, the sunflowers
+def flat_leaf(name, base, q, L, w, m, shape='diamond', both=True, fold=0.0):
+    """A flat leaf from base (a point) along its quaternion q's +y, its face along q's +z: 'diamond' (a pointed oval, 2
+    triangles) or 'heart' (rounded at the base, pointed at the tip, 4 triangles); both: a back face too; fold: its edges
+    bent back a little (a crease down the middle)."""
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); B = Vector(base)
+    pts = [(0, 0, 0), (w, L * 0.45, -fold), (0, L, 0), (-w, L * 0.45, -fold)] if shape == 'diamond' else \
+          [(0, 0, 0), (w * 0.85, L * 0.12, -fold), (w, L * 0.42, -fold), (0, L, 0), (-w, L * 0.42, -fold), (-w * 0.85, L * 0.12, -fold)]
+    vs = [bm.verts.new(B + q @ Vector(p_)) for p_ in pts]
+    bm.faces.new(vs)
+    if both:
+        vb = [bm.verts.new(B + q @ (Vector(p_) - Vector((0, 0, 0.002)))) for p_ in pts]; bm.faces.new(vb[::-1])
+    bmesh.ops.triangulate(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    for pl in o.data.polygons: pl.use_smooth = False
+    return o
+
+
 def bush_v(seed=141, name='bush_a', flowers=False):
-    """A leafy bush (110 of them round the village: light): clumps of leaves in three greens, darker inside, lighter on
-    top; the second kind in flower (little pink and white blossoms)."""
+    """A leafy bush (110 of them round the village): a rounded mound of leafy clumps in four greens (darker low down and
+    inside, sunlit on top), its outside covered in little pointed leaves standing out of it every which way, a few twigs at
+    its foot; the second kind in flower (pink and white five-petalled blossoms). (6 Nov 2026, Audrey: "Details of the
+    bushes ... need to be improved": it had been seven smooth blobs.) As big as before: about 0.8 m across, 0.55 high."""
+    from mathutils import Quaternion
     random.seed(seed); objs = []
-    leaf = [C('vbuleaf%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#4f8f34', '#62a63e', '#76b84a'))]
+    leaf = [C('vbuleaf%d' % i, h, rough=0.8, var=0.07, hue_var=0.015) for i, h in enumerate(('#3d7a2b', '#4c8d33', '#5fa33c', '#79ba4a'))]
+    twig = C('vbutwig', '#5a4330', rough=0.9, var=0.1)
+    # the body: a core, a ring of clumps round its foot, a few on top
+    clumps = [((0, 0), 0.25, 0.26, 1)]
     for k in range(7):
-        a = k / 7 * math.tau + random.uniform(-0.3, 0.3); d = random.uniform(0.1, 0.22) if k else 0.0
-        r = random.uniform(0.18, 0.25) if k else 0.27; z = r * 0.75 + (0.1 if k == 0 else random.uniform(0.0, 0.07))      # (as big as the old bushes)
-        tone = leaf[0] if z < 0.2 else leaf[1] if z < 0.28 else leaf[2]
-        objs.append(sphere('vbuclump', r, (math.cos(a) * d, math.sin(a) * d, z), (1.05, 1.0, 0.88), (0, 0, a), m=tone, ico=2, disp=0.28, disp_scale=3.0, seed=seed * 10 + k))
+        a = k / 7 * math.tau + random.uniform(-0.25, 0.25); d = random.uniform(0.19, 0.25)
+        clumps.append(((math.cos(a) * d, math.sin(a) * d), random.uniform(0.14, 0.17), random.uniform(0.15, 0.2), 0 if k % 2 else 1))
+    for k in range(4):
+        a = k / 4 * math.tau + random.uniform(0, 1.2); d = random.uniform(0.06, 0.13)
+        clumps.append(((math.cos(a) * d, math.sin(a) * d), random.uniform(0.13, 0.16), random.uniform(0.34, 0.4), 2 + (k % 2)))
+    for i, ((x, y), r, z, tone) in enumerate(clumps):
+        objs.append(sphere('vbuclump', r, (x, y, z), (1.05, 1.0, 0.9), (0, 0, random.uniform(0, 3)), m=leaf[max(0, tone - 1)], ico=2, disp=0.3, disp_scale=4.0, seed=seed * 10 + i))      # (a shade darker: the leaves on it catch the light)
+    # leaves all over the clumps: each a little pointed leaf (two triangles) lying on a clump's surface, its tip lifted a
+    # little, turned any which way, lighter where the sun reaches
+    for k in range(340):
+        (cx, cy), r, cz, tone0 = random.choice(clumps)
+        a = random.uniform(0, math.tau); el = math.asin(random.uniform(-0.2, 1.0))
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = Vector((cx, cy, cz)) + Vector((d.x * r * 1.05, d.y * r, d.z * r * 0.9)) * random.uniform(1.06, 1.14)
+        if p.z < 0.05 or (p - Vector((0, 0, 0.24))).length < 0.2: continue      # (not under the bush, nor deep inside it)
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), random.uniform(0, math.tau)) @ Quaternion((1, 0, 0), random.uniform(0.15, 0.45))      # (its tip lifted off the clump)
+        tone = leaf[min(3, max(0, tone0 + (1 if el > 0.6 else 0) - (1 if el < 0.1 else 0)))]
+        objs.append(flat_leaf('vbuleafy', tuple(p), q, random.uniform(0.06, 0.085), random.uniform(0.022, 0.03), tone, both=False, fold=0.006))
+    for k in range(4):                                  # twigs at its foot
+        a = k / 4 * math.tau + 0.5; objs.append(cyl('vbutwig', 0.012, 0.22, (math.cos(a) * 0.12, math.sin(a) * 0.12, 0.08), (math.cos(a + 1.57) * 0.6, math.sin(a + 1.57) * 0.6, 0), m=twig, verts=5, r2=0.006, bevel=0.0))
     if flowers:
-        cols = [C('vbupink', '#f08bb0', rough=0.6), C('vbuwhite', '#fbf6ee', rough=0.6)]
-        for k in range(14):
-            a = random.uniform(0, math.tau); el = random.uniform(0.15, 1.2); rr = 0.33
-            p = (math.cos(a) * rr * math.cos(el) * 1.05, math.sin(a) * rr * math.cos(el), 0.24 + rr * math.sin(el) * 0.75)
-            objs.append(sphere('vbubloom', 0.028, p, (1, 1, 0.7), m=cols[k % 2], ico=0, seg=6, rings=4))
+        cols = [C('vbupink', '#f08bb0', rough=0.6), C('vbuwhite', '#fbf6ee', rough=0.6)]; eye = C('vbueye', '#f4c43a', rough=0.6)
+        C0 = Vector((0, 0, 0.24)); RX, RY, RZ = 0.4, 0.38, 0.34      # (the mound's outside, the blossoms just on it)
+        for k in range(18):
+            a = random.uniform(0, math.tau); el = math.asin(random.uniform(0.1, 0.95))
+            d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+            p = C0 + Vector((d.x * RX, d.y * RY, d.z * RZ)) * 1.05; n = Vector((d.x / RX, d.y / RY, d.z / RZ)).normalized()
+            q = n.to_track_quat('Z', 'Y'); c = cols[k % 2]
+            for j in range(5):                          # five petals round a yellow eye
+                pa = j / 5 * math.tau; off = q @ Vector((math.cos(pa) * 0.018, math.sin(pa) * 0.018, 0))
+                objs.append(sphere('vbupetal', 0.016, tuple(p + off), (1, 0.75, 0.3), (q @ Quaternion((0, 0, 1), pa)).to_euler(), m=c, ico=1))
+            objs.append(sphere('vbueye', 0.009, tuple(p + n * 0.006), (1, 1, 0.6), q.to_euler(), m=eye, ico=1))
     return finish(objs, name)
 
 
@@ -1807,14 +1852,15 @@ def mushrooms_v(seed=144, name='mushrooms'):
 
 
 # ------------------------------------------------------------------ the sunflowers
-def star_disc(name, r_out, r_in, n, c, tilt, m, t=0.012):
-    """A flat ring of n pointed petals (a star) round c, tilted back by tilt about x."""
+def star_disc(name, r_out, r_in, n, c, tilt, m, t=0.012, cup=0.0):
+    """A ring of n pointed petals (a star) round c, tilted back by tilt about x; cup: the petals' tips brought forward (-y)
+    by that much, so the flower is a shallow cup, not a flat disc."""
     me = bpy.data.meshes.new(name); bm = bmesh.new(); R = Matrix.Rotation(tilt, 4, 'X'); C0 = Vector(c); rings = []
     for dz in (-t / 2, t / 2):
         ring = []
         for k in range(2 * n):
-            a = k / (2 * n) * math.tau; rr = r_out if k % 2 == 0 else r_in
-            ring.append(bm.verts.new(C0 + R @ Vector((math.cos(a) * rr, dz, math.sin(a) * rr))))
+            a = k / (2 * n) * math.tau; rr = r_out if k % 2 == 0 else r_in; fw = cup * (rr / r_out) ** 2
+            ring.append(bm.verts.new(C0 + R @ Vector((math.cos(a) * rr, dz - fw, math.sin(a) * rr))))
         rings.append(ring)
     bm.faces.new(rings[0]); bm.faces.new(rings[1][::-1])
     N = 2 * n
@@ -1825,30 +1871,37 @@ def star_disc(name, r_out, r_in, n, c, tilt, m, t=0.012):
 
 
 def sunflowers_v(seed=145, name='sunflowers', w=3.6, d=1.8):
-    """A bed of sunflowers: tall stems of different heights, broad leaves, heads of golden pointed petals in two rings
-    round a dark seed centre with a paler rim, most facing the sun (the player), a few nodding; a little edging of boards."""
+    """A bed of sunflowers: tall stems of different heights, each with three broad heart-shaped leaves; heads of golden
+    pointed petals in two cupped rings (the inner turned half a petal), round a domed dark seed centre with a paler rim, all
+    facing the sun and the player, tipped back a little more or less; a little edging of boards. (6 Nov 2026, Audrey:
+    "Details of the ... sunflowers need to be improved": flat star discs, some nodding edge-on, small leaves.)"""
+    from mathutils import Quaternion
     random.seed(seed); objs = []
     soil = C('vsfsoil', '#5a3f2c', rough=0.95, var=0.06); wood = C('vsfwood', '#8a5d3a', rough=0.75, var=0.1)
-    stem = C('vsfstem', '#4f7f2e', rough=0.7); leaf = [C('vsfleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#4f8a33', '#5f9a3c'))]
-    petal = [C('vsfpetal%d' % i, h, rough=0.5) for i, h in enumerate(('#f2b51e', '#f7c531', '#eaa514'))]
-    centre = C('vsfcentre', '#4a2a12', rough=0.85); rim = C('vsfrim', '#7a4a1e', rough=0.85)
+    stem = C('vsfstem', '#4f7f2e', rough=0.7); leaf = [C('vsfleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#467f2f', '#55923a', '#64a443'))]
+    petal = [C('vsfpetal%d' % i, h, rough=0.5) for i, h in enumerate(('#f2b51e', '#f7c531', '#eaa514', '#fbd04a'))]
+    centre = C('vsfcentre', '#3f220e', rough=0.85); seeds = C('vsfseeds', '#5c3416', rough=0.85); rim = C('vsfrim', '#7a4a1e', rough=0.85)
     objs.append(box('vsfbed', (w, d, 0.06), (0, 0, 0.03), m=soil, bevel=0.0))
     for sy in (-1, 1): objs.append(box('vsfedge', (w + 0.04, 0.035, 0.09), (0, sy * d / 2, 0.045), m=wood, bevel=0.005, segs=1))
     for sx in (-1, 1): objs.append(box('vsfedge', (0.035, d, 0.09), (sx * w / 2, 0, 0.045), m=wood, bevel=0.005, segs=1))
     for r in range(int(d / 0.45)):
         for i in range(int(w / 0.42)):
             x = -w / 2 + 0.25 + i * 0.42 + random.uniform(-0.05, 0.05); y = -d / 2 + 0.25 + r * 0.45 + random.uniform(-0.04, 0.04)
-            h = random.uniform(0.85, 1.2); nod = random.random() < 0.2
-            objs.append(cyl('vsfstem', 0.02, h, (x, y, h / 2), m=stem, verts=6, r2=0.014, bevel=0.0))
-            for k in range(2):                          # broad leaves, either side
-                sd = 1 if k else -1; z = h * (0.35 + 0.25 * k)
-                objs.append(sphere('vsfleaf', 0.1, (x + sd * 0.09, y, z), (1.0, 0.65, 0.18), (0, math.radians(sd * -25), 0), m=random.choice(leaf), ico=1, seed=k + i))
-            tilt = math.radians(65 if nod else 15); c = Vector((x, y - 0.03, h + 0.02))
-            objs.append(star_disc('vsfpetals', 0.18, 0.11, 13, c, tilt, random.choice(petal)))
-            q = star_disc('vsfpetals2', 0.16, 0.1, 13, Vector((0, 0, 0)), 0.0, petal[2])      # (the inner ring turned half a petal: no gaps)
-            q.matrix_world = Matrix.Translation(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.006, 0))) @ Matrix.Rotation(tilt, 4, 'X') @ Matrix.Rotation(math.pi / 13, 4, 'Y'); objs.append(q)
-            q = cyl('vsfcentre', 0.075, 0.03, tuple(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.014, 0))), (math.radians(90) + tilt, 0, 0), m=centre, verts=14, bevel=0.0); objs.append(q)
-            q = cyl('vsfrim', 0.085, 0.02, tuple(c + Matrix.Rotation(tilt, 4, 'X') @ Vector((0, -0.008, 0))), (math.radians(90) + tilt, 0, 0), m=rim, verts=14, bevel=0.0); objs.append(q)
+            h = random.uniform(0.85, 1.2) + r * 0.05; sz = random.uniform(0.88, 1.12)
+            objs.append(cyl('vsfstem', 0.022, h, (x, y, h / 2), m=stem, verts=7, r2=0.015, bevel=0.0))
+            for k in range(3):                          # broad heart-shaped leaves, out to either side in turn, drooping
+                sd = 1 if (k + i) % 2 else -1; z = h * (0.26 + 0.2 * k); L = 0.2 - 0.025 * k
+                yaw = (0 if sd > 0 else math.pi) + random.uniform(-0.45, 0.45)
+                q = Quaternion((0, 0, 1), yaw - math.pi / 2) @ Quaternion((1, 0, 0), math.radians(random.uniform(-32, -10))) @ Quaternion((0, 1, 0), random.uniform(-0.3, 0.3))      # (out from the stem, drooping, its face up)
+                objs.append(flat_leaf('vsfleaf', (x, y, z), q, L, L * 0.38, random.choice(leaf), shape='heart', fold=0.012))
+            tilt = math.radians(random.uniform(8, 30)); c = Vector((x, y - 0.03, h + 0.02)); Rt = Matrix.Rotation(tilt, 4, 'X')
+            objs.append(star_disc('vsfpetals', 0.18 * sz, 0.1 * sz, 15, c, tilt, random.choice(petal[:3]), cup=0.05 * sz))
+            q = star_disc('vsfpetals2', 0.15 * sz, 0.09 * sz, 15, Vector((0, 0, 0)), 0.0, random.choice((petal[2], petal[3])), cup=0.035 * sz)      # (the inner ring turned half a petal: no gaps)
+            q.matrix_world = Matrix.Translation(c + Rt @ Vector((0, -0.008, 0))) @ Rt @ Matrix.Rotation(math.pi / 15, 4, 'Y'); objs.append(q)
+            objs.append(cyl('vsfrim', 0.085 * sz, 0.02, tuple(c + Rt @ Vector((0, -0.01, 0))), (math.radians(90) + tilt, 0, 0), m=rim, verts=16, bevel=0.0))
+            objs.append(sphere('vsfcentre', 0.072 * sz, tuple(c + Rt @ Vector((0, -0.016, 0))), (1, 0.42, 1), (tilt, 0, 0), m=centre, seg=14, rings=7))
+            objs.append(sphere('vsfseeds', 0.04 * sz, tuple(c + Rt @ Vector((0, -0.038, 0))), (1, 0.4, 1), (tilt, 0, 0), m=seeds, seg=10, rings=5))
+            objs.append(sphere('vsfback', 0.07 * sz, tuple(c + Rt @ Vector((0, 0.02, 0))), (1, 0.35, 1), (tilt, 0, 0), m=random.choice(leaf), seg=10, rings=5))      # (the green back of the head)
     return finish(objs, name)
 
 

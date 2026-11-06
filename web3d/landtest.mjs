@@ -34,7 +34,7 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 let s = await state();
-ok('a new farm: level 1, the home field yours, the wild meadow fenced off with its long grass, nothing for sale, no level card', s.level === 1 && s.land === '0' && s.owned === 1 && s.sale === -1 && s.fence > 100 && s.grass > 1000 && !s.card, s);
+ok('a new farm: level 1, the home field yours, the wild meadow in its long grass (no fence since 6 Nov 2026), nothing for sale, no level card', s.level === 1 && s.land === '0' && s.owned === 1 && s.sale === -1 && s.fence === 0 && s.grass > 1000 && !s.card, s);
 const wildTap = await p.evaluate(() => { const f = window.__farm, F = f.fields().fields[5], c = F.mid; f.lookAt(c[0], c[1]); f.draw(); const v = new f.THREE.Vector3(c[0], 0, c[1]).project(f.camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, at: f.fieldAt(c[0], c[1]) }; });
 await p.touchscreen.tap(wildTap.x, wildTap.y); await run(0.2);
 const tagT = await p.evaluate(() => document.getElementById('tag').textContent);
@@ -76,7 +76,7 @@ const reach0 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), i
 await p.tap('.gsheet .gbtn'); await run(1.2);
 s = await state();
 const reach1 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), inside1), wild1 = await p.evaluate(() => window.__farm.wildIn(1));
-ok('bought: 100 coins paid, the field yours (its long grass cut, the fence moved out, the farmer can walk there), nothing more for sale at level 2', s.coins === 50 && s.land === '0,1' && s.owned === 2 && s.sale === -1 && s.bub === null && !s.card && wild0 > 50 && wild1 === 0 && s.fence !== before.fence && !reach0 && reach1, { s, wild0, wild1, reach0, reach1 });
+ok('bought: 100 coins paid, the field yours (its long grass cut, no fence, the farmer can walk there), nothing more for sale at level 2', s.coins === 50 && s.land === '0,1' && s.owned === 2 && s.sale === -1 && s.bub === null && !s.card && wild0 > 50 && wild1 === 0 && s.fence === 0 && !reach0 && reach1, { s, wild0, wild1, reach0, reach1 });
 // level 4 at once: one card, the next patch for sale
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 620; g.save(); });
 await run(1.5);

@@ -35,9 +35,9 @@ BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windm
          'hay_stack': (village3d.hay_stack_v, 4000), 'round_bale': (village3d.round_bale_v, 3000), 'flower_pots': (village3d.flower_pots_v, 4000),
          'planter': (village3d.planter_v, 5000), 'veg_patch': (lambda: village3d.veg_patch_v(2.6, 1.8, name='veg_patch'), 14000),
          'veg_patch_sq': (lambda: village3d.veg_patch_v(2.4, 2.4, name='veg_patch_sq'), 14000),
-         'bush_a': (lambda: village3d.bush_v(141, 'bush_a'), 700), 'bush_b': (lambda: village3d.bush_v(148, 'bush_b', flowers=True), 900),
+         'bush_a': (lambda: village3d.bush_v(141, 'bush_a'), 4600), 'bush_b': (lambda: village3d.bush_v(148, 'bush_b', flowers=True), 5600),      # (more detail, 6 Nov 2026: were 700, 900)
          'rock_a': (lambda: village3d.rock_v(1, 'rock_a'), 220), 'rock_b': (lambda: village3d.rock_v(2, 'rock_b'), 220),
-         'picket_fence': (village3d.picket_fence_v, 1500), 'mushrooms': (village3d.mushrooms_v, 1500), 'sunflowers': (village3d.sunflowers_v, 13000),
+         'picket_fence': (village3d.picket_fence_v, 1500), 'mushrooms': (village3d.mushrooms_v, 1500), 'sunflowers': (village3d.sunflowers_v, 22000),
          'pasture': (village3d.pasture_v, 6000), 'pasture_shelter': (village3d.pasture_shelter_v, 6000),
          'kennel': (lambda: __import__('beasts').kennel(), 7000)}
 names = []

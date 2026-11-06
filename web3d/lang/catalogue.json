@@ -361,8 +361,8 @@
  },
  {
   "id": "text.land_body",
-  "en": "Wild meadow with room for a coop or two. Buy it and it’s yours for good: the grass is cut and your fence moves out round it.",
-  "fr": "Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : l’herbe est coupée et votre clôture l’entoure."
+  "en": "Wild meadow with room for a coop or two. Buy it and it’s yours for good: its long grass is cut, ready for your coops.",
+  "fr": "Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : ses hautes herbes sont fauchées, prêtes pour vos poulaillers."
  },
  {
   "id": "text.land_buy",
@@ -1875,8 +1875,8 @@
  },
  {
   "id": "text.intro_1b",
-  "en": "Your three Rhode Island Reds are yours for good. Cuddle them: they trust you more, earn stars and lay better eggs.",
-  "fr": "Vos trois Rhode Island Red sont à vous pour toujours. Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs."
+  "en": "Your three Rhode Island Reds are yours for good, and each has a personality of its own: a Diva, a Rebel, a Glutton… Cuddle them: they trust you more, earn stars and lay better eggs.",
+  "fr": "Vos trois Rhode Island Red sont à vous pour toujours, et chacune a sa personnalité : une Diva, une Rebelle, une Gourmande… Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs."
  },
  {
   "id": "text.intro_2",
@@ -1905,8 +1905,18 @@
  },
  {
   "id": "text.intro_4b",
-  "en": "Win rosettes at shows, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.",
-  "fr": "Gagnez des cocardes aux concours, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour."
+  "en": "Win rosettes at shows, go fishing in the pond and the river, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.",
+  "fr": "Gagnez des cocardes aux concours, pêchez dans l’étang et la rivière, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour."
+ },
+ {
+  "id": "text.intro_5",
+  "en": "Rusty the fox",
+  "fr": "Rusty le renard"
+ },
+ {
+  "id": "text.intro_5b",
+  "en": "From level 4, Rusty may come by at night for the eggs; he never harms a bird. Shut the coops’ doors at dusk, or let a Brave hen, the geese or your dog chase him off.",
+  "fr": "Dès le niveau 4, Rusty peut passer la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser."
  },
  {
   "id": "text.intro_next",
@@ -2255,6 +2265,11 @@
   "fr": "Version {v}"
  },
  {
+  "id": "text.credits",
+  "en": "Music: {music}. Sounds: {sounds}. The peacock’s call: {peacock} ({lic}), cleaned up.",
+  "fr": "Musique : {music}. Sons : {sounds}. Le cri du paon : {peacock} ({lic}), nettoyé."
+ },
+ {
   "id": "text.saved_here",
   "en": "Your farm is saved on this phone.",
   "fr": "Votre ferme est enregistrée sur ce téléphone."
@@ -2268,6 +2283,126 @@
   "id": "text.code_how",
   "en": "Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after clearing Safari, to carry on where you left off.",
   "fr": "Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir vidé Safari, pour reprendre là où vous en étiez."
+ },
+ {
+  "id": "text.code_how_app",
+  "en": "Copy your farm code and keep it somewhere safe (Notes is fine). Paste it here on another phone, or after reinstalling the game, to carry on where you left off.",
+  "fr": "Copiez le code de votre ferme et gardez-le en lieu sûr (dans Notes par exemple). Collez-le ici sur un autre téléphone, ou après avoir réinstallé le jeu, pour reprendre là où vous en étiez."
+ },
+ {
+  "id": "text.notes_shows",
+  "en": "Shows",
+  "fr": "Concours"
+ },
+ {
+  "id": "text.notes_crops",
+  "en": "Wheat & honey",
+  "fr": "Blé et miel"
+ },
+ {
+  "id": "text.notes_chicks",
+  "en": "Chicks",
+  "fr": "Poussins"
+ },
+ {
+  "id": "text.notes_eggs",
+  "en": "Eggs",
+  "fr": "Œufs"
+ },
+ {
+  "id": "text.nt_eggs_t",
+  "en": "Fresh eggs 🥚",
+  "fr": "Des œufs frais 🥚"
+ },
+ {
+  "id": "text.nt_eggs",
+  "en": "{n} eggs are waiting in the nests.",
+  "fr": "{n} œufs vous attendent dans les nids."
+ },
+ {
+  "id": "text.nt_hatch_t",
+  "en": "Chicks! 🐣",
+  "fr": "Des poussins ! 🐣"
+ },
+ {
+  "id": "text.nt_wheat_t",
+  "en": "The wheat is ripe 🌾",
+  "fr": "Le blé est mûr 🌾"
+ },
+ {
+  "id": "text.nt_wheat",
+  "en": "Your wheat is golden and ready to harvest.",
+  "fr": "Votre blé est doré et prêt à être moissonné."
+ },
+ {
+  "id": "text.nt_honey_t",
+  "en": "Honey 🍯",
+  "fr": "Du miel 🍯"
+ },
+ {
+  "id": "text.nt_honey",
+  "en": "The beehives are full: {n} jars of honey to collect.",
+  "fr": "Les ruches sont pleines : {n} pots de miel à récolter."
+ },
+ {
+  "id": "text.nt_show_t",
+  "en": "Show results 🏆",
+  "fr": "Résultats du concours 🏆"
+ },
+ {
+  "id": "text.nt_show",
+  "en": "The judge has been! Come and see where {name} was placed.",
+  "fr": "Le juge est passé ! Venez découvrir le classement de {name}."
+ },
+ {
+  "id": "text.nt_miss_t",
+  "en": "Your farm misses you",
+  "fr": "Votre ferme pense à vous"
+ },
+ {
+  "id": "text.nt_miss",
+  "en": "{names} miss you! Come and say hello.",
+  "fr": "Vous manquez à {names} ! Venez leur dire bonjour."
+ },
+ {
+  "id": "text.settings_notes",
+  "en": "Reminders",
+  "fr": "Rappels"
+ },
+ {
+  "id": "text.notes_note",
+  "en": "Choose the ones you’d like. Never at night, two a day at most; and if you’re away for 3 days, a note from your hens.",
+  "fr": "Choisissez ceux que vous voulez. Jamais la nuit, deux par jour au plus ; et si vous vous absentez 3 jours, un petit mot de vos poules."
+ },
+ {
+  "id": "text.notes_denied",
+  "en": "Notifications are turned off for Feather & Field on your phone: Settings > Notifications.",
+  "fr": "Les notifications de Feather & Field sont désactivées sur votre téléphone : Réglages > Notifications."
+ },
+ {
+  "id": "text.notes_ask_t",
+  "en": "Reminders?",
+  "fr": "Des rappels ?"
+ },
+ {
+  "id": "text.notes_ask",
+  "en": "Shall I let you know when eggs are waiting, chicks hatch, the wheat or the honey is ready, and when the show results are in? Never at night, two a day at most.",
+  "fr": "Voulez-vous un petit mot quand des œufs vous attendent, que des poussins naissent, que le blé ou le miel est prêt, et pour les résultats des concours ? Jamais la nuit, deux par jour au plus."
+ },
+ {
+  "id": "text.notes_yes",
+  "en": "Yes please",
+  "fr": "Oui, merci"
+ },
+ {
+  "id": "text.notes_no",
+  "en": "Not now",
+  "fr": "Pas maintenant"
+ },
+ {
+  "id": "text.notes_ask_note",
+  "en": "You can choose which ones, or turn them off, any time in Settings.",
+  "fr": "Vous pourrez choisir lesquels, ou les désactiver, à tout moment dans les Réglages."
  },
  {
   "id": "text.code_copy",

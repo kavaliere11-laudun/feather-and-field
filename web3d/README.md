@@ -3975,3 +3975,56 @@ the birds already had.
   screens) now on every phone held upright (`max-width: 520px`), about 50 px more picture; the tall key
   [0.06, 0.235, 0.95, 0.785]. At 402x874 the Orpington, the Brahma, the Polish, the duck and a chick show above the card;
   on a small phone (375x667) the card still covers the hens. TestFlight build sent after it.
+
+## Audrey's first play on her iPhone (TestFlight, 6 Nov 2026), fixes, first batch
+
+Her notes while playing build 10, and what changed:
+- **The intro's dots were cut** ("progression bar cut"): the sticky button row's cover reached 24 px up, over the dots
+  20 px above it. In the intro it now reaches down and to the sides only (`index.html` `.gsheet.gintro .gstick`).
+- **Swipe the intro cards** ("allow people to scroll left / right to go next and backwards"): anywhere on the card, not
+  just the picture; the card follows the finger a little and the next one slides in (`gameui.js` swipe, introNav). Touch
+  events, not pointer events: once a swipe is seen going sideways the sheet doesn't scroll, and the phone's own scrolling
+  can't cancel it; a mouse uses pointer events. Up and down still scrolls the sheet.
+- **Intro pictures 2 and 4** ("clipping", "the chick on the right is not touching the ground"): picture 2 wider (the
+  whole coop, its roof no longer cut by the frame), the chick by mum standing clear of her (it had been half inside her,
+  under a spread wing), the hopping chick on the ground; picture 4's honey frame held in front of the farmer's hands (they
+  went through it), the bees clear of his head, the winner a Buff Orpington (the Light Brahma face on showed a band of
+  dark marks across her breast, the edge of her collar's feathers: worth a look at the Brahma model later). Picture 1
+  re-rendered with today's rustic coop; picture 3 (all six languages) without the fence, the wild land in long grass,
+  the leaping hen on the ground.
+- **The wheat field "looks like an actual square on the screen"**: it lay square to the screen (45 or 135 degrees). It
+  now lies with the farm's lines like the coops (0 or 90: `main.js` WHEAT_DEGS), so it reads as laid on the ground; Turn
+  swaps 0 and 90. The save accepts 0, 45, 90 and 135 (`game.js`); a field from before is turned on load where it fits as
+  it is (nothing more to clear). wheattest checks both.
+- **Tilt the view** ("allow it up and down to change the angle of the view"): two fingers sliding up together tilt it
+  lower (looking across the farm), down tilts it higher; 26 to 72 degrees (usual 42: `main.js` view.el, VIEW_EL0). A
+  twist needs both fingers moving, a tilt both sliding the same way, so one never starts the other. The compass shows
+  when turned or tilted and brings both back; show day and the morning film use the usual view and put yours back after;
+  R and F tilt on a computer. viewtest checks it.
+- **No land fences** ("get rid of the fences ... the lands not bought yet ... high grass not cut and slightly different
+  colour"; one ran through the well): `LAND_FENCE = false`. The land not yours is its warmer colour under long grass:
+  clumps of 30 tapering blades, dark green at the root to a pale sunny green at the tip (`main.js` longGrass), every
+  42 cm, lit on both sides (`batch` bothLit). The farmer still keeps to your land and the lanes (the walking grid as
+  before); the geese's and the dock's gates still open, unseen; Rusty runs through the grass (no fence to leap). The
+  land card says "its long grass is cut, ready for your coops" (six languages). landtest updated.
+- **The pond's benches face the water** ("These benches are non sense"): 45 and 182 degrees
+  (`stylized/village_layout.py` and `models/village.json`).
+- **The intro, five cards** (her choice: "Text + a fox card"): card 1 names the personalities (a Diva, a Rebel, a
+  Glutton…), the shows' card adds fishing in the pond and the river, and a new card, "Rusty the fox", shown fourth so the
+  shows' "a little each day" still ends it (`gameui.js` ORDER [1, 2, 3, 5, 4]): from level 4 he may come at night for
+  the eggs, never harming a bird; shut the doors at dusk, or a Brave hen, the geese or the dog chase him off. Six
+  languages (the json sources and the packs: `lang/catalogue.mjs`). Its picture, scene 5 (`intro.js` fox, shot at 19:20
+  by intropics.mjs): the Red Barn at dusk, a Brave hen wings up, Biscuit after Rusty, who looks back over his shoulder;
+  both really running into place for the moment it's shot, a paw on the ground. All five pictures re-rendered (the new
+  bushes). firstdaytest checks five.
+- **Bushes and sunflowers** ("Details of the bushes and the sunflowers need to be improved"): `village3d.py` bush_v, a
+  mound of leafy clumps with 340 little flat leaves on them (two triangles each, `flat_leaf`), a shade darker underneath,
+  twigs at the foot, five-petalled blossoms on the flowering kind (budget 4,600 and 5,600 triangles, were 700 and 900);
+  sunflowers_v, petals in two cupped rings, a domed seed centre, every head facing out (none nodding edge-on), three broad
+  heart-shaped leaves a stem, out to either side and drooping. Exported with `export_village3d.py` and spliced into
+  `village.glb`.
+- **Next, her choice:** the Glutton's apples come back with the golden apple egg ("Yes, with the apple egg"; they were in
+  the Unity version only).
+- **The repository** (6 Nov): a commit from another chat had swept `web3d/node_modules` and `web3d/dist` into `source`
+  (10,700 files). They're out of it again and in `.gitignore` (with `web3d/_docs/`); after a pull, run `npm ci` in
+  `web3d/` and `./build.sh`.

@@ -69,7 +69,7 @@ export const TEXT = {
     level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', level_new: 'New at this level',
     land_new: 'A new field is for sale: {c} coins', land_show: 'See the field', level_next_land: 'At level {n}: a new field for sale',
     land_count: 'Your land: {n} fields', land_count1: 'Your land: 1 field', land_all: 'All the land is yours!',
-    land_title: 'A field', land_body: 'Wild meadow with room for a coop or two. Buy it and it’s yours for good: the grass is cut and your fence moves out round it.',
+    land_title: 'A field', land_body: 'Wild meadow with room for a coop or two. Buy it and it’s yours for good: its long grass is cut, ready for your coops.',
     land_buy: 'Buy for {c} coins', land_broke: 'Not enough coins yet ({c})', land_bought: 'The new field is yours!', land_wild: 'Wild meadow · for sale at level {n}',
         sale_sign: 'FOR SALE', bub_sale: 'For sale',
     coop_lives: '{names} live here.', and: 'and', rustic: 'rustic',
@@ -182,10 +182,11 @@ export const TEXT = {
     away_wheat: 'Your wheat is ripe: tap the field to harvest it', away_wheat_grow: 'Your wheat is growing: ripe in {t}', away_feed: '{coop}: the feeder is empty', away_feed_low: '{coop}: the feeder is low',
     away_show: 'The show results are in: they’re next', away_jobs: 'New jobs for today', away_jobs_ready: '{n} job rewards to collect', away_jobs_ready1: 'A job reward to collect',
     away_collect: 'Collect all eggs ({n})', away_ok: 'Off to the farm', away_sold: '{n} eggs sold · +{c} coins',
-    intro_1: 'Your forever flock', intro_1b: 'Your three Rhode Island Reds are yours for good. Cuddle them: they trust you more, earn stars and lay better eggs.',
+    intro_1: 'Your forever flock', intro_1b: 'Your three Rhode Island Reds are yours for good, and each has a personality of its own: a Diva, a Rebel, a Glutton… Cuddle them: they trust you more, earn stars and lay better eggs.',
     intro_2: 'Eggs and chicks', intro_2b: 'Each hen lays about two eggs a day: collect them to sell. Now and then a hen raises chicks; grown up, they leave for a new farm and you earn coins.',
     intro_3: 'Land and new breeds', intro_3b: 'Each level brings a field to buy, and new breeds arrive as trios with their own coop. Put everything where you like.',
-    intro_4: 'Shows, honey and more', intro_4b: 'Win rosettes at shows, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.',
+    intro_4: 'Shows, honey and more', intro_4b: 'Win rosettes at shows, go fishing in the pond and the river, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.',
+    intro_5: 'Rusty the fox', intro_5b: 'From level 4, Rusty may come by at night for the eggs; he never harms a bird. Shut the coops’ doors at dusk, or let a Brave hen, the geese or your dog chase him off.',
     intro_next: 'Next', intro_go: 'Let’s go!', intro_skip: 'Skip',
     guide_n: 'First day · {n} of {of}', guide_skip: 'Skip', guide_show: 'Show me',
     guide_eggs: 'Collect your first egg: tap the egg over the Red Barn.', guide_eggs_wait: 'Your first egg is on its way: a hen will go in to lay in a moment.',
@@ -345,7 +346,7 @@ export const TEXT = {
     level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', level_new: 'Nouveau à ce niveau',
     land_new: 'Un nouveau terrain est à vendre : {c} pièces', land_show: 'Voir le terrain', level_next_land: 'Au niveau {n} : un nouveau terrain à vendre',
     land_count: 'Vos terrains : {n}', land_count1: 'Votre terrain : 1', land_all: 'Tous les terrains sont à vous !',
-    land_title: 'Un terrain', land_body: 'Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : l’herbe est coupée et votre clôture l’entoure.',
+    land_title: 'Un terrain', land_body: 'Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : ses hautes herbes sont fauchées, prêtes pour vos poulaillers.',
     land_buy: 'Acheter pour {c} pièces', land_broke: 'Pas encore assez de pièces ({c})', land_bought: 'Le nouveau terrain est à vous !', land_wild: 'Pré sauvage · à vendre au niveau {n}',
         sale_sign: 'À VENDRE', bub_sale: 'À vendre',
     coop_lives: '{names} vivent ici.', and: 'et', rustic: 'rustique',
@@ -458,10 +459,11 @@ export const TEXT = {
     away_wheat: 'Votre blé est mûr : touchez le champ pour le récolter', away_wheat_grow: 'Votre blé pousse : mûr dans {t}', away_feed: '{coop} : la mangeoire est vide', away_feed_low: '{coop} : la mangeoire est presque vide',
     away_show: 'Les résultats des concours sont arrivés : ils arrivent juste après', away_jobs: 'De nouvelles tâches aujourd’hui', away_jobs_ready: '{n} récompenses de tâches à récupérer', away_jobs_ready1: 'Une récompense de tâche à récupérer',
     away_collect: 'Ramasser les œufs ({n})', away_ok: 'À la ferme', away_sold: '{n} œufs vendus · +{c} pièces',
-    intro_1: 'Votre basse-cour pour toujours', intro_1b: 'Vos trois Rhode Island Red sont à vous pour toujours. Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs.',
+    intro_1: 'Votre basse-cour pour toujours', intro_1b: 'Vos trois Rhode Island Red sont à vous pour toujours, et chacune a sa personnalité : une Diva, une Rebelle, une Gourmande… Faites-leur des câlins : elles vous font davantage confiance, gagnent des étoiles et pondent de meilleurs œufs.',
     intro_2: 'Œufs et poussins', intro_2b: 'Chaque poule pond environ deux œufs par jour : ramassez-les pour les vendre. De temps en temps, une poule élève des poussins ; une fois grands, ils partent pour une nouvelle ferme et vous gagnez des pièces.',
     intro_3: 'Terres et nouvelles races', intro_3b: 'Chaque niveau apporte un terrain à acheter, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez.',
-    intro_4: 'Concours, miel et plus encore', intro_4b: 'Gagnez des cocardes aux concours, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour.',
+    intro_4: 'Concours, miel et plus encore', intro_4b: 'Gagnez des cocardes aux concours, pêchez dans l’étang et la rivière, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour.',
+    intro_5: 'Rusty le renard', intro_5b: 'Dès le niveau 4, Rusty peut venir la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser.',
     intro_next: 'Suivant', intro_go: 'C’est parti !', intro_skip: 'Passer',
     guide_n: 'Premier jour · {n} sur {of}', guide_skip: 'Passer', guide_show: 'Montrer',
     guide_eggs: 'Ramassez votre premier œuf : touchez l’œuf au-dessus de la Grange rouge.', guide_eggs_wait: 'Votre premier œuf arrive : une poule va aller pondre dans un instant.',
@@ -1139,7 +1141,7 @@ export function checkFarm(d, now = Date.now()) {
   // (0: not sown; never further ahead than it takes to grow); the grain in store
   out.dresses = dresses;                             // (the seasonal dresses owned: after the decorations, as a new farm has them)
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
-  out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: wh.deg === 135 ? 135 : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
+  out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: [0, 45, 90, 135].includes(wh.deg) ? wh.deg : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
   out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
   // when the farm was last open (for the welcome-back summary): never ahead of now
   out.lastSeen = Number.isFinite(d.lastSeen) && d.lastSeen > 0 ? Math.min(d.lastSeen, now) : now;
@@ -1598,7 +1600,7 @@ export class Game {
   }
   placeWheat(at, clear = []) {
     const X = spotNum(at.x), Z = spotNum(at.z); if (X === null || Z === null) return false;
-    const w = this.wheat(); w.x = X; w.z = Z; w.deg = at.deg === 135 ? 135 : 45; this.cleared(clear); this.save(); return true;
+    const w = this.wheat(); w.x = X; w.z = Z; w.deg = [0, 45, 90, 135].includes(at.deg) ? at.deg : 0; this.cleared(clear);      // (0 or 90 since 6 Nov 2026; 45 or 135 before) this.save(); return true;
   }
   // ---- honey: the jars in the hives now, when the next comes, harvesting them (sold)
   honeyAt(now = Date.now()) { const H = this.data.honey; if (!H) return 0; return Math.min(HONEY.max, H.n + Math.floor(Math.max(0, now - H.at) / HONEY.every)); }

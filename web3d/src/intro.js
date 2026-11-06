@@ -8,8 +8,10 @@
 //     pecking, one peering at the eggs) by a straw nest of brown eggs, the Red Barn behind.
 //   3 "Land and new breeds": a field of wild meadow behind the land's fence with its FOR SALE sign and red-ribbon stakes (as
 //     main.js draws them), mown farm grass in front, and the Buff Orpingtons arriving at their Thatched Cottage, delighted.
-//   4 "Shows, honey and more": the judge pinning the first prize's red rosette on a Light Brahma in her little show coop;
+//   4 "Shows, honey and more": the judge pinning the first prize's red rosette on a Buff Orpington in her little show coop;
 //     the farmer beside her holding up a frame of honey from his hives, a couple of bees after it.
+//   5 "Rusty the fox" (6 Nov 2026, Audrey: "Text + a fox card"), shown fourth: dusk at the Red Barn, its door shut; a Brave
+//     hen out in front, wings up, calling; Biscuit the Border Collie bounding after Rusty, who's off at a run, looking back.
 // The test village itself is hidden while a scene is on (clearView): only the ground, the stage and its cast show.
 // Everything is the game's own: Bird (main.js) posed through its posterPose hook, Farmer (farmer.js) poses, the coops'
 // models, the show ground (showground.js), the land's fence, sign and stakes, the hearts, the honey frame. Nothing here runs
@@ -17,6 +19,7 @@
 import * as THREE from 'three';
 import { Farmer } from './farmer.js';
 import { loadShow, ShowGround, SHOW } from './showground.js';
+import { Fox, T } from './beasts.js';
 
 const DEG = Math.PI / 180;
 // a farmer's pose with the arms the other way round (the left doing what the right did): shoulders, elbows, wrists, hands
@@ -27,7 +30,7 @@ function mirrorArms(P) {
 }
 // each scene's stage and camera turned together by this much (degrees) from the game's view, so the late-morning sun
 // comes from in front and to the left: faces in the light, shadows falling away behind (?turn=N tries another)
-const TURNS = [0, -50, -50, -50, -72];
+const TURNS = [0, -50, -50, -50, -72, -40];
 const TURN_Q = typeof location !== 'undefined' && /[?&]turn=(-?\d+)/.test(location.search) ? +RegExp.$1 : null;
 // every pose field a bird's rig reads, at rest: a scene's pose starts from these, so nothing the bird does by herself shows
 const REST = { walk: 0, peck: 0, sit: 0, kick: 0, kickT: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0,
@@ -58,7 +61,7 @@ class Intro {
     if (this.n === 4) await loadShow(C.loadGLB, C.loadJSON);
     // (the sale sign's words are drawn once, in the game's own type: wait for it, a few seconds at most)
     if (this.n === 3 && document.fonts) await Promise.race([document.fonts.load('800 58px Nunito').catch(() => null), new Promise(ok => setTimeout(ok, 4000))]);
-    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show()][this.n]();
+    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show(), () => this.fox()][this.n]();
     C.allBirds.push(...this.plot.birds);
     this.update(0);
   }
@@ -129,6 +132,7 @@ class Intro {
     this.t = 0;
     for (const h of this.hearts) { h.life = 0; h.sprite.visible = false; }
     this.hearts = []; for (const k of this.heartK) { k.next = 0; k.i = 0; }
+    for (const f of this.restarts || []) f();
   }
   update(dt) {
     if (this.cam) this.cam.az = this.turn;
@@ -170,19 +174,22 @@ class Intro {
 
   // ------------------------------------------------------------------ 2. Eggs and chicks
   chicks() {
-    this.cam = { at: [-0.2, 0.42, -0.1], el: 16, dist: 4.4, fov: 20.5, shadowReach: 3.5 };
+    const CHICK_BY_MUM = [0.3, 0.14];      // (where the chick snuggled up to mum stands)
+    // (6 Nov 2026: wider, the whole coop in the picture, its roof no longer cut by the frame)
+    this.cam = { at: [-0.2, 0.66, -0.55], el: 16, dist: 4.6, fov: 29, shadowReach: 4 };
     this.prop('rustic_rir', -0.12, -2.55, 0);
     this.prop('bush_b', -1.75, -2.25, 0, 0.75); this.prop('bush_a', -2.3, -1.5, 0, 0.6); this.prop('flower_pots', 0.98, -1.95, 10, 0.85); this.prop('bush_a', 1.75, -2.6, 0, 0.7);
     this.prop('tree_apple', -2.6, -4.6, 0); this.prop('tree_b', 3.3, -5.2, 30);
     this.dress(260, { x0: -3, x1: 3, z0: -4, z1: 1.6, clear: [[-0.95, -3.2, 0.7, -1.6], [-1.15, -0.35, 0.75, 0.75], [-0.5, -1.4, 0.6, -0.3], [0.7, -2.3, 1.3, -1.6]], seed: 12, flowers: 0.5 });
-    // mum, settled low, her near wing spread over a chick sheltering under it
+    // mum, settled low, looking down at the chick snuggled up beside her (6 Nov 2026, Audrey: "there is clipping": the chick
+    // had been half inside her, under a spread wing; now it stands clear of her, close against her side)
     const mum = this.bird('rir', 'hen', null, 0.0, 0.0, -0.6, A => { A.sit = 0.7; A.lookYaw = -0.25; A.lookTilt = 0.15; });
-    this.after(mum, B => { B.wingL.rotation.z += 0.95; });
-    this.bird('rir', 'chick', null, 0.14, 0.03, -0.6, A => { A.lookYaw = -0.3; A.lookTilt = 0.25; });
-    // the others: one pecking, one hopping for joy, one peering at the eggs
+    this.after(mum, B => { B.wingL.rotation.z += 0.25; });
+    this.bird('rir', 'chick', null, CHICK_BY_MUM[0], CHICK_BY_MUM[1], -0.9, A => { A.lookYaw = -0.3; A.lookTilt = 0.35; });
+    // the others: one pecking, one trotting over with its wings out, one peering at the eggs (each on the ground: Audrey,
+    // "the chick on the right is not touching the ground", where one had been caught mid-hop)
     this.bird('rir', 'chick', null, -0.36, 0.4, 0.4, A => { A.peck = 1; });
-    const hop = this.bird('rir', 'chick', null, 0.45, 0.42, -0.9, A => { A.hopT = 0.45; A.flap = 1; A.t = 2.3; A.lookTilt = 0.15; });
-    hop.shadowY = 0.015; this.ticks.push(() => { hop.root.position.y = 0.07; });
+    this.bird('rir', 'chick', null, 0.45, 0.42, -0.9, A => { A.walk = 1; A.phase = 0.5; A.flap = 0.5; A.t = 2.3; A.lookTilt = 0.15; });
     this.bird('rir', 'chick', null, -0.72, 0.02, -0.35, A => { A.lookYaw = 0.2; A.lookTilt = 0.3; A.peck = 0.35; });
     this.nest(-0.82, 0.3, 4);
   }
@@ -225,7 +232,7 @@ class Intro {
     const w = p => { const v = this.g.localToWorld(new THREE.Vector3(p[0], 0, p[1])); return [v.x, v.z]; };
     const side = (x, z) => { let best = 1e9, s = 1; for (let i = 1; i < L.length; i++) { const [ax, az] = L[i - 1], [bx, bz] = L[i], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz, u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), d = Math.hypot(x - ax - dx * u, z - az - dz * u); if (d < best) { best = d; s = (dx * (z - az) - dz * (x - ax)) > 0 ? 1 : -1; } } return s * best; };
     this.g.updateMatrixWorld(true);
-    this.keep(this.ctx.fence([L.map(w)]));
+    // (no fence along it since 6 Nov 2026, as in the game: the land not yours yet is its warmer colour and long grass)
     this.tint(side);
     this.wild(side);
     // the FOR SALE sign just inside the fence, facing out over the farm; stakes with red ribbons along the field's border
@@ -243,10 +250,11 @@ class Intro {
     this.dress(70, { x0: -1.8, x1: 3.2, z0: 0.9, z1: 2.6, round: [[1.05, 1.25, 0.42], [0.36, 1.52, 0.4], [-0.36, 1.22, 0.4]], seed: 23, flowers: 0.6 });
     // (the farm's own short grass only this side of the fence)
     this.g.children.filter(c => /grass_tuft|flower_/.test(c.name) && side(c.position.x, c.position.z) < 0.25).forEach(c => c.removeFromParent());
-    // the Buff Orpingtons, delighted with their new home: the rooster crowing, a hen leaping for joy, the other trotting up
+    // the Buff Orpingtons, delighted with their new home: the rooster crowing, a hen flapping for joy, the other trotting up
     this.bird('orp', 'rooster', null, 1.05, 1.2, -0.75, A => { A.crow = 1; A.flap = 0.3; A.t = 2.3; A.lookTilt = 0.05; A.proud = 0.5; });
-    const h1 = this.bird('orp', 'hen', null, 0.36, 1.48, -0.2, A => { A.hopT = 0.52; A.flap = 1; A.t = 2.3; A.lookTilt = 0.1; });
-    h1.shadowY = 0.015; this.ticks.push(() => { h1.root.position.y = 0.2; });
+    // (her feet on the ground, flapping for joy: 6 Nov 2026, as the chick in the second picture, a bird caught mid-leap read as
+    // floating)
+    this.bird('orp', 'hen', null, 0.36, 1.48, -0.2, A => { A.flap = 1; A.t = 2.3; A.lookTilt = 0.1; A.proud = 0.4; });
     this.bird('orp', 'hen', null, -0.36, 1.18, 0.5, A => { A.walk = 1; A.phase = 0.6; A.proud = 0.6; A.lookYaw = -0.3; A.lookTilt = 0.2; });
   }
   // the meadow's warmer colour over the ground (as main.js landTint: soft-edged), and its long grass and wildflowers
@@ -265,16 +273,16 @@ class Intro {
     this.g.add(m);
   }
   wild(side) {
-    const tufts = [[], [], []], flowers = { flower_daisy: [], flower_butter: [], flower_clover: [] }, fn = Object.keys(flowers), step = 0.42;
+    const tufts = [[], [], []], flowers = { flower_daisy: [], flower_butter: [], flower_clover: [] }, fn = Object.keys(flowers), step = 0.36;
     for (let z = -40, zi = 0; z < 4; z += step, zi++) for (let x = -16, xi = 0; x < 10; x += step, xi++) {
       const r = this.ctx.rng(xi * 7919 + zi * 104729 + 13);
       const px = x + r() * step, pz = z + r() * step;
       if (side(px, pz) > -0.12) continue;
       const v = this.g.localToWorld(new THREE.Vector3(px, 0, pz));
-      tufts[Math.floor(r() * 3)].push(new THREE.Matrix4().compose(v, new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(1.3 + r() * 0.5, 1.9 + r() * 0.9, 1.3 + r() * 0.5)));
-      if (r() < 0.22) { const k = fn[Math.floor((Math.sin(px * 0.9) + Math.cos(pz * 0.8) + 2) * 0.75) % 3]; for (let j = 0; j < 3; j++) { const u = this.g.localToWorld(new THREE.Vector3(px + (r() - 0.5) * 0.5, 0, pz + (r() - 0.5) * 0.5)); flowers[k].push(new THREE.Matrix4().compose(u, new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3().setScalar(1.4 + r() * 0.6))); } }
+      const sc = 0.85 + r() * 0.45; tufts[0].push(new THREE.Matrix4().compose(v, new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3(sc, sc * (0.85 + r() * 0.4), sc)));      // (the game's long grass: main.js longGrass)
+      if (r() < 0.12) { const k = fn[Math.floor((Math.sin(px * 0.9) + Math.cos(pz * 0.8) + 2) * 0.75) % 3]; for (let j = 0; j < 3; j++) { const u = this.g.localToWorld(new THREE.Vector3(px + (r() - 0.5) * 0.5, 0, pz + (r() - 0.5) * 0.5)); flowers[k].push(new THREE.Matrix4().compose(u, new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), r() * 6.28), new THREE.Vector3().setScalar(1.4 + r() * 0.6))); } }
     }
-    tufts.forEach((list, k) => this.keep(this.ctx.batch('grass_tuft_' + k, list, { lambert: true, tile: 6, twoSided: true, wind: 1.2 })));
+    this.ctx.longGrass(); this.keep(this.ctx.batch('long_grass', tufts[0], { lambert: true, tile: 6, twoSided: true, wind: 1.2, bothLit: true }));
     for (const k of fn) this.keep(this.ctx.batch(k, flowers[k], { lambert: true, twoSided: true, wind: 1.2 }));
   }
 
@@ -288,7 +296,9 @@ class Intro {
     // her (a Light Brahma, white against her blue coop) and her neighbours in their coops (none of them changed: the Silkie as
     // she is); she stands tall, the others look over at her; the two behind the farmer and the judge settled down in the straw
     // (the coop behind the farmer an empty one, so nobody peeks out round his head)
-    const kinds = [['sil', 'hen', 'white'], null, ['bra', 'hen'], ['orp', 'hen'], ['leg', 'hen'], ['rir', 'hen']];
+    // (6 Nov 2026: the winner a Buff Orpington, golden against her blue coop; the Light Brahma, face on and chest out, showed
+    // a band of dark marks across her breast, the edge of her collar's feathers: "Clipping here too"; she sits next door now)
+    const kinds = [['sil', 'hen', 'white'], null, ['orp', 'hen'], ['bra', 'hen'], ['leg', 'hen'], ['rir', 'hen']];
     I.pens.forEach((p, i) => {
       if (!kinds[i]) return;
       const [breed, kind, colour] = kinds[i], low = i === k + 1;
@@ -316,11 +326,36 @@ class Intro {
     const frame = this.ctx.honeyFrame(); this.g.add(frame);
     this.ticks.push(() => {
       const B = A.rig.B, a = B.wristL.getWorldPosition(new THREE.Vector3()), b = B.wristR.getWorldPosition(new THREE.Vector3()), h = A.root.rotation.y + this.g.rotation.y;
-      const p = a.add(b).multiplyScalar(0.5).add(new THREE.Vector3(Math.sin(h) * 0.07, 0.07, Math.cos(h) * 0.07));
+      const F = [0.17, 0.07];      // (forward of his hands, and up: the frame held up in front of them, his hands behind it, not through it: 6 Nov 2026)
+      const p = a.add(b).multiplyScalar(0.5).add(new THREE.Vector3(Math.sin(h) * F[0], F[1], Math.cos(h) * F[0]));
       frame.position.copy(this.g.worldToLocal(p)); frame.rotation.set(-0.3, A.root.rotation.y, 0, 'YXZ');
     });
-    this.bees([[P.x - 0.36, 0.98, 1.76, -1.3], [P.x - 0.43, 1.2, 1.8, -1.95]]);
+    this.bees([[P.x - 0.32, 0.98, 1.76, -1.3], [P.x - 0.3, 1.24, 1.8, -1.95]]);      // (clear of his head and hat)
     this.heartsFrom([P.bird[0] + 0.02, 1.4, P.bird[2] + 0.25], 0.5, [0.02, 0.3, 0.12], 0.13);
+  }
+  // ------------------------------------------------------------------ 5. Rusty the fox
+  // (dusk: intropics.mjs shoots it at 19:40; nobody hurt, as ever: he's off empty-handed, the door shut)
+  fox() {
+    this.cam = { at: [0.2, 0.4, -0.25], el: 13, dist: 6.9, fov: 22, shadowReach: 4.5 };
+    this.prop('rustic_rir', -0.95, -2.1, 18);
+    this.prop('bush_b', -2.4, -1.6, 0, 0.8); this.prop('bush_a', 1.9, -2.6, 0, 0.75); this.prop('tree_apple', -2.9, -4.4, 0); this.prop('tree_a', 2.9, -4.6, 60);
+    this.dress(230, { x0: -3.4, x1: 3.4, z0: -4, z1: 2, clear: [[-1.9, -3.1, 0.1, -1.0], [-1.2, -0.6, 2.2, 1.0]], seed: 15, flowers: 0.45 });
+    // the Brave hen, out in front of her coop: chest out, wings up, calling after him
+    this.bird('rir', 'hen', null, -1.12, 0.62, 0.9, A => { A.proud = 1; A.flap = 1; A.t = 2.3; A.kawk = 1; A.lookYaw = 0.15; A.lookTilt = -0.05; });
+    // Rusty and Biscuit at a run, a paw on the ground (each where the picture wants him at the moment it's shot, SHOT seconds in, having run
+    // there at his pace): Rusty looks back over his shoulder, ears back, his brush streaming; Biscuit after him, grinning
+    const C = this.ctx, SHOT = 3, fam = { r: this.r, joints: C.beastJoints, out: true, group: new THREE.Group(), foxes: [], visible: () => true };
+    this.g.add(fam.group);
+    const runner = (kind, name, role, x, z, heading, v, face) => {
+      const f = new Fox(fam, kind, name, role, 1, this.r); f.home = false; f.root.visible = true; f.heading = heading; fam.foxes.push(f);
+      f.at = t => { const back = v * (SHOT - t); f.pos.set(x - Math.sin(heading) * back, 0, z - Math.cos(heading) * back); };
+      f.at(0); f.face = face; return f;
+    };
+    runner('fox', 'Rusty', 'dad', 1.2, 0.3, 1.4, 1.62, A => { A.lookYawGoal = -1.2; A.lookPitchGoal = 0.05; A.earsGoal = -0.7; A.tailUpGoal = 0.3; A.mouthGoal = 0.15; });
+    runner('collie', 'Biscuit', 'dog', -0.2, 0.75, 1.45, 1.66, A => { A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.mouthGoal = 0.7; A.earsGoal = 0.6; A.wideGoal = 0.3; });
+    fam.nextTask = f => T.wait(1e6, (f, t, dt) => { f.at(Math.min(this.t, SHOT + 0.5)); f.face(f.A); });
+    this.restarts = [() => { for (const f of fam.foxes) { f.at(0); f.lastPos = null; } }];
+    this.ticks.push(dt => { if (dt > 0) for (const f of fam.foxes) f.update(dt); });
   }
   // a few bees, as decorlife.js draws them (a fuzzy striped body, two round wings a blur of a beat), a little bigger so they
   // show in the picture: each [x, y, z, heading] on the stage

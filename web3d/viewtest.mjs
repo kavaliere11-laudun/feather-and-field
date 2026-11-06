@@ -96,6 +96,30 @@ await p.evaluate(() => document.getElementById('compass').click());
 await run(0.2); const mid = await az(); const turning = await p.evaluate(() => window.__farm.viewTurning());
 await run(1.2);
 ok('the compass tapped: back to the usual view, smoothly (part way after 0.2 s), the compass gone', mid !== c0 && Math.abs(mid - 45) > 3 && turning && (await az()) === 45 && !(await p.evaluate(() => window.__farm.compass())), { c0, mid, end: await az() });
+// tilting (6 Nov 2026, Audrey: "allow it up and down to change the angle of the view"): two fingers sliding up together:
+// the view tilts lower (looking across the farm); down: higher; never past its limits; a pinch doesn't tilt; the compass
+// shows, and tapped, brings back the usual angle too
+const el = () => p.evaluate(() => +window.__farm.viewEl().toFixed(2));
+const slide = async (dy, n = 10, spreadTo = 1) => {
+  const cx = W / 2, cy = H / 2, at = (k, sp) => [[cx - 70 * sp, cy + dy * k], [cx + 70 * sp, cy + dy * k]];
+  await fingers(at(0, 1), 'pointerdown');
+  for (let i = 1; i <= n; i++) { await fingers(at(i / n, 1 + (spreadTo - 1) * i / n), 'pointermove'); await run(1 / 30); }
+  await fingers(at(1, spreadTo), 'pointerup'); await run(0.1);
+};
+const e0 = await el(), z0 = await az();
+await slide(-120); const e1 = await el();
+await slide(160); const e2 = await el();
+ok('two fingers sliding up: the view tilts lower; down: higher; not turned by it', e0 === 42 && e1 < e0 - 12 && e2 > e1 + 20 && (await az()) === z0, { e0, e1, e2 });
+await shot('tilt_high');
+await slide(-400); const lo = await el(); await shot('tilt_low');
+await slide(500); const hi = await el();
+ok('kept between 26 and 72 degrees', lo === 26 && hi === 72, { lo, hi });
+await p.evaluate(() => window.__farm.setViewAz(45)); await run(0.1);
+const e3 = await el(); await twist(4, 90, 8, 1.5);
+ok('a pinch: zoomed, not tilted', (await el()) === e3, await el());
+ok('tilted only: the compass shows', await p.evaluate(() => window.__farm.compass()));
+await p.evaluate(() => document.getElementById('compass').click()); await run(1.5);
+ok('the compass tapped: the usual angle back as well, the compass gone', (await el()) === 42 && (await az()) === 45 && !(await p.evaluate(() => window.__farm.compass())), { el: await el(), az: await az() });
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

@@ -45,7 +45,7 @@ await load();
 let s = await S();
 const saved = await p.evaluate(() => window.__farm.game().data.wheat);
 ok('a fresh farm: the wheat field on your own land, ploughed, the sign "Sow", no grass through it, saved where it is',
-  s.at && s.owned && s.stage === 'soil' && s.shown === 'soil' && s.under === true && saved.x === s.at[0] && saved.z === s.at[1] && [45, 135].includes(saved.deg), { s, saved });
+  s.at && s.owned && s.stage === 'soil' && s.shown === 'soil' && s.under === true && saved.x === s.at[0] && saved.z === s.at[1] && [0, 90].includes(saved.deg), { s, saved });      // (with the farm's lines since 6 Nov 2026: 0 or 90)
 await look(s.at[0], s.at[1]); await run(0.5);
 s = await S();
 ok('in view: its sign says Sow', T.bubSow.test(s.bub || ''), s.bub);
@@ -130,6 +130,16 @@ await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load()
 const after = await p.evaluate(() => { const d = window.__farm.game().data; return JSON.stringify({ w: d.wheat, g: d.grain, h: d.honey }); });
 s = await S();
 ok('a reload: the field, the grain and the honey as they were, not flagged', before === after && !(await p.evaluate(() => window.__farm.game().edited)) && s.at && s.deg === saved2.deg, { before, after });
+// a field from before 6 Nov 2026, square to the screen (45 degrees): turned to lie with the farm's lines (0 or 90) where it
+// fits as it is (a spot found where both fit; the save changed here, so flagged by that), nothing else changed
+const old = await p.evaluate(() => { const f = window.__farm, w = f.game().data.wheat; for (let r = 0; r < 12; r += 0.5) for (let k = 0; k < 16; k++) { const x = Math.round((w.x + Math.cos(k / 16 * 6.283) * r) * 4) / 4, z = Math.round((w.z + Math.sin(k / 16 * 6.283) * r) * 4) / 4;
+  const A = f.deco.spot('wheat', x, z, 45), B = f.deco.spot('wheat', x, z, 0); if (A.ok && B.ok && B.clear.every(id => A.clear.includes(id))) return [x, z, A.clear]; } return null; });
+await p.evaluate(at => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.wheat.deg = 45; if (at) { raw.d.wheat.x = at[0]; raw.d.wheat.z = at[1]; raw.d.cleared = [...new Set([...raw.d.cleared, ...at[2]])]; } localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, old);
+{ const g0 = await p.evaluate(() => JSON.parse(localStorage.getItem('ff3d.farm')).d.wheat);
+  await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+  const r = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, wheat: g.data.wheat }; });
+  ok('an old field at 45 degrees: turned to 0 or 90 where it fits, still where it was', old && [0, 90].includes(r.wheat.deg) && r.wheat.x === g0.x && r.wheat.z === g0.z && r.wheat.ripe === g0.ripe, { g0, r });
+  await p.evaluate(() => { const g = window.__farm.game(); g.edited = false; g.save(); }); }
 // a save changed outside
 for (const [what, edit, check] of [
   ['a field ripe later than it can grow', 'd.wheat.ripe = Date.now() + 99 * 3600e3', r => r.wheat.ripe <= r.now + 4 * 3600e3 + 1000],
