@@ -332,6 +332,17 @@ function rng(seed) {
 
 // ------------------------------------------------------------------ loading
 const loading = document.getElementById('loading');
+// the store app opens on the painted picture (its launch screen, app/icons.py) and keeps it up (the SplashScreen plugin,
+// launchAutoHide false: app/capacitor.config.json) until the loading screen's own picture, the same, is ready under it:
+// no plain green between the two. At most 4 seconds, whatever happens
+if (window.__ffApp === true && GAME_MODE && window.Capacitor && window.Capacitor.nativePromise) {
+  let hidden = false;
+  const hideSplash = () => { if (hidden) return; hidden = true; requestAnimationFrame(() => requestAnimationFrame(() => { try { window.Capacitor.nativePromise('SplashScreen', 'hide', { fadeOutDuration: 250 }).catch(() => {}); } catch (e) { /* */ } })); };
+  const pic = new Image();
+  pic.src = (matchMedia('(orientation: landscape)').matches ? 'welcome.jpg' : 'welcome-tall.jpg') + BUST;
+  if (pic.decode) pic.decode().then(hideSplash, hideSplash); else pic.onload = pic.onerror = hideSplash;
+  setTimeout(hideSplash, 4000);
+}
 const bar = loading.querySelector('.fill');
 const progress = {};
 function showProgress() {

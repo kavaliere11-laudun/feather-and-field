@@ -4044,3 +4044,7 @@ Her notes while playing build 10, and what changed:
   The test village's loading stays green. `app/icons.py` cuts the same parts for the iPhone's launch screen
   (Splash.imageset: `launch-tall.jpg`, and `launch-wide.jpg` for height class compact, i.e. sideways), so the app opens
   on the picture and the words come on over it. gametest passes.
+- **No green between the two** (6 Nov, 18:55): the first app check (run 17) caught the web view's plain green
+  (Capacitor's backgroundColor) for a moment between the launch picture and the loading one. The app now has
+  `@capacitor/splash-screen` 8.0.2 (`launchAutoHide: false`): it keeps the launch picture up until main.js has the
+  loading picture decoded (`SplashScreen.hide` through `Capacitor.nativePromise`, as notify.js does; at most 4 s).

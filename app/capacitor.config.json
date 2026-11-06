@@ -13,6 +13,15 @@
     "backgroundColor": "#557230"
   },
   "plugins": {
-    "StatusBar": { "style": "DARK", "overlaysWebView": true }
+    "StatusBar": {
+      "style": "DARK",
+      "overlaysWebView": true
+    },
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "launchFadeOutDuration": 250,
+      "backgroundColor": "#5d8fb6",
+      "showSpinner": false
+    }
   }
 }
