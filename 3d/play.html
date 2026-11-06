@@ -473,7 +473,8 @@
   .gsheet.gwelcome .gsheet-head { padding-top: 18px; }
   .gsheet-body { min-height: 0; }
   /* a short screen held upright (a browser inside another app, a small phone): the welcome a little tighter */
-  @media (orientation: portrait) and (max-height: 760px) {
+  /* (and on every phone held upright, 6 Nov: more of the welcome picture's hens in view above it, the iPhone app above all) */
+  @media (orientation: portrait) and (max-height: 760px), (orientation: portrait) and (max-width: 520px) {
     .gsheet.gwelcome .gsheet-head { padding-top: 14px; } .gsheet.gwelcome .gsheet-head h2 { font-size: 23px; }
     .gsheet.gwelcome .gsheet-body { gap: 8px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); } .gsheet.gwelcome .gtext { font-size: 14.5px; line-height: 1.35; }
     .gsheet.gwelcome .gwho .gchip { padding: 9px; } .gsheet.gwelcome .ginput { padding: 9px 13px; } .gsheet.gwelcome .gbtn { padding: 12px 18px; }
@@ -587,6 +588,6 @@
 <div id="tag"></div>
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
-<script src="app.js?v=1793979405"></script>
+<script src="app.js?v=1793986541"></script>
 </body>
 </html>
