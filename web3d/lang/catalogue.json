@@ -1814,6 +1814,16 @@
   "fr": "Une plume de paon à ramasser"
  },
  {
+  "id": "text.away_apple_egg",
+  "en": "{n} apple eggs under the apple trees",
+  "fr": "{n} œufs dorés sous les pommiers"
+ },
+ {
+  "id": "text.away_apple_egg1",
+  "en": "An apple egg under the apple tree",
+  "fr": "Un œuf doré sous le pommier"
+ },
+ {
   "id": "text.away_wheat",
   "en": "Your wheat is ripe: tap the field to harvest it",
   "fr": "Votre blé est mûr : touchez le champ pour le récolter"
@@ -1916,7 +1926,7 @@
  {
   "id": "text.intro_5b",
   "en": "From level 4, Rusty may come by at night for the eggs; he never harms a bird. Shut the coops’ doors at dusk, or let a Brave hen, the geese or your dog chase him off.",
-  "fr": "Dès le niveau 4, Rusty peut passer la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser."
+  "fr": "Dès le niveau 4, Rusty peut venir la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser."
  },
  {
   "id": "text.intro_next",
@@ -2908,6 +2918,46 @@
   "id": "text.feather_sold1",
   "en": "A peacock feather sold · +{c} coins",
   "fr": "Une plume de paon vendue · +{c} pièces"
+ },
+ {
+  "id": "text.apple_tree",
+  "en": "🍎 {n} apples on {name}’s tree",
+  "fr": "🍎 {n} pommes sur l’arbre de {name}"
+ },
+ {
+  "id": "text.apple_tree1",
+  "en": "🍎 An apple on {name}’s tree",
+  "fr": "🍎 Une pomme sur l’arbre de {name}"
+ },
+ {
+  "id": "text.apple_tree0",
+  "en": "🍎 No apples on {name}’s tree yet: the next one in {t}",
+  "fr": "🍎 Pas encore de pomme sur l’arbre de {name} : la prochaine dans {t}"
+ },
+ {
+  "id": "text.apple_egg_wait",
+  "en": "🍎 An apple egg is waiting under {name}’s tree: tap it",
+  "fr": "🍎 Un œuf doré attend sous l’arbre de {name} : touchez-le"
+ },
+ {
+  "id": "text.apple_laid",
+  "en": "🍎 Two apples, and {name} laid an apple egg! Tap it to sell it",
+  "fr": "🍎 Deux pommes, et {name} a pondu un œuf doré ! Touchez-le pour le vendre"
+ },
+ {
+  "id": "text.apple_egg_sold",
+  "en": "An apple egg sold · +{c} coins · +{xp} XP",
+  "fr": "Un œuf doré vendu · +{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.apple_planted",
+  "en": "🍎 An apple tree for {name} the Glutton: watch her hop for its apples",
+  "fr": "🍎 Un pommier pour {name} la Gourmande : regardez-la sauter pour ses pommes"
+ },
+ {
+  "id": "text.apple_line",
+  "en": "🍎 She hops up for the apples on her tree: after two, she lays an apple egg, worth three eggs.",
+  "fr": "🍎 Elle saute pour attraper les pommes de son arbre : après deux, elle pond un œuf doré, qui vaut trois œufs."
  },
  {
   "id": "text.honey_sold",

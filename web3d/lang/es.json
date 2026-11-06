@@ -1034,5 +1034,16 @@
  "text.notes_ask": "¿Quieres que te avise cuando haya huevos esperándote, nazcan pollitos, el trigo o la miel estén listos y lleguen los resultados de los concursos? Nunca de noche, dos al día como mucho.",
  "text.notes_yes": "Sí, gracias",
  "text.notes_no": "Ahora no",
- "text.notes_ask_note": "Puedes elegir cuáles, o desactivarlos, cuando quieras en Ajustes."
+ "text.notes_ask_note": "Puedes elegir cuáles, o desactivarlos, cuando quieras en Ajustes.",
+ "text.apple_tree": "🍎 {n} manzanas en el árbol de {name}",
+ "text.apple_tree1": "🍎 Una manzana en el árbol de {name}",
+ "text.apple_tree0": "🍎 Aún no hay manzanas en el árbol de {name}: la próxima, en {t}",
+ "text.apple_egg_wait": "🍎 Un huevo dorado espera bajo el árbol de {name}: tócalo",
+ "text.apple_laid": "🍎 ¡Dos manzanas, y {name} ha puesto un huevo dorado! Tócalo para venderlo",
+ "text.apple_egg_sold": "Un huevo dorado vendido · +{c} monedas · +{xp} XP",
+ "text.apple_planted": "🍎 Un manzano para {name}, la Glotona: mira cómo salta a por sus manzanas",
+ "text.apple_line": "🍎 Salta para alcanzar las manzanas de su árbol: después de dos, pone un huevo dorado, que vale como tres huevos.",
+ "text.away_apple_egg": "{n} huevos dorados bajo los manzanos",
+ "text.away_apple_egg1": "Un huevo dorado bajo el manzano",
+ "text.apple_line0": "🍎 En cuanto su gallinero esté remendado, tendrá su propio manzano: saltará para alcanzar sus manzanas y, después de dos, pondrá un huevo dorado."
 }

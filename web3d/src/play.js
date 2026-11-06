@@ -8,8 +8,12 @@
 //   cabbage: a few pecks at it, each sends it swinging and spinning on its string.
 //   ladder: perch by perch to the top, a look round from up there (the rooster crows), a flutter down.
 //   xylophone: pecks at its bars, a note floating up from each in the bar's colour.
-// Nothing is saved: it's just their day. A bird at play is busy (nobody calls her away; the farmer coming into the pen, or
-// bedtime, ends it).
+// And the Glutton's apple tree (6 Nov 2026; main.js appleTree: plot.apple), in any look's yard where it's planted: a
+// Glutton hen goes and stands under an apple, looks up at it, crouches and leaps straight up, head up and wings out, and
+// knocks it down; it falls in front of her and she eats it, three bites; after her second, she goes to the nook under the
+// tree, settles there a moment with the egg song's clucks, and gets up: an apple egg (the game: game.eatApple).
+// Nothing else is saved: it's just their day. A bird at play is busy (nobody calls her away; the farmer coming into the pen,
+// or bedtime, ends it).
 import * as THREE from 'three';
 
 const smooth01 = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
@@ -50,8 +54,10 @@ export function tickToys(plot, dt) {
 
 // a free play thing for her now and then (none for chicks, nor by night, nor while the farmer's in the pen)
 export function wantPlay(b) {
-  const T = b.plot.toys;
-  if (!T || b.kind === 'chick' || b.train || b.mum || b.plot.farmer || b.cuddle || b.called || b.laying || b.stay || b.nightNow(0.6)) return null;      // (not the peacock: his train)
+  const T = b.plot.toys, AP = b.plot.apple;
+  if ((!T && !AP) || b.kind === 'chick' || b.train || b.mum || b.plot.farmer || b.cuddle || b.called || b.laying || b.stay || b.nightNow(0.6)) return null;      // (not the peacock: his train)
+  if (AP && b.kind === 'hen' && b.pers === 'glutton' && AP.want(b) && b.r() < 0.4) return 'apple';      // (the Glutton: an apple on her tree)
+  if (!T) return null;
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
   const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !(k === 'xylo' && b.kind === 'rooster'));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;
@@ -59,9 +65,10 @@ export function wantPlay(b) {
 
 // off to play: where she goes first (the pen's frame), and which way she'll face there
 export function startPlay(b, kind) {
-  const T = b.plot.toys, P = T.P, j = b.r() - 0.5;
+  const T = b.plot.toys, P = T && T.P, j = b.r() - 0.5, AP = b.plot.apple;
   let C;                                             // where she might go first ({ spot, face, bath }), in order
-  if (kind === 'swing') C = [{ spot: [P.swing.at[0] + j * 0.08, P.swing.at[1] + 0.46], face: Math.PI }];
+  if (kind === 'apple') { const S = AP && AP.pick(b); if (!S) return false; C = [{ spot: S.stand, face: S.face, slot: S }]; }      // (under the apple she's after)
+  else if (kind === 'swing') C = [{ spot: [P.swing.at[0] + j * 0.08, P.swing.at[1] + 0.46], face: Math.PI }];
   else if (kind === 'dust' && !P.dust.w) {          // the Cosy's tub (a round sand pit): from the side she's on, just outside it, then a hop into its middle
     const D = P.dust.at, p = b.root.position, a = Math.atan2(p.x - D[0], p.z - D[1]), R = (P.dust.r || 0.235) + 0.185;
     C = [0, 0.6, -0.6, 1.2, -1.2, 1.9, -1.9, 2.6, -2.6, Math.PI].map(da => {
@@ -91,8 +98,8 @@ export function startPlay(b, kind) {
     if (!b.free(c.spot[0], c.spot[1])) continue;
     const route = reach(c.spot);
     if (!route) continue;
-    T[kind].by = b;
-    b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot: c.spot, face: c.face, stuck: 0, bath: c.bath };
+    (kind === 'apple' ? AP : T[kind]).by = b;
+    b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot: c.spot, face: c.face, stuck: 0, bath: c.bath, slot: c.slot };
     b.act = null; b.route = null; b.then = null; b.wait = 0; b.eatAt = null;
     return true;
   }
@@ -102,8 +109,9 @@ export function startPlay(b, kind) {
 // done (or called away): back on the ground, the play thing free again after a little while
 export function endPlay(b, early = false) {
   const P = b.play; if (!P) return;
-  const T = b.plot.toys, toy = T && T[P.kind];
+  const T = b.plot.toys, toy = P.kind !== 'apple' && T && T[P.kind];
   if (toy && toy.by === b) { toy.by = null; toy.next = T.clock + 6 + b.r() * 10; }
+  if (P.kind === 'apple' && b.plot.apple) b.plot.apple.done(b, early);      // (a while before she goes again)
   if (early && P.phase !== 'walk') { const p = b.root.position; p.set(P.spot[0], 0.015, P.spot[1]); }
   b.root.position.y = 0.015; b.shadowY = undefined; b.hopT = -1; b.visual.rotation.z = 0;
   b.play = null; b.wait = 0.4 + b.r() * 0.8; b.acted = true;
@@ -121,7 +129,7 @@ function hop(b, P, from, to, dur, high, dt) {
 
 // one frame of play: returns her pose (walking, sit, flap, peck, ruffle, kick, crow)
 export function playStep(b, dt) {
-  const P = b.play, T = b.plot.toys, Q = T.P, p = b.root.position, o = { walking: false };
+  const P = b.play, T = b.plot.toys, Q = T && T.P, p = b.root.position, o = { walking: false };
   P.t += dt; P.all += dt;
   const next = (ph, extra) => { P.phase = ph; P.t = 0; P.from = p.clone(); Object.assign(P, extra || {}); };
   if (P.phase !== 'walk' && b.plot.farmer && !P.leaving) {          // the farmer's here: down and off (the next step ends it)
@@ -129,7 +137,7 @@ export function playStep(b, dt) {
     if (P.kind === 'swing' && (P.phase === 'turn' || P.phase === 'ride')) next('down');
     else if (P.kind === 'ladder' && P.phase !== 'down' && P.phase !== 'walk' && P.phase !== 'face') next('down');
     else if (P.kind === 'dust' && P.phase === 'bathe') next('out');
-    else if (P.kind === 'cabbage' || P.kind === 'xylo') { endPlay(b); return o; }
+    else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase !== 'hop')) { endPlay(b); return o; }
   }
   if (P.phase === 'walk') {                          // there, round what's in the way
     if (b.plot.farmer || b.nightNow(0.3) || P.all > 25) { endPlay(b); return o; }
@@ -147,15 +155,76 @@ export function playStep(b, dt) {
       else if (P.kind === 'dust') next('in');
       else if (P.kind === 'cabbage') next('peck', { left: 4.5 + b.r() * 4, pk: 0 });
       else if (P.kind === 'ladder') next('climb', { step: 0, rest: 0 });
+      else if (P.kind === 'apple') next('look');
       else next('tap', { left: 3.5 + b.r() * 3, pk: 0 });
     }
     return o;
   }
+  if (P.kind === 'apple') return appleStep(b, P, o, next, dt);
   if (P.kind === 'swing') return swingStep(b, P, T, Q.swing, o, next, dt);
   if (P.kind === 'dust') return dustStep(b, P, T, Q.dust, o, next, dt);
   if (P.kind === 'cabbage') return cabbageStep(b, P, T, Q.cabbage, o, next, dt);
   if (P.kind === 'ladder') return ladderStep(b, P, T, Q.ladder, o, next, dt);
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
+}
+
+// the Glutton's apple: look up, the leap, the apple eaten; after two, the egg (plot.apple: main.js appleTree)
+function appleStep(b, P, o, next, dt) {
+  const AP = b.plot.apple, p = b.root.position;
+  if (!AP) { endPlay(b); return o; }
+  if (P.phase === 'look') {                          // head back, eyes on it
+    o.up = smooth01(P.t / 0.4);
+    if (P.t > 0.85) next('hop');
+    return o;
+  }
+  if (P.phase === 'hop') {                           // a crouch, and straight up, stretched tall, head up, wings out: her beak knocks it off
+    const u = Math.min(1, P.t / 0.85), a = smooth01((u - 0.24) / 0.62);
+    b.hopT = u < 1 ? u : -1;
+    p.y = P.from.y + 0.11 * Math.sin(a * Math.PI);
+    b.shadowY = u > 0.2 && u < 0.95 ? 0.0 : undefined;
+    o.up = 1; o.flap = u > 0.22 && u < 0.72 ? 0.9 : 0;
+    if (u > 0.5 && !P.hit) { P.hit = true; P.got = AP.knock(b, P.slot); }
+    if (u >= 1) { p.y = P.from.y; b.shadowY = undefined; b.hopT = -1; if (P.got) next('eat', { bites: 0, got: P.got }); else endPlay(b); }
+    return o;
+  }
+  if (P.phase === 'eat') {                           // she watches it fall, then pecks it up, a bite at a time
+    if (!AP.down()) { o.up = 0.6 * (1 - smooth01(P.t / 0.3)); P.t = 0; return o; }
+    o.peck = (P.t % 0.62) > 0.3 ? 1 : 0.25;
+    const k = Math.min(3, Math.floor(P.t / 0.62));
+    if (k > P.bites) { P.bites = k; AP.bite(k); }
+    if (P.t > 0.62 * 3 + 0.15) { AP.eaten(); if (P.got.egg) { AP.laying = true; next('nook', { stuck: 0 }); } else next('ruffle'); }
+    return o;
+  }
+  if (P.phase === 'nook') {                          // two apples: to the nook under the tree, facing out
+    const q = AP.S.nook, r = b.stepToward(q[0], q[1], dt, 0.7, P.stuck < 0.6);
+    o.walking = r.walking; P.stuck = r.blocked ? P.stuck + dt : 0;
+    if (r.arrived || Math.hypot(q[0] - p.x, q[1] - p.z) < 0.05 || P.t > 4) next('settle');
+    return o;
+  }
+  if (P.phase === 'settle') {
+    const r = b.turnTo(AP.S.nookA, dt); o.walking = r.walking;
+    if (r.done || P.t > 1.2) next('lay');
+    return o;
+  }
+  if (P.phase === 'lay') {                           // down low a moment, the egg song's clucks; up, and there's the egg
+    o.sit = P.t < 2.2 ? 1 : 0;
+    if (P.t > 0.5 && !P.sang) { P.sang = true; AP.song(b); }
+    if (P.t > 2.6) {
+      AP.laid(b);
+      let to = null;                                 // (off it, to one side: not between it and the camera, so it's seen)
+      for (const da of [1.6, -1.6, 2.2, -2.2, 1.1, -1.1, 0]) { const a = AP.S.nookA + da, q = [p.x + Math.sin(a) * 0.3, p.z + Math.cos(a) * 0.3]; if (b.free(q[0], q[1])) { to = q; break; } }
+      next('off', { to: to || [p.x, p.z] });
+    }
+    return o;
+  }
+  if (P.phase === 'off') {                           // a step off it
+    const r = b.stepToward(P.to[0], P.to[1], dt, 0.8, P.t < 0.6); o.walking = r.walking;      // (her first steps over the egg, whatever's said about who's near)
+    if (r.arrived || P.t > 2) next('ruffle');
+    return o;
+  }
+  o.ruffle = Math.sin(Math.min(1, P.t / 0.75) * Math.PI);      // (a happy shake)
+  if (P.t > 0.75) endPlay(b);
+  return o;
 }
 
 // where her feet are on the swing's perch (it moves)

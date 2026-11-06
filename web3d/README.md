@@ -4024,7 +4024,7 @@ Her notes while playing build 10, and what changed:
   heart-shaped leaves a stem, out to either side and drooping. Exported with `export_village3d.py` and spliced into
   `village.glb`.
 - **Next, her choice:** the Glutton's apples come back with the golden apple egg ("Yes, with the apple egg"; they were in
-  the Unity version only).
+  the Unity version only): done, see the next section.
 - **The repository** (6 Nov): a commit from another chat had swept `web3d/node_modules` and `web3d/dist` into `source`
   (10,700 files). They're out of it again and in `.gitignore` (with `web3d/_docs/`); after a pull, run `npm ci` in
   `web3d/` and `./build.sh`.
@@ -4048,3 +4048,36 @@ Her notes while playing build 10, and what changed:
   (Capacitor's backgroundColor) for a moment between the launch picture and the loading one. The app now has
   `@capacitor/splash-screen` 8.0.2 (`launchAutoHide: false`): it keeps the launch picture up until main.js has the
   loading picture decoded (`SplashScreen.hide` through `Capacitor.nativePromise`, as notify.js does; at most 4 s).
+
+## The Glutton's apples and her apple egg (6 Nov 2026; Audrey: "Do we still have the apple trees for the gloutons chickens?"; then "Yes, with the apple egg")
+They were in the Unity version only. Now in the game:
+- **The tree** (`stylized/village3d.py apple_tub_v`, exported with `export_village3d.py apple_tub` and spliced into
+  `village.glb`, about 3,600 triangles): a little apple tree in an oak half-barrel (two iron hoops, dark earth), a short
+  crooked trunk, a round crown of small oval leaves over a dark core, lighter on top; about 1.05 m high. No apples on
+  the model: the browser hangs them (`main.js` appleGeo: round, rosy red with a yellow-green cheek, a stalk and a leaf).
+- **Planted** (`game.js` plantApples, checked every 3 s by `main.js` tickApples) in a chicken coop the first time a grown
+  Glutton hen lives there and it's been mended at least (the Rustic pen is too small: in a Rustic coop her card says
+  "Once her coop is mended, she'll have an apple tree of her own…"); kept after. The hint: "An apple tree for X the
+  Glutton: watch her hop for its apples". Not for the call ducks or the peafowl.
+- **Where** (`main.js` appleSpot): in its yard, clear of everything in it (feeder, dish, hay, ramp, play things, the
+  Christmas tree, the nest's let-down door), of the farmer's ways (gate to the nest and the feeder) and the hens' way down
+  the ramp, as near a back corner (by the house) as there's room; a little narrower in a small yard. The birds walk round
+  its tub (it's in the pen's obstacles; the farmer's spots are worked out again). Its four apples hang under the crown's
+  edge on the side the camera's on by default (so she and they aren't hidden behind the crown), each with a spot to stand
+  under it; the egg's nook between two of them.
+- **The apples** (`game.js` APPLES): one ripens every 3 hours, 4 at most, also while the game's closed; a new tree has 2.
+- **Her outing** (`play.js` 'apple', like the toys; only while you watch): now and then (every 25 to 60 s at most, while
+  there's an apple and no egg waiting) she goes and stands under one, looks up (a new `up` pose in `birds.js`: chest up,
+  beak to the sky), crouches and leaps straight up, wings out, and knocks it down (`game.eatApple`: saved at once); it
+  falls spinning in front of her and she eats it in three bites, then a happy shake.
+- **The apple egg:** after her second apple she goes to the nook under the tree, settles there with the egg song, gets
+  up and steps aside: a golden egg (rosy gold, a soft glow now and then), bigger than a hen's egg. The hint: "Two apples,
+  and X laid an apple egg! Tap it to sell it". A tap: it lifts and spins away, sold for three of her breed's eggs and
+  3 XP (`game.sellAppleEgg`). No outing while it's waiting. The welcome-back summary says when one is.
+- **A tap on the tree:** how many apples are on it, or when the next one's ripe, or that an egg's waiting.
+- **Her card:** "She hops up for the apples on her tree: after two, she lays an apple egg, worth three eggs."
+- **Six languages** (the egg is an "œuf doré" in French, "goldenes Ei", "huevo dorado", "uovo d'oro", "ovo dourado").
+- **Saving and security:** each chicken coop's `ap` { apples then, when the last ripened, eaten towards the next egg,
+  an egg waiting } is checked on load: four apples at most, never ahead of now, an egg only if exactly `true`, none
+  counted towards the next while one waits, none in a Rustic coop or a duck's or peafowl's; tampering is flagged as usual.
+- **Test:** `appletest.mjs` (LANG=fr; W/H; SHOTS): 19 checks, from the Rustic coop's card to the tampered save.

@@ -1039,5 +1039,16 @@
  "text.notes_ask": "Quer um aviso quando houver ovos esperando, pintinhos nascendo, o trigo ou o mel prontos e quando saírem os resultados dos concursos? Nunca à noite, no máximo dois por dia.",
  "text.notes_yes": "Sim, por favor",
  "text.notes_no": "Agora não",
- "text.notes_ask_note": "Você pode escolher quais, ou desativá-los, quando quiser nos Ajustes."
+ "text.notes_ask_note": "Você pode escolher quais, ou desativá-los, quando quiser nos Ajustes.",
+ "text.apple_tree": "🍎 {n} maçãs na árvore de {name}",
+ "text.apple_tree1": "🍎 Uma maçã na árvore de {name}",
+ "text.apple_tree0": "🍎 Ainda não tem maçã na árvore de {name}: a próxima sai em {t}",
+ "text.apple_egg_wait": "🍎 Um ovo dourado está esperando embaixo da árvore de {name}: toque nele",
+ "text.apple_laid": "🍎 Duas maçãs, e {name} botou um ovo dourado! Toque nele para vender",
+ "text.apple_egg_sold": "Um ovo dourado vendido · +{c} moedas · +{xp} XP",
+ "text.apple_planted": "🍎 Uma macieira para {name}, a Gulosa: veja ela pular para pegar as maçãs",
+ "text.apple_line": "🍎 Ela pula para pegar as maçãs da árvore dela: depois de duas, bota um ovo dourado, que vale três ovos.",
+ "text.away_apple_egg": "{n} ovos dourados embaixo das macieiras",
+ "text.away_apple_egg1": "Um ovo dourado embaixo da macieira",
+ "text.apple_line0": "🍎 Assim que o galinheiro dela for reformado, ela vai ter a própria macieira: vai pular para pegar as maçãs e, depois de duas, botar um ovo dourado."
 }

@@ -288,6 +288,7 @@ export class GameUI {
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
     pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex, g.kindOf(b.breed))));
+    if (b.pers === 'glutton' && b.sex === 'h' && !g.kindOf(b.breed)) { const hc = g.coop(b.coop); pc.append(el('p', 'gnote gapples', this.t(hc && hc.tier >= 1 ? 'apple_line' : 'apple_line0'))); }      // (the Glutton's apples: her tree, or one to come once her coop's mended)
     body.append(pc);
     // experience: the stars, the way to the next, how they come and what they do
     const ec = el('div', 'gcard'), s = g.stars(b), part = g.starPart(b);
@@ -1014,10 +1015,10 @@ export class GameUI {
     this.bird = null;
     b.append(el('p', 'gsub', this.t('away_for', { t: this.longDur(sum.away) })));
     if (sum.paused) b.append(el('p', 'gnote', this.t('away_paused')));
-    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', feathers: '🦚', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
+    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', feathers: '🦚', apple_egg: '🍎', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
     const list = el('div', 'gcard gaway');
     for (const it of sum.items) {
-      const one = it.n === 1 && ['eggs', 'full', 'honey', 'feathers', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
+      const one = it.n === 1 && ['eggs', 'full', 'honey', 'feathers', 'apple_egg', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
       const row = el('div', 'gaway-r' + (it.k === 'feed' || it.k === 'full' ? ' gwarn' : '')); row.dataset.k = it.k;
       row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
     }

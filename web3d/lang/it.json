@@ -1039,5 +1039,16 @@
  "text.notes_ask": "Vuoi un avviso quando ci sono uova che ti aspettano, nascono i pulcini, il grano o il miele sono pronti e arrivano i risultati dei concorsi? Mai di notte, al massimo due al giorno.",
  "text.notes_yes": "Sì, grazie",
  "text.notes_no": "Non ora",
- "text.notes_ask_note": "Puoi scegliere quali, o disattivarli, quando vuoi nelle Impostazioni."
+ "text.notes_ask_note": "Puoi scegliere quali, o disattivarli, quando vuoi nelle Impostazioni.",
+ "text.apple_tree": "🍎 {n} mele sull’albero di {name}",
+ "text.apple_tree1": "🍎 Una mela sull’albero di {name}",
+ "text.apple_tree0": "🍎 Ancora niente mele sull’albero di {name}: la prossima tra {t}",
+ "text.apple_egg_wait": "🍎 Un uovo d’oro aspetta sotto l’albero di {name}: toccalo",
+ "text.apple_laid": "🍎 Due mele, e {name} ha fatto un uovo d’oro! Toccalo per venderlo",
+ "text.apple_egg_sold": "Un uovo d’oro venduto · +{c} monete · +{xp} XP",
+ "text.apple_planted": "🍎 Un melo per {name}, la Golosa: guardala saltare per prendere le sue mele",
+ "text.apple_line": "🍎 Salta per prendere le mele del suo albero: dopo due, fa un uovo d’oro, che vale tre uova.",
+ "text.away_apple_egg": "{n} uova d’oro sotto i meli",
+ "text.away_apple_egg1": "Un uovo d’oro sotto il melo",
+ "text.apple_line0": "🍎 Appena il suo pollaio sarà rattoppato, avrà un melo tutto suo: salterà per prenderne le mele e, dopo due, farà un uovo d’oro."
 }

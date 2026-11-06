@@ -1039,5 +1039,16 @@
  "text.notes_ask": "Soll ich dir Bescheid geben, wenn Eier warten, Küken schlüpfen, der Weizen oder der Honig bereit ist und wenn die Ergebnisse der Schau da sind? Nie nachts, höchstens zwei am Tag.",
  "text.notes_yes": "Ja, gern",
  "text.notes_no": "Jetzt nicht",
- "text.notes_ask_note": "Du kannst jederzeit in den Einstellungen auswählen, welche du möchtest, oder sie ausschalten."
+ "text.notes_ask_note": "Du kannst jederzeit in den Einstellungen auswählen, welche du möchtest, oder sie ausschalten.",
+ "text.apple_tree": "🍎 {n} Äpfel am Baum von {name}",
+ "text.apple_tree1": "🍎 Ein Apfel am Baum von {name}",
+ "text.apple_tree0": "🍎 Noch keine Äpfel am Baum von {name}: der nächste in {t}",
+ "text.apple_egg_wait": "🍎 Unter dem Baum von {name} wartet ein goldenes Ei: Tipp es an",
+ "text.apple_laid": "🍎 Zwei Äpfel, und {name} hat ein goldenes Ei gelegt! Tipp es an, um es zu verkaufen",
+ "text.apple_egg_sold": "Ein goldenes Ei verkauft · +{c} Münzen · +{xp} XP",
+ "text.apple_planted": "🍎 Ein Apfelbaum für {name}, unseren Vielfraß: Schau zu, wie sie nach seinen Äpfeln springt",
+ "text.apple_line": "🍎 Sie springt nach den Äpfeln an ihrem Baum: Nach zweien legt sie ein goldenes Ei, so viel wert wie drei Eier.",
+ "text.away_apple_egg": "{n} goldene Eier unter den Apfelbäumen",
+ "text.away_apple_egg1": "Ein goldenes Ei unter dem Apfelbaum",
+ "text.apple_line0": "🍎 Sobald ihr Stall geflickt ist, bekommt sie ihren eigenen Apfelbaum: Sie springt nach seinen Äpfeln und legt nach zweien ein goldenes Ei."
 }

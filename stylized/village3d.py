@@ -1795,6 +1795,58 @@ def bush_v(seed=141, name='bush_a', flowers=False):
     return finish(objs, name)
 
 
+def apple_tub_v(seed=149, name='apple_tub'):
+    """The Glutton's apple tree (6 Nov 2026, Audrey: "Do we still have the apple trees for the gloutons chickens?"; "Yes, with
+    the apple egg"): a little apple tree in a wooden half-barrel, planted in the yard of a coop where a Glutton hen lives.
+    The tub (oak staves, two iron hoops, dark earth), a short crooked trunk splitting into four branches, a round crown of
+    small oval leaves over dark leafy clumps, lighter on top; no apples (the browser hangs them, as many as have ripened,
+    just under the crown's edge at about 0.53 m, where she can reach them with a hop). About 1.05 m high, the crown 0.56 m
+    across and its foot at 0.62, the tub 0.34 across."""
+    from mathutils import Quaternion
+    random.seed(seed); objs = []
+    wood = C('vatwood', '#9a6b42', rough=0.85, var=0.08); hoop = C('vathoop', '#4b4844', rough=0.5, metal=0.6)
+    soil = C('vatsoil', '#4a3424', rough=1.0, var=0.1); bark = C('vatbark', '#6b4a32', rough=0.95, var=0.1)
+    leaf = [C('vatleaf%d' % i, h, rough=0.8, var=0.06, hue_var=0.012) for i, h in enumerate(('#2f6324', '#3d7a2b', '#4c8d33', '#5d9f3b'))]
+    core = C('vatcore', '#2c5a22', rough=0.9, var=0.05)
+    # the tub: a half barrel, its staves bulging a little, its joints, two hoops, the earth just below its rim
+    R, H = 0.17, 0.22
+    prof = [(R * 0.86, 0.0), (R * 0.95, H * 0.45), (R, H)]
+    objs.append(lathe('vattub', prof, wood, verts=18, cap_bottom=True))
+    objs.append(lathe('vatin', [(R * 0.94, H), (R * 0.9, H * 0.6)], wood, verts=18))      # (the inside of its rim)
+    for k in range(18):
+        a = k / 18 * math.tau
+        pts = [Vector((math.cos(a) * (rr + 0.002), math.sin(a) * (rr + 0.002), z)) for rr, z in prof]
+        for p0, p1 in zip(pts, pts[1:]):
+            objs.append(plank('vatstave', p0, p1, 0.006, 0.004, (math.cos(a), math.sin(a), 0), C('vatjoint', '#4a3020', rough=0.9), jitter=0.0, bevel=0.0))
+    for z, rr in ((H * 0.2, R * 0.9), (H * 0.78, R * 0.985)):
+        objs.append(cyl('vathoop', rr + 0.008, 0.028, (0, 0, z), m=hoop, verts=18, bevel=0.0))
+    objs.append(cyl('vatsoil', R * 0.92, 0.02, (0, 0, H - 0.03), m=soil, verts=18, bevel=0.0))
+    # the trunk: a little crooked, thicker at its foot, splitting at 0.56 m into four branches up and out into the crown
+    T0, T1 = Vector((0, 0, H - 0.03)), Vector((0.012, -0.01, 0.56))
+    objs.append(cyl('vattrunk', 0.03, (T1 - T0).length, tuple((T0 + T1) / 2), (T1 - T0).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=8, r2=0.022, bevel=0.0))
+    objs.append(sphere('vatknot', 0.024, tuple(T1), m=bark, ico=1))
+    for k in range(4):
+        a = k / 4 * math.tau + 0.4 + random.uniform(-0.2, 0.2)
+        E = Vector((math.cos(a) * 0.15, math.sin(a) * 0.15, 0.74 + random.uniform(-0.02, 0.04)))
+        objs.append(cyl('vatbranch', 0.015, (E - T1).length, tuple((T1 + E) / 2), (E - T1).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=6, r2=0.009, bevel=0.0))
+    # the crown: a dark core of clumps (its shade), leaves all over it standing a little off it, smaller and lighter on top
+    C0, RX, RZ = Vector((0, 0, 0.84)), 0.25, 0.2
+    objs.append(sphere('vatcore', 1.0, tuple(C0), (RX * 0.92, RX * 0.92, RZ * 0.92), m=core, ico=3, disp=0.12, disp_scale=3.0, seed=seed))
+    for k in range(7):
+        a = k / 7 * math.tau + random.uniform(-0.2, 0.2); el = random.uniform(-0.2, 0.6)
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        objs.append(sphere('vatclump', random.uniform(0.1, 0.12), tuple(C0 + Vector((d.x * RX * 0.62, d.y * RX * 0.62, d.z * RZ * 0.6))), (1, 1, 0.85), m=core, ico=2, disp=0.25, disp_scale=4.0, seed=seed * 10 + k))
+    for k in range(900):
+        a = random.uniform(0, math.tau); el = math.asin(random.uniform(-0.75, 1.0))
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = C0 + Vector((d.x * RX, d.y * RX, d.z * RZ)) * random.uniform(0.96, 1.08)
+        n = Vector((d.x / RX, d.y / RX, d.z / RZ)).normalized()
+        q = n.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), random.uniform(0, math.tau)) @ Quaternion((1, 0, 0), random.uniform(0.25, 0.6))      # (its tip lifted off the crown)
+        tone = leaf[min(3, max(0, int((el + 0.75) / 1.75 * 4 + random.uniform(-0.6, 0.6))))]
+        objs.append(flat_leaf('vatleafy', tuple(p), q, random.uniform(0.042, 0.056), random.uniform(0.014, 0.019), tone, both=False, fold=0.004))
+    return finish(objs, name)
+
+
 def rock_v(seed=142, name='rock_a'):
     """A field stone: a lumpy grey boulder in two tones, a patch of moss on top, a pebble beside it."""
     random.seed(seed); objs = []
