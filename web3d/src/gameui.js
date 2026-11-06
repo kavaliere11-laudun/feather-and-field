@@ -76,6 +76,10 @@ function langPicker(cur, pick) {
 // the third onboarding picture has words in it (the sale sign): its own picture in each language (intropics.mjs)
 const INTRO_PIC = ['fr', 'de', 'es', 'pt', 'it'];
 
+// the cards that are messages to the player (they come by themselves, or say how things went), shown in the middle of the
+// screen sideways (Audrey, 6 Nov: "Also this should be centered", of "While you were away"); the others are about
+// something on the farm or a menu, and stay on the right so the farm's in view beside them
+const CENTER_CARDS = ['away', 'levelup', 'congrats', 'showres', 'fox', 'rare', 'acctask', 'notesask', 'twofarms', 'addemo', 'paydemo', 'thanksdemo', 'intro'];
 export class GameUI {
   constructor(game, o = {}) {
     this.g = game; this.o = o;                         // o: { onClose(), version, reload() }
@@ -109,6 +113,13 @@ export class GameUI {
     head.append(this.title, this.x);
     this.body = el('div', 'gsheet-body');
     this.sheet.append(head, this.body);
+    // (more below to scroll to: a soft fade over the last words, gone once at the bottom)
+    const more = () => { const b = this.body; this.sheet.classList.toggle('gmore', !this.sheet.hidden && b.scrollHeight > b.clientHeight + 4 && b.scrollTop + b.clientHeight < b.scrollHeight - 4); };
+    this.body.addEventListener('scroll', more, { passive: true });
+    for (const ev of ['load', 'animationend', 'transitionend']) this.body.addEventListener(ev, more, true);      // (a picture arriving, or something growing in, makes it longer)
+    if (window.ResizeObserver) new ResizeObserver(more).observe(this.body);
+    if (window.MutationObserver) new MutationObserver(() => { requestAnimationFrame(more); setTimeout(more, 450); }).observe(this.body, { childList: true, subtree: true });
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', more);      // (the words' own font arriving makes them longer)
     this.dim = el('div', 'gdim'); this.dim.hidden = true;
     document.body.append(this.dim, this.sheet);
     this.x.addEventListener('click', () => this.close());
@@ -153,6 +164,7 @@ export class GameUI {
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
     this.sheet.classList.toggle('gintro', kind === 'intro');
+    this.sheet.classList.toggle('gcenter', CENTER_CARDS.includes(kind));      // (sideways: a message in the middle of the screen; a card about something on the farm on the right, beside it)
     return this.body;
   }
   close() {

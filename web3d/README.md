@@ -4118,3 +4118,33 @@ They were in the Unity version only. Now in the game:
   where a browser has it. A computer's window plays as before, whatever its shape.
 - **The checks:** automated browsers (navigator.webdriver) see the farm upright as before unless they ask with
   `?sideways`, so the older portrait checks still run; `sidewaystest.mjs` (LANG=fr) checks the screen itself.
+
+## Every card checked, the wheat field and the water (6 Nov 2026, evening; Audrey: "Cut message, audit them all please to make sure they are all ok"; "Also this should be centered"; "This message should also be centred and the field perspective is still not great"; "Can you please improve what the water looks like")
+- **Cut words:** the buttons kept at the bottom of a card (`.gstick`) had a 24 px cream shadow upwards that covered the
+  last line above them; now it reaches only the 9 px gap, and nothing in a card shrinks (`.gsheet-body > *` flex-shrink
+  0). Where there's more to read below, the words fade out just above the buttons (or at the card's bottom edge), so it
+  reads as "scroll for more", not cut (`.gmore`, set by `gameui.js` on scroll, size, content, pictures, fonts).
+- **Messages in the middle:** sideways, a message (while you were away, a level up, congratulations, the show results,
+  the fox's night, a rare chick, the account and reminder asks, the two farms, the shop's preview cards, the intro) opens
+  in the middle of the screen, popping in (`.gcenter`, `CENTER_CARDS` in `gameui.js`); a card about something on the farm
+  stays on the right, beside it. The wheat's bubble sits over the middle of the field.
+- **The label over a tapped thing** wraps onto two lines when long, never off the screen.
+- **The audit:** `cardaudit.mjs` (`./withserver.sh node cardaudit.mjs OUT`, LANGS, SIZES): on six sideways phones (the
+  smallest iPhone to the biggest, and Safari's bars on a small one) in all six languages, the welcome, the five intro
+  cards and every card the game has (34), at the top and scrolled to the bottom: on the screen, every line seen whole
+  (not cut at a side, not squashed, not under the buttons, not covered), the buttons' words whole, the fade there when
+  there's more below, messages in the middle and the others on the right; and the hint and the label with the longest
+  words. Pictures of any that fail. All pass, in every language on every size.
+- **The wheat field** (`main.js` fieldEdge, fieldSoil, footShade, wheat): real ploughed ground instead of a flat box: 11
+  ridges along the field, lit on top with dark furrows between, sinking under the grass at an uneven, rounded edge, with
+  a verge of meadow grass and a few daisies round it. The wheat grows in rows on the ridges, darker at its foot, shorter
+  towards the edge and in gentle waves; ripe, thick enough to hide the ground (a sea of gold with its rows showing, three
+  ears a stalk). It stands up out of the ground from the usual view and looking steeply down, by day and at night.
+- **The water** (`buildWater`, `waterShader`, `bankRing`, `bandRibbon`, `waterside`): the streams in the pond's own
+  colours, their ripples carried downstream in two layers taking turns (never stretched at a bend), a little white water
+  at the edges; where a stream runs into the pond or out of it there's no end to see: it fades into the pond's water and
+  the pond's bank opens for it. Soft banks: dark wet earth at the water, then sand, fading into the grass (no hard line).
+  Reeds and bulrushes in clumps and stones half in the water round the pond and along the streams (never on a path, a
+  bridge, the dock, a stream's mouth or where the farmer fishes), swaying in the wind; dimmed at night.
+- **Next, as promised to Audrey:** the grass, bushes and map; the fields to restore (overgrown, "to restore" instead of
+  "for sale"); the story cards when her pictures come.

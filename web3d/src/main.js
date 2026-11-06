@@ -670,6 +670,53 @@ function ribbon(points, half, y, flowing = false) {
 }
 
 const DIRT = new THREE.MeshLambertMaterial({ color: '#c79a62', side: THREE.DoubleSide });
+// soft banks: colours (and how much of each shows) from the water outwards, fading into the grass
+const BANK_SOFT = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+const BANK_RINGS = [[0.97, '#4f3a27', 1], [1.015, '#6b4f33', 1], [1.05, '#9a7a50', 1], [1.09, '#b8996a', 0.95], [1.14, '#a99d66', 0.55], [1.21, '#93a05c', 0]];
+const BANK_COLS = h => [[h - 0.06, '#4f3a27', 1], [h + 0.05, '#6b4f33', 1], [h + 0.13, '#9a7a50', 1], [h + 0.22, '#b8996a', 0.9], [h + 0.31, '#a99d66', 0.5], [h + 0.42, '#93a05c', 0]];
+function rgbaOf(hex, a) { const c = new THREE.Color(hex); return [c.r, c.g, c.b, a]; }
+function bankRing(c, au, av, rings, y) {         // round the pond: its wobbly ellipse, ring by ring
+  const N = 96, pos = [], col = [], idx = [];
+  for (const [sc, hex, a] of rings) for (let s = 0; s <= N; s++) {
+    const t = s / N * Math.PI * 2, w = sc * (1 + 0.035 * Math.sin(t * 5 + 1) + 0.02 * Math.sin(t * 9));
+    const x = c.x + (au.x * Math.cos(t) + av.x * Math.sin(t)) * w, z = c.z + (au.z * Math.cos(t) + av.z * Math.sin(t)) * w;
+    pos.push(x, y, z);
+    // (open where a stream runs into it or out of it: the stream's own banks carry on there)
+    let gap = 1; for (const st of V.streams) for (let i = 1; i < st.length; i++) gap = Math.min(gap, Math.max(0, Math.min(1, (segDist(x, z, st[i - 1], st[i]) - V.streamHalf) / 0.25)));
+    col.push(...rgbaOf(hex, a * gap));
+  }
+  for (let r = 0; r < rings.length - 1; r++) for (let s = 0; s < N; s++) { const a = r * (N + 1) + s, b = a + 1, cc = a + N + 1, d = cc + 1; idx.push(a, cc, b, b, cc, d); }
+  return flatGeo(pos, col, idx);
+}
+function flatGeo(pos, col, idx) {
+  for (let i = 0; i < idx.length; i += 3) {       // (every triangle facing up, lit like the ground round it)
+    const [a, b, c] = [idx[i] * 3, idx[i + 1] * 3, idx[i + 2] * 3];
+    const ny = (pos[b + 2] - pos[a + 2]) * (pos[c] - pos[a]) - (pos[b] - pos[a]) * (pos[c + 2] - pos[a + 2]);
+    if (ny < 0) { const t = idx[i + 1]; idx[i + 1] = idx[i + 2]; idx[i + 2] = t; }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setIndex(idx);
+  const nrm = new Float32Array(pos.length); for (let i = 1; i < nrm.length; i += 3) nrm[i] = 1;
+  g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  return g;
+}
+function bandRibbon(points, cols, y) {           // along a stream: its banks either side, with rounded ends (cols: from the middle out)
+  const P = points.map(p => new THREE.Vector2(p[0], p[2])), n = P.length, pos = [], col = [], idx = [], K = cols.length;
+  const dirs = P.map((_, i) => new THREE.Vector2().subVectors(P[Math.min(n - 1, i + 1)], P[Math.max(0, i - 1)]).normalize());
+  const add = (x, z, k) => { pos.push(x, y, z); col.push(...rgbaOf(cols[k][1], cols[k][2])); };
+  // the length: for each side, its columns from the inside out
+  for (let i = 0; i < n; i++) for (const side of [1, -1]) for (let k = 0; k < K; k++) { const nx = -dirs[i].y * side, nz = dirs[i].x * side; add(P[i].x + nx * cols[k][0], P[i].y + nz * cols[k][0], k); }
+  const row = 2 * K, at = (i, side, k) => i * row + (side > 0 ? 0 : K) + k;
+  for (let i = 0; i < n - 1; i++) for (const side of [1, -1]) for (let k = 0; k < K - 1; k++) { const a = at(i, side, k), b = at(i + 1, side, k), c2 = at(i, side, k + 1), d = at(i + 1, side, k + 1); idx.push(a, c2, b, b, c2, d); }
+  // the ends: half rings from one side round to the other
+  for (const [i, out] of [[0, -1], [n - 1, 1]]) {
+    const d = dirs[i].clone().multiplyScalar(out), nx = -dirs[i].y, nz = dirs[i].x, S = 12, base = pos.length / 3;
+    for (let s = 0; s <= S; s++) { const th = -Math.PI / 2 + s / S * Math.PI, cx = Math.cos(th), sx = Math.sin(th);
+      for (let k = 0; k < K; k++) add(P[i].x + (d.x * cx + nx * sx) * cols[k][0], P[i].y + (d.y * cx + nz * sx) * cols[k][0], k); }
+    for (let s = 0; s < S; s++) for (let k = 0; k < K - 1; k++) { const a = base + s * K + k, b = a + K, c2 = a + 1, dd = b + 1; idx.push(a, c2, b, b, c2, dd); }
+  }
+  return flatGeo(pos, col, idx);
+}
 const BANK = new THREE.MeshLambertMaterial({ color: '#b48c5c', side: THREE.DoubleSide });
 const WATER = new THREE.MeshStandardMaterial({ color: '#5fb3d6', roughness: 0.12, metalness: 0.0, side: THREE.DoubleSide });
 // ------------------------------------------------------------------ moving water (Audrey, 23 Oct: "Perfect next": the pond's moving
@@ -692,25 +739,35 @@ function waterShader(mat, kind, extra = {}) {
       .replace('#include <common>', `#include <common>
 uniform float wTime; uniform float wDay;
 varying vec3 vWPos;
-${stream ? 'varying vec4 vFlow;' : 'uniform vec3 pondC; uniform vec3 pondU; uniform vec3 pondV;'}
+${stream ? 'varying vec4 vFlow;' : ''}
+uniform vec3 pondC; uniform vec3 pondU; uniform vec3 pondV;
+float pondAt(vec2 w) { vec2 rel = w - pondC.xz; float pa = dot(rel, pondU.xz) / dot(pondU.xz, pondU.xz), pb = dot(rel, pondV.xz) / dot(pondV.xz, pondV.xz); float at = atan(pb, pa); return length(vec2(pa, pb)) / (1.0 + 0.035 * sin(at * 5.0 + 1.0) + 0.02 * sin(at * 9.0)); }
 float wh, whf; vec2 wg; float wEdge;
-void wave(vec2 p, vec2 d, float k, float sp, float a) { float ph = dot(p, d) * k - wTime * sp; float v = a * sin(ph); wh += v; if (k > 10.0) whf += v; wg += a * k * cos(ph) * d; }`)
+void wave(vec2 p, vec2 d, float k, float sp, float a) { float ph = dot(p, d) * k - wTime * sp; float v = a * sin(ph); wh += v; if (k > 10.0) whf += v; wg += a * k * cos(ph) * d; }
+// (the stream's ripples at one moment, in the water's own frame: they're carried downstream by moving this frame along)
+vec3 ripples(vec2 p) {
+  vec3 r = vec3(0.0);
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i), k = 4.2 + fi * 3.3, a = 0.0062 / (1.0 + fi * 0.55);
+    vec2 d = vec2(cos(fi * 2.39 + 0.4), sin(fi * 2.39 + 0.4));
+    float ph = dot(p, d) * k + fi * 1.7 + sin(dot(p, d.yx) * 0.9 + fi) * 0.8 - wTime * (0.6 + fi * 0.25);
+    r += vec3(a * sin(ph), a * k * cos(ph) * d);
+  }
+  return r;
+}`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
 {
   wh = 0.0; wg = vec2(0.0);
   ${stream ? `
-  // along the stream (metres) and across it (-1 at one bank, 1 at the other); the flow is fastest in the middle
-  float al = vFlow.x, ac = vFlow.y; vec2 dir = normalize(vFlow.zw), side = vec2(-dir.y, dir.x);
-  float run = wTime * (0.55 + 0.25 * (1.0 - ac * ac));
-  vec2 q = vec2(al - run, ac * 0.42);
-  float g1 = 0.0; vec2 gq = vec2(0.0);
-  for (int i = 0; i < 4; i++) {
-    float fi = float(i), k = 3.1 + fi * 2.3; vec2 d = normalize(vec2(1.0, (fi - 1.5) * 0.9));
-    float ph = dot(q, d) * k + fi * 1.7 + sin(q.x * 0.7 + fi) * 1.3;
-    float a = 0.016 / (1.0 + fi * 0.6);
-    wh += a * sin(ph); gq += a * k * cos(ph) * d;
-  }
-  wg = gq.x * dir + gq.y * side * 0.42 / 0.42;
+  // (6 Nov 2026, Audrey: "Can you please improve what the water looks like": its streaks had looked stretched) the ripples
+  // carried downstream, fastest in the middle, in two layers taking turns (each moved along for a few seconds, then
+  // faded out as the other fades in), so they drift with the water and never stretch round a bend
+  float ac = vFlow.y; vec2 dir = normalize(vFlow.zw);
+  float sp = 0.45 * (0.5 + 0.5 * (1.0 - ac * ac)), t1 = fract(wTime * 0.16), t2 = fract(wTime * 0.16 + 0.5), w2 = abs(t1 * 2.0 - 1.0);
+  vec3 r1 = ripples(vWPos.xz - dir * sp * t1 / 0.16), r2 = ripples(vWPos.xz - dir * sp * t2 / 0.16 + vec2(3.7, 1.3));
+  vec3 rr = mix(r1, r2, w2);
+  wh = rr.x; wg = rr.yz * (1.0 - 0.5 * smoothstep(0.75, 1.0, abs(ac)));
+  whf = wh;
   wEdge = abs(ac);` : `
   // where in the pond: 0 in the middle, 1 at the bank (the ellipse with its wobble)
   vec2 rel = vWPos.xz - pondC.xz;
@@ -738,13 +795,16 @@ void wave(vec2 p, vec2 d, float k, float sp, float a) { float ph = dot(p, d) * k
   vec2 toCam = normalize(cameraPosition.xz - vWPos.xz);
   float face = dot(wg, toCam);
   ${stream ? `
-  vec3 deep = vec3(0.05, 0.3, 0.47), shallow = vec3(0.19, 0.55, 0.68);          // (linear colours: #3c94b6 and #78c2d6)
-  diffuseColor.rgb = mix(deep, shallow, smoothstep(0.35, 1.0, wEdge));
-  float streak = smoothstep(0.55, 1.0, sin((vFlow.x - wTime * 0.75) * 2.3 + sin(vFlow.y * 4.0 + vFlow.x * 0.9) * 1.8) * 0.5 + 0.5) * (1.0 - wEdge * 0.6);
-  diffuseColor.rgb += vec3(0.1, 0.12, 0.12) * streak;
-  float foam = smoothstep(0.78, 0.98, wEdge) * (0.55 + 0.45 * sin(vFlow.x * 7.0 - wTime * 2.4 + vFlow.y * 3.0));
-  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.96, 0.97), foam * 0.45);
-  diffuseColor.rgb *= 1.0 + 3.6 * face;` : `
+  vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);          // (the pond's own: the two waters one)
+  diffuseColor.rgb = mix(deep, shallow, smoothstep(0.15, 1.0, wEdge));
+  float foam = smoothstep(0.8, 0.99, wEdge) * smoothstep(0.35, 1.0, 0.5 + 0.5 * sin(dot(vWPos.xz, normalize(vFlow.zw)) * 6.0 - wTime * 2.2 + vFlow.y * 3.0));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.95), foam * 0.4 * smoothstep(1.02, 1.3, pondAt(vWPos.xz)));
+  // (where it runs into the pond, or out of it: no end of it to see, the stream fades into the pond's water)
+  float pe = pondAt(vWPos.xz);
+  diffuseColor.rgb = mix(mix(deep, shallow, smoothstep(0.4, 0.98, pe)), diffuseColor.rgb, smoothstep(1.0, 1.5, pe));      // (its colour the pond's as it reaches it)
+  diffuseColor.a *= smoothstep(0.9, 1.0, pe);
+  diffuseColor.rgb *= 1.0 + 3.4 * face;
+  diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.8, 0.95, wEdge));` : `
   vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);         // (linear colours: #3487ad and #72bfd4)
   diffuseColor.rgb = mix(deep, shallow, smoothstep(0.4, 0.98, wEdge));
   diffuseColor.rgb *= 1.0 + 3.4 * face;
@@ -807,16 +867,95 @@ function buildWater() {
     g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
     return g;
   };
-  still(new THREE.Mesh(ellipse(1.12, 0.003), BANK));
-  const pond = waterShader(WATER.clone(), 'pond', { pondC: { value: c }, pondU: { value: au }, pondV: { value: av } });
+  // (6 Nov 2026, Audrey: "Can you please improve what the water looks like") the banks: dark wet earth at the water's edge,
+  // then sand, then fading into the grass (no hard line round the water); the streams run into the pond and out of it
+  // with no end to see, in the pond's own colours
+  still(new THREE.Mesh(bankRing(c, au, av, BANK_RINGS, 0.003), BANK_SOFT)).renderOrder = -1;      // (the banks drawn first, the streams' water over them)
+  const shape = { pondC: { value: c }, pondU: { value: au }, pondV: { value: av } };
+  const pond = waterShader(WATER.clone(), 'pond', shape);
   still(new THREE.Mesh(ellipse(1.0, 0.007), pond));
   // the streams, each in its banks, flowing from its first point to its last (the west one into the pond, the other out of it)
-  const flowing = waterShader(WATER.clone(), 'stream');
+  const flowing = waterShader(WATER.clone(), 'stream', shape); flowing.transparent = true; flowing.depthWrite = false;
   for (const st of V.streams) {
-    still(new THREE.Mesh(ribbon(st, V.streamHalf + 0.16, 0.0035), BANK));
-    still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075, true), flowing));
+    still(new THREE.Mesh(bandRibbon(st, BANK_COLS(V.streamHalf), 0.0035), BANK_SOFT)).renderOrder = -1;
+    still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075, true), flowing)).renderOrder = 1;
   }
+  waterside();
 }
+// reeds and bulrushes in clumps at the water's edge, and stones half in the water, round the pond and here and there along
+// the streams (never on a path, a bridge, the dock, where a stream meets the pond, or where the farmer fishes)
+function waterside() {
+  const P = V.pond, c = new THREE.Vector3(...P.center), au = new THREE.Vector3(...P.axisU), av = new THREE.Vector3(...P.axisV), r = rng(83);
+  const dock = V.props.find(p => p.model === 'dock'), mouths = [];
+  for (const st of V.streams) for (const e of [st[0], st[st.length - 1]]) if (Math.hypot(e[0] - c.x, e[2] - c.z) < 8) mouths.push(e);
+  const ok = (x, z, m = 0.35) => !nearLines(V.paths, x, z, V.pathHalf + m) && !(dock && Math.hypot(x - dock.pos[0], z - dock.pos[2]) < 1.7)
+    && !mouths.some(e => Math.hypot(x - e[0], z - e[2]) < 1.3) && Math.hypot(x - RIVER_BRIDGE[0], z - RIVER_BRIDGE[1]) > 4.6;
+  const blades = [], heads = [], stones = [], Y = new THREE.Vector3(0, 1, 0), q = new THREE.Quaternion(), e = new THREE.Euler();
+  const clump = (x, z, n) => {
+    for (let i = 0; i < n; i++) {
+      const a = r() * 6.283, d = Math.sqrt(r()) * 0.17, h = 0.26 + r() * 0.36;
+      blades.push([x + Math.cos(a) * d, z + Math.sin(a) * d, h, (r() - 0.5) * 0.5, (r() - 0.5) * 0.5, r() * 6.283, 0.82 + r() * 0.3]);
+    }
+    for (let i = Math.floor(r() * 3); i >= 0; i--) {
+      const a = r() * 6.283, d = Math.sqrt(r()) * 0.1, h = 0.48 + r() * 0.2, tx = (r() - 0.5) * 0.2, tz = (r() - 0.5) * 0.2;
+      heads.push([x + Math.cos(a) * d, z + Math.sin(a) * d, h, tx, tz]);
+    }
+  };
+  const rocks = (x, z, n) => { for (let i = 0; i < n; i++) { const a = r() * 6.283, d = r() * 0.14, s = 0.05 + r() * 0.08; stones.push([x + Math.cos(a) * d, z + Math.sin(a) * d, s, r() * 6.283, 0.82 + r() * 0.3]); } };
+  // round the pond
+  for (let k = 0; k < 40; k++) {
+    const t = (k + r() * 0.6) / 40 * Math.PI * 2, w = 1 + 0.035 * Math.sin(t * 5 + 1) + 0.02 * Math.sin(t * 9), sc = (0.985 + r() * 0.06) * w;
+    const x = c.x + (au.x * Math.cos(t) + av.x * Math.sin(t)) * sc, z = c.z + (au.z * Math.cos(t) + av.z * Math.sin(t)) * sc;
+    if (!ok(x, z)) continue;
+    const roll = r();
+    if (roll < 0.34) clump(x, z, 11 + Math.floor(r() * 9)); else if (roll < 0.52) rocks(x, z, 2 + Math.floor(r() * 3));
+  }
+  // along the streams, now one bank, now the other
+  for (const st of V.streams) {
+    let along = 0;
+    for (let i = 1; i < st.length; i++) {
+      const a = st[i - 1], b = st[i], L = Math.hypot(b[0] - a[0], b[2] - a[2]); if (!L) continue;
+      const nx = -(b[2] - a[2]) / L, nz = (b[0] - a[0]) / L;
+      for (let u = 0; u < L; u += 0.5) {
+        along += 0.5; if (r() > 0.11) continue;
+        const side = r() < 0.5 ? 1 : -1, off = V.streamHalf + 0.02 + r() * 0.08, x = a[0] + (b[0] - a[0]) * u / L + nx * off * side, z = a[2] + (b[2] - a[2]) * u / L + nz * off * side;
+        if (!ok(x, z, 0.6) || Math.hypot(x - c.x, z - c.z) < 5.6) continue;
+        if (r() < 0.55) clump(x, z, 8 + Math.floor(r() * 8)); else rocks(x, z, 1 + Math.floor(r() * 3));
+      }
+    }
+  }
+  const col = new THREE.Color(), out = [];
+  if (blades.length) {
+    const g = new THREE.ConeGeometry(0.019, 1, 3, 1).translate(0, 0.5, 0), m = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+    addWind(m, 0.5); nightGrade(m);
+    const k = new THREE.InstancedMesh(g, m, blades.length);
+    blades.forEach(([x, z, h, tx, tz, yaw, sh], i) => { k.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q.setFromEuler(e.set(tx, yaw, tz)), new THREE.Vector3(1, h, 1))); k.setColorAt(i, col.set(i % 3 ? '#5f9a3c' : '#7aab47').multiplyScalar(sh)); });
+    out.push(k);
+  }
+  if (heads.length) {       // the bulrushes: a stalk and its brown head
+    const stalk = new THREE.CylinderGeometry(0.004, 0.006, 1, 4).translate(0, 0.5, 0), head = new THREE.CapsuleGeometry(0.019, 0.075, 2, 6);
+    const ms = new THREE.MeshLambertMaterial({ color: '#6f9a43' }), mh = new THREE.MeshLambertMaterial({ color: '#6e4528' });
+    addWind(ms, 0.5); addWind(mh, 0.5); nightGrade(ms); nightGrade(mh);
+    const ks = new THREE.InstancedMesh(stalk, ms, heads.length), kh = new THREE.InstancedMesh(head, mh, heads.length);
+    heads.forEach(([x, z, h, tx, tz], i) => {
+      q.setFromEuler(e.set(tx, 0, tz));
+      ks.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(1, h, 1)));
+      const top = new THREE.Vector3(0, h - 0.05, 0).applyQuaternion(q);
+      kh.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x + top.x, top.y, z + top.z), q, new THREE.Vector3(1, 1, 1)));
+    });
+    out.push(ks, kh);
+  }
+  if (stones.length) {
+    const g = new THREE.IcosahedronGeometry(1, 1), m = new THREE.MeshLambertMaterial({ color: '#ffffff', flatShading: true });
+    nightGrade(m);
+    const k = new THREE.InstancedMesh(g, m, stones.length);
+    stones.forEach(([x, z, s, yaw, sh], i) => { k.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, s * 0.1, z), q.setFromEuler(e.set(0, yaw, 0)), new THREE.Vector3(s, s * 0.55, s * 0.8))); k.setColorAt(i, col.set(i % 3 === 0 ? '#a8a294' : i % 3 === 1 ? '#8f8a7e' : '#b9b2a2').multiplyScalar(sh)); });
+    out.push(k);
+  }
+  for (const k of out) { k.computeBoundingSphere(); still(k); }
+  WATERSIDE.length = 0; WATERSIDE.push(...out);
+}
+const WATERSIDE = [];
 
 // many copies of one model, drawn together (one draw per material). A batch is drawn whole whenever any of it is in view, so
 // copies spread over the village are split into tiles: the phone then only draws the tiles near the view.
@@ -1023,41 +1162,117 @@ const WHEAT_STAGES = ['soil', 'sprouts', 'growing', 'ripe'];
 const WHEAT_DEGS = [0, 90];
 const WHEAT_NAMES = { soil: 'Ploughed, ready to sow', sprouts: 'The first green shoots', growing: 'Growing tall and green', ripe: 'Golden and ready' };
 const wheatField = { stage: GAME_MODE ? 'soil' : WHEAT_STAGES.includes(params.get('wheat')) ? params.get('wheat') : 'ripe', parts: {}, inverse: null, half: [0, 0] };
+// The game's field (6 Nov 2026, Audrey: "the field perspective is still not great": from the usual view and looking steeply
+// down it had read as a flat dark slab): real ploughed ground, its ridges lit on top and its furrows in shade, its edge
+// soft and uneven where the grass takes over (a verge of grass and a few daisies round it, no straight box edge); the wheat
+// in rows on the ridges, darker at its foot, a little shorter towards the edge and in gentle waves, so it stands up out of
+// the ground from any angle, by day and at night
+function fieldEdge(w, d) {                     // how far a spot is outside the field's soft, uneven edge (below 0: inside)
+  const r = rng(57), ph = [r(), r(), r()].map(v => v * 6.283), R = 0.42;
+  return (x, z) => {
+    const a = Math.atan2(z / d, x / w);
+    const wob = 0.045 * Math.sin(3 * a + ph[0]) + 0.03 * Math.sin(7 * a + ph[1]) + 0.018 * Math.sin(17 * a + ph[2]);
+    const qx = Math.abs(x) - (w / 2 - 0.1 - R), qz = Math.abs(z) - (d / 2 - 0.1 - R);
+    return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - R + wob;
+  };
+}
+const smoothIn = (v, a, b) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+function fieldSoil(w, d, edge, ROW, z0) {      // the ploughed ground: ridges along the field, sinking under the grass at its edge
+  const geo = new THREE.PlaneGeometry(w + 0.2, d + 0.2, 132, 96).rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position, n = pos.count, col = new Float32Array(n * 3), r = rng(58);
+  const furrow = new THREE.Color('#4a2e1b'), ridge = new THREE.Color('#9b6d45'), verge = new THREE.Color('#7d8c46'), c = new THREE.Color();
+  for (let i = 0; i < n; i++) {
+    const x = pos.getX(i), z = pos.getZ(i), sd = edge(x, z), inside = smoothIn(-sd, -0.02, 0.18);
+    const t = 0.5 + 0.5 * Math.cos((z - z0) / ROW * Math.PI * 2), clod = r() - 0.5;      // (t: 1 on top of a ridge)
+    pos.setY(i, -0.026 + inside * (0.04 + 0.04 * t * t + 0.008 * clod));
+    c.copy(furrow).lerp(ridge, Math.max(0, Math.min(1, t * 0.9 + clod * 0.22))).lerp(verge, (1 - inside) * 0.75);
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  m.matrixAutoUpdate = false; m.receiveShadow = true;
+  return m;
+}
+function footShade(mat, top, amount) {         // a plant darker at its foot (in the shade of the others), full colour at its top
+  const before = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, rr) => {
+    if (before) before.call(mat, sh, rr);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vFoot;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvFoot = clamp(position.y / ${top.toFixed(4)}, 0.0, 1.0);`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vFoot;')
+      .replace('#include <color_fragment>', `#include <color_fragment>\ndiffuseColor.rgb *= mix(${(1 - amount).toFixed(3)}, 1.0, smoothstep(0.0, 0.85, vFoot));`);
+  };
+  const key = mat.customProgramCacheKey, own = key !== THREE.Material.prototype.customProgramCacheKey;      // (each shade its own shader)
+  mat.customProgramCacheKey = () => (own ? key.call(mat) : '') + '+foot' + amount + '/' + top.toFixed(4);
+  return mat;
+}
 function wheat(fieldMatrix, w, d, parent = null) {      // (parent: the game's own field, drawn in its frame: its parts back)
-  const r = rng(31), spots = [];
-  for (let x = -w / 2 + 0.12; x < w / 2 - 0.1; x += 0.15)
-    for (let y = -d / 2 + 0.12; y < d / 2 - 0.1; y += 0.15)
-      spots.push({ x: x + (r() - 0.5) * 0.06, z: y + (r() - 0.5) * 0.06, h: 0.85 + r() * 0.3, turn: r() * 6.28, keep: r(), shade: 0.86 + r() * 0.22, ears: [0, 1].map(() => [r() * 6.28, r() - 0.5, r() - 0.5]) });
-  const Y = new THREE.Vector3(0, 1, 0), stalkGeo = meshesOf(parts.grass_tuft_1)[0].geometry;
+  const r = rng(31), spots = [], ROW = 0.2, z0 = -d / 2 + 0.2, nRows = Math.round((d - 0.4) / ROW) + 1, edge = fieldEdge(w, d);
+  for (let k = 0; k < nRows; k++) for (let x0 = -w / 2 + 0.12; x0 < w / 2 - 0.1; x0 += 0.075) {
+    const x = x0 + (r() - 0.5) * 0.03, z = z0 + k * ROW + (r() - 0.5) * 0.035, sd = edge(x, z);
+    if (sd > -0.12) continue;
+    const rim = smoothIn(-sd, 0.12, 0.6), wave = 1 + 0.07 * Math.sin(x * 1.7 + z * 2.3) + 0.05 * Math.sin(x * 4.1 - z * 3.3);
+    spots.push({ x, z, h: (0.86 + r() * 0.24) * (0.74 + 0.26 * rim) * wave, turn: r() * 6.28, keep: r(), shade: (0.88 + r() * 0.2) * (0.93 + 0.07 * Math.sin(x * 2.2 - z * 1.4)),
+      ears: (parent ? [0, 1, 2] : [0, 1]).map(() => [r() * 6.28, r() - 0.5, r() - 0.5]) });
+  }
+  const Y = new THREE.Vector3(0, 1, 0), stalkMesh = meshesOf(parts.grass_tuft_1)[0], stalkGeo = stalkMesh.geometry;
+  if (!stalkGeo.boundingBox) stalkGeo.computeBoundingBox();
   const at = (m) => parent ? m : new THREE.Matrix4().multiplyMatrices(fieldMatrix, m);
-  function stalks(list, height, width, colour) {
-    const mesh = new THREE.InstancedMesh(stalkGeo, addWind(new THREE.MeshLambertMaterial({ color: colour, side: THREE.DoubleSide }), 0.3), list.length);
+  function stalks(list, height, width, colour, foot) {
+    const mat = addWind(new THREE.MeshLambertMaterial({ color: colour, side: THREE.DoubleSide }), 0.3);
+    if (parent) footShade(mat, stalkGeo.boundingBox.max.y, foot);
+    const mesh = new THREE.InstancedMesh(stalkGeo, mat, list.length);
     const c = new THREE.Color();
     list.forEach((s, i) => {
-      mesh.setMatrixAt(i, at(new THREE.Matrix4().compose(new THREE.Vector3(s.x, 0.02, s.z), new THREE.Quaternion().setFromAxisAngle(Y, s.turn), new THREE.Vector3(width, 7 * s.h * height, width))));
+      mesh.setMatrixAt(i, at(new THREE.Matrix4().compose(new THREE.Vector3(s.x, parent ? 0.04 : 0.02, s.z), new THREE.Quaternion().setFromAxisAngle(Y, s.turn), new THREE.Vector3(width, 7 * s.h * height, width))));
       mesh.setColorAt(i, c.setScalar(s.shade));
     });
     return mesh;
   }
-  // ploughed furrows along the field (bare and sprouting)
-  const ridgeGeo = new THREE.CapsuleGeometry(0.07, w - 0.45, 3, 8).rotateZ(Math.PI / 2).scale(1, 0.45, 1);
-  const ridges = new THREE.InstancedMesh(ridgeGeo, new THREE.MeshLambertMaterial({ color: '#6e4b2c' }), 8);
-  for (let i = 0; i < 8; i++) ridges.setMatrixAt(i, at(new THREE.Matrix4().makeTranslation(0, 0.05, -1.05 + i * 0.3)));
+  // the ground: ploughed ridges (the game's field: its own soft-edged soil; the village's: the bed in its model, ridges on it)
+  let ground;
+  if (parent) ground = fieldSoil(w, d, edge, ROW, z0);
+  else {
+    const ridgeGeo = new THREE.CapsuleGeometry(0.07, w - 0.45, 3, 8).rotateZ(Math.PI / 2).scale(1, 0.45, 1);
+    ground = new THREE.InstancedMesh(ridgeGeo, new THREE.MeshLambertMaterial({ color: '#6e4b2c' }), 8);
+    for (let i = 0; i < 8; i++) ground.setMatrixAt(i, at(new THREE.Matrix4().makeTranslation(0, 0.05, -1.05 + i * 0.3)));
+  }
   // ripe ears, two on each stalk
   const ears = [];
   for (const s of spots) for (const [a, ex, ez] of s.ears)
-    ears.push(at(new THREE.Matrix4().compose(new THREE.Vector3(s.x + Math.cos(a) * 0.035, 0.02 + 0.36 * s.h, s.z + Math.sin(a) * 0.035),
+    ears.push(at(new THREE.Matrix4().compose(new THREE.Vector3(s.x + Math.cos(a) * (parent ? 0.05 : 0.035), parent ? 0.04 + 0.41 * s.h : 0.02 + 0.36 * s.h, s.z + Math.sin(a) * (parent ? 0.05 : 0.035)),
       new THREE.Quaternion().setFromEuler(new THREE.Euler(ex * 0.5, 0, ez * 0.5)), new THREE.Vector3(1, 1, 1))));
-  const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(0.016, 0.09, 4, 1), addWind(new THREE.MeshLambertMaterial({ color: '#e7bf55' }), 0.3), ears.length);
+  const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(parent ? 0.02 : 0.016, parent ? 0.1 : 0.09, 5, 1), addWind(new THREE.MeshLambertMaterial({ color: parent ? '#f8d670' : '#e7bf55' }), 0.3), ears.length);
   ears.forEach((m, i) => ea.setMatrixAt(i, m));
+  // (the game's field: a verge of meadow grass and a few daisies round its edge, where the grass meets the ploughed ground)
+  const verge = [];
+  if (parent) {
+    const rv = rng(59), tufts = [[], [], []], daisies = [], sc = V.tufts.length ? V.tufts.slice(0, 300).reduce((a, t) => a + t[5], 0) / Math.min(300, V.tufts.length) : 1;
+    for (let i = 0; i < 2600 && tufts.flat().length < 420; i++) {
+      const x = (rv() - 0.5) * (w + 0.1), z = (rv() - 0.5) * (d + 0.1), sd = edge(x, z);
+      const near = sd > -0.07 && sd < 0.1, corner = sd >= 0.1 && rv() < 0.35;      // (thick along the edge; in the corners the meadow carries on)
+      if (!near && !corner) continue;
+      const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(Y, rv() * 6.28), new THREE.Vector3(1, 1, 1).multiplyScalar(sc * (0.75 + rv() * 0.5)));
+      if (near && rv() < 0.05) daisies.push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(Y, rv() * 6.28), new THREE.Vector3(1.4, 1.4, 1.4)));
+      else tufts[Math.floor(rv() * 3)].push(m);
+    }
+    const inst = (name, list) => { for (const m of meshesOf(parts[name] || new THREE.Group())) {
+      const mat = addWind(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), 1.2); nightGrade(mat);
+      const k = new THREE.InstancedMesh(m.geometry, mat, list.length);
+      list.forEach((mx, i) => k.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
+      verge.push(k);
+    } };
+    tufts.forEach((list, k) => { if (list.length) inst('grass_tuft_' + k, list); });
+    if (daisies.length) inst('flower_daisy', daisies);
+  }
   const P = parent ? {} : wheatField.parts;
-  P.soil = [ridges];
-  P.sprouts = [ridges, stalks(spots.filter(s => s.keep < 0.4), 0.3, 2.0, '#86c24a')];
-  P.growing = [stalks(spots, 0.55, 2.2, '#5f9c36')];
-  P.ripe = [stalks(spots, 1, 2.4, '#d9b24e'), ea];
+  P.soil = [ground, ...verge];
+  P.sprouts = [ground, ...verge, stalks(parent ? spots.filter(s => s.keep < 0.75) : spots.filter(s => s.keep < 0.4), 0.3, 2.0, parent ? '#8ccf4c' : '#86c24a', 0.35)];
+  P.growing = [ground, ...verge, stalks(spots, 0.55, parent ? 2.9 : 2.2, parent ? '#65aa38' : '#5f9c36', 0.45)].slice(parent ? 0 : 2);
+  P.ripe = [ground, ...verge, stalks(spots, parent ? 1.05 : 1, parent ? 3.4 : 2.4, parent ? '#e8c35c' : '#d9b24e', 0.42), ea].slice(parent ? 0 : 2);      // (the game's: thick enough to hide the ground, a sea of gold with its rows just showing)
   for (const list of Object.values(P)) for (const o of list) if (!o.parent) {
-    o.computeBoundingSphere(); o.receiveShadow = true;
-    if (parent) { o.castShadow = o !== ridges && o !== ea; nightGrade(o.material); parent.add(o); } else still(o, o !== ridges && o !== ea, true);
+    if (o.isInstancedMesh) o.computeBoundingSphere(); o.receiveShadow = true;
+    if (parent) { o.castShadow = o !== ground && o !== ea && !verge.includes(o); if (!verge.includes(o)) nightGrade(o.material); parent.add(o); } else still(o, o !== ground && o !== ea, true);
   }
   if (parent) return P;
   wheatField.inverse = fieldMatrix.clone().invert(); wheatField.half = [w / 2, d / 2];
@@ -6427,8 +6642,7 @@ function settleDecor() {
 function decorModel(id) {
   const g = new THREE.Group(); g.matrixAutoUpdate = false;
   if (id === 'wheat') {                                     // (the wheat field: its bed, and its wheat in the four stages)
-    if (parts.wheat_field) for (const m of meshesOf(parts.wheat_field)) { nightGrade(m.material); const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.receiveShadow = true; g.add(k); }
-    g.userData.wheat = wheat(null, 4.4, 2.4, g);
+    g.userData.wheat = wheat(null, 4.4, 2.4, g);      // (its own soft-edged ploughed ground, not the village model's bed)
     return g;
   }
   if (id === 'kennel') {                                    // (the dog's kennel: his name on the board over the door)
@@ -6923,7 +7137,7 @@ function fieldBubbles(w, h) {
   if (W && !busy && DMOVE.id !== 'wheat') {
     const txt = st === 'soil' ? '🌾 ' + game.t('bub_sow') : st === 'ripe' ? '🌾 ' + game.t('bub_harvest') : '🌱 ' + gameUI.dur(game.wheatLeft());
     if (FIELD.bub.textContent !== txt) { FIELD.bub.textContent = txt; FIELD.bub.classList.toggle('ripe', st === 'ripe'); }
-    put(FIELD.bub, true, bubV.set(0, 0.5, 1.0).applyMatrix4(W.d.m));
+    put(FIELD.bub, true, bubV.set(0, 0.45, 0).applyMatrix4(W.d.m));      // (over the field's middle, Audrey 6 Nov: "This message should also be centred")
   } else FIELD.bub.hidden = true;
   const Hv = DEC.items.beehives, n = Hv && !FIELD.honey && DMOVE.id !== 'beehives' ? game.honeyAt() : 0;
   if (n) {
@@ -7630,6 +7844,11 @@ document.addEventListener('visibilitychange', () => {
 
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
 window.__farm = {
+  // (the card audit: the label's longest words, and the label placed as the game places it, over a spot on the screen)
+  labelWords: () => { const lots = [{ name: 'Marguerite' }, { name: 'Clementine' }, { name: 'Bartholomew' }, { name: 'Wilhelmina' }];
+    return [vt('door_notyet', { who: doorWho(lots) }), vt('door_notyet', { who: doorWho(lots.slice(0, 2)) }), vt('door_shut'), game.t('land_wild', { n: 30 }), game.t('laying', { name: 'Wilhelmina' }), game.t('no_eggs'),
+      dogT('named', 'Bartholomew'), ...Object.keys(DECOR).map(k => tr(LANG, 'decor.' + k))]; },
+  labelAt: (sx, sy) => moveTag({ x: sx * 2 - 1, y: 1 - sy * 2 }),
   accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
   notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
