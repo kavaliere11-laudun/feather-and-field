@@ -4356,7 +4356,7 @@ function featherTap(plot, i) {
 // over the side fence with a flutter, round to an apple, a hop for it (play.js 'apple'); it falls in front of her and she
 // eats it (game.eatApple); after two she settles under the tree and lays an apple egg there; then back over the fence. A
 // tap on the egg: sold (game.sellAppleEgg); on the tree: how many apples it has, or when the next one's ripe
-const APPLE_HANG = 0.61, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
+const APPLE_HANG = 0.665, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
 let APPLE_GEO = null, APPLE_MAT = null, AEGG_MAT = null;
 function appleGeo() {
   if (APPLE_GEO) return APPLE_GEO;
@@ -4402,30 +4402,41 @@ function appleStrip(gc, side) {
 // default, so she and they are seen, not hidden behind its crown); null: no way over to it
 function appleSpot(plot, side) {
   const R = appleStrip(plot.gc, side), pen = plot.pen, Y = pen.yard, obs = pen.obstacles, blk = plot.block0 || [], out = side === 'l' ? -1 : 1;
-  const fence = side === 'l' ? R[2] : R[0], tx = fence + out * 0.5, tz = Math.max(R[1] + 0.45, Math.min(R[3] - 0.7, Y.min[2] + 0.3));
+  const fence = side === 'l' ? R[2] : R[0], tx = fence + out * 0.55;
   const inStrip = (x, z, m = 0.1) => x > R[0] + m && x < R[2] - m && z > R[1] + m && z < R[3] - m;
+  const roomy = (x, z) => inStrip(x, z, 0.14) && Math.abs(x - fence) > 0.28;      // (where she can stand: her body clear of the fence and the corner's edges)
   const inYard = (x, z) => x > Y.min[0] + 0.05 && x < Y.max[0] - 0.05 && z > Y.min[2] + 0.06 && z < Y.max[2] - 0.12 &&
     !obs.some(o => Math.hypot(x - o[0], z - o[2]) < o[3] + 0.14) && !blk.some(o => Math.hypot(x - o[0], z - o[1]) < o[2] + 0.14);
-  const xin = side === 'l' ? Y.min[0] + 0.1 : Y.max[0] - 0.1, xout = fence + out * 0.2;
-  let zc = null;
-  for (const dz of [0.45, 0.6, 0.3, 0.75, 0.9, 0.15, 1.05, 0, 1.2]) { const z = tz + dz; if (inYard(xin, z) && inStrip(xout, z) && Math.hypot(xout - tx, z - tz) > 0.3) { zc = +z.toFixed(3); break; } }
+  const xin = side === 'l' ? Y.min[0] + 0.1 : Y.max[0] - 0.1, xout = fence + out * 0.27;
+  // (where she goes over: a clear spot inside by the side fence, as near the yard's back as can be; the tree half a metre
+  // or so along from it, towards the house if there's room, so she lands beside it, not on its tub)
+  const zs = [];
+  for (let z = Y.min[2] + 0.1; z <= Y.max[2] - 0.15; z += 0.05) if (inYard(xin, z) && inStrip(xout, z)) zs.push(+z.toFixed(3));
+  zs.sort((a, b) => Math.abs(a - Y.min[2] - 0.35) - Math.abs(b - Y.min[2] - 0.35));
+  const ST = 0.4, standAt = (tz) => { const out = []; for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; if (roomy(tx + Math.sin(a) * ST, tz + Math.cos(a) * ST)) out.push(a); } return out; };
+  let zc = null, tz = null;
+  for (const z of zs) {
+    for (const dz of [-0.55, 0.55, -0.7, 0.7]) { const t = +(z + dz).toFixed(3); if (inStrip(tx, t, 0.3) && standAt(t).length >= 3) { zc = z; tz = t; break; } }
+    if (zc !== null) break;
+  }
   if (zc === null) return null;
   const yaw = plot.group.rotation.y, cx = Math.sin(VIEW_AZ0), cz = Math.cos(VIEW_AZ0);
   const camA = Math.atan2(cx * Math.cos(yaw) - cz * Math.sin(yaw), cx * Math.sin(yaw) + cz * Math.cos(yaw));      // (the camera's side, in the yard's own frame)
-  const ST = 0.29, stand = [];
-  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; if (inStrip(tx + Math.sin(a) * ST, tz + Math.cos(a) * ST)) stand.push(a); }
+  // (she stands far enough out for her breast to clear the tub, her beak under the apple, her head clear of the crown
+  // when she leaps: the apples just inside the crown's edge, under it)
+  const stand = standAt(tz);
   const seen = stand.filter(a => Math.abs(wrapA(a - camA)) < 1.75), A = seen.length >= 3 ? seen : stand, slots = [], gap = a => Math.min(...slots.map(q => Math.abs(wrapA(a - q.a))), 9);
   while (slots.length < APPLES_RULE.max) {      // (the first nearest the camera, then spread round)
     let pick = null;
     for (const a of A) if (pick === null || (slots.length ? gap(a) > gap(pick) : Math.abs(wrapA(a - camA)) < Math.abs(wrapA(pick - camA)))) pick = a;
     if (pick === null || (slots.length && gap(pick) < 0.38)) break;
-    const hr = 0.17, y = APPLE_HANG + (slots.length % 2 ? 0.01 : -0.008);
+    const hr = 0.215, y = APPLE_HANG + (slots.length % 2 ? 0.008 : -0.006);
     slots.push({ a: pick, hang: [tx + Math.sin(pick) * hr, y, tz + Math.cos(pick) * hr], stand: [tx + Math.sin(pick) * ST, tz + Math.cos(pick) * ST], face: pick + Math.PI });
   }
   if (!slots.length) return null;
-  let nook = null; for (const a of A) { const q = [tx + Math.sin(a) * (ST + 0.06), tz + Math.cos(a) * (ST + 0.06)]; if (inStrip(q[0], q[1]) && (!nook || gap(a) > nook.g)) nook = { g: gap(a), at: q, a }; }
+  let nook = null; for (const a of A) { const q = [tx + Math.sin(a) * (ST + 0.04), tz + Math.cos(a) * (ST + 0.04)]; if (roomy(q[0], q[1]) && (!nook || gap(a) > nook.g)) nook = { g: gap(a), at: q, a }; }
   return { side, at: [tx, tz], s: 1, strip: R, slots, nook: nook ? nook.at : slots[0].stand, nookA: nook ? nook.a : slots[0].a, camA,
-    inAt: [xin, zc], outAt: [xout, zc], outA: Math.atan2(out, 0), inStrip };
+    inAt: [xin, zc], outAt: [xout, zc], outA: Math.atan2(out, 0), inStrip, roomy };
 }
 // the side for a coop's tree: the one the camera sees first, where the coop with its corner there could stand as it is
 // (clear of the lanes, other coops, the buildings, on the farm's own land) and there's a way over to it; null: neither
@@ -4477,17 +4488,20 @@ function appleTree(plot) {
     return r;
   };
   // (outside: where she may walk, and her way from a to b round the tub, not through it)
-  A.free = (x, z) => S.inStrip(x, z, 0.06) && Math.hypot(x - S.at[0], z - S.at[1]) > 0.24;
+  A.free = (x, z) => S.roomy(x, z) && Math.hypot(x - S.at[0], z - S.at[1]) > 0.34;
   A.way = (a, b) => {
-    const [cx, cz] = S.at, R = 0.33, ang = q => Math.atan2(q[0] - cx, q[1] - cz);
+    const [cx, cz] = S.at, R = 0.42, ang = q => Math.atan2(q[0] - cx, q[1] - cz);
     const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1e-9, u = Math.max(0, Math.min(1, ((cx - a[0]) * dx + (cz - a[1]) * dz) / L2));
-    if (Math.hypot(a[0] + dx * u - cx, a[1] + dz * u - cz) > 0.27) return [b];
+    if (Math.hypot(a[0] + dx * u - cx, a[1] + dz * u - cz) > 0.38) return [b];
     const a0 = ang(a), d = wrapA(ang(b) - a0), out = [];
     const tryDir = sg => { const pts = [], D = sg * (sg === Math.sign(d) ? Math.abs(d) : 2 * Math.PI - Math.abs(d)), k = Math.max(1, Math.ceil(Math.abs(D) / 0.5));
-      for (let i = 1; i < k; i++) { const t = a0 + D * i / k, q = [cx + Math.sin(t) * R, cz + Math.cos(t) * R]; if (!S.inStrip(q[0], q[1], 0.04)) return null; pts.push(q); } return pts; };
+      for (let i = 1; i < k; i++) { const t = a0 + D * i / k, q = [cx + Math.sin(t) * R, cz + Math.cos(t) * R]; if (!S.roomy(q[0], q[1])) return null; pts.push(q); } return pts; };
     const pts = tryDir(Math.sign(d) || 1) || tryDir(-(Math.sign(d) || 1)) || [];
     return [...pts, b];
   };
+  // (how much higher than her own hop she leaps for it: just enough for her beak, looking up, to reach under the apple, so
+  // her head stays out of the crown; a bigger hen hardly needs to, a Silkie leaps higher)
+  A.lift = (b, sl) => { const sc = b.rig.scale, sz = Math.min(1.2, sc / 0.5), beak = 0.84 * sc + 0.03 * sz, own = 0.12 * sz; return Math.max(0.02, Math.min(0.14, sl.hang[1] - 0.033 - beak - own)); };
   A.down = () => !!(A.drop && A.drop.landed);
   A.bite = k => { if (A.drop) A.drop.bite = k; };
   A.eaten = () => { A.drop = null; A.fall.visible = false; };

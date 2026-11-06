@@ -66,19 +66,27 @@ const c1 = await card();
 ok('…her card speaks of her escapes (and no more of waiting for a tree)', T.line.test(c1) && !T.line0.test(c1));
 if (SHOTS) { await p.evaluate(() => { const f = window.__farm, A = f.gamePlots()[0].apple, w = A.group.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z, 2.0); f.step(1 / 30, 10); }); await shot('1_tree'); }
 // her outing (no waiting for it): she goes, looks up, leaps, it falls in front of her, she eats it
-const outing = async () => p.evaluate(id => { const f = window.__farm, g = f.game(), P = f.gamePlots()[0], A = P.apple, b = P.birds.find(x => x.gid === id); A.next = 0;
-  const seen = { phases: [], top: 0, fell: null, n0: g.applesAt(g.data.coops[0]), over: 0, out: false }, PP = P.pen.pen, outside = x => x < PP.min[0] || x > PP.max[0];
-  for (let i = 0; i < 30 * 60; i++) {
-    window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false);
-    const Q = b.play; if (Q && Q.kind === 'apple') { if (seen.phases[seen.phases.length - 1] !== Q.phase) seen.phases.push(Q.phase); if (Q.phase === 'hop') seen.top = Math.max(seen.top, b.root.position.y);
-      if (Q.phase === 'out' || Q.phase === 'in') seen.over = Math.max(seen.over, b.root.position.y); if (Q.phase === 'eat' && outside(b.root.position.x)) seen.out = true;
-      if (A.drop && !seen.fell) { const p = b.root.position, fy = b.root.rotation.y, d = [A.drop.to[0] - p.x, A.drop.to[1] - p.z]; seen.fell = { d: +Math.hypot(d[0], d[1]).toFixed(3), ahead: +(d[0] * Math.sin(fy) + d[1] * Math.cos(fy)).toFixed(3) }; } }
-    if (seen.phases.length && !b.play) break;
+const outing = async () => p.evaluate(id => { const f = window.__farm, g = f.game(), P = f.gamePlots()[0], A = P.apple, b = P.birds.find(x => x.gid === id), v = new f.THREE.Vector3();
+  const PP = P.pen.pen, outside = x => x < PP.min[0] || x > PP.max[0], up = () => b.rig.bones.root.getWorldPosition(v).y;      // (her body: the hop's own lift and hers)
+  let seen = null;
+  for (let tries = 0; tries < 4; tries++) {      // (an outing called off before she's over the fence, the farmer coming into the pen say: another)
+    A.next = 0; seen = { phases: [], top: 0, fell: null, n0: g.applesAt(g.data.coops[0]), over: 0, out: false, tries };
+    let base = null, y0 = up();
+    for (let i = 0; i < 30 * 60; i++) {
+      window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false);
+      const Q = b.play; if (Q && Q.kind === 'apple') { if (seen.phases[seen.phases.length - 1] !== Q.phase) { seen.phases.push(Q.phase); if (Q.phase === 'out' || Q.phase === 'hop') base = up(); }
+        if (Q.phase === 'hop') seen.top = Math.max(seen.top, up() - base);
+        if (Q.phase === 'out' || Q.phase === 'in') seen.over = Math.max(seen.over, up() - y0);
+        if (Q.phase === 'eat' && outside(b.root.position.x)) seen.out = true;
+        if (A.drop && !seen.fell) { const p = b.root.position, fy = b.root.rotation.y, d = [A.drop.to[0] - p.x, A.drop.to[1] - p.z]; seen.fell = { d: +Math.hypot(d[0], d[1]).toFixed(3), ahead: +(d[0] * Math.sin(fy) + d[1] * Math.cos(fy)).toFixed(3) }; } }
+      if (seen.phases.length && !b.play) break;
+    }
+    if (seen.phases.includes('out')) break;
   }
   sessionStorage.setItem('__T', String(window.__T)); seen.ap = { ...g.data.coops[0].ap }; seen.top = +seen.top.toFixed(3); seen.over = +seen.over.toFixed(3); seen.home = b.free(b.root.position.x, b.root.position.z) && !outside(b.root.position.x); return seen; }, HEN);
 let O = await outing();
 s = await st();
-ok('her escape: to the fence, over it (well above it), under an apple outside, a look up, a leap off the ground, it falls just in front of her and she eats it; back over, in the yard again', O.phases.join() === 'walk,face,out,go,aim,look,hop,eat,shake,home,turnin,in' && O.over > 0.7 && O.out && O.top > 0.1 && O.fell && O.fell.d < 0.16 && O.fell.ahead > 0.05 && O.home, O);
+ok('her escape: to the fence, over it (well above it), under an apple outside, a look up, a leap off the ground, it falls just in front of her and she eats it; back over, in the yard again', O.phases.join() === 'walk,face,out,go,aim,look,hop,eat,shake,home,turnin,in' && O.over > 0.55 && O.out && O.top > 0.1 && O.fell && O.fell.d < 0.16 && O.fell.ahead > 0.05 && O.home, O);
 ok('…the save: one apple fewer on the tree, one eaten', s.ap.n === 1 && s.ap.ate === 1 && !s.ap.egg && s.shown === 1, s);
 O = await outing();
 s = await st();

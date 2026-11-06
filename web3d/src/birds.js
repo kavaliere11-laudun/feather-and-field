@@ -995,13 +995,15 @@ export class Rig {
     B.tail.rotation.set(0.25 * s.crow + 0.08 * Math.sin(s.t * 1.3) * (1 - w) + T.p, 0.12 * Math.sin(s.t * 9) * s.wag + T.y + (s.bend || 0), 0);      // (bend: a peacock's train trailing round behind him)
     const A = this.bends ? 0 : 0.5 * w * (1 + 0.5 * pr), lf = this.bends ? 0 : 1;      // (steps with bending legs their own, below)
     const kick = s.kick > 0 ? Math.max(0, Math.sin(s.kickT * 14)) : 0;
-    const legX = -1.25 * s.sit - 0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash - 0.35 * dk;
+    // (a hop, on legs that bend: the legs fold at the top and the ankle instead, below: hop)
+    const hop = this.bends && (s.hopT ?? -1) >= 0 ? 1 : 0, drop = (H.crouch * 0.32 + H.squash * 0.22) * this.shank;
+    const legX = -1.25 * s.sit + (1 - hop) * (-0.55 * H.crouch + 0.85 * H.tuck - 0.4 * H.reach - 0.3 * H.squash) - 0.35 * dk;
     const kq = this.bends ? 0.95 : 1.0;      // (legs that bend: a scratch a rake along the ground, below)
     B.legL.rotation.set(A * Math.sin(ph) + (s.kickLeg === 0 ? kq * kick * s.kick : 0) + legX, 0, 0);
     B.legR.rotation.set(-A * Math.sin(ph) + (s.kickLeg === 1 ? kq * kick * s.kick : 0) + legX * 0.92, 0, 0);
     B.legL.position.copy(Rr.legL); B.legR.position.copy(Rr.legR);
     // resting: the legs fold right up under her, out of sight (they go down with the body and fold away into it)
-    const legY = -s.sit * this.shank * 0.78 - (H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank - 0.22 * this.shank * dk;
+    const legY = -s.sit * this.shank * 0.78 + (hop ? -drop : -(H.crouch * 0.25 + H.squash * 0.15) * this.shank + H.tuck * 0.3 * this.shank) - 0.22 * this.shank * dk;
     B.legL.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, -Math.cos(ph)) + (s.kickLeg === 0 ? kick * s.kick * lift : 0) + legY;
     B.legR.position.y += lf * w * lift * (1 + 1.2 * pr) * Math.max(0, Math.cos(ph)) + (s.kickLeg === 1 ? kick * s.kick * lift : 0) + legY;
     if (this.bends) {
@@ -1015,6 +1017,18 @@ export class Rig {
       const up = (this.peafowl ? 0.33 : 0.3) * L * (1 + 0.8 * pr);
       body.position.y -= c;
       for (const [leg, shin, foot, off, kl] of [[B.legL, B.shinL, B.footL, 0, 0], [B.legR, B.shinR, B.footR, 0.5, 1]]) {
+        if (hop) {
+          // a hop (Audrey, 6 Nov: "when the chicken jumps her legs need to fold and have a natural movement"): crouching,
+          // her feet stay put as she sinks, the legs folding at the top and the ankle (behind); the push off, legs straight
+          // (her toes last to leave); in the air, the legs drawn up and back under her, folded, the toes curled; then
+          // reaching down and a little forward to land, toes spread, and folding again as she lands and settles
+          let fz = 0.04 * L * H.crouch - 0.22 * L * H.tuck + 0.13 * L * H.reach + 0.03 * L * H.squash, fy = -(L - drop) + 0.5 * L * H.tuck - 0.03 * L * H.reach;
+          let d = Math.hypot(fz, fy); const dm = (l1 + l2) * 0.998; if (d > dm) { fz *= dm / d; fy *= dm / d; d = dm; }
+          const phi = Math.atan2(fz, -fy), bk = Math.acos(Math.max(-1, Math.min(1, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))));
+          const t1 = phi - bk, kz = l1 * Math.sin(t1), ky = -l1 * Math.cos(t1), t2 = Math.atan2(fz - kz, -(fy - ky));
+          leg.rotation.x -= t1; shin.rotation.set(-(t2 - t1), 0, 0); foot.rotation.set(t2 + 1.15 * H.tuck - 0.25 * H.reach + 0.35 * H.rise, 0, 0);
+          continue;
+        }
         const u = ((ph / (2 * Math.PI) + off) % 1 + 1) % 1;
         let fz, e = 0;
         if (u < beta) fz = S * (1 - 2 * u / beta);

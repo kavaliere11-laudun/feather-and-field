@@ -173,13 +173,12 @@ export function playStep(b, dt) {
 
 // the Glutton's apple: over the fence, round to it, look up, the leap, the apple eaten; after two, the egg; back over the
 // fence (plot.apple: main.js appleTree)
-function flutter(b, P, to, dur, o) {                 // up and over, wings going, landing on the far side
-  const p = b.root.position, u = Math.min(1, P.t / dur), e = smooth01(u);
-  p.x = P.from.x + (to[0] - P.from.x) * e; p.z = P.from.z + (to[1] - P.from.z) * e; p.y = 0.015 + 0.82 * Math.sin(u * Math.PI);
-  b.shadowY = u < 0.97 ? 0.0 : undefined; o.flap = u < 0.9 ? 1 : 0;
-  if (u >= 1) { p.y = 0.015; b.shadowY = undefined; return true; }
-  return false;
+function flutter(b, P, to, dur, o) {                 // a crouch, up and over, wings going, legs folded up under her, reaching down to land
+  const u = Math.min(1, P.t / dur);
+  o.flap = u > 0.2 && u < 0.88 ? 1 : 0;
+  return hop(b, P, P.from, tmpTo.set(to[0], 0.015, to[1]), dur, 0.62, 0);
 }
+const tmpTo = new THREE.Vector3();
 function walkOut(b, P, AP, o, dt) {                  // along her way outside (P.way), round the tub; true when there
   const q = P.way[0], p = b.root.position;
   if (!q) return true;
@@ -201,8 +200,9 @@ function appleStep(b, P, o, next, dt) {
   }
   if (P.phase === 'hop') {                           // a crouch, and straight up, stretched tall, head up, wings out: her beak knocks it off
     const u = Math.min(1, P.t / 0.85), a = smooth01((u - 0.24) / 0.62);
+    if (P.lift === undefined) P.lift = AP.lift(b, P.slot);      // (just as high as her beak needs, so her head stays clear of the crown)
     b.hopT = u < 1 ? u : -1;
-    p.y = P.from.y + 0.11 * Math.sin(a * Math.PI);
+    p.y = P.from.y + P.lift * Math.sin(a * Math.PI);
     b.shadowY = u > 0.2 && u < 0.95 ? 0.0 : undefined;
     o.up = 1; o.flap = u > 0.22 && u < 0.72 ? 0.9 : 0;
     if (u > 0.5 && !P.hit) { P.hit = true; P.got = AP.knock(b, P.slot); }

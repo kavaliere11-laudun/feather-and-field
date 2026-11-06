@@ -1801,7 +1801,7 @@ def apple_tub_v(seed=149, name='apple_tub'):
     The tub (oak staves, two iron hoops, dark earth), a short crooked trunk splitting into four branches, a round crown of
     small oval leaves over dark leafy clumps, lighter on top; no apples (the browser hangs them, as many as have ripened,
     just under the crown's edge at about 0.53 m, where she can reach them with a hop). About 1.05 m high, the crown 0.56 m
-    across and its foot at 0.62, the tub 0.34 across."""
+    across and its foot at 0.62, the tub 0.28 across."""
     from mathutils import Quaternion
     random.seed(seed); objs = []
     wood = C('vatwood', '#9a6b42', rough=0.85, var=0.08); hoop = C('vathoop', '#4b4844', rough=0.5, metal=0.6)
@@ -1809,7 +1809,7 @@ def apple_tub_v(seed=149, name='apple_tub'):
     leaf = [C('vatleaf%d' % i, h, rough=0.8, var=0.06, hue_var=0.012) for i, h in enumerate(('#2f6324', '#3d7a2b', '#4c8d33', '#5d9f3b'))]
     core = C('vatcore', '#2c5a22', rough=0.9, var=0.05)
     # the tub: a half barrel, its staves bulging a little, its joints, two hoops, the earth just below its rim
-    R, H = 0.17, 0.22
+    R, H = 0.14, 0.22      # (a slimmer tub, 6 Nov evening: so she can stand under the apples without her breast in it)
     prof = [(R * 0.86, 0.0), (R * 0.95, H * 0.45), (R, H)]
     objs.append(lathe('vattub', prof, wood, verts=18, cap_bottom=True))
     objs.append(lathe('vatin', [(R * 0.94, H), (R * 0.9, H * 0.6)], wood, verts=18))      # (the inside of its rim)

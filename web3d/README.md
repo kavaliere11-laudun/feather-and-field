@@ -4087,6 +4087,15 @@ They were in the Unity version only. Now in the game:
   egg waiting, its side 'l' or 'r' } is checked on load: four apples at most, never ahead of now, an egg only if exactly
   `true`, none counted towards the next while one waits, a side only 'l' or 'r', none for a duck's or peafowl's coop;
   tampering is flagged as usual.
+- **Her legs and the tree** (6 Nov, 20:23; Audrey: "when the chicken jumps her legs need to fold and have a natural
+  movement. There is clipping with the tree"): every hop of a bird with bending legs (`birds.js`, the hens and roosters,
+  the peafowl) now folds them at the top and the ankle: crouching, the feet stay put as she sinks; the push off, legs
+  straight, toes last to leave; in the air drawn up and back under her, the toes curled; reaching down and a little
+  forward to land, then folding again as she settles (was: straight legs swung from the hip). Her flutter over the fence is
+  such a hop too (it had no hop at all). The tree: its tub slimmer (0.28 m across); she stands 0.4 m from the trunk (her
+  breast clear of the tub), the apples hang just inside the crown's edge at 0.665 m, and she leaps only as high as her beak
+  needs (`A.lift`, by her size), so her head stays out of the leaves; she walks round the tub 0.42 m out; the tree stands
+  half a metre along the fence from where she goes over (towards the house where there's room), so she lands beside it.
 - **Test:** `appletest.mjs` (LANG=fr; W/H; SHOTS): 21 checks, from her card before the tree to the tampered save.
 
 ## Sideways only (6 Nov 2026, 19:29; Audrey: "also let's force the game to be sideway, it should not be player portrait")
