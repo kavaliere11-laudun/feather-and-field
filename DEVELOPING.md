@@ -133,8 +133,11 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
 - Tests are the `.mjs` files in `web3d/` (Playwright + headless Chromium, 402x874 phone size). `foxtest.mjs`, `visittest.mjs`,
   `doors.mjs`, `insideshot.mjs`, `interact.mjs`, `nesttap.mjs` and `bedtrace.mjs` are the main checks.
 - The new game is `play.html` (built from `index.html` with `body.game`): `src/game.js` (its rules and the save, every
-  field checked on load), `src/gameui.js` (its top bar, cards and welcome). It is played sideways first and checked both
-  ways: `gametest.mjs` and `eggtest.mjs` take `LANG=fr` and `W=874 H=402` (sideways).
+  field checked on load), `src/gameui.js` (its top bar, cards and welcome). **Since 6 Nov 2026 it is played sideways
+  only** (Audrey: "let's force the game to be sideway"): the iPhone app turns only sideways and a phone held upright sees
+  "Turn your phone sideways to play" (`sidewaystest.mjs`). Check new work at 874x402 (`W=874 H=402`) in both languages
+  first; the older checks still run upright (402x874) because automated browsers skip the turn screen unless they ask
+  for it with `?sideways`. `gametest.mjs` and `eggtest.mjs` take `LANG=fr` and `W=874 H=402`.
 - Deploy: `./build.sh`, then `./deploy.sh <clone of main>` (it replaces `3d/` with `dist/` and writes the usual address's
   page from it, `site.mjs`; give the 2D game's `site/` as a second folder to replace `classic/` too), commit and push.
   Since the switch (release 1 step 12, 26 Oct 2026) the usual address is the 3D game and the 2D game is in `classic/`

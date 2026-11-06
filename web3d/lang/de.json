@@ -1046,9 +1046,10 @@
  "text.apple_egg_wait": "🍎 Unter dem Baum von {name} wartet ein goldenes Ei: Tipp es an",
  "text.apple_laid": "🍎 Zwei Äpfel, und {name} hat ein goldenes Ei gelegt! Tipp es an, um es zu verkaufen",
  "text.apple_egg_sold": "Ein goldenes Ei verkauft · +{c} Münzen · +{xp} XP",
- "text.apple_planted": "🍎 Ein Apfelbaum für {name}, unseren Vielfraß: Schau zu, wie sie nach seinen Äpfeln springt",
- "text.apple_line": "🍎 Sie springt nach den Äpfeln an ihrem Baum: Nach zweien legt sie ein goldenes Ei, so viel wert wie drei Eier.",
+ "text.apple_planted": "🍎 Ein Apfelbaum für {name}, unseren Vielfraß, gleich neben ihrem Stall: Schau zu, wie sie für seine Äpfel ausbüxt",
+ "text.apple_line": "🍎 Ab und zu büxt sie über den Zaun zu ihrem Apfelbaum aus und springt nach seinen Äpfeln: Nach zweien legt sie ein goldenes Ei, so viel wert wie drei Eier.",
  "text.away_apple_egg": "{n} goldene Eier unter den Apfelbäumen",
  "text.away_apple_egg1": "Ein goldenes Ei unter dem Apfelbaum",
- "text.apple_line0": "🍎 Sobald ihr Stall geflickt ist, bekommt sie ihren eigenen Apfelbaum: Sie springt nach seinen Äpfeln und legt nach zweien ein goldenes Ei."
+ "text.apple_line0": "🍎 Sie hätte gern einen Apfelbaum gleich neben ihrem Stall: Er wird gepflanzt, sobald auf einer Seite Platz ist (auf deinem Land, abseits von Wegen und anderen Ställen).",
+ "text.sideways": "Dreh dein Handy quer, um zu spielen"
 }

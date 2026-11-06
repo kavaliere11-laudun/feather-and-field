@@ -288,7 +288,10 @@ export class GameUI {
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
     pc.append(el('div', 'glabel', this.t('personality')), ph, el('p', 'gtext', g.persLine(b.pers, b.sex, g.kindOf(b.breed))));
-    if (b.pers === 'glutton' && b.sex === 'h' && !g.kindOf(b.breed)) { const hc = g.coop(b.coop); pc.append(el('p', 'gnote gapples', this.t(hc && hc.tier >= 1 ? 'apple_line' : 'apple_line0'))); }      // (the Glutton's apples: her tree, or one to come once her coop's mended)
+    if (b.pers === 'glutton' && b.sex === 'h' && !g.kindOf(b.breed)) {      // (the Glutton's apples; her tree still to come: no room for it yet)
+      pc.append(el('p', 'gnote gapples', this.t('apple_line')));
+      const hc = g.coop(b.coop); if (!(hc && hc.ap && hc.ap.side)) pc.append(el('p', 'gnote gapples0', this.t('apple_line0')));
+    }
     body.append(pc);
     // experience: the stars, the way to the next, how they come and what they do
     const ec = el('div', 'gcard'), s = g.stars(b), part = g.starPart(b);

@@ -8,10 +8,13 @@
 //   cabbage: a few pecks at it, each sends it swinging and spinning on its string.
 //   ladder: perch by perch to the top, a look round from up there (the rooster crows), a flutter down.
 //   xylophone: pecks at its bars, a note floating up from each in the bar's colour.
-// And the Glutton's apple tree (6 Nov 2026; main.js appleTree: plot.apple), in any look's yard where it's planted: a
-// Glutton hen goes and stands under an apple, looks up at it, crouches and leaps straight up, head up and wings out, and
-// knocks it down; it falls in front of her and she eats it, three bites; after her second, she goes to the nook under the
-// tree, settles there a moment with the egg song's clucks, and gets up: an apple egg (the game: game.eatApple).
+// And the Glutton's apple tree (6 Nov 2026; main.js appleTree: plot.apple), just outside her coop's pen (Audrey: "I'd like
+// the tree outside the coop as the gluton escape to eat"): a Glutton hen goes to the side fence, flutters up and over it,
+// goes round under an apple, looks up at it, crouches and leaps straight up, head up and wings out, and knocks it down; it
+// falls in front of her and she eats it, three bites; after her second, she goes to the nook under the tree, settles there
+// a moment with the egg song's clucks, and gets up: an apple egg (the game: game.eatApple). Then back to the fence and over
+// it, home. Once she's over, she finishes her outing (the farmer coming into the pen doesn't stop her); at bedtime she's
+// back inside at once.
 // Nothing else is saved: it's just their day. A bird at play is busy (nobody calls her away; the farmer coming into the pen,
 // or bedtime, ends it).
 import * as THREE from 'three';
@@ -67,7 +70,7 @@ export function wantPlay(b) {
 export function startPlay(b, kind) {
   const T = b.plot.toys, P = T && T.P, j = b.r() - 0.5, AP = b.plot.apple;
   let C;                                             // where she might go first ({ spot, face, bath }), in order
-  if (kind === 'apple') { const S = AP && AP.pick(b); if (!S) return false; C = [{ spot: S.stand, face: S.face, slot: S }]; }      // (under the apple she's after)
+  if (kind === 'apple') { const S = AP && AP.pick(b); if (!S) return false; C = [{ spot: AP.S.inAt, face: AP.S.outA, slot: S }]; }      // (to the side fence, facing out: the apple she's after)
   else if (kind === 'swing') C = [{ spot: [P.swing.at[0] + j * 0.08, P.swing.at[1] + 0.46], face: Math.PI }];
   else if (kind === 'dust' && !P.dust.w) {          // the Cosy's tub (a round sand pit): from the side she's on, just outside it, then a hop into its middle
     const D = P.dust.at, p = b.root.position, a = Math.atan2(p.x - D[0], p.z - D[1]), R = (P.dust.r || 0.235) + 0.185;
@@ -137,7 +140,7 @@ export function playStep(b, dt) {
     if (P.kind === 'swing' && (P.phase === 'turn' || P.phase === 'ride')) next('down');
     else if (P.kind === 'ladder' && P.phase !== 'down' && P.phase !== 'walk' && P.phase !== 'face') next('down');
     else if (P.kind === 'dust' && P.phase === 'bathe') next('out');
-    else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase !== 'hop')) { endPlay(b); return o; }
+    else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase === 'face')) { endPlay(b); return o; }      // (the Glutton: unless she's over the fence already)
   }
   if (P.phase === 'walk') {                          // there, round what's in the way
     if (b.plot.farmer || b.nightNow(0.3) || P.all > 25) { endPlay(b); return o; }
@@ -155,7 +158,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'dust') next('in');
       else if (P.kind === 'cabbage') next('peck', { left: 4.5 + b.r() * 4, pk: 0 });
       else if (P.kind === 'ladder') next('climb', { step: 0, rest: 0 });
-      else if (P.kind === 'apple') next('look');
+      else if (P.kind === 'apple') next('out');
       else next('tap', { left: 3.5 + b.r() * 3, pk: 0 });
     }
     return o;
@@ -168,10 +171,29 @@ export function playStep(b, dt) {
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
 }
 
-// the Glutton's apple: look up, the leap, the apple eaten; after two, the egg (plot.apple: main.js appleTree)
+// the Glutton's apple: over the fence, round to it, look up, the leap, the apple eaten; after two, the egg; back over the
+// fence (plot.apple: main.js appleTree)
+function flutter(b, P, to, dur, o) {                 // up and over, wings going, landing on the far side
+  const p = b.root.position, u = Math.min(1, P.t / dur), e = smooth01(u);
+  p.x = P.from.x + (to[0] - P.from.x) * e; p.z = P.from.z + (to[1] - P.from.z) * e; p.y = 0.015 + 0.82 * Math.sin(u * Math.PI);
+  b.shadowY = u < 0.97 ? 0.0 : undefined; o.flap = u < 0.9 ? 1 : 0;
+  if (u >= 1) { p.y = 0.015; b.shadowY = undefined; return true; }
+  return false;
+}
+function walkOut(b, P, AP, o, dt) {                  // along her way outside (P.way), round the tub; true when there
+  const q = P.way[0], p = b.root.position;
+  if (!q) return true;
+  const r = b.stepToward(q[0], q[1], dt, 1.1, false); o.walking = r.walking;
+  if (r.arrived || Math.hypot(q[0] - p.x, q[1] - p.z) < 0.04) P.way.shift();
+  return !P.way.length || P.t > 8;
+}
 function appleStep(b, P, o, next, dt) {
   const AP = b.plot.apple, p = b.root.position;
-  if (!AP) { endPlay(b); return o; }
+  if (!AP) { if (P.phase !== 'walk') p.set(P.spot[0], 0.015, P.spot[1]); endPlay(b); return o; }      // (its tree gone: back in)
+  const S = AP.S, here = () => [p.x, p.z];
+  if (P.phase === 'out') { if (flutter(b, P, S.outAt, 0.95, o)) next('go', { way: AP.way(S.outAt, P.slot.stand) }); return o; }
+  if (P.phase === 'go') { if (walkOut(b, P, AP, o, dt)) next('aim'); return o; }
+  if (P.phase === 'aim') { const r = b.turnTo(P.slot.face, dt); o.walking = r.walking; if (r.done || P.t > 1.2) next('look'); return o; }
   if (P.phase === 'look') {                          // head back, eyes on it
     o.up = smooth01(P.t / 0.4);
     if (P.t > 0.85) next('hop');
@@ -184,7 +206,7 @@ function appleStep(b, P, o, next, dt) {
     b.shadowY = u > 0.2 && u < 0.95 ? 0.0 : undefined;
     o.up = 1; o.flap = u > 0.22 && u < 0.72 ? 0.9 : 0;
     if (u > 0.5 && !P.hit) { P.hit = true; P.got = AP.knock(b, P.slot); }
-    if (u >= 1) { p.y = P.from.y; b.shadowY = undefined; b.hopT = -1; if (P.got) next('eat', { bites: 0, got: P.got }); else endPlay(b); }
+    if (u >= 1) { p.y = P.from.y; b.shadowY = undefined; b.hopT = -1; if (P.got) next('eat', { bites: 0, got: P.got }); else next('shake'); }
     return o;
   }
   if (P.phase === 'eat') {                           // she watches it fall, then pecks it up, a bite at a time
@@ -192,17 +214,12 @@ function appleStep(b, P, o, next, dt) {
     o.peck = (P.t % 0.62) > 0.3 ? 1 : 0.25;
     const k = Math.min(3, Math.floor(P.t / 0.62));
     if (k > P.bites) { P.bites = k; AP.bite(k); }
-    if (P.t > 0.62 * 3 + 0.15) { AP.eaten(); if (P.got.egg) { AP.laying = true; next('nook', { stuck: 0 }); } else next('ruffle'); }
+    if (P.t > 0.62 * 3 + 0.15) { AP.eaten(); if (P.got.egg) { AP.laying = true; next('nook', { way: AP.way(here(), S.nook) }); } else next('shake'); }
     return o;
   }
-  if (P.phase === 'nook') {                          // two apples: to the nook under the tree, facing out
-    const q = AP.S.nook, r = b.stepToward(q[0], q[1], dt, 0.7, P.stuck < 0.6);
-    o.walking = r.walking; P.stuck = r.blocked ? P.stuck + dt : 0;
-    if (r.arrived || Math.hypot(q[0] - p.x, q[1] - p.z) < 0.05 || P.t > 4) next('settle');
-    return o;
-  }
-  if (P.phase === 'settle') {
-    const r = b.turnTo(AP.S.nookA, dt); o.walking = r.walking;
+  if (P.phase === 'nook') { if (walkOut(b, P, AP, o, dt)) next('settle'); return o; }      // (two apples: to the nook under the tree)
+  if (P.phase === 'settle') {                        // (facing out from the tree)
+    const r = b.turnTo(S.nookA, dt); o.walking = r.walking;
     if (r.done || P.t > 1.2) next('lay');
     return o;
   }
@@ -212,18 +229,24 @@ function appleStep(b, P, o, next, dt) {
     if (P.t > 2.6) {
       AP.laid(b);
       let to = null;                                 // (off it, to one side: not between it and the camera, so it's seen)
-      for (const da of [1.6, -1.6, 2.2, -2.2, 1.1, -1.1, 0]) { const a = AP.S.nookA + da, q = [p.x + Math.sin(a) * 0.3, p.z + Math.cos(a) * 0.3]; if (b.free(q[0], q[1])) { to = q; break; } }
-      next('off', { to: to || [p.x, p.z] });
+      for (const da of [1.6, -1.6, 2.2, -2.2, 1.1, -1.1, 0]) { const a = S.nookA + da, q = [p.x + Math.sin(a) * 0.3, p.z + Math.cos(a) * 0.3]; if (AP.free(q[0], q[1])) { to = q; break; } }
+      next('off', { to: to || here() });
     }
     return o;
   }
   if (P.phase === 'off') {                           // a step off it
-    const r = b.stepToward(P.to[0], P.to[1], dt, 0.8, P.t < 0.6); o.walking = r.walking;      // (her first steps over the egg, whatever's said about who's near)
-    if (r.arrived || P.t > 2) next('ruffle');
+    const r = b.stepToward(P.to[0], P.to[1], dt, 0.8, false); o.walking = r.walking;
+    if (r.arrived || P.t > 2) next('shake');
     return o;
   }
-  o.ruffle = Math.sin(Math.min(1, P.t / 0.75) * Math.PI);      // (a happy shake)
-  if (P.t > 0.75) endPlay(b);
+  if (P.phase === 'shake') {                         // a happy shake
+    o.ruffle = Math.sin(Math.min(1, P.t / 0.75) * Math.PI);
+    if (P.t > 0.75) next('home', { way: AP.way(here(), S.outAt) });
+    return o;
+  }
+  if (P.phase === 'home') { if (walkOut(b, P, AP, o, dt)) next('turnin'); return o; }      // (back to the fence)
+  if (P.phase === 'turnin') { const r = b.turnTo(S.outA + Math.PI, dt); o.walking = r.walking; if (r.done || P.t > 1.2) next('in'); return o; }
+  if (P.phase === 'in') { if (flutter(b, P, S.inAt, 0.95, o)) endPlay(b); return o; }      // (over, and home)
   return o;
 }
 

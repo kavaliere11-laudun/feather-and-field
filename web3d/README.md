@@ -4049,35 +4049,53 @@ Her notes while playing build 10, and what changed:
   `@capacitor/splash-screen` 8.0.2 (`launchAutoHide: false`): it keeps the launch picture up until main.js has the
   loading picture decoded (`SplashScreen.hide` through `Capacitor.nativePromise`, as notify.js does; at most 4 s).
 
-## The Glutton's apples and her apple egg (6 Nov 2026; Audrey: "Do we still have the apple trees for the gloutons chickens?"; then "Yes, with the apple egg")
+## The Glutton's apples and her apple egg (6 Nov 2026; Audrey: "Do we still have the apple trees for the gloutons chickens?"; then "Yes, with the apple egg"; then "I'd like the tree outside the coop as the gluton escape to eat")
 They were in the Unity version only. Now in the game:
 - **The tree** (`stylized/village3d.py apple_tub_v`, exported with `export_village3d.py apple_tub` and spliced into
   `village.glb`, about 3,600 triangles): a little apple tree in an oak half-barrel (two iron hoops, dark earth), a short
   crooked trunk, a round crown of small oval leaves over a dark core, lighter on top; about 1.05 m high. No apples on
   the model: the browser hangs them (`main.js` appleGeo: round, rosy red with a yellow-green cheek, a stalk and a leaf).
-- **Planted** (`game.js` plantApples, checked every 3 s by `main.js` tickApples) in a chicken coop the first time a grown
-  Glutton hen lives there and it's been mended at least (the Rustic pen is too small: in a Rustic coop her card says
-  "Once her coop is mended, she'll have an apple tree of her own…"); kept after. The hint: "An apple tree for X the
-  Glutton: watch her hop for its apples". Not for the call ducks or the peafowl.
-- **Where** (`main.js` appleSpot): in its yard, clear of everything in it (feeder, dish, hay, ramp, play things, the
-  Christmas tree, the nest's let-down door), of the farmer's ways (gate to the nest and the feeder) and the hens' way down
-  the ramp, as near a back corner (by the house) as there's room; a little narrower in a small yard. The birds walk round
-  its tub (it's in the pen's obstacles; the farmer's spots are worked out again). Its four apples hang under the crown's
-  edge on the side the camera's on by default (so she and they aren't hidden behind the crown), each with a spot to stand
-  under it; the egg's nook between two of them.
+- **Outside the coop** (her second note, 19:23): it stands half a metre out from one side fence of the pen, in a corner
+  0.95 m wide that the coop's footprint takes in (`main.js` APPLE_STRIP, footOf/footBase): nothing else can be put
+  there, the farmer and the animals walk round it, it moves with the coop, and the bigger pens of the upgrades keep it
+  beside them. The side: the one the camera sees first, where the coop with its corner could stand as it is (clear of
+  lanes, other coops and buildings, on the farm's own land: coopSpot) and there's a clear spot by that fence to go over
+  from (`appleSideFor`, `appleSpot`); the trees, bushes and rocks there cleared. If neither side has room it waits (tried
+  again every minute); her card then says "She'd love an apple tree just outside her coop: it's planted as soon as
+  there's room on one side of it". A coop is never moved for its tree: on opening, or when an upgrade has no room with
+  it, the tree comes off (`game.appleOff`) and is planted again where there's room. Not for the ducks or the peafowl.
+- **Planted** (`game.js` plantApple, checked every 3 s by `main.js` tickApples) the first time a grown Glutton hen lives
+  in a chicken coop, any look, the Rustic too. The hint: "An apple tree for X the Glutton, just outside her coop: watch
+  her slip out for its apples". Its four apples hang under the crown's edge on the side the camera's on by default.
 - **The apples** (`game.js` APPLES): one ripens every 3 hours, 4 at most, also while the game's closed; a new tree has 2.
-- **Her outing** (`play.js` 'apple', like the toys; only while you watch): now and then (every 25 to 60 s at most, while
-  there's an apple and no egg waiting) she goes and stands under one, looks up (a new `up` pose in `birds.js`: chest up,
-  beak to the sky), crouches and leaps straight up, wings out, and knocks it down (`game.eatApple`: saved at once); it
-  falls spinning in front of her and she eats it in three bites, then a happy shake.
+- **Her escape** (`play.js` 'apple', like the toys; only while you watch, every 25 to 60 s at most, while there's an apple
+  and no egg waiting): she goes to the side fence, flutters up and over it (0.8 m up, wings going), walks round the tub
+  to an apple, looks up at it (an `up` pose in `birds.js`: chest up, beak to the sky), crouches and leaps straight up and
+  knocks it down (`game.eatApple`: saved at once); it falls spinning in front of her and she eats it in three bites; a
+  happy shake, back to the fence and over it, home. Once she's over, the farmer coming into the pen doesn't stop her; at
+  bedtime she's back inside at once.
 - **The apple egg:** after her second apple she goes to the nook under the tree, settles there with the egg song, gets
-  up and steps aside: a golden egg (rosy gold, a soft glow now and then), bigger than a hen's egg. The hint: "Two apples,
-  and X laid an apple egg! Tap it to sell it". A tap: it lifts and spins away, sold for three of her breed's eggs and
-  3 XP (`game.sellAppleEgg`). No outing while it's waiting. The welcome-back summary says when one is.
+  up and steps aside: a golden egg (rosy gold, a soft glow now and then), bigger than a hen's egg, lying in the grass
+  under the tree. The hint: "Two apples, and X laid an apple egg! Tap it to sell it". A tap: it lifts and spins away,
+  sold for three of her breed's eggs and 3 XP (`game.sellAppleEgg`). No escape while it's waiting. The welcome-back
+  summary says when one is.
 - **A tap on the tree:** how many apples are on it, or when the next one's ripe, or that an egg's waiting.
-- **Her card:** "She hops up for the apples on her tree: after two, she lays an apple egg, worth three eggs."
+- **Her card:** "Now and then she slips out over the fence to her apple tree and hops for its apples: after two, she lays
+  an apple egg, worth three eggs."
 - **Six languages** (the egg is an "œuf doré" in French, "goldenes Ei", "huevo dorado", "uovo d'oro", "ovo dourado").
-- **Saving and security:** each chicken coop's `ap` { apples then, when the last ripened, eaten towards the next egg,
-  an egg waiting } is checked on load: four apples at most, never ahead of now, an egg only if exactly `true`, none
-  counted towards the next while one waits, none in a Rustic coop or a duck's or peafowl's; tampering is flagged as usual.
-- **Test:** `appletest.mjs` (LANG=fr; W/H; SHOTS): 19 checks, from the Rustic coop's card to the tampered save.
+- **Saving and security:** each chicken coop's `ap` { apples then, when the last ripened, eaten towards the next egg, an
+  egg waiting, its side 'l' or 'r' } is checked on load: four apples at most, never ahead of now, an egg only if exactly
+  `true`, none counted towards the next while one waits, a side only 'l' or 'r', none for a duck's or peafowl's coop;
+  tampering is flagged as usual.
+- **Test:** `appletest.mjs` (LANG=fr; W/H; SHOTS): 21 checks, from her card before the tree to the tampered save.
+
+## Sideways only (6 Nov 2026, 19:29; Audrey: "also let's force the game to be sideway, it should not be player portrait")
+- **The iPhone app** turns only sideways (`app/ios/App/App/Info.plist` UISupportedInterfaceOrientations: landscape right
+  and left; the app is iPhone-only, so no iPad rules apply).
+- **On the website**, a phone or tablet held upright (`(orientation: portrait) and (pointer: coarse)`) sees `#sideways`
+  over everything: the tall painted picture, "Feather & Field", a phone outline turning, and "Turn your phone sideways
+  to play" ("Tournez votre téléphone à l'horizontale pour jouer", six languages, `main.js` turnSideways, the words again
+  on each turn). The web app's manifest already asks for landscape, and `screen.orientation.lock('landscape')` is tried
+  where a browser has it. A computer's window plays as before, whatever its shape.
+- **The checks:** automated browsers (navigator.webdriver) see the farm upright as before unless they ask with
+  `?sideways`, so the older portrait checks still run; `sidewaystest.mjs` (LANG=fr) checks the screen itself.

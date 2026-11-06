@@ -229,7 +229,7 @@ export const TEXT = {
     nudge_t: 'Keep your farm safe', nudge_how: 'Sign in with Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.',
     nudge_later: 'Not now', nudge_note: 'It’s up to you: you can sign in any time in Settings.', welcome_signin: 'Have a farm saved online? Sign in',
     privacy: 'Privacy',                                            // (the privacy page: privacy.mjs)
-    loading: 'Loading your farm…',
+    loading: 'Loading your farm…', sideways: 'Turn your phone sideways to play',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.', lays_sil: 'Lays about an egg a day, {p} coins each: Silkies are better mums than layers.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
     eggs_fresh1: '1 fresh egg sold · +{c} coins · +{xp} XP', eggs_fresh: '{n} eggs sold · +{c} coins · {f} fresh: +{xp} XP',
@@ -251,9 +251,9 @@ export const TEXT = {
     feather_sold1: 'A peacock feather sold · +{c} coins',
     apple_tree: '🍎 {n} apples on {name}’s tree', apple_tree1: '🍎 An apple on {name}’s tree', apple_tree0: '🍎 No apples on {name}’s tree yet: the next one in {t}',
     apple_egg_wait: '🍎 An apple egg is waiting under {name}’s tree: tap it', apple_laid: '🍎 Two apples, and {name} laid an apple egg! Tap it to sell it',
-    apple_egg_sold: 'An apple egg sold · +{c} coins · +{xp} XP', apple_planted: '🍎 An apple tree for {name} the Glutton: watch her hop for its apples',
-    apple_line: '🍎 She hops up for the apples on her tree: after two, she lays an apple egg, worth three eggs.',
-    apple_line0: '🍎 Once her coop is mended, she’ll have an apple tree of her own: she’ll hop for its apples, and after two lay an apple egg.',
+    apple_egg_sold: 'An apple egg sold · +{c} coins · +{xp} XP', apple_planted: '🍎 An apple tree for {name} the Glutton, just outside her coop: watch her slip out for its apples',
+    apple_line: '🍎 Now and then she slips out over the fence to her apple tree and hops for its apples: after two, she lays an apple egg, worth three eggs.',
+    apple_line0: '🍎 She’d love an apple tree just outside her coop: it’s planted as soon as there’s room on one side of it (your own land, clear of lanes and other coops).',
     honey_sold: '{n} jars of honey sold · +{c} coins', honey_sold1: 'A jar of honey sold · +{c} coins',
     // fishing (release 5)
     fish_rudd: 'Rudd', fish_roach: 'Roach', fish_perch: 'Perch', fish_tench: 'Tench', fish_golden_tench: 'Golden tench', fish_koi: 'Koi', fish_big_bertha: 'Big Bertha',
@@ -510,7 +510,7 @@ export const TEXT = {
     nudge_t: 'Mettez votre ferme à l’abri', nudge_how: 'Connectez-vous avec Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.',
     nudge_later: 'Plus tard', nudge_note: 'C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages.', welcome_signin: 'Une ferme enregistrée en ligne ? Connectez-vous',
     privacy: 'Confidentialité',
-    loading: 'Chargement de votre ferme…',
+    loading: 'Chargement de votre ferme…', sideways: 'Tournez votre téléphone à l’horizontale pour jouer',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.', lays_sil: 'Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
     eggs_fresh1: '1 œuf tout frais vendu · +{c} pièces · +{xp} XP', eggs_fresh: '{n} œufs vendus · +{c} pièces · {f} tout frais : +{xp} XP',
@@ -532,9 +532,9 @@ export const TEXT = {
     feather_sold1: 'Une plume de paon vendue · +{c} pièces',
     apple_tree: '🍎 {n} pommes sur l’arbre de {name}', apple_tree1: '🍎 Une pomme sur l’arbre de {name}', apple_tree0: '🍎 Pas encore de pomme sur l’arbre de {name} : la prochaine dans {t}',
     apple_egg_wait: '🍎 Un œuf doré attend sous l’arbre de {name} : touchez-le', apple_laid: '🍎 Deux pommes, et {name} a pondu un œuf doré ! Touchez-le pour le vendre',
-    apple_egg_sold: 'Un œuf doré vendu · +{c} pièces · +{xp} XP', apple_planted: '🍎 Un pommier pour {name} la Gourmande : regardez-la sauter pour ses pommes',
-    apple_line: '🍎 Elle saute pour attraper les pommes de son arbre : après deux, elle pond un œuf doré, qui vaut trois œufs.',
-    apple_line0: '🍎 Une fois son poulailler rafistolé, elle aura son propre pommier : elle sautera pour en attraper les pommes, et après deux, pondra un œuf doré.',
+    apple_egg_sold: 'Un œuf doré vendu · +{c} pièces · +{xp} XP', apple_planted: '🍎 Un pommier pour {name} la Gourmande, juste à côté de son poulailler : regardez-la s’échapper pour ses pommes',
+    apple_line: '🍎 De temps en temps, elle s’échappe par-dessus la clôture jusqu’à son pommier et saute pour attraper ses pommes : après deux, elle pond un œuf doré, qui vaut trois œufs.',
+    apple_line0: '🍎 Elle rêve d’un pommier juste à côté de son poulailler : il sera planté dès qu’il y aura de la place d’un côté (sur vos terres, loin des chemins et des autres poulaillers).',
     honey_sold: '{n} pots de miel vendus · +{c} pièces', honey_sold1: 'Un pot de miel vendu · +{c} pièces',
     // la pêche (version 5)
     fish_rudd: 'Rotengle', fish_roach: 'Gardon', fish_perch: 'Perche', fish_tench: 'Tanche', fish_golden_tench: 'Tanche dorée', fish_koi: 'Koï', fish_big_bertha: 'Grosse Berthe',
@@ -862,8 +862,9 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // drops a feather from his train in his yard, three lying there at most; a tap on one: picked up and sold, a fine one
 export const FEATHERS = { every: 12 * 3600e3, max: 3, price: 40, xp: 5 };
 // ---- the Glutton's apples (6 Nov 2026, Audrey: "Do we still have the apple trees for the gloutons chickens?"; then "Yes,
-// with the apple egg", as in the Unity version): a little apple tree in a tub, planted in the yard of a chicken coop the
-// first time a Glutton hen lives there and it's been mended at least (the Rustic pen has no room for it), kept after. An apple ripens on it every 3 hours, 4 at most (also while the game's
+// with the apple egg", as in the Unity version; then "I'd like the tree outside the coop as the gluton escape to eat"): a
+// little apple tree in a tub just outside a chicken coop's pen, on one side of it (side: 'l' or 'r', where there's room:
+// main.js), planted the first time a Glutton hen lives there, kept after (it moves with the coop). An apple ripens on it every 3 hours, 4 at most (also while the game's
 // closed); while you watch, now and then she hops up, knocks one down and eats it; after two, she lays an apple egg by the
 // tree (not while one's waiting there): a tap, and it's sold for 3 of her breed's eggs
 export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3, xp: 3 };
@@ -1070,7 +1071,8 @@ export function checkFarm(d, now = Date.now()) {
       ...(typeof c.dress === 'string' && dresses.includes(c.dress) ? { dress: c.dress } : {}),      // (a seasonal dress it wears: one owned)
       ...(Array.isArray(c.lt) ? { lt: layTimesKept(c.lt, int(c.eggs, 0, NEST_MAX, 0), now) } : {}),      // (when its eggs were laid: fresh ones earn more)
       ...(c.breed === 'pea' ? { fe: { n: int(c.fe && c.fe.n, 0, FEATHERS.max, 0), at: int(c.fe && c.fe.at, 0, now, now) } } : {}),      // (the peacock's feathers lying in his yard, and when the last one came: never ahead of now)
-      ...(c.ap && typeof c.ap === 'object' && !kindOf(c.breed) && int(c.tier, 0, 4, 0) >= 1 ? { ap: { n: int(c.ap.n, 0, APPLES.max, 0), at: int(c.ap.at, 0, now, now), ate: c.ap.egg === true ? 0 : int(c.ap.ate, 0, APPLES.perEgg - 1, 0), egg: c.ap.egg === true } } : {}) });      // (a chicken coop's apple tree: its apples then and when the last one ripened (never ahead of now), the apples eaten towards the next egg (none while one's waiting), an apple egg waiting)      // (the peacock's feathers lying in his yard, and when the last one came: never ahead of now)
+      ...(c.ap && typeof c.ap === 'object' && !kindOf(c.breed) ? { ap: { n: int(c.ap.n, 0, APPLES.max, 0), at: int(c.ap.at, 0, now, now), ate: c.ap.egg === true ? 0 : int(c.ap.ate, 0, APPLES.perEgg - 1, 0), egg: c.ap.egg === true,
+        ...(c.ap.side === 'l' || c.ap.side === 'r' ? { side: c.ap.side } : {}) } } : {}) });      // (a chicken coop's apple tree: its apples then and when the last one ripened (never ahead of now), the apples eaten towards the next egg (none while one's waiting), an apple egg waiting, which side of the pen it stands)      // (the peacock's feathers lying in his yard, and when the last one came: never ahead of now)
   }
   out.birds = [];
   const ids = new Set();
@@ -1632,16 +1634,18 @@ export class Game {
   }
   // ---- the peacock's feathers: how many lie in his yard now; one picked up (sold)
   feathersAt(c, now = Date.now()) { const F = c && c.breed === 'pea' && c.fe; if (!F) return 0; return Math.min(FEATHERS.max, F.n + Math.floor(Math.max(0, now - F.at) / FEATHERS.every)); }
-  // ---- the Glutton's apples: her coop's grown Glutton hens; a tree planted in each chicken coop where one lives now that
-  // has none yet (with a couple of apples on it already: the coops planted); the apples on a coop's tree now; one knocked
-  // down and eaten by one of its Glutton hens (not while an apple egg's waiting: after two, one is); the apple egg sold
+  // ---- the Glutton's apples: her coop's grown Glutton hens; the chicken coops where one lives with no tree beside them
+  // (yet, or no room for it where it was); a tree planted on one side of a coop's pen (the first: a couple of apples on it
+  // already), or taken off that side (null: no room there any more); the apples on a coop's tree now; one knocked down and
+  // eaten by one of its Glutton hens (not while an apple egg's waiting: after two, one is); the apple egg sold
   gluttons(c) { return c && !kindOf(c.breed) ? this.birdsIn(c.id).filter(b => b.pers === 'glutton' && b.sex === 'h') : []; }
-  plantApples(now = Date.now()) {
-    const out = [];
-    for (const c of this.data.coops) if (!c.ap && c.tier >= 1 && this.gluttons(c).length) { c.ap = { n: APPLES.first, at: now, ate: 0, egg: false }; out.push(c.id); }
-    if (out.length) this.save();
-    return out;
+  appleWants() { return this.data.coops.filter(c => !(c.ap && c.ap.side) && this.gluttons(c).length); }
+  plantApple(coopId, side, now = Date.now()) {
+    const c = this.coop(coopId); if (!c || kindOf(c.breed) || (side !== 'l' && side !== 'r')) return null;
+    if (!c.ap) c.ap = { n: APPLES.first, at: now, ate: 0, egg: false };
+    c.ap.side = side; this.save(); return c.ap;
   }
+  appleOff(coopId) { const c = this.coop(coopId); if (c && c.ap && c.ap.side) { delete c.ap.side; this.save(); } }
   applesAt(c, now = Date.now()) { const A = c && c.ap; if (!A) return 0; return Math.min(APPLES.max, A.n + Math.floor(Math.max(0, now - A.at) / APPLES.every)); }
   appleNext(c, now = Date.now()) { const A = c && c.ap; if (!A || this.applesAt(c, now) >= APPLES.max) return 0; return APPLES.every - (Math.max(0, now - A.at) % APPLES.every); }      // (ms till the next one ripens: 0 when it's full)
   eatApple(coopId, birdId, now = Date.now()) {

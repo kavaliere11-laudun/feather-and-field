@@ -1046,9 +1046,10 @@
  "text.apple_egg_wait": "🍎 Un uovo d’oro aspetta sotto l’albero di {name}: toccalo",
  "text.apple_laid": "🍎 Due mele, e {name} ha fatto un uovo d’oro! Toccalo per venderlo",
  "text.apple_egg_sold": "Un uovo d’oro venduto · +{c} monete · +{xp} XP",
- "text.apple_planted": "🍎 Un melo per {name}, la Golosa: guardala saltare per prendere le sue mele",
- "text.apple_line": "🍎 Salta per prendere le mele del suo albero: dopo due, fa un uovo d’oro, che vale tre uova.",
+ "text.apple_planted": "🍎 Un melo per {name}, la Golosa, proprio accanto al suo pollaio: guardala scappare per le sue mele",
+ "text.apple_line": "🍎 Ogni tanto scappa oltre il recinto fino al suo melo e salta per prenderne le mele: dopo due, fa un uovo d’oro, che vale tre uova.",
  "text.away_apple_egg": "{n} uova d’oro sotto i meli",
  "text.away_apple_egg1": "Un uovo d’oro sotto il melo",
- "text.apple_line0": "🍎 Appena il suo pollaio sarà rattoppato, avrà un melo tutto suo: salterà per prenderne le mele e, dopo due, farà un uovo d’oro."
+ "text.apple_line0": "🍎 Le piacerebbe un melo accanto al suo pollaio: verrà piantato appena ci sarà spazio su un lato (sulla tua terra, lontano dai sentieri e dagli altri pollai).",
+ "text.sideways": "Gira il telefono in orizzontale per giocare"
 }

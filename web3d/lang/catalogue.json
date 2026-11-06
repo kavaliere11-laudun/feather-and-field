@@ -2645,6 +2645,11 @@
   "fr": "Chargement de votre ferme…"
  },
  {
+  "id": "text.sideways",
+  "en": "Turn your phone sideways to play",
+  "fr": "Tournez votre téléphone à l’horizontale pour jouer"
+ },
+ {
   "id": "text.eggs",
   "en": "Eggs",
   "fr": "Œufs"
@@ -2951,13 +2956,18 @@
  },
  {
   "id": "text.apple_planted",
-  "en": "🍎 An apple tree for {name} the Glutton: watch her hop for its apples",
-  "fr": "🍎 Un pommier pour {name} la Gourmande : regardez-la sauter pour ses pommes"
+  "en": "🍎 An apple tree for {name} the Glutton, just outside her coop: watch her slip out for its apples",
+  "fr": "🍎 Un pommier pour {name} la Gourmande, juste à côté de son poulailler : regardez-la s’échapper pour ses pommes"
  },
  {
   "id": "text.apple_line",
-  "en": "🍎 She hops up for the apples on her tree: after two, she lays an apple egg, worth three eggs.",
-  "fr": "🍎 Elle saute pour attraper les pommes de son arbre : après deux, elle pond un œuf doré, qui vaut trois œufs."
+  "en": "🍎 Now and then she slips out over the fence to her apple tree and hops for its apples: after two, she lays an apple egg, worth three eggs.",
+  "fr": "🍎 De temps en temps, elle s’échappe par-dessus la clôture jusqu’à son pommier et saute pour attraper ses pommes : après deux, elle pond un œuf doré, qui vaut trois œufs."
+ },
+ {
+  "id": "text.apple_line0",
+  "en": "🍎 She’d love an apple tree just outside her coop: it’s planted as soon as there’s room on one side of it (your own land, clear of lanes and other coops).",
+  "fr": "🍎 Elle rêve d’un pommier juste à côté de son poulailler : il sera planté dès qu’il y aura de la place d’un côté (sur vos terres, loin des chemins et des autres poulaillers)."
  },
  {
   "id": "text.honey_sold",

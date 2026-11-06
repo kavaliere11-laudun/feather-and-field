@@ -456,11 +456,23 @@ function retireOldCache() {
     if (window.caches) caches.keys().then(ks => { for (const k of ks) if (/^ff-/.test(k)) caches.delete(k); }).catch(() => {});
   } catch (e) { /* */ }
 }
+// sideways only (Audrey, 6 Nov: "let's force the game to be sideway, it should not be player portrait"): held upright, the
+// game's covered by "Turn your phone sideways to play" (index.html #sideways), in the game's language (again on each turn,
+// it may have changed); where the browser can, it's asked to stay sideways. (Automated checks see the farm upright as
+// before, unless they ask for this with ?sideways.)
+function turnSideways() {
+  const el = document.getElementById('sideways'); if (!el) return;
+  if (navigator.webdriver && !params.has('sideways')) document.body.classList.add('gsideways-off');
+  const say = () => { el.querySelector('.msg').textContent = game.t('sideways'); };
+  say(); addEventListener('resize', say);
+  try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* */ }
+}
 async function start() {
   let welcome = null;
   if (GAME_MODE) {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
+    turnSideways();
     gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
@@ -1662,6 +1674,7 @@ function buildNav(wild = false) {
     const PP = pl.kind === 'coop' ? penOf(pl).pen : null;      // (its own pen: bigger with its look, release 4)
     const lo = PP ? new THREE.Vector3(PP.min[0] - 0.01, 0, PP.min[2] - 0.01) : new THREE.Vector3(-1.56, 0, -1.3);
     const hi = PP ? new THREE.Vector3(PP.max[0] + 0.01, 0, PP.max[2] + 0.05) : new THREE.Vector3(1.82, 0, 1.68);
+    if (pl.apple) { const R = pl.apple.S.strip; lo.x = Math.min(lo.x, R[0]); hi.x = Math.max(hi.x, R[2]); }      // (the Glutton's apple tree's corner)
     wb.makeEmpty(); for (const x of [lo.x, hi.x]) for (const z of [lo.z, hi.z]) wb.expandByPoint(frame.localToWorld(new THREE.Vector3(x, 0, z)));
     // the plot and a margin round it (a fox's brush sweeps wide as he turns), but where a path runs through the margin, only
     // the plot itself: the paths between plots and to their gates stay open (plots corner to corner could shut them in)
@@ -4335,14 +4348,15 @@ function featherTap(plot, i) {
   wake(1500);
 }
 // ---- the Glutton's apples (6 Nov 2026, Audrey: "Do we still have the apple trees for the gloutons chickens?"; "Yes, with
-// the apple egg"): her coop's little apple tree in its tub (village.glb apple_tub: stylized/village3d.py apple_tub_v),
-// planted the first time a Glutton hen lives there (game.plantApples), at a spot of its own in the yard (appleSpot): clear
-// of what's in it, of the farmer's ways to the nest, the feeder and the gate, and of the ramp, as near a back corner (by
-// the house) as there's room; the birds walk round its tub. Its apples (game.applesAt) hang under the crown's edge on the
-// sides she can stand under; now and then while you watch, she goes and hops for one (play.js 'apple'): it falls in
-// front of her and she eats it (game.eatApple); after two, she settles under the tree and lays an apple egg there. A tap
-// on the egg: sold (game.sellAppleEgg); on the tree: how many apples it has, or when the next one's ripe
-const APPLE_R = 0.19, APPLE_HANG = 0.61, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
+// the apple egg"; then "I'd like the tree outside the coop as the gluton escape to eat"): her coop's little apple tree in
+// its tub (village.glb apple_tub: stylized/village3d.py apple_tub_v), just outside the pen on one side (the coop's
+// footprint takes in a strip there, APPLE_STRIP: nothing else stands on it, it moves with the coop), planted the first time
+// a Glutton hen lives there, on the side the camera sees if there's room (appleSideFor; game.plantApple). Its apples
+// (game.applesAt) hang under the crown's edge on the sides she can stand under; now and then while you watch she escapes:
+// over the side fence with a flutter, round to an apple, a hop for it (play.js 'apple'); it falls in front of her and she
+// eats it (game.eatApple); after two she settles under the tree and lays an apple egg there; then back over the fence. A
+// tap on the egg: sold (game.sellAppleEgg); on the tree: how many apples it has, or when the next one's ripe
+const APPLE_HANG = 0.61, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
 let APPLE_GEO = null, APPLE_MAT = null, AEGG_MAT = null;
 function appleGeo() {
   if (APPLE_GEO) return APPLE_GEO;
@@ -4376,66 +4390,70 @@ function appleEggMat() {
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   return (AEGG_MAT = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffc35a, emissiveIntensity: 0.15, roughness: 0.28, metalness: 0.35 }));
 }
-// where the tree stands in this coop's yard ({ at: [x, z], s: its width, 1 or a little narrower in a small yard }), its
-// apples (each where it hangs, and where she stands under it facing the trunk) and the nook where she lays (on the side
-// the camera's on by default, so she and they are seen, not hidden behind its crown); null: no room for it
-function appleSpot(plot) {
-  const pen = plot.pen, Y = pen.yard, obs = pen.obstacles, blk = plot.block0 || [], N = nestOf(plot) || {};
-  const gate = [pen.gate[0], Y.max[2] + 0.1], foot = N.foot || [-0.31, 1.1], fd = [pen.feeder[0], pen.feeder[2]];
-  const ways = [[...gate, ...foot], [...gate, ...fd], [...foot, ...fd]];      // (the farmer's ways in the pen, and the hens' down the ramp to the gate)
-  const free = (x, z, r) => x > Y.min[0] + 0.1 && x < Y.max[0] - 0.1 && z > Y.min[2] + 0.04 && z < Y.max[2] - 0.08 &&
-    !obs.some(o => Math.hypot(x - o[0], z - o[2]) < o[3] + r) && !blk.some(o => Math.hypot(x - o[0], z - o[1]) < o[2] + r);
-  const corners = [[Y.min[0] + 0.32, Y.min[2] + 0.22], [Y.max[0] - 0.32, Y.min[2] + 0.22]];
+// the Glutton's corner beside a coop's pen on its side ('l' or 'r'), in its yard's own frame: [x0, z0, x1, z1]
+const APPLE_STRIP = 0.95;
+function appleStrip(gc, side) {
+  const F = footBase(gc), sx = COOP_SHIFT.x, sz = COOP_SHIFT.z;
+  return side === 'l' ? [F.x0 - APPLE_STRIP - sx, F.z0 - sz, F.x0 - sx, F.z1 - sz] : [F.x1 - sx, F.z0 - sz, F.x1 + APPLE_STRIP - sx, F.z1 - sz];
+}
+// where the tree stands in it (by the yard's back, half a metre out from the fence), where she goes over the fence (a
+// clear spot inside by the side fence, a little in front of the tree, and where she lands outside), its apples (each where
+// it hangs, and where she stands under it facing the trunk) and the nook where she lays (on the side the camera's on by
+// default, so she and they are seen, not hidden behind its crown); null: no way over to it
+function appleSpot(plot, side) {
+  const R = appleStrip(plot.gc, side), pen = plot.pen, Y = pen.yard, obs = pen.obstacles, blk = plot.block0 || [], out = side === 'l' ? -1 : 1;
+  const fence = side === 'l' ? R[2] : R[0], tx = fence + out * 0.5, tz = Math.max(R[1] + 0.45, Math.min(R[3] - 0.7, Y.min[2] + 0.3));
+  const inStrip = (x, z, m = 0.1) => x > R[0] + m && x < R[2] - m && z > R[1] + m && z < R[3] - m;
+  const inYard = (x, z) => x > Y.min[0] + 0.05 && x < Y.max[0] - 0.05 && z > Y.min[2] + 0.06 && z < Y.max[2] - 0.12 &&
+    !obs.some(o => Math.hypot(x - o[0], z - o[2]) < o[3] + 0.14) && !blk.some(o => Math.hypot(x - o[0], z - o[1]) < o[2] + 0.14);
+  const xin = side === 'l' ? Y.min[0] + 0.1 : Y.max[0] - 0.1, xout = fence + out * 0.2;
+  let zc = null;
+  for (const dz of [0.45, 0.6, 0.3, 0.75, 0.9, 0.15, 1.05, 0, 1.2]) { const z = tz + dz; if (inYard(xin, z) && inStrip(xout, z) && Math.hypot(xout - tx, z - tz) > 0.3) { zc = +z.toFixed(3); break; } }
+  if (zc === null) return null;
   const yaw = plot.group.rotation.y, cx = Math.sin(VIEW_AZ0), cz = Math.cos(VIEW_AZ0);
   const camA = Math.atan2(cx * Math.cos(yaw) - cz * Math.sin(yaw), cx * Math.sin(yaw) + cz * Math.cos(yaw));      // (the camera's side, in the yard's own frame)
-  const seen = a => Math.abs(wrapA(a - camA)) < 1.75;
-  for (const [s, wg, ns, om] of [[1, 0.34, 6, 0.06], [0.85, 0.34, 6, 0.06], [0.75, 0.24, 4, 0.03]]) {      // (full size; a little narrower; a small yard's, nearer the farmer's ways)
-    const TR = APPLE_R * s, ST = Math.max(0.29 * s, 0.17 * s + 0.13);
-    let best = null;
-    for (let x = Y.min[0] + 0.2; x <= Y.max[0] - 0.2; x += 0.05) for (let z = Y.min[2] + 0.2; z <= Y.max[2] - 0.25; z += 0.05) {
-      if (!free(x, z, TR + om) || ways.some(L => laneDist(x, z, L) < TR + wg)) continue;
-      const stand = [];
-      for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, q = [x + Math.sin(a) * ST, z + Math.cos(a) * ST]; if (free(q[0], q[1], 0.12)) stand.push(a); }
-      if (stand.length < ns) continue;
-      const vis = stand.filter(seen).length;
-      const d = Math.min(...corners.map(c => Math.hypot(x - c[0], z - c[1]))) - 0.03 * stand.length - 0.06 * Math.min(vis, 5);
-      if (!best || d < best.d) best = { d, x: +x.toFixed(3), z: +z.toFixed(3), s, ST, stand, vis };
-    }
-    if (best) {
-      // (its apples: on the camera's side if there's room for her there, the first nearest the camera, then spread round;
-      // the egg's nook between two of them, a step further out)
-      const A = best.vis >= 3 ? best.stand.filter(seen) : best.stand, slots = [], gap = a => Math.min(...slots.map(q => Math.abs(wrapA(a - q.a))), 9);
-      while (slots.length < APPLES_RULE.max) {
-        let pick = null;
-        for (const a of A) if (pick === null || (slots.length ? gap(a) > gap(pick) : Math.abs(wrapA(a - camA)) < Math.abs(wrapA(pick - camA)))) pick = a;
-        if (pick === null || (slots.length && gap(pick) < 0.38)) break;
-        const hr = 0.17 * best.s, y = APPLE_HANG + (slots.length % 2 ? 0.01 : -0.008);
-        slots.push({ a: pick, hang: [best.x + Math.sin(pick) * hr, y, best.z + Math.cos(pick) * hr], stand: [best.x + Math.sin(pick) * best.ST, best.z + Math.cos(pick) * best.ST], face: pick + Math.PI });
-      }
-      let nook = null; for (const a of A) { const q = [best.x + Math.sin(a) * (best.ST + 0.05), best.z + Math.cos(a) * (best.ST + 0.05)]; if (free(q[0], q[1], 0.12) && (!nook || gap(a) > nook.g)) nook = { g: gap(a), at: q, a }; }
-      return { at: [best.x, best.z], s: best.s, slots, nook: nook ? nook.at : slots[0].stand, nookA: nook ? nook.a : slots[0].a, camA };
-    }
+  const ST = 0.29, stand = [];
+  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; if (inStrip(tx + Math.sin(a) * ST, tz + Math.cos(a) * ST)) stand.push(a); }
+  const seen = stand.filter(a => Math.abs(wrapA(a - camA)) < 1.75), A = seen.length >= 3 ? seen : stand, slots = [], gap = a => Math.min(...slots.map(q => Math.abs(wrapA(a - q.a))), 9);
+  while (slots.length < APPLES_RULE.max) {      // (the first nearest the camera, then spread round)
+    let pick = null;
+    for (const a of A) if (pick === null || (slots.length ? gap(a) > gap(pick) : Math.abs(wrapA(a - camA)) < Math.abs(wrapA(pick - camA)))) pick = a;
+    if (pick === null || (slots.length && gap(pick) < 0.38)) break;
+    const hr = 0.17, y = APPLE_HANG + (slots.length % 2 ? 0.01 : -0.008);
+    slots.push({ a: pick, hang: [tx + Math.sin(pick) * hr, y, tz + Math.cos(pick) * hr], stand: [tx + Math.sin(pick) * ST, tz + Math.cos(pick) * ST], face: pick + Math.PI });
+  }
+  if (!slots.length) return null;
+  let nook = null; for (const a of A) { const q = [tx + Math.sin(a) * (ST + 0.06), tz + Math.cos(a) * (ST + 0.06)]; if (inStrip(q[0], q[1]) && (!nook || gap(a) > nook.g)) nook = { g: gap(a), at: q, a }; }
+  return { side, at: [tx, tz], s: 1, strip: R, slots, nook: nook ? nook.at : slots[0].stand, nookA: nook ? nook.a : slots[0].a, camA,
+    inAt: [xin, zc], outAt: [xout, zc], outA: Math.atan2(out, 0), inStrip };
+}
+// the side for a coop's tree: the one the camera sees first, where the coop with its corner there could stand as it is
+// (clear of the lanes, other coops, the buildings, on the farm's own land) and there's a way over to it; null: neither
+function appleSideFor(p, c) {
+  const yaw = p.group.rotation.y, cx = Math.sin(VIEW_AZ0), cz = Math.cos(VIEW_AZ0), lx = cx * Math.cos(yaw) - cz * Math.sin(yaw);
+  for (const side of lx < 0 ? ['l', 'r'] : ['r', 'l']) {
+    if (!coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).ok) continue;
+    if (appleSpot(p, side)) return side;
   }
   return null;
 }
-// the tree in a coop that has one: drawn in its yard, the birds walking round its tub (its pen with the tub in the way)
-function dropApple(plot) { const A = plot.apple; if (A) { A.group.removeFromParent(); A.fall.removeFromParent(); if (plot.pen === A.pen) plot.pen = A.bare; plot.apple = null; } }
+// the tree beside a coop that has one (in its corner beside the pen)
+function dropApple(plot) { const A = plot.apple; if (A) { A.group.removeFromParent(); A.fall.removeFromParent(); plot.apple = null; } }
 function appleTree(plot) {
   dropApple(plot);
   const gc = GAME_MODE && plot.gc && game.coop(plot.gc.id);
-  if (!gc || !gc.ap || !parts.apple_tub || plot.breed === 'call' || plot.breed === 'pea') return null;
-  const S = appleSpot(plot); if (!S) return null;
+  if (!gc || !gc.ap || !gc.ap.side || !parts.apple_tub || plot.breed === 'call' || plot.breed === 'pea') return null;
+  const S = appleSpot(plot, gc.ap.side); if (!S) return null;
   const g = new THREE.Group(); g.position.set(S.at[0], 0, S.at[1]); plot.frame.add(g);
   const tree = part('apple_tub'); tree.scale.set(S.s, 1, S.s); tree.rotation.y = (parseInt(gc.id.slice(1), 10) || 0) * 1.3;
   tree.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
   g.add(tree);
   const apples = S.slots.map(sl => { const m = new THREE.Mesh(appleGeo(), appleMat()); m.castShadow = true; m.position.set(sl.hang[0] - S.at[0], sl.hang[1], sl.hang[2] - S.at[1]); m.rotation.y = sl.a * 2.7; m.visible = false; g.add(m); return m; });
-  const egg = new THREE.Mesh(EGG_GEO, appleEggMat()); egg.castShadow = true; egg.receiveShadow = true; egg.visible = false;
+  const egg = new THREE.Mesh(EGG_GEO, appleEggMat()); egg.castShadow = true; egg.receiveShadow = true; egg.visible = false; egg.userData.moves = true;
   egg.position.set(S.nook[0] - S.at[0], 0.038, S.nook[1] - S.at[1]); egg.rotation.set(1.35, S.nookA, 0.15); egg.scale.set(0.068, 0.088, 0.068); g.add(egg);
-  const fall = new THREE.Mesh(appleGeo(), appleMat()); fall.castShadow = true; fall.visible = false; plot.frame.add(fall);      // (the one knocked down: in the yard's own frame)
+  const fall = new THREE.Mesh(appleGeo(), appleMat()); fall.castShadow = true; fall.visible = false; fall.userData.moves = true; plot.frame.add(fall);      // (the one knocked down: in the yard's own frame)
   g.updateMatrixWorld(true);
-  const bare = plot.pen; plot.pen = { ...bare, obstacles: [...bare.obstacles, [S.at[0], 0, S.at[1], APPLE_R * S.s]] }; plot.lanes = null; plot.exitWay = null;      // (the farmer's spots in the pen worked out again, clear of it)
-  const A = plot.apple = { group: g, tree, S, slots: S.slots, apples, egg, fall, drop: null, by: null, clock: 0, next: 6 + Math.random() * 10, laying: false, popT: 0, eggFly: 0, bare, pen: plot.pen };
+  const A = plot.apple = { group: g, tree, S, slots: S.slots, apples, egg, fall, drop: null, by: null, clock: 0, next: 6 + Math.random() * 10, laying: false, popT: 0, eggFly: 0 };
   const n = () => game.applesAt(game.coop(plot.gc.id));
   // play.js asks: is there an apple for her now (and no egg waiting, nothing falling); which one (the nearest hanging, put
   // last so the others stay where they hang); knocked down (game.eatApple: false if the game says no); the fallen one
@@ -4443,7 +4461,7 @@ function appleTree(plot) {
   A.want = b => !A.by && !A.drop && !A.laying && A.next <= A.clock && !!b.gid && !(game.coop(plot.gc.id).ap || {}).egg && n() > 0;
   A.pick = b => {
     const k = Math.min(n(), A.slots.length); if (!k) return null;
-    const p = b.root.position; let j = 0;
+    const p = { x: S.outAt[0], z: S.outAt[1] }; let j = 0;      // (the nearest to where she comes over the fence)
     for (let i = 1; i < k; i++) if (Math.hypot(A.slots[i].stand[0] - p.x, A.slots[i].stand[1] - p.z) < Math.hypot(A.slots[j].stand[0] - p.x, A.slots[j].stand[1] - p.z)) j = i;
     if (j !== k - 1) { [A.slots[j], A.slots[k - 1]] = [A.slots[k - 1], A.slots[j]]; [A.apples[j], A.apples[k - 1]] = [A.apples[k - 1], A.apples[j]]; }
     return A.slots[k - 1];
@@ -4457,6 +4475,18 @@ function appleTree(plot) {
     if (r.egg) A.laying = true;      // (the egg's hers to lay once she's eaten it: not shown till then)
     plot.gc = game.coop(plot.gc.id); wake(4000);
     return r;
+  };
+  // (outside: where she may walk, and her way from a to b round the tub, not through it)
+  A.free = (x, z) => S.inStrip(x, z, 0.06) && Math.hypot(x - S.at[0], z - S.at[1]) > 0.24;
+  A.way = (a, b) => {
+    const [cx, cz] = S.at, R = 0.33, ang = q => Math.atan2(q[0] - cx, q[1] - cz);
+    const dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz || 1e-9, u = Math.max(0, Math.min(1, ((cx - a[0]) * dx + (cz - a[1]) * dz) / L2));
+    if (Math.hypot(a[0] + dx * u - cx, a[1] + dz * u - cz) > 0.27) return [b];
+    const a0 = ang(a), d = wrapA(ang(b) - a0), out = [];
+    const tryDir = sg => { const pts = [], D = sg * (sg === Math.sign(d) ? Math.abs(d) : 2 * Math.PI - Math.abs(d)), k = Math.max(1, Math.ceil(Math.abs(D) / 0.5));
+      for (let i = 1; i < k; i++) { const t = a0 + D * i / k, q = [cx + Math.sin(t) * R, cz + Math.cos(t) * R]; if (!S.inStrip(q[0], q[1], 0.04)) return null; pts.push(q); } return pts; };
+    const pts = tryDir(Math.sign(d) || 1) || tryDir(-(Math.sign(d) || 1)) || [];
+    return [...pts, b];
   };
   A.down = () => !!(A.drop && A.drop.landed);
   A.bite = k => { if (A.drop) A.drop.bite = k; };
@@ -4472,12 +4502,19 @@ function appleTree(plot) {
 let applePlantCheck = 0;
 function tickApples(dt) {
   if (!game.data) return;
-  if ((applePlantCheck -= dt) <= 0) {
+  if ((applePlantCheck -= dt) <= 0 && !MOVE.plot && !DMOVE.id) {
     applePlantCheck = 3;
-    for (const id of game.plantApples()) {
-      const p = gamePlots().find(q => q.gc && q.gc.id === id); if (!p) continue;
-      p.gc = game.coop(id);
-      if (appleTree(p)) { const gl = game.gluttons(p.gc)[0]; hintNext(game.t('apple_planted', { name: gl ? gl.name : '' })); renderer.shadowMap.needsUpdate = true; wake(1500); }
+    const now = performance.now();
+    for (const c of game.appleWants()) {
+      const p = gamePlots().find(q => q.gc && q.gc.id === c.id); if (!p || (p.appleTried && now - p.appleTried < 60e3)) continue;
+      p.appleTried = now;
+      const side = appleSideFor(p, c); if (!side) continue;      // (no room on either side: tried again in a while)
+      const first = !c.ap; game.plantApple(c.id, side); p.gc = game.coop(c.id);
+      const S = coopSpot(spotOf(p.gc), p.gc), ids = new Set(S.clear.map(o => o.id));      // (the trees, bushes and rocks in its corner cleared, for good)
+      for (const o of S.clear) { clearAway(o); if (!game.data.cleared.includes(o.id)) game.data.cleared.push(o.id); }
+      if (ids.size) { V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id)); game.save(); }
+      if (appleTree(p)) { if (first) { const gl = game.gluttons(p.gc)[0]; hintNext(game.t('apple_planted', { name: gl ? gl.name : '' })); } }
+      rebuildNav(); buildNature(); buildGrass(); hidePebbles(); renderer.shadowMap.needsUpdate = true; wake(1500);
     }
   }
   if (AEGG_MAT) { const t = performance.now() / 1000; AEGG_MAT.emissiveIntensity = 0.12 + 0.3 * Math.pow(0.5 + 0.5 * Math.sin(t * 2.4), 3); }
@@ -5641,14 +5678,21 @@ const APRON = { x0: -0.3, z0: 1.67, x1: 0.66, z1: 2.45 };    // the ground just 
 const FOOTS = {}, APRONS = {};
 function penTierOf(c) { const t = c && hasLooks(baseBreed(c.breed)) ? Math.max(0, Math.min(4, c.tier || 0)) : 2; return (t !== 2 || (c && c.breed === 'pea')) && pensOf(baseBreed(c.breed))[t] ? t : 2; }      // (the peafowl's Snug yard its own size: bigger)
 const penKey = c => { const t = penTierOf(c); return t === 2 ? 2 : baseBreed(c.breed) + t; };
+// (with the Glutton's apple tree's corner beside the pen, on its side)
 function footOf(c) {
+  const F = footBase(c), side = c && c.ap && c.ap.side;
+  if (side !== 'l' && side !== 'r') return F;
+  const key = penKey(c) + side;
+  return FOOTS[key] || (FOOTS[key] = side === 'l' ? { ...F, x0: F.x0 - APPLE_STRIP } : { ...F, x1: F.x1 + APPLE_STRIP });
+}
+function footBase(c) {
   const t = penTierOf(c); if (t === 2) return FOOT;
   const P = pensOf(baseBreed(c.breed))[t], key = penKey(c);
   return FOOTS[key] || (FOOTS[key] = { x0: P.min[0] - 0.065 + COOP_SHIFT.x, z0: P.min[1] - 0.07 + COOP_SHIFT.z, x1: P.max[0] + 0.065 + COOP_SHIFT.x, z1: P.max[1] + 0.07 + COOP_SHIFT.z });
 }
 function apronOf(c) {
   const t = penTierOf(c); if (t === 2) return APRON;
-  const F = footOf(c), g = pensOf(baseBreed(c.breed))[t].gate + COOP_SHIFT.x, key = penKey(c);
+  const F = footBase(c), g = pensOf(baseBreed(c.breed))[t].gate + COOP_SHIFT.x, key = penKey(c);
   return APRONS[key] || (APRONS[key] = { x0: g - 0.58, z0: F.z1, x1: g + 0.38, z1: F.z1 + 0.78 });
 }
 const spotOf = c => ({ x: c.x, z: c.z, deg: c.deg });
@@ -5720,6 +5764,7 @@ function settleCoops() {
   let changed = false;
   for (const c of game.data.coops) {
     if (coopSpot(c, c).ok) continue;
+    if (c.ap && c.ap.side && coopSpot(c, { ...c, ap: { ...c.ap, side: null } }).ok) { game.appleOff(c.id); continue; }      // (its apple tree's corner no good: the tree goes, planted again where there's room; the coop stays)
     const f = freeSpot(c); if (f) { Object.assign(c, f); changed = true; }
   }
   const gone = new Set(game.data.cleared);
@@ -5787,10 +5832,12 @@ function tryUpgrade(p) {
   if (!n) return 'top';
   if (p.farmer || MOVE.plot || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return 'busy'; }
   if (game.data.coins < n.price) return 'coins';
-  const S = coopSpot(spotOf(gc), { ...gc, tier: n.tier });
+  let S = coopSpot(spotOf(gc), { ...gc, tier: n.tier }), off = false;
+  if (!S.ok && gc.ap && gc.ap.side) { const S2 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }      // (no room for its bigger pen with the apple tree's corner: the tree moves, the coop grows)
   if (!S.ok) return 'room';
   const res = game.upgradeCoop(gc.id, S.clear.map(o => o.id));
   if (res !== 'ok') return res;
+  if (off) { game.appleOff(gc.id); p.appleTried = 0; }
   const ids = new Set(S.clear.map(o => o.id));
   V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
   for (const o of S.clear) clearAway(o);
@@ -5850,7 +5897,7 @@ function viewAbove(x, z, size) {
 }
 const FOOT_TEXS = {};
 function footMark(gc) {
-  const FOOT = footOf(gc), APRON = apronOf(gc), key = penKey(gc);
+  const FOOT = footOf(gc), APRON = apronOf(gc), key = penKey(gc) + ((gc.ap && gc.ap.side) || '');
   const X0 = FOOT.x0 - 0.25, X1 = FOOT.x1 + 0.25, Z0 = FOOT.z0 - 0.25, Z1 = APRON.z1 + 0.15, w = X1 - X0, h = Z1 - Z0;
   let FOOT_TEX = FOOT_TEXS[key];
   if (!FOOT_TEX) {
@@ -7577,7 +7624,7 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: i => appleSpot(gamePlots()[i]), of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled

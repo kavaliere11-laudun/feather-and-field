@@ -1041,9 +1041,10 @@
  "text.apple_egg_wait": "🍎 Un huevo dorado espera bajo el árbol de {name}: tócalo",
  "text.apple_laid": "🍎 ¡Dos manzanas, y {name} ha puesto un huevo dorado! Tócalo para venderlo",
  "text.apple_egg_sold": "Un huevo dorado vendido · +{c} monedas · +{xp} XP",
- "text.apple_planted": "🍎 Un manzano para {name}, la Glotona: mira cómo salta a por sus manzanas",
- "text.apple_line": "🍎 Salta para alcanzar las manzanas de su árbol: después de dos, pone un huevo dorado, que vale como tres huevos.",
+ "text.apple_planted": "🍎 Un manzano para {name}, la Glotona, justo al lado de su gallinero: mira cómo se escapa a por sus manzanas",
+ "text.apple_line": "🍎 De vez en cuando se escapa por encima de la valla hasta su manzano y salta para alcanzar sus manzanas: después de dos, pone un huevo dorado, que vale como tres huevos.",
  "text.away_apple_egg": "{n} huevos dorados bajo los manzanos",
  "text.away_apple_egg1": "Un huevo dorado bajo el manzano",
- "text.apple_line0": "🍎 En cuanto su gallinero esté remendado, tendrá su propio manzano: saltará para alcanzar sus manzanas y, después de dos, pondrá un huevo dorado."
+ "text.apple_line0": "🍎 Le encantaría tener un manzano junto a su gallinero: se plantará en cuanto haya sitio a un lado (en tus tierras, lejos de los caminos y de otros gallineros).",
+ "text.sideways": "Gira el móvil en horizontal para jugar"
 }
