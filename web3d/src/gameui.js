@@ -38,7 +38,7 @@ const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      //
 // the hens' feet), and the colour Safari's bars take over its top
 export const HEROES = {
   wide: { src: 'welcome.jpg', w: 3548, h: 1774, key: [0.07, 0.02, 0.645, 0.86], bar: '#557230' },
-  tall: { src: 'welcome-tall.jpg', w: 2048, h: 3072, key: [0.06, 0.22, 0.95, 0.80], bar: '#5d8fb6' },
+  tall: { src: 'welcome-tall.jpg', w: 2048, h: 3072, key: [0.06, 0.235, 0.95, 0.785], bar: '#5d8fb6' },
 };
 // the little barn (as on Your coops' button): the Breed Book's coop lines
 const BARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';

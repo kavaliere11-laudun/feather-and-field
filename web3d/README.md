@@ -3971,3 +3971,7 @@ the birds already had.
   game is published first). "Upload succeeded"; the simulator's pictures (app-check, run 12) show the new welcome. In the
   app (full screen, under the clock) the Silkie on the hat sits just under the tagline and the sheet covers most of the
   hens upright: to look at if Audrey wants more of them in view.
+- **More of the hens upright** (6 Nov, 17:35; Audrey: "Yes please"): the welcome card's tighter layout (was only for short
+  screens) now on every phone held upright (`max-width: 520px`), about 50 px more picture; the tall key
+  [0.06, 0.235, 0.95, 0.785]. At 402x874 the Orpington, the Brahma, the Polish, the duck and a chick show above the card;
+  on a small phone (375x667) the card still covers the hens. TestFlight build sent after it.

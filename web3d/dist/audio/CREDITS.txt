@@ -1,0 +1,31 @@
+Feather & Field: the sounds and music
+
+Music (Audrey's picks, 28 Oct 2026). Both CC0 1.0 Universal (public domain): free for a paid game, no credit required.
+Credited anyway, with thanks.
+- "Champ de tournesol" by Komiku, from the album "It's time for adventure!". Free Music Archive and the Internet Archive both
+  list it as CC0 1.0 Universal. The copy used here came from FreePD.com.
+- "Happy Whistling Ukulele" by Rafael Krux, from FreePD.com ("CC0 1.0 Universal Public Domain Dedication", "Free for Commercial
+  Use").
+Both were made quieter and evened out to the same loudness (-18 LUFS), and saved as 128 kbps MP3s.
+
+The hens chatting (29 Oct 2026): Audrey's own hens, from her own videos. Every voice was taken out; seven of their real
+moments were kept whole and in order, gently cleaned (some of the garden's air left in). audio/hens/hen1-7.mp3.
+
+The farm's sounds (29 Oct 2026; Audrey: "All good, put them in"), audio/farm/: real recordings by Joseph Sardin,
+BigSoundBank.com, CC0 1.0 Universal (public domain; credit optional, given with thanks: "Additional sounds: Joseph SARDIN -
+BigSoundBank.com"). Cut, made gentler where needed and evened out by the source's audio/farm_clips.py:
+- the egg songs: "Hen lays #1"; the rooster: "Cock Song #1", "Rooster Song"; the fox's visit: "Henhouse";
+- a mummy hen with her chicks: "Hens worried"; chicks: "Chick that chirp"; ducks: "Ducks"; Biscuit: "Old dog barking #1";
+- the pond: "Pond in a Field"; dawn: "Birds Waking #1"; day: "Countryside #3"; evening: "Evening Birds"; night:
+  "Campaign at night #1".
+
+The geese and the bee (29 Oct 2026), audio/farm/honk1-3.mp3, buzz1-2.mp3: the US National Park Service's sound gallery
+("Canada Geese", "Bee", Yosemite), public domain ("The files are in the public domain and may be downloaded. Enjoy, and
+please give the appropriate credit."). Credit: National Park Service.
+
+The peacock's call (1 Nov 2026; Audrey chose it: "Dartmoor, England is better but will need to be reworked a little to
+remove noise"), audio/farm/peacall1-4.mp3: "Peacock.wav" by Keith Selmes (Freesound, https://freesound.org/s/397357/),
+licensed under Creative Commons Attribution 4.0 (CC BY 4.0, https://creativecommons.org/licenses/by/4.0/): free for a paid
+game with this credit. Changes made: four clips of his calls cut from it, the low rumble of cars and the steady hiss taken
+out, the little birds and noise between his calls quietened, each made louder and evened out (the source's
+audio/peacock_clips.py).

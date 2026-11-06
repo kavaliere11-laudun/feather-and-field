@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#557230">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Feather &amp; Field">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Feather &amp; Field · 3D village (test)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root { --ink: #1e3426; --meringue: #fffdf7; --yolk: #f5b92e; --barn: #d2462f; --meadow: #3f8f4e; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* (the page's own green: the farm's top edge, deep grass under trees. An iPhone's Home Screen app paints the strip it
+     keeps under the clock in it (Apple's bug since iOS 26.1: a web app can no longer draw under the clock), and Safari its
+     bars: it should run on into the picture, not stand out as a green bar; Audrey, 28 Oct, a screenshot) */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #557230; overscroll-behavior: none; }
+  body { font-family: Nunito, system-ui, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; }
+  #farm { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(20, 40, 15, 0.22) 100%); }
+  .top { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 10px); display: flex; justify-content: center; gap: 8px; pointer-events: none; }
+  .pill { pointer-events: auto; background: rgba(255, 253, 247, 0.9); border-radius: 999px; padding: 9px 16px; font-weight: 800; font-size: 15px;
+          box-shadow: 0 2px 10px rgba(30, 52, 38, 0.15); text-decoration: none; color: var(--ink); }
+  .title { font-family: Fredoka, Nunito, sans-serif; font-weight: 600; font-size: 17px; }
+  #readout { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 14px); white-space: nowrap;
+             font-size: 13px; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  #readout.slow { background: var(--barn); color: #fff; }
+  #hint { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translate(-50%, -6px); width: max-content; max-width: calc(100vw - 32px);      /* (as wide as its words, up to the screen: centred from the middle it would otherwise wrap at half the screen) */
+          background: rgba(30, 52, 38, 0.92); color: #fff; padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 15px; text-align: center;
+          opacity: 0; transition: opacity .35s, transform .35s; pointer-events: none; }
+  #hint.on { opacity: 1; transform: translate(-50%, 0); }
+  #tag { position: fixed; left: 0; top: 0; padding: 7px 13px; border-radius: 999px; background: var(--meringue); font-weight: 800; font-size: 15px;
+         box-shadow: 0 2px 8px rgba(30, 52, 38, 0.2); opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+  #tag.on { opacity: 1; }
+  #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+             background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 16px), #8cb85c 42%); transition: opacity .5s; }
+  #loading.done { opacity: 0; pointer-events: none; }
+  #loading .msg { font-family: Fredoka, Nunito, sans-serif; font-weight: 600; font-size: 20px; color: var(--meringue); text-align: center; padding: 0 24px; }
+  #loading .bar { width: 200px; height: 10px; border-radius: 99px; background: rgba(255, 253, 247, 0.35); overflow: hidden; }
+  #loading .fill { width: 0; height: 100%; background: var(--yolk); transition: width .2s; }
+  #inside-top { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 10px); display: flex; justify-content: center; pointer-events: none; }
+  #inside-back { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
+                 padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; }
+  #inside-top[hidden], #inside-back[hidden] { display: none; }
+  #farmerbtn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 17px;
+               padding: 13px 24px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; background: var(--yolk); color: var(--ink);
+               box-shadow: 0 3px 14px rgba(245, 185, 46, 0.45); white-space: nowrap; }
+  #farmerbtn[hidden] { display: none; }
+  body.inside #farmerbtn { display: none; }
+  #foxbtn.alarm { background: var(--barn); color: #fff; border: 0; }
+  body.inside .top { display: none; }
+  #fade { position: fixed; inset: 0; background: #0d1320; opacity: 0; pointer-events: none; transition: opacity .28s; }
+  #fade.on { opacity: 1; }
+  /* the farm dog's name: a button after tapping him, and a little card to type a new one in */
+  #dogbtn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
+            padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; white-space: nowrap;
+            max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+  #dogname { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translateX(-50%); width: min(340px, calc(100vw - 32px));
+             background: var(--meringue); border-radius: 18px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(30, 52, 38, 0.25);
+             display: flex; flex-direction: column; gap: 10px; margin: 0; z-index: 5; }
+  #dogname label { font-weight: 800; font-size: 15px; }
+  #dogname input { font: inherit; font-size: 17px; font-weight: 700; padding: 10px 12px; border-radius: 12px; border: 2px solid rgba(30, 52, 38, 0.22);
+                   background: #fff; color: var(--ink); width: 100%; -webkit-user-select: text; user-select: text; }
+  #dogname input:focus { outline: none; border-color: var(--meadow); }
+  #dogname .row { display: flex; gap: 10px; justify-content: flex-end; }
+  #dogname .row button { font-size: 16px; padding: 10px 18px; border: 0; cursor: pointer; font-family: inherit; }
+  #dogname-save { background: var(--yolk) !important; }
+  #dogbtn[hidden], #dogname[hidden] { display: none; }
+  /* after tapping a hen by day: send the farmer into her pen for a cuddle, or to fill the feeder (the game's own words) */
+  #henbtns { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); display: flex; gap: 10px;
+             max-width: calc(100vw - 32px); }
+  #henbtns button { font-size: 16px; padding: 12px 18px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; white-space: nowrap; }
+  #cuddlebtn { background: #ffd6df !important; }
+  #henbtns[hidden] { display: none; }
+  body.inside #henbtns, body.replaying #henbtns { display: none; }
+  /* the morning replay of last night's fox visit, as an old silent film (replay.js); the title cards in IM Fell English
+     (old printing types, SIL Open Font License: fonts/OFL-IM-Fell.txt), kept here with the page */
+  @font-face { font-family: Fell; src: url(fonts/fell-italic.woff) format('woff'); font-style: italic; font-weight: 400; font-display: swap; }
+  @font-face { font-family: Fell; src: url(fonts/fell.woff) format('woff'); font-style: normal; font-weight: 400; font-display: swap; }
+  #replaybtn { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 17px;
+               padding: 13px 24px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; white-space: nowrap;
+               background: #2b2118; color: #f6e7c4; box-shadow: 0 3px 14px rgba(43, 33, 24, 0.4); }
+  #replaybtn[hidden], #film[hidden] { display: none; }
+  #farm.film { filter: sepia(0.92) contrast(1.16) brightness(1.62) saturate(0.82); }
+  html:has(body.replaying), body.replaying { background: #0b0805; }          /* (the gate weave shows no green at the edges) */
+  body.replaying .top, body.replaying #readout, body.replaying #farmerbtn, body.replaying #dogbtn, body.replaying #hint, body.replaying .vignette { display: none; }
+  #film { position: fixed; inset: 0; pointer-events: none; z-index: 8; }
+  #film > * { position: absolute; }
+  #film-grain { inset: 0; width: 100%; height: 100%; opacity: 0.55; }
+  #film-flick { inset: 0; opacity: 0; }
+  .film-scratch { top: 0; bottom: 0; width: 1.5px; background: rgba(250, 240, 215, 0.85); opacity: 0; }
+  #film-s2 { background: rgba(30, 20, 8, 0.8); width: 1px; }
+  #film-vig { inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(26, 16, 6, 0.55) 86%, rgba(14, 9, 3, 0.85) 100%); }
+  #film-iris { inset: 0; }
+  #film-card { inset: 0; display: flex; align-items: center; justify-content: center; background: #0f0b07; opacity: 0; transition: opacity .25s; padding: 24px; }
+  #film-card.on { opacity: 1; }
+  #film-card .frame { width: min(340px, 100%); padding: 34px 22px; border: 2px solid #d9c7a0; outline: 1px solid #d9c7a0; outline-offset: 5px;
+                      text-align: center; color: #efe3c6; font-family: Fell, Didot, Baskerville, Georgia, serif; }
+  #film-card .frame::before, #film-card .frame::after { content: '❦'; display: block; font-size: 22px; color: #cdb98f; line-height: 1; }
+  #film-card .frame::before { margin-bottom: 18px; } #film-card .frame::after { margin-top: 18px; transform: scaleX(-1); }
+  #film-title { margin: 0; font-size: 27px; line-height: 1.3; font-style: italic; }
+  #film-sub { margin: 16px 0 0; font-size: 18px; line-height: 1.35; color: #d8c8a2; font-style: italic; }
+  #film-card.end #film-title { font-size: 44px; font-style: normal; letter-spacing: 0.04em; }
+  #film-skip { right: 14px; bottom: calc(env(safe-area-inset-bottom) + 16px); pointer-events: auto; font-family: Fell, Georgia, serif;
+               font-size: 17px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(239, 227, 198, 0.55); background: rgba(15, 11, 7, 0.55);
+               color: #efe3c6; cursor: pointer; z-index: 2; }
+
+  /* ---- the game (play.html: body.game): the 2D game's look; the test page's own buttons hidden */
+  body.game { --sage: #eef2e4; --ink-2: #5f6f5c; --line: #d9e1c9; --yolk-deep: #c98d0c; --glass-top: rgba(255, 253, 247, 0.93);
+              --glass-line: rgba(255, 255, 255, 0.7); --shadow: 0 10px 30px rgba(20, 40, 20, 0.18); --display: 'Fredoka', system-ui, sans-serif; }
+  body.game .top, body.game #readout { display: none !important; }
+  body.game.showfps #readout { display: block !important; z-index: 30; bottom: auto; top: calc(env(safe-area-inset-top) + 58px); left: calc(env(safe-area-inset-left) + 12px); transform: none; }      /* (?fps: under the title) */
+  body.game #hint { top: calc(env(safe-area-inset-top) + 62px); }
+  .gbar { position: fixed; z-index: 6; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px;
+          padding: calc(10px + env(safe-area-inset-top)) 12px 0; pointer-events: none; }
+  .gbar > * { pointer-events: auto; }
+  .gbar[hidden] { display: none; }
+  body.inside .gbar, body.replaying .gbar { display: none; }
+  .gbrand { font-family: var(--display); font-weight: 600; font-size: 20px; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); white-space: nowrap;
+            flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .gpill { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 13px 0 7px; border-radius: 999px; border: 1px solid var(--glass-line);
+           background: var(--glass-top); box-shadow: var(--shadow); color: var(--ink); font: 600 15px var(--display); font-variant-numeric: tabular-nums; cursor: pointer; }
+  .glvl { padding: 0 13px 0 4px; }
+  .gring { width: 30px; height: 30px; border-radius: 50%; background: conic-gradient(var(--yolk) calc(var(--p, 0) * 1%), rgba(30, 52, 38, 0.08) 0); display: grid; place-items: center; flex: none; }
+  .gring::after { content: ""; width: 22px; height: 22px; border-radius: 50%; background: var(--meringue); }
+  .gcoin { width: 24px; height: 24px; border-radius: 50%; flex: none; position: relative;
+           background: radial-gradient(circle at 35% 30%, #ffeeb0, var(--yolk) 55%, var(--yolk-deep));
+           box-shadow: inset 0 -2px 0 rgba(120, 80, 0, 0.3), inset 0 0 0 2.5px rgba(150, 100, 0, 0.45), inset 0 0 0 4px rgba(255, 240, 180, 0.55); }
+  .gcoin::after { content: ""; position: absolute; inset: 7px; background: rgba(150, 100, 0, 0.5);
+                  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+  .gicon { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow); color: var(--ink);
+           display: grid; place-items: center; cursor: pointer; flex: none; padding: 0; }
+  .gicon svg { width: 20px; height: 20px; }
+  @media (max-width: 430px) { .gbrand { font-size: 0; } .gbar { gap: 6px; padding-inline: 10px; } }
+  /* (the narrowest phones: a folding phone shut, an old small one: the bar a little tighter, so the last button fits) */
+  @media (max-width: 355px) { .gbar { gap: 4px; padding-inline: 7px; } .gbar .gicon { width: 34px; height: 34px; } .gbar .gicon svg { width: 18px; height: 18px; }
+    .gbar .gpill { height: 34px; padding: 0 10px 0 6px; gap: 5px; } }
+  .gdim { position: fixed; inset: 0; z-index: 19; background: rgba(20, 35, 20, 0.35); }
+  .gdim[hidden], .gsheet[hidden] { display: none; }
+  .gsheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 62%; z-index: 20; background: var(--meringue); color: var(--ink); border-radius: 28px 28px 0 0;
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; font-family: Nunito, system-ui, sans-serif; }
+  .gsheet.modal { max-height: 92%; }
+  .gsheet.in { animation: gsup 0.32s cubic-bezier(0.2, 1.1, 0.3, 1); }
+  @keyframes gsup { from { transform: translateY(100%); } to { transform: none; } }
+  .gsheet::before { content: ""; position: absolute; top: 8px; left: 50%; width: 42px; height: 5px; margin-left: -21px; border-radius: 3px; background: var(--line); }
+  .gsheet-head { display: flex; align-items: center; gap: 10px; padding: 22px 18px 4px; }
+  .gsheet-head h2 { font-family: var(--display); font-weight: 600; font-size: 25px; line-height: 1.1; margin: 0; flex: 1; min-width: 0; }
+  .gsheet .gx { background: var(--sage); border: 0; box-shadow: none; }
+  .gsheet .gx[hidden] { display: none; }
+  .gsheet-body { overflow-y: auto; padding: 4px 16px calc(22px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;
+                 -webkit-user-select: none; user-select: none; }
+  .gtext { margin: 0; font-size: 15.5px; line-height: 1.4; font-weight: 600; }
+  .gsub { margin: 0; color: var(--ink-2); font-weight: 700; font-size: 15px; }
+  .gnote { margin: 0; color: var(--ink-2); font-size: 14px; font-weight: 600; }
+  .gwarn { color: #b36a00; }
+  .gver { font-size: 12.5px; opacity: 0.8; }
+  .gforever { margin: 0; font-weight: 800; color: var(--meadow); font-size: 14.5px; }
+  .gheart { color: #e0566f; }
+  .glabel { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-2); }
+  .gsec { margin-top: 4px; }
+  .gcard { background: var(--sage); border-radius: 18px; padding: 11px 14px; display: flex; flex-direction: column; gap: 5px; }
+  .gcard-h { display: flex; align-items: center; gap: 8px; }
+  .gcard-t { font-family: var(--display); font-weight: 600; font-size: 19px; }
+  .gemoji { font-size: 22px; line-height: 1; }
+  .gstars { font-size: 24px; letter-spacing: 3px; color: #c9c2a8; line-height: 1; }
+  .gstars .on { color: var(--yolk); }
+  .ghearts { font-size: 21px; color: #d9b2ba; letter-spacing: 2px; line-height: 1; }
+  .ghearts .on { color: #e0566f; }
+  /* congratulations (a brood grown up): a row for each young hen and rooster, its rating and its coins */
+  .gkids { gap: 2px; padding-block: 6px; }
+  .gkid { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+  .gkid + .gkid { border-top: 1px solid var(--line); }
+  .gkid-t { flex: 1; min-width: 0; font-family: var(--display); font-weight: 600; font-size: 16.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gstars.gsmall { font-size: 17px; letter-spacing: 1px; white-space: nowrap; }
+  .gkid-c { display: inline-flex; align-items: center; gap: 4px; min-width: 52px; justify-content: flex-end; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
+  .gcoin.gcoin-s { width: 18px; height: 18px; } .gcoin.gcoin-s::after { inset: 5px; }
+  .gtotal { margin: 2px 0 0; text-align: center; font: 600 21px var(--display); color: var(--ink); }
+  /* a new level: the number big in a golden ring */
+  .glevelbig { align-self: center; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; margin: 2px 0;
+               background: radial-gradient(circle at 35% 30%, #fff3c4, var(--yolk) 60%, var(--yolk-deep)); box-shadow: inset 0 -3px 0 rgba(120, 80, 0, 0.25), 0 6px 18px rgba(201, 141, 12, 0.35);
+               font: 600 40px var(--display); color: #6b4300; animation: glvpop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1); }
+  @keyframes glvpop { from { transform: scale(0.3); } to { transform: none; } }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet .glevelbig { width: 64px; height: 64px; font-size: 30px; } }
+  @media (prefers-reduced-motion: reduce) { .glevelbig { animation: none; } }
+  .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
+  /* Your coops: the little barn in the top bar (a red dot: a new breed's coop waiting), the sheet's rows */
+  .gcoops, .gshows, .gjobs { position: relative; }
+  .gdot.gcount.gnum1 { width: auto; min-width: 18px; height: 18px; top: -5px; right: -5px; padding: 0 4px; border-radius: 9px; color: #fff; font-weight: 800; font-size: 11px; line-height: 14px; text-align: center; }
+  /* Today's jobs (release 1 step 9c) */
+  .gjob .gbar-xp { margin: 2px 0 0; }
+  .gjobrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
+  .gjobrow .gnote { margin: 0; }
+  .gjob-done { background: #fff3cf; } .gjob-paid { opacity: 0.7; }
+  .gjob-ok { color: var(--meadow); font-weight: 800; font-size: 14.5px; }
+  /* Shows (release 1 step 9): the rosette in the top bar, the shows' cards, a bird's rosettes, the results */
+  .gros-i { display: inline-grid; width: 24px; height: 24px; flex: none; } .gros-i svg { width: 100%; height: 100%; display: block; }
+  .gros-big { width: 32px; height: 32px; }
+  .gshow .gcard-h { gap: 8px; } .gshow .gbtn { margin-top: 2px; }
+  .gchance { margin: 2px 0 0; font-weight: 700; }
+  .gshowrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid rgba(40, 60, 30, 0.1); padding-top: 6px; margin-top: 4px; }
+  .gshowrow .gchance { font-weight: 600; font-size: 14px; }
+  .glink { align-self: flex-start; background: none; border: 0; padding: 4px 0; margin: 0; color: var(--meadow); font-weight: 700; font-size: 14.5px; font-family: inherit; text-decoration: underline; cursor: pointer; }
+  .ghow { background: #f3f6ea; } .ghow .gnote { margin: 0; }
+  .grosrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .grostier { min-width: 72px; font-weight: 700; font-size: 14px; color: var(--ink-2); }
+  .gros { display: inline-flex; align-items: center; gap: 2px; font-weight: 700; font-size: 14px; color: var(--ink); }
+  .gchamp { color: #b1781a; font-weight: 800; margin: 2px 0 0; }
+  .gtext.gfound { color: var(--meadow); font-weight: 700; }
+  .gskip { position: fixed; z-index: 7; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); border: 0; border-radius: 999px;
+           padding: 10px 18px; background: rgba(255, 253, 247, 0.93); color: var(--ink); font-weight: 700; font-size: 15px; font-family: inherit; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2); cursor: pointer; }
+  .gskip[hidden] { display: none; }
+  .gresult .gcard-h { align-items: flex-start; gap: 10px; } .gresult .gtext { margin: 0; }
+  .gdot { position: absolute; top: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #e2412f; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
+  .gdot[hidden] { display: none; }
+  .gnewcoop { background: #fff3cf; }
+  .gnewcoop .gbtn { margin-top: 4px; }
+  .gbadge { margin-left: auto; background: #e2412f; color: #fff; font: 600 12.5px var(--display); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .gcooprow { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+  .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
+  /* fishing (release 5; fishing.js): the worms and Stop along the bottom; the line's pull while reeling (the green part to
+     keep it in, the needle, how far the fish has come); a sheet of glass over the farm from the cast to the catch */
+  .fishbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 18px); z-index: 16; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .fishbar[hidden], .fishgauge[hidden], .fishglass[hidden] { display: none; }
+  .fishworms { background: var(--glass-top, rgba(255,253,247,0.93)); border-radius: 999px; padding: 10px 14px; font: 800 15px Nunito, system-ui, sans-serif; color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); }
+  .fishstop { border: 0; border-radius: 999px; padding: 11px 18px; font: 800 15px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
+  .fishglass { position: fixed; inset: 0; z-index: 15; touch-action: none; }
+  .fishgauge { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 16; width: min(300px, calc(100vw - 48px));
+               background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 10px 14px 12px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); pointer-events: none; }
+  .fishprog { height: 6px; border-radius: 99px; background: #e5e9dc; overflow: hidden; margin-bottom: 9px; }
+  .fishprogfill { height: 100%; width: 0; background: #4f9bc4; border-radius: 99px; }
+  .fishtrack { position: relative; height: 18px; border-radius: 99px; background: #e9b4a4; }
+  .fishgreen { position: absolute; top: 0; bottom: 0; background: #7cc56e; border-radius: 4px; }
+  .fishneedle { position: absolute; top: -5px; bottom: -5px; width: 6px; margin-left: -3px; border-radius: 3px; background: #1e3426; transition: background .15s; }
+  .fishneedle.ok { background: #1f6b2c; } .fishneedle.hot { background: #d2402f; }
+  .gfishrow { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: -2px 0 2px; }
+  .gfishrow img { width: 46px; height: 30px; object-fit: contain; filter: brightness(0) opacity(0.22); }
+  .gfishrow img.got { filter: none; }
+  .gfishsize { margin: 0; font: 600 22px var(--display, Fredoka, sans-serif); color: var(--ink); }
+  .gfishnew { color: #b8860b; font-weight: 800; }
+  .gfishcard .gpic img { object-fit: contain; }
+  .gfishbtns { flex-wrap: wrap; } .gfishbtns .gbtn { white-space: nowrap; }
+  /* rare babies (release 2 step 2): keep or sell, side by side under her row; her card's line */
+  .grow.grare-row { justify-content: flex-start; flex-wrap: nowrap; padding: 2px 0 4px; } .gkids .grow.grare-row { padding: 2px 0 8px 34px; }
+  .grare-row .gbtn, .gsheet.gcongrats .grare-row .gbtn { position: static; box-shadow: none; margin: 0; padding: 8px 14px; font-size: 15px; flex: none; }
+  .grare-row .gbtn.galt { background: #fff; border: 1.5px solid var(--line); }
+  .gkid-rare .gkid-t { color: #8a5a00; }
+  .gkid-n { margin: 0 0 6px 34px; }
+  .grare { color: #8a5a00; font-weight: 700; }
+  .gcenter { text-align: center; }
+  /* the Breed Book (release 1 step 8): a page for each breed, its picture beside its words (how it comes, its eggs, its
+     coop); not yet on the farm, the picture a dark silhouette. Upright a taller sheet; sideways the card on the right */
+  .gsheet.gbook { max-height: 86%; }
+  html:has(.gsheet.gbook:not([hidden])) #hint { opacity: 0; }              /* (the taller sheet would cut a hint in two) */
+  .gpage { flex-direction: row; align-items: flex-start; gap: 12px; padding: 10px 12px 11px 10px; }
+  .gpic { width: 92px; height: 92px; flex: none; border-radius: 16px; overflow: hidden; display: grid; place-items: center;
+          background: radial-gradient(circle at 50% 80%, #fffbea 0, #f6f1dc 40%, #dbe7c6 100%); box-shadow: inset 0 0 0 1px rgba(63, 143, 78, 0.12); }
+  .gpic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .gpage-no .gpic { background: radial-gradient(circle at 50% 80%, #f8f9f3 0, #e4e9db 100%); box-shadow: inset 0 0 0 1px rgba(30, 52, 38, 0.08); }
+  .gpage-no .gpic img { filter: brightness(0); opacity: 0.62; }
+  .gpage-i { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; padding-top: 1px; }
+  .gpage .gcard-t { font-size: 18px; line-height: 1.15; }
+  .gpage-s { margin: 0 0 2px; font-weight: 800; font-size: 14.5px; line-height: 1.3; color: var(--ink-2); }
+  .gpage-s.gfound { color: var(--meadow); }
+  .gpage-l { display: flex; align-items: flex-start; gap: 7px; font-size: 13.5px; line-height: 1.3; }
+  .gpage-k { color: var(--ink); font-weight: 800; }
+  .gpage .gegg-i { width: 11px; height: 14px; flex: none; margin: 2px 2px 0 1px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+                   background: var(--egg, #b97a4f); box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.13), 0 0 0 1px rgba(30, 52, 38, 0.1); }
+  .gpage-c { width: 15px; height: 15px; flex: none; margin-top: 1px; color: var(--ink-2); }
+  .gpage-c svg { width: 15px; height: 15px; display: block; }
+  .gpage-go { align-self: flex-start; margin-top: 4px; }
+  .gbooktabs { display: flex; gap: 8px; margin: 0 0 4px; }
+  .gbooktabs .gbtn { flex: 1; margin: 0; }
+  .gbookwater { margin: 10px 2px 0; }
+  .gfishpage .gpic { background: radial-gradient(circle at 50% 60%, #fbf7ec 0, #eef0e4 100%); padding: 4px; box-sizing: border-box; }
+  .gfishrare { color: var(--ink-2); font-weight: 700; }
+  .gbookbtn { margin-top: 2px; }
+  /* the shop (release 1 step 9d: the coins at the top, "Decorate your farm"): each decoration's picture beside what it
+     brings, its price and Buy and place; one to come later greyed; one on the farm, Move */
+  .gshop-top { display: flex; align-items: center; gap: 10px; } .gshop-top .gnote { flex: 1; margin: 0; }
+  .gshop-c, .gdec-p { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
+  .gshop-c { flex: none; background: #fff; border-radius: 999px; padding: 5px 12px 5px 6px; box-shadow: 0 1px 3px rgba(30, 52, 38, 0.15); font-size: 16px; color: var(--ink); }
+  .gdec .gpic { width: 84px; height: 84px; padding: 6px; box-sizing: border-box; }
+  .gdec-l { margin: 0; font-size: 13.5px; line-height: 1.3; }
+  .gdec-p { color: var(--ink); margin-top: 2px; }
+  .gdec .gpage-go { margin-top: 6px; }
+  .gani-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .gfox-row { display: flex; gap: 10px; margin-top: 14px; } .gfox-row .gbtn { flex: 1; margin: 0; }
+  .gbtn.gdec-broke, .gbtn.gdec-broke:disabled { background: #e9ecdf; color: var(--ink-2); box-shadow: none; opacity: 1; }
+  .gdecnew .gdec-i { width: 40px; height: 40px; object-fit: contain; flex: none; }
+  .gshop-tabs { margin: 2px 0 0; gap: 6px; } .gshop-tabs .gchip { flex: 1; padding: 9px 4px; font-size: 14px; white-space: nowrap; }
+  .gout .gpic { padding: 4px 10px 0; }
+  .gout-on { box-shadow: inset 0 0 0 2px var(--meadow); }
+  /* the wheat field and the honey (release 1 step 9e): the field's sign, the honey pot over the hives, a jar flying to the coins */
+  .gbub.gwheat { background: #fff7d6; } .gbub.gwheat::after { border-top-color: #fff7d6; }
+  .gbub.gwheat.ripe { background: #ffe38a; } .gbub.gwheat.ripe::after { border-top-color: #ffe38a; }
+  .gbub.ghoney { background: #ffe9b0; } .gbub.ghoney::after { border-top-color: #ffe9b0; }
+  .gjar { position: fixed; z-index: 30; width: 16px; height: 20px; border-radius: 4px 4px 6px 6px; pointer-events: none;
+          background: linear-gradient(#a8742a 0 4px, #f2b230 4px 100%); box-shadow: inset -3px -3px 0 rgba(120, 60, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.25); }
+  .gwheat-s { font-weight: 800; }
+  /* the peacock's feather flying to the coins (1 Nov) */
+  .gfeather { position: fixed; z-index: 30; width: 10px; height: 26px; border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%; pointer-events: none;
+          background: radial-gradient(ellipse 4px 5px at 50% 24%, #17257a 0 60%, transparent 62%), radial-gradient(ellipse 6px 8px at 50% 26%, #2fb0a6 0 60%, transparent 62%),
+            radial-gradient(ellipse 8px 10px at 50% 28%, #c49a3a 0 62%, transparent 64%), linear-gradient(#3f8a3a, #6f9c3a 60%, rgba(111, 156, 58, 0.2));
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+  /* the welcome-back summary (release 1 step 9f): a line for each thing waiting, its picture first */
+  .gaway { gap: 2px; padding: 8px 12px; }
+  .gaway-r { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 700; font-size: 15px; line-height: 1.3; color: var(--ink); }
+  .gaway-r + .gaway-r { border-top: 1px solid rgba(30, 52, 38, 0.08); }
+  .gaway-r.gwarn { color: #8a2d1d; }
+  .gaway-i { width: 26px; flex: none; text-align: center; font-size: 19px; }
+  .gstick-wrap .gbtn { white-space: normal; line-height: 1.15; }
+  /* the pictures before the first day, and the first day's guide (release 1 step 10) */
+  .gsheet.gintro { max-height: 92%; }
+  .gintro-pic { width: 100%; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; background: radial-gradient(circle at 50% 70%, #f6f1dc 0, #dbe7c6 100%); touch-action: pan-y; }
+  .gintro-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gintro-pic.none img { display: none; }
+  .gintro-t { margin: 10px 2px 4px; }
+  .gdots { display: flex; justify-content: center; gap: 7px; margin: 6px 0 10px; }
+  .gdots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(30, 52, 38, 0.18); }
+  .gdots span.on { background: var(--meadow); width: 20px; border-radius: 4px; }
+  /* sideways: the picture whole beside its words (1 Nov: as a thin strip across the card it lost the hens and the farmer) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet.gintro { width: min(640px, 76vw); }
+    .gsheet.gintro .gsheet-body { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; row-gap: 4px; align-items: center; }
+    .gsheet.gintro .gintro-pic { grid-row: 1 / span 2; width: auto; height: min(calc(100vh - 236px), 240px); aspect-ratio: 4 / 3; }
+    .gsheet.gintro .gintro-t { grid-column: 2; align-self: end; margin: 0; }
+    .gsheet.gintro .gdots { grid-column: 2; align-self: start; justify-content: flex-start; margin: 6px 0 0 2px; }
+    .gsheet.gintro .gstick { grid-column: 1 / -1; margin-top: 6px; }
+  }
+  .gguide { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); width: min(92vw, 380px); box-sizing: border-box;
+            background: #fffdf3; border-radius: 18px; padding: 10px 14px 11px; box-shadow: 0 6px 18px rgba(30, 52, 38, 0.22), 0 0 0 2px #f2c94c; font-family: var(--body); }
+  .gguide[hidden] { display: none; }
+  .gguide-n { font: 600 12.5px var(--display); color: #a3740d; letter-spacing: 0.02em; text-transform: uppercase; }
+  .gguide-t { margin: 3px 0 0; font-weight: 800; font-size: 15px; line-height: 1.3; color: var(--ink); }
+  .gguide-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .gguide-row button { font: 700 14px var(--body); border: 0; background: none; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
+  .gguide-row .gguide-show { background: #f2c94c; color: #3b2a00; border-radius: 999px; padding: 6px 14px; }
+  .gguide-row .gguide-skip { margin-left: auto; text-decoration: underline; }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: calc(env(safe-area-inset-left, 0px) + 12px); transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(42vw, 340px); } }      /* (sideways: the bottom left corner, off the Red Barn in the middle; Audrey's play-through, 1 Nov) */
+  .garrow { position: fixed; z-index: 40; left: 0; top: 0; width: 34px; height: 40px; margin: -46px 0 0 -17px; pointer-events: none; animation: garrowb 0.9s ease-in-out infinite; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
+  .garrow[hidden] { display: none; }
+  @keyframes garrowb { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
+  .garrow.up { margin: 6px 0 0 -17px; rotate: 180deg; animation-name: garrowu; }      /* (under something at the top, pointing up at it) */
+  @keyframes garrowu { 0%, 100% { translate: 0 0; } 50% { translate: 0 9px; } }
+  /* My account (release 7: account.js) */
+  .gacct .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gacct-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+  .gacct .gacct-row .gsmallbtn { margin: 0; flex: 0 1 auto; max-width: 100%; background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }      /* ("Tap again to delete…" wraps inside its button) */
+  .gacct .gacct-row .gsmallbtn.gdanger { background: var(--barn); color: #fff; box-shadow: none; }
+  .gacct-who { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .gacct-privacy { font-size: 12.5px; font-weight: 500; }
+  .gtwo .gtwo-name { margin: 0; font-weight: 700; }
+  .gtwo .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gwelcome-signin { align-self: center; margin-top: -2px; }
+  .gwelcome-empty { text-align: center; }
+  .gwelcome-acct { display: flex; flex-direction: column; gap: 6px; }
+  .gwelcome-acct .gbtn { margin-top: 0; }
+  /* the farm code (release 1 step 9g) */
+  .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
+  .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
+  .gcodebox[hidden] { display: none; }
+  .gcode .gcode-load { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+  .gcode .gcode-load.gdanger { background: var(--barn); color: #fff; box-shadow: none; }
+  .gcodebox::placeholder { font-family: inherit; color: var(--ink-2); }
+  .gdecnew .gnote { margin: 4px 0 0; }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
+  .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }
+  .gcuddle { background: #e0566f; box-shadow: 0 4px 14px rgba(224, 86, 111, 0.35); margin-top: 0; padding: 11px 18px; }
+  .gworms { margin-top: 8px; padding: 11px 18px; }
+  .ghappy { color: #c4475f; }
+  .gstick { position: sticky; bottom: 0; z-index: 1; display: flex; gap: 8px; background: var(--meringue); box-shadow: 0 0 0 24px var(--meringue); padding-top: 2px; }      /* (what scrolls under it hidden, all round) */
+  .gstick .gbtn { margin: 0; flex: 1; font-size: 17px; padding: 13px 12px; white-space: nowrap; }
+  .gstick .gbtn:first-child { flex: 1.7; }
+  /* moving a coop: along the bottom, what the spot's like (green: good, red: why not) and Turn, Cancel, Put it here */
+  .gmove { position: fixed; z-index: 15; left: 0; right: 0; bottom: 0; background: var(--meringue); color: var(--ink); border-radius: 24px 24px 0 0;
+           box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2); padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px;
+           font-family: Nunito, system-ui, sans-serif; animation: gsup 0.3s cubic-bezier(0.2, 1.1, 0.3, 1); -webkit-user-select: none; user-select: none; }
+  .gmove[hidden] { display: none; }
+  .gmove-t { margin: 0; text-align: center; font-weight: 800; font-size: 15.5px; line-height: 1.3; color: #3f8a32; min-height: 1.3em; }
+  .gmove-t.bad { color: #c8412b; }
+  .gmove-row { display: flex; gap: 8px; }
+  .gmove-b { margin: 0; flex: 1; padding: 12px 8px; font-size: 16px; white-space: nowrap; }
+  .gmove-go { flex: 1.45; }
+  .gmove-go:disabled { background: #d8d1bf; box-shadow: none; cursor: default; }
+  body.gmoving #hint { opacity: 0; }
+  /* the compass (release 6): once the view's turned, top right under the bar; its needle points the usual way up; a tap turns it back */
+  #compass { position: fixed; right: calc(env(safe-area-inset-right) + 12px); top: calc(env(safe-area-inset-top) + 64px); width: 46px; height: 46px; border-radius: 50%; padding: 0; z-index: 30;
+    border: 2px solid rgba(255, 255, 255, 0.95); background: radial-gradient(circle at 50% 40%, #fffdf6 0, #efe9d8 100%); box-shadow: 0 3px 10px rgba(30, 40, 20, 0.28); display: grid; place-items: center; cursor: pointer; }
+  #compass[hidden] { display: none; }
+  #compass .needle { width: 36px; height: 36px; display: block; transform-origin: 50% 50%; }
+  #compass .needle svg { width: 100%; height: 100%; display: block; }
+  #compass:active { transform: scale(0.94); }
+  body.gopen #compass { opacity: 0; pointer-events: none; }
+  body.gmoving .gbub { pointer-events: none; }
+  body.gmoving .gbar { opacity: 0.55; } body.gmoving .gbar button { pointer-events: none; }      /* (placing or moving something: finish first) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gmove { left: 50%; right: auto; width: min(560px, 72vw); transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); border-radius: 22px; padding: 10px 12px 12px; gap: 8px; animation: none; }
+    .gmove-b { padding: 10px 8px; }
+  }
+  .gsheet.gcongrats .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }      /* ("Lovely!" always in sight) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    /* (sideways the whole height, over the coins: they count up when it's closed) */
+    body.gcong .gbar > :not(.gbrand) { visibility: hidden; }
+    .gsheet.gcongrats { top: max(10px, env(safe-area-inset-top)); bottom: max(10px, env(safe-area-inset-bottom)); max-height: calc(100% - 20px); margin-block: auto; }
+    .gsheet.gcongrats .gsheet-head { padding-top: 12px; } .gsheet.gcongrats .gsheet-head h2 { font-size: 22px; }
+    .gsheet.gcongrats .gsheet-body { gap: 7px; padding-bottom: 12px; }
+    .gsheet.gcongrats .gkids { padding-block: 3px; } .gsheet.gcongrats .gkid { min-height: 29px; }
+    .gsheet.gcongrats .gtotal { font-size: 19px; margin: 0; } .gsheet.gcongrats .gnote { font-size: 13px; line-height: 1.3; }
+    .gsheet.gcongrats .gbtn { padding: 11px 18px; margin-top: 2px; }
+  }
+  .grow { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .gchips { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* the shop's real-money preview (?shopdemo): coin piles for the bags, their tags, the payment stand-in */
+  .giap-pile { position: relative; background: radial-gradient(circle at 50% 70%, #fff4c9, #f3e3a6 70%); }
+  .giap-c { position: absolute; width: 30px; height: 30px; transform: translateX(-50%) rotate(var(--d)); box-shadow: 0 2px 0 rgba(120, 80, 0, 0.35); }
+  .giap-c::after { inset: 9px; }
+  .giap-tag { margin: 2px 0 2px; align-self: flex-start; } .giap-value { background: #3f8a3a; }
+  .giap-get { margin-top: 6px; margin-left: 6px; }
+  .giap-pay { text-align: center; } .giap-price { font: 700 28px var(--display); margin: 2px 0 4px; color: var(--ink); }
+  .giap-fly { position: fixed; z-index: 60; pointer-events: none; }
+  .giap-adpic { display: grid; place-items: center; font-size: 40px; background: radial-gradient(circle at 50% 60%, #e8f4ff, #cfe6f7 70%); }
+  .giap-adscreen { height: 150px; border-radius: 16px; background: linear-gradient(135deg, #2c3e50, #4b6584); color: #fff; display: grid; place-items: center; font-size: 42px; margin: 4px 0 10px; }
+  .giap-adbar { height: 8px; border-radius: 99px; background: rgba(30, 52, 38, 0.15); overflow: hidden; margin-bottom: 10px; } .giap-adfill { height: 100%; width: 0; background: var(--yolk); }
+  .gnotes-kinds { margin: -2px 0 10px; } .gnotes-kinds[hidden] { display: none; } .gnotes-kind { font-size: 14px; }      /* (the reminders one wants: notify.js) */
+  .gchip { font: 600 15px var(--display); padding: 9px 15px; border-radius: 999px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+  .gchip.on { border-color: var(--meadow); background: #e5f1df; }
+  /* the language list (lang.js: more than three languages): a chip that opens the phone's own picker */
+  .gselect { -webkit-appearance: none; appearance: none; padding-right: 36px; min-width: 136px; text-align: left; border-color: var(--meadow); background: #e5f1df url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23355e2b' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 13px center; }
+  .gwho { gap: 10px; }
+  .gwho .gchip { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: 18px; font-size: 17px; }
+  .ginput { font: 700 17px Nunito, system-ui, sans-serif; padding: 11px 13px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink);
+            width: 100%; -webkit-user-select: text; user-select: text; }
+  .ginput:focus { outline: none; border-color: var(--meadow); }
+  .gbtn { font: 600 18px var(--display); padding: 14px 18px; border-radius: 999px; border: 0; background: var(--barn); color: #fff; cursor: pointer; margin-top: 6px;
+          box-shadow: 0 4px 14px rgba(210, 70, 47, 0.35); }
+  .gbtn.galt { background: var(--sage); color: var(--ink); box-shadow: none; font-size: 16px; }
+  .gbtn.gdanger { background: var(--barn); color: #fff; }
+  /* the welcome picture: the whole screen behind the welcome, placed by gameui.js fitHero() so the farmer, the dog, the
+     geese and the hens always show above the sheet (or beside the card, sideways). Safari paints the strip under the
+     clock in this background colour, so the picture's top fades into that same colour: one picture up to the top. Opened
+     from the Home Screen the page runs under the clock itself and the top is only lightly shaded. */
+  html.gwelcoming, html.gwelcoming body { background: #557230; }
+  .ghero { position: fixed; z-index: 18; inset: 0; overflow: hidden; padding-left: env(safe-area-inset-left);      /* (the padding: read by fitHero, clear of a notch) */
+           background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 24px), #79aa48 50%, #8bbb55); }   /* (a solid colour too: Safari reads a fixed layer's background colour for its bars) */
+  /* the tall picture (held upright) has sky at its top: the same, in a sky blue */
+  html.gwelcoming.gtall, html.gwelcoming.gtall body { background: #5d8fb6; }
+  html.gtall .ghero { background: #5d8fb6 linear-gradient(#5d8fb6, #5d8fb6 calc(env(safe-area-inset-top) + 24px), #8fc0dc 50%, #8bbb55); }
+  html.gtall .ghero::before { background: linear-gradient(#5d8fb6, rgba(93, 143, 182, 0.8) 38%, rgba(93, 143, 182, 0)); }
+  /* (the wide picture, held sideways: no strip under the clock to match, and the Silkie on the farmer's hat near its top, so
+     only a light shade behind the name) */
+  @media (orientation: landscape) { html:not(.gtall) .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.5), rgba(30, 52, 22, 0.22) 45%, rgba(30, 52, 22, 0)); } }
+  .ghero[hidden] { display: none; }
+  .ghero img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.4s; }
+  .ghero img.on { opacity: 1; }
+  .ghero::before { content: ""; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: calc(env(safe-area-inset-top) + 150px);
+                   background: linear-gradient(#557230, rgba(85, 114, 48, 0.82) 38%, rgba(85, 114, 48, 0)); }
+  .standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
+  @media (display-mode: standalone), (display-mode: fullscreen) { .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
+  html.gtall .standalone .ghero::before, html.gtall.standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
+  @media (display-mode: standalone), (display-mode: fullscreen) { html.gtall .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
+  .glogo, .gtag { z-index: 2; }
+  .gtag-first { display: block; width: fit-content; max-width: calc(100% - 24px); margin: 8px auto 0; padding: 5px 12px; border-radius: 999px; background: rgba(30, 52, 38, 0.5); font-size: 13px; line-height: 1.3; text-shadow: none; }
+  .glogo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center; font: 600 34px/1.05 var(--display); color: #fffdf7;
+           text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); letter-spacing: 0.01em; }
+  .gtag { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 56px); text-align: center; font: 700 15px Nunito, system-ui, sans-serif; color: #fffdf7;
+          text-shadow: 0 1px 8px rgba(20, 40, 15, 0.7); }
+  .gsheet.gwelcome { max-height: none; }
+  .gsheet.gwelcome .gsheet-head { padding-top: 18px; }
+  .gsheet-body { min-height: 0; }
+  /* a short screen held upright (a browser inside another app, a small phone): the welcome a little tighter */
+  /* (and on every phone held upright, 6 Nov: more of the welcome picture's hens in view above it, the iPhone app above all) */
+  @media (orientation: portrait) and (max-height: 760px), (orientation: portrait) and (max-width: 520px) {
+    .gsheet.gwelcome .gsheet-head { padding-top: 14px; } .gsheet.gwelcome .gsheet-head h2 { font-size: 23px; }
+    .gsheet.gwelcome .gsheet-body { gap: 8px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); } .gsheet.gwelcome .gtext { font-size: 14.5px; line-height: 1.35; }
+    .gsheet.gwelcome .gwho .gchip { padding: 9px; } .gsheet.gwelcome .ginput { padding: 9px 13px; } .gsheet.gwelcome .gbtn { padding: 12px 18px; }
+  }
+  /* a big screen held upright (a tablet): the welcome's lines no wider than reads well, in the middle */
+  @media (orientation: portrait) and (min-width: 640px) { .gsheet.gwelcome .gsheet-head, .gsheet.gwelcome .gsheet-body { width: 100%; max-width: 580px; margin-inline: auto; } }
+  /* sideways (the game is played sideways first): every sheet is a card on the right under the top bar, sliding in from
+     the side, so the farm stays in view beside it */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet { left: auto; right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 60px); bottom: max(12px, env(safe-area-inset-bottom));
+              width: min(400px, 46vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - env(safe-area-inset-top) - 72px); margin-block: 0 auto; border-radius: 24px;
+              box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+    .gsheet.modal { max-height: calc(100% - env(safe-area-inset-top) - 72px); }
+    .gsheet::before { display: none; }
+    .gsheet-head { padding-top: 16px; }
+    .gsheet-body { padding-bottom: 16px; }
+    .gsheet.in { animation-name: gsin; }
+    @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
+    body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
+    body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
+    body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
+  }
+  /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet.gwelcome { left: auto; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom));
+                       width: min(400px, 46vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - 24px); margin-block: auto; border-radius: 26px; }
+    .gsheet.gwelcome::before { display: none; }
+    .gsheet.gwelcome .gsheet-head { padding-top: 16px; }
+    .gsheet.gwelcome .gsheet-body { padding-bottom: 14px; gap: 9px; }
+    /* (Start always in sight: if the card has to scroll, it stays at the bottom with the rest going under it) */
+    .gsheet.gwelcome .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 0 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }
+    .ghero .glogo, .ghero .gtag { right: calc(min(400px, 46vw) + 12px); }
+  }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 520px) {
+    .gsheet.gwelcome .gsheet-head h2 { font-size: 21px; } .gsheet.gwelcome .gtext { font-size: 14px; line-height: 1.32; }
+    .gsheet.gwelcome .gwho .gchip { padding: 8px; font-size: 16px; } .gsheet.gwelcome .gchip { padding: 7px 13px; } .gsheet.gwelcome .ginput { padding: 8px 12px; }
+    .gsheet.gwelcome .gbtn { padding: 12px 18px; font-size: 17px; }
+    .glogo { font-size: 28px; } .gtag { top: calc(env(safe-area-inset-top) + 48px); font-size: 14px; }
+  }
+  /* very short (Safari's bars and a row of tabs on a phone held sideways) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 360px) {
+    .gsheet.gwelcome { top: 8px; bottom: 8px; max-height: calc(100% - 16px); }
+    .gsheet.gwelcome .gsheet-head { padding: 12px 16px 2px; } .gsheet.gwelcome .gsheet-head h2 { font-size: 19px; }
+    .gsheet.gwelcome .gsheet-body { gap: 7px; } .gsheet.gwelcome .gtext { font-size: 13px; line-height: 1.3; }
+    .gsheet.gwelcome .glabel { font-size: 11.5px; } .gsheet.gwelcome .gchip { padding: 5px 12px; font-size: 14px; }
+    .gsheet.gwelcome .gwho .gchip { padding: 6px; font-size: 15px; } .gsheet.gwelcome .ginput { padding: 6px 12px; font-size: 16px; }
+    .gsheet.gwelcome .gbtn { padding: 10px 18px; font-size: 16px; margin-top: 2px; }
+    .glogo { font-size: 24px; top: calc(env(safe-area-inset-top) + 8px); } .gtag { top: calc(env(safe-area-inset-top) + 38px); font-size: 13px; }
+  }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 320px) { .gsheet.gwelcome .gtext { display: none; } }      /* (the choices first, all in sight) */
+  /* ---- tablets and other big screens (Audrey, 28 Oct: "how does the game show on ... tablet, very important"): the bar,
+     the cards and the buttons a third bigger (they were phone-sized on a big screen, the writing small), and a card held
+     upright no wider than reads well, in the middle; sideways it stays the card on the right */
+  @media (min-width: 700px) and (min-height: 700px) {
+    body.game .gbar, body.game .gsheet, body.game .gguide, body.game #hint, body.game .fishbar, body.game .fishgauge, body.game #compass, body.game .gmove,
+    body.game .gskip, body.game #farmerbtn, body.game #dogbtn, body.game #henbtns, body.game #replaybtn, body.game #inside-back, body.game #inside-top { zoom: 1.3; }
+  }
+  @media (min-width: 700px) and (min-height: 700px) and (max-aspect-ratio: 5/4) { body.game .gsheet { width: min(540px, 100%); margin-inline: auto; } }
+  @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) and (min-aspect-ratio: 5/4) { body.game .ghero .glogo, body.game .ghero .gtag { right: calc(min(400px, 46vw) * 1.3 + 16px); } }
+  /* the tip for a phone or tablet held upright: "Best played sideways", a little phone turning */
+  .gturn { position: fixed; z-index: 15; left: 50%; top: calc(env(safe-area-inset-top) + 60px); transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+           width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box; padding: 9px 16px 9px 12px; border-radius: 999px; background: var(--glass-top); border: 1px solid var(--glass-line);
+           color: var(--ink); font: 700 15px/1.25 Nunito, system-ui, sans-serif; box-shadow: var(--shadow); pointer-events: auto; animation: gturnin 0.4s ease-out; transition: opacity 0.35s; }
+  .gturn.gout { opacity: 0; }
+  .gturn svg { flex: none; width: 26px; height: 26px; color: var(--barn); animation: gturnspin 2.4s ease-in-out infinite; }
+  @keyframes gturnin { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translateX(-50%); } }
+  @keyframes gturnspin { 0%, 22% { transform: rotate(0deg); } 50%, 78% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+  body.gturning #hint { opacity: 0; }
+  @media (min-width: 700px) and (min-height: 700px) { body.game .gturn { zoom: 1.3; } }
+  .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
+  .gfeedbar { height: 14px; } .gfeedbar.low .gbar-fill { background: #e8913a; }
+  .gbtn:disabled { opacity: 0.75; cursor: default; }
+  /* the farm's bubbles (main.js places them): the eggs waiting in a coop's nest, a feeder running low. Tap one. */
+  .gbub { position: fixed; z-index: 5; left: 0; top: 0; transform: translate(-50%, calc(-100% - 7px)); display: inline-flex; align-items: center; gap: 6px;
+          height: 34px; padding: 0 12px 0 9px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow);
+          font: 600 16px var(--display); color: var(--ink); white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .gbub[hidden] { display: none; }
+  .gbub::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: var(--glass-top); }
+  .gbub .gegg-i { width: 14px; height: 18px; flex: none; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; background: var(--egg, #b97a4f); box-shadow: inset -2px -3px 0 rgba(0, 0, 0, 0.13); }
+  .gbub.full { background: #fff1c2; } .gbub.full::after { border-top-color: #fff1c2; }
+  .gbub .gfresh { display: none; font-size: 13px; margin: 0 -3px 0 -2px; } .gbub.fresh .gfresh { display: inline; }      /* (fresh eggs: worth more XP) */
+  .gbub.low { background: #fff1c2; } .gbub.low::after { border-top-color: #fff1c2; }
+  .gbub.empty { background: #ffd9cf; color: #8a2d1d; } .gbub.empty::after { border-top-color: #ffd9cf; }
+  .gbub.pop { animation: gbubpop 0.5s ease-out; }
+  @keyframes gbubpop { 0% { transform: translate(-50%, calc(-100% - 7px)) scale(1); } 40% { transform: translate(-50%, calc(-100% - 7px)) scale(1.22); } 100% { transform: translate(-50%, calc(-100% - 7px)) scale(1); } }
+  body.inside .gbub, body.replaying .gbub { display: none; }
+  .gegg { position: fixed; z-index: 30; width: 18px; height: 22px; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; pointer-events: none;
+          box-shadow: inset -3px -4px 0 rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.2); }
+  .gpill.gbump { animation: gbump 0.45s ease-out; }
+  @keyframes gbump { 0% { transform: scale(1); } 40% { transform: scale(1.16); } 100% { transform: scale(1); } }
+  .gbar-fill { height: 100%; background: var(--yolk); border-radius: 99px; }
+  @media (prefers-reduced-motion: reduce) { #hint, #tag, #loading, #fade { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .gsheet.in { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="farm"></canvas>
+<div class="vignette"></div>
+<div class="top"><span class="pill title">3D village</span><button id="foxbtn" class="pill" type="button" hidden>Foxes</button><a class="pill" href="../">Back to the game</a></div>
+<div id="inside-top" hidden><span class="pill title" id="inside-title"></span></div>
+<button id="inside-back" class="pill" type="button" hidden>Back to the farm</button>
+<button id="farmerbtn" class="pill" type="button" hidden>Send the farmer</button>
+<button id="dogbtn" class="pill" type="button" hidden></button>
+<button id="replaybtn" class="pill" type="button" hidden></button>
+<div id="henbtns" hidden><button id="cuddlebtn" class="pill" type="button"></button><button id="feedbtn" class="pill" type="button"></button></div>
+<form id="dogname" hidden><label for="dogname-in" id="dogname-label"></label><input id="dogname-in" type="text" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"><div class="row"><button type="button" class="pill" id="dogname-cancel"></button><button type="submit" class="pill" id="dogname-save"></button></div></form>
+<div id="fade"></div>
+<div id="hint" role="status"></div>
+<button id="compass" type="button" hidden aria-label="Back to the usual view"><span class="needle"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4.5 L25.2 20 L14.8 20 Z" fill="#d8472f"/><path d="M20 35.5 L25.2 20 L14.8 20 Z" fill="#f3eee0" stroke="#b9b1a0" stroke-width="0.8"/><circle cx="20" cy="20" r="2.4" fill="#3b3a36"/></svg></span></button>
+<div id="film" hidden><canvas id="film-grain" width="180" height="390"></canvas><div id="film-flick"></div><div class="film-scratch" id="film-s1"></div><div class="film-scratch" id="film-s2"></div><div id="film-vig"></div><div id="film-iris"></div><div id="film-card"><div class="frame"><p id="film-title"></p><p id="film-sub"></p></div></div><button id="film-skip" type="button"></button></div>
+<div id="tag"></div>
+<button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
+<div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
+<script src="app.js?v=1793986541"></script>
+</body>
+</html>
