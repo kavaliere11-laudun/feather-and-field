@@ -2,8 +2,8 @@
 - the icon (1024x1024, no transparency: Apple's rule): art/icon-1024.png, the white Silkie hen and her chick in a meadow
   of daisies in front of a red barn, painted (Audrey, 2 Nov 2026, "Final one": made with ChatGPT from the game's own Silkie
   and chick, web3d/iconstudio.mjs, as its model); also the web game's Home Screen icons (web3d/icon-*.png)
-- the launch screen (2732x2732, shown filling the screen): the game's loading green (index.html #loading), so the app opens
-  straight into "Loading your farm..." with no flash
+- the launch screen: the welcome's painted picture, tall upright and wide sideways, as the game's loading screen shows it
+  (index.html body.game #loading), so the app opens on the picture and "Loading your farm..." comes on over it
 """
 import os
 from PIL import Image
@@ -14,15 +14,20 @@ assert ic.size == (1024, 1024)
 ic.save(f'{IOS}/AppIcon.appiconset/AppIcon-512@2x.png', optimize=True)
 WEB = f'{HERE}/../web3d'
 for n in (180, 192, 512): ic.resize((n, n), Image.LANCZOS).save(f'{WEB}/icon-{n}.png', optimize=True)      # (the Home Screen's)
-# the loading screen's green: #557230 at the top (under the clock), down to #8cb85c at 42%, then flat
-S = 2732
-top, low = (0x55, 0x72, 0x30), (0x8c, 0xb8, 0x5c)
-col = Image.new('RGB', (1, S))
-for y in range(S):
-    f = y / S
-    t = 0 if f < 0.06 else min(1, (f - 0.06) / (0.42 - 0.06))
-    col.putpixel((0, y), tuple(round(a + (b - a) * t) for a, b in zip(top, low)))
-sp = col.resize((S, S))
-for n in ('splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png'):
-    sp.save(f'{IOS}/Splash.imageset/{n}', optimize=True)
+# the launch screen (6 Nov 2026, Audrey: "Yes, loading too"): the welcome's painted picture, cut to just what the game's
+# loading screen shows (index.html body.game #loading: the tall one at 34% across held upright, the wide one in the middle
+# sideways, each filling a 19.5:9 iPhone), so the app opens on the picture and the loading screen's name, words and bar
+# come on over it. Two pictures: the tall one, and the wide one for a phone held sideways (height class compact)
+import json
+SP = f'{IOS}/Splash.imageset'
+for f in os.listdir(SP):
+    if f.endswith(('.png', '.jpg')): os.remove(f'{SP}/{f}')
+R = 402 / 874                                                        # (an iPhone held upright, width over height)
+t = Image.open(f'{WEB}/welcome-tall.jpg').convert('RGB'); tw = round(t.height * R); x = round(0.34 * (t.width - tw))
+t.crop((x, 0, x + tw, t.height)).resize((1206, 2622), Image.LANCZOS).save(f'{SP}/launch-tall.jpg', quality=86, optimize=True)
+w = Image.open(f'{WEB}/welcome.jpg').convert('RGB'); wh = round(w.width * R); y = round((w.height - wh) / 2)
+w.crop((0, y, w.width, y + wh)).resize((2622, 1206), Image.LANCZOS).save(f'{SP}/launch-wide.jpg', quality=86, optimize=True)
+json.dump({'images': [{'idiom': 'universal', 'filename': 'launch-tall.jpg', 'scale': '3x'},
+                      {'idiom': 'universal', 'filename': 'launch-wide.jpg', 'height-class': 'compact', 'scale': '3x'}],
+           'info': {'version': 1, 'author': 'xcode'}}, open(f'{SP}/Contents.json', 'w'), indent=2)
 print('icon and launch screen written')

@@ -41,6 +41,24 @@
   #loading .msg { font-family: Fredoka, Nunito, sans-serif; font-weight: 600; font-size: 20px; color: var(--meringue); text-align: center; padding: 0 24px; }
   #loading .bar { width: 200px; height: 10px; border-radius: 99px; background: rgba(255, 253, 247, 0.35); overflow: hidden; }
   #loading .fill { width: 0; height: 100%; background: var(--yolk); transition: width .2s; }
+  /* the game's loading screen (6 Nov 2026, Audrey: "Yes, loading too"): the welcome's painted picture, tall upright and
+     wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
+     opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
+  body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
+                       background: #5d8fb6 url("welcome-tall.jpg?v=BUST") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=BUST") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+  body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
+                               font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
+  body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
+                              background: linear-gradient(rgba(30, 52, 22, 0), rgba(30, 52, 22, 0.55)); pointer-events: none; }
+  body.game #loading .msg, body.game #loading .bar { position: relative; z-index: 1; }
+  body.game #loading .msg { text-shadow: 0 1px 8px rgba(20, 40, 15, 0.8); }
+  body.game #loading .bar { background: rgba(255, 253, 247, 0.5); box-shadow: 0 1px 6px rgba(20, 40, 15, 0.35); }
+  /* (sideways the hens fill the bottom: the words and the bar on the sky, under the name) */
+  @media (orientation: landscape) { body.game #loading { justify-content: flex-start; gap: 10px; padding: calc(env(safe-area-inset-top) + 62px) 0 0; }
+    body.game #loading::after { top: 0; bottom: auto; height: 34%; background: linear-gradient(rgba(30, 52, 22, 0.42), rgba(30, 52, 22, 0)); }
+    body.game #loading .msg { font-size: 18px; } }
+  @media (orientation: landscape) and (max-height: 520px) { body.game #loading::before { font-size: 28px; top: calc(env(safe-area-inset-top) + 10px); } body.game #loading { padding-top: calc(env(safe-area-inset-top) + 52px); } }
   #inside-top { position: fixed; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 10px); display: flex; justify-content: center; pointer-events: none; }
   #inside-back { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 58px); font-size: 16px;
                  padding: 12px 22px; border: 0; cursor: pointer; font-family: Nunito, system-ui, sans-serif; }

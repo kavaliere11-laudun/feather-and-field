@@ -4036,3 +4036,11 @@ Her notes while playing build 10, and what changed:
   and his chick show beside the card. Built on top of the other session's iPhone notes (5696674); gametest passes.
   (A first publish went out incomplete for about a minute, node_modules having gone with the rebase; undone at once,
   d01f768. Before deploying, check `ls dist/play.webmanifest dist/models/village.glb`.)
+- **The loading screen and the app's launch screen** (6 Nov, 18:40; Audrey: "should this image also be the loading image
+  when the game opens?", then "Yes, loading too (Recommended)"): `index.html body.game #loading` shows the tall picture
+  upright (cover, 34% across) and the wide one sideways (cover, centred), "Feather & Field" at the top, "Loading your
+  farm…" and the bar at the bottom over a soft shade upright, under the name on the sky sideways (the hens fill the
+  bottom). The CSS asks for `welcome*.jpg?v=BUST` (build.sh puts the build's number in), the same files as the welcome.
+  The test village's loading stays green. `app/icons.py` cuts the same parts for the iPhone's launch screen
+  (Splash.imageset: `launch-tall.jpg`, and `launch-wide.jpg` for height class compact, i.e. sideways), so the app opens
+  on the picture and the words come on over it. gametest passes.
