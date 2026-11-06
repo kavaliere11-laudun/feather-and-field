@@ -4028,3 +4028,11 @@ Her notes while playing build 10, and what changed:
 - **The repository** (6 Nov): a commit from another chat had swept `web3d/node_modules` and `web3d/dist` into `source`
   (10,700 files). They're out of it again and in `.gitignore` (with `web3d/_docs/`); after a pull, run `npm ci` in
   `web3d/` and `./build.sh`.
+- **Sideways, sky above** (6 Nov, 18:12; Audrey asked about sideways): the wide picture redone by ChatGPT with sky and
+  treetops above (same size, the scene a little smaller and lower; the Polish without her tongue and with grey legs,
+  the Ayam's tail kept), enlarged as before: `welcome.jpg` 3548 x 1774, `welcome-art/wide-1774.png`. Wide key
+  [0.14, 0.15, 0.665, 0.97]: the farmer to Biscuit (the duck at the left edge or just off it). In the app sideways
+  (874x402, 932x430, the notch's 62 px allowed for) the title sits on sky, clear of the Silkie on the hat, and Biscuit
+  and his chick show beside the card. Built on top of the other session's iPhone notes (5696674); gametest passes.
+  (A first publish went out incomplete for about a minute, node_modules having gone with the rebase; undone at once,
+  d01f768. Before deploying, check `ls dist/play.webmanifest dist/models/village.glb`.)

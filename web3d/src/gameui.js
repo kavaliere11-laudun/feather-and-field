@@ -37,7 +37,7 @@ const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      //
 // upright; each with its size and the part that must always show (key: the duck to the goose, the Silkie on the hat to
 // the hens' feet), and the colour Safari's bars take over its top
 export const HEROES = {
-  wide: { src: 'welcome.jpg', w: 3548, h: 1774, key: [0.07, 0.02, 0.645, 0.86], bar: '#557230' },
+  wide: { src: 'welcome.jpg', w: 3548, h: 1774, key: [0.14, 0.15, 0.665, 0.97], bar: '#557230' },
   tall: { src: 'welcome-tall.jpg', w: 2048, h: 3072, key: [0.06, 0.235, 0.95, 0.785], bar: '#5d8fb6' },
 };
 // the little barn (as on Your coops' button): the Breed Book's coop lines
