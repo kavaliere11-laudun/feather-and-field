@@ -1,3 +1,5 @@
+// (Since 6 Nov 2026 the welcome pictures are painted, not rendered: welcome-art/, README "The painted welcome pictures".
+// Don't write this one over welcome.jpg.)
 // The game's welcome picture (main.js ?poster): node posterpic.mjs OUT  (W, H: css px; DSF; EL, AZ, DIST, FOV, AT=x,y,z: the camera; T: seconds of posing)
 // Made with: AT=1.05,0.75,0.1 DIST=9.8 FOV=28.5 W=1100 H=500 DSF=5 ./withserver.sh node posterpic.mjs /tmp/p  (5500x2500: the scene
 // with grass to spare all round, more on the right for the card sideways; shrunk to 3300x1500 for smooth edges and saved as

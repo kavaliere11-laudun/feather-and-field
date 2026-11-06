@@ -446,6 +446,13 @@
   html.gwelcoming, html.gwelcoming body { background: #557230; }
   .ghero { position: fixed; z-index: 18; inset: 0; overflow: hidden; padding-left: env(safe-area-inset-left);      /* (the padding: read by fitHero, clear of a notch) */
            background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 24px), #79aa48 50%, #8bbb55); }   /* (a solid colour too: Safari reads a fixed layer's background colour for its bars) */
+  /* the tall picture (held upright) has sky at its top: the same, in a sky blue */
+  html.gwelcoming.gtall, html.gwelcoming.gtall body { background: #5d8fb6; }
+  html.gtall .ghero { background: #5d8fb6 linear-gradient(#5d8fb6, #5d8fb6 calc(env(safe-area-inset-top) + 24px), #8fc0dc 50%, #8bbb55); }
+  html.gtall .ghero::before { background: linear-gradient(#5d8fb6, rgba(93, 143, 182, 0.8) 38%, rgba(93, 143, 182, 0)); }
+  /* (the wide picture, held sideways: no strip under the clock to match, and the Silkie on the farmer's hat near its top, so
+     only a light shade behind the name) */
+  @media (orientation: landscape) { html:not(.gtall) .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.5), rgba(30, 52, 22, 0.22) 45%, rgba(30, 52, 22, 0)); } }
   .ghero[hidden] { display: none; }
   .ghero img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.4s; }
   .ghero img.on { opacity: 1; }
@@ -453,6 +460,8 @@
                    background: linear-gradient(#557230, rgba(85, 114, 48, 0.82) 38%, rgba(85, 114, 48, 0)); }
   .standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
   @media (display-mode: standalone), (display-mode: fullscreen) { .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
+  html.gtall .standalone .ghero::before, html.gtall.standalone .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); }
+  @media (display-mode: standalone), (display-mode: fullscreen) { html.gtall .ghero::before { background: linear-gradient(rgba(30, 52, 22, 0.55), rgba(30, 52, 22, 0.25) 45%, rgba(30, 52, 22, 0)); } }
   .glogo, .gtag { z-index: 2; }
   .gtag-first { display: block; width: fit-content; max-width: calc(100% - 24px); margin: 8px auto 0; padding: 5px 12px; border-radius: 999px; background: rgba(30, 52, 38, 0.5); font-size: 13px; line-height: 1.3; text-shadow: none; }
   .glogo { position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center; font: 600 34px/1.05 var(--display); color: #fffdf7;

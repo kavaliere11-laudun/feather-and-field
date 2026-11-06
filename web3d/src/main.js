@@ -7193,7 +7193,7 @@ const barTint = { at: 0, top: '', bottom: '', px: new Uint8Array(4), meta: docum
 function tintBars(now) {
   barTint.at = now;
   if (document.documentElement.classList.contains('gwelcoming')) {          // (the welcome's own colours back)
-    if (barTint.top) { barTint.top = barTint.bottom = ''; if (barTint.meta) barTint.meta.setAttribute('content', '#557230'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = ''; }
+    if (barTint.top) { barTint.top = barTint.bottom = ''; if (barTint.meta) barTint.meta.setAttribute('content', document.documentElement.classList.contains('gtall') ? '#5d8fb6' : '#557230'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = ''; }
     return;
   }
   const gl = renderer.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, P = barTint.px;

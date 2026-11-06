@@ -33,7 +33,13 @@ const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' 
 const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
-export const HERO = { w: 3300, h: 1500, key: [0.236, 0.285, 0.642, 0.79] };      // (1 Nov: a little room left of the farmer, sideways his arm was cut)
+// the welcome pictures (6 Nov 2026, painted, Audrey's choice): a wide one for a screen held sideways and a tall one held
+// upright; each with its size and the part that must always show (key: the duck to the goose, the Silkie on the hat to
+// the hens' feet), and the colour Safari's bars take over its top
+export const HEROES = {
+  wide: { src: 'welcome.jpg', w: 3548, h: 1774, key: [0.07, 0.02, 0.645, 0.86], bar: '#557230' },
+  tall: { src: 'welcome-tall.jpg', w: 2048, h: 3072, key: [0.06, 0.22, 0.95, 0.80], bar: '#5d8fb6' },
+};
 // the little barn (as on Your coops' button): the Breed Book's coop lines
 const BARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.8V20h13V9.8"/><path d="M9.5 20v-5.5h5V20"/><path d="M9.5 14.5l5 5.5M14.5 14.5l-5 5.5"/></svg>';
 
@@ -165,7 +171,7 @@ export class GameUI {
     if (!this.heroEl) {
       this.heroEl = el('div', 'ghero');
       const img = this.heroImg = el('img'); img.alt = ''; img.decoding = 'async';
-      img.addEventListener('load', () => { this.fitHero(); img.classList.add('on'); }); img.src = 'welcome.jpg' + (this.o.bust || '');      // (fading in once it's there)
+      img.addEventListener('load', () => { this.fitHero(); img.classList.add('on'); });      // (fading in once it's there; its src: fitHero, wide or tall)
       this.heroLogo = el('div', 'glogo'); this.heroTag = el('div', 'gtag');
       this.heroEl.append(img, this.heroLogo); this.heroLogo.after(this.heroTag);
       document.body.append(this.heroEl);
@@ -187,6 +193,13 @@ export class GameUI {
     const bottom = side || S.hidden ? Ht - 8 : S.offsetTop - 8, right = side ? S.offsetLeft - 8 : W;
     // how far down the picture must reach: under the sheet's round corners, or to the bottom when the sheet doesn't fill the width
     const cover = side || S.hidden || S.offsetWidth < W - 2 ? Ht : Math.min(Ht, S.offsetTop + 32);
+    // (the tall picture held upright, the wide one sideways: swapped when the phone turns)
+    const kind = side || W > Ht ? 'wide' : 'tall', HERO = HEROES[kind];
+    if (img.dataset.kind !== kind) {
+      img.dataset.kind = kind; img.classList.remove('on'); img.src = HERO.src + (this.o.bust || '');
+      document.documentElement.classList.toggle('gtall', kind === 'tall');
+      const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', HERO.bar);
+    }
     const [x0, y0, x1, y1] = HERO.key, kw = (x1 - x0) * HERO.w, kh = (y1 - y0) * HERO.h;
     let k = Math.min((right - left) / kw, Math.max(60, bottom - top) / kh, 1);    // (never bigger than it was drawn)
     k = Math.max(k, W / HERO.w, cover / HERO.h);
@@ -196,7 +209,7 @@ export class GameUI {
     const reach = side ? Math.min(W, S.offsetLeft + 40) : W;
     x = Math.min(0, Math.max(reach - iw, x)); y = Math.min(0, Math.max(cover - ih, y));
     Object.assign(img.style, { width: iw + 'px', height: ih + 'px', left: x + 'px', top: y + 'px' });
-    this.heroFit = { k: +k.toFixed(4), x: Math.round(x), y: Math.round(y), side, open: [0, Math.round(top), Math.round(right), Math.round(bottom)] };
+    this.heroFit = { kind, k: +k.toFixed(4), x: Math.round(x), y: Math.round(y), side, open: [0, Math.round(top), Math.round(right), Math.round(bottom)] };
   }
   welcome() {
     return new Promise(resolve => {

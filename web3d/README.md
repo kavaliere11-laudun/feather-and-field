@@ -3944,3 +3944,25 @@ the birds already had.
   fails loudly. "Upload succeeded"; Apple processes it, then it's in TestFlight. Audrey (5 Nov: "I want to play the game
   on my phone but not publish it at first, as it still has bugs"): TestFlight internal testing only; nothing on the App
   Store until she submits a version and releases it.
+
+## The painted welcome pictures (6 Nov 2026; Audrey: "I need a better welcome image, I really like that one it's funny but I need to improve the quality of it while keeping the spirit of the game")
+
+- Painted with AI from the 3D welcome picture, step by step with Audrey (Midjourney for the look, Gemini for the scene,
+  ChatGPT for the final; prompts and lessons in the project doc `claude/image-prompts.md`). The cast: the farmer scattering
+  corn by the red hen house, a black and white Paint Silkie on his hat, a white call duck, a Buff Orpington and a Light
+  Brahma tugging a worm, an Ayam Cemani pecking, a black Polish with a white crest, two chicks, Biscuit in a play bow with a
+  chick on his back, the white goose, the rooster crowing on the hay bale, a peacock, the wheelbarrow of pumpkins. No text:
+  the game puts its name and tagline on in every language.
+- Touched up by hand after ChatGPT: the Polish's tongue taken out and her yellow leg made grey like the other (wide);
+  the Ayam Cemani with her full tail from the wide picture and the Polish and her chick from another version (tall).
+  Those finals are `welcome-art/wide-1774.png` and `welcome-art/tall-1024.png`.
+- Enlarged twice with Real-ESRGAN x2plus (`welcome-art/upscale.py`: `pip install torch spandrel`, the model
+  `RealESRGAN_x2plus.pth` from github.com/xinntao/Real-ESRGAN releases v0.2.1; 2 minutes a picture on the CPU) and saved
+  quality 84: `welcome.jpg` (3548 x 1774, wide) and `welcome-tall.jpg` (2048 x 3072, tall).
+- `gameui.js HEROES`: fitHero shows the tall picture held upright and the wide one sideways (or on any screen wider than
+  tall), swapped when the phone turns; each with its key (the part kept in view: upright the duck to the goose, the Silkie
+  on the hat down to the hens; sideways the duck to Biscuit, the card covering the rest) and its bar colour. Upright the
+  picture's top is sky, so the top fades into a sky blue (#5d8fb6, `html.gtall`; the theme colour too, and main.js's
+  tintBars gives it back); sideways only a light shade behind the name, so the Silkie on the hat shows.
+- Checked at 402x874, 375x667, 874x402, 932x430, 820x1180 and 1280x800, English and French; turning the phone swaps
+  the picture; gametest passes. The app icon stays the Silkie mum and chick of 2 Nov (Audrey: "let's keep the current icon").

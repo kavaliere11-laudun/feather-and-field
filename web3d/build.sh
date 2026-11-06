@@ -18,7 +18,7 @@ cp models/plants.glb models/flock.glb models/flock.json models/coops.glb models/
 for m in coops village interiors decor showground fauna; do node slim.mjs models/$m.glb dist/models/$m.glb > /dev/null; done      # (the still models made smaller: slim.mjs, ~6 MB off the first load; main.js unslim)
 cp models/outfit_*.glb models/outfit_*.json dist/models/          # (the farmers' outfits, each loaded only when worn: farmer.js loadOutfit)
 rm -rf dist/fonts && cp -r fonts dist/fonts          # (the replay's title cards: IM Fell English, with its licence)
-cp welcome.jpg dist/welcome.jpg                      # (the game's welcome picture: main.js ?poster, rendered by posterpic.mjs)
+cp welcome.jpg welcome-tall.jpg dist/                # (the game's welcome pictures, wide and tall: painted, 6 Nov 2026; gameui.js HEROES)
 rm -rf dist/book && cp -r book dist/book             # (the Breed Book's pictures, one a breed: rendered by bookpics.mjs)
 rm -rf dist/intro && cp -r intro dist/intro          # (the onboarding pictures, 1-4 and 3-fr: main.js ?intro, rendered by intropics.mjs)
 rm -rf dist/outfits && cp -r outfits dist/outfits        # (the shop's pictures of the farmer's outfits: the 2D game's own, game2/img/farmer)
