@@ -3966,3 +3966,8 @@ the birds already had.
   tintBars gives it back); sideways only a light shade behind the name, so the Silkie on the hat shows.
 - Checked at 402x874, 375x667, 874x402, 932x430, 820x1180 and 1280x800, English and French; turning the phone swaps
   the picture; gametest passes. The app icon stays the Silkie mum and chick of 2 Nov (Audrey: "let's keep the current icon").
+- **TestFlight build 12** (6 Nov, 15:47; Audrey: "Do we need to do something to push it to test flight"): sent with the
+  workflow's TestFlight job (`gh workflow run ios.yml --ref source -f testflight=true`; it wraps main's 3d/, so the web
+  game is published first). "Upload succeeded"; the simulator's pictures (app-check, run 12) show the new welcome. In the
+  app (full screen, under the clock) the Silkie on the hat sits just under the tagline and the sheet covers most of the
+  hens upright: to look at if Audrey wants more of them in view.
