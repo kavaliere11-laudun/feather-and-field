@@ -971,9 +971,9 @@ export class Rig {
     const up = s.up || 0;                    // looking up (the Glutton under her apple): chest up, neck stretched, beak to the sky
     body.position.y += bob - s.sit * this.shank * 0.85 - (H.crouch * 0.32 + H.squash * 0.22) * this.shank - 0.025 * sz * bd - 0.3 * this.shank * dk - 0.02 * sz * st + 0.004 * sz * sl * Math.sin(s.t * 1.7);
     body.rotation.set(0.38 * s.peck - 0.28 * s.crow + 0.12 * s.kick + 0.05 * s.sit + 0.22 * H.crouch - 0.14 * H.rise * (1 - st) + 0.12 * H.squash
-                      - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr + 0.12 * dk - 0.32 * up,
+                      - 0.2 * sg - 0.06 * kw + 0.04 * ck - 0.13 * pr + 0.12 * dk - 0.16 * up,
                       0, w * Math.sin(ph) * 0.07 + 0.13 * shake);
-    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk + 0.45 * sl - 0.62 * up,
+    head.rotation.set(0.95 * s.peck - 0.55 * s.crow + 0.1 * s.sit - 0.1 * H.crouch + 0.42 * ck - 0.62 * kw - 0.16 * pr - 0.1 * dk + 0.45 * sl - 0.38 * up,
                       s.lookYaw * (1 - s.peck) + 0.35 * rf * Math.sin(s.t * 38 + 1) + 2.5 * sl,
                       s.lookTilt * (1 - s.peck) + s.crow * 0.06 * Math.sin(s.t * 40));
     // walking, the head holds still in the air while the body passes under it, then darts forward: the chicken head-bob

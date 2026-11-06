@@ -3895,7 +3895,7 @@ function tapAt(x, y) {
     // the game: the Glutton's apple tree (how many apples on it, or when the next is ripe)
     if (GAME_MODE) for (const p of livePlots()) {
       const A = p.apple; if (!A) continue;
-      const q = A.S.at, r = 0.33 * A.S.s; nb.min.set(q[0] - r, 0, q[1] - r); nb.max.set(q[0] + r, 1.02, q[1] + r);
+      const q = A.S.at, r = 0.33 * A.S.s; nb.min.set(q[0] - r, 0, q[1] - r); nb.max.set(q[0] + r, 1.22, q[1] + r);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
       if (loc.intersectBox(nb, hitP)) { appleTreeTap(p); return; }
     }
@@ -4356,7 +4356,7 @@ function featherTap(plot, i) {
 // over the side fence with a flutter, round to an apple, a hop for it (play.js 'apple'); it falls in front of her and she
 // eats it (game.eatApple); after two she settles under the tree and lays an apple egg there; then back over the fence. A
 // tap on the egg: sold (game.sellAppleEgg); on the tree: how many apples it has, or when the next one's ripe
-const APPLE_HANG = 0.665, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
+const APPLE_HANG = 0.8, APPLE_GOLD = '#f2c14e', APPLE_LIE = 0.032;
 let APPLE_GEO = null, APPLE_MAT = null, AEGG_MAT = null;
 function appleGeo() {
   if (APPLE_GEO) return APPLE_GEO;
@@ -4390,6 +4390,11 @@ function appleEggMat() {
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   return (AEGG_MAT = new THREE.MeshStandardMaterial({ map: tex, emissive: 0xffc35a, emissiveIntensity: 0.15, roughness: 0.28, metalness: 0.35 }));
 }
+// where a hen's beak is, for her size (rig.scale; measured on the drawn hens, the tip of the beak, 6 Nov evening): looking
+// up (the apple pose: so far forward of her feet, so high), and bent down to eat from the ground (peck 1.45: so far
+// forward, just above the ground)
+const BEAK_UP = { sil: [0.31, 1.0], bra: [0.28, 1.11], pol: [0.28, 1.11] }, BEAK_EAT = 0.37;
+const beakUp = b => { const k = BEAK_UP[baseBreed(b.breed)] || [0.21, 1.05], sc = b.rig.scale; return [k[0] * sc, k[1] * sc]; };
 // the Glutton's corner beside a coop's pen on its side ('l' or 'r'), in its yard's own frame: [x0, z0, x1, z1]
 const APPLE_STRIP = 0.95;
 function appleStrip(gc, side) {
@@ -4477,15 +4482,23 @@ function appleTree(plot) {
     if (j !== k - 1) { [A.slots[j], A.slots[k - 1]] = [A.slots[k - 1], A.slots[j]]; [A.apples[j], A.apples[k - 1]] = [A.apples[k - 1], A.apples[j]]; }
     return A.slots[k - 1];
   };
+  // (where she stands for an apple: her beak, looking up, just under it; never closer than her breast clears the tub)
+  A.standFor = (b, sl) => { const r = Math.max(0.37, 0.215 + beakUp(b)[0]), q = [S.at[0] + Math.sin(sl.a) * r, S.at[1] + Math.cos(sl.a) * r]; return S.roomy(q[0], q[1]) ? q : sl.stand; };
+  // (knocked off: it pops out past her shoulder and lands beside her, away from the tub, just where her beak comes down
+  // when she turns to it and bends to eat; face: which way she turns)
   A.knock = (b, sl) => {
     const i = A.slots.indexOf(sl), r = i >= 0 ? game.eatApple(plot.gc.id, b.gid) : null; if (!r) return null;
-    const p = b.root.position, f = sl.face, to = [p.x + Math.sin(f) * 0.105, p.z + Math.cos(f) * 0.105];
+    const p = b.root.position, aOut = Math.atan2(p.x - S.at[0], p.z - S.at[1]), reach = BEAK_EAT * b.rig.scale;
+    let face = aOut + 1.3, to = null;
+    const side = q => Math.abs(Math.abs(wrapA(q - S.camA)) - 1.2);      // (best: turned side-on to the camera, a little towards it, so she's seen bending to it)
+    for (const da of [1.3, -1.3, 0.9, -0.9, 1.7, -1.7, 0.5, -0.5, 0].sort((x, y) => side(aOut + x) - side(aOut + y))) { const a = aOut + da, q = [p.x + Math.sin(a) * reach, p.z + Math.cos(a) * reach]; if (S.inStrip(q[0], q[1], 0.06) && Math.hypot(q[0] - S.at[0], q[1] - S.at[1]) > 0.26) { face = a; to = q; break; } }
+    if (!to) to = [p.x + Math.sin(face) * reach, p.z + Math.cos(face) * reach];
     A.apples[i].visible = false;
     A.fall.position.set(sl.hang[0], sl.hang[1], sl.hang[2]); A.fall.scale.setScalar(1); A.fall.rotation.set(0, sl.a * 2.7, 0); A.fall.visible = true;
-    A.drop = { from: [sl.hang[0], sl.hang[1], sl.hang[2]], to, t: 0, landed: false, bite: 0, spin: (b.r() - 0.5) * 9 };
+    A.drop = { from: [sl.hang[0], sl.hang[1], sl.hang[2]], to, face, t: 0, landed: false, bite: 0, spin: (b.r() - 0.5) * 9 };
     if (r.egg) A.laying = true;      // (the egg's hers to lay once she's eaten it: not shown till then)
     plot.gc = game.coop(plot.gc.id); wake(4000);
-    return r;
+    return { ...r, face };
   };
   // (outside: where she may walk, and her way from a to b round the tub, not through it)
   A.free = (x, z) => S.roomy(x, z) && Math.hypot(x - S.at[0], z - S.at[1]) > 0.34;
@@ -4501,7 +4514,7 @@ function appleTree(plot) {
   };
   // (how much higher than her own hop she leaps for it: just enough for her beak, looking up, to reach under the apple, so
   // her head stays out of the crown; a bigger hen hardly needs to, a Silkie leaps higher)
-  A.lift = (b, sl) => { const sc = b.rig.scale, sz = Math.min(1.2, sc / 0.5), beak = 0.84 * sc + 0.03 * sz, own = 0.12 * sz; return Math.max(0.02, Math.min(0.14, sl.hang[1] - 0.033 - beak - own)); };
+  A.lift = (b, sl) => { const sz = Math.min(1.2, b.rig.scale / 0.5), own = 0.12 * sz; return Math.max(0.03, Math.min(0.34, sl.hang[1] - 0.033 + 0.02 - beakUp(b)[1] - own)); };
   A.down = () => !!(A.drop && A.drop.landed);
   A.bite = k => { if (A.drop) A.drop.bite = k; };
   A.eaten = () => { A.drop = null; A.fall.visible = false; };
@@ -4539,11 +4552,11 @@ function tickApples(dt) {
     const n = game.applesAt(c);
     for (let i = 0; i < A.apples.length; i++) A.apples[i].visible = i < n;
     const D = A.drop;
-    if (D) {      // (it falls, faster and faster, spinning; a little bounce where it lands; then bitten away a bite at a time)
+    if (D) {      // (knocked out in an arc, spinning; a little bounce where it lands, beside her; then bitten away a bite at a time)
       const m = A.fall;
       if (!D.landed) {
-        D.t += dt; const u = Math.min(1, D.t / 0.42), e = u * u;
-        m.position.set(D.from[0] + (D.to[0] - D.from[0]) * u, D.from[1] + (APPLE_LIE - D.from[1]) * e, D.from[2] + (D.to[1] - D.from[2]) * u);
+        D.t += dt; const u = Math.min(1, D.t / 0.5);      // (knocked out in an arc, up a little, then down beside her)
+        m.position.set(D.from[0] + (D.to[0] - D.from[0]) * u, D.from[1] + (APPLE_LIE - D.from[1]) * u * u + 0.16 * Math.sin(u * Math.PI) * (1 - u * 0.4), D.from[2] + (D.to[1] - D.from[2]) * u);
         m.rotation.x += D.spin * dt; m.rotation.z += D.spin * 0.6 * dt;
         if (u >= 1) { D.landed = true; D.bt = 0; }
       } else {
@@ -4572,7 +4585,7 @@ function appleEggTap(plot) {
 function appleTreeTap(plot) {
   const c = game.coop(plot.gc.id), gl = game.gluttons(c)[0], name = gl ? gl.name : game.coopName(c), n = game.applesAt(c);
   tag.textContent = c.ap.egg ? game.t('apple_egg_wait', { name }) : n > 1 ? game.t('apple_tree', { n, name }) : n === 1 ? game.t('apple_tree1', { name }) : game.t('apple_tree0', { name, t: gameUI.dur(game.appleNext(c)) });
-  tagBird = null; tagSpot.set(plot.apple.S.at[0], 1.08, plot.apple.S.at[1]); plot.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.8;
+  tagBird = null; tagSpot.set(plot.apple.S.at[0], 1.26, plot.apple.S.at[1]); plot.frame.localToWorld(tagSpot); tag.classList.add('on'); fieldTag = 2.8;
 }
 // tap a nest (or its bubble): the eggs fly to the coins, sold
 function collectAt(plot) {

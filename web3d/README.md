@@ -4053,7 +4053,7 @@ Her notes while playing build 10, and what changed:
 They were in the Unity version only. Now in the game:
 - **The tree** (`stylized/village3d.py apple_tub_v`, exported with `export_village3d.py apple_tub` and spliced into
   `village.glb`, about 3,600 triangles): a little apple tree in an oak half-barrel (two iron hoops, dark earth), a short
-  crooked trunk, a round crown of small oval leaves over a dark core, lighter on top; about 1.05 m high. No apples on
+  crooked trunk, a round crown of small oval leaves over a dark core, lighter on top; about 1.2 m high. No apples on
   the model: the browser hangs them (`main.js` appleGeo: round, rosy red with a yellow-green cheek, a stalk and a leaf).
 - **Outside the coop** (her second note, 19:23): it stands half a metre out from one side fence of the pen, in a corner
   0.95 m wide that the coop's footprint takes in (`main.js` APPLE_STRIP, footOf/footBase): nothing else can be put
@@ -4096,6 +4096,16 @@ They were in the Unity version only. Now in the game:
   breast clear of the tub), the apples hang just inside the crown's edge at 0.665 m, and she leaps only as high as her beak
   needs (`A.lift`, by her size), so her head stays out of the leaves; she walks round the tub 0.42 m out; the tree stands
   half a metre along the fence from where she goes over (towards the house where there's room), so she lands beside it.
+- **Eating it, and the tree once more** (6 Nov, 21:24; Audrey, with a picture: "the chicken is picking next to the apple +
+  clipping with the tree"): measured on the drawn hens (the tip of the beak, every breed): looking up her beak is about a
+  fifth of her size ahead of her feet (more for the Brahma, the Polish and the Silkies), and bending to eat from the ground
+  (peck 1.45) it comes down just above the ground 0.37 of her size ahead (`main.js` BEAK_UP, BEAK_EAT). So: she stands
+  where her beak, looking up, is just under the apple (`A.standFor`, never nearer the trunk than 0.37 m); the apple she
+  knocks pops out past her shoulder and lands beside her, away from the tub, exactly where her beak comes down; she turns
+  side-on to the camera to it and bends right down to eat it (was: it fell under her breast and she pecked into the tub).
+  The tree is taller (1.2 m, the trunk splitting at 0.7 m, the crown from 0.76 m): the apples hang at 0.8 m and her whole
+  leap stays under the leaves. The look-up pose is softer (her beak up and forward, not straight up). appletest checks
+  the apple lies just under her beak once she's turned, and that she and it are clear of the tub.
 - **Test:** `appletest.mjs` (LANG=fr; W/H; SHOTS): 21 checks, from her card before the tree to the tampered save.
 
 ## Sideways only (6 Nov 2026, 19:29; Audrey: "also let's force the game to be sideway, it should not be player portrait")

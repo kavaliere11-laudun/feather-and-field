@@ -1800,8 +1800,8 @@ def apple_tub_v(seed=149, name='apple_tub'):
     the apple egg"): a little apple tree in a wooden half-barrel, planted in the yard of a coop where a Glutton hen lives.
     The tub (oak staves, two iron hoops, dark earth), a short crooked trunk splitting into four branches, a round crown of
     small oval leaves over dark leafy clumps, lighter on top; no apples (the browser hangs them, as many as have ripened,
-    just under the crown's edge at about 0.53 m, where she can reach them with a hop). About 1.05 m high, the crown 0.56 m
-    across and its foot at 0.62, the tub 0.28 across."""
+    just under the crown's edge at about 0.8 m, where she can reach them with a leap). About 1.2 m high, the crown 0.56 m
+    across and its foot at 0.76, the tub 0.28 across."""
     from mathutils import Quaternion
     random.seed(seed); objs = []
     wood = C('vatwood', '#9a6b42', rough=0.85, var=0.08); hoop = C('vathoop', '#4b4844', rough=0.5, metal=0.6)
@@ -1821,16 +1821,16 @@ def apple_tub_v(seed=149, name='apple_tub'):
     for z, rr in ((H * 0.2, R * 0.9), (H * 0.78, R * 0.985)):
         objs.append(cyl('vathoop', rr + 0.008, 0.028, (0, 0, z), m=hoop, verts=18, bevel=0.0))
     objs.append(cyl('vatsoil', R * 0.92, 0.02, (0, 0, H - 0.03), m=soil, verts=18, bevel=0.0))
-    # the trunk: a little crooked, thicker at its foot, splitting at 0.56 m into four branches up and out into the crown
-    T0, T1 = Vector((0, 0, H - 0.03)), Vector((0.012, -0.01, 0.56))
+    # the trunk: a little crooked, thicker at its foot, splitting at 0.7 m into four branches up and out into the crown
+    T0, T1 = Vector((0, 0, H - 0.03)), Vector((0.012, -0.01, 0.7))      # (a taller trunk, 6 Nov evening: the crown above her head as she leaps)
     objs.append(cyl('vattrunk', 0.03, (T1 - T0).length, tuple((T0 + T1) / 2), (T1 - T0).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=8, r2=0.022, bevel=0.0))
     objs.append(sphere('vatknot', 0.024, tuple(T1), m=bark, ico=1))
     for k in range(4):
         a = k / 4 * math.tau + 0.4 + random.uniform(-0.2, 0.2)
-        E = Vector((math.cos(a) * 0.15, math.sin(a) * 0.15, 0.74 + random.uniform(-0.02, 0.04)))
+        E = Vector((math.cos(a) * 0.15, math.sin(a) * 0.15, 0.88 + random.uniform(-0.02, 0.04)))
         objs.append(cyl('vatbranch', 0.015, (E - T1).length, tuple((T1 + E) / 2), (E - T1).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=6, r2=0.009, bevel=0.0))
     # the crown: a dark core of clumps (its shade), leaves all over it standing a little off it, smaller and lighter on top
-    C0, RX, RZ = Vector((0, 0, 0.84)), 0.25, 0.2
+    C0, RX, RZ = Vector((0, 0, 0.98)), 0.25, 0.2
     objs.append(sphere('vatcore', 1.0, tuple(C0), (RX * 0.92, RX * 0.92, RZ * 0.92), m=core, ico=3, disp=0.12, disp_scale=3.0, seed=seed))
     for k in range(7):
         a = k / 7 * math.tau + random.uniform(-0.2, 0.2); el = random.uniform(-0.2, 0.6)

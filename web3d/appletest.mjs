@@ -78,7 +78,8 @@ const outing = async () => p.evaluate(id => { const f = window.__farm, g = f.gam
         if (Q.phase === 'hop') seen.top = Math.max(seen.top, up() - base);
         if (Q.phase === 'out' || Q.phase === 'in') seen.over = Math.max(seen.over, up() - y0);
         if (Q.phase === 'eat' && outside(b.root.position.x)) seen.out = true;
-        if (A.drop && !seen.fell) { const p = b.root.position, fy = b.root.rotation.y, d = [A.drop.to[0] - p.x, A.drop.to[1] - p.z]; seen.fell = { d: +Math.hypot(d[0], d[1]).toFixed(3), ahead: +(d[0] * Math.sin(fy) + d[1] * Math.cos(fy)).toFixed(3) }; } }
+        if (A.drop && Q.phase === 'eat' && Q.turned && !seen.fell) { const p = b.root.position, fy = b.root.rotation.y, d = [A.drop.to[0] - p.x, A.drop.to[1] - p.z];      // (once she's turned to it to eat)
+          seen.fell = { d: +Math.hypot(d[0], d[1]).toFixed(3), ahead: +(d[0] * Math.sin(fy) + d[1] * Math.cos(fy)).toFixed(3), reach: +(0.37 * b.rig.scale).toFixed(3), tub: +Math.hypot(A.drop.to[0] - A.S.at[0], A.drop.to[1] - A.S.at[1]).toFixed(3), herTub: +Math.hypot(p.x - A.S.at[0], p.z - A.S.at[1]).toFixed(3) }; } }
       if (seen.phases.length && !b.play) break;
     }
     if (seen.phases.includes('out')) break;
@@ -86,7 +87,7 @@ const outing = async () => p.evaluate(id => { const f = window.__farm, g = f.gam
   sessionStorage.setItem('__T', String(window.__T)); seen.ap = { ...g.data.coops[0].ap }; seen.top = +seen.top.toFixed(3); seen.over = +seen.over.toFixed(3); seen.home = b.free(b.root.position.x, b.root.position.z) && !outside(b.root.position.x); return seen; }, HEN);
 let O = await outing();
 s = await st();
-ok('her escape: to the fence, over it (well above it), under an apple outside, a look up, a leap off the ground, it falls just in front of her and she eats it; back over, in the yard again', O.phases.join() === 'walk,face,out,go,aim,look,hop,eat,shake,home,turnin,in' && O.over > 0.55 && O.out && O.top > 0.1 && O.fell && O.fell.d < 0.16 && O.fell.ahead > 0.05 && O.home, O);
+ok('her escape: to the fence, over it (well above it), under an apple outside, a look up, a leap off the ground, it pops out beside her, away from the tub; she turns to it and bends down to eat it, her beak right over it, she and it clear of the tub; back over, in the yard again', O.phases.join() === 'walk,face,out,go,aim,look,hop,eat,shake,home,turnin,in' && O.over > 0.55 && O.out && O.top > 0.1 && O.fell && Math.abs(O.fell.ahead - O.fell.reach) < 0.04 && O.fell.d < O.fell.reach + 0.04 && O.fell.tub > 0.25 && O.fell.herTub > 0.33 && O.home, O);
 ok('…the save: one apple fewer on the tree, one eaten', s.ap.n === 1 && s.ap.ate === 1 && !s.ap.egg && s.shown === 1, s);
 O = await outing();
 s = await st();

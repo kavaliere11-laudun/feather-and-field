@@ -190,7 +190,7 @@ function appleStep(b, P, o, next, dt) {
   const AP = b.plot.apple, p = b.root.position;
   if (!AP) { if (P.phase !== 'walk') p.set(P.spot[0], 0.015, P.spot[1]); endPlay(b); return o; }      // (its tree gone: back in)
   const S = AP.S, here = () => [p.x, p.z];
-  if (P.phase === 'out') { if (flutter(b, P, S.outAt, 0.95, o)) next('go', { way: AP.way(S.outAt, P.slot.stand) }); return o; }
+  if (P.phase === 'out') { if (flutter(b, P, S.outAt, 0.95, o)) { const st = AP.standFor(b, P.slot); next('go', { way: AP.way(S.outAt, st) }); } return o; }
   if (P.phase === 'go') { if (walkOut(b, P, AP, o, dt)) next('aim'); return o; }
   if (P.phase === 'aim') { const r = b.turnTo(P.slot.face, dt); o.walking = r.walking; if (r.done || P.t > 1.2) next('look'); return o; }
   if (P.phase === 'look') {                          // head back, eyes on it
@@ -209,9 +209,11 @@ function appleStep(b, P, o, next, dt) {
     if (u >= 1) { p.y = P.from.y; b.shadowY = undefined; b.hopT = -1; if (P.got) next('eat', { bites: 0, got: P.got }); else next('shake'); }
     return o;
   }
-  if (P.phase === 'eat') {                           // she watches it fall, then pecks it up, a bite at a time
-    if (!AP.down()) { o.up = 0.6 * (1 - smooth01(P.t / 0.3)); P.t = 0; return o; }
-    o.peck = (P.t % 0.62) > 0.3 ? 1 : 0.25;
+  if (P.phase === 'eat') {                           // she turns to where it landed beside her, then bends right down and eats it, a bite at a time
+    const r = b.turnTo(P.got.face ?? b.root.rotation.y, dt); o.walking = r.walking && !r.done;
+    if (!AP.down() || (!r.done && P.t < 1.5 && !P.turned)) { o.up = 0.6 * (1 - smooth01(P.t / 0.3)); if (AP.down()) return o; P.t = 0; return o; }
+    if (!P.turned) { P.turned = true; P.t = 0; }
+    o.peck = (P.t % 0.62) > 0.3 ? 1.45 : 0.5;
     const k = Math.min(3, Math.floor(P.t / 0.62));
     if (k > P.bites) { P.bites = k; AP.bite(k); }
     if (P.t > 0.62 * 3 + 0.15) { AP.eaten(); if (P.got.egg) { AP.laying = true; next('nook', { way: AP.way(here(), S.nook) }); } else next('shake'); }
