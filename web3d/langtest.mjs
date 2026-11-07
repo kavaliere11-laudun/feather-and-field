@@ -32,7 +32,7 @@ for (const L of LANGS) {
   await p.screenshot({ path: `${OUT}/${L}_1_welcome.png` });
   await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
-  await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 1200; g.data.coins = 2400; g.save(); f.gameUI().close(); f.gameUI().refresh(); f.draw(); });
+  await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 240; g.data.coins = 2400; g.save(); f.gameUI().close(); f.gameUI().refresh(); f.draw(); });
   // each card: its words, anything English left, anything off the card
   const look = () => p.evaluate(() => {
     const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null;

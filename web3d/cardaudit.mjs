@@ -100,7 +100,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
   }
   // a farm with things going on: level 12, coins, a Glutton among the hens (her apples on her card)
   await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); if (f.gameUI().isOpen) f.gameUI().close();
-    g.data.guide = { step: 5, done: true }; g.data.xp = Math.round(60 * Math.pow(11, 2.1)) + 5; g.data.coins = 12345; const h = g.data.birds.find(x => x.sex === 'h' && x.pers === 'rebel'); if (h) h.pers = 'glutton'; g.save(); f.gameUI().refresh(); });
+    g.data.guide = { step: 5, done: true }; g.data.xp = window.__farm.xpFor(12) + 5; g.data.coins = 12345; const h = g.data.birds.find(x => x.sex === 'h' && x.pers === 'rebel'); if (h) h.pers = 'glutton'; g.save(); f.gameUI().refresh(); });
   const G = 'window.__farm.game()', U = 'window.__farm.gameUI()';
   const cards = [
     ['hen', `(() => { const g = ${G}, b = g.data.birds.find(x => x.pers === 'glutton') || g.data.birds[1]; ${U}.birdCard(b); })()`],
@@ -118,6 +118,8 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     ['showday', `${U}.showDayCard('Harvest Fair', () => {}, () => {})`],
     ['showres', `(() => { const g = ${G}, h = g.data.birds.find(x => x.sex === 'h'), r = g.data.birds.find(x => x.sex === 'r'); ${U}.showResults([{ bird: h.id, place: 1, id: 'c20261106', coins: 120, xp: 30 }, { bird: r.id, place: 2, id: 'b20261106', coins: 60, xp: 20 }, { bird: h.id, place: 7, id: 'v20261106', coins: 0, xp: 5 }]); })()`],
     ['jobs', `${U}.jobsSheet({})`],
+    ['orders', `${U}.ordersSheet({})`],      // (village orders, 7 Nov 2026)
+    ['levelup2', `(() => { ${G}.data.lvSeen = 1; ${U}.levelUpCard(3, { price: 100 }, () => {}, ['orp'], null); })()`],      // (levels 2 and 3 at once: fishing, the tin, the golden egg, the orders, a breed)
     ['shop', `${U}.shopSheet({}, 'decor')`],
     ['shop2', `${U}.shopSheet({}, 'animals')`],
     ['shop3', `${U}.shopSheet({}, 'dress')`],

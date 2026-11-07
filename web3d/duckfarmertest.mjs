@@ -10,6 +10,7 @@
 // Glutton's snack at the feeder, the Rebel's hop and splashy bath, the Good mum's rest). No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
+import { xpFor } from './src/game.js';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -28,7 +29,7 @@ const load = async () => {
   await p.waitForTimeout(1500); await run(0.5);
 };
 const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.draw()); await p.screenshot({ path: `${SHOTS}/farmer_${fr ? 'fr' : 'en'}_${W}x${H}_${name}.png`, timeout: 180000 }); } };
-const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
+const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: src/game.js, quicker at first since 7 Nov 2026)
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const pen = () => p.evaluate(() => { const f = window.__farm, g = f.game(), P = f.coopPlots().find(q => q.breed === 'call'); if (!P || !P.callPen) return null;

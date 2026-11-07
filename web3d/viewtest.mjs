@@ -46,7 +46,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 400; g.data.lvSeen = 3; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 60; g.data.lvSeen = 3; g.save(); f.gameUI().close(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 ok('the usual view: turned 45 degrees round, no compass', (await az()) === 45 && !(await p.evaluate(() => window.__farm.compass())), await az());

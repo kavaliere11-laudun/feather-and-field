@@ -27,6 +27,7 @@ export const FARMER_TEXT = register('say', {
   sow: ['Grow tall and golden!', 'Pousse bien, mon blé !'],
   harvest: ['What a harvest!', 'Quelle belle récolte !'],
   honey: ['Thank you, bees!', 'Merci, les abeilles !'],
+  order: ['A basket for the village!', 'Un panier pour le village !'],
   geese: ['Hello, you two!', 'Coucou, vous deux !'],                     // (a visit to the geese: geese.js, main.js geeseVisit)
   whoa: ['Whoa!', 'Oh là là !'],
   tomorrow: ['Maybe tomorrow…', 'Demain, peut-être…'],

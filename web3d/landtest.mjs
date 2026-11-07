@@ -16,7 +16,7 @@ const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || 
 let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
 const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`;
-const run = (secs) => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); } f.draw(); }, secs);
+const run = (secs) => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, secs);      // (the clock kept over a reload: the orders' times are checked against it)
 const state = () => p.evaluate(() => {
   const f = window.__farm, g = f.game(), B = document.querySelector('.gbub.gsale');
   const L = f.land();
@@ -47,7 +47,7 @@ let t = await cardText();
 ok('the level card: what level 2 brings (another field to restore)', /level 2: another field to restore|niveau 2 : un autre terrain à remettre en état/i.test(t) && /1 field|terrain : 1/.test(t), t);
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 2
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 70; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.save(); });      // (level 2: 15 XP since 7 Nov 2026)
 await run(1.5);
 s = await state(); t = await cardText();
 ok('level 2: its card (the level, the patch for sale at 100 coins), the top bar says 2', s.card === 'levelup' && s.bar === '2' && /Level 2!|Niveau 2 !/.test(t) && /100/.test(t), { s, t });
@@ -85,7 +85,7 @@ ok('restored: puffs where its brambles and old things were, all of it cleared wi
 const reach1 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), inside1), wild1 = await p.evaluate(() => window.__farm.wildIn(1));
 ok('bought: 100 coins paid, the field yours (its long grass cut, no fence, the farmer can walk there), nothing more for sale at level 2', s.coins === 50 && s.land === '0,1' && s.owned === 2 && s.sale === -1 && s.bub === null && !s.card && wild0 > 50 && wild1 === 0 && s.fence === 0 && !reach0 && reach1, { s, wild0, wild1, reach0, reach1 });
 // level 4 at once: one card, the next patch for sale
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 620; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 130; g.save(); });      // (level 4: 120)
 await run(1.5);
 s = await state(); t = await cardText();
 await look(); await run(0.1); s = await state();
@@ -100,12 +100,12 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await state();
 ok('a reload: the same land and level, the sign where it was, not flagged', (await keep()) === saved && s.sale === 2 && s.owned === 2 && !s.edited && !s.card, s);
 // a save changed outside the game
-await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 70; raw.d.land = [0, 7, 9, 12]; raw.d.lvSeen = 9; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 20; raw.d.land = [0, 7, 9, 12]; raw.d.lvSeen = 9; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 const tm = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, land: g.data.land.join(), lvSeen: g.data.lvSeen, owned: window.__farm.land().owned }; });
 ok('a save changed outside: fields only in order and one a level (0,1 at level 2), the card mark at most the level, flagged', tm.edited && tm.land === '0,1' && tm.lvSeen === 2 && tm.owned === 2, tm);
 // a farm from before this step (no card mark): no card owed
-await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 300; raw.d.land = [0]; delete raw.d.lvSeen; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = 60; raw.d.land = [0]; delete raw.d.lvSeen; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });      // (level 3: 45)
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await state();
 ok('a farm from before levels and land (level 3): no card owed, the next field for sale', !s.card && s.level === 3 && s.lvSeen === 3 && s.sale === 1, s);

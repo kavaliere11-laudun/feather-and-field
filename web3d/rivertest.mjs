@@ -46,7 +46,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 2600; g.data.lvSeen = 7; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 600; g.data.lvSeen = 7; g.save(); f.gameUI().close(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 // level 7: not yet
@@ -55,7 +55,7 @@ let sh = await sheet();
 ok('level 7: the footbridge\'s card: the river\'s fish, it opens at level 8, no button', sh && sh.kind === 'dock' && sh.water === 'river' && (fr ? /niveau 8/ : /level 8/).test(sh.text) && !sh.go && sh.fish === 7, sh);
 ok('level 7: no rod or bucket on the footbridge yet', !(await p.evaluate(() => !!window.__farm.fishers().river)));
 // level 8: its card says the river's open, with a look at it
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 3600; g.save(); f.gameUI().close(); }); await run(1.5);
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 900; g.data.orders = { list: [], next: Math.round(window.__T + 3 * 3600e3), seq: 1, done: 0 }; g.save(); f.gameUI().close(); }); await run(1.5);      // (level 8: since 7 Nov 2026, 880 XP; no village orders waiting for a fish, so it's sold)
 await p.waitForTimeout(1600); await p.evaluate(() => window.__farm.showNews()); await run(0.2);
 sh = await sheet();
 const lvl = await p.evaluate(() => { const c = [...document.querySelectorAll('.gsheet:not([hidden]) .gfishnew')].map(x => x.innerText).join(' | '); return c; });

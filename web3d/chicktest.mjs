@@ -109,7 +109,8 @@ const news = await p.evaluate(() => window.__farm.game().unseenNews());
 const nw = news[0] || {};
 ok('grown, late morning: their coins in, the news (a rating and coins each), a farewell begins', news.length === 1 && nw.kids.length === n && nw.kids.every(k => k.stars >= 1 && k.stars <= 5 && k.coins >= 17 && k.coins <= 36) && s.coins === before.coins + nw.coins && nw.coins === nw.kids.reduce((a, k) => a + k.coins, 0) && !!s.fw && /off to a new farm|partent pour une nouvelle ferme/.test(s.hint), { s, nw });
 let ready = false, party = false;
-for (let i = 0; i < 40 && !(s.fw && s.fw.phase === 'exit'); i++) { await sim(2); s = await state(); ready = ready || !!(s.fw && s.fw.ready); party = party || !!(s.fw && s.fw.phase === 'party'); }
+const closeLv = () => p.evaluate(() => { const u = window.__farm.gameUI(); if (u.kind === 'levelup') u.close(); });      // (the quicker first levels, 7 Nov 2026: level 2 comes during this; its card, closed)
+for (let i = 0; i < 40 && !(s.fw && s.fw.phase === 'exit'); i++) { await sim(2); await closeLv(); s = await state(); ready = ready || !!(s.fw && s.fw.ready); party = party || !!(s.fw && s.fw.phase === 'party'); }
 const said = await p.evaluate(() => document.querySelectorAll('.gsheet:not([hidden])').length);
 ok('the farmer comes to the gate and cheers; the party; then out they go', ready && party && s.fw && s.fw.phase === 'exit' && said === 0, s);
 let gone = false;
@@ -117,7 +118,7 @@ for (let i = 0; i < 40 && !gone; i++) { await sim(2); s = await state(); gone = 
 const ex = await p.evaluate(() => window.__farm.lastExit(0)), view1 = await p.evaluate(() => window.__farm.view.target.toArray().join());
 ok('one by one out of the gate and all the way off the farm (past its edge), the farmer watching them go, then gone', gone && ex && ex.past >= 1.2 && ex.look <= 45, { ex, s });
 ok('the view never moved by itself', view1 === view0, { view0, view1 });
-await sim(2); await p.waitForTimeout(400);
+await sim(2); await closeLv(); await p.waitForTimeout(400);
 s = await state();
 const cc = await p.evaluate(() => ({ text: document.querySelector('.gsheet').innerText, rows: document.querySelectorAll('.gsheet .gkid').length, stars: [...document.querySelectorAll('.gsheet .gkid .gstars')].map(e => e.querySelectorAll('.on').length) }));
 ok('the congratulations card: her babies grown up, each one\'s rating and coins, the total, the parents\' experience', s.card === 'congrats' && /Congratulations|Félicitations/.test(cc.text) && /babies have grown up|petits de .* ont grandi/.test(cc.text) && cc.rows === n && cc.stars.join() === nw.kids.map(k => k.stars).join() && cc.text.includes('+' + nw.coins) && /experience|expérience/.test(cc.text), cc);

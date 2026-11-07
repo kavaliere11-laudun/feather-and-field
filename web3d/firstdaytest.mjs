@@ -97,7 +97,10 @@ await shot('6_jobs');
 await click('.gbar .gjobs'); await run(0.3);
 g = await G();
 ok('Today\'s jobs opened: on to the shop, waiting while the card is open', g.step === 'shop' && !g.card && !g.arrow, g);
-await p.evaluate(() => window.__farm.gameUI().close()); await run(0.3);
+await p.evaluate(() => window.__farm.gameUI().close()); await run(2.0);
+const lvUp = await kind();                         // (since 7 Nov 2026 the first levels come during the first day: level 2, then 3)
+ok('the first day\'s XP: a new level\'s card by now', lvUp === 'levelup', lvUp);
+for (let i = 0; i < 3 && (await kind()) === 'levelup'; i++) { await p.evaluate(() => window.__farm.gameUI().close()); await run(2.0); }
 g = await G();
 ok('the card closed: the arrow over the coins', !!g.arrow && (fr ? /Touchez vos pièces/ : /Tap your coins/).test(g.card), g);
 await shot('7_shop');

@@ -83,7 +83,7 @@ const nextDay = (h = 10) => p.evaluate(h => { const d = new Date(window.__T); d.
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0`, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 }); await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(fr => { const g = window.__farm.game(); g.data.xp = Math.round(60 * Math.pow(3, 2.1)) + 50; g.data.lvSeen = 4; g.data.land = [0, 1, 2, 3]; g.data.guide = { step: 5, done: true }; g.data.animals = { geese: { at: window.__T - 9 * 86400e3 } }; g.data.lastSeen = window.__T - 60e3; if (fr) { g.data.farmer.look = 'f'; g.data.farmer.name = 'Rosie'; } g.save(); sessionStorage.setItem('__T', window.__T); }, fr);
+await p.evaluate(fr => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(4) + 50; g.data.lvSeen = 4; g.data.land = [0, 1, 2, 3]; g.data.guide = { step: 5, done: true }; g.data.animals = { geese: { at: window.__T - 9 * 86400e3 } }; g.data.lastSeen = window.__T - 60e3; if (fr) { g.data.farmer.look = 'f'; g.data.farmer.name = 'Rosie'; } g.save(); sessionStorage.setItem('__T', window.__T); }, fr);
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 // the gates
 const gates = await p.evaluate(() => { const f = window.__farm; return { list: f.geeseTrust.gates(), wild: f.game().data.land.length }; });

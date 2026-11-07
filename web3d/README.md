@@ -4351,3 +4351,57 @@ They were in the Unity version only. Now in the game:
   more from the head's middle, from 70 degrees to her right to 30 to her left) folded away to nothing; the hair cap's
   hairline is her hairline now, the locks by her temples, the sides, the back and the plait kept.
 - Arthur as he was made (his hair round the sides and back, thinning on top).
+
+## A quicker start: the first levels, fishing at level 2 (7 Nov 2026, 17:57; Audrey: "The start is too slow. To keep the people going we should have the few first level super easy to reach. And after that it becomes harder obviously. We also need things entertaining so I think fishing should be quickly available"; her choices: "Level 5 by day 2", "Fishing at level 2", and as new things to do "Village orders", "Daily egg hunt", "Vegetable garden")
+- **Measured first** (`firstsession.mjs`: a keen new player's first visit minute by minute, then twice a day): the first
+  visit earned 10 XP, level 2 came on the second day, 3 after a week, 5 after two weeks.
+- **The levels** (`game.js` `XP_AT`): 15, 45, 120, 230, 380, 580, 880, 1,320, 1,950 XP for levels 2 to 10, then each a
+  little longer than the one before, and the last ones longer than before, so level 30 still comes after about a year
+  once a day (balsim.mjs, with the orders and the golden egg: day 314 once a day, 256 twice, 206 six times; before: 322,
+  270, 222). Now (twice
+  a day): levels 2 and 3 in the first visit, 4 that evening, 5 on day 2, 6 on day 4, 8 on day 8, 10 on day 15. Up to
+  level 25 it never asks more than the curve before, so no farm goes down a level.
+- **The first day's guide** gives XP too: 5 a step and 10 more at the end ("Well done! +10 coins, +5 XP").
+- **A gift for each new level up to 10**: 25 coins x the level (50 at level 2 .. 250 at 10), on the level's card, paid
+  as it closes (`levelGift`, `levelGiftDue`, `seenLevel`).
+- **A level's card shows all that came since the last one** (fishing, decorations, animals, Rusty, shows, outfits), not
+  only its own level's: two levels can come at once now.
+- **Fishing at the pond from level 2** (was 3), with **a tin of 10 worms to start with**, once (`FISHING.gift`,
+  `fishGift`, saved as `fish.gift`, checked like the rest): on level 2's card, or for a farm already past it, a word when
+  it opens. The river still at 8.
+- Tests: their XP for a level from the game itself now (`xpFor`, `window.__farm.xpFor`), and the fishing, worms, land,
+  breed, Book, river, show, view and language tests moved to the new numbers.
+
+## Village orders (7 Nov 2026, Audrey's choice: "Village orders: villagers ask for a basket (eggs, fish, honey, grain): fill it for coins, XP and sometimes a surprise")
+- **From level 3**, at most three at a time, two when they start, then one every 3 hours while there's room (and 30
+  minutes after one's delivered or turned down, at the soonest). Never in a hurry: an order waits.
+- **The villagers** (`VILLAGERS`), each with what they like and a line of their own: Mrs Potts the baker (eggs, honey),
+  Mr Finch the aquarium shop (fish), Lily at the tea room (eggs, honey), Old Tom the miller (grain, eggs), Dr Amara the
+  vet (eggs, fish), Miss Clara at the village school (eggs), Marco at the café (eggs, fish), the village fête (anything).
+  An order is one thing they like (or two), as much as the farm's level makes sense of (`orderAmount`): eggs 3 + level/2,
+  a fish or more from level 6, honey only once the hives are there.
+- **Filling it** (`setAside`): the eggs, fish and honey go to the orders first as they come (the oldest first), instead
+  of being sold ("🧺 5 for Mrs Potts"; a fish's card: "For Lily's order"); the grain comes from the store when the basket
+  goes. A legendary fish's photo doesn't count.
+- **Delivered** (the basket button in the corner, its number the baskets ready; "🧺 Ready!" over the farm stall, the
+  village's egg stall by the farmhouse; a tap on the stall opens them too): the farmer takes the basket to the stall and
+  sets it down ("A basket for the village!"), then it's paid: 1.4 x what it's worth plus 10 coins, and its XP; one basket
+  in four a surprise ("🎁 A surprise inside!" on its card): a tin of 10 worms, a sack of 20 grain, or half as many coins
+  again. "Not this one": what was set aside for it sold, and another comes along.
+- **Saved** as `orders` { list, next, seq, done }, checked as the farm opens: only from level 3, three at most, known
+  villagers (one order each), one or two known things in amounts an order can ask, never more set aside than asked.
+- Words in all six languages (`ord_*`, `vil_*`, `say.order`; each language's own quotation marks). `ordertest.mjs`.
+
+## The daily egg hunt (7 Nov 2026, Audrey's choice: "Daily egg hunt: each day a hen hides a golden egg somewhere on the farm for you to find")
+- **From level 2.** Each day (the phone's own day) one of your hens (who, from the day's own number) hides a golden egg on
+  your land: tucked in by a bush, a tree or a rock still standing on a field that's yours, where there's room round it
+  (`huntSpot`: the same spot all day, and again when more land is yours). A storybook egg, a little bigger than life so it
+  can be found on a phone, in gold, with a glint every 3.6 seconds (hidden by what's in front of it, like the egg).
+- **Said once a day**, as the farm opens or the day turns: "🥚✨ Margot has hidden today's golden egg somewhere on your farm.
+  Can you find it?"
+- **Found** (a tap on it or within a thumb's width): it hops up turning in a sparkle and is gone, a hen's egg song; "✨ You
+  found Margot's golden egg! +30 coins, +4 XP · golden eggs found: 1". Each day in a row, more, up to a week: 20 + 10 a
+  day coins (30 .. 90), 3 + 1 a day XP (`HUNT`, `huntPay`); a day missed, back to one.
+- **Saved** as `hunt` { last: the day the last was found, streak, n }, checked as the farm opens: only from level 2, the
+  day never ahead of today, the days in a row never more than found in all.
+- Its line on level 2's card. Words in six languages (`hunt_*`). `hunttest.mjs`.

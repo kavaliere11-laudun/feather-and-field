@@ -7,6 +7,7 @@
 // sticks with the farm shut: in the morning the card says the automatic door stuck open, and he took the nest's eggs;
 // a reload keeps it, unflagged. A Snug coop's door is still the player's to shut. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import { xpFor } from './src/game.js';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874);
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London' });
@@ -24,7 +25,7 @@ const load = async () => {
   await p.waitForTimeout(1500); await run(0.5);
 };
 const jump = t => p.evaluate(t => { window.__T = t; sessionStorage.setItem('__T', t); const d = new Date(t); window.__farm.setHour(d.getHours() + d.getMinutes() / 60); }, t);      // (the farm's hour with it)
-const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
+const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: src/game.js, quicker at first since 7 Nov 2026)
 const at = (t, h, m = 0) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).getTime(); };
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0], F = g.fox();
   return { tier: c.tier, auto: g.autoDoor(c), shut: g.doorShut(c), saved: c.shut || null, door: f.doorOf(0), hint: document.getElementById('hint').textContent, tonight: g.foxTonight(), last: F.last ? { ...F.last } : null, edited: g.edited, card: f.gameUI().kind, text: document.querySelector('.gsheet') && !document.querySelector('.gsheet').hidden ? document.querySelector('.gsheet').innerText : '', asleep: f.coopPlots().find(q => q.gc).birds.every(b => b.asleep || !b.root.visible) }; });

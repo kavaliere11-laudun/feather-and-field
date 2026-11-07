@@ -13,6 +13,7 @@
 // No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
+import { xpFor } from './src/game.js';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -32,7 +33,7 @@ const load = async () => {
 };
 const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.draw()); await p.screenshot({ path: `${SHOTS}/pea_${fr ? 'fr' : 'en'}_${W}x${H}_${name}.png`, timeout: 180000 }); } };
 const look = async (size = 2.6, dx = 0, dz = 0) => { if (SHOTS) { await p.evaluate(([s, dx, dz]) => { const f = window.__farm, Q = f.gamePlots().find(q => q.breed === 'pea'); f.lookAt(Q.centre.x + dx, Q.centre.z + dz, s); f.step(1 / 30, 20); }, [size, dx, dz]); await p.waitForTimeout(300); } };
-const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
+const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: src/game.js, quicker at first since 7 Nov 2026)
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const PI = () => p.evaluate(() => window.__farm.gamePlots().findIndex(q => q.breed === 'pea'));

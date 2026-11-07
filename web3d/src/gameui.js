@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, HUNT } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -56,6 +56,7 @@ const JOB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 // (foot: where its dots and Next go, clear of its hens; focus: the point it drifts closer to)
 const STORY = [{ src: '1.webp' }, { src: '2.webp' }, { src: '3.webp' }, { src: '4.webp', foot: 'left', focus: '76% 86%' }];
 const BOOK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.3 5.2 7.8 4.6 4 4.8v13.4c3.8-.2 6.3.4 8 1.7 1.7-1.3 4.2-1.9 8-1.7V4.8c-3.8-.2-6.3.4-8 1.7z"/><path d="M12 6.5v13.4"/></svg>';
+const BASKET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10h17l-1.8 9.2a1.5 1.5 0 0 1-1.5 1.3H6.8a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M8 10l3-6M16 10l-3-6"/><path d="M9 13.5v4M12 13.5v4M15 13.5v4"/></svg>';
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -108,10 +109,13 @@ export class GameUI {
     // the Breed Book: its own button (7 Nov 2026, Audrey: "I think we need the breed bible to be a button itself"; it had
     // been only on the farmhouse shelf and in Your coops)
     this.bookBtn = el('button', 'gicon gbookbtn'); this.bookBtn.type = 'button'; this.bookBtn.innerHTML = BOOK_ICON;
+    // village orders (7 Nov 2026): a basket, with the number of baskets ready to deliver; from the level they open
+    this.ordBtn = el('button', 'gicon gordbtn'); this.ordBtn.type = 'button'; this.ordBtn.innerHTML = BASKET_ICON; this.ordBtn.hidden = true;
+    this.odot = el('span', 'gdot gcount'); this.odot.hidden = true; this.ordBtn.append(this.odot);
     // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
     // left, the farm's buttons on the right, settings apart)
     this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
-    this.acts = el('div', 'gacts'); this.acts.append(this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
+    this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
     this.bar.append(this.stat, this.acts, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
@@ -140,6 +144,7 @@ export class GameUI {
     this.showsBtn.addEventListener('click', () => { if (this.o.shows) this.o.shows(); });
     this.jobsBtn.addEventListener('click', () => { if (this.o.jobs) this.o.jobs(); });
     this.bookBtn.addEventListener('click', () => { if (this.o.book) this.o.book(); else this.bookSheet({}); });
+    this.ordBtn.addEventListener('click', () => { if (this.o.orders) this.o.orders(); else this.ordersSheet({}); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
     if (window.__ffApp === true || navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');      // (the store app too: app/make-www.mjs)
@@ -165,6 +170,9 @@ export class GameUI {
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
     this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
     const sd = this.g.showsDot(); this.sdot.hidden = !sd; this.showsBtn.setAttribute('aria-label', this.t('shows_aria') + (sd ? ' · ' + this.t('shows_new') : ''));
+    const oo = this.g.ordersOpen(), orr = oo ? this.g.ordersReady() : 0;
+    this.ordBtn.hidden = !oo; this.odot.hidden = !orr; this.odot.textContent = orr ? String(orr) : ''; this.odot.classList.toggle('gnum1', orr > 0);
+    this.ordBtn.setAttribute('aria-label', this.t('ord_aria') + (orr ? ' · ' + this.t('ord_readyb') : ''));
   }
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
@@ -182,7 +190,11 @@ export class GameUI {
     if (this.sheet.hidden) return;
     if (this.twoResolve) { const r = this.twoResolve; this.twoResolve = null; r(null); }
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
-    if (this.kind === 'levelup' && this.levelShown) { this.g.seenLevel(); this.levelShown = 0; }
+    if (this.kind === 'levelup' && this.levelShown) {
+      const c = this.g.seenLevel(), w = this.g.fishGift(); this.levelShown = 0;      // (the level's gift of coins; the pond's tin of worms, once)
+      if (c) { this.refresh(); this.bumpCoins(); }
+      if (w && !this.giftSaid && this.o.say) this.o.say('🪱 ' + this.t('fish_gift', { n: w }));
+    }
     if (this.kind === 'showres') { this.g.seenShows(); this.refresh(); this.bumpCoins(); }
     if (this.kind === 'fish' && this.fishThen) { const f = this.fishThen; this.fishThen = null; f(this.g.worms() > 0); }      // (closed: on fishing while there are worms)
     this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
@@ -528,33 +540,42 @@ export class GameUI {
   levelUpCard(L, sale, onShow, trios = [], onPlace = null) {
     const body = this.open('levelup', '🎉 ' + this.t('level_up', { n: L }));
     this.bird = null; this.levelShown = L;
+    // (what each level since the last card brings, not only this one's: since 7 Nov 2026 the first levels come quickly,
+    // two at once at times, and the pond's fishing at 2 mustn't be missed by a card for 3)
+    const from = Math.min(L - 1, this.g.data.lvSeen || 1), since = n => n > from && n <= L;
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    const gift = this.g.levelGiftDue();                // (coins for the new level: given as the card closes)
+    if (gift) body.append(el('p', 'glvgift', '🎁 ' + this.t('level_gift', { c: gift.toLocaleString(this.g.locale()) })));
+    this.giftSaid = false;
     for (const b of trios) {                           // a new breed first, the biggest news (1 Nov: sideways it was out of sight under the rest)
       const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
       h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : this.g.kindOf(b) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
       c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
       body.append(c);
     }
-    const decs = Object.keys(DECOR).filter(id => DECOR[id].level === L);      // (a decoration to buy now: the shop, the coins at the top)
+    const decs = Object.keys(DECOR).filter(id => since(DECOR[id].level));      // (a decoration to buy now: the shop, the coins at the top)
     if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
-    for (const id of Object.keys(ANIMALS).filter(k => ANIMALS[k].level === L && !this.g.animalOwned(k))) {      // (an animal to buy now: the shop's Animals shelf)
+    for (const id of Object.keys(ANIMALS).filter(k => since(ANIMALS[k].level) && !this.g.animalOwned(k))) {      // (an animal to buy now: the shop's Animals shelf)
       const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); c.dataset.animal = id; ic.alt = ''; ic.src = 'decor/' + id + '.webp' + (this.o.bust || '');
       hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: this.g.animalName(id) }))); c.append(hd); body.append(c);
       if (!decs.length) c.append(el('p', 'gnote', this.t('dec_new_where')));
       else { const n = body.querySelector('.gdecnew .gnote'); if (n) { n.remove(); c.append(n); } }      // (where to buy them said once, under the last)
     }
-    if (L === FOX.level) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
-    for (const w of ['pond', 'river']) if (FISHING[w] === L) {              // (fishing opens: the pond at 3, the river at 8; a look at it)
+    if (since(HUNT.level)) { const c = el('div', 'gcard gordnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🥚'), el('span', 'gcard-t', this.t('hunt_lv_t'))); c.append(hd, el('p', 'gnote', this.t('hunt_lv_b'))); body.append(c); }      // (the daily golden egg starts)
+    if (since(ORDERS.level)) { const c = el('div', 'gcard gordnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t('ord_lv_t'))); c.append(hd, el('p', 'gnote', this.t('ord_lv_b'))); body.append(c); }      // (village orders start)
+    if (since(FOX.level)) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
+    for (const w of ['pond', 'river']) if (since(FISHING[w])) {              // (fishing opens: the pond at 2, the river at 8; a look at it)
       const c = el('div', 'gcard gfishnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎣'), el('span', 'gcard-t', this.t(w === 'pond' ? 'fish_new' : 'fish_new_river'))); c.append(hd);
+      if (w === 'pond' && !(this.g.data.fish && this.g.data.fish.gift)) { c.append(el('p', 'gtext', this.t('fish_gift', { n: FISHING.gift }))); this.giftSaid = true; }      // (a tin to start with)
       if (w === 'pond') c.append(el('p', 'gnote', this.t('fish_hens', { farmer: this.g.farmerName() })));      // (where the worms come from)
       const show = w === 'pond' ? this.o.showPond : this.o.showRiver;
       if (show) { const b = el('button', 'gbtn galt gsmallbtn', this.t(w === 'pond' ? 'fish_show' : 'fish_show_river')); b.type = 'button'; b.dataset.fish = 'show'; b.addEventListener('click', () => { this.close(); show(); }); c.append(b); }
       body.append(c);
     }
-    const outs = Object.keys(OUTFITS).filter(id => OUTFITS[id].level === L && L > 1);      // (a new outfit for the farmer: the shop too)
+    const outs = Object.keys(OUTFITS).filter(id => since(OUTFITS[id].level) && OUTFITS[id].level > 1);      // (a new outfit for the farmer: the shop too)
     if (outs.length) { const lk = this.g.data.farmer.look === 'f' ? 'f' : 'm', c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'outfits/card_' + lk + '_' + outs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('out_new', { farmer: this.g.farmerName(), names: outs.map(id => this.g.outfitName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
-    for (const tier of ['c', 'n']) if (SHOWS[tier].level === L) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.locale()) }))); c.append(hd); body.append(c); }
+    for (const tier of ['c', 'n']) if (since(SHOWS[tier].level)) { const c = el('div', 'gcard'), hd = el('div', 'gcard-h'), ic = el('span', 'gros-i'); ic.innerHTML = rosette(1, true); hd.append(ic, el('span', 'gcard-t', this.t('show_new_' + tier, { f: SHOWS[tier].fee, p: SHOWS[tier].prize[0].toLocaleString(this.g.locale()) }))); c.append(hd); body.append(c); }
     if (trios.length) {                                // a new breed: place its coop now, or later (Your coops)
       if (sale) { const c = el('div', 'gcard'), h = el('div', 'gcard-h'); h.append(el('span', 'gemoji', '🌱'), el('span', 'gcard-t', this.t('land_new', { c: sale.price }))); c.append(h); body.append(c); }
       const go = el('button', 'gbtn', this.t('place_now')); go.type = 'button';
@@ -810,6 +831,36 @@ export class GameUI {
       c.append(bar, row); b.append(c);
     });
     b.append(el('p', 'gnote gcenter', this.t('jobs_note')));
+  }
+  // ---- village orders (7 Nov 2026): each villager's basket, what's in it and what's still wanted, what it pays (and a
+  // surprise, if it hides one); a ready one delivered (h.deliver(id): main.js, the farmer takes it to the stall), or one
+  // turned down (h.decline(id)); none: when the next comes
+  ordersSheet(h = {}) {
+    const g = this.g, b = this.open('orders', this.t('ord_title')), fmt = n => n.toLocaleString(g.locale());
+    this.bird = null;
+    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾' };
+    b.append(el('p', 'gnote', this.t('ord_sub')));
+    for (const o of list) {
+      const ready = g.orderReady(o), P = g.orderPayOf(o), c = el('div', 'gcard gorder' + (ready ? ' gorder-ready' : '')), hd = el('div', 'gcard-h');
+      c.dataset.order = o.id;
+      hd.append(el('span', 'gemoji', g.villagerEmoji(o.who)), el('span', 'gcard-t', g.villagerName(o.who) + ' · ' + this.t('vil_' + o.who + '_r')));
+      c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));      // (in the language's own quotation marks)
+      for (const k of ['eggs', 'fish', 'honey', 'grain']) {
+        if (!o.items[k]) continue;
+        const n = o.items[k], have = k === 'grain' ? Math.min(n, Math.floor(g.data.grain || 0)) : Math.min(n, o.got[k] || 0);
+        const row = el('div', 'gorder-i'), bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * have / n) + '%'; bar.append(fill);
+        row.append(el('span', 'gtext', icon[k] + ' ' + this.t('ord_' + k) + ' ' + (k === 'grain' ? fmt(n) + ' ' + this.t('ord_grain_have', { n: fmt(Math.floor(g.data.grain || 0)) }) : have + ' / ' + n)), bar);
+        c.append(row);
+      }
+      const foot = el('div', 'gjobrow'); foot.append(el('span', 'gnote', '🪙 ' + this.t('ord_pay', { c: fmt(P.coins), x: P.xp }) + (P.surprise ? ' · ' + this.t('ord_surprise') : '')));
+      c.append(foot);
+      const btns = el('div', 'gorder-b');
+      if (ready) { const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('ord_deliver')); go.type = 'button'; go.dataset.ord = 'deliver'; go.addEventListener('click', () => h.deliver && h.deliver(o.id)); btns.append(go); }
+      const no = el('button', 'gbtn galt gsmallbtn gorder-no', this.t('ord_decline')); no.type = 'button'; no.dataset.ord = 'decline'; no.addEventListener('click', () => h.decline && h.decline(o.id)); btns.append(no);
+      c.append(btns); b.append(c);
+    }
+    if (!list.length) b.append(el('p', 'gtext', this.t('ord_none')));
+    const next = g.orderNextIn(); if (next > 0 && list.length < 3) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
   }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
   showDayCard(show, onWatch, onSkip) {
@@ -1157,7 +1208,7 @@ export class GameUI {
     info.append(el('p', 'gfishsize', this.t('fish_size', { cm: r.cm })));
     if (r.first) info.append(el('p', 'gtext gfishnew', '✨ ' + this.t('fish_first')));
     else if (r.best) info.append(el('p', 'gtext gfishnew', '🏆 ' + this.t('fish_best')));
-    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
+    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : r.order ? this.t('ord_fish_set', { name: g.villagerName(r.order.who) }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
     card.append(pic, info); body.append(card);
     const left = g.worms(), row = el('div', 'gstick gfishbtns');
     const done = keep => { const f = this.fishThen; this.fishThen = null; this.close(); if (f) f(keep); };

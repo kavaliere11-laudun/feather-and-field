@@ -89,7 +89,7 @@ await shot('5_rosette');
 await p.evaluate(() => window.__farm.gameUI().close()); await run(2);
 ok('the results card doesn\'t come back', (await kind()) !== 'showres', await kind());
 // level 4: the County show
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 700; g.data.lvSeen = 3; g.save(); }); await run(1.6);
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 130; g.data.lvSeen = 3; g.save(); }); await run(1.6);      // (level 4)
 t = await sheet();
 ok('level 4: its card brings the County show', (await kind()) === 'levelup' && T.county.test(t), t.slice(0, 400));
 await shot('6_level4');

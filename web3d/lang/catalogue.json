@@ -325,6 +325,11 @@
   "fr": "Nouveau à ce niveau"
  },
  {
+  "id": "text.level_gift",
+  "en": "A gift for your new level: +{c} coins",
+  "fr": "Un cadeau pour votre nouveau niveau : +{c} pièces"
+ },
+ {
   "id": "text.land_new",
   "en": "A field is ready to restore: {c} coins",
   "fr": "Un terrain est prêt à être remis en état : {c} pièces"
@@ -2025,13 +2030,13 @@
  },
  {
   "id": "text.guide_did",
-  "en": "Well done! +{c} coins",
-  "fr": "Bravo ! +{c} pièces"
+  "en": "Well done! +{c} coins, +{x} XP",
+  "fr": "Bravo ! +{c} pièces, +{x} XP"
  },
  {
   "id": "text.guide_done",
-  "en": "Your first day is done! +{c} coins. Another field can be restored at level 2.",
-  "fr": "Votre premier jour est terminé ! +{c} pièces. Un autre terrain pourra être remis en état au niveau 2."
+  "en": "Your first day is done! +{c} coins, +{x} XP",
+  "fr": "Votre premier jour est terminé ! +{c} pièces, +{x} XP"
  },
  {
   "id": "text.jobs_title",
@@ -3215,6 +3220,11 @@
   "fr": "Vos poules qui aiment {farmer} lui trouvent des vers chaque jour : touchez-en une et demandez."
  },
  {
+  "id": "text.fish_gift",
+  "en": "A tin of {n} worms to start with 🪱",
+  "fr": "Une boîte de {n} vers pour commencer 🪱"
+ },
+ {
   "id": "text.fish_go",
   "en": "Go fishing",
   "fr": "Aller pêcher"
@@ -3263,6 +3273,311 @@
   "id": "text.fish_level",
   "en": "Fishing opens at level {n}.",
   "fr": "La pêche ouvre au niveau {n}."
+ },
+ {
+  "id": "text.hunt_hint",
+  "en": "🥚✨ {hen} has hidden today’s golden egg somewhere on your farm. Can you find it?",
+  "fr": "🥚✨ {hen} a caché l’œuf d’or du jour quelque part sur votre ferme. Saurez-vous le trouver ?"
+ },
+ {
+  "id": "text.hunt_found",
+  "en": "✨ You found {hen}’s golden egg! +{c} coins, +{x} XP",
+  "fr": "✨ Vous avez trouvé l’œuf d’or de {hen} ! +{c} pièces, +{x} XP"
+ },
+ {
+  "id": "text.hunt_streak",
+  "en": "{n} days in a row",
+  "fr": "{n} jours de suite"
+ },
+ {
+  "id": "text.hunt_total",
+  "en": "golden eggs found: {n}",
+  "fr": "œufs d’or trouvés : {n}"
+ },
+ {
+  "id": "text.hunt_lv_t",
+  "en": "New: a golden egg to find every day",
+  "fr": "Nouveau : un œuf d’or à trouver chaque jour"
+ },
+ {
+  "id": "text.hunt_lv_b",
+  "en": "Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.",
+  "fr": "Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite."
+ },
+ {
+  "id": "text.ord_q",
+  "en": "“{l}”",
+  "fr": "« {l} »"
+ },
+ {
+  "id": "text.ord_title",
+  "en": "Village orders",
+  "fr": "Commandes du village"
+ },
+ {
+  "id": "text.ord_sub",
+  "en": "Villagers ask for a basket. Your eggs, fish and honey go to their baskets first as they come; the grain comes from your store.",
+  "fr": "Les villageois demandent un panier. Vos œufs, vos poissons et votre miel vont d’abord dans leurs paniers, à mesure ; le grain vient de votre réserve."
+ },
+ {
+  "id": "text.ord_eggs",
+  "en": "Eggs",
+  "fr": "Œufs"
+ },
+ {
+  "id": "text.ord_fish",
+  "en": "Fish",
+  "fr": "Poissons"
+ },
+ {
+  "id": "text.ord_honey",
+  "en": "Jars of honey",
+  "fr": "Pots de miel"
+ },
+ {
+  "id": "text.ord_grain",
+  "en": "Grain",
+  "fr": "Grain"
+ },
+ {
+  "id": "text.ord_grain_have",
+  "en": "(in your store: {n})",
+  "fr": "(dans votre réserve : {n})"
+ },
+ {
+  "id": "text.ord_pay",
+  "en": "{c} coins · {x} XP",
+  "fr": "{c} pièces · {x} XP"
+ },
+ {
+  "id": "text.ord_surprise",
+  "en": "🎁 A surprise inside!",
+  "fr": "🎁 Une surprise dedans !"
+ },
+ {
+  "id": "text.ord_deliver",
+  "en": "Deliver the basket",
+  "fr": "Livrer le panier"
+ },
+ {
+  "id": "text.ord_decline",
+  "en": "Not this one",
+  "fr": "Pas celle-ci"
+ },
+ {
+  "id": "text.ord_none",
+  "en": "No orders just now.",
+  "fr": "Pas de commande pour l’instant."
+ },
+ {
+  "id": "text.ord_next",
+  "en": "The next one comes in {t}.",
+  "fr": "La prochaine arrive dans {t}."
+ },
+ {
+  "id": "text.ord_ready",
+  "en": "🧺 {name}’s basket is ready: tap the stall to deliver it",
+  "fr": "🧺 Le panier de {name} est prêt : touchez l’étal pour le livrer"
+ },
+ {
+  "id": "text.ord_readyb",
+  "en": "Ready!",
+  "fr": "Prêt !"
+ },
+ {
+  "id": "text.ord_new",
+  "en": "📜 A new order from {name}",
+  "fr": "📜 Une nouvelle commande de {name}"
+ },
+ {
+  "id": "text.ord_new2",
+  "en": "📜 {n} new village orders: tap the basket",
+  "fr": "📜 {n} nouvelles commandes du village : touchez le panier"
+ },
+ {
+  "id": "text.ord_set",
+  "en": "🧺 {n} for {name}",
+  "fr": "🧺 {n} pour {name}"
+ },
+ {
+  "id": "text.ord_fish_set",
+  "en": "For {name}’s order 🧺",
+  "fr": "Pour la commande de {name} 🧺"
+ },
+ {
+  "id": "text.ord_done",
+  "en": "Delivered to {name}: +{c} coins, +{x} XP",
+  "fr": "Livré à {name} : +{c} pièces, +{x} XP"
+ },
+ {
+  "id": "text.ord_sp_worms",
+  "en": "🎁 Surprise: a tin of {n} worms!",
+  "fr": "🎁 Surprise : une boîte de {n} vers !"
+ },
+ {
+  "id": "text.ord_sp_grain",
+  "en": "🎁 Surprise: a sack of {n} grain!",
+  "fr": "🎁 Surprise : un sac de {n} de grain !"
+ },
+ {
+  "id": "text.ord_sp_coins",
+  "en": "🎁 Surprise: {c} coins more!",
+  "fr": "🎁 Surprise : {c} pièces de plus !"
+ },
+ {
+  "id": "text.ord_declined",
+  "en": "Turned down: what was set aside for it sold · +{c} coins",
+  "fr": "Refusée : ce qui était mis de côté est vendu · +{c} pièces"
+ },
+ {
+  "id": "text.ord_declined0",
+  "en": "Turned down: another order will come along",
+  "fr": "Refusée : une autre commande viendra"
+ },
+ {
+  "id": "text.ord_lv_t",
+  "en": "New: village orders",
+  "fr": "Nouveau : les commandes du village"
+ },
+ {
+  "id": "text.ord_lv_b",
+  "en": "Villagers ask for baskets of eggs, fish, honey or grain, and pay well: tap the stall by the farmhouse.",
+  "fr": "Les villageois demandent des paniers d’œufs, de poissons, de miel ou de grain, et paient bien : touchez l’étal près de la ferme."
+ },
+ {
+  "id": "text.ord_aria",
+  "en": "Village orders",
+  "fr": "Commandes du village"
+ },
+ {
+  "id": "text.ord_stall",
+  "en": "The farm stall",
+  "fr": "L’étal de la ferme"
+ },
+ {
+  "id": "text.ord_on_way",
+  "en": "{farmer} is taking the basket to the stall",
+  "fr": "{farmer} porte le panier à l’étal"
+ },
+ {
+  "id": "text.vil_potts",
+  "en": "Mrs Potts",
+  "fr": "Mme Potts"
+ },
+ {
+  "id": "text.vil_potts_r",
+  "en": "the baker",
+  "fr": "la boulangère"
+ },
+ {
+  "id": "text.vil_potts_l",
+  "en": "For my sponge cakes, if you please!",
+  "fr": "Pour mes gâteaux, s’il vous plaît !"
+ },
+ {
+  "id": "text.vil_finch",
+  "en": "Mr Finch",
+  "fr": "M. Finch"
+ },
+ {
+  "id": "text.vil_finch_r",
+  "en": "the aquarium shop",
+  "fr": "l’animalerie"
+ },
+ {
+  "id": "text.vil_finch_l",
+  "en": "Something for the big tank in my window.",
+  "fr": "De quoi garnir le grand aquarium de ma vitrine."
+ },
+ {
+  "id": "text.vil_lily",
+  "en": "Lily",
+  "fr": "Lily"
+ },
+ {
+  "id": "text.vil_lily_r",
+  "en": "the tea room",
+  "fr": "le salon de thé"
+ },
+ {
+  "id": "text.vil_lily_l",
+  "en": "Warm scones need the very best!",
+  "fr": "Mes scones méritent ce qu’il y a de mieux !"
+ },
+ {
+  "id": "text.vil_tom",
+  "en": "Old Tom",
+  "fr": "Le vieux Tom"
+ },
+ {
+  "id": "text.vil_tom_r",
+  "en": "the miller",
+  "fr": "le meunier"
+ },
+ {
+  "id": "text.vil_tom_l",
+  "en": "My mill’s been quiet all week.",
+  "fr": "Mon moulin est resté bien calme cette semaine."
+ },
+ {
+  "id": "text.vil_amara",
+  "en": "Dr Amara",
+  "fr": "Dr Amara"
+ },
+ {
+  "id": "text.vil_amara_r",
+  "en": "the vet",
+  "fr": "la vétérinaire"
+ },
+ {
+  "id": "text.vil_amara_l",
+  "en": "A treat for me, and one for my cat Pudding.",
+  "fr": "Un régal pour moi, et un pour ma chatte Praline."
+ },
+ {
+  "id": "text.vil_clara",
+  "en": "Miss Clara",
+  "fr": "Mlle Clara"
+ },
+ {
+  "id": "text.vil_clara_r",
+  "en": "the village school",
+  "fr": "l’école du village"
+ },
+ {
+  "id": "text.vil_clara_l",
+  "en": "It’s cooking class on Friday!",
+  "fr": "Vendredi, c’est l’atelier cuisine !"
+ },
+ {
+  "id": "text.vil_marco",
+  "en": "Marco",
+  "fr": "Marco"
+ },
+ {
+  "id": "text.vil_marco_r",
+  "en": "the café",
+  "fr": "le café"
+ },
+ {
+  "id": "text.vil_marco_l",
+  "en": "My breakfasts are famous thanks to you.",
+  "fr": "Mes petits-déjeuners sont célèbres grâce à vous."
+ },
+ {
+  "id": "text.vil_fete",
+  "en": "The fête",
+  "fr": "La fête"
+ },
+ {
+  "id": "text.vil_fete_r",
+  "en": "the village committee",
+  "fr": "le comité du village"
+ },
+ {
+  "id": "text.vil_fete_l",
+  "en": "Prizes for the tombola, please!",
+  "fr": "Des lots pour la tombola, s’il vous plaît !"
  },
  {
   "id": "text.fish_tin",
@@ -4161,6 +4476,11 @@
   "id": "say.honey",
   "en": "Thank you, bees!",
   "fr": "Merci, les abeilles !"
+ },
+ {
+  "id": "say.order",
+  "en": "A basket for the village!",
+  "fr": "Un panier pour le village !"
  },
  {
   "id": "say.geese",

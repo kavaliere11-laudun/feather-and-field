@@ -91,7 +91,7 @@ ok('at night: a tap on the farmhouse opens the book', k.kind === 'book' && k.sub
 await shot('4_night');
 await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.setHour(undefined); });
 // ---- level 3 (three fields; the Orpingtons' level since 30 Oct): the Orpingtons waiting, placed from the book
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 300; g.data.lvSeen = 3; g.data.coins = 3000; g.data.land = [0, 1, 2]; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60; g.data.lvSeen = 3; g.data.coins = 3000; g.data.land = [0, 1, 2]; g.save(); });      // (level 3: the levels' XP since 7 Nov 2026)
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 k = await book();

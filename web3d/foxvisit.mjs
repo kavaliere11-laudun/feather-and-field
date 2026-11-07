@@ -9,6 +9,7 @@
 // for a night to come) is checked and flagged. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
+import { xpFor } from './src/game.js';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), SHOTS = process.env.SHOTS;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -27,7 +28,7 @@ const load = async () => {
   await p.waitForTimeout(1500); await run(0.5);
 };
 const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.draw()); await p.screenshot({ path: `${SHOTS}/fox_${fr ? 'fr' : 'en'}_${W}x${H}_${name}.png`, timeout: 180000 }); } };
-const xpAt = L => Math.round(60 * Math.pow(L - 1, 2.1)) + 5;
+const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: src/game.js, quicker at first since 7 Nov 2026)
 // the farm's clock to a time (the page's own and the game's), the farm left alone till then (as if it was shut)
 const jump = t => p.evaluate(t => { window.__T = t; sessionStorage.setItem('__T', t); }, t);
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(), F = g.fox();
@@ -49,7 +50,8 @@ const visit0 = nights[0];
 await jump(visit0.t + 9 * 3600e3); await run(1);
 let s = await st();
 ok('level 3: a night he\'d have come goes by with no visit', s.seen >= visit0.key && !s.last && s.card !== 'fox', { s, visit0 });
-// level 4: its card
+// level 4: its card (any card up first, the account's suggestion a few days in, closed)
+await p.evaluate(() => window.__farm.gameUI().close()); await run(0.3);
 await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.land.push(3); g.save(); }, xpAt(4)); await run(1.6);
 s = await st();
 await shot('1_level4');

@@ -33,7 +33,7 @@ await load(); await run(2.5);
 ok('a fresh farm: no summary', (await kind()) !== 'away', await kind());
 await p.evaluate(() => window.__farm.gameUI().close());
 // set the farm up: level 6, the beehives, the wheat sown; then away 9 hours, a feeder empty and eggs in the nest
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = Math.round(60 * Math.pow(5, 2.1) + 5); g.data.coins = 3000; g.data.lvSeen = g.level; g.save(); f.deco.start('beehives'); f.deco.place(); f.deco.wheat.sow(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = window.__farm.xpFor(6) + 5; g.data.coins = 3000; g.data.lvSeen = g.level; g.save(); f.deco.start('beehives'); f.deco.place(); f.deco.wheat.sow(); });
 await run(1);
 // (the page put away now, as when the phone's locked: when it was last seen; it opens again 9 hours on)
 await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; c.eggs = 8; c.feed = 0; c.fedAt = window.__T; g.data.wheat.ripe = window.__T - 600e3; g.save(); sessionStorage.setItem('__T', window.__T + 9 * 3600e3); });

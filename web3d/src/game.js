@@ -66,7 +66,7 @@ export const TEXT = {
     coop_rustic: '{coop} (rustic)',
     level_title: 'Level {n}', level_xp: '{xp} of {need} XP to level {next}', level_top: 'Top level!',
     level_how: 'Look after your birds to earn XP.',
-    level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', level_new: 'New at this level',
+    level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', level_new: 'New at this level', level_gift: 'A gift for your new level: +{c} coins',
     land_new: 'A field is ready to restore: {c} coins', land_show: 'See the field', level_next_land: 'At level {n}: another field to restore',
     land_count: 'Your land: {n} fields', land_count1: 'Your land: 1 field', land_all: 'All the land is yours!',
     land_title: 'An overgrown field', land_body: 'This field is part of your farm, but it has gone wild: brambles, nettles and old odds and ends. Restore it and it’s ready for your coops, for good.',
@@ -198,7 +198,7 @@ export const TEXT = {
     guide_cuddle: 'Give a hen a cuddle: tap a hen, then ♥ Cuddle.', guide_cuddle_card: 'Now tap ♥ Cuddle.',
     guide_sow: 'Sow your wheat field: tap its sign, then Sow.', guide_sow_card: 'Tap Sow: the wheat will feed your hens.',
     guide_jobs: 'Today’s jobs: tap the clipboard at the top.', guide_shop: 'Tap your coins: the shop for decorations, animals and outfits.',
-    guide_did: 'Well done! +{c} coins', guide_done: 'Your first day is done! +{c} coins. Another field can be restored at level 2.',
+    guide_did: 'Well done! +{c} coins, +{x} XP', guide_done: 'Your first day is done! +{c} coins, +{x} XP',
     jobs_title: 'Today’s jobs', jobs_aria: 'Today’s jobs', jobs_new: 'new jobs today', jobs_ready: '{n} to collect',
     job_eggs: 'Collect {n} eggs', job_eggs1: 'Collect an egg', job_cuddle: 'Give {n} cuddles', job_cuddle1: 'Give a cuddle', job_feed: 'Fill a feeder', job_show: 'Enter a bird in a show',
     job_reward: '+{c} coins · +{xp} XP', job_claim: 'Collect', job_paid: 'Done ✓', jobs_note: 'New jobs every day at midnight.',
@@ -269,11 +269,32 @@ export const TEXT = {
     book_fish_not: 'Not caught yet', book_fish_level: 'Fishing here opens at level {n}', book_fish_size: '{a} to {b} cm', book_fish_price: 'about {c} coins', book_fish_photo: 'its photo {c} coins', fish_going_river: '{farmer} is off to the footbridge',
     river_title: 'Fishing in the river', river_body: 'Minnows, gudgeon, dace and chub live in the river, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.', fish_show: 'Show me the pond',
     dock_title: 'Fishing at the pond', dock_body: 'Rudd, roach, perch and tench live in the pond, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.',
-    fish_worms: '{n} worms', fish_worms1: '1 worm', fish_worms0: 'No worms left', fish_hens: 'Your chickens who love {farmer} find worms every day: tap one and ask.', fish_go: 'Go fishing',
+    fish_worms: '{n} worms', fish_worms1: '1 worm', fish_worms0: 'No worms left', fish_hens: 'Your chickens who love {farmer} find worms every day: tap one and ask.', fish_gift: 'A tin of {n} worms to start with 🪱', fish_go: 'Go fishing',
     fish_noworms: 'No worms left: ask your chickens who love {farmer} (tap one), or buy a tin at the dock.',
     worms_ask: 'Ask for worms · 🪱 {n}', worms_given: '🪱 {name} found worms for {farmer} today. More tomorrow!',
     worms_shy: '🪱 {name} is still shy: no worms for {farmer} yet. Cuddles help.', worms_how: 'Worms found each day: Friendly 1 · Trusting 2 · Best friend 3.',
     worms_done: '{name} is finding {n} worms for {farmer} 🪱', worms_done1: '{name} is finding a worm for {farmer} 🪱', worms_night: '{farmer} is asleep: worms in the morning', fish_level: 'Fishing opens at level {n}.',
+    // the daily egg hunt (7 Nov 2026)
+    hunt_hint: '🥚✨ {hen} has hidden today’s golden egg somewhere on your farm. Can you find it?', hunt_found: '✨ You found {hen}’s golden egg! +{c} coins, +{x} XP',
+    hunt_streak: '{n} days in a row', hunt_total: 'golden eggs found: {n}', hunt_lv_t: 'New: a golden egg to find every day', hunt_lv_b: 'Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.',
+    // village orders (7 Nov 2026)
+    ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Your eggs, fish and honey go to their baskets first as they come; the grain comes from your store.',
+    ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your store: {n})',
+    ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
+    ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 {name}’s basket is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
+    ord_new: '📜 A new order from {name}', ord_new2: '📜 {n} new village orders: tap the basket', ord_set: '🧺 {n} for {name}', ord_fish_set: 'For {name}’s order 🧺',
+    ord_done: 'Delivered to {name}: +{c} coins, +{x} XP', ord_sp_worms: '🎁 Surprise: a tin of {n} worms!', ord_sp_grain: '🎁 Surprise: a sack of {n} grain!', ord_sp_coins: '🎁 Surprise: {c} coins more!',
+    ord_declined: 'Turned down: what was set aside for it sold · +{c} coins', ord_declined0: 'Turned down: another order will come along',
+    ord_lv_t: 'New: village orders', ord_lv_b: 'Villagers ask for baskets of eggs, fish, honey or grain, and pay well: tap the stall by the farmhouse.',
+    ord_aria: 'Village orders', ord_stall: 'The farm stall', ord_on_way: '{farmer} is taking the basket to the stall',
+    vil_potts: 'Mrs Potts', vil_potts_r: 'the baker', vil_potts_l: 'For my sponge cakes, if you please!',
+    vil_finch: 'Mr Finch', vil_finch_r: 'the aquarium shop', vil_finch_l: 'Something for the big tank in my window.',
+    vil_lily: 'Lily', vil_lily_r: 'the tea room', vil_lily_l: 'Warm scones need the very best!',
+    vil_tom: 'Old Tom', vil_tom_r: 'the miller', vil_tom_l: 'My mill’s been quiet all week.',
+    vil_amara: 'Dr Amara', vil_amara_r: 'the vet', vil_amara_l: 'A treat for me, and one for my cat Pudding.',
+    vil_clara: 'Miss Clara', vil_clara_r: 'the village school', vil_clara_l: 'It’s cooking class on Friday!',
+    vil_marco: 'Marco', vil_marco_r: 'the café', vil_marco_l: 'My breakfasts are famous thanks to you.',
+    vil_fete: 'The fête', vil_fete_r: 'the village committee', vil_fete_l: 'Prizes for the tombola, please!',
     fish_tin: 'A tin of {n} worms', fish_tin_buy: 'Buy · {c} coins', fish_tin_bought: '{n} worms in the tin · −{c} coins',
     fish_going: '{farmer} is off to the dock', fish_night: '{farmer} is asleep: fishing in the morning', fish_busy: '{farmer} is busy: try again in a moment',
     fish_cast: 'Tap the water to cast', fish_wait: 'Watch the float…', fish_bite: 'Now! Tap!', fish_soon: 'Too soon! Wait till the float goes under',
@@ -353,7 +374,7 @@ export const TEXT = {
     coop_rustic: '{coop} (rustique)',
     level_title: 'Niveau {n}', level_xp: '{xp} sur {need} XP pour le niveau {next}', level_top: 'Niveau maximum !',
     level_how: 'Prenez soin de vos volailles pour gagner de l’XP.',
-    level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', level_new: 'Nouveau à ce niveau',
+    level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', level_new: 'Nouveau à ce niveau', level_gift: 'Un cadeau pour votre nouveau niveau : +{c} pièces',
     land_new: 'Un terrain est prêt à être remis en état : {c} pièces', land_show: 'Voir le terrain', level_next_land: 'Au niveau {n} : un autre terrain à remettre en état',
     land_count: 'Vos terrains : {n}', land_count1: 'Votre terrain : 1', land_all: 'Tous les terrains sont à vous !',
     land_title: 'Un terrain en friche', land_body: 'Ce terrain fait partie de votre ferme, mais il est retourné à l’état sauvage : ronces, orties et vieux bric-à-brac. Remettez-le en état et il sera prêt pour vos poulaillers, pour toujours.',
@@ -485,7 +506,7 @@ export const TEXT = {
     guide_cuddle: 'Faites un câlin à une poule : touchez une poule, puis ♥ Faire un câlin.', guide_cuddle_card: 'Touchez maintenant ♥ Faire un câlin.',
     guide_sow: 'Semez votre champ de blé : touchez son panneau, puis Semer.', guide_sow_card: 'Touchez Semer : le blé nourrira vos poules.',
     guide_jobs: 'Les tâches du jour : touchez le presse-papiers en haut.', guide_shop: 'Touchez vos pièces : la boutique des décorations, des animaux et des tenues.',
-    guide_did: 'Bravo ! +{c} pièces', guide_done: 'Votre premier jour est terminé ! +{c} pièces. Un autre terrain pourra être remis en état au niveau 2.',
+    guide_did: 'Bravo ! +{c} pièces, +{x} XP', guide_done: 'Votre premier jour est terminé ! +{c} pièces, +{x} XP',
     jobs_title: 'Les tâches du jour', jobs_aria: 'Les tâches du jour', jobs_new: 'nouvelles tâches aujourd’hui', jobs_ready: '{n} à récupérer',
     job_eggs: 'Ramasser {n} œufs', job_eggs1: 'Ramasser un œuf', job_cuddle: 'Faire {n} câlins', job_cuddle1: 'Faire un câlin', job_feed: 'Remplir une mangeoire', job_show: 'Inscrire une volaille à un concours',
     job_reward: '+{c} pièces · +{xp} XP', job_claim: 'Récupérer', job_paid: 'Fait ✓', jobs_note: 'De nouvelles tâches chaque jour à minuit.',
@@ -555,11 +576,32 @@ export const TEXT = {
     book_fish_not: 'Pas encore pêché', book_fish_level: 'La pêche ici ouvre au niveau {n}', book_fish_size: 'De {a} à {b} cm', book_fish_price: 'environ {c} pièces', book_fish_photo: 'sa photo {c} pièces', fish_going_river: '{farmer} part à la passerelle',
     river_title: 'La pêche à la rivière', river_body: 'Vairons, goujons, vandoises et chevesnes vivent dans la rivière, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme.', fish_show: 'Voir l’étang',
     dock_title: 'La pêche à l’étang', dock_body: 'Rotengles, gardons, perches et tanches vivent dans l’étang, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme.',
-    fish_worms: '{n} vers', fish_worms1: '1 ver', fish_worms0: 'Plus de vers', fish_hens: 'Vos poules qui aiment {farmer} lui trouvent des vers chaque jour : touchez-en une et demandez.', fish_go: 'Aller pêcher',
+    fish_worms: '{n} vers', fish_worms1: '1 ver', fish_worms0: 'Plus de vers', fish_hens: 'Vos poules qui aiment {farmer} lui trouvent des vers chaque jour : touchez-en une et demandez.', fish_gift: 'Une boîte de {n} vers pour commencer 🪱', fish_go: 'Aller pêcher',
     fish_noworms: 'Plus de vers : demandez à vos poules qui aiment {farmer} (touchez-en une), ou achetez une boîte au ponton.',
     worms_ask: 'Demander des vers · 🪱 {n}', worms_given: '🪱 {name} a trouvé des vers pour {farmer} aujourd’hui. D’autres demain !',
     worms_shy: '🪱 {name} est encore farouche : pas de vers pour {farmer} pour l’instant. Les câlins aident.', worms_how: 'Vers trouvés chaque jour : Sociable 1 · En confiance 2 · Inséparable 3.',
     worms_done: '{name} cherche {n} vers pour {farmer} 🪱', worms_done1: '{name} cherche un ver pour {farmer} 🪱', worms_night: '{farmer} dort : les vers, ce sera demain matin', fish_level: 'La pêche ouvre au niveau {n}.',
+    // la chasse à l’œuf du jour (7 nov. 2026)
+    hunt_hint: '🥚✨ {hen} a caché l’œuf d’or du jour quelque part sur votre ferme. Saurez-vous le trouver ?', hunt_found: '✨ Vous avez trouvé l’œuf d’or de {hen} ! +{c} pièces, +{x} XP',
+    hunt_streak: '{n} jours de suite', hunt_total: 'œufs d’or trouvés : {n}', hunt_lv_t: 'Nouveau : un œuf d’or à trouver chaque jour', hunt_lv_b: 'Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite.',
+    // commandes du village (7 nov. 2026)
+    ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Vos œufs, vos poissons et votre miel vont d’abord dans leurs paniers, à mesure ; le grain vient de votre réserve.',
+    ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre réserve : {n})',
+    ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
+    ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier de {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
+    ord_new: '📜 Une nouvelle commande de {name}', ord_new2: '📜 {n} nouvelles commandes du village : touchez le panier', ord_set: '🧺 {n} pour {name}', ord_fish_set: 'Pour la commande de {name} 🧺',
+    ord_done: 'Livré à {name} : +{c} pièces, +{x} XP', ord_sp_worms: '🎁 Surprise : une boîte de {n} vers !', ord_sp_grain: '🎁 Surprise : un sac de {n} de grain !', ord_sp_coins: '🎁 Surprise : {c} pièces de plus !',
+    ord_declined: 'Refusée : ce qui était mis de côté est vendu · +{c} pièces', ord_declined0: 'Refusée : une autre commande viendra',
+    ord_lv_t: 'Nouveau : les commandes du village', ord_lv_b: 'Les villageois demandent des paniers d’œufs, de poissons, de miel ou de grain, et paient bien : touchez l’étal près de la ferme.',
+    ord_aria: 'Commandes du village', ord_stall: 'L’étal de la ferme', ord_on_way: '{farmer} porte le panier à l’étal',
+    vil_potts: 'Mme Potts', vil_potts_r: 'la boulangère', vil_potts_l: 'Pour mes gâteaux, s’il vous plaît !',
+    vil_finch: 'M. Finch', vil_finch_r: 'l’animalerie', vil_finch_l: 'De quoi garnir le grand aquarium de ma vitrine.',
+    vil_lily: 'Lily', vil_lily_r: 'le salon de thé', vil_lily_l: 'Mes scones méritent ce qu’il y a de mieux !',
+    vil_tom: 'Le vieux Tom', vil_tom_r: 'le meunier', vil_tom_l: 'Mon moulin est resté bien calme cette semaine.',
+    vil_amara: 'Dr Amara', vil_amara_r: 'la vétérinaire', vil_amara_l: 'Un régal pour moi, et un pour ma chatte Praline.',
+    vil_clara: 'Mlle Clara', vil_clara_r: 'l’école du village', vil_clara_l: 'Vendredi, c’est l’atelier cuisine !',
+    vil_marco: 'Marco', vil_marco_r: 'le café', vil_marco_l: 'Mes petits-déjeuners sont célèbres grâce à vous.',
+    vil_fete: 'La fête', vil_fete_r: 'le comité du village', vil_fete_l: 'Des lots pour la tombola, s’il vous plaît !',
     fish_tin: 'Une boîte de {n} vers', fish_tin_buy: 'Acheter · {c} pièces', fish_tin_bought: '{n} vers dans la boîte · −{c} pièces',
     fish_going: '{farmer} part au ponton', fish_night: '{farmer} dort : la pêche, ce sera demain matin', fish_busy: '{farmer} est occupé : réessayez dans un instant',
     fish_cast: 'Touchez l’eau pour lancer', fish_wait: 'Surveillez le bouchon…', fish_bite: 'Maintenant ! Touchez !', fish_soon: 'Trop tôt ! Attendez que le bouchon plonge',
@@ -720,9 +762,18 @@ export const TRUST_AT = [0, 3, 8, 15];                 // cuddles for Shy, Frien
 export const EXP_DAY = 5, EXP_TIME_MAX = 250, EXP_CUDDLE = 8, HAPPY_MS = 6 * 3600e3, XP_BEST = 20;
 export const MAX_STARS = 5;
 
-// ---- levels: the XP to reach each level (a first curve; the year-long balance comes with step 9)
+// ---- levels: the XP to reach each level. The first ones quick (7 Nov 2026, Audrey: "The start is too slow. To keep the
+// people going we should have the few first level super easy to reach. And after that it becomes harder"; her choice:
+// "Level 5 by day 2"): level 2 in the first minutes, 3 by the end of the first visit, 5 on the second day; then each
+// level a little longer to reach than the one before, and the last ones longer than before, so level 30 still comes
+// after about a year once a day, with the village orders too (balsim.mjs: day 335; 268 twice a day). Up to level 25 it
+// never asks more than the curve before (60 x (level - 1)^2.1), so no farm goes down a level (or loses a field): none
+// could be past 25 yet
 export const TOP_LEVEL = 30;
-export function xpFor(level) { return level <= 1 ? 0 : Math.round(60 * Math.pow(level - 1, 2.1)); }
+const XP_AT = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10500, 12900, 15700, 18900, 22500, 26450, 30800, 35550, 40800, 46550, 52750, 59550, 66900, 74850, 83350];
+export function xpFor(level) { return level <= 1 ? 0 : XP_AT[Math.min(TOP_LEVEL, level)]; }
+// a gift of coins for each new level up to 10 (the same day: the first fields, the breeds and the shop come quicker now)
+export const levelGift = L => L >= 2 && L <= 10 ? 25 * L : 0;
 export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
 
 // ---- land (release 1 step 5): the farm is split into 30 fields along its lanes and the stream (fields.py: models/
@@ -868,6 +919,45 @@ export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120 };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
+// ---- village orders (7 Nov 2026, Audrey: "Just feeding the chickens is not enough"; her choice: "Village orders: villagers
+// ask for a basket (eggs, fish, honey, grain): fill it for coins, XP and sometimes a surprise"). From level 3, at most
+// three at a time at the farm's stall, a new one every 3 hours (two at once when they start). The eggs, fish and honey
+// set aside for them as they come (the oldest order first, instead of being sold), the grain from the store when the
+// basket goes; delivered: paid more than selling it all (pay x its worth), and its XP, and one basket in four a surprise
+// (a tin of worms, a sack of grain or extra coins). A villager's order: one thing (or two) of what they like, as much as
+// the farm's level makes sense of. Never in a hurry: an order waits for you (or "Not this one": another comes in a while)
+export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 * 60e3, worth: { eggs: 6, fish: 22, honey: 15, grain: 1.5 }, pay: 1.4, most: { eggs: 30, fish: 5, honey: 5, grain: 60 } };
+export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain'];
+export const VILLAGERS = {
+  potts: { e: '🧁', wants: ['eggs', 'eggs', 'honey'] }, finch: { e: '🐠', wants: ['fish'] }, lily: { e: '🫖', wants: ['eggs', 'honey'] },
+  tom: { e: '🌾', wants: ['grain', 'grain', 'eggs'] }, amara: { e: '🩺', wants: ['eggs', 'fish'] }, clara: { e: '🏫', wants: ['eggs'] },
+  marco: { e: '☕', wants: ['eggs', 'fish'] }, fete: { e: '🎪', wants: ['eggs', 'fish', 'honey', 'grain'] },
+};
+// how much of a thing an order asks for at a level (r: 0..1, a little more or less)
+export function orderAmount(k, L, r = 0.5) {
+  if (k === 'eggs') return Math.max(3, Math.min(ORDERS.most.eggs, Math.round((3 + L / 2) * (0.8 + 0.4 * r))));
+  if (k === 'fish') return Math.min(ORDERS.most.fish, 1 + Math.floor(L / 6) + (r > 0.7 ? 1 : 0));
+  if (k === 'honey') return Math.min(ORDERS.most.honey, 1 + Math.floor(L / 8) + (r > 0.7 ? 1 : 0));
+  return Math.min(ORDERS.most.grain, 5 * Math.round((10 + 2 * L) * (0.8 + 0.4 * r) / 5));
+}
+// what an order pays: its coins and XP (from what it asks for); its surprise, if it has one (worked out from its own number,
+// so it's the same whenever it's looked at): 'worms', 'grain' or 'coins'
+export function orderPay(o) {
+  let w = 0; for (const k of ORDER_ITEMS) w += (o.items[k] || 0) * ORDERS.worth[k];
+  return { coins: Math.round(ORDERS.pay * w) + 10, xp: Math.round(w / 12) + 2 };
+}
+export function orderSurprise(o, fishing) {
+  const h = hash01('order|' + o.id + '|' + o.t); if (h >= 0.25) return null;
+  const k = Math.floor(h * 12) % 3; return k === 0 && fishing ? 'worms' : k === 1 ? 'grain' : 'coins';
+}
+export const SURPRISE = { worms: 10, grain: 20, coins: 0.5 };
+// ---- the daily egg hunt (7 Nov 2026, Audrey's choice: "Daily egg hunt: each day a hen hides a golden egg somewhere on the
+// farm for you to find"): from level 2, one a day (the phone's own day), hidden by one of the farm's hens (who, from the
+// day's own number; main.js where, on your land, near a bush, a tree, a rock or something standing about). Found: coins
+// and XP, more for each day in a row up to a week (20 + 10 a day: 30 .. 90 coins; 3 + 1 a day XP), and all of them
+// counted. Saved: the day the last was found, how many days in a row, how many in all
+export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 7 };
+export const huntPay = streak => { const k = Math.min(HUNT.week, Math.max(1, streak)); return { coins: HUNT.coins + HUNT.coinsDay * k, xp: HUNT.xp + HUNT.xpDay * k }; };          // (the tin's worms, the sack's grain, half again in coins)
 // ---- the peacock's feathers (Audrey, 1 Nov: "His dropped feathers (Recommended)"): now and then (one every 12 hours) he
 // drops a feather from his train in his yard, three lying there at most; a tap on one: picked up and sold, a fine one
 export const FEATHERS = { every: 12 * 3600e3, max: 3, price: 40, xp: 5 };
@@ -880,7 +970,7 @@ export const FEATHERS = { every: 12 * 3600e3, max: 3, price: 40, xp: 5 };
 export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3, xp: 3 };
 // ---- fishing (release 5; game-plan-v2.md §8; Audrey, 28 Oct: the fish "Perfect, carry on"; the legendary ones "Photo,
 // then let go", "and on top of that each time the farmer fishes a new breed of fish he is happy and does a little
-// celebration"): the pond from level 3, the river from level 8, seven fish in each (four common, two rare, one legendary
+// celebration"): the pond from level 3 (2 since 7 Nov 2026), the river from level 8, seven fish in each (four common, two rare, one legendary
 // with a name), drawn by weight (w, out of 100 in each water). A worm a cast: found by the chickens who love the farmer
 // (Audrey, 28 Oct: "that would be cute if the chickens get them to the farmer up to 3 a day per chicken if the chicken loves
 // the farmer and the farmer goes and asks for it"; then "Replace them", "1, 2 or 3 by love", "One visit, all her worms"):
@@ -889,7 +979,7 @@ export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3,
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 3, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10 };
+export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
 export const FISH_RULES = {
   rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 1, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 1, cm: [12, 25] },
   perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 1, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 2, cm: [20, 45] },
@@ -907,7 +997,7 @@ export function fishPrice(id, cm) { const R = FISH_RULES[id]; return R.rare === 
 // ---- the first day's guide (release 1 step 10; Audrey: "Scenes from the 3D farm" for the pictures before it): five
 // little things to do on a new farm, one at a time, each a few coins; the last a bonus
 export const GUIDE = ['eggs', 'cuddle', 'sow', 'jobs', 'shop'];
-export const GUIDE_COINS = 10, GUIDE_BONUS = 30;
+export const GUIDE_COINS = 10, GUIDE_BONUS = 30, GUIDE_XP = 5, GUIDE_XP_BONUS = 10;      // (XP since 7 Nov 2026: level 2 during it, 3 by its end)
 // ---- seasonal dresses for the coops (release 4; Audrey, 27 Oct: seasonal coops, "The next one will be Christmas and should
 // only be a dress for any coop", "In season, kept forever (Recommended)", "1,500 coins (Recommended)", "1 Dec to 6 Jan
 // (Recommended)"): on sale in the farm shop in its season (from..to, month and day on the phone's own calendar, both
@@ -1239,8 +1329,32 @@ export function checkFarm(d, now = Date.now()) {
       const g = raw[id], R = FISH_RULES[id];
       if (Array.isArray(g) && g.length === 2 && Number.isInteger(g[0]) && g[0] >= 1 && g[0] <= 1e6 && Number.isInteger(g[1]) && g[1] >= R.cm[0] && g[1] <= R.cm[1] && L >= fishLevel(id)) got[id] = [g[0], g[1]];
     }
-    out.fish = { worms: int(fs.worms, 0, FISHING.maxWorms, 0), got };
+    out.fish = { worms: int(fs.worms, 0, FISHING.maxWorms, 0), got, ...(fs.gift === true ? { gift: true } : {}) };      // (gift: the starting tin given)
     if ('day' in fs || 'free' in fs) { out.fish.day = typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now); out.fish.free = int(fs.free, 0, FISHING.oldFree, 0); }
+  }
+  // village orders (7 Nov 2026): only once the farm's level has opened them; at most three, each from a known villager
+  // (one order each), asking for one or two known things in amounts an order can, what's set aside for it never more than
+  // it asks; when the next comes (never further off than one's time); how many have gone
+  const od = d.orders && typeof d.orders === 'object' ? d.orders : null;
+  if (od && L >= ORDERS.level) {
+    const list = [], ids = new Set(), whos = new Set();
+    for (const o of Array.isArray(od.list) ? od.list.slice(0, ORDERS.max) : []) {
+      if (!o || typeof o !== 'object' || typeof o.id !== 'string' || !/^o\d{1,7}$/.test(o.id) || ids.has(o.id) || !Object.hasOwn(VILLAGERS, o.who) || whos.has(o.who)) continue;
+      const items = {}, got = {}, it = o.items && typeof o.items === 'object' ? o.items : {}, gt = o.got && typeof o.got === 'object' ? o.got : {};
+      for (const k of ORDER_ITEMS) if (Number.isInteger(it[k]) && it[k] >= 1 && it[k] <= ORDERS.most[k]) items[k] = it[k];
+      const n = Object.keys(items).length; if (!n || n > 2) continue;
+      for (const k of ['eggs', 'fish', 'honey']) if (items[k] && Number.isInteger(gt[k]) && gt[k] >= 1) got[k] = Math.min(items[k], gt[k]);
+      ids.add(o.id); whos.add(o.who); list.push({ id: o.id, who: o.who, t: int(o.t, 0, now + TZ_SLACK, now), items, got });
+    }
+    const seq = Math.max(int(od.seq, 1, 1e7, 1), ...list.map(o => parseInt(o.id.slice(1), 10) + 1));
+    out.orders = { list, next: int(od.next, 0, now + ORDERS.every, 0), seq, done: int(od.done, 0, 1e7, 0) };
+  }
+  // the daily egg hunt (7 Nov 2026): the day the last golden egg was found (never ahead of today), the days in a row
+  // (at least one, never more than found in all), how many in all; only once the farm's level has opened it
+  const hu = d.hunt && typeof d.hunt === 'object' ? d.hunt : null;
+  if (hu && L >= HUNT.level && typeof hu.last === 'string' && /^\d{8}$/.test(hu.last) && hu.last <= dayKey(now + TZ_SLACK)) {
+    const n = int(hu.n, 1, 1e6, 1);
+    out.hunt = { last: hu.last, streak: int(hu.streak, 1, n, 1), n };
   }
   return out;
 }
@@ -1295,7 +1409,9 @@ export class Game {
   // ---- levels and land: a new level's card once (lvSeen); the next patch of land (at the level it comes with), for sale
   // once the level allows; bought with coins
   levelNews() { return this.level > (this.data.lvSeen || 1) ? this.level : 0; }
-  seenLevel() { this.data.lvSeen = this.level; this.save(); }
+  // seen: the coins for each new level since the last card (levelGift), with it; the coins given
+  levelGiftDue() { let c = 0; for (let L = (this.data.lvSeen || 1) + 1; L <= this.level; L++) c += levelGift(L); return c; }
+  seenLevel() { const c = this.levelGiftDue(); this.data.coins += c; this.data.lvSeen = this.level; this.save(); return c; }
   landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: k + 1 } : null; }
   landForSale() { const n = this.landNext(); return n && this.level >= n.level ? n : null; }
   buyLand() {
@@ -1639,8 +1755,89 @@ export class Game {
     const k = Math.floor(Math.max(0, now - H.at) / HONEY.every), n = Math.min(HONEY.max, H.n + k);
     if (!n) return null;
     H.at = H.n + k >= HONEY.max ? now : H.at + k * HONEY.every; H.n = 0;
-    const coins = n * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();
-    return { n, coins, xp };
+    const to = this.setAside('honey', n), coins = (n - to.n) * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();      // (jars for the orders first)
+    return { n, coins, xp, toOrder: to.n, to: to.to };
+  }
+  // ---- village orders: open from level 3; the orders now (new ones as they're due: two when they start, then one every
+  // 3 hours while there's room); a new one; things set aside for them as they come; ready (all of it set aside, and the
+  // grain in the store); one delivered (paid, the grain taken from the store, its surprise); one turned down (what was set
+  // aside for it sold)
+  ordersOpen() { return this.level >= ORDERS.level; }
+  orderBook() { return this.data.orders || (this.data.orders = { list: [], next: 0, seq: 1, done: 0 }); }
+  orders(now = Date.now()) { if (!this.ordersOpen()) return []; this.orderTick(now); return this.orderBook().list; }
+  orderTick(now = Date.now(), r = Math.random) {
+    if (!this.ordersOpen()) return 0;
+    const B = this.orderBook(); let added = 0;
+    if (!B.next) { for (let i = 0; i < ORDERS.first && B.list.length < ORDERS.max; i++) if (this.newOrder(now, r)) added++; B.next = Math.round(now + ORDERS.every); }
+    while (B.list.length < ORDERS.max && now >= B.next) { if (!this.newOrder(Math.min(now, B.next), r)) break; B.next += ORDERS.every; added++; }
+    if (added) this.save();
+    return added;
+  }
+  orderCan(k) { return k === 'eggs' || k === 'grain' || (k === 'fish' ? this.fishOpen('pond') : k === 'honey' && !!this.data.honey); }
+  newOrder(t, r = Math.random) {
+    const B = this.orderBook(), L = this.level, busy = new Set(B.list.map(o => o.who));
+    const who = Object.keys(VILLAGERS).filter(v => !busy.has(v) && VILLAGERS[v].wants.some(k => this.orderCan(k)));
+    if (!who.length) return null;
+    const v = who[Math.floor(r() * who.length) % who.length], wants = VILLAGERS[v].wants.filter(k => this.orderCan(k));
+    const pick = [wants[Math.floor(r() * wants.length) % wants.length]], rest = wants.filter(k => k !== pick[0]);
+    if (rest.length && r() < 0.4) pick.push(rest[Math.floor(r() * rest.length) % rest.length]);
+    const items = {}; for (const k of pick) items[k] = orderAmount(k, L, r());
+    const o = { id: 'o' + B.seq++, who: v, t: Math.round(t), items, got: {} };
+    B.list.push(o); return o;
+  }
+  setAside(k, n) {
+    if (!this.data.orders || !this.ordersOpen() || !(n > 0)) return { n: 0, to: [] };
+    let left = n; const to = [];
+    for (const o of this.data.orders.list) {
+      const need = (o.items[k] || 0) - (o.got[k] || 0); if (need <= 0 || left <= 0) continue;
+      const g = Math.min(need, left); o.got[k] = (o.got[k] || 0) + g; left -= g; to.push({ id: o.id, who: o.who, n: g });
+    }
+    return { n: n - left, to };
+  }
+  orderLeft(o, k) { return k === 'grain' ? Math.max(0, (o.items.grain || 0) - Math.floor(this.data.grain || 0)) : Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)); }
+  orderReady(o) { return ORDER_ITEMS.every(k => !o.items[k] || this.orderLeft(o, k) === 0); }
+  ordersReady() { return this.ordersOpen() && this.data.orders ? this.data.orders.list.filter(o => this.orderReady(o)).length : 0; }
+  villagerName(v) { return this.t('vil_' + v); }
+  villagerEmoji(v) { return VILLAGERS[v] ? VILLAGERS[v].e : '🧺'; }
+  orderPayOf(o) { return { ...orderPay(o), surprise: !!orderSurprise(o, this.fishOpen('pond')) }; }
+  orderNextIn(now = Date.now()) { const B = this.data.orders; return this.ordersOpen() && B && B.next ? Math.max(0, B.next - now) : 0; }
+  // the words for things set aside for the orders: "🧺 3 for Mrs Potts" (to: setAside's)
+  setAsideText(to) { return to.map(x => this.t('ord_set', { n: x.n, name: this.villagerName(x.who) })).join(' · '); }
+  deliverOrder(id, now = Date.now()) {
+    const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o || !this.orderReady(o)) return null;
+    if (o.items.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - o.items.grain) * 100) / 100);
+    const P = orderPay(o), sp = orderSurprise(o, this.fishOpen('pond'));
+    let coins = P.coins, worms = 0, grain = 0;
+    if (sp === 'coins') coins += Math.round(P.coins * SURPRISE.coins);
+    if (sp === 'worms') { const f = this.fishBag(); worms = Math.max(0, Math.min(SURPRISE.worms, FISHING.maxWorms - f.worms)); f.worms += worms; }
+    if (sp === 'grain') { const g = this.data.grain || 0; grain = Math.max(0, Math.min(SURPRISE.grain, WHEAT.max - g)); this.data.grain = Math.round((g + grain) * 100) / 100; }
+    this.data.coins += coins; this.data.xp += P.xp;
+    B.list = B.list.filter(x => x !== o); B.done = (B.done || 0) + 1; B.next = Math.max(B.next || 0, Math.round(now + ORDERS.gap));
+    this.save();
+    return { id, who: o.who, coins, xp: P.xp, surprise: sp, worms, grain, extra: sp === 'coins' ? coins - P.coins : 0 };
+  }
+  declineOrder(id, now = Date.now()) {
+    const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o) return null;
+    const coins = Math.round((o.got.eggs || 0) * ORDERS.worth.eggs + (o.got.fish || 0) * ORDERS.worth.fish + (o.got.honey || 0) * HONEY.price);
+    this.data.coins += coins; B.list = B.list.filter(x => x !== o); B.next = Math.max(B.next || 0, Math.round(now + ORDERS.gap)); this.save();
+    return { coins };
+  }
+  // ---- the daily egg hunt: open from level 2; today's (its day, found or not, the hen who hid it, the days in a row it
+  // would make, how many found in all); found (paid, counted)
+  huntOpen() { return this.level >= HUNT.level; }
+  huntToday(now = Date.now()) {
+    const day = dayKey(now), H = this.data.hunt || { last: '', streak: 0, n: 0 }, found = H.last === day;
+    const hens = this.data.birds.filter(b => b.sex === 'h' && !kindOf(b.breed)), hen = hens.length ? hens[Math.floor(hash01('hunt|' + day + '|' + this.data.made) * hens.length) % hens.length] : null;
+    const streak = found ? H.streak : H.last === dayKey(now - 86400e3) ? H.streak + 1 : 1;
+    return { day, found, hen: hen ? hen.name : '', henId: hen ? hen.id : null, streak, n: H.n || 0, seed: hash01('huntspot|' + day + '|' + this.data.made) };
+  }
+  huntFind(now = Date.now()) {
+    if (!this.huntOpen()) return null;
+    const T = this.huntToday(now); if (T.found) return null;
+    const P = huntPay(T.streak);
+    this.data.hunt = { last: T.day, streak: T.streak, n: T.n + 1 };
+    this.data.coins += P.coins; this.data.xp += P.xp; this.save();
+    return { ...P, streak: T.streak, n: T.n + 1, hen: T.hen };
   }
   // ---- the peacock's feathers: how many lie in his yard now; one picked up (sold)
   feathersAt(c, now = Date.now()) { const F = c && c.breed === 'pea' && c.fe; if (!F) return 0; return Math.min(FEATHERS.max, F.n + Math.floor(Math.max(0, now - F.at) / FEATHERS.every)); }
@@ -1682,11 +1879,18 @@ export class Game {
     this.data.coins += FEATHERS.price; this.data.xp += FEATHERS.xp; this.save();
     return { coins: FEATHERS.price, xp: FEATHERS.xp, left: n - 1 };
   }
-  // ---- fishing: open at the pond (level 3) and the river (8); the worms (found by the chickens, or from tins);
+  // ---- fishing: open at the pond (level 2) and the river (8); the worms (found by the chickens, or from tins);
   // a cast (a worm on the hook: the fish that will bite decided there and then, kept till it's landed or lost); landed
   // (sold live, or a legendary one's photo; the count and the biggest kept); a tin of worms
   fishOpen(water) { return water in FISHING && typeof FISHING[water] === 'number' && this.level >= FISHING[water]; }
   fishBag() { return this.data.fish || (this.data.fish = { worms: 0, got: {} }); }
+  // a tin of worms to start with, once, as the pond opens (or on a farm that had it open before): the worms given, or 0
+  fishGift() {
+    if (!this.fishOpen('pond')) return 0;
+    const f = this.fishBag(); if (f.gift) return 0;
+    f.gift = true; f.worms = Math.min(FISHING.maxWorms, f.worms + FISHING.gift); this.save();
+    return FISHING.gift;
+  }
   worms() { return this.data.fish ? this.data.fish.worms : 0; }
   // the worms a bird finds for the farmer each day (by how much she loves him: none while she's shy), whether she's given
   // them today; asked (her card's "Ask for worms"): all of today's at once, into the bag (null: fishing not open yet, shy,
@@ -1718,9 +1922,10 @@ export class Game {
     this.bite = null;
     const R = FISH_RULES[b.id], f = this.fishBag(), g = f.got[b.id], first = !g, best = !first && b.cm > g[1];
     f.got[b.id] = [g ? g[0] + 1 : 1, g ? Math.max(g[1], b.cm) : b.cm];
-    const coins = fishPrice(b.id, b.cm), xp = R.xp + (first ? FISHING.firstXp : 0);
+    const to = R.rare === 2 ? { n: 0, to: [] } : this.setAside('fish', 1);      // (for an order first, if one wants a fish: a legendary one's photo isn't one)
+    const coins = to.n ? 0 : fishPrice(b.id, b.cm), xp = R.xp + (first ? FISHING.firstXp : 0);
     this.data.coins += coins; this.data.xp += xp; this.save();
-    return { id: b.id, cm: b.cm, water: b.water, rare: R.rare, legend: R.rare === 2, first, best, coins, xp, n: f.got[b.id][0] };
+    return { id: b.id, cm: b.cm, water: b.water, rare: R.rare, legend: R.rare === 2, first, best, coins, xp, n: f.got[b.id][0], order: to.n ? to.to[0] : null };
   }
   loseFish() { const had = !!this.bite; this.bite = null; return had; }
   buyWorms(now = Date.now()) {
@@ -1734,10 +1939,10 @@ export class Game {
   guideStep() { const G = this.data.guide; return G && !G.done && G.step < GUIDE.length ? GUIDE[G.step] : null; }
   guideDid(k) {
     const G = this.data.guide; if (!G || G.done || GUIDE[G.step] !== k) return null;
-    G.step++; let coins = GUIDE_COINS;
-    if (G.step >= GUIDE.length) { G.done = true; coins += GUIDE_BONUS; }
-    this.data.coins += coins; this.save();
-    return { coins, done: G.done, next: G.done ? null : GUIDE[G.step], n: G.step };
+    G.step++; let coins = GUIDE_COINS, xp = GUIDE_XP;
+    if (G.step >= GUIDE.length) { G.done = true; coins += GUIDE_BONUS; xp += GUIDE_XP_BONUS; }
+    this.data.coins += coins; this.data.xp += xp; this.save();
+    return { coins, xp, done: G.done, next: G.done ? null : GUIDE[G.step], n: G.step };
   }
   guideSkip() { const G = this.data.guide; if (G && !G.done) { G.done = true; this.save(); } }
   // ---- the welcome-back summary (release 1 step 9f; Audrey: "Welcome-back summary (Recommended)"): after time away (from:
@@ -2014,15 +2219,17 @@ export class Game {
   // how many of a nest's eggs are fresh now (laid within 3 hours)
   freshIn(c, now = Date.now()) { return Math.min(c.eggs || 0, (c.lt || []).filter(t => t <= now && now - t <= FRESH.ms).length); }
   // the words for eggs sold (collect's result): fresh ones say so, with the XP
-  soldText(r) { return r.fresh ? this.t(r.n === 1 ? 'eggs_fresh1' : 'eggs_fresh', { n: r.n, c: r.coins, f: r.fresh, xp: r.xp }) : this.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }); }
+  soldText(r) {
+    if (r.toOrder) { const sold = r.n - r.toOrder; return this.setAsideText(r.to) + (sold > 0 ? ' · ' + this.t(sold === 1 ? 'eggs_sold1' : 'eggs_sold', { n: sold, c: r.coins }) : ''); }      // (eggs for the orders first: village orders)
+    return r.fresh ? this.t(r.n === 1 ? 'eggs_fresh1' : 'eggs_fresh', { n: r.n, c: r.coins, f: r.fresh, xp: r.xp }) : this.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }); }
   // tap the nest: its eggs sold, coins and XP
   collect(coopId, now = Date.now()) {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
-    const n = c.eggs, fresh = this.freshIn(c, now);
-    const coins = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XPV.egg + fresh * FRESH.xp;
+    const n = c.eggs, fresh = this.freshIn(c, now), to = this.setAside('eggs', n), sold = n - to.n;      // (eggs for the orders first: the rest sold)
+    const coins = sold * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XPV.egg + fresh * FRESH.xp;
     c.eggs = 0; c.bonus = 0; c.lt = []; this.data.coins += coins; this.data.xp += xp;
     const done = this.job('eggs', n);
-    return { n, fresh, coins, xp, done };
+    return { n, fresh, coins, xp, done, toOrder: to.n, to: to.to };
   }
   // what filling the feeder now would cost, and how much it would get: all of it, what the coins can buy, or (no coins and
   // nothing left in it) a free handful of kitchen scraps, a unit, so the hens can always go on laying

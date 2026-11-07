@@ -104,7 +104,7 @@ await p.evaluate(() => window.__farm.deco.place()); await run(0.5);
 const saved2 = await p.evaluate(() => window.__farm.game().data.wheat);
 ok('Move the field: Turn there, turned and put somewhere else, saved so', mv.shown && st2.ok && saved2.deg !== s.deg && saved2.x === st2.at.x && saved2.z === st2.at.z && (await S()).deg === saved2.deg, { mv, st2, saved2 });
 // the beehives and the honey
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = Math.round(60 * Math.pow(5, 2.1) + 5); g.data.coins = 5000; g.data.lvSeen = g.level; g.save(); window.__farm.gameUI().refresh(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(6) + 5; g.data.coins = 5000; g.data.lvSeen = g.level; g.save(); window.__farm.gameUI().refresh(); });
 await p.evaluate(() => { const f = window.__farm; f.deco.start('beehives'); f.deco.place(); }); await run(1);
 let hs = await HS();
 ok('the beehives bought: no honey yet', hs.n === 0 && !hs.bub, hs);

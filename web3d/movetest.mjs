@@ -70,7 +70,7 @@ m = await st(); const hintT = await p.evaluate(() => document.getElementById('hi
 ok('not while the farmer\'s busy in a pen: a word, no moving', visiting && !m.on && T.busy.test(hintT), { visiting, m, hintT });
 await run(40);
 // level 2, the next field bought: moved there, turned, put down
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 70; g.data.coins = 300; g.save(); }); await run(1.5);
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.data.coins = 300; g.save(); }); await run(1.5);      // (level 2)
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.2);
 await p.evaluate(() => window.__farm.buyLand()); await run(1.5);
 await p.evaluate(() => window.__farm.move.start(0)); await run(0.5);

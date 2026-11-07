@@ -23,7 +23,7 @@ function simulate(name, seed) {
   g.newFarm({ lang: 'en', look: 'f', name: 'Sim' });
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
-  const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
+  const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0, orders: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
   const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
   let spot = 0;
@@ -65,6 +65,10 @@ function simulate(name, seed) {
         const cands = g.showBirds(s).filter(x => g.canEnter(x.b, s) === 'ok');
         if (cands.length && cands[0].ch.rosette > 0.15) { const fee = G.SHOWS[s.id[0]].fee; const r = g.enterShow(s.id, cands[0].b.id, NOW); if (r) spend.shows += fee; }
       }
+      // the daily golden egg (7 Nov 2026): found at the first visit of the day
+      if (g.huntOpen && g.huntOpen() && h === hours[0]) { const r = track('hunt', () => g.huntFind(NOW)); if (r) earn.hunt = (earn.hunt || 0) + r.coins; }
+      // village orders (7 Nov 2026): the ready ones delivered (the eggs, fish and honey went to them as they came)
+      if (g.orders) { g.orders(NOW); for (const o of [...g.orders(NOW)]) if (g.orderReady(o)) { const r = track('orders', () => g.deliverOrder(o.id, NOW)); if (r) earn.orders = (earn.orders || 0) + r.coins; } }
       // the jobs
       const J = g.jobs(NOW); J.list.forEach((j, i) => { if (j.got >= j.n && !j.paid) { const r = track('jobs', () => g.claimJob(i, NOW)); if (r) earn.jobs += r.coins; } });
       // a new level: seen; the next field when it can; a new breed's coop placed

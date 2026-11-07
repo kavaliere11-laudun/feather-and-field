@@ -1,7 +1,7 @@
 // Worms from the chickens (Audrey, 28 Oct: "that would be cute if the chickens get them to the farmer up to 3 a day per
 // chicken if the chicken loves the farmer and the farmer goes and asks for it"; then "Replace them", "1, 2 or 3 by love",
 // "One visit, all her worms"): ./withserver.sh node wormtest.mjs [OUT]   (LANG=fr; W, H: the screen, e.g. W=874 H=402; PORT)
-// A new farm on a fake clock. Level 2: nothing about worms on a hen's card. Level 3: a shy hen finds none ("cuddles
+// A new farm on a fake clock. Level 1: nothing about worms on a hen's card. Level 2 (since 7 Nov 2026; 3 before): a shy hen finds none ("cuddles
 // help"), her trust card says how many each level finds. Friendly: "Ask for worms · 🪱 1": the worm in the bag at once, the
 // card closed, "… is finding a worm for …"; the farmer into the pen, crouched, his hand held out; she comes to him,
 // scratches, pecks it up and drops it into his palm; "Thank you, my lovely!", a heart; his hand closed round it, up, to his
@@ -47,17 +47,17 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 70; g.data.lvSeen = 2; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { window.__T = Math.round(window.__T); sessionStorage.setItem('__T', window.__T); const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 10; g.data.lvSeen = 1; g.save(); f.gameUI().close(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.3);
 const ids = await p.evaluate(() => { const B = window.__farm.game().data.birds; return { hen: B.find(b => b.sex === 'h').id, roo: B.find(b => b.sex === 'r').id }; });
 await p.evaluate(() => { const g = window.__farm.game(); for (const c of g.data.coops) for (const b of g.birdsIn(c.id)) if (b.sex === 'h') b.laid = window.__T; g.save(); });      // (no one off to lay in the middle of it)
 let t = await card(ids.hen);
-ok('level 2: nothing about worms on a hen\'s card', !(await btn()) && !T.shy.test(t) && !T.how.test(t), t.slice(0, 200));
-// level 3
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 400; g.data.lvSeen = 3; g.save(); f.gameUI().close(); }); await run(0.3);
+ok('level 1: nothing about worms on a hen\'s card', !(await btn()) && !T.shy.test(t) && !T.how.test(t), t.slice(0, 200));
+// level 2 (the pond's starting tin of worms already given: the worms here are the hens')
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 20; g.data.lvSeen = 2; g.fishBag().gift = true; g.save(); f.gameUI().close(); }); await run(0.3);
 t = await card(ids.hen);
-ok('level 3, a shy hen: no worms yet ("cuddles help"), no button; her trust card says how many each level finds', !(await btn()) && T.shy.test(t) && T.how.test(t), t);
+ok('level 2, a shy hen: no worms yet ("cuddles help"), no button; her trust card says how many each level finds', !(await btn()) && T.shy.test(t) && T.how.test(t), t);
 await setBird(ids.hen, { trust: 3 });
 t = await card(ids.hen);
 ok('Friendly: "Ask for worms · 🪱 1"', T.ask1.test(await btn()), await btn());

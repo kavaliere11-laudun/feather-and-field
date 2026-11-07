@@ -40,9 +40,9 @@ let t = await sheet();
 ok('Your coops (the little barn up top): the Red Barn to move, and what level 3 brings', T.red.test(t) && T.next5.test(t) && (await p.evaluate(() => window.__farm.gameUI().kind)) === 'coops', t);
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 3, three fields
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 100; g.data.lvSeen = 2; g.data.coins = 3000; g.data.land = [0, 1]; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.data.lvSeen = 2; g.data.coins = 3000; g.data.land = [0, 1]; g.save(); });      // (level 2; the levels' XP since 7 Nov 2026)
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 300; g.save(); }); await run(1.6);
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60; g.save(); }); await run(1.6);      // (level 3)
 s = await st(); t = await sheet();
 const btns = await p.evaluate(() => [...document.querySelectorAll('.gsheet .gstick .gbtn')].map(b => { const r = b.getBoundingClientRect(); return { t: b.textContent, top: Math.round(r.top), bottom: Math.round(r.bottom) }; }));
 ok('level 3: its card says a new breed has come, "Place their coop now" and "Later" in sight', s.level === 3 && s.card === 'levelup' && T.orp.test(t) && btns.length === 2 && T.place.test(btns[0].t) && T.later.test(btns[1].t) && btns.every(x => x.bottom <= H && x.top >= 0) && s.dot, { s, btns });
@@ -78,7 +78,7 @@ s = await st();
 const kept = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.breed === 'orp'); return P && P.birds.filter(b => b.gid).length; });
 ok('a reload: both coops and their birds, not flagged', s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && kept === 3 && !s.edited && !s.dot, { s, kept });
 // level 5 straight from its card: the white Silkies (five fields, room for their coop)
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 1110; g.data.land = [0, 1, 2, 3, 4]; g.save(); }); await run(1.6);
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 240; g.data.land = [0, 1, 2, 3, 4]; g.save(); }); await run(1.6);      // (level 5)
 t = await sheet();
 ok('level 5: the Silkies come', T.sil.test(t), t);
 await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
