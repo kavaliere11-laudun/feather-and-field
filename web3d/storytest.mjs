@@ -10,7 +10,7 @@ const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-un
 let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
 const BASE = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:30`;
-const LINES = fr ? [/^Mamie vous a laissé sa ferme/, /^Feather & Field est à vous/, /^Chaque terrain est à vous/] : [/^Grandma has left you her farm/, /^Feather & Field is yours now/, /^Every field is yours/];
+const LINES = fr ? [/^Mamie vous a laissé sa ferme/, /^Feather & Field est à vous/, /^Chaque terrain est à vous/, /^Ramassez les œufs/] : [/^Grandma has left you her farm/, /^Feather & Field is yours now/, /^Every field is yours/, /^Collect the eggs/];
 const errs = [];
 const open = async (q) => {
   const ctx = await b.newContext({ viewport: { width: 874, height: 402 }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB' });
@@ -25,17 +25,19 @@ const st = p => p.evaluate(() => { const s = document.querySelector('.gstory'); 
 let { ctx, p } = await open('&story');
 await p.waitForSelector('.gstory img.on', { timeout: 120000 }); await p.waitForTimeout(1500);
 let s = await st(p);
-ok('a new phone: grandma\'s story first, over everything, its pictures there, no welcome yet', s && s.n === 3 && s.on === 0 && s.top && s.loaded && !s.welcome, s);
+ok('a new phone: grandma\'s story first, over everything, its four pictures there, no welcome yet', s && s.n === 4 && s.on === 0 && s.top && s.loaded && !s.welcome, s);
 ok('the first picture\'s line, in the phone\'s language, the first dot', LINES[0].test(s.text) && s.dots === 0, s);
 await p.click('.gstory-next'); await p.waitForTimeout(400); s = await st(p);
 ok('Next: the second picture and its line', s.on === 1 && LINES[1].test(s.text) && s.dots === 1, s);
 await p.touchscreen.tap(437, 200); await p.waitForTimeout(400); s = await st(p);       // (a tap on the picture)
-ok('a tap on the picture: the third, the last button says Let\'s go', s.on === 2 && LINES[2].test(s.text) && /Let’s go|C’est parti/.test(s.next), s);
+ok('a tap on the picture: the third', s.on === 2 && LINES[2].test(s.text) && !/Let’s go|C’est parti/.test(s.next), s);
 const swipe = async (dx) => { await p.mouse.move(437 - dx / 2, 200); await p.mouse.down(); await p.mouse.move(437 + dx / 2, 205, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(400); };
 await swipe(160); s = await st(p);
 ok('a swipe the other way: back to the second', s.on === 1, s);
 await swipe(-160); s = await st(p);
 ok('a swipe on: the third again', s.on === 2, s);
+await p.click('.gstory-next'); await p.waitForTimeout(400); s = await st(p);
+ok('Next: the fourth, the farm restored, and the last button says Let\'s go', s.on === 3 && LINES[3].test(s.text) && s.dots === 3 && /Let’s go|C’est parti/.test(s.next), s);
 await p.click('.gstory-next'); await p.waitForTimeout(900); s = await st(p);
 const w = await p.evaluate(() => !!document.querySelector('.gsheet.gwelcome:not([hidden])'));
 ok('"Let\'s go!": the story gone, the welcome there', !s && w, { s, w });
@@ -52,7 +54,7 @@ const btn = await p.evaluate(() => { const e = document.querySelector('.gsheet .
 ok('Settings: "The farm\'s story"', /The farm’s story|L’histoire de la ferme/.test(btn || ''), btn);
 await p.click('.gsheet .gstory-again'); await p.waitForTimeout(800); s = await st(p);
 ok('…plays it again from the first picture, the card closed', s && s.on === 0 && await p.evaluate(() => !window.__farm.gameUI().isOpen), s);
-await p.click('.gstory-skip'); await p.waitForTimeout(900);
+await p.click('.gstory-skip'); await p.waitForFunction(() => !document.querySelector('.gstory'), null, { timeout: 8000 }).catch(() => {});      // (gone after its fade, on a busy machine a little later)
 ok('…and Skip goes back to the farm (no welcome)', !(await st(p)) && !(await p.evaluate(() => !!document.querySelector('.gsheet.gwelcome:not([hidden])'))));
 await ctx.close();
 // automated checks without ?story: no story (the welcome first, as before)

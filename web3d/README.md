@@ -4190,9 +4190,9 @@ They were in the Unity version only. Now in the game:
 ## Grandma's story at the start (7 Nov 2026; Audrey: "let's add storytelling that you just inherited the farm but everything is to do so you do it step by step. Add a little storytelling at the start of the game"; her choices: "Painted story cards", "Your grandmother"; her pictures from Midjourney)
 - **The pictures** (`web3d/story/1-3.webp`, 1536 x 768, hers): grandma's letter and the key on the kitchen table; the
   little cottage with its gate, its three Rhode Island Reds and a rusty wheelbarrow; the overgrown corner with a broken
-  fence, a fallen log and grandma's hat. Her fourth ("too busy and not accurate") is being made again: "Picture 2,
-  restored" (the same cottage mended, a before and after; the Midjourney prompt uses picture 2's link on the site as its
-  reference). It goes in as `story/4.webp` and `STORY` in `gameui.js` gets its fourth entry.
+  fence, a fallen log and grandma's hat; and (`story/4.webp`, 11:08) the same cottage restored: fresh walls, the fence
+  mended, flowers, ripe wheat, the hens by the open gate (her first fourth was "too busy and not accurate"; her choice
+  "Picture 2, restored", made in Midjourney with picture 2's link on the site as its reference).
 - **The cards** (`gameui.js` story(), `.gstory`): each picture over the whole screen, drifting slowly closer; its line in a
   cream card in the top left corner (over the pictures' skies and corners, not their hens), the dots and Next under the
   thumb bottom right, Skip top right; a tap on the picture or a swipe for the next, a swipe the other way back, the
@@ -4201,7 +4201,7 @@ They were in the Unity version only. Now in the game:
 - **The lines, six languages** (`story_1` to `story_4`): "Grandma has left you her farm, with a letter: "Look after my
   hens. The rest will come, one step at a time."" · "Feather & Field is yours now. Her three Rhode Island Reds are waiting
   at the gate." · "Every field is yours, but the weeds have taken them back. Each one needs work, and coins, to bring it
-  back to life." · (with the fourth picture) "Collect the eggs, care for your hens, and bring the farm back to life, field
+  back to life." · "Collect the eggs, care for your hens, and bring the farm back to life, field
   by field." French: "Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à
   pas. »" …
 - **The check:** `storytest.mjs` (LANG=fr).
