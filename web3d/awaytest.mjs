@@ -36,7 +36,8 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = window.__farm.xpFor(6) + 5; g.data.coins = 3000; g.data.lvSeen = g.level; g.save(); f.deco.start('beehives'); f.deco.place(); f.deco.wheat.sow(); });
 await run(1);
 // (the page put away now, as when the phone's locked: when it was last seen; it opens again 9 hours on)
-await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; c.eggs = 8; c.feed = 0; c.fedAt = window.__T; g.data.wheat.ripe = window.__T - 600e3; g.save(); sessionStorage.setItem('__T', window.__T + 9 * 3600e3); });
+await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; if (g.data.orders) { g.data.orders.list = []; g.data.orders.next = Math.round(window.__T + 10 * 3600e3); } c.eggs = 8; c.feed = 0;      // (no village orders waiting: the eggs all sold)
+  c.fedAt = window.__T; g.data.wheat.ripe = window.__T - 600e3; g.save(); sessionStorage.setItem('__T', window.__T + 9 * 3600e3); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await run(2.5);
 let r = await rows(), t = await sheet();

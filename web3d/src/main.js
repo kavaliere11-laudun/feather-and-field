@@ -5027,16 +5027,17 @@ function placeBubbles() {
 // the welcome-back card's "Collect all eggs": every nest's eggs fly to the coins at once, sold
 function collectAll() {
   gameUI.close();
-  let n = 0, coins = 0; const done = [];
+  let n = 0, coins = 0, toN = 0; const done = [], to = [];
   for (const plot of gamePlots()) {
     if (!plot.gc.eggs) continue;
     const B = bubbleFor(plot), at = B.eggs.hidden ? null : B.eggs.getBoundingClientRect();
     const r = game.collect(plot.gc.id); if (!r) continue;
     n += r.n; coins += r.coins; if (r.done) done.push(...[].concat(r.done));
+    toN += r.toOrder || 0; for (const x of r.to || []) { const o = to.find(y => y.who === x.who); if (o) o.n += x.n; else to.push({ ...x }); }      // (eggs for the village orders: set aside, not sold)
     plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
     gameUI.flyEggs(at ? { x: at.left + at.width / 2, y: at.top + at.height / 2 } : { x: canvas.clientWidth / 2, y: canvas.clientHeight * 0.6 }, r.n, EGG_COLOUR[plot.breed]);
   }
-  if (n) { hint(game.t('away_sold', { n, c: coins })); guideDid('eggs'); }
+  if (n) { hint(toN ? game.setAsideText(to) + (n > toN ? ' · ' + game.t('away_sold', { n: n - toN, c: coins }) : '') : game.t('away_sold', { n, c: coins })); guideDid('eggs'); }
   jobsDone(done);
   return { n, coins };
 }
