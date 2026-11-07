@@ -1173,5 +1173,9 @@
  "text.garden_aria": "L’orto",
  "say.treat": "Una leccornia per voi!",
  "text.nt_garden_t": "L’orto è maturo 🥕",
- "text.nt_garden": "Le tue {crop} sono pronte da raccogliere."
+ "text.nt_garden": "Le tue {crop} sono pronte da raccogliere.",
+ "foxden.come": "🦊 La famiglia di Rusty esce a giocare",
+ "foxden.hello": "🦊 Le volpi ti salutano!",
+ "foxden.night": "🦊 Shh… le volpi dormono. Un cucciolo sporge il muso per vedere chi c’è.",
+ "foxden.out": "🦊 Rusty è in giro stanotte: la tana è tranquilla."
 }

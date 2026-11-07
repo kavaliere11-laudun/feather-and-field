@@ -7,8 +7,8 @@
 // while you were away (everything at once), the coins, the account and notifications asks, two farms, Settings), and the
 // first day's guide, the hint and the label over a tapped thing with the longest words. Checks, each card at the top and
 // scrolled to the bottom: on the screen; every line of words seen whole (not cut at a side, not squashed in its box, not
-// under the buttons that stay at the bottom, nor under anything else); the buttons' words not cut; messages in the middle,
-// the others on the right. A picture of each failing one in OUT. Ends with the problems found, or ALL PASS.
+// under the buttons that stay at the bottom, nor under anything else); the buttons' words not cut; every card in the
+// middle (the welcome on the right, its picture beside it). A picture of each failing one in OUT. Ends with the problems found, or ALL PASS.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/cardaudit'; fs.mkdirSync(OUT, { recursive: true });
@@ -78,7 +78,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     const wantMid = CENTER.some(k => a.kind.split(' ').includes('g' + k)) || a.kind.includes('gcenter');
     const issues = [...a.out];
     if (/gcenter/.test(a.kind) && !a.centred) issues.push(['a message, not in the middle']);
-    if (!/gcenter|gwelcome/.test(a.kind) && !a.right) issues.push(['not on the right']);
+    if (!/gwelcome/.test(a.kind) && !a.centred) issues.push(['not in the middle']);      // (every card in the middle since 7 Nov 2026: "Make these centred on the screen")
     // (its bottom corners round, as drawn: nothing cream painted out into them, 7 Nov, Audrey: "Still cut")
     if (a.rad >= 12) for (const [cx, cy] of [[a.R[0] + 1, a.R[3] - 2], [a.R[2] - 3, a.R[3] - 2]]) {
       const px = await p.screenshot({ clip: { x: Math.max(0, cx), y: Math.max(0, cy), width: 2, height: 1 } });

@@ -1173,5 +1173,9 @@
  "text.garden_aria": "A horta",
  "say.treat": "Um petisco para vocês!",
  "text.nt_garden_t": "A horta está madura 🥕",
- "text.nt_garden": "Hora de colher: {crop}!"
+ "text.nt_garden": "Hora de colher: {crop}!",
+ "foxden.come": "🦊 A família do Rusty sai para brincar",
+ "foxden.hello": "🦊 As raposas dizem oi!",
+ "foxden.night": "🦊 Psiu… as raposas estão dormindo. Um filhote põe o focinho para fora para ver quem está aí.",
+ "foxden.out": "🦊 O Rusty está fazendo a ronda esta noite: a toca está tranquila."
 }

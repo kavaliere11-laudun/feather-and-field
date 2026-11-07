@@ -1173,5 +1173,9 @@
  "text.garden_aria": "Der Gemüsegarten",
  "say.treat": "Eine Leckerei für euch!",
  "text.nt_garden_t": "Der Garten ist reif 🥕",
- "text.nt_garden": "Deine {crop} sind bereit zum Ernten."
+ "text.nt_garden": "Deine {crop} sind bereit zum Ernten.",
+ "foxden.come": "🦊 Rustys Familie kommt zum Spielen heraus",
+ "foxden.hello": "🦊 Die Füchse sagen Hallo!",
+ "foxden.night": "🦊 Pst… die Füchse schlafen. Ein Junges steckt die Nase heraus, um zu sehen, wer da ist.",
+ "foxden.out": "🦊 Rusty ist heute Nacht auf seiner Runde: Im Bau ist es still."
 }

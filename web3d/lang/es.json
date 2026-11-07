@@ -1168,5 +1168,9 @@
  "text.garden_aria": "El huerto",
  "say.treat": "¡Una golosina para todos!",
  "text.nt_garden_t": "El huerto está maduro 🥕",
- "text.nt_garden": "Tus {crop} están listas para cosechar."
+ "text.nt_garden": "Tus {crop} están listas para cosechar.",
+ "foxden.come": "🦊 La familia de Rusty sale a jugar",
+ "foxden.hello": "🦊 ¡Los zorros te saludan!",
+ "foxden.night": "🦊 Chis… los zorros duermen. Un cachorro asoma el hocico para ver quién está ahí.",
+ "foxden.out": "🦊 Rusty está de ronda esta noche: la madriguera está tranquila."
 }

@@ -17,7 +17,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BREEDS, ALL_BREEDS, SILKIE, BREED_NAMES, initFlock, Rig, setFar, setFurDetail, setHairTexture, setSoftFur, setMaterialHook, TRAIN_J, TRAIN_SPLIT } from './birds.js';
 import { FarmDog, nameBoard, KENNEL } from './dog.js';
-import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog, setBeastLang } from './beasts.js';
+import { initBeasts, DogLineup, FoxFamily, FoxLineup, PosterDog, setBeastLang, sitWatch } from './beasts.js';
 import { initGeese, GeeseLineup, GeeseFlock, DuckLineup, Goose, LINE as GOOSE_POSE, setGooseLang } from './geese.js';
 import { NavGrid, NightVisit } from './nightvisit.js';
 import { Replay, REPLAY_TEXT } from './replay.js';
@@ -2193,6 +2193,30 @@ function buildFoxes(joints) {
   if (foxBtn) foxBtn.addEventListener('click', () => { const c = nightVisit && nightVisit.active() ? nightVisit.fox.pos.clone().sub(new THREE.Vector3(0.3, 0, 0.3)) : foxes.centre(new THREE.Vector3()); view.target.set(c.x, 0, c.z).add(new THREE.Vector3(0.3, 0, 0.3)); view.size = 2.8; clampView(); applyGrass(); placeCamera(); wake(800); });
 }
 let foxHinted = false;
+// a tap on the den (or round it): whether the ray goes through the den's mound (a box round it, a little bigger)
+function denAt(ray) {
+  const m = new THREE.Matrix4().makeRotationY(FOX_DEN[2]).setPosition(FOX_DEN[0], 0, FOX_DEN[1]).invert(), r = ray.clone().applyMatrix4(m);
+  return !!r.intersectBox(new THREE.Box3(new THREE.Vector3(-0.95, 0, -1.25), new THREE.Vector3(0.95, 0.85, 1.35)), new THREE.Vector3());
+}
+// the den tapped: by day the family comes out to play (out already: they hop and bow to you); at night they're asleep, and a
+// cub peeks out of the den's mouth to see who's there, and pops back in. Not while Rusty's out on his night visit
+const DEN_UI = { at: 0 };
+register('foxden', { come: ['🦊 Rusty’s family comes out to play', '🦊 La famille de Rusty sort jouer'], hello: ['🦊 The foxes say hello!', '🦊 Les renards vous disent bonjour !'],
+  night: ['🦊 Shh… the foxes are asleep. A cub peeks out to see who’s there.', '🦊 Chut… les renards dorment. Un renardeau passe le bout du nez pour voir qui est là.'],
+  out: ['🦊 Rusty’s out on his rounds tonight: the den is quiet.', '🦊 Rusty fait sa tournée cette nuit : le terrier est calme.'] });
+function foxDenTap() {
+  const now = performance.now(); if (now - DEN_UI.at < 2500) return; DEN_UI.at = now;
+  if (nightVisit && nightVisit.active()) { hint(tr(LANG, 'foxden.out')); return; }
+  const h = clockHour(), day = h >= 6 && h < 21.5;
+  if (day) {
+    if (foxes.visible()) { for (const f of foxes.foxes) if (f.root.visible && !f.home) foxes.tapped(f); hint(tr(LANG, 'foxden.hello')); }
+    else if (!foxes.out) { foxes.comeOut(); hint(tr(LANG, 'foxden.come')); }
+    wake(4000); return;
+  }
+  const cub = foxes.foxes.find(f => f.kind === 'cub' && f.home && !f.todo.length && !f.task);
+  if (cub) { cub.home = false; cub.todo = [foxes.emergeTask(), sitWatch(2.6), foxes.inTask()]; }
+  hint(tr(LANG, 'foxden.night')); wake(6000);
+}
 
 // ------------------------------------------------------------------ the farm dog's name: Biscuit, unless the player chooses another.
 // Checked as the game checks every name (no control characters or < >, spaces tidied, at most 20 letters), kept in this
@@ -4694,6 +4718,8 @@ function tapAt(x, y) {
       decorCard(gdc.model); return;
     }
     if (hd < Infinity) { bookSheet(); return; }
+    // the fox den (7 Nov 2026, Audrey: "When I tap the fox house it should not give me the price of the land, it should make the fox do something")
+    if (GAME_MODE && foxes && parts.den && denAt(ray.ray)) { foxDenTap(); return; }
     // the game: the field for sale (its card), or the wild meadow (when it comes up for sale)
     if (GAME_MODE && FIELDS && game.data) {
       const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP), f = gp ? fieldAt(gp.x, gp.z) : -1;
@@ -6435,7 +6461,7 @@ function syncLand(fresh = false) {
     LAND.wild = overgrowth();
     if (bought >= 0) { const W = overgrowth(bought); LAND.mow.meshes.push(...W); for (const m of W) m.matrixAutoUpdate = true; restoreMoment(bought); }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
-    applyGrass();
+    if (bought >= 0) buildGrass(); else applyGrass();      // (a field just restored: your land's soft grass over it straight away, as after a reload; 7 Nov 2026, Audrey: "the grass is different. It looks like the old design")
     renderer.shadowMap.needsUpdate = true;
   }
   if (saleF !== SALE.field) {
