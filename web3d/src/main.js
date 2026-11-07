@@ -2674,7 +2674,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
     return () => !b.cuddle || (b.cuddle.ready && Math.hypot(b.pos.x - at[0], b.pos.z - at[1]) < 0.16);      // (there in front of him: only then is she picked up)
   };
   const P = {
-    plot, out, waitMax: DK ? 30 : 12,      // (a call duck may be out on the pond, round the far side: longer to come)
+    plot, out, waitMax: DK ? 30 : 20,      // (a call duck may be out on the pond, round the far side: longer to come)
     in: [W(gx, gz + 0.12), W(IN[0], IN[1]), W(S[0], S[1])], back: [W(S[0], S[1]), W(IN[0], IN[1]), W(gx, gz + 0.12), out],
     toGate: H([gx, gz + 0.6], [gx, gz]), feederAt: W(FS[0], FS[1]), toFeeder: H(FS, FD) - side, clear: W(CLEAR[0], CLEAR[1]),
     throwAt: W(B[0], B[1]), toCorn: H(B, SC), crouchAt: W(CB[0], CB[1]), toHen: H(CB, ahead),
