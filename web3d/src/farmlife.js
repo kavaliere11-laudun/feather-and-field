@@ -10,7 +10,7 @@
 // in English or French.
 import * as THREE from 'three';
 import { register, tr } from './lang.js';
-import { Farmer, FARMER_NAME } from './farmer.js';
+import { Farmer, FARMER_NAME, POSES } from './farmer.js';
 import { Torch } from './nightvisit.js';
 
 export const FARMER_TEXT = register('say', {
@@ -561,7 +561,13 @@ export class FarmLife {
     // ---- the body: walking (or running) as far as he really goes, the pose wanted, the face
     const W = this.want, sp = this.speed, run = sp > 1.7;
     this.phase += this.moved / (run ? 1.35 : 0.85) * Math.PI * 2;
-    const f = this.f, A = { pose: W.pose, face: W.face, walk: clamp(sp / 0.9, 0, 1), run: run ? 1 : 0, phase: this.phase, keepArms: W.keepArms, props: W.props };
+    // (7 Nov 2026, the farmer's moves, second pass) how quickly he's speeding up or slowing down (leaning into it: farmer.js);
+    // turning round where he stands, little steps round instead of his boots sliding round on the spot
+    if (dt > 0) { const a = (sp - (this.sp0 ?? sp)) / dt; this.sp0 = sp; this.acc = (this.acc || 0) + (a - (this.acc || 0)) * Math.min(1, dt * 6); }
+    let walk = clamp(sp / 0.9, 0, 1);
+    const spin = Math.abs(this.av), standing = !(POSES[W.pose] && POSES[W.pose].root_z);
+    if (sp < 0.25 && spin > 0.4 && standing && !this.running) { this.phase += spin * dt * 2; walk = Math.max(walk, 0.3 * Math.min(1, (spin - 0.4) / 1.8)); }
+    const f = this.f, A = { pose: W.pose, face: W.face, walk, run: run ? 1 : 0, phase: this.phase, keepArms: W.keepArms, props: W.props, accel: this.running ? 0 : this.acc };
     const look = W.look || [0, 0], head = W.head, t = this.time;
     A.anim = (P, Fc) => {
       if (W.lookAbout && sp > 0.2) { Fc.look = [0.4 * Math.sin(t * 0.5), 0]; P.head[2] += 10 * Math.sin(t * 0.5); }

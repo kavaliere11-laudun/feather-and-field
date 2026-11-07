@@ -4300,3 +4300,22 @@ They were in the Unity version only. Now in the game:
 - **To bake again** after a new export: `bl/bin/python web3d/bake_ao.py web3d/models/village.glb web3d/models/decor.glb
   web3d/models/coops.glb` (about 2.5 minutes, most of it the coops).
 - `rarecooptest.mjs`: the Breed Book has sixteen pages now (the call ducks' and the peacock's), not fourteen.
+
+## The farmer's moves, second pass (7 Nov 2026, 15:53; Audrey: "Next", after the corner shading)
+- **Boots on the ground** (`FarmerRig.groundFeet`): bending down or getting up, the legs fold faster than the hips come down,
+  so half way his boots went up to 6 cm into the ground (measured on every crouch: the pat, the worms, the cuddle's scoop,
+  kneeling at the water, letting a fish go). After each pose the body's lifted so the lowest point of either sole (its heel
+  and toe, `SOLE`, from the ankle in farmer.glb) stays on the ground; never pulled down, so a hop is still a hop. Walking
+  it goes by the middle of the sole only (`SOLE_MID`), so the walk's own heel-and-toe roll and bob stay as they were.
+  Now 0 mm under the ground through every crouch (was -53 to -59 mm).
+- **Easing in and out** (`springPose`): every change of pose (crouching, reaching, getting up, turning to wave) had
+  started at full speed, a jerk at the start of each; now each angle moves like a weight on a spring, critically damped
+  (quickness 10.5 per second, about as quick as before over all), so it starts gently, speeds up and settles. Walking
+  keeps its quick follow (`lerpPoseV`), each angle's speed kept up so nothing jumps between the two.
+- **Starting off and stopping** (`accel`, farmlife.js): he leans into his first steps as he speeds up (up to 7 degrees)
+  and back a little, his weight on his heels, as he comes to a stop.
+- **Turning on the spot**: little steps round as he turns where he stands (the walk at a third, its pace from how fast he
+  turns), instead of his boots sliding round; not when crouched or running from the geese.
+- The boots and the easing are the same for everyone made with `Farmer` (Rosie, the show judge, the farmer in the intro
+  and on show day); the leaning and the steps round are the farm's farmer's (`FarmLife`).
+- The hat: it moves with his head as it is; a wobble of its own would be too small to see at the game's size, so not done.

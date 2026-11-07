@@ -182,13 +182,24 @@ export function fullPose(p = {}) {
   o.ankleR = p.ankleR !== undefined ? p.ankleR : -o.kneeR - o.hipR[1] * 0.6;
   return o;
 }
-function lerpPose(a, b, k) {
+// the pose eased towards the one wanted like a weight on a spring, critically damped (7 Nov 2026, the farmer's moves, second
+// pass: each change of pose had started at full speed, a jerk at the start of every crouch, reach and getting up; now
+// each one starts gently, speeds up and settles). w: how quick (per second); v: how fast each angle's changing now (kept
+// up while walking too, lerpPoseV, so nothing jumps between the two)
+function springPose(a, v, b, dt, w) {
+  const den = 1 + 2 * w * dt + w * w * dt * dt, k = w * w * dt;
   for (const key in b) {
-    if (Array.isArray(b[key])) for (let i = 0; i < b[key].length; i++) a[key][i] = ease(a[key][i], b[key][i], k);
-    else a[key] = ease(a[key], b[key], k);
+    if (Array.isArray(b[key])) for (let i = 0; i < b[key].length; i++) { const u = (v[key][i] + k * (b[key][i] - a[key][i])) / den; v[key][i] = u; a[key][i] += u * dt; }
+    else { const u = (v[key] + k * (b[key] - a[key])) / den; v[key] = u; a[key] += u * dt; }
   }
-  return a;
 }
+function lerpPoseV(a, v, b, k, dt) {
+  for (const key in b) {
+    if (Array.isArray(b[key])) for (let i = 0; i < b[key].length; i++) { const n = ease(a[key][i], b[key][i], k); v[key][i] = (n - a[key][i]) / dt; a[key][i] = n; }
+    else { const n = ease(a[key], b[key], k); v[key] = (n - a[key]) / dt; a[key] = n; }
+  }
+}
+const stillPose = () => { const o = fullPose(); for (const k in o) { if (Array.isArray(o[k])) o[k].fill(0); else o[k] = 0; } return o; };
 export function fullFace(f = {}) {
   const o = Object.assign({ up: 0.75, lo: -0.8, tilt: 0, look: [0, 0], brow: 0, browH: 0.2, mouth: 'smile', blush: 0.35 }, f);
   o.look = o.look.slice(); return o;
@@ -261,6 +272,8 @@ export function makeRod(grade) {
 
 // ------------------------------------------------------------------ one farmer's body and face, posed from a pose and a face
 const _e = new THREE.Euler(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _hm = new THREE.Matrix4();
+const _gi = new THREE.Matrix4(), _gm = new THREE.Matrix4(), _gv = new THREE.Vector3();
+const SOLE = [new THREE.Vector3(0, -0.098, -0.06), new THREE.Vector3(0, -0.098, 0.14)], SOLE_MID = [new THREE.Vector3(0, -0.098, 0.03)];      // (a boot's heel and toe, from the ankle: farmer.glb)
 const _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _s1 = new THREE.Vector3(), _s2 = new THREE.Vector3(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
 export class FarmerRig {
   constructor(look, grade) {
@@ -316,6 +329,7 @@ export class FarmerRig {
     this.turn('kneeL', [0, P.kneeL, 0]); this.turn('kneeR', [0, P.kneeR, 0]);
     this.turn('ankleL', [0, P.ankleL, 0]); this.turn('ankleR', [0, P.ankleR, 0]);
     B.pelvis.position.copy(R.pelvis.p); B.pelvis.position.y += P.rootZ;
+    this.lift = this.noGround ? 0 : this.groundFeet();
     this.hand('L', P.handL); this.hand('R', P.handR);
     // ---- the face: lids turned open or shut about the eye's side axis (and slanted), the eyes turned to look, brows, mouth
     for (const [side, s] of [['L', 1], ['R', -1]]) {
@@ -354,6 +368,18 @@ export class FarmerRig {
       _m.premultiply(_hm.copy(par.matrixWorld).invert()).decompose(B.hat.position, B.hat.quaternion, B.hat.scale);
     }
   }
+  // the boots kept on the ground (7 Nov 2026, the farmer's moves): crouching or getting up, the legs fold faster than the
+  // hips come down, so half way the boots went up to 6 cm into the ground; the body's lifted so the lowest point of
+  // either sole (its heel and its toe, SOLE: in the ankle's own frame) is on the ground. Never pulled down (a hop stays a
+  // hop). The lift (m), for tests
+  groundFeet() {
+    const B = this.B; this.mesh.updateMatrixWorld(true); _gi.copy(this.mesh.matrixWorld).invert();
+    let lo = Infinity;
+    const pts = this.walking ? SOLE_MID : SOLE;                     // (walking: the walk's own heel and toe roll and bob, as made)
+    for (const a of [B.ankleL, B.ankleR]) { _gm.multiplyMatrices(_gi, a.matrixWorld); for (const s of pts) lo = Math.min(lo, _gv.copy(s).applyMatrix4(_gm).y); }
+    if (!(lo < 0)) return 0;
+    B.pelvis.position.y -= lo; return -lo;
+  }
   ensureRod() { if (!this.rod) { this.rod = makeRod(this.grade); this.B.wristR.add(this.rod); this.rod.visible = false; } return this.rod; }
   // the rod's tip in the world (the line hangs from it), as posed now; null with no rod
   rodTip() { if (!this.rod || !this.rod.visible) return null; const t = this.rod.userData.tip; t.updateWorldMatrix(true, false); return t.getWorldPosition(new THREE.Vector3()); }
@@ -370,7 +396,7 @@ export class Farmer {
     this.r = r; this.look = look;
     this.root = new THREE.Group(); parent.add(this.root);
     this.rig = new FarmerRig(look, grade); this.root.add(this.rig.mesh);
-    this.P = fullPose(POSES.turn); this.F = fullFace(); this.t = r() * 10; this.blinkIn = 1 + r() * 3; this.blinkT = 0;
+    this.P = fullPose(POSES.turn); this.V = stillPose(); this.F = fullFace(); this.t = r() * 10; this.blinkIn = 1 + r() * 3; this.blinkT = 0;
     this.want = { pose: 'turn', face: 'neutral', walk: 0, run: 0, talk: 0, props: {} };
     this.label = tr(LANG, 'name.' + look);
     this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.6;
@@ -412,15 +438,17 @@ export class Farmer {
       target.chest[1] += 1.1 * br; target.rootZ += 0.0025 * br;
       target.chest[0] += 1.2 * sh; target.hipL[0] += 1.0 * sh; target.hipR[0] += 1.0 * sh;
     }
+    // starting off and stopping (7 Nov 2026, the farmer's moves, second pass): leaning into his first steps as he speeds
+    // up, and back a little, his weight on his heels, as he comes to a stop (accel: m/s per second, farmlife.js)
+    if (W.accel) { const a2 = Math.max(-1, Math.min(1, W.accel / 3)); target.chest[1] += a2 > 0 ? 7 * a2 : 5 * a2; target.head[1] -= 3 * a2; }
     if (W.anim) W.anim(target, face, t);
-    const k = Math.min(1, dt * (g > 0 ? 14 : 6));
-    lerpPose(this.P, target, k);
+    if (dt > 0) { if (g > 0) lerpPoseV(this.P, this.V, target, Math.min(1, dt * 14), dt); else springPose(this.P, this.V, target, dt, 10.5); }
     for (const key of ['up', 'lo', 'tilt', 'brow', 'browH', 'blush']) this.F[key] = ease(this.F[key], face[key], Math.min(1, dt * 9));
     this.F.look[0] = ease(this.F.look[0], face.look[0], Math.min(1, dt * 6)); this.F.look[1] = ease(this.F.look[1], face.look[1], Math.min(1, dt * 6));
     this.F.mouth = face.mouth;
     if ((this.blinkIn -= dt) <= 0) { this.blinkT = typeof window !== 'undefined' && window.__noBlink ? 0 : 0.18; this.blinkIn = 2 + this.r() * 3.5; }
     const blink = this.blinkT > 0 ? Math.sin(Math.PI * (1 - (this.blinkT -= dt) / 0.18)) : 0;
-    this.rig.pose(this.P, this.F, W.face === 'cuddle' ? 0 : blink, W.props || {});
+    this.rig.walking = g > 0.05; this.rig.pose(this.P, this.F, W.face === 'cuddle' ? 0 : blink, W.props || {});
   }
 }
 
