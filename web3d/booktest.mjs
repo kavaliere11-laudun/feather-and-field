@@ -114,6 +114,15 @@ const safe = await p.evaluate(() => { const f = window.__farm, g = f.game(); g.d
   return { imgs: S.querySelectorAll('img').length, shown: S.querySelector('.gpage-s').textContent.includes('<img'), hacked: !!window.__hacked }; });
 await run(0.2);
 ok('names are set as text, never as HTML', safe.imgs === 16 && safe.shown && !safe.hacked && !(await p.evaluate(() => !!window.__hacked)), safe);
+// the Breed Book's own button (7 Nov 2026, Audrey: "I think we need the breed bible to be a button itself"), in the corner
+// column with the farm's other buttons; nothing in the bar against the screen's edges ("too close from the edge"), no name
+await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); });
+await p.tap('.gbar .gbookbtn'); await p.waitForTimeout(400);
+const bb = await p.evaluate(() => { const u = window.__farm.gameUI(), W = innerWidth, H = innerHeight;
+  const rs = [...document.querySelectorAll('.gbar button')].map(e => e.getBoundingClientRect());
+  return { kind: u.kind, title: document.querySelector('.gsheet h2').textContent, edge: Math.min(...rs.map(r => Math.min(r.left, W - r.right))), name: /Feather|Field/.test(document.querySelector('.gbar').textContent),
+    column: ['gjobs', 'gshows', 'gbookbtn', 'gcoops'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.left > W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) }; });
+ok('the Breed Book has its own button: it opens the Book; the farm\'s buttons in a column bottom right, nothing within 14 px of the edges, no game name in the bar', bb.kind === 'book' && bb.edge >= 14 && !bb.name && bb.column, bb);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

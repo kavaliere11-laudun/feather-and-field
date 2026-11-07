@@ -4172,3 +4172,17 @@ They were in the Unity version only. Now in the game:
 - **Cost:** checked with a counter (triangles, draw calls) against the version before: about a quarter more at the
   usual zooms; the load a little longer. `landtest.mjs` checks the overgrown fields and the restoring.
 - **Next:** the story cards (grandma's farm) when Audrey's pictures come.
+
+## The buttons in the corner, the Breed Book's button, grounded props, no weeds round the field (7 Nov 2026, morning; Audrey: "These look like they are not touching the ground"; "the buttons top right corner are too close from the edge of the screen. Come with a more modern proposal for the buttons. I think we need the breed bible to be a button itself. No need to display the name of the game"; "That's looks like weed is growing outside of the field")
+- **The buttons:** three looks were shown on her phone (a corner column, a side rail, a top capsule); her choice: "A:
+  corner column". The level and coins top left, settings top right; Today's jobs, Shows, the Breed Book and Your coops as
+  bigger round glass buttons (50 px) in a column in the bottom right corner, under the thumb (`.gstat`, `.gacts`). The bar
+  keeps clear of the phone's rounded corners and camera (the safe area on each side and a margin; it had ignored the
+  sides). No game name in the corner. All in `.gbar` as before, so everything that points at a button still finds it.
+- **The Breed Book's own button** (`.gbookbtn`, an open book), opening the Book (it had been only on the farmhouse shelf and
+  in Your coops). `booktest.mjs` checks it, the column, the edges and that the name's gone.
+- **Grounded props** (`contactShadows`): a soft dark patch on the ground under each prop that stands on it (the hay
+  stacks, round bales, barrels, wheelbarrows, benches, the well, the egg stall, planters, flower pots, the scarecrow, the
+  mushrooms, the farmhouse, the field shelter), reaching a little beyond its foot, and those props a touch darker where
+  they meet the ground: the sun's shadow is kept a little off things (so it never speckles them) and had left a light gap.
+- **The wheat field:** no verge of grass and daisies round it any more (they read as weeds); just its soft-edged soil.

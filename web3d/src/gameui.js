@@ -52,6 +52,7 @@ function rosette(place, champ = false) {
     '<circle cx="12" cy="10" r="8.2" fill="' + c + '"/><circle cx="12" cy="10" r="7.4" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="1.9 1.5"/>' + mid + '</svg>';
 }
 const JOB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10.5l1.6 1.6 3-3M8.5 16.5l1.6 1.6 3-3M15 11h1.5M15 17h1.5"/></svg>';
+const BOOK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.3 5.2 7.8 4.6 4 4.8v13.4c3.8-.2 6.3.4 8 1.7 1.7-1.3 4.2-1.9 8-1.7V4.8c-3.8-.2-6.3.4-8 1.7z"/><path d="M12 6.5v13.4"/></svg>';
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -101,8 +102,14 @@ export class GameUI {
     // Today's jobs: a clipboard, with the number of rewards to collect (or a dot: today's jobs not looked at yet)
     this.jobsBtn = el('button', 'gicon gjobs'); this.jobsBtn.type = 'button'; this.jobsBtn.innerHTML = JOB_ICON;
     this.jdot = el('span', 'gdot gcount'); this.jdot.hidden = true; this.jobsBtn.append(this.jdot);
-    this.brand = el('div', 'gbrand');
-    this.bar.append(this.brand, this.lvl, this.coins, this.jobsBtn, this.showsBtn, this.coopsBtn, this.gear);
+    // the Breed Book: its own button (7 Nov 2026, Audrey: "I think we need the breed bible to be a button itself"; it had
+    // been only on the farmhouse shelf and in Your coops)
+    this.bookBtn = el('button', 'gicon gbookbtn'); this.bookBtn.type = 'button'; this.bookBtn.innerHTML = BOOK_ICON;
+    // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
+    // left, the farm's buttons on the right, settings apart)
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
+    this.acts = el('div', 'gacts'); this.acts.append(this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
+    this.bar.append(this.stat, this.acts, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
@@ -129,6 +136,7 @@ export class GameUI {
     this.coopsBtn.addEventListener('click', () => { if (this.o.coops) this.o.coops(); });
     this.showsBtn.addEventListener('click', () => { if (this.o.shows) this.o.shows(); });
     this.jobsBtn.addEventListener('click', () => { if (this.o.jobs) this.o.jobs(); });
+    this.bookBtn.addEventListener('click', () => { if (this.o.book) this.o.book(); else this.bookSheet({}); });
     this.kind = null;
     // opened from the Home Screen: the page runs under the clock (the picture's top only lightly shaded there)
     if (window.__ffApp === true || navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)) document.documentElement.classList.add('standalone');      // (the store app too: app/make-www.mjs)
@@ -142,7 +150,7 @@ export class GameUI {
   refresh() {
     const d = this.g.data; if (!d) return;
     const L = this.g.level, lo = xpFor(L), hi = xpFor(L + 1);
-    this.brand.textContent = this.t('brand');
+    this.bookBtn.setAttribute('aria-label', this.t('book_title'));
     this.lvlNum.textContent = L; this.lvl.setAttribute('aria-label', this.t('level') + ' ' + L);
     this.ring.style.setProperty('--p', L >= TOP_LEVEL ? 100 : Math.round(100 * (d.xp - lo) / Math.max(1, hi - lo)));
     this.coinNum.textContent = d.coins.toLocaleString(this.g.locale());

@@ -473,7 +473,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
@@ -1217,9 +1217,39 @@ function buildProps() {
   for (const p of V.props) if (!p.own) (byModel[p.model] = byModel[p.model] || []).push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));      // (not the game's decorations: their own copies)
   for (const name in byModel) {
     if (!parts[name]) { console.warn('no model for', name); continue; }
-    batch(name, byModel[name], { cast: true });
+    batch(name, byModel[name], { cast: true, ...(CONTACT.includes(name) && name !== 'farmhouse' ? { foot: [0.16, 0.4] } : {}) });      // (the ones standing on the ground: a touch darker where they meet it)
   }
   for (const mx of byModel.wheat_field || []) wheat(mx, 4.4, 2.4);
+  contactShadows();
+}
+// (7 Nov 2026, Audrey, of the hay bales: "These look like they are not touching the ground") a soft dark patch on the
+// ground right under each prop that stands on it, where the sun's shadow (kept a little off things, so it never speckles
+// them) doesn't quite reach: they sit on the ground
+const CONTACT = ['hay_stack', 'round_bale', 'barrels', 'wheelbarrow', 'bench', 'well', 'egg_stall', 'planter', 'flower_pots', 'scarecrow', 'mushrooms', 'farmhouse', 'pasture_shelter'];
+let CONTACT_TEX = null;
+function contactTex() {
+  if (CONTACT_TEX) return CONTACT_TEX;
+  const N = 128, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const c = cv.getContext('2d'); c.filter = 'blur(9px)'; c.fillStyle = '#000';
+  c.beginPath(); c.roundRect ? c.roundRect(24, 24, N - 48, N - 48, 26) : c.rect(24, 24, N - 48, N - 48); c.fill();
+  CONTACT_TEX = new THREE.CanvasTexture(cv);
+  return CONTACT_TEX;
+}
+function contactShadows() {
+  const list = [], box = new THREE.Box3(), size = new THREE.Vector3(), mid = new THREE.Vector3();
+  for (const p of V.props) {
+    if (!CONTACT.includes(p.model) || !parts[p.model]) continue;
+    box.setFromObject(parts[p.model]); box.getSize(size); box.getCenter(mid);
+    // (the patch's dark middle is about 60% of it: as big as the thing's footprint and a little more, fading out round it)
+    const grow = F => p.model === 'farmhouse' ? F * 1.08 : Math.min((F + 0.14) / 0.6, F + 0.9);
+    list.push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1).multiply(new THREE.Matrix4().compose(new THREE.Vector3(mid.x, 0.0068, mid.z), new THREE.Quaternion(), new THREE.Vector3(grow(size.x), 1, grow(size.z)))));
+  }
+  if (!list.length) return;
+  const mat = new THREE.MeshBasicMaterial({ map: contactTex(), color: '#1d2a17', transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  nightGrade(mat);
+  const k = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), mat, list.length);
+  list.forEach((m, i) => k.setMatrixAt(i, m));
+  k.computeBoundingSphere(); k.renderOrder = -1; k.matrixAutoUpdate = false; scene.add(k);
 }
 
 // the wheat field in the game's four stages (as in the 2D game): bare ploughed soil, the first green shoots (a fifth of the
@@ -1233,7 +1263,7 @@ const WHEAT_NAMES = { soil: 'Ploughed, ready to sow', sprouts: 'The first green 
 const wheatField = { stage: GAME_MODE ? 'soil' : WHEAT_STAGES.includes(params.get('wheat')) ? params.get('wheat') : 'ripe', parts: {}, inverse: null, half: [0, 0] };
 // The game's field (6 Nov 2026, Audrey: "the field perspective is still not great": from the usual view and looking steeply
 // down it had read as a flat dark slab): real ploughed ground, its ridges lit on top and its furrows in shade, its edge
-// soft and uneven where the grass takes over (a verge of grass and a few daisies round it, no straight box edge); the wheat
+// soft and uneven where the grass takes over (no straight box edge, and no verge of tufts round it: they read as weeds); the wheat
 // in rows on the ridges, darker at its foot, a little shorter towards the edge and in gentle waves, so it stands up out of
 // the ground from any angle, by day and at night
 function fieldEdge(w, d) {                     // how far a spot is outside the field's soft, uneven edge (below 0: inside)
@@ -1313,27 +1343,7 @@ function wheat(fieldMatrix, w, d, parent = null) {      // (parent: the game's o
       new THREE.Quaternion().setFromEuler(new THREE.Euler(ex * 0.5, 0, ez * 0.5)), new THREE.Vector3(1, 1, 1))));
   const ea = new THREE.InstancedMesh(new THREE.ConeGeometry(parent ? 0.02 : 0.016, parent ? 0.1 : 0.09, 5, 1), addWind(new THREE.MeshLambertMaterial({ color: parent ? '#f8d670' : '#e7bf55' }), 0.3), ears.length);
   ears.forEach((m, i) => ea.setMatrixAt(i, m));
-  // (the game's field: a verge of meadow grass and a few daisies round its edge, where the grass meets the ploughed ground)
-  const verge = [];
-  if (parent) {
-    const rv = rng(59), tufts = [[], [], []], daisies = [], sc = V.tufts.length ? V.tufts.slice(0, 300).reduce((a, t) => a + t[5], 0) / Math.min(300, V.tufts.length) : 1;
-    for (let i = 0; i < 2600 && tufts.flat().length < 420; i++) {
-      const x = (rv() - 0.5) * (w + 0.1), z = (rv() - 0.5) * (d + 0.1), sd = edge(x, z);
-      const near = sd > -0.07 && sd < 0.1, corner = sd >= 0.1 && rv() < 0.35;      // (thick along the edge; in the corners the meadow carries on)
-      if (!near && !corner) continue;
-      const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(Y, rv() * 6.28), new THREE.Vector3(1, 1, 1).multiplyScalar(sc * (0.75 + rv() * 0.5)));
-      if (near && rv() < 0.05) daisies.push(new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(Y, rv() * 6.28), new THREE.Vector3(1.4, 1.4, 1.4)));
-      else tufts[Math.floor(rv() * 3)].push(m);
-    }
-    const inst = (name, list) => { for (const m of meshesOf(parts[name] || new THREE.Group())) {
-      const mat = addWind(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), 1.2); nightGrade(mat);
-      const k = new THREE.InstancedMesh(m.geometry, mat, list.length);
-      list.forEach((mx, i) => k.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
-      verge.push(k);
-    } };
-    tufts.forEach((list, k) => { if (list.length) inst('grass_tuft_' + k, list); });
-    if (daisies.length) inst('flower_daisy', daisies);
-  }
+  const verge = [];      // (no verge of grass round it: 7 Nov, Audrey, "That's looks like weed is growing outside of the field")
   const P = parent ? {} : wheatField.parts;
   P.soil = [ground, ...verge];
   P.sprouts = [ground, ...verge, stalks(parent ? spots.filter(s => s.keep < 0.75) : spots.filter(s => s.keep < 0.4), 0.3, 2.0, parent ? '#8ccf4c' : '#86c24a', 0.35)];
