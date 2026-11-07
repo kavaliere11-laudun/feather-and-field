@@ -4214,7 +4214,12 @@ They were in the Unity version only. Now in the game:
   hidden) had spread past the card's round bottom corners, so the card looked cut off square. The card's scrolling part
   is now clipped to the card's round corners (`.gsheet-body` sideways, border radius 0 0 24px 24px). `cardaudit.mjs`
   now checks each card's bottom corners in the picture itself (cream there: "a square corner at the bottom"); it finds
-  the fault on the version before and none now, in four languages and four sizes.
+  the fault on the version before and none now. Then (Audrey: "Did you run the audit across all the pop up to make sure
+  they are not broken / cut as I asked you earlier ?": it hadn't looked at the cards' shape, the other pop-ups, or two of
+  the six sizes) it checks every pop-up: besides the cards, the first day's guide card with each line, the bubbles with
+  their longest words, the move bar with each message, the buttons over a hen, the dog's and the farmer's, and grandma's
+  story card by card. Run in full, six languages on six sideways phones (667x375, 844x390, 874x402, 932x430, 956x440,
+  667x320): 1,476 checks, all pass.
 - **The home bar:** nothing in the app hides it (no `prefersHomeIndicatorAutoHidden`, the SystemBars plugin not told to
   hide it). Since iOS 26 Apple fades the home bar out a moment after any app opens, and an app can no longer keep it
   showing (reported for Unity games too, closed "As Designed"); a swipe up from the bottom still leaves the game at once,
