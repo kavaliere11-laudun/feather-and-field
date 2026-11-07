@@ -212,6 +212,7 @@
                   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
   .gicon { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow); color: var(--ink);
            display: grid; place-items: center; cursor: pointer; flex: none; padding: 0; }
+  .gicon[hidden] { display: none; }      /* (the village orders' basket, till they open at level 3) */
   .gicon svg { width: 20px; height: 20px; }
   @media (max-width: 430px) { .gbar, .gstat { gap: 6px; } }
   /* (the narrowest phones: a folding phone shut, an old small one: the bar a little tighter, so the last button fits) */
