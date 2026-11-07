@@ -4439,3 +4439,9 @@ They were in the Unity version only. Now in the game:
 - While you were away: "Your vegetable garden is ready to pick". Words in six languages (`garden_*`, `bed_*`, `crop_*`,
   `treat_*`, `say.treat`). `gardentest.mjs`. Also: the wheat field's new spot after a move is saved straight away (it
   waited for the next save before).
+- Also in this step: "Collect all eggs" after time away says which eggs went to the village orders ("🧺 5 for Mrs Potts ·
+  3 eggs sold · +21 coins"), not "sold for 0 coins"; the village orders' basket button hidden till level 3 (its hidden
+  mark had been overruled by the round buttons' style); an order's things kept in one order; a new garden put where every
+  coop's gate can still be reached (checked for as few spots as can be: the walking grid is made again for each); the
+  farmer waits up to 20 seconds for a bird he's called to him (the rooster, from across the yard, came too late for his
+  worms); a reminder when the garden's ripe ("The garden is ripe 🥕", with the crops' reminders: "Garden, wheat & honey").
