@@ -2207,7 +2207,7 @@ register('foxden', { come: ['🦊 Rusty’s family comes out to play', '🦊 La 
 function foxDenTap() {
   const now = performance.now(); if (now - DEN_UI.at < 2500) return; DEN_UI.at = now;
   if (nightVisit && nightVisit.active()) { hint(tr(LANG, 'foxden.out')); return; }
-  const h = clockHour(), day = h >= 6 && h < 21.5;
+  const h = DAY.hour, day = h >= 6 && h < 21.5;      // (the hour the farm's light shows)
   if (day) {
     if (foxes.visible()) { for (const f of foxes.foxes) if (f.root.visible && !f.home) foxes.tapped(f); hint(tr(LANG, 'foxden.hello')); }
     else if (!foxes.out) { foxes.comeOut(); hint(tr(LANG, 'foxden.come')); }
