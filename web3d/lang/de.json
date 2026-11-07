@@ -1018,7 +1018,7 @@
  "text.credits": "Musik: {music}. Geräusche: {sounds}. Der Ruf des Pfaus: {peacock} ({lic}), bearbeitet.",
  "text.code_how_app": "Kopiere deinen Hofcode und bewahre ihn sicher auf (zum Beispiel in Notizen). Füge ihn hier auf einem anderen Handy ein oder nachdem du das Spiel neu installiert hast – so machst du genau da weiter, wo du aufgehört hast.",
  "text.notes_shows": "Schauen",
- "text.notes_crops": "Weizen & Honig",
+ "text.notes_crops": "Garten, Weizen & Honig",
  "text.notes_chicks": "Küken",
  "text.notes_eggs": "Eier",
  "text.nt_eggs_t": "Frische Eier 🥚",
@@ -1171,5 +1171,7 @@
  "text.away_garden": "Dein Gemüsegarten ist bereit zum Ernten",
  "text.away_garden1": "Ein Beet in deinem Gemüsegarten ist bereit zum Ernten",
  "text.garden_aria": "Der Gemüsegarten",
- "say.treat": "Eine Leckerei für euch!"
+ "say.treat": "Eine Leckerei für euch!",
+ "text.nt_garden_t": "Der Garten ist reif 🥕",
+ "text.nt_garden": "Deine {crop} sind bereit zum Ernten."
 }

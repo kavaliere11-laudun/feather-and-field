@@ -1018,7 +1018,7 @@
  "text.credits": "Música: {music}. Sons: {sounds}. O grito do pavão: {peacock} ({lic}), limpo.",
  "text.code_how_app": "Copie o código da sua fazenda e guarde-o num lugar seguro (no app Notas, por exemplo). Cole-o aqui em outro celular, ou depois de reinstalar o jogo, para continuar de onde parou.",
  "text.notes_shows": "Concursos",
- "text.notes_crops": "Trigo e mel",
+ "text.notes_crops": "Horta, trigo e mel",
  "text.notes_chicks": "Pintinhos",
  "text.notes_eggs": "Ovos",
  "text.nt_eggs_t": "Ovos fresquinhos 🥚",
@@ -1171,5 +1171,7 @@
  "text.away_garden": "Sua horta está pronta para colher",
  "text.away_garden1": "Um canteiro da sua horta está pronto para colher",
  "text.garden_aria": "A horta",
- "say.treat": "Um petisco para vocês!"
+ "say.treat": "Um petisco para vocês!",
+ "text.nt_garden_t": "A horta está madura 🥕",
+ "text.nt_garden": "Hora de colher: {crop}!"
 }

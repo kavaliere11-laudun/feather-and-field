@@ -1013,7 +1013,7 @@
  "text.credits": "Música: {music}. Sonidos: {sounds}. El grito del pavo real: {peacock} ({lic}), limpiado.",
  "text.code_how_app": "Copia el código de tu granja y guárdalo en un lugar seguro (en Notas, por ejemplo). Pégalo aquí en otro teléfono, o después de reinstalar el juego, para seguir donde lo dejaste.",
  "text.notes_shows": "Concursos",
- "text.notes_crops": "Trigo y miel",
+ "text.notes_crops": "Huerto, trigo y miel",
  "text.notes_chicks": "Pollitos",
  "text.notes_eggs": "Huevos",
  "text.nt_eggs_t": "Huevos frescos 🥚",
@@ -1166,5 +1166,7 @@
  "text.away_garden": "Tu huerto está listo para cosechar",
  "text.away_garden1": "Un bancal de tu huerto está listo para cosechar",
  "text.garden_aria": "El huerto",
- "say.treat": "¡Una golosina para todos!"
+ "say.treat": "¡Una golosina para todos!",
+ "text.nt_garden_t": "El huerto está maduro 🥕",
+ "text.nt_garden": "Tus {crop} están listas para cosechar."
 }

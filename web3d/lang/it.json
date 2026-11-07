@@ -1018,7 +1018,7 @@
  "text.credits": "Musica: {music}. Suoni: {sounds}. Il verso del pavone: {peacock} ({lic}), ripulito.",
  "text.code_how_app": "Copia il codice della tua fattoria e conservalo in un posto sicuro (va benissimo l’app Note). Incollalo qui su un altro telefono, o dopo aver reinstallato il gioco, per riprendere da dove avevi lasciato.",
  "text.notes_shows": "Concorsi",
- "text.notes_crops": "Grano e miele",
+ "text.notes_crops": "Orto, grano e miele",
  "text.notes_chicks": "Pulcini",
  "text.notes_eggs": "Uova",
  "text.nt_eggs_t": "Uova fresche 🥚",
@@ -1171,5 +1171,7 @@
  "text.away_garden": "Il tuo orto è pronto da raccogliere",
  "text.away_garden1": "Un’aiuola del tuo orto è pronta da raccogliere",
  "text.garden_aria": "L’orto",
- "say.treat": "Una leccornia per voi!"
+ "say.treat": "Una leccornia per voi!",
+ "text.nt_garden_t": "L’orto è maturo 🥕",
+ "text.nt_garden": "Le tue {crop} sono pronte da raccogliere."
 }

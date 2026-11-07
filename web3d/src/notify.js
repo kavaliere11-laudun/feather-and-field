@@ -19,11 +19,11 @@ export const AHEAD = 4 * 86400e3;                      // how far ahead
 export const MISS_AFTER = 3 * 86400e3, MISS_HOUR = 18; // the farm left alone this long: one note, at this hour
 export const EGGS_AT = 6;                              // eggs waiting that are worth a note (a day at most, two days ahead)
 const LEAD = 5 * 60e3, STEP = 15 * 60e3;
-const KINDS = ['hatch', 'show', 'miss', 'wheat', 'honey', 'eggs'];      // (most important first)
+const KINDS = ['hatch', 'show', 'miss', 'wheat', 'garden', 'honey', 'eggs'];      // (most important first)
 // the player's choice of which (Audrey, 1 Nov 21:01: "choose which ones you want, for example eggs only. The one after 3
 // days inactivity shows if at least 1 notification is active"): four groups, all on at first; the "miss you" note comes
 // with any of them
-export const GROUPS = { eggs: ['eggs'], chicks: ['hatch'], crops: ['wheat', 'honey'], shows: ['show'] };
+export const GROUPS = { eggs: ['eggs'], chicks: ['hatch'], crops: ['wheat', 'garden', 'honey'], shows: ['show'] };      // (the vegetable garden with the crops, 7 Nov 2026)
 const ALL = Object.keys(GROUPS);
 const PREF_KEY = 'ff3d.notes', KINDS_KEY = 'ff3d.notesKinds';
 
@@ -48,6 +48,8 @@ export function plan(game, now = Date.now(), groups = ALL) {
   for (const e of game.shows().in) add('show', game.showJudgedAt(e.id), game.t('nt_show_t'), game.t('nt_show', { name: name(e.bird), show: game.showName(e.id) }));
   // the wheat ripe; the hives full
   const w = game.wheat(); if (w.ripe) add('wheat', w.ripe, game.t('nt_wheat_t'), game.t('nt_wheat'));
+  const gb = d.garden && game.gardenOpen() ? d.garden.beds.filter(b => b.crop && b.ripe > now).sort((a, b) => a.ripe - b.ripe) : [];      // (the vegetable garden: the next bed ripe)
+  if (gb.length) add('garden', gb[0].ripe, game.t('nt_garden_t'), game.t('nt_garden', { crop: game.t('crop_l_' + gb[0].crop) }));
   const H = d.honey; if (H && H.n < HONEY.max) add('honey', H.at + (HONEY.max - H.n) * HONEY.every, game.t('nt_honey_t'), game.t('nt_honey', { n: HONEY.max }));
   // the farm run on ahead on a copy (nothing saved): the eggs laid (as the game lays them: fed, room in the nest, not
   // sitting), the broody hens and their chicks hatching

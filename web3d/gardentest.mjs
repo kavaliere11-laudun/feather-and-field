@@ -3,7 +3,7 @@
 // A new farm on a fake clock. Level 3: no garden. Level 4: its card says so, the garden on your land by the farmhouse,
 // "Sow" over it. Its card: three beds, each ready to sow (carrots, strawberries, pumpkins). Carrots sown in bed 1: their
 // seeds paid, the farmer sows them, then their sign; shoots, growing, ripe in an hour; "Pick": six carrots in the basket,
-// +2 XP, the bed empty again. A reload: all kept, not flagged. A treat for the coop (a bird's card): the carrots it takes
+// +1 XP, the bed empty again. A reload: all kept, not flagged. A treat for the coop (a bird's card): the carrots it takes
 // from the basket, the farmer scatters it in the pen (bits of carrot), and soon after each hen lays an extra egg; one a
 // day ("They've had their treat today"). Strawberries: a little experience for every bird too. A village order for
 // carrots: delivered from the basket. A save changed outside the game (a bed ripe far ahead, the basket overfull, a treat
@@ -82,7 +82,7 @@ await look(); await shoot('4_ripe');
 const x0 = s.xp;
 await p.evaluate(() => window.__farm.garden.tap(true)); await run(0.3);
 s = await S();
-ok('picked: six carrots in the basket, +2 XP, the farmer on his way', s.garden.veg.carrot === 6 && s.xp === x0 + 2 && s.work === 'pick' && !s.garden.beds[0].crop, s);
+ok('picked: six carrots in the basket, +1 XP, the farmer on his way', s.garden.veg.carrot === 6 && s.xp === x0 + 1 && s.work === 'pick' && !s.garden.beds[0].crop, s);
 await run(3); await shoot('5_picking');
 await waitWork(); s = await S();
 ok('done: the bed empty again; "+6 carrots"', !s.work && s.st.visible[0].length === 0 && /\+6/.test(await hintT()), { v: s.st.visible, h: await hintT() });
@@ -105,7 +105,7 @@ const lays0 = await p.evaluate(() => { const g = window.__farm.game(), c = g.dat
 await p.evaluate(() => document.querySelector('.gsheet [data-give="carrot"]').click()); await run(0.3);
 s = await S();
 const tr = await p.evaluate(() => window.__farm.game().data.coops[0].treat);
-ok('given: two carrots from the basket, the coop\'s treat today, the farmer on his way to the pen', s.garden.veg.carrot === 4 && tr && tr.crop === 'carrot', { veg: s.garden.veg, tr });
+ok('given: three carrots from the basket, the coop\'s treat today, the farmer on his way to the pen', s.garden.veg.carrot === 3 && tr && tr.crop === 'carrot', { veg: s.garden.veg, tr });
 let bits = [];
 for (let i = 0; i < 40 && !bits.includes('carrot'); i++) { await run(0.5); bits = await p.evaluate(() => window.__farm.treat.corn(0)); }
 ok('in the pen: bits of carrot scattered for them', bits.includes('carrot'), bits.slice(0, 8));
