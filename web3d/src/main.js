@@ -330,6 +330,22 @@ function richer(geo, sat = SAT, lift = 1) {
   c.needsUpdate = true;
   geo.userData.richer = true;
 }
+// soft shading in the corners (7 Nov, the finish: under the eaves, where a wall meets the ground, between the boards, in a
+// barrel's rim): how hidden each corner of the buildings, coops and props is was baked once into its colour's alpha
+// (bake_ao.py: 255 open, lower hidden); the colour's darkened by it here, in the new look (the old look: as it was), and
+// the alpha put back to 1 either way (so done once only, even on a colour copied back from before: tintedPart)
+const AO = STORY_LOOK ? Math.max(0, Math.min(1, parseFloat(params.get('ao') || '0.7'))) : 0;
+function ambientShade(geo) {
+  const c = geo.getAttribute('color');
+  if (!c || c.itemSize !== 4) return;
+  const arr = c.array, k = c.normalized ? 255 : 1;
+  for (let o = 0; o < arr.length; o += 4) {
+    const f = 1 - AO * (1 - arr[o + 3] / k);
+    if (f < 1) { arr[o] = Math.round(arr[o] * f); arr[o + 1] = Math.round(arr[o + 1] * f); arr[o + 2] = Math.round(arr[o + 2] * f); }
+    arr[o + 3] = k;
+  }
+  c.needsUpdate = true;
+}
 
 // ------------------------------------------------------------------ a little seeded randomness (the village looks the same every time)
 function rng(seed) {
@@ -424,7 +440,7 @@ function tintedPart(name, col) {
       const R = refs.find(R => R.cols.some(q => near(c, q)));
       if (R) { const t = R.to.clone().multiplyScalar(lum(c) / R.l); a.setXYZ(i, t.r, t.g, t.b); }
     }
-    a.needsUpdate = true; richer(m.geometry, SAT, 1);
+    a.needsUpdate = true; richer(m.geometry, SAT, 1); ambientShade(m.geometry);
   }
   o.updateMatrixWorld(true); parts[key] = o;
   return key;
@@ -512,6 +528,7 @@ async function start() {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) {
         richer(m.geometry, g === village ? 1.22 : SAT, g === village ? 1.08 : 1);
+        if (g === village || g === coopsGlb || g === decorGlb) ambientShade(m.geometry);
         if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; lightUp(m.material); }
       }
       parts[child.name] = child;

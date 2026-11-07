@@ -4281,3 +4281,22 @@ They were in the Unity version only. Now in the game:
   the long grass, your land's carpet and the flowers).
 - **Wood grain: not done.** Every model's colours are one shared material, so a plank can't be told from a dirt floor or
   which way it runs; it needs the wood made as its own material in Blender (coops, fences, benches, the dock, the bridge).
+
+## Soft shading in the corners (7 Nov 2026, afternoon; Audrey: "Whatever you want", so Claude's pick for the finish)
+- **What it is:** the corners of every building, coop and prop a little darker where little light reaches: under the
+  eaves, the porch and the door's recess, the window boxes, the gaps between a coop's boards, where a rail meets its post,
+  inside a barrel's or a pot's rim, under a bench, where a wall meets the ground. The light and shadows are as they were.
+- **How (`bake_ao.py`, once, in Blender's python for its ray tree):** for each corner of each part of `village.glb`,
+  `coops.glb` and `decor.glb`, 48 rays over the half of the sky it faces, as far as a quarter of the part's size (5 cm to
+  50 cm); what they meet near by (the part itself, and the ground when it stands on it, counting a little less) is how
+  hidden it is; smoothed a little along the surface. A corner buried inside another piece (the models are pieces pushed
+  into each other: a rail's end in its post) takes its seen neighbours' answer, not black. Left out: the trees, bushes,
+  rocks, flowers, sunflowers, wheat and mushrooms (they have their own shading), lights and glass, and floors on the
+  ground (a pen's yard, a plot's earth: their few corners are at their edges, so it spread into a muddy yard).
+- **Where it's kept:** in each corner's colour's fourth number (its alpha, 255 everywhere until now), so the files are the
+  same size; `main.js` `ambientShade` darkens the colour by it as the models load (70%; `?ao=0.5` to try another
+  strength), in the new look only (`?oldlook`: as before), and puts the alpha back. The colours themselves are untouched in
+  the files, so the Silkie coops are still found and recoloured by `tintedPart` (which shades its copy again).
+- **To bake again** after a new export: `bl/bin/python web3d/bake_ao.py web3d/models/village.glb web3d/models/decor.glb
+  web3d/models/coops.glb` (about 2.5 minutes, most of it the coops).
+- `rarecooptest.mjs`: the Breed Book has sixteen pages now (the call ducks' and the peacock's), not fourteen.

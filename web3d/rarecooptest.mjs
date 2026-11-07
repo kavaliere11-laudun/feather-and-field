@@ -2,7 +2,7 @@
 // A farm at level 7 with the White Silkies (their level is 5 since 30 Oct) and two Paint Silkies in the basket by the fire: Your coops lists them with
 // "Their coop: 2,500 coins" (not enough coins) then "Build their coop · 2,500"; built: a rustic Pagoda in the Paint
 // colours, 2,500 coins paid, its birds from the basket ("Welcome home, ... and ...!"), the basket empty. The Breed Book has
-// fourteen pages (no Red since 30 Oct): the Paint Silkies found, the Lavender ones "Rare: hatched by a Black Silkie". A brood of the Paint pair:
+// sixteen pages (no Red since 30 Oct; the call ducks and the peacock since): the Paint Silkies found, the Lavender ones "Rare: hatched by a Black Silkie". A brood of the Paint pair:
 // every chick a Paint Silkie; grown, a young hen waits for your choice (their trio's third hen), the others sold for you
 // for less; kept, she joins the Paint coop ("... has joined Pagoda Coop"). A Silkie hen's card: about an egg a day. A
 // reload keeps it all, unflagged; a save changed outside (the Paint coop twice, a Lavender one waiting in the Paint coop)
@@ -70,12 +70,12 @@ await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.
 t = await sheet();
 ok('a Silkie hen\'s card: "about an egg a day"', T.lays.test(t), t.slice(0, 300));
 await p.evaluate(() => window.__farm.gameUI().close());
-// the Breed Book: fourteen pages
+// the Breed Book: sixteen pages (fourteen, and since then the call ducks' and the peacock's)
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('.gpage')], one = k => { const e = document.querySelector(`.gpage[data-breed="${k}"]`); return e && { found: !e.classList.contains('gpage-no'), text: e.innerText, img: e.querySelector('img').src.split('/').pop().split('?')[0] }; };
   return { n: pg.length, paint: one('sil_paint'), lav: one('sil_lavender'), cuckoo: one('sil_cuckoo') }; });
-ok('the Breed Book: fourteen pages, the Paint Silkies found (Pip and Paddy), the Lavender ones "Rare: hatched by a Black Silkie", the Cuckoo ones from the Partridge (no Grey since 30 Oct)',
-  book.n === 14 && book.paint.found && /Pip/.test(book.paint.text) && book.paint.img === 'sil_paint.webp' && !book.lav.found && T.lav.test(book.lav.text) && T.cuckoo.test(book.cuckoo.text), book);
+ok('the Breed Book: sixteen pages, the Paint Silkies found (Pip and Paddy), the Lavender ones "Rare: hatched by a Black Silkie", the Cuckoo ones from the Partridge (no Grey since 30 Oct)',
+  book.n === 16 && book.paint.found && /Pip/.test(book.paint.text) && book.paint.img === 'sil_paint.webp' && !book.lav.found && T.lav.test(book.lav.text) && T.cuckoo.test(book.cuckoo.text), book);
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_paint"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('3_book');
 await p.evaluate(() => window.__farm.gameUI().close());
