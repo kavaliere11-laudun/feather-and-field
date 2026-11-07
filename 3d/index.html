@@ -81,6 +81,7 @@
   .gstory-text.in { animation: gstext .6s ease-out; }
   @keyframes gstext { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .gstory-foot { position: absolute; right: max(16px, calc(env(safe-area-inset-right) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); display: flex; align-items: center; gap: 12px; }
+  .gstory.gstory-left .gstory-foot { right: auto; left: max(16px, calc(env(safe-area-inset-left) + 8px)); flex-direction: row-reverse; }      /* (a picture whose hens are bottom right) */
   .gstory-foot .gdots { margin: 0; padding: 8px 10px; border-radius: 999px; background: rgba(255, 253, 247, 0.85); }
   .gstory-foot .gbtn { margin: 0; width: auto; padding: 12px 26px; font-size: 17px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); }
   .gstory-skip { position: absolute; right: max(16px, calc(env(safe-area-inset-right) + 8px)); top: max(14px, calc(env(safe-area-inset-top) + 12px)); border: 1px solid rgba(255, 255, 255, 0.7);
@@ -686,6 +687,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794049898"></script>
+<script src="app.js?v=1794050051"></script>
 </body>
 </html>
