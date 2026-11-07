@@ -23,14 +23,16 @@ const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || 
 const log = [], seen = new Set(); let pic = 0, lastHint = '';
 const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story`;
 const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, s);
-const state = () => p.evaluate(() => { const f = window.__farm, g = f.game(), d = new Date(window.__T); return { day: Math.floor((window.__T - new Date('2026-11-09T00:00:00Z').getTime()) / 86400e3), hm: String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'), level: g.level, coins: g.data.coins, xp: g.data.xp }; });
+const state = () => p.evaluate(() => { const f = window.__farm, g = f && f.game(), d = new Date(window.__T); if (!g || !g.data) return { day: 0, hm: '--:--', level: 0, coins: 0, xp: 0 }; return { day: Math.floor((window.__T - new Date('2026-11-09T00:00:00Z').getTime()) / 86400e3), hm: String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'), level: g.level, coins: g.data.coins, xp: g.data.xp }; });
 const note = async (kind, text) => { const s = await state(); const line = `d${s.day} ${s.hm} L${s.level} ${s.coins}c ${s.xp}xp · ${kind}: ${String(text).replace(/\s*\n\s*/g, ' | ').slice(0, 900)}`; log.push(line); console.log(line); fs.writeFileSync(`${OUT}/log.txt`, log.join('\n') + '\n'); };
 const shoot = async name => { await p.evaluate(() => document.getAnimations().forEach(a => a.finish())).catch(() => {}); await p.waitForTimeout(250); const n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_${name}.png`, timeout: 120000 }).catch(e => console.log('(picture skipped: ' + e.message.split('\n')[0] + ')')); };
 const once = async (key, name) => { if (seen.has(key)) return; seen.add(key); await shoot(name); };
 const hintNow = async () => { const h = await p.evaluate(() => { const e = document.getElementById('hint'); return e && e.classList.contains('on') ? e.textContent : ''; }); if (h && h !== lastHint) { lastHint = h; await note('word', h); } return h; };
 const cardNow = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { kind: window.__farm.gameUI().kind, text: s.innerText } : null; });
 const click = sel => p.evaluate(sel => { const e = document.querySelector(sel); if (!e || e.disabled) return false; e.click(); return true; }, sel);
-const act = async (secs = 1.5) => { await run(secs); await hintNow(); };
+const NEWS = /^(levelup|congrats|showres|showday|rare|fox|away|chick|notesask|acctask)$/;
+let inCards = false;
+const act = async (secs = 1.5) => { await run(secs); await hintNow(); if (!inCards) { const c = await cardNow(); if (c && NEWS.test(c.kind)) await cards('popped up'); } };      // (a card that opens by itself mid-visit, a new level's: noted and dealt with, not closed unseen)
 const safe = async (what, f) => { try { await f(); } catch (e) { await note('ERROR in ' + what, e.message.split('\n')[0]); } };
 const load = async () => {
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
@@ -38,7 +40,8 @@ const load = async () => {
   await run(1.5);
 };
 // whatever cards are open: each noted (its first time pictured; each new level's), then dealt with as a player would
-const cards = async (where) => {
+const cards = async (where) => { inCards = true; try { await cards1(where); } finally { inCards = false; } };
+const cards1 = async (where) => {
   for (let k = 0; k < 12; k++) {
     await run(0.6);
     const c = await cardNow(); if (!c) return;
@@ -90,6 +93,7 @@ async function visit(first = false) {
   // a cuddle (and the worms) for each bird, the farmer's visits one after another
   for (const id of S.birds) await safe('cuddle', async () => {
     await waitFarmer(25);
+    { const c = await cardNow(); if (c && c.kind !== 'bird') await cards('before a cuddle'); }
     const r = await p.evaluate(id => { const f = window.__farm, B = f.allBirds.find(x => x.gid === id); if (!B || !B.root.visible) return null; f.gameUI().close(); f.openBirdCard(B); return { cuddle: !!document.querySelector('.gsheet .gcuddle'), worms: !!document.querySelector('.gsheet button[data-worms=ask]'), treat: !!document.querySelector('.gsheet [data-treat]') }; }, id);
     if (!r) return;
     await once('card:bird', 'card_bird');
@@ -102,7 +106,7 @@ async function visit(first = false) {
   S = await g();
   for (let i = 0; i < S.coops.length; i++) if (S.coops[i].feed < 0.4) await safe('feeder', async () => { await waitFarmer(20); await p.evaluate(i => window.__farm.feederCard(i), i); await act(0.4); await once('card:feeder', 'card_feeder'); const c = await cardNow(); if (c) await note('card feeder', c.text); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); await act(1.5); });
   // the wheat
-  if (S.wheat === 'ripe' || S.wheat === 'soil') await safe('wheat', async () => { await waitFarmer(20); await p.evaluate(() => window.__farm.deco.wheat.tap()); await act(0.6); const c = await cardNow(); if (c) { await note('card ' + c.kind, c.text); await once('card:wheat', 'card_wheat'); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); } await act(2); });
+  for (let w = 0; w < 2; w++) if (((S = await g()).wheat === 'ripe' || S.wheat === 'soil')) await safe('wheat', async () => { await waitFarmer(30); await p.evaluate(() => window.__farm.deco.wheat.tap()); await act(0.6); const c = await cardNow(); if (c) { await note('card ' + c.kind, c.text); await once('card:wheat', 'card_wheat'); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); } await act(2); });
   // the vegetable garden: what's ripe picked, the empty beds sown (strawberries in the middle; carrots in the morning,
   // pumpkins in the evening), then a treat for each coop
   if (S.garden) await safe('garden', async () => {
@@ -166,7 +170,7 @@ async function visit(first = false) {
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 for (let k = 0; k < 20; k++) {      // (grandma's story: its own pages, Next on each; then the welcome card)
   await p.waitForTimeout(1500);
-  const st = await p.evaluate(() => { const g = document.querySelector('.gstory'); return g && g.offsetParent !== null && !g.hidden ? g.innerText : null; }).catch(() => null);
+  const st = await p.evaluate(() => { const g = document.querySelector('.gstory:not(.out)'); return g && !g.hidden && g.getClientRects().length && getComputedStyle(g).display !== 'none' ? g.querySelector('.gstory-text').textContent : null; }).catch(() => null);
   if (st) { await note('story', st); await shoot('story_' + k); await click('.gstory-next'); continue; }
   const c = await cardNow(); if (!c) { if (await p.evaluate(() => !!window.__farm && document.getElementById('loading') === null)) break; continue; }
   await note('start ' + c.kind, c.text); await once('start:' + c.kind + k, 'start_' + c.kind + '_' + k);
