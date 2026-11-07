@@ -15,6 +15,27 @@ export function initFarmer(gltf, json) {
     let mesh = null; child.traverse(c => { if (c.isMesh && !mesh) mesh = c; });
     if (mesh) MODELS[child.name.replace('farmer_', '')] = mesh.geometry;
   }
+  if (MODELS.f) noFringe(MODELS.f, INFO.joints.f);
+}
+// Rosie's fringe gone (7 Nov 2026, Audrey, of the fringe swept across her forehead under her new hair, hairCap: "Can we
+// remove that bold part please"): the triangles of her hair, on her head, over the forehead (above her brows, from
+// above her right eye to just past the middle, as seen from the front: up 25 degrees and more from the head's middle,
+// between 70 degrees to her right and 30 to her left) folded away to nothing; the locks by her temples and the rest kept
+function noFringe(g, joints) {
+  const P = g.attributes.position, C = g.attributes.color, SI = g.attributes.skinIndex, SW = g.attributes.skinWeight, I = g.index && g.index.array;
+  const hc = joints.findIndex(j => j.name === 'headc'); if (!I || hc < 0 || !C || !SI) return;
+  const c = new THREE.Vector3().fromArray(joints.find(j => j.name === 'head').pos).add(new THREE.Vector3().fromArray(joints[hc].pos));
+  for (let a = joints.find(j => j.name === 'head').parent; a; ) { const j = joints.find(q => q.name === a); c.add(new THREE.Vector3().fromArray(j.pos)); a = j.parent; }
+  const main = i => { let best = -1, bw = -1; for (let k = 0; k < 4; k++) { const w = SW.getComponent(i, k); if (w > bw) { bw = w; best = SI.getComponent(i, k); } } return best; };
+  const hair = i => C.getX(i) < 0.05 && C.getY(i) < 0.03 && main(i) === hc;
+  let n = 0;
+  for (let t = 0; t < I.length; t += 3) {
+    const a = I[t], b = I[t + 1], d = I[t + 2]; if (!(hair(a) && hair(b) && hair(d))) continue;
+    const x = (P.getX(a) + P.getX(b) + P.getX(d)) / 3 - c.x, y = (P.getY(a) + P.getY(b) + P.getY(d)) / 3 - c.y, z = (P.getZ(a) + P.getZ(b) + P.getZ(d)) / 3 - c.z;
+    const az = Math.atan2(x, z) / DEG, el = Math.asin(y / Math.hypot(x, y, z)) / DEG;
+    if (el >= 25 && az > -70 && az < 30) { I[t + 1] = a; I[t + 2] = a; n++; }
+  }
+  g.index.needsUpdate = true; g.userData.noFringe = n;
 }
 // another look made the same way, in its own file (the show judge: judge.glb + judge.json, look 'j'), added after
 // initFarmer; it then makes a FarmerRig or a Farmer like Arthur and Rosie, with the same poses and faces

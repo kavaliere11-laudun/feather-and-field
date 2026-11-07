@@ -4346,4 +4346,8 @@ They were in the Unity version only. Now in the game:
   combed back. A rigid mesh on the head's bone (`headc`), faded with her at the farmhouse door. Checked under all five
   outfits' hats (the flat cap, the garden hat, the bobble hat, the rodeo hat, the top hat), from the front, low down and
   behind.
+- **Her fringe gone** (17:47, Audrey, of the bold dark fringe swept across her forehead under the new hair: "Can we remove
+  that bold part please"; `noFringe`, at load): the triangles of her hair on her head over the forehead (up 25 degrees and
+  more from the head's middle, from 70 degrees to her right to 30 to her left) folded away to nothing; the hair cap's
+  hairline is her hairline now, the locks by her temples, the sides, the back and the plait kept.
 - Arthur as he was made (his hair round the sides and back, thinning on top).
