@@ -2336,8 +2336,18 @@
  },
  {
   "id": "text.notes_crops",
-  "en": "Wheat & honey",
-  "fr": "Blé et miel"
+  "en": "Garden, wheat & honey",
+  "fr": "Potager, blé et miel"
+ },
+ {
+  "id": "text.nt_garden_t",
+  "en": "The garden is ripe 🥕",
+  "fr": "Le potager est mûr 🥕"
+ },
+ {
+  "id": "text.nt_garden",
+  "en": "Your {crop} are ready to pick.",
+  "fr": "Vos {crop} sont prêtes à être récoltées."
  },
  {
   "id": "text.notes_chicks",
