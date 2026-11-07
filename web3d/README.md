@@ -4334,3 +4334,16 @@ They were in the Unity version only. Now in the game:
   (sun x its height / (sun + sky)), x 0.9: like the farm's own shadows, long and soft in the evening, faint by moonlight.
 - The same for the farmer and the judge on show day (`showday.js`). His fishing rod no longer casts a kept shadow either.
 - (`FarmerShadow.peek()`: how much of the little picture he covers, for tests.)
+
+## Rosie's hair on top (7 Nov 2026, 17:28; Audrey, with a picture of Rosie close and seen from low down: "The farmer has a hair problem")
+- **Why:** the 2D game's model has her hair only round the back and sides, the plait and a fringe swept across the
+  forehead: its hat always hid the top of her head. In 3D the hat is pushed back so her face shows from the game's view
+  above (`HAT_SIT`); with the view tilted low and close (the two-finger tilt), the top of her head showed bare under the
+  brim and the fringe read as a stripe across it.
+- **Now** (`farmer.js` `hairCap`, `HAIR_CAP`): a cap of hair over the top of her head, under the hat: from a hairline above
+  the forehead (43 degrees up from the head's middle in front, gently waved, down to the nape behind, -22), its edge tucked
+  into the head, a little fuller over the crown, in her hair's own colour (farmer.json `colours.f.hair`) with fine strands
+  combed back. A rigid mesh on the head's bone (`headc`), faded with her at the farmhouse door. Checked under all five
+  outfits' hats (the flat cap, the garden hat, the bobble hat, the rodeo hat, the top hat), from the front, low down and
+  behind.
+- Arthur as he was made (his hair round the sides and back, thinning on top).

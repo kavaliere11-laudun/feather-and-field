@@ -270,6 +270,45 @@ export function makeRod(grade) {
   return root;
 }
 
+// ------------------------------------------------------------------ the hair on top of the head (7 Nov 2026, Audrey, of Rosie seen
+// close from low down: "The farmer has a hair problem"): the 2D game's model has hair only round the back and the sides and
+// a fringe, as its hat always hid the top of the head; with the hat pushed back so the face shows from above (HAT_SIT), and
+// the view tilted low and close, the top of the head showed bare, the fringe a stripe across it. A cap of hair over the top
+// of the head, under the hat: from a hairline above the forehead (high in front, gently waved, down to the nape behind), its
+// edge tucked into the head, in the hair's own colour, combed back in fine strands. Rigid on the head (headc: the head's
+// middle, the model's own axes, +z the face). front, back: the hairline's height there (degrees up from the head's middle)
+const HAIR_CAP = { f: { front: 43, back: -22, lift: 1.045 } };          // (Rosie; Arthur's hair as he was made, thinning on top)
+const HEAD_R = [0.212, 0.212, 0.187, 0.196];          // (the head: across, up, to the face, to the back: farmer.glb)
+function hairCap(look, grade, bone) {
+  const H = HAIR_CAP[look], seg = 96, rings = 18, pos = [], col = [], idx = [];
+  const hair = new THREE.Color(INFO.colours[look].hair), c = new THREE.Color();
+  const sm = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  for (let j = 0; j <= rings; j++) for (let i = 0; i <= seg; i++) {
+    const az = (i / seg) * 2 * Math.PI - Math.PI, front = (1 + Math.cos(az)) / 2;       // (az 0: straight ahead)
+    const line = H.back + (H.front - H.back) * front * front + 2.2 * Math.sin(az * 9) * front;       // (a gently waved hairline in front)
+    const t = j / rings, el = (line + (90 - line) * (1 - (1 - t) * (1 - t))) * DEG;         // (rings closer together at the edge)
+    const k = H.lift - (H.lift - 0.975) * (1 - sm(0, 0.16, t)) + 0.012 * Math.sin(Math.PI * Math.min(1, t * 1.3)); // (tucked in at its edge, a little fuller over the crown)
+    const rz = Math.cos(az) > 0 ? HEAD_R[2] : HEAD_R[3];
+    pos.push(HEAD_R[0] * Math.cos(el) * Math.sin(az) * k, HEAD_R[1] * Math.sin(el) * k, rz * Math.cos(el) * Math.cos(az) * k);
+    // strands combed back from the hairline: fine light and dark lines round the head, a soft sheen across the crown
+    const str = 0.5 + 0.5 * Math.sin(az * 70 + Math.sin(az * 13) * 2), str2 = 0.5 + 0.5 * Math.sin(az * 163 + 1.3);
+    const v = 0.78 + 0.22 * str * str2 + 0.12 * sm(0.35, 0.8, t) * (1 - sm(0.8, 1, t)) * front;
+    c.copy(hair).multiplyScalar(v); col.push(c.r, c.g, c.b);
+  }
+  for (let j = 0; j < rings; j++) for (let i = 0; i < seg; i++) {
+    const a = j * (seg + 1) + i, b = a + 1, d = a + seg + 1, e = d + 1;
+    idx.push(a, b, d, b, e, d);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0, transparent: true });
+  if (grade) grade(m);
+  const mesh = new THREE.Mesh(g, m); mesh.name = 'hairCap'; mesh.frustumCulled = false;
+  bone.add(mesh);
+  return mesh;
+}
+
 // ------------------------------------------------------------------ one farmer's body and face, posed from a pose and a face
 const _e = new THREE.Euler(), _q = new THREE.Quaternion(), _m = new THREE.Matrix4(), _hm = new THREE.Matrix4();
 const _gi = new THREE.Matrix4(), _gm = new THREE.Matrix4(), _gv = new THREE.Vector3();
@@ -298,6 +337,7 @@ export class FarmerRig {
     this.B = B; this.blush = this.mesh.material.userData.blush;
     this.eyeR = INFO.info[look].eyes.L.r; this.gazeUp = 0.55;
     this.outfit = null; this.hatSit = HAT_SIT.classic;
+    if (HAIR_CAP[look]) this.cap = hairCap(look, grade, B.headc);
   }
   // dressed in a bought outfit (its id, loaded first: loadOutfit), or back to Classic (null). Only Arthur and Rosie have
   // outfits; false if this look has none or the outfit isn't loaded yet (nothing changes then)
@@ -402,7 +442,7 @@ export class Farmer {
     this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.6;
     const m = this.rig.mesh.material; m.transparent = true; this.opacity = 1;          // (fading in and out at the farmhouse door)
   }
-  fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5 && !this.shadow; }
+  fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; if (this.rig.cap) { this.rig.cap.material.opacity = o; this.rig.cap.visible = o > 0.01; } this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5 && !this.shadow; }
   // his own shadow, following him (FarmerShadow), in place of the farm's kept shadows
   ownShadow() { if (!this.shadow) { this.shadow = new FarmerShadow(this); this.rig.mesh.castShadow = false; } return this.shadow; }
   // a bought outfit on (its id, loaded first: loadOutfit), or Classic again (null): FarmerRig.wear
