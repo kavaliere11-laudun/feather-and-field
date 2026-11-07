@@ -1852,7 +1852,7 @@ export class Game {
     const v = who[Math.floor(r() * who.length) % who.length], wants = VILLAGERS[v].wants.filter(k => this.orderCan(k));
     const pick = [wants[Math.floor(r() * wants.length) % wants.length]], rest = wants.filter(k => k !== pick[0]);
     if (rest.length && r() < 0.4) pick.push(rest[Math.floor(r() * rest.length) % rest.length]);
-    const items = {}; for (const k of pick) items[k] = orderAmount(k, L, r());
+    const items = {}; for (const k of ORDER_ITEMS) if (pick.includes(k)) items[k] = orderAmount(k, L, r());      // (in the save check's order: the same after a reload)
     const o = { id: 'o' + B.seq++, who: v, t: Math.round(t), items, got: {} };
     B.list.push(o); return o;
   }
