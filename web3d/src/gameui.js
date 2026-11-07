@@ -555,7 +555,7 @@ export class GameUI {
     this.giftSaid = false;
     for (const b of trios) {                           // a new breed first, the biggest news (1 Nov: sideways it was out of sight under the rest)
       const c = el('div', 'gcard gnewcoop'), h = el('div', 'gcard-h');
-      h.append(el('span', 'gemoji', this.g.isDuck(b) ? '🦆' : this.g.kindOf(b) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', this.g.trioTitle(b)));
+      h.append(this.breedPic(b), el('span', 'gcard-t', this.g.trioTitle(b)));      // (their picture from the Breed Book, 7 Nov 2026, Audrey: "Add a photo of the chickens breed instead of a generic icon")
       c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
       body.append(c);
     }
@@ -671,13 +671,19 @@ export class GameUI {
   moveStatus(text, ok) { if (!this.mbar) return; this.mtext.textContent = text; this.mtext.classList.toggle('bad', !ok); this.mplace.disabled = !ok; }
   moveTop() { return this.mbar && !this.mbar.hidden ? this.mbar.offsetTop : innerHeight; }      // (where the bar starts: the farm above it)
 
+  // a breed's picture (the Breed Book's: the trio, see-through), for a card's heading; its emoji if the picture won't load
+  breedPic(breed) {
+    const g = this.g, im = el('img', 'gbreed-i'); im.alt = ''; im.decoding = 'async'; im.src = 'book/' + breed + '.webp' + (this.o.bust || '');
+    im.addEventListener('error', () => im.replaceWith(el('span', 'gemoji', g.isDuck(breed) ? '🦆' : g.kindOf(breed) === 'pea' ? '🦚' : '🐔')), { once: true });
+    return im;
+  }
   // ---- Your coops: a new breed's coop waiting to be placed (h.place(breed)), each coop on the farm (h.move(id)), the next breed
   coopsSheet(h) {
     const g = this.g, b = this.open('coops', this.t('coops_title'));
     this.bird = null;
     for (const breed of g.waitingCoops()) {
       const c = el('div', 'gcard gnewcoop'), hd = el('div', 'gcard-h');
-      hd.append(el('span', 'gemoji', g.isDuck(breed) ? '🦆' : g.kindOf(breed) === 'pea' ? '🦚' : '🐔'), el('span', 'gcard-t', g.trioTitle(breed)), el('span', 'gbadge', this.t('coops_new')));
+      hd.append(this.breedPic(breed), el('span', 'gcard-t', g.trioTitle(breed)), el('span', 'gbadge', this.t('coops_new')));
       c.append(hd, el('p', 'gtext', this.t(g.dk('trio_body', g.kindOf(breed)))));
       const go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(breed));
       c.append(go); b.append(c);
