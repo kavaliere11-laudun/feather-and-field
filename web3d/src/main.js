@@ -7866,7 +7866,11 @@ function settleGarden(gone, way = false) {      // (way: the way to every coop's
     const fh = V.props.find(p => p.model === 'farmhouse'), vl = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), ux = VIEW_DIR.x / vl, uz = VIEW_DIR.z / vl;
     const cands = fh ? [[-uz, ux, 5.5], [uz, -ux, 5.5], [-uz + ux * 0.7, ux + uz * 0.7, 6], [uz + ux * 0.7, -ux + uz * 0.7, 6], [-uz - ux * 0.6, ux - uz * 0.6, 6], [uz - ux * 0.6, -ux - uz * 0.6, 6]].map(([dx, dz, r]) => [fh.pos[0] + dx * r, fh.pos[2] + dz * r]) : [];
     let f = G.x !== null && G.z !== null ? decorFreeNear('garden', G.x, G.z, 40, false, GARDEN_DEGS) : null;
-    if (!f) { let first = null; for (const c of [...cands, ...(VILLAGE_VEG || [])]) { const q = decorFreeNear('garden', c[0], c[1], 6, way, GARDEN_DEGS); if (!q) continue; first = first || q; if (inView(q.x, q.z, 1.0)) { f = q; break; } } f = f || first; }
+    if (!f) {      // (each candidate's nearest good spot, those in full view first; with way, the first that keeps every gate open: checked one at a time, the walking grid made again for each, so as few as can be)
+      const found = []; for (const c of [...cands, ...(VILLAGE_VEG || [])]) { const q = decorFreeNear('garden', c[0], c[1], 6, false, GARDEN_DEGS); if (q && !found.some(o => o.x === q.x && o.z === q.z && o.deg === q.deg)) found.push(q); }
+      found.sort((a, b) => (inView(b.x, b.z, 1.0) ? 1 : 0) - (inView(a.x, a.z, 1.0) ? 1 : 0));
+      f = found.find(q => !way || decorWayOk('garden', q.x, q.z, q.deg)) || null;
+    }
     if (!f) f = decorFreeNear('garden', HOME_COOP.x + 3, HOME_COOP.z + 3, 40, way, GARDEN_DEGS);
     if (f) { G.x = f.x; G.z = f.z; G.deg = f.deg; } else { G.x = G.z = null; }
     changed = true;
