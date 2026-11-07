@@ -52,6 +52,10 @@ const params = new URLSearchParams(location.search);
 // test page (index.html) shows the whole village. In the game the geese, the dog and the decorations are bought, so a new
 // farm has none of them yet; the fox doesn't visit before the geese can be bought.
 const GAME_MODE = document.body.classList.contains('game');
+// the farm's finish in the feel of the story pictures (7 Nov 2026, Audrey: "I would like the finish to look a bit more
+// premium and natural"): thick soft grass on your land, earth paths with wheel tracks, deeper trees and bushes, warmer
+// light. ?oldlook shows the farm as it was, to compare
+const STORY_LOOK = !params.has('oldlook');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 // My account (release 7: account.js): the farm saved online with a Google account (only once the game has its Firebase
@@ -625,9 +629,10 @@ function buildGround(img) {
   tex.repeat.set(6, 6);                                    // one picture every 20 m
   tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   const c = villageCentre();
-  const gm = new THREE.MeshLambertMaterial({ map: tex }), detail = grassDetail();
+  const gm = new THREE.MeshLambertMaterial({ map: tex }), detail = grassDetail(), lanes = STORY_LOOK && GAME_MODE ? laneMap(c) : null;
   gm.onBeforeCompile = sh => {                 // (soft patches, lusher and sunnier: groundPatch; close up, the fine texture of short grass)
     sh.uniforms.grassDetail = { value: detail };
+    if (lanes) { sh.uniforms.laneMap = { value: lanes.tex }; sh.uniforms.laneO = { value: lanes.o }; }
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xz;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;\nuniform sampler2D grassDetail;').replace('#include <map_fragment>', `#include <map_fragment>
 {
@@ -637,14 +642,63 @@ function buildGround(img) {
   float n2 = sin(vGW.x * 0.63 + vGW.y * 0.41 + sin(vGW.y * 0.5) * 2.0) * sin(vGW.y * 0.57 - vGW.x * 0.29);
   float t = smoothstep(-0.6, 0.6, n1 * 0.7 + n2 * 0.3);
   diffuseColor.rgb *= mix(vec3(0.9, 0.98, 0.88), vec3(1.08, 1.05, 0.9), t);
-}`);
+}${lanes ? LANE_GLSL : ''}`);
+    if (lanes) sh.fragmentShader = sh.fragmentShader.replace('uniform sampler2D grassDetail;', 'uniform sampler2D grassDetail;\nuniform sampler2D laneMap; uniform vec2 laneO;\n' + LANE_FNS);
   };
-  gm.customProgramCacheKey = () => 'ground-patches';
+  gm.customProgramCacheKey = () => 'ground-patches' + (lanes ? '+lanes' : '');
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), gm);
   ground.rotation.x = -Math.PI / 2; ground.position.set(c.x, 0, c.z);
   still(ground);
 }
 
+// (the story look) the lanes, drawn by the ground itself so where they join and cross it's all one: a map over the ground of
+// how far each spot is from the middle of the nearest lane (each lane carried on out into the woods: outward), 1 px every
+// 8 cm; the ground's shader turns it into packed earth in warm browns, two wheel tracks worn darker either side of the
+// middle, grass down the middle in tufts, little round stones, and soft edges where the grass takes over
+const LANE_SIZE = 120, LANE_N = 1536, LANE_FAR = 1.0;
+function laneMap(c) {
+  const N = LANE_N, data = new Uint8Array(N * N).fill(255), k = N / LANE_SIZE, o = new THREE.Vector2(c.x - LANE_SIZE / 2, c.z - LANE_SIZE / 2);
+  for (const l of V.paths) {
+    const L = outward(l);
+    for (let i = 1; i < L.length; i++) {
+      const a = L[i - 1], b = L[i];
+      const i0 = Math.max(0, Math.floor((Math.min(a[0], b[0]) - LANE_FAR - o.x) * k)), i1 = Math.min(N - 1, Math.ceil((Math.max(a[0], b[0]) + LANE_FAR - o.x) * k));
+      const j0 = Math.max(0, Math.floor((Math.min(a[2], b[2]) - LANE_FAR - o.y) * k)), j1 = Math.min(N - 1, Math.ceil((Math.max(a[2], b[2]) + LANE_FAR - o.y) * k));
+      for (let j = j0; j <= j1; j++) for (let ii = i0; ii <= i1; ii++) {
+        const d = segDist(o.x + (ii + 0.5) / k, o.y + (j + 0.5) / k, a, b); if (d >= LANE_FAR) continue;
+        const v = Math.round(d / LANE_FAR * 255), at = j * N + ii; if (v < data[at]) data[at] = v;
+      }
+    }
+  }
+  const tex = new THREE.DataTexture(data, N, N, THREE.RedFormat, THREE.UnsignedByteType);
+  tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+  return { tex, o };
+}
+const LANE_FNS = `float lh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float ln(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(lh(i), lh(i + vec2(1.0, 0.0)), f.x), mix(lh(i + vec2(0.0, 1.0)), lh(i + vec2(1.0, 1.0)), f.x), f.y); }`;
+const LANE_GLSL = `
+{
+  float ld = texture2D(laneMap, (vGW - laneO) / ${LANE_SIZE.toFixed(1)}).r * ${LANE_FAR.toFixed(2)};
+  float n1 = ln(vGW * 3.1), n2 = ln(vGW * 11.0), n3 = ln(vGW * 0.7);
+  float a = ld / 0.44;
+  float lane = 1.0 - smoothstep(0.9, 1.06, a + (n2 - 0.5) * 0.1 + (n1 - 0.5) * 0.08);
+  if (lane > 0.0) {
+    // (linear colours: warm packed earth)
+    vec3 earth = mix(vec3(0.33, 0.16, 0.06), vec3(0.47, 0.25, 0.1), n1 * 0.7 + n3 * 0.3);
+    earth *= 0.9 + 0.2 * n2;
+    float rut = 1.0 - smoothstep(0.08, 0.18, abs(a - 0.42 + (n1 - 0.5) * 0.06));
+    earth = mix(earth, vec3(0.22, 0.1, 0.04) * (0.95 + 0.1 * n1), rut * 0.5);
+    float mid = (1.0 - smoothstep(0.06, 0.2, a + (n2 - 0.5) * 0.12)) * smoothstep(0.35, 0.6, n1 + 0.2);
+    earth = mix(earth, vec3(0.13, 0.25, 0.045) * (0.9 + 0.2 * n2), mid * 0.85);
+    vec2 sc = vGW * 14.0, sf = fract(sc) - 0.5;
+    float st = step(0.94, lh(floor(sc))) * (1.0 - smoothstep(0.18, 0.26, length(sf))) * step(a, 0.8);
+    earth = mix(earth, vec3(0.5, 0.46, 0.38) * (0.85 + 0.3 * lh(floor(sc) + 3.0)), st);
+    float edge = smoothstep(0.78, 0.98, a + (n1 - 0.5) * 0.16 + (n2 - 0.5) * 0.06);
+    earth = mix(earth, diffuseColor.rgb, edge * 0.7);
+    diffuseColor.rgb = mix(diffuseColor.rgb, earth, lane);
+  }
+}`;
 function villageCentre() { const c = V.bounds.corners; return new THREE.Vector3((c[0][0] + c[2][0]) / 2, 0, (c[0][2] + c[2][2]) / 2); }
 
 function still(o, cast = false, receive = true) {          // a part of the village that never moves
@@ -813,7 +867,7 @@ vec3 ripples(vec2 p) {
   vec2 toCam = normalize(cameraPosition.xz - vWPos.xz);
   float face = dot(wg, toCam);
   ${stream ? `
-  vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);          // (the pond's own: the two waters one)
+  ${STORY_LOOK ? 'vec3 deep = vec3(0.02, 0.2, 0.33), shallow = vec3(0.12, 0.5, 0.56);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}          // (the pond's own: the two waters one; the story look: a deep green-blue, clear and sandy at the edges)
   diffuseColor.rgb = mix(deep, shallow, smoothstep(0.15, 1.0, wEdge));
   float foam = smoothstep(0.8, 0.99, wEdge) * smoothstep(0.35, 1.0, 0.5 + 0.5 * sin(dot(vWPos.xz, normalize(vFlow.zw)) * 6.0 - wTime * 2.2 + vFlow.y * 3.0));
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.95), foam * 0.4 * smoothstep(1.02, 1.3, pondAt(vWPos.xz)));
@@ -823,8 +877,13 @@ vec3 ripples(vec2 p) {
   diffuseColor.a *= smoothstep(0.9, 1.0, pe);
   diffuseColor.rgb *= 1.0 + 3.4 * face;
   diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.8, 0.95, wEdge));` : `
-  vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);         // (linear colours: #3487ad and #72bfd4)
+  ${STORY_LOOK ? 'vec3 deep = vec3(0.02, 0.2, 0.33), shallow = vec3(0.12, 0.5, 0.56);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}         // (linear colours: #3487ad and #72bfd4; the story look: #277c9c and #60bcc5, a touch of sand at the edge)
   diffuseColor.rgb = mix(deep, shallow, smoothstep(0.4, 0.98, wEdge));
+  ${STORY_LOOK ? `// (the story look) the sandy bottom showing through at the edge, with a few stones
+  { vec2 q = vWPos.xz * 2.3; float sn = fract(sin(dot(floor(q), vec2(12.9898, 78.233))) * 43758.5453);
+    float shore = smoothstep(0.72, 0.95, wEdge);
+    vec3 sand = mix(vec3(0.3, 0.27, 0.15), vec3(0.22, 0.2, 0.11), sn);
+    diffuseColor.rgb = mix(diffuseColor.rgb, sand, shore * 0.18); }` : ''}
   diffuseColor.rgb *= 1.0 + 3.4 * face;
   diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.88, 0.97, wEdge));     // (the brightest ripple faces, crisp)
   // little sparkles of light here and there, each twinkling on and off, more where the breeze ruffles the water, by day
@@ -847,8 +906,10 @@ vec3 ripples(vec2 p) {
 }
 
 function buildPaths() {
-  const geos = V.paths.map((p, i) => ribbon(GAME_MODE ? outward(p) : p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
-  still(new THREE.Mesh(mergeGeometries(geos, false), DIRT));
+  if (!(STORY_LOOK && GAME_MODE)) {          // (the story look: the ground itself draws the lanes, laneMap)
+    const geos = V.paths.map((p, i) => ribbon(GAME_MODE ? outward(p) : p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
+    still(new THREE.Mesh(mergeGeometries(geos, false), DIRT));
+  }
   // pebbles along the edges, in one batch
   const peb = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.03, 0), new THREE.MeshLambertMaterial({ color: '#cfc8ba' }), V.pebbles.length);
   const r = rng(5), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), e = new THREE.Euler();
@@ -1006,10 +1067,10 @@ function outerWoods() {
     spots.push([x, z, gap]);
   }
   // one tree: a trunk and a round crown of three blobs, in its own colours
-  const crown = mergeGeometries([[0, 0, 0, 1], [0.45, -0.15, 0.2, 0.75], [-0.35, -0.2, -0.3, 0.8]].map(([x, y, z, k]) => { const g = geoAt(new THREE.SphereGeometry(k, 8, 6), x, y, z); g.deleteAttribute('uv'); return g; }), false);      // (round and soft, like the farm's own)
+  const crown = mergeGeometries([[0, 0.1, 0, 0.8], [0.5, -0.12, 0.25, 0.62], [-0.42, -0.18, -0.28, 0.66], [0.1, -0.2, -0.5, 0.58], [-0.2, 0.42, 0.3, 0.55]].map(([x, y, z, k]) => { const g = geoAt(new THREE.SphereGeometry(k, 9, 6), x, y, z); g.deleteAttribute('uv'); return g; }), false);      // (soft and lumpy, like the farm's own)
   const trunk = new THREE.CylinderGeometry(0.11, 0.16, 1, 6).translate(0, 0.5, 0);
   const cm = new THREE.MeshLambertMaterial({ color: '#ffffff' }), tm = new THREE.MeshLambertMaterial({ color: '#6e5038' });
-  addWind(cm, 0.004); nightGrade(cm); nightGrade(tm);
+  addWind(cm, 0.004); if (STORY_LOOK) crownShade(cm, [-0.75, 0.9, 0.55]); nightGrade(cm); nightGrade(tm);
   const tiles = new Map();
   for (const sp of spots) { const k = Math.floor(sp[0] / 20) + ',' + Math.floor(sp[1] / 20); if (!tiles.has(k)) tiles.set(k, []); tiles.get(k).push(sp); }
   const c = new THREE.Color(), q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
@@ -1019,8 +1080,8 @@ function outerWoods() {
       const h = 1.4 + r() * 1.1, cr = 0.95 + r() * 0.55, far = Math.min(1, gap / 12);
       kt.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q.identity(), new THREE.Vector3(1, h + 0.3, 1)));
       kc.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, h + cr * 0.7, z), q.setFromAxisAngle(Y, r() * 6.28), new THREE.Vector3(cr, cr * (0.85 + r() * 0.2), cr)));
-      const g = 0.56 + r() * 0.16;
-      kc.setColorAt(i, c.setRGB(0.27 + r() * 0.1 - far * 0.05, g - far * 0.07, 0.17 + far * 0.08, THREE.SRGBColorSpace));
+      const g = 0.66 + r() * 0.16;
+      kc.setColorAt(i, c.setRGB(0.4 + r() * 0.12 - far * 0.06, g - far * 0.08, 0.2 + far * 0.08, THREE.SRGBColorSpace));
     });
     for (const k of [kc, kt]) { k.castShadow = true; k.receiveShadow = k === kt; k.computeBoundingSphere(); k.matrixAutoUpdate = false; scene.add(k); WOODS.push(k); }
   }
@@ -1074,6 +1135,7 @@ function batchOne(name, matrices, opts) {
     if (opts.tint && opts.lambert) mat.color.setRGB(...opts.tint);      // (its colours warmed or cooled: the wild meadow's long grass)
     if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
     if (opts.foot) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } footShade(mat, opts.foot[0], opts.foot[1]); }      // (darker at its foot, in its own shade)
+    if (opts.crown) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } crownShade(mat, opts.crown); }      // (the story look: leaves deeper inside and underneath, sunlit on top)
     if (opts.bothLit) { const before = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { if (before) before.call(mat, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); }; mat.customProgramCacheKey = () => 'bothLit'; }      // (both sides of a blade lit as its front: the long grass, not half its blades in the dark)
     nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
@@ -1293,6 +1355,28 @@ function fieldSoil(w, d, edge, ROW, z0) {      // the ploughed ground: ridges al
   m.matrixAutoUpdate = false; m.receiveShadow = true;
   return m;
 }
+// (the story look) a tree's or a bush's leaves: deeper and cooler low down and inside the crown, warm and sunlit on top, and
+// the lime greens of the models a little deeper; c: [where the crown starts, its top, how deep the shade goes]
+function crownShade(mat, c) {
+  const before = mat.onBeforeCompile, [y0, y1, deep] = c;
+  mat.onBeforeCompile = (sh, rr) => {
+    if (before) before.call(mat, sh, rr);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvCrown = smoothstep(${y0.toFixed(3)}, ${y1.toFixed(3)}, position.y); vCrownN = normal;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  float g = diffuseColor.g - max(diffuseColor.r, diffuseColor.b);          // (how green: the leaves, not the trunk)
+  float leaf = smoothstep(0.05, 0.2, g);
+  float lit = clamp(vCrown * 0.75 + max(vCrownN.y, 0.0) * 0.35, 0.0, 1.0);
+  vec3 shade = mix(vec3(${(1 - deep).toFixed(3)}, ${(1 - deep * 0.75).toFixed(3)}, ${(1 - deep * 0.55).toFixed(3)}), vec3(1.0, 0.98, 0.86), lit);
+  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.76, 0.86, 0.7) * shade, leaf);
+}`);
+  };
+  const key = mat.customProgramCacheKey, own = key !== THREE.Material.prototype.customProgramCacheKey;
+  mat.customProgramCacheKey = () => (own ? key.call(mat) : '') + '+crown' + c.join('/');
+  return mat;
+}
 function footShade(mat, top, amount) {         // a plant darker at its foot (in the shade of the others), full colour at its top
   const before = mat.onBeforeCompile;
   mat.onBeforeCompile = (sh, rr) => {
@@ -1397,8 +1481,10 @@ function buildNature() {
   dropMeshes(NATURE);
   const lists = {};
   for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
-  for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b'])
-    NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22] } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22] } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38] } : {}));
+  for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b']) {
+    const crown = STORY_LOOK ? (name[0] === 't' ? { crown: [0.7, 1.95, 0.62] } : name[0] === 'b' ? { crown: [0.0, 0.55, 0.5] } : {}) : {};
+    NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22], ...crown } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22], ...crown } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38], ...crown } : {}));
+  }
   // wildflowers in little drifts (none through a coop)
   const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] };
   for (const f of V.flowers) for (const [name, x, z, yaw, sc] of f.pts) if (!underCoop(x, z, 0.1)) fl[name].push(place(x, 0, z, yaw, sc));
@@ -1460,8 +1546,10 @@ function buildGrass() {
   for (const m of VGRASS) { const i = grassTiles.findIndex(g => g.mesh === m); if (i >= 0) grassTiles.splice(i, 1); }
   dropMeshes(VGRASS);
   const TILE = 6, tiles = new Map();
+  const mine = STORY_LOOK && GAME_MODE && game.data ? game.data.land.length : 0;
   for (const t of V.tufts) {
     if (underCoop(t[0], t[2], 0.05)) continue;
+    if (mine) { const f = fieldAt(t[0], t[2]); if (f >= 0 && f < mine) continue; }      // (your land: the carpet instead)
     const key = Math.floor(t[0] / TILE) + ',' + Math.floor(t[2] / TILE);
     if (!tiles.has(key)) tiles.set(key, [[], [], []]);
     tiles.get(key)[t[3]].push(place(t[0], 0, t[2], t[4] / DEG, t[5]));
@@ -1471,13 +1559,109 @@ function buildGrass() {
       for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2, colorOf: grassShade })) { grassTiles.push({ mesh: inst, full: inst.count }); VGRASS.push(inst); }
     });
   }
+  if (STORY_LOOK && GAME_MODE) for (const m of grassCarpet()) { grassTiles.push({ mesh: m, full: m.count, carpet: true }); VGRASS.push(m); }
   applyGrass();
+}
+// (the story look) your land's grass: a thick, soft carpet of short blades, darker at their roots and sunny at their tips,
+// in the meadow's patches, longer along the lanes and round trees, fences and walls; never through a coop, a path, the
+// water or anything standing there. In tiles of 6 m (only those in view drawn), thinner on slower phones and further out
+let CARPET_GEO = null;
+function carpetGeo() {
+  if (CARPET_GEO) return CARPET_GEO;
+  const r = rng(907), pos = [], col = [], nrm = [], c0 = new THREE.Color(), c1 = new THREE.Color(), c = new THREE.Color();
+  for (let i = 0; i < 13; i++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.075, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    const h = 0.045 + r() * 0.05, w = 0.008 + r() * 0.006, face = r() * Math.PI, lean = 0.01 + r() * 0.03, la = r() * Math.PI * 2;
+    const px = Math.cos(face) * w, pz = Math.sin(face) * w;
+    pos.push(x - px, 0, z - pz, x + px, 0, z + pz, x + Math.cos(la) * lean, h, z + Math.sin(la) * lean);
+    c0.setRGB(0.4 + r() * 0.05, 0.6 + r() * 0.05, 0.22, THREE.SRGBColorSpace);
+    c1.setRGB(0.66 + r() * 0.1, 0.84 + r() * 0.06, 0.38 + r() * 0.1, THREE.SRGBColorSpace);
+    for (const k of [0, 0, 1]) { c.copy(k ? c1 : c0); col.push(c.r, c.g, c.b); nrm.push(Math.cos(la) * 0.25, 1, Math.sin(la) * 0.25); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  g.normalizeNormals(); g.computeBoundingSphere();
+  return (CARPET_GEO = g);
+}
+let CARPET_MAT = null;
+function carpetMat() {
+  if (CARPET_MAT) return CARPET_MAT;
+  const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  addWind(m, 0.9);
+  const before = m.onBeforeCompile;          // (both sides of a blade lit as its front: never a dark underside showing)
+  m.onBeforeCompile = (sh, rr) => { before.call(m, sh, rr); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); };
+  m.customProgramCacheKey = () => 'carpet';
+  nightGrade(m);
+  return (CARPET_MAT = m);
+}
+// how far (x, z) is from the middle of the nearest lane (quick: the lanes' pieces kept in 2 m squares, once)
+let PATHB = null;
+function pathDist(x, z) {
+  if (!PATHB) {
+    PATHB = new Map();
+    for (const l of V.paths) for (let i = 1; i < l.length; i++) {
+      const a = l[i - 1], b = l[i];
+      for (let cx = Math.floor((Math.min(a[0], b[0]) - 1.2) / 2); cx <= Math.floor((Math.max(a[0], b[0]) + 1.2) / 2); cx++)
+        for (let cz = Math.floor((Math.min(a[2], b[2]) - 1.2) / 2); cz <= Math.floor((Math.max(a[2], b[2]) + 1.2) / 2); cz++) {
+          const k = cx + ',' + cz; if (!PATHB.has(k)) PATHB.set(k, []); PATHB.get(k).push([a, b]);
+        }
+    }
+  }
+  const list = PATHB.get(Math.floor(x / 2) + ',' + Math.floor(z / 2)); if (!list) return 9;
+  let d = 9; for (const [a, b] of list) d = Math.min(d, segDist(x, z, a, b));
+  return d;
+}
+function grassCarpet() {
+  if (!FIELDS || !game.data) return [];
+  const out = [], tiles = new Map(), nav = navGrid(), STEP = 0.15, n = game.data.land.length;
+  const bx0 = FIELDS.x0, bz0 = FIELDS.z0, bx1 = FIELDS.x0 + FIELDS.nx * FIELDS.cell, bz1 = FIELDS.z0 + FIELDS.nz * FIELDS.cell;
+  const trees = V.trees.map(t => [t.pos[0], t.pos[2]]);
+  for (let z = bz0, zi = 0; z < bz1; z += STEP, zi++) for (let x = bx0, xi = 0; x < bx1; x += STEP, xi++) {
+    const h1 = hash01(xi * 0.731 + 3.1, zi * 1.379 + 7.7), h2 = hash01(zi * 0.913 + 1.7, xi * 1.117 + 4.3);
+    const px = x + h1 * STEP, pz = z + h2 * STEP, f = fieldAt(px, pz);
+    const pd = pathDist(px, pz);
+    if (pd < 0.08 && h2 > 0.45) { const key = Math.floor(px / 6) + ',' + Math.floor(pz / 6); if (!tiles.has(key)) tiles.set(key, []); tiles.get(key).push([px, pz, 0.55, h1 * 6.283]); continue; }      // (a little grass down a lane's middle)
+    if (f < 0 || f >= n) continue;                                           // (your land only: the wild land has its long grass)
+    if (pd < V.pathHalf - 0.05 || underCoop(px, pz, 0.03) || inPondAt(px, pz, 0.15)) continue;
+    if (pd > V.pathHalf + 0.25 && !nav.freeAt(px, pz)) continue;          // (not through things standing there)
+    // longer by the lanes' edges and round the trees (where a mower doesn't quite reach), and in gentle patches
+    let tall = 0.85 + 0.35 * groundPatch(px * 1.7, pz * 1.7);
+    if (pd < V.pathHalf + 0.18) tall += 0.45;
+    for (const [tx, tz] of trees) { if (Math.abs(px - tx) > 1.4 || Math.abs(pz - tz) > 1.4) continue; const d = Math.hypot(px - tx, pz - tz); if (d < 1.4) { tall += 0.5 * (1 - d / 1.4); break; } }
+    const key = Math.floor(px / 6) + ',' + Math.floor(pz / 6);
+    if (!tiles.has(key)) tiles.set(key, []);
+    tiles.get(key).push([px, pz, tall, h1 * 6.283]);
+  }
+  // (a few daisies and buttercups here and there, clover in the deeper patches)
+  const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] };
+  for (const list of tiles.values()) for (const [x, z, tall] of list) {
+    if (tall < 0.8) continue;
+    const h = hash01(x * 5.3, z * 7.1), t = groundPatch(x, z);
+    if (h < 0.006) fl.flower_daisy.push(place(x, 0, z, h * 60000, 1.1 + h * 50));
+    else if (h < 0.009) fl.flower_butter.push(place(x, 0, z, h * 60000, 1.1));
+    else if (t < 0.3 && h < 0.04) fl.flower_clover.push(place(x, 0, z, h * 9000, 1.2 + h * 8));
+  }
+  for (const n in fl) out.push(...batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2, tile: 6 }));
+  const geo = carpetGeo(), mat = carpetMat(), c = new THREE.Color(), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3();
+  for (const list of tiles.values()) {
+    for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(hash01(i * 0.37, list.length * 0.11) * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }      // (shuffled: thinned evenly)
+    const k = new THREE.InstancedMesh(geo, mat, list.length);
+    list.forEach(([x, z, tall, yaw], i) => {
+      k.setMatrixAt(i, m.compose(new THREE.Vector3(x, 0, z), qn.setFromAxisAngle(up, yaw), sc.set(1, tall, 1)));
+      const t = groundPatch(x, z), v = 0.88 + hash01(z * 3.1, x * 2.3) * 0.2;      // (deeper green patches and sunnier ones)
+      k.setColorAt(i, c.setRGB((0.7 + 0.32 * t) * v, (0.84 + 0.14 * t) * v, (0.66 + 0.06 * t) * v));
+    });
+    k.computeBoundingSphere(); k.receiveShadow = true; k.matrixAutoUpdate = false; k.userData.carpet = true;
+    scene.add(k); out.push(k);
+  }
+  return out;
 }
 function applyGrass() {
   setFar(view.size > 5.5);
   furDetail();
   const far = view.size > 7.2;
-  for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); g.mesh.visible = !far; }
+  const thin = view.size < 3 ? 1 : view.size < 4.6 ? 0.7 : 0.45;      // (the story look's carpet: thinner as the farm gets smaller on the screen)
+  for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass * (g.carpet ? thin : 1))); g.mesh.visible = !far; }
   for (const m of LAND.wild) if (m.userData.small) m.visible = !far;      // (the land still to restore: its nettles and the like, with the grass)
 }
 
@@ -4117,7 +4301,7 @@ function zoomBy(f) {
   const before = view.size;
   view.size = Math.min(view.max, Math.max(view.min, view.size * f));
   const crossed = t => (before > t) !== (view.size > t);
-  if (crossed(7.2) || crossed(5.5)) applyGrass(); else furDetail();
+  if (crossed(7.2) || crossed(5.5) || crossed(3) || crossed(4.6)) applyGrass(); else furDetail();
   placeCamera();
 }
 // the view stays over the village: its centre is kept inside the map (in the map's own across/up directions)
@@ -5817,8 +6001,8 @@ function landTint() {
   for (let k = 0; k < nz; k++) {
     const r = FIELDS.rows[k], row = k;                     // (the canvas's top row is the plane's top: the lowest z, laid flat)
     for (let j = 0; j < r.length; j += 3) {
-      if (r[j + 2] < n) continue;
-      for (let i = r[j]; i < r[j] + r[j + 1]; i++) { const o = (row * nx + i) * 4; d[o] = 196; d[o + 1] = 186; d[o + 2] = 92; d[o + 3] = 92; }
+      if (r[j + 2] < n) { if (STORY_LOOK) for (let i = r[j]; i < r[j] + r[j + 1]; i++) { const o = (row * nx + i) * 4; d[o] = 58; d[o + 1] = 110; d[o + 2] = 38; d[o + 3] = 64; } continue; }      // (the story look: your land a deeper, richer green)
+      for (let i = r[j]; i < r[j] + r[j + 1]; i++) { const o = (row * nx + i) * 4; if (STORY_LOOK) { d[o] = 150; d[o + 1] = 158; d[o + 2] = 60; d[o + 3] = 70; } else { d[o] = 196; d[o + 1] = 186; d[o + 2] = 92; d[o + 3] = 92; } }
     }
   }
   c.putImageData(img, 0, 0);
@@ -5836,7 +6020,8 @@ function longGrass() {
     const px = Math.cos(face) * w, pz = Math.sin(face) * w, tx = x + Math.cos(la) * lean, tz = z + Math.sin(la) * lean;
     pos.push(x - px, 0, z - pz, x + px, 0, z + pz, tx, h, tz);
     c0.setRGB(0.42 + r() * 0.06, 0.58 + r() * 0.06, 0.2, THREE.SRGBColorSpace);
-    c1.setRGB(0.78 + r() * 0.12, 0.84 + r() * 0.08, 0.44 + r() * 0.12, THREE.SRGBColorSpace);
+    if (STORY_LOOK) c1.setRGB(0.72 + r() * 0.12, 0.78 + r() * 0.08, 0.36 + r() * 0.1, THREE.SRGBColorSpace);      // (the story look: tips golden green, a touch deeper)
+    else c1.setRGB(0.78 + r() * 0.12, 0.84 + r() * 0.08, 0.44 + r() * 0.12, THREE.SRGBColorSpace);
     for (const k of [0, 0, 1]) { c.copy(k ? c1 : c0); col.push(c.r, c.g, c.b); }
   }
   const geo = new THREE.BufferGeometry();
@@ -8193,6 +8378,7 @@ window.__farm = {
   lastExit: i => gamePlots()[i].lastExit || null, farmExit,
   // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale
   saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
+  farmLife: () => farmLife,
   farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
   overgrownIn: f => { const out = {}, m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.wild) for (let i = 0; i < im.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) out[im.userData.wild] = (out[im.userData.wild] || 0) + 1; } return out; },
   restoring: () => !!LAND.mow, puffs: () => CLEARING.length,

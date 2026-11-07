@@ -4224,3 +4224,30 @@ They were in the Unity version only. Now in the game:
   hide it). Since iOS 26 Apple fades the home bar out a moment after any app opens, and an app can no longer keep it
   showing (reported for Unity games too, closed "As Designed"); a swipe up from the bottom still leaves the game at once,
   and brings the bar back. Nothing to change in the game; told Audrey.
+
+## A more premium, natural finish, first pass (7 Nov 2026, 12:11; Audrey: "I would like you to work on improving the global design of the open world. I would like the finish to look a bit more premium and natural. For example, the grass on the unlocked land could be better ... Maybe we should review a little bit the moves of the farmer ... Think about the hay finish, the water, the trees, the bushes"; she saw examples (Tiny Glade, Hay Day, Farming Simulator) and a rough light-only test: "There is no difference between your pictures"; so a real first pass in the story pictures' feel)
+- **The switch:** `STORY_LOOK` (main.js), on; `?oldlook` shows the farm as it was, to compare.
+- **Your land's grass** (`grassCarpet`, `carpetGeo`, `carpetMat`): a thick, soft carpet of short blades every 15 cm instead of
+  the scattered dark tufts (those are left off your land): each clump darker at its roots and sunny at its tips, both
+  sides lit, swaying; in the meadow's patches (deeper green and sunnier); longer by the lanes' edges and round the trees;
+  a little grass down a lane's middle; a few daisies and buttercups, clover in the deeper patches. Never through a coop, a
+  lane, the water or anything standing there. In tiles of 6 m, thinner further out (`applyGrass`: all of it up close,
+  70% at the usual view, 45% wider) and on slower phones. Your land's ground a deeper green (`landTint`).
+- **The lanes** (`laneMap`, `LANE_GLSL`): drawn by the ground itself, so where they join and cross it's one: a map over
+  the ground of how far each spot is from the nearest lane (1 px every 8 cm, each lane carried on out into the woods);
+  packed earth in warm browns, two wheel tracks worn darker, grass down the middle in tufts, little round stones, soft
+  edges where the grass takes over. (The old look keeps its flat ribbons.)
+- **The trees, bushes and woods** (`crownShade`): their leaves deeper and cooler low down and inside the crown, warm and
+  sunlit on top, the lime greens deeper; the woods round the farm lumpy like the farm's own trees, shaded the same way.
+  The long wild grass's tips golden green, a touch deeper; the wild land's tint golden green.
+- **The water:** the pond and streams a little deeper and greener (#277c9c to #60bcc5), a touch of sand at the pond's edge.
+- **The farmer's walk** (`farmer.js` Farmer.update, every human: Arthur, Rosie, the judge): each leg's knee bends as it
+  swings forward (it had bent as the leg pushed back, so the legs looked stiff), the heel lands with the toes up and he
+  pushes off from the toes, the body lowest as each foot lands, the hips swaying over the foot on the ground and the
+  shoulders turning against them with the head steady, the arms loose, a moment behind the legs, elbows bending as they
+  come forward. Standing: breathing and a slow shift of the weight. The pail hangs by his side (`carry`), swinging a
+  little (it had been held out in front).
+- **Cost:** triangles the same as before, a few more draws (about 15 at the usual view); the load the same.
+- **Next in this pass:** the light (warmer, softer shade under things, evening glow), hay and wood (straw strands, wood
+  grain, tiles), the farmer's other moves (starting and stopping, turning, sowing, crouching; the hat and Rosie's plait),
+  then small signs of life.

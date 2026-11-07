@@ -121,7 +121,7 @@ export const POSES = {
   hips: { shL: [38, 18, 0], elL: [-70, -20, 0], shR: [-38, 18, 0], elR: [70, -20, 0], hand: ['fist', 'fist'], chest: [0, -3, 0] },
   torch: { shR: [-8, -62, 0], elR: -18, wrR: [0, 10, 0], hand: ['relax', 'hold'] },
   stretch: { shL: [30, -150, 0], elL: -10, shR: [-30, -150, 0], elR: -10, chest: [0, -8, 0], head: [0, -12, 0], hand: ['open', 'open'] },
-  carry: { shL: [10, -12, 0], elL: -20, shR: [-6, 0, 0], elR: -8, hand: ['hold', 'relax'] },          // (3D only) the pail carried, as when feeding
+  carry: { shL: [14, 2, 0], elL: -6, shR: [-6, 0, 0], elR: -8, hand: ['hold', 'relax'] },          // (3D only) the pail carried, hanging by his side (7 Nov 2026: it had been held out in front)
   // (3D only) a proper cuddle: crouched with both arms reaching down and forward to scoop a hen up; then standing with her
   // held against his chest, the left arm under her, the right hand on her back (farmlife.js: stroking, a gentle sway)
   scoop: { root_z: -0.27, hipL: [10, -96, 0], hipR: [-10, -96, 0], kneeL: 142, kneeR: 142, ankleL: -46, ankleR: -46, chest: [0, 24, 0], head: [0, -2, 0],
@@ -384,17 +384,33 @@ export class Farmer {
   update(dt) {
     const W = this.want, t = (this.t += dt);
     const target = fullPose(POSES[W.pose] || {}), face = fullFace(FACES[W.face] || {});
-    // a walk (or a run): legs swinging from the hips, knees bending as each comes through, arms swinging against them, a bob
+    // a walk (or a run) (7 Nov 2026, Audrey: "Maybe we should review a little bit the moves of the farmer"): each leg swinging
+    // through from the hip with its knee bending as it comes forward (not as it pushes back), the heel down first with the
+    // toes up, rolling over to push off from the toes; the body lowest as each foot lands and rising over it; the hips
+    // swaying over the foot on the ground and the shoulders turning against them, the head kept steady; the arms loose,
+    // swinging a moment behind the legs, the elbows bending as they come forward. With the pail it hangs by his side,
+    // swinging a little
     const g = W.walk || 0, rn = W.run || 0, ph = W.phase !== undefined ? W.phase : t * (W.run ? 11 : 6.6);      // (phase: from how far he's really gone)
     if (g > 0) {
-      const sw = (24 + 16 * rn) * g, s = Math.sin(ph), c = Math.cos(ph);
+      const sw = (22 + 16 * rn) * g, s = Math.sin(ph), c = Math.cos(ph);
       target.hipL[1] += -sw * s; target.hipR[1] += sw * s;
-      target.kneeL += (8 + (30 + 30 * rn) * Math.max(0, -c)) * g; target.kneeR += (8 + (30 + 30 * rn) * Math.max(0, c)) * g;
-      target.ankleL = -target.kneeL - target.hipL[1] * 0.6; target.ankleR = -target.kneeR - target.hipR[1] * 0.6;
-      if (!W.keepArms) { target.shL[1] += (20 + 25 * rn) * s * g; target.shR[1] += -(20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; target.elR[1] -= (10 + 40 * rn) * g; }
-      else if (W.keepArms === 'L') { target.shL[1] += (20 + 25 * rn) * s * g; target.elL[1] -= (10 + 40 * rn) * g; }          // (the torch held steady in the right hand)
-      else if (W.keepArms === 'R') { target.shR[1] += -(20 + 25 * rn) * s * g; target.elR[1] -= (10 + 40 * rn) * g; }        // (the pail held steady in the left)
-      target.chest[2] += 5 * s * g; target.chest[1] += 6 * rn; target.rootZ += -0.012 * g * Math.abs(c) - 0.03 * rn;
+      const swingL = Math.max(0, c), swingR = Math.max(0, -c);                 // (each leg's swing forward: its knee bends then)
+      target.kneeL += (6 + (40 + 34 * rn) * swingL * swingL * (1.4 - 0.4 * swingL)) * g;
+      target.kneeR += (6 + (40 + 34 * rn) * swingR * swingR * (1.4 - 0.4 * swingR)) * g;
+      const heel = 14 + 6 * rn;                                                    // (toes up as the heel lands, down as it pushes off)
+      target.ankleL = -target.kneeL - target.hipL[1] * 0.6 - heel * s * g; target.ankleR = -target.kneeR - target.hipR[1] * 0.6 + heel * s * g;
+      const a = Math.sin(ph - 0.35), fwdL = Math.max(0, -a), fwdR = Math.max(0, a), arm = (22 + 25 * rn) * g;
+      if (!W.keepArms || W.keepArms === 'R') { target.shL[1] += arm * a * (W.keepArms === 'R' ? 0.25 : 1); target.elL[1] -= (W.keepArms === 'R' ? 2 : 8 + 22 * fwdL + 40 * rn) * g; }
+      if (!W.keepArms || W.keepArms === 'L') { target.shR[1] += -arm * a; target.elR[1] -= (8 + 22 * fwdR + 40 * rn) * g; }
+      target.chest[2] += 7 * s * g; target.head[2] -= 5 * s * g;                // (shoulders against the hips, the head steady)
+      target.chest[0] += 2.2 * c * g;                                             // (swaying over the foot on the ground)
+      target.chest[1] += 6 * rn + 2 * g;
+      target.rootZ += -(0.016 + 0.02 * rn) * g * (1 - Math.abs(c)) - 0.03 * rn;   // (lowest as each foot lands)
+    } else {
+      // standing: breathing, a slow shift of the weight
+      const br = Math.sin(t * 1.7), sh = Math.sin(t * 0.37);
+      target.chest[1] += 1.1 * br; target.rootZ += 0.0025 * br;
+      target.chest[0] += 1.2 * sh; target.hipL[0] += 1.0 * sh; target.hipR[0] += 1.0 * sh;
     }
     if (W.anim) W.anim(target, face, t);
     const k = Math.min(1, dt * (g > 0 ? 14 : 6));
