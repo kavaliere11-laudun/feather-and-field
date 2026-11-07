@@ -4319,3 +4319,18 @@ They were in the Unity version only. Now in the game:
 - The boots and the easing are the same for everyone made with `Farmer` (Rosie, the show judge, the farmer in the intro
   and on show day); the leaning and the steps round are the farm's farmer's (`FarmLife`).
 - The hat: it moves with his head as it is; a wobble of its own would be too small to see at the game's size, so not done.
+
+## The farmer's own shadow (7 Nov 2026, 16:48; Audrey, of the farmer's moves video: "The shadow of the farmer doesn't follow him")
+- **Why:** the farm's shadows are drawn once and kept (`renderer.shadowMap.autoUpdate = false`: drawn again only when the
+  view has moved a good way or the sun has moved), as only still things were meant to cast them; the farmer cast his
+  into them too, so his stayed where he'd been when they were last drawn, and didn't move with him. The birds, foxes and
+  others have soft round shadows of their own that follow them.
+- **Now** (`farmer.js` `FarmerShadow`, `Farmer.ownShadow()`): the farmer no longer casts into the kept shadows. His own:
+  a second mesh on his skin, flattened onto the ground along the sun's light (in its vertex shader), drawn each frame white
+  on black into a small picture (192 px) seen from straight above, from his feet out to where his hat's shadow falls;
+  that picture laid on the ground round him (1.2 cm up) as a soft dark patch (`alphaMap`). So it has his shape, crouching,
+  waving or walking, and moves with him every frame. `drawFarmerShadows(renderer)` before each picture of the farm.
+- **How dark, which way** (`applyDaylight`): the sun's way (`SUN_DIR`), and the sun's share of the light on the ground
+  (sun x its height / (sun + sky)), x 0.9: like the farm's own shadows, long and soft in the evening, faint by moonlight.
+- The same for the farmer and the judge on show day (`showday.js`). His fishing rod no longer casts a kept shadow either.
+- (`FarmerShadow.peek()`: how much of the little picture he covers, for tests.)

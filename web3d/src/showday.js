@@ -48,6 +48,7 @@ export class ShowDay {
     this.judge = new Farmer(G.group, 'j', ctx.grade, r);
     this.judge.pos.set(J.stand[0], 0, J.stand[1]); this.judge.root.rotation.y = J.standYaw;
     this.farmer = new Farmer(G.group, ctx.look, ctx.grade, r);
+    this.judge.ownShadow(); this.farmer.ownShadow();          // (their own shadows, following them: farmer.js FarmerShadow)
     this.from = [P.farmer[0] - 2.2, P.farmer[1] + 1.4]; this.farmer.pos.set(this.from[0], 0, this.from[1]);
     this.watch = [-2.2, 2.08];                         // (where he watches from: by the sign, clear of the judge's way)
     this.plan(); this.t = 0; this.k = 0; this.done = false; this.said = {};
@@ -197,6 +198,7 @@ export class ShowDay {
     const { plots, allBirds } = this.ctx, i = plots.indexOf(this.plot);
     if (i >= 0) plots.splice(i, 1);
     for (const b of this.plot.birds) { const k = allBirds.indexOf(b); if (k >= 0) allBirds.splice(k, 1); b.root.removeFromParent(); }
+    for (const f of [this.judge, this.farmer]) if (f && f.shadow) f.shadow.dispose();
     this.G.group.removeFromParent();
   }
 }

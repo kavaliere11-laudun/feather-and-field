@@ -26,7 +26,7 @@ import { FishLineup } from './fish.js';
 import { Fishing } from './fishing.js';
 import { DuckFlock } from './ducks.js';
 import { CallPen } from './callpen.js';
-import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded } from './farmer.js';
+import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded, drawFarmerShadows, SHADOW as FARMER_SHADOW } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
@@ -215,6 +215,11 @@ function applyDaylight(h) {
   const el = mix(3) * DEG, turn = mix(4) * DEG;
   _dir.copy(NOON_FROM).applyAxisAngle(new THREE.Vector3(0, 1, 0), turn).multiplyScalar(Math.cos(el)); _dir.y = Math.sin(el);
   SUN_DIR.copy(_dir).negate().normalize();
+  // the farmer's own shadow (farmer.js FarmerShadow): the sun's way, and as dark as the light it takes away (the sun's
+  // share of what lights the ground; a little less, as the farm's soft-edged shadows are)
+  FARMER_SHADOW.dir.copy(SUN_DIR);
+  { const lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, S = lum(sun.color) * sun.intensity * Math.max(0, -SUN_DIR.y), H = lum(hemi.color) * hemi.intensity;
+    FARMER_SHADOW.dark = 0.9 * S / (S + H + 1e-6); }
   // the shadows are drawn again when the light has moved a little (not every frame: they're the costly part)
   const now = performance.now();
   if (SUN_DIR.angleTo(DAY.shadowDir) > 0.6 * DEG && now - DAY.shadowAt > 400) { DAY.shadowDir.copy(SUN_DIR); DAY.shadowAt = now; aimShadows(true); }
@@ -2551,6 +2556,7 @@ function buildFarmer() {
     kennel: kd && (HAS_DOG || (GAME_MODE && farmDog)) ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
     others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : [])],
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), inView: (x, z) => inView(x, z, 2.2) }, rng(71));
+  farmLife.f.ownShadow();                      // (his own shadow, following him: the farm's are kept, drawn only now and then)
 }
 
 // ------------------------------------------------------------------ the farmer in a pen: a cuddle, or filling the feeder
@@ -8466,7 +8472,7 @@ function replayFrame(now) {
   replay.update(dt); tickDoors(dt, now); placeTag(dt);
   WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }
-  renderer.render(scene, camera);
+  drawFarmerShadows(renderer); renderer.render(scene, camera);
   wake(300);
 }
 
@@ -8511,7 +8517,7 @@ function frame(now) {
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
-  else renderer.render(scene, camera);
+  else { drawFarmerShadows(renderer); renderer.render(scene, camera); }
   if (GAME_MODE && now - barTint.at > 1500) tintBars(now);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
@@ -8591,7 +8597,7 @@ window.__farm = {
   wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; }, water: (t) => { WATER_T.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
-  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); renderer.render(scene, camera); },
+  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderer.render(scene, camera); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
@@ -8644,7 +8650,7 @@ window.__farm = {
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
-    cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); renderer.render(scene, cam); return true; },
+    cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); drawFarmerShadows(renderer); renderer.render(scene, cam); return true; },
   poster: () => poster, intro: () => intro, posterShot: (o) => {                // the welcome picture (and the onboarding pictures): a perspective camera on the stage
     const P = poster || intro, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
@@ -8654,7 +8660,7 @@ window.__farm = {
     const sh = sun.shadow, R = o.shadowReach || 4.5; sh.mapSize.set(4096, 4096); if (sh.map) { sh.map.dispose(); sh.map = null; }
     sh.camera.left = -R; sh.camera.right = R; sh.camera.top = R; sh.camera.bottom = -R; sh.camera.updateProjectionMatrix(); sh.radius = 2.5; sh.needsUpdate = true;
     const h = (canvas.clientHeight || innerHeight) * renderer.getPixelRatio(); setFar(false); setFurDetail(h / (2 * (o.dist || 9) * Math.tan((o.fov || 24) / 2 * DEG)), 1);
-    renderer.render(scene, cam); return true; },
+    drawFarmerShadows(renderer); renderer.render(scene, cam); return true; },
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits

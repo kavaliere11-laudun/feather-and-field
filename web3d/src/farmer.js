@@ -380,7 +380,7 @@ export class FarmerRig {
     if (!(lo < 0)) return 0;
     B.pelvis.position.y -= lo; return -lo;
   }
-  ensureRod() { if (!this.rod) { this.rod = makeRod(this.grade); this.B.wristR.add(this.rod); this.rod.visible = false; } return this.rod; }
+  ensureRod() { if (!this.rod) { this.rod = makeRod(this.grade); this.B.wristR.add(this.rod); this.rod.visible = false; if (this.noKeptShadow) this.rod.traverse(o => { o.castShadow = false; }); } return this.rod; }
   // the rod's tip in the world (the line hangs from it), as posed now; null with no rod
   rodTip() { if (!this.rod || !this.rod.visible) return null; const t = this.rod.userData.tip; t.updateWorldMatrix(true, false); return t.getWorldPosition(new THREE.Vector3()); }
   // where the hat is now, in the world (to knock it off from)
@@ -402,7 +402,9 @@ export class Farmer {
     this.hitR = 0.35; this.hitY = 0.7; this.tagY = 1.6;
     const m = this.rig.mesh.material; m.transparent = true; this.opacity = 1;          // (fading in and out at the farmhouse door)
   }
-  fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5; }
+  fade(o) { this.opacity = o; this.rig.mesh.material.opacity = o; this.rig.mesh.visible = o > 0.01; this.rig.mesh.castShadow = o > 0.5 && !this.shadow; }
+  // his own shadow, following him (FarmerShadow), in place of the farm's kept shadows
+  ownShadow() { if (!this.shadow) { this.shadow = new FarmerShadow(this); this.rig.mesh.castShadow = false; } return this.shadow; }
   // a bought outfit on (its id, loaded first: loadOutfit), or Classic again (null): FarmerRig.wear
   wear(id) { return this.rig.wear(id); }
   get outfit() { return this.rig.outfit; }
@@ -513,3 +515,68 @@ export class FarmerLineup {
   }
   get geese() { return this.farmers; }
 }
+
+// ------------------------------------------------------------------ his own shadow (7 Nov 2026, Audrey: "The shadow of the farmer
+// doesn't follow him"): the farm's shadows are drawn once and kept, only drawn again when the view moves on or the sun
+// has moved (main.js: only still things should cast them), so his stayed where he'd last been. Now he has his own: his
+// figure (the same skin, a second mesh) flattened onto the ground along the sun's light, drawn each frame white on black
+// into a small picture seen from straight above, and that laid on the ground round him as a soft dark patch. SHADOW: the
+// sun's way (dir, the way the light goes) and how dark a shadow is (dark, 0..1), kept up by main.js with the time of
+// day; drawFarmerShadows(renderer) before each picture
+export const SHADOW = { dir: new THREE.Vector3(0.55, -0.72, -0.62).normalize(), dark: 0.45, list: new Set() };
+const SH_PX = 192, SH_UP = 1.8;                   // (the picture's size; how tall a farmer's shadow is reckoned, hat and all)
+const _sc = new THREE.Color(), _sv = new THREE.Vector3();
+class FarmerShadow {
+  constructor(farmer) {
+    this.f = farmer; const rig = farmer.rig; rig.noKeptShadow = true; if (rig.rod) rig.rod.traverse(o => { o.castShadow = false; });
+    this.rt = new THREE.WebGLRenderTarget(SH_PX, SH_PX, { depthBuffer: false, stencilBuffer: false });
+    this.plane = { value: 0 }; this.dirU = { value: SHADOW.dir };
+    const flat = new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide });
+    flat.userData.noGrade = true;
+    flat.onBeforeCompile = sh => {
+      sh.uniforms.shPlane = this.plane; sh.uniforms.shDir = this.dirU;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float shPlane; uniform vec3 shDir;')
+        .replace('#include <project_vertex>', `vec4 wp = modelMatrix * vec4(transformed, 1.0);
+          wp.xyz += shDir * ((shPlane - wp.y) / min(shDir.y, -0.05));      // (along the light down onto the ground)
+          vec4 mvPosition = viewMatrix * wp; gl_Position = projectionMatrix * mvPosition;`);
+    };
+    flat.customProgramCacheKey = () => 'farmerFlat';
+    this.flat = new THREE.SkinnedMesh(rig.mesh.geometry, flat); this.flat.bind(rig.mesh.skeleton, rig.mesh.bindMatrix);
+    this.flat.matrixAutoUpdate = false; this.flat.frustumCulled = false;
+    this.scene = new THREE.Scene(); this.scene.add(this.flat);
+    this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 60); this.cam.up.set(0, 0, -1);
+    const m = new THREE.MeshBasicMaterial({ color: '#0e1622', transparent: true, alphaMap: this.rt.texture, opacity: SHADOW.dark, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    m.userData.noGrade = true;
+    this.decal = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), m);
+    this.decal.renderOrder = 1; this.decal.frustumCulled = false; this.decal.visible = false;
+    SHADOW.list.add(this);
+  }
+  draw(renderer) {
+    const f = this.f, rig = f.rig, D = SHADOW.dir, o = f.opacity === undefined ? 1 : f.opacity;
+    let shown = rig.mesh.visible; for (let a = f.root; a && shown; a = a.parent) shown = a.visible;
+    const on = shown && o > 0.01 && SHADOW.dark > 0.01 && D.y < -0.05;
+    this.decal.visible = on; if (!on) return;
+    let top = f.root; while (top.parent) top = top.parent;
+    if (this.decal.parent !== top) top.add(this.decal);                  // (laid in the world itself: its place is worked out in the world's terms)
+    rig.mesh.updateWorldMatrix(true, true); rig.mesh.skeleton.update();
+    const p = _sv.setFromMatrixPosition(rig.mesh.matrixWorld), gy = p.y;
+    // where the shadow lies: from his feet out to where his hat's falls (the light's way), and a margin
+    const k = SH_UP / -D.y, hx = D.x * k, hz = D.z * k, cx = p.x + hx / 2, cz = p.z + hz / 2;
+    const e = Math.min(5, Math.max(0.9, Math.hypot(hx, hz) / 2 + 0.75));
+    this.plane.value = gy;
+    this.flat.matrix.copy(rig.mesh.matrixWorld); this.flat.matrixWorld.copy(rig.mesh.matrixWorld); this.flat.bindMatrixInverse.copy(rig.mesh.bindMatrixInverse);
+    const c = this.cam; c.left = -e; c.right = e; c.top = e; c.bottom = -e; c.position.set(cx, gy + 20, cz); c.lookAt(cx, gy, cz); c.updateProjectionMatrix(); c.updateMatrixWorld();
+    const was = renderer.getRenderTarget(), cc = renderer.getClearColor(_sc).getHex(), ca = renderer.getClearAlpha(), auto = renderer.shadowMap.autoUpdate, need = renderer.shadowMap.needsUpdate;
+    renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;          // (no shadows drawn for this little picture)
+    this.r = renderer; renderer.setRenderTarget(this.rt); renderer.setClearColor(0x000000, 1); renderer.clear(true, false, false);
+    this.scene.matrixWorldAutoUpdate = false; renderer.render(this.scene, c);
+    renderer.setRenderTarget(was); renderer.setClearColor(cc, ca); renderer.shadowMap.autoUpdate = auto; renderer.shadowMap.needsUpdate = need;
+    this.decal.position.set(cx, gy + 0.012, cz); this.decal.scale.set(2 * e, 1, 2 * e);
+    this.decal.material.opacity = SHADOW.dark * Math.min(1, o * 1.4);
+  }
+  // (tests) how much of the little picture his figure covers, 0..1
+  peek() { if (!this.r) return -1; const n = SH_PX * SH_PX, px = new Uint8Array(4 * n); this.r.readRenderTargetPixels(this.rt, 0, 0, SH_PX, SH_PX, px); let k = 0; for (let i = 0; i < n; i++) if (px[i * 4 + 1] > 127) k++; return k / n; }
+  dispose() { SHADOW.list.delete(this); this.decal.removeFromParent(); this.rt.dispose(); }
+}
+export function drawFarmerShadows(renderer) { for (const s of SHADOW.list) s.draw(renderer); }
+
