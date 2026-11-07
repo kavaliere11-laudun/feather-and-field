@@ -576,7 +576,17 @@ export class FarmLife {
       if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }
       if (W.pour) { P.shL[1] -= 45 * W.pour; P.elL[1] -= 25 * W.pour; P.wrL[1] += 70 * W.pour; P.chest[1] += 8 * W.pour; }      // the pail tipped
-      if (W.scatter !== undefined) { const k = Math.sin(((W.scatter * 1.1) % 1) * Math.PI); P.shR[1] += -30 * k; P.elR[1] += 20 * k; P.wrR[1] += -30 * k; }
+      // throwing seed or corn (7 Nov 2026: "the moves of the farmer"): a hand into the pail on his left, his body turning to
+      // it and bending a little, then a wide sweep of the arm out to the right as he turns with it, the seed flying from the
+      // end of the sweep, and back
+      if (W.scatter !== undefined) {
+        const u2 = (W.scatter * 1.1) % 1, sm = (a, b, x) => { const v = Math.min(1, Math.max(0, (x - a) / (b - a))); return v * v * (3 - 2 * v); };
+        const reach = sm(0, 0.28, u2) * (1 - sm(0.3, 0.45, u2)), sweep = sm(0.3, 0.7, u2) * (1 - sm(0.8, 1, u2));
+        P.shR[0] += 26 * reach - 50 * sweep; P.shR[1] += -18 * reach - 38 * sweep; P.elR[1] += -34 * reach + 24 * sweep; P.wrR[1] += 22 * reach - 26 * sweep;
+        P.chest[2] += 13 * reach - 16 * sweep; P.head[2] += 8 * reach - 14 * sweep; P.chest[1] += 9 * reach + 2 * sweep; P.head[1] += 6 * reach;
+      }
+      // walking round a bend: leaning into it a little, looking the way he's turning (av: how fast he turns)
+      if (sp > 0.15) { const tv = clamp(this.av, -4, 4), wk = clamp(sp / 0.9, 0, 1); P.head[2] += 5 * tv * wk; P.chest[2] += 2 * tv * wk; P.chest[0] += -1.6 * tv * wk; }
       if (W.talk) Fc.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'o';
       if (W.anim) W.anim(P, Fc, t);                           // (a task's own movement: the fishing's reel wound, a hop and a fist pumped)
     };

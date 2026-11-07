@@ -4262,3 +4262,17 @@ They were in the Unity version only. Now in the game:
 - **Next in this pass:** the light (warmer, softer shade under things, evening glow), hay and wood (straw strands, wood
   grain, tiles), the farmer's other moves (starting and stopping, turning, sowing, crouching; the hat and Rosie's plait),
   then small signs of life.
+
+## The finish, second pass: light, hay, the farmer's sowing and turns (7 Nov 2026, 13:29; Audrey, of the first pass: "Ok for all")
+- **Light** (story look, `DAY_KEYS` from 7:30 to 17:12): a warmer sun (`STORY_SUN`, #ffecd2 at midday), a touch stronger, and
+  the shade cooler and a little deeper (sky light #9db7e2, 10% less); soft shade where trunks, bushes and rocks meet the
+  ground (`natureContact`); the farm's edges softly darker, like a painting's (`#vignette`, not inside a coop or in the
+  replay).
+- **Hay** (`strawShade`, `looseStraw`): the bales' yellow in fine strands of gold, pale and a few greener stalks, darker in
+  the little gaps, along a square bale and round a round one (the twine as it was); loose straw lying about round them.
+- **The farmer** (`farmlife.js`): throwing seed or corn is a real sowing sweep: a hand into the pail on his left, his body
+  turning to it, then a wide sweep of the arm out to the right as he turns with it, the seed flying from the end of it;
+  walking round a bend he leans into it a little and looks the way he's turning. Rosie's plait has no joint of its own in
+  her model (it's part of her head), so it can't swing yet: a job for her model in Blender if wanted.
+- **Still to come:** wood grain (the models' colours are all one material, so wood has to be told from other browns),
+  small signs of life (butterflies, birds' shadows, the wind on the long grass).

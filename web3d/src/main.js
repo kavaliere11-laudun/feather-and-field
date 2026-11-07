@@ -56,6 +56,7 @@ const GAME_MODE = document.body.classList.contains('game');
 // premium and natural"): thick soft grass on your land, earth paths with wheel tracks, deeper trees and bushes, warmer
 // light. ?oldlook shows the farm as it was, to compare
 const STORY_LOOK = !params.has('oldlook');
+if (!STORY_LOOK) document.body.classList.add('oldlook');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
 // My account (release 7: account.js): the farm saved online with a Google account (only once the game has its Firebase
@@ -165,6 +166,7 @@ function aimShadows(force) {
 // 3 minutes, from ?time if given.
 // Each key: hour, sun colour, sun strength, sun height and turn (degrees; turn 0 is the midday direction), sky light,
 // ground light, their strength, the colour round the village, how lit the lamps are.
+const STORY_SUN = { 7.5: '#ffe2bd', 12.5: '#ffecd2', 17.2: '#ffe6c6' };
 const DAY_KEYS = [
   [0, '#8ea6ff', 1.6, 50, 15, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
   [5.4, '#8ea6ff', 1.6, 50, 35, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
@@ -178,7 +180,8 @@ const DAY_KEYS = [
   [20.2, '#ff8a5e', 1.4, 2, 70, '#6c6596', '#2c2a2a', 1.85, '#3e4a40', 0.7],
   [21.0, '#8ea6ff', 1.5, 40, -10, '#384a84', '#181f22', 1.5, '#203046', 1],
   [24, '#8ea6ff', 1.6, 50, 15, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
-].map(k => [k[0], new THREE.Color(k[1]), k[2], k[3], k[4], new THREE.Color(k[5]), new THREE.Color(k[6]), k[7], new THREE.Color(k[8]), k[9]]);
+].map(k => STORY_LOOK && k[0] >= 7.5 && k[0] <= 17.2 ? [k[0], STORY_SUN[k[0]] || k[1], k[2] * 1.06, k[3], k[4], '#9db7e2', '#57603f', k[7] * 0.9, k[8], k[9]] : k)      // (the story look: a warmer sun, the shade cooler and a little deeper)
+  .map(k => [k[0], new THREE.Color(k[1]), k[2], k[3], k[4], new THREE.Color(k[5]), new THREE.Color(k[6]), k[7], new THREE.Color(k[8]), k[9]]);
 const DAY = { hour: 12, glow: { value: 0 }, warm: { value: new THREE.Color('#ffc46e') }, shadowDir: SUN_DIR.clone(), shadowAt: 0 };
 const NOON_FROM = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize();                // where the midday sun is, seen from above
 const dayStart = (() => {                      // ?time=HH:MM and ?daylapse=minutes for a whole day
@@ -1186,6 +1189,7 @@ function batchOne(name, matrices, opts) {
     if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
     if (opts.foot) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } footShade(mat, opts.foot[0], opts.foot[1]); }      // (darker at its foot, in its own shade)
     if (opts.crown) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } crownShade(mat, opts.crown); }      // (the story look: leaves deeper inside and underneath, sunlit on top)
+    if (opts.straw) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } strawShade(mat, opts.straw === 'round_bale'); }
     const dapple = opts.crown && name[0] === 't';      // (a tree's shadow dappled: sunlight through its leaves)
     if (opts.bothLit) { const before = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { if (before) before.call(mat, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); }; mat.customProgramCacheKey = () => 'bothLit'; }      // (both sides of a blade lit as its front: the long grass, not half its blades in the dark)
     nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
@@ -1332,7 +1336,8 @@ function buildProps() {
   for (const p of V.props) if (!p.own) (byModel[p.model] = byModel[p.model] || []).push(place(p.pos[0], 0, p.pos[2], p.deg, p.s || 1));      // (not the game's decorations: their own copies)
   for (const name in byModel) {
     if (!parts[name]) { console.warn('no model for', name); continue; }
-    batch(name, byModel[name], { cast: true, ...(CONTACT.includes(name) && name !== 'farmhouse' ? { foot: [0.16, 0.4] } : {}) });      // (the ones standing on the ground: a touch darker where they meet it)
+    batch(name, byModel[name], { cast: true, ...(CONTACT.includes(name) && name !== 'farmhouse' ? { foot: [0.16, 0.4] } : {}), ...(STORY_LOOK && (name === 'hay_stack' || name === 'round_bale') ? { straw: name } : {}) });      // (the ones standing on the ground: a touch darker where they meet it; the story look: straw on the hay)
+  if (STORY_LOOK) looseStraw();
   }
   for (const mx of byModel.wheat_field || []) wheat(mx, 4.4, 2.4);
   contactShadows();
@@ -1406,6 +1411,54 @@ function fieldSoil(w, d, edge, ROW, z0) {      // the ploughed ground: ridges al
   const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors: true }));
   m.matrixAutoUpdate = false; m.receiveShadow = true;
   return m;
+}
+// (the story look) hay that looks like straw (7 Nov 2026, Audrey: "Think about the hay finish"): its yellow parts in fine
+// strands of golden, pale and a few greener and browner stalks, darker in the little gaps between them, running along a
+// square bale and round a round one; the twine left as it is
+function strawShade(mat, round) {
+  const before = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, rr) => {
+    if (before) before.call(mat, sh, rr);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vStrawP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvStrawP = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vStrawP;
+float sh1(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float sn(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(sh1(i), sh1(i + vec3(1, 0, 0)), f.x), mix(sh1(i + vec3(0, 1, 0)), sh1(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(sh1(i + vec3(0, 0, 1)), sh1(i + vec3(1, 0, 1)), f.x), mix(sh1(i + vec3(0, 1, 1)), sh1(i + vec3(1, 1, 1)), f.x), f.y), f.z); }`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{
+  float hay = smoothstep(0.12, 0.3, min(diffuseColor.r, diffuseColor.g) - diffuseColor.b) * step(diffuseColor.g * 0.55, diffuseColor.r * 0.9);
+  ${round ? 'vec3 q = vec3(atan(vStrawP.z, vStrawP.y) * 0.35, vStrawP.x, length(vStrawP.yz));' : 'vec3 q = vStrawP;'}
+  vec3 s1 = vec3(q.x * 3.0, q.y * 95.0, q.z * 95.0), s2 = vec3(q.x * 7.0, q.y * 190.0, q.z * 190.0);
+  float a = sn(s1), b = sn(s2), c = sn(vec3(q.x * 1.5, q.y * 22.0, q.z * 22.0));
+  vec3 straw = diffuseColor.rgb * mix(vec3(0.82, 0.72, 0.5), vec3(1.08, 1.02, 0.86), a);
+  straw = mix(straw, straw * vec3(0.86, 0.98, 0.7), smoothstep(0.75, 0.95, c) * 0.5);          // (a few greener stalks)
+  straw *= 0.8 + 0.28 * smoothstep(0.25, 0.7, b);                                                // (the little gaps)
+  diffuseColor.rgb = mix(diffuseColor.rgb, straw, hay);
+}`);
+  };
+  const key = mat.customProgramCacheKey, own = key !== THREE.Material.prototype.customProgramCacheKey;
+  mat.customProgramCacheKey = () => (own ? key.call(mat) : '') + '+straw' + (round ? 'r' : 's');
+  return mat;
+}
+// loose straw on the ground round the hay: little golden stalks lying about
+function looseStraw() {
+  const r = rng(733), list = [], col = new THREE.Color(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  for (const p of V.props) {
+    if (p.model !== 'hay_stack' && p.model !== 'round_bale') continue;
+    const R = p.model === 'hay_stack' ? 0.75 : 0.6;
+    for (let i = 0; i < 70; i++) {
+      const a = r() * 6.283, d = R * (0.55 + Math.sqrt(r()) * 0.75), x = p.pos[0] + Math.cos(a) * d, z = p.pos[2] + Math.sin(a) * d;
+      list.push([x, z, r() * 6.283, 0.05 + r() * 0.07, r()]);
+    }
+  }
+  if (!list.length) return;
+  const g = new THREE.BoxGeometry(1, 0.004, 0.007), m = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+  nightGrade(m);
+  const k = new THREE.InstancedMesh(g, m, list.length);
+  list.forEach(([x, z, yaw, len, h], i) => { k.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.006, z), q.setFromEuler(e.set(0, yaw, (h - 0.5) * 0.2)), new THREE.Vector3(len, 1, 1))); k.setColorAt(i, col.set(h < 0.6 ? '#e8c35a' : h < 0.85 ? '#f2db8c' : '#b9a24f')); });
+  k.computeBoundingSphere(); k.receiveShadow = true; k.matrixAutoUpdate = false; scene.add(k);
 }
 // (the story look) a tree's shadow with sunlight coming through its leaves: its shadow drawn with little gaps, in clumps
 let DAPPLE = null;
@@ -1564,6 +1617,18 @@ function tagNature() {
 }
 const natureMatrix = o => o.id[0] === 't' ? place(o.pos[0], 0, o.pos[2], o.yaw, o.h / 2.1) : place(o.pos[0], 0, o.pos[2], o.rot, o.s * (o.id[0] === 'b' ? 1.1 : 1.2));
 const NATURE = [];
+function natureContact() {
+  const list = [];
+  for (const t of V.trees) list.push(place(t.pos[0], 0.0066, t.pos[2], 0, 1).multiply(new THREE.Matrix4().makeScale(1.25, 1, 1.25)));
+  for (const b of V.bushes) { const k = 1.15 * (b.s || 1); list.push(place(b.pos[0], 0.0066, b.pos[2], 0, 1).multiply(new THREE.Matrix4().makeScale(k, 1, k))); }
+  for (const r of V.rocks) { const k = 0.5 * (r.s || 1); list.push(place(r.pos[0], 0.0066, r.pos[2], 0, 1).multiply(new THREE.Matrix4().makeScale(k, 1, k))); }
+  const mat = new THREE.MeshBasicMaterial({ map: contactTex(), color: '#1d2a17', transparent: true, opacity: 0.38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  nightGrade(mat);
+  const k = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), mat, list.length);
+  list.forEach((m, i) => k.setMatrixAt(i, m));
+  k.computeBoundingSphere(); k.renderOrder = -1; k.matrixAutoUpdate = false; k.userData.ownMat = true; scene.add(k);
+  return [k];
+}
 function dropMeshes(list) { for (const m of list) { m.removeFromParent(); if (m.userData.ownMat) m.material.dispose(); } list.length = 0; }
 function buildNature() {
   dropMeshes(NATURE);
@@ -1573,6 +1638,7 @@ function buildNature() {
     const crown = STORY_LOOK ? (name[0] === 't' ? { crown: [0.7, 1.95, 0.62, 7] } : name[0] === 'b' ? { crown: [0.0, 0.55, 0.5, 14] } : {}) : {};
     NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22], ...crown } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22], ...crown } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38], ...crown } : {}));
   }
+  if (STORY_LOOK) NATURE.push(...natureContact());      // (soft shade where trunks, bushes and rocks meet the ground)
   // wildflowers in little drifts (none through a coop)
   const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] };
   for (const f of V.flowers) for (const [name, x, z, yaw, sc] of f.pts) if (!underCoop(x, z, 0.1)) fl[name].push(place(x, 0, z, yaw, sc));
