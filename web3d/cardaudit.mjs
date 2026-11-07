@@ -120,10 +120,13 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     ['jobs', `${U}.jobsSheet({})`],
     ['orders', `${U}.ordersSheet({})`],      // (village orders, 7 Nov 2026)
     ['levelup2', `(() => { ${G}.data.lvSeen = 1; ${U}.levelUpCard(3, { price: 100 }, () => {}, ['orp'], null); })()`],      // (levels 2 and 3 at once: fishing, the tin, the golden egg, the orders, a breed)
+    ['levelup4', `(() => { ${G}.data.lvSeen = 3; ${U}.levelUpCard(4, { price: 200 }, () => {}, [], null); })()`],      // (level 4: the vegetable garden, the geese, Rusty)      // (levels 2 and 3 at once: fishing, the tin, the golden egg, the orders, a breed)
     ['shop', `${U}.shopSheet({}, 'decor')`],
     ['shop2', `${U}.shopSheet({}, 'animals')`],
     ['shop3', `${U}.shopSheet({}, 'dress')`],
     ['wheat', `${U}.wheatSheet({})`],
+    ['garden', `(() => { const g = ${G}, G2 = g.garden(), now = window.__T; G2.beds[0] = { crop: 'carrot', ripe: now - 1000 }; G2.beds[1] = { crop: 'straw', ripe: now + 2 * 3600e3 }; G2.beds[2] = { crop: null, ripe: 0 }; G2.veg = { carrot: 12, straw: 4, pump: 2 }; ${U}.gardenSheet({}); })()`],      // (the vegetable garden, 7 Nov 2026: a bed ripe, one growing, one empty)
+    ['treat', `${U}.treatSheet(${G}.data.coops[0].id, {})`],
     ['decor', `${U}.decorCard('beehives', () => {})`],
     ['dock', `${U}.dockCard({ water: 'pond' }, {})`],
     ['fish', `${U}.fishCard({ id: 'big_bertha', cm: 84, water: 'river', rare: 1, legend: false, first: true, best: false, coins: 160, xp: 40, n: 1 }, () => {})`],

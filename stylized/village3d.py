@@ -2053,3 +2053,256 @@ def pasture_shelter_v(seed=147, name='pasture_shelter'):
     objs.append(cyl('vpswater', 0.11, 0.008, (tx, ty, 0.2), m=water, verts=16, bevel=0.0)); objs[-1].scale = (2.6, 1.0, 1.0)
     for sx in (-1, 1): objs.append(box('vpsfoot', (0.04, 0.24, 0.03), (tx + sx * 0.22, ty, 0.015), m=galv, bevel=0.0))
     return finish(objs, name)
+
+
+# ================================================================== the vegetable garden (7 Nov 2026, Audrey's choice:
+# "Vegetable garden: grow carrots, strawberries and pumpkins, which grow at different speeds; treats the hens love"):
+# three raised beds side by side in timber frames, a watering can and a trug; each bed shows what's sown in it (its sign
+# with the crop painted on, then the crop at three stages: shoots, growing, ripe). The crops and signs are their own
+# models, in a bed's own frame (its middle at 0, 0; the soil's top at GARDEN_SOIL): the browser puts them in the beds.
+GARDEN_BED = (0.8, 1.5)          # a bed's frame outside (x, y)
+GARDEN_X = (-1.0, 0.0, 1.0)      # the beds' middles
+GARDEN_SOIL = 0.16
+
+
+def ribbon_leaf(objs, name, base, d, L, w, m, up=0.35, both=True):
+    """A narrow leaf from base along direction d (any), lifted by `up`: a pointed blade (two triangles each side)."""
+    from mathutils import Quaternion
+    D = Vector(d).normalized(); D = (D + Vector((0, 0, up))).normalized()
+    q = D.to_track_quat('Y', 'Z')
+    objs.append(flat_leaf(name, base, q, L, w, m, shape='diamond', both=both, fold=w * 0.15))
+
+
+def garden_v(seed=151, name='garden'):
+    """Three raised beds (two boards high, corner posts a little proud, the soil heaped a little and crumbly on top), a
+    green watering can at the front right, a trug with a hand fork at the front left. About 3.3 m across, 1.6 deep."""
+    random.seed(seed); objs = []
+    wood = [C('gdwood%d' % i, h, rough=0.85, var=0.1) for i, h in enumerate(('#8a5d3a', '#7d5434', '#94673f'))]
+    post = C('gdpost', '#6e4a2e', rough=0.9, var=0.08)
+    soil = C('gdsoil', '#5a3f2c', rough=0.95, var=0.06); clod = C('gdclod', '#6b4c35', rough=1.0, var=0.08)
+    W, D = GARDEN_BED; T = 0.045
+    for bx in GARDEN_X:
+        for row, z in enumerate((0.05, 0.145)):            # two boards high, a hair apart
+            for sy in (-1, 1): objs.append(box('gdboard', (W - 0.02, T, 0.088), (bx, sy * (D / 2 - T / 2), z), m=random.choice(wood), bevel=0.008, segs=1, jitter=0.002))
+            for sx in (-1, 1): objs.append(box('gdboard', (T, D - 2 * T, 0.088), (bx + sx * (W / 2 - T / 2), 0, z), m=random.choice(wood), bevel=0.008, segs=1, jitter=0.002))
+        for sx in (-1, 1):
+            for sy in (-1, 1): objs.append(box('gdpost', (0.06, 0.06, 0.24), (bx + sx * (W / 2 - 0.02), sy * (D / 2 - 0.02), 0.12), m=post, bevel=0.008, segs=1))
+        objs.append(box('gdsoil', (W - 2 * T, D - 2 * T, GARDEN_SOIL - 0.01), (bx, 0, (GARDEN_SOIL - 0.01) / 2), m=soil, bevel=0.0))
+        for k in range(26):                                 # crumbs of earth on top
+            x = bx + random.uniform(-W / 2 + T + 0.03, W / 2 - T - 0.03); y = random.uniform(-D / 2 + T + 0.03, D / 2 - T - 0.03)
+            objs.append(sphere('gdclod', random.uniform(0.012, 0.022), (x, y, GARDEN_SOIL - 0.006), (1, 1, 0.45), m=clod, ico=1, seed=k))
+    # the watering can (front right, by the end bed): its body, the spout with its rose, the handle over the top
+    can = C('gdcan', '#5f8f6a', rough=0.45, metal=0.5); cand = C('gdcand', '#4b735a', rough=0.5, metal=0.5)
+    cx, cy = GARDEN_X[-1] + W / 2 + 0.2, -D / 2 + 0.22
+    objs.append(lathe('gdcanbody', [(0.0, 0.0), (0.075, 0.0), (0.08, 0.02), (0.08, 0.15), (0.07, 0.17), (0.035, 0.18)], can, verts=18, cap_bottom=True, cap_top=True))
+    objs[-1].location = (cx, cy, 0)
+    a, b = Vector((cx - 0.06, cy - 0.03, 0.05)), Vector((cx - 0.24, cy - 0.09, 0.2))
+    objs.append(cyl('gdspout', 0.014, (b - a).length, tuple((a + b) / 2), (b - a).to_track_quat('Z', 'Y').to_euler(), m=can, verts=8, r2=0.01, bevel=0.0))
+    objs.append(cyl('gdrose', 0.022, 0.03, tuple(b + (b - a).normalized() * 0.012), (b - a).to_track_quat('Z', 'Y').to_euler(), m=cand, verts=10, r2=0.012, bevel=0.0))
+    polyline(objs, 'gdhandle', [Vector((cx + 0.06, cy, 0.16)), Vector((cx + 0.05, cy, 0.24)), Vector((cx - 0.02, cy, 0.26)), Vector((cx - 0.05, cy, 0.19))], 0.016, 0.01, (0, -1, 0), cand)
+    # the trug (front left): a shallow willow basket, a hand fork lying in it, two carrots
+    tr = C('gdtrug', '#b08a55', rough=0.85, var=0.06); trd = C('gdtrugd', '#8c6a3e', rough=0.85)
+    tx, ty = GARDEN_X[0] - W / 2 - 0.2, -D / 2 + 0.25
+    objs.append(lathe('gdtrugb', [(0.0, 0.01), (0.08, 0.01), (0.12, 0.05), (0.13, 0.07)], tr, verts=16, cap_bottom=True)); objs[-1].scale = (1.6, 1.0, 1.0); objs[-1].location = (tx, ty, 0)
+    objs.append(lathe('gdtrugr', [(0.128, 0.068), (0.124, 0.076)], trd, verts=16)); objs[-1].scale = (1.6, 1.0, 1.0); objs[-1].location = (tx, ty, 0)
+    polyline(objs, 'gdtrugh', [Vector((tx - 0.18, ty, 0.07)), Vector((tx - 0.12, ty, 0.17)), Vector((tx, ty, 0.2)), Vector((tx + 0.12, ty, 0.17)), Vector((tx + 0.18, ty, 0.07))], 0.016, 0.008, (0, -1, 0), trd)
+    steel = C('gdsteel', '#a9aca8', rough=0.35, metal=0.8); handle = C('gdhandlew', '#8a5d3a', rough=0.75)
+    objs.append(cyl('gdforkh', 0.011, 0.09, (tx - 0.05, ty + 0.02, 0.06), (math.radians(90), 0, math.radians(80)), m=handle, verts=8, bevel=0.0))
+    for k in range(3): objs.append(cyl('gdtine', 0.004, 0.07, (tx + 0.04, ty + 0.035 + (k - 1) * 0.012, 0.055), (math.radians(90), 0, math.radians(80)), m=steel, verts=5, bevel=0.0))
+    org = C('gdcarrot', '#e8792a', rough=0.6); leaf = C('gdleaf', '#5b9440', rough=0.75)
+    for k, (dx, dy, yaw) in enumerate(((0.02, -0.03, 0.3), (0.06, 0.02, -0.4))):
+        p = Vector((tx + dx, ty + dy, 0.05)); d = Vector((math.cos(yaw), math.sin(yaw), 0))
+        objs.append(cyl('gdtrugc', 0.016, 0.1, tuple(p), d.to_track_quat('Z', 'Y').to_euler(), m=org, verts=8, r2=0.004, bevel=0.0))
+        for j in range(4): ribbon_leaf(objs, 'gdtrugl', tuple(p - d * 0.05), -d + Vector((random.uniform(-0.4, 0.4), random.uniform(-0.4, 0.4), 0)), 0.07, 0.008, leaf, up=0.2)
+    return finish(objs, name)
+
+
+def garden_sign_v(kind, name):
+    """A bed's sign at its front: a stake with a little cream board, the crop painted on it (a carrot, a strawberry, a
+    pumpkin) as raised flat shapes, facing the front (-y)."""
+    random.seed(sum(map(ord, name))); objs = []
+    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03); edge = C('gsedge', '#6e4a2e', rough=0.85)
+    X, Y = 0.22, -GARDEN_BED[1] / 2 + 0.1
+    objs.append(box('gsstake', (0.016, 0.016, 0.2), (X, Y + 0.01, GARDEN_SOIL + 0.06), m=stake, bevel=0.0))
+    B0 = Vector((X, Y, GARDEN_SOIL + 0.17)); tilt = math.radians(-12)
+    objs.append(box('gsboard', (0.14, 0.012, 0.1), tuple(B0), (tilt, 0, 0), m=board, bevel=0.004, segs=1))
+    for sz in (-1, 1): objs.append(box('gsedge', (0.15, 0.014, 0.008), tuple(B0 + Vector((0, -sz * 0.05 * math.sin(tilt), sz * 0.05 * math.cos(tilt)))), (tilt, 0, 0), m=edge, bevel=0.0))
+    # the picture: shapes laid on the board's front face
+    F = Vector((0, -math.cos(tilt), math.sin(tilt)))       # (its front's normal; the board's up along U)
+    U = Vector((0, math.sin(-tilt) * -1, math.cos(tilt))); U = Vector((0, -math.sin(tilt), math.cos(tilt)))
+    at = lambda u, v, lift=0.0: B0 + F * (0.0065 + lift) + Vector((u, 0, 0)) + U * v
+    def disc(nm, u, v, sx, sy, m, lift=0.0, rot=0.0):
+        o = cyl(nm, 1.0, 0.002, tuple(at(u, v, lift)), (0, 0, 0), m=m, verts=14, bevel=0.0)
+        o.rotation_euler = (F.to_track_quat('Z', 'Y') @ Euler((0, 0, rot)).to_quaternion()).to_euler(); o.scale = (sx, sy, 1.0); objs.append(o)
+    green = C('gsgreen', '#4f8a35', rough=0.7)
+    if kind == 'carrot':
+        org = C('gscarrot', '#e8792a', rough=0.6)
+        o = cyl('gscar', 0.012, 0.05, tuple(at(0.0, -0.004, 0.002)), (0, 0, 0), m=org, verts=10, r2=0.002, bevel=0.0)      # a carrot: a cone, point down
+        o.rotation_euler = (-U).to_track_quat('Z', 'Y').to_euler(); o.scale = (1.0, 0.35, 1.0); objs.append(o)
+        for a in (-0.5, 0.0, 0.5): disc('gstop', 0.012 * math.sin(a) * 2, 0.03 + 0.01 * math.cos(a), 0.004, 0.014, green, rot=a)
+    elif kind == 'straw':
+        red = C('gsred', '#d43b2f', rough=0.5); seed = C('gsseed', '#f2d36b', rough=0.6)
+        o = cyl('gsberry', 0.02, 0.036, tuple(at(0.0, -0.004, 0.002)), (0, 0, 0), m=red, verts=12, r2=0.008, bevel=0.0)      # a berry: a rounded cone, point down
+        o.rotation_euler = (-U).to_track_quat('Z', 'Y').to_euler(); o.scale = (1.0, 0.35, 1.0); objs.append(o)
+        for (u, v) in ((-0.008, 0.006), (0.008, 0.005), (0.0, -0.006), (-0.006, -0.003), (0.006, -0.008)): disc('gsseed', u, v, 0.0018, 0.0026, seed, lift=0.0045)
+        for a in (-1.0, 0.0, 1.0): disc('gscalyx', 0.012 * math.sin(a), 0.016 + 0.006 * math.cos(a), 0.004, 0.009, green, lift=0.004, rot=a)
+    else:
+        org = C('gspump', '#e27d2a', rough=0.55); dark = C('gspumpd', '#c4651e', rough=0.6); stalk = C('gsstalk', '#6b6a35', rough=0.8)
+        disc('gspump', 0.0, -0.006, 0.028, 0.023, org)
+        for u in (-0.013, 0.0, 0.013): disc('gsrib', u, -0.006, 0.0014, 0.021 - abs(u) * 0.35, dark, lift=0.001)
+        disc('gsstalk', 0.0, 0.02, 0.003, 0.008, stalk, lift=0.001); disc('gsleafp', 0.011, 0.022, 0.009, 0.004, green, lift=0.001, rot=0.5)
+    return finish(objs, name)
+
+
+def flat_bit(name, c, a, L, w, m):
+    """A flat little strip lying on the ground at c, along angle a (a straw, two triangles, seen from above)."""
+    me = bpy.data.meshes.new(name); dx, dy = math.cos(a) * L / 2, math.sin(a) * L / 2; nx, ny = -math.sin(a) * w / 2, math.cos(a) * w / 2
+    me.from_pydata([(c[0] - dx - nx, c[1] - dy - ny, c[2]), (c[0] + dx - nx, c[1] + dy - ny, c[2]), (c[0] + dx + nx, c[1] + dy + ny, c[2]), (c[0] - dx + nx, c[1] - dy + ny, c[2])], [], [(0, 1, 2, 3)])
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def _strawberry_plant(objs, x, y, s, leaf, stalk, flowers=0, berries=0, unripe=0):
+    """A strawberry plant at (x, y), size s (1: full grown): trifoliate leaves on stalks round it, white flowers, berries
+    lying out on the straw round it (red, seeded; or still green-white)."""
+    from mathutils import Quaternion
+    n = int(round(5 + 6 * s)); z0 = GARDEN_SOIL
+    for k in range(n):
+        a = k / n * math.tau + random.uniform(-0.3, 0.3); r = random.uniform(0.04, 0.07) * s; h = random.uniform(0.05, 0.09) * s
+        tip = Vector((x + math.cos(a) * r, y + math.sin(a) * r, z0 + h))
+        objs.append(plank('gstalk', (x, y, z0), tuple(tip), 0.004, 0.003, (0, 0, 1), stalk, jitter=0.0, bevel=0.0))
+        out = Vector((math.cos(a), math.sin(a), 0))
+        for j, da in enumerate((-0.9, 0.0, 0.9)):            # three round toothed leaflets, spread out flat-ish
+            d = Vector((math.cos(a + da), math.sin(a + da), 0.25 + random.uniform(-0.1, 0.15)))
+            q = d.normalized().to_track_quat('Y', 'Z') @ Quaternion((0, 1, 0), random.uniform(-0.3, 0.3))
+            objs.append(flat_leaf('gsleaf', tuple(tip), q, random.uniform(0.038, 0.048) * (0.6 + 0.4 * s), random.uniform(0.017, 0.021) * (0.6 + 0.4 * s), random.choice(leaf), shape='heart', both=True, fold=0.004))
+    white = C('gsflower', '#f7f4ea', rough=0.6); yel = C('gsfcentre', '#f2c53d', rough=0.6)
+    for k in range(flowers):
+        a = random.uniform(0, math.tau); p = Vector((x + math.cos(a) * 0.05 * s, y + math.sin(a) * 0.05 * s, z0 + 0.1 * s + 0.01))
+        for j in range(5):
+            b = j / 5 * math.tau; objs.append(cyl('gspetal', 0.0085, 0.002, tuple(p + Vector((math.cos(b) * 0.009, math.sin(b) * 0.009, 0))), m=white, verts=6, bevel=0.0))
+        objs.append(cyl('gscentre', 0.0055, 0.004, tuple(p + Vector((0, 0, 0.002))), m=yel, verts=6, bevel=0.0))
+    red = C('gsberry', '#d43b2f', rough=0.4, coat=0.3); pale = C('gsunripe', '#d8e2a8', rough=0.6); seed = C('gsseedy', '#f2d36b', rough=0.6)
+    calyx = C('gscalyx', '#4f8a35', rough=0.7)
+    for k in range(berries + unripe):
+        a = k / max(1, berries + unripe) * math.tau + random.uniform(-0.4, 0.4); r = random.uniform(0.07, 0.1)
+        p = Vector((x + math.cos(a) * r, y + math.sin(a) * r, z0 + 0.018)); ripe = k < berries
+        d = Vector((math.cos(a), math.sin(a), -0.35)).normalized()      # (lying out, its tip down and away from the plant)
+        o = sphere('gsberry', 0.016 if ripe else 0.012, tuple(p), (1.0, 1.0, 1.3), m=red if ripe else pale, seg=8, rings=6)
+        o.rotation_euler = d.to_track_quat('Z', 'Y').to_euler(); objs.append(o)
+        objs.append(cyl('gscalyx', 0.012, 0.004, tuple(p - d * 0.019), d.to_track_quat('Z', 'Y').to_euler(), m=calyx, verts=6, bevel=0.0))
+        objs.append(plank('gsrunner', (x, y, z0 + 0.04 * s), tuple(p - d * 0.02), 0.003, 0.002, (0, 0, 1), C('gsstalk', '#6f9a3c', rough=0.7), jitter=0.0, bevel=0.0))
+
+
+def _carrot_plant(objs, x, y, s, leaf, stem, shoulder=False):
+    """A carrot's feathery top: stems out of the ground, each with leaflets along it; ripe: its orange shoulder showing."""
+    from mathutils import Quaternion
+    n = 3 if s < 0.35 else 5 if s < 0.7 else 7; z0 = GARDEN_SOIL
+    for k in range(n):
+        a = k / n * math.tau + random.uniform(-0.4, 0.4); lean = random.uniform(0.15, 0.45)
+        L = random.uniform(0.75, 1.1) * (0.05 + 0.15 * s)
+        d = Vector((math.cos(a) * lean, math.sin(a) * lean, 1.0)).normalized()
+        tip = Vector((x, y, z0 + 0.005)) + d * L
+        if s < 0.35:                                          # (shoots: plain little blades)
+            ribbon_leaf(objs, 'gcshoot', (x, y, z0 + 0.003), d, L, 0.005, random.choice(leaf), up=1.2); continue
+        objs.append(plank('gcstem', (x, y, z0), tuple(tip), 0.0035, 0.0025, (math.cos(a), math.sin(a), 0), stem, jitter=0.0, bevel=0.0))
+        for j in range(3 if s < 0.7 else 4):                  # leaflets in pairs up the stem, smaller at the tip
+            u = 0.35 + 0.2 * j; p = Vector((x, y, z0)) + d * L * u; side = Vector((-math.sin(a), math.cos(a), 0))
+            for sd in (-1, 1):
+                ribbon_leaf(objs, 'gcleaf', tuple(p), side * sd + d * 0.6, (0.035 - j * 0.006) * (0.6 + 0.5 * s), 0.009, random.choice(leaf), up=0.5)
+        ribbon_leaf(objs, 'gcleaf', tuple(tip), d, 0.025 * (0.6 + 0.5 * s), 0.008, random.choice(leaf), up=0.3)
+    if shoulder:
+        org = C('gcorange', '#e8792a', rough=0.6)
+        objs.append(cyl('gcshoulder', random.uniform(0.017, 0.022), 0.03, (x, y, z0 + 0.002), m=org, verts=10, r2=0.012, bevel=0.0))
+
+
+def _pumpkin(objs, p, r, m, ribs=10, stalk=None, yaw=0.0):
+    """A ribbed pumpkin sitting at p (its foot), radius r: squat, a dimple at the top, a stalk."""
+    me = bpy.data.meshes.new('gppump'); bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=40, v_segments=14, radius=1.0)
+    for v in bm.verts:
+        th = math.atan2(v.co.y, v.co.x) + yaw; rib = 1.0 - 0.13 * abs(math.sin(ribs * th / 2)) ** 0.7
+        z = v.co.z; zz = z * 0.72 - 0.18 * max(0.0, z) ** 6      # (squat; pulled in at the top round the stalk)
+        v.co = Vector((v.co.x * rib, v.co.y * rib, zz))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('gppump', me)); setmat(o, m)
+    for pl in o.data.polygons: pl.use_smooth = True
+    o.scale = (r, r, r); o.location = (p[0], p[1], p[2] + r * 0.7); objs.append(o)
+    if stalk:
+        objs.append(cyl('gpstalk', r * 0.11, r * 0.4, (p[0], p[1], p[2] + r * 0.62 + r * 0.2), (random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3), 0), m=stalk, verts=7, r2=r * 0.07, bevel=0.0))
+
+
+def _pumpkin_leaf(objs, base, d, size, m):
+    """A pumpkin's big leaf from base (its stalk's top) towards d: five rounded lobes fanned out (palm-like), cupped a
+    little, the middle one longest."""
+    from mathutils import Quaternion
+    D = d.normalized(); up = Vector((0, 0, 1)); side = D.cross(up).normalized() if abs(D.z) < 0.95 else Vector((1, 0, 0))
+    for k, ang in enumerate((-72, -36, 0, 36, 72)):
+        L = size * (1.0 - abs(ang) / 72 * 0.3); a = math.radians(ang)
+        dir_ = (D * math.cos(a) + side * math.sin(a)).normalized(); dir_.z += 0.12 * abs(ang) / 72      # (the side lobes curled up a little)
+        q = dir_.normalized().to_track_quat('Y', 'Z')
+        objs.append(flat_leaf('gpleaf', tuple(Vector(base) + dir_ * 0.004), q, L, L * 0.42, m, shape='heart', both=True, fold=L * 0.06))
+
+
+def _pumpkin_vine(objs, x, y, s, leaf, vine, rng_a=0.0, leaves=8):
+    """A pumpkin plant at (x, y): runners out over the bed, big heart-shaped leaves on tall stalks along them."""
+    from mathutils import Quaternion
+    z0 = GARDEN_SOIL
+    for k in range(leaves):
+        a = rng_a + k / leaves * math.tau * 1.6 + random.uniform(-0.3, 0.3); r = random.uniform(0.03, 0.24) * s
+        foot = Vector((x + math.cos(a) * r, y + math.sin(a) * r, z0 + 0.008)); h = random.uniform(0.04, 0.13) * (0.5 + 0.5 * s)
+        top = foot + Vector((math.cos(a) * 0.03, math.sin(a) * 0.03, h))
+        objs.append(plank('gpstem', tuple(foot), tuple(top), 0.006, 0.005, (math.cos(a), math.sin(a), 0), vine, jitter=0.0, bevel=0.0))
+        _pumpkin_leaf(objs, top, Vector((math.cos(a), math.sin(a), random.uniform(0.15, 0.45))), random.uniform(0.1, 0.13) * (0.55 + 0.45 * s), random.choice(leaf))
+    for k in range(3):                                        # the runners, lying along the soil
+        a = rng_a + k * 2.1 + random.uniform(-0.3, 0.3); pts = []
+        for j in range(5):
+            u = j / 4; rr = 0.28 * s * u; pts.append(Vector((x + math.cos(a + 0.5 * u) * rr, y + math.sin(a + 0.5 * u) * rr, z0 + 0.008)))
+        polyline(objs, 'gprunner', pts, 0.007, 0.006, (0, 0, 1), vine)
+
+
+def garden_crop_v(kind, stage, name):
+    """One bed's crop at stage 1 (shoots), 2 (growing) or 3 (ripe), in a bed's own frame."""
+    random.seed(sum(map(ord, name))); objs = []
+    W, D = GARDEN_BED; s = (0.3, 0.65, 1.0)[stage - 1]
+    if kind == 'carrot':
+        leaf = [C('gcleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#5b9440', '#6fa34a', '#4f8a35'))]; stem = C('gcstem', '#5f9a3c', rough=0.7)
+        for x in (-0.22, 0.0, 0.22):
+            for j in range(7):
+                y = -0.48 + j * 0.175 + random.uniform(-0.015, 0.015)
+                _carrot_plant(objs, x + random.uniform(-0.015, 0.015), y, s * random.uniform(0.9, 1.05), leaf, stem, shoulder=stage == 3)
+    elif kind == 'straw':
+        leaf = [C('gsleaf%d' % i, h, rough=0.7, var=0.06) for i, h in enumerate(('#3f7f2f', '#4c8d33', '#5a9a3c'))]; stalk = C('gsstalk', '#6f9a3c', rough=0.7)
+        straw = [C('gsstraw%d' % i, h, rough=0.9) for i, h in enumerate(('#d9bf74', '#c9ab5f', '#e3cd8a'))]
+        for k in range(320 if stage > 1 else 200):            # straw laid thick along the rows, under the berries
+            x = random.choice((-0.17, 0.17)) + random.gauss(0, 0.06); y = random.uniform(-0.56, 0.66); a = random.uniform(0, math.tau); L = random.uniform(0.025, 0.05)
+            if abs(x) > 0.33: continue
+            objs.append(flat_bit('gsstraw', (x, y, GARDEN_SOIL + 0.002 + random.uniform(0, 0.003)), a, L, 0.0045, random.choice(straw)))
+        for x in (-0.17, 0.17):
+            for j, y in enumerate((-0.42, -0.1, 0.22, 0.54)):
+                _strawberry_plant(objs, x + random.uniform(-0.01, 0.01), y + random.uniform(-0.015, 0.015), s, leaf, stalk,
+                                  flowers=(0, 2, 1)[stage - 1], berries=(0, 0, random.choice((3, 4)))[stage - 1], unripe=(0, 1, 1)[stage - 1])
+    else:
+        leaf = [C('gpleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#4c8d33', '#5d9f3b', '#447f2e'))]; vine = C('gpvine', '#5a8f38', rough=0.75)
+        stalk = C('gpstalkc', '#6b6a35', rough=0.8)
+        if stage == 1:                                        # seedlings: two round seed leaves, a first true leaf
+            for (x, y) in ((-0.12, -0.35), (0.14, -0.05), (-0.1, 0.3), (0.12, 0.55)):
+                for sd in (-1, 1):
+                    from mathutils import Quaternion
+                    d = Vector((sd * 0.9, random.uniform(-0.2, 0.2), 0.5)); q = d.normalized().to_track_quat('Y', 'Z')
+                    objs.append(flat_leaf('gpcoty', (x, y, GARDEN_SOIL + 0.035), q, 0.03, 0.013, leaf[1], shape='diamond', both=True, fold=0.003))
+                objs.append(plank('gpstem', (x, y, GARDEN_SOIL), (x, y, GARDEN_SOIL + 0.045), 0.005, 0.004, (0, -1, 0), vine, jitter=0.0, bevel=0.0))
+                d = Vector((random.uniform(-0.3, 0.3), 1.0, 0.6)); q = d.normalized().to_track_quat('Y', 'Z')
+                objs.append(flat_leaf('gpleaf', (x, y, GARDEN_SOIL + 0.045), q, 0.045, 0.03, leaf[0], shape='heart', both=True, fold=0.004))
+        else:
+            for (x, y, a0) in ((0.0, -0.3, 0.4), (0.02, 0.36, 2.2)):
+                _pumpkin_vine(objs, x, y, s, leaf, vine, rng_a=a0, leaves=12 if stage == 2 else 16)
+            if stage == 2:
+                fl = C('gpflower', '#f4b62a', rough=0.6); young = C('gpyoung', '#7aa142', rough=0.6)
+                for (x, y) in ((0.2, -0.45), (-0.22, 0.18)):
+                    objs.append(cyl('gpflower', 0.028, 0.045, (x, y, GARDEN_SOIL + 0.06), (math.radians(random.uniform(-25, 25)), math.radians(random.uniform(-25, 25)), 0), m=fl, verts=10, r2=0.006, bevel=0.0))
+                for (x, y) in ((-0.2, -0.1), (0.18, 0.55)): _pumpkin(objs, (x, y, GARDEN_SOIL), 0.04, young, stalk=stalk, yaw=random.uniform(0, 1))
+            else:
+                org = C('gppumpkin', '#e27d2a', rough=0.5, var=0.03)
+                for (x, y, r) in ((-0.17, -0.42, 0.105), (0.17, -0.02, 0.115), (-0.14, 0.46, 0.1)): _pumpkin(objs, (x, y, GARDEN_SOIL - 0.01), r, org, stalk=stalk, yaw=random.uniform(0, 1))
+    return finish(objs, name)

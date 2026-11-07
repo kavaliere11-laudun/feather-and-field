@@ -3305,6 +3305,256 @@
   "fr": "Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite."
  },
  {
+  "id": "text.garden_title",
+  "en": "Your vegetable garden",
+  "fr": "Votre potager"
+ },
+ {
+  "id": "text.garden_how",
+  "en": "Sow a bed for a few coins and pick it when it’s ripe: carrots grow fastest, pumpkins slowest. Your birds love them as treats, and the villagers ask for them too.",
+  "fr": "Semez un carré pour quelques pièces et récoltez-le quand il est mûr : les carottes poussent le plus vite, les citrouilles le plus lentement. Vos oiseaux en raffolent, et les villageois en demandent aussi."
+ },
+ {
+  "id": "text.crop_carrot",
+  "en": "Carrots",
+  "fr": "Carottes"
+ },
+ {
+  "id": "text.crop_straw",
+  "en": "Strawberries",
+  "fr": "Fraises"
+ },
+ {
+  "id": "text.crop_pump",
+  "en": "Pumpkins",
+  "fr": "Citrouilles"
+ },
+ {
+  "id": "text.bed_n",
+  "en": "Bed {n}",
+  "fr": "Carré {n}"
+ },
+ {
+  "id": "text.bed_empty",
+  "en": "Ready to sow. What shall we grow?",
+  "fr": "Prêt à semer. Qu’allons-nous faire pousser ?"
+ },
+ {
+  "id": "text.bed_sow",
+  "en": "{c} coins · {t}",
+  "fr": "{c} pièces · {t}"
+ },
+ {
+  "id": "text.bed_sown",
+  "en": "Just sown: the first shoots soon.",
+  "fr": "Tout juste semé : les premières pousses bientôt."
+ },
+ {
+  "id": "text.bed_shoots",
+  "en": "The first little shoots.",
+  "fr": "Les premières petites pousses."
+ },
+ {
+  "id": "text.bed_growing",
+  "en": "Growing well.",
+  "fr": "Ça pousse bien."
+ },
+ {
+  "id": "text.bed_ripe",
+  "en": "Ripe! {n} to pick.",
+  "fr": "Mûr ! {n} à récolter."
+ },
+ {
+  "id": "text.bed_pick",
+  "en": "Pick",
+  "fr": "Récolter"
+ },
+ {
+  "id": "text.basket_title",
+  "en": "Your basket",
+  "fr": "Votre panier"
+ },
+ {
+  "id": "text.basket_how",
+  "en": "Tap one of your birds to give their coop a treat. Villagers’ orders take from your basket too.",
+  "fr": "Touchez un de vos oiseaux pour offrir une friandise à son poulailler. Les commandes du village se servent aussi dans votre panier."
+ },
+ {
+  "id": "text.garden_move",
+  "en": "Move the garden",
+  "fr": "Déplacer le potager"
+ },
+ {
+  "id": "text.garden_sowing",
+  "en": "{farmer} is on the way to sow the {crop}",
+  "fr": "{farmer} va semer les {crop}"
+ },
+ {
+  "id": "text.garden_sowed",
+  "en": "{e} {crop} sown · −{c} coins. Ripe in {t}.",
+  "fr": "{e} {crop} semées · −{c} pièces. Mûres dans {t}."
+ },
+ {
+  "id": "text.garden_broke",
+  "en": "Not enough coins for the seeds yet",
+  "fr": "Pas encore assez de pièces pour les graines"
+ },
+ {
+  "id": "text.garden_picking",
+  "en": "{farmer} is on the way to pick the {crop}",
+  "fr": "{farmer} va récolter les {crop}"
+ },
+ {
+  "id": "text.garden_picked",
+  "en": "{e} +{n} {crop} in your basket · +{xp} XP",
+  "fr": "{e} +{n} {crop} dans votre panier · +{xp} XP"
+ },
+ {
+  "id": "text.garden_part",
+  "en": "{e} +{n} {crop} in your basket (it’s full of them now) · +{xp} XP",
+  "fr": "{e} +{n} {crop} dans votre panier (il en est plein maintenant) · +{xp} XP"
+ },
+ {
+  "id": "text.garden_full",
+  "en": "Your basket is full of {crop}: use some for treats or orders first.",
+  "fr": "Votre panier est plein de {crop} : utilisez-en d’abord pour des friandises ou des commandes."
+ },
+ {
+  "id": "text.crop_l_carrot",
+  "en": "carrots",
+  "fr": "carottes"
+ },
+ {
+  "id": "text.crop_l_straw",
+  "en": "strawberries",
+  "fr": "fraises"
+ },
+ {
+  "id": "text.crop_l_pump",
+  "en": "pumpkins",
+  "fr": "citrouilles"
+ },
+ {
+  "id": "text.bub_pick",
+  "en": "Pick",
+  "fr": "Récolter"
+ },
+ {
+  "id": "text.bub_plant",
+  "en": "Sow",
+  "fr": "Semer"
+ },
+ {
+  "id": "text.garden_lv_t",
+  "en": "New: your vegetable garden",
+  "fr": "Nouveau : votre potager"
+ },
+ {
+  "id": "text.garden_lv_b",
+  "en": "By the farmhouse: grow carrots, strawberries and pumpkins. Treats your birds love, and the villagers will ask for them.",
+  "fr": "Près de la ferme : faites pousser carottes, fraises et citrouilles. Des friandises que vos oiseaux adorent, et les villageois vous en demanderont."
+ },
+ {
+  "id": "text.treat_btn",
+  "en": "🍓 A treat for the coop",
+  "fr": "🍓 Une friandise pour le poulailler"
+ },
+ {
+  "id": "text.treat_title",
+  "en": "A treat for {coop}",
+  "fr": "Une friandise pour {coop}"
+ },
+ {
+  "id": "text.treat_body",
+  "en": "Something from the garden! One treat a day for each coop.",
+  "fr": "Quelque chose du potager ! Une friandise par jour pour chaque poulailler."
+ },
+ {
+  "id": "text.treat_carrot",
+  "en": "An extra egg from each hen, soon after.",
+  "fr": "Un œuf de plus de chaque poule, peu après."
+ },
+ {
+  "id": "text.treat_straw",
+  "en": "An extra egg from each hen, and a little experience for every bird.",
+  "fr": "Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau."
+ },
+ {
+  "id": "text.treat_pump",
+  "en": "Two extra eggs from each hen, and a little experience for every bird.",
+  "fr": "Deux œufs de plus de chaque poule, et un peu d’expérience pour chaque oiseau."
+ },
+ {
+  "id": "text.treat_have",
+  "en": "It takes {need} · in your basket: {n}",
+  "fr": "Il en faut {need} · dans votre panier : {n}"
+ },
+ {
+  "id": "text.treat_give",
+  "en": "Give it",
+  "fr": "L’offrir"
+ },
+ {
+  "id": "text.treat_none",
+  "en": "Nothing in your basket yet: grow some in your vegetable garden.",
+  "fr": "Rien dans votre panier pour l’instant : faites-en pousser dans votre potager."
+ },
+ {
+  "id": "text.treat_had",
+  "en": "🍓 They’ve had their treat today. Another one tomorrow!",
+  "fr": "🍓 Ils ont eu leur friandise aujourd’hui. Une autre demain !"
+ },
+ {
+  "id": "text.treat_given",
+  "en": "{farmer} brings them a treat · extra eggs coming soon",
+  "fr": "{farmer} leur apporte une friandise · des œufs en plus bientôt"
+ },
+ {
+  "id": "text.treat_given_x",
+  "en": "{farmer} brings them a treat · extra eggs coming soon, and a little experience for every bird",
+  "fr": "{farmer} leur apporte une friandise · des œufs en plus bientôt, et un peu d’expérience pour chaque oiseau"
+ },
+ {
+  "id": "text.ord_carrot",
+  "en": "Carrots",
+  "fr": "Carottes"
+ },
+ {
+  "id": "text.ord_straw",
+  "en": "Strawberries",
+  "fr": "Fraises"
+ },
+ {
+  "id": "text.ord_pump",
+  "en": "Pumpkins",
+  "fr": "Citrouilles"
+ },
+ {
+  "id": "text.ord_veg_have",
+  "en": "(in your basket: {n})",
+  "fr": "(dans votre panier : {n})"
+ },
+ {
+  "id": "text.ord_sub_veg",
+  "en": "Vegetables come from your garden basket.",
+  "fr": "Les légumes viennent du panier de votre potager."
+ },
+ {
+  "id": "text.away_garden",
+  "en": "Your vegetable garden is ready to pick",
+  "fr": "Votre potager est prêt à être récolté"
+ },
+ {
+  "id": "text.away_garden1",
+  "en": "A bed in your vegetable garden is ready to pick",
+  "fr": "Un carré de votre potager est prêt à être récolté"
+ },
+ {
+  "id": "text.garden_aria",
+  "en": "The vegetable garden",
+  "fr": "Le potager"
+ },
+ {
   "id": "text.ord_q",
   "en": "“{l}”",
   "fr": "« {l} »"
@@ -4501,6 +4751,11 @@
   "id": "say.corn",
   "en": "Some corn for you!",
   "fr": "Du grain pour vous !"
+ },
+ {
+  "id": "say.treat",
+  "en": "A treat for you!",
+  "fr": "Une friandise pour vous !"
  },
  {
   "id": "say.there",

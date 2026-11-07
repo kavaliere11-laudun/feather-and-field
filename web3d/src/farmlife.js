@@ -32,6 +32,7 @@ export const FARMER_TEXT = register('say', {
   whoa: ['Whoa!', 'Oh là là !'],
   tomorrow: ['Maybe tomorrow…', 'Demain, peut-être…'],
   corn: ['Some corn for you!', 'Du grain pour vous !'],
+  treat: ['A treat for you!', 'Une friandise pour vous !'],              // (from the vegetable garden, 7 Nov 2026)
   there: ['There you are!', 'Vous voilà !'],
   wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
@@ -284,6 +285,17 @@ export class FarmLife {
           const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 4) { thrown = k; P.scatter(Lf.handTip(), 12); }
         }),
         TK.act('watch', 4.5, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)]; }));
+    } else if (kind === 'treat') {
+      // a treat from the vegetable garden (7 Nov 2026; n: which): out of the pail over the yard, three handfuls ("A treat
+      // for you!"), and a moment watching them rush over and peck it up, hearts over them
+      let thrown = 0, hearted = 0;
+      L.push(() => TK.walk(P.around ? P.around([P.throwAt]) : [P.throwAt]), TK.face(P.toCorn), TK.say('treat'),
+        TK.act('scatter', 3.0, (W, u, Lf) => {
+          W.pose = 'feed'; W.face = 'happy'; W.scatter = u;
+          const k = Math.floor(u * 1.1 + 0.45); if (k > thrown && thrown < 3) { thrown = k; P.scatter(Lf.handTip(), 9, n); }
+        }),
+        TK.act('watch', 4.6, (W, u) => { W.pose = 'turn'; W.face = 'happy'; W.look = [0.35 * Math.sin(u * 0.9), -0.35]; W.head = [0, 8, 14 * Math.sin(u * 0.9)];
+          if (u > 1.2 + hearted * 1.3 && hearted < 3) { hearted++; if (P.treatHearts) P.treatHearts(); } }));
     } else if (kind === 'worms') {
       // worms from her (Audrey, 28 Oct: "that would be cute if the chickens get them to the farmer ... if the chicken loves the
       // farmer and the farmer goes and asks for it"): a crouch, she hurries over and he holds his hand out low, palm up; for
@@ -349,7 +361,7 @@ export class FarmLife {
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => {
       if (seq.aborted) return true;
-      if (kind !== 'fill') return run(Lf, dt);
+      if (kind !== 'fill' && kind !== 'treat') return run(Lf, dt);      // (the treat's in the pail too)
       const W = Lf.want; W.props.pail = true;
       const done = run(Lf, dt);
       if (W.pose === 'turn') { W.pose = 'carry'; W.keepArms = 'R'; }      // (carrying the pail, it steady in the left hand)

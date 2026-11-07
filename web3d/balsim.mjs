@@ -13,6 +13,7 @@ Date.now = () => NOW;
 const G = await import('./src/game.js');
 const { Game, DECOR, OUTFITS, WHEAT } = G;
 if (process.env.BAL) { const o = JSON.parse(process.env.BAL); for (const k in o) { if (k in G.XPV) G.XPV[k] = o[k]; else if (k.startsWith('fresh.')) G.FRESH[k.slice(6)] = o[k]; } }      // (other values to try)
+if (process.env.NOGARDEN) G.GARDEN.level = 99;      // (to compare: no vegetable garden)
 const DAYS = +(process.argv[2] || 365), WHICH = process.argv[3] || 'all', SEEDS = +(process.argv[4] || 3);
 const PROFILES = { daily: [19], twice: [8, 19], often: [8, 11, 14, 17, 20, 23] };
 function rngOf(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
@@ -22,6 +23,7 @@ function simulate(name, seed) {
   Math.random = R;                                   // (the trios' personalities and names, the same each run)
   g.newFarm({ lang: 'en', look: 'f', name: 'Sim' });
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
+  let treats = 0;
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0, orders: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
   const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
@@ -55,6 +57,15 @@ function simulate(name, seed) {
         if (R() < [0.85, 0.75, 0.6][b.rare]) { const r = track('fish', () => g.landFish()); if (r) earn.fish += r.coins; } else g.loseFish();
       }
       if (g.wheatStage(NOW) === 'soil' && g.data.coins >= WHEAT.sow + 40) { g.sowWheat(NOW); spend.wheat += WHEAT.sow; }
+      // the vegetable garden (7 Nov 2026): the ripe beds picked; the empty ones sown (strawberries in the middle bed; in the
+      // others carrots when coming back later that day, pumpkins at the last visit); a treat for each coop at the first visit
+      // (the best there's enough of)
+      if (g.gardenOpen()) {
+        for (let i = 0; i < 3; i++) if (g.bedStage(i, NOW) === 'ripe') track('garden', () => g.pickBed(i, NOW));
+        const last = h === hours[hours.length - 1];
+        for (let i = 0; i < 3; i++) if (g.bedStage(i, NOW) === 'empty') { const k = i === 1 ? 'straw' : i === 2 || last ? 'pump' : 'carrot'; if (g.data.coins >= G.CROPS[k].seed + 40 && g.sowBed(i, k, NOW)) spend.garden = (spend.garden || 0) + G.CROPS[k].seed; }
+        if (h === hours[0]) for (const c of g.data.coops) { const k = ['pump', 'straw', 'carrot'].find(k => g.treatCan(c, k, NOW)); if (k) { g.giveTreat(c.id, k, NOW); treats++; } }
+      }
       // the feeders (when below half: the grain first)
       for (const c of g.data.coops) if (g.feedLeft(c, NOW) < 0.5) { const q = track('feed', () => g.fillFeeder(c.id, NOW)); if (q && q.cost) spend.feed += q.cost; }
       // cuddles
@@ -68,7 +79,8 @@ function simulate(name, seed) {
       // the daily golden egg (7 Nov 2026): found at the first visit of the day
       if (g.huntOpen && g.huntOpen() && h === hours[0]) { const r = track('hunt', () => g.huntFind(NOW)); if (r) earn.hunt = (earn.hunt || 0) + r.coins; }
       // village orders (7 Nov 2026): the ready ones delivered (the eggs, fish and honey went to them as they came)
-      if (g.orders) { g.orders(NOW); for (const o of [...g.orders(NOW)]) if (g.orderReady(o)) { const r = track('orders', () => g.deliverOrder(o.id, NOW)); if (r) earn.orders = (earn.orders || 0) + r.coins; } }
+      if (g.orders) { g.orders(NOW); for (const o of [...g.orders(NOW)]) if (!g.orderReady(o) && NOW - o.t > 2 * 86400e3) g.declineOrder(o.id, NOW);      // (one waiting two days: "Not this one")
+        for (const o of [...g.orders(NOW)]) if (g.orderReady(o)) { const r = track('orders', () => g.deliverOrder(o.id, NOW)); if (r) earn.orders = (earn.orders || 0) + r.coins; } }
       // the jobs
       const J = g.jobs(NOW); J.list.forEach((j, i) => { if (j.got >= j.n && !j.paid) { const r = track('jobs', () => g.claimJob(i, NOW)); if (r) earn.jobs += r.coins; } });
       // a new level: seen; the next field when it can; a new breed's coop placed
@@ -87,7 +99,7 @@ function simulate(name, seed) {
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
+  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -99,6 +111,7 @@ for (const name of Object.keys(PROFILES)) {
   console.log('the day each level comes: ' + lv.join(' '));
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
   console.log('XP from: ' + Object.keys(runs[0].xpBy).map(k => `${k} ${Math.round(avg(runs, r => r.xpBy[k] || 0))}`).join(', '));
+  console.log('treats given: ' + Math.round(avg(runs, r => r.treats)));
   console.log('Rusty: ' + avg(runs, r => r.foxes.n).toFixed(1) + ' visits in the time, ' + avg(runs, r => r.foxes.eggs).toFixed(1) + ' eggs taken');
   console.log('rare babies: ' + avg(runs, r => r.rares.length).toFixed(1) + ' in the year, one every ' + (avg(runs, r => r.silkDays / Math.max(1, r.rares.length)) / 30).toFixed(1) + ' months a Silkie coop; the first on day ' + Math.round(avg(runs, r => r.rares[0] || 0)) + '; in the basket at the end ' + avg(runs, r => r.basket).toFixed(1) + ', rare coops ' + avg(runs, r => r.rareCoops).toFixed(1));
   console.log('the Red Barn: ' + [1, 2, 3, 4].map(t => ['', 'Mended', 'Snug', 'Cosy', 'Deluxe'][t] + ' day ' + (runs.every(r => r.upDay[t]) ? Math.round(avg(runs, r => r.upDay[t])) : '-')).join(', '));

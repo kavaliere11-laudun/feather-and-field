@@ -4358,7 +4358,7 @@ They were in the Unity version only. Now in the game:
 - **The levels** (`game.js` `XP_AT`): 15, 45, 120, 230, 380, 580, 880, 1,320, 1,950 XP for levels 2 to 10, then each a
   little longer than the one before, and the last ones longer than before, so level 30 still comes after about a year
   once a day (balsim.mjs, with the orders and the golden egg: day 314 once a day, 256 twice, 206 six times; before: 322,
-  270, 222). Now (twice
+  270, 222; with the vegetable garden and levels 16 to 30 a little further, up to 9% more at 30: 322, 255, 188). Now (twice
   a day): levels 2 and 3 in the first visit, 4 that evening, 5 on day 2, 6 on day 4, 8 on day 8, 10 on day 15. Up to
   level 25 it never asks more than the curve before, so no farm goes down a level.
 - **The first day's guide** gives XP too: 5 a step and 10 more at the end ("Well done! +10 coins, +5 XP").
@@ -4405,3 +4405,37 @@ They were in the Unity version only. Now in the game:
 - **Saved** as `hunt` { last: the day the last was found, streak, n }, checked as the farm opens: only from level 2, the
   day never ahead of today, the days in a row never more than found in all.
 - Its line on level 2's card. Words in six languages (`hunt_*`). `hunttest.mjs`.
+
+## The vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which grow at different speeds; treats the hens love")
+- **From level 4** (its line on level 4's card: "New: your vegetable garden"). Three raised beds in timber frames, a
+  watering can and a trug, on your land by the farmhouse where it's in full view (beside the house as you look at it,
+  `settleGarden`; moved and turned like the wheat field: "Move the garden"). The village's old vegetable patch by the
+  farmhouse makes way for it. Its models (`garden.glb`, `stylized/village3d.py` `garden_v`, `garden_sign_v`,
+  `garden_crop_v`; corner shading baked) load only once it's open.
+- **Each bed** grows one crop: carrots ripe in an hour, strawberries in 3, pumpkins in 8 (also while the game's closed),
+  their seeds 5, 10 or 20 coins. Its sign shows what's sown (a carrot, a strawberry or a pumpkin painted on it), then
+  the crop at three stages: little shoots, growing (the strawberries in flower, small green pumpkins), ripe (orange
+  shoulders, red berries on the straw, three big pumpkins). A bubble over it: "🌱 Sow" when all are empty, how long till
+  the next is ripe, "🧺 Pick" when one is.
+- **Its card** (a tap on it): each bed (sow carrots, strawberries or pumpkins; growing, with its bar; ripe: Pick), the
+  basket, "Move the garden". By day the farmer goes to the bed: seed thrown over it, or crouched picking, the vegetables
+  flying up, "What a harvest!" ("Arthur is on the way to pick the carrots"); else it's simply done.
+- **Picked** into the basket: 6 carrots, 6 strawberries or 2 pumpkins, and 1, 2 or 4 XP; the basket holds 30, 30 and 10
+  (full: the crop stays in the bed till there's room).
+- **Treats** (a bird's card: "🍓 A treat for the coop"; one a day for each coop, by day): 3 carrots, an extra egg from each
+  hen soon after; 3 strawberries, the same and a little experience for every bird there (+8); 2 pumpkins, two extra eggs
+  from each hen and the experience. The farmer goes into the pen with the pail ("A treat for you!"), scatters bits of
+  carrot, strawberry or pumpkin, and they rush over to peck them up, hearts over them; the extra eggs come 20 (and 50)
+  minutes later and a few minutes of each hen's own (`treatEggAt`, `dueLays`).
+- **Village orders ask for them too** once the garden's open (Mrs Potts carrots and pumpkins, Lily and Marco
+  strawberries, Dr Amara carrots, Miss Clara strawberries and carrots, the fête pumpkins), taken from the basket when the
+  order goes, as the grain from the store.
+- **Saved** as `garden` { x, z, deg, beds: [{ crop, ripe }], veg: { carrot, straw, pump } } and a coop's last `treat`
+  { t, crop }, checked as the farm opens: only from level 4; a bed's crop one of the three and never riper later than its
+  crop takes; the basket whole numbers up to what it holds; a treat never in the future.
+- **The balance** (`balsim.mjs`, sowing pumpkins for the night, strawberries in the middle bed, a treat for each coop at
+  the first visit): level 30 on day 322 once a day, 255 twice, 188 six times (the levels from 16 to 30 a little further
+  for it, up to 9% at 30; to 25 never more than the curve before).
+- While you were away: "Your vegetable garden is ready to pick". Words in six languages (`garden_*`, `bed_*`, `crop_*`,
+  `treat_*`, `say.treat`). `gardentest.mjs`. Also: the wheat field's new spot after a move is saved straight away (it
+  waited for the next save before).

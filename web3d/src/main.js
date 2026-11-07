@@ -30,7 +30,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
-import { xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FEATHERS, APPLES as APPLES_RULE } from './game.js';
+import { CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FEATHERS, APPLES as APPLES_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
@@ -501,7 +501,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -511,13 +511,15 @@ async function start() {
     loadJSON('coops.json'), new THREE.TextureLoader().loadAsync(MODELS + 'silkie_hair.jpg' + BUST).then(setHairTexture), loadGLB('interiors.glb'), loadJSON('interiors.json'),
     loadGLB('beasts.glb'), loadJSON('beasts.json'), loadGLB('fauna.glb'), loadGLB('geese.glb'), loadJSON('geese.json'), loadGLB('farmer.glb'), loadJSON('farmer.json'), loadGLB('decor.glb'), loadJSON('decor.json')]);
   if (welcome) game.newFarm(await welcome);
+  if (GAME_MODE && game.data && game.gardenOpen()) await loadGarden().catch(() => null);      // (the vegetable garden's models, once it's open)
   if (GAME_MODE) { LANG = game.lang; FARMER_LOOK = game.data.farmer.look; document.documentElement.lang = LANG; dogName = game.dogName(); setBeastLang(LANG); }
   V = plan; PEN = PEN0 = pen; COOPS = coopsInfo;      // (PEN0: the Snug pen, under any name)
   tagNature();
   if (GAME_MODE) {                                         // the game: its fields; no set places for coops, so no little paths to them
     FIELDS = await fieldsP;
     V.paths = V.paths.filter(l => l.length > 3);
-    V.props = V.props.filter(p => p.model !== 'wheat_field');      // (the village's wheat field: the farm has its own, on its land)
+    VILLAGE_VEG = V.props.filter(p => p.model === 'veg_patch').map(p => [p.pos[0], p.pos[2]]);      // (where the vegetable garden goes first)
+    V.props = V.props.filter(p => p.model !== 'wheat_field' && p.model !== 'veg_patch');      // (the village's wheat field and vegetable patch: the farm has its own, on its land)
     fillPlotGaps();
     edgeTufts();
     const near = (x, z) => V.paths.some(l => { for (let i = 1; i < l.length; i++) { const a = l[i - 1], b = l[i], dx = b[0] - a[0], dz = b[2] - a[2], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[2]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < V.pathHalf + 0.6) return true; } return false; });
@@ -544,6 +546,7 @@ async function start() {
   buildPaths();
   placeDecor(decorInfo);
   if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.wheat = [-2.25, -1.25, 2.25, 1.25];      // (the wheat field's footprint: its bed)
+  if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.garden = GARDEN_FOOT;      // (the vegetable garden's: its three beds, the can and the trug)
   if (GAME_MODE && DECOR_INFO) DECOR_INFO.foot.kennel = [KENNEL.x0 - 0.06, -KENNEL.half - 0.06, 1.45, KENNEL.food[1] + KENNEL.r + 0.02];      // (the dog's kennel: it, his bowls, the grass in front of his door)
   if (GAME_MODE) { settleCoops(); settleDecor(); hidePebbles(); }        // (each coop and decoration where it can stand, what's under it cleared)
   buildProps(); if (GAME_MODE) syncDecor(); else buildDecor();
@@ -2689,10 +2692,10 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
     // the hens and the rooster, where he must mind them (world)
     hens() { return [...plot.birds.filter(b => b.root.visible && !(b.laying && b.laying.inside)), ...(DK ? DK.all().filter(d => DK.solid(d)) : [])].map(b => ({ pos: b.root.getWorldPosition(new THREE.Vector3()), R: b.isGoose ? 0.22 : 0.32, noPush: true })); },
     fill(u) { if (plot.feedMesh) plot.feedMesh.position.y = FEEDER_LOW + (FEEDER_FULL - FEEDER_LOW) * Math.max(0, Math.min(1, u)); },
-    scatter(hand, n) {
+    scatter(hand, n, kind) {      // (kind: a treat from the garden, else corn)
       const C = plot.corn || (plot.corn = new Corn(plot.frame, (x, z) => plot.callPen ? plot.callPen.free(x, z, 0.02) : yardFree(x, z, plot), rng(77 + plots.indexOf(plot)), nightGrade));      // (the call ducks': on the dry yard, not in their pond)
       const first = !C.left, F = plot.farmer;
-      C.handful(v.copy(hand).applyMatrix4(inv), SC[0], SC[1], 0.42, n, F ? [F.x, F.z, 0.55] : null);
+      C.handful(v.copy(hand).applyMatrix4(inv), SC[0], SC[1], 0.42, n, F ? [F.x, F.z, 0.55] : null, kind);
       if (first) for (const b of plot.birds) if (!b.busy() && !b.cuddle) b.feedIn = b.pers === 'glutton' ? 0.45 : 0.6 + b.r() * 0.9;      // corn! off they go
       if (first && DK) DK.cornOut();
     },
@@ -2819,6 +2822,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       if (!b.isGoose) b.rig.sleepy(k > 0.9); else C.carry.y -= 0.05;      // (a call duck: her eyes shut by her own pose; held a little lower, she's smaller)
     },
     heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.isGoose ? 0.3 : b.rig.scale * 0.8; spawnHeart(p); },
+    treatHearts() { for (const b of [...plot.birds, ...(DK ? DK.all() : [])]) if (b.root && b.root.visible && !(b.laying && b.laying.inside) && Math.random() < 0.7) P.heart(b); },      // (a treat: happy birds, hearts over most of them)
     // worms from her (farmlife.js 'worms'; Audrey's idea): u the time since she started, each worm DIG of it, n of them. Each:
     // two kicks back, her beak down to the ground (the worm's there in it), up with it wriggling, then dropped into his palm
     // (his right hand held out, palm up), where it stays with the others; closed in his hand (wormsClosed); gone (wormsDone)
@@ -4684,6 +4688,7 @@ function tapAt(x, y) {
     if (GAME_MODE && game.data && game.ordersOpen() && stallAt(ray.ray) && stallAt.dist < hd && !(gdc && gdd < stallAt.dist)) { ordersSheet(); return; }      // (the farm stall: the village orders)
     if (gdc && gdd < hd) {
       if (gdc.model === 'wheat') { wheatTap(); return; }
+      if (gdc.model === 'garden') { gardenTap(); return; }
       if (gdc.model === 'bandstand' && decorLife) decorLife.play();
       if (gdc.model === 'beehives' && game.honeyAt() > 0) { honeyTap(); return; }
       decorCard(gdc.model); return;
@@ -7250,6 +7255,8 @@ function underDecor(x, z, m = 0) {
   if (W && W.x !== null && DECOR_INFO.foot.wheat) { const [lx, lz] = inSpot(decSp(W.x, W.z, W.deg), x, z); if (decGap('wheat', lx, lz) <= m) return true; }
   const K = game.kennel();                                  // (and the dog's kennel)
   if (K && K.x !== null && DECOR_INFO.foot.kennel) { const [lx, lz] = inSpot(decSp(K.x, K.z, KENNEL_DEG), x, z); if (decGap('kennel', lx, lz) <= m) return true; }
+  const G = game.data.garden;                               // (and the vegetable garden)
+  if (G && G.x !== null && DECOR_INFO.foot.garden) { const [lx, lz] = inSpot(decSp(G.x, G.z, G.deg), x, z); if (decGap('garden', lx, lz) <= m) return true; }
   if (DMOVE.id && DMOVE.at) { const [lx, lz] = inSpot(decSp(DMOVE.at.x, DMOVE.at.z, DMOVE.at.deg), x, z); if (decGap(DMOVE.id, lx, lz) <= m) return true; }
   return false;
 }
@@ -7361,6 +7368,7 @@ function settleDecor() {
       addDecor('wheat', W.x, W.z, W.deg);
     }
   }
+  settleGarden(gone) && (changed = true);
   // the dog's kennel (release 3): where the save has it, or the nearest good spot to it (none: near the farmhouse)
   const K = game.data.animals && game.data.animals.dog;
   if (K && DECOR_INFO.foot.kennel && parts.kennel) {
@@ -7385,6 +7393,7 @@ function decorModel(id) {
     g.userData.wheat = wheat(null, 4.4, 2.4, g);      // (its own soft-edged ploughed ground, not the village model's bed)
     return g;
   }
+  if (id === 'garden') g.userData.beds = gardenBeds(g);      // (the vegetable garden: each bed's signs and crops, shown as they grow)
   if (id === 'kennel') {                                    // (the dog's kennel: his name on the board over the door)
     kennelBoard = kennelBoard || nameBoard(); const [bx, by] = KENNEL.board;
     kennelBoard.mesh.position.set(bx + 0.003, by, 0); kennelBoard.mesh.rotation.y = Math.PI / 2; g.add(kennelBoard.mesh);
@@ -7407,7 +7416,7 @@ function decorModel(id) {
 function addDecor(id, x, z, deg = 45) {
   let it = DEC.items[id];
   if (!it) {
-    const box = id === 'wheat' ? new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 0.6, 1.2)) : new THREE.Box3().setFromObject(parts[id]);
+    const box = id === 'wheat' ? new THREE.Box3(new THREE.Vector3(-2.2, 0, -1.2), new THREE.Vector3(2.2, 0.6, 1.2)) : id === 'garden' ? new THREE.Box3(new THREE.Vector3(GARDEN_FOOT[0], 0, GARDEN_FOOT[1]), new THREE.Vector3(GARDEN_FOOT[2], 0.45, GARDEN_FOOT[3])) : new THREE.Box3().setFromObject(parts[id]);
     it = DEC.items[id] = { group: decorModel(id), prop: { model: id === 'wheat' ? 'wheat_field' : id, pos: [x, 0, z], deg, s: 1, decor: true, own: true }, d: { model: id, box } };
     scene.add(it.group); V.props.push(it.prop);
   }
@@ -7441,6 +7450,8 @@ function syncDecor() {
   }
   const W = game.wheat();                                   // (the wheat field, as the save has it)
   if (W.x !== null && DECOR_INFO.foot.wheat && !(DMOVE.id === 'wheat')) { addDecor('wheat', W.x, W.z, W.deg); FIELD.shown = ''; tickWheat(); }
+  const G = game.gardenOpen() && game.data.garden;           // (the vegetable garden, as the save has it)
+  if (G && G.x !== null && parts.garden && DECOR_INFO.foot.garden && DMOVE.id !== 'garden') { const it = addDecor('garden', G.x, G.z, G.deg); if (!decorList.includes(it.d)) decorList.push(it.d); GARDEN_UI.shown = []; tickGarden(); }
   const K = game.kennel();                                  // (the dog's kennel, as the save has it)
   if (K && K.x !== null && parts.kennel && DECOR_INFO.foot.kennel && DMOVE.id !== 'kennel') { const it = addDecor('kennel', K.x, K.z, KENNEL_DEG); if (!decorList.includes(it.d)) decorList.push(it.d); }
   const w = DEC.items.windmill; sails = w ? w.group.userData.sails || null : null;
@@ -7559,9 +7570,9 @@ function decorFootMark(id) {
   return m;
 }
 function startDecor(id) {
-  const isW = id === 'wheat', isK = id === 'kennel';       // (the wheat field: moved the same way, and turned; the dog's kennel (release 3): bought and moved the same way)
-  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR_INFO || (isW ? !DECOR_INFO.foot.wheat || FIELD.work : isK ? !DECOR_INFO.foot.kennel || !parts.kennel : !DECOR[id] || DECOR[id].pond || !parts[id])) return false;
-  const own = isW ? game.wheat() : isK ? game.kennel() : game.decorOwned(id);
+  const isG = id === 'garden', isW = id === 'wheat' || isG, isK = id === 'kennel';       // (the wheat field and the vegetable garden: moved the same way, and turned; the dog's kennel (release 3): bought and moved the same way)
+  if (DMOVE.id || MOVE.plot || inside.open || SHOWDAY || !DECOR_INFO || (isG ? !DECOR_INFO.foot.garden || !parts.garden || GARDEN_UI.work || !game.data.garden : isW ? !DECOR_INFO.foot.wheat || FIELD.work : isK ? !DECOR_INFO.foot.kennel || !parts.kennel : !DECOR[id] || DECOR[id].pond || !parts[id])) return false;
+  const own = isG ? game.garden() : isW ? game.wheat() : isK ? game.kennel() : game.decorOwned(id);
   if (!own && (isK ? !game.animalNext('dog') || game.data.coins < ANIMALS.dog.price : !game.decorNext(id) || game.data.coins < DECOR[id].price)) return false;
   gameUI.close(); holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   let at = own && own.x !== null ? { x: own.x, z: own.z, deg: own.deg || 45 } : null;
@@ -7639,6 +7650,7 @@ function putDecor() {
     dogCame = id === 'kennel';
     gameUI.refresh(); gameUI.bumpCoins();
   } else if (id === 'wheat') { game.placeWheat(at, [...ids]); said = game.t('dec_moved', { name: game.t('wheat_title') }); }
+  else if (id === 'garden') { game.placeGarden(at, [...ids]); said = game.t('dec_moved', { name: game.t('garden_title') }); }
   else if (id === 'kennel') { game.moveKennel(at, [...ids]); said = game.t('kennel_moved', { name: game.dogName() }); }
   else { game.moveDecor(id, at, [...ids]); said = game.t('dec_moved', { name: game.decorName(id) }); }
   for (const o of clear) clearAway(o);
@@ -7708,6 +7720,7 @@ function showWheat(stage) {
 function tickWheat() {
   if (!GAME_MODE || !game.data) return;
   tickOrders();
+  tickGarden();
   showWheat(FIELD.hold || game.wheatStage());
   if (FIELD.work && performance.now() > FIELD.work.until) FIELD.work.seq.finish();      // (he never got there: it's done anyway)
 }
@@ -7800,6 +7813,197 @@ function honeyTap() {
   else fly();
   return true;
 }
+// ---- the vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which
+// grow at different speeds; treats the hens love"; game.js GARDEN): from level 4, three raised beds on your land by the
+// farmhouse (garden.glb, loaded once it's open: the beds, and for each crop its sign and its three stages, stage/vegetables
+// village3d.py); each bed as the save has it (or as it was, till the farmer's done there); a bubble over it (Pick when a bed's
+// ripe, Sow when they're all empty, else how long till the next is ripe); tapped: its card (sow a bed, pick it, move the
+// garden); by day the farmer sows (a handful of seed over the bed) or picks (crouched, the vegetables flying up into his
+// trug), in front of the bed. A treat from the basket for a coop: he goes into its pen and scatters it, and they rush over
+// to peck it up, hearts over them
+const GARDEN_UI = { loading: null, shown: [], hold: [null, null, null], work: null, bub: null, opening: false };
+let VILLAGE_VEG = null;
+const GARDEN_BEDX = [-1.0, 0.0, 1.0], GARDEN_DEGS = [0, 90], GARDEN_FOOT = [-1.85, -0.8, 1.75, 0.8];      // (the beds' middles across it; its footprint, x and z (its front +z))
+const CROP_COLOUR = { carrot: '#ef8a2c', straw: '#e0453a', pump: '#f0962e' };
+function loadGarden() {
+  if (parts.garden) return Promise.resolve(true);
+  if (!GARDEN_UI.loading) GARDEN_UI.loading = loadGLB('garden.glb').then(glb => {
+    for (const child of [...glb.scene.children]) {
+      child.updateMatrixWorld(true);
+      for (const m of meshesOf(child)) { richer(m.geometry, SAT, 1); ambientShade(m.geometry); if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; lightUp(m.material); } }
+      parts[child.name] = child;
+    }
+    return true;
+  }).catch(e => { GARDEN_UI.loading = null; throw e; });
+  return GARDEN_UI.loading;
+}
+// a model's meshes copied into a group of the garden's at bed i (hidden till it's that bed's)
+function gardenPiece(name, i, parent) {
+  const g = new THREE.Group(); g.position.x = GARDEN_BEDX[i]; g.visible = false; parent.add(g);
+  if (!parts[name]) return g;
+  for (const m of meshesOf(parts[name])) {
+    nightGrade(m.material);
+    const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = !/_1$/.test(name); k.receiveShadow = true; g.add(k);
+  }
+  return g;
+}
+function gardenBeds(g) {
+  return GARDEN_BEDX.map((_, i) => {
+    const B = { sign: {}, crop: {} };
+    for (const k of CROP_IDS) { B.sign[k] = gardenPiece('garden_sign_' + k, i, g); B.crop[k] = [1, 2, 3].map(st => gardenPiece('garden_' + k + '_' + st, i, g)); }
+    return B;
+  });
+}
+// the farm opening (and the garden newly open): on your land, where the save has it or the nearest good spot to it (none:
+// where the village's vegetable patch was, by the farmhouse, else in front of it); what's under it cleared
+function settleGarden(gone, way = false) {      // (way: the way to every coop's gate checked too, once the farm's up)
+  if (!game.gardenOpen() || !parts.garden || !DECOR_INFO.foot.garden) return false;
+  const G = game.garden(); let changed = false;
+  if (G.x === null || G.z === null || !decorSpot('garden', G.x, G.z, G.deg).ok) {
+    // (a new one: near the farmhouse, where it's in full view (not behind the house or under a tree): beside the house as
+    // you look at it, or where the village's vegetable patch was, else the nearest good spot)
+    const fh = V.props.find(p => p.model === 'farmhouse'), vl = Math.hypot(VIEW_DIR.x, VIEW_DIR.z), ux = VIEW_DIR.x / vl, uz = VIEW_DIR.z / vl;
+    const cands = fh ? [[-uz, ux, 5.5], [uz, -ux, 5.5], [-uz + ux * 0.7, ux + uz * 0.7, 6], [uz + ux * 0.7, -ux + uz * 0.7, 6], [-uz - ux * 0.6, ux - uz * 0.6, 6], [uz - ux * 0.6, -ux - uz * 0.6, 6]].map(([dx, dz, r]) => [fh.pos[0] + dx * r, fh.pos[2] + dz * r]) : [];
+    let f = G.x !== null && G.z !== null ? decorFreeNear('garden', G.x, G.z, 40, false, GARDEN_DEGS) : null;
+    if (!f) { let first = null; for (const c of [...cands, ...(VILLAGE_VEG || [])]) { const q = decorFreeNear('garden', c[0], c[1], 6, way, GARDEN_DEGS); if (!q) continue; first = first || q; if (inView(q.x, q.z, 1.0)) { f = q; break; } } f = f || first; }
+    if (!f) f = decorFreeNear('garden', HOME_COOP.x + 3, HOME_COOP.z + 3, 40, way, GARDEN_DEGS);
+    if (f) { G.x = f.x; G.z = f.z; G.deg = f.deg; } else { G.x = G.z = null; }
+    changed = true;
+  }
+  if (G.x !== null) {
+    for (const t of decorSpot('garden', G.x, G.z, G.deg).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); changed = true; }
+    V.trees = V.trees.filter(t => !gone.has(t.id)); V.bushes = V.bushes.filter(t => !gone.has(t.id)); V.rocks = V.rocks.filter(t => !gone.has(t.id));
+    const it = addDecor('garden', G.x, G.z, G.deg); if (!decorList.includes(it.d)) decorList.push(it.d);
+  }
+  return changed;
+}
+// the garden newly open (a level up while playing): its models, then it on your land
+function openGarden() {
+  if (!GAME_MODE || !game.gardenOpen() || DEC.items.garden || GARDEN_UI.opening) return;
+  GARDEN_UI.opening = true;
+  loadGarden().then(() => {
+    GARDEN_UI.opening = false;
+    const gone = new Set(game.data.cleared);
+    if (settleGarden(gone, true)) game.save();
+    BLOCKERS = null; decorSpots = null; rebuildNav(); buildNature(); buildGrass(); hidePebbles();
+    GARDEN_UI.shown = []; tickGarden(); renderer.shadowMap.needsUpdate = true; wake(1000);
+  }).catch(() => { GARDEN_UI.opening = false; });
+}
+// each bed as the save has it (or held as it was while the farmer's at work there)
+function tickGarden() {
+  if (!GAME_MODE || !game.data) return;
+  if (game.gardenOpen() && !DEC.items.garden) { openGarden(); return; }
+  const it = DEC.items.garden; if (!it || !game.data.garden) return;
+  if (!GARDEN_UI.checked) {      // (once the farm's up: a garden put down as the farm opened that's in the way of a coop's gate, moved)
+    GARDEN_UI.checked = true;
+    if (gamePlots().some(p => !penSpec(p)) && !DMOVE.id) {
+      const G = game.garden(), was = [G.x, G.z, G.deg]; dropDecor('garden'); G.x = G.z = null; rebuildNav();
+      if (!settleGarden(new Set(game.data.cleared), true) || G.x === null) { [G.x, G.z, G.deg] = was; settleGarden(new Set(game.data.cleared)); }
+      game.save(); BLOCKERS = null; decorSpots = null; rebuildNav(); buildNature(); buildGrass(); hidePebbles(); GARDEN_UI.shown = []; renderer.shadowMap.needsUpdate = true; wake(1000);
+      return;
+    }
+  }
+  const beds = it.group.userData.beds; let changed = false;
+  game.data.garden.beds.forEach((bed, i) => {
+    const H = GARDEN_UI.hold[i], st = H ? H.stage : game.bedStage(i), crop = H ? H.crop : bed.crop, key = st + '|' + crop;
+    if (GARDEN_UI.shown[i] === key) return;
+    GARDEN_UI.shown[i] = key; changed = true;
+    const B = beds[i], n = { shoots: 1, growing: 2, ripe: 3 }[st] || 0;
+    for (const k of CROP_IDS) { B.sign[k].visible = st !== 'empty' && k === crop; B.crop[k].forEach((g, j) => { g.visible = k === crop && j + 1 === n; }); }
+  });
+  if (changed) { renderer.shadowMap.needsUpdate = true; wake(300); }
+  if (GARDEN_UI.work && performance.now() > GARDEN_UI.work.until) GARDEN_UI.work.seq.finish();      // (he never got there: it's done anyway)
+}
+// the bubble over it: Pick (a bed ripe), Sow (all of them empty), or the next one ripe in
+function gardenBubble() {
+  const G = game.data.garden, ripe = game.bedsRipe();
+  if (ripe) return { txt: '🧺 ' + game.t('bub_pick'), ripe: true };
+  if (G.beds.every(b => !b.crop)) return { txt: '🌱 ' + game.t('bub_plant'), ripe: false };
+  const left = Math.min(...G.beds.map((b, i) => b.crop ? game.bedLeft(i) : Infinity));
+  return { txt: '🌱 ' + gameUI.dur(left), ripe: false };
+}
+// the garden tapped (or its bubble: a ripe bed picked straight away)
+function gardenTap(bubble = false) {
+  if (GARDEN_UI.work) { hint(game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) })); return; }
+  if (bubble && game.bedsRipe()) { const i = game.data.garden.beds.findIndex((_, k) => game.bedStage(k) === 'ripe'); if (i >= 0 && pickBed(i)) return; }
+  holdBird(null); henOff(); gardenCard();
+}
+function gardenCard() {
+  gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), move: () => { gameUI.close(); startDecor('garden'); } },
+    { busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : '' });
+}
+// where the farmer stands to work at bed i: in front of it (or the nearest he can get to), facing it
+function bedSpot(i) {
+  const it = DEC.items.garden; if (!it) return null;
+  const m = it.d.m, nav = navGrid(), R = farmReach(), v = new THREE.Vector3(), c = new THREE.Vector3(GARDEN_BEDX[i], 0, 0).applyMatrix4(m);
+  for (const [lx, lz] of [[GARDEN_BEDX[i], 1.25], [GARDEN_BEDX[i] + 0.3, 1.3], [GARDEN_BEDX[i] - 0.3, 1.3], [GARDEN_BEDX[i], -1.25]]) {
+    v.set(lx, 0, lz).applyMatrix4(m); const f = nav.nearestIn(R, v.x, v.z, 0.5); if (!f) continue;
+    return { at: f, face: Math.atan2(c.x - f[0], c.z - f[1]) };
+  }
+  return null;
+}
+// sowing or picking bed i: the farmer's work there (false: he isn't about, it's simply done)
+function gardenWork(kind, i, crop, done) {
+  if (!farmLife || farmLife.home || farmLife.running || GARDEN_UI.work || FIELD.work || farmLife.pending) return false;
+  const S = bedSpot(i); if (!S) return false;
+  let acts, o = {};
+  if (kind === 'sow') {                                      // a couple of handfuls of seed along the bed
+    let thrown = 0; o = { pail: true, say: 'sow' };
+    acts = [['scatter', 2.4, (W, u, L) => { W.pose = 'feed'; W.face = 'feeding'; W.scatter = u; const k = Math.floor(u * 1.4 + 0.45); if (k > thrown && thrown < 2) { thrown = k; seedThrow(L.handTip(), L.heading, thrown + 1.5); } }], 'done'];
+  } else {                                                   // crouched, picking, the vegetables up into his trug; then hooray
+    let bit = 0.25;
+    acts = [['pick', 2.6, (W, u, L) => { W.pose = 'pet'; W.face = 'happy'; W.patting = true; W.look = [0, -0.4]; if (u > bit) { bit += 0.4; vegBits(L.handTip(), crop); } }], 'done',
+      ['hooray', 1.3, W => { W.pose = 'stretch'; W.face = 'happy'; }]];
+    o = { say: 'harvest' };
+  }
+  const seq = farmLife.workAt(S.at, S.face, acts, () => { if (GARDEN_UI.work && GARDEN_UI.work.seq === seq) GARDEN_UI.work = null; done(); }, o);
+  if (!seq) return false;
+  GARDEN_UI.work = { kind, crop, seq, until: performance.now() + 100e3 };
+  return true;
+}
+function vegBits(hand, crop) { bitsAt(hand, 4, CROP_COLOUR[crop] || '#ef8a2c', { speed: 0.5, up: 1.7, life: 0.8, size: 0.04, g: 5 }); bitsAt(hand, 3, '#5b9440', { speed: 0.5, up: 1.5, life: 0.7, size: 0.03, g: 5 }); }
+function sowBed(i, crop) {
+  if (GARDEN_UI.work) return false;
+  const r = game.sowBed(i, crop); if (!r) return false;
+  if (r.broke) { hint(game.t('garden_broke')); return false; }
+  gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
+  GARDEN_UI.hold[i] = { stage: 'empty', crop: null };
+  const C = CROPS[crop], said = game.t('garden_sowed', { e: C.e, crop: game.t('crop_' + crop), c: C.seed, t: gameUI.dur(C.grow) });
+  const done = () => { GARDEN_UI.hold[i] = null; tickGarden(); hint(said); };
+  if (gardenWork('sow', i, crop, done)) hint(game.t('garden_sowing', { farmer: farmerName(), crop: game.t('crop_l_' + crop) }));
+  else done();
+  tickGarden();
+  return true;
+}
+function pickBed(i) {
+  if (GARDEN_UI.work) return false;
+  const was = game.data.garden.beds[i].crop, r = game.pickBed(i); if (!r) return false;
+  if (r.kept) { hint(game.t('garden_full', { crop: game.t('crop_l_' + r.crop) })); return true; }
+  gameUI.close(); gameUI.refresh();
+  GARDEN_UI.hold[i] = { stage: 'ripe', crop: was };
+  const C = CROPS[r.crop], said = game.t(r.full ? 'garden_part' : 'garden_picked', { e: C.e, n: r.n, crop: game.t('crop_l_' + r.crop), xp: r.xp });
+  const done = () => { GARDEN_UI.hold[i] = null; tickGarden(); hint(said); gameUI.refresh(); };
+  if (gardenWork('pick', i, r.crop, done)) hint(game.t('garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + r.crop) }));
+  else done();
+  tickGarden();
+  return true;
+}
+// ---- a treat from the garden for a coop (its card, from a bird's): given, the farmer goes into the pen and scatters it
+// (by day, about the farm), else it's simply there on the ground for them
+function treatCard(coopId) {
+  holdBird(null);
+  gameUI.treatSheet(coopId, { give: k => giveTreat(coopId, k) });
+}
+function giveTreat(coopId, crop) {
+  const plot = gamePlots().find(p => p.gc && p.gc.id === coopId), r = game.giveTreat(coopId, crop); if (!r) return null;
+  gameUI.close(); gameUI.refresh();
+  const said = game.t(r.exp ? 'treat_given_x' : 'treat_given', { farmer: farmerName() });
+  const P = plot && farmLife && !farmLife.home && !farmLife.running ? penSpec(plot) : null;
+  if (P && farmLife.visitPen(P, 'treat', null, crop)) { hint(said); wake(1000); return r; }
+  if (plot) { const P2 = penSpec(plot, true); if (P2) { const v = new THREE.Vector3(); P2.plot.frame.updateMatrixWorld(true); for (let k = 0; k < 3; k++) { v.set(P2.throwAt[0], 0.5, P2.throwAt[1]); P2.scatter(v, 8, crop); } } }
+  hint(said); wake(1000);
+  return r;
+}
 // little bits flying: seed from his hand onto the field, straw as he cuts, a golden puff over the field when it's done
 const BITS = [];
 let BIT_TEX = null;
@@ -7867,6 +8071,7 @@ function fieldBubbles(w, h) {
   const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
   if (!FIELD.bub) FIELD.bub = mk('gwheat', () => wheatTap());
   if (!FIELD.hbub) FIELD.hbub = mk('ghoney', () => honeyTap());
+  if (!GARDEN_UI.bub) GARDEN_UI.bub = mk('gwheat ggarden', () => gardenTap(true));
   const put = (e, show, v) => {
     if (!show || inside.open || SHOWDAY) { e.hidden = true; return; }
     v.project(camera);
@@ -7880,6 +8085,11 @@ function fieldBubbles(w, h) {
     if (FIELD.bub.textContent !== txt) { FIELD.bub.textContent = txt; FIELD.bub.classList.toggle('ripe', st === 'ripe'); }
     put(FIELD.bub, true, bubV.set(0, 0.45, 0).applyMatrix4(W.d.m));      // (over the field's middle, Audrey 6 Nov: "This message should also be centred")
   } else FIELD.bub.hidden = true;
+  const Gd = DEC.items.garden, gt = Gd && !GARDEN_UI.work && DMOVE.id !== 'garden' && game.data.garden ? gardenBubble() : null;
+  if (gt) {
+    if (GARDEN_UI.bub.textContent !== gt.txt) { GARDEN_UI.bub.textContent = gt.txt; GARDEN_UI.bub.classList.toggle('ripe', gt.ripe); }
+    put(GARDEN_UI.bub, true, bubV.set(0, 0.55, 0).applyMatrix4(Gd.d.m));
+  } else if (GARDEN_UI.bub) GARDEN_UI.bub.hidden = true;
   const Hv = DEC.items.beehives, n = Hv && !FIELD.honey && DMOVE.id !== 'beehives' ? game.honeyAt() : 0;
   if (n) {
     const txt = '🍯 ' + n; if (FIELD.hbub.textContent !== txt) FIELD.hbub.textContent = txt;
@@ -8728,7 +8938,11 @@ window.__farm = {
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
-  fieldAt: (x, z) => fieldAt(x, z),
+  garden: { tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
+    state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,
+      visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
+    spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, 0).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; } },
+  treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
   orders: { stall: () => { const S = stallSpot(); return S && { top: S.top, mid: S.mid, front: [S.front.x, S.front.z] }; }, run: () => ORDER_RUN, sheet: () => ordersSheet(), deliver: id => deliverOrder(id), tick: () => tickOrders(), bubble: () => { const B = orderBub; return B && !B.hidden ? B.textContent : null; } },      // (tests: village orders)
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },

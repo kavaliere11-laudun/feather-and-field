@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, HUNT } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -362,6 +362,11 @@ export class GameUI {
       else if (state === 'night') { if (left > 0) body.append(el('p', 'gnote', this.t('worms_night', { farmer }))); }
       else { const wb = el('button', 'gbtn galt gworms', this.t('worms_ask', { n: wn })); wb.type = 'button'; wb.dataset.worms = 'ask'; wb.addEventListener('click', () => { if (this.o.askWorms) this.o.askWorms(b.id); }); body.append(wb); }
     }
+    // a treat from the vegetable garden for her coop (7 Nov 2026): one a day for each coop, by day (its card: h.treat)
+    if (g.gardenOpen() && coop) {
+      if (g.treatToday(coop)) body.append(el('p', 'gtext gfound gtreatgot', this.t('treat_had')));
+      else if (state !== 'night') { const tb = el('button', 'gbtn galt gtreat', this.t('treat_btn')); tb.type = 'button'; tb.dataset.treat = 'open'; tb.addEventListener('click', () => { if (this.o.treat) this.o.treat(coop.id); }); body.append(tb); }
+    }
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
@@ -564,6 +569,7 @@ export class GameUI {
     }
     if (since(HUNT.level)) { const c = el('div', 'gcard gordnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🥚'), el('span', 'gcard-t', this.t('hunt_lv_t'))); c.append(hd, el('p', 'gnote', this.t('hunt_lv_b'))); body.append(c); }      // (the daily golden egg starts)
     if (since(ORDERS.level)) { const c = el('div', 'gcard gordnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t('ord_lv_t'))); c.append(hd, el('p', 'gnote', this.t('ord_lv_b'))); body.append(c); }      // (village orders start)
+    if (since(GARDEN.level)) { const c = el('div', 'gcard gordnew ggardennew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🥕'), el('span', 'gcard-t', this.t('garden_lv_t'))); c.append(hd, el('p', 'gnote', this.t('garden_lv_b'))); body.append(c); }      // (the vegetable garden opens)
     if (since(FOX.level)) { const c = el('div', 'gcard gfoxnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🦊'), el('span', 'gcard-t', this.t('fox_new'))); c.append(hd); body.append(c); }      // (Rusty's visits start)
     for (const w of ['pond', 'river']) if (since(FISHING[w])) {              // (fishing opens: the pond at 2, the river at 8; a look at it)
       const c = el('div', 'gcard gfishnew'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎣'), el('span', 'gcard-t', this.t(w === 'pond' ? 'fish_new' : 'fish_new_river'))); c.append(hd);
@@ -838,18 +844,18 @@ export class GameUI {
   ordersSheet(h = {}) {
     const g = this.g, b = this.open('orders', this.t('ord_title')), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
-    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾' };
-    b.append(el('p', 'gnote', this.t('ord_sub')));
+    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' }, store = k => k === 'grain' || CROP_IDS.includes(k);      // (the grain and the vegetables come from their store when it goes)
+    b.append(el('p', 'gnote', this.t('ord_sub') + (g.gardenOpen() ? ' ' + this.t('ord_sub_veg') : '')));
     for (const o of list) {
       const ready = g.orderReady(o), P = g.orderPayOf(o), c = el('div', 'gcard gorder' + (ready ? ' gorder-ready' : '')), hd = el('div', 'gcard-h');
       c.dataset.order = o.id;
       hd.append(el('span', 'gemoji', g.villagerEmoji(o.who)), el('span', 'gcard-t', g.villagerName(o.who) + ' · ' + this.t('vil_' + o.who + '_r')));
       c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));      // (in the language's own quotation marks)
-      for (const k of ['eggs', 'fish', 'honey', 'grain']) {
+      for (const k of ORDER_ITEMS) {
         if (!o.items[k]) continue;
-        const n = o.items[k], have = k === 'grain' ? Math.min(n, Math.floor(g.data.grain || 0)) : Math.min(n, o.got[k] || 0);
+        const n = o.items[k], have = store(k) ? Math.min(n, g.storeOf(k)) : Math.min(n, o.got[k] || 0);
         const row = el('div', 'gorder-i'), bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * have / n) + '%'; bar.append(fill);
-        row.append(el('span', 'gtext', icon[k] + ' ' + this.t('ord_' + k) + ' ' + (k === 'grain' ? fmt(n) + ' ' + this.t('ord_grain_have', { n: fmt(Math.floor(g.data.grain || 0)) }) : have + ' / ' + n)), bar);
+        row.append(el('span', 'gtext', icon[k] + ' ' + this.t('ord_' + k) + ' ' + (store(k) ? fmt(n) + ' ' + this.t(k === 'grain' ? 'ord_grain_have' : 'ord_veg_have', { n: fmt(g.storeOf(k)) }) : have + ' / ' + n)), bar);
         c.append(row);
       }
       const foot = el('div', 'gjobrow'); foot.append(el('span', 'gnote', '🪙 ' + this.t('ord_pay', { c: fmt(P.coins), x: P.xp }) + (P.surprise ? ' · ' + this.t('ord_surprise') : '')));
@@ -1135,10 +1141,10 @@ export class GameUI {
     this.bird = null;
     b.append(el('p', 'gsub', this.t('away_for', { t: this.longDur(sum.away) })));
     if (sum.paused) b.append(el('p', 'gnote', this.t('away_paused')));
-    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', feathers: '🦚', apple_egg: '🍎', wheat: '🌾', wheat_grow: '🌱', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
+    const IC = { eggs: '🥚', full: '🪺', hatched: '🐣', grown: '🎉', honey: '🍯', feathers: '🦚', apple_egg: '🍎', wheat: '🌾', wheat_grow: '🌱', garden: '🥕', feed: '🌾', feed_low: '🌾', show: '🎀', jobs: '📋', jobs_ready: '📋' };
     const list = el('div', 'gcard gaway');
     for (const it of sum.items) {
-      const one = it.n === 1 && ['eggs', 'full', 'honey', 'feathers', 'apple_egg', 'jobs_ready'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
+      const one = it.n === 1 && ['eggs', 'full', 'honey', 'feathers', 'apple_egg', 'jobs_ready', 'garden'].includes(it.k), txt = this.t(this.g.dk('away_' + it.k + (one ? '1' : ''), it.duck), { n: it.n, name: it.name, coop: it.coop, t: it.ms ? this.dur(it.ms) : '' });
       const row = el('div', 'gaway-r' + (it.k === 'feed' || it.k === 'full' ? ' gwarn' : '')); row.dataset.k = it.k;
       row.append(el('span', 'gaway-i', IC[it.k] || '•'), el('span', 'gaway-t', txt)); list.append(row);
     }
@@ -1165,6 +1171,55 @@ export class GameUI {
       go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
     } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => h.harvest()); b.append(go); }
     const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+  }
+  // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
+  // or pumpkins, h.sow(i, crop); ripe: Pick, h.pick(i)); the basket; Move the garden (h.move). o.busy: the farmer's at work
+  // there (the words for it)
+  gardenSheet(h, o = {}) {
+    const g = this.g, b = this.open('garden', '🥕 ' + this.t('garden_title')), B = g.vegBasket(), fmt = n => n.toLocaleString(g.locale());
+    this.bird = null;
+    b.append(el('p', 'gnote', this.t('garden_how')));
+    g.garden().beds.forEach((bed, i) => {
+      const st = g.bedStage(i), c = el('div', 'gcard gbed'), hd = el('div', 'gcard-h'); c.dataset.bed = i; c.dataset.stage = st;
+      hd.append(el('span', 'gemoji', bed.crop ? CROPS[bed.crop].e : '🟫'), el('span', 'gcard-t', this.t('bed_n', { n: i + 1 }) + (bed.crop ? ' · ' + this.t('crop_' + bed.crop) : '')));
+      c.append(hd);
+      if (st === 'empty') {
+        c.append(el('p', 'gnote', this.t('bed_empty')));
+        const row = el('div', 'gbed-sow');
+        for (const k of CROP_IDS) {
+          const C = CROPS[k], broke = g.data.coins < C.seed, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), C.e + ' ' + this.t('crop_' + k) + ' · ' + this.t('bed_sow', { c: C.seed, t: this.dur(C.grow) }));
+          go.type = 'button'; go.disabled = broke || !!o.busy; go.dataset.sow = k; go.addEventListener('click', () => { if (!go.disabled) h.sow(i, k); }); row.append(go);
+        }
+        c.append(row);
+      } else if (st === 'ripe') {
+        c.append(el('p', 'gtext gfound', this.t('bed_ripe', { n: CROPS[bed.crop].n })));
+        const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('bed_pick')); go.type = 'button'; go.dataset.pick = i; go.disabled = !!o.busy; go.addEventListener('click', () => { if (!go.disabled) h.pick(i); }); c.append(go);
+      } else {
+        const left = g.bedLeft(i), u = 1 - left / CROPS[bed.crop].grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
+        c.append(el('p', 'gnote', this.t('bed_' + st)), bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
+      }
+      b.append(c);
+    });
+    if (o.busy) b.append(el('p', 'gnote gcenter', o.busy));
+    b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
+    b.append(el('p', 'gnote', this.t('basket_how')));
+    const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+  }
+  // ---- a treat from the garden for a coop's birds (7 Nov 2026): what each vegetable does, how many are in the basket,
+  // Give (h.give(crop)); had today: tomorrow
+  treatSheet(coopId, h) {
+    const g = this.g, c = g.coop(coopId), B = g.vegBasket(), b = this.open('treat', '🍓 ' + this.t('treat_title', { coop: g.coopName(c) })), fmt0 = n => n.toLocaleString(g.locale());
+    this.bird = null;
+    b.append(el('p', 'gtext', this.t('treat_body')));
+    if (g.treatToday(c)) { b.append(el('p', 'gtext gfound', this.t('treat_had'))); return; }
+    for (const k of CROP_IDS) {
+      const C = CROPS[k], n = B[k] || 0, can = g.treatCan(c, k), card = el('div', 'gcard gtreatk'), hd = el('div', 'gcard-h'); card.dataset.crop = k;
+      hd.append(el('span', 'gemoji', C.e), el('span', 'gcard-t', this.t('crop_' + k)));
+      card.append(hd, el('p', 'gtext', this.t('treat_' + k)), el('p', 'gnote', this.t('treat_have', { n: fmt0(n), need: C.treat })));
+      const go = el('button', 'gbtn gsmallbtn' + (can ? '' : ' galt'), this.t('treat_give')); go.type = 'button'; go.disabled = !can; go.dataset.give = k;
+      go.addEventListener('click', () => { if (!go.disabled) h.give(k); }); card.append(go); b.append(card);
+    }
+    if (!g.vegCount()) b.append(el('p', 'gnote gcenter', this.t('treat_none')));
   }
   // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)
   decorCard(id, onMove) {

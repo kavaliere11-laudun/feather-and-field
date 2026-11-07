@@ -17,7 +17,7 @@ from multiprocessing import Pool
 DT = {5120: np.int8, 5121: np.uint8, 5122: np.int16, 5123: np.uint16, 5125: np.uint32, 5126: np.float32}
 NC = {'SCALAR': 1, 'VEC2': 2, 'VEC3': 3, 'VEC4': 4}
 # not shaded: nature has its own (crownShade, natureContact), the flowers and wheat are too fine, lights and glass stay clear
-SKIP_PART = ('tree_', 'bush_', 'rock_', 'wheat_field', 'sunflowers', 'flowers', 'mushrooms', 'xmas_star')
+SKIP_PART = ('tree_', 'bush_', 'rock_', 'wheat_field', 'sunflowers', 'flowers', 'mushrooms', 'xmas_star', 'garden_carrot', 'garden_straw', 'garden_pump', 'garden_sign')      # (the garden's crops: leaves, no shading of their own)
 SKIP_MAT = ('glow', 'glowc', 'window', 'glass')
 RAYS = 48
 GROUND_W = 0.6          # the ground counts a little less (the contact patches and foot shading do some of that already)

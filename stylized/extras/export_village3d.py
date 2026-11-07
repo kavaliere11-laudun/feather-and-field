@@ -40,7 +40,12 @@ BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windm
          'rock_a': (lambda: village3d.rock_v(1, 'rock_a'), 220), 'rock_b': (lambda: village3d.rock_v(2, 'rock_b'), 220),
          'picket_fence': (village3d.picket_fence_v, 1500), 'mushrooms': (village3d.mushrooms_v, 1500), 'sunflowers': (village3d.sunflowers_v, 22000),
          'pasture': (village3d.pasture_v, 6000), 'pasture_shelter': (village3d.pasture_shelter_v, 6000),
-         'kennel': (lambda: __import__('beasts').kennel(), 7000)}
+         'kennel': (lambda: __import__('beasts').kennel(), 7000),
+         'garden': (village3d.garden_v, 14000)}      # (the vegetable garden, 7 Nov 2026: its beds; their signs and crops below)
+for _k in ('carrot', 'straw', 'pump'):
+    BUILD['garden_sign_' + _k] = ((lambda k=_k: village3d.garden_sign_v(k, 'garden_sign_' + k)), 1500)
+    for _s, _b in ((1, 4000), (2, 9000), (3, 12000)):
+        BUILD['garden_%s_%d' % (_k, _s)] = ((lambda k=_k, s=_s: village3d.garden_crop_v(k, s, 'garden_%s_%d' % (k, s))), _b)
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)
