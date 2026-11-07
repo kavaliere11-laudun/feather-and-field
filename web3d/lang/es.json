@@ -1046,5 +1046,10 @@
  "text.away_apple_egg": "{n} huevos dorados bajo los manzanos",
  "text.away_apple_egg1": "Un huevo dorado bajo el manzano",
  "text.apple_line0": "🍎 Le encantaría tener un manzano junto a su gallinero: se plantará en cuanto haya sitio a un lado (en tus tierras, lejos de los caminos y de otros gallineros).",
- "text.sideways": "Gira el móvil en horizontal para jugar"
+ "text.sideways": "Gira el móvil en horizontal para jugar",
+ "text.story_1": "La abuela te ha dejado su granja, con una carta: «Cuida de mis gallinas. Lo demás llegará poco a poco».",
+ "text.story_2": "Feather & Field ya es tuya. Sus tres Rhode Island Red te esperan en la cancela.",
+ "text.story_3": "Todos los terrenos son tuyos, pero la maleza los ha recuperado. Cada uno necesita trabajo, y monedas, para volver a la vida.",
+ "text.story_4": "Recoge los huevos, cuida de tus gallinas y devuelve la vida a la granja, terreno a terreno.",
+ "text.settings_story": "📜 La historia de la granja"
 }

@@ -4186,3 +4186,22 @@ They were in the Unity version only. Now in the game:
   mushrooms, the farmhouse, the field shelter), reaching a little beyond its foot, and those props a touch darker where
   they meet the ground: the sun's shadow is kept a little off things (so it never speckles them) and had left a light gap.
 - **The wheat field:** no verge of grass and daisies round it any more (they read as weeds); just its soft-edged soil.
+
+## Grandma's story at the start (7 Nov 2026; Audrey: "let's add storytelling that you just inherited the farm but everything is to do so you do it step by step. Add a little storytelling at the start of the game"; her choices: "Painted story cards", "Your grandmother"; her pictures from Midjourney)
+- **The pictures** (`web3d/story/1-3.webp`, 1536 x 768, hers): grandma's letter and the key on the kitchen table; the
+  little cottage with its gate, its three Rhode Island Reds and a rusty wheelbarrow; the overgrown corner with a broken
+  fence, a fallen log and grandma's hat. Her fourth ("too busy and not accurate") is being made again: "Picture 2,
+  restored" (the same cottage mended, a before and after; the Midjourney prompt uses picture 2's link on the site as its
+  reference). It goes in as `story/4.webp` and `STORY` in `gameui.js` gets its fourth entry.
+- **The cards** (`gameui.js` story(), `.gstory`): each picture over the whole screen, drifting slowly closer; its line in a
+  cream card in the top left corner (over the pictures' skies and corners, not their hens), the dots and Next under the
+  thumb bottom right, Skip top right; a tap on the picture or a swipe for the next, a swipe the other way back, the
+  last one's "Let's go!". On a new phone it comes before the welcome (while the farm loads); Settings has "📜 The farm's
+  story" to see it again. Automated checks skip it unless `?story`.
+- **The lines, six languages** (`story_1` to `story_4`): "Grandma has left you her farm, with a letter: "Look after my
+  hens. The rest will come, one step at a time."" · "Feather & Field is yours now. Her three Rhode Island Reds are waiting
+  at the gate." · "Every field is yours, but the weeds have taken them back. Each one needs work, and coins, to bring it
+  back to life." · (with the fourth picture) "Collect the eggs, care for your hens, and bring the farm back to life, field
+  by field." French: "Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à
+  pas. »" …
+- **The check:** `storytest.mjs` (LANG=fr).

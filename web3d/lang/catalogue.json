@@ -1944,6 +1944,31 @@
   "fr": "Passer"
  },
  {
+  "id": "text.story_1",
+  "en": "Grandma has left you her farm, with a letter: “Look after my hens. The rest will come, one step at a time.”",
+  "fr": "Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à pas. »"
+ },
+ {
+  "id": "text.story_2",
+  "en": "Feather & Field is yours now. Her three Rhode Island Reds are waiting at the gate.",
+  "fr": "Feather & Field est à vous maintenant. Ses trois Rhode Island Red vous attendent au portail."
+ },
+ {
+  "id": "text.story_3",
+  "en": "Every field is yours, but the weeds have taken them back. Each one needs work, and coins, to bring it back to life.",
+  "fr": "Chaque terrain est à vous, mais les mauvaises herbes l’ont repris. Chacun demande du travail, et des pièces, pour revivre."
+ },
+ {
+  "id": "text.story_4",
+  "en": "Collect the eggs, care for your hens, and bring the farm back to life, field by field.",
+  "fr": "Ramassez les œufs, prenez soin de vos poules et redonnez vie à la ferme, terrain après terrain."
+ },
+ {
+  "id": "text.settings_story",
+  "en": "📜 The farm’s story",
+  "fr": "📜 L’histoire de la ferme"
+ },
+ {
   "id": "text.guide_n",
   "en": "First day · {n} of {of}",
   "fr": "Premier jour · {n} sur {of}"

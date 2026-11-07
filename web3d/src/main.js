@@ -474,7 +474,8 @@ async function start() {
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
     gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
-    if (!game.data) welcome = gameUI.welcome();          // (a new farm: who's farming, while the farm loads)
+    // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
+    if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
   const fieldsP = GAME_MODE ? loadJSON('fields.json') : null;          // (the game's fields: fields.py)
   const [farm, flock, village, plan, pen, meadow, flockInfo, coopsGlb, coopsInfo, , insideGlb, insideInfo, beastsGlb, beastsInfo, faunaGlb, geeseGlb, geeseInfo, farmerGlb, farmerInfo, decorGlb, decorInfo] = await Promise.all([loadGLB('plants.glb'), loadGLB('flock.glb'),

@@ -52,6 +52,8 @@ function rosette(place, champ = false) {
     '<circle cx="12" cy="10" r="8.2" fill="' + c + '"/><circle cx="12" cy="10" r="7.4" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="1.9 1.5"/>' + mid + '</svg>';
 }
 const JOB_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10.5l1.6 1.6 3-3M8.5 16.5l1.6 1.6 3-3M15 11h1.5M15 17h1.5"/></svg>';
+// the story's pictures, in order (web3d/story)
+const STORY = ['1.webp', '2.webp', '3.webp'];
 const BOOK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.3 5.2 7.8 4.6 4 4.8v13.4c3.8-.2 6.3.4 8 1.7 1.7-1.3 4.2-1.9 8-1.7V4.8c-3.8-.2-6.3.4-8 1.7z"/><path d="M12 6.5v13.4"/></svg>';
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
@@ -184,6 +186,48 @@ export class GameUI {
     if (this.kind === 'fish' && this.fishThen) { const f = this.fishThen; this.fishThen = null; f(this.g.worms() > 0); }      // (closed: on fishing while there are worms)
     this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
+  // ---- the story at the start (7 Nov 2026; Audrey: "let's add storytelling that you just inherited the farm but everything
+  // is to do"; her choices: "Painted story cards", "Your grandmother"; the pictures hers, from Midjourney): grandma's farm in
+  // a few painted pictures, each with its line, before the welcome on a new phone (and from Settings again). Each picture
+  // drifts slowly closer; tap or swipe for the next (back with a swipe the other way), Skip in the corner, the last one's
+  // "Let's go!". Resolves when it's over
+  story() {
+    const cards = STORY.map((src, i) => ({ src: 'story/' + src + (this.o.bust || ''), line: this.t('story_' + (i + 1)) }));
+    return new Promise(resolve => {
+      const box = el('div', 'gstory'); box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', this.t('settings_story').replace(/^\S+\s/, ''));
+      const imgs = cards.map(c => { const im = el('img'); im.alt = ''; im.decoding = 'async'; im.draggable = false; im.src = c.src; box.append(im); return im; });      // (not draggable: a swipe stays a swipe)
+      const cap = el('div', 'gstory-cap'), text = el('p', 'gstory-text'); cap.append(text);
+      const foot = el('div', 'gstory-foot'), dots = el('div', 'gdots'), next = el('button', 'gbtn gstory-next'); next.type = 'button';
+      cards.forEach(() => dots.append(el('span')));
+      foot.append(dots, next);
+      const skip = el('button', 'gstory-skip', this.t('intro_skip')); skip.type = 'button';
+      box.append(cap, foot, skip);
+      document.body.append(box);
+      let at = -1, done = false;
+      const show = i => {
+        if (i < 0 || i >= cards.length || i === at) return;
+        at = i;
+        imgs.forEach((im, k) => { im.classList.toggle('on', k === i); if (k === i) { im.style.animation = 'none'; void im.offsetWidth; im.style.animation = ''; } });
+        text.classList.remove('in'); void text.offsetWidth; text.textContent = cards[i].line; text.classList.add('in');
+        [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+        next.textContent = i === cards.length - 1 ? this.t('intro_go') : this.t('intro_next');
+      };
+      const finish = () => { if (done) return; done = true; box.classList.add('out'); setTimeout(() => box.remove(), 450); document.removeEventListener('keydown', key); resolve(); };
+      const go = d => { if (at + d >= cards.length) finish(); else show(at + d); };
+      next.addEventListener('click', e => { e.stopPropagation(); go(1); });
+      skip.addEventListener('click', e => { e.stopPropagation(); finish(); });
+      let sx = null, sy = 0, swiped = 0;
+      box.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; });
+      box.addEventListener('pointerup', e => {
+        if (sx === null) return; const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { swiped = Date.now(); go(dx < 0 ? 1 : -1); }
+      });
+      box.addEventListener('click', e => { if (e.target.closest('button') || Date.now() - swiped < 400) return; go(1); });      // (a tap on the picture: the next)
+      const key = e => { if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') go(1); else if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'Escape') finish(); };
+      document.addEventListener('keydown', key);
+      show(0);
+    });
+  }
   // ---- the welcome: language, your farmer (him or her, a name), start
   // the welcome picture over the top of the screen (the farmer, hens of every breed, the geese and the dog: main.js ?poster),
   // with the game's name; the welcome sheet below it
@@ -1340,6 +1384,9 @@ export class GameUI {
       g.wipe(); if (this.o.reload) this.o.reload();
     });
     b.append(fresh);
+    const st = el('button', 'gbtn galt gstory-again', this.t('settings_story')); st.type = 'button';
+    st.addEventListener('click', () => { this.close(); this.story(); });
+    b.append(st);
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
     b.append(this.credits(), this.privacyLink());
   }
