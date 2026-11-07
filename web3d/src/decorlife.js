@@ -78,7 +78,7 @@ class Bees {
 
 // ------------------------------------------------------------------ butterflies over the flower bed: a flutter from flower to
 // flower, settling a moment with the wings slowly opening and closing, now and then a little wander out and back
-class Butterflies {
+export class Butterflies {
   constructor(parent, grade, r, n = 4) {
     this.r = r; this.f = [];
     const COL = [['#fbf6e9', '#3a3a3a'], ['#f2c84b', '#6a4a12'], ['#ee8a3c', '#3a1d0e'], ['#8fbdf0', '#21364f']];

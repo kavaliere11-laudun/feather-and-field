@@ -4274,5 +4274,10 @@ They were in the Unity version only. Now in the game:
   turning to it, then a wide sweep of the arm out to the right as he turns with it, the seed flying from the end of it;
   walking round a bend he leans into it a little and looks the way he's turning. Rosie's plait has no joint of its own in
   her model (it's part of her head), so it can't swing yet: a job for her model in Blender if wanted.
-- **Still to come:** wood grain (the models' colours are all one material, so wood has to be told from other browns),
-  small signs of life (butterflies, birds' shadows, the wind on the long grass).
+- **Small signs of life** (13:44, "Ok carry on"; `tickMeadowLife`, story look, by day): butterflies (the decorations' own,
+  a little bigger than life) over the three drifts of wildflowers nearest the middle of the view, two to a drift; now and
+  then (every 18 to 48 s) the soft shadows of three birds flying over in a loose V, flapping and gliding, crossing the
+  ground and gone; the wind seen rolling across the grass, the blades a little lighter as each gust bends them (`addWind`,
+  the long grass, your land's carpet and the flowers).
+- **Wood grain: not done.** Every model's colours are one shared material, so a plank can't be told from a dirt floor or
+  which way it runs; it needs the wood made as its own material in Blender (coops, fences, benches, the dock, the bridge).

@@ -29,7 +29,7 @@ import { CallPen } from './callpen.js';
 import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
-import { DecorLife } from './decorlife.js';
+import { DecorLife, Butterflies } from './decorlife.js';
 import { Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FEATHERS, APPLES as APPLES_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
@@ -1173,8 +1173,12 @@ function addWind(mat, amp) {
         float gust = (0.5 + 0.5 * sin(windTime * 1.6 - (wBase.x * 0.8 + wBase.z * 0.6) * 1.8)) * (0.65 + 0.35 * sin(windTime * 0.31 + wBase.x * 0.02));
         float flutter = sin(windTime * 4.3 + wBase.x * 1.9 - wBase.z * 1.3 + wH * 2.0);
         wPos.xz += vec2(0.8, 0.6) * windAmp * wH * wH * (gust + 0.22 * flutter);
+        vWindSheen = (gust - 0.45) * clamp(wH * 3.0, 0.0, 1.0);
         vec4 mvPosition = viewMatrix * wPos;
-        gl_Position = projectionMatrix * mvPosition;`);
+        gl_Position = projectionMatrix * mvPosition;`).replace('#include <common>', '#include <common>\nvarying float vWindSheen;');
+    // (the story look) the wind seen rolling across the grass: the blades a little lighter as each gust bends them
+    if (STORY_LOOK && amp >= 0.8) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vWindSheen;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 1.0 + 0.32 * vWindSheen;');
   };
   mat.customProgramCacheKey = () => 'wind' + amp;
   mat.needsUpdate = true;
@@ -1317,6 +1321,56 @@ function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
   if (GAME_MODE) { tickBits(dt); tickHoneyFrame(); }
+  if (GAME_MODE && STORY_LOOK) tickMeadowLife(dt);
+}
+// ---- (the story look) small signs of life about the farm, by day (7 Nov 2026, Audrey's "premium and natural" finish):
+// butterflies over the wildflower drifts near where you're looking (a few at a time, from the decorations' own), and now
+// and then the shadows of a few birds flying over, gliding and flapping, crossing the ground and gone
+const MEADOW = { groups: [], t: 0, birds: null, birdIn: 8 };
+const dayNow = () => { const h = clockHour(), sm = (a, b, x) => { const v = Math.min(1, Math.max(0, (x - a) / (b - a))); return v * v * (3 - 2 * v); }; return sm(6.3, 7.2, h) * (1 - sm(19.6, 20.4, h)); };
+function tickMeadowLife(dt) {
+  const M = MEADOW; M.t += dt;
+  const day = dayNow(), T = view.target;
+  // butterflies: up to three drifts of wildflowers nearest the middle of the view, within 6 m, each with two butterflies
+  if ((M.pick = (M.pick || 0) - dt) <= 0) {
+    M.pick = 2;
+    const near = V.flowers.map((f, i) => [i, Math.hypot(f.pos[0] - T.x, f.pos[2] - T.z)]).filter(([i, d]) => d < 6 && !underCoop(V.flowers[i].pos[0], V.flowers[i].pos[2], 0.3)).sort((a, b) => a[1] - b[1]).slice(0, 3).map(([i]) => i);
+    for (const G of M.groups) G.want = near.includes(G.i);
+    for (const i of near) if (!M.groups.some(G => G.i === i)) {
+      const f = V.flowers[i], g = new THREE.Group(); g.position.set(f.pos[0], 0, f.pos[2]); g.scale.setScalar(1.7); scene.add(g);      // (a little bigger than life: seen from the game's view)
+      M.groups.push({ i, g, b: new Butterflies(g, nightGrade, rng(900 + i), 2), want: true });
+    }
+    for (let k = M.groups.length - 1; k >= 0; k--) { const G = M.groups[k]; if (!G.want && M.groups.length > 3) { G.g.removeFromParent(); M.groups.splice(k, 1); } }
+  }
+  for (const G of M.groups) { G.g.visible = G.want; if (G.want) G.b.update(dt, day, M.t); }
+  // the birds' shadows
+  if (!M.birds) {
+    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 64; const c = cv.getContext('2d');
+    c.filter = 'blur(2.5px)'; c.fillStyle = '#000';
+    c.beginPath(); c.moveTo(64, 26); c.quadraticCurveTo(40, 6, 6, 18); c.quadraticCurveTo(36, 22, 56, 36); c.lineTo(60, 52); c.lineTo(68, 52); c.lineTo(72, 36);
+    c.quadraticCurveTo(92, 22, 122, 18); c.quadraticCurveTo(88, 6, 64, 26); c.fill();
+    const tex = new THREE.CanvasTexture(cv), mat = new THREE.MeshBasicMaterial({ map: tex, color: '#1d2a17', transparent: true, opacity: 0, depthWrite: false });
+    M.birds = [0, 1, 2].map(() => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55).rotateX(-Math.PI / 2), mat); m.visible = false; m.renderOrder = 2; scene.add(m); return m; });
+    M.birdMat = mat;
+  }
+  if (M.fly) {
+    const F = M.fly; F.t += dt;
+    const fade = Math.min(1, F.t / 0.6, (F.dur - F.t) / 0.6);
+    M.birdMat.opacity = 0.34 * Math.max(0, fade) * day;
+    M.birds.forEach((m, k) => {
+      const off = [[0, 0], [-0.9, 0.7], [-1.1, -0.8]][k], u = F.t * F.speed;
+      m.position.set(F.from.x + F.dir.x * (u + off[0]) - F.dir.z * off[1], 0.02, F.from.z + F.dir.z * (u + off[0]) + F.dir.x * off[1]);
+      m.rotation.y = Math.atan2(F.dir.x, F.dir.z);
+      const flap = Math.sin(M.t * 11 + k * 1.3) > -0.2 && (Math.floor(M.t * 0.7 + k) % 2 === 0);      // (flapping, then a glide)
+      m.scale.set(flap ? 0.65 + 0.35 * Math.abs(Math.sin(M.t * 11 + k)) : 1, 1, 1);
+      m.visible = true;
+    });
+    if (F.t >= F.dur) { M.fly = null; for (const m of M.birds) m.visible = false; M.birdIn = 18 + Math.random() * 30; }
+    wake(100);
+  } else if (day > 0.6 && (M.birdIn -= dt) <= 0) {
+    const a = Math.random() * Math.PI * 2, dir = new THREE.Vector3(Math.cos(a), 0, Math.sin(a)), R = Math.max(5, view.size * 2.2);
+    M.fly = { t: 0, speed: 4.2, dur: 2 * R / 4.2, dir, from: new THREE.Vector3(T.x - dir.x * R, 0, T.z - dir.z * R) };
+  }
 }
 // a tap on one: its name over it
 function decorAt(ray) {
@@ -8533,6 +8587,7 @@ window.__farm = {
   // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale
   saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
   farmLife: () => farmLife,
+  meadow: () => MEADOW,
   farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
   overgrownIn: f => { const out = {}, m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.wild) for (let i = 0; i < im.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) out[im.userData.wild] = (out[im.userData.wild] || 0) + 1; } return out; },
   restoring: () => !!LAND.mow, puffs: () => CLEARING.length,
