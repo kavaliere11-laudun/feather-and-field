@@ -38,10 +38,13 @@ ok('a new farm: level 1, the home field yours, the wild meadow in its long grass
 const wildTap = await p.evaluate(() => { const f = window.__farm, F = f.fields().fields[5], c = F.mid; f.lookAt(c[0], c[1]); f.draw(); const v = new f.THREE.Vector3(c[0], 0, c[1]).project(f.camera); return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, at: f.fieldAt(c[0], c[1]) }; });
 await p.touchscreen.tap(wildTap.x, wildTap.y); await run(0.2);
 const tagT = await p.evaluate(() => document.getElementById('tag').textContent);
-ok('a tap on the wild meadow: when it comes up for sale', /(Wild meadow|Pré sauvage) · (for sale at level|à vendre au niveau) 6/.test(tagT), { wildTap, tagT });
+ok('a tap on the overgrown land: when it can be restored', /(Overgrown field|Terrain en friche) · (to restore at level|à remettre en état au niveau) 6/.test(tagT), { wildTap, tagT });
+// (6 Nov 2026, Audrey: "they belong to the farm but the farm doesn't have enough money to renovate them"; "Overgrown, needing repair")
+const og = await p.evaluate(() => [1, 2, 5].map(f => window.__farm.overgrownIn(f)));
+ok('the land still to restore is overgrown: brambles, nettles, thistles, cow parsley, young scrub and an old thing or two (a broken fence, a fallen log, a rusty wheelbarrow, a pile of stones) in each field', og.every(o => o.bramble >= 2 && o.nettle >= 2 && (o.fence || o.log || o.barrow || o.stones)), og);
 await p.evaluate(() => window.__farm.gameUI().levelSheet()); await run(0.2);
 let t = await cardText();
-ok('the level card: what level 2 brings (a new field)', /level 2: a new field|niveau 2 : un nouveau terrain/i.test(t) && /1 field|terrain : 1/.test(t), t);
+ok('the level card: what level 2 brings (another field to restore)', /level 2: another field to restore|niveau 2 : un autre terrain à remettre en état/i.test(t) && /1 field|terrain : 1/.test(t), t);
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 2
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 70; g.save(); });
@@ -51,7 +54,7 @@ ok('level 2: its card (the level, the patch for sale at 100 coins), the top bar 
 const look = () => p.evaluate(() => { const f = window.__farm, a = f.land().at; f.lookAt(a[0], a[1]); f.draw(); });
 await look(); await run(0.1); s = await state();
 const sign = await p.evaluate(() => window.__farm.saleSign().length);
-ok('the next field in order for sale: its sign (and stakes), and its bubble over it in view', s.sale === 1 && sign >= 3 && /(For sale|À vendre) · 100/.test(s.bub || ''), { s, sign });
+ok('the next field in order to restore: its sign (and stakes), and its bubble over it in view', s.sale === 1 && sign >= 3 && /(To restore|À restaurer) · 100/.test(s.bub || ''), { s, sign });
 await p.tap('.gsheet .gx');
 await run(0.5);
 s = await state();
@@ -70,11 +73,15 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 150; g.save(); window.__farm.gameUI().refresh(); });
 await p.evaluate(() => document.querySelector('.gbub.gsale').click()); await run(0.2);
 t = await cardText();
-ok('its bubble opens its card: buy for 100 coins', /Buy for 100|Acheter pour 100/.test(t), t);
+ok('its bubble opens its card: an overgrown field, restore it for 100 coins', /Restore for 100|Remettre en état : 100/.test(t) && /(overgrown field|terrain en friche)/i.test(t), t);
 const before = s, inside1 = await p.evaluate(() => { const f = window.__farm, F = f.fields().fields[1]; return F.mid; });
 const reach0 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), inside1), wild0 = await p.evaluate(() => window.__farm.wildIn(1));
-await p.tap('.gsheet .gbtn'); await run(1.2);
+await p.tap('.gsheet .gbtn'); await run(0.25);
+const during = await p.evaluate(() => ({ mow: window.__farm.restoring(), puffs: window.__farm.puffs() }));
+await run(1.0);
 s = await state();
+const og1 = await p.evaluate(() => window.__farm.overgrownIn(1));
+ok('restored: puffs where its brambles and old things were, all of it cleared with the long grass', during.mow && during.puffs >= 3 && Object.keys(og1).length === 0, { during, og1 });
 const reach1 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), inside1), wild1 = await p.evaluate(() => window.__farm.wildIn(1));
 ok('bought: 100 coins paid, the field yours (its long grass cut, no fence, the farmer can walk there), nothing more for sale at level 2', s.coins === 50 && s.land === '0,1' && s.owned === 2 && s.sale === -1 && s.bub === null && !s.card && wild0 > 50 && wild1 === 0 && s.fence === 0 && !reach0 && reach1, { s, wild0, wild1, reach0, reach1 });
 // level 4 at once: one card, the next patch for sale

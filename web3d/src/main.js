@@ -490,6 +490,7 @@ async function start() {
     V.paths = V.paths.filter(l => l.length > 3);
     V.props = V.props.filter(p => p.model !== 'wheat_field');      // (the village's wheat field: the farm has its own, on its land)
     fillPlotGaps();
+    edgeTufts();
     const near = (x, z) => V.paths.some(l => { for (let i = 1; i < l.length; i++) { const a = l[i - 1], b = l[i], dx = b[0] - a[0], dz = b[2] - a[2], L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[2]) * dz) / L)); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < V.pathHalf + 0.6) return true; } return false; });
     V.pebbles = V.pebbles.filter(q => near(q[0], q[2]));
   }
@@ -517,6 +518,7 @@ async function start() {
   if (GAME_MODE) { settleCoops(); settleDecor(); hidePebbles(); }        // (each coop and decoration where it can stand, what's under it cleared)
   buildProps(); if (GAME_MODE) syncDecor(); else buildDecor();
   buildNature();
+  if (GAME_MODE) outerWoods();
   buildPlots(Math.max(0, Math.min(40, parseInt(params.get('coops') || '10', 10))));
   if (params.has('lineup') && !['foxes', 'geese', 'dog', 'frogs', 'ducks', 'farmer', 'show', 'fish'].includes(params.get('lineup'))) buildLineup();
   if (params.get('lineup') === 'geese') geeseLineup = new GeeseLineup(scene, villageCentre().add(new THREE.Vector3(32, 0, 32)), 45 * DEG, rng(41));
@@ -622,7 +624,22 @@ function buildGround(img) {
   tex.repeat.set(6, 6);                                    // one picture every 20 m
   tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   const c = villageCentre();
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshLambertMaterial({ map: tex }));
+  const gm = new THREE.MeshLambertMaterial({ map: tex }), detail = grassDetail();
+  gm.onBeforeCompile = sh => {                 // (soft patches, lusher and sunnier: groundPatch; close up, the fine texture of short grass)
+    sh.uniforms.grassDetail = { value: detail };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;\nuniform sampler2D grassDetail;').replace('#include <map_fragment>', `#include <map_fragment>
+{
+  float gd = texture2D(grassDetail, vGW * 0.62).r * 0.6 + texture2D(grassDetail, vGW * 0.23 + 0.37).r * 0.4;
+  diffuseColor.rgb *= 0.74 + 0.52 * gd;
+  float n1 = sin(vGW.x * 0.21 + sin(vGW.y * 0.17) * 1.7) * sin(vGW.y * 0.19 + sin(vGW.x * 0.13) * 1.9);
+  float n2 = sin(vGW.x * 0.63 + vGW.y * 0.41 + sin(vGW.y * 0.5) * 2.0) * sin(vGW.y * 0.57 - vGW.x * 0.29);
+  float t = smoothstep(-0.6, 0.6, n1 * 0.7 + n2 * 0.3);
+  diffuseColor.rgb *= mix(vec3(0.9, 0.98, 0.88), vec3(1.08, 1.05, 0.9), t);
+}`);
+  };
+  gm.customProgramCacheKey = () => 'ground-patches';
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), gm);
   ground.rotation.x = -Math.PI / 2; ground.position.set(c.x, 0, c.z);
   still(ground);
 }
@@ -829,7 +846,7 @@ vec3 ripples(vec2 p) {
 }
 
 function buildPaths() {
-  const geos = V.paths.map((p, i) => ribbon(p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
+  const geos = V.paths.map((p, i) => ribbon(GAME_MODE ? outward(p) : p, V.pathHalf, 0.004 + (i % 7) * 0.0003));
   still(new THREE.Mesh(mergeGeometries(geos, false), DIRT));
   // pebbles along the edges, in one batch
   const peb = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.03, 0), new THREE.MeshLambertMaterial({ color: '#cfc8ba' }), V.pebbles.length);
@@ -876,7 +893,8 @@ function buildWater() {
   still(new THREE.Mesh(ellipse(1.0, 0.007), pond));
   // the streams, each in its banks, flowing from its first point to its last (the west one into the pond, the other out of it)
   const flowing = waterShader(WATER.clone(), 'stream', shape); flowing.transparent = true; flowing.depthWrite = false;
-  for (const st of V.streams) {
+  for (const st0 of V.streams) {
+    const st = GAME_MODE ? outward(st0) : st0;
     still(new THREE.Mesh(bandRibbon(st, BANK_COLS(V.streamHalf), 0.0035), BANK_SOFT)).renderOrder = -1;
     still(new THREE.Mesh(ribbon(st, V.streamHalf, 0.0075, true), flowing)).renderOrder = 1;
   }
@@ -957,6 +975,55 @@ function waterside() {
 }
 const WATERSIDE = [];
 
+// ---- the map round the farm (6 Nov 2026, Audrey: "I would also like to improve the map"): zoomed out at its edge, the
+// farm had stopped at a row of trees with bare green beyond; now woods run all round it, thicker and a little bluer
+// further off, the lanes and the streams carrying on out into them through a gap in the trees
+const uvOf = (x, z) => [(x - z) * R2, (-z - x) * R2];
+function edgeGap(x, z) {                         // how far (x, z) is outside the farm's edge (below 0: inside)
+  const [u, v] = uvOf(x, z), B = V.bounds;
+  return Math.max(B.u[0] - u, u - B.u[1], B.v[0] - v, v - B.v[1]);
+}
+function outward(line) {                         // a lane or stream that leaves the farm, carried on 20 m the way it was going
+  const out = line.slice(), n = line.length; if (n < 2) return out;
+  for (const [end, prev, front] of [[line[n - 1], line[n - 2], false], [line[0], line[1], true]]) {
+    if (edgeGap(end[0], end[2]) < -3) continue;
+    const dx = end[0] - prev[0], dz = end[2] - prev[2], L = Math.hypot(dx, dz) || 1, steps = 10;
+    const more = []; for (let k = 1; k <= steps; k++) { const t = k * 2; more.push([end[0] + dx / L * t + Math.sin(k * 1.3) * 0.15, 0, end[2] + dz / L * t + Math.cos(k * 1.1) * 0.15]); }
+    if (front) out.unshift(...more.reverse()); else out.push(...more);
+  }
+  return out;
+}
+const WOODS = [];
+function outerWoods() {
+  for (const m of WOODS) m.removeFromParent(); WOODS.length = 0;
+  const r = rng(1201), B = V.bounds, ways = [...V.paths, ...V.streams].filter(l => l.length > 1).map(outward);
+  const inWay = (x, z) => ways.some(l => { for (let i = 1; i < l.length; i++) if (segDist(x, z, l[i - 1], l[i]) < 2.0) return true; return false; });
+  const spots = [], S = 2.5;
+  for (let u = B.u[0] - 14; u < B.u[1] + 14; u += S) for (let v = B.v[0] - 14; v < B.v[1] + 14; v += S) {
+    const uu = u + (r() - 0.5) * S * 0.8, vv = v + (r() - 0.5) * S * 0.8, x = (uu - vv) * R2, z = -(uu + vv) * R2, gap = edgeGap(x, z);
+    if (gap < 1.2 || r() < 0.1 || inWay(x, z)) continue;
+    spots.push([x, z, gap]);
+  }
+  // one tree: a trunk and a round crown of three blobs, in its own colours
+  const crown = mergeGeometries([[0, 0, 0, 1], [0.45, -0.15, 0.2, 0.75], [-0.35, -0.2, -0.3, 0.8]].map(([x, y, z, k]) => { const g = geoAt(new THREE.SphereGeometry(k, 8, 6), x, y, z); g.deleteAttribute('uv'); return g; }), false);      // (round and soft, like the farm's own)
+  const trunk = new THREE.CylinderGeometry(0.11, 0.16, 1, 6).translate(0, 0.5, 0);
+  const cm = new THREE.MeshLambertMaterial({ color: '#ffffff' }), tm = new THREE.MeshLambertMaterial({ color: '#6e5038' });
+  addWind(cm, 0.004); nightGrade(cm); nightGrade(tm);
+  const tiles = new Map();
+  for (const sp of spots) { const k = Math.floor(sp[0] / 20) + ',' + Math.floor(sp[1] / 20); if (!tiles.has(k)) tiles.set(k, []); tiles.get(k).push(sp); }
+  const c = new THREE.Color(), q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
+  for (const list of tiles.values()) {
+    const kc = new THREE.InstancedMesh(crown, cm, list.length), kt = new THREE.InstancedMesh(trunk, tm, list.length);
+    list.forEach(([x, z, gap], i) => {
+      const h = 1.4 + r() * 1.1, cr = 0.95 + r() * 0.55, far = Math.min(1, gap / 12);
+      kt.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q.identity(), new THREE.Vector3(1, h + 0.3, 1)));
+      kc.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, h + cr * 0.7, z), q.setFromAxisAngle(Y, r() * 6.28), new THREE.Vector3(cr, cr * (0.85 + r() * 0.2), cr)));
+      const g = 0.56 + r() * 0.16;
+      kc.setColorAt(i, c.setRGB(0.27 + r() * 0.1 - far * 0.05, g - far * 0.07, 0.17 + far * 0.08, THREE.SRGBColorSpace));
+    });
+    for (const k of [kc, kt]) { k.castShadow = true; k.receiveShadow = k === kt; k.computeBoundingSphere(); k.matrixAutoUpdate = false; scene.add(k); WOODS.push(k); }
+  }
+}
 // many copies of one model, drawn together (one draw per material). A batch is drawn whole whenever any of it is in view, so
 // copies spread over the village are split into tiles: the phone then only draws the tiles near the view.
 function batch(name, matrices, opts = {}) {
@@ -1005,11 +1072,13 @@ function batchOne(name, matrices, opts) {
     let mat = opts.lambert ? new THREE.MeshLambertMaterial({ vertexColors: true, side: opts.twoSided ? THREE.DoubleSide : THREE.FrontSide }) : m.material;
     if (opts.tint && opts.lambert) mat.color.setRGB(...opts.tint);      // (its colours warmed or cooled: the wild meadow's long grass)
     if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
+    if (opts.foot) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } footShade(mat, opts.foot[0], opts.foot[1]); }      // (darker at its foot, in its own shade)
     if (opts.bothLit) { const before = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { if (before) before.call(mat, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); }; mat.customProgramCacheKey = () => 'bothLit'; }      // (both sides of a blade lit as its front: the long grass, not half its blades in the dark)
     nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
     inst.userData.model = name; inst.userData.ownMat = mat !== m.material;
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
+    if (opts.colorOf) { const c = new THREE.Color(); matrices.forEach((mx, i) => inst.setColorAt(i, opts.colorOf(mx, c))); }      // (each copy a shade of its own)
     inst.castShadow = !!opts.cast; inst.receiveShadow = true;
     inst.instanceMatrix.needsUpdate = true;
     inst.computeBoundingSphere();
@@ -1318,13 +1387,62 @@ function buildNature() {
   const lists = {};
   for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
   for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b'])
-    NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007 } : name[0] === 't' ? { cast: true, wind: 0.006 } : name[0] === 'b' ? { cast: true, wind: 0.05 } : {}));
+    NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22] } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22] } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38] } : {}));
   // wildflowers in little drifts (none through a coop)
   const fl = { flower_daisy: [], flower_butter: [], flower_clover: [] };
   for (const f of V.flowers) for (const [name, x, z, yaw, sc] of f.pts) if (!underCoop(x, z, 0.1)) fl[name].push(place(x, 0, z, yaw, sc));
   for (const n in fl) NATURE.push(...batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2 }));
 }
 
+// the fine texture of short grass on the ground, seen close up: little strokes, lighter and darker, on a tile that
+// repeats seamlessly (its average a plain grey, so from far off it's the ground as it was)
+function grassDetail() {
+  const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const c = cv.getContext('2d'), r = rng(611);
+  c.fillStyle = 'rgb(128,128,128)'; c.fillRect(0, 0, N, N); c.lineCap = 'round';
+  for (let i = 0; i < 4200; i++) {
+    const x = r() * N, y = r() * N, a = -Math.PI / 2 + (r() - 0.5) * 2.2, l = 3 + r() * 7, light = r() < 0.5, v = light ? 175 + r() * 60 : 50 + r() * 50;
+    c.strokeStyle = `rgba(${v | 0},${v | 0},${v | 0},${0.5 + r() * 0.35})`; c.lineWidth = 1.2 + r() * 1.4;
+    for (const ox of [-N, 0, N]) for (const oy of [-N, 0, N]) { if (x + ox < -12 || x + ox > N + 12 || y + oy < -12 || y + oy > N + 12) continue; c.beginPath(); c.moveTo(x + ox, y + oy); c.lineTo(x + ox + Math.cos(a) * l, y + oy + Math.sin(a) * l); c.stroke(); }
+  }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace;
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return t;
+}
+// (6 Nov 2026, Audrey: "improve ... the quality of the grass and the bushes") the meadow in soft patches, lusher and
+// sunnier, drifting across the farm (the ground's colour and its grass alike: groundPatch, the same in the ground's shader)
+function groundPatch(x, z) {
+  const n1 = Math.sin(x * 0.21 + Math.sin(z * 0.17) * 1.7) * Math.sin(z * 0.19 + Math.sin(x * 0.13) * 1.9);
+  const n2 = Math.sin(x * 0.63 + z * 0.41 + Math.sin(z * 0.5) * 2.0) * Math.sin(z * 0.57 - x * 0.29);
+  const v = n1 * 0.7 + n2 * 0.3, t = Math.max(0, Math.min(1, (v + 0.6) / 1.2));
+  return t * t * (3 - 2 * t);
+}
+const hash01 = (x, z) => { const v = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return v - Math.floor(v); };
+function grassShade(mx, c) {
+  const x = mx.elements[12], z = mx.elements[14], t = groundPatch(x, z), k = 0.92 + hash01(x, z) * 0.16;
+  return c.setRGB((0.9 + 0.22 * t) * k, (1.0 + 0.06 * t) * k, (0.86 - 0.02 * t) * k);
+}
+function natureShade(mx, c) {                   // (bushes and trees: each its own green, a little yellower or bluer)
+  const x = mx.elements[12], z = mx.elements[14], h = hash01(x, z), h2 = hash01(z, x);
+  return c.setRGB(0.9 + h * 0.16, 0.95 + h2 * 0.08, 0.84 + (1 - h) * 0.16);
+}
+// more grass where it grows thickest: along the lanes' verges and round the trees, bushes and rocks (once, at the start)
+function edgeTufts() {
+  const r = rng(733), add = (x, z) => { if (fieldAt(x, z) >= 0) V.tufts.push([x, 0, z, Math.floor(r() * 3), r() * 6.283, 1.5 + r() * 0.8]); };
+  for (const l of V.paths) for (let i = 1; i < l.length; i++) {
+    const a = l[i - 1], b = l[i], L = Math.hypot(b[0] - a[0], b[2] - a[2]); if (!L) continue;
+    const nx = -(b[2] - a[2]) / L, nz = (b[0] - a[0]) / L;
+    for (let u = 0; u < L; u += 0.22) for (const sd of [1, -1]) {
+      if (r() > 0.75) continue;
+      const off = V.pathHalf + 0.05 + r() * r() * 0.35, x = a[0] + (b[0] - a[0]) * u / L + nx * off * sd, z = a[2] + (b[2] - a[2]) * u / L + nz * off * sd;
+      if (!nearLines(V.paths, x, z, V.pathHalf + 0.03)) add(x, z);
+    }
+  }
+  const ring = (cx, cz, r0, r1, n) => { for (let i = 0; i < n; i++) { const a = r() * 6.283, d = r0 + r() * (r1 - r0); add(cx + Math.cos(a) * d, cz + Math.sin(a) * d); } };
+  for (const t of V.trees) ring(t.pos[0], t.pos[2], 0.35, 1.0, 10);
+  for (const b of V.bushes) ring(b.pos[0], b.pos[2], 0.3 * (b.s || 1), 0.62 * (b.s || 1), 6);
+  for (const k of V.rocks) ring(k.pos[0], k.pos[2], 0.16 * (k.s || 1), 0.32 * (k.s || 1), 4);
+}
 // grass tufts in tiles of 6 m, so the phone only draws the tiles in view; fewer on slower phones, none when zoomed far out
 const VGRASS = [];
 function buildGrass() {
@@ -1339,7 +1457,7 @@ function buildGrass() {
   }
   for (const lists of tiles.values()) {
     lists.forEach((list, k) => {
-      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2 })) { grassTiles.push({ mesh: inst, full: inst.count }); VGRASS.push(inst); }
+      for (const inst of batch('grass_tuft_' + k, list, { lambert: true, tile: 0, twoSided: true, wind: 1.2, colorOf: grassShade })) { grassTiles.push({ mesh: inst, full: inst.count }); VGRASS.push(inst); }
     });
   }
   applyGrass();
@@ -1349,6 +1467,7 @@ function applyGrass() {
   furDetail();
   const far = view.size > 7.2;
   for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass)); g.mesh.visible = !far; }
+  for (const m of LAND.wild) if (m.userData.small) m.visible = !far;      // (the land still to restore: its nettles and the like, with the grass)
 }
 
 // ------------------------------------------------------------------ plots: a coop with its birds, an empty plot ready to build, or a plot for sale
@@ -5664,7 +5783,7 @@ function tickFishing(dt) {
   FISHING.update(dt, VIEW_DIR);
 }
 const SALE = { sign: null, stakes: null, field: -1, at: null };
-const LAND = { tint: null, tintCv: null, fence: [], grass: [], mow: null };
+const LAND = { tint: null, tintCv: null, fence: [], grass: [], wild: [], mow: null };
 // the land's fences no more (6 Nov 2026, Audrey: "I would actually get rid of the fences and for the lands not bought yet
 // they should just be with high grass not cut and slightly different colour"; one had run through the well): the land not
 // yours yet is its warmer colour and long, uncut grass; the farmer still keeps to your land and the lanes, and the geese's
@@ -5865,6 +5984,9 @@ function syncLand(fresh = false) {
     if (game.fishOpen('river')) riverRig();
     LAND.fence = LAND_FENCE ? buildFence(cutGates(fenceLines())) : [];
     if (bought >= 0) { if (LAND.mow) for (const m of LAND.mow.meshes) m.removeFromParent(); LAND.mow = { meshes: wildPlants(bought), t: 0 }; for (const m of LAND.mow.meshes) m.matrixAutoUpdate = true; }
+    for (const m of LAND.wild) m.removeFromParent();
+    LAND.wild = overgrowth();
+    if (bought >= 0) { const W = overgrowth(bought); LAND.mow.meshes.push(...W); for (const m of W) m.matrixAutoUpdate = true; restoreMoment(bought); }
     LAND.grass = wildPlants(); for (const m of LAND.grass) grassTiles.push({ mesh: m, full: m.count });
     applyGrass();
     renderer.shadowMap.needsUpdate = true;
@@ -5897,6 +6019,182 @@ function buyField() {
   hint(game.t('land_bought'));
   syncLand(); wake(1500);
   return r;
+}
+// ---- the land still to restore (6 Nov 2026, Audrey: "they belong to the farm but the farm doesn't have enough money to
+// renovate them"; her choice: "Overgrown, needing repair"): besides its long grass and wildflowers, each field gone wild
+// has brambles with blackberries, clumps of nettles and a few thistles, and an old thing or two left lying there: a broken
+// bit of fence, a fallen log with moss on it, a rusty old wheelbarrow on its side, a pile of stones. Kept clear of its
+// edges with your land and the lanes (where its sign goes). Restored: all of it cleared in puffs with the long grass
+function geoPaint(geo, hex, jit = 0, r = Math.random) {      // (one colour, a little varied, for merging with others)
+  const g = geo.index ? geo.toNonIndexed() : geo; g.deleteAttribute('uv');
+  const c = new THREE.Color(hex), n = g.attributes.position.count, col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i += 3) { const k = 1 + (r() - 0.5) * jit; for (let j = 0; j < 3 && i + j < n; j++) { col[(i + j) * 3] = c.r * k; col[(i + j) * 3 + 1] = c.g * k; col[(i + j) * 3 + 2] = c.b * k; } }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
+}
+const geoAt = (g, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = sx, sz = sx) => g.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz)));
+function arch(ax, az, bx, bz, h, rad) {          // a bramble's cane: arching up and over to the ground
+  const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(ax, 0.02, az), new THREE.Vector3((ax + bx) / 2, h, (az + bz) / 2), new THREE.Vector3(bx, 0.03, bz));
+  return new THREE.TubeGeometry(c, 8, rad, 4, false);
+}
+const WILD_GEO = {};
+function wildGeos() {
+  if (WILD_GEO.bramble) return WILD_GEO;
+  const r = rng(907), M = list => { const g = mergeGeometries(list, false); g.computeBoundingSphere(); return g; };
+  // brambles: a wide, low tangle of leaves (greens and a few reddish old ones) with green canes looping between them,
+  // blackberries (a few still red) and pale pink flowers on top
+  let L = [];
+  const leaves = [];
+  for (let i = 0; i < 18; i++) {
+    const a = r() * 6.28, d = Math.sqrt(r()) * 0.44, x = Math.cos(a) * d, z = Math.sin(a) * d * 0.85, y = 0.06 + (0.44 - d) * 0.45 + r() * 0.06, rr = 0.075 + r() * 0.065;
+    leaves.push([x, y + rr * 0.5, z]);
+    L.push(geoPaint(geoAt(new THREE.IcosahedronGeometry(1, 0), x, y, z, r(), r(), r(), rr, rr * 0.7, rr), ['#3b6a2e', '#4b7c36', '#33602a', '#58843a', '#6b5a36'][i % 5 === 4 && i > 10 ? 4 : i % 4], 0.22, r));
+  }
+  for (let i = 0; i < 5; i++) {
+    const A = leaves[Math.floor(r() * leaves.length)], B = leaves[Math.floor(r() * leaves.length)];
+    if (Math.hypot(A[0] - B[0], A[2] - B[2]) < 0.25) continue;
+    L.push(geoPaint(arch(A[0], A[2], B[0], B[2], Math.max(A[1], B[1]) + 0.16 + r() * 0.1, 0.012), '#5d6f2f', 0.2, r));
+  }
+  for (let i = 0; i < 14; i++) { const [x, y, z] = leaves[i % leaves.length]; L.push(geoPaint(geoAt(new THREE.OctahedronGeometry(0.019, 0), x + (r() - 0.5) * 0.12, y + 0.02 + r() * 0.04, z + (r() - 0.5) * 0.12), i % 5 ? '#24122a' : '#b02a3c', 0.15, r)); }
+  for (let i = 0; i < 5; i++) { const [x, y, z] = leaves[(i * 5) % leaves.length]; L.push(geoPaint(geoAt(new THREE.OctahedronGeometry(0.024, 0), x + (r() - 0.5) * 0.1, y + 0.05, z + (r() - 0.5) * 0.1, 0, 0, 0, 1, 0.45, 1), '#f3dce3', 0.05, r)); }
+  WILD_GEO.bramble = M(L);
+  // cow parsley: tall pale stalks with flat white heads of tiny flowers
+  L = [];
+  for (let i = 0; i < 3; i++) {
+    const a = r() * 6.28, d = r() * 0.1, x = Math.cos(a) * d, z = Math.sin(a) * d, h = 0.5 + r() * 0.25, tx = (r() - 0.5) * 0.2, tz = (r() - 0.5) * 0.2;
+    L.push(geoPaint(geoAt(new THREE.CylinderGeometry(0.006, 0.009, h, 4).translate(0, h / 2, 0), x, 0, z, tx, 0, tz), '#7d9a52', 0.1, r));
+    const top = new THREE.Vector3(0, h, 0).applyEuler(new THREE.Euler(tx, 0, tz));
+    for (let k = 0; k < 7; k++) { const b = k / 7 * 6.28, e = k ? 0.05 : 0; L.push(geoPaint(geoAt(new THREE.OctahedronGeometry(0.026, 0), x + top.x + Math.cos(b) * e, top.y + 0.01, z + top.z + Math.sin(b) * e, 0, 0, 0, 1, 0.5, 1), '#f7f5ec', 0.06, r)); }
+    for (let k = 0; k < 2; k++) L.push(geoPaint(geoAt(new THREE.OctahedronGeometry(1, 0), x + top.x * 0.4, h * (0.3 + k * 0.2), z + top.z * 0.4, 0, r() * 6.28, 0.3, 0.08, 0.006, 0.05), '#6f9447', 0.15, r));
+  }
+  WILD_GEO.parsley = M(L);
+  // nettles: upright stalks with pairs of pointed leaves, drooping green tassels at the top
+  L = [];
+  for (let i = 0; i < 5; i++) {
+    const a = r() * 6.28, d = r() * 0.12, x = Math.cos(a) * d, z = Math.sin(a) * d, h = 0.32 + r() * 0.22, tilt = (r() - 0.5) * 0.25;
+    L.push(geoPaint(geoAt(new THREE.CylinderGeometry(0.006, 0.009, h, 4).translate(0, h / 2, 0), x, 0, z, tilt, 0, tilt), '#4a7533', 0.1, r));
+    for (let k = 0; k < 3; k++) { const y = h * (0.35 + k * 0.22), yaw = r() * 6.28 + k * 1.57; for (const sd of [1, -1]) L.push(geoPaint(geoAt(new THREE.OctahedronGeometry(1, 0), x + Math.cos(yaw) * 0.045 * sd, y, z + Math.sin(yaw) * 0.045 * sd, 0.35 * sd, -yaw, 0, 0.055 - k * 0.01, 0.007, 0.024 - k * 0.004), '#3b6a2c', 0.2, r)); }
+    L.push(geoPaint(geoAt(new THREE.ConeGeometry(0.018, 0.08, 4), x, h + 0.02, z, Math.PI, 0, 0), '#7f9550', 0.1, r));
+  }
+  WILD_GEO.nettle = M(L);
+  // thistles: a spiky rosette, a stalk, a purple flower head on a green cup
+  L = [];
+  for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + r() * 0.3; L.push(geoPaint(geoAt(new THREE.ConeGeometry(0.03, 0.2, 3), Math.cos(a) * 0.09, 0.03, Math.sin(a) * 0.09, 0, -a, Math.PI / 2 - 0.35, 1, 1, 0.35), '#5f7f4a', 0.15, r)); }
+  L.push(geoPaint(new THREE.CylinderGeometry(0.008, 0.011, 0.5, 4).translate(0, 0.25, 0), '#5f7f4a', 0.1, r));
+  L.push(geoPaint(geoAt(new THREE.IcosahedronGeometry(0.035, 0), 0, 0.5, 0, 0, 0, 0, 1, 0.9, 1), '#6a8a4c', 0.1, r));
+  L.push(geoPaint(geoAt(new THREE.ConeGeometry(0.04, 0.06, 6), 0, 0.555, 0, Math.PI, 0, 0), '#9b4fb0', 0.1, r));
+  WILD_GEO.thistle = M(L);
+  // an old broken bit of fence: three weathered posts (one leaning, one snapped), a rail hanging, a rail in the grass
+  L = [];
+  const old = '#8c8170';
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.07, 0.72, 0.07).translate(0, 0.36, 0), -0.7, 0, 0, 0, 0, 0.05), old, 0.15, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.07, 0.62, 0.07).translate(0, 0.31, 0), 0.05, 0, 0, 0, 0, -0.35), '#7d7262', 0.15, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.07, 0.3, 0.07).translate(0, 0.15, 0), 0.75, 0, 0), old, 0.15, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.85, 0.05, 0.04), -0.33, 0.42, 0.02, 0, 0, -0.6), '#968a77', 0.15, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.8, 0.05, 0.04), 0.42, 0.03, 0.18, 0, 0.35, Math.PI / 2 - 0.02), '#867b69', 0.15, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.75, 0.05, 0.04), -0.3, 0.6, 0.03, 0, 0, 0.12), '#968a77', 0.15, r));
+  WILD_GEO.fence = M(L);
+  // a fallen log: bark, paler cut ends, moss on top, a stub of a branch
+  L = [];
+  const bark = geoPaint(new THREE.CylinderGeometry(0.13, 0.15, 1.15, 9, 1, true), '#6b4b32', 0.25, r);
+  L.push(geoAt(bark, 0, 0.13, 0, 0, 0, Math.PI / 2));
+  for (const sd of [1, -1]) L.push(geoPaint(geoAt(new THREE.CircleGeometry(sd > 0 ? 0.13 : 0.15, 9), sd * 0.575, 0.13, 0, 0, sd * Math.PI / 2, 0), '#c49a6a', 0.08, r));
+  for (let i = 0; i < 5; i++) L.push(geoPaint(geoAt(new THREE.IcosahedronGeometry(1, 0), -0.4 + i * 0.2 + r() * 0.08, 0.25, (r() - 0.5) * 0.06, 0, r(), 0, 0.09, 0.04, 0.08), i % 2 ? '#5d8b3b' : '#6f9a45', 0.2, r));
+  L.push(geoPaint(geoAt(new THREE.CylinderGeometry(0.025, 0.04, 0.3, 5), 0.2, 0.3, 0.06, 0.5, 0, 0.6), '#6b4b32', 0.2, r));
+  WILD_GEO.log = M(L);
+  // a rusty old wheelbarrow on its side: the tub, its wheel, the handles
+  L = [];
+  const tub = new THREE.CylinderGeometry(0.34, 0.22, 0.24, 4, 1, true).rotateY(Math.PI / 4);
+  L.push(geoPaint(geoAt(tub, 0, 0.3, 0, 0, 0, 1.25, 1, 1, 0.75), '#8b4a2b', 0.35, r));
+  L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.34, 0.02, 0.24), -0.1, 0.3, 0, 0, 0, 1.25), '#6e3a22', 0.3, r));
+  L.push(geoPaint(geoAt(new THREE.TorusGeometry(0.13, 0.03, 5, 12), 0.35, 0.16, 0.0, 0.3, 0, 0), '#3b3532', 0.15, r));
+  for (const sd of [1, -1]) L.push(geoPaint(geoAt(new THREE.BoxGeometry(0.9, 0.035, 0.035), -0.18, 0.12 + sd * 0.02, sd * 0.17, 0, sd * 0.12, 0.08), '#6e5a44', 0.15, r));
+  WILD_GEO.barrow = M(L);
+  // a pile of old stones
+  L = [];
+  for (let i = 0; i < 7; i++) { const a = r() * 6.28, d = i ? 0.12 + r() * 0.16 : 0, s2 = 0.09 + r() * 0.07; L.push(geoPaint(geoAt(new THREE.IcosahedronGeometry(1, 0), Math.cos(a) * d, s2 * 0.45 + (i ? 0 : 0.08), Math.sin(a) * d, r(), r(), r(), s2, s2 * 0.7, s2 * 0.85), i % 3 ? '#9d978a' : '#b3ab9b', 0.2, r)); }
+  WILD_GEO.stones = M(L);
+  return WILD_GEO;
+}
+const WILD_MAT = {};
+function wildMat(wind) {                         // (flat-shaded, its own colours, swaying a little if it's a plant; dimmed at night)
+  const k = wind ? 'w' : 's';
+  if (!WILD_MAT[k]) { const m = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }); if (wind) addWind(m, 0.35); nightGrade(m); WILD_MAT[k] = m; }
+  return WILD_MAT[k];
+}
+// where each field gone wild has its brambles, nettles, thistles and old things (decided once for each field, so they're
+// the same each time: the field's own random numbers); `only`: just that field's
+function wildSpots(F) {
+  const r = rng(4409 + F.id * 97), nav = navGrid(), out = [];
+  const edges = F.lines;                         // (clear of all its edges: the same whichever fields are yours, so nothing moves as you restore them)
+  const clear = (x, z, m) => !edges.some(L => { for (let i = 1; i < L.pts.length; i++) { const a = L.pts[i - 1], b = L.pts[i]; if (segDist(x, z, [a[0], 0, a[1]], [b[0], 0, b[1]]) < m) return true; } return false; });
+  const xs = F.lines.flatMap(L => L.pts.map(p => p[0])), zs = F.lines.flatMap(L => L.pts.map(p => p[1]));
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), z0 = Math.min(...zs), z1 = Math.max(...zs);
+  const want = { thing: F.area > 110 ? 2 : 1, bramble: Math.round(F.area / 16), scrub: Math.round(F.area / 75), nettle: Math.round(F.area / 13), parsley: Math.round(F.area / 18), thistle: Math.round(F.area / 22) };
+  const things = ['fence', 'log', 'barrow', 'stones'];
+  for (const kind of ['thing', 'bramble', 'scrub', 'nettle', 'parsley', 'thistle']) {
+    for (let k = 0, tries = 0; k < want[kind] && tries < 300; tries++) {
+      const x = x0 + r() * (x1 - x0), z = z0 + r() * (z1 - z0), m = kind === 'thing' ? 1.4 : kind === 'bramble' || kind === 'scrub' ? 1.0 : 0.6;
+      if (fieldAt(x, z) !== F.id || !nav.freeAt(x, z) || !clear(x, z, m)) continue;
+      if (V.trees.some(t => Math.hypot(t.pos[0] - x, t.pos[2] - z) < 1.1)) continue;
+      const big = kind === 'thing' || kind === 'bramble' || kind === 'scrub';
+      if (out.some(o => Math.hypot(o.x - x, o.z - z) < (kind === 'thing' || o.kind === 'thing' ? 1.5 : big || o.big ? 0.95 : 0.5))) continue;
+      out.push({ kind: kind === 'thing' ? things[(F.id + k * 3) % 4] : kind, x, z, yaw: r() * 6.28, s: (kind === 'bramble' ? 1.15 : kind === 'nettle' || kind === 'thistle' ? 1.3 : kind === 'scrub' ? 0.7 : 1.05) * (0.85 + r() * 0.35), big });
+      k++;
+    }
+  }
+  return out;
+}
+function overgrowth(only = -1) {
+  if (!GAME_MODE || !game.data || !FIELDS) return [];
+  const n = game.data.land.length, tiles = new Map(), out = [];
+  for (const F of FIELDS.fields) {
+    if (only >= 0 ? F.id !== only : F.id < n) continue;
+    for (const o of wildSpots(F)) {
+      const key = Math.floor(o.x / 20) + ',' + Math.floor(o.z / 20); if (!tiles.has(key)) tiles.set(key, {});
+      const L = tiles.get(key); (L[o.kind] = L[o.kind] || []).push(place(o.x, 0, o.z, o.yaw / DEG, o.s));
+    }
+  }
+  for (const lists of tiles.values()) out.push(...overgrowthTile(lists));      // (in tiles of 20 m: only the ones in view drawn)
+  return out;
+}
+function overgrowthTile(lists) {
+  const G = wildGeos(), out = [];
+  if (lists.scrub) {                             // (young wild bushes: the farm's bushes, smaller and scruffier)
+    for (const m of meshesOf(parts.bush_b || parts.bush_a)) {
+      const mat = addWind(m.material.clone(), 0.05); mat.userData.graded = false; nightGrade(mat);
+      const k = new THREE.InstancedMesh(m.geometry, mat, lists.scrub.length), c = new THREE.Color();
+      lists.scrub.forEach((mx, i) => { k.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)); k.setColorAt(i, c.setRGB(0.86 + (i % 3) * 0.05, 0.9, 0.66)); });
+      k.castShadow = true; k.receiveShadow = true; k.computeBoundingSphere(); k.userData.wild = 'scrub'; k.userData.ownMat = true; k.matrixAutoUpdate = false; scene.add(k); out.push(k);
+    }
+    delete lists.scrub;
+  }
+  for (const kind in lists) {
+    const plant = kind === 'bramble' || kind === 'nettle' || kind === 'thistle' || kind === 'parsley';
+    const k = new THREE.InstancedMesh(G[kind], wildMat(plant), lists[kind].length);
+    lists[kind].forEach((m, i) => k.setMatrixAt(i, m));
+    k.castShadow = kind === 'bramble' || G[kind] && !plant; k.receiveShadow = true; k.computeBoundingSphere(); k.userData.wild = kind; k.userData.small = kind === 'nettle' || kind === 'thistle' || kind === 'parsley';
+    k.matrixAutoUpdate = false; scene.add(k); out.push(k);
+  }
+  return out;
+}
+// a field restored: puffs of leaves and dust where its brambles and old things were, as all of it is cleared
+function restoreMoment(f) {
+  const F = FIELDS.fields[f]; if (!F) return;
+  const spots = wildSpots(F).filter(o => o.big).slice(0, 16);
+  spots.forEach((o, i) => puffAt(o.x, o.z, o.kind === 'bramble' || o.kind === 'scrub' ? '#6fa548' : o.kind === 'stones' ? '#d8cfbf' : '#c2a27a', 0.4, i * 0.06));
+}
+function puffAt(x, z, colour, h, delay = 0) {
+  if (!PUFF_TEX) PUFF_TEX = fxTexture64(64, c => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(32, 32, 30, 0, Math.PI * 2); c.fill(); });
+  const mat = new THREE.SpriteMaterial({ map: PUFF_TEX, color: colour, transparent: true, depthWrite: false, opacity: 0 }), R = rng(x * 131 + z * 71), bits = [];
+  for (let i = 0; i < 11; i++) {
+    const sp = new THREE.Sprite(mat), a = R() * Math.PI * 2;
+    sp.position.set(x, h * (0.3 + 0.7 * R()), z); sp.scale.setScalar(0.01);
+    bits.push({ sp, v: new THREE.Vector3(Math.cos(a) * (0.5 + R()), 0.4 + R() * 0.8, Math.sin(a) * (0.5 + R())), s: 0.42 * (0.7 + R() * 0.6) });
+    scene.add(sp);
+  }
+  const g = new THREE.Group(); scene.add(g);
+  CLEARING.push({ g, base: new THREE.Vector3(1, 1, 1), t: -delay, bits, mat });
 }
 // each frame: a bought field's long grass shrinking away as it's cut
 function tickLand(dt) {
@@ -6476,6 +6774,7 @@ function clearAway(o) {
 function tickClearing(dt) {
   for (let i = CLEARING.length - 1; i >= 0; i--) {
     const C = CLEARING[i]; C.t += dt;
+    if (C.t < 0) continue;                             // (waiting its turn)
     const k = Math.max(0.001, 1 - Math.min(1, C.t / 0.55) ** 2); C.g.scale.copy(C.base).multiplyScalar(k);
     const u = Math.min(1, C.t / 1.1);
     for (const b of C.bits) { b.sp.position.addScaledVector(b.v, dt); b.v.multiplyScalar(1 - dt * 2.2); b.sp.scale.setScalar(b.s * (0.4 + u)); }
@@ -7880,6 +8179,8 @@ window.__farm = {
   // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale
   saleSign: () => { const o = []; if (SALE.sign) SALE.sign.traverse(c => { if (c.isMesh) { const w = c.getWorldPosition(new THREE.Vector3()); o.push([c.type, c.isInstancedMesh ? c.count : 1, +w.x.toFixed(2), +w.y.toFixed(2), +w.z.toFixed(2), c.visible]); } }); return o; },
   farmerCanReach: (x, z) => { const R = farmReach(), nav = navGrid(), i = nav.ix(x), k = nav.iz(z); return !!(R[k * nav.nx + i] || R[k * nav.nx + i + 1] || R[(k + 1) * nav.nx + i]); },
+  overgrownIn: f => { const out = {}, m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.wild) for (let i = 0; i < im.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) out[im.userData.wild] = (out[im.userData.wild] || 0) + 1; } return out; },
+  restoring: () => !!LAND.mow, puffs: () => CLEARING.length,
   wildIn: f => { let c = 0; const m = new THREE.Matrix4(), v = new THREE.Vector3(); for (const im of LAND.grass) for (let i = 0; i < im.instanceMatrix.count; i++) { im.getMatrixAt(i, m); v.setFromMatrixPosition(m); if (fieldAt(v.x, v.z) === f) c++; } return c; },
   gateWant: (i, on) => { if (GATES[i]) GATES[i].want = on; },
   heartsLive: () => heartsMade,

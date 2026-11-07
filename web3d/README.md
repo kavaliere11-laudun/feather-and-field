@@ -4148,3 +4148,27 @@ They were in the Unity version only. Now in the game:
   bridge, the dock, a stream's mouth or where the farmer fishes), swaying in the wind; dimmed at night.
 - **Next, as promised to Audrey:** the grass, bushes and map; the fields to restore (overgrown, "to restore" instead of
   "for sale"); the story cards when her pictures come.
+
+## The fields to restore, the grass, the bushes and the woods round the farm (7 Nov 2026, just after midnight; Audrey: "improve the map, the quality of the grass and the bushes, as well as how the land that belongs to the farm or not yet are showing. What we can say, is that they belong to the farm but the farm doesn't have enough money to renovate them"; her choice: "Overgrown, needing repair (Recommended)")
+- **The land still to restore** (`main.js` wildGeos, wildSpots, overgrowth, restoreMoment): besides its long grass and
+  wildflowers, each field gone wild has bramble patches (leafy tangles with green canes, blackberries, a few red ones,
+  pale pink flowers), clumps of nettles, cow parsley, thistles and young scrub, and an old thing or two (a broken bit of
+  fence, a fallen log with moss, a rusty wheelbarrow on its side, a pile of stones). Each field's are decided by its own
+  random numbers and kept clear of all its edges, so nothing moves as fields are restored. Drawn in tiles of 20 m (only
+  the ones in view); the small plants hidden when zoomed far out, like the grass.
+- **Restoring a field:** the card is "An overgrown field": "This field is part of your farm, but it has gone wild:
+  brambles, nettles and old odds and ends. Restore it and it's ready for your coops, for good." The button "Restore for
+  100 coins"; then puffs of leaves and dust where its brambles and old things were, all of it shrinking away with the
+  long grass, and "The field is restored!".
+- **The words, six languages:** "for sale" is now "to restore" everywhere (the sign TO RESTORE / À RESTAURER, its bubble,
+  the label on the land, the level cards, the first-day guide, the intro's third card, "restore the next field" when
+  there's no room). French: "Un terrain en friche", "Remettre en état : 100 pièces", "Le terrain est remis en état !".
+- **The grass:** the ground in soft patches, lusher and sunnier (`groundPatch`, the same in the ground's shader and on
+  each tuft), a fine texture of short grass on it close up (`grassDetail`, a seamless tile of little strokes), and
+  thicker grass along the lanes' verges and round trees, bushes and rocks (`edgeTufts`).
+- **The bushes and trees:** each its own shade of green, a little yellower or bluer, and darker at the foot (`footShade`).
+- **The map round the farm:** woods all round it (`outerWoods`: round soft trees, a little bluer further off), the
+  lanes and the two streams carrying on out into them through a gap in the trees (`outward`, seen only).
+- **Cost:** checked with a counter (triangles, draw calls) against the version before: about a quarter more at the
+  usual zooms; the load a little longer. `landtest.mjs` checks the overgrown fields and the restoring.
+- **Next:** the story cards (grandma's farm) when Audrey's pictures come.

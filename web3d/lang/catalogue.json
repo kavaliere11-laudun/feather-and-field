@@ -326,8 +326,8 @@
  },
  {
   "id": "text.land_new",
-  "en": "A new field is for sale: {c} coins",
-  "fr": "Un nouveau terrain est à vendre : {c} pièces"
+  "en": "A field is ready to restore: {c} coins",
+  "fr": "Un terrain est prêt à être remis en état : {c} pièces"
  },
  {
   "id": "text.land_show",
@@ -336,8 +336,8 @@
  },
  {
   "id": "text.level_next_land",
-  "en": "At level {n}: a new field for sale",
-  "fr": "Au niveau {n} : un nouveau terrain à vendre"
+  "en": "At level {n}: another field to restore",
+  "fr": "Au niveau {n} : un autre terrain à remettre en état"
  },
  {
   "id": "text.land_count",
@@ -356,18 +356,18 @@
  },
  {
   "id": "text.land_title",
-  "en": "A field",
-  "fr": "Un terrain"
+  "en": "An overgrown field",
+  "fr": "Un terrain en friche"
  },
  {
   "id": "text.land_body",
-  "en": "Wild meadow with room for a coop or two. Buy it and it’s yours for good: its long grass is cut, ready for your coops.",
-  "fr": "Un pré sauvage avec de la place pour un ou deux poulaillers. Achetez-le et il est à vous pour toujours : ses hautes herbes sont fauchées, prêtes pour vos poulaillers."
+  "en": "This field is part of your farm, but it has gone wild: brambles, nettles and old odds and ends. Restore it and it’s ready for your coops, for good.",
+  "fr": "Ce terrain fait partie de votre ferme, mais il est retourné à l’état sauvage : ronces, orties et vieux bric-à-brac. Remettez-le en état et il sera prêt pour vos poulaillers, pour toujours."
  },
  {
   "id": "text.land_buy",
-  "en": "Buy for {c} coins",
-  "fr": "Acheter pour {c} pièces"
+  "en": "Restore for {c} coins",
+  "fr": "Remettre en état : {c} pièces"
  },
  {
   "id": "text.land_broke",
@@ -376,23 +376,23 @@
  },
  {
   "id": "text.land_bought",
-  "en": "The new field is yours!",
-  "fr": "Le nouveau terrain est à vous !"
+  "en": "The field is restored!",
+  "fr": "Le terrain est remis en état !"
  },
  {
   "id": "text.land_wild",
-  "en": "Wild meadow · for sale at level {n}",
-  "fr": "Pré sauvage · à vendre au niveau {n}"
+  "en": "Overgrown field · to restore at level {n}",
+  "fr": "Terrain en friche · à remettre en état au niveau {n}"
  },
  {
   "id": "text.sale_sign",
-  "en": "FOR SALE",
-  "fr": "À VENDRE"
+  "en": "TO RESTORE",
+  "fr": "À RESTAURER"
  },
  {
   "id": "text.bub_sale",
-  "en": "For sale",
-  "fr": "À vendre"
+  "en": "To restore",
+  "fr": "À restaurer"
  },
  {
   "id": "text.coop_lives",
@@ -826,8 +826,8 @@
  },
  {
   "id": "text.no_room",
-  "en": "No room on your land for another coop yet: buy the next field.",
-  "fr": "Pas encore de place sur votre terrain pour un autre poulailler : achetez le prochain terrain."
+  "en": "No room on your land for another coop yet: restore the next field.",
+  "fr": "Pas encore de place sur votre terrain pour un autre poulailler : remettez en état le prochain terrain."
  },
  {
   "id": "text.welcome_trio",
@@ -1286,8 +1286,8 @@
  },
  {
   "id": "text.dec_no_room",
-  "en": "No room for it on your land just now: buy the next field, or move things about.",
-  "fr": "Pas de place sur votre terrain pour l’instant : achetez le prochain terrain, ou déplacez des choses."
+  "en": "No room for it on your land just now: restore the next field, or move things about.",
+  "fr": "Pas de place sur votre terrain pour l’instant : remettez en état le prochain terrain, ou déplacez des choses."
  },
  {
   "id": "text.dec_pond_hint",
@@ -1905,8 +1905,8 @@
  },
  {
   "id": "text.intro_3b",
-  "en": "Each level brings a field to buy, and new breeds arrive as trios with their own coop. Put everything where you like.",
-  "fr": "Chaque niveau apporte un terrain à acheter, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez."
+  "en": "Each level, another field of the farm can be restored, and new breeds arrive as trios with their own coop. Put everything where you like.",
+  "fr": "À chaque niveau, un autre terrain de la ferme peut être remis en état, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez."
  },
  {
   "id": "text.intro_4",
@@ -2005,8 +2005,8 @@
  },
  {
   "id": "text.guide_done",
-  "en": "Your first day is done! +{c} coins. A new field comes at level 2.",
-  "fr": "Votre premier jour est terminé ! +{c} pièces. Un nouveau terrain arrive au niveau 2."
+  "en": "Your first day is done! +{c} coins. Another field can be restored at level 2.",
+  "fr": "Votre premier jour est terminé ! +{c} pièces. Un autre terrain pourra être remis en état au niveau 2."
  },
  {
   "id": "text.jobs_title",
