@@ -164,12 +164,14 @@ async function visit(first = false) {
 
 // ---- the start: the story, the welcome, the first day's pictures, the guide
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
-for (let k = 0; k < 12; k++) {
+for (let k = 0; k < 20; k++) {      // (grandma's story: its own pages, Next on each; then the welcome card)
   await p.waitForTimeout(1500);
+  const st = await p.evaluate(() => { const g = document.querySelector('.gstory'); return g && g.offsetParent !== null && !g.hidden ? g.innerText : null; }).catch(() => null);
+  if (st) { await note('story', st); await shoot('story_' + k); await click('.gstory-next'); continue; }
   const c = await cardNow(); if (!c) { if (await p.evaluate(() => !!window.__farm && document.getElementById('loading') === null)) break; continue; }
   await note('start ' + c.kind, c.text); await once('start:' + c.kind + k, 'start_' + c.kind + '_' + k);
   if (c.kind === 'welcome') { await click('.gsheet .gbtn:not(.galt)'); break; }
-  await p.evaluate(() => { const n = [...document.querySelectorAll('.gsheet .gbtn, .gstory button, button')].find(x => x.offsetParent && !x.classList.contains('galt') && /Next|Suivant|Start|Commencer|Continue|Continuer|Weiter|Siguiente|Avanti|Próximo|Começar|Iniciar|Inizia|Los/i.test(x.textContent)); if (n) n.click(); });
+  await click('.gsheet .gbtn:not(.galt)');
 }
 await load();
 // the first day's pictures (the intro cards) and the guide's steps, as the arrow says
