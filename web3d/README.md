@@ -4445,3 +4445,19 @@ They were in the Unity version only. Now in the game:
   coop's gate can still be reached (checked for as few spots as can be: the walking grid is made again for each); the
   farmer waits up to 20 seconds for a bird he's called to him (the rooster, from across the yard, came too late for his
   worms); a reminder when the garden's ripe ("The garden is ripe 🥕", with the crops' reminders: "Garden, wheat & honey").
+
+## Her notes from playing, 7 Nov 2026 evening (on her iPhone, sideways)
+- **"Add a photo of the chickens breed instead of a generic icon"**: a new breed's card (on the level's card, and in Your
+  coops while its coop waits to be placed) shows the breed's own picture, the Breed Book's (the trio, see-through),
+  instead of the chicken emoji (`gameui.js` `breedPic`; the emoji if the picture won't load).
+- **"Make these centred on the screen"** (the overgrown field's card, on the right): every card sideways opens in the
+  middle of the screen under the top bar, popping in (the welcome stays on the right, its picture beside it).
+  `cardaudit.mjs` checks every card is in the middle.
+- **"I just restored that bit and look the grass is different. It looks like the old design"**: a field just restored
+  kept the wild meadow's old tufts until the game was opened again; now your land's soft grass is laid over it straight
+  away (`syncLand`: `buildGrass`).
+- **"When I tap the fox house it should not give me the price of the land, it should make the fox do something"**: a tap
+  on the den (`denAt`, `foxDenTap`): by day Rusty's family comes out to play ("🦊 Rusty's family comes out to play"), or,
+  out already, they hop and bow to you; at night they're asleep and a cub peeks out of the den's mouth, sits a moment and
+  pops back in ("🦊 Shh… the foxes are asleep. A cub peeks out to see who's there."); while Rusty's out on his night
+  visit, "the den is quiet". Six languages (`foxden.*`).
