@@ -64,6 +64,31 @@
      tablet held upright sees the painted picture, the name, a phone turning and "Turn your phone sideways to play" (in its
      language: main.js); the iPhone app itself only turns sideways (app/ios Info.plist), the web app asks to (the manifest,
      screen.orientation.lock where there is one); a computer's window, however it's shaped, plays as before */
+  /* the story at the start (7 Nov 2026: grandma's farm, Audrey's painted pictures; gameui.js story()): each picture over the
+     whole screen, drifting slowly closer; its line in a cream card in the top left corner (the pictures' skies and corners,
+     not their hens), the dots and Next under your thumb bottom right, Skip top right */
+  .gstory { position: fixed; inset: 0; z-index: 900; background: #3d4f2c; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer;
+            animation: gsfade .5s ease-out; }
+  .gstory.out { opacity: 0; transition: opacity .45s; pointer-events: none; }
+  @keyframes gsfade { from { opacity: 0; } to { opacity: 1; } }
+  .gstory img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease; transform-origin: 60% 55%; -webkit-user-drag: none; -webkit-touch-callout: none; pointer-events: none; }
+  .gstory img.on { opacity: 1; animation: gsken 12s ease-out forwards; }
+  @keyframes gsken { from { transform: scale(1.02); } to { transform: scale(1.1); } }
+  .gstory-cap { position: absolute; left: max(18px, calc(env(safe-area-inset-left) + 12px)); top: max(14px, calc(env(safe-area-inset-top) + 12px)); width: min(400px, 46%);
+                box-sizing: border-box; padding: 14px 18px; border-radius: 22px; background: rgba(255, 253, 247, 0.92); box-shadow: 0 10px 30px rgba(20, 40, 20, 0.25);
+                -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); pointer-events: none; }
+  .gstory-text { margin: 0; color: #1e3426; font: 500 18px/1.38 'Fredoka', system-ui, sans-serif; }
+  .gstory-text.in { animation: gstext .6s ease-out; }
+  @keyframes gstext { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .gstory-foot { position: absolute; right: max(16px, calc(env(safe-area-inset-right) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); display: flex; align-items: center; gap: 12px; }
+  .gstory-foot .gdots { margin: 0; padding: 8px 10px; border-radius: 999px; background: rgba(255, 253, 247, 0.85); }
+  .gstory-foot .gbtn { margin: 0; width: auto; padding: 12px 26px; font-size: 17px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); }
+  .gstory-skip { position: absolute; right: max(16px, calc(env(safe-area-inset-right) + 8px)); top: max(14px, calc(env(safe-area-inset-top) + 12px)); border: 1px solid rgba(255, 255, 255, 0.7);
+                 border-radius: 999px; padding: 8px 16px; background: rgba(255, 253, 247, 0.85); color: #1e3426; font: 600 15px 'Fredoka', system-ui, sans-serif; cursor: pointer;
+                 -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  @media (orientation: portrait) { .gstory-cap { width: auto; right: max(18px, calc(env(safe-area-inset-right) + 12px)); top: max(64px, calc(env(safe-area-inset-top) + 60px)); } }
+  @media (prefers-reduced-motion: reduce) { .gstory img.on { animation: none; } }
+  .gsheet .gstory-again { margin-top: 4px; }
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
@@ -661,6 +686,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794047739"></script>
+<script src="app.js?v=1794048913"></script>
 </body>
 </html>
