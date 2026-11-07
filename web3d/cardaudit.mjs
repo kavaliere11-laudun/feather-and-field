@@ -168,6 +168,75 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
   });
   checked++;
   if (strip.length) bad(`${tag} hint and label`, strip.slice(0, 4));
+  // ---- the other pop-ups (7 Nov 2026, Audrey: "Did you run the audit across all the pop up"): the first day's guide card
+  // with each of its lines, the bubbles over the farm with their longest words, the bar for moving a coop or a decoration
+  // with each of its messages, the buttons over a tapped hen, the dog's and the farmer's; each on the screen, its words
+  // whole, clear of the bar at the top and the buttons in the corner
+  const others = await p.evaluate(() => {
+    const f = window.__farm, g = f.game(), ui = f.gameUI(), W = innerWidth, H = innerHeight, out = [];
+    const v = { name: 'Marguerite', farmer: 'Rosie', t: '2 h 59 min', n: 3, of: 5, c: 120, coop: 'The Red Barn', names: 'Bartholomew, Wilhelmina and Clementine' };
+    const keep = [...document.querySelectorAll('.gstat, .gacts, .gbar > .ggear')].map(e => e.getBoundingClientRect());
+    const overlap = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+    const check = (e, what, mustClear = true) => {
+      const r = e.getBoundingClientRect(); if (!r.width) { out.push([what, 'not shown']); return; }
+      if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) out.push([what, 'off the screen', [r.left, r.top, r.right, r.bottom].map(Math.round)]);
+      for (const x of [e, ...e.querySelectorAll('*')]) {
+        if (!x.getClientRects().length) continue;
+        const cs = getComputedStyle(x);
+        if (x.scrollWidth > x.clientWidth + 2 && cs.overflowX !== 'visible' && x.clientWidth > 0) out.push([what, 'words cut', (x.textContent || '').slice(0, 40)]);
+        if (x.tagName === 'BUTTON' && x.scrollWidth > x.clientWidth + 2) out.push([what, 'button words cut', x.textContent.slice(0, 40)]);
+      }
+      if (mustClear) for (const k of keep) if (overlap(r, k)) { out.push([what, 'over the buttons at the top or in the corner', [r.left, r.top, r.right, r.bottom].map(Math.round)]); break; }
+    };
+    // the guide card, each line
+    const gk = ['guide_cuddle', 'guide_cuddle_card', 'guide_eggs', 'guide_eggs_wait', 'guide_jobs', 'guide_sow', 'guide_sow_card', 'guide_shop', 'guide_did', 'guide_done'];
+    for (const k of gk) { const c = f.guideSay(g.t(k, v), g.t('guide_n', v)); check(c, 'guide card · ' + k); }
+    f.guideOff();
+    // the bubbles over the farm, the longest words
+    const bub = document.createElement('button'); bub.className = 'gbub'; document.body.append(bub);
+    for (const t of ['🪧 ' + g.t('bub_sale') + ' · 10,000', '🌱 2 h 59 min', '🌾 ' + g.t('bub_harvest'), '🌾 ' + g.t('bub_empty'), '🌾 ' + g.t('bub_low'), '🌾 ' + g.t('bub_sow'), '🍯 6']) {
+      bub.textContent = t; bub.style.left = W / 2 + 'px'; bub.style.top = H / 2 + 'px';
+      const r = bub.getBoundingClientRect(); if (r.width > W * 0.6) out.push(['bubble', 'wider than a bubble should be', t]);
+      if (r.height > 52) out.push(['bubble', 'on more than one line', t, Math.round(r.height)]);
+      check(bub, 'bubble · ' + t, false);
+    }
+    bub.remove();
+    // the move bar, each message
+    ui.moveBar(true, { turn() {}, cancel() {}, place() {} });
+    for (const k of ['move_hint', 'move_ok', 'move_clear', 'move_land', 'move_lane', 'move_room', 'move_coop', 'move_gate', 'dec_bad_way', 'dec_ok_clear']) { ui.moveStatus(g.t(k, v), k === 'move_ok'); check(document.querySelector('.gmove'), 'move bar · ' + k, false); }
+    ui.moveBar(false);
+    // the buttons over a tapped hen, the dog's, the farmer's
+    const w = f.bottomWords();
+    const hb = document.getElementById('henbtns'), cu = document.getElementById('cuddlebtn'), fi = document.getElementById('feedbtn');
+    if (hb && cu && fi) { cu.textContent = w.cuddle; fi.textContent = w.fill; hb.hidden = false; check(hb, 'buttons over a hen'); hb.hidden = true; }
+    const db = document.getElementById('dogbtn'); if (db) { db.textContent = w.dog; db.hidden = false; check(db, 'the dog\'s button'); db.hidden = true; }
+    const fb = document.getElementById('farmerbtn'); if (fb && w.farmer) { fb.textContent = w.farmer; fb.hidden = false; check(fb, 'the farmer\'s button'); fb.hidden = true; }
+    return out;
+  });
+  checked++;
+  if (others.length) bad(`${tag} the other pop-ups`, others.slice(0, 6));
+  // ---- grandma's story: each card's line in its box on the screen, clear of Skip, the dots and Next
+  await p.evaluate(() => { window.__farm.gameUI().story(); });
+  for (let i = 0; i < 4; i++) {
+    await p.waitForTimeout(250); await p.evaluate(() => document.getAnimations().forEach(a => { if (a.animationName !== 'gsken') a.finish(); }));
+    const st = await p.evaluate(() => {
+      const b = document.querySelector('.gstory'); if (!b) return null;
+      const W = innerWidth, H = innerHeight, cap = b.querySelector('.gstory-cap').getBoundingClientRect(), t = b.querySelector('.gstory-text'), foot = b.querySelector('.gstory-foot').getBoundingClientRect(), skip = b.querySelector('.gstory-skip').getBoundingClientRect(), out = [];
+      const overlap = (a, c) => a.left < c.right - 1 && a.right > c.left + 1 && a.top < c.bottom - 1 && a.bottom > c.top + 1;
+      if (cap.left < 0 || cap.top < 0 || cap.right > W || cap.bottom > H) out.push('its line off the screen');
+      if (overlap(cap, foot) || overlap(cap, skip)) out.push('its line under Skip or Next');
+      if (t.scrollHeight > t.clientHeight + 2 || t.scrollWidth > t.clientWidth + 2) out.push('its words cut');
+      for (const btn of b.querySelectorAll('button')) if (btn.scrollWidth > btn.clientWidth + 2) out.push('button words cut: ' + btn.textContent);
+      const on = [...b.querySelectorAll('img')].findIndex(x => x.classList.contains('on'));
+      return { on, out, n: b.querySelectorAll('img').length };
+    });
+    checked++;
+    if (!st) { bad(`${tag} story: did not open`, {}); break; }
+    if (st.out.length) { bad(`${tag} story card ${st.on + 1}`, st.out); await p.screenshot({ path: `${OUT}/${L}_${W}x${H}_story${st.on + 1}.png` }); }
+    if (st.on >= st.n - 1) break;
+    await p.click('.gstory-next');
+  }
+  await p.evaluate(() => { const s = document.querySelector('.gstory-skip'); if (s) s.click(); });
   if (errs.length) bad(`${tag}: page errors`, errs.slice(0, 3));
   console.log(`${tag}: done (${problems.length} problems so far)`);
   await ctx.close();

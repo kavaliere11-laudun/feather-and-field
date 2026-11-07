@@ -8159,6 +8159,10 @@ window.__farm = {
     return [vt('door_notyet', { who: doorWho(lots) }), vt('door_notyet', { who: doorWho(lots.slice(0, 2)) }), vt('door_shut'), game.t('land_wild', { n: 30 }), game.t('laying', { name: 'Wilhelmina' }), game.t('no_eggs'),
       dogT('named', 'Bartholomew'), ...Object.keys(DECOR).map(k => tr(LANG, 'decor.' + k))]; },
   labelAt: (sx, sy) => moveTag({ x: sx * 2 - 1, y: 1 - sy * 2 }),
+  // (and the other pop-ups: the first day's guide card with given words, and the words on the buttons over a tapped hen, the dog, for the farmer)
+  guideSay: (text, n) => { const G = guideEls(); G.text.textContent = text; G.n.textContent = n || ''; G.card.querySelector('.gguide-show').textContent = game.t('guide_show'); G.card.querySelector('.gguide-skip').textContent = game.t('guide_skip'); G.card.hidden = false; return G.card; },
+  guideOff: () => { if (GUIDE_UI.card) GUIDE_UI.card.hidden = true; },
+  bottomWords: () => ({ cuddle: henT('cuddle'), fill: henT('fill').replace('{c}', '120'), dog: dogT('rename', 'Bartholomew'), farmer: nightVisit ? nightVisit.T('send') : '' }),
   accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
   notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
