@@ -63,7 +63,7 @@ const AUDIT = () => {
   if (body.scrollHeight > body.clientHeight + 4 && !s.classList.contains('gmore') && !/gcongrats|gwelcome/.test(s.className)) out.push(['more below, but no fade to say so', body.scrollHeight - body.clientHeight]);
   if (scrolls) { body.scrollTop = body.scrollHeight; look('bottom'); body.scrollTop = 0; }
   const mid = (R.left + R.right) / 2;
-  return { kind: [...s.classList].join(' '), title: (s.querySelector('h2') || {}).textContent, out, scrolls, centred: Math.abs(mid - W / 2) < 24, right: R.right > W - 40 };
+  return { kind: [...s.classList].join(' '), title: (s.querySelector('h2') || {}).textContent, out, scrolls, centred: Math.abs(mid - W / 2) < 24, right: R.right > W - 40, R: [R.left, R.top, R.right, R.bottom], rad: parseFloat(getComputedStyle(s).borderBottomLeftRadius) || 0 };
 };
 for (const L of LANGS) for (const [W, H] of SIZES) {
   const tag = `${L} ${W}x${H}`;
@@ -79,6 +79,12 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     const issues = [...a.out];
     if (/gcenter/.test(a.kind) && !a.centred) issues.push(['a message, not in the middle']);
     if (!/gcenter|gwelcome/.test(a.kind) && !a.right) issues.push(['not on the right']);
+    // (its bottom corners round, as drawn: nothing cream painted out into them, 7 Nov, Audrey: "Still cut")
+    if (a.rad >= 12) for (const [cx, cy] of [[a.R[0] + 1, a.R[3] - 2], [a.R[2] - 3, a.R[3] - 2]]) {
+      const px = await p.screenshot({ clip: { x: Math.max(0, cx), y: Math.max(0, cy), width: 2, height: 1 } });
+      const png = await p.evaluate(async b64 => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); return [...x.getImageData(0, 0, 1, 1).data]; }, px.toString('base64'));
+      if (png[0] > 248 && png[1] > 246 && png[2] > 238) { issues.push(['a square corner at the bottom', png.slice(0, 3)]); break; }
+    }
     if (issues.length) { bad(`${tag} ${name}`, { title: a.title, issues: issues.slice(0, 6) }); await p.screenshot({ path: `${OUT}/${L}_${W}x${H}_${name}.png` }); }
   };
   await report('welcome', await p.evaluate(AUDIT));

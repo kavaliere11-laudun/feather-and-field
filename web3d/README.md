@@ -4205,3 +4205,17 @@ They were in the Unity version only. Now in the game:
   by field." French: "Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à
   pas. »" …
 - **The check:** `storytest.mjs` (LANG=fr).
+  by field." French: "Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à
+  pas. »" …
+- **The check:** `storytest.mjs` (LANG=fr).
+
+## The cards' bottom corners; the iPhone's home bar (7 Nov 2026, 11:24; Audrey, of "While you were away": "Still cut"; "we should have the apple middle bar showing when people are closing the app"; asked, "I can't see the bar")
+- **The corners:** the cream behind the buttons kept at the bottom of a card (a wide shadow, so what scrolls under them is
+  hidden) had spread past the card's round bottom corners, so the card looked cut off square. The card's scrolling part
+  is now clipped to the card's round corners (`.gsheet-body` sideways, border radius 0 0 24px 24px). `cardaudit.mjs`
+  now checks each card's bottom corners in the picture itself (cream there: "a square corner at the bottom"); it finds
+  the fault on the version before and none now, in four languages and four sizes.
+- **The home bar:** nothing in the app hides it (no `prefersHomeIndicatorAutoHidden`, the SystemBars plugin not told to
+  hide it). Since iOS 26 Apple fades the home bar out a moment after any app opens, and an app can no longer keep it
+  showing (reported for Unity games too, closed "As Designed"); a swipe up from the bottom still leaves the game at once,
+  and brings the bar back. Nothing to change in the game; told Audrey.

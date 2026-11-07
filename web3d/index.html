@@ -583,7 +583,7 @@
     .gsheet.modal { max-height: calc(100% - env(safe-area-inset-top) - 72px); }
     .gsheet::before { display: none; }
     .gsheet-head { padding-top: 16px; }
-    .gsheet-body { padding-bottom: 16px; }
+    .gsheet-body { padding-bottom: 16px; border-radius: 0 0 24px 24px; }      /* (what scrolls, and the cream behind the buttons kept at the bottom, clipped to the card's round corners: 7 Nov, Audrey, "Still cut": its bottom corners had shown square) */
     .gsheet.in { animation-name: gsin; }
     @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
     /* (a message: in the middle, below the top bar, popping in) */
