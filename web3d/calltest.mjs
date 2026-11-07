@@ -69,9 +69,15 @@ ok('a while later: about their pen, none gone to lay by herself', P.ducks.every(
 if (SHOTS) { await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.lookAt(Q.centre.x, Q.centre.z, 2.4); f.step(1 / 30, 20); }); await p.waitForTimeout(300); }
 await shot('2_pen');
 // a tap on a duck: her card; she stays and faces you
-const tapAt = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks[1];
-  d.task = { name: 'look', act: 'look', t: 0, run() { return false; } }; /* (standing still to be tapped) */ const w = d.root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w.x, w.z, 1.6); f.step(1 / 30, 30); f.draw(); const v = d.root.getWorldPosition(new f.THREE.Vector3()); const q = f.screenOf(v.x, v.z, v.y + 0.14); return { x: q.x, y: q.y, gid: d.gid }; });
-await p.touchscreen.tap(tapAt.x, tapAt.y); await run(0.6);
+const tapAt = await p.evaluate(() => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), D = Q.callPen.ducks;
+  for (const x of D) x.task = { name: 'look', act: 'look', t: 0, run() { return false; } }; /* (all standing still, so the drake can't wander in front of her: 7 Nov 2026) */
+  const w0 = D[1].root.getWorldPosition(new f.THREE.Vector3()); f.lookAt(w0.x, w0.z, 1.6); f.step(1 / 30, 30); f.draw();
+  const at = x => { const v = x.root.getWorldPosition(new f.THREE.Vector3()); return f.screenOf(v.x, v.z, v.y + 0.14); };
+  const d = [D[1], D[2]].map(x => ({ x, q: at(x), gap: Math.min(...D.filter(o => o !== x).map(o => { const r = at(o); return Math.hypot(r.x - at(x).x, r.y - at(x).y); })) })).sort((a, b) => b.gap - a.gap)[0];      // (the duck the others stand clearest of on the screen)
+  return { x: d.q.x, y: d.q.y, gid: d.x.gid }; });
+await p.touchscreen.tap(tapAt.x, tapAt.y);
+await p.evaluate(gid => { const Q = window.__farm.coopPlots().find(q => q.breed === 'call'); for (const x of Q.callPen.ducks) if (x.gid !== gid && x.task && x.task.name === 'look') x.task = null; }, tapAt.gid);      // (the others about again)
+await run(0.6);
 t = await sheet();
 const held = await p.evaluate(gid => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), d = Q.callPen.ducks.find(x => x.gid === gid); return { held: d.held, task: d.task && d.task.name, card: f.gameUI().kind }; }, tapAt.gid);
 await shot('3_card');
