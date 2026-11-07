@@ -151,13 +151,24 @@
   body.game .top, body.game #readout { display: none !important; }
   body.game.showfps #readout { display: block !important; z-index: 30; bottom: auto; top: calc(env(safe-area-inset-top) + 58px); left: calc(env(safe-area-inset-left) + 12px); transform: none; }      /* (?fps: under the title) */
   body.game #hint { top: calc(env(safe-area-inset-top) + 62px); }
+  /* (7 Nov 2026, Audrey: "the buttons top right corner are too close from the edge of the screen"; "No need to display the
+     name of the game"): clear of the phone's rounded corners and its camera on either side (the safe area, and a margin) */
   .gbar { position: fixed; z-index: 6; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 8px;
-          padding: calc(10px + env(safe-area-inset-top)) 12px 0; pointer-events: none; }
+          padding: calc(10px + env(safe-area-inset-top)) max(14px, calc(env(safe-area-inset-right) + 8px)) 0 max(14px, calc(env(safe-area-inset-left) + 8px)); pointer-events: none; }
+  .gstat { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+  .gacts { display: flex; align-items: center; gap: 8px; }
+  .gstat > *, .gacts > * { pointer-events: auto; }
+  .gicon { position: relative; }
+  .gpill, .gicon { -webkit-backdrop-filter: blur(10px) saturate(1.3); backdrop-filter: blur(10px) saturate(1.3); }
+  /* the farm's buttons (7 Nov, Audrey's choice of three looks: "A: corner column"): bigger, in a column in the bottom
+     right corner, under your thumb; the level and coins top left, settings top right */
+  .gacts { position: fixed; right: max(14px, calc(env(safe-area-inset-right) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); flex-direction: column; gap: 10px; }
+  .gacts .gicon { width: 50px; height: 50px; }
+  .gacts .gicon svg { width: 24px; height: 24px; }
+  .gacts .gdot { top: 0; right: 0; }
   .gbar > * { pointer-events: auto; }
   .gbar[hidden] { display: none; }
   body.inside .gbar, body.replaying .gbar { display: none; }
-  .gbrand { font-family: var(--display); font-weight: 600; font-size: 20px; color: #fff; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); white-space: nowrap;
-            flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .gpill { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 13px 0 7px; border-radius: 999px; border: 1px solid var(--glass-line);
            background: var(--glass-top); box-shadow: var(--shadow); color: var(--ink); font: 600 15px var(--display); font-variant-numeric: tabular-nums; cursor: pointer; }
   .glvl { padding: 0 13px 0 4px; }
@@ -171,9 +182,9 @@
   .gicon { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow); color: var(--ink);
            display: grid; place-items: center; cursor: pointer; flex: none; padding: 0; }
   .gicon svg { width: 20px; height: 20px; }
-  @media (max-width: 430px) { .gbrand { font-size: 0; } .gbar { gap: 6px; padding-inline: 10px; } }
+  @media (max-width: 430px) { .gbar, .gstat { gap: 6px; } }
   /* (the narrowest phones: a folding phone shut, an old small one: the bar a little tighter, so the last button fits) */
-  @media (max-width: 355px) { .gbar { gap: 4px; padding-inline: 7px; } .gbar .gicon { width: 34px; height: 34px; } .gbar .gicon svg { width: 18px; height: 18px; }
+  @media (max-width: 355px) { .gbar, .gstat { gap: 4px; } .gbar { padding-inline: 7px; } .gbar > .gicon { width: 34px; height: 34px; } .gbar > .gicon svg { width: 18px; height: 18px; }
     .gbar .gpill { height: 34px; padding: 0 10px 0 6px; gap: 5px; } }
   .gdim { position: fixed; inset: 0; z-index: 19; background: rgba(20, 35, 20, 0.35); }
   .gdim[hidden], .gsheet[hidden] { display: none; }
@@ -461,7 +472,7 @@
   .gsheet.gcongrats .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 4px 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }      /* ("Lovely!" always in sight) */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
     /* (sideways the whole height, over the coins: they count up when it's closed) */
-    body.gcong .gbar > :not(.gbrand) { visibility: hidden; }
+    body.gcong .gbar > * { visibility: hidden; }
     .gsheet.gcongrats { top: max(10px, env(safe-area-inset-top)); bottom: max(10px, env(safe-area-inset-bottom)); max-height: calc(100% - 20px); margin-block: auto; }
     .gsheet.gcongrats .gsheet-head { padding-top: 12px; } .gsheet.gcongrats .gsheet-head h2 { font-size: 22px; }
     .gsheet.gcongrats .gsheet-body { gap: 7px; padding-bottom: 12px; }
@@ -650,6 +661,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794011352"></script>
+<script src="app.js?v=1794047739"></script>
 </body>
 </html>
