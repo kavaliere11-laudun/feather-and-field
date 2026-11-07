@@ -5168,6 +5168,26 @@
   "fr": "Coq d’or"
  },
  {
+  "id": "foxden.come",
+  "en": "🦊 Rusty’s family comes out to play",
+  "fr": "🦊 La famille de Rusty sort jouer"
+ },
+ {
+  "id": "foxden.hello",
+  "en": "🦊 The foxes say hello!",
+  "fr": "🦊 Les renards vous disent bonjour !"
+ },
+ {
+  "id": "foxden.night",
+  "en": "🦊 Shh… the foxes are asleep. A cub peeks out to see who’s there.",
+  "fr": "🦊 Chut… les renards dorment. Un renardeau passe le bout du nez pour voir qui est là."
+ },
+ {
+  "id": "foxden.out",
+  "en": "🦊 Rusty’s out on his rounds tonight: the den is quiet.",
+  "fr": "🦊 Rusty fait sa tournée cette nuit : le terrier est calme."
+ },
+ {
   "id": "dog.rename",
   "en": "Rename {n}",
   "fr": "Renommer {n}"
