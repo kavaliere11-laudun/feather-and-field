@@ -8050,7 +8050,7 @@ function tickHunt(dt) {
   egg.visible = true;
   HUNT_UI.t += dt; const k = (HUNT_UI.t % 3.6) / 3.6, tw = k < 0.18 ? Math.sin(k / 0.18 * Math.PI) : 0;      // (a twinkle every 3.6 seconds)
   HUNT_UI.glint.scale.setScalar(0.001 + 0.3 * tw); HUNT_UI.glint.material.opacity = tw; HUNT_UI.glint.material.rotation = HUNT_UI.t * 0.8;
-  if (HUNT_UI.said !== T.day && !gameUI.isOpen && !GUIDE_UI.on && !GUIDE_UI.intro && hintLeft <= 0 && performance.now() > newsFrom + 2500) {      // (never over another word: after it) HUNT_UI.said = T.day; hint(game.t('hunt_hint', { hen: T.hen })); }
+  if (HUNT_UI.said !== T.day && !gameUI.isOpen && !GUIDE_UI.on && !GUIDE_UI.intro && hintLeft <= 0 && performance.now() > newsFrom + 2500) { HUNT_UI.said = T.day; hint(game.t('hunt_hint', { hen: T.hen })); }      // (never over another word: after it)
 }
 // a tap on the screen near today's egg (within a thumb's width of it): found
 function huntTap(x, y) {
