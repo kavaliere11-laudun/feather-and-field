@@ -654,7 +654,7 @@ function buildGround(img) {
 // (the story look) the lanes, drawn by the ground itself so where they join and cross it's all one: a map over the ground of
 // how far each spot is from the middle of the nearest lane (each lane carried on out into the woods: outward), 1 px every
 // 8 cm; the ground's shader turns it into packed earth in warm browns, two wheel tracks worn darker either side of the
-// middle, grass down the middle in tufts, little round stones, and soft edges where the grass takes over
+// middle (no wheel tracks: footpaths), little round stones, and soft edges where the grass takes over
 const LANE_SIZE = 120, LANE_N = 1536, LANE_FAR = 1.0;
 function laneMap(c) {
   const N = LANE_N, data = new Uint8Array(N * N).fill(255), k = N / LANE_SIZE, o = new THREE.Vector2(c.x - LANE_SIZE / 2, c.z - LANE_SIZE / 2);
@@ -684,15 +684,15 @@ const LANE_GLSL = `
   float a = ld / 0.44;
   float lane = 1.0 - smoothstep(0.9, 1.06, a + (n2 - 0.5) * 0.1 + (n1 - 0.5) * 0.08);
   if (lane > 0.0) {
-    // (linear colours: warm packed earth)
-    vec3 earth = mix(vec3(0.33, 0.16, 0.06), vec3(0.47, 0.25, 0.1), n1 * 0.7 + n3 * 0.3);
-    earth *= 0.9 + 0.2 * n2;
-    float rut = 1.0 - smoothstep(0.08, 0.18, abs(a - 0.42 + (n1 - 0.5) * 0.06));
-    earth = mix(earth, vec3(0.22, 0.1, 0.04) * (0.95 + 0.1 * n1), rut * 0.5);
-    float mid = (1.0 - smoothstep(0.06, 0.2, a + (n2 - 0.5) * 0.12)) * smoothstep(0.35, 0.6, n1 + 0.2);
-    earth = mix(earth, vec3(0.13, 0.25, 0.045) * (0.9 + 0.2 * n2), mid * 0.85);
+    // (linear colours) a footpath (7 Nov, Audrey: the wheel tracks looked "like cars are involved which is not the case"):
+    // warm packed earth, trodden paler and smoother down the middle where feet go, a little darker and rougher towards the
+    // sides, little round stones
+    vec3 earth = mix(vec3(0.3, 0.15, 0.06), vec3(0.44, 0.24, 0.1), n1 * 0.7 + n3 * 0.3);
+    earth *= 0.88 + 0.2 * n2 * smoothstep(0.15, 0.7, a);
+    float worn = 1.0 - smoothstep(0.1, 0.62, a + (n1 - 0.5) * 0.14);
+    earth = mix(earth, vec3(0.52, 0.32, 0.15) * (0.96 + 0.08 * n1), worn * 0.55);
     vec2 sc = vGW * 14.0, sf = fract(sc) - 0.5;
-    float st = step(0.94, lh(floor(sc))) * (1.0 - smoothstep(0.18, 0.26, length(sf))) * step(a, 0.8);
+    float st = step(0.95, lh(floor(sc))) * (1.0 - smoothstep(0.18, 0.26, length(sf))) * step(0.25, a) * step(a, 0.85);
     earth = mix(earth, vec3(0.5, 0.46, 0.38) * (0.85 + 0.3 * lh(floor(sc) + 3.0)), st);
     float edge = smoothstep(0.78, 0.98, a + (n1 - 0.5) * 0.16 + (n2 - 0.5) * 0.06);
     earth = mix(earth, diffuseColor.rgb, edge * 0.7);
@@ -867,7 +867,7 @@ vec3 ripples(vec2 p) {
   vec2 toCam = normalize(cameraPosition.xz - vWPos.xz);
   float face = dot(wg, toCam);
   ${stream ? `
-  ${STORY_LOOK ? 'vec3 deep = vec3(0.02, 0.2, 0.33), shallow = vec3(0.12, 0.5, 0.56);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}          // (the pond's own: the two waters one; the story look: a deep green-blue, clear and sandy at the edges)
+  ${STORY_LOOK ? 'vec3 deep = vec3(0.015, 0.17, 0.36), shallow = vec3(0.13, 0.55, 0.62);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}          // (the pond's own: the two waters one; the story look: a deep green-blue, clear and sandy at the edges)
   diffuseColor.rgb = mix(deep, shallow, smoothstep(0.15, 1.0, wEdge));
   float foam = smoothstep(0.8, 0.99, wEdge) * smoothstep(0.35, 1.0, 0.5 + 0.5 * sin(dot(vWPos.xz, normalize(vFlow.zw)) * 6.0 - wTime * 2.2 + vFlow.y * 3.0));
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.95), foam * 0.4 * smoothstep(1.02, 1.3, pondAt(vWPos.xz)));
@@ -877,13 +877,13 @@ vec3 ripples(vec2 p) {
   diffuseColor.a *= smoothstep(0.9, 1.0, pe);
   diffuseColor.rgb *= 1.0 + 3.4 * face;
   diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.8, 0.95, wEdge));` : `
-  ${STORY_LOOK ? 'vec3 deep = vec3(0.02, 0.2, 0.33), shallow = vec3(0.12, 0.5, 0.56);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}         // (linear colours: #3487ad and #72bfd4; the story look: #277c9c and #60bcc5, a touch of sand at the edge)
+  ${STORY_LOOK ? 'vec3 deep = vec3(0.015, 0.17, 0.36), shallow = vec3(0.13, 0.55, 0.62);' : 'vec3 deep = vec3(0.035, 0.24, 0.42), shallow = vec3(0.17, 0.53, 0.66);'}         // (linear colours: #3487ad and #72bfd4; the story look: #2273a1 and #64c3cf, deeper in the middle)
   diffuseColor.rgb = mix(deep, shallow, smoothstep(0.4, 0.98, wEdge));
   ${STORY_LOOK ? `// (the story look) the sandy bottom showing through at the edge, with a few stones
   { vec2 q = vWPos.xz * 2.3; float sn = fract(sin(dot(floor(q), vec2(12.9898, 78.233))) * 43758.5453);
     float shore = smoothstep(0.72, 0.95, wEdge);
     vec3 sand = mix(vec3(0.3, 0.27, 0.15), vec3(0.22, 0.2, 0.11), sn);
-    diffuseColor.rgb = mix(diffuseColor.rgb, sand, shore * 0.18); }` : ''}
+    diffuseColor.rgb = mix(diffuseColor.rgb, sand, shore * 0.1); }` : ''}
   diffuseColor.rgb *= 1.0 + 3.4 * face;
   diffuseColor.rgb += vec3(0.07, 0.09, 0.09) * smoothstep(0.04, 0.065, face) * (1.0 - smoothstep(0.88, 0.97, wEdge));     // (the brightest ripple faces, crisp)
   // little sparkles of light here and there, each twinkling on and off, more where the breeze ruffles the water, by day
@@ -894,6 +894,21 @@ vec3 ripples(vec2 p) {
   float spark = (1.0 - smoothstep(0.05, 0.11, length((fr - off) * vec2(1.0, 1.7)))) * tw * step(0.5, rnd) * smoothstep(0.0, 0.004, whf + 0.002);
   spark *= 1.0 - smoothstep(0.85, 0.97, wEdge);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.98, 1.0), spark * 0.8 * wDay);
+  ${STORY_LOOK ? `// (the story look, 7 Nov: "pond had no difference") the bottom seen through the clear shallows: sand and pebbles, wavering
+  // with the ripples; a darker drop-off where it gets deep; the sky's clouds drifting across the water, softly mirrored
+  { vec2 bq = vWPos.xz * 3.4 + wg * 2.2, bc = floor(bq), bf = fract(bq) - 0.5;
+    float r1 = fract(sin(dot(bc, vec2(41.3, 289.1))) * 43758.55), r2 = fract(sin(dot(bc, vec2(17.7, 113.9))) * 23131.7);
+    float peb = (1.0 - smoothstep(0.16 + 0.12 * r1, 0.24 + 0.12 * r1, length(bf - (vec2(r1, r2) - 0.5) * 0.4))) * step(0.45, r2);
+    vec3 bottom = mix(vec3(0.3, 0.3, 0.16), vec3(0.2, 0.22, 0.12), r1);
+    bottom = mix(bottom, vec3(0.36, 0.34, 0.27) * (0.8 + 0.4 * r2), peb);
+    bottom *= vec3(0.42, 1.0, 1.05);                                 // (seen through the water: tinted by it)
+    float shallow2 = smoothstep(0.72, 0.95, wEdge);
+    diffuseColor.rgb = mix(diffuseColor.rgb, bottom * (1.0 + 2.5 * face), shallow2 * 0.45);
+    diffuseColor.rgb *= 1.0 - 0.22 * smoothstep(0.5, 0.64, wEdge) * (1.0 - smoothstep(0.64, 0.8, wEdge));
+    vec2 cq = vWPos.xz * 0.11 + vec2(wTime * 0.012, wTime * 0.006) + wg * 0.6;
+    float cl = sin(cq.x * 2.1 + sin(cq.y * 1.7) * 1.4) * sin(cq.y * 2.6 + sin(cq.x * 1.3) * 1.2);
+    cl = smoothstep(0.15, 0.85, cl * 0.5 + 0.5);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.62, 0.78, 0.86), cl * 0.12 * (1.0 - shallow2) * wDay); }` : ''}
   // a bright wet line where the water meets the bank, coming and going with the little waves
   float lap = smoothstep(0.93, 0.985, wEdge) * (1.0 - smoothstep(0.985, 1.0, wEdge));
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.95), lap * (0.45 + 0.25 * sin(wTime * 1.3 + atan(vWPos.z - pondC.z, vWPos.x - pondC.x) * 9.0)));`}
@@ -952,9 +967,11 @@ function buildWater() {
   still(new THREE.Mesh(bankRing(c, au, av, BANK_RINGS, 0.003), BANK_SOFT)).renderOrder = -1;      // (the banks drawn first, the streams' water over them)
   const shape = { pondC: { value: c }, pondU: { value: au }, pondV: { value: av } };
   const pond = waterShader(WATER.clone(), 'pond', shape);
+  if (STORY_LOOK) pond.roughness = 0.3;      // (the story look: less of the sun's milky sheen over it, its own colours showing)
   still(new THREE.Mesh(ellipse(1.0, 0.007), pond));
   // the streams, each in its banks, flowing from its first point to its last (the west one into the pond, the other out of it)
   const flowing = waterShader(WATER.clone(), 'stream', shape); flowing.transparent = true; flowing.depthWrite = false;
+  if (STORY_LOOK) flowing.roughness = 0.3;
   for (const st0 of V.streams) {
     const st = GAME_MODE ? outward(st0) : st0;
     still(new THREE.Mesh(bandRibbon(st, BANK_COLS(V.streamHalf), 0.0035), BANK_SOFT)).renderOrder = -1;
@@ -1032,6 +1049,39 @@ function waterside() {
     stones.forEach(([x, z, s, yaw, sh], i) => { k.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, s * 0.1, z), q.setFromEuler(e.set(0, yaw, 0)), new THREE.Vector3(s, s * 0.55, s * 0.8))); k.setColorAt(i, col.set(i % 3 === 0 ? '#a8a294' : i % 3 === 1 ? '#8f8a7e' : '#b9b2a2').multiplyScalar(sh)); });
     out.push(k);
   }
+  // (the story look) water lilies: a few drifts of round leaves on the pond, each with its notch, some flowering pink or white
+  if (STORY_LOOK) {
+    const pads = [], flowers = [], dk = dock ? [dock.pos[0], dock.pos[2]] : null;
+    for (let k = 0, tries = 0; k < 4 && tries < 60; tries++) {
+      const t = r() * Math.PI * 2, sc = 0.55 + r() * 0.25, x = c.x + (au.x * Math.cos(t) + av.x * Math.sin(t)) * sc, z = c.z + (au.z * Math.cos(t) + av.z * Math.sin(t)) * sc;
+      if (dk && Math.hypot(x - dk[0], z - dk[1]) < 2.2) continue;
+      if (mouths.some(e => Math.hypot(x - e[0], z - e[2]) < 2.0)) continue;
+      k++;
+      const n = 6 + Math.floor(r() * 6);
+      for (let i = 0; i < n; i++) {
+        const a = r() * 6.283, d = Math.sqrt(r()) * 0.42, px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d, s = 0.06 + r() * 0.07;
+        if (pads.some(q => Math.hypot(q[0] - px, q[1] - pz) < (q[2] + s) * 0.95)) continue;
+        pads.push([px, pz, s, r() * 6.283, 0.85 + r() * 0.3]);
+        if (r() < 0.32) flowers.push([px + (r() - 0.5) * s * 0.6, pz + (r() - 0.5) * s * 0.6, r() < 0.65 ? '#f4a9c2' : '#fbf6ec', 1.5 + r() * 0.5]);
+      }
+    }
+    const padG = new THREE.CircleGeometry(1, 18, 0.35, Math.PI * 2 - 0.7).rotateX(-Math.PI / 2), pm = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+    nightGrade(pm);
+    const kp = new THREE.InstancedMesh(padG, pm, pads.length);
+    pads.forEach(([x, z, s, yaw, sh], i) => { kp.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.0095, z), q.setFromEuler(e.set(0, yaw, 0)), new THREE.Vector3(s, 1, s))); kp.setColorAt(i, col.set(i % 3 ? '#5d8f3a' : '#4c7d30').multiplyScalar(sh)); });
+    out.push(kp);
+    if (flowers.length) {
+      const parts = [];
+      for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2; parts.push(new THREE.SphereGeometry(1, 6, 4).scale(0.012, 0.007, 0.026).translate(0, 0.01, 0.018).rotateX(-0.5).rotateY(a)); }
+      for (let k = 0; k < 5; k++) { const a = (k + 0.5) / 5 * Math.PI * 2; parts.push(new THREE.SphereGeometry(1, 6, 4).scale(0.01, 0.007, 0.02).translate(0, 0.016, 0.01).rotateX(-1.0).rotateY(a)); }
+      const g = mergeGeometries(parts.map(x => { x.deleteAttribute('uv'); return x; }), false);
+      const heart = new THREE.SphereGeometry(0.008, 6, 4).translate(0, 0.02, 0); heart.deleteAttribute('uv');
+      const fm = new THREE.MeshLambertMaterial({ color: '#ffffff' }), hm = new THREE.MeshLambertMaterial({ color: '#f2c230' }); nightGrade(fm); nightGrade(hm);
+      const kf = new THREE.InstancedMesh(g, fm, flowers.length), kh = new THREE.InstancedMesh(heart, hm, flowers.length);
+      flowers.forEach(([x, z, cc, s2], i) => { const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0.009, z), q.setFromEuler(e.set(0, i * 1.7, 0)), new THREE.Vector3(s2, s2, s2)); kf.setMatrixAt(i, m); kh.setMatrixAt(i, m); kf.setColorAt(i, col.set(cc)); });
+      out.push(kf, kh);
+    }
+  }
   for (const k of out) { k.computeBoundingSphere(); still(k); }
   WATERSIDE.length = 0; WATERSIDE.push(...out);
 }
@@ -1070,7 +1120,7 @@ function outerWoods() {
   const crown = mergeGeometries([[0, 0.1, 0, 0.8], [0.5, -0.12, 0.25, 0.62], [-0.42, -0.18, -0.28, 0.66], [0.1, -0.2, -0.5, 0.58], [-0.2, 0.42, 0.3, 0.55]].map(([x, y, z, k]) => { const g = geoAt(new THREE.SphereGeometry(k, 9, 6), x, y, z); g.deleteAttribute('uv'); return g; }), false);      // (soft and lumpy, like the farm's own)
   const trunk = new THREE.CylinderGeometry(0.11, 0.16, 1, 6).translate(0, 0.5, 0);
   const cm = new THREE.MeshLambertMaterial({ color: '#ffffff' }), tm = new THREE.MeshLambertMaterial({ color: '#6e5038' });
-  addWind(cm, 0.004); if (STORY_LOOK) crownShade(cm, [-0.75, 0.9, 0.55]); nightGrade(cm); nightGrade(tm);
+  addWind(cm, 0.004); if (STORY_LOOK) crownShade(cm, [-0.75, 0.9, 0.55, 3.5]); nightGrade(cm); nightGrade(tm);
   const tiles = new Map();
   for (const sp of spots) { const k = Math.floor(sp[0] / 20) + ',' + Math.floor(sp[1] / 20); if (!tiles.has(k)) tiles.set(k, []); tiles.get(k).push(sp); }
   const c = new THREE.Color(), q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0);
@@ -1136,6 +1186,7 @@ function batchOne(name, matrices, opts) {
     if (opts.wind) { mat = addWind(opts.lambert ? mat : mat.clone(), opts.wind); mat.userData.graded = false; }      // its own copy: other models may share the material
     if (opts.foot) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } footShade(mat, opts.foot[0], opts.foot[1]); }      // (darker at its foot, in its own shade)
     if (opts.crown) { if (mat === m.material) { mat = mat.clone(); mat.userData.graded = false; } crownShade(mat, opts.crown); }      // (the story look: leaves deeper inside and underneath, sunlit on top)
+    const dapple = opts.crown && name[0] === 't';      // (a tree's shadow dappled: sunlight through its leaves)
     if (opts.bothLit) { const before = mat.onBeforeCompile; mat.onBeforeCompile = (sh, r) => { if (before) before.call(mat, sh, r); sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('gl_FrontFacing ? 1.0 : - 1.0', '1.0')); }; mat.customProgramCacheKey = () => 'bothLit'; }      // (both sides of a blade lit as its front: the long grass, not half its blades in the dark)
     nightGrade(mat);      // (its own copy dimmed at night too: 1 Nov, the bushes and trees in the wind stayed bright green all night)
     const inst = new THREE.InstancedMesh(m.geometry, mat, matrices.length);
@@ -1143,6 +1194,7 @@ function batchOne(name, matrices, opts) {
     matrices.forEach((mx, i) => inst.setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(mx, m.matrixWorld)));
     if (opts.colorOf) { const c = new THREE.Color(); matrices.forEach((mx, i) => inst.setColorAt(i, opts.colorOf(mx, c))); }      // (each copy a shade of its own)
     inst.castShadow = !!opts.cast; inst.receiveShadow = true;
+    if (dapple) inst.customDepthMaterial = dappleDepth();
     inst.instanceMatrix.needsUpdate = true;
     inst.computeBoundingSphere();
     inst.matrixAutoUpdate = false;
@@ -1355,22 +1407,58 @@ function fieldSoil(w, d, edge, ROW, z0) {      // the ploughed ground: ridges al
   m.matrixAutoUpdate = false; m.receiveShadow = true;
   return m;
 }
+// (the story look) a tree's shadow with sunlight coming through its leaves: its shadow drawn with little gaps, in clumps
+let DAPPLE = null;
+function dappleDepth() {
+  if (DAPPLE) return DAPPLE;
+  const m = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vDW; varying float vDY;')
+      .replace('#include <project_vertex>', `#include <project_vertex>
+        vec4 dw = vec4(transformed, 1.0);
+        #ifdef USE_INSTANCING
+        dw = instanceMatrix * dw;
+        #endif
+        vDW = (modelMatrix * dw).xyz; vDY = position.y;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vDW; varying float vDY;
+float dh(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float dn(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(dh(i), dh(i + vec3(1, 0, 0)), f.x), mix(dh(i + vec3(0, 1, 0)), dh(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(dh(i + vec3(0, 0, 1)), dh(i + vec3(1, 0, 1)), f.x), mix(dh(i + vec3(0, 1, 1)), dh(i + vec3(1, 1, 1)), f.x), f.y), f.z); }`)
+      .replace('void main() {', `void main() {
+  if (vDY > 0.75) { float n = dn(vDW * 5.5) * 0.65 + dn(vDW * 13.0) * 0.35; if (n > 0.6) discard; }`);
+  };
+  m.customProgramCacheKey = () => 'dapple';
+  return (DAPPLE = m);
+}
 // (the story look) a tree's or a bush's leaves: deeper and cooler low down and inside the crown, warm and sunlit on top, and
 // the lime greens of the models a little deeper; c: [where the crown starts, its top, how deep the shade goes]
-function crownShade(mat, c) {
+function crownShade(mat, c) {      // (c[3]: how many clumps of leaves a metre, in the model's own size)
   const before = mat.onBeforeCompile, [y0, y1, deep] = c;
   mat.onBeforeCompile = (sh, rr) => {
     if (before) before.call(mat, sh, rr);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN;')
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvCrown = smoothstep(${y0.toFixed(3)}, ${y1.toFixed(3)}, position.y); vCrownN = normal;`);
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN;')
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN; varying vec3 vCrownP;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nvCrown = smoothstep(${y0.toFixed(3)}, ${y1.toFixed(3)}, position.y); vCrownN = normal; vCrownP = position;`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vCrown; varying vec3 vCrownN; varying vec3 vCrownP;')
       .replace('#include <color_fragment>', `#include <color_fragment>
 {
   float g = diffuseColor.g - max(diffuseColor.r, diffuseColor.b);          // (how green: the leaves, not the trunk)
   float leaf = smoothstep(0.05, 0.2, g);
   float lit = clamp(vCrown * 0.75 + max(vCrownN.y, 0.0) * 0.35, 0.0, 1.0);
   vec3 shade = mix(vec3(${(1 - deep).toFixed(3)}, ${(1 - deep * 0.75).toFixed(3)}, ${(1 - deep * 0.55).toFixed(3)}), vec3(1.0, 0.98, 0.86), lit);
-  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.76, 0.86, 0.7) * shade, leaf);
+  // clumps of leaves: little rounded bunches, sunnier on their tops, darker in the gaps between
+  vec3 lp = vCrownP * ${(c[3] || 9).toFixed(1)};
+  vec3 li = floor(lp), lf = fract(lp) - 0.5;
+  float lr = fract(sin(dot(li, vec3(127.1, 311.7, 74.7))) * 43758.5453);
+  float clump = 1.0 - smoothstep(0.25, 0.62, length(lf + (vec3(lr, fract(lr * 7.3), fract(lr * 13.1)) - 0.5) * 0.35));
+  float tip = smoothstep(0.0, 0.5, lf.y + 0.15) * clump;
+  vec3 leafC = diffuseColor.rgb * vec3(0.76, 0.86, 0.7) * shade * (0.8 + 0.28 * clump) + vec3(0.06, 0.07, 0.0) * tip * lit;
+  diffuseColor.rgb = mix(diffuseColor.rgb, leafC, leaf);
+  // the trunk: bark in long streaks, darker in its cracks
+  float bark = (1.0 - leaf) * (1.0 - smoothstep(0.0, 0.05, vCrown));      // (below the crown only: not the apples)
+  float streak = sin(atan(vCrownP.z, vCrownP.x) * 14.0 + sin(vCrownP.y * 9.0) * 1.5) * 0.5 + 0.5;
+  diffuseColor.rgb *= 1.0 - bark * 0.28 * smoothstep(0.55, 0.95, streak);
 }`);
   };
   const key = mat.customProgramCacheKey, own = key !== THREE.Material.prototype.customProgramCacheKey;
@@ -1482,7 +1570,7 @@ function buildNature() {
   const lists = {};
   for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
   for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b']) {
-    const crown = STORY_LOOK ? (name[0] === 't' ? { crown: [0.7, 1.95, 0.62] } : name[0] === 'b' ? { crown: [0.0, 0.55, 0.5] } : {}) : {};
+    const crown = STORY_LOOK ? (name[0] === 't' ? { crown: [0.7, 1.95, 0.62, 7] } : name[0] === 'b' ? { crown: [0.0, 0.55, 0.5, 14] } : {}) : {};
     NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22], ...crown } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22], ...crown } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38], ...crown } : {}));
   }
   // wildflowers in little drifts (none through a coop)
@@ -1519,8 +1607,9 @@ function grassShade(mx, c) {
   const x = mx.elements[12], z = mx.elements[14], t = groundPatch(x, z), k = 0.92 + hash01(x, z) * 0.16;
   return c.setRGB((0.9 + 0.22 * t) * k, (1.0 + 0.06 * t) * k, (0.86 - 0.02 * t) * k);
 }
-function natureShade(mx, c) {                   // (bushes and trees: each its own green, a little yellower or bluer)
+function natureShade(mx, c) {                   // (bushes and trees: each its own green, a little yellower or bluer; the story look more so)
   const x = mx.elements[12], z = mx.elements[14], h = hash01(x, z), h2 = hash01(z, x);
+  if (STORY_LOOK) return c.setRGB(0.78 + h * 0.34, 0.9 + h2 * 0.14, 0.7 + (1 - h) * 0.3);
   return c.setRGB(0.9 + h * 0.16, 0.95 + h2 * 0.08, 0.84 + (1 - h) * 0.16);
 }
 // more grass where it grows thickest: along the lanes' verges and round the trees, bushes and rocks (once, at the start)
@@ -1620,7 +1709,6 @@ function grassCarpet() {
     const h1 = hash01(xi * 0.731 + 3.1, zi * 1.379 + 7.7), h2 = hash01(zi * 0.913 + 1.7, xi * 1.117 + 4.3);
     const px = x + h1 * STEP, pz = z + h2 * STEP, f = fieldAt(px, pz);
     const pd = pathDist(px, pz);
-    if (pd < 0.08 && h2 > 0.45) { const key = Math.floor(px / 6) + ',' + Math.floor(pz / 6); if (!tiles.has(key)) tiles.set(key, []); tiles.get(key).push([px, pz, 0.55, h1 * 6.283]); continue; }      // (a little grass down a lane's middle)
     if (f < 0 || f >= n) continue;                                           // (your land only: the wild land has its long grass)
     if (pd < V.pathHalf - 0.05 || underCoop(px, pz, 0.03) || inPondAt(px, pz, 0.15)) continue;
     if (pd > V.pathHalf + 0.25 && !nav.freeAt(px, pz)) continue;          // (not through things standing there)

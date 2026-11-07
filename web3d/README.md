@@ -4248,6 +4248,17 @@ They were in the Unity version only. Now in the game:
   come forward. Standing: breathing and a slow shift of the weight. The pail hangs by his side (`carry`), swinging a
   little (it had been held out in front).
 - **Cost:** triangles the same as before, a few more draws (about 15 at the usual view); the load the same.
+- **Her first look (13:12):** "Home ok, grass ok, house ok, trees can be better, stream looks like cars are involved which
+  is not the case, pond had no difference". So:
+  - **Footpaths, not cart tracks:** no wheel tracks and no grass strip down the middle: warm packed earth, trodden paler
+    and smoother down the middle where feet go, a little darker and rougher towards the sides, little stones.
+  - **The pond** (`waterShader`, story look): a deeper blue in the middle (#2273a1) to clear turquoise shallows (#64c3cf), a
+    darker drop-off where it gets deep, the sandy bottom and pebbles seen through the shallows, wavering with the ripples,
+    the clouds drifting across it softly mirrored, less of the sun's milky sheen (roughness 0.3); four drifts of water
+    lilies (`waterside`: round leaves with their notch, a third of them flowering pink or white).
+  - **The trees** (`crownShade`, `dappleDepth`): their shadows dappled, sunlight coming through the leaves in clumps; the
+    leaves in little rounded bunches, sunnier on their tops and darker in the gaps; bark in long streaks on the trunks;
+    each tree a more different green (some deeper, some yellower).
 - **Next in this pass:** the light (warmer, softer shade under things, evening glow), hay and wood (straw strands, wood
   grain, tiles), the farmer's other moves (starting and stopping, turning, sowing, crouching; the hat and Rosie's plait),
   then small signs of life.
