@@ -307,6 +307,7 @@
   .gdot[hidden] { display: none; }
   .gnewcoop { background: #fff3cf; }
   .gnewcoop .gbtn { margin-top: 4px; }
+  .gbreed-i { width: 76px; height: 76px; object-fit: contain; flex: none; margin: -10px 2px -10px -6px; }      /* (a new breed's picture, the Breed Book's) */
   .gbadge { margin-left: auto; background: #e2412f; color: #fff; font: 600 12.5px var(--display); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
   .gcooprow { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
   .gcoopinfo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -590,22 +591,20 @@
   }
   /* a big screen held upright (a tablet): the welcome's lines no wider than reads well, in the middle */
   @media (orientation: portrait) and (min-width: 640px) { .gsheet.gwelcome .gsheet-head, .gsheet.gwelcome .gsheet-body { width: 100%; max-width: 580px; margin-inline: auto; } }
-  /* sideways (the game is played sideways first): every sheet is a card on the right under the top bar, sliding in from
-     the side, so the farm stays in view beside it */
+  /* sideways (the game is played sideways first): every sheet is a card in the middle of the screen under the top bar,
+     popping in (7 Nov 2026, Audrey, of the overgrown field's card on the right: "Make these centred on the screen") */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
-    .gsheet { left: auto; right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 60px); bottom: max(12px, env(safe-area-inset-bottom));
-              width: min(400px, 46vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - env(safe-area-inset-top) - 72px); margin-block: 0 auto; border-radius: 24px;
+    .gsheet { left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 60px); bottom: max(12px, env(safe-area-inset-bottom));
+              width: min(420px, 50vw); height: -webkit-fit-content; height: fit-content; max-height: calc(100% - env(safe-area-inset-top) - 72px); margin: 0 auto auto; border-radius: 24px;
               box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
     .gsheet.modal { max-height: calc(100% - env(safe-area-inset-top) - 72px); }
     .gsheet::before { display: none; }
     .gsheet-head { padding-top: 16px; }
     .gsheet-body { padding-bottom: 16px; border-radius: 0 0 24px 24px; }      /* (what scrolls, and the cream behind the buttons kept at the bottom, clipped to the card's round corners: 7 Nov, Audrey, "Still cut": its bottom corners had shown square) */
-    .gsheet.in { animation-name: gsin; }
-    @keyframes gsin { from { transform: translateX(calc(100% + 24px)); } to { transform: none; } }
-    /* (a message: in the middle, below the top bar, popping in) */
+    .gsheet.in { animation-name: gspop; }
+    /* (a message: in the middle of the screen, a little wider) */
     .gsheet.gcenter { left: 0; right: 0; margin: auto; }
     .gsheet.gcenter:not(.gintro) { width: min(440px, 62vw); }
-    .gsheet.gcenter.in { animation-name: gspop; }
     @keyframes gspop { from { transform: translateY(14px) scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
@@ -704,6 +703,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794087393"></script>
+<script src="app.js?v=1794093509"></script>
 </body>
 </html>
