@@ -715,6 +715,11 @@
   "fr": "Pas assez de place ici."
  },
  {
+  "id": "text.move_grow",
+  "en": "Not enough room here for its bigger pen later: the dotted line shows how big it grows.",
+  "fr": "Pas assez de place ici pour son futur enclos plus grand : les pointillés montrent jusqu’où il ira."
+ },
+ {
   "id": "text.move_coop",
   "en": "Too close to another coop.",
   "fr": "Trop près d’un autre poulailler."
@@ -1258,6 +1263,11 @@
   "id": "text.dec_bad_room",
   "en": "Not enough room here.",
   "fr": "Pas assez de place ici."
+ },
+ {
+  "id": "text.dec_bad_grow",
+  "en": "This ground is kept for a coop to grow into.",
+  "fr": "Cet endroit est gardé pour qu’un poulailler puisse s’agrandir."
  },
  {
   "id": "text.dec_bad_way",

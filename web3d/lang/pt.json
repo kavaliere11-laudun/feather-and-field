@@ -1187,5 +1187,7 @@
  "text.vil_amara_s": "a Dra. Amara",
  "text.vil_clara_s": "a professora Clara",
  "text.vil_marco_s": "Marco",
- "text.vil_fete_s": "a festa"
+ "text.vil_fete_s": "a festa",
+ "text.move_grow": "Aqui não cabe o cercado maior que ele vai ter: a linha pontilhada mostra até onde ele vai crescer.",
+ "text.dec_bad_grow": "Este espaço fica reservado para um galinheiro poder crescer."
 }

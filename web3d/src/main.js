@@ -6743,7 +6743,7 @@ function blockers() {
 }
 // a coop at sp ({ x, z, deg }; self: the coop itself, in the save): whether it can stand there and if not why, and the
 // trees, bushes and rocks to clear
-function coopSpot(sp, self) {
+function coopSpot(sp, self, quick = false) {      // (quick: only whether it's fine, stopping at the first thing wrong)
   const a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a), B = blockers(), v = new THREE.Vector3();
   const others = GAME_MODE ? game.data.coops.filter(o => o !== self && !(self && self.id && o.id === self.id)) : [], F = footOf(self), A = apronOf(self);
   let land = false, lane = false, room = false, near = false;
@@ -6762,9 +6762,12 @@ function coopSpot(sp, self) {
         v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) { room = true; break; }
       }
       if (!near) for (const o of others) { const [ox, oz] = inSpot(o, x, z); if (rectGap(footOf(o), ox, oz) < 0.35 || rectGap(apronOf(o), ox, oz) < 0.2) { near = true; break; } }
+      if (quick && (lane || land || room || near)) return;
     }
   };
-  check(F, 0, false); check(A, 0, true);
+  check(F, 0, false); if (quick && (lane || land || room || near)) return { ok: false, why: 'move_room', clear: [] };
+  check(A, 0, true); if (quick && (lane || land || room || near)) return { ok: false, why: 'move_room', clear: [] };
+  if (quick) return { ok: true, why: null, clear: [] };
   const clear = [], hits = (o, r) => { const [lx, lz] = inSpot(sp, o.pos[0], o.pos[2]); return rectGap(F, lx, lz) < r || rectGap(A, lx, lz) < r * 0.7; };
   for (const t of V.trees) if (hits(t, 0.75 * (t.r || 1.3))) clear.push(t);
   for (const b of V.bushes) if (hits(b, 0.46 * (b.s || 1) + 0.05)) clear.push(b);
@@ -6816,7 +6819,7 @@ function fillPlotGaps() {
   });
 }
 // ---- moving one
-const MOVE = { plot: null, from: null, at: null, spot: null, ghost: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false };
+const MOVE = { plot: null, from: null, at: null, spot: null, ghost: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false, grow: 0 };
 const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55';
 function moveBusy(p) {
   return !!(p.fw || p.farmer || inside.open || (farmLife && (farmLife.pen || [farmLife.task, farmLife.pending].some(t => t && t.name === 'pen'))) || (nightVisit && nightVisit.active()));
@@ -6883,19 +6886,24 @@ function retier(p) {
   batchCoops(); rebuildPools(); rebuildNav(); buildNature(); buildGrass(); hidePebbles(); clearWalkers(p);
   renderer.shadowMap.needsUpdate = true; wake(1000);
 }
-function startMove(p) {
+// (grow: the look it keeps room for wherever it goes, its outline dotted round it: Deluxe, or the biggest the farm has room
+// for near there (a farm with few fields has room for no Deluxe pen yet); 8 Nov 2026, Audrey: "from the start when you add
+// a coop to the game you need to anticipate how big it will become and block the zone around")
+function startMove(p, grow) {
   if (!p || !p.gc || MOVE.plot || DMOVE.id) return;
   gameUI.close();
   if (!p.draft && moveBusy(p)) { hint(game.t('move_busy')); return; }
   holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   MOVE.plot = p; MOVE.from = p.draft ? null : spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = !!p.draft; MOVE.nav = false;
+  const t0 = p.gc.tier || 0;
+  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...placeSpots(p.gc.breed, 8, MOVE.at).map(o => o.t)));      // (where it stands, or the roomiest spot near)
   // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
   const ghost = new THREE.Group();
   for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
     const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(M).multiply(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; ghost.add(k);
   }
   p.frame.add(ghost); MOVE.ghost = ghost;
-  MOVE.foot = footMark(p.gc); p.group.add(MOVE.foot);
+  MOVE.foot = footMark(p.gc, MOVE.grow); p.group.add(MOVE.foot);
   batchCoops();
   if (farmLife && farmLife.task && farmLife.task.name === 'coop') farmLife.task = null;      // (he was off to watch them: something else)
   gameUI.moveBar(true, { turn: () => { MOVE.moved = true; moveTo(MOVE.at.x, MOVE.at.z, (MOVE.at.deg + 90) % 360, true); }, cancel: () => endMove(false), place: () => placeCoop() });
@@ -6910,14 +6918,16 @@ function viewAbove(x, z, size) {
   return [x - up.x * k, z - up.z * k];
 }
 const FOOT_TEXS = {};
-function footMark(gc) {
-  const FOOT = footOf(gc), APRON = apronOf(gc), key = penKey(gc) + ((gc.ap && gc.ap.side) || '');
-  const X0 = FOOT.x0 - 0.25, X1 = FOOT.x1 + 0.25, Z0 = FOOT.z0 - 0.25, Z1 = APRON.z1 + 0.15, w = X1 - X0, h = Z1 - Z0;
+function footMark(gc, grow = 4) {
+  const FOOT = footOf(gc), APRON = apronOf(gc), G = grownOf(gc, grow), GF = G ? footOf(G) : FOOT, GA = G ? apronOf(G) : APRON, key = penKey(gc) + ((gc.ap && gc.ap.side) || '') + (G ? '+' + grow : '');
+  const X0 = Math.min(FOOT.x0, GF.x0) - 0.25, X1 = Math.max(FOOT.x1, GF.x1) + 0.25, Z0 = Math.min(FOOT.z0, GF.z0) - 0.25, Z1 = Math.max(APRON.z1, GA.z1) + 0.15, w = X1 - X0, h = Z1 - Z0;
   let FOOT_TEX = FOOT_TEXS[key];
   if (!FOOT_TEX) {
     const W = 256, H = Math.round(256 * h / w), cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const c = cv.getContext('2d'), px = x => (x - X0) / w * W, pz = z => (z - Z0) / h * H;
-    c.fillStyle = 'rgba(255,255,255,0.3)'; c.strokeStyle = '#fff'; c.lineWidth = 9; c.lineJoin = 'round';
+    c.lineJoin = 'round';
+    if (G) { c.fillStyle = 'rgba(255,255,255,0.12)'; c.strokeStyle = '#fff'; c.lineWidth = 6; c.setLineDash([16, 12]); c.beginPath(); c.roundRect(px(GF.x0), pz(GF.z0), px(GF.x1) - px(GF.x0), pz(GF.z1) - pz(GF.z0), 22); c.fill(); c.stroke(); c.setLineDash([]); }      // (the room it will grow into: dotted)
+    c.fillStyle = 'rgba(255,255,255,0.3)'; c.strokeStyle = '#fff'; c.lineWidth = 9;
     c.beginPath(); c.roundRect(px(FOOT.x0), pz(FOOT.z0), px(FOOT.x1) - px(FOOT.x0), pz(FOOT.z1) - pz(FOOT.z0), 22); c.fill(); c.stroke();
     // the way out of its gate
     const gx = px((APRON.x0 + APRON.x1) / 2), y0 = pz(FOOT.z1) + 4, y1 = pz(APRON.z1) - 4;
@@ -6938,7 +6948,10 @@ function moveTo(x, z, deg, force = false) {
   MOVE.at = { x, z, deg };
   const g = p.group; g.position.set(x, 0, z); g.rotation.y = deg * DEG; g.updateMatrix(); g.updateMatrixWorld(true);
   p.centre.set(x, 0, z); placeDoor(p); placePools(p);
-  const S = MOVE.spot = coopSpot(MOVE.at, p.gc);
+  let S = coopSpot(MOVE.at, p.gc);
+  const home = MOVE.from && x === MOVE.from.x && z === MOVE.from.z && deg === MOVE.from.deg;
+  if (S.ok && !home && grownOf(p.gc, MOVE.grow) && !roomToGrow(MOVE.at, p.gc.breed, p.gc.id, MOVE.grow)) S = { ok: false, why: 'move_grow', clear: S.clear };      // (room kept for its bigger looks: the dotted outline; where it stood already: as before)
+  MOVE.spot = S;
   MOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
   gameUI.moveStatus(game.t(!MOVE.moved ? 'move_hint' : S.ok ? (S.clear.length ? 'move_clear' : 'move_ok') : S.why), S.ok);
   MOVE.grassAt = performance.now() + 220;                   // (once it's still a moment: no grass through its pen)
@@ -7151,7 +7164,7 @@ function startPlace(breed) {
   p.draft = d;
   for (const b of p.birds) b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   rebuildDoors(); rebuildPools();
-  startMove(p);
+  startMove(p, Math.max(0, ...spots.filter(o => o.g !== false).map(o => o.t || 0)));
   // (offered only where "Put it here" will take it: its gate opening onto the farm with it there, as placeCoop checks; else
   // the next nearest. 1 Nov: the peafowl's pavilion at level 30 was offered a spot with its gate shut in)
   if (MOVE.plot === p && !gateOpen(p)) {
@@ -7164,16 +7177,24 @@ function startPlace(breed) {
 }
 // room for a coop at sp to grow to its Deluxe look where it stands, and the coops already there to grow to theirs (1 Nov,
 // the play-through: coops put where the game suggested were boxed in, and every new look said to move them first)
-function roomToGrow(sp, breed) {
+function roomToGrow(sp, breed, selfId = null, tier = 4) {
   if (!hasLooks(baseBreed(breed))) return true;
-  if (!coopSpot(sp, { breed, tier: 4 }).ok) return false;
-  const F = footOf({ breed, tier: 4 }), a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a);
+  if (!coopSpot(sp, { breed, tier, id: selfId }, true).ok) return false;
+  const F = footOf({ breed, tier }), a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a);
   for (let lz = F.z0; lz < F.z1 + 0.249; lz += 0.5) for (let lx = F.x0; lx < F.x1 + 0.249; lx += 0.5) {
     const px = Math.min(lx, F.x1), pz = Math.min(lz, F.z1), x = sp.x + px * c + pz * s, z = sp.z - px * s + pz * c;
-    for (const o of game.data.coops) { if ((o.tier || 0) >= 4 || !hasLooks(baseBreed(o.breed))) continue; const [ox, oz] = inSpot(o, x, z); if (rectGap(footOf({ ...o, tier: 4 }), ox, oz) < 0.35) return false; }
+    for (const o of game.data.coops) { if (o.id === selfId || (o.tier || 0) >= 4 || !hasLooks(baseBreed(o.breed))) continue; const [ox, oz] = inSpot(o, x, z); if (rectGap(footOf({ ...o, tier: 4 }), ox, oz) < 0.35) return false; }
   }
   return true;
 }
+// the biggest look a coop at sp would have room for (its own look at least): 4 is Deluxe
+function roomTier(sp, breed, selfId = null, from = 0) {
+  if (!hasLooks(baseBreed(breed))) return from;
+  for (let t = 4; t > from; t--) if (roomToGrow(sp, breed, selfId, t)) return t;
+  return from;
+}
+// a coop with bigger looks to come, at the look it keeps room for (t, else Deluxe), else null
+const grownOf = (gc, t = 4) => gc && hasLooks(baseBreed(gc.breed)) && (gc.tier || 0) < t ? { ...gc, tier: t } : null;
 // clear of where the coops will grow to (a decoration offered a spot: not where a coop's next looks would need)
 function clearOfGrowth(id, x, z) {
   const f = DECOR_INFO.foot[id], rad = f ? 0.75 * Math.max(-f[0], f[2], -f[1], f[3]) : 0.5;
@@ -7191,24 +7212,24 @@ function gateOpen(p) {
 }
 // where a new coop first appears: the nearest spots to the middle of the view where it can stand, facing you, best with
 // nothing to clear and its gate onto open ground (a quick look: gateOpen makes sure)
-function placeSpots(breed, n = 8) {
-  const self = { breed }, cx = Math.round(view.target.x * 4) / 4, cz = Math.round(view.target.z * 4) / 4;
+function placeSpots(breed, n = 8, near = null) {
+  const self = { breed }, c0 = near || view.target, cx = Math.round(c0.x * 4) / 4, cz = Math.round(c0.z * 4) / 4;
   const Fq = footOf({ breed, tier: 0 }), quick = (x, z) => [[0, 0], [Fq.x0 + 0.04, Fq.z0 + 0.07], [Fq.x1 - 0.04, Fq.z0 + 0.07], [Fq.x0 + 0.04, Fq.z1 - 0.07], [Fq.x1 - 0.04, Fq.z1 - 0.07]].every(([dx, dz]) => owned(fieldAt(x + dx, z + dz)));
   const PQ = hasLooks(breed) ? tierPen(breed, 0) : PEN, gl = [PQ.gate[0] + COOP_SHIFT.x, PQ.pen.max[2] + 0.6 + COOP_SHIFT.z], nav = navGrid(), R = farmReach();
   const gateOk = (x, z, deg) => { const c = Math.cos(deg * DEG), sn = Math.sin(deg * DEG); return !!nav.nearestIn(R, x + gl[0] * c + gl[1] * sn, z - gl[0] * sn + gl[1] * c, 0.6); };
-  const found = []; let r0 = -1, open = 0, roomy = 0;
-  for (let r = 0; r < 40 && !(r0 >= 0 && (r > r0 + 8 || (roomy >= 2 && r > r0 + 1) || (open >= 3 && !roomy && r > r0 + 6))); r += 1) for (let k = 0, m = Math.max(1, Math.round(r * 6)); k < m; k++) {
+  const found = []; let r0 = -1, open = 0, roomy = 0;      // (on till two spots with room for Deluxe, or well past the first good spot: the roomiest is wanted, 8 Nov 2026)
+  for (let r = 0; r < 40 && !(r0 >= 0 && (r > r0 + 24 || (roomy >= 2 && r > r0 + 1))); r += 1) for (let k = 0, m = Math.max(1, Math.round(r * 6)); k < m; k++) {
     const a = k / m * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
     if (!quick(x, z)) continue;
     for (const deg of [90, 0]) {
       const S = coopSpot({ x, z, deg }, self); if (!S.ok) continue;
       if (r0 < 0) r0 = r;
-      const g = gateOk(x, z, deg), w = g && roomToGrow({ x, z, deg }, breed); if (g) open++; if (w) roomy++;
-      found.push({ x, z, deg, r, n: S.clear.length, g, w });
+      const g = gateOk(x, z, deg), t = g ? roomTier({ x, z, deg }, breed) : 0, w = t === 4; if (g) open++; if (w) roomy++;
+      found.push({ x, z, deg, r, n: S.clear.length, g, t, w });
     }
   }
-  found.sort((a, b) => (b.g - a.g) || (b.w - a.w) || (a.r - b.r) || (a.n - b.n));
-  return found.slice(0, n).map(o => ({ x: o.x, z: o.z, deg: o.deg }));
+  found.sort((a, b) => (b.g - a.g) || (b.t - a.t) || (a.r - b.r) || (a.n - b.n));      // (the roomiest to grow first: Deluxe where the farm has room for it, 8 Nov 2026)
+  return found.slice(0, n).map(o => ({ x: o.x, z: o.z, deg: o.deg, w: o.w, t: o.t }));
 }
 function dropPlot(p) {
   for (const b of [...p.birds]) removeBird(b);
@@ -7320,7 +7341,7 @@ function decorSpot(id, x, z, deg = 45) {
 // every coop's gate still open with it there
 function decorFreeNear(id, cx, cz, far = 40, way = false, degs = [45], grow = false) {
   // (grow: a spot offered for a new one: best clear of where the coops will grow, nearby; else the nearest as before)
-  if (grow === true) return decorFreeNear(id, cx, cz, Math.min(far, 16), way, degs, 'only') || decorFreeNear(id, cx, cz, far, way, degs);
+  if (grow === true) return decorFreeNear(id, cx, cz, Math.min(far, 16), way, degs, 'only') || (far > 16 && decorFreeNear(id, cx, cz, far, way, degs, 'only')) || decorFreeNear(id, cx, cz, far, way, degs);
   cx = Math.round(cx * 4) / 4; cz = Math.round(cz * 4) / 4;
   const no = new Set();
   for (let tries = 0; tries < 6; tries++) {
@@ -7622,7 +7643,9 @@ function decMoveTo(x, z, force = false, deg = DMOVE.at ? DMOVE.at.deg || 45 : 45
   if (x !== DMOVE.at.x || z !== DMOVE.at.z) DMOVE.moved = true;
   DMOVE.at = { x, z, deg };
   setDecorAt(DMOVE.item, x, z, deg);
-  const S = DMOVE.spot = decorSpot(DMOVE.id, x, z, deg);
+  let S = decorSpot(DMOVE.id, x, z, deg);
+  if (S.ok && !(DMOVE.from && x === DMOVE.from.x && z === DMOVE.from.z) && !clearOfGrowth(DMOVE.id, x, z)) S = { ok: false, why: 'dec_bad_grow', clear: S.clear };      // (kept for a coop to grow into; where it stood already: as before)
+  DMOVE.spot = S;
   DMOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
   gameUI.moveStatus(game.t(!DMOVE.moved ? 'dec_place_hint' : S.ok ? (S.clear.length ? 'dec_ok_clear' : 'dec_ok') : S.why), S.ok);
   DMOVE.grassAt = performance.now() + 220;
@@ -7894,11 +7917,12 @@ function settleGarden(gone, way = false) {      // (way: the way to every coop's
     const cands = fh ? [[-uz, ux, 5.5], [uz, -ux, 5.5], [-uz + ux * 0.7, ux + uz * 0.7, 6], [uz + ux * 0.7, -ux + uz * 0.7, 6], [-uz - ux * 0.6, ux - uz * 0.6, 6], [uz - ux * 0.6, -ux - uz * 0.6, 6]].map(([dx, dz, r]) => [fh.pos[0] + dx * r, fh.pos[2] + dz * r]) : [];
     let f = G.x !== null && G.z !== null ? decorFreeNear('garden', G.x, G.z, 40, false, GARDEN_DEGS) : null;
     if (!f) {      // (each candidate's nearest good spot, those in full view first; with way, the first that keeps every gate open: checked one at a time, the walking grid made again for each, so as few as can be)
-      const found = []; for (const c of [...cands, ...(VILLAGE_VEG || [])]) { const q = decorFreeNear('garden', c[0], c[1], 6, false, GARDEN_DEGS); if (q && !found.some(o => o.x === q.x && o.z === q.z && o.deg === q.deg)) found.push(q); }
+      const found = [], fresh = G.x === null;      // (a new garden: first clear of where the coops will grow, 8 Nov 2026)
+      for (const grow of fresh ? ['only', false] : [false]) { if (found.length) break; for (const c of [...cands, ...(VILLAGE_VEG || [])]) { const q = decorFreeNear('garden', c[0], c[1], 6, false, GARDEN_DEGS, grow); if (q && !found.some(o => o.x === q.x && o.z === q.z && o.deg === q.deg)) found.push(q); } }
       found.sort((a, b) => (inView(b.x, b.z, 1.0) ? 1 : 0) - (inView(a.x, a.z, 1.0) ? 1 : 0));
       f = found.find(q => !way || decorWayOk('garden', q.x, q.z, q.deg)) || null;
     }
-    if (!f) f = decorFreeNear('garden', HOME_COOP.x + 3, HOME_COOP.z + 3, 40, way, GARDEN_DEGS);
+    if (!f) f = decorFreeNear('garden', HOME_COOP.x + 3, HOME_COOP.z + 3, 40, way, GARDEN_DEGS, G.x === null);
     if (f) { G.x = f.x; G.z = f.z; G.deg = f.deg; } else { G.x = G.z = null; }
     changed = true;
   }
@@ -9014,7 +9038,8 @@ window.__farm = {
     gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]), dressCoop: (i, id) => dressCoop(gamePlots()[i], id), coopParts: i => coopParts(gamePlots()[i]).map(x => x[0]), shopSheet: tab => shopSheet(tab),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
-    state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length }) },
+    state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length, grow: MOVE.grow }),
+    room: (i, sp) => { const gc = gamePlots()[i].gc; return { now: coopSpot(sp, gc).ok, grow: roomToGrow(sp, gc.breed, gc.id), tier: roomTier(sp, gc.breed, gc.id, gc.tier || 0) }; }, grown: (i, t = 4) => { const G = grownOf(gamePlots()[i].gc, t); return G && { foot: footOf(G), apron: apronOf(G) }; }, clearOfGrowth: (id, x, z) => clearOfGrowth(id, x, z) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
   animal: { buy: id => buyAnimal(id), see: id => seeAnimal(id), owned: () => geeseOwned() },
   // tests (Rusty's visits in the game): the nights to come he visits (from a time), tonight's on the farm, the film's record

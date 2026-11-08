@@ -1187,5 +1187,7 @@
  "text.vil_amara_s": "Dr. Amara",
  "text.vil_clara_s": "Fräulein Clara",
  "text.vil_marco_s": "Marco",
- "text.vil_fete_s": "das Dorffest"
+ "text.vil_fete_s": "das Dorffest",
+ "text.move_grow": "Hier ist kein Platz für sein späteres, größeres Gehege: Die gestrichelte Linie zeigt, wie groß es wird.",
+ "text.dec_bad_grow": "Dieser Platz bleibt frei, damit ein Stall wachsen kann."
 }

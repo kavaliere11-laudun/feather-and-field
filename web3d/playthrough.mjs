@@ -7,7 +7,9 @@
 // each bird, the feeders, the wheat, the vegetable garden and a treat for each coop, the jobs, the next field, a new breed's
 // coop, and a little fishing in the morning. Writes OUT/log.txt (every card's and every word's text, with the day, the
 // time, the level and the coins) and a picture of each kind of card the first time it opens, each level's card, and the
-// new things the first time they're seen (OUT/NNN_*.png). Ends with how far it got and any page errors.
+// new things the first time they're seen (OUT/NNN_*.png). Ends with how far it got and any page errors. Since the second
+// play-through (8 Nov 2026) it spends as a keen player would too (SHOP=0: not): the coops' next looks, the geese once the
+// fox has called, the decorations, the farmer's outfits, the dog; the shows each day; the honey; the doors shut at night.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/playthrough', LANG = process.env.LANG || 'en', W = +(process.env.W || 874), H = +(process.env.H || 402);
@@ -53,6 +55,7 @@ const cards1 = async (where) => {
       const placed = await placeCoop(); if (placed) continue;
     }
     if (/^(congrats|news|showres|rare|grown)$/.test(c.kind) && await click('.gsheet .gbtn:not(.galt)')) { await act(1); continue; }
+    if (c.kind === 'showday' && await click('.gsheet .gbtn.galt')) { await act(1); continue; }      // ("Just the results")
     if (/^gintro|^intro|welcome|story/.test(c.kind)) { await click('.gsheet .gbtn:not(.galt)'); await act(0.4); continue; }
     await p.evaluate(() => window.__farm.gameUI().close()); await act(0.5);
   }
@@ -70,6 +73,78 @@ const placeCoop = async () => {
 };
 const look = (x, z, size = 2.6) => p.evaluate(([x, z, s]) => { const f = window.__farm; f.lookAt(x, z, s); }, [x, z, size]);
 const waitFarmer = async (max = 40) => { for (let i = 0; i < max; i++) { const busy = await p.evaluate(() => { const L = window.__farm.farmer(); return !!(L && (L.pending || (L.task && /^(pen|work|order|out)$/.test(L.task.name)))); }); if (!busy) return; await act(1); } };
+
+// ---- spending (the second play-through, 8 Nov 2026, Audrey: "Yes" to one with the shop): what to buy, in order
+const SHOP = process.env.SHOP !== '0', KEEP = 150;
+const coins = () => p.evaluate(() => window.__farm.game().data.coins);
+const placeIt = async (what) => {      // (a decoration or the kennel being placed: put down where the farm offers, or a step aside)
+  await act(1);
+  for (let k = 0; k < 8 && !(await p.evaluate(() => window.__farm.deco.state().ok)); k++) await p.evaluate(k => { const f = window.__farm, M = f.deco.state(); f.deco.to(M.at.x + [3, -3, 0, 0, 4, -4, 4, -4][k], M.at.z + [0, 0, 3, -3, 4, 4, -4, -4][k]); }, k);
+  const ok = await p.evaluate(() => window.__farm.deco.state().ok);
+  await once('decplace:' + what, 'placing_' + what);
+  if (!ok) { await note('could not place', what); await p.evaluate(() => window.__farm.deco.cancel()); await act(0.5); return false; }
+  await click('.gmove-go'); await act(2);
+  return true;
+};
+const shopTab = async (tab) => { await p.evaluate(() => window.__farm.deco.shop()); await act(0.4); if (tab !== 'decor') { await click(`.gsheet .gchip[data-tab="${tab}"]`); await act(0.3); } await once('shop:' + tab, 'shop_' + tab); };
+async function spend() {
+  // the coops' next looks, the cheapest first
+  const ups = await p.evaluate(() => { const f = window.__farm, g = f.game(); return f.gamePlots().map((q, i) => { const n = g.coopNext(g.coop(q.gc.id)); return n ? { i, price: n.price, look: n.look } : null; }).filter(Boolean).sort((a, b) => a.price - b.price); });
+  for (const u of ups) {
+    if (await coins() < u.price + KEEP) break;
+    await safe('upgrade', async () => {
+      await waitFarmer(25);
+      await p.evaluate(i => window.__farm.coopCard(i), u.i); await act(0.4); await once('card:coop', 'card_coop');
+      const c = await cardNow(); if (c && !seen.has('uptext:' + u.look)) { seen.add('uptext:' + u.look); await note('card coop', c.text); }
+      if (!(await click('.gsheet .gup .gbtn:not(.galt)'))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
+      await act(1.5);
+      const why = await p.evaluate(() => { const w = document.querySelector('.gsheet .gup-why'); return w && !w.hidden ? w.textContent : ''; });
+      if (why) { await note('upgrade refused', why); await p.evaluate(() => window.__farm.gameUI().close()); return; }
+      const P = await p.evaluate(i => { const q = window.__farm.gamePlots()[i].group.position; return [q.x, q.z]; }, u.i);
+      await look(P[0], P[1], 2.4); await act(1); await once('look:' + u.look, 'coop_' + u.look);
+    });
+  }
+  const g2 = () => p.evaluate(() => { const g = window.__farm.game(); return { level: g.level, fox: !!g.foxLast(), geese: g.animalNext('geese'), dog: g.animalNext('dog'), decor: ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse'].filter(id => g.decorNext(id)), outfits: ['market', 'garden'].filter(id => g.outfitNext(id)) }; });
+  let G = await g2();
+  // the geese, once the fox has called
+  if (G.geese && G.fox && await coins() >= 1200 + KEEP) await safe('geese', async () => { await shopTab('animals'); if (await click('.gsheet [data-animal="geese"] .gpage-go:not(.galt)')) { await act(3); await once('geese', 'geese_came'); } else await p.evaluate(() => window.__farm.gameUI().close()); });
+  // the decorations, the cheapest first
+  for (const id of (await g2()).decor) {
+    const price = await p.evaluate(id => ({ flowers: 400, birdbath: 800, beehives: 1800, duckhouse: 3000, greenhouse: 6000 })[id], id);
+    if (await coins() < price + KEEP) break;
+    await safe('decor ' + id, async () => {
+      await waitFarmer(20); await shopTab('decor');
+      if (!(await click(`.gsheet [data-decor="${id}"] .gpage-go:not(.galt)`))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
+      if (id === 'duckhouse') { await act(2); await once('duckhouse', 'duckhouse'); return; }      // (straight onto the pond)
+      await placeIt(id);
+    });
+  }
+  // the farmer's outfits
+  for (const id of (await g2()).outfits) {
+    const price = id === 'market' ? 1200 : 3500;
+    if (await coins() < price + KEEP) break;
+    await safe('outfit ' + id, async () => { await shopTab('outfits'); if (await click(`.gsheet [data-outfit="${id}"] .gpage-go:not(.galt)`)) { await p.waitForTimeout(2500); await act(3); const L = await p.evaluate(() => { const q = window.__farm.farmer().pos; return [q.x, q.z]; }); await look(L[0], L[1], 2.0); await act(0.5); await once('outfit:' + id, 'outfit_' + id); } else await p.evaluate(() => window.__farm.gameUI().close()); });
+  }
+  // the dog: his kennel placed, then his name (Biscuit, as it comes)
+  G = await g2();
+  if (G.dog && await coins() >= 4000 + KEEP) await safe('dog', async () => {
+    await shopTab('animals');
+    if (!(await click('.gsheet [data-animal="dog"] .gpage-go:not(.galt)'))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
+    if (!(await placeIt('kennel'))) return;
+    await p.waitForTimeout(2200); await act(0.5);
+    if (await p.evaluate(() => !document.getElementById('dogname').hidden)) { await once('dogname', 'dog_name'); await note('dog name', await p.evaluate(() => document.getElementById('dogname').innerText)); await click('#dogname-save'); await act(1); }
+    const D = await p.evaluate(() => { const d = window.__farm.dog(); return d && d.dog ? [d.dog.pos.x, d.dog.pos.z] : null; }); if (D) { await look(D[0], D[1], 2.2); await act(1); await once('dog', 'dog_came'); }
+  });
+}
+const enterShows = async () => {
+  await p.evaluate(() => window.__farm.showsSheet()); await act(0.4); await once('card:shows', 'card_shows');
+  const c = await cardNow(); if (c && !seen.has('stext')) { seen.add('stext'); await note('card shows', c.text); }
+  for (let k = 0; k < 3; k++) {
+    const r = await p.evaluate(() => { for (const c of document.querySelectorAll('.gsheet .gshow')) { const b = [...c.children].find(x => x.matches('button.gbtn') && !x.disabled); if (b && (!b.classList.contains('galt') || c.dataset.show[0] === 'v')) { const t = b.textContent; b.click(); return t; } } return null; });
+    if (!r) break; await act(0.5);
+  }
+  if (await cardNow()) await p.evaluate(() => window.__farm.gameUI().close());
+};
 
 // ---- a visit
 async function visit(first = false) {
@@ -141,6 +216,19 @@ async function visit(first = false) {
   // the next field
   S = await g();
   if (S.sale && S.coins >= S.sale.price + 60) await safe('land', async () => { await p.evaluate(() => window.__farm.landCard()); await act(0.4); await once('card:land', 'card_land'); const c = await cardNow(); if (c) await note('card land', c.text); await click('.gsheet .gbtn:not(.galt)'); await act(2); });
+  // spending, as a keen player would (SHOP=0: not): the coops' next looks first, then the geese (once the fox has called),
+  // the decorations, the farmer's outfits, the dog; always keeping some coins back for feed and seed
+  if (SHOP) await spend();
+  // the shows: the best bird in each show with a fair chance (the village show anyway: it's cheap)
+  if (SHOP) await safe('shows', enterShows);
+  // the honey
+  if (SHOP && await p.evaluate(() => { const h = window.__farm.deco.honey.state(); return !!h.bub; })) await safe('honey', async () => { await waitFarmer(25); const at = await p.evaluate(() => { const it = window.__farm.deco.items().find(x => x.id === 'beehives'); return it && it.at; }); if (at) { await look(at[0], at[1], 2.6); await once('honeypot', 'honey_pot'); } await p.evaluate(() => { const b = document.querySelector('.gbub.ghoney'); if (b) b.click(); else window.__farm.deco.honey.tap(); }); await act(1); for (let i = 0; i < 20 && await p.evaluate(() => !!window.__farm.deco.honey.state().work); i++) await act(1); });
+  // the doors shut at night, once the fox has called (as his card says)
+  if (SHOP && (await state()).hm >= '17:00' && await p.evaluate(() => !!window.__farm.game().foxLast())) await safe('doors', async () => {
+    await waitFarmer(20); await act(20);      // (everyone in for the night)
+    const n = await p.evaluate(() => window.__farm.gamePlots().length);
+    for (let i = 0; i < n; i++) { const d = await p.evaluate(i => window.__farm.doorOf(i), i); if (d && d.goal === 1) { await p.evaluate(i => window.__farm.doorTapAt(i), i); await act(0.5); const t = await p.evaluate(() => document.getElementById('tag').textContent); if (!seen.has('door:' + t)) { seen.add('door:' + t); await note('door', t); } } }
+  });
   // a new breed waiting for its coop
   const wait = await p.evaluate(() => window.__farm.game().waitingCoops());
   if (wait.length) await safe('coop', async () => { await p.evaluate(b => window.__farm.place(b), wait[0]); await act(1.5); await once('move', 'placing_coop'); for (let k = 0; k < 6 && !(await p.evaluate(() => window.__farm.move.state().ok)); k++) await p.evaluate(k => { const f = window.__farm, M = f.move.state(); f.move.to(M.at.x + (k % 2 ? -3 : 3), M.at.z + (k > 2 ? 3 : -3)); }, k).catch(() => {}); await click('.gmove-go'); await act(2); await note('placed a coop', wait[0]); });

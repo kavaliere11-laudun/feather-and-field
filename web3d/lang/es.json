@@ -1182,5 +1182,7 @@
  "text.vil_amara_s": "la doctora Amara",
  "text.vil_clara_s": "la señorita Clara",
  "text.vil_marco_s": "Marco",
- "text.vil_fete_s": "la fiesta"
+ "text.vil_fete_s": "la fiesta",
+ "text.move_grow": "Aquí no cabe su corral más grande de más adelante: la línea de puntos muestra hasta dónde crecerá.",
+ "text.dec_bad_grow": "Este sitio se reserva para que un gallinero pueda crecer."
 }

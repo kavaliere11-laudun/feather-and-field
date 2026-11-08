@@ -1187,5 +1187,7 @@
  "text.vil_amara_s": "la dottoressa Amara",
  "text.vil_clara_s": "la maestra Clara",
  "text.vil_marco_s": "Marco",
- "text.vil_fete_s": "la sagra"
+ "text.vil_fete_s": "la sagra",
+ "text.move_grow": "Qui non ci sta il suo recinto più grande di domani: la linea tratteggiata mostra fin dove arriverà.",
+ "text.dec_bad_grow": "Questo spazio è riservato a un pollaio che si ingrandirà."
 }
