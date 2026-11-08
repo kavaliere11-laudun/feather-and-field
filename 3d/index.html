@@ -30,7 +30,7 @@
   #readout.slow { background: var(--barn); color: #fff; }
   #hint { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translate(-50%, -6px); width: max-content; max-width: calc(100vw - 32px);      /* (as wide as its words, up to the screen: centred from the middle it would otherwise wrap at half the screen) */
           background: rgba(30, 52, 38, 0.92); color: #fff; padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 15px; text-align: center;
-          opacity: 0; transition: opacity .35s, transform .35s; pointer-events: none; }
+          opacity: 0; transition: opacity .35s, transform .35s; pointer-events: none; z-index: 14; }      /* (over the bubbles and signs in the farm, 8 Nov 2026: a sale sign's tag sat on top of it; under the cards and the coop-placing bar) */
   #hint.on { opacity: 1; transform: translate(-50%, 0); }
   #tag { position: fixed; left: 0; top: 0; padding: 7px 13px; border-radius: 999px; background: var(--meringue); font-weight: 800; font-size: 15px;
          box-shadow: 0 2px 8px rgba(30, 52, 38, 0.2); opacity: 0; transition: opacity .2s; pointer-events: none;
@@ -703,6 +703,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794093509"></script>
+<script src="app.js?v=1794101291"></script>
 </body>
 </html>
