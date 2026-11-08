@@ -148,6 +148,7 @@ const sun = new THREE.DirectionalLight('#fff1dc', parseFloat(params.get('sun') |
 sun.castShadow = true;
 scene.add(sun, sun.target);
 const SUN_DIR = new THREE.Vector3(0.55, -0.72, -0.62).normalize();
+const CLEAR = { at: -1e9, rects: [], sel: '.gbar button, .gacts button, #compass, #farmerbtn, #dogbtn, #replaybtn, #foxbtn' };      // (the buttons the farm's bubbles keep clear of: bubAt)
 const SHADOW_REACH = 15;                                  // metres round the view that get shadows
 let shadowAt = null;
 
@@ -4594,6 +4595,7 @@ const compassEl = document.getElementById('compass'), needleEl = compassEl && co
 function compassShow() {
   if (!compassEl) return;
   const on = GAME_MODE && (Math.abs(viewOff()) > 3 * DEG || Math.abs(view.el - VIEW_EL0) > 2 * DEG) && !inside.open;
+  if (compassEl.hidden !== !on) CLEAR.at = -1e9;      // (the bubbles see it at once)
   compassEl.hidden = !on; compassEl.setAttribute('aria-label', tr(LANG, 'ui.compass'));
   if (on && needleEl) {
     const t = view.target, p0 = t.clone().project(camera), p1 = t.clone().add(new THREE.Vector3(-Math.sin(VIEW_AZ0), 0, -Math.cos(VIEW_AZ0))).project(camera);
@@ -5069,6 +5071,36 @@ function bubbleText(now = Date.now(), only = null) {
   }
 }
 const bubV = new THREE.Vector3();
+// the farm's bubbles kept clear of the buttons (8 Nov 2026, Audrey: "Yes" to it, after a wheat field's "🌱 4 h" slipped
+// under the basket in the corner column): one over a button moves the least way off it (left of the column, below the
+// top bar...), its tail still pointing at what it's about; with no room near (moved over 140 px, or off the screen) it
+// hides till the farm's moved on. The buttons' places read a couple of times a second, a bubble's size when its words change
+function clearRects() {
+  const now = performance.now();
+  if (now - CLEAR.at < 400) return CLEAR.rects;
+  CLEAR.at = now; CLEAR.rects = [];
+  for (const b of document.querySelectorAll(CLEAR.sel)) { const r = b.getBoundingClientRect(); if (r.width > 0 && r.height > 0 && getComputedStyle(b).visibility !== 'hidden') CLEAR.rects.push(r); }
+  return CLEAR.rects;
+}
+function bubAt(e, sx, sy) {
+  e.hidden = false;
+  if (e._t !== e.textContent || !e._w) { e._t = e.textContent; e._w = e.offsetWidth; e._h = e.offsetHeight + 7; }      // (+ its tail)
+  const w = e._w, h = e._h, M = 6, W = canvas.clientWidth, H = canvas.clientHeight, R = clearRects();
+  const L = sx - w / 2, Rt = sx + w / 2, T = sy - h, B = sy;
+  const clear = (dx, dy) => L + dx >= 4 && Rt + dx <= W - 4 && T + dy >= 0 && B + dy <= H && !R.some(r => Rt + dx + M > r.left && L + dx - M < r.right && B + dy + M > r.top && T + dy - M < r.bottom);
+  let x = sx, y = sy;
+  if (!clear(0, 0)) {      // (every way off every button, sideways, up or down or both: the shortest that clears them all)
+    const DX = [0], DY = [0];
+    for (const r of R) { DX.push(r.left - M - Rt, r.right + M - L); DY.push(r.top - M - B, r.bottom + M - T); }
+    let best = null;
+    for (const dx of DX) for (const dy of DY) { const d = Math.hypot(dx, dy); if (d <= 140 && (!best || d < best[2]) && clear(dx, dy)) best = [dx, dy, d]; }
+    if (!best) { e.hidden = true; return; }
+    x += best[0]; y += best[1];
+  }
+  e.style.left = x.toFixed(1) + 'px'; e.style.top = y.toFixed(1) + 'px'; e.dataset.at = sx.toFixed(1) + ',' + sy.toFixed(1);      // (where it points: for the tests)
+  const tail = Math.max(-(w / 2 - 14), Math.min(w / 2 - 14, sx - x));      // (the tail towards what it's about)
+  e.style.setProperty('--tail', tail.toFixed(1) + 'px');
+}
 function placeBubbles() {
   if (!GAME_MODE) return;
   const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -5081,7 +5113,7 @@ function placeBubbles() {
       bubV.copy(SALE.at); bubV.project(camera);
       const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
-      else { B.hidden = false; B.style.left = sx.toFixed(1) + 'px'; B.style.top = sy.toFixed(1) + 'px'; }
+      else bubAt(B, sx, sy);
     }
   }
   { // the farm stall: "🧺 Ready!" over it while a basket's ready to deliver (village orders)
@@ -5092,7 +5124,7 @@ function placeBubbles() {
       bubV.set(S.top[0], S.top[1], S.top[2]); bubV.project(camera);
       const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
-      else { B.hidden = false; B.style.left = sx.toFixed(1) + 'px'; B.style.top = sy.toFixed(1) + 'px'; }
+      else bubAt(B, sx, sy);
     }
   }
   for (const p of gamePlots()) {
@@ -5102,7 +5134,7 @@ function placeBubbles() {
       bubV.set(x, y, z); p.frame.localToWorld(bubV); bubV.project(camera);
       const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
-      e.hidden = false; e.style.left = sx.toFixed(1) + 'px'; e.style.top = sy.toFixed(1) + 'px';
+      bubAt(e, sx, sy);
     };
     const G = nestOf(p), f = penOf(p).feeder;
     put(B.eggs, B.n > 0, G.win[0], G.win[2] - 0.05, 0.52);            // (its tail on the nest window)
@@ -8193,7 +8225,7 @@ function fieldBubbles(w, h) {
     v.project(camera);
     const sx = (v.x + 1) / 2 * w, sy = (1 - v.y) / 2 * h;
     if (v.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
-    e.hidden = false; e.style.left = sx.toFixed(1) + 'px'; e.style.top = sy.toFixed(1) + 'px';
+    bubAt(e, sx, sy);
   };
   const W = DEC.items.wheat, st = game.wheatStage(), busy = FIELD.work && FIELD.work.kind !== 'honey';
   if (W && !busy && DMOVE.id !== 'wheat') {

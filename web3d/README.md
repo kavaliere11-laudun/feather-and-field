@@ -4628,3 +4628,17 @@ doesn't redraw them on every step.
 - **The compass:** sideways the corner column of buttons reaches up to where it sat (64 px from the top, right), over
   the basket. Sideways it now sits beside the settings gear in the top row (`#compass` in a landscape rule).
 
+## The farm's bubbles kept clear of the buttons (8 Nov 2026 evening; Audrey: "Yes", after a wheat field's "🌱 4 h" slipped under the basket in the corner column)
+- Every bubble over the farm (the wheat field's, the garden's, the honey's, a coop's eggs, feed and chicks, the land for
+  sale, the farm stall's) is placed through `bubAt(e, sx, sy)`. Where it would cover a button (the top bar's level,
+  coins and gear, the corner column, the compass, the farmer's, dog's, fox's and replay buttons; `CLEAR.sel`), it takes
+  the shortest move that clears them all at once (sideways, up or down, or both: each button's edges tried, plus a
+  6 px margin), and keeps on the screen; with none within 140 px it hides till the farm's moved on. Its tail still
+  points at what it's about (`--tail` on `.gbub::after`, within the bubble). In open ground nothing changes.
+- The buttons' places are read a couple of times a second (and at once when the compass shows or goes); a bubble's
+  size when its words change. `data-at` on a bubble: where it points (for the tests).
+- First try: one button at a time, the least move off each; squeezed between the basket and the compass it went back
+  and forth between them and hid. `bubbletest.mjs` (English and French): the wheat field's bubble aimed under each of
+  the eight buttons and the compass: never over one, mostly moved off rather than hidden, its tail towards the field;
+  in open ground where it always was.
+
