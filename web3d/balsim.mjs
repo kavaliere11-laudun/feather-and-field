@@ -28,7 +28,7 @@ function simulate(name, seed) {
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0, orders: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
   const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
-  let spot = 0;
+  let spot = 0; const bought = [];
   for (let d = 0; d < DAYS; d++) {
     const day0 = start + d * 86400e3 - ((start % 86400e3) - 0);    // (midnight UTC of the day)
     for (const h of hours) {
@@ -90,16 +90,17 @@ function simulate(name, seed) {
       for (const breed of g.waitingCoops()) { spot++; const dft = g.draftCoop(breed, { x: spot * 6, z: 0, deg: 90 }); if (dft) track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 })); }
       // decorations and outfits, keeping enough back for the next field and a few days' feed
       const keep = (g.landNext() ? g.landNext().price : 0) + 60 * g.data.coops.length;
-      for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; if (c.breed === 'rir') upDay[n.tier] = d + 1; if (c.breed === 'orp') upDay['orp' + n.tier] = d + 1; if (c.breed === 'sil') upDay['sil' + n.tier] = d + 1; if (c.breed === 'leg') upDay['leg' + n.tier] = d + 1; if (c.breed === 'bra') upDay['bra' + n.tier] = d + 1; if (c.breed === 'pol' || c.breed === 'aya') upDay[c.breed + n.tier] = d + 1; } }      // (the coops' looks, release 4)
+      for (const c of (process.env.SHOPFIRST ? [] : g.data.coops)) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; bought.push([d + 1, c.breed + ' ' + ['', 'mended', 'snug', 'cosy', 'deluxe'][n.tier]]); if (c.breed === 'rir') upDay[n.tier] = d + 1; if (c.breed === 'orp') upDay['orp' + n.tier] = d + 1; if (c.breed === 'sil') upDay['sil' + n.tier] = d + 1; if (c.breed === 'leg') upDay['leg' + n.tier] = d + 1; if (c.breed === 'bra') upDay['bra' + n.tier] = d + 1; if (c.breed === 'pol' || c.breed === 'aya') upDay[c.breed + n.tier] = d + 1; } }      // (the coops' looks, release 4)
       for (const line of g.rareCoops()) if (g.data.coins - G.RARE.coop >= keep) { spot++; const dft = g.draftCoop(line, { x: spot * 6, z: 0, deg: 90 }); if (dft && track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 }))) spend.rare = (spend.rare || 0) + G.RARE.coop; }      // (a rare colour's own coop)
-      for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (track('decor', () => g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 }))) spend.decor += DECOR[id].price; }
-      for (const id of Object.keys(G.ANIMALS)) if (g.animalNext(id) && g.data.coins - G.ANIMALS[id].price >= keep) { spot++; if (track('animals', () => g.buyAnimal(id, NOW, { x: -spot * 4, z: 14 }))) spend.animals = (spend.animals || 0) + G.ANIMALS[id].price; }      // (the geese and the dog, release 3)
-      for (const id of Object.keys(OUTFITS)) if (g.outfitNext(id) && g.data.coins - OUTFITS[id].price >= keep) { if (track('outfits', () => g.buyOutfit(id))) spend.outfits += OUTFITS[id].price; }
+      for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (track('decor', () => g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 }))) { spend.decor += DECOR[id].price; bought.push([d + 1, id]); } }
+      for (const id of Object.keys(G.ANIMALS)) if (g.animalNext(id) && g.data.coins - G.ANIMALS[id].price >= keep) { spot++; if (track('animals', () => g.buyAnimal(id, NOW, { x: -spot * 4, z: 14 }))) spend.animals = (spend.animals || 0) + G.ANIMALS[id].price; bought.push([d + 1, id]); }      // (the geese and the dog, release 3)
+      for (const id of Object.keys(OUTFITS)) if (g.outfitNext(id) && g.data.coins - OUTFITS[id].price >= keep) { if (track('outfits', () => g.buyOutfit(id))) { spend.outfits += OUTFITS[id].price; bought.push([d + 1, 'outfit ' + id]); } }
+      if (process.env.SHOPFIRST) for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; bought.push([d + 1, c.breed + ' ' + ['', 'mended', 'snug', 'cosy', 'deluxe'][n.tier]]); } }      // (SHOPFIRST: the shop before the coops' looks)
       const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
+  return { bought, levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -121,5 +122,6 @@ for (const name of Object.keys(PROFILES)) {
   console.log('the Timber Lodge: ' + [1, 2, 3, 4].map(t => ['', 'Mended', 'Snug', 'Cosy', 'Deluxe'][t] + ' day ' + (runs.every(r => r.upDay['bra' + t]) ? Math.round(avg(runs, r => r.upDay['bra' + t])) : '-')).join(', '));
   for (const [k, nm] of [['pol', 'the Little Windmill'], ['aya', 'the Javanese House']])          // (release 7's)
     console.log(nm + ': ' + [1, 2, 3, 4].map(t => ['', 'Mended', 'Snug', 'Cosy', 'Deluxe'][t] + ' day ' + (runs.every(r => r.upDay[k + t]) ? Math.round(avg(runs, r => r.upDay[k + t])) : '-')).join(', '));
+  if (process.env.BOUGHT) { const B = runs[0].bought.filter(([d]) => d <= +process.env.BOUGHT); console.log('bought (farm 1, to day ' + process.env.BOUGHT + '): ' + B.map(([d, w]) => 'd' + d + ' ' + w).join(', ')); }
   console.log('spent: ' + Object.entries(runs[0].spend).map(([k]) => `${k} ${Math.round(avg(runs, r => r.spend[k]))}`).join(', '));
 }
