@@ -4529,3 +4529,19 @@ Show days answered "Just the results".
 - **The French run, after the change**: level 10 on day 13 again, no look refused: the Thatched Cottage ("Chaumière")
   grew to Mended on day 5 and to Snug on day 13, the Red Barn to Snug, the Pagoda, Javanese and Floating houses to
   Mended, a flower bed and a bird bath; no page errors.
+
+## The doors shut from dusk (8 Nov 2026; Audrey: "Yes", after the second play-through's player came at 19:00 and heard "The door stays open in the daytime")
+The farm's birds go in for the night at about 22:00 to 22:45 (the roosters last), so a door shut by hand could only be
+shut once everyone was in, late in the evening; a player who looks in at 19:00 couldn't shut it for Rusty's visits
+(from 23:00). Now, from 18:00:
+- The moon shows over each door you shut by hand (a Rustic, Mended or Snug coop's; an automatic door's only on a night
+  it sticks, as before).
+- Tapped with everyone still out: "🌙 The door will shut by itself tonight, once everyone's in" / "🌙 La porte se fermera
+  toute seule ce soir, quand tout le monde sera rentré". It's shut for the night in the save there and then (Rusty finds
+  it shut, even with the app closed), the door stays open for them, the moon goes, and once they're all in it shuts
+  itself (`tickDoors`, `game.doorBooked`). Tapped again: "The door stays open tonight". With everyone in, a tap shuts it
+  there and then as before; in the morning it opens by itself at 7:30 as before.
+- The app opened again in the evening with the door shut for the night: open till they're all in (`buildDoors`: shut at
+  once only from 22:48).
+- Before 18:00, as before: "The door stays open in the daytime". Nothing new in the save (the night's key, `c.shut`, as
+  when shut by hand). Six languages. `dusktest.mjs` (English and French); `foxvisit.mjs` now reloads its shut farm at 23:00.
