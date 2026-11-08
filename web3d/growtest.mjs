@@ -34,11 +34,14 @@ const at = placed.s.at;
 ok('put down', await p.evaluate(() => window.__farm.move.place()));
 await run(1);
 ok('there, room for its Deluxe look', (await p.evaluate(sp => window.__farm.move.room(1, sp), at)).grow);
-// a spot near it where it would stand today but not grow: moved there, refused, and why
+// a spot near it where it would stand today but not grow: moved there, a word (your own coop: your choice); a new coop, refused
 const tight = await p.evaluate(() => { const f = window.__farm, c = f.game().data.coops[1]; for (let r = 1; r < 14; r += 0.5) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; for (const deg of [0, 90]) { const sp = { x: Math.round((c.x + Math.cos(a) * r) * 4) / 4, z: Math.round((c.z + Math.sin(a) * r) * 4) / 4, deg }; const q = f.move.room(1, sp); if (q.now && !q.grow) return sp; } } return null; });
 if (tight) {
   const m = await p.evaluate(sp => { const f = window.__farm; f.move.start(1); f.move.to(sp.x, sp.z, sp.deg); const s = f.move.state(); f.move.cancel(); return s; }, tight);
-  ok(fr ? 'déplacé là : refusé, « Pas assez de place ici pour son futur enclos plus grand… »' : 'moved there: refused, "Not enough room here for its bigger pen later…"', !m.ok && m.why === 'move_grow' && (fr ? /futur enclos plus grand/ : /bigger pen later/).test(m.text), m);
+  ok(fr ? 'déplacé là : « Il tient pour l’instant, mais son futur enclos plus grand ne tiendra pas ici », en orange, à vous de voir' : 'moved there: "It fits for now, but its bigger pen won’t fit here later", amber, your choice', m.ok && m.small && (fr ? /Il tient pour l’instant/ : /It fits for now/).test(m.text), m);
+  // a new coop (the Silkies'), though: only where its room is kept
+  const n = await p.evaluate(() => { const f = window.__farm; f.place('sil'); const s0 = f.move.state(), M = s0.at; let s = null; for (let r = 1; r < 16 && !s; r += 0.5) for (let k = 0; k < 24 && !s; k++) { const a = k / 24 * Math.PI * 2; f.move.to(M.x + Math.cos(a) * r, M.z + Math.sin(a) * r); const q = f.move.state(); if (q.why === 'move_grow') s = q; } f.move.cancel(); return { s0, s: s || { ok: true, why: 'none found' } }; });
+  ok(fr ? 'un nouveau poulailler, lui, refusé là : « Pas assez de place ici pour son futur enclos plus grand… »' : 'a new coop there, though: refused, "Not enough room here for its bigger pen later…"', n.s0.ok && !n.s.ok && n.s.why === 'move_grow' && (fr ? /futur enclos plus grand/ : /bigger pen later/).test(n.s.text), n);
 } else ok('a tight spot near it to try (where it fits today, not grown)', false, 'none found');
 // a decoration into the room it'll grow into: refused
 const corner = await p.evaluate(() => { const f = window.__farm, c = f.game().data.coops[1], G = f.move.grown(1); if (!G) return null; const a = c.deg * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a), F = G.foot, out = [];

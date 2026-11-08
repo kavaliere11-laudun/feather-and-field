@@ -720,6 +720,11 @@
   "fr": "Pas assez de place ici pour son futur enclos plus grand : les pointillés montrent jusqu’où il ira."
  },
  {
+  "id": "text.move_small",
+  "en": "It fits for now, but its bigger pen won’t fit here later (the dotted line).",
+  "fr": "Il tient pour l’instant, mais son futur enclos plus grand ne tiendra pas ici (les pointillés)."
+ },
+ {
   "id": "text.move_coop",
   "en": "Too close to another coop.",
   "fr": "Trop près d’un autre poulailler."

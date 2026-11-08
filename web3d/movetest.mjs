@@ -26,7 +26,7 @@ const st = () => p.evaluate(() => window.__farm.move.state());
 const at = () => p.evaluate(() => window.__farm.coopAt(0));
 const saved = () => p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return { x: c.x, z: c.z, deg: c.deg, plot: c.plot, cleared: g.data.cleared.join(), edited: g.edited }; });
 const T = { bad: fr ? /Seulement sur votre terrain/ : /Only on your own land/, lane: fr ? /Pas sur un chemin/ : /Not on a lane/, room: fr ? /Pas assez de place/ : /Not enough room/,
-  good: fr ? /Bel emplacement/ : /A good spot/, hint: fr ? /Faites glisser le poulailler/ : /Drag the coop/, moved: fr ? /nouvelle place/ : /new place/, busy: fr ? /Pas tout de suite/ : /Not just now/ };
+  good: fr ? /Bel emplacement/ : /A good spot/, small: fr ? /Il tient pour l’instant/ : /It fits for now/, hint: fr ? /Faites glisser le poulailler/ : /Drag the coop/, moved: fr ? /nouvelle place/ : /new place/, busy: fr ? /Pas tout de suite/ : /Not just now/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
@@ -76,7 +76,7 @@ await p.evaluate(() => window.__farm.buyLand()); await run(1.5);
 await p.evaluate(() => window.__farm.move.start(0)); await run(0.5);
 await p.evaluate(() => window.__farm.move.to(-33, -23)); await run(0.1);
 m = await st();
-ok('in the new field: a good spot, the bush in its way to clear', m.ok && T.good.test(m.text) && m.clear.join() === 'b84', m);          // (a new farm's barn is Rustic, its pen small: release 4)
+ok('in the new field: a spot it fits (its bigger pen later won\'t: a word, amber, still its choice), the bush in its way to clear', m.ok && (T.good.test(m.text) || (m.small && T.small.test(m.text))) && m.clear.join() === 'b84', m);          // (a new farm's barn is Rustic, its pen small: release 4)
 await p.tap('.gmove-row .gbtn:first-child'); await run(0.1);
 m = await st();
 ok('Turn: a quarter turn, still good', m.ok && m.at.deg === 180, m);

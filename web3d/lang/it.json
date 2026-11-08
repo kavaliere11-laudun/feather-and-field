@@ -1189,5 +1189,6 @@
  "text.vil_marco_s": "Marco",
  "text.vil_fete_s": "la sagra",
  "text.move_grow": "Qui non ci sta il suo recinto più grande di domani: la linea tratteggiata mostra fin dove arriverà.",
- "text.dec_bad_grow": "Questo spazio è riservato a un pollaio che si ingrandirà."
+ "text.dec_bad_grow": "Questo spazio è riservato a un pollaio che si ingrandirà.",
+ "text.move_small": "Per ora ci sta, ma più avanti il suo recinto più grande qui non ci starà (la linea tratteggiata)."
 }

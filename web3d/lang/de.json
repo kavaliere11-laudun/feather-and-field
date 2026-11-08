@@ -1189,5 +1189,6 @@
  "text.vil_marco_s": "Marco",
  "text.vil_fete_s": "das Dorffest",
  "text.move_grow": "Hier ist kein Platz für sein späteres, größeres Gehege: Die gestrichelte Linie zeigt, wie groß es wird.",
- "text.dec_bad_grow": "Dieser Platz bleibt frei, damit ein Stall wachsen kann."
+ "text.dec_bad_grow": "Dieser Platz bleibt frei, damit ein Stall wachsen kann.",
+ "text.move_small": "Passt fürs Erste, aber sein späteres, größeres Gehege passt hier nicht hin (die gestrichelte Linie)."
 }

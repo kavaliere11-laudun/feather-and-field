@@ -1189,5 +1189,6 @@
  "text.vil_marco_s": "Marco",
  "text.vil_fete_s": "a festa",
  "text.move_grow": "Aqui não cabe o cercado maior que ele vai ter: a linha pontilhada mostra até onde ele vai crescer.",
- "text.dec_bad_grow": "Este espaço fica reservado para um galinheiro poder crescer."
+ "text.dec_bad_grow": "Este espaço fica reservado para um galinheiro poder crescer.",
+ "text.move_small": "Cabe por enquanto, mas o cercado maior não vai caber aqui depois (a linha pontilhada)."
 }

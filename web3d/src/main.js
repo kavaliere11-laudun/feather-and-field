@@ -6820,7 +6820,7 @@ function fillPlotGaps() {
 }
 // ---- moving one
 const MOVE = { plot: null, from: null, at: null, spot: null, ghost: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false, grow: 0 };
-const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55';
+const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55', FOOT_SMALL = '#ffc14d';      // (small: it fits, but not its bigger looks later)
 function moveBusy(p) {
   return !!(p.fw || p.farmer || inside.open || (farmLife && (farmLife.pen || [farmLife.task, farmLife.pending].some(t => t && t.name === 'pen'))) || (nightVisit && nightVisit.active()));
 }
@@ -6950,10 +6950,10 @@ function moveTo(x, z, deg, force = false) {
   p.centre.set(x, 0, z); placeDoor(p); placePools(p);
   let S = coopSpot(MOVE.at, p.gc);
   const home = MOVE.from && x === MOVE.from.x && z === MOVE.from.z && deg === MOVE.from.deg;
-  if (S.ok && !home && grownOf(p.gc, MOVE.grow) && !roomToGrow(MOVE.at, p.gc.breed, p.gc.id, MOVE.grow)) S = { ok: false, why: 'move_grow', clear: S.clear };      // (room kept for its bigger looks: the dotted outline; where it stood already: as before)
+  if (S.ok && !home && grownOf(p.gc, MOVE.grow) && !roomToGrow(MOVE.at, p.gc.breed, p.gc.id, MOVE.grow)) S = p.draft ? { ok: false, why: 'move_grow', clear: S.clear } : { ...S, small: true };      // (room kept for its bigger looks, the dotted outline: a new coop only where there's that room; one of yours moved, a word that its bigger pen won't fit there, so it's your choice; where it stood already: as before)
   MOVE.spot = S;
-  MOVE.foot.material.color.set(S.ok ? FOOT_OK : FOOT_NO);
-  gameUI.moveStatus(game.t(!MOVE.moved ? 'move_hint' : S.ok ? (S.clear.length ? 'move_clear' : 'move_ok') : S.why), S.ok);
+  MOVE.foot.material.color.set(S.ok ? (S.small ? FOOT_SMALL : FOOT_OK) : FOOT_NO);
+  gameUI.moveStatus(game.t(!MOVE.moved ? 'move_hint' : S.small ? 'move_small' : S.ok ? (S.clear.length ? 'move_clear' : 'move_ok') : S.why), S.ok);
   MOVE.grassAt = performance.now() + 220;                   // (once it's still a moment: no grass through its pen)
   renderer.shadowMap.needsUpdate = true; wake(600);
 }
@@ -9038,7 +9038,7 @@ window.__farm = {
     gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]), dressCoop: (i, id) => dressCoop(gamePlots()[i], id), coopParts: i => coopParts(gamePlots()[i]).map(x => x[0]), shopSheet: tab => shopSheet(tab),
   move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
-    state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length, grow: MOVE.grow }),
+    state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, small: !!(MOVE.spot && MOVE.spot.small), clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length, grow: MOVE.grow }),
     room: (i, sp) => { const gc = gamePlots()[i].gc; return { now: coopSpot(sp, gc).ok, grow: roomToGrow(sp, gc.breed, gc.id), tier: roomTier(sp, gc.breed, gc.id, gc.tier || 0) }; }, grown: (i, t = 4) => { const G = grownOf(gamePlots()[i].gc, t); return G && { foot: footOf(G), apron: apronOf(G) }; }, clearOfGrowth: (id, x, z) => clearOfGrowth(id, x, z) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm
   animal: { buy: id => buyAnimal(id), see: id => seeAnimal(id), owned: () => geeseOwned() },
@@ -9046,7 +9046,7 @@ window.__farm = {
   foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
     live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
-    spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45]), way: (id, x, z) => decorWayOk(id, x, z),
+    spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45], true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
