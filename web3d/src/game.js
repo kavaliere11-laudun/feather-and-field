@@ -296,20 +296,20 @@ export const TEXT = {
     ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Your eggs, fish and honey go to their baskets first as they come; the grain comes from your store.',
     ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your store: {n})',
     ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
-    ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 {name}’s basket is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
+    ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 The basket for {name} is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
     ord_new: '📜 A new order from {name}', ord_new2: '📜 {n} new village orders: tap the basket', ord_set: '🧺 {n} for {name}', ord_fish_set: 'For {name}’s order 🧺',
     ord_done: 'Delivered to {name}: +{c} coins, +{x} XP', ord_sp_worms: '🎁 Surprise: a tin of {n} worms!', ord_sp_grain: '🎁 Surprise: a sack of {n} grain!', ord_sp_coins: '🎁 Surprise: {c} coins more!',
     ord_declined: 'Turned down: what was set aside for it sold · +{c} coins', ord_declined0: 'Turned down: another order will come along',
     ord_lv_t: 'New: village orders', ord_lv_b: 'Villagers ask for baskets of eggs, fish, honey or grain, and pay well: tap the stall by the farmhouse.',
     ord_aria: 'Village orders', ord_stall: 'The farm stall', ord_on_way: '{farmer} is taking the basket to the stall',
-    vil_potts: 'Mrs Potts', vil_potts_r: 'the baker', vil_potts_l: 'For my sponge cakes, if you please!',
-    vil_finch: 'Mr Finch', vil_finch_r: 'the aquarium shop', vil_finch_l: 'Something for the big tank in my window.',
-    vil_lily: 'Lily', vil_lily_r: 'the tea room', vil_lily_l: 'Warm scones need the very best!',
-    vil_tom: 'Old Tom', vil_tom_r: 'the miller', vil_tom_l: 'My mill’s been quiet all week.',
-    vil_amara: 'Dr Amara', vil_amara_r: 'the vet', vil_amara_l: 'A treat for me, and one for my cat Pudding.',
-    vil_clara: 'Miss Clara', vil_clara_r: 'the village school', vil_clara_l: 'It’s cooking class on Friday!',
-    vil_marco: 'Marco', vil_marco_r: 'the café', vil_marco_l: 'My breakfasts are famous thanks to you.',
-    vil_fete: 'The fête', vil_fete_r: 'the village committee', vil_fete_l: 'Prizes for the tombola, please!',
+    vil_potts: 'Mrs Potts', vil_potts_s: 'Mrs Potts', vil_potts_r: 'the baker', vil_potts_l: 'For my sponge cakes, if you please!',
+    vil_finch: 'Mr Finch', vil_finch_s: 'Mr Finch', vil_finch_r: 'the aquarium shop', vil_finch_l: 'Something for the big tank in my window.',
+    vil_lily: 'Lily', vil_lily_s: 'Lily', vil_lily_r: 'the tea room', vil_lily_l: 'Warm scones need the very best!',
+    vil_tom: 'Old Tom', vil_tom_s: 'Old Tom', vil_tom_r: 'the miller', vil_tom_l: 'My mill’s been quiet all week.',
+    vil_amara: 'Dr Amara', vil_amara_s: 'Dr Amara', vil_amara_r: 'the vet', vil_amara_l: 'A treat for me, and one for my cat Pudding.',
+    vil_clara: 'Miss Clara', vil_clara_s: 'Miss Clara', vil_clara_r: 'the village school', vil_clara_l: 'It’s cooking class on Friday!',
+    vil_marco: 'Marco', vil_marco_s: 'Marco', vil_marco_r: 'the café', vil_marco_l: 'My breakfasts are famous thanks to you.',
+    vil_fete: 'The fête', vil_fete_s: 'the fête', vil_fete_r: 'the village committee', vil_fete_l: 'Prizes for the tombola, please!',
     fish_tin: 'A tin of {n} worms', fish_tin_buy: 'Buy · {c} coins', fish_tin_bought: '{n} worms in the tin · −{c} coins',
     fish_going: '{farmer} is off to the dock', fish_night: '{farmer} is asleep: fishing in the morning', fish_busy: '{farmer} is busy: try again in a moment',
     fish_cast: 'Tap the water to cast', fish_wait: 'Watch the float…', fish_bite: 'Now! Tap!', fish_soon: 'Too soon! Wait till the float goes under',
@@ -618,20 +618,20 @@ export const TEXT = {
     ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Vos œufs, vos poissons et votre miel vont d’abord dans leurs paniers, à mesure ; le grain vient de votre réserve.',
     ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre réserve : {n})',
     ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
-    ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier de {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
-    ord_new: '📜 Une nouvelle commande de {name}', ord_new2: '📜 {n} nouvelles commandes du village : touchez le panier', ord_set: '🧺 {n} pour {name}', ord_fish_set: 'Pour la commande de {name} 🧺',
-    ord_done: 'Livré à {name} : +{c} pièces, +{x} XP', ord_sp_worms: '🎁 Surprise : une boîte de {n} vers !', ord_sp_grain: '🎁 Surprise : un sac de {n} de grain !', ord_sp_coins: '🎁 Surprise : {c} pièces de plus !',
+    ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
+    ord_new: '📜 Une nouvelle commande à préparer pour {name}', ord_new2: '📜 {n} nouvelles commandes du village : touchez le panier', ord_set: '🧺 {n} pour {name}', ord_fish_set: 'Mis de côté pour {name} 🧺',
+    ord_done: 'Panier livré pour {name} : +{c} pièces, +{x} XP', ord_sp_worms: '🎁 Surprise : une boîte de {n} vers !', ord_sp_grain: '🎁 Surprise : un sac de grain (+{n}) !', ord_sp_coins: '🎁 Surprise : {c} pièces de plus !',
     ord_declined: 'Refusée : ce qui était mis de côté est vendu · +{c} pièces', ord_declined0: 'Refusée : une autre commande viendra',
     ord_lv_t: 'Nouveau : les commandes du village', ord_lv_b: 'Les villageois demandent des paniers d’œufs, de poissons, de miel ou de grain, et paient bien : touchez l’étal près de la ferme.',
     ord_aria: 'Commandes du village', ord_stall: 'L’étal de la ferme', ord_on_way: '{farmer} porte le panier à l’étal',
-    vil_potts: 'Mme Potts', vil_potts_r: 'la boulangère', vil_potts_l: 'Pour mes gâteaux, s’il vous plaît !',
-    vil_finch: 'M. Finch', vil_finch_r: 'l’animalerie', vil_finch_l: 'De quoi garnir le grand aquarium de ma vitrine.',
-    vil_lily: 'Lily', vil_lily_r: 'le salon de thé', vil_lily_l: 'Mes scones méritent ce qu’il y a de mieux !',
-    vil_tom: 'Le vieux Tom', vil_tom_r: 'le meunier', vil_tom_l: 'Mon moulin est resté bien calme cette semaine.',
-    vil_amara: 'Dr Amara', vil_amara_r: 'la vétérinaire', vil_amara_l: 'Un régal pour moi, et un pour ma chatte Praline.',
-    vil_clara: 'Mlle Clara', vil_clara_r: 'l’école du village', vil_clara_l: 'Vendredi, c’est l’atelier cuisine !',
-    vil_marco: 'Marco', vil_marco_r: 'le café', vil_marco_l: 'Mes petits-déjeuners sont célèbres grâce à vous.',
-    vil_fete: 'La fête', vil_fete_r: 'le comité du village', vil_fete_l: 'Des lots pour la tombola, s’il vous plaît !',
+    vil_potts: 'Mme Potts', vil_potts_s: 'Mme Potts', vil_potts_r: 'la boulangère', vil_potts_l: 'Pour mes gâteaux, s’il vous plaît !',
+    vil_finch: 'M. Finch', vil_finch_s: 'M. Finch', vil_finch_r: 'l’animalerie', vil_finch_l: 'De quoi garnir le grand aquarium de ma vitrine.',
+    vil_lily: 'Lily', vil_lily_s: 'Lily', vil_lily_r: 'le salon de thé', vil_lily_l: 'Mes scones méritent ce qu’il y a de mieux !',
+    vil_tom: 'Le vieux Tom', vil_tom_s: 'le vieux Tom', vil_tom_r: 'le meunier', vil_tom_l: 'Mon moulin est resté bien calme cette semaine.',
+    vil_amara: 'Dr Amara', vil_amara_s: 'la docteure Amara', vil_amara_r: 'la vétérinaire', vil_amara_l: 'Un régal pour moi, et un pour ma chatte Praline.',
+    vil_clara: 'Mlle Clara', vil_clara_s: 'Mlle Clara', vil_clara_r: 'l’école du village', vil_clara_l: 'Vendredi, c’est l’atelier cuisine !',
+    vil_marco: 'Marco', vil_marco_s: 'Marco', vil_marco_r: 'le café', vil_marco_l: 'Mes petits-déjeuners sont célèbres grâce à vous.',
+    vil_fete: 'La fête', vil_fete_s: 'la fête', vil_fete_r: 'le comité du village', vil_fete_l: 'Des lots pour la tombola, s’il vous plaît !',
     fish_tin: 'Une boîte de {n} vers', fish_tin_buy: 'Acheter · {c} pièces', fish_tin_bought: '{n} vers dans la boîte · −{c} pièces',
     fish_going: '{farmer} part au ponton', fish_night: '{farmer} dort : la pêche, ce sera demain matin', fish_busy: '{farmer} est occupé : réessayez dans un instant',
     fish_cast: 'Touchez l’eau pour lancer', fish_wait: 'Surveillez le bouchon…', fish_bite: 'Maintenant ! Touchez !', fish_soon: 'Trop tôt ! Attendez que le bouchon plonge',
@@ -1869,11 +1869,12 @@ export class Game {
   orderReady(o) { return ORDER_ITEMS.every(k => !o.items[k] || this.orderLeft(o, k) === 0); }
   ordersReady() { return this.ordersOpen() && this.data.orders ? this.data.orders.list.filter(o => this.orderReady(o)).length : 0; }
   villagerName(v) { return this.t('vil_' + v); }
+  villagerIn(v) { return this.t('vil_' + v + '_s'); }      // (the name inside a sentence: "for the fête", "pour le vieux Tom", "für den alten Tom"; the phrases use a word that doesn't run into it, "pour" not "de" or "à", 8 Nov 2026)
   villagerEmoji(v) { return VILLAGERS[v] ? VILLAGERS[v].e : '🧺'; }
   orderPayOf(o) { return { ...orderPay(o), surprise: !!orderSurprise(o, this.fishOpen('pond')) }; }
   orderNextIn(now = Date.now()) { const B = this.data.orders; return this.ordersOpen() && B && B.next ? Math.max(0, B.next - now) : 0; }
   // the words for things set aside for the orders: "🧺 3 for Mrs Potts" (to: setAside's)
-  setAsideText(to) { return to.map(x => this.t('ord_set', { n: x.n, name: this.villagerName(x.who) })).join(' · '); }
+  setAsideText(to) { return to.map(x => this.t('ord_set', { n: x.n, name: this.villagerIn(x.who) })).join(' · '); }
   deliverOrder(id, now = Date.now()) {
     const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o || !this.orderReady(o)) return null;
     if (o.items.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - o.items.grain) * 100) / 100);

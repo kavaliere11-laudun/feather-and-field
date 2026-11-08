@@ -1269,7 +1269,7 @@ export class GameUI {
     info.append(el('p', 'gfishsize', this.t('fish_size', { cm: r.cm })));
     if (r.first) info.append(el('p', 'gtext gfishnew', '✨ ' + this.t('fish_first')));
     else if (r.best) info.append(el('p', 'gtext gfishnew', '🏆 ' + this.t('fish_best')));
-    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : r.order ? this.t('ord_fish_set', { name: g.villagerName(r.order.who) }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
+    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : r.order ? this.t('ord_fish_set', { name: g.villagerIn(r.order.who) }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
     card.append(pic, info); body.append(card);
     const left = g.worms(), row = el('div', 'gstick gfishbtns');
     const done = keep => { const f = this.fishThen; this.fishThen = null; this.close(); if (f) f(keep); };

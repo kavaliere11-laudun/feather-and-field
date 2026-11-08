@@ -1074,10 +1074,10 @@
  "text.ord_next": "Die nächste kommt in {t}.",
  "text.ord_ready": "🧺 Der Korb für {name} ist fertig: Tippe auf den Stand, um ihn zu liefern",
  "text.ord_readyb": "Fertig!",
- "text.ord_new": "📜 Eine neue Bestellung von {name}",
+ "text.ord_new": "📜 Eine neue Bestellung für {name}",
  "text.ord_new2": "📜 {n} neue Bestellungen aus dem Dorf: Tippe auf den Korb",
  "text.ord_set": "🧺 {n} für {name}",
- "text.ord_fish_set": "Für die Bestellung von {name} 🧺",
+ "text.ord_fish_set": "Zurückgelegt für {name} 🧺",
  "text.ord_done": "An {name} geliefert: +{c} Münzen, +{x} XP",
  "text.ord_sp_worms": "🎁 Überraschung: eine Dose mit {n} Würmern!",
  "text.ord_sp_grain": "🎁 Überraschung: ein Sack mit {n} Korn!",
@@ -1179,5 +1179,13 @@
  "foxden.night": "🦊 Pst… die Füchse schlafen. Ein Junges steckt die Nase heraus, um zu sehen, wer da ist.",
  "foxden.out": "🦊 Rusty ist heute Nacht auf seiner Runde: Im Bau ist es still.",
  "text.farmer_feed_g": "{farmer} kommt mit deinem Korn",
- "text.filled_g": "Futterspender mit deinem Korn gefüllt"
+ "text.filled_g": "Futterspender mit deinem Korn gefüllt",
+ "text.vil_potts_s": "Frau Potts",
+ "text.vil_finch_s": "Herrn Finch",
+ "text.vil_lily_s": "Lily",
+ "text.vil_tom_s": "den alten Tom",
+ "text.vil_amara_s": "Dr. Amara",
+ "text.vil_clara_s": "Fräulein Clara",
+ "text.vil_marco_s": "Marco",
+ "text.vil_fete_s": "das Dorffest"
 }

@@ -8345,7 +8345,7 @@ function deliverOrder(id) {
   gameUI.close();
   const pay = () => {
     const r = game.deliverOrder(id); ORDER_RUN = null; if (!r) return;
-    hint(game.t('ord_done', { name: game.villagerName(r.who), c: r.coins, x: r.xp }) + (r.surprise === 'worms' && r.worms ? ' · ' + game.t('ord_sp_worms', { n: r.worms }) : r.surprise === 'grain' && r.grain ? ' · ' + game.t('ord_sp_grain', { n: r.grain }) : r.surprise === 'coins' ? ' · ' + game.t('ord_sp_coins', { c: r.extra }) : ''));
+    hint(game.t('ord_done', { name: game.villagerIn(r.who), c: r.coins, x: r.xp }) + (r.surprise === 'worms' && r.worms ? ' · ' + game.t('ord_sp_worms', { n: r.worms }) : r.surprise === 'grain' && r.grain ? ' · ' + game.t('ord_sp_grain', { n: r.grain }) : r.surprise === 'coins' ? ' · ' + game.t('ord_sp_coins', { c: r.extra }) : ''));
     gameUI.refresh(); gameUI.bumpCoins(); wake(1500);
   };
   const S = stallSpot(), nav = navGrid(), spot = S && nav.nearestIn(farmReach(), S.front.x, S.front.z, 1.2);
@@ -8359,7 +8359,7 @@ function deliverOrder(id) {
 function tickOrders() {
   if (!GAME_MODE || !game.data || !game.ordersOpen()) return;
   const before = new Set((game.data.orders ? game.data.orders.list : []).map(o => o.id)), n = game.orderTick();
-  if (n) { const fresh = game.data.orders.list.filter(o => !before.has(o.id)); if (fresh.length && !gameUI.isOpen) hintNext(fresh.length > 1 ? game.t('ord_new2', { n: fresh.length }) : game.t('ord_new', { name: game.villagerName(fresh[0].who) })); gameUI.refresh(); }
+  if (n) { const fresh = game.data.orders.list.filter(o => !before.has(o.id)); if (fresh.length && !gameUI.isOpen) hintNext(fresh.length > 1 ? game.t('ord_new2', { n: fresh.length }) : game.t('ord_new', { name: game.villagerIn(fresh[0].who) })); gameUI.refresh(); }
   if (ORDER_RUN && performance.now() > ORDER_RUN.until) { const id = ORDER_RUN.id; ORDER_RUN = null; const r = game.deliverOrder(id); if (r) { gameUI.refresh(); gameUI.bumpCoins(); } }
 }
 let saleBub = null;
