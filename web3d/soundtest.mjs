@@ -15,6 +15,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&sound&time=11:00`;
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=user-gesture-required'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', deviceScaleFactor: 2 });
+ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
 const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
 let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };

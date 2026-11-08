@@ -14,6 +14,7 @@ const LINES = fr ? [/^Mamie vous a laissé sa ferme/, /^Feather & Field est à v
 const errs = [];
 const open = async (q) => {
   const ctx = await b.newContext({ viewport: { width: 874, height: 402 }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message));
   await p.goto(BASE + q, { waitUntil: 'domcontentloaded', timeout: 120000 });
   return { ctx, p };

@@ -24,6 +24,7 @@ const farmDoc = async uid => { const r = await fetch(`${FS}/farms/${uid}`, { hea
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function phone(tag) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: 'en-GB' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   await ctx.addInitScript(u => { window.__emuGoogle = u; }, SAM);
   const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(e.message)); p.tag = tag;
   await p.goto(URL0, { waitUntil: 'domcontentloaded', timeout: 120000 });

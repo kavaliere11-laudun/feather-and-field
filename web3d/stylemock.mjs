@@ -1,6 +1,6 @@
 // The art style mocks (8 Nov 2026, Audrey: "I want a stylised art style but still high quality and polished. Smooth frame
 // rates while scrolling around"): the same farm (mockfarm.mjs's save) in a look, from the same views, sideways on a phone:
-// ./withserver.sh node stylemock.mjs FARM.json OUT [look ...]   (PORT; LOOKS as arguments: '' is today's, else ?look=NAME)
+// ./withserver.sh node stylemock.mjs FARM.json OUT [look ...]   (PORT; LOOKS as arguments: today, toon, clay, paint: ?look=NAME)
 // Writes OUT/<look>_<view>.png (874 x 402 at 2x) and OUT/<look>_cost.json: triangles, draws, and the time to draw a frame
 // while the view pans (the test browser draws in software: only a comparison between looks).
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
@@ -14,7 +14,7 @@ for (const look of LOOKS.length ? LOOKS : ['today']) {
   await ctx.addInitScript(([save, T]) => { if (!sessionStorage.getItem('mock')) { localStorage.setItem('ff3d.farm', save); sessionStorage.setItem('mock', '1'); } window.__T = T; Date.now = () => window.__T; }, [farm.save, farm.T]);
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  const L = look === 'today' ? '' : '&look=' + look;
+  const L = '&look=' + look;      // (today: the look before Storybook)
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=en${L}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); if (f.gameUI().isOpen) f.gameUI().close(); document.querySelectorAll('.gbar, .gside, #hint, .gbub, #tag, .gguide').forEach(e => e.style.visibility = 'hidden'); });

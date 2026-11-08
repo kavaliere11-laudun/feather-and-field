@@ -24,11 +24,15 @@ for (const look of [3, 4]) {
     const r = await p.evaluate(([kind, breed]) => {
       const f = window.__farm, P = f.coopPlots().find(q => q.breed === breed), T = P.toys;
       if (T[kind].by) f.endPlay(T[kind].by, true);
-      const b = P.birds.find(x => x.kind === (kind === 'ladder' ? 'rooster' : 'hen') && !x.busy() && !x.cuddle) || P.birds.find(x => x.kind === 'hen' && !x.busy());
-      if (!b) return { err: 'no free bird' };
-      b.layIn = 9999;
-      const started = f.startPlay(b, kind);
-      if (!started) return { err: 'not started' };
+      // (a free bird of the kind, else a hen; if every way in is taken by the others where they stand, the next one, then a
+      // moment later: where they stand depends on how many frames ran before the test stilled the farm)
+      let b = null, started = false;
+      for (let tries = 0; tries < 8 && !started; tries++) {
+        const free = [...P.birds.filter(x => x.kind === (kind === 'ladder' ? 'rooster' : 'hen') && !x.busy() && !x.cuddle), ...P.birds.filter(x => x.kind === 'hen' && !x.busy())];
+        for (const x of free) { x.layIn = 9999; if (f.startPlay(x, kind)) { b = x; started = true; break; } }
+        if (!started) f.step(1 / 30, 30);
+      }
+      if (!started) return { err: P.birds.some(x => !x.busy()) ? 'not started' : 'no free bird' };
       window.__pb = b;
       const out = { phases: [], maxSwing: 0, onPerchY: 0, minY: 9, spin: 0, maxY: 0, fx: 0, time: 0, sandY: T.P.dust.y };
       for (let i = 0; i < 60 * 30 && b.play; i++) {

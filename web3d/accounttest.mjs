@@ -24,6 +24,7 @@ const cloud = {}; let offline = new Set();
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function phone(tag) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: LANG === 'fr' ? 'fr-FR' : 'en-GB' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (Storybook's outline picture is slow in the test browser's software drawing: a screenshot or a reload of a running farm can wait on it)
   await ctx.exposeFunction('__fakeCloud', (op, a) => {
     if (offline.has(tag)) throw new Error('offline');
     if (op === 'get') return cloud[a.uid] || null;
@@ -156,9 +157,10 @@ await settings(C); await until(C, () => !!document.querySelector('.gacct-in:not(
 await until(C, () => window.__farm.account().st.n === 1 && window.__farm.account().status === 'saved');
 const made0 = JSON.parse(cloud[UID].farm).d.made;
 await settings(C);
-const newBtn = await C.evaluate(() => { const b = [...document.querySelectorAll('.gsheet .gbtn.galt')].pop(); b.click(); return b.textContent; });
+const NEWB = () => [...document.querySelectorAll('.gsheet .gbtn.galt')].filter(b => /new farm|nouvelle ferme|start again|recommencer/i.test(b.textContent)).pop();      // (Settings' new farm button: no longer the last since The farm's story)
+const newBtn = await C.evaluate(NEWB => { const b = eval(NEWB)(); b.click(); return b.textContent; }, NEWB.toString());
 ok('C: Start a new farm, signed in: "here and online"', /online|en ligne/i.test(newBtn), newBtn);
-await C.evaluate(() => [...document.querySelectorAll('.gsheet .gbtn.galt')].pop().click());
+await C.evaluate(NEWB => eval(NEWB)().click(), NEWB.toString());
 await C.waitForTimeout(800); await C.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 const welcomeEmpty = await C.evaluate(() => !document.querySelector('.gwelcome-signin') || true);
 await C.waitForTimeout(200); await newFarm(C);

@@ -57,7 +57,7 @@ const GAME_MODE = document.body.classList.contains('game');
 // premium and natural"): thick soft grass on your land, earth paths with wheel tracks, deeper trees and bushes, warmer
 // light. ?oldlook shows the farm as it was, to compare
 const STORY_LOOK = !params.has('oldlook');
-const LOOK = LOOKS[params.get('look')] || null;      // (the art style mocks, 8 Nov 2026: ?look=toon, clay or paint; looks.js)
+const LOOK = LOOKS[params.get('look') || 'toon'] || null;      // (Storybook, the game's look from 8 Nov 2026, Audrey's choice; ?look=today the look before, ?look=clay or paint the other mocks; looks.js)
 if (LOOK) lookChunks(THREE, LOOK);
 if (!STORY_LOOK) document.body.classList.add('oldlook');
 const game = GAME_MODE ? new Game() : null;
@@ -88,8 +88,8 @@ let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0'
 
 // ------------------------------------------------------------------ renderer, scene, camera, light
 const canvas = document.getElementById('farm');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[q].aa, powerPreference: 'high-performance', stencil: false });
-setSoftFur(renderer.getContext().getContextAttributes().antialias);          // soft fluff edges where the phone antialiases
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[q].aa && !(LOOK && LOOK.ink), powerPreference: 'high-performance', stencil: false });      // (Storybook: its outline picture is the one smoothed, the screen only shows it)
+setSoftFur(LOOK && LOOK.ink ? QUALITY[q].aa : renderer.getContext().getContextAttributes().antialias);          // soft fluff edges where the phone antialiases
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;               // like the Unity farm: colours as they are, no film curve
 renderer.shadowMap.enabled = true;
@@ -161,6 +161,34 @@ function placeCamera() {
   camera.updateMatrixWorld();
   aimShadows(false);
 }
+
+// everything's shaders built behind the loading screen (8 Nov 2026, Audrey: "low frames when panning around the map"): a
+// phone builds a material's shader the first time it's drawn, so panning onto a coop, the beehives or the geese for the
+// first time stopped the farm for a moment (in the test browser up to thirteen frames' time, five times in one pan). Now
+// every material in the farm, on screen or not (in Storybook the versions for its outline picture, which the farm is drawn
+// into), and every shadow's: one pass of the sun's shadows over the whole farm. (Drawing the whole farm once as well was
+// tried: the chicks' wandering came out differently after it; the pictures (textures) are sent to the chip instead, the
+// other first-time stall it removed.)
+function warmUp() {
+  const t0 = performance.now();
+  renderFarm();      // (Storybook: its outline picture made first; the farm is drawn into it, with shaders of its own)
+  renderer.setRenderTarget(INK ? INK.rt : null); renderer.compile(scene, camera); renderer.setRenderTarget(null);      // (not compileAsync: its wait can stall on a material changed meanwhile)
+  // every picture the materials use sent to the phone's graphics chip now, not the first time it's on screen
+  const tex = new Set(), take = v => { if (v && v.isTexture && !v.isRenderTargetTexture) tex.add(v); };
+  scene.traverse(o => { for (const m of [].concat(o.material || [])) { for (const k in m) take(m[k]); if (m.uniforms) for (const k in m.uniforms) take(m.uniforms[k] && m.uniforms[k].value); } });
+  for (const t of tex) { try { renderer.initTexture(t); } catch (e) { /* (one that can't yet: when first drawn, as before) */ } }
+  WARM.textures = tex.size;
+  const t1 = performance.now();
+  const s = sun.shadow, R = 90;      // (the shadows' pass over the whole farm on a small map: the same shaders, little to fill)
+  sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, -160); sun.updateMatrixWorld();
+  s.camera.left = -R; s.camera.right = R; s.camera.top = R; s.camera.bottom = -R; s.camera.near = 1; s.camera.far = 330; s.camera.updateProjectionMatrix();
+  s.mapSize.set(256, 256); if (s.map) { s.map.dispose(); s.map = null; }
+  renderer.shadowMap.needsUpdate = true; renderFarm();
+  aimShadows(true);      // (back to the view's own, its map at full size again)
+  const t2 = performance.now();
+  Object.assign(WARM, { ms: Math.round(t2 - t0), build: Math.round(t1 - t0), shadows: Math.round(t2 - t1), programs: renderer.info.programs.length });
+}
+const WARM = { ms: 0, programs: 0 };
 
 // shadows for the area round the view: redrawn when the view has moved a good way, or zoomed out past what they cover
 function aimShadows(force) {
@@ -623,9 +651,10 @@ async function start() {
   if (farmDog && params.has('dog')) { const c = farmDog.centre(new THREE.Vector3()); view.target.set(c.x + 0.3, 0, c.z + 0.3); view.size = 2.4; }
   resize();
   aimShadows(true);
+  if (GAME_MODE) syncLand(true);
+  if (!params.has('nowarm')) warmUp();      // (all at once: no pause in which the game could start ticking before the farm is open; ?nowarm without)
   loading.classList.add('done');
   setTimeout(() => loading.remove(), 600);
-  if (GAME_MODE) syncLand(true);
   if (GAME_MODE) {
     openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); if (!welcome) hint(game.t('hint_move'));
     startFirstDay(!!welcome);                              // (a new farm: the pictures, then the first day's guide)
@@ -8947,12 +8976,11 @@ readout.addEventListener('click', () => { details = !details; showReadout(); });
 // picture first, then onto the screen with a soft line wherever something stands out against what's behind it (where the
 // depth bends sharply: flat ground and walls give none however they slope)
 let INK = null;
-function renderFarm() {
-  if (!LOOK || !LOOK.ink) { renderer.render(scene, camera); return; }
+function renderFarm(sc = scene, cam = camera) {
+  if (!LOOK || !LOOK.ink) { renderer.render(sc, cam); return; }
   const sz = renderer.getDrawingBufferSize(new THREE.Vector2());
   if (!INK) {
-    const half = renderer.extensions.has('EXT_color_buffer_half_float') || renderer.extensions.has('EXT_color_buffer_float');      // (else plain bytes: a phone without them)
-    const rt = new THREE.WebGLRenderTarget(sz.x, sz.y, { samples: 4, type: half ? THREE.HalfFloatType : THREE.UnsignedByteType, depthTexture: new THREE.DepthTexture(sz.x, sz.y) });
+    const rt = new THREE.WebGLRenderTarget(sz.x, sz.y, { samples: QUALITY[q].aa ? 4 : 0, type: THREE.UnsignedByteType, colorSpace: THREE.SRGBColorSpace, depthTexture: new THREE.DepthTexture(sz.x, sz.y) });      // (8-bit sRGB: half a half-float picture's memory, as smooth to the eye)
     const mat = new THREE.ShaderMaterial({
       uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, px: { value: new THREE.Vector2() }, span: { value: 300 }, ink: { value: new THREE.Vector3(...LOOK.ink) } },
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
@@ -8971,8 +8999,9 @@ void main() {
     INK = { rt, mat, scene: new THREE.Scene().add(quad), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
   }
   if (INK.rt.width !== sz.x || INK.rt.height !== sz.y) INK.rt.setSize(sz.x, sz.y);
-  INK.mat.uniforms.px.value.set(LOOK.inkW / sz.x, LOOK.inkW / sz.y); INK.mat.uniforms.span.value = camera.far - camera.near;
-  renderer.setRenderTarget(INK.rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+  INK.mat.uniforms.px.value.set(LOOK.inkW / sz.x, LOOK.inkW / sz.y); INK.mat.uniforms.span.value = cam.far - cam.near;
+  INK.mat.uniforms.ink.value.x = cam.isOrthographicCamera ? LOOK.ink[0] : 0;      // (the lines read the farm's even depth: none inside a coop, seen in perspective; still smoothed)
+  renderer.setRenderTarget(INK.rt); renderer.render(sc, cam); renderer.setRenderTarget(null);
   renderer.render(INK.scene, INK.cam);
 }
 function frame(now) {
@@ -8989,7 +9018,7 @@ function frame(now) {
   if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
-  if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
+  if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
   else { drawFarmerShadows(renderer); renderFarm(); }
   if (GAME_MODE && now - barTint.at > 1500) tintBars(now);
   const gap = now - lastFrame;
@@ -9067,6 +9096,7 @@ window.__farm = {
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
   orders: { stall: () => { const S = stallSpot(); return S && { top: S.top, mid: S.mid, front: [S.front.x, S.front.z] }; }, run: () => ORDER_RUN, sheet: () => ordersSheet(), deliver: id => deliverOrder(id), tick: () => tickOrders(), bubble: () => { const B = orderBub; return B && !B.hidden ? B.textContent : null; } },      // (tests: village orders)
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
+  warm: () => ({ ...WARM, now: renderer.info.programs.length }),      // (the shaders built behind the loading screen: how long, how many; and how many now)
   costCats: () => {      // (the mocks: by kind, hidden a kind at a time)
     const measure = () => { renderer.render(scene, camera); return { tri: renderer.info.render.triangles, calls: renderer.info.render.calls }; };
     renderer.render(scene, camera); const all = measure(), out = { all };
@@ -9143,7 +9173,7 @@ window.__farm = {
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
   closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
-    cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); drawFarmerShadows(renderer); renderer.render(scene, cam); return true; },
+    cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); drawFarmerShadows(renderer); renderFarm(scene, cam); return true; },
   poster: () => poster, intro: () => intro, posterShot: (o) => {                // the welcome picture (and the onboarding pictures): a perspective camera on the stage
     const P = poster || intro, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
@@ -9153,7 +9183,7 @@ window.__farm = {
     const sh = sun.shadow, R = o.shadowReach || 4.5; sh.mapSize.set(4096, 4096); if (sh.map) { sh.map.dispose(); sh.map = null; }
     sh.camera.left = -R; sh.camera.right = R; sh.camera.top = R; sh.camera.bottom = -R; sh.camera.updateProjectionMatrix(); sh.radius = 2.5; sh.needsUpdate = true;
     const h = (canvas.clientHeight || innerHeight) * renderer.getPixelRatio(); setFar(false); setFurDetail(h / (2 * (o.dist || 9) * Math.tan((o.fov || 24) / 2 * DEG)), 1);
-    drawFarmerShadows(renderer); renderer.render(scene, cam); return true; },
+    drawFarmerShadows(renderer); renderFarm(scene, cam); return true; },
   replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
@@ -9163,8 +9193,8 @@ window.__farm = {
   nestOf, showEggs,
   // tests: set the hour (0-24) the light shows, or undefined for the clock again
   setHour: (h) => { DAY.override = h; DAY.shadowAt = 0; applyDaylight(clockHour()); }, day: DAY,
-  inside, openInside, closeInside, insideTap, drawInside: () => { updateInside(1 / 30); placeTag(1 / 30); renderer.render(inside.scene, inside.camera); },
-  stepInside: (dt, n) => { for (let k = 0; k < n && inside.open; k++) updateInside(dt); placeTag(dt * n); if (inside.open) renderer.render(inside.scene, inside.camera); },
+  inside, openInside, closeInside, insideTap, drawInside: () => { updateInside(1 / 30); placeTag(1 / 30); renderFarm(inside.scene, inside.camera); },
+  stepInside: (dt, n) => { for (let k = 0; k < n && inside.open; k++) updateInside(dt); placeTag(dt * n); if (inside.open) renderFarm(inside.scene, inside.camera); },
 };
 start().catch(err => {
   console.error(err);

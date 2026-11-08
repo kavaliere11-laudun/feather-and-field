@@ -4582,3 +4582,39 @@ coop, the house and garden, zoomed out), 874 x 402 at 2x, with the cost. Shown t
 What a full restyle would add, in the look she picks: simpler, chunkier stylised models for the hens, ducks, geese,
 coops and trees (never the Silkies: their look is final), and the shadows kept for a margin round the view so a pan
 doesn't redraw them on every step.
+
+## Storybook, the game's look; no more stalls the first time things come on screen (8 Nov 2026; Audrey chose "Storybook - do not alter models of the characters and animals")
+- **The look:** `?look=toon` is now the game's own (`LOOK` defaults to `toon`); `?look=today` shows the look before,
+  `?look=clay` or `paint` the other mocks. The characters' and animals' models are untouched (her rule from now on: a
+  restyle may change the light, colours, ground, coops, trees and props, never the birds, the farmer, the fox family,
+  the geese, the dog, the ducks or the frogs).
+- **The outline picture:** 8-bit sRGB (`UnsignedByteType`, `SRGBColorSpace`; half the memory of the mocks' half floats,
+  as smooth to the eye), its antialiasing only at the quality levels that have it. The screen itself is no longer
+  antialiased in Storybook (the picture is the one smoothed; the screen only shows it: the mocks smoothed twice), the
+  fluff's soft edges going by the picture's. The coop's inside and the picture hooks go through the same picture
+  (`renderFarm(scene, camera)`), smoothed, without lines in perspective.
+- **The stalls while panning:** a phone builds a material's shader the first time it's drawn. Panning the level-12 farm
+  in the test browser, five frames each stopped for six to thirteen frames' time (shaders built on the spot); a second
+  pan over the same ground had none. `warmUp()` now runs behind the loading screen, all at once (no pause in which the
+  game could tick before the farm is open): every material's shader in the scene (`renderer.compile`, into Storybook's
+  outline picture, whose shaders differ from the screen's: compiled for the screen, four stalls were left), every
+  texture the materials use sent to the chip (`renderer.initTexture`), and one pass of the sun's shadows over the whole
+  farm on a 256 map (every caster's depth shader). A first pan then builds no shader. About 2.5 seconds in the test
+  browser (a fraction on a phone); `window.__farm.warm()` tells its parts; `?nowarm` skips it. Not used:
+  `compileAsync` (its wait can stall for good on a material changed meanwhile); drawing the whole farm once from far
+  above (it took the test browser's own first-draw stall away too, but its time at loading shifted the chicks'
+  real-time-paced wandering in `chicktest.mjs`); pauses between the steps (the game ticked mid-load: a reloaded farm
+  came out different in `gametest.mjs`). The test browser still has one slow frame the first time a new kind of thing
+  is drawn: its software drawing builds a routine for each, which a phone's chip doesn't.
+- Tests: `accounttest.mjs` picks Settings' new-farm button by its words (The farm's story is the last button since it
+  came); `booktest.mjs` gives its first tap two minutes while the farm loads; `accounttest.mjs` and `calltest.mjs` give
+  screenshots and reloads two minutes, and so do all the browser tests now (`setDefaultTimeout(120000)` on each
+  context: a running farm's frames are slow in the test browser's software drawing, Storybook's outline picture about
+  45% slower there); `gametest.mjs` stills the farm before changing its save from
+  outside (no tick saving over the change) and gives a hen laying at nightfall time to finish before bed;
+  `playtest.mjs` tries the next free hen, then a moment later, when the others stand in every way into the dust bath
+  (where they stand depends on how many frames ran before the test stilled the farm). Known before Storybook (the look
+  before, without the warm-up, does the same): `duckfarmertest.mjs` "box_call: nobody in his boots", a duck 0.24 m from
+  the farmer where it wants 0.27. The long ones (`duckfarmertest`, `fishtest`, `soundtest`) need more than 15 minutes
+  each in the test browser now.
+

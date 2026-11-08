@@ -23,6 +23,7 @@ for (const L of LANGS) {
   const english = new Set();
   for (const e of cat) { const en = [].concat(e.en, e.f_en || []); const mine = flat(tr[e.id]); for (const s of en) if (s && s.split(/\s+/).length >= 4 && !mine.includes(s)) english.add(s.replace(/\{\w+\}/g, '').trim()); }
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC[L], deviceScaleFactor: 2 });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 }); await p.waitForTimeout(800);
@@ -75,6 +76,7 @@ for (const L of LANGS) {
 // a save with a language the game doesn't speak: English
 {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: 'en-GB' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage();
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 }); await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());

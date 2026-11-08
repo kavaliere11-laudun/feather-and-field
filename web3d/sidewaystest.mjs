@@ -16,6 +16,7 @@ const WORDS = fr ? 'Tournez votre téléphone à l’horizontale pour jouer' : '
 const errs = [];
 const open = async (opts, q = '&sideways') => {
   const ctx = await b.newContext({ locale: fr ? 'fr-FR' : 'en-GB', ...opts });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message));
   await p.goto(BASE + q, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => document.querySelector('#sideways .msg') && window.__farm !== undefined || document.querySelector('.gsheet:not([hidden])'), null, { timeout: 180000 });

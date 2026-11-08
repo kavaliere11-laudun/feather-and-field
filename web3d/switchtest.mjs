@@ -36,6 +36,7 @@ const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name
 const errs = [];
 async function phone() {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: SHOTS ? 2 : 1, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage();
   p.on('pageerror', e => errs.push(p.url().split('/feather-and-field/')[1] + ': ' + e.message));
   return p;

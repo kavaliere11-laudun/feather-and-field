@@ -38,6 +38,7 @@ const shot = async (p, name) => { await p.evaluate(() => document.getAnimations(
 // ---- the app
 {
   const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, locale: LANG === 'fr' ? 'fr-FR' : 'en-GB' });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.addInitScript(FAKE);
   await newFarm(p, LANG);
@@ -125,6 +126,7 @@ const shot = async (p, name) => { await p.evaluate(() => document.getAnimations(
 // ---- not the app (the website): nothing of it
 {
   const ctx = await b.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 1 });
+  ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await newFarm(p, 'en');
   await p.evaluate(() => { window.__farm.game().guideSkip(); window.__farm.gameUI().close(); });

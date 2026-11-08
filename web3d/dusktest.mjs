@@ -10,6 +10,7 @@ import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const L = process.env.LANG || 'en', fr = L === 'fr';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: 874, height: 402 }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London' });
+ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
 await ctx.addInitScript(() => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || new Date('2026-11-09T15:00:00Z').getTime()); Date.now = () => window.__T; });
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message));

@@ -10,6 +10,7 @@ import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const fr = process.env.LANG === 'fr', URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0`;
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: +(process.env.W || 402), height: +(process.env.H || 874) }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB' });
+ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const ready = () => p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
@@ -48,6 +49,7 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await ready();
 const again = await p.evaluate(() => { const f = window.__farm, g = f.game(); return { d: g.data, welcome: !document.querySelector('.gsheet').hidden && document.querySelector('.gsheet').classList.contains('modal'), edited: g.edited, names: f.coopPlots()[0].birds.map(b => b.name) }; });
 // ---- a save changed outside the game
 await p.evaluate(() => {
+  window.__farm.pause(true);      // (the farm still: no tick saves it again over the change before the reload)
   const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d;
   d.level = 30; d.xp = 'lots'; d.coins = 5e12;
   d.birds[0].pers = 'mum';                                       // (the rooster a good mum)
@@ -68,7 +70,7 @@ const tamper = await p.evaluate(async () => {
 // ---- night: the trio in bed, inside the coop
 const night = await p.evaluate(() => {
   const f = window.__farm; f.gameUI().close(); f.setHour(23.6);
-  for (let k = 0; k < 600 && !f.coopPlots()[0].birds.every(b => b.asleep); k++) f.step(1 / 30, 3);
+  for (let k = 0; k < 2400 && !f.coopPlots()[0].birds.every(b => b.asleep); k++) f.step(1 / 30, 3);      // (a hen laying when night falls finishes first)
   const plot = f.coopPlots()[0]; f.openInside(plot);
   return { asleep: plot.birds.map(b => !!b.asleep) };
 });
