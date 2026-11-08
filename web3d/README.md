@@ -4461,3 +4461,40 @@ They were in the Unity version only. Now in the game:
   out already, they hop and bow to you; at night they're asleep and a cub peeks out of the den's mouth, sits a moment and
   pops back in ("🦊 Shh… the foxes are asleep. A cub peeks out to see who's there."); while Rusty's out on his night
   visit, "the den is quiet". Six languages (`foxden.*`).
+
+## The play-through, day 1 to level 10 (8 Nov 2026; Audrey's choice after the vegetable garden: "Play-through")
+A new farm played the way a keen player would, through the game's own buttons and cards, in English and then in French
+(`playthrough.mjs`: grandma's story, the welcome, the first day, then a visit at 19:00 and two a day after, at 8:00 and
+19:00, the app opened afresh each time; each visit: whatever card opens first, the golden egg, the eggs, the apple eggs,
+the village orders, a cuddle (or the worms) for each bird, the feeders, the wheat (harvested and sown again), the
+vegetable garden (picked, sown) and a treat for each coop, the jobs, the next field, a new breed's coop, and a little
+fishing in the morning). Every card's and every word's text goes into a log with the day, the time, the level and the
+coins; a picture of each kind of card the first time it opens, and of each level's card. No page errors.
+- **How fast**: level 2 the first evening, 3 the next morning, 4 on day 2, 5 on day 3, 6 on day 5, 7 on day 6, 8 on
+  day 8, 9 on day 11 or 12, 10 on day 17 (French; the English run stopped at day 16 with level 9, 25 XP short). Coins pile up from
+  level 7 (4,000 by day 16) as the run buys nothing from the shop.
+- **Fixed from what it showed**:
+  - The feeder filled from the wheat field's grain said "· −0 coins" ("Arthur is on the way with the feed · −0
+    coins"): now "Arthur is on the way with your grain" / "Feeder filled with your grain" (`farmer_feed_g`,
+    `filled_g`, six languages).
+  - "1 eggs sold" when the welcome-back card's "Collect all eggs" found a single egg: "1 egg sold" (`collectAll`).
+  - The grain harvested with the store nearly full said "+4.6299999999999955 grain": a whole number now
+    (`harvestWheat`, and the grain surprise of an order).
+  - A field's for-sale sign ("To restore · 140") sat on top of the message along the bottom: the message now goes over
+    the farm's signs and bubbles (`#hint` z-index 14; still under the cards and the coop-placing bar).
+  - The villagers' names inside a sentence: "Delivered to The fête", and in French "Livré à Le vieux Tom", "Pour la
+    commande de Dr Amara" (the same in Spanish, Italian, Portuguese and German: "de El señor Finch", "für Der alte
+    Tom"). Each villager now has a name for inside a sentence too (`vil_*_s`, `villagerIn`: "the fête", "le vieux Tom",
+    "la docteure Amara", "el señor Finch", "den alten Tom"), and the phrases use a word that doesn't run into it ("pour",
+    "para", "per", "für" rather than "de" or "à"): "Panier livré pour le vieux Tom", "Mis de côté pour la docteure
+    Amara 🧺", "Une nouvelle commande à préparer pour la fête". The card's heading keeps the name as it was ("Le vieux
+    Tom · le meunier"). And the grain surprise in French: "un sac de grain (+20)", not "un sac de 20 de grain".
+  - French before a bird's (or the farmer's) name that starts with a vowel or an h: "l’œuf d’or d’Olive", "les
+    poussins d’Ivy", "le poulailler d’Henrietta", not "de Olive" (`lang.js` `elide`, for every phrase with "de {…}" or
+    "que {…}").
+- **Fine as it is**: the story, the welcome, every level's card (2 to 10, the new breeds' pictures), the golden egg every
+  day (a streak of 16), the orders, the garden and the treats, the fox's visits ("the nest was empty: she pecked him on
+  the nose"), the grown-up chicks' congratulations, fishing.
+- **Noted, not changed**: a coop's name in French goes without "la" ("Une friandise pour Grange rouge"), as a coop can have a name of your own. Carrots fill the garden basket (30) when sown every morning and given only now and then; the
+  basket-full word says so ("Your basket is full of carrots: use some for treats or orders first"). The golden egg
+  can be small in a tree's shade.
