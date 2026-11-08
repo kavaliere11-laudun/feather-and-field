@@ -4018,6 +4018,16 @@
   "fr": "{farmer} arrive avec le grain · −{c} pièces"
  },
  {
+  "id": "text.farmer_feed_g",
+  "en": "{farmer} is on the way with your grain",
+  "fr": "{farmer} arrive avec votre grain"
+ },
+ {
+  "id": "text.filled_g",
+  "en": "Feeder filled with your grain",
+  "fr": "Mangeoire remplie avec votre grain"
+ },
+ {
   "id": "text.farmer_scraps",
   "en": "{farmer} is on the way with some kitchen scraps",
   "fr": "{farmer} arrive avec des restes de cuisine"

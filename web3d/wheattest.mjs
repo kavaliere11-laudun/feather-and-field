@@ -114,6 +114,7 @@ hs = await HS();
 ok('16 hours on: two jars, the honey pot "🍯 2" over the hives', hs.n === 2 && hs.bub === '🍯 2', hs);
 await shot('8_honeypot');
 const m4 = await money();
+await p.evaluate(() => { const g = window.__farm.game(); if (g.data.orders) { g.data.orders.list = []; g.data.orders.next = Math.round(window.__T + 3 * 3600e3); g.save(); } });      // (no village order waiting: a jar for the fête's basket isn't sold)
 await p.evaluate(() => document.querySelector('.gbub.ghoney').click()); await run(0.5);
 hs = await HS();
 ok('tapped: the farmer on his way to the hives, the pot gone', hs.going && hs.work === 'honey' && !hs.bub && hs.n === 0, hs);

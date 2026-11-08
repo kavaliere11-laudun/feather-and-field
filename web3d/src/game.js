@@ -1805,7 +1805,7 @@ export class Game {
     const w = this.wheat(); if (!w.ripe || now < w.ripe) return null;
     const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, WHEAT.max - g));
     w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.save();
-    return { grain: add, xp: WHEAT.xp, store: this.data.grain };
+    return { grain: Math.round(add), xp: WHEAT.xp, store: this.data.grain };      // (a whole number to say: "+4.63 grain" with the store nearly full read oddly)
   }
   placeWheat(at, clear = []) {
     const X = spotNum(at.x), Z = spotNum(at.z); if (X === null || Z === null) return false;
@@ -1886,7 +1886,7 @@ export class Game {
     this.data.coins += coins; this.data.xp += P.xp;
     B.list = B.list.filter(x => x !== o); B.done = (B.done || 0) + 1; B.next = Math.max(B.next || 0, Math.round(now + ORDERS.gap));
     this.save();
-    return { id, who: o.who, coins, xp: P.xp, surprise: sp, worms, grain, extra: sp === 'coins' ? coins - P.coins : 0 };
+    return { id, who: o.who, coins, xp: P.xp, surprise: sp, worms, grain: Math.round(grain), extra: sp === 'coins' ? coins - P.coins : 0 };      // (the grain said as a whole number)
   }
   declineOrder(id, now = Date.now()) {
     const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o) return null;

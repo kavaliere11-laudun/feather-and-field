@@ -5063,7 +5063,8 @@ function collectAll() {
     plot.gc = game.coop(plot.gc.id); plot.nest.count = 0; showEggs(plot); bubbleText(Date.now(), plot);
     gameUI.flyEggs(at ? { x: at.left + at.width / 2, y: at.top + at.height / 2 } : { x: canvas.clientWidth / 2, y: canvas.clientHeight * 0.6 }, r.n, EGG_COLOUR[plot.breed]);
   }
-  if (n) { hint(toN ? game.setAsideText(to) + (n > toN ? ' · ' + game.t('away_sold', { n: n - toN, c: coins }) : '') : game.t('away_sold', { n, c: coins })); guideDid('eggs'); }
+  const soldT = k => game.t(k === 1 ? 'eggs_sold1' : 'away_sold', { n: k, c: coins });      // ("1 egg sold", not "1 eggs")
+  if (n) { hint(toN ? game.setAsideText(to) + (n > toN ? ' · ' + soldT(n - toN) : '') : soldT(n)); guideDid('eggs'); }
   jobsDone(done);
   return { n, coins };
 }

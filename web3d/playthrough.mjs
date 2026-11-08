@@ -52,7 +52,7 @@ const cards1 = async (where) => {
     if (c.kind === 'levelup' && await p.evaluate(() => [...document.querySelectorAll('.gsheet .gbtn')].some(e => !e.classList.contains('galt') && e.offsetParent))) {
       const placed = await placeCoop(); if (placed) continue;
     }
-    if (/^(congrats|news|showres|rare|fox|grown)$/.test(c.kind) && await click('.gsheet .gbtn:not(.galt)')) { await act(1); continue; }
+    if (/^(congrats|news|showres|rare|grown)$/.test(c.kind) && await click('.gsheet .gbtn:not(.galt)')) { await act(1); continue; }
     if (/^gintro|^intro|welcome|story/.test(c.kind)) { await click('.gsheet .gbtn:not(.galt)'); await act(0.4); continue; }
     await p.evaluate(() => window.__farm.gameUI().close()); await act(0.5);
   }
@@ -81,6 +81,9 @@ async function visit(first = false) {
   if (S.hunt) await safe('golden egg', async () => { await look(S.hunt[0], S.hunt[1], 2.2); await run(0.3); await once('hunt', 'golden_egg'); await p.evaluate(() => window.__farm.hunt.tap()); await act(1.5); });
   // the eggs
   for (let i = 0; i < S.coops.length; i++) if (S.coops[i].eggs) await safe('eggs', async () => { await p.evaluate(i => window.__farm.collectAt(i), i); await act(1.2); });
+  // the apple eggs under the Gluttons' apple trees
+  const apples = await p.evaluate(() => { const f = window.__farm; return f.gamePlots().map((q, i) => { const A = f.apples.of(i); return A && A.egg && A.egg.visible ? i : -1; }).filter(i => i >= 0); });
+  for (const i of apples) await safe('apple egg', async () => { const P = await p.evaluate(i => { const e = window.__farm.apples.of(i).egg; e.updateWorldMatrix(true, false); const m = e.matrixWorld.elements; return [m[12], m[14]]; }, i); await look(P[0], P[1], 2.2); await once('apple', 'apple_egg'); await p.evaluate(i => window.__farm.apples.eggTap(i), i); await act(1); });
   await cards('after eggs');
   // the village orders
   S = await g();
