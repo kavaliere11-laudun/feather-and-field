@@ -8384,13 +8384,13 @@ function fillFeeder(plot) {
     const leave = P.leave; P.leave = () => { leave(); plot.pourUntil = 0; };
     if (farmLife.visitPen(P, 'fill', null)) {
       plot.pourUntil = performance.now() + 90e3;                          // (the grain stays as it was until he pours)
-      hint(game.t(q.scraps ? 'farmer_scraps' : 'farmer_feed', { farmer: farmerName(), c: q.cost }));
+      hint(game.t(q.scraps ? 'farmer_scraps' : q.cost ? 'farmer_feed' : 'farmer_feed_g', { farmer: farmerName(), c: q.cost }));      // (all from the wheat field's grain: no "−0 coins")
       bubbleText(Date.now(), plot); wake(1000);
       return q;
     }
   }
   setFeed(plot, q.level); bubbleText(Date.now(), plot);
-  hint(game.t(q.scraps ? 'filled_scraps' : 'filled', { c: q.cost }));
+  hint(game.t(q.scraps ? 'filled_scraps' : q.cost ? 'filled' : 'filled_g', { c: q.cost }));
   return q;
 }
 let focus = null;

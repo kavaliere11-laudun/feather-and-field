@@ -1177,5 +1177,7 @@
  "foxden.come": "🦊 La famiglia di Rusty esce a giocare",
  "foxden.hello": "🦊 Le volpi ti salutano!",
  "foxden.night": "🦊 Shh… le volpi dormono. Un cucciolo sporge il muso per vedere chi c’è.",
- "foxden.out": "🦊 Rusty è in giro stanotte: la tana è tranquilla."
+ "foxden.out": "🦊 Rusty è in giro stanotte: la tana è tranquilla.",
+ "text.farmer_feed_g": "{farmer} arriva con il tuo grano",
+ "text.filled_g": "Mangiatoia riempita con il tuo grano"
 }

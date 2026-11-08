@@ -1177,5 +1177,7 @@
  "foxden.come": "🦊 A família do Rusty sai para brincar",
  "foxden.hello": "🦊 As raposas dizem oi!",
  "foxden.night": "🦊 Psiu… as raposas estão dormindo. Um filhote põe o focinho para fora para ver quem está aí.",
- "foxden.out": "🦊 O Rusty está fazendo a ronda esta noite: a toca está tranquila."
+ "foxden.out": "🦊 O Rusty está fazendo a ronda esta noite: a toca está tranquila.",
+ "text.farmer_feed_g": "{farmer} está a caminho com seus grãos",
+ "text.filled_g": "Comedouro cheio com seus grãos"
 }

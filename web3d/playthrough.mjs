@@ -22,10 +22,10 @@ const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const log = [], seen = new Set(); let pic = 0, lastHint = '';
 const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story`;
-const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, s);
+const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); }, s);      // (no drawing: the test browser draws slowly; a frame is drawn just for each picture)
 const state = () => p.evaluate(() => { const f = window.__farm, g = f && f.game(), d = new Date(window.__T); if (!g || !g.data) return { day: 0, hm: '--:--', level: 0, coins: 0, xp: 0 }; return { day: Math.floor((window.__T - new Date('2026-11-09T00:00:00Z').getTime()) / 86400e3), hm: String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'), level: g.level, coins: g.data.coins, xp: g.data.xp }; });
 const note = async (kind, text) => { const s = await state(); const line = `d${s.day} ${s.hm} L${s.level} ${s.coins}c ${s.xp}xp · ${kind}: ${String(text).replace(/\s*\n\s*/g, ' | ').slice(0, 900)}`; log.push(line); console.log(line); fs.writeFileSync(`${OUT}/log.txt`, log.join('\n') + '\n'); };
-const shoot = async name => { await p.evaluate(() => document.getAnimations().forEach(a => a.finish())).catch(() => {}); await p.waitForTimeout(250); const n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_${name}.png`, timeout: 120000 }).catch(e => console.log('(picture skipped: ' + e.message.split('\n')[0] + ')')); };
+const shoot = async name => { await p.evaluate(() => { document.getAnimations().forEach(a => a.finish()); window.__farm.draw(); }).catch(() => {}); await p.waitForTimeout(250); const n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_${name}.png`, timeout: 120000 }).catch(e => console.log('(picture skipped: ' + e.message.split('\n')[0] + ')')); };
 const once = async (key, name) => { if (seen.has(key)) return; seen.add(key); await shoot(name); };
 const hintNow = async () => { const h = await p.evaluate(() => { const e = document.getElementById('hint'); return e && e.classList.contains('on') ? e.textContent : ''; }); if (h && h !== lastHint) { lastHint = h; await note('word', h); } return h; };
 const cardNow = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { kind: window.__farm.gameUI().kind, text: s.innerText } : null; });
@@ -68,7 +68,7 @@ const placeCoop = async () => {
   await note('placed a coop', JSON.stringify(await p.evaluate(() => window.__farm.game().data.coops.map(c => c.breed))));
   return true;
 };
-const look = (x, z, size = 2.6) => p.evaluate(([x, z, s]) => { const f = window.__farm; f.lookAt(x, z, s); f.draw(); }, [x, z, size]);
+const look = (x, z, size = 2.6) => p.evaluate(([x, z, s]) => { const f = window.__farm; f.lookAt(x, z, s); }, [x, z, size]);
 const waitFarmer = async (max = 40) => { for (let i = 0; i < max; i++) { const busy = await p.evaluate(() => { const L = window.__farm.farmer(); return !!(L && (L.pending || (L.task && /^(pen|work|order|out)$/.test(L.task.name)))); }); if (!busy) return; await act(1); } };
 
 // ---- a visit

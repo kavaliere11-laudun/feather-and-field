@@ -1172,5 +1172,7 @@
  "foxden.come": "🦊 La familia de Rusty sale a jugar",
  "foxden.hello": "🦊 ¡Los zorros te saludan!",
  "foxden.night": "🦊 Chis… los zorros duermen. Un cachorro asoma el hocico para ver quién está ahí.",
- "foxden.out": "🦊 Rusty está de ronda esta noche: la madriguera está tranquila."
+ "foxden.out": "🦊 Rusty está de ronda esta noche: la madriguera está tranquila.",
+ "text.farmer_feed_g": "{farmer} va de camino con tu grano",
+ "text.filled_g": "Comedero lleno con tu grano"
 }
