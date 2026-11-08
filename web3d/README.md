@@ -4559,3 +4559,26 @@ A keen player twice a day (three farms, 60 days):
 - The gap: Rusty from level 4 (day 3), the geese (1,200) about ten days later; the doors shut from dusk keep the eggs
   safe meanwhile.
 - Audrey's choice: "Keep prices". Nothing changed in the game.
+
+## Art style mocks (8 Nov 2026; Audrey: "I think our current art style is trying to be too realistic and potentially causing some performance issues (low frames when panning around the map) I want a stylised art style but still high quality and polished. Smooth frame rates while scrolling around, the map and assets should look very high quality and polished to a stylised effect matching the theme of the game. Produce me some mocks to look at")
+What costs the most at the usual zoom (a level-12 farm, `mockfarm.mjs`; `costCats()` in the page): about 938,000
+triangles in 328 draws: the lawn's grass blades 254,000 (131 draws), the birds 149,000, the coops 112,000, trees and
+bushes 75,000, the rest (props, fences, wild plants) about 350,000. The shadows are drawn again whenever the view moves,
+so a pan costs about 60% more than a still frame (the test browser: 8 ms against 5).
+Three looks, only with `?look=NAME` (`src/looks.js`; without it the game is exactly as before): three's shader pieces
+changed for every material at once (`lookChunks`: the light's ramp, the sun's sheen, the shadows' edge, a colour grade
+with a warm rim), the lawn's shader (`lookGround`), chunky five-blade tufts in place of the fine blades
+(`clumpGeo`, only where the grass grows long and 5% elsewhere), and soft outlines from the depth (the farm drawn into a
+picture first, `renderFarm`; plain bytes on a phone without half floats):
+- `toon`, "Storybook": light in soft bands (lit, half-lit, shade), crisp shadows, clean warm colours, a warm rim, the
+  lawn painted in soft patches of three greens, brown outlines. About 777,000 triangles, grass 92,000.
+- `clay`, "Soft diorama": the light wrapping round, creamy colours, lifted shadows, a smooth lawn and no tufts, a
+  tilt-shift blur at the top and bottom of the screen. About 760,000, grass 76,000.
+- `paint`, "Watercolour": lighter washes, a paper grain over the screen, the lawn brushed in strokes, sepia lines.
+  About 777,000, grass 92,000.
+`stylemock.mjs FARM.json OUT look…` pictures the farm in each look from four views (the farm, close to the Orpingtons'
+coop, the house and garden, zoomed out), 874 x 402 at 2x, with the cost. Shown to Audrey on a Design canvas
+("Feather & Field art style mocks"), and live on the site to try (`/3d/play.html?look=toon`, `clay`, `paint`).
+What a full restyle would add, in the look she picks: simpler, chunkier stylised models for the hens, ducks, geese,
+coops and trees (never the Silkies: their look is final), and the shadows kept for a margin round the view so a pan
+doesn't redraw them on every step.
