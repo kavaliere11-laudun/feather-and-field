@@ -33,7 +33,7 @@
 // 24 Oct: "In the logic that the chickens from the coop gains experience and produce better and better babies"); a brood
 // gives its parents experience.
 
-import { PACKS, LOCALE, langOk, phoneLang, register, tr, ordinal } from './lang.js';
+import { PACKS, LOCALE, langOk, phoneLang, register, tr, ordinal, elide } from './lang.js';      // (elide: French "d’Olive")
 export const SAVE_KEY = 'ff3d.farm';
 const SAVE_V = 1;
 
@@ -1432,7 +1432,7 @@ export class Game {
   // ---- words
   t(key, vars = {}, sexF = false) {
     const L = this.lang, s = (sexF && TEXT_F[L] && TEXT_F[L][key]) || (TEXT[L] && TEXT[L][key]) || (sexF && TEXT_F.en[key]) || TEXT.en[key] || key;
-    return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
+    return elide(L, s, vars).replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
   }
   dk(key, kind) { const k = kind === true ? 'duck' : kind; return k && TEXT.en[key + '_' + k] ? key + '_' + k : key; }      // (the call ducks' version of a brood word: ducklings, young ducks and drakes; the peafowl's: peachicks, young peahens and peacocks)
   locale() { return LOCALE[this.lang] || 'en-GB'; }                      // (numbers and dates: "1,250", "1 250", "1.250")
@@ -1781,7 +1781,7 @@ export class Game {
   foxFilmable(now = Date.now()) { const l = this.foxLast(); return !!(l && !l.watched && now >= l.t && now - l.t < 20 * 3600e3); }
   foxStory(l = this.foxLast()) {
     if (!l) return '';
-    const de = /^[aeiouyàâéèêîôûAEIOUYÀÂÉÈÊÎÔÛ]/.test(l.hen) ? 'd’' + l.hen : 'de ' + l.hen;      // (French: d’Ivy, de Willow)
+    const de = /^[aeiouyàâéèêîôûh]/i.test(l.hen) ? 'd’' + l.hen : 'de ' + l.hen;      // (French: d’Ivy, d’Henrietta, de Willow)
     const k = !l.open ? 'fox_shut' : l.by ? 'fox_' + l.by : l.eggs > 1 ? 'fox_eggs' : l.eggs === 1 ? 'fox_eggs1' : 'fox_empty';
     return (l.stuck ? this.t('fox_stuck') + ' ' : '') + this.t(k, { hen: l.hen, dehen: de, n: l.eggs, dog: this.dogName(), farmer: this.farmerName() }, k === 'fox_farmer' && this.data.farmer.look === 'f');
   }

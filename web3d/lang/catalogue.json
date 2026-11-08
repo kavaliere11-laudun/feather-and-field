@@ -3636,8 +3636,8 @@
  },
  {
   "id": "text.ord_ready",
-  "en": "🧺 {name}’s basket is ready: tap the stall to deliver it",
-  "fr": "🧺 Le panier de {name} est prêt : touchez l’étal pour le livrer"
+  "en": "🧺 The basket for {name} is ready: tap the stall to deliver it",
+  "fr": "🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer"
  },
  {
   "id": "text.ord_readyb",
@@ -3647,7 +3647,7 @@
  {
   "id": "text.ord_new",
   "en": "📜 A new order from {name}",
-  "fr": "📜 Une nouvelle commande de {name}"
+  "fr": "📜 Une nouvelle commande à préparer pour {name}"
  },
  {
   "id": "text.ord_new2",
@@ -3662,12 +3662,12 @@
  {
   "id": "text.ord_fish_set",
   "en": "For {name}’s order 🧺",
-  "fr": "Pour la commande de {name} 🧺"
+  "fr": "Mis de côté pour {name} 🧺"
  },
  {
   "id": "text.ord_done",
   "en": "Delivered to {name}: +{c} coins, +{x} XP",
-  "fr": "Livré à {name} : +{c} pièces, +{x} XP"
+  "fr": "Panier livré pour {name} : +{c} pièces, +{x} XP"
  },
  {
   "id": "text.ord_sp_worms",
@@ -3677,7 +3677,7 @@
  {
   "id": "text.ord_sp_grain",
   "en": "🎁 Surprise: a sack of {n} grain!",
-  "fr": "🎁 Surprise : un sac de {n} de grain !"
+  "fr": "🎁 Surprise : un sac de grain (+{n}) !"
  },
  {
   "id": "text.ord_sp_coins",
@@ -3725,6 +3725,11 @@
   "fr": "Mme Potts"
  },
  {
+  "id": "text.vil_potts_s",
+  "en": "Mrs Potts",
+  "fr": "Mme Potts"
+ },
+ {
   "id": "text.vil_potts_r",
   "en": "the baker",
   "fr": "la boulangère"
@@ -3736,6 +3741,11 @@
  },
  {
   "id": "text.vil_finch",
+  "en": "Mr Finch",
+  "fr": "M. Finch"
+ },
+ {
+  "id": "text.vil_finch_s",
   "en": "Mr Finch",
   "fr": "M. Finch"
  },
@@ -3755,6 +3765,11 @@
   "fr": "Lily"
  },
  {
+  "id": "text.vil_lily_s",
+  "en": "Lily",
+  "fr": "Lily"
+ },
+ {
   "id": "text.vil_lily_r",
   "en": "the tea room",
   "fr": "le salon de thé"
@@ -3768,6 +3783,11 @@
   "id": "text.vil_tom",
   "en": "Old Tom",
   "fr": "Le vieux Tom"
+ },
+ {
+  "id": "text.vil_tom_s",
+  "en": "Old Tom",
+  "fr": "le vieux Tom"
  },
  {
   "id": "text.vil_tom_r",
@@ -3785,6 +3805,11 @@
   "fr": "Dr Amara"
  },
  {
+  "id": "text.vil_amara_s",
+  "en": "Dr Amara",
+  "fr": "la docteure Amara"
+ },
+ {
   "id": "text.vil_amara_r",
   "en": "the vet",
   "fr": "la vétérinaire"
@@ -3796,6 +3821,11 @@
  },
  {
   "id": "text.vil_clara",
+  "en": "Miss Clara",
+  "fr": "Mlle Clara"
+ },
+ {
+  "id": "text.vil_clara_s",
   "en": "Miss Clara",
   "fr": "Mlle Clara"
  },
@@ -3815,6 +3845,11 @@
   "fr": "Marco"
  },
  {
+  "id": "text.vil_marco_s",
+  "en": "Marco",
+  "fr": "Marco"
+ },
+ {
   "id": "text.vil_marco_r",
   "en": "the café",
   "fr": "le café"
@@ -3828,6 +3863,11 @@
   "id": "text.vil_fete",
   "en": "The fête",
   "fr": "La fête"
+ },
+ {
+  "id": "text.vil_fete_s",
+  "en": "the fête",
+  "fr": "la fête"
  },
  {
   "id": "text.vil_fete_r",

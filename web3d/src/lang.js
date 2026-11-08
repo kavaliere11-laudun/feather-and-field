@@ -40,8 +40,14 @@ export function register(prefix, table) {
 export function tr(lang, id, vars) {
   const a = REG[id];
   let s = !a ? id : lang === 'fr' ? (a[1] ?? a[0]) : lang === 'en' ? a[0] : ((PACKS[lang] && PACKS[lang].words && PACKS[lang].words[id]) ?? a[0]);
-  if (vars) s = s.replace(/\{(\w+)\}/g, (m, x) => (vars[x] !== undefined ? vars[x] : m));
+  if (vars) s = elide(lang, s, vars).replace(/\{(\w+)\}/g, (m, x) => (vars[x] !== undefined ? vars[x] : m));
   return s;
+}
+// French before a name that starts with a vowel or an h: "d’Olive", "d’Arthur", "qu’Ivy", not "de Olive" (8 Nov 2026,
+// from the play-through): "de {name}" / "que {name}" in the phrase become "d’{name}" / "qu’{name}" for such a name
+export function elide(lang, s, vars) {
+  if (lang !== 'fr' || !vars) return s;
+  return s.replace(/(^|[\s«(])(de|que) \{(\w+)\}/g, (m, a, w, k) => (typeof vars[k] === 'string' && /^[aeiouyàâéèêîôûh]/i.test(vars[k]) ? a + w.slice(0, -1) + '’{' + k + '}' : m));
 }
 export const registered = () => REG;
 // an ordinal ("1st", "1er", "1.", "1.º"): in each language, for a hen (sexF) or a rooster
