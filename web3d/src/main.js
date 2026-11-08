@@ -41,6 +41,7 @@ import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
 import { initPlay, addToys, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
+import { LOOKS, lookChunks, lookGround, clumpGeo } from './looks.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -56,6 +57,8 @@ const GAME_MODE = document.body.classList.contains('game');
 // premium and natural"): thick soft grass on your land, earth paths with wheel tracks, deeper trees and bushes, warmer
 // light. ?oldlook shows the farm as it was, to compare
 const STORY_LOOK = !params.has('oldlook');
+const LOOK = LOOKS[params.get('look')] || null;      // (the art style mocks, 8 Nov 2026: ?look=toon, clay or paint; looks.js)
+if (LOOK) lookChunks(THREE, LOOK);
 if (!STORY_LOOK) document.body.classList.add('oldlook');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
@@ -90,9 +93,29 @@ setSoftFur(renderer.getContext().getContextAttributes().antialias);          // 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;               // like the Unity farm: colours as they are, no film curve
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = LOOK && LOOK.shadow === 'crisp' ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 renderer.shadowMap.autoUpdate = false;                    // redrawn only when the view moves on (only still things cast shadows)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
+// (a look's touches over the farm, under the game's buttons and cards: clay's tilt-shift blur along the top and bottom,
+// paint's paper grain)
+if (LOOK && (LOOK.tilt || LOOK.paper)) {
+  const st = document.createElement('style');
+  st.textContent = `.look-tilt { position: fixed; left: 0; right: 0; height: 24%; z-index: 1; pointer-events: none; -webkit-backdrop-filter: blur(2.4px); backdrop-filter: blur(2.4px); }
+.look-tilt.top { top: 0; -webkit-mask-image: linear-gradient(#000 10%, transparent); mask-image: linear-gradient(#000 10%, transparent); }
+.look-tilt.bot { bottom: 0; -webkit-mask-image: linear-gradient(transparent, #000 90%); mask-image: linear-gradient(transparent, #000 90%); }
+.look-paper { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.6; mix-blend-mode: multiply; background-size: 384px 384px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }`;
+  document.head.append(st);
+  if (LOOK.tilt) for (const k of ['top', 'bot']) { const d = document.createElement('div'); d.className = 'look-tilt ' + k; document.body.append(d); }
+  if (LOOK.paper) {      // (watercolour paper: fine grain, a few fibres, soft blotches; drawn once)
+    const N = 384, cv = document.createElement('canvas'); cv.width = cv.height = N; const cx = cv.getContext('2d'), im = cx.createImageData(N, N), r = rng(77);
+    const blot = (x, y) => Math.sin(x * 0.045 + Math.sin(y * 0.031) * 2.2) * Math.sin(y * 0.039 + Math.sin(x * 0.027) * 1.8);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const k = (y * N + x) * 4, g = 255 - Math.pow(r(), 2.4) * 70 - (blot(x, y) * 0.5 + 0.5) * 22; im.data[k] = g; im.data[k + 1] = g * 0.985; im.data[k + 2] = g * 0.95; im.data[k + 3] = 255; }
+    cx.putImageData(im, 0, 0); cx.strokeStyle = 'rgba(120, 100, 70, 0.12)'; cx.lineWidth = 0.6;
+    for (let i = 0; i < 140; i++) { const x = r() * N, y = r() * N, a = r() * 6.28, l = 6 + r() * 18; cx.beginPath(); cx.moveTo(x, y); cx.quadraticCurveTo(x + Math.cos(a + 0.6) * l * 0.5, y + Math.sin(a + 0.6) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); cx.stroke(); }
+    const d = document.createElement('div'); d.className = 'look-paper'; d.style.backgroundImage = 'url(' + cv.toDataURL() + ')'; document.body.append(d);
+  }
+}
 
 const scene = new THREE.Scene();
 initPlay({ scene, fxTexture64: (size, draw) => fxTexture64(size, draw) });
@@ -205,8 +228,8 @@ function applyDaylight(h) {
   let i = 0; while (i < DAY_KEYS.length - 2 && h >= DAY_KEYS[i + 1][0]) i++;
   const A = DAY_KEYS[i], B = DAY_KEYS[i + 1], t = Math.min(1, Math.max(0, (h - A[0]) / (B[0] - A[0]))), u = t * t * (3 - 2 * t);
   const mix = (k) => A[k] + (B[k] - A[k]) * u;
-  sun.color.copy(A[1]).lerp(B[1], u); sun.intensity = mix(2);
-  hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7);
+  sun.color.copy(A[1]).lerp(B[1], u); sun.intensity = mix(2) * (LOOK ? LOOK.sun : 1);
+  hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7) * (LOOK ? LOOK.hemi : 1);
   scene.background.copy(A[8]).lerp(B[8], u);
   DAY.glow.value = mix(9); lampPools.update(); WATER_DAY.value = Math.max(0, 1 - DAY.glow.value * 1.4);
   if (METALS.length) { const k = metalK(); for (const m of METALS) m.envMapIntensity = k; }
@@ -663,17 +686,17 @@ function buildGround(img) {
     if (lanes) { sh.uniforms.laneMap = { value: lanes.tex }; sh.uniforms.laneO = { value: lanes.o }; }
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;').replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvGW = (modelMatrix * vec4(transformed, 1.0)).xz;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vGW;\nuniform sampler2D grassDetail;').replace('#include <map_fragment>', `#include <map_fragment>
-{
+${LOOK ? lookGround(LOOK) : `{
   float gd = texture2D(grassDetail, vGW * 0.62).r * 0.6 + texture2D(grassDetail, vGW * 0.23 + 0.37).r * 0.4;
   diffuseColor.rgb *= 0.74 + 0.52 * gd;
   float n1 = sin(vGW.x * 0.21 + sin(vGW.y * 0.17) * 1.7) * sin(vGW.y * 0.19 + sin(vGW.x * 0.13) * 1.9);
   float n2 = sin(vGW.x * 0.63 + vGW.y * 0.41 + sin(vGW.y * 0.5) * 2.0) * sin(vGW.y * 0.57 - vGW.x * 0.29);
   float t = smoothstep(-0.6, 0.6, n1 * 0.7 + n2 * 0.3);
   diffuseColor.rgb *= mix(vec3(0.9, 0.98, 0.88), vec3(1.08, 1.05, 0.9), t);
-}${lanes ? LANE_GLSL : ''}`);
+}`}${lanes ? LANE_GLSL : ''}`);
     if (lanes) sh.fragmentShader = sh.fragmentShader.replace('uniform sampler2D grassDetail;', 'uniform sampler2D grassDetail;\nuniform sampler2D laneMap; uniform vec2 laneO;\n' + LANE_FNS);
   };
-  gm.customProgramCacheKey = () => 'ground-patches' + (lanes ? '+lanes' : '');
+  gm.customProgramCacheKey = () => 'ground-patches' + (lanes ? '+lanes' : '') + (LOOK ? '+' + params.get('look') : '');
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), gm);
   ground.rotation.x = -Math.PI / 2; ground.position.set(c.x, 0, c.z);
   still(ground);
@@ -1817,7 +1840,7 @@ function carpetGeo() {
   g.normalizeNormals(); g.computeBoundingSphere();
   return (CARPET_GEO = g);
 }
-let CARPET_MAT = null;
+let CARPET_MAT = null, CARPET_CLUMP = null;
 function carpetMat() {
   if (CARPET_MAT) return CARPET_MAT;
   const m = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
@@ -1847,7 +1870,7 @@ function pathDist(x, z) {
 }
 function grassCarpet() {
   if (!FIELDS || !game.data) return [];
-  const out = [], tiles = new Map(), nav = navGrid(), STEP = 0.15, n = game.data.land.length;
+  const out = [], tiles = new Map(), nav = navGrid(), STEP = LOOK ? 0.42 : 0.15, n = game.data.land.length, FK = (STEP / 0.15) ** 2;      // (a look: chunky tufts here and there, FK: as many flowers)
   const bx0 = FIELDS.x0, bz0 = FIELDS.z0, bx1 = FIELDS.x0 + FIELDS.nx * FIELDS.cell, bz1 = FIELDS.z0 + FIELDS.nz * FIELDS.cell;
   const trees = V.trees.map(t => [t.pos[0], t.pos[2]]);
   for (let z = bz0, zi = 0; z < bz1; z += STEP, zi++) for (let x = bx0, xi = 0; x < bx1; x += STEP, xi++) {
@@ -1870,12 +1893,14 @@ function grassCarpet() {
   for (const list of tiles.values()) for (const [x, z, tall] of list) {
     if (tall < 0.8) continue;
     const h = hash01(x * 5.3, z * 7.1), t = groundPatch(x, z);
-    if (h < 0.006) fl.flower_daisy.push(place(x, 0, z, h * 60000, 1.1 + h * 50));
-    else if (h < 0.009) fl.flower_butter.push(place(x, 0, z, h * 60000, 1.1));
-    else if (t < 0.3 && h < 0.04) fl.flower_clover.push(place(x, 0, z, h * 9000, 1.2 + h * 8));
+    if (h < 0.006 * FK) fl.flower_daisy.push(place(x, 0, z, h * 60000, 1.1 + h * 50 / FK));
+    else if (h < 0.009 * FK) fl.flower_butter.push(place(x, 0, z, h * 60000, 1.1));
+    else if (t < 0.3 && h < Math.min(0.3, 0.04 * FK)) fl.flower_clover.push(place(x, 0, z, h * 9000, 1.2 + h * 8 / FK));
   }
   for (const n in fl) out.push(...batch(n, fl[n], { lambert: true, twoSided: true, wind: 1.2, tile: 6 }));
-  const geo = carpetGeo(), mat = carpetMat(), c = new THREE.Color(), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3();
+  if (LOOK && LOOK.grass === 'none') return out;      // (a smooth lawn: the flowers only)
+  if (LOOK) for (const [k, list] of tiles) tiles.set(k, list.filter(([x, z, tall]) => tall > 1.12 || hash01(x * 2.9, z * 4.1) < 0.05));      // (the tufts where the grass grows long: by the lanes, round the trees, a very few here and there)
+  const geo = LOOK ? (CARPET_CLUMP || (CARPET_CLUMP = clumpGeo(THREE, rng))) : carpetGeo(), mat = carpetMat(), c = new THREE.Color(), m = new THREE.Matrix4(), qn = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3();
   for (const list of tiles.values()) {
     for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(hash01(i * 0.37, list.length * 0.11) * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }      // (shuffled: thinned evenly)
     const k = new THREE.InstancedMesh(geo, mat, list.length);
@@ -1894,7 +1919,7 @@ function applyGrass() {
   furDetail();
   const far = view.size > 7.2;
   const thin = view.size < 3 ? 1 : view.size < 4.6 ? 0.7 : 0.45;      // (the story look's carpet: thinner as the farm gets smaller on the screen)
-  for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass * (g.carpet ? thin : 1))); g.mesh.visible = !far; }
+  for (const g of grassTiles) { g.mesh.count = Math.max(1, Math.round(g.full * QUALITY[q].grass * (g.carpet ? (LOOK ? 1 : thin) : LOOK ? LOOK.wild : 1))); g.mesh.visible = !far; }
   for (const m of LAND.wild) if (m.userData.small) m.visible = !far;      // (the land still to restore: its nettles and the like, with the grass)
 }
 
@@ -8888,7 +8913,7 @@ function replayFrame(now) {
   replay.update(dt); tickDoors(dt, now); placeTag(dt);
   WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600;
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }
-  drawFarmerShadows(renderer); renderer.render(scene, camera);
+  drawFarmerShadows(renderer); renderFarm();
   wake(300);
 }
 
@@ -8918,6 +8943,38 @@ let details = params.has('details');
 if (params.has('fps') || details) document.body.classList.add('showfps');      // (?fps: the smoothness readout in the game too, to check it on a phone)
 readout.addEventListener('click', () => { details = !details; showReadout(); });
 
+// the farm drawn: straight onto the screen, or (a look with ink lines, ?look=toon or paint: the art style mocks) into a
+// picture first, then onto the screen with a soft line wherever something stands out against what's behind it (where the
+// depth bends sharply: flat ground and walls give none however they slope)
+let INK = null;
+function renderFarm() {
+  if (!LOOK || !LOOK.ink) { renderer.render(scene, camera); return; }
+  const sz = renderer.getDrawingBufferSize(new THREE.Vector2());
+  if (!INK) {
+    const half = renderer.extensions.has('EXT_color_buffer_half_float') || renderer.extensions.has('EXT_color_buffer_float');      // (else plain bytes: a phone without them)
+    const rt = new THREE.WebGLRenderTarget(sz.x, sz.y, { samples: 4, type: half ? THREE.HalfFloatType : THREE.UnsignedByteType, depthTexture: new THREE.DepthTexture(sz.x, sz.y) });
+    const mat = new THREE.ShaderMaterial({
+      uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, px: { value: new THREE.Vector2() }, span: { value: 300 }, ink: { value: new THREE.Vector3(...LOOK.ink) } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: `uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 px; uniform float span; uniform vec3 ink; varying vec2 vUv;
+float D(vec2 o) { return texture2D(tDepth, vUv + o * px).r * span; }
+void main() {
+  vec4 c = texture2D(tColor, vUv);
+  float d = D(vec2(0.0)), l = D(vec2(-1.0, 0.0)), r = D(vec2(1.0, 0.0)), u = D(vec2(0.0, 1.0)), w = D(vec2(0.0, -1.0));
+  float lap = abs(l + r + u + w - 4.0 * d), jump = max(max(abs(l - d), abs(r - d)), max(abs(u - d), abs(w - d)));
+  float e = smoothstep(ink.y, ink.y * 2.5, lap) * smoothstep(0.02, 0.06, jump) * (d < span * 0.999 ? 1.0 : 0.0);
+  gl_FragColor = vec4(mix(c.rgb, c.rgb * vec3(0.42, 0.34, 0.3), e * ink.x), 1.0);
+  #include <colorspace_fragment>
+}`, depthTest: false, depthWrite: false });
+    const quad = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)).setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2)), mat);
+    quad.frustumCulled = false;
+    INK = { rt, mat, scene: new THREE.Scene().add(quad), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
+  }
+  if (INK.rt.width !== sz.x || INK.rt.height !== sz.y) INK.rt.setSize(sz.x, sz.y);
+  INK.mat.uniforms.px.value.set(LOOK.inkW / sz.x, LOOK.inkW / sz.y); INK.mat.uniforms.span.value = camera.far - camera.near;
+  renderer.setRenderTarget(INK.rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+  renderer.render(INK.scene, INK.cam);
+}
 function frame(now) {
   requestAnimationFrame(frame);
   if (paused) return;
@@ -8933,7 +8990,7 @@ function frame(now) {
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderer.render(inside.scene, inside.camera); }
-  else { drawFarmerShadows(renderer); renderer.render(scene, camera); }
+  else { drawFarmerShadows(renderer); renderFarm(); }
   if (GAME_MODE && now - barTint.at > 1500) tintBars(now);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
@@ -9010,6 +9067,17 @@ window.__farm = {
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
   orders: { stall: () => { const S = stallSpot(); return S && { top: S.top, mid: S.mid, front: [S.front.x, S.front.z] }; }, run: () => ORDER_RUN, sheet: () => ordersSheet(), deliver: id => deliverOrder(id), tick: () => tickOrders(), bubble: () => { const B = orderBub; return B && !B.hidden ? B.textContent : null; } },      // (tests: village orders)
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
+  costCats: () => {      // (the mocks: by kind, hidden a kind at a time)
+    const measure = () => { renderer.render(scene, camera); return { tri: renderer.info.render.triangles, calls: renderer.info.render.calls }; };
+    renderer.render(scene, camera); const all = measure(), out = { all };
+    const kinds = { birds: allBirds.map(b => b.root).concat(plots.flatMap(p => p.birds.map(b => b.root))), grass: grassTiles.map(t => t.mesh).concat(LAND.grass || [], LAND.wild || []), nature: NATURE.map(n => n.mesh || n).filter(o => o && o.isObject3D), coops: COOP_BATCH.filter(o => o && o.isObject3D), decor: decorList.map(d => d.group || d.mesh).filter(o => o && o.isObject3D) };
+    for (const [k, list] of Object.entries(kinds)) { const was = list.map(o => o.visible); list.forEach(o => { o.visible = false; }); const m = measure(); list.forEach((o, i) => { o.visible = was[i]; }); out[k] = { tri: all.tri - m.tri, calls: all.calls - m.calls, n: list.length }; }
+    return out; },
+  costBy: () => { const out = []; renderer.render(scene, camera); renderer.render(scene, camera); const shadowPass = renderer.shadowMap.needsUpdate; const all = renderer.info.render.triangles, calls = renderer.info.render.calls;      // (the art style mocks, 8 Nov 2026: what each of the scene's parts costs to draw, hidden one at a time)
+    scene.children.forEach((o, i) => { if (!o.visible) return; o.visible = false; renderer.render(scene, camera); const t = all - renderer.info.render.triangles, c = calls - renderer.info.render.calls; o.visible = true;
+      let name = o.name || o.type; if (!o.name) { const m = []; o.traverse(x => { if (x.isMesh && m.length < 3) m.push((x.name || x.geometry && x.geometry.name || '?') + (x.isInstancedMesh ? '×' + x.count : '')); }); name += ' ' + m.join(','); }
+      if (t > 0) out.push({ i, name: name.slice(0, 80), tri: t, calls: c }); });
+    renderer.render(scene, camera); const sum = out.reduce((a, x) => a + x.tri, 0); renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); const withShadows = renderer.info.render.triangles; return { all, calls, sum, withShadows, shadowPass, parts: out.sort((a, b) => b.tri - a.tri) }; },
   turnView: deg => turnView(deg * DEG), viewAz: () => view.az / DEG, setViewAz: deg => setViewAz(deg * DEG), viewEl: () => view.el / DEG, tiltView: px => tiltView(px), viewTurning: () => !!viewTurn, compass: () => compassEl && !compassEl.hidden,
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
@@ -9021,7 +9089,7 @@ window.__farm = {
   wheat: (stage) => setWheat(stage), field: () => wheatField, wind: (t) => { WIND.time.value = t; }, water: (t) => { WATER_T.value = t; },
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
-  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderer.render(scene, camera); },
+  draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
