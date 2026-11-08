@@ -668,7 +668,7 @@
           height: 34px; padding: 0 12px 0 9px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow);
           font: 600 16px var(--display); color: var(--ink); white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; }
   .gbub[hidden] { display: none; }
-  .gbub::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: var(--glass-top); }
+  .gbub::after { content: ""; position: absolute; left: calc(50% + var(--tail, 0px)); bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: var(--glass-top); }
   .gbub .gegg-i { width: 14px; height: 18px; flex: none; border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%; background: var(--egg, #b97a4f); box-shadow: inset -2px -3px 0 rgba(0, 0, 0, 0.13); }
   .gbub.full { background: #fff1c2; } .gbub.full::after { border-top-color: #fff1c2; }
   .gbub .gfresh { display: none; font-size: 13px; margin: 0 -3px 0 -2px; } .gbub.fresh .gfresh { display: inline; }      /* (fresh eggs: worth more XP) */
@@ -706,6 +706,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794173246"></script>
+<script src="app.js?v=1794175535"></script>
 </body>
 </html>
