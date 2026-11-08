@@ -4545,3 +4545,17 @@ shut once everyone was in, late in the evening; a player who looks in at 19:00 c
   once only from 22:48).
 - Before 18:00, as before: "The door stays open in the daytime". Nothing new in the save (the night's key, `c.shut`, as
   when shut by hand). Six languages. `dusktest.mjs` (English and French); `foxvisit.mjs` now reloads its shut farm at 23:00.
+
+## The prices checked (8 Nov 2026; Audrey: "Yes" to checking the coop upgrades' prices against the rest of the shop)
+`balsim.mjs` now lists what's bought and when (`BOUGHT=60`), and can buy the shop before the coops' looks (`SHOPFIRST=1`).
+A keen player twice a day (three farms, 60 days):
+- Something new to buy about every 2 days for the first two months. The coops' looks first: Mended day 5 (first coop),
+  flower bed 8, bird bath 10, geese 18, the market outfit 19, beehives 23, duck house 44, garden outfit 46, the dog 49,
+  greenhouse 54. The shop first: flower bed 5, geese 12, market outfit 14, beehives 23, duck house 26, dog 50,
+  greenhouse 56. Once a day: geese day 22, beehives 24.
+- The looks bring few coins: a Mended or Snug coop about one egg more every three days a hen (about 2 coins a day a
+  coop), Cosy and Deluxe an evening egg now and then; they're for the look, the XP (about the decorations' per coin),
+  better chicks and (Cosy up) the automatic door.
+- The gap: Rusty from level 4 (day 3), the geese (1,200) about ten days later; the doors shut from dusk keep the eggs
+  safe meanwhile.
+- Audrey's choice: "Keep prices". Nothing changed in the game.
