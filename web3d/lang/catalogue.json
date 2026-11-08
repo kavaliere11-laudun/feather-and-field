@@ -5433,6 +5433,16 @@
   "fr": "La porte reste ouverte la journée"
  },
  {
+  "id": "door.door_later",
+  "en": "🌙 The door will shut by itself tonight, once everyone’s in",
+  "fr": "🌙 La porte se fermera toute seule ce soir, quand tout le monde sera rentré"
+ },
+ {
+  "id": "door.door_stay",
+  "en": "The door stays open tonight",
+  "fr": "La porte reste ouverte cette nuit"
+ },
+ {
   "id": "door.door_notyet",
   "en": "Not everyone’s in yet: {who}",
   "fr": "Tout le monde n’est pas rentré : {who}"

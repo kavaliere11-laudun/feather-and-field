@@ -1721,6 +1721,7 @@ export class Game {
   // last looked at (the eggs laid before he came in the nest; the last visit kept for the morning's card and film)
   fox() { return this.data.fox || (this.data.fox = { seen: foxSeenFrom(Date.now()) }); }
   doorShut(c, now = Date.now()) { return shutFor(c, nightKey(now)); }
+  doorBooked(c, now = Date.now()) { return !!c && c.shut === nightKey(now); }      // (shut for tonight by hand: from dusk, it shuts itself once they're all in)
   autoDoor(c) { return autoDoor(c); }
   doorStuck(c, now = Date.now()) { return doorStuck(c, nightKey(now)); }
   setDoorShut(coopId, shut, now = Date.now()) {

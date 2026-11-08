@@ -3021,7 +3021,7 @@ function buildDoors() {
   for (const p of plots) if (p.kind === 'coop') {
     const st = inColour('popdoor_' + p.breed, p).slice(8), S = DOORS.styles[st] = DOORS.styles[st] || { meshes: [], plots: [] };
     const h0 = clockHour(), auto = GAME_MODE && p.gc && game.autoDoor(p.gc);
-    const o = p.door || (GAME_MODE && p.gc && game.doorShut(p.gc) && (auto ? h0 >= AUTO_SHUT || h0 < AUTO_OPEN : h0 >= 18 || h0 < 7.5) ? { shut: true, s: 0, goal: 0 } : {});      // (made again, a new coop: each door as it was; the game: shut tonight as the save has it; an automatic one once they're all in)
+    const o = p.door || (GAME_MODE && p.gc && game.doorShut(p.gc) && (auto ? h0 >= AUTO_SHUT || h0 < AUTO_OPEN : h0 >= AUTO_SHUT || h0 < 7.5) ? { shut: true, s: 0, goal: 0 } : {});      // (one shut for the night from dusk: open till they're all in)      // (made again, a new coop: each door as it was; the game: shut tonight as the save has it; an automatic one once they're all in)
     p.door = { shut: !!o.shut, s: o.s ?? 1, goal: o.goal ?? 1, i: S.plots.length, badge: o.badge || null, kind: o.kind || null };
     S.plots.push(p);
   }
@@ -3057,6 +3057,10 @@ const doorOpen = p => !p.door || p.door.s >= 1;
 // (release 4: a Cosy or Deluxe coop's automatic door shuts itself once they're all in, from 22:00 (by 22:48 at the latest)
 // and opens at 6:00; about once a month it sticks open: a hint says so, its moon to shut it by hand; that's Rusty's night)
 const AUTO_SHUT = 22.8, AUTO_OPEN = 6;
+// (8 Nov 2026, Audrey: "Yes" to doors shut from dusk: a door can be tapped from 18:00, the moon over it from then: with
+// everyone in it shuts there and then; with some still out it's shut for the night in the save at once (Rusty finds it
+// shut) and shuts itself once they're all in; tapped again, it stays open tonight)
+const DUSK = 18;
 const STUCK_SAID = new Set();
 function setDoor(p, open) { if (p.door) { p.door.goal = open ? 1 : 0; p.door.shut = !open; wake(1200); if (GAME_MODE && p.gc && !(replay && replay.on)) game.setDoorShut(p.gc.id, !open); } }
 let BADGE_TEX = null;
@@ -3102,7 +3106,7 @@ function tickDoors(dt, now = performance.now()) {
           if (allIn && d.goal === 1 && !STUCK_SAID.has(key)) { STUCK_SAID.add(key); hint(vt('door_stuck', { coop: game.coopName(p.gc) })); }
         } else if (d.goal === 1 && !rusty && (allIn || h >= AUTO_SHUT || h < AUTO_OPEN) && !(h >= AUTO_OPEN && h < 20)) setDoor(p, false);      // (shuts itself)
         if (d.goal === 0 && h >= AUTO_OPEN && h < 20) setDoor(p, true);                                              // (and opens itself in the morning)
-      }
+      } else if (GAME_MODE && p.gc && !(replay && replay.on) && d.goal === 1 && h >= 20 && game.doorBooked(p.gc) && p.birds.length && p.birds.every(inForNight) && !(nightVisit && nightVisit.active() && nightVisit.target === p)) setDoor(p, false);      // (shut for the night from dusk: now they're all in)
       if (d.s !== d.goal) { d.s = d.goal > d.s ? Math.min(d.goal, d.s + dt / 0.9) : Math.max(d.goal, d.s - dt / 0.9); moved = true; wake(300); }
       const v = doorEase(d.s) * DOOR_RUN;
       if (slide && slide.array[d.i] !== v) { for (const m of S.meshes) { const a = m.geometry.getAttribute('doorSlide'); a.array[d.i] = v; a.needsUpdate = true; } }
@@ -3110,7 +3114,7 @@ function tickDoors(dt, now = performance.now()) {
       // the badge: a moon when everyone's in bed and the door is still open; a sun when it's shut and they're waiting to get up
       let kind = null;
       if (nightVisit && nightVisit.active() && nightVisit.target === p) kind = null;           // Rusty's at this door: keep him in view
-      else if (d.goal === 1 && d.s >= 1 && evening() && p.birds.length && p.birds.every(inForNight)) kind = 'moon';
+      else if (d.goal === 1 && d.s >= 1 && p.birds.length && (GAME_MODE && p.gc && !game.autoDoor(p.gc) ? (h >= DUSK || h < 5.5) && !game.doorBooked(p.gc) : evening() && p.birds.every(inForNight))) kind = 'moon';      // (a door shut by hand: from dusk, till it's tapped)
       else if (d.goal === 0 && d.s <= 0 && p.birds.some(b => b.asleep && !b.nightNow())) kind = 'sun';
       if (kind && !d.badge) {
         BADGE_TEX = BADGE_TEX || badgeTextures();
@@ -3144,11 +3148,13 @@ function doorTap(p, at) {
   else if (d.goal === 0) {
     setDoor(p, true);
     msg = p.birds.some(b => b.asleep && !b.nightNow()) ? vt('door_morning') : vt('door_open');
-  } else if (!evening()) msg = vt('door_day');
+  } else if (DAY.hour >= 5.5 && DAY.hour < DUSK) msg = vt('door_day');
   else {
-    const out = p.birds.filter(b => !inForNight(b));
-    if (out.length) msg = vt('door_notyet', { who: doorWho(out) });
-    else { setDoor(p, false); msg = vt('door_shut'); }
+    const out = p.birds.filter(b => !inForNight(b)), byHand = GAME_MODE && p.gc && !(replay && replay.on) && (!game.autoDoor(p.gc) || game.doorStuck(p.gc));
+    if (!out.length && (evening() || !byHand)) { setDoor(p, false); msg = vt('door_shut'); }
+    else if (!byHand) msg = vt('door_notyet', { who: doorWho(out) });
+    else if (game.doorBooked(p.gc)) { game.setDoorShut(p.gc.id, false); msg = vt('door_stay'); }      // (tapped again: open tonight)
+    else { game.setDoorShut(p.gc.id, true); msg = vt('door_later'); }                                // (shut for the night: by itself once they're in)
   }
   tag.textContent = msg; tagBird = null; tag.classList.add('on'); fieldTag = 2.6;
   if (at) tagSpot.copy(at);
@@ -8458,6 +8464,8 @@ function moveTag(v) {          // v: the spot on screen (-1..1) the label stands
 const VT = register('door', {
   door_open: ['Door open', 'Porte ouverte'], door_morning: ['Good morning! Door open', 'Bonjour ! Porte ouverte'],
   door_day: ['The door stays open in the daytime', 'La porte reste ouverte la journée'],
+  door_later: ['🌙 The door will shut by itself tonight, once everyone’s in', '🌙 La porte se fermera toute seule ce soir, quand tout le monde sera rentré'],
+  door_stay: ['The door stays open tonight', 'La porte reste ouverte cette nuit'],
   door_notyet: ['Not everyone’s in yet: {who}', 'Tout le monde n’est pas rentré : {who}'], door_shut: ['Door shut. Sleep well!', 'Porte fermée. Dormez bien !'],
   door_stuck: ['The automatic door of the {coop} has stuck open tonight! Tap the moon over it to shut it by hand.', 'La porte automatique du poulailler ({coop}) est restée coincée ouverte ce soir ! Touchez la lune au-dessus pour la fermer à la main.'],
   out1: ['{a} is still out', '{a} est encore dehors'], out2: ['{a} and {b} are still out', '{a} et {b} sont encore dehors'],

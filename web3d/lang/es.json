@@ -1185,5 +1185,7 @@
  "text.vil_fete_s": "la fiesta",
  "text.move_grow": "Aquí no cabe su corral más grande de más adelante: la línea de puntos muestra hasta dónde crecerá.",
  "text.dec_bad_grow": "Este sitio se reserva para que un gallinero pueda crecer.",
- "text.move_small": "Cabe por ahora, pero su corral más grande no cabrá aquí más adelante (la línea de puntos)."
+ "text.move_small": "Cabe por ahora, pero su corral más grande no cabrá aquí más adelante (la línea de puntos).",
+ "door.door_later": "🌙 La puerta se cerrará sola esta noche, cuando estén todos dentro",
+ "door.door_stay": "La puerta se queda abierta esta noche"
 }
