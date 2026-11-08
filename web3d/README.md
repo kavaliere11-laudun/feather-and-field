@@ -4498,3 +4498,34 @@ coins; a picture of each kind of card the first time it opens, and of each level
 - **Noted, not changed**: a coop's name in French goes without "la" ("Une friandise pour Grange rouge"), as a coop can have a name of your own. Carrots fill the garden basket (30) when sown every morning and given only now and then; the
   basket-full word says so ("Your basket is full of carrots: use some for treats or orders first"). The golden egg
   can be small in a tree's shade.
+
+## The second play-through, with the shop; room kept for each coop to grow (8 Nov 2026; Audrey: "Yes" to a play-through that spends)
+The play-through again, day 1 to level 10, now spending as a keen player would (`playthrough.mjs`, SHOP on by default): the
+coops' next looks first (the cheapest first, always keeping 150 coins back), the geese once the fox has called, the
+decorations, Arthur's outfits, the dog; a bird in every show it has a fair chance in (the village show anyway); the honey;
+the doors shut at night once the fox has called (only from 20:00: at the 19:00 visit "The door stays open in the daytime").
+Show days answered "Just the results".
+- **How fast**: level 10 on day 13 (17 without spending): the looks and decorations bring XP. The coins go: Red Barn and
+  Pagoda Coop to Snug, the Javanese House and Floating House to Mended, a flower bed and a bird bath by level 10; no
+  geese, beehives, outfits or dog yet (they cost more than was left).
+- **What it found** (English run, before the change): the Thatched Cottage's next look refused every visit, "Its bigger pen needs more room here: move the
+  coop first", and moving it showed only today's small pen, so there was no telling where the bigger one would fit.
+- **Audrey's choice**: "I think from the start when you add a coop to the game you need to anticipate how big it will
+  become and block the zone around." So:
+  - A new breed's coop is offered the roomiest spot near the view: room for its Deluxe look where the farm has it, else
+    the biggest look the land allows (a farm of its first few fields has room for no Deluxe pen anywhere: Deluxe needs
+    about four fields restored; `roomTier`, `placeSpots` sorting by it).
+  - Its outline while it's placed or moved shows that room dotted round today's pen (`footMark`), and a new coop can only
+    be put where that room is kept: "Not enough room here for its bigger pen later: the dotted line shows how big it
+    grows." (`move_grow`).
+  - One of your coops moved where its bigger pen won't fit: allowed, the outline amber and a word, "It fits for now, but
+    its bigger pen won't fit here later (the dotted line)." (`move_small`), so a small farm's first coop can still be moved.
+  - Decorations, the dog's kennel, the wheat field and the garden moved or placed: not into a coop's room to grow, "This
+    ground is kept for a coop to grow into." (`dec_bad_grow`); a new vegetable garden (level 4) is placed clear of it too.
+  - Farms already played keep everything where it is (nothing moved when the game opens); nothing new in the save.
+  - Six languages. `growtest.mjs` (English and French): the roomiest spot offered, the dotted room, a new coop refused
+    where its room isn't kept, your own coop's word, a flower bed refused in the room, a new garden clear of it, and the
+    coop grown through every look to Deluxe where it stands.
+- **The French run, after the change**: level 10 on day 13 again, no look refused: the Thatched Cottage ("Chaumière")
+  grew to Mended on day 5 and to Snug on day 13, the Red Barn to Snug, the Pagoda, Javanese and Floating houses to
+  Mended, a flower bed and a bird bath; no page errors.
