@@ -109,7 +109,7 @@ ok('a night the farm is open at his time: his visit on the farm, an egg in his m
 v = (await upcoming())[0];
 await jump(v.t - 2 * 3600e3); await run(1);
 await p.evaluate(() => { const g = window.__farm.game(); for (const c of g.data.coops) { c.eggs = 2; c.lt = [window.__T - 3600e3, window.__T - 3500e3]; g.setDoorShut(c.id, true); } g.save(); });
-await p.goto(URL + '&time=22:30', { waitUntil: 'domcontentloaded' }); await load();      // (the farm's clock at night, for its doors)
+await p.goto(URL + '&time=23:00', { waitUntil: 'domcontentloaded' }); await load();      // (the farm's clock at night, for its doors: since 8 Nov a door shut for the night opens for them till they're all in, by 22:48)
 const doors = await p.evaluate(() => window.__farm.gamePlots().map(q => q.door && q.door.shut));
 await p.goto(URL, { waitUntil: 'domcontentloaded' }); await load();
 await jump(v.t + 8 * 3600e3); await run(1.2);
