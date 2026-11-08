@@ -502,6 +502,9 @@
   #compass { position: fixed; right: calc(env(safe-area-inset-right) + 12px); top: calc(env(safe-area-inset-top) + 64px); width: 46px; height: 46px; border-radius: 50%; padding: 0; z-index: 30;
     border: 2px solid rgba(255, 255, 255, 0.95); background: radial-gradient(circle at 50% 40%, #fffdf6 0, #efe9d8 100%); box-shadow: 0 3px 10px rgba(30, 40, 20, 0.28); display: grid; place-items: center; cursor: pointer; }
   #compass[hidden] { display: none; }
+  /* (8 Nov 2026, Audrey: "the north arrow shows on the cta": sideways the corner column of buttons reaches up to there; so
+     it sits beside the settings gear instead, in the top row) */
+  @media (orientation: landscape) { #compass { top: calc(env(safe-area-inset-top) + 6px); right: calc(max(14px, calc(env(safe-area-inset-right) + 8px)) + 48px); } }
   #compass .needle { width: 36px; height: 36px; display: block; transform-origin: 50% 50%; }
   #compass .needle svg { width: 100%; height: 100%; display: block; }
   #compass:active { transform: scale(0.94); }

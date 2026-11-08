@@ -8982,13 +8982,16 @@ function renderFarm(sc = scene, cam = camera) {
   if (!INK) {
     const rt = new THREE.WebGLRenderTarget(sz.x, sz.y, { samples: QUALITY[q].aa ? 4 : 0, type: THREE.UnsignedByteType, colorSpace: THREE.SRGBColorSpace, depthTexture: new THREE.DepthTexture(sz.x, sz.y) });      // (8-bit sRGB: half a half-float picture's memory, as smooth to the eye)
     const mat = new THREE.ShaderMaterial({
-      uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, px: { value: new THREE.Vector2() }, span: { value: 300 }, ink: { value: new THREE.Vector3(...LOOK.ink) } },
+      uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, k: { value: 1 }, span: { value: 300 }, ink: { value: new THREE.Vector3(...LOOK.ink) } },
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-      fragmentShader: `uniform sampler2D tColor; uniform sampler2D tDepth; uniform vec2 px; uniform float span; uniform vec3 ink; varying vec2 vUv;
-float D(vec2 o) { return texture2D(tDepth, vUv + o * px).r * span; }
+      // (each dot and its neighbours k whole dots away, read exactly: 8 Nov 2026, Audrey's iPhone showed lines across the
+      // whole screen. Read 1.5 dots away, each sample fell on the border between two dots, which her phone's chip rounded
+      // one way on some rows and the other way on the next, so flat ground looked bent every few rows)
+      fragmentShader: `uniform sampler2D tColor; uniform sampler2D tDepth; uniform int k; uniform float span; uniform vec3 ink; varying vec2 vUv;
+float D(ivec2 o) { return texelFetch(tDepth, clamp(ivec2(gl_FragCoord.xy) + o, ivec2(0), textureSize(tDepth, 0) - 1), 0).r * span; }
 void main() {
-  vec4 c = texture2D(tColor, vUv);
-  float d = D(vec2(0.0)), l = D(vec2(-1.0, 0.0)), r = D(vec2(1.0, 0.0)), u = D(vec2(0.0, 1.0)), w = D(vec2(0.0, -1.0));
+  vec4 c = texelFetch(tColor, ivec2(gl_FragCoord.xy), 0);
+  float d = D(ivec2(0)), l = D(ivec2(-k, 0)), r = D(ivec2(k, 0)), u = D(ivec2(0, k)), w = D(ivec2(0, -k));
   float lap = abs(l + r + u + w - 4.0 * d), jump = max(max(abs(l - d), abs(r - d)), max(abs(u - d), abs(w - d)));
   float e = smoothstep(ink.y, ink.y * 2.5, lap) * smoothstep(0.02, 0.06, jump) * (d < span * 0.999 ? 1.0 : 0.0);
   gl_FragColor = vec4(mix(c.rgb, c.rgb * vec3(0.42, 0.34, 0.3), e * ink.x), 1.0);
@@ -8999,7 +9002,7 @@ void main() {
     INK = { rt, mat, scene: new THREE.Scene().add(quad), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
   }
   if (INK.rt.width !== sz.x || INK.rt.height !== sz.y) INK.rt.setSize(sz.x, sz.y);
-  INK.mat.uniforms.px.value.set(LOOK.inkW / sz.x, LOOK.inkW / sz.y); INK.mat.uniforms.span.value = cam.far - cam.near;
+  INK.mat.uniforms.k.value = Math.max(1, Math.round(LOOK.inkW)); INK.mat.uniforms.span.value = cam.far - cam.near;
   INK.mat.uniforms.ink.value.x = cam.isOrthographicCamera ? LOOK.ink[0] : 0;      // (the lines read the farm's even depth: none inside a coop, seen in perspective; still smoothed)
   renderer.setRenderTarget(INK.rt); renderer.render(sc, cam); renderer.setRenderTarget(null);
   renderer.render(INK.scene, INK.cam);

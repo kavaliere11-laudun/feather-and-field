@@ -4618,3 +4618,13 @@ doesn't redraw them on every step.
   the farmer where it wants 0.27. The long ones (`duckfarmertest`, `fishtest`, `soundtest`) need more than 15 minutes
   each in the test browser now.
 
+## Lines across the screen; the compass over a button (8 Nov 2026 evening, Audrey on her iPhone, a picture at night: "See the lines on the screen. Also the north arrow shows on the cta")
+- **The lines:** dark lines every few rows across the whole farm, in Storybook. Its outline step compared each dot's
+  depth with its neighbours 1.5 dots away (`inkW`); each such sample fell on the border between two dots, which her
+  phone's chip rounded one way on some rows and the other way on the next, so flat ground read as bent there and got a
+  line. The test browser rounds the same way everywhere, so the pictures here never showed them. Now the neighbours are
+  read exactly, whole dots away (`texelFetch` at `gl_FragCoord`, `k = round(inkW)`: 2 for Storybook), the picture's
+  colour too: a flat or sloping surface gives no line however it's rounded.
+- **The compass:** sideways the corner column of buttons reaches up to where it sat (64 px from the top, right), over
+  the basket. Sideways it now sits beside the settings gear in the top row (`#compass` in a landscape rule).
+
