@@ -340,12 +340,12 @@ export class GameUI {
     });
   }
   // ---- a bird's card: who she is, her personality, experience and trust, where she lives
-  // one job at a time (9 Nov 2026, Audrey's choice): while the farmer's at a job, a card's buttons for another wait, a note
-  // above them saying what he's doing (main.js farmerBusyText; the card's opened again once he's free)
+  // while the farmer's at a job, a note above a card's buttons for another says what he's doing and what's next on his list
+  // (main.js farmerBusyText, jobGate: a job asked meanwhile goes on that list, three at most; the card's opened again as
+  // the note changes)
   busyNote(btns) {
     const t = this.o.busy ? this.o.busy() : '', list = btns.filter(Boolean);
     if (!t || !list.length) return '';
-    for (const x of list) { x.disabled = true; x.classList.add('gwait'); }
     list[0].before(el('p', 'gnote gbusy', '🧑‍🌾 ' + t));
     return t;
   }
@@ -1207,12 +1207,12 @@ export class GameUI {
         const row = el('div', 'gbed-sow');
         for (const k of CROP_IDS) {
           const C = CROPS[k], broke = g.data.coins < C.seed, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), C.e + ' ' + this.t('crop_' + k) + ' · ' + this.t('bed_sow', { c: C.seed, t: this.dur(C.grow) }));
-          go.type = 'button'; go.disabled = broke || !!o.busy; go.dataset.sow = k; go.addEventListener('click', () => { if (!go.disabled) h.sow(i, k); }); row.append(go);
+          go.type = 'button'; go.disabled = broke; go.dataset.sow = k; go.addEventListener('click', () => { if (!go.disabled) h.sow(i, k); }); row.append(go);
         }
         c.append(row);
       } else if (st === 'ripe') {
         c.append(el('p', 'gtext gfound', this.t('bed_ripe', { n: CROPS[bed.crop].n })));
-        const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('bed_pick')); go.type = 'button'; go.dataset.pick = i; go.disabled = !!o.busy; go.addEventListener('click', () => { if (!go.disabled) h.pick(i); }); c.append(go);
+        const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('bed_pick')); go.type = 'button'; go.dataset.pick = i; go.addEventListener('click', () => { if (!go.disabled) h.pick(i); }); c.append(go);
       } else {
         const left = g.bedLeft(i), u = 1 - left / CROPS[bed.crop].grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
         c.append(el('p', 'gnote', this.t('bed_' + st)), bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
@@ -1283,11 +1283,10 @@ export class GameUI {
       const c = el('div', 'gcard ghow gfhelp'), hd = el('div', 'gcard-h'); c.dataset.step = k;
       hd.append(el('span', 'gemoji', e), el('span', 'gcard-t', this.t('fhelp_' + k + 't')));
       c.append(hd, el('p', 'gtext', this.t('fhelp_' + k)));
-      if (k === 3) {      // (the gauge as it looks: the needle in the green, slack to the left, too tight to the right)
-        const demo = el('div', 'fishdemo'), tr = el('div', 'fishtrack'), gr = el('div', 'fishgreen'), nd = el('div', 'fishneedle ok'), lab = el('div', 'fishdemo-l');
-        gr.style.left = '28%'; gr.style.width = '40%'; nd.style.left = '47%'; tr.append(gr, nd);
-        lab.append(el('span', '', this.t('fhelp_slack')), el('span', 'ok', this.t('fhelp_good')), el('span', 'hot', this.t('fhelp_tight')));
-        demo.append(tr, lab); c.append(demo);
+      if (k === 3) {      // (the bar as it looks: blue as the fish comes in, red while it pulls)
+        const demo = el('div', 'fishdemo');
+        for (const [cls, w, key] of [['', '62%', 'fhelp_good'], [' pull', '62%', 'fhelp_tight']]) { const row = el('div', 'fishdemo-r' + cls), pr = el('div', 'fishprog'), fl = el('div', 'fishprogfill'); fl.style.width = w; pr.append(fl); row.append(el('span', 'fishway-e', '🐟'), pr, el('span', 'fishway-e', '🪣'), el('span', 'fishdemo-t', this.t(key))); demo.append(row); }
+        c.append(demo);
       }
       body.append(c);
     }

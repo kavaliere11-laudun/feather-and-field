@@ -1,11 +1,12 @@
-// One job at a time, and the farmer running to a far job (9 Nov 2026; Audrey: "the farmer takes too long to come. It was
-// busy with a previous task so perhaps we can only allow one task at the time", her choice "One job at a time"; "the farmer
-// should run especially if he is far"): ./withserver.sh node busytest.mjs   (LANG=fr; PORT)
-// A level-3 farm by day. The farmer sent from the far side of the farm to cuddle a hen: he runs while it's far, hurries the
-// last few metres. Meanwhile another hen's card: her Cuddle and worms buttons waiting, a note over them ("Arthur is giving
-// Juniper a cuddle. One job at a time: free again in a moment."); the dock's card: Go fishing waiting, the same note; a
-// cuddle asked all the same (the hook): nothing done, the note said. Once he's done, the open card again with its buttons
-// back and no note. Fishing: another hen's card says he's fishing, "tap Stop fishing first"; Stop: free again. No page errors.
+// The farmer's list of next jobs, his dash to a job and the skip ahead (9 Nov 2026, Audrey: "it's frustrating that the
+// farmer can only do 1 thing at the time and you cannot schedule the next action", her choice "Line up to 3 jobs"; "The
+// farmer is too slow to move around", her choice "Run, and skip ahead if far"): ./withserver.sh node busytest.mjs   (LANG=fr; PORT)
+// A level-3 farm by day. In sight and far from a hen's pen, a cuddle asked: he dashes all the way (3 m/s), never skipping.
+// Out of sight and far, another cuddle asked: he's put on his way just off the screen and runs in. While he's at it: another
+// hen's card has its Cuddle button live and a note ("Arthur is giving X a cuddle. Ask for anything else..."); asked: on his
+// list (1 of 3), the note now "Next: a cuddle for Y"; the same again: "Already on his list"; a feeder and fishing: 3 of 3; a
+// fourth: "list is full". He does them in order: the cuddle, the feeder, then out fishing. Fishing and waiting to cast, a
+// cuddle asked: he puts his rod down and goes. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const L = process.env.LANG || 'en', fr = L === 'fr';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -25,50 +26,65 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(2);
 await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); });
 const card = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null; const q = sel => s.querySelector(sel);
   return { kind: window.__farm.gameUI().kind, note: (q('.gbusy') || {}).textContent || '', cuddle: q('.gcuddle') ? q('.gcuddle').disabled : null, worms: q('.gworms') ? q('.gworms').disabled : null, go: q('button[data-fish=go]') ? q('button[data-fish=go]').disabled : null }; });
-// the hens: two of them; the farmer put on the far side of the farm
+const T = fr ? { ask: /Demandez autre chose/, added: n => new RegExp('\\(' + n + ' sur 3\\)'), next: /Ensuite/, full: /pleine/, already: /Déjà/ } : { ask: /Ask for anything else/, added: n => new RegExp('\\(' + n + ' of 3\\)'), next: /Next:/, full: /full/, already: /Already/ };
+const card = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null; const q = sel => s.querySelector(sel);
+  return { kind: window.__farm.gameUI().kind, note: (q('.gbusy') || {}).textContent || '', cuddle: q('.gcuddle') ? q('.gcuddle').disabled : null }; });
+const hintNow = () => p.evaluate(() => document.getElementById('hint').textContent);
 const H = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots()[0], hens = P.birds.filter(x => x.gid && f.game().bird(x.gid).sex === 'h'); return hens.slice(0, 2).map(x => ({ id: x.gid, name: f.game().bird(x.gid).name })); });
 ok('two hens to ask for', H.length === 2, H);
-const far = await p.evaluate(() => { const f = window.__farm, Lf = f.farmer(), P = f.coopPlots()[0], c = P.centre;
+const free = async (n = 90) => { let fr2 = false; for (let i = 0; i < n && !fr2; i++) { await run(1); fr2 = !(await p.evaluate(() => window.__farm.farmerJob() || window.__farm.jobList().length)); } return fr2; };
+// the farmer put `R` m from the coop, the view over the coop at `size`
+const putFar = (size) => p.evaluate(size => { const f = window.__farm, Lf = f.farmer(), P = f.coopPlots()[0], c = P.centre;
   for (let i = 0; i < 300 && (Lf.task && Lf.task.name === 'pen' || Lf.home); i++) f.step(1 / 30, 1);
-  let best = null;      // (a spot about 11 m off that he can walk from)
-  for (let R = 12; R > 7 && !best; R -= 1) for (let a = 0; a < 6.28 && !best; a += 0.35) { const x = c.x + Math.cos(a) * R, z = c.z + Math.sin(a) * R; if (Lf.o.nav.freeAt(x, z) && Lf.o.nav.find(x, z, c.x, c.z, true)) best = [x, z]; }
-  Lf.pos.x = best[0]; Lf.pos.z = best[1]; Lf.task = null; Lf.pending = null; return Math.hypot(best[0] - c.x, best[1] - c.z); });
-// the cuddle asked: off he goes, running while it's far
-await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[0].id); await run(0.2);
-await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
-const job = await p.evaluate(() => window.__farm.farmerJob());
-ok(`the cuddle asked (him ${far.toFixed(1)} m off): his job now`, job && job.kind === 'cuddle', job);
-const sp = await p.evaluate(() => { const f = window.__farm, Lf = f.farmer(), P = f.coopPlots()[0], out = [];
-  for (let i = 0; i < 30 * 40 && Lf.task && Lf.task.name === 'pen' && !Lf.pen; i++) { f.step(1 / 30, 1); out.push([+Lf.speed.toFixed(2), +Math.hypot(Lf.pos.x - P.centre.x, Lf.pos.z - P.centre.z).toFixed(1)]); }
-  return { top: Math.max(...out.map(q => q[0])), farTop: Math.max(...out.filter(q => q[1] > 7).map(q => q[0])), nearTop: Math.max(0, ...out.filter(q => q[1] < 3).map(q => q[0])), n: out.length }; });
-ok('a long way off he runs (over 1.9 m/s); the last metres a hurry (under 1.6)', sp.farTop > 1.9 && sp.nearTop < 1.6, sp);
-// meanwhile (he's in the pen with her now)
+  let best = null;
+  for (let R = 14; R > 8 && !best; R -= 1) for (let a = 0; a < 6.28 && !best; a += 0.35) { const x = c.x + Math.cos(a) * R, z = c.z + Math.sin(a) * R; if (Lf.o.nav.freeAt(x, z) && Lf.o.nav.find(x, z, c.x, c.z, true)) best = [x, z]; }
+  Lf.pos.x = best[0]; Lf.pos.z = best[1]; Lf.task = null; Lf.pending = null; Lf.speed = 0; f.lookAt(c.x, c.z, size); f.draw();
+  return { d: Math.hypot(best[0] - c.x, best[1] - c.z), seen: Lf.o.onScreen(best[0], best[1], 1.5), skipped: Lf.skipped || 0 }; }, size);
+const cuddle = async id => { await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), id); await run(0.2); await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1); };
+const watch = () => p.evaluate(() => { const f = window.__farm, Lf = f.farmer(), P = f.coopPlots()[0], out = []; let firstSeen = null;
+  for (let i = 0; i < 30 * 40 && Lf.task && Lf.task.name === 'pen' && !Lf.pen; i++) { f.step(1 / 30, 1); const d = Math.hypot(Lf.pos.x - P.centre.x, Lf.pos.z - P.centre.z); out.push([Lf.speed, d]); if (firstSeen === null && Lf.o.onScreen(Lf.pos.x, Lf.pos.z, 0)) firstSeen = +d.toFixed(1); }
+  return { top: +Math.max(...out.map(q => q[0])).toFixed(2), secs: +(out.length / 30).toFixed(1), d0: +out[0][1].toFixed(1), skipped: Lf.skipped || 0, firstSeen, inPen: !!Lf.pen }; });
+// ---- in sight: he dashes all the way
+let far = await putFar(16);
+await cuddle(H[0].id);
+let w = await watch();
+ok(`in sight, ${far.d.toFixed(0)} m off: he dashes to the job (3 m/s), all the way (no skip)`, far.seen && w.top > 2.8 && w.top < 3.2 && w.skipped === far.skipped && w.inPen, { far, w });
+ok('free again', await free());
+// ---- out of sight: put on his way just off the screen
+await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id); b.happy = 0; g.save(); }, H[0].id);
+far = await putFar(3.2);
+await cuddle(H[0].id);
+w = await watch();
+ok(`out of sight, ${far.d.toFixed(0)} m off: put on his way just off the screen, running in, there in a few seconds`, !far.seen && w.skipped === far.skipped + 1 && w.d0 < far.d - 3 && w.secs < 6 && w.inPen, { far, w });
+// ---- meanwhile: another hen's card, live, with the note; asked: on his list
 await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
 let c = await card();
-const T = fr ? { name: new RegExp('câlin à ' + H[0].name), wait: /Une chose à la fois/, fish: /pêche/, stop: /Arrêter de pêcher/ } : { name: new RegExp('cuddle'), wait: /One job at a time/, fish: /fishing/, stop: /Stop fishing/ };
-ok(`meanwhile ${H[1].name}'s card: Cuddle (and worms, if she has any) waiting, the note over them saying what he's doing`, c && c.kind === 'bird' && c.cuddle === true && c.worms !== false && T.name.test(c.note) && c.note.includes(H[0].name) && T.wait.test(c.note), c);
-await p.evaluate(() => window.__farm.dockCard()); await run(0.1);
-c = await card();
-ok('the dock\'s card: Go fishing waiting, the same note', c && c.kind === 'dock' && c.go === true && T.wait.test(c.note), c);
-await p.evaluate(() => window.__farm.gameUI().close());
-const asked = await p.evaluate(id => { const f = window.__farm, g = f.game(), b0 = JSON.stringify(g.bird(id)); const r = f.gameUI().o.cuddle(id); f.step(1 / 30, 3); return { r, same: JSON.stringify(g.bird(id)) === b0, hint: document.getElementById('hint').textContent }; }, H[1].id);
-ok('a cuddle asked all the same: nothing done, the note said', asked.r === null && asked.same && T.wait.test(asked.hint), asked);
-// he's done: the open card again, its buttons back
-await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
-let free = false; for (let i = 0; i < 80 && !free; i++) { await run(1); free = !(await p.evaluate(() => window.__farm.farmerJob())); }
-c = await card();
-ok('he\'s done: the card open again with Cuddle back, no note', free && c && c.kind === 'bird' && c.cuddle === false && !c.note, { free, c });
-// fishing: busy with that
-await p.evaluate(() => window.__farm.gameUI().close());
-const go = await p.evaluate(() => { const f = window.__farm; f.dockCard(); const b = document.querySelector('.gsheet button[data-fish=go]'); if (b && !b.disabled) b.click(); return !!b && !b.disabled; }); await run(0.3);
+ok(`meanwhile ${H[1].name}'s card: Cuddle live, the note saying what he's doing and to ask for anything else`, c && c.kind === 'bird' && c.cuddle === false && c.note.includes(H[0].name) && T.ask.test(c.note), c);
+await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
+let L = await p.evaluate(() => window.__farm.jobList()), h = await hintNow();
 await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
 c = await card();
-ok('fishing: a hen\'s card says he\'s fishing, "tap Stop fishing first"', go && c && c.cuddle === true && T.fish.test(c.note) && T.stop.test(c.note), { go, c });
-await p.evaluate(() => window.__farm.gameUI().close());
-for (let i = 0; i < 60 && (await p.evaluate(() => window.__farm.fishing() && window.__farm.fishing().state)) !== 'ready'; i++) { await run(1); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); }); }
-await p.evaluate(() => window.__farm.fishing().stop());
-free = false; for (let i = 0; i < 60 && !free; i++) { await run(1); free = !(await p.evaluate(() => window.__farm.farmerJob())); }
-ok('Stop: back off the dock, free again', free);
+ok('asked: on his list (1 of 3), nothing done yet; her card\'s note: "Next: a cuddle for her"', L.length === 1 && L[0].kind === 'cuddle' && T.added(1).test(h) && h.includes(H[1].name) && c && T.next.test(c.note) && c.note.includes(H[1].name), { L, h, c });
+await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
+h = await hintNow(); L = await p.evaluate(() => window.__farm.jobList());
+ok('asked again: "Already on his list", still one', L.length === 1 && T.already.test(h), { L, h });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close(); const co = g.data.coops[0]; co.feed = 0; co.fedAt = 0; g.save(); f.gameTick(window.__T); f.fillFeeder(0); });
+await p.evaluate(() => { const f = window.__farm; f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=go]'); if (q) q.click(); });
+h = await hintNow(); L = await p.evaluate(() => window.__farm.jobList());
+ok('a feeder and fishing asked: 3 of 3 on his list', L.length === 3 && L.map(q => q.kind).join() === 'cuddle,fill,fish' && T.added(3).test(h), { L, h });
+const full = await p.evaluate(() => { const f = window.__farm; f.wheat.sow(); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; });
+ok('a fourth: "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
+// ---- he does them in order
+const seen = []; let fishing = false;
+for (let i = 0; i < 240 && !fishing; i++) { await run(1); const q = await p.evaluate(() => { const f = window.__farm, j = f.farmerJob(); if (f.gameUI().isOpen) f.gameUI().close(); return { k: j && j.kind, n: f.jobList().length, st: f.fishing() && f.fishing().state }; }); if (q.k && seen[seen.length - 1] !== q.k) seen.push(q.k); fishing = q.st === 'ready'; }
+const after = await p.evaluate(id => { const f = window.__farm, g = f.game(); return { happy: g.happyLeft(g.bird(id)) > 0, feed: g.data.coops[0].feed, n: f.jobList().length }; }, H[1].id);
+ok('he does them in order: her cuddle, the feeder, then out on the dock ready to cast; the list empty', fishing && seen.join().includes('cuddle,fill,fish') && after.happy && after.feed > 0 && after.n === 0, { seen, after });
+// ---- fishing, waiting to cast: a job asked, the rod down for it
+await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.happy = 0; g.save(); f.gameUI().o.cuddle(id); }, H[0].id);
+L = await p.evaluate(() => window.__farm.jobList());
+let went = false; for (let i = 0; i < 120 && !went; i++) { await run(1); went = await p.evaluate(id => { const f = window.__farm, g = f.game(); if (f.gameUI().isOpen) f.gameUI().close(); return g.happyLeft(g.bird(id)) > 0 && f.fishing().state === 'off'; }, H[0].id); }
+ok('fishing and waiting to cast, a cuddle asked: on his list, his rod put down, the cuddle given', L.length === 1 && went, { L, went });
+ok('free at the end, the list empty', await free());
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close(); process.exit(fails ? 1 : 0);

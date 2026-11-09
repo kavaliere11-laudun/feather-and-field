@@ -5,7 +5,7 @@
 // done: never just there or gone). On the river the float drifts off downstream with the current (o.drift).
 //  1. Tap the water to cast: the rod drawn back over the shoulder and swung, the float flying out on its line to where you
 //     tapped (as near as the rod reaches), a little ring where it lands.
-//  2. Watch the float: it bobs; a nibble or two (little dips); then it's pulled under with a splash and a "!": tap now.
+//  2. Watch the float: it bobs; then it's pulled under with a splash and a "!", and stays down a long moment: tap.
 //     Tapping before: "Too soon!", the fish wary a moment more. Too slow: it's off with the worm.
 //  3. Reel in by holding: the line's pull on a gauge, keep it in the green while the fish pulls (it comes in while the pull's
 //     in the green, quicker while you're reeling; rare fish pull harder, a legendary one hardest). Too hard for too long and the line snaps; too slack and it slips the hook. Its shadow comes in
@@ -23,12 +23,15 @@ import { makeRod } from './farmer.js';
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const sm = u => u * u * (3 - 2 * u);
-// the reel's feel by how rare the fish is: the green part of the gauge, how quickly reeling brings it in, its pull
-const FIGHT = [{ g0: 0.28, g1: 0.76, rate: 0.2, pull: 0.26, every: [1.3, 2.6] }, { g0: 0.34, g1: 0.72, rate: 0.13, pull: 0.36, every: [1.0, 2.0] }, { g0: 0.38, g1: 0.7, rate: 0.09, pull: 0.42, every: [0.9, 1.8] }];
-const SNAP_T = 0.75, SLIP_T = 2.6, BITE_WIN = [1.25, 1.05, 0.95];
-// (9 Nov 2026, Audrey: "I just tried and failed twice with still no idea of what to do to get the fish out of the water"):
-// till the first fish is in, an easy one: longer to strike, a wide green, a gentle pull
-const EASY = { g0: 0.2, g1: 0.84, rate: 0.26, pull: 0.16, every: [1.8, 3.2] }, EASY_BITE = 2.2;
+// (9 Nov 2026 evening, Audrey: "I would like to challenge the fishing gameplay as it's a little hard and not super
+// intuitive", her choice "Tap, then hold": no nibbles to fool you; the float dives and stays down a long moment: tap; then
+// hold to reel in, and let go while the fish pulls (the bar turns red). Nothing snaps: reeling against its pull only lets
+// it take a little line back. Not tapped in time, it bites again, twice more, then it's off with the worm; a hooked fish
+// left alone a long while swims off.)
+// by how rare the fish is: how quickly it comes in, how long it pulls, how long between pulls; the first catch the easiest
+const FIGHT = [{ rate: 0.24, pull: [0.8, 1.2], calm: [2.4, 3.6] }, { rate: 0.18, pull: [0.9, 1.4], calm: [2.0, 3.0] }, { rate: 0.14, pull: [1.0, 1.6], calm: [1.7, 2.6] }];
+const EASY = { rate: 0.3, pull: [0.8, 1.0], calm: [3.2, 4.4] };
+const BITE_T = 4, BITES = 3, BACK = 0.1, LEFT_T = 9;      // (the float down this long; bites before it's off; line taken back a second, reeled against its pull; a hooked fish left alone this long: gone)
 
 // ---- the little things on the water: rings spreading, the float, the line, a fish's shadow, a "!"
 function ringPool(scene, n, y) {
@@ -147,7 +150,7 @@ export class Fishing {
     this.gauge = el('div', 'fishgauge'); const track = el('div', 'fishtrack'); this.green = el('div', 'fishgreen'); this.needle = el('div', 'fishneedle');
     this.prog = el('div', 'fishprog'); this.progFill = el('div', 'fishprogfill'); this.prog.append(this.progFill);
     const way = el('div', 'fishway'); way.append(el('span', 'fishway-e', '🐟'), this.prog, el('span', 'fishway-e', '🪣'));
-    track.append(this.green, this.needle); this.gauge.append(way, track); this.gauge.hidden = true;
+    this.gauge.append(way); this.gauge.hidden = true;      // (the way in, 🐟 to 🪣: blue as it comes, red while it pulls)
     this.bar.append(this.tipEl, this.gauge, row); this.showBar(false);
     this.glass = el('div', 'fishglass'); this.glass.hidden = true;
     const down = e => { e.preventDefault(); this.press(true); }, up = e => { e.preventDefault(); this.press(false); };
@@ -163,7 +166,6 @@ export class Fishing {
     const s = this.state;
     if (s === 'ready') this.words(this.o.game.worms() ? 'fish_cast' : 'fish_worms0');
     else if (s === 'wait' || s === 'cast') this.words('fish_watch');
-    else if (s === 'nibble') this.words('fish_nibble');
     else if (s === 'bite') this.words('fish_bite', 'bite');
   }
   // how to fish (its card: main.js); by itself the first time he's ready to cast, while no fish is in yet
@@ -221,13 +223,13 @@ export class Fishing {
     this.hold = on && this.state === 'reel';
     if (!on) return;
     if (this.state === 'bite') { this.strike(); return; }
-    if (this.state === 'wait' || this.state === 'nibble') { this.flash('fish_soon'); this.state = 'wait'; this.t = 0; this.waitFor = 2 + Math.random() * 2.5; }
+    if (this.state === 'wait') this.flash('fish_soon');      // (too soon: no harm done)
   }
   strike() {
     const F = this.fight();
-    this.state = 'reel'; this.t = 0; this.T = 0.45; this.p = 0; this.over = 0; this.slack = 0; this.surge = 0; this.nextSurge = 0.8; this.hold = true;
+    this.state = 'reel'; this.t = 0; this.T = 0.45; this.p = 0; this.pullT = 0; this.calmT = 1.6 + Math.random() * 0.8; this.idle = 0; this.hold = true;
     this.bang.visible = false; this.gauge.hidden = false;
-    this.green.style.left = (F.g0 / 1.2 * 100) + '%'; this.green.style.width = ((F.g1 - F.g0) / 1.2 * 100) + '%';
+    this.gauge.classList.remove('pull');
     this.words('fish_r_hold'); this.o.wake(3000);
     this.fishAt = this.target.clone(); this.shadow.visible = true; this.shadow.material.opacity = 0;
     const L = Math.max(0.1, (this.bite.cm / 100) * 0.9); this.shadow.scale.set(L * 0.16, 1, L * 0.5);
@@ -249,44 +251,37 @@ export class Fishing {
       if (this.t > 0.45 && tip) {
         const u = clamp((this.t - 0.45) / 0.6, 0, 1), p = tip.clone().lerp(this.target, u); p.y = tip.y + (this.target.y - tip.y) * u + 0.9 * 4 * u * (1 - u) * 0.6;
         this.float.position.copy(p); this.float.visible = true; this.line.set(tip, p, 0.02, camDir);
-        if (u >= 1) { this.state = 'wait'; this.t = 0; this.waitFor = 2.5 + Math.random() * 4; this.nibbles = 1 + Math.floor(Math.random() * 3); this.rings.add(this.target.x, this.target.z, 0.22); if (!this.tipUntil) this.nowTip(); }
+        if (u >= 1) { this.state = 'wait'; this.t = 0; this.waitFor = 2 + Math.random() * 3; this.misses = 0; this.rings.add(this.target.x, this.target.z, 0.22); if (!this.tipUntil) this.nowTip(); }
       }
     } else if (this.state === 'wait' || this.state === 'nibble' || this.state === 'bite') {
       let dip = 0;
       if (this.o.drift) this.o.drift(this.target, dt);          // (the river: carried off downstream, as far as the line lets it)
-      if (this.state === 'wait' && this.t > this.waitFor) { this.state = 'nibble'; this.t = 0; if (!this.tipUntil) this.nowTip(); }
-      if (this.state === 'nibble') {
-        const k = Math.floor(this.t / 0.7), u = (this.t % 0.7) / 0.7;
-        if (k < this.nibbles) { dip = u < 0.3 ? Math.sin(u / 0.3 * Math.PI) * 0.012 : 0; if (u < dt / 0.7 + 1e-3) this.rings.add(this.target.x, this.target.z, 0.12, 0.7); }
-        else { this.state = 'bite'; this.t = 0; this.rings.add(this.target.x, this.target.z, 0.4, 1.0); this.rings.add(this.target.x, this.target.z, 0.25, 0.8); this.nowTip(); }
-      }
+      if (this.state === 'wait' && this.t > this.waitFor) { this.state = 'bite'; this.t = 0; this.rings.add(this.target.x, this.target.z, 0.4, 1.0); this.rings.add(this.target.x, this.target.z, 0.25, 0.8); this.nowTip(); }
       if (this.state === 'bite') {
         dip = Math.min(0.06, this.t * 0.4);
         this.bang.visible = true; this.bang.position.set(this.target.x, W + 0.25 + 0.03 * Math.sin(this.t * 18), this.target.z);
-        if (this.t > (this.easy ? EASY_BITE : BITE_WIN[this.bite.rare])) { this.bang.visible = false; this.lose('fish_missed'); return; }
+        if (this.t > BITE_T) {      // (not tapped: up it bobs, and it bites again in a moment; the third time it's off)
+          this.bang.visible = false; this.misses = (this.misses || 0) + 1;
+          if (this.misses >= BITES) { this.lose('fish_missed'); return; }
+          this.state = 'wait'; this.t = 0; this.waitFor = 1.2 + Math.random() * 1.2; this.flash('fish_again');
+        }
       }
       const fp = this.target.clone(); fp.y = W + 0.006 * Math.sin(this.t * 2.6) - dip;
       this.float.position.copy(fp); this.float.visible = fp.y > W - 0.04;
       if (tip) this.line.set(tip, fp, 0.12, camDir);
       this.o.wake(200);
     } else if (this.state === 'reel') {
-      const F = this.fight(), big = 0.8 + 0.4 * clamp((this.bite.cm - 5) / 100, 0, 1);
-      // the fish's pull: a surge now and then, harder for a rarer, bigger fish
-      this.nextSurge -= dt; if (this.nextSurge <= 0) { this.surge = 0.35; this.nextSurge = F.every[0] + Math.random() * (F.every[1] - F.every[0]); this.surgeK = F.pull * big * (0.7 + 0.6 * Math.random()); }
-      let dT = this.hold ? 0.85 : -0.75;
-      if (this.surge > 0) { this.surge -= dt; dT += this.surgeK / 0.35 * (this.hold ? 1 : 0.55); }
-      this.T = clamp(this.T + dT * dt, 0, 1.2);
-      const inGreen = this.T >= F.g0 && this.T <= F.g1;
-      this.p = clamp(this.p + (inGreen ? F.rate * (this.hold ? 1 : 0.5) : this.T < F.g0 ? -0.03 : 0.02) * dt, 0, 1);      // (in the green it comes in, quicker reeling; slack, it swims off a little)
-      this.over = this.T > 1.0 ? this.over + dt : 0;
-      this.slack = this.T < F.g0 * 0.6 && this.p > 0.04 ? this.slack + dt : 0;
-      this.needle.style.left = (this.T / 1.2 * 100) + '%'; this.progFill.style.width = (this.p * 100) + '%';
-      this.needle.classList.toggle('hot', this.T > 1.0); this.needle.classList.toggle('ok', inGreen);
-      // (saying what to do as it goes: hold to reel; in the green, good; heading for the red, let go a moment; slack with the
-      // fish on, hold again)
-      if (!this.tipUntil) { const k = this.T > F.g1 ? 'fish_r_ease' : this.T < F.g0 ? (this.p > 0.04 && !this.hold ? 'fish_r_slack' : 'fish_r_hold') : 'fish_r_good'; this.words(k, k === 'fish_r_good' ? 'good' : k === 'fish_r_hold' ? '' : 'warn'); }
-      if (this.over > SNAP_T) { this.lose('fish_snap'); return; }
-      if (this.slack > SLIP_T) { this.lose('fish_slip'); return; }
+      const F = this.fight(), r = (q) => q[0] + Math.random() * (q[1] - q[0]);
+      // calm: held, it comes in; then it pulls a moment (the bar red): let go, or it takes a little line back
+      if (this.pullT > 0) { this.pullT -= dt; if (this.pullT <= 0) this.calmT = r(F.calm); }
+      else { this.calmT -= dt; if (this.calmT <= 0 && this.p < 0.9) this.pullT = r(F.pull); }
+      const pulling = this.pullT > 0;
+      this.p = clamp(this.p + (pulling ? (this.hold ? -BACK : 0) : this.hold ? F.rate : -0.015) * dt, 0, 1);
+      this.idle = this.hold ? 0 : this.idle + dt;
+      this.T += ((pulling ? (this.hold ? 1.05 : 0.8) : this.hold ? 0.55 : 0.2) - this.T) * Math.min(1, dt * 6);      // (how taut the line is: the rod's bend)
+      this.progFill.style.width = (this.p * 100) + '%'; this.gauge.classList.toggle('pull', pulling);
+      if (!this.tipUntil) { const k = pulling ? 'fish_r_ease' : this.hold ? 'fish_r_good' : 'fish_r_hold'; this.words(k, pulling ? 'warn' : this.hold ? 'good' : ''); }
+      if (this.idle > LEFT_T) { this.lose('fish_slip'); return; }
       // its shadow coming in under the water, weaving; a ring now and then
       const end = new THREE.Vector3(S.stand[0] + Math.sin(S.face) * 0.6, W, S.stand[1] + Math.cos(S.face) * 0.6);
       const at = this.target.clone().lerp(end, sm(this.p)), side = new THREE.Vector3(Math.cos(S.face), 0, -Math.sin(S.face));
@@ -294,7 +289,7 @@ export class Fishing {
       const dir = at.clone().sub(this.fishAt); this.fishAt.copy(at);
       this.shadow.position.set(at.x, W + 0.002, at.z); if (dir.lengthSq() > 1e-8) this.shadow.rotation.y = Math.atan2(dir.x, dir.z);
       this.shadow.material.opacity = Math.min(0.32, this.t * 0.6);
-      if (Math.random() < dt * (this.surge > 0 ? 3 : 0.7)) this.rings.add(at.x, at.z, 0.14, 0.7);
+      if (Math.random() < dt * (this.pullT > 0 ? 3 : 0.7)) this.rings.add(at.x, at.z, 0.14, 0.7);
       this.float.visible = false;
       if (tip) this.line.set(tip, new THREE.Vector3(at.x, W, at.z), 0.04 * (1.2 - this.T), camDir);
       if (this.p >= 1) this.landed();

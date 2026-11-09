@@ -39,7 +39,7 @@ export const FARMER_TEXT = register('say', {
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 });
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
-const SPEED = { walk: 1.0, hurry: 1.45, run: 2.15 };
+const SPEED = { walk: 1.0, hurry: 1.45, run: 2.15, dash: 3.0 };      // (dash: to a job he's been asked for)
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -67,8 +67,12 @@ const TK = {
     const p = this.pts[this.i], last = this.i >= this.pts.length - 1, x0 = L.pos.x, z0 = L.pos.z;
     // (hurrying to a job, a long way off: he runs, back to a hurry for the last few metres; 9 Nov 2026, Audrey: "the farmer
     // should run especially if he is far")
-    this.ran = pace === 'hurry' && Math.hypot(x - L.pos.x, z - L.pos.z) > (this.ran ? 3.5 : 5);
-    if (L.moveTo(p[0], p[1], dt, this.ran ? 'run' : pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
+    // (9 Nov evening, Audrey: "The farmer is too slow to move around. Maybe if he is too far he can just teleport ? Or run
+    // faster", her choice "Run, and skip ahead if far": to a job he always runs, faster (3 m/s), a hurry only for the last
+    // two metres; and out of sight with a long way still to go, he's put on his way just off the screen, running in)
+    this.ran = pace === 'hurry' && Math.hypot(x - L.pos.x, z - L.pos.z) > (this.ran ? 1.6 : 2.4);
+    if (pace === 'hurry' && L.o.onScreen && (this.skipT = (this.skipT ?? 0) - dt) <= 0) { this.skipT = 0.4; const q = L.skipAhead(this.pts, this.i); if (q) { this.pts = q; this.i = 0; return false; } }
+    if (L.moveTo(p[0], p[1], dt, this.ran ? 'dash' : pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
     this.still = Math.hypot(L.pos.x - x0, L.pos.z - z0) < 0.002 ? this.still + dt : 0;
     if (this.still > 1.5 && this.again < 4) { this.pts = null; this.still = 0; this.again++; }
     L.want.face = 'neutral'; L.want.lookAbout = true;
@@ -149,8 +153,22 @@ export class FarmLife {
   T(key) { return tr(this.lang, 'say.' + key).replace('{dog}', this.o.dogName ? this.o.dogName() : 'Biscuit'); }
   say(key, secs = 2.6) {
     const text = this.T(key), m = this.bubble.material; m.map = bubbleTexture(text); m.needsUpdate = true;
-    this.bubbleT = secs; this.said.push(key); if (this.said.length > 40) this.said.shift();
+    this.bubbleT = secs; this.bubbleText = text; this.said.push(key); if (this.said.length > 40) this.said.shift();
     if (this.o.said) this.o.said(key, text);
+  }
+  // out of sight with a long way to go to a job (pts from i on: his way): put on that way just off the screen (or, the job
+  // itself out of sight, 2 m short of it), already running. The rest of his way, or null (in sight, or not far)
+  skipAhead(pts, i) {
+    const on = this.o.onScreen, P = [[this.pos.x, this.pos.z], ...pts.slice(i)];
+    if (this.pen || this.home || on(this.pos.x, this.pos.z, 1.5)) return null;
+    const len = []; let total = 0; for (let k = 1; k < P.length; k++) { const d = Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]); len.push(d); total += d; }
+    if (total < 9) return null;
+    const at = s => { let k = 0; while (k < len.length - 1 && s > len[k]) { s -= len[k]; k++; } const u = len[k] > 1e-6 ? Math.min(1, s / len[k]) : 0; return { k, p: [P[k][0] + (P[k + 1][0] - P[k][0]) * u, P[k][1] + (P[k + 1][1] - P[k][1]) * u] }; };
+    let back = 2; while (back < total - 4 && on(at(total - back).p[0], at(total - back).p[1], 1.5)) back += 0.5;
+    if (back >= total - 4) return null;
+    const q = at(total - back), nav = this.o.nav; if (nav && !nav.freeAt(q.p[0], q.p[1])) return null;
+    const next = P[q.k + 1]; this.pos.x = q.p[0]; this.pos.z = q.p[1]; this.heading = Math.atan2(next[0] - q.p[0], next[1] - q.p[1]); this.av = 0; this.speed = SPEED.dash; this.skipped = (this.skipped || 0) + 1;
+    return P.slice(q.k + 1);
   }
   torchTip() { return this.f.rig.B.torch.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(Math.sin(this.heading) * 0.14, 0.02, Math.cos(this.heading) * 0.14)); }
   // ---- moving: turning smoothly, a step towards (x, z) at a pace, round the animals (waiting a moment if one's right in front)
@@ -174,10 +192,10 @@ export class FarmLife {
       if (!this.o.nav || this.o.nav.freeAt(p.x + bx * 0.35, p.z + bz * 0.35)) { ax = bx; az = bz; }      // (never bending into anything)
       if (rd < R * 1.1 && ahead > 0.7) slow = Math.min(slow, Math.max(0.15, (rd - R * 0.8) / (R * 0.3)));
     }
-    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' ? 7 : 4.5);
+    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' || pace === 'dash' ? 7 : 4.5);
     let want = SPEED[pace] * (off > 1.2 ? 0.15 : off > 0.6 ? 0.5 : 1) * slow;
     if (!through) want = Math.min(want, Math.sqrt(2 * 2.5 * Math.max(0, d - 0.03)) + 0.05);
-    this.speed += clamp(want - this.speed, -5 * dt, 3 * dt); this.movedNow = true;
+    this.speed += clamp(want - this.speed, -5 * dt, (pace === 'dash' ? 5 : 3) * dt); this.movedNow = true;
     const st = Math.min(d, Math.max(0, this.speed) * dt);
     let nx = p.x + Math.sin(this.heading) * st, nz = p.z + Math.cos(this.heading) * st;
     const nav = this.o.nav;
@@ -585,7 +603,7 @@ export class FarmLife {
     if (!this.turned) this.av *= Math.max(0, 1 - dt * 10);
     // ---- the body: walking (or running) as far as he really goes, the pose wanted, the face
     const W = this.want, sp = this.speed, run = sp > 1.7;
-    this.phase += this.moved / (run ? 1.35 : 0.85) * Math.PI * 2;
+    this.phase += this.moved / (sp > 2.5 ? 1.7 : run ? 1.35 : 0.85) * Math.PI * 2;      // (longer strides at a dash)
     // (7 Nov 2026, the farmer's moves, second pass) how quickly he's speeding up or slowing down (leaning into it: farmer.js);
     // turning round where he stands, little steps round instead of his boots sliding round on the spot
     if (dt > 0) { const a = (sp - (this.sp0 ?? sp)) / dt; this.sp0 = sp; this.acc = (this.acc || 0) + (a - (this.acc || 0)) * Math.min(1, dt * 6); }
@@ -644,7 +662,7 @@ export class FarmLife {
     else T.update(dt, false);
     if (this.bubbleT > 0 && f.opacity > 0.5) {
       this.bubbleT -= dt; const u = Math.min(1, (2.6 - this.bubbleT) * 6), w = this.bubble.material.map.userData.w || 3, s = 0.2 * u;
-      this.bubble.visible = this.bubbleT > 0 && this.group.visible; this.bubble.scale.set(s * w, s, 1);
+      this.bubble.visible = this.bubbleT > 0 && this.group.visible && !this.o.ownBubble; this.bubble.scale.set(s * w, s, 1);      // (ownBubble: the page draws his words itself, sharp at any zoom)
       this.bubble.position.set(this.pos.x, this.pos.y + 1.78, this.pos.z); this.bubble.material.opacity = Math.min(1, this.bubbleT * 3);
     } else this.bubble.visible = false;
   }

@@ -3944,13 +3944,13 @@
  },
  {
   "id": "text.fish_soon",
-  "en": "Too soon! Wait till the float goes under",
-  "fr": "Trop tôt ! Attendez que le bouchon plonge"
+  "en": "Not yet: wait for the float to dive",
+  "fr": "Pas encore : attendez que le bouchon plonge"
  },
  {
   "id": "text.fish_missed",
-  "en": "Too late: it got away with the worm",
-  "fr": "Trop tard : il est parti avec le ver"
+  "en": "It swam off with the worm",
+  "fr": "Il est parti avec le ver"
  },
  {
   "id": "text.fish_reel",
@@ -3964,8 +3964,8 @@
  },
  {
   "id": "text.fish_slip",
-  "en": "Too slack: it slipped off the hook",
-  "fr": "Trop mou : il s’est décroché"
+  "en": "Left alone, it swam away",
+  "fr": "Laissé seul, il s’est sauvé"
  },
  {
   "id": "text.fish_stop",
@@ -4057,13 +4057,88 @@
  },
  {
   "id": "text.busy_wait",
-  "en": "One job at a time: free again in a moment.",
-  "fr": "Une chose à la fois : de nouveau libre dans un instant."
+  "en": "Ask for anything else: it’ll be done next (up to 3 jobs).",
+  "fr": "Demandez autre chose : ce sera fait ensuite (3 tâches au plus)."
  },
  {
   "id": "text.busy_wait_fish",
-  "en": "One job at a time: tap Stop fishing first.",
-  "fr": "Une chose à la fois : touchez d’abord « Arrêter de pêcher »."
+  "en": "Ask for another job and the rod is put down for it.",
+  "fr": "Demandez une autre tâche et la canne sera posée pour la faire."
+ },
+ {
+  "id": "text.next_list",
+  "en": "Next: {list}.",
+  "fr": "Ensuite : {list}."
+ },
+ {
+  "id": "text.next_added",
+  "en": "Added to {farmer}’s list ({n} of 3): {job}.",
+  "fr": "Ajouté à la liste de {farmer} ({n} sur 3) : {job}."
+ },
+ {
+  "id": "text.next_full",
+  "en": "{farmer}’s list is full: 3 jobs waiting.",
+  "fr": "La liste de {farmer} est pleine : 3 tâches en attente."
+ },
+ {
+  "id": "text.next_already",
+  "en": "Already on {farmer}’s list.",
+  "fr": "Déjà sur la liste de {farmer}."
+ },
+ {
+  "id": "text.next_cuddle",
+  "en": "a cuddle for {name}",
+  "fr": "un câlin pour {name}"
+ },
+ {
+  "id": "text.next_worms",
+  "en": "{name}’s worms",
+  "fr": "les vers de {name}"
+ },
+ {
+  "id": "text.next_fill",
+  "en": "a feeder",
+  "fr": "une mangeoire"
+ },
+ {
+  "id": "text.next_treat",
+  "en": "a treat",
+  "fr": "une friandise"
+ },
+ {
+  "id": "text.next_fish",
+  "en": "fishing",
+  "fr": "la pêche"
+ },
+ {
+  "id": "text.next_geese",
+  "en": "the geese",
+  "fr": "les oies"
+ },
+ {
+  "id": "text.next_sow",
+  "en": "sowing the wheat",
+  "fr": "semer le blé"
+ },
+ {
+  "id": "text.next_harvest",
+  "en": "the wheat harvest",
+  "fr": "la moisson"
+ },
+ {
+  "id": "text.next_honey",
+  "en": "the honey",
+  "fr": "le miel"
+ },
+ {
+  "id": "text.next_garden",
+  "en": "the garden",
+  "fr": "le potager"
+ },
+ {
+  "id": "text.next_order",
+  "en": "a basket for the stall",
+  "fr": "un panier pour l’étal"
  },
  {
   "id": "text.fish_casting",
@@ -4071,9 +4146,14 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.fish_again",
+  "en": "It let go… it’ll bite again",
+  "fr": "Il a lâché… il va mordre de nouveau"
+ },
+ {
   "id": "text.fish_watch",
-  "en": "Watch the float: tap when it’s pulled right under",
-  "fr": "Surveillez le bouchon : touchez quand il plonge d’un coup"
+  "en": "Wait for the float to dive, then tap",
+  "fr": "Attendez que le bouchon plonge, puis touchez"
  },
  {
   "id": "text.fish_nibble",
@@ -4087,13 +4167,13 @@
  },
  {
   "id": "text.fish_r_good",
-  "en": "That’s it! Keep the needle in the green",
-  "fr": "C’est ça ! Gardez l’aiguille dans le vert"
+  "en": "Reeling in… keep holding",
+  "fr": "On remonte… gardez le doigt appuyé"
  },
  {
   "id": "text.fish_r_ease",
-  "en": "Too tight! Let go a moment",
-  "fr": "Trop tendu ! Relâchez un instant"
+  "en": "It’s pulling! Let go a moment",
+  "fr": "Il tire ! Relâchez un instant"
  },
  {
   "id": "text.fish_r_slack",
@@ -4122,8 +4202,8 @@
  },
  {
   "id": "text.fhelp_2",
-  "en": "Watch the float. A nibble or two first: wait. When it’s pulled right under and a ! pops up, tap at once.",
-  "fr": "Surveillez le bouchon. D’abord une touche ou deux : attendez. Quand il plonge d’un coup et qu’un ! apparaît, touchez tout de suite."
+  "en": "Watch the float. When it dives and a ! pops up, tap anywhere. No rush: it stays down a few seconds.",
+  "fr": "Surveillez le bouchon. Quand il plonge et qu’un ! apparaît, touchez l’écran. Rien ne presse : il reste sous l’eau quelques secondes."
  },
  {
   "id": "text.fhelp_3t",
@@ -4132,8 +4212,8 @@
  },
  {
   "id": "text.fhelp_3",
-  "en": "Hold your finger down to reel in, and keep the needle in the green. If it heads for the red, let go a moment (the line could snap); if it drops back to the left, hold again (the fish could slip off). The blue bar fills as the fish comes in.",
-  "fr": "Gardez le doigt appuyé pour remonter, et gardez l’aiguille dans le vert. Si elle file vers le rouge, relâchez un instant (la ligne pourrait casser) ; si elle retombe vers la gauche, appuyez de nouveau (le poisson pourrait se décrocher). La barre bleue se remplit à mesure que le poisson arrive."
+  "en": "Hold your finger down to reel the fish in. When the bar turns red the fish is pulling: let go until it’s blue again. Nothing can break.",
+  "fr": "Gardez le doigt appuyé pour remonter le poisson. Quand la barre devient rouge, le poisson tire : relâchez jusqu’à ce qu’elle redevienne bleue. Rien ne peut casser."
  },
  {
   "id": "text.fhelp_slack",
@@ -4142,13 +4222,13 @@
  },
  {
   "id": "text.fhelp_good",
-  "en": "Reeling in",
-  "fr": "On remonte"
+  "en": "Blue: hold",
+  "fr": "Bleu : appuyez"
  },
  {
   "id": "text.fhelp_tight",
-  "en": "Too tight: let go",
-  "fr": "Trop tendu : relâchez"
+  "en": "Red: let go",
+  "fr": "Rouge : relâchez"
  },
  {
   "id": "text.fhelp_first",

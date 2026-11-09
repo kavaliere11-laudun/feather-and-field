@@ -6,7 +6,8 @@
 // water: a worm used, the float out on its line, "Watch the float". A tap too soon: "Too soon!". The bite: a tap, the
 // gauge; reeling (a player keeping it in the green): landed, into his hands, turned to us; a fish new to us: held up high;
 // its card (its name, its size, new, sold live, coins and XP, Keep fishing with the worms left); coins and XP paid.
-// Keep: ready again. A bite missed: "Too late", the worm gone, nothing paid. Held too hard: the line snaps. Too slack: it
+// Keep: ready again. The float stays down a long moment; not tapped it bites again, the third time it's off with the worm.
+// Reeled against its pull: nothing snaps. Left alone a long while: it
 // slips the hook. Big Bertha: her photo, back into the pond (he crouches at the edge), 300 coins. The last worm: the card
 // has only Stop. Stop: back along the dock and off with the pail, the gate shut, the bar gone. A reload: the catches kept,
 // unflagged. Too late in the evening: "asleep: fishing in the morning". No page errors. Pictures in OUT.
@@ -39,11 +40,11 @@ const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet
     stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img').length, got: s.querySelectorAll('.gfishrow img.got').length }; });
 const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));      // (the cards slid up)
 const until = async (test, secs, step = 0.25) => { for (let t = 0; t < secs; t += step) { if (await p.evaluate(test)) return true; await run(step); } return p.evaluate(test); };
-// a player reeling: holding while the needle's low, letting go when it's high (or `how`: 'hard' always holding, 'slack' never)
+// a player reeling: holding, letting go while the fish pulls (or `how`: 'hard' always holding, 'slack' never)
 const reel = (how = 'good') => p.evaluate(async how => {
   const f = window.__farm, F = f.fishing();
   for (let i = 0; i < 30 * 90 && F.state === 'reel'; i++) {
-    if (how === 'good') F.press(F.T < 0.5); else F.press(how === 'hard');
+    if (how === 'good') F.press(!(F.pullT > 0)); else F.press(how === 'hard');
     window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false);
   }
   F.press(false); sessionStorage.setItem('__T', window.__T); f.draw(); return F.state;
@@ -90,7 +91,7 @@ ok('out at the dock\'s end, up on its deck, ready: the worms and Stop at the bot
 // (9 Nov 2026, Audrey: "there is no instruction as of how it works"): no fish caught yet, the how-to card by itself, its three
 // steps and the gauge drawn, "your first catch will be an easy one"; the fish waits while it's open; Got it
 let hs = await sheet();
-const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: !!s.querySelector('.fishdemo .fishgreen'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
+const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: s.querySelectorAll('.fishdemo .fishprog').length === 2 && !!s.querySelector('.fishdemo-r.pull'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
 ok('the first time, no fish yet: "How to fish" by itself (cast, strike, reel in, the gauge as it looks, an easy first catch)', hs && hs.kind === 'fishhelp' && hInfo.steps === 3 && hInfo.demo && hInfo.ok && (fr ? /Comment pêcher/.test(hs.text) && /facile/.test(hs.text) : /How to fish/.test(hs.text) && /easy one/.test(hs.text)), { hs, hInfo });
 await shoot('0_howto');
 await p.evaluate(() => document.querySelector('.gsheet button[data-fhelp=ok]').click()); await run(0.3);
@@ -115,7 +116,7 @@ ok('a tap on the water: cast', await castOut());
 await run(1.3); s = await st();
 ok('a worm used, the float out on the water, "Watch the float"', s.worms === before.worms - 1 && s.state === 'wait' && s.float && (fr ? /bouchon/ : /float/).test(s.hint), s);
 await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
-ok('a tap too soon: "Too soon!", still waiting', s.state === 'wait' && (fr ? /Trop tôt/ : /Too soon/).test(s.hint), s.hint);
+ok('a tap too soon: "Not yet", still waiting, no harm done', s.state === 'wait' && (fr ? /Pas encore/ : /Not yet/).test(s.hint), s.hint);
 ok('then the bite', await until(() => window.__farm.fishing().state === 'bite', 20));
 await shoot('2_bite');
 await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
@@ -143,15 +144,19 @@ ok('Keep fishing: he crouches and lowers it into the bucket, picks his rod up ag
 // a bite missed
 let w0 = (await st()).worms, cc = (await st()).coins;
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25);
-ok('a bite missed: "Too late", the worm gone, nothing paid', await until(() => window.__farm.fishing().state === 'ready', 3) && (await st()).worms === w0 - 1 && (await st()).coins === cc && (fr ? /Trop tard/ : /Too late/).test((await st()).hint), await st());
-// too hard
+await run(3); const held = (await st()).state;
+const again = await until(() => window.__farm.fishing().state === 'wait', 2), againHint = (await st()).hint;
+ok('the float stays down a long moment (3 s on: still biting); not tapped, it lets go and bites again', held === 'bite' && again && (fr ? /mordre de nouveau/ : /bite again/).test(againHint) && await until(() => window.__farm.fishing().state === 'bite', 6), { held, again, againHint });
+ok('three bites missed: off with the worm, nothing paid', await until(() => window.__farm.fishing().state === 'ready', 20) && (await st()).worms === w0 - 1 && (await st()).coins === cc && (fr ? /parti avec le ver/ : /swam off with the worm/).test((await st()).hint), await st());
+// reeled against its pull: nothing snaps, it only takes a little line back; the bar red meanwhile
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));
-end = await reel('hard'); s = await st();
-ok('held too hard: the line snaps', end === 'ready' && (fr ? /cassé/ : /snapped/).test(s.hint), { end, h: s.hint });
-// too slack
-await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => { const F = window.__farm.fishing(); F.press(true); F.p = 0.2; });
+const pull = await p.evaluate(() => { const f = window.__farm, F = f.fishing(); F.p = 0.5; F.pullT = 1.2; F.press(true);
+  for (let i = 0; i < 24; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); }
+  const r = { state: F.state, p: +F.p.toFixed(3), red: document.querySelector('.fishgauge').classList.contains('pull'), tip: document.querySelector('.fishtip').textContent }; F.press(false); return r; });
+ok('reeled against its pull: nothing snaps, a little line taken back, the bar red, "It\'s pulling! Let go a moment"', pull.state === 'reel' && pull.p < 0.5 && pull.p > 0.38 && pull.red && (fr ? /Il tire/ : /pulling/).test(pull.tip), pull);
+// left alone a long while: it swims away
 end = await reel('slack'); s = await st();
-ok('too slack: it slips the hook', end === 'ready' && (fr ? /décroché/ : /slipped/).test(s.hint), { end, h: s.hint });
+ok('hooked and left alone a long while: it swims away', end === 'ready' && (fr ? /sauvé/ : /swam away/).test(s.hint), { end, h: s.hint });
 // Big Bertha
 await p.evaluate(() => { const g = window.__farm.game(); g.data.fish.worms = 1; g.save(); window.__farm.fishing().refreshBar(); });
 cc = (await st()).coins;
