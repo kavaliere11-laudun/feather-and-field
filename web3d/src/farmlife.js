@@ -350,7 +350,7 @@ export class FarmLife {
           TK.say('cuddle'),
           // (on his other side, where the stroke runs across his back rather than along it: a gentler, smaller one, the hand
           // kept on his back)
-          TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; W.hugK = near && near.side < 0 ? 0.4 : 1; if (u > heart) { heart += 0.55; P.heart(hen); } }),
+          TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; W.hugK = near && near.side < 0 ? 0.3 : 1; if (u > heart) { heart += 0.55; P.heart(hen); } }),
         ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
           TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
