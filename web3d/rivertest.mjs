@@ -75,6 +75,8 @@ await settle(); await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();
 ok('Go: the farmer off to the footbridge', s.seq && (fr ? /part à la passerelle/ : /off to the footbridge/).test(s.hint), s.hint);
 for (let i = 0; i < 160; i++) { await run(1); s = await st(); if (s.state === 'ready') break; }
+// (9 Nov 2026: no fish caught yet, the how-to card comes by itself; the fish waits while it's open: Got it)
+await p.evaluate(() => { const b = document.querySelector('.gsheet:not([hidden]) button[data-fhelp=ok]'); if (b) b.click(); }); await run(0.2);
 const rodNow = await p.evaluate(() => { const F = window.__farm.fishing(), L = window.__farm.farmer(); return { water: F.o.water, onDeck: F.deckRod.visible, inHand: F.rodIn && !!L.f.rig.rod && L.f.rig.rod.visible }; });
 ok('out on the footbridge\'s middle, up on its deck, facing down the stream, the rod picked up; the worms and Stop at the bottom', s.state === 'ready' && s.water === 'river' && Math.hypot(s.pos[0] - s.R.stand[0], s.pos[2] - s.R.stand[1]) < 0.15 && Math.abs(s.pos[1] - s.R.deck) < 0.03 && s.R.deck > 0.2 && Math.abs(Math.atan2(Math.sin(s.heading - s.R.face), Math.cos(s.heading - s.R.face))) < 0.3 && rodNow.inHand && !rodNow.onDeck && s.bar, { s, rodNow });
 await p.evaluate(() => { const f = window.__farm, R = f.river(); f.lookAt(R.stand[0] + Math.sin(R.face) * 1.2, R.stand[1] + Math.cos(R.face) * 1.2, 2.2); });

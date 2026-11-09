@@ -4642,3 +4642,58 @@ doesn't redraw them on every step.
   the eight buttons and the compass: never over one, mostly moved off rather than hidden, its tail towards the field;
   in open ground where it always was.
 
+## The show in sight, one job at a time, fishing explained (9 Nov 2026, Audrey on her iPhone: "The show section is hidden in the trees. The fishing section, the farmer takes too long to come. It was busy with a previous task so perhaps we can only allow one task at the time. But also the farmer should run especially if he is far. See for fishing we have 2 buttons clipping. Also there is no instruction as of how it works. I just tried and failed twice with still no idea of what to do to get the fish out of the water"; her choice: "One job at a time")
+- **The show:** the tent stands just past the farm's edge, among the woods, whose round crowns stood between it and the
+  view. For the show the woods' trees on the tent's ground and in front of it (in the usual view's terms: within 6.2 m
+  across, from 8 m in front to 3.6 m behind) step aside (`woodsAside`: their instances scaled to nothing, put back after),
+  and the corner column, the compass and the bubbles are put away while it plays (`body.showday`): Skip had sat on Home.
+- **One job at a time:** the farmer's jobs (a cuddle, worms, a feeder, a treat, fishing, the geese, sowing, harvesting,
+  the honey, the garden, a basket to the stall; the farm's own: seeing youngsters off, chasing Rusty) each say what they
+  are (`seq.job`, farmlife.js `busyWith()`); main.js `farmerJob()`, `farmerBusyText()`: "Arthur is giving Juniper a
+  cuddle. One job at a time: free again in a moment." (fishing: "…tap Stop fishing first"). While he's at one, every
+  card's buttons for another wait, the note over them (gameUI `busyNote`: the bird's Cuddle, worms and treat, Go fishing,
+  the geese's visit, Sow and Harvest, the garden's beds, the feeder, the treats, the baskets to deliver), and a bubble
+  tapped for one says it (`jobGate`); once he's free the open card comes again with its buttons back (`tickBusy`, each
+  frame). Before, a job asked meanwhile waited behind the one he was at (`pending`), and the wheat, the honey and a feeder
+  were simply done without him. Words: `busy_*` (`job_*` were taken by Today's jobs), six languages.
+- **Running:** hurrying to a job more than 5 m off he runs (2.15 m/s, the geese's chase's pace), back to a hurry for
+  the last 3.5 m (TK.path).
+- **Fishing's panel** (fishing.js `ui`): one panel at the bottom: what to do now in words (dark; orange and pulsing for
+  "Now! Tap!", red for a warning or what went wrong, green for going well), the gauge while reeling (🐟 to 🪣 over it:
+  how far the fish has come), then the worms, "?" and Stop. The words were on the farm's own line (`#hint`), which
+  sideways sat under the worms and Stop: she never saw "Watch the float" or "Hold to reel". While fishing the farm's own
+  words go to the top (`body.fishing`). As it goes: "Casting…", "Watch the float: tap when it's pulled right under", "A
+  nibble… not yet!", "Now! Tap!"; reeling: "Hold your finger down to reel in", "That's it! Keep the needle in the green",
+  "Too tight! Let go a moment", "Too slack! Hold again"; what happened (too soon, too late, snapped, slipped) for 2.6 s,
+  then what to do. (The method is `words()`: `tip` is the rod's tip.)
+- **How to fish** (gameUI `fishHelp`): its card by itself the first time he's ready to cast while no fish is in yet
+  (once a visit), and from "?": 1 Cast, 2 Strike, 3 Reel in, with the gauge drawn as it looks ("Slack: hold", "Reeling
+  in", "Too tight: let go") and "Your first catch will be an easy one". While it's open the fish waits (`o.reading`).
+- **The first catch easy** (fishing.js `EASY`): till a first fish is in, 2.2 s to strike (was 0.95 to 1.25), the green
+  from 0.2 to 0.84 (was 0.28 to 0.76 at its widest), a gentler pull, rarer surges.
+- Tests: `busytest.mjs` (new, English and French: he runs from 12 m off, under 1.6 m/s near; another hen's card and the
+  dock's waiting with the note; a cuddle asked anyway: nothing done; free: the card back; fishing: "tap Stop fishing
+  first"); `fishtest.mjs` (the how-to card by itself, Got it, the panel's parts side by side and on the screen, the farm's
+  words clear of it, "?", the new words); `showdaytest.mjs` as before.
+- **The last grain** (penvisit corn, main.js `goEat`/`ate`): a grain lying where no hen can stand close enough to peck
+  it (in a corner by the fence) kept the hens going back to it for good. Now a grain gone for five times is had by a
+  sparrow (gone), and the grain a hen went for counts as hers when it's within 0.32 m of her. The tests that ask the
+  farmer for several jobs in a row (`cuddletest`, `jobtest`, `duckfarmertest`) wait for him to be free between them.
+
+## Three more looks (9 Nov 2026; Audrey: "Come with more style mocks, I am not overly convinced by strorybook")
+- Three new directions, on the same Design canvas ("Feather & Field art style mocks", a second row: "Round 2: three more
+  looks", Storybook beside them, then a board each with the farm, a coop close, the house and garden, zoomed out). Only
+  light, colour and ground change; every bird, the farmer and the animals exactly as they are (her rule: "do not alter
+  models of the characters and animals").
+  - **Sunny pastel** (`?look=pastel`): soft rounded light (`ramp: 'soft'`), shade with a hint of lavender (the sky's
+    light tinted), a lawn mown in stripes (`ground: 'stripes'`), no lines, no grass tufts, a little lift to white
+    (`pastel`), a warm haze. About 760,000 triangles, grass 76,000.
+  - **Painted** (`?look=painted`): a warm afternoon: golden sun (`sunTint`), blue shade, three soft tones
+    (`ramp: 'soft3'`), a brushed meadow (`ground: 'meadow'`: cool and warm strokes) with tufts, soft violet lines
+    (`inkC`), a gentle glow and vignette. About 780,000, grass 92,000.
+  - **Bright cel** (`?look=breeze`): two crisp tones (`ramp: 'two'`), airy blue shade, a cool edge light (`rimC`),
+    strong colours, a light summer haze, no lines. About 780,000.
+- looks.js: `rimC` (the edge light's colour), `pastel` (a lift to white), `sky`/`gnd`/`sunTint` (applyDaylight tints the
+  sky light, the ground light and the sun), `haze` (a page-wide wash over the farm). Storybook stays the game's look
+  till she picks; each new one can be tried live on the site.
+

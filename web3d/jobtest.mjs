@@ -48,8 +48,10 @@ await p.evaluate(() => window.__farm.gameUI().close());
 // doing them: each kind (whatever today's are, all four counted where they are)
 const doJob = async k => p.evaluate(k => {
   const f = window.__farm, g = f.game();
+  const free = () => { for (let i = 0; i < 30 * 90 && f.farmerJob(); i++) f.step(1 / 30, 1); };      // (one job at a time, 9 Nov 2026: the farmer done with the last before the next)
+  free();
   if (k === 'eggs') { const c = g.data.coops[0]; c.eggs = 12; g.save(); f.collectAt(0); }
-  if (k === 'cuddle') { for (const b of g.data.birds) { b.happy = 0; } g.save(); for (const b of g.data.birds.slice(0, 3)) f.gameUI().o.cuddle(b.id); }
+  if (k === 'cuddle') { for (const b of g.data.birds) { b.happy = 0; } g.save(); for (const b of g.data.birds.slice(0, 3)) { free(); f.gameUI().o.cuddle(b.id); } }
   if (k === 'feed') { const c = g.data.coops[0]; c.feed = 0; c.fedAt = window.__T; g.data.coins += 50; g.save(); f.fillFeeder(0); }
   if (k === 'show') { f.showsSheet(); document.querySelector('.gshow .gbtn').click(); }
 }, k);

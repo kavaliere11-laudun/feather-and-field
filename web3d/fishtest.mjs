@@ -32,7 +32,7 @@ const load = async () => {
 };
 const st = () => p.evaluate(() => { const f = window.__farm, F = f.fishing(), L = f.farmer(), g = f.game(), G = f.dockGate(), D = f.dock();
   return { state: F ? F.state : null, seq: !!f.fishSeq(), pos: [+L.pos.x.toFixed(2), +L.pos.y.toFixed(2), +L.pos.z.toFixed(2)], home: L.home, worms: g.worms(), coins: g.data.coins, xp: g.data.xp,
-    gate: G ? +G.open.toFixed(2) : null, D: D && { stand: D.stand, deck: D.deck }, bar: F ? !F.bar.hidden : false, gauge: F ? !F.gauge.hidden : false, hint: document.getElementById('hint').textContent,
+    gate: G ? +G.open.toFixed(2) : null, D: D && { stand: D.stand, deck: D.deck }, bar: F ? !F.bar.hidden : false, gauge: F ? !F.gauge.hidden : false, hint: F && !F.bar.hidden && F.tipEl.textContent ? F.tipEl.textContent : document.getElementById('hint').textContent, tip: F ? F.tipEl.textContent : '',
     float: F ? F.float.visible : false, said: L.said.slice(-3), got: g.data.fish ? Object.keys(g.data.fish.got) : [] }; });
 const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null;
   return { kind: window.__farm.gameUI().kind, text: s.innerText, go: !!s.querySelector('button[data-fish=go]'), tin: !!s.querySelector('button[data-fish=tin]'), keep: (s.querySelector('button[data-fish=keep]') || {}).textContent || null,
@@ -87,6 +87,26 @@ ok('through the dock\'s gate in the wild meadow\'s fence (it opened as he went i
 const rodNow = await p.evaluate(() => { const F = window.__farm.fishing(), L = window.__farm.farmer(); return { onDeck: F.deckRod.visible, inHand: F.rodIn && !!L.f.rig.rod && L.f.rig.rod.visible }; });
 ok('he picked his rod up off the dock (it\'s in his hand now)', !rodNow.onDeck && rodNow.inHand, rodNow);
 ok('out at the dock\'s end, up on its deck, ready: the worms and Stop at the bottom, "Tap the water to cast"', s.state === 'ready' && Math.hypot(s.pos[0] - s.D.stand[0], s.pos[2] - s.D.stand[1]) < 0.15 && Math.abs(s.pos[1] - s.D.deck) < 0.02 && s.bar && (fr ? /Touchez l’eau/ : /Tap the water/).test(s.hint), s);
+// (9 Nov 2026, Audrey: "there is no instruction as of how it works"): no fish caught yet, the how-to card by itself, its three
+// steps and the gauge drawn, "your first catch will be an easy one"; the fish waits while it's open; Got it
+let hs = await sheet();
+const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: !!s.querySelector('.fishdemo .fishgreen'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
+ok('the first time, no fish yet: "How to fish" by itself (cast, strike, reel in, the gauge as it looks, an easy first catch)', hs && hs.kind === 'fishhelp' && hInfo.steps === 3 && hInfo.demo && hInfo.ok && (fr ? /Comment pêcher/.test(hs.text) && /facile/.test(hs.text) : /How to fish/.test(hs.text) && /easy one/.test(hs.text)), { hs, hInfo });
+await shoot('0_howto');
+await p.evaluate(() => document.querySelector('.gsheet button[data-fhelp=ok]').click()); await run(0.3);
+ok('Got it: the card closed, the panel there: what to do, the worms, ? and Stop', !(await sheet()) && await p.evaluate(() => { const F = window.__farm.fishing(); return !F.bar.hidden && !!F.helpBtn && F.helpBtn.offsetWidth > 0; }));
+// the panel: nothing over anything (its words, the worms, ?, Stop), on the screen, the farm's own words clear of it
+const lay = await p.evaluate(() => { const F = window.__farm.fishing(), r = e => e.getBoundingClientRect(), els = [F.tipEl, F.wormsEl, F.helpBtn, F.stopBtn].map(r);
+  const over = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  const pairs = []; for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) if (over(els[i], els[j])) pairs.push([i, j]);
+  const H = document.getElementById('hint'); H.textContent = 'A test of the farm’s own words, as long as most of them'; H.classList.add('on');
+  const hr = r(H), panel = r(F.bar), off = els.some(q => q.left < 0 || q.right > innerWidth || q.bottom > innerHeight);
+  H.classList.remove('on');
+  return { pairs, off, hintOver: over(hr, panel), panel: [panel.left, panel.top, panel.right, panel.bottom].map(Math.round), hint: [hr.top, hr.bottom].map(Math.round) }; });
+ok('the panel: its words, the worms, ? and Stop side by side, nothing over another, on the screen; the farm\'s own words clear of it', !lay.pairs.length && !lay.off && !lay.hintOver, lay);
+await p.evaluate(() => window.__farm.fishing().helpBtn.click()); await run(0.2);
+ok('"?": the how-to card again (without the easy-catch line once a fish is in: see below)', (await sheet() || {}).kind === 'fishhelp');
+await p.evaluate(() => document.querySelector('.gsheet button[data-fhelp=ok]').click()); await run(0.2);
 await p.evaluate(() => { const f = window.__farm, D = f.dock(); f.lookAt(D.stand[0] - Math.sin(D.face) * 0.3, D.stand[1] - Math.cos(D.face) * 0.3, 2.0); });
 await run(0.3); await shoot('1_dock');
 // a cast
@@ -99,7 +119,7 @@ ok('a tap too soon: "Too soon!", still waiting', s.state === 'wait' && (fr ? /Tr
 ok('then the bite', await until(() => window.__farm.fishing().state === 'bite', 20));
 await shoot('2_bite');
 await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
-ok('a tap: reeling, the gauge up', s.state === 'reel' && s.gauge && (fr ? /Maintenez/ : /Hold to reel/).test(s.hint), s);
+ok('a tap: reeling, the gauge up, "Hold your finger down to reel in"', s.state === 'reel' && s.gauge && (fr ? /doigt appuyé/ : /Hold your finger down/).test(s.hint), s);
 await run(0.6); await shoot('3_reel');
 const c0 = (await st()).coins, x0 = (await st()).xp;
 let end = await reel('good');

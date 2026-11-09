@@ -26,6 +26,9 @@ const sm = u => u * u * (3 - 2 * u);
 // the reel's feel by how rare the fish is: the green part of the gauge, how quickly reeling brings it in, its pull
 const FIGHT = [{ g0: 0.28, g1: 0.76, rate: 0.2, pull: 0.26, every: [1.3, 2.6] }, { g0: 0.34, g1: 0.72, rate: 0.13, pull: 0.36, every: [1.0, 2.0] }, { g0: 0.38, g1: 0.7, rate: 0.09, pull: 0.42, every: [0.9, 1.8] }];
 const SNAP_T = 0.75, SLIP_T = 2.6, BITE_WIN = [1.25, 1.05, 0.95];
+// (9 Nov 2026, Audrey: "I just tried and failed twice with still no idea of what to do to get the fish out of the water"):
+// till the first fish is in, an easy one: longer to strike, a wide green, a gentle pull
+const EASY = { g0: 0.2, g1: 0.84, rate: 0.26, pull: 0.16, every: [1.8, 3.2] }, EASY_BITE = 2.2;
 
 // ---- the little things on the water: rings spreading, the float, the line, a fish's shadow, a "!"
 function ringPool(scene, n, y) {
@@ -129,21 +132,44 @@ export class Fishing {
   }
   get on() { return this.state !== 'off'; }
   props(on) { this.bucket.visible = on; this.deckRod.visible = on && !this.rodIn; }
-  // ---- the screen's part: the worms and Stop at the bottom; the gauge while reeling; a sheet of glass over the farm from
-  // the cast to the catch (a tap or a hold anywhere is the player's; the view stays put)
+  // ---- the screen's part, one panel at the bottom (9 Nov 2026, Audrey: the worms and Stop sat on the words saying what to
+  // do, "there is no instruction as of how it works"): what to do now, in words (the tip: coloured for the moment to tap,
+  // for a warning, for going well), the gauge while reeling (the fish's way in to the bucket over it), then the worms, "?"
+  // (how to fish: its card) and Stop. A sheet of glass over the farm from the cast to the catch (a tap or a hold anywhere
+  // is the player's; the view stays put); the panel's words and gauge let a hold through to it
   ui() {
     const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
-    this.bar = el('div', 'fishbar'); this.wormsEl = el('span', 'fishworms'); this.stopBtn = el('button', 'fishstop'); this.stopBtn.type = 'button';
+    this.bar = el('div', 'fishbar'); this.tipEl = el('div', 'fishtip'); const row = el('div', 'fishrow');
+    this.wormsEl = el('span', 'fishworms'); this.stopBtn = el('button', 'fishstop'); this.stopBtn.type = 'button';
     this.stopBtn.addEventListener('click', () => this.stop());
-    this.bar.append(this.wormsEl, this.stopBtn); this.bar.hidden = true;
+    this.helpBtn = el('button', 'fishhelp', '?'); this.helpBtn.type = 'button'; this.helpBtn.addEventListener('click', () => this.help());
+    row.append(this.wormsEl, this.helpBtn, this.stopBtn);
     this.gauge = el('div', 'fishgauge'); const track = el('div', 'fishtrack'); this.green = el('div', 'fishgreen'); this.needle = el('div', 'fishneedle');
     this.prog = el('div', 'fishprog'); this.progFill = el('div', 'fishprogfill'); this.prog.append(this.progFill);
-    track.append(this.green, this.needle); this.gauge.append(this.prog, track); this.gauge.hidden = true;
+    const way = el('div', 'fishway'); way.append(el('span', 'fishway-e', '🐟'), this.prog, el('span', 'fishway-e', '🪣'));
+    track.append(this.green, this.needle); this.gauge.append(way, track); this.gauge.hidden = true;
+    this.bar.append(this.tipEl, this.gauge, row); this.showBar(false);
     this.glass = el('div', 'fishglass'); this.glass.hidden = true;
     const down = e => { e.preventDefault(); this.press(true); }, up = e => { e.preventDefault(); this.press(false); };
     this.glass.addEventListener('pointerdown', down); this.glass.addEventListener('pointerup', up); this.glass.addEventListener('pointercancel', up); this.glass.addEventListener('pointerleave', up);
-    document.body.append(this.glass, this.gauge, this.bar);
+    document.body.append(this.glass, this.bar);
   }
+  showBar(on) { this.bar.hidden = !on; document.body.classList.toggle('fishing', on); if (on) this.helpBtn.setAttribute('aria-label', this.o.t('fhelp_title')); }
+  // the panel's words: what to do now (kind: 'bite', 'warn' or 'good' colours them); flash: something that happened, for a
+  // couple of seconds, then back to what to do
+  words(key, kind = '') { this.tipUntil = 0; if (this.tipKey === key) return; this.tipKey = key; this.tipEl.textContent = key ? this.o.t(key) : ''; this.tipEl.className = 'fishtip' + (kind ? ' ' + kind : ''); }
+  flash(key) { this.words(key, 'warn'); this.tipUntil = performance.now() + 2600; }
+  nowTip() {
+    const s = this.state;
+    if (s === 'ready') this.words(this.o.game.worms() ? 'fish_cast' : 'fish_worms0');
+    else if (s === 'wait' || s === 'cast') this.words('fish_watch');
+    else if (s === 'nibble') this.words('fish_nibble');
+    else if (s === 'bite') this.words('fish_bite', 'bite');
+  }
+  // how to fish (its card: main.js); by itself the first time he's ready to cast, while no fish is in yet
+  anyCaught() { const g = this.o.game.data && this.o.game.data.fish && this.o.game.data.fish.got; return !!g && Object.keys(g).length > 0; }
+  help() { if (this.o.help) this.o.help(!this.anyCaught()); }
+  fight() { return this.easy ? EASY : FIGHT[this.bite.rare]; }
   refreshBar() {
     const n = this.o.game.worms(), t = this.o.t;
     this.wormsEl.textContent = '🪱 ' + (n === 1 ? t('fish_worms1') : n ? t('fish_worms', { n }) : t('fish_worms0'));
@@ -151,16 +177,19 @@ export class Fishing {
   }
   // ---- out at the dock's end (main.js, once the farmer's there): he crouches and picks his rod up, then he's ready
   start() { this.state = 'pickup'; this.t = 0; this.then = 'ready'; this.o.wake(1500); }
-  ready() { this.state = 'ready'; this.t = 0; this.bar.hidden = false; this.refreshBar(); this.o.hint(this.o.t(this.o.game.worms() ? 'fish_cast' : 'fish_worms0')); }
+  ready() {
+    this.state = 'ready'; this.t = 0; this.showBar(true); this.refreshBar(); this.tipKey = null; this.nowTip();
+    if (!this.helped && !this.anyCaught()) { this.helped = true; this.help(); }
+  }
   stop() {                                         // (Stop, or night falling: the line wound in, the rod laid down, off he goes)
     if (['off', 'laydown', 'leaving'].includes(this.state)) return;
     if (['reel', 'bite', 'wait', 'nibble', 'cast'].includes(this.state)) this.o.game.loseFish();
-    this.clearWater(); this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true;
+    this.clearWater(); this.showBar(false); this.gauge.hidden = true; this.glass.hidden = true;
     if (this.fish) { this.keep = false; return; }   // (a fish in his hands: into the bucket first; he stops after)
     if (this.rodIn) { this.state = 'laydown'; this.t = 0; this.then = 'leaving'; } else this.state = 'leaving';
     this.o.wake(1000);
   }
-  end() { this.clearWater(); if (this.fish) { this.fish.root.removeFromParent(); this.fish = null; } this.result = null; this.state = 'off'; this.rodIn = false; this.bar.hidden = true; this.gauge.hidden = true; this.glass.hidden = true; this.deckRod.matrix.copy(this.rodRest); this.deckRod.updateMatrixWorld(true); this.props(true); }
+  end() { this.clearWater(); if (this.fish) { this.fish.root.removeFromParent(); this.fish = null; } this.result = null; this.state = 'off'; this.rodIn = false; this.showBar(false); this.gauge.hidden = true; this.glass.hidden = true; this.deckRod.matrix.copy(this.rodRest); this.deckRod.updateMatrixWorld(true); this.props(true); }
   clearWater() {
     this.float.visible = false; this.line.mesh.visible = false; this.shadow.visible = false; this.bang.visible = false; this.rings.hide();
     if (this.fish && !['lift', 'unhook', 'show', 'trophy', 'card', 'away'].includes(this.state)) { this.fish.root.removeFromParent(); this.fish = null; }
@@ -181,8 +210,8 @@ export class Fishing {
       if (!this.o.inWater(tx, tz)) return false;
     }
     const bite = this.o.game.castWorm(this.o.water);
-    if (!bite) { this.o.hint(this.o.t('fish_noworms')); return true; }
-    this.bite = bite; this.refreshBar();
+    if (!bite) { this.flash('fish_noworms'); return true; }
+    this.bite = bite; this.easy = !this.anyCaught(); this.refreshBar(); this.words('fish_casting');
     this.target = new THREE.Vector3(tx, this.o.waterY, tz); this.state = 'cast'; this.t = 0; this.glass.hidden = false;
     this.o.wake(3000);
     return true;
@@ -192,25 +221,27 @@ export class Fishing {
     this.hold = on && this.state === 'reel';
     if (!on) return;
     if (this.state === 'bite') { this.strike(); return; }
-    if (this.state === 'wait' || this.state === 'nibble') { this.o.hint(this.o.t('fish_soon')); this.state = 'wait'; this.t = 0; this.waitFor = 2 + Math.random() * 2.5; }
+    if (this.state === 'wait' || this.state === 'nibble') { this.flash('fish_soon'); this.state = 'wait'; this.t = 0; this.waitFor = 2 + Math.random() * 2.5; }
   }
   strike() {
-    const F = FIGHT[this.bite.rare];
+    const F = this.fight();
     this.state = 'reel'; this.t = 0; this.T = 0.45; this.p = 0; this.over = 0; this.slack = 0; this.surge = 0; this.nextSurge = 0.8; this.hold = true;
     this.bang.visible = false; this.gauge.hidden = false;
     this.green.style.left = (F.g0 / 1.2 * 100) + '%'; this.green.style.width = ((F.g1 - F.g0) / 1.2 * 100) + '%';
-    this.o.hint(this.o.t('fish_reel')); this.o.wake(3000);
+    this.words('fish_r_hold'); this.o.wake(3000);
     this.fishAt = this.target.clone(); this.shadow.visible = true; this.shadow.material.opacity = 0;
     const L = Math.max(0.1, (this.bite.cm / 100) * 0.9); this.shadow.scale.set(L * 0.16, 1, L * 0.5);
     this.rings.add(this.target.x, this.target.z, 0.35, 0.9);
   }
   lose(key) {
     this.o.game.loseFish(); this.clearWater(); this.gauge.hidden = true; this.glass.hidden = true;
-    this.state = 'ready'; this.t = 0; this.o.hint(this.o.t(key)); this.refreshBar(); this.o.wake(1500);
+    this.state = 'ready'; this.t = 0; this.flash(key); this.refreshBar(); this.o.wake(1500);
   }
   // ---- each frame (the water's part; the farmer's own, and the fish in his hands, in drive)
   update(dt, camDir) {
     if (this.state === 'off') return;
+    if (this.tipUntil && performance.now() > this.tipUntil) { this.tipUntil = 0; this.tipKey = null; if (this.state !== 'reel') this.nowTip(); }
+    if (this.o.reading && this.o.reading() && /^(wait|nibble|bite|reel)$/.test(this.state)) { this.hold = false; return; }      // (the how-to card open: the fish waits)
     this.t += dt; this.rings.update(dt);
     const S = this.o.spot, tip = this.tip, W = this.o.waterY;
     if (this.state === 'cast') {
@@ -218,28 +249,28 @@ export class Fishing {
       if (this.t > 0.45 && tip) {
         const u = clamp((this.t - 0.45) / 0.6, 0, 1), p = tip.clone().lerp(this.target, u); p.y = tip.y + (this.target.y - tip.y) * u + 0.9 * 4 * u * (1 - u) * 0.6;
         this.float.position.copy(p); this.float.visible = true; this.line.set(tip, p, 0.02, camDir);
-        if (u >= 1) { this.state = 'wait'; this.t = 0; this.waitFor = 2.5 + Math.random() * 4; this.nibbles = 1 + Math.floor(Math.random() * 3); this.rings.add(this.target.x, this.target.z, 0.22); this.o.hint(this.o.t('fish_wait')); }
+        if (u >= 1) { this.state = 'wait'; this.t = 0; this.waitFor = 2.5 + Math.random() * 4; this.nibbles = 1 + Math.floor(Math.random() * 3); this.rings.add(this.target.x, this.target.z, 0.22); if (!this.tipUntil) this.nowTip(); }
       }
     } else if (this.state === 'wait' || this.state === 'nibble' || this.state === 'bite') {
       let dip = 0;
       if (this.o.drift) this.o.drift(this.target, dt);          // (the river: carried off downstream, as far as the line lets it)
-      if (this.state === 'wait' && this.t > this.waitFor) { this.state = 'nibble'; this.t = 0; }
+      if (this.state === 'wait' && this.t > this.waitFor) { this.state = 'nibble'; this.t = 0; if (!this.tipUntil) this.nowTip(); }
       if (this.state === 'nibble') {
         const k = Math.floor(this.t / 0.7), u = (this.t % 0.7) / 0.7;
         if (k < this.nibbles) { dip = u < 0.3 ? Math.sin(u / 0.3 * Math.PI) * 0.012 : 0; if (u < dt / 0.7 + 1e-3) this.rings.add(this.target.x, this.target.z, 0.12, 0.7); }
-        else { this.state = 'bite'; this.t = 0; this.rings.add(this.target.x, this.target.z, 0.4, 1.0); this.rings.add(this.target.x, this.target.z, 0.25, 0.8); this.o.hint(this.o.t('fish_bite')); }
+        else { this.state = 'bite'; this.t = 0; this.rings.add(this.target.x, this.target.z, 0.4, 1.0); this.rings.add(this.target.x, this.target.z, 0.25, 0.8); this.nowTip(); }
       }
       if (this.state === 'bite') {
         dip = Math.min(0.06, this.t * 0.4);
         this.bang.visible = true; this.bang.position.set(this.target.x, W + 0.25 + 0.03 * Math.sin(this.t * 18), this.target.z);
-        if (this.t > BITE_WIN[this.bite.rare]) { this.bang.visible = false; this.lose('fish_missed'); return; }
+        if (this.t > (this.easy ? EASY_BITE : BITE_WIN[this.bite.rare])) { this.bang.visible = false; this.lose('fish_missed'); return; }
       }
       const fp = this.target.clone(); fp.y = W + 0.006 * Math.sin(this.t * 2.6) - dip;
       this.float.position.copy(fp); this.float.visible = fp.y > W - 0.04;
       if (tip) this.line.set(tip, fp, 0.12, camDir);
       this.o.wake(200);
     } else if (this.state === 'reel') {
-      const F = FIGHT[this.bite.rare], big = 0.8 + 0.4 * clamp((this.bite.cm - 5) / 100, 0, 1);
+      const F = this.fight(), big = 0.8 + 0.4 * clamp((this.bite.cm - 5) / 100, 0, 1);
       // the fish's pull: a surge now and then, harder for a rarer, bigger fish
       this.nextSurge -= dt; if (this.nextSurge <= 0) { this.surge = 0.35; this.nextSurge = F.every[0] + Math.random() * (F.every[1] - F.every[0]); this.surgeK = F.pull * big * (0.7 + 0.6 * Math.random()); }
       let dT = this.hold ? 0.85 : -0.75;
@@ -251,6 +282,9 @@ export class Fishing {
       this.slack = this.T < F.g0 * 0.6 && this.p > 0.04 ? this.slack + dt : 0;
       this.needle.style.left = (this.T / 1.2 * 100) + '%'; this.progFill.style.width = (this.p * 100) + '%';
       this.needle.classList.toggle('hot', this.T > 1.0); this.needle.classList.toggle('ok', inGreen);
+      // (saying what to do as it goes: hold to reel; in the green, good; heading for the red, let go a moment; slack with the
+      // fish on, hold again)
+      if (!this.tipUntil) { const k = this.T > F.g1 ? 'fish_r_ease' : this.T < F.g0 ? (this.p > 0.04 && !this.hold ? 'fish_r_slack' : 'fish_r_hold') : 'fish_r_good'; this.words(k, k === 'fish_r_good' ? 'good' : k === 'fish_r_hold' ? '' : 'warn'); }
       if (this.over > SNAP_T) { this.lose('fish_snap'); return; }
       if (this.slack > SLIP_T) { this.lose('fish_slip'); return; }
       // its shadow coming in under the water, weaving; a ring now and then
@@ -277,7 +311,7 @@ export class Fishing {
   }
   landed() {
     this.result = this.o.game.landFish();
-    this.gauge.hidden = true; this.shadow.visible = false; this.hold = false;
+    this.gauge.hidden = true; this.shadow.visible = false; this.hold = false; this.showBar(false);
     if (!this.result) { this.lose('fish_slip'); return; }
     const f = new Fish(this.result.id, this.o.grade); this.fish = f;
     const L = f.spec.L, show = Math.max(0.3, Math.min(0.72, L * 1.7)) * (0.9 + 0.2 * (this.result.cm - f.spec.cm[0]) / Math.max(1, f.spec.cm[1] - f.spec.cm[0]));      // (larger than life in his hands, so it reads on a phone; a bigger one a little bigger)
@@ -288,7 +322,7 @@ export class Fishing {
     this.o.wake(2000);
   }
   showCard() {
-    this.state = 'card'; this.t = 0; this.glass.hidden = true; this.bar.hidden = true;
+    this.state = 'card'; this.t = 0; this.glass.hidden = true; this.showBar(false);
     this.o.card(this.result, keep => { this.keep = keep; this.state = 'away'; this.t = 0; this.splashed = false; this.o.wake(2000); });
   }
   // ---- the fish in his hands: cradled on both palms (along his shoulders, belly down, a little out from him), or on his

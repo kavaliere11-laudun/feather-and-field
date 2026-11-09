@@ -340,6 +340,15 @@ export class GameUI {
     });
   }
   // ---- a bird's card: who she is, her personality, experience and trust, where she lives
+  // one job at a time (9 Nov 2026, Audrey's choice): while the farmer's at a job, a card's buttons for another wait, a note
+  // above them saying what he's doing (main.js farmerBusyText; the card's opened again once he's free)
+  busyNote(btns) {
+    const t = this.o.busy ? this.o.busy() : '', list = btns.filter(Boolean);
+    if (!t || !list.length) return '';
+    for (const x of list) { x.disabled = true; x.classList.add('gwait'); }
+    list[0].before(el('p', 'gnote gbusy', '🧑‍🌾 ' + t));
+    return t;
+  }
   birdCard(b) {
     const g = this.g, f = b.sex === 'h', coop = g.coop(b.coop);
     const body = this.open('bird', b.name);
@@ -352,7 +361,9 @@ export class GameUI {
     const left = g.happyLeft(b), state = this.o.cuddleState ? this.o.cuddleState(b) : 'ok';
     if (left > 0) body.append(el('p', 'gtext ghappy', '♥ ' + this.t('happy_left', { when: g.howLong(left) }, f)));
     else if (state === 'night') body.append(el('p', 'gnote', this.t('cuddle_night', { farmer: g.farmerName() })));
-    else { const cb = el('button', 'gbtn gcuddle', this.t('cuddle_btn')); cb.type = 'button'; cb.addEventListener('click', () => { if (this.o.cuddle) this.o.cuddle(b.id); }); body.append(cb); }
+    let cb = null, wb = null, tb = null;      // (the farmer's jobs here: a cuddle, her worms, a treat)
+    if (left > 0 || state === 'night') { /* */ }
+    else { cb = el('button', 'gbtn gcuddle', this.t('cuddle_btn')); cb.type = 'button'; cb.addEventListener('click', () => { if (this.o.cuddle) this.o.cuddle(b.id); }); body.append(cb); }
     // worms (once fishing's open; Audrey's idea): what she finds for the farmer each day, by how much she loves him; "Ask
     // for worms": all of today's at once (given today: more tomorrow; shy: cuddles help; at night: in the morning)
     if (g.fishOpen('pond')) {
@@ -360,13 +371,14 @@ export class GameUI {
       if (g.wormsGiven(b)) body.append(el('p', 'gtext gfound gwormsgot', this.t('worms_given', { name: b.name, farmer })));
       else if (!wn) body.append(el('p', 'gnote gwormsshy', this.t('worms_shy', { name: b.name, farmer })));
       else if (state === 'night') { if (left > 0) body.append(el('p', 'gnote', this.t('worms_night', { farmer }))); }
-      else { const wb = el('button', 'gbtn galt gworms', this.t('worms_ask', { n: wn })); wb.type = 'button'; wb.dataset.worms = 'ask'; wb.addEventListener('click', () => { if (this.o.askWorms) this.o.askWorms(b.id); }); body.append(wb); }
+      else { wb = el('button', 'gbtn galt gworms', this.t('worms_ask', { n: wn })); wb.type = 'button'; wb.dataset.worms = 'ask'; wb.addEventListener('click', () => { if (this.o.askWorms) this.o.askWorms(b.id); }); body.append(wb); }
     }
     // a treat from the vegetable garden for her coop (7 Nov 2026): one a day for each coop, by day (its card: h.treat)
     if (g.gardenOpen() && coop) {
       if (g.treatToday(coop)) body.append(el('p', 'gtext gfound gtreatgot', this.t('treat_had')));
-      else if (state !== 'night') { const tb = el('button', 'gbtn galt gtreat', this.t('treat_btn')); tb.type = 'button'; tb.dataset.treat = 'open'; tb.addEventListener('click', () => { if (this.o.treat) this.o.treat(coop.id); }); body.append(tb); }
+      else if (state !== 'night') { tb = el('button', 'gbtn galt gtreat', this.t('treat_btn')); tb.type = 'button'; tb.dataset.treat = 'open'; tb.addEventListener('click', () => { if (this.o.treat) this.o.treat(coop.id); }); body.append(tb); }
     }
+    this.busyNote([cb, wb, tb]);
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
@@ -509,7 +521,7 @@ export class GameUI {
     const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : grain && !q.cost ? this.t('fill_grain') : grain && !q.partial ? this.t('fill_grain_c', { c: q.cost }) : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
     go.type = 'button'; go.disabled = !!(q.full || q.broke); if (go.disabled) go.classList.add('galt');
     go.addEventListener('click', () => { if (!go.disabled) onFill(); });
-    b.append(go);
+    b.append(go); if (!go.disabled) this.busyNote([go]);
   }
   // ---- eggs flying from the nest to the coins, then the coins counted up
   flyEggs(from, n, colour, done, cls = 'gegg') {
@@ -867,11 +879,12 @@ export class GameUI {
       const foot = el('div', 'gjobrow'); foot.append(el('span', 'gnote', '🪙 ' + this.t('ord_pay', { c: fmt(P.coins), x: P.xp }) + (P.surprise ? ' · ' + this.t('ord_surprise') : '')));
       c.append(foot);
       const btns = el('div', 'gorder-b');
-      if (ready) { const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('ord_deliver')); go.type = 'button'; go.dataset.ord = 'deliver'; go.addEventListener('click', () => h.deliver && h.deliver(o.id)); btns.append(go); }
+      if (ready) { const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('ord_deliver')); go.type = 'button'; go.dataset.ord = 'deliver'; go.addEventListener('click', () => { if (!go.disabled && h.deliver) h.deliver(o.id); }); btns.append(go); }
       const no = el('button', 'gbtn galt gsmallbtn gorder-no', this.t('ord_decline')); no.type = 'button'; no.dataset.ord = 'decline'; no.addEventListener('click', () => h.decline && h.decline(o.id)); btns.append(no);
       c.append(btns); b.append(c);
     }
     if (!list.length) b.append(el('p', 'gtext', this.t('ord_none')));
+    this.busyNote([...b.querySelectorAll('button[data-ord="deliver"]')]);
     const next = g.orderNextIn(); if (next > 0 && list.length < 3) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
   }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
@@ -1174,8 +1187,8 @@ export class GameUI {
     b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: WHEAT.max })));
     if (st === 'soil') {
       const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
-      go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
-    } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => h.harvest()); b.append(go); }
+      go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go); if (!go.disabled) this.busyNote([go]);
+    } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => { if (!go.disabled) h.harvest(); }); b.append(go); this.busyNote([go]); }
     const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
   }
   // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
@@ -1225,6 +1238,7 @@ export class GameUI {
       const go = el('button', 'gbtn gsmallbtn' + (can ? '' : ' galt'), this.t('treat_give')); go.type = 'button'; go.disabled = !can; go.dataset.give = k;
       go.addEventListener('click', () => { if (!go.disabled) h.give(k); }); card.append(go); b.append(card);
     }
+    this.busyNote([...b.querySelectorAll('button[data-give]:not([disabled])')]);
     if (!g.vegCount()) b.append(el('p', 'gnote gcenter', this.t('treat_none')));
   }
   // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)
@@ -1251,12 +1265,34 @@ export class GameUI {
     body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0'))), el('p', 'gnote', this.t('fish_hens', { farmer })));
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
-    else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => h.go()); body.append(b); }
+    else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => { if (!b.disabled) h.go(); }); body.append(b); this.busyNote([b]); }
     const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
     th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
     const bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke ? ' galt' : ''), broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke; bb.dataset.fish = 'tin';
     bb.addEventListener('click', () => { if (!bb.disabled) h.buy(); });
     tc.append(th, bb); body.append(tc);
+  }
+  // ---- how to fish (9 Nov 2026, Audrey: "there is no instruction as of how it works. I just tried and failed twice with
+  // still no idea of what to do to get the fish out of the water"): cast, strike, reel in, the gauge drawn as it looks with
+  // what each part means; by itself the first time he's ready to cast while no fish is in yet (first: an easy first catch
+  // said), and from the "?" on the fishing panel
+  fishHelp(first) {
+    const body = this.open('fishhelp', '🎣 ' + this.t('fhelp_title'));
+    this.bird = null;
+    for (const [e, k] of [['👆', 1], ['❗', 2], ['✊', 3]]) {
+      const c = el('div', 'gcard ghow gfhelp'), hd = el('div', 'gcard-h'); c.dataset.step = k;
+      hd.append(el('span', 'gemoji', e), el('span', 'gcard-t', this.t('fhelp_' + k + 't')));
+      c.append(hd, el('p', 'gtext', this.t('fhelp_' + k)));
+      if (k === 3) {      // (the gauge as it looks: the needle in the green, slack to the left, too tight to the right)
+        const demo = el('div', 'fishdemo'), tr = el('div', 'fishtrack'), gr = el('div', 'fishgreen'), nd = el('div', 'fishneedle ok'), lab = el('div', 'fishdemo-l');
+        gr.style.left = '28%'; gr.style.width = '40%'; nd.style.left = '47%'; tr.append(gr, nd);
+        lab.append(el('span', '', this.t('fhelp_slack')), el('span', 'ok', this.t('fhelp_good')), el('span', 'hot', this.t('fhelp_tight')));
+        demo.append(tr, lab); c.append(demo);
+      }
+      body.append(c);
+    }
+    if (first) body.append(el('p', 'gnote gcenter', '✨ ' + this.t('fhelp_first')));
+    const row = el('div', 'gstick'), ok = el('button', 'gbtn', this.t('fhelp_ok')); ok.type = 'button'; ok.dataset.fhelp = 'ok'; ok.addEventListener('click', () => this.close()); row.append(ok); body.append(row);      // (kept in sight at the bottom: sideways the card scrolls)
   }
   // ---- a fish caught (fishing.js): its picture, its name and size, new to you or your biggest yet, sold live to the
   // village aquarium shop (or a legendary one's photo, and back into the water), the coins and XP; Keep fishing, or Stop.
@@ -1288,7 +1324,7 @@ export class GameUI {
     body.append(el('p', 'gsub', this.t('geese_sub')));
     if (T.level === 3 && T.happy > 0) body.append(el('p', 'gtext ghappy', '♥ ' + this.t('geese_happy', { when: g.howLong(T.happy) })));
     else if (state === 'night') body.append(el('p', 'gnote', this.t(T.level === 3 ? 'cuddle_night' : 'geese_night', { farmer })));
-    else { const b = el('button', 'gbtn gcuddle', this.t(T.level === 3 ? 'cuddle_btn' : 'geese_visit')); b.type = 'button'; b.addEventListener('click', () => h.visit()); body.append(b); }
+    else { const b = el('button', 'gbtn gcuddle', this.t(T.level === 3 ? 'cuddle_btn' : 'geese_visit')); b.type = 'button'; b.addEventListener('click', () => { if (!b.disabled) h.visit(); }); body.append(b); this.busyNote([b]); }
     const tc = el('div', 'gcard'), th = el('div', 'gcard-h'), hearts = el('span', 'ghearts');
     for (let i = 1; i <= 3; i++) hearts.append(el('span', i <= T.level ? 'on' : '', i <= T.level ? '♥' : '♡'));
     th.append(hearts, el('span', 'gcard-t', this.t('geese_lv' + T.level)));

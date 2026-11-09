@@ -41,7 +41,7 @@ import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
 import { initPlay, addToys, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
-import { LOOKS, lookChunks, lookGround, clumpGeo } from './looks.js';
+import { LOOKS, lookChunks, lookGround, clumpGeo, lookPost } from './looks.js';
 
 const MODELS = './models/';
 // each published version asks for its own copies of the models (?v=...), so a phone never mixes an old model kept from an
@@ -59,6 +59,7 @@ const GAME_MODE = document.body.classList.contains('game');
 const STORY_LOOK = !params.has('oldlook');
 const LOOK = LOOKS[params.get('look') || 'toon'] || null;      // (Storybook, the game's look from 8 Nov 2026, Audrey's choice; ?look=today the look before, ?look=clay or paint the other mocks; looks.js)
 if (LOOK) lookChunks(THREE, LOOK);
+const LOOK_POST = lookPost(LOOK);      // (the farm drawn into a picture first: a look's lines, glow, darker corners)
 if (!STORY_LOOK) document.body.classList.add('oldlook');
 const game = GAME_MODE ? new Game() : null;
 let gameUI = null;
@@ -88,8 +89,8 @@ let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0'
 
 // ------------------------------------------------------------------ renderer, scene, camera, light
 const canvas = document.getElementById('farm');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[q].aa && !(LOOK && LOOK.ink), powerPreference: 'high-performance', stencil: false });      // (Storybook: its outline picture is the one smoothed, the screen only shows it)
-setSoftFur(LOOK && LOOK.ink ? QUALITY[q].aa : renderer.getContext().getContextAttributes().antialias);          // soft fluff edges where the phone antialiases
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: QUALITY[q].aa && !LOOK_POST, powerPreference: 'high-performance', stencil: false });      // (Storybook: its outline picture is the one smoothed, the screen only shows it)
+setSoftFur(LOOK_POST ? QUALITY[q].aa : renderer.getContext().getContextAttributes().antialias);          // soft fluff edges where the phone antialiases
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.NoToneMapping;               // like the Unity farm: colours as they are, no film curve
 renderer.shadowMap.enabled = true;
@@ -98,7 +99,7 @@ renderer.shadowMap.autoUpdate = false;                    // redrawn only when t
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));
 // (a look's touches over the farm, under the game's buttons and cards: clay's tilt-shift blur along the top and bottom,
 // paint's paper grain)
-if (LOOK && (LOOK.tilt || LOOK.paper)) {
+if (LOOK && (LOOK.tilt || LOOK.paper || LOOK.haze)) {
   const st = document.createElement('style');
   st.textContent = `.look-tilt { position: fixed; left: 0; right: 0; height: 24%; z-index: 1; pointer-events: none; -webkit-backdrop-filter: blur(2.4px); backdrop-filter: blur(2.4px); }
 .look-tilt.top { top: 0; -webkit-mask-image: linear-gradient(#000 10%, transparent); mask-image: linear-gradient(#000 10%, transparent); }
@@ -107,6 +108,7 @@ if (LOOK && (LOOK.tilt || LOOK.paper)) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }`;
   document.head.append(st);
   if (LOOK.tilt) for (const k of ['top', 'bot']) { const d = document.createElement('div'); d.className = 'look-tilt ' + k; document.body.append(d); }
+  if (LOOK.haze) { const d = document.createElement('div'); d.style.cssText = `position: fixed; left: 0; right: 0; top: 0; height: 42%; z-index: 1; pointer-events: none; background: linear-gradient(${LOOK.haze}, transparent)`; document.body.append(d); }      // (the far side of the farm in a light haze)
   if (LOOK.paper) {      // (watercolour paper: fine grain, a few fibres, soft blotches; drawn once)
     const N = 384, cv = document.createElement('canvas'); cv.width = cv.height = N; const cx = cv.getContext('2d'), im = cx.createImageData(N, N), r = rng(77);
     const blot = (x, y) => Math.sin(x * 0.045 + Math.sin(y * 0.031) * 2.2) * Math.sin(y * 0.039 + Math.sin(x * 0.027) * 1.8);
@@ -259,6 +261,10 @@ function applyDaylight(h) {
   const mix = (k) => A[k] + (B[k] - A[k]) * u;
   sun.color.copy(A[1]).lerp(B[1], u); sun.intensity = mix(2) * (LOOK ? LOOK.sun : 1);
   hemi.color.copy(A[5]).lerp(B[5], u); hemi.groundColor.copy(A[6]).lerp(B[6], u); hemi.intensity = mix(7) * (LOOK ? LOOK.hemi : 1);
+  if (LOOK) {      // (a look's tinted sky light, the shade's colour, and sun)
+    const tint = (c, k) => { if (k) { c.r *= k[0]; c.g *= k[1]; c.b *= k[2]; } };
+    tint(hemi.color, LOOK.sky); tint(hemi.groundColor, LOOK.gnd); tint(sun.color, LOOK.sunTint);
+  }
   scene.background.copy(A[8]).lerp(B[8], u);
   DAY.glow.value = mix(9); lampPools.update(); WATER_DAY.value = Math.max(0, 1 - DAY.glow.value * 1.4);
   if (METALS.length) { const k = metalK(); for (const m of METALS) m.envMapIntensity = k; }
@@ -553,7 +559,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -3762,6 +3768,9 @@ class Bird {
     const C = this.plot.corn; if (!C || this.busy() || this.cuddle) return false;
     const p = this.root.position, g = C.pick(p.x, p.z, this, this.flock);
     if (!g) { this.eatAt = null; if (C.flying) this.feedIn = 0.3; return false; }
+    // (a grain gone for again and again, where nobody can stand close enough to peck it: a sparrow has it. 9 Nov 2026: one
+    // grain lay on in a corner of a pen for good, the hens going back to it)
+    const q = C.g.find(x => x.to === g); if (q && (q.tries = (q.tries || 0) + 1) > 4) { q.eaten = true; return this.goEat(); }
     const dx = g[0] - p.x, dz = g[1] - p.z, d = Math.hypot(dx, dz), reach = 0.13 * this.rig.scale / 0.5;
     this.eatAt = g; this.act = null; this.wait = 0; this.then = { type: 'peck', left: 1.2 + this.r() * 1.2, eat: true };
     if (d > reach + 0.05) {
@@ -3775,6 +3784,8 @@ class Bird {
     const C = this.plot.corn; if (!C) return;
     const p = this.root.position, y = this.root.rotation.y, reach = 0.13 * this.rig.scale / 0.5;
     C.eat(p.x + Math.sin(y) * reach, p.z + Math.cos(y) * reach, 0.1, 4);
+    const q = this.eatAt && C.g.find(x => x.to === this.eatAt);      // (the grain she went for, right by her though not quite under her beak: hers too)
+    if (q && !q.eaten && Math.hypot(q.to[0] - p.x, q.to[1] - p.z) < 0.32) q.eaten = true;
     this.eatAt = null; if (C.left > 0) this.feedIn = 0.12 + this.r() * 0.35;
   }
   // the farmer crouched in the pen for a cuddle: she hurries over to `spot` and settles there facing him (face: her heading)
@@ -4874,8 +4885,43 @@ function farmerAsleep() { return !farmLife || farmLife.home || DAY.hour >= 21.8 
 // ---- worms from the chickens (Audrey, 28 Oct; game.js askWorms): "Ask for worms" on a bird's card: her worms for the day
 // at once (Friendly 1, Trusting 2, Best friend 3), into the bag; the farmer comes into the pen and crouches with his hand out,
 // she scratches, pecks them up and drops them in his palm (by day, out and about: at night, in the morning)
+// ---- one job at a time (9 Nov 2026, Audrey: "the farmer takes too long to come. It was busy with a previous task so perhaps
+// we can only allow one task at the time"; her choice "One job at a time"): while he's at a job (one you asked for: a cuddle,
+// worms, a feeder, a treat, fishing, the geese, the wheat, the honey, the garden, a basket to the stall; or one of the
+// farm's: seeing youngsters off, chasing Rusty), the buttons for another wait, saying what he's doing; a bubble tapped for
+// one says so. Once he's free an open card's buttons come back (tickBusy). What he's doing: farmlife.js busyWith()
+function farmerJob() {
+  if (!GAME_MODE || !farmLife || !game.data || farmLife.home) return null;
+  if (FSEQ || (FISHING && FISHING.on)) return { kind: 'fish' };
+  return farmLife.busyWith();
+}
+function farmerBusyText(j = farmerJob()) {
+  if (!j) return '';
+  const gb = j.hen && j.hen.gid ? game.bird(j.hen.gid) : null, kind = (j.kind === 'cuddle' || j.kind === 'worms') && !gb ? 'work' : j.kind;
+  const f = !!(game.data.farmer && game.data.farmer.look === 'f');
+  return game.t('busy_' + (BUSY.kinds.includes(kind) ? kind : 'work'), { farmer: farmerName(), name: gb ? gb.name : '' }, f) + ' ' + game.t(kind === 'fish' ? 'busy_wait_fish' : 'busy_wait');
+}
+const BUSY = { text: '', kinds: ['cuddle', 'worms', 'fill', 'treat', 'fish', 'geese', 'sow', 'harvest', 'honey', 'garden', 'order', 'cheer', 'fox', 'work'] };
+function jobGate() { const t = farmerBusyText(); if (!t) return false; hint(t); return true; }
+// the cards with a job's buttons, opened again when he's busy or free (their buttons waiting, or back)
+function tickBusy() {
+  const t = farmerBusyText(); if (t === BUSY.text) return;
+  BUSY.text = t;
+  if (!gameUI.isOpen) return;
+  const k = gameUI.kind;
+  if (k === 'bird' && gameUI.bird) { const b = game.bird(gameUI.bird); if (b) gameUI.birdCard(b); }
+  else if (k === 'dock') dockCard(DOCK_WATER);
+  else if (k === 'geese') geeseCard();
+  else if (k === 'wheat') wheatCard();
+  else if (k === 'garden') gardenCard();
+  else if (k === 'orders') ordersSheet();
+  else if (k === 'feeder' && FEEDER_PLOT) feederCard(FEEDER_PLOT);
+  else if (k === 'treat' && TREAT_COOP) treatCard(TREAT_COOP);
+}
+let DOCK_WATER = 'pond', FEEDER_PLOT = null, TREAT_COOP = null;
 function gameWorms(id) {
   if (farmerAsleep()) return null;
+  if (jobGate()) return null;
   const r = game.askWorms(id); if (!r) return null;
   const b = birdOf(id), gb = game.bird(id);
   gameUI.close(); holdBird(null);
@@ -4896,6 +4942,7 @@ function duckVisitOk(b) {
   const C = b.pen; return !!(farmLife && !farmLife.home && !farmLife.running && !b.plot.farmer && !b.plot.fw && C && !C.bedtime(clockHour()) && !b.inHouse && !b.broody && !b.leaving && !b.laying && b.root.visible && !(C.brood && C.brood.mum === b) && !(b.task && /^(lay|sit|lead|bed|morning)/.test(b.task.name)));
 }
 function gameCuddle(id) {
+  if (jobGate()) return null;
   const r = game.cuddle(id); if (!r || r.happy) return r;
   const b = birdOf(id), gb = game.bird(id), farmer = farmerName();
   gameUI.close(); holdBird(null);
@@ -6075,6 +6122,7 @@ function geeseCard() {
   gameUI.geeseCard(farmerAsleep() ? 'night' : 'ok', { visit: () => geeseVisit() });
 }
 function geeseVisit() {
+  if (jobGate()) return null;
   const r = game.visitGeese(); if (!r) return null;
   gameUI.close();
   const farmer = farmerName();
@@ -6215,7 +6263,8 @@ function fishRoute() {
 }
 // the fishing's things on the dock (his rod lying there, his bucket) from the day the pond opens, and the fishing itself
 const fishText = (k, v) => game.t(k, Object.assign({ farmer: farmerName() }, v || {}), game.data.farmer.look === 'f');
-const fishCommon = () => ({ scene, grade: nightGrade, game, t: fishText, hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake });
+const fishCommon = () => ({ scene, grade: nightGrade, game, t: fishText, hint: t => hint(t), say: k => farmLife.say(k), card: (r, then) => { holdBird(null); henOff(); gameUI.fishCard(r, then); }, wake,
+  help: first => { holdBird(null); henOff(); gameUI.fishHelp(first); }, reading: () => gameUI.isOpen && gameUI.kind === 'fishhelp' });      // (how to fish: its card; the fish waits while it's open)
 function fishingRig() {
   const D = dockInfo(); if (!D || FISHERS.pond) return FISHERS.pond;
   FISHERS.pond = new Fishing(Object.assign(fishCommon(), { water: 'pond', waterY: POND_Y, spot: { stand: D.stand, face: D.face, deck: D.deck }, inWater: (x, z) => fishWater(x, z), reach: [1.2, 4.2] }));
@@ -6229,7 +6278,7 @@ function startFishing(water = 'pond') {
   if (!D || !farmLife || !GAME_MODE || !game.fishOpen(water)) return 'none';
   if (farmerAsleep() || DAY.hour >= 21.6) return 'night';
   if (FSEQ || (FISHING && FISHING.on)) return 'on';
-  if (farmLife.running || farmLife.home || farmLife.pending) return 'busy';          // (out of the door, or busy in a pen: off to the dock straight after)
+  if (farmLife.running || farmLife.home || farmLife.pending || farmerJob()) return 'busy';          // (out of the door, or at another job: one job at a time)
   if (!game.worms()) return 'worms';
   const R = water === 'river' ? riverRoute() : fishRoute(); if (!R) return 'none';
   const Fz = water === 'river' ? riverRig() : fishingRig(); FISHING = Fz;
@@ -6242,9 +6291,10 @@ function startFishing(water = 'pond') {
 // the card of the pond's dock (or the river's footbridge): its fish, the worms, Go fishing, a tin of worms
 function dockCard(water = 'pond') {
   holdBird(null); henOff();
+  DOCK_WATER = water;
   const open = game.fishOpen(water), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
   gameUI.dockCard({ water, open, worms: open ? game.worms() : 0, state: st }, {
-    go: () => { const r = startFishing(water); gameUI.close(); hint(game.t(r === 'ok' ? (water === 'river' ? 'fish_going_river' : 'fish_going') : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
+    go: () => { const bt = farmerBusyText(), r = startFishing(water); gameUI.close(); if (r === 'busy' && bt) { hint(bt); return; } hint(game.t(r === 'ok' ? (water === 'river' ? 'fish_going_river' : 'fish_going') : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
     buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(water); } } });
 }
 const riverCard = () => dockCard('river');
@@ -7186,6 +7236,25 @@ function showSpot() {
   for (const [u, vv] of out) { const X = (u - vv) * R2, Z = -(u + vv) * R2; if (fits(X, Z)) return (SHOW_SPOT = { x: X, z: Z }); }
   return (SHOW_SPOT = null);
 }
+// the woods kept out of the show's way (9 Nov 2026, Audrey: "The show section is hidden in the trees"): the tent stands just
+// past the farm's edge, where the woods grow, and their round crowns stood between it and the view. For the show the
+// trees on the tent's ground and in front of it (nearer the view, up to 8 m: a tall crown in front covers a lot) step
+// aside; back once it's over. In the usual view's terms: u across the screen, v up it (as showSpot)
+const WOODS_ASIDE = [];
+function woodsAside(at) {
+  for (const h of WOODS_ASIDE.splice(0)) { h.mesh.setMatrixAt(h.i, h.m); h.mesh.instanceMatrix.needsUpdate = true; }
+  if (at) {
+    const u0 = (at.x - at.z) * R2, v0 = (-at.z - at.x) * R2, m = new THREE.Matrix4(), p = new THREE.Vector3(), none = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (const mesh of WOODS) {
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, m); p.setFromMatrixPosition(m);
+        const u = (p.x - p.z) * R2, v = (-p.z - p.x) * R2;
+        if (Math.abs(u - u0) < 6.2 && v > v0 - 8 && v < v0 + 3.6) { WOODS_ASIDE.push({ mesh, i, m: m.clone() }); mesh.setMatrixAt(i, none); mesh.instanceMatrix.needsUpdate = true; }
+      }
+    }
+  }
+  renderer.shadowMap.needsUpdate = true;
+}
 async function startShowDay(r, list) {
   const at = showSpot(), gb = game.bird(r.bird), real = allBirds.find(x => x.gid === r.bird);
   if (!at || !gb) { gameUI.showResults(list); return; }
@@ -7199,6 +7268,7 @@ async function startShowDay(r, list) {
     onEnd: () => { if (SHOWDAY) gameUI.showResults(list); } });
   { const wo = game.outfitWorn(); if (wo !== 'classic' && outfitLoaded(wo)) SHOWDAY.farmer.wear(wo); }      // (in the outfit he wears on the farm)
   SHOWDAY.real = real; if (real) real.root.visible = false;
+  woodsAside(at); document.body.classList.add('showday');      // (the trees in front of the tent aside; the corner's buttons put away while it plays)
   if (farmLife) farmLife.group.visible = false;
   showFrom = [view.target.x, view.target.z, view.size, view.az, view.el]; setViewAz(VIEW_AZ0, VIEW_EL0); viewTurn = null;      // (the tent from the usual view)
   const c = SHOWDAY.centre(), asp = innerWidth / Math.max(1, innerHeight); focusOn(c.x, c.z, Math.min(view.max, Math.max(2.25, 6.2 / (2 * asp))));      // (the whole tent across the screen, upright too)
@@ -7210,6 +7280,7 @@ function endShowDay() {
   if (SHOWDAY.real) SHOWDAY.real.root.visible = true;
   if (farmLife) farmLife.group.visible = true;
   SHOWDAY.dispose(); SHOWDAY = null; gameUI.skipBtn(false);
+  woodsAside(null); document.body.classList.remove('showday');
   if (showFrom) { setViewAz(showFrom[3] ?? VIEW_AZ0, showFrom[4] ?? VIEW_EL0); focusOn(showFrom[0], showFrom[1], showFrom[2]); showFrom = null; }      // (back to the farm, where the view was, turned as it was)
   wake(300);
 }
@@ -7904,6 +7975,7 @@ function farmerWork(kind, done) {
       'done', ['away', 0.4, W => { W.pose = 'turn'; W.face = 'happy'; FIELD.frameOn = false; }]];
     o = { say: 'honey' };
   }
+  o.job = { kind };
   const seq = farmLife.workAt(S.at, S.face, acts, () => { FIELD.frameOn = false; if (FIELD.work && FIELD.work.seq === seq) FIELD.work = null; done(); }, o);
   if (!seq) return false;
   FIELD.work = { kind, seq, until: performance.now() + 100e3 };
@@ -7913,11 +7985,12 @@ function farmerWork(kind, done) {
 function wheatTap() {
   if (FIELD.work && FIELD.work.kind !== 'honey') { hint(game.t(FIELD.work.kind === 'sow' ? 'wheat_sowing' : 'wheat_cutting', { farmer: farmerName(), c: WHEAT.sow })); return; }
   if (game.wheatStage() === 'ripe') { harvestWheat(); return; }
-  holdBird(null); henOff();
-  gameUI.wheatSheet({ sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => { gameUI.close(); startDecor('wheat'); } });
+  holdBird(null); henOff(); wheatCard();
 }
+function wheatCard() { gameUI.wheatSheet({ sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => { gameUI.close(); startDecor('wheat'); } }); }
 function sowWheat() {
   if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  if (jobGate()) return false;
   const r = game.sowWheat(); if (!r) return false;
   if (r.broke) { hint(game.t('wheat_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
@@ -7931,6 +8004,7 @@ function sowWheat() {
 }
 function harvestWheat() {
   if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  if (jobGate()) return false;
   const r = game.harvestWheat(); if (!r) return false;
   gameUI.close(); gameUI.refresh();
   FIELD.hold = 'ripe';
@@ -7944,6 +8018,7 @@ function harvestWheat() {
 // the honey pot (or the hives) tapped: the jars sold, flying to the coins once the farmer has them
 function honeyTap() {
   if (FIELD.honey) return false;
+  if (game.honeyAt() && jobGate()) return false;
   const r = game.collectHoney(); if (!r) { decorCard('beehives'); return false; }
   const fly = () => {
     FIELD.honey = false;
@@ -8078,7 +8153,7 @@ function gardenTap(bubble = false) {
 }
 function gardenCard() {
   gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), move: () => { gameUI.close(); startDecor('garden'); } },
-    { busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : '' });
+    { busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : farmerBusyText() });
 }
 // where the farmer stands to work at bed i: in front of it (or the nearest he can get to), facing it
 function bedSpot(i) {
@@ -8104,6 +8179,7 @@ function gardenWork(kind, i, crop, done) {
       ['hooray', 1.3, W => { W.pose = 'stretch'; W.face = 'happy'; }]];
     o = { say: 'harvest' };
   }
+  o.job = { kind: 'garden' };
   const seq = farmLife.workAt(S.at, S.face, acts, () => { if (GARDEN_UI.work && GARDEN_UI.work.seq === seq) GARDEN_UI.work = null; done(); }, o);
   if (!seq) return false;
   GARDEN_UI.work = { kind, crop, seq, until: performance.now() + 100e3 };
@@ -8112,6 +8188,7 @@ function gardenWork(kind, i, crop, done) {
 function vegBits(hand, crop) { bitsAt(hand, 4, CROP_COLOUR[crop] || '#ef8a2c', { speed: 0.5, up: 1.7, life: 0.8, size: 0.04, g: 5 }); bitsAt(hand, 3, '#5b9440', { speed: 0.5, up: 1.5, life: 0.7, size: 0.03, g: 5 }); }
 function sowBed(i, crop) {
   if (GARDEN_UI.work) return false;
+  if (jobGate()) return false;
   const r = game.sowBed(i, crop); if (!r) return false;
   if (r.broke) { hint(game.t('garden_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
@@ -8125,6 +8202,7 @@ function sowBed(i, crop) {
 }
 function pickBed(i) {
   if (GARDEN_UI.work) return false;
+  if (jobGate()) return false;
   const was = game.data.garden.beds[i].crop, r = game.pickBed(i); if (!r) return false;
   if (r.kept) { hint(game.t('garden_full', { crop: game.t('crop_l_' + r.crop) })); return true; }
   gameUI.close(); gameUI.refresh();
@@ -8139,10 +8217,11 @@ function pickBed(i) {
 // ---- a treat from the garden for a coop (its card, from a bird's): given, the farmer goes into the pen and scatters it
 // (by day, about the farm), else it's simply there on the ground for them
 function treatCard(coopId) {
-  holdBird(null);
+  holdBird(null); TREAT_COOP = coopId;
   gameUI.treatSheet(coopId, { give: k => giveTreat(coopId, k) });
 }
 function giveTreat(coopId, crop) {
+  if (jobGate()) return null;
   const plot = gamePlots().find(p => p.gc && p.gc.id === coopId), r = game.giveTreat(coopId, crop); if (!r) return null;
   gameUI.close(); gameUI.refresh();
   const said = game.t(r.exp ? 'treat_given_x' : 'treat_given', { farmer: farmerName() });
@@ -8458,6 +8537,7 @@ function ordersSheet() {
 }
 function deliverOrder(id) {
   const o = game.data.orders && game.data.orders.list.find(x => x.id === id); if (!o || !game.orderReady(o)) return;
+  if (jobGate()) return;
   gameUI.close();
   const pay = () => {
     const r = game.deliverOrder(id); ORDER_RUN = null; if (!r) return;
@@ -8467,7 +8547,7 @@ function deliverOrder(id) {
   const S = stallSpot(), nav = navGrid(), spot = S && nav.nearestIn(farmReach(), S.front.x, S.front.z, 1.2);
   const seq = spot && farmLife && farmLife.workAt(spot, Math.atan2(S.mid[0] - spot[0], S.mid[1] - spot[1]), [
     ['give', 1.4, (W, u) => { W.pose = u < 0.6 ? 'feed' : 'turn'; W.face = 'happy'; W.look = [0, -0.25]; W.props.pail = u < 0.6; }], 'done',
-    ['wave', 1.2, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], pay, { pail: true, say: 'order' });
+    ['wave', 1.2, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], pay, { pail: true, say: 'order', job: { kind: 'order' } });
   if (seq) { ORDER_RUN = { id, until: performance.now() + 90e3 }; hint(game.t('ord_on_way', { farmer: farmerName() })); }
   else pay();
 }
@@ -8488,10 +8568,11 @@ function saleBubble() {
 // a feeder's card, and filling it: the save at once, the farmer bringing the feed (by day, out and about) or straight in
 function feederCard(plot) {
   if (!plot.gc) return;
-  holdBird(null);
+  holdBird(null); FEEDER_PLOT = plot;
   gameUI.feederSheet(plot.gc, () => fillFeeder(plot));
 }
 function fillFeeder(plot) {
+  if (jobGate()) return null;
   const c = plot.gc, before = game.feedLeft(c), q = game.fillFeeder(c.id);
   if (!q || q.full || q.broke) return null;
   gameUI.close(); gameUI.refresh(); jobsDone(q.done);
@@ -9009,24 +9090,34 @@ readout.addEventListener('click', () => { details = !details; showReadout(); });
 // depth bends sharply: flat ground and walls give none however they slope)
 let INK = null;
 function renderFarm(sc = scene, cam = camera) {
-  if (!LOOK || !LOOK.ink) { renderer.render(sc, cam); return; }
+  if (!LOOK_POST) { renderer.render(sc, cam); return; }
   const sz = renderer.getDrawingBufferSize(new THREE.Vector2());
   if (!INK) {
     const rt = new THREE.WebGLRenderTarget(sz.x, sz.y, { samples: QUALITY[q].aa ? 4 : 0, type: THREE.UnsignedByteType, colorSpace: THREE.SRGBColorSpace, depthTexture: new THREE.DepthTexture(sz.x, sz.y) });      // (8-bit sRGB: half a half-float picture's memory, as smooth to the eye)
     const mat = new THREE.ShaderMaterial({
-      uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, k: { value: 1 }, span: { value: 300 }, ink: { value: new THREE.Vector3(...LOOK.ink) } },
+      uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, k: { value: 1 }, span: { value: 300 }, ink: { value: new THREE.Vector3(...(LOOK.ink || [0, 0.02, 0])) },
+        inkC: { value: new THREE.Vector3(...(LOOK.inkC || [0.42, 0.34, 0.3])) }, glow: { value: new THREE.Vector3(...(LOOK.glow || [1, 0, 1])) }, vig: { value: LOOK.vig || 0 } },
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       // (each dot and its neighbours k whole dots away, read exactly: 8 Nov 2026, Audrey's iPhone showed lines across the
       // whole screen. Read 1.5 dots away, each sample fell on the border between two dots, which her phone's chip rounded
       // one way on some rows and the other way on the next, so flat ground looked bent every few rows)
-      fragmentShader: `uniform sampler2D tColor; uniform sampler2D tDepth; uniform int k; uniform float span; uniform vec3 ink; varying vec2 vUv;
+      fragmentShader: `uniform sampler2D tColor; uniform sampler2D tDepth; uniform int k; uniform float span; uniform vec3 ink; uniform vec3 inkC; uniform vec3 glow; uniform float vig; varying vec2 vUv;
 float D(ivec2 o) { return texelFetch(tDepth, clamp(ivec2(gl_FragCoord.xy) + o, ivec2(0), textureSize(tDepth, 0) - 1), 0).r * span; }
 void main() {
   vec4 c = texelFetch(tColor, ivec2(gl_FragCoord.xy), 0);
   float d = D(ivec2(0)), l = D(ivec2(-k, 0)), r = D(ivec2(k, 0)), u = D(ivec2(0, k)), w = D(ivec2(0, -k));
   float lap = abs(l + r + u + w - 4.0 * d), jump = max(max(abs(l - d), abs(r - d)), max(abs(u - d), abs(w - d)));
   float e = smoothstep(ink.y, ink.y * 2.5, lap) * smoothstep(0.02, 0.06, jump) * (d < span * 0.999 ? 1.0 : 0.0);
-  gl_FragColor = vec4(mix(c.rgb, c.rgb * vec3(0.42, 0.34, 0.3), e * ink.x), 1.0);
+  // (a look's glow: what's brighter than glow.x in a ring of dots glow.z away, and half that, added back softly)
+  if (glow.y > 0.0) {
+    ivec2 p = ivec2(gl_FragCoord.xy), hi = textureSize(tColor, 0) - 1; vec3 g = vec3(0.0);
+    for (int i = 0; i < 8; i++) { float a = float(i) * 0.7854 + 0.39; vec2 o = vec2(cos(a), sin(a)) * glow.z;
+      g += max(texelFetch(tColor, clamp(p + ivec2(o), ivec2(0), hi), 0).rgb - glow.x, 0.0) + max(texelFetch(tColor, clamp(p + ivec2(o * 0.5), ivec2(0), hi), 0).rgb - glow.x, 0.0); }
+    c.rgb += g * (glow.y / 16.0);
+  }
+  c.rgb = mix(c.rgb, c.rgb * inkC, e * ink.x);
+  vec2 vq = vUv - 0.5; c.rgb *= 1.0 - vig * dot(vq, vq) * 1.6;      // (the corners a touch darker)
+  gl_FragColor = vec4(c.rgb, 1.0);
   #include <colorspace_fragment>
 }`, depthTest: false, depthWrite: false });
     const quad = new THREE.Mesh(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)).setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2)), mat);
@@ -9034,8 +9125,8 @@ void main() {
     INK = { rt, mat, scene: new THREE.Scene().add(quad), cam: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1) };
   }
   if (INK.rt.width !== sz.x || INK.rt.height !== sz.y) INK.rt.setSize(sz.x, sz.y);
-  INK.mat.uniforms.k.value = Math.max(1, Math.round(LOOK.inkW)); INK.mat.uniforms.span.value = cam.far - cam.near;
-  INK.mat.uniforms.ink.value.x = cam.isOrthographicCamera ? LOOK.ink[0] : 0;      // (the lines read the farm's even depth: none inside a coop, seen in perspective; still smoothed)
+  INK.mat.uniforms.k.value = Math.max(1, Math.round(LOOK.inkW || 1)); INK.mat.uniforms.span.value = cam.far - cam.near;
+  INK.mat.uniforms.ink.value.x = cam.isOrthographicCamera && LOOK.ink ? LOOK.ink[0] : 0;      // (the lines read the farm's even depth: none inside a coop, seen in perspective; still smoothed)
   renderer.setRenderTarget(INK.rt); renderer.render(sc, cam); renderer.setRenderTarget(null);
   renderer.render(INK.scene, INK.cam);
 }
@@ -9050,7 +9141,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt);
-  if (GAME_MODE) { gameTick(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
@@ -9159,7 +9250,7 @@ window.__farm = {
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
-  game: () => game, gameUI: () => gameUI, openBirdCard, billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
+  game: () => game, gameUI: () => gameUI, openBirdCard, busyText: () => farmerBusyText(), farmerJob: () => farmerJob(), tickBusy: () => tickBusy(), billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
   gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => F.duck ? k.pen.kids.includes(k) : k.plot.birds.includes(k)).length, duck: !!F.duck } : null; },

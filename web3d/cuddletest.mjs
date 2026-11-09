@@ -27,7 +27,10 @@ const T = { cuddle: fr ? /Faire un câlin/ : /♥ Cuddle/, done: fr ? /fait un c
   friend: fr ? /devient sociable avec/ : /is getting friendly with/, trusts: fr ? /a confiance en .+ et vient lui dire bonjour/ : /trusts .+ now, and comes to the fence/,
   best: fr ? /sont inséparables ! \+21 XP/ : /are best friends! \+21 XP/, star: fr ? /gagne une nouvelle étoile/ : /has earned a new star/, night: fr ? /Les câlins, ce sera demain matin/ : /Cuddles in the morning/,
   next2: fr ? /Encore 2 câlins avant « Sociable »/ : /2 more cuddles to “Friendly”/, next3: fr ? /Encore 3 câlins avant « Sociable »/ : /3 more cuddles to “Friendly”/, greets: fr ? /Vient saluer .+ à la clôture/ : /Comes to the fence to greet/, eggs8: fr ? /à 8 pièces l’œuf/ : /8 coins each/ };
-const card = id => p.evaluate(id => { const f = window.__farm; f.gameUI().close(); f.openBirdCard(f.allBirds.find(x => x.gid === id)); return document.querySelector('.gsheet').innerText; }, id);
+// (one job at a time, 9 Nov 2026: the farmer finishes the cuddle he's at before the next card's asked; the clock jumped hours,
+// he'd long be done)
+const free = () => p.evaluate(() => { const f = window.__farm; for (let i = 0; i < 30 * 90 && f.farmerJob(); i++) f.step(1 / 30, 1); return !f.farmerJob(); });
+const card = async id => { await free(); return p.evaluate(id => { const f = window.__farm; f.gameUI().close(); f.openBirdCard(f.allBirds.find(x => x.gid === id)); return document.querySelector('.gsheet').innerText; }, id); };
 const hen = () => p.evaluate(id => { const g = window.__farm.game(), h = g.bird(id); return { trust: h.trust, exp: h.exp, happy: Math.round((h.happy - window.__T) / 60e3), stars: g.stars(h), level: g.trustLevel(h) }; }, HEN);
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 const later = h => p.evaluate(h => { window.__T += h * 3600e3; sessionStorage.setItem('__T', window.__T); }, h);

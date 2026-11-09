@@ -315,6 +315,21 @@ export const TEXT = {
     fish_cast: 'Tap the water to cast', fish_wait: 'Watch the float…', fish_bite: 'Now! Tap!', fish_soon: 'Too soon! Wait till the float goes under',
     fish_missed: 'Too late: it got away with the worm', fish_reel: 'Hold to reel in. Keep the line in the green',
     fish_snap: 'Too hard: the line snapped and it swam off', fish_slip: 'Too slack: it slipped off the hook', fish_stop: 'Stop fishing', fish_keep: 'Keep fishing', fish_stop1: 'Stop',
+    // (9 Nov 2026) one job at a time: what the farmer's doing, over the buttons that wait for him
+    busy_cuddle: '{farmer} is giving {name} a cuddle.', busy_worms: '{farmer} is collecting {name}’s worms.', busy_fill: '{farmer} is filling a feeder.',
+    busy_treat: '{farmer} is taking a treat to a coop.', busy_fish: '{farmer} is fishing.', busy_geese: '{farmer} is visiting the geese.',
+    busy_sow: '{farmer} is sowing the wheat.', busy_harvest: '{farmer} is harvesting the wheat.', busy_honey: '{farmer} is collecting the honey.',
+    busy_garden: '{farmer} is in the vegetable garden.', busy_order: '{farmer} is taking a basket to the stall.', busy_cheer: '{farmer} is seeing the youngsters off.',
+    busy_fox: '{farmer} is chasing Rusty away.', busy_work: '{farmer} is busy.', busy_wait: 'One job at a time: free again in a moment.',
+    busy_wait_fish: 'One job at a time: tap Stop fishing first.',
+    // (9 Nov 2026) fishing: what to do now, on its panel; how to fish, its card
+    fish_casting: 'Casting…', fish_watch: 'Watch the float: tap when it’s pulled right under', fish_nibble: 'A nibble… not yet!',
+    fish_r_hold: 'Hold your finger down to reel in', fish_r_good: 'That’s it! Keep the needle in the green', fish_r_ease: 'Too tight! Let go a moment',
+    fish_r_slack: 'Too slack! Hold again',
+    fhelp_title: 'How to fish', fhelp_1t: '1. Cast', fhelp_1: 'Tap the water where you’d like to cast your line.',
+    fhelp_2t: '2. Strike', fhelp_2: 'Watch the float. A nibble or two first: wait. When it’s pulled right under and a ! pops up, tap at once.',
+    fhelp_3t: '3. Reel in', fhelp_3: 'Hold your finger down to reel in, and keep the needle in the green. If it heads for the red, let go a moment (the line could snap); if it drops back to the left, hold again (the fish could slip off). The blue bar fills as the fish comes in.',
+    fhelp_slack: 'Slack: hold', fhelp_good: 'Reeling in', fhelp_tight: 'Too tight: let go', fhelp_first: 'Your first catch will be an easy one.', fhelp_ok: 'Got it!',
     fish_size: '{cm} cm', fish_first: 'New fish for your book!', fish_best: 'Your biggest yet!', fish_xp: '+{xp} XP',
     fish_sold: 'Off to the village aquarium shop, live and well · +{c} coins',
     fish_photo_big_bertha: 'Her photo for your book, then back into the pond she goes. The village paper buys your photo · +{c} coins',
@@ -637,6 +652,19 @@ export const TEXT = {
     fish_cast: 'Touchez l’eau pour lancer', fish_wait: 'Surveillez le bouchon…', fish_bite: 'Maintenant ! Touchez !', fish_soon: 'Trop tôt ! Attendez que le bouchon plonge',
     fish_missed: 'Trop tard : il est parti avec le ver', fish_reel: 'Maintenez pour remonter. Gardez la ligne dans le vert',
     fish_snap: 'Trop fort : la ligne a cassé et il s’est sauvé', fish_slip: 'Trop mou : il s’est décroché', fish_stop: 'Arrêter de pêcher', fish_keep: 'Continuer', fish_stop1: 'Arrêter',
+    busy_cuddle: '{farmer} fait un câlin à {name}.', busy_worms: '{farmer} ramasse les vers de {name}.', busy_fill: '{farmer} remplit une mangeoire.',
+    busy_treat: '{farmer} apporte une friandise à un poulailler.', busy_fish: '{farmer} est à la pêche.', busy_geese: '{farmer} rend visite aux oies.',
+    busy_sow: '{farmer} sème le blé.', busy_harvest: '{farmer} récolte le blé.', busy_honey: '{farmer} récolte le miel.',
+    busy_garden: '{farmer} est au potager.', busy_order: '{farmer} porte un panier à l’étal.', busy_cheer: '{farmer} dit au revoir aux jeunes.',
+    busy_fox: '{farmer} chasse Rusty.', busy_work: '{farmer} est occupé.', busy_wait: 'Une chose à la fois : de nouveau libre dans un instant.',
+    busy_wait_fish: 'Une chose à la fois : touchez d’abord « Arrêter de pêcher ».',
+    fish_casting: 'On lance…', fish_watch: 'Surveillez le bouchon : touchez quand il plonge d’un coup', fish_nibble: 'Ça mordille… pas encore !',
+    fish_r_hold: 'Gardez le doigt appuyé pour remonter', fish_r_good: 'C’est ça ! Gardez l’aiguille dans le vert', fish_r_ease: 'Trop tendu ! Relâchez un instant',
+    fish_r_slack: 'Trop mou ! Appuyez de nouveau',
+    fhelp_title: 'Comment pêcher', fhelp_1t: '1. Lancer', fhelp_1: 'Touchez l’eau là où vous voulez lancer la ligne.',
+    fhelp_2t: '2. Ferrer', fhelp_2: 'Surveillez le bouchon. D’abord une touche ou deux : attendez. Quand il plonge d’un coup et qu’un ! apparaît, touchez tout de suite.',
+    fhelp_3t: '3. Remonter', fhelp_3: 'Gardez le doigt appuyé pour remonter, et gardez l’aiguille dans le vert. Si elle file vers le rouge, relâchez un instant (la ligne pourrait casser) ; si elle retombe vers la gauche, appuyez de nouveau (le poisson pourrait se décrocher). La barre bleue se remplit à mesure que le poisson arrive.',
+    fhelp_slack: 'Mou : appuyez', fhelp_good: 'On remonte', fhelp_tight: 'Trop tendu : relâchez', fhelp_first: 'Votre première prise sera facile.', fhelp_ok: 'Compris !',
     fish_size: '{cm} cm', fish_first: 'Un nouveau poisson pour votre livre !', fish_best: 'Votre plus beau !', fish_xp: '+{xp} XP',
     fish_sold: 'Direction l’animalerie du village, en pleine forme · +{c} pièces',
     fish_photo_big_bertha: 'Sa photo pour votre livre, puis elle retourne dans l’étang. Le journal du village achète votre photo · +{c} pièces',
@@ -697,7 +725,7 @@ export const TEXT_F = { en: { exp_chicks: 'The more stars, the better her chicks
     champ_c: 'Championne régionale', champ_n: 'Championne nationale',
     fox_farmer: 'Rusty le renard est venu pour les œufs du poulailler {dehen}, mais {farmer} est sortie avec sa lampe et l’a renvoyé chez lui !',
     geese_b0: 'Ils n’aiment pas encore {farmer} : ils sifflent et la chassent de leur pré.', geese_b1: 'Ils tolèrent {farmer} maintenant, de loin, et mangent le grain quand elle s’éloigne.',
-    fish_busy: '{farmer} est occupée : réessayez dans un instant' } };
+    fish_busy: '{farmer} est occupée : réessayez dans un instant', busy_work: '{farmer} est occupée.' } };
 
 // the other languages' words (lang.js: German, Spanish, Portuguese, Italian), by the same keys
 for (const [L, P] of Object.entries(PACKS)) { TEXT[L] = P.text || {}; TEXT_F[L] = P.textF || {}; }

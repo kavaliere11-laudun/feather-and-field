@@ -3983,6 +3983,184 @@
   "fr": "Arrêter"
  },
  {
+  "id": "text.busy_cuddle",
+  "en": "{farmer} is giving {name} a cuddle.",
+  "fr": "{farmer} fait un câlin à {name}."
+ },
+ {
+  "id": "text.busy_worms",
+  "en": "{farmer} is collecting {name}’s worms.",
+  "fr": "{farmer} ramasse les vers de {name}."
+ },
+ {
+  "id": "text.busy_fill",
+  "en": "{farmer} is filling a feeder.",
+  "fr": "{farmer} remplit une mangeoire."
+ },
+ {
+  "id": "text.busy_treat",
+  "en": "{farmer} is taking a treat to a coop.",
+  "fr": "{farmer} apporte une friandise à un poulailler."
+ },
+ {
+  "id": "text.busy_fish",
+  "en": "{farmer} is fishing.",
+  "fr": "{farmer} est à la pêche."
+ },
+ {
+  "id": "text.busy_geese",
+  "en": "{farmer} is visiting the geese.",
+  "fr": "{farmer} rend visite aux oies."
+ },
+ {
+  "id": "text.busy_sow",
+  "en": "{farmer} is sowing the wheat.",
+  "fr": "{farmer} sème le blé."
+ },
+ {
+  "id": "text.busy_harvest",
+  "en": "{farmer} is harvesting the wheat.",
+  "fr": "{farmer} récolte le blé."
+ },
+ {
+  "id": "text.busy_honey",
+  "en": "{farmer} is collecting the honey.",
+  "fr": "{farmer} récolte le miel."
+ },
+ {
+  "id": "text.busy_garden",
+  "en": "{farmer} is in the vegetable garden.",
+  "fr": "{farmer} est au potager."
+ },
+ {
+  "id": "text.busy_order",
+  "en": "{farmer} is taking a basket to the stall.",
+  "fr": "{farmer} porte un panier à l’étal."
+ },
+ {
+  "id": "text.busy_cheer",
+  "en": "{farmer} is seeing the youngsters off.",
+  "fr": "{farmer} dit au revoir aux jeunes."
+ },
+ {
+  "id": "text.busy_fox",
+  "en": "{farmer} is chasing Rusty away.",
+  "fr": "{farmer} chasse Rusty."
+ },
+ {
+  "id": "text.busy_work",
+  "en": "{farmer} is busy.",
+  "fr": "{farmer} est occupé.",
+  "gender": true,
+  "f_en": "{farmer} is busy.",
+  "f_fr": "{farmer} est occupée."
+ },
+ {
+  "id": "text.busy_wait",
+  "en": "One job at a time: free again in a moment.",
+  "fr": "Une chose à la fois : de nouveau libre dans un instant."
+ },
+ {
+  "id": "text.busy_wait_fish",
+  "en": "One job at a time: tap Stop fishing first.",
+  "fr": "Une chose à la fois : touchez d’abord « Arrêter de pêcher »."
+ },
+ {
+  "id": "text.fish_casting",
+  "en": "Casting…",
+  "fr": "On lance…"
+ },
+ {
+  "id": "text.fish_watch",
+  "en": "Watch the float: tap when it’s pulled right under",
+  "fr": "Surveillez le bouchon : touchez quand il plonge d’un coup"
+ },
+ {
+  "id": "text.fish_nibble",
+  "en": "A nibble… not yet!",
+  "fr": "Ça mordille… pas encore !"
+ },
+ {
+  "id": "text.fish_r_hold",
+  "en": "Hold your finger down to reel in",
+  "fr": "Gardez le doigt appuyé pour remonter"
+ },
+ {
+  "id": "text.fish_r_good",
+  "en": "That’s it! Keep the needle in the green",
+  "fr": "C’est ça ! Gardez l’aiguille dans le vert"
+ },
+ {
+  "id": "text.fish_r_ease",
+  "en": "Too tight! Let go a moment",
+  "fr": "Trop tendu ! Relâchez un instant"
+ },
+ {
+  "id": "text.fish_r_slack",
+  "en": "Too slack! Hold again",
+  "fr": "Trop mou ! Appuyez de nouveau"
+ },
+ {
+  "id": "text.fhelp_title",
+  "en": "How to fish",
+  "fr": "Comment pêcher"
+ },
+ {
+  "id": "text.fhelp_1t",
+  "en": "1. Cast",
+  "fr": "1. Lancer"
+ },
+ {
+  "id": "text.fhelp_1",
+  "en": "Tap the water where you’d like to cast your line.",
+  "fr": "Touchez l’eau là où vous voulez lancer la ligne."
+ },
+ {
+  "id": "text.fhelp_2t",
+  "en": "2. Strike",
+  "fr": "2. Ferrer"
+ },
+ {
+  "id": "text.fhelp_2",
+  "en": "Watch the float. A nibble or two first: wait. When it’s pulled right under and a ! pops up, tap at once.",
+  "fr": "Surveillez le bouchon. D’abord une touche ou deux : attendez. Quand il plonge d’un coup et qu’un ! apparaît, touchez tout de suite."
+ },
+ {
+  "id": "text.fhelp_3t",
+  "en": "3. Reel in",
+  "fr": "3. Remonter"
+ },
+ {
+  "id": "text.fhelp_3",
+  "en": "Hold your finger down to reel in, and keep the needle in the green. If it heads for the red, let go a moment (the line could snap); if it drops back to the left, hold again (the fish could slip off). The blue bar fills as the fish comes in.",
+  "fr": "Gardez le doigt appuyé pour remonter, et gardez l’aiguille dans le vert. Si elle file vers le rouge, relâchez un instant (la ligne pourrait casser) ; si elle retombe vers la gauche, appuyez de nouveau (le poisson pourrait se décrocher). La barre bleue se remplit à mesure que le poisson arrive."
+ },
+ {
+  "id": "text.fhelp_slack",
+  "en": "Slack: hold",
+  "fr": "Mou : appuyez"
+ },
+ {
+  "id": "text.fhelp_good",
+  "en": "Reeling in",
+  "fr": "On remonte"
+ },
+ {
+  "id": "text.fhelp_tight",
+  "en": "Too tight: let go",
+  "fr": "Trop tendu : relâchez"
+ },
+ {
+  "id": "text.fhelp_first",
+  "en": "Your first catch will be an easy one.",
+  "fr": "Votre première prise sera facile."
+ },
+ {
+  "id": "text.fhelp_ok",
+  "en": "Got it!",
+  "fr": "Compris !"
+ },
+ {
   "id": "text.fish_size",
   "en": "{cm} cm",
   "fr": "{cm} cm"

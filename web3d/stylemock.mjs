@@ -22,13 +22,14 @@ for (const look of LOOKS.length ? LOOKS : ['today']) {
   await run(2); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); });
   const spots = await p.evaluate(() => { const f = window.__farm, g = f.game(), C = g.data.coops, G = g.data.garden, mid = C.reduce((a, c) => [a[0] + c.x / C.length, a[1] + c.z / C.length], [0, 0]); const orp = C.find(c => c.breed === 'orp') || C[0];
     return { farm: [mid[0], mid[1], 4.4], coop: [orp.x, orp.z, 1.9], house: [G.x, G.z, 3.0], wide: [mid[0], mid[1], 8] }; });
-  for (const [name, [x, z, size]] of Object.entries(spots)) {
+  for (const [name, [x, z, size]] of Object.entries(spots).filter(([k]) => !process.env.VIEWS || process.env.VIEWS.split(',').includes(k))) {      // (VIEWS=farm,coop: only those)
     await p.evaluate(([x, z, size]) => { const f = window.__farm; f.lookAt(x, z, size); }, [x, z, size]);
     await run(0.5);
     await p.evaluate(() => { const f = window.__farm; f.draw(); f.draw(); document.getAnimations().forEach(a => a.finish()); });
     await p.screenshot({ path: `${OUT}/${look}_${name}.png`, timeout: 180000 });
     console.log(look, name);
   }
+  if (process.env.NOCOST) { await ctx.close(); continue; }
   // the cost: the usual view, panning 0.4 m a frame (the shadows drawn again as it goes)
   const cost = await p.evaluate(([x, z]) => { const f = window.__farm, R = f.renderer; f.lookAt(x, z, 4.4); f.draw(); const k = f.costCats(), still = { tri: k.all.tri, calls: k.all.calls, grass: k.grass, birds: k.birds };
     const t0 = performance.now(); for (let i = 0; i < 12; i++) { f.lookAt(x + i * 0.4, z - i * 0.2, 4.4); f.draw(); } R.getContext().finish(); const pan = (performance.now() - t0) / 12;

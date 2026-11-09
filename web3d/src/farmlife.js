@@ -65,7 +65,10 @@ const TK = {
     this.t += dt;
     if (!this.pts) { const f = L.o.nav.find(L.pos.x, L.pos.z, x, z, true); this.pts = f ? f.slice(1) : []; this.i = 0; if (!this.pts.length) return true; }
     const p = this.pts[this.i], last = this.i >= this.pts.length - 1, x0 = L.pos.x, z0 = L.pos.z;
-    if (L.moveTo(p[0], p[1], dt, pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
+    // (hurrying to a job, a long way off: he runs, back to a hurry for the last few metres; 9 Nov 2026, Audrey: "the farmer
+    // should run especially if he is far")
+    this.ran = pace === 'hurry' && Math.hypot(x - L.pos.x, z - L.pos.z) > (this.ran ? 3.5 : 5);
+    if (L.moveTo(p[0], p[1], dt, this.ran ? 'run' : pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
     this.still = Math.hypot(L.pos.x - x0, L.pos.z - z0) < 0.002 ? this.still + dt : 0;
     if (this.still > 1.5 && this.again < 4) { this.pts = null; this.still = 0; this.again++; }
     L.want.face = 'neutral'; L.want.lookAbout = true;
@@ -264,7 +267,7 @@ export class FarmLife {
   // out after Rusty)
   visitPen(P, kind, hen, n) {
     if (!P || this.home || this.running) return false;
-    const t = this.penTask(P, kind, hen, n);
+    const t = this.penTask(P, kind, hen, n); t.job = { kind, hen };
     if ((kind === 'cuddle' || kind === 'worms') && P.reserve) P.reserve(hen);
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = t; else this.task = t;
     return true;
@@ -383,7 +386,7 @@ export class FarmLife {
       return (this.t > 3 && done()) || this.t > 30;
     } };
     const seq = TK.seq('pen', [TK.path(at[0], at[1], 'hurry'), there, TK.face(face), () => { ready(); return null; }, TK.say('farewell'), cheer, TK.act('about', 1.5, STAND.about)]);
-    const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
+    const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt); seq.job = { kind: 'cheer' };
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return true;
   }
@@ -405,7 +408,7 @@ export class FarmLife {
       if (W.pose === 'turn') { W.pose = 'carry'; W.keepArms = 'R'; }
       return r;
     };
-    seq.finish = finish;
+    seq.finish = finish; seq.job = o.job || { kind: 'work' };
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return seq;
   }
@@ -480,7 +483,7 @@ export class FarmLife {
     L.push(() => { V.done(true); return null; });
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => { const r = seq.aborted || run(Lf, dt); if (r && self.hat) self.hatOn(); return r; };      // (never left without his hat)
-    seq.visit = V;
+    seq.visit = V; seq.job = { kind: 'geese' };
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return true;
   }
@@ -502,9 +505,16 @@ export class FarmLife {
       TK.walk(F.outPts), gate(false), () => { F.done(true); return null; });
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
-    seq.fishing = F;
+    seq.fishing = F; seq.job = { kind: 'fish' };
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return seq;
+  }
+  // what he's at that was asked of him (a job: a pen visit, the geese, fishing, work about the farm, seeing youngsters
+  // off; or chasing Rusty), or is to do straight after: { kind, hen? }, or null (9 Nov 2026: one job at a time, main.js)
+  busyWith() {
+    if (this.running) return { kind: 'fox' };
+    const t = this.task && this.task.name === 'pen' ? this.task : null, q = this.pending;
+    return (t && (t.job || { kind: 'work' })) || (q && (q.job || { kind: 'work' })) || null;
   }
   // his hat knocked off (the geese chasing him out): up off his head and down at `to` ([x, z]), tumbling; back on (hatHome
   // 0..1 as he picks it up and puts it on: farmer.js), on (hatOn)

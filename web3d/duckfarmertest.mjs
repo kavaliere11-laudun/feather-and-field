@@ -78,10 +78,12 @@ const probe = () => p.evaluate(() => { const f = window.__farm, Q = f.coopPlots(
 const watch = async (secs, each) => { const out = []; for (let i = 0; i < secs * 5; i++) { await run(0.2); const q = await probe(); out.push(q); if (each && each(q, out)) break; } return out; };
 const duckAt = (sel) => p.evaluate(sel => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'), C = Q.callPen, d = C.ducks.find(x => x.gid === sel);
   return { task: d.task && d.task.name, carry: !!(d.cuddle && d.cuddle.carry), k: d.cuddle && d.cuddle.carry ? d.cuddle.carry.k : 0, y: +d.pos.y.toFixed(3), onLand: C.onLand(d), s: +C.pondS(d.pos.x, d.pos.z).toFixed(2), wet: +d.wet.toFixed(2), worms: (window.__farm.lastPen && window.__farm.lastPen()) || null }; }, sel);
+const free = async () => { for (let i = 0; i < 80 && await p.evaluate(() => !!window.__farm.farmerJob()); i++) await run(0.5); };      // (one job at a time)
 for (const t of LOOKS) {
   await p.evaluate(([t, gi]) => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'call'); c.tier = t; g.save(); f.retier(gi); }, [t, gi]); await run(3);
   const house = await p.evaluate(gi => window.__farm.coopLook(gi).house, gi);
   // ---- the feed
+  await free();
   await p.evaluate(gi => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'call'); c.feed = 0; c.fedAt = 0; g.save(); f.gameTick(window.__T); f.fillFeeder(gi); }, gi);
   let seen = false, thrown = false;
   const w = await watch(90, (q, all) => { seen = seen || q.visit; thrown = thrown || q.left > 0; return seen && !q.visit && thrown && q.left === 0; });
@@ -92,6 +94,7 @@ for (const t of LOOKS) {
   if (SHOTS && t === LOOKS[0]) await shot(`${t}_fed`);
   await run(4);
   // ---- a cuddle
+  await free();
   const sel = await p.evaluate(() => { const f = window.__farm, g = f.game(), Q = f.coopPlots().find(q => q.breed === 'call'), C = Q.callPen, d = C.ducks.find(x => x.kind === 'call_f' && !C.busy(x)) || C.ducks.find(x => x.kind === 'call_f'); const b = g.bird(d.gid); b.happy = 0; b.trust = 8; b.worm = ''; g.save(); f.openBirdCard(d); return d.gid; });
   await run(0.4);
   await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.3);
@@ -100,6 +103,7 @@ for (const t of LOOKS) {
   let d = await duckAt(sel);
   ok(`${house}: a cuddle: she comes over, he picks her up and holds her, sets her down on dry land, she's off about her day`, came && carried > 10 && !d.carry && d.task !== 'cuddle' && (d.onLand || d.wet > 0.5) && !wentIn, { came, carried, d, wentIn });
   // ---- her worms
+  await free();
   await p.evaluate(sel => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.openBirdCard(Q.callPen.ducks.find(x => x.gid === sel)); }, sel); await run(0.4);
   const hasW = await p.evaluate(() => !!document.querySelector('.gsheet .gworms'));
   if (hasW) {

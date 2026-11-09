@@ -77,9 +77,12 @@ let out = false;
 for (let i = 0; i < 14 && !out; i++) { await sim(5); s = await state(); out = s.chicks === s.brood.n && !s.mum.phase; }
 ok('she comes out with her chicks behind her', out, s);
 const near = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0], c = f.game().data.coops[0], m = P.birds.find(x => x.gid === c.brood.hen); return P.birds.filter(x => x.gameChick).map(x => +x.root.position.distanceTo(m.root.position).toFixed(2)); });
-await sim(20);
-const near2 = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0], c = f.game().data.coops[0], m = P.birds.find(x => x.gid === c.brood.hen); return P.birds.filter(x => x.gameChick).map(x => +x.root.position.distanceTo(m.root.position).toFixed(2)); });
-ok('the chicks keep near their mum', near2.every(d => d < 1.2), { near, near2 });
+// (over 20 seconds, every half second: how far each is from her. One moment's look alone (under 1.2 m each) failed by
+// chance on a path where she'd just stepped off: 9 Nov 2026, the farmer running to his jobs changed the pen's moments)
+const dists = [];
+for (let k = 0; k < 40; k++) { await sim(0.5); dists.push(await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0], c = f.game().data.coops[0], m = P.birds.find(x => x.gid === c.brood.hen); return P.birds.filter(x => x.gameChick).map(x => x.root.position.distanceTo(m.root.position)); })); }
+const all = dists.flat(), mean = all.reduce((a, d) => a + d, 0) / all.length, far = Math.max(...all), near2 = dists[dists.length - 1].map(d => +d.toFixed(2));
+ok('the chicks keep near their mum (on average within 0.9 m over 20 s, never more than 2 m off)', mean < 0.9 && far < 2, { near, near2, mean: +mean.toFixed(2), far: +far.toFixed(2) });
 const ccard = await p.evaluate(() => { const f = window.__farm, ch = f.gamePlots()[0].birds.find(x => x.gameChick); f.chickCard ? f.chickCard(ch) : null; return document.querySelector('.gsheet').innerText; });
 ok('a chick\'s card: whose she is, a young hen or rooster in about 24 hours', /chick|poussin/i.test(ccard) && /24 hours|24 heures/.test(ccard) && /young hen or rooster|jeune poule ou (un )?jeune coq/i.test(ccard), ccard);
 await p.evaluate(() => window.__farm.gameUI().close());
