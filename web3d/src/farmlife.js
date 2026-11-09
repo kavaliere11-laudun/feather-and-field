@@ -602,7 +602,7 @@ export class FarmLife {
       if (W.patting) { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); }
       if (W.hug !== undefined) {                              // her back stroked, a gentle sway from side to side
         const st = Math.sin(t * 2.4), sw = Math.sin(t * 1.25);
-        const hk = W.hugK ?? 1; P.shR[0] += 7 * st * hk; P.elR[0] += 10 * st * hk; P.wrR[0] += 12 * st * hk; if (W.backK) P.shR[1] += W.backK * st * hk;      /* (the peacock's back: the hand kept down on it as it goes along) */ P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
+        const hk = W.hugK ?? 1; P.shR[0] += 7 * st * hk; P.elR[0] += 10 * st * hk; P.wrR[0] += 12 * st * hk; if (W.backK) P.shR[1] += W.backK * st * hk;      /* (the peacock's back: the hand kept down on it as it goes along) */ P.chest[0] += 4 * sw * (hk < 1 ? 0.4 : 1); P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
       }
       if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }
