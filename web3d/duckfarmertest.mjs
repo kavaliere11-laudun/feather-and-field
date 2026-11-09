@@ -101,7 +101,7 @@ for (const t of LOOKS) {
   let carried = 0, came = false, wentIn = false;
   for (let i = 0; i < 300; i++) { await run(0.2); const d = await duckAt(sel), q = await probe(); came = came || d.task === 'cuddle'; if (d.carry && d.k > 0.9) carried++; if (q.inPen && q.visit && q.s < 1 + 0.22 / q.m) wentIn = true; if (came && !q.visit && i > 20 && d.task !== 'cuddle') break; }
   let d = await duckAt(sel);
-  ok(`${house}: a cuddle: she comes over, he picks her up and holds her, sets her down on dry land, she's off about her day`, came && carried > 10 && !d.carry && d.task !== 'cuddle' && (d.onLand || d.wet > 0.5) && !wentIn, { came, carried, d, wentIn });
+  ok(`${house}: a cuddle: she comes over, he picks her up and holds her, sets her down on dry land, she's off about her day`, came && carried > 10 && !d.carry && d.task !== 'cuddle' && (d.onLand || d.wet > 0.5 || d.task === 'swim') && !wentIn, { came, carried, d, wentIn });      // (or already off down the bank for a swim)
   // ---- her worms
   await free();
   await p.evaluate(sel => { const f = window.__farm, Q = f.coopPlots().find(q => q.breed === 'call'); f.openBirdCard(Q.callPen.ducks.find(x => x.gid === sel)); }, sel); await run(0.4);
