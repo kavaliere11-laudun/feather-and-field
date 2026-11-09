@@ -4678,7 +4678,14 @@ doesn't redraw them on every step.
 - **The last grain** (penvisit corn, main.js `goEat`/`ate`): a grain lying where no hen can stand close enough to peck
   it (in a corner by the fence) kept the hens going back to it for good. Now a grain gone for five times is had by a
   sparrow (gone), and the grain a hen went for counts as hers when it's within 0.32 m of her. The tests that ask the
-  farmer for several jobs in a row (`cuddletest`, `jobtest`, `duckfarmertest`) wait for him to be free between them.
+  farmer for several jobs in a row (`cuddletest`, `jobtest`, `duckfarmertest`, `peatest`) wait for him to be free
+  between them.
+- **The peacock's stroke from his other side** (main.js `nearHim`, farmlife.js): his running changed where the farmer
+  found the peacock, and he crouched on the peacock's other side, where his right hand's stroke runs across the back
+  rather than along it (the hand slipping off the side, up to 9 cm above the feathers). He now tries every spot on the
+  good side first (the angles 0.9, 1.25, 0.55, 1.6, then 1.9, 0.25), the other side only when none will do
+  (`near.side`), and from there the stroke is a gentler, smaller one (`W.hugK` 0.3, the body's sway 0.4): his hand
+  stays on the back (within 4 cm, `peatest`).
 
 ## Three more looks (9 Nov 2026; Audrey: "Come with more style mocks, I am not overly convinced by strorybook")
 - Three new directions, on the same Design canvas ("Feather & Field art style mocks", a second row: "Round 2: three more
