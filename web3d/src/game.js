@@ -662,7 +662,7 @@ export const TEXT = {
     fish_r_hold: 'Gardez le doigt appuyé pour remonter', fish_r_good: 'C’est ça ! Gardez l’aiguille dans le vert', fish_r_ease: 'Trop tendu ! Relâchez un instant',
     fish_r_slack: 'Trop mou ! Appuyez de nouveau',
     fhelp_title: 'Comment pêcher', fhelp_1t: '1. Lancer', fhelp_1: 'Touchez l’eau là où vous voulez lancer la ligne.',
-    fhelp_2t: '2. Ferrer', fhelp_2: 'Surveillez le bouchon. D’abord une touche ou deux : attendez. Quand il plonge d’un coup et qu’un ! apparaît, touchez tout de suite.',
+    fhelp_2t: '2. Ferrer', fhelp_2: 'Surveillez le bouchon. D’abord une touche ou deux\u00a0: attendez. Quand il plonge d’un coup et qu’un ! apparaît, touchez tout de suite.',
     fhelp_3t: '3. Remonter', fhelp_3: 'Gardez le doigt appuyé pour remonter, et gardez l’aiguille dans le vert. Si elle file vers le rouge, relâchez un instant (la ligne pourrait casser) ; si elle retombe vers la gauche, appuyez de nouveau (le poisson pourrait se décrocher). La barre bleue se remplit à mesure que le poisson arrive.',
     fhelp_slack: 'Mou : appuyez', fhelp_good: 'On remonte', fhelp_tight: 'Trop tendu : relâchez', fhelp_first: 'Votre première prise sera facile.', fhelp_ok: 'Compris !',
     fish_size: '{cm} cm', fish_first: 'Un nouveau poisson pour votre livre !', fish_best: 'Votre plus beau !', fish_xp: '+{xp} XP',
