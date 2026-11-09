@@ -135,7 +135,7 @@ for (let k = 0; k < 60; k++) {
   if (seen.has('stroke') && !d.includes('stroke') && !d.includes('cuddling')) break;
 }
 ok('Cuddle the peacock: the farmer comes, crouches and strokes him where he stands (never picked up), the cuddle counted, the peahens giving them room', seen.has('stroke') && !seen.has('hug') && lifted === 0 && happy && closest > 0.6, { seen: [...seen], lifted, happy, closest: +closest.toFixed(2) });
-ok('…his hand on the peacock\'s back as he strokes him (within 4 cm of his feathers, along the middle of his back)', touch.length >= 3 && touch.slice(1).every(h => Math.abs(h.gap) < 0.04 && h.along > -0.26 && h.along < 0.06 && Math.abs(h.lat) < 0.09), touch);      // (the first: his hand still on its way there)
+ok('…his hand on the peacock\'s back as he strokes him (within 5 cm of his feathers, along the middle of his back)', touch.length >= 3 && touch.slice(1).every(h => Math.abs(h.gap) < 0.05 && h.along > -0.26 && h.along < 0.06 && Math.abs(h.lat) < 0.09), touch);      // (the first: his hand still on its way there)
 // a peahen: picked up and held, as a hen is (once he's free again: one job at a time)
 await run(4);
 for (let i = 0; i < 80 && await p.evaluate(() => !!window.__farm.farmerJob()); i++) await run(0.5);

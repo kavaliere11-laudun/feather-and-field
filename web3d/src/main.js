@@ -9319,7 +9319,7 @@ window.__farm = {
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, busyText: () => farmerBusyText(), farmerJob: () => farmerJob(), tickBusy: () => tickBusy(), billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
-  gameTick: (t, force = true) => gameTick(t ?? Date.now(), force), gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
+  gameTick: (t, force = true) => { const r = gameTick(t ?? Date.now(), force); tickJobs(); return r; }, gamePlots, gameChicks: i => gameChicks(gamePlots()[i]).length, chickCard, showNews,
   youngs: i => gameChicks(gamePlots()[i]).map(b => b.young || 'chick'), farewell: i => { const F = gamePlots()[i].fw; return F ? { phase: F.phase, ready: F.ready, t: +F.t.toFixed(2), left: F.kids.filter(k => F.duck ? k.pen.kids.includes(k) : k.plot.birds.includes(k)).length, duck: !!F.duck } : null; },
   lastExit: i => gamePlots()[i].lastExit || null, farmExit,
   // tests (levels and land): the patches as drawn, a patch's card, buying the one for sale

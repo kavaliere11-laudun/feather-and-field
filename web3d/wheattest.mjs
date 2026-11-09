@@ -32,6 +32,7 @@ const kind = () => p.evaluate(() => window.__farm.gameUI().kind);
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const S = () => p.evaluate(() => window.__farm.deco.wheat.state());
 const HS = () => p.evaluate(() => window.__farm.deco.honey.state());
+const free = async () => { for (let i = 0; i < 80 && await p.evaluate(() => !!window.__farm.farmerJob()); i++) await run(0.5); };      // (one job at a time: the next when he's free)
 const money = () => p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, xp: g.data.xp, grain: g.data.grain }; });
 const word = () => p.evaluate(() => document.getElementById('hint').textContent);
 const look = (x, z, size = 3.4) => p.evaluate(([x, z, size]) => window.__farm.lookAt(x + 0.4, z + 0.4, size), [x, z, size]);
@@ -77,6 +78,7 @@ ok('four hours on: golden, the sign "Harvest"', s.stage === 'ripe' && s.shown ==
 await shot('5_ripe');
 // harvest it
 const m1 = await money();
+await free();
 await p.evaluate(() => window.__farm.deco.wheat.tap()); await run(0.5);
 s = await S();
 ok('tapped ripe: harvested at once (the save), the farmer on his way, the field golden till he\'s done', s.work === 'harvest' && s.hold === 'ripe' && s.stage === 'soil' && (await money()).grain === 20 && (await money()).xp === m1.xp + 12, { s, m: await money() });
