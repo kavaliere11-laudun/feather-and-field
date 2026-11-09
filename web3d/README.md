@@ -4759,3 +4759,25 @@ doesn't redraw them on every step.
   sight he dashes, no skip; out of sight he's put just off the screen; the list: live buttons, 1 of 3, already, 3 of 3,
   full; done in order; the rod put down for a job), `farmertest.mjs` (the page's bubble).
 
+## Twenty fish, biting hours, one tin a day; the keep net and the fish box (9 Nov 2026, 23:23, Audrey: "It needs to take time to fish all the different species. Remind me how many they are? Also not too sure how the fishes are sold currently. I think the best thing is to sell them at the end of the fishing or each time you fish one you get asked what do to. If the fish is kept probably we need an inventory. Please confirm you can fish in the pond and in the river"; 23:25: "Introduce more fish species"; her choices: "Keep net, sell at the end", "Time of day + one tin a day")
+- **Twenty species, ten a water** (fish.js `FISH`, game.js `FISH_RULES`): six new, built from the same shapes as the
+  others: the pond's bream, crucian carp and (rare) pumpkinseed; the river's bleak, barbel and (rare) rainbow trout (its
+  rosy stripe: the new `band` marking). Each water: six common, three rare, one legendary. Their pictures: `fishpics.mjs`
+  (now `&look=today`, as the first fourteen were taken) and `fishcards.py`. Names in six languages.
+- **Who bites when** (game.js `fishBites`, `castWorm(..., hour)`; fishing.js passes the game's own clock, `o.hour`): a
+  rare fish only in its hours (`when`): golden tench and brown trout 6 to 10, pumpkinseed and rainbow trout 11 to 15, koi
+  and grayling 17 to 22; Big Bertha and Old Snapjaw only once every other fish of their water has been caught. In its
+  hours a rare one bites about 1 cast in 14. The Book's page of a fish not caught yet says when it bites.
+- **One tin of worms a day** (`buyWorms`, the bag's `tin`: the day it was bought; the dock's button "One tin a day:
+  another tomorrow"). Before, tins without end paid for themselves: a whole water in one sitting.
+- **The keep net** (the bag's `net`, 60 at most; `landFish`): a catch goes into it, no coins yet (its card: "Into the keep
+  net · worth 13 coins"); a legendary one's photo is paid at once as before. A trip over with fish in it: its card
+  (`catchSheet`, main.js `catchCard`, `CATCH_DUE`): each fish with its size, its price and Keep; Sell: the rest sold
+  (`sellCatch(keep)`). Closed without selling: kept for next time, and a button on the dock's card.
+- **The fish box** (the bag's `box`, 12 at most): the fish kept, for the villagers' orders: an order's fish now come from
+  the box when it's delivered, the smallest first (`orderLeft`, `deliverOrder`; fish set aside for an order before this
+  still count). `sellBox` sells it all.
+- **The save's check** (`cleanSave`): the net and the box hold only known fish, never a legendary one, of an open water,
+  each a whole size within its kind's, no more than 60 and 12; the tin's day never ahead of today.
+- Tests: `nettest.mjs` (new, English and French); `fishtest`, `rivertest`, `ordertest` updated.
+
