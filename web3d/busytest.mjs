@@ -43,8 +43,8 @@ const watch = () => p.evaluate(() => { const f = window.__farm, Lf = f.farmer(),
   for (let i = 0; i < 30 * 40 && Lf.task && Lf.task.name === 'pen' && !Lf.pen; i++) { f.step(1 / 30, 1); const d = Math.hypot(Lf.pos.x - P.centre.x, Lf.pos.z - P.centre.z); out.push([Lf.speed, d]); if (firstSeen === null && Lf.o.onScreen(Lf.pos.x, Lf.pos.z, 0)) firstSeen = +d.toFixed(1); }
   return { top: +Math.max(...out.map(q => q[0])).toFixed(2), secs: +(out.length / 30).toFixed(1), d0: +out[0][1].toFixed(1), skipped: Lf.skipped || 0, firstSeen, inPen: !!Lf.pen }; });
 // ---- in sight: he dashes all the way
-let far = await putFar(16);
-await cuddle(H[0].id);
+let far = await putFar(26);
+await p.evaluate(id => window.__farm.gameUI().o.cuddle(id), H[0].id); await run(0.1);      // (asked without her card: opening it brings the view in close to her)
 let w = await watch();
 ok(`in sight, ${far.d.toFixed(0)} m off: he dashes to the job (3 m/s), all the way (no skip)`, far.seen && w.top > 2.8 && w.top < 3.2 && w.skipped === far.skipped && w.inPen, { far, w });
 ok('free again', await free());
@@ -70,7 +70,7 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close
 await p.evaluate(() => { const f = window.__farm; f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=go]'); if (q) q.click(); });
 h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
 ok('a feeder and fishing asked: 3 of 3 on his list', JL.length === 3 && JL.map(q => q.kind).join() === 'cuddle,fill,fish' && T.added(3).test(h), { JL, h });
-const full = await p.evaluate(() => { const f = window.__farm; f.wheat.sow(); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; });
+const full = await p.evaluate(() => { const f = window.__farm; f.deco.wheat.sow(); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; });
 ok('a fourth: "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
 // ---- he does them in order
 const seen = []; let fishing = false;

@@ -71,7 +71,7 @@ const pick = await p.evaluate(() => {
   return { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight };
 });
 await p.touchscreen.tap(pick.x, pick.y);
-const tapped = await p.evaluate(() => { const f = window.__farm, L = f.farmer(); window.__run(1.5); return { task: L.task && L.task.name, said: window.__S.said.slice(window.__q0), bubble: L.bubble.visible, tag: document.getElementById('tag').textContent }; });
+const tapped = await p.evaluate(() => { const f = window.__farm, L = f.farmer(); window.__run(1.5); return { task: L.task && L.task.name, said: window.__S.said.slice(window.__q0), bubble: L.bubbleT > 0 && !!document.querySelector('.fsay:not([hidden])'), tag: document.getElementById('tag').textContent }; });
 const errs1 = p.errs.slice(); await p.close();
 // ---- a night visit: sent out after Rusty
 const q = await page('&visit=3&noguard');
