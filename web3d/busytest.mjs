@@ -59,17 +59,17 @@ await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].b
 let c = await card();
 ok(`meanwhile ${H[1].name}'s card: Cuddle live, the note saying what he's doing and to ask for anything else`, c && c.kind === 'bird' && c.cuddle === false && c.note.includes(H[0].name) && T.ask.test(c.note), c);
 await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
-let L = await p.evaluate(() => window.__farm.jobList()), h = await hintNow();
+let JL = await p.evaluate(() => window.__farm.jobList()), h = await hintNow();
 await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
 c = await card();
-ok('asked: on his list (1 of 3), nothing done yet; her card\'s note: "Next: a cuddle for her"', L.length === 1 && L[0].kind === 'cuddle' && T.added(1).test(h) && h.includes(H[1].name) && c && T.next.test(c.note) && c.note.includes(H[1].name), { L, h, c });
+ok('asked: on his list (1 of 3), nothing done yet; her card\'s note: "Next: a cuddle for her"', JL.length === 1 && JL[0].kind === 'cuddle' && T.added(1).test(h) && h.includes(H[1].name) && c && T.next.test(c.note) && c.note.includes(H[1].name), { JL, h, c });
 await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
-h = await hintNow(); L = await p.evaluate(() => window.__farm.jobList());
-ok('asked again: "Already on his list", still one', L.length === 1 && T.already.test(h), { L, h });
+h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
+ok('asked again: "Already on his list", still one', JL.length === 1 && T.already.test(h), { JL, h });
 await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close(); const co = g.data.coops[0]; co.feed = 0; co.fedAt = 0; g.save(); f.gameTick(window.__T); f.fillFeeder(0); });
 await p.evaluate(() => { const f = window.__farm; f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=go]'); if (q) q.click(); });
-h = await hintNow(); L = await p.evaluate(() => window.__farm.jobList());
-ok('a feeder and fishing asked: 3 of 3 on his list', L.length === 3 && L.map(q => q.kind).join() === 'cuddle,fill,fish' && T.added(3).test(h), { L, h });
+h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
+ok('a feeder and fishing asked: 3 of 3 on his list', JL.length === 3 && JL.map(q => q.kind).join() === 'cuddle,fill,fish' && T.added(3).test(h), { JL, h });
 const full = await p.evaluate(() => { const f = window.__farm; f.wheat.sow(); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; });
 ok('a fourth: "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
 // ---- he does them in order
@@ -79,9 +79,9 @@ const after = await p.evaluate(id => { const f = window.__farm, g = f.game(); re
 ok('he does them in order: her cuddle, the feeder, then out on the dock ready to cast; the list empty', fishing && seen.join().includes('cuddle,fill,fish') && after.happy && after.feed > 0 && after.n === 0, { seen, after });
 // ---- fishing, waiting to cast: a job asked, the rod down for it
 await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.happy = 0; g.save(); f.gameUI().o.cuddle(id); }, H[0].id);
-L = await p.evaluate(() => window.__farm.jobList());
+JL = await p.evaluate(() => window.__farm.jobList());
 let went = false; for (let i = 0; i < 120 && !went; i++) { await run(1); went = await p.evaluate(id => { const f = window.__farm, g = f.game(); if (f.gameUI().isOpen) f.gameUI().close(); return g.happyLeft(g.bird(id)) > 0 && f.fishing().state === 'off'; }, H[0].id); }
-ok('fishing and waiting to cast, a cuddle asked: on his list, his rod put down, the cuddle given', L.length === 1 && went, { L, went });
+ok('fishing and waiting to cast, a cuddle asked: on his list, his rod put down, the cuddle given', JL.length === 1 && went, { JL, went });
 ok('free at the end, the list empty', await free());
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
