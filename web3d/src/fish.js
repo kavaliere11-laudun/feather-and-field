@@ -1,5 +1,5 @@
-// The fish (release 5, fishing; game-plan-v2.md §8): fourteen species, seven in the pond and seven in the river, in each
-// water four common, two rare and one legendary with a name. Pond: rudd, roach, perch, tench; the golden tench and the koi
+// The fish (release 5, fishing; game-plan-v2.md §8): twenty species (fourteen till 9 Nov 2026), ten in the pond and ten in
+// the river, in each water six common, three rare and one legendary with a name. Pond: rudd, roach, perch, tench; the golden tench and the koi
 // (rare); Big Bertha, the giant mirror carp. River: minnow, gudgeon, dace, chub; the brown trout and the grayling (rare);
 // Old Snapjaw, the pike.
 //
@@ -60,6 +60,25 @@ export const FISH = {
     eye: { k: 0.042, iris: '#1e1c1c', ring: '#d6b04a' }, barbels: 4,
     col: { back: '#fbf7ee', side: '#f8f4ea', belly: '#f7f3ea' }, fins: { all: '#f4eee2', t: '#f3e6d8' },
     patch: [3.2, 0.5, 0.72, 1], patchCol: '#e4532a', patch2Col: '#1c1c22', scale: [15, 0.16], gill: 0.25 },
+  // (9 Nov 2026, Audrey: "Introduce more fish species": three more a water)
+  bream: { water: 'pond', rare: 0, L: 0.36, cm: [25, 50], names: ['Bream', 'Brème'],
+    body: { H: 0.5, sH: 0.42, p: 0.6, ped: 0.24, hump: 0.6, W: 0.26, mouth: -0.1, tail: 0.22 },
+    dorsal: [[0.48, 0.6, 0.24]], anal: [0.6, 0.84, 0.16, 'long'], pelvic: 0.44, pect: 0.24, tailShape: 'fork',
+    eye: { k: 0.048, iris: '#cfc7a8' },
+    col: { back: '#4b4a3a', side: '#b8a777', belly: '#efe6c8' }, fins: { all: '#4f4a40', a: '#5b5346' },
+    scale: [18, 0.4], gill: 0.25 },
+  crucian: { water: 'pond', rare: 0, L: 0.24, cm: [12, 30], names: ['Crucian carp', 'Carassin'],
+    body: { H: 0.46, sH: 0.42, p: 0.55, ped: 0.36, hump: 0.6, W: 0.4, mouth: 0.05, tail: 0.2 },
+    dorsal: [[0.36, 0.7, 0.17, 'round']], anal: [0.68, 0.8, 0.14, 'round'], pelvic: 0.44, pect: 0.24, tailShape: 'notch', bigFins: 1.1,
+    eye: { k: 0.05, iris: '#d8b25a' },
+    col: { back: '#5a4a1e', side: '#d2a23a', belly: '#f2dc9a' }, fins: { all: '#b8742e', d: '#8a6a2c', t: '#9a6a2e' },
+    scale: [14, 0.5], gill: 0.26 },
+  sunfish: { water: 'pond', rare: 1, L: 0.2, cm: [8, 18], names: ['Pumpkinseed', 'Perche-soleil'],
+    body: { H: 0.54, sH: 0.42, p: 0.55, ped: 0.28, hump: 0.56, W: 0.3, mouth: 0.1, tail: 0.2 },
+    dorsal: [[0.3, 0.52, 0.2, 'spiny'], [0.54, 0.74, 0.2, 'round']], anal: [0.62, 0.8, 0.18, 'round'], pelvic: 0.38, pect: 0.27, tailShape: 'notch',
+    eye: { k: 0.06, iris: '#d8452c' },
+    col: { back: '#2f5a4a', side: '#e39a2c', belly: '#f6c63a' }, fins: { all: '#e8a23a', d: '#4f8a78', d2: '#5a9a84', t: '#5a9a84' },
+    spotA: [0.5, 0.02, -0.2, 1.0], spotACol: '#2a7f8f', spotB: [0.4, 0.016, -0.4, 0.5], spotBCol: '#d8452c', bars: [7, 0.5, 0.1, 0.7], barCol: '#2a5a50', scale: [20, 0.2], gill: 0.3 },
   big_bertha: { water: 'pond', rare: 2, L: 0.9, cm: [85, 95], names: ['Big Bertha', 'Grosse Berthe'], legend: true,
     body: { H: 0.4, sH: 0.38, p: 0.58, ped: 0.32, hump: 0.64, W: 0.42, mouth: -0.08, tail: 0.18 },
     dorsal: [[0.34, 0.7, 0.14, 'long']], anal: [0.7, 0.8, 0.15], pelvic: 0.44, pect: 0.24, tailShape: 'fork',
@@ -91,6 +110,24 @@ export const FISH = {
     eye: { k: 0.05, iris: '#d0a944' },
     col: { back: '#36412f', side: '#b4b293', belly: '#ede6cf' }, fins: { all: '#3c3b30', a: '#d76a34', v: '#d97a3c', p: '#c9884a' },
     scale: [14, 0.75], gill: 0.27 },
+  bleak: { water: 'river', rare: 0, L: 0.16, cm: [8, 15], names: ['Bleak', 'Ablette'],
+    body: { H: 0.22, sH: 0.42, p: 0.6, ped: 0.3, hump: 0.5, W: 0.4, mouth: 0.25, tail: 0.22 },
+    dorsal: [[0.54, 0.64, 0.18]], anal: [0.64, 0.82, 0.14, 'long'], pelvic: 0.46, pect: 0.24, tailShape: 'fork',
+    eye: { k: 0.062, iris: '#e0c470' },
+    col: { back: '#3f6a5e', side: '#e4ecee', belly: '#fbfbf8' }, fins: { all: '#d9dcd2' },
+    scale: [20, 0.3], gill: 0.25, line: [0.5, 0.06] },
+  barbel: { water: 'river', rare: 0, L: 0.44, cm: [35, 70], names: ['Barbel', 'Barbeau'],
+    body: { H: 0.2, sH: 0.36, p: 0.72, ped: 0.36, hump: 0.64, W: 0.58, mouth: -0.5, tail: 0.2 },
+    dorsal: [[0.4, 0.52, 0.2]], anal: [0.68, 0.78, 0.15], pelvic: 0.46, pect: 0.23, tailShape: 'fork', bigFins: 1.1,
+    eye: { k: 0.04, iris: '#c9a85a', up: 0.5 }, barbels: 4,
+    col: { back: '#4f4a2c', side: '#b59a52', belly: '#f1e6c2' }, fins: { all: '#c8703a', d: '#7a6a3c', t: '#a0683a' },
+    scale: [22, 0.3], gill: 0.24 },
+  rainbow_trout: { water: 'river', rare: 1, L: 0.38, cm: [25, 55], names: ['Rainbow trout', 'Truite arc-en-ciel'],
+    body: { H: 0.25, sH: 0.42, p: 0.62, ped: 0.38, hump: 0.54, W: 0.42, mouth: 0.0, tail: 0.18 },
+    dorsal: [[0.4, 0.54, 0.18]], adipose: 0.84, anal: [0.68, 0.79, 0.15], pelvic: 0.5, pect: 0.24, tailShape: 'notch',
+    eye: { k: 0.048, iris: '#d9c27a' },
+    col: { back: '#3f5a4a', side: '#c9d2cc', belly: '#f6f4ee' }, fins: { all: '#8a9a8a', d: '#6a7f6c', t: '#6a7f6c', v: '#d9a0a0', a: '#d9a0a0' }, finSpot: { d: '#161a16', t: '#161a16' },
+    spotA: [0.75, 0.011, 0.1, 1.0], spotACol: '#161a16', band: [0.75, 0.2], bandCol: '#e06a8a', scale: [50, 0.06], gill: 0.25 },
   brown_trout: { water: 'river', rare: 1, L: 0.38, cm: [25, 50], names: ['Brown trout', 'Truite fario'],
     body: { H: 0.25, sH: 0.42, p: 0.62, ped: 0.38, hump: 0.54, W: 0.42, mouth: 0.0, tail: 0.18 },
     dorsal: [[0.4, 0.54, 0.18]], adipose: 0.84, anal: [0.68, 0.79, 0.15], pelvic: 0.5, pect: 0.24, tailShape: 'square',
@@ -295,7 +332,7 @@ export function fishMaterial(id, grade) {
     koiP: { value: v4(sp.patch, [0, 0, 0, 0]) }, patchCol: { value: C(sp.patchCol || '#000000') }, patch2Col: { value: C(sp.patch2Col || '#000000') },
     mirror: { value: new THREE.Vector2(...(sp.mirror || [0, 0])) }, mirrorCol: { value: C(sp.mirrorCol || '#ffffff') },
     mottle: { value: new THREE.Vector2(...(sp.mottle || [0, 0])) }, lline: { value: new THREE.Vector2(...(sp.line || [0, 0])) },
-    stripes: { value: new THREE.Vector2(...(sp.stripes || [0, 0])) }, blush: { value: 0 },
+    stripes: { value: new THREE.Vector2(...(sp.stripes || [0, 0])) }, blush: { value: 0 }, band: { value: new THREE.Vector2(...(sp.band || [0, 0])) }, bandCol: { value: C(sp.bandCol || '#000000') },
   };
   const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.0, side: THREE.DoubleSide });
   m.name = 'fish'; m.userData.fish = U;
@@ -315,7 +352,8 @@ vFd = fd; vLP = position / fishL;
 varying vec3 vFd; varying vec3 vLP;
 uniform float lb, gill, spotAFront, hasHalo, blush;
 uniform vec3 cBack, cSide, cBelly, barCol, blotchCol, spotACol, spotBCol, halo, beanCol, patchCol, patch2Col, mirrorCol;
-uniform vec2 scl, mirror, mottle, lline, stripes;
+uniform vec2 scl, mirror, mottle, lline, stripes, band;
+uniform vec3 bandCol;
 uniform vec4 bars, blotch, spotA, spotB, beans, koiP;
 float fh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 vec2 fh2(vec2 p) { return vec2(fh(p), fh(p + 17.31)); }
@@ -406,6 +444,8 @@ const BODY_GLSL = `
   if (lline.x > 0.0) { float ll = abs(v - lline.y); col *= 1.0 - lline.x * 0.4 * (1.0 - smoothstep(0.015, 0.04, ll)) * step(0.0, sin(s * 300.0)) * smoothstep(0.22, 0.28, s); }
   // the gill cover's edge: a curved line behind the head
   { float gl = abs(s - gill + 0.06 * v * v); float aa = fwidth(s) * 1.2; float on = (1.0 - smoothstep(0.004, 0.006 + aa, gl)) * (1.0 - smoothstep(0.78, 0.92, abs(v))); col *= 1.0 - 0.38 * on; }
+  // a soft band of colour along the side, gill to tail (the rainbow trout's rosy stripe)
+  if (band.x > 0.0) col = mix(col, bandCol, band.x * (1.0 - smoothstep(0.0, band.y, abs(v))) * smoothstep(0.2, 0.3, s) * (1.0 - smoothstep(0.82, 0.95, s)));
   // a blush on his cheeks, under and behind the eye (the salmon, when he sees her)
   if (blush > 0.0) { float d = length(vec2((s - 0.215) / 0.05, (v + 0.06) / 0.3)); col = mix(col, vec3(0.97, 0.47, 0.56), blush * 0.85 * (1.0 - smoothstep(0.45, 1.0, d))); }
   diffuseColor.rgb = col;

@@ -261,7 +261,9 @@ export const TEXT = {
     apple_line0: '🍎 She’d love an apple tree just outside her coop: it’s planted as soon as there’s room on one side of it (your own land, clear of lanes and other coops).',
     honey_sold: '{n} jars of honey sold · +{c} coins', honey_sold1: 'A jar of honey sold · +{c} coins',
     // fishing (release 5)
-    fish_rudd: 'Rudd', fish_roach: 'Roach', fish_perch: 'Perch', fish_tench: 'Tench', fish_golden_tench: 'Golden tench', fish_koi: 'Koi', fish_big_bertha: 'Big Bertha',
+    fish_rudd: 'Rudd', fish_roach: 'Roach', fish_perch: 'Perch', fish_tench: 'Tench', fish_golden_tench: 'Golden tench', fish_koi: 'Koi', fish_big_bertha: 'Big Bertha', fish_bream: 'Bream', fish_crucian: 'Crucian carp', fish_sunfish: 'Pumpkinseed',
+    fish_bleak: 'Bleak', fish_barbel: 'Barbel', fish_rainbow_trout: 'Rainbow trout',
+    fish_netted: 'Into the keep net 🧺 · worth {c} coins', catch_title: 'Your keep net', catch_sub: 'Sell your catch, or keep some in the fish box for the villagers’ orders.', catch_keep: 'Keep', catch_kept: 'Kept ✓', catch_sell: 'Sell · +{c} coins', catch_sell0: 'Put them in the fish box', catch_box: 'Fish box: {n} of {max}', catch_box_note: 'Fish in the box go to the villagers’ orders that ask for fish.', catch_box_sell: 'Sell the box · +{c} coins', catch_sold: '{n} fish sold · +{c} coins', catch_sold1: '{n} fish sold · +{c} coins', catch_boxed: '{n} in the fish box', catch_open: '🧺 Keep net: {n} to sell', catch_none: 'Your keep net is empty.', fish_tin_tomorrow: 'One tin a day: another tomorrow', book_fish_am: 'Bites early in the morning (6 to 10)', book_fish_noon: 'Bites around midday (11 to 3)', book_fish_eve: 'Bites in the evening (from 5)', book_fish_legend: 'Only once every other fish here is caught',
     fish_minnow: 'Minnow', fish_gudgeon: 'Gudgeon', fish_dace: 'Dace', fish_chub: 'Chub', fish_brown_trout: 'Brown trout', fish_grayling: 'Grayling', fish_old_snapjaw: 'Old Snapjaw',
     fish_new: 'Fishing at the pond: tap its dock', fish_new_river: 'Fishing in the river: tap its footbridge', fish_show_river: 'Show me the river',
     book_tab_birds: 'Breeds', book_tab_fish: 'Fish', book_fish_found: '{n} of {all} fish caught', book_fish_pond: 'The pond', book_fish_river: 'The river',
@@ -601,7 +603,9 @@ export const TEXT = {
     apple_line0: '🍎 Elle rêve d’un pommier juste à côté de son poulailler : il sera planté dès qu’il y aura de la place d’un côté (sur vos terres, loin des chemins et des autres poulaillers).',
     honey_sold: '{n} pots de miel vendus · +{c} pièces', honey_sold1: 'Un pot de miel vendu · +{c} pièces',
     // la pêche (version 5)
-    fish_rudd: 'Rotengle', fish_roach: 'Gardon', fish_perch: 'Perche', fish_tench: 'Tanche', fish_golden_tench: 'Tanche dorée', fish_koi: 'Koï', fish_big_bertha: 'Grosse Berthe',
+    fish_rudd: 'Rotengle', fish_roach: 'Gardon', fish_perch: 'Perche', fish_tench: 'Tanche', fish_golden_tench: 'Tanche dorée', fish_koi: 'Koï', fish_big_bertha: 'Grosse Berthe', fish_bream: 'Brème', fish_crucian: 'Carassin', fish_sunfish: 'Perche-soleil',
+    fish_bleak: 'Ablette', fish_barbel: 'Barbeau', fish_rainbow_trout: 'Truite arc-en-ciel',
+    fish_netted: 'Dans la bourriche 🧺 · vaut {c} pièces', catch_title: 'Votre bourriche', catch_sub: 'Vendez votre pêche, ou gardez-en dans le vivier pour les commandes du village.', catch_keep: 'Garder', catch_kept: 'Gardé ✓', catch_sell: 'Vendre · +{c} pièces', catch_sell0: 'Mettre dans le vivier', catch_box: 'Vivier\u00a0: {n} sur {max}', catch_box_note: 'Les poissons du vivier partent dans les commandes du village qui en demandent.', catch_box_sell: 'Vendre le vivier · +{c} pièces', catch_sold: '{n} poissons vendus · +{c} pièces', catch_sold1: '{n} poisson vendu · +{c} pièces', catch_boxed: '{n} dans le vivier', catch_open: '🧺 Bourriche\u00a0: {n} à vendre', catch_none: 'Votre bourriche est vide.', fish_tin_tomorrow: 'Une boîte par jour\u00a0: une autre demain', book_fish_am: 'Mord tôt le matin (6 h à 10 h)', book_fish_noon: 'Mord vers midi (11 h à 15 h)', book_fish_eve: 'Mord le soir (dès 17 h)', book_fish_legend: 'Seulement quand tous les autres poissons d’ici sont pris',
     fish_minnow: 'Vairon', fish_gudgeon: 'Goujon', fish_dace: 'Vandoise', fish_chub: 'Chevesne', fish_brown_trout: 'Truite fario', fish_grayling: 'Ombre', fish_old_snapjaw: 'Vieux Claquemâchoire',
     fish_new: 'La pêche à l’étang : touchez son ponton', fish_new_river: 'La pêche à la rivière : touchez sa passerelle', fish_show_river: 'Voir la rivière',
     book_tab_birds: 'Races', book_tab_fish: 'Poissons', book_fish_found: '{n} poissons pêchés sur {all}', book_fish_pond: 'L’étang', book_fish_river: 'La rivière',
@@ -1063,16 +1067,26 @@ export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3,
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, maxWorms: 999, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
+export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 999, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
+// (9 Nov 2026 night, Audrey: "It needs to take time to fish all the different species", "Introduce more fish species"; her
+// choices "Time of day + one tin a day", "Keep net, sell at the end"): twenty fish, ten a water: six common, three rare,
+// one legendary. when: the hours a rare one bites ([from, to), the game's clock: early morning or evening); a legendary one
+// only once every other fish of its water has been caught. One tin of worms a day (FISHING.tin, the bag's `tin`: the day
+// it was bought). A catch goes into the keep net (the bag's `net`), sold at the end of the trip, or kept in the fish box
+// (`box`, FISHING.box at most) for the villagers' orders
 export const FISH_RULES = {
-  rudd: { water: 'pond', rare: 0, w: 26, price: 9, xp: 1, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 30, price: 8, xp: 1, cm: [12, 25] },
-  perch: { water: 'pond', rare: 0, w: 20, price: 11, xp: 1, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 14, price: 14, xp: 2, cm: [20, 45] },
-  golden_tench: { water: 'pond', rare: 1, w: 4.5, price: 70, xp: 6, cm: [20, 40] }, koi: { water: 'pond', rare: 1, w: 4, price: 90, xp: 6, cm: [30, 60] },
-  big_bertha: { water: 'pond', rare: 2, w: 1.5, price: 300, xp: 25, cm: [85, 95] },
-  minnow: { water: 'river', rare: 0, w: 30, price: 6, xp: 1, cm: [5, 10] }, gudgeon: { water: 'river', rare: 0, w: 26, price: 8, xp: 1, cm: [8, 15] },
-  dace: { water: 'river', rare: 0, w: 22, price: 10, xp: 1, cm: [15, 25] }, chub: { water: 'river', rare: 0, w: 12, price: 15, xp: 2, cm: [30, 50] },
-  brown_trout: { water: 'river', rare: 1, w: 4.5, price: 80, xp: 6, cm: [25, 50] }, grayling: { water: 'river', rare: 1, w: 4, price: 90, xp: 6, cm: [25, 45] },
-  old_snapjaw: { water: 'river', rare: 2, w: 1.5, price: 400, xp: 25, cm: [100, 110] },
+  rudd: { water: 'pond', rare: 0, w: 22, price: 9, xp: 1, cm: [15, 30] }, roach: { water: 'pond', rare: 0, w: 24, price: 8, xp: 1, cm: [12, 25] },
+  perch: { water: 'pond', rare: 0, w: 16, price: 11, xp: 1, cm: [15, 35] }, tench: { water: 'pond', rare: 0, w: 11, price: 14, xp: 2, cm: [20, 45] },
+  bream: { water: 'pond', rare: 0, w: 12, price: 13, xp: 2, cm: [25, 50] }, crucian: { water: 'pond', rare: 0, w: 13, price: 12, xp: 1, cm: [12, 30] },
+  golden_tench: { water: 'pond', rare: 1, w: 7, price: 70, xp: 6, cm: [20, 40], when: [6, 10] }, koi: { water: 'pond', rare: 1, w: 6, price: 90, xp: 6, cm: [30, 60], when: [17, 22] },
+  sunfish: { water: 'pond', rare: 1, w: 7, price: 60, xp: 6, cm: [8, 18], when: [11, 15] },
+  big_bertha: { water: 'pond', rare: 2, w: 2.5, price: 300, xp: 25, cm: [85, 95] },
+  minnow: { water: 'river', rare: 0, w: 24, price: 6, xp: 1, cm: [5, 10] }, gudgeon: { water: 'river', rare: 0, w: 20, price: 8, xp: 1, cm: [8, 15] },
+  dace: { water: 'river', rare: 0, w: 18, price: 10, xp: 1, cm: [15, 25] }, chub: { water: 'river', rare: 0, w: 11, price: 15, xp: 2, cm: [30, 50] },
+  bleak: { water: 'river', rare: 0, w: 16, price: 7, xp: 1, cm: [8, 15] }, barbel: { water: 'river', rare: 0, w: 9, price: 18, xp: 2, cm: [35, 70] },
+  brown_trout: { water: 'river', rare: 1, w: 7, price: 80, xp: 6, cm: [25, 50], when: [6, 10] }, grayling: { water: 'river', rare: 1, w: 6, price: 90, xp: 6, cm: [25, 45], when: [17, 22] },
+  rainbow_trout: { water: 'river', rare: 1, w: 7, price: 70, xp: 6, cm: [25, 55], when: [11, 15] },
+  old_snapjaw: { water: 'river', rare: 2, w: 2.5, price: 400, xp: 25, cm: [100, 110] },
 };
 export const FISH_IDS = Object.keys(FISH_RULES);
 export const fishLevel = id => FISHING[FISH_RULES[id].water];
@@ -1414,6 +1428,12 @@ export function checkFarm(d, now = Date.now()) {
       if (Array.isArray(g) && g.length === 2 && Number.isInteger(g[0]) && g[0] >= 1 && g[0] <= 1e6 && Number.isInteger(g[1]) && g[1] >= R.cm[0] && g[1] <= R.cm[1] && L >= fishLevel(id)) got[id] = [g[0], g[1]];
     }
     out.fish = { worms: int(fs.worms, 0, FISHING.maxWorms, 0), got, ...(fs.gift === true ? { gift: true } : {}) };      // (gift: the starting tin given)
+    // the keep net and the fish box: known fish (never a legendary one) of an open water, each a size of its own kind's, no
+    // more than the net and the box hold; the day the last tin was bought: never ahead of today
+    const fishList = (raw, max) => (Array.isArray(raw) ? raw : []).filter(q => Array.isArray(q) && q.length === 2 && typeof q[0] === 'string' && Object.prototype.hasOwnProperty.call(FISH_RULES, q[0]) && FISH_RULES[q[0]].rare < 2 && L >= fishLevel(q[0]) && Number.isInteger(q[1]) && q[1] >= FISH_RULES[q[0]].cm[0] && q[1] <= FISH_RULES[q[0]].cm[1]).slice(0, max).map(q => [q[0], q[1]]);
+    const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, FISHING.box);
+    if (net.length) out.fish.net = net; if (box.length) out.fish.box = box;
+    if (typeof fs.tin === 'string' && /^\d{8}$/.test(fs.tin) && fs.tin <= dayKey(now + TZ_SLACK)) out.fish.tin = fs.tin;
     if ('day' in fs || 'free' in fs) { out.fish.day = typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now); out.fish.free = int(fs.free, 0, FISHING.oldFree, 0); }
   }
   // village orders (7 Nov 2026): only once the farm's level has opened them; at most three, each from a known villager
@@ -1879,7 +1899,7 @@ export class Game {
     return added;
   }
   orderCan(k) { return k === 'eggs' || k === 'grain' || (k === 'fish' ? this.fishOpen('pond') : k === 'honey' ? !!this.data.honey : CROP_IDS.includes(k) && this.gardenOpen()); }
-  storeOf(k) { return k === 'grain' ? Math.floor(this.data.grain || 0) : this.vegBasket()[k] || 0; }      // (what's in store for an order)
+  storeOf(k) { return k === 'grain' ? Math.floor(this.data.grain || 0) : k === 'fish' ? this.fishBox().length : this.vegBasket()[k] || 0; }      // (what's in store for an order)
   newOrder(t, r = Math.random) {
     const B = this.orderBook(), L = this.level, busy = new Set(B.list.map(o => o.who));
     const who = Object.keys(VILLAGERS).filter(v => !busy.has(v) && VILLAGERS[v].wants.some(k => this.orderCan(k)));
@@ -1900,7 +1920,7 @@ export class Game {
     }
     return { n: n - left, to };
   }
-  orderLeft(o, k) { return STORE_ITEMS.includes(k) ? Math.max(0, (o.items[k] || 0) - this.storeOf(k)) : Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)); }
+  orderLeft(o, k) { return k === 'fish' ? Math.max(0, (o.items.fish || 0) - (o.got.fish || 0) - this.fishBox().length) : STORE_ITEMS.includes(k) ? Math.max(0, (o.items[k] || 0) - this.storeOf(k)) : Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)); }
   orderReady(o) { return ORDER_ITEMS.every(k => !o.items[k] || this.orderLeft(o, k) === 0); }
   ordersReady() { return this.ordersOpen() && this.data.orders ? this.data.orders.list.filter(o => this.orderReady(o)).length : 0; }
   villagerName(v) { return this.t('vil_' + v); }
@@ -1913,6 +1933,7 @@ export class Game {
   deliverOrder(id, now = Date.now()) {
     const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o || !this.orderReady(o)) return null;
     if (o.items.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - o.items.grain) * 100) / 100);
+    if (o.items.fish) { const need = Math.max(0, o.items.fish - (o.got.fish || 0)), f = this.fishBag(); if (need && f.box) { f.box.sort((a, b) => fishPrice(a[0], a[1]) - fishPrice(b[0], b[1])); f.box.splice(0, need); if (!f.box.length) delete f.box; } }      // (the fish from the box, the smallest first)
     for (const k of CROP_IDS) if (o.items[k]) { const B = this.vegBasket(); B[k] = Math.max(0, (B[k] || 0) - o.items[k]); }      // (the vegetables from the basket)
     const P = orderPay(o), sp = orderSurprise(o, this.fishOpen('pond'));
     let coins = P.coins, worms = 0, grain = 0;
@@ -2054,11 +2075,26 @@ export class Game {
   }
   fishGot(id) { const g = this.data.fish && this.data.fish.got[id]; return g ? { n: g[0], best: g[1] } : null; }
   fishName(id) { return this.t('fish_' + id); }
-  castWorm(water, now = Date.now(), r = Math.random) {
+  // who bites now: the common fish always; a rare one in its hours; the legendary one once all the others of its water are in
+  fishBites(id, hour) { const R = FISH_RULES[id]; return R.rare === 2 ? FISH_IDS.every(k => k === id || FISH_RULES[k].water !== R.water || this.fishGot(k)) : !R.when || (hour >= R.when[0] && hour < R.when[1]); }
+  fishBox() { return (this.data.fish && this.data.fish.box) || []; }
+  fishNet() { return (this.data.fish && this.data.fish.net) || []; }
+  tinToday(now = Date.now()) { return !!this.data.fish && this.data.fish.tin === dayKey(now); }
+  // the keep net at the end of a trip: those at `keep` (places in the net) into the fish box, while there's room; the rest
+  // sold for their sizes' prices: { coins, sold, kept }
+  sellCatch(keep = []) {
+    const f = this.fishBag(), net = f.net || []; if (!net.length) return null;
+    let coins = 0, sold = 0, kept = 0; const box = f.box || [];
+    net.forEach((q, i) => { if (keep.includes(i) && box.length < FISHING.box) { box.push(q); kept++; } else { coins += fishPrice(q[0], q[1]); sold++; } });
+    delete f.net; if (box.length) f.box = box; this.data.coins += coins; this.save();
+    return { coins, sold, kept };
+  }
+  sellBox() { const f = this.fishBag(), box = f.box || []; if (!box.length) return null; const coins = box.reduce((a, q) => a + fishPrice(q[0], q[1]), 0); delete f.box; this.data.coins += coins; this.save(); return { coins, sold: box.length }; }
+  castWorm(water, now = Date.now(), r = Math.random, hour = new Date(now).getHours() + new Date(now).getMinutes() / 60) {
     if (!this.fishOpen(water)) return null;
     const f = this.fishBag(); if (f.worms <= 0) return null;
     f.worms--;
-    const list = FISH_IDS.filter(id => FISH_RULES[id].water === water);
+    const list = FISH_IDS.filter(id => FISH_RULES[id].water === water && this.fishBites(id, hour));
     let x = r() * list.reduce((a, id) => a + FISH_RULES[id].w, 0), id = list[0];
     for (const k of list) { x -= FISH_RULES[k].w; if (x < 0) { id = k; break; } }
     const R = FISH_RULES[id], cm = Math.round(R.cm[0] + (R.cm[1] - R.cm[0]) * Math.pow(r(), 1.6));
@@ -2071,16 +2107,19 @@ export class Game {
     this.bite = null;
     const R = FISH_RULES[b.id], f = this.fishBag(), g = f.got[b.id], first = !g, best = !first && b.cm > g[1];
     f.got[b.id] = [g ? g[0] + 1 : 1, g ? Math.max(g[1], b.cm) : b.cm];
-    const to = R.rare === 2 ? { n: 0, to: [] } : this.setAside('fish', 1);      // (for an order first, if one wants a fish: a legendary one's photo isn't one)
-    const coins = to.n ? 0 : fishPrice(b.id, b.cm), xp = R.xp + (first ? FISHING.firstXp : 0);
+    // (a legendary one: its photo paid now, and back it goes; any other into the keep net, sold at the end of the trip; the
+    // net full: sold there and then)
+    const legend = R.rare === 2, worth = fishPrice(b.id, b.cm), full = !legend && (f.net || []).length >= FISHING.net;
+    if (!legend && !full) (f.net = f.net || []).push([b.id, b.cm]);
+    const coins = legend || full ? worth : 0, xp = R.xp + (first ? FISHING.firstXp : 0);
     this.data.coins += coins; this.data.xp += xp; this.save();
-    return { id: b.id, cm: b.cm, water: b.water, rare: R.rare, legend: R.rare === 2, first, best, coins, xp, n: f.got[b.id][0], order: to.n ? to.to[0] : null };
+    return { id: b.id, cm: b.cm, water: b.water, rare: R.rare, legend, first, best, coins, worth, net: legend ? 0 : (f.net || []).length, xp, n: f.got[b.id][0], order: null };
   }
   loseFish() { const had = !!this.bite; this.bite = null; return had; }
   buyWorms(now = Date.now()) {
     const T = FISHING.tin, f = this.fishBag();
-    if (this.data.coins < T.price || f.worms + T.n > FISHING.maxWorms) return null;
-    this.data.coins -= T.price; f.worms += T.n; this.save();
+    if (this.data.coins < T.price || f.worms + T.n > FISHING.maxWorms || f.tin === dayKey(now)) return null;      // (one tin a day)
+    this.data.coins -= T.price; f.worms += T.n; f.tin = dayKey(now); this.save();
     return { n: T.n, price: T.price, worms: f.worms };
   }
   // ---- the first day's guide: the step now ('eggs', 'cuddle', …, or null: done or skipped); a step done (k: only if it's

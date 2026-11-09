@@ -3070,6 +3070,136 @@
   "fr": "Grosse Berthe"
  },
  {
+  "id": "text.fish_bream",
+  "en": "Bream",
+  "fr": "Brème"
+ },
+ {
+  "id": "text.fish_crucian",
+  "en": "Crucian carp",
+  "fr": "Carassin"
+ },
+ {
+  "id": "text.fish_sunfish",
+  "en": "Pumpkinseed",
+  "fr": "Perche-soleil"
+ },
+ {
+  "id": "text.fish_bleak",
+  "en": "Bleak",
+  "fr": "Ablette"
+ },
+ {
+  "id": "text.fish_barbel",
+  "en": "Barbel",
+  "fr": "Barbeau"
+ },
+ {
+  "id": "text.fish_rainbow_trout",
+  "en": "Rainbow trout",
+  "fr": "Truite arc-en-ciel"
+ },
+ {
+  "id": "text.fish_netted",
+  "en": "Into the keep net 🧺 · worth {c} coins",
+  "fr": "Dans la bourriche 🧺 · vaut {c} pièces"
+ },
+ {
+  "id": "text.catch_title",
+  "en": "Your keep net",
+  "fr": "Votre bourriche"
+ },
+ {
+  "id": "text.catch_sub",
+  "en": "Sell your catch, or keep some in the fish box for the villagers’ orders.",
+  "fr": "Vendez votre pêche, ou gardez-en dans le vivier pour les commandes du village."
+ },
+ {
+  "id": "text.catch_keep",
+  "en": "Keep",
+  "fr": "Garder"
+ },
+ {
+  "id": "text.catch_kept",
+  "en": "Kept ✓",
+  "fr": "Gardé ✓"
+ },
+ {
+  "id": "text.catch_sell",
+  "en": "Sell · +{c} coins",
+  "fr": "Vendre · +{c} pièces"
+ },
+ {
+  "id": "text.catch_sell0",
+  "en": "Put them in the fish box",
+  "fr": "Mettre dans le vivier"
+ },
+ {
+  "id": "text.catch_box",
+  "en": "Fish box: {n} of {max}",
+  "fr": "Vivier : {n} sur {max}"
+ },
+ {
+  "id": "text.catch_box_note",
+  "en": "Fish in the box go to the villagers’ orders that ask for fish.",
+  "fr": "Les poissons du vivier partent dans les commandes du village qui en demandent."
+ },
+ {
+  "id": "text.catch_box_sell",
+  "en": "Sell the box · +{c} coins",
+  "fr": "Vendre le vivier · +{c} pièces"
+ },
+ {
+  "id": "text.catch_sold",
+  "en": "{n} fish sold · +{c} coins",
+  "fr": "{n} poissons vendus · +{c} pièces"
+ },
+ {
+  "id": "text.catch_sold1",
+  "en": "{n} fish sold · +{c} coins",
+  "fr": "{n} poisson vendu · +{c} pièces"
+ },
+ {
+  "id": "text.catch_boxed",
+  "en": "{n} in the fish box",
+  "fr": "{n} dans le vivier"
+ },
+ {
+  "id": "text.catch_open",
+  "en": "🧺 Keep net: {n} to sell",
+  "fr": "🧺 Bourriche : {n} à vendre"
+ },
+ {
+  "id": "text.catch_none",
+  "en": "Your keep net is empty.",
+  "fr": "Votre bourriche est vide."
+ },
+ {
+  "id": "text.fish_tin_tomorrow",
+  "en": "One tin a day: another tomorrow",
+  "fr": "Une boîte par jour : une autre demain"
+ },
+ {
+  "id": "text.book_fish_am",
+  "en": "Bites early in the morning (6 to 10)",
+  "fr": "Mord tôt le matin (6 h à 10 h)"
+ },
+ {
+  "id": "text.book_fish_noon",
+  "en": "Bites around midday (11 to 3)",
+  "fr": "Mord vers midi (11 h à 15 h)"
+ },
+ {
+  "id": "text.book_fish_eve",
+  "en": "Bites in the evening (from 5)",
+  "fr": "Mord le soir (dès 17 h)"
+ },
+ {
+  "id": "text.book_fish_legend",
+  "en": "Only once every other fish here is caught",
+  "fr": "Seulement quand tous les autres poissons d’ici sont pris"
+ },
+ {
   "id": "text.fish_minnow",
   "en": "Minnow",
   "fr": "Vairon"

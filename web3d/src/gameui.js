@@ -798,6 +798,7 @@ export class GameUI {
         info.append(el('span', 'gcard-t', g.fishName(id)), el('p', 'gnote gpage-l gfishrare', this.t('fish_rare' + R.rare)));
         info.append(el('p', 'gpage-s' + (c ? ' gfound' : ''), c ? (c.n === 1 ? this.t('book_fish_caught1', { cm: c.best }) : this.t('book_fish_caught', { n: c.n, cm: c.best })) : open ? this.t('book_fish_not') : this.t('book_fish_level', { n: FISHING[w] })));
         info.append(el('p', 'gnote gpage-l', this.t('book_fish_size', { a: R.cm[0], b: R.cm[1] }) + ' · ' + (R.rare === 2 ? this.t('book_fish_photo', { c: R.price }) : this.t('book_fish_price', { c: fishPrice(id, Math.round((R.cm[0] + R.cm[1]) / 2)) }))));
+        if (!c && open && (R.when || R.rare === 2)) info.append(el('p', 'gnote gpage-l gfishwhen', '🕒 ' + this.t(R.rare === 2 ? 'book_fish_legend' : R.when[0] < 11 ? 'book_fish_am' : R.when[0] < 16 ? 'book_fish_noon' : 'book_fish_eve')));      // (not caught yet: when it bites)
         card.append(pic, info); b.append(card);
       }
     }
@@ -871,7 +872,7 @@ export class GameUI {
       c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));      // (in the language's own quotation marks)
       for (const k of ORDER_ITEMS) {
         if (!o.items[k]) continue;
-        const n = o.items[k], have = store(k) ? Math.min(n, g.storeOf(k)) : Math.min(n, o.got[k] || 0);
+        const n = o.items[k], have = k === 'fish' ? Math.min(n, (o.got.fish || 0) + g.fishBox().length) : store(k) ? Math.min(n, g.storeOf(k)) : Math.min(n, o.got[k] || 0);
         const row = el('div', 'gorder-i'), bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * have / n) + '%'; bar.append(fill);
         row.append(el('span', 'gtext', icon[k] + ' ' + this.t('ord_' + k) + ' ' + (store(k) ? fmt(n) + ' ' + this.t(k === 'grain' ? 'ord_grain_have' : 'ord_veg_have', { n: fmt(g.storeOf(k)) }) : have + ' / ' + n)), bar);
         c.append(row);
@@ -1266,9 +1267,10 @@ export class GameUI {
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
     else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => { if (!b.disabled) h.go(); }); body.append(b); this.busyNote([b]); }
+    if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', g.fishNet().length ? this.t('catch_open', { n: g.fishNet().length }) : this.t('catch_box', { n: g.fishBox().length, max: FISHING.box })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
     const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
     th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
-    const bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke ? ' galt' : ''), broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke; bb.dataset.fish = 'tin';
+    const had = g.tinToday(), bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke || had ? ' galt' : ''), had ? this.t('fish_tin_tomorrow') : broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke || had; bb.dataset.fish = 'tin';
     bb.addEventListener('click', () => { if (!bb.disabled) h.buy(); });
     tc.append(th, bb); body.append(tc);
   }
@@ -1304,7 +1306,7 @@ export class GameUI {
     info.append(el('p', 'gfishsize', this.t('fish_size', { cm: r.cm })));
     if (r.first) info.append(el('p', 'gtext gfishnew', '✨ ' + this.t('fish_first')));
     else if (r.best) info.append(el('p', 'gtext gfishnew', '🏆 ' + this.t('fish_best')));
-    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : r.order ? this.t('ord_fish_set', { name: g.villagerIn(r.order.who) }) : this.t('fish_sold', { c: r.coins })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
+    info.append(el('p', 'gtext', r.legend ? this.t('fish_photo_' + r.id, { c: r.coins }) : r.coins ? this.t('fish_sold', { c: r.coins }) : this.t('fish_netted', { c: r.worth, n: r.net })), el('p', 'gnote gfound', this.t('fish_xp', { xp: r.xp }) + ' · ' + this.t(r.n === 1 ? 'fish_caught_1' : 'fish_caught_n', { n: r.n })));
     card.append(pic, info); body.append(card);
     const left = g.worms(), row = el('div', 'gstick gfishbtns');
     const done = keep => { const f = this.fishThen; this.fishThen = null; this.close(); if (f) f(keep); };
@@ -1312,6 +1314,31 @@ export class GameUI {
     const s = el('button', 'gbtn' + (left ? ' galt' : ''), this.t(left ? 'fish_stop1' : 'fish_stop')); s.type = 'button'; s.dataset.fish = 'stop'; s.addEventListener('click', () => done(false)); row.append(s);
     body.append(row);
     this.refresh(); this.bumpCoins();
+  }
+  // ---- the keep net at the end of a trip (9 Nov 2026, Audrey's choice "Keep net, sell at the end"): each fish with its
+  // size and price and a Keep button (into the fish box, for the villagers' orders, while there's room); Sell: the rest
+  // sold (h.sell(keep): the places kept). The fish box: how many, and Sell the box (h.sellBox)
+  catchSheet(h) {
+    const g = this.g, net = g.fishNet(), box = g.fishBox(), body = this.open('catch', '🧺 ' + this.t('catch_title'));
+    this.bird = null;
+    const keep = new Set(), room = () => FISHING.box - box.length - keep.size;
+    if (net.length) {
+      body.append(el('p', 'gsub', this.t('catch_sub')));
+      const sell = el('button', 'gbtn', ''); sell.type = 'button'; sell.dataset.catch = 'sell';
+      const total = () => net.reduce((a, q, i) => a + (keep.has(i) ? 0 : fishPrice(q[0], q[1])), 0);
+      const btns = [], fresh = () => { sell.textContent = keep.size === net.length ? this.t('catch_sell0') : this.t('catch_sell', { c: fmt(total()) }); btns.forEach((b, i) => { b.textContent = keep.has(i) ? this.t('catch_kept') : this.t('catch_keep'); b.classList.toggle('galt', !keep.has(i)); b.disabled = !keep.has(i) && room() <= 0; }); };
+      const list = el('div', 'gcatch');
+      net.forEach((q, i) => {
+        const row = el('div', 'gcatch-r'), im = el('img'); im.alt = ''; im.src = 'fish/' + q[0] + '.webp' + (this.o.bust || '');
+        const kb = el('button', 'gbtn gsmallbtn galt', ''); kb.type = 'button'; kb.dataset.keep = i; kb.addEventListener('click', () => { if (keep.has(i)) keep.delete(i); else if (room() > 0) keep.add(i); fresh(); }); btns.push(kb);
+        row.append(im, el('span', 'gtext gcatch-n', g.fishName(q[0]) + ' · ' + this.t('fish_size', { cm: q[1] })), el('span', 'gtext gcatch-c', '🪙 ' + fishPrice(q[0], q[1])), kb); list.append(row);
+      });
+      body.append(list);
+      sell.addEventListener('click', () => h.sell([...keep])); fresh();
+      const st = el('div', 'gstick'); st.append(sell); body.append(st);
+    } else body.append(el('p', 'gnote gcenter', this.t('catch_none')));
+    body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note')));
+    if (box.length && !net.length) { const sb = el('button', 'gbtn galt', this.t('catch_box_sell', { c: fmt(box.reduce((a, q) => a + fishPrice(q[0], q[1]), 0)) })); sb.type = 'button'; sb.dataset.catch = 'box'; sb.addEventListener('click', () => h.sellBox()); body.append(sb); }
   }
   // ---- Gertrude and Hector (release 3): who they are, their trust (cross .. friends: hearts, what it means, days of visits to
   // the next), a visit (h.visit; friends: a cuddle, or how long they're happy after one; at night, in the morning)

@@ -211,7 +211,7 @@ export class Fishing {
       for (let k = 0; k < 12 && !this.o.inWater(tx, tz); k++) { d = Math.max(r0, d - 0.25); a *= 0.8; tx = S.stand[0] + Math.sin(h + a) * d; tz = S.stand[1] + Math.cos(h + a) * d; }
       if (!this.o.inWater(tx, tz)) return false;
     }
-    const bite = this.o.game.castWorm(this.o.water);
+    const bite = this.o.game.castWorm(this.o.water, undefined, undefined, this.o.hour ? this.o.hour() : undefined);      // (the game's own clock: who bites at this hour)
     if (!bite) { this.flash('fish_noworms'); return true; }
     this.bite = bite; this.easy = !this.anyCaught(); this.refreshBar(); this.words('fish_casting');
     this.target = new THREE.Vector3(tx, this.o.waterY, tz); this.state = 'cast'; this.t = 0; this.glass.hidden = false;

@@ -1,4 +1,4 @@
-// Pictures of the fourteen fish (?lineup=fish, src/fish.js), one each, framed to its length: ./withserver.sh node fishpics.mjs [OUT]
+// Pictures of the fish (?lineup=fish, src/fish.js), one each, framed to its length: ./withserver.sh node fishpics.mjs [OUT]
 // (PORT; ONLY=rudd,perch: just those; W, H the picture's size in CSS pixels, 2x)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
@@ -7,7 +7,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 2 });
 const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
-await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup=fish&time=11:00${process.env.BACKDROP ? '&backdrop' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup=fish&look=today&time=11:00${process.env.BACKDROP ? '&backdrop' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 await p.addStyleTag({ content: '#hint, #readout, #tag, .top, #ui, .hud, .vignette { display: none !important; }' });
 const ids = await p.evaluate(() => window.__farm.fishLineup().fish.map(f => f.id));
