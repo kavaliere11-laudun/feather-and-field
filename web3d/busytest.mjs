@@ -24,8 +24,6 @@ await load();
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(3) + 5; g.data.lvSeen = 3; g.fishBag().gift = true; g.fishBag().worms = 6; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(2);
 await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); });
-const card = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null; const q = sel => s.querySelector(sel);
-  return { kind: window.__farm.gameUI().kind, note: (q('.gbusy') || {}).textContent || '', cuddle: q('.gcuddle') ? q('.gcuddle').disabled : null, worms: q('.gworms') ? q('.gworms').disabled : null, go: q('button[data-fish=go]') ? q('button[data-fish=go]').disabled : null }; });
 const T = fr ? { ask: /Demandez autre chose/, added: n => new RegExp('\\(' + n + ' sur 3\\)'), next: /Ensuite/, full: /pleine/, already: /Déjà/ } : { ask: /Ask for anything else/, added: n => new RegExp('\\(' + n + ' of 3\\)'), next: /Next:/, full: /full/, already: /Already/ };
 const card = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null; const q = sel => s.querySelector(sel);
   return { kind: window.__farm.gameUI().kind, note: (q('.gbusy') || {}).textContent || '', cuddle: q('.gcuddle') ? q('.gcuddle').disabled : null }; });

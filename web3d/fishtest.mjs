@@ -144,9 +144,9 @@ ok('Keep fishing: he crouches and lowers it into the bucket, picks his rod up ag
 // a bite missed
 let w0 = (await st()).worms, cc = (await st()).coins;
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25);
-await run(3); const held = (await st()).state;
+await run(3); const stayed = (await st()).state;
 const again = await until(() => window.__farm.fishing().state === 'wait', 2), againHint = (await st()).hint;
-ok('the float stays down a long moment (3 s on: still biting); not tapped, it lets go and bites again', held === 'bite' && again && (fr ? /mordre de nouveau/ : /bite again/).test(againHint) && await until(() => window.__farm.fishing().state === 'bite', 6), { held, again, againHint });
+ok('the float stays down a long moment (3 s on: still biting); not tapped, it lets go and bites again', stayed === 'bite' && again && (fr ? /mordre de nouveau/ : /bite again/).test(againHint) && await until(() => window.__farm.fishing().state === 'bite', 6), { stayed, again, againHint });
 ok('three bites missed: off with the worm, nothing paid', await until(() => window.__farm.fishing().state === 'ready', 20) && (await st()).worms === w0 - 1 && (await st()).coins === cc && (fr ? /parti avec le ver/ : /swam off with the worm/).test((await st()).hint), await st());
 // reeled against its pull: nothing snaps, it only takes a little line back; the bar red meanwhile
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));
