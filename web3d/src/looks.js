@@ -65,6 +65,15 @@ vec3 lookGrade(vec3 c, vec3 n, vec3 v) {
   if (!C.lights_fragment_begin.includes(sh)) throw new Error('look: shadows');
   C.lights_fragment_begin = C.lights_fragment_begin.replace(sh, sh.replace('? getShadow(', '? lookShadow( getShadow(').replace(') : 1.0;', ') ) : 1.0;'));
   C.opaque_fragment = C.opaque_fragment.replace('gl_FragColor = vec4( outgoingLight, diffuseColor.a );', `#ifdef RE_Direct
+// (never brighter than its own colour in all the light there is: a tree's tiny leaf, caught wrong, drew as a bright white
+// dot, plain to see at night. 9 Nov 2026, Audrey: "Why are the trees lighting at night ?")
+#if NUM_DIR_LIGHTS > 0 && NUM_HEMI_LIGHTS > 0 && NUM_POINT_LIGHTS == 0 && NUM_SPOT_LIGHTS == 0 && !defined( USE_ENVMAP )
+{
+  vec3 lk = directionalLights[ 0 ].color + hemisphereLights[ 0 ].skyColor + hemisphereLights[ 0 ].groundColor + ambientLightColor;
+  float cap = max( lk.r, max( lk.g, lk.b ) ) * 0.45;
+  outgoingLight = min( max( outgoingLight, vec3( 0.0 ) ), min( diffuseColor.rgb, vec3( 1.0 ) ) * cap + totalEmissiveRadiance + 0.004 );
+}
+#endif
 outgoingLight = lookGrade( outgoingLight, normal, geometryViewDir );
 #else
 outgoingLight = lookGrade( outgoingLight, vec3( 0.0, 0.0, 1.0 ), vec3( 0.0, 0.0, 1.0 ) );
