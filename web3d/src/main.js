@@ -57,7 +57,7 @@ const GAME_MODE = document.body.classList.contains('game');
 // premium and natural"): thick soft grass on your land, earth paths with wheel tracks, deeper trees and bushes, warmer
 // light. ?oldlook shows the farm as it was, to compare
 const STORY_LOOK = !params.has('oldlook');
-const LOOK = LOOKS[params.get('look') || 'toon'] || null;      // (Storybook, the game's look from 8 Nov 2026, Audrey's choice; ?look=today the look before, ?look=clay or paint the other mocks; looks.js)
+const LOOK = LOOKS[params.get('look') || 'painted'] || null;      // (Painted, the game's look from 9 Nov 2026, Audrey's choice; ?look=toon Storybook (8 Nov), ?look=today the look before that, ?look=clay, paint, pastel or breeze the other mocks; looks.js)
 if (LOOK) lookChunks(THREE, LOOK);
 const LOOK_POST = lookPost(LOOK);      // (the farm drawn into a picture first: a look's lines, glow, darker corners)
 if (!STORY_LOOK) document.body.classList.add('oldlook');
