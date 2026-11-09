@@ -34,8 +34,8 @@ const kind = () => p.evaluate(() => window.__farm.gameUI().isOpen ? window.__far
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 const sheetT = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? s.innerText : ''; });
 const G = () => p.evaluate(() => { const g = window.__farm.game(), d = g.data; return { level: g.level, coins: d.coins, xp: d.xp, grain: d.grain || 0, orders: d.orders ? JSON.parse(JSON.stringify(d.orders)) : null, open: g.ordersOpen(), ready: g.ordersReady(), btn: !document.querySelector('.gordbtn').hidden, dot: document.querySelector('.gordbtn .gdot').hidden ? '' : document.querySelector('.gordbtn .gdot').textContent, edited: g.edited }; });
-const T = fr ? { lvl: /commandes du village/i, two: /2 nouvelles commandes du village/, deliver: /Livrer le panier/, decline: /Pas celle-ci/, pay: /pièces · \d+ XP/, set: /🧺 \d+ pour/, way: /porte le panier/, done: /Panier livré pour .* : \+\d+ pièces, \+\d+ XP/, ready: /Prêt/, fish: /Mis de côté pour/, declined: /Refusée/ }
-  : { lvl: /village orders/i, two: /2 new village orders/, deliver: /Deliver the basket/, decline: /Not this one/, pay: /coins · \d+ XP/, set: /🧺 \d+ for/, way: /taking the basket/, done: /Delivered to .*: \+\d+ coins, \+\d+ XP/, ready: /Ready/, fish: /For .*’s order/, declined: /Turned down/ };
+const T = fr ? { lvl: /commandes du village/i, two: /2 nouvelles commandes du village/, deliver: /Livrer le panier/, decline: /Pas celle-ci/, pay: /pièces · \d+ XP/, set: /🧺 \d+ pour/, way: /porte le panier/, done: /Panier livré pour .* : \+\d+ pièces, \+\d+ XP/, ready: /Prêt/, fish: /bourriche/, declined: /Refusée/ }
+  : { lvl: /village orders/i, two: /2 new village orders/, deliver: /Deliver the basket/, decline: /Not this one/, pay: /coins · \d+ XP/, set: /🧺 \d+ for/, way: /taking the basket/, done: /Delivered to .*: \+\d+ coins, \+\d+ XP/, ready: /Ready/, fish: /keep net/, declined: /Turned down/ };
 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
@@ -100,10 +100,10 @@ await p.evaluate(() => { window.__T += 12 * 3600e3; sessionStorage.setItem('__T'
 s = await G();
 ok('hours later: new orders, three at most', s.orders.list.length === 3, s.orders.list.map(o => o.who));
 // a fish for an order that wants one
-const fishR = await p.evaluate(() => { const g = window.__farm.game(), o = g.data.orders.list[0]; o.items = { fish: 1 }; o.got = {}; g.save(); g.bite = { id: 'roach', cm: 20, water: 'pond', rare: 0 }; const c = g.data.coins, r = g.landFish(); return { coins: g.data.coins - c, r, got: o.got.fish }; });
-ok('a fish caught while an order wants one: set aside for it, no coins', fishR.coins === 0 && fishR.got === 1 && fishR.r.order && fishR.r.coins === 0, fishR);
+const fishR = await p.evaluate(() => { const g = window.__farm.game(), o = g.data.orders.list[0]; o.items = { fish: 1 }; o.got = {}; g.save(); g.bite = { id: 'roach', cm: 20, water: 'pond', rare: 0 }; const c = g.data.coins, r = g.landFish(), ready0 = g.orderReady(o), k = g.sellCatch([0]); return { coins: g.data.coins - c, r, net: r.net, ready0, k, box: g.fishBox().length, ready: g.orderReady(o) }; });
+ok('a fish caught while an order wants one: into the keep net (no coins yet); kept in the fish box at the end of the trip: the order ready', fishR.coins === 0 && fishR.net === 1 && !fishR.ready0 && fishR.k && fishR.k.kept === 1 && fishR.box === 1 && fishR.ready, fishR);
 const fc = await p.evaluate(r => { window.__farm.gameUI().fishCard(r, () => {}); const t = document.querySelector('.gsheet').innerText; window.__farm.gameUI().close(); return t; }, fishR.r);
-ok('its card says it\'s for the order', T.fish.test(fc), fc.slice(0, 300));
+ok('its card says it\'s in the keep net', T.fish.test(fc), fc.slice(0, 300));
 // a reload: kept, unflagged
 const before = JSON.stringify((await G()).orders);
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();

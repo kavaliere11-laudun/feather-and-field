@@ -1319,7 +1319,7 @@ export class GameUI {
   // size and price and a Keep button (into the fish box, for the villagers' orders, while there's room); Sell: the rest
   // sold (h.sell(keep): the places kept). The fish box: how many, and Sell the box (h.sellBox)
   catchSheet(h) {
-    const g = this.g, net = g.fishNet(), box = g.fishBox(), body = this.open('catch', '🧺 ' + this.t('catch_title'));
+    const g = this.g, net = g.fishNet(), box = g.fishBox(), body = this.open('catch', '🧺 ' + this.t('catch_title')), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
     const keep = new Set(), room = () => FISHING.box - box.length - keep.size;
     if (net.length) {

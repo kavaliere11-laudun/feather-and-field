@@ -60,7 +60,7 @@ await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 // level 1: not yet
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 let sh = await sheet();
-ok('level 1: the dock\'s card: the pond, fishing opens at level 2, no button', sh && sh.kind === 'dock' && (fr ? /niveau 2/ : /level 2/).test(sh.text) && !sh.go && sh.fish === 7, sh);
+ok('level 1: the dock\'s card: the pond, fishing opens at level 2, no button', sh && sh.kind === 'dock' && (fr ? /niveau 2/ : /level 2/).test(sh.text) && !sh.go && sh.fish === 10, sh);
 // level 2: its card says fishing's open, with a look at the pond
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 20; g.save(); f.gameUI().close(); }); await run(1.5);
 await p.waitForTimeout(1600); await p.evaluate(() => window.__farm.showNews()); await run(0.2);      // (news waits a moment and a half after the farm opens)
@@ -78,7 +78,7 @@ await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 sh = await sheet();
 const props0 = await p.evaluate(() => { const F = window.__farm.fishing(); return F && { rod: F.deckRod.visible, bucket: F.bucket.visible }; });
 ok('level 2: his rod lying on the dock and his bucket by it', props0 && props0.rod && props0.bucket, props0);
-ok('level 2: the pond\'s seven fish (none caught yet), 4 worms, Go fishing, a tin of worms', sh && sh.go && sh.tin && sh.fish === 7 && sh.got === 0 && /4/.test(sh.text) && (fr ? /Aller pêcher/ : /Go fishing/).test(sh.text), sh);
+ok('level 2: the pond\'s ten fish (none caught yet), 4 worms, Go fishing, a tin of worms', sh && sh.go && sh.tin && sh.fish === 10 && sh.got === 0 && /4/.test(sh.text) && (fr ? /Aller pêcher/ : /Go fishing/).test(sh.text), sh);
 await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();
 ok('Go: the farmer off to the dock', s.seq && (fr ? /part au ponton/ : /off to the dock/).test(s.hint), s.hint);
@@ -133,7 +133,7 @@ const held = await p.evaluate(() => { const f = window.__farm, F = f.fishing(), 
   return { fwd: +fwd.toFixed(2), above: +(r.y - a.y).toFixed(3), aboveR: +(r.y - b.y).toFixed(3), rodOnDeck: F.deckRod.visible }; });
 ok('taken off the hook in his hand, the rod laid down on the dock; held out in front of him, resting on his hands (not through them)', sawUnhook && sawRodDown && held.rodOnDeck && held.fwd > 0.22 && held.above > 0.02, held);
 ok('a fish new to us: held up high, hooray ("A new fish!")', sawTrophy && s.said.includes('fishnew'), s.said);
-ok('its card: its name, its size, new to the book, sold live, coins and XP; Keep fishing with the worms left', sh && sh.kind === 'fish' && sh.text.includes(R.cm + ' cm') && (fr ? /nouveau poisson/ : /New fish/).test(sh.text) && (fr ? /animalerie/ : /aquarium shop/).test(sh.text) && sh.keep && sh.keep.includes(String(s.worms)) && sh.stop, { sh, R });
+ok('its card: its name, its size, new to the book, into the keep net, XP; Keep fishing with the worms left', sh && sh.kind === 'fish' && sh.text.includes(R.cm + ' cm') && (fr ? /nouveau poisson/ : /New fish/).test(sh.text) && (fr ? /bourriche/ : /keep net/).test(sh.text) && sh.keep && sh.keep.includes(String(s.worms)) && sh.stop, { sh, R });
 ok('paid: its coins and its XP', s.coins === c0 + R.coins && s.xp === x0 + R.xp && R.xp === R.xp && s.got.includes(R.id), { c0, s, R });
 await shoot('6_card');
 await settle(); await p.tap('.gsheet button[data-fish=keep]');

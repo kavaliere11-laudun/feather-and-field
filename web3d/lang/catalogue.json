@@ -3336,8 +3336,8 @@
  },
  {
   "id": "text.river_body",
-  "en": "Minnows, gudgeon, dace and chub live in the river, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.",
-  "fr": "Vairons, goujons, vandoises et chevesnes vivent dans la rivière, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme."
+  "en": "Minnows, gudgeon, dace and chub live in the river, and rarer fish that bite only at certain hours. Your catch goes into a keep net: sell it when you stop, or keep some for the villagers’ orders.",
+  "fr": "Vairons, goujons, vandoises et chevesnes vivent dans la rivière, et des poissons plus rares qui ne mordent qu’à certaines heures. Votre pêche va dans une bourriche : vendez-la en partant, ou gardez-en pour les commandes du village."
  },
  {
   "id": "text.fish_show",
@@ -3351,8 +3351,8 @@
  },
  {
   "id": "text.dock_body",
-  "en": "Rudd, roach, perch and tench live in the pond, and a few rarer fish. Every fish you catch goes to the village aquarium shop, live and well.",
-  "fr": "Rotengles, gardons, perches et tanches vivent dans l’étang, et quelques poissons plus rares. Chaque poisson pêché part à l’animalerie du village, en pleine forme."
+  "en": "Rudd, roach, perch and tench live in the pond, and rarer fish that bite only at certain hours. Your catch goes into a keep net: sell it when you stop, or keep some for the villagers’ orders.",
+  "fr": "Rotengles, gardons, perches et tanches vivent dans l’étang, et des poissons plus rares qui ne mordent qu’à certaines heures. Votre pêche va dans une bourriche : vendez-la en partant, ou gardez-en pour les commandes du village."
  },
  {
   "id": "text.fish_worms",
