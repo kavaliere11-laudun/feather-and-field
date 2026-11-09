@@ -2889,7 +2889,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
           }
           if (!via) continue;
           b.route = null; b.target.copy(p); b.wait = Math.max(b.wait || 0, 20); if (b.act) b.act = null; b.fanGoal = 0;      // (he waits for him)
-          return { at: W(q[0], q[1]), face: H(q, back) + turn, via: via.map(v => W(v[0], v[1])) };
+          return { at: W(q[0], q[1]), face: H(q, back) + turn, via: via.map(v => W(v[0], v[1])), side: Math.sign(a) };      // (side: which side of him, the stroke's)
         }
       }
       return null;

@@ -348,7 +348,9 @@ export class FarmLife {
             const dx = q[0] - Lf.pos.x, dz = q[1] - Lf.pos.z, d = Math.hypot(dx, dz); if (d < 0.004 || d > 0.35) return true;
             const s = Math.min(d, dt * 0.3); Lf.pos.x += dx / d * s; Lf.pos.z += dz / d * s; return this.t > 1.5; } },
           TK.say('cuddle'),
-          TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; if (u > heart) { heart += 0.55; P.heart(hen); } }),
+          // (on his other side, where the stroke runs across his back rather than along it: a gentler, smaller one, the hand
+          // kept on his back)
+          TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; W.hugK = near && near.side < 0 ? 0.4 : 1; if (u > heart) { heart += 0.55; P.heart(hen); } }),
         ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
           TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
@@ -600,7 +602,7 @@ export class FarmLife {
       if (W.patting) { P.shR[1] += 8 * Math.sin(t * 3); P.elR[1] += 10 * Math.sin(t * 3 + 1); }
       if (W.hug !== undefined) {                              // her back stroked, a gentle sway from side to side
         const st = Math.sin(t * 2.4), sw = Math.sin(t * 1.25);
-        P.shR[0] += 7 * st; P.elR[0] += 10 * st; P.wrR[0] += 12 * st; if (W.backK) P.shR[1] += W.backK * st;      /* (the peacock's back: the hand kept down on it as it goes along) */ P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
+        const hk = W.hugK ?? 1; P.shR[0] += 7 * st * hk; P.elR[0] += 10 * st * hk; P.wrR[0] += 12 * st * hk; if (W.backK) P.shR[1] += W.backK * st * hk;      /* (the peacock's back: the hand kept down on it as it goes along) */ P.chest[0] += 4 * sw; P.head[0] += 7 * Math.sin(t * 1.25 + 0.6); P.head[1] += 4;
       }
       if (W.low) { P.chest[1] += 16 * W.low; P.head[1] -= 12 * W.low; P.shR[1] += 22 * W.low; P.elR[1] -= 6 * W.low; P.wrR[1] += 25 * W.low; }      // (down to a hen's back)
       if (W.raise) { P.shR[1] -= 18; P.elR[1] += 8; }
