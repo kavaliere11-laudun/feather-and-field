@@ -4730,3 +4730,32 @@ doesn't redraw them on every step.
 - Test: `touchtest.mjs` (new, English and French): a finger never lifted, then a real tap on a hen: her card; the three
   ways it's forgotten; fishing ready, a stuck finger, a tap on the water: cast; a change of sharpness: the farm on the
   picture in the very frame its size changes.
+
+## Fishing made simple, the farmer's dash and his list of jobs, his words sharp, no bright dots at night (9 Nov 2026, 20:50, Audrey: "I would like to challenge the fishing gameplay as it's a little hard and not super intuitive. The text bubble when the farmer fishes is blurry. Why are the trees lighting at night ? The farmer is too slow to move around. Maybe if he is too far he can just teleport ? Or run faster. Come with solutions. Lastly, still have the screen issue when for a split second the screen goes black. Another thing, it's frustrating that the farmer can only do 1 thing at the time and you cannot schedule the next action. Come with a solution"; her choices: "Tap, then hold", "Run, and skip ahead if far", "Line up to 3 jobs")
+- **Fishing: tap, then hold** (fishing.js `FIGHT`, `EASY`, `BITE_T` 4 s, `BITES` 3, `BACK`, `LEFT_T` 9 s): no nibbles. The
+  float dives with its "!" and stays down 4 s: a tap anywhere. A tap before: "Not yet", no harm. Not tapped: it lets go and
+  bites again ("It let go… it'll bite again"), the third time it's off with the worm. Reeling: hold and it comes in (the
+  bar 🐟 to 🪣, blue); now and then it pulls a second or so (the bar red, "It's pulling! Let go a moment"): held meanwhile
+  it only takes a little line back. Nothing snaps or slips; a hooked fish left alone 9 s swims away. Rarer fish come in
+  slower and pull more often; the first catch the easiest. The needle and its green are gone; "How to fish" shows the bar
+  blue ("Blue: hold") and red ("Red: let go"). Words in six languages (`fish_again` new).
+- **His words** (main.js `tickFarmerSay`, `.fsay`; farmlife.js `o.ownBubble`): a bubble of the page's own over his hat,
+  the same size and sharp at any zoom (it was a little picture in the farm, tiny from far off, softened by the look).
+- **The trees at night** (looks.js, `opaque_fragment`): tiny leaves on the crowns drew far brighter than their own colour
+  could be, white dots plain at night in Painted (Storybook's lines hid them). Each surface is now kept to its own colour
+  in all the light there is (the sun or moon, the sky and ground light), where no lamp or shine is involved.
+- **The dash and the skip ahead** (farmlife.js `SPEED.dash` 3 m/s, TK.path, `skipAhead`; main.js `onScreen`): to a job he
+  always runs, at 3 m/s (2.15 before, and only beyond 5 m), a hurry for the last two metres. Out of sight with 9 m or more
+  of his way to go, he's put on that way just off the screen (2 m short of the job if it's out of sight too), already
+  running in; never while he's in sight, in a pen or at home.
+- **His list of next jobs** (main.js `JOBQ`, `jobGate(kind, key, name, run)`, `tickJobs`; words `next_*`): a job asked
+  while he's at one goes on his list, three at most, each once ("Added to Arthur's list (2 of 3): a feeder"; "Already on
+  Arthur's list"; "Arthur's list is full"). The cards' buttons stay live; their note says what he's doing and "Next: …".
+  He does them in order as he's free; fishing and only waiting to cast, he puts his rod down for the next one. Forgotten
+  at night; never saved.
+- **The black screen:** her build at 20:50 was most likely the one before the fix (sent to Apple 20:40, a few minutes to
+  process). If it's still there in the next build: to look at the look's picture (four samples a dot, heavy on memory).
+- Tests: `fishtest.mjs` (the long bite, three misses, reeling against its pull, left alone), `busytest.mjs` rewritten (in
+  sight he dashes, no skip; out of sight he's put just off the screen; the list: live buttons, 1 of 3, already, 3 of 3,
+  full; done in order; the rod put down for a job), `farmertest.mjs` (the page's bubble).
+
