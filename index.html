@@ -38,6 +38,11 @@
          box-shadow: 0 2px 8px rgba(30, 52, 38, 0.2); opacity: 0; transition: opacity .2s; pointer-events: none;
          width: max-content; max-width: min(340px, calc(100vw - 24px)); text-align: center; line-height: 1.25; }      /* (a long one on two lines, never off the screen) */
   #tag.on { opacity: 1; }
+  /* the farmer's words, over his hat (main.js tickFarmerSay) */
+  .fsay { position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none; padding: 6px 12px; border-radius: 14px; background: #fffdf6; color: #24331f; font: 800 14px Nunito, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.22); will-change: transform; }
+  .fsay::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: #fffdf6; transform: rotate(45deg); border-radius: 2px; }
+  .fsay[hidden] { display: none; }
+  body.showday .fsay { display: none; }
   #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
              background: #557230 linear-gradient(#557230, #557230 calc(env(safe-area-inset-top) + 16px), #8cb85c 42%); transition: opacity .5s; }
   #loading.done { opacity: 0; pointer-events: none; }
@@ -48,8 +53,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1794256075") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794256075") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1794266413") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794266413") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -100,7 +105,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794256075") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794266413") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -333,16 +338,20 @@
   .fishstop { border: 0; border-radius: 999px; padding: 11px 18px; font: 800 15px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
   .fishhelp { width: 42px; height: 42px; border-radius: 50%; border: 0; padding: 0; font: 800 19px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
   .fishglass { position: fixed; inset: 0; z-index: 15; touch-action: none; }
-  .fishgauge { width: min(300px, calc(100vw - 48px)); background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 9px 14px 12px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); }
-  .fishway { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; } .fishway .fishprog { flex: 1; margin: 0; } .fishway-e { font-size: 15px; line-height: 1; }
+  .fishgauge { width: min(300px, calc(100vw - 48px)); background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 10px 14px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); }
+  .fishway { display: flex; align-items: center; gap: 6px; margin-bottom: 0; } .fishway .fishprog { flex: 1; margin: 0; } .fishway-e { font-size: 15px; line-height: 1; }
   /* (the how-to card's gauge, as it looks, with what each part means) */
   .fishdemo { margin-top: 8px; } .fishdemo .fishtrack { height: 16px; }
   .fishdemo-l { display: flex; justify-content: space-between; gap: 6px; margin-top: 6px; font: 700 13px Nunito, system-ui, sans-serif; color: var(--ink-2); }
   .fishdemo-l .ok { color: #2f7a3a; } .fishdemo-l .hot { color: #b8432d; }
   /* (fishing: the farm's other words at the top, clear of the panel) */
   body.game.fishing #hint { top: calc(env(safe-area-inset-top) + 62px); bottom: auto; }
-  .fishprog { height: 6px; border-radius: 99px; background: #e5e9dc; overflow: hidden; margin-bottom: 9px; }
-  .fishprogfill { height: 100%; width: 0; background: #4f9bc4; border-radius: 99px; }
+  .fishprog { height: 14px; border-radius: 99px; background: #e5e9dc; overflow: hidden; margin-bottom: 9px; }
+  .fishprogfill { height: 100%; width: 0; background: #4f9bc4; border-radius: 99px; transition: background .15s; }
+  .fishgauge.pull .fishprogfill, .fishdemo-r.pull .fishprogfill { background: #d2402f; }
+  .fishgauge.pull { box-shadow: 0 0 0 3px rgba(210, 64, 47, 0.55), 0 3px 14px rgba(30, 52, 38, 0.2); }
+  .fishdemo-r { display: flex; align-items: center; gap: 6px; margin-top: 7px; } .fishdemo-r .fishprog { flex: 1; margin: 0; }
+  .fishdemo-t { font: 700 13px Nunito, system-ui, sans-serif; color: #2b6f95; min-width: 92px; } .fishdemo-r.pull .fishdemo-t { color: #b8432d; }
   .fishtrack { position: relative; height: 18px; border-radius: 99px; background: #e9b4a4; }
   .fishgreen { position: absolute; top: 0; bottom: 0; background: #7cc56e; border-radius: 4px; }
   .fishneedle { position: absolute; top: -5px; bottom: -5px; width: 6px; margin-left: -3px; border-radius: 3px; background: #1e3426; transition: background .15s; }
@@ -729,6 +738,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794256075"></script>
+<script src="app.js?v=1794266413"></script>
 </body>
 </html>
