@@ -2871,7 +2871,9 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       // (crouched in his 'pet' pose, his right hand is HAND ahead of him and to his right: he's put so that it rests on the
       // peacock's back just behind his neck, Audrey: "the farmer doesn't touch the peacock")
       const [HF, HR] = PEA_HAND, back = [p.x + Math.sin(y) * PEA_BACK, p.z + Math.cos(y) * PEA_BACK], turn = Math.atan2(HR, HF);
-      for (const [angles, R0, tr] of [[[0.9, -0.9, 1.25, -1.25, 0.55, -0.55, 1.6, -1.6], 0.6, 0.5], [[1.9, -1.9, 0.25, -0.25], 0.5, 0.44]]) {      // (by his chest, a little in front, best: his head not in his face, well off his train)
+      // (by his chest, a little in front, best: his head not in his face, well off his train. The side where his right hand
+      // strokes along the back first: on the other his stroke ran across it, the hand slipping off the side; 9 Nov 2026)
+      for (const [angles, R0, tr] of [[[0.9, 1.25, 0.55, 1.6], 0.6, 0.5], [[1.9, 0.25], 0.5, 0.44], [[-0.9, -1.25, -0.55, -1.6], 0.6, 0.5], [[-1.9, -0.25], 0.5, 0.44]]) {
         TR = tr;
         for (const a of angles) for (const d of [0]) {
           const u = [Math.sin(y + a), Math.cos(y + a)], h = Math.atan2(-u[0], -u[1]) + turn;      // (from the peacock out to him; the way he faces)
