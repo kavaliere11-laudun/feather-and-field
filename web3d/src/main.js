@@ -368,8 +368,10 @@ function resize() {
   furDetail();
   if (inside.open) insideFrameCamera();
   wake(400);
+  redrawNow = true;
 }
-window.addEventListener('resize', resize);
+let redrawNow = false;
+window.addEventListener('resize', () => { resize(); if (typeof drawNow === 'function') drawNow(); });
 window.addEventListener('orientationchange', () => { resize(); setTimeout(resize, 300); setTimeout(resize, 900); });
 if (window.visualViewport) visualViewport.addEventListener('resize', resize);
 if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(canvas);
@@ -4523,8 +4525,15 @@ function livePlots() {
 const pointers = new Map();
 let drag = null, pinch = 0, twist = null, tilt = null;
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+// (a finger the page never heard lifted, 9 Nov 2026, Audrey fishing: "when I tap the water nothing happens and the zoom
+// functionality becomes funny": with one finger still counted as down, a tap isn't a tap and one finger's drag is a pinch
+// and a turn. A phone can lose a lift: the finger came up over something that had just appeared or gone (fishing's sheet
+// of glass, a card), or the app was left mid-touch. So: a first finger down means none were down; a touch the phone says
+// is over, lost or cancelled is forgotten; and so are all of them when no finger is on the screen or the game is put away)
+function dropPointers() { if (!pointers.size) return; pointers.clear(); drag = null; pinch = 0; twist = null; tilt = null; MOVE.drag = null; DMOVE.drag = null; }
 canvas.addEventListener('pointerdown', e => {
   if (replay && replay.on) return;                       // (the morning replay films itself)
+  if (e.isPrimary !== false && pointers.size && !pointers.has(e.pointerId)) dropPointers();
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* (a pointer the page made itself, in a test) */ }
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
   if (pointers.size === 1) drag = { moved: false };
@@ -4578,6 +4587,10 @@ function endPointer(e) {
 }
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('lostpointercapture', e => { if (pointers.has(e.pointerId)) setTimeout(() => { if (pointers.has(e.pointerId)) { pointers.delete(e.pointerId); if (pointers.size < 2) { pinch = 0; twist = null; tilt = null; } if (!pointers.size) drag = null; } }, 0); });      // (its lift comes first when there is one)
+for (const ev of ['touchend', 'touchcancel']) window.addEventListener(ev, e => { if (e.touches && e.touches.length === 0) setTimeout(dropPointers, 0); }, { passive: true, capture: true });      // (no finger on the screen: none down; after the lift's own tap)
+window.addEventListener('blur', dropPointers);
+document.addEventListener('visibilitychange', () => { if (document.hidden) dropPointers(); });
 canvas.addEventListener('wheel', e => { e.preventDefault(); if (replay && replay.on) return; if (inside.open) { inside.pan += (e.deltaX || e.deltaY) * inside.mPerPx * 0.5; insideFrameCamera(); wake(1000); return; } zoomBy(Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0016))); wake(1000); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 
@@ -9132,6 +9145,9 @@ void main() {
   renderer.setRenderTarget(INK.rt); renderer.render(sc, cam); renderer.setRenderTarget(null);
   renderer.render(INK.scene, INK.cam);
 }
+// (the screen's size changed outside a frame: the farm drawn at once, never a blank screen till the next frame)
+function drawNow() { if (!redrawNow || paused || !INK_READY()) return; redrawNow = false; try { if (inside.open) renderFarm(inside.scene, inside.camera); else renderFarm(); } catch (e) { /* (not loaded yet) */ } }
+function INK_READY() { return typeof scene !== 'undefined' && typeof camera !== 'undefined' && document.getElementById('loading') === null; }
 function frame(now) {
   requestAnimationFrame(frame);
   if (paused) return;
@@ -9139,6 +9155,7 @@ function frame(now) {
   const busy = now < awakeUntil || pointers.size > 0;
   if (!busy && now - lastFrame < 1000 / 30 - 3) return;              // idle: every other screen refresh is enough
   const dt = Math.min(0.1, (now - (lastSim || now)) / 1000); lastSim = now;
+  if (wantQ !== null) { const n = wantQ; wantQ = null; setQuality(n); }
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
@@ -9148,6 +9165,7 @@ function frame(now) {
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
   else { drawFarmerShadows(renderer); renderFarm(); }
+  redrawNow = false;
   if (GAME_MODE && now - barTint.at > 1500) tintBars(now);
   const gap = now - lastFrame;
   // a frame counts as late below 25 a second (it used to be below 37 while touched, which lowered the quality on phones
@@ -9178,8 +9196,12 @@ function setQuality(n) {
   aimShadows(true);
   resize();
 }
-function stepDown() { slowAt = view.size; setQuality(q + 1); }
-function stepUp() { stepUps++; slowAt = q - 1 > START_Q ? slowAt * 0.7 : Infinity; setQuality(q - 1); }
+// (a change of sharpness asked for at a frame's end is made at the start of the next, and drawn in that same frame: the
+// picture's size changed after drawing left the screen black till the next frame was ready, a heavy one, the grass and
+// the shadows made again. 9 Nov 2026, Audrey: "the screen sometimes turns black for half a second")
+let wantQ = null;
+function stepDown() { slowAt = view.size; wantQ = q + 1; }
+function stepUp() { stepUps++; slowAt = q - 1 > START_Q ? slowAt * 0.7 : Infinity; wantQ = q - 1; }
 
 function showReadout() {
   const fps = Math.round(meter.fps);
@@ -9250,6 +9272,7 @@ window.__farm = {
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
+  pointersDown: () => pointers.size, wantQuality: n => { wantQ = n; }, quality: () => q,
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, busyText: () => farmerBusyText(), farmerJob: () => farmerJob(), tickBusy: () => tickBusy(), billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),

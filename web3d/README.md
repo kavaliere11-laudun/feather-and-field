@@ -4715,3 +4715,18 @@ doesn't redraw them on every step.
   plain spaces before : ; ! ? elsewhere, so a line can start with one at a narrow width: to tidy everywhere at once (in
   `t()`), with the French tests' words to match.
 
+## Taps that did nothing while fishing; a black screen for half a second (9 Nov 2026 evening, Audrey on her iPhone: "The fishing experience is bugged can't do anything when I tap the water nothing happens and the zoom functionality becomes funny. Also while playing the game the screen sometimes turns black for half a second")
+- **A finger left "down":** the page keeps the fingers on the screen (`pointers`); a tap is a finger down and up with no
+  other down, and two down are a pinch, a turn or a tilt. A lift the phone never told the page (the finger up over
+  something just shown or hidden, fishing's sheet of glass or a card; the app left mid-touch) left one counted as down
+  for good: no tap was a tap (nothing cast), and one finger's drag zoomed and turned the view (her picture: the compass
+  showing). Not reproduced here (a computer's touches always lift); mended at every way out: a first finger down
+  (`isPrimary`) means none were (`dropPointers`); a touch lost (`lostpointercapture`) is forgotten; no finger left on the
+  screen (`touchend`/`touchcancel` with none), the window left (`blur`) or the game hidden: none down.
+- **The black screen:** when frames ran slow (or light again) the sharpness stepped (`stepDown`/`stepUp`) at a frame's
+  end: the picture's size changed after it was drawn, which empties it, and the screen stayed black till the next frame
+  was ready, a heavy one (grass and shadows made again). Now asked for (`wantQ`) and made at the start of the next
+  frame, drawn in that same frame; a change of the window's size draws at once too (`drawNow`).
+- Test: `touchtest.mjs` (new, English and French): a finger never lifted, then a real tap on a hen: her card; the three
+  ways it's forgotten; fishing ready, a stuck finger, a tap on the water: cast; a change of sharpness: the farm on the
+  picture in the very frame its size changes.
