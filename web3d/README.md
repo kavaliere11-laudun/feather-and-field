@@ -4704,3 +4704,14 @@ doesn't redraw them on every step.
   sky light, the ground light and the sun), `haze` (a page-wide wash over the farm). Storybook stays the game's look
   till she picks; each new one can be tried live on the site.
 
+## Painted, the game's look (9 Nov 2026; Audrey's choice: "Painted (Recommended)")
+- main.js `LOOK`: Painted (`looks.js painted`) when the address names none; `?look=toon` Storybook (8 Nov),
+  `?look=today` the look before that, `clay`, `paint`, `pastel`, `breeze` the other mocks. Only the light, colours and
+  ground: every bird, the farmer and the animals as they were.
+- Checked in Painted: playtest, gametest, sidewaystest, showdaytest, bubbletest, busytest, viewtest, turntest,
+  firstdaytest, chicktest; the pan's frames (software drawing) as Storybook's (median 948 ms against 943), nothing built
+  while panning (warmUp: 80 programs).
+- French: "How to fish" step 2's colon kept on its line (a no-break space before it). The game's French words still use
+  plain spaces before : ; ! ? elsewhere, so a line can start with one at a narrow width: to tidy everywhere at once (in
+  `t()`), with the French tests' words to match.
+
