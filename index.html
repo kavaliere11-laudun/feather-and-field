@@ -48,8 +48,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1794175535") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794175535") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1794222950") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794222950") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -100,7 +100,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794175535") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794222950") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -304,6 +304,9 @@
   .gskip { position: fixed; z-index: 7; right: max(14px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); border: 0; border-radius: 999px;
            padding: 10px 18px; background: rgba(255, 253, 247, 0.93); color: var(--ink); font-weight: 700; font-size: 15px; font-family: inherit; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2); cursor: pointer; }
   .gskip[hidden] { display: none; }
+  /* (9 Nov 2026: the show day's Skip sat on the corner column's Home button; while the show plays the column, the compass and
+     the farm's bubbles are put away) */
+  body.showday .gacts, body.showday #compass, body.showday .gbub { display: none !important; }
   .gresult .gcard-h { align-items: flex-start; gap: 10px; } .gresult .gtext { margin: 0; }
   .gdot { position: absolute; top: -2px; right: -2px; width: 13px; height: 13px; border-radius: 50%; background: #e2412f; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); }
   .gdot[hidden] { display: none; }
@@ -316,13 +319,28 @@
   .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
   /* fishing (release 5; fishing.js): the worms and Stop along the bottom; the line's pull while reeling (the green part to
      keep it in, the needle, how far the fish has come); a sheet of glass over the farm from the cast to the catch */
-  .fishbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 18px); z-index: 16; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .fishbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 12px); z-index: 16; display: flex; flex-direction: column; align-items: center; gap: 7px;
+             width: max-content; max-width: calc(100vw - 24px); pointer-events: none; }
   .fishbar[hidden], .fishgauge[hidden], .fishglass[hidden] { display: none; }
+  .fishrow { display: flex; gap: 8px; align-items: center; white-space: nowrap; pointer-events: auto; }
+  .fishtip { background: rgba(30, 52, 38, 0.9); color: #fff; border-radius: 999px; padding: 9px 18px; font: 700 16px Nunito, system-ui, sans-serif; text-align: center; line-height: 1.25;
+             max-width: min(560px, calc(100vw - 40px)); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.25); transition: background-color .2s; }
+  .fishtip:empty { display: none; }
+  .fishtip.bite { background: #e0701f; font-size: 21px; padding: 10px 26px; animation: fishpulse .45s ease-in-out infinite alternate; }
+  .fishtip.warn { background: #b8432d; } .fishtip.good { background: #2f7a3a; }
+  @keyframes fishpulse { from { transform: scale(1); } to { transform: scale(1.08); } }
   .fishworms { background: var(--glass-top, rgba(255,253,247,0.93)); border-radius: 999px; padding: 10px 14px; font: 800 15px Nunito, system-ui, sans-serif; color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); }
   .fishstop { border: 0; border-radius: 999px; padding: 11px 18px; font: 800 15px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
+  .fishhelp { width: 42px; height: 42px; border-radius: 50%; border: 0; padding: 0; font: 800 19px Nunito, system-ui, sans-serif; background: var(--meringue); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 52, 38, 0.18); cursor: pointer; }
   .fishglass { position: fixed; inset: 0; z-index: 15; touch-action: none; }
-  .fishgauge { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 16; width: min(300px, calc(100vw - 48px));
-               background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 10px 14px 12px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); pointer-events: none; }
+  .fishgauge { width: min(300px, calc(100vw - 48px)); background: rgba(255, 253, 247, 0.94); border-radius: 18px; padding: 9px 14px 12px; box-shadow: 0 3px 14px rgba(30, 52, 38, 0.2); }
+  .fishway { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; } .fishway .fishprog { flex: 1; margin: 0; } .fishway-e { font-size: 15px; line-height: 1; }
+  /* (the how-to card's gauge, as it looks, with what each part means) */
+  .fishdemo { margin-top: 8px; } .fishdemo .fishtrack { height: 16px; }
+  .fishdemo-l { display: flex; justify-content: space-between; gap: 6px; margin-top: 6px; font: 700 13px Nunito, system-ui, sans-serif; color: var(--ink-2); }
+  .fishdemo-l .ok { color: #2f7a3a; } .fishdemo-l .hot { color: #b8432d; }
+  /* (fishing: the farm's other words at the top, clear of the panel) */
+  body.game.fishing #hint { top: calc(env(safe-area-inset-top) + 62px); bottom: auto; }
   .fishprog { height: 6px; border-radius: 99px; background: #e5e9dc; overflow: hidden; margin-bottom: 9px; }
   .fishprogfill { height: 100%; width: 0; background: #4f9bc4; border-radius: 99px; }
   .fishtrack { position: relative; height: 18px; border-radius: 99px; background: #e9b4a4; }
@@ -647,7 +665,7 @@
      the cards and the buttons a third bigger (they were phone-sized on a big screen, the writing small), and a card held
      upright no wider than reads well, in the middle; sideways it stays the card on the right */
   @media (min-width: 700px) and (min-height: 700px) {
-    body.game .gbar, body.game .gsheet, body.game .gguide, body.game #hint, body.game .fishbar, body.game .fishgauge, body.game #compass, body.game .gmove,
+    body.game .gbar, body.game .gsheet, body.game .gguide, body.game #hint, body.game .fishbar, body.game #compass, body.game .gmove,
     body.game .gskip, body.game #farmerbtn, body.game #dogbtn, body.game #henbtns, body.game #replaybtn, body.game #inside-back, body.game #inside-top { zoom: 1.3; }
   }
   @media (min-width: 700px) and (min-height: 700px) and (max-aspect-ratio: 5/4) { body.game .gsheet { width: min(540px, 100%); margin-inline: auto; } }
@@ -665,6 +683,9 @@
   .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
   .gfeedbar { height: 14px; } .gfeedbar.low .gbar-fill { background: #e8913a; }
   .gbtn:disabled { opacity: 0.75; cursor: default; }
+  /* (one job at a time: what the farmer's doing, over the buttons that wait for him) */
+  .gnote.gbusy { background: #fff3d6; border-radius: 12px; padding: 8px 12px; margin: 4px 0; color: var(--ink); }
+  .gbtn.gwait { opacity: 0.5; }
   /* the farm's bubbles (main.js places them): the eggs waiting in a coop's nest, a feeder running low. Tap one. */
   .gbub { position: fixed; z-index: 5; left: 0; top: 0; transform: translate(-50%, calc(-100% - 7px)); display: inline-flex; align-items: center; gap: 6px;
           height: 34px; padding: 0 12px 0 9px; border-radius: 999px; border: 1px solid var(--glass-line); background: var(--glass-top); box-shadow: var(--shadow);
@@ -708,6 +729,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794175535"></script>
+<script src="app.js?v=1794222950"></script>
 </body>
 </html>
