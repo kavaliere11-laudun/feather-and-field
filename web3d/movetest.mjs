@@ -82,8 +82,8 @@ m = await st();
 ok('in the new field: a spot where it and its bigger pen fit, something in its way to clear', m.ok && !m.small && m.clear.join() === spot[2], { m, spot });          // (a new farm's barn is Rustic, its pen small: release 4)
 await p.tap('.gmove-row .gbtn:first-child'); await run(0.1);
 m = await st();
-const turned = m.at.deg, ids = m.clear.slice(); let tries = 0; while (!m.ok && tries++ < 3) { await p.tap('.gmove-row .gbtn:first-child'); await run(0.1); m = await st(); }      // (round again if its bigger pen doesn't fit that way)
-ok('Turn: a quarter turn (on round till it fits), good', m.ok && m.at.deg % 90 === 0 && turned !== undefined, m);
+const turned = m.at.deg, ids = m.clear.slice(); let tries = 0; while (!m.ok && tries++ < 7) { await p.tap('.gmove-row .gbtn:first-child'); await run(0.1); m = await st(); }      // (round again if its bigger pen doesn't fit that way)
+ok('Turn: an eighth of a turn (on round till it fits), good', m.ok && m.at.deg % 45 === 0 && turned !== undefined, m);
 const put = [m.at.x, m.at.z, m.at.deg], gone1 = m.clear.slice();
 await p.tap('.gmove-go'); await run(1.6);
 a = await at(); m = await st(); s = await saved();

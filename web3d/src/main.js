@@ -7058,9 +7058,10 @@ const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55', FOOT_SMALL = '#ffc14d';      // 
 function moveBusy(p) {
   return !!(p.fw || p.farmer || inside.open || (farmLife && (farmLife.pen || [farmLife.task, farmLife.pending].some(t => t && t.name === 'pen'))) || (nightVisit && nightVisit.active()));
 }
+const nightAt = p => farmerAsleep() || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: farmerAsleep() || anyAsleep(p) ? null : () => cuddleAll(p.gc.id), asleep: farmerAsleep() || anyAsleep(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
 function dressCoop(p, id) {
