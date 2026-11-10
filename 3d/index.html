@@ -36,6 +36,12 @@
          box-shadow: 0 2px 8px rgba(30, 52, 38, 0.2); opacity: 0; transition: opacity .2s; pointer-events: none;
          width: max-content; max-width: min(340px, calc(100vw - 24px)); text-align: center; line-height: 1.25; }      /* (a long one on two lines, never off the screen) */
   #tag.on { opacity: 1; }
+  /* the keep net's card (gameui.js catchSheet) */
+  .gcatch { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+  .gcatch-r { display: flex; align-items: center; gap: 8px; background: #f3f4ec; border-radius: 14px; padding: 4px 8px 4px 4px; }
+  .gcatch-r img { width: 60px; height: 40px; object-fit: contain; flex: none; }
+  .gcatch-n { flex: 1; margin: 0; min-width: 0; } .gcatch-c { margin: 0; white-space: nowrap; font-weight: 800; }
+  .gcatch-r .gbtn { width: auto; flex: none; margin: 0; min-width: 84px; }
   /* the farmer's words, over his hat (main.js tickFarmerSay) */
   .fsay { position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none; padding: 6px 12px; border-radius: 14px; background: #fffdf6; color: #24331f; font: 800 14px Nunito, system-ui, sans-serif; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.22); will-change: transform; }
   .fsay::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; margin-left: -5px; background: #fffdf6; transform: rotate(45deg); border-radius: 2px; }
@@ -736,6 +742,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794266413"></script>
+<script src="app.js?v=1794270355"></script>
 </body>
 </html>
