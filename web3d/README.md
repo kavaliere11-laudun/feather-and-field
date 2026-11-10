@@ -4813,3 +4813,43 @@ doesn't redraw them on every step.
   (`MOVE.grow`: not where it stands, or a coop on a small farm could never be moved); turning it can make it fit.
 - Tests: `hinttest` (new); `fishtest`, `rivertest`, `busytest`, `growtest`, `movetest` updated.
 
+
+## Three test players, their nine suggestions, and milestones (10 Nov 2026; Audrey: "create 3 personas players that you will use to play the game and come back with improvements suggestions"; then "Ok with your 9 recommendations. Comes with ideas for the ones that are new features such as the night task")
+The three players (Maya, 9, plays in bursts and loves fishing; Claire, 41, once a day, in French; Tom, 27, plays to
+finish everything), what each found and the nine suggestions are in the Claude Doc "Feather & Field: three test players"
+(https://claude.ai/artifact/P4kquhEHuc4CpDi2tJ7TJ7). `playthrough.mjs` plays them (VISITS, CASTS, HIT, TIN, ANYHOUR,
+KEEPFISH, SEED). All nine built:
+- **How to fish in one look**: its three steps in one small card with the bar under them, all in sight sideways
+  (gameui.js `fishHelp`, `.gfstep`).
+- **The morning's worms**: 3 worms the first time the farm is open each day, once fishing is open (not the day it
+  opens: the gift tin) (`dawnWorms`, DAWN_WORMS; `fish.dawn` in the save, checked).
+- **"Cuddle everyone here"** (her choice: "One coop at a time"): on a coop's card with two birds or more; the farmer
+  goes round every bird of that coop not cuddled lately, one after the other (main.js `cuddleAll`, `CUDDLE_ALL`, run
+  from `tickJobs` when he's free; not at night).
+- **Collect all** on Today's jobs when two or more are done (`claimJobs`).
+- **Feeders last three days** (FEED_DAYS; two before).
+- **Shorter words** on the Village orders card and How to fish.
+- **The goodnight round** (her choice): from 18:00 a "🌙 Goodnight" button beside the farmer's; a tap books every
+  coop's door shut for the night (as the door's own button does), the farmer says goodnight, +10 coins, +5 XP; once an
+  evening (`goodnight`, NIGHT; `gn` in the save, checked). The camera doesn't move.
+- **A second way to worms** (her choice: "From the daily jobs"): all three of the day's jobs collected: 5 worms, once a
+  day (JOBS_BONUS; `jobs.bonus`, checked).
+- **Milestones** (her words: "Milestone is good idea. We should put a few in place. Fishing, but also how many chickens
+  loves you with different levels, the harvest, the special eggs found, how many chicks you've had"; "Yes plus keepsake
+  at star. Add something about rusty, fisrt visit, visit where he got in, visite blocked etc. And add something a
+  secret one about the frog and salmon love story. That one needs to be hard to get as witnessing it is rare"; "Add one
+  about money earnt"): a third tab in the Book, 🏅. Fifteen (game.js MILES): different fish caught (5, 10, 15, 20),
+  best friends (1, 5, 10, 20), chicks raised (5, 25, 60, 150), golden eggs (5, 20, 50, 100), eggs collected (50, 500,
+  2 000, 10 000), wheat harvests (5, 25, 75, 200), vegetables (20, 100, 300, 800), orders (3, 15, 40, 100), rosettes
+  (1, 5, 15, 40), goodnight rounds (3, 15, 50, 150), coins earned (500, 5 000, 25 000, 100 000), Rusty's first visit,
+  Rusty got the eggs, Rusty sent home with nothing (1, 5, 15, 40), and the secret one. Each step pays when collected
+  (50/150/400/1 000 coins, 5/10/20/40 XP; the one-offs 100 and 10; the secret 500 and 50); the last step puts the
+  milestone's keepsake on the shelf at the top of the tab. A number on the Book button when something's to collect.
+  Counted from 10 Nov on in the save's `tally` (eggs, chicks, wheat, veg, night, coins, fox, foxin, foxout, love); fish,
+  friends, golden eggs, orders and rosettes are read from the farm as it stands, so they start where the player is.
+  `tally` and `mile` are checked at load (whole numbers, known names only, a step never past the last).
+- **The secret one** shows as "???" ("A secret of the pond. Keep your eyes open…") until won. Won by seeing the salmon
+  and the little frog kiss (pond.js calls `kiss` at the kiss): only with the game in front, no card open, the pond on
+  the screen and not zoomed far out. Still never mentioned anywhere else. (This replaces "no reward" for the secret of
+  28 Oct, at Audrey's wish.)
+- Test: `milestest` (EN and FR).
