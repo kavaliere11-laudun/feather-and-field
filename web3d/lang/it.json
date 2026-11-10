@@ -1324,5 +1324,21 @@
  "text.jobs_note2": "Finiscili tutti e tre per avere {n} vermi.",
  "text.cuddle_all": "♥ Coccola tutti qui",
  "text.cuddle_all_go": "{farmer} va a coccolare tutti qui ♥",
- "text.cuddle_all_none": "Qui tutti hanno già avuto la loro coccola per ora."
+ "text.cuddle_all_none": "Qui tutti hanno già avuto la loro coccola per ora.",
+ "text.catch_want": "🧺 Per un ordine",
+ "text.catch_orders": "Gli ordini del villaggio hanno ancora bisogno di {n} pesci. Tieni quelli segnati.",
+ "text.catch_orders1": "Un ordine del villaggio ha ancora bisogno di 1 pesce. Tieni quello segnato.",
+ "text.catch_orders0": "Per ora nessun ordine ha bisogno di pesce.",
+ "text.hist_more": "Scopri di più",
+ "text.hist_less": "Mostra meno",
+ "text.hist_rir": "Selezionata intorno al 1850 nel Rhode Island e nel Massachusetts, negli Stati Uniti, da galline di fattoria del posto e da uccelli arrivati in nave dall’Asia. Robusta e affidabile, è diventata una delle ovaiole più amate al mondo ed è l’uccello simbolo del Rhode Island.",
+ "text.hist_orp": "Creata nel 1886 da William Cook nel villaggio di Orpington, nel Kent, in Inghilterra. Voleva una gallina che facesse tante uova e fosse anche bella. Grandi, soffici e tranquille, le Orpington hanno presto conquistato il mondo.",
+ "text.hist_sil": "Una razza molto antica dell’Asia, probabilmente della Cina. Nel Duecento il viaggiatore Marco Polo raccontò di galline con «pelo come di gatta». Sotto il piumino le Moroseta hanno la pelle scura e cinque dita per zampa, e sono mamme devote.",
+ "text.hist_aya": "Viene dall’isola di Giava, in Indonesia, dove «ayam» vuol dire semplicemente pollo. È nera dappertutto: piume, becco, pelle e perfino le ossa. A Giava si dice da tempo che porti fortuna.",
+ "text.hist_call": "Un’anatra piccolissima allevata nei Paesi Bassi, probabilmente a partire da uccelli arrivati dall’Asia. Un tempo i cacciatori usavano il suo richiamo forte e chiaro per attirare le anatre selvatiche: da qui il nome di anatra da richiamo. Oggi si alleva per la sua simpatia.",
+ "text.hist_leg": "Viene dalla Toscana e prende il nome dal porto di Livorno, «Leghorn» in inglese, da dove nell’Ottocento veniva imbarcata per l’America. Leggera e vivace, è una campionessa delle uova bianche.",
+ "text.hist_pol": "Nonostante il nome inglese «Polish», la Padovana viene con ogni probabilità dai Paesi Bassi, dove compare in dipinti del Seicento. Quel nome verrebbe da un’antica parola olandese per «testa», per via del suo splendido ciuffo.",
+ "text.hist_bra": "Selezionata negli Stati Uniti negli anni Quaranta dell’Ottocento da uccelli molto grandi arrivati da Shanghai, in Cina, porta il nome del fiume Brahmaputra. Nel 1852 alcune furono mandate alla regina Vittoria. Enorme ma tranquilla, è detta la «regina delle galline».",
+ "text.hist_pea": "Il pavone comune viene dall’India e dallo Sri Lanka, ed è l’uccello nazionale dell’India. Si allevano pavoni nei giardini da più di duemila anni. Solo il maschio ha il grande strascico, che apre a ruota per conquistare le femmine.",
+ "text.shop_btn": "Negozio"
 }

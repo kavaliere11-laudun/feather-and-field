@@ -4276,6 +4276,86 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.shop_btn",
+  "en": "Shop",
+  "fr": "Boutique"
+ },
+ {
+  "id": "text.hist_more",
+  "en": "Learn more",
+  "fr": "En savoir plus"
+ },
+ {
+  "id": "text.hist_less",
+  "en": "Show less",
+  "fr": "Réduire"
+ },
+ {
+  "id": "text.hist_rir",
+  "en": "Bred in the 1850s in Rhode Island and Massachusetts, in the United States, from local farm hens and birds brought by ship from Asia. Hardy and dependable, it became one of the world’s best-loved layers and is the state bird of Rhode Island.",
+  "fr": "Créée vers 1850 dans le Rhode Island et le Massachusetts, aux États-Unis, à partir de poules de ferme locales et d’oiseaux venus d’Asie par bateau. Robuste et fiable, elle est devenue l’une des pondeuses les plus aimées du monde et l’oiseau emblème du Rhode Island."
+ },
+ {
+  "id": "text.hist_orp",
+  "en": "Created in 1886 by William Cook in the village of Orpington, in Kent, England. He wanted a bird that laid well and looked handsome too. Big, fluffy and gentle, Orpingtons soon won hearts all over the world.",
+  "fr": "Créée en 1886 par William Cook dans le village d’Orpington, dans le Kent, en Angleterre. Il voulait une poule qui ponde bien et qui soit belle aussi. Grandes, toutes rondes et douces, les Orpington ont vite conquis le monde entier."
+ },
+ {
+  "id": "text.hist_sil",
+  "en": "A very old breed from Asia, most likely China. In the 1200s the traveller Marco Polo wrote of hens with “hair like cats”. Under the fluff, Silkies have dark skin and five toes on each foot, and they make devoted mothers.",
+  "fr": "Une race très ancienne venue d’Asie, sans doute de Chine. Au XIIIe siècle, le voyageur Marco Polo parlait de poules au « poil comme celui des chats ». Sous leur duvet, les Soies ont la peau sombre et cinq doigts à chaque patte, et ce sont des mères dévouées."
+ },
+ {
+  "id": "text.hist_aya",
+  "en": "From the island of Java, in Indonesia, where “ayam” simply means chicken. It is black all over: feathers, beak, skin and even bones. In Java it has long been thought to bring good luck.",
+  "fr": "Elle vient de l’île de Java, en Indonésie, où « ayam » veut simplement dire poulet. Elle est noire de partout : plumes, bec, peau et même les os. À Java, on dit depuis longtemps qu’elle porte bonheur."
+ },
+ {
+  "id": "text.hist_call",
+  "en": "A tiny duck bred in the Netherlands, probably from birds that first came from Asia. Hunters once used its loud, clear call to draw wild ducks closer, which is how it got its name. Today it is kept for its charm.",
+  "fr": "Un tout petit canard élevé aux Pays-Bas, sans doute à partir d’oiseaux venus d’Asie. Les chasseurs se servaient autrefois de son cri fort et clair pour attirer les canards sauvages : c’est de là que vient son nom de canard d’appel. Aujourd’hui, on l’élève pour son charme."
+ },
+ {
+  "id": "text.hist_leg",
+  "en": "From Tuscany, in Italy. It takes its name from the port of Livorno, called Leghorn in English, where the birds were loaded onto ships for America in the 1800s. Light and lively, it is a champion layer of white eggs.",
+  "fr": "Elle vient de Toscane, en Italie. Son nom est celui du port de Livourne, « Leghorn » en anglais, d’où elle embarquait pour l’Amérique au XIXe siècle. Légère et vive, c’est une championne des œufs blancs."
+ },
+ {
+  "id": "text.hist_pol",
+  "en": "Despite its name, the Polish most likely comes from the Netherlands, where it appears in paintings from the 1600s. Its name may come from an old Dutch word for “head”, after its splendid crest.",
+  "fr": "Malgré son nom, la Polonaise (ou Padoue) vient sans doute des Pays-Bas, où on la voit sur des tableaux du XVIIe siècle. Son nom viendrait d’un vieux mot néerlandais pour « tête », à cause de sa superbe huppe."
+ },
+ {
+  "id": "text.hist_bra",
+  "en": "Bred in the United States in the 1840s from very large birds brought from Shanghai, in China, and named after the Brahmaputra river. In 1852 a few were sent to Queen Victoria. Huge but gentle, it is called the “King of Chickens”.",
+  "fr": "Créée aux États-Unis dans les années 1840 à partir de très grands oiseaux venus de Shanghai, en Chine, elle porte le nom du fleuve Brahmapoutre. En 1852, quelques-unes furent offertes à la reine Victoria. Immense mais douce, on l’appelle la « reine des poules »."
+ },
+ {
+  "id": "text.hist_pea",
+  "en": "The Indian peafowl comes from India and Sri Lanka, and is the national bird of India. People have kept peafowl in their gardens for more than two thousand years. Only the peacock has the great train, which he fans out to impress the peahens.",
+  "fr": "Le paon bleu vient d’Inde et du Sri Lanka ; c’est l’oiseau national de l’Inde. On élève des paons dans les jardins depuis plus de deux mille ans. Seul le mâle porte la grande traîne, qu’il déploie en roue pour séduire les paonnes."
+ },
+ {
+  "id": "text.catch_want",
+  "en": "🧺 For an order",
+  "fr": "🧺 Pour une commande"
+ },
+ {
+  "id": "text.catch_orders",
+  "en": "Villagers’ orders still need {n} fish. Keep the ones marked.",
+  "fr": "Les commandes du village demandent encore {n} poissons. Gardez ceux qui sont marqués."
+ },
+ {
+  "id": "text.catch_orders1",
+  "en": "A villager’s order still needs 1 fish. Keep the one marked.",
+  "fr": "Une commande du village demande encore 1 poisson. Gardez celui qui est marqué."
+ },
+ {
+  "id": "text.catch_orders0",
+  "en": "No order needs fish right now.",
+  "fr": "Aucune commande ne demande de poisson pour l’instant."
+ },
+ {
   "id": "text.mile_tab",
   "en": "Milestones",
   "fr": "Objectifs"

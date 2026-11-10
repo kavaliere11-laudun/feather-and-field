@@ -54,38 +54,28 @@ far = await putFar(3.2);
 await cuddle(H[0].id);
 w = await watch();
 ok(`out of sight, ${far.d.toFixed(0)} m off: put on his way just off the screen, running in, there in a few seconds`, !far.seen && w.skipped === far.skipped + 1 && w.d0 < far.d - 3 && w.secs < 6 && w.inPen, { far, w });
-// ---- meanwhile: another hen's card, live, with the note; asked: on his list
+// ---- meanwhile: another hen's card; her cuddle asked: done at once (10 Nov 2026, Audrey: "It should let me validate the
+// action cuddle instead of just saying it's on the list that's confusing. Same for all CTa"): counted now, the card shut,
+// said so, nothing on his list; worms the same; only fishing, which he must go and do, waits its turn on the list
 await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
 let c = await card();
-ok(`meanwhile ${H[1].name}'s card: Cuddle live, the note saying what he's doing and to ask for anything else`, c && c.kind === 'bird' && c.cuddle === false && c.note.includes(H[0].name) && T.ask.test(c.note), c);
+ok(`meanwhile ${H[1].name}'s card: Cuddle live, no note about a list`, c && c.kind === 'bird' && c.cuddle === false && !c.note, c);
 await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
 let JL = await p.evaluate(() => window.__farm.jobList()), h = await hintNow();
-await p.evaluate(id => window.__farm.openBirdCard(window.__farm.coopPlots()[0].birds.find(x => x.gid === id)), H[1].id); await run(0.1);
-c = await card();
-ok('asked: on his list (1 of 3), nothing done yet; her card\'s note: "Next: a cuddle for her"', JL.length === 1 && JL[0].kind === 'cuddle' && T.added(1).test(h) && h.includes(H[1].name) && c && T.next.test(c.note) && c.note.includes(H[1].name), { JL, h, c });
-await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
-h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
-ok('asked again: "Already on his list", still one', JL.length === 1 && T.already.test(h), { JL, h });
-// a chore meanwhile: simply accepted, not on his list (10 Nov 2026: "Instead of this message it should just accept the action")
+const now1 = await p.evaluate(id => { const f = window.__farm, g = f.game(); return { happy: g.happyLeft(g.bird(id)) > 0, open: f.gameUI().isOpen }; }, H[1].id);
+ok('asked: her cuddle given at once (happy, the card shut, said with her name), nothing on a list', JL.length === 0 && now1.happy && !now1.open && h.includes(H[1].name), { JL, h, now1 });
 const chore = await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close(); const co = g.data.coops[0]; co.feed = 0; co.fedAt = 0; g.save(); f.gameTick(window.__T); const r = f.fillFeeder(0); return { r: !!r, feed: g.data.coops[0].feed, n: f.jobList().length }; });
-ok('a feeder filled meanwhile: accepted at once, not on his list', chore.r && chore.feed > 0 && chore.n === 1, chore);
-// her worms and fishing asked: 3 of 3; a fourth: full
-const roo = await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.trust = 60; b.worm = ''; g.save(); const r = f.coopPlots()[0].birds.find(x => x.gid && g.bird(x.gid).sex !== 'h'); f.gameUI().o.askWorms(id); return r.gid; }, H[0].id);
+ok('a feeder filled meanwhile: accepted at once, not on his list', chore.r && chore.feed > 0 && chore.n === 0, chore);
+const wr = await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.trust = 60; b.worm = ''; g.save(); const w0 = g.fishBag().worms; const r = f.gameUI().o.askWorms(id); return { r: !!r, more: g.fishBag().worms - w0, n: f.jobList().length }; }, H[0].id);
+ok('her friend\'s worms asked meanwhile: given at once, not on his list', wr.r && wr.more > 0 && wr.n === 0, wr);
 await p.evaluate(() => { const f = window.__farm; f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=go]'); if (q) q.click(); });
 h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
-ok('her friend\'s worms and fishing asked: 3 of 3 on his list', JL.length === 3 && JL.map(q => q.kind).join() === 'cuddle,worms,fish' && T.added(3).test(h), { JL, h });
-const full = await p.evaluate(id => { const f = window.__farm; f.gameUI().o.cuddle(id); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; }, roo);
-ok('a fourth (the rooster\'s cuddle): "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
-// ---- he does them in order
-const seen = []; let fishing = false;
-for (let i = 0; i < 240 && !fishing; i++) { await run(1); const q = await p.evaluate(() => { const f = window.__farm, j = f.farmerJob(); if (f.gameUI().isOpen) f.gameUI().close(); return { k: j && j.kind, n: f.jobList().length, st: f.fishing() && f.fishing().state }; }); if (q.k && seen[seen.length - 1] !== q.k) seen.push(q.k); fishing = q.st === 'ready'; }
-const after = await p.evaluate(id => { const f = window.__farm, g = f.game(); return { happy: g.happyLeft(g.bird(id)) > 0, n: f.jobList().length }; }, H[1].id);
-ok('he does them in order: her cuddle, the worms, then out on the dock ready to cast; the list empty', fishing && /cuddle.*worms.*fish/.test(seen.join()) && after.happy && after.n === 0, { seen, after });
-// ---- fishing, waiting to cast: a job asked, the rod down for it
-await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.happy = 0; g.save(); f.gameUI().o.cuddle(id); }, H[0].id);
-JL = await p.evaluate(() => window.__farm.jobList());
-let went = false; for (let i = 0; i < 120 && !went; i++) { await run(1); went = await p.evaluate(id => { const f = window.__farm, g = f.game(); if (f.gameUI().isOpen) f.gameUI().close(); return g.happyLeft(g.bird(id)) > 0 && f.fishing().state === 'off'; }, H[0].id); }
-ok('fishing and waiting to cast, a cuddle asked: on his list, his rod put down, the cuddle given', JL.length === 1 && went, { JL, went });
+const busyStill = await p.evaluate(() => !!window.__farm.farmerJob());
+ok('fishing asked while he works: next on his list, said so, the card shut' + (busyStill ? '' : ' (he was free already: off he goes)'), busyStill ? JL.length === 1 && JL[0].kind === 'fish' && T.added(1).test(h) : true, { JL, h });
+let fishing = false;
+for (let i = 0; i < 240 && !fishing; i++) { await run(1); fishing = await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); f.tickJobs(); return !!(f.fishing() && f.fishing().state === 'ready'); }); }
+ok('…and when he\'s done he goes fishing: out on the dock ready to cast, the list empty', fishing && (await p.evaluate(() => window.__farm.jobList().length)) === 0);
+await p.evaluate(() => window.__farm.fishing().stop()); for (let i = 0; i < 60 && !(await free()); i++) { await run(1); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); }); }
 ok('free at the end, the list empty', await free());
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');

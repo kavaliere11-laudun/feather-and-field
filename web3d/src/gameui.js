@@ -114,7 +114,10 @@ export class GameUI {
     this.odot = el('span', 'gdot gcount'); this.odot.hidden = true; this.ordBtn.append(this.odot);
     // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
     // left, the farm's buttons on the right, settings apart)
-    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
+    // the farm shop's own button beside the coins (10 Nov 2026, Audrey: "Farm shop should have its own entry next to the coins to advertise it more")
+    this.shopBtn = el('button', 'gpill gshopbtn'); this.shopBtn.type = 'button'; this.shopLbl = el('span', 'gnum gshop-l'); this.shopBtn.append(el('span', 'gshop-e', '🛍️'), this.shopLbl);
+    this.shopBtn.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn);
     this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
     this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
     this.bar.append(this.stat, this.acts, this.gear);
@@ -160,6 +163,7 @@ export class GameUI {
     const d = this.g.data; if (!d) return;
     const L = this.g.level, lo = xpFor(L), hi = xpFor(L + 1);
     this.bookBtn.setAttribute('aria-label', this.t('book_title'));
+    this.shopLbl.textContent = this.t('shop_btn'); this.shopBtn.setAttribute('aria-label', this.t('shop_title'));
     this.lvlNum.textContent = L; this.lvl.setAttribute('aria-label', this.t('level') + ' ' + L);
     this.ring.style.setProperty('--p', L >= TOP_LEVEL ? 100 : Math.round(100 * (d.xp - lo) / Math.max(1, hi - lo)));
     this.coinNum.textContent = d.coins.toLocaleString(this.g.locale());
@@ -168,6 +172,7 @@ export class GameUI {
     const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
     const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
+    this.shopLbl.textContent = this.t('shop_btn');
     const mr = this.g.milesReady(); this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
     this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
@@ -380,7 +385,7 @@ export class GameUI {
       if (g.treatToday(coop)) body.append(el('p', 'gtext gfound gtreatgot', this.t('treat_had')));
       else if (state !== 'night') { tb = el('button', 'gbtn galt gtreat', this.t('treat_btn')); tb.type = 'button'; tb.dataset.treat = 'open'; tb.addEventListener('click', () => { if (this.o.treat) this.o.treat(coop.id); }); body.append(tb); }
     }
-    this.busyNote([cb, wb, tb]);
+    // (no busy note here since 10 Nov 2026: a cuddle or worms asked while he works are simply done at once)
     // personality
     const pc = el('div', 'gcard');
     const ph = el('div', 'gcard-h'); ph.append(el('span', 'gemoji', PERS_INFO[b.pers].icon), el('span', 'gcard-t', g.persName(b.pers, b.sex)));
@@ -767,7 +772,8 @@ export class GameUI {
       const card = el('div', 'gcard gpage' + (pg.found ? '' : ' gpage-no')); card.dataset.breed = pg.breed;
       const pic = el('div', 'gpic'), img = el('img');
       img.alt = ''; img.width = img.height = 320; img.decoding = 'async'; img.src = 'book/' + pg.breed + '.webp' + (this.o.bust || '');
-      pic.append(img);
+      if (pg.found) pic.append(img);
+      else { const sil = el('div', 'gsil'), u = 'url("book/' + pg.breed + '.webp' + (this.o.bust || '') + '")'; sil.style.webkitMaskImage = u; sil.style.maskImage = u; pic.append(sil); }      // (not found yet: its dark shape, by a mask: the darkened picture came out blank on her iPhone, 10 Nov 2026: "Why is there no image")
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.bookName(pg.breed)));
       info.append(el('p', 'gpage-s' + (pg.found ? ' gfound' : '') + (pg.rare ? ' grare' : ''), pg.found ? this.t('book_on_farm', { names: list(pg.names) }) : pg.rare ? this.t('book_rare', { from: pg.from.map(k => g.breedName(k)).join(this.t('book_or')) }) : pg.waiting ? this.t('book_waiting') : this.t('book_at_level', { n: pg.level })));
@@ -784,6 +790,14 @@ export class GameUI {
         const go = el('button', 'gbtn gsmallbtn gpage-go giap-adopt', this.dt('adopt', { p: this.money(RARE_PRICE) })); go.type = 'button';
         go.addEventListener('click', () => this.payDemo({ what: g.bookName(pg.breed), price: RARE_PRICE, done: () => this.thanksDemo(this.dt('thanks_rare', { breed: g.bookName(pg.breed) })) }));
         info.append(go, el('p', 'gnote gpage-l', this.dt('adopt_note')));
+      }
+      {      // (10 Nov 2026, Audrey: "add a little paragraph about the history of the breed where it comes from etc. Could be under a learn more": folded away under "Learn more")
+        const hk = 'hist_' + pg.base, ht = this.t(hk);
+        if (ht && ht !== hk) {
+          const more = el('button', 'glink ghist-b', this.t('hist_more') + ' ▾'), tx = el('p', 'gnote ghist', ht); more.type = 'button'; tx.hidden = true; more.dataset.hist = pg.breed;
+          more.addEventListener('click', () => { tx.hidden = !tx.hidden; more.textContent = this.t(tx.hidden ? 'hist_more' : 'hist_less') + (tx.hidden ? ' ▾' : ' ▴'); });
+          info.append(more, tx);
+        }
       }
       card.append(pic, info); b.append(card);
     }
@@ -1350,6 +1364,8 @@ export class GameUI {
     const keep = new Set(), room = () => FISHING.box - box.length - keep.size;
     if (net.length) {
       body.append(el('p', 'gsub', this.t('catch_sub')));
+      const want = g.fishWanted(), wanted = new Set(net.map((q, i) => [fishPrice(q[0], q[1]), i]).sort((a, b) => a[0] - b[0]).slice(0, Math.min(want, room())).map(x => x[1]));      // (10 Nov 2026, Audrey: "I should have next to the relevant fish if they are wanted in an order or not so I know which ones to keep or sell": the cheapest ones, as many as the orders still need)
+      body.append(el('p', 'gnote gcatch-o', this.t(want === 0 ? 'catch_orders0' : want === 1 ? 'catch_orders1' : 'catch_orders', { n: want })));
       const sell = el('button', 'gbtn', ''); sell.type = 'button'; sell.dataset.catch = 'sell';
       const total = () => net.reduce((a, q, i) => a + (keep.has(i) ? 0 : fishPrice(q[0], q[1])), 0);
       const btns = [], fresh = () => { sell.textContent = keep.size === net.length ? this.t('catch_sell0') : this.t('catch_sell', { c: fmt(total()) }); btns.forEach((b, i) => { b.textContent = keep.has(i) ? this.t('catch_kept') : this.t('catch_keep'); b.classList.toggle('galt', !keep.has(i)); b.disabled = !keep.has(i) && room() <= 0; }); };
@@ -1357,13 +1373,14 @@ export class GameUI {
       net.forEach((q, i) => {
         const row = el('div', 'gcatch-r'), im = el('img'); im.alt = ''; im.src = 'fish/' + q[0] + '.webp' + (this.o.bust || '');
         const kb = el('button', 'gbtn gsmallbtn galt', ''); kb.type = 'button'; kb.dataset.keep = i; kb.addEventListener('click', () => { if (keep.has(i)) keep.delete(i); else if (room() > 0) keep.add(i); fresh(); }); btns.push(kb);
-        row.append(im, el('span', 'gtext gcatch-n', g.fishName(q[0]) + ' · ' + this.t('fish_size', { cm: q[1] })), el('span', 'gtext gcatch-c', '🪙 ' + fishPrice(q[0], q[1])), kb); list.append(row);
+        const nm = el('span', 'gtext gcatch-n', g.fishName(q[0]) + ' · ' + this.t('fish_size', { cm: q[1] })); if (wanted.has(i)) { row.dataset.want = '1'; nm.append(el('span', 'gcatch-w', this.t('catch_want'))); }
+        row.append(im, nm, el('span', 'gtext gcatch-c', '🪙 ' + fishPrice(q[0], q[1])), kb); list.append(row);
       });
       body.append(list);
       sell.addEventListener('click', () => h.sell([...keep])); fresh();
+      body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note')));      // (before the button kept at the bottom: nothing under it, Audrey 10 Nov: "broken text at the bottom of the popup")
       const st = el('div', 'gstick'); st.append(sell); body.append(st);
-    } else body.append(el('p', 'gnote gcenter', this.t('catch_none')));
-    body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note')));
+    } else { body.append(el('p', 'gnote gcenter', this.t('catch_none'))); body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note'))); }
     if (box.length && !net.length) { const sb = el('button', 'gbtn galt', this.t('catch_box_sell', { c: fmt(box.reduce((a, q) => a + fishPrice(q[0], q[1]), 0)) })); sb.type = 'button'; sb.dataset.catch = 'box'; sb.addEventListener('click', () => h.sellBox()); body.append(sb); }
   }
   // ---- Gertrude and Hector (release 3): who they are, their trust (cross .. friends: hearts, what it means, days of visits to

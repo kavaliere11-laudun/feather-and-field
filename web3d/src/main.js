@@ -4975,14 +4975,15 @@ let DOCK_WATER = 'pond', FEEDER_PLOT = null, TREAT_COOP = null;
 let CATCH_DUE = false;      // (a trip over with fish in the keep net: its card as soon as no other is open)
 function gameWorms(id) {
   if (farmerAsleep()) return null;
-  if (jobGate('worms', 'worms:' + id, (game.bird(id) || {}).name, () => gameWorms(id))) return null;
+  const busyNow = !!farmerJob() || JOBQ.length > 0;      // (10 Nov 2026, Audrey: "It should let me validate the action cuddle instead of just saying it's on the list that's confusing. Same for all CTa": accepted at once; the farmer busy: counted now, hearts over the bird, no visit)
   const r = game.askWorms(id); if (!r) return null;
   const b = birdOf(id), gb = game.bird(id);
   gameUI.close(); holdBird(null);
   if (b && b.isGoose) {      // (a call duck: the farmer comes for them as for a hen's, if he can; else a happy bob and a quack where she is)
-    const P = duckVisitOk(b) ? penSpec(b.plot) : null;
+    const P = !busyNow && duckVisitOk(b) ? penSpec(b.plot) : null;
     if (P && farmLife.visitPen(P, 'worms', b, r.n)) wake(1500); else { b.pen.cuddled(b); wake(1500); }
   }
+  else if (b && busyNow) { heartsOver(b, 1); wake(1500); }
   else if (b && farmLife && !farmLife.home && !farmLife.running && !b.busy() && !b.nightNow(0.3)) {
     const P = penSpec(b.plot);
     if (P && farmLife.visitPen(P, 'worms', b, r.n)) wake(1500);
@@ -5007,14 +5008,15 @@ function cuddleAll(coopId) {
   return ids.length;
 }
 function gameCuddle(id) {
-  if (jobGate('cuddle', 'cuddle:' + id, (game.bird(id) || {}).name, () => gameCuddle(id))) return null;
+  const busyNow = !!farmerJob() || JOBQ.length > 0;      // (10 Nov 2026, Audrey: "It should let me validate the action cuddle instead of just saying it's on the list that's confusing. Same for all CTa": accepted at once; the farmer busy: counted now, hearts over the bird, no visit)
   const r = game.cuddle(id); if (!r || r.happy) return r;
   const b = birdOf(id), gb = game.bird(id), farmer = farmerName();
   gameUI.close(); holdBird(null);
   if (b && b.isGoose) {      // (a call duck: the farmer comes and picks her up for a cuddle, as a hen; if he can't, she turns to you, hearts, a bob and a quack)
-    const P = duckVisitOk(b) ? penSpec(b.plot) : null;
+    const P = !busyNow && duckVisitOk(b) ? penSpec(b.plot) : null;
     if (P && farmLife.visitPen(P, 'cuddle', b)) wake(1500); else if (b.pen.cuddled(b)) { heartsOver(b); wake(1500); }
   }
+  else if (b && busyNow) { heartsOver(b); wake(1500); }
   else if (b && farmLife && !farmLife.home && !farmLife.running && !b.busy() && !b.nightNow(0.3)) {
     const P = penSpec(b.plot);
     if (P && farmLife.visitPen(P, 'cuddle', b)) wake(1500);
@@ -6189,7 +6191,7 @@ function geeseCard() {
   gameUI.geeseCard(farmerAsleep() ? 'night' : 'ok', { visit: () => geeseVisit() });
 }
 function geeseVisit() {
-  if (jobGate('geese', 'geese', '', () => geeseVisit())) return null;
+  const busyNow = !!farmerJob() || JOBQ.length > 0;
   const r = game.visitGeese(); if (!r) return null;
   gameUI.close();
   const farmer = farmerName();
@@ -6198,7 +6200,8 @@ function geeseVisit() {
   if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
   if (r.done) jobsDone(r.done);
   braveGuards();
-  if (!r.happy) startGeeseVisit(r.level);
+  if (!r.happy && !busyNow) startGeeseVisit(r.level);
+  else if (!r.happy && geeseFlock) for (const g of geeseFlock.geese) spawnHeart(new THREE.Vector3(g.pos.x, 0.5, g.pos.z));
   return r;
 }
 // the friends' geese are braver guards (quicker after Rusty: nightvisit.js alarm, geese.js watchFor)

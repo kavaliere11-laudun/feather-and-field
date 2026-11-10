@@ -1319,5 +1319,21 @@
  "text.jobs_note2": "Termina las tres para ganar {n} lombrices.",
  "text.cuddle_all": "♥ Mimar a todos aquí",
  "text.cuddle_all_go": "{farmer} va a mimar a todos aquí ♥",
- "text.cuddle_all_none": "Aquí todos han tenido ya su mimo por ahora."
+ "text.cuddle_all_none": "Aquí todos han tenido ya su mimo por ahora.",
+ "text.catch_want": "🧺 Para un pedido",
+ "text.catch_orders": "Los pedidos del pueblo aún necesitan {n} peces. Guarda los marcados.",
+ "text.catch_orders1": "Un pedido del pueblo aún necesita 1 pez. Guarda el marcado.",
+ "text.catch_orders0": "Ahora mismo ningún pedido necesita pescado.",
+ "text.hist_more": "Saber más",
+ "text.hist_less": "Ver menos",
+ "text.hist_rir": "Criada hacia 1850 en Rhode Island y Massachusetts, en Estados Unidos, a partir de gallinas de granja de la zona y aves llegadas en barco desde Asia. Fuerte y fiable, se convirtió en una de las ponedoras más queridas del mundo y es el ave oficial de Rhode Island.",
+ "text.hist_orp": "Creada en 1886 por William Cook en el pueblo de Orpington, en Kent, Inglaterra. Quería una gallina que pusiera bien y que además fuera bonita. Grandes, esponjosas y tranquilas, las Orpington conquistaron pronto el mundo entero.",
+ "text.hist_sil": "Una raza muy antigua de Asia, seguramente de China. En el siglo XIII, el viajero Marco Polo habló de gallinas con «pelo como el de los gatos». Bajo el plumón, las Sedosas tienen la piel oscura y cinco dedos en cada pata, y son madres muy entregadas.",
+ "text.hist_aya": "Viene de la isla de Java, en Indonesia, donde «ayam» significa simplemente pollo. Es negra por completo: plumas, pico, piel y hasta los huesos. En Java se dice desde hace mucho que trae buena suerte.",
+ "text.hist_call": "Un pato diminuto criado en los Países Bajos, probablemente a partir de aves llegadas de Asia. Antiguamente los cazadores usaban su llamada fuerte y clara para atraer a los patos salvajes, y de ahí viene su nombre de pato de reclamo. Hoy se cría por su encanto.",
+ "text.hist_leg": "Viene de la Toscana, en Italia. Toma su nombre del puerto de Livorno, «Leghorn» en inglés, desde donde se embarcaba hacia América en el siglo XIX. Ligera y vivaz, es una campeona de los huevos blancos.",
+ "text.hist_pol": "A pesar de su nombre, la Polaca viene seguramente de los Países Bajos, donde aparece en cuadros del siglo XVII. Su nombre podría venir de una antigua palabra neerlandesa que significa «cabeza», por su espléndido moño.",
+ "text.hist_bra": "Criada en Estados Unidos en la década de 1840 a partir de aves muy grandes traídas de Shanghái, en China, lleva el nombre del río Brahmaputra. En 1852 se enviaron algunas a la reina Victoria. Enorme pero tranquila, la llaman la «reina de las gallinas».",
+ "text.hist_pea": "El pavo real común viene de la India y de Sri Lanka, y es el ave nacional de la India. Se crían pavos reales en los jardines desde hace más de dos mil años. Solo el macho tiene la gran cola, que abre en abanico para impresionar a las hembras.",
+ "text.shop_btn": "Tienda"
 }

@@ -1324,5 +1324,21 @@
  "text.jobs_note2": "Termine as três para ganhar {n} minhocas.",
  "text.cuddle_all": "♥ Dar carinho a todos aqui",
  "text.cuddle_all_go": "{farmer} vai dar carinho a todos aqui ♥",
- "text.cuddle_all_none": "Todos aqui já ganharam carinho por enquanto."
+ "text.cuddle_all_none": "Todos aqui já ganharam carinho por enquanto.",
+ "text.catch_want": "🧺 Para um pedido",
+ "text.catch_orders": "Os pedidos da vila ainda precisam de {n} peixes. Guarde os marcados.",
+ "text.catch_orders1": "Um pedido da vila ainda precisa de 1 peixe. Guarde o marcado.",
+ "text.catch_orders0": "No momento nenhum pedido precisa de peixe.",
+ "text.hist_more": "Saiba mais",
+ "text.hist_less": "Mostrar menos",
+ "text.hist_rir": "Criada por volta de 1850 em Rhode Island e Massachusetts, nos Estados Unidos, a partir de galinhas de fazenda da região e de aves trazidas de navio da Ásia. Forte e confiável, tornou-se uma das poedeiras mais queridas do mundo e é a ave símbolo de Rhode Island.",
+ "text.hist_orp": "Criada em 1886 por William Cook na vila de Orpington, em Kent, na Inglaterra. Ele queria uma galinha que botasse bem e também fosse bonita. Grandes, fofas e mansas, as Orpington logo conquistaram o mundo inteiro.",
+ "text.hist_sil": "Uma raça muito antiga da Ásia, provavelmente da China. No século XIII, o viajante Marco Polo falou de galinhas com “pelo como o dos gatos”. Debaixo da penugem, as Sedosas têm a pele escura e cinco dedos em cada pé, e são mães dedicadas.",
+ "text.hist_aya": "Vem da ilha de Java, na Indonésia, onde “ayam” quer dizer simplesmente frango. É preta por inteiro: penas, bico, pele e até os ossos. Em Java, há muito tempo se diz que ela traz sorte.",
+ "text.hist_call": "Um pato minúsculo criado nos Países Baixos, provavelmente a partir de aves vindas da Ásia. Antigamente os caçadores usavam seu chamado forte e claro para atrair os patos selvagens, e daí vem seu nome. Hoje é criado pelo seu encanto.",
+ "text.hist_leg": "Vem da Toscana, na Itália. Seu nome é o do porto de Livorno, “Leghorn” em inglês, de onde embarcava para a América no século XIX. Leve e esperta, é uma campeã dos ovos brancos.",
+ "text.hist_pol": "Apesar do nome, a Polonesa vem provavelmente dos Países Baixos, onde aparece em pinturas do século XVII. Seu nome talvez venha de uma antiga palavra holandesa para “cabeça”, por causa do seu belo topete.",
+ "text.hist_bra": "Criada nos Estados Unidos na década de 1840 a partir de aves muito grandes trazidas de Xangai, na China, leva o nome do rio Bramaputra. Em 1852, algumas foram enviadas à rainha Vitória. Enorme mas mansa, é chamada de “rainha das galinhas”.",
+ "text.hist_pea": "O pavão-indiano vem da Índia e do Sri Lanka e é a ave nacional da Índia. Há mais de dois mil anos as pessoas criam pavões em seus jardins. Só o macho tem a grande cauda, que ele abre em leque para impressionar as fêmeas.",
+ "text.shop_btn": "Loja"
 }
