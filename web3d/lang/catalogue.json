@@ -3571,8 +3571,8 @@
  },
  {
   "id": "text.garden_full",
-  "en": "Your basket is full of {crop}: use some for treats or orders first.",
-  "fr": "Votre panier est plein de {crop} : utilisez-en d’abord pour des friandises ou des commandes."
+  "en": "No room left for {crop} in your pantry. Sell some, or keep them for an order.",
+  "fr": "Plus de place pour les {crop} dans votre garde-manger. Vendez-en, ou gardez-les pour une commande."
  },
  {
   "id": "text.crop_l_carrot",
@@ -3686,13 +3686,13 @@
  },
  {
   "id": "text.ord_veg_have",
-  "en": "(in your basket: {n})",
-  "fr": "(dans votre panier : {n})"
+  "en": "(in your pantry: {n})",
+  "fr": "(dans votre garde-manger : {n})"
  },
  {
   "id": "text.ord_sub_veg",
-  "en": "Vegetables come from your garden basket.",
-  "fr": "Les légumes viennent du panier de votre potager."
+  "en": "Everything comes from your pantry.",
+  "fr": "Tout vient de votre garde-manger."
  },
  {
   "id": "text.away_garden",
@@ -3746,8 +3746,8 @@
  },
  {
   "id": "text.ord_grain_have",
-  "en": "(in your store: {n})",
-  "fr": "(dans votre réserve : {n})"
+  "en": "(in your pantry: {n})",
+  "fr": "(dans votre garde-manger : {n})"
  },
  {
   "id": "text.ord_pay",
@@ -4274,6 +4274,106 @@
   "id": "text.fish_casting",
   "en": "Casting…",
   "fr": "On lance…"
+ },
+ {
+  "id": "text.pantry_btn",
+  "en": "Pantry",
+  "fr": "Garde-manger"
+ },
+ {
+  "id": "text.pantry_title",
+  "en": "Your pantry",
+  "fr": "Votre garde-manger"
+ },
+ {
+  "id": "text.pantry_sub",
+  "en": "Everything you collect is kept here. Sell it when you like, or keep it for the villagers’ orders.",
+  "fr": "Tout ce que vous récoltez est gardé ici. Vendez quand vous voulez, ou gardez pour les commandes du village."
+ },
+ {
+  "id": "text.pantry_orders",
+  "en": "🧺 {n} kept for orders",
+  "fr": "🧺 {n} gardés pour les commandes"
+ },
+ {
+  "id": "text.pantry_sell",
+  "en": "Sell {n} · +{c} coins",
+  "fr": "Vendre {n} · +{c} pièces"
+ },
+ {
+  "id": "text.pantry_sell_kept",
+  "en": "Sell anyway · +{c} coins",
+  "fr": "Vendre quand même · +{c} pièces"
+ },
+ {
+  "id": "text.pantry_grow",
+  "en": "Your shelves get bigger as your farm levels up.",
+  "fr": "Vos étagères s’agrandissent quand votre ferme monte de niveau."
+ },
+ {
+  "id": "text.pantry_sold",
+  "en": "Sold: {n} · +{c} coins",
+  "fr": "Vendu : {n} · +{c} pièces"
+ },
+ {
+  "id": "text.pantry_empty",
+  "en": "Empty",
+  "fr": "Vide"
+ },
+ {
+  "id": "text.pantry_full",
+  "en": "Full",
+  "fr": "Plein"
+ },
+ {
+  "id": "text.eggs_pantry1",
+  "en": "🥚 1 egg to your pantry · +{xp} XP",
+  "fr": "🥚 1 œuf dans votre garde-manger · +{xp} XP"
+ },
+ {
+  "id": "text.eggs_pantry",
+  "en": "🥚 {n} eggs to your pantry · +{xp} XP",
+  "fr": "🥚 {n} œufs dans votre garde-manger · +{xp} XP"
+ },
+ {
+  "id": "text.pantry_over",
+  "en": "Pantry full: {n} sold · +{c} coins",
+  "fr": "Garde-manger plein : {n} vendus · +{c} pièces"
+ },
+ {
+  "id": "text.honey_pantry1",
+  "en": "🍯 1 jar of honey to your pantry",
+  "fr": "🍯 1 pot de miel dans votre garde-manger"
+ },
+ {
+  "id": "text.honey_pantry",
+  "en": "🍯 {n} jars of honey to your pantry",
+  "fr": "🍯 {n} pots de miel dans votre garde-manger"
+ },
+ {
+  "id": "text.pantry_grain",
+  "en": "Your feeders use this grain first.",
+  "fr": "Vos mangeoires utilisent d’abord ce grain."
+ },
+ {
+  "id": "text.pantry_big_t",
+  "en": "Bigger shelves",
+  "fr": "Étagères plus grandes"
+ },
+ {
+  "id": "text.pantry_big_d",
+  "en": "Half as much room again on every shelf, for good.",
+  "fr": "Moitié plus de place sur chaque étagère, pour toujours."
+ },
+ {
+  "id": "text.pantry_big_on",
+  "en": "Bigger shelves: yours ✓",
+  "fr": "Étagères plus grandes : à vous ✓"
+ },
+ {
+  "id": "text.pantry_first",
+  "en": "Your eggs wait here. Tap Sell to turn them into coins.",
+  "fr": "Vos œufs attendent ici. Touchez Vendre pour les changer en pièces."
  },
  {
   "id": "text.shop_btn",

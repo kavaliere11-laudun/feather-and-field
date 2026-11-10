@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -117,7 +117,10 @@ export class GameUI {
     // the farm shop's own button beside the coins (10 Nov 2026, Audrey: "Farm shop should have its own entry next to the coins to advertise it more")
     this.shopBtn = el('button', 'gpill gshopbtn'); this.shopBtn.type = 'button'; this.shopLbl = el('span', 'gnum gshop-l'); this.shopBtn.append(el('span', 'gshop-e', '🛍️'), this.shopLbl);
     this.shopBtn.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
-    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn);
+    // the pantry's (10 Nov 2026): a dot when a shelf is full, or eggs wait there and it has never been opened
+    this.panBtn = el('button', 'gpill gshopbtn gpanbtn'); this.panBtn.type = 'button'; this.panLbl = el('span', 'gnum gshop-l'); this.pdot = el('span', 'gdot'); this.pdot.hidden = true; this.panBtn.append(el('span', 'gshop-e', '🧺'), this.panLbl, this.pdot);
+    this.panBtn.addEventListener('click', () => { if (this.o.pantry) this.o.pantry(); else this.pantrySheet({}); });
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn, this.panBtn);
     this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
     this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
     this.bar.append(this.stat, this.acts, this.gear);
@@ -172,7 +175,8 @@ export class GameUI {
     const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
     const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
-    this.shopLbl.textContent = this.t('shop_btn');
+    this.shopLbl.textContent = this.t('shop_btn'); this.panLbl.textContent = this.t('pantry_btn'); this.panBtn.setAttribute('aria-label', this.t('pantry_title'));
+    { const P = this.g.pantryBag(); this.pdot.hidden = !(this.g.pantryFull() || (!P.seen && P.eggs > 0)); }
     const mr = this.g.milesReady(); this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
     this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
@@ -862,6 +866,37 @@ export class GameUI {
     if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
   }
   // ---- Today's jobs (release 1 step 9c): each job, how far along it is, its reward; done: "Collect" (h.claim(i))
+  // ---- the pantry (10 Nov 2026; game.js PANTRY): a shelf for each thing collected: how many of how many, those the open
+  // orders still want, Sell (the rest; "Sell anyway" when only wanted ones are left): h.sell(k, all). h.note: said on top
+  // (a shelf found full). The bigger shelves for real money: with the shop's preview only (IAP_DEMO)
+  pantrySheet(h = {}) {
+    const g = this.g, b = this.open('pantry', '🧺 ' + this.t('pantry_title')), fmt = n => n.toLocaleString(g.locale()), rows = g.pantry(), first = !g.pantryBag().seen;
+    this.bird = null; g.pantrySeen(); this.refresh();
+    const icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' };
+    if (h.note) b.append(el('p', 'gtext gpan-note', h.note));
+    b.append(el('p', 'gnote', first && g.pantryBag().eggs ? this.t('pantry_first') : this.t('pantry_sub')));
+    const list = el('div', 'gcatch gpan');
+    for (const r of rows) {
+      const row = el('div', 'gcatch-r gpan-r' + (r.n >= r.max ? ' gpan-full' : '')), info = el('span', 'gtext gcatch-n'); row.dataset.shelf = r.k;
+      info.append(el('b', '', this.t('ord_' + r.k)), ' ' + fmt(r.n) + ' / ' + fmt(r.max) + (r.n >= r.max ? ' · ' + this.t('pantry_full') : ''));
+      if (r.kept) info.append(el('span', 'gcatch-w', this.t('pantry_orders', { n: fmt(r.kept) })));
+      else if (r.k === 'grain' && r.n) info.append(el('span', 'gcatch-w gpan-g', this.t('pantry_grain')));
+      row.append(el('span', 'gemoji gpan-e', icon[r.k]), info);
+      const spare = r.n - r.kept;
+      if (spare > 0) { const sb = el('button', 'gbtn gsmallbtn', this.t('pantry_sell', { n: fmt(spare), c: fmt(r.coins) })); sb.type = 'button'; sb.dataset.sell = r.k; sb.addEventListener('click', () => h.sell && h.sell(r.k, false)); row.append(sb); }
+      else if (r.n > 0) { const sb = el('button', 'gbtn gsmallbtn galt', this.t('pantry_sell_kept', { c: fmt(r.all) })); sb.type = 'button'; sb.dataset.sell = r.k; sb.dataset.all = '1'; sb.addEventListener('click', () => h.sell && h.sell(r.k, true)); row.append(sb); }
+      else row.append(el('span', 'gnote gpan-0', this.t('pantry_empty')));
+      list.append(row);
+    }
+    b.append(list);
+    if (g.data.shelves) b.append(el('p', 'gnote gcenter', this.t('pantry_big_on')));
+    else if (IAP_DEMO) {
+      const card = el('div', 'gcard giap'), go = el('button', 'gbtn gsmallbtn', this.t('pantry_big_t') + ' · ' + this.money(1.99)); go.type = 'button'; go.dataset.shelves = '1';
+      go.addEventListener('click', () => this.payDemo({ what: this.t('pantry_big_t'), price: 1.99, done: () => this.thanksDemo(this.t('pantry_big_on')) }));
+      card.append(el('span', 'gcard-t', '✨ ' + this.t('pantry_big_t')), el('p', 'gnote', this.t('pantry_big_d')), go); b.append(card);
+    }
+    b.append(el('p', 'gnote gcenter', this.t('pantry_grow')));
+  }
   // ---- the milestones (10 Nov 2026; game.js MILES): the keepsakes won on their shelf, then each milestone: its name, what
   // it counts, how far along (the number, the next step's), its steps as stars (won ones gold), Collect when a step's
   // reached (h.mile(id): main.js); the secret one unnamed till it's won
@@ -908,7 +943,7 @@ export class GameUI {
   ordersSheet(h = {}) {
     const g = this.g, b = this.open('orders', this.t('ord_title')), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
-    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' }, store = k => k === 'grain' || CROP_IDS.includes(k);      // (the grain and the vegetables come from their store when it goes)
+    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' }, store = k => k !== 'fish';      // (the grain and the vegetables come from their store when it goes)
     b.append(el('p', 'gnote', this.t('ord_sub') + (g.gardenOpen() ? ' ' + this.t('ord_sub_veg') : '')));
     for (const o of list) {
       const ready = g.orderReady(o), P = g.orderPayOf(o), c = el('div', 'gcard gorder' + (ready ? ' gorder-ready' : '')), hd = el('div', 'gcard-h');
@@ -917,7 +952,7 @@ export class GameUI {
       c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));      // (in the language's own quotation marks)
       for (const k of ORDER_ITEMS) {
         if (!o.items[k]) continue;
-        const n = o.items[k], have = k === 'fish' ? Math.min(n, (o.got.fish || 0) + g.fishBox().length) : store(k) ? Math.min(n, g.storeOf(k)) : Math.min(n, o.got[k] || 0);
+        const n = o.items[k], have = k === 'fish' ? Math.min(n, (o.got.fish || 0) + g.fishBox().length) : store(k) ? Math.min(n, (o.got[k] || 0) + g.storeOf(k)) : Math.min(n, o.got[k] || 0);
         const row = el('div', 'gorder-i'), bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * have / n) + '%'; bar.append(fill);
         row.append(el('span', 'gtext', icon[k] + ' ' + this.t('ord_' + k) + ' ' + (store(k) ? fmt(n) + ' ' + this.t(k === 'grain' ? 'ord_grain_have' : 'ord_veg_have', { n: fmt(g.storeOf(k)) }) : have + ' / ' + n)), bar);
         c.append(row);
@@ -1229,7 +1264,7 @@ export class GameUI {
       b.append(bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
     }
     b.append(el('p', 'gnote', this.t('wheat_how', { c: WHEAT.sow, g: WHEAT.grain, xp: WHEAT.xp })));
-    b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: WHEAT.max })));
+    b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: g.shelf('grain') })));
     if (st === 'soil') {
       const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
       go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
@@ -1309,7 +1344,7 @@ export class GameUI {
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
     else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => { if (!b.disabled) h.go(); }); body.append(b); this.busyNote([b]); }
-    if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', g.fishNet().length ? this.t('catch_open', { n: g.fishNet().length }) : this.t('catch_box', { n: g.fishBox().length, max: FISHING.box })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
+    if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', g.fishNet().length ? this.t('catch_open', { n: g.fishNet().length }) : this.t('catch_box', { n: g.fishBox().length, max: g.shelf('fish') })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
     const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
     th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
     const had = g.tinToday(), bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke || had ? ' galt' : ''), had ? this.t('fish_tin_tomorrow') : broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke || had; bb.dataset.fish = 'tin';
@@ -1361,7 +1396,7 @@ export class GameUI {
   catchSheet(h) {
     const g = this.g, net = g.fishNet(), box = g.fishBox(), body = this.open('catch', '🧺 ' + this.t('catch_title')), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
-    const keep = new Set(), room = () => FISHING.box - box.length - keep.size;
+    const keep = new Set(), room = () => g.shelf('fish') - box.length - keep.size;
     if (net.length) {
       body.append(el('p', 'gsub', this.t('catch_sub')));
       const want = g.fishWanted(), wanted = new Set(net.map((q, i) => [fishPrice(q[0], q[1]), i]).sort((a, b) => a[0] - b[0]).slice(0, Math.min(want, room())).map(x => x[1]));      // (10 Nov 2026, Audrey: "I should have next to the relevant fish if they are wanted in an order or not so I know which ones to keep or sell": the cheapest ones, as many as the orders still need)
@@ -1378,9 +1413,9 @@ export class GameUI {
       });
       body.append(list);
       sell.addEventListener('click', () => h.sell([...keep])); fresh();
-      body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note')));      // (before the button kept at the bottom: nothing under it, Audrey 10 Nov: "broken text at the bottom of the popup")
+      body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: g.shelf('fish') }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note')));      // (before the button kept at the bottom: nothing under it, Audrey 10 Nov: "broken text at the bottom of the popup")
       const st = el('div', 'gstick'); st.append(sell); body.append(st);
-    } else { body.append(el('p', 'gnote gcenter', this.t('catch_none'))); body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: FISHING.box }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note'))); }
+    } else { body.append(el('p', 'gnote gcenter', this.t('catch_none'))); body.append(el('p', 'gtext gbasket', '🐟 ' + this.t('catch_box', { n: box.length, max: g.shelf('fish') }) + (box.length ? ' · ' + [...new Set(box.map(q => q[0]))].map(id => g.fishName(id)).join(', ') : '')), el('p', 'gnote', this.t('catch_box_note'))); }
     if (box.length && !net.length) { const sb = el('button', 'gbtn galt', this.t('catch_box_sell', { c: fmt(box.reduce((a, q) => a + fishPrice(q[0], q[1]), 0)) })); sb.type = 'button'; sb.dataset.catch = 'box'; sb.addEventListener('click', () => h.sellBox()); body.append(sb); }
   }
   // ---- Gertrude and Hector (release 3): who they are, their trust (cross .. friends: hearts, what it means, days of visits to

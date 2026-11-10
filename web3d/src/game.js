@@ -286,17 +286,17 @@ export const TEXT = {
     basket_title: 'Your basket', basket_how: 'Tap one of your birds to give their coop a treat. Villagers’ orders take from your basket too.', garden_move: 'Move the garden',
     garden_sowing: '{farmer} is on the way to sow the {crop}', garden_sowed: '{e} {crop} sown · −{c} coins. Ripe in {t}.', garden_broke: 'Not enough coins for the seeds yet',
     garden_picking: '{farmer} is on the way to pick the {crop}', garden_picked: '{e} +{n} {crop} in your basket · +{xp} XP', garden_part: '{e} +{n} {crop} in your basket (it’s full of them now) · +{xp} XP',
-    garden_full: 'Your basket is full of {crop}: use some for treats or orders first.', crop_l_carrot: 'carrots', crop_l_straw: 'strawberries', crop_l_pump: 'pumpkins',
+    garden_full: 'No room left for {crop} in your pantry. Sell some, or keep them for an order.', crop_l_carrot: 'carrots', crop_l_straw: 'strawberries', crop_l_pump: 'pumpkins',
     bub_pick: 'Pick', bub_plant: 'Sow', garden_lv_t: 'New: your vegetable garden', garden_lv_b: 'By the farmhouse: grow carrots, strawberries and pumpkins. Treats your birds love, and the villagers will ask for them.',
     treat_btn: '🍓 A treat for the coop', treat_title: 'A treat for {coop}', treat_body: 'Something from the garden! One treat a day for each coop.',
     treat_carrot: 'An extra egg from each hen, soon after.', treat_straw: 'An extra egg from each hen, and a little experience for every bird.', treat_pump: 'Two extra eggs from each hen, and a little experience for every bird.',
     treat_have: 'It takes {need} · in your basket: {n}', treat_give: 'Give it', treat_none: 'Nothing in your basket yet: grow some in your vegetable garden.',
     treat_had: '🍓 They’ve had their treat today. Another one tomorrow!', treat_given: '{farmer} brings them a treat · extra eggs coming soon', treat_given_x: '{farmer} brings them a treat · extra eggs coming soon, and a little experience for every bird',
-    ord_carrot: 'Carrots', ord_straw: 'Strawberries', ord_pump: 'Pumpkins', ord_veg_have: '(in your basket: {n})', ord_sub_veg: 'Vegetables come from your garden basket.',
+    ord_carrot: 'Carrots', ord_straw: 'Strawberries', ord_pump: 'Pumpkins', ord_veg_have: '(in your pantry: {n})', ord_sub_veg: 'Everything comes from your pantry.',
     away_garden: 'Your vegetable garden is ready to pick', away_garden1: 'A bed in your vegetable garden is ready to pick', garden_aria: 'The vegetable garden',
     // village orders (7 Nov 2026)
     ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Fill it and deliver it for coins.',
-    ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your store: {n})',
+    ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your pantry: {n})',
     ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
     ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 The basket for {name} is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
     ord_new: '📜 A new order from {name}', ord_new2: '📜 {n} new village orders: tap the basket', ord_set: '🧺 {n} for {name}', ord_fish_set: 'For {name}’s order 🧺',
@@ -328,7 +328,9 @@ export const TEXT = {
     next_cuddle: 'a cuddle for {name}', next_worms: '{name}’s worms', next_fill: 'a feeder', next_treat: 'a treat', next_fish: 'fishing', next_geese: 'the geese',
     next_sow: 'sowing the wheat', next_harvest: 'the wheat harvest', next_honey: 'the honey', next_garden: 'the garden', next_order: 'a basket for the stall',
     // (9 Nov 2026) fishing: what to do now, on its panel; how to fish, its card
-    fish_casting: 'Casting…', shop_btn: 'Shop',
+    fish_casting: 'Casting…',
+    pantry_btn: 'Pantry', pantry_title: 'Your pantry', pantry_sub: 'Everything you collect is kept here. Sell it when you like, or keep it for the villagers’ orders.', pantry_orders: '🧺 {n} kept for orders', pantry_sell: 'Sell {n} · +{c} coins', pantry_sell_kept: 'Sell anyway · +{c} coins', pantry_grow: 'Your shelves get bigger as your farm levels up.', pantry_sold: 'Sold: {n} · +{c} coins', pantry_empty: 'Empty', pantry_full: 'Full', eggs_pantry1: '🥚 1 egg to your pantry · +{xp} XP', eggs_pantry: '🥚 {n} eggs to your pantry · +{xp} XP', pantry_over: 'Pantry full: {n} sold · +{c} coins', honey_pantry1: '🍯 1 jar of honey to your pantry', honey_pantry: '🍯 {n} jars of honey to your pantry', pantry_grain: 'Your feeders use this grain first.', pantry_big_t: 'Bigger shelves', pantry_big_d: 'Half as much room again on every shelf, for good.', pantry_big_on: 'Bigger shelves: yours ✓', pantry_first: 'Your eggs wait here. Tap Sell to turn them into coins.',
+    shop_btn: 'Shop',
     hist_more: 'Learn more',
     hist_less: 'Show less',
     hist_rir: 'Bred in the 1850s in Rhode Island and Massachusetts, in the United States, from local farm hens and birds brought by ship from Asia. Hardy and dependable, it became one of the world’s best-loved layers and is the state bird of Rhode Island.',
@@ -642,17 +644,17 @@ export const TEXT = {
     basket_title: 'Votre panier', basket_how: 'Touchez un de vos oiseaux pour offrir une friandise à son poulailler. Les commandes du village se servent aussi dans votre panier.', garden_move: 'Déplacer le potager',
     garden_sowing: '{farmer} va semer les {crop}', garden_sowed: '{e} {crop} semées · −{c} pièces. Mûres dans {t}.', garden_broke: 'Pas encore assez de pièces pour les graines',
     garden_picking: '{farmer} va récolter les {crop}', garden_picked: '{e} +{n} {crop} dans votre panier · +{xp} XP', garden_part: '{e} +{n} {crop} dans votre panier (il en est plein maintenant) · +{xp} XP',
-    garden_full: 'Votre panier est plein de {crop} : utilisez-en d’abord pour des friandises ou des commandes.', crop_l_carrot: 'carottes', crop_l_straw: 'fraises', crop_l_pump: 'citrouilles',
+    garden_full: 'Plus de place pour les {crop} dans votre garde-manger. Vendez-en, ou gardez-les pour une commande.', crop_l_carrot: 'carottes', crop_l_straw: 'fraises', crop_l_pump: 'citrouilles',
     bub_pick: 'Récolter', bub_plant: 'Semer', garden_lv_t: 'Nouveau : votre potager', garden_lv_b: 'Près de la ferme : faites pousser carottes, fraises et citrouilles. Des friandises que vos oiseaux adorent, et les villageois vous en demanderont.',
     treat_btn: '🍓 Une friandise pour le poulailler', treat_title: 'Une friandise pour {coop}', treat_body: 'Quelque chose du potager ! Une friandise par jour pour chaque poulailler.',
     treat_carrot: 'Un œuf de plus de chaque poule, peu après.', treat_straw: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', treat_pump: 'Deux œufs de plus de chaque poule, et un peu d’expérience pour chaque oiseau.',
     treat_have: 'Il en faut {need} · dans votre panier : {n}', treat_give: 'L’offrir', treat_none: 'Rien dans votre panier pour l’instant : faites-en pousser dans votre potager.',
     treat_had: '🍓 Ils ont eu leur friandise aujourd’hui. Une autre demain !', treat_given: '{farmer} leur apporte une friandise · des œufs en plus bientôt', treat_given_x: '{farmer} leur apporte une friandise · des œufs en plus bientôt, et un peu d’expérience pour chaque oiseau',
-    ord_carrot: 'Carottes', ord_straw: 'Fraises', ord_pump: 'Citrouilles', ord_veg_have: '(dans votre panier : {n})', ord_sub_veg: 'Les légumes viennent du panier de votre potager.',
+    ord_carrot: 'Carottes', ord_straw: 'Fraises', ord_pump: 'Citrouilles', ord_veg_have: '(dans votre garde-manger\u00a0: {n})', ord_sub_veg: 'Tout vient de votre garde-manger.',
     away_garden: 'Votre potager est prêt à être récolté', away_garden1: 'Un carré de votre potager est prêt à être récolté', garden_aria: 'Le potager',
     // commandes du village (7 nov. 2026)
     ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Remplissez-le et livrez-le contre des pièces.',
-    ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre réserve : {n})',
+    ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre garde-manger\u00a0: {n})',
     ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
     ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
     ord_new: '📜 Une nouvelle commande à préparer pour {name}', ord_new2: '📜 {n} nouvelles commandes du village : touchez le panier', ord_set: '🧺 {n} pour {name}', ord_fish_set: 'Mis de côté pour {name} 🧺',
@@ -682,7 +684,9 @@ export const TEXT = {
     next_list: 'Ensuite\u00a0: {list}.', next_added: 'Ajouté à la liste de {farmer} ({n} sur 3)\u00a0: {job}.', next_full: 'La liste de {farmer} est pleine\u00a0: 3 tâches en attente.', next_already: 'Déjà sur la liste de {farmer}.',
     next_cuddle: 'un câlin pour {name}', next_worms: 'les vers de {name}', next_fill: 'une mangeoire', next_treat: 'une friandise', next_fish: 'la pêche', next_geese: 'les oies',
     next_sow: 'semer le blé', next_harvest: 'la moisson', next_honey: 'le miel', next_garden: 'le potager', next_order: 'un panier pour l’étal',
-    fish_casting: 'On lance…', shop_btn: 'Boutique',
+    fish_casting: 'On lance…',
+    pantry_btn: 'Garde-manger', pantry_title: 'Votre garde-manger', pantry_sub: 'Tout ce que vous récoltez est gardé ici. Vendez quand vous voulez, ou gardez pour les commandes du village.', pantry_orders: '🧺 {n} gardés pour les commandes', pantry_sell: 'Vendre {n} · +{c} pièces', pantry_sell_kept: 'Vendre quand même · +{c} pièces', pantry_grow: 'Vos étagères s’agrandissent quand votre ferme monte de niveau.', pantry_sold: 'Vendu\u00a0: {n} · +{c} pièces', pantry_empty: 'Vide', pantry_full: 'Plein', eggs_pantry1: '🥚 1 œuf dans votre garde-manger · +{xp} XP', eggs_pantry: '🥚 {n} œufs dans votre garde-manger · +{xp} XP', pantry_over: 'Garde-manger plein\u00a0: {n} vendus · +{c} pièces', honey_pantry1: '🍯 1 pot de miel dans votre garde-manger', honey_pantry: '🍯 {n} pots de miel dans votre garde-manger', pantry_grain: 'Vos mangeoires utilisent d’abord ce grain.', pantry_big_t: 'Étagères plus grandes', pantry_big_d: 'Moitié plus de place sur chaque étagère, pour toujours.', pantry_big_on: 'Étagères plus grandes\u00a0: à vous ✓', pantry_first: 'Vos œufs attendent ici. Touchez Vendre pour les changer en pièces.',
+    shop_btn: 'Boutique',
     hist_more: 'En savoir plus',
     hist_less: 'Réduire',
     hist_rir: 'Créée vers 1850 dans le Rhode Island et le Massachusetts, aux États-Unis, à partir de poules de ferme locales et d’oiseaux venus d’Asie par bateau. Robuste et fiable, elle est devenue l’une des pondeuses les plus aimées du monde et l’oiseau emblème du Rhode Island.',
@@ -1023,8 +1027,18 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // (a tin of worms, a sack of grain or extra coins). A villager's order: one thing (or two) of what they like, as much as
 // the farm's level makes sense of. Never in a hurry: an order waits for you (or "Not this one": another comes in a while)
 export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 * 60e3, worth: { eggs: 6, fish: 22, honey: 15, grain: 1.5, carrot: 3, straw: 4, pump: 18 }, pay: 1.4, most: { eggs: 30, fish: 5, honey: 5, grain: 60, carrot: 18, straw: 18, pump: 4 } };
+// ---- the pantry (10 Nov 2026, Audrey: "I should be offered to keep it sell I need a storage"; "If the eggs are sold
+// instantly, how do I collect them for orders ? They should go to the storage too until u decide to sell or not"; her
+// choices: "One pantry", "Limited, bigger shelves can be bought in the shop with real money otherwise they will become
+// bigger as levels are going up", eggs "Straight to storage"): one shelf for each thing collected (the eggs and the honey
+// new: they were sold as collected; the grain store, the vegetable basket and the fish box are its other shelves). A
+// shelf's size: its base, 5% more for each level past 5, half as much again with the bigger shelves bought. Sold from
+// there, a shelf at a time (what the open orders still want is kept unless asked); the orders take from it when they go
+export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18 }, eggMax: 40 };
+export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'fish'];
+const shelfMost = k => Math.ceil(PANTRY.base[k] * (1 + PANTRY.grow * 60) * PANTRY.bought);      // (no save holds more on a shelf)
 export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump'];
-const STORE_ITEMS = ['grain', 'carrot', 'straw', 'pump'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
+const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
 export const VILLAGERS = {
   potts: { e: '🧁', wants: ['eggs', 'eggs', 'honey', 'carrot', 'pump'] }, finch: { e: '🐠', wants: ['fish'] }, lily: { e: '🫖', wants: ['eggs', 'honey', 'straw'] },
   tom: { e: '🌾', wants: ['grain', 'grain', 'eggs'] }, amara: { e: '🩺', wants: ['eggs', 'fish', 'carrot'] }, clara: { e: '🏫', wants: ['eggs', 'straw', 'carrot'] },
@@ -1409,7 +1423,11 @@ export function checkFarm(d, now = Date.now()) {
   out.dresses = dresses;                             // (the seasonal dresses owned: after the decorations, as a new farm has them)
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
   out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: [0, 45, 90, 135].includes(wh.deg) ? wh.deg : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
-  out.grain = Math.round(num(d.grain, 0, WHEAT.max, 0) * 100) / 100;
+  out.grain = Math.round(num(d.grain, 0, shelfMost('grain'), 0) * 100) / 100;
+  // the pantry's eggs and honey (whole numbers, no more than a shelf can ever hold; the eggs' worth no more than eggs can fetch), the bigger shelves bought
+  { const pn = d.pantry && typeof d.pantry === 'object' ? d.pantry : {}, eggs = int(pn.eggs, 0, shelfMost('eggs'), 0);
+    out.pantry = { eggs, val: int(pn.val, 0, eggs * PANTRY.eggMax, 0), honey: int(pn.honey, 0, shelfMost('honey'), 0) }; if (pn.seen === true) out.pantry.seen = true; }
+  if (d.shelves === true) out.shelves = true;
   // when the farm was last open (for the welcome-back summary): never ahead of now
   out.lastSeen = Number.isFinite(d.lastSeen) && d.lastSeen > 0 ? Math.min(d.lastSeen, now) : now;
   // the first day's guide: the step reached, done or not (a farm from before it: done)
@@ -1482,7 +1500,7 @@ export function checkFarm(d, now = Date.now()) {
     // the keep net and the fish box: known fish (never a legendary one) of an open water, each a size of its own kind's, no
     // more than the net and the box hold; the day the last tin was bought: never ahead of today
     const fishList = (raw, max) => (Array.isArray(raw) ? raw : []).filter(q => Array.isArray(q) && q.length === 2 && typeof q[0] === 'string' && Object.prototype.hasOwnProperty.call(FISH_RULES, q[0]) && FISH_RULES[q[0]].rare < 2 && L >= fishLevel(q[0]) && Number.isInteger(q[1]) && q[1] >= FISH_RULES[q[0]].cm[0] && q[1] <= FISH_RULES[q[0]].cm[1]).slice(0, max).map(q => [q[0], q[1]]);
-    const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, FISHING.box);
+    const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, shelfMost('fish'));
     if (net.length) out.fish.net = net; if (box.length) out.fish.box = box;
     if (typeof fs.dawn === 'string' && /^\d{8}$/.test(fs.dawn) && fs.dawn <= dayKey(now + TZ_SLACK)) out.fish.dawn = fs.dawn;      // (the morning's worms: the day they were last found)
     if (typeof fs.tin === 'string' && /^\d{8}$/.test(fs.tin) && fs.tin <= dayKey(now + TZ_SLACK)) out.fish.tin = fs.tin;
@@ -1527,7 +1545,7 @@ export function checkFarm(d, now = Date.now()) {
     const gd = vgd, beds = Array.from({ length: GARDEN.beds }, (_, i) => { const b = Array.isArray(gd.beds) && gd.beds[i] && typeof gd.beds[i] === 'object' ? gd.beds[i] : null;
       return b && Object.hasOwn(CROPS, b.crop) && Number.isFinite(b.ripe) && b.ripe > 0 ? { crop: b.crop, ripe: int(b.ripe, 1, now + CROPS[b.crop].grow + TZ_SLACK, 1) } : { crop: null, ripe: 0 }; });
     const vg = gd.veg && typeof gd.veg === 'object' ? gd.veg : {}, veg = {};
-    for (const k of CROP_IDS) veg[k] = int(vg[k], 0, GARDEN.max[k], 0);
+    for (const k of CROP_IDS) veg[k] = int(vg[k], 0, shelfMost(k), 0);
     out.garden = { x: spotNum(gd.x), z: spotNum(gd.z), deg: [0, 90].includes(gd.deg) ? gd.deg : 0, beds, veg };
     // a coop's last treat (when, which): never ahead of now; none before the garden
     for (const c of out.coops) { const r = (Array.isArray(d.coops) ? d.coops : []).find(o => o && o.id === c.id), tr = r && r.treat;
@@ -1918,7 +1936,7 @@ export class Game {
   }
   harvestWheat(now = Date.now()) {
     const w = this.wheat(); if (!w.ripe || now < w.ripe) return null;
-    const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, WHEAT.max - g));
+    const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, this.shelf('grain') - g));
     w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.tallyAdd('wheat', 1, false); this.save();
     return { grain: Math.round(add), xp: WHEAT.xp, store: this.data.grain };      // (a whole number to say: "+4.63 grain" with the store nearly full read oddly)
   }
@@ -1940,8 +1958,9 @@ export class Game {
     const k = Math.floor(Math.max(0, now - H.at) / HONEY.every), n = Math.min(HONEY.max, H.n + k);
     if (!n) return null;
     H.at = H.n + k >= HONEY.max ? now : H.at + k * HONEY.every; H.n = 0;
-    const to = this.setAside('honey', n), coins = (n - to.n) * HONEY.price, xp = n * HONEY.xp; this.data.coins += coins; this.data.xp += xp; this.save();      // (jars for the orders first)
-    return { n, coins, xp, toOrder: to.n, to: to.to };
+    const P = this.pantryBag(), kept = Math.max(0, Math.min(n, this.shelf('honey') - P.honey)), sold = n - kept, coins = sold * HONEY.price, xp = n * HONEY.xp;      // (to the pantry; what doesn't fit is sold)
+    P.honey += kept; this.data.coins += coins; this.data.xp += xp; this.save();
+    return { n, coins, xp, kept, sold, toOrder: 0, to: [] };
   }
   // ---- village orders: open from level 3; the orders now (new ones as they're due: two when they start, then one every
   // 3 hours while there's room); a new one; things set aside for them as they come; ready (all of it set aside, and the
@@ -1959,7 +1978,7 @@ export class Game {
     return added;
   }
   orderCan(k) { return k === 'eggs' || k === 'grain' || (k === 'fish' ? this.fishOpen('pond') : k === 'honey' ? !!this.data.honey : CROP_IDS.includes(k) && this.gardenOpen()); }
-  storeOf(k) { return k === 'grain' ? Math.floor(this.data.grain || 0) : k === 'fish' ? this.fishBox().length : this.vegBasket()[k] || 0; }      // (what's in store for an order)
+  storeOf(k) { return k === 'eggs' ? this.pantryBag().eggs : k === 'honey' ? this.pantryBag().honey : k === 'grain' ? Math.floor(this.data.grain || 0) : k === 'fish' ? this.fishBox().length : this.vegBasket()[k] || 0; }      // (what's in store for an order)
   newOrder(t, r = Math.random) {
     const B = this.orderBook(), L = this.level, busy = new Set(B.list.map(o => o.who));
     const who = Object.keys(VILLAGERS).filter(v => !busy.has(v) && VILLAGERS[v].wants.some(k => this.orderCan(k)));
@@ -1971,6 +1990,37 @@ export class Game {
     const o = { id: 'o' + B.seq++, who: v, t: Math.round(t), items, got: {} };
     B.list.push(o); return o;
   }
+  // ---- the pantry
+  pantryBag() { return this.data.pantry || (this.data.pantry = { eggs: 0, val: 0, honey: 0 }); }
+  shelf(k) { return Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, this.level - PANTRY.from)) * (this.data.shelves ? PANTRY.bought : 1)); }
+  shelfOpen(k) { return k === 'eggs' ? true : k === 'honey' ? !!this.data.honey : k === 'grain' ? !!this.data.wheat || (this.data.grain || 0) > 0 : k === 'fish' ? this.fishOpen('pond') : this.gardenOpen(); }
+  wantedOf(k) { if (!this.ordersOpen() || !this.data.orders) return 0; return Math.min(this.storeOf(k), this.data.orders.list.reduce((a, o) => a + Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)), 0)); }      // (what the open orders still want of a shelf, of what's on it)
+  // what n things off a shelf fetch (the eggs: their share of what they're worth; the fish: the biggest ones, the orders taking the smallest)
+  shelfValue(k, n) {
+    const have = this.storeOf(k); n = Math.max(0, Math.min(n, have)); if (!n) return 0;
+    if (k === 'eggs') { const P = this.pantryBag(); return Math.round(P.val * n / P.eggs); }
+    if (k === 'fish') return this.fishBox().map(q => fishPrice(q[0], q[1])).sort((a, b) => b - a).slice(0, n).reduce((a, c) => a + c, 0);
+    return Math.floor(PANTRY.price[k] * n);
+  }
+  pantryTake(k, n) {      // (n off a shelf, not paid: an order's)
+    n = Math.max(0, Math.min(n, this.storeOf(k))); if (!n) return 0;
+    if (k === 'eggs') { const P = this.pantryBag(), v = Math.round(P.val * n / P.eggs); P.eggs -= n; P.val = P.eggs ? Math.max(0, P.val - v) : 0; }
+    else if (k === 'honey') this.pantryBag().honey -= n;
+    else if (k === 'grain') this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - n) * 100) / 100);
+    else if (k === 'fish') { const f = this.fishBag(); f.box.sort((a, b) => fishPrice(b[0], b[1]) - fishPrice(a[0], a[1])); f.box.splice(0, n); if (!f.box.length) delete f.box; }
+    else { const B = this.vegBasket(); B[k] = Math.max(0, (B[k] || 0) - n); }
+    return n;
+  }
+  // a shelf sold: all that the open orders don't want (all: those too); nothing to sell: null
+  sellShelf(k, all = false) {
+    if (!PANTRY_IDS.includes(k)) return null;
+    const n = this.storeOf(k) - (all ? 0 : this.wantedOf(k)); if (!(n > 0)) return null;
+    const coins = this.shelfValue(k, n); this.pantryTake(k, n); this.data.coins += coins; this.save();
+    return { k, n, coins };
+  }
+  pantry() { return PANTRY_IDS.filter(k => this.shelfOpen(k)).map(k => { const n = this.storeOf(k), kept = this.wantedOf(k); return { k, n, max: this.shelf(k), kept, coins: this.shelfValue(k, n - kept), all: this.shelfValue(k, n) }; }); }
+  pantryFull() { return this.pantry().filter(r => r.n >= r.max).length; }
+  pantrySeen() { const P = this.pantryBag(); if (!P.seen) { P.seen = true; this.save(); } }
   setAside(k, n) {
     if (!this.data.orders || !this.ordersOpen() || !(n > 0)) return { n: 0, to: [] };
     let left = n; const to = [];
@@ -1980,7 +2030,7 @@ export class Game {
     }
     return { n: n - left, to };
   }
-  orderLeft(o, k) { return k === 'fish' ? Math.max(0, (o.items.fish || 0) - (o.got.fish || 0) - this.fishBox().length) : STORE_ITEMS.includes(k) ? Math.max(0, (o.items[k] || 0) - this.storeOf(k)) : Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)); }
+  orderLeft(o, k) { return k === 'fish' ? Math.max(0, (o.items.fish || 0) - (o.got.fish || 0) - this.fishBox().length) : STORE_ITEMS.includes(k) ? Math.max(0, (o.items[k] || 0) - (o.got[k] || 0) - this.storeOf(k)) : Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)); }
   fishWanted() { if (!this.ordersOpen() || !this.data.orders) return 0; return Math.max(0, this.data.orders.list.reduce((a, o) => a + Math.max(0, (o.items.fish || 0) - (o.got.fish || 0)), 0) - this.fishBox().length); }      // (fish the open orders still need, past those in the box)
   orderReady(o) { return ORDER_ITEMS.every(k => !o.items[k] || this.orderLeft(o, k) === 0); }
   ordersReady() { return this.ordersOpen() && this.data.orders ? this.data.orders.list.filter(o => this.orderReady(o)).length : 0; }
@@ -1994,13 +2044,14 @@ export class Game {
   deliverOrder(id, now = Date.now()) {
     const B = this.data.orders, o = B && B.list.find(x => x.id === id); if (!o || !this.orderReady(o)) return null;
     if (o.items.grain) this.data.grain = Math.max(0, Math.round(((this.data.grain || 0) - o.items.grain) * 100) / 100);
+    for (const k of ['eggs', 'honey']) if (o.items[k]) this.pantryTake(k, Math.max(0, o.items[k] - (o.got[k] || 0)));      // (the eggs and the honey from the pantry)
     if (o.items.fish) { const need = Math.max(0, o.items.fish - (o.got.fish || 0)), f = this.fishBag(); if (need && f.box) { f.box.sort((a, b) => fishPrice(a[0], a[1]) - fishPrice(b[0], b[1])); f.box.splice(0, need); if (!f.box.length) delete f.box; } }      // (the fish from the box, the smallest first)
     for (const k of CROP_IDS) if (o.items[k]) { const B = this.vegBasket(); B[k] = Math.max(0, (B[k] || 0) - o.items[k]); }      // (the vegetables from the basket)
     const P = orderPay(o), sp = orderSurprise(o, this.fishOpen('pond'));
     let coins = P.coins, worms = 0, grain = 0;
     if (sp === 'coins') coins += Math.round(P.coins * SURPRISE.coins);
     if (sp === 'worms') { const f = this.fishBag(); worms = Math.max(0, Math.min(SURPRISE.worms, FISHING.maxWorms - f.worms)); f.worms += worms; }
-    if (sp === 'grain') { const g = this.data.grain || 0; grain = Math.max(0, Math.min(SURPRISE.grain, WHEAT.max - g)); this.data.grain = Math.round((g + grain) * 100) / 100; }
+    if (sp === 'grain') { const g = this.data.grain || 0; grain = Math.max(0, Math.min(SURPRISE.grain, this.shelf('grain') - g)); this.data.grain = Math.round((g + grain) * 100) / 100; }
     this.data.coins += coins; this.data.xp += P.xp;
     B.list = B.list.filter(x => x !== o); B.done = (B.done || 0) + 1; B.next = Math.max(B.next || 0, Math.round(now + ORDERS.gap));
     this.save();
@@ -2052,7 +2103,7 @@ export class Game {
   pickBed(i, now = Date.now()) {
     if (this.bedStage(i, now) !== 'ripe') return null;
     const b = this.garden().beds[i], C = CROPS[b.crop], B = this.vegBasket(), crop = b.crop;
-    const n = Math.max(0, Math.min(C.n, GARDEN.max[crop] - (B[crop] || 0)));
+    const n = Math.max(0, Math.min(C.n, this.shelf(crop) - (B[crop] || 0)));
     if (!n) return { crop, n: 0, full: true, kept: true };      // (the basket has all of those it can hold: left in the bed for now)
     B[crop] = (B[crop] || 0) + n; b.crop = null; b.ripe = 0; this.data.xp += C.xp; this.tallyAdd('veg', n, false); this.save();
     return { crop, n, full: n < C.n, xp: C.xp };
@@ -2146,7 +2197,7 @@ export class Game {
   sellCatch(keep = []) {
     const f = this.fishBag(), net = f.net || []; if (!net.length) return null;
     let coins = 0, sold = 0, kept = 0; const box = f.box || [];
-    net.forEach((q, i) => { if (keep.includes(i) && box.length < FISHING.box) { box.push(q); kept++; } else { coins += fishPrice(q[0], q[1]); sold++; } });
+    net.forEach((q, i) => { if (keep.includes(i) && box.length < this.shelf('fish')) { box.push(q); kept++; } else { coins += fishPrice(q[0], q[1]); sold++; } });
     delete f.net; if (box.length) f.box = box; this.data.coins += coins; this.save();
     return { coins, sold, kept };
   }
@@ -2520,18 +2571,20 @@ export class Game {
   // how many of a nest's eggs are fresh now (laid within 3 hours)
   freshIn(c, now = Date.now()) { return Math.min(c.eggs || 0, (c.lt || []).filter(t => t <= now && now - t <= FRESH.ms).length); }
   // the words for eggs sold (collect's result): fresh ones say so, with the XP
-  soldText(r) {
-    if (r.toOrder) { const sold = r.n - r.toOrder; return this.setAsideText(r.to) + (sold > 0 ? ' · ' + this.t(sold === 1 ? 'eggs_sold1' : 'eggs_sold', { n: sold, c: r.coins }) : ''); }      // (eggs for the orders first: village orders)
-    return r.fresh ? this.t(r.n === 1 ? 'eggs_fresh1' : 'eggs_fresh', { n: r.n, c: r.coins, f: r.fresh, xp: r.xp }) : this.t(r.n === 1 ? 'eggs_sold1' : 'eggs_sold', { n: r.n, c: r.coins }); }
+  soldText(r) {      // (eggs collected: to the pantry, the XP; any that didn't fit: sold)
+    const t = r.kept ? this.t(r.kept === 1 ? 'eggs_pantry1' : 'eggs_pantry', { n: r.kept, xp: r.xp }) : '';
+    return r.sold ? (t ? t + ' · ' : '') + this.t('pantry_over', { n: r.sold, c: r.coins }) : t;
+  }
   // tap the nest: its eggs sold, coins and XP
   collect(coopId, now = Date.now()) {
     const c = this.coop(coopId); if (!c || !c.eggs) return null;
-    const n = c.eggs, fresh = this.freshIn(c, now), to = this.setAside('eggs', n), sold = n - to.n;      // (eggs for the orders first: the rest sold)
-    const coins = sold * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XPV.egg + fresh * FRESH.xp;
+    const n = c.eggs, fresh = this.freshIn(c, now), P = this.pantryBag(), kept = Math.max(0, Math.min(n, this.shelf('eggs') - P.eggs)), sold = n - kept;      // (to the pantry, with what they're worth: sold from there; what doesn't fit is sold now)
+    const worth = n * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), keptVal = Math.round(worth * kept / n), coins = worth - keptVal, xp = n * XPV.egg + fresh * FRESH.xp;
+    P.eggs += kept; P.val += keptVal;
     c.eggs = 0; c.bonus = 0; c.lt = []; this.data.coins += coins; this.data.xp += xp;
     this.tallyAdd('eggs', n, false);
     const done = this.job('eggs', n);
-    return { n, fresh, coins, xp, done, toOrder: to.n, to: to.to };
+    return { n, fresh, coins, xp, done, kept, sold, toOrder: 0, to: [] };
   }
   // what filling the feeder now would cost, and how much it would get: all of it, what the coins can buy, or (no coins and
   // nothing left in it) a free handful of kitchen scraps, a unit, so the hens can always go on laying
