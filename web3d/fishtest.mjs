@@ -41,10 +41,12 @@ const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet
 const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));      // (the cards slid up)
 const until = async (test, secs, step = 0.25) => { for (let t = 0; t < secs; t += step) { if (await p.evaluate(test)) return true; await run(step); } return p.evaluate(test); };
 // a player reeling: holding, letting go while the fish pulls (or `how`: 'hard' always holding, 'slack' never)
+const hit = () => p.evaluate(() => { const F = window.__farm.fishing(), G = F.fight(); F.bt = (F.g0 + G.green / 2) * G.sweep; F.press(true); });      // (a tap with the marker in the middle of the green)
+const miss = () => p.evaluate(() => { const F = window.__farm.fishing(), G = F.fight(); const x = F.g0 > 0.5 ? F.g0 - 0.2 : F.g0 + G.green + 0.2; F.bt = x * G.sweep; F.press(true); });      // (and one well outside it)
 const reel = (how = 'good') => p.evaluate(async how => {
   const f = window.__farm, F = f.fishing();
   for (let i = 0; i < 30 * 90 && F.state === 'reel'; i++) {
-    if (how === 'good') F.press(!(F.pullT > 0)); else F.press(how === 'hard');
+    
     window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false);
   }
   F.press(false); sessionStorage.setItem('__T', window.__T); f.draw(); return F.state;
@@ -91,7 +93,7 @@ ok('out at the dock\'s end, up on its deck, ready: the worms and Stop at the bot
 // (9 Nov 2026, Audrey: "there is no instruction as of how it works"): no fish caught yet, the how-to card by itself, its three
 // steps and the gauge drawn, "your first catch will be an easy one"; the fish waits while it's open; Got it
 let hs = await sheet();
-const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: s.querySelectorAll('.fishdemo .fishprog').length === 2 && !!s.querySelector('.fishdemo-r.pull'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
+const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: !!s.querySelector('.fishdemo .fishgreen') && !!s.querySelector('.fishdemo .fishneedle'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
 ok('the first time, no fish yet: "How to fish" by itself (cast, strike, reel in, the gauge as it looks, an easy first catch)', hs && hs.kind === 'fishhelp' && hInfo.steps === 3 && hInfo.demo && hInfo.ok && (fr ? /Comment pêcher/.test(hs.text) && /facile/.test(hs.text) : /How to fish/.test(hs.text) && /easy one/.test(hs.text)), { hs, hInfo });
 await shoot('0_howto');
 await p.evaluate(() => document.querySelector('.gsheet button[data-fhelp=ok]').click()); await run(0.3);
@@ -119,8 +121,15 @@ await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
 ok('a tap too soon: "Not yet", still waiting, no harm done', s.state === 'wait' && (fr ? /Pas encore/ : /Not yet/).test(s.hint), s.hint);
 ok('then the bite', await until(() => window.__farm.fishing().state === 'bite', 20));
 await shoot('2_bite');
-await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
-ok('a tap: reeling, the gauge up, "Hold your finger down to reel in"', s.state === 'reel' && s.gauge && (fr ? /doigt appuyé/ : /Hold your finger down/).test(s.hint), s);
+const bar = await p.evaluate(() => { const F = window.__farm.fishing(), g = document.querySelector('.fishgauge'), tr = g.querySelector('.fishtrack'), gr = g.querySelector('.fishgreen').getBoundingClientRect(), t = tr.getBoundingClientRect(); return { up: !g.hidden && !tr.hidden && t.width > 100, green: +(gr.width / t.width).toFixed(2), inside: gr.left >= t.left - 1 && gr.right <= t.right + 1, tries: F.tries, way: g.querySelector('.fishway').hidden, tip: document.querySelector('.fishtip').textContent }; });
+ok('the bar up: its green part (the first catch: a wide one, 42%), the marker, three tries, "Tap when the marker is in the green!"', bar.up && bar.inside && Math.abs(bar.green - 0.42) < 0.03 && bar.tries === 3 && bar.way && (fr ? /dans le vert/ : /in the green/).test(bar.tip), bar);
+const mv = await p.evaluate(() => { const f = window.__farm, F = f.fishing(), xs = []; for (let i = 0; i < 90; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); xs.push(F.cursor()); } return { min: Math.min(...xs), max: Math.max(...xs), state: F.state }; });
+ok('the marker goes to and fro along the whole bar', mv.state === 'bite' && mv.min < 0.08 && mv.max > 0.92, mv);
+await miss(); s = await st();
+const t1 = await p.evaluate(() => ({ tries: window.__farm.fishing().tries, tip: document.querySelector('.fishtip').textContent }));
+ok('a tap outside the green: a try gone ("Missed! 2 tries left"), still on', s.state === 'bite' && t1.tries === 2 && /2/.test(t1.tip), t1);
+await hit(); s = await st();
+ok('a tap in the green: hooked, in it comes by itself ("Got it!")', s.state === 'reel' && s.gauge && (fr ? /Bravo/ : /Got it/).test(s.hint), s);
 await run(0.6); await shoot('3_reel');
 const c0 = (await st()).coins, x0 = (await st()).xp;
 let end = await reel('good');
@@ -144,24 +153,19 @@ ok('Keep fishing: he crouches and lowers it into the bucket, picks his rod up ag
 // a bite missed
 let w0 = (await st()).worms, cc = (await st()).coins;
 await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25);
-await run(3); const stayed = (await st()).state;
-const bitAgain = await until(() => window.__farm.fishing().state === 'wait', 2), againHint = (await st()).hint;
-ok('the float stays down a long moment (3 s on: still biting); not tapped, it lets go and bites again', stayed === 'bite' && bitAgain && (fr ? /mordre de nouveau/ : /bite again/).test(againHint) && await until(() => window.__farm.fishing().state === 'bite', 6), { stayed, bitAgain, againHint });
-ok('three bites missed: off with the worm, nothing paid', await until(() => window.__farm.fishing().state === 'ready', 20) && (await st()).worms === w0 - 1 && (await st()).coins === cc && (fr ? /parti avec le ver/ : /swam off with the worm/).test((await st()).hint), await st());
-// reeled against its pull: nothing snaps, it only takes a little line back; the bar red meanwhile
-await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));
-const pull = await p.evaluate(() => { const f = window.__farm, F = f.fishing(); F.p = 0.5; F.pullT = 1.2; F.press(true);
-  for (let i = 0; i < 24; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); }
-  const r = { state: F.state, p: +F.p.toFixed(3), red: document.querySelector('.fishgauge').classList.contains('pull'), tip: document.querySelector('.fishtip').textContent }; F.press(false); return r; });
-ok('reeled against its pull: nothing snaps, a little line taken back, the bar red, "It\'s pulling! Let go a moment"', pull.state === 'reel' && pull.p < 0.5 && pull.p > 0.38 && pull.red && (fr ? /Il tire/ : /pulling/).test(pull.tip), pull);
-// left alone a long while: it swims away
-end = await reel('slack'); s = await st();
-ok('hooked and left alone a long while: it swims away', end === 'ready' && (fr ? /sauvé/ : /swam away/).test(s.hint), { end, h: s.hint });
+await miss(); await miss(); const two = await p.evaluate(() => ({ st: window.__farm.fishing().state, tries: window.__farm.fishing().tries, tip: document.querySelector('.fishtip').textContent })); await miss();
+ok('three taps outside the green: "Last try" after two, then off with the worm, nothing paid', two.st === 'bite' && two.tries === 1 && (fr ? /Dernier essai/ : /Last try/).test(two.tip) && (await st()).state === 'ready' && (await st()).worms === w0 - 1 && (await st()).coins === cc && (fr ? /parti avec le ver/ : /got away with the worm/).test((await st()).hint), { two, s: await st() });
+// rarer fish: a smaller green, still there to hit
+const greens = await p.evaluate(() => { const F = window.__farm.fishing(), was = [F.easy, F.bite]; const out = []; for (const rare of [0, 1, 2]) { F.easy = false; F.bite = { rare }; const G = F.fight(); out.push([G.green, G.sweep, +(G.green * G.sweep).toFixed(2)]); } F.easy = was[0]; F.bite = was[1]; return out; });
+ok('the green smaller for a rarer fish, the marker in it at least a fifth of a second each pass', greens[0][0] > greens[1][0] && greens[1][0] > greens[2][0] && greens.every(g => g[2] >= 0.2), greens);
+// the bite left alone: off with the worm
+await castOut(); await until(() => window.__farm.fishing().state === 'bite', 25);
+ok('the bite left alone 15 s: off with the worm', await until(() => window.__farm.fishing().state === 'ready', 17, 0.5) && (fr ? /parti avec le ver/ : /got away/).test((await st()).hint), await st());
 // Big Bertha
 await p.evaluate(() => { const g = window.__farm.game(); g.data.fish.worms = 1; g.save(); window.__farm.fishing().refreshBar(); });
 cc = (await st()).coins;
 await castOut(); await p.evaluate(() => { const F = window.__farm.fishing(), g = window.__farm.game(); g.bite = { id: 'big_bertha', cm: 91, water: 'pond', rare: 2 }; F.bite = { ...g.bite }; });
-await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));
+await until(() => window.__farm.fishing().state === 'bite', 25); await hit();
 end = await reel('good');
 ok('Big Bertha, reeled in (harder: the gauge\'s green smaller)', end === 'lift', end);
 await until(() => window.__farm.fishing().state === 'card', 12, 0.2);

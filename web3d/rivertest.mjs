@@ -36,9 +36,11 @@ const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet
     stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img').length, got: s.querySelectorAll('.gfishrow img.got').length, water: (s.querySelector('.gfishrow') || {}).dataset ? s.querySelector('.gfishrow') && s.querySelector('.gfishrow').dataset.water : null }; });
 const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));
 const until = async (test, secs, step = 0.25) => { for (let t = 0; t < secs; t += step) { if (await p.evaluate(test)) return true; await run(step); } return p.evaluate(test); };
+const hit = () => p.evaluate(() => { const F = window.__farm.fishing(), G = F.fight(); F.bt = (F.g0 + G.green / 2) * G.sweep; F.press(true); });      // (a tap with the marker in the middle of the green)
+const miss = () => p.evaluate(() => { const F = window.__farm.fishing(), G = F.fight(); const x = F.g0 > 0.5 ? F.g0 - 0.2 : F.g0 + G.green + 0.2; F.bt = x * G.sweep; F.press(true); });      // (and one well outside it)
 const reel = (how = 'good') => p.evaluate(async how => {
   const f = window.__farm, F = f.fishing();
-  for (let i = 0; i < 30 * 90 && F.state === 'reel'; i++) { if (how === 'good') F.press(F.T < 0.5); else F.press(how === 'hard'); window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); }
+  for (let i = 0; i < 30 * 90 && F.state === 'reel'; i++) { window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); }
   F.press(false); sessionStorage.setItem('__T', window.__T); f.draw(); return F.state;
 }, how);
 const castOut = () => p.evaluate(() => { const f = window.__farm, R = f.river(), F = f.fishing(); return F.tapWater(R.stand[0] + Math.sin(R.face + 0.08) * 2.2, R.stand[1] + Math.cos(R.face + 0.08) * 2.2); });
@@ -92,7 +94,7 @@ await run(3); const q1 = await onStream();
 ok('carried off down the stream as it waits', q1.s - q0.s > 0.15 && q1.d < 0.3, { q0, q1 });
 await shoot('3_float');
 ok('then the bite', await until(() => window.__farm.fishing().state === 'bite', 25));
-await p.evaluate(() => window.__farm.fishing().press(true));
+await hit();
 const c0 = (await st()).coins;
 let end = await reel('good');
 ok('reeled in: landed', end === 'lift', end);
@@ -110,7 +112,7 @@ ok('Keep fishing: into the bucket, the rod picked up again, ready', sawLower && 
 await p.evaluate(() => { const g = window.__farm.game(); g.data.fish.worms = 1; g.save(); window.__farm.fishing().refreshBar(); });
 const cc = (await st()).coins;
 await castOut(); await p.evaluate(() => { const F = window.__farm.fishing(), g = window.__farm.game(); g.bite = { id: 'old_snapjaw', cm: 110, water: 'river', rare: 2 }; F.bite = { ...g.bite }; });
-await until(() => window.__farm.fishing().state === 'bite', 25); await p.evaluate(() => window.__farm.fishing().press(true));
+await until(() => window.__farm.fishing().state === 'bite', 25); await hit();
 end = await reel('good');
 ok('Old Snapjaw, reeled in', end === 'lift', end);
 await until(() => window.__farm.fishing().state === 'card', 14, 0.2);

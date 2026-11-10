@@ -1282,10 +1282,9 @@ export class GameUI {
       const c = el('div', 'gcard ghow gfhelp'), hd = el('div', 'gcard-h'); c.dataset.step = k;
       hd.append(el('span', 'gemoji', e), el('span', 'gcard-t', this.t('fhelp_' + k + 't')));
       c.append(hd, el('p', 'gtext', this.t('fhelp_' + k)));
-      if (k === 3) {      // (the bar as it looks: blue as the fish comes in, red while it pulls)
-        const demo = el('div', 'fishdemo');
-        for (const [cls, w, key] of [['', '62%', 'fhelp_good'], [' pull', '62%', 'fhelp_tight']]) { const row = el('div', 'fishdemo-r' + cls), pr = el('div', 'fishprog'), fl = el('div', 'fishprogfill'); fl.style.width = w; pr.append(fl); row.append(el('span', 'fishway-e', '🐟'), pr, el('span', 'fishway-e', '🪣'), el('span', 'fishdemo-t', this.t(key))); demo.append(row); }
-        c.append(demo);
+      if (k === 3) {      // (the bar as it looks: the marker in the green)
+        const demo = el('div', 'fishdemo'), tr = el('div', 'fishtrack'), gr = el('div', 'fishgreen'), nd = el('div', 'fishneedle ok');
+        gr.style.left = '46%'; gr.style.width = '30%'; nd.style.left = '58%'; tr.append(gr, nd); demo.append(tr); c.append(demo);
       }
       body.append(c);
     }

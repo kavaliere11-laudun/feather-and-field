@@ -6333,7 +6333,7 @@ function startFishing(water = 'pond') {
   const R = water === 'river' ? riverRoute() : fishRoute(); if (!R) return 'none';
   const Fz = water === 'river' ? riverRig() : fishingRig(); FISHING = Fz;
   const F = Object.assign({}, R, { enter() { if (R.gate) { R.gate.want = 1; wake(1000); } }, leave() { if (R.gate) { R.gate.want = 0; wake(1000); } }, hens: () => [], at() {},
-    arrived: () => Fz.start(), drive: (Lf, dt) => Fz.drive(Lf, dt), done: () => { FSEQ = null; if (Fz.on) Fz.end(); CATCH_DUE = game.fishNet().length > 0; } });
+    arrived: () => Fz.start(), drive: (Lf, dt) => Fz.drive(Lf, dt), done: () => { FSEQ = null; const shown = Fz.netShown; Fz.netShown = false; if (Fz.on) Fz.end(); if (!shown) CATCH_DUE = game.fishNet().length > 0; } });
   const seq = farmLife.fishAt(F); if (!seq) return 'busy';
   FSEQ = seq; wake(1500);
   return 'ok';
@@ -6453,6 +6453,9 @@ function tickFishing(dt) {
   if (!FSEQ && !(FISHING && FISHING.on)) return;
   if (FSEQ && farmLife && farmLife.task !== FSEQ && farmLife.pending !== FSEQ) { FSEQ = null; if (FISHING && FISHING.on) FISHING.end(); }
   if (!FISHING || !FISHING.on) return;
+  // (the keep net's card as soon as he stops, not once he's back off the dock. 10 Nov 2026, Audrey: "It should come straight
+  // after I select stop fishing")
+  if (['laydown', 'leaving'].includes(FISHING.state)) { if (!FISHING.netShown) { FISHING.netShown = true; CATCH_DUE = game.fishNet().length > 0; } } else FISHING.netShown = false;
   if (DAY.hour >= 22.15 && !gameUI.isOpen && ['ready', 'wait', 'nibble'].includes(FISHING.state)) { FISHING.stop(); hint(game.t('fish_night', { farmer: farmerName() })); }
   FISHING.update(dt, VIEW_DIR);
 }
@@ -8651,6 +8654,20 @@ function tickFocus(dt) {
   clampView(); applyGrass(); placeCamera(); furDetail(); wake(200);
   if (focus.t >= 1) focus = null;
 }
+// a button in the bottom left corner: the view over to the farmer (10 Nov 2026, Audrey: "Add a button to focus the camera
+// back on the farmer"): only ever by the player's tap; at home (asleep, or not out yet): over to his door, and a word
+let FIND_BTN = null;
+function findFarmerBtn() {
+  if (FIND_BTN || !GAME_MODE) return;
+  const b = FIND_BTN = document.createElement('button'); b.type = 'button'; b.id = 'findfarmer'; b.className = 'gicon'; b.textContent = '🧑‍🌾';
+  b.addEventListener('click', () => {
+    if (!farmLife || SHOWDAY || inside.open) return;
+    b.setAttribute('aria-label', game.t('find_farmer', { farmer: farmerName() }));
+    const home = farmLife.home, at = home ? farmLife.o.door : [farmLife.pos.x, farmLife.pos.z];
+    focusOn(at[0], at[1], Math.min(view.size, 5)); if (home) hint(game.t('find_home', { farmer: farmerName() }));
+  });
+  document.body.append(b);
+}
 let fieldTag = 0;
 const tagSpot = new THREE.Vector3();          // where a label that isn't a bird's stands (the wheat field, a nest box)
 function placeTag(dt) {
@@ -9210,7 +9227,7 @@ function frame(now) {
   if (!frozen) { for (const p of livePlots()) { if (p === inside.plot) continue; for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt, now); tickFoxes(dt); if (foxGroups().length) wake(100); }
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
-  tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
+  findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
   if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock

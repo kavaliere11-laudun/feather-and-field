@@ -39,7 +39,7 @@ export const FARMER_TEXT = register('say', {
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 });
 const OUT_AT = 6.4, IN_AT = 22.6, TORCH_AT = 21.2;       // (out of the house, in for the night, the torch lit: hours)
-const SPEED = { walk: 1.0, hurry: 1.45, run: 2.15, dash: 3.0 };      // (dash: to a job he's been asked for)
+const SPEED = { walk: 1.0, hurry: 1.45, run: 2.15, dash: 3.2, sprint: 4.6 };      // (dash: to a job he's been asked for)
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
@@ -72,7 +72,9 @@ const TK = {
     // two metres; and out of sight with a long way still to go, he's put on his way just off the screen, running in)
     this.ran = pace === 'hurry' && Math.hypot(x - L.pos.x, z - L.pos.z) > (this.ran ? 1.6 : 2.4);
     if (pace === 'hurry' && L.o.onScreen && (this.skipT = (this.skipT ?? 0) - dt) <= 0) { this.skipT = 0.4; const q = L.skipAhead(this.pts, this.i); if (q) { this.pts = q; this.i = 0; return false; } }
-    if (L.moveTo(p[0], p[1], dt, this.ran ? 'dash' : pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
+    // (10 Nov, of fishing: "it still takes too long for the farmer to reach the spot": more than 7 m still to go, a sprint)
+    const far = this.ran && Math.hypot(x - L.pos.x, z - L.pos.z) > (this.far ? 5.5 : 7); this.far = far;
+    if (L.moveTo(p[0], p[1], dt, far ? 'sprint' : this.ran ? 'dash' : pace, !last) || (!last && Math.hypot(p[0] - L.pos.x, p[1] - L.pos.z) < 0.18)) { if (last) return true; this.i++; }
     this.still = Math.hypot(L.pos.x - x0, L.pos.z - z0) < 0.002 ? this.still + dt : 0;
     if (this.still > 1.5 && this.again < 4) { this.pts = null; this.still = 0; this.again++; }
     L.want.face = 'neutral'; L.want.lookAbout = true;
@@ -192,10 +194,10 @@ export class FarmLife {
       if (!this.o.nav || this.o.nav.freeAt(p.x + bx * 0.35, p.z + bz * 0.35)) { ax = bx; az = bz; }      // (never bending into anything)
       if (rd < R * 1.1 && ahead > 0.7) slow = Math.min(slow, Math.max(0.15, (rd - R * 0.8) / (R * 0.3)));
     }
-    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' || pace === 'dash' ? 7 : 4.5);
+    const off = this.turnTo(Math.atan2(ax, az), dt, pace === 'run' || pace === 'dash' || pace === 'sprint' ? 7 : 4.5);
     let want = SPEED[pace] * (off > 1.2 ? 0.15 : off > 0.6 ? 0.5 : 1) * slow;
     if (!through) want = Math.min(want, Math.sqrt(2 * 2.5 * Math.max(0, d - 0.03)) + 0.05);
-    this.speed += clamp(want - this.speed, -5 * dt, (pace === 'dash' ? 5 : 3) * dt); this.movedNow = true;
+    this.speed += clamp(want - this.speed, -5 * dt, (pace === 'dash' || pace === 'sprint' ? 6 : 3) * dt); this.movedNow = true;
     const st = Math.min(d, Math.max(0, this.speed) * dt);
     let nx = p.x + Math.sin(this.heading) * st, nz = p.z + Math.cos(this.heading) * st;
     const nav = this.o.nav;
@@ -519,8 +521,8 @@ export class FarmLife {
     const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - F.start[0], Lf.pos.z - F.start[1]) > 0.8) { seq.aborted = true; F.done(false); } return true; } };
     const gate = on => () => { if (on) { self.pen = F; F.enter(); } else if (self.pen === F) { F.leave(); self.pen = null; } return null; };
     const L = [TK.path(F.start[0], F.start[1], 'hurry'), there, TK.face(F.toIn), gate(true)];
-    if (F.gate) L.push(TK.act('open', 0.6, W => { W.pose = 'turn'; W.face = 'happy'; W.look = [0, -0.2]; }));
-    L.push(TK.walk(F.inPts), TK.face(F.face), () => { F.arrived(); return null; },
+    if (F.gate) L.push(TK.act('open', 0.3, W => { W.pose = 'turn'; W.face = 'happy'; W.look = [0, -0.2]; }));
+    L.push(TK.walk(F.inPts, 'hurry'), TK.face(F.face), () => { F.arrived(); return null; },
       { name: 'fishing', run: (Lf, dt) => F.drive(Lf, dt) },
       TK.walk(F.outPts), gate(false), () => { F.done(true); return null; });
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
@@ -603,7 +605,7 @@ export class FarmLife {
     if (!this.turned) this.av *= Math.max(0, 1 - dt * 10);
     // ---- the body: walking (or running) as far as he really goes, the pose wanted, the face
     const W = this.want, sp = this.speed, run = sp > 1.7;
-    this.phase += this.moved / (sp > 2.5 ? 1.7 : run ? 1.35 : 0.85) * Math.PI * 2;      // (longer strides at a dash)
+    this.phase += this.moved / (sp > 3.8 ? 2.1 : sp > 2.5 ? 1.7 : run ? 1.35 : 0.85) * Math.PI * 2;      // (longer strides at a dash)
     // (7 Nov 2026, the farmer's moves, second pass) how quickly he's speeding up or slowing down (leaning into it: farmer.js);
     // turning round where he stands, little steps round instead of his boots sliding round on the spot
     if (dt > 0) { const a = (sp - (this.sp0 ?? sp)) / dt; this.sp0 = sp; this.acc = (this.acc || 0) + (a - (this.acc || 0)) * Math.min(1, dt * 6); }
