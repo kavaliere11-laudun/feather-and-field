@@ -27,7 +27,9 @@ const seen = () => p.evaluate(() => { const h = document.getElementById('hint'),
   const over = [...document.querySelectorAll('.gbar button, .gbar > *')].map(q => q.getBoundingClientRect()).filter(q => q.width > 0 && r.right > q.left && r.left < q.right && r.bottom > q.top && r.top < q.bottom).length;
   return { text: h.textContent, op: +cs.opacity, top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right), onTop: top === h || h.contains(top), over, card: window.__farm.gameUI().isOpen, veg: window.__farm.game().vegBasket().carrot }; });
 let h = await seen();
-ok('Pick with the basket full: nothing picked, and "Your basket is full of carrots…" on the screen over the card, clear of the bar', h.card && h.veg === set.max && (fr ? /plein/ : /full of carrots/).test(h.text) && h.op > 0.9 && h.top >= 0 && h.right <= 874 && h.left >= 0 && h.over === 0, h);
+const pn = await p.evaluate(() => { const u = window.__farm.gameUI(); return { kind: u.isOpen && u.kind, note: (document.querySelector('.gpan-note') || {}).textContent || '' }; });
+ok('Pick with the carrots\' shelf full: nothing picked, the pantry opens with "No room left for carrots…" (to sell some, or keep them)', pn.kind === 'pantry' && h.veg === set.max && (fr ? /carottes/ : /carrots/).test(pn.note), { pn, h });
+await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.garden.tap(false); }); await run(0.2);
 if (OUT) await p.screenshot({ path: `${OUT}/hint_full_${L}.jpg`, type: 'jpeg', quality: 90 });
 await p.evaluate(() => { const g = window.__farm.game(); g.vegBasket().carrot = 0; g.save(); });
 await p.evaluate(() => document.querySelector('.gsheet button[data-pick="0"]').click()); await run(0.3);

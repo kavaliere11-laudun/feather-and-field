@@ -90,7 +90,7 @@ ok('a star from a cuddle: a word', rs === 1 && T.star.test(ht), { rs, ht });
 // stars from time on the farm; eggs a coin dearer for each of her stars
 const timeStars = await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id), since = b.since, exp = b.exp; b.exp = 0; b.since = window.__T - 30 * 86400e3; const s = g.stars(b); const s2 = (b.since = window.__T - 90 * 86400e3, g.stars(b)); b.since = since; b.exp = exp; return [s, s2]; }, HEN);
 ok('stars from time on the farm: one and a half a month, at most two and a half', timeStars[0] === 1 && timeStars[1] === 2, timeStars);
-const egg = await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id), c = g.coop(b.coop); b.exp = 200; b.laid = window.__T - 1000; c.eggs = 0; c.bonus = 0; c.feed = 6; c.fedAt = window.__T; const coins = g.data.coins; const r = g.layEgg(id, window.__T - 10); const got = g.collect(c.id); return { r, got, dc: g.data.coins - coins, base: g.eggPrice(c), card: 0 }; }, HEN);
+const egg = await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id), c = g.coop(b.coop); b.exp = 200; b.laid = window.__T - 1000; c.eggs = 0; c.bonus = 0; c.feed = 6; c.fedAt = window.__T; const coins = g.pantryBag().val; const r = g.layEgg(id, window.__T - 10); const got = g.collect(c.id); return { r, got, dc: g.pantryBag().val - coins, base: g.eggPrice(c), card: 0 }; }, HEN);
 t = await card(HEN);
 ok('her eggs a coin dearer for each of her stars (2 stars: 8 coins), her card says so', egg.r === 'laid' && egg.dc === egg.base + 2 && T.eggs8.test(t), { egg, t: t.slice(0, 300) });
 // at night: in the morning

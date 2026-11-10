@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.eggs_pantry_f1",
+  "en": "🥚 1 fresh egg to your pantry · +{xp} XP",
+  "fr": "🥚 1 œuf tout frais dans votre garde-manger · +{xp} XP"
+ },
+ {
+  "id": "text.eggs_pantry_f",
+  "en": "🥚 {n} eggs to your pantry, {f} fresh · +{xp} XP",
+  "fr": "🥚 {n} œufs dans votre garde-manger, dont {f} tout frais · +{xp} XP"
+ },
+ {
   "id": "text.pantry_btn",
   "en": "Pantry",
   "fr": "Garde-manger"

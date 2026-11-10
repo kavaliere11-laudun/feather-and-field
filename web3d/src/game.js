@@ -328,7 +328,7 @@ export const TEXT = {
     next_cuddle: 'a cuddle for {name}', next_worms: '{name}’s worms', next_fill: 'a feeder', next_treat: 'a treat', next_fish: 'fishing', next_geese: 'the geese',
     next_sow: 'sowing the wheat', next_harvest: 'the wheat harvest', next_honey: 'the honey', next_garden: 'the garden', next_order: 'a basket for the stall',
     // (9 Nov 2026) fishing: what to do now, on its panel; how to fish, its card
-    fish_casting: 'Casting…',
+    fish_casting: 'Casting…', eggs_pantry_f1: '🥚 1 fresh egg to your pantry · +{xp} XP', eggs_pantry_f: '🥚 {n} eggs to your pantry, {f} fresh · +{xp} XP',
     pantry_btn: 'Pantry', pantry_title: 'Your pantry', pantry_sub: 'Everything you collect is kept here. Sell it when you like, or keep it for the villagers’ orders.', pantry_orders: '🧺 {n} kept for orders', pantry_sell: 'Sell {n} · +{c} coins', pantry_sell_kept: 'Sell anyway · +{c} coins', pantry_grow: 'Your shelves get bigger as your farm levels up.', pantry_sold: 'Sold: {n} · +{c} coins', pantry_empty: 'Empty', pantry_full: 'Full', eggs_pantry1: '🥚 1 egg to your pantry · +{xp} XP', eggs_pantry: '🥚 {n} eggs to your pantry · +{xp} XP', pantry_over: 'Pantry full: {n} sold · +{c} coins', honey_pantry1: '🍯 1 jar of honey to your pantry', honey_pantry: '🍯 {n} jars of honey to your pantry', pantry_grain: 'Your feeders use this grain first.', pantry_big_t: 'Bigger shelves', pantry_big_d: 'Half as much room again on every shelf, for good.', pantry_big_on: 'Bigger shelves: yours ✓', pantry_first: 'Your eggs wait here. Tap Sell to turn them into coins.',
     shop_btn: 'Shop',
     hist_more: 'Learn more',
@@ -684,7 +684,7 @@ export const TEXT = {
     next_list: 'Ensuite\u00a0: {list}.', next_added: 'Ajouté à la liste de {farmer} ({n} sur 3)\u00a0: {job}.', next_full: 'La liste de {farmer} est pleine\u00a0: 3 tâches en attente.', next_already: 'Déjà sur la liste de {farmer}.',
     next_cuddle: 'un câlin pour {name}', next_worms: 'les vers de {name}', next_fill: 'une mangeoire', next_treat: 'une friandise', next_fish: 'la pêche', next_geese: 'les oies',
     next_sow: 'semer le blé', next_harvest: 'la moisson', next_honey: 'le miel', next_garden: 'le potager', next_order: 'un panier pour l’étal',
-    fish_casting: 'On lance…',
+    fish_casting: 'On lance…', eggs_pantry_f1: '🥚 1 œuf tout frais dans votre garde-manger · +{xp} XP', eggs_pantry_f: '🥚 {n} œufs dans votre garde-manger, dont {f} tout frais · +{xp} XP',
     pantry_btn: 'Garde-manger', pantry_title: 'Votre garde-manger', pantry_sub: 'Tout ce que vous récoltez est gardé ici. Vendez quand vous voulez, ou gardez pour les commandes du village.', pantry_orders: '🧺 {n} gardés pour les commandes', pantry_sell: 'Vendre {n} · +{c} pièces', pantry_sell_kept: 'Vendre quand même · +{c} pièces', pantry_grow: 'Vos étagères s’agrandissent quand votre ferme monte de niveau.', pantry_sold: 'Vendu\u00a0: {n} · +{c} pièces', pantry_empty: 'Vide', pantry_full: 'Plein', eggs_pantry1: '🥚 1 œuf dans votre garde-manger · +{xp} XP', eggs_pantry: '🥚 {n} œufs dans votre garde-manger · +{xp} XP', pantry_over: 'Garde-manger plein\u00a0: {n} vendus · +{c} pièces', honey_pantry1: '🍯 1 pot de miel dans votre garde-manger', honey_pantry: '🍯 {n} pots de miel dans votre garde-manger', pantry_grain: 'Vos mangeoires utilisent d’abord ce grain.', pantry_big_t: 'Étagères plus grandes', pantry_big_d: 'Moitié plus de place sur chaque étagère, pour toujours.', pantry_big_on: 'Étagères plus grandes\u00a0: à vous ✓', pantry_first: 'Vos œufs attendent ici. Touchez Vendre pour les changer en pièces.',
     shop_btn: 'Boutique',
     hist_more: 'En savoir plus',
@@ -1036,7 +1036,7 @@ export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 *
 // there, a shelf at a time (what the open orders still want is kept unless asked); the orders take from it when they go
 export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18 }, eggMax: 40 };
 export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'fish'];
-const shelfMost = k => Math.ceil(PANTRY.base[k] * (1 + PANTRY.grow * 60) * PANTRY.bought);      // (no save holds more on a shelf)
+const shelfSize = (k, level, big) => Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, level - PANTRY.from)) * (big ? PANTRY.bought : 1));      // (a shelf's size at a level; the save's check: no shelf holds more than its size at the save's own level)
 export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump'];
 const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
 export const VILLAGERS = {
@@ -1423,10 +1423,10 @@ export function checkFarm(d, now = Date.now()) {
   out.dresses = dresses;                             // (the seasonal dresses owned: after the decorations, as a new farm has them)
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
   out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: [0, 45, 90, 135].includes(wh.deg) ? wh.deg : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
-  out.grain = Math.round(num(d.grain, 0, shelfMost('grain'), 0) * 100) / 100;
+  out.grain = Math.round(num(d.grain, 0, shelfSize('grain', levelOf(out.xp), d.shelves === true), 0) * 100) / 100;
   // the pantry's eggs and honey (whole numbers, no more than a shelf can ever hold; the eggs' worth no more than eggs can fetch), the bigger shelves bought
-  { const pn = d.pantry && typeof d.pantry === 'object' ? d.pantry : {}, eggs = int(pn.eggs, 0, shelfMost('eggs'), 0);
-    out.pantry = { eggs, val: int(pn.val, 0, eggs * PANTRY.eggMax, 0), honey: int(pn.honey, 0, shelfMost('honey'), 0) }; if (pn.seen === true) out.pantry.seen = true; }
+  { const pn = d.pantry && typeof d.pantry === 'object' ? d.pantry : {}, eggs = int(pn.eggs, 0, shelfSize('eggs', levelOf(out.xp), d.shelves === true), 0);
+    out.pantry = { eggs, val: int(pn.val, 0, eggs * PANTRY.eggMax, 0), honey: int(pn.honey, 0, shelfSize('honey', levelOf(out.xp), d.shelves === true), 0) }; if (pn.seen === true) out.pantry.seen = true; }
   if (d.shelves === true) out.shelves = true;
   // when the farm was last open (for the welcome-back summary): never ahead of now
   out.lastSeen = Number.isFinite(d.lastSeen) && d.lastSeen > 0 ? Math.min(d.lastSeen, now) : now;
@@ -1500,7 +1500,7 @@ export function checkFarm(d, now = Date.now()) {
     // the keep net and the fish box: known fish (never a legendary one) of an open water, each a size of its own kind's, no
     // more than the net and the box hold; the day the last tin was bought: never ahead of today
     const fishList = (raw, max) => (Array.isArray(raw) ? raw : []).filter(q => Array.isArray(q) && q.length === 2 && typeof q[0] === 'string' && Object.prototype.hasOwnProperty.call(FISH_RULES, q[0]) && FISH_RULES[q[0]].rare < 2 && L >= fishLevel(q[0]) && Number.isInteger(q[1]) && q[1] >= FISH_RULES[q[0]].cm[0] && q[1] <= FISH_RULES[q[0]].cm[1]).slice(0, max).map(q => [q[0], q[1]]);
-    const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, shelfMost('fish'));
+    const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, shelfSize('fish', levelOf(out.xp), d.shelves === true));
     if (net.length) out.fish.net = net; if (box.length) out.fish.box = box;
     if (typeof fs.dawn === 'string' && /^\d{8}$/.test(fs.dawn) && fs.dawn <= dayKey(now + TZ_SLACK)) out.fish.dawn = fs.dawn;      // (the morning's worms: the day they were last found)
     if (typeof fs.tin === 'string' && /^\d{8}$/.test(fs.tin) && fs.tin <= dayKey(now + TZ_SLACK)) out.fish.tin = fs.tin;
@@ -1545,7 +1545,7 @@ export function checkFarm(d, now = Date.now()) {
     const gd = vgd, beds = Array.from({ length: GARDEN.beds }, (_, i) => { const b = Array.isArray(gd.beds) && gd.beds[i] && typeof gd.beds[i] === 'object' ? gd.beds[i] : null;
       return b && Object.hasOwn(CROPS, b.crop) && Number.isFinite(b.ripe) && b.ripe > 0 ? { crop: b.crop, ripe: int(b.ripe, 1, now + CROPS[b.crop].grow + TZ_SLACK, 1) } : { crop: null, ripe: 0 }; });
     const vg = gd.veg && typeof gd.veg === 'object' ? gd.veg : {}, veg = {};
-    for (const k of CROP_IDS) veg[k] = int(vg[k], 0, shelfMost(k), 0);
+    for (const k of CROP_IDS) veg[k] = int(vg[k], 0, shelfSize(k, levelOf(out.xp), d.shelves === true), 0);
     out.garden = { x: spotNum(gd.x), z: spotNum(gd.z), deg: [0, 90].includes(gd.deg) ? gd.deg : 0, beds, veg };
     // a coop's last treat (when, which): never ahead of now; none before the garden
     for (const c of out.coops) { const r = (Array.isArray(d.coops) ? d.coops : []).find(o => o && o.id === c.id), tr = r && r.treat;
@@ -1992,7 +1992,7 @@ export class Game {
   }
   // ---- the pantry
   pantryBag() { return this.data.pantry || (this.data.pantry = { eggs: 0, val: 0, honey: 0 }); }
-  shelf(k) { return Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, this.level - PANTRY.from)) * (this.data.shelves ? PANTRY.bought : 1)); }
+  shelf(k) { return shelfSize(k, this.level, !!this.data.shelves); }
   shelfOpen(k) { return k === 'eggs' ? true : k === 'honey' ? !!this.data.honey : k === 'grain' ? !!this.data.wheat || (this.data.grain || 0) > 0 : k === 'fish' ? this.fishOpen('pond') : this.gardenOpen(); }
   wantedOf(k) { if (!this.ordersOpen() || !this.data.orders) return 0; return Math.min(this.storeOf(k), this.data.orders.list.reduce((a, o) => a + Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)), 0)); }      // (what the open orders still want of a shelf, of what's on it)
   // what n things off a shelf fetch (the eggs: their share of what they're worth; the fish: the biggest ones, the orders taking the smallest)
@@ -2572,7 +2572,7 @@ export class Game {
   freshIn(c, now = Date.now()) { return Math.min(c.eggs || 0, (c.lt || []).filter(t => t <= now && now - t <= FRESH.ms).length); }
   // the words for eggs sold (collect's result): fresh ones say so, with the XP
   soldText(r) {      // (eggs collected: to the pantry, the XP; any that didn't fit: sold)
-    const t = r.kept ? this.t(r.kept === 1 ? 'eggs_pantry1' : 'eggs_pantry', { n: r.kept, xp: r.xp }) : '';
+    const t = !r.kept ? '' : r.fresh ? this.t(r.kept === 1 ? 'eggs_pantry_f1' : 'eggs_pantry_f', { n: r.kept, f: Math.min(r.fresh, r.kept), xp: r.xp }) : this.t(r.kept === 1 ? 'eggs_pantry1' : 'eggs_pantry', { n: r.kept, xp: r.xp });
     return r.sold ? (t ? t + ' · ' : '') + this.t('pantry_over', { n: r.sold, c: r.coins }) : t;
   }
   // tap the nest: its eggs sold, coins and XP

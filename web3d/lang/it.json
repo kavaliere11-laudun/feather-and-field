@@ -1360,5 +1360,7 @@
  "text.pantry_big_t": "Scaffali più grandi",
  "text.pantry_big_d": "Metà posto in più su ogni scaffale, per sempre.",
  "text.pantry_big_on": "Scaffali più grandi: tuoi ✓",
- "text.pantry_first": "Le tue uova aspettano qui. Tocca Vendi per trasformarle in monete."
+ "text.pantry_first": "Le tue uova aspettano qui. Tocca Vendi per trasformarle in monete.",
+ "text.eggs_pantry_f1": "🥚 1 uovo fresco nella tua dispensa · +{xp} XP",
+ "text.eggs_pantry_f": "🥚 {n} uova nella tua dispensa, {f} fresche · +{xp} XP"
 }

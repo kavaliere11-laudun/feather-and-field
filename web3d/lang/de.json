@@ -1357,5 +1357,7 @@
  "text.pantry_big_t": "Größere Regale",
  "text.pantry_big_d": "Auf jedem Regal noch einmal halb so viel Platz, für immer.",
  "text.pantry_big_on": "Größere Regale: deine ✓",
- "text.pantry_first": "Deine Eier warten hier. Tippe auf Verkaufen, um Münzen daraus zu machen."
+ "text.pantry_first": "Deine Eier warten hier. Tippe auf Verkaufen, um Münzen daraus zu machen.",
+ "text.eggs_pantry_f1": "🥚 1 frisches Ei in deine Speisekammer · +{xp} XP",
+ "text.eggs_pantry_f": "🥚 {n} Eier in deine Speisekammer, {f} davon frisch · +{xp} XP"
 }

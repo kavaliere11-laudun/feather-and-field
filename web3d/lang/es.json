@@ -1355,5 +1355,7 @@
  "text.pantry_big_t": "Estantes más grandes",
  "text.pantry_big_d": "La mitad más de sitio en cada estante, para siempre.",
  "text.pantry_big_on": "Estantes más grandes: tuyos ✓",
- "text.pantry_first": "Tus huevos esperan aquí. Toca Vender para convertirlos en monedas."
+ "text.pantry_first": "Tus huevos esperan aquí. Toca Vender para convertirlos en monedas.",
+ "text.eggs_pantry_f1": "🥚 1 huevo fresco a tu despensa · +{xp} XP",
+ "text.eggs_pantry_f": "🥚 {n} huevos a tu despensa, {f} frescos · +{xp} XP"
 }

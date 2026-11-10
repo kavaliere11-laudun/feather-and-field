@@ -68,7 +68,7 @@ await click('.gbub.geggs'); await run(0.5);
 await p.waitForTimeout(900); await run(0.2);
 g = await G();
 const c1 = await coins();
-ok('collected: the egg sold and +10 coins, on to a cuddle (the arrow over a hen)', g.step === 'cuddle' && c1 >= c0 + 10 + 6 && !!g.arrow && (fr ? /câlin à une poule/ : /Give a hen a cuddle/).test(g.card), { g, c0, c1 });
+ok('collected: the egg to the pantry, +10 coins for the step, on to a cuddle (the arrow over a hen)', g.step === 'cuddle' && c1 >= c0 + 10 && !!g.arrow && (fr ? /câlin à une poule/ : /Give a hen a cuddle/).test(g.card), { g, c0, c1 });
 // a cuddle: tap the hen the arrow's over, then ♥ Cuddle
 const tgt = await p.evaluate(() => { const f = window.__farm, T = f.deco.guide.target(); return T.world ? f.screenOf(T.world[0], T.world[2], T.world[1] - 0.35) : null; });
 await p.touchscreen.tap(tgt.x, tgt.y); await run(0.4);

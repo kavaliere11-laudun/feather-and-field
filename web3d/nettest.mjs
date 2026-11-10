@@ -64,8 +64,8 @@ ok('the Book: 20 fish pages; a rare one not caught says when it bites, the legen
 // ---- the save's check
 await p.evaluate(() => { const g = window.__farm.game(), f = g.fishBag(); f.net = [['big_bertha', 90], ['rudd', 999], ['nope', 10], ['rudd', 20], 'x', ['rudd', 20.5]]; f.box = Array.from({ length: 30 }, () => ['roach', 15]); f.tin = '99991231'; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
-const chk = await p.evaluate(() => { const g = window.__farm.game(); return { net: g.fishNet(), box: g.fishBox().length, tin: g.fishBag().tin || null, edited: g.edited }; });
-ok('the save\'s check: only real fish of real sizes in the net (never a legendary one), the box no more than 12, no tin from the future', JSON.stringify(chk.net) === '[["rudd",20]]' && chk.box === 12 && chk.tin === null, chk);
+const chk = await p.evaluate(() => { const g = window.__farm.game(); return { net: g.fishNet(), box: g.fishBox().length, tin: g.fishBag().tin || null, edited: g.edited, max: g.shelf('fish') }; });
+ok('the save\'s check: only real fish of real sizes in the net (never a legendary one), the box no more than 12, no tin from the future', JSON.stringify(chk.net) === '[["rudd",20]]' && chk.box === chk.max && chk.tin === null, chk);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close(); process.exit(fails ? 1 : 0);

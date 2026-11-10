@@ -46,7 +46,8 @@ await p.evaluate(() => window.__farm.collectAt(0));
 const flying = await p.evaluate(() => document.querySelectorAll('.gegg').length);
 await p.waitForTimeout(1200);
 s = await state();
-ok('collected: sold for 6 coins; fresh: 1 + 2 XP ("fresh"), the nest empty, the bubble gone, an egg flew', flying >= 1 && s.coins === 106 && s.xp === 3 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && /\+6/.test(s.hint) && (fr ? /tout frais/ : /fresh/).test(s.hint) && /\+3 XP/.test(s.hint), { flying, ...s });
+const pan = await p.evaluate(() => { const g = window.__farm.game(), P = { ...g.pantryBag() }; const r = g.sellShelf('eggs', true); return { P, r }; }); s = await state();
+ok('collected: to the pantry, worth 6 coins (sold from there: +6); fresh: 1 + 2 XP ("fresh"), the nest empty, the bubble gone, an egg flew', flying >= 1 && pan.P.eggs === 1 && pan.P.val === 6 && pan.r.coins === 6 && s.coins === 106 && s.xp === 3 && s.eggs === 0 && s.nest === 0 && s.eggBub === null && (fr ? /garde-manger/ : /pantry/).test(s.hint) && (fr ? /tout frais/ : /fresh/).test(s.hint) && /\+3 XP/.test(s.hint), { flying, pan, ...s });
 // away for two days: the eggs laid meanwhile are there (no walking in), the feeder low
 const day = 86400e3;
 await setT(T0 + 2 * day - 3600e3);

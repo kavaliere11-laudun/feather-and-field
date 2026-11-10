@@ -39,7 +39,7 @@ const look = (x, z, size = 3.4) => p.evaluate(([x, z, size]) => window.__farm.lo
 const untilDone = async (max = 60) => { for (let i = 0; i < max; i++) { await run(1); if (!(await S()).work) return i; } return -1; };
 const T = { sow: fr ? /Semer · 20 pièces/ : /Sow · 20 coins/, bubSow: fr ? /Semer/ : /Sow/, bubHarvest: fr ? /Récolter/ : /Harvest/, store: fr ? /Grain en réserve : 0 sur 120/ : /Grain in store: 0 of 120/,
   sowing: fr ? /va semer le blé/ : /is on the way to sow the wheat/, done: fr ? /Blé récolté : \+20 de grain/ : /Wheat harvested: \+20 grain/, grainFill: fr ? /avec votre grain \(gratuit\)/ : /with your grain \(free\)/,
-  honey: fr ? /2 pots de miel vendus · \+30 pièces/ : /2 jars of honey sold · \+30 coins/ };
+  honey: fr ? /2 pots de miel dans votre garde-manger/ : /2 jars of honey to your pantry/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
@@ -126,7 +126,7 @@ for (let i = 0; i < 60; i++) { await run(0.5); if ((await HS()).frame) { await r
 for (let i = 0; i < 30 && (await HS()).going; i++) await run(1);
 await p.waitForTimeout(1200); await run(0.3);
 const m5 = await money(), w3 = await word();
-ok('he lifts out a frame of honey; then the jars sold (2 × 15 coins, +6 XP)', framed >= 0 && !(await HS()).going && m5.coins === m4.coins + 30 && m5.xp === m4.xp + 6 && T.honey.test(w3), { framed, m4, m5, w3 });
+ok('he lifts out a frame of honey; then the jars to the pantry (2, +6 XP)', framed >= 0 && !(await HS()).going && m5.coins === m4.coins && (await p.evaluate(() => window.__farm.game().pantryBag().honey)) === 2 && m5.xp === m4.xp + 6 && T.honey.test(w3), { framed, m4, m5, w3 });
 // a reload
 const before = await p.evaluate(() => { const d = window.__farm.game().data; return JSON.stringify({ w: d.wheat, g: d.grain, h: d.honey }); });
 if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(await p.evaluate(() => ({ raw: JSON.parse(localStorage.getItem('ff3d.farm')), now: window.__T }))));
