@@ -1,6 +1,6 @@
 // The game, release 1 step 3 (eggs and feed): node eggtest.mjs   (LANG=fr: a French phone; W, H: the screen, e.g. W=874 H=402)
 // A fresh farm at 10:00 on a fake clock: the first egg (the good mum walks in and lays it, the bubble shows 1); collected
-// (the eggs fly to the coins: +6 coins; fresh, collected within 3 hours of being laid: 1 XP and 2 more); two days away: the eggs laid meanwhile are there, the feeder low; three
+// (the eggs fly to the coins: +6 coins; fresh, collected within 3 hours of being laid: 1 XP and 2 more); two days away: the eggs laid meanwhile are there, the feeder a third full; three
 // days: empty, no eggs after it ran out; the feeder's card and filling it (the farmer brings the feed, the grain rises,
 // coins down); a full nest stops the laying; a reload keeps it all; eggs laid long ago: 1 XP each, none fresh; a save changed
 // outside the game is checked and flagged (when its eggs were laid too);
@@ -53,7 +53,7 @@ await setT(T0 + 2 * day - 3600e3);
 await p.evaluate(() => { const f = window.__farm; f.gameTick(window.__T); f.draw(); });
 s = await state();
 const expect2 = await p.evaluate(() => { const g = window.__farm.game(); return g.data.birds.filter(b => b.sex === 'h').map(b => b.laid); });
-ok('two days away: the eggs laid meanwhile are in the nest (a hen whose time has just come walks in), the feeder low (its bubble)', s.eggs + s.laying.length >= 6 && s.eggs <= 8 && s.nest === s.eggs && s.laying.length <= 1 && s.feed > 0 && s.feed < 0.25 && /Feed low|Presque vide/.test(s.feedBub || ''), s);
+ok('two days away: the eggs laid meanwhile are in the nest (a hen whose time has just come walks in), the feeder a third full still (it lasts three days)', s.eggs + s.laying.length >= 6 && s.eggs <= 8 && s.nest === s.eggs && s.laying.length <= 1 && s.feed > 0.25 && s.feed < 0.45, s);
 const before = s.eggs;
 // three days: the feeder ran out; nothing laid after it did
 await setT(T0 + 3 * day + 6 * 3600e3);
@@ -64,12 +64,12 @@ ok('three days: the feeder empty (no grain, its bubble), no eggs after it ran ou
 await p.evaluate(() => window.__farm.feederCard(0));
 await p.waitForTimeout(400);
 const card = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, text: document.querySelector('.gsheet').innerText, btn: document.querySelector('.gsheet .gbtn').textContent }));
-ok('the feeder card: empty, fill it for 12 coins', card.kind === 'feeder' && /12/.test(card.btn) && /(Empty|Vide)/.test(card.text), card);
+ok('the feeder card: empty, fill it for 18 coins', card.kind === 'feeder' && /18/.test(card.btn) && /(Empty|Vide)/.test(card.text), card);
 const coinsBefore = s.coins;
 await p.tap('.gsheet .gbtn');
 await p.evaluate(() => { const f = window.__farm; f.step(0.1, 2); f.gameTick(window.__T); f.draw(); });
 s = await state();
-ok('filled: 12 coins paid, the save full at once, the farmer on his way, the grain still empty until he pours', s.coins === coinsBefore - 12 && s.feed === 1 && /on the way|arrive/.test(s.hint) && !s.meshOn && s.feedBub === null, s);
+ok('filled: 18 coins paid, the save full at once, the farmer on his way, the grain still empty until he pours', s.coins === coinsBefore - 18 && s.feed === 1 && /on the way|arrive/.test(s.hint) && !s.meshOn && s.feedBub === null, s);
 let poured = false;
 for (let i = 0; i < 9 && !poured; i++) { await sim(10); s = await state(); poured = s.meshOn && s.mesh > 0.06; }
 ok('the farmer pours: the grain up to full', poured, s);
