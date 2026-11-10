@@ -47,6 +47,8 @@ function simulate(name, seed) {
       // the eggs, the honey, the wheat
       for (const c of g.data.coops) { const r = track('eggs', () => g.collect(c.id)); if (r) earn.eggs += r.coins; }
       const hr = track('honey', () => g.collectHoney(NOW)); if (hr) earn.honey += hr.coins;
+      // (the pantry, 10 Nov 2026: the eggs and jars are kept there; this player sells what the open orders don't want straight away)
+      { const r = track('eggs', () => g.sellShelf('eggs')); if (r) earn.eggs += r.coins; const h2 = track('honey', () => g.sellShelf('honey')); if (h2) earn.honey += h2.coins; }
       if (g.wheatStage(NOW) === 'ripe') track('wheat', () => g.harvestWheat(NOW));
       // fishing (release 5): the chickens asked for their worms (Friendly 1, Trusting 2, Best friend 3 a day), then up to 8
       // worms fished at the first visit (a keen player's few minutes; the river half the time once it's open), most fish

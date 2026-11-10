@@ -162,6 +162,8 @@ async function visit(first = false) {
   if (S.hunt) await safe('golden egg', async () => { await look(S.hunt[0], S.hunt[1], 2.2); await run(0.3); await once('hunt', 'golden_egg'); await p.evaluate(() => window.__farm.hunt.tap()); await act(1.5); });
   // the eggs
   for (let i = 0; i < S.coops.length; i++) if (S.coops[i].eggs) await safe('eggs', async () => { await p.evaluate(i => window.__farm.collectAt(i), i); await act(1.2); });
+  // the pantry (10 Nov 2026): what the orders don't want, sold shelf by shelf (the grain kept for the feeders)
+  await safe('pantry', async () => { await p.evaluate(() => window.__farm.pantrySheet()); await act(0.3); for (let k = 0; k < 8; k++) { const sold = await p.evaluate(() => { const q = [...document.querySelectorAll('.gpan-r [data-sell]:not([data-all])')].find(x => x.closest('.gpan-r').dataset.shelf !== 'grain'); if (q) q.click(); return !!q; }); if (!sold) break; await act(0.3); } await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen && u.kind === 'pantry') u.close(); }); });
   // the apple eggs under the Gluttons' apple trees
   const apples = await p.evaluate(() => { const f = window.__farm; return f.gamePlots().map((q, i) => { const A = f.apples.of(i); return A && A.egg && A.egg.visible ? i : -1; }).filter(i => i >= 0); });
   for (const i of apples) await safe('apple egg', async () => { const P = await p.evaluate(i => { const e = window.__farm.apples.of(i).egg; e.updateWorldMatrix(true, false); const m = e.matrixWorld.elements; return [m[12], m[14]]; }, i); await look(P[0], P[1], 2.2); await once('apple', 'apple_egg'); await p.evaluate(i => window.__farm.apples.eggTap(i), i); await act(1); });

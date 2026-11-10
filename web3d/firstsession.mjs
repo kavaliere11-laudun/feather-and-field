@@ -13,7 +13,7 @@ const start = NOW, lv = {}; let last = 1;
 const visit = (mins) => {
   for (const e of g.dueLays(NOW)) g.layEgg(e.hen, e.t, NOW);
   g.broodTick(NOW);
-  for (const c of g.data.coops) g.collect(c.id);
+  for (const c of g.data.coops) g.collect(c.id); g.sellShelf('eggs');      // (sold from the pantry, 10 Nov 2026)
   if (g.wheatStage(NOW) === 'ripe') g.harvestWheat(NOW);
   if (g.wheatStage(NOW) === 'soil' && g.data.coins >= WHEAT.sow) g.sowWheat(NOW);
   for (const b of g.data.birds) g.cuddle(b.id, NOW);
