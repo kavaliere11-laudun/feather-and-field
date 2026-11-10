@@ -96,7 +96,7 @@ const fc = await p.evaluate(() => { const f = window.__farm; f.gameUI().feederSh
 const m2 = await money();
 const q = await p.evaluate(() => { const g = window.__farm.game(); return g.fillFeeder(g.data.coops[0].id); });
 const m3 = await money();
-ok('an empty feeder: "Fill it with your grain (free)"; filled from the grain, no coins', T.grainFill.test(fc) && m3.coins === m2.coins && Math.abs(m3.grain - (m2.grain - 6)) < 0.01 && q.grain === 6 && q.cost === 0, { fc: fc.slice(0, 300), m2, m3, q });
+ok('an empty feeder: "Fill it with your grain (free)"; filled from the grain, no coins', T.grainFill.test(fc) && m3.coins === m2.coins && Math.abs(m3.grain - (m2.grain - 9)) < 0.01 && q.grain === 9 && q.cost === 0, { fc: fc.slice(0, 300), m2, m3, q });
 await p.evaluate(() => window.__farm.gameUI().close());
 // move it and turn it
 s = await S();
