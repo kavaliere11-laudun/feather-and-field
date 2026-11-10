@@ -4853,3 +4853,29 @@ KEEPFISH, SEED). All nine built:
   the screen and not zoomed far out. Still never mentioned anywhere else. (This replaces "no reward" for the secret of
   28 Oct, at Audrey's wish.)
 - Test: `milestest` (EN and FR).
+
+## Her notes of 10 Nov 2026 evening (iPhone, 20:35 to 20:45)
+- **"It should let me validate the action cuddle instead of just saying it's on the list that's confusing. Same for all
+  CTa"**: a cuddle, worms or a visit to the geese asked while the farmer works is done at once: counted, the card shut,
+  said, hearts over the bird, and he isn't sent (main.js `busyNow` in `gameCuddle`, `gameWorms`, `geeseVisit`). The
+  bird card's note about his list is gone. Only fishing still waits its turn on his list (he has to go there).
+- **"Looks like there is some broken text at the bottom of the popup"** (the keep net): the fish box's lines now come
+  before the Sell button kept at the bottom, so nothing shows under it.
+- **"I should have next to the relevant fish if they are wanted in an order"**: the keep net says how many fish the
+  open orders still need (`fishWanted`), and marks that many of the catch, the cheapest, "🧺 For an order".
+- **"Why is there no image"** (the Book, breeds not found yet): their dark shape is now drawn with a mask (`.gsil`);
+  the darkened picture (a CSS filter) came out blank on her iPhone.
+- **"add a little paragraph about the history of the breed where it comes from etc. Could be under a learn more"**:
+  each Book page has "Learn more ▾", which unfolds two or three sentences on the breed's history (`hist_<base>`, nine
+  breeds, six languages; the Silkie colours share the Silkie's).
+- **"Farm shop should have its own entry next to the coins"**: a "🛍️ Shop" pill beside the coins (the bag alone on a
+  narrow screen). A message shown over a card sits a little to the right so it stays clear of it.
+- **"Can you check if the sound works"**: nothing in the sound's code has changed since it was built; on an iPhone the
+  game is silent whenever the phone's silent mode is on (the bell in Control Centre, or the side switch), whatever the
+  volume. Asked her to check that first.
+- **Decided, to build next: the Pantry** (her answers): one pantry for everything collected (eggs, vegetables, fish,
+  grain, honey); eggs go straight in instead of being sold at once; you sell from there and orders take from it; its
+  size is limited and grows with the farm's level, and bigger shelves can be bought with real money. When it's full
+  (her carrots: "I should be offered to keep it sell I need a storage") you're offered to sell or keep.
+- Tests: `busytest` rewritten for actions done at once; `hinttest`, `fishtest`, `rivertest`, `wheattest`, `eggtest`,
+  `pentest` adjusted.
