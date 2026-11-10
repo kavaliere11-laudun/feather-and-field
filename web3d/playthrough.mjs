@@ -14,6 +14,12 @@ import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/playthrough', LANG = process.env.LANG || 'en', W = +(process.env.W || 874), H = +(process.env.H || 402);
 const UNTIL = +(process.env.UNTIL || 10), DAYS = +(process.env.DAYS || 16);
+// (10 Nov 2026, Audrey: "create 3 personas players that you will use to play the game": the same play-through as another
+// kind of player. VISITS: the hours of the visits each day ("8,19"); CASTS: casts at most a visit (2), at any hour with
+// ANYHOUR=1; HIT: how often a tap lands in the green (1); TIN=1: a tin of worms bought each day; KEEPFISH=1: fish kept for
+// the orders; CARE=0: no cuddles; SEED: the dice)
+const VISITS = (process.env.VISITS || '8,19').split(',').map(Number), CASTS = +(process.env.CASTS ?? 2), HIT = +(process.env.HIT ?? 1), TIN = process.env.TIN === '1', ANYHOUR = process.env.ANYHOUR === '1', KEEPFISH = process.env.KEEPFISH === '1';
+let seed = +(process.env.SEED || 7); const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 fs.mkdirSync(OUT, { recursive: true });
 const LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR' }[LANG];
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -234,23 +240,33 @@ async function visit(first = false) {
   if (wait.length) await safe('coop', async () => { await p.evaluate(b => window.__farm.place(b), wait[0]); await act(1.5); await once('move', 'placing_coop'); for (let k = 0; k < 6 && !(await p.evaluate(() => window.__farm.move.state().ok)); k++) await p.evaluate(k => { const f = window.__farm, M = f.move.state(); f.move.to(M.at.x + (k % 2 ? -3 : 3), M.at.z + (k > 2 ? 3 : -3)); }, k).catch(() => {}); await click('.gmove-go'); await act(2); await note('placed a coop', wait[0]); });
   // a little fishing in the morning (two casts)
   S = await g();
-  if (S.fish && S.worms > 0 && (first || (await state()).hm < '12:00')) await safe('fishing', async () => {
+  if (TIN && S.fish && !(await p.evaluate(() => window.__farm.game().tinToday())) && S.coins >= 120) await safe('tin', async () => { await p.evaluate(() => window.__farm.dockCard()); await act(0.4); await click('.gsheet button[data-fish=tin]'); await act(0.4); await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); }); });
+  S = await g();
+  if (CASTS > 0 && S.fish && S.worms > 0 && (first || ANYHOUR || (await state()).hm < '12:00')) await safe('fishing', async () => {
     await waitFarmer(25);
+    const t0 = await p.evaluate(() => window.__T);
     await p.evaluate(() => window.__farm.dockCard()); await act(0.4); await once('card:dock', 'card_dock');
     if (!(await click('.gsheet button[data-fish=go]'))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
-    for (let i = 0; i < 90 && (await p.evaluate(() => (window.__farm.fishing() || {}).state)) !== 'ready'; i++) await act(1);
+    for (let i = 0; i < 90 && (await p.evaluate(() => (window.__farm.fishing() || {}).state)) !== 'ready'; i++) { await act(1); const c = await cardNow(); if (c && c.kind === 'fishhelp') { await note('card fishhelp', c.text); await once('card:fishhelp', 'card_fishhelp'); await click('.gsheet button[data-fhelp=ok]'); } }
+    await note('fishing', 'on the dock ready after ' + Math.round(((await p.evaluate(() => window.__T)) - t0) / 1000) + ' s');
     await once('fishready', 'fishing_ready');
-    for (let k = 0; k < 2; k++) {
+    let got = 0, lost = 0;
+    for (let k = 0; k < CASTS; k++) {
       if ((await p.evaluate(() => window.__farm.game().worms())) < 1) break;
       await p.evaluate(() => { const f = window.__farm, D = f.dock(), F = f.fishing(); return F.tapWater(D.stand[0] + Math.sin(D.face + 0.3) * 2.6, D.stand[1] + Math.cos(D.face + 0.3) * 2.6); }); await act(0.5);
       for (let i = 0; i < 100 && (await p.evaluate(() => window.__farm.fishing().state)) !== 'bite'; i++) await run(0.25);
-      await p.evaluate(() => window.__farm.fishing().press(true)); await run(0.2);
-      await p.evaluate(() => { const f = window.__farm, F = f.fishing(); for (let i = 0; i < 30 * 90 && F.state === 'reel'; i++) { F.press(F.T < 0.5); window.__T += 1000 / 30; f.step(1 / 30, 1); f.gameTick(window.__T, false); } F.press(false); sessionStorage.setItem('__T', window.__T); });
-      await act(1);
-      for (let i = 0; i < 20 && !(await cardNow()); i++) await act(0.5);
-      const c = await cardNow(); if (c) { await note('card ' + c.kind, c.text); await once('card:fish', 'card_fish'); if (!(await click('.gsheet button[data-fish=keep]'))) { await click('.gsheet button[data-fish=stop]') || await p.evaluate(() => window.__farm.gameUI().close()); break; } await act(0.6); }
+      await once('fishbite', 'fishing_bite');
+      for (let t = 0; t < 3 && (await p.evaluate(() => window.__farm.fishing().state)) === 'bite'; t++) {      // (up to three taps: in the green, or not)
+        const hit = rnd() < HIT;
+        await p.evaluate(hit => { const F = window.__farm.fishing(), G = F.fight(); const x = hit ? F.g0 + G.green / 2 : (F.g0 > 0.5 ? F.g0 - 0.2 : F.g0 + G.green + 0.2); F.bt = x * G.sweep; F.press(true); }, hit); await run(0.4);
+      }
+      if ((await p.evaluate(() => window.__farm.fishing().state)) === 'ready') { lost++; await hintNow(); continue; }
+      for (let i = 0; i < 40 && !(await cardNow()); i++) await act(0.5);
+      const c = await cardNow(); if (c) { got++; await note('card ' + c.kind, c.text); await once('card:fish', 'card_fish'); if (!(await click('.gsheet button[data-fish=keep]'))) { await click('.gsheet button[data-fish=stop]') || await p.evaluate(() => window.__farm.gameUI().close()); break; } await act(0.6); for (let i = 0; i < 30 && (await p.evaluate(() => window.__farm.fishing().state)) !== 'ready'; i++) await act(0.5); }
     }
     if (await p.evaluate(() => !!window.__farm.fishing() && window.__farm.fishing().state !== 'off')) { await p.evaluate(() => { const F = window.__farm.fishing(); if (F.stop) F.stop(); }); }
+    for (let i = 0; i < 12; i++) { await act(1); const c = await cardNow(); if (c && c.kind === 'catch') { await note('card catch', c.text); await once('card:catch', 'card_catch'); if (KEEPFISH) await click('.gsheet button[data-keep="0"]'); await click('.gsheet button[data-catch=sell]'); await act(0.5); break; } }
+    await note('fishing done', `${got} caught, ${lost} got away; species so far ${await p.evaluate(() => Object.keys(window.__farm.game().fishBag().got).length)} of 20; worms left ${await p.evaluate(() => window.__farm.game().worms())}`);
     await act(2);
   });
   await cards('end of visit');
@@ -277,7 +293,7 @@ await visit(true);
 await note('guide after the first visit', await p.evaluate(() => { const e = document.querySelector('.gguide'); return e ? e.innerText : '(no guide card)'; }));
 // then 19:00 the first day, and 8:00 and 19:00 after: the app opened afresh each time
 const day0 = new Date('2026-11-09T00:00:00Z').getTime();
-const times = [day0 + 19 * 3600e3]; for (let d = 1; d <= DAYS; d++) times.push(day0 + d * 86400e3 + 8 * 3600e3, day0 + d * 86400e3 + 19 * 3600e3);
+const times = VISITS.filter(h => h > 12).map(h => day0 + h * 3600e3); for (let d = 1; d <= DAYS; d++) for (const h of VISITS) times.push(day0 + d * 86400e3 + h * 3600e3);
 for (const t of times) {
   if ((await state()).level >= UNTIL) break;
   await p.evaluate(t => { window.__T = Math.max(window.__T, t); sessionStorage.setItem('__T', window.__T); }, t);
