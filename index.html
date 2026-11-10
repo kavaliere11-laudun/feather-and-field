@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1794344429") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794344429") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1794347243") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794347243") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794344429") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794347243") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -405,6 +405,8 @@
   .gpage-no .gpic img { filter: brightness(0); opacity: 0.62; }
   .ghist-b { display: inline-block; margin-top: 4px; } .ghist { margin: 4px 0 0; } .ghist[hidden] { display: none; }
   .gshopbtn { padding: 0 13px 0 9px; } .gshop-e { font-size: 19px; line-height: 1; } @media (max-width: 520px) { .gshop-l { display: none; } .gshopbtn { padding: 0 9px; } }
+  body.gopen .gshopbtn { display: none; }      /* (a card open: out of the way of a message said over it) */
+  .gpanbtn { position: relative; } .gpan-r { padding: 8px 8px 8px 10px; } .gpan-e { font-size: 24px; flex: none; } .gpan-r .gbtn { min-width: 0; white-space: nowrap; font-size: 15px; padding: 10px 13px; } .gpan-0 { margin: 0 8px 0 0; } .gpan-full { box-shadow: inset 0 0 0 2px rgba(226, 65, 47, 0.4); } .gpan-g { color: var(--ink-2); font-weight: 600; } .gpan-note { background: #fdf0d2; border-radius: 12px; padding: 8px 10px; margin: 0 0 6px; }
   .gsil { width: 100%; height: 100%; background: #4d564b; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
   .gcatch-w { display: block; font-size: 12px; font-weight: 800; color: #2f7a3a; line-height: 1.1; } .gcatch-r[data-want] { box-shadow: inset 0 0 0 2px rgba(47, 122, 58, 0.45); } .gcatch-o { margin: 0 0 4px; }
   .gpage-i { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; padding-top: 1px; }
@@ -665,7 +667,7 @@
     .gsheet.gcenter:not(.gintro) { width: min(440px, 62vw); }
     @keyframes gspop { from { transform: translateY(14px) scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
-    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(46vw, 440px); left: calc(50% + 60px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
+    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(56vw, 520px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
     body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }
@@ -765,6 +767,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794344429"></script>
+<script src="app.js?v=1794347243"></script>
 </body>
 </html>
