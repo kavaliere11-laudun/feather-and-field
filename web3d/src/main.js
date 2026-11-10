@@ -5119,9 +5119,9 @@ function gameTick(now = Date.now(), force = false) {
   const live = document.visibilityState !== 'hidden';
   const tonight = foxLiveTick(now, live);                               // (tonight's visit, if it's time and the farm is open)
   if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
+  if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
-  if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms)
   nightBtn(now);
   if (game.showTick(now).length) gameUI.refresh();                    // (a show judged: its results card once the farm's free)
   const jd = game.jobs(now).day; if (jd !== jobsDay) { jobsDay = jd; gameUI.refresh(); }      // (midnight: new jobs, the clipboard's dot)

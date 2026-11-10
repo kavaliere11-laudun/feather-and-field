@@ -93,7 +93,7 @@ ok('out at the dock\'s end, up on its deck, ready: the worms and Stop at the bot
 // (9 Nov 2026, Audrey: "there is no instruction as of how it works"): no fish caught yet, the how-to card by itself, its three
 // steps and the gauge drawn, "your first catch will be an easy one"; the fish waits while it's open; Got it
 let hs = await sheet();
-const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfhelp').length, demo: !!s.querySelector('.fishdemo .fishgreen') && !!s.querySelector('.fishdemo .fishneedle'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
+const hInfo = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { steps: s.querySelectorAll('.gfstep').length, demo: !!s.querySelector('.fishdemo .fishgreen') && !!s.querySelector('.fishdemo .fishneedle'), ok: !!s.querySelector('button[data-fhelp=ok]') } : null; });
 ok('the first time, no fish yet: "How to fish" by itself (cast, strike, reel in, the gauge as it looks, an easy first catch)', hs && hs.kind === 'fishhelp' && hInfo.steps === 3 && hInfo.demo && hInfo.ok && (fr ? /Comment pêcher/.test(hs.text) && /facile/.test(hs.text) : /How to fish/.test(hs.text) && /easy one/.test(hs.text)), { hs, hInfo });
 await shoot('0_howto');
 await p.evaluate(() => document.querySelector('.gsheet button[data-fhelp=ok]').click()); await run(0.3);
