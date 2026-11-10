@@ -2791,8 +2791,8 @@
  },
  {
   "id": "text.feed_days",
-  "en": "Enough for about two days.",
-  "fr": "De quoi tenir environ deux jours."
+  "en": "Enough for about three days.",
+  "fr": "De quoi tenir environ trois jours."
  },
  {
   "id": "text.feed_empty_line",
@@ -2811,18 +2811,18 @@
  },
  {
   "id": "text.feed_how",
-  "en": "Your hens lay while there’s food in it. Full, it feeds your trio for two days.",
-  "fr": "Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+  "en": "Your hens lay while there’s food in it. Full, it feeds your trio for three days.",
+  "fr": "Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours."
  },
  {
   "id": "text.feed_how_duck",
-  "en": "Your ducks lay while there’s food in it. Full, it feeds your trio for two days.",
-  "fr": "Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+  "en": "Your ducks lay while there’s food in it. Full, it feeds your trio for three days.",
+  "fr": "Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours."
  },
  {
   "id": "text.feed_how_pea",
-  "en": "Your peahens lay while there’s food in it. Full, it feeds your trio for two days.",
-  "fr": "Vos paonnes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours."
+  "en": "Your peahens lay while there’s food in it. Full, it feeds your trio for three days.",
+  "fr": "Vos paonnes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours."
  },
  {
   "id": "text.fill_grain",
@@ -3721,8 +3721,8 @@
  },
  {
   "id": "text.ord_sub",
-  "en": "Villagers ask for a basket. Your eggs and honey go to their baskets first as they come; fish come from your fish box, the grain from your store.",
-  "fr": "Les villageois demandent un panier. Vos œufs et votre miel vont d’abord dans leurs paniers, à mesure ; les poissons viennent de votre vivier, le grain de votre réserve."
+  "en": "Villagers ask for a basket. Fill it and deliver it for coins.",
+  "fr": "Les villageois demandent un panier. Remplissez-le et livrez-le contre des pièces."
  },
  {
   "id": "text.ord_eggs",
@@ -4276,6 +4276,246 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.mile_tab",
+  "en": "Milestones",
+  "fr": "Objectifs"
+ },
+ {
+  "id": "text.mile_sub",
+  "en": "Keepsakes on your shelf: {n} of {all}",
+  "fr": "Souvenirs sur votre étagère : {n} sur {all}"
+ },
+ {
+  "id": "text.mile_collect",
+  "en": "Collect · +{c} coins",
+  "fr": "Récupérer · +{c} pièces"
+ },
+ {
+  "id": "text.mile_got",
+  "en": "🏅 {name}: +{c} coins, +{xp} XP",
+  "fr": "🏅 {name} : +{c} pièces, +{xp} XP"
+ },
+ {
+  "id": "text.mile_keep",
+  "en": "🏅 {name}: +{c} coins, +{xp} XP, and a keepsake for your shelf!",
+  "fr": "🏅 {name} : +{c} pièces, +{xp} XP, et un souvenir pour votre étagère !"
+ },
+ {
+  "id": "text.mile_all",
+  "en": "All done ✓",
+  "fr": "Terminé ✓"
+ },
+ {
+  "id": "text.mile_secret",
+  "en": "???",
+  "fr": "???"
+ },
+ {
+  "id": "text.mile_secret_d",
+  "en": "A secret of the pond. Keep your eyes open…",
+  "fr": "Un secret de l’étang. Ouvrez l’œil…"
+ },
+ {
+  "id": "text.mile_shelf",
+  "en": "Your keepsakes",
+  "fr": "Vos souvenirs"
+ },
+ {
+  "id": "text.mile_fish",
+  "en": "Angler",
+  "fr": "Pêche"
+ },
+ {
+  "id": "text.mile_fish_d",
+  "en": "Different fish caught",
+  "fr": "Poissons différents pêchés"
+ },
+ {
+  "id": "text.mile_friends",
+  "en": "Best friends",
+  "fr": "Meilleurs amis"
+ },
+ {
+  "id": "text.mile_friends_d",
+  "en": "Birds who are your best friends",
+  "fr": "Volailles devenues vos meilleures amies"
+ },
+ {
+  "id": "text.mile_chicks",
+  "en": "Nursery",
+  "fr": "Nurserie"
+ },
+ {
+  "id": "text.mile_chicks_d",
+  "en": "Chicks raised",
+  "fr": "Poussins élevés"
+ },
+ {
+  "id": "text.mile_gold",
+  "en": "Golden eggs",
+  "fr": "Œufs d’or"
+ },
+ {
+  "id": "text.mile_gold_d",
+  "en": "Golden eggs found",
+  "fr": "Œufs d’or trouvés"
+ },
+ {
+  "id": "text.mile_eggs",
+  "en": "Egg basket",
+  "fr": "Panier d’œufs"
+ },
+ {
+  "id": "text.mile_eggs_d",
+  "en": "Eggs collected",
+  "fr": "Œufs ramassés"
+ },
+ {
+  "id": "text.mile_wheat",
+  "en": "Harvest",
+  "fr": "Moisson"
+ },
+ {
+  "id": "text.mile_wheat_d",
+  "en": "Wheat harvests",
+  "fr": "Récoltes de blé"
+ },
+ {
+  "id": "text.mile_veg",
+  "en": "Kitchen garden",
+  "fr": "Potager"
+ },
+ {
+  "id": "text.mile_veg_d",
+  "en": "Vegetables picked",
+  "fr": "Légumes récoltés"
+ },
+ {
+  "id": "text.mile_orders",
+  "en": "Village friend",
+  "fr": "Ami du village"
+ },
+ {
+  "id": "text.mile_orders_d",
+  "en": "Orders delivered",
+  "fr": "Commandes livrées"
+ },
+ {
+  "id": "text.mile_ros",
+  "en": "Show star",
+  "fr": "Star des concours"
+ },
+ {
+  "id": "text.mile_ros_d",
+  "en": "Rosettes won",
+  "fr": "Cocardes gagnées"
+ },
+ {
+  "id": "text.mile_night",
+  "en": "Goodnight",
+  "fr": "Bonne nuit"
+ },
+ {
+  "id": "text.mile_night_d",
+  "en": "Goodnight rounds done",
+  "fr": "Tournées du soir faites"
+ },
+ {
+  "id": "text.mile_coins",
+  "en": "Nest egg",
+  "fr": "Bas de laine"
+ },
+ {
+  "id": "text.mile_coins_d",
+  "en": "Coins earned",
+  "fr": "Pièces gagnées"
+ },
+ {
+  "id": "text.mile_foxfirst",
+  "en": "A visitor in the night",
+  "fr": "Un visiteur dans la nuit"
+ },
+ {
+  "id": "text.mile_foxfirst_d",
+  "en": "Rusty’s first visit",
+  "fr": "La première visite de Rusty"
+ },
+ {
+  "id": "text.mile_foxin",
+  "en": "Oops!",
+  "fr": "Oups !"
+ },
+ {
+  "id": "text.mile_foxin_d",
+  "en": "Rusty got to the eggs",
+  "fr": "Rusty a eu les œufs"
+ },
+ {
+  "id": "text.mile_rusty",
+  "en": "Fox-proof",
+  "fr": "À l’épreuve du renard"
+ },
+ {
+  "id": "text.mile_rusty_d",
+  "en": "Nights Rusty went home with nothing",
+  "fr": "Nuits où Rusty est reparti bredouille"
+ },
+ {
+  "id": "text.mile_love",
+  "en": "Love at the pond",
+  "fr": "Amour à l’étang"
+ },
+ {
+  "id": "text.mile_love_d",
+  "en": "You saw the salmon and the little frog",
+  "fr": "Vous avez vu le saumon et la petite grenouille"
+ },
+ {
+  "id": "text.gn_btn",
+  "en": "Goodnight",
+  "fr": "Bonne nuit"
+ },
+ {
+  "id": "text.gn_done",
+  "en": "Goodnight, everyone! Every door will shut for the night · +{c} coins · +{xp} XP",
+  "fr": "Bonne nuit, tout le monde ! Toutes les portes seront fermées pour la nuit · +{c} pièces · +{xp} XP"
+ },
+ {
+  "id": "text.dawn_worms",
+  "en": "🪱 {n} worms found this morning",
+  "fr": "🪱 {n} vers trouvés ce matin"
+ },
+ {
+  "id": "text.job_claim_all",
+  "en": "Collect all",
+  "fr": "Tout récupérer"
+ },
+ {
+  "id": "text.jobs_bonus",
+  "en": "All three jobs done: +{n} worms 🪱",
+  "fr": "Les trois tâches faites : +{n} vers 🪱"
+ },
+ {
+  "id": "text.jobs_note2",
+  "en": "Finish all three for {n} worms.",
+  "fr": "Finissez les trois pour gagner {n} vers."
+ },
+ {
+  "id": "text.cuddle_all",
+  "en": "♥ Cuddle everyone here",
+  "fr": "♥ Câliner tout le monde ici"
+ },
+ {
+  "id": "text.cuddle_all_go",
+  "en": "{farmer} is off to cuddle everyone here ♥",
+  "fr": "{farmer} part câliner tout le monde ici ♥"
+ },
+ {
+  "id": "text.cuddle_all_none",
+  "en": "Everyone here has had a cuddle for now.",
+  "fr": "Tout le monde ici a eu son câlin pour l’instant."
+ },
+ {
   "id": "text.fish_try2",
   "en": "Missed! 2 tries left",
   "fr": "Raté ! Encore 2 essais"
@@ -4342,8 +4582,8 @@
  },
  {
   "id": "text.fhelp_1",
-  "en": "Tap the water where you’d like to cast your line.",
-  "fr": "Touchez l’eau là où vous voulez lancer la ligne."
+  "en": "Tap the water.",
+  "fr": "Touchez l’eau."
  },
  {
   "id": "text.fhelp_2t",
@@ -4352,8 +4592,8 @@
  },
  {
   "id": "text.fhelp_2",
-  "en": "Watch the float. When it dives, a bar comes up with a marker going to and fro.",
-  "fr": "Surveillez le bouchon. Quand il plonge, une barre apparaît avec un curseur qui va et vient."
+  "en": "Watch the float until it dives.",
+  "fr": "Surveillez le bouchon jusqu’à ce qu’il plonge."
  },
  {
   "id": "text.fhelp_3t",
@@ -4362,8 +4602,8 @@
  },
  {
   "id": "text.fhelp_3",
-  "en": "Tap when the marker is in the green part and the fish is yours. You get 3 tries. Rarer fish have a smaller green.",
-  "fr": "Touchez quand le curseur est dans la partie verte et le poisson est à vous. Vous avez 3 essais. Les poissons rares ont un vert plus petit."
+  "en": "Tap when the marker is in the green. You get 3 tries.",
+  "fr": "Touchez quand le curseur est dans le vert. Vous avez 3 essais."
  },
  {
   "id": "text.fhelp_slack",

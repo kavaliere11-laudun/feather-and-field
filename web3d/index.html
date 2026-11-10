@@ -38,6 +38,16 @@
   #tag.on { opacity: 1; }
   /* the button that brings the view to the farmer (main.js findFarmerBtn): bottom left */
   #findfarmer { position: fixed; z-index: 6; left: max(14px, calc(env(safe-area-inset-left) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); width: 50px; height: 50px; font-size: 24px; line-height: 1; padding: 0; }
+  #goodnight { position: fixed; z-index: 6; left: max(72px, calc(env(safe-area-inset-left) + 66px)); bottom: max(18px, calc(env(safe-area-inset-bottom) + 14px)); width: auto; margin: 0; padding: 9px 14px; font-size: 15px; background: #2f3f6b; color: #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
+  #goodnight[hidden], body:not(.game) #goodnight, body.gopen #goodnight, body.showday #goodnight, body.inside #goodnight, body.gmoving #goodnight, html.gwelcoming #goodnight, body:has(.gguide:not([hidden])) #goodnight, body:has(#loading) #goodnight { display: none; }
+  .gbooktabs .gbtn { position: relative; }
+  .gshelf { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 10px; padding: 8px 8px 10px; border-radius: 12px; background: linear-gradient(#f3e3c4, #e9d3a8); border-bottom: 5px solid #b98a52; }
+  .gkeep { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: rgba(255, 255, 255, 0.35); border: 1.5px dashed rgba(120, 85, 40, 0.35); }
+  .gkeep.on { background: #fffdf7; border: 1.5px solid #d9a441; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18); }
+  .gmile .gcard-h { align-items: center; } .gmile-stars { margin-left: auto; white-space: nowrap; font-size: 15px; letter-spacing: 1px; color: rgba(30, 52, 38, 0.2); } .gmile-stars .on { color: #e3a81c; }
+  .gmile-ready { border-color: #e3a81c; box-shadow: 0 0 0 2px rgba(227, 168, 28, 0.25); }
+  .gcuddleall { background: #d9537a; }
+  .gfhelp .gfstep { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 5px; } .gfhelp .gfstep .gtext { margin: 0; } .gfhelp .gfstep .gemoji { font-size: 18px; line-height: 1.25; }
   body:not(.game) #findfarmer, body.gopen #findfarmer, body.showday #findfarmer, body.inside #findfarmer, body.gmoving #findfarmer, html.gwelcoming #findfarmer, body:has(.gguide:not([hidden])) #findfarmer, body:has(#loading) #findfarmer { display: none; }
   /* the bite's bar: only its track, then only the way in */
   .fishgauge .fishtrack[hidden], .fishgauge .fishway[hidden] { display: none; }

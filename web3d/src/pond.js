@@ -772,6 +772,7 @@ export class FrogPond {
     const eyes = this.mouthOf(f, fx, fz).lerp(nose, 0.5); eyes.y += 0.03;
     if (t > 3.5 && t < 6.0 && (L.hb = (L.hb || 0) - dt) <= 0) { L.hb = 0.42; this.heart(eyes.x, eyes.y, eyes.z, 0.048 + Math.random() * 0.018, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04, 0.14); }
     if (t >= 6.62 && once('kiss')) {
+      if (this.o.kiss) this.o.kiss(pl.X[0], pl.X[1]);
       this.heart(eyes.x, eyes.y + 0.025, eyes.z, 0.11, 0, 0, 0.11);
       for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + 0.3; this.heart(eyes.x, eyes.y, eyes.z, 0.04 + Math.random() * 0.014, Math.cos(a) * 0.14, Math.sin(a) * 0.14, 0.17); }
     }

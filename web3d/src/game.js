@@ -242,9 +242,9 @@ export const TEXT = {
     first_egg: '{name} has laid your first egg! Tap the nest to collect it.',
     nest_full: 'The nest is full: collect the eggs so your hens can lay again.',
     feeder_title: 'Feeder · {coop}', feed_full: 'Full', feed_pct: '{p}% full', feed_empty: 'Empty',
-    feed_hours: 'Enough for about {h} hours.', feed_hour: 'Enough for about an hour.', feed_days: 'Enough for about two days.',
+    feed_hours: 'Enough for about {h} hours.', feed_hour: 'Enough for about an hour.', feed_days: 'Enough for about three days.',
     feed_empty_line: 'Your hens stop laying until it’s filled.', feed_empty_line_duck: 'Your ducks stop laying until it’s filled.', feed_empty_line_pea: 'Your peahens stop laying until it’s filled.',
-    feed_how: 'Your hens lay while there’s food in it. Full, it feeds your trio for two days.', feed_how_duck: 'Your ducks lay while there’s food in it. Full, it feeds your trio for two days.', feed_how_pea: 'Your peahens lay while there’s food in it. Full, it feeds your trio for two days.',
+    feed_how: 'Your hens lay while there’s food in it. Full, it feeds your trio for three days.', feed_how_duck: 'Your ducks lay while there’s food in it. Full, it feeds your trio for three days.', feed_how_pea: 'Your peahens lay while there’s food in it. Full, it feeds your trio for three days.',
     fill_grain: 'Fill it with your grain (free)', fill_grain_c: 'Fill it · {c} coins + your grain', feed_grain: 'Your grain from the wheat field: {n} (used first).',
     filled_grain: 'Feeder filled with your own grain', farmer_grain: '{farmer} is on the way with your grain',
     wheat_title: 'Your wheat field', wheat_soil: 'Ploughed and ready to sow.', wheat_sown: 'Sown: the first shoots soon.', wheat_sprouts: 'The first green shoots.', wheat_growing: 'Growing tall and green.', wheat_ripe: 'Golden and ready to harvest!',
@@ -295,7 +295,7 @@ export const TEXT = {
     ord_carrot: 'Carrots', ord_straw: 'Strawberries', ord_pump: 'Pumpkins', ord_veg_have: '(in your basket: {n})', ord_sub_veg: 'Vegetables come from your garden basket.',
     away_garden: 'Your vegetable garden is ready to pick', away_garden1: 'A bed in your vegetable garden is ready to pick', garden_aria: 'The vegetable garden',
     // village orders (7 Nov 2026)
-    ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Your eggs and honey go to their baskets first as they come; fish come from your fish box, the grain from your store.',
+    ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Fill it and deliver it for coins.',
     ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your store: {n})',
     ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
     ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 The basket for {name} is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
@@ -328,12 +328,14 @@ export const TEXT = {
     next_cuddle: 'a cuddle for {name}', next_worms: '{name}’s worms', next_fill: 'a feeder', next_treat: 'a treat', next_fish: 'fishing', next_geese: 'the geese',
     next_sow: 'sowing the wheat', next_harvest: 'the wheat harvest', next_honey: 'the honey', next_garden: 'the garden', next_order: 'a basket for the stall',
     // (9 Nov 2026) fishing: what to do now, on its panel; how to fish, its card
-    fish_casting: 'Casting…', fish_try2: 'Missed! 2 tries left', fish_try1: 'Missed! Last try', find_farmer: 'Find {farmer}', find_home: '{farmer} is at home', fish_again: 'It let go… it’ll bite again', fish_watch: 'Wait for a bite…', fish_nibble: 'A nibble… not yet!',
+    fish_casting: 'Casting…',
+    mile_tab: 'Milestones', mile_sub: 'Keepsakes on your shelf: {n} of {all}', mile_collect: 'Collect · +{c} coins', mile_got: '🏅 {name}: +{c} coins, +{xp} XP', mile_keep: '🏅 {name}: +{c} coins, +{xp} XP, and a keepsake for your shelf!', mile_all: 'All done ✓', mile_secret: '???', mile_secret_d: 'A secret of the pond. Keep your eyes open…', mile_shelf: 'Your keepsakes', mile_fish: 'Angler', mile_fish_d: 'Different fish caught', mile_friends: 'Best friends', mile_friends_d: 'Birds who are your best friends', mile_chicks: 'Nursery', mile_chicks_d: 'Chicks raised', mile_gold: 'Golden eggs', mile_gold_d: 'Golden eggs found', mile_eggs: 'Egg basket', mile_eggs_d: 'Eggs collected', mile_wheat: 'Harvest', mile_wheat_d: 'Wheat harvests', mile_veg: 'Kitchen garden', mile_veg_d: 'Vegetables picked', mile_orders: 'Village friend', mile_orders_d: 'Orders delivered', mile_ros: 'Show star', mile_ros_d: 'Rosettes won', mile_night: 'Goodnight', mile_night_d: 'Goodnight rounds done', mile_coins: 'Nest egg', mile_coins_d: 'Coins earned', mile_foxfirst: 'A visitor in the night', mile_foxfirst_d: 'Rusty’s first visit', mile_foxin: 'Oops!', mile_foxin_d: 'Rusty got to the eggs', mile_rusty: 'Fox-proof', mile_rusty_d: 'Nights Rusty went home with nothing', mile_love: 'Love at the pond', mile_love_d: 'You saw the salmon and the little frog', gn_btn: 'Goodnight', gn_done: 'Goodnight, everyone! Every door will shut for the night · +{c} coins · +{xp} XP', dawn_worms: '🪱 {n} worms found this morning', job_claim_all: 'Collect all', jobs_bonus: 'All three jobs done: +{n} worms 🪱', jobs_note2: 'Finish all three for {n} worms.', cuddle_all: '♥ Cuddle everyone here', cuddle_all_go: '{farmer} is off to cuddle everyone here ♥', cuddle_all_none: 'Everyone here has had a cuddle for now.',
+    fish_try2: 'Missed! 2 tries left', fish_try1: 'Missed! Last try', find_farmer: 'Find {farmer}', find_home: '{farmer} is at home', fish_again: 'It let go… it’ll bite again', fish_watch: 'Wait for a bite…', fish_nibble: 'A nibble… not yet!',
     fish_r_hold: 'Hold your finger down to reel in', fish_r_good: 'Got it! In it comes…', fish_r_ease: 'It’s pulling! Let go a moment',
     fish_r_slack: 'Too slack! Hold again',
-    fhelp_title: 'How to fish', fhelp_1t: '1. Cast', fhelp_1: 'Tap the water where you’d like to cast your line.',
-    fhelp_2t: '2. Wait for a bite', fhelp_2: 'Watch the float. When it dives, a bar comes up with a marker going to and fro.',
-    fhelp_3t: '3. Tap in the green', fhelp_3: 'Tap when the marker is in the green part and the fish is yours. You get 3 tries. Rarer fish have a smaller green.',
+    fhelp_title: 'How to fish', fhelp_1t: '1. Cast', fhelp_1: 'Tap the water.',
+    fhelp_2t: '2. Wait for a bite', fhelp_2: 'Watch the float until it dives.',
+    fhelp_3t: '3. Tap in the green', fhelp_3: 'Tap when the marker is in the green. You get 3 tries.',
     fhelp_slack: 'Slack: hold', fhelp_good: 'Blue: hold', fhelp_tight: 'Red: let go', fhelp_first: 'Your first catch will be an easy one.', fhelp_ok: 'Got it!',
     fish_size: '{cm} cm', fish_first: 'New fish for your book!', fish_best: 'Your biggest yet!', fish_xp: '+{xp} XP',
     fish_sold: 'Off to the village aquarium shop, live and well · +{c} coins',
@@ -584,9 +586,9 @@ export const TEXT = {
     first_egg: '{name} a pondu votre premier œuf ! Touchez le nid pour le ramasser.',
     nest_full: 'Le nid est plein : ramassez les œufs pour que vos poules pondent à nouveau.',
     feeder_title: 'Mangeoire · {coop}', feed_full: 'Pleine', feed_pct: 'Pleine à {p} %', feed_empty: 'Vide',
-    feed_hours: 'De quoi tenir environ {h} heures.', feed_hour: 'De quoi tenir environ une heure.', feed_days: 'De quoi tenir environ deux jours.',
+    feed_hours: 'De quoi tenir environ {h} heures.', feed_hour: 'De quoi tenir environ une heure.', feed_days: 'De quoi tenir environ trois jours.',
     feed_empty_line: 'Vos poules ne pondent plus jusqu’à ce qu’elle soit remplie.', feed_empty_line_duck: 'Vos canes ne pondent plus jusqu’à ce qu’elle soit remplie.', feed_empty_line_pea: 'Vos paonnes ne pondent plus jusqu’à ce qu’elle soit remplie.',
-    feed_how: 'Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.', feed_how_duck: 'Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.', feed_how_pea: 'Vos paonnes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant deux jours.',
+    feed_how: 'Vos poules pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours.', feed_how_duck: 'Vos canes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours.', feed_how_pea: 'Vos paonnes pondent tant qu’elle contient du grain. Pleine, elle nourrit votre trio pendant trois jours.',
     fill_grain: 'La remplir avec votre grain (gratuit)', fill_grain_c: 'La remplir · {c} pièces + votre grain', feed_grain: 'Votre grain du champ de blé : {n} (utilisé d’abord).',
     filled_grain: 'Mangeoire remplie avec votre propre grain', farmer_grain: '{farmer} arrive avec votre grain',
     wheat_title: 'Votre champ de blé', wheat_soil: 'Labouré et prêt à semer.', wheat_sown: 'Semé : les premières pousses bientôt.', wheat_sprouts: 'Les premières pousses vertes.', wheat_growing: 'Il pousse, haut et vert.', wheat_ripe: 'Doré et prêt à récolter !',
@@ -637,7 +639,7 @@ export const TEXT = {
     ord_carrot: 'Carottes', ord_straw: 'Fraises', ord_pump: 'Citrouilles', ord_veg_have: '(dans votre panier : {n})', ord_sub_veg: 'Les légumes viennent du panier de votre potager.',
     away_garden: 'Votre potager est prêt à être récolté', away_garden1: 'Un carré de votre potager est prêt à être récolté', garden_aria: 'Le potager',
     // commandes du village (7 nov. 2026)
-    ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Vos œufs et votre miel vont d’abord dans leurs paniers, à mesure\u00a0; les poissons viennent de votre vivier, le grain de votre réserve.',
+    ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Remplissez-le et livrez-le contre des pièces.',
     ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre réserve : {n})',
     ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
     ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
@@ -668,12 +670,14 @@ export const TEXT = {
     next_list: 'Ensuite\u00a0: {list}.', next_added: 'Ajouté à la liste de {farmer} ({n} sur 3)\u00a0: {job}.', next_full: 'La liste de {farmer} est pleine\u00a0: 3 tâches en attente.', next_already: 'Déjà sur la liste de {farmer}.',
     next_cuddle: 'un câlin pour {name}', next_worms: 'les vers de {name}', next_fill: 'une mangeoire', next_treat: 'une friandise', next_fish: 'la pêche', next_geese: 'les oies',
     next_sow: 'semer le blé', next_harvest: 'la moisson', next_honey: 'le miel', next_garden: 'le potager', next_order: 'un panier pour l’étal',
-    fish_casting: 'On lance…', fish_try2: 'Raté\u00a0! Encore 2 essais', fish_try1: 'Raté\u00a0! Dernier essai', find_farmer: 'Trouver {farmer}', find_home: '{farmer} est à la maison', fish_again: 'Il a lâché… il va mordre de nouveau', fish_watch: 'Attendez que ça morde…', fish_nibble: 'Ça mordille… pas encore !',
+    fish_casting: 'On lance…',
+    mile_tab: 'Objectifs', mile_sub: 'Souvenirs sur votre étagère\u00a0: {n} sur {all}', mile_collect: 'Récupérer · +{c} pièces', mile_got: '🏅 {name}\u00a0: +{c} pièces, +{xp} XP', mile_keep: '🏅 {name}\u00a0: +{c} pièces, +{xp} XP, et un souvenir pour votre étagère\u00a0!', mile_all: 'Terminé ✓', mile_secret: '???', mile_secret_d: 'Un secret de l’étang. Ouvrez l’œil…', mile_shelf: 'Vos souvenirs', mile_fish: 'Pêche', mile_fish_d: 'Poissons différents pêchés', mile_friends: 'Meilleurs amis', mile_friends_d: 'Volailles devenues vos meilleures amies', mile_chicks: 'Nurserie', mile_chicks_d: 'Poussins élevés', mile_gold: 'Œufs d’or', mile_gold_d: 'Œufs d’or trouvés', mile_eggs: 'Panier d’œufs', mile_eggs_d: 'Œufs ramassés', mile_wheat: 'Moisson', mile_wheat_d: 'Récoltes de blé', mile_veg: 'Potager', mile_veg_d: 'Légumes récoltés', mile_orders: 'Ami du village', mile_orders_d: 'Commandes livrées', mile_ros: 'Star des concours', mile_ros_d: 'Cocardes gagnées', mile_night: 'Bonne nuit', mile_night_d: 'Tournées du soir faites', mile_coins: 'Bas de laine', mile_coins_d: 'Pièces gagnées', mile_foxfirst: 'Un visiteur dans la nuit', mile_foxfirst_d: 'La première visite de Rusty', mile_foxin: 'Oups\u00a0!', mile_foxin_d: 'Rusty a eu les œufs', mile_rusty: 'À l’épreuve du renard', mile_rusty_d: 'Nuits où Rusty est reparti bredouille', mile_love: 'Amour à l’étang', mile_love_d: 'Vous avez vu le saumon et la petite grenouille', gn_btn: 'Bonne nuit', gn_done: 'Bonne nuit, tout le monde\u00a0! Toutes les portes seront fermées pour la nuit · +{c} pièces · +{xp} XP', dawn_worms: '🪱 {n} vers trouvés ce matin', job_claim_all: 'Tout récupérer', jobs_bonus: 'Les trois tâches faites\u00a0: +{n} vers 🪱', jobs_note2: 'Finissez les trois pour gagner {n} vers.', cuddle_all: '♥ Câliner tout le monde ici', cuddle_all_go: '{farmer} part câliner tout le monde ici ♥', cuddle_all_none: 'Tout le monde ici a eu son câlin pour l’instant.',
+    fish_try2: 'Raté\u00a0! Encore 2 essais', fish_try1: 'Raté\u00a0! Dernier essai', find_farmer: 'Trouver {farmer}', find_home: '{farmer} est à la maison', fish_again: 'Il a lâché… il va mordre de nouveau', fish_watch: 'Attendez que ça morde…', fish_nibble: 'Ça mordille… pas encore !',
     fish_r_hold: 'Gardez le doigt appuyé pour remonter', fish_r_good: 'Bravo\u00a0! Il arrive…', fish_r_ease: 'Il tire\u00a0! Relâchez un instant',
     fish_r_slack: 'Trop mou ! Appuyez de nouveau',
-    fhelp_title: 'Comment pêcher', fhelp_1t: '1. Lancer', fhelp_1: 'Touchez l’eau là où vous voulez lancer la ligne.',
-    fhelp_2t: '2. Attendre que ça morde', fhelp_2: 'Surveillez le bouchon. Quand il plonge, une barre apparaît avec un curseur qui va et vient.',
-    fhelp_3t: '3. Toucher dans le vert', fhelp_3: 'Touchez quand le curseur est dans la partie verte et le poisson est à vous. Vous avez 3 essais. Les poissons rares ont un vert plus petit.',
+    fhelp_title: 'Comment pêcher', fhelp_1t: '1. Lancer', fhelp_1: 'Touchez l’eau.',
+    fhelp_2t: '2. Attendre que ça morde', fhelp_2: 'Surveillez le bouchon jusqu’à ce qu’il plonge.',
+    fhelp_3t: '3. Toucher dans le vert', fhelp_3: 'Touchez quand le curseur est dans le vert. Vous avez 3 essais.',
     fhelp_slack: 'Mou : appuyez', fhelp_good: 'Bleu\u00a0: appuyez', fhelp_tight: 'Rouge\u00a0: relâchez', fhelp_first: 'Votre première prise sera facile.', fhelp_ok: 'Compris !',
     fish_size: '{cm} cm', fish_first: 'Un nouveau poisson pour votre livre !', fish_best: 'Votre plus beau !', fish_xp: '+{xp} XP',
     fish_sold: 'Direction l’animalerie du village, en pleine forme · +{c} pièces',
@@ -1174,7 +1178,29 @@ export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, j
 // more"; "A bit quicker"): fresh eggs, collected within 3 hours of being laid, earn more; a cuddle earns a little each time
 // (once her happy glow from the last one has worn off, 6 hours)
 export const FRESH = { ms: 3 * 3600e3, xp: 2, cuddle: 1 };
-export const FEED_DAYS = 2;                           // a full feeder keeps its birds for two days (a unit a bird a day)
+export const FEED_DAYS = 3;                           // a full feeder keeps its birds for three days (a unit a bird a day; two till 10 Nov 2026: a once-a-day player found one empty most days)
+// ---- milestones (10 Nov 2026, Audrey: "Milestone is good idea. We should put a few in place. Fishing, but also how many
+// chickens loves you with different levels, the harvest, the special eggs found, how many chicks you've had", "Yes plus
+// keepsake at star. Add something about rusty, first visit, visit where he got in, visit blocked etc. And add something a
+// secret one about the frog and salmon love story. That one needs to be hard to get as witnessing it is rare", "Add one
+// about money earnt"): each a number the farm has reached, in steps (bronze, silver, gold, star; some a single one);
+// a step reached pays coins and XP when collected (MILE_PAY, by step; `pay` its own), the last one a keepsake too (its
+// picture on the Milestones shelf). What's counted: the save's tally (eggs, chicks, wheat, veg, night, coins, fox, foxin,
+// foxout, love), or the farm as it stands (fish, friends, golden eggs, orders, rosettes). secret: not named till it's won
+export const MILES = {
+  fish: { e: '🐟', at: [5, 10, 15, 20] }, friends: { e: '💛', at: [1, 5, 10, 20] }, chicks: { e: '🐣', at: [5, 25, 60, 150] },
+  gold: { e: '🥚', at: [5, 20, 50, 100] }, eggs: { e: '🧺', at: [50, 500, 2000, 10000] }, wheat: { e: '🌾', at: [5, 25, 75, 200] },
+  veg: { e: '🥕', at: [20, 100, 300, 800] }, orders: { e: '🧁', at: [3, 15, 40, 100] }, ros: { e: '🎀', at: [1, 5, 15, 40] },
+  night: { e: '🏮', at: [3, 15, 50, 150] }, coins: { e: '🪙', at: [500, 5000, 25000, 100000] },
+  foxfirst: { e: '👀', at: [1], pay: [100, 10] }, foxin: { e: '🙈', at: [1], pay: [100, 10] }, rusty: { e: '🦊', at: [1, 5, 15, 40] },
+  love: { e: '💞', at: [1], pay: [500, 50], secret: true },
+};
+export const MILE_IDS = Object.keys(MILES);
+export const MILE_PAY = { coins: [50, 150, 400, 1000], xp: [5, 10, 20, 40] };
+const TALLY = ['eggs', 'chicks', 'wheat', 'veg', 'night', 'coins', 'fox', 'foxin', 'foxout', 'love'];
+export const NIGHT = { from: 18, xp: 5, coins: 10 };      // (the goodnight round: from dusk, once an evening)
+export const DAWN_WORMS = 3;                               // (worms found each morning, once fishing is open)
+export const JOBS_BONUS = 5;                               // (worms for all three of the day's jobs done)
 // ---- the coops' five looks (release 4; Audrey: "Coops to work on", the Red Barn first; "Look nicer and help a little";
 // prices "300 / 1,000 / 3,000 / 8,000"): Rustic (0, a new coop), Mended, Snug (the coops of a farm from before: "Snug:
 // nothing changes"), Cosy, Deluxe. Each look helps a little: the eggs (Rustic: the afternoon egg missed one day in three,
@@ -1371,6 +1397,7 @@ export function checkFarm(d, now = Date.now()) {
   if (jb && typeof jb.day === 'string' && /^\d{8}$/.test(jb.day) && jb.day <= dayKey(now) && Number.isInteger(jb.lv) && jb.lv >= 1 && jb.lv <= L && Array.isArray(jb.list)) {
     const want = jobsFor(jb.day, jb.lv);
     out.jobs = { day: jb.day, lv: jb.lv, seen: jb.seen === true, list: want.map((w, i) => { const r = jb.list[i] || {}, got = r.k === w.k ? int(r.got, 0, w.n, 0) : 0; return { k: w.k, n: w.n, got, paid: r.paid === true && got >= w.n }; }) };
+    if (jb.bonus === true && out.jobs.list.every(j => j.paid)) out.jobs.bonus = true;      // (the worms for all three done: given)
   } else out.jobs = null;
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
     const mum = out.birds.find(b => b.pers === 'mum') || out.birds.find(b => b.sex === 'h');
@@ -1433,6 +1460,7 @@ export function checkFarm(d, now = Date.now()) {
     const fishList = (raw, max) => (Array.isArray(raw) ? raw : []).filter(q => Array.isArray(q) && q.length === 2 && typeof q[0] === 'string' && Object.prototype.hasOwnProperty.call(FISH_RULES, q[0]) && FISH_RULES[q[0]].rare < 2 && L >= fishLevel(q[0]) && Number.isInteger(q[1]) && q[1] >= FISH_RULES[q[0]].cm[0] && q[1] <= FISH_RULES[q[0]].cm[1]).slice(0, max).map(q => [q[0], q[1]]);
     const net = fishList(fs.net, FISHING.net), box = fishList(fs.box, FISHING.box);
     if (net.length) out.fish.net = net; if (box.length) out.fish.box = box;
+    if (typeof fs.dawn === 'string' && /^\d{8}$/.test(fs.dawn) && fs.dawn <= dayKey(now + TZ_SLACK)) out.fish.dawn = fs.dawn;      // (the morning's worms: the day they were last found)
     if (typeof fs.tin === 'string' && /^\d{8}$/.test(fs.tin) && fs.tin <= dayKey(now + TZ_SLACK)) out.fish.tin = fs.tin;
     if ('day' in fs || 'free' in fs) { out.fish.day = typeof fs.day === 'string' && /^\d{8}$/.test(fs.day) && fs.day <= dayKey(now + TZ_SLACK) ? fs.day : dayKey(now); out.fish.free = int(fs.free, 0, FISHING.oldFree, 0); }
   }
@@ -1455,6 +1483,13 @@ export function checkFarm(d, now = Date.now()) {
   }
   // the daily egg hunt (7 Nov 2026): the day the last golden egg was found (never ahead of today), the days in a row
   // (at least one, never more than found in all), how many in all; only once the farm's level has opened it
+  // the milestones (10 Nov 2026): what's been counted (whole numbers, none below zero), the steps collected of each (no
+  // more than it has); the evening the last goodnight round was done (never ahead of tonight)
+  const ty = d.tally && typeof d.tally === 'object' ? d.tally : null;
+  if (ty) { out.tally = {}; for (const k of TALLY) { const v = int(ty[k], 0, 1e9, 0); if (v) out.tally[k] = v; } }
+  const ml = d.mile && typeof d.mile === 'object' ? d.mile : null;
+  if (ml) { out.mile = {}; for (const id of MILE_IDS) { const v = int(ml[id], 0, MILES[id].at.length, 0); if (v) out.mile[id] = v; } }
+  if (typeof d.gn === 'string' && /^\d{8}$/.test(d.gn) && d.gn <= dayKey(now + TZ_SLACK)) out.gn = d.gn;
   const hu = d.hunt && typeof d.hunt === 'object' ? d.hunt : null;
   if (hu && L >= HUNT.level && typeof hu.last === 'string' && /^\d{8}$/.test(hu.last) && hu.last <= dayKey(now + TZ_SLACK)) {
     const n = int(hu.n, 1, 1e6, 1);
@@ -1811,7 +1846,8 @@ export class Game {
     if (live) eggs = open && !by ? live.took || 0 : 0;                          // (taken already, as he went: foxTakeNow)
     else if (open && !by) { eggs = c.eggs; c.eggs = 0; c.lt = []; c.bonus = 0; }
     const last = { key: k, t, coop: c.id, open, by, eggs, hen: this.foxHen(c), seen: false, watched: false, ...(open && doorStuck(c, k) ? { stuck: true } : {}) };
-    const F = this.fox(); F.last = last; if (k > F.seen) F.seen = k;
+    const F = this.fox(); if (!F.last || F.last.key !== k) { this.tallyAdd('fox', 1, false); this.tallyAdd(open && !by && eggs > 0 ? 'foxin' : 'foxout', 1, false); }      // (the milestones: his visits, those he got the eggs, those he went home with nothing)
+    F.last = last; if (k > F.seen) F.seen = k;
     this.save();
     return last;
   }
@@ -1859,7 +1895,7 @@ export class Game {
   harvestWheat(now = Date.now()) {
     const w = this.wheat(); if (!w.ripe || now < w.ripe) return null;
     const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, WHEAT.max - g));
-    w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.save();
+    w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.tallyAdd('wheat', 1, false); this.save();
     return { grain: Math.round(add), xp: WHEAT.xp, store: this.data.grain };      // (a whole number to say: "+4.63 grain" with the store nearly full read oddly)
   }
   placeWheat(at, clear = []) {
@@ -1993,7 +2029,7 @@ export class Game {
     const b = this.garden().beds[i], C = CROPS[b.crop], B = this.vegBasket(), crop = b.crop;
     const n = Math.max(0, Math.min(C.n, GARDEN.max[crop] - (B[crop] || 0)));
     if (!n) return { crop, n: 0, full: true, kept: true };      // (the basket has all of those it can hold: left in the bed for now)
-    B[crop] = (B[crop] || 0) + n; b.crop = null; b.ripe = 0; this.data.xp += C.xp; this.save();
+    B[crop] = (B[crop] || 0) + n; b.crop = null; b.ripe = 0; this.data.xp += C.xp; this.tallyAdd('veg', n, false); this.save();
     return { crop, n, full: n < C.n, xp: C.xp };
   }
   bedsRipe(now = Date.now()) { return this.gardenOpen() && this.data.garden ? this.data.garden.beds.filter((_, i) => this.bedStage(i, now) === 'ripe').length : 0; }
@@ -2201,13 +2237,62 @@ export class Game {
     this.save();
     return done;
   }
+  // ---- the milestones: the tally; what each stands at; its steps reached and collected; those with a step to collect;
+  // one collected (its next step: coins, XP, and at its last the keepsake)
+  tallyAdd(k, n = 1, save = true) { if (!this.data || !(n > 0)) return; const T = this.data.tally || (this.data.tally = {}); T[k] = Math.min(1e9, (T[k] || 0) + n); if (save) this.save(); }
+  tallyOf(k) { return (this.data.tally && this.data.tally[k]) || 0; }
+  mileValue(id) {
+    const d = this.data;
+    if (id === 'fish') return d.fish ? Object.keys(d.fish.got).length : 0;
+    if (id === 'friends') return d.birds.filter(b => this.trustLevel(b) >= 3).length;
+    if (id === 'gold') return d.hunt ? d.hunt.n : 0;
+    if (id === 'orders') return d.orders ? d.orders.done || 0 : 0;
+    if (id === 'ros') return d.birds.reduce((a, b) => a + (b.ros || []).reduce((x, n) => x + n, 0), 0);
+    if (id === 'foxfirst') return Math.min(1, this.tallyOf('fox') || (d.fox && d.fox.last ? 1 : 0));
+    if (id === 'rusty') return this.tallyOf('foxout');
+    return this.tallyOf(id);
+  }
+  mileReached(id) { const v = this.mileValue(id); return MILES[id].at.filter(n => v >= n).length; }
+  mileClaimed(id) { return Math.min(MILES[id].at.length, (this.data.mile && this.data.mile[id]) || 0); }
+  milesReady() { return MILE_IDS.filter(id => this.mileReached(id) > this.mileClaimed(id)).length; }
+  milePay(id, step) { const M = MILES[id]; return M.pay ? { coins: M.pay[0], xp: M.pay[1] } : { coins: MILE_PAY.coins[step], xp: MILE_PAY.xp[step] }; }
+  claimMile(id) {
+    if (!MILES[id]) return null;
+    const got = this.mileClaimed(id); if (this.mileReached(id) <= got) return null;
+    const P = this.milePay(id, got); (this.data.mile || (this.data.mile = {}))[id] = got + 1; this.data.coins += P.coins; this.data.xp += P.xp; this.save();
+    return { id, step: got, ...P, keepsake: got + 1 === MILES[id].at.length };
+  }
+  // ---- the goodnight round (10 Nov 2026, Audrey's choice for the evening visit): from dusk, once an evening: every coop's
+  // door shut for the night, a few coins and XP; done already, or not yet evening: null
+  nightDone(now = Date.now()) { return this.data.gn === nightKey(now); }
+  nightOpen(now = Date.now(), hour = new Date(now).getHours()) { return hour >= NIGHT.from && !this.nightDone(now); }
+  goodnight(now = Date.now(), hour = new Date(now).getHours()) {
+    if (!this.nightOpen(now, hour)) return null;
+    const k = nightKey(now); let doors = 0;
+    for (const c of this.data.coops) if (!isDuck(c.breed) && c.shut !== k) { c.shut = k; doors++; }
+    this.data.gn = k; this.data.coins += NIGHT.coins; this.data.xp += NIGHT.xp; this.tallyAdd('night', 1, false); this.save();
+    return { doors, coins: NIGHT.coins, xp: NIGHT.xp, n: this.tallyOf('night') };
+  }
+  // the morning's worms (10 Nov 2026: a child who fishes ran out on her third day): a few each day, the first time the
+  // farm is open that day, once fishing is; those found (0: already, or the bag full)
+  dawnWorms(now = Date.now()) {
+    if (!this.fishOpen('pond')) return 0;
+    const f = this.fishBag(), day = dayKey(now); if (f.dawn === day) return 0;
+    const first = f.dawn === undefined; f.dawn = day;
+    const n = first ? 0 : Math.max(0, Math.min(DAWN_WORMS, FISHING.maxWorms - f.worms)); f.worms += n; this.save();      // (not on the day fishing opens: the tin given then)
+    return n;
+  }
   jobReward() { return jobReward(this.jobs().lv); }
   jobsReady(now = Date.now()) { return this.jobs(now).list.filter(j => j.got >= j.n && !j.paid).length; }
   claimJob(i, now = Date.now()) {
     const J = this.jobs(now), j = J.list[i]; if (!j || j.got < j.n || j.paid) return null;
-    const r = jobReward(J.lv); j.paid = true; this.data.coins += r.coins; this.data.xp += r.xp; this.save();
-    return r;
+    const r = jobReward(J.lv); j.paid = true; this.data.coins += r.coins; this.data.xp += r.xp;
+    let worms = 0;      // (all three done: a few worms more, once a day)
+    if (!J.bonus && J.list.every(x => x.paid) && this.fishOpen('pond')) { J.bonus = true; const f = this.fishBag(); worms = Math.max(0, Math.min(JOBS_BONUS, FISHING.maxWorms - f.worms)); f.worms += worms; }
+    this.save();
+    return { ...r, worms };
   }
+  claimJobs(now = Date.now()) { const J = this.jobs(now); let coins = 0, xp = 0, worms = 0, n = 0; J.list.forEach((j, i) => { const r = this.claimJob(i, now); if (r) { coins += r.coins; xp += r.xp; worms += r.worms; n++; } }); return n ? { coins, xp, worms, n } : null; }
   jobText(j) { return j.n === 1 && (j.k === 'eggs' || j.k === 'cuddle') ? this.t('job_' + j.k + '1') : this.t('job_' + j.k, { n: j.n }); }
   lookedAtJobs() { const J = this.jobs(); if (!J.seen) { J.seen = true; this.save(); } }
   rosettesOf(b) { return b.ros && b.ros.length === 9 ? b.ros : [0, 0, 0, 0, 0, 0, 0, 0, 0]; }
@@ -2381,7 +2466,7 @@ export class Game {
               return { ...k, coins: BREED_INFO[c.breed].rare ? Math.round(rarePrice(k.stars) * RARE.bred) : rarePrice(k.stars), full: true };     // (the trio of that colour complete: sold for you; a rare pair's own, for less)
             });
             const coins = kids.reduce((a, k) => a + k.coins, 0), xp = Math.round(kids.reduce((a, k) => a + XPV.chick + XPV.star * k.stars, 0)), dad = this.birdsIn(c.id).find(x => x.sex === 'r');
-            this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null;
+            this.data.coins += coins; this.data.xp += xp; c.lastBrood = grown; c.brood = null; this.tallyAdd('chicks', kids.length, false);
             if (hen) { hen.laid = Math.max(hen.laid, grown); hen.exp = Math.min(1e7, hen.exp + EXP_MUM); }       // (her lays while she was busy don't come back)
             if (dad) dad.exp = Math.min(1e7, dad.exp + EXP_DAD);
             const news = { type: 'grown', coop: c.id, hen: br.hen, dad: dad ? dad.id : '', kids, coins, xp, t: grown, seen: false };
@@ -2419,6 +2504,7 @@ export class Game {
     const n = c.eggs, fresh = this.freshIn(c, now), to = this.setAside('eggs', n), sold = n - to.n;      // (eggs for the orders first: the rest sold)
     const coins = sold * this.eggPrice(c) + Math.min(c.bonus || 0, n * MAX_STARS), xp = n * XPV.egg + fresh * FRESH.xp;
     c.eggs = 0; c.bonus = 0; c.lt = []; this.data.coins += coins; this.data.xp += xp;
+    this.tallyAdd('eggs', n, false);
     const done = this.job('eggs', n);
     return { n, fresh, coins, xp, done, toOrder: to.n, to: to.to };
   }
@@ -2455,6 +2541,9 @@ export class Game {
   // ---- saving: on the phone, sealed; every load checked
   save() {
     if (!this.data || !this.store) return;
+    // (the milestones' "coins earned": every time the purse has grown since the last save)
+    if (this._coins !== undefined && this.data.coins > this._coins) { const T = this.data.tally || (this.data.tally = {}); T.coins = Math.min(1e9, (T.coins || 0) + this.data.coins - this._coins); }
+    this._coins = this.data.coins;
     const body = JSON.stringify(this.data);
     try { this.store.setItem(SAVE_KEY, JSON.stringify({ d: this.data, s: seal(body) })); } catch (e) { /* storage full or blocked: the farm goes on */ }
     for (const f of this.listeners) f();

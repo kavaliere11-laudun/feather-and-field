@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS } from './game.js';
+import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -115,6 +115,7 @@ export class GameUI {
     // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
     // left, the farm's buttons on the right, settings apart)
     this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
+    this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
     this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
     this.bar.append(this.stat, this.acts, this.gear);
     this.bar.hidden = true;
@@ -167,6 +168,7 @@ export class GameUI {
     const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
     const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
+    const mr = this.g.milesReady(); this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
     this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
     const sd = this.g.showsDot(); this.sdot.hidden = !sd; this.showsBtn.setAttribute('aria-label', this.t('shows_aria') + (sd ? ' · ' + this.t('shows_new') : ''));
@@ -514,7 +516,7 @@ export class GameUI {
     const pct = Math.round(left * 100);
     const bar = el('div', 'gbar-xp gfeedbar' + (left < 0.25 ? ' low' : '')); const fill = el('div', 'gbar-fill'); fill.style.width = Math.max(0, Math.min(100, pct)) + '%'; bar.append(fill);
     b.append(el('p', 'gtext gfeedpct', pct >= 99 ? this.t('feed_full') : pct <= 0 ? this.t('feed_empty') : this.t('feed_pct', { p: pct })), bar);
-    b.append(el('p', 'gtext', left <= 0 ? this.t(g.dk('feed_empty_line', g.kindOf(coop.breed))) : h >= 47 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
+    b.append(el('p', 'gtext', left <= 0 ? this.t(g.dk('feed_empty_line', g.kindOf(coop.breed))) : h >= 71 ? this.t('feed_days') : h < 1.5 ? this.t('feed_hour') : this.t('feed_hours', { h: Math.round(h) })));
     b.append(el('p', 'gnote', this.t(g.dk('feed_how', g.kindOf(coop.breed)))));
     if (g.data.grain >= 0.5) b.append(el('p', 'gnote gfound', '🌾 ' + this.t('feed_grain', { n: Math.floor(g.data.grain) })));
     const grain = q.grain >= 0.01 && !q.full && !q.broke && !q.scraps;
@@ -636,6 +638,7 @@ export class GameUI {
     body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
     const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
     if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: this.g.andList(names) })));
+    if (up && up.onCuddleAll && g.birdsIn(coop.id).length > 1) { const ca = el('button', 'gbtn gcuddleall', this.t('cuddle_all')); ca.type = 'button'; ca.addEventListener('click', () => up.onCuddleAll()); body.append(ca); }
     const n = up && g.coopNext(coop);
     if (n) {
       const c = el('div', 'gcard gup'), hd = el('div', 'gcard-h');
@@ -740,11 +743,14 @@ export class GameUI {
     const g = this.g, pages = g.bookPages(), found = pages.filter(x => x.found).length;
     const b = this.open('book', this.t('book_title'));
     this.bird = null; b.scrollTop = 0;
-    // (once fishing's open: the breeds, or the fish: two tabs)
-    if (g.fishOpen('pond')) {
-      const tabs = el('div', 'gbooktabs'), tab = (k, label) => { const t = el('button', 'gbtn gsmallbtn' + ((this.bookTab || 'birds') === k ? ' gon' : ' galt'), label); t.type = 'button'; t.dataset.tab = k; t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
-      tabs.append(tab('birds', '🐔 ' + this.t('book_tab_birds')), tab('fish', '🐟 ' + this.t('book_tab_fish'))); b.append(tabs);
-      if (this.bookTab === 'fish') { this.fishPages(b); return; }
+    // (the breeds, the fish once fishing's open, the milestones: tabs)
+    {
+      const tabs = el('div', 'gbooktabs'), tab = (k, label, dot) => { const t = el('button', 'gbtn gsmallbtn' + ((this.bookTab || 'birds') === k ? ' gon' : ' galt'), label); t.type = 'button'; t.dataset.tab = k; if (dot) { const d = el('span', 'gdot'); t.append(d); } t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
+      tabs.append(tab('birds', '🐔 ' + this.t('book_tab_birds')));
+      if (g.fishOpen('pond')) tabs.append(tab('fish', '🐟 ' + this.t('book_tab_fish')));
+      tabs.append(tab('miles', '🏅 ' + this.t('mile_tab'), g.milesReady() > 0)); b.append(tabs);
+      if (this.bookTab === 'fish' && g.fishOpen('pond')) { this.fishPages(b); return; }
+      if (this.bookTab === 'miles') { this.milePages(b, h); return; }
     }
     b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
     const list = names => this.g.andList(names);
@@ -842,6 +848,30 @@ export class GameUI {
     if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
   }
   // ---- Today's jobs (release 1 step 9c): each job, how far along it is, its reward; done: "Collect" (h.claim(i))
+  // ---- the milestones (10 Nov 2026; game.js MILES): the keepsakes won on their shelf, then each milestone: its name, what
+  // it counts, how far along (the number, the next step's), its steps as stars (won ones gold), Collect when a step's
+  // reached (h.mile(id): main.js); the secret one unnamed till it's won
+  milePages(b, h = {}) {
+    const g = this.g, fmt = n => n.toLocaleString(g.locale());
+    const kept = MILE_IDS.filter(id => g.mileClaimed(id) >= MILES[id].at.length);
+    b.append(el('p', 'gsub', this.t('mile_sub', { n: kept.length, all: MILE_IDS.length })));
+    const shelf = el('div', 'gshelf'); shelf.setAttribute('aria-label', this.t('mile_shelf'));
+    for (const id of MILE_IDS) { const k = el('span', 'gkeep' + (kept.includes(id) ? ' on' : ''), kept.includes(id) ? MILES[id].e : ''); k.dataset.keep = id; shelf.append(k); }
+    b.append(shelf);
+    for (const id of MILE_IDS) {
+      const M = MILES[id], v = g.mileValue(id), got = g.mileClaimed(id), reached = g.mileReached(id), N = M.at.length, hid = M.secret && !reached;
+      const c = el('div', 'gcard gmile' + (reached > got ? ' gmile-ready' : got >= N ? ' gmile-done' : '')), hd = el('div', 'gcard-h'); c.dataset.mile = id;
+      const stars = el('span', 'gmile-stars'); for (let k = 0; k < N; k++) stars.append(el('span', k < got ? 'on' : '', '★'));
+      hd.append(el('span', 'gemoji', hid ? '❔' : M.e), el('span', 'gcard-t', hid ? this.t('mile_secret') : this.t('mile_' + id)), stars);
+      c.append(hd);
+      const next = M.at[Math.min(got, N - 1)], row = el('div', 'gjobrow');
+      if (N > 1 || hid) { const bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.min(1, v / next)) + '%'; bar.append(fill); c.append(bar); }
+      row.append(el('span', 'gnote', hid ? this.t('mile_secret_d') : this.t('mile_' + id + '_d') + (N > 1 ? ' · ' + fmt(Math.min(v, got >= N ? v : 1e12)) + (got < N ? ' / ' + fmt(next) : '') : '')));
+      if (reached > got) { const P = g.milePay(id, got), go = el('button', 'gbtn gsmallbtn', this.t('mile_collect', { c: fmt(P.coins) })); go.type = 'button'; go.dataset.collect = id; go.addEventListener('click', () => h.mile && h.mile(id)); row.append(go); }
+      else if (got >= N) row.append(el('span', 'gjob-ok', this.t('mile_all')));
+      c.append(row); b.append(c);
+    }
+  }
   jobsSheet(h = {}) {
     const g = this.g, J = g.jobs(), r = g.jobReward(), b = this.open('jobs', this.t('jobs_title'));
     this.bird = null;
@@ -855,7 +885,8 @@ export class GameUI {
       else if (j.got >= j.n) { const go = el('button', 'gbtn gsmallbtn', this.t('job_claim')); go.type = 'button'; go.addEventListener('click', () => h.claim && h.claim(i)); row.append(go); }
       c.append(bar, row); b.append(c);
     });
-    b.append(el('p', 'gnote gcenter', this.t('jobs_note')));
+    if (g.jobsReady() >= 2) { const all = el('button', 'gbtn', this.t('job_claim_all')); all.type = 'button'; all.dataset.jobs = 'all'; all.addEventListener('click', () => h.claimAll && h.claimAll()); b.append(all); }
+    b.append(el('p', 'gnote gcenter', this.t('jobs_note') + (g.fishOpen('pond') && !J.bonus ? ' ' + this.t('jobs_note2', { n: JOBS_BONUS }) : '')));
   }
   // ---- village orders (7 Nov 2026): each villager's basket, what's in it and what's still wanted, what it pays (and a
   // surprise, if it hides one); a ready one delivered (h.deliver(id): main.js, the farmer takes it to the stall), or one
@@ -1278,16 +1309,15 @@ export class GameUI {
   fishHelp(first) {
     const body = this.open('fishhelp', '🎣 ' + this.t('fhelp_title'));
     this.bird = null;
-    for (const [e, k] of [['👆', 1], ['❗', 2], ['✊', 3]]) {
-      const c = el('div', 'gcard ghow gfhelp'), hd = el('div', 'gcard-h'); c.dataset.step = k;
-      hd.append(el('span', 'gemoji', e), el('span', 'gcard-t', this.t('fhelp_' + k + 't')));
-      c.append(hd, el('p', 'gtext', this.t('fhelp_' + k)));
-      if (k === 3) {      // (the bar as it looks: the marker in the green)
-        const demo = el('div', 'fishdemo'), tr = el('div', 'fishtrack'), gr = el('div', 'fishgreen'), nd = el('div', 'fishneedle ok');
-        gr.style.left = '46%'; gr.style.width = '30%'; nd.style.left = '58%'; tr.append(gr, nd); demo.append(tr); c.append(demo);
-      }
-      body.append(c);
+    const c = el('div', 'gcard ghow gfhelp');      // (the three steps in one small card: all in sight sideways, no scrolling)
+    for (const [e, k] of [['👆', 1], ['❗', 2], ['🎯', 3]]) {
+      const r = el('div', 'gfstep'), tx = el('p', 'gtext'); r.dataset.step = k;
+      const st = el('b', '', this.t('fhelp_' + k + 't')); tx.append(st, ' ' + this.t('fhelp_' + k));
+      r.append(el('span', 'gemoji', e), tx); c.append(r);
     }
+    const demo = el('div', 'fishdemo'), tr = el('div', 'fishtrack'), gr = el('div', 'fishgreen'), nd = el('div', 'fishneedle ok');      // (the bar as it looks: the marker in the green)
+    gr.style.left = '46%'; gr.style.width = '30%'; nd.style.left = '58%'; tr.append(gr, nd); demo.append(tr); c.append(demo);
+    body.append(c);
     if (first) body.append(el('p', 'gnote gcenter', '✨ ' + this.t('fhelp_first')));
     const row = el('div', 'gstick'), ok = el('button', 'gbtn', this.t('fhelp_ok')); ok.type = 'button'; ok.dataset.fhelp = 'ok'; ok.addEventListener('click', () => this.close()); row.append(ok); body.append(row);      // (kept in sight at the bottom: sideways the card scrolls)
   }
