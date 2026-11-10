@@ -39,7 +39,7 @@ const house = await p.evaluate(() => { const f = window.__farm, [x, z] = f.coopA
 await p.touchscreen.tap(house.x, house.y); await run(0.3);
 const card = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, text: document.querySelector('.gsheet').innerText }));
 ok('a tap on the coop: its card (who lives there, move it)', card.kind === 'coop' && (fr ? /vivent ici/ : /live here/).test(card.text) && (fr ? /Déplacer ce poulailler/ : /Move this coop/).test(card.text), card);
-await p.tap('.gsheet .gbtn:not(.gup .gbtn)'); await run(1);          // ("Move this coop": not the upgrade's button above it, release 4)
+await p.tap('.gsheet [data-move]'); await run(1);          // ("Move this coop": not the upgrade's button above it, release 4)
 let m = await st();
 const bar = await p.evaluate(() => { const B = document.querySelector('.gmove'); return B && !B.hidden && B.getBoundingClientRect().top; });
 ok('moving: the bar (Turn, Cancel, Put it here), what to do, the coop out of its batch', m.on && bar > H * 0.5 && T.hint.test(m.text) && m.ok && m.batch === 0, { m, bar });

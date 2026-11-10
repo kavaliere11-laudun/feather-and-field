@@ -115,15 +115,19 @@ export class GameUI {
     // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
     // left, the farm's buttons on the right, settings apart)
     // the farm shop's own button beside the coins (10 Nov 2026, Audrey: "Farm shop should have its own entry next to the coins to advertise it more")
-    this.shopBtn = el('button', 'gpill gshopbtn'); this.shopBtn.type = 'button'; this.shopLbl = el('span', 'gnum gshop-l'); { const ic = el('span', 'gshop-i'); ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5h14.8L21 9"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4.5h4V20"/></svg>'; this.shopBtn.append(ic, this.shopLbl); }      // (a market stall, drawn like the other buttons; Audrey 10 Nov 2026 21:52: "Change the shopping and pantry icons")
+    this.shopBtn = el('button', 'gicon gshopbtn'); this.shopBtn.type = 'button'; this.shopBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5h14.8L21 9"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4.5h4V20"/></svg>'; this.shopLbl = el('span', 'gpan-l');
     this.shopBtn.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
     // the pantry's (10 Nov 2026): a dot when a shelf is full, or eggs wait there and it has never been opened
     this.panBtn = el('button', 'gicon gpanbtn'); this.panBtn.type = 'button'; this.panBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16"/><circle cx="8.500" cy="6.700" r="1.100"/><path d="M12.500 13v-2h3v2M8 19v-2.200h2.500V19"/></svg>'; this.panLbl = el('span', 'gpan-l'); this.pdot = el('span', 'gdot'); this.pdot.hidden = true; this.panBtn.append(this.pdot);      // (shelves with things on them, her choice of four 10 Nov 2026 22:14 ("B · Shelves"), at the top right beside the gear: "Pantry icon should not be next to shopping one")
     this.panBtn.addEventListener('click', () => { if (this.o.pantry) this.o.pantry(); else this.pantrySheet({}); });
-    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn);
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
     this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
-    this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
-    this.bar.append(this.stat, this.acts, this.panBtn, this.gear);
+    // (10 Nov 2026, Audrey: "Buttons are fine but messy come with a suggestion for them"; her choice "A · Two tidy sides": on the
+    // left "my farm": Shop, Pantry, Book, Coops; on the right "today": Orders, Jobs, Shows; each with its name under it)
+    this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn);
+    this.mine = el('div', 'gacts gmine'); this.mine.append(this.shopBtn, this.panBtn, this.bookBtn, this.coopsBtn);
+    this.navs = [[this.shopBtn, 'shop_btn'], [this.panBtn, 'pantry_btn'], [this.bookBtn, 'nav_book'], [this.coopsBtn, 'nav_coops'], [this.ordBtn, 'nav_orders'], [this.jobsBtn, 'nav_jobs'], [this.showsBtn, 'nav_shows']].map(([b, k]) => { const l = el('small', 'gnav-l'); b.append(l); return [l, k]; });
+    this.bar.append(this.stat, this.acts, this.mine, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
@@ -166,7 +170,7 @@ export class GameUI {
     const d = this.g.data; if (!d) return;
     const L = this.g.level, lo = xpFor(L), hi = xpFor(L + 1);
     this.bookBtn.setAttribute('aria-label', this.t('book_title'));
-    this.shopLbl.textContent = this.t('shop_btn'); this.shopBtn.setAttribute('aria-label', this.t('shop_title'));
+
     this.lvlNum.textContent = L; this.lvl.setAttribute('aria-label', this.t('level') + ' ' + L);
     this.ring.style.setProperty('--p', L >= TOP_LEVEL ? 100 : Math.round(100 * (d.xp - lo) / Math.max(1, hi - lo)));
     this.coinNum.textContent = d.coins.toLocaleString(this.g.locale());
@@ -175,7 +179,8 @@ export class GameUI {
     const waiting = this.g.waitingCoops().length > 0 || this.g.rareWaiting().length > 0;      // (a new breed's coop, or a rare baby for your choice)
     this.dot.hidden = !waiting; this.coopsBtn.setAttribute('aria-label', this.t('coops_aria') + (waiting ? ' · ' + this.t('coops_waiting') : ''));
     const jr = this.g.jobsReady(), jn = !this.g.jobs().seen;
-    this.shopLbl.textContent = this.t('shop_btn'); this.panLbl.textContent = this.t('pantry_btn'); this.panBtn.setAttribute('aria-label', this.t('pantry_title'));
+    for (const [l, k] of this.navs) { const t = this.t(k); if (l.textContent !== t) l.textContent = t; }
+    this.shopBtn.setAttribute('aria-label', this.t('shop_title')); this.panBtn.setAttribute('aria-label', this.t('pantry_title'));
     { const P = this.g.pantryBag(); this.pdot.hidden = !(this.g.pantryFull() || (!P.seen && P.eggs > 0)); }
     const mr = this.g.milesReady(); this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
@@ -674,7 +679,7 @@ export class GameUI {
     }
     body.append(el('p', 'gnote', this.t('move_body')));
     const go = el('button', 'gbtn', this.t('move_btn')); go.type = 'button';
-    go.addEventListener('click', () => onMove());
+    go.dataset.move = '1'; go.addEventListener('click', () => onMove());
     body.append(go);
   }
   // ---- moving a coop: what the spot's like, and Turn, Cancel, Put it here (h: { turn(), cancel(), place() })

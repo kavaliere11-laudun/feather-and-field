@@ -1364,5 +1364,10 @@
  "text.eggs_pantry_f1": "🥚 1 ovo fresco para a sua despensa · +{xp} XP",
  "text.eggs_pantry_f": "🥚 {n} ovos para a sua despensa, {f} frescos · +{xp} XP",
  "text.move_snapped": "Movido um pouco, para onde cabe e pode crescer.",
- "text.coop_inside": "Olhar lá dentro"
+ "text.coop_inside": "Olhar lá dentro",
+ "text.nav_book": "Livro",
+ "text.nav_coops": "Galinheiros",
+ "text.nav_orders": "Pedidos",
+ "text.nav_jobs": "Tarefas",
+ "text.nav_shows": "Exposições"
 }

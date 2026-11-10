@@ -1359,5 +1359,10 @@
  "text.eggs_pantry_f1": "🥚 1 huevo fresco a tu despensa · +{xp} XP",
  "text.eggs_pantry_f": "🥚 {n} huevos a tu despensa, {f} frescos · +{xp} XP",
  "text.move_snapped": "Movido un poco, donde cabe y puede crecer.",
- "text.coop_inside": "Mirar dentro"
+ "text.coop_inside": "Mirar dentro",
+ "text.nav_book": "Libro",
+ "text.nav_coops": "Gallineros",
+ "text.nav_orders": "Pedidos",
+ "text.nav_jobs": "Tareas",
+ "text.nav_shows": "Concursos"
 }

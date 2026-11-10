@@ -4276,6 +4276,31 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.nav_book",
+  "en": "Book",
+  "fr": "Livre"
+ },
+ {
+  "id": "text.nav_coops",
+  "en": "Coops",
+  "fr": "Poulaillers"
+ },
+ {
+  "id": "text.nav_orders",
+  "en": "Orders",
+  "fr": "Commandes"
+ },
+ {
+  "id": "text.nav_jobs",
+  "en": "Jobs",
+  "fr": "Tâches"
+ },
+ {
+  "id": "text.nav_shows",
+  "en": "Shows",
+  "fr": "Concours"
+ },
+ {
   "id": "text.move_snapped",
   "en": "Nudged to where it fits, with room to grow.",
   "fr": "Déplacé un peu, là où il a la place de s’agrandir."

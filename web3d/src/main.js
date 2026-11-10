@@ -151,7 +151,7 @@ const sun = new THREE.DirectionalLight('#fff1dc', parseFloat(params.get('sun') |
 sun.castShadow = true;
 scene.add(sun, sun.target);
 const SUN_DIR = new THREE.Vector3(0.55, -0.72, -0.62).normalize();
-const CLEAR = { at: -1e9, rects: [], sel: '.gbar button, .gacts button, #compass, #farmerbtn, #dogbtn, #replaybtn, #foxbtn' };      // (the buttons the farm's bubbles keep clear of: bubAt)
+const CLEAR = { at: -1e9, rects: [], sel: '.gbar button, .gacts button, #findfarmer, #compass, #farmerbtn, #dogbtn, #replaybtn, #foxbtn' };      // (the buttons the farm's bubbles keep clear of: bubAt)
 const SHADOW_REACH = 15;                                  // metres round the view that get shadows
 let shadowAt = null;
 
@@ -5124,7 +5124,6 @@ function gameTick(now = Date.now(), force = false) {
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
-  nightBtn(now);
   if (game.showTick(now).length) gameUI.refresh();                    // (a show judged: its results card once the farm's free)
   const jd = game.jobs(now).day; if (jd !== jobsDay) { jobsDay = jd; gameUI.refresh(); }      // (midnight: new jobs, the clipboard's dot)
   for (const p of gamePlots()) syncBrood(p, now, live, news);
@@ -5227,6 +5226,18 @@ function placeBubbles() {
     else {
       const txt = '🪧 ' + game.t('bub_sale') + ' · ' + n.price; if (B.textContent !== txt) B.textContent = txt;
       bubV.copy(SALE.at); bubV.project(camera);
+      const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
+      if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
+      else bubAt(B, sx, sy);
+    }
+  }
+  { // the farmhouse at dusk: "🌙 Goodnight" over it, till the round is done
+    if (!HOUSE_HIT && game.data && game.nightOpen(Date.now(), clockHour())) try { farmhouseAt(new THREE.Ray()); } catch (e) { /* */ }
+    const B = nightBubble(), on = game.data && HOUSE_HIT && !inside.open && !SHOWDAY && game.nightOpen(Date.now(), clockHour());
+    if (!on) B.hidden = true;
+    else {
+      const txt = '🌙 ' + game.t('gn_btn'); if (B.textContent !== txt) B.textContent = txt;
+      HOUSE_HIT.box.getCenter(bubV); bubV.y = HOUSE_HIT.box.max.y + 0.1; bubV.applyMatrix4(HOUSE_HIT.m); bubV.project(camera);
       const sx = (bubV.x + 1) / 2 * w, sy = (1 - bubV.y) / 2 * h;
       if (bubV.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) B.hidden = true;
       else bubAt(B, sx, sy);
@@ -8713,24 +8724,40 @@ function tickFocus(dt) {
 // a button in the bottom left corner: the view over to the farmer (10 Nov 2026, Audrey: "Add a button to focus the camera
 // back on the farmer"): only ever by the player's tap; at home (asleep, or not out yet): over to his door, and a word
 let FIND_BTN = null;
-// ---- the goodnight round (10 Nov 2026; game.js goodnight): a moon button over the farmer's, from dusk, till it's done:
-// every door booked shut for the night, the farmer says goodnight, a few coins and XP
-let NIGHT_BTN = null;
-function nightBtn(now = Date.now()) {
-  if (!GAME_MODE) return;
-  if (!NIGHT_BTN) {
-    const b = NIGHT_BTN = document.createElement('button'); b.type = 'button'; b.id = 'goodnight'; b.className = 'gbtn'; b.hidden = true;
-    b.addEventListener('click', () => {
-      const r = game.goodnight(Date.now(), clockHour()); if (!r) { b.hidden = true; return; }
-      for (const p of gamePlots()) p.gc = game.coop(p.gc.id) || p.gc;
-      hint(game.t('gn_done', { c: r.coins, xp: r.xp })); if (farmLife && farmLife.say && !farmLife.home) farmLife.say('night', 3.2);
-      gameUI.refresh(); gameUI.bumpCoins(); b.hidden = true; wake(1500);
-    });
-    document.body.append(b);
-  }
-  NIGHT_BTN.textContent = '🌙 ' + game.t('gn_btn');
-  NIGHT_BTN.hidden = !game.nightOpen(now, clockHour());
+// ---- the goodnight round (10 Nov 2026; game.js goodnight). First a button by the farmer's ("it's just a random CTA rethink
+// it too"); her choice then: "A bubble on the farmhouse": from dusk, till it's done, "🌙 Goodnight" over the farmhouse like
+// the farm's other bubbles (placeBubbles). A tap: every door booked shut for the night, a few coins and XP, and the
+// farmer, if he's out, goes round the coops (the nearest first, six at most), a wave at each gate ("Goodnight, girls!")
+let NIGHT_BUB = null, NIGHT_RUN = false;
+function nightBubble() {
+  if (NIGHT_BUB) return NIGHT_BUB;
+  const b = NIGHT_BUB = document.createElement('button'); b.type = 'button'; b.className = 'gbub gnightbub'; b.hidden = true;
+  b.addEventListener('click', ev => { ev.stopPropagation(); goodnightRound(); });
+  document.body.append(b); return b;
 }
+function goodnightRound() {
+  const r = game.goodnight(Date.now(), clockHour()); if (!r) return null;
+  for (const p of gamePlots()) p.gc = game.coop(p.gc.id) || p.gc;
+  hint(game.t('gn_done', { c: r.coins, xp: r.xp })); gameUI.refresh(); gameUI.bumpCoins(); nightBubble().hidden = true; wake(1500);
+  if (!farmLife || farmLife.home || farmLife.running || farmerJob()) return r;
+  const stops = [], v = new THREE.Vector3();
+  for (const p of gamePlots()) {
+    if (!p.frame || !p.door) continue;
+    const PEN = penOf(p); v.set(PEN.gate[0], 0, PEN.pen.max[2] + 0.6); p.frame.localToWorld(v);
+    const at = navGrid().nearestIn(farmReach(), v.x, v.z, 0.6); if (!at) continue;
+    stops.push({ at, face: Math.atan2(p.centre.x - at[0], p.centre.z - at[1]), d: Math.hypot(at[0] - farmLife.pos.x, at[1] - farmLife.pos.z) });
+  }
+  stops.sort((a, b) => a.d - b.d); stops.length = Math.min(stops.length, 6);
+  let i = 0; NIGHT_RUN = true;
+  const next = () => {
+    if (i >= stops.length) { NIGHT_RUN = false; return; }
+    const S = stops[i++], seq = farmLife.workAt(S.at, S.face, [['night', 1.3, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }], 'done'], next, { say: 'night', job: { kind: 'night' } });
+    if (!seq) NIGHT_RUN = false;
+  };
+  next();
+  return r;
+}
+function nightBtn() { /* (the bubble's: placeBubbles) */ }
 function findFarmerBtn() {
   if (FIND_BTN || !GAME_MODE) return;
   const b = FIND_BTN = document.createElement('button'); b.type = 'button'; b.id = 'findfarmer'; b.className = 'gicon'; b.textContent = '🧑‍🌾';
@@ -9415,7 +9442,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
-  catchCard, fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), frogPond: () => frogPond,
+  catchCard, fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,
   pointersDown: () => pointers.size, wantQuality: n => { wantQ = n; },
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },

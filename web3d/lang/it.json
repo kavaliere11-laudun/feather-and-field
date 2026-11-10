@@ -1364,5 +1364,10 @@
  "text.eggs_pantry_f1": "🥚 1 uovo fresco nella tua dispensa · +{xp} XP",
  "text.eggs_pantry_f": "🥚 {n} uova nella tua dispensa, {f} fresche · +{xp} XP",
  "text.move_snapped": "Spostato un po’, dove ci sta e può crescere.",
- "text.coop_inside": "Guarda dentro"
+ "text.coop_inside": "Guarda dentro",
+ "text.nav_book": "Libro",
+ "text.nav_coops": "Pollai",
+ "text.nav_orders": "Ordini",
+ "text.nav_jobs": "Lavori",
+ "text.nav_shows": "Mostre"
 }

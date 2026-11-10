@@ -85,19 +85,23 @@ await p.evaluate(() => window.__farm.gameUI().fishHelp(true)); await run(0.2);
 let H = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'), body = s.querySelector('.gbody') || s, r = s.getBoundingClientRect(); const inView = n => { const q = n.getBoundingClientRect(); return q.top >= r.top - 1 && q.bottom <= Math.min(innerHeight, r.bottom) + 1; }; const okTop = s.querySelector('[data-fhelp=ok]').getBoundingClientRect().top; return { steps: [...s.querySelectorAll('.gfstep')].map(inView), demo: inView(s.querySelector('.fishdemo')), ok: inView(s.querySelector('[data-fhelp=ok]')), scroll: s.querySelector('.fishdemo').getBoundingClientRect().bottom > okTop + 1 }; });
 ok('How to fish, sideways: the three steps, the bar and OK all in sight, none of it under the button', H.steps.length === 3 && H.steps.every(Boolean) && H.demo && H.ok && !H.scroll, H);
 await shut();
-// ---- the goodnight round: no button by day; from 18:00 a button; tapped: doors booked shut, coins, XP, once an evening
-let N0 = await p.evaluate(() => { window.__farm.nightBtn(); const q = document.getElementById('goodnight'); return !!q && !q.hidden; });
-ok('by day: no Goodnight button', N0 === false, N0);
+// ---- the goodnight round: by day no bubble; from 18:00 "Goodnight" over the farmhouse (her choice 10 Nov 22:24: "A bubble
+// on the farmhouse"); tapped: doors booked shut, coins, XP, the farmer off round the coops; once an evening
+let N0 = await p.evaluate(() => window.__farm.nightBubble());
+ok('by day: no Goodnight bubble', N0 === null, N0);
 await p.evaluate(() => { window.__T = new Date('2026-11-10T19:00:00Z').getTime(); sessionStorage.setItem('__T', window.__T); });
 await go('19:00'); await load(); await run(1); await shut();
-let N1 = await p.evaluate(() => { const f = window.__farm, g = f.game(); f.nightBtn(); const q = document.getElementById('goodnight'), r = q.getBoundingClientRect(), ff = document.getElementById('findfarmer').getBoundingClientRect(); return { shown: !q.hidden && r.width > 0, text: q.textContent, clear: r.left >= ff.right - 1, coins: g.data.coins, xp: g.data.xp, top: (document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) || {}).id, at: [r.left + r.width / 2, r.top + r.height / 2] }; });
-ok('at 19:00: a Goodnight button, beside the farmer\'s, nothing over it', N1.shown && N1.clear && N1.top === 'goodnight' && (fr ? /Bonne nuit/ : /Goodnight/).test(N1.text), N1);
+let N1 = await p.evaluate(() => { const f = window.__farm, g = f.game(), s = f.farmhouseSpot(); f.lookAt(s[0], s[2], 5); f.draw(); const t = f.nightBubble(), q = document.querySelector('.gnightbub'), r = q.getBoundingClientRect(); return { t, shown: !q.hidden && r.width > 0, coins: g.data.coins, xp: g.data.xp, top: (document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) || {}).className, at: [r.left + r.width / 2, r.top + r.height / 2], old: !!document.getElementById('goodnight') }; });
+ok('at 19:00: a "Goodnight" bubble over the farmhouse, nothing over it; no loose button any more', N1.shown && /gnightbub/.test(N1.top || '') && (fr ? /Bonne nuit/ : /Goodnight/).test(N1.t || '') && !N1.old, N1);
 await p.touchscreen.tap(N1.at[0], N1.at[1]); await run(0.3);
-let N2 = await p.evaluate(() => { const f = window.__farm, g = f.game(), q = document.getElementById('goodnight'); return { hidden: q.hidden, coins: g.data.coins, xp: g.data.xp, shut: g.data.coops.filter(c => !/duck/.test(c.breed)).every(c => c.shut === g.data.gn), gn: g.data.gn, n: g.tallyOf('night'), again: g.goodnight(Date.now(), 19), hint: document.getElementById('hint').textContent }; });
-ok('tapped: +10 coins, +5 XP, every coop\'s door booked shut for the night, the button gone, counted once (not twice the same evening)', N2.hidden && N2.coins === N1.coins + 10 && N2.xp === N1.xp + 5 && N2.shut && N2.n === 1 && N2.again === null, { N1, N2 });
+let N2 = await p.evaluate(() => { const f = window.__farm, g = f.game(); return { bub: f.nightBubble(), coins: g.data.coins, xp: g.data.xp, shut: g.data.coops.filter(c => !/duck/.test(c.breed)).every(c => c.shut === g.data.gn), n: g.tallyOf('night'), again: g.goodnight(Date.now(), 19), run: f.nightRun(), job: (f.farmerJob() || {}).kind, home: f.farmer().home }; });
+ok('tapped: +10 coins, +5 XP, every coop\'s door booked shut for the night, the bubble gone, counted once', N2.bub === null && N2.coins === N1.coins + 10 && N2.xp === N1.xp + 5 && N2.shut && N2.n === 1 && N2.again === null, { N1, N2 });
+ok('…and the farmer, if he\'s out, sets off round the coops', N2.home ? true : N2.run && N2.job === 'night', N2);
+let gone = false; for (let i = 0; i < 120 && !gone; i++) { await run(1); gone = await p.evaluate(() => !window.__farm.nightRun()); }
+ok('his round ends', gone);
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1);
-let N3 = await p.evaluate(() => { window.__farm.nightBtn(); return document.getElementById('goodnight').hidden; });
-ok('the game opened again that evening: no button', N3 === true, N3);
+let N3 = await p.evaluate(() => window.__farm.nightBubble());
+ok('the game opened again that evening: no bubble', N3 === null, N3);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close(); process.exit(fails ? 1 : 0);

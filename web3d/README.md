@@ -4921,3 +4921,30 @@ shot again so they share the game's Painted look (`intro/*.webp`, the sign of pi
 - 22:11, "No need to write boutique just the icon would do": the Shop button is its icon alone, in every language.
 - 22:14, "Suggest another icon for the storage": four drawn (crate, shelves, sack, barrel); her choice "B · Shelves":
   the Pantry button is a little cupboard with things on its shelves.
+
+## Her notes of 10 Nov 2026, 22:24 to 22:28: tidy buttons, the goodnight bubble, a coop that finds its place, the coop's card at night
+- **"Buttons are fine but messy come with a suggestion for them"**: two layouts mocked; her choice "A · Two tidy sides".
+  On the left, "my farm": Shop, Pantry, Book, Coops (`.gmine`); on the right, "today": Orders, Jobs, Shows (`.gacts`),
+  the farmer's button under them in the bottom right corner; each button has its name under it (`.gnav-l`, six
+  languages). Top left: level and coins only; top right: the gear, the compass beside it.
+- **"The goodnight it's just a random CTA rethink it too"**: her choice "A bubble on the farmhouse". From 18:00, till
+  it's done, "🌙 Goodnight" floats over the farmhouse like the farm's other bubbles (main.js `nightBubble`,
+  placeBubbles). A tap: every door booked shut, +10 coins, +5 XP, and the farmer, if he's out and free, goes round the
+  coops (nearest first, six at most) with a wave and "Goodnight, girls!" at each gate (`goodnightRound`).
+- **"Seems that there is no way to add a coop in that space of the game that is quite a big one fix that"**: measured: a
+  full-grown pen (4.9 × 4.3 m) fits only a few places in each field, and only at some angles; one small field (the
+  third) can't hold one at any angle. So: Turn goes by eighths of a turn (45°, was 90°), which opens about twice as
+  many places; and a coop let go (or tapped to) where it's refused is nudged to the nearest place within 2.5 m, at any
+  eighth, that has room to grow ("Nudged to where it fits, with room to grow.", `moveSettle`, `moveFits`). The rule
+  itself stands (room for its bigger pens from the start).
+- **"I tried to click to know the price to improve the coop but each time it takes me inside the coop as the chickens
+  are asleep"**: in the game a tap on the coop's house always opens its card; while the birds sleep the card has
+  "🌙 Look inside" for the view of them in bed.
+- **"Cuddle in the morning Audrey is asleep that's confusing because the farmer is actually out there. Should just not
+  be allowed"**: at night the coop's card has no "Cuddle everyone here" button, only "Cuddles in the morning: everyone
+  here is asleep." (the same words on a bird's card; the farmer isn't named any more).
+- **"When I have a milestone clicking on the milestone button scrolls down to the next milestone completed"**: the
+  Milestones tab opens on the first one ready to collect.
+- **"The shelve icon should not disappear when the shelve is empty"**: each keepsake's picture is always in its place on
+  the shelf, pale until it's won (the secret one a question mark).
+- Tests: `fittest` (new, EN/FR); `milestest` (the bubble), `movetest` updated.

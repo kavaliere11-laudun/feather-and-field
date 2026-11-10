@@ -1361,5 +1361,10 @@
  "text.eggs_pantry_f1": "🥚 1 frisches Ei in deine Speisekammer · +{xp} XP",
  "text.eggs_pantry_f": "🥚 {n} Eier in deine Speisekammer, {f} davon frisch · +{xp} XP",
  "text.move_snapped": "Ein Stück verschoben, dorthin, wo er Platz zum Wachsen hat.",
- "text.coop_inside": "Hineinschauen"
+ "text.coop_inside": "Hineinschauen",
+ "text.nav_book": "Buch",
+ "text.nav_coops": "Ställe",
+ "text.nav_orders": "Aufträge",
+ "text.nav_jobs": "Aufgaben",
+ "text.nav_shows": "Schauen"
 }
