@@ -3721,8 +3721,8 @@
  },
  {
   "id": "text.ord_sub",
-  "en": "Villagers ask for a basket. Your eggs, fish and honey go to their baskets first as they come; the grain comes from your store.",
-  "fr": "Les villageois demandent un panier. Vos œufs, vos poissons et votre miel vont d’abord dans leurs paniers, à mesure ; le grain vient de votre réserve."
+  "en": "Villagers ask for a basket. Your eggs and honey go to their baskets first as they come; fish come from your fish box, the grain from your store.",
+  "fr": "Les villageois demandent un panier. Vos œufs et votre miel vont d’abord dans leurs paniers, à mesure ; les poissons viennent de votre vivier, le grain de votre réserve."
  },
  {
   "id": "text.ord_eggs",

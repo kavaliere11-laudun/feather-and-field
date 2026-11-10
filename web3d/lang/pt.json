@@ -1059,7 +1059,7 @@
  "text.level_gift": "Um presente pelo seu novo nível: +{c} moedas",
  "text.fish_gift": "Uma lata com {n} minhocas para começar 🪱",
  "text.ord_title": "Pedidos da vila",
- "text.ord_sub": "Os vizinhos pedem uma cesta. Seus ovos, peixes e mel vão primeiro para as cestas deles, conforme chegam; o grão sai do seu estoque.",
+ "text.ord_sub": "Os vizinhos pedem uma cesta. Seus ovos e mel vão primeiro para as cestas deles, conforme chegam; os peixes saem da sua caixa de peixes e o grão do seu estoque.",
  "text.ord_eggs": "Ovos",
  "text.ord_fish": "Peixes",
  "text.ord_honey": "Potes de mel",

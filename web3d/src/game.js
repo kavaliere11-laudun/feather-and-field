@@ -295,7 +295,7 @@ export const TEXT = {
     ord_carrot: 'Carrots', ord_straw: 'Strawberries', ord_pump: 'Pumpkins', ord_veg_have: '(in your basket: {n})', ord_sub_veg: 'Vegetables come from your garden basket.',
     away_garden: 'Your vegetable garden is ready to pick', away_garden1: 'A bed in your vegetable garden is ready to pick', garden_aria: 'The vegetable garden',
     // village orders (7 Nov 2026)
-    ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Your eggs, fish and honey go to their baskets first as they come; the grain comes from your store.',
+    ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Your eggs and honey go to their baskets first as they come; fish come from your fish box, the grain from your store.',
     ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your store: {n})',
     ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
     ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 The basket for {name} is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
@@ -637,7 +637,7 @@ export const TEXT = {
     ord_carrot: 'Carottes', ord_straw: 'Fraises', ord_pump: 'Citrouilles', ord_veg_have: '(dans votre panier : {n})', ord_sub_veg: 'Les légumes viennent du panier de votre potager.',
     away_garden: 'Votre potager est prêt à être récolté', away_garden1: 'Un carré de votre potager est prêt à être récolté', garden_aria: 'Le potager',
     // commandes du village (7 nov. 2026)
-    ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Vos œufs, vos poissons et votre miel vont d’abord dans leurs paniers, à mesure ; le grain vient de votre réserve.',
+    ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Vos œufs et votre miel vont d’abord dans leurs paniers, à mesure\u00a0; les poissons viennent de votre vivier, le grain de votre réserve.',
     ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre réserve : {n})',
     ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
     ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',

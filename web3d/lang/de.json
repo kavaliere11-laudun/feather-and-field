@@ -1059,7 +1059,7 @@
  "text.level_gift": "Ein Geschenk zum neuen Level: +{c} Münzen",
  "text.fish_gift": "Eine Dose mit {n} Würmern für den Anfang 🪱",
  "text.ord_title": "Bestellungen aus dem Dorf",
- "text.ord_sub": "Die Leute aus dem Dorf wünschen sich einen Korb. Deine Eier, Fische und dein Honig kommen zuerst in ihre Körbe, so wie sie kommen; das Korn kommt aus deinem Vorrat.",
+ "text.ord_sub": "Die Leute aus dem Dorf wünschen sich einen Korb. Deine Eier und dein Honig kommen zuerst in ihre Körbe, so wie sie kommen; Fische kommen aus deiner Fischkiste, das Korn aus deinem Vorrat.",
  "text.ord_eggs": "Eier",
  "text.ord_fish": "Fische",
  "text.ord_honey": "Gläser Honig",

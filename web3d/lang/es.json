@@ -1054,7 +1054,7 @@
  "text.level_gift": "Un regalo por tu nuevo nivel: +{c} monedas",
  "text.fish_gift": "Una lata de {n} lombrices para empezar 🪱",
  "text.ord_title": "Pedidos del pueblo",
- "text.ord_sub": "Los vecinos piden una cesta. Tus huevos, tus peces y tu miel van primero a sus cestas, a medida que llegan; el grano sale de tu reserva.",
+ "text.ord_sub": "Los vecinos piden una cesta. Tus huevos y tu miel van primero a sus cestas, a medida que llegan; los peces salen de tu caja de peces y el grano de tu reserva.",
  "text.ord_eggs": "Huevos",
  "text.ord_fish": "Peces",
  "text.ord_honey": "Tarros de miel",
