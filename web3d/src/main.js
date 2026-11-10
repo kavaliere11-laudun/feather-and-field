@@ -7154,7 +7154,8 @@ function moveTo(x, z, deg, force = false) {
   p.centre.set(x, 0, z); placeDoor(p); placePools(p);
   let S = coopSpot(MOVE.at, p.gc);
   const home = MOVE.from && x === MOVE.from.x && z === MOVE.from.z && deg === MOVE.from.deg;
-  if (S.ok && !home && grownOf(p.gc, MOVE.grow) && !roomToGrow(MOVE.at, p.gc.breed, p.gc.id, MOVE.grow)) S = p.draft ? { ok: false, why: 'move_grow', clear: S.clear } : { ...S, small: true };      // (room kept for its bigger looks, the dotted outline: a new coop only where there's that room; one of yours moved, a word that its bigger pen won't fit there, so it's your choice; where it stood already: as before)
+  if (S.ok && !home && grownOf(p.gc, MOVE.grow) && !roomToGrow(MOVE.at, p.gc.breed, p.gc.id, MOVE.grow)) S = { ok: false, why: 'move_grow', clear: S.clear };      // (10 Nov 2026, Audrey, of a coop moved where only its pen of now fits: "That should not be allowed it needs to fit from the start": refused for a coop of yours moved too, not only a new one)
+  // was: S = p.draft ? { ok: false, why: 'move_grow', clear: S.clear } : { ...S, small: true };      // (room kept for its bigger looks, the dotted outline: a new coop only where there's that room; one of yours moved, a word that its bigger pen won't fit there, so it's your choice; where it stood already: as before)
   MOVE.spot = S;
   MOVE.foot.material.color.set(S.ok ? (S.small ? FOOT_SMALL : FOOT_OK) : FOOT_NO);
   gameUI.moveStatus(game.t(!MOVE.moved ? 'move_hint' : S.small ? 'move_small' : S.ok ? (S.clear.length ? 'move_clear' : 'move_ok') : S.why), S.ok);
