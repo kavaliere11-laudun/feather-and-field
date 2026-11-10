@@ -4919,3 +4919,5 @@ shot again so they share the game's Painted look (`intro/*.webp`, the sign of pi
 - The fox's welcome picture: Rusty stays in mid-bound; Biscuit sets off a tenth of a second later (intro.js `runner`'s
   `late`), so the shot catches him in the same stride as in the first picture.
 - 22:11, "No need to write boutique just the icon would do": the Shop button is its icon alone, in every language.
+- 22:14, "Suggest another icon for the storage": four drawn (crate, shelves, sack, barrel); her choice "B · Shelves":
+  the Pantry button is a little cupboard with things on its shelves.
