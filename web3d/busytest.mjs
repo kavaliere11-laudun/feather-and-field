@@ -4,8 +4,8 @@
 // A level-3 farm by day. In sight and far from a hen's pen, a cuddle asked: he dashes all the way (3 m/s), never skipping.
 // Out of sight and far, another cuddle asked: he's put on his way just off the screen and runs in. While he's at it: another
 // hen's card has its Cuddle button live and a note ("Arthur is giving X a cuddle. Ask for anything else..."); asked: on his
-// list (1 of 3), the note now "Next: a cuddle for Y"; the same again: "Already on his list"; a feeder and fishing: 3 of 3; a
-// fourth: "list is full". He does them in order: the cuddle, the feeder, then out fishing. Fishing and waiting to cast, a
+// list (1 of 3), the note now "Next: a cuddle for Y"; the same again: "Already on his list"; a feeder filled meanwhile:
+// simply accepted; worms and fishing: 3 of 3; a fourth: "list is full". He does them in order: the cuddle, the worms, fishing. Fishing and waiting to cast, a
 // cuddle asked: he puts his rod down and goes. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const L = process.env.LANG || 'en', fr = L === 'fr';
@@ -66,17 +66,21 @@ ok('asked: on his list (1 of 3), nothing done yet; her card\'s note: "Next: a cu
 await p.evaluate(() => document.querySelector('.gsheet .gcuddle').click()); await run(0.1);
 h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
 ok('asked again: "Already on his list", still one', JL.length === 1 && T.already.test(h), { JL, h });
-await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close(); const co = g.data.coops[0]; co.feed = 0; co.fedAt = 0; g.save(); f.gameTick(window.__T); f.fillFeeder(0); });
+// a chore meanwhile: simply accepted, not on his list (10 Nov 2026: "Instead of this message it should just accept the action")
+const chore = await p.evaluate(() => { const f = window.__farm, g = f.game(); f.gameUI().close(); const co = g.data.coops[0]; co.feed = 0; co.fedAt = 0; g.save(); f.gameTick(window.__T); const r = f.fillFeeder(0); return { r: !!r, feed: g.data.coops[0].feed, n: f.jobList().length }; });
+ok('a feeder filled meanwhile: accepted at once, not on his list', chore.r && chore.feed > 0 && chore.n === 1, chore);
+// her worms and fishing asked: 3 of 3; a fourth: full
+const roo = await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.trust = 60; b.worm = ''; g.save(); const r = f.coopPlots()[0].birds.find(x => x.gid && g.bird(x.gid).sex !== 'h'); f.gameUI().o.askWorms(id); return r.gid; }, H[0].id);
 await p.evaluate(() => { const f = window.__farm; f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=go]'); if (q) q.click(); });
 h = await hintNow(); JL = await p.evaluate(() => window.__farm.jobList());
-ok('a feeder and fishing asked: 3 of 3 on his list', JL.length === 3 && JL.map(q => q.kind).join() === 'cuddle,fill,fish' && T.added(3).test(h), { JL, h });
-const full = await p.evaluate(() => { const f = window.__farm; f.deco.wheat.sow(); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; });
-ok('a fourth: "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
+ok('her friend\'s worms and fishing asked: 3 of 3 on his list', JL.length === 3 && JL.map(q => q.kind).join() === 'cuddle,worms,fish' && T.added(3).test(h), { JL, h });
+const full = await p.evaluate(id => { const f = window.__farm; f.gameUI().o.cuddle(id); return { n: f.jobList().length, hint: document.getElementById('hint').textContent }; }, roo);
+ok('a fourth (the rooster\'s cuddle): "his list is full", still three', full.n === 3 && T.full.test(full.hint), full);
 // ---- he does them in order
 const seen = []; let fishing = false;
 for (let i = 0; i < 240 && !fishing; i++) { await run(1); const q = await p.evaluate(() => { const f = window.__farm, j = f.farmerJob(); if (f.gameUI().isOpen) f.gameUI().close(); return { k: j && j.kind, n: f.jobList().length, st: f.fishing() && f.fishing().state }; }); if (q.k && seen[seen.length - 1] !== q.k) seen.push(q.k); fishing = q.st === 'ready'; }
-const after = await p.evaluate(id => { const f = window.__farm, g = f.game(); return { happy: g.happyLeft(g.bird(id)) > 0, feed: g.data.coops[0].feed, n: f.jobList().length }; }, H[1].id);
-ok('he does them in order: her cuddle, the feeder, then out on the dock ready to cast; the list empty', fishing && seen.join().includes('cuddle,fill,fish') && after.happy && after.feed > 0 && after.n === 0, { seen, after });
+const after = await p.evaluate(id => { const f = window.__farm, g = f.game(); return { happy: g.happyLeft(g.bird(id)) > 0, n: f.jobList().length }; }, H[1].id);
+ok('he does them in order: her cuddle, the worms, then out on the dock ready to cast; the list empty', fishing && /cuddle.*worms.*fish/.test(seen.join()) && after.happy && after.n === 0, { seen, after });
 // ---- fishing, waiting to cast: a job asked, the rod down for it
 await p.evaluate(id => { const f = window.__farm, g = f.game(), b = g.bird(id); b.happy = 0; g.save(); f.gameUI().o.cuddle(id); }, H[0].id);
 JL = await p.evaluate(() => window.__farm.jobList());

@@ -521,7 +521,7 @@ export class GameUI {
     const go = el('button', 'gbtn', q.full ? this.t('fill_full') : q.broke ? this.t('fill_broke') : q.scraps ? this.t('fill_scraps') : grain && !q.cost ? this.t('fill_grain') : grain && !q.partial ? this.t('fill_grain_c', { c: q.cost }) : this.t(q.partial ? 'fill_part' : 'fill_btn', { c: q.cost }));
     go.type = 'button'; go.disabled = !!(q.full || q.broke); if (go.disabled) go.classList.add('galt');
     go.addEventListener('click', () => { if (!go.disabled) onFill(); });
-    b.append(go); if (!go.disabled) this.busyNote([go]);
+    b.append(go);
   }
   // ---- eggs flying from the nest to the coins, then the coins counted up
   flyEggs(from, n, colour, done, cls = 'gegg') {
@@ -885,7 +885,6 @@ export class GameUI {
       c.append(btns); b.append(c);
     }
     if (!list.length) b.append(el('p', 'gtext', this.t('ord_none')));
-    this.busyNote([...b.querySelectorAll('button[data-ord="deliver"]')]);
     const next = g.orderNextIn(); if (next > 0 && list.length < 3) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
   }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
@@ -1188,8 +1187,8 @@ export class GameUI {
     b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: WHEAT.max })));
     if (st === 'soil') {
       const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
-      go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go); if (!go.disabled) this.busyNote([go]);
-    } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => { if (!go.disabled) h.harvest(); }); b.append(go); this.busyNote([go]); }
+      go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
+    } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => { if (!go.disabled) h.harvest(); }); b.append(go); }
     const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
   }
   // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
@@ -1220,7 +1219,6 @@ export class GameUI {
       }
       b.append(c);
     });
-    if (o.busy) b.append(el('p', 'gnote gcenter', o.busy));
     b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
     b.append(el('p', 'gnote', this.t('basket_how')));
     const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
@@ -1239,7 +1237,6 @@ export class GameUI {
       const go = el('button', 'gbtn gsmallbtn' + (can ? '' : ' galt'), this.t('treat_give')); go.type = 'button'; go.disabled = !can; go.dataset.give = k;
       go.addEventListener('click', () => { if (!go.disabled) h.give(k); }); card.append(go); b.append(card);
     }
-    this.busyNote([...b.querySelectorAll('button[data-give]:not([disabled])')]);
     if (!g.vegCount()) b.append(el('p', 'gnote gcenter', this.t('treat_none')));
   }
   // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)

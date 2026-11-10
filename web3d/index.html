@@ -643,6 +643,7 @@
     .gsheet.gcenter:not(.gintro) { width: min(440px, 62vw); }
     @keyframes gspop { from { transform: translateY(14px) scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
+    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(56vw, 520px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
     body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }

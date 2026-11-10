@@ -4918,10 +4918,15 @@ function farmerBusyText(j = farmerJob()) {
   return game.t('busy_' + (BUSY.kinds.includes(kind) ? kind : 'work'), { farmer: farmerName(), name: gb ? gb.name : '' }, f) + ' ' + (JOBQ.length ? game.t('next_list', { list: JOBQ.map(q => q.label).join(', ') }) : game.t(kind === 'fish' ? 'busy_wait_fish' : 'busy_wait'));
 }
 // ---- the jobs to do next (9 Nov 2026 evening, Audrey: "it's frustrating that the farmer can only do 1 thing at the time
-// and you cannot schedule the next action", her choice "Line up to 3 jobs"): a job asked while he's at one goes on his
-// list (three at most, each once), said on the cards ("Next: a cuddle for Juniper, a feeder"); he does them in order as
-// he's free (tickBusy). Asked while he's fishing and only waiting to cast: he puts his rod down for it. At night: forgotten.
-// Never saved (a list for this visit). jobGate: true if the job was put on the list (or couldn't be): not to do now
+// and you cannot schedule the next action", her choice "Line up to 3 jobs"; then, 10 Nov, of the wheat's card saying
+// "Next: the garden, sowing the wheat": "Instead of this message it should just accept the action"):
+// - the farm's chores are simply accepted, whatever he's doing: sowing and harvesting the wheat, the honey, the garden's
+//   beds, a feeder, a treat, a basket for the stall: done at once in the save, the card closed with its own words; he
+//   comes and does it after the job he's at if nothing else is waiting for him, else it's simply done;
+// - the jobs that are his visit itself wait their turn on his list (three at most, each once): a cuddle, a hen's worms,
+//   the geese, fishing; he does them in order as he's free (tickBusy). Asked while he's fishing and only waiting to cast:
+//   he puts his rod down for it. At night: forgotten. Never saved (a list for this visit).
+// jobGate: true if the job was put on the list (or couldn't be): not to do now
 const JOBQ = [];
 function jobLabel(kind, name) { return game.t('next_' + kind, { name: name || '' }); }
 function jobGate(kind, key, name, run) {
@@ -8043,8 +8048,7 @@ function wheatTap() {
 }
 function wheatCard() { gameUI.wheatSheet({ sow: () => sowWheat(), harvest: () => harvestWheat(), move: () => { gameUI.close(); startDecor('wheat'); } }); }
 function sowWheat() {
-  if (jobGate('sow', 'wheat', '', () => sowWheat())) return false;
-  if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  if (FIELD.work && FIELD.work.kind !== 'honey') FIELD.work.seq.finish();      // (still at the field's last job: that one done now)
   const r = game.sowWheat(); if (!r) return false;
   if (r.broke) { hint(game.t('wheat_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
@@ -8057,8 +8061,7 @@ function sowWheat() {
   return true;
 }
 function harvestWheat() {
-  if (jobGate('harvest', 'wheat', '', () => harvestWheat())) return false;
-  if (FIELD.work && FIELD.work.kind !== 'honey') return false;
+  if (FIELD.work && FIELD.work.kind !== 'honey') FIELD.work.seq.finish();
   const r = game.harvestWheat(); if (!r) return false;
   gameUI.close(); gameUI.refresh();
   FIELD.hold = 'ripe';
@@ -8072,7 +8075,6 @@ function harvestWheat() {
 // the honey pot (or the hives) tapped: the jars sold, flying to the coins once the farmer has them
 function honeyTap() {
   if (FIELD.honey) return false;
-  if (game.honeyAt() && jobGate('honey', 'honey', '', () => honeyTap())) return false;
   const r = game.collectHoney(); if (!r) { decorCard('beehives'); return false; }
   const fly = () => {
     FIELD.honey = false;
@@ -8240,8 +8242,7 @@ function gardenWork(kind, i, crop, done) {
 }
 function vegBits(hand, crop) { bitsAt(hand, 4, CROP_COLOUR[crop] || '#ef8a2c', { speed: 0.5, up: 1.7, life: 0.8, size: 0.04, g: 5 }); bitsAt(hand, 3, '#5b9440', { speed: 0.5, up: 1.5, life: 0.7, size: 0.03, g: 5 }); }
 function sowBed(i, crop) {
-  if (jobGate('garden', 'bed:' + i, '', () => sowBed(i, crop))) return false;
-  if (GARDEN_UI.work) return false;
+  if (GARDEN_UI.work) GARDEN_UI.work.seq.finish();      // (still at the garden's last job: that one done now)
   const r = game.sowBed(i, crop); if (!r) return false;
   if (r.broke) { hint(game.t('garden_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
@@ -8254,8 +8255,7 @@ function sowBed(i, crop) {
   return true;
 }
 function pickBed(i) {
-  if (jobGate('garden', 'bed:' + i, '', () => pickBed(i))) return false;
-  if (GARDEN_UI.work) return false;
+  if (GARDEN_UI.work) GARDEN_UI.work.seq.finish();
   const was = game.data.garden.beds[i].crop, r = game.pickBed(i); if (!r) return false;
   if (r.kept) { hint(game.t('garden_full', { crop: game.t('crop_l_' + r.crop) })); return true; }
   gameUI.close(); gameUI.refresh();
@@ -8274,11 +8274,10 @@ function treatCard(coopId) {
   gameUI.treatSheet(coopId, { give: k => giveTreat(coopId, k) });
 }
 function giveTreat(coopId, crop) {
-  if (jobGate('treat', 'treat:' + coopId, '', () => giveTreat(coopId, crop))) return null;
   const plot = gamePlots().find(p => p.gc && p.gc.id === coopId), r = game.giveTreat(coopId, crop); if (!r) return null;
   gameUI.close(); gameUI.refresh();
   const said = game.t(r.exp ? 'treat_given_x' : 'treat_given', { farmer: farmerName() });
-  const P = plot && farmLife && !farmLife.home && !farmLife.running ? penSpec(plot) : null;
+  const P = plot && farmLife && !farmLife.home && !farmLife.running && !farmLife.pending ? penSpec(plot) : null;
   if (P && farmLife.visitPen(P, 'treat', null, crop)) { hint(said); wake(1000); return r; }
   if (plot) { const P2 = penSpec(plot, true); if (P2) { const v = new THREE.Vector3(); P2.plot.frame.updateMatrixWorld(true); for (let k = 0; k < 3; k++) { v.set(P2.throwAt[0], 0.5, P2.throwAt[1]); P2.scatter(v, 8, crop); } } }
   hint(said); wake(1000);
@@ -8590,7 +8589,6 @@ function ordersSheet() {
 }
 function deliverOrder(id) {
   const o = game.data.orders && game.data.orders.list.find(x => x.id === id); if (!o || !game.orderReady(o)) return;
-  if (jobGate('order', 'order:' + id, '', () => deliverOrder(id))) return;
   gameUI.close();
   const pay = () => {
     const r = game.deliverOrder(id); ORDER_RUN = null; if (!r) return;
@@ -8598,7 +8596,7 @@ function deliverOrder(id) {
     gameUI.refresh(); gameUI.bumpCoins(); wake(1500);
   };
   const S = stallSpot(), nav = navGrid(), spot = S && nav.nearestIn(farmReach(), S.front.x, S.front.z, 1.2);
-  const seq = spot && farmLife && farmLife.workAt(spot, Math.atan2(S.mid[0] - spot[0], S.mid[1] - spot[1]), [
+  const seq = spot && farmLife && !farmLife.pending && farmLife.workAt(spot, Math.atan2(S.mid[0] - spot[0], S.mid[1] - spot[1]), [
     ['give', 1.4, (W, u) => { W.pose = u < 0.6 ? 'feed' : 'turn'; W.face = 'happy'; W.look = [0, -0.25]; W.props.pail = u < 0.6; }], 'done',
     ['wave', 1.2, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], pay, { pail: true, say: 'order', job: { kind: 'order' } });
   if (seq) { ORDER_RUN = { id, until: performance.now() + 90e3 }; hint(game.t('ord_on_way', { farmer: farmerName() })); }
@@ -8625,11 +8623,10 @@ function feederCard(plot) {
   gameUI.feederSheet(plot.gc, () => fillFeeder(plot));
 }
 function fillFeeder(plot) {
-  if (jobGate('fill', 'fill:' + (plot.gc ? plot.gc.id : ''), '', () => fillFeeder(plot))) return null;
   const c = plot.gc, before = game.feedLeft(c), q = game.fillFeeder(c.id);
   if (!q || q.full || q.broke) return null;
   gameUI.close(); gameUI.refresh(); jobsDone(q.done);
-  const P = farmLife && !farmLife.home && !farmLife.running ? penSpec(plot) : null;
+  const P = farmLife && !farmLife.home && !farmLife.running && !farmLife.pending ? penSpec(plot) : null;
   if (P) {
     P.fill = u => { plot.pourUntil = performance.now() + 4000; setFeed(plot, before + (q.level - before) * Math.max(0, Math.min(1, u))); };
     const leave = P.leave; P.leave = () => { leave(); plot.pourUntil = 0; };
@@ -8700,7 +8697,10 @@ const vt = (k, v = {}) => tr(LANG, 'door.' + k, v);
 const hintEl = document.getElementById('hint');
 let hintLeft = 0;
 const HINT_NEXT = [];                                    // (words to say once the one showing has had its time: a job done)
-function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
+// (said while a card is open: shown over the card, at the top. 10 Nov 2026, Audrey, the garden's card: "I click on pick but it
+// doesn't work": the answer ("Your basket is full of carrots…", or "Added to Arthur's list…") was hidden, sideways, under
+// the card)
+function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintEl.classList.toggle('gover', !!(gameUI && gameUI.isOpen)); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
 function hintNext(t) { if (hintLeft > 0) HINT_NEXT.push(t); else hint(t); }
 function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) { if (HINT_NEXT.length) hint(HINT_NEXT.shift()); else hintEl.classList.remove('on'); } }
 // jobs just done (game.js job): said after what was done, the clipboard's number up
