@@ -116,7 +116,7 @@ await run(0.3); await shoot('1_dock');
 const before = await st();
 ok('a tap on the water: cast', await castOut());
 await run(1.3); s = await st();
-ok('a worm used, the float out on the water, "Watch the float"', s.worms === before.worms - 1 && s.state === 'wait' && s.float && (fr ? /bouchon/ : /float/).test(s.hint), s);
+ok('a worm used, the float out on the water, "Wait for a bite…"', s.worms === before.worms - 1 && s.state === 'wait' && s.float && (fr ? /morde/ : /bite/).test(s.hint), s);
 await p.evaluate(() => window.__farm.fishing().press(true)); s = await st();
 ok('a tap too soon: "Not yet", still waiting, no harm done', s.state === 'wait' && (fr ? /Pas encore/ : /Not yet/).test(s.hint), s.hint);
 ok('then the bite', await until(() => window.__farm.fishing().state === 'bite', 20));

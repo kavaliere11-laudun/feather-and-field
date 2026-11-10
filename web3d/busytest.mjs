@@ -46,7 +46,7 @@ const watch = () => p.evaluate(() => { const f = window.__farm, Lf = f.farmer(),
 let far = await putFar(26);
 await p.evaluate(id => window.__farm.gameUI().o.cuddle(id), H[0].id); await run(0.1);      // (asked without her card: opening it brings the view in close to her)
 let w = await watch();
-ok(`in sight, ${far.d.toFixed(0)} m off: he dashes to the job (3 m/s), all the way (no skip)`, far.seen && w.top > 2.8 && w.top < 3.2 && w.skipped === far.skipped && w.inPen, { far, w });
+ok(`in sight, ${far.d.toFixed(0)} m off: he sprints to the job (4.6 m/s while far), all the way (no skip)`, far.seen && w.top > 4.2 && w.top < 4.8 && w.skipped === far.skipped && w.inPen, { far, w });
 ok('free again', await free());
 // ---- out of sight: put on his way just off the screen
 await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id); b.happy = 0; g.save(); }, H[0].id);
