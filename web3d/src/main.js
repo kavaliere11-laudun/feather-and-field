@@ -4584,7 +4584,7 @@ canvas.addEventListener('pointermove', e => {
 function endPointer(e) {
   const p = pointers.get(e.pointerId); if (!p) return;
   pointers.delete(e.pointerId);
-  if (MOVE.drag && MOVE.drag.id === e.pointerId) MOVE.drag = null;
+  if (MOVE.drag && MOVE.drag.id === e.pointerId) { MOVE.drag = null; moveSettle(); }
   if (DMOVE.drag && DMOVE.drag.id === e.pointerId) DMOVE.drag = null;
   if (drag && !drag.moved && pointers.size === 0 && performance.now() - p.t0 < 500) (inside.open ? insideTap : MOVE.plot ? moveTap : DMOVE.id ? decTap : tapAt)(e.clientX, e.clientY);
   if (pointers.size < 2) { pinch = 0; twist = null; tilt = null; }
@@ -4746,7 +4746,7 @@ function tapAt(x, y) {
       if (!anyAsleep(p)) continue;
       nb.min.set(-0.72, 0, -0.52); nb.max.set(0.72, 1.6, 0.6);
       loc.copy(ray.ray).applyMatrix4(inv.copy(p.frame.matrixWorld).invert());
-      if (loc.intersectBox(nb, hitP)) { openInside(p); return; }
+      if (loc.intersectBox(nb, hitP)) { if (GAME_MODE && p.gc) coopCard(p); else openInside(p); return; }      // (the game: its card, with "Look inside"; Audrey 10 Nov 2026 22:27: "I tried to click to know the price to improve the coop but each time it takes me inside the coop as the chickens are asleep")
     }
     // a coop's nest box: collect the eggs (the game: sold)
     for (const p of livePlots()) {
@@ -7049,7 +7049,7 @@ function moveBusy(p) {
 }
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: () => cuddleAll(p.gc.id) });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: farmerAsleep() || anyAsleep(p) ? null : () => cuddleAll(p.gc.id), asleep: farmerAsleep() || anyAsleep(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
 function dressCoop(p, id) {
@@ -7133,7 +7133,7 @@ function startMove(p, grow) {
   MOVE.foot = footMark(p.gc, MOVE.grow); p.group.add(MOVE.foot);
   batchCoops();
   if (farmLife && farmLife.task && farmLife.task.name === 'coop') farmLife.task = null;      // (he was off to watch them: something else)
-  gameUI.moveBar(true, { turn: () => { MOVE.moved = true; moveTo(MOVE.at.x, MOVE.at.z, (MOVE.at.deg + 90) % 360, true); }, cancel: () => endMove(false), place: () => placeCoop() });
+  gameUI.moveBar(true, { turn: () => { MOVE.moved = true; moveTo(MOVE.at.x, MOVE.at.z, (MOVE.at.deg + 45) % 360, true); }, cancel: () => endMove(false), place: () => placeCoop() });
   moveTo(MOVE.at.x, MOVE.at.z, MOVE.at.deg, true);
   const size = Math.max(view.size, sideways() ? 3.4 : 4.4), v = viewAbove(p.centre.x, p.centre.z, size);
   focusOn(v[0], v[1], size);                                // (the player's tap: room round it in view, above the bar)
@@ -7185,6 +7185,23 @@ function moveTo(x, z, deg, force = false) {
   MOVE.grassAt = performance.now() + 220;                   // (once it's still a moment: no grass through its pen)
   renderer.shadowMap.needsUpdate = true; wake(600);
 }
+// ---- a coop let go where it doesn't fit: nudged to the nearest place that does, turned if need be (10 Nov 2026, Audrey, of
+// a wide stretch between two lanes where every try was refused: "Seems that there is no way to add a coop in that space of
+// the game that is quite a big one fix that". A full-grown pen fits few places and only at some angles: Turn now goes by
+// eighths of a turn, and a refused spot looks within 2.5 m, at each eighth, for one with room to grow)
+function moveFits(x, z, deg) {
+  const p = MOVE.plot, sp = { x, z, deg }; if (!coopSpot(sp, p.gc, true).ok) return false;
+  return !(grownOf(p.gc, MOVE.grow) && !roomToGrow(sp, p.gc.breed, p.gc.id, MOVE.grow));
+}
+function moveSettle() {
+  const p = MOVE.plot; if (!p || !MOVE.spot || MOVE.spot.ok || MOVE.drag) return false;
+  const { x, z, deg } = MOVE.at;
+  for (const r of [0, 0.5, 1, 1.5, 2, 2.5]) for (let k = 0; k < (r ? 8 : 1); k++) for (const dd of [0, 45, 315, 90, 270, 135, 225, 180]) {
+    const X = Math.round((x + Math.cos(k * Math.PI / 4) * r) * 4) / 4, Z = Math.round((z + Math.sin(k * Math.PI / 4) * r) * 4) / 4, D = (deg + dd) % 360;
+    if ((r || dd) && moveFits(X, Z, D)) { moveTo(X, Z, D, true); if (MOVE.spot.ok) { gameUI.moveStatus(game.t('move_snapped'), true); return true; } }
+  }
+  moveTo(x, z, deg, true); return false;
+}
 function groundAt(cx, cy, out = new THREE.Vector3()) {
   ndc.set(cx / canvas.clientWidth * 2 - 1, -(cy / canvas.clientHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
   return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), out);
@@ -7200,7 +7217,7 @@ function moveDrag(cx, cy) { const g = groundAt(cx, cy); if (g) moveTo(g.x - MOVE
 function moveTap(cx, cy) {
   const g = groundAt(cx, cy); if (!g) return;
   const [lx, lz] = inSpot(MOVE.at, g.x, g.z); if (rectGap(footOf(MOVE.plot.gc), lx, lz) < 0.05) return;
-  moveTo(g.x, g.z, MOVE.at.deg);
+  moveTo(g.x, g.z, MOVE.at.deg); moveSettle();
 }
 // each frame: carried to the edge of the screen, the view goes along
 function tickMove(dt) {
@@ -9422,7 +9439,7 @@ window.__farm = {
     alarm: () => guardAlarm(geeseFlock, null), brave: () => !!(geeseFlock && geeseFlock.brave), visit: () => geeseVisit(), start: k => startGeeseVisit(k), V: () => GVISIT, corn: () => CORN.list.filter(c => c.landed).length,
     gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]), dressCoop: (i, id) => dressCoop(gamePlots()[i], id), coopParts: i => coopParts(gamePlots()[i]).map(x => x[0]), shopSheet: tab => shopSheet(tab),
-  move: { start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
+  move: { settle: () => moveSettle(), fits: (x, z, deg) => moveFits(x, z, deg), start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, small: !!(MOVE.spot && MOVE.spot.small), clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length, grow: MOVE.grow }),
     room: (i, sp) => { const gc = gamePlots()[i].gc; return { now: coopSpot(sp, gc).ok, grow: roomToGrow(sp, gc.breed, gc.id), tier: roomTier(sp, gc.breed, gc.id, gc.tier || 0) }; }, grown: (i, t = 4) => { const G = grownOf(gamePlots()[i].gc, t); return G && { foot: footOf(G), apron: apronOf(G) }; }, clearOfGrowth: (id, x, z) => clearOfGrowth(id, x, z) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm

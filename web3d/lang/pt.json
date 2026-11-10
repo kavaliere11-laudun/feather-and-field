@@ -48,7 +48,7 @@
   "t": "Feliz pelo carinho por mais {when}",
   "f": "Feliz pelo carinho por mais {when}"
  },
- "text.cuddle_night": "Carinhos só de manhã: {farmer} está dormindo.",
+ "text.cuddle_night": "Carinho só de manhã: todos aqui estão dormindo.",
  "text.cuddle_done": "{farmer} faz carinho em {name} ♥ +{xp} XP",
  "text.trust_up1": "{name} está pegando amizade com {farmer}.",
  "text.trust_up2": "{name} agora confia em {farmer} e vem até a cerca dar oi.",
@@ -1362,5 +1362,7 @@
  "text.pantry_big_on": "Prateleiras maiores: suas ✓",
  "text.pantry_first": "Seus ovos esperam aqui. Toque em Vender para transformá-los em moedas.",
  "text.eggs_pantry_f1": "🥚 1 ovo fresco para a sua despensa · +{xp} XP",
- "text.eggs_pantry_f": "🥚 {n} ovos para a sua despensa, {f} frescos · +{xp} XP"
+ "text.eggs_pantry_f": "🥚 {n} ovos para a sua despensa, {f} frescos · +{xp} XP",
+ "text.move_snapped": "Movido um pouco, para onde cabe e pode crescer.",
+ "text.coop_inside": "Olhar lá dentro"
 }

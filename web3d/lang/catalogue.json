@@ -246,8 +246,8 @@
  },
  {
   "id": "text.cuddle_night",
-  "en": "Cuddles in the morning: {farmer} is asleep.",
-  "fr": "Les câlins, ce sera demain matin : {farmer} dort."
+  "en": "Cuddles in the morning: everyone here is asleep.",
+  "fr": "Les câlins, ce sera demain matin : tout le monde dort ici."
  },
  {
   "id": "text.cuddle_done",
@@ -4274,6 +4274,16 @@
   "id": "text.fish_casting",
   "en": "Casting…",
   "fr": "On lance…"
+ },
+ {
+  "id": "text.move_snapped",
+  "en": "Nudged to where it fits, with room to grow.",
+  "fr": "Déplacé un peu, là où il a la place de s’agrandir."
+ },
+ {
+  "id": "text.coop_inside",
+  "en": "Look inside",
+  "fr": "Regarder à l’intérieur"
  },
  {
   "id": "text.eggs_pantry_f1",

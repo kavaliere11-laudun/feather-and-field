@@ -647,6 +647,8 @@ export class GameUI {
     body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
     const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
     if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: this.g.andList(names) })));
+    if (up && up.onInside) { const ib = el('button', 'gbtn galt', '🌙 ' + this.t('coop_inside')); ib.type = 'button'; ib.dataset.inside = '1'; ib.addEventListener('click', () => up.onInside()); body.append(ib); }
+    if (up && up.asleep && g.birdsIn(coop.id).length > 1) body.append(el('p', 'gnote', this.t('cuddle_night')));      // (no cuddle button at night: said instead, Audrey 22:28)
     if (up && up.onCuddleAll && g.birdsIn(coop.id).length > 1) { const ca = el('button', 'gbtn gcuddleall', this.t('cuddle_all')); ca.type = 'button'; ca.addEventListener('click', () => up.onCuddleAll()); body.append(ca); }
     const n = up && g.coopNext(coop);
     if (n) {
@@ -905,7 +907,7 @@ export class GameUI {
     const kept = MILE_IDS.filter(id => g.mileClaimed(id) >= MILES[id].at.length);
     b.append(el('p', 'gsub', this.t('mile_sub', { n: kept.length, all: MILE_IDS.length })));
     const shelf = el('div', 'gshelf'); shelf.setAttribute('aria-label', this.t('mile_shelf'));
-    for (const id of MILE_IDS) { const k = el('span', 'gkeep' + (kept.includes(id) ? ' on' : ''), kept.includes(id) ? MILES[id].e : ''); k.dataset.keep = id; shelf.append(k); }
+    for (const id of MILE_IDS) { const won = kept.includes(id), k = el('span', 'gkeep' + (won ? ' on' : ''), MILES[id].secret && !g.mileReached(id) ? '❔' : MILES[id].e); k.dataset.keep = id; shelf.append(k); }      // (each keepsake's picture always in its place, pale till it's won: Audrey 10 Nov 2026 22:24, "The shelve icon should not disappear when the shelve is empty")
     b.append(shelf);
     for (const id of MILE_IDS) {
       const M = MILES[id], v = g.mileValue(id), got = g.mileClaimed(id), reached = g.mileReached(id), N = M.at.length, hid = M.secret && !reached;
@@ -920,6 +922,7 @@ export class GameUI {
       else if (got >= N) row.append(el('span', 'gjob-ok', this.t('mile_all')));
       c.append(row); b.append(c);
     }
+    const ready = b.querySelector('.gmile-ready'); if (ready) ready.scrollIntoView({ block: 'center' });      // (one to collect: brought into view, "clicking on the milestone button scrolls down to the next milestone completed")
   }
   jobsSheet(h = {}) {
     const g = this.g, J = g.jobs(), r = g.jobReward(), b = this.open('jobs', this.t('jobs_title'));

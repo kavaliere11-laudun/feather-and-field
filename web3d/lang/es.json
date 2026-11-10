@@ -48,7 +48,7 @@
   "t": "Feliz tras un mimo: le dura {when} más",
   "f": "Feliz tras un mimo: le dura {when} más"
  },
- "text.cuddle_night": "Mimos por la mañana: {farmer} está durmiendo.",
+ "text.cuddle_night": "Los mimos, mañana por la mañana: aquí todos duermen.",
  "text.cuddle_done": "{farmer} le da un mimo a {name} ♥ +{xp} XP",
  "text.trust_up1": "{name} ya se lleva bien con {farmer}.",
  "text.trust_up2": "{name} ya confía en {farmer} y va a la valla a saludar.",
@@ -1357,5 +1357,7 @@
  "text.pantry_big_on": "Estantes más grandes: tuyos ✓",
  "text.pantry_first": "Tus huevos esperan aquí. Toca Vender para convertirlos en monedas.",
  "text.eggs_pantry_f1": "🥚 1 huevo fresco a tu despensa · +{xp} XP",
- "text.eggs_pantry_f": "🥚 {n} huevos a tu despensa, {f} frescos · +{xp} XP"
+ "text.eggs_pantry_f": "🥚 {n} huevos a tu despensa, {f} frescos · +{xp} XP",
+ "text.move_snapped": "Movido un poco, donde cabe y puede crecer.",
+ "text.coop_inside": "Mirar dentro"
 }
