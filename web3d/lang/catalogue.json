@@ -4069,17 +4069,17 @@
  },
  {
   "id": "text.fish_bite",
-  "en": "Now! Tap!",
-  "fr": "Maintenant ! Touchez !"
+  "en": "Tap when the marker is in the green!",
+  "fr": "Touchez quand le curseur est dans le vert !"
  },
  {
   "id": "text.fish_soon",
-  "en": "Not yet: wait for the float to dive",
-  "fr": "Pas encore : attendez que le bouchon plonge"
+  "en": "Not yet: wait for a bite",
+  "fr": "Pas encore : attendez que ça morde"
  },
  {
   "id": "text.fish_missed",
-  "en": "It swam off with the worm",
+  "en": "It got away with the worm",
   "fr": "Il est parti avec le ver"
  },
  {
@@ -4276,14 +4276,34 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.fish_try2",
+  "en": "Missed! 2 tries left",
+  "fr": "Raté ! Encore 2 essais"
+ },
+ {
+  "id": "text.fish_try1",
+  "en": "Missed! Last try",
+  "fr": "Raté ! Dernier essai"
+ },
+ {
+  "id": "text.find_farmer",
+  "en": "Find {farmer}",
+  "fr": "Trouver {farmer}"
+ },
+ {
+  "id": "text.find_home",
+  "en": "{farmer} is at home",
+  "fr": "{farmer} est à la maison"
+ },
+ {
   "id": "text.fish_again",
   "en": "It let go… it’ll bite again",
   "fr": "Il a lâché… il va mordre de nouveau"
  },
  {
   "id": "text.fish_watch",
-  "en": "Wait for the float to dive, then tap",
-  "fr": "Attendez que le bouchon plonge, puis touchez"
+  "en": "Wait for a bite…",
+  "fr": "Attendez que ça morde…"
  },
  {
   "id": "text.fish_nibble",
@@ -4297,8 +4317,8 @@
  },
  {
   "id": "text.fish_r_good",
-  "en": "Reeling in… keep holding",
-  "fr": "On remonte… gardez le doigt appuyé"
+  "en": "Got it! In it comes…",
+  "fr": "Bravo ! Il arrive…"
  },
  {
   "id": "text.fish_r_ease",
@@ -4327,23 +4347,23 @@
  },
  {
   "id": "text.fhelp_2t",
-  "en": "2. Strike",
-  "fr": "2. Ferrer"
+  "en": "2. Wait for a bite",
+  "fr": "2. Attendre que ça morde"
  },
  {
   "id": "text.fhelp_2",
-  "en": "Watch the float. When it dives and a ! pops up, tap anywhere. No rush: it stays down a few seconds.",
-  "fr": "Surveillez le bouchon. Quand il plonge et qu’un ! apparaît, touchez l’écran. Rien ne presse : il reste sous l’eau quelques secondes."
+  "en": "Watch the float. When it dives, a bar comes up with a marker going to and fro.",
+  "fr": "Surveillez le bouchon. Quand il plonge, une barre apparaît avec un curseur qui va et vient."
  },
  {
   "id": "text.fhelp_3t",
-  "en": "3. Reel in",
-  "fr": "3. Remonter"
+  "en": "3. Tap in the green",
+  "fr": "3. Toucher dans le vert"
  },
  {
   "id": "text.fhelp_3",
-  "en": "Hold your finger down to reel the fish in. When the bar turns red the fish is pulling: let go until it’s blue again. Nothing can break.",
-  "fr": "Gardez le doigt appuyé pour remonter le poisson. Quand la barre devient rouge, le poisson tire : relâchez jusqu’à ce qu’elle redevienne bleue. Rien ne peut casser."
+  "en": "Tap when the marker is in the green part and the fish is yours. You get 3 tries. Rarer fish have a smaller green.",
+  "fr": "Touchez quand le curseur est dans la partie verte et le poisson est à vous. Vous avez 3 essais. Les poissons rares ont un vert plus petit."
  },
  {
   "id": "text.fhelp_slack",
