@@ -342,6 +342,8 @@ class Intro {
     this.dress(230, { x0: -3.4, x1: 3.4, z0: -4, z1: 2, clear: [[-1.9, -3.1, 0.1, -1.0], [-1.2, -0.6, 2.2, 1.0]], seed: 15, flowers: 0.45 });
     // the Brave hen, out in front of her coop: chest out, wings up, calling after him
     this.bird('rir', 'hen', null, -1.12, 0.62, 0.9, A => { A.proud = 1; A.flap = 1; A.t = 2.3; A.kawk = 1; A.lookYaw = 0.15; A.lookTilt = -0.05; });
+    // (10 Nov 2026, Audrey: "Can you rework that image the fox has a weird pose": shot a tenth of a second later, intropics.mjs T 3.1 for this scene: Rusty stretched out in mid-bound,
+    // his legs apart, where he was caught with them bunched under him; his head turned back less far)
     // Rusty and Biscuit at a run, a paw on the ground (each where the picture wants him at the moment it's shot, SHOT seconds in, having run
     // there at his pace): Rusty looks back over his shoulder, ears back, his brush streaming; Biscuit after him, grinning
     const C = this.ctx, SHOT = 3, fam = { r: this.r, joints: C.beastJoints, out: true, group: new THREE.Group(), foxes: [], visible: () => true };
@@ -351,8 +353,8 @@ class Intro {
       f.at = t => { const back = v * (SHOT - t); f.pos.set(x - Math.sin(heading) * back, 0, z - Math.cos(heading) * back); };
       f.at(0); f.face = face; return f;
     };
-    runner('fox', 'Rusty', 'dad', 1.2, 0.3, 1.4, 1.62, A => { A.lookYawGoal = -1.2; A.lookPitchGoal = 0.05; A.earsGoal = -0.7; A.tailUpGoal = 0.3; A.mouthGoal = 0.15; });
-    runner('collie', 'Biscuit', 'dog', -0.2, 0.75, 1.45, 1.66, A => { A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.mouthGoal = 0.7; A.earsGoal = 0.6; A.wideGoal = 0.3; });
+    runner('fox', 'Rusty', 'dad', 1.04, 0.27, 1.4, 1.62, A => { A.lookYawGoal = -0.75; A.lookPitchGoal = 0.05; A.earsGoal = -0.7; A.tailUpGoal = 0.3; A.mouthGoal = 0.15; });
+    runner('collie', 'Biscuit', 'dog', -0.36, 0.72, 1.45, 1.66, A => { A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.mouthGoal = 0.7; A.earsGoal = 0.6; A.wideGoal = 0.3; });
     fam.nextTask = f => T.wait(1e6, (f, t, dt) => { f.at(Math.min(this.t, SHOT + 0.5)); f.face(f.A); });
     this.restarts = [() => { for (const f of fam.foxes) { f.at(0); f.lastPos = null; } }];
     this.ticks.push(dt => { if (dt > 0) for (const f of fam.foxes) f.update(dt); });

@@ -4906,3 +4906,9 @@ KEEPFISH, SEED). All nine built:
   a card keeps its place).
 - Tests: `pantrytest` (EN/FR); `eggtest`, `ordertest`, `awaytest`, `cuddletest`, `wheattest`, `nettest`, `hinttest`,
   `firstdaytest` brought in line.
+
+## The fox's welcome picture restaged (10 Nov 2026, 21:05; Audrey: "Can you rework that image the fox has a weird pose")
+Rusty was caught with his legs bunched under him and his head twisted far back. The scene (intro.js `fox`) is now shot a
+tenth of a second later (intropics.mjs: T 3.1 for scene 5): he is stretched out in mid-bound, legs apart, glancing back
+less far, Biscuit after him. No model changed, only the moment and the turn of his head. All five welcome pictures were
+shot again so they share the game's Painted look (`intro/*.webp`, the sign of picture 3 in six languages).

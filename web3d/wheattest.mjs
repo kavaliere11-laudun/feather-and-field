@@ -147,7 +147,7 @@ await p.evaluate(at => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
 // a save changed outside
 for (const [what, edit, check] of [
   ['a field ripe later than it can grow', 'd.wheat.ripe = Date.now() + 99 * 3600e3', r => r.wheat.ripe <= r.now + 4 * 3600e3 + 1000],
-  ['grain past the store', 'd.grain = 999', r => r.grain === 120],
+  ['grain past the store', 'd.grain = 999', r => r.grain === 126],
   ['honey past the hives', 'd.honey.n = 99', r => r.honey.n === 6],
   ['honey without hives', 'd.decor = d.decor.filter(x => x.id !== "beehives"); d.honey = { n: 5, at: 0 }', r => !r.honey]]) {
   await p.evaluate(e => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d; eval(e); localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, edit);

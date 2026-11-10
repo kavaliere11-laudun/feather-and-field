@@ -29,7 +29,7 @@ for (const S of SHOTS) {
     const f = window.__farm; f.pause(true); f.wind(4.2); window.__noBlink = true; f.intro().restart();
     for (let i = 0; i < T * 30; i++) f.step(1 / 30, 1);
     f.posterShot({ ...f.intro().cam, ...CAM, aspect });
-  }, [T, W / H, CAM]);
+  }, [process.env.T ? T : S.n === 5 ? 3.1 : T, W / H, CAM]);
   const png = tmp + S.name + '.png';
   await p.screenshot({ path: png });
   await p.close();
