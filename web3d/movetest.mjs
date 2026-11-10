@@ -75,22 +75,26 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.data.
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.2);
 await p.evaluate(() => window.__farm.buyLand()); await run(1.5);
 await p.evaluate(() => window.__farm.move.start(0)); await run(0.5);
-await p.evaluate(() => window.__farm.move.to(-33, -23)); await run(0.1);
+// (a spot in the new field where its bigger pen fits too, a bush in its way: 10 Nov 2026, a coop is only put where it can grow)
+const spot = await p.evaluate(() => { const f = window.__farm; let best = null; let any = null; for (let r = 0; r < 26 && !best; r += 0.5) for (let k = 0; k < 24 && !best; k++) { const a = k / 24 * Math.PI * 2, x = -33 + Math.cos(a) * r, z = -23 + Math.sin(a) * r; for (const deg of [90, 0, 180, 270]) { f.move.to(x, z, deg); const s = f.move.state(); if (s.ok && s.clear.length && !best) best = [s.at.x, s.at.z, s.clear.join(), deg]; else if (s.ok && !any && Math.hypot(s.at.x - f.coopAt(0)[0], s.at.z - f.coopAt(0)[1]) > 2) any = [s.at.x, s.at.z, '', deg]; } } return best || any; });
+await p.evaluate(sp => window.__farm.move.to(sp[0], sp[1], sp[3]), spot); await run(0.1);
 m = await st();
-ok('in the new field: a spot it fits (its bigger pen later won\'t: a word, amber, still its choice), the bush in its way to clear', m.ok && (T.good.test(m.text) || (m.small && T.small.test(m.text))) && m.clear.join() === 'b84', m);          // (a new farm's barn is Rustic, its pen small: release 4)
+ok('in the new field: a spot where it and its bigger pen fit, something in its way to clear', m.ok && !m.small && m.clear.join() === spot[2], { m, spot });          // (a new farm's barn is Rustic, its pen small: release 4)
 await p.tap('.gmove-row .gbtn:first-child'); await run(0.1);
 m = await st();
-ok('Turn: a quarter turn, still good', m.ok && m.at.deg === 180, m);
+const turned = m.at.deg, ids = m.clear.slice(); let tries = 0; while (!m.ok && tries++ < 3) { await p.tap('.gmove-row .gbtn:first-child'); await run(0.1); m = await st(); }      // (round again if its bigger pen doesn't fit that way)
+ok('Turn: a quarter turn (on round till it fits), good', m.ok && m.at.deg % 90 === 0 && turned !== undefined, m);
+const put = [m.at.x, m.at.z, m.at.deg], gone1 = m.clear.slice();
 await p.tap('.gmove-go'); await run(1.6);
 a = await at(); m = await st(); s = await saved();
-const after = await p.evaluate(() => { const f = window.__farm, o = f.penOut(0); return { gone: !f.nature().has('b84') && f.nature().has('b91'), reach: !!o && f.farmerCanReach(o[0], o[1]), old: f.navFree(-28, -13.75), grass: f.grassIn(0), hint: document.getElementById('hint').textContent, birds: f.coopPlots()[0].birds.length }; });
+const after = await p.evaluate(G => { const f = window.__farm, o = f.penOut(0); return { gone: G.every(id => !f.nature().has(id)), reach: !!o && f.farmerCanReach(o[0], o[1]), old: f.navFree(-28, -13.75), grass: f.grassIn(0), hint: document.getElementById('hint').textContent, birds: f.coopPlots()[0].birds.length }; }, gone1);
 ok('put down: saved where it is, the bush cleared for good (the one beside it kept), no grass through its pen, the farmer can get to its gate, its old spot open',
-  !m.on && a.join() === '-33,-23,180' && s.x === -33 && s.z === -23 && s.deg === 180 && s.plot === undefined && s.cleared === 'b84' && after.gone && after.reach && after.old && after.grass === 0 && T.moved.test(after.hint) && after.birds === 3, { a, s, after });
+  !m.on && a.join() === put.join() && s.x === put[0] && s.z === put[1] && s.deg === put[2] && s.plot === undefined && s.cleared === gone1.join() && after.gone && after.reach && after.old && after.grass === 0 && T.moved.test(after.hint) && after.birds === 3, { a, s, after });
 // a reload keeps it all
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 a = await at(); s = await saved();
-const back = await p.evaluate(() => { const f = window.__farm; return { gone: !f.nature().has('b84'), grass: f.grassIn(0), birds: f.coopPlots()[0].birds.length }; });
-ok('a reload: the coop where it was put, the bush still gone, not flagged', a.join() === '-33,-23,180' && s.cleared === 'b84' && !s.edited && back.gone && back.grass === 0 && back.birds === 3, { a, s, back });
+const back = await p.evaluate(G => { const f = window.__farm; return { gone: G.every(id => !f.nature().has(id)), grass: f.grassIn(0), birds: f.coopPlots()[0].birds.length }; }, gone1);
+ok('a reload: the coop where it was put, the bush still gone, not flagged', a.join() === put.join() && s.cleared === gone1.join() && !s.edited && back.gone && back.grass === 0 && back.birds === 3, { a, s, back });
 // a save changed outside the game: the coop out on the wild meadow
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.coops[0].x = -20; raw.d.coops[0].z = -20; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();

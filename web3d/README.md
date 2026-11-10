@@ -4781,3 +4781,35 @@ doesn't redraw them on every step.
   each a whole size within its kind's, no more than 60 and 12; the tin's day never ahead of today.
 - Tests: `nettest.mjs` (new, English and French); `fishtest`, `rivertest`, `ordertest` updated.
 
+## Her notes from playing, 10 Nov 2026 morning (iPhone): messages over a card, chores simply accepted, a tap in the green, the keep net at once, a button to the farmer, a coop only where it can grow
+- **"I click on pick but it doesn't work"** (the garden's card): the game was answering ("Your basket is full of carrots…",
+  or "Added to …'s list") but sideways a message said while a card is open was hidden under the card
+  (`body.gopen #hint { opacity: 0 }`). Now one said while a card is open is shown over it, at the top between the coins
+  and the gear (`hint()` marks it `gover`; index.html). Test: `hinttest.mjs` (new).
+- **"Instead of this message it should just accept the action"** (the wheat's card: "Next: the garden, sowing the wheat"):
+  the farm's chores are simply accepted whatever he's doing: sowing and harvesting the wheat, the honey, the garden's beds,
+  a feeder, a treat, a basket for the stall: done at once in the save, the card closed with its own words; he comes and
+  does it after his job if nothing else is waiting for him, else it's simply done (a field or garden job still running is
+  finished first: `seq.finish()`). His list (three at most) is now only for the jobs that are his visit itself: a cuddle,
+  a hen's worms, the geese, fishing. The chores' cards no longer carry the "busy" note.
+- **Fishing: a tap in the green, three tries** ("I liked the progression bar with a green part. We can make it that the
+  player needs to click when the cursor is in the green. The green section is more or less big depending on the fish, it
+  has to be always reasonably achievable, the player has up to 3 tries"; fishing.js `FIGHT`, `EASY`, `TRIES`, `cursor`,
+  `placeGreen`): cast, wait; at the bite the bar comes up, a marker going to and fro, a green part somewhere on it (the
+  first catch 42% of the bar, a common fish 30%, a rare one 22%, a legendary one 17%; the marker crosses in 1.7 to 1.25 s:
+  in the green at least a fifth of a second each pass). A tap in the green: hooked, and in it comes by itself (1.5 s). A
+  tap outside: a try gone ("Missed! 2 tries left"), the green put somewhere else; three tries, then it's off with the
+  worm; left alone 15 s: the same. This replaces the hold-to-reel of 9 Nov evening. "How to fish": 1 Cast, 2 Wait for a
+  bite, 3 Tap in the green.
+- **"it still takes too long for the farmer to reach the spot"**: a sprint (4.6 m/s) while more than 7 m from a job, the
+  dash (3.2) nearer; along the dock at a hurry, the gate in 0.3 s.
+- **"It should come straight after I select stop fishing"**: the keep net's card as soon as he stops (the rod being laid
+  down), not once he's back off the dock (main.js tickFishing, `netShown`).
+- **"Add a button to focus the camera back on the farmer"**: 🧑‍🌾 in the bottom left corner (`#findfarmer`,
+  `findFarmerBtn`): the view glides to him (to his door, with a word, when he's at home). Only ever by her tap.
+- **"That should not be allowed it needs to fit from the start"** (a coop moved where only today's pen fits, amber, "It
+  fits for now…"): a coop of yours being moved is refused there too, red, "Not enough room here for its bigger pen
+  later…", as a new coop always was. The look it must have room for is the roomiest of the other spots on your land
+  (`MOVE.grow`: not where it stands, or a coop on a small farm could never be moved); turning it can make it fit.
+- Tests: `hinttest` (new); `fishtest`, `rivertest`, `busytest`, `growtest`, `movetest` updated.
+

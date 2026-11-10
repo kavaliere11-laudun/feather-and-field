@@ -7100,7 +7100,11 @@ function startMove(p, grow) {
   holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   MOVE.plot = p; MOVE.from = p.draft ? null : spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = !!p.draft; MOVE.nav = false;
   const t0 = p.gc.tier || 0;
-  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...placeSpots(p.gc.breed, 8, MOVE.at).map(o => o.t)));      // (where it stands, or the roomiest spot near)
+  // (the look it must have room for wherever it's put: for a new coop the roomiest there is, where it's offered or near;
+  // for one of yours being moved, the roomiest of the other spots: where it stands may be the only one with room for more,
+  // and a coop that may only go where its bigger pen fits, 10 Nov 2026, could then never be moved at all)
+  const near = placeSpots(p.gc.breed, 8, MOVE.at).map(o => o.t);
+  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : p.draft ? Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...near) : Math.max(t0, ...near));
   // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
   const ghost = new THREE.Group();
   for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
