@@ -536,7 +536,7 @@ export class GameUI {
   }
   // ---- eggs flying from the nest to the coins, then the coins counted up
   flyEggs(from, n, colour, done, cls = 'gegg') {
-    const to = this.coins.getBoundingClientRect(), tx = to.left + 18, ty = to.top + to.height / 2;
+    const to = ((cls === 'gegg' || cls === 'gjar') && this.panBtn.offsetWidth ? this.panBtn : this.coins).getBoundingClientRect(), tx = to.left + 18, ty = to.top + to.height / 2;      // (eggs and jars: to the pantry, 10 Nov 2026)
     const k = Math.max(1, Math.min(6, n)); let left = k;
     for (let i = 0; i < k; i++) {
       const e = el('div', cls); if (colour) e.style.background = colour; e.style.left = (from.x - 9) + 'px'; e.style.top = (from.y - 11) + 'px'; document.body.append(e);

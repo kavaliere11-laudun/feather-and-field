@@ -4879,3 +4879,30 @@ KEEPFISH, SEED). All nine built:
   (her carrots: "I should be offered to keep it sell I need a storage") you're offered to sell or keep.
 - Tests: `busytest` rewritten for actions done at once; `hinttest`, `fishtest`, `rivertest`, `wheattest`, `eggtest`,
   `pentest` adjusted.
+
+## The pantry (10 Nov 2026, 21:03; Audrey: "I should be offered to keep it sell I need a storage"; "If the eggs are sold instantly, how do I collect them for orders ? They should go to the storage too until u decide to sell or not"; her choices: "One pantry", "Limited, bigger shelves can be bought in the shop with real money otherwise they will become bigger as levels are going up", eggs "Straight to storage")
+- **One pantry, a shelf for each thing collected** (game.js PANTRY): eggs, jars of honey, grain, carrots, strawberries,
+  pumpkins, fish. The eggs and the honey are new there (they were sold the moment they were collected); the grain store,
+  the vegetable basket and the fish box are simply its other shelves now.
+- **Eggs go straight in** (`collect`): with what they're worth (the breed's price and the hen's stars, kept in
+  `pantry.val`), the XP at once as before, no coins yet. Honey the same (`collectHoney`). What doesn't fit on a full
+  shelf is sold on the spot and said ("Pantry full: 3 sold · +18 coins").
+- **Sold from the pantry's card** (a 🧺 Pantry pill beside Shop, a dot when a shelf is full or eggs wait there and it has
+  never been opened; gameui.js `pantrySheet`, main.js `pantrySheet`, `sellShelf`): each shelf shows how many of how many,
+  "🧺 n kept for orders" for what the open orders still want (`wantedOf`), and "Sell n · +c coins" for the rest; with
+  only wanted ones left, "Sell anyway". Prices: eggs their own worth, honey 15, grain 1, carrots 3, strawberries 4,
+  pumpkins 18, fish by kind and size (the biggest sold first, the orders taking the smallest).
+- **Orders take from the pantry** when they're delivered (eggs and honey too now: nothing is "set aside" at collecting
+  any more; an old save's set-aside eggs still count). An order is ready when the pantry holds what it asks.
+- **A full shelf in the garden**: Pick opens the pantry with "No room left for carrots in your pantry. Sell some, or keep
+  them for an order." (it used to be a message only).
+- **Sizes** (`shelf(k)`): eggs 24, honey 6, grain 120, carrots 30, strawberries 30, pumpkins 10, fish 12; 5% more for
+  each level past 5 (level 10: eggs 30; level 30: 54); half as much again with `data.shelves` (the bigger shelves, for
+  real money: shown only with the shop's preview, `?shopdemo`, like the other real-money cards; when purchases go live
+  the flag must come from the store's own receipt, never from the save alone).
+- **The save's checks**: `pantry.eggs`, `pantry.honey`, the grain, each vegetable and the fish box no more than their
+  shelf at the save's own level; the eggs' worth no more than 40 coins an egg; `shelves` only `true`.
+- Eggs and jars now fly to the Pantry button. The Shop and Pantry pills hide while a card is open (a message said over
+  a card keeps its place).
+- Tests: `pantrytest` (EN/FR); `eggtest`, `ordertest`, `awaytest`, `cuddletest`, `wheattest`, `nettest`, `hinttest`,
+  `firstdaytest` brought in line.
