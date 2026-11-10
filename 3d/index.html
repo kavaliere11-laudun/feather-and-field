@@ -401,6 +401,10 @@
   .gpic img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .gpage-no .gpic { background: radial-gradient(circle at 50% 80%, #f8f9f3 0, #e4e9db 100%); box-shadow: inset 0 0 0 1px rgba(30, 52, 38, 0.08); }
   .gpage-no .gpic img { filter: brightness(0); opacity: 0.62; }
+  .ghist-b { display: inline-block; margin-top: 4px; } .ghist { margin: 4px 0 0; } .ghist[hidden] { display: none; }
+  .gshopbtn { padding: 0 13px 0 9px; } .gshop-e { font-size: 19px; line-height: 1; } @media (max-width: 520px) { .gshop-l { display: none; } .gshopbtn { padding: 0 9px; } }
+  .gsil { width: 100%; height: 100%; background: #4d564b; -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat; }
+  .gcatch-w { display: block; font-size: 12px; font-weight: 800; color: #2f7a3a; line-height: 1.1; } .gcatch-r[data-want] { box-shadow: inset 0 0 0 2px rgba(47, 122, 58, 0.45); } .gcatch-o { margin: 0 0 4px; }
   .gpage-i { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; padding-top: 1px; }
   .gpage .gcard-t { font-size: 18px; line-height: 1.15; }
   .gpage-s { margin: 0 0 2px; font-weight: 800; font-size: 14.5px; line-height: 1.3; color: var(--ink-2); }
@@ -659,7 +663,7 @@
     .gsheet.gcenter:not(.gintro) { width: min(440px, 62vw); }
     @keyframes gspop { from { transform: translateY(14px) scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
-    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(56vw, 520px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
+    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(46vw, 440px); left: calc(50% + 60px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
     body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }
@@ -759,6 +763,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794342853"></script>
+<script src="app.js?v=1794344429"></script>
 </body>
 </html>
