@@ -4912,3 +4912,9 @@ Rusty was caught with his legs bunched under him and his head twisted far back. 
 tenth of a second later (intropics.mjs: T 3.1 for scene 5): he is stretched out in mid-bound, legs apart, glancing back
 less far, Biscuit after him. No model changed, only the moment and the turn of his head. All five welcome pictures were
 shot again so they share the game's Painted look (`intro/*.webp`, the sign of picture 3 in six languages).
+
+## New Shop and Pantry buttons; Biscuit as he was (10 Nov 2026, 21:52; Audrey: "Change the shopping and pantry icons. Pantry icon should not be next to shopping one"; "fox is good but revert the dog to how it was on the previous photo")
+- The Shop pill beside the coins has a drawn market stall (line art like the other buttons) in place of the shopping
+  bags. The Pantry is a round button with a drawn jar at the top right, beside the gear, away from the Shop.
+- The fox's welcome picture: Rusty stays in mid-bound; Biscuit sets off a tenth of a second later (intro.js `runner`'s
+  `late`), so the shot catches him in the same stride as in the first picture.

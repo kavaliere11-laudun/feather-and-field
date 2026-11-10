@@ -348,13 +348,13 @@ class Intro {
     // there at his pace): Rusty looks back over his shoulder, ears back, his brush streaming; Biscuit after him, grinning
     const C = this.ctx, SHOT = 3, fam = { r: this.r, joints: C.beastJoints, out: true, group: new THREE.Group(), foxes: [], visible: () => true };
     this.g.add(fam.group);
-    const runner = (kind, name, role, x, z, heading, v, face) => {
+    const runner = (kind, name, role, x, z, heading, v, face, late = 0) => {      // (late: he sets off that much later, so the shot catches him that much earlier in his stride)
       const f = new Fox(fam, kind, name, role, 1, this.r); f.home = false; f.root.visible = true; f.heading = heading; fam.foxes.push(f);
-      f.at = t => { const back = v * (SHOT - t); f.pos.set(x - Math.sin(heading) * back, 0, z - Math.cos(heading) * back); };
+      f.at = t => { const back = v * (SHOT - Math.max(0, t - late)); f.pos.set(x - Math.sin(heading) * back, 0, z - Math.cos(heading) * back); };
       f.at(0); f.face = face; return f;
     };
     runner('fox', 'Rusty', 'dad', 1.04, 0.27, 1.4, 1.62, A => { A.lookYawGoal = -0.75; A.lookPitchGoal = 0.05; A.earsGoal = -0.7; A.tailUpGoal = 0.3; A.mouthGoal = 0.15; });
-    runner('collie', 'Biscuit', 'dog', -0.36, 0.72, 1.45, 1.66, A => { A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.mouthGoal = 0.7; A.earsGoal = 0.6; A.wideGoal = 0.3; });
+    runner('collie', 'Biscuit', 'dog', -0.2, 0.75, 1.45, 1.66, A => { A.tailUpGoal = 0.7; A.wagGoal = 0.5; A.mouthGoal = 0.7; A.earsGoal = 0.6; A.wideGoal = 0.3; }, 0.1);      // (Biscuit as he was in the first picture, Audrey 10 Nov 2026 21:52: "fox is good but revert the dog to how it was")
     fam.nextTask = f => T.wait(1e6, (f, t, dt) => { f.at(Math.min(this.t, SHOT + 0.5)); f.face(f.A); });
     this.restarts = [() => { for (const f of fam.foxes) { f.at(0); f.lastPos = null; } }];
     this.ticks.push(dt => { if (dt > 0) for (const f of fam.foxes) f.update(dt); });

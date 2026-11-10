@@ -115,15 +115,15 @@ export class GameUI {
     // (no game name in the corner: 7 Nov, "No need to display the name of the game"; the level and coins together on the
     // left, the farm's buttons on the right, settings apart)
     // the farm shop's own button beside the coins (10 Nov 2026, Audrey: "Farm shop should have its own entry next to the coins to advertise it more")
-    this.shopBtn = el('button', 'gpill gshopbtn'); this.shopBtn.type = 'button'; this.shopLbl = el('span', 'gnum gshop-l'); this.shopBtn.append(el('span', 'gshop-e', '🛍️'), this.shopLbl);
+    this.shopBtn = el('button', 'gpill gshopbtn'); this.shopBtn.type = 'button'; this.shopLbl = el('span', 'gnum gshop-l'); { const ic = el('span', 'gshop-i'); ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5h14.8L21 9"/><path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"/><path d="M5 12.5V20h14v-7.5"/><path d="M10 20v-4.5h4V20"/></svg>'; this.shopBtn.append(ic, this.shopLbl); }      // (a market stall, drawn like the other buttons; Audrey 10 Nov 2026 21:52: "Change the shopping and pantry icons")
     this.shopBtn.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
     // the pantry's (10 Nov 2026): a dot when a shelf is full, or eggs wait there and it has never been opened
-    this.panBtn = el('button', 'gpill gshopbtn gpanbtn'); this.panBtn.type = 'button'; this.panLbl = el('span', 'gnum gshop-l'); this.pdot = el('span', 'gdot'); this.pdot.hidden = true; this.panBtn.append(el('span', 'gshop-e', '🧺'), this.panLbl, this.pdot);
+    this.panBtn = el('button', 'gicon gpanbtn'); this.panBtn.type = 'button'; this.panBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="10" height="3.2" rx="1"/><path d="M8 6.2c-1.6 1-2.5 2.300-2.500 4.300V18a3 3 0 003 3h7a3 3 0 003-3v-7.500c0-2-.9-3.300-2.500-4.300"/><path d="M9 12.500h6v4H9z"/></svg>'; this.panLbl = el('span', 'gpan-l'); this.pdot = el('span', 'gdot'); this.pdot.hidden = true; this.panBtn.append(this.pdot);      // (a jar, at the top right beside the gear: "Pantry icon should not be next to shopping one")
     this.panBtn.addEventListener('click', () => { if (this.o.pantry) this.o.pantry(); else this.pantrySheet({}); });
-    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn, this.panBtn);
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.shopBtn);
     this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
     this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn, this.bookBtn, this.coopsBtn);
-    this.bar.append(this.stat, this.acts, this.gear);
+    this.bar.append(this.stat, this.acts, this.panBtn, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
     // the sheet
