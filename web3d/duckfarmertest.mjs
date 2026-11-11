@@ -123,14 +123,14 @@ const PERS = { mum: { acts: ['rest'], line: fr ? /ses canetons/ : /her ducklings
 for (const [pers, want] of Object.entries(PERS)) {
   const gid = await p.evaluate(pers => { const f = window.__farm, g = f.game(), C = f.coopPlots().find(q => q.breed === 'call').callPen, d = C.ducks.find(x => x.kind === 'call_f'); d.pers = pers; g.bird(d.gid).pers = pers; g.save(); f.openBirdCard(d); return d.gid; }, pers);
   await run(0.4); const t = await sheet(); await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
-  let laid = false; const acts = new Set();
+  let laid = false; const acts = new Set(), trace = [];
   for (let i = 0; i < 480; i++) {
     const q = await p.evaluate(gid => { const C = window.__farm.coopPlots().find(q => q.breed === 'call').callPen, d = C.ducks.find(x => x.gid === gid); if (d.laidOn !== C.day && (!d.task || d.task.name !== 'lay') && C.canLay(d)) C.layNow(d); return { task: d.task && d.task.name, act: d.act, laid: d.laidOn === C.day }; }, gid);
-    if (q.laid) laid = true; if (laid && (q.task === 'lay' || q.task === 'pleased')) acts.add(q.act); if (laid && q.task !== 'lay' && q.task !== 'pleased') break;
+    if (q.laid) laid = true; { const k2 = q.task + ':' + q.act; if (trace[trace.length - 1] !== k2) trace.push(k2); } if (laid && (q.task === 'lay' || q.task === 'pleased')) acts.add(q.act); if (laid && q.task !== 'lay' && q.task !== 'pleased') break;
     await run(0.25);
   }
   await p.evaluate(gid => { const C = window.__farm.coopPlots().find(q => q.breed === 'call').callPen; C.ducks.find(x => x.gid === gid).laidOn = -1; }, gid);
-  ok(`a ${pers} duck: her card's words a duck's; after laying, pleased with herself her own way`, want.line.test(t) && laid && want.acts.every(a => acts.has(a)), { acts: [...acts], laid, line: t.match(/(PERSONALITY|PERSONNALITÉ)[^]*?\n\n[^\n]+\n\n([^\n]+)/i)?.[2] });
+  ok(`a ${pers} duck: her card's words a duck's; after laying, pleased with herself her own way`, want.line.test(t) && laid && want.acts.every(a => acts.has(a)), { acts: [...acts], trace, laid, line: t.match(/(PERSONALITY|PERSONNALITÉ)[^]*?\n\n[^\n]+\n\n([^\n]+)/i)?.[2] });
 }
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
