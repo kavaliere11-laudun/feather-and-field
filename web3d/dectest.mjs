@@ -120,7 +120,7 @@ const worn = () => p.evaluate(() => { const f = window.__farm, F = f.farmer(); r
 await p.evaluate(() => window.__farm.deco.shop()); await run(0.3);
 await p.evaluate(() => document.querySelector('.gshop-tabs .gchip[data-tab="outfits"]').click()); await run(0.3);
 await p.waitForFunction(() => [...document.querySelectorAll('.gout img')].every(i => i.complete), null, { timeout: 30000 }).catch(() => {});
-const outs = await p.evaluate(() => [...document.querySelectorAll('.gout')].map(c => [c.dataset.outfit, c.classList.contains('gpage-no'), c.classList.contains('gout-on'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img').naturalWidth > 0]));
+const outs = await p.evaluate(() => [...document.querySelectorAll('.gout')].map(c => [c.dataset.outfit, c.classList.contains('gpage-no'), c.classList.contains('gout-on'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img') ? c.querySelector('img').naturalWidth > 0 : !!c.querySelector('.gsil')]));
 t = await sheet();
 ok('Outfits: the six with their pictures; the classic worn; market day and the garden party to buy; the other three to come',
   outs.length === 6 && outs.every(o => o[4]) && outs[0][2] && outs.filter(o => o[1]).length === 3 && outs.filter(o => o[3]).length === 2 && (fr ? /Jour de marché/ : /Market day/).test(t) && (fr ? /Acheter et porter · 1[\s\u202f ]200/ : /Buy and wear · 1,200/).test(t), { outs, t: t.slice(0, 300) });

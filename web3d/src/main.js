@@ -5005,7 +5005,7 @@ function duckVisitOk(b) {
 // heart over each of them while he hugs (penSpec heart). He can't come (busy, in bed, no way in): hearts over them all
 const CUDDLE_ALL = [];      // (kept empty: the tests' cuddleQueue)
 function cuddleAll(coopId) {
-  if (farmerAsleep()) { hint(game.t('cuddle_night', { farmer: farmerName() })); return 0; }
+  if (DAY.hour >= 21.8 || DAY.hour < 6.3) { hint(game.t('cuddle_night', { farmer: farmerName() })); return 0; }      // (by day with the farmer indoors a moment: hearts where they are)
   const due = game.birdsIn(coopId).filter(b => !(game.happyLeft(b) > 0));
   gameUI.close();
   if (!due.length) { hint(game.t('cuddle_all_none')); return 0; }
@@ -7100,7 +7100,7 @@ function moveBusy(p) {
   return !!(p.fw || p.farmer || inside.open || (farmLife && ((farmLife.pen && farmLife.pen.plot === p) || mine(farmLife.task) || mine(farmLife.pending))) || (nightVisit && nightVisit.active() && nightVisit.target === p));
 }
 let MOVE_WAIT = null;
-const nightAt = p => farmerAsleep() || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
+const nightAt = p => DAY.hour >= 21.8 || DAY.hour < 6.3 || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
   gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });

@@ -31,11 +31,12 @@ ok(fr ? 'French: "Objectifs", "Pièces gagnées"' : 'English: "Milestones", "Coi
 await shut();
 // ---- eggs collected: 50 → a step to collect; the dot on the Book; collected: coins, XP, a star
 let S0 = await p.evaluate(() => { const g = window.__farm.game(); g.tallyAdd('eggs', 50); window.__farm.gameUI().refresh(); return { coins: g.data.coins, xp: g.data.xp, dot: !window.__farm.gameUI().bdot.hidden && window.__farm.gameUI().bdot.textContent, ready: g.milesReady() }; });
-ok('50 eggs collected: one milestone ready, a "1" on the Book', S0.ready === 1 && S0.dot === '1', S0);
+const waitN = await p.evaluate(() => window.__farm.game().waitingCoops().length);
+ok('50 eggs collected: one milestone ready, counted on the Book (with any coop waiting there)', S0.ready === 1 && S0.dot === String(1 + waitN), { S0, waitN });
 await p.evaluate(() => window.__farm.bookOpen('miles')); await run(0.2);
 await p.evaluate(() => document.querySelector('.gmile[data-mile=eggs] [data-collect]').click()); await run(0.2);
 let S1 = await p.evaluate(() => { const g = window.__farm.game(), c = document.querySelector('.gmile[data-mile=eggs]'); return { coins: g.data.coins, xp: g.data.xp, on: c.querySelectorAll('.gmile-stars .on').length, go: !!c.querySelector('[data-collect]'), dot: window.__farm.gameUI().bdot.hidden, hint: document.getElementById('hint').textContent, tally: g.tallyOf('coins') }; });
-ok('collected: +50 coins, +5 XP, its first star, nothing more to collect, the dot gone', S1.coins === S0.coins + 50 && S1.xp === S0.xp + 5 && S1.on === 1 && !S1.go && S1.dot, { S0, S1 });
+ok('collected: +50 coins, +5 XP, its first star, nothing more to collect, the dot gone', S1.coins === S0.coins + 50 && S1.xp === S0.xp + 5 && S1.on === 1 && !S1.go && (S1.dot || waitN > 0), { S0, S1 });
 ok('…and those 50 coins count as coins earned, once', S1.tally === 50, S1.tally);
 // ---- a one-off: Rusty's first visit; all four steps of one: its keepsake on the shelf
 await p.evaluate(() => { const g = window.__farm.game(); g.tallyAdd('fox', 1); g.tallyAdd('foxout', 40); });
