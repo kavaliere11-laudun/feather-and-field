@@ -123,10 +123,10 @@ const PERS = { mum: { acts: ['rest'], line: fr ? /ses canetons/ : /her ducklings
 for (const [pers, want] of Object.entries(PERS)) {
   const gid = await p.evaluate(pers => { const f = window.__farm, g = f.game(), C = f.coopPlots().find(q => q.breed === 'call').callPen, d = C.ducks.find(x => x.kind === 'call_f'); d.pers = pers; g.bird(d.gid).pers = pers; g.save(); f.openBirdCard(d); return d.gid; }, pers);
   await run(0.4); const t = await sheet(); await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
-  let laid = false; const acts = new Set(), trace = [];
+  let laid = false; const acts = new Set(), trace = []; let idle = 0;
   for (let i = 0; i < 480; i++) {
     const q = await p.evaluate(gid => { const C = window.__farm.coopPlots().find(q => q.breed === 'call').callPen, d = C.ducks.find(x => x.gid === gid); if (d.laidOn !== C.day && (!d.task || d.task.name !== 'lay') && C.canLay(d)) C.layNow(d); return { task: d.task && d.task.name, act: d.act, laid: d.laidOn === C.day }; }, gid);
-    if (q.laid) laid = true; { const k2 = q.task + ':' + q.act; if (trace[trace.length - 1] !== k2) trace.push(k2); } if (laid && (q.task === 'lay' || q.task === 'pleased')) acts.add(q.act); if (laid && q.task !== 'lay' && q.task !== 'pleased') break;
+    if (q.laid) laid = true; { const k2 = q.task + ':' + q.act; if (trace[trace.length - 1] !== k2) trace.push(k2); } if (laid && (q.task === 'lay' || q.task === 'pleased')) acts.add(q.act); if (laid && q.task !== 'lay' && q.task !== 'pleased' && (q.task || ++idle > 12)) break;      // (a moment with no task between laying and her routine isn't its end)
     await run(0.25);
   }
   await p.evaluate(gid => { const C = window.__farm.coopPlots().find(q => q.breed === 'call').callPen; C.ducks.find(x => x.gid === gid).laidOn = -1; }, gid);
