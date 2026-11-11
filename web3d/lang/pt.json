@@ -131,7 +131,7 @@
  "text.move_cancel": "Cancelar",
  "text.move_place": "Colocar aqui",
  "text.moved": "O galinheiro está no novo lugar!",
- "text.move_busy": "Agora não: tente de novo daqui a pouco.",
+ "text.move_busy": "Um momento: este galinheiro está ocupado. A mudança começa sozinha assim que ele ficar livre.",
  "text.coops_title": "Seus galinheiros",
  "text.coops_aria": "Seus galinheiros",
  "text.coops_waiting": "Um novo galinheiro está esperando por você",

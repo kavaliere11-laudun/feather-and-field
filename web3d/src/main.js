@@ -7055,9 +7055,15 @@ function fillPlotGaps() {
 // ---- moving one
 const MOVE = { plot: null, from: null, at: null, spot: null, ghost: null, foot: null, drag: null, moved: false, nav: false, grassAt: 0, grass: false, grow: 0 };
 const FOOT_OK = '#7be070', FOOT_NO = '#ff6a55', FOOT_SMALL = '#ffc14d';      // (small: it fits, but not its bigger looks later)
+// (11 Nov 2026, Audrey, "Not just now: try again in a moment." on her screen: "I should always be able to move a coop
+// please". Only what's going on at this very coop holds it up now: its grown chicks' farewell, the farmer in its pen or on
+// his way to it, Rusty at it. The farmer busy anywhere else, his goodnight round, fishing, Rusty at another coop: no matter.
+// And held up, it isn't refused: the move starts by itself the moment the coop is free (MOVE_WAIT, tickMove))
 function moveBusy(p) {
-  return !!(p.fw || p.farmer || inside.open || (farmLife && (farmLife.pen || [farmLife.task, farmLife.pending].some(t => t && t.name === 'pen'))) || (nightVisit && nightVisit.active()));
+  const mine = t => t && t.name === 'pen' && t.job && t.job.plot === p;
+  return !!(p.fw || p.farmer || inside.open || (farmLife && ((farmLife.pen && farmLife.pen.plot === p) || mine(farmLife.task) || mine(farmLife.pending))) || (nightVisit && nightVisit.active() && nightVisit.target === p));
 }
+let MOVE_WAIT = null;
 const nightAt = p => farmerAsleep() || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
@@ -7127,7 +7133,8 @@ function retier(p) {
 function startMove(p, grow) {
   if (!p || !p.gc || MOVE.plot || DMOVE.id) return;
   gameUI.close();
-  if (!p.draft && moveBusy(p)) { hint(game.t('move_busy')); return; }
+  if (!p.draft && moveBusy(p)) { MOVE_WAIT = { p, grow, until: performance.now() + 180e3 }; hint(game.t('move_busy')); wake(2000); return; }
+  MOVE_WAIT = null;
   holdBird(null); henOff(); tagBird = null; tag.classList.remove('on');
   MOVE.plot = p; MOVE.from = p.draft ? null : spotOf(p.gc); MOVE.at = spotOf(p.gc); MOVE.moved = !!p.draft; MOVE.nav = false;
   const t0 = p.gc.tier || 0;
@@ -7234,6 +7241,7 @@ function moveTap(cx, cy) {
 // each frame: carried to the edge of the screen, the view goes along
 function tickMove(dt) {
   tickDecMove(dt);
+  if (MOVE_WAIT) { const Wt = MOVE_WAIT; wake(500); if (performance.now() > Wt.until || !gamePlots().includes(Wt.p)) MOVE_WAIT = null; else if (!MOVE.plot && !DMOVE.id && !gameUI.isOpen && !SHOWDAY && !moveBusy(Wt.p)) { MOVE_WAIT = null; startMove(Wt.p, Wt.grow); } }
   if (MOVE.plot && MOVE.grassAt && !MOVE.drag && performance.now() > MOVE.grassAt) { MOVE.grassAt = 0; MOVE.grass = true; buildGrass(); wake(200); }
   const D = MOVE.drag; if (!D) return;
   const p = pointers.get(D.id); if (!p) return;
@@ -9487,7 +9495,7 @@ window.__farm = {
     alarm: () => guardAlarm(geeseFlock, null), brave: () => !!(geeseFlock && geeseFlock.brave), visit: () => geeseVisit(), start: k => startGeeseVisit(k), V: () => GVISIT, corn: () => CORN.list.filter(c => c.landed).length,
     gates: () => GATES.map(G => ({ field: G.field, p: G.p.map(v => +v.toFixed(2)), out: G.out, gin: G.gin, meet: G.meet, front: G.front, flee: G.flee, hatAt: G.hatAt, n: G.n, open: +G.open.toFixed(2), reg: G.reg })) },
   land: () => ({ owned: landOwned, sale: SALE.field, fence: LAND.fence.reduce((a, m) => a + m.count, 0), grass: LAND.grass.reduce((a, m) => a + m.instanceMatrix.count, 0), at: SALE.at && [SALE.at.x, SALE.at.z].map(v => +v.toFixed(2)) }), fieldAt, fields: () => FIELDS, landCard: () => landCard(), buyLand: () => buyField(), coopCard: i => coopCard(gamePlots()[i]), dressCoop: (i, id) => dressCoop(gamePlots()[i], id), coopParts: i => coopParts(gamePlots()[i]).map(x => x[0]), shopSheet: tab => shopSheet(tab),
-  move: { settle: () => moveSettle(), fits: (x, z, deg) => moveFits(x, z, deg), start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
+  move: { busy: i => moveBusy(gamePlots()[i]), waiting: () => !!MOVE_WAIT, settle: () => moveSettle(), fits: (x, z, deg) => moveFits(x, z, deg), start: i => startMove(gamePlots()[i]), to: (x, z, deg) => moveTo(x, z, deg === undefined ? MOVE.at.deg : deg), place: () => placeCoop(), cancel: () => endMove(false),
     state: () => ({ on: !!MOVE.plot, at: MOVE.at, ok: !!(MOVE.spot && MOVE.spot.ok), why: MOVE.spot && MOVE.spot.why, small: !!(MOVE.spot && MOVE.spot.small), clear: MOVE.spot ? MOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent, batch: COOP_BATCH.length, grow: MOVE.grow }),
     room: (i, sp) => { const gc = gamePlots()[i].gc; return { now: coopSpot(sp, gc).ok, grow: roomToGrow(sp, gc.breed, gc.id), tier: roomTier(sp, gc.breed, gc.id, gc.tier || 0) }; }, grown: (i, t = 4) => { const G = grownOf(gamePlots()[i].gc, t); return G && { foot: footOf(G), apron: apronOf(G) }; }, clearOfGrowth: (id, x, z) => clearOfGrowth(id, x, z) },
   // tests (decorations): the shop, buying one, placing and moving it, what's on the farm

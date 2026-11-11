@@ -4970,3 +4970,11 @@ shot again so they share the game's Painted look (`intro/*.webp`, the sign of pi
   and a word: they played (turn the volume up if not heard), the sound is still waking (tap again), or this device
   gives none (`Sound.test`). Not verifiable here: the test browser has no sound; to confirm on her iPhone.
 - The coop let go between two lanes now finds its place: confirmed by her.
+
+## A coop can always be moved (11 Nov 2026, 20:08; Audrey, "Not just now: try again in a moment." on her screen at night: "I should always be able to move a coop please")
+`moveBusy` held every coop while the farmer was in any pen or on any errand named 'pen' (a visit, the geese, fishing, his
+new goodnight round) and while Rusty was anywhere on the farm. Now only what's happening at that very coop holds it:
+its grown chicks' farewell, the farmer in its pen or on his way to it (`job.plot`), Rusty at it. And held, it isn't
+refused: "One moment: it's busy at this coop. The move will start by itself as soon as it's free." and the move starts
+by itself (main.js `MOVE_WAIT`, `tickMove`; given up after three minutes or if a card is open it waits for it to
+close). Test: `movealwaystest` (EN/FR).

@@ -756,8 +756,8 @@
  },
  {
   "id": "text.move_busy",
-  "en": "Not just now: try again in a moment.",
-  "fr": "Pas tout de suite : réessayez dans un instant."
+  "en": "One moment: it’s busy at this coop. The move will start by itself as soon as it’s free.",
+  "fr": "Un instant : il y a du monde à ce poulailler. Le déplacement commencera tout seul dès qu’il sera libre."
  },
  {
   "id": "text.coops_title",

@@ -131,7 +131,7 @@
  "text.move_cancel": "Abbrechen",
  "text.move_place": "Hier hinstellen",
  "text.moved": "Der Stall steht an seinem neuen Platz!",
- "text.move_busy": "Gerade nicht: Versuch es gleich noch mal.",
+ "text.move_busy": "Einen Moment: An diesem Stall ist gerade etwas los. Das Umstellen beginnt von selbst, sobald er frei ist.",
  "text.coops_title": "Deine Ställe",
  "text.coops_aria": "Deine Ställe",
  "text.coops_waiting": "Ein neuer Stall wartet auf dich",

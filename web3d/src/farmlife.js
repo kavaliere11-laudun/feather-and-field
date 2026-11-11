@@ -287,7 +287,7 @@ export class FarmLife {
   // out after Rusty)
   visitPen(P, kind, hen, n) {
     if (!P || this.home || this.running) return false;
-    const t = this.penTask(P, kind, hen, n); t.job = { kind, hen };
+    const t = this.penTask(P, kind, hen, n); t.job = { kind, hen, plot: P.plot };
     if ((kind === 'cuddle' || kind === 'worms') && P.reserve) P.reserve(hen);
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = t; else this.task = t;
     return true;
