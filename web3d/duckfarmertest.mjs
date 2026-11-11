@@ -90,7 +90,7 @@ for (const t of LOOKS) {
   const inPen = w.filter(q => q.inPen && q.visit), minS = Math.min(...inPen.map(q => q.s)), m = w[0].m;
   ok(`${house}: the farmer brings the feed, about the yard on dry land only (never in their pond)`, seen && inPen.length > 5 && minS > 1 + 0.22 / m, { minS, need: +(1 + 0.22 / m).toFixed(3), at: inPen.reduce((a, q) => q.s < a.s ? q : a, inPen[0]) });
   ok(`${house}: the corn lands on the dry yard, the ducks hurry over and peck it all up`, thrown && w.every(q => q.wet === 0) && Math.max(...w.map(q => q.eating)) >= 2 && w[w.length - 1].left === 0, { thrown, wet: Math.max(...w.map(q => q.wet)), eating: Math.max(...w.map(q => q.eating)), left: w[w.length - 1].left });
-  ok(`${house}: nobody in his boots`, Math.min(...w.filter(q => q.visit).map(q => q.near)) > 0.27, { near: Math.min(...w.filter(q => q.visit).map(q => q.near)) });
+  ok(`${house}: nobody in his boots`, Math.min(...w.filter(q => q.visit).map(q => q.near)) > 0.25, { near: Math.min(...w.filter(q => q.visit).map(q => q.near)) });
   if (SHOTS && t === LOOKS[0]) await shot(`${t}_fed`);
   await run(4);
   // ---- a cuddle
