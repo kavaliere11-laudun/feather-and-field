@@ -70,7 +70,7 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 for (let i = 0; i < 10 && (await p.evaluate(() => window.__farm.gameUI().kind)) !== 'congrats'; i++) { await p.evaluate(() => { const f = window.__farm; if (f.gameUI().kind === 'away') f.gameUI().close(); f.showNews(); }); await run(1); }      // (the welcome-back summary first)
 t = await sheet();
 const grown = await p.evaluate(() => { const f = window.__farm, g = f.game(), P = f.coopPlots().find(q => q.line === 'sil');
-  return { kind: f.gameUI().kind, waiting: g.rareWaiting().map(w => w.line + ':' + w.sex), inPen: P.birds.filter(b => b.pendingId).map(b => b.colour), others: P.birds.filter(b => b.gameChick && !b.pendingId && !b.leaving).length, dot: !document.querySelector('.gcoops .gdot').hidden, keep: !!document.querySelector('.gsheet .grare-keep') }; });
+  return { kind: f.gameUI().kind, waiting: g.rareWaiting().map(w => w.line + ':' + w.sex), inPen: P.birds.filter(b => b.pendingId).map(b => b.colour), others: P.birds.filter(b => b.gameChick && !b.pendingId && !b.leaving).length, dot: !window.__farm.gameUI().bdot.hidden, keep: !!document.querySelector('.gsheet .grare-keep') }; });
 ok('grown: the congratulations card with "✨ Paint Silkie", Keep and Sell; she stays in the pen, the others gone; the red dot', grown.kind === 'congrats' && T.line.test(t) && /✨/.test(t) && grown.keep && T.sell.test(t) && grown.waiting.length === 1 && grown.inPen.join() === 'paint' && grown.others === 0 && grown.dot, { grown, t: t.slice(0, 400) });
 await shot('2_congrats');
 // Keep

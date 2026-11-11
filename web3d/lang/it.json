@@ -141,7 +141,7 @@
  "text.trio_body": "Un gallo e due galline, tuoi per sempre, con il loro pollaio. Mettilo dove vuoi sui tuoi terreni.",
  "text.place_now": "Sistema ora il loro pollaio",
  "text.later": "Più tardi",
- "text.later_note": "Ti aspetta in “I tuoi pollai” (il piccolo fienile in alto).",
+ "text.later_note": "Ti aspetta nel tuo Libro, per quando vuoi.",
  "text.place_btn": "Sistemalo",
  "text.move_short": "Sposta",
  "text.coops_next": "Al livello {n}: {breed}",
@@ -154,7 +154,7 @@
  "text.book_found1": "1 razza trovata su {all}",
  "text.book_on_farm": "Nella tua fattoria: {names}",
  "text.book_at_level": "Arriva al livello {n}",
- "text.book_waiting": "Il loro pollaio ti aspetta in “I tuoi pollai”",
+ "text.book_waiting": "Il loro pollaio è pronto: sistemalo quando vuoi",
  "text.book_price": "{p} monete a uovo, più una moneta per ogni stella della gallina",
  "text.book_coop": "{coop}, in stile rustico all’inizio",
  "text.book_more": "Altre pagine in arrivo.",
@@ -1323,7 +1323,7 @@
  "text.jobs_bonus": "Tutti e tre i lavori fatti: +{n} vermi 🪱",
  "text.jobs_note2": "Finiscili tutti e tre per avere {n} vermi.",
  "text.cuddle_all": "♥ Coccola tutti qui",
- "text.cuddle_all_go": "{farmer} va a coccolare tutti qui ♥",
+ "text.cuddle_all_go": "{farmer} va a coccolare tutti qui ♥ +{xp} XP",
  "text.cuddle_all_none": "Qui tutti hanno già avuto la loro coccola per ora.",
  "text.catch_want": "🧺 Per un ordine",
  "text.catch_orders": "Gli ordini del villaggio hanno ancora bisogno di {n} pesci. Tieni quelli segnati.",
@@ -1373,5 +1373,10 @@
  "text.sound_test": "Prova il suono",
  "text.sound_test_ok": "Sono appena suonate due note. Se non le hai sentite, alza il volume con i tasti laterali mentre il gioco è aperto.",
  "text.sound_test_wait": "Il suono si sta svegliando: tocca ancora una volta.",
- "text.sound_test_none": "Questo dispositivo non dà suono al gioco."
+ "text.sound_test_none": "Questo dispositivo non dà suono al gioco.",
+ "text.cuddle_all_done": "Una coccola per tutti qui ♥ +{xp} XP",
+ "text.book_coop_wait": "Un pollaio ti aspetta: {breed}",
+ "text.book_see": "Vedi",
+ "text.coop_waits": "🏠 Un nuovo pollaio ti aspetta nel tuo Libro: sistemalo quando vuoi.",
+ "text.apple_wait": "🍎 Non c’è posto per il melo accanto al recinto più grande: aspetta nel suo vaso e tornerà da solo quando il pollaio avrà spazio di lato (sposta il pollaio per fargliene)."
 }

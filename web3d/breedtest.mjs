@@ -24,7 +24,7 @@ const load = async () => {
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.gameTick(window.__T); f.draw(); });
   await p.waitForTimeout(1500); await run(0.5);
 };
-const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), dot: !document.querySelector('.gcoops .gdot').hidden, coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length,
+const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), dot: !window.__farm.gameUI().bdot.hidden, coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length,
   plots: f.coopPlots().length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const T = { orp: fr ? /Nouvelle race : Orpington fauve/ : /New breed: Buff Orpington/, sil: fr ? /Nouvelle race : Poule soie blanche/ : /New breed: White Silkie/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
@@ -36,7 +36,7 @@ await p.tap('.gsheet .gbtn');
 await load();
 let s = await st();
 ok('a new farm: nothing waiting, no red dot', s.level === 1 && s.waiting === '' && !s.dot && s.coops === 'rir', s);
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
 ok('Your coops (the little barn up top): the Red Barn to move, and what level 3 brings', T.red.test(t) && T.next5.test(t) && (await p.evaluate(() => window.__farm.gameUI().kind)) === 'coops', t);
 await p.evaluate(() => window.__farm.gameUI().close());
@@ -50,7 +50,7 @@ ok('level 3: its card says a new breed has come, "Place their coop now" and "Lat
 await p.tap('.gsheet .gstick .gbtn:nth-child(2)'); await run(0.4);
 s = await st();
 ok('Later: the card gone (seen), the red dot on the little barn, the Orpingtons waiting', !s.card && s.dot && s.waiting === 'orp' && (await p.evaluate(() => window.__farm.game().data.lvSeen)) === 3, s);
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 t = await sheet();
 ok('Your coops: the new breed with "New!" and Place it, the Red Barn', T.orp.test(t) && T.red.test(t) && (await p.evaluate(() => !!document.querySelector('.gnewcoop .gbadge'))), t);
 // placing it, then Cancel

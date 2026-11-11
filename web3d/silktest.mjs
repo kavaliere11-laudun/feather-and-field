@@ -43,7 +43,7 @@ await load();
 await p.evaluate(L11 => { const g = window.__farm.game(); g.data.xp = L11; g.data.lvSeen = 11; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(11));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
 ok('level 11, Your coops: what level 12 brings, the Buff Silkies', T.next.test(t), t.slice(-200));
 await p.evaluate(() => window.__farm.gameUI().close());

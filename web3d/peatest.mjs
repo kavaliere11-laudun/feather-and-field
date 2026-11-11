@@ -57,7 +57,7 @@ await load();
 await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 29; g.data.coins = 50000; g.data.land = Array.from({ length: 29 }, (_, i) => i); g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(29));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
 ok('level 29, Your coops: what level 30 brings, the peafowl', T.next.test(t), t.slice(-300));
 await p.evaluate(() => window.__farm.gameUI().close());

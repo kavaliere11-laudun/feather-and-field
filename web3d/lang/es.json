@@ -141,7 +141,7 @@
  "text.trio_body": "Un gallo y dos gallinas, tuyos para siempre, con su propio gallinero. Ponlo donde quieras en tus tierras.",
  "text.place_now": "Colocar su gallinero ahora",
  "text.later": "Más tarde",
- "text.later_note": "Te espera en Tus gallineros (el pequeño granero de arriba).",
+ "text.later_note": "Te espera en tu Libro, para cuando quieras.",
  "text.place_btn": "Colocarlo",
  "text.move_short": "Mover",
  "text.coops_next": "En el nivel {n}: {breed}",
@@ -154,7 +154,7 @@
  "text.book_found1": "Razas encontradas: 1 de {all}",
  "text.book_on_farm": "En tu granja: {names}",
  "text.book_at_level": "Llega en el nivel {n}",
- "text.book_waiting": "Su gallinero te espera en Tus gallineros",
+ "text.book_waiting": "Su gallinero está listo: colócalo cuando quieras",
  "text.book_price": "{p} monedas por huevo, más una moneda por cada estrella de la gallina",
  "text.book_coop": "{coop}, de estilo rústico al principio",
  "text.book_more": "Más páginas próximamente.",
@@ -1318,7 +1318,7 @@
  "text.jobs_bonus": "Las tres tareas hechas: +{n} lombrices 🪱",
  "text.jobs_note2": "Termina las tres para ganar {n} lombrices.",
  "text.cuddle_all": "♥ Mimar a todos aquí",
- "text.cuddle_all_go": "{farmer} va a mimar a todos aquí ♥",
+ "text.cuddle_all_go": "{farmer} va a mimar a todos aquí ♥ +{xp} XP",
  "text.cuddle_all_none": "Aquí todos han tenido ya su mimo por ahora.",
  "text.catch_want": "🧺 Para un pedido",
  "text.catch_orders": "Los pedidos del pueblo aún necesitan {n} peces. Guarda los marcados.",
@@ -1368,5 +1368,10 @@
  "text.sound_test": "Probar el sonido",
  "text.sound_test_ok": "Acaban de sonar dos notas. Si no las has oído, sube el volumen con los botones laterales con el juego abierto.",
  "text.sound_test_wait": "El sonido se está despertando: toca otra vez.",
- "text.sound_test_none": "Este dispositivo no da sonido al juego."
+ "text.sound_test_none": "Este dispositivo no da sonido al juego.",
+ "text.cuddle_all_done": "Un mimo para todos aquí ♥ +{xp} XP",
+ "text.book_coop_wait": "Un gallinero te espera: {breed}",
+ "text.book_see": "Ver",
+ "text.coop_waits": "🏠 Un nuevo gallinero te espera en tu Libro: colócalo cuando quieras.",
+ "text.apple_wait": "🍎 No queda sitio para el manzano junto al corral más grande: espera en su maceta y volverá solo cuando el gallinero tenga sitio a un lado (mueve el gallinero para dárselo)."
 }

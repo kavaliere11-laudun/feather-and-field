@@ -69,13 +69,15 @@ await p.evaluate(() => document.querySelector('[data-jobs=all]').click()); await
 let J1 = await p.evaluate(() => { const g = window.__farm.game(); return { paid: g.jobs().list.every(j => j.paid), worms: g.fishBag().worms, coins: g.data.coins, hint: document.getElementById('hint').textContent, all: !!document.querySelector('[data-jobs=all]') }; });
 ok('one tap: all three paid, 5 worms more, said so; the button gone', J1.paid && J1.worms === 7 && J1.coins > J0.coins && /5/.test(J1.hint) && !J1.all, J1);
 await shut();
-// ---- Cuddle everyone here: from the coop's card; the farmer round each bird in turn
+// ---- Cuddle everyone here: from the coop's card; all at once (11 Nov 2026, Audrey: "Can we imagine the farmer actually
+// cuddling them all at the same time ? That would be cute"): every bird's cuddle counted at once, one visit, one hen in
+// his arms and the others gathered round him, a heart over each
 await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2);
-let Q0 = await p.evaluate(() => { const q = document.querySelector('.gcuddleall'); const n = window.__farm.game().birdsIn(window.__farm.gamePlots()[0].gc.id).length; if (q) q.click(); return { btn: !!q, n, queue: window.__farm.cuddleQueue().length, open: window.__farm.gameUI().isOpen }; });
-ok('a coop\'s card: "Cuddle everyone here"; tapped: the card shuts, every bird is on his round', Q0.btn && Q0.queue === Q0.n && !Q0.open, Q0);
-let happy = 0; for (let i = 0; i < 240 && happy < Q0.n; i++) { await run(1); happy = await p.evaluate(() => { const f = window.__farm, g = f.game(); if (f.gameUI().isOpen) f.gameUI().close(); f.tickJobs(); return g.birdsIn(f.gamePlots()[0].gc.id).filter(x => g.happyLeft(x) > 0).length; }); }
-ok('…and each one gets her cuddle, one after the other', happy === Q0.n, { happy, n: Q0.n });
-for (let i = 0; i < 60 && await p.evaluate(() => !!window.__farm.farmerJob()); i++) await run(1);
+let Q0 = await p.evaluate(() => { const f = window.__farm, g = f.game(), q = document.querySelector('.gcuddleall'); const id = f.gamePlots()[0].gc.id, n = g.birdsIn(id).length; if (q) q.click(); return { btn: !!q, n, happy: g.birdsIn(id).filter(x => g.happyLeft(x) > 0).length, open: f.gameUI().isOpen, job: (f.farmerJob() || {}).kind, hint: document.getElementById('hint').textContent, home: f.farmer().home }; });
+ok('a coop\'s card: "Cuddle everyone here"; tapped: the card shuts, every bird has her cuddle at once, the farmer off to them (one visit)', Q0.btn && Q0.happy === Q0.n && !Q0.open && (Q0.home || Q0.job === 'cuddle') && /♥/.test(Q0.hint), Q0);
+let round = 0, near = 0, hearts = 0, inPen = false, out = false;
+for (let i = 0; i < 400 && !out; i++) { await run(0.25); const q = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0], F = P.farmer; if (f.gameUI().isOpen) f.gameUI().close(); return { in: !!F, group: !!P.group, near: F ? P.birds.filter(x => x.root.visible && Math.hypot(x.root.position.x - F.x, x.root.position.z - F.z) < 1.25).length : 0, hearts: f.hearts ? f.hearts() : -1, job: (f.farmerJob() || {}).kind }; }); if (q.in) { inPen = true; if (q.group) round++; near = Math.max(near, q.near); hearts = Math.max(hearts, q.hearts); } else if (inPen && !q.job) out = true; }
+ok('…he goes in once: the birds gather round him (all of them within reach), then he\'s out again', Q0.home || (inPen && round > 4 && near >= Math.min(Q0.n, 3) && out), { inPen, round, near, hearts, out });
 await shut();
 await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2);
 let Q1 = await p.evaluate(() => { document.querySelector('.gcuddleall').click(); return { queue: window.__farm.cuddleQueue().length, hint: document.getElementById('hint').textContent }; });

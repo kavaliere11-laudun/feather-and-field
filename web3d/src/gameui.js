@@ -125,8 +125,8 @@ export class GameUI {
     // (10 Nov 2026, Audrey: "Buttons are fine but messy come with a suggestion for them"; her choice "A · Two tidy sides": on the
     // left "my farm": Shop, Pantry, Book, Coops; on the right "today": Orders, Jobs, Shows; each with its name under it)
     this.acts = el('div', 'gacts'); this.acts.append(this.ordBtn, this.jobsBtn, this.showsBtn);
-    this.mine = el('div', 'gacts gmine'); this.mine.append(this.shopBtn, this.panBtn, this.bookBtn, this.coopsBtn);
-    this.navs = [[this.shopBtn, 'shop_btn'], [this.panBtn, 'pantry_btn'], [this.bookBtn, 'nav_book'], [this.coopsBtn, 'nav_coops'], [this.ordBtn, 'nav_orders'], [this.jobsBtn, 'nav_jobs'], [this.showsBtn, 'nav_shows']].map(([b, k]) => { const l = el('small', 'gnav-l'); b.append(l); return [l, k]; });
+    this.mine = el('div', 'gacts gmine'); this.mine.append(this.shopBtn, this.panBtn, this.bookBtn);      // (no Coops button since 11 Nov 2026, Audrey: "Not sure the button coops is needed"; "Use the book and make sure to add a notification to flag that a coop is waiting in the book": what waited there is at the top of the Book's breeds)
+    this.navs = [[this.shopBtn, 'shop_btn'], [this.panBtn, 'pantry_btn'], [this.bookBtn, 'nav_book'], [this.ordBtn, 'nav_orders'], [this.jobsBtn, 'nav_jobs'], [this.showsBtn, 'nav_shows']].map(([b, k]) => { const l = el('small', 'gnav-l'); b.append(l); return [l, k]; });
     this.bar.append(this.stat, this.acts, this.mine, this.gear);
     this.bar.hidden = true;
     document.body.append(this.bar);
@@ -182,7 +182,7 @@ export class GameUI {
     for (const [l, k] of this.navs) { const t = this.t(k); if (l.textContent !== t) l.textContent = t; }
     this.shopBtn.setAttribute('aria-label', this.t('shop_title')); this.panBtn.setAttribute('aria-label', this.t('pantry_title'));
     { const P = this.g.pantryBag(); this.pdot.hidden = !(this.g.pantryFull() || (!P.seen && P.eggs > 0)); }
-    const mr = this.g.milesReady(); this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);
+    const mr = this.g.milesReady() + this.g.waitingCoops().length + this.g.rareWaiting().length; this.bdot.hidden = !mr; this.bdot.textContent = mr ? String(mr) : ''; this.bdot.classList.toggle('gnum1', mr > 0);      // (milestones to collect, coops waiting to be placed, rare babies waiting for a choice)
     this.jdot.hidden = !jr && !jn; this.jdot.textContent = jr ? String(jr) : ''; this.jdot.classList.toggle('gnum1', jr > 0);
     this.jobsBtn.setAttribute('aria-label', this.t('jobs_aria') + (jr ? ' · ' + this.t('jobs_ready', { n: jr }) : jn ? ' · ' + this.t('jobs_new') : ''));
     const sd = this.g.showsDot(); this.sdot.hidden = !sd; this.showsBtn.setAttribute('aria-label', this.t('shows_aria') + (sd ? ' · ' + this.t('shows_new') : ''));
@@ -768,6 +768,17 @@ export class GameUI {
       if (this.bookTab === 'fish' && g.fishOpen('pond')) { this.fishPages(b); return; }
       if (this.bookTab === 'miles') { this.milePages(b, h); return; }
     }
+    // (what used to wait under the Coops button: a new breed's coop to place, a rare baby to choose for, the basket by the fire)
+    for (const breed of g.waitingCoops()) {
+      const c = el('div', 'gcard gnewcoop gbook-wait'), hd = el('div', 'gcard-h'), go = el('button', 'gbtn', this.t('place_btn')); go.type = 'button'; go.dataset.place = breed;
+      hd.append(el('span', 'gemoji', '🏠'), el('span', 'gcard-t', this.t('book_coop_wait', { breed: g.breedName(breed) }))); go.addEventListener('click', () => h.place && h.place(breed));
+      c.append(hd, go); b.append(c);
+    }
+    if ((g.rareWaiting().length || g.basket().length) && h.coops) {
+      const c = el('div', 'gcard gbook-wait'), hd = el('div', 'gcard-h'), go = el('button', 'gbtn gsmallbtn', this.t('book_see')); go.type = 'button'; go.dataset.coops = '1';
+      hd.append(el('span', 'gemoji', '🧺'), el('span', 'gcard-t', this.t(g.rareWaiting().length ? 'rare_waiting' : 'basket_t'))); go.addEventListener('click', () => h.coops());
+      c.append(hd, go); b.append(c);
+    }
     b.append(el('p', 'gsub', this.t(found === 1 ? 'book_found1' : 'book_found', { n: found, all: pages.length })));
     const list = names => this.g.andList(names);
     let allShown = false;
@@ -824,7 +835,7 @@ export class GameUI {
       for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) {
         const R = FISH_RULES[id], c = g.fishGot(id), open = g.fishOpen(w);
         const card = el('div', 'gcard gpage gfishpage' + (c ? '' : ' gpage-no')); card.dataset.fish = id;
-        const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'fish/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+        const pic = this.picOf('fish/' + id + '.webp' + (this.o.bust || ''), !c);
         const info = el('div', 'gpage-i');
         info.append(el('span', 'gcard-t', g.fishName(id)), el('p', 'gnote gpage-l gfishrare', this.t('fish_rare' + R.rare)));
         info.append(el('p', 'gpage-s' + (c ? ' gfound' : ''), c ? (c.n === 1 ? this.t('book_fish_caught1', { cm: c.best }) : this.t('book_fish_caught', { n: c.n, cm: c.best })) : open ? this.t('book_fish_not') : this.t('book_fish_level', { n: FISHING[w] })));
@@ -873,6 +884,14 @@ export class GameUI {
     if (more) { const card = b.querySelector('[data-show="' + more + '"]'); if (card) card.scrollIntoView({ block: 'nearest' }); }
   }
   // ---- Today's jobs (release 1 step 9c): each job, how far along it is, its reward; done: "Collect" (h.claim(i))
+  // a card's picture; dark: not yours yet (a level to come): its shape alone, drawn with a mask (the darkened picture, a
+  // CSS filter, came out blank on Audrey's iPhone: 10 Nov "Why is there no image", 11 Nov the shop: "Missing images")
+  picOf(src, dark) {
+    const pic = el('div', 'gpic');
+    if (dark) { const sil = el('div', 'gsil'), u = 'url("' + src + '")'; sil.style.webkitMaskImage = u; sil.style.maskImage = u; sil.dataset.src = src; pic.append(sil); }
+    else { const img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = src; pic.append(img); }
+    return pic;
+  }
   // ---- the pantry (10 Nov 2026; game.js PANTRY): a shelf for each thing collected: how many of how many, those the open
   // orders still want, Sell (the rest; "Sell anyway" when only wanted ones are left): h.sell(k, all). h.note: said on top
   // (a shelf found full). The bigger shelves for real money: with the shop's preview only (IAP_DEMO)
@@ -1036,7 +1055,7 @@ export class GameUI {
     for (const id of Object.keys(DECOR)) {
       const D = DECOR[id], own = g.decorOwned(id), lock = g.level < D.level, broke = !own && !lock && g.data.coins < D.price;
       const card = el('div', 'gcard gpage gdec' + (lock ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.decor = id;
-      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const pic = this.picOf('decor/' + id + '.webp' + (this.o.bust || ''), lock);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.decorName(id)), el('p', 'gnote gdec-l', this.t('decl_' + id)));
       if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('dec_owned')));
@@ -1115,7 +1134,7 @@ export class GameUI {
     for (const id of Object.keys(ANIMALS)) {
       const A = ANIMALS[id], own = g.animalOwned(id), lock = !own && g.level < A.level, broke = !own && !lock && g.data.coins < A.price;
       const card = el('div', 'gcard gpage gdec gani' + (lock ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.animal = id;
-      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const pic = this.picOf('decor/' + id + '.webp' + (this.o.bust || ''), lock);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.animalName(id)), el('p', 'gnote gdec-l', this.t('anil_' + id)));
       if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t(A.kennel ? 'ani_dog_owned' : 'ani_owned')));
@@ -1145,7 +1164,7 @@ export class GameUI {
     for (const id of Object.keys(OUTFITS)) {
       const O = OUTFITS[id], own = g.outfitOwned(id), on = g.outfitWorn() === id, lock = !own && g.level < O.level, broke = !own && !lock && g.data.coins < O.price;
       const card = el('div', 'gcard gpage gdec gout' + (lock ? ' gpage-no' : '') + (on ? ' gout-on' : '')); card.dataset.outfit = id;
-      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'outfits/card_' + look + (id === 'classic' ? '' : '_' + id) + '.webp' + (this.o.bust || ''); pic.append(img);
+      const pic = this.picOf('outfits/card_' + look + (id === 'classic' ? '' : '_' + id) + '.webp' + (this.o.bust || ''), lock);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', g.outfitName(id)), el('p', 'gnote gdec-l', this.t('ofd_' + id)));
       if (on) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('out_wearing')));
@@ -1169,7 +1188,7 @@ export class GameUI {
     for (const id of Object.keys(DRESSES)) {
       const D = DRESSES[id], own = g.dressOwned(id), on = inSeason(id), broke = !own && on && g.data.coins < D.price;
       const card = el('div', 'gcard gpage gdec gdress' + (!own && !on ? ' gpage-no' : '') + (own ? ' gdec-own' : '')); card.dataset.dress = id;
-      const pic = el('div', 'gpic'), img = el('img'); img.alt = ''; img.decoding = 'async'; img.src = 'decor/' + id + '.webp' + (this.o.bust || ''); pic.append(img);
+      const pic = this.picOf('decor/' + id + '.webp' + (this.o.bust || ''), !own && !on);
       const info = el('div', 'gpage-i');
       info.append(el('span', 'gcard-t', cap(g.dressName(id))), el('p', 'gnote gdec-l', this.t('dressl_' + id)));
       if (own) info.append(el('p', 'gpage-s gfound', '✓ ' + this.t('dress_owned')));
@@ -1344,7 +1363,7 @@ export class GameUI {
     const g = this.g, w = o.water === 'river' ? 'river' : 'pond', body = this.open('dock', this.t(w === 'river' ? 'river_title' : 'dock_title')), farmer = g.farmerName();
     this.bird = null;
     const row = el('div', 'gfishrow'); row.dataset.water = w;
-    for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) { const im = el('img', g.fishGot(id) ? 'got' : ''); im.alt = ''; im.src = 'fish/' + id + '.webp' + (this.o.bust || ''); row.append(im); }
+    for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) { const src = 'fish/' + id + '.webp' + (this.o.bust || ''); if (g.fishGot(id)) { const im = el('img', 'got'); im.alt = ''; im.src = src; row.append(im); } else { const sl = el('span', 'gfishsil'), u = 'url("' + src + '")'; sl.style.webkitMaskImage = u; sl.style.maskImage = u; row.append(sl); } }
     body.append(row, el('p', 'gtext', this.t(w === 'river' ? 'river_body' : 'dock_body')));
     if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING[w] }))); return; }
     const n = o.worms;

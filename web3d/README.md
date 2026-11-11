@@ -4978,3 +4978,34 @@ its grown chicks' farewell, the farmer in its pen or on his way to it (`job.plot
 refused: "One moment: it's busy at this coop. The move will start by itself as soon as it's free." and the move starts
 by itself (main.js `MOVE_WAIT`, `tickMove`; given up after three minutes or if a card is open it waits for it to
 close). Test: `movealwaystest` (EN/FR).
+
+## Her notes of 11 Nov 2026, 21:35 to 21:40: everyone cuddled at once, the apple tree kept and growing, bed bubbles, shop pictures, no Coops button
+- **"The cuddle them all is a bit long and boring. Can we imagine the farmer actually cuddling them all at the same time ?
+  That would be cute"**: "Cuddle everyone here" is one visit now (main.js `cuddleAll`): every bird of the coop not cuddled
+  lately has her cuddle counted at once; the farmer goes in and crouches, one hen comes into his arms, the others hurry
+  over and gather round his feet (`gatherRound`), and each gets a heart while he hugs (penSpec `heart`, `plot.group`).
+  He can't come (busy, in bed): hearts over them all where they are. The queue of single visits is gone.
+- **The apple tree** ("my silkie coop is level 3 and the tree seems to be gone. We should keep it and probably make it
+  grow"; her choices: "Always keep it", "Grows, and gives more"): it is the Glutton's tree; an upgrade used to take it
+  away whenever the bigger pen left no room for its corner on that side. Now the upgrade first moves it to the other
+  side (`tryUpgrade`, `flip`); only with no room on either side does it wait, with a word saying it comes back by itself
+  once the coop has room at its side (a front-corner place for it isn't built: the hen's way over the fence is made for
+  the sides). It grows with the coop: 5% wider and 2% taller a look (`appleTree`), its apples hanging where they did so
+  she still reaches them; and it holds one more apple from Snug and one more at Deluxe (game.js `appleMost`,
+  `appleMax`; 4, 5, 6; the save's check follows).
+- **"Bug in the display of the growing fruits"** (three bubbles with pictures only): each bed's bubble always says its
+  words now; where two would touch, the one further up the screen floats higher; one bubble for the whole garden only
+  when zoomed so far out that the beds are a finger apart.
+- **"Missing images"** (the shop's Greenhouse, Windmill, Bandstand, "Comes at level N"): the same fault as the Book's on
+  10 Nov: things not yours yet were shown as a darkened picture (a CSS filter), blank on her devices. All of them are
+  drawn with a mask now (gameui.js `picOf`: decorations, animals, outfits, dresses, the fish pages; the fish rows on the
+  dock's card, `.gfishsil`).
+- **"Why don't I have my account in the settings ? Did we decide against it ?"**: not decided against. The account
+  (account.js) is switched off inside the store app (`APP`): Google's sign-in page can't open inside an app, so the app
+  needs its own Sign in with Apple and Google, which isn't built yet. On the web it's behind `?account=1`.
+- **"Not sure the button coops is needed"**; "Use the book and make sure to add a notification to flag that a coop is
+  waiting in the book whenever the player wants": the Coops button is gone. A new breed's coop waiting to be placed is
+  a card at the top of the Book's breeds with "Place it" (and on its own page); a rare baby waiting for a choice or
+  the basket by the fire: a card there with "See" (the old Coops card). The Book's number counts them with the
+  milestones; the Book opens on the breeds while something waits; and "🏠 A new coop is waiting in your Book: place it
+  whenever you like." is said when the farm opens and whenever another comes. Moving a coop stays on its own card.

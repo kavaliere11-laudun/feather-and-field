@@ -2779,7 +2779,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       else { plot.farmer.px = undefined; plot.pb[2] = 0; }
       if (DK) for (const d of DK.all()) DK.keepFromFarmer(d);      // (the call ducks out of his way as he steps, not a moment after)
     },
-    leave() { plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; if (DK) for (const d of DK.ducks) d.called = false; P.wormsDone(); },
+    leave() { plot.group = false; plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; if (DK) for (const d of DK.ducks) d.called = false; P.wormsDone(); },
     reserve(b) { if (b) b.called = true; },                  // (sent for: she doesn't go off to lay meanwhile)
     // the hens and the rooster, where he must mind them (world)
     hens() { return [...plot.birds.filter(b => b.root.visible && !(b.laying && b.laying.inside)), ...(DK ? DK.all().filter(d => DK.solid(d)) : [])].map(b => ({ pos: b.root.getWorldPosition(new THREE.Vector3()), R: b.isGoose ? 0.22 : 0.32, noPush: true })); },
@@ -2830,6 +2830,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       const sides = worms ? [wside(1), wside(-1)].filter(o => roomFor(o.at)) : [];
       // (no way on foot to either side: beside him all the same, she flutters over)
       const w = sides.find(o => reach(o.at)) || sides[0] || null, at = w ? w.at : spot, face = w ? Math.atan2(w.palm[0] - at[0], w.palm[1] - at[1]) : Math.atan2(CB[0] - at[0], CB[1] - at[1]);
+      if (plot.group && !worms) gatherRound(plot, b, at);      // ("Cuddle everyone here": the others hurry over round him too)
       plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b]]; P.henAt = { side: !!w, hand: w ? w.hand : 'R', at, sides: [wside(1), wside(-1)].map(o => o.at.map(v => +v.toFixed(2))), room: sides.length };      // (which hand he holds out; the tests)
       for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - at[0], o.root.position.z - at[1]) < 0.4) o.shooFrom(at[0], at[1]);      // (anyone sitting where she'll be: up and off)
       return b.comeForCuddle(at, face, [plot.farmer.x, plot.farmer.z])
@@ -2915,7 +2916,9 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       b.shadowY = 0.015;
       if (!b.isGoose) b.rig.sleepy(k > 0.9); else C.carry.y -= 0.05;      // (a call duck: her eyes shut by her own pose; held a little lower, she's smaller)
     },
-    heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.isGoose ? 0.3 : b.rig.scale * 0.8; spawnHeart(p); },
+    heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.isGoose ? 0.3 : b.rig.scale * 0.8; spawnHeart(p);
+      if (plot.group && plot.farmer) for (const o of plot.birds) if (o !== b && o.root.visible && Math.hypot(o.root.position.x - plot.farmer.x, o.root.position.z - plot.farmer.z) < 1.25) { const q = o.root.getWorldPosition(new THREE.Vector3()); q.y += o.isGoose ? 0.3 : o.rig.scale * 0.8; spawnHeart(q); }      // (everyone gathered round him: a heart each)
+      if (plot.group && DK) for (const d of DK.ducks) if (d !== b && d.root.visible) { const q = d.root.getWorldPosition(new THREE.Vector3()); q.y += 0.3; spawnHeart(q); } },
     treatHearts() { for (const b of [...plot.birds, ...(DK ? DK.all() : [])]) if (b.root && b.root.visible && !(b.laying && b.laying.inside) && Math.random() < 0.7) P.heart(b); },      // (a treat: happy birds, hearts over most of them)
     // worms from her (farmlife.js 'worms'; Audrey's idea): u the time since she started, each worm DIG of it, n of them. Each:
     // two kicks back, her beak down to the ground (the worm's there in it), up with it wriggling, then dropped into his palm
@@ -4945,7 +4948,6 @@ function jobGate(kind, key, name, run) {
 }
 function tickJobs() {
   if (CATCH_DUE && !gameUI.isOpen && !SHOWDAY && !inside.open) { CATCH_DUE = false; if (game.fishNet().length) catchCard(); }
-  if (CUDDLE_ALL.length && !JOBQ.length && !JOBQ.running && !farmerJob() && !gameUI.isOpen && !SHOWDAY && !inside.open) { if (farmerAsleep()) CUDDLE_ALL.length = 0; else gameCuddle(CUDDLE_ALL.shift()); return; }
   if (!JOBQ.length) return;
   if (farmerAsleep()) { JOBQ.length = 0; return; }
   const j = farmerJob();
@@ -4996,16 +4998,48 @@ function gameWorms(id) {
 function duckVisitOk(b) {
   const C = b.pen; return !!(farmLife && !farmLife.home && !farmLife.running && !b.plot.farmer && !b.plot.fw && C && !C.bedtime(clockHour()) && !b.inHouse && !b.broody && !b.leaving && !b.laying && b.root.visible && !(C.brood && C.brood.mum === b) && !(b.task && /^(lay|sit|lead|bed|morning)/.test(b.task.name)));
 }
-// ---- "Cuddle everyone here" (10 Nov 2026, a coop's card): each bird of the coop not cuddled lately, one after the other
-// (CUDDLE_ALL: the farmer's visits in turn, tickJobs; none left to cuddle: said)
-const CUDDLE_ALL = [];
+// ---- "Cuddle everyone here" (10 Nov 2026, a coop's card). First each bird in turn; then (11 Nov 2026, Audrey: "The
+// cuddle them all is a bit long and boring. Can we imagine the farmer actually cuddling them all at the same time ? That
+// would be cute"): one visit: every bird of the coop not cuddled lately has her cuddle counted at once; the farmer goes
+// in and crouches, one hen comes into his arms and the others hurry over and gather round his feet (gatherRound), a
+// heart over each of them while he hugs (penSpec heart). He can't come (busy, in bed, no way in): hearts over them all
+const CUDDLE_ALL = [];      // (kept empty: the tests' cuddleQueue)
 function cuddleAll(coopId) {
   if (farmerAsleep()) { hint(game.t('cuddle_night', { farmer: farmerName() })); return 0; }
-  const ids = game.birdsIn(coopId).filter(b => !(game.happyLeft(b) > 0)).map(b => b.id).filter(id => !CUDDLE_ALL.includes(id));
+  const due = game.birdsIn(coopId).filter(b => !(game.happyLeft(b) > 0));
   gameUI.close();
-  if (!ids.length) { hint(game.t('cuddle_all_none')); return 0; }
-  CUDDLE_ALL.push(...ids); hint(game.t('cuddle_all_go', { farmer: farmerName() })); wake(800);
-  return ids.length;
+  if (!due.length) { hint(game.t('cuddle_all_none')); return 0; }
+  const busyNow = !!farmerJob() || JOBQ.length > 0, done = []; let xp = 0, ups = [];
+  for (const gb of due) { const r = game.cuddle(gb.id); if (!r || r.happy) continue; xp += r.xp || 0; if (r.up) ups.push([gb, r]); if (r.done) done.push(...[].concat(r.done)); }
+  const plot = gamePlots().find(q => q.gc && q.gc.id === coopId), birds = due.map(gb => birdOf(gb.id)).filter(Boolean);
+  let went = false;
+  if (plot && !busyNow && farmLife && !farmLife.home && !farmLife.running) {
+    const first = birds.find(b => b.isGoose ? duckVisitOk(b) : !b.train && !b.busy() && !b.nightNow(0.3)) || birds.find(b => b.isGoose ? duckVisitOk(b) : !b.busy() && !b.nightNow(0.3));
+    const P = first ? penSpec(plot) : null;
+    if (P) { plot.group = true; went = farmLife.visitPen(P, 'cuddle', first); if (!went) plot.group = false; }
+  }
+  if (!went) for (const b of birds) { if (b.isGoose && b.pen) b.pen.cuddled(b); heartsOver(b); }
+  const upT = ups.length ? ' · ' + game.t('trust_up' + ups[0][1].up, { name: ups[0][0].name, farmer: farmerName(), xp: ups[0][1].xp }) : '';
+  hint(game.t(went ? 'cuddle_all_go' : 'cuddle_all_done', { farmer: farmerName(), xp }) + upT); wake(1500);
+  if (xp) { gameUI.refresh(); gameUI.bumpCoins(); }
+  if (done.length) jobsDone(done);
+  return due.length;
+}
+// the others of the coop hurry over to the farmer, crouched for a cuddle: each to a place of her own round him (not where
+// the hen in his arms comes to, at), as near as there's room
+function gatherRound(plot, held, at) {
+  const F = plot.farmer; if (!F) return; const taken = [at];
+  for (const o of plot.birds) {
+    if (o === held || !o.root.visible || o.busy() || o.train || o.cuddle) continue;
+    const a0 = Math.atan2(o.root.position.x - F.x, o.root.position.z - F.z); let best = null;
+    for (const rad of [0.6, 0.72, 0.86]) { for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5, 2.1, -2.1, 2.8]) {
+      const x = F.x + Math.sin(a0 + da) * rad, z = F.z + Math.cos(a0 + da) * rad;
+      if (!o.free(x, z) || taken.some(q => Math.hypot(q[0] - x, q[1] - z) < 0.36)) continue;
+      best = [x, z]; break; } if (best) break; }
+    if (!best) continue;
+    taken.push(best);
+    const r = o.plan([best]); o.act = null; o.wait = 0; o.then = null; o.eatAt = null; o.route = r.length ? r : [best]; o.pace = 1.6; o.nextLeg();
+  }
 }
 function gameCuddle(id) {
   const busyNow = !!farmerJob() || JOBQ.length > 0;      // (10 Nov 2026, Audrey: "It should let me validate the action cuddle instead of just saying it's on the list that's confusing. Same for all CTa": accepted at once; the farmer busy: counted now, hearts over the bird, no visit)
@@ -5082,7 +5116,7 @@ function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay();
 // (busy, the nest taken, the page not in view) has a couple of minutes, then her egg is simply there, as for a lay while
 // the game was shut. The feeders' grain goes down with the save's level; bubbles over a nest with eggs and a feeder low.
 const LIVE_LAY = 150e3;
-let gameTickAt = 0, fullNoted = 0, jobsDay = '';
+let WAIT_NOTED = 0, gameTickAt = 0, fullNoted = 0, jobsDay = '';
 const gamePlots = () => plots.filter(p => p.gc && !p.draft);          // (not a new coop still being placed)
 function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
 function canLayNow(b) {
@@ -5121,6 +5155,7 @@ function gameTick(now = Date.now(), force = false) {
   const live = document.visibilityState !== 'hidden';
   const tonight = foxLiveTick(now, live);                               // (tonight's visit, if it's time and the farm is open)
   if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
+  { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hint(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
@@ -5454,7 +5489,7 @@ function appleSpot(plot, side) {
   // when she leaps: the apples just inside the crown's edge, under it)
   const stand = standAt(tz);
   const seen = stand.filter(a => Math.abs(wrapA(a - camA)) < 1.75), A = seen.length >= 3 ? seen : stand, slots = [], gap = a => Math.min(...slots.map(q => Math.abs(wrapA(a - q.a))), 9);
-  while (slots.length < APPLES_RULE.max) {      // (the first nearest the camera, then spread round)
+  while (slots.length < APPLES_RULE.max + 2) {      // (two more than a Rustic coop's tree holds: one more from Snug, one more at Deluxe)      // (the first nearest the camera, then spread round)
     let pick = null;
     for (const a of A) if (pick === null || (slots.length ? gap(a) > gap(pick) : Math.abs(wrapA(a - camA)) < Math.abs(wrapA(pick - camA)))) pick = a;
     if (pick === null || (slots.length && gap(pick) < 0.38)) break;
@@ -5484,7 +5519,8 @@ function appleTree(plot) {
   if (!gc || !gc.ap || !gc.ap.side || !parts.apple_tub || plot.breed === 'call' || plot.breed === 'pea') return null;
   const S = appleSpot(plot, gc.ap.side); if (!S) return null;
   const g = new THREE.Group(); g.position.set(S.at[0], 0, S.at[1]); plot.frame.add(g);
-  const tree = part('apple_tub'); tree.scale.set(S.s, 1, S.s); tree.rotation.y = (parseInt(gc.id.slice(1), 10) || 0) * 1.3;
+  const gk = Math.max(0, Math.min(4, gc.tier || 0)), gx = 1 + 0.05 * gk, gy = 1 + 0.02 * gk;      // (11 Nov 2026: it grows with the coop, a little wider and taller at each look; its apples hang where they did, so she still reaches them)
+  const tree = part('apple_tub'); tree.scale.set(S.s * gx, gy, S.s * gx); tree.rotation.y = (parseInt(gc.id.slice(1), 10) || 0) * 1.3;
   tree.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
   g.add(tree);
   const apples = S.slots.map(sl => { const m = new THREE.Mesh(appleGeo(), appleMat()); m.castShadow = true; m.position.set(sl.hang[0] - S.at[0], sl.hang[1], sl.hang[2] - S.at[1]); m.rotation.y = sl.a * 2.7; m.visible = false; g.add(m); return m; });
@@ -7091,11 +7127,17 @@ function tryUpgrade(p) {
   if (p.farmer || MOVE.plot || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return 'busy'; }
   if (game.data.coins < n.price) return 'coins';
   let S = coopSpot(spotOf(gc), { ...gc, tier: n.tier }), off = false;
-  if (!S.ok && gc.ap && gc.ap.side) { const S2 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }      // (no room for its bigger pen with the apple tree's corner: the tree moves, the coop grows)
+  let flip = null;
+  if (!S.ok && gc.ap && gc.ap.side) {      // (no room for its bigger pen with the apple tree's corner: the tree goes to the other side if there's room there (11 Nov 2026: "Always keep it"); only with no room on either side does it wait)
+    const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: other } });
+    if (S1.ok) { S = S1; flip = other; }
+    else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
+  }      // (no room for its bigger pen with the apple tree's corner: the tree moves, the coop grows)
   if (!S.ok) return 'room';
   const res = game.upgradeCoop(gc.id, S.clear.map(o => o.id));
   if (res !== 'ok') return res;
-  if (off) { game.appleOff(gc.id); p.appleTried = 0; }
+  if (flip) game.plantApple(gc.id, flip);
+  if (off) { game.appleOff(gc.id); p.appleTried = 0; hintNext(game.t('apple_wait')); }
   const ids = new Set(S.clear.map(o => o.id));
   V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
   for (const o of S.clear) clearAway(o);
@@ -7429,7 +7471,8 @@ function pantrySheet(note) {
 }
 function bookSheet() {
   holdBird(null); henOff();
-  gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); }, mile: id => {      // (a milestone's step collected: its coins, XP, and at the last its keepsake)
+  if (game.waitingCoops().length || game.rareWaiting().length) gameUI.bookTab = 'birds';      // (something waiting there: the breeds first)
+  gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); }, coops: () => coopsSheet(), mile: id => {      // (a milestone's step collected: its coins, XP, and at the last its keepsake)
     const r = game.claimMile(id); if (!r) return;
     hint(game.t(r.keepsake ? 'mile_keep' : 'mile_got', { name: game.t('mile_' + id), c: r.coins.toLocaleString(game.locale()), xp: r.xp }));
     gameUI.refresh(); gameUI.bumpCoins(); bookSheet();
@@ -8431,10 +8474,10 @@ function fieldBubbles(w, h) {
   const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
   if (!FIELD.bub) FIELD.bub = mk('gwheat', () => wheatTap());
   if (!FIELD.hbub) FIELD.hbub = mk('ghoney', () => honeyTap());
-  const put = (e, show, v) => {
+  const put = (e, show, v, up = 0) => {
     if (!show || inside.open || SHOWDAY) { e.hidden = true; return; }
     v.project(camera);
-    const sx = (v.x + 1) / 2 * w, sy = (1 - v.y) / 2 * h;
+    const sx = (v.x + 1) / 2 * w, sy = (1 - v.y) / 2 * h - up;
     if (v.z > 1 || sx < -40 || sx > w + 40 || sy < 20 || sy > h + 40) { e.hidden = true; return; }
     bubAt(e, sx, sy);
   };
@@ -8452,9 +8495,16 @@ function fieldBubbles(w, h) {
   // those would touch too (zoomed far out): one bubble for the garden, as before. Widths measured once a wording)
   const bedTxt = (i, m) => { const bed = game.data.garden.beds[i], stg = game.bedStage(i), ico = { carrot: '🥕', straw: '🍓', pump: '🎃' }[bed.crop] || '🌱'; return stg === 'ripe' ? '🧺' + (m === 2 ? ' ' + game.t('bub_pick') : '') : !bed.crop ? '🌱' + (m === 2 ? ' ' + game.t('bub_sow') : '') : ico + (m === 2 ? ' ' + gameUI.dur(game.bedLeft(i)) : ''); };
   const bubW = t => { const C = GARDEN_UI.wide || (GARDEN_UI.wide = new Map()); if (!C.has(t)) { const M = GARDEN_UI.meas || (GARDEN_UI.meas = (() => { const e = document.createElement('span'); e.className = 'gbub gwheat ggarden'; e.style.cssText = 'visibility:hidden;pointer-events:none;left:-999px;top:-999px;transform:none'; document.body.append(e); return e; })()); M.textContent = t; C.set(t, M.offsetWidth); if (C.size > 200) C.clear(); } return C.get(t); };
-  let mode = 0;
+  // (11 Nov 2026, 21:36, Audrey, three bubbles with pictures only: "Bug in the display of the growing fruits": each bed
+  // always says its words now (what's growing and how long, Sow, Pick); where two would touch, the one further up the
+  // screen floats a little higher; only zoomed so far out that the beds are a finger apart is it one bubble for the garden)
+  let mode = 0, lift = [0, 0, 0];
   if (gOn) { const at = GARDEN_BEDX.map((x, i) => { bubV.set(x, BED_BUB_Y[i], 0).applyMatrix4(Gd.d.m).project(camera); return [(bubV.x + 1) / 2 * w, (1 - bubV.y) / 2 * h]; });
-    for (const m of [2, 1]) { const R = at.map(([sx, sy], i) => { const bw = bubW(bedTxt(i, m)); return [sx - bw / 2 - 4, sx + bw / 2 + 4, sy - 45, sy + 4]; }); let hit = false; for (let i = 0; i < 3 && !hit; i++) for (let j = i + 1; j < 3; j++) if (R[i][1] > R[j][0] && R[i][0] < R[j][1] && R[i][3] > R[j][2] && R[i][2] < R[j][3]) { hit = true; break; } if (!hit) { mode = m; break; } } }
+    if (Math.hypot(at[1][0] - at[0][0], at[1][1] - at[0][1]) >= 34) {
+      mode = 2; const order = [0, 1, 2].sort((i, j) => at[j][1] - at[i][1]), placed = [];      // (the lowest on the screen first: it stays; those above make room)
+      for (const i of order) { const bw = bubW(bedTxt(i, 2)); let up = 0;
+        for (let n = 0; n < 6; n++) { const R = [at[i][0] - bw / 2 - 4, at[i][0] + bw / 2 + 4, at[i][1] - up - 45, at[i][1] - up + 4], hit = placed.find(Q => R[1] > Q[0] && R[0] < Q[1] && R[3] > Q[2] && R[2] < Q[3]); if (!hit) { placed.push(R); break; } up = at[i][1] + 4 - hit[2] + 2; if (n === 5) placed.push(R); }
+        lift[i] = up; } } }
   GARDEN_UI.one = mode === 0;
   GARDEN_UI.bubs.forEach((B, i) => {
     const bed = gOn && game.data.garden.beds[i]; if (!bed) { B.hidden = true; return; }
@@ -8465,7 +8515,7 @@ function fieldBubbles(w, h) {
     }
     const stg = game.bedStage(i), txt = bedTxt(i, mode);
     if (B.textContent !== txt) { B.textContent = txt; B.classList.toggle('ripe', stg === 'ripe'); }
-    put(B, true, bubV.set(GARDEN_BEDX[i], BED_BUB_Y[i], 0).applyMatrix4(Gd.d.m));
+    put(B, true, bubV.set(GARDEN_BEDX[i], BED_BUB_Y[i], 0).applyMatrix4(Gd.d.m), lift[i]);
   });
   GARDEN_UI.bub = GARDEN_UI.bubs.find(B => !B.hidden) || GARDEN_UI.bubs[0];      // (the tests': the first one showing)
   const Hv = DEC.items.beehives, n = Hv && !FIELD.honey && DMOVE.id !== 'beehives' ? game.honeyAt() : 0;

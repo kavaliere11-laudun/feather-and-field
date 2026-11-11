@@ -141,7 +141,7 @@
  "text.trio_body": "Um galo e duas galinhas, seus para sempre, com o próprio galinheiro. Coloque-o onde quiser nas suas terras.",
  "text.place_now": "Colocar o galinheiro agora",
  "text.later": "Depois",
- "text.later_note": "Ele fica esperando por você em Seus galinheiros (o celeirinho lá em cima).",
+ "text.later_note": "Ele espera por você no seu Livro, para quando quiser.",
  "text.place_btn": "Colocar",
  "text.move_short": "Mover",
  "text.coops_next": "No nível {n}: {breed}",
@@ -154,7 +154,7 @@
  "text.book_found1": "1 raça encontrada de {all}",
  "text.book_on_farm": "Na sua fazenda: {names}",
  "text.book_at_level": "Chega no nível {n}",
- "text.book_waiting": "O galinheiro deles está esperando por você em Seus galinheiros",
+ "text.book_waiting": "O galinheiro deles está pronto: coloque quando quiser",
  "text.book_price": "{p} moedas por ovo, mais uma moeda por estrela da galinha",
  "text.book_coop": "{coop}, rústico no começo",
  "text.book_more": "Mais páginas em breve.",
@@ -1323,7 +1323,7 @@
  "text.jobs_bonus": "As três tarefas feitas: +{n} minhocas 🪱",
  "text.jobs_note2": "Termine as três para ganhar {n} minhocas.",
  "text.cuddle_all": "♥ Dar carinho a todos aqui",
- "text.cuddle_all_go": "{farmer} vai dar carinho a todos aqui ♥",
+ "text.cuddle_all_go": "{farmer} vai dar carinho a todos aqui ♥ +{xp} XP",
  "text.cuddle_all_none": "Todos aqui já ganharam carinho por enquanto.",
  "text.catch_want": "🧺 Para um pedido",
  "text.catch_orders": "Os pedidos da vila ainda precisam de {n} peixes. Guarde os marcados.",
@@ -1373,5 +1373,10 @@
  "text.sound_test": "Testar o som",
  "text.sound_test_ok": "Duas notas acabaram de tocar. Se você não ouviu, aumente o volume com os botões laterais com o jogo aberto.",
  "text.sound_test_wait": "O som está acordando: toque mais uma vez.",
- "text.sound_test_none": "Este aparelho não dá som ao jogo."
+ "text.sound_test_none": "Este aparelho não dá som ao jogo.",
+ "text.cuddle_all_done": "Um carinho para todos aqui ♥ +{xp} XP",
+ "text.book_coop_wait": "Um galinheiro espera por você: {breed}",
+ "text.book_see": "Ver",
+ "text.coop_waits": "🏠 Um novo galinheiro espera por você no seu Livro: coloque quando quiser.",
+ "text.apple_wait": "🍎 Não há lugar para a macieira ao lado do cercado maior: ela espera no vaso e volta sozinha quando o galinheiro tiver espaço ao lado (mude o galinheiro para dar espaço)."
 }

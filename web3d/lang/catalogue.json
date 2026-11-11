@@ -816,8 +816,8 @@
  },
  {
   "id": "text.later_note",
-  "en": "It waits for you in Your coops (the little barn up top).",
-  "fr": "Il vous attend dans Vos poulaillers (la petite grange en haut)."
+  "en": "It waits for you in your Book, for whenever you like.",
+  "fr": "Il vous attend dans votre Livre, pour quand vous voudrez."
  },
  {
   "id": "text.place_btn",
@@ -881,8 +881,8 @@
  },
  {
   "id": "text.book_waiting",
-  "en": "Their coop is waiting for you in Your coops",
-  "fr": "Leur poulailler vous attend dans Vos poulaillers"
+  "en": "Their coop is ready: place it whenever you like",
+  "fr": "Leur poulailler est prêt : installez-le quand vous voulez"
  },
  {
   "id": "text.book_price",
@@ -4276,6 +4276,31 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.apple_wait",
+  "en": "🍎 No room for the apple tree beside the bigger pen: it’s safe in its tub and comes back by itself when the coop has room at its side (move the coop to give it some).",
+  "fr": "🍎 Plus de place pour le pommier à côté du nouvel enclos : il attend dans son bac et reviendra tout seul dès que le poulailler aura de la place sur le côté (déplacez-le pour lui en donner)."
+ },
+ {
+  "id": "text.book_coop_wait",
+  "en": "A coop is waiting: {breed}",
+  "fr": "Un poulailler vous attend : {breed}"
+ },
+ {
+  "id": "text.book_see",
+  "en": "See",
+  "fr": "Voir"
+ },
+ {
+  "id": "text.coop_waits",
+  "en": "🏠 A new coop is waiting in your Book: place it whenever you like.",
+  "fr": "🏠 Un nouveau poulailler vous attend dans votre Livre : installez-le quand vous voulez."
+ },
+ {
+  "id": "text.cuddle_all_done",
+  "en": "A cuddle for everyone here ♥ +{xp} XP",
+  "fr": "Un câlin pour tout le monde ici ♥ +{xp} XP"
+ },
+ {
   "id": "text.sound_test",
   "en": "Test the sound",
   "fr": "Tester le son"
@@ -4752,8 +4777,8 @@
  },
  {
   "id": "text.cuddle_all_go",
-  "en": "{farmer} is off to cuddle everyone here ♥",
-  "fr": "{farmer} part câliner tout le monde ici ♥"
+  "en": "{farmer} is off to cuddle everyone here ♥ +{xp} XP",
+  "fr": "{farmer} part câliner tout le monde ici ♥ +{xp} XP"
  },
  {
   "id": "text.cuddle_all_none",

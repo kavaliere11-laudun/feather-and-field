@@ -77,7 +77,7 @@ await p.tap('.gsheet .gx'); await run(0.3);
 const kept = await p.evaluate(() => { const f = window.__farm, before = localStorage.getItem('ff3d.farm'), closed = !f.gameUI().kind; f.book(); f.gameUI().close(); return closed && localStorage.getItem('ff3d.farm') === before; });
 ok('closed with its cross; opening the book saves nothing', kept);
 // ---- Your coops: "Breed Book" at its bottom
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 const cb = await p.evaluate(() => { const e = document.querySelector('.gsheet .gbookbtn'), r = e && e.getBoundingClientRect(), b = document.querySelector('.gsheet-body'); if (e) b.scrollTop = b.scrollHeight; return e && { t: e.textContent, kind: window.__farm.gameUI().kind }; });
 await shot('3_coops');
 await p.tap('.gsheet .gbookbtn'); await run(0.3);
@@ -122,7 +122,7 @@ await p.tap('.gbar .gbookbtn'); await p.waitForTimeout(400);
 const bb = await p.evaluate(() => { const u = window.__farm.gameUI(), W = innerWidth, H = innerHeight;
   const rs = [...document.querySelectorAll('.gbar button')].map(e => e.getBoundingClientRect());
   return { kind: u.kind, title: document.querySelector('.gsheet h2').textContent, edge: Math.min(...rs.map(r => Math.min(r.left, W - r.right))), name: /Feather|Field/.test(document.querySelector('.gbar').textContent),
-    column: ['gjobs', 'gshows'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.left > W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) && ['gpanbtn', 'gbookbtn', 'gcoops'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.right < W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) }; });
+    column: ['gjobs', 'gshows'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.left > W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) && ['gpanbtn', 'gbookbtn'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.right < W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) }; });
 ok('the Breed Book has its own button: it opens the Book; the farm\'s buttons in two columns, today\'s on the right and the farm\'s own on the left (10 Nov 2026), nothing within 14 px of the edges, no game name in the bar', bb.kind === 'book' && bb.edge >= 14 && !bb.name && bb.column, bb);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');

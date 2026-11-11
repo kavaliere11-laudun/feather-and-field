@@ -47,7 +47,7 @@ await load();
 await p.evaluate(L9 => { const g = window.__farm.game(); g.data.xp = L9; g.data.lvSeen = 9; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7, 8]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(9));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
-await p.tap('.gcoops'); await run(0.3);
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
 ok('level 9, Your coops: what level 10 brings, the call ducks', T.next.test(t), t.slice(-300));
 await p.evaluate(() => window.__farm.gameUI().close());
