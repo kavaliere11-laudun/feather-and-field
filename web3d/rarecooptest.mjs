@@ -74,7 +74,7 @@ ok('a Silkie hen\'s card: "about an egg a day"', T.lays.test(t), t.slice(0, 300)
 await p.evaluate(() => window.__farm.gameUI().close());
 // the Breed Book: sixteen pages (fourteen, and since then the call ducks' and the peacock's)
 await p.evaluate(() => window.__farm.book()); await run(0.3);
-const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('.gpage')], one = k => { const e = document.querySelector(`.gpage[data-breed="${k}"]`); return e && { found: !e.classList.contains('gpage-no'), text: e.innerText, img: e.querySelector('img').src.split('/').pop().split('?')[0] }; };
+const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('.gpage')], one = k => { const e = document.querySelector(`.gpage[data-breed="${k}"]`); return e && { found: !e.classList.contains('gpage-no'), text: e.innerText, img: (e.querySelector('img') ? e.querySelector('img').src : (e.querySelector('.gsil').style.webkitMaskImage || e.querySelector('.gsil').style.maskImage).replace(/^url\("?|"?\)$/g, '')).split('/').pop().split('?')[0] }; };
   return { n: pg.length, paint: one('sil_paint'), lav: one('sil_lavender'), cuckoo: one('sil_cuckoo') }; });
 ok('the Breed Book: sixteen pages, the Paint Silkies found (Pip and Paddy), the Lavender ones "Rare: hatched by a Black Silkie", the Cuckoo ones from the Partridge (no Grey since 30 Oct)',
   book.n === 16 && book.paint.found && /Pip/.test(book.paint.text) && book.paint.img === 'sil_paint.webp' && !book.lav.found && T.lav.test(book.lav.text) && T.cuckoo.test(book.cuckoo.text), book);

@@ -41,7 +41,7 @@ const book = () => p.evaluate(async () => {
   const cut = [...S.querySelectorAll('h2, .gsub, .gcard-t, .gpage-s, .gpage-l, .gnote, .gbtn')].filter(e => e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > r.right + 0.5).map(e => e.textContent.slice(0, 40));
   return { kind: window.__farm.gameUI().kind, title: S.querySelector('h2').textContent, sub: S.querySelector('.gsub').textContent, more: S.querySelector('.gsheet-body > .gnote:last-child').textContent,
     pages: [...S.querySelectorAll('.gpage')].map(c => ({ breed: c.dataset.breed, name: c.querySelector('.gcard-t').textContent, status: c.querySelector('.gpage-s').textContent, lines: [...c.querySelectorAll('.gpage-l')].map(l => l.textContent),
-      dark: getComputedStyle(c.querySelector('.gpic img')).filter.includes('brightness(0)'), w: c.querySelector('.gpic img').naturalWidth, go: !!c.querySelector('.gpage-go'), egg: getComputedStyle(c.querySelector('.gegg-i')).backgroundColor })),
+      dark: !!c.querySelector('.gpic .gsil') && /book\//.test(c.querySelector('.gpic .gsil').style.webkitMaskImage || c.querySelector('.gpic .gsil').style.maskImage), w: c.querySelector('.gpic img') ? c.querySelector('.gpic img').naturalWidth : c.querySelector('.gpic .gsil').offsetWidth * 4, go: !!c.querySelector('.gpage-go'), egg: getComputedStyle(c.querySelector('.gegg-i')).backgroundColor })),
     imgs: S.querySelectorAll('img').length, sheet: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], barBottom: Math.round(bar.bottom), x: [Math.round(x.left), Math.round(x.top), Math.round(x.right)],
     wide: body.scrollWidth > body.clientWidth + 1, cut, vw: innerWidth, vh: innerHeight };
 });

@@ -98,7 +98,7 @@ const checks = [
   ['no geese, dog or decorations yet', !farm.geese && !farm.dog && farm.decor === 0, [farm.geese, farm.dog, farm.decor]],
   ['saved on the phone, not flagged', farm.saved && !farm.edited, farm.saved],
   ['a real tap on each bird: her card in the phone\'s language', cards.every(c => c.ui === 'bird' && c.text.startsWith(c.name) && c.text.includes(c.kind === 'rooster' ? T.rooster : T.hen) && c.text.includes(T.forever) && c.text.includes(T.shy) && c.text.includes(T.lives) && c.text.includes(T[c.pers] || '?')), cards.map(c => [c.name, c.pers, c.kind, c.text.slice(0, 40), c.text.slice(-70)])],
-  ['the same farm after a reload', !again.welcome && !again.edited && JSON.stringify(again.d) === JSON.stringify(farm.d) && again.names.join() === farm.birds.map(x => x.name).join(), [again.welcome, again.edited]],
+  ['the same farm after a reload', !again.welcome && !again.edited && JSON.stringify(again.d) === JSON.stringify(farm.d) && again.names.join() === farm.birds.map(x => x.name).join(), [again.welcome, again.edited, Object.keys({ ...again.d, ...farm.d }).filter(k => JSON.stringify(again.d[k]) !== JSON.stringify(farm.d[k]))]],
   ['a save changed outside the game: everything checked', tamper.xp === 0 && tamper.coins === 1e9 && tamper.level === 1 && tamper.rooster !== 'mum' && !/[<>"]/.test(tamper.name) && tamper.n === 3 && tamper.trust === 15 && tamper.tier === 0 && !tamper.hacked && !tamper.imgInCard, tamper],
   ['…and flagged in Settings', tamper.edited && tamper.warned && tamper.settings === T.settings, [tamper.edited, tamper.warned]],
   ['at night: the trio in bed; inside the coop, its title in the language', night.asleep.every(Boolean) && insideTitle === T.inside, [night.asleep, insideTitle]],

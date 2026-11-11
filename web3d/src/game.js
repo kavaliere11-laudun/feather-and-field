@@ -2423,7 +2423,7 @@ export class Game {
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
     this.data.dresses = [];
-    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
+    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.pantry = { eggs: 0, val: 0, honey: 0 }; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
     this.edited = false;
     this.save();
     return this.data;
