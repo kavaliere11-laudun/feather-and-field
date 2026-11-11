@@ -562,7 +562,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -8277,6 +8277,8 @@ function gardenTap(bubble = false) {
   if (bubble && game.bedsRipe()) { const i = game.data.garden.beds.findIndex((_, k) => game.bedStage(k) === 'ripe'); if (i >= 0 && pickBed(i)) return; }
   holdBird(null); henOff(); gardenCard();
 }
+const BED_BUB_Y = [0.55, 0.55, 0.55];      // (how high over its bed each bubble floats)
+function bedTap(i) { if (GARDEN_UI.one) { gardenTap(true); return; } if (game.bedStage(i) === 'ripe' && pickBed(i)) return; holdBird(null); henOff(); gardenCard(); }      // (a bed's own bubble)
 function gardenCard() {
   gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), move: () => { gameUI.close(); startDecor('garden'); } },
     { busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : farmerBusyText() });
@@ -8421,7 +8423,6 @@ function fieldBubbles(w, h) {
   const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
   if (!FIELD.bub) FIELD.bub = mk('gwheat', () => wheatTap());
   if (!FIELD.hbub) FIELD.hbub = mk('ghoney', () => honeyTap());
-  if (!GARDEN_UI.bub) GARDEN_UI.bub = mk('gwheat ggarden', () => gardenTap(true));
   const put = (e, show, v) => {
     if (!show || inside.open || SHOWDAY) { e.hidden = true; return; }
     v.project(camera);
@@ -8435,11 +8436,30 @@ function fieldBubbles(w, h) {
     if (FIELD.bub.textContent !== txt) { FIELD.bub.textContent = txt; FIELD.bub.classList.toggle('ripe', st === 'ripe'); }
     put(FIELD.bub, true, bubV.set(0, 0.45, 0).applyMatrix4(W.d.m));      // (over the field's middle, Audrey 6 Nov: "This message should also be centred")
   } else FIELD.bub.hidden = true;
-  const Gd = DEC.items.garden, gt = Gd && !GARDEN_UI.work && DMOVE.id !== 'garden' && game.data.garden ? gardenBubble() : null;
-  if (gt) {
-    if (GARDEN_UI.bub.textContent !== gt.txt) { GARDEN_UI.bub.textContent = gt.txt; GARDEN_UI.bub.classList.toggle('ripe', gt.ripe); }
-    put(GARDEN_UI.bub, true, bubV.set(0, 0.55, 0).applyMatrix4(Gd.d.m));
-  } else if (GARDEN_UI.bub) GARDEN_UI.bub.hidden = true;
+  // the kitchen garden: a bubble over each bed (11 Nov 2026, Audrey: "Can I nave 1 bubble per field please"): empty: "Sow" (its
+  // card); growing: what's in it and how long; ripe: "Pick" (that bed picked straight away)
+  const Gd = DEC.items.garden, gOn = Gd && !GARDEN_UI.work && DMOVE.id !== 'garden' && game.data.garden;
+  if (!GARDEN_UI.bubs) GARDEN_UI.bubs = GARDEN_BEDX.map((_, i) => mk('gwheat ggarden', () => bedTap(i)));
+  // (how much each says goes by the room there is on the screen: its words; if two would touch, its picture alone; if
+  // those would touch too (zoomed far out): one bubble for the garden, as before. Widths measured once a wording)
+  const bedTxt = (i, m) => { const bed = game.data.garden.beds[i], stg = game.bedStage(i), ico = { carrot: '🥕', straw: '🍓', pump: '🎃' }[bed.crop] || '🌱'; return stg === 'ripe' ? '🧺' + (m === 2 ? ' ' + game.t('bub_pick') : '') : !bed.crop ? '🌱' + (m === 2 ? ' ' + game.t('bub_sow') : '') : ico + (m === 2 ? ' ' + gameUI.dur(game.bedLeft(i)) : ''); };
+  const bubW = t => { const C = GARDEN_UI.wide || (GARDEN_UI.wide = new Map()); if (!C.has(t)) { const M = GARDEN_UI.meas || (GARDEN_UI.meas = (() => { const e = document.createElement('span'); e.className = 'gbub gwheat ggarden'; e.style.cssText = 'visibility:hidden;pointer-events:none;left:-999px;top:-999px;transform:none'; document.body.append(e); return e; })()); M.textContent = t; C.set(t, M.offsetWidth); if (C.size > 200) C.clear(); } return C.get(t); };
+  let mode = 0;
+  if (gOn) { const at = GARDEN_BEDX.map((x, i) => { bubV.set(x, BED_BUB_Y[i], 0).applyMatrix4(Gd.d.m).project(camera); return [(bubV.x + 1) / 2 * w, (1 - bubV.y) / 2 * h]; });
+    for (const m of [2, 1]) { const R = at.map(([sx, sy], i) => { const bw = bubW(bedTxt(i, m)); return [sx - bw / 2 - 4, sx + bw / 2 + 4, sy - 45, sy + 4]; }); let hit = false; for (let i = 0; i < 3 && !hit; i++) for (let j = i + 1; j < 3; j++) if (R[i][1] > R[j][0] && R[i][0] < R[j][1] && R[i][3] > R[j][2] && R[i][2] < R[j][3]) { hit = true; break; } if (!hit) { mode = m; break; } } }
+  GARDEN_UI.one = mode === 0;
+  GARDEN_UI.bubs.forEach((B, i) => {
+    const bed = gOn && game.data.garden.beds[i]; if (!bed) { B.hidden = true; return; }
+    if (mode === 0) {
+      if (i !== 1) { B.hidden = true; return; }
+      const gt = gardenBubble(); if (B.textContent !== gt.txt) { B.textContent = gt.txt; B.classList.toggle('ripe', gt.ripe); }
+      put(B, true, bubV.set(0, 0.55, 0).applyMatrix4(Gd.d.m)); return;
+    }
+    const stg = game.bedStage(i), txt = bedTxt(i, mode);
+    if (B.textContent !== txt) { B.textContent = txt; B.classList.toggle('ripe', stg === 'ripe'); }
+    put(B, true, bubV.set(GARDEN_BEDX[i], BED_BUB_Y[i], 0).applyMatrix4(Gd.d.m));
+  });
+  GARDEN_UI.bub = GARDEN_UI.bubs.find(B => !B.hidden) || GARDEN_UI.bubs[0];      // (the tests': the first one showing)
   const Hv = DEC.items.beehives, n = Hv && !FIELD.honey && DMOVE.id !== 'beehives' ? game.honeyAt() : 0;
   if (n) {
     const txt = '🍯 ' + n; if (FIELD.hbub.textContent !== txt) FIELD.hbub.textContent = txt;
@@ -9409,7 +9429,7 @@ window.__farm = {
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
   garden: { tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
-    state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,
+    state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, bubs: (GARDEN_UI.bubs || []).map(B => B.hidden ? null : B.textContent), owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, 0).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },

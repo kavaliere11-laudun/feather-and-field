@@ -441,7 +441,7 @@
  "text.settings_sounds": "Geräusche",
  "text.music_on": "An",
  "text.music_off": "Aus",
- "text.settings_music_note": "Die Musik spielt ab und zu, tagsüber und am Abend. Ist dein Handy stumm geschaltet, ist auch das Spiel still.",
+ "text.settings_music_note": "Die Musik kommt ab und zu, tagsüber und am Abend.",
  "text.settings_lang": "Sprache",
  "text.settings_new": "Neuen Hof beginnen",
  "text.settings_new_sure": "Noch mal tippen, um ganz von vorn anzufangen",
@@ -1366,5 +1366,9 @@
  "text.nav_coops": "Ställe",
  "text.nav_orders": "Aufträge",
  "text.nav_jobs": "Aufgaben",
- "text.nav_shows": "Schauen"
+ "text.nav_shows": "Schauen",
+ "text.sound_test": "Ton testen",
+ "text.sound_test_ok": "Gerade wurden zwei Töne gespielt. Wenn du sie nicht gehört hast, stelle mit den Seitentasten lauter, während das Spiel offen ist.",
+ "text.sound_test_wait": "Der Ton wacht gerade auf: Tippe noch einmal.",
+ "text.sound_test_none": "Dieses Gerät gibt dem Spiel keinen Ton."
 }

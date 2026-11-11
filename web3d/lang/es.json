@@ -441,7 +441,7 @@
  "text.settings_sounds": "Sonidos",
  "text.music_on": "Sí",
  "text.music_off": "No",
- "text.settings_music_note": "La música suena de vez en cuando, de día y al atardecer. Si tu teléfono está en silencio, el juego también.",
+ "text.settings_music_note": "La música suena de vez en cuando, de día y al atardecer.",
  "text.settings_lang": "Idioma",
  "text.settings_new": "Empezar una granja nueva",
  "text.settings_new_sure": "Toca otra vez para empezar de cero",
@@ -1364,5 +1364,9 @@
  "text.nav_coops": "Gallineros",
  "text.nav_orders": "Pedidos",
  "text.nav_jobs": "Tareas",
- "text.nav_shows": "Concursos"
+ "text.nav_shows": "Concursos",
+ "text.sound_test": "Probar el sonido",
+ "text.sound_test_ok": "Acaban de sonar dos notas. Si no las has oído, sube el volumen con los botones laterales con el juego abierto.",
+ "text.sound_test_wait": "El sonido se está despertando: toca otra vez.",
+ "text.sound_test_none": "Este dispositivo no da sonido al juego."
 }

@@ -1594,6 +1594,9 @@ export class GameUI {
       row.append(ch); b.append(row);
     }
     b.append(el('p', 'gnote gsound-note', this.t('settings_music_note')));
+    { const tb = el('button', 'gbtn galt gsmallbtn gsound-test', '🔊 ' + this.t('sound_test')), tn = el('p', 'gnote gsound-res'); tb.type = 'button'; tn.hidden = true;      // (a way to check the sound is alive: two notes, and a word on what to look at if they aren't heard)
+      tb.addEventListener('click', () => { const r = this.o.soundTest ? this.o.soundTest() : 'none'; tn.textContent = this.t(r === 'running' ? 'sound_test_ok' : r === 'none' ? 'sound_test_none' : 'sound_test_wait'); tn.hidden = false; });
+      b.append(tb, tn); }
     if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
     if (IAP_DEMO) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; c.append(hd, el('p', 'gnote', this.dt('restore_note')), r); b.append(c); }
     if (this.o.account && this.o.account.on) b.append(this.accountCard());

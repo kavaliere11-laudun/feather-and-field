@@ -441,7 +441,7 @@
  "text.settings_sounds": "Suoni",
  "text.music_on": "Sì",
  "text.music_off": "No",
- "text.settings_music_note": "La musica arriva ogni tanto, di giorno e di sera. Se il telefono è in modalità silenziosa, anche il gioco resta in silenzio.",
+ "text.settings_music_note": "La musica arriva ogni tanto, di giorno e di sera.",
  "text.settings_lang": "Lingua",
  "text.settings_new": "Inizia una nuova fattoria",
  "text.settings_new_sure": "Tocca di nuovo per ricominciare da zero",
@@ -1369,5 +1369,9 @@
  "text.nav_coops": "Pollai",
  "text.nav_orders": "Ordini",
  "text.nav_jobs": "Lavori",
- "text.nav_shows": "Mostre"
+ "text.nav_shows": "Mostre",
+ "text.sound_test": "Prova il suono",
+ "text.sound_test_ok": "Sono appena suonate due note. Se non le hai sentite, alza il volume con i tasti laterali mentre il gioco è aperto.",
+ "text.sound_test_wait": "Il suono si sta svegliando: tocca ancora una volta.",
+ "text.sound_test_none": "Questo dispositivo non dà suono al gioco."
 }

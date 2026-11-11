@@ -441,7 +441,7 @@
  "text.settings_sounds": "Sons",
  "text.music_on": "Sim",
  "text.music_off": "Não",
- "text.settings_music_note": "A música toca de vez em quando, de dia e à noitinha. Com o celular no silencioso, o jogo também fica em silêncio.",
+ "text.settings_music_note": "A música toca de vez em quando, de dia e ao entardecer.",
  "text.settings_lang": "Idioma",
  "text.settings_new": "Começar uma nova fazenda",
  "text.settings_new_sure": "Toque de novo para recomeçar do zero",
@@ -1369,5 +1369,9 @@
  "text.nav_coops": "Galinheiros",
  "text.nav_orders": "Pedidos",
  "text.nav_jobs": "Tarefas",
- "text.nav_shows": "Exposições"
+ "text.nav_shows": "Exposições",
+ "text.sound_test": "Testar o som",
+ "text.sound_test_ok": "Duas notas acabaram de tocar. Se você não ouviu, aumente o volume com os botões laterais com o jogo aberto.",
+ "text.sound_test_wait": "O som está acordando: toque mais uma vez.",
+ "text.sound_test_none": "Este aparelho não dá som ao jogo."
 }

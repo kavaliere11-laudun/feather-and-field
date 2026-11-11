@@ -86,7 +86,7 @@ export class Sound {
     if (this.o.off) return;
     try {
       if (!this.ctx) {
-        try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* (older phones: their own way) */ }
+        try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* (older phones: their own way) */ }      // (heard with the ring switch on silent too, 11 Nov 2026: Audrey, her volume up, three times: "No sounds"; it was 'ambient')
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
         this.ctx = new AC();
         this.master = this.ctx.createGain(); this.master.connect(this.ctx.destination);
@@ -251,6 +251,17 @@ export class Sound {
     if (!on) { if (this.state === 'playing') { this.el.pause(); this.pausedPlaying = true; } this.ctx.suspend().catch(() => {}); return; }
     this.ctx.resume().catch(() => {});
     if (this.pausedPlaying) { this.pausedPlaying = false; if (this.state === 'playing') this.playEl(); }
+  }
+  // Settings' "Test the sound": two notes straight to the speaker (no recording needed), whatever the Music and Sounds
+  // switches say; what state the sound is in ('running': they play; else it's still waking: tap again)
+  test() {
+    this.unlock(); if (!this.ctx) return 'none';
+    try { this.ctx.resume().catch(() => {}); } catch (e) { /* */ }
+    try {
+      const t0 = this.ctx.currentTime + 0.05;
+      [[660, 0], [880, 0.22]].forEach(([f, d]) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.25, t0 + d + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.3); o.connect(g); g.connect(this.ctx.destination); o.start(t0 + d); o.stop(t0 + d + 0.32); });
+    } catch (e) { return 'error'; }
+    return this.ctx.state;
   }
   info() {
     return { unlocked: !!this.ctx, ctx: this.ctx && this.ctx.state, state: this.state, track: MUSIC[this.track], gain: this.gain ? +this.gain.gain.value.toFixed(3) : 0,

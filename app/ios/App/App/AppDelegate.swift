@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import AVFoundation
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +8,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // The game's sounds and music are heard even with the phone's ring switch on silent (11 Nov 2026, Audrey: "No sounds",
+        // three times, her volume up): a web view's sound is otherwise muted by that switch. Mixed with whatever else is
+        // playing, so her own music isn't stopped. The game's own Music and Sounds switches still decide what plays.
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch { /* (silent mode then mutes it, as before) */ }
         return true
     }
 

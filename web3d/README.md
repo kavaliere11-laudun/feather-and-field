@@ -4954,3 +4954,19 @@ shot again so they share the game's Painted look (`intro/*.webp`, the sign of pi
   line: `booktest`, `rarecooptest` (the drawn shapes), `wormtest` (worms given at once while he works), `gametest`.
   `emutest` and `rulestest` need the account emulators and `switchtest` two site addresses: not run here.
   `playthrough`, `balsim` and `firstsession` sell from the pantry; a year of `balsim` gives the same pace of levels.
+
+## A bubble for each garden bed; sound with the ring switch on silent (11 Nov 2026, 07:30; Audrey: "No sounds. Can I nave 1 bubble per field please."; "The coop space is working")
+- **A bubble for each bed** of the kitchen garden (main.js `fieldBubbles`, `GARDEN_UI.bubs`, `bedTap`): empty "🌱 Sow"
+  (the garden's card), growing its crop and the time left ("🎃 5 h"), ripe "🧺 Pick" (that bed picked straight away).
+  How much each says goes by the room on the screen: its words when the three fit side by side, its picture alone
+  when they'd touch, and one bubble for the whole garden (as before) when zoomed far out; checked at eleven zooms and
+  three turns, sideways and upright: never one over another.
+- **"No sounds"** (the third time, her volume up): the game deliberately followed the phone's ring switch (the page's
+  audio session "ambient", and a web view is muted by that switch). Now it plays with the switch on silent too: the
+  page asks for the "playback" session (sound.js `unlock`), and the iPhone app sets `AVAudioSession` to playback, mixed
+  with other sound so her own music isn't stopped (app/ios `AppDelegate.swift`). The Music and Sounds switches still
+  decide what plays. The Settings note no longer says "With your phone on silent, the game is silent too."
+- **"Test the sound"** in Settings: two notes played straight to the speaker (no recording, whatever the switches),
+  and a word: they played (turn the volume up if not heard), the sound is still waking (tap again), or this device
+  gives none (`Sound.test`). Not verifiable here: the test browser has no sound; to confirm on her iPhone.
+- The coop let go between two lanes now finds its place: confirmed by her.

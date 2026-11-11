@@ -2291,8 +2291,8 @@
  },
  {
   "id": "text.settings_music_note",
-  "en": "The music comes now and then, by day and of an evening. With your phone on silent, the game is silent too.",
-  "fr": "La musique vient de temps en temps, le jour et le soir. Si votre téléphone est en mode silencieux, le jeu l’est aussi."
+  "en": "The music comes now and then, by day and of an evening.",
+  "fr": "La musique vient de temps en temps, le jour et le soir."
  },
  {
   "id": "text.settings_lang",
@@ -4274,6 +4274,26 @@
   "id": "text.fish_casting",
   "en": "Casting…",
   "fr": "On lance…"
+ },
+ {
+  "id": "text.sound_test",
+  "en": "Test the sound",
+  "fr": "Tester le son"
+ },
+ {
+  "id": "text.sound_test_ok",
+  "en": "Two notes just played. If you didn’t hear them, turn the volume up with the side buttons while the game is open.",
+  "fr": "Deux notes viennent de jouer. Si vous ne les avez pas entendues, montez le volume avec les boutons sur le côté, le jeu ouvert."
+ },
+ {
+  "id": "text.sound_test_wait",
+  "en": "The sound is waking up: tap once more.",
+  "fr": "Le son se réveille : touchez encore une fois."
+ },
+ {
+  "id": "text.sound_test_none",
+  "en": "This device gives the game no sound.",
+  "fr": "Cet appareil ne donne pas de son au jeu."
  },
  {
   "id": "text.nav_book",
