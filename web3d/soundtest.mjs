@@ -129,7 +129,7 @@ ok('a woof, a quack, a flurry, a goose\'s honk, a bee, the peacock\'s call from 
 // the settings: Music On / Off
 await p.evaluate(() => window.__farm.gameUI().settings()); await wait(700);
 const row = await p.evaluate(() => { const r = document.querySelector('.gmusic'); return r ? { label: r.querySelector('.glabel').textContent, chips: [...r.querySelectorAll('.gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')), note: document.querySelector('.gsound-note').textContent, sounds: [...document.querySelectorAll('.gsounds .gchip')].map(c => c.textContent + (c.classList.contains('on') ? '*' : '')).join() } : null; });
-ok('Settings: the music row and the sounds row, both on', row && row.label === (fr ? 'Musique' : 'Music') && row.chips.join() === (fr ? 'Oui*,Non' : 'On*,Off') && row.sounds === row.chips.join() && /silen/.test(row.note), row);
+ok('Settings: the music row and the sounds row, both on', row && row.label === (fr ? 'Musique' : 'Music') && row.chips.join() === (fr ? 'Oui*,Non' : 'On*,Off') && row.sounds === row.chips.join() && !/silen/.test(row.note) && !!(await p.evaluate(() => document.querySelector('.gsound-test'))), row);
 await p.screenshot({ path: `${OUT}/settings_${W}x${H}${fr ? '_fr' : ''}.png` });
 await p.tap('.gmusic .gchip:nth-child(2)');
 s = await until(async () => { const i = await info(); return i.state === 'idle' ? i : null; }, 10000) || await info();
