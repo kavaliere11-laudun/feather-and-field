@@ -50,7 +50,7 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await p.tap('.gbar .gpill:not(.glvl)'); await run(0.3);
 await p.waitForFunction(() => [...document.querySelectorAll('.gdec img')].every(i => i.complete), null, { timeout: 30000 }).catch(() => {});
 let t = await sheet();
-const cards = await p.evaluate(() => [...document.querySelectorAll('.gdec')].map(c => [c.dataset.decor, c.classList.contains('gpage-no'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img').complete && c.querySelector('img').naturalWidth > 0]));
+const cards = await p.evaluate(() => [...document.querySelectorAll('.gdec')].map(c => [c.dataset.decor, c.classList.contains('gpage-no'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img') ? c.querySelector('img').complete && c.querySelector('img').naturalWidth > 0 : !!c.querySelector('.gsil')]));
 ok('the coins open the shop: the eight with their pictures; the five its level has come for to buy, the others greyed with their level',
   (await kind()) === 'shop' && T.title.test(t) && cards.length === 8 && cards.filter(c => !c[1] && c[2]).length === 5 && cards.filter(c => c[1]).length === 3 && cards.every(c => c[3]) && T.buy.test(t) && T.lvl13.test(t) && T.pond.test(t), { cards, t: t.slice(0, 400) });
 await shot('1_shop');

@@ -37,7 +37,7 @@ const st = () => p.evaluate(() => { const f = window.__farm, F = f.fishing(), L 
     float: F ? F.float.visible : false, said: L.said.slice(-3), got: g.data.fish ? Object.keys(g.data.fish.got) : [] }; });
 const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null;
   return { kind: window.__farm.gameUI().kind, text: s.innerText, go: !!s.querySelector('button[data-fish=go]'), tin: !!s.querySelector('button[data-fish=tin]'), keep: (s.querySelector('button[data-fish=keep]') || {}).textContent || null,
-    stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img').length, got: s.querySelectorAll('.gfishrow img.got').length }; });
+    stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img, .gfishrow .gfishsil').length, got: s.querySelectorAll('.gfishrow img.got').length }; });
 const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));      // (the cards slid up)
 const until = async (test, secs, step = 0.25) => { for (let t = 0; t < secs; t += step) { if (await p.evaluate(test)) return true; await run(step); } return p.evaluate(test); };
 // a player reeling: holding, letting go while the fish pulls (or `how`: 'hard' always holding, 'slack' never)

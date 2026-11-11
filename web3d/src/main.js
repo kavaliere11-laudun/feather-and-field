@@ -562,7 +562,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -2779,7 +2779,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       else { plot.farmer.px = undefined; plot.pb[2] = 0; }
       if (DK) for (const d of DK.all()) DK.keepFromFarmer(d);      // (the call ducks out of his way as he steps, not a moment after)
     },
-    leave() { plot.group = false; plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; if (DK) for (const d of DK.ducks) d.called = false; P.wormsDone(); },
+    leave() { plot.hugAll = false; plot.block = base; plot.farmer = null; plot.fb = null; plot.pb = null; for (const b of plot.birds) b.called = false; if (DK) for (const d of DK.ducks) d.called = false; P.wormsDone(); },
     reserve(b) { if (b) b.called = true; },                  // (sent for: she doesn't go off to lay meanwhile)
     // the hens and the rooster, where he must mind them (world)
     hens() { return [...plot.birds.filter(b => b.root.visible && !(b.laying && b.laying.inside)), ...(DK ? DK.all().filter(d => DK.solid(d)) : [])].map(b => ({ pos: b.root.getWorldPosition(new THREE.Vector3()), R: b.isGoose ? 0.22 : 0.32, noPush: true })); },
@@ -2830,7 +2830,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       const sides = worms ? [wside(1), wside(-1)].filter(o => roomFor(o.at)) : [];
       // (no way on foot to either side: beside him all the same, she flutters over)
       const w = sides.find(o => reach(o.at)) || sides[0] || null, at = w ? w.at : spot, face = w ? Math.atan2(w.palm[0] - at[0], w.palm[1] - at[1]) : Math.atan2(CB[0] - at[0], CB[1] - at[1]);
-      if (plot.group && !worms) gatherRound(plot, b, at);      // ("Cuddle everyone here": the others hurry over round him too)
+      if (plot.hugAll && !worms) gatherRound(plot, b, at);      // ("Cuddle everyone here": the others hurry over round him too)
       plot.farmer.hen = b; plot.block = [...plot.block, [at[0], at[1], 0.22, b]]; P.henAt = { side: !!w, hand: w ? w.hand : 'R', at, sides: [wside(1), wside(-1)].map(o => o.at.map(v => +v.toFixed(2))), room: sides.length };      // (which hand he holds out; the tests)
       for (const o of plot.birds) if (o !== b && o.root.visible && !o.busy() && Math.hypot(o.root.position.x - at[0], o.root.position.z - at[1]) < 0.4) o.shooFrom(at[0], at[1]);      // (anyone sitting where she'll be: up and off)
       return b.comeForCuddle(at, face, [plot.farmer.x, plot.farmer.z])
@@ -2917,8 +2917,8 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       if (!b.isGoose) b.rig.sleepy(k > 0.9); else C.carry.y -= 0.05;      // (a call duck: her eyes shut by her own pose; held a little lower, she's smaller)
     },
     heart(b) { const p = b.root.getWorldPosition(new THREE.Vector3()); p.y += b.isGoose ? 0.3 : b.rig.scale * 0.8; spawnHeart(p);
-      if (plot.group && plot.farmer) for (const o of plot.birds) if (o !== b && o.root.visible && Math.hypot(o.root.position.x - plot.farmer.x, o.root.position.z - plot.farmer.z) < 1.25) { const q = o.root.getWorldPosition(new THREE.Vector3()); q.y += o.isGoose ? 0.3 : o.rig.scale * 0.8; spawnHeart(q); }      // (everyone gathered round him: a heart each)
-      if (plot.group && DK) for (const d of DK.ducks) if (d !== b && d.root.visible) { const q = d.root.getWorldPosition(new THREE.Vector3()); q.y += 0.3; spawnHeart(q); } },
+      if (plot.hugAll && plot.farmer) for (const o of plot.birds) if (o !== b && o.root.visible && Math.hypot(o.root.position.x - plot.farmer.x, o.root.position.z - plot.farmer.z) < 1.25) { const q = o.root.getWorldPosition(new THREE.Vector3()); q.y += o.isGoose ? 0.3 : o.rig.scale * 0.8; spawnHeart(q); }      // (everyone gathered round him: a heart each)
+      if (plot.hugAll && DK) for (const d of DK.ducks) if (d !== b && d.root.visible) { const q = d.root.getWorldPosition(new THREE.Vector3()); q.y += 0.3; spawnHeart(q); } },
     treatHearts() { for (const b of [...plot.birds, ...(DK ? DK.all() : [])]) if (b.root && b.root.visible && !(b.laying && b.laying.inside) && Math.random() < 0.7) P.heart(b); },      // (a treat: happy birds, hearts over most of them)
     // worms from her (farmlife.js 'worms'; Audrey's idea): u the time since she started, each worm DIG of it, n of them. Each:
     // two kicks back, her beak down to the ground (the worm's there in it), up with it wriggling, then dropped into his palm
@@ -5016,7 +5016,7 @@ function cuddleAll(coopId) {
   if (plot && !busyNow && farmLife && !farmLife.home && !farmLife.running) {
     const first = birds.find(b => b.isGoose ? duckVisitOk(b) : !b.train && !b.busy() && !b.nightNow(0.3)) || birds.find(b => b.isGoose ? duckVisitOk(b) : !b.busy() && !b.nightNow(0.3));
     const P = first ? penSpec(plot) : null;
-    if (P) { plot.group = true; went = farmLife.visitPen(P, 'cuddle', first); if (!went) plot.group = false; }
+    if (P) { plot.hugAll = true; went = farmLife.visitPen(P, 'cuddle', first); if (!went) plot.hugAll = false; }
   }
   if (!went) for (const b of birds) { if (b.isGoose && b.pen) b.pen.cuddled(b); heartsOver(b); }
   const upT = ups.length ? ' · ' + game.t('trust_up' + ups[0][1].up, { name: ups[0][0].name, farmer: farmerName(), xp: ups[0][1].xp }) : '';
@@ -7469,9 +7469,9 @@ function pantrySheet(note) {
     hint(game.t('pantry_sold', { n: r.n.toLocaleString(game.locale()), c: r.coins.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); pantrySheet();
   } });
 }
-function bookSheet() {
+function bookSheet(fromButton = false) {
   holdBird(null); henOff();
-  if (game.waitingCoops().length || game.rareWaiting().length) gameUI.bookTab = 'birds';      // (something waiting there: the breeds first)
+  if (fromButton && (game.waitingCoops().length || game.rareWaiting().length)) gameUI.bookTab = 'birds';      // (something waiting there: the breeds first)
   gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); }, coops: () => coopsSheet(), mile: id => {      // (a milestone's step collected: its coins, XP, and at the last its keepsake)
     const r = game.claimMile(id); if (!r) return;
     hint(game.t(r.keepsake ? 'mile_keep' : 'mile_got', { name: game.t('mile_' + id), c: r.coins.toLocaleString(game.locale()), xp: r.xp }));

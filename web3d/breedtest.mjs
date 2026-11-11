@@ -24,7 +24,7 @@ const load = async () => {
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.gameTick(window.__T); f.draw(); });
   await p.waitForTimeout(1500); await run(0.5);
 };
-const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), dot: !window.__farm.gameUI().bdot.hidden, coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length,
+const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), dot: (+window.__farm.gameUI().bdot.textContent || 0) > g.milesReady(), coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length,
   plots: f.coopPlots().length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const T = { orp: fr ? /Nouvelle race : Orpington fauve/ : /New breed: Buff Orpington/, sil: fr ? /Nouvelle race : Poule soie blanche/ : /New breed: White Silkie/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,

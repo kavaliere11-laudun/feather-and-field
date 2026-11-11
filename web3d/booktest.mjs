@@ -29,9 +29,9 @@ const load = async () => {
 const tag = (fr ? 'fr' : 'en') + '_' + W + 'x' + H;
 const shot = async (n) => { if (!SHOTS) return; await p.evaluate(() => document.getAnimations().forEach(a => a.finish())); await p.screenshot({ path: `${SHOTS}/book_${tag}_${n}.png`, timeout: 240000 }); };
 const L = fr ? { title: 'Livre des races', found: n => n === 1 ? '1 race trouvée sur 16' : n + ' races trouvées sur 16', farm: 'Dans votre ferme : ', at: n => 'Arrive au niveau ' + n, and: ' et ', price: '6 pièces l’œuf, plus une pièce par étoile de la poule',
-    coop: 'Grange rouge, rustique pour commencer', more: 'D’autres pages à venir.', eggs: 'Œufs bruns', waiting: 'Leur poulailler vous attend dans Vos poulaillers', btn: '📖 Livre des races', sil: 'Poule soie blanche' }
+    coop: 'Grange rouge, rustique pour commencer', more: 'D’autres pages à venir.', eggs: 'Œufs bruns', waiting: 'Leur poulailler est prêt\u00a0: installez-le quand vous voulez', btn: '📖 Livre des races', sil: 'Poule soie blanche' }
   : { title: 'Breed Book', found: n => n + ' of 16 breeds found', farm: 'On your farm: ', at: n => 'Comes at level ' + n, and: ' and ', price: '6 coins an egg, plus a coin for each star of the hen',
-    coop: 'Red Barn, rustic to start', more: 'More pages to come.', eggs: 'Brown eggs', waiting: 'Their coop is waiting for you in Your coops', btn: '📖 Breed Book', sil: 'White Silkie' };
+    coop: 'Red Barn, rustic to start', more: 'More pages to come.', eggs: 'Brown eggs', waiting: 'Their coop is ready: place it whenever you like', btn: '📖 Breed Book', sil: 'White Silkie' };
 // the book as shown: its title, the count, each page (breed, name, its lines, the picture's look and whether it loaded),
 // and how it sits on the screen (the top bar, the sheet, anything wider than its box)
 const book = () => p.evaluate(async () => {

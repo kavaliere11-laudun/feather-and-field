@@ -33,7 +33,7 @@ const st = () => p.evaluate(() => { const f = window.__farm, F = f.fishing(), L 
     R, bar: F ? !F.bar.hidden : false, hint: document.getElementById('hint').textContent, float: F ? F.float.visible : false, said: L.said.slice(-3), got: g.data.fish ? Object.keys(g.data.fish.got) : [] }; });
 const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return null;
   return { kind: window.__farm.gameUI().kind, text: s.innerText, go: !!s.querySelector('button[data-fish=go]'), keep: (s.querySelector('button[data-fish=keep]') || {}).textContent || null,
-    stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img').length, got: s.querySelectorAll('.gfishrow img.got').length, water: (s.querySelector('.gfishrow') || {}).dataset ? s.querySelector('.gfishrow') && s.querySelector('.gfishrow').dataset.water : null }; });
+    stop: !!s.querySelector('button[data-fish=stop]'), fish: s.querySelectorAll('.gfishrow img, .gfishrow .gfishsil').length, got: s.querySelectorAll('.gfishrow img.got').length, water: (s.querySelector('.gfishrow') || {}).dataset ? s.querySelector('.gfishrow') && s.querySelector('.gfishrow').dataset.water : null }; });
 const settle = () => p.evaluate(() => document.getAnimations().forEach(a => a.finish()));
 const until = async (test, secs, step = 0.25) => { for (let t = 0; t < secs; t += step) { if (await p.evaluate(test)) return true; await run(step); } return p.evaluate(test); };
 const hit = () => p.evaluate(() => { const F = window.__farm.fishing(), G = F.fight(); F.bt = (F.g0 + G.green / 2) * G.sweep; F.press(true); });      // (a tap with the marker in the middle of the green)
