@@ -4948,3 +4948,9 @@ shot again so they share the game's Painted look (`intro/*.webp`, the sign of pi
 - **"The shelve icon should not disappear when the shelve is empty"**: each keepsake's picture is always in its place on
   the shelf, pale until it's won (the secret one a question mark).
 - Tests: `fittest` (new, EN/FR); `milestest` (the bubble), `movetest` updated.
+- 11 Nov 2026, the night's full check (every `*test.mjs`, after the pantry, the two columns of buttons and the coop
+  nudge): one real fault, a new farm's save gaining its `pantry` only at the first reload (a new farm now starts with
+  it); the Book's three tabs now fit side by side upright too (smaller words, the dot inside its tab). Tests brought in
+  line: `booktest`, `rarecooptest` (the drawn shapes), `wormtest` (worms given at once while he works), `gametest`.
+  `emutest` and `rulestest` need the account emulators and `switchtest` two site addresses: not run here.
+  `playthrough`, `balsim` and `firstsession` sell from the pantry; a year of `balsim` gives the same pace of levels.

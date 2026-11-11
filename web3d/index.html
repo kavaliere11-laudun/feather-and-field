@@ -39,7 +39,8 @@
   /* the button that brings the view to the farmer (main.js findFarmerBtn): bottom left */
   #findfarmer { position: fixed; z-index: 6; right: max(14px, calc(env(safe-area-inset-right) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); width: 50px; height: 50px; font-size: 24px; line-height: 1; padding: 0; }
   .gnightbub { background: #2f3f6b; color: #fff; } .gnightbub::after { border-top-color: #2f3f6b; }
-  .gbooktabs .gbtn { position: relative; }
+  .gbooktabs .gdot { top: 3px; right: 5px; }
+  .gbooktabs { gap: 6px; } .gbooktabs .gbtn { position: relative; min-width: 0; padding: 11px 4px; font-size: 14.500px; white-space: nowrap; letter-spacing: -0.1px; }      /* (three tabs side by side, upright too: none cut, none on two lines) */
   .gshelf { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 10px; padding: 8px 8px 10px; border-radius: 12px; background: linear-gradient(#f3e3c4, #e9d3a8); border-bottom: 5px solid #b98a52; }
   .gkeep { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: rgba(255, 255, 255, 0.35); border: 1.5px dashed rgba(120, 85, 40, 0.35); }
   .gkeep:not(.on) { filter: grayscale(1) opacity(0.42); }

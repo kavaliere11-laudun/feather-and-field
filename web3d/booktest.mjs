@@ -41,8 +41,8 @@ const book = () => p.evaluate(async () => {
   const cut = [...S.querySelectorAll('h2, .gsub, .gcard-t, .gpage-s, .gpage-l, .gnote, .gbtn')].filter(e => e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > r.right + 0.5).map(e => e.textContent.slice(0, 40));
   return { kind: window.__farm.gameUI().kind, title: S.querySelector('h2').textContent, sub: S.querySelector('.gsub').textContent, more: S.querySelector('.gsheet-body > .gnote:last-child').textContent,
     pages: [...S.querySelectorAll('.gpage')].map(c => ({ breed: c.dataset.breed, name: c.querySelector('.gcard-t').textContent, status: c.querySelector('.gpage-s').textContent, lines: [...c.querySelectorAll('.gpage-l')].map(l => l.textContent),
-      dark: !!c.querySelector('.gpic .gsil') && /book\//.test(c.querySelector('.gpic .gsil').style.webkitMaskImage || c.querySelector('.gpic .gsil').style.maskImage), w: c.querySelector('.gpic img') ? c.querySelector('.gpic img').naturalWidth : c.querySelector('.gpic .gsil').offsetWidth * 4, go: !!c.querySelector('.gpage-go'), egg: getComputedStyle(c.querySelector('.gegg-i')).backgroundColor })),
-    imgs: S.querySelectorAll('img').length, sheet: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], barBottom: Math.round(bar.bottom), x: [Math.round(x.left), Math.round(x.top), Math.round(x.right)],
+      dark: !!c.querySelector('.gpic .gsil') && /book\//.test(c.querySelector('.gpic .gsil').style.webkitMaskImage || c.querySelector('.gpic .gsil').style.maskImage), w: c.querySelector('.gpic img') ? c.querySelector('.gpic img').naturalWidth : 320, go: !!c.querySelector('.gpage-go'), egg: getComputedStyle(c.querySelector('.gegg-i')).backgroundColor })),
+    imgs: S.querySelectorAll('.gpic img, .gpic .gsil').length, sheet: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], barBottom: Math.round(bar.bottom), x: [Math.round(x.left), Math.round(x.top), Math.round(x.right)],
     wide: body.scrollWidth > body.clientWidth + 1, cut, vw: innerWidth, vh: innerHeight };
 });
 const inSight = k => k.sheet[0] >= 0 && k.sheet[2] <= k.vw && k.sheet[3] <= k.vh + 1 && k.sheet[1] >= k.barBottom && k.x[0] >= 0 && k.x[2] <= k.vw && k.x[1] >= k.barBottom && !k.wide && k.cut.length === 0;
@@ -112,7 +112,7 @@ ok('placed: "2 of 16", the Orpingtons found, their trio named, in colour', orp &
 await shot('6_two');
 // ---- names are set as text: a name with code in it (as if it got past the checks) shows as text
 const safe = await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.birds[0].name = '<img src=x onerror="window.__hacked=1">Zed'; f.book(); const S = document.querySelector('.gsheet');
-  return { imgs: S.querySelectorAll('img').length, shown: S.querySelector('.gpage-s').textContent.includes('<img'), hacked: !!window.__hacked }; });
+  return { imgs: S.querySelectorAll('.gpic img, .gpic .gsil').length, shown: S.querySelector('.gpage-s').textContent.includes('<img'), hacked: !!window.__hacked }; });
 await run(0.2);
 ok('names are set as text, never as HTML', safe.imgs === 16 && safe.shown && !safe.hacked && !(await p.evaluate(() => !!window.__hacked)), safe);
 // the Breed Book's own button (7 Nov 2026, Audrey: "I think we need the breed bible to be a button itself"), in the corner
@@ -122,8 +122,8 @@ await p.tap('.gbar .gbookbtn'); await p.waitForTimeout(400);
 const bb = await p.evaluate(() => { const u = window.__farm.gameUI(), W = innerWidth, H = innerHeight;
   const rs = [...document.querySelectorAll('.gbar button')].map(e => e.getBoundingClientRect());
   return { kind: u.kind, title: document.querySelector('.gsheet h2').textContent, edge: Math.min(...rs.map(r => Math.min(r.left, W - r.right))), name: /Feather|Field/.test(document.querySelector('.gbar').textContent),
-    column: ['gjobs', 'gshows', 'gbookbtn', 'gcoops'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.left > W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) }; });
-ok('the Breed Book has its own button: it opens the Book; the farm\'s buttons in a column bottom right, nothing within 14 px of the edges, no game name in the bar', bb.kind === 'book' && bb.edge >= 14 && !bb.name && bb.column, bb);
+    column: ['gjobs', 'gshows'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.left > W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) && ['gpanbtn', 'gbookbtn', 'gcoops'].map(c => document.querySelector('.gbar .' + c).getBoundingClientRect()).every((r, i, a) => r.right < W / 2 && r.top > H / 3 && (!i || r.top > a[i - 1].top)) }; });
+ok('the Breed Book has its own button: it opens the Book; the farm\'s buttons in two columns, today\'s on the right and the farm\'s own on the left (10 Nov 2026), nothing within 14 px of the edges, no game name in the bar', bb.kind === 'book' && bb.edge >= 14 && !bb.name && bb.column, bb);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
