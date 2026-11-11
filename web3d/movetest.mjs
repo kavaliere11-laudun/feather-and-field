@@ -68,8 +68,10 @@ await run(0.1);
 const visiting = await p.evaluate(() => { const L = window.__farm.farmer(); return !!(L && ((L.task && L.task.name === 'pen') || (L.pending && L.pending.name === 'pen'))); });
 await p.evaluate(() => window.__farm.move.start(0)); await run(0.1);
 m = await st(); const hintT = await p.evaluate(() => document.getElementById('hint').textContent);
-ok('not while the farmer\'s busy in a pen: a word, no moving', visiting && !m.on && T.busy.test(hintT), { visiting, m, hintT });
-await run(40);
+ok('while the farmer\'s busy in its pen: a word that the move will start by itself, no moving yet (11 Nov 2026: never refused)', visiting && !m.on && (fr ? /commencera tout seul/ : /start by itself/).test(hintT), { visiting, m, hintT });
+let auto = false; for (let i = 0; i < 80 && !auto; i++) { await run(1); auto = await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); return f.move.state().on; }); }
+ok('…and it starts by itself once he\'s out', auto);
+await p.evaluate(() => window.__farm.move.cancel()); await run(0.5);
 // level 2, the next field bought: moved there, turned, put down
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.data.coins = 300; g.save(); }); await run(1.5);      // (level 2)
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.2);
