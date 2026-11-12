@@ -2359,9 +2359,11 @@ function buildGeese() {
   else { geeseFlock.group.visible = false; geeseFlock.geese = []; }        // (the game: not bought yet; the pond's ways stay for the others)
   // the pond's frogs (pond.js): they jump in when a goose, Biscuit or Rusty comes near
   frogPond = new FrogPond(scene, { pond: P, avoid, mouths, spots: V.frogs, grade: nightGrade, lang: LANG, kiss: (x, z) => {      // (the secret milestone: the kiss seen, the pond on the screen, the game in front, no card over it)
-    if (!GAME_MODE || !game.data || document.visibilityState === 'hidden' || gameUI.isOpen || inside.open || SHOWDAY || view.size > 9) return;
-    const v = new THREE.Vector3(x, 0.05, z).project(camera); if (Math.abs(v.x) > 0.92 || Math.abs(v.y) > 0.88) return;
-    if (!game.tallyOf('love')) { game.tallyAdd('love'); gameUI.refresh(); }
+    // (12 Nov 2026, Audrey: "I witnessed the frog and the salmon in love bud got no reward": counted wherever the kiss is on the
+    // screen, however far out the view; and said at once, with where its reward waits)
+    if (!GAME_MODE || !game.data || document.visibilityState === 'hidden' || gameUI.isOpen || inside.open || SHOWDAY) return;
+    const v = new THREE.Vector3(x, 0.05, z).project(camera); if (Math.abs(v.x) > 1 || Math.abs(v.y) > 1) return;
+    if (!game.tallyOf('love')) { game.tallyAdd('love'); gameUI.refresh(); hint(game.t('mile_love_seen')); wake(1500); }
   }, near: () => {
     const out = [];
     if (geeseFlock) for (const g of geeseFlock.geese) out.push([g.pos.x, g.pos.z]);

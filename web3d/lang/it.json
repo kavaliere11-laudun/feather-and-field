@@ -1396,5 +1396,6 @@
  "text.wheat2_bought": "🌾 Il tuo secondo campo di grano è pronto da seminare · −{c} monete. Spostalo dalla sua scheda, se vuoi.",
  "text.catch_pantry1": "🐟 1 pesce nella tua dispensa",
  "text.catch_pantry": "🐟 {n} pesci nella tua dispensa",
- "text.dock_pantry": "🐟 Pesci in dispensa: {n} su {max}"
+ "text.dock_pantry": "🐟 Pesci in dispensa: {n} su {max}",
+ "text.mile_love_seen": "💞 Li hai visti! Un traguardo segreto è tuo: ritiralo nel tuo Libro."
 }

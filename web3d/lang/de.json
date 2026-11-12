@@ -1393,5 +1393,6 @@
  "text.wheat2_bought": "🌾 Dein zweites Weizenfeld ist bereit zur Aussaat · −{c} Münzen. Verschiebe es über seine Karte, wenn du magst.",
  "text.catch_pantry1": "🐟 1 Fisch in deine Speisekammer",
  "text.catch_pantry": "🐟 {n} Fische in deine Speisekammer",
- "text.dock_pantry": "🐟 Fische in der Speisekammer: {n} von {max}"
+ "text.dock_pantry": "🐟 Fische in der Speisekammer: {n} von {max}",
+ "text.mile_love_seen": "💞 Du hast sie gesehen! Ein geheimer Meilenstein gehört dir: Hol ihn dir in deinem Buch ab."
 }
