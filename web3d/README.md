@@ -5050,3 +5050,15 @@ close). Test: `movealwaystest` (EN/FR).
   (picked up and held).
 - Tests: `bedstest`, `wheat2test` new; `milestest` (no one picked up, he turns to each), `chicktest`, `wheattest` (no
   bubble for a wait) follow.
+- **A "Feather & Field" player on her lock screen** (15:26: "I have that on my locked screen now when I play the game.
+  Not sure that's needed"): a phone shows that card for whatever an `<audio>` element plays, and the music was one
+  (heard on silent since 11 Nov's `playback` session). The music is now fetched, decoded (at 32 kHz, one track kept at a
+  time) and played as a buffer like the farm's sounds (sound.js `loadMusic`, `start`, `mus`); no `<audio>` is made
+  unless a track can't be decoded (`ensureEl`, the fallback: the music rather than none). The sound test's grey line
+  says which way: `music buf` or `music el`. Asked what she hears from "Test the sound": "Two notes only" (the notes
+  are made by the engine, the farm clip and the hen after them are decoded recordings): so the engine is heard and
+  decoded recordings aren't, cause still unknown; if her music now plays as `buf`, decoding works and the fault is
+  elsewhere; if as `el`, decoding is the fault. `soundtest` follows.
+- **"What is this used for now ?"** (the village's fenced paddock with its shelter and bales, the old vegetable patch):
+  only scenery; her choice: "Keep for a future animal" (roadmap).
+

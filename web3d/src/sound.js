@@ -74,6 +74,7 @@ export class Sound {
     this.hen = { bufs: [], loading: false, src: null, g: null, pan: null, nextAt: Infinity, last: [], played: 0, near: 0, lev: HENS.level, kind: '' };
     this.farm = { groups: {}, meta: null, loading: false, beds: {}, last: {}, played: {} };
     this.el = null; this.gain = null; this.blocked = false; this.hidden = false; this.log = [];
+    this.mus = { bufs: [null, null], src: null, t0: 0, way: '' };      // (the music as decoded sound, 12 Nov 2026: see start)
     if (o.off) return;
     const tap = () => this.unlock();
     for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) window.addEventListener(ev, tap, { capture: true, passive: true });
@@ -91,20 +92,14 @@ export class Sound {
         this.ctx = new AC();
         this.master = this.ctx.createGain(); this.master.connect(this.ctx.destination);
         this.gain = this.ctx.createGain(); this.gain.gain.value = 0; this.gain.connect(this.master);
-        this.el = new Audio(); this.el.preload = 'auto'; this.el.setAttribute('playsinline', '');
-        this.ctx.createMediaElementSource(this.el).connect(this.gain);
-        this.el.addEventListener('ended', () => this.ended());
-        this.el.src = this.src(this.track);
+        try { if (navigator.mediaSession) { navigator.mediaSession.metadata = null; navigator.mediaSession.playbackState = 'none'; } } catch (e) { /* */ }
         this.fx = this.ctx.createGain(); this.fx.connect(this.master);            // (the farm's own sounds)
         this.loadHens(); this.loadFarm(); const hf = HENS.first; this.hen.nextAt = this.now() + hf[0] + Math.random() * (hf[1] - hf[0]);
-        // a phone lets an <audio> play later only once it has played from a tap: so it plays now, silent, for a moment
-        // (unless the music starts right away anyway)
-        const p = this.el.play(); if (p && p.then) p.then(() => { if (this.state !== 'playing') this.el.pause(); }).catch(e => { if (e && e.name === 'NotAllowedError') this.blocked = true; });      // (an interrupted load is no matter)
         const a = MUSIC_TIMES.first; this.nextAt = this.now() + a[0] + Math.random() * (a[1] - a[0]);
         this.note('unlocked');
       }
       if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
-      if (this.blocked && this.state === 'playing' && this.el.paused) this.playEl();
+      if (this.blocked && this.state === 'playing' && this.el && this.el.paused) this.playEl();
     } catch (e) { this.note('no sound: ' + e.message); }
   }
   src(i) { return (this.o.base || 'audio/') + MUSIC[i] + '.mp3'; }
@@ -119,22 +114,53 @@ export class Sound {
     g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(to, t + Math.max(0.05, secs));
   }
   level() { return MUSIC_TIMES.level * musicLevel(this.o.hour()); }
+  // The music is played as decoded sound, like the farm's sounds, not by an <audio> player (12 Nov 2026, Audrey, a
+  // "Feather & Field" player with a play button on her lock screen: "Not sure that's needed": a phone shows that card for
+  // whatever an <audio> plays). The track is fetched and decoded when it's wanted (at 32 kHz: a third less memory), played,
+  // then let go. Only if it can't be decoded is the <audio> player made after all (the music rather than none).
+  loadMusic(i) {
+    if (this.mus.bufs[i]) return Promise.resolve(this.mus.bufs[i]);
+    let slow = null; try { if (window.OfflineAudioContext) slow = new OfflineAudioContext(2, 1, 32000); } catch (e) { /* (at the page's own rate) */ }
+    const decode = (ab, c) => new Promise((res, rej) => { const p = c.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    return fetch(this.src(i)).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => slow ? decode(ab.slice(0), slow).catch(() => decode(ab, this.ctx)) : decode(ab, this.ctx))
+      .then(b => { this.mus.bufs = [null, null]; this.mus.bufs[i] = b; return b; });      // (one track kept at a time)
+  }
+  ensureEl() {
+    if (this.el) return;
+    this.el = new Audio(); this.el.preload = 'auto'; this.el.setAttribute('playsinline', '');
+    this.ctx.createMediaElementSource(this.el).connect(this.gain);
+    this.el.addEventListener('ended', () => { if (this.mus.way === 'el') this.ended(); });
+  }
+  stopSrc() { const S = this.mus.src; this.mus.src = null; if (S) { S.onended = null; try { S.stop(); } catch (e) { /* */ } try { S.disconnect(); } catch (e) { /* */ } } }
+  pos() { return this.mus.way === 'buf' ? (this.mus.src ? this.ctx.currentTime - this.mus.t0 : 0) : this.el ? this.el.currentTime : 0; }
   start() {
-    this.el.src = this.src(this.track); this.gain.gain.value = 0;              // (from the start: loaded afresh rather than wound back)
-    this.state = 'playing'; this.playEl(); this.target = this.level(); this.ramp(this.target, MUSIC_TIMES.fade);
-    this.note('play ' + MUSIC[this.track]);
+    const i = this.track; this.gain.gain.value = 0; this.state = 'loading'; this.stopSrc();
+    this.loadMusic(i).then(buf => {
+      if (this.state !== 'loading' || this.track !== i) return;
+      const S = this.ctx.createBufferSource(); S.buffer = buf; S.connect(this.gain); S.onended = () => { if (this.mus.src === S) { this.mus.src = null; this.ended(); } };
+      this.mus.src = S; this.mus.way = 'buf'; this.mus.t0 = this.ctx.currentTime; S.start();
+      this.state = 'playing'; this.target = this.level(); this.ramp(this.target, MUSIC_TIMES.fade);
+      this.note('play ' + MUSIC[i]);
+    }).catch(e => {      // (not decoded: the <audio> player after all)
+      if (this.state !== 'loading' || this.track !== i) return;
+      this.note('music by player: ' + (e && e.message));
+      this.ensureEl(); this.mus.way = 'el'; this.el.src = this.src(i);
+      this.state = 'playing'; this.playEl(); this.target = this.level(); this.ramp(this.target, MUSIC_TIMES.fade);
+    });
   }
   ended() {
     if (this.state !== 'playing') return;
-    this.state = 'idle'; this.track = 1 - this.track; this.el.src = this.src(this.track);
+    this.state = 'idle'; this.track = 1 - this.track;
     const g = MUSIC_TIMES.gap; this.nextAt = this.now() + g[0] + Math.random() * (g[1] - g[0]);
     this.note('ended; next in ' + Math.round(this.nextAt - this.now()) + ' s');
   }
   // stopped (the music switched off, or night): it fades, then rests; switched on again, a track comes soon
   stop(secs, why) {
+    if (this.state === 'loading') { this.state = 'idle'; this.track = 1 - this.track; return; }
     if (this.state !== 'playing') return;
     this.state = 'fading'; this.ramp(0, secs); this.note('fade: ' + why);
-    clearTimeout(this.fadeT); this.fadeT = setTimeout(() => { if (this.state === 'fading') { this.el.pause(); this.state = 'idle'; this.track = 1 - this.track; this.el.src = this.src(this.track); } }, secs * 1000 + 100);
+    clearTimeout(this.fadeT); this.fadeT = setTimeout(() => { if (this.state === 'fading') { this.stopSrc(); if (this.el) this.el.pause(); this.state = 'idle'; this.track = 1 - this.track; } }, secs * 1000 + 100);
   }
   tick() {
     if (!this.ctx || this.hidden) return;
@@ -143,7 +169,7 @@ export class Sound {
     if (this.state === 'playing') {
       if (!on) { this.stop(0.8, 'switched off'); return; }
       if (lv <= 0) { this.stop(8, 'night'); this.nextAt = this.now() + 60; return; }
-      if (this.el.currentTime > MUSIC_TIMES.fade && Math.abs(lv - this.target) > 0.01) { this.target = lv; this.ramp(lv, 4); }      // (evening coming on: softer, slowly)
+      if (this.pos() > MUSIC_TIMES.fade && Math.abs(lv - this.target) > 0.01) { this.target = lv; this.ramp(lv, 4); }      // (evening coming on: softer, slowly)
     } else if (this.state === 'idle' && on && this.now() >= this.nextAt) {
       if (lv > 0) this.start(); else this.nextAt = this.now() + 60;              // (night: looked at again in a minute)
     }
@@ -249,7 +275,7 @@ export class Sound {
   visible(on) {
     this.hidden = !on;
     if (!this.ctx) return;
-    if (!on) { if (this.state === 'playing') { this.el.pause(); this.pausedPlaying = true; } this.ctx.suspend().catch(() => {}); return; }
+    if (!on) { if (this.state === 'playing' && this.mus.way === 'el' && this.el) { this.el.pause(); this.pausedPlaying = true; } this.ctx.suspend().catch(() => {}); return; }      // (decoded music stops and goes on with the engine)
     this.ctx.resume().catch(() => {});
     if (this.pausedPlaying) { this.pausedPlaying = false; if (this.state === 'playing') this.playEl(); }
   }
@@ -273,11 +299,11 @@ export class Sound {
   diag() {
     if (!this.ctx) return 'no engine';
     const F = this.farm, shots = Object.values(F.groups).reduce((a, L) => a + L.length, 0), beds = Object.keys(F.beds).length, all = F.meta ? Object.keys(F.meta).length : 0;
-    return [this.ctx.state, Math.round(this.ctx.sampleRate / 1000) + 'k', 'farm ' + (shots + beds) + '/' + all, 'beds ' + beds, 'hens ' + this.hen.bufs.filter(Boolean).length + '/' + HENS.files, 'played ' + (this.hen.played || 0) + '+' + Object.values(F.played || {}).reduce((a, n) => a + n, 0), this.hidden ? 'hidden' : 'shown', this.log.slice(-3).join(' | ')].join(' · ');
+    return [this.ctx.state, Math.round(this.ctx.sampleRate / 1000) + 'k', 'farm ' + (shots + beds) + '/' + all, 'beds ' + beds, 'hens ' + this.hen.bufs.filter(Boolean).length + '/' + HENS.files, 'music ' + (this.mus.way || '-'), 'played ' + (this.hen.played || 0) + '+' + Object.values(F.played || {}).reduce((a, n) => a + n, 0), this.hidden ? 'hidden' : 'shown', this.log.slice(-3).join(' | ')].join(' · ');
   }
   info() {
     return { unlocked: !!this.ctx, ctx: this.ctx && this.ctx.state, state: this.state, track: MUSIC[this.track], gain: this.gain ? +this.gain.gain.value.toFixed(3) : 0,
-      at: this.el ? +this.el.currentTime.toFixed(1) : 0, ready: this.el ? this.el.readyState : 0, err: this.el && this.el.error ? this.el.error.code : 0, paused: this.el ? this.el.paused : true, next: Number.isFinite(this.nextAt) ? Math.round(this.nextAt - this.now()) : null, blocked: this.blocked, log: this.log.slice(),
+      at: +this.pos().toFixed(1), way: this.mus.way, ready: this.mus.way === 'buf' ? 4 : this.el ? this.el.readyState : 0, err: this.el && this.el.error ? this.el.error.code : 0, paused: this.mus.way === 'buf' ? !this.mus.src || this.ctx.state !== 'running' : this.el ? this.el.paused : true, next: Number.isFinite(this.nextAt) ? Math.round(this.nextAt - this.now()) : null, blocked: this.blocked, log: this.log.slice(),
       farm: { groups: Object.fromEntries(Object.entries(this.farm.groups).map(([k, v]) => [k, v.length])), beds: Object.fromEntries(Object.entries(this.farm.beds).map(([k, B]) => [k, B.g ? +B.g.gain.value.toFixed(3) : 0])), played: { ...this.farm.played }, last: this.farm.lastPlayed || null },
       hens: { kind: this.hen.kind, loaded: this.hen.bufs.filter(Boolean).length, playing: !!this.hen.src, which: this.hen.src ? this.hen.which : 0, played: this.hen.played, near: +this.hen.near.toFixed(3), gain: this.hen.g ? +this.hen.g.gain.value.toFixed(3) : 0, pan: this.hen.pan ? +this.hen.pan.pan.value.toFixed(2) : 0 } };
   }

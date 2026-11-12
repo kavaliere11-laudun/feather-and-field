@@ -42,13 +42,14 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.guide = { step: 
 s = await info();
 ok('the first tap: the sound wakes (the page\'s audio running)', s.unlocked && s.ctx === 'running', s);
 s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused && i.at > 0.5 ? i : null; }, 20000);
+ok('the music is played as decoded sound: no media player made (12 Nov 2026: no "Feather & Field" player on the lock screen)', !!s && s.way === 'buf' && await p.evaluate(() => window.__farm.sound().el === null), s && s.way);
 ok('a few seconds later: one of the two tracks starts', !!s && /champ-de-tournesol|happy-whistling-ukulele/.test(s.track), s);
 const first = s && s.track;
 await wait(3500);
 s = await info(); let lv = await loud('gain');
 ok('fading in to its volume, and really sounding', s.gain > 0.3 && s.gain < 0.5 && lv > 0.02, { gain: s.gain, peak: lv });
 // to the end of the track: a few minutes of just the farm, then the other
-await p.evaluate(() => window.__farm.sound().el.dispatchEvent(new Event('ended')));      // (as if it had played to its end)
+await p.evaluate(() => window.__farm.sound().mus.src.stop());      // (as if it had played to its end)
 s = await until(async () => { const i = await info(); return i.state === 'idle' ? i : null; }, 8000);
 ok('the track over: a quiet spell of 2½ to 5 minutes before the next', !!s && s.next >= 145 && s.next <= 300 && s.track !== first, s);
 await wait(1200); lv = await loud('gain');
@@ -68,7 +69,7 @@ await p.evaluate(() => { const S = window.__farm.sound(); S.nextAt = S.now(); })
 s = await info();
 ok('and no new track at night', s.state === 'idle' && s.paused, s);
 await p.evaluate(() => { window.__farm.setHour(9); const S = window.__farm.sound(); S.nextAt = S.now(); });
-s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused ? i : null; }, 8000);
+s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused ? i : null; }, 40000);
 ok('morning: the music comes back', !!s, s);
 // put away and back
 await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); });
