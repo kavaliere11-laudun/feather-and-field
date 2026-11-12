@@ -58,7 +58,7 @@ for (; day < 40; day++) {
 const off = day <= 25 ? '+01:00' : '+00:00', next = n => new Date(at(D + 'T12:00:00' + off) + n * 86400e3).toISOString().slice(0, 10);
 await sim(2);
 s = await state();
-ok('7:00 on the ' + D + ': a hen goes broody (the news, the bubble)', !!s.brood && !s.brood.hatched && s.brood.n >= 2 && s.brood.n <= 4 && /broody|couveuse/.test(s.hint) && /🐣/.test(s.bub || ''), s);
+ok('7:00 on the ' + D + ': a hen goes broody (the news; no bubble for the wait)', !!s.brood && !s.brood.hatched && s.brood.n >= 2 && s.brood.n <= 4 && /broody|couveuse/.test(s.hint) && !s.bub, s);      // (no bubble for the hours of her sitting since 12 Nov 2026: only things to do have one)
 let sat = false;
 for (let i = 0; i < 12 && !sat; i++) { await sim(10); s = await state(); sat = s.mum && s.mum.broody && s.mum.phase === 'sit'; }
 ok('she walks in and settles on the nest', sat, s.mum);

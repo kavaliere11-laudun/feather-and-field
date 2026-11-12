@@ -71,7 +71,7 @@ ok('he scatters the seed there, then the field is sown', took >= 0 && left >= 0 
 await ahead(1); await run(0.3); s = await S();
 ok('an hour on: the first green shoots', s.stage === 'sprouts' && s.shown === 'sprouts', s);
 await ahead(1.2); await run(0.3); s = await S();
-ok('two hours on: tall and green, the sign the time left', s.stage === 'growing' && s.shown === 'growing' && /🌱/.test(s.bub || ''), s);
+ok('two hours on: tall and green, no sign while it only grows (12 Nov 2026)', s.stage === 'growing' && s.shown === 'growing' && !s.bub, s);
 await shot('4_growing');
 await ahead(1.9); await run(0.3); s = await S();
 ok('four hours on: golden, the sign "Harvest"', s.stage === 'ripe' && s.shown === 'ripe' && T.bubHarvest.test(s.bub || ''), s);
