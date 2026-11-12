@@ -2363,7 +2363,7 @@ function buildGeese() {
     // screen, however far out the view; and said at once, with where its reward waits)
     if (!GAME_MODE || !game.data || document.visibilityState === 'hidden' || gameUI.isOpen || inside.open || SHOWDAY) return;
     const v = new THREE.Vector3(x, 0.05, z).project(camera); if (Math.abs(v.x) > 1 || Math.abs(v.y) > 1) return;
-    if (!game.tallyOf('love')) { game.tallyAdd('love'); gameUI.refresh(); hint(game.t('mile_love_seen')); wake(1500); }
+    if (!game.tallyOf('love')) { game.tallyAdd('love'); MILES_NOTED = game.milesReady(); gameUI.refresh(); hint(game.t('mile_love_seen')); wake(1500); }
   }, near: () => {
     const out = [];
     if (geeseFlock) for (const g of geeseFlock.geese) out.push([g.pos.x, g.pos.z]);
@@ -5130,7 +5130,7 @@ function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay();
 // (busy, the nest taken, the page not in view) has a couple of minutes, then her egg is simply there, as for a lay while
 // the game was shut. The feeders' grain goes down with the save's level; bubbles over a nest with eggs and a feeder low.
 const LIVE_LAY = 150e3;
-let WAIT_NOTED = 0, gameTickAt = 0, fullNoted = 0, jobsDay = '';
+let MILES_NOTED = -1, WAIT_NOTED = 0, gameTickAt = 0, fullNoted = 0, jobsDay = '';
 const gamePlots = () => plots.filter(p => p.gc && !p.draft);          // (not a new coop still being placed)
 function syncNest(plot) { const c = plot.gc && game.coop(plot.gc.id); if (!c) return; plot.gc = c; if (plot.nest.count !== c.eggs) { plot.nest.count = c.eggs; plot.nest.pop = 1; showEggs(plot); } }
 function canLayNow(b) {
@@ -5169,6 +5169,9 @@ function gameTick(now = Date.now(), force = false) {
   const live = document.visibilityState !== 'hidden';
   const tonight = foxLiveTick(now, live);                               // (tonight's visit, if it's time and the farm is open)
   if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
+  // (a milestone reached: said, with where to collect it: 12 Nov 2026, Audrey, of the secret one won silently: "receive no
+  // notification nothing had to look for it"; the secret one has its own word, at the kiss)
+  { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) hintNext(game.t(mr > 1 ? 'mile_ready_n' : 'mile_ready', { n: mr })); } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
   { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);

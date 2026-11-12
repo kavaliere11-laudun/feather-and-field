@@ -1394,5 +1394,7 @@
  "text.catch_pantry1": "🐟 1 Fisch in deine Speisekammer",
  "text.catch_pantry": "🐟 {n} Fische in deine Speisekammer",
  "text.dock_pantry": "🐟 Fische in der Speisekammer: {n} von {max}",
- "text.mile_love_seen": "💞 Du hast sie gesehen! Ein geheimer Meilenstein gehört dir: Hol ihn dir in deinem Buch ab."
+ "text.mile_love_seen": "💞 Du hast sie gesehen! Ein geheimer Meilenstein gehört dir: Hol ihn dir in deinem Buch ab.",
+ "text.mile_ready": "🏅 Ein Meilenstein erreicht! Hol ihn dir in deinem Buch ab.",
+ "text.mile_ready_n": "🏅 {n} Meilensteine erreicht! Hol sie dir in deinem Buch ab."
 }

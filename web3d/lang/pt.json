@@ -1397,5 +1397,7 @@
  "text.catch_pantry1": "🐟 1 peixe para a sua despensa",
  "text.catch_pantry": "🐟 {n} peixes para a sua despensa",
  "text.dock_pantry": "🐟 Peixes na despensa: {n} de {max}",
- "text.mile_love_seen": "💞 Você os viu! Uma conquista secreta é sua: pegue-a no seu Livro."
+ "text.mile_love_seen": "💞 Você os viu! Uma conquista secreta é sua: pegue-a no seu Livro.",
+ "text.mile_ready": "🏅 Uma conquista alcançada! Pegue-a no seu Livro.",
+ "text.mile_ready_n": "🏅 {n} conquistas alcançadas! Pegue-as no seu Livro."
 }
