@@ -152,13 +152,13 @@ export class Fishing {
     this.prog = el('div', 'fishprog'); this.progFill = el('div', 'fishprogfill'); this.prog.append(this.progFill);
     const way = el('div', 'fishway'); way.append(el('span', 'fishway-e', '🐟'), this.prog, el('span', 'fishway-e', '🪣'));
     track.append(this.green, this.needle); this.way = way; this.track = track; this.gauge.append(track, way); this.gauge.hidden = true;      // (the bar with its green and its marker for the bite; then the way in, 🐟 to 🪣)
-    this.bar.append(this.tipEl, this.gauge, row); this.showBar(false);
+    this.row = row; this.bar.append(this.tipEl, this.gauge); this.showBar(false);      // (the worms, ? and Stop on their own at the top, out of the way of the taps on the water: 12 Nov 2026, Audrey: "easy to click on them by mistake while fishing")
     this.glass = el('div', 'fishglass'); this.glass.hidden = true;
     const down = e => { e.preventDefault(); this.press(true); }, up = e => { e.preventDefault(); this.press(false); };
     this.glass.addEventListener('pointerdown', down); this.glass.addEventListener('pointerup', up); this.glass.addEventListener('pointercancel', up); this.glass.addEventListener('pointerleave', up);
-    document.body.append(this.glass, this.bar);
+    document.body.append(this.glass, this.bar, this.row);
   }
-  showBar(on) { this.bar.hidden = !on; document.body.classList.toggle('fishing', on); if (on) this.helpBtn.setAttribute('aria-label', this.o.t('fhelp_title')); }
+  showBar(on) { this.bar.hidden = !on; if (this.row) this.row.hidden = !on; document.body.classList.toggle('fishing', on); if (on) this.helpBtn.setAttribute('aria-label', this.o.t('fhelp_title')); }
   // the panel's words: what to do now (kind: 'bite', 'warn' or 'good' colours them); flash: something that happened, for a
   // couple of seconds, then back to what to do
   words(key, kind = '') { this.tipUntil = 0; if (this.tipKey === key) return; this.tipKey = key; this.tipEl.textContent = key ? this.o.t(key) : ''; this.tipEl.className = 'fishtip' + (kind ? ' ' + kind : ''); }
