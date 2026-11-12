@@ -5115,4 +5115,7 @@ close). Test: `movealwaystest` (EN/FR).
   (main.js `MILES_NOTED`, `mile_ready`, `mile_ready_n`; after whatever else is being said). Still collected in the Book
   (offered to her: paid automatically instead, if she prefers).
 - Found by `gametest`: with no farm yet (the welcome) the catch check read a farm that wasn't there: guarded.
+- To look at (not from tonight's changes: the same on the build before): `notetest` "the eggs waiting (one or two
+  days)" finds no egg reminder planned when it is run late in the evening (about 21:30); it passes by day. Either the
+  test depends on the hour, or a player who closes the game at night gets no egg reminder.
 
