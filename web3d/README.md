@@ -5102,4 +5102,17 @@ close). Test: `movealwaystest` (EN/FR).
   (a tenth at a view of 5.2 m and wider, full from 2.6 m in), and as before by how near the middle of the view the
   coop is.
 - `soundtest` follows.
+- **Fishing's buttons** (20:47: "the position of the buttons is poor ux as it's easy to click on them by mistake while
+  fishing. Do we need them all ? Probably not"): while fishing the six side buttons and the farmer's button are hidden
+  (`body.fishing .gacts, #findfarmer`), and the worms, "?" and "Stop fishing" are a row of their own at the top of the
+  screen, between the coins and the settings wheel (fishing.js `this.row`, `.fishrow`; lower in portrait). "Wait for a
+  bite…" and the reeling bar stay at the bottom: not buttons.
+- **Milestones said when reached** (20:48 to 20:50: "I witnessed the frog and the salmon in love bud got no reward";
+  "Actually I do but receive no notification nothing had to look for it"; "Should come with a reward too"): the secret
+  one was counted silently and waited in the Book (she had it, collected). Now it is said at the kiss ("💞 You saw them!
+  A secret milestone: +500 coins and a keepsake are waiting in your Book.", `mile_love_seen`), and counted wherever the
+  kiss is on the screen (no limit on how far out the view is). Every milestone reached is said with its reward
+  (main.js `MILES_NOTED`, `mile_ready`, `mile_ready_n`; after whatever else is being said). Still collected in the Book
+  (offered to her: paid automatically instead, if she prefers).
+- Found by `gametest`: with no farm yet (the welcome) the catch check read a farm that wasn't there: guarded.
 

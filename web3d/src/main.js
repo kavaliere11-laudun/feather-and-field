@@ -4960,7 +4960,7 @@ function jobGate(kind, key, name, run) {
   return true;
 }
 function tickJobs() {
-  if (CATCH_DUE || (game.data.fish && game.data.fish.net && !FSEQ && !(FISHING && FISHING.on))) { CATCH_DUE = false; stowCatch(); }      // (a trip over: the catch to the pantry, said; no card, 12 Nov 2026)
+  if (CATCH_DUE || (game.data && game.data.fish && game.data.fish.net && !FSEQ && !(FISHING && FISHING.on))) { CATCH_DUE = false; stowCatch(); }      // (a trip over: the catch to the pantry, said; no card, 12 Nov 2026)
   if (!JOBQ.length) return;
   if (farmerAsleep()) { JOBQ.length = 0; return; }
   const j = farmerJob();

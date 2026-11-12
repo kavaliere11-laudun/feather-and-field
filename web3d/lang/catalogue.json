@@ -4276,6 +4276,21 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.mile_ready",
+  "en": "🏅 {name}: milestone reached! +{c} coins are waiting in your Book.",
+  "fr": "🏅 {name} : objectif atteint ! +{c} pièces vous attendent dans votre Livre."
+ },
+ {
+  "id": "text.mile_ready_n",
+  "en": "🏅 {n} milestones reached! Their rewards are waiting in your Book.",
+  "fr": "🏅 {n} objectifs atteints ! Leurs récompenses vous attendent dans votre Livre."
+ },
+ {
+  "id": "text.mile_love_seen",
+  "en": "💞 You saw them! A secret milestone: +{c} coins and a keepsake are waiting in your Book.",
+  "fr": "💞 Vous les avez vus ! Un objectif secret : +{c} pièces et un souvenir vous attendent dans votre Livre."
+ },
+ {
   "id": "text.catch_pantry1",
   "en": "🐟 1 fish to your pantry",
   "fr": "🐟 1 poisson dans votre garde-manger"
