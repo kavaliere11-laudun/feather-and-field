@@ -4276,6 +4276,21 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.garden_all",
+  "en": "See all the beds",
+  "fr": "Voir tous les carrés"
+ },
+ {
+  "id": "text.replay_bad",
+  "en": "Rusty took {n} eggs last night · Watch",
+  "fr": "Rusty a pris {n} œufs cette nuit · Voir"
+ },
+ {
+  "id": "text.replay_bad1",
+  "en": "Rusty took an egg last night · Watch",
+  "fr": "Rusty a pris un œuf cette nuit · Voir"
+ },
+ {
   "id": "text.apple_wait",
   "en": "🍎 No room for the apple tree beside the bigger pen: it’s safe in its tub and comes back by itself when the coop has room at its side (move the coop to give it some).",
   "fr": "🍎 Plus de place pour le pommier à côté du nouvel enclos : il attend dans son bac et reviendra tout seul dès que le poulailler aura de la place sur le côté (déplacez-le pour lui en donner)."
@@ -4307,8 +4322,8 @@
  },
  {
   "id": "text.sound_test_ok",
-  "en": "Two notes just played. If you didn’t hear them, turn the volume up with the side buttons while the game is open.",
-  "fr": "Deux notes viennent de jouer. Si vous ne les avez pas entendues, montez le volume avec les boutons sur le côté, le jeu ouvert."
+  "en": "Two notes just played, then a farm sound and one of your hens. If you didn’t hear the notes, turn the volume up with the side buttons while the game is open.",
+  "fr": "Deux notes viennent de jouer, puis un bruit de la ferme et l’une de vos poules. Si vous n’avez pas entendu les notes, montez le volume avec les boutons sur le côté, le jeu ouvert."
  },
  {
   "id": "text.sound_test_wait",

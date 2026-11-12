@@ -1302,10 +1302,13 @@ export class GameUI {
   // or pumpkins, h.sow(i, crop); ripe: Pick, h.pick(i)); the basket; Move the garden (h.move). o.busy: the farmer's at work
   // there (the words for it)
   gardenSheet(h, o = {}) {
-    const g = this.g, b = this.open('garden', '🥕 ' + this.t('garden_title')), B = g.vegBasket(), fmt = n => n.toLocaleString(g.locale());
+    // (o.only: one bed's own card, 12 Nov 2026, Audrey: "They are grouped under 1 entry while really it should be 1 per bed")
+    const g = this.g, one = Number.isInteger(o.only) && g.garden().beds[o.only] ? o.only : null, B = g.vegBasket(), fmt = n => n.toLocaleString(g.locale());
+    const b = this.open('garden', '🥕 ' + (one === null ? this.t('garden_title') : this.t('bed_n', { n: one + 1 })));
     this.bird = null;
-    b.append(el('p', 'gnote', this.t('garden_how')));
+    if (one === null) b.append(el('p', 'gnote', this.t('garden_how')));
     g.garden().beds.forEach((bed, i) => {
+      if (one !== null && i !== one) return;
       const st = g.bedStage(i), c = el('div', 'gcard gbed'), hd = el('div', 'gcard-h'); c.dataset.bed = i; c.dataset.stage = st;
       hd.append(el('span', 'gemoji', bed.crop ? CROPS[bed.crop].e : '🟫'), el('span', 'gcard-t', this.t('bed_n', { n: i + 1 }) + (bed.crop ? ' · ' + this.t('crop_' + bed.crop) : '')));
       c.append(hd);
@@ -1326,8 +1329,10 @@ export class GameUI {
       }
       b.append(c);
     });
+    if (one === null) {
     b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
     b.append(el('p', 'gnote', this.t('basket_how')));
+    } else { const all = el('button', 'glink', this.t('garden_all')); all.type = 'button'; all.dataset.all = '1'; all.addEventListener('click', () => h.all && h.all()); b.append(all); return; }
     const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
   }
   // ---- a treat from the garden for a coop's birds (7 Nov 2026): what each vegetable does, how many are in the basket,
@@ -1614,8 +1619,8 @@ export class GameUI {
     }
     b.append(el('p', 'gnote gsound-note', this.t('settings_music_note')));
     { const tb = el('button', 'gbtn galt gsmallbtn gsound-test', '🔊 ' + this.t('sound_test')), tn = el('p', 'gnote gsound-res'); tb.type = 'button'; tn.hidden = true;      // (a way to check the sound is alive: two notes, and a word on what to look at if they aren't heard)
-      tb.addEventListener('click', () => { const r = this.o.soundTest ? this.o.soundTest() : 'none'; tn.textContent = this.t(r === 'running' ? 'sound_test_ok' : r === 'none' ? 'sound_test_none' : 'sound_test_wait'); tn.hidden = false; });
-      b.append(tb, tn); }
+      tb.addEventListener('click', () => { const r = this.o.soundTest ? this.o.soundTest() : 'none'; tn.textContent = this.t(r === 'running' ? 'sound_test_ok' : r === 'none' ? 'sound_test_none' : 'sound_test_wait'); tn.hidden = false; dg.textContent = ''; setTimeout(() => { if (dg.isConnected) dg.textContent = this.o.soundDiag ? this.o.soundDiag() : ''; }, 1200); });
+      const dg = el('p', 'gnote gsound-diag'); b.append(tb, tn, dg); }
     if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
     if (IAP_DEMO) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; c.append(hd, el('p', 'gnote', this.dt('restore_note')), r); b.append(c); }
     if (this.o.account && this.o.account.on) b.append(this.accountCard());

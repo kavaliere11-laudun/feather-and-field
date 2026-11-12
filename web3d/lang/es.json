@@ -1366,12 +1366,15 @@
  "text.nav_jobs": "Tareas",
  "text.nav_shows": "Concursos",
  "text.sound_test": "Probar el sonido",
- "text.sound_test_ok": "Acaban de sonar dos notas. Si no las has oído, sube el volumen con los botones laterales con el juego abierto.",
+ "text.sound_test_ok": "Acaban de sonar dos notas, luego un sonido de la granja y una de tus gallinas. Si no has oído las notas, sube el volumen con los botones laterales con el juego abierto.",
  "text.sound_test_wait": "El sonido se está despertando: toca otra vez.",
  "text.sound_test_none": "Este dispositivo no da sonido al juego.",
  "text.cuddle_all_done": "Un mimo para todos aquí ♥ +{xp} XP",
  "text.book_coop_wait": "Un gallinero te espera: {breed}",
  "text.book_see": "Ver",
  "text.coop_waits": "🏠 Un nuevo gallinero te espera en tu Libro: colócalo cuando quieras.",
- "text.apple_wait": "🍎 No queda sitio para el manzano junto al corral más grande: espera en su maceta y volverá solo cuando el gallinero tenga sitio a un lado (mueve el gallinero para dárselo)."
+ "text.apple_wait": "🍎 No queda sitio para el manzano junto al corral más grande: espera en su maceta y volverá solo cuando el gallinero tenga sitio a un lado (mueve el gallinero para dárselo).",
+ "text.garden_all": "Ver todos los bancales",
+ "text.replay_bad": "Rusty se llevó {n} huevos anoche · Ver",
+ "text.replay_bad1": "Rusty se llevó un huevo anoche · Ver"
 }

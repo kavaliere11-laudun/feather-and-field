@@ -1371,12 +1371,15 @@
  "text.nav_jobs": "Lavori",
  "text.nav_shows": "Mostre",
  "text.sound_test": "Prova il suono",
- "text.sound_test_ok": "Sono appena suonate due note. Se non le hai sentite, alza il volume con i tasti laterali mentre il gioco è aperto.",
+ "text.sound_test_ok": "Sono appena suonate due note, poi un suono della fattoria e una delle tue galline. Se non hai sentito le note, alza il volume con i tasti laterali mentre il gioco è aperto.",
  "text.sound_test_wait": "Il suono si sta svegliando: tocca ancora una volta.",
  "text.sound_test_none": "Questo dispositivo non dà suono al gioco.",
  "text.cuddle_all_done": "Una coccola per tutti qui ♥ +{xp} XP",
  "text.book_coop_wait": "Un pollaio ti aspetta: {breed}",
  "text.book_see": "Vedi",
  "text.coop_waits": "🏠 Un nuovo pollaio ti aspetta nel tuo Libro: sistemalo quando vuoi.",
- "text.apple_wait": "🍎 Non c’è posto per il melo accanto al recinto più grande: aspetta nel suo vaso e tornerà da solo quando il pollaio avrà spazio di lato (sposta il pollaio per fargliene)."
+ "text.apple_wait": "🍎 Non c’è posto per il melo accanto al recinto più grande: aspetta nel suo vaso e tornerà da solo quando il pollaio avrà spazio di lato (sposta il pollaio per fargliene).",
+ "text.garden_all": "Vedi tutte le aiuole",
+ "text.replay_bad": "Rusty ha preso {n} uova stanotte · Guarda",
+ "text.replay_bad1": "Rusty ha preso un uovo stanotte · Guarda"
 }

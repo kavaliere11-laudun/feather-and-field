@@ -562,7 +562,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -4808,7 +4808,12 @@ function tapAt(x, y) {
     if (GAME_MODE && game.data && game.ordersOpen() && stallAt(ray.ray) && stallAt.dist < hd && !(gdc && gdd < stallAt.dist)) { ordersSheet(); return; }      // (the farm stall: the village orders)
     if (gdc && gdd < hd) {
       if (gdc.model === 'wheat') { wheatTap(); return; }
-      if (gdc.model === 'garden') { gardenTap(); return; }
+      if (gdc.model === 'garden') {      // (the bed under the finger: its own card; between them or beside: the garden's)
+        const it = DEC.items.garden, gp = it && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.15), new THREE.Vector3());
+        let bi = -1; if (gp) { gp.applyMatrix4(new THREE.Matrix4().copy(it.d.m).invert()); let bd = 0.42; GARDEN_BEDX.forEach((x, i) => { const d = Math.abs(gp.x - x); if (d < bd && Math.abs(gp.z) < 1.0) { bd = d; bi = i; } }); }
+        if (bi >= 0 && game.data.garden && game.data.garden.beds[bi]) { if (game.bedStage(bi) === 'ripe' && pickBed(bi)) return; holdBird(null); henOff(); gardenCard(bi); return; }
+        gardenTap(); return;
+      }
       if (gdc.model === 'bandstand' && decorLife) decorLife.play();
       if (gdc.model === 'beehives' && game.honeyAt() > 0) { honeyTap(); return; }
       decorCard(gdc.model); return;
@@ -8329,10 +8334,10 @@ function gardenTap(bubble = false) {
   holdBird(null); henOff(); gardenCard();
 }
 const BED_BUB_Y = [0.55, 0.55, 0.55];      // (how high over its bed each bubble floats)
-function bedTap(i) { if (GARDEN_UI.one) { gardenTap(true); return; } if (game.bedStage(i) === 'ripe' && pickBed(i)) return; holdBird(null); henOff(); gardenCard(); }      // (a bed's own bubble)
-function gardenCard() {
-  gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), move: () => { gameUI.close(); startDecor('garden'); } },
-    { busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : farmerBusyText() });
+function bedTap(i) { if (GARDEN_UI.one) { gardenTap(true); return; } if (game.bedStage(i) === 'ripe' && pickBed(i)) return; holdBird(null); henOff(); gardenCard(i); }      // (a bed's own bubble)
+function gardenCard(only) {
+  gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), all: () => gardenCard(), move: () => { gameUI.close(); startDecor('garden'); } },
+    { only, busy: GARDEN_UI.work ? game.t(GARDEN_UI.work.kind === 'sow' ? 'garden_sowing' : 'garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + GARDEN_UI.work.crop) }) : farmerBusyText() });
 }
 // where the farmer stands to work at bed i: in front of it (or the nearest he can get to), facing it
 function bedSpot(i) {
@@ -9290,8 +9295,22 @@ function startReplay() {
 }
 // the button: in the morning until it's been watched (?replay: at any hour, once), not while inside a coop or while another
 // button has the spot
+const REPLAY_SHOWN = { key: null, at: 0 };
 function tickReplayBtn() {
   if (!replay || !replayBtn) return;
+  // (12 Nov 2026, Audrey: "I said skip last night but the button stays. Maybe it can go on the side and disappear after a
+  // certain time": in the game it's a small button at the side now, there for a minute and a half from when it first
+  // shows; then it goes and that night's film is put away)
+  if (GAME_MODE && game.data && game.foxFilmable() && !replay.on) {
+    const k = (game.foxLast() || {}).key;
+    if (REPLAY_SHOWN.key !== k) { REPLAY_SHOWN.key = k; REPLAY_SHOWN.at = 0; }
+    if (!replayBtn.hidden && !REPLAY_SHOWN.at) REPLAY_SHOWN.at = performance.now();
+    if (REPLAY_SHOWN.at && performance.now() - REPLAY_SHOWN.at > 90e3) { game.foxWatched(); replayBtn.hidden = true; return; }
+  }
+  if (GAME_MODE && game.data) {      // ("If the fox was successful the last night message cta should say it or show something bad happened")
+    const l = game.foxLast(), bad = !!(l && l.open && !l.by && l.eggs > 0), txt = bad ? '🦊 ' + game.t(l.eggs === 1 ? 'replay_bad1' : 'replay_bad', { n: l.eggs }) : '🎞 ' + tr(LANG, 'replay.btn');
+    if (replayBtn.textContent !== txt) { replayBtn.textContent = txt; replayBtn.classList.toggle('bad', bad); }
+  }
   const h = clockHour(), want = !replay.on && !inside.open && (GAME_MODE ? !!game.data && game.foxFilmable() && !gameUI.isOpen && !MOVE.plot && !DMOVE.id && !SHOWDAY : !replayDone && (params.has('replay') || (h >= 6 && h < 12 && !replaySeenToday())))
     && (!farmerBtn || farmerBtn.hidden) && (!dogEls.btn || dogEls.btn.hidden) && dogEls.form && dogEls.form.hidden;
   if (replayBtn.hidden === want) {
@@ -9486,7 +9505,7 @@ window.__farm = {
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
-  garden: { tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
+  garden: { bedCard: i => gardenCard(i), bedTap: i => bedTap(i), tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
     state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, bubs: (GARDEN_UI.bubs || []).map(B => B.hidden ? null : B.textContent), owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, 0).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; } },
@@ -9586,7 +9605,7 @@ window.__farm = {
     sh.camera.left = -R; sh.camera.right = R; sh.camera.top = R; sh.camera.bottom = -R; sh.camera.updateProjectionMatrix(); sh.radius = 2.5; sh.needsUpdate = true;
     const h = (canvas.clientHeight || innerHeight) * renderer.getPixelRatio(); setFar(false); setFurDetail(h / (2 * (o.dist || 9) * Math.tan((o.fov || 24) / 2 * DEG)), 1);
     drawFarmerShadows(renderer); renderFarm(scene, cam); return true; },
-  replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn,
+  replay: () => replay, startReplay, replayRecord, replayBtn: () => replayBtn, replayShown: () => REPLAY_SHOWN,
   replayTick: (dt, n) => { for (let i = 0; i < n && replay && replay.on; i++) { replay.update(dt); tickDoors(dt); } placeTag(dt * n); if (replay && replay.on) applyDaylight(clockHour()); },
   // tests: the first free hen of a pen goes to lay now (sitting for `sit` seconds); every other hen waits
   layNow: (i, sit) => { const pl = plots[i]; for (const b of pl.birds) if (b.layIn !== undefined) b.layIn = 1e9; const h = pl.birds.find(b => b.kind === 'hen' && !b.laying); h.startLaying(sit); return h.name + ' (' + h.pers + ')'; },

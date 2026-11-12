@@ -197,7 +197,7 @@ export class Sound {
       F.meta = meta;
       for (const [name, m] of Object.entries(meta)) {
         fetch(base + name + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
-          .then(ab => decode(ab, m.bed && slow ? slow : this.ctx).catch(() => decode(ab, this.ctx)))
+          .then(ab => m.bed && slow ? decode(ab.slice(0), slow).catch(() => decode(ab, this.ctx)) : decode(ab, this.ctx))      // (a copy for the slower decoder: decoding empties the bytes it's given, and the fallback needs them)
           .then(b => { if (m.bed) F.beds[name] = { buf: b, src: null, g: null }; else (F.groups[groupOf(name)] = F.groups[groupOf(name)] || []).push(b); })
           .catch(e => this.note(name + ': ' + (e && e.message)));
       }
@@ -210,6 +210,7 @@ export class Sound {
   }
   // a one-shot from where it happens (at: {near 0-1, pan -1 to 1}, from main.js heardAt); kind: a group ('crow', 'egg_diva')
   play(kind, at, level) {
+    if (this.ctx && !this.hidden && this.ctx.state !== 'running') { try { this.ctx.resume().catch(() => {}); } catch (e) { /* */ } }      // (asleep, after a call or the app put away: woken for the next one)
     if (!this.ctx || this.hidden || this.ctx.state !== 'running' || (this.o.sounds && !this.o.sounds()) || !at || at.near < 0.02) return null;
     const buf = this.pick(kind); if (!buf) return null;
     const lev = (level ?? FARM.level[groupOf(kind).replace(/_.*/, '')] ?? 0.5) * at.near;
@@ -260,8 +261,19 @@ export class Sound {
     try {
       const t0 = this.ctx.currentTime + 0.05;
       [[660, 0], [880, 0.22]].forEach(([f, d]) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.25, t0 + d + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.3); o.connect(g); g.connect(this.ctx.destination); o.start(t0 + d); o.stop(t0 + d + 0.32); });
-    } catch (e) { return 'error'; }
+      // (then one of the farm's own recordings, a crow or a cluck, and one of her hens' clips, straight to the speaker: 12 Nov
+      // 2026, Audrey: "The sound works but I only have the music not chicken noise or anything")
+      const one = (buf, at, lev) => { if (!buf) return; const sN = this.ctx.createBufferSource(), g = this.ctx.createGain(); sN.buffer = buf; g.gain.value = lev; sN.connect(g); g.connect(this.ctx.destination); sN.start(t0 + at, 0, Math.min(buf.duration, 3)); };
+      const G = this.farm.groups, any = (G.crow && G.crow[0]) || (G.egg && G.egg[0]) || Object.values(G).map(L => L[0]).find(Boolean);
+      one(any, 0.7, 0.8); one(this.hen.bufs.find(Boolean), 2.2, 0.9);
+    } catch (e) { this.note('test: ' + e.message); return 'error'; }
     return this.ctx.state;
+  }
+  // what the sound has to play with, in a line (Settings shows it under the test, for telling Claude)
+  diag() {
+    if (!this.ctx) return 'no engine';
+    const F = this.farm, shots = Object.values(F.groups).reduce((a, L) => a + L.length, 0), beds = Object.keys(F.beds).length, all = F.meta ? Object.keys(F.meta).length : 0;
+    return [this.ctx.state, Math.round(this.ctx.sampleRate / 1000) + 'k', 'farm ' + (shots + beds) + '/' + all, 'beds ' + beds, 'hens ' + this.hen.bufs.filter(Boolean).length + '/' + HENS.files, 'played ' + (this.hen.played || 0) + '+' + Object.values(F.played || {}).reduce((a, n) => a + n, 0), this.hidden ? 'hidden' : 'shown', this.log.slice(-3).join(' | ')].join(' · ');
   }
   info() {
     return { unlocked: !!this.ctx, ctx: this.ctx && this.ctx.state, state: this.state, track: MUSIC[this.track], gain: this.gain ? +this.gain.gain.value.toFixed(3) : 0,

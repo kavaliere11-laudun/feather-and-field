@@ -1368,12 +1368,15 @@
  "text.nav_jobs": "Aufgaben",
  "text.nav_shows": "Schauen",
  "text.sound_test": "Ton testen",
- "text.sound_test_ok": "Gerade wurden zwei Töne gespielt. Wenn du sie nicht gehört hast, stelle mit den Seitentasten lauter, während das Spiel offen ist.",
+ "text.sound_test_ok": "Gerade wurden zwei Töne gespielt, dann ein Geräusch vom Hof und eine deiner Hennen. Wenn du die Töne nicht gehört hast, stelle mit den Seitentasten lauter, während das Spiel offen ist.",
  "text.sound_test_wait": "Der Ton wacht gerade auf: Tippe noch einmal.",
  "text.sound_test_none": "Dieses Gerät gibt dem Spiel keinen Ton.",
  "text.cuddle_all_done": "Eine Kuschelrunde für alle hier ♥ +{xp} XP",
  "text.book_coop_wait": "Ein Stall wartet: {breed}",
  "text.book_see": "Ansehen",
  "text.coop_waits": "🏠 Ein neuer Stall wartet in deinem Buch: Stelle ihn auf, wann du magst.",
- "text.apple_wait": "🍎 Neben dem größeren Auslauf ist kein Platz für den Apfelbaum: Er wartet in seinem Kübel und kommt von selbst zurück, sobald der Stall seitlich Platz hat (stelle den Stall um, um ihm welchen zu geben)."
+ "text.apple_wait": "🍎 Neben dem größeren Auslauf ist kein Platz für den Apfelbaum: Er wartet in seinem Kübel und kommt von selbst zurück, sobald der Stall seitlich Platz hat (stelle den Stall um, um ihm welchen zu geben).",
+ "text.garden_all": "Alle Beete ansehen",
+ "text.replay_bad": "Rusty hat heute Nacht {n} Eier geholt · Ansehen",
+ "text.replay_bad1": "Rusty hat heute Nacht ein Ei geholt · Ansehen"
 }

@@ -1371,12 +1371,15 @@
  "text.nav_jobs": "Tarefas",
  "text.nav_shows": "Exposições",
  "text.sound_test": "Testar o som",
- "text.sound_test_ok": "Duas notas acabaram de tocar. Se você não ouviu, aumente o volume com os botões laterais com o jogo aberto.",
+ "text.sound_test_ok": "Duas notas acabaram de tocar, depois um som da fazenda e uma das suas galinhas. Se você não ouviu as notas, aumente o volume com os botões laterais com o jogo aberto.",
  "text.sound_test_wait": "O som está acordando: toque mais uma vez.",
  "text.sound_test_none": "Este aparelho não dá som ao jogo.",
  "text.cuddle_all_done": "Um carinho para todos aqui ♥ +{xp} XP",
  "text.book_coop_wait": "Um galinheiro espera por você: {breed}",
  "text.book_see": "Ver",
  "text.coop_waits": "🏠 Um novo galinheiro espera por você no seu Livro: coloque quando quiser.",
- "text.apple_wait": "🍎 Não há lugar para a macieira ao lado do cercado maior: ela espera no vaso e volta sozinha quando o galinheiro tiver espaço ao lado (mude o galinheiro para dar espaço)."
+ "text.apple_wait": "🍎 Não há lugar para a macieira ao lado do cercado maior: ela espera no vaso e volta sozinha quando o galinheiro tiver espaço ao lado (mude o galinheiro para dar espaço).",
+ "text.garden_all": "Ver todos os canteiros",
+ "text.replay_bad": "O Rusty levou {n} ovos esta noite · Ver",
+ "text.replay_bad1": "O Rusty levou um ovo esta noite · Ver"
 }
