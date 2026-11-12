@@ -53,7 +53,7 @@ const lv = await sheetT();
 ok('level 3: its card says the village orders have come', (await kind()) === 'levelup' && T.lvl.test(lv), lv.slice(0, 400));
 await p.evaluate(() => window.__farm.gameUI().close()); await run(1.5);
 s = await G();
-const h1 = await hintT();
+let h1 = await hintT(); for (let i = 0; i < 24 && !T.two.test(h1); i++) { await run(0.5); h1 = await hintT(); }      // (a new coop's word may come first: said one after the other)
 ok('two orders arrive, "2 new village orders"; the basket button with them', s.open && s.orders && s.orders.list.length === 2 && T.two.test(h1) && s.btn && !s.dot, { s, h1 });
 await p.evaluate(() => { for (const id of ['o1', 'o2']) { const g = window.__farm.game(), o = g.data.orders.list.find(x => x.id === id); o.items = id === 'o1' ? { eggs: 5 } : { eggs: 4 }; o.got = {}; } window.__farm.game().save(); });      // (the same each run)
 await p.evaluate(() => document.querySelector('.gordbtn').click()); await run(0.2); await settle();

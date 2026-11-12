@@ -5164,7 +5164,7 @@ function gameTick(now = Date.now(), force = false) {
   const live = document.visibilityState !== 'hidden';
   const tonight = foxLiveTick(now, live);                               // (tonight's visit, if it's time and the farm is open)
   if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
-  { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hint(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
+  { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
