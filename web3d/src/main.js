@@ -4898,6 +4898,9 @@ function henHeard() {
   for (const p of plots) {
     if (p.kind !== 'coop' || !p.birds.some(b => !b.asleep && b.root.visible)) continue;
     p.frame.getWorldPosition(_cv); const h = heardAt(_cv.x, _cv.z);
+    // (12 Nov 2026, Audrey: "Ideally, you would hear the chickens only when you zoom in a coop … And from far when unzoomed":
+    // close in on a coop: clear; zoomed out: faint, as from far; by how near the middle of the view the coop is, as before)
+    { const d = Math.hypot(_cv.x - view.target.x, _cv.z - view.target.z), R = view.size * 1.1 + 1.2, u = Math.min(1, Math.max(0, (5.2 - view.size) / 2.6)); h.near = Math.pow(Math.max(0, 1 - d / R), 1.4) * (0.1 + 0.9 * u * u * (3 - 2 * u)); }
     if (best && h.near <= best.near) continue;
     h.brood = p.birds.some(b => b.kind === 'chick' && !b.asleep) ? 'chicks' : p.birds.some(b => b.laying && b.laying.broody) ? 'sitting' : null;
     best = h;

@@ -63,14 +63,12 @@ await p.evaluate(() => window.__farm.setHour(20.8));
 s = await until(async () => { const i = await info(); return i.gain < 0.3 && Math.abs(i.gain - 0.42 * 0.6 * 0.5) < 0.04 ? i : null; }, 20000) || await info();
 ok('of an evening: softer', s.state === 'playing' && s.gain > 0.1 && s.gain < 0.3, s.gain);
 await p.evaluate(() => window.__farm.setHour(22.5));
-s = await until(async () => { const i = await info(); return i.state === 'idle' ? i : null; }, 25000) || await info();
-ok('at night: faded away', s.state === 'idle' && s.paused && s.gain < 0.01, s);
-await p.evaluate(() => { const S = window.__farm.sound(); S.nextAt = S.now(); }); await wait(1500);
-s = await info();
-ok('and no new track at night', s.state === 'idle' && s.paused, s);
-await p.evaluate(() => { window.__farm.setHour(9); const S = window.__farm.sound(); S.nextAt = S.now(); });
-s = await until(async () => { const i = await info(); return i.state === 'playing' && !i.paused ? i : null; }, 40000);
-ok('morning: the music comes back', !!s, s);
+// (12 Nov 2026, Audrey: "at night the chickens and birds noise need to stop. Just the music should stay")
+s = await until(async () => { const i = await info(); return Math.abs(i.gain - 0.42 * 0.35) < 0.03 ? i : null; }, 25000) || await info();
+ok('at night: the music stays, softest', s.state === 'playing' && !s.paused && s.gain > 0.08 && s.gain < 0.2, s.gain);
+await p.evaluate(() => window.__farm.setHour(9));
+s = await until(async () => { const i = await info(); return i.gain > 0.36 ? i : null; }, 25000) || await info();
+ok('morning: full again', s.state === 'playing' && s.gain > 0.36, s.gain);
 // put away and back
 await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); });
 await wait(800); s = await info();
@@ -106,7 +104,7 @@ const bedAt = async (h, bed, name) => {
   F = await until(async () => { const f = await farm(); return f.beds[bed] > 0.2 && Object.entries(f.beds).every(([k, v]) => k === bed || k === 'pond' || v < 0.03) ? f : null; }, 25000);
   ok(name + ': its own bed, the others silent', !!F, F ? F.beds : (await farm()).beds);
 };
-for (const [h, bed, name] of [[11, 'day', 'by day'], [7, 'dawn', 'at dawn'], [20, 'evening', 'of an evening']]) await bedAt(h, bed, name);      // (the night's at the end: the birds go to bed)
+for (const [h, bed, name] of [[11, 'day', 'by day'], [7, 'dawn', 'at dawn'], [19.2, 'evening', 'of an evening']]) await bedAt(h, bed, name);      // (the night's at the end: the birds go to bed)
 await p.evaluate(() => window.__farm.setHour(11));
 await p.evaluate(() => { const f = window.__farm, c = f.plan().pond.center; f.lookAt(c[0], c[2], 2.6); });
 F = await until(async () => { const f = await farm(); return f.beds.pond > 0.3 ? f : null; }, 20000);
@@ -172,7 +170,11 @@ await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 ok('a save with the music and the sounds typed in wrong: checked (both on)', await p.evaluate(() => { const g = window.__farm.game(); return g.data.music === undefined && g.data.sounds === undefined && g.musicOn() && g.soundsOn(); }));
 await p.evaluate(() => window.__farm.gameUI().close()); await p.tap('#farm', { position: { x: W / 2, y: H * 0.6 } }).catch(() => p.mouse.click(W / 2, H * 0.6));
-await until(async () => Object.keys((await farm()).beds).length === 5, 45000); await bedAt(23.2, 'night', 'at night');
+await until(async () => Object.keys((await farm()).beds).length === 5, 45000); await p.evaluate(() => window.__farm.setHour(23.2));
+F = await until(async () => { const f = await farm(); return Object.entries(f.beds).every(([k, v]) => k === 'pond' || v < 0.03) ? f : null; }, 25000);
+ok('at night: no birdsong at all (only the music, and the pond by the pond)', !!F, F ? F.beds : (await farm()).beds);
+const nightHen = await p.evaluate(() => { const f = window.__farm, S = f.sound(); const r = S.play('crow', { near: 1, pan: 0 }), k = S.play('bark', { near: 1, pan: 0 }); return { crow: !!r, bark: !!k, hens: S.hen.near }; });
+ok('…no crow, no hens chatting; Biscuit\'s bark still heard (Rusty\'s visit)', !nightHen.crow && nightHen.bark && nightHen.hens === 0, nightHen);
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

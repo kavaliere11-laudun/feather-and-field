@@ -5091,3 +5091,15 @@ close). Test: `movealwaystest` (EN/FR).
   found (not reproduced here); if he stands still again after a visit, that is a separate fault to look for.
 - Tests: `nettest`, `ordertest` follow.
 
+## Quiet nights and hens by the zoom (12 Nov 2026, 20:43; Audrey: "All working now. I think at night the chickens and birds noise need to stop. Just the music should stay. Ideally, you would hear the chickens only when you zoom in a coop … And from far when unzoomed")
+- Her "All working now": the farm's sounds are heard in the app, and the lock-screen player is gone.
+- **Night**: the birds are silent from 20:00 to 6:00, fading out from 19:30 and back in until 6:30 (sound.js
+  `birdsLevel`): the hens' chatter, the birdsong under the time of day (dawn, day, evening, night beds), crows, egg
+  songs, chicks, ducks, the peacock. Kept at night: the pond's water and frogs by the pond, and the sounds of Rusty's
+  visit (the flurry in the coop, Biscuit's bark, the geese's honks: `NIGHT_KINDS`). **The music now goes on through
+  the night**, at its softest (`musicLevel` 0.35; it used to stop at 21:30).
+- **Hens by the zoom** (main.js `henHeard`): close in on a coop they are clear; zoomed out they are faint, as from far
+  (a tenth at a view of 5.2 m and wider, full from 2.6 m in), and as before by how near the middle of the view the
+  coop is.
+- `soundtest` follows.
+

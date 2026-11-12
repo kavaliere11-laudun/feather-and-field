@@ -28,14 +28,21 @@ export const MUSIC_TIMES = {
   level: 0.42,                 // the music's own volume (the farm's sounds will sit above it)
   fade: 2.5,                   // seconds to fade in
 };
-// how loud the music is by the hour (0: none, and no new track): full by day, softer at dawn and of an evening, none at night
+// how loud the music is by the hour: full by day, softer of an evening, softest through the night
+// (12 Nov 2026, Audrey: "at night the chickens and birds noise need to stop. Just the music should stay": the music goes
+// on through the night, soft; it used to stop)
 export function musicLevel(h) {
-  if (h >= 21.5 || h < 6) return 0;
-  if (h < 7) return 0.55 * smooth((h - 6) / 0.5);
+  if (h >= 21.5 || h < 6) return 0.35;
+  if (h < 7) return 0.35 + 0.65 * smooth((h - 6) / 0.5);
   if (h < 19) return 1;
   return 0.6 - 0.25 * smooth((h - 20.5) / 1);            // (19:00-21:30: softer, and softer still towards night)
 }
 
+// the farm's birds by the hour (the hens' chatter, the birdsong under it all, crows, egg songs, ducks, the peacock): 1 by day,
+// fading out from 19:30 to 20:00, none through the night, back from 6:00 to 6:30 (the pond's water and frogs stay; so do the
+// sounds of Rusty's visit: the flurry in the coop, Biscuit's bark, the geese's honks)
+export function birdsLevel(h) { return h >= 20 || h < 6 ? 0 : h >= 19.5 ? 1 - smooth((h - 19.5) / 0.5) : h < 6.5 ? smooth((h - 6) / 0.5) : 1; }
+const NIGHT_KINDS = ['flurry', 'bark', 'honk'];
 export const HENS = {
   files: 7,                    // audio/hens/hen1.mp3 ... hen7.mp3
   level: 1.8,                  // close to a coop (her recordings are quiet: -30 to -34 LUFS; the music sits a little under)
@@ -192,8 +199,8 @@ export class Sound {
     }
   }
   tickHens() {
-    const H = this.hen, t = this.ctx.currentTime, on = !this.o.sounds || !!this.o.sounds();
-    const src = on && this.o.hens ? this.o.hens() : null; H.near = src ? src.near : 0;
+    const H = this.hen, t = this.ctx.currentTime, q = birdsLevel(this.o.hour()), on = (!this.o.sounds || !!this.o.sounds()) && q > 0;
+    const src0 = on && this.o.hens ? this.o.hens() : null, src = src0 ? { ...src0, near: src0.near * q } : null; H.near = src ? src.near : 0;
     if (H.src) {                                    // one playing: it follows the view (or fades, switched off or the birds gone in)
       H.g.gain.setTargetAtTime(on ? H.lev * H.near : 0, t, on ? 0.35 : 0.08);
       if (H.pan && src) H.pan.pan.setTargetAtTime(src.pan, t, 0.35);
@@ -246,8 +253,9 @@ export class Sound {
   play(kind, at, level) {
     if (this.ctx && !this.hidden && this.ctx.state !== 'running') { try { this.ctx.resume().catch(() => {}); } catch (e) { /* */ } }      // (asleep, after a call or the app put away: woken for the next one)
     if (!this.ctx || this.hidden || this.ctx.state !== 'running' || (this.o.sounds && !this.o.sounds()) || !at || at.near < 0.02) return null;
+    const q = NIGHT_KINDS.includes(groupOf(kind).replace(/_.*/, '')) ? 1 : birdsLevel(this.o.hour()); if (q < 0.05) return null;      // (the birds quiet at night)
     const buf = this.pick(kind); if (!buf) return null;
-    const lev = (level ?? FARM.level[groupOf(kind).replace(/_.*/, '')] ?? 0.5) * at.near;
+    const lev = (level ?? FARM.level[groupOf(kind).replace(/_.*/, '')] ?? 0.5) * at.near * q;
     const s = this.ctx.createBufferSource(); s.buffer = buf; const g = this.ctx.createGain(); g.gain.value = lev;
     let pan = null; if (this.ctx.createStereoPanner) { pan = this.ctx.createStereoPanner(); pan.pan.value = at.pan || 0; }
     s.connect(g); if (pan) { g.connect(pan); pan.connect(this.fx); } else g.connect(this.fx);
@@ -266,14 +274,14 @@ export class Sound {
   }
   // the beds: each loops from the start (silent until it's its hour), the time of day's crossfading, the pond's by how near
   tickBeds() {
-    const F = this.farm, t = this.ctx.currentTime, on = !this.o.sounds || !!this.o.sounds(), mix = bedMix(this.o.hour());
+    const F = this.farm, t = this.ctx.currentTime, on = !this.o.sounds || !!this.o.sounds(), mix = bedMix(this.o.hour()), q = birdsLevel(this.o.hour());
     const pond = on && this.o.pond ? this.o.pond() : null;
     for (const [name, B] of Object.entries(F.beds)) {
       if (!B.src) {
         B.src = this.ctx.createBufferSource(); B.src.buffer = B.buf; B.src.loop = true; B.g = this.ctx.createGain(); B.g.gain.value = 0;
         B.src.connect(B.g); B.g.connect(this.fx); B.src.start(0, Math.random() * B.buf.duration * 0.8);
       }
-      const want = !on ? 0 : name === 'pond' ? FARM.pondLevel * (pond ? pond.near : 0) : FARM.bedLevel * (mix[name] || 0);
+      const want = !on ? 0 : name === 'pond' ? FARM.pondLevel * (pond ? pond.near : 0) : FARM.bedLevel * (mix[name] || 0) * q;
       B.g.gain.setTargetAtTime(want, t, on ? 1.2 : 0.15); B.want = want;
     }
   }
