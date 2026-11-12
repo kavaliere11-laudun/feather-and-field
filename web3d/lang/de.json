@@ -1378,5 +1378,17 @@
  "text.apple_wait": "🍎 Neben dem größeren Auslauf ist kein Platz für den Apfelbaum: Er wartet in seinem Kübel und kommt von selbst zurück, sobald der Stall seitlich Platz hat (stelle den Stall um, um ihm welchen zu geben).",
  "text.garden_all": "Alle Beete ansehen",
  "text.replay_bad": "Rusty hat heute Nacht {n} Eier geholt · Ansehen",
- "text.replay_bad1": "Rusty hat heute Nacht ein Ei geholt · Ansehen"
+ "text.replay_bad1": "Rusty hat heute Nacht ein Ei geholt · Ansehen",
+ "text.bed_more_t": "Beet {n}: ein neues",
+ "text.bed_more": "Dieses Beet anlegen · {c} Münzen",
+ "text.bed_more_broke": "Dieses Beet anlegen · {c} Münzen (noch nicht genug)",
+ "text.bed_more_lv": "Ab Level {l}, für {c} Münzen.",
+ "text.bed_bought": "🟫 Beet {n} gehört dir · −{c} Münzen. Säe es, wann du magst.",
+ "text.bed_bought_moved": "🟫 Beet {n} gehört dir · −{c} Münzen. Der Garten ist ein Stück gerückt, damit die zweite Reihe Platz hat.",
+ "text.bed_noroom": "Hier ist kein Platz für eine zweite Reihe Beete: Stelle den Garten zuerst an einen freieren Ort.",
+ "text.wheat2_title": "Dein zweites Weizenfeld",
+ "text.wheat2_more_t": "Ein zweites Weizenfeld",
+ "text.wheat2_more": "Dieses Feld anlegen · {c} Münzen",
+ "text.wheat2_more_broke": "Dieses Feld anlegen · {c} Münzen (noch nicht genug)",
+ "text.wheat2_bought": "🌾 Dein zweites Weizenfeld ist bereit zur Aussaat · −{c} Münzen. Verschiebe es über seine Karte, wenn du magst."
 }

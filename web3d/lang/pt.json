@@ -1381,5 +1381,17 @@
  "text.apple_wait": "🍎 Não há lugar para a macieira ao lado do cercado maior: ela espera no vaso e volta sozinha quando o galinheiro tiver espaço ao lado (mude o galinheiro para dar espaço).",
  "text.garden_all": "Ver todos os canteiros",
  "text.replay_bad": "O Rusty levou {n} ovos esta noite · Ver",
- "text.replay_bad1": "O Rusty levou um ovo esta noite · Ver"
+ "text.replay_bad1": "O Rusty levou um ovo esta noite · Ver",
+ "text.bed_more_t": "Canteiro {n}: um novo",
+ "text.bed_more": "Adicionar este canteiro · {c} moedas",
+ "text.bed_more_broke": "Adicionar este canteiro · {c} moedas (ainda não dá)",
+ "text.bed_more_lv": "A partir do nível {l}, por {c} moedas.",
+ "text.bed_bought": "🟫 O canteiro {n} é seu · −{c} moedas. Semeie quando quiser.",
+ "text.bed_bought_moved": "🟫 O canteiro {n} é seu · −{c} moedas. A horta mudou um pouco de lugar para caber a segunda fileira.",
+ "text.bed_noroom": "Aqui não há espaço para uma segunda fileira de canteiros: mude primeiro a horta para um lugar mais livre.",
+ "text.wheat2_title": "Seu segundo campo de trigo",
+ "text.wheat2_more_t": "Um segundo campo de trigo",
+ "text.wheat2_more": "Adicionar este campo · {c} moedas",
+ "text.wheat2_more_broke": "Adicionar este campo · {c} moedas (ainda não dá)",
+ "text.wheat2_bought": "🌾 Seu segundo campo de trigo está pronto para semear · −{c} moedas. Mude-o de lugar na ficha dele, se quiser."
 }

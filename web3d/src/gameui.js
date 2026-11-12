@@ -1282,12 +1282,12 @@ export class GameUI {
   }
   // ---- the wheat field (tapped, not ripe): how far it's grown and when it's ripe, what it gives, the grain in store; Sow
   // (h.sow) or, ripe, Harvest (h.harvest); Move the field (h.move)
-  wheatSheet(h) {
-    const g = this.g, st = g.wheatStage(), b = this.open('wheat', this.t('wheat_title'));
+  wheatSheet(h, k = 0) {      // (k: 1 the second field, once bought, 12 Nov 2026)
+    const g = this.g, st = g.wheatStage(undefined, k), b = this.open('wheat', this.t(k ? 'wheat2_title' : 'wheat_title'));
     this.bird = null;
     b.append(el('p', 'gtext gwheat-s', this.t('wheat_' + st)));
     if (st !== 'soil' && st !== 'ripe') {
-      const left = g.wheatLeft(), u = 1 - left / WHEAT.grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
+      const left = g.wheatLeft(undefined, k), u = 1 - left / WHEAT.grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
       b.append(bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
     }
     b.append(el('p', 'gnote', this.t('wheat_how', { c: WHEAT.sow, g: WHEAT.grain, xp: WHEAT.xp })));
@@ -1296,6 +1296,15 @@ export class GameUI {
       const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
       go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
     } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => { if (!go.disabled) h.harvest(); }); b.append(go); }
+    // (a second field, her choice "Buy more, by level": on the first one's card: its price; before its level, when it comes)
+    const nx = k ? null : g.wheatNext();
+    if (nx) {
+      const c = el('div', 'gcard gbed gbedmore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🌾'), el('span', 'gcard-t', this.t('wheat2_more_t'))); c.append(hd);
+      const fmt = n => n.toLocaleString(g.locale());
+      if (nx.locked) c.append(el('p', 'gnote', this.t('bed_more_lv', { l: nx.level, c: fmt(nx.price) })));
+      else { const go = el('button', 'gbtn gsmallbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'wheat2_more_broke' : 'wheat2_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buywheat = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); c.append(go); }
+      b.append(c);
+    }
     const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
   }
   // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
@@ -1333,6 +1342,14 @@ export class GameUI {
     b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
     b.append(el('p', 'gnote', this.t('basket_how')));
     } else { const all = el('button', 'glink', this.t('garden_all')); all.type = 'button'; all.dataset.all = '1'; all.addEventListener('click', () => h.all && h.all()); b.append(all); return; }
+    // (a bed more, 12 Nov 2026, her choice "Buy more, by level": the next one, its price; before its level, when it comes)
+    const nx = g.bedNext();
+    if (nx) {
+      const c = el('div', 'gcard gbed gbedmore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🟫'), el('span', 'gcard-t', this.t('bed_more_t', { n: nx.n }))); c.append(hd);
+      if (nx.locked) c.append(el('p', 'gnote', this.t('bed_more_lv', { l: nx.level, c: fmt(nx.price) })));
+      else { const go = el('button', 'gbtn gsmallbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'bed_more_broke' : 'bed_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buybed = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); c.append(go); }
+      b.append(c);
+    }
     const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
   }
   // ---- a treat from the garden for a coop's birds (7 Nov 2026): what each vegetable does, how many are in the basket,

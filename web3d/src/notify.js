@@ -47,7 +47,7 @@ export function plan(game, now = Date.now(), groups = ALL) {
   // the shows: judged at 7 the morning after
   for (const e of game.shows().in) add('show', game.showJudgedAt(e.id), game.t('nt_show_t'), game.t('nt_show', { name: name(e.bird), show: game.showName(e.id) }));
   // the wheat ripe; the hives full
-  const w = game.wheat(); if (w.ripe) add('wheat', w.ripe, game.t('nt_wheat_t'), game.t('nt_wheat'));
+  const wr = [0, 1].map(k => game.wheat(k)).filter(w => w && w.ripe > now).map(w => w.ripe); if (wr.length) add('wheat', Math.min(...wr), game.t('nt_wheat_t'), game.t('nt_wheat'));      // (the next field ripe)
   const gb = d.garden && game.gardenOpen() ? d.garden.beds.filter(b => b.crop && b.ripe > now).sort((a, b) => a.ripe - b.ripe) : [];      // (the vegetable garden: the next bed ripe)
   if (gb.length) add('garden', gb[0].ripe, game.t('nt_garden_t'), game.t('nt_garden', { crop: game.t('crop_l_' + gb[0].crop) }));
   const H = d.honey; if (H && H.n < HONEY.max) add('honey', H.at + (HONEY.max - H.n) * HONEY.every, game.t('nt_honey_t'), game.t('nt_honey', { n: HONEY.max }));

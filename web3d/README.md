@@ -5009,3 +5009,44 @@ close). Test: `movealwaystest` (EN/FR).
   the basket by the fire: a card there with "See" (the old Coops card). The Book's number counts them with the
   milestones; the Book opens on the breeds while something waits; and "🏠 A new coop is waiting in your Book: place it
   whenever you like." is said when the farm opens and whenever another comes. Moving a coop stays on its own card.
+
+## Her notes of 12 Nov 2026: the Last night button, one card per bed, fewer bubbles, more beds and a second field, everyone stroked
+- **"I said skip last night but the button stays. Maybe it can go on the side and disappear after a certain time"**: the
+  "Last night" button is small, at the left side in the game, and goes by itself 90 seconds after it first shows
+  (main.js `REPLAY_SHOWN`, then `game.foxWatched()`).
+- **"If the fox was successful the last night message cta should say it or show something bad happened"**: when Rusty got
+  eggs the button says so, in red: "Rusty took 3 eggs last night · Watch" (`replay_bad`, `replay_bad1`, class `bad`).
+- **"The sound works but I only have the music not chicken noise or anything"**: not found yet (it can't be heard in the
+  test browser). "Test the sound" in Settings now plays two notes, then a real farm sound and one of her hens straight
+  to the speaker, and shows a small grey line of what the sound engine has (sound.js `test`, `diag`): her screenshot of
+  that line is the next step. Also: a sound asked for while the engine is asleep wakes it, and the farm's background
+  beds decode from their own copy of the file.
+- **"They are grouped under 1 entry while really it should be 1 per bed"**: a tap on a bed (or its bubble) opens that
+  bed's own card (gameui.js `gardenSheet` `o.only`), with "See all the beds" under it; a tap between the beds or on the
+  can opens the whole garden's card as before.
+- **"That's too busy too many messages"** (eight bubbles on her screen); her choice "Only when there's something to do":
+  no bubble for a wait any more: a brood's hours, a growing bed, growing wheat. Their time left is on their cards.
+  Bubbles stay for Sow, Pick, Harvest, eggs, honey, chicks ready.
+- **"we might want to think about extending them and the [wheat] field with levels or money. Needs to be relevant as the
+  game cannot become too easy either"**; her choice "Buy more, by level":
+  - **Beds**: a fourth from level 9 for 400 coins, a fifth from level 14 for 900, a sixth from level 20 for 2,000 (game.js
+    `GARDEN.more`, `bedsMost`, `bedNext`, `buyBed`): the level and the coins both. Bought on the garden's card ("Bed 4: a
+    new one"; before its level the card says when it comes). They stand in a second row behind the first three
+    (main.js `GARDEN_BEDZ`, `GARDEN_ROW2`); the garden's footprint is that much deeper from the fourth (`gardenFoot`), so
+    buying it checks the room: where it is, else the nearest good spot (it moves, and says so), else nothing is bought
+    and it says to move the garden first (`buyBed`). A bought bed's frame is the middle bed's triangles taken out of
+    the garden's model in the browser (`gardenBedAlone`): no new model file. The farmer works a second-row bed from
+    behind it or from the path between the rows (`bedSpot`). Save check: no more beds than the level allows.
+  - **A second wheat field**: from level 12 for 1,200 coins (`WHEAT.second`, `wheatNext`, `buyWheat`; saved as
+    `wheat2`, only from its level). Bought on the first field's card; it is put down at the nearest good spot to the
+    first and the view goes to it; sown, grown, harvested and moved on its own, with its own card ("Your second wheat
+    field") and bubble (main.js `WID`, `FIELD.f[k]`; every wheat function takes which field). Reminders and the
+    welcome-back list take whichever field is ripe first.
+- **"For cuddle everyone I had in mind the farmer in the coop with the 3 chickens around him and caressing them and
+  sending love. Currently it holds 1 chicken"**: in "Cuddle everyone here" nobody is picked up now. The farmer crouches
+  in the pen, the one called comes in front of him, the others hurry over and settle down within his reach
+  (`gatherRound`, each sits: `rest`), and he strokes each in turn, turning to her, hearts over them all the while
+  (farmlife.js, the `P.all()` branch; penSpec `all`, `round`). A single cuddle from a bird's own card is as before
+  (picked up and held).
+- Tests: `bedstest`, `wheat2test` new; `milestest` (no one picked up, he turns to each), `chicktest`, `wheattest` (no
+  bubble for a wait) follow.

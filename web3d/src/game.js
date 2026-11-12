@@ -328,7 +328,7 @@ export const TEXT = {
     next_cuddle: 'a cuddle for {name}', next_worms: '{name}’s worms', next_fill: 'a feeder', next_treat: 'a treat', next_fish: 'fishing', next_geese: 'the geese',
     next_sow: 'sowing the wheat', next_harvest: 'the wheat harvest', next_honey: 'the honey', next_garden: 'the garden', next_order: 'a basket for the stall',
     // (9 Nov 2026) fishing: what to do now, on its panel; how to fish, its card
-    fish_casting: 'Casting…', garden_all: 'See all the beds', replay_bad: 'Rusty took {n} eggs last night · Watch', replay_bad1: 'Rusty took an egg last night · Watch', apple_wait: '🍎 No room for the apple tree beside the bigger pen: it’s safe in its tub and comes back by itself when the coop has room at its side (move the coop to give it some).', book_coop_wait: 'A coop is waiting: {breed}', book_see: 'See', coop_waits: '🏠 A new coop is waiting in your Book: place it whenever you like.', cuddle_all_done: 'A cuddle for everyone here ♥ +{xp} XP', sound_test: 'Test the sound', sound_test_ok: 'Two notes just played, then a farm sound and one of your hens. If you didn’t hear the notes, turn the volume up with the side buttons while the game is open.', sound_test_wait: 'The sound is waking up: tap once more.', sound_test_none: 'This device gives the game no sound.', nav_book: 'Book', nav_coops: 'Coops', nav_orders: 'Orders', nav_jobs: 'Jobs', nav_shows: 'Shows', move_snapped: 'Nudged to where it fits, with room to grow.', coop_inside: 'Look inside', eggs_pantry_f1: '🥚 1 fresh egg to your pantry · +{xp} XP', eggs_pantry_f: '🥚 {n} eggs to your pantry, {f} fresh · +{xp} XP',
+    fish_casting: 'Casting…', wheat2_title: 'Your second wheat field', wheat2_more_t: 'A second wheat field', wheat2_more: 'Add this field · {c} coins', wheat2_more_broke: 'Add this field · {c} coins (not enough yet)', wheat2_bought: '🌾 Your second wheat field is ready to sow · −{c} coins. Move it from its card if you like.', bed_more_t: 'Bed {n}: a new one', bed_more: 'Add this bed · {c} coins', bed_more_broke: 'Add this bed · {c} coins (not enough yet)', bed_more_lv: 'From level {l}, for {c} coins.', bed_bought: '🟫 Bed {n} is yours · −{c} coins. Sow it whenever you like.', bed_bought_moved: '🟫 Bed {n} is yours · −{c} coins. The garden moved a little to have room for its second row.', bed_noroom: 'No room here for a second row of beds: move the garden somewhere roomier first.', garden_all: 'See all the beds', replay_bad: 'Rusty took {n} eggs last night · Watch', replay_bad1: 'Rusty took an egg last night · Watch', apple_wait: '🍎 No room for the apple tree beside the bigger pen: it’s safe in its tub and comes back by itself when the coop has room at its side (move the coop to give it some).', book_coop_wait: 'A coop is waiting: {breed}', book_see: 'See', coop_waits: '🏠 A new coop is waiting in your Book: place it whenever you like.', cuddle_all_done: 'A cuddle for everyone here ♥ +{xp} XP', sound_test: 'Test the sound', sound_test_ok: 'Two notes just played, then a farm sound and one of your hens. If you didn’t hear the notes, turn the volume up with the side buttons while the game is open.', sound_test_wait: 'The sound is waking up: tap once more.', sound_test_none: 'This device gives the game no sound.', nav_book: 'Book', nav_coops: 'Coops', nav_orders: 'Orders', nav_jobs: 'Jobs', nav_shows: 'Shows', move_snapped: 'Nudged to where it fits, with room to grow.', coop_inside: 'Look inside', eggs_pantry_f1: '🥚 1 fresh egg to your pantry · +{xp} XP', eggs_pantry_f: '🥚 {n} eggs to your pantry, {f} fresh · +{xp} XP',
     pantry_btn: 'Pantry', pantry_title: 'Your pantry', pantry_sub: 'Everything you collect is kept here. Sell it when you like, or keep it for the villagers’ orders.', pantry_orders: '🧺 {n} kept for orders', pantry_sell: 'Sell {n} · +{c} coins', pantry_sell_kept: 'Sell anyway · +{c} coins', pantry_grow: 'Your shelves get bigger as your farm levels up.', pantry_sold: 'Sold: {n} · +{c} coins', pantry_empty: 'Empty', pantry_full: 'Full', eggs_pantry1: '🥚 1 egg to your pantry · +{xp} XP', eggs_pantry: '🥚 {n} eggs to your pantry · +{xp} XP', pantry_over: 'Pantry full: {n} sold · +{c} coins', honey_pantry1: '🍯 1 jar of honey to your pantry', honey_pantry: '🍯 {n} jars of honey to your pantry', pantry_grain: 'Your feeders use this grain first.', pantry_big_t: 'Bigger shelves', pantry_big_d: 'Half as much room again on every shelf, for good.', pantry_big_on: 'Bigger shelves: yours ✓', pantry_first: 'Your eggs wait here. Tap Sell to turn them into coins.',
     shop_btn: 'Shop',
     hist_more: 'Learn more',
@@ -684,7 +684,7 @@ export const TEXT = {
     next_list: 'Ensuite\u00a0: {list}.', next_added: 'Ajouté à la liste de {farmer} ({n} sur 3)\u00a0: {job}.', next_full: 'La liste de {farmer} est pleine\u00a0: 3 tâches en attente.', next_already: 'Déjà sur la liste de {farmer}.',
     next_cuddle: 'un câlin pour {name}', next_worms: 'les vers de {name}', next_fill: 'une mangeoire', next_treat: 'une friandise', next_fish: 'la pêche', next_geese: 'les oies',
     next_sow: 'semer le blé', next_harvest: 'la moisson', next_honey: 'le miel', next_garden: 'le potager', next_order: 'un panier pour l’étal',
-    fish_casting: 'On lance…', garden_all: 'Voir tous les carrés', replay_bad: 'Rusty a pris {n} œufs cette nuit · Voir', replay_bad1: 'Rusty a pris un œuf cette nuit · Voir', apple_wait: '🍎 Plus de place pour le pommier à côté du nouvel enclos\u00a0: il attend dans son bac et reviendra tout seul dès que le poulailler aura de la place sur le côté (déplacez-le pour lui en donner).', book_coop_wait: 'Un poulailler vous attend\u00a0: {breed}', book_see: 'Voir', coop_waits: '🏠 Un nouveau poulailler vous attend dans votre Livre\u00a0: installez-le quand vous voulez.', cuddle_all_done: 'Un câlin pour tout le monde ici ♥ +{xp} XP', sound_test: 'Tester le son', sound_test_ok: 'Deux notes viennent de jouer, puis un bruit de la ferme et l’une de vos poules. Si vous n’avez pas entendu les notes, montez le volume avec les boutons sur le côté, le jeu ouvert.', sound_test_wait: 'Le son se réveille\u00a0: touchez encore une fois.', sound_test_none: 'Cet appareil ne donne pas de son au jeu.', nav_book: 'Livre', nav_coops: 'Poulaillers', nav_orders: 'Commandes', nav_jobs: 'Tâches', nav_shows: 'Concours', move_snapped: 'Déplacé un peu, là où il a la place de s’agrandir.', coop_inside: 'Regarder à l’intérieur', eggs_pantry_f1: '🥚 1 œuf tout frais dans votre garde-manger · +{xp} XP', eggs_pantry_f: '🥚 {n} œufs dans votre garde-manger, dont {f} tout frais · +{xp} XP',
+    fish_casting: 'On lance…', wheat2_title: 'Votre deuxième champ de blé', wheat2_more_t: 'Un deuxième champ de blé', wheat2_more: 'Ajouter ce champ · {c} pièces', wheat2_more_broke: 'Ajouter ce champ · {c} pièces (pas encore assez)', wheat2_bought: '🌾 Votre deuxième champ de blé est prêt à semer · −{c} pièces. Déplacez-le depuis sa fiche si vous voulez.', bed_more_t: 'Carré {n} : un nouveau', bed_more: 'Ajouter ce carré · {c} pièces', bed_more_broke: 'Ajouter ce carré · {c} pièces (pas encore assez)', bed_more_lv: 'À partir du niveau {l}, pour {c} pièces.', bed_bought: '🟫 Le carré {n} est à vous · −{c} pièces. Semez-le quand vous voulez.', bed_bought_moved: '🟫 Le carré {n} est à vous · −{c} pièces. Le potager s’est un peu déplacé pour loger sa deuxième rangée.', bed_noroom: 'Pas la place ici pour une deuxième rangée de carrés\u00a0: déplacez d’abord le potager vers un endroit plus dégagé.', garden_all: 'Voir tous les carrés', replay_bad: 'Rusty a pris {n} œufs cette nuit · Voir', replay_bad1: 'Rusty a pris un œuf cette nuit · Voir', apple_wait: '🍎 Plus de place pour le pommier à côté du nouvel enclos\u00a0: il attend dans son bac et reviendra tout seul dès que le poulailler aura de la place sur le côté (déplacez-le pour lui en donner).', book_coop_wait: 'Un poulailler vous attend\u00a0: {breed}', book_see: 'Voir', coop_waits: '🏠 Un nouveau poulailler vous attend dans votre Livre\u00a0: installez-le quand vous voulez.', cuddle_all_done: 'Un câlin pour tout le monde ici ♥ +{xp} XP', sound_test: 'Tester le son', sound_test_ok: 'Deux notes viennent de jouer, puis un bruit de la ferme et l’une de vos poules. Si vous n’avez pas entendu les notes, montez le volume avec les boutons sur le côté, le jeu ouvert.', sound_test_wait: 'Le son se réveille\u00a0: touchez encore une fois.', sound_test_none: 'Cet appareil ne donne pas de son au jeu.', nav_book: 'Livre', nav_coops: 'Poulaillers', nav_orders: 'Commandes', nav_jobs: 'Tâches', nav_shows: 'Concours', move_snapped: 'Déplacé un peu, là où il a la place de s’agrandir.', coop_inside: 'Regarder à l’intérieur', eggs_pantry_f1: '🥚 1 œuf tout frais dans votre garde-manger · +{xp} XP', eggs_pantry_f: '🥚 {n} œufs dans votre garde-manger, dont {f} tout frais · +{xp} XP',
     pantry_btn: 'Garde-manger', pantry_title: 'Votre garde-manger', pantry_sub: 'Tout ce que vous récoltez est gardé ici. Vendez quand vous voulez, ou gardez pour les commandes du village.', pantry_orders: '🧺 {n} gardés pour les commandes', pantry_sell: 'Vendre {n} · +{c} pièces', pantry_sell_kept: 'Vendre quand même · +{c} pièces', pantry_grow: 'Vos étagères s’agrandissent quand votre ferme monte de niveau.', pantry_sold: 'Vendu\u00a0: {n} · +{c} pièces', pantry_empty: 'Vide', pantry_full: 'Plein', eggs_pantry1: '🥚 1 œuf dans votre garde-manger · +{xp} XP', eggs_pantry: '🥚 {n} œufs dans votre garde-manger · +{xp} XP', pantry_over: 'Garde-manger plein\u00a0: {n} vendus · +{c} pièces', honey_pantry1: '🍯 1 pot de miel dans votre garde-manger', honey_pantry: '🍯 {n} pots de miel dans votre garde-manger', pantry_grain: 'Vos mangeoires utilisent d’abord ce grain.', pantry_big_t: 'Étagères plus grandes', pantry_big_d: 'Moitié plus de place sur chaque étagère, pour toujours.', pantry_big_on: 'Étagères plus grandes\u00a0: à vous ✓', pantry_first: 'Vos œufs attendent ici. Touchez Vendre pour les changer en pièces.',
     shop_btn: 'Boutique',
     hist_more: 'En savoir plus',
@@ -1015,7 +1015,9 @@ const geeseLevel = n => GEESE_TRUST.at.filter(k => n >= k).length - 1;
 // ---- the wheat field (release 1 step 9e; the 2D game's, Audrey's own idea; Audrey, 25 Oct: "On your land from the
 // start"): sown for 20 coins, ripe 4 hours later; harvested, grain for the feeders (used before coins: a unit of grain is a
 // unit of feed) and XP. Starting values (the balance is step 11)
-export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120 };
+// A second field (12 Nov 2026, Audrey's choice "Buy more, by level"): from level 12, for 1,200 coins (the level and the
+// coins both); sown, grown and harvested on its own, like the first. Saved as wheat2 (not there: not bought)
+export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120, second: { level: 12, price: 1200 } };
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
@@ -1078,7 +1080,12 @@ export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 
 // and pumpkins give every bird there a little experience too) and what the villagers ask for in their orders (from the
 // basket when the order goes, as the grain from the store). Saved: where the garden is, each bed's crop and when it's
 // ripe, the basket; a coop's last treat
-export const GARDEN = { level: 4, beds: 3, max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
+// More beds (12 Nov 2026, Audrey: "we might want to think about extending them and the [wheat] field with levels or money.
+// Needs to be relevant as the game cannot become too easy either"; her choice: "Buy more, by level"): a fourth bed from
+// level 9 for 400 coins, a fifth from level 14 for 900, a sixth from level 20 for 2,000 (the level and the coins both), in a
+// second row behind the first three. Saved: simply how many beds the garden has (never more than the level allows)
+export const GARDEN = { level: 4, beds: 3, more: [{ level: 9, price: 400 }, { level: 14, price: 900 }, { level: 20, price: 2000 }], max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
+export const bedsMost = level => GARDEN.beds + GARDEN.more.filter(m => level >= m.level).length;
 export const CROPS = {
   carrot: { grow: 1 * 3600e3, seed: 5, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥕' },
   straw: { grow: 3 * 3600e3, seed: 10, n: 6, xp: 2, treat: 3, eggs: 1, exp: 8, e: '🍓' },
@@ -1425,6 +1432,9 @@ export function checkFarm(d, now = Date.now()) {
   out.dresses = dresses;                             // (the seasonal dresses owned: after the decorations, as a new farm has them)
   const wh = d.wheat && typeof d.wheat === 'object' ? d.wheat : {};
   out.wheat = { x: spotNum(wh.x), z: spotNum(wh.z), deg: [0, 45, 90, 135].includes(wh.deg) ? wh.deg : 45, ripe: Number.isFinite(wh.ripe) && wh.ripe > 0 ? Math.min(wh.ripe, now + WHEAT.grow) : 0 };
+  // (the second field, bought: only from its level; checked as the first)
+  const wh2 = d.wheat2 && typeof d.wheat2 === 'object' ? d.wheat2 : null;
+  if (wh2 && levelOf(out.xp) >= WHEAT.second.level) out.wheat2 = { x: spotNum(wh2.x), z: spotNum(wh2.z), deg: [0, 90].includes(wh2.deg) ? wh2.deg : 0, ripe: Number.isFinite(wh2.ripe) && wh2.ripe > 0 ? Math.min(wh2.ripe, now + WHEAT.grow) : 0 };
   out.grain = Math.round(num(d.grain, 0, shelfSize('grain', levelOf(out.xp), d.shelves === true), 0) * 100) / 100;
   // the pantry's eggs and honey (whole numbers, no more than a shelf can ever hold; the eggs' worth no more than eggs can fetch), the bigger shelves bought
   { const pn = d.pantry && typeof d.pantry === 'object' ? d.pantry : {}, eggs = int(pn.eggs, 0, shelfSize('eggs', levelOf(out.xp), d.shelves === true), 0);
@@ -1544,7 +1554,8 @@ export function checkFarm(d, now = Date.now()) {
   // its crop takes), the basket's vegetables (whole, up to its most)
   const vgd = d.garden && typeof d.garden === 'object' ? d.garden : null;
   if (vgd && L >= GARDEN.level) {
-    const gd = vgd, beds = Array.from({ length: GARDEN.beds }, (_, i) => { const b = Array.isArray(gd.beds) && gd.beds[i] && typeof gd.beds[i] === 'object' ? gd.beds[i] : null;
+    const gd = vgd, nb = int(Array.isArray(gd.beds) ? gd.beds.length : GARDEN.beds, GARDEN.beds, bedsMost(L), GARDEN.beds), beds = Array.from({ length: nb }, (_, i) =>      // (as many beds as the save has, never more than its level allows)
+      { const b = Array.isArray(gd.beds) && gd.beds[i] && typeof gd.beds[i] === 'object' ? gd.beds[i] : null;
       return b && Object.hasOwn(CROPS, b.crop) && Number.isFinite(b.ripe) && b.ripe > 0 ? { crop: b.crop, ripe: int(b.ripe, 1, now + CROPS[b.crop].grow + TZ_SLACK, 1) } : { crop: null, ripe: 0 }; });
     const vg = gd.veg && typeof gd.veg === 'object' ? gd.veg : {}, veg = {};
     for (const k of CROP_IDS) veg[k] = int(vg[k], 0, shelfSize(k, levelOf(out.xp), d.shelves === true), 0);
@@ -1923,28 +1934,37 @@ export class Game {
   foxSeen() { const l = this.foxLast(); if (l && !l.seen) { l.seen = true; this.save(); } }
   foxWatched() { const l = this.foxLast(); if (l && !l.watched) { l.watched = true; l.seen = true; this.save(); } }
   // ---- the wheat field: how far it's grown, sowing it, harvesting it, where it is
-  wheat() { return this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
-  wheatStage(now = Date.now()) {
-    const w = this.wheat(); if (!w.ripe) return 'soil';
+  // (k: 0 the first field, 1 the second, once bought)
+  wheat(k = 0) { return k ? this.data.wheat2 || null : this.data.wheat || (this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }); }
+  wheatFields() { return this.data.wheat2 ? 2 : 1; }
+  // the second field: what it takes (null once it's yours); bought: its coins paid, bare soil, the farm finds it a place
+  wheatNext() { const m = WHEAT.second; return this.data.wheat2 ? null : { level: m.level, price: m.price, locked: this.level < m.level, broke: this.data.coins < m.price, can: this.level >= m.level && this.data.coins >= m.price }; }
+  buyWheat(at) {
+    const m = this.wheatNext(), X = at && spotNum(at.x), Z = at && spotNum(at.z); if (!m || !m.can || X === null || Z === null || X === undefined || Z === undefined) return null;
+    this.data.coins -= m.price; this.data.wheat2 = { x: X, z: Z, deg: at.deg === 90 ? 90 : 0, ripe: 0 }; this.save();
+    return { price: m.price };
+  }
+  wheatStage(now = Date.now(), k = 0) {
+    const w = this.wheat(k); if (!w) return 'soil'; if (!w.ripe) return 'soil';
     const u = 1 - (w.ripe - now) / WHEAT.grow;
     return u >= 1 ? 'ripe' : u >= 0.45 ? 'growing' : u >= 0.1 ? 'sprouts' : 'sown';
   }
-  wheatLeft(now = Date.now()) { const w = this.wheat(); return w.ripe ? Math.max(0, w.ripe - now) : 0; }
-  sowWheat(now = Date.now()) {
-    const w = this.wheat(); if (w.ripe) return null;
+  wheatLeft(now = Date.now(), k = 0) { const w = this.wheat(k); return w && w.ripe ? Math.max(0, w.ripe - now) : 0; }
+  sowWheat(now = Date.now(), k = 0) {
+    const w = this.wheat(k); if (!w || w.ripe) return null;
     if (this.data.coins < WHEAT.sow) return { broke: true };
     this.data.coins -= WHEAT.sow; w.ripe = now + WHEAT.grow; this.save();
     return { cost: WHEAT.sow };
   }
-  harvestWheat(now = Date.now()) {
-    const w = this.wheat(); if (!w.ripe || now < w.ripe) return null;
+  harvestWheat(now = Date.now(), k = 0) {
+    const w = this.wheat(k); if (!w || !w.ripe || now < w.ripe) return null;
     const g = this.data.grain || 0, add = Math.max(0, Math.min(WHEAT.grain, this.shelf('grain') - g));
     w.ripe = 0; this.data.grain = Math.round((g + add) * 100) / 100; this.data.xp += WHEAT.xp; this.tallyAdd('wheat', 1, false); this.save();
     return { grain: Math.round(add), xp: WHEAT.xp, store: this.data.grain };      // (a whole number to say: "+4.63 grain" with the store nearly full read oddly)
   }
-  placeWheat(at, clear = []) {
+  placeWheat(at, clear = [], k = 0) {
     const X = spotNum(at.x), Z = spotNum(at.z); if (X === null || Z === null) return false;
-    const w = this.wheat(); w.x = X; w.z = Z; w.deg = [0, 45, 90, 135].includes(at.deg) ? at.deg : 0; this.cleared(clear);      // (0 or 90 since 6 Nov 2026; 45 or 135 before)
+    const w = this.wheat(k); if (!w) return false; w.x = X; w.z = Z; w.deg = [0, 45, 90, 135].includes(at.deg) ? at.deg : 0; this.cleared(clear);      // (0 or 90 since 6 Nov 2026; 45 or 135 before)
     this.save(); return true;
   }
   placeGarden(at, clear = []) {      // (the vegetable garden, moved: as the wheat field, 0 or 90)
@@ -2110,6 +2130,14 @@ export class Game {
     B[crop] = (B[crop] || 0) + n; b.crop = null; b.ripe = 0; this.data.xp += C.xp; this.tallyAdd('veg', n, false); this.save();
     return { crop, n, full: n < C.n, xp: C.xp };
   }
+  // a bed more (GARDEN.more): the next one (its level, its price, whether it can be bought now: the level and the coins), null
+  // with all six; bought: its coins paid, an empty bed added
+  bedNext() { const G = this.gardenOpen() ? this.garden() : null, m = G ? GARDEN.more[G.beds.length - GARDEN.beds] : null; return m ? { n: G.beds.length + 1, level: m.level, price: m.price, locked: this.level < m.level, broke: this.data.coins < m.price, can: this.level >= m.level && this.data.coins >= m.price } : null; }
+  buyBed() {
+    const m = this.bedNext(); if (!m || !m.can) return null;
+    this.data.coins -= m.price; this.garden().beds.push({ crop: null, ripe: 0 }); this.save();
+    return { n: m.n, price: m.price };
+  }
   bedsRipe(now = Date.now()) { return this.gardenOpen() && this.data.garden ? this.data.garden.beds.filter((_, i) => this.bedStage(i, now) === 'ripe').length : 0; }
   vegCount() { const B = this.data.garden ? this.data.garden.veg : null; return B ? CROP_IDS.reduce((a, k) => a + (B[k] || 0), 0) : 0; }
   treatToday(c, now = Date.now()) { return !!(c && c.treat && dayKey(c.treat.t) === dayKey(now)); }
@@ -2261,7 +2289,8 @@ export class Game {
     const h = this.honeyAt(now); if (h) items.push({ k: 'honey', n: h });
     const fe = d.coops.reduce((a, c) => a + this.feathersAt(c, now), 0); if (fe) items.push({ k: 'feathers', n: fe });
     const ae = d.coops.filter(c => c.ap && c.ap.egg).length; if (ae) items.push({ k: 'apple_egg', n: ae });
-    if (this.wheatStage(now) === 'ripe') items.push({ k: 'wheat' }); else if (this.wheat().ripe) items.push({ k: 'wheat_grow', ms: this.wheatLeft(now) });
+    { const st = [0, 1].filter(k => this.wheat(k)).map(k => [this.wheatStage(now, k), this.wheatLeft(now, k)]), grow = st.filter(q => q[0] !== 'ripe' && q[0] !== 'soil').map(q => q[1]);      // (either field ripe; else the next one's time)
+      if (st.some(q => q[0] === 'ripe')) items.push({ k: 'wheat' }); else if (grow.length) items.push({ k: 'wheat_grow', ms: Math.min(...grow) }); }
     const gr = this.bedsRipe(now); if (gr) items.push({ k: 'garden', n: gr });      // (the vegetable garden: beds ripe)
     for (const c of d.coops) { const l = this.feedLeft(c, now); if (l <= 0) items.push({ k: 'feed', coop: this.coopName(c) }); else if (l < 0.25) items.push({ k: 'feed_low', coop: this.coopName(c) }); }
     if (this.unseenShows().length) items.push({ k: 'show' });
@@ -2426,7 +2455,7 @@ export class Game {
     this.data.shows = { in: [], res: [], seen: '' };
     this.data.decor = [];                              // (in the order the save check gives: a reload the same farm)
     this.data.dresses = [];
-    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; this.data.grain = 0; this.data.pantry = { eggs: 0, val: 0, honey: 0 }; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
+    this.data.wheat = { x: null, z: null, deg: 45, ripe: 0 }; delete this.data.wheat2; this.data.grain = 0; this.data.pantry = { eggs: 0, val: 0, honey: 0 }; this.data.lastSeen = now; this.data.guide = { step: 0, done: false };
     this.edited = false;
     this.save();
     return this.data;

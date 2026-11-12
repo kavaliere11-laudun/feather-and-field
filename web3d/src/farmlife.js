@@ -371,6 +371,14 @@ export class FarmLife {
           // (on his other side, where the stroke runs across his back rather than along it: a gentler, smaller one, the hand
           // kept on his back)
           TK.act('stroke', 4.8, (W, u) => { W.pose = 'petTall'; W.face = 'cuddle'; W.look = [0, -0.35]; W.hug = u; W.backK = -4; W.hugK = near && near.side < 0 ? 0.3 : 1; if (u > heart) { heart += 0.55; P.heart(hen); } }),
+        ]) : ready && ready() && P.all && P.all() ? TK.seq('cuddling', [      // ("Cuddle everyone here", 12 Nov 2026, Audrey: "I had in mind the farmer in the coop with the 3 chickens around him and caressing them and sending love. Currently it holds 1 chicken": no one picked up: he stays crouched among them and strokes each in turn, the one in front of him first, hearts over them all the while)
+          TK.say('cuddle'),
+          TK.act('stroke', 2.4, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.look = [0, -0.4]; if (u > heart) { heart += 0.3; P.heart(hen); } }),
+          ...[0, 1, 2, 3, 4].flatMap(i => [
+            { name: 'turn', t: 0, h: null, run(Lf, dt) { this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'cuddle'; if (this.h === null) { const R = P.round(); this.h = i < R.length ? R[i] : false; } return this.h === false || Lf.turnTo(this.h, dt, 3) < 0.06 || this.t > 2; } },
+            { name: 'stroke', t: 0, n: 0.2, run(Lf, dt) { if (i >= P.round().length) return true; this.t += dt; const W = Lf.want; W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.look = [0, -0.4]; if (this.t > this.n) { this.n += 0.7; P.heart(hen); } return this.t > 2.1; } }]),
+          TK.face(P.toHen),
+          TK.act('stroke', 1.6, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.look = [0, -0.4]; if (u > 0.5 && heart < 9) { heart = 9; P.heart(hen); } }),
         ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
           TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),

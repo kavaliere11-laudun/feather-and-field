@@ -4276,6 +4276,66 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.wheat2_title",
+  "en": "Your second wheat field",
+  "fr": "Votre deuxième champ de blé"
+ },
+ {
+  "id": "text.wheat2_more_t",
+  "en": "A second wheat field",
+  "fr": "Un deuxième champ de blé"
+ },
+ {
+  "id": "text.wheat2_more",
+  "en": "Add this field · {c} coins",
+  "fr": "Ajouter ce champ · {c} pièces"
+ },
+ {
+  "id": "text.wheat2_more_broke",
+  "en": "Add this field · {c} coins (not enough yet)",
+  "fr": "Ajouter ce champ · {c} pièces (pas encore assez)"
+ },
+ {
+  "id": "text.wheat2_bought",
+  "en": "🌾 Your second wheat field is ready to sow · −{c} coins. Move it from its card if you like.",
+  "fr": "🌾 Votre deuxième champ de blé est prêt à semer · −{c} pièces. Déplacez-le depuis sa fiche si vous voulez."
+ },
+ {
+  "id": "text.bed_more_t",
+  "en": "Bed {n}: a new one",
+  "fr": "Carré {n} : un nouveau"
+ },
+ {
+  "id": "text.bed_more",
+  "en": "Add this bed · {c} coins",
+  "fr": "Ajouter ce carré · {c} pièces"
+ },
+ {
+  "id": "text.bed_more_broke",
+  "en": "Add this bed · {c} coins (not enough yet)",
+  "fr": "Ajouter ce carré · {c} pièces (pas encore assez)"
+ },
+ {
+  "id": "text.bed_more_lv",
+  "en": "From level {l}, for {c} coins.",
+  "fr": "À partir du niveau {l}, pour {c} pièces."
+ },
+ {
+  "id": "text.bed_bought",
+  "en": "🟫 Bed {n} is yours · −{c} coins. Sow it whenever you like.",
+  "fr": "🟫 Le carré {n} est à vous · −{c} pièces. Semez-le quand vous voulez."
+ },
+ {
+  "id": "text.bed_bought_moved",
+  "en": "🟫 Bed {n} is yours · −{c} coins. The garden moved a little to have room for its second row.",
+  "fr": "🟫 Le carré {n} est à vous · −{c} pièces. Le potager s’est un peu déplacé pour loger sa deuxième rangée."
+ },
+ {
+  "id": "text.bed_noroom",
+  "en": "No room here for a second row of beds: move the garden somewhere roomier first.",
+  "fr": "Pas la place ici pour une deuxième rangée de carrés : déplacez d’abord le potager vers un endroit plus dégagé."
+ },
+ {
   "id": "text.garden_all",
   "en": "See all the beds",
   "fr": "Voir tous les carrés"
