@@ -82,8 +82,8 @@ await p.evaluate(() => { window.__farm.gameUI().close(); document.querySelector(
 await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(fr => { const sel = document.querySelector('.gsheet .gselect'); if (sel) { sel.value = fr ? 'en' : 'fr'; sel.dispatchEvent(new Event('change')); } else [...document.querySelectorAll('.gsheet .gchip')].find(c => c.textContent === (fr ? 'English' : 'Français')).click(); }, fr)]);
 await ready();
 const other = await p.evaluate(() => { const g = window.__farm.game(); document.querySelector('.gbar .ggear').click(); return { lang: g.lang, html: document.documentElement.lang, title: document.querySelector('.gsheet h2').textContent }; });
-await p.evaluate(() => document.querySelector('.gsheet .gbtn.galt').click());
-await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(() => document.querySelector('.gsheet .gbtn.galt').click())]);
+await p.evaluate(() => document.querySelector('.gsheet .gbtn.galt:not(.gsound-test)').click());
+await Promise.all([p.waitForNavigation({ waitUntil: 'domcontentloaded' }), p.evaluate(() => document.querySelector('.gsheet .gbtn.galt:not(.gsound-test)').click())]);
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 const fresh = await p.evaluate(() => ({ save: localStorage.getItem('ff3d.farm'), modal: document.querySelector('.gsheet').classList.contains('modal') }));
 const d = farm.d, roo = d.birds.filter(x => x.sex === 'r'), hens = d.birds.filter(x => x.sex === 'h');
