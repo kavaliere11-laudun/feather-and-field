@@ -36,7 +36,7 @@ import { Account } from './account.js';
 import { Notes } from './notify.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
-import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS } from './game.js';
+import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
@@ -2363,7 +2363,7 @@ function buildGeese() {
     // screen, however far out the view; and said at once, with where its reward waits)
     if (!GAME_MODE || !game.data || document.visibilityState === 'hidden' || gameUI.isOpen || inside.open || SHOWDAY) return;
     const v = new THREE.Vector3(x, 0.05, z).project(camera); if (Math.abs(v.x) > 1 || Math.abs(v.y) > 1) return;
-    if (!game.tallyOf('love')) { game.tallyAdd('love'); MILES_NOTED = game.milesReady(); gameUI.refresh(); hint(game.t('mile_love_seen')); wake(1500); }
+    if (!game.tallyOf('love')) { game.tallyAdd('love'); MILES_NOTED = game.milesReady(); gameUI.refresh(); hint(game.t('mile_love_seen', { c: game.milePay('love', 0).coins.toLocaleString(game.locale()) })); wake(1500); }
   }, near: () => {
     const out = [];
     if (geeseFlock) for (const g of geeseFlock.geese) out.push([g.pos.x, g.pos.z]);
@@ -5171,7 +5171,7 @@ function gameTick(now = Date.now(), force = false) {
   if (game.foxTick(now, tonight)) { for (const p of gamePlots()) { p.gc = game.coop(p.gc.id) || p.gc; syncNest(p); } gameUI.refresh(); }      // (the nights gone by: what Rusty took)
   // (a milestone reached: said, with where to collect it: 12 Nov 2026, Audrey, of the secret one won silently: "receive no
   // notification nothing had to look for it"; the secret one has its own word, at the kiss)
-  { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) hintNext(game.t(mr > 1 ? 'mile_ready_n' : 'mile_ready', { n: mr })); } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
+  { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) { const id = MILE_IDS.find(k => game.mileReached(k) > game.mileClaimed(k)), P = id ? game.milePay(id, game.mileClaimed(id)) : null; hintNext(mr > 1 || !P ? game.t('mile_ready_n', { n: mr }) : game.t('mile_ready', { name: game.t('mile_' + id), c: P.coins.toLocaleString(game.locale()) })); } } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
   { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);

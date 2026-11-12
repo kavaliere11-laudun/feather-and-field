@@ -1397,7 +1397,7 @@
  "text.catch_pantry1": "🐟 1 pesce nella tua dispensa",
  "text.catch_pantry": "🐟 {n} pesci nella tua dispensa",
  "text.dock_pantry": "🐟 Pesci in dispensa: {n} su {max}",
- "text.mile_love_seen": "💞 Li hai visti! Un traguardo segreto è tuo: ritiralo nel tuo Libro.",
- "text.mile_ready": "🏅 Un traguardo raggiunto! Ritiralo nel tuo Libro.",
- "text.mile_ready_n": "🏅 {n} traguardi raggiunti! Ritirali nel tuo Libro."
+ "text.mile_love_seen": "💞 Li hai visti! Un traguardo segreto: +{c} monete e un ricordo ti aspettano nel tuo Libro.",
+ "text.mile_ready": "🏅 {name}: traguardo raggiunto! +{c} monete ti aspettano nel tuo Libro.",
+ "text.mile_ready_n": "🏅 {n} traguardi raggiunti! Le ricompense ti aspettano nel tuo Libro."
 }
