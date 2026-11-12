@@ -4955,7 +4955,7 @@ function jobGate(kind, key, name, run) {
   return true;
 }
 function tickJobs() {
-  if (CATCH_DUE && !gameUI.isOpen && !SHOWDAY && !inside.open) { CATCH_DUE = false; if (game.fishNet().length) catchCard(); }
+  if (CATCH_DUE || (game.data.fish && game.data.fish.net && !FSEQ && !(FISHING && FISHING.on))) { CATCH_DUE = false; stowCatch(); }      // (a trip over: the catch to the pantry, said; no card, 12 Nov 2026)
   if (!JOBQ.length) return;
   if (farmerAsleep()) { JOBQ.length = 0; return; }
   const j = farmerJob();
@@ -6276,6 +6276,10 @@ function startGeeseVisit(stage) {
     farmer: () => farmLife.pos, lead: () => G.pos,
     close: () => Math.min(...F.geese.map(g => Math.hypot(g.pos.x - farmLife.pos.x, g.pos.z - farmLife.pos.z))),
     ate: () => !!V.eaten, ready: () => !!V.settled,
+    // (a place by the lead goose on the farmer's side, within his hand's reach, that he can stand on: not in the water)
+    nearSpot() { const g = G.pos, f = farmLife.pos, l = Math.hypot(f.x - g.x, f.z - g.z) || 1, ux = (f.x - g.x) / l, uz = (f.z - g.z) / l, nv = navGrid();
+      for (const r of [0.95, 1.15, 1.4]) for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6]) { const c = Math.cos(da), sn = Math.sin(da), x = g.x + (ux * c - uz * sn) * r, z = g.z + (ux * sn + uz * c) * r; if (nv.freeAt(x, z) && F.pondAt(x, z)[0] >= 0.5) return [x, z]; }
+      return null; },
     enter() { V.inside = true; if (gate) gate.want = 1; wake(1000); }, leave() { V.inside = false; if (gate) gate.want = 0; wake(1000); },
     hens: () => [], at() {},
     react(k) { V.phase = k; if (F.visitV !== V) F.visit(V); wake(1500); },
@@ -6421,12 +6425,18 @@ function dockCard(water = 'pond') {
   const open = game.fishOpen(water), st = FSEQ || (FISHING && FISHING.on) ? 'on' : farmerAsleep() ? 'night' : 'ok';
   gameUI.dockCard({ water, open, worms: open ? game.worms() : 0, state: st }, {
     go: () => { const bt = farmerBusyText(), r = startFishing(water); gameUI.close(); if (r === 'next') return; if (r === 'busy' && bt) { hint(bt); return; } hint(game.t(r === 'ok' ? (water === 'river' ? 'fish_going_river' : 'fish_going') : r === 'night' ? 'fish_night' : r === 'worms' ? 'fish_noworms' : 'fish_busy', { farmer: farmerName() }, game.data.farmer.look === 'f')); },
-    net: () => catchCard(),
+    net: () => { stowCatch(); pantrySheet(); },
     buy: () => { const r = game.buyWorms(); if (r) { hint(game.t('fish_tin_bought', { n: r.n, c: r.price })); gameUI.refresh(); if (FISHING && FISHING.on) FISHING.refreshBar(); dockCard(water); } } });
 }
 const riverCard = () => dockCard('river');
 // the keep net (9 Nov 2026, Audrey's choice "Keep net, sell at the end"): its card when a trip ends with fish in it, and
 // from the dock's card; Sell: those not kept sold, the kept into the fish box (game.js sellCatch)
+function stowCatch() {
+  const r = game.stowCatch(); if (!r) return null;
+  hint((r.kept ? game.t(r.kept === 1 ? 'catch_pantry1' : 'catch_pantry', { n: r.kept }) : '') + (r.sold ? (r.kept ? ' · ' : '') + game.t('pantry_over', { n: r.sold, c: r.coins }) : ''));
+  gameUI.refresh(); if (r.sold) gameUI.bumpCoins(); wake(600);
+  return r;
+}
 function catchCard() {
   holdBird(null); henOff();
   gameUI.catchSheet({
@@ -8830,26 +8840,27 @@ function ordersSheet() {
   gameUI.ordersSheet({ deliver: id => deliverOrder(id), decline: id => { const r = game.declineOrder(id); if (!r) return; hint(r.coins ? game.t('ord_declined', { c: r.coins }) : game.t('ord_declined0')); gameUI.refresh(); if (r.coins) gameUI.bumpCoins(); ordersSheet(); } });
 }
 function deliverOrder(id) {
+  // (12 Nov 2026, Audrey: "When I complete an order the popup should stay on as I probably can complete another one": paid at
+  // once, the card stays with the orders left (it shuts with none left); the farmer still takes the basket to the stall, to see)
   const o = game.data.orders && game.data.orders.list.find(x => x.id === id); if (!o || !game.orderReady(o)) return;
-  gameUI.close();
-  const pay = () => {
-    const r = game.deliverOrder(id); ORDER_RUN = null; if (!r) return;
-    hint(game.t('ord_done', { name: game.villagerIn(r.who), c: r.coins, x: r.xp }) + (r.surprise === 'worms' && r.worms ? ' · ' + game.t('ord_sp_worms', { n: r.worms }) : r.surprise === 'grain' && r.grain ? ' · ' + game.t('ord_sp_grain', { n: r.grain }) : r.surprise === 'coins' ? ' · ' + game.t('ord_sp_coins', { c: r.extra }) : ''));
-    gameUI.refresh(); gameUI.bumpCoins(); wake(1500);
-  };
+  const r = game.deliverOrder(id); if (!r) return;
+  const left = game.data.orders.list.length;
+  if (left) ordersSheet(); else gameUI.close();
+  hint(game.t('ord_done', { name: game.villagerIn(r.who), c: r.coins, x: r.xp }) + (r.surprise === 'worms' && r.worms ? ' · ' + game.t('ord_sp_worms', { n: r.worms }) : r.surprise === 'grain' && r.grain ? ' · ' + game.t('ord_sp_grain', { n: r.grain }) : r.surprise === 'coins' ? ' · ' + game.t('ord_sp_coins', { c: r.extra }) : ''));
+  gameUI.refresh(); gameUI.bumpCoins(); wake(1500);
+  if (ORDER_RUN) return;      // (already on his way with a basket: this one goes with it)
   const S = stallSpot(), nav = navGrid(), spot = S && nav.nearestIn(farmReach(), S.front.x, S.front.z, 1.2);
   const seq = spot && farmLife && !farmLife.pending && farmLife.workAt(spot, Math.atan2(S.mid[0] - spot[0], S.mid[1] - spot[1]), [
     ['give', 1.4, (W, u) => { W.pose = u < 0.6 ? 'feed' : 'turn'; W.face = 'happy'; W.look = [0, -0.25]; W.props.pail = u < 0.6; }], 'done',
-    ['wave', 1.2, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], pay, { pail: true, say: 'order', job: { kind: 'order' } });
-  if (seq) { ORDER_RUN = { id, until: performance.now() + 90e3 }; hint(game.t('ord_on_way', { farmer: farmerName() })); }
-  else pay();
+    ['wave', 1.2, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], () => { ORDER_RUN = null; }, { pail: true, say: 'order', job: { kind: 'order' } });
+  if (seq) ORDER_RUN = { id, until: performance.now() + 90e3 };
 }
 // each second: new orders as they come (a word for them), a delivery that never got there paid all the same
 function tickOrders() {
   if (!GAME_MODE || !game.data || !game.ordersOpen()) return;
   const before = new Set((game.data.orders ? game.data.orders.list : []).map(o => o.id)), n = game.orderTick();
   if (n) { const fresh = game.data.orders.list.filter(o => !before.has(o.id)); if (fresh.length && !gameUI.isOpen) hintNext(fresh.length > 1 ? game.t('ord_new2', { n: fresh.length }) : game.t('ord_new', { name: game.villagerIn(fresh[0].who) })); gameUI.refresh(); }
-  if (ORDER_RUN && performance.now() > ORDER_RUN.until) { const id = ORDER_RUN.id; ORDER_RUN = null; const r = game.deliverOrder(id); if (r) { gameUI.refresh(); gameUI.bumpCoins(); } }
+  if (ORDER_RUN && performance.now() > ORDER_RUN.until) ORDER_RUN = null;
 }
 let saleBub = null;
 function saleBubble() {
@@ -9628,7 +9639,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
-  catchCard, fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
+  catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,
   pointersDown: () => pointers.size, wantQuality: n => { wantQ = n; },
   foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },

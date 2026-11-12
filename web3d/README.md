@@ -5061,4 +5061,33 @@ close). Test: `movealwaystest` (EN/FR).
   elsewhere; if as `el`, decoding is the fault. `soundtest` follows.
 - **"What is this used for now ?"** (the village's fenced paddock with its shelter and bales, the old vegetable patch):
   only scenery; her choice: "Keep for a future animal" (roadmap).
+- **The farm's sounds in the app, found** (19:00, her screenshot of the sound test's line: "running · 48k · farm 0/41 ·
+  beds 0 · hens 0/7 · … peacall3: 0"; "The music is there but not the chickens sounds"): inside the app Capacitor
+  answers for media files (`.mp3`) with a plain response that has no HTTP status (WebViewAssetHandler.swift: a
+  `URLResponse` for media extensions), so `fetch` sees status 0 and `ok` false though the bytes are all there; sound.js
+  refused every recording for it (`throw new Error(r.status)`: the "0" in her line). The music was heard only because
+  the phone's own player fetched it. Now `bytes(url)` takes a status of 0, and with no bytes from fetch asks again
+  with XMLHttpRequest. The same would have sent the new decoded music back to the `<audio>` player (and its lock-screen
+  card) in the app: fixed with it. On the web the sounds always loaded.
+
+## Her notes of 12 Nov 2026, 19:06 to 19:10: fish straight to the Pantry, the orders card stays, the geese visit
+- **"I have been fishing and closed the basket without making any decision and the fishes didn't move from the basket I
+  thought I had lost them. Please if no decision is made they go to storage. I also find the keep sale logic a bit odd …
+  too many clicks"**; her choice "Straight to the Pantry": at the end of a trip the catch goes to the pantry's fish
+  shelf by itself, like the eggs (game.js `stowCatch`, main.js `stowCatch`): no keep-net card; fish the shelf has no
+  room for are sold, and said ("Pantry full: 2 sold"). A net left in an older save is put away the same way when the
+  farm opens. The dock's card button is "Fish in your pantry: n of max" and opens the Pantry. The old card
+  (`catchSheet`, `sellCatch`) is still in the code, unused by the game.
+- **"And if I click sell I am not too sure what I am selling"**: the Pantry's fish row names what is on the shelf
+  ("Roach ×3, Perch"), beside "Sell 4 · +88 coins".
+- **"When I complete an order the popup should stay on as I probably can complete another one"**: Deliver pays at once
+  and the orders card stays with the orders left (it shuts when none is left); the farmer still carries the basket to
+  the stall, for show (main.js `deliverOrder`; `ORDER_RUN` is only his walk now).
+- **"Visit to the geese is made from too far"; "My farmer bugged after visiting the geese and is not moving anymore"**
+  (friends, no fence, the geese at the water's edge, the farmer on the lane): he used to wait up to 45 s, then 12 more,
+  for geese who weren't coming, then wave from where he stood. Now he waits 7 s, then walks to them himself, to a spot
+  within reach on his side of the lead goose (main.js `V.nearSpot`, farmlife.js `closer`), crouches and strokes; and he
+  leaves by a found path with a time limit rather than a straight line. Why the geese didn't come in her case isn't
+  found (not reproduced here); if he stands still again after a visit, that is a separate fault to look for.
+- Tests: `nettest`, `ordertest` follow.
 

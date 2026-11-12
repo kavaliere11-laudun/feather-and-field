@@ -64,6 +64,14 @@ export function bedMix(h) {
   return m;
 }
 const groupOf = n => n.replace(/\d+$/, '');
+// a sound file's bytes. Inside the phone app a file of the app's own can answer with status 0 though it's all there
+// (12 Nov 2026, Audrey's sound test: "farm 0/41 · hens 0/7 · peacall3: 0": every recording refused for its status,
+// the music heard only because the phone's own player fetched it), and some answer fetch with nothing: so a status of 0
+// is taken, and with no bytes from fetch the file is asked for the older way
+function bytes(url) {
+  const xhr = () => new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('GET', url); x.responseType = 'arraybuffer'; x.onload = () => (x.response && x.response.byteLength ? res(x.response) : rej(new Error('empty ' + x.status))); x.onerror = () => rej(new Error('xhr ' + x.status)); x.send(); });
+  return fetch(url).then(r => { if (!r.ok && r.status !== 0) throw new Error('status ' + r.status); return r.arrayBuffer(); }).then(ab => { if (!ab || !ab.byteLength) throw new Error('no bytes'); return ab; }).catch(() => xhr());
+}
 
 export class Sound {
   // o.base: where the files are (e.g. 'audio/'); o.hour(): the farm's hour; o.music(), o.sounds(): whether the player wants
@@ -122,7 +130,7 @@ export class Sound {
     if (this.mus.bufs[i]) return Promise.resolve(this.mus.bufs[i]);
     let slow = null; try { if (window.OfflineAudioContext) slow = new OfflineAudioContext(2, 1, 32000); } catch (e) { /* (at the page's own rate) */ }
     const decode = (ab, c) => new Promise((res, rej) => { const p = c.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
-    return fetch(this.src(i)).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    return bytes(this.src(i))
       .then(ab => slow ? decode(ab.slice(0), slow).catch(() => decode(ab, this.ctx)) : decode(ab, this.ctx))
       .then(b => { this.mus.bufs = [null, null]; this.mus.bufs[i] = b; return b; });      // (one track kept at a time)
   }
@@ -179,7 +187,7 @@ export class Sound {
     if (this.hen.loading) return; this.hen.loading = true;
     const decode = ab => new Promise((res, rej) => { const p = this.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });      // (older Safari: callbacks only)
     for (let i = 0; i < HENS.files; i++) {
-      fetch((this.o.base || 'audio/') + 'hens/hen' + (i + 1) + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      bytes((this.o.base || 'audio/') + 'hens/hen' + (i + 1) + '.mp3')
         .then(decode).then(b => { this.hen.bufs[i] = b; }).catch(e => this.note('hen ' + (i + 1) + ': ' + (e && e.message)));
     }
   }
@@ -222,7 +230,7 @@ export class Sound {
     fetch(base + 'farm.json').then(r => r.json()).then(meta => {
       F.meta = meta;
       for (const [name, m] of Object.entries(meta)) {
-        fetch(base + name + '.mp3').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+        bytes(base + name + '.mp3')
           .then(ab => m.bed && slow ? decode(ab.slice(0), slow).catch(() => decode(ab, this.ctx)) : decode(ab, this.ctx))      // (a copy for the slower decoder: decoding empties the bytes it's given, and the fallback needs them)
           .then(b => { if (m.bed) F.beds[name] = { buf: b, src: null, g: null }; else (F.groups[groupOf(name)] = F.groups[groupOf(name)] || []).push(b); })
           .catch(e => this.note(name + ': ' + (e && e.message)));

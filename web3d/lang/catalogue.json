@@ -4276,6 +4276,21 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.catch_pantry1",
+  "en": "🐟 1 fish to your pantry",
+  "fr": "🐟 1 poisson dans votre garde-manger"
+ },
+ {
+  "id": "text.catch_pantry",
+  "en": "🐟 {n} fish to your pantry",
+  "fr": "🐟 {n} poissons dans votre garde-manger"
+ },
+ {
+  "id": "text.dock_pantry",
+  "en": "🐟 Fish in your pantry: {n} of {max}",
+  "fr": "🐟 Poissons au garde-manger : {n} sur {max}"
+ },
+ {
   "id": "text.wheat2_title",
   "en": "Your second wheat field",
   "fr": "Votre deuxième champ de blé"

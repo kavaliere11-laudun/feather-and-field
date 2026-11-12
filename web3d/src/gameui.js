@@ -907,6 +907,7 @@ export class GameUI {
       info.append(el('b', '', this.t('ord_' + r.k)), ' ' + fmt(r.n) + ' / ' + fmt(r.max) + (r.n >= r.max ? ' · ' + this.t('pantry_full') : ''));
       if (r.kept) info.append(el('span', 'gcatch-w', this.t('pantry_orders', { n: fmt(r.kept) })));
       else if (r.k === 'grain' && r.n) info.append(el('span', 'gcatch-w gpan-g', this.t('pantry_grain')));
+      if (r.k === 'fish' && r.n) { const C = new Map(); for (const q of g.fishBox()) C.set(q[0], (C.get(q[0]) || 0) + 1); info.append(el('span', 'gcatch-w gpan-g gpan-fish', [...C].map(([id, n]) => g.fishName(id) + (n > 1 ? ' ×' + n : '')).join(', '))); }      // (which fish: Audrey 12 Nov 2026, "if I click sell I am not too sure what I am selling")
       row.append(el('span', 'gemoji gpan-e', icon[r.k]), info);
       const spare = r.n - r.kept;
       if (spare > 0) { const sb = el('button', 'gbtn gsmallbtn', this.t('pantry_sell', { n: fmt(spare), c: fmt(r.coins) })); sb.type = 'button'; sb.dataset.sell = r.k; sb.addEventListener('click', () => h.sell && h.sell(r.k, false)); row.append(sb); }
@@ -1393,7 +1394,7 @@ export class GameUI {
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
     else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => { if (!b.disabled) h.go(); }); body.append(b); this.busyNote([b]); }
-    if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', g.fishNet().length ? this.t('catch_open', { n: g.fishNet().length }) : this.t('catch_box', { n: g.fishBox().length, max: g.shelf('fish') })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
+    if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', this.t('dock_pantry', { n: g.fishNet().length + g.fishBox().length, max: g.shelf('fish') })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
     const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
     th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
     const had = g.tinToday(), bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke || had ? ' galt' : ''), had ? this.t('fish_tin_tomorrow') : broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke || had; bb.dataset.fish = 'tin';

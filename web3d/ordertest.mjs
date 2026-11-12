@@ -81,13 +81,14 @@ await shoot('2_ready');
 await p.evaluate(() => document.querySelector('.gordbtn').click()); await run(0.2); await settle();
 const c1 = (await G()).coins, x1 = (await G()).xp, pay = await p.evaluate(() => { const g = window.__farm.game(); return g.orderPayOf(g.data.orders.list[0]); });
 await p.evaluate(() => document.querySelector('.gsheet [data-ord=deliver]').click()); await run(0.3);
-const way = await hintT(), run1 = await p.evaluate(() => !!window.__farm.orders.run());
-ok('Deliver: the farmer off to the stall with the basket', run1 && T.way.test(way) && !(await kind()), way);
-let near = 99;
-for (let i = 0; i < 90; i++) { await run(0.5); const q = await p.evaluate(S => { const L = window.__farm.farmer(); return { d: Math.hypot(L.pos.x - S.front[0], L.pos.z - S.front[1]), pail: !!L.f.want.props.pail, run: !!window.__farm.orders.run() }; }, st); near = Math.min(near, q.d); if (!q.run) break; }
+const done = await hintT(), run1 = await p.evaluate(() => !!window.__farm.orders.run());
 s = await G();
-const done = await hintT();
-ok('he got to the stall; paid: its coins (a surprise\'s too) and XP, the order gone, the next one a while later', near < 1.2 && s.coins >= c1 + pay.coins && s.xp === x1 + pay.xp && s.orders.list.length === 1 && s.orders.done === 1 && T.done.test(done) && s.orders.next >= (await p.evaluate(() => window.__T)) + 25 * 60e3, { near, s, pay, done });
+// (12 Nov 2026, Audrey: "When I complete an order the popup should stay on as I probably can complete another one")
+ok('Deliver: paid at once (its coins, a surprise\'s too, and XP), the order gone, the next one a while later; the card stays with the order left', s.coins >= c1 + pay.coins && s.xp === x1 + pay.xp && s.orders.list.length === 1 && s.orders.done === 1 && T.done.test(done) && (await kind()) === 'orders' && (await p.evaluate(() => document.querySelectorAll('.gsheet .gorder').length)) === 1 && s.orders.next >= (await p.evaluate(() => window.__T)) + 25 * 60e3, { s, pay, done, kind: await kind() });
+await p.evaluate(() => window.__farm.gameUI().close());
+let near = 99;
+for (let i = 0; i < 90; i++) { await run(0.5); const q = await p.evaluate(S => { const L = window.__farm.farmer(); return { d: Math.hypot(L.pos.x - S.front[0], L.pos.z - S.front[1]), run: !!window.__farm.orders.run() }; }, st); near = Math.min(near, q.d); if (!q.run) break; }
+ok('and the farmer takes the basket to the stall', run1 && near < 1.2, { run1, near });
 await shoot('3_paid');
 // not this one: its eggs sold
 const c2 = (await G()).coins;
@@ -102,8 +103,8 @@ await p.evaluate(() => { window.__T += 12 * 3600e3; sessionStorage.setItem('__T'
 s = await G();
 ok('hours later: new orders, three at most', s.orders.list.length === 3, s.orders.list.map(o => o.who));
 // a fish for an order that wants one
-const fishR = await p.evaluate(() => { const g = window.__farm.game(), o = g.data.orders.list[0]; o.items = { fish: 1 }; o.got = {}; g.save(); g.bite = { id: 'roach', cm: 20, water: 'pond', rare: 0 }; const c = g.data.coins, r = g.landFish(), ready0 = g.orderReady(o), k = g.sellCatch([0]); return { coins: g.data.coins - c, r, net: r.net, ready0, k, box: g.fishBox().length, ready: g.orderReady(o) }; });
-ok('a fish caught while an order wants one: into the keep net (no coins yet); kept in the fish box at the end of the trip: the order ready', fishR.coins === 0 && fishR.net === 1 && !fishR.ready0 && fishR.k && fishR.k.kept === 1 && fishR.box === 1 && fishR.ready, fishR);
+const fishR = await p.evaluate(() => { const g = window.__farm.game(), o = g.data.orders.list[0]; o.items = { fish: 1 }; o.got = {}; g.save(); g.bite = { id: 'roach', cm: 20, water: 'pond', rare: 0 }; const c = g.data.coins, r = g.landFish(), ready0 = g.orderReady(o), k = g.stowCatch(); return { coins: g.data.coins - c, r, net: r.net, ready0, k, box: g.fishBox().length, ready: g.orderReady(o) }; });
+ok('a fish caught while an order wants one: into the keep net (no coins yet); to the pantry at the end of the trip: the order ready', fishR.coins === 0 && fishR.net === 1 && !fishR.ready0 && fishR.k && fishR.k.kept === 1 && fishR.box === 1 && fishR.ready, fishR);
 const fc = await p.evaluate(r => { window.__farm.gameUI().fishCard(r, () => {}); const t = document.querySelector('.gsheet').innerText; window.__farm.gameUI().close(); return t; }, fishR.r);
 ok('its card says it\'s in the keep net', T.fish.test(fc), fc.slice(0, 300));
 // a reload: kept, unflagged

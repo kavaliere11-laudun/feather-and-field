@@ -1393,5 +1393,8 @@
  "text.wheat2_more_t": "Um segundo campo de trigo",
  "text.wheat2_more": "Adicionar este campo · {c} moedas",
  "text.wheat2_more_broke": "Adicionar este campo · {c} moedas (ainda não dá)",
- "text.wheat2_bought": "🌾 Seu segundo campo de trigo está pronto para semear · −{c} moedas. Mude-o de lugar na ficha dele, se quiser."
+ "text.wheat2_bought": "🌾 Seu segundo campo de trigo está pronto para semear · −{c} moedas. Mude-o de lugar na ficha dele, se quiser.",
+ "text.catch_pantry1": "🐟 1 peixe para a sua despensa",
+ "text.catch_pantry": "🐟 {n} peixes para a sua despensa",
+ "text.dock_pantry": "🐟 Peixes na despensa: {n} de {max}"
 }

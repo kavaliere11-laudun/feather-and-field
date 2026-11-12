@@ -31,18 +31,17 @@ const land = await p.evaluate(() => { const g = window.__farm.game(), c0 = g.dat
   return { paid: c1 - c0, net: g.fishNet(), worth: out.map(r => r.worth), coins: out.map(r => r.coins), leg: { coins: leg.coins, net: leg.net }, photo: g.data.coins - c1 }; });
 ok('three fish landed: in the keep net, no coins yet, each with what it\'s worth', land.paid === 0 && land.net.length === 3 && land.coins.every(c => c === 0) && land.worth.every(w => w > 0), land);
 ok('a legendary one: its photo paid at once (300), not in the net', land.photo === 300 && land.net.length === 3, land);
-// ---- the net's card
-await p.evaluate(() => window.__farm.catchCard());
-const sheet = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { kind: window.__farm.gameUI().kind, rows: s.querySelectorAll('.gcatch-r').length, sell: (s.querySelector('button[data-catch=sell]') || {}).textContent, text: s.innerText.slice(0, 400) } : null; });
-let sh = await sheet();
-ok('the keep net\'s card: three fish, each with Keep, and Sell with the total', sh && sh.kind === 'catch' && sh.rows === 3 && sh.sell.includes(String(land.worth.reduce((a, c) => a + c, 0))), sh);
-await p.evaluate(() => document.querySelector('.gsheet button[data-keep="2"]').click());
-sh = await sheet();
-ok('Keep on the pumpkinseed: the total without it', sh.sell.includes(String(land.worth[0] + land.worth[1])) && (fr ? /Gardé/ : /Kept/).test(sh.text), sh);
+// ---- the trip over: the catch straight to the pantry (12 Nov 2026, Audrey: "closed the basket without making any
+// decision and the fishes didn't move from the basket I thought I had lost them. Please if no decision is made they go to
+// storage"; her choice "Straight to the Pantry"): no card, nothing sold while there's room; a full shelf: the rest sold
 const c0 = await p.evaluate(() => window.__farm.game().data.coins);
-await p.evaluate(() => document.querySelector('.gsheet button[data-catch=sell]').click());
-const sold = await p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, net: g.fishNet().length, box: g.fishBox(), open: window.__farm.gameUI().isOpen, hint: document.getElementById('hint').textContent }; });
-ok('Sell: the other two paid, the kept one in the fish box, the net empty, "2 fish sold"', sold.coins === c0 + land.worth[0] + land.worth[1] && sold.net === 0 && sold.box.length === 1 && sold.box[0][0] === 'sunfish' && /2/.test(sold.hint), sold);
+const stow = await p.evaluate(() => { const f = window.__farm, g = f.game(); const r = f.stowCatch(); return { r, coins: g.data.coins, net: g.fishNet().length, box: g.fishBox().map(q => q[0]), open: f.gameUI().isOpen, hint: document.getElementById('hint').textContent }; });
+ok('the catch to the pantry: three fish on its shelf, none sold, the net empty, no card, said', stow.r && stow.r.kept === 3 && stow.r.sold === 0 && stow.coins === c0 && stow.net === 0 && stow.box.length === 3 && !stow.open && /3/.test(stow.hint) && (fr ? /garde-manger/ : /pantry/).test(stow.hint), stow);
+await p.evaluate(() => window.__farm.pantrySheet()); 
+const pan = await p.evaluate(() => { const r = document.querySelector('.gsheet [data-shelf=fish]'); const t = r ? r.innerText : ''; window.__farm.gameUI().close(); return t; });
+ok('the pantry says which fish are on the shelf, and what selling them pays', (fr ? /Vendre 3/ : /Sell 3/).test(pan) && /×|,/.test(pan), pan);
+const over = await p.evaluate(() => { const f = window.__farm, g = f.game(), max = g.shelf('fish'), F = g.fishBag(); F.box = Array.from({ length: max - 1 }, () => ['roach', 20]); F.net = [['roach', 20], ['rudd', 20]]; const c = g.data.coins, r = f.stowCatch(); const out = { r, paid: g.data.coins - c, box: g.fishBox().length, max, hint: document.getElementById('hint').textContent }; F.box = [['sunfish', 12]]; g.save(); return out; });
+ok('a shelf with room for one: one kept, the other sold and said', over.r.kept === 1 && over.r.sold === 1 && over.paid > 0 && over.box === over.max && (fr ? /plein/i : /full/i).test(over.hint), over);
 // ---- an order for a fish: from the box
 const ord = await p.evaluate(() => { const g = window.__farm.game(); g.orderBook().list = [{ id: 'oT', who: 'finch', t: window.__T, items: { fish: 1 }, got: {} }]; g.save(); const o = g.data.orders.list[0], ready = g.orderReady(o), r = g.deliverOrder('oT'); return { ready, r: !!r, box: g.fishBox().length }; });
 ok('an order for a fish: ready from the box; delivered: the box empty', ord.ready && ord.r && ord.box === 0, ord);

@@ -503,13 +503,17 @@ export class FarmLife {
         return this.t >= 5.4;
       } };
       const up = () => TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; });
-      L.push(wait(() => V.close() < 2.0, 45, (W, u, Lf, dt) => { W.pose = 'turn'; W.face = 'happy'; watch(W, u, Lf, dt); }),
+      // (12 Nov 2026, Audrey, the farmer on the lane and the geese still at the water's edge: "Visit to the geese is made from
+      // too far"; then "My farmer bugged after visiting the geese and is not moving anymore": he waited up to a minute for
+      // geese who weren't coming. Now a few seconds, then he walks over to them himself, to within his hand's reach)
+      L.push(wait(() => V.close() < 2.0, 7, (W, u, Lf, dt) => { W.pose = 'turn'; W.face = 'happy'; watch(W, u, Lf, dt); }),
+        () => { if (V.close() < 1.3 || !V.nearSpot) return null; const q = V.nearSpot(); return q ? TK.seq('closer', [TK.path(q[0], q[1], 'walk', 20), { name: 'face', t: 0, run(Lf, dt) { this.t += dt; const g = V.lead(); return Lf.turnTo(Math.atan2(g.x - Lf.pos.x, g.z - Lf.pos.z), dt, 3) < 0.08 || this.t > 2; } }]) : null; },
         TK.act('crouch', 0.8, W => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; }),
-        wait(() => V.ready(), 12, (W, u, Lf, dt) => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; watch(W, u, Lf, dt); }),
-        () => V.ready() ? TK.seq('stroking', [react('stroke'), TK.say('cuddle'), stroke, up(), TK.face('camera'), TK.act('wave', 1.8, STAND.wave)])
+        wait(() => V.ready() || V.close() < 1.15, 8, (W, u, Lf, dt) => { W.pose = 'pet'; W.face = 'happy'; W.look = [0, -0.3]; watch(W, u, Lf, dt); }),
+        () => V.ready() || V.close() < 1.15 ? TK.seq('stroking', [react('stroke'), TK.say('cuddle'), stroke, up(), TK.face('camera'), TK.act('wave', 1.8, STAND.wave)])
           : TK.seq('nocuddle', [up(), TK.say('geese'), TK.act('wave', 1.8, STAND.wave)]));
     }
-    if (V.stage > 0) L.push(TK.walk(V.noGate ? [V.out] : [V.gin, V.out]), gate(false));
+    if (V.stage > 0) L.push(V.noGate ? TK.path(V.out[0], V.out[1], 'walk', 20) : TK.walk([V.gin, V.out]), gate(false));      // (no fence: back by a way round whatever's between, and never for more than a few seconds)
     L.push(() => { V.done(true); return null; });
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => { const r = seq.aborted || run(Lf, dt); if (r && self.hat) self.hatOn(); return r; };      // (never left without his hat)
