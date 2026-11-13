@@ -5134,12 +5134,14 @@ function greetFarmer(at) {
     plot.callPen.greet(d, x, fz, Math.atan2(v.x - x, v.z - fz));
   }
 }
+let BIRD_BACK = null;
 function openBirdCard(b) {
   const gb = game.data.birds.find(x => x.id === b.gid); if (!gb) return;
   gameUI.birdCard(gb); holdBird(b);
   const w = b.root.getWorldPosition(new THREE.Vector3()), hz = Math.hypot(VIEW_DIR.x, VIEW_DIR.z);
-  if (sideways()) {                 // (sideways: the card on the right, she in the middle of the space beside it)
-    const size = Math.min(view.size, 0.85), up = -0.2 * size / PITCH_SIN, upp = 2 * size / Math.max(1, canvas.clientHeight);
+  if (!BIRD_BACK) BIRD_BACK = { x: view.target.x, z: view.target.z, size: view.size };      // (the view as it was: back to it when her card shuts)
+  if (sideways()) {                 // (sideways: the card on the right half, she close up in the middle of the left half)
+    const size = Math.min(view.size, 0.95), up = -0.2 * size / PITCH_SIN, upp = 2 * size / Math.max(1, canvas.clientHeight);
     const side = (gameUI.sheet.offsetWidth + 24) / 2 * upp, right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); right.y = 0; right.normalize();
     focusOn(w.x + VIEW_DIR.x / hz * up + right.x * side, w.z + VIEW_DIR.z / hz * up + right.z * side, size);
     return;
@@ -5147,7 +5149,7 @@ function openBirdCard(b) {
   const size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN;      // (upright: her feet a third of the way up the screen, her head under the top bar)
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
-function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay(); if (k === 'intro') { GUIDE_UI.intro = false; GUIDE_UI.on = true; } wake(300); }
+function gameSheetClosed(k) { holdBird(null); if (k === 'bird' && BIRD_BACK) setTimeout(() => { if (gameUI.kind === 'bird') return; const B = BIRD_BACK; BIRD_BACK = null; if (B && !gameUI.isOpen && !pointers.size) focusOn(B.x, B.z, B.size); }, 0); if (k === 'showres') endShowDay(); if (k === 'intro') { GUIDE_UI.intro = false; GUIDE_UI.on = true; } wake(300); }
 
 // ---- the game's eggs and feed (game.js has the rules; here they're seen). Once a second: the lays that are due. A hen
 // whose time has just come walks in and lays (the egg counts when it's in the straw, gameLaid); one that can't go yet
@@ -5196,6 +5198,7 @@ function gameTick(now = Date.now(), force = false) {
   // (a milestone reached: said, with where to collect it: 12 Nov 2026, Audrey, of the secret one won silently: "receive no
   // notification nothing had to look for it"; the secret one has its own word, at the kiss)
   { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) { const id = MILE_IDS.find(k => game.mileReached(k) > game.mileClaimed(k)), P = id ? game.milePay(id, game.mileClaimed(id)) : null; hintNext(mr > 1 || !P ? game.t('mile_ready_n', { n: mr }) : game.t('mile_ready', { name: game.t('mile_' + id), c: P.coins.toLocaleString(game.locale()) })); } } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
+  if (BIRD_BACK && gameUI.isOpen && gameUI.kind !== 'bird') BIRD_BACK = null;      // (on to another card from hers: the view stays)
   { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);

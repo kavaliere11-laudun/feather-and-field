@@ -196,6 +196,7 @@ export class GameUI {
     if (this.twoResolve && kind !== 'twofarms') { const r = this.twoResolve; this.twoResolve = null; r(null); }      // (the two farms' choice not made: asked again later)
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
+    this.sheet.classList.toggle('gbird', kind === 'bird'); document.body.classList.toggle('gbirdopen', kind === 'bird');      // (a bird's card: beside her, not over her: index.html, 13 Nov 2026)
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
     this.sheet.classList.toggle('gintro', kind === 'intro');
@@ -213,7 +214,7 @@ export class GameUI {
     }
     if (this.kind === 'showres') { this.g.seenShows(); this.refresh(); this.bumpCoins(); }
     if (this.kind === 'fish' && this.fishThen) { const f = this.fishThen; this.fishThen = null; f(this.g.worms() > 0); }      // (closed: on fishing while there are worms)
-    this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
+    this.sheet.hidden = true; document.body.classList.remove('gcong'); this.dim.hidden = true; document.body.classList.remove('gopen'); document.body.classList.remove('gbirdopen'); const k = this.kind; this.kind = null; this.bird = null; if (this.o.onClose) this.o.onClose(k); }
   get isOpen() { return !this.sheet.hidden; }
   // ---- the story at the start (7 Nov 2026; Audrey: "let's add storytelling that you just inherited the farm but everything
   // is to do"; her choices: "Painted story cards", "Your grandmother"; the pictures hers, from Midjourney): grandma's farm in

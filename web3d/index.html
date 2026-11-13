@@ -538,6 +538,7 @@
   .gdecnew .gnote { margin: 4px 0 0; }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
   .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }
+  body.gbirdopen .gacts, body.gbirdopen #findfarmer { display: none !important; }      /* (her card open: nothing over her but her) */
   /* a bird's stars and the way to the next, at the top of her card; the banner when she earns one (main.js starParty) */
   .gbirdstars { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
   .gbirdstars .gstarbar { flex: 1; min-width: 60px; max-width: 220px; height: 9px; margin: 0; }
@@ -686,6 +687,10 @@
               box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
     .gsheet.modal { max-height: calc(100% - env(safe-area-inset-top) - 72px); }
     .gsheet::before { display: none; }
+    /* a bird's card (13 Nov 2026, Audrey, her rooster hidden behind his own card: "This view is not ok it should focus on the
+       chicken on half of the screen"; her choice "A · Half and half"): the right half of the screen, top to bottom; the bird
+       close up in the middle of the left half (main.js openBirdCard) */
+    .gsheet.gbird { left: 50%; right: max(12px, env(safe-area-inset-right)); width: auto; margin: 0; top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom)); height: auto; max-height: none; }
     .gsheet-head { padding-top: 16px; }
     .gsheet-body { padding-bottom: 16px; border-radius: 0 0 24px 24px; }      /* (what scrolls, and the cream behind the buttons kept at the bottom, clipped to the card's round corners: 7 Nov, Audrey, "Still cut": its bottom corners had shown square) */
     .gsheet.in { animation-name: gspop; }

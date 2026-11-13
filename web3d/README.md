@@ -5156,3 +5156,26 @@ close). Test: `movealwaystest` (EN/FR).
   sooner (the seventh decoration by day 180 instead of the sixth). So: no easier early; a richer late game with nothing
   to spend it on, which was already so before (190,788 unspent). The run doesn't buy the new beds or the second field.
 
+## A bird's card beside her, not over her (13 Nov 2026, 16:09; Audrey, her rooster hidden behind his own card: "This view is not ok it should focus on the chicken on half of the screen. Comes with proposition")
+- Sideways, every card has been a card in the middle of the screen since 7 Nov ("Make these centred"), so a bird's card
+  covered the bird. Shown three real screenshots (her reply to a first set of text sketches: "the layout you are showing
+  me are just text"); her choice: "A · Half and half".
+- Sideways a bird's card is the right half of the screen, top to bottom (index.html `.gsheet.gbird`; gameui.js sets it
+  for the `bird` card), the side buttons and the farmer's button hidden meanwhile (`body.gbirdopen`); the view goes
+  close in on her (0.95) with her in the middle of the left half (main.js `openBirdCard`, as before by the card's
+  width), and back to where it was when her card shuts (`BIRD_BACK`; not if another card was opened from hers). Upright
+  is as before.
+
+## Paint for coops: built, set aside (13 Nov 2026)
+- Built for the Red Barn (walls blue, sage, plum; roof and trims slate, terracotta, navy, straw; 3,000 coins each; tried
+  on the coop before paying; `paintedPart` tells walls and roof from the model's own colours and slopes) and passing its
+  own test's first steps, then her word at 16:10: "I am not convinced that these colour changes are worth a lot of
+  money and interest from the players to be honest. A different coop design would be better". Not shipped: kept on the
+  branch `paint-wip`.
+- Instead (her words): "a different design with something extravagant, we could create themes and collections, like
+  Christmas, valentines day, etc and people once they bought the design can reuse it later and switch between what they
+  own". Her choices: themes Valentine's Day, Easter and spring, Halloween, Summer fête, and "a winter one with snow";
+  each "A whole new building" (the coop itself replaced by a themed building), owned for good, switched at will. The
+  game's Christmas dress (`DRESSES.xmas`, 1,500 coins, in season 1 Dec to 6 Jan) is the seed of it. Next: a picture of
+  the first building for her before any is built (see roadmap).
+
