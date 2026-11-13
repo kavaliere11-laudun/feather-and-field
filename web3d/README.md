@@ -5146,4 +5146,13 @@ close). Test: `movealwaystest` (EN/FR).
   version, in grey: "picture 4 of 4 · 2.00× of 3× · 58 fps" (how sharp it is drawn now, of the four steps, and how
   smooth): her screenshot of it when it looks soft is the next step. No other cause found yet.
 - `cuddletest` follows (the banner; 12 coins at two stars).
+- **The balance with the new prices** (13 Nov 2026, 14:26, Audrey: "Test that"; `balsim.mjs 365 all 3`, against the same
+  run on the commit before, cc362b1): levels come on the same days (level 30 on day 331 once a day, 263 twice, 195 six
+  times: levels go by XP, not coins). The first three months are the same to within a few hundred coins (day 90: 6,774
+  coins in hand against 5,504 once a day). From about six months it shows: day 180, 26,256 in hand against 10,055 once
+  a day (39,285 against 6,783 twice a day). Over the year eggs earn 293,288 against 170,121 once a day (+72%), grown
+  chicks 139,662 against 109,070 (+28%), everything together about +24%; coins left unspent at the year's end 352,920
+  against 190,788 (464,311 against 259,172 twice a day; 505,570 against 318,252 six times). Nothing is bought much
+  sooner (the seventh decoration by day 180 instead of the sixth). So: no easier early; a richer late game with nothing
+  to spend it on, which was already so before (190,788 unspent). The run doesn't buy the new beds or the second field.
 
