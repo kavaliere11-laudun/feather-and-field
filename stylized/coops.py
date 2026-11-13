@@ -6368,7 +6368,7 @@ def winter_chalet(seed=77, name='theme_winter_rir', house='rir', FL=0.40, wx=0.4
     for (x, y, s) in ((-0.5, D2 + 0.08, 1.0), (0.1, D2 + 0.1, 1.2), (0.55, D2 + 0.06, 0.9), (W2 + 0.1, 0.25, 0.9), (W2 + 0.09, -0.2, 0.7), (-W2 - 0.1, 0.1, 1.1), (-W2 - 0.08, -0.3, 0.7), (0.62, -D2 - 0.1, 0.6)):
         objs.append(sphere('drift', 0.16 * s, (x, y, 0.0), (1.5, 1.0, 0.45), m=snowb if random.random() < 0.4 else snow, seg=14, rings=8))
     # the snowman by the door (right of it, clear of the ramp): three balls, coal eyes and buttons, a carrot, twig arms, a red scarf, a tin bucket for a hat
-    sx_, sy_ = 0.8, -D2 - 0.24
+    sx_, sy_ = 1.72, -0.84                         # (in the Deluxe garden, right of the cabbage; 13 Nov: every themed building has the Deluxe garden)
     keep(sx_, sy_, 0.15)
     for r_, z in ((0.13, 0.11), (0.095, 0.3), (0.07, 0.445)): objs.append(sphere('snowman', r_, (sx_, sy_, z), (1, 1, 0.92), m=snow, seg=16, rings=10))
     for dx in (-0.025, 0.025): objs.append(sphere('eye', 0.009, (sx_ + dx, sy_ - 0.062, 0.465), m=coal, seg=8, rings=6))

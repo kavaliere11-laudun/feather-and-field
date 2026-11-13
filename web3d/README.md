@@ -5181,12 +5181,16 @@ close). Test: `movealwaystest` (EN/FR).
 
 ## Themed coop buildings: the Snow Chalet (13 Nov 2026; Audrey: "a different design with something extravagant, we could create themes and collections … once they bought the design can reuse it later and switch between what they own")
 - Her choices: a whole new building in place of the coop; one for each breed in each theme; no levels ("maybe it should be
-  a unique one no levels"); "Make sure the toys are also updated"; 8,000 coins each; bought in the theme's season only,
-  worn any time; real money beside the coins from the start (see below). Themes: winter first, then Valentine's Day,
+  a unique one no levels"); "Make sure the toys are also updated"; bought in the theme's season only, worn any time;
+  **Deluxe while worn** (17:24: "these exclusive coops are available only in deluxe so if you go for this design and you
+  pay for it you immediately upgrade. But of course if you revert to the regular design, you will need to upgrade up to
+  the deluxe"), so **15,000 coins** (above the 12,300 the whole upgrade path costs; 8,000 was her first choice before
+  this rule); "new toys and the chickens need to interact with the toys that's funny … the snow ones can have snow on
+  the floor and they leave foot print in"; real money beside the coins from the start (see below). Themes: winter first, then Valentine's Day,
   Easter and spring, Halloween, Summer fête.
 - **The model** (`stylized/coops.py winter_chalet`): an alpine chalet whose gable faces the front: cream plaster under
   dark timbers, a balcony of red hearts with a lit door behind it, red shutters, a steep roof under a thick quilt of
-  snow with lumps and icicles along the eaves, a stone chimney capped with snow, a snowman (scarf, bucket hat), a little
+  snow with lumps and icicles along the eaves, a stone chimney capped with snow, a snowman (scarf, bucket hat; in the Deluxe garden, right of the cabbage), a little
   fir, a lantern on a post, drifts against the walls. It takes the breed it stands in for (`house`, `FL`, `wx`,
   `ramp`): its pop door, ramp and nest window exactly where that breed's own house has them, so the game's one nest
   per breed holds (checked at export against coops.json). Looked at with `view_model.py winter_chalet OUT`; exported
@@ -5194,12 +5198,27 @@ close). Test: `movealwaystest` (EN/FR).
   yard by it) and spliced with `splice_coops.py` as `theme_winter_rir`.
 - **The rules** (game.js `THEMES`, `themeInSeason`, `themesFor`, `buyTheme`, `wearTheme`): a theme lists the breeds whose
   building is made (`breeds`: only `rir` so far). Saved: `themes` (the buildings owned, `winter_rir`) and on a coop
-  `theme`; the save check keeps only real buildings and a theme worn only if owned for that coop's breed. Winter is on
+  `theme` and `tier0`. Moving in (`wearTheme`) puts the look it had really reached aside in `tier0` and makes the
+  coop tier 4, so everything that reads the tier (the garden and its toys, eggs, chicks, cuddles) is a Deluxe coop's;
+  moving out gives `tier0` back (`ownLook`). No upgrading while it is worn (tier 4 is the top). The save check keeps
+  only real buildings, a theme worn only if owned for that coop's breed (then tier 4 whatever the save says), and a
+  theme not owned taken off with the coop back at `tier0`. Winter is on
   sale from 14 Nov to 28 Feb for now (so she can try it before December; 1 Dec was the plan).
-- **In the village** (main.js): `coopLook` gives the themed house whatever the coop's look, its pen and fence the
-  look's own; for winter those two are drawn snowed (`snowedPart`: a copy of the model with every face that looks up,
-  off the ground, turned to snow: rails, posts, the swing, the parasol, the fountain, the feeder, the bales): that is
-  the toys' winter look. No weathervane on it. The swing's seat and the cabbage (moving parts) are as they were.
+- **In the village** (main.js): `coopLook` gives the themed house with the Deluxe pen and fence; for winter those two
+  are drawn snowed (`snowedPart`: a copy of the model with every face that looks up turned to snow: the yard's floor,
+  rails, posts, the swing, the parasol, the fountain, the feeder, the bales): that is the toys' winter look. No
+  weathervane on it. `themeCoop` asks for room for the Deluxe garden exactly as an upgrade does (`coopSpot` at tier 4,
+  the apple tree's corner moved or let go, what's in the way cleared); no room: "move the coop somewhere roomier
+  first", nothing paid.
+- **Winter's own play** (play.js `addWinter`, `removeWinter`, `iceStep`, `tickPrints`):
+  - *The frozen puddle* (`toys.ice`, drawn in code: a pale blue oval with skate scratches, in the middle of the yard at
+    0.1, 2.0): a play thing like the others (kind `ice`, twice as likely as each of the others). A hen walks to one end,
+    faces along it, and slides to the other end, low, wings out, wobbling, sometimes turning right round; a spray of
+    snow where she stops, a shake, and often back again (three goes at most).
+  - *Footprints*: one instanced mesh a winter coop (240 prints: three toes forward, one back). Each bird walking on
+    the ground of the yard leaves one every step, left then right, small ones for chicks; none on the ice, the ramp, in
+    the air or asleep. They stay 40 s, then fade into the snow over 14 s.
+  - The dust bath's puffs are snow in a winter coop.
 - **Its card**: a coop whose breed has a building shows "Themed buildings": the Snow Chalet with what it is, and Buy
   (in season), "Move into the Snow Chalet" / "Back to its own coop" (owned), or "In the shop in winter".
 - **Real money** (her 17:01 "no real money should be there from the start, why waiting?"): not built yet. Agreed: built
@@ -5207,7 +5226,9 @@ close). Test: `movealwaystest` (EN/FR).
   the products created in App Store Connect; the ICO fee she planned for when she starts trading). Purchases checked
   from Apple's signed record on the phone, never from the save. Prices suggested, not yet confirmed by her: £0.99 a
   building, £5.99 a theme of nine, £1.99 the bigger pantry shelves.
-- `themetest.mjs` (new, December on its clock): the buy, the snowed pen, a hen laying in the chalet's nest, off and
-  on again, a reload, every look 0 to 4, July (not for sale; an owned one still worn), a tampered save.
+- `themetest.mjs` (new, December on its clock): no room said then the coop moved; the buy at 15,000; Deluxe while
+  worn with its own look kept; the card naming both; the snowed Deluxe pen, the puddle, footprints, a hen sliding; a
+  hen laying in the chalet's nest; off (its own look back, no snow) and on again; a reload; footprints fading; July
+  (not for sale; an owned one still worn); a tampered save.
 - Next: the other eight winter buildings, one at a time, each shown to her first.
 

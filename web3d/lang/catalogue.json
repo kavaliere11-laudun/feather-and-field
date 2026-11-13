@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_room",
+  "en": "It comes with a Deluxe garden, which needs more room here: move the coop somewhere roomier first.",
+  "fr": "Il vient avec un jardin Luxe, qui demande plus de place ici : déplacez d’abord le poulailler vers un endroit plus dégagé."
+ },
+ {
+  "id": "text.theme_own",
+  "en": "Its own coop: {look}.",
+  "fr": "Son propre poulailler : {look}."
+ },
+ {
   "id": "text.theme_winter",
   "en": "Winter",
   "fr": "Hiver"
@@ -4287,8 +4297,8 @@
  },
  {
   "id": "text.themel_winter_rir",
-  "en": "A little alpine chalet deep in snow: icicles, a balcony of red hearts, a snowman by the door. Snow settles on the pen and its toys too.",
-  "fr": "Un petit chalet alpin sous la neige : des glaçons, un balcon à cœurs rouges, un bonhomme de neige devant la porte. La neige se pose aussi sur l’enclos et ses jeux."
+  "en": "A little alpine chalet deep in snow: icicles, a balcony of red hearts, a snowman in the garden. Snow underfoot that keeps their footprints, and a frozen puddle to slide on.",
+  "fr": "Un petit chalet alpin sous la neige : des glaçons, un balcon à cœurs rouges, un bonhomme de neige au jardin. De la neige au sol qui garde leurs empreintes, et une flaque gelée pour glisser."
  },
  {
   "id": "text.theme_t",
@@ -4342,8 +4352,8 @@
  },
  {
   "id": "text.theme_note",
-  "en": "Yours for good once bought: switch whenever you like.",
-  "fr": "À vous pour toujours une fois acheté : changez quand vous voulez."
+  "en": "A themed building is a Deluxe coop while they live in it: the big garden and its toys, and a Deluxe coop’s eggs, chicks and cuddles. Back in its own coop, it has the look you had reached. Yours for good once bought: switch whenever you like.",
+  "fr": "Un bâtiment à thème est un poulailler Luxe tant qu’elles y vivent : le grand jardin et ses jeux, et les œufs, les poussins et les câlins d’un poulailler Luxe. De retour dans son poulailler, il a l’allure que vous aviez atteinte. À vous pour toujours une fois acheté : changez quand vous voulez."
  },
  {
   "id": "text.star_next",

@@ -1402,7 +1402,7 @@
  "text.star_kids": "Mejores pollitos a partir de ahora",
  "text.theme_winter": "Invierno",
  "text.theme_winter_rir": "Chalet de nieve",
- "text.themel_winter_rir": "Un pequeño chalet alpino bajo la nieve: carámbanos, un balcón de corazones rojos, un muñeco de nieve junto a la puerta. La nieve también cubre el corral y sus juegos.",
+ "text.themel_winter_rir": "Un pequeño chalet alpino bajo la nieve: carámbanos, un balcón de corazones rojos, un muñeco de nieve en el jardín. Nieve en el suelo que guarda sus huellas y un charco helado para deslizarse.",
  "text.theme_t": "Edificios temáticos",
  "text.theme_buy": "{name} · {c} monedas",
  "text.theme_broke": "{name} · {c} monedas (aún no alcanza)",
@@ -1413,5 +1413,7 @@
  "text.theme_bought": "❄️ El {name} es tuyo para siempre · −{c} monedas",
  "text.theme_done": "{coop} es ahora el {name}.",
  "text.theme_gone": "{coop} vuelve a ser su gallinero.",
- "text.theme_note": "Tuyo para siempre una vez comprado: cámbialo cuando quieras."
+ "text.theme_note": "Un edificio temático es un gallinero De lujo mientras viven en él: el gran jardín y sus juegos, y los huevos, pollitos y mimos de un gallinero De lujo. De vuelta en su gallinero, tiene el aspecto que habías alcanzado. Tuyo para siempre una vez comprado: cámbialo cuando quieras.",
+ "text.theme_room": "Viene con un jardín De lujo, que necesita más sitio aquí: mueve antes el gallinero a un lugar más despejado.",
+ "text.theme_own": "Su propio gallinero: {look}."
 }

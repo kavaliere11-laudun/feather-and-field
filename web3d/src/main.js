@@ -40,7 +40,7 @@ import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { buildIntro } from './intro.js';
-import { initPlay, addToys, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
+import { initPlay, addToys, addWinter, removeWinter, printsLive, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
 import { LOOKS, lookChunks, lookGround, clumpGeo, lookPost } from './looks.js';
 
 const MODELS = './models/';
@@ -1992,7 +1992,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN); plot.lanes = null;      // (its pen: the birds' yard, what's in it, its gate; the farmer's ways in it worked out again)
     addNest(frame, plot);
     appleTree(plot);                                      // (the Glutton's apple tree, if it has one)
-    if (penOf(plot).play && parts.swing_seat) addToys(plot, penOf(plot).play, part);      // (the swing, the cabbage...: play.js)
+    if (penOf(plot).play && parts.swing_seat) { addToys(plot, penOf(plot).play, part); if (plot.theme === 'winter') addWinter(plot); }      // (the swing, the cabbage...: play.js)
     addSails(plot);                                       // (the Little Windmill's sails)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
@@ -2103,13 +2103,13 @@ function snowedPart(name) {
   const key = name + '#snow'; if (parts[key]) return key;
   const src = parts[name]; if (!src) return name;
   src.updateMatrixWorld(true);
-  const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd');
+  const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd'), FL = new THREE.Color('#dde8f4');
   for (const m of meshesOf(src)) {
     const C0 = m.geometry.attributes.color, N = m.geometry.attributes.normal, P = m.geometry.attributes.position; let g = m.geometry;
     if (C0 && N) { g = m.geometry.clone(); const C = C0.clone(); g.setAttribute('color', C); nm.getNormalMatrix(m.matrixWorld);
       for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); nv.fromBufferAttribute(N, i).applyMatrix3(nm).normalize();
-        if (v.y < 0.06 || nv.y < 0.55) continue; const k = Math.min(1, (nv.y - 0.55) / 0.3) * Math.min(1, (v.y - 0.06) / 0.05);
-        C.setXYZ(i, C.getX(i) + (SN.r - C.getX(i)) * k, C.getY(i) + (SN.g - C.getY(i)) * k, C.getZ(i) + (SN.b - C.getZ(i)) * k); } }
+        if (nv.y < 0.55) continue; const k = Math.min(1, (nv.y - 0.55) / 0.3), S1 = v.y < 0.06 ? FL : SN;      // (the ground too: snow on the floor, 13 Nov; a touch bluer than the snow on things, so they and the footprints show on it)
+        C.setXYZ(i, C.getX(i) + (S1.r - C.getX(i)) * k, C.getY(i) + (S1.g - C.getY(i)) * k, C.getZ(i) + (S1.b - C.getZ(i)) * k); } }
     const mesh = new THREE.Mesh(g, m.material); mesh.applyMatrix4(m.matrixWorld); grp.add(mesh);
   }
   grp.updateMatrixWorld(true); parts[key] = grp; return key;
@@ -7187,12 +7187,31 @@ function coopCard(p) {
 // a themed building from a coop's card: bought (in its season: worn at once), moved into, or left for the coop's own look
 function themeCoop(p, t, buy) {
   if (!p || !p.gc || MOVE.plot) return false;
-  const base = baseBreed(p.gc.breed), name = t ? game.themeName(t, base) : '';
-  if (buy) { const r = game.buyTheme(p.gc.id, t); if (!r) return false; if (r.broke) { hint(game.t('dec_broke')); return false; }
-    gameUI.close(); retier(p); hint(game.t('theme_bought', { name, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); return true; }
-  const was = p.gc.theme; if (!game.wearTheme(p.gc.id, t)) return false;
+  const gc = game.coop(p.gc.id); if (!gc) return false;
+  const base = baseBreed(gc.breed), name = t ? game.themeName(t, base) : '';
+  let clear = [], flip = null, off = false;
+  if (t && !gc.theme && gc.tier < 4) {               // (it comes with the Deluxe garden: room for it here, as for an upgrade)
+    if (p.farmer || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return false; }
+    if (buy && game.data.coins < ((game.themesFor(gc).find(x => x.id === t) || {}).price || 0)) { hint(game.t('dec_broke')); return false; }
+    let S = coopSpot(spotOf(gc), { ...gc, tier: 4 });
+    if (!S.ok && gc.ap && gc.ap.side) {
+      const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: other } });
+      if (S1.ok) { S = S1; flip = other; }
+      else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
+    }
+    if (!S.ok) { hint(game.t('theme_room')); return false; }
+    clear = S.clear;
+  }
+  const ids = clear.map(o => o.id);
+  let r;
+  if (buy) { r = game.buyTheme(gc.id, t, undefined, ids); if (!r) return false; if (r.broke) { hint(game.t('dec_broke')); return false; } }
+  else if (!game.wearTheme(gc.id, t, ids)) return false;
+  if (flip) game.plantApple(gc.id, flip);
+  if (off) { game.appleOff(gc.id); p.appleTried = 0; hintNext(game.t('apple_wait')); }
+  if (ids.length) { const set = new Set(ids); V.trees = V.trees.filter(o => !set.has(o.id)); V.bushes = V.bushes.filter(o => !set.has(o.id)); V.rocks = V.rocks.filter(o => !set.has(o.id)); for (const o of clear) clearAway(o); }
   gameUI.close(); retier(p);
-  hint(t ? game.t('theme_done', { coop: game.coopName(p.gc), name }) : game.t('theme_gone', { coop: game.coopName(p.gc) }));
+  if (buy) { hint(game.t('theme_bought', { name, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); }
+  else hint(t ? game.t('theme_done', { coop: game.coopName(gc), name }) : game.t('theme_gone', { coop: game.coopName(gc) }));
   return true;
 }
 function dressCoop(p, id) {
@@ -7243,14 +7262,14 @@ function retier(p) {
   p.gc = game.coop(p.gc.id) || p.gc;
   p.tier = p.gc.tier; p.rustic = p.gc.tier === 0; p.deluxe = p.gc.tier >= 4; p.dress = p.gc.dress || null; p.theme = p.gc.theme || null;
   for (const b of p.birds) if (b.play) endPlay(b, true);
-  if (p.toys) { p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
+  if (p.toys) { removeWinter(p); p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
   const L = coopLook(p);
   dropApple(p);
   p.pen = dressedPen(p, L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN);
   p.block = p.block0 = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
   appleTree(p);
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
-  if (penOf(p).play && parts.swing_seat) addToys(p, penOf(p).play, part);
+  if (penOf(p).play && parts.swing_seat) { addToys(p, penOf(p).play, part); if (p.theme === 'winter') addWinter(p); }
   addSails(p);
   if (p.callPen) addCallDucks(p, p.callR);                 // (the call ducks: their new pond, raft and ball)
   p.exitWay = null;
@@ -9715,6 +9734,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
+  winterOf: id => { const p = plots.find(x => x.gc && x.gc.id === id), T = p && p.toys; return T ? { ice: T.ice ? { at: T.ice.at, by: !!T.ice.by, in: !!T.ice.mesh.parent } : null, prints: printsLive(p), theme: p.theme, tier: p.tier } : null; },
   coopModels: () => COOP_BATCH.map(m => m.userData.model),      // (the tests: which models the coops are drawn with)
   starParty: id => starParty(game.bird(id)), starToast: () => STAR_TOAST && !STAR_TOAST.hidden ? STAR_TOAST.innerText : null,
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,

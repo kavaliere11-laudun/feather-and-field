@@ -53,6 +53,7 @@ export function tickToys(plot, dt) {
   C.vx += (-K2 * Math.sin(C.ax) - 0.9 * C.vx) * dt; C.vz += (-K2 * Math.sin(C.az) - 0.9 * C.vz) * dt;
   C.ax += C.vx * dt; C.az += C.vz * dt; C.vs *= Math.exp(-1.1 * dt); C.spin += C.vs * dt;
   C.mesh.rotation.set(C.ax, C.spin, C.az);
+  if (T.prints) tickPrints(plot, dt);
 }
 
 // a free play thing for her now and then (none for chicks, nor by night, nor while the farmer's in the pen)
@@ -62,7 +63,7 @@ export function wantPlay(b) {
   if (AP && b.kind === 'hen' && b.pers === 'glutton' && AP.want(b) && b.r() < 0.4) return 'apple';      // (the Glutton: an apple on her tree)
   if (!T) return null;
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
-  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !(k === 'xylo' && b.kind === 'rooster'));
+  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !(k === 'xylo' && b.kind === 'rooster'));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;
 }
 
@@ -85,6 +86,11 @@ export function startPlay(b, kind) {
       bath: [D.at[0] + (sx ? sx * hw * 0.35 : j * hw * 0.7), D.at[1] + (sz ? sz * hd * 0.3 : j * hd * 0.4)] }));
   } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
   else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
+  else if (kind === 'ice') {                         // the frozen puddle: to one end of it (the nearer one first), facing along it
+    const I = T.ice, z = I.at[1] + j * 0.2, ends = [-1, 1].map(sx => ({ spot: [I.at[0] + sx * (I.hw + 0.2), z], face: -sx * Math.PI / 2, to: [I.at[0] - sx * (I.hw + 0.2), z] }));
+    if (Math.abs(b.root.position.x - ends[1].spot[0]) < Math.abs(b.root.position.x - ends[0].spot[0])) ends.reverse();
+    C = ends.filter(e => b.free(e.to[0], e.to[1]));
+  }
   else C = [{ spot: [P.xylo.at[0] + 0.25, P.xylo.at[1] + j * 0.08], face: -Math.PI / 2 }];
   const Y = b.plot.pen && b.plot.pen.yard, mid = Y && [(Y.min[0] + Y.max[0]) / 2, (Y.min[2] + Y.max[2]) / 2];
   const reach = spot => {                            // a way there: straight, or by a step out in front of it, or by the middle of the yard
@@ -102,7 +108,7 @@ export function startPlay(b, kind) {
     const route = reach(c.spot);
     if (!route) continue;
     (kind === 'apple' ? AP : T[kind]).by = b;
-    b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot: c.spot, face: c.face, stuck: 0, bath: c.bath, slot: c.slot };
+    b.play = { kind, phase: 'walk', t: 0, all: 0, route, spot: c.spot, face: c.face, stuck: 0, bath: c.bath, slot: c.slot, to: c.to };
     b.act = null; b.route = null; b.then = null; b.wait = 0; b.eatAt = null;
     return true;
   }
@@ -140,6 +146,7 @@ export function playStep(b, dt) {
     if (P.kind === 'swing' && (P.phase === 'turn' || P.phase === 'ride')) next('down');
     else if (P.kind === 'ladder' && P.phase !== 'down' && P.phase !== 'walk' && P.phase !== 'face') next('down');
     else if (P.kind === 'dust' && P.phase === 'bathe') next('out');
+    else if (P.kind === 'ice') { if (P.phase !== 'slide') { endPlay(b); return o; } }
     else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase === 'face')) { endPlay(b); return o; }      // (the Glutton: unless she's over the fence already)
   }
   if (P.phase === 'walk') {                          // there, round what's in the way
@@ -159,6 +166,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'cabbage') next('peck', { left: 4.5 + b.r() * 4, pk: 0 });
       else if (P.kind === 'ladder') next('climb', { step: 0, rest: 0 });
       else if (P.kind === 'apple') next('out');
+      else if (P.kind === 'ice') next('slide', { goes: P.goes || 0, spin: b.r() < 0.4 ? (b.r() < 0.5 ? -1 : 1) : 0 });
       else next('tap', { left: 3.5 + b.r() * 3, pk: 0 });
     }
     return o;
@@ -168,6 +176,7 @@ export function playStep(b, dt) {
   if (P.kind === 'dust') return dustStep(b, P, T, Q.dust, o, next, dt);
   if (P.kind === 'cabbage') return cabbageStep(b, P, T, Q.cabbage, o, next, dt);
   if (P.kind === 'ladder') return ladderStep(b, P, T, Q.ladder, o, next, dt);
+  if (P.kind === 'ice') return iceStep(b, P, T, o, next, dt);
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
 }
 
@@ -363,6 +372,96 @@ function ladderStep(b, P, T, Q, o, next, dt) {
   return o;
 }
 
+// the frozen puddle (the winter theme; Audrey, 13 Nov 2026: "I also want these coops to have new toys and the chickens need to
+// interact with the toys that's funny"): a few quick steps onto it and away she slides to the other end, low, wings out for
+// balance, wobbling (now and then she turns right round on the way); a spray of snow where she stops, a shake; often back
+// again the other way
+function iceStep(b, P, T, o, next, dt) {
+  const p = b.root.position;
+  if (P.phase === 'slide') {
+    const D = 1.55, u = Math.min(1, P.t / D), a = 1 - (1 - u) * (1 - u);
+    p.x = P.from.x + (P.to[0] - P.from.x) * a; p.z = P.from.z + (P.to[1] - P.from.z) * a; p.y = 0.015;
+    o.walking = u < 0.16; o.sit = 0.35 * smooth01(u / 0.25); o.flap = u > 0.12 && u < 0.8 ? 0.55 : 0;
+    b.visual.rotation.z = 0.2 * Math.sin(P.t * 13) * (1 - u);
+    if (P.spin) b.root.rotation.y = P.face + P.spin * 2 * Math.PI * smooth01((u - 0.15) / 0.75);
+    if (u >= 1) { b.visual.rotation.z = 0; b.root.rotation.y = P.face; for (let k = 0; k < 5; k++) dustPuff(b, 0.1, 0.07);
+      const back = P.spot; P.spot = P.to; P.to = back; next('shake', { goes: P.goes + 1 }); }
+    return o;
+  }
+  if (P.phase === 'shake') {                         // a happy shake; then again, the other way (three goes at most)
+    o.ruffle = Math.sin(Math.min(1, P.t / 0.7) * Math.PI);
+    if (P.t > 0.9) { if (P.leaving || P.goes >= 3 || b.r() < 0.35 || !b.free(P.to[0], P.to[1])) endPlay(b); else { P.face += Math.PI; next('face'); } }
+  }
+  return o;
+}
+
+// ---- winter in a pen (the winter theme; Audrey: "the snow ones can have snow on the floor and they leave foot print in"):
+// the frozen puddle in the middle of the yard, and the birds' footprints in the snow: one for each step where a bird walks
+// on the ground (not on the ice, the ramp, nor in the air), left foot, right foot, small ones for the chicks; they stay
+// most of a minute, then the snow closes over them
+const SNOW = new THREE.Color('#dde8f4'), PRINT = new THREE.Color('#7f95b8'), PRINTS = 240, P_STAY = 40, P_FADE = 14;
+let iceTex = null, printTex = null;
+const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpC = new THREE.Color(), UP = new THREE.Vector3(0, 1, 0);
+export function addWinter(plot) {
+  const T = plot.toys; if (!T || T.ice) return;
+  if (!iceTex) iceTex = fxTex(128, c => {
+    const g = c.createRadialGradient(64, 64, 6, 64, 64, 62); g.addColorStop(0, '#c9e9f6'); g.addColorStop(0.6, '#a5d6ee'); g.addColorStop(0.9, '#83c1e2'); g.addColorStop(0.97, '#d8eef8'); g.addColorStop(1, '#f4f8fd');
+    c.fillStyle = g; c.beginPath(); c.arc(64, 64, 63, 0, 6.3); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.8; c.lineCap = 'round';
+    for (const [x0, y0, x1, y1] of [[28, 50, 78, 44], [40, 78, 96, 70], [52, 30, 70, 34], [30, 66, 50, 62], [74, 56, 100, 52], [58, 92, 82, 88]]) { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
+  });
+  const I = T.ice = { at: [0.1, 2.0], hw: 0.58, hd: 0.34, by: null, next: 0 };
+  const ig = new THREE.CircleGeometry(1, 40); ig.rotateX(-Math.PI / 2);
+  I.mesh = new THREE.Mesh(ig, new THREE.MeshStandardMaterial({ map: iceTex, transparent: true, roughness: 0.18, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  I.mesh.scale.set(I.hw, 1, I.hd); I.mesh.position.set(I.at[0], 0.012, I.at[1]); I.mesh.receiveShadow = true; I.mesh.renderOrder = 1; I.mesh.userData.moves = true; plot.frame.add(I.mesh);
+  if (!printTex) printTex = fxTex(64, c => {         // a hen's foot: three toes forward, a short one back
+    c.strokeStyle = '#fff'; c.lineWidth = 7; c.lineCap = 'round';
+    for (const [x, y] of [[32, 6], [12, 16], [52, 16], [32, 58]]) { c.beginPath(); c.moveTo(32, 40); c.lineTo(x, y); c.stroke(); }
+  });
+  const pg = new THREE.PlaneGeometry(1, 1); pg.rotateX(-Math.PI / 2);
+  const pm = new THREE.InstancedMesh(pg, new THREE.MeshLambertMaterial({ map: printTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), PRINTS);
+  tmpM.makeScale(0, 0, 0); for (let i = 0; i < PRINTS; i++) { pm.setMatrixAt(i, tmpM); pm.setColorAt(i, PRINT); }
+  pm.frustumCulled = false; pm.receiveShadow = true; pm.renderOrder = 1; pm.userData.moves = true; plot.frame.add(pm);
+  T.prints = { mesh: pm, n: 0, age: new Float32Array(PRINTS).fill(-1), at: new Map(), live: 0 };
+}
+export function removeWinter(plot) {
+  const T = plot.toys; if (!T) return;
+  if (T.ice) { T.ice.mesh.removeFromParent(); T.ice.mesh.geometry.dispose(); T.ice.mesh.material.dispose(); T.ice = null; }
+  if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
+}
+export function printsLive(plot) { return plot.toys && plot.toys.prints ? plot.toys.prints.live : 0; }
+function tickPrints(plot, dt) {
+  const T = plot.toys, R = T.prints, I = T.ice, Y = plot.pen && plot.pen.yard;
+  let moved = false, tinted = false;
+  for (const b of plot.birds) {
+    const p = b.root.position; let s = R.at.get(b);
+    if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
+    const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
+    const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
+    if (out) { s.x = p.x; s.z = p.z; continue; }
+    const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);
+    if (d < 0.085 * k) continue;
+    if (d < 0.5) {                                   // (a step, not a jump from somewhere else)
+      const a = Math.atan2(dx, dz), i = R.n; R.n = (R.n + 1) % PRINTS;
+      tmpP.set(p.x + Math.cos(a) * 0.028 * k * s.side, 0.014, p.z - Math.sin(a) * 0.028 * k * s.side);
+      tmpQ.setFromAxisAngle(UP, a + Math.PI + s.side * 0.12); tmpS.setScalar(0.085 * k);
+      R.mesh.setMatrixAt(i, tmpM.compose(tmpP, tmpQ, tmpS)); R.mesh.setColorAt(i, PRINT); R.age[i] = 0; moved = tinted = true; s.side = -s.side;
+    }
+    s.x = p.x; s.z = p.z;
+  }
+  let live = 0;
+  for (let i = 0; i < PRINTS; i++) {
+    if (R.age[i] < 0) continue;
+    R.age[i] += dt; live++;
+    if (R.age[i] > P_STAY + P_FADE) { R.age[i] = -1; live--; R.mesh.setMatrixAt(i, tmpM.makeScale(0, 0, 0)); moved = true; }
+    else if (R.age[i] > P_STAY) { R.mesh.setColorAt(i, tmpC.copy(PRINT).lerp(SNOW, (R.age[i] - P_STAY) / P_FADE)); tinted = true; }
+  }
+  R.live = live;
+  if (moved) R.mesh.instanceMatrix.needsUpdate = true;
+  if (tinted && R.mesh.instanceColor) R.mesh.instanceColor.needsUpdate = true;
+  if (R.at.size > plot.birds.length + 4) for (const b of R.at.keys()) if (!plot.birds.includes(b)) R.at.delete(b);
+}
+
 const XYLO = ['#e2453c', '#ff8c42', '#f4c430', '#5bb04a', '#3d7fd1', '#9b6bd1'];
 function xyloStep(b, P, T, Q, o, next, dt) {
   b.turnTo(-Math.PI / 2, dt);
@@ -380,7 +479,7 @@ function xyloStep(b, P, T, Q, o, next, dt) {
 }
 
 // ---- the effects: little puffs of sand, notes floating up
-let dustMat = null; const noteMats = {};
+let dustMat = null, snowMat = null; const noteMats = {};
 function fx(mat, at, life, size, grow, drift) {
   if (!SCENE) return;
   let n = FX.find(x => x.life <= 0 && x.mat === mat);
@@ -392,9 +491,14 @@ function dustPuff(b, spread, size) {
     dustMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(232,212,165,0.85)'); g.addColorStop(1, 'rgba(232,212,165,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false });
     dustMat.userData.noGrade = true;
   }
+  let mat = dustMat;
+  if (b.plot.theme === 'winter') {                   // (in the snow: it's snow that flies)
+    if (!snowMat) { snowMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(1, 'rgba(240,247,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false }); snowMat.userData.noGrade = true; }
+    mat = snowMat;
+  }
   const w = b.root.getWorldPosition(new THREE.Vector3()), a = Math.random() * 6.28, d = Math.random() * spread;
   w.x += Math.cos(a) * d; w.z += Math.sin(a) * d; w.y += 0.05 + Math.random() * 0.05;
-  fx(dustMat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08, 0.1 + Math.random() * 0.08, Math.sin(a) * 0.08]);
+  fx(mat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08, 0.1 + Math.random() * 0.08, Math.sin(a) * 0.08]);
 }
 function note(b, local, col) {
   if (!noteMats[col]) {

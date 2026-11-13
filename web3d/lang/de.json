@@ -1404,7 +1404,7 @@
  "text.star_kids": "Ab jetzt bessere Küken",
  "text.theme_winter": "Winter",
  "text.theme_winter_rir": "Schneechalet",
- "text.themel_winter_rir": "Ein kleines Alpenchalet tief im Schnee: Eiszapfen, ein Balkon mit roten Herzen, ein Schneemann vor der Tür. Schnee legt sich auch auf den Auslauf und seine Spielsachen.",
+ "text.themel_winter_rir": "Ein kleines Alpenchalet tief im Schnee: Eiszapfen, ein Balkon mit roten Herzen, ein Schneemann im Garten. Schnee am Boden, der ihre Fußspuren behält, und eine gefrorene Pfütze zum Schlittern.",
  "text.theme_t": "Themenhäuser",
  "text.theme_buy": "{name} · {c} Münzen",
  "text.theme_broke": "{name} · {c} Münzen (noch nicht genug)",
@@ -1415,5 +1415,7 @@
  "text.theme_bought": "❄️ Das {name} gehört dir für immer · −{c} Münzen",
  "text.theme_done": "{coop} ist jetzt das {name}.",
  "text.theme_gone": "{coop} ist wieder der eigene Stall.",
- "text.theme_note": "Einmal gekauft, für immer deins: Wechsle, wann du magst."
+ "text.theme_note": "Ein Themenhaus ist ein Deluxe-Stall, solange sie darin wohnen: der große Garten mit seinen Spielsachen und Eier, Küken und Kuscheln wie im Deluxe-Stall. Zurück im eigenen Stall hat er wieder das Aussehen, das du erreicht hattest. Einmal gekauft, für immer deins: Wechsle, wann du magst.",
+ "text.theme_room": "Dazu gehört ein Deluxe-Garten, und der braucht hier mehr Platz: Stelle den Stall zuerst an einen freieren Ort.",
+ "text.theme_own": "Der eigene Stall: {look}."
 }

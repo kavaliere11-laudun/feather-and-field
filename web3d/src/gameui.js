@@ -650,7 +650,7 @@ export class GameUI {
   }
 
   // a coop's look after its breed: its name (release 4: a coop with its five looks), else "rustic" while it's new
-  lookTag(coop) { return UPGRADES.includes(this.g.baseOf(coop.breed)) ? ' · ' + this.g.lookName(coop) : coop.tier === 0 ? ' · ' + this.t('rustic') : ''; }
+  lookTag(coop) { if (coop.theme) return ' · ' + this.g.themeName(coop.theme, this.g.baseOf(coop.breed)); return UPGRADES.includes(this.g.baseOf(coop.breed)) ? ' · ' + this.g.lookName(coop) : coop.tier === 0 ? ' · ' + this.t('rustic') : ''; }
   // ---- a coop: who lives there; its next look (release 4: what it brings, its price; up.onUpgrade(): main.js tryUpgrade,
   // 'ok', or why not: 'room' (its bigger pen doesn't fit there: move it first), 'coins', 'busy'); move it (onMove:
   // main.js startMove)
@@ -687,6 +687,7 @@ export class GameUI {
           else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) up.onTheme(T.id, true); }); row.append(bt); }
           else row.append(el('p', 'gnote', this.t('theme_when_' + T.id)));
           c.append(row); }
+        if (coop.theme) c.append(el('p', 'gnote gtheme-own', this.t('theme_own', { look: g.lookName({ ...coop, theme: undefined, tier: g.ownLook(coop) }) })));
         c.append(el('p', 'gnote', this.t('theme_note'))); body.append(c); } }
     for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
       const on = coop.dress === id, name = g.dressName(id);
