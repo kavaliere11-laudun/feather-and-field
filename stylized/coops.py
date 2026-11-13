@@ -1950,6 +1950,9 @@ def deluxe_fence(seed=9):
     if WINTER:                                                  # (the winter garden: holly and pine, red berries)
         leaf = [C('wg_holly1', '#1f5a34', rough=0.6), C('wg_holly2', '#2f7244', rough=0.6), C('wg_pine', '#27503a', rough=0.8)]
         rose = [C('wg_berry', '#d02a34', rough=0.35)]
+    SWEETS = [C(k, h, rough=0.4) for k, h in (('gb_red', '#d5303a'), ('gb_green', '#3f9a4c'), ('gb_yellow', '#f5c531'), ('gb_pink', '#f18bb2'), ('gb_blue', '#58a9e0'), ('gb_purple', '#9a6bd0'))]
+    if WINTER == 'orp':                                         # (the Gingerbread Cottage's: icing and sweets over the arch, gumdrops along the borders)
+        leaf = [C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)]; rose = SWEETS
     x0, x1, y0, y1 = coop.PEN['box']
     hinge, gc = coop.gate_span(); gw = abs(gc - hinge) * 2
     g0, g1 = min(hinge, gc + (gc - hinge)), max(hinge, gc + (gc - hinge))
@@ -1999,7 +2002,10 @@ def deluxe_fence(seed=9):
         a, b = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); n = int((b - a).length / 0.05)
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
-            if random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER != 'orp' and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER == 'orp':                                 # (a row of gumdrops)
+                if i % 3 == 0: objs.append(sphere('bgum', 0.04, (p.x, p.y, 0.02), (1, 1, 1.25), m=SWEETS[(i // 3) % 6], seg=10, rings=8))
+                continue
             if WINTER:                                          # (a holly berry or two; now and then a pine cone)
                 if i % 5 == 0: objs.append(sphere('wcone', 0.028, (p.x, p.y, 0.07), (0.8, 0.8, 1.3), m=C('wg_cone', '#8a5a34', rough=0.8), ico=1, disp=0.3, seed=i))
                 else: objs.append(sphere('bberry', 0.017, (p.x, p.y, 0.085 + random.uniform(0, 0.05)), m=rose[0], ico=1))
@@ -2191,36 +2197,118 @@ def icicles(objs, x, y, z, r, n, m, lo=0.05, hi=0.11, seed=0):
         objs.append(cyl('icicle', rnd.uniform(0.008, 0.013), h, (x + math.cos(a) * r, y + math.sin(a) * r, z - h / 2), (math.pi, 0, 0), m=m, verts=5, r2=0.0, bevel=0.0))
 
 
-def winter_pen():
-    """The winter garden's yard (pen_t4_winter; Audrey, 13 Nov 2026: "Maybe some toys needs to be changed like the parasol"; her
-    choices: an igloo, the fountain frozen): the Deluxe yard with a box of snow for the sand bath (no beach umbrella), the
-    fountain's water turned to ice with icicles round its bowl and its basin, and an igloo in the front right corner."""
+def cocoa_mug(objs, x, y):
+    """The Gingerbread Cottage's bath (Audrey's choice, 13 Nov 2026: "Hot chocolate mug"): a giant red mug on a saucer, full of
+    hot chocolate with marshmallows floating in it (the round sand pit's size and height, so they bathe in it the same way),
+    its handle at the back, a candy cane for a stirrer."""
+    red = C('gb_red', '#d5303a', rough=0.35); icing = C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)
+    choc = C('gb_cocoa', '#5a341d', rough=0.3, var=0.03); pink = C('gb_pink', '#f18bb2', rough=0.4)
+    R = PIT_R + 0.03; H = 0.15
+    objs.append(cyl('saucer', R + 0.14, 0.025, (x, y, 0.012), m=icing, verts=28, bevel=0.008))
+    n = 26
+    for k in range(n):                                          # its wall, a white band round it
+        a = k / n * math.tau; c, s_ = math.cos(a), math.sin(a)
+        objs.append(box('mugwall', (2 * math.pi * R / n * 1.08, 0.045, H), (x + c * R, y + s_ * R, H / 2 + 0.02), (0, 0, a + math.pi / 2), m=red, bevel=0.006, segs=1))
+    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.028, major_segments=28, minor_segments=6, location=(x, y, H + 0.02))
+    o = bpy.context.object; setmat(o, icing); objs.append(o)
+    bpy.ops.mesh.primitive_torus_add(major_radius=R + 0.024, minor_radius=0.012, major_segments=28, minor_segments=4, location=(x, y, 0.08))
+    o = bpy.context.object; setmat(o, icing); objs.append(o)
+    hx, hy = x + (R + 0.1) * math.cos(1.1), y + (R + 0.1) * math.sin(1.1)       # the handle, at the back right
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.1, minor_radius=0.028, major_segments=14, minor_segments=6, location=(hx, hy, 0.1), rotation=(math.radians(90), 0, 1.1))
+    o = bpy.context.object; setmat(o, red); objs.append(o)
+    objs.append(sphere('cocoa', PIT_R, (x, y, 0.05), (1, 1, 0.09), m=choc, ico=3, disp=0.03, seed=15))
+    rnd = random.Random(21)
+    for k in range(9):                                          # marshmallows floating round its edge (the middle is theirs)
+        a = k / 9 * math.tau + rnd.uniform(-0.2, 0.2); rr = rnd.uniform(0.25, 0.33)
+        objs.append(cyl('mallow', 0.045, 0.05, (x + math.cos(a) * rr, y + math.sin(a) * rr, 0.1), (rnd.uniform(-0.4, 0.4), rnd.uniform(-0.4, 0.4), a), m=pink if k % 3 == 0 else icing, verts=10, bevel=0.012))
+    a0, b0 = Vector((x - 0.2, y + 0.26, 0.08)), Vector((x - 0.36, y + 0.46, 0.5))          # a candy cane stirrer leaning on the rim at the back
+    for i in range(8):
+        p_, q_ = a0.lerp(b0, i / 8), a0.lerp(b0, (i + 1) / 8)
+        objs.append(cyl('stir', 0.02, (q_ - p_).length + 0.004, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=red if i % 2 else icing, verts=8, bevel=0.0))
+
+
+def winter_pen(bk='rir'):
+    """The winter garden's yard (pen_t4_winter; another breed's: pen_t4_orp_winter; Audrey, 13 Nov 2026: "Maybe some toys
+    needs to be changed like the parasol", then "Can you try to find some uniqueness in the toys for the breeds?"). The
+    Rhode Island Reds' (the Snow Chalet): the Deluxe yard with a box of snow for the sand bath (no beach umbrella), the
+    fountain's water turned to ice with icicles round its bowl and its basin, and an igloo in the front right corner. The
+    Buff Orpingtons' (the Gingerbread Cottage): a giant mug of hot chocolate for the sand pit, a swing frame of candy
+    canes, the water chocolate (the roundabout, the gumdrop and the doughnut are moving parts of their own)."""
     global WINTER
-    WINTER = True
-    try: root = pen_tier(4)
+    WINTER = bk
+    try: root = pen_tier(4, bk)
     finally: WINTER = False
-    ice = mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02)
-    _swap(root, {'water'}, ice)
-    L = pen_layout(4); dx, dy = L['dish']; objs = []
-    icicles(objs, dx, dy, 0.455, 0.135, 11, ice, seed=3); icicles(objs, dx, dy, 0.11, 0.31, 9, ice, lo=0.03, hi=0.06, seed=5)
-    igloo(objs, *IGLOO)
+    objs = []
+    if bk == 'rir':
+        ice = mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02)
+        _swap(root, {'water'}, ice)
+        L = pen_layout(4); dx, dy = L['dish']
+        icicles(objs, dx, dy, 0.455, 0.135, 11, ice, seed=3); icicles(objs, dx, dy, 0.11, 0.31, 9, ice, lo=0.03, hi=0.06, seed=5)
+        igloo(objs, *IGLOO)
+    elif bk == 'orp':
+        _swap(root, {'water'}, mat('gb_cocoaw', '#6a3d22', rough=0.25, spec=0.5, var=0.02))
     _own(objs, root)
-    root.name = 'pen_t4_winter'
+    root.name = 'pen_t4' + ('' if bk == 'rir' else '_' + bk) + '_winter'
     return root
 
 
-def winter_fence():
-    """The winter garden's fence (fence_t4_winter; her choices: "Flowers to holly", "Bunting to fairy lights"): the white pickets
-    with holly and red berries over the arch and along the borders (a pine cone here and there), and strings of little warm
+def winter_fence(bk='rir'):
+    """The winter garden's fence (fence_t4_winter, fence_t4_orp_winter; her choices: "Flowers to holly", "Bunting to fairy
+    lights"): the white pickets with holly and red berries over the arch and along the borders (a pine cone here and there;
+    the Gingerbread Cottage's: icing and sweets over the arch, gumdrops along the borders), and strings of little warm
     lights where the bunting was and along the sides, glowing at night."""
     global WINTER
-    had = LIGHTS.get('fence_t4'); WINTER = True
-    try: root = fence_tier(4)
+    key = 'fence_t4' + ('' if bk == 'rir' else '_' + bk)
+    had = LIGHTS.get(key); WINTER = bk
+    try: root = fence_tier(4, bk=bk)
     finally: WINTER = False
-    LIGHTS['fence_t4_winter'] = LIGHTS.pop('fence_t4')
-    if had is not None: LIGHTS['fence_t4'] = had
-    root.name = 'fence_t4_winter'
+    LIGHTS[key + '_winter'] = LIGHTS.pop(key)
+    if had is not None: LIGHTS[key] = had
+    root.name = key + '_winter'
     return root
+
+
+def roundabout():
+    """The Gingerbread garden's roundabout (her choice: "Peppermint roundabout"): a big peppermint lying flat, white with a red
+    swirl, a red hub with a white knob (its middle on the ground at the origin: it turns)."""
+    objs = []; red = C('gb_red', '#d5303a', rough=0.35); icing = C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)
+    objs.append(cyl('mintdisc', 0.4, 0.06, (0, 0, 0.04), m=icing, verts=28, bevel=0.02))
+    for k in range(8):                                         # the swirl
+        a = k / 8 * math.tau
+        for j in range(5):
+            rr = 0.09 + j * 0.068; aa = a + j * 0.2
+            objs.append(sphere('mintswirl', 0.045, (math.cos(aa) * rr, math.sin(aa) * rr, 0.068), (1.25, 0.6, 0.12), (0, 0, aa + 0.45), m=red, seg=8, rings=5))
+    objs.append(cyl('minthub', 0.05, 0.1, (0, 0, 0.11), m=red, verts=12, bevel=0.01))
+    objs.append(sphere('mintknob', 0.045, (0, 0, 0.18), m=icing, seg=10, rings=8))
+    return finish(objs, 'roundabout')
+
+
+def gumdrop():
+    """The Gingerbread garden's trampoline (her choice: "Gumdrop trampoline"): a huge green gumdrop, sugar all over it (its foot
+    on the ground at the origin: it squashes as they bounce)."""
+    objs = []; rnd = random.Random(5)
+    objs.append(sphere('gumdrop', 0.3, (0, 0, 0.0), (1, 1, 0.93), m=C('gb_gum', '#44b060', rough=0.25, sss=0.3), seg=20, rings=14))
+    sugar = C('gb_sugar', '#ffffff', rough=0.4)
+    for k in range(46):
+        v = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), abs(rnd.gauss(0, 1)) + 0.15)).normalized()
+        objs.append(sphere('sugar', 0.011, (v.x * 0.3, v.y * 0.3, v.z * 0.279), m=sugar, ico=1))
+    return finish(objs, 'gumdrop')
+
+
+def doughnut():
+    """The Gingerbread garden's hanging treat in the cabbage's place: a doughnut on its string, pink icing and sprinkles (the
+    string's top at the origin, as the cabbage)."""
+    objs = []; L = CAB_TOP - CAB_Z; rnd = random.Random(12)
+    objs.append(cyl('cstring', 0.005, L - 0.09, (0, 0, -(L - 0.09) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.058, minor_radius=0.034, major_segments=18, minor_segments=8, location=(0, 0, -L), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, C('gb_dough', '#d9a05b', rough=0.8, var=0.05)); objs.append(o)
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.058, minor_radius=0.03, major_segments=18, minor_segments=8, location=(0, -0.012, -L), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, C('gb_pink', '#f18bb2', rough=0.4)); objs.append(o)
+    cols = [C(k, h, rough=0.4) for k, h in (('gb_red', '#d5303a'), ('gb_yellow', '#f5c531'), ('gb_blue', '#58a9e0'), ('gb_icing', '#fbf7f0'))]
+    for k in range(16):
+        a = k / 16 * math.tau + rnd.uniform(-0.1, 0.1)
+        objs.append(box('sprinkle', (0.018, 0.006, 0.006), (math.cos(a) * 0.058, -0.045, -L + math.sin(a) * 0.058), (0, rnd.uniform(0, 3), 0), m=cols[k % 4], bevel=0.0, segs=1))
+    return finish(objs, 'doughnut')
 
 
 def seed_ball():
@@ -3152,6 +3240,19 @@ LADDER = ((-0.17, 0.13), (-0.09, 0.27), (0.0, 0.42))            # its perches on
 def swing_frame(objs, x, y, rustic=False):
     """(rustic: the cottage's, of round hazel poles lashed with twine)"""
     wood = coop.M()['wood']; dark = coop.M()['darkwood']
+    if WINTER == 'orp':                                         # (the Gingerbread Cottage's garden: a frame of candy canes)
+        red = C('gb_red', '#d5303a', rough=0.35); icing = C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)
+        def stick(a, b, r=0.024, n=8):
+            a, b = Vector(a), Vector(b)
+            for i in range(n):
+                p_, q_ = a.lerp(b, i / n), a.lerp(b, (i + 1) / n)
+                objs.append(cyl('swcane', r, (q_ - p_).length + 0.004, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=red if i % 2 else icing, verts=8, bevel=0.0))
+        for sx in (-1, 1):
+            top = Vector((x + sx * SWING_HALF, y, SWING_TOP + 0.03))
+            for sy in (-1, 1): stick((x + sx * SWING_HALF, y + sy * 0.2, 0.0), top)
+            objs.append(sphere('swgum', 0.045, top + Vector((0, 0, 0.02)), m=C('gb_green', '#3f9a4c', rough=0.4) if sx > 0 else C('gb_yellow', '#f5c531', rough=0.4), seg=10, rings=8))
+        stick((x - SWING_HALF - 0.06, y, SWING_TOP), (x + SWING_HALF + 0.06, y, SWING_TOP), r=0.022, n=10)
+        return
     if rustic:
         pole = C('ct_hazel', CT['hazel'], rough=0.85, var=0.12, grain=0.3, grain_scale=G); twine = coop.M()['twine']
         for sx in (-1, 1):
@@ -3963,6 +4064,7 @@ def tin_bath(objs, x, y):
 def sand_pit(objs, x, y):
     """The Deluxe cottage's sand bath: a round pit of pale sand edged with old bricks, a parasol of thatch on a pole over its
     back, a little wooden rake."""
+    if WINTER == 'orp': return cocoa_mug(objs, x, y)            # (the Gingerbread Cottage's garden: a giant mug of hot chocolate)
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
     brick = C('brick', '#9b5239', rough=0.85, var=0.1)
     n = 22

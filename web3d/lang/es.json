@@ -1415,5 +1415,7 @@
  "text.theme_gone": "{coop} vuelve a ser su gallinero.",
  "text.theme_note": "Un edificio temático es un gallinero De lujo mientras viven en él: el gran jardín y sus juegos, y los huevos, pollitos y mimos de un gallinero De lujo. De vuelta en su gallinero, tiene el aspecto que habías alcanzado. Tuyo para siempre una vez comprado: cámbialo cuando quieras.",
  "text.theme_room": "Viene con un jardín De lujo, que necesita más sitio aquí: mueve antes el gallinero a un lugar más despejado.",
- "text.theme_own": "Su propio gallinero: {look}."
+ "text.theme_own": "Su propio gallinero: {look}.",
+ "text.theme_winter_orp": "Casita de jengibre",
+ "text.themel_winter_orp": "Una casita de pan de jengibre: un tejado de glaseado cubierto de dulces, bastones de caramelo, piruletas. En su jardín, un tiovivo de menta, una gominola para rebotar y una taza gigante de chocolate caliente para bañarse."
 }

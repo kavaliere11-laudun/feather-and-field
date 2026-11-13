@@ -125,7 +125,7 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.themes = ['winte
 c = await card();
 ok('July, owned: it can still be moved into', c.btn && c.btn.go === 'on', c);
 // a save changed outside the game
-await p.evaluate(() => { const g = window.__farm.game(); g.data.themes = ['winter_orp', 'summer_rir', 5]; g.data.coops[0].theme = 'winter'; g.data.coops[0].tier0 = g.data.coops[0].tier; g.data.coops[0].tier = 4; g.save(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.themes = ['winter_zzz', 'summer_rir', 5]; g.data.coops[0].theme = 'winter'; g.data.coops[0].tier0 = g.data.coops[0].tier; g.data.coops[0].tier = 4; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(0.5);
 s = await S();
 ok('themes that don\'t exist dropped, a theme worn without owning it taken off (the coop back to its own look), flagged', s.themes.length === 0 && !s.theme && s.tier === own && s.edited === true, s);

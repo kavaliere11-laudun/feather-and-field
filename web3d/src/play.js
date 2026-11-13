@@ -53,6 +53,8 @@ export function tickToys(plot, dt) {
   C.vx += (-K2 * Math.sin(C.ax) - 0.9 * C.vx) * dt; C.vz += (-K2 * Math.sin(C.az) - 0.9 * C.vz) * dt;
   C.ax += C.vx * dt; C.az += C.vz * dt; C.vs *= Math.exp(-1.1 * dt); C.spin += C.vs * dt;
   C.mesh.rotation.set(C.ax, C.spin, C.az);
+  if (T.spin) { const R = T.spin, rider = R.by && R.by.play && R.by.play.phase === 'ride'; R.w += ((rider ? 3.4 : 0) - R.w) * Math.min(1, dt * (rider ? 0.9 : 0.7)); R.a = (R.a + R.w * dt) % (Math.PI * 2); R.mesh.rotation.y = R.a; }
+  if (T.bounce) { const B = T.bounce; B.sq += (B.want - B.sq) * Math.min(1, dt * 22); B.mesh.scale.set(1 + (1 - B.sq) * 0.35, B.sq, 1 + (1 - B.sq) * 0.35); B.want = 1; }
   if (T.prints) tickPrints(plot, dt);
 }
 
@@ -63,7 +65,7 @@ export function wantPlay(b) {
   if (AP && b.kind === 'hen' && b.pers === 'glutton' && AP.want(b) && b.r() < 0.4) return 'apple';      // (the Glutton: an apple on her tree)
   if (!T) return null;
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
-  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo') && b.kind === 'rooster'));
+  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo', 'spin', 'spin', 'bounce', 'bounce'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo' || k === 'spin' || k === 'bounce') && b.kind === 'rooster'));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;
 }
 
@@ -86,7 +88,9 @@ export function startPlay(b, kind) {
       bath: [D.at[0] + (sx ? sx * hw * 0.35 : j * hw * 0.7), D.at[1] + (sz ? sz * hd * 0.3 : j * hd * 0.4)] }));
   } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
   else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
-  else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];      // (the igloo: to its door, facing in)
+  else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];
+  else if (kind === 'spin') C = [[1, 0], [0, -1], [-1, 0]].map(([sx, sz]) => ({ spot: [T.spin.at[0] + sx * (T.spin.r + 0.22), T.spin.at[1] + sz * (T.spin.r + 0.22)], face: Math.atan2(-sx, -sz), slot: Math.atan2(sx, sz) }));      // (the roundabout: beside it, her seat the one nearest)
+  else if (kind === 'bounce') C = [{ spot: [T.bounce.at[0] - 0.56, T.bounce.at[1]], face: Math.PI / 2 }, { spot: [T.bounce.at[0], T.bounce.at[1] + 0.56], face: Math.PI }];      // (the gumdrop: beside it)      // (the igloo: to its door, facing in)
   else if (kind === 'ice') {                         // the frozen puddle: to one end of it (the nearer one first), facing along it
     const I = T.ice, z = I.at[1] + j * 0.2, ends = [-1, 1].map(sx => ({ spot: [I.at[0] + sx * (I.hw + 0.2), z], face: -sx * Math.PI / 2, to: [I.at[0] - sx * (I.hw + 0.2), z] }));
     if (Math.abs(b.root.position.x - ends[1].spot[0]) < Math.abs(b.root.position.x - ends[0].spot[0])) ends.reverse();
@@ -150,6 +154,8 @@ export function playStep(b, dt) {
     else if (P.kind === 'dust' && P.phase === 'bathe') next('out');
     else if (P.kind === 'ice') { if (P.phase !== 'slide') { endPlay(b); return o; } }
     else if (P.kind === 'igloo') { if (P.phase !== 'out' && P.phase !== 'shake') next('out'); }
+    else if (P.kind === 'spin') { if (P.phase === 'ride') next('slow'); }
+    else if (P.kind === 'bounce') { if (P.phase === 'bounce') P.left = 0; }
     else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase === 'face')) { endPlay(b); return o; }      // (the Glutton: unless she's over the fence already)
   }
   if (P.phase === 'walk') {                          // there, round what's in the way
@@ -170,6 +176,8 @@ export function playStep(b, dt) {
       else if (P.kind === 'ladder') next('climb', { step: 0, rest: 0 });
       else if (P.kind === 'apple') next('out');
       else if (P.kind === 'igloo') next('in');
+      else if (P.kind === 'spin') next('on', { off: P.slot - T.spin.a });
+      else if (P.kind === 'bounce') next('up');
       else if (P.kind === 'ice') next('slide', { goes: P.goes || 0, spin: b.r() < 0.4 ? (b.r() < 0.5 ? -1 : 1) : 0 });
       else next('tap', { left: 3.5 + b.r() * 3, pk: 0 });
     }
@@ -182,6 +190,8 @@ export function playStep(b, dt) {
   if (P.kind === 'ladder') return ladderStep(b, P, T, Q.ladder, o, next, dt);
   if (P.kind === 'ice') return iceStep(b, P, T, o, next, dt);
   if (P.kind === 'igloo') return iglooStep(b, P, T, o, next, dt);
+  if (P.kind === 'spin') return spinStep(b, P, T, o, next, dt);
+  if (P.kind === 'bounce') return bounceStep(b, P, T, o, next, dt);
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
 }
 
@@ -400,6 +410,59 @@ function iceStep(b, P, T, o, next, dt) {
   return o;
 }
 
+// the Gingerbread garden's own (Audrey, 13 Nov 2026: "Can you try to find some uniqueness in the toys for the breeds?"; her
+// choices for the Buff Orpingtons: "Peppermint roundabout", "Gumdrop trampoline", "Hot chocolate mug"):
+// the roundabout: a hop onto the peppermint, down low; round it goes, faster, she leans out; it slows, she hops off, dizzy
+// (swaying, stars round her head), a shake
+const SEAT = 0.17, SPIN_Y = 0.065;
+function spinStep(b, P, T, o, next, dt) {
+  const p = b.root.position, R = T.spin, th = R.a + P.off, seat = () => tmpV.set(R.at[0] + Math.sin(th) * SEAT, SPIN_Y, R.at[1] + Math.cos(th) * SEAT);
+  if (P.phase === 'on') { o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0; if (hop(b, P, P.from, seat().clone(), 0.75, 0.08, dt)) next('ride', { ride: 6 + b.r() * 3 }); return o; }
+  if (P.phase === 'ride' || P.phase === 'slow') {
+    seat(); p.copy(tmpV); b.shadowY = SPIN_Y - 0.005; o.sit = 0.6; b.root.rotation.y = th + Math.PI / 2; b.visual.rotation.z = -0.07 * R.w;
+    if (P.phase === 'ride' && P.t > P.ride) next('slow');
+    if (P.phase === 'slow' && (R.w < 0.5 || P.t > 4)) { b.visual.rotation.z = 0; next('off'); }
+    return o;
+  }
+  if (P.phase === 'off') {
+    if (!P.land) P.land = new THREE.Vector3(P.spot[0], 0.015, P.spot[1]);
+    o.flap = P.t > 0.2 && P.t < 0.6 ? 0.6 : 0;
+    if (hop(b, P, P.from, P.land, 0.8, 0.06, dt)) next('dizzy', { yaw: b.root.rotation.y });
+    return o;
+  }
+  if (P.phase === 'dizzy') {                         // the world's still turning: she sways, stars round her head
+    const k = Math.max(0, 1 - P.t / 2.2); b.visual.rotation.z = 0.24 * Math.sin(P.t * 6.5) * k; b.root.rotation.y = P.yaw + 0.5 * Math.sin(P.t * 3.1) * k;
+    P.star = (P.star || 0) - dt; if (P.star <= 0 && k > 0.2) { P.star = 0.28; note(b, new THREE.Vector3(p.x + Math.sin(P.t * 5) * 0.09, 0.42, p.z + Math.cos(P.t * 5) * 0.09), '#ffc93c', '✦'); }
+    if (P.t > 2.2) { b.visual.rotation.z = 0; next('shake'); }
+    return o;
+  }
+  if (P.phase === 'shake') { o.ruffle = Math.sin(Math.min(1, P.t / 0.7) * Math.PI); if (P.t > 0.85) endPlay(b); }
+  return o;
+}
+// the gumdrop: a flutter up onto it, and she bounces, higher each time, wings going, the gumdrop squashing under her, a
+// little turn in the air; a last big one, and down beside it
+const GUM_TOP = 0.27, BOUNCE_T = 0.66;
+function bounceStep(b, P, T, o, next, dt) {
+  const p = b.root.position, B = T.bounce;
+  if (P.phase === 'up') { o.flap = P.t > 0.2 && P.t < 0.7 ? 1 : 0; if (hop(b, P, P.from, tmpV.set(B.at[0], GUM_TOP, B.at[1]).clone(), 0.85, 0.12, dt)) next('bounce', { left: 5 + Math.floor(b.r() * 4), n: 0, yaw: b.root.rotation.y }); return o; }
+  if (P.phase === 'bounce') {
+    const u = (P.t % BOUNCE_T) / BOUNCE_T, n = Math.floor(P.t / BOUNCE_T), high = Math.min(0.34, 0.14 + n * 0.05), touch = u < 0.14 || u > 0.86;
+    if (touch) B.want = 0.72;
+    p.set(B.at[0], GUM_TOP * B.sq + high * 4 * u * (1 - u), B.at[1]); b.shadowY = 0.0;
+    o.flap = touch ? 0 : 0.9; o.sit = touch ? 0.5 : 0; b.root.rotation.y = P.yaw + (n + smooth01((u - 0.15) / 0.7)) * 0.9;
+    if (n >= P.left && u < 0.1) next('down');
+    return o;
+  }
+  if (P.phase === 'down') {
+    if (!P.land) P.land = new THREE.Vector3(P.spot[0], 0.015, P.spot[1]);
+    o.flap = P.t > 0.15 && P.t < 0.75 ? 1 : 0;
+    if (hop(b, P, P.from, P.land, 0.9, 0.22, dt)) next('shake');
+    return o;
+  }
+  if (P.phase === 'shake') { o.ruffle = Math.sin(Math.min(1, P.t / 0.7) * Math.PI); if (P.t > 0.85) endPlay(b); }
+  return o;
+}
+
 // the igloo (the winter garden; Audrey's choice for the parasol's place, 13 Nov 2026: "An igloo": "a little igloo the hens walk
 // into and peek out of"): in at its door, a moment out of sight inside while she turns round, then her head out of the
 // door, a look left and right; out she comes, a shake, snow flying
@@ -438,9 +501,21 @@ function iglooStep(b, P, T, o, next, dt) {
 const SNOW = new THREE.Color('#dde8f4'), PRINT = new THREE.Color('#7f95b8'), PRINTS = 240, P_STAY = 40, P_FADE = 14;
 let iceTex = null, printTex = null;
 const tmpM = new THREE.Matrix4(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3(), tmpP = new THREE.Vector3(), tmpC = new THREE.Color(), UP = new THREE.Vector3(0, 1, 0);
-export function addWinter(plot, garden = false) {
-  const T = plot.toys; if (!T || T.ice) return;
-  if (garden) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
+// each breed's winter garden: what's walked round ([x, z, r]), the treat hung in the cabbage's place, where the snow doesn't
+// settle (the warm things), and which play things it has
+const GARDENS = {
+  rir: { blocks: [[1.9, 2.65, 0.52]], treat: 'seedball', warm: null, igloo: true, ice: true },
+  orp: { blocks: [[-0.3, 2.3, 0.35], [1.9, 1.3, 0.3]], treat: 'doughnut', warm: [[1.6, 0.25, 0.62], [-1.35, 2.45, 0.5]], spin: [-0.3, 2.3], bounce: [1.9, 1.3], mallows: true },
+};
+const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
+export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
+export function addWinter(plot, garden = null, part = null) {
+  const T = plot.toys; if (!T || T.prints) return;
+  const G = winterGarden(garden); T.garden = G;
+  const hang = (name, at) => { const m = part(name); m.position.set(at[0], 0, at[1]); m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } c.userData.moves = true; }); plot.frame.add(m); return m; };
+  if (G.spin && part) { T.spin = { at: G.spin, r: 0.33, a: 0, w: 0, by: null, next: 0, mesh: hang('roundabout', G.spin) }; T.spin.mesh.scale.setScalar(0.83); }      // (a little smaller than modelled: clear of the gate, the feeder and the trough)
+  if (G.bounce && part) T.bounce = { at: G.bounce, sq: 1, want: 1, by: null, next: 0, mesh: hang('gumdrop', G.bounce) };
+  if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
     const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];
     T.igloo = { at, r: R, by: null, next: 0, spot: [at[0] + d[0] * (R + 0.3), at[1] + d[1] * (R + 0.3)], door: [at[0] + d[0] * (R - 0.1), at[1] + d[1] * (R - 0.1)], face: Math.atan2(-d[0], -d[1]) };
   }
@@ -450,10 +525,12 @@ export function addWinter(plot, garden = false) {
     c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.8; c.lineCap = 'round';
     for (const [x0, y0, x1, y1] of [[28, 50, 78, 44], [40, 78, 96, 70], [52, 30, 70, 34], [30, 66, 50, 62], [74, 56, 100, 52], [58, 92, 82, 88]]) { c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
   });
+  if (G.ice) {
   const I = T.ice = { at: [0.1, 2.0], hw: 0.58, hd: 0.34, by: null, next: 0 };
   const ig = new THREE.CircleGeometry(1, 40); ig.rotateX(-Math.PI / 2);
   I.mesh = new THREE.Mesh(ig, new THREE.MeshStandardMaterial({ map: iceTex, transparent: true, roughness: 0.18, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   I.mesh.scale.set(I.hw, 1, I.hd); I.mesh.position.set(I.at[0], 0.012, I.at[1]); I.mesh.receiveShadow = true; I.mesh.renderOrder = 1; I.mesh.userData.moves = true; plot.frame.add(I.mesh);
+  }
   if (!printTex) printTex = fxTex(64, c => {         // a hen's foot: three toes forward, a short one back
     c.strokeStyle = '#fff'; c.lineWidth = 7; c.lineCap = 'round';
     for (const [x, y] of [[32, 6], [12, 16], [52, 16], [32, 58]]) { c.beginPath(); c.moveTo(32, 40); c.lineTo(x, y); c.stroke(); }
@@ -468,6 +545,7 @@ export function removeWinter(plot) {
   const T = plot.toys; if (!T) return;
   if (T.ice) { T.ice.mesh.removeFromParent(); T.ice.mesh.geometry.dispose(); T.ice.mesh.material.dispose(); T.ice = null; }
   T.igloo = null;
+  for (const k of ['spin', 'bounce']) if (T[k]) { T[k].mesh.removeFromParent(); T[k] = null; }
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
 }
 export function printsLive(plot) { return plot.toys && plot.toys.prints ? plot.toys.prints.live : 0; }
@@ -478,7 +556,7 @@ function tickPrints(plot, dt) {
     const p = b.root.position; let s = R.at.get(b);
     if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
     const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
-    const G = T.igloo, inIgloo = G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05;
+    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce') && b.play.phase !== 'walk' && b.play.phase !== 'face');
     const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || inIgloo || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
     if (out) { s.x = p.x; s.z = p.z; continue; }
     const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);
@@ -521,7 +599,7 @@ function xyloStep(b, P, T, Q, o, next, dt) {
 }
 
 // ---- the effects: little puffs of sand, notes floating up
-let dustMat = null, snowMat = null; const noteMats = {};
+let dustMat = null, snowMat = null, mallowMat = null; const noteMats = {};
 function fx(mat, at, life, size, grow, drift) {
   if (!SCENE) return;
   let n = FX.find(x => x.life <= 0 && x.mat === mat);
@@ -533,22 +611,29 @@ function dustPuff(b, spread, size) {
     dustMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(232,212,165,0.85)'); g.addColorStop(1, 'rgba(232,212,165,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false });
     dustMat.userData.noGrade = true;
   }
-  let mat = dustMat;
+  let mat = dustMat, mallow = false;
   if (b.plot.theme === 'winter') {                   // (in the snow: it's snow that flies)
     if (!snowMat) { snowMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(1, 'rgba(240,247,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false }); snowMat.userData.noGrade = true; }
     mat = snowMat;
+    if (b.plot.toys && b.plot.toys.garden && b.plot.toys.garden.mallows && b.play && b.play.kind === 'dust') {      // (in the mug of hot chocolate: marshmallows fly)
+      if (!mallowMat) { mallowMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { c.fillStyle = '#fffaf4'; c.strokeStyle = '#f3b6cb'; c.lineWidth = 4; c.beginPath(); c.roundRect ? c.roundRect(14, 16, 36, 32, 11) : c.rect(14, 16, 36, 32); c.fill(); c.stroke(); }), transparent: true, depthWrite: false }); mallowMat.userData.noGrade = true; }
+      mat = mallowMat; mallow = true;
+    }
   }
   const w = b.root.getWorldPosition(new THREE.Vector3()), a = Math.random() * 6.28, d = Math.random() * spread;
   w.x += Math.cos(a) * d; w.z += Math.sin(a) * d; w.y += 0.05 + Math.random() * 0.05;
+  if (mallow) { fx(mat, w, 0.9 + Math.random() * 0.4, 0.07, 0.15, [Math.cos(a) * 0.35, 0.55 + Math.random() * 0.3, Math.sin(a) * 0.35]); return; }
   fx(mat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08, 0.1 + Math.random() * 0.08, Math.sin(a) * 0.08]);
 }
-function note(b, local, col) {
-  if (!noteMats[col]) {
-    noteMats[col] = new THREE.SpriteMaterial({ map: fxTex(64, c => { c.font = 'bold 56px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#fffaf0'; c.strokeText('♪', 32, 34); c.fillStyle = col; c.fillText('♪', 32, 34); }), transparent: true, depthWrite: false });
-    noteMats[col].userData.noGrade = true;
+function note(b, local, col, glyph = '♪') {       // (a note floating up from a bar; a star round a dizzy head)
+  const key = col + glyph;
+  if (!noteMats[key]) {
+    noteMats[key] = new THREE.SpriteMaterial({ map: fxTex(64, c => { c.font = 'bold 56px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 6; c.strokeStyle = '#fffaf0'; c.strokeText(glyph, 32, 34); c.fillStyle = col; c.fillText(glyph, 32, 34); }), transparent: true, depthWrite: false });
+    noteMats[key].userData.noGrade = true;
   }
   const w = local.clone(); b.plot.frame.localToWorld(w);
-  fx(noteMats[col], w, 1.6, 0.15, 0.25, [(Math.random() - 0.5) * 0.1, 0.32, (Math.random() - 0.5) * 0.1]);
+  if (glyph === '♪') fx(noteMats[key], w, 1.6, 0.15, 0.25, [(Math.random() - 0.5) * 0.1, 0.32, (Math.random() - 0.5) * 0.1]);
+  else fx(noteMats[key], w, 0.8, 0.09, 0.2, [0, 0.1, 0]);
 }
 export function tickPlayFx(dt) {
   for (const n of FX) {

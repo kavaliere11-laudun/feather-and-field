@@ -5255,4 +5255,29 @@ close). Test: `movealwaystest` (EN/FR).
   old spot, when its Deluxe pen doesn't fit there, to the new one if that is free. A bush (b18) under the new spot is
   cleared as a farm begins. `movetest` and `growtest` updated (the latter: the look a moved coop must keep room for is
   the roomiest of the other spots, no longer always Deluxe on its small test farm).
+- **Each breed's winter garden its own** (13 Nov 19:40, Audrey: "Can you try to find some uniqueness in the toys for the
+  breeds?"). Her choices for the Buff Orpingtons: all of "Hot chocolate mug", "Peppermint roundabout", "Gumdrop
+  trampoline", "Candy versions of the rest"; and "Yes, show me the list" for the other breeds. The list sent to her
+  (hers to change; nothing but the first two built): Reds: Snow Chalet, igloo and frozen puddle. Orpingtons:
+  Gingerbread Cottage, mug, roundabout, trampoline. Silkies: Ice Palace, an ice slide. Leghorns: Santa's Workshop, a
+  toy train to ride. Brahmas: Ski Lodge, a sledge run. Polish: Snow Globe cottage, a snowball that grows as it rolls.
+  Ayam Cemani: Hot Spring cabin, a steaming pool. Call ducks: ice-fishing hut, curling stones. Peafowl: Winter
+  Carousel pavilion, a carousel perch.
+- **The Gingerbread Cottage** (`theme_winter_orp`, `coops.py winter_gingerbread`; shown to her as a picture, then
+  built with her toy choices): gingerbread walls piped with icing, an icing roof covered in sweets, peppermint gable
+  windows (lit), a chocolate door with a wreath, candy canes (one a lamp post, its light), lollipops, gumdrops. The
+  Orpingtons' own nest, pop door and ramp (checked at export). THEMES.winter.breeds is now rir, orp.
+  - Its garden (`winter_pen('orp')`, `winter_fence('orp')` with `WINTER = 'orp'`): `pen_t4_orp_winter` (the round sand
+    pit a giant mug of hot chocolate with marshmallows, `cocoa_mug`, same size and height so the bath play is the
+    same; a candy-cane swing frame; the trough's water chocolate), `fence_t4_orp_winter` (icing and sweets over the
+    arch, gumdrops along the borders, the fairy lights), and three moving parts: `roundabout`, `gumdrop`, `doughnut`.
+  - main.js: `coopLook` looks for `<fence or pen>_<breed>_winter`, then `_winter`; `garden` is the breed.
+    `snowedPart(name, warm)` leaves the warm things unsnowed (the mug, the chocolate trough).
+  - play.js `GARDENS` (`winterGarden(k)`): for each breed what is walked round, the treat hung in the cabbage's
+    place, the warm spots and its play things. New kinds, hens only: `spin` (the peppermint roundabout: a hop on, it
+    turns up to speed with her going round on it leaning, slows, she hops off dizzy, swaying with stars round her
+    head, a shake) and `bounce` (the gumdrop: a flutter up, five to eight bounces each higher, the gumdrop squashing
+    under her, a turn in the air, down beside it). In the mug the bath's puffs are marshmallows flying.
+  - `gingertest.mjs` (new): an Orpington coop, the buy, its garden and toys (no igloo or puddle), each of the three
+    plays, footprints, the Reds' chalet beside it with its igloo, a reload.
 

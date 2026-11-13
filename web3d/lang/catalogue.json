@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter_orp",
+  "en": "Gingerbread Cottage",
+  "fr": "Maison en pain d’épices"
+ },
+ {
+  "id": "text.themel_winter_orp",
+  "en": "A cottage baked of gingerbread: an icing roof covered in sweets, candy canes, lollipops. In its garden a peppermint roundabout, a gumdrop to bounce on and a giant mug of hot chocolate to bathe in.",
+  "fr": "Une maisonnette en pain d’épices : un toit de glaçage couvert de bonbons, des sucres d’orge, des sucettes. Dans son jardin, un tourniquet à la menthe, une boule de gomme pour rebondir et une tasse géante de chocolat chaud pour se baigner."
+ },
+ {
   "id": "text.theme_room",
   "en": "It comes with a Deluxe garden, which needs more room here: move the coop somewhere roomier first.",
   "fr": "Il vient avec un jardin Luxe, qui demande plus de place ici : déplacez d’abord le poulailler vers un endroit plus dégagé."

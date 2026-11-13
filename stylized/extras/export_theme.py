@@ -15,7 +15,10 @@ coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; wr
 G['GLOW'].update({'wc_glow'})                             # (the chalet's windows glow at night, with its lantern)
 G['GLOW'].update({'wg_fairy0', 'wg_fairy1', 'wg_fairy2'})    # (the winter garden's fairy lights)
 THEMES = {'theme_winter_rir': (lambda: coops.winter_chalet(name='theme_winter_rir', house='rir', FL=0.40, wx=0.445, ramp=0.67), 16000, 'rir'),
-          'pen_t4_winter': (coops.winter_pen, 11500, None), 'fence_t4_winter': (coops.winter_fence, 13000, None), 'seedball': (coops.seed_ball, 900, None)}
+          'pen_t4_winter': (coops.winter_pen, 11500, None), 'fence_t4_winter': (coops.winter_fence, 13000, None), 'seedball': (coops.seed_ball, 900, None),
+          'theme_winter_orp': (lambda: coops.winter_gingerbread(name='theme_winter_orp'), 20000, 'orp'),
+          'pen_t4_orp_winter': (lambda: coops.winter_pen('orp'), 11500, None), 'fence_t4_orp_winter': (lambda: coops.winter_fence('orp'), 13000, None),
+          'roundabout': (coops.roundabout, 2200, None), 'gumdrop': (coops.gumdrop, 900, None), 'doughnut': (coops.doughnut, 800, None)}
 NEST0 = json.load(open(os.path.join(HERE, '..', 'web3d', 'models', 'coops.json')))['nests']
 names = []
 for n, (fn, budget, house) in THEMES.items():

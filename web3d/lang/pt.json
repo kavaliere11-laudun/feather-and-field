@@ -1420,5 +1420,7 @@
  "text.theme_gone": "{coop} voltou a ser o galinheiro de sempre.",
  "text.theme_note": "Uma construção temática é um galinheiro Deluxe enquanto elas moram nela: o grande jardim com os brinquedos, e os ovos, pintinhos e carinhos de um galinheiro Deluxe. De volta ao galinheiro de sempre, ele tem o visual que você tinha alcançado. Seu para sempre depois de comprado: troque quando quiser.",
  "text.theme_room": "Ela vem com um jardim Deluxe, que precisa de mais espaço aqui: mude primeiro o galinheiro para um lugar mais livre.",
- "text.theme_own": "O galinheiro de sempre: {look}."
+ "text.theme_own": "O galinheiro de sempre: {look}.",
+ "text.theme_winter_orp": "Casinha de gengibre",
+ "text.themel_winter_orp": "Uma casinha de pão de gengibre: um telhado de glacê coberto de doces, bengalas de açúcar, pirulitos. No jardim, um gira-gira de hortelã, uma bala de goma para pular e uma caneca gigante de chocolate quente para tomar banho."
 }

@@ -1417,5 +1417,7 @@
  "text.theme_gone": "{coop} ist wieder der eigene Stall.",
  "text.theme_note": "Ein Themenhaus ist ein Deluxe-Stall, solange sie darin wohnen: der große Garten mit seinen Spielsachen und Eier, Küken und Kuscheln wie im Deluxe-Stall. Zurück im eigenen Stall hat er wieder das Aussehen, das du erreicht hattest. Einmal gekauft, für immer deins: Wechsle, wann du magst.",
  "text.theme_room": "Dazu gehört ein Deluxe-Garten, und der braucht hier mehr Platz: Stelle den Stall zuerst an einen freieren Ort.",
- "text.theme_own": "Der eigene Stall: {look}."
+ "text.theme_own": "Der eigene Stall: {look}.",
+ "text.theme_winter_orp": "Lebkuchenhaus",
+ "text.themel_winter_orp": "Ein Häuschen aus Lebkuchen: ein Zuckergussdach voller Süßigkeiten, Zuckerstangen, Lutscher. Im Garten ein Pfefferminz-Karussell, ein Gummibonbon zum Hüpfen und eine riesige Tasse heiße Schokolade zum Baden."
 }
