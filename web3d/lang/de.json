@@ -35,7 +35,7 @@
  "text.trust_body": "Kuscheln schafft Vertrauen: Alle 6 Stunden zählt es einmal.",
  "text.exp_how": "Sterne gibt es für Zeit auf dem Hof, fürs Kuscheln und fürs Aufziehen von Küken.",
  "text.exp_top": "Alle fünf Sterne!",
- "text.exp_eggs": "Jeder Stern macht ihre Eier eine Münze teurer.",
+ "text.exp_eggs": "Jeder Stern macht ihre Eier {n} Münzen wertvoller: jetzt {p} Münzen pro Ei.",
  "text.exp_chicks": {
   "t": "Je mehr Sterne, desto besser seine Küken.",
   "f": "Je mehr Sterne, desto besser ihre Küken."
@@ -1396,5 +1396,10 @@
  "text.dock_pantry": "🐟 Fische in der Speisekammer: {n} von {max}",
  "text.mile_love_seen": "💞 Du hast sie gesehen! Ein geheimer Meilenstein: +{c} Münzen und ein Andenken warten in deinem Buch.",
  "text.mile_ready": "🏅 {name}: Meilenstein erreicht! +{c} Münzen warten in deinem Buch.",
- "text.mile_ready_n": "🏅 {n} Meilensteine erreicht! Ihre Belohnungen warten in deinem Buch."
+ "text.mile_ready_n": "🏅 {n} Meilensteine erreicht! Ihre Belohnungen warten in deinem Buch.",
+ "text.star_next": "{n} / 100 bis zum nächsten Stern",
+ "text.star_toast": "{name} hat {n} Sterne!",
+ "text.star_toast1": "{name} hat den ersten Stern!",
+ "text.star_eggs": "Eier jetzt je {p} Münzen wert",
+ "text.star_kids": "Ab jetzt bessere Küken"
 }

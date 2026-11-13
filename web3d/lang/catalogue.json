@@ -189,8 +189,8 @@
  },
  {
   "id": "text.exp_eggs",
-  "en": "Each star makes her eggs a coin dearer.",
-  "fr": "Chaque étoile rend ses œufs une pièce plus chers."
+  "en": "Each star makes her eggs {n} coins dearer: {p} coins an egg now.",
+  "fr": "Chaque étoile rend ses œufs {n} pièces plus chers : {p} pièces l’œuf maintenant."
  },
  {
   "id": "text.exp_chicks",
@@ -4274,6 +4274,31 @@
   "id": "text.fish_casting",
   "en": "Casting…",
   "fr": "On lance…"
+ },
+ {
+  "id": "text.star_next",
+  "en": "{n} / 100 to the next star",
+  "fr": "{n} / 100 vers la prochaine étoile"
+ },
+ {
+  "id": "text.star_toast",
+  "en": "{name} has {n} stars!",
+  "fr": "{name} a {n} étoiles !"
+ },
+ {
+  "id": "text.star_toast1",
+  "en": "{name} has a first star!",
+  "fr": "{name} a sa première étoile !"
+ },
+ {
+  "id": "text.star_eggs",
+  "en": "Eggs worth {p} coins each now",
+  "fr": "Ses œufs valent maintenant {p} pièces"
+ },
+ {
+  "id": "text.star_kids",
+  "en": "Better chicks from now on",
+  "fr": "De meilleurs poussins désormais"
  },
  {
   "id": "text.mile_ready",

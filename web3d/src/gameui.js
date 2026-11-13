@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
+import { PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -372,6 +372,13 @@ export class GameUI {
     const champ = g.champion(b);
     const duck = g.kindOf(b.breed);      // (a call duck: a duck or the drake; a peahen or the peacock)
     body.append(el('p', 'gsub', g.breedName(b.breed) + ' · ' + this.t(duck === 'duck' ? (f ? 'duck' : 'drake') : duck === 'pea' ? (f ? 'peahen' : 'peacock') : f ? 'hen' : 'rooster') + (champ ? ' · 🏆 ' + this.t('champ_' + champ, {}, f) : '')));
+    // (her stars and the way to the next, first thing on her card: 13 Nov 2026, Audrey: "the chicken 'level' and experience it's
+    // quite hidden atm … a progression bar to know where she is at")
+    { const s0 = g.stars(b), part0 = g.starPart(b), row = el('div', 'gbirdstars'), st0 = el('span', 'gstars gsmall'); for (let i = 0; i < MAX_STARS; i++) st0.append(el('span', i < s0 ? 'on' : '', i < s0 ? '★' : '☆'));
+      row.append(st0);
+      if (s0 < MAX_STARS) { const bar = el('div', 'gbar-xp gstarbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(Math.max(0.03, part0) * 100) + '%'; bar.append(fill); row.append(bar, el('span', 'gnote gstarnum', this.t('star_next', { n: Math.round(part0 * 100) }))); }
+      else row.append(el('span', 'gnote gstarnum', this.t('exp_top')));
+      body.append(row); }
     const forever = el('p', 'gforever'); forever.append(el('span', 'gheart', '♥'), document.createTextNode(' ' + this.t(f ? 'forever_h' : 'forever_r'))); body.append(forever);
     // a cuddle (or how long she's happy after one; at night, in the morning)
     const left = g.happyLeft(b), state = this.o.cuddleState ? this.o.cuddleState(b) : 'ok';
@@ -411,7 +418,7 @@ export class GameUI {
     ec.append(el('div', 'glabel', this.t('experience')), st);
     if (s < MAX_STARS) { const bar = el('div', 'gbar-xp gstarbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(part * 100) + '%'; bar.append(fill); ec.append(bar); }
     ec.append(el('p', 'gtext', !s && part < 0.05 ? this.t('exp_none', {}, f) : s >= MAX_STARS ? this.t('exp_top') : this.t('exp_how')));
-    ec.append(el('p', 'gnote', (f ? this.t('exp_eggs', { p: g.henEggPrice(b) }) + ' ' : '') + this.t(duck === 'duck' ? 'exp_ducklings' : duck === 'pea' ? 'exp_peachicks' : 'exp_chicks', {}, f)));
+    ec.append(el('p', 'gnote', (f ? this.t('exp_eggs', { p: g.henEggPrice(b), n: STAR_EGG }) + ' ' : '') + this.t(duck === 'duck' ? 'exp_ducklings' : duck === 'pea' ? 'exp_peachicks' : 'exp_chicks', {}, f)));
     body.append(ec);
     // trust: the hearts, cuddles to the next level, what it does; a cuddle (or how long she's happy after one)
     const tc = el('div', 'gcard', ), lv = g.trustLevel(b), farmer = g.farmerName();
@@ -1695,6 +1702,7 @@ export class GameUI {
     st.addEventListener('click', () => { this.close(); this.story(); });
     b.append(st);
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
+    if (this.o.picDiag) { const pd = el('p', 'gnote gsound-diag gpic-diag', this.o.picDiag()); b.append(pd); }      // (how sharp the picture is drawn just now, and how smoothly: for telling Claude, 13 Nov 2026)
     b.append(this.credits(), this.privacyLink());
   }
   // thanks to whose music and sounds these are (audio/CREDITS.txt); the peacock's recording (CC BY 4.0) asks for its

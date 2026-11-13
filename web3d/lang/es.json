@@ -35,7 +35,7 @@
  "text.trust_body": "Los mimos dan confianza: cuenta uno cada 6 horas.",
  "text.exp_how": "Las estrellas llegan con el tiempo en la granja, los mimos y la crianza de pollitos.",
  "text.exp_top": "¡Las cinco estrellas!",
- "text.exp_eggs": "Cada estrella hace que sus huevos valgan una moneda más.",
+ "text.exp_eggs": "Cada estrella hace que sus huevos valgan {n} monedas más: ahora {p} monedas por huevo.",
  "text.exp_chicks": {
   "t": "Cuantas más estrellas, mejores serán sus pollitos.",
   "f": "Cuantas más estrellas, mejores serán sus pollitos."
@@ -1394,5 +1394,10 @@
  "text.dock_pantry": "🐟 Peces en tu despensa: {n} de {max}",
  "text.mile_love_seen": "💞 ¡Los has visto! Un logro secreto: +{c} monedas y un recuerdo te esperan en tu Libro.",
  "text.mile_ready": "🏅 {name}: ¡logro conseguido! +{c} monedas te esperan en tu Libro.",
- "text.mile_ready_n": "🏅 ¡{n} logros conseguidos! Sus recompensas te esperan en tu Libro."
+ "text.mile_ready_n": "🏅 ¡{n} logros conseguidos! Sus recompensas te esperan en tu Libro.",
+ "text.star_next": "{n} / 100 para la próxima estrella",
+ "text.star_toast": "¡{name} tiene {n} estrellas!",
+ "text.star_toast1": "¡{name} tiene su primera estrella!",
+ "text.star_eggs": "Sus huevos valen ahora {p} monedas",
+ "text.star_kids": "Mejores pollitos a partir de ahora"
 }

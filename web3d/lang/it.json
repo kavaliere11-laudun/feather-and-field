@@ -35,7 +35,7 @@
  "text.trust_body": "Le coccole creano fiducia: ne conta una ogni 6 ore.",
  "text.exp_how": "Le stelle arrivano col tempo in fattoria, con le coccole e con i pulcini allevati.",
  "text.exp_top": "Tutte e cinque le stelle!",
- "text.exp_eggs": "Ogni stella fa valere le sue uova una moneta in più.",
+ "text.exp_eggs": "Ogni stella fa valere le sue uova {n} monete in più: ora {p} monete l’uno.",
  "text.exp_chicks": {
   "t": "Più stelle ha, migliori saranno i suoi pulcini.",
   "f": "Più stelle ha, migliori saranno i suoi pulcini."
@@ -1399,5 +1399,10 @@
  "text.dock_pantry": "🐟 Pesci in dispensa: {n} su {max}",
  "text.mile_love_seen": "💞 Li hai visti! Un traguardo segreto: +{c} monete e un ricordo ti aspettano nel tuo Libro.",
  "text.mile_ready": "🏅 {name}: traguardo raggiunto! +{c} monete ti aspettano nel tuo Libro.",
- "text.mile_ready_n": "🏅 {n} traguardi raggiunti! Le ricompense ti aspettano nel tuo Libro."
+ "text.mile_ready_n": "🏅 {n} traguardi raggiunti! Le ricompense ti aspettano nel tuo Libro.",
+ "text.star_next": "{n} / 100 alla prossima stella",
+ "text.star_toast": "{name} ha {n} stelle!",
+ "text.star_toast1": "{name} ha la sua prima stella!",
+ "text.star_eggs": "Le sue uova valgono ora {p} monete",
+ "text.star_kids": "Pulcini migliori d’ora in poi"
 }

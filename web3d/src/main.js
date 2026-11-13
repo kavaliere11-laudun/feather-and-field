@@ -562,7 +562,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -2963,7 +2963,8 @@ function wormMat() { if (!WORM_MAT) { WORM_MAT = new THREE.MeshStandardMaterial(
 // hearts floating up (a cuddle): sprites from a little pool, as the song's notes
 const HEARTS = []; let heartMat = null;
 let heartsMade = 0;                                     // (how many so far: for the tests)
-function spawnHeart(at) {
+let starTex = null, heartTex = null;
+function spawnHeart(at, star = false) {
   heartsMade++;
   if (!heartMat) {
     heartMat = new THREE.SpriteMaterial({ map: fxTexture64(64, c => { c.fillStyle = '#ff6b8a'; c.beginPath(); c.moveTo(32, 54); c.bezierCurveTo(4, 34, 10, 8, 32, 22); c.bezierCurveTo(54, 8, 60, 34, 32, 54); c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff4f6'; c.stroke(); }), transparent: true, depthWrite: false });
@@ -2971,7 +2972,10 @@ function spawnHeart(at) {
   }
   let n = HEARTS.find(x => x.life <= 0);
   if (!n) { if (HEARTS.length > 24) return; n = { sprite: new THREE.Sprite(heartMat.clone()), life: 0 }; n.sprite.renderOrder = 3; scene.add(n.sprite); HEARTS.push(n); }
-  n.sprite.position.set(at.x + (Math.random() - 0.5) * 0.1, at.y, at.z + (Math.random() - 0.5) * 0.1); n.sprite.scale.setScalar(1e-4);
+  if (!heartTex) heartTex = heartMat.map;
+  if (star && !starTex) starTex = fxTexture64(64, c => { c.fillStyle = '#ffc93c'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 12 : 28; c[i ? 'lineTo' : 'moveTo'](32 + Math.cos(a) * r, 33 + Math.sin(a) * r); } c.closePath(); c.fill(); c.lineWidth = 3; c.strokeStyle = '#fff6d6'; c.stroke(); });
+  { const want = star ? starTex : heartTex; if (n.sprite.material.map !== want) { n.sprite.material.map = want; n.sprite.material.needsUpdate = true; } }
+  n.sprite.position.set(at.x + (Math.random() - 0.5) * (star ? 0.34 : 0.1), at.y, at.z + (Math.random() - 0.5) * (star ? 0.34 : 0.1)); n.sprite.scale.setScalar(1e-4);
   n.size = 0.1 + Math.random() * 0.04; n.life = n.full = 1.5;
   n.drift = [(Math.random() - 0.5) * 0.08, 0.32 + 0.08 * Math.random(), (Math.random() - 0.5) * 0.08];
   n.sprite.visible = true;
@@ -5072,9 +5076,30 @@ function gameCuddle(id) {
   hint(r.up ? game.t('trust_up' + r.up, { name: gb.name, farmer, xp: r.xp }) : game.t('cuddle_done', { name: gb.name, farmer, xp: r.xp }));
   if (r.xp) { gameUI.refresh(); gameUI.bumpCoins(); }
   starsSeen.set(id, game.stars(gb));                      // (a star from the cuddle: said with it)
-  if (r.star && !r.up) hint(game.t('star_up', { name: gb.name }));
+  if (r.star) setTimeout(() => starParty(gb), 900);
   jobsDone(r.done); guideDid('cuddle');
   return r;
+}
+// A star earned (13 Nov 2026, Audrey: "We need an animation when she passes level"): gold stars burst up over her, she hops
+// and flaps, a chime, and a banner in the middle of the screen for a few seconds: her stars, her name, and what the new star
+// brings (her eggs' new price; a rooster: better chicks). Nothing to tap; it doesn't cover a card's buttons for long
+let STAR_TOAST = null;
+function starParty(gb) {
+  const b = birdOf(gb.id), n = game.stars(gb), hen = gb.sex === 'h';
+  if (b && b.root.visible) {
+    const w = b.root.getWorldPosition(new THREE.Vector3()); w.y += b.isGoose ? 0.3 : b.rig.scale * 0.9;
+    for (let k = 0; k < 9; k++) setTimeout(() => spawnHeart(w.clone().add(new THREE.Vector3(0, 0.04 * (k % 3), 0)), true), k * 110);
+    if (!b.isGoose && !b.asleep && !b.busy()) { b.act = { type: 'flap', left: 0.8 }; b.hopT = 0; b.wait = Math.max(b.wait || 0, 1.1); b.route = null; }
+  }
+  if (sound && sound.chime) sound.chime();
+  if (!STAR_TOAST) { STAR_TOAST = document.createElement('div'); STAR_TOAST.className = 'gstarup'; STAR_TOAST.hidden = true; STAR_TOAST.setAttribute('role', 'status'); document.body.append(STAR_TOAST); }
+  const T = STAR_TOAST, row = document.createElement('div'), nm = document.createElement('div'), sub = document.createElement('div');
+  row.className = 'gstarup-s'; for (let i = 0; i < 5; i++) { const sp = document.createElement('span'); sp.textContent = i < n ? '★' : '☆'; if (i < n) sp.className = i === n - 1 ? 'on new' : 'on'; row.append(sp); }
+  nm.className = 'gstarup-n'; nm.textContent = game.t(n === 1 ? 'star_toast1' : 'star_toast', { name: gb.name, n });
+  sub.className = 'gstarup-t'; sub.textContent = hen ? '🥚 ' + game.t('star_eggs', { p: game.henEggPrice(gb) }) : '🐣 ' + game.t('star_kids');
+  T.replaceChildren(row, nm, sub); T.hidden = false; T.classList.remove('go'); void T.offsetWidth; T.classList.add('go');
+  clearTimeout(T._t); T._t = setTimeout(() => { T.hidden = true; }, 4200);
+  wake(4500);
 }
 // a bird gaining a star while you watch (time on the farm, a brood, a cuddle): a word and a little burst of stars over her
 const starsSeen = new Map();
@@ -5083,8 +5108,7 @@ function watchStars() {
     const s = game.stars(gb), was = starsSeen.get(gb.id);
     starsSeen.set(gb.id, s);
     if (was === undefined || s <= was) continue;
-    hint(game.t('star_up', { name: gb.name }));
-    heartsOver(birdOf(gb.id));
+    starParty(gb);
   }
 }
 // the farmer stops at a coop's fence: its trusting birds trot over to the front fence to say hello, a heart over each
@@ -9654,6 +9678,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
+  starParty: id => starParty(game.bird(id)), starToast: () => STAR_TOAST && !STAR_TOAST.hidden ? STAR_TOAST.innerText : null,
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,
   pointersDown: () => pointers.size, wantQuality: n => { wantQ = n; },

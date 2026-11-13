@@ -35,7 +35,7 @@
  "text.trust_body": "Carinhos criam confiança: só um conta a cada 6 horas.",
  "text.exp_how": "As estrelas vêm com o tempo na fazenda, os carinhos e os pintinhos criados.",
  "text.exp_top": "Todas as cinco estrelas!",
- "text.exp_eggs": "Cada estrela faz os ovos dela valerem uma moeda a mais.",
+ "text.exp_eggs": "Cada estrela faz os ovos dela valerem {n} moedas a mais: agora {p} moedas por ovo.",
  "text.exp_chicks": {
   "t": "Quanto mais estrelas, melhores os pintinhos dele.",
   "f": "Quanto mais estrelas, melhores os pintinhos dela."
@@ -1399,5 +1399,10 @@
  "text.dock_pantry": "🐟 Peixes na despensa: {n} de {max}",
  "text.mile_love_seen": "💞 Você os viu! Uma conquista secreta: +{c} moedas e uma lembrança esperam por você no seu Livro.",
  "text.mile_ready": "🏅 {name}: conquista alcançada! +{c} moedas esperam por você no seu Livro.",
- "text.mile_ready_n": "🏅 {n} conquistas alcançadas! As recompensas esperam por você no seu Livro."
+ "text.mile_ready_n": "🏅 {n} conquistas alcançadas! As recompensas esperam por você no seu Livro.",
+ "text.star_next": "{n} / 100 para a próxima estrela",
+ "text.star_toast": "{name} tem {n} estrelas!",
+ "text.star_toast1": "{name} tem a primeira estrela!",
+ "text.star_eggs": "Os ovos valem agora {p} moedas",
+ "text.star_kids": "Pintinhos melhores daqui em diante"
 }

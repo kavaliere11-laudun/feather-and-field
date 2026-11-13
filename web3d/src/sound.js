@@ -314,6 +314,13 @@ export class Sound {
     } catch (e) { this.note('test: ' + e.message); return 'error'; }
     return this.ctx.state;
   }
+  // a little rising chime (a bird's new star): three soft notes, made here (no recording); not with the sounds switched off
+  chime() {
+    if (!this.ctx || this.hidden || this.ctx.state !== 'running' || (this.o.sounds && !this.o.sounds())) return false;
+    const t0 = this.ctx.currentTime + 0.03;
+    [[784, 0], [988, 0.13], [1319, 0.26]].forEach(([f, d]) => { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.16, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.55); o.connect(g); g.connect(this.fx); o.start(t0 + d); o.stop(t0 + d + 0.6); });
+    return true;
+  }
   // what the sound has to play with, in a line (Settings shows it under the test, for telling Claude)
   diag() {
     if (!this.ctx) return 'no engine';
