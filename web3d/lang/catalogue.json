@@ -4276,6 +4276,101 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.paint_btn",
+  "en": "🎨 Paint this coop",
+  "fr": "🎨 Repeindre ce poulailler"
+ },
+ {
+  "id": "text.paint_title",
+  "en": "Paint {coop}",
+  "fr": "Repeindre {coop}"
+ },
+ {
+  "id": "text.paint_walls",
+  "en": "Walls",
+  "fr": "Murs"
+ },
+ {
+  "id": "text.paint_roof",
+  "en": "Roof and trims",
+  "fr": "Toit et boiseries"
+ },
+ {
+  "id": "text.pc_own",
+  "en": "Its own",
+  "fr": "D’origine"
+ },
+ {
+  "id": "text.pc_blue",
+  "en": "Blue",
+  "fr": "Bleu"
+ },
+ {
+  "id": "text.pc_sage",
+  "en": "Sage green",
+  "fr": "Vert sauge"
+ },
+ {
+  "id": "text.pc_plum",
+  "en": "Plum",
+  "fr": "Prune"
+ },
+ {
+  "id": "text.pc_slate",
+  "en": "Slate grey",
+  "fr": "Gris ardoise"
+ },
+ {
+  "id": "text.pc_terra",
+  "en": "Terracotta",
+  "fr": "Terre cuite"
+ },
+ {
+  "id": "text.pc_navy",
+  "en": "Navy",
+  "fr": "Bleu marine"
+ },
+ {
+  "id": "text.pc_straw",
+  "en": "Straw yellow",
+  "fr": "Jaune paille"
+ },
+ {
+  "id": "text.paint_go",
+  "en": "Paint it · {c} coins",
+  "fr": "Repeindre · {c} pièces"
+ },
+ {
+  "id": "text.paint_free",
+  "en": "Paint it · free",
+  "fr": "Repeindre · gratuit"
+ },
+ {
+  "id": "text.paint_same",
+  "en": "Pick a colour to try it on",
+  "fr": "Choisissez une couleur pour l’essayer"
+ },
+ {
+  "id": "text.paint_broke",
+  "en": "Not enough coins yet ({c})",
+  "fr": "Pas encore assez de pièces ({c})"
+ },
+ {
+  "id": "text.paint_done",
+  "en": "🎨 Freshly painted · −{c} coins",
+  "fr": "🎨 Peinture fraîche · −{c} pièces"
+ },
+ {
+  "id": "text.paint_done0",
+  "en": "🎨 Back in its own colours",
+  "fr": "🎨 De nouveau dans ses couleurs d’origine"
+ },
+ {
+  "id": "text.paint_note",
+  "en": "Only for looks. {c} coins for a new colour of walls or roof; back to its own colours is free.",
+  "fr": "Juste pour le plaisir des yeux. {c} pièces pour une nouvelle couleur de murs ou de toit ; revenir aux couleurs d’origine est gratuit."
+ },
+ {
   "id": "text.star_next",
   "en": "{n} / 100 to the next star",
   "fr": "{n} / 100 vers la prochaine étoile"

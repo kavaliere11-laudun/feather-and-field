@@ -2,7 +2,7 @@
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { READY, LANG_NAME } from './lang.js';
-import { PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
+import { PERS_INFO, MAX_STARS, STAR_EGG, PAINT, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -677,6 +677,7 @@ export class GameUI {
       });
       c.append(b, why); body.append(c);
     } else if (up && UPGRADES.includes(g.baseOf(coop.breed))) body.append(el('p', 'gnote', this.t('up_top')));
+    if (up && up.onPaint) { const pb = el('button', 'gbtn galt gpaintbtn', this.t('paint_btn')); pb.type = 'button'; pb.addEventListener('click', () => up.onPaint()); body.append(pb); }      // (paint, 13 Nov 2026: the coops that can be painted)
     for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
       const on = coop.dress === id, name = g.dressName(id);
       if (on) body.append(el('p', 'gnote', this.t('dress_card', { name })));
@@ -1359,6 +1360,27 @@ export class GameUI {
       b.append(c);
     }
     const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+  }
+  // ---- paint for a coop (13 Nov 2026; game.js PAINT): two rows of colours, the walls' and the roof's (its own first); a
+  // colour tapped is tried on the coop at once (h.try(w, r)); "Paint it" with what it costs (h.go(w, r)); a narrow card, low,
+  // so the coop shows above it
+  paintSheet(coop, h) {
+    const g = this.g, b = this.open('paint', '🎨 ' + this.t('paint_title', { coop: g.coopName(coop) })), fmt = n => n.toLocaleString(g.locale()), was = g.paintOf(coop);
+    this.bird = null;
+    let w = was.w, r = was.r; const HEX = { blue: '#6f9bc9', sage: '#7fa58a', plum: '#8a62a8', slate: '#8a8f98', terra: '#d9703a', navy: '#3d4f7c', straw: '#e6cf7a' };
+    const go = el('button', 'gbtn', ''); go.type = 'button'; go.dataset.paint = 'go';
+    const rows = [];
+    const fresh = () => { const c = g.paintPrice(coop, w, r), same = w === was.w && r === was.r, broke = g.data.coins < c;
+      go.textContent = same ? this.t('paint_same') : broke ? this.t('paint_broke', { c: fmt(c) }) : c ? this.t('paint_go', { c: fmt(c) }) : this.t('paint_free'); go.disabled = same || broke; go.classList.toggle('galt', same || broke);
+      for (const [get, btns] of rows) for (const [id, e] of btns) e.classList.toggle('on', (get() || null) === id); };
+    const row = (label, ids, get, set, own) => { const wrap = el('div', 'gpaint-row'), btns = []; wrap.append(el('div', 'glabel', label)); const line = el('div', 'gpaint-sw');
+      for (const id of [null, ...ids]) { const e = el('button', 'gpaint-c'), dot = el('span', 'gpaint-dot'); e.type = 'button'; e.dataset.colour = id || 'own'; dot.style.background = id ? HEX[id] : own; e.append(dot, el('span', 'gpaint-n', this.t(id ? 'pc_' + id : 'pc_own')));
+        e.addEventListener('click', () => { set(id); fresh(); h.try(w, r); }); btns.push([id, e]); line.append(e); }
+      wrap.append(line); rows.push([get, btns]); b.append(wrap); };
+    row(this.t('paint_walls'), PAINT.walls, () => w, v => { w = v; }, '#a8322f');
+    row(this.t('paint_roof'), PAINT.roofs, () => r, v => { r = v; }, 'linear-gradient(135deg, #6fae96 50%, #8f9aa6 50%)');
+    b.append(el('p', 'gnote', this.t('paint_note', { c: fmt(PAINT.price) })));
+    go.addEventListener('click', () => { if (!go.disabled) h.go(w, r); }); const st = el('div', 'gstick'); st.append(go); b.append(st); fresh();
   }
   // ---- a treat from the garden for a coop's birds (7 Nov 2026): what each vegetable does, how many are in the basket,
   // Give (h.give(crop)); had today: tomorrow

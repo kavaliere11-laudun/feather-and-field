@@ -2091,9 +2091,42 @@ function tickSails(p, dt) {
   S.a = (S.a + S.v * dt) % (2 * Math.PI); S.mesh.rotation.z = S.a;
 }
 // a coop's parts drawn in its style's batch: [model, where in its frame]
+// ---- a coop's paint (13 Nov 2026; game.js PAINT): the house's model in other colours, made once for each look and each pair
+// of colours as a part of its own (as the Silkies' coloured Pagodas are). What's wall and what's roof is told from the model
+// itself: the walls are its barn red (clear red, well saturated); the roof is whatever colours its sloping faces high up
+// have, and everything else up there in those same colours (ridge, bargeboards, the corner trims that match it). Each keeps
+// its own light and shade: the new colour times how light that spot was against the usual
+const PAINT_HEX = { blue: '#6f9bc9', sage: '#7fa58a', plum: '#8a62a8', slate: '#8a8f98', terra: '#d9703a', navy: '#3d4f7c', straw: '#e6cf7a' };
+function paintedPart(name, w, r) {
+  if (!w && !r) return name;
+  const key = name + '#' + (w || '') + '#' + (r || ''); if (parts[key]) return key;
+  const src = parts[name]; if (!src) return name;
+  src.updateMatrixWorld(true);
+  const ms = meshesOf(src).filter(m => m.geometry.attributes.color), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3();
+  // every vertex: how high, how its face slopes, its colour (hue, how strong, how light)
+  const V = []; let y0 = Infinity, y1 = -Infinity;
+  ms.forEach((m, mi) => { const P = m.geometry.attributes.position, N = m.geometry.attributes.normal, C = m.geometry.attributes.color, K = C.normalized ? (C.array instanceof Uint8Array ? 255 : 65535) : 1; nm.getNormalMatrix(m.matrixWorld);
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); if (N) nv.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); else nv.set(0, 0, 0);
+      const cr = C.getX(i), cg = C.getY(i), cb = C.getZ(i), mx = Math.max(cr, cg, cb), mn = Math.min(cr, cg, cb), d = mx - mn; let h = 0; if (d > 1e-5) { h = mx === cr ? ((cg - cb) / d) % 6 : mx === cg ? (cb - cr) / d + 2 : (cr - cg) / d + 4; h = (h * 60 + 360) % 360; }
+      const sat = mx ? d / mx : 0; y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+      V.push({ mi, i, y: v.y, ny: nv.y, h, s: sat, v: mx, k: sat < 0.16 ? 'g' + Math.round(mx * 4) : 'h' + Math.round(h / 24) + (sat < 0.4 ? 'a' : 'b'), K }); } });
+  const H = y1 - y0, isWall = q => q.s > 0.45 && (q.h < 14 || q.h > 346);
+  const slope = V.filter(q => q.ny > 0.3 && q.ny < 0.97 && q.y > y0 + 0.55 * H && !isWall(q)), tally = {}; for (const q of slope) tally[q.k] = (tally[q.k] || 0) + 1;
+  const roofKeys = new Set(Object.entries(tally).filter(([, n]) => n >= slope.length * 0.12).map(([k]) => k));
+  const isRoof = q => !isWall(q) && roofKeys.has(q.k) && q.y > y0 + 0.4 * H;
+  const med = L => { if (!L.length) return 0.5; const a = L.map(q => q.v).sort((x, y) => x - y); return a[a.length >> 1] || 0.5; };
+  const wRef = med(V.filter(isWall)), rRef = med(V.filter(isRoof)), wc = w ? new THREE.Color(PAINT_HEX[w]) : null, rc = r ? new THREE.Color(PAINT_HEX[r]) : null;
+  const geos = ms.map(m => { const g = m.geometry.clone(); g.setAttribute('color', m.geometry.attributes.color.clone()); return g; });
+  for (const q of V) { const c = wc && isWall(q) ? [wc, wRef] : rc && isRoof(q) ? [rc, rRef] : null; if (!c) continue; const k = Math.max(0.5, Math.min(1.6, q.v / (c[1] || 0.5))); geos[q.mi].attributes.color.setXYZ(q.i, Math.min(1, c[0].r * k), Math.min(1, c[0].g * k), Math.min(1, c[0].b * k)); }
+  const grp = new THREE.Group();
+  ms.forEach((m, mi) => { const k = new THREE.Mesh(geos[mi], m.material); k.applyMatrix4(m.matrixWorld); grp.add(k); });
+  for (const m of meshesOf(src)) if (!m.geometry.attributes.color) { const k = new THREE.Mesh(m.geometry, m.material); k.applyMatrix4(m.matrixWorld); grp.add(k); }
+  grp.updateMatrixWorld(true); parts[key] = grp; return key;
+}
+const paintOfPlot = plot => plot.paintTry || (plot.gc && plot.gc.paint) || null;
 function coopParts(plot) {
-  const L = coopLook(plot), house = L.house, I = new THREE.Matrix4();
-  const out = [[inColour(house, plot), I], [L.pen, I], [L.fence, I]];
+  const L = coopLook(plot), house = L.house, I = new THREE.Matrix4(), pt = paintOfPlot(plot);
+  const out = [[pt ? paintedPart(inColour(house, plot), pt.w, pt.r) : inColour(house, plot), I], [L.pen, I], [L.fence, I]];
   if (L.vane) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
   if (plot.dress === 'xmas' && parts.xmas_star) {                // (the Christmas dress: the garland on its fence, the tree, the star on its roof; on a vane's top)
     out.push(['xmas_fence_t' + Math.max(0, L.penT < 0 ? 2 : L.penT), I]);
@@ -5147,7 +5180,7 @@ function openBirdCard(b) {
   const size = Math.min(view.size, 1.35), up = 0.32 * size / PITCH_SIN;      // (upright: her feet a third of the way up the screen, her head under the top bar)
   focusOn(w.x + VIEW_DIR.x / hz * up, w.z + VIEW_DIR.z / hz * up, size);
 }
-function gameSheetClosed(k) { holdBird(null); if (k === 'showres') endShowDay(); if (k === 'intro') { GUIDE_UI.intro = false; GUIDE_UI.on = true; } wake(300); }
+function gameSheetClosed(k) { holdBird(null); if (k === 'paint') paintClosed(); if (k === 'showres') endShowDay(); if (k === 'intro') { GUIDE_UI.intro = false; GUIDE_UI.on = true; } wake(300); }
 
 // ---- the game's eggs and feed (game.js has the rules; here they're seen). Once a second: the lays that are due. A hen
 // whose time has just come walks in and lays (the egg counts when it's in the straw, gameLaid); one that can't go yet
@@ -5196,6 +5229,7 @@ function gameTick(now = Date.now(), force = false) {
   // (a milestone reached: said, with where to collect it: 12 Nov 2026, Audrey, of the secret one won silently: "receive no
   // notification nothing had to look for it"; the secret one has its own word, at the kiss)
   { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) { const id = MILE_IDS.find(k => game.mileReached(k) > game.mileClaimed(k)), P = id ? game.milePay(id, game.mileClaimed(id)) : null; hintNext(mr > 1 || !P ? game.t('mile_ready_n', { n: mr }) : game.t('mile_ready', { name: game.t('mile_' + id), c: P.coins.toLocaleString(game.locale()) })); } } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
+  if (PAINT_OPEN && gameUI.kind !== 'paint') paintClosed();      // (the paint card gone some other way: the coop as it was)
   { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
@@ -7155,9 +7189,23 @@ let MOVE_WAIT = null;
 const nightAt = p => DAY.hour >= 21.8 || DAY.hour < 6.3 || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onPaint: game.paintable(p.gc) ? () => paintCard(p) : null, onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
+// the coop's paint card: a colour picked is tried on the coop at once (nothing paid); "Paint it": paid, kept; the card shut any
+// other way: as it was
+function paintCard(p) {
+  if (!p || !p.gc || MOVE.plot || !game.paintable(p.gc)) return;
+  const was = game.paintOf(p.gc), show = (w, r) => { p.paintTry = { w: w || null, r: r || null }; batchCoops(); renderer.shadowMap.needsUpdate = true; wake(800); };
+  PAINT_OPEN = p;
+  gameUI.paintSheet(p.gc, { try: (w, r) => show(w, r), go: (w, r) => {
+    const res = game.paintCoop(p.gc.id, w, r); if (!res) return; if (res.broke) { hint(game.t('paint_broke', { c: res.coins.toLocaleString(game.locale()) })); return; }
+    PAINT_OPEN = null; p.paintTry = null; p.gc = game.coop(p.gc.id) || p.gc; gameUI.close(); batchCoops(); renderer.shadowMap.needsUpdate = true;
+    hint(res.coins ? game.t('paint_done', { c: res.coins.toLocaleString(game.locale()) }) : game.t('paint_done0')); gameUI.refresh(); if (res.coins) gameUI.bumpCoins(); wake(1200); } });
+  show(was.w, was.r);
+}
+let PAINT_OPEN = null;
+function paintClosed() { const p = PAINT_OPEN; if (!p) return; PAINT_OPEN = null; if (p.paintTry) { p.paintTry = null; batchCoops(); renderer.shadowMap.needsUpdate = true; wake(600); } }
 function dressCoop(p, id) {
   if (!p || !p.gc || MOVE.plot || !game.dressCoop(p.gc.id, id)) return false;
   gameUI.close(); retier(p);
@@ -9678,6 +9726,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
+  coopModels: () => COOP_BATCH.map(m => m.userData.model),      // (the tests: which models the coops are drawn with, a painted one's with its colours)
   starParty: id => starParty(game.bird(id)), starToast: () => STAR_TOAST && !STAR_TOAST.hidden ? STAR_TOAST.innerText : null,
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,
