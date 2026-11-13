@@ -405,7 +405,7 @@ function iceStep(b, P, T, o, next, dt) {
 // door, a look left and right; out she comes, a shake, snow flying
 function iglooStep(b, P, T, o, next, dt) {
   const p = b.root.position, I = T.igloo, lerp = (A, B, u) => { p.x = A[0] + (B[0] - A[0]) * u; p.z = A[1] + (B[1] - A[1]) * u; p.y = 0.015; };
-  if (P.phase === 'in') { const u = Math.min(1, P.t / 1.1); lerp(I.spot, I.at, smooth01(u)); if (u > 0.5) b.root.visible = false;      // (through its door: out of sight) o.walking = true; o.sit = 0.5 * u; if (u >= 1) next('inside', { stay: 1.0 + b.r() * 1.2 }); return o; }
+  if (P.phase === 'in') { const u = Math.min(1, P.t / 1.1); lerp(I.spot, I.at, smooth01(u)); if (u > 0.5) b.root.visible = false;      /* (through its door: out of sight) */ o.walking = true; o.sit = 0.5 * u; if (u >= 1) next('inside', { stay: 1.0 + b.r() * 1.2 }); return o; }
   if (P.phase === 'inside') {                        // (out of sight: she turns round)
     p.set(I.at[0], 0.015, I.at[1]); o.sit = 0.5; b.root.rotation.y = I.face + Math.PI * smooth01(P.t / 0.8); b.root.visible = false;      // (right inside: not drawn, so nothing of her shows through its wall)
     if (P.t > P.stay) { b.root.rotation.y = I.face + Math.PI; b.root.visible = true; next('peek', { look: 2.2 + b.r() * 1.8 }); }
