@@ -678,6 +678,16 @@ export class GameUI {
       });
       c.append(b, why); body.append(c);
     } else if (up && UPGRADES.includes(g.baseOf(coop.breed))) body.append(el('p', 'gnote', this.t('up_top')));
+    // (themed buildings, 13 Nov 2026: this breed's, each bought in its season, then moved into or left whenever she likes)
+    { const TH = up && up.onTheme ? g.themesFor(coop) : [], base = g.baseOf(coop.breed), fmtn = n => n.toLocaleString(g.locale());
+      if (TH.length) { const c = el('div', 'gcard gtheme'); c.append(el('div', 'glabel', this.t('theme_t')));
+        for (const T of TH) { const name = g.themeName(T.id, base), row = el('div', 'gtheme-r'); row.dataset.theme = T.id;
+          row.append(el('p', 'gtext', (T.on ? '✓ ' : '') + name), el('p', 'gnote', this.t('themel_' + T.key)));
+          if (T.owned) { const bt = el('button', 'gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.type = 'button'; bt.dataset.themego = T.on ? 'off' : 'on'; bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); row.append(bt); }
+          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) up.onTheme(T.id, true); }); row.append(bt); }
+          else row.append(el('p', 'gnote', this.t('theme_when_' + T.id)));
+          c.append(row); }
+        c.append(el('p', 'gnote', this.t('theme_note'))); body.append(c); } }
     for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
       const on = coop.dress === id, name = g.dressName(id);
       if (on) body.append(el('p', 'gnote', this.t('dress_card', { name })));

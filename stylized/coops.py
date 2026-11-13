@@ -6282,12 +6282,13 @@ def gamelan(objs, x, y):
 # switch between what they own"; "A whole new building"; themes: Valentine's Day, Easter and spring, Halloween, Summer fête,
 # "a winter one with snow"). Each has the Red Barn's footprint, its pop door and ramp and its nest window where every house
 # has them, so the birds' yard and their laying are the same. The first: the winter one.
-def winter_chalet(seed=77, name='theme_winter'):
+def winter_chalet(seed=77, name='theme_winter_rir', house='rir', FL=0.40, wx=0.445, ramp=0.67):
     """The Snow Chalet: a little alpine chalet deep in snow. Cream plaster walls under dark timbers, a carved balcony
     under the gable with a row of red hearts cut in it, red shutters, a steep roof under a thick quilt of snow with
     icicles along the eaves, a stone chimney with its own cap of snow, a warm window; by the door a snowman in a red
     scarf and a tin bucket hat, a sledge leaning on the wall, a little fir heavy with snow, a lantern on a post, and
-    drifts of snow against the walls."""
+    drifts of snow against the walls. (house, FL, wx, ramp: the breed whose coop it stands in for: its pop door, its
+    nest window and its ramp exactly where that breed's own house has them, so the game's nest for it holds.)"""
     random.seed(seed); objs = []
     plaster = C('wc_plaster', '#f1e7d2', rough=0.9, var=0.03); timber = C('wc_timber', '#5a3a24', rough=0.8, var=0.1, grain=0.3, grain_scale=G)
     timberd = C('wc_timberd', '#452b1a', rough=0.85, var=0.06); red = C('wc_red', '#c23a31', rough=0.6, var=0.04)
@@ -6296,7 +6297,8 @@ def winter_chalet(seed=77, name='theme_winter'):
     glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     green = C('wc_fir', '#2f6b45', rough=0.8, var=0.08); wood = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G)
     orange = C('wc_carrot', '#f08a2c', rough=0.6); tin = C('wc_tin', '#8f9aa3', rough=0.4, metal=0.7); coal = C('wc_coal', '#1f1d1c', rough=0.8)
-    EAVE, PEAK = 0.9, 1.72
+    EAVE, PEAK = 1.1, 1.92
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])      # (what stands in the yard by it: the birds walk round)
     # the walls: plaster below, dark planks above the balcony line, timbers at the corners and round the openings
     core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=plaster, bevel=0.01, segs=2); objs.append(core)
     for sx in (-1, 1):
@@ -6356,18 +6358,18 @@ def winter_chalet(seed=77, name='theme_winter'):
     objs.append(box('dlintel', (0.32, 0.05, 0.06), (0.08, -D2 - 0.03, 0.64), m=timber, bevel=0.01, segs=2))
     for dx in (-0.013, 0.013): objs.append(sphere('dheart', 0.018, (0.08 + dx, -D2 - 0.05, 0.47), (1, 0.4, 1), m=red, seg=10, rings=6))
     objs.append(box('dheartv', (0.03, 0.014, 0.03), (0.08, -D2 - 0.05, 0.45), (0, math.radians(45), 0), m=red, bevel=0.003, segs=1))
-    nest_window(objs, 'rir', 0.26, 0.44, timber, solids=[core], nest_floor=0.2, door='drop', door_m=red)
-    for sx in (-1, 1): objs.append(box('nshut', (0.07, 0.02, WIN_H + 0.04), (0.44 + sx * (WIN_W / 2 + 0.06), -D2 - 0.02, 0.26 + 0.05 + WIN_H / 2), m=red, bevel=0.005, segs=1))
-    objs.append(box('nsnow', (WIN_W + 0.22, 0.06, 0.04), (0.44, -D2 - 0.04, 0.26 + 0.05 + WIN_H + 0.06), m=snow, bevel=0.018, segs=3))
-    window(objs, W2 + 0.03, 0.0, 0.5, 0.24, 0.2, timber, glass, normal=(1, 0, 0))
-    pop_door(objs, 0.26, timber, wood, C('darkwood', '#6d4a31', rough=0.8))
-    straw_bits(objs, (-0.31, -D2 - 0.04, 0.27), 0.08, 14, 0.0)
+    nest_window(objs, house, FL, wx, timber, solids=[core], ramp_len=ramp, door='drop', door_m=red)
+    for sx in (-1, 1): objs.append(box('nshut', (0.07, 0.02, WIN_H + 0.04), (wx + sx * (WIN_W / 2 + 0.06), -D2 - 0.02, FL + 0.04 + WIN_H / 2), m=red, bevel=0.005, segs=1))
+    objs.append(box('nsnow', (WIN_W + 0.22, 0.06, 0.04), (wx, -D2 - 0.04, FL + 0.04 + WIN_H + 0.06), m=snow, bevel=0.018, segs=3))
+    window(objs, W2 + 0.03, 0.0, 0.62, 0.26, 0.24, timber, glass, normal=(1, 0, 0))
+    pop_door(objs, FL, timber, wood, C('darkwood', '#6d4a31', rough=0.8), length=ramp)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
     # drifts against the walls
     for (x, y, s) in ((-0.5, D2 + 0.08, 1.0), (0.1, D2 + 0.1, 1.2), (0.55, D2 + 0.06, 0.9), (W2 + 0.1, 0.25, 0.9), (W2 + 0.09, -0.2, 0.7), (-W2 - 0.1, 0.1, 1.1), (-W2 - 0.08, -0.3, 0.7), (0.62, -D2 - 0.1, 0.6)):
         objs.append(sphere('drift', 0.16 * s, (x, y, 0.0), (1.5, 1.0, 0.45), m=snowb if random.random() < 0.4 else snow, seg=14, rings=8))
     # the snowman by the door (right of it, clear of the ramp): three balls, coal eyes and buttons, a carrot, twig arms, a red scarf, a tin bucket for a hat
     sx_, sy_ = 0.8, -D2 - 0.24
-    block('rir', sx_, sy_, 0.13)
+    keep(sx_, sy_, 0.15)
     for r_, z in ((0.13, 0.11), (0.095, 0.3), (0.07, 0.445)): objs.append(sphere('snowman', r_, (sx_, sy_, z), (1, 1, 0.92), m=snow, seg=16, rings=10))
     for dx in (-0.025, 0.025): objs.append(sphere('eye', 0.009, (sx_ + dx, sy_ - 0.062, 0.465), m=coal, seg=8, rings=6))
     for z in (0.27, 0.31, 0.35): objs.append(sphere('button', 0.009, (sx_, sy_ - 0.09, z), m=coal, seg=8, rings=6))
@@ -6379,10 +6381,10 @@ def winter_chalet(seed=77, name='theme_winter'):
         a0, b0 = Vector((sx_ + sgn * 0.08, sy_, 0.31)), Vector((sx_ + sgn * 0.2, sy_ - 0.02, 0.39))
         objs.append(cyl('twig', 0.006, (b0 - a0).length, tuple((a0 + b0) / 2), (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=timberd, verts=5, bevel=0.0))
     # a little fir heavy with snow, at the back corner; a sledge leaning on the side wall; a lantern on a post left of the ramp
-    fx, fy = -0.86, -0.1
-    block('rir', fx, fy, 0.14)
+    fx, fy = -0.8, -0.2
+    keep(fx, fy, 0.18)
     objs.append(cyl('firtrunk', 0.025, 0.14, (fx, fy, 0.07), m=timberd, verts=8, bevel=0.0))
-    for k, (r_, z, h) in enumerate(((0.2, 0.26, 0.3), (0.15, 0.46, 0.26), (0.1, 0.64, 0.22))):
+    for k, (r_, z, h) in enumerate(((0.17, 0.26, 0.3), (0.13, 0.46, 0.26), (0.09, 0.64, 0.22))):
         objs.append(cyl('fir', r_, h, (fx, fy, z), m=green, verts=10, r2=0.012, bevel=0.0))
         for q in range(5):
             an = q * 2 * math.pi / 5 + k; objs.append(sphere('firsnow', r_ * 0.34, (fx + math.cos(an) * r_ * 0.55, fy + math.sin(an) * r_ * 0.55, z - h * 0.18), (1.2, 1.2, 0.5), m=snow, seg=10, rings=6))
@@ -6390,7 +6392,7 @@ def winter_chalet(seed=77, name='theme_winter'):
     for sgn in (-1, 1):
         objs.append(box('runner', (0.02, 0.5, 0.025), (W2 + 0.09 + sgn * 0.0, -0.05 + sgn * 0.0, 0.26), (math.radians(72), 0, 0), m=red, bevel=0.005, segs=1))
     objs.append(box('sledge', (0.05, 0.42, 0.24), (W2 + 0.085, 0.02, 0.27), (math.radians(72), 0, 0), m=wood, bevel=0.008, segs=1))
-    block('rir', -0.62, -D2 - 0.28, 0.1)
+    keep(-0.62, -D2 - 0.28, 0.1)
     objs.append(cyl('lpost', 0.022, 0.95, (-0.62, -D2 - 0.28, 0.475), m=timberd, verts=8, bevel=0.0))
     objs.append(box('larm', (0.14, 0.025, 0.025), (-0.56, -D2 - 0.28, 0.92), m=iron, bevel=0.004, segs=1))
     light_at(name, -0.5, -D2 - 0.28, 0.85)

@@ -1404,5 +1404,19 @@
  "text.star_toast": "{name} ha {n} stelle!",
  "text.star_toast1": "{name} ha la sua prima stella!",
  "text.star_eggs": "Le sue uova valgono ora {p} monete",
- "text.star_kids": "Pulcini migliori d’ora in poi"
+ "text.star_kids": "Pulcini migliori d’ora in poi",
+ "text.theme_winter": "Inverno",
+ "text.theme_winter_rir": "Chalet delle nevi",
+ "text.themel_winter_rir": "Un piccolo chalet alpino sotto la neve: ghiaccioli, un balcone di cuori rossi, un pupazzo di neve accanto alla porta. La neve si posa anche sul recinto e sui suoi giochi.",
+ "text.theme_t": "Edifici a tema",
+ "text.theme_buy": "{name} · {c} monete",
+ "text.theme_broke": "{name} · {c} monete (non bastano ancora)",
+ "text.theme_on": "Trasloca nello {name}",
+ "text.theme_off": "Torna al suo pollaio",
+ "text.theme_wears": "Questo è lo {name}.",
+ "text.theme_when_winter": "In negozio d’inverno.",
+ "text.theme_bought": "❄️ Lo {name} è tuo per sempre · −{c} monete",
+ "text.theme_done": "{coop} ora è lo {name}.",
+ "text.theme_gone": "{coop} è di nuovo il suo pollaio.",
+ "text.theme_note": "Tuo per sempre una volta comprato: cambia quando vuoi."
 }

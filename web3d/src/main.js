@@ -1987,6 +1987,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.breed = gc ? baseBreed(gc.breed) : TB[i % TB.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / TB.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
+    plot.theme = gc ? gc.theme || null : params.get('theme');      // (a themed building: the game's, or the test page's ?theme=winter)
     plot.dress = gc ? gc.dress || null : params.get('dress');       // (a seasonal dress: the game's, or the test page's ?dress=xmas)
     plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN); plot.lanes = null;      // (its pen: the birds' yard, what's in it, its gate; the farmer's ways in it worked out again)
     addNest(frame, plot);
@@ -2052,6 +2053,9 @@ const LOOKS5 = !GAME_MODE && params.has('looks');
 const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (breed === 'call' || (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5)));      // (the call ducks': always)
 function coopLook(plot) {
   const t = Math.max(0, Math.min(4, plot.tier || 0)), T = hasLooks(plot.breed) ? TIER_LOOK[plot.breed][t] : null;
+  // (a themed building, 13 Nov 2026: in place of the house whatever the coop's look; its own pen and fence, the theme's way)
+  const th = plot.theme && T && parts['theme_' + plot.theme + '_' + baseBreed(plot.breed)] ? 'theme_' + plot.theme + '_' + baseBreed(plot.breed) : null;
+  if (th) return { house: th, fence: T[1], pen: T[2], vane: false, penT: t, theme: plot.theme };
   if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4 && plot.breed !== 'call' && plot.breed !== 'pea', penT: t };      // (no rooster on the ducks' roof: their lighthouse and pennant; nor on the Garden Pavilion's dome: its gold finial)
   return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
 }
@@ -2091,9 +2095,28 @@ function tickSails(p, dt) {
   S.a = (S.a + S.v * dt) % (2 * Math.PI); S.mesh.rotation.z = S.a;
 }
 // a coop's parts drawn in its style's batch: [model, where in its frame]
+// ---- winter on a pen and its toys (the winter theme; Audrey: "Make sure the toys are also updated"): snow has settled on
+// everything there: a copy of the pen's (the fence's) model with every face that looks up, off the ground, turned to snow,
+// the more the flatter it lies (the top of the rails and posts, the swing's bar, the parasol, the feeder's lid, the bales,
+// the toys). Made once for each model
+function snowedPart(name) {
+  const key = name + '#snow'; if (parts[key]) return key;
+  const src = parts[name]; if (!src) return name;
+  src.updateMatrixWorld(true);
+  const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd');
+  for (const m of meshesOf(src)) {
+    const C0 = m.geometry.attributes.color, N = m.geometry.attributes.normal, P = m.geometry.attributes.position; let g = m.geometry;
+    if (C0 && N) { g = m.geometry.clone(); const C = C0.clone(); g.setAttribute('color', C); nm.getNormalMatrix(m.matrixWorld);
+      for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); nv.fromBufferAttribute(N, i).applyMatrix3(nm).normalize();
+        if (v.y < 0.06 || nv.y < 0.55) continue; const k = Math.min(1, (nv.y - 0.55) / 0.3) * Math.min(1, (v.y - 0.06) / 0.05);
+        C.setXYZ(i, C.getX(i) + (SN.r - C.getX(i)) * k, C.getY(i) + (SN.g - C.getY(i)) * k, C.getZ(i) + (SN.b - C.getZ(i)) * k); } }
+    const mesh = new THREE.Mesh(g, m.material); mesh.applyMatrix4(m.matrixWorld); grp.add(mesh);
+  }
+  grp.updateMatrixWorld(true); parts[key] = grp; return key;
+}
 function coopParts(plot) {
   const L = coopLook(plot), house = L.house, I = new THREE.Matrix4();
-  const out = [[inColour(house, plot), I], [L.pen, I], [L.fence, I]];
+  const out = L.theme === 'winter' ? [[house, I], [snowedPart(L.pen), I], [snowedPart(L.fence), I]] : [[L.theme ? house : inColour(house, plot), I], [L.pen, I], [L.fence, I]];
   if (L.vane) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
   if (plot.dress === 'xmas' && parts.xmas_star) {                // (the Christmas dress: the garland on its fence, the tree, the star on its roof; on a vane's top)
     out.push(['xmas_fence_t' + Math.max(0, L.penT < 0 ? 2 : L.penT), I]);
@@ -7158,9 +7181,20 @@ let MOVE_WAIT = null;
 const nightAt = p => DAY.hour >= 21.8 || DAY.hour < 6.3 || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onTheme: (t, buy) => themeCoop(p, t, buy), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
+// a themed building from a coop's card: bought (in its season: worn at once), moved into, or left for the coop's own look
+function themeCoop(p, t, buy) {
+  if (!p || !p.gc || MOVE.plot) return false;
+  const base = baseBreed(p.gc.breed), name = t ? game.themeName(t, base) : '';
+  if (buy) { const r = game.buyTheme(p.gc.id, t); if (!r) return false; if (r.broke) { hint(game.t('dec_broke')); return false; }
+    gameUI.close(); retier(p); hint(game.t('theme_bought', { name, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); return true; }
+  const was = p.gc.theme; if (!game.wearTheme(p.gc.id, t)) return false;
+  gameUI.close(); retier(p);
+  hint(t ? game.t('theme_done', { coop: game.coopName(p.gc), name }) : game.t('theme_gone', { coop: game.coopName(p.gc) }));
+  return true;
+}
 function dressCoop(p, id) {
   if (!p || !p.gc || MOVE.plot || !game.dressCoop(p.gc.id, id)) return false;
   gameUI.close(); retier(p);
@@ -7207,7 +7241,7 @@ function tryUpgrade(p) {
 // what's in it, its play things, its feeder's grain, its lanterns, the walking grid and the grass round it
 function retier(p) {
   p.gc = game.coop(p.gc.id) || p.gc;
-  p.tier = p.gc.tier; p.rustic = p.gc.tier === 0; p.deluxe = p.gc.tier >= 4; p.dress = p.gc.dress || null;
+  p.tier = p.gc.tier; p.rustic = p.gc.tier === 0; p.deluxe = p.gc.tier >= 4; p.dress = p.gc.dress || null; p.theme = p.gc.theme || null;
   for (const b of p.birds) if (b.play) endPlay(b, true);
   if (p.toys) { p.toys.swing.mesh.removeFromParent(); p.toys.cabbage.mesh.removeFromParent(); p.toys = null; }
   const L = coopLook(p);
@@ -9681,6 +9715,7 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
+  coopModels: () => COOP_BATCH.map(m => m.userData.model),      // (the tests: which models the coops are drawn with)
   starParty: id => starParty(game.bird(id)), starToast: () => STAR_TOAST && !STAR_TOAST.hidden ? STAR_TOAST.innerText : null,
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,

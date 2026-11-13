@@ -4276,6 +4276,76 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter",
+  "en": "Winter",
+  "fr": "Hiver"
+ },
+ {
+  "id": "text.theme_winter_rir",
+  "en": "Snow Chalet",
+  "fr": "Chalet des neiges"
+ },
+ {
+  "id": "text.themel_winter_rir",
+  "en": "A little alpine chalet deep in snow: icicles, a balcony of red hearts, a snowman by the door. Snow settles on the pen and its toys too.",
+  "fr": "Un petit chalet alpin sous la neige : des glaçons, un balcon à cœurs rouges, un bonhomme de neige devant la porte. La neige se pose aussi sur l’enclos et ses jeux."
+ },
+ {
+  "id": "text.theme_t",
+  "en": "Themed buildings",
+  "fr": "Bâtiments à thème"
+ },
+ {
+  "id": "text.theme_buy",
+  "en": "{name} · {c} coins",
+  "fr": "{name} · {c} pièces"
+ },
+ {
+  "id": "text.theme_broke",
+  "en": "{name} · {c} coins (not enough yet)",
+  "fr": "{name} · {c} pièces (pas encore assez)"
+ },
+ {
+  "id": "text.theme_on",
+  "en": "Move into the {name}",
+  "fr": "Emménager dans le {name}"
+ },
+ {
+  "id": "text.theme_off",
+  "en": "Back to its own coop",
+  "fr": "Revenir à son poulailler"
+ },
+ {
+  "id": "text.theme_wears",
+  "en": "This is the {name}.",
+  "fr": "Voici le {name}."
+ },
+ {
+  "id": "text.theme_when_winter",
+  "en": "In the shop in winter.",
+  "fr": "En boutique l’hiver."
+ },
+ {
+  "id": "text.theme_bought",
+  "en": "❄️ The {name} is yours for good · −{c} coins",
+  "fr": "❄️ Le {name} est à vous pour toujours · −{c} pièces"
+ },
+ {
+  "id": "text.theme_done",
+  "en": "{coop} is now the {name}.",
+  "fr": "{coop} est maintenant le {name}."
+ },
+ {
+  "id": "text.theme_gone",
+  "en": "{coop} is its own coop again.",
+  "fr": "{coop} a retrouvé son poulailler."
+ },
+ {
+  "id": "text.theme_note",
+  "en": "Yours for good once bought: switch whenever you like.",
+  "fr": "À vous pour toujours une fois acheté : changez quand vous voulez."
+ },
+ {
   "id": "text.star_next",
   "en": "{n} / 100 to the next star",
   "fr": "{n} / 100 vers la prochaine étoile"

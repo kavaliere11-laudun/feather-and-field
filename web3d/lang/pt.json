@@ -1404,5 +1404,19 @@
  "text.star_toast": "{name} tem {n} estrelas!",
  "text.star_toast1": "{name} tem a primeira estrela!",
  "text.star_eggs": "Os ovos valem agora {p} moedas",
- "text.star_kids": "Pintinhos melhores daqui em diante"
+ "text.star_kids": "Pintinhos melhores daqui em diante",
+ "text.theme_winter": "Inverno",
+ "text.theme_winter_rir": "Chalé de neve",
+ "text.themel_winter_rir": "Um pequeno chalé alpino sob a neve: pingentes de gelo, uma varanda de corações vermelhos, um boneco de neve junto à porta. A neve também cobre o cercado e os brinquedos.",
+ "text.theme_t": "Construções temáticas",
+ "text.theme_buy": "{name} · {c} moedas",
+ "text.theme_broke": "{name} · {c} moedas (ainda não dá)",
+ "text.theme_on": "Mudar para o {name}",
+ "text.theme_off": "Voltar ao galinheiro dele",
+ "text.theme_wears": "Este é o {name}.",
+ "text.theme_when_winter": "Na loja no inverno.",
+ "text.theme_bought": "❄️ O {name} é seu para sempre · −{c} moedas",
+ "text.theme_done": "{coop} agora é o {name}.",
+ "text.theme_gone": "{coop} voltou a ser o galinheiro de sempre.",
+ "text.theme_note": "Seu para sempre depois de comprado: troque quando quiser."
 }
