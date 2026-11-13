@@ -5280,4 +5280,17 @@ close). Test: `movealwaystest` (EN/FR).
     under her, a turn in the air, down beside it). In the mug the bath's puffs are marshmallows flying.
   - `gingertest.mjs` (new): an Orpington coop, the buy, its garden and toys (no igloo or puddle), each of the three
     plays, footprints, the Reds' chalet beside it with its igloo, a reload.
+- **The Ice Palace** for the Silkies (13 Nov 21:53, "Go on with the silkies"; `theme_winter_sil`, `coops.py
+  winter_palace`: ice-block walls on an ice plinth, battlements, four corner turrets and a keep under crystal spires,
+  lit windows, a silver snowflake on the tallest, a deep blue door, crystals and an ice lantern; the Silkies' own
+  nest, pop door and two steps). Its picture was sent to her and the garden built in the same go. The birds
+  themselves are untouched ("Do not edit silkies").
+  - Its garden (`WINTER = 'sil'`): `pen_t4_sil_winter` (the zen garden raked snow, the pond ice, and the **ice
+    slide**, `ice_slide`, `SLIDE`: three steps of ice blocks, a platform, a blue chute between rails, a heap of snow),
+    `fence_t4_sil_winter` (frost and blue ice over the arch, ice crystals along the borders, fairy lights), and the
+    `snowflake` treat in the cabbage's place.
+  - play.js `GARDENS.sil`, kind `chute` (hens only): up the steps a hop at a time, a look from the top, down the
+    chute faster and faster, out into the snow heap with snow flying, a shake. The slide's ice is kept clear of snow
+    (`warm`).
+  - `icetest.mjs` (new). White Silkies are hard to see on the snow floor: to look at with her.
 

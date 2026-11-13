@@ -1422,5 +1422,7 @@
  "text.theme_room": "Ela vem com um jardim Deluxe, que precisa de mais espaço aqui: mude primeiro o galinheiro para um lugar mais livre.",
  "text.theme_own": "O galinheiro de sempre: {look}.",
  "text.theme_winter_orp": "Casinha de gengibre",
- "text.themel_winter_orp": "Uma casinha de pão de gengibre: um telhado de glacê coberto de doces, bengalas de açúcar, pirulitos. No jardim, um gira-gira de hortelã, uma bala de goma para pular e uma caneca gigante de chocolate quente para tomar banho."
+ "text.themel_winter_orp": "Uma casinha de pão de gengibre: um telhado de glacê coberto de doces, bengalas de açúcar, pirulitos. No jardim, um gira-gira de hortelã, uma bala de goma para pular e uma caneca gigante de chocolate quente para tomar banho.",
+ "text.theme_winter_sil": "Palácio de gelo",
+ "text.themel_winter_sil": "Um pequeno palácio esculpido em gelo azul: torrinhas sob pináculos de cristal, janelas iluminadas, um floco de neve no topo. No jardim, um escorregador de gelo para deslizar até um monte de neve, um lago congelado e neve rastelada para tomar banho."
 }

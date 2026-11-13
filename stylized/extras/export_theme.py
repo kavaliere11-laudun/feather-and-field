@@ -18,6 +18,8 @@ THEMES = {'theme_winter_rir': (lambda: coops.winter_chalet(name='theme_winter_ri
           'pen_t4_winter': (coops.winter_pen, 11500, None), 'fence_t4_winter': (coops.winter_fence, 13000, None), 'seedball': (coops.seed_ball, 900, None),
           'theme_winter_orp': (lambda: coops.winter_gingerbread(name='theme_winter_orp'), 20000, 'orp'),
           'pen_t4_orp_winter': (lambda: coops.winter_pen('orp'), 11500, None), 'fence_t4_orp_winter': (lambda: coops.winter_fence('orp'), 13000, None),
+          'theme_winter_sil': (lambda: coops.winter_palace(name='theme_winter_sil'), 18000, 'sil'),
+          'pen_t4_sil_winter': (lambda: coops.winter_pen('sil'), 11500, None), 'fence_t4_sil_winter': (lambda: coops.winter_fence('sil'), 13000, None), 'snowflake': (coops.snowflake, 700, None),
           'roundabout': (coops.roundabout, 2200, None), 'gumdrop': (coops.gumdrop, 900, None), 'doughnut': (coops.doughnut, 800, None)}
 NEST0 = json.load(open(os.path.join(HERE, '..', 'web3d', 'models', 'coops.json')))['nests']
 names = []

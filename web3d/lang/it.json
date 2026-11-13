@@ -1422,5 +1422,7 @@
  "text.theme_room": "Arriva con un giardino Deluxe, che qui ha bisogno di più spazio: sposta prima il pollaio in un punto più libero.",
  "text.theme_own": "Il suo pollaio: {look}.",
  "text.theme_winter_orp": "Casetta di pan di zenzero",
- "text.themel_winter_orp": "Una casetta di pan di zenzero: un tetto di glassa coperto di dolcetti, bastoncini di zucchero, lecca-lecca. Nel giardino una giostrina alla menta, una caramella gommosa su cui rimbalzare e una tazza gigante di cioccolata calda in cui fare il bagno."
+ "text.themel_winter_orp": "Una casetta di pan di zenzero: un tetto di glassa coperto di dolcetti, bastoncini di zucchero, lecca-lecca. Nel giardino una giostrina alla menta, una caramella gommosa su cui rimbalzare e una tazza gigante di cioccolata calda in cui fare il bagno.",
+ "text.theme_winter_sil": "Palazzo di ghiaccio",
+ "text.themel_winter_sil": "Un piccolo palazzo scolpito nel ghiaccio azzurro: torrette sotto guglie di cristallo, finestre illuminate, un fiocco di neve in cima. Nel giardino uno scivolo di ghiaccio per sfrecciare in un mucchio di neve, uno stagno ghiacciato e neve rastrellata in cui fare il bagno."
 }

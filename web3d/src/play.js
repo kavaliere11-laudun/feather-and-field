@@ -65,7 +65,7 @@ export function wantPlay(b) {
   if (AP && b.kind === 'hen' && b.pers === 'glutton' && AP.want(b) && b.r() < 0.4) return 'apple';      // (the Glutton: an apple on her tree)
   if (!T) return null;
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
-  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo', 'spin', 'spin', 'bounce', 'bounce'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo' || k === 'spin' || k === 'bounce') && b.kind === 'rooster'));
+  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo', 'spin', 'spin', 'bounce', 'bounce', 'chute', 'chute', 'chute'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo' || k === 'spin' || k === 'bounce') && b.kind === 'rooster'));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;
 }
 
@@ -89,6 +89,7 @@ export function startPlay(b, kind) {
   } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
   else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
   else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];
+  else if (kind === 'chute') C = [{ spot: [T.chute.foot, T.chute.z], face: Math.PI / 2 }];      // (the ice slide: the foot of its steps, facing up them)
   else if (kind === 'spin') C = [[1, 0], [0, -1], [-1, 0]].map(([sx, sz]) => ({ spot: [T.spin.at[0] + sx * (T.spin.r + 0.22), T.spin.at[1] + sz * (T.spin.r + 0.22)], face: Math.atan2(-sx, -sz), slot: Math.atan2(sx, sz) }));      // (the roundabout: beside it, her seat the one nearest)
   else if (kind === 'bounce') C = [{ spot: [T.bounce.at[0] - 0.56, T.bounce.at[1]], face: Math.PI / 2 }, { spot: [T.bounce.at[0], T.bounce.at[1] + 0.56], face: Math.PI }];      // (the gumdrop: beside it)      // (the igloo: to its door, facing in)
   else if (kind === 'ice') {                         // the frozen puddle: to one end of it (the nearer one first), facing along it
@@ -155,6 +156,7 @@ export function playStep(b, dt) {
     else if (P.kind === 'ice') { if (P.phase !== 'slide') { endPlay(b); return o; } }
     else if (P.kind === 'igloo') { if (P.phase !== 'out' && P.phase !== 'shake') next('out'); }
     else if (P.kind === 'spin') { if (P.phase === 'ride') next('slow'); }
+    else if (P.kind === 'chute') { if (P.phase === 'top') P.wait = 0; }
     else if (P.kind === 'bounce') { if (P.phase === 'bounce') P.left = 0; }
     else if (P.kind === 'cabbage' || P.kind === 'xylo' || (P.kind === 'apple' && P.phase === 'face')) { endPlay(b); return o; }      // (the Glutton: unless she's over the fence already)
   }
@@ -176,6 +178,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'ladder') next('climb', { step: 0, rest: 0 });
       else if (P.kind === 'apple') next('out');
       else if (P.kind === 'igloo') next('in');
+      else if (P.kind === 'chute') next('climb', { step: 0, rest: 0 });
       else if (P.kind === 'spin') next('on', { off: P.slot - T.spin.a });
       else if (P.kind === 'bounce') next('up');
       else if (P.kind === 'ice') next('slide', { goes: P.goes || 0, spin: b.r() < 0.4 ? (b.r() < 0.5 ? -1 : 1) : 0 });
@@ -191,6 +194,7 @@ export function playStep(b, dt) {
   if (P.kind === 'ice') return iceStep(b, P, T, o, next, dt);
   if (P.kind === 'igloo') return iglooStep(b, P, T, o, next, dt);
   if (P.kind === 'spin') return spinStep(b, P, T, o, next, dt);
+  if (P.kind === 'chute') return chuteStep(b, P, T, o, next, dt);
   if (P.kind === 'bounce') return bounceStep(b, P, T, o, next, dt);
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
 }
@@ -463,6 +467,36 @@ function bounceStep(b, P, T, o, next, dt) {
   return o;
 }
 
+// the Ice Palace's garden's own (her list, 13 Nov 2026: "An ice slide they whoosh down"): up its three steps a hop at a
+// time, a look from the top, then down the chute she goes, low, wings up, faster and faster, and out into the heap of snow
+// at its foot, snow flying; a shake
+function chuteStep(b, P, T, o, next, dt) {
+  const p = b.root.position, S = T.chute;
+  if (P.phase === 'climb') {
+    if (P.rest > 0) { P.rest -= dt; P.t = 0; P.from = p.clone(); o.sit = 0.25; return o; }
+    if (P.step >= S.steps.length) { next('top', { wait: 0.5 + b.r() * 0.9 }); return o; }
+    const q = S.steps[P.step]; b.shadowY = 0.0;
+    if (hop(b, P, P.from, tmpV.set(q[0], q[1] + 0.01, S.z).clone(), 0.6, 0.06, dt)) { P.step++; P.rest = 0.22 + b.r() * 0.3; }
+    return o;
+  }
+  if (P.phase === 'top') { b.shadowY = 0.0; o.sit = 0.3; o.up = 0.3 * Math.sin(Math.min(1, P.t / 0.5) * Math.PI); if (P.t > P.wait) next('go'); return o; }
+  if (P.phase === 'go') {                            // down the chute
+    const u = Math.min(1, P.t / 0.85), a = u * u;
+    p.set(P.from.x + (S.end[0] - P.from.x) * a, P.from.y + (S.end[1] - P.from.y) * a, S.z); b.shadowY = 0.0;
+    o.sit = 0.6; o.flap = u > 0.15 ? 0.5 : 0; b.root.rotation.y = Math.PI / 2; b.visual.rotation.z = 0.1 * Math.sin(P.t * 16);
+    if (u >= 1) { b.visual.rotation.z = 0; for (let k = 0; k < 7; k++) dustPuff(b, 0.16, 0.1); next('skid'); }
+    return o;
+  }
+  if (P.phase === 'skid') {                          // into the snow
+    const u = Math.min(1, P.t / 0.4), a = 1 - (1 - u) * (1 - u);
+    p.set(P.from.x + (S.land - P.from.x) * a, P.from.y + (0.015 - P.from.y) * a, S.z); o.sit = 0.6 * (1 - u); b.shadowY = undefined;
+    if (u >= 1) { P.spot = [S.land, S.z]; next('shake'); }
+    return o;
+  }
+  if (P.phase === 'shake') { o.ruffle = Math.sin(Math.min(1, P.t / 0.8) * Math.PI); if (P.t > 0.15 && !P.shook) { P.shook = true; for (let k = 0; k < 4; k++) dustPuff(b, 0.12, 0.09); } if (P.t > 0.95) endPlay(b); }
+  return o;
+}
+
 // the igloo (the winter garden; Audrey's choice for the parasol's place, 13 Nov 2026: "An igloo": "a little igloo the hens walk
 // into and peek out of"): in at its door, a moment out of sight inside while she turns round, then her head out of the
 // door, a look left and right; out she comes, a shake, snow flying
@@ -507,6 +541,9 @@ const GARDENS = {
   rir: { blocks: [[1.9, 2.65, 0.52]], treat: 'seedball', warm: null, igloo: true, ice: true },
   orp: { blocks: [[-0.3, 2.3, 0.35], [1.9, 1.3, 0.3]], treat: 'doughnut', warm: [[1.6, 0.25, 0.62], [-1.35, 2.45, 0.5]], spin: [-0.3, 2.3], bounce: [1.9, 1.3], mallows: true },
 };
+GARDENS.sil = { blocks: [[-0.7, 1.9, 0.24], [-0.3, 1.9, 0.2], [0.05, 1.9, 0.17]], treat: 'snowflake', warm: [[-0.62, 1.9, 0.3], [-0.07, 1.9, 0.36]],      // (warm: the slide's blue ice kept clear of snow)
+ 
+  chute: { z: 1.9, foot: -1.12, steps: [[-0.82, 0.16], [-0.64, 0.3], [-0.46, 0.42]], top: [-0.36, 0.42], end: [0.22, 0.04], land: 0.58 } };      // (the ice slide: stylized/coops.py SLIDE)
 const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
 export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
 export function addWinter(plot, garden = null, part = null) {
@@ -515,6 +552,7 @@ export function addWinter(plot, garden = null, part = null) {
   const hang = (name, at) => { const m = part(name); m.position.set(at[0], 0, at[1]); m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } c.userData.moves = true; }); plot.frame.add(m); return m; };
   if (G.spin && part) { T.spin = { at: G.spin, r: 0.33, a: 0, w: 0, by: null, next: 0, mesh: hang('roundabout', G.spin) }; T.spin.mesh.scale.setScalar(0.83); }      // (a little smaller than modelled: clear of the gate, the feeder and the trough)
   if (G.bounce && part) T.bounce = { at: G.bounce, sq: 1, want: 1, by: null, next: 0, mesh: hang('gumdrop', G.bounce) };
+  if (G.chute) T.chute = { ...G.chute, by: null, next: 0 };
   if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
     const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];
     T.igloo = { at, r: R, by: null, next: 0, spot: [at[0] + d[0] * (R + 0.3), at[1] + d[1] * (R + 0.3)], door: [at[0] + d[0] * (R - 0.1), at[1] + d[1] * (R - 0.1)], face: Math.atan2(-d[0], -d[1]) };
@@ -544,7 +582,7 @@ export function addWinter(plot, garden = null, part = null) {
 export function removeWinter(plot) {
   const T = plot.toys; if (!T) return;
   if (T.ice) { T.ice.mesh.removeFromParent(); T.ice.mesh.geometry.dispose(); T.ice.mesh.material.dispose(); T.ice = null; }
-  T.igloo = null;
+  T.igloo = null; T.chute = null;
   for (const k of ['spin', 'bounce']) if (T[k]) { T[k].mesh.removeFromParent(); T[k] = null; }
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
 }
@@ -556,7 +594,7 @@ function tickPrints(plot, dt) {
     const p = b.root.position; let s = R.at.get(b);
     if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
     const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
-    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce') && b.play.phase !== 'walk' && b.play.phase !== 'face');
+    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute') && b.play.phase !== 'walk' && b.play.phase !== 'face');
     const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || inIgloo || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
     if (out) { s.x = p.x; s.z = p.z; continue; }
     const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);

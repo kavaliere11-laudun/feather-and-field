@@ -1953,6 +1953,8 @@ def deluxe_fence(seed=9):
     SWEETS = [C(k, h, rough=0.4) for k, h in (('gb_red', '#d5303a'), ('gb_green', '#3f9a4c'), ('gb_yellow', '#f5c531'), ('gb_pink', '#f18bb2'), ('gb_blue', '#58a9e0'), ('gb_purple', '#9a6bd0'))]
     if WINTER == 'orp':                                         # (the Gingerbread Cottage's: icing and sweets over the arch, gumdrops along the borders)
         leaf = [C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)]; rose = SWEETS
+    if WINTER == 'sil':                                         # (the Ice Palace's: frost and blue ice over the arch, ice crystals along the borders)
+        leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5), C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)]
     x0, x1, y0, y1 = coop.PEN['box']
     hinge, gc = coop.gate_span(); gw = abs(gc - hinge) * 2
     g0, g1 = min(hinge, gc + (gc - hinge)), max(hinge, gc + (gc - hinge))
@@ -2002,7 +2004,11 @@ def deluxe_fence(seed=9):
         a, b = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); n = int((b - a).length / 0.05)
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
-            if WINTER != 'orp' and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER not in ('orp', 'sil') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER == 'sil':                                 # (ice crystals, some tall)
+                if i % 3 == 0:
+                    h = random.uniform(0.07, 0.2); objs.append(cyl('bcrystal', 0.03, h, (p.x, p.y, h / 2), (random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3), 0), m=rose[i % 2], verts=6, r2=0.004, bevel=0.0))
+                continue
             if WINTER == 'orp':                                 # (a row of gumdrops)
                 if i % 3 == 0: objs.append(sphere('bgum', 0.04, (p.x, p.y, 0.02), (1, 1, 1.25), m=SWEETS[(i // 3) % 6], seg=10, rings=8))
                 continue
@@ -2039,6 +2045,96 @@ def deluxe_fence(seed=9):
     if WINTER:                                                  # (lights along the two side fences too, post to post)
         bunting((x0, y0, 0.5), (x0, y1, 0.5), sag=0.05); bunting((x1, y0, 0.5), (x1, y1, 0.5), sag=0.05)
     return finish(objs, 'fence_dx')
+
+
+def winter_palace(seed=79, name='theme_winter_sil', house='sil', FL=0.14, wx=0.42, NF=0.06):
+    """The Ice Palace (the winter collection's building for the Silkies; Audrey, 13 Nov 2026: "Go on with the silkies"): a
+    little palace cut from blue ice. Walls of ice blocks on an ice plinth, battlements, a round turret at each corner
+    under a tall crystal spire, a keep in the middle with lit windows and the tallest spire, a snowflake on its tip; a
+    deep blue arched door, icicles under every ledge, snow on every top, clusters of ice crystals at its foot, an ice
+    lantern by the steps. (house, FL, wx, NF: the Silkies' own pop door with its two steps, nest window and nest.)"""
+    random.seed(seed); objs = []
+    ice = C('ip_ice', '#bfe2f4', rough=0.22, spec=0.7, coat=0.4, var=0.03); iced = C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)
+    deep = C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5); joint = C('ip_joint', '#e6f3fb', rough=0.5)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); icicle_m = C('wc_ice', '#cfe6f6', rough=0.12, spec=0.8, coat=0.6)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); silver = C('ip_silver', '#dfe7ee', rough=0.3, metal=0.8)
+    EAVE = 0.92
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    def crystal(x, y, h, r, tilt=(0, 0), m=None):
+        objs.append(cyl('crystal', r, h, (x + tilt[0] * h / 2, y + tilt[1] * h / 2, h / 2), (-tilt[1], tilt[0], random.uniform(0, 1)), m=m or iced, verts=6, r2=r * 0.12, bevel=0.0))
+    def crenels(x0, x1, y0, y1, z, n, m=ice):               # battlements along a ledge (a line from (x0, y0) to (x1, y1))
+        for i in range(n):
+            if i % 2: continue
+            t = (i + 0.5) / n; objs.append(box('crenel', (0.085, 0.085, 0.09), (x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, z + 0.045), m=m, bevel=0.012, segs=1))
+    def spire(x, y, z, r, h, tip=True):
+        objs.append(cyl('spire', r, h, (x, y, z + h / 2), m=deep, verts=8, r2=0.008, bevel=0.0))
+        objs.append(cyl('spiresnow', r * 1.12, 0.035, (x, y, z + 0.012), m=snow, verts=10, bevel=0.012))
+        if tip: objs.append(sphere('spiretip', 0.022, (x, y, z + h + 0.012), m=silver, seg=8, rings=6))
+    # ---- the plinth and the walls: ice blocks, their joints pale
+    plinth = box('plinth', (2 * W2 + 0.22, 2 * D2 + 0.22, FL), (0, 0, FL / 2), m=iced, bevel=0.02, segs=2); objs.append(plinth)
+    walls = box('walls', (2 * W2, 2 * D2, EAVE - FL), (0, 0, (EAVE + FL) / 2), m=ice, bevel=0.012, segs=2); objs.append(walls)
+    for k, z in enumerate((0.34, 0.54, 0.74)):
+        objs.append(box('course', (2 * W2 + 0.012, 2 * D2 + 0.012, 0.012), (0, 0, z), m=joint, bevel=0.0, segs=1))
+        for i in range(7):                                  # the blocks' upright joints, each course's between the ones below (front and sides)
+            x = -W2 + (i + 0.5 * (k % 2) + 0.25) * 2 * W2 / 7
+            if abs(x + 0.31) < 0.15 or abs(x - 0.045) < 0.16 or abs(x - wx) < 0.2: continue
+            objs.append(box('upright', (0.012, 0.012, 0.19), (x, -D2 - 0.004, z - 0.1), m=joint, bevel=0.0, segs=1))
+        for sx in (-1, 1):
+            for i in range(4): objs.append(box('upright', (0.012, 0.012, 0.19), (sx * (W2 + 0.004), -D2 + (i + 0.5 * (k % 2) + 0.3) * 2 * D2 / 4.6, z - 0.1), m=joint, bevel=0.0, segs=1))
+    objs.append(box('ledge', (2 * W2 + 0.1, 2 * D2 + 0.1, 0.05), (0, 0, EAVE), m=iced, bevel=0.012, segs=1))
+    crenels(-W2 + 0.14, W2 - 0.14, -D2 - 0.01, -D2 - 0.01, EAVE + 0.02, 9); crenels(-W2 + 0.14, W2 - 0.14, D2 + 0.01, D2 + 0.01, EAVE + 0.02, 9)
+    for sx in (-1, 1): crenels(sx * (W2 + 0.01), sx * (W2 + 0.01), -D2 + 0.14, D2 - 0.14, EAVE + 0.02, 5)
+    objs.append(box('roofsnow', (2 * W2 - 0.06, 2 * D2 - 0.06, 0.05), (0, 0, EAVE + 0.04), m=snow, bevel=0.02, segs=2))
+    for k in range(12):                                     # icicles under the front ledge
+        x = -W2 + 0.08 + k * (2 * W2 - 0.16) / 11; ln = random.uniform(0.05, 0.13)
+        objs.append(cyl('icicle', 0.013, ln, (x, -D2 - 0.045, EAVE - 0.025 - ln / 2), (math.radians(180), 0, 0), icicle_m, verts=6, r2=0.001, bevel=0.0))
+    # ---- a round turret at each corner, a slit of light in it, a crystal spire
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            tx, ty = sx * (W2 + 0.02), sy * (D2 + 0.02); th = 1.2 if sy < 0 else 1.32
+            objs.append(cyl('turret', 0.115, th, (tx, ty, th / 2), m=ice, verts=12, bevel=0.01))
+            for z in (0.4, 0.75, 1.05): objs.append(cyl('tband', 0.12, 0.014, (tx, ty, z), m=joint, verts=12, bevel=0.0))
+            objs.append(cyl('tledge', 0.145, 0.045, (tx, ty, th), m=iced, verts=12, bevel=0.01))
+            objs.append(box('tslit', (0.03, 0.02, 0.1), (tx, ty + sy * 0.112, th - 0.22), m=glass, bevel=0.0, segs=1))
+            spire(tx, ty, th + 0.02, 0.135, 0.46 if sy < 0 else 0.52)
+            for q in range(5):
+                an = q * math.tau / 5 + 0.4; ln = random.uniform(0.04, 0.09)
+                objs.append(cyl('icicle', 0.011, ln, (tx + math.cos(an) * 0.135, ty + math.sin(an) * 0.135, th - 0.02 - ln / 2), (math.radians(180), 0, 0), icicle_m, verts=5, r2=0.001, bevel=0.0))
+    # ---- the keep in the middle: lit windows, battlements, the tallest spire, a snowflake on its tip
+    KW, KD, KT = 0.5, 0.42, 1.5
+    objs.append(box('keep', (KW, KD, KT - EAVE), (0, 0.04, (KT + EAVE) / 2), m=iced, bevel=0.012, segs=1))
+    objs.append(box('keepledge', (KW + 0.08, KD + 0.08, 0.045), (0, 0.04, KT), m=ice, bevel=0.01, segs=1))
+    crenels(-KW / 2 + 0.03, KW / 2 - 0.03, 0.04 - KD / 2 - 0.02, 0.04 - KD / 2 - 0.02, KT + 0.02, 5); crenels(-KW / 2 + 0.03, KW / 2 - 0.03, 0.04 + KD / 2 + 0.02, 0.04 + KD / 2 + 0.02, KT + 0.02, 5)
+    for x in (-0.12, 0.12):
+        objs.append(box('kwin', (0.09, 0.02, 0.2), (x, 0.04 - KD / 2 - 0.006, 1.22), m=glass, bevel=0.0, segs=1))
+        objs.append(cyl('kwintop', 0.045, 0.02, (x, 0.04 - KD / 2 - 0.006, 1.32), (math.radians(90), 0, 0), m=glass, verts=12, bevel=0.0))
+    for sx in (-1, 1): objs.append(box('kwinS', (0.02, 0.1, 0.2), (sx * (KW / 2 + 0.006), 0.04, 1.22), m=glass, bevel=0.0, segs=1))
+    objs.append(cyl('drum', 0.15, 0.14, (0, 0.04, KT + 0.09), m=ice, verts=12, bevel=0.01))
+    spire(0, 0.04, KT + 0.16, 0.19, 0.72, tip=False)
+    fz = KT + 0.16 + 0.72 + 0.07                             # the snowflake: six silver arms
+    for q in range(3):
+        objs.append(box('flake', (0.16, 0.012, 0.018), (0, 0.04, fz), (0, q * math.pi / 3, 0), m=silver, bevel=0.0, segs=1))
+    objs.append(cyl('flakepin', 0.006, 0.09, (0, 0.04, fz - 0.05), m=silver, verts=5, bevel=0.0))
+    # ---- the front: a deep blue door under a white arch, the nest window in a frame of pale ice, the hens' door and its two steps
+    arched_door(objs, 0.045, -D2 - 0.005, FL, 0.24, 0.5, deep, joint, silver)
+    nest_window(objs, house, FL, wx, joint, ww=0.26, wh=0.3, solids=[walls, plinth], steps=2, nest_floor=NF, door='lattice', door_m=deep)
+    pop_door(objs, FL, joint, None, None, steps=2)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 12, 0.0)
+    # ---- ice crystals at its foot, an ice lantern by the steps, drifts
+    for (cx, cy) in ((-W2 - 0.3, 0.05), (W2 + 0.32, 0.12), (W2 + 0.3, -D2 - 0.02)):
+        keep(cx, cy, 0.13)
+        crystal(cx, cy, 0.5, 0.075, m=deep); crystal(cx + 0.09, cy - 0.04, 0.32, 0.055, (0.3, -0.1)); crystal(cx - 0.08, cy + 0.03, 0.26, 0.05, (-0.35, 0.1)); crystal(cx + 0.02, cy - 0.1, 0.2, 0.045, (0.1, -0.45), m=ice)
+        objs.append(sphere('cdrift', 0.13, (cx, cy, 0.0), (1.3, 1.1, 0.35), m=snow, seg=12, rings=8))
+    lx, ly = -0.74, -D2 - 0.34; keep(lx, ly, 0.09)
+    objs.append(cyl('lpost', 0.05, 0.42, (lx, ly, 0.21), m=iced, verts=6, bevel=0.008))
+    objs.append(box('lantern', (0.11, 0.11, 0.12), (lx, ly, 0.49), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.008, segs=1))
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('lcage', (0.018, 0.018, 0.14), (lx + sx * 0.055, ly + sy * 0.055, 0.49), m=ice, bevel=0.0, segs=1))
+    objs.append(cyl('lroof', 0.1, 0.1, (lx, ly, 0.61), m=deep, verts=6, r2=0.006, bevel=0.0))
+    light_at(name, lx, ly, 0.49)
+    for (x, y, s_) in ((-0.5, D2 + 0.16, 1.0), (0.2, D2 + 0.18, 1.2), (0.6, -D2 - 0.2, 0.5)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.4), m=snow, seg=14, rings=8))
+    return finish(objs, name)
 
 
 def winter_gingerbread(seed=78, name='theme_winter_orp', house='orp', FL=0.2, wx=0.415, NF=0.08):
@@ -2247,6 +2343,9 @@ def winter_pen(bk='rir'):
         igloo(objs, *IGLOO)
     elif bk == 'orp':
         _swap(root, {'water'}, mat('gb_cocoaw', '#6a3d22', rough=0.25, spec=0.5, var=0.02))
+    elif bk == 'sil':
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+        ice_slide(objs)
     _own(objs, root)
     root.name = 'pen_t4' + ('' if bk == 'rir' else '_' + bk) + '_winter'
     return root
@@ -2266,6 +2365,46 @@ def winter_fence(bk='rir'):
     if had is not None: LIGHTS[key] = had
     root.name = key + '_winter'
     return root
+
+
+SLIDE = dict(y=-1.9, steps=((-0.82, 0.16), (-0.64, 0.3), (-0.46, 0.42)), top=(-0.36, 0.42), end=(0.22, 0.04))      # (the ice slide, along x in the Silkies' Deluxe yard: its steps (x, height), the chute's top and foot; play.js CHUTE the same)
+
+
+def ice_slide(objs):
+    """The Ice Palace's garden's own (Audrey's list, 13 Nov 2026: "an ice slide they whoosh down"): three steps of ice
+    blocks up to a little platform with a crystal at each back corner, a chute of smooth blue ice down the other side
+    between two low rails, a heap of soft snow at its foot."""
+    ice = C('ip_ice', '#bfe2f4', rough=0.22, spec=0.7, coat=0.4, var=0.03); iced = C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)
+    deep = C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    y = SLIDE['y']; W = 0.3
+    for k, (x, h) in enumerate(SLIDE['steps']):
+        objs.append(box('slstep', (0.19, W + 0.04, h), (x, y, h / 2), m=ice if k % 2 == 0 else iced, bevel=0.012, segs=1))
+    px, ph = SLIDE['steps'][-1]
+    for sy in (-1, 1): objs.append(cyl('slcrystal', 0.03, 0.2, (px - 0.06, y + sy * (W / 2 + 0.0), ph + 0.1), m=deep, verts=6, r2=0.004, bevel=0.0))
+    a, b = Vector((SLIDE['top'][0], y, SLIDE['top'][1] - 0.02)), Vector((SLIDE['end'][0], y, SLIDE['end'][1] - 0.02))
+    objs.append(plank('slchute', a, b, W, 0.04, (0, 0, 1), deep, jitter=0.0, bevel=0.008))
+    for sy in (-1, 1):
+        objs.append(plank('slrail', a + Vector((0, sy * (W / 2 + 0.01), 0.045)), b + Vector((0, sy * (W / 2 + 0.01), 0.045)), 0.07, 0.03, (0, sy, 0), ice, jitter=0.0, bevel=0.008))
+    mid = (a + b) / 2
+    objs.append(box('slprop', (0.08, W - 0.04, mid.z - 0.02), (mid.x - 0.08, y, (mid.z - 0.02) / 2), m=iced, bevel=0.01, segs=1))
+    for k, (dx, dy, r_) in enumerate(((0.26, 0.0, 0.17), (0.2, 0.14, 0.11), (0.22, -0.13, 0.1), (0.4, 0.05, 0.1))):          # the heap of snow at its foot
+        objs.append(sphere('slsnow', r_, (SLIDE['end'][0] + dx, y + dy, 0.0), (1.3, 1.1, 0.42), m=snow, seg=12, rings=8))
+
+
+def snowflake():
+    """The Ice Palace's garden's hanging treat in the cabbage's place: a big snowflake of seed cake dusted white, a blue
+    berry on each arm (the string's top at the origin, as the cabbage)."""
+    objs = []; L = CAB_TOP - CAB_Z
+    cake = C('ip_cake', '#f1f5fa', rough=0.8, var=0.04); berry = C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5)
+    objs.append(cyl('cstring', 0.005, L - 0.1, (0, 0, -(L - 0.1) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    for q in range(3):
+        objs.append(box('flakearm', (0.2, 0.03, 0.034), (0, 0, -L), (0, q * math.pi / 3, 0), m=cake, bevel=0.008, segs=1))
+    for q in range(6):
+        a = q * math.pi / 3; c, s_ = math.cos(a), math.sin(a)
+        objs.append(sphere('flakeberry', 0.02, (c * 0.1, 0, -L + s_ * 0.1), m=berry, seg=8, rings=6))
+        for sg in (-1, 1): objs.append(box('flaketwig', (0.05, 0.022, 0.02), (c * 0.06 + math.cos(a + sg * 0.9) * 0.02, 0, -L + s_ * 0.06 + math.sin(a + sg * 0.9) * 0.02), (0, -(a + sg * 0.9), 0), m=cake, bevel=0.004, segs=1))
+    objs.append(sphere('flakemid', 0.03, (0, 0, -L), (1, 0.7, 1), m=cake, seg=10, rings=6))
+    return finish(objs, 'snowflake')
 
 
 def roundabout():
@@ -4458,6 +4597,7 @@ def sand_bowl(objs, x, y):
 def zen_garden(objs, x, y):
     """The Deluxe Pagoda's sand bath: a low frame of dark wood round raked pale sand, three mossy stones at its corners."""
     wood = _cs('ink', rough=0.6, var=0.05); sand = _cs('sand', rough=0.95, var=0.03); raked = _cs('raked', rough=0.95)
+    if WINTER == 'sil': sand = C('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); raked = C('ip_raked', '#c9dcee', rough=0.9)      # (the Ice Palace's garden: raked snow)
     hw, hd, H = ZEN_W / 2, ZEN_D / 2, 0.07
     for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
                       ((x - hw, y - hd), (x - hw, y + hd), (-1, 0, 0)), ((x + hw, y - hd), (x + hw, y + hd), (1, 0, 0))):

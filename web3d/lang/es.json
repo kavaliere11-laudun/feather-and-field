@@ -1417,5 +1417,7 @@
  "text.theme_room": "Viene con un jardín De lujo, que necesita más sitio aquí: mueve antes el gallinero a un lugar más despejado.",
  "text.theme_own": "Su propio gallinero: {look}.",
  "text.theme_winter_orp": "Casita de jengibre",
- "text.themel_winter_orp": "Una casita de pan de jengibre: un tejado de glaseado cubierto de dulces, bastones de caramelo, piruletas. En su jardín, un tiovivo de menta, una gominola para rebotar y una taza gigante de chocolate caliente para bañarse."
+ "text.themel_winter_orp": "Una casita de pan de jengibre: un tejado de glaseado cubierto de dulces, bastones de caramelo, piruletas. En su jardín, un tiovivo de menta, una gominola para rebotar y una taza gigante de chocolate caliente para bañarse.",
+ "text.theme_winter_sil": "Palacio de hielo",
+ "text.themel_winter_sil": "Un pequeño palacio tallado en hielo azul: torrecillas bajo agujas de cristal, ventanas iluminadas, un copo de nieve en lo más alto. En su jardín, un tobogán de hielo para lanzarse a un montón de nieve, un estanque helado y nieve rastrillada para bañarse."
 }

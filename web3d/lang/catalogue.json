@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter_sil",
+  "en": "Ice Palace",
+  "fr": "Palais de glace"
+ },
+ {
+  "id": "text.themel_winter_sil",
+  "en": "A little palace cut from blue ice: turrets under crystal spires, lit windows, a snowflake on its tallest tip. In its garden an ice slide to whoosh down into a heap of snow, a frozen pond and raked snow to bathe in.",
+  "fr": "Un petit palais taillé dans la glace bleue : des tourelles sous des flèches de cristal, des fenêtres éclairées, un flocon tout en haut. Dans son jardin, un toboggan de glace pour filer dans un tas de neige, un bassin gelé et de la neige ratissée pour se baigner."
+ },
+ {
   "id": "text.theme_winter_orp",
   "en": "Gingerbread Cottage",
   "fr": "Maison en pain d’épices"
