@@ -5224,8 +5224,9 @@ close). Test: `movealwaystest` (EN/FR).
 - **Real money** (her 17:01 "no real money should be there from the start, why waiting?"): not built yet. Agreed: built
   beside the coins, its buttons hidden until her Apple side is ready (the Paid Apps agreement with bank and tax details;
   the products created in App Store Connect; the ICO fee she planned for when she starts trading). Purchases checked
-  from Apple's signed record on the phone, never from the save. Prices suggested, not yet confirmed by her: £0.99 a
-  building, £5.99 a theme of nine, £1.99 the bigger pantry shelves.
+  from Apple's signed record on the phone, never from the save. Prices, hers (13 Nov 19:36: "The nine should be 9.99£ and 1 should be
+  1,99£"): **£1.99 a building, £9.99 a theme of nine** (I had suggested £0.99 and £5.99); the bigger pantry shelves
+  £1.99, suggested and not yet confirmed by her.
 - `themetest.mjs` (new, December on its clock): no room said then the coop moved; the buy at 15,000; Deluxe while
   worn with its own look kept; the card naming both; the snowed Deluxe pen, the puddle, footprints, a hen sliding; a
   hen laying in the chalet's nest; off (its own look back, no snow) and on again; a reload; footprints fading; July
