@@ -2035,6 +2035,116 @@ def deluxe_fence(seed=9):
     return finish(objs, 'fence_dx')
 
 
+def winter_gingerbread(seed=78, name='theme_winter_orp', house='orp', FL=0.2, wx=0.415, NF=0.08):
+    """The Gingerbread Cottage (the winter collection's building for the Buff Orpingtons; Audrey, 13 Nov 2026: "Yes go
+    ahead"): a cottage baked of gingerbread. Biscuit walls piped with white icing (dots along every edge, a wavy line
+    under the eaves), gumdrops along its foot and sweets all over its roof of thick icing that drips in scallops over
+    the eaves, a round peppermint window in each gable, a chocolate door under an icing arch with a holly wreath, a
+    biscuit chimney with an icing cap, two candy canes crossed over the door and one as a lamp post, big lollipops
+    beside it, drifts of sugar snow. (house, FL, wx, NF: the Buff Orpingtons' own pop door, nest window and nest.)"""
+    random.seed(seed); objs = []
+    ginger = C('gb_ginger', '#b5692f', rough=0.85, var=0.07); gingerd = C('gb_gingerd', '#8f4f22', rough=0.85, var=0.06)
+    icing = C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2); choc = C('gb_choc', '#4a2a18', rough=0.6, var=0.05)
+    red = C('gb_red', '#d5303a', rough=0.35); green = C('gb_green', '#3f9a4c', rough=0.4); yellow = C('gb_yellow', '#f5c531', rough=0.4)
+    pink = C('gb_pink', '#f18bb2', rough=0.4); blue = C('gb_blue', '#58a9e0', rough=0.4); purple = C('gb_purple', '#9a6bd0', rough=0.4)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); holly = C('wg_holly1', '#1f5a34', rough=0.6)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)
+    sweets = [red, green, yellow, pink, blue, purple]
+    EAVE, PEAK = 0.95, 1.72
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    def dots(a, b, n, r=0.017, m=icing):                    # icing piped in dots along a line
+        a, b = Vector(a), Vector(b)
+        for i in range(n + 1): objs.append(sphere('dot', r, tuple(a.lerp(b, i / n)), m=m, seg=8, rings=5))
+    def cane(x, y, h, lean=(0, 0), hook=1, r=0.026):        # a candy cane: red and white stripes up a stick, its crook at the top
+        pts = [Vector((x + lean[0] * t, y + lean[1] * t, h * t)) for t in [i / 9 for i in range(10)]]
+        top = pts[-1]; R = 0.075
+        for i in range(1, 9): aa = math.pi * i / 8; pts.append(top + Vector((hook * R * (1 - math.cos(aa)), 0, R * math.sin(aa))))
+        for i, (p_, q_) in enumerate(zip(pts, pts[1:])):
+            objs.append(cyl('cane', r, (q_ - p_).length + 0.006, tuple((p_ + q_) / 2), (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=red if i % 2 else icing, verts=8, bevel=0.0))
+        return pts[-1]
+    def lolly(x, y, h, R, cols, yaw=0.0):                   # a big lollipop: a swirl of two colours on a white stick
+        keep(x, y, 0.06)
+        objs.append(cyl('lstick', 0.014, h, (x, y, h / 2), m=icing, verts=6, bevel=0.0))
+        for k, rr in enumerate((R, R * 0.72, R * 0.45, R * 0.2)):
+            objs.append(cyl('lolly', rr, 0.035 + k * 0.012, (x, y, h + R * 0.8), (math.radians(90), 0, yaw), m=cols[k % 2], verts=18, bevel=0.006))
+    # ---- the walls: gingerbread, a darker baked edge at each corner, icing piped along every edge
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=ginger, bevel=0.015, segs=2); objs.append(core)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            objs.append(box('edge', (0.06, 0.06, EAVE), (sx * W2, sy * D2, EAVE / 2), m=gingerd, bevel=0.012, segs=1))
+            dots((sx * (W2 + 0.03), sy * (D2 + 0.03), 0.08), (sx * (W2 + 0.03), sy * (D2 + 0.03), EAVE - 0.06), 9)
+    for sx in (-1, 1):                                      # the gables (at the sides: the ridge runs along the front)
+        n = 9
+        for i in range(n):
+            y = -D2 + (i + 0.5) * 2 * D2 / n; top = EAVE + (PEAK - EAVE) * (1 - abs(y) / D2) - 0.04
+            objs.append(plank('gable', (sx * W2, y, EAVE - 0.02), (sx * W2, y, max(EAVE + 0.02, top)), 2 * D2 / n * 1.0, 0.04, (sx, 0, 0), ginger, jitter=0.0))
+        gz = EAVE + 0.2                                     # a round peppermint window in it: red and white, a warm light in its middle
+        objs.append(cyl('mint', 0.13, 0.03, (sx * (W2 + 0.03), 0, gz), (0, math.radians(90), 0), m=icing, verts=18, bevel=0.006))
+        for k in range(6):
+            aa = k / 6 * math.tau
+            objs.append(sphere('mintr', 0.04, (sx * (W2 + 0.045), math.cos(aa) * 0.085, gz + math.sin(aa) * 0.085), (0.3, 1, 1), m=red, seg=8, rings=5))
+        objs.append(cyl('mintglow', 0.045, 0.036, (sx * (W2 + 0.034), 0, gz), (0, math.radians(90), 0), m=glass, verts=12, bevel=0.0))
+    for k in range(13):                                     # a wavy line of icing under the front eave, a sweet in each dip
+        x = -W2 + 0.05 + k * (2 * W2 - 0.1) / 12; z = EAVE - 0.1 - (0.035 if k % 2 else 0.0)
+        objs.append(sphere('wave', 0.022, (x, -D2 - 0.012, z), m=icing, seg=8, rings=5))
+        if k % 2: objs.append(sphere('wsweet', 0.02, (x, -D2 - 0.018, z - 0.045), m=sweets[k % 6], seg=8, rings=6))
+    for k in range(11):                                     # gumdrops along its foot (not across the pop door, the door or under the nest window)
+        x = -W2 + 0.06 + k * (2 * W2 - 0.12) / 10
+        if abs(x + 0.31) < 0.17 or abs(x - 0.045) < 0.16 or abs(x - wx) < 0.24: continue
+        objs.append(sphere('gumdrop', 0.045, (x, -D2 - 0.05, 0.02), (1, 1, 1.25), m=sweets[k % 6], seg=10, rings=8))
+    for sx in (-1, 1):
+        for k in range(5): objs.append(sphere('gumdrop', 0.045, (sx * (W2 + 0.05), -D2 + 0.1 + k * 0.17, 0.02), (1, 1, 1.25), m=sweets[(k + 2) % 6], seg=10, rings=8))
+    # ---- the roof: biscuit under thick icing that drips in scallops over the eaves, sweets all over it
+    over, go = 0.2, 0.16; run = D2 + over; rise = PEAK - (EAVE - 0.1); ang = math.atan2(rise, run); L = math.hypot(run, rise)
+    for sy in (-1, 1):
+        cy_, cz = sy * run / 2, (EAVE - 0.1 + PEAK) / 2; ny, nz = sy * math.sin(ang), math.cos(ang)
+        objs.append(box('roofb', (2 * W2 + 2 * go, L, 0.045), (0, cy_, cz), (-sy * ang, 0, 0), m=gingerd, bevel=0.008, segs=1))
+        objs.append(box('rooficing', (2 * W2 + 2 * go + 0.05, L + 0.04, 0.1), (0, cy_ + ny * 0.07, cz + nz * 0.07), (-sy * ang, 0, 0), m=icing, bevel=0.045, segs=4))
+        for k in range(10):                                 # the scallops of icing over the eave, a longer drip here and there
+            x = -W2 - go + 0.06 + k * (2 * W2 + 2 * go - 0.12) / 9; ey, ez = sy * (run + 0.02), EAVE - 0.1 + 0.03
+            objs.append(sphere('scallop', 0.075, (x, ey, ez), (1, 0.7, 1.0 + (0.5 if k % 3 == 1 else 0.0)), m=icing, seg=12, rings=8))
+        for r_ in range(3):                                 # sweets on it, in rows
+            for k in range(7 - r_ % 2):
+                u = 0.22 + r_ * 0.26; x = -W2 - go + 0.2 + (k + 0.5 * (r_ % 2)) * (2 * W2 + 2 * go - 0.4) / 6
+                py, pz = sy * run * (1 - u) + ny * 0.125, EAVE - 0.1 + rise * u + nz * 0.125
+                objs.append(sphere('smartie', 0.042, (x, py, pz), (1, 1, 0.45), (-sy * ang, 0, 0), m=sweets[(k + r_ * 2) % 6], seg=10, rings=6))
+    objs.append(cyl('ridgeicing', 0.085, 2 * W2 + 2 * go + 0.04, (0, 0, PEAK + 0.06), (0, math.radians(90), 0), icing, verts=12, bevel=0.03))
+    for k in range(7): objs.append(sphere('ridgedrop', 0.05, (-W2 - go + 0.12 + k * (2 * W2 + 2 * go - 0.24) / 6, 0, PEAK + 0.15), (1, 1, 1.2), m=sweets[k % 6], seg=10, rings=8))
+    # the chimney: a biscuit block, an icing cap that drips, a curl of sugar on top
+    cx, cyy = -0.4, 0.2; cz0 = EAVE - 0.1 + rise * (1 - (cyy + 0.0) / run) - 0.1
+    objs.append(box('chimney', (0.2, 0.2, 0.55), (cx, cyy, cz0 + 0.275), m=ginger, bevel=0.012, segs=1))
+    objs.append(box('chimcap', (0.26, 0.26, 0.07), (cx, cyy, cz0 + 0.57), m=icing, bevel=0.03, segs=3))
+    for k in range(4): aa = k * math.pi / 2 + 0.6; objs.append(sphere('chimdrip', 0.04, (cx + math.cos(aa) * 0.12, cyy + math.sin(aa) * 0.12, cz0 + 0.52), (0.8, 0.8, 1.5), m=icing, seg=8, rings=6))
+    objs.append(sphere('chimsnow', 0.09, (cx, cyy, cz0 + 0.63), (1, 1, 0.6), m=snow, seg=12, rings=8))
+    # ---- the front: a chocolate door under an icing arch, a holly wreath on it; the nest window iced round; the pop door
+    arched_door(objs, 0.045, -D2 - 0.005, FL, 0.24, 0.56, choc, icing, gold)
+    wz = FL + 0.38
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.06, minor_radius=0.02, major_segments=14, minor_segments=6, location=(0.045, -D2 - 0.05, wz), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, holly); objs.append(o)
+    for aa in (0.4, 2.2, 4.3): objs.append(sphere('wberry', 0.013, (0.045 + math.cos(aa) * 0.06, -D2 - 0.072, wz + math.sin(aa) * 0.06), m=red, seg=8, rings=5))
+    objs.append(box('wbow', (0.05, 0.012, 0.026), (0.045, -D2 - 0.072, wz - 0.062), m=red, bevel=0.004, segs=1))
+    nest_window(objs, house, FL, wx, icing, solids=[core], nest_floor=NF, door='drop', door_m=choc)
+    z0n = NF + 0.04
+    dots((wx - WIN_W / 2 - 0.05, -D2 - 0.03, z0n + 0.02), (wx - WIN_W / 2 - 0.05, -D2 - 0.03, z0n + WIN_H), 6); dots((wx + WIN_W / 2 + 0.05, -D2 - 0.03, z0n + 0.02), (wx + WIN_W / 2 + 0.05, -D2 - 0.03, z0n + WIN_H), 6)
+    dots((wx - WIN_W / 2 - 0.05, -D2 - 0.03, z0n + WIN_H + 0.045), (wx + WIN_W / 2 + 0.05, -D2 - 0.03, z0n + WIN_H + 0.045), 6)
+    window(objs, W2 + 0.03, 0.12, 0.52, 0.24, 0.22, icing, glass, normal=(1, 0, 0))
+    pop_door(objs, FL, icing, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    # two candy canes crossed on the wall between the pop door and the door? No room: one each side of the house's front corners
+    cane(-W2 - 0.12, -D2 - 0.1, 0.62, hook=1); keep(-W2 - 0.12, -D2 - 0.1, 0.07)
+    cane(W2 + 0.14, -D2 - 0.1, 0.62, hook=-1); keep(W2 + 0.14, -D2 - 0.1, 0.07)
+    # a candy cane lamp post left of the ramp: a lantern hung from its crook
+    tip = cane(-0.72, -D2 - 0.34, 0.86, hook=1, r=0.03); keep(-0.72, -D2 - 0.34, 0.1)
+    light_at(name, tip.x, tip.y, tip.z - 0.09)
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (tip.x, tip.y, tip.z - 0.09), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(sphere('lsnow', 0.05, (tip.x, tip.y, tip.z - 0.03), (1, 1, 0.5), m=snow, seg=10, rings=6))
+    # big lollipops beside the house (clear of the yard's play things), drifts of sugar snow against the walls
+    lolly(-W2 - 0.3, 0.1, 0.62, 0.15, (pink, icing)); lolly(-W2 - 0.52, -0.16, 0.42, 0.12, (blue, icing), yaw=0.3); lolly(W2 + 0.34, 0.2, 0.52, 0.13, (yellow, red), yaw=-0.3)
+    for (x, y, s_) in ((-0.5, D2 + 0.08, 1.0), (0.1, D2 + 0.1, 1.2), (0.55, D2 + 0.06, 0.9), (W2 + 0.1, 0.3, 0.8), (-W2 - 0.1, 0.3, 0.9), (0.3, -D2 - 0.09, 0.45)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.45), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
 WINTER = False                     # (set while the winter garden's pen and fence are built: winter_pen, winter_fence)
 IGLOO = (1.9, -2.65, 0.5)          # (the igloo in the winter Deluxe garden: x, y (Blender), its radius; its door looks to the yard's middle)
 
