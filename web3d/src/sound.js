@@ -75,7 +75,9 @@ const groupOf = n => n.replace(/\d+$/, '');
 // (12 Nov 2026, Audrey's sound test: "farm 0/41 · hens 0/7 · peacall3: 0": every recording refused for its status,
 // the music heard only because the phone's own player fetched it), and some answer fetch with nothing: so a status of 0
 // is taken, and with no bytes from fetch the file is asked for the older way
-function bytes(url) {
+let PENDING = 0;      // (sound files being fetched and unpacked now: Sound.decoding)
+function bytes(url) { PENDING++; setTimeout(() => { PENDING = Math.max(0, PENDING - 1); }, 6000); return bytes0(url); }
+function bytes0(url) {
   const xhr = () => new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('GET', url); x.responseType = 'arraybuffer'; x.onload = () => (x.response && x.response.byteLength ? res(x.response) : rej(new Error('empty ' + x.status))); x.onerror = () => rej(new Error('xhr ' + x.status)); x.send(); });
   return fetch(url).then(r => { if (!r.ok && r.status !== 0) throw new Error('status ' + r.status); return r.arrayBuffer(); }).then(ab => { if (!ab || !ab.byteLength) throw new Error('no bytes'); return ab; }).catch(() => xhr());
 }
@@ -118,6 +120,7 @@ export class Sound {
     } catch (e) { this.note('no sound: ' + e.message); }
   }
   src(i) { return (this.o.base || 'audio/') + MUSIC[i] + '.mp3'; }
+  decoding() { return PENDING > 0 || this.state === 'loading'; }      // (busy unpacking recordings: the picture's slow frames meanwhile aren't the farm's fault, main.js)
   note(s) { this.log.push([Math.round(this.now()), s]); if (this.log.length > 30) this.log.shift(); }
   playEl() {
     const p = this.el.play(); this.blocked = false;

@@ -9551,8 +9551,15 @@ function frame(now) {
   if (now - meter.since >= 2000) {
     meter.fps = meter.frames * 1000 / (now - meter.since);
     meter.slow = meter.late > meter.frames * 0.4 ? meter.slow + 1 : 0;      // two slow stretches in a row: step down
+    // (13 Nov 2026, Audrey: "Things are more blurry than normal, what's happening ?": since the farm's sounds load in the
+    // app (12 Nov), the phone is busy for a few seconds unpacking forty recordings and the music: those slow frames lowered
+    // the sharpness, and it only came back by zooming well in. Now a stretch while sounds are being unpacked doesn't count,
+    // and the sharpness comes back by itself after a smooth while (12 s, then twice as long each time it had to drop again))
+    if (sound && sound.decoding && sound.decoding()) meter.slow = 0;
+    if (meter.slow) meter.good = 0; else if (meter.frames >= 20 && meter.late <= meter.frames * 0.15) meter.good = (meter.good || 0) + 1;      // (a smooth stretch; one with hardly a frame drawn, the farm at rest, neither counts nor resets)
     meter.frames = 0; meter.late = 0; meter.since = now;
-    if (meter.slow >= 2 && q < QUALITY.length - 1 && !params.has('q')) { stepDown(); meter.slow = 0; }
+    if (meter.slow >= 2 && q < QUALITY.length - 1 && !params.has('q')) { stepDown(); meter.slow = 0; meter.good = 0; }
+    else if (q > START_Q && !params.has('q') && meter.good * 2000 >= 12000 * Math.pow(2, Math.min(4, upTries))) { upTries++; meter.good = 0; slowAt = Infinity; wantQ = q - 1; }
     // back up again once the view is clearly lighter than where it got slow (zoomed in), a few times at most
     else if (q > START_Q && !meter.slow && view.size < slowAt * 0.7 && stepUps < 4 && !params.has('q')) stepUp();
     showReadout();
@@ -9562,7 +9569,7 @@ function frame(now) {
 // a slow stretch steps the quality down (lower resolution, fewer shadows, less grass and fur); it used to stay down for the
 // rest of the visit, so one heavy zoomed-out look left everything blurry afterwards
 const START_Q = q;
-let slowAt = Infinity, stepUps = 0;
+let slowAt = Infinity, stepUps = 0, upTries = 0;
 function setQuality(n) {
   q = n;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY[q].dpr));

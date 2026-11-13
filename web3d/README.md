@@ -5119,3 +5119,12 @@ close). Test: `movealwaystest` (EN/FR).
   days)" finds no egg reminder planned when it is run late in the evening (about 21:30); it passes by day. Either the
   test depends on the hour, or a player who closes the game at night gets no egg reminder.
 
+## Blurry after the sounds loaded (13 Nov 2026, 11:45; Audrey, the pond soft all over: "Things are more blurry than normal, what's happening ?")
+- The picture's sharpness steps down after two slow stretches of frames (main.js `stepDown`, `QUALITY`) and came back
+  only by zooming well in from where it got slow. Since 12 Nov the farm's forty recordings and the music are really
+  fetched and unpacked in the app (before, they failed there): a few busy seconds, slow frames, the sharpness lowered,
+  and left low. Most likely cause; not measured on her phone.
+- Now: a stretch while sound files are being unpacked doesn't count as slow (sound.js `decoding()`, `PENDING`; main.js
+  the meter), and the sharpness comes back up by itself after a smooth while (12 s of smooth frames; twice as long each
+  time it had to drop again, up to 16 times: `upTries`, `meter.good`). The zoom-in way back stays.
+
