@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1794572235") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794572235") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1794578666") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1794578666") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794572235") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1794578666") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -539,6 +539,23 @@
   .gdecnew .gnote { margin: 4px 0 0; }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gbook { width: min(480px, 56vw); max-height: calc(100% - env(safe-area-inset-top) - 72px); } }      /* (a little wider: fewer lines) */
   .gstarbar { height: 7px; margin: 2px 0 1px; background: rgba(40, 60, 30, 0.1); }
+  /* a bird's stars and the way to the next, at the top of her card; the banner when she earns one (main.js starParty) */
+  .gbirdstars { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+  .gbirdstars .gstarbar { flex: 1; min-width: 60px; max-width: 220px; height: 9px; margin: 0; }
+  .gbirdstars .gstarbar .gbar-fill { background: var(--yolk); }
+  .gbirdstars .gstarnum { margin: 0; white-space: nowrap; }
+  .gstarup { position: fixed; z-index: 40; left: 50%; top: 34%; transform: translate(-50%, -50%); pointer-events: none; text-align: center; padding: 14px 26px 16px; border-radius: 26px;
+             background: var(--glass-top, rgba(255, 253, 247, 0.96)); box-shadow: 0 8px 30px rgba(30, 52, 38, 0.28); font-family: Fredoka, Nunito, system-ui, sans-serif; color: var(--ink); max-width: calc(100vw - 40px); }
+  .gstarup[hidden] { display: none; }
+  .gstarup.go { animation: gstarup 4.2s ease both; }
+  .gstarup-s { font-size: 34px; letter-spacing: 4px; color: #c9c2a8; line-height: 1.1; }
+  .gstarup-s .on { color: var(--yolk); }
+  .gstarup-s .new { display: inline-block; animation: gstarnew 1s .25s ease both; }
+  .gstarup-n { font-weight: 700; font-size: 22px; margin-top: 4px; }
+  .gstarup-t { font: 700 15px Nunito, system-ui, sans-serif; color: #4a6a52; margin-top: 3px; }
+  @keyframes gstarup { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); } 8% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 14% { transform: translate(-50%, -50%) scale(1); } 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -58%) scale(.96); } }
+  @keyframes gstarnew { 0% { transform: scale(0) rotate(-60deg); } 60% { transform: scale(1.7) rotate(12deg); } 100% { transform: scale(1) rotate(0); } }
+  @media (prefers-reduced-motion: reduce) { .gstarup.go, .gstarup-s .new { animation: none; } }
   .gcuddle { background: #e0566f; box-shadow: 0 4px 14px rgba(224, 86, 111, 0.35); margin-top: 0; padding: 11px 18px; }
   .gworms { margin-top: 8px; padding: 11px 18px; }
   .ghappy { color: #c4475f; }
@@ -778,6 +795,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1794572235"></script>
+<script src="app.js?v=1794578666"></script>
 </body>
 </html>
