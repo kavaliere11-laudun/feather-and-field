@@ -1168,7 +1168,7 @@ export const DRESSES = { xmas: { price: 1500, from: [12, 1], to: [1, 6] } };
 // 15,000 coins each (her "go with your recommendation": more than the 12,300 the four upgrades cost, so upgrading stays
 // the cheaper way). The winter theme first, the Rhode Island Reds' Snow Chalet its first building (the others as they're made:
 // `breeds`). Saved: the buildings owned (themes: 'winter_rir', ...), and on a coop the theme it wears (theme)
-export const THEMES = { winter: { price: 15000, from: [11, 14], to: [2, 28], breeds: ['rir'] } };      // (in the shop from mid-November for now, so it can be tried before December)
+export const THEMES = { winter: { price: 15000, from: [11, 13], to: [2, 28], breeds: ['rir'] } };      // (in the shop from mid-November for now, so it can be tried before December)
 export function themeInSeason(id, now = Date.now()) {
   const D = THEMES[id]; if (!D) return false;
   const d = new Date(now), k = (d.getMonth() + 1) * 100 + d.getDate(), a = D.from[0] * 100 + D.from[1], b = D.to[0] * 100 + D.to[1];

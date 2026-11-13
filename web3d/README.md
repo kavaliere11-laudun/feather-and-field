@@ -5203,7 +5203,7 @@ close). Test: `movealwaystest` (EN/FR).
   moving out gives `tier0` back (`ownLook`). No upgrading while it is worn (tier 4 is the top). The save check keeps
   only real buildings, a theme worn only if owned for that coop's breed (then tier 4 whatever the save says), and a
   theme not owned taken off with the coop back at `tier0`. Winter is on
-  sale from 14 Nov to 28 Feb for now (so she can try it before December; 1 Dec was the plan).
+  sale from 13 Nov to 28 Feb for now (so she can try it before December; 1 Dec was the plan).
 - **In the village** (main.js): `coopLook` gives the themed house with the Deluxe pen and fence; for winter those two
   are drawn snowed (`snowedPart`: a copy of the model with every face that looks up turned to snow: the yard's floor,
   rails, posts, the swing, the parasol, the fountain, the feeder, the bales): that is the toys' winter look. No
