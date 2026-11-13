@@ -5128,3 +5128,22 @@ close). Test: `movealwaystest` (EN/FR).
   the meter), and the sharpness comes back up by itself after a smooth while (12 s of smooth frames; twice as long each
   time it had to drop again, up to 16 times: `upTries`, `meter.good`). The zoom-in way back stays.
 
+## Experience made visible, and worth more (13 Nov 2026, 13:38; Audrey: "we need to add more things around the chicken 'level' and experience it's quite hidden atm. We need an animation when she passes level, and a progression bar to know where she is at. Also make sure the eggs and the babies are sold for more the most experienced she is")
+- Asked "how often the chicken rotates": she meant hens being replaced. They never are (the forever flock, her brief
+  of 24 Oct); told so, with an offer of options if she wants old hens to retire. Not built.
+- **A star earned** (main.js `starParty`; from `watchStars` and a cuddle's star): nine gold stars burst up over the bird
+  (the hearts' pool with a star picture, `spawnHeart(at, true)`), she flaps and hops, a three-note chime (sound.js
+  `chime`, made, not a recording; not with Sounds off), and a banner in the middle of the screen for four seconds:
+  her stars (the new one popping in), "Willow has 3 stars!", and what it brings ("🥚 Eggs worth 15 coins each now"; a
+  rooster: "🐣 Better chicks from now on"). Nothing to tap. Replaces the line "★ … has earned a new star!".
+- **Progress**: her stars, a bar and "62 / 100 to the next star" are the first thing on a bird's card, under her name
+  (gameui.js `.gbirdstars`); the Experience section lower down stays, with how stars come and what they do.
+- **Prices** (her choice "Much stronger"): each star makes a hen's eggs 3 coins dearer (game.js `STAR_EGG`; it was 1:
+  a Rhode Island Red's egg 6 to 21 coins); a youngster sells from 0.8 of its breed's price at one star to 2.5 times at
+  five (`kidPrice` 0.375 + 0.425 a star; it was 1.6). The nest's bonus and its save check follow. To watch: a mature
+  farm earns clearly more; the balance simulations haven't been re-run with these numbers.
+- **The picture's line in Settings** (her "it seems to me it's not as good as before", of the sharpness): under the
+  version, in grey: "picture 4 of 4 · 2.00× of 3× · 58 fps" (how sharp it is drawn now, of the four steps, and how
+  smooth): her screenshot of it when it looks soft is the next step. No other cause found yet.
+- `cuddletest` follows (the banner; 12 coins at two stars).
+

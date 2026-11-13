@@ -85,14 +85,15 @@ ok('the fifteenth: best friends, +20 XP (and the cuddle\'s own 1); trust stops a
 const rooster = await p.evaluate(() => { const g = window.__farm.game(), r = g.data.birds.find(b => b.sex === 'r'); r.exp = 95; r.happy = 0; g.save(); return r.id; });
 await run(1.2);
 await card(rooster); await cuddleTap();
-ht = await hintT(); const rs = await p.evaluate(id => window.__farm.game().stars(window.__farm.game().bird(id)), rooster);
-ok('a star from a cuddle: a word', rs === 1 && T.star.test(ht), { rs, ht });
+await p.waitForTimeout(1300); ht = await p.evaluate(() => window.__farm.starToast()); const rs = await p.evaluate(id => window.__farm.game().stars(window.__farm.game().bird(id)), rooster);
+// (13 Nov 2026: a banner in the middle of the screen, gold stars over him, not just a word)
+ok('a star from a cuddle: its banner (his stars, his name, better chicks)', rs === 1 && !!ht && /★/.test(ht) && (fr ? /première étoile/ : /first star/).test(ht) && (fr ? /poussins/ : /chicks/).test(ht), { rs, ht });
 // stars from time on the farm; eggs a coin dearer for each of her stars
 const timeStars = await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id), since = b.since, exp = b.exp; b.exp = 0; b.since = window.__T - 30 * 86400e3; const s = g.stars(b); const s2 = (b.since = window.__T - 90 * 86400e3, g.stars(b)); b.since = since; b.exp = exp; return [s, s2]; }, HEN);
 ok('stars from time on the farm: one and a half a month, at most two and a half', timeStars[0] === 1 && timeStars[1] === 2, timeStars);
 const egg = await p.evaluate(id => { const g = window.__farm.game(), b = g.bird(id), c = g.coop(b.coop); b.exp = 200; b.laid = window.__T - 1000; c.eggs = 0; c.bonus = 0; c.feed = 6; c.fedAt = window.__T; const coins = g.pantryBag().val; const r = g.layEgg(id, window.__T - 10); const got = g.collect(c.id); return { r, got, dc: g.pantryBag().val - coins, base: g.eggPrice(c), card: 0 }; }, HEN);
 t = await card(HEN);
-ok('her eggs a coin dearer for each of her stars (2 stars: 8 coins), her card says so', egg.r === 'laid' && egg.dc === egg.base + 2 && T.eggs8.test(t), { egg, t: t.slice(0, 300) });
+ok('her eggs 3 coins dearer for each of her stars (2 stars: 12 coins), her card says so, with her stars and the way to the next at the top', egg.r === 'laid' && egg.dc === egg.base + 6 && /12/.test(t) && (fr ? /vers la prochaine étoile/ : /to the next star/).test(t.slice(0, 120)), { egg, t: t.slice(0, 300) });
 // at night: in the morning
 await p.evaluate(() => { window.__farm.setHour(23); }); await run(0.3);
 await p.evaluate(id => { const g = window.__farm.game(); g.bird(id).happy = 0; }, HEN);
