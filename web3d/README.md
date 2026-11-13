@@ -5179,3 +5179,35 @@ close). Test: `movealwaystest` (EN/FR).
   game's Christmas dress (`DRESSES.xmas`, 1,500 coins, in season 1 Dec to 6 Jan) is the seed of it. Next: a picture of
   the first building for her before any is built (see roadmap).
 
+## Themed coop buildings: the Snow Chalet (13 Nov 2026; Audrey: "a different design with something extravagant, we could create themes and collections … once they bought the design can reuse it later and switch between what they own")
+- Her choices: a whole new building in place of the coop; one for each breed in each theme; no levels ("maybe it should be
+  a unique one no levels"); "Make sure the toys are also updated"; 8,000 coins each; bought in the theme's season only,
+  worn any time; real money beside the coins from the start (see below). Themes: winter first, then Valentine's Day,
+  Easter and spring, Halloween, Summer fête.
+- **The model** (`stylized/coops.py winter_chalet`): an alpine chalet whose gable faces the front: cream plaster under
+  dark timbers, a balcony of red hearts with a lit door behind it, red shutters, a steep roof under a thick quilt of
+  snow with lumps and icicles along the eaves, a stone chimney capped with snow, a snowman (scarf, bucket hat), a little
+  fir, a lantern on a post, drifts against the walls. It takes the breed it stands in for (`house`, `FL`, `wx`,
+  `ramp`): its pop door, ramp and nest window exactly where that breed's own house has them, so the game's one nest
+  per breed holds (checked at export against coops.json). Looked at with `view_model.py winter_chalet OUT`; exported
+  with `bl/bin/python stylized/extras/export_theme.py OUT` (16,000 triangles, its lantern's light, what stands in the
+  yard by it) and spliced with `splice_coops.py` as `theme_winter_rir`.
+- **The rules** (game.js `THEMES`, `themeInSeason`, `themesFor`, `buyTheme`, `wearTheme`): a theme lists the breeds whose
+  building is made (`breeds`: only `rir` so far). Saved: `themes` (the buildings owned, `winter_rir`) and on a coop
+  `theme`; the save check keeps only real buildings and a theme worn only if owned for that coop's breed. Winter is on
+  sale from 14 Nov to 28 Feb for now (so she can try it before December; 1 Dec was the plan).
+- **In the village** (main.js): `coopLook` gives the themed house whatever the coop's look, its pen and fence the
+  look's own; for winter those two are drawn snowed (`snowedPart`: a copy of the model with every face that looks up,
+  off the ground, turned to snow: rails, posts, the swing, the parasol, the fountain, the feeder, the bales): that is
+  the toys' winter look. No weathervane on it. The swing's seat and the cabbage (moving parts) are as they were.
+- **Its card**: a coop whose breed has a building shows "Themed buildings": the Snow Chalet with what it is, and Buy
+  (in season), "Move into the Snow Chalet" / "Back to its own coop" (owned), or "In the shop in winter".
+- **Real money** (her 17:01 "no real money should be there from the start, why waiting?"): not built yet. Agreed: built
+  beside the coins, its buttons hidden until her Apple side is ready (the Paid Apps agreement with bank and tax details;
+  the products created in App Store Connect; the ICO fee she planned for when she starts trading). Purchases checked
+  from Apple's signed record on the phone, never from the save. Prices suggested, not yet confirmed by her: £0.99 a
+  building, £5.99 a theme of nine, £1.99 the bigger pantry shelves.
+- `themetest.mjs` (new, December on its clock): the buy, the snowed pen, a hen laying in the chalet's nest, off and
+  on again, a reload, every look 0 to 4, July (not for sale; an owned one still worn), a tampered save.
+- Next: the other eight winter buildings, one at a time, each shown to her first.
+
