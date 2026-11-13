@@ -580,6 +580,25 @@
     0.66,
     3.25
    ]
+  ],
+  "theme_winter_leg": [
+   [
+    -0.54,
+    0.5,
+    0.83
+   ]
+  ],
+  "fence_t4_leg_winter": [
+   [
+    -0.005,
+    0.66,
+    3.25
+   ],
+   [
+    0.749,
+    0.66,
+    3.25
+   ]
   ]
  },
  "nests": {
@@ -7530,6 +7549,23 @@
     0.78,
     0.09
    ]
+  ],
+  "theme_winter_leg": [
+   [
+    0.96,
+    -0.1,
+    0.2
+   ],
+   [
+    -0.82,
+    0.5,
+    0.08
+   ],
+   [
+    -0.74,
+    0.8,
+    0.08
+   ]
   ]
  },
  "pens": {
@@ -10528,6 +10564,36 @@
    "tris": 700,
    "verts": 396,
    "prims": 2
+  },
+  "theme_winter_leg": {
+   "tris": 17284,
+   "verts": 9972,
+   "prims": 5
+  },
+  "pen_t4_leg_winter": {
+   "tris": 9436,
+   "verts": 6770,
+   "prims": 4
+  },
+  "fence_t4_leg_winter": {
+   "tris": 13000,
+   "verts": 8014,
+   "prims": 5
+  },
+  "train_engine": {
+   "tris": 680,
+   "verts": 370,
+   "prims": 2
+  },
+  "train_wagon": {
+   "tris": 452,
+   "verts": 248,
+   "prims": 2
+  },
+  "bauble": {
+   "tris": 600,
+   "verts": 326,
+   "prims": 4
   }
  },
  "paths": {

@@ -55,6 +55,7 @@ export function tickToys(plot, dt) {
   C.mesh.rotation.set(C.ax, C.spin, C.az);
   if (T.spin) { const R = T.spin, rider = R.by && R.by.play && R.by.play.phase === 'ride'; R.w += ((rider ? 3.4 : 0) - R.w) * Math.min(1, dt * (rider ? 0.9 : 0.7)); R.a = (R.a + R.w * dt) % (Math.PI * 2); R.mesh.rotation.y = R.a; }
   if (T.bounce) { const B = T.bounce; B.sq += (B.want - B.sq) * Math.min(1, dt * 22); B.mesh.scale.set(1 + (1 - B.sq) * 0.35, B.sq, 1 + (1 - B.sq) * 0.35); B.want = 1; }
+  if (T.train) { const R = T.train; if (R.a !== 0 && !(R.by && R.by.play && R.by.play.phase === 'ride')) { R.a += dt * 1.1; if (R.a >= Math.PI * 2) R.a = 0; } placeTrain(R); }      // (left out on the track: home to its station)
   if (T.prints) tickPrints(plot, dt);
 }
 
@@ -65,7 +66,7 @@ export function wantPlay(b) {
   if (AP && b.kind === 'hen' && b.pers === 'glutton' && AP.want(b) && b.r() < 0.4) return 'apple';      // (the Glutton: an apple on her tree)
   if (!T) return null;
   if (b.r() > (b.kind === 'rooster' ? 0.035 : 0.06)) return null;
-  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo', 'spin', 'spin', 'bounce', 'bounce', 'chute', 'chute', 'chute'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo' || k === 'spin' || k === 'bounce') && b.kind === 'rooster'));
+  const free = ['swing', 'dust', 'cabbage', 'ladder', 'xylo', 'ice', 'ice', 'igloo', 'igloo', 'spin', 'spin', 'bounce', 'bounce', 'chute', 'chute', 'chute', 'train', 'train', 'train'].filter(k => T[k] && !T[k].by && T[k].next <= T.clock && !((k === 'xylo' || k === 'igloo' || k === 'spin' || k === 'bounce' || k === 'train') && b.kind === 'rooster') && !(k === 'train' && T.train.a !== 0));
   return free.length ? free[Math.floor(b.r() * free.length)] : null;
 }
 
@@ -89,6 +90,7 @@ export function startPlay(b, kind) {
   } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
   else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
   else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];
+  else if (kind === 'train') C = T.train.a === 0 ? [{ spot: [T.train.c[0], T.train.c[1] + T.train.r + 0.27], face: Math.PI }] : [];      // (the toy train: at its station, beside the wagon)
   else if (kind === 'chute') C = [{ spot: [T.chute.foot, T.chute.z], face: Math.PI / 2 }];      // (the ice slide: the foot of its steps, facing up them)
   else if (kind === 'spin') C = [[1, 0], [0, -1], [-1, 0]].map(([sx, sz]) => ({ spot: [T.spin.at[0] + sx * (T.spin.r + 0.22), T.spin.at[1] + sz * (T.spin.r + 0.22)], face: Math.atan2(-sx, -sz), slot: Math.atan2(sx, sz) }));      // (the roundabout: beside it, her seat the one nearest)
   else if (kind === 'bounce') C = [{ spot: [T.bounce.at[0] - 0.56, T.bounce.at[1]], face: Math.PI / 2 }, { spot: [T.bounce.at[0], T.bounce.at[1] + 0.56], face: Math.PI }];      // (the gumdrop: beside it)      // (the igloo: to its door, facing in)
@@ -179,6 +181,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'apple') next('out');
       else if (P.kind === 'igloo') next('in');
       else if (P.kind === 'chute') next('climb', { step: 0, rest: 0 });
+      else if (P.kind === 'train') next('on');
       else if (P.kind === 'spin') next('on', { off: P.slot - T.spin.a });
       else if (P.kind === 'bounce') next('up');
       else if (P.kind === 'ice') next('slide', { goes: P.goes || 0, spin: b.r() < 0.4 ? (b.r() < 0.5 ? -1 : 1) : 0 });
@@ -195,6 +198,7 @@ export function playStep(b, dt) {
   if (P.kind === 'igloo') return iglooStep(b, P, T, o, next, dt);
   if (P.kind === 'spin') return spinStep(b, P, T, o, next, dt);
   if (P.kind === 'chute') return chuteStep(b, P, T, o, next, dt);
+  if (P.kind === 'train') return trainStep(b, P, T, o, next, dt);
   if (P.kind === 'bounce') return bounceStep(b, P, T, o, next, dt);
   return xyloStep(b, P, T, Q.xylo, o, next, dt);
 }
@@ -467,6 +471,36 @@ function bounceStep(b, P, T, o, next, dt) {
   return o;
 }
 
+// Santa's Workshop's garden's own (her list, 13 Nov 2026: "A little toy train they ride round the yard"): the train waits at
+// its station; a hen hops into the wagon, and off it goes round the track, two or three times, smoke puffing from its
+// funnel, her wings out with joy now and then; back at the station she hops out, a shake
+const TRAIN_GAP = 0.74, WAGON_Y = 0.13, TRAIN_K = 1.35;      // (the engine ahead of the wagon round the track, the wagon's floor, the train drawn a third bigger than modelled: a hen's size)
+function placeTrain(R) {
+  for (const [m, th] of [[R.wagon, R.a], [R.engine, R.a + TRAIN_GAP]]) { m.position.set(R.c[0] + Math.sin(th) * R.r, 0, R.c[1] + Math.cos(th) * R.r); m.rotation.y = th; m.scale.setScalar(TRAIN_K); }
+}
+function trainStep(b, P, T, o, next, dt) {
+  const p = b.root.position, R = T.train, seat = () => tmpV.set(R.c[0] + Math.sin(R.a) * R.r, WAGON_Y, R.c[1] + Math.cos(R.a) * R.r);
+  if (P.phase === 'on') { o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0; if (hop(b, P, P.from, seat().clone(), 0.75, 0.1, dt)) next('ride', { laps: b.r() < 0.5 ? 2 : 3 }); return o; }
+  if (P.phase === 'ride') {
+    const D = P.laps * 4.4, u = Math.min(1, P.t / D), e = u * u * u * (u * (u * 6 - 15) + 10);
+    R.a = u >= 1 ? 0 : P.laps * Math.PI * 2 * e;
+    seat(); p.copy(tmpV); b.shadowY = 0.0; o.sit = 0.55; b.root.rotation.y = R.a + Math.PI / 2;
+    const lap = (R.a / (Math.PI * 2)) % 1; o.flap = lap > 0.45 && lap < 0.6 && u < 0.95 ? 0.7 : 0;
+    P.puff = (P.puff || 0) - dt;
+    if (P.puff <= 0 && u > 0.03 && u < 0.97) { P.puff = 0.3; const th = R.a + TRAIN_GAP + 0.27; puffAt(b.plot, tmpP.set(R.c[0] + Math.sin(th) * R.r, 0.36, R.c[1] + Math.cos(th) * R.r)); }
+    if (u >= 1) next('off');
+    return o;
+  }
+  if (P.phase === 'off') {
+    if (!P.land) P.land = new THREE.Vector3(P.spot[0], 0.015, P.spot[1]);
+    o.flap = P.t > 0.2 && P.t < 0.6 ? 0.6 : 0;
+    if (hop(b, P, P.from, P.land, 0.8, 0.1, dt)) next('shake');
+    return o;
+  }
+  if (P.phase === 'shake') { o.ruffle = Math.sin(Math.min(1, P.t / 0.7) * Math.PI); if (P.t > 0.85) endPlay(b); }
+  return o;
+}
+
 // the Ice Palace's garden's own (her list, 13 Nov 2026: "An ice slide they whoosh down"): up its three steps a hop at a
 // time, a look from the top, then down the chute she goes, low, wings up, faster and faster, and out into the heap of snow
 // at its foot, snow flying; a shake
@@ -544,6 +578,7 @@ const GARDENS = {
 GARDENS.sil = { blocks: [[-0.7, 1.9, 0.24], [-0.3, 1.9, 0.2], [0.05, 1.9, 0.17]], treat: 'snowflake', warm: [[-0.62, 1.9, 0.3], [-0.07, 1.9, 0.36]],      // (warm: the slide's blue ice kept clear of snow)
  
   chute: { z: 1.9, foot: -1.12, steps: [[-0.82, 0.16], [-0.64, 0.3], [-0.46, 0.42]], top: [-0.36, 0.42], end: [0.22, 0.04], land: 0.58 } };      // (the ice slide: stylized/coops.py SLIDE)
+GARDENS.leg = { blocks: [[-0.06, 2.6, 0.06]], treat: 'bauble', warm: [[-0.4, 1.95, 0.56]], train: { c: [-0.4, 1.95], r: 0.45 } };      // (the toy train's round track: stylized/coops.py TRACK; warm: its rails kept clear of snow)
 const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
 export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
 export function addWinter(plot, garden = null, part = null) {
@@ -552,6 +587,7 @@ export function addWinter(plot, garden = null, part = null) {
   const hang = (name, at) => { const m = part(name); m.position.set(at[0], 0, at[1]); m.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } c.userData.moves = true; }); plot.frame.add(m); return m; };
   if (G.spin && part) { T.spin = { at: G.spin, r: 0.33, a: 0, w: 0, by: null, next: 0, mesh: hang('roundabout', G.spin) }; T.spin.mesh.scale.setScalar(0.83); }      // (a little smaller than modelled: clear of the gate, the feeder and the trough)
   if (G.bounce && part) T.bounce = { at: G.bounce, sq: 1, want: 1, by: null, next: 0, mesh: hang('gumdrop', G.bounce) };
+  if (G.train && part) { T.train = { ...G.train, a: 0, by: null, next: 0, engine: hang('train_engine', G.train.c), wagon: hang('train_wagon', G.train.c) }; placeTrain(T.train); }
   if (G.chute) T.chute = { ...G.chute, by: null, next: 0 };
   if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
     const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];
@@ -584,6 +620,7 @@ export function removeWinter(plot) {
   if (T.ice) { T.ice.mesh.removeFromParent(); T.ice.mesh.geometry.dispose(); T.ice.mesh.material.dispose(); T.ice = null; }
   T.igloo = null; T.chute = null;
   for (const k of ['spin', 'bounce']) if (T[k]) { T[k].mesh.removeFromParent(); T[k] = null; }
+  if (T.train) { T.train.engine.removeFromParent(); T.train.wagon.removeFromParent(); T.train = null; }
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
 }
 export function printsLive(plot) { return plot.toys && plot.toys.prints ? plot.toys.prints.live : 0; }
@@ -594,7 +631,7 @@ function tickPrints(plot, dt) {
     const p = b.root.position; let s = R.at.get(b);
     if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
     const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
-    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute') && b.play.phase !== 'walk' && b.play.phase !== 'face');
+    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute' || b.play.kind === 'train') && b.play.phase !== 'walk' && b.play.phase !== 'face');
     const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || inIgloo || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
     if (out) { s.x = p.x; s.z = p.z; continue; }
     const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);
@@ -662,6 +699,12 @@ function dustPuff(b, spread, size) {
   w.x += Math.cos(a) * d; w.z += Math.sin(a) * d; w.y += 0.05 + Math.random() * 0.05;
   if (mallow) { fx(mat, w, 0.9 + Math.random() * 0.4, 0.07, 0.15, [Math.cos(a) * 0.35, 0.55 + Math.random() * 0.3, Math.sin(a) * 0.35]); return; }
   fx(mat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08, 0.1 + Math.random() * 0.08, Math.sin(a) * 0.08]);
+}
+let steamMat = null;
+function puffAt(plot, local) {                       // a puff of steam from the toy train's funnel
+  if (!steamMat) { steamMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(1, 'rgba(235,240,246,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false }); steamMat.userData.noGrade = true; }
+  const w = local.clone(); plot.frame.localToWorld(w);
+  fx(steamMat, w, 1.1, 0.07, 1.8, [0, 0.22, 0]);
 }
 function note(b, local, col, glyph = '♪') {       // (a note floating up from a bar; a star round a dizzy head)
   const key = col + glyph;

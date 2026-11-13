@@ -40,7 +40,7 @@ const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.
 const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gtheme-r'), b = r && r.querySelector('button'); return r ? { text: r.innerText, btn: b ? { t: b.textContent, off: b.disabled, go: b.dataset.themego } : null } : null; }); };
 const tap = () => p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme-r button').click());
 const view = z => p.evaluate(z => { const f = window.__farm, P = f.gamePlots()[0]; f.lookAt(P.gc.x, P.gc.z, z); f.draw(); }, z);
-const T = fr ? { name: /Chalet des neiges/, back: /Revenir à son poulailler/, into: /Emménager/, when: /l’hiver/, own: /Son propre poulailler/ } : { name: /Snow Chalet/, back: /Back to its own coop/, into: /Move into/, when: /in winter/, own: /Its own coop/ };
+const T = fr ? { name: /Chalet des neiges/, back: /Revenir à son poulailler/, into: /Emménager/, when: /l’hiver/, own: /Son propre poulailler/ } : { name: /Snow Chalet/, back: /Back to its own coop/, into: /Move in:/, when: /in winter/, own: /Its own coop/ };
 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });

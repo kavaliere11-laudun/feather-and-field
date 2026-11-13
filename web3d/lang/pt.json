@@ -1411,12 +1411,12 @@
  "text.theme_t": "Construções temáticas",
  "text.theme_buy": "{name} · {c} moedas",
  "text.theme_broke": "{name} · {c} moedas (ainda não dá)",
- "text.theme_on": "Mudar para o {name}",
+ "text.theme_on": "Mudar para: {name}",
  "text.theme_off": "Voltar ao galinheiro dele",
- "text.theme_wears": "Este é o {name}.",
+ "text.theme_wears": "Elas moram aqui: {name}.",
  "text.theme_when_winter": "Na loja no inverno.",
- "text.theme_bought": "❄️ O {name} é seu para sempre · −{c} moedas",
- "text.theme_done": "{coop} agora é o {name}.",
+ "text.theme_bought": "❄️ {name}: seu para sempre · −{c} moedas",
+ "text.theme_done": "{coop} se mudou: {name}.",
  "text.theme_gone": "{coop} voltou a ser o galinheiro de sempre.",
  "text.theme_note": "Uma construção temática é um galinheiro Deluxe enquanto elas moram nela: o grande jardim com os brinquedos, e os ovos, pintinhos e carinhos de um galinheiro Deluxe. De volta ao galinheiro de sempre, ele tem o visual que você tinha alcançado. Seu para sempre depois de comprado: troque quando quiser.",
  "text.theme_room": "Ela vem com um jardim Deluxe, que precisa de mais espaço aqui: mude primeiro o galinheiro para um lugar mais livre.",
@@ -1424,5 +1424,7 @@
  "text.theme_winter_orp": "Casinha de gengibre",
  "text.themel_winter_orp": "Uma casinha de pão de gengibre: um telhado de glacê coberto de doces, bengalas de açúcar, pirulitos. No jardim, um gira-gira de hortelã, uma bala de goma para pular e uma caneca gigante de chocolate quente para tomar banho.",
  "text.theme_winter_sil": "Palácio de gelo",
- "text.themel_winter_sil": "Um pequeno palácio esculpido em gelo azul: torrinhas sob pináculos de cristal, janelas iluminadas, um floco de neve no topo. No jardim, um escorregador de gelo para deslizar até um monte de neve, um lago congelado e neve rastelada para tomar banho."
+ "text.themel_winter_sil": "Um pequeno palácio esculpido em gelo azul: torrinhas sob pináculos de cristal, janelas iluminadas, um floco de neve no topo. No jardim, um escorregador de gelo para deslizar até um monte de neve, um lago congelado e neve rastelada para tomar banho.",
+ "text.theme_winter_leg": "Oficina do Papai Noel",
+ "text.themel_winter_leg": "Uma oficina de brinquedos no Polo Norte: paredes vermelhas sob um telhado verde nevado, luzes coloridas no beiral, presentes, um soldadinho de guarda. No jardim, um trenzinho para dar voltas e mais voltas e o trenó do Papai Noel cheio de neve para tomar banho."
 }

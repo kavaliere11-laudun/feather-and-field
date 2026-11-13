@@ -5293,4 +5293,21 @@ close). Test: `movealwaystest` (EN/FR).
     chute faster and faster, out into the snow heap with snow flying, a shake. The slide's ice is kept clear of snow
     (`warm`).
   - `icetest.mjs` (new). White Silkies are hard to see on the snow floor: to look at with her.
+- **Santa's Workshop** for the Leghorns (13 Nov 22:42, "Carry on"; `theme_winter_leg`, `coops.py winter_workshop`:
+  red plank walls, white corners, a green door under a gold star, a snowy green roof with coloured lights along the
+  eaves (`xlight*`, GLOWC), a lit dormer, a chimney with a sack of presents, a pile of presents (`_gift`), a toy
+  soldier, a striped North Pole post with a lantern; the Leghorns' own nest, pop door and ramp).
+  - Its garden (`WINTER = 'leg'`): `pen_t4_leg_winter` (the rowing boat of sand is Santa's sleigh full of snow,
+    `santa_sleigh`, same size and height; the water butt ice; the toy train's round track and its little station,
+    `train_track`, `TRACK`), `fence_t4_leg_winter` (holly and baubles over the arch, little presents along the
+    borders, fairy lights), and moving parts `train_engine`, `train_wagon`, `bauble` (the treat).
+  - play.js `GARDENS.leg`, kind `train` (hens only): the train waits at its station; a hen hops into the wagon, it
+    goes round the track two or three times easing off and back to a stop at the station, steam puffing from the
+    funnel, her wings out once a lap; she hops out, a shake. Drawn 1.35 times its model's size (`TRAIN_K`). Left out
+    on the track (a rider called away), it rolls home. Not stopped by the farmer coming in: the ride finishes.
+  - `traintest.mjs` (new; Leghorns come at level 15).
+- **Names in sentences** (13 Nov, found while adding this one): the sentences that put an article before a
+  building's name were wrong for half the names in French, German, Spanish, Italian and Portuguese ("Le Maison…",
+  "Das Eispalast", "El Casita"), and "The Santa's Workshop" in English. `theme_on`, `theme_bought`, `theme_done` and
+  `theme_wears` now carry the name after a colon, with no article, in all six languages.
 

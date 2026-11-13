@@ -1411,12 +1411,12 @@
  "text.theme_t": "Edifici a tema",
  "text.theme_buy": "{name} · {c} monete",
  "text.theme_broke": "{name} · {c} monete (non bastano ancora)",
- "text.theme_on": "Trasloca nello {name}",
+ "text.theme_on": "Trasloca: {name}",
  "text.theme_off": "Torna al suo pollaio",
- "text.theme_wears": "Questo è lo {name}.",
+ "text.theme_wears": "Vivono qui: {name}.",
  "text.theme_when_winter": "In negozio d’inverno.",
- "text.theme_bought": "❄️ Lo {name} è tuo per sempre · −{c} monete",
- "text.theme_done": "{coop} ora è lo {name}.",
+ "text.theme_bought": "❄️ {name}: tuo per sempre · −{c} monete",
+ "text.theme_done": "{coop} ha traslocato: {name}.",
  "text.theme_gone": "{coop} è di nuovo il suo pollaio.",
  "text.theme_note": "Un edificio a tema è un pollaio Deluxe finché ci vivono: il grande giardino con i suoi giochi, e uova, pulcini e coccole di un pollaio Deluxe. Tornato al suo pollaio, ha l’aspetto che avevi raggiunto. Tuo per sempre una volta comprato: cambia quando vuoi.",
  "text.theme_room": "Arriva con un giardino Deluxe, che qui ha bisogno di più spazio: sposta prima il pollaio in un punto più libero.",
@@ -1424,5 +1424,7 @@
  "text.theme_winter_orp": "Casetta di pan di zenzero",
  "text.themel_winter_orp": "Una casetta di pan di zenzero: un tetto di glassa coperto di dolcetti, bastoncini di zucchero, lecca-lecca. Nel giardino una giostrina alla menta, una caramella gommosa su cui rimbalzare e una tazza gigante di cioccolata calda in cui fare il bagno.",
  "text.theme_winter_sil": "Palazzo di ghiaccio",
- "text.themel_winter_sil": "Un piccolo palazzo scolpito nel ghiaccio azzurro: torrette sotto guglie di cristallo, finestre illuminate, un fiocco di neve in cima. Nel giardino uno scivolo di ghiaccio per sfrecciare in un mucchio di neve, uno stagno ghiacciato e neve rastrellata in cui fare il bagno."
+ "text.themel_winter_sil": "Un piccolo palazzo scolpito nel ghiaccio azzurro: torrette sotto guglie di cristallo, finestre illuminate, un fiocco di neve in cima. Nel giardino uno scivolo di ghiaccio per sfrecciare in un mucchio di neve, uno stagno ghiacciato e neve rastrellata in cui fare il bagno.",
+ "text.theme_winter_leg": "Officina di Babbo Natale",
+ "text.themel_winter_leg": "Un’officina di giocattoli al Polo Nord: pareti rosse sotto un tetto verde innevato, luci colorate lungo la gronda, regali, un soldatino di guardia. Nel giardino un trenino su cui fare giri e giri e la slitta di Babbo Natale piena di neve in cui fare il bagno."
 }

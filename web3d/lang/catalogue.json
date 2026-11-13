@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter_leg",
+  "en": "Santa’s Workshop",
+  "fr": "Atelier du Père Noël"
+ },
+ {
+  "id": "text.themel_winter_leg",
+  "en": "A toy workshop at the North Pole: red walls under a snowy green roof, coloured lights along the eaves, presents, a toy soldier on guard. In its garden a little toy train to ride round and round, and Santa’s sleigh full of snow to bathe in.",
+  "fr": "Un atelier de jouets au pôle Nord : des murs rouges sous un toit vert enneigé, des guirlandes de couleur, des cadeaux, un petit soldat de garde. Dans son jardin, un petit train pour faire des tours et le traîneau du Père Noël rempli de neige pour se baigner."
+ },
+ {
   "id": "text.theme_winter_sil",
   "en": "Ice Palace",
   "fr": "Palais de glace"
@@ -4337,8 +4347,8 @@
  },
  {
   "id": "text.theme_on",
-  "en": "Move into the {name}",
-  "fr": "Emménager dans le {name}"
+  "en": "Move in: {name}",
+  "fr": "Emménager : {name}"
  },
  {
   "id": "text.theme_off",
@@ -4347,8 +4357,8 @@
  },
  {
   "id": "text.theme_wears",
-  "en": "This is the {name}.",
-  "fr": "Voici le {name}."
+  "en": "They live here: {name}.",
+  "fr": "Elles vivent ici : {name}."
  },
  {
   "id": "text.theme_when_winter",
@@ -4357,13 +4367,13 @@
  },
  {
   "id": "text.theme_bought",
-  "en": "❄️ The {name} is yours for good · −{c} coins",
-  "fr": "❄️ Le {name} est à vous pour toujours · −{c} pièces"
+  "en": "❄️ {name}: yours for good · −{c} coins",
+  "fr": "❄️ {name} : à vous pour toujours · −{c} pièces"
  },
  {
   "id": "text.theme_done",
-  "en": "{coop} is now the {name}.",
-  "fr": "{coop} est maintenant le {name}."
+  "en": "{coop} has moved in: {name}.",
+  "fr": "{coop} a emménagé : {name}."
  },
  {
   "id": "text.theme_gone",

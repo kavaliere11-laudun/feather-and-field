@@ -1953,6 +1953,8 @@ def deluxe_fence(seed=9):
     SWEETS = [C(k, h, rough=0.4) for k, h in (('gb_red', '#d5303a'), ('gb_green', '#3f9a4c'), ('gb_yellow', '#f5c531'), ('gb_pink', '#f18bb2'), ('gb_blue', '#58a9e0'), ('gb_purple', '#9a6bd0'))]
     if WINTER == 'orp':                                         # (the Gingerbread Cottage's: icing and sweets over the arch, gumdrops along the borders)
         leaf = [C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)]; rose = SWEETS
+    if WINTER == 'leg':                                         # (Santa's Workshop's: holly and baubles over the arch, little presents along the borders)
+        rose = [C('sw_red', '#c2302d', rough=0.35), C('gb_gold', '#d9a53a', rough=0.35, metal=0.6), C('gb_blue', '#58a9e0', rough=0.4)]
     if WINTER == 'sil':                                         # (the Ice Palace's: frost and blue ice over the arch, ice crystals along the borders)
         leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5), C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)]
     x0, x1, y0, y1 = coop.PEN['box']
@@ -2004,7 +2006,10 @@ def deluxe_fence(seed=9):
         a, b = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); n = int((b - a).length / 0.05)
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
-            if WINTER not in ('orp', 'sil') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER not in ('orp', 'sil', 'leg') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER == 'leg':                                 # (little presents)
+                if i % 5 == 0: sz = random.uniform(0.06, 0.1); _gift(objs, p.x, p.y, 0.0, (sz, sz, sz * random.uniform(0.7, 1.1)), SWEETS[(i // 5) % 6], rose[1] if (i // 5) % 2 else leaf[0] if False else C('gb_icing', '#fbf7f0', rough=0.5), random.uniform(0, 1.5))
+                continue
             if WINTER == 'sil':                                 # (ice crystals, some tall)
                 if i % 3 == 0:
                     h = random.uniform(0.07, 0.2); objs.append(cyl('bcrystal', 0.03, h, (p.x, p.y, h / 2), (random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3), 0), m=rose[i % 2], verts=6, r2=0.004, bevel=0.0))
@@ -2045,6 +2050,110 @@ def deluxe_fence(seed=9):
     if WINTER:                                                  # (lights along the two side fences too, post to post)
         bunting((x0, y0, 0.5), (x0, y1, 0.5), sag=0.05); bunting((x1, y0, 0.5), (x1, y1, 0.5), sag=0.05)
     return finish(objs, 'fence_dx')
+
+
+def _gift(objs, x, y, z, sz, col, rib, rot=0.0):
+    """A wrapped present: a box in `col`, a ribbon round it both ways and a bow on top in `rib` (sz: its sides)."""
+    w, d, h = sz
+    objs.append(box('gift', (w, d, h), (x, y, z + h / 2), (0, 0, rot), m=col, bevel=0.008, segs=1))
+    objs.append(box('giftrib', (w + 0.006, d * 0.2, h + 0.006), (x, y, z + h / 2), (0, 0, rot), m=rib, bevel=0.0, segs=1))
+    objs.append(box('giftrib', (w * 0.2, d + 0.006, h + 0.006), (x, y, z + h / 2), (0, 0, rot), m=rib, bevel=0.0, segs=1))
+    for sg in (-1, 1): objs.append(sphere('giftbow', min(w, d) * 0.2, (x + sg * min(w, d) * 0.16 * math.cos(rot), y + sg * min(w, d) * 0.16 * math.sin(rot), z + h + 0.012), (1.2, 0.7, 0.7), (0, 0, rot), m=rib, seg=8, rings=6))
+
+
+def winter_workshop(seed=80, name='theme_winter_leg', house='leg', FL=0.18, wx=0.44):
+    """Santa's Workshop (the winter collection's building for the Leghorns; Audrey, 13 Nov 2026: "Carry on"): a toy
+    workshop at the North Pole. Red plank walls with white corners, a green door under a gold star, a steep green roof
+    under thick snow with a string of coloured lights along its eaves, a dormer with a round lit window, a brick chimney
+    with a sack of presents in it; a pile of wrapped presents and a toy soldier by the door, a striped North Pole post
+    with a lantern. (house, FL, wx: the Leghorns' own pop door and ramp, nest window and nest.)"""
+    random.seed(seed); objs = []
+    red = C('sw_red', '#c2302d', rough=0.7, var=0.06, grain=0.25, grain_scale=G); redd = C('sw_redd', '#9c2422', rough=0.7, var=0.05)
+    white = C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2); green = C('sw_green', '#2f7a46', rough=0.6, var=0.05); greend = C('sw_greend', '#1f5a34', rough=0.65, var=0.05)
+    gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); brick = C('brick', '#9b5239', rough=0.85, var=0.1)
+    black = C('wc_coal', '#1f1d1c', rough=0.8); skin = C('sw_skin', '#f2c9a4', rough=0.7); blue = C('gb_blue', '#58a9e0', rough=0.4); yellow = C('gb_yellow', '#f5c531', rough=0.4)
+    bulbs = [C('xlight%d' % i, h, rough=0.3, emission=(h, 0.6)) for i, h in enumerate(XLIGHTS)]
+    EAVE, PEAK = 0.98, 1.78
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    # ---- the walls: red planks, white corner boards and a white band under the eaves
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=redd, bevel=0.01, segs=2); objs.append(core)
+    n = 14
+    for i in range(n):
+        x = -W2 + (i + 0.5) * 2 * W2 / n
+        for sy in (-1, 1):
+            if sy < 0 and (abs(x + 0.31) < 0.16 or abs(x - 0.055) < 0.17 or abs(x - wx) < 0.2): continue
+            objs.append(plank('wplank', (x, sy * D2, 0.02), (x, sy * D2, EAVE - 0.03), 2 * W2 / n * 0.94, 0.03, (0, sy, 0), red, jitter=0.3))
+    for sx in (-1, 1):
+        m_ = 9
+        for i in range(m_):
+            y = -D2 + (i + 0.5) * 2 * D2 / m_; top = EAVE + (PEAK - EAVE) * (1 - abs(y) / D2) - 0.05
+            objs.append(plank('gplank', (sx * W2, y, 0.02), (sx * W2, y, max(EAVE, top)), 2 * D2 / m_ * 0.94, 0.03, (sx, 0, 0), red, jitter=0.3))
+        for sy in (-1, 1): objs.append(box('corner', (0.075, 0.075, EAVE), (sx * W2, sy * D2, EAVE / 2), m=white, bevel=0.01, segs=1))
+    for sy in (-1, 1): objs.append(box('band', (2 * W2 + 0.08, 0.05, 0.07), (0, sy * D2, EAVE - 0.03), m=white, bevel=0.01, segs=1))
+    # ---- the roof: green boards under thick snow, lumps along the eaves, coloured lights strung under them
+    over, go = 0.2, 0.16; run = D2 + over; rise = PEAK - (EAVE - 0.1); ang = math.atan2(rise, run); L = math.hypot(run, rise)
+    for sy in (-1, 1):
+        cy_, cz = sy * run / 2, (EAVE - 0.1 + PEAK) / 2; ny, nz = sy * math.sin(ang), math.cos(ang)
+        objs.append(box('roofb', (2 * W2 + 2 * go, L, 0.045), (0, cy_, cz), (-sy * ang, 0, 0), m=greend, bevel=0.008, segs=1))
+        objs.append(box('roofsnow', (2 * W2 + 2 * go + 0.05, L * 0.8, 0.11), (0, cy_ * 0.76 + ny * 0.075, cz + rise * 0.1 + nz * 0.075), (-sy * ang, 0, 0), m=snow, bevel=0.05, segs=4))      # (the green shows below it, down to the eave)
+        for k in range(8):
+            x = -W2 - go + 0.08 + k * (2 * W2 + 2 * go - 0.16) / 7
+            objs.append(sphere('lump', random.uniform(0.07, 0.1), (x, sy * run * 0.74, EAVE - 0.1 + rise * 0.26 + 0.05), (1.3, 0.9, 0.6), (-sy * ang, 0, 0), m=snow, seg=12, rings=8))
+        nb = 15
+        for k in range(nb):                                 # the lights, sagging between the corners
+            u = k / (nb - 1); x = -W2 - go + 0.03 + u * (2 * W2 + 2 * go - 0.06); sag = 0.05 * math.sin(u * math.pi * 3) ** 2
+            objs.append(sphere('xbulb', 0.024, (x, sy * (run + 0.02), EAVE - 0.14 - sag), (1, 1, 1.3), m=bulbs[k % len(bulbs)], seg=8, rings=6))
+        objs.append(box('lightwire', (2 * W2 + 2 * go, 0.006, 0.006), (0, sy * (run + 0.02), EAVE - 0.115), m=black, bevel=0.0, segs=1))
+    objs.append(cyl('ridgesnow', 0.09, 2 * W2 + 2 * go + 0.04, (0, 0, PEAK + 0.05), (0, math.radians(90), 0), snow, verts=12, bevel=0.03))
+    # the dormer on the front slope: a little gabled window, round and lit
+    dz = EAVE - 0.1 + rise * 0.52; dy = -run * 0.48
+    objs.append(box('dormer', (0.3, 0.3, 0.26), (0.32, dy + 0.1, dz + 0.1), m=red, bevel=0.01, segs=1))
+    objs.append(cyl('dormwin', 0.07, 0.02, (0.32, dy - 0.055, dz + 0.12), (math.radians(90), 0, 0), m=glass, verts=16, bevel=0.0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.075, minor_radius=0.016, major_segments=18, minor_segments=6, location=(0.32, dy - 0.06, dz + 0.12), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, white); objs.append(o)
+    for sx in (-1, 1): objs.append(box('dormroof', (0.24, 0.36, 0.035), (0.32 + sx * 0.085, dy + 0.1, dz + 0.3), (0, sx * math.radians(38), 0), m=greend, bevel=0.006, segs=1))
+    objs.append(cyl('dormsnow', 0.06, 0.38, (0.32, dy + 0.1, dz + 0.38), (math.radians(90), 0, 0), snow, verts=10, bevel=0.02))
+    # the chimney: bricks, a cap of snow, a sack of presents poking out
+    cx, cyy = -0.38, 0.2; cz0 = EAVE - 0.1 + rise * (1 - cyy / run) - 0.1
+    objs.append(box('chimney', (0.22, 0.22, 0.6), (cx, cyy, cz0 + 0.3), m=brick, bevel=0.012, segs=1))
+    objs.append(box('chimcap', (0.28, 0.28, 0.06), (cx, cyy, cz0 + 0.61), m=snow, bevel=0.025, segs=3))
+    objs.append(sphere('sack', 0.1, (cx, cyy, cz0 + 0.7), (1, 1, 1.1), m=C('sw_sack', '#8a5a34', rough=0.9, var=0.08), seg=12, rings=8))
+    _gift(objs, cx - 0.03, cyy - 0.02, cz0 + 0.76, (0.08, 0.08, 0.08), blue, yellow, 0.4); _gift(objs, cx + 0.05, cyy + 0.03, cz0 + 0.75, (0.06, 0.06, 0.1), green, white, -0.3)
+    # ---- the front: a green door with a gold knob under a gold star, the nest window framed white, the hens' door and ramp
+    arched_door(objs, 0.055, -D2 - 0.01, 0.0, 0.26, 0.62, green, white, gold)
+    for q in range(5):                                      # the star over the door
+        aa = math.pi / 2 + q * math.tau / 5
+        objs.append(cyl('star', 0.03, 0.09, (0.055 + math.cos(aa) * 0.045, -D2 - 0.05, 0.8 + math.sin(aa) * 0.045), (math.radians(90), 0, 0), m=gold, verts=3, bevel=0.0))
+    objs.append(cyl('starmid', 0.045, 0.03, (0.055, -D2 - 0.05, 0.8), (math.radians(90), 0, 0), m=gold, verts=10, bevel=0.0))
+    nest_window(objs, house, FL, wx, white, solids=[core], door='drop', door_m=green)
+    objs.append(box('nsnow', (WIN_W + 0.2, 0.06, 0.04), (wx, -D2 - 0.04, FL + 0.04 + WIN_H + 0.06), m=snow, bevel=0.018, segs=3))
+    window(objs, W2 + 0.03, 0.0, 0.6, 0.26, 0.24, white, glass, normal=(1, 0, 0))
+    pop_door(objs, FL, white, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    # ---- by it: a pile of presents, a toy soldier on guard, the North Pole (a striped post, a gold ball, a lantern)
+    gx, gy = W2 + 0.34, 0.1; keep(gx, gy, 0.2)
+    _gift(objs, gx, gy, 0.0, (0.22, 0.22, 0.18), red, gold, 0.2); _gift(objs, gx + 0.2, gy - 0.08, 0.0, (0.16, 0.14, 0.12), blue, white, -0.3)
+    _gift(objs, gx - 0.02, gy - 0.2, 0.0, (0.13, 0.13, 0.13), yellow, red, 0.5); _gift(objs, gx + 0.02, gy + 0.01, 0.18, (0.14, 0.12, 0.1), green, gold, -0.2)
+    tx, ty = -W2 - 0.2, -D2 - 0.06; keep(tx, ty, 0.08)             # the toy soldier
+    for sg in (-1, 1): objs.append(cyl('tsleg', 0.022, 0.16, (tx + sg * 0.028, ty, 0.08), m=blue, verts=8, bevel=0.0))
+    objs.append(cyl('tsbody', 0.055, 0.17, (tx, ty, 0.245), m=red, verts=10, bevel=0.008))
+    for sg in (-1, 1): objs.append(cyl('tsarm', 0.018, 0.14, (tx + sg * 0.07, ty, 0.25), m=red, verts=6, bevel=0.0))
+    objs.append(sphere('tshead', 0.045, (tx, ty, 0.37), m=skin, seg=10, rings=8))
+    objs.append(cyl('tshat', 0.047, 0.11, (tx, ty, 0.455), m=black, verts=10, bevel=0.006))
+    objs.append(box('tsbelt', (0.115, 0.115, 0.02), (tx, ty, 0.2), m=gold, bevel=0.0, segs=1))
+    for z in (0.24, 0.29): objs.append(sphere('tsbtn', 0.01, (tx, ty - 0.055, z), m=gold, seg=6, rings=4))
+    px, py = -0.74, -D2 - 0.36; keep(px, py, 0.08)                 # the North Pole
+    for i in range(10):
+        objs.append(cyl('pole', 0.035, 0.08, (px, py, 0.04 + i * 0.078), m=red if i % 2 else white, verts=10, bevel=0.0))
+    objs.append(sphere('poleball', 0.06, (px, py, 0.84), m=gold, seg=12, rings=8))
+    objs.append(box('polesign', (0.26, 0.02, 0.09), (px + 0.1, py - 0.03, 0.62), m=white, bevel=0.006, segs=1))
+    objs.append(box('polesignr', (0.22, 0.022, 0.05), (px + 0.1, py - 0.032, 0.62), m=red, bevel=0.0, segs=1))
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (px + 0.2, py - 0.03, 0.5), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    light_at(name, px + 0.2, py - 0.03, 0.5)
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (W2 + 0.08, -0.25, 0.7), (0.6, -D2 - 0.12, 0.5)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
 
 
 def winter_palace(seed=79, name='theme_winter_sil', house='sil', FL=0.14, wx=0.42, NF=0.06):
@@ -2346,6 +2455,9 @@ def winter_pen(bk='rir'):
     elif bk == 'sil':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
         ice_slide(objs)
+    elif bk == 'leg':
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+        train_track(objs)
     _own(objs, root)
     root.name = 'pen_t4' + ('' if bk == 'rir' else '_' + bk) + '_winter'
     return root
@@ -2365,6 +2477,98 @@ def winter_fence(bk='rir'):
     if had is not None: LIGHTS[key] = had
     root.name = key + '_winter'
     return root
+
+
+TRACK = dict(c=(-0.4, -1.95), r=0.45)                           # (the toy train's round track in the Leghorns' Deluxe yard: its middle (x, y), its radius; play.js GARDENS.leg)
+
+
+def santa_sleigh(objs, x, y):
+    """Santa's Workshop's bath: his sleigh, red with a gold stripe, on two gold runners that curl up in front, full of snow
+    (the rowing boat's size and height, so they bathe in it the same way), a sack of presents at its back."""
+    red = C('sw_red', '#c2302d', rough=0.5, var=0.04); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)
+    snow = C('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02)
+    objs.append(_frustum('hull', x, y, 0.03, 0.14, BOAT_W - 0.2, BOAT_D - 0.14, BOAT_W, BOAT_D, red, pointed=0.12))
+    objs.append(_frustum('stripe', x, y, 0.1, 0.125, BOAT_W - 0.03, BOAT_D - 0.02, BOAT_W + 0.005, BOAT_D + 0.004, gold, pointed=0.12))
+    objs.append(_frustum('bsand', x, y, 0.06, 0.1, BOAT_W - 0.14, BOAT_D - 0.12, BOAT_W - 0.04, BOAT_D - 0.04, snow, pointed=0.1))
+    me = bpy.data.meshes.new('bsandtop'); bm = bmesh.new(); w, d, pt = BOAT_W - 0.05, BOAT_D - 0.05, 0.11
+    vs = [bm.verts.new((x + px, y + py, 0.1)) for (px, py) in ((-w / 2 + pt, -d / 2), (w / 2 - pt, -d / 2), (w / 2, 0), (w / 2 - pt, d / 2), (-w / 2 + pt, d / 2), (-w / 2, 0))]
+    bm.faces.new(vs); bm.normal_update(); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('bsandtop', me)); setmat(o, snow); objs.append(o)
+    for sy in (-1, 1):                                          # the runners, curled up in front
+        ry = y + sy * (BOAT_D / 2 - 0.04)
+        objs.append(box('runner', (BOAT_W + 0.1, 0.022, 0.022), (x, ry, 0.012), m=gold, bevel=0.004, segs=1))
+        for k in range(6):
+            a0, a1 = -math.pi / 2 + k * 0.5, -math.pi / 2 + (k + 1) * 0.5; cx_, R = x + BOAT_W / 2 + 0.05, 0.09
+            objs.append(plank('curl', (cx_ + math.cos(a0) * R, ry, 0.1 + math.sin(a0) * R), (cx_ + math.cos(a1) * R, ry, 0.1 + math.sin(a1) * R), 0.022, 0.022, (0, sy, 0), gold, jitter=0.0, bevel=0.003))
+        for dx in (-0.25, 0.2): objs.append(box('strut', (0.02, 0.02, 0.05), (x + dx, ry, 0.035), m=gold, bevel=0.0, segs=1))
+    objs.append(box('sback', (0.04, BOAT_D - 0.08, 0.16), (x - BOAT_W / 2 + 0.06, y, 0.2), (0, math.radians(-12), 0), m=red, bevel=0.012, segs=1))
+    objs.append(sphere('ssack', 0.085, (x - BOAT_W / 2 - 0.08, y + 0.02, 0.07), (1, 1, 1.1), m=C('sw_sack', '#8a5a34', rough=0.9, var=0.08), seg=12, rings=8))
+    _gift(objs, x - BOAT_W / 2 - 0.1, y - 0.17, 0.0, (0.1, 0.1, 0.09), C('gb_blue', '#58a9e0', rough=0.4), gold, 0.3)
+
+
+def train_track(objs):
+    """Santa's Workshop's garden's own (Audrey's list, 13 Nov 2026: "A little toy train they ride round the yard"): a round
+    track of two rails on wooden sleepers, and a little station: a striped post with a green signal board and a bell."""
+    iron = C('sw_rail', '#59626b', rough=0.4, metal=0.7); wood = C('darkwood', '#6d4a31', rough=0.8)
+    cx, cy = TRACK['c']; R = TRACK['r']
+    for rr in (R - 0.045, R + 0.045):
+        bpy.ops.mesh.primitive_torus_add(major_radius=rr, minor_radius=0.009, major_segments=36, minor_segments=4, location=(cx, cy, 0.05))
+        o = bpy.context.object; setmat(o, iron); objs.append(o)
+    for k in range(18):
+        a = k / 18 * math.tau
+        objs.append(box('sleeper', (0.15, 0.035, 0.022), (cx + math.cos(a) * R, cy + math.sin(a) * R, 0.035), (0, 0, a), m=wood, bevel=0.003, segs=1))
+    sx_, sy_ = cx + 0.34, cy - R - 0.2                           # the station: at the front of the track
+    red = C('sw_red', '#c2302d', rough=0.5, var=0.04); white = C('gb_icing', '#fbf7f0', rough=0.5)
+    for i in range(7): objs.append(cyl('stpost', 0.022, 0.07, (sx_, sy_, 0.035 + i * 0.068), m=red if i % 2 else white, verts=8, bevel=0.0))
+    objs.append(box('stsign', (0.16, 0.02, 0.07), (sx_, sy_ - 0.02, 0.44), m=C('sw_green', '#2f7a46', rough=0.6, var=0.05), bevel=0.006, segs=1))
+    objs.append(sphere('stbell', 0.03, (sx_, sy_, 0.52), (1, 1, 1.15), m=C('gb_gold', '#d9a53a', rough=0.35, metal=0.6), seg=10, rings=8))
+
+
+def train_engine():
+    """The toy train's engine (its middle on the rails at the origin, running towards +x; glTF: +x): a red boiler with gold
+    bands and a black funnel, a green cab with a yellow roof, six little wheels."""
+    objs = []; red = C('sw_red', '#c2302d', rough=0.4, var=0.03); green = C('sw_green', '#2f7a46', rough=0.5); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)
+    black = C('wc_coal', '#1f1d1c', rough=0.6); yellow = C('gb_yellow', '#f5c531', rough=0.4)
+    objs.append(box('chassis', (0.26, 0.11, 0.025), (0, 0, 0.085), m=black, bevel=0.004, segs=1))
+    objs.append(cyl('boiler', 0.05, 0.16, (0.04, 0, 0.145), (0, math.radians(90), 0), m=red, verts=12, bevel=0.006))
+    for dx in (-0.01, 0.07): objs.append(cyl('band', 0.053, 0.012, (dx, 0, 0.145), (0, math.radians(90), 0), m=gold, verts=12, bevel=0.0))
+    objs.append(cyl('funnel', 0.018, 0.07, (0.09, 0, 0.215), m=black, verts=8, r2=0.028, bevel=0.0))
+    objs.append(sphere('dome', 0.022, (0.02, 0, 0.195), m=gold, seg=8, rings=6))
+    objs.append(box('cab', (0.09, 0.11, 0.12), (-0.085, 0, 0.155), m=green, bevel=0.008, segs=1))
+    objs.append(box('cabroof', (0.11, 0.13, 0.018), (-0.085, 0, 0.222), m=yellow, bevel=0.006, segs=1))
+    objs.append(box('buffer', (0.02, 0.1, 0.03), (0.135, 0, 0.09), m=gold, bevel=0.004, segs=1))
+    for dx in (-0.09, 0.0, 0.09):
+        for sy in (-1, 1): objs.append(cyl('wheel', 0.036, 0.016, (dx, sy * 0.058, 0.052), (math.radians(90), 0, 0), m=black if dx else gold, verts=10, bevel=0.0))
+    return finish(objs, 'train_engine')
+
+
+def train_wagon():
+    """The toy train's open wagon (as the engine: its middle on the rails at the origin): green sides with a gold rim, a hen's
+    width inside, four little wheels."""
+    objs = []; green = C('sw_green', '#2f7a46', rough=0.5); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); black = C('wc_coal', '#1f1d1c', rough=0.6); red = C('sw_red', '#c2302d', rough=0.4)
+    objs.append(box('wfloor', (0.26, 0.17, 0.025), (0, 0, 0.085), m=black, bevel=0.004, segs=1))
+    for sy in (-1, 1): objs.append(box('wside', (0.26, 0.018, 0.075), (0, sy * 0.085, 0.13), m=green, bevel=0.004, segs=1))
+    for sx in (-1, 1): objs.append(box('wend', (0.018, 0.17, 0.075), (sx * 0.125, 0, 0.13), m=red, bevel=0.004, segs=1))
+    for sy in (-1, 1): objs.append(box('wrim', (0.275, 0.022, 0.014), (0, sy * 0.085, 0.172), m=gold, bevel=0.003, segs=1))
+    for dx in (-0.08, 0.08):
+        for sy in (-1, 1): objs.append(cyl('wheel', 0.036, 0.016, (dx, sy * 0.095, 0.052), (math.radians(90), 0, 0), m=black, verts=10, bevel=0.0))
+    return finish(objs, 'train_wagon')
+
+
+def bauble():
+    """Santa's Workshop's garden's hanging treat in the cabbage's place: a big red bauble of seed cake, a gold band and cap
+    (the string's top at the origin, as the cabbage)."""
+    objs = []; L = CAB_TOP - CAB_Z; gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)
+    objs.append(cyl('cstring', 0.005, L - 0.09, (0, 0, -(L - 0.09) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    objs.append(sphere('bauble', 0.075, (0, 0, -L), m=C('sw_red', '#c2302d', rough=0.3, var=0.03), seg=16, rings=12))
+    objs.append(cyl('bband', 0.077, 0.02, (0, 0, -L), m=gold, verts=16, bevel=0.0))
+    objs.append(cyl('bcap', 0.025, 0.03, (0, 0, -L + 0.08), m=gold, verts=10, bevel=0.004))
+    rnd = random.Random(4)
+    for k in range(14):
+        v = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1))).normalized() * 0.075
+        if abs(v.z) < 0.02: continue
+        objs.append(sphere('bseed', 0.01, (v.x, v.y, -L + v.z), m=C('gb_icing', '#fbf7f0', rough=0.5), ico=1))
+    return finish(objs, 'bauble')
 
 
 SLIDE = dict(y=-1.9, steps=((-0.82, 0.16), (-0.64, 0.3), (-0.46, 0.42)), top=(-0.36, 0.42), end=(0.22, 0.04))      # (the ice slide, along x in the Silkies' Deluxe yard: its steps (x, height), the chute's top and foot; play.js CHUTE the same)
@@ -5035,6 +5239,7 @@ def wheelbarrow(objs, x, y):
 
 def sand_boat(objs, x, y):
     """The Deluxe cottage's sand bath: a little blue rowing boat full of sand, a white stripe along it, an oar beside it."""
+    if WINTER == 'leg': return santa_sleigh(objs, x, y)         # (Santa's Workshop's garden: his sleigh, full of snow)
     blue = C('bluedoor', '#3b6890', rough=0.55, var=0.05, grain=0.2, grain_scale=G); white = C('trimw', '#efe9dc', rough=0.6)
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); wood = coop.M()['wood']
     objs.append(_frustum('hull', x, y, 0.0, 0.13, BOAT_W - 0.24, BOAT_D - 0.2, BOAT_W, BOAT_D, blue, pointed=0.18))

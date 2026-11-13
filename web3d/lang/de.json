@@ -1408,12 +1408,12 @@
  "text.theme_t": "Themenhäuser",
  "text.theme_buy": "{name} · {c} Münzen",
  "text.theme_broke": "{name} · {c} Münzen (noch nicht genug)",
- "text.theme_on": "Ins {name} einziehen",
+ "text.theme_on": "Einziehen: {name}",
  "text.theme_off": "Zurück in den eigenen Stall",
- "text.theme_wears": "Das ist das {name}.",
+ "text.theme_wears": "Hier wohnen sie: {name}.",
  "text.theme_when_winter": "Im Winter im Laden.",
- "text.theme_bought": "❄️ Das {name} gehört dir für immer · −{c} Münzen",
- "text.theme_done": "{coop} ist jetzt das {name}.",
+ "text.theme_bought": "❄️ {name}: für immer deins · −{c} Münzen",
+ "text.theme_done": "{coop} ist eingezogen: {name}.",
  "text.theme_gone": "{coop} ist wieder der eigene Stall.",
  "text.theme_note": "Ein Themenhaus ist ein Deluxe-Stall, solange sie darin wohnen: der große Garten mit seinen Spielsachen und Eier, Küken und Kuscheln wie im Deluxe-Stall. Zurück im eigenen Stall hat er wieder das Aussehen, das du erreicht hattest. Einmal gekauft, für immer deins: Wechsle, wann du magst.",
  "text.theme_room": "Dazu gehört ein Deluxe-Garten, und der braucht hier mehr Platz: Stelle den Stall zuerst an einen freieren Ort.",
@@ -1421,5 +1421,7 @@
  "text.theme_winter_orp": "Lebkuchenhaus",
  "text.themel_winter_orp": "Ein Häuschen aus Lebkuchen: ein Zuckergussdach voller Süßigkeiten, Zuckerstangen, Lutscher. Im Garten ein Pfefferminz-Karussell, ein Gummibonbon zum Hüpfen und eine riesige Tasse heiße Schokolade zum Baden.",
  "text.theme_winter_sil": "Eispalast",
- "text.themel_winter_sil": "Ein kleiner Palast aus blauem Eis: Türmchen unter Kristallspitzen, erleuchtete Fenster, eine Schneeflocke ganz oben. Im Garten eine Eisrutsche, die in einen Schneehaufen saust, ein gefrorener Teich und geharkter Schnee zum Baden."
+ "text.themel_winter_sil": "Ein kleiner Palast aus blauem Eis: Türmchen unter Kristallspitzen, erleuchtete Fenster, eine Schneeflocke ganz oben. Im Garten eine Eisrutsche, die in einen Schneehaufen saust, ein gefrorener Teich und geharkter Schnee zum Baden.",
+ "text.theme_winter_leg": "Werkstatt des Weihnachtsmanns",
+ "text.themel_winter_leg": "Eine Spielzeugwerkstatt am Nordpol: rote Wände unter einem verschneiten grünen Dach, bunte Lichter an der Traufe, Geschenke, ein Spielzeugsoldat auf Wache. Im Garten eine kleine Spielzeugeisenbahn für Runde um Runde und der Schlitten des Weihnachtsmanns voller Schnee zum Baden."
 }
