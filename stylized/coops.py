@@ -6275,3 +6275,126 @@ def gamelan(objs, x, y):
             objs.append(sphere('xpin', 0.006, (x + sx * (L / 2 - 0.02), yy, 0.105), m=gold, seg=6, rings=4))
     objs.append(cyl('xmallet', 0.007, 0.16, (x + 0.08, y + 0.24, 0.015), (math.radians(90), 0, math.radians(30)), m=_jg('teakd', var=0.06), verts=6, bevel=0.0))
     objs.append(cyl('xmhead', 0.02, 0.04, (x + 0.12, y + 0.3, 0.02), (0, math.radians(90), math.radians(30)), m=_jg('teak', var=0.06), verts=8, bevel=0.0))
+
+
+# ------------------------------------------------------------------ themed buildings (13 Nov 2026, Audrey: "a different design
+# with something extravagant, we could create themes and collections … once they bought the design can reuse it later and
+# switch between what they own"; "A whole new building"; themes: Valentine's Day, Easter and spring, Halloween, Summer fête,
+# "a winter one with snow"). Each has the Red Barn's footprint, its pop door and ramp and its nest window where every house
+# has them, so the birds' yard and their laying are the same. The first: the winter one.
+def winter_chalet(seed=77, name='theme_winter'):
+    """The Snow Chalet: a little alpine chalet deep in snow. Cream plaster walls under dark timbers, a carved balcony
+    under the gable with a row of red hearts cut in it, red shutters, a steep roof under a thick quilt of snow with
+    icicles along the eaves, a stone chimney with its own cap of snow, a warm window; by the door a snowman in a red
+    scarf and a tin bucket hat, a sledge leaning on the wall, a little fir heavy with snow, a lantern on a post, and
+    drifts of snow against the walls."""
+    random.seed(seed); objs = []
+    plaster = C('wc_plaster', '#f1e7d2', rough=0.9, var=0.03); timber = C('wc_timber', '#5a3a24', rough=0.8, var=0.1, grain=0.3, grain_scale=G)
+    timberd = C('wc_timberd', '#452b1a', rough=0.85, var=0.06); red = C('wc_red', '#c23a31', rough=0.6, var=0.04)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); snowb = C('wc_snowb', '#dfeaf6', rough=0.6, var=0.02)
+    ice = C('wc_ice', '#cfe6f6', rough=0.12, spec=0.8, coat=0.6); stone_m = C('wc_stone', '#9a958c', rough=0.9, var=0.12)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    green = C('wc_fir', '#2f6b45', rough=0.8, var=0.08); wood = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G)
+    orange = C('wc_carrot', '#f08a2c', rough=0.6); tin = C('wc_tin', '#8f9aa3', rough=0.4, metal=0.7); coal = C('wc_coal', '#1f1d1c', rough=0.8)
+    EAVE, PEAK = 0.9, 1.72
+    # the walls: plaster below, dark planks above the balcony line, timbers at the corners and round the openings
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=plaster, bevel=0.01, segs=2); objs.append(core)
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('post', (0.07, 0.07, EAVE + 0.02), (sx * W2, sy * D2, EAVE / 2), m=timber, bevel=0.008, segs=1))
+    for sy in (-1, 1):
+        objs.append(box('plate', (2 * W2 + 0.1, 0.06, 0.07), (0, sy * D2, EAVE - 0.02), m=timber, bevel=0.008, segs=1))
+        objs.append(box('sill', (2 * W2 + 0.06, 0.05, 0.06), (0, sy * D2, 0.04), m=timberd, bevel=0.008, segs=1))
+    for sx in (-1, 1): objs.append(box('plateS', (0.06, 2 * D2 + 0.06, 0.07), (sx * W2, 0, EAVE - 0.02), m=timber, bevel=0.008, segs=1))
+    for sy in (-1, 1):                                    # plank gables front and back, dark (the ridge runs front to back: the chalet's face is its gable)
+        n = 13
+        for i in range(n):
+            x = -W2 + (i + 0.5) * 2 * W2 / n; top = EAVE + (PEAK - EAVE) * (1 - abs(x) / W2) - 0.05
+            objs.append(plank('gable', (x, sy * D2, EAVE - 0.02), (x, sy * D2, max(EAVE + 0.02, top)), 2 * W2 / n * 0.97, 0.035, (0, sy, 0), timber, jitter=0.4))
+    # the steep roof: dark boards under a thick quilt of snow that hangs over the eaves, soft at its edges
+    over, go = 0.2, 0.2; run = W2 + over; rise = PEAK - (EAVE - 0.12); a = math.atan2(rise, run); L = math.hypot(run, rise)
+    for sx in (-1, 1):
+        cx_, cz = sx * run / 2, (EAVE - 0.12 + PEAK) / 2
+        objs.append(box('roofb', (L, 2 * D2 + 2 * go, 0.04), (cx_, 0, cz), (0, sx * a, 0), m=timberd, bevel=0.006, segs=1))
+        nx, nz = sx * math.sin(a), math.cos(a)
+        objs.append(box('roofsnow', (L + 0.05, 2 * D2 + 2 * go + 0.06, 0.13), (cx_ + nx * 0.075, 0, cz + nz * 0.075), (0, sx * a, 0), m=snow, bevel=0.055, segs=4))
+        for k in range(6):                                # the snow's edge along the eave: lumps, and icicles under them
+            y = -D2 - go + 0.05 + k * (2 * D2 + 2 * go - 0.1) / 5 + random.uniform(-0.03, 0.03)
+            ex, ez = sx * (run + 0.02), EAVE - 0.12 + 0.04
+            objs.append(sphere('lump', random.uniform(0.07, 0.1), (ex, y, ez + 0.03), (0.9, 1.3, 0.7), m=snow, seg=12, rings=8))
+            ln = random.uniform(0.09, 0.2)
+            objs.append(cyl('icicle', 0.016, ln, (ex + sx * 0.01, y + random.uniform(-0.04, 0.04), ez - ln / 2), (math.radians(180), 0, 0), ice, verts=6, r2=0.001, bevel=0.0))
+    objs.append(cyl('ridgesnow', 0.1, 2 * D2 + 2 * go + 0.04, (0, 0, PEAK + 0.05), (math.radians(90), 0, 0), snow, verts=12, bevel=0.03))
+    for k in range(5):                                    # icicles under the front edge of the roof's snow, either side of the gable
+        for sx in (-1, 1):
+            u = 0.25 + k * 0.17; x = sx * run * u; z = PEAK - rise * u + 0.0; ln = random.uniform(0.06, 0.14)
+            objs.append(cyl('icicle', 0.013, ln, (x, -D2 - go - 0.01, z - ln / 2 - 0.02), (math.radians(180), 0, 0), ice, verts=6, r2=0.001, bevel=0.0))
+    # the chimney: stones, a cap of snow
+    cx, cyy = 0.33, 0.18; cz0 = EAVE + (PEAK - EAVE) * (1 - cx / W2) - 0.12
+    for r_ in range(6):
+        for k in range(4):
+            ang = k * math.pi / 2 + (r_ % 2) * 0.4
+            objs.append(box('chst', (0.11, 0.11, 0.085), (cx + math.cos(ang) * 0.045, cyy + math.sin(ang) * 0.045, cz0 + 0.05 + r_ * 0.085), (0, 0, ang), m=stone_m, bevel=0.016, segs=2, jitter=0.004))
+    objs.append(sphere('chsnow', 0.13, (cx, cyy, cz0 + 0.58), (1, 1, 0.5), m=snow, seg=14, rings=8))
+    # the balcony under the front gable: a carved rail with hearts cut out (red behind), on two brackets
+    by, bz = -D2 - 0.13, EAVE + 0.02
+    objs.append(box('balfloor', (0.86, 0.2, 0.03), (0.0, -D2 - 0.09, bz), m=timber, bevel=0.006, segs=1))
+    objs.append(box('balrail', (0.9, 0.025, 0.035), (0.0, by - 0.05, bz + 0.2), m=timber, bevel=0.006, segs=1))
+    for k in range(9):
+        x = -0.4 + k * 0.1
+        objs.append(box('balust', (0.075, 0.02, 0.17), (x, by - 0.05, bz + 0.1), m=timber if k % 2 else timberd, bevel=0.005, segs=1))
+        if k % 2 == 0:
+            for dx in (-0.012, 0.012): objs.append(sphere('bheart', 0.016, (x + dx, by - 0.062, bz + 0.12), (1, 0.35, 1), m=red, seg=10, rings=6))
+            objs.append(box('bheartv', (0.028, 0.012, 0.028), (x, by - 0.062, bz + 0.102), (0, math.radians(45), 0), m=red, bevel=0.003, segs=1))
+    for x in (-0.36, 0.36): objs.append(box('bracket', (0.04, 0.16, 0.04), (x, -D2 - 0.07, bz - 0.06), (math.radians(35), 0, 0), m=timberd, bevel=0.006, segs=1))
+    objs.append(box('balsnow', (0.94, 0.07, 0.05), (0.0, by - 0.05, bz + 0.24), m=snow, bevel=0.024, segs=3))
+    objs.append(box('gwin', (0.2, 0.02, 0.22), (0.0, -D2 - 0.012, EAVE + 0.3), m=glass, bevel=0.004, segs=1))          # the little door onto the balcony, lit
+    for sx in (-1, 1): objs.append(box('gshut', (0.09, 0.02, 0.22), (sx * 0.155, -D2 - 0.02, EAVE + 0.3), m=red, bevel=0.005, segs=1))
+    # the front door: planks under a round-topped lintel, a heart in it; red shutters by the nest window
+    for k in range(3):
+        u = 0.0 + k * 0.08
+        objs.append(plank('cdoor', (u, -D2 - 0.03, 0.03), (u, -D2 - 0.03, 0.6), 0.078, 0.03, (0, -1, 0), timberd, jitter=0.3))
+    objs.append(box('dlintel', (0.32, 0.05, 0.06), (0.08, -D2 - 0.03, 0.64), m=timber, bevel=0.01, segs=2))
+    for dx in (-0.013, 0.013): objs.append(sphere('dheart', 0.018, (0.08 + dx, -D2 - 0.05, 0.47), (1, 0.4, 1), m=red, seg=10, rings=6))
+    objs.append(box('dheartv', (0.03, 0.014, 0.03), (0.08, -D2 - 0.05, 0.45), (0, math.radians(45), 0), m=red, bevel=0.003, segs=1))
+    nest_window(objs, 'rir', 0.26, 0.44, timber, solids=[core], nest_floor=0.2, door='drop', door_m=red)
+    for sx in (-1, 1): objs.append(box('nshut', (0.07, 0.02, WIN_H + 0.04), (0.44 + sx * (WIN_W / 2 + 0.06), -D2 - 0.02, 0.26 + 0.05 + WIN_H / 2), m=red, bevel=0.005, segs=1))
+    objs.append(box('nsnow', (WIN_W + 0.22, 0.06, 0.04), (0.44, -D2 - 0.04, 0.26 + 0.05 + WIN_H + 0.06), m=snow, bevel=0.018, segs=3))
+    window(objs, W2 + 0.03, 0.0, 0.5, 0.24, 0.2, timber, glass, normal=(1, 0, 0))
+    pop_door(objs, 0.26, timber, wood, C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, 0.27), 0.08, 14, 0.0)
+    # drifts against the walls
+    for (x, y, s) in ((-0.5, D2 + 0.08, 1.0), (0.1, D2 + 0.1, 1.2), (0.55, D2 + 0.06, 0.9), (W2 + 0.1, 0.25, 0.9), (W2 + 0.09, -0.2, 0.7), (-W2 - 0.1, 0.1, 1.1), (-W2 - 0.08, -0.3, 0.7), (0.62, -D2 - 0.1, 0.6)):
+        objs.append(sphere('drift', 0.16 * s, (x, y, 0.0), (1.5, 1.0, 0.45), m=snowb if random.random() < 0.4 else snow, seg=14, rings=8))
+    # the snowman by the door (right of it, clear of the ramp): three balls, coal eyes and buttons, a carrot, twig arms, a red scarf, a tin bucket for a hat
+    sx_, sy_ = 0.8, -D2 - 0.24
+    block('rir', sx_, sy_, 0.13)
+    for r_, z in ((0.13, 0.11), (0.095, 0.3), (0.07, 0.445)): objs.append(sphere('snowman', r_, (sx_, sy_, z), (1, 1, 0.92), m=snow, seg=16, rings=10))
+    for dx in (-0.025, 0.025): objs.append(sphere('eye', 0.009, (sx_ + dx, sy_ - 0.062, 0.465), m=coal, seg=8, rings=6))
+    for z in (0.27, 0.31, 0.35): objs.append(sphere('button', 0.009, (sx_, sy_ - 0.09, z), m=coal, seg=8, rings=6))
+    objs.append(cyl('carrot', 0.012, 0.07, (sx_, sy_ - 0.095, 0.445), (math.radians(90), 0, 0), orange, verts=8, r2=0.001, bevel=0.0))
+    objs.append(cyl('scarf', 0.062, 0.03, (sx_, sy_, 0.385), m=red, verts=14, bevel=0.008))
+    objs.append(box('scarfend', (0.035, 0.014, 0.09), (sx_ + 0.045, sy_ - 0.055, 0.34), (0.15, 0, -0.2), m=red, bevel=0.005, segs=1))
+    objs.append(cyl('bucket', 0.05, 0.075, (sx_, sy_ + 0.005, 0.535), (0.12, 0.1, 0), tin, verts=12, r2=0.062, bevel=0.004))
+    for sgn in (-1, 1):
+        a0, b0 = Vector((sx_ + sgn * 0.08, sy_, 0.31)), Vector((sx_ + sgn * 0.2, sy_ - 0.02, 0.39))
+        objs.append(cyl('twig', 0.006, (b0 - a0).length, tuple((a0 + b0) / 2), (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=timberd, verts=5, bevel=0.0))
+    # a little fir heavy with snow, at the back corner; a sledge leaning on the side wall; a lantern on a post left of the ramp
+    fx, fy = -0.86, -0.1
+    block('rir', fx, fy, 0.14)
+    objs.append(cyl('firtrunk', 0.025, 0.14, (fx, fy, 0.07), m=timberd, verts=8, bevel=0.0))
+    for k, (r_, z, h) in enumerate(((0.2, 0.26, 0.3), (0.15, 0.46, 0.26), (0.1, 0.64, 0.22))):
+        objs.append(cyl('fir', r_, h, (fx, fy, z), m=green, verts=10, r2=0.012, bevel=0.0))
+        for q in range(5):
+            an = q * 2 * math.pi / 5 + k; objs.append(sphere('firsnow', r_ * 0.34, (fx + math.cos(an) * r_ * 0.55, fy + math.sin(an) * r_ * 0.55, z - h * 0.18), (1.2, 1.2, 0.5), m=snow, seg=10, rings=6))
+        if k == 2: objs.append(sphere('firtop', 0.04, (fx, fy, z + h * 0.42), (1, 1, 0.8), m=snow, seg=10, rings=6))
+    for sgn in (-1, 1):
+        objs.append(box('runner', (0.02, 0.5, 0.025), (W2 + 0.09 + sgn * 0.0, -0.05 + sgn * 0.0, 0.26), (math.radians(72), 0, 0), m=red, bevel=0.005, segs=1))
+    objs.append(box('sledge', (0.05, 0.42, 0.24), (W2 + 0.085, 0.02, 0.27), (math.radians(72), 0, 0), m=wood, bevel=0.008, segs=1))
+    block('rir', -0.62, -D2 - 0.28, 0.1)
+    objs.append(cyl('lpost', 0.022, 0.95, (-0.62, -D2 - 0.28, 0.475), m=timberd, verts=8, bevel=0.0))
+    objs.append(box('larm', (0.14, 0.025, 0.025), (-0.56, -D2 - 0.28, 0.92), m=iron, bevel=0.004, segs=1))
+    light_at(name, -0.5, -D2 - 0.28, 0.85)
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (-0.5, -D2 - 0.28, 0.85), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(sphere('lsnow', 0.055, (-0.5, -D2 - 0.28, 0.915), (1, 1, 0.5), m=snow, seg=10, rings=6))
+    objs.append(sphere('psnow', 0.035, (-0.62, -D2 - 0.28, 0.955), (1, 1, 0.6), m=snow, seg=10, rings=6))
+    return finish(objs, name)
