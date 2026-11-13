@@ -530,6 +530,18 @@
     0.85,
     0.72
    ]
+  ],
+  "fence_t4_winter": [
+   [
+    -0.005,
+    0.66,
+    3.25
+   ],
+   [
+    0.749,
+    0.66,
+    3.25
+   ]
   ]
  },
  "nests": {
@@ -10359,6 +10371,21 @@
    "tris": 16000,
    "verts": 8951,
    "prims": 5
+  },
+  "pen_t4_winter": {
+   "tris": 10636,
+   "verts": 8523,
+   "prims": 4
+  },
+  "fence_t4_winter": {
+   "tris": 13000,
+   "verts": 8144,
+   "prims": 5
+  },
+  "seedball": {
+   "tris": 900,
+   "verts": 532,
+   "prims": 2
   }
  },
  "paths": {
