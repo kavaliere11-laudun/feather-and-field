@@ -69,9 +69,9 @@ if (!s.theme) {                                // no room for a Deluxe garden he
   await run(1); await close(); await run(0.5);
   c = await card(); await tap(); await run(0.8); s = await S(); said = await hintT();
 }
-ok('bought: 15,000 paid, owned, the coop is the chalet at once, said', s.coins === 5000 && s.themes.join() === 'winter_rir' && s.theme === 'winter' && s.drawn.includes('theme_winter_rir') && T.name.test(said), { s, said });
-ok('…and a Deluxe coop while they live in it (the look it had reached kept aside): the Deluxe pen and fence, snowed', s.tier === 4 && s.tier0 === own && s.w && s.w.tier === 4 && s.drawn.some(n => /pen_.*#snow/.test(n)) && s.drawn.includes('fence_t4#snow') && s.drawn.includes('pen_t4#snow') && !s.drawn.some(n => /^(house|rustic)_rir/.test(n)), { tier: s.tier, tier0: s.tier0, drawn: s.drawn });
-ok('its play things, and the frozen puddle in the yard', s.w && s.w.ice && s.w.ice.in && !s.w.ice.by, s.w);
+ok('bought: 15,000 paid, owned, the coop is the chalet at once, said', s.coins === 5000 && s.themes.join() === 'winter_rir' && s.theme === 'winter' && s.drawn.includes('theme_winter_rir') && (T.name.test(said) || /🏅/.test(said)), { s, said });      // (or the milestone its coins brought, said just after)
+ok('…and a Deluxe coop while they live in it (the look it had reached kept aside): the Deluxe pen and fence, snowed', s.tier === 4 && s.tier0 === own && s.w && s.w.tier === 4 && s.drawn.includes('fence_t4_winter#snow') && s.drawn.includes('pen_t4_winter#snow') && !s.drawn.some(n => /^(house|rustic)_rir/.test(n)), { tier: s.tier, tier0: s.tier0, drawn: s.drawn });
+ok('its play things, the frozen puddle in the yard, the igloo, a seed ball where the cabbage hung', s.w && s.w.ice && s.w.ice.in && !s.w.ice.by && s.w.igloo && s.w.treat === 'seedball', s.w);
 c = await card(); let txt = await sheet();
 ok('its card names the chalet, and its own coop\'s look', T.name.test(txt.split('\n').slice(0, 4).join(' ')) && T.own.test(txt), txt.split('\n').slice(0, 4));
 await close(); await view(2.6); await shoot('1_chalet');
@@ -83,9 +83,16 @@ const before = s.w.prints;
 // a hen slides across the puddle
 const slid = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0]; for (const b of P.birds) b.stay = false; for (const b of P.birds) { if (b.kind !== 'hen' || b.play || b.asleep) continue; b.layIn = 9999; if (f.startPlay(b, 'ice')) return true; } return false; });
 ok('a hen sets off for the frozen puddle', slid, await S().then(x => x.w));
-let phases = new Set(), xs = [];
+let phases = new Set(); const xs = [];
 for (let i = 0; i < 160; i++) { await run(0.25); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[0], b = P.birds.find(x => x.play && x.play.kind === 'ice'); return b ? { ph: b.play.phase, x: b.root.position.x } : null; }); if (!st) break; phases.add(st.ph); if (st.ph === 'slide') { xs.push(st.x); if (xs.length === 3) await shoot('3_slide'); } }
 ok('…she slides right across it, then a shake; the puddle free again after', phases.has('slide') && phases.has('shake') && xs.length > 2 && Math.abs(xs[xs.length - 1] - xs[0]) > 0.5 && !(await S()).w.ice.by, { phases: [...phases], x0: xs[0], x1: xs[xs.length - 1] });
+// a hen goes into the igloo, out of sight, peeks out of its door, comes out
+await p.evaluate(() => { const P = window.__farm.gamePlots()[0]; for (const b of P.birds) if (b.play) window.__farm.endPlay(b, true); });
+const went = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[0]; for (const b of P.birds) { if (b.kind !== 'hen' || b.play || b.asleep) continue; b.layIn = 9999; if (f.startPlay(b, 'igloo')) return true; } return false; });
+phases = new Set(); let hid = false, peeked = false;
+for (let i = 0; i < 200 && went; i++) { await run(0.25); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[0], b = P.birds.find(x => x.play && x.play.kind === 'igloo'); return b ? { ph: b.play.phase, vis: b.root.visible } : null; }); if (!st) break; phases.add(st.ph); if (st.ph === 'inside' && !st.vis) hid = true; if (st.ph === 'peek' && st.vis && !peeked) { peeked = true; await shoot('3b_igloo'); } }
+const allSeen = await p.evaluate(() => window.__farm.gamePlots()[0].birds.every(b => b.root.visible));
+ok('a hen goes into the igloo (out of sight inside), peeks out of its door, comes out with a shake; everyone in sight after', went && hid && peeked && phases.has('out') && phases.has('shake') && allSeen && !(await S()).w.igloo.by, { went, phases: [...phases], hid, peeked, allSeen });
 // the footprints go after a while (nobody walking: every bird held still)
 await p.evaluate(() => { const P = window.__farm.gamePlots()[0]; for (const b of P.birds) if (b.play) window.__farm.endPlay(b, true); });
 // life goes on in it: a hen lays in its nest, nobody stuck, no errors
@@ -96,11 +103,11 @@ ok('a hen lays in the chalet\'s nest', s.eggs > e0, { eggs: s.eggs, was: e0 });
 c = await card();
 ok('its card: "Back to its own coop"', c.btn && c.btn.go === 'off' && T.back.test(c.btn.t), c);
 await tap(); await run(0.6); s = await S();
-ok('…its own coop again in the look it had reached, nothing paid, still owned, no snow, no puddle', !s.theme && s.tier === own && s.tier0 === undefined && s.coins === 5000 && s.themes.length === 1 && !s.drawn.includes('theme_winter_rir') && !s.drawn.some(n => /#snow/.test(n)) && !(s.w && s.w.ice), s);
+ok('…its own coop again in the look it had reached, nothing paid, still owned, no snow, no puddle', !s.theme && s.tier === own && s.tier0 === undefined && s.coins === 5000 && s.themes.length === 1 && !s.drawn.includes('theme_winter_rir') && !s.drawn.some(n => /#snow/.test(n)) && !(s.w && (s.w.ice || s.w.igloo)) && !(s.w && s.w.treat !== 'cabbage'), s);
 await view(2.2); await shoot('4_own');
 c = await card(); ok('"Move into the Snow Chalet": free', c.btn && c.btn.go === 'on' && T.into.test(c.btn.t), c.btn);
 await tap(); await run(0.6); s = await S();
-ok('…the chalet again, Deluxe again', s.theme === 'winter' && s.tier === 4 && s.tier0 === own && s.coins === 5000 && s.drawn.includes('theme_winter_rir') && s.w.ice, s.drawn);
+ok('…the chalet again, Deluxe again', s.theme === 'winter' && s.tier === 4 && s.tier0 === own && s.coins === 5000 && s.drawn.includes('theme_winter_rir') && s.w.ice && s.w.igloo && s.w.treat === 'seedball', s.drawn);
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1);
 s = await S();
 ok('a reload: owned, worn, Deluxe, its own look kept, not flagged', s.theme === 'winter' && s.tier === 4 && s.tier0 === own && s.themes.length === 1 && !s.edited && s.drawn.includes('theme_winter_rir') && s.w && s.w.ice && s.w.ice.in, s);

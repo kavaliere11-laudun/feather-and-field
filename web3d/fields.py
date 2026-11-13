@@ -133,6 +133,19 @@ while len(order) < nf:
 pos = {f: n for n, f in enumerate(order)}
 lab = np.vectorize(lambda v: pos[v] if v >= 0 else -1)(lab)
 
+# the first coop's spot (game.js HOME_COOP) with room for its Deluxe garden from the start (13 Nov 2026, Audrey: "the 1st coop
+# needs to be put in a place where the deluxe would fit from the start"): the home field is a little too narrow there, so
+# the ground under that garden (the Deluxe pen's footprint and its gate's apron at that spot, half a metre round them)
+# is the home field's, taken from the field beside it
+HOME = (-30.0, -13.75)                                   # (x, z; facing 90: its pen's front towards +x)
+FOOT4 = (-2.44, -1.87, 2.44, 3.2)                        # (the Deluxe pen in its own frame: x0, z0, x1, z1 with the apron)
+M = 0.5
+hx0, hx1 = HOME[0] + FOOT4[1] - M, HOME[0] + FOOT4[3] + M
+hz0, hz1 = HOME[1] - FOOT4[2] - M, HOME[1] - FOOT4[0] + M
+took = (lab > 0) & (XX > hx0) & (XX < hx1) & (ZZ > hz0) & (ZZ < hz1)
+print('home garden: cells taken for the home field', int(took.sum()), 'from', sorted(set(lab[took].ravel().tolist())))
+lab[took] = 0
+
 # each field's borders: the cell edges between it and what's next to it, joined into lines and simplified
 def kind_at(k, i):
     if not (0 <= k < NZ and 0 <= i < NX) or not inside[k, i]: return 'edge'

@@ -13,12 +13,15 @@ G = {'__name__': 'export_coops_head', '__file__': os.path.join(HERE, 'export_coo
 exec(compile(head, 'export_coops_head', 'exec'), G)
 coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; write_glb = G['write_glb']
 G['GLOW'].update({'wc_glow'})                             # (the chalet's windows glow at night, with its lantern)
-THEMES = {'theme_winter_rir': (lambda: coops.winter_chalet(name='theme_winter_rir', house='rir', FL=0.40, wx=0.445, ramp=0.67), 16000, 'rir')}
+G['GLOW'].update({'wg_fairy0', 'wg_fairy1', 'wg_fairy2'})    # (the winter garden's fairy lights)
+THEMES = {'theme_winter_rir': (lambda: coops.winter_chalet(name='theme_winter_rir', house='rir', FL=0.40, wx=0.445, ramp=0.67), 16000, 'rir'),
+          'pen_t4_winter': (coops.winter_pen, 11500, None), 'fence_t4_winter': (coops.winter_fence, 13000, None), 'seedball': (coops.seed_ball, 900, None)}
 NEST0 = json.load(open(os.path.join(HERE, '..', 'web3d', 'models', 'coops.json')))['nests']
 names = []
 for n, (fn, budget, house) in THEMES.items():
     if WANT and n not in WANT: continue
     BUDGET[n] = budget; one(n, fn); names.append(n)
+    if not house: continue                                 # (a garden's part: no nest of its own)
     was = {k: v for k, v in NEST0['house_' + house].items() if k != 'block'}
     assert coops.NESTS['house_' + house] == was, ('the themed building must keep its breed\'s nest', n, coops.NESTS['house_' + house], was)
 write_glb(os.path.join(OUT, 'theme.glb'), names)

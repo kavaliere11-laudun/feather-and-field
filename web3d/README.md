@@ -5231,4 +5231,27 @@ close). Test: `movealwaystest` (EN/FR).
   hen laying in the chalet's nest; off (its own look back, no snow) and on again; a reload; footprints fading; July
   (not for sale; an owned one still worn); a tampered save.
 - Next: the other eight winter buildings, one at a time, each shown to her first.
+- **The winter garden's own things** (13 Nov evening; Audrey: "Love it! Maybe some toys needs to be changed like the
+  parasol"; her choices: "An igloo", and all four of "Fountain frozen", "Flowers to holly", "Cabbage to a seed ball",
+  "Bunting to fairy lights"). For the Rhode Island Reds' Deluxe garden so far:
+  - Models (`stylized/coops.py`, the `WINTER` flag set while they are built; exported with `export_theme.py`, spliced):
+    `pen_t4_winter` (`winter_pen`: the sand bath a box of snow with no beach umbrella, bucket or spade; the fountain's
+    water ice, icicles round its bowl and basin; the igloo, `igloo()`, in the front right corner at `IGLOO`),
+    `fence_t4_winter` (`winter_fence`: holly, red berries and pine cones for the roses and the flower borders; strings
+    of little warm bulbs, material names `wg_fairy*` in the export's GLOW, where the bunting was and along both sides)
+    and `seedball` (`seed_ball`: hung in the cabbage's place, pecked and spun the same way).
+  - main.js `coopLook`: a winter coop draws those two (snowed like the rest, `snowedPart` now leaving glowing materials
+    alone) and says `garden`; `iglooBlock()` is walked round; `addToys(…, 'seedball')`.
+  - play.js: the igloo is a play thing (kind `igloo`, hens only): to its door, in (not drawn while right inside, so
+    nothing shows through the wall), a turn, her head out of the door looking left and right, out, a shake with snow
+    flying. No footprints inside it.
+- **The first coop where its Deluxe garden fits** (13 Nov, Audrey: "The deluxe coop should fit from the start as
+  discussed the 1st coop needs to be put in a place where the deluxe would fit from the start please"): the home field
+  was too narrow at the old spot (-28, -13.75) for a Deluxe pen at any quarter turn (4 sample points on the lane at
+  best). `HOME_COOP` is now (-30, -13.75, 90) and `fields.py` gives the home field the ground under that Deluxe garden
+  (its footprint and apron plus half a metre: 106 cells taken from fields 4 and 6; `HOME`, `FOOT4` there;
+  fields.json regenerated, everything else identical). `settleCoops` moves a first coop still standing exactly on the
+  old spot, when its Deluxe pen doesn't fit there, to the new one if that is free. A bush (b18) under the new spot is
+  cleared as a farm begins. `movetest` and `growtest` updated (the latter: the look a moved coop must keep room for is
+  the roomiest of the other spots, no longer always Deluxe on its small test farm).
 

@@ -1992,7 +1992,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.pen = dressedPen(plot, coopLook(plot).penT >= 0 ? tierPen(plot.breed, coopLook(plot).penT) : PEN); plot.lanes = null;      // (its pen: the birds' yard, what's in it, its gate; the farmer's ways in it worked out again)
     addNest(frame, plot);
     appleTree(plot);                                      // (the Glutton's apple tree, if it has one)
-    if (penOf(plot).play && parts.swing_seat) { addToys(plot, penOf(plot).play, part); if (plot.theme === 'winter') addWinter(plot); }      // (the swing, the cabbage...: play.js)
+    if (penOf(plot).play && parts.swing_seat) { const W = plot.theme === 'winter'; addToys(plot, penOf(plot).play, part, W && parts.seedball ? 'seedball' : 'cabbage'); if (W) addWinter(plot, coopLook(plot).garden); }      // (the swing, the cabbage...: play.js)
     addSails(plot);                                       // (the Little Windmill's sails)
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
@@ -2051,11 +2051,15 @@ const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence
 const LOOKS5 = !GAME_MODE && params.has('looks');
 // (a breed's looks in the game once its upgrades are (game.js UPGRADES); on the test page's ?looks as soon as they're made)
 const hasLooks = breed => !!(TIER_LOOK[breed] && parts[TIER_LOOK[breed][0][0]] && (breed === 'call' || (GAME_MODE ? UPGRADES.includes(breed) : LOOKS5)));      // (the call ducks': always)
+function iglooBlock() { return [1.9, 2.65, 0.52]; }      // (the winter garden's igloo: stylized/coops.py IGLOO; play.js addWinter; a function: plots are made before this line runs)
 function coopLook(plot) {
   const t = Math.max(0, Math.min(4, plot.tier || 0)), T = hasLooks(plot.breed) ? TIER_LOOK[plot.breed][t] : null;
   // (a themed building, 13 Nov 2026: in place of the house whatever the coop's look; its own pen and fence, the theme's way)
   const th = plot.theme && T && parts['theme_' + plot.theme + '_' + baseBreed(plot.breed)] ? 'theme_' + plot.theme + '_' + baseBreed(plot.breed) : null;
-  if (th) return { house: th, fence: T[1], pen: T[2], vane: false, penT: t, theme: plot.theme };
+  if (th) {                                          // (winter: the garden's own winter things, Audrey 13 Nov: an igloo for the parasol, the fountain frozen, holly for the flowers, fairy lights for the bunting)
+    const own = k => plot.theme === 'winter' && t === 4 && baseBreed(plot.breed) === 'rir' && parts[k + '_winter'] ? k + '_winter' : null;
+    return { house: th, fence: own('fence_t4') || T[1], pen: own('pen_t4') || T[2], vane: false, penT: t, theme: plot.theme, garden: !!own('pen_t4') };
+  }
   if (T) return { house: T[0], fence: T[1], pen: T[2], vane: t === 4 && plot.breed !== 'call' && plot.breed !== 'pea', penT: t };      // (no rooster on the ducks' roof: their lighthouse and pennant; nor on the Garden Pavilion's dome: its gold finial)
   return { house: (plot.rustic && parts['rustic_' + plot.breed] ? 'rustic_' : 'house_') + plot.breed, fence: plot.deluxe ? 'fence_dx' : plot.rustic && parts.fence_rustic ? 'fence_rustic' : 'fence', pen: 'pen_base', vane: plot.deluxe, penT: -1 };
 }
@@ -2106,7 +2110,7 @@ function snowedPart(name) {
   const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd'), FL = new THREE.Color('#dde8f4');
   for (const m of meshesOf(src)) {
     const C0 = m.geometry.attributes.color, N = m.geometry.attributes.normal, P = m.geometry.attributes.position; let g = m.geometry;
-    if (C0 && N) { g = m.geometry.clone(); const C = C0.clone(); g.setAttribute('color', C); nm.getNormalMatrix(m.matrixWorld);
+    if (C0 && N && !/^(glow|glowc|window)$/.test(m.material.name)) { g = m.geometry.clone();      /* (not its lights) */ const C = C0.clone(); g.setAttribute('color', C); nm.getNormalMatrix(m.matrixWorld);
       for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); nv.fromBufferAttribute(N, i).applyMatrix3(nm).normalize();
         if (nv.y < 0.55) continue; const k = Math.min(1, (nv.y - 0.55) / 0.3), S1 = v.y < 0.06 ? FL : SN;      // (the ground too: snow on the floor, 13 Nov; a touch bluer than the snow on things, so they and the footprints show on it)
         C.setXYZ(i, C.getX(i) + (S1.r - C.getX(i)) * k, C.getY(i) + (S1.g - C.getY(i)) * k, C.getZ(i) + (S1.b - C.getZ(i)) * k); } }
@@ -2194,7 +2198,7 @@ function addNest(frame, plot) {
   eggs.userData.moves = true; eggs.receiveShadow = true; eggs.castShadow = false;
   frame.add(eggs);
   plot.nest = { eggs, count: 0, pop: 1, by: null };
-  plot.block = plot.block0 = [...((nestOf(plot) || {}).block || []), ...((COOPS.blocks || {})[coopLook(plot).house] || [])];         // things in front of the house to walk round (a let-down door, a pot...)
+  plot.block = plot.block0 = [...((nestOf(plot) || {}).block || []), ...((COOPS.blocks || {})[coopLook(plot).house] || []), ...(coopLook(plot).garden ? [iglooBlock()] : [])];         // things in front of the house to walk round (a let-down door, a pot...)
   plot.nest.count = GAME_MODE ? (plot.gc ? plot.gc.eggs : 0) : 2;      // (the game: its save; on the test page a couple already laid this morning)
   showEggs(plot);
   const grain = new THREE.Mesh(GRAIN_GEO, GRAIN); grain.position.set(penOf(plot).feeder[0], 0.065, penOf(plot).feeder[2]);
@@ -7127,6 +7131,13 @@ function coopSpot(sp, self, quick = false) {      // (quick: only whether it's f
 // good one to home), what's under them cleared, and the trees, bushes and rocks cleared for good taken away
 function settleCoops() {
   let changed = false;
+  // (13 Nov 2026, Audrey: "the 1st coop needs to be put in a place where the deluxe would fit from the start": a first coop
+  // still where farms used to begin, too narrow for its Deluxe garden, goes to today's start two metres along, if that's free)
+  const c0 = game.data.coops[0];
+  if (c0 && c0.x === -28 && c0.z === -13.75 && c0.deg === 90 && (c0.tier || 0) < 4 && !coopSpot(spotOf(c0), { ...c0, tier: 4 }).ok) {
+    const there = { ...c0, ...HOME_COOP, tier: 4 };
+    if (coopSpot(HOME_COOP, there).ok && roomToGrow(HOME_COOP, c0.breed, c0.id, 4)) { Object.assign(c0, HOME_COOP); changed = true; }
+  }
   for (const c of game.data.coops) {
     if (coopSpot(c, c).ok) continue;
     if (c.ap && c.ap.side && coopSpot(c, { ...c, ap: { ...c.ap, side: null } }).ok) { game.appleOff(c.id); continue; }      // (its apple tree's corner no good: the tree goes, planted again where there's room; the coop stays)
@@ -7266,10 +7277,10 @@ function retier(p) {
   const L = coopLook(p);
   dropApple(p);
   p.pen = dressedPen(p, L.penT >= 0 ? tierPen(p.breed, L.penT) : PEN);
-  p.block = p.block0 = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || [])];
+  p.block = p.block0 = [...((nestOf(p) || {}).block || []), ...((COOPS.blocks || {})[L.house] || []), ...(L.garden ? [iglooBlock()] : [])];
   appleTree(p);
   if (p.feedMesh) { const f = penOf(p).feeder; p.feedMesh.position.x = f[0]; p.feedMesh.position.z = f[2]; }
-  if (penOf(p).play && parts.swing_seat) { addToys(p, penOf(p).play, part); if (p.theme === 'winter') addWinter(p); }
+  if (penOf(p).play && parts.swing_seat) { const W = p.theme === 'winter'; addToys(p, penOf(p).play, part, W && parts.seedball ? 'seedball' : 'cabbage'); if (W) addWinter(p, L.garden); }
   addSails(p);
   if (p.callPen) addCallDucks(p, p.callR);                 // (the call ducks: their new pond, raft and ball)
   p.exitWay = null;
@@ -9734,7 +9745,9 @@ window.__farm = {
   step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
-  winterOf: id => { const p = plots.find(x => x.gc && x.gc.id === id), T = p && p.toys; return T ? { ice: T.ice ? { at: T.ice.at, by: !!T.ice.by, in: !!T.ice.mesh.parent } : null, prints: printsLive(p), theme: p.theme, tier: p.tier } : null; },
+  spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }
+    return bl ? bl : f < 0 ? (nearLines(V.paths, x, z, V.pathHalf + 0.02) ? '=' : nearLines(V.paths, x, z, V.pathHalf + 0.4) ? '-' : (nearLines(V.streams, x, z, V.streamHalf + 0.7) || inPondAt(x, z, 0.6)) ? '~' : ' ') : owned(f) ? '.' : String(f % 10); },      // (the tests: what's at a point of the ground)
+  winterOf: id => { const p = plots.find(x => x.gc && x.gc.id === id), T = p && p.toys; return T ? { igloo: T.igloo ? { by: !!T.igloo.by } : null, treat: T.cabbage.model, ice: T.ice ? { at: T.ice.at, by: !!T.ice.by, in: !!T.ice.mesh.parent } : null, prints: printsLive(p), theme: p.theme, tier: p.tier } : null; },
   coopModels: () => COOP_BATCH.map(m => m.userData.model),      // (the tests: which models the coops are drawn with)
   starParty: id => starParty(game.bird(id)), starToast: () => STAR_TOAST && !STAR_TOAST.hidden ? STAR_TOAST.innerText : null,
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,

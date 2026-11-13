@@ -35,7 +35,8 @@ ok('put down', await p.evaluate(() => window.__farm.move.place()));
 await run(1);
 ok('there, room for its Deluxe look', (await p.evaluate(sp => window.__farm.move.room(1, sp), at)).grow);
 // a spot near it where it would stand today but not grow: moved there, a word (your own coop: your choice); a new coop, refused
-const tight = await p.evaluate(() => { const f = window.__farm, c = f.game().data.coops[1]; for (let r = 1; r < 14; r += 0.5) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; for (const deg of [0, 90]) { const sp = { x: Math.round((c.x + Math.cos(a) * r) * 4) / 4, z: Math.round((c.z + Math.sin(a) * r) * 4) / 4, deg }; const q = f.move.room(1, sp); if (q.now && !q.grow) return sp; } } return null; });
+const tight = await p.evaluate(() => { const f = window.__farm, c = f.game().data.coops[1]; f.move.start(1); const G = f.move.state().grow; f.move.cancel();      // (the look it must keep room for: the roomiest of the other spots, 13 Nov: no longer always Deluxe on this small farm)
+  for (let r = 1; r < 14; r += 0.5) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2; for (const deg of [0, 90]) { const sp = { x: Math.round((c.x + Math.cos(a) * r) * 4) / 4, z: Math.round((c.z + Math.sin(a) * r) * 4) / 4, deg }; const q = f.move.room(1, sp); if (q.now && q.tier < G) return sp; } } return null; });
 if (tight) {
   const m = await p.evaluate(sp => { const f = window.__farm; f.move.start(1); f.move.to(sp.x, sp.z, sp.deg); const s = f.move.state(); f.move.cancel(); return s; }, tight);
   ok('moved there: refused too, "Not enough room here for its bigger pen later…" (10 Nov 2026: "it needs to fit from the start")', !m.ok && m.why === 'move_grow' && !m.small && (fr ? /futur enclos plus grand/ : /bigger pen later/).test(m.text), m);

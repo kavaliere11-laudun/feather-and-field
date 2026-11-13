@@ -1947,6 +1947,9 @@ def deluxe_fence(seed=9):
     paint = C('picket', '#f6f2ea', rough=0.6, var=0.03)
     leaf = [C('rleaf1', '#3f7a35', rough=0.8), C('rleaf2', '#5a9442', rough=0.8)]
     rose = [C('rose1', '#e0567a', rough=0.5), C('rose2', '#c8283c', rough=0.5), C('rose3', '#f6b3c4', rough=0.5)]
+    if WINTER:                                                  # (the winter garden: holly and pine, red berries)
+        leaf = [C('wg_holly1', '#1f5a34', rough=0.6), C('wg_holly2', '#2f7244', rough=0.6), C('wg_pine', '#27503a', rough=0.8)]
+        rose = [C('wg_berry', '#d02a34', rough=0.35)]
     x0, x1, y0, y1 = coop.PEN['box']
     hinge, gc = coop.gate_span(); gw = abs(gc - hinge) * 2
     g0, g1 = min(hinge, gc + (gc - hinge)), max(hinge, gc + (gc - hinge))
@@ -1997,6 +2000,10 @@ def deluxe_fence(seed=9):
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
             if random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER:                                          # (a holly berry or two; now and then a pine cone)
+                if i % 5 == 0: objs.append(sphere('wcone', 0.028, (p.x, p.y, 0.07), (0.8, 0.8, 1.3), m=C('wg_cone', '#8a5a34', rough=0.8), ico=1, disp=0.3, seed=i))
+                else: objs.append(sphere('bberry', 0.017, (p.x, p.y, 0.085 + random.uniform(0, 0.05)), m=rose[0], ico=1))
+                continue
             objs.append(sphere('bflower', 0.026, (p.x, p.y, 0.08 + random.uniform(0, 0.07)), m=C('dxf%d' % (i % 6), FLOWERS[i % 6], rough=0.5), ico=1))
     border((x0 + 0.1, y0), (g0 - 0.15, y0), Vector((0, -1, 0))); border((g1 + 0.15, y0), (x1 - 0.1, y0), Vector((0, -1, 0)))
     border((x0, y0 + 0.15), (x0, y1 - 0.15), Vector((-1, 0, 0)))
@@ -2008,6 +2015,13 @@ def deluxe_fence(seed=9):
         for p, q in zip(pts, pts[1:]):
             objs.append(cyl('string', 0.005, (q - p).length, (p + q) / 2, (q - p).to_track_quat('Z', 'Y').to_euler(), C('string', '#efe6d2', rough=0.7), verts=5, bevel=0.0))
         dd = (b - a).normalized()
+        if WINTER:                                              # (fairy lights: little warm bulbs along the string, glowing at night)
+            bulbs = [C('wg_fairy%d' % k, h, rough=0.3, emission=(h, 0.7)) for k, h in enumerate(('#ffd98a', '#ffe9b8', '#ffc56a'))]
+            m2 = max(8, int(L / 0.1))
+            for i in range(1, m2):
+                u = i / m2; pp = a.lerp(b, u) - Vector((0, 0, sag * 4 * u * (1 - u) + 0.016))
+                objs.append(sphere('fairy', 0.017, pp, (1, 1, 1.25), m=bulbs[i % 3], ico=1))
+            return
         for i in range(1, n):
             p, q = pts[i] - dd * 0.05, pts[i] + dd * 0.05
             me = bpy.data.meshes.new('flag'); bm = bmesh.new()
@@ -2016,7 +2030,105 @@ def deluxe_fence(seed=9):
             f = link(bpy.data.objects.new('flag', me)); setmat(f, cols[i % len(cols)]); objs.append(f)
             so = f.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.004
     bunting((x0, y0 - 0.01, 0.56), (g0 - 0.02, y0 - 0.01, 0.88)); bunting((g1 + 0.02, y0 - 0.01, 0.88), (x1, y0 - 0.01, 0.56))
+    if WINTER:                                                  # (lights along the two side fences too, post to post)
+        bunting((x0, y0, 0.5), (x0, y1, 0.5), sag=0.05); bunting((x1, y0, 0.5), (x1, y1, 0.5), sag=0.05)
     return finish(objs, 'fence_dx')
+
+
+WINTER = False                     # (set while the winter garden's pen and fence are built: winter_pen, winter_fence)
+IGLOO = (1.9, -2.65, 0.5)          # (the igloo in the winter Deluxe garden: x, y (Blender), its radius; its door looks to the yard's middle)
+
+
+def igloo(objs, x, y, R):
+    """A little igloo of snow blocks: a dome, the courses and joints of its blocks, a short arched way in (dark inside) looking
+    to the yard's middle, a cap of fresh snow, a tiny red flag."""
+    snow = C('wg_igloo', '#dfeaf6', rough=0.85, var=0.03); joint = C('wg_igjoint', '#8fabc9', rough=0.9); dark = C('wg_igdark', '#1e2a3a', rough=1.0)
+    objs.append(sphere('igloo', R, (x, y, 0), (1, 1, 0.92), m=snow, seg=24, rings=14))
+    for k, zf in enumerate((0.22, 0.45, 0.66, 0.84)):         # the courses
+        z = R * 0.92 * zf; r = R * math.sqrt(max(0.0, 1 - zf * zf)) + 0.002
+        bpy.ops.mesh.primitive_torus_add(major_radius=r, minor_radius=0.011, major_segments=28, minor_segments=4, location=(x, y, z))
+        o = bpy.context.object; setmat(o, joint); objs.append(o)
+        n = 10 - k * 2                                         # the joints between its blocks, each course's between the ones below
+        z0 = R * 0.92 * (0.0 if k == 0 else (0.22, 0.45, 0.66)[k - 1])
+        for j in range(n):
+            a = (j + 0.5 * (k % 2)) / n * math.tau; zm = (z0 + z) / 2; rm = R * math.sqrt(max(0.0, 1 - (zm / (R * 0.92)) ** 2)) + 0.003
+            objs.append(box('igjoint', (0.02, 0.02, (z - z0) * 0.95), (x + math.cos(a) * rm, y + math.sin(a) * rm, zm), (0, 0, a), m=joint, bevel=0.0, segs=1))
+    d = Vector((-1, 1, 0)).normalized(); side = Vector((d.y, -d.x, 0))                 # the way in
+    c0 = Vector((x, y, 0)) + d * (R * 0.8); HW, HH, LEN = 0.17, 0.31, R * 0.4
+    n = 9
+    for k in range(n):                                         # an arch of blocks over it
+        a0, a1 = math.pi * k / n, math.pi * (k + 1) / n
+        p0 = c0 + d * (LEN / 2) + side * (math.cos(a0) * HW) + Vector((0, 0, HH - HW + math.sin(a0) * HW)) if True else None
+        p1 = c0 + d * (LEN / 2) + side * (math.cos(a1) * HW) + Vector((0, 0, HH - HW + math.sin(a1) * HW))
+        objs.append(plank('igarch', p0, p1, LEN + 0.06, 0.05, d, snow, jitter=0.0, bevel=0.01))
+    for sx in (-1, 1): objs.append(box('igjamb', (0.05, LEN + 0.06, HH - HW + 0.02), tuple(c0 + d * (LEN / 2) + side * (sx * HW) + Vector((0, 0, (HH - HW) / 2))), (0, 0, math.atan2(d.y, d.x) - math.pi / 2), m=snow, bevel=0.01, segs=1))
+    objs.append(box('igdark', (HW * 2 - 0.02, 0.01, HH - 0.02), tuple(c0 + d * (LEN * 0.35) + Vector((0, 0, (HH - 0.02) / 2))), (0, 0, math.atan2(d.y, d.x) - math.pi / 2), m=dark, bevel=0.0, segs=1))
+    objs.append(sphere('igcap', R * 0.42, (x, y, R * 0.86), (1, 1, 0.3), m=C('wg_snowcap', '#ffffff', rough=0.9), ico=2, disp=0.12, seed=4))
+    fz = R * 0.92                                              # a tiny red flag on top
+    objs.append(cyl('igpole', 0.006, 0.16, (x, y, fz + 0.08), m=C('iron', '#26231f', rough=0.5, metal=0.6), verts=5, bevel=0.0))
+    objs.append(box('igflag', (0.07, 0.004, 0.045), (x + 0.04, y, fz + 0.135), m=C('wg_berry', '#d02a34', rough=0.35), bevel=0.0, segs=1))
+    for k in range(7):                                         # drifts round its foot
+        a = k / 7 * math.tau + 0.3
+        if Vector((math.cos(a), math.sin(a), 0)).dot(d) > 0.6 or math.cos(a) > 0.5 or math.sin(a) < -0.5: continue      # (not in its doorway, nor through the fence)
+        objs.append(sphere('igdrift', 0.11, (x + math.cos(a) * (R + 0.03), y + math.sin(a) * (R + 0.03), 0.0), (1.2, 1, 0.45), (0, 0, a), m=snow, ico=2, disp=0.2, seed=k + 9))
+
+
+def icicles(objs, x, y, z, r, n, m, lo=0.05, hi=0.11, seed=0):
+    """Icicles hanging round a rim (radius r at height z)."""
+    rnd = random.Random(seed)
+    for k in range(n):
+        a = (k + rnd.uniform(-0.25, 0.25)) / n * math.tau; h = rnd.uniform(lo, hi)
+        objs.append(cyl('icicle', rnd.uniform(0.008, 0.013), h, (x + math.cos(a) * r, y + math.sin(a) * r, z - h / 2), (math.pi, 0, 0), m=m, verts=5, r2=0.0, bevel=0.0))
+
+
+def winter_pen():
+    """The winter garden's yard (pen_t4_winter; Audrey, 13 Nov 2026: "Maybe some toys needs to be changed like the parasol"; her
+    choices: an igloo, the fountain frozen): the Deluxe yard with a box of snow for the sand bath (no beach umbrella), the
+    fountain's water turned to ice with icicles round its bowl and its basin, and an igloo in the front right corner."""
+    global WINTER
+    WINTER = True
+    try: root = pen_tier(4)
+    finally: WINTER = False
+    ice = mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02)
+    _swap(root, {'water'}, ice)
+    L = pen_layout(4); dx, dy = L['dish']; objs = []
+    icicles(objs, dx, dy, 0.455, 0.135, 11, ice, seed=3); icicles(objs, dx, dy, 0.11, 0.31, 9, ice, lo=0.03, hi=0.06, seed=5)
+    igloo(objs, *IGLOO)
+    _own(objs, root)
+    root.name = 'pen_t4_winter'
+    return root
+
+
+def winter_fence():
+    """The winter garden's fence (fence_t4_winter; her choices: "Flowers to holly", "Bunting to fairy lights"): the white pickets
+    with holly and red berries over the arch and along the borders (a pine cone here and there), and strings of little warm
+    lights where the bunting was and along the sides, glowing at night."""
+    global WINTER
+    had = LIGHTS.get('fence_t4'); WINTER = True
+    try: root = fence_tier(4)
+    finally: WINTER = False
+    LIGHTS['fence_t4_winter'] = LIGHTS.pop('fence_t4')
+    if had is not None: LIGHTS['fence_t4'] = had
+    root.name = 'fence_t4_winter'
+    return root
+
+
+def seed_ball():
+    """The winter garden's hanging treat in the cabbage's place (her choice: "Cabbage to a seed ball"): a ball of seeds in a
+    net on its string, a red ribbon tied in a bow on top (the string's top at the origin, as the cabbage)."""
+    objs = []; L = CAB_TOP - CAB_Z
+    objs.append(cyl('cstring', 0.005, L - 0.07, (0, 0, -(L - 0.07) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    objs.append(sphere('seedball', 0.075, (0, 0, -L), m=C('wg_seed', '#c9a468', rough=0.9, var=0.12), ico=2, disp=0.1, seed=3))
+    rnd = random.Random(8); cols = [C('wg_seed_d', '#5b4028', rough=0.8), C('wg_seed_l', '#f0e2b8', rough=0.8), C('wg_seed_s', '#2c2622', rough=0.7)]
+    for k in range(34):                                        # seeds all over it
+        v = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1))).normalized() * 0.074
+        objs.append(sphere('seed', 0.011, (v.x, v.y, -L + v.z), (1, 0.7, 0.5), (rnd.uniform(0, 3), rnd.uniform(0, 3), 0), m=cols[k % 3], ico=1))
+    red = C('wg_berry', '#d02a34', rough=0.35)
+    for sx in (-1, 1):                                         # the bow
+        objs.append(sphere('bow', 0.03, (sx * 0.03, 0, -L + 0.085), (1.2, 0.5, 0.75), (0, sx * 0.4, 0), m=red, seg=10, rings=6))
+        objs.append(box('bowtail', (0.014, 0.004, 0.06), (sx * 0.02, 0, -L + 0.05), (0, sx * 0.35, 0), m=red, bevel=0.0, segs=1))
+    objs.append(sphere('bowknot', 0.012, (0, 0, -L + 0.085), m=red, seg=8, rings=5))
+    return finish(objs, 'seedball')
 
 
 def weathervane():
@@ -2982,6 +3094,7 @@ def dust_bath(objs, x, y):
     over its back corner, a little bucket and spade."""
     wood = _barn_m('pine2', rough=0.75, var=0.08); dark = coop.M()['darkwood']
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    if WINTER: sand = mat('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); sand2 = mat('wg_snowbath2', '#e3ecf6', rough=0.9, var=0.02)      # (the winter garden: a snow bath)
     hw, hd, H = SAND_W / 2, SAND_D / 2, 0.11
     for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
                       ((x - hw, y - hd), (x - hw, y + hd), (-1, 0, 0)), ((x + hw, y - hd), (x + hw, y + hd), (1, 0, 0))):
@@ -2996,6 +3109,7 @@ def dust_bath(objs, x, y):
         a = random.uniform(0, math.tau)
         px, py = x + math.cos(a) * (hw + 0.08), y + math.sin(a) * (hd + 0.08)
         objs.append(sphere('sspill', random.uniform(0.04, 0.06), (px, py, 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 3))
+    if WINTER: return                                           # (no beach umbrella, bucket or spade in the snow: the igloo instead, winter_pen)
     # the beach umbrella: a pole at the back left corner, a striped canopy over the box
     cx_, cy_ = -1, 1                                            # (its back left corner: the sand in front of it stays in sight)
     ux, uy, uz, R = x + cx_ * (hw - 0.12), y + cy_ * (hd - 0.12), 0.72, 0.42
