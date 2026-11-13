@@ -55,6 +55,12 @@ export function tickToys(plot, dt) {
   C.mesh.rotation.set(C.ax, C.spin, C.az);
   if (T.spin) { const R = T.spin, rider = R.by && R.by.play && R.by.play.phase === 'ride'; R.w += ((rider ? 3.4 : 0) - R.w) * Math.min(1, dt * (rider ? 0.9 : 0.7)); R.a = (R.a + R.w * dt) % (Math.PI * 2); R.mesh.rotation.y = R.a; }
   if (T.bounce) { const B = T.bounce; B.sq += (B.want - B.sq) * Math.min(1, dt * 22); B.mesh.scale.set(1 + (1 - B.sq) * 0.35, B.sq, 1 + (1 - B.sq) * 0.35); B.want = 1; }
+  if (T.chute && T.chute.mesh && T.chute.back > 0) {      // (the sledge drawn back up to the top of its run by the winch)
+    const S = T.chute; S.back = Math.max(0, S.back - dt); const u = 1 - S.back / 3.2, m = S.mesh;
+    if (S.back <= 0) restSledge(S);
+    else if (u < 0.2) { m.position.set(S.land + (S.end[0] - S.land) * (u / 0.2), 0.02, S.z); m.rotation.z = 0; }
+    else { const v = (u - 0.2) / 0.8; m.position.set(S.end[0] + (S.top[0] - S.end[0]) * v, S.end[1] + (S.top[1] - S.end[1]) * v, S.z); m.rotation.z = -Math.atan2(S.top[1] - S.end[1], S.end[0] - S.top[0]); }
+  }
   if (T.train) { const R = T.train; if (R.a !== 0 && !(R.by && R.by.play && R.by.play.phase === 'ride')) { R.a += dt * 1.1; if (R.a >= Math.PI * 2) R.a = 0; } placeTrain(R); }      // (left out on the track: home to its station)
   if (T.prints) tickPrints(plot, dt);
 }
@@ -504,8 +510,10 @@ function trainStep(b, P, T, o, next, dt) {
 // the Ice Palace's garden's own (her list, 13 Nov 2026: "An ice slide they whoosh down"): up its three steps a hop at a
 // time, a look from the top, then down the chute she goes, low, wings up, faster and faster, and out into the heap of snow
 // at its foot, snow flying; a shake
+function restSledge(S) { S.mesh.position.set(S.top[0] - 0.06, S.top[1] + 0.005, S.z); S.mesh.rotation.set(0, 0, 0); }
 function chuteStep(b, P, T, o, next, dt) {
-  const p = b.root.position, S = T.chute;
+  const p = b.root.position, S = T.chute, up = S.mesh ? 0.06 : 0;      // (on a sledge: sat on its slats)
+  if (S.mesh && (P.phase === 'go' || P.phase === 'skid') && S.back > 0) S.back = 0;
   if (P.phase === 'climb') {
     if (P.rest > 0) { P.rest -= dt; P.t = 0; P.from = p.clone(); o.sit = 0.25; return o; }
     if (P.step >= S.steps.length) { next('top', { wait: 0.5 + b.r() * 0.9 }); return o; }
@@ -516,15 +524,22 @@ function chuteStep(b, P, T, o, next, dt) {
   if (P.phase === 'top') { b.shadowY = 0.0; o.sit = 0.3; o.up = 0.3 * Math.sin(Math.min(1, P.t / 0.5) * Math.PI); if (P.t > P.wait) next('go'); return o; }
   if (P.phase === 'go') {                            // down the chute
     const u = Math.min(1, P.t / 0.85), a = u * u;
-    p.set(P.from.x + (S.end[0] - P.from.x) * a, P.from.y + (S.end[1] - P.from.y) * a, S.z); b.shadowY = 0.0;
+    p.set(P.from.x + (S.end[0] - P.from.x) * a, P.from.y + (S.end[1] + up - P.from.y) * a, S.z); b.shadowY = 0.0;
+    if (S.mesh) { S.mesh.position.set(p.x, p.y - up, S.z); S.mesh.rotation.z = -Math.atan2(S.top[1] - S.end[1], S.end[0] - S.top[0]) * Math.min(1, u * 6); }
     o.sit = 0.6; o.flap = u > 0.15 ? 0.5 : 0; b.root.rotation.y = Math.PI / 2; b.visual.rotation.z = 0.1 * Math.sin(P.t * 16);
     if (u >= 1) { b.visual.rotation.z = 0; for (let k = 0; k < 7; k++) dustPuff(b, 0.16, 0.1); next('skid'); }
     return o;
   }
   if (P.phase === 'skid') {                          // into the snow
     const u = Math.min(1, P.t / 0.4), a = 1 - (1 - u) * (1 - u);
-    p.set(P.from.x + (S.land - P.from.x) * a, P.from.y + (0.015 - P.from.y) * a, S.z); o.sit = 0.6 * (1 - u); b.shadowY = undefined;
-    if (u >= 1) { P.spot = [S.land, S.z]; next('shake'); }
+    p.set(P.from.x + (S.land - P.from.x) * a, P.from.y + (0.015 + up - P.from.y) * a, S.z); o.sit = 0.6 * (1 - u * (S.mesh ? 0 : 1)); b.shadowY = undefined;
+    if (S.mesh) { S.mesh.position.set(p.x, 0.02, S.z); S.mesh.rotation.z = 0; }
+    if (u >= 1) { if (S.mesh) { next('hopoff', { to: [S.land + 0.05, S.z + 0.3] }); } else { P.spot = [S.land, S.z]; next('shake'); } }
+    return o;
+  }
+  if (P.phase === 'hopoff') {                        // off the sledge, beside it; the winch draws it back up
+    if (!P.land) { if (!b.free(P.to[0], P.to[1])) P.to = [S.land + 0.05, S.z - 0.3]; P.land = new THREE.Vector3(P.to[0], 0.015, P.to[1]); }
+    if (hop(b, P, P.from, P.land, 0.6, 0.06, dt)) { P.spot = P.to; S.back = 3.2; next('shake'); }
     return o;
   }
   if (P.phase === 'shake') { o.ruffle = Math.sin(Math.min(1, P.t / 0.8) * Math.PI); if (P.t > 0.15 && !P.shook) { P.shook = true; for (let k = 0; k < 4; k++) dustPuff(b, 0.12, 0.09); } if (P.t > 0.95) endPlay(b); }
@@ -579,6 +594,8 @@ GARDENS.sil = { blocks: [[-0.7, 1.9, 0.24], [-0.3, 1.9, 0.2], [0.05, 1.9, 0.17]]
  
   chute: { z: 1.9, foot: -1.12, steps: [[-0.82, 0.16], [-0.64, 0.3], [-0.46, 0.42]], top: [-0.36, 0.42], end: [0.22, 0.04], land: 0.58 } };      // (the ice slide: stylized/coops.py SLIDE)
 GARDENS.leg = { blocks: [[-0.06, 2.6, 0.06]], treat: 'bauble', warm: [[-0.4, 1.95, 0.56]], train: { c: [-0.4, 1.95], r: 0.45 } };      // (the toy train's round track: stylized/coops.py TRACK; warm: its rails kept clear of snow)
+GARDENS.bra = { blocks: [[-0.9, 1.75, 0.3], [-0.42, 1.75, 0.26], [-0.06, 1.75, 0.16]], treat: 'pinecone', warm: null,
+  chute: { z: 1.75, foot: -1.36, steps: [[-1.06, 0.2], [-0.8, 0.4]], top: [-0.7, 0.4], end: [0.02, 0.04], land: 0.55, sled: true } };      // (the sledge run: stylized/coops.py HILL; its sledge a part of its own)
 const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
 export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
 export function addWinter(plot, garden = null, part = null) {
@@ -588,7 +605,7 @@ export function addWinter(plot, garden = null, part = null) {
   if (G.spin && part) { T.spin = { at: G.spin, r: 0.33, a: 0, w: 0, by: null, next: 0, mesh: hang('roundabout', G.spin) }; T.spin.mesh.scale.setScalar(0.83); }      // (a little smaller than modelled: clear of the gate, the feeder and the trough)
   if (G.bounce && part) T.bounce = { at: G.bounce, sq: 1, want: 1, by: null, next: 0, mesh: hang('gumdrop', G.bounce) };
   if (G.train && part) { T.train = { ...G.train, a: 0, by: null, next: 0, engine: hang('train_engine', G.train.c), wagon: hang('train_wagon', G.train.c) }; placeTrain(T.train); }
-  if (G.chute) T.chute = { ...G.chute, by: null, next: 0 };
+  if (G.chute) { T.chute = { ...G.chute, by: null, next: 0, back: 0 }; if (G.chute.sled && part) { T.chute.mesh = hang('sledge', [0, 0]); restSledge(T.chute); } }
   if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
     const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];
     T.igloo = { at, r: R, by: null, next: 0, spot: [at[0] + d[0] * (R + 0.3), at[1] + d[1] * (R + 0.3)], door: [at[0] + d[0] * (R - 0.1), at[1] + d[1] * (R - 0.1)], face: Math.atan2(-d[0], -d[1]) };
@@ -618,7 +635,7 @@ export function addWinter(plot, garden = null, part = null) {
 export function removeWinter(plot) {
   const T = plot.toys; if (!T) return;
   if (T.ice) { T.ice.mesh.removeFromParent(); T.ice.mesh.geometry.dispose(); T.ice.mesh.material.dispose(); T.ice = null; }
-  T.igloo = null; T.chute = null;
+  T.igloo = null; if (T.chute && T.chute.mesh) T.chute.mesh.removeFromParent(); T.chute = null;
   for (const k of ['spin', 'bounce']) if (T[k]) { T[k].mesh.removeFromParent(); T[k] = null; }
   if (T.train) { T.train.engine.removeFromParent(); T.train.wagon.removeFromParent(); T.train = null; }
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }

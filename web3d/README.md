@@ -5310,4 +5310,16 @@ close). Test: `movealwaystest` (EN/FR).
   building's name were wrong for half the names in French, German, Spanish, Italian and Portuguese ("Le Maison…",
   "Das Eispalast", "El Casita"), and "The Santa's Workshop" in English. `theme_on`, `theme_bought`, `theme_done` and
   `theme_wears` now carry the name after a colon, with no article, in all six languages.
+- **The Ski Lodge** for the Brahmas (13 Nov 23:39, "Carry on"; `theme_winter_bra`, `coops.py winter_lodge`: an
+  A-frame of honey timber on a stone foot under a great steep snowy roof, a tall lit three-cornered window, a red
+  door under crossed skis, a stone chimney, a ski rack, firewood under snow, a signpost with a lantern; the Brahmas'
+  own nest, pop door and ramp).
+  - Its garden (`WINTER = 'bra'`): `pen_t4_bra_winter` (the crib of sand a crib of snow, the flume's water ice, and
+    the **sledge run**, `sledge_hill`, `HILL`: a hill of packed snow with two steps up its back, a run between little
+    flags, a winch post), `fence_t4_bra_winter` (pine and berries over the arch, little firs along the borders, fairy
+    lights), and moving parts `sledge` and `pinecone` (the treat).
+  - play.js `GARDENS.bra`: the `chute` kind again with `sled: true`: she hops up the hill, sits on the sledge at
+    the top, rides it down and out across the snow, hops off beside it (`hopoff`), a shake; the winch then draws the
+    sledge back up over 3 s (`chute.back`, in `tickToys`).
+  - `sledgetest.mjs` (new; Brahmas come at level 24).
 

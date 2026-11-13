@@ -1955,6 +1955,8 @@ def deluxe_fence(seed=9):
         leaf = [C('gb_icing', '#fbf7f0', rough=0.5, var=0.01, sss=0.2)]; rose = SWEETS
     if WINTER == 'leg':                                         # (Santa's Workshop's: holly and baubles over the arch, little presents along the borders)
         rose = [C('sw_red', '#c2302d', rough=0.35), C('gb_gold', '#d9a53a', rough=0.35, metal=0.6), C('gb_blue', '#58a9e0', rough=0.4)]
+    if WINTER == 'bra':                                         # (the Ski Lodge's: pine and red berries over the arch, little firs along the borders)
+        leaf = [C('wg_pine', '#27503a', rough=0.8), C('wg_holly2', '#2f7244', rough=0.6)]
     if WINTER == 'sil':                                         # (the Ice Palace's: frost and blue ice over the arch, ice crystals along the borders)
         leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5), C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)]
     x0, x1, y0, y1 = coop.PEN['box']
@@ -2006,7 +2008,13 @@ def deluxe_fence(seed=9):
         a, b = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); n = int((b - a).length / 0.05)
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
-            if WINTER not in ('orp', 'sil', 'leg') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER not in ('orp', 'sil', 'leg', 'bra') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER == 'bra':                                 # (little firs, snow on their tips)
+                if i % 4 == 0:
+                    h = random.uniform(0.12, 0.22)
+                    objs.append(cyl('bfir', 0.05, h, (p.x, p.y, h / 2 + 0.02), m=leaf[(i // 4) % 2], verts=7, r2=0.004, bevel=0.0))
+                    objs.append(sphere('bfirsnow', 0.022, (p.x, p.y, h + 0.01), (1, 1, 0.7), m=C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2), seg=8, rings=5))
+                continue
             if WINTER == 'leg':                                 # (little presents)
                 if i % 5 == 0: sz = random.uniform(0.06, 0.1); _gift(objs, p.x, p.y, 0.0, (sz, sz, sz * random.uniform(0.7, 1.1)), SWEETS[(i // 5) % 6], rose[1] if (i // 5) % 2 else leaf[0] if False else C('gb_icing', '#fbf7f0', rough=0.5), random.uniform(0, 1.5))
                 continue
@@ -2152,6 +2160,100 @@ def winter_workshop(seed=80, name='theme_winter_leg', house='leg', FL=0.18, wx=0
     objs.append(box('lantern', (0.07, 0.07, 0.09), (px + 0.2, py - 0.03, 0.5), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
     light_at(name, px + 0.2, py - 0.03, 0.5)
     for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (W2 + 0.08, -0.25, 0.7), (0.6, -D2 - 0.12, 0.5)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
+def winter_lodge(seed=81, name='theme_winter_bra', house='bra', FL=0.26, wx=0.44, NF=0.2):
+    """The Ski Lodge (the winter collection's building for the Brahmas; Audrey, 13 Nov 2026: "Carry on"): an A-frame lodge in
+    the mountains. A stone foot, a front of honey-coloured timber under a great steep roof that comes down low at the
+    sides, deep in snow, a tall three-cornered window lit under the peak, a red door, crossed skis over it, a stone
+    chimney; beside it a rack of skis and poles, a stack of firewood under snow, a signpost with a lantern. (house, FL,
+    wx, NF: the Brahmas' own pop door and ramp, nest window and nest.)"""
+    random.seed(seed); objs = []
+    timber = C('sl_timber', '#c08a4e', rough=0.75, var=0.1, grain=0.35, grain_scale=G); dark = C('sl_dark', '#5a3a24', rough=0.8, var=0.08, grain=0.3, grain_scale=G)
+    stone_m = C('wc_stone', '#9a958c', rough=0.9, var=0.12); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    red = C('sw_red', '#c2302d', rough=0.5, var=0.04); blue = C('gb_blue', '#58a9e0', rough=0.4); yellow = C('gb_yellow', '#f5c531', rough=0.4)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); icicle_m = C('wc_ice', '#cfe6f6', rough=0.12, spec=0.8, coat=0.6); iron = C('iron', '#26231f', rough=0.5, metal=0.6)
+    WALL, PEAK, LOW = 0.78, 2.02, 0.5                        # (the side walls' top, the ridge, the eaves' edge)
+    over = 0.26; run = W2 + over; rise = PEAK - LOW; a = math.atan2(rise, run); L = math.hypot(run, rise); go = 0.2
+    roofz = lambda x: PEAK - rise * abs(x) / run
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    # ---- the walls: a foot of stones, timber above (the sides low under the roof)
+    core = box('core', (2 * W2, 2 * D2, WALL), (0, 0, WALL / 2), m=timber, bevel=0.01, segs=2); objs.append(core)
+    for sy in (-1, 1):
+        for i in range(9):
+            x = -W2 + 0.07 + i * (2 * W2 - 0.14) / 8
+            if sy < 0 and (abs(x + 0.31) < 0.17 or abs(x - 0.05) < 0.17 or abs(x - wx) < 0.22): continue
+            objs.append(box('foot', (0.15, 0.06, 0.13), (x, sy * (D2 + 0.012), 0.065), m=stone_m, bevel=0.02, segs=2, jitter=0.004))
+        n = 15                                              # the gable: upright boards up to the roof
+        for i in range(n):
+            x = -W2 + (i + 0.5) * 2 * W2 / n; top = roofz(x) - 0.07
+            if sy < 0 and (abs(x + 0.31) < 0.15 or abs(x - wx) < 0.19): z0 = (FL + POP_H + 0.06) if x < 0 else (NF + 0.04 + WIN_H + 0.05)
+            else: z0 = 0.13
+            if top > z0 + 0.05: objs.append(plank('board', (x, sy * D2, z0), (x, sy * D2, top), 2 * W2 / n * 0.95, 0.035, (0, sy, 0), timber if i % 2 else dark if i % 5 == 0 else timber, jitter=0.3))
+    # ---- the great roof: dark boards, deep snow that stops short of the eaves, lumps and icicles along them
+    for sx in (-1, 1):
+        cx_, cz = sx * run / 2, (LOW + PEAK) / 2; nx, nz = sx * math.sin(a), math.cos(a)
+        objs.append(box('roofb', (L, 2 * D2 + 2 * go, 0.05), (cx_, 0, cz), (0, sx * a, 0), m=dark, bevel=0.006, segs=1))
+        objs.append(box('roofsnow', (L * 0.86, 2 * D2 + 2 * go + 0.05, 0.12), (cx_ * 0.86 + nx * 0.08, 0, cz + rise * 0.07 + nz * 0.08), (0, sx * a, 0), m=snow, bevel=0.055, segs=4))
+        for k in range(6):
+            y = -D2 - go + 0.06 + k * (2 * D2 + 2 * go - 0.12) / 5; ex, ez = sx * run * 0.84, LOW + rise * 0.16
+            objs.append(sphere('lump', random.uniform(0.07, 0.1), (ex + nx * 0.07, y, ez + nz * 0.07), (0.9, 1.3, 0.7), m=snow, seg=12, rings=8))
+            ln = random.uniform(0.07, 0.16)
+            objs.append(cyl('icicle', 0.014, ln, (sx * (run + 0.0), y + random.uniform(-0.04, 0.04), LOW - 0.02 - ln / 2), (math.radians(180), 0, 0), icicle_m, verts=6, r2=0.001, bevel=0.0))
+        objs.append(box('barge', (L + 0.04, 0.05, 0.09), (cx_, -D2 - go, cz - 0.02), (0, sx * a, 0), m=dark, bevel=0.008, segs=1))      # the barge boards on the front gable
+    objs.append(cyl('ridgesnow', 0.1, 2 * D2 + 2 * go + 0.04, (0, 0, PEAK + 0.06), (math.radians(90), 0, 0), snow, verts=12, bevel=0.03))
+    # the tall three-cornered window under the peak, lit, its bars dark
+    wz0, wz1 = 1.12, 1.74
+    me = bpy.data.meshes.new('gwin'); bm = bmesh.new()
+    vs = [bm.verts.new((-0.3, -D2 - 0.04, wz0)), bm.verts.new((0.3, -D2 - 0.04, wz0)), bm.verts.new((0.0, -D2 - 0.04, wz1))]
+    f_ = bm.faces.new(vs); bm.normal_update()
+    if f_.normal.y > 0: f_.normal_flip()
+    bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('gwin', me)); setmat(o, glass); objs.append(o)
+    objs.append(box('gsill', (0.7, 0.06, 0.05), (0, -D2 - 0.045, wz0 - 0.02), m=dark, bevel=0.008, segs=1))
+    objs.append(box('gbar', (0.025, 0.02, wz1 - wz0), (0, -D2 - 0.05, (wz0 + wz1) / 2), m=dark, bevel=0.0, segs=1))
+    for sx in (-1, 1): objs.append(plank('gframe', (sx * 0.33, -D2 - 0.05, wz0), (0, -D2 - 0.05, wz1 + 0.03), 0.04, 0.03, (0, -1, 0), dark, jitter=0.0, bevel=0.004))
+    objs.append(box('gsnow', (0.74, 0.07, 0.04), (0, -D2 - 0.05, wz0 + 0.02), m=snow, bevel=0.018, segs=3))
+    # the chimney: stones, up the back of the roof, a cap of snow
+    cx, cyy = 0.3, 0.22; cz0 = roofz(cx) - 0.1
+    for r_ in range(6):
+        for k in range(4):
+            ang = k * math.pi / 2 + (r_ % 2) * 0.4
+            objs.append(box('chst', (0.11, 0.11, 0.085), (cx + math.cos(ang) * 0.045, cyy + math.sin(ang) * 0.045, cz0 + 0.05 + r_ * 0.085), (0, 0, ang), m=stone_m, bevel=0.016, segs=2, jitter=0.004))
+    objs.append(sphere('chsnow', 0.13, (cx, cyy, cz0 + 0.58), (1, 1, 0.5), m=snow, seg=14, rings=8))
+    # ---- the front: a red door, crossed skis over it, the nest window, the hens' door and ramp
+    arched_door(objs, 0.05, -D2 - 0.01, 0.0, 0.25, 0.6, red, dark, C('brass', '#c99a3c', rough=0.3, metal=0.9))
+    for sg, col in ((-1, blue), (1, yellow)):
+        objs.append(box('ski', (0.045, 0.014, 0.52), (0.05, -D2 - 0.045 - 0.008 * sg, 0.9), (0, sg * math.radians(52), 0), m=col, bevel=0.004, segs=1))
+    nest_window(objs, house, FL, wx, dark, solids=[core], nest_floor=NF, door='drop', door_m=red)
+    objs.append(box('nsnow', (WIN_W + 0.2, 0.06, 0.04), (wx, -D2 - 0.04, NF + 0.04 + WIN_H + 0.06), m=snow, bevel=0.018, segs=3))
+    pop_door(objs, FL, dark, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    # ---- beside it: a rack of skis and poles, a stack of firewood under snow, a signpost with a lantern (where the lodge's post stands)
+    rx, ry = run + 0.22, 0.12; keep(rx, ry, 0.2)
+    for sy in (-1, 1): objs.append(box('rackpost', (0.04, 0.04, 0.5), (rx, ry + sy * 0.22, 0.25), m=dark, bevel=0.006, segs=1))
+    objs.append(box('rackbar', (0.035, 0.5, 0.035), (rx, ry, 0.46), m=dark, bevel=0.006, segs=1))
+    for k, col in enumerate((red, blue, yellow, red)):
+        objs.append(box('rski', (0.02, 0.05, 0.62), (rx + 0.035, ry - 0.16 + k * 0.105, 0.31), (0, math.radians(-8), 0), m=col, bevel=0.004, segs=1))
+    for k in range(2): objs.append(cyl('rpole', 0.007, 0.5, (rx - 0.035, ry - 0.06 + k * 0.12, 0.25), (0, math.radians(8), 0), m=iron, verts=5, bevel=0.0))
+    fx_, fy_ = -run - 0.16, 0.1; keep(fx_, fy_, 0.2)
+    logm = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G); endg = C('sl_endg', '#d9b580', rough=0.8)
+    for r_ in range(3):
+        for k in range(4 - r_):
+            yy = fy_ - 0.165 + (k + r_ * 0.5) * 0.11
+            objs.append(cyl('firelog', 0.052, 0.3, (fx_, yy, 0.055 + r_ * 0.095), (0, math.radians(90), 0), m=logm, verts=8, bevel=0.0))
+            objs.append(cyl('fireend', 0.045, 0.302, (fx_, yy, 0.055 + r_ * 0.095), (0, math.radians(90), 0), m=endg, verts=8, bevel=0.0))
+    objs.append(sphere('firesnow', 0.2, (fx_, fy_, 0.3), (0.9, 1.1, 0.3), m=snow, seg=12, rings=8))
+    lx, ly = -0.62, -D2 - 0.28
+    objs.append(cyl('lpost', 0.024, 0.9, (lx, ly, 0.45), m=dark, verts=8, bevel=0.0))
+    for k, (col, z, rot) in enumerate(((red, 0.78, 0.1), (blue, 0.66, -0.12))):
+        objs.append(box('sign', (0.24, 0.02, 0.08), (lx + 0.08, ly - 0.02, z), (0, rot, 0), m=col, bevel=0.006, segs=1))
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (lx - 0.07, ly, 0.5), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(box('larm', (0.1, 0.02, 0.02), (lx - 0.04, ly, 0.56), m=iron, bevel=0.0, segs=1))
+    light_at(name, lx - 0.07, ly, 0.5)
+    objs.append(sphere('psnow', 0.04, (lx, ly, 0.92), (1, 1, 0.6), m=snow, seg=10, rings=6))
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (0.62, -D2 - 0.12, 0.5), (run + 0.05, -0.3, 0.8), (-run - 0.05, -0.3, 0.8)):
         objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
     return finish(objs, name)
 
@@ -2458,6 +2560,9 @@ def winter_pen(bk='rir'):
     elif bk == 'leg':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
         train_track(objs)
+    elif bk == 'bra':
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+        sledge_hill(objs)
     _own(objs, root)
     root.name = 'pen_t4' + ('' if bk == 'rir' else '_' + bk) + '_winter'
     return root
@@ -2477,6 +2582,66 @@ def winter_fence(bk='rir'):
     if had is not None: LIGHTS[key] = had
     root.name = key + '_winter'
     return root
+
+
+HILL = dict(y=-1.75, steps=((-1.06, 0.2), (-0.8, 0.4)), top=(-0.7, 0.4), end=(0.02, 0.04))      # (the sledge run, along x in the Brahmas' Deluxe yard: the steps up its back (x, height), the slope's top and foot; play.js GARDENS.bra)
+
+
+def sledge_hill(objs):
+    """The Ski Lodge's garden's own (Audrey's list, 13 Nov 2026: "A sledge run down a small snowy hill"): a little hill of
+    packed snow, two steps cut in its back, a smooth run down its front between two rows of little flags, a winch post
+    at the top that draws the sledge back up."""
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); snowb = C('wc_snowb', '#dfeaf6', rough=0.6, var=0.02)
+    y = HILL['y']; W = 0.5; (s1x, s1h), (tx, th) = HILL['steps']; ex, ez = HILL['end']
+    prof = [(s1x - 0.14, 0.0), (s1x - 0.12, s1h), (s1x + 0.12, s1h), (tx - 0.13, th), (HILL['top'][0] + 0.02, th), (ex, ez - 0.02), (ex + 0.12, 0.0)]
+    me = bpy.data.meshes.new('hill'); bm = bmesh.new()
+    front = [bm.verts.new((px, y - W / 2, pz)) for px, pz in prof]; back = [bm.verts.new((px, y + W / 2, pz)) for px, pz in prof]
+    n = len(prof)
+    for i in range(n): j = (i + 1) % n; bm.faces.new((front[i], front[j], back[j], back[i]))
+    bm.faces.new(front); bm.faces.new(list(reversed(back))); bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('hill', me)); setmat(o, snow); objs.append(o)
+    bv = o.modifiers.new('bevel', 'BEVEL'); bv.width = 0.03; bv.segments = 2
+    for k in range(9):                                          # soft snow heaped along its sides and at its foot
+        u = k / 8; px = s1x - 0.1 + u * (ex + 0.1 - s1x); hz = max(0.03, th * (1 - max(0, (px - tx) / (ex - tx))) if px > tx else s1h)
+        for sy in (-1, 1): objs.append(sphere('hillside', 0.1 + hz * 0.25, (px, y + sy * (W / 2 + 0.03), hz * 0.45), (1.3, 0.8, 0.9), m=snowb if k % 3 == 0 else snow, seg=10, rings=7))
+    red = C('sw_red', '#c2302d', rough=0.5, var=0.04); blue = C('gb_blue', '#58a9e0', rough=0.4); dark = C('sl_dark', '#5a3a24', rough=0.8, var=0.08)
+    for k in range(3):                                          # the flags down the run
+        u = 0.2 + k * 0.3; px = HILL['top'][0] + u * (ex - HILL['top'][0]); pz = th + u * (ez - th)
+        for sy, col in ((-1, red), (1, blue)):
+            objs.append(cyl('flagpole', 0.006, 0.2, (px, y + sy * (W / 2 - 0.03), pz + 0.1), m=dark, verts=5, bevel=0.0))
+            objs.append(box('flag', (0.07, 0.004, 0.045), (px + 0.035, y + sy * (W / 2 - 0.03), pz + 0.175), m=col, bevel=0.0, segs=1))
+    objs.append(cyl('winch', 0.02, 0.3, (tx - 0.08, y + W / 2 - 0.04, th + 0.15), m=dark, verts=7, bevel=0.0))           # the winch post at the top
+    objs.append(cyl('winchdrum', 0.03, 0.06, (tx - 0.08, y + W / 2 - 0.04, th + 0.24), (math.radians(90), 0, 0), m=red, verts=10, bevel=0.0))
+
+
+def sledge():
+    """The Ski Lodge's sledge (its middle on the snow at the origin, its front towards +x): slats of pale wood on two red
+    runners curled up in front, a rope."""
+    objs = []; wood = _barn_m('pine', rough=0.75, var=0.05); red = C('sw_red', '#c2302d', rough=0.5, var=0.04)
+    for sy in (-1, 1):
+        objs.append(box('srunner', (0.3, 0.018, 0.018), (0, sy * 0.075, 0.01), m=red, bevel=0.003, segs=1))
+        for k in range(4):
+            a0, a1 = -math.pi / 2 + k * 0.55, -math.pi / 2 + (k + 1) * 0.55
+            objs.append(plank('scurl', (0.15 + math.cos(a0) * 0.045, sy * 0.075, 0.055 + math.sin(a0) * 0.045), (0.15 + math.cos(a1) * 0.045, sy * 0.075, 0.055 + math.sin(a1) * 0.045), 0.018, 0.018, (0, sy, 0), red, jitter=0.0, bevel=0.003))
+        for dx in (-0.1, 0.06): objs.append(box('sstrut', (0.016, 0.016, 0.035), (dx, sy * 0.075, 0.035), m=red, bevel=0.0, segs=1))
+    for k in range(4): objs.append(box('sslat', (0.3, 0.04, 0.012), (-0.01, -0.066 + k * 0.044, 0.058), m=wood, bevel=0.003, segs=1))
+    return finish(objs, 'sledge')
+
+
+def pinecone():
+    """The Ski Lodge's garden's hanging treat in the cabbage's place: a big pine cone stuck with seeds, a red ribbon (the
+    string's top at the origin, as the cabbage)."""
+    objs = []; L = CAB_TOP - CAB_Z; cone = C('wg_cone', '#8a5a34', rough=0.8); rnd = random.Random(6)
+    objs.append(cyl('cstring', 0.005, L - 0.1, (0, 0, -(L - 0.1) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    for r_ in range(6):                                        # its scales, in rows
+        z = -L + 0.07 - r_ * 0.03; rr = 0.03 + 0.045 * math.sin((r_ + 0.8) / 6.5 * math.pi)
+        for k in range(7):
+            a = k / 7 * math.tau + r_ * 0.45
+            objs.append(sphere('scale', 0.028, (math.cos(a) * rr, math.sin(a) * rr, z), (1, 0.75, 0.5), (0, 0.5, a), m=cone, ico=1))
+            if (k + r_) % 3 == 0: objs.append(sphere('cseed', 0.009, (math.cos(a) * (rr + 0.022), math.sin(a) * (rr + 0.022), z + 0.008), m=C('gb_icing', '#fbf7f0', rough=0.5), ico=1))
+    objs.append(sphere('conecore', 0.05, (0, 0, -L), (1, 1, 1.5), m=cone, seg=8, rings=6))
+    for sg in (-1, 1): objs.append(sphere('cbow', 0.024, (sg * 0.026, 0, -L + 0.1), (1.2, 0.5, 0.75), m=C('sw_red', '#c2302d', rough=0.5), seg=8, rings=6))
+    return finish(objs, 'pinecone')
 
 
 TRACK = dict(c=(-0.4, -1.95), r=0.45)                           # (the toy train's round track in the Leghorns' Deluxe yard: its middle (x, y), its radius; play.js GARDENS.leg)
@@ -5777,6 +5942,7 @@ def sand_crib(objs, x, y):
     its back corner."""
     bark = _cb('bark', var=0.08, grain=0.3, grain_scale=G); log = C('log', '#8d5b34', rough=0.8, var=0.1, grain=0.35, grain_scale=G); endg = _cb('endg', var=0.06)
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    if WINTER == 'bra': sand = mat('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); sand2 = mat('wg_snowbath2', '#e3ecf6', rough=0.9, var=0.02)      # (the Ski Lodge's garden: a crib of snow)
     hw, hd, r = CRIB_W / 2, CRIB_D / 2, 0.055
     for sy in (-1, 1): _log(objs, (x - hw - 0.08, y + sy * hd, r), (x + hw + 0.08, y + sy * hd, r), r, log, endg, verts=10, name='crib')
     for sx in (-1, 1): _log(objs, (x + sx * hw, y - hd - 0.08, 2.2 * r), (x + sx * hw, y + hd + 0.08, 2.2 * r), r, log, endg, verts=10, name='crib')

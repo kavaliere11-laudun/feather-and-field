@@ -599,6 +599,25 @@
     0.66,
     3.25
    ]
+  ],
+  "theme_winter_bra": [
+   [
+    -0.69,
+    0.5,
+    0.72
+   ]
+  ],
+  "fence_t4_bra_winter": [
+   [
+    -0.005,
+    0.66,
+    3.25
+   ],
+   [
+    0.749,
+    0.66,
+    3.25
+   ]
   ]
  },
  "nests": {
@@ -7566,6 +7585,18 @@
     0.8,
     0.08
    ]
+  ],
+  "theme_winter_bra": [
+   [
+    1.1,
+    -0.12,
+    0.2
+   ],
+   [
+    -1.04,
+    -0.1,
+    0.2
+   ]
   ]
  },
  "pens": {
@@ -10594,6 +10625,31 @@
    "tris": 600,
    "verts": 326,
    "prims": 4
+  },
+  "theme_winter_bra": {
+   "tris": 13857,
+   "verts": 7947,
+   "prims": 5
+  },
+  "pen_t4_bra_winter": {
+   "tris": 9574,
+   "verts": 6370,
+   "prims": 3
+  },
+  "fence_t4_bra_winter": {
+   "tris": 13000,
+   "verts": 7854,
+   "prims": 5
+  },
+  "sledge": {
+   "tris": 500,
+   "verts": 286,
+   "prims": 2
+  },
+  "pinecone": {
+   "tris": 900,
+   "verts": 570,
+   "prims": 2
   }
  },
  "paths": {

@@ -4276,6 +4276,16 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter_bra",
+  "en": "Ski Lodge",
+  "fr": "Chalet de ski"
+ },
+ {
+  "id": "text.themel_winter_bra",
+  "en": "A mountain lodge under a great steep roof deep in snow: a tall lit window, crossed skis over a red door, a rack of skis, firewood. In its garden a little hill with a sledge to ride down, and a crib of snow to bathe in.",
+  "fr": "Un chalet de montagne sous un grand toit pentu couvert de neige : une haute fenêtre éclairée, des skis croisés au-dessus d’une porte rouge, un râtelier à skis, du bois de chauffage. Dans son jardin, une petite butte avec une luge pour dévaler la pente et un bac de neige pour se baigner."
+ },
+ {
   "id": "text.theme_winter_leg",
   "en": "Santa’s Workshop",
   "fr": "Atelier du Père Noël"
