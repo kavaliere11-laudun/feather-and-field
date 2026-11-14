@@ -5363,3 +5363,35 @@ close). Test: `movealwaystest` (EN/FR).
   loads for every player. Themes should load on demand.
 - The container restarted during the last regression run (14 Nov, memory); the run was started again in one lane.
 
+## The winter review's changes; garden bubbles each their own; sharper when it's heavy (14 Nov 2026)
+- **Her answers in the review's comments** (14 Nov 11:25 to 11:28): "I agree" twice (replace the Ski Lodge, the Chalet
+  stays; rebuild the Workshop as its own shape); the Ice-Fishing Hut's garden "doesn't work we need the pond to be much
+  bigger it should use most of the space"; the Winter Carousel's "toys are a bit boring and poor in here"; the train:
+  "love the train, does the chickens jump on it sometimes?". Then: "I will let you update the artefact when you are
+  done with the changes".
+- **Cable-Car Station** for the Brahmas (`coops.py winter_cablecar`, `theme_winter_bra`; replaces `winter_lodge`, kept
+  in the file, not exported): toy the **chairlift** (`chair_lift`, `lift_chair`, `LIFT`; play.js kind `lift`,
+  `GARDENS.bra.lift`): a hen hops on at the mat, rides across and hops off. The sledge run is no longer used.
+  `lifttest.mjs` (was sledgetest).
+- **Santa's Toy Factory** for the Leghorns (`winter_factory`, replaces `winter_workshop`): a tall factory with a clock
+  tower and a present chute; the toy train kept (`traintest`).
+- **Winter Carousel's garden** (peafowl): a bigger carousel off the yard's middle (`spin: [0.75, 1.55]`, so the birds'
+  ways round things stay open), a **strength game** (`strength_game`, `striker_puck`, `STRIKER`; kind `striker`: a
+  peahen jumps on the pad, the puck shoots up and rings the bell, she struts) and an **ice mirror** for the peacock
+  (`ice_mirror`, `MIRROR`; kind `mirror`). The peacock can't walk a hen's route (his train won't turn in a tight
+  spot: in play's `walk` phase he simply stood still), so `startPlay(b, 'mirror')` doesn't make a play: it picks a
+  spot facing the mirror with room for his fan (`fanClear` there and 10 cm each way, `trainClear`; nearest first, out
+  to 2.5 m; off the farmer's ways if it can), he flutters over (`flyTo`) with `then = { type: 'display' }` and his fan
+  goes up as he lands (main.js, the flight's end). The mirror's corner is crowded (feeder, fence): in the test he
+  stands 2.5 m from it. **To do: the mirror somewhere roomier** (a model change), so he shows off close to it.
+- **Ice-Fishing Hut**: a frozen lake drawn over most of the garden (`winter_hut`, a ring of ice, fishing holes). The
+  pond the ducks really swim in is unchanged; a real winter play for them on the ice is still to do.
+- **Garden beds, each bubble its own** (14 Nov 12:45, Audrey: "When I click on pick, all the other ones go and I need
+  to wait until I can pick the next one. They should work independently"): `fieldBubbles` hid every garden bubble
+  while `GARDEN_UI.work` was set. Now only the bed he's at has none (`GARDEN_UI.hold[i]`); a tap on another bed
+  finishes the job in hand at once (`pickBed`/`sowBed` already did) and sends him to the next. The one bubble for the
+  whole garden (zoomed far out) still hides while he works. gardentest (en, fr) and bedstest pass.
+- **Sharpness** (14 Nov 12:47, Audrey, the pond from far off, buttons crisp and the farm soft: "See it's still a
+  little blurry"): read as the picture stepped down under load (a wide view is the heaviest). `QUALITY` now: 2x, 2x
+  with thinner grass, 1024 shadows and less fluff, 1.5x, 1.25x (it was 2, 1.5, 1.25, 1). Not measured on her phone; if
+  it stays soft, her Settings "picture" line at that moment is the next step.
