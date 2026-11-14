@@ -5462,3 +5462,9 @@ price to have it at once). Prices hers: 1.99 a building, 9.99 the nine. Her Appl
   ten products made in App Store Connect (Audrey, from the list sent to her) and a sandbox purchase in TestFlight.
 - Still to do: the first purchase must go to Apple's review with an app version; a line about purchases on the
   privacy page; the same shop for the other themes when they exist.
+- **The ten products made in App Store Connect** (14 Nov, 21:15 to 22:30, at her request, in her own signed-in Chrome):
+  nine buildings at 1.99 and `winter.all` ("Winter Collection") at 9.99, base country United Kingdom (GBP), Apple's
+  comparable prices elsewhere, all 175 countries, English (U.K.) and French names and descriptions, a review
+  screenshot (the card) and a note for the reviewers on each. State: "Finaliser avant soumission"; nothing sent for
+  review. Next: a sandbox purchase in TestFlight (the money buttons show only if Apple returns the products), then
+  her submission with an app version.
