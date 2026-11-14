@@ -82,9 +82,9 @@ const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 // ------------------------------------------------------------------ quality levels (the first one the device can manage)
 const QUALITY = [
   { dpr: 2, shadow: 2048, grass: 1.0, aa: true, fur: 1 },
-  { dpr: 1.5, shadow: 2048, grass: 0.8, aa: true, fur: 1 },
-  { dpr: 1.25, shadow: 1024, grass: 0.55, aa: false, fur: 0.67 },
-  { dpr: 1, shadow: 1024, grass: 0.35, aa: false, fur: 0.34 },
+  { dpr: 2, shadow: 1024, grass: 0.65, aa: true, fur: 0.67 },      // (14 Nov 2026, Audrey, the pond from far off: "See it's still a little blurry": the first step down keeps the sharpness and thins the grass, the shadows and the fluff instead; the picture never goes under 1.25)
+  { dpr: 1.5, shadow: 1024, grass: 0.45, aa: true, fur: 0.67 },
+  { dpr: 1.25, shadow: 1024, grass: 0.35, aa: false, fur: 0.34 },
 ];
 let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0', 10) || 0));
 
