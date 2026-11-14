@@ -130,6 +130,7 @@ export function startPlay(b, kind) {
   else if (kind === 'striker') C = [{ spot: [T.striker.pad[0], T.striker.pad[1] + 0.32], face: Math.PI }];      // (the strength game: in front of its pad)
   else if (kind === 'roll') { const R = T.roll, d = ballDir(R); C = [{ spot: [R.a[0] - d[0] * 0.26, R.a[1] - d[1] * 0.26], face: Math.atan2(d[0], d[1]) }]; }      // (the snowball: behind it, facing along its run)
   else if (kind === 'soak') C = [[0, 1], [1, 0], [-1, 0]].map(([sx, sz]) => ({ spot: [T.soak.at[0] + sx * (T.soak.r + 0.24), T.soak.at[1] + sz * (T.soak.r + 0.24)], face: Math.atan2(-sx, -sz) }));      // (the hot spring: at its edge)
+  else if (kind === 'train2') { const R = T.train, th = -TRAIN_GAP; C = R.a === 0 && R.by && R.by !== b ? [{ spot: [R.c[0] + Math.sin(th) * (R.r + 0.27), R.c[1] + Math.cos(th) * (R.r + 0.27)], face: th + Math.PI }] : []; }      /* (a friend for the ride: beside the second wagon) */
   else if (kind === 'train') C = T.train.a === 0 ? [{ spot: [T.train.c[0], T.train.c[1] + T.train.r + 0.27], face: Math.PI }] : [];      // (the toy train: at its station, beside the wagon)
   else if (kind === 'chute') C = [{ spot: [T.chute.foot, T.chute.z], face: Math.PI / 2 }];      // (the ice slide: the foot of its steps, facing up them)
   else if (kind === 'spin') C = [[1, 0], [0, -1], [-1, 0]].map(([sx, sz]) => ({ spot: [T.spin.at[0] + sx * (T.spin.r + 0.22), T.spin.at[1] + sz * (T.spin.r + 0.22)], face: Math.atan2(-sx, -sz), slot: Math.atan2(sx, sz) }));      // (the roundabout: beside it, her seat the one nearest)
@@ -223,7 +224,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'apple') next('out');
       else if (P.kind === 'igloo') next('in');
       else if (P.kind === 'chute') next('climb', { step: 0, rest: 0 });
-      else if (P.kind === 'train') next('on');
+      else if (P.kind === 'train' || P.kind === 'train2') next('on');
       else if (P.kind === 'roll') next('push');
       else if (P.kind === 'lift') next('on');
       else if (P.kind === 'striker') next('jump');
@@ -245,7 +246,7 @@ export function playStep(b, dt) {
   if (P.kind === 'igloo') return iglooStep(b, P, T, o, next, dt);
   if (P.kind === 'spin') return spinStep(b, P, T, o, next, dt);
   if (P.kind === 'chute') return chuteStep(b, P, T, o, next, dt);
-  if (P.kind === 'train') return trainStep(b, P, T, o, next, dt);
+  if (P.kind === 'train' || P.kind === 'train2') return trainStep(b, P, T, o, next, dt);
   if (P.kind === 'roll') return rollStep(b, P, T, o, next, dt);
   if (P.kind === 'lift') return liftStep(b, P, T, o, next, dt);
   if (P.kind === 'striker') return strikeStep(b, P, T, o, next, dt);
@@ -627,7 +628,7 @@ function soakStep(b, P, T, o, next, dt) {
 // the Snow Globe's glass and the snow whirling in it (the building's model has the base and the little village: stylized/
 // coops.py winter_globe): a clear ball over the house, and flakes that drift down inside it and round, for ever
 function addGlobe(plot, T, G) {
-  const glass = new THREE.Mesh(new THREE.SphereGeometry(G.r, 28, 18), new THREE.MeshStandardMaterial({ color: '#e6f5ff', transparent: true, opacity: 0.26, roughness: 0.04, metalness: 0.15, depthWrite: false }));
+  const glass = new THREE.Mesh(new THREE.SphereGeometry(G.r, 28, 18), new THREE.MeshStandardMaterial({ color: '#cfe9ff', transparent: true, opacity: 0.36, roughness: 0.04, metalness: 0.15, depthWrite: false }));
   glass.position.set(0, G.y, 0); glass.renderOrder = 2; glass.userData.moves = true; plot.frame.add(glass);
   const N = 70, pos = new Float32Array(N * 3), ph = new Float32Array(N);
   for (let i = 0; i < N; i++) { const a = Math.random() * 6.28, rr = Math.sqrt(Math.random()) * G.r * 0.82, h = (Math.random() * 2 - 1) * G.r * 0.8; pos[i * 3] = Math.cos(a) * rr; pos[i * 3 + 1] = h; pos[i * 3 + 2] = Math.sin(a) * rr; ph[i] = Math.random() * 6.28; }
@@ -652,11 +653,40 @@ function tickGlobe(G, dt) {
 // funnel, her wings out with joy now and then; back at the station she hops out, a shake
 const TRAIN_GAP = 0.74, WAGON_Y = 0.13, TRAIN_K = 1.35;      // (the engine ahead of the wagon round the track, the wagon's floor, the train drawn a third bigger than modelled: a hen's size)
 function placeTrain(R) {
-  for (const [m, th] of [[R.wagon, R.a], [R.engine, R.a + TRAIN_GAP]]) { m.position.set(R.c[0] + Math.sin(th) * R.r, 0, R.c[1] + Math.cos(th) * R.r); m.rotation.y = th; m.scale.setScalar(TRAIN_K); }
+  for (const [m, th] of [[R.wagon, R.a], [R.engine, R.a + TRAIN_GAP], [R.wagon2, R.a - TRAIN_GAP]]) { m.position.set(R.c[0] + Math.sin(th) * R.r, 0, R.c[1] + Math.cos(th) * R.r); m.rotation.y = th; m.scale.setScalar(TRAIN_K); }
 }
 function trainStep(b, P, T, o, next, dt) {
-  const p = b.root.position, R = T.train, seat = () => tmpV.set(R.c[0] + Math.sin(R.a) * R.r, WAGON_Y, R.c[1] + Math.cos(R.a) * R.r);
-  if (P.phase === 'on') { o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0; if (hop(b, P, P.from, seat().clone(), 0.75, 0.1, dt)) next('ride', { laps: b.r() < 0.5 ? 2 : 3 }); return o; }
+  const two = P.kind === 'train2', back = two ? TRAIN_GAP : 0;      // (the friend: in the second wagon, behind)
+  const p = b.root.position, R = T.train, seat = () => tmpV.set(R.c[0] + Math.sin(R.a - back) * R.r, WAGON_Y, R.c[1] + Math.cos(R.a - back) * R.r);
+  if (two) {
+    // the second rider (Audrey, 14 Nov 2026, of the train: "does the chickens jump on it sometimes?"; a friend along for the
+    // ride): into the second wagon, round with the train, and out again when it's back at its station
+    const going = !!(R.by && R.by.play && R.by.play.phase === 'ride');
+    if (P.phase === 'on') { o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0; if (hop(b, P, P.from, seat().clone(), 0.75, 0.1, dt)) next('ride'); return o; }
+    if (P.phase === 'ride') {
+      seat(); p.copy(tmpV); b.shadowY = 0.0; o.sit = 0.55; b.root.rotation.y = R.a - back + Math.PI / 2;
+      if (R.a > 0) P.rode = true;
+      const lap = (R.a / (Math.PI * 2)) % 1; o.flap = going && lap > 0.7 && lap < 0.85 ? 0.7 : 0;
+      if (!going && R.a === 0 && (P.rode || !R.by || !R.by.play || P.t > 10)) next('off');      // (home again; or nobody driving after all)
+      return o;
+    }
+  } else if (P.phase === 'on') {
+    o.flap = P.t > 0.25 && P.t < 0.6 ? 0.6 : 0;
+    if (hop(b, P, P.from, seat().clone(), 0.75, 0.1, dt)) {
+      // (a friend asked along, about one ride in two: a hen with nothing much on, who'll come and sit in the second wagon)
+      const mate = b.r() < 0.5 || R.pair ? b.plot.birds.find(x => x !== b && x.kind === 'hen' && !x.play && !x.asleep && !x.mum && !x.cuddle && !x.called && !x.laying && !x.stay && !x.flight && x.root.visible && startPlay(x, 'train2')) : null;
+      next('wait', { mate: mate || null });
+    }
+    return o;
+  }
+  if (P.phase === 'wait') {                            // (sat in her wagon: off at once on her own, or when her friend's aboard)
+    seat(); p.copy(tmpV); b.shadowY = 0.0; o.sit = 0.55; b.root.rotation.y = Math.PI / 2;
+    const m = P.mate, coming = m && m.play && m.play.kind === 'train2';
+    if (coming && m.play.phase !== 'ride' && P.t < 16) return o;
+    if (coming && P.t < 0.6) return o;
+    next('ride', { laps: b.r() < 0.5 ? 2 : 3, two: !!coming });
+    return o;
+  }
   if (P.phase === 'ride') {
     const D = P.laps * 4.4, u = Math.min(1, P.t / D), e = u * u * u * (u * (u * 6 - 15) + 10);
     R.a = u >= 1 ? 0 : P.laps * Math.PI * 2 * e;
@@ -760,16 +790,16 @@ const GARDENS = {
   rir: { blocks: [[1.9, 2.65, 0.52]], treat: 'seedball', warm: null, igloo: true, ice: true },
   orp: { blocks: [[-0.3, 2.3, 0.35], [1.9, 1.3, 0.3]], treat: 'doughnut', warm: [[1.6, 0.25, 0.62], [-1.35, 2.45, 0.5]], spin: [-0.3, 2.3], bounce: [1.9, 1.3], mallows: true },
 };
-GARDENS.sil = { blocks: [[-0.7, 1.9, 0.24], [-0.3, 1.9, 0.2], [0.05, 1.9, 0.17]], treat: 'snowflake', warm: [[-0.62, 1.9, 0.3], [-0.07, 1.9, 0.36]],      // (warm: the slide's blue ice kept clear of snow)
+GARDENS.sil = { floor: '#b4cfe8', blocks: [[-0.7, 1.9, 0.24], [-0.3, 1.9, 0.2], [0.05, 1.9, 0.17]], treat: 'snowflake', warm: [[-0.62, 1.9, 0.3], [-0.07, 1.9, 0.36]],      // (warm: the slide's blue ice kept clear of snow)
  
   chute: { z: 1.9, foot: -1.12, steps: [[-0.82, 0.16], [-0.64, 0.3], [-0.46, 0.42]], top: [-0.36, 0.42], end: [0.22, 0.04], land: 0.58 } };      // (the ice slide: stylized/coops.py SLIDE)
 GARDENS.leg = { blocks: [[-0.06, 2.6, 0.06]], treat: 'bauble', warm: [[-0.4, 1.95, 0.56]], train: { c: [-0.4, 1.95], r: 0.45 } };      // (the toy train's round track: stylized/coops.py TRACK; warm: its rails kept clear of snow)
 GARDENS.bra = { blocks: [[-0.95, 1.49, 0.1], [0.4, 1.49, 0.1]], treat: 'pinecone', warm: null, lift: { z: 1.75, a: [-0.95, 0.55], b: [0.4, 1.0], drop: 0.3 } };      // (the chairlift: stylized/coops.py LIFT; the sledge run before it, 13 Nov, was a second slide)
 GARDENS.pol = { blocks: [], treat: 'mitten', warm: null, globe: { y: 1.5, r: 0.68 }, roll: { a: [-0.85, 1.75], b: [0.35, 2.15] } };      // (the Snow Globe: its glass and the snow in it; the snowball's run)
 GARDENS.aya = { blocks: [[-0.35, 1.9, 0.46]], treat: 'orange', warm: [[-0.35, 1.9, 0.62]], soak: { at: [-0.35, 1.9], r: 0.42 }, steam: [[0.38, 2.38, -0.3, 0.7], [-0.35, 0.12, 1.9, 0.55]] };      // (the Barrel Sauna: the hot spring, stylized/coops.py POOL; steam from the chimney and the pool: x, y, z, every so many seconds)
-GARDENS.pea = { blocks: [[0.75, 1.55, 0.58], [-1.0, 2.6, 0.14], [2.55, 2.4, 0.2]], treat: 'bell', warm: [[0.75, 1.55, 0.62]], spin: [0.75, 1.55], carousel: true,      // (the carousel off the yard's middle: the birds' ways round things go by there)
+GARDENS.pea = { blocks: [[0.75, 1.55, 0.58], [-1.0, 2.6, 0.14], [2.62, 0.1, 0.2]], treat: 'bell', warm: [[0.75, 1.55, 0.62]], spin: [0.75, 1.55], carousel: true,      // (the carousel off the yard's middle: the birds' ways round things go by there)
  
-  striker: { at: [-1.0, 2.6], pad: [-1.0, 2.84], y0: 0.16, y1: 1.27 }, mirror: { at: [2.55, 2.4], spot: [1.95, 2.8], face: Math.atan2(0.6, -0.4) } };      // (the Winter Carousel: its carousel (the `spin` play gentler, with music), the strength game and the peacock's ice mirror: stylized/coops.py STRIKER, MIRROR)
+  striker: { at: [-1.0, 2.6], pad: [-1.0, 2.84], y0: 0.16, y1: 1.27 }, mirror: { at: [2.62, 0.1], spot: [1.6, 0.1], face: Math.PI / 2 } };      // (the Winter Carousel: its carousel (the `spin` play gentler, with music), the strength game and the peacock's ice mirror: stylized/coops.py STRIKER, MIRROR)
 const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
 export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
 export function addWinter(plot, garden = null, part = null) {
@@ -786,10 +816,10 @@ export function addWinter(plot, garden = null, part = null) {
   if (G.steam) T.steam = G.steam.map(q => ({ at: q, t: Math.random() * q[3] }));
   if (G.globe) addGlobe(plot, T, G.globe);      // (a little smaller than modelled: clear of the gate, the feeder and the trough)
   if (G.bounce && part) T.bounce = { at: G.bounce, sq: 1, want: 1, by: null, next: 0, mesh: hang('gumdrop', G.bounce) };
-  if (G.train && part) { T.train = { ...G.train, a: 0, by: null, next: 0, engine: hang('train_engine', G.train.c), wagon: hang('train_wagon', G.train.c) }; placeTrain(T.train); }
+  if (G.train && part) { T.train = { ...G.train, a: 0, by: null, next: 0, engine: hang('train_engine', G.train.c), wagon: hang('train_wagon', G.train.c), wagon2: hang('train_wagon', G.train.c) }; T.train2 = { by: null, next: 0 }; placeTrain(T.train); }
   if (G.chute) { T.chute = { ...G.chute, by: null, next: 0, back: 0 }; if (G.chute.sled && part) { T.chute.mesh = hang('sledge', [0, 0]); restSledge(T.chute); } }
   if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
-    const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];
+    const at = [1.9, 2.65], R = 0.5, d = [-1, 0];      /* (its door along the front fence, seen side on: 14 Nov) */
     T.igloo = { at, r: R, by: null, next: 0, spot: [at[0] + d[0] * (R + 0.3), at[1] + d[1] * (R + 0.3)], door: [at[0] + d[0] * (R - 0.1), at[1] + d[1] * (R - 0.1)], face: Math.atan2(-d[0], -d[1]) };
   }
   if (!iceTex) iceTex = fxTex(128, c => {
@@ -822,7 +852,7 @@ export function removeWinter(plot) {
   for (const k of ['spin', 'bounce', 'roll', 'lift', 'striker']) if (T[k]) { T[k].mesh.removeFromParent(); T[k] = null; }
   T.soak = null; T.steam = null;
   if (T.globe) { for (const m of [T.globe.glass, T.globe.snow]) { m.removeFromParent(); m.geometry.dispose(); m.material.dispose(); } T.globe = null; }
-  if (T.train) { T.train.engine.removeFromParent(); T.train.wagon.removeFromParent(); T.train = null; }
+  if (T.train) { T.train.engine.removeFromParent(); T.train.wagon.removeFromParent(); T.train.wagon2.removeFromParent(); T.train = null; T.train2 = null; }
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
 }
 export function printsLive(plot) { return plot.toys && plot.toys.prints ? plot.toys.prints.live : 0; }
@@ -833,7 +863,7 @@ function tickPrints(plot, dt) {
     const p = b.root.position; let s = R.at.get(b);
     if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
     const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
-    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute' || b.play.kind === 'train' || b.play.kind === 'soak' || b.play.kind === 'lift' || b.play.kind === 'striker') && b.play.phase !== 'walk' && b.play.phase !== 'face');
+    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute' || b.play.kind === 'train' || b.play.kind === 'train2' || b.play.kind === 'soak' || b.play.kind === 'lift' || b.play.kind === 'striker') && b.play.phase !== 'walk' && b.play.phase !== 'face');
     const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || inIgloo || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
     if (out) { s.x = p.x; s.z = p.z; continue; }
     const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);

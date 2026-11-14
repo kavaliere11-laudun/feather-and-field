@@ -1941,6 +1941,18 @@ def wood_fence():
 FLOWERS = ['#e2453c', '#f4c430', '#f08bb0', '#fbf6ee', '#9b6bd1', '#ff8c42']
 
 
+# the winter gardens' fences: [the pickets' colours in turn], their tips ('gold' or a colour), the rails and posts
+FENCE_LOOK = {'rir': (['#8a5f3a', '#7d5533'], '#c2302d', '#6f4a2c'),              # the Snow Chalet: brown timber, red tips
+              'orp': (['#b9763c'], '#fbf7f0', '#a5672f'),                         # the Gingerbread Cottage: gingerbread, icing tips
+              'sil': (['#a6d2ee', '#8fc2e6'], '#3f8fcc', '#93c8e8'),              # the Ice Palace: blue ice
+              'leg': (['#c2302d', '#2f7a46'], 'gold', '#fbf7f0'),                 # Santa's Toy Factory: red and green in turn, gold tips
+              'bra': (['#8f9aa3'], '#f4b922', '#2f8f8a'),                         # the Cable-Car Station: steel, yellow tips, teal rails
+              'pol': (['#6a4428'], 'gold', '#5a3a24'),                            # the Snow Globe: polished dark wood and brass
+              'aya': (['#b98a55', '#a87a48'], '#8a6238', '#8a6238'),              # the Barrel Sauna: cedar
+              'pea': (['#c2302d', '#fbf7f0'], 'gold', '#fbf7f0'),                 # the Winter Carousel: red and white stripes, gold tips
+              'call': (['#6f8796', '#5f7786'], '#c2302d', '#4f6674')}             # the Ice-Fishing Hut: weathered blue-grey boards, red tips (floats)
+
+
 def deluxe_fence(seed=9):
     """White pickets with pointed tops, a rose arch over the open gate with two lanterns, flowers along the outside of the
     front and left fences, and bunting from the corners up to the arch."""
@@ -1966,6 +1978,15 @@ def deluxe_fence(seed=9):
         leaf = [C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)]; rose = [C('sw_red', '#c2302d', rough=0.35), C('ca_teal', '#2f8f8a', rough=0.5)]
     if WINTER == 'sil':                                         # (the Ice Palace's: frost and blue ice over the arch, ice crystals along the borders)
         leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5), C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)]
+    # each winter garden its own fence (Audrey's review, 14 Nov 2026: "Give each garden its own fence and gate... This fixes
+    # the sameness from far away more than anything else"; "carry on with what is left"): its pickets' colours in turn, their
+    # tips, its rails and posts
+    pk, tipm = [paint], paint
+    if WINTER in FENCE_LOOK:
+        P_, T_, R_ = FENCE_LOOK[WINTER]; kw = dict(rough=0.25, spec=0.7, coat=0.4) if WINTER == 'sil' else dict(rough=0.6)
+        pk = [C('wf_%s_p%d' % (WINTER, i), h, var=0.04, **kw) for i, h in enumerate(P_)]
+        tipm = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6) if T_ == 'gold' else C('wf_%s_t' % WINTER, T_, rough=0.45)
+        paint = C('wf_%s_r' % WINTER, R_, var=0.03, **kw)
     x0, x1, y0, y1 = coop.PEN['box']
     hinge, gc = coop.gate_span(); gw = abs(gc - hinge) * 2
     g0, g1 = min(hinge, gc + (gc - hinge)), max(hinge, gc + (gc - hinge))
@@ -1975,8 +1996,8 @@ def deluxe_fence(seed=9):
         for i in range(1, n):
             p = a.lerp(b, i / n)
             if skip and skip[0] - 0.03 < p.x < skip[1] + 0.03: continue
-            objs.append(box('picket', (0.05, 0.022, 0.42), (p.x, p.y, 0.21), (0, 0, ang), m=paint, bevel=0.006, segs=1))
-            objs.append(cyl('ptip', 0.032, 0.06, (p.x, p.y, 0.45), (0, 0, ang + math.pi / 4), m=paint, verts=4, r2=0.0, bevel=0.0))
+            objs.append(box('picket', (0.05, 0.022, 0.42), (p.x, p.y, 0.21), (0, 0, ang), m=pk[i % len(pk)], bevel=0.006, segs=1))
+            objs.append(cyl('ptip', 0.032, 0.06, (p.x, p.y, 0.45), (0, 0, ang + math.pi / 4), m=tipm, verts=4, r2=0.0, bevel=0.0))
         segs = [(a, Vector((skip[0], a.y, 0))), (Vector((skip[1], a.y, 0)), b)] if skip else [(a, b)]
         nrm = Vector((-d.y, d.x, 0))
         for z in (0.12, 0.3):
@@ -1985,13 +2006,13 @@ def deluxe_fence(seed=9):
     run((x0, y0), (x1, y0), skip=(g0, g1)); run((x1, y0), (x1, y1)); run((x0, y0), (x0, y1)); run((x0, y1), (x1, y1))
     for (x, y) in ((x0, y0), (x1, y0), (x0, y1), (x1, y1), (g0, y0), (g1, y0)):
         objs.append(box('cpost', (0.07, 0.07, 0.52), (x, y, 0.26), m=paint, bevel=0.01, segs=1))
-        objs.append(sphere('cball', 0.04, (x, y, 0.55), m=paint, seg=12, rings=8))
+        objs.append(sphere('cball', 0.04, (x, y, 0.55), m=tipm, seg=12, rings=8))
     # the gate, open outwards on its hinge post (as the wooden one)
     ang = math.radians(-70); hingev = Vector((hinge, y0, 0)); d = Vector((-math.cos(ang), math.sin(ang), 0)).normalized() * (g1 - g0 - 0.05)
     nrm = Vector((-d.y, d.x, 0)).normalized()
     for k in range(6):
         p = hingev + d * ((k + 0.5) / 6)
-        objs.append(box('gpicket', (0.045, 0.02, 0.38), (p.x, p.y, 0.21), (0, 0, math.atan2(d.y, d.x)), m=paint, bevel=0.005, segs=1))
+        objs.append(box('gpicket', (0.045, 0.02, 0.38), (p.x, p.y, 0.21), (0, 0, math.atan2(d.y, d.x)), m=pk[k % len(pk)], bevel=0.005, segs=1))
     for z in (0.12, 0.3):
         objs.append(plank('grail', hingev + Vector((0, 0, z)), hingev + d + Vector((0, 0, z)), 0.045, 0.02, nrm, paint, jitter=0.2, bevel=0.004))
     # rose arch over the gateway
@@ -2584,7 +2605,7 @@ def winter_hut(name='theme_winter_call'):
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     for f_ in bm.faces:
         if f_.normal.z < 0: f_.normal_flip()
-    bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('lake', me)); setmat(o, C('ih_lake', '#c4e3f3', rough=0.12, spec=0.8, coat=0.5)); objs.append(o)
+    bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('lake', me)); setmat(o, C('ih_lake', '#9ccdea', rough=0.12, spec=0.8, coat=0.5))      # (bluer: the white ducks show on it, 14 Nov); objs.append(o)
     for i in range(14):                                     # snow heaped along its edge, cracks across it
         a = i / 14 * math.tau + rnd.uniform(-0.1, 0.1)
         objs.append(sphere('lakesnow', rnd.uniform(0.16, 0.26), (LX + math.cos(a) * LA * 0.98, LY + math.sin(a) * LB * 0.98, 0.02), (1.4, 1.0, 0.3), (0, 0, a + 1.57), m=snow, seg=10, rings=6))
@@ -2941,7 +2962,7 @@ def igloo(objs, x, y, R):
         for j in range(n):
             a = (j + 0.5 * (k % 2)) / n * math.tau; zm = (z0 + z) / 2; rm = R * math.sqrt(max(0.0, 1 - (zm / (R * 0.92)) ** 2)) + 0.003
             objs.append(box('igjoint', (0.02, 0.02, (z - z0) * 0.95), (x + math.cos(a) * rm, y + math.sin(a) * rm, zm), (0, 0, a), m=joint, bevel=0.0, segs=1))
-    d = Vector((-1, 1, 0)).normalized(); side = Vector((d.y, -d.x, 0))                 # the way in
+    d = Vector((-1, 0, 0)).normalized(); side = Vector((d.y, -d.x, 0))                 # the way in (along the front fence, seen side on from where one looks: 14 Nov, it looked away)
     c0 = Vector((x, y, 0)) + d * (R * 0.8); HW, HH, LEN = 0.17, 0.31, R * 0.4
     n = 9
     for k in range(n):                                         # an arch of blocks over it
@@ -3041,25 +3062,26 @@ def winter_pen(bk='rir'):
     return root
 
 
-def winter_fence(bk='rir'):
+def winter_fence(bk='rir', look=None):
     """The winter garden's fence (fence_t4_winter, fence_t4_orp_winter; her choices: "Flowers to holly", "Bunting to fairy
     lights"): the white pickets with holly and red berries over the arch and along the borders (a pine cone here and there;
     the Gingerbread Cottage's: icing and sweets over the arch, gumdrops along the borders), and strings of little warm
     lights where the bunting was and along the sides, glowing at night."""
     global WINTER
     key = 'fence_t4' + ('' if bk == 'rir' else '_' + bk)
-    had = LIGHTS.get(key); WINTER = bk
+    had = LIGHTS.get(key); WINTER = look or bk
     try: root = fence_tier(4, bk=bk)
     finally: WINTER = False
-    LIGHTS[key + '_winter'] = LIGHTS.pop(key)
+    name = key + ('_' + look if look else '') + '_winter'      # (look: another breed's in this yard's size: the call ducks' in the shared one, fence_t4_call_winter)
+    LIGHTS[name] = LIGHTS.pop(key)
     if had is not None: LIGHTS[key] = had
-    root.name = key + '_winter'
+    root.name = name
     return root
 
 
 LIFT = dict(y=-1.75, a=(-0.95, 0.55), b=(0.4, 1.0), drop=0.3)       # (the chairlift in the Brahmas' Deluxe yard, along x: its low and high pylons (x, top), how far the chair hangs under the cable; play.js GARDENS.bra)
 STRIKER = (-1.0, -2.6)                                           # (the strength game in the peafowl's Deluxe yard: x, y (Blender); play.js GARDENS.pea)
-MIRROR = (2.55, -2.4)                                            # (the ice mirror there, facing -x)
+MIRROR = (2.62, -0.1)                                             # (the ice mirror there, facing -x)
 
 
 def chair_lift(objs):
@@ -4556,10 +4578,48 @@ def xylophone(objs, x, y):
     objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=C('xbar0', cols[0], rough=0.35, metal=0.4), seg=8, rings=6))
 
 
+# the winter gardens' own swing frames and xylophones (Audrey's review, 14 Nov 2026: "Finish the standard toys per theme. The
+# swing and xylophone are unchanged in most gardens"; "carry on with what is left"): a frame of striped poles in the
+# theme's two colours with a ball on each top (the Gingerbread Cottage's candy canes were the first: swing_frame), and the
+# xylophone's six bars in the theme's colours. (Not the Leghorns' swing: theirs hangs in its apple tree.)
+SWING_LOOK = {'rir': ('#8a5f3a', '#6f4a2c', '#c2302d'), 'sil': ('#a6d2ee', '#dff1fb', '#3f8fcc'), 'bra': ('#8f9aa3', '#f4b922', '#2f8f8a'),
+              'pol': ('#6a4428', '#d9a53a', '#c2302d'), 'aya': ('#b98a55', '#8a6238', '#f08a2c'), 'pea': ('#2f8f8a', '#d9a53a', '#c2302d')}
+XYLO_LOOK = {'rir': ['#c2302d', '#fbf7f0', '#2f7a46'] * 2, 'sil': ['#dff1fb', '#c4e3f3', '#a6d2ee', '#8fc2e6', '#6fb0de', '#3f8fcc'], 'leg': ['#c2302d', '#d9a53a', '#2f7a46'] * 2,
+             'bra': ['#f4b922', '#2f8f8a', '#c2302d'] * 2, 'pol': ['#d9a53a', '#c9952f', '#b98628'] * 2, 'aya': ['#b98a55', '#a87a48', '#8a6238'] * 2,
+             'pea': ['#c2302d', '#fbf7f0', '#2f8f8a', '#d9a53a', '#c2302d', '#fbf7f0']}
+
+
+def striped_swing(objs, x, y, ca, cb, ball):
+    a_ = C('ws_%s_a' % WINTER, ca, rough=0.45); b_ = C('ws_%s_b' % WINTER, cb, rough=0.45); top_ = C('ws_%s_t' % WINTER, ball, rough=0.4)
+    def stick(a, b, r=0.024, n=8):
+        a, b = Vector(a), Vector(b)
+        for i in range(n):
+            p_, q_ = a.lerp(b, i / n), a.lerp(b, (i + 1) / n)
+            objs.append(cyl('swcane', r, (q_ - p_).length + 0.004, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=a_ if i % 2 else b_, verts=8, bevel=0.0))
+    for sx in (-1, 1):
+        top = Vector((x + sx * SWING_HALF, y, SWING_TOP + 0.03))
+        for sy in (-1, 1): stick((x + sx * SWING_HALF, y + sy * 0.2, 0.0), top)
+        objs.append(sphere('swgum', 0.045, top + Vector((0, 0, 0.02)), m=top_, seg=10, rings=8))
+    stick((x - SWING_HALF - 0.06, y, SWING_TOP), (x + SWING_HALF + 0.06, y, SWING_TOP), r=0.022, n=10)
+
+
+def winter_xylophone(objs, x, y, cols):
+    wood = coop.M()['darkwood']; pale = _barn_m('pine', rough=0.75, var=0.05)
+    for sy in (-1, 1):
+        objs.append(box('xrail', (0.26, 0.03, 0.025), (x, y + sy * 0.16, 0.085), (0, 0, 0), m=pale, bevel=0.005, segs=1))
+        for sx in (-1, 1): objs.append(box('xleg', (0.03, 0.03, 0.08), (x + sx * 0.1, y + sy * 0.16, 0.04), m=wood, bevel=0.004, segs=1))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.26 - k * 0.025
+        objs.append(box('xbar', (L, 0.042, 0.016), (x, yy, 0.105), m=C('wx_%s_%d' % (WINTER, k), cols[k], rough=0.3, metal=0.4), bevel=0.004, segs=1))
+    objs.append(cyl('xmallet', 0.006, 0.16, (x + 0.08, y + 0.2, 0.015), (math.radians(90), 0, math.radians(30)), m=wood, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.018, (x + 0.12, y + 0.27, 0.018), m=C('wx_%s_0' % WINTER, cols[0], rough=0.3, metal=0.4), seg=8, rings=6))
+
+
 def play_things(objs, t, k='rir'):
     P = PLAY_BY[k].get(t)
     if not P: return
-    if P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
+    if WINTER in SWING_LOOK and t == 4: striped_swing(objs, *P['swing'], *SWING_LOOK[WINTER])
+    elif P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
     elif P.get('frame') == 'tree': tree_swing(objs, *P['swing'])
     elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
     elif P.get('frame') == 'dutch': dutch_swing(objs, *P['swing'])
@@ -4584,7 +4644,8 @@ def play_things(objs, t, k='rir'):
     if 'mkund' in P: sand_kund(objs, *P['mkund'], marble=True)
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
-    if 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
+    if 'xylo' in P and WINTER in XYLO_LOOK: winter_xylophone(objs, *P['xylo'], XYLO_LOOK[WINTER])
+    elif 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):

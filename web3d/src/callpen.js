@@ -64,6 +64,30 @@ function beachBall(winter = false) {
   m.castShadow = true; m.receiveShadow = true; return m;
 }
 
+// ---- winter, the Ice-Fishing Hut's frozen lake (Audrey, 14 Nov 2026: "carry on with what is left": a real winter play for the
+// ducks): a curling stone they push from one house (the rings painted on the ice) to the other, and a belly slide across
+// the ice. Where the lake is (stylized/coops.py winter_hut: LX, LY, LA, LB; its fishing holes), in the pen's frame
+const LAKE = [0.07, 1.1, 2.12, 1.86], HOLES = [[-1.2, 1.95], [1.25, 2.05]], ICE_Y = 0.0235, STONE_R = 0.075;
+const STONE_SLOW = 0.22;                                  // (how fast the stone loses its speed on the ice, m/s2)
+function curlStone() {
+  const g = new THREE.Group(), M = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.35, ...o });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(STONE_R, STONE_R * 0.86, 0.05, 20), M('#8d949c', { roughness: 0.25 })); body.position.y = 0.027;
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(STONE_R + 0.002, STONE_R + 0.002, 0.014, 20), M('#5c636b')); band.position.y = 0.03;
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(STONE_R * 0.7, STONE_R * 0.78, 0.012, 18), M('#c2302d')); cap.position.y = 0.057;
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.03, 8), M('#c2302d')); post.position.set(0, 0.075, -0.025);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.07, 8), M('#c2302d')); grip.rotation.x = Math.PI / 2; grip.position.set(0, 0.09, 0.005);
+  for (const m of [body, band, cap, post, grip]) { m.castShadow = true; m.receiveShadow = true; g.add(m); }
+  return g;
+}
+function curlHouse() {
+  const g = new THREE.Group();
+  [['#c2302d', 0.25], ['#fbf7f0', 0.18], ['#2f6fb5', 0.115], ['#fbf7f0', 0.045]].forEach(([c, r], i) => {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(r, 32), new THREE.MeshStandardMaterial({ color: c, roughness: 0.3, polygonOffset: true, polygonOffsetFactor: -1 - i, polygonOffsetUnits: -1 - i }));
+    m.rotation.x = -Math.PI / 2; m.position.y = ICE_Y + 0.0006 * (i + 1); m.receiveShadow = true; g.add(m);
+  });
+  return g;
+}
+
 export class CallPen {
   // plot: its coop (frame, nest); o: { pond: [cx, cz, a, b, waterY], path: the Deluxe's way over its bridge ([x, y, z]...)
   // or null, yard: { min, max } (frame), obstacles: [[x, 0, z, r]], block: [[x, z, r]], ball: [x, z] or null (the Cosy's,
@@ -94,6 +118,7 @@ export class CallPen {
       this.ball = { mesh: beachBall(!!o.winter), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion(), zone: 'water', out: false };
       this.group.add(this.ball.mesh); this.placeBall(0);
     }
+    if (o.winter && o.yard) this.makeIce();
     this.group.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; });
     // where they start: by day about the yard, by night in bed
     const h = o.hour();
@@ -167,6 +192,7 @@ export class CallPen {
     const Y = this.o.yard; if (!Y || x < Y.min[0] || x > Y.max[0] || z < Y.min[2] || z > Y.max[2]) return false;
     if (this.pondS(x, z) < 1.18 || this.underPlank(x, z, 0.05)) return false;
     if ((this.o.obstacles || []).some(q => Math.hypot(x - q[0], z - q[2]) < q[3] + r)) return false;
+    if (this.curl && !this.curl.making && Math.hypot(x - this.curl.x, z - this.curl.z) < STONE_R + r) return false;      // (the curling stone)
     if ((this.o.block || []).some(q => Math.hypot(x - q[0], z - q[1]) < q[2] + r * 0.5 && this.pondS(q[0], q[1]) > 1.05)) return false;
     return true;
   }
@@ -247,6 +273,7 @@ export class CallPen {
     const swim = d.pers === 'rebel' ? 0.62 : 0.45;
     if (r < swim) return this.swimTask(d, false);
     if (this.ball && this.ball.zone === 'water' && r < swim + 0.15) return this.swimTask(d, false, true);      // (not while it's out on the yard: that's fetching)
+    if (this.curl && !this.plot.farmer && r > 0.78) { const t = r > 0.89 ? this.curlTask(d) : this.slideTask(d); if (t) return t; }      // (winter: the curling stone, a belly slide across the ice)
     if (d.pers === 'brave' && r > 0.82) { const w = this.watchSpot(); if (w && this.walkTo(L, w[0], w[1], 'walk', d)) { L.push(TK.face(w[2]), TK.act('watch', 6 + this.r() * 5, (g, u) => { g.A.upGoal = 0.95; g.A.lookYawGoal = 0.7 * Math.sin(u * 0.9 + g.seed); g.A.tiltGoal = 0.25 * Math.max(0, Math.sin(u * 0.6)); })); return TK.seq('yard', L); } }
     const s = this.yardSpot(); if (!this.walkTo(L, s[0], s[1], 'walk', d)) return TK.act('look', 2 + this.r() * 2);
     const k = d.pers === 'glutton' ? this.r() * 0.6 : d.pers === 'diva' ? 0.45 + this.r() * 0.35 : this.r();
@@ -859,6 +886,85 @@ export class CallPen {
     const s = this.pondS(B.x, B.z), u = smooth(0.86, 1.12, s), afloat = P.wy + BALL_R * 0.78 + 0.005 * Math.sin(this.time * 1.7) * (1 - u);
     B.mesh.position.set(B.x, afloat + (BALL_R + 0.002 - afloat) * u + 0.035 * Math.sin(Math.PI * u), B.z); B.mesh.quaternion.copy(B.spin);      // (afloat, up over the bank's stones, rolling on the ground)
   }
+  // ---- winter: the frozen lake's games. The ways across the ice: straight lines over free yard on the lake, clear of the
+  // fishing holes (found once); the longest, nearest the front, is the curling sheet, a house at each end, the stone on one
+  makeIce() {
+    const Y = this.o.yard, pts = [], ok = (x, z, m) => this.free(x, z, m) && Math.hypot((x - LAKE[0]) / LAKE[2], (z - LAKE[1]) / LAKE[3]) < 0.8 && HOLES.every(h => Math.hypot(x - h[0], z - h[1]) > 0.5);
+    for (let x = Y.min[0] + 0.1; x <= Y.max[0] - 0.1; x += 0.2) for (let z = Y.min[2] + 0.1; z <= Y.max[2] - 0.1; z += 0.2) if (ok(x, z, 0.26)) pts.push([x, z]);
+    const lines = [];
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const a = pts[i], b = pts[j], len = Math.hypot(b[0] - a[0], b[1] - a[1]); if (len < 1.2 || len > 2.3) continue;
+      let clear = true; for (let k = 1; k < 14 && clear; k++) { const u = k / 14; clear = ok(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, 0.22); }
+      if (clear) lines.push({ a, b, len });
+    }
+    if (!lines.length) return;
+    const sheet = lines.reduce((m, q) => { const v = q.len + 0.25 * (q.a[1] + q.b[1]) / 2; return !m || v > m.v ? { q, v } : m; }, null).q;
+    const dx = (sheet.b[0] - sheet.a[0]) / sheet.len, dz = (sheet.b[1] - sheet.a[1]) / sheet.len;
+    this.curl = { making: true, a: sheet.a, dir: [dx, dz], len: sheet.len, p: 0, v: 0, sgn: 1, by: null, x: sheet.a[0], z: sheet.a[1], turn: 0, stone: curlStone(), houses: [curlHouse(), curlHouse()] };
+    this.slides = lines.filter(q => { const m = [(q.a[0] + q.b[0]) / 2, (q.a[1] + q.b[1]) / 2], w = [m[0] - sheet.a[0], m[1] - sheet.a[1]], al = w[0] * dx + w[1] * dz, off = Math.abs(w[0] * dz - w[1] * dx); return off > 0.45 || al < -0.3 || al > sheet.len + 0.3; });      // (not along the curling sheet itself)
+    this.curl.houses[0].position.set(sheet.a[0], 0, sheet.a[1]); this.curl.houses[1].position.set(sheet.b[0], 0, sheet.b[1]);
+    this.group.add(this.curl.stone, ...this.curl.houses); this.curl.making = false; this.placeStone(0);
+  }
+  placeStone(dt) {
+    const K = this.curl;
+    if (K.by && !(K.by.task && K.by.task.name === 'curl')) K.by = null;      // (called away from it: it waits where it is)
+    if (K.v > 0) { K.p = Math.min(K.len, Math.max(0, K.p + K.sgn * K.v * dt)); K.turn += K.v * dt * 2.2; K.v = Math.max(0, K.v - STONE_SLOW * dt); if (K.p <= 0 || K.p >= K.len) K.v = 0; }
+    K.x = K.a[0] + K.dir[0] * K.p; K.z = K.a[1] + K.dir[1] * K.p;
+    K.stone.position.set(K.x, ICE_Y, K.z); K.stone.rotation.y = K.turn;
+    for (const d of this.all()) {                          // (nobody through it: they step round)
+      if (d === K.by || !this.solid(d) || d.wet > 0.3) continue;
+      const q = near(K.x, K.z, capOf(d)), dist = Math.hypot(K.x - q[0], K.z - q[1]), need = CAP.r * capK(d) + STONE_R + 0.003; if (dist >= need) continue;
+      let nx = q[0] - K.x, nz = q[1] - K.z; const l = Math.hypot(nx, nz); if (l < 1e-5) { nx = Math.sin(d.heading); nz = Math.cos(d.heading); } else { nx /= l; nz /= l; }
+      this.shoveOut(d, nx, nz, need - dist);
+    }
+  }
+  // curling: round behind the stone, a waddle along the sheet shoving it with her breast, then a last push and she lets it
+  // go: it glides on, turning slowly, and stops in the far house; she watches it all the way, then a happy bob and a quack
+  curlTask(d) {
+    const K = this.curl, pen = this; if (!K || K.by || K.v > 0 || !this.onLand(d)) return null;
+    const sgn = K.p < K.len / 2 ? 1 : -1, ux = K.dir[0] * sgn, uz = K.dir[1] * sgn, reach = CAP.front + CAP.r + STONE_R + 0.004, L = [];
+    const end = sgn > 0 ? K.len : 0, room = Math.abs(end - K.p); if (room < 0.6) return null;
+    if (!this.walkTo(L, K.x - ux * (reach + 0.12), K.z - uz * (reach + 0.12), 'walk', d)) return null;
+    K.by = d;
+    L.push(TK.face(Math.atan2(ux, uz)));
+    L.push({ name: 'shove', act: 'walk', t: 0, p0: K.p, run(g, dt) {
+      this.t += dt; const A = g.A, gone = Math.abs(K.p - this.p0);
+      g.moveTo(K.x + ux * 0.3, K.z + uz * 0.3, dt, gone > room * 0.3 ? 'hurry' : 'walk', true);
+      const al = (g.pos.x - K.a[0]) * K.dir[0] + (g.pos.z - K.a[1]) * K.dir[1] + sgn * reach;      // (her breast, along the sheet)
+      if (sgn > 0 ? al > K.p : al < K.p) K.p = Math.min(K.len, Math.max(0, al));
+      A.grazeGoal = 0.35; A.wagGoal = 0.6; A.bobGoal = (this.t % 1.0) < 0.45 ? 1 : 0;
+      if (gone > room * 0.42 || this.t > 14) { const left = Math.abs(end - K.p); K.sgn = sgn; K.v = Math.sqrt(2 * STONE_SLOW * Math.max(0.02, left - 0.02)); K.last = { by: g, from: this.p0, at: pen.time }; return true; }
+      return false;
+    } });
+    L.push({ name: 'watch', act: 'look', t: 0, run(g, dt) {      // (watching it go: tall, her head following it, a wing flap of hope)
+      this.t += dt; const A = g.A; A.upGoal = 0.95; g.turnTo(Math.atan2(K.x - g.pos.x, K.z - g.pos.z), dt, 2);
+      if (this.t > 0.5 && this.t < 1.6) { A.wingsGoal = 0.8; A.flapGoal = 1; }
+      return K.v <= 0 || this.t > 12;
+    } });
+    L.push(() => { if (this.o.sound) this.o.sound('quack', d.pos.x, d.pos.z); K.by = null; return TK.act('bob', 3.4, BOB); });
+    return TK.seq('curl', L);
+  }
+  // a belly slide: to one end of a way across the ice, a run-up, down onto her breast with her wings out, and she glides
+  // on, turning slowly round as she goes; up again, a look about (where am I?), a shake and a wag
+  slideTask(d) {
+    if (!this.slides || !this.slides.length || !this.onLand(d)) return null;
+    const q = this.slides[Math.floor(this.r() * this.slides.length)], flip = this.r() < 0.5, a = flip ? q.b : q.a, b = flip ? q.a : q.b;
+    const ux = (b[0] - a[0]) / q.len, uz = (b[1] - a[1]) / q.len, L = [], pen = this;
+    if (!this.walkTo(L, a[0], a[1], 'walk', d)) return null;
+    L.push(TK.face(Math.atan2(ux, uz)));
+    L.push({ name: 'runup', act: 'walk', t: 0, run(g, dt) { this.t += dt; g.moveTo(b[0], b[1], dt, 'run', true); g.A.wingsGoal = 0.5; g.A.flapGoal = 0.5; return (g.pos.x - a[0]) * ux + (g.pos.z - a[1]) * uz > 0.38 || this.t > 4; } });
+    L.push({ name: 'glide', act: 'rest', t: 0, v: 0.95, spin: (this.r() < 0.5 ? -1 : 1) * (0.6 + this.r() * 1.2), run(g, dt) {
+      this.t += dt; const A = g.A, left = q.len - ((g.pos.x - a[0]) * ux + (g.pos.z - a[1]) * uz);
+      A.sitGoal = 1; A.wingsGoal = 0.75; A.upGoal = 0.55; A.tailUpGoal = 0.5; A.jawGoal = this.t < 0.8 ? 1 : 0;
+      this.v = Math.max(0, this.v - (left < 0.25 ? 2.2 : 0.42) * dt);
+      const nx = g.pos.x + ux * this.v * dt, nz = g.pos.z + uz * this.v * dt;
+      if (pen.free(nx, nz, 0.1)) { g.pos.x = nx; g.pos.z = nz; } else this.v = 0;
+      g.heading += this.spin * Math.min(1, this.v / 0.5) * dt; g.spd = 0; g.moved = true; g.slid = (g.slid || 0) + this.v * dt;
+      return this.v < 0.03;
+    } });
+    L.push(TK.act('look', 1.6), TK.act('shake', 1.4), TK.act('bob', 3.4, BOB));
+    return TK.seq('slide', L);
+  }
   // ---- the ball out on the yard: a duck climbs out and rolls it back down into the water with her breast (the one who
   // kicked it, if she's free, else whoever's nearest); then a happy bob. Not at night: it waits for the morning
   fetchTask(d) {
@@ -988,6 +1094,7 @@ export class CallPen {
     this.trails();
     for (const d of this.all()) { this.keepOff(d); this.keepFromFarmer(d); }
     this.apart();
+    if (this.curl) this.placeStone(Math.min(dt, 0.05));
     if (this.ball) {
       this.bump(false, dt); this.placeBall(Math.min(dt, 0.05)); this.bump(true, dt);
       const B = this.ball;

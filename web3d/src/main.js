@@ -2102,11 +2102,11 @@ function tickSails(p, dt) {
 // everything there: a copy of the pen's (the fence's) model with every face that looks up, off the ground, turned to snow,
 // the more the flatter it lies (the top of the rails and posts, the swing's bar, the parasol, the feeder's lid, the bales,
 // the toys). Made once for each model
-function snowedPart(name, warm = null) {      // (warm: [x, z, r] round what the snow doesn't settle on: a mug of hot chocolate)
-  const key = name + '#snow'; if (parts[key]) return key;
+function snowedPart(name, warm = null, floor = null) {      /* (floor: a garden's own snow floor colour, bluer under white birds: Audrey's review, 14 Nov, "fix what is hard to see") */      // (warm: [x, z, r] round what the snow doesn't settle on: a mug of hot chocolate)
+  const key = name + '#snow'; if (parts[key]) return key;      /* (a garden's own pen model: its floor colour goes with its name) */
   const src = parts[name]; if (!src) return name;
   src.updateMatrixWorld(true);
-  const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd'), FL = new THREE.Color('#dde8f4');
+  const grp = new THREE.Group(), v = new THREE.Vector3(), nv = new THREE.Vector3(), nm = new THREE.Matrix3(), SN = new THREE.Color('#f4f8fd'), FL = new THREE.Color(floor || '#dde8f4');
   for (const m of meshesOf(src)) {
     const C0 = m.geometry.attributes.color, N = m.geometry.attributes.normal, P = m.geometry.attributes.position; let g = m.geometry;
     if (C0 && N && !/^(glow|glowc|window)$/.test(m.material.name)) { g = m.geometry.clone();      /* (not its lights) */ const C = C0.clone(); g.setAttribute('color', C); nm.getNormalMatrix(m.matrixWorld);
@@ -2117,9 +2117,11 @@ function snowedPart(name, warm = null) {      // (warm: [x, z, r] round what the
   }
   grp.updateMatrixWorld(true); parts[key] = grp; return key;
 }
+// (what the snow doesn't settle on in a winter garden: the garden's own warm things, and its xylophone's bars, so their colours show)
+function winterWarm(plot, L) { const W = winterGarden(L.garden).warm || [], pl = penOf(plot).play, x = pl && pl.xylo; return x ? [...W, [x.at[0], x.at[1], 0.2]] : W.length ? W : null; }
 function coopParts(plot) {
   const L = coopLook(plot), house = L.house, I = new THREE.Matrix4();
-  const out = L.theme === 'winter' ? [[house, I], [snowedPart(L.pen, winterGarden(L.garden).warm), I], [snowedPart(L.fence), I]] : [[L.theme ? house : inColour(house, plot), I], [L.pen, I], [L.fence, I]];
+  const out = L.theme === 'winter' ? [[house, I], [snowedPart(L.pen, winterWarm(plot, L), winterGarden(L.garden).floor), I], [snowedPart(L.fence), I]] : [[L.theme ? house : inColour(house, plot), I], [L.pen, I], [L.fence, I]];
   if (L.vane) { const t = COOPS.tops[house]; out.push(['vane', new THREE.Matrix4().makeTranslation(t[0], t[1] - 0.02, t[2])]); }
   if (plot.dress === 'xmas' && parts.xmas_star) {                // (the Christmas dress: the garland on its fence, the tree, the star on its roof; on a vane's top)
     out.push(['xmas_fence_t' + Math.max(0, L.penT < 0 ? 2 : L.penT), I]);
