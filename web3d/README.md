@@ -5496,6 +5496,9 @@ rare trios should remain 19,99"; "play the game and let me know the impact of th
   page shown as a picture, not a shape, when it can be adopted), "Bigger shelves" in the Pantry, "Restore purchases"
   in Settings; "Put down their Pagoda (yours already)" in Your coops. Six languages.
 - **store2test.mjs** (en, fr): all of it with the stand-in. **iapshots2.mjs**: the review pictures.
-- **At Apple**: the ten new products are NOT made yet (her browser went offline at 23:30 as the first was being
-  created; nothing was created). `scratchpad/iap/gen3.py` holds the names, descriptions, notes and steps.
+- **At Apple**: the ten new products made on 14 Nov, 23:15 to 23:50, in her signed-in Chrome (`iapproducts.py`: the
+  names, descriptions, notes and steps): four consumables (`coins.*`) and six non-consumables (`silkie.*`,
+  `pantry.shelves`), base United Kingdom (GBP), all 175 countries, English (U.K.) and French, a note for the reviewers
+  and a review picture each (`iapshots2.mjs`; the trios with a large picture of the birds over their Book page).
+  Twenty products in all; nothing sent for review.
 - Not built: the rewarded advert (needs her own advert account).
