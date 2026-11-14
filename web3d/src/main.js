@@ -4187,6 +4187,7 @@ class Bird {
       flap = u < 0.9 ? 1 : 0; this.shadowY = 0.015;
       if (u >= 1) {
         p.y = 0.015; this.shadowY = undefined; this.flight = null; this.wait = 0.6; this.trainOk = this.trainYaw = F.to[2]; this.trainAt = [p.x, p.z]; this.target.copy(p);
+        if (this.then && this.then.type === 'display') { this.act = this.then; this.then = null; this.wait = this.act.left + 0.2; }      // (down in front of his ice mirror: his fan, for his reflection)
         if (this.cuddle && !this.cuddle.ready && this.then) { this.route = this.plan([this.cuddle.spot]); this.wait = 0.2; this.nextLeg(); }      // (on his way to the farmer: on again from here)
       }
     } else if (this.backing) {                       // (the peacock wedged, facing the fence say: a few small steps backwards first, wayOut)

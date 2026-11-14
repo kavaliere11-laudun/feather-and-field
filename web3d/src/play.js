@@ -116,7 +116,13 @@ export function startPlay(b, kind) {
       const a0 = Math.atan2(T.mirror.spot[0] - M[0], T.mirror.spot[1] - M[1]) + da, spot = [M[0] + Math.sin(a0) * R, M[1] + Math.cos(a0) * R], face = Math.atan2(M[0] - spot[0], M[1] - spot[1]);
       const n = [[0, 0], [0.1, 0], [-0.1, 0], [0, 0.1], [0, -0.1]].filter(([ox, oz]) => b.fanClear(face, [spot[0] + ox, spot[1] + oz])).length; C.push({ spot, face, n });      /* (with a little to spare: he stops a step short or long) */
     }
-    C.sort((p, q) => q.n - p.n); C.push({ spot: T.mirror.spot, face: T.mirror.face });      /* (the roomiest first; at worst his usual spot, and he shows it off whichever way there's room) */
+    C.sort((p, q) => q.n - p.n);      /* (the roomiest first) */
+    /* (he can't walk a hen's way there, his train won't turn in a tight spot: a flutter over to his mirror, as he gets out of a corner, and his fan up as he lands) */
+    const c = C.find(c => c.n >= 3 && b.free(c.spot[0], c.spot[1]) && b.trainClear(c.spot[0], c.spot[1], c.face, true) && Math.hypot(c.spot[0] - b.root.position.x, c.spot[1] - b.root.position.z) > 0.3);
+    if (!c || b.flight) return false;
+    b.flyTo(c.spot[0], c.spot[1], c.face); b.then = { type: 'display', left: 10, face: c.face, ready: true }; b.wait = 0;
+    T.mirror.next = T.clock + 90 + b.r() * 120;
+    return true;
   }
   else if (kind === 'lift') C = [{ spot: [T.lift.a[0], T.lift.z + 0.34], face: Math.PI }];      // (the chairlift: on its boarding mat, facing the chair)
   else if (kind === 'striker') C = [{ spot: [T.striker.pad[0], T.striker.pad[1] + 0.32], face: Math.PI }];      // (the strength game: in front of its pad)
