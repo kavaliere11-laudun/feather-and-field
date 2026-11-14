@@ -112,15 +112,15 @@ export function startPlay(b, kind) {
   else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];
   else if (kind === 'mirror') {                      // the peacock's ice mirror: somewhere in front of it with room behind him for his fan
     const M = T.mirror.at; C = [];
-    for (const R of [0.85, 1.05, 1.3]) for (const da of [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4]) {
+    for (const R of [0.85, 1.05, 1.3, 1.6, 1.9, 2.2, 2.5]) for (const da of [0, 0.25, -0.25, 0.5, -0.5, 0.75, -0.75, 1.05, -1.05, 1.4, -1.4]) {      /* (close if there's room; it's a busy corner: else from further back, still facing it) */
       const a0 = Math.atan2(T.mirror.spot[0] - M[0], T.mirror.spot[1] - M[1]) + da, spot = [M[0] + Math.sin(a0) * R, M[1] + Math.cos(a0) * R], face = Math.atan2(M[0] - spot[0], M[1] - spot[1]);
       const n = [[0, 0], [0.1, 0], [-0.1, 0], [0, 0.1], [0, -0.1]].filter(([ox, oz]) => b.fanClear(face, [spot[0] + ox, spot[1] + oz])).length; C.push({ spot, face, n });      /* (with a little to spare: he stops a step short or long) */
     }
-    C.sort((p, q) => q.n - p.n);      /* (the roomiest first) */
+    C.forEach((c, i) => { c.i = i; }); C.sort((p, q) => (q.n >= 3) - (p.n >= 3) || p.i - q.i);      /* (the roomiest first) */
     /* (he can't walk a hen's way there, his train won't turn in a tight spot: a flutter over to his mirror, as he gets out of a corner, and his fan up as he lands) */
     const okAt = (c, n, ways) => c.n >= n && b.free(c.spot[0], c.spot[1]) && b.trainClear(c.spot[0], c.spot[1], c.face, true, c.face, ways) && Math.hypot(c.spot[0] - b.root.position.x, c.spot[1] - b.root.position.z) > 0.3;
     const c = C.find(c => okAt(c, 3, true)) || C.find(c => okAt(c, 3, false)) || C.find(c => okAt(c, 1, false));      /* (best: room to spare and off the farmer's ways; else across one of his ways, he moves when the farmer comes) */
-    b.mirrorWhy = c ? null : { n: C.map(c => c.n).join(''), free: C.filter(c => b.free(c.spot[0], c.spot[1])).length, train: C.filter(c => b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length, both: C.filter(c => c.n && b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length };
+    b.mirrorWhy = c ? null : { n: C.map(c => c.n).join('') + '/' + C.filter(c => okAt(c, 1, false)).length, free: C.filter(c => b.free(c.spot[0], c.spot[1])).length, train: C.filter(c => b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length, both: C.filter(c => c.n && b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length };
     if (!c || b.flight) return false;
     b.flyTo(c.spot[0], c.spot[1], c.face); b.then = { type: 'display', left: 10, face: c.face, ready: true }; b.wait = 0;
     T.mirror.next = T.clock + 90 + b.r() * 120;
