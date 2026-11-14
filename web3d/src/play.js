@@ -118,7 +118,9 @@ export function startPlay(b, kind) {
     }
     C.sort((p, q) => q.n - p.n);      /* (the roomiest first) */
     /* (he can't walk a hen's way there, his train won't turn in a tight spot: a flutter over to his mirror, as he gets out of a corner, and his fan up as he lands) */
-    const c = C.find(c => c.n >= 3 && b.free(c.spot[0], c.spot[1]) && b.trainClear(c.spot[0], c.spot[1], c.face, true) && Math.hypot(c.spot[0] - b.root.position.x, c.spot[1] - b.root.position.z) > 0.3);
+    const okAt = (c, n, ways) => c.n >= n && b.free(c.spot[0], c.spot[1]) && b.trainClear(c.spot[0], c.spot[1], c.face, true, c.face, ways) && Math.hypot(c.spot[0] - b.root.position.x, c.spot[1] - b.root.position.z) > 0.3;
+    const c = C.find(c => okAt(c, 3, true)) || C.find(c => okAt(c, 3, false)) || C.find(c => okAt(c, 1, false));      /* (best: room to spare and off the farmer's ways; else across one of his ways, he moves when the farmer comes) */
+    b.mirrorWhy = c ? null : { n: C.map(c => c.n).join(''), free: C.filter(c => b.free(c.spot[0], c.spot[1])).length, train: C.filter(c => b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length, both: C.filter(c => c.n && b.trainClear(c.spot[0], c.spot[1], c.face, false, c.face, false)).length };
     if (!c || b.flight) return false;
     b.flyTo(c.spot[0], c.spot[1], c.face); b.then = { type: 'display', left: 10, face: c.face, ready: true }; b.wait = 0;
     T.mirror.next = T.clock + 90 + b.r() * 120;
