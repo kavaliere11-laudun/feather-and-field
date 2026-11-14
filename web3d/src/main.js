@@ -34,7 +34,7 @@ import { CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
-import { Store, productOf, setOf } from './store.js';
+import { Store, productOf, setOf, bagOf, trioOf, TRIO_ALL, SHELVES } from './store.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
@@ -76,7 +76,23 @@ function paidBack(ids) {
   if (document.getElementById('loading') !== null) { setTimeout(() => paidBack(ids), 1000); return; }
   for (const id of ids) { const p = plots.find(x => x.gc && x.gc.id === id && !x.draft); if (p && game.coop(id)) retier(p); }
 }
-const store = GAME_MODE && !params.has('poster') ? new Store(game, { onBack: ids => paidBack(ids) }) : null;
+const store = GAME_MODE && !params.has('poster') ? new Store(game, { onBack: ids => paidBack(ids), onAdopt: list => paidTrios(list), onCoins: () => { if (gameUI) { gameUI.refresh(); gameUI.bumpCoins(); } } }) : null;
+// a rare trio bought has arrived (in its colour's coop, or the basket by the fire with its Pagoda to put down): said, and
+// the birds of a coop already on the farm shown at once (the page again: the simplest way they all come in right)
+function paidTrios(list) {
+  if (document.getElementById('loading') !== null) { setTimeout(() => paidTrios(list), 1000); return; }
+  const names = list.flatMap(x => x.names); if (!names.length) return;
+  if (list.some(x => game.data.coops.some(c => c.breed === x.line))) { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); return; }
+  hint(game.t('pay_trio', { names: game.andList(names) })); if (gameUI) gameUI.refresh();
+}
+// the shop's other things for real money (store.js; gameui.js o.pay): a bag of coins ('bag:purse'), a rare trio
+// ('trio:sil_paint'), the four ('trios'), the Pantry's bigger shelves ('shelves')
+const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : null;
+const payUI = store && store.on ? {
+  price: k => store.priceOf(payId(k)),
+  buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
+  restore: () => payRestore(),
+} : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
@@ -570,7 +586,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, pay: payUI, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }

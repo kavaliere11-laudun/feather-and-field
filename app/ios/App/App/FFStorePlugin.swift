@@ -2,8 +2,8 @@ import Foundation
 import Capacitor
 import StoreKit
 
-// Feather & Field's shop for real money (14 Nov 2026): the winter buildings, each bought once and kept for good
-// (Apple's "non-consumable"), and the nine together. StoreKit 2: what is owned is read from Apple's own signed
+// Feather & Field's shop for real money (14 Nov 2026): the winter buildings, the rare Silkie trios and the Pantry's
+// bigger shelves, each bought once and kept for good (Apple's "non-consumable"), and bags of coins ("consumable"). StoreKit 2: what is owned is read from Apple's own signed
 // records (Transaction.currentEntitlements, each one verified on the phone by StoreKit), never from the game's save.
 // Called from the game through the app's bridge (web3d/src/store.js): products, owned, buy, restore.
 // No keys or secrets here: the phone's own Apple account does the paying.
@@ -15,7 +15,9 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "products", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "owned", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "buy", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise)
     ]
     private var updates: Task<Void, Never>?
 
@@ -23,7 +25,8 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
         // purchases finished elsewhere (approved later by a parent, another device): taken in, the game asks again
         updates = Task.detached {
             for await result in Transaction.updates {
-                if case .verified(let t) = result { await t.finish() }
+                // (a bag of coins is left open until the game has handed the coins over: pending, finish)
+                if case .verified(let t) = result, t.productType != .consumable { await t.finish() }
             }
         }
     }
@@ -65,8 +68,14 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
                 switch result {
                 case .success(let verification):
                     if case .verified(let t) = verification {
-                        await t.finish()
-                        call.resolve(["state": "bought", "ids": await self.ownedIds()])
+                        if t.productType == .consumable {
+                            // coins: the game hands them over from this receipt, then calls finish
+                            call.resolve(["state": "bought", "ids": await self.ownedIds(),
+                                          "tx": ["id": String(t.id), "productId": t.productID]])
+                        } else {
+                            await t.finish()
+                            call.resolve(["state": "bought", "ids": await self.ownedIds()])
+                        }
                     } else {
                         call.resolve(["state": "failed", "ids": await self.ownedIds()])
                     }
@@ -80,6 +89,30 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
             } catch {
                 call.reject("buy")
             }
+        }
+    }
+
+    // bags of coins paid for and not yet handed over (verified receipts only, not refunded)
+    @objc func pending(_ call: CAPPluginCall) {
+        Task {
+            var list: [[String: String]] = []
+            for await result in Transaction.unfinished {
+                if case .verified(let t) = result, t.productType == .consumable, t.revocationDate == nil {
+                    list.append(["id": String(t.id), "productId": t.productID])
+                }
+            }
+            call.resolve(["list": list])
+        }
+    }
+
+    // a bag's coins handed over: Apple is told this receipt is done
+    @objc func finish(_ call: CAPPluginCall) {
+        guard let id = call.getString("id") else { call.reject("id"); return }
+        Task {
+            for await result in Transaction.unfinished {
+                if case .verified(let t) = result, String(t.id) == id { await t.finish() }
+            }
+            call.resolve()
         }
     }
 
