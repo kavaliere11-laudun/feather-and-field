@@ -8689,7 +8689,7 @@ function fieldBubbles(w, h) {
   }
   // the kitchen garden: a bubble over each bed (11 Nov 2026, Audrey: "Can I nave 1 bubble per field please"): empty: "Sow" (its
   // card); growing: what's in it and how long; ripe: "Pick" (that bed picked straight away)
-  const Gd = DEC.items.garden, gOn = Gd && !GARDEN_UI.work && DMOVE.id !== 'garden' && game.data.garden;
+  const Gd = DEC.items.garden, gOn = Gd && DMOVE.id !== 'garden' && game.data.garden;      /* (14 Nov 2026, Audrey: "When I click on pick, all the other ones go and I need to wait until I can pick the next one. They should work independently": the other beds keep their bubbles while the farmer's at one; only the bed he's at has none) */
   if (!GARDEN_UI.bubs) GARDEN_UI.bubs = GARDEN_BEDX.map((_, i) => mk('gwheat ggarden', () => bedTap(i)));
   // (how much each says goes by the room there is on the screen: its words; if two would touch, its picture alone; if
   // those would touch too (zoomed far out): one bubble for the garden, as before. Widths measured once a wording)
@@ -8702,17 +8702,17 @@ function fieldBubbles(w, h) {
   if (gOn) { const at = GARDEN_BEDX.map((x, i) => { bubV.set(x, BED_BUB_Y[i], GARDEN_BEDZ[i]).applyMatrix4(Gd.d.m).project(camera); return [(bubV.x + 1) / 2 * w, (1 - bubV.y) / 2 * h]; });
     if (Math.hypot(at[1][0] - at[0][0], at[1][1] - at[0][1]) >= 34) {
       mode = 2; const order = GARDEN_BEDX.map((_, i) => i).sort((i, j) => at[j][1] - at[i][1]), placed = [];      // (the lowest on the screen first: it stays; those above make room)
-      for (const i of order) { const bd = game.data.garden.beds[i]; if (!bd || (bd.crop && game.bedStage(i) !== 'ripe')) continue;      // (a growing bed has no bubble: no room kept for it)
+      for (const i of order) { const bd = game.data.garden.beds[i]; if (!bd || GARDEN_UI.hold[i] || (bd.crop && game.bedStage(i) !== 'ripe')) continue;      // (a growing bed has no bubble: no room kept for it)
         const bw = bubW(bedTxt(i, 2)); let up = 0;
         for (let n = 0; n < 6; n++) { const R = [at[i][0] - bw / 2 - 4, at[i][0] + bw / 2 + 4, at[i][1] - up - 45, at[i][1] - up + 4], hit = placed.find(Q => R[1] > Q[0] && R[0] < Q[1] && R[3] > Q[2] && R[2] < Q[3]); if (!hit) { placed.push(R); break; } up = at[i][1] + 4 - hit[2] + 2; if (n === 5) placed.push(R); }
         lift[i] = up; } } }
   GARDEN_UI.one = mode === 0;
   GARDEN_UI.bubs.forEach((B, i) => {
-    const bed = gOn && game.data.garden.beds[i]; if (!bed) { B.hidden = true; return; }
+    const bed = gOn && !GARDEN_UI.hold[i] && game.data.garden.beds[i]; if (!bed) { B.hidden = true; return; }
     if (mode === 0) {
       if (i !== 1) { B.hidden = true; return; }
       const gt = gardenBubble(); if (B.textContent !== gt.txt) { B.textContent = gt.txt; B.classList.toggle('ripe', gt.ripe); }
-      put(B, !gt.wait, bubV.set(0, 0.55, game.data.garden.beds.length > 3 ? GARDEN_ROW2 / 2 : 0).applyMatrix4(Gd.d.m)); return;
+      put(B, !gt.wait && !GARDEN_UI.work, bubV.set(0, 0.55, game.data.garden.beds.length > 3 ? GARDEN_ROW2 / 2 : 0).applyMatrix4(Gd.d.m)); return;
     }
     const stg = game.bedStage(i), todo = stg === 'ripe' || !bed.crop, txt = bedTxt(i, mode);      // (growing: no bubble)
     if (B.textContent !== txt) { B.textContent = txt; B.classList.toggle('ripe', stg === 'ripe'); }
