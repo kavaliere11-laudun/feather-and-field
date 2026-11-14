@@ -5322,4 +5322,44 @@ close). Test: `movealwaystest` (EN/FR).
     the top, rides it down and out across the snow, hops off beside it (`hopoff`), a shake; the winch then draws the
     sledge back up over 3 s (`chute.back`, in `tickToys`).
   - `sledgetest.mjs` (new; Brahmas come at level 24).
+- **The last four winter buildings** (13 Nov 23:52, Audrey: "When you are done carry on with all the other coops. At the
+  end, create an artefact with all of them, and compare them. Have a critical eye, they should not look like each
+  others too much. I am concerned they will. People will pay for this content so it needs to be good enough and bring
+  enough diversity. Remember, the toys and how the chickens interacts with them is a good one too."). THEMES.winter.breeds
+  is now all nine. `wintertest.mjs` (BREED=pol|aya|pea|call) tests each.
+  - **Snow Globe**, Polish (`winter_globe`, `theme_winter_pol`): a wooden music-box base with gold bands and a
+    wind-up key, a tiny village on top. The glass ball and the snow falling inside it are drawn by the game (play.js
+    `addGlobe`, `tickGlobe`: a transparent sphere and 70 points). Toy: the **snowball** (`snowball` part, kind
+    `roll`): a hen pushes it along its run, it grows to her size and bursts, she jumps; a new one grows at the start.
+    Treat `mitten`.
+  - **Barrel Sauna**, Ayam Cemani (`winter_sauna`, `theme_winter_aya`; her list said "Hot Spring cabin"): a cedar
+    barrel on its side, hoops, snow, a tin chimney. Toy: the **hot spring** (`hot_pool`, `POOL`; kind `soak`): in,
+    low in the water for 8 to 13 s with a slow ruffle, out, a shake; steam from the pool and the chimney
+    (`GARDENS.aya.steam`, `puffAt`). She asked for "eyes closed": the birds have no closed-eye pose; not done. Treat
+    `orange`.
+  - **Winter Carousel**, peafowl (`winter_carousel`, `theme_winter_pea`): cream walls, mirrors, twisted gold poles
+    under a round red and white canopy with bulbs. Toy: the little **carousel** (`carousel` part; the `spin` play with
+    `carousel: true`: slower, music notes, nobody dizzy). The peacock can't use it (his train). Treat `bell`. Its
+    bigger yard needs a roomier farm for the Deluxe garden.
+  - **Ice-Fishing Hut**, call ducks (`winter_hut`, `theme_winter_call`): `floating(look=4)` under a winter palette
+    (`WINTER = 'call'`: no lighthouse, wheel or lilies; bits of ice instead), plus snow, a stove pipe, a rod and
+    float, a fish rack, a lantern, plates of ice round the pond. coops.json `ponds`, `balls` and `paths` for it are
+    copied from `deluxe_call` after the splice (by hand: the export doesn't write them). The ducks have no play
+    things system, so no garden of their own (the Reds' holly fence is used) and no footprints; their ball is a
+    fishing float in winter (callpen.js `beachBall(winter)`).
+  - Each garden's fence border and arch its own (`deluxe_fence` under `WINTER`): snowmen (pol), cairns (aya), striped
+    posts (pea); the three baths are snow.
+- **The comparison she asked for**: the artifact "Winter collection review"
+  (https://claude.ai/artifact/LMTNwNWHNzhNQ5wR4FUwyD; its page and pictures in the scratchpad's `art/`). My verdict
+  there: five buildings stand alone (Ice Palace, Snow Globe, Barrel Sauna, Winter Carousel, Ice-Fishing Hut); four are
+  all "a house under a white pitched roof" (Snow Chalet, Gingerbread Cottage, Santa's Workshop, Ski Lodge), in two
+  look-alike pairs (Chalet and Lodge; Gingerbread and Workshop). Toys: ten interactions, two overlapping pairs (ice
+  slide and sledge run; roundabout and carousel), the call ducks' the weakest. Every garden shares the same white
+  picket fence, swing and xylophone. Proposed, in order: rebuild the Workshop as its own shape; replace the Ski Lodge
+  and its sledge; a real winter play for the ducks; an ice mirror for the peacock in place of the carousel toy; a
+  fence of its own for each garden; the standard toys themed; visibility fixes (Silkies on snow, the hill, the globe's
+  glass, the igloo's door); even value. Waiting for her choices.
+- To do before more themes: coops.glb is 35.9 MB before slimming (27.8 MB before the winter collection); every theme
+  loads for every player. Themes should load on demand.
+- The container restarted during the last regression run (14 Nov, memory); the run was started again in one lane.
 
