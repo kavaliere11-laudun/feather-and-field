@@ -4276,6 +4276,46 @@
   "fr": "On lance…"
  },
  {
+  "id": "text.theme_winter_call",
+  "en": "Ice-Fishing Hut",
+  "fr": "Cabane de pêche sur glace"
+ },
+ {
+  "id": "text.themel_winter_call",
+  "en": "A red fishing hut on its raft, snow on the roof, a rod set over the water and little fish drying. Their pond is ringed with ice, a hole of open water in the middle, and they nose a giant fishing float round it.",
+  "fr": "Une cabane de pêche rouge sur son radeau, de la neige sur le toit, une canne posée au-dessus de l’eau et des petits poissons qui sèchent. Leur mare est cerclée de glace, un trou d’eau libre au milieu, où ils poussent du bec un bouchon de pêche géant."
+ },
+ {
+  "id": "text.theme_winter_pol",
+  "en": "Snow Globe",
+  "fr": "Boule à neige"
+ },
+ {
+  "id": "text.themel_winter_pol",
+  "en": "A giant snow globe: a polished wooden base with a wind-up key, and under the glass a tiny snowy village where it never stops snowing. In its garden a snowball to roll that grows as it goes, until it bursts.",
+  "fr": "Une boule à neige géante : un socle de bois verni avec sa clé à remonter et, sous le verre, un minuscule village où il neige sans fin. Dans son jardin, une boule de neige à pousser qui grossit en roulant, jusqu’à éclater."
+ },
+ {
+  "id": "text.theme_winter_aya",
+  "en": "Barrel Sauna",
+  "fr": "Sauna tonneau"
+ },
+ {
+  "id": "text.themel_winter_aya",
+  "en": "A great cedar barrel on its side, snow on top and steam from its chimney, towels on the rail. In its garden a hot spring to soak in, steam rising all round.",
+  "fr": "Un grand tonneau de cèdre couché, de la neige dessus et de la vapeur à la cheminée, des serviettes sur la barre. Dans son jardin, une source chaude où se prélasser, dans un nuage de vapeur."
+ },
+ {
+  "id": "text.theme_winter_pea",
+  "en": "Winter Carousel",
+  "fr": "Manège d’hiver"
+ },
+ {
+  "id": "text.themel_winter_pea",
+  "en": "A fairground carousel house under a great red and white canopy, gold all over, bulbs at every point. In its garden a little carousel that turns to music.",
+  "fr": "Une maison-manège de fête foraine sous un grand chapiteau rouge et blanc, de l’or partout, une ampoule à chaque pointe. Dans son jardin, un petit manège qui tourne en musique."
+ },
+ {
   "id": "text.theme_winter_bra",
   "en": "Ski Lodge",
   "fr": "Chalet de ski"

@@ -1453,6 +1453,7 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
     nl, nf = {0: (0, 0), 1: (1, 0), 2: (4, 2), 3: (6, 4), 4: (0, 0)}[look]
     if look == 4:                                        # (the Deluxe: water lilies all over, as in Monet's garden: Audrey, "add Lily pad level 5")
         white = C('lilywhite', '#fbf6ee', rough=0.6); n_ = 0
+        if WINTER == 'call': pad = C('ip_ice', '#bfe2f4', rough=0.22, spec=0.7, coat=0.4, var=0.03)      # (the winter fishing hut's: bits of ice afloat, no lilies)
         for kk in range(400):
             if n_ >= 34: break
             u, v = random.uniform(-1, 1), random.uniform(-1, 1)
@@ -1462,7 +1463,7 @@ def pond(objs, F, P, seed=3, look=2, name='house_call'):
             if abs(x + 0.22) < 0.14 and y < -0.3: continue                       # (nor under the gangplank)
             r = random.uniform(0.045, 0.085); n_ += 1
             objs.append(cyl('lilypad', r, 0.006, (x, y, F['water'] + 0.004), (0, 0, random.uniform(0, 6.28)), m=pad, verts=12, bevel=0.0))
-            if n_ % 3 == 0:
+            if n_ % 3 == 0 and WINTER != 'call':
                 fm = flower if n_ % 2 else white
                 for j in range(5):
                     a_ = j * 2 * math.pi / 5
@@ -1889,7 +1890,7 @@ def floating(seed=17, name='house_call', look=2, F=None):
             for j in range(3):
                 cc = c + nrm * 0.012 + dn * (-0.05 + i * 0.1) + Vector((-0.08 + j * 0.08, 0, 0))
                 objs.append(plank('solarcell', cc - dn * 0.044, cc + dn * 0.044, 0.072, 0.008, nrm, cell, jitter=0.0, bevel=0.0))
-    if t == 4:                                            # a ship's wheel on its right side, a brass bell, the lighthouse at the back
+    if t == 4 and WINTER != 'call':                       # a ship's wheel on its right side, a brass bell, the lighthouse at the back (not the winter fishing hut's)
         wheel = C('fwheel', '#8a5a33', rough=0.6, grain=0.3, grain_scale=G); wx_, wy_, wz_ = W2 + 0.04, -0.2, 0.47
         bpy.ops.mesh.primitive_torus_add(major_radius=0.085, minor_radius=0.012, major_segments=24, minor_segments=6, location=(wx_, wy_, wz_))
         tr = bpy.context.object; tr.rotation_euler = (0, math.radians(90), 0); setmat(tr, wheel); objs.append(tr)
@@ -1957,6 +1958,12 @@ def deluxe_fence(seed=9):
         rose = [C('sw_red', '#c2302d', rough=0.35), C('gb_gold', '#d9a53a', rough=0.35, metal=0.6), C('gb_blue', '#58a9e0', rough=0.4)]
     if WINTER == 'bra':                                         # (the Ski Lodge's: pine and red berries over the arch, little firs along the borders)
         leaf = [C('wg_pine', '#27503a', rough=0.8), C('wg_holly2', '#2f7244', rough=0.6)]
+    if WINTER == 'pol':                                         # (the Snow Globe's: snow and red and gold balls over the arch, little snowmen along the borders)
+        leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('sw_red', '#c2302d', rough=0.35), C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)]
+    if WINTER == 'aya':                                         # (the Barrel Sauna's: moss and little oranges over the arch, cairns of smooth stones along the borders)
+        leaf = [C('sa_moss', '#55733a', rough=0.9), C('wg_pine', '#27503a', rough=0.8)]; rose = [C('sa_orange', '#f08a2c', rough=0.5)]
+    if WINTER == 'pea':                                         # (the Winter Carousel's: gold leaves and red and teal balls over the arch, little striped posts along the borders)
+        leaf = [C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)]; rose = [C('sw_red', '#c2302d', rough=0.35), C('ca_teal', '#2f8f8a', rough=0.5)]
     if WINTER == 'sil':                                         # (the Ice Palace's: frost and blue ice over the arch, ice crystals along the borders)
         leaf = [C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)]; rose = [C('ip_deep', '#3f8fcc', rough=0.2, spec=0.8, coat=0.5), C('ip_iced', '#93c8e8', rough=0.22, spec=0.7, coat=0.4, var=0.03)]
     x0, x1, y0, y1 = coop.PEN['box']
@@ -2008,7 +2015,22 @@ def deluxe_fence(seed=9):
         a, b = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); n = int((b - a).length / 0.05)
         for i in range(n):
             p = a.lerp(b, random.random()) + out * random.uniform(0.08, 0.2)
-            if WINTER not in ('orp', 'sil', 'leg', 'bra') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER not in ('orp', 'sil', 'leg', 'bra', 'pol', 'aya', 'pea') and random.random() < 0.45: objs.append(sphere('bleaf', 0.05, (p.x, p.y, 0.04), (1, 1, 0.6), m=random.choice(leaf), ico=1, disp=0.25, seed=i))
+            if WINTER == 'pol':                                 # (little snowmen)
+                if i % 6 == 0:
+                    for r_, z in ((0.045, 0.04), (0.032, 0.1), (0.024, 0.145)): objs.append(sphere('bsnowman', r_, (p.x, p.y, z), m=leaf[0], seg=8, rings=6))
+                    objs.append(cyl('bsnowhat', 0.02, 0.03, (p.x, p.y, 0.18), m=rose[(i // 6) % 2], verts=8, bevel=0.0))
+                continue
+            if WINTER == 'aya':                                 # (cairns of smooth stones)
+                if i % 5 == 0:
+                    st = C('wc_stone', '#9a958c', rough=0.9, var=0.12)
+                    for k, (r_, z) in enumerate(((0.05, 0.025), (0.038, 0.07), (0.026, 0.105))): objs.append(sphere('bcairn', r_, (p.x + random.uniform(-0.008, 0.008), p.y, z), (1.2, 1.0, 0.55), m=st, seg=8, rings=6))
+                continue
+            if WINTER == 'pea':                                 # (little striped posts, a gold ball on each)
+                if i % 5 == 0:
+                    for k in range(4): objs.append(cyl('bpost', 0.016, 0.045, (p.x, p.y, 0.022 + k * 0.044), m=rose[0] if k % 2 else C('gb_icing', '#fbf7f0', rough=0.5), verts=6, bevel=0.0))
+                    objs.append(sphere('bpostball', 0.026, (p.x, p.y, 0.2), m=leaf[0], seg=8, rings=6))
+                continue
             if WINTER == 'bra':                                 # (little firs, snow on their tips)
                 if i % 4 == 0:
                     h = random.uniform(0.12, 0.22)
@@ -2256,6 +2278,239 @@ def winter_lodge(seed=81, name='theme_winter_bra', house='bra', FL=0.26, wx=0.44
     for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (0.62, -D2 - 0.12, 0.5), (run + 0.05, -0.3, 0.8), (-run - 0.05, -0.3, 0.8)):
         objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
     return finish(objs, name)
+
+
+def winter_globe(seed=82, name='theme_winter_pol', house='pol', FL=0.2, wx=0.36):
+    """The Snow Globe (the winter collection's building for the Polish; Audrey, 13 Nov 2026: "carry on with all the other
+    coops"): a giant snow globe. Its base is the coop: dark polished wood with gold bands and feet, a gold plaque over a
+    round-topped door, a big wind-up key in its side; on it a gold collar and, inside the glass (the glass itself and the
+    snow whirling in it are drawn by the game: play.js GARDENS.pol.globe), a tiny snowy village: a hill, a little red-
+    roofed church with a lit window, two firs, a snowman. (house, FL, wx: the Polish's own pop door, nest window, nest.)"""
+    random.seed(seed); objs = []
+    wood = C('sg_wood', '#4a2c1c', rough=0.35, coat=0.4, var=0.05, grain=0.25, grain_scale=G); woodl = C('sg_woodl', '#6b4226', rough=0.4, coat=0.3, var=0.05)
+    gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); red = C('sw_red', '#c2302d', rough=0.5, var=0.04)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); green = C('wc_fir', '#2f6b45', rough=0.8, var=0.08); cream = C('wc_plaster', '#f1e7d2', rough=0.9, var=0.03)
+    EAVE = 0.86
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=wood, bevel=0.03, segs=3); objs.append(core)
+    for z in (0.05, EAVE - 0.05):                           # gold bands round it, top and bottom
+        objs.append(box('band', (2 * W2 + 0.03, 2 * D2 + 0.03, 0.05), (0, 0, z), m=gold, bevel=0.012, segs=2))
+    for sx in (-1, 1):                                      # a rounded gold-capped column at each corner
+        for sy in (-1, 1):
+            objs.append(cyl('col', 0.07, EAVE, (sx * W2, sy * D2, EAVE / 2), m=woodl, verts=10, bevel=0.01))
+            objs.append(sphere('colcap', 0.075, (sx * W2, sy * D2, EAVE + 0.02), (1, 1, 0.6), m=gold, seg=10, rings=6))
+            objs.append(sphere('foot', 0.085, (sx * (W2 + 0.02), sy * (D2 + 0.02), 0.03), (1, 1, 0.55), m=gold, seg=10, rings=6))
+    objs.append(cyl('plate', 0.84, 0.07, (0, 0, EAVE + 0.035), m=wood, verts=28, bevel=0.02))                # the globe's seat, its gold collar
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.66, minor_radius=0.05, major_segments=32, minor_segments=8, location=(0, 0, EAVE + 0.09))
+    o = bpy.context.object; setmat(o, gold); objs.append(o)
+    # the wind-up key in its right side
+    kx = W2 + 0.02
+    objs.append(cyl('keyshaft', 0.03, 0.22, (kx + 0.11, 0.05, 0.5), (0, math.radians(90), 0), m=gold, verts=8, bevel=0.0))
+    for sz in (-1, 1):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.085, minor_radius=0.026, major_segments=16, minor_segments=6, location=(kx + 0.24, 0.05, 0.5 + sz * 0.095), rotation=(math.radians(90), 0, 0))
+        o = bpy.context.object; setmat(o, gold); objs.append(o)
+    keep(kx + 0.2, 0.05, 0.12)
+    # the front: a round-topped door, a gold plaque over it, the nest window framed gold, the hens' door and ramp
+    arched_door(objs, 0.0, -D2 - 0.012, 0.0, 0.22, 0.56, woodl, gold, gold)
+    objs.append(box('plaque', (0.3, 0.02, 0.09), (0.0, -D2 - 0.02, 0.7), m=gold, bevel=0.01, segs=2))
+    nest_window(objs, house, FL, wx, gold, solids=[core], door='drop', door_m=woodl)
+    pop_door(objs, FL, gold, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 12, 0.0)
+    # ---- inside the glass: a tiny snowy village
+    Z = EAVE + 0.1
+    objs.append(sphere('ghill', 0.6, (0, 0, Z - 0.02), (1, 1, 0.42), m=snow, seg=20, rings=10))
+    cx, cy, cz = 0.05, 0.05, Z + 0.2                           # the little church
+    objs.append(box('church', (0.26, 0.2, 0.2), (cx, cy, cz + 0.1), m=cream, bevel=0.008, segs=1))
+    for sx in (-1, 1): objs.append(box('chroof', (0.2, 0.24, 0.025), (cx + sx * 0.068, cy, cz + 0.255), (0, sx * math.radians(42), 0), m=red, bevel=0.004, segs=1))
+    objs.append(box('chtower', (0.1, 0.1, 0.36), (cx - 0.16, cy, cz + 0.18), m=cream, bevel=0.006, segs=1))
+    objs.append(cyl('chspire', 0.085, 0.2, (cx - 0.16, cy, cz + 0.46), m=red, verts=4, r2=0.004, bevel=0.0))
+    objs.append(box('chwin', (0.07, 0.012, 0.09), (cx + 0.03, cy - 0.102, cz + 0.11), m=glass, bevel=0.0, segs=1))
+    objs.append(box('chwin2', (0.04, 0.012, 0.06), (cx - 0.16, cy - 0.052, cz + 0.26), m=glass, bevel=0.0, segs=1))
+    objs.append(sphere('chsnow', 0.1, (cx, cy, cz + 0.3), (1.2, 1.2, 0.25), m=snow, seg=10, rings=6))
+    for (fx, fy, fs) in ((0.36, -0.12, 1.0), (-0.38, 0.2, 0.8)):
+        fz = Z + 0.2 * (1 - (fx * fx + fy * fy) / 0.36)
+        objs.append(cyl('gtrunk', 0.015, 0.06, (fx, fy, fz + 0.03), m=wood, verts=6, bevel=0.0))
+        for k, (r_, h) in enumerate(((0.1, 0.16), (0.075, 0.14), (0.05, 0.12))):
+            objs.append(cyl('gfir', r_ * fs, h * fs, (fx, fy, fz + (0.1 + k * 0.09) * fs), m=green, verts=8, r2=0.006, bevel=0.0))
+            objs.append(sphere('gfirsnow', r_ * 0.5 * fs, (fx, fy, fz + (0.17 + k * 0.09) * fs), (1, 1, 0.5), m=snow, seg=8, rings=5))
+    sx_, sy_ = 0.3, 0.25; sz_ = Z + 0.14
+    for r_, dz in ((0.055, 0.04), (0.04, 0.115), (0.03, 0.17)): objs.append(sphere('gsnowman', r_, (sx_, sy_, sz_ + dz), m=snow, seg=10, rings=8))
+    objs.append(cyl('gcarrot', 0.006, 0.03, (sx_, sy_ - 0.03, sz_ + 0.17), (math.radians(90), 0, 0), m=C('wc_carrot', '#f08a2c', rough=0.6), verts=6, r2=0.001, bevel=0.0))
+    # a lantern by the ramp (where the windmill's stands), drifts
+    lx, ly = -0.66, -D2 - 0.26
+    objs.append(cyl('lpost', 0.022, 0.6, (lx, ly, 0.3), m=gold, verts=8, bevel=0.0))
+    objs.append(sphere('lglobe', 0.075, (lx, ly, 0.66), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), seg=12, rings=8))
+    objs.append(sphere('lcap', 0.04, (lx, ly, 0.735), (1, 1, 0.5), m=snow, seg=8, rings=6))
+    light_at(name, lx, ly, 0.66)
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (-W2 - 0.12, 0.1, 0.9), (0.62, -D2 - 0.12, 0.45)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
+def winter_sauna(seed=83, name='theme_winter_aya', house='aya', FL=0.24, wx=0.42):
+    """The Barrel Sauna (the winter collection's building for the Ayam Cemani; her list: "Hot Spring cabin"): a great cedar
+    barrel lying on its side in two stone cradles, iron hoops round it, snow along its top, a tin chimney (the game
+    draws its steam: play.js GARDENS.aya.steam), a round-topped door in its front of upright boards with a little lit
+    round window; beside it a bucket and ladle, a pile of hot stones, towels on a rail, a lantern. (house, FL, wx: the
+    Ayam Cemani's own pop door and ramp, nest window and nest.)"""
+    random.seed(seed); objs = []
+    cedar = C('sa_cedar', '#b9743c', rough=0.7, var=0.1, grain=0.35, grain_scale=G); cedard = C('sa_cedard', '#8f5527', rough=0.75, var=0.08, grain=0.3, grain_scale=G)
+    iron = C('iron', '#26231f', rough=0.5, metal=0.6); stone_m = C('wc_stone', '#9a958c', rough=0.9, var=0.12); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); tin = C('wc_tin', '#8f9aa3', rough=0.4, metal=0.7); red = C('sw_red', '#c2302d', rough=0.6, var=0.04); white = C('gb_icing', '#fbf7f0', rough=0.6)
+    R, CZ, EAVE = 1.0, 0.9, 1.25
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=cedard, bevel=0.01, segs=2); objs.append(core)
+    objs.append(cyl('barrel', R, 2 * D2 + 0.16, (0, 0.1, CZ), (math.radians(90), 0, 0), m=cedar, verts=28, bevel=0.012))            # (its front end just behind the boards)
+    for y in (-D2 + 0.1, D2 + 0.1): 
+        bpy.ops.mesh.primitive_torus_add(major_radius=R + 0.006, minor_radius=0.022, major_segments=36, minor_segments=5, location=(0, y, CZ), rotation=(math.radians(90), 0, 0))
+        o = bpy.context.object; setmat(o, iron); objs.append(o)
+    for k in range(14):                                     # the staves' joints along it
+        a = math.radians(-20 + k * 220 / 13); objs.append(box('stave', (0.012, 2 * D2 + 0.1, 0.012), (math.cos(a) * (R + 0.002), 0.1, CZ + math.sin(a) * (R + 0.002)), m=cedard, bevel=0.0, segs=1))
+    n = 17                                                  # the front: upright boards in the barrel's round end
+    for i in range(n):
+        x = -R + 0.06 + (i + 0.5) * (2 * R - 0.12) / n; h = math.sqrt(max(0.0, (R - 0.03) ** 2 - x * x)); top, bot = CZ + h, max(0.0, CZ - h)
+        if abs(x + 0.31) < 0.16: bot = FL + POP_H + 0.06
+        elif abs(x - wx) < 0.2: bot = FL + 0.04 + WIN_H + 0.05
+        elif abs(x - 0.05) < 0.15: bot = 0.62
+        if top > bot + 0.04: objs.append(plank('fboard', (x, -D2, bot), (x, -D2, top), (2 * R - 0.12) / n * 0.96, 0.035, (0, -1, 0), cedar if i % 3 else cedard, jitter=0.25))
+    for sx in (-1, 1):                                      # boards low down either side of the openings (under the barrel's curve the wall is the core's)
+        pass
+    objs.append(cyl('rwin', 0.09, 0.02, (0.05, -D2 - 0.03, 1.35), (math.radians(90), 0, 0), m=glass, verts=16, bevel=0.0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.095, minor_radius=0.018, major_segments=18, minor_segments=6, location=(0.05, -D2 - 0.035, 1.35), rotation=(math.radians(90), 0, 0))
+    o = bpy.context.object; setmat(o, cedard); objs.append(o)
+    for sx in (-1, 1):                                      # the stone cradles
+        for k in range(5):
+            objs.append(box('cradle', (0.2, 0.16, 0.13), (sx * (0.72 + k * 0.035), -D2 + 0.12 + k * 0.17, 0.065), (0, 0, random.uniform(-0.2, 0.2)), m=stone_m, bevel=0.03, segs=2, jitter=0.006))
+    objs.append(box('topsnow', (0.9, 2 * D2 + 0.2, 0.1), (0, 0.1, CZ + R - 0.01), m=snow, bevel=0.045, segs=4))
+    for k in range(5): objs.append(sphere('topsnowl', random.uniform(0.1, 0.14), (random.choice((-1, 1)) * random.uniform(0.38, 0.5), -D2 + 0.12 + k * 0.2, CZ + R - 0.1), (1.2, 1.2, 0.5), m=snow, seg=10, rings=7))
+    chx, chy = 0.38, 0.3                                    # the tin chimney
+    objs.append(cyl('chim', 0.06, 0.5, (chx, chy, CZ + R + 0.12), m=tin, verts=10, bevel=0.0))
+    objs.append(cyl('chimcap', 0.1, 0.06, (chx, chy, CZ + R + 0.42), m=tin, verts=10, r2=0.02, bevel=0.0))
+    arched_door(objs, 0.05, -D2 - 0.012, 0.0, 0.25, 0.6, cedard, cedar, iron)
+    nest_window(objs, house, FL, wx, cedard, solids=[core], door='drop', door_m=cedar)
+    pop_door(objs, FL, cedard, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 12, 0.0)
+    # beside it: a bucket and ladle, hot stones, towels on a rail, a lantern on a post
+    bx, by = 1.12, -D2 - 0.02; keep(bx, by, 0.12)
+    objs.append(cyl('bucket', 0.07, 0.13, (bx, by, 0.065), m=cedard, verts=12, r2=0.085, bevel=0.004))
+    objs.append(cyl('ladle', 0.008, 0.26, (bx + 0.04, by, 0.18), (0, math.radians(25), 0), m=cedar, verts=5, bevel=0.0))
+    for k in range(6): a = k * 1.1; objs.append(sphere('hotstone', random.uniform(0.045, 0.065), (bx + 0.02 + math.cos(a) * 0.09, by + 0.26 + math.sin(a) * 0.07, 0.035 + (k % 2) * 0.05), (1.1, 1, 0.75), m=stone_m, seg=8, rings=6))
+    keep(bx + 0.02, by + 0.26, 0.14)
+    tx, ty = -1.12, -D2 + 0.1; keep(tx, ty, 0.2)
+    for sy in (-1, 1): objs.append(cyl('railpost', 0.018, 0.5, (tx, ty + sy * 0.2, 0.25), m=cedard, verts=6, bevel=0.0))
+    objs.append(cyl('rail', 0.014, 0.46, (tx, ty, 0.48), (math.radians(90), 0, 0), m=cedard, verts=6, bevel=0.0))
+    for k, col in enumerate((white, red)): objs.append(box('towel', (0.02, 0.15, 0.26), (tx, ty - 0.1 + k * 0.2, 0.36), m=col, bevel=0.006, segs=1))
+    lx, ly = -0.66, -D2 - 0.26
+    objs.append(cyl('lpost', 0.022, 0.62, (lx, ly, 0.31), m=cedard, verts=8, bevel=0.0))
+    objs.append(box('lantern', (0.08, 0.08, 0.1), (lx, ly, 0.67), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    objs.append(cyl('lroof', 0.075, 0.05, (lx, ly, 0.745), (0, 0, math.pi / 4), m=iron, verts=4, r2=0.0, bevel=0.0))
+    light_at(name, lx, ly, 0.67)
+    for (x, y, s_) in ((-0.6, D2 + 0.22, 1.0), (0.3, D2 + 0.24, 1.1), (0.62, -D2 - 0.12, 0.45)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
+def winter_carousel(seed=84, name='theme_winter_pea', house='pea', FL=0.24, wx=0.38):
+    """The Winter Carousel (the winter collection's building for the peafowl): a fairground carousel house. Cream walls
+    with gold-framed mirrors and red panels, a twisted gold pole at each corner, and over it all a great round canopy
+    in red and white stripes, a scalloped gold valance with a bulb at every point (lit at night), snow on its crown, a
+    gold ball and a pennant on top; a ticket booth sign and a lantern by the ramp. (house, FL, wx: the peafowl's own
+    pop door and ramp, nest window and nest.)"""
+    random.seed(seed); objs = []
+    cream = C('wc_plaster', '#f1e7d2', rough=0.8, var=0.03); red = C('sw_red', '#c2302d', rough=0.5, var=0.04); white = C('gb_icing', '#fbf7f0', rough=0.5)
+    gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); teal = C('ca_teal', '#2f8f8a', rough=0.5); mirror = C('ca_mirror', '#cfe4ee', rough=0.08, metal=0.9)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); bulbs = [C('wg_fairy%d' % k, h, rough=0.3, emission=(h, 0.7)) for k, h in enumerate(('#ffd98a', '#ffe9b8', '#ffc56a'))]
+    EAVE = 1.0; RC, HC = 1.12, 0.62                           # (the canopy's radius and height)
+    core = box('core', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=cream, bevel=0.012, segs=2); objs.append(core)
+    objs.append(box('plinth', (2 * W2 + 0.1, 2 * D2 + 0.1, 0.08), (0, 0, 0.04), m=red, bevel=0.015, segs=1))
+    objs.append(box('frieze', (2 * W2 + 0.06, 2 * D2 + 0.06, 0.1), (0, 0, EAVE - 0.05), m=red, bevel=0.012, segs=1))
+    for sx in (-1, 1):
+        for sy in (-1, 1):                                  # the twisted gold poles
+            for k in range(12):
+                objs.append(cyl('pole', 0.034, EAVE / 12 + 0.004, (sx * (W2 + 0.03), sy * (D2 + 0.03), (k + 0.5) * EAVE / 12), (0, 0, k * 0.5), m=gold if k % 2 else white, verts=6, bevel=0.0))
+        for k, y in enumerate((-0.22, 0.22)):               # the side walls: a mirror in a gold frame, a teal panel under it
+            objs.append(box('mframe', (0.02, 0.26, 0.4), (sx * (W2 + 0.006), y, 0.62), m=gold, bevel=0.01, segs=1))
+            objs.append(box('mirror', (0.024, 0.2, 0.34), (sx * (W2 + 0.008), y, 0.62), m=mirror, bevel=0.0, segs=1))
+            objs.append(box('panel', (0.02, 0.26, 0.22), (sx * (W2 + 0.006), y, 0.24), m=teal, bevel=0.008, segs=1))
+    # the canopy: twelve stripes up to a point, a valance of gold scallops, bulbs at their tips, snow on the crown
+    n = 12; apex = Vector((0, 0, EAVE + 0.06 + HC))
+    for k in range(n):
+        a0, a1 = k / n * math.tau, (k + 1) / n * math.tau
+        p0 = Vector((math.cos(a0) * RC, math.sin(a0) * RC, EAVE + 0.06)); p1 = Vector((math.cos(a1) * RC, math.sin(a1) * RC, EAVE + 0.06))
+        me = bpy.data.meshes.new('canopy'); bm = bmesh.new(); f_ = bm.faces.new([bm.verts.new(apex), bm.verts.new(p0), bm.verts.new(p1)]); bm.normal_update()
+        if f_.normal.z < 0: f_.normal_flip()
+        bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('canopy', me)); setmat(o, red if k % 2 else white); objs.append(o)
+        so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.03
+        am = (a0 + a1) / 2
+        objs.append(sphere('scallop', 0.15, (math.cos(am) * (RC - 0.02), math.sin(am) * (RC - 0.02), EAVE + 0.02), (0.5, 1.0, 0.75), (0, 0, am), m=gold, seg=10, rings=6))
+        objs.append(sphere('cbulb', 0.03, (math.cos(a0) * (RC + 0.01), math.sin(a0) * (RC + 0.01), EAVE - 0.03), m=bulbs[k % 3], seg=8, rings=6))
+    objs.append(cyl('under', RC - 0.04, 0.03, (0, 0, EAVE + 0.045), m=cream, verts=24, bevel=0.0))
+    objs.append(sphere('crownsnow', 0.42, (0, 0, EAVE + 0.06 + HC * 0.66), (1, 1, 0.62), m=snow, seg=14, rings=8))
+    objs.append(sphere('finial', 0.07, (0, 0, apex.z + 0.1), m=gold, seg=12, rings=8))
+    objs.append(cyl('mast', 0.01, 0.3, (0, 0, apex.z + 0.3), m=gold, verts=5, bevel=0.0))
+    me = bpy.data.meshes.new('pennant'); bm = bmesh.new(); bm.faces.new([bm.verts.new((0, 0, apex.z + 0.44)), bm.verts.new((0, 0, apex.z + 0.32)), bm.verts.new((0.2, 0, apex.z + 0.38))]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new('pennant', me)); setmat(o, red); objs.append(o); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.008
+    # the front: a red door with a gold star, the nest window framed gold, the hens' door and ramp
+    arched_door(objs, 0.0, -D2 - 0.012, 0.0, 0.2, 0.58, red, gold, gold)
+    nest_window(objs, house, FL, wx, gold, solids=[core], door='drop', door_m=red)
+    pop_door(objs, FL, gold, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 12, 0.0)
+    lx, ly = -0.81, -D2 + 0.05                              # a lantern on a striped post (where the pavilion's urn stands)
+    for i in range(8): objs.append(cyl('lpost', 0.024, 0.075, (lx, ly, 0.037 + i * 0.073), m=red if i % 2 else white, verts=8, bevel=0.0))
+    objs.append(sphere('lglobe', 0.07, (lx, ly, 0.66), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), seg=12, rings=8))
+    light_at(name, lx, ly, 0.66)
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (0.6, -D2 - 0.12, 0.45)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
+def winter_hut(name='theme_winter_call'):
+    """The Ice-Fishing Hut (the winter collection's building for the call ducks): the Floating House's Deluxe raft, pond and
+    Monet's bridge (so the ducks' ways, their pond and their nest are exactly theirs), the house a red fishing hut with a
+    dark roof under snow and a tin stove pipe (the game draws its smoke), a fishing rod set over the water with a red and
+    white float, a rack of little fish drying, a lantern; plates of ice and snow all round the pond's edge, the water
+    open in the middle: a hole in the ice."""
+    global WINTER
+    was = FLOAT_LOOK[4]
+    FLOAT_LOOK[4] = dict(was, wall='#b8372f', wall2='#a32f28', trim='#fbf7ee', roof='#3a4a54', ridge='#2c3a44', door='#fbf7ee', flag='#f6c945', water='#5aa9c8', water2='#4796b8')
+    WINTER = 'call'
+    try: root = floating(name=name, look=4)
+    finally: FLOAT_LOOK[4] = was; WINTER = False
+    if 'deluxe_call' in FLOAT_PATH and name not in FLOAT_PATH: FLOAT_PATH[name] = FLOAT_PATH['deluxe_call']
+    objs = []; rnd = random.Random(91); k = FLOAT['k'] if 'k' in FLOAT else 0.72
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); ice = C('ip_ice', '#bfe2f4', rough=0.22, spec=0.7, coat=0.4, var=0.03)
+    cx, cy, pa, pb = dict(FLOAT, **FLOAT_POND[4])['pond']
+    for i in range(22):                                     # plates of ice round the pond's edge, snow on some
+        a = i / 22 * math.tau + rnd.uniform(-0.08, 0.08); rr = rnd.uniform(0.8, 0.9); sz = rnd.uniform(0.15, 0.26)
+        if abs(math.sin(a) + 1) < 0.25 and abs(math.cos(a)) < 0.45: continue      # (not across the bridge's landing at the front)
+        x, y = cx + math.cos(a) * pa * rr, cy + math.sin(a) * pb * rr
+        objs.append(cyl('floe', sz, 0.035, (x, y, FLOAT['water'] + 0.012), (0, 0, rnd.uniform(0, 3)), m=ice, verts=6, bevel=0.006))
+        if i % 2: objs.append(cyl('floesnow', sz * 0.72, 0.03, (x, y, FLOAT['water'] + 0.04), m=snow, verts=8, bevel=0.012))
+    EAVE, PEAK, DK = FLOAT['eave'] * k, FLOAT['peak'] * k, FLOAT['deck'] * k
+    objs.append(box('roofsnow', (2 * W2 * k + 0.2, 0.5, 0.08), (0, 0, PEAK + DK + 0.0), m=snow, bevel=0.035, segs=3))        # snow along the ridge, lumps down the slopes
+    for sy in (-1, 1):
+        for i in range(5): objs.append(sphere('rooflump', rnd.uniform(0.09, 0.13), (-0.4 + i * 0.2, sy * 0.3, (EAVE + PEAK) / 2 + DK + 0.02), (1.3, 1.1, 0.4), m=snow, seg=10, rings=6))
+    tin = C('wc_tin', '#8f9aa3', rough=0.4, metal=0.7)
+    objs.append(cyl('stove', 0.035, 0.34, (-0.28, 0.12, PEAK + DK + 0.12), m=tin, verts=8, bevel=0.0)); objs.append(cyl('stovecap', 0.06, 0.04, (-0.28, 0.12, PEAK + DK + 0.3), m=tin, verts=8, r2=0.012, bevel=0.0))
+    dark = C('sl_dark', '#5a3a24', rough=0.8, var=0.08); red = C('sw_red', '#c2302d', rough=0.4); white = C('gb_icing', '#fbf7f0', rough=0.5)
+    rx, ry = 0.5, -0.5                                      # the rod set in a rest at the raft's front right corner, its line down to a float
+    a0, b0 = Vector((rx, ry + 0.06, DK + 0.02)), Vector((rx + 0.34, ry - 0.1, DK + 0.5))
+    objs.append(cyl('rod', 0.008, (b0 - a0).length, (a0 + b0) / 2, (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=dark, verts=5, bevel=0.0))
+    objs.append(cyl('rodrest', 0.012, 0.16, (rx + 0.1, ry - 0.04, DK + 0.08), m=dark, verts=5, bevel=0.0))
+    fl = Vector((b0.x + 0.0, b0.y - 0.0, FLOAT['water'] + 0.03))
+    objs.append(cyl('line', 0.003, b0.z - fl.z, (fl.x, fl.y, (b0.z + fl.z) / 2), m=white, verts=4, bevel=0.0))
+    objs.append(sphere('float', 0.035, tuple(fl), m=red, seg=10, rings=8)); objs.append(sphere('floatw', 0.03, (fl.x, fl.y, fl.z - 0.018), m=white, seg=10, rings=8))
+    kx, ky = -0.6, -0.42                                    # a rack of little fish drying, at the raft's front left
+    for sx in (-1, 1): objs.append(cyl('rackpost', 0.012, 0.36, (kx + sx * 0.14, ky, DK + 0.18), m=dark, verts=5, bevel=0.0))
+    objs.append(cyl('rackbar', 0.01, 0.32, (kx, ky, DK + 0.35), (0, math.radians(90), 0), m=dark, verts=5, bevel=0.0))
+    fish = C('ih_fish', '#9fb4c4', rough=0.3, metal=0.4)
+    for i in range(3): objs.append(sphere('dfish', 0.03, (kx - 0.09 + i * 0.09, ky, DK + 0.28), (0.5, 0.35, 1.5), m=fish, seg=8, rings=6))
+    lx, ly = 0.62, 0.3
+    objs.append(cyl('lpost', 0.014, 0.4, (lx, ly, DK + 0.2), m=dark, verts=6, bevel=0.0))
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (lx, ly, DK + 0.44), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    LIGHTS.setdefault(name, []).append([round(lx, 3), round(DK + 0.44, 3), round(-ly, 3)])
+    _own(objs, root)
+    return root
 
 
 def winter_palace(seed=79, name='theme_winter_sil', house='sil', FL=0.14, wx=0.42, NF=0.06):
@@ -2563,6 +2818,11 @@ def winter_pen(bk='rir'):
     elif bk == 'bra':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
         sledge_hill(objs)
+    elif bk in ('pol', 'pea'):
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+    elif bk == 'aya':
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+        hot_pool(objs)
     _own(objs, root)
     root.name = 'pen_t4' + ('' if bk == 'rir' else '_' + bk) + '_winter'
     return root
@@ -2582,6 +2842,111 @@ def winter_fence(bk='rir'):
     if had is not None: LIGHTS[key] = had
     root.name = key + '_winter'
     return root
+
+
+POOL = (-0.35, -1.9, 0.42)                                      # (the hot spring in the Ayam Cemani's Deluxe yard: x, y (Blender), its radius; play.js GARDENS.aya)
+
+
+def hot_pool(objs):
+    """The Barrel Sauna's garden's own (Audrey's list, 13 Nov 2026: "A steaming pool they sit in, eyes closed"): a hot spring,
+    a round pool of turquoise water ringed with dark smooth rocks, a bamboo spout trickling into it, a little wooden
+    stool with a folded towel (the game draws its steam)."""
+    x, y, R = POOL; rnd = random.Random(31)
+    rock = [C('hp_rock', '#4e5358', rough=0.85, var=0.1), C('hp_rock2', '#6a6f73', rough=0.85, var=0.1)]
+    objs.append(cyl('hpwater', R, 0.02, (x, y, 0.045), m=C('hp_water', '#4fc4c6', rough=0.12, spec=0.6, coat=0.4), verts=28, bevel=0.0))
+    objs.append(cyl('hpdeep', R * 0.6, 0.022, (x, y, 0.046), m=C('hp_water2', '#2fa3ad', rough=0.12, spec=0.6, coat=0.4), verts=20, bevel=0.0))
+    n = 15
+    for k in range(n):
+        a = k / n * math.tau + rnd.uniform(-0.08, 0.08); rr = rnd.uniform(0.075, 0.12)
+        if abs(math.atan2(math.sin(a - math.pi / 2 * -1), math.cos(a - math.pi / 2 * -1))) < 0.32: rr *= 0.55      # (lower at the front: the way in)
+        objs.append(sphere('hprock', rr, (x + math.cos(a) * (R + 0.04), y + math.sin(a) * (R + 0.04), rr * 0.45), (1.2, 1.0, 0.75), (0, 0, a), m=rock[k % 2], ico=2, disp=0.12, seed=k + 40))
+    bam = C('hp_bamboo', '#9aa85a', rough=0.6); bx, by = x - R - 0.02, y + R * 0.5
+    objs.append(cyl('hppost', 0.022, 0.34, (bx, by, 0.17), m=bam, verts=7, bevel=0.0))
+    objs.append(cyl('hpspout', 0.018, 0.3, (bx + 0.12, by - 0.06, 0.3), (0, math.radians(72), math.radians(-27)), m=bam, verts=7, bevel=0.0))
+    objs.append(cyl('hptrickle', 0.006, 0.22, (bx + 0.25, by - 0.125, 0.16), m=C('hp_water', '#4fc4c6', rough=0.12, spec=0.6, coat=0.4), verts=5, bevel=0.0))
+    sx_, sy_ = x + R + 0.16, y + 0.2
+    objs.append(cyl('hpstool', 0.07, 0.03, (sx_, sy_, 0.14), m=C('sa_cedar', '#b9743c', rough=0.7, var=0.1), verts=10, bevel=0.004))
+    for k in range(3): a = k * 2.1; objs.append(cyl('hpleg', 0.01, 0.13, (sx_ + math.cos(a) * 0.045, sy_ + math.sin(a) * 0.045, 0.065), m=C('sa_cedard', '#8f5527', rough=0.75, var=0.08), verts=5, bevel=0.0))
+    objs.append(box('hptowel', (0.09, 0.07, 0.03), (sx_, sy_, 0.17), m=C('gb_icing', '#fbf7f0', rough=0.6), bevel=0.008, segs=1))
+
+
+def snowball():
+    """The Snow Globe's garden's own (her list: "A snowball they roll that grows as it goes"): a ball of snow, a little lumpy
+    (its middle at the origin, one across: the game sizes and rolls it)."""
+    objs = [sphere('snowball', 0.5, (0, 0, 0), m=C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2), ico=3, disp=0.06, seed=7)]
+    rnd = random.Random(3)
+    for k in range(9):
+        v = Vector((rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1))).normalized() * 0.47
+        objs.append(sphere('sblump', 0.09, tuple(v), m=C('wc_snowb', '#dfeaf6', rough=0.6, var=0.02), ico=1))
+    return finish(objs, 'snowball')
+
+
+def carousel_toy():
+    """The Winter Carousel's garden's own (her list: "A carousel perch that turns, lit at night"): a little carousel. A round
+    red deck with a gold rim, a twisted gold pole, a small striped canopy with a bulb at each point, a perch bar across
+    under it (its middle on the ground at the origin: it turns)."""
+    objs = []; red = C('sw_red', '#c2302d', rough=0.5, var=0.04); white = C('gb_icing', '#fbf7f0', rough=0.5); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6)
+    bulbs = [C('wg_fairy%d' % k, h, rough=0.3, emission=(h, 0.7)) for k, h in enumerate(('#ffd98a', '#ffe9b8', '#ffc56a'))]
+    objs.append(cyl('deck', 0.42, 0.05, (0, 0, 0.035), m=red, verts=24, bevel=0.012))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.42, minor_radius=0.018, major_segments=24, minor_segments=5, location=(0, 0, 0.06))
+    o = bpy.context.object; setmat(o, gold); objs.append(o)
+    for k in range(10): objs.append(cyl('cpole', 0.028, 0.072, (0, 0, 0.08 + k * 0.07), (0, 0, k * 0.6), m=gold if k % 2 else white, verts=6, bevel=0.0))
+    n = 8; apex = Vector((0, 0, 0.98)); RC = 0.36
+    for k in range(n):
+        a0, a1 = k / n * math.tau, (k + 1) / n * math.tau
+        me = bpy.data.meshes.new('ccanopy'); bm = bmesh.new()
+        f_ = bm.faces.new([bm.verts.new(apex), bm.verts.new((math.cos(a0) * RC, math.sin(a0) * RC, 0.78)), bm.verts.new((math.cos(a1) * RC, math.sin(a1) * RC, 0.78))]); bm.normal_update()
+        if f_.normal.z < 0: f_.normal_flip()
+        bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('ccanopy', me)); setmat(o, red if k % 2 else white); objs.append(o)
+        so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02
+        objs.append(sphere('cbulb', 0.022, (math.cos(a0) * RC, math.sin(a0) * RC, 0.76), m=bulbs[k % 3], seg=8, rings=6))
+    objs.append(sphere('cfinial', 0.035, (0, 0, 1.0), m=gold, seg=10, rings=8))
+    return finish(objs, 'carousel')
+
+
+def _hung(name, build):
+    """A treat on its string in the cabbage's place (the string's top at the origin): build(objs, L) adds the treat round
+    (0, 0, -L)."""
+    objs = []; L = CAB_TOP - CAB_Z
+    objs.append(cyl('cstring', 0.005, L - 0.09, (0, 0, -(L - 0.09) / 2), m=coop.M()['twine'], verts=5, bevel=0.0))
+    build(objs, L)
+    return finish(objs, name)
+
+
+def mitten():
+    """The Snow Globe's garden's treat: a red woollen mitten stuffed with seeds, a white cuff."""
+    def build(objs, L):
+        red = C('sw_red', '#c2302d', rough=0.8, var=0.05); white = C('gb_icing', '#fbf7f0', rough=0.8)
+        objs.append(sphere('mitt', 0.07, (0, 0, -L - 0.01), (0.9, 0.6, 1.2), m=red, seg=12, rings=8))
+        objs.append(sphere('mittthumb', 0.03, (0.065, 0, -L + 0.0), (1, 0.7, 1.3), (0, -0.5, 0), m=red, seg=8, rings=6))
+        objs.append(cyl('mittcuff', 0.056, 0.045, (0, 0, -L + 0.075), m=white, verts=12, bevel=0.01))
+        for k in range(5): objs.append(sphere('mseed', 0.011, (-0.03 + k * 0.015, -0.01 + (k % 2) * 0.02, -L + 0.105), m=C('wg_seed', '#c9a468', rough=0.9), ico=1))
+    return _hung('mitten', build)
+
+
+def orange_slices():
+    """The Barrel Sauna's garden's treat: three dried orange slices threaded on the string, a cinnamon stick under them."""
+    def build(objs, L):
+        peel = C('sa_orange', '#f08a2c', rough=0.5); flesh = C('sa_orangef', '#ffb347', rough=0.5)
+        for k in range(3):
+            z = -L + 0.07 - k * 0.07
+            objs.append(cyl('oslice', 0.06, 0.016, (0, 0, z), (math.radians(90), 0, k * 0.5), m=peel, verts=14, bevel=0.0))
+            objs.append(cyl('oflesh', 0.05, 0.02, (0, 0, z), (math.radians(90), 0, k * 0.5), m=flesh, verts=8, bevel=0.0))
+        objs.append(cyl('cinnamon', 0.012, 0.11, (0, 0, -L - 0.11), (0, math.radians(80), 0), m=C('sa_cedard', '#8f5527', rough=0.75), verts=6, bevel=0.0))
+    return _hung('orange', build)
+
+
+def gold_bell():
+    """The Winter Carousel's garden's treat: a gold bell of seed cake, a red bow on top."""
+    def build(objs, L):
+        gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); red = C('sw_red', '#c2302d', rough=0.5)
+        objs.append(cyl('bell', 0.075, 0.1, (0, 0, -L), m=gold, verts=14, r2=0.035, bevel=0.01))
+        objs.append(sphere('belltop', 0.04, (0, 0, -L + 0.055), m=gold, seg=10, rings=6))
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.078, minor_radius=0.012, major_segments=16, minor_segments=5, location=(0, 0, -L - 0.048))
+        o = bpy.context.object; setmat(o, gold); objs.append(o)
+        objs.append(sphere('clapper', 0.02, (0, 0, -L - 0.07), m=red, seg=8, rings=6))
+        for sg in (-1, 1): objs.append(sphere('bbow', 0.026, (sg * 0.028, 0, -L + 0.095), (1.2, 0.5, 0.75), m=red, seg=8, rings=6))
+    return _hung('bell', build)
 
 
 HILL = dict(y=-1.75, steps=((-1.06, 0.2), (-0.8, 0.4)), top=(-0.7, 0.4), end=(0.02, 0.04))      # (the sledge run, along x in the Brahmas' Deluxe yard: the steps up its back (x, height), the slope's top and foot; play.js GARDENS.bra)
@@ -6540,6 +6905,7 @@ def sand_delft(objs, x, y):
     """The Deluxe windmill's sand bath: a low sandbox faced with blue-and-white Delft tiles, full of sand, a little toy boat."""
     blue, whitep = _cw('delft', rough=0.3, spec=0.5), _cw('delftw', rough=0.3, spec=0.5)
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    if WINTER: sand = mat('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); sand2 = mat('wg_snowbath2', '#e3ecf6', rough=0.9, var=0.02)      # (a winter garden: a bath of snow)
     hw, hd, H = DELFT_W / 2, DELFT_D / 2, 0.11
     objs.append(box('dcore', (DELFT_W - 0.02, DELFT_D - 0.02, H - 0.01), (x, y, (H - 0.01) / 2), m=whitep, bevel=0.0))
     for (a, b, n) in (((x - hw, y - hd), (x + hw, y - hd), (0, -1, 0)), ((x - hw, y + hd), (x + hw, y + hd), (0, 1, 0)),
@@ -6981,6 +7347,7 @@ def sand_kund(objs, x, y, marble=False):
     marble, a ring of inlaid flowers, a gold edge)."""
     st, st2 = (C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5), C('pv_marble2', '#efebe2', rough=0.4, var=0.02)) if marble else (C('pv_red', PV['red'], rough=0.85, var=0.08), C('pv_red2', PV['red2'], rough=0.85, var=0.07))
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    if WINTER: sand = mat('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); sand2 = mat('wg_snowbath2', '#e3ecf6', rough=0.9, var=0.02)      # (a winter garden: a bath of snow)
     R = KUND_R
     objs.append(cyl('kstep', R + 0.06, 0.05, (x, y, 0.025), m=st2, verts=24, bevel=0.006))
     bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=0.04, major_segments=32, minor_segments=8, location=(x, y, 0.08))
@@ -7075,6 +7442,7 @@ def sand_candi(objs, x, y):
     little bell-shaped stone at each corner."""
     stones = [_jg('stone', i, rough=0.9, var=0.06) for i in range(3)]
     sand = mat('dsand', '#f0dca8', rough=0.95, var=0.05, bump=0.35, bump_scale=220); sand2 = mat('dsand2', '#e2c98e', rough=0.95, var=0.05)
+    if WINTER: sand = mat('wg_snowbath', '#f4f8fd', rough=0.9, var=0.02); sand2 = mat('wg_snowbath2', '#e3ecf6', rough=0.9, var=0.02)      # (a winter garden: a bath of snow)
     hw, hd = CANDI_W / 2, CANDI_D / 2
     for step, (inset, z0, h) in enumerate(((0.0, 0.0, 0.07), (0.05, 0.07, 0.06))):
         for (a, b) in (((x - hw + inset, y - hd + inset), (x + hw - inset, y - hd + inset)), ((x - hw + inset, y + hd - inset), (x + hw - inset, y + hd - inset))):

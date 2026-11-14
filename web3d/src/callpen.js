@@ -50,12 +50,13 @@ function closest(A, B) {
 const S = (x, z, pace, through, tol) => Object.assign(TK.straight(x, z, pace, through, tol), { to: [x, z] });      // (a straight walk or swim, knowing where to)
 
 // a beach ball: six panels in turn red, yellow and blue, white caps (stylized/coops.py beach_ball's look)
-function beachBall() {
+// (winter: a giant fishing float, red over white, the Ice-Fishing Hut's: Audrey's list, 13 Nov 2026)
+function beachBall(winter = false) {
   const g = new THREE.SphereGeometry(BALL_R, 24, 14), P = g.attributes.position, col = new Float32Array(P.count * 3);
   const cols = ['#e2453c', '#f4c430', '#3d8fd1'].map(h => new THREE.Color(h)), white = new THREE.Color('#fbf6ee');
   for (let i = 0; i < P.count; i++) {
     const x = P.getX(i), y = P.getY(i), z = P.getZ(i), lon = Math.atan2(z, x) + Math.PI;
-    const c = Math.abs(y) > BALL_R * 0.86 ? white : cols[Math.floor(lon / (Math.PI / 3)) % 3];
+    const c = winter ? (y > BALL_R * 0.9 ? cols[1] : y > 0.004 ? cols[0] : y > -0.012 ? new THREE.Color('#26231f') : white) : Math.abs(y) > BALL_R * 0.86 ? white : cols[Math.floor(lon / (Math.PI / 3)) % 3];
     col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -90,7 +91,7 @@ export class CallPen {
     this.wetThings = IN_WATER[o.house] || [];
     this.ring = this.makeRing();
     if (o.ball) {
-      this.ball = { mesh: beachBall(), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion(), zone: 'water', out: false };
+      this.ball = { mesh: beachBall(!!o.winter), x: o.ball[0], z: o.ball[1], vx: 0, vz: 0, spin: new THREE.Quaternion(), zone: 'water', out: false };
       this.group.add(this.ball.mesh); this.placeBall(0);
     }
     this.group.traverse(c => { c.userData.moves = true; c.matrixAutoUpdate = true; });
