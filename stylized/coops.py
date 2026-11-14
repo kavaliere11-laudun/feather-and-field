@@ -2186,6 +2186,91 @@ def winter_workshop(seed=80, name='theme_winter_leg', house='leg', FL=0.18, wx=0
     return finish(objs, name)
 
 
+def winter_cablecar(seed=85, name='theme_winter_bra', house='bra', FL=0.26, wx=0.44, NF=0.2):
+    """The Cable-Car Station (the Brahmas' winter building in the Ski Lodge's place; Audrey, 14 Nov 2026, of "keep the Chalet
+    and turn the Lodge into something with a different outline and colour, for example a cable-car station … with a
+    gondola arriving": "I agree"): a mountain station, nothing like a chalet. A foot of pale concrete, an upper deck of
+    teal panels with a long lit window, a single-pitch roof tipped up to the right under snow with a yellow edge, the
+    big orange wheel under its lip, two cables running up to a steel pylon beside it, and a red gondola coming in on
+    them; a trail-map board, skis in a rack, a lantern. (house, FL, wx, NF: the Brahmas' own pop door and ramp, nest
+    window and nest.)"""
+    random.seed(seed); objs = []
+    conc = C('cc_conc', '#d7dbde', rough=0.85, var=0.04); concd = C('cc_concd', '#aeb5ba', rough=0.85, var=0.04)
+    teal = C('cc_teal', '#1f8f95', rough=0.45, var=0.03); teald = C('cc_teald', '#166d73', rough=0.5); yellow = C('cc_yellow', '#f4b922', rough=0.45)
+    red = C('sw_red', '#c2302d', rough=0.4, var=0.03); orange = C('cc_orange', '#ee6c1f', rough=0.45); steel = C('cc_steel', '#7d8892', rough=0.4, metal=0.6)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); dark = C('iron', '#26231f', rough=0.5, metal=0.6)
+    blue = C('gb_blue', '#58a9e0', rough=0.4); white = C('gb_icing', '#fbf7f0', rough=0.5); cabglass = C('cc_cabglass', '#bfe3f2', rough=0.1, spec=0.8)
+    B0, B1 = 0.82, 1.3                                      # (the concrete foot's top, the deck's top)
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    core = box('core', (2 * W2, 2 * D2, B0), (0, 0, B0 / 2), m=conc, bevel=0.012, segs=2); objs.append(core)
+    objs.append(box('footband', (2 * W2 + 0.03, 2 * D2 + 0.03, 0.12), (0, 0, 0.06), m=concd, bevel=0.012, segs=1))
+    for x in (-0.47, -0.14, 0.24):                            # the concrete's shutter lines
+        objs.append(box('seam', (0.012, 2 * D2 + 0.012, B0 - 0.14), (x, 0, B0 / 2 + 0.06), m=concd, bevel=0.0, segs=1))
+    # the upper deck: teal panels, a long window all along its front and round its right end, lit; a yellow line under it
+    objs.append(box('deck', (2 * W2 + 0.14, 2 * D2 + 0.14, B1 - B0), (0, 0, (B0 + B1) / 2), m=teal, bevel=0.015, segs=1))
+    objs.append(box('deckline', (2 * W2 + 0.16, 2 * D2 + 0.16, 0.04), (0, 0, B0 + 0.02), m=yellow, bevel=0.006, segs=1))
+    objs.append(box('band', (2 * W2 - 0.06, 0.02, 0.2), (0, -D2 - 0.075, B0 + 0.27), m=glass, bevel=0.0, segs=1))
+    objs.append(box('bandR', (0.02, 2 * D2 - 0.1, 0.2), (W2 + 0.075, 0, B0 + 0.27), m=glass, bevel=0.0, segs=1))
+    for i in range(6): objs.append(box('mullion', (0.018, 0.026, 0.22), (-W2 + 0.07 + i * (2 * W2 - 0.14) / 5, -D2 - 0.078, B0 + 0.27), m=teald, bevel=0.0, segs=1))
+    # the roof: one pitch, low at the left, tipped up and out over the right end; snow on it, a yellow edge
+    x0, x1 = -W2 - 0.16, W2 + 0.62; zl, zr = B1 + 0.03, B1 + 0.5; L = math.hypot(x1 - x0, zr - zl); ang = math.atan2(zr - zl, x1 - x0)
+    cx_, cz_ = (x0 + x1) / 2, (zl + zr) / 2
+    objs.append(box('roof', (L, 2 * D2 + 0.4, 0.06), (cx_, 0, cz_), (0, -ang, 0), m=teald, bevel=0.01, segs=1))
+    objs.append(box('roofedge', (L + 0.02, 2 * D2 + 0.44, 0.03), (cx_, 0, cz_ - 0.035), (0, -ang, 0), m=yellow, bevel=0.006, segs=1))
+    objs.append(box('roofsnow', (L * 0.9, 2 * D2 + 0.34, 0.1), (cx_ - 0.04, 0, cz_ + 0.075), (0, -ang, 0), m=snow, bevel=0.045, segs=4))
+    for k in range(5): objs.append(sphere('rooflump', random.uniform(0.07, 0.1), (x0 + 0.04, -D2 - 0.1 + k * (2 * D2 + 0.2) / 4, zl + 0.05), (0.8, 1.3, 0.6), m=snow, seg=10, rings=6))
+    for sy in (-1, 1): objs.append(box('strut', (0.05, 0.05, zr - B1 - 0.04), (W2 + 0.02, sy * (D2 + 0.02), (B1 + zr) / 2 - 0.03), m=steel, bevel=0.006, segs=1))      # the steel struts that hold its lip up
+    # the wheel under the roof's lip, flat, its hub; the two cables from it up to the pylon and on
+    wxp, wyp, wzp = W2 + 0.3, 0.05, B1 + 0.2
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.22, minor_radius=0.03, major_segments=24, minor_segments=6, location=(wxp, wyp, wzp))
+    o = bpy.context.object; setmat(o, orange); objs.append(o)
+    for k in range(3): objs.append(box('spoke', (0.42, 0.03, 0.02), (wxp, wyp, wzp), (0, 0, k * math.pi / 3), m=orange, bevel=0.0, segs=1))
+    objs.append(cyl('hub', 0.04, 0.3, (wxp, wyp, wzp + 0.12), m=steel, verts=8, bevel=0.0))
+    PX, PY, PH = W2 + 1.05, 0.05, 2.25                       # the pylon
+    keep(PX, PY, 0.2)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            a0, b0 = Vector((PX + sx * 0.16, PY + sy * 0.16, 0.0)), Vector((PX + sx * 0.04, PY + sy * 0.04, PH))
+            objs.append(cyl('pyleg', 0.016, (b0 - a0).length, (a0 + b0) / 2, (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=steel, verts=5, bevel=0.0))
+    for k in range(5):                                       # its cross braces
+        z0_, z1_ = k * PH / 5, (k + 1) * PH / 5; w0, w1 = 0.16 - 0.12 * k / 5, 0.16 - 0.12 * (k + 1) / 5
+        for (ax, ay, bx_, by_) in ((-1, -1, 1, -1), (1, -1, 1, 1), (1, 1, -1, 1), (-1, 1, -1, -1)):
+            a0, b0 = Vector((PX + ax * w0, PY + ay * w0, z0_)), Vector((PX + bx_ * w1, PY + by_ * w1, z1_))
+            objs.append(cyl('pybrace', 0.008, (b0 - a0).length, (a0 + b0) / 2, (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=steel, verts=4, bevel=0.0))
+    objs.append(box('pyarm', (0.12, 0.62, 0.06), (PX, PY, PH + 0.02), m=yellow, bevel=0.008, segs=1))
+    objs.append(sphere('pysnow', 0.07, (PX, PY, PH + 0.08), (1, 2.2, 0.5), m=snow, seg=10, rings=6))
+    for sy in (-1, 1):
+        objs.append(cyl('sheave', 0.05, 0.03, (PX, PY + sy * 0.25, PH - 0.03), (math.radians(90), 0, 0), m=orange, verts=10, bevel=0.0))
+        a0, b0, c0 = Vector((wxp, wyp + sy * 0.22, wzp)), Vector((PX, PY + sy * 0.25, PH - 0.08)), Vector((PX + 0.5, PY + sy * 0.25, PH + 0.33))
+        for p_, q_ in ((a0, b0), (b0, c0)): objs.append(cyl('cable', 0.006, (q_ - p_).length, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=dark, verts=4, bevel=0.0))
+    # the gondola coming in on the near cable: a red cabin with big windows, a white roof, its arm and grip
+    t = 0.74; ga = Vector((wxp, wyp - 0.22, wzp)).lerp(Vector((PX, PY - 0.25, PH - 0.08)), t); gz = ga.z - 0.36
+    objs.append(cyl('garm', 0.01, 0.2, (ga.x, ga.y, ga.z - 0.1), m=steel, verts=5, bevel=0.0)); objs.append(box('ggrip', (0.08, 0.03, 0.03), (ga.x, ga.y, ga.z), m=steel, bevel=0.0, segs=1))
+    objs.append(box('gcabin', (0.4, 0.3, 0.34), (ga.x, ga.y, gz - 0.04), m=red, bevel=0.04, segs=2))
+    objs.append(box('groof', (0.42, 0.32, 0.04), (ga.x, ga.y, gz + 0.145), m=white, bevel=0.014, segs=1))
+    objs.append(box('gwinF', (0.32, 0.306, 0.14), (ga.x, ga.y, gz + 0.02), m=cabglass, bevel=0.0, segs=1)); objs.append(box('gwinS', (0.406, 0.22, 0.14), (ga.x, ga.y, gz + 0.02), m=cabglass, bevel=0.0, segs=1))
+    objs.append(box('gstripe', (0.404, 0.304, 0.035), (ga.x, ga.y, gz - 0.13), m=yellow, bevel=0.0, segs=1))
+    # ---- the front: a yellow door, a trail map over the pop door, the nest window, the hens' door and ramp
+    arched_door(objs, 0.05, -D2 - 0.012, 0.0, 0.25, 0.58, yellow, concd, dark)
+    nest_window(objs, house, FL, wx, concd, solids=[core], nest_floor=NF, door='drop', door_m=yellow)
+    pop_door(objs, FL, concd, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 12, 0.0)
+    # a trail map on the left wall, skis in a rack by it, a lantern on a post (where the lodge's stands), drifts
+    objs.append(box('map', (0.02, 0.5, 0.34), (-W2 - 0.012, 0.0, 0.5), m=white, bevel=0.006, segs=1))
+    for (dy, dz, col) in ((-0.12, 0.08, red), (0.02, -0.02, blue), (0.14, 0.06, dark)): objs.append(box('trail', (0.024, 0.2, 0.02), (-W2 - 0.014, dy, 0.5 + dz), (random.uniform(-0.5, 0.5), 0, 0), m=col, bevel=0.0, segs=1))
+    rx, ry = -W2 - 0.3, 0.1; keep(rx, ry, 0.18)
+    for sy in (-1, 1): objs.append(box('rackpost', (0.04, 0.04, 0.46), (rx, ry + sy * 0.2, 0.23), m=steel, bevel=0.006, segs=1))
+    objs.append(box('rackbar', (0.035, 0.46, 0.035), (rx, ry, 0.42), m=steel, bevel=0.006, segs=1))
+    for k, col in enumerate((red, yellow, blue)): objs.append(box('rski', (0.02, 0.05, 0.6), (rx - 0.035, ry - 0.12 + k * 0.12, 0.3), (0, math.radians(8), 0), m=col, bevel=0.004, segs=1))
+    lx, ly = -0.62, -D2 - 0.28
+    objs.append(cyl('lpost', 0.022, 0.72, (lx, ly, 0.36), m=steel, verts=8, bevel=0.0))
+    objs.append(sphere('lglobe', 0.07, (lx, ly, 0.78), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), seg=12, rings=8))
+    light_at(name, lx, ly, 0.78)
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (0.62, -D2 - 0.12, 0.5), (PX, PY - 0.2, 0.8)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
+
+
 def winter_lodge(seed=81, name='theme_winter_bra', house='bra', FL=0.26, wx=0.44, NF=0.2):
     """The Ski Lodge (the winter collection's building for the Brahmas; Audrey, 13 Nov 2026: "Carry on"): an A-frame lodge in
     the mountains. A stone foot, a front of honey-coloured timber under a great steep roof that comes down low at the
