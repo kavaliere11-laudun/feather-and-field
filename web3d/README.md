@@ -5395,3 +5395,6 @@ close). Test: `movealwaystest` (EN/FR).
   little blurry"): read as the picture stepped down under load (a wide view is the heaviest). `QUALITY` now: 2x, 2x
   with thinner grass, 1024 shadows and less fluff, 1.5x, 1.25x (it was 2, 1.5, 1.25, 1). Not measured on her phone; if
   it stays soft, her Settings "picture" line at that moment is the next step.
+- **Published 14 Nov ~15:50**: the full check passed (wintertest pea, pol, aya, call; gametest and themetest en/fr;
+  lift, train, ginger, ice, play, pea, call, duck, lang, move, grow, upgrade), main deployed, TestFlight started. The
+  "Winter collection review" artifact was rewritten as a second review (new nine, before/after, what is left).
