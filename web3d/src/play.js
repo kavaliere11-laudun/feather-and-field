@@ -753,7 +753,7 @@ GARDENS.bra = { blocks: [[-0.95, 1.49, 0.1], [0.4, 1.49, 0.1]], treat: 'pinecone
 GARDENS.pol = { blocks: [], treat: 'mitten', warm: null, globe: { y: 1.5, r: 0.68 }, roll: { a: [-0.85, 1.75], b: [0.35, 2.15] } };      // (the Snow Globe: its glass and the snow in it; the snowball's run)
 GARDENS.aya = { blocks: [[-0.35, 1.9, 0.46]], treat: 'orange', warm: [[-0.35, 1.9, 0.62]], soak: { at: [-0.35, 1.9], r: 0.42 }, steam: [[0.38, 2.38, -0.3, 0.7], [-0.35, 0.12, 1.9, 0.55]] };      // (the Barrel Sauna: the hot spring, stylized/coops.py POOL; steam from the chimney and the pool: x, y, z, every so many seconds)
 GARDENS.pea = { blocks: [[0.2, 2.2, 0.58], [-1.0, 2.6, 0.18], [2.55, 2.4, 0.2]], treat: 'bell', warm: [[0.2, 2.2, 0.62]], spin: [0.2, 2.2], carousel: true,
-  striker: { at: [-1.0, 2.6], pad: [-1.0, 2.84], y0: 0.16, y1: 1.27 }, mirror: { at: [2.55, 2.4], spot: [1.95, 2.4], face: Math.PI / 2 } };      // (the Winter Carousel: its carousel (the `spin` play gentler, with music), the strength game and the peacock's ice mirror: stylized/coops.py STRIKER, MIRROR)
+  striker: { at: [-1.0, 2.6], pad: [-1.0, 2.84], y0: 0.16, y1: 1.27 }, mirror: { at: [2.55, 2.4], spot: [1.95, 2.8], face: Math.atan2(0.6, -0.4) } };      // (the Winter Carousel: its carousel (the `spin` play gentler, with music), the strength game and the peacock's ice mirror: stylized/coops.py STRIKER, MIRROR)
 const NO_GARDEN = { blocks: [], treat: null, warm: null, ice: true };
 export function winterGarden(k) { return GARDENS[k] || NO_GARDEN; }
 export function addWinter(plot, garden = null, part = null) {
