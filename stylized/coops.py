@@ -3080,8 +3080,8 @@ def winter_fence(bk='rir', look=None):
 
 
 LIFT = dict(y=-1.75, a=(-0.95, 0.55), b=(0.4, 1.0), drop=0.3)       # (the chairlift in the Brahmas' Deluxe yard, along x: its low and high pylons (x, top), how far the chair hangs under the cable; play.js GARDENS.bra)
-STRIKER = (-1.0, -2.6)                                           # (the strength game in the peafowl's Deluxe yard: x, y (Blender); play.js GARDENS.pea)
-MIRROR = (2.62, -0.1)                                             # (the ice mirror there, facing -x)
+STRIKER = (2.4, -2.2)                                            # (the strength game in the peafowl's Deluxe yard: x, y (Blender); play.js GARDENS.pea)
+MIRROR = (-2.0, -2.85)                                            # (the ice mirror there, facing +x, into the yard)
 
 
 def chair_lift(objs):
@@ -3142,10 +3142,10 @@ def ice_mirror(objs):
     other toy"): a tall oval of polished ice in a gold frame on a snowy foot, a gold bow on its top, facing into the yard."""
     x, y = MIRROR; gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); ice = C('ca_mirror', '#cfe4ee', rough=0.08, metal=0.9); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
     objs.append(sphere('mfoot', 0.22, (x, y, 0.0), (0.8, 1.4, 0.4), m=snow, seg=12, rings=8))
-    objs.append(sphere('mglass', 0.5, (x - 0.01, y, 0.62), (0.035, 0.62, 1.0), m=ice, seg=20, rings=14))
+    objs.append(sphere('mglass', 0.5, (x + 0.01, y, 0.62), (0.035, 0.62, 1.0), m=ice, seg=20, rings=14))
     bpy.ops.mesh.primitive_torus_add(major_radius=0.5, minor_radius=0.035, major_segments=28, minor_segments=6, location=(x, y, 0.62), rotation=(0, math.radians(90), 0))
     o = bpy.context.object; o.scale = (1.0, 0.64, 1.0); setmat(o, gold); objs.append(o)
-    objs.append(box('mshine', (0.006, 0.04, 0.5), (x - 0.03, y - 0.1, 0.68), (math.radians(18), 0, 0), m=C('gb_icing', '#fbf7f0', rough=0.3), bevel=0.0, segs=1))
+    objs.append(box('mshine', (0.006, 0.04, 0.5), (x + 0.03, y - 0.1, 0.68), (math.radians(18), 0, 0), m=C('gb_icing', '#fbf7f0', rough=0.3), bevel=0.0, segs=1))
     for sg in (-1, 1): objs.append(sphere('mbow', 0.06, (x, y + sg * 0.06, 1.16), (0.5, 1.2, 0.75), m=gold, seg=8, rings=6))
 
 
