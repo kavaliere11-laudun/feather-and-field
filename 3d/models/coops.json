@@ -687,6 +687,18 @@
     0.512,
     -0.3
    ]
+  ],
+  "fence_t4_call_winter": [
+   [
+    -0.005,
+    0.66,
+    3.25
+   ],
+   [
+    0.749,
+    0.66,
+    3.25
+   ]
   ]
  },
  "nests": {
@@ -10752,8 +10764,8 @@
    "prims": 5
   },
   "pen_t4_winter": {
-   "tris": 10636,
-   "verts": 8523,
+   "tris": 11360,
+   "verts": 8935,
    "prims": 4
   },
   "fence_t4_winter": {
@@ -10802,9 +10814,9 @@
    "prims": 5
   },
   "pen_t4_sil_winter": {
-   "tris": 9014,
-   "verts": 6708,
-   "prims": 5
+   "tris": 9730,
+   "verts": 7128,
+   "prims": 4
   },
   "fence_t4_sil_winter": {
    "tris": 13000,
@@ -10822,8 +10834,8 @@
    "prims": 5
   },
   "pen_t4_leg_winter": {
-   "tris": 9436,
-   "verts": 6770,
+   "tris": 9004,
+   "verts": 6530,
    "prims": 4
   },
   "fence_t4_leg_winter": {
@@ -10852,8 +10864,8 @@
    "prims": 5
   },
   "pen_t4_bra_winter": {
-   "tris": 7522,
-   "verts": 5192,
+   "tris": 8486,
+   "verts": 5708,
    "prims": 4
   },
   "fence_t4_bra_winter": {
@@ -10887,8 +10899,8 @@
    "prims": 4
   },
   "pen_t4_pol_winter": {
-   "tris": 11098,
-   "verts": 6821,
+   "tris": 11422,
+   "verts": 7025,
    "prims": 4
   },
   "fence_t4_pol_winter": {
@@ -10897,8 +10909,8 @@
    "prims": 5
   },
   "pen_t4_aya_winter": {
-   "tris": 10364,
-   "verts": 6439,
+   "tris": 10340,
+   "verts": 6393,
    "prims": 4
   },
   "fence_t4_aya_winter": {
@@ -10908,7 +10920,7 @@
   },
   "pen_t4_pea_winter": {
    "tris": 12500,
-   "verts": 10284,
+   "verts": 8662,
    "prims": 5
   },
   "fence_t4_pea_winter": {
@@ -10955,6 +10967,11 @@
    "tris": 56,
    "verts": 32,
    "prims": 2
+  },
+  "fence_t4_call_winter": {
+   "tris": 13000,
+   "verts": 8144,
+   "prims": 5
   }
  },
  "paths": {
