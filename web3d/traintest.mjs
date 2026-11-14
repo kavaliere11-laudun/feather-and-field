@@ -30,7 +30,7 @@ const sheet = () => p.evaluate(() => { const e = document.querySelector('.gsheet
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[window.__ci || 0]; return { coins: g.data.coins, theme: c.theme || null, themes: g.data.themes || [], tier: c.tier, tier0: c.tier0, w: f.winterOf(c.id), eggs: c.eggs, kind: f.gameUI().kind, edited: g.edited, drawn: [...new Set(f.coopModels())] }; });
 
 
-const T = fr ? { name: /Atelier du Père Noël/ } : { name: /Santa’s Workshop/ };
+const T = fr ? { name: /Fabrique de jouets du Père Noël/ } : { name: /Santa’s Toy Factory/ };
 const view = (lx, lz, z, i = 1) => p.evaluate(([lx, lz, z, i]) => { const f = window.__farm, P = f.gamePlots()[i], w = P.frame.localToWorld(new f.THREE.Vector3(lx, 0, lz)); f.lookAt(w.x, w.z, z); f.draw(); }, [lx, lz, z, i]);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });

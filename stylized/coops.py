@@ -2571,6 +2571,30 @@ def winter_hut(name='theme_winter_call'):
         x, y = cx + math.cos(a) * pa * rr, cy + math.sin(a) * pb * rr
         objs.append(cyl('floe', sz, 0.035, (x, y, FLOAT['water'] + 0.012), (0, 0, rnd.uniform(0, 3)), m=ice, verts=6, bevel=0.006))
         if i % 2: objs.append(cyl('floesnow', sz * 0.72, 0.03, (x, y, FLOAT['water'] + 0.04), m=snow, verts=8, bevel=0.012))
+    # the frozen lake: ice over most of the garden, round the hole of open water the hut floats in (Audrey, 14 Nov 2026: "we need
+    # the pond to be much bigger it should use most of the space"); cracks in it, snow at its edge, two little fishing holes
+    # with a flag by each
+    LX, LY, LA, LB = 0.07, -1.1, 2.12, 1.86; nseg = 48
+    me = bpy.data.meshes.new('lake'); bm = bmesh.new()
+    wob = lambda i: 1 + 0.03 * math.sin(i * 0.9) + 0.02 * math.cos(i * 2.3)
+    outer = [bm.verts.new((LX + math.cos(i / nseg * math.tau) * LA * wob(i), LY + math.sin(i / nseg * math.tau) * LB * wob(i), 0.022)) for i in range(nseg)]
+    inner = [bm.verts.new((cx + math.cos(i / nseg * math.tau) * pa * 0.86, cy + math.sin(i / nseg * math.tau) * pb * 0.86, 0.022)) for i in range(nseg)]
+    for i in range(nseg):
+        j = (i + 1) % nseg; f_ = bm.faces.new((outer[i], outer[j], inner[j], inner[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for f_ in bm.faces:
+        if f_.normal.z < 0: f_.normal_flip()
+    bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('lake', me)); setmat(o, C('ih_lake', '#c4e3f3', rough=0.12, spec=0.8, coat=0.5)); objs.append(o)
+    for i in range(14):                                     # snow heaped along its edge, cracks across it
+        a = i / 14 * math.tau + rnd.uniform(-0.1, 0.1)
+        objs.append(sphere('lakesnow', rnd.uniform(0.16, 0.26), (LX + math.cos(a) * LA * 0.98, LY + math.sin(a) * LB * 0.98, 0.02), (1.4, 1.0, 0.3), (0, 0, a + 1.57), m=snow, seg=10, rings=6))
+    for (x0_, y0_, x1_, y1_) in ((-1.5, -1.5, -0.9, -2.2), (0.9, -1.6, 1.6, -1.2), (-0.2, -2.3, 0.5, -2.7), (1.2, -2.2, 1.0, -2.6), (-1.7, -0.9, -1.3, -1.2)):
+        objs.append(plank('crack', (x0_, y0_, 0.025), (x1_, y1_, 0.025), 0.012, 0.004, (0, 0, 1), snow, jitter=0.0, bevel=0.0))
+    for (hx_, hy_) in ((-1.2, -1.95), (1.25, -2.05)):
+        objs.append(cyl('fhole', 0.11, 0.006, (hx_, hy_, 0.026), m=C('ih_hole', '#2f6f96', rough=0.1, spec=0.8), verts=14, bevel=0.0))
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.115, minor_radius=0.018, major_segments=16, minor_segments=5, location=(hx_, hy_, 0.03))
+        o = bpy.context.object; setmat(o, snow); objs.append(o)
+        objs.append(cyl('tipup', 0.006, 0.22, (hx_ + 0.14, hy_, 0.11), m=C('sl_dark', '#5a3a24', rough=0.8), verts=5, bevel=0.0)); objs.append(box('tipflag', (0.07, 0.004, 0.045), (hx_ + 0.175, hy_, 0.19), m=C('sw_red', '#c2302d', rough=0.4), bevel=0.0, segs=1))
     EAVE, PEAK, DK = FLOAT['eave'] * k, FLOAT['peak'] * k, FLOAT['deck'] * k
     objs.append(box('roofsnow', (2 * W2 * k + 0.2, 0.5, 0.08), (0, 0, PEAK + DK + 0.0), m=snow, bevel=0.035, segs=3))        # snow along the ridge, lumps down the slopes
     for sy in (-1, 1):
@@ -2596,6 +2620,107 @@ def winter_hut(name='theme_winter_call'):
     LIGHTS.setdefault(name, []).append([round(lx, 3), round(DK + 0.44, 3), round(-ly, 3)])
     _own(objs, root)
     return root
+
+
+def winter_factory(seed=86, name='theme_winter_leg', house='leg', FL=0.18, wx=0.44):
+    """Santa's Toy Factory (the Leghorns' winter building in the Workshop's place; Audrey, 14 Nov 2026, of "rebuild the
+    Workshop as a shape of its own: a tall, narrow toy factory with a clock tower, a crooked chimney and a chute where
+    presents slide out": "I agree"). A foot of red brick; on it a narrower green upper floor under a saw-tooth roof with
+    lit skylights; at its left a tall clock tower, a big white clock under a pointed blue roof with a gold star; at its
+    right a crooked chimney in three bends; a yellow chute curling out of the upper floor down to a heap of presents; a
+    big gold cog on the wall, coloured lights along the brickwork's top. (house, FL, wx: the Leghorns' own pop door and
+    ramp, nest window and nest.)"""
+    random.seed(seed); objs = []
+    brick = C('tf_brick', '#b3473c', rough=0.85, var=0.08); brickd = C('tf_brickd', '#8f352d', rough=0.85, var=0.06); stone = C('gb_icing', '#fbf7f0', rough=0.6)
+    green = C('sw_green', '#2f7a46', rough=0.55, var=0.05); greend = C('sw_greend', '#1f5a34', rough=0.6, var=0.05); blue = C('tf_blue', '#2f5f9c', rough=0.5, var=0.04)
+    gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); yellow = C('cc_yellow', '#f4b922', rough=0.45); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    glass = C('wc_glow', '#ffd98a', rough=0.3, emission=('#ffc76a', 1.4)); dark = C('iron', '#26231f', rough=0.5, metal=0.6); red = C('sw_red', '#c2302d', rough=0.4)
+    gblue = C('gb_blue', '#58a9e0', rough=0.4); bulbs = [C('xlight%d' % i, h, rough=0.3, emission=(h, 0.6)) for i, h in enumerate(XLIGHTS)]
+    B0 = 0.86                                               # (the brick foot's top)
+    keep = lambda x, y, r: BLOCKS.setdefault(name, []).append([round(x, 3), round(-y, 3), r])
+    core = box('core', (2 * W2, 2 * D2, B0), (0, 0, B0 / 2), m=brick, bevel=0.012, segs=2); objs.append(core)
+    for r_ in range(7):                                     # courses of darker bricks here and there (front and sides)
+        z = 0.1 + r_ * 0.11
+        for i in range(9):
+            x = -W2 + 0.07 + (i + 0.5 * (r_ % 2)) * (2 * W2 - 0.1) / 9
+            if random.random() < 0.55 or abs(x + 0.31) < 0.2 or abs(x - 0.055) < 0.18 or abs(x - wx) < 0.22: continue
+            objs.append(box('brk', (0.12, 0.02, 0.05), (x, -D2 - 0.004, z), m=brickd, bevel=0.004, segs=1))
+        for sx in (-1, 1):
+            for i in range(5):
+                if random.random() < 0.5: continue
+                objs.append(box('brk', (0.02, 0.12, 0.05), (sx * (W2 + 0.004), -D2 + 0.1 + (i + 0.5 * (r_ % 2)) * 0.16, z), m=brickd, bevel=0.004, segs=1))
+    objs.append(box('cornice', (2 * W2 + 0.08, 2 * D2 + 0.08, 0.06), (0, 0, B0), m=stone, bevel=0.012, segs=1))
+    nb = 13
+    for k in range(nb): objs.append(sphere('xbulb', 0.022, (-W2 + 0.05 + k * (2 * W2 - 0.1) / (nb - 1), -D2 - 0.06, B0 - 0.07 - 0.03 * math.sin(k / (nb - 1) * math.pi * 3) ** 2), (1, 1, 1.3), m=bulbs[k % len(bulbs)], seg=8, rings=6))
+    # ---- the upper floor: narrower, green, a row of lit windows; a saw-tooth roof, each tooth a lit skylight under snow
+    UX0, UX1, U1 = -0.2, W2 - 0.06, 1.42
+    objs.append(box('upper', (UX1 - UX0, 2 * D2 - 0.16, U1 - B0), ((UX0 + UX1) / 2, 0, (B0 + U1) / 2), m=green, bevel=0.012, segs=1))
+    for i in range(3): objs.append(box('uwin', (0.14, 0.02, 0.2), (UX0 + 0.14 + i * 0.24, -D2 + 0.075, B0 + 0.3), m=glass, bevel=0.0, segs=1))
+    nt = 3; tw = (UX1 - UX0) / nt
+    for i in range(nt):
+        tx0 = UX0 + i * tw
+        me = bpy.data.meshes.new('tooth'); bm = bmesh.new(); y0, y1 = -D2 + 0.06, D2 - 0.06
+        v = [bm.verts.new(c) for c in ((tx0, y0, U1), (tx0 + tw, y0, U1), (tx0, y0, U1 + 0.24), (tx0, y1, U1), (tx0 + tw, y1, U1), (tx0, y1, U1 + 0.24))]
+        for f_ in ((0, 1, 2), (3, 5, 4), (0, 3, 4, 1), (1, 4, 5, 2), (0, 2, 5, 3)): bm.faces.new([v[j] for j in f_])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces); bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('tooth', me)); setmat(o, greend); objs.append(o)
+        objs.append(box('skylight', (0.012, 2 * D2 - 0.3, 0.16), (tx0 - 0.004, 0, U1 + 0.11), m=glass, bevel=0.0, segs=1))
+        sl = math.hypot(tw, 0.24); sa = math.atan2(0.24, tw)
+        objs.append(box('toothsnow', (sl * 0.8, 2 * D2 - 0.2, 0.05), (tx0 + tw * 0.45, 0, U1 + 0.14 + 0.03), (0, sa, 0), m=snow, bevel=0.022, segs=3))
+    # ---- the clock tower at the left: brick, a big clock on its front and its left, a pointed blue roof, a gold star
+    TX, TY, TW, T1 = -0.4, 0.02, 0.4, 2.02
+    objs.append(box('tower', (TW, TW, T1 - B0), (TX, TY, (B0 + T1) / 2), m=brick, bevel=0.012, segs=1))
+    objs.append(box('towerband', (TW + 0.06, TW + 0.06, 0.05), (TX, TY, T1), m=stone, bevel=0.01, segs=1))
+    for (cxx, cyy, rot) in ((TX, TY - TW / 2 - 0.012, (math.radians(90), 0, 0)), (TX - TW / 2 - 0.012, TY, (0, math.radians(90), 0))):
+        objs.append(cyl('clock', 0.15, 0.02, (cxx, cyy, 1.68), rot, m=stone, verts=20, bevel=0.0))
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.155, minor_radius=0.018, major_segments=22, minor_segments=6, location=(cxx, cyy, 1.68), rotation=rot)
+        o = bpy.context.object; setmat(o, gold); objs.append(o)
+    objs.append(box('hand1', (0.018, 0.012, 0.11), (TX, TY - TW / 2 - 0.026, 1.725), m=dark, bevel=0.0, segs=1))
+    objs.append(box('hand2', (0.08, 0.012, 0.016), (TX + 0.035, TY - TW / 2 - 0.026, 1.68), m=dark, bevel=0.0, segs=1))
+    objs.append(box('hand1', (0.012, 0.018, 0.11), (TX - TW / 2 - 0.026, TY, 1.725), m=dark, bevel=0.0, segs=1))
+    objs.append(box('twin', (0.1, 0.02, 0.2), (TX, TY - TW / 2 - 0.008, 1.2), m=glass, bevel=0.0, segs=1))
+    objs.append(cyl('spire', 0.33, 0.6, (TX, TY, T1 + 0.32), (0, 0, math.pi / 4), m=blue, verts=4, r2=0.01, bevel=0.0))
+    objs.append(cyl('spiresnow', 0.34, 0.05, (TX, TY, T1 + 0.05), (0, 0, math.pi / 4), m=snow, verts=4, bevel=0.016))
+    objs.append(sphere('spiresnow2', 0.13, (TX, TY, T1 + 0.42), (1, 1, 0.5), m=snow, seg=10, rings=6))
+    sz = T1 + 0.7
+    for q in range(5):
+        aa = math.pi / 2 + q * math.tau / 5; objs.append(cyl('star', 0.028, 0.08, (TX + math.cos(aa) * 0.04, TY, sz + math.sin(aa) * 0.04), (math.radians(90), 0, 0), m=gold, verts=3, bevel=0.0))
+    objs.append(cyl('starmid', 0.04, 0.03, (TX, TY, sz), (math.radians(90), 0, 0), m=gold, verts=10, bevel=0.0)); objs.append(cyl('starpin', 0.006, 0.1, (TX, TY, sz - 0.08), m=gold, verts=5, bevel=0.0))
+    # ---- the crooked chimney at the right back: three bends, a snow cap (the game draws its smoke)
+    pts = [Vector((0.46, 0.2, U1 - 0.05)), Vector((0.5, 0.2, U1 + 0.34)), Vector((0.4, 0.2, U1 + 0.6)), Vector((0.48, 0.2, U1 + 0.9))]
+    for p_, q_ in zip(pts, pts[1:]): objs.append(cyl('crook', 0.07, (q_ - p_).length + 0.05, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=brickd, verts=8, bevel=0.0))
+    objs.append(cyl('crookrim', 0.09, 0.05, tuple(pts[-1] + Vector((0, 0, 0.02))), m=stone, verts=8, bevel=0.008)); objs.append(sphere('crooksnow', 0.08, tuple(pts[-1] + Vector((0, 0, 0.06))), (1, 1, 0.5), m=snow, seg=8, rings=6))
+    # ---- the chute: out of a hatch in the upper floor's right end, round and down to a heap of presents
+    cp = [Vector((UX1 + 0.02, -0.02, 1.16)), Vector((UX1 + 0.26, -0.06, 1.06)), Vector((UX1 + 0.42, -0.2, 0.82)), Vector((UX1 + 0.44, -0.4, 0.52)), Vector((UX1 + 0.36, -0.56, 0.24))]
+    for p_, q_ in zip(cp, cp[1:]): objs.append(cyl('chute', 0.085, (q_ - p_).length + 0.04, (p_ + q_) / 2, (q_ - p_).to_track_quat('Z', 'Y').to_euler(), m=yellow, verts=10, bevel=0.0))
+    objs.append(box('hatch', (0.03, 0.22, 0.22), (UX1 + 0.006, -0.02, 1.16), m=dark, bevel=0.0, segs=1))
+    hx, hy = UX1 + 0.34, -0.66; keep(hx, hy, 0.2)
+    _gift(objs, hx, hy, 0.0, (0.2, 0.2, 0.16), red, gold, 0.3); _gift(objs, hx + 0.17, hy + 0.1, 0.0, (0.14, 0.13, 0.11), gblue, stone, -0.4); _gift(objs, hx - 0.03, hy + 0.02, 0.16, (0.12, 0.12, 0.1), yellow, red, 0.7)
+    _gift(objs, cp[3].x, cp[3].y - 0.02, cp[3].z + 0.06, (0.09, 0.09, 0.08), green, gold, 0.5)          # (one on its way down)
+    # a big gold cog on the brick front, between the door and the tower's foot
+    gx, gz_ = -0.31, 0.78
+    # ---- the front: a green door, the nest window framed in stone, the hens' door and ramp
+    arched_door(objs, 0.055, -D2 - 0.01, 0.0, 0.26, 0.62, green, stone, gold)
+    cgx, cgz = 0.055, 0.76
+    objs.append(cyl('cog', 0.075, 0.025, (cgx, -D2 - 0.02, cgz), (math.radians(90), 0, 0), m=gold, verts=12, bevel=0.0))
+    for q in range(8): aa = q * math.tau / 8; objs.append(box('cogtooth', (0.035, 0.025, 0.035), (cgx + math.cos(aa) * 0.085, -D2 - 0.02, cgz + math.sin(aa) * 0.085), (0, -aa, 0), m=gold, bevel=0.0, segs=1))
+    nest_window(objs, house, FL, wx, stone, solids=[core], door='drop', door_m=green)
+    window(objs, W2 + 0.03, 0.0, 0.5, 0.26, 0.24, stone, glass, normal=(1, 0, 0))
+    pop_door(objs, FL, stone, C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G), C('darkwood', '#6d4a31', rough=0.8))
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 14, 0.0)
+    tx, ty = -W2 - 0.2, -D2 - 0.06; keep(tx, ty, 0.08)             # the toy soldier on guard, as before
+    skin = C('sw_skin', '#f2c9a4', rough=0.7); black = C('wc_coal', '#1f1d1c', rough=0.8)
+    for sg in (-1, 1): objs.append(cyl('tsleg', 0.022, 0.16, (tx + sg * 0.028, ty, 0.08), m=gblue, verts=8, bevel=0.0))
+    objs.append(cyl('tsbody', 0.055, 0.17, (tx, ty, 0.245), m=red, verts=10, bevel=0.008))
+    for sg in (-1, 1): objs.append(cyl('tsarm', 0.018, 0.14, (tx + sg * 0.07, ty, 0.25), m=red, verts=6, bevel=0.0))
+    objs.append(sphere('tshead', 0.045, (tx, ty, 0.37), m=skin, seg=10, rings=8)); objs.append(cyl('tshat', 0.047, 0.11, (tx, ty, 0.455), m=black, verts=10, bevel=0.006))
+    px, py = -0.74, -D2 - 0.36; keep(px, py, 0.08)                 # the North Pole post with its lantern
+    for i in range(10): objs.append(cyl('pole', 0.035, 0.08, (px, py, 0.04 + i * 0.078), m=red if i % 2 else stone, verts=10, bevel=0.0))
+    objs.append(sphere('poleball', 0.06, (px, py, 0.84), m=gold, seg=12, rings=8))
+    objs.append(box('lantern', (0.07, 0.07, 0.09), (px + 0.12, py - 0.03, 0.5), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.006, segs=1))
+    light_at(name, px + 0.12, py - 0.03, 0.5)
+    for (x, y, s_) in ((-0.5, D2 + 0.1, 1.0), (0.2, D2 + 0.12, 1.2), (-W2 - 0.08, 0.2, 0.7), (0.6, -D2 - 0.12, 0.45)):
+        objs.append(sphere('drift', 0.16 * s_, (x, y, 0.0), (1.5, 1.0, 0.42), m=snow, seg=14, rings=8))
+    return finish(objs, name)
 
 
 def winter_palace(seed=79, name='theme_winter_sil', house='sil', FL=0.14, wx=0.42, NF=0.06):
@@ -2902,9 +3027,12 @@ def winter_pen(bk='rir'):
         train_track(objs)
     elif bk == 'bra':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
-        sledge_hill(objs)
-    elif bk in ('pol', 'pea'):
+        chair_lift(objs)
+    elif bk == 'pol':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+    elif bk == 'pea':
+        _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
+        strength_game(objs); ice_mirror(objs)
     elif bk == 'aya':
         _swap(root, {'water'}, mat('wg_ice', '#bfe3f2', rough=0.25, spec=0.5, var=0.02))
         hot_pool(objs)
@@ -2927,6 +3055,76 @@ def winter_fence(bk='rir'):
     if had is not None: LIGHTS[key] = had
     root.name = key + '_winter'
     return root
+
+
+LIFT = dict(y=-1.75, a=(-0.95, 0.55), b=(0.4, 1.0), drop=0.3)       # (the chairlift in the Brahmas' Deluxe yard, along x: its low and high pylons (x, top), how far the chair hangs under the cable; play.js GARDENS.bra)
+STRIKER = (-1.0, -2.6)                                           # (the strength game in the peafowl's Deluxe yard: x, y (Blender); play.js GARDENS.pea)
+MIRROR = (2.55, -2.4)                                            # (the ice mirror there, facing -x)
+
+
+def chair_lift(objs):
+    """The Cable-Car Station's garden's own (in the sledge run's place, 14 Nov 2026: not a second slide): a little chairlift,
+    a low pylon and a tall one with a cable between them, a boarding mat at the low one, snow on their arms (the chair
+    is a part of its own: `lift_chair`)."""
+    steel = C('cc_steel', '#7d8892', rough=0.4, metal=0.6); yellow = C('cc_yellow', '#f4b922', rough=0.45); orange = C('cc_orange', '#ee6c1f', rough=0.45)
+    snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2); dark = C('iron', '#26231f', rough=0.5, metal=0.6); y = LIFT['y']
+    for (x, h) in (LIFT['a'], LIFT['b']):
+        for sy in (-1, 1):
+            a0, b0 = Vector((x, y + 0.26 + sy * 0.09, 0.0)), Vector((x, y + 0.26, h + 0.06))
+            objs.append(cyl('ltleg', 0.016, (b0 - a0).length, (a0 + b0) / 2, (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=steel, verts=5, bevel=0.0))
+        objs.append(box('ltarm', (0.05, 0.34, 0.04), (x, y + 0.11, h + 0.06), m=yellow, bevel=0.006, segs=1))
+        objs.append(cyl('ltwheel', 0.04, 0.025, (x, y, h + 0.02), (math.radians(90), 0, 0), m=orange, verts=10, bevel=0.0))
+        objs.append(sphere('ltsnow', 0.045, (x, y + 0.14, h + 0.1), (1, 2.4, 0.5), m=snow, seg=8, rings=5))
+    a0, b0 = Vector((LIFT['a'][0], y, LIFT['a'][1])), Vector((LIFT['b'][0], y, LIFT['b'][1]))
+    objs.append(cyl('ltcable', 0.006, (b0 - a0).length, (a0 + b0) / 2, (b0 - a0).to_track_quat('Z', 'Y').to_euler(), m=dark, verts=4, bevel=0.0))
+    objs.append(box('ltmat', (0.3, 0.3, 0.02), (LIFT['a'][0], y - 0.02, 0.012), m=orange, bevel=0.006, segs=1))
+
+
+def lift_chair():
+    """The chairlift's chair (its grip on the cable at the origin, the seat `LIFT['drop']` below; it faces -y, the camera):
+    a red bench with a back, a steel hanger, a safety bar."""
+    objs = []; red = C('sw_red', '#c2302d', rough=0.4, var=0.03); steel = C('cc_steel', '#7d8892', rough=0.4, metal=0.6); D = LIFT['drop']
+    objs.append(box('grip', (0.07, 0.03, 0.03), (0, 0, 0), m=steel, bevel=0.0, segs=1))
+    objs.append(cyl('hanger', 0.008, D + 0.12, (0, 0.06, -(D - 0.12) / 2), m=steel, verts=5, bevel=0.0))
+    objs.append(box('seat', (0.3, 0.16, 0.022), (0, 0, -D), m=red, bevel=0.006, segs=1))
+    objs.append(box('back', (0.3, 0.022, 0.16), (0, 0.075, -D + 0.085), m=red, bevel=0.006, segs=1))
+    for sx in (-1, 1): objs.append(box('side', (0.016, 0.16, 0.08), (sx * 0.15, 0, -D + 0.045), m=steel, bevel=0.0, segs=1))
+    objs.append(cyl('bar', 0.006, 0.3, (0, -0.075, -D + 0.085), (0, math.radians(90), 0), m=steel, verts=5, bevel=0.0))
+    return finish(objs, 'liftchair')
+
+
+def strength_game(objs):
+    """The Winter Carousel's garden's own (Audrey, 14 Nov 2026, of its toys: "a bit boring and poor in here"): a fairground
+    strength game. A round red pad to jump on, behind it a tall striped board with marks up it, a gold bell under a little
+    canopy at the top (the puck that shoots up it is a part of its own: `striker_puck`)."""
+    x, y = STRIKER; red = C('sw_red', '#c2302d', rough=0.5, var=0.04); white = C('gb_icing', '#fbf7f0', rough=0.5); gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); teal = C('ca_teal', '#2f8f8a', rough=0.5)
+    objs.append(cyl('stpad', 0.13, 0.04, (x, y - 0.24, 0.03), m=red, verts=16, bevel=0.01)); objs.append(cyl('stpadrim', 0.145, 0.02, (x, y - 0.24, 0.012), m=gold, verts=16, bevel=0.0))
+    objs.append(box('stbase', (0.3, 0.2, 0.08), (x, y, 0.04), m=teal, bevel=0.012, segs=1))
+    for i in range(10): objs.append(box('stboard', (0.16, 0.035, 0.12), (x, y, 0.14 + i * 0.12), m=red if i % 2 else white, bevel=0.004, segs=1))
+    for i in range(1, 10): objs.append(box('stmark', (0.05, 0.006, 0.012), (x + 0.045, y - 0.02, 0.08 + i * 0.12), m=gold, bevel=0.0, segs=1))
+    objs.append(box('strail', (0.02, 0.012, 1.2), (x - 0.03, y - 0.022, 0.68), m=gold, bevel=0.0, segs=1))
+    objs.append(cyl('stbell', 0.07, 0.03, (x, y - 0.03, 1.36), (math.radians(90), 0, 0), m=gold, verts=14, bevel=0.006))
+    objs.append(sphere('stbellmid', 0.025, (x, y - 0.05, 1.36), m=red, seg=8, rings=6))
+    objs.append(cyl('sttop', 0.14, 0.12, (x, y, 1.5), m=red, verts=8, r2=0.01, bevel=0.0)); objs.append(sphere('sttopball', 0.03, (x, y, 1.58), m=gold, seg=8, rings=6))
+
+
+def striker_puck():
+    """The strength game's puck (its middle at the origin): a little gold weight on the board's rail."""
+    objs = [box('puck', (0.07, 0.03, 0.05), (0, 0, 0), m=C('gb_gold', '#d9a53a', rough=0.35, metal=0.6), bevel=0.008, segs=1)]
+    objs.append(box('puckband', (0.074, 0.032, 0.014), (0, 0, 0), m=C('sw_red', '#c2302d', rough=0.5), bevel=0.0, segs=1))
+    return finish(objs, 'puck')
+
+
+def ice_mirror(objs):
+    """The peacock's own (the same day: "an ice mirror the peacock walks up to and fans his train at, since he can't use any
+    other toy"): a tall oval of polished ice in a gold frame on a snowy foot, a gold bow on its top, facing into the yard."""
+    x, y = MIRROR; gold = C('gb_gold', '#d9a53a', rough=0.35, metal=0.6); ice = C('ca_mirror', '#cfe4ee', rough=0.08, metal=0.9); snow = C('wc_snow', '#f6fafe', rough=0.55, var=0.012, sss=0.2)
+    objs.append(sphere('mfoot', 0.22, (x, y, 0.0), (0.8, 1.4, 0.4), m=snow, seg=12, rings=8))
+    objs.append(sphere('mglass', 0.5, (x - 0.01, y, 0.62), (0.035, 0.62, 1.0), m=ice, seg=20, rings=14))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.5, minor_radius=0.035, major_segments=28, minor_segments=6, location=(x, y, 0.62), rotation=(0, math.radians(90), 0))
+    o = bpy.context.object; o.scale = (1.0, 0.64, 1.0); setmat(o, gold); objs.append(o)
+    objs.append(box('mshine', (0.006, 0.04, 0.5), (x - 0.03, y - 0.1, 0.68), (math.radians(18), 0, 0), m=C('gb_icing', '#fbf7f0', rough=0.3), bevel=0.0, segs=1))
+    for sg in (-1, 1): objs.append(sphere('mbow', 0.06, (x, y + sg * 0.06, 1.16), (0.5, 1.2, 0.75), m=gold, seg=8, rings=6))
 
 
 POOL = (-0.35, -1.9, 0.42)                                      # (the hot spring in the Ayam Cemani's Deluxe yard: x, y (Blender), its radius; play.js GARDENS.aya)

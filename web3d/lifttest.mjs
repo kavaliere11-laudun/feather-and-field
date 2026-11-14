@@ -1,11 +1,11 @@
-// The Ski Lodge and its garden (13 Nov 2026; Audrey: "Carry on"; her list: "Brahmas: Ski Lodge; a sledge run down a small
-// snowy hill"): ./withserver.sh node sledgetest.mjs [OUT]   (LANG=fr; PORT)
-// A farm with a Brahma coop (level 24), in December: its card offers the Ski Lodge; bought: the lodge and its own winter
-// garden, a pine cone where the cabbage hung, the sledge at the top of its hill. A hen climbs the hill, rides the sledge
-// down, hops off; the sledge is drawn back up. Footprints. A reload keeps it, not flagged. No page errors.
+// The Cable-Car Station and its garden (14 Nov 2026; Audrey agreed in the winter review to replace the Ski Lodge, too like
+// the Snow Chalet): ./withserver.sh node lifttest.mjs [OUT]   (LANG=fr; PORT)
+// A farm with a Brahma coop (level 24), in December: its card offers the Cable-Car Station; bought: the station and its
+// own winter garden, a pine cone where the cabbage hung, the chairlift. A hen hops onto the chair, rides up to the tall
+// pylon and back, hops off. Footprints. A reload keeps it, not flagged. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
-const OUT = process.argv[2] || '/tmp/claude-0/farmer/sledgetest', fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402);
+const OUT = process.argv[2] || '/tmp/claude-0/farmer/lifttest', fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402);
 fs.mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London', deviceScaleFactor: 2 });
@@ -18,7 +18,7 @@ let fails = 0;
 const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
 const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, s);
 const jump = async ms => { await p.evaluate(ms => { window.__T = Math.round(window.__T + ms); sessionStorage.setItem('__T', window.__T); }, ms); await run(1.5); };
-const shoot = async n => { await p.waitForTimeout(300); await p.screenshot({ path: `${OUT}/sledge_${n}${fr ? '_fr' : ''}.png`, timeout: 90000 }).catch(e => console.log('(picture ' + n + ' skipped: ' + e.message.split('\n')[0] + ')')); };
+const shoot = async n => { await p.waitForTimeout(300); await p.screenshot({ path: `${OUT}/lift_${n}${fr ? '_fr' : ''}.png`, timeout: 90000 }).catch(e => console.log('(picture ' + n + ' skipped: ' + e.message.split('\n')[0] + ')')); };
 const load = async () => {
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.gameTick(window.__T); f.draw(); });
@@ -30,7 +30,7 @@ const sheet = () => p.evaluate(() => { const e = document.querySelector('.gsheet
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[window.__ci || 0]; return { coins: g.data.coins, theme: c.theme || null, themes: g.data.themes || [], tier: c.tier, tier0: c.tier0, w: f.winterOf(c.id), eggs: c.eggs, kind: f.gameUI().kind, edited: g.edited, drawn: [...new Set(f.coopModels())] }; });
 
 
-const T = fr ? { name: /Chalet de ski/ } : { name: /Ski Lodge/ };
+const T = fr ? { name: /Gare du téléphérique/ } : { name: /Cable-Car Station/ };
 const view = (lx, lz, z, i = 1) => p.evaluate(([lx, lz, z, i]) => { const f = window.__farm, P = f.gamePlots()[i], w = P.frame.localToWorld(new f.THREE.Vector3(lx, 0, lz)); f.lookAt(w.x, w.z, z); f.draw(); }, [lx, lz, z, i]);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
@@ -44,26 +44,24 @@ ok('a Brahma coop put down where its Deluxe garden will fit', placed.r && placed
 await p.evaluate(() => { window.__ci = 1; });
 await close(); await p.evaluate(() => window.__farm.coopCard(1)); await run(0.2);
 let c = await p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gtheme-r'), b = r && r.querySelector('button'); return r ? { text: r.innerText, btn: b ? { t: b.textContent, off: b.disabled, go: b.dataset.themego } : null } : null; });
-ok('its card offers the Ski Lodge for 15,000 coins', c && T.name.test(c.text) && c.btn && c.btn.go === 'buy' && !c.btn.off, c);
+ok('its card offers the Cable-Car Station for 15,000 coins', c && T.name.test(c.text) && c.btn && c.btn.go === 'buy' && !c.btn.off, c);
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme-r button').click()); await run(0.8);
 let s = await S();
-ok('bought: the lodge, a Deluxe coop while worn, its own winter garden drawn', s.themes.join() === 'winter_bra' && s.theme === 'winter' && s.tier === 4 && s.drawn.includes('theme_winter_bra') && s.drawn.includes('pen_t4_bra_winter#snow') && s.drawn.includes('fence_t4_bra_winter#snow'), s);
-ok('its own toys: the sledge at the top of its hill, a pine cone where the cabbage hung; no igloo, puddle, roundabout, gumdrop or train', s.w && s.w.chute && s.w.chute.sled && s.w.chute.sled[1] > 0.35 && s.w.treat === 'pinecone' && !s.w.igloo && !s.w.ice && !s.w.spin && !s.w.bounce && !s.w.train, s.w);
+ok('bought: the station, a Deluxe coop while worn, its own winter garden drawn', s.themes.join() === 'winter_bra' && s.theme === 'winter' && s.tier === 4 && s.drawn.includes('theme_winter_bra') && s.drawn.includes('pen_t4_bra_winter#snow') && s.drawn.includes('fence_t4_bra_winter#snow'), s);
+ok('its own toys: the chairlift with its chair at the low pylon, a pine cone where the cabbage hung; no sledge, igloo, puddle, roundabout, gumdrop or train', s.w && s.w.lift && s.w.lift.u === 0 && s.w.treat === 'pinecone' && !s.w.chute && !s.w.igloo && !s.w.ice && !s.w.spin && !s.w.bounce && !s.w.train, s.w);
 await close(); await view(0.1, 1.2, 2.7); await shoot('1_garden');
-const went = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1]; for (const b of P.birds) if (b.play) f.endPlay(b, true); for (const b of P.birds) { if (b.kind !== 'hen' || b.asleep) continue; b.layIn = 9999; if (f.startPlay(b, 'chute')) return true; } return false; });
+const went = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1]; for (const b of P.birds) if (b.play) f.endPlay(b, true); for (const b of P.birds) { if (b.kind !== 'hen' || b.asleep) continue; b.layIn = 9999; if (f.startPlay(b, 'lift')) return true; } return false; });
 await view(-0.3, 1.9, 1.0);
 const ph = new Set(); let maxY = 0, x0 = null, x1 = null, shot = 0;
-for (let i = 0; i < 300 && went; i++) { await run(0.12); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[1], b = P.birds.find(x => x.play && x.play.kind === 'chute'); return b ? { ph: b.play.phase, x: b.root.position.x, y: b.root.position.y } : null; }); if (!st) break; ph.add(st.ph); maxY = Math.max(maxY, st.y); if (st.ph === 'top' && shot === 0) { shot = 1; await shoot('2_top'); } if (st.ph === 'go') { if (x0 === null) x0 = st.x; x1 = st.x; if (shot === 1 && st.y < 0.3) { shot = 2; await shoot('3_sliding'); } } }
+for (let i = 0; i < 300 && went; i++) { await run(0.12); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[1], b = P.birds.find(x => x.play && x.play.kind === 'lift'); return b ? { ph: b.play.phase, x: b.root.position.x, y: b.root.position.y } : null; }); if (!st) break; ph.add(st.ph); maxY = Math.max(maxY, st.y); if (st.ph === 'ride' && shot === 0 && st.y > 0.6) { shot = 1; await shoot('2_riding'); } }
 s = await S();
-ok('a hen climbs the hill, rides the sledge down, hops off, a shake', went && ph.has('climb') && ph.has('top') && ph.has('go') && ph.has('skid') && ph.has('hopoff') && ph.has('shake') && maxY > 0.4 && x1 - x0 > 0.3 && !s.w.chute.by && (s.w.chute.back > 0 || s.w.chute.sled[0] > 0.2), { went, ph: [...ph], maxY, x0, x1, w: s.w.chute });
-await run(5); s = await S();
-ok('the sledge drawn back up to the top of its run', s.w.chute.sled[1] > 0.35 && s.w.chute.sled[0] < -0.6 && s.w.chute.back === 0, s.w.chute);
+ok('a hen hops onto the chair, rides up the cable to the tall pylon and back down, hops off, a shake; the chair home again', went && ph.has('on') && ph.has('ride') && ph.has('off') && ph.has('shake') && maxY > 0.6 && !s.w.lift.by && s.w.lift.u === 0, { went, ph: [...ph], maxY, w: s.w.lift });
 await run(12); s = await S();
 ok('footprints in its snow', s.w.prints > 3, s.w);
 await close();
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1);
 await p.evaluate(() => { window.__ci = 1; }); s = await S();
-ok('a reload: kept, not flagged', s.theme === 'winter' && s.tier === 4 && !s.edited && s.drawn.includes('theme_winter_bra') && s.w.chute, s);
+ok('a reload: kept, not flagged', s.theme === 'winter' && s.tier === 4 && !s.edited && s.drawn.includes('theme_winter_bra') && s.w.lift, s);
 await p.evaluate(() => window.__farm.setHour(22.5)); await run(0.5); await view(0.1, 1.2, 2.7); await shoot('4_night');
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? `${fails} FAILED` : 'ALL PASS');

@@ -583,7 +583,7 @@
   ],
   "theme_winter_leg": [
    [
-    -0.54,
+    -0.62,
     0.5,
     0.83
    ]
@@ -602,8 +602,8 @@
   ],
   "theme_winter_bra": [
    [
-    -0.69,
-    0.5,
+    -0.62,
+    0.78,
     0.72
    ]
   ],
@@ -7640,8 +7640,8 @@
   ],
   "theme_winter_leg": [
    [
-    0.96,
-    -0.1,
+    0.9,
+    0.66,
     0.2
    ],
    [
@@ -7657,14 +7657,14 @@
   ],
   "theme_winter_bra": [
    [
-    1.1,
-    -0.12,
+    1.67,
+    -0.05,
     0.2
    ],
    [
-    -1.04,
+    -0.92,
     -0.1,
-    0.2
+    0.18
    ]
   ],
   "theme_winter_pol": [
@@ -10817,8 +10817,8 @@
    "prims": 2
   },
   "theme_winter_leg": {
-   "tris": 17284,
-   "verts": 9972,
+   "tris": 13248,
+   "verts": 8300,
    "prims": 5
   },
   "pen_t4_leg_winter": {
@@ -10847,14 +10847,14 @@
    "prims": 4
   },
   "theme_winter_bra": {
-   "tris": 13857,
-   "verts": 7947,
+   "tris": 8952,
+   "verts": 5702,
    "prims": 5
   },
   "pen_t4_bra_winter": {
-   "tris": 9574,
-   "verts": 6370,
-   "prims": 3
+   "tris": 7522,
+   "verts": 5192,
+   "prims": 4
   },
   "fence_t4_bra_winter": {
    "tris": 13000,
@@ -10907,8 +10907,8 @@
    "prims": 4
   },
   "pen_t4_pea_winter": {
-   "tris": 12232,
-   "verts": 9597,
+   "tris": 12500,
+   "verts": 10284,
    "prims": 5
   },
   "fence_t4_pea_winter": {
@@ -10942,9 +10942,19 @@
    "prims": 3
   },
   "theme_winter_call": {
-   "tris": 21999,
-   "verts": 13697,
+   "tris": 23999,
+   "verts": 15305,
    "prims": 5
+  },
+  "liftchair": {
+   "tris": 156,
+   "verts": 92,
+   "prims": 2
+  },
+  "puck": {
+   "tris": 56,
+   "verts": 32,
+   "prims": 2
   }
  },
  "paths": {

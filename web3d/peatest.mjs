@@ -105,7 +105,7 @@ const tapOn = async kind => {
 const hen = await tapOn('hen');
 await shot('3_peahen_card');
 ok('a tap on a peahen: her card ("Indian Blue peafowl · Peahen", her peachicks)', hen.card === 'bird' && T.hen.test(hen.t) && T.chicks.test(hen.t), { card: hen.card, t: hen.t.slice(0, 400) });
-await p.evaluate(() => window.__farm.gameUI().close()); await run(0.3);
+await p.evaluate(() => window.__farm.gameUI().close()); await run(2.5);      // (the view goes back from her card's close-up, 13 Nov)
 const cock = await tapOn('rooster');
 await shot('4_peacock_card');
 ok('a tap on the peacock: his card ("Indian Blue peafowl · Peacock")', cock.card === 'bird' && T.cock.test(cock.t) && !T.hen.test(cock.t), { card: cock.card, t: cock.t.slice(0, 400) });

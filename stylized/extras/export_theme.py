@@ -21,19 +21,19 @@ THEMES = {'theme_winter_rir': (lambda: coops.winter_chalet(name='theme_winter_ri
           'pen_t4_orp_winter': (lambda: coops.winter_pen('orp'), 11500, None), 'fence_t4_orp_winter': (lambda: coops.winter_fence('orp'), 13000, None),
           'theme_winter_sil': (lambda: coops.winter_palace(name='theme_winter_sil'), 18000, 'sil'),
           'pen_t4_sil_winter': (lambda: coops.winter_pen('sil'), 11500, None), 'fence_t4_sil_winter': (lambda: coops.winter_fence('sil'), 13000, None), 'snowflake': (coops.snowflake, 700, None),
-          'theme_winter_leg': (lambda: coops.winter_workshop(name='theme_winter_leg'), 18000, 'leg'),
+          'theme_winter_leg': (lambda: coops.winter_factory(name='theme_winter_leg'), 20000, 'leg'),
           'pen_t4_leg_winter': (lambda: coops.winter_pen('leg'), 11500, None), 'fence_t4_leg_winter': (lambda: coops.winter_fence('leg'), 13000, None),
           'train_engine': (coops.train_engine, 900, None), 'train_wagon': (coops.train_wagon, 500, None), 'bauble': (coops.bauble, 600, None),
-          'theme_winter_bra': (lambda: coops.winter_lodge(name='theme_winter_bra'), 18000, 'bra'),
+          'theme_winter_bra': (lambda: coops.winter_cablecar(name='theme_winter_bra'), 18000, 'bra'),
           'pen_t4_bra_winter': (lambda: coops.winter_pen('bra'), 11500, None), 'fence_t4_bra_winter': (lambda: coops.winter_fence('bra'), 13000, None),
-          'sledge': (coops.sledge, 500, None), 'pinecone': (coops.pinecone, 900, None),
+          'sledge': (coops.sledge, 500, None), 'liftchair': (coops.lift_chair, 400, None), 'puck': (coops.striker_puck, 100, None), 'pinecone': (coops.pinecone, 900, None),
           'theme_winter_pol': (lambda: coops.winter_globe(name='theme_winter_pol'), 16000, 'pol'), 'theme_winter_aya': (lambda: coops.winter_sauna(name='theme_winter_aya'), 16000, 'aya'),
           'theme_winter_pea': (lambda: coops.winter_carousel(name='theme_winter_pea'), 18000, 'pea'),
           'pen_t4_pol_winter': (lambda: coops.winter_pen('pol'), 11500, None), 'fence_t4_pol_winter': (lambda: coops.winter_fence('pol'), 13000, None),
           'pen_t4_aya_winter': (lambda: coops.winter_pen('aya'), 11500, None), 'fence_t4_aya_winter': (lambda: coops.winter_fence('aya'), 13000, None),
           'pen_t4_pea_winter': (lambda: coops.winter_pen('pea'), 12500, None), 'fence_t4_pea_winter': (lambda: coops.winter_fence('pea'), 15000, None),
           'snowball': (coops.snowball, 500, None), 'carousel': (coops.carousel_toy, 1400, None), 'mitten': (coops.mitten, 500, None), 'orange': (coops.orange_slices, 500, None), 'bell': (coops.gold_bell, 600, None),
-          'theme_winter_call': (lambda: coops.winter_hut(name='theme_winter_call'), 22000, 'call'),
+          'theme_winter_call': (lambda: coops.winter_hut(name='theme_winter_call'), 24000, 'call'),
           'roundabout': (coops.roundabout, 2200, None), 'gumdrop': (coops.gumdrop, 900, None), 'doughnut': (coops.doughnut, 800, None)}
 NEST0 = json.load(open(os.path.join(HERE, '..', 'web3d', 'models', 'coops.json')))['nests']
 names = []

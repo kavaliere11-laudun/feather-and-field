@@ -4282,8 +4282,8 @@
  },
  {
   "id": "text.themel_winter_call",
-  "en": "A red fishing hut on its raft, snow on the roof, a rod set over the water and little fish drying. Their pond is ringed with ice, a hole of open water in the middle, and they nose a giant fishing float round it.",
-  "fr": "Une cabane de pêche rouge sur son radeau, de la neige sur le toit, une canne posée au-dessus de l’eau et des petits poissons qui sèchent. Leur mare est cerclée de glace, un trou d’eau libre au milieu, où ils poussent du bec un bouchon de pêche géant."
+  "en": "A red fishing hut on its raft, snow on the roof, a rod set over the water and little fish drying. The whole garden is a frozen lake, with fishing holes and flags, open water round the hut, and a giant fishing float they nose round it.",
+  "fr": "Une cabane de pêche rouge sur son radeau, de la neige sur le toit, une canne posée au-dessus de l’eau et des petits poissons qui sèchent. Tout le jardin est un lac gelé, avec des trous de pêche et leurs fanions, de l’eau libre autour de la cabane et un bouchon de pêche géant qu’ils poussent du bec."
  },
  {
   "id": "text.theme_winter_pol",
@@ -4312,28 +4312,28 @@
  },
  {
   "id": "text.themel_winter_pea",
-  "en": "A fairground carousel house under a great red and white canopy, gold all over, bulbs at every point. In its garden a little carousel that turns to music.",
-  "fr": "Une maison-manège de fête foraine sous un grand chapiteau rouge et blanc, de l’or partout, une ampoule à chaque pointe. Dans son jardin, un petit manège qui tourne en musique."
+  "en": "A fairground carousel house under a great red and white canopy, gold all over, bulbs at every point. In its garden a carousel that turns to music, a strength game with a bell to ring, and an ice mirror for the peacock to admire himself in.",
+  "fr": "Une maison-manège de fête foraine sous un grand chapiteau rouge et blanc, de l’or partout, une ampoule à chaque pointe. Dans son jardin, un manège qui tourne en musique, un jeu de force avec sa cloche à faire sonner et un miroir de glace où le paon s’admire."
  },
  {
   "id": "text.theme_winter_bra",
-  "en": "Ski Lodge",
-  "fr": "Chalet de ski"
+  "en": "Cable-Car Station",
+  "fr": "Gare du téléphérique"
  },
  {
   "id": "text.themel_winter_bra",
-  "en": "A mountain lodge under a great steep roof deep in snow: a tall lit window, crossed skis over a red door, a rack of skis, firewood. In its garden a little hill with a sledge to ride down, and a crib of snow to bathe in.",
-  "fr": "Un chalet de montagne sous un grand toit pentu couvert de neige : une haute fenêtre éclairée, des skis croisés au-dessus d’une porte rouge, un râtelier à skis, du bois de chauffage. Dans son jardin, une petite butte avec une luge pour dévaler la pente et un bac de neige pour se baigner."
+  "en": "A mountain station: concrete and teal under a tipped-up roof deep in snow, the big wheel turning, a red gondola coming in on its cables. In its garden a chairlift that carries a hen up over the snow and back.",
+  "fr": "Une gare de montagne : du béton et du bleu canard sous un toit relevé couvert de neige, la grande roue qui tourne, une cabine rouge qui arrive sur ses câbles. Dans son jardin, un télésiège qui emporte une poule au-dessus de la neige et la ramène."
  },
  {
   "id": "text.theme_winter_leg",
-  "en": "Santa’s Workshop",
-  "fr": "Atelier du Père Noël"
+  "en": "Santa’s Toy Factory",
+  "fr": "Fabrique de jouets du Père Noël"
  },
  {
   "id": "text.themel_winter_leg",
-  "en": "A toy workshop at the North Pole: red walls under a snowy green roof, coloured lights along the eaves, presents, a toy soldier on guard. In its garden a little toy train to ride round and round, and Santa’s sleigh full of snow to bathe in.",
-  "fr": "Un atelier de jouets au pôle Nord : des murs rouges sous un toit vert enneigé, des guirlandes de couleur, des cadeaux, un petit soldat de garde. Dans son jardin, un petit train pour faire des tours et le traîneau du Père Noël rempli de neige pour se baigner."
+  "en": "A tall toy factory: a clock tower with a blue spire, a crooked chimney, a saw-tooth roof with lit skylights, and a yellow chute where the presents slide out. In its garden a little toy train to ride round and round, and Santa’s sleigh full of snow to bathe in.",
+  "fr": "Une haute fabrique de jouets : une tour d’horloge à flèche bleue, une cheminée tordue, un toit en dents de scie aux verrières éclairées et un toboggan jaune d’où glissent les cadeaux. Dans son jardin, un petit train pour faire des tours et le traîneau du Père Noël rempli de neige pour se baigner."
  },
  {
   "id": "text.theme_winter_sil",

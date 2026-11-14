@@ -65,6 +65,17 @@ if (BREED === 'call') {
   s = await S();
   if (BREED === 'pol') ok('a hen rolls the snowball along its run, it grows and bursts, she jumps; the globe has its glass and snow', went && ph.has('push') && ph.has('wow') && ph.has('shake') && maxU > 0.9 && s.w.roll.u === 0 && s.w.globe && !s.w.roll.by, { went, ph: [...ph], maxU, w: s.w });
   if (BREED === 'aya') ok('a hen soaks in the hot spring, low in the water, then out with a shake; steam from the pool and the chimney', went && ph.has('in') && ph.has('soak') && ph.has('out') && ph.has('shake') && minY < 0 && s.w.steam === 2 && !s.w.soak.by, { went, ph: [...ph], minY, w: s.w });
+  if (BREED === 'pea') {
+    const went2 = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1]; for (const b of P.birds) if (b.play) f.endPlay(b, true); for (const b of P.birds) { if (b.kind !== 'hen' || b.asleep) continue; b.layIn = 9999; if (f.startPlay(b, 'striker')) return true; } return false; });
+    const ph2 = new Set(); let maxH = 0, rung = false;
+    for (let i = 0; i < 300 && went2; i++) { await run(0.1); const st = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1], b = P.birds.find(x => x.play && x.play.kind === 'striker'), w = f.winterOf(P.gc.id); return b ? { ph: b.play.phase, w } : null; }); if (!st) break; ph2.add(st.ph); maxH = Math.max(maxH, st.w.striker.h); rung = rung || st.w.striker.rung; }
+    ok('a peahen jumps on the strength game\'s pad: the puck shoots up, rings the bell, comes back down; she struts', went2 && ph2.has('jump') && ph2.has('watch') && ph2.has('strut') && maxH === 1 && rung && (await S()).w.striker.h === 0, { went2, ph: [...ph2], maxH, rung });
+    const cock = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1]; for (const b of P.birds) if (b.play) f.endPlay(b, true); const b = P.birds.find(x => x.train); if (!b) return { none: true }; const ok = f.startPlay(b, 'mirror'); return { ok }; });
+    let shown = null;
+    for (let i = 0; i < 300 && cock.ok; i++) { await run(0.2); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[1], b = P.birds.find(x => x.train); return { play: !!b.play, act: b.act ? b.act.type : null, fan: b.A.fan, x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y }; }); if (!st.play && st.act === 'display' && st.fan > 0.8) { shown = st; break; } if (!st.play && st.act !== 'display' && i > 100) break; }
+    ok('the peacock walks to his ice mirror and fans his train at it', cock.ok && shown && Math.hypot(shown.x - 1.95, shown.z - 2.4) < 0.5, { cock, shown });
+    if (shown) { await view(1.6, 2.4, 1.5); await shoot('1b_mirror'); }
+  }
   if (BREED === 'pea') ok('a peahen rides the little carousel round, gently, and gets off without being dizzy', went && ph.has('ride') && !ph.has('dizzy') && ph.has('shake') && maxW > 1 && maxW < 2 && s.w.carousel && !s.w.spin.by, { went, ph: [...ph], maxW, w: s.w });
   await run(8); s = await S();
   ok('footprints in its snow', s.w.prints > 2, s.w);
