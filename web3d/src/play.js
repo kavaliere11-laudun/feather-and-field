@@ -114,7 +114,7 @@ export function startPlay(b, kind) {
     const M = T.mirror.at; C = [];
     for (const R of [0.85, 1.05, 1.3]) for (const da of [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4]) {
       const a0 = Math.atan2(T.mirror.spot[0] - M[0], T.mirror.spot[1] - M[1]) + da, spot = [M[0] + Math.sin(a0) * R, M[1] + Math.cos(a0) * R], face = Math.atan2(M[0] - spot[0], M[1] - spot[1]);
-      if (b.fanClear(face, spot)) C.push({ spot, face });
+      if ([[0, 0], [0.1, 0], [-0.1, 0], [0, 0.1], [0, -0.1]].every(([ox, oz]) => b.fanClear(face, [spot[0] + ox, spot[1] + oz]))) C.push({ spot, face });      /* (with a little to spare: he stops a step short or long) */
     }
   }
   else if (kind === 'lift') C = [{ spot: [T.lift.a[0], T.lift.z + 0.34], face: Math.PI }];      // (the chairlift: on its boarding mat, facing the chair)
@@ -218,7 +218,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'roll') next('push');
       else if (P.kind === 'lift') next('on');
       else if (P.kind === 'striker') next('jump');
-      else if (P.kind === 'mirror') { const f = P.face; endPlay(b); if (b.fanClear(f)) { b.act = { type: 'display', left: 10, face: f, ready: true }; b.wait = 10; } return o; }      // (at his mirror: his fan, for his reflection)
+      else if (P.kind === 'mirror') { const f = P.face; endPlay(b); const fy = b.fanClear(f) ? f : b.displayYaw(); if (fy !== null) { b.act = { type: 'display', left: 10, face: fy, ready: fy === f }; b.wait = 10; } return o; }      // (at his mirror: his fan, for his reflection)
       else if (P.kind === 'soak') next('in');
       else if (P.kind === 'spin') next('on', { off: P.slot - T.spin.a });
       else if (P.kind === 'bounce') next('up');
