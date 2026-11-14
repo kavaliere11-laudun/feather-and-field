@@ -5398,3 +5398,38 @@ close). Test: `movealwaystest` (EN/FR).
 - **Published 14 Nov ~15:50**: the full check passed (wintertest pea, pol, aya, call; gametest and themetest en/fr;
   lift, train, ginger, ice, play, pea, call, duck, lang, move, grow, upgrade), main deployed, TestFlight started. The
   "Winter collection review" artifact was rewritten as a second review (new nine, before/after, what is left).
+
+## Winter, what was left: curling, a friend on the train, fences, the mirror (14 Nov 2026, evening)
+Audrey's comment on the review, 14 Nov 16:01: "ok cool carry on with what is left and when you are done update the
+artefact". The six things of the review's "What is left":
+- **The call ducks' winter play** (`callpen.js`, only with `o.winter`): `makeIce()` finds the clear straight lines on
+  the frozen lake (0.5 m clear of the fishing holes); the longest is the curling sheet (`this.curl`: a granite stone
+  with a red handle, `curlStone()`; a ringed house at each end, `curlHouse()`), the others are belly slides
+  (`this.slides`). `curlTask`: a duck walks behind the stone, shoves it, it glides with friction to the far house
+  (`placeStone`), she watches, quacks, bobs; the next duck sends it back. `slideTask`: a run-up, down on her belly,
+  wings out, a slow spin, a shake. Their own choice (`dayTask`, about once a minute between them); not while the
+  farmer is in. `free()` keeps them off the stone. wintertest call checks both (pictures `call_1c_curling`,
+  `call_1d_slide`).
+- **A friend on the train** (`play.js`): a second wagon (`T.train.wagon2`), kind `train2`. The driver, once on, may
+  invite a free hen (half the time; `T.train.pair` forces it for the test); she waits for her (`wait`, 16 s at most),
+  they ride together, both hop off at the station. traintest (en, fr) checks it.
+- **Each garden its own fence** (`coops.py` `FENCE_LOOK`, `winter_fence(bk, look)`): the nine differ by colour and
+  tips (timber and red, gingerbread and icing, blue ice, red and green with gold, steel with yellow and teal rails,
+  dark wood and brass, cedar, red and white with gold, blue-grey and red for the ducks: `fence_t4_call_winter`).
+  The same shape and gate for all: not yet "its own gate".
+- **Swings and xylophones per theme** (`SWING_LOOK`, `XYLO_LOOK`, `striped_swing()`, `winter_xylophone()`): the
+  swing's frame and the bars' colours follow the theme (the Leghorns' tree swing and the Orpingtons' candy canes are
+  as they were). `winterWarm()` (main.js) keeps the xylophone's bars clear of snow.
+- **Hard to see**: the Silkies' floor and the ducks' lake bluer (`GARDENS.sil.floor`, `snowedPart(name, warm, floor)`;
+  `ih_lake`), the globe's glass bolder (opacity 0.36, bluer).
+  **The igloo's door was turned along the front fence and put back**: the drinking fountain of the Deluxe yard stands
+  right before it there (about (1.0, 2.55)), no hen could reach the door (themetest failed). Its door is as it was
+  (to the yard's middle). To show it better the igloo itself would have to move.
+- **The peacock's mirror** now at the front left of his yard, (-2.0, 2.85), facing along the fence, the strength
+  game at (2.4, 2.2): nothing behind or beside the house is walkable in that yard (a probe), and his fan needs the
+  room before it. He stands 1.05 m from it, fan open (wintertest pea).
+- Checks on the final build: wintertest pea, call, pol, aya; train, theme, ice, lift, ginger; game and theme and
+  train in French; play, pea, call, duck, lang, move.
+- **Still open**: fences with their own shapes and gates; themed models loaded on demand (coops.glb is 36 MB); the
+  other themes; real-money purchases (she has finished Apple's side: paid apps agreement, bank and tax active, 14 Nov;
+  prices 1.99 a building, 9.99 the nine; a buying screen with Restore, purchases checked from Apple's signed record).

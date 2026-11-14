@@ -819,7 +819,7 @@ export function addWinter(plot, garden = null, part = null) {
   if (G.train && part) { T.train = { ...G.train, a: 0, by: null, next: 0, engine: hang('train_engine', G.train.c), wagon: hang('train_wagon', G.train.c), wagon2: hang('train_wagon', G.train.c) }; T.train2 = { by: null, next: 0 }; placeTrain(T.train); }
   if (G.chute) { T.chute = { ...G.chute, by: null, next: 0, back: 0 }; if (G.chute.sled && part) { T.chute.mesh = hang('sledge', [0, 0]); restSledge(T.chute); } }
   if (G.igloo) {                                      // (the winter garden's igloo: stylized/coops.py IGLOO; its door looks to the yard's middle)
-    const at = [1.9, 2.65], R = 0.5, d = [-1, 0];      /* (its door along the front fence, seen side on: 14 Nov) */
+    const at = [1.9, 2.65], R = 0.5, d = [-Math.SQRT1_2, -Math.SQRT1_2];      /* (straight along the front fence the drinking fountain stands before the door: tried 14 Nov, put back) */
     T.igloo = { at, r: R, by: null, next: 0, spot: [at[0] + d[0] * (R + 0.3), at[1] + d[1] * (R + 0.3)], door: [at[0] + d[0] * (R - 0.1), at[1] + d[1] * (R - 0.1)], face: Math.atan2(-d[0], -d[1]) };
   }
   if (!iceTex) iceTex = fxTex(128, c => {

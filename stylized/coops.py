@@ -2962,7 +2962,7 @@ def igloo(objs, x, y, R):
         for j in range(n):
             a = (j + 0.5 * (k % 2)) / n * math.tau; zm = (z0 + z) / 2; rm = R * math.sqrt(max(0.0, 1 - (zm / (R * 0.92)) ** 2)) + 0.003
             objs.append(box('igjoint', (0.02, 0.02, (z - z0) * 0.95), (x + math.cos(a) * rm, y + math.sin(a) * rm, zm), (0, 0, a), m=joint, bevel=0.0, segs=1))
-    d = Vector((-1, 0, 0)).normalized(); side = Vector((d.y, -d.x, 0))                 # the way in (along the front fence, seen side on from where one looks: 14 Nov, it looked away)
+    d = Vector((-1, 1, 0)).normalized(); side = Vector((d.y, -d.x, 0))                 # the way in (straight along the fence the drinking fountain is in its way: 14 Nov, tried and put back)
     c0 = Vector((x, y, 0)) + d * (R * 0.8); HW, HH, LEN = 0.17, 0.31, R * 0.4
     n = 9
     for k in range(n):                                         # an arch of blocks over it
