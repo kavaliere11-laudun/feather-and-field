@@ -5433,3 +5433,32 @@ artefact". The six things of the review's "What is left":
 - **Still open**: fences with their own shapes and gates; themed models loaded on demand (coops.glb is 36 MB); the
   other themes; real-money purchases (she has finished Apple's side: paid apps agreement, bank and tax active, 14 Nov;
   prices 1.99 a building, 9.99 the nine; a buying screen with Restore, purchases checked from Apple's signed record).
+
+## Real money: the app's shop for the winter buildings (14 Nov 2026, evening)
+Audrey, 14 Nov 18:32: "so what is the next step?"; her choice: **"Coins or money"** (15,000 coins as before, or Apple's
+price to have it at once). Prices hers: 1.99 a building, 9.99 the nine. Her Apple side is active (agreements, bank, tax).
+- **Only in the iPhone app.** The website has no money buttons and counts nothing bought with money.
+- **The app's plugin** `app/ios/App/App/FFStorePlugin.swift` (StoreKit 2; registered by `GameViewController.swift`,
+  the storyboard's view controller; both added to the Xcode project by hand): `products` (ids -> Apple's price text),
+  `owned` (Transaction.currentEntitlements: verified, not revoked, non-consumable), `buy` (bought / pending /
+  cancelled / failed, with what's owned after), `restore` (AppStore.sync, then owned). No keys or secrets in it.
+- **`src/store.js`** (`Store`): the bridge (as notify.js does; a test's stand-in `window.__fakeStore`). Product ids:
+  `com.featherandfield.game.winter.<breed>` (rir, orp, sil, leg, bra, pol, aya, pea, call) and
+  `com.featherandfield.game.winter.all` (gives all nine). Asks Apple what's owned when the farm opens, when the app
+  comes back to the front, after a purchase and after a restore.
+- **Security** (her standing rule): what is owned comes from Apple's signed record, never from the save.
+  `game.setPaid(keys)` writes Apple's answer over the save's note (`data.paid`, checked by `checkFarm`: real building
+  names, once each) and puts any coop in a building no longer owned back to its own look (a refund; an edited save;
+  a farm code from elsewhere). `game.paidNow` (Apple's last answer) is applied to a farm loaded or started again after
+  it. Outside the app the answer is "nothing", at once. If Apple can't be heard in the app, the last note stands for
+  that session. Coins-bought buildings (`data.themes`) are untouched.
+- **The card** (gameui.js, the themed buildings' part): the coin button as before, then "Or have it now · £1.99"
+  (Apple's own price text, in the player's money), "All nine winter buildings · £9.99" while more than one is left,
+  a note ("kept on your Apple account"), and "Restore purchases" (Apple asks for one). Texts `pay_*` in six languages.
+  For one building the room for its Deluxe garden is looked at before Apple's sheet opens (main.js `themeCoop(p, t,
+  'pay')`), so nothing is paid for a building that can't go up there; `payAll`, `payRestore`.
+- **storetest.mjs** (en, fr, also upright): outside the app; cancelled; waiting for a parent; bought; reload; refund;
+  an edited save; the nine; restore. All pass with the stand-in. **Not yet tried with Apple itself**: that needs the
+  ten products made in App Store Connect (Audrey, from the list sent to her) and a sandbox purchase in TestFlight.
+- Still to do: the first purchase must go to Apple's review with an app version; a line about purchases on the
+  privacy page; the same shop for the other themes when they exist.

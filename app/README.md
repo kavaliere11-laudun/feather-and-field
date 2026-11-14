@@ -32,3 +32,12 @@ repository's secrets (ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8, APPLE_TEAM_ID), add
 is on the default branch) builds, signs and sends a build; its number is the run's number. TestFlight only: internal
 testing (Audrey and whoever she adds), nothing on the App Store until she submits a version for review and releases it.
 The plugins use none of the APIs Apple asks reasons for; Capacitor's own frameworks carry their privacy manifests.
+
+## The shop for real money (from 14 Nov 2026)
+
+`ios/App/App/FFStorePlugin.swift`: the app's own plugin (StoreKit 2) for the winter buildings, registered by
+`GameViewController.swift` (the storyboard's view controller is this class, not Capacitor's own). Both files are in the
+Xcode project by hand (`project.pbxproj`); `npx cap sync` leaves them alone. The game's side is `web3d/src/store.js`.
+Products (made by Audrey in App Store Connect, non-consumable): `com.featherandfield.game.winter.rir`, `.orp`, `.sil`,
+`.leg`, `.bra`, `.pol`, `.aya`, `.pea`, `.call` and `com.featherandfield.game.winter.all`. No keys or secrets: the
+phone's own Apple account pays, and what is owned is read from Apple's signed records on the phone.

@@ -34,6 +34,7 @@ import { CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
+import { Store, productOf, setOf } from './store.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
@@ -69,6 +70,13 @@ let gameUI = null;
 const farmLoaded = () => { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); };
 const account = GAME_MODE && !params.has('poster') ? new Account(game, { bust: BUST, say: t => hint(t), loaded: farmLoaded, ask: (here, online) => gameUI.twoFarms(here, online) }) : null;
 const notes = GAME_MODE && !params.has('poster') ? new Notes(game) : null;      // (the store app's reminders: notify.js; nothing outside the app)
+// the app's shop for real money (store.js): what Apple says is owned, asked now and whenever the app comes back; a coop
+// in a building no longer owned is redrawn in its own look (once the farm is up)
+function paidBack(ids) {
+  if (document.getElementById('loading') !== null) { setTimeout(() => paidBack(ids), 1000); return; }
+  for (const id of ids) { const p = plots.find(x => x.gc && x.gc.id === id && !x.draft); if (p && game.coop(id)) retier(p); }
+}
+const store = GAME_MODE && !params.has('poster') ? new Store(game, { onBack: ids => paidBack(ids) }) : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
@@ -7194,7 +7202,7 @@ let MOVE_WAIT = null;
 const nightAt = p => DAY.hour >= 21.8 || DAY.hour < 6.3 || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onTheme: (t, buy) => themeCoop(p, t, buy), onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onTheme: (t, buy) => themeCoop(p, t, buy), pay: store && store.on ? { on: true, price: k => store.price(k), all: t => store.priceAll(t), onPay: t => themeCoop(p, t, 'pay'), onAll: t => payAll(t), onRestore: () => payRestore() } : null, onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
 // a themed building from a coop's card: bought (in its season: worn at once), moved into, or left for the coop's own look
@@ -7205,7 +7213,7 @@ function themeCoop(p, t, buy) {
   let clear = [], flip = null, off = false;
   if (t && !gc.theme && gc.tier < 4) {               // (it comes with the Deluxe garden: room for it here, as for an upgrade)
     if (p.farmer || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return false; }
-    if (buy && game.data.coins < ((game.themesFor(gc).find(x => x.id === t) || {}).price || 0)) { hint(game.t('dec_broke')); return false; }
+    if (buy === true && game.data.coins < ((game.themesFor(gc).find(x => x.id === t) || {}).price || 0)) { hint(game.t('dec_broke')); return false; }
     let S = coopSpot(spotOf(gc), { ...gc, tier: 4 });
     if (!S.ok && gc.ap && gc.ap.side) {
       const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: other } });
@@ -7217,6 +7225,16 @@ function themeCoop(p, t, buy) {
   }
   const ids = clear.map(o => o.id);
   let r;
+  if (buy === 'pay') {                               // (for money: Apple's sheet, then, once Apple's record has it, moved in as if just bought; the room was looked at first, so nothing is paid for a building that can't go up here)
+    if (!store || store.busy || game.themeOwned(t, base)) return false;
+    hint(game.t('pay_busy'));
+    store.buy(productOf(t + '_' + base)).then(st => {
+      if (st === 'bought') { if (themeCoop(p, t, false)) hint(game.t('pay_done', { name })); else { gameUI.close(); hint(game.t('pay_done', { name })); } }
+      else if (st === 'pending') hint(game.t('pay_wait'));
+      else if (st === 'failed') hint(game.t('pay_fail'));
+    });
+    return true;
+  }
   if (buy) { r = game.buyTheme(gc.id, t, undefined, ids); if (!r) return false; if (r.broke) { hint(game.t('dec_broke')); return false; } }
   else if (!game.wearTheme(gc.id, t, ids)) return false;
   if (flip) game.plantApple(gc.id, flip);
@@ -7226,6 +7244,17 @@ function themeCoop(p, t, buy) {
   if (buy) { hint(game.t('theme_bought', { name, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); }
   else hint(t ? game.t('theme_done', { coop: game.coopName(gc), name }) : game.t('theme_gone', { coop: game.coopName(gc) }));
   return true;
+}
+// the nine together, and Apple's "Restore purchases" (store.js): from a coop's card
+function payAll(t) {
+  if (!store || store.busy) return;
+  hint(game.t('pay_busy'));
+  store.buy(setOf(t)).then(st => { if (st === 'bought') { gameUI.close(); hint(game.t('pay_all_done')); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); });
+}
+function payRestore() {
+  if (!store || store.busy) return;
+  hint(game.t('pay_busy'));
+  store.restore().then(n => { gameUI.close(); hint(game.t(n > 0 ? 'pay_back' : n === 0 ? 'pay_none' : 'pay_fail')); });
 }
 function dressCoop(p, id) {
   if (!p || !p.gc || MOVE.plot || !game.dressCoop(p.gc.id, id)) return false;

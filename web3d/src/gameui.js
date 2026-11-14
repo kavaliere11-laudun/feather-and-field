@@ -684,10 +684,18 @@ export class GameUI {
         for (const T of TH) { const name = g.themeName(T.id, base), row = el('div', 'gtheme-r'); row.dataset.theme = T.id;
           row.append(el('p', 'gtext', (T.on ? '✓ ' : '') + name), el('p', 'gnote', this.t('themel_' + T.key)));
           if (T.owned) { const bt = el('button', 'gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.type = 'button'; bt.dataset.themego = T.on ? 'off' : 'on'; bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); row.append(bt); }
-          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) up.onTheme(T.id, true); }); row.append(bt); }
+          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) up.onTheme(T.id, true); }); row.append(bt);
+            const pr = up.pay ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
+            if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', this.t('pay_buy', { p: pr })); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.addEventListener('click', () => up.pay.onPay(T.id)); row.append(pb); } }
           else row.append(el('p', 'gnote', this.t('theme_when_' + T.id)));
           c.append(row); }
         if (coop.theme) c.append(el('p', 'gnote gtheme-own', this.t('theme_own', { look: g.lookName({ ...coop, theme: undefined, tier: g.ownLook(coop) }) })));
+        if (up.pay && up.pay.on) {                    // (the nine together, while some are still to buy; and Apple's "Restore purchases")
+          for (const T of TH) { const all = T.season && g.themeLeft(T.id) > 1 ? up.pay.all(T.id) : null; if (!all) continue;
+            const ab = el('button', 'gbtn gsmallbtn gpay', this.t('pay_all', { p: all })); ab.type = 'button'; ab.dataset.themego = 'all'; ab.addEventListener('click', () => up.pay.onAll(T.id)); c.append(ab); }
+          c.append(el('p', 'gnote', this.t('pay_note')));
+          const rb = el('button', 'gbtn gsmallbtn galt', this.t('pay_restore')); rb.type = 'button'; rb.dataset.themego = 'restore'; rb.addEventListener('click', () => up.pay.onRestore()); c.append(rb);
+        }
         c.append(el('p', 'gnote', this.t('theme_note'))); body.append(c); } }
     for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
       const on = coop.dress === id, name = g.dressName(id);
