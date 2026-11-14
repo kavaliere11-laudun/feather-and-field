@@ -5468,3 +5468,34 @@ price to have it at once). Prices hers: 1.99 a building, 9.99 the nine. Her Appl
   screenshot (the card) and a note for the reviewers on each. State: "Finaliser avant soumission"; nothing sent for
   review. Next: a sandbox purchase in TestFlight (the money buttons show only if Apple returns the products), then
   her submission with an app version.
+
+## Real money, the rest: coins, rare trios, the Pantry's shelves (14 Nov 2026, night)
+Audrey's grid ("the price of the coops will remain the same. so based on that, propose a grid for the rest"; "All four
+rare trios should remain 19,99"; "play the game and let me know the impact of these prices"; "yes"):
+| | | |
+|---|---|---|
+| Winter building / the nine | 1.99 / 9.99 | fixed (15,000 coins a building) |
+| Purse / Basket / Sack / Cart | 0.99 / 2.99 / 4.99 / 9.99 | 3,000 / 10,000 / 20,000 / 50,000 coins (were 1,000 / 3,500 / 6,500 / 15,000) |
+| Rare Silkie trio / the four | 6.99 / 19.99 | Paint, Lavender, Splash, Cuckoo |
+| The Pantry's bigger shelves | 1.99 | half as much room again |
+- **Why**: a building bought directly stays the best deal (7,500 coins a pound against 5,000 at best in a Cart).
+  `balsim.mjs` (GIFT=day:coins, "earned so far"): a once-a-day player earns about 200 coins a day in week one, 1,000
+  from day 7 to 30, 1,700 to day 90, 2,200 to day 180; a Cart on day 7 puts him six days ahead at level 13 and a week
+  at level 20, never more than a level (levels come from XP).
+- **game.js**: `BAGS`, `TRIO_LINES`; `setPaid(keys, { shelves, trios })` -> `paidNow`, `applyPaid()` (also at the end
+  of `newFarm`); `putPaid` now also sets `data.shelves` by Apple's word and forgets `data.trios` / `data.gift` Apple
+  doesn't confirm; `adoptTrio(line)` (once a farm a colour, `data.trios`: the birds the colour still lacks, never more
+  than a trio, into its coop or the basket by the fire, its Pagoda free: `data.gift`, `coopFree`); nothing is taken
+  back on a refund. `grantCoins(tx, bag)`: Apple's receipt number kept (`data.txs`, the last 60), one receipt pays
+  once; not counted as coins earned. `checkFarm` checks `trios`, `gift`, `txs`.
+- **store.js**: `bagOf`, `trioOf`, `TRIO_ALL`, `SHELVES` (`com.featherandfield.game.coins.purse|basket|sack|cart`,
+  `.silkie.paint|lavender|splash|cuckoo|all`, `.pantry.shelves`); `settle()` / `pending()` for the bags (the plugin
+  leaves a bag's receipt open until the coins are handed over: `pending`, `finish`); `priceOf(id)`.
+- **gameui.js**: the 2 Nov preview (`?shopdemo`) made real when `o.pay` is given (main.js `payUI`): the shop's Coins
+  shelf (no advert card and no "Most popular" for real), "Adopt this trio" / "Adopt all four" in the Book (the rare
+  page shown as a picture, not a shape, when it can be adopted), "Bigger shelves" in the Pantry, "Restore purchases"
+  in Settings; "Put down their Pagoda (yours already)" in Your coops. Six languages.
+- **store2test.mjs** (en, fr): all of it with the stand-in. **iapshots2.mjs**: the review pictures.
+- **At Apple**: the ten new products are NOT made yet (her browser went offline at 23:30 as the first was being
+  created; nothing was created). `scratchpad/iap/gen3.py` holds the names, descriptions, notes and steps.
+- Not built: the rewarded advert (needs her own advert account).
