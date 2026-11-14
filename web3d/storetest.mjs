@@ -38,7 +38,7 @@ const PRE = 'com.featherandfield.game.winter.';
 await ctx.addInitScript(() => {
   const get = (k, d) => { try { const v = sessionStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
   if (get('__shop', false)) window.__fakeStore = {
-    products: async o => ({ products: o.ids.map(id => ({ id, price: /all$/.test(id) ? '£9.99' : '£1.99' })).concat([{ id: 'com.other.thing', price: '£0.01' }]) }),
+    products: async o => ({ products: o.ids.map(id => ({ id, price: /\.all$/.test(id) ? '£9.99' : '£1.99' })).concat([{ id: 'com.other.thing', price: '£0.01' }]) }),
     owned: async () => ({ ids: get('__owned', []) }),
     buy: async o => { const how = get('__how', 'bought'), ids = get('__owned', []); if (how === 'bought') { ids.push(o.id); sessionStorage.setItem('__owned', JSON.stringify(ids)); } return { state: how, ids }; },
     restore: async () => ({ ids: get('__owned', []) }),
