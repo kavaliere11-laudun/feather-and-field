@@ -73,8 +73,8 @@ if (BREED === 'call') {
     let cock = { ok: false };      // (asked till he's somewhere he can set off from)
     for (let k = 0; k < 40 && !cock.ok; k++) { cock = await p.evaluate(() => { const f = window.__farm, P = f.gamePlots()[1]; for (const b of P.birds) if (b.play) f.endPlay(b, true); const b = P.birds.find(x => x.train); if (!b) return { none: true }; const ok = !b.act && f.startPlay(b, 'mirror'); return { ok }; }); if (!cock.ok) await run(1.5); }
     let shown = null;
-    for (let i = 0; i < 300 && cock.ok; i++) { await run(0.2); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[1], b = P.birds.find(x => x.train); return { play: !!b.play, act: b.act ? b.act.type : null, fan: b.A.fan, x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y }; }); if (!st.play && st.act === 'display' && st.fan > 0.8) { shown = st; break; } if (!st.play && st.act !== 'display' && i > 100) break; }
-    ok('the peacock walks to his ice mirror and fans his train at it', cock.ok && shown && Math.hypot(shown.x - 1.95, shown.z - 2.8) < 0.5, { cock, shown });
+    for (let i = 0; i < 300 && cock.ok; i++) { await run(0.2); const st = await p.evaluate(() => { const P = window.__farm.gamePlots()[1], b = P.birds.find(x => x.train); return { play: !!b.play, act: b.act ? b.act.type : null, fan: b.A.fan, x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y, near: Math.hypot(b.root.position.x - 2.55, b.root.position.z - 2.4) }; }); if (!st.play && st.act === 'display' && st.fan > 0.8) { shown = st; break; } if (!st.play && st.act !== 'display' && i > 100) break; }
+    ok('the peacock walks to his ice mirror and fans his train at it', cock.ok && shown && shown.near < 1.5, { cock, shown });
     if (shown) { await view(1.6, 2.4, 1.5); await shoot('1b_mirror'); }
   }
   if (BREED === 'pea') ok('a peahen rides the little carousel round, gently, and gets off without being dizzy', went && ph.has('ride') && !ph.has('dizzy') && ph.has('shake') && maxW > 1 && maxW < 2 && s.w.carousel && !s.w.spin.by, { went, ph: [...ph], maxW, w: s.w });

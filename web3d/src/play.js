@@ -110,7 +110,13 @@ export function startPlay(b, kind) {
   } else if (kind === 'cabbage') C = [{ spot: [P.cabbage.at[0], P.cabbage.at[1] + 0.2], face: Math.PI }];
   else if (kind === 'ladder') C = [{ spot: [P.ladder.at[0] + j * 0.12, P.ladder.at[1] + 0.44], face: Math.PI }];
   else if (kind === 'igloo') C = [{ spot: T.igloo.spot, face: T.igloo.face }];
-  else if (kind === 'mirror') C = [{ spot: T.mirror.spot, face: T.mirror.face }];
+  else if (kind === 'mirror') {                      // the peacock's ice mirror: somewhere in front of it with room behind him for his fan
+    const M = T.mirror.at; C = [];
+    for (const R of [0.85, 1.05, 1.3]) for (const da of [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.4, -1.4]) {
+      const a0 = Math.atan2(T.mirror.spot[0] - M[0], T.mirror.spot[1] - M[1]) + da, spot = [M[0] + Math.sin(a0) * R, M[1] + Math.cos(a0) * R], face = Math.atan2(M[0] - spot[0], M[1] - spot[1]);
+      if (b.fanClear(face, spot)) C.push({ spot, face });
+    }
+  }
   else if (kind === 'lift') C = [{ spot: [T.lift.a[0], T.lift.z + 0.34], face: Math.PI }];      // (the chairlift: on its boarding mat, facing the chair)
   else if (kind === 'striker') C = [{ spot: [T.striker.pad[0], T.striker.pad[1] + 0.32], face: Math.PI }];      // (the strength game: in front of its pad)
   else if (kind === 'roll') { const R = T.roll, d = ballDir(R); C = [{ spot: [R.a[0] - d[0] * 0.26, R.a[1] - d[1] * 0.26], face: Math.atan2(d[0], d[1]) }]; }      // (the snowball: behind it, facing along its run)
@@ -212,7 +218,7 @@ export function playStep(b, dt) {
       else if (P.kind === 'roll') next('push');
       else if (P.kind === 'lift') next('on');
       else if (P.kind === 'striker') next('jump');
-      else if (P.kind === 'mirror') { const f = P.face; endPlay(b); b.act = { type: 'display', left: 10, face: f, ready: true }; b.wait = 10; return o; }      // (at his mirror: his fan, for his reflection)
+      else if (P.kind === 'mirror') { const f = P.face; endPlay(b); if (b.fanClear(f)) { b.act = { type: 'display', left: 10, face: f, ready: true }; b.wait = 10; } return o; }      // (at his mirror: his fan, for his reflection)
       else if (P.kind === 'soak') next('in');
       else if (P.kind === 'spin') next('on', { off: P.slot - T.spin.a });
       else if (P.kind === 'bounce') next('up');
