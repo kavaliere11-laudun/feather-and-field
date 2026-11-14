@@ -6,7 +6,7 @@
 // when it can, places a new breed's coop, upgrades the coops (release 4), and buys decorations, the geese and the dog, and outfits once they leave a reserve
 // for feed and land.
 // Prints, for each profile: the level reached on days 7, 30, 90, 180, 365, the day each level comes, the coins, the
-// birds, and where the coins came from.
+// birds, and where the coins came from. GIFT=day:coins adds a bought bag of coins on that day (the real-money prices, 14 Nov).
 globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 let NOW = Date.UTC(2026, 9, 26, 9, 0);
 Date.now = () => NOW;
@@ -15,6 +15,7 @@ const { Game, DECOR, OUTFITS, WHEAT } = G;
 if (process.env.BAL) { const o = JSON.parse(process.env.BAL); for (const k in o) { if (k in G.XPV) G.XPV[k] = o[k]; else if (k.startsWith('fresh.')) G.FRESH[k.slice(6)] = o[k]; } }      // (other values to try)
 if (process.env.NOGARDEN) G.GARDEN.level = 99;      // (to compare: no vegetable garden)
 const DAYS = +(process.argv[2] || 365), WHICH = process.argv[3] || 'all', SEEDS = +(process.argv[4] || 3);
+const GIFT = process.env.GIFT ? process.env.GIFT.split(':').map(Number) : null;
 const PROFILES = { daily: [19], twice: [8, 19], often: [8, 11, 14, 17, 20, 23] };
 function rngOf(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
 function simulate(name, seed) {
@@ -31,6 +32,7 @@ function simulate(name, seed) {
   let spot = 0; const bought = [];
   for (let d = 0; d < DAYS; d++) {
     const day0 = start + d * 86400e3 - ((start % 86400e3) - 0);    // (midnight UTC of the day)
+    if (GIFT && d + 1 === GIFT[0]) g.data.coins += GIFT[1];      // (GIFT=day:coins: a bag of coins bought that day, to see what it changes)
     for (const h of hours) {
       NOW = day0 + h * 3600e3 + Math.floor(R() * 40) * 60e3;
       // the game catching up (as the farm does when it opens)
@@ -100,7 +102,7 @@ function simulate(name, seed) {
       if (process.env.SHOPFIRST) for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; bought.push([d + 1, c.breed + ' ' + ['', 'mended', 'snug', 'cosy', 'deluxe'][n.tier]]); } }      // (SHOPFIRST: the shop before the coops' looks)
       const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
     }
-    if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
+    if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { earned: Object.values(earn).reduce((x, y) => x + y, 0), level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
   return { bought, levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
@@ -109,7 +111,7 @@ for (const name of Object.keys(PROFILES)) {
   if (WHICH !== 'all' && WHICH !== name) continue;
   const runs = []; for (let s = 1; s <= SEEDS; s++) runs.push(simulate(name, s));
   console.log(`\n== ${name} (${PROFILES[name].length} visit${PROFILES[name].length > 1 ? 's' : ''} a day, ${SEEDS} farms)`);
-  for (const d of [7, 30, 90, 180, 365]) if (runs[0].at[d]) console.log(`day ${String(d).padStart(3)}: level ${avg(runs, r => r.at[d].level).toFixed(1)}, coins ${Math.round(avg(runs, r => r.at[d].coins))}, birds ${avg(runs, r => r.at[d].birds).toFixed(0)}, coops ${avg(runs, r => r.at[d].coops).toFixed(1)}, fields ${avg(runs, r => r.at[d].land).toFixed(1)}, decorations ${avg(runs, r => r.at[d].decor).toFixed(1)}`);
+  for (const d of [7, 30, 90, 180, 365]) if (runs[0].at[d]) console.log(`day ${String(d).padStart(3)}: level ${avg(runs, r => r.at[d].level).toFixed(1)}, coins ${Math.round(avg(runs, r => r.at[d].coins))}, earned so far ${Math.round(avg(runs, r => r.at[d].earned))}, birds ${avg(runs, r => r.at[d].birds).toFixed(0)}, coops ${avg(runs, r => r.at[d].coops).toFixed(1)}, fields ${avg(runs, r => r.at[d].land).toFixed(1)}, decorations ${avg(runs, r => r.at[d].decor).toFixed(1)}`);
   const lv = [2, 3, 5, 6, 8, 10, 11, 13, 15, 17, 20, 23, 25, 30].map(L => `L${L}:${runs.every(r => r.levelDay[L]) ? Math.round(avg(runs, r => r.levelDay[L])) : '-'}`);
   console.log('the day each level comes: ' + lv.join(' '));
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
