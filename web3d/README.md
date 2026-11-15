@@ -5538,3 +5538,4 @@ Five runs at 402x874, about ten days each, no page errors in any:
 - **"Don't let me click on cuddle them if I can't… say when it will be possible again"** (15 Nov, 11:26): a coop's card
   with nobody due a cuddle shows no "Cuddle everyone here" button but "♥ Everyone here has had a cuddle. The next one in
   {when}." (`cuddle_all_wait`, six languages; `.gcuddlewait`; the soonest of the birds). `milestest` updated.
+- **Sideways only from now on** (15 Nov 2026, Audrey: "because the game can only be played sideway all the future tests need to be done that way please"): every test, picture and play-through at 874x402 (`W=874 H=402`; `playthrough.mjs` is sideways by default). Coin bag pictures: three proposals shown (outlined objects, soft objects, neat stacks), her choice awaited.
