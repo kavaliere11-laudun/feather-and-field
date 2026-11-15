@@ -90,7 +90,7 @@ function paidTrios(list) {
 const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : null;
 const payUI = store && store.on ? {
   price: k => store.priceOf(payId(k)),
-  buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
+  buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { payEnd(); if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
   restore: () => payRestore(),
 } : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
@@ -7245,7 +7245,7 @@ function themeCoop(p, t, buy) {
   if (buy === 'pay') {                               // (for money: Apple's sheet, then, once Apple's record has it, moved in as if just bought; the room was looked at first, so nothing is paid for a building that can't go up here)
     if (!store || store.busy || game.themeOwned(t, base)) return false;
     hint(game.t('pay_busy'));
-    store.buy(productOf(t + '_' + base)).then(st => {
+    store.buy(productOf(t + '_' + base)).then(st => { payEnd();
       if (st === 'bought') { if (themeCoop(p, t, false)) hint(game.t('pay_done', { name })); else { gameUI.close(); hint(game.t('pay_done', { name })); } }
       else if (st === 'pending') hint(game.t('pay_wait'));
       else if (st === 'failed') hint(game.t('pay_fail'));
@@ -7266,7 +7266,7 @@ function themeCoop(p, t, buy) {
 function payAll(t) {
   if (!store || store.busy) return;
   hint(game.t('pay_busy'));
-  store.buy(setOf(t)).then(st => { if (st === 'bought') { gameUI.close(); hint(game.t('pay_all_done')); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); });
+  store.buy(setOf(t)).then(st => { payEnd(); if (st === 'bought') { gameUI.close(); hint(game.t('pay_all_done')); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); });
 }
 function payRestore() {
   if (!store || store.busy) return;
@@ -9149,6 +9149,7 @@ const HINT_NEXT = [];                                    // (words to say once t
 // doesn't work": the answer ("Your basket is full of carrots…", or "Added to Arthur's list…") was hidden, sideways, under
 // the card)
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintEl.classList.toggle('gover', !!(gameUI && gameUI.isOpen)); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
+function payEnd() { if (hintEl.textContent === game.t('pay_busy')) { hintLeft = 0; hintEl.classList.remove('on'); } }      // (15 Nov 2026: "One moment…" goes as soon as Apple has answered, not seconds after)
 function hintNext(t) { if (hintLeft > 0) HINT_NEXT.push(t); else hint(t); }
 function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) { if (HINT_NEXT.length) hint(HINT_NEXT.shift()); else hintEl.classList.remove('on'); } }
 // jobs just done (game.js job): said after what was done, the clipboard's number up

@@ -5540,3 +5540,9 @@ Five runs at 402x874, about ten days each, no page errors in any:
   {when}." (`cuddle_all_wait`, six languages; `.gcuddlewait`; the soonest of the birds). `milestest` updated.
 - **Sideways only from now on** (15 Nov 2026, Audrey: "because the game can only be played sideway all the future tests need to be done that way please"): every test, picture and play-through at 874x402 (`W=874 H=402`; `playthrough.mjs` is sideways by default). Coin bag pictures: three proposals shown (outlined objects, soft objects, neat stacks), her choice awaited.
 - **The coin bags' pictures** (15 Nov, her choice of three: "A · Storybook"): a purse, a basket, a sack and a cart, outlined, each with its coins (`src/bagart.js` `BAG_ART`, drawn by a script; gameui.js `coinCards`, `.giap-bag`); the piles of coins stay for the `?shopdemo` preview's fallback only. `paytest` checks each bag has its picture. Checked sideways (874x402), en and fr.
+- **The test players again, sideways** (15 Nov, her choice; 874x402, as she plays): Tom (L11 on day 8, £41.96), Claire in
+  French (L8 on day 10, £3.98), Sophie (L9 on day 8, £9.97; her Snow Chalet fitted this time), Maya (L8 on day 7,
+  nothing bought): no page errors; every card, the story, the shop, the Book, the Pagodas and the winter buildings read
+  well sideways. Two things found and fixed: the Pantry's shelf row in French ("Vendre quand même · +11 pièces" squeezed
+  the shelf's words into a narrow column: the row wraps now, the button on a line of its own when there's no room;
+  index.html `.gpan-r`), and "One moment…" goes as soon as Apple has answered (main.js `payEnd`).
