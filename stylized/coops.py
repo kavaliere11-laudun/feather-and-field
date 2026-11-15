@@ -8715,3 +8715,166 @@ def sand_boules(objs, x, y):
     for k in range(5):
         a = random.uniform(0, math.tau)
         objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (W / 2 + 0.1), y + math.sin(a) * (D / 2 + 0.12), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 31))
+
+
+# ---- the Araucana's mountain hut (15 Nov 2026; Audrey: "Carry on"): a DESIGN to show her, NOT in HOUSES. A hut of the
+# Andes of southern Chile, where the breed comes from: a base of dark mountain stone, walls of scalloped wooden shingles
+# painted the blue-green of her eggs, a steep roof of silvery shingles, a red door, a woven band under the eaves, a
+# monkey puzzle tree. Rustic: a stone shelter under old shingles, a woven blanket over the hole. Mended: new bare shingles
+# half way, a sawhorse. Snug: the hut. Cosy: a veranda with a blanket and strings of red peppers, a monkey puzzle tree.
+# Deluxe: a storey taller, a balcony across the front, white diamonds in the shingles, a taller tree.
+ARA = dict(rock='#6f6a66', rock2='#5d5957', rock3='#827c76', teal='#3fa7a0', teal2='#57b8b0', teald='#2f8a86', roof='#8a5646', roof2='#996352', roof3='#75463a', oldroof='#7d776c', oldroof2='#6c675f',
+           newwood='#d8b27c', newwood2='#caa46c', white='#f4efe4', red='#c93a2e', redd='#9c2a22', black='#2b2826', needle='#2f6b3c', needle2='#3b7d46', trunk='#6a5444', pepper='#d8322a', clay='#b0603a')
+
+
+def _ara(k, rough=0.8, **kw): return C('ara_' + k, ARA[k], rough=rough, **kw)
+
+
+def woven_band(objs, z, x0, x1, y, normal, seed):
+    """A band woven in red, white and black (a zigzag of little squares) along a wall."""
+    cols = [_ara('red', rough=0.7), _ara('white', rough=0.7), _ara('black', rough=0.7)]; n = int(abs(x1 - x0) / 0.052)
+    nx, ny = normal
+    objs.append(box('wband', ((abs(x1 - x0) + 0.01, 0.012, 0.085) if ny else (0.012, abs(x1 - x0) + 0.01, 0.085)), (((x0 + x1) / 2, y, z) if ny else (y, (x0 + x1) / 2, z)), m=cols[0], bevel=0.0))
+    for i in range(n):
+        u = x0 + (i + 0.5) * (x1 - x0) / n; dz = (0.02, 0.0, -0.02, 0.0)[i % 4]; m = cols[1 + (i // 2) % 2]
+        objs.append(box('wsq', ((0.03, 0.02, 0.03) if ny else (0.02, 0.03, 0.03)), ((u, y + ny * 0.004, z + dz) if ny else (y + nx * 0.004, u, z + dz)), m=m, bevel=0.0))
+
+
+def monkey_puzzle(objs, x, y, h, key, seed):
+    """A monkey puzzle tree (the araucaria of the Araucana's mountains): a straight trunk, an umbrella of upturned branches."""
+    rnd = random.Random(seed); block(key, x, y, 0.09); nd = [_ara('needle'), _ara('needle2')]
+    objs.append(cyl('mptrunk', 0.045, h, (x, y, h / 2), m=_ara('trunk', rough=0.9, var=0.08), verts=8, r2=0.028, bevel=0.0))
+    for tier, (z, r, n) in enumerate(((h * 0.72, 0.3, 7), (h * 0.86, 0.24, 6), (h * 0.98, 0.14, 5))):
+        for k in range(n):
+            a = (k + 0.5 * tier) / n * math.tau
+            for j in range(3):                      # each branch: three tufts, out and then up
+                rr = r * (0.35 + 0.33 * j); zz = z + 0.05 * j * j
+                objs.append(sphere('leafp', 0.06 - 0.008 * j, (x + math.cos(a) * rr, y + math.sin(a) * rr, zz), (1, 1, 0.8), m=rnd.choice(nd), ico=1, disp=0.2, seed=seed + tier * 31 + k * 3 + j))
+    objs.append(sphere('leafp', 0.07, (x, y, h + 0.06), m=nd[1], ico=1, disp=0.2, seed=seed))
+
+
+def andes(look=2, name=None, key='ara', seed=141):
+    """The Araucana's mountain hut, look 0 (Rustic) .. 4 (Deluxe). Blender axes: front -y, ridge along x."""
+    name = name or ('box_', 'shed_', 'house_', 'cosy_', 'deluxe_')[look] + key
+    random.seed(seed + look); objs = []
+    rocks = [_ara('rock', rough=0.9, var=0.1), _ara('rock2', rough=0.9, var=0.1), _ara('rock3', rough=0.9, var=0.1)]
+    teal = [_ara('teal', rough=0.7, var=0.05), _ara('teal2', rough=0.7, var=0.05), _ara('teald', rough=0.7, var=0.05)]
+    roofm = [_ara('roof', rough=0.8, var=0.08), _ara('roof2', rough=0.8, var=0.08), _ara('roof3', rough=0.8, var=0.08)]
+    oldr = [_ara('oldroof', rough=0.9, var=0.1), _ara('oldroof2', rough=0.9, var=0.1), _sus('moss', rough=0.95, var=0.1), _ara('oldroof', rough=0.9, var=0.1)]
+    new = [_ara('newwood', rough=0.8, var=0.08, grain=0.3, grain_scale=G), _ara('newwood2', rough=0.8, var=0.08, grain=0.3, grain_scale=G)]
+    white = _ara('white', rough=0.6, var=0.02); red = _ara('red', rough=0.55, var=0.04); redd = _ara('redd', rough=0.6); black = _ara('black', rough=0.6)
+    glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0); brass = C('brass', '#c99a3c', rough=0.3, metal=0.9); dark = C('darkwood', '#6d4a31', rough=0.8)
+    wood = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G); iron = C('iron', '#2e2c2b', rough=0.5)
+    FL, WX, NF = 0.2, 0.415, 0.08
+    EAVE, PEAK = ((0.6, 0.98), (0.74, 1.2), (0.84, 1.46), (0.84, 1.46), (1.14, 1.8))[look]
+    gtop = lambda z: D2 * max(0.0, 1 - (z - EAVE) / (PEAK - 0.06 - EAVE)) if z > EAVE else D2
+    BASE = (EAVE, 0.4, 0.26, 0.26, 0.26)[look]     # how high the stone goes: all the way (a stone shelter), then a base under the shingles
+    wall_m = rocks[0] if look == 0 else new[0] if look == 1 else teal[0]
+    plinth = box('plinth', (2 * W2 + 0.06, 2 * D2 + 0.06, 0.12), (0, 0, 0.06), m=rocks[1], bevel=0.015, segs=2); objs.append(plinth)
+    walls = box('walls', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=wall_m, bevel=0.012, segs=2); objs.append(walls)
+    solids = [walls, plinth]
+    if look:
+        low = box('lowstone', (2 * W2 + 0.035, 2 * D2 + 0.035, BASE), (0, 0, BASE / 2), m=rocks[0], bevel=0.015, segs=2); objs.append(low); solids.append(low)
+    for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, rocks[1] if look == 0 else wall_m))
+    stone_bits(objs, FL, EAVE if look == 0 else BASE + 0.04, PEAK if look == 0 else BASE + 0.2, rocks, 150 if look == 0 else 60, seed + 3, WX)
+    if look:                                       # the shingles: scalloped rows on the gables, a scatter standing proud on the long walls
+        sh = new if look == 1 else teal
+        dia = (lambda row: white if row % 4 == 1 else random.choice(sh)) if look == 4 else None
+        for sx in (-1, 1): tile_hang(objs, sx, BASE + 0.01, PEAK - 0.1, gtop, sh, rows=dia)
+        rnd = random.Random(seed + 5)
+        for k_ in range(70 if look < 4 else 110):
+            x = rnd.uniform(-W2 + 0.06, W2 - 0.06); z = BASE + 0.05 + int(rnd.uniform(0, (EAVE - BASE - 0.1) / 0.062)) * 0.062
+            if abs(x + 0.31) < POP_W / 2 + 0.08 and z < FL + POP_H + 0.08: continue
+            if abs(x - 0.045) < 0.2 and z < 0.8: continue
+            if abs(x - WX) < WIN_W / 2 + 0.07 and z < 0.6: continue
+            objs.append(box('shingle', (0.07, 0.018, 0.07), (x, -D2 - 0.006, z), m=(white if (look == 4 and 0.8 < z < 0.9) else rnd.choice(sh)), bevel=0.006, segs=1, jitter=0.003))
+    # ---- roof: wooden shingles, silvered by the weather
+    if look == 0:
+        gone = lambda sy, r, rows, x: (sy < 0 and ((x > 0.1 and r < rows * 0.55) or random.random() < 0.15)) or (sy > 0 and random.random() < 0.3)
+        clay_roof(objs, EAVE, PEAK, oldr, dark, None, skip=gone, batten=C('sus_batten', '#4b4037', rough=0.95), over=0.12, gable_over=0.08)
+        e = Vector((0.36, -(D2 + 0.12), EAVE - 0.06)); r_ = Vector((0.36, 0, PEAK + 0.02)); nrm = Vector((0, -(PEAK - EAVE + 0.08), D2 + 0.12)).normalized()
+        a = r_.lerp(e, 0.04); b = r_.lerp(e, 0.62)       # a woven blanket over the hole, red with white and black stripes, a stone on each corner
+        objs.append(plank('blanket', a + nrm * 0.045, b + nrm * 0.045, 0.5, 0.015, nrm, red, jitter=0.6, bevel=0.004))
+        for t_, m_ in ((0.2, white), (0.3, black), (0.7, black), (0.8, white)):
+            c = a.lerp(b, t_) + nrm * 0.056; objs.append(plank('bstripe', c + Vector((-0.25, 0, 0)), c + Vector((0.25, 0, 0)), 0.03, 0.008, nrm, m_, jitter=0.2, bevel=0.0))
+        for dx in (-0.2, 0.2): objs.append(sphere('tstone', 0.035, tuple(b + nrm * 0.07 + Vector((dx, 0, 0))), (1.2, 1, 0.7), m=rocks[2], ico=1, disp=0.2, seed=int(dx * 50) + 60))
+    elif look == 1:
+        gone = lambda sy, r, rows, x: sy > 0 and (r < rows * 0.5 or x > 0.2)
+        clay_roof(objs, EAVE, PEAK, new, new[1], new[1], skip=gone, batten=C('sus_batten', '#4b4037', rough=0.95), over=0.13, gable_over=0.1)
+    else:
+        band = (lambda r, rows, i: white if (r in (3, 7) and i % 2 == 0) or r == 5 and i % 2 else None) if look == 4 else (lambda r, rows, i: roofm[2] if r % 3 == 0 else None)
+        clay_roof(objs, EAVE, PEAK, roofm, red if look >= 3 else white, roofm[2], band=band)
+    # ---- the stove pipe, through the ridge towards the -x end, a little hat on it
+    if look >= 2:
+        cx = -0.36; top = PEAK + (0.34 if look < 4 else 0.4)
+        objs.append(cyl('stovepipe', 0.045, top - PEAK + 0.2, (cx, 0, (top + PEAK - 0.2) / 2), m=iron, verts=10, bevel=0.0))
+        objs.append(cyl('pipecollar', 0.07, 0.04, (cx, 0, PEAK + 0.06), m=iron, verts=10, bevel=0.0))
+        objs.append(cyl('pipehat', 0.085, 0.06, (cx, 0, top + 0.05), m=iron, verts=10, r2=0.01, bevel=0.0))
+    # ---- the door, the nest window, the side windows
+    if look == 0:
+        for i in range(3): objs.append(plank('door', (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.125), (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.56), 0.075, 0.03, (0, -1, 0), dark, jitter=1.2))
+        objs.append(box('lintel', (0.36, 0.035, 0.06), (0.045, -D2 - 0.012, 0.56), m=dark, bevel=0.008, segs=1))
+    else:
+        arched_door(objs, 0.045, -D2 - 0.012, 0.12, 0.25, 0.6, red if look >= 2 else new[0], white if look >= 2 else new[1], brass if look >= 2 else iron)
+        objs.append(box('doorstep', (0.36, 0.14, 0.12), (0.045, -D2 - 0.08, 0.06), m=rocks[2], bevel=0.012, segs=1))
+    trim = white if look >= 2 else (new[1] if look else dark)
+    nest_window(objs, key, FL, WX, trim, solids=solids, nest_floor=NF, door='drop', door_m=red if look >= 2 else trim)
+    if look >= 1:
+        for sx in (1, -1):
+            window(objs, sx * (W2 + 0.03), 0.0, 0.56, 0.22, 0.22, trim, glass, normal=(sx, 0, 0), cross=look >= 2)
+            if look >= 2:
+                for d in (-1, 1): objs.append(box('shutter', (0.02, 0.085, 0.24), (sx * (W2 + 0.03), d * 0.18, 0.56), m=red, bevel=0.004, segs=1))
+            if look == 4:
+                window(objs, sx * (W2 + 0.045), 0.0, 1.22, 0.2, 0.2, white, glass, normal=(sx, 0, 0))
+                for d in (-1, 1): objs.append(box('shutter', (0.02, 0.08, 0.22), (sx * (W2 + 0.045), d * 0.17, 1.22), m=red, bevel=0.004, segs=1))
+    if look >= 2:                                  # the woven band under the eaves: the front, and the gable the camera sees
+        woven_band(objs, EAVE - 0.075, -W2 + 0.02, W2 - 0.02, -D2 - 0.02, (0, -1), seed + 7)
+        woven_band(objs, EAVE - 0.075, -D2 + 0.02, D2 - 0.02, -W2 - 0.024, (-1, 0), seed + 8)
+    # ---- what stands by it
+    if look == 0:
+        weeds = [C('ivy1', '#3f6e30', rough=0.8), C('ivy2', '#55893d', rough=0.8)]
+        for k in range(14):
+            z = random.uniform(0.03, 0.3); x = W2 - random.uniform(-0.02, 0.3)
+            objs.append(sphere('ivy', random.uniform(0.03, 0.05), (x, -D2 - 0.04, z), (1, 0.55, 1), m=random.choice(weeds), ico=1, disp=0.25, seed=k))
+        for k in range(5): objs.append(sphere('boulder', random.uniform(0.05, 0.09), (-W2 - 0.1 - 0.05 * (k % 2), -0.3 + k * 0.14, 0.04), (1, 1, 0.7), m=random.choice(rocks), ico=1, disp=0.25, seed=k + 40))
+    if look == 1:                                  # a sawhorse along the gable with a board on it, bundles of new shingles by the corner
+        TXp = -W2 - 0.2
+        for ty in (-0.2, 0.2):
+            block(key, TXp, ty, 0.15)
+            for s in (-1, 1): objs.append(plank('trestle', (TXp + s * 0.09, ty, 0.0), (TXp + s * 0.02, ty, 0.28), 0.04, 0.03, (0, 1, 0), new[1], jitter=0.4))
+        objs.append(plank('tplank', (TXp, -0.32, 0.29), (TXp, 0.32, 0.29), 0.1, 0.03, (0, 0, 1), new[0], jitter=0.4))
+        SX, SY = W2 + 0.16, -D2 + 0.1; block(key, SX, SY, 0.13)
+        for k in range(5): objs.append(box('tstack', (0.16, 0.12, 0.024), (SX + random.uniform(-0.01, 0.01), SY + random.uniform(-0.01, 0.01), 0.013 + k * 0.026), m=random.choice(new), bevel=0.004, segs=1))
+    if look >= 3:                                  # a veranda from the door to the corner (the Deluxe: a balcony on it), a blanket over its rail, red peppers drying, a lantern
+        PY, x0, x1 = -D2 - 0.3, -0.16, W2 + 0.02; VZ = 0.8
+        for px in (x0, x1):
+            objs.append(plank('vpost', (px, PY, 0.0), (px, PY, VZ), 0.045, 0.045, (0, -1, 0), red, jitter=0.2)); block(key, px, PY, 0.05)
+        objs.append(plank('vbeam', (x0 - 0.04, PY, VZ), (x1 + 0.04, PY, VZ), 0.05, 0.04, (0, -1, 0), red, jitter=0.2))
+        if look == 3:
+            for i in range(8):
+                x = x0 - 0.03 + (i + 0.5) * (x1 - x0 + 0.06) / 8
+                for r in range(3):
+                    a_ = Vector((x, -D2 - 0.02 - r * 0.12, VZ + 0.1 - r * 0.03)); b_ = a_ + Vector((0, -0.13, -0.035))
+                    objs.append(plank('sh', a_, b_, (x1 - x0 + 0.06) / 8 * 0.93, 0.018, (0, -0.25, 1), random.choice(roofm), jitter=1.2, bevel=0.005))
+        else:                                      # the balcony: a floor of boards, a white rail with red diamonds, a door behind it
+            objs.append(box('bfloor', (x1 - x0 + 0.1, 0.36, 0.03), ((x0 + x1) / 2, -D2 - 0.17, VZ + 0.035), m=wood, bevel=0.004, segs=1))
+            objs.append(plank('brail', (x0 - 0.04, PY - 0.02, VZ + 0.24), (x1 + 0.04, PY - 0.02, VZ + 0.24), 0.035, 0.03, (0, -1, 0), white, jitter=0.2))
+            for i in range(9):
+                x = x0 + i * (x1 - x0) / 8
+                objs.append(box('bbal', (0.022, 0.022, 0.2), (x, PY - 0.02, VZ + 0.14), m=white, bevel=0.0))
+                if i < 8: objs.append(box('bdia', (0.04, 0.012, 0.04), (x + (x1 - x0) / 16, PY - 0.02, VZ + 0.14), (0, math.radians(45), 0), m=red, bevel=0.0))
+            arched_door(objs, 0.3, -D2 - 0.012, VZ + 0.05, 0.2, 0.3, red, white, brass)
+        for k in range(2):                         # strings of red peppers hung from the beam
+            hx = x0 + 0.14 + k * 0.1
+            for j in range(5): objs.append(sphere('flower', 0.02, (hx + (j % 2) * 0.012, PY - 0.005, VZ - 0.06 - j * 0.035), (1, 1, 1.5), m=_ara('pepper', rough=0.5), ico=1))
+        objs.append(box('blanket', (0.2, 0.02, 0.26), (x1 - 0.18, PY - 0.03, 0.42), m=red, bevel=0.004, segs=1))       # a blanket over a low rail
+        for dz, m_ in ((0.08, white), (0.04, black), (-0.04, black), (-0.08, white)): objs.append(box('bstripe', (0.205, 0.024, 0.018), (x1 - 0.18, PY - 0.03, 0.42 + dz), m=m_, bevel=0.0))
+        objs.append(plank('vrail', (x1 - 0.32, PY, 0.55), (x1, PY, 0.55), 0.03, 0.03, (0, -1, 0), red, jitter=0.2))
+        LZ = 0.62; light_at(name, 0.245, -D2 - 0.06, LZ)
+        objs.append(box('lcap', (0.06, 0.06, 0.012), (0.245, -D2 - 0.06, LZ + 0.05), m=iron, bevel=0.003, segs=1))
+        objs.append(box('lamp', (0.045, 0.045, 0.07), (0.245, -D2 - 0.06, LZ), m=C('lamp', '#ffd98a', rough=0.3), bevel=0.004, segs=1))
+        for k, py_ in enumerate((-0.3, -0.16)): objs.append(cyl('claypot', 0.04 + 0.01 * k, 0.09 + 0.02 * k, (-W2 - 0.08, py_, 0.05), m=_ara('clay'), verts=10, r2=0.03, bevel=0.0))
+        monkey_puzzle(objs, -W2 - 0.3, D2 - 0.02, 1.25 if look == 3 else 1.9, key, seed + 11)
+    pop_door(objs, FL, white if look >= 2 else (new[1] if look else dark), wood, dark)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18 if look < 3 else 10, 0.0)
+    return finish(objs, name)
