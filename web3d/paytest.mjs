@@ -72,8 +72,9 @@ ok('level 3: the Coins shelf, Adopt (the four and each), the shelves, "Or have i
 const blue = async sel => p.evaluate(sel => [...document.querySelectorAll('.gsheet:not([hidden]) ' + sel)].map(b => getComputedStyle(b).backgroundColor), sel);
 await p.evaluate(() => window.__farm.deco.shop()); await run(0.3); await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gchip')].find(c => c.dataset.tab === 'coins').click()); await run(0.3);
 const cb = await blue('.giap-buy');
-const pile = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .giap[data-bag]')].map(c => { const P = c.querySelector('.giap-pile').getBoundingClientRect(); return [...c.querySelectorAll('.giap-c')].every(x => { const r = x.getBoundingClientRect(); return r.left >= P.left - 0.5 && r.right <= P.right + 0.5 && r.top >= P.top - 0.5 && r.bottom <= P.bottom + 0.5; }); }));
-ok('the bags\' piles of coins all inside their pictures (the Cart\'s too)', pile.length === 4 && pile.every(Boolean), pile);
+const pile = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .giap[data-bag]')].map(c => { const v = c.querySelector('.giap-bag svg'); if (!v) return false; const r = v.getBoundingClientRect(); return r.width > 50 && Math.abs(r.width - r.height) < 2 && v.querySelectorAll('circle, ellipse').length > 3; }));
+ok('each bag its own picture (a purse, a basket, a sack, a cart: 15 Nov 2026), square and whole', pile.length === 4 && pile.every(Boolean), pile);
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .giap[data-bag="basket"]').scrollIntoView({ block: 'end' })); await shoot('1a_coins');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .giap[data-bag="cart"]').scrollIntoView({ block: 'center' })); await shoot('1_coins');
 await close(); await p.evaluate(() => window.__farm.book()); await run(0.3); const ab = await blue('.giap-adopt, .giap-adopt-all');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .giap-adopt-all').scrollIntoView({ block: 'start' })); await shoot('2_book');

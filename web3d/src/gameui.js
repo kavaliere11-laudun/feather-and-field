@@ -1,6 +1,7 @@
 // The game's own screens over the 3D farm (game.js holds the farm): the top bar (level, coins, settings), the welcome
 // (language, your farmer), a bird's card, the level, the coins and the settings, as sheets that slide up from the bottom,
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
+import { BAG_ART } from './bagart.js';
 import { READY, LANG_NAME } from './lang.js';
 import { BAGS, TRIO_LINES, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
@@ -1143,7 +1144,7 @@ export class GameUI {
       const amt = el('p', 'gpage-s gdec-p'); amt.append(el('span', 'gcoin gcoin-s'), document.createTextNode(this.dt('coins', { n: fmt(B.coins) }))); info.append(amt);
       const go = el('button', 'gbtn gsmallbtn gpage-go gpay giap-buy', PAY ? PAY.price('bag:' + B.id) : this.money(B.price)); go.type = 'button';
       go.addEventListener('click', () => this.payFor('bag:' + B.id, { what: this.dt(B.id), price: B.price, done: () => this.thanksDemo(this.dt('thanks_coins', { n: fmt(B.coins) })) }));
-      info.append(go); card.append(this.coinPile(B.pile), info); b.append(card);
+      info.append(go); const pic = el('div', 'gpic giap-bag'); pic.innerHTML = BAG_ART[B.id] || ''; card.append(BAG_ART[B.id] ? pic : this.coinPile(B.pile), info); b.append(card);
     }
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in
