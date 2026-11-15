@@ -2146,6 +2146,25 @@ def garden_sign_v(kind, name):
         o.rotation_euler = (-U).to_track_quat('Z', 'Y').to_euler(); o.scale = (1.0, 0.35, 1.0); objs.append(o)
         for (u, v) in ((-0.008, 0.006), (0.008, 0.005), (0.0, -0.006), (-0.006, -0.003), (0.006, -0.008)): disc('gsseed', u, v, 0.0018, 0.0026, seed, lift=0.0045)
         for a in (-1.0, 0.0, 1.0): disc('gscalyx', 0.012 * math.sin(a), 0.016 + 0.006 * math.cos(a), 0.004, 0.009, green, lift=0.004, rot=a)
+    elif kind == 'lettuce':
+        lg = C('gslettuce', '#8fc65a', rough=0.7); disc('gslet', 0.0, -0.004, 0.03, 0.024, green)
+        disc('gslet2', 0.0, -0.002, 0.02, 0.016, lg, lift=0.001); disc('gslet3', 0.0, 0.0, 0.009, 0.008, C('gslettuce2', '#b7dc7c', rough=0.7), lift=0.002)
+    elif kind == 'peas':
+        pod = C('gspod', '#6fae45', rough=0.6); pea = C('gspea', '#a4d65e', rough=0.5)
+        disc('gspod', 0.0, -0.002, 0.034, 0.011, pod, rot=0.35)
+        for k in range(4): disc('gspea', -0.02 + k * 0.0135, -0.009 + k * 0.0048, 0.0058, 0.0058, pea, lift=0.001)
+    elif kind == 'corn':
+        yel = C('gscorn', '#f2c230', rough=0.55); disc('gshusk', -0.012, -0.008, 0.012, 0.026, green, rot=0.35); disc('gshusk', 0.012, -0.008, 0.012, 0.026, green, rot=-0.35)
+        disc('gscob', 0.0, 0.002, 0.012, 0.03, yel, lift=0.001)
+        for k in range(4): disc('gskern', 0.0, -0.014 + k * 0.011, 0.011, 0.0012, C('gscornd', '#d9a21f', rough=0.6), lift=0.002)
+    elif kind == 'beet':
+        pur = C('gsbeet', '#9c2f5c', rough=0.55); disc('gsbeet', 0.0, -0.01, 0.022, 0.02, pur); disc('gsroot', 0.0, -0.032, 0.003, 0.008, pur)
+        for a_ in (-0.5, 0.0, 0.5): disc('gstop', 0.014 * math.sin(a_) * 2, 0.02 + 0.012 * math.cos(a_), 0.006, 0.016, green, rot=a_)
+        disc('gsvein', 0.0, 0.022, 0.0015, 0.014, pur, lift=0.001)
+    elif kind == 'sunf':
+        yel = C('gssun', '#f6c221', rough=0.55); br = C('gssunc', '#6b4423', rough=0.7)
+        for k in range(10): disc('gspetal', 0.022 * math.cos(k * 0.628), 0.004 + 0.022 * math.sin(k * 0.628), 0.011, 0.005, yel, rot=k * 0.628)
+        disc('gscentre', 0.0, 0.004, 0.014, 0.014, br, lift=0.001); disc('gsstem', 0.0, -0.03, 0.002, 0.012, green)
     else:
         org = C('gspump', '#e27d2a', rough=0.55); dark = C('gspumpd', '#c4651e', rough=0.6); stalk = C('gsstalk', '#6b6a35', rough=0.8)
         disc('gspump', 0.0, -0.006, 0.028, 0.023, org)
@@ -2261,6 +2280,87 @@ def _pumpkin_vine(objs, x, y, s, leaf, vine, rng_a=0.0, leaves=8):
         polyline(objs, 'gprunner', pts, 0.007, 0.006, (0, 0, 1), vine)
 
 
+def _more_crops(objs, kind, stage, s):
+    """The five vegetables of 15 Nov 2026 (Audrey: "extend the fields to grow vegetables. Introduce new ones"): lettuce,
+    peas, sweetcorn, beetroot, sunflowers, each at stage 1 (shoots), 2 (growing), 3 (ripe), in a bed's own frame."""
+    Z = GARDEN_SOIL; R = random.uniform
+    quat = lambda d: Vector(d).normalized().to_track_quat('Y', 'Z')
+    def shoots(spots, m, L=0.035):
+        for (x, y) in spots:
+            for sd in (-1, 1): objs.append(flat_leaf('gxshoot', (x, y, Z + 0.004), quat((sd * 0.8, R(-0.2, 0.2), 0.8)), L, L * 0.4, m, shape='diamond', both=True, fold=0.002))
+    if kind == 'lettuce':
+        leaf = [C('gl_leaf%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#7fbf4d', '#93cc5c', '#6aae40'))]; heart = C('gl_heart', '#bfe384', rough=0.7, var=0.04)
+        spots = [(x, -0.5 + j * 0.34) for x in (-0.18, 0.18) for j in range(4)]
+        if stage == 1: shoots(spots, leaf[1]); return
+        for (x, y) in spots:
+            r = 0.07 + 0.06 * s
+            for ring, (n, rr, up) in enumerate(((7, 1.0, 0.45), (6, 0.7, 0.9)) if stage == 3 else ((6, 0.85, 0.7),)):
+                for k in range(n):
+                    a = k / n * math.tau + ring * 0.4 + R(-0.15, 0.15)
+                    objs.append(flat_leaf('glleaf', (x, y, Z + 0.004), quat((math.cos(a), math.sin(a), up)), r * rr, r * rr * 0.62, random.choice(leaf), shape='heart', both=True, fold=-0.008))
+            if stage == 3: objs.append(sphere('glheart', 0.045, (x, y, Z + 0.035), (1, 1, 0.8), m=heart, ico=1, disp=0.15, seed=int((x + y) * 100)))
+    elif kind == 'peas':
+        leaf = [C('gp2_leaf%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#5e9f3e', '#74b24c'))]; cane = C('gp2_cane', '#c9a665', rough=0.8); pod = C('gp2_pod', '#7fbd4a', rough=0.55); fl = C('gp2_flower', '#fbf6ee', rough=0.6)
+        H = 0.5; ys = (-0.5, -0.17, 0.17, 0.5)
+        for y in ys:                                    # crossed canes down the bed, a cane along their tops
+            for sd in (-1, 1): objs.append(plank('gxcane', (sd * 0.2, y, Z), (-sd * 0.03, y, Z + H), 0.012, 0.012, (0, 1, 0), cane, jitter=0.0, bevel=0.0))
+        objs.append(plank('gxcane', (0, ys[0] - 0.06, Z + H - 0.035), (0, ys[-1] + 0.06, Z + H - 0.035), 0.012, 0.012, (0, 0, 1), cane, jitter=0.0, bevel=0.0))
+        if stage == 1: shoots([(sd * 0.2, y) for y in ys for sd in (-1, 1)], leaf[1]); return
+        top = 0.5 if stage == 2 else 0.95
+        for y in ys:
+            for sd in (-1, 1):
+                for k in range(4 if stage == 2 else 8):
+                    u = (k + 0.5) / (4 if stage == 2 else 8) * top; px = sd * 0.2 * (1 - u) - sd * 0.03 * u; pz = Z + H * u
+                    objs.append(flat_leaf('gxleaf', (px, y, pz), quat((sd * R(0.2, 0.9), R(-1, 1), R(0.1, 0.6))), 0.055, 0.03, random.choice(leaf), shape='heart', both=True, fold=0.003))
+                    if stage == 2 and k % 2: objs.append(sphere('gxflower', 0.012, (px + sd * 0.02, y + R(-0.03, 0.03), pz + 0.02), m=fl, ico=1))
+                    if stage == 3 and k % 2 == 0: objs.append(sphere('gxpod', 0.012, (px + sd * 0.03, y + R(-0.04, 0.04), pz - 0.015), (0.8, 0.8, 3.2), (R(-0.3, 0.3), R(-0.3, 0.3), 0), m=pod, seg=6, rings=4))
+    elif kind == 'corn':
+        leaf = [C('gc2_leaf%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#5a9a3a', '#6fae45'))]; stalk = C('gc2_stalk', '#7fae4a', rough=0.7); cob = C('gc2_cob', '#f2c230', rough=0.5); husk = C('gc2_husk', '#a9cf6a', rough=0.7); tas = C('gc2_tassel', '#d8c27a', rough=0.8)
+        spots = [(x, y) for x in (-0.17, 0.17) for y in (-0.45, 0.0, 0.45)]
+        if stage == 1: shoots(spots, leaf[1], L=0.06); return
+        H = 0.34 if stage == 2 else 0.62
+        for (x, y) in spots:
+            h = H * R(0.9, 1.05); objs.append(cyl('gxstalk', 0.011, h, (x, y, Z + h / 2), m=stalk, verts=6, r2=0.007, bevel=0.0))
+            for k in range(4 if stage == 2 else 6):
+                a = k * 2.4 + R(-0.3, 0.3); z = Z + h * (0.2 + 0.13 * k)
+                ribbon_leaf(objs, 'gxblade', (x, y, z), (math.cos(a), math.sin(a), 0.5), 0.17 + 0.05 * s, 0.022, random.choice(leaf), up=0.25)
+            if stage == 3:
+                for k, a in enumerate((0.6, 3.6)):
+                    c = (x + math.cos(a) * 0.028, y + math.sin(a) * 0.028, Z + h * (0.42 + 0.12 * k))
+                    objs.append(sphere('gxhusk', 0.022, c, (1, 1, 2.6), (math.cos(a) * 0.35, -math.sin(a) * 0.35, 0), m=husk, seg=6, rings=4))
+                    objs.append(sphere('gxcob', 0.017, (c[0] + math.cos(a) * 0.006, c[1] + math.sin(a) * 0.006, c[2] + 0.03), (1, 1, 2.0), (math.cos(a) * 0.35, -math.sin(a) * 0.35, 0), m=cob, seg=6, rings=4))
+                for k in range(4): ribbon_leaf(objs, 'gxtassel', (x, y, Z + h), (math.cos(k * 1.57), math.sin(k * 1.57), 1.6), 0.07, 0.006, tas, up=0.6)
+    elif kind == 'beet':
+        leaf = [C('gb_leaf%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#3f8236', '#4f9440', '#356f30'))]; stem = C('gb_stem', '#b0325f', rough=0.6); root = C('gb_root', '#8f2a55', rough=0.55, var=0.04)
+        spots = [(x + R(-0.01, 0.01), -0.5 + j * 0.2) for x in (-0.2, 0.0, 0.2) for j in range(6)]
+        if stage == 1: shoots(spots, stem, L=0.03); return
+        for (x, y) in spots:
+            n = 4 if stage == 2 else 6
+            for k in range(n):
+                a = k / n * math.tau + R(-0.3, 0.3); d = Vector((math.cos(a) * 0.5, math.sin(a) * 0.5, 1.0)).normalized(); L = (0.06 + 0.07 * s) * R(0.85, 1.1)
+                p = Vector((x, y, Z + 0.01)) + d * L * 0.45
+                objs.append(plank('gxbstem', (x, y, Z + 0.005), tuple(p), 0.006, 0.004, (math.cos(a), math.sin(a), 0), stem, jitter=0.0, bevel=0.0))
+                objs.append(flat_leaf('gxbleaf', tuple(p), quat((d.x, d.y, d.z * 0.7)), L * 0.75, L * 0.3, random.choice(leaf), shape='heart', both=True, fold=0.004))
+            if stage == 3: objs.append(sphere('gxbeet', R(0.026, 0.032), (x, y, Z + 0.004), (1, 1, 0.75), m=root, seg=8, rings=5))
+    else:                                               # sunflowers
+        leaf = [C('gs2_leaf%d' % i, h, rough=0.7, var=0.05) for i, h in enumerate(('#4f8f38', '#63a445'))]; stalk = C('gs2_stalk', '#6c9a3e', rough=0.7); pet = [C('gs2_petal', '#f6c221', rough=0.55), C('gs2_petal2', '#f9d44a', rough=0.55)]; mid = C('gs2_centre', '#5d3b1f', rough=0.8); bud = C('gs2_bud', '#86b04a', rough=0.7)
+        spots = [(-0.14, -0.42), (0.14, 0.02), (-0.12, 0.46)]
+        if stage == 1: shoots(spots + [(0.16, -0.5), (0.15, 0.5)], leaf[1], L=0.06); return
+        H = 0.36 if stage == 2 else 0.68
+        for i, (x, y) in enumerate(spots):
+            h = H * (1.0, 0.9, 1.06)[i]; objs.append(cyl('gxstalk', 0.014, h, (x, y, Z + h / 2), m=stalk, verts=6, r2=0.01, bevel=0.0))
+            for k in range(4 if stage == 2 else 6):
+                a = k * 2.2 + i; z = Z + h * (0.18 + 0.12 * k)
+                objs.append(flat_leaf('gxsleaf', (x, y, z), quat((math.cos(a), math.sin(a), 0.25)), 0.11 + 0.03 * s, 0.05 + 0.012 * s, random.choice(leaf), shape='heart', both=True, fold=0.006))
+            F = Vector((0.15 * (i - 1), -0.75, 0.6)).normalized(); c = Vector((x, y, Z + h)) + F * 0.02
+            if stage == 2: objs.append(sphere('gxbud', 0.035, tuple(c), (1, 1, 0.8), m=bud, ico=1, disp=0.1, seed=i)); continue
+            q = F.to_track_quat('Z', 'Y')
+            o = cyl('gxcentre', 0.06, 0.02, tuple(c), (0, 0, 0), m=mid, verts=12, bevel=0.0); o.rotation_euler = q.to_euler(); objs.append(o)
+            for k in range(14):
+                a = k / 14 * math.tau; d = q @ Vector((math.cos(a), math.sin(a), 0.12))
+                objs.append(flat_leaf('gxpetal', tuple(c + (q @ Vector((math.cos(a), math.sin(a), 0))) * 0.05 + F * 0.004), d.to_track_quat('Y', 'Z') if abs(d.z) < 0.99 else q, 0.07, 0.02, pet[k % 2], shape='diamond', both=True, fold=0.002))
+
+
 def garden_crop_v(kind, stage, name):
     """One bed's crop at stage 1 (shoots), 2 (growing) or 3 (ripe), in a bed's own frame."""
     random.seed(sum(map(ord, name))); objs = []
@@ -2282,6 +2382,7 @@ def garden_crop_v(kind, stage, name):
             for j, y in enumerate((-0.42, -0.1, 0.22, 0.54)):
                 _strawberry_plant(objs, x + random.uniform(-0.01, 0.01), y + random.uniform(-0.015, 0.015), s, leaf, stalk,
                                   flowers=(0, 2, 1)[stage - 1], berries=(0, 0, random.choice((3, 4)))[stage - 1], unripe=(0, 1, 1)[stage - 1])
+    elif kind in ('lettuce', 'peas', 'corn', 'beet', 'sunf'): _more_crops(objs, kind, stage, s)
     else:
         leaf = [C('gpleaf%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#4c8d33', '#5d9f3b', '#447f2e'))]; vine = C('gpvine', '#5a8f38', rough=0.75)
         stalk = C('gpstalkc', '#6b6a35', rough=0.8)

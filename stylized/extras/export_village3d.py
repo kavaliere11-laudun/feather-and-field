@@ -42,7 +42,7 @@ BUILD = {'farmhouse': (village3d.farmhouse, 22000), 'windmill': (village3d.windm
          'pasture': (village3d.pasture_v, 6000), 'pasture_shelter': (village3d.pasture_shelter_v, 6000),
          'kennel': (lambda: __import__('beasts').kennel(), 7000),
          'garden': (village3d.garden_v, 14000)}      # (the vegetable garden, 7 Nov 2026: its beds; their signs and crops below)
-for _k in ('carrot', 'straw', 'pump'):
+for _k in ('carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf'):      # (the last five: 15 Nov 2026, web3d/models/garden2.glb)
     BUILD['garden_sign_' + _k] = ((lambda k=_k: village3d.garden_sign_v(k, 'garden_sign_' + k)), 1500)
     for _s, _b in ((1, 4000), (2, 9000), (3, 12000)):
         BUILD['garden_%s_%d' % (_k, _s)] = ((lambda k=_k, s=_s: village3d.garden_crop_v(k, s, 'garden_%s_%d' % (k, s))), _b)

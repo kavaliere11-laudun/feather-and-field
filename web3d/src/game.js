@@ -281,7 +281,7 @@ export const TEXT = {
     hunt_streak: '{n} days in a row', hunt_total: 'golden eggs found: {n}', hunt_lv_t: 'New: a golden egg to find every day', hunt_lv_b: 'Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.',
     // the vegetable garden (7 Nov 2026)
     garden_title: 'Your vegetable garden', garden_how: 'Sow a bed for a few coins and pick it when it’s ripe: carrots grow fastest, pumpkins slowest. Your birds love them as treats, and the villagers ask for them too.',
-    crop_carrot: 'Carrots', crop_straw: 'Strawberries', crop_pump: 'Pumpkins', bed_n: 'Bed {n}', bed_empty: 'Ready to sow. What shall we grow?', bed_sow: '{c} coins · {t}',
+    crop_carrot: 'Carrots', crop_lettuce: 'Lettuces', crop_l_lettuce: 'lettuces', ord_lettuce: 'Lettuces', treat_lettuce: 'An extra egg from each hen, soon after.', crop_peas: 'Peas', crop_l_peas: 'peas', ord_peas: 'Peas', treat_peas: 'An extra egg from each hen, and a little experience for every bird.', crop_corn: 'Sweetcorn', crop_l_corn: 'sweetcorn', ord_corn: 'Sweetcorn', treat_corn: 'An extra egg from each hen, and a little experience for every bird.', crop_beet: 'Beetroot', crop_l_beet: 'beetroot', ord_beet: 'Beetroot', treat_beet: 'An extra egg from each hen, and a little experience for every bird.', crop_sunf: 'Sunflower seeds', crop_l_sunf: 'sunflower seeds', ord_sunf: 'Sunflower seeds', treat_sunf: 'Two extra eggs from each hen, and a little experience for every bird.', crop_next: 'Next: {crop} from level {l}', crop_straw: 'Strawberries', crop_pump: 'Pumpkins', bed_n: 'Bed {n}', bed_empty: 'Ready to sow. What shall we grow?', bed_sow: '{c} coins · {t}',
     bed_sown: 'Just sown: the first shoots soon.', bed_shoots: 'The first little shoots.', bed_growing: 'Growing well.', bed_ripe: 'Ripe! {n} to pick.', bed_pick: 'Pick',
     basket_title: 'Your basket', basket_how: 'Tap one of your birds to give their coop a treat. Villagers’ orders take from your basket too.', garden_move: 'Move the garden',
     garden_sowing: '{farmer} is on the way to sow the {crop}', garden_sowed: '{e} {crop} sown · −{c} coins. Ripe in {t}.', garden_broke: 'Not enough coins for the seeds yet',
@@ -639,7 +639,7 @@ export const TEXT = {
     hunt_streak: '{n} jours de suite', hunt_total: 'œufs d’or trouvés : {n}', hunt_lv_t: 'Nouveau : un œuf d’or à trouver chaque jour', hunt_lv_b: 'Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite.',
     // le potager (7 nov. 2026)
     garden_title: 'Votre potager', garden_how: 'Semez un carré pour quelques pièces et récoltez-le quand il est mûr : les carottes poussent le plus vite, les citrouilles le plus lentement. Vos oiseaux en raffolent, et les villageois en demandent aussi.',
-    crop_carrot: 'Carottes', crop_straw: 'Fraises', crop_pump: 'Citrouilles', bed_n: 'Carré {n}', bed_empty: 'Prêt à semer. Qu’allons-nous faire pousser ?', bed_sow: '{c} pièces · {t}',
+    crop_carrot: 'Carottes', crop_lettuce: 'Laitues', crop_l_lettuce: 'laitues', ord_lettuce: 'Laitues', treat_lettuce: 'Un œuf de plus de chaque poule, peu après.', crop_peas: 'Petits pois', crop_l_peas: 'petits pois', ord_peas: 'Petits pois', treat_peas: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_corn: 'Maïs doux', crop_l_corn: 'épis de maïs', ord_corn: 'Maïs doux', treat_corn: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_beet: 'Betteraves', crop_l_beet: 'betteraves', ord_beet: 'Betteraves', treat_beet: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_sunf: 'Graines de tournesol', crop_l_sunf: 'graines de tournesol', ord_sunf: 'Graines de tournesol', treat_sunf: 'Deux œufs de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_next: 'Ensuite : {crop} au niveau {l}', crop_straw: 'Fraises', crop_pump: 'Citrouilles', bed_n: 'Carré {n}', bed_empty: 'Prêt à semer. Qu’allons-nous faire pousser ?', bed_sow: '{c} pièces · {t}',
     bed_sown: 'Tout juste semé : les premières pousses bientôt.', bed_shoots: 'Les premières petites pousses.', bed_growing: 'Ça pousse bien.', bed_ripe: 'Mûr ! {n} à récolter.', bed_pick: 'Récolter',
     basket_title: 'Votre panier', basket_how: 'Touchez un de vos oiseaux pour offrir une friandise à son poulailler. Les commandes du village se servent aussi dans votre panier.', garden_move: 'Déplacer le potager',
     garden_sowing: '{farmer} va semer les {crop}', garden_sowed: '{e} {crop} semées · −{c} pièces. Mûres dans {t}.', garden_broke: 'Pas encore assez de pièces pour les graines',
@@ -1046,8 +1046,8 @@ export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 *
 // new: they were sold as collected; the grain store, the vegetable basket and the fish box are its other shelves). A
 // shelf's size: its base, 5% more for each level past 5, half as much again with the bigger shelves bought. Sold from
 // there, a shelf at a time (what the open orders still want is kept unless asked); the orders take from it when they go
-export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18 }, eggMax: 40 };
-export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'fish'];
+export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, lettuce: 30, peas: 30, corn: 16, beet: 16, sunf: 12, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18, lettuce: 2, peas: 3, corn: 8, beet: 10, sunf: 14 }, eggMax: 40 };
+export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf', 'fish'];
 const shelfSize = (k, level, big) => Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, level - PANTRY.from)) * (big ? PANTRY.bought : 1));      // (a shelf's size at a level; the save's check: no shelf holds more than its size at the save's own level)
 export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump'];
 const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
@@ -1094,13 +1094,21 @@ export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 
 // Needs to be relevant as the game cannot become too easy either"; her choice: "Buy more, by level"): a fourth bed from
 // level 9 for 400 coins, a fifth from level 14 for 900, a sixth from level 20 for 2,000 (the level and the coins both), in a
 // second row behind the first three. Saved: simply how many beds the garden has (never more than the level allows)
-export const GARDEN = { level: 4, beds: 3, more: [{ level: 9, price: 400 }, { level: 14, price: 900 }, { level: 20, price: 2000 }], max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
+export const GARDEN = { level: 4, beds: 3, more: [{ level: 9, price: 400 }, { level: 14, price: 900 }, { level: 20, price: 2000 }, { level: 22, price: 3000 }, { level: 24, price: 4000 }, { level: 27, price: 5000 }, { level: 30, price: 6000 }], max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
 export const bedsMost = level => GARDEN.beds + GARDEN.more.filter(m => level >= m.level).length;
 export const CROPS = {
   carrot: { grow: 1 * 3600e3, seed: 5, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥕' },
   straw: { grow: 3 * 3600e3, seed: 10, n: 6, xp: 2, treat: 3, eggs: 1, exp: 8, e: '🍓' },
   pump: { grow: 8 * 3600e3, seed: 20, n: 2, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🎃' },
+  // (15 Nov 2026, Audrey: "extend the fields to grow vegetables. Introduce new ones and it becomes a real part of the game":
+  // five more, each from its own level (the first three with the garden); claude/vegetables-plan.md)
+  lettuce: { grow: 0.5 * 3600e3, seed: 3, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥬', level: 6 },
+  peas: { grow: 2 * 3600e3, seed: 8, n: 8, xp: 2, treat: 3, eggs: 1, exp: 8, e: '🫛', level: 9 },
+  corn: { grow: 4 * 3600e3, seed: 12, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🌽', level: 12 },
+  beet: { grow: 5 * 3600e3, seed: 15, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🍠', level: 15 },
+  sunf: { grow: 6 * 3600e3, seed: 18, n: 3, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🌻', level: 18 },
 };
+export const cropLevel = k => (CROPS[k] && CROPS[k].level) || GARDEN.level;
 export const CROP_IDS = Object.keys(CROPS);
 // a treat's extra egg k from a hen: 20 or 50 minutes after it (and a few minutes of her own)
 export const treatEggAt = (t, henId, k) => Math.round(t + (GARDEN.eggAt[k] + GARDEN.eggSpread * hash01('treat|' + henId + '|' + t + '|' + k)) * 60e3);
@@ -1607,13 +1615,13 @@ export function checkFarm(d, now = Date.now()) {
   if (vgd && L >= GARDEN.level) {
     const gd = vgd, nb = int(Array.isArray(gd.beds) ? gd.beds.length : GARDEN.beds, GARDEN.beds, bedsMost(L), GARDEN.beds), beds = Array.from({ length: nb }, (_, i) =>      // (as many beds as the save has, never more than its level allows)
       { const b = Array.isArray(gd.beds) && gd.beds[i] && typeof gd.beds[i] === 'object' ? gd.beds[i] : null;
-      return b && Object.hasOwn(CROPS, b.crop) && Number.isFinite(b.ripe) && b.ripe > 0 ? { crop: b.crop, ripe: int(b.ripe, 1, now + CROPS[b.crop].grow + TZ_SLACK, 1) } : { crop: null, ripe: 0 }; });
+      return b && Object.hasOwn(CROPS, b.crop) && L >= cropLevel(b.crop) && Number.isFinite(b.ripe) && b.ripe > 0 ? { crop: b.crop, ripe: int(b.ripe, 1, now + CROPS[b.crop].grow + TZ_SLACK, 1) } : { crop: null, ripe: 0 }; });
     const vg = gd.veg && typeof gd.veg === 'object' ? gd.veg : {}, veg = {};
-    for (const k of CROP_IDS) veg[k] = int(vg[k], 0, shelfSize(k, levelOf(out.xp), d.shelves === true), 0);
+    for (const k of CROP_IDS) veg[k] = L >= cropLevel(k) ? int(vg[k], 0, shelfSize(k, levelOf(out.xp), d.shelves === true), 0) : 0;      // (a vegetable's: none before its own level)
     out.garden = { x: spotNum(gd.x), z: spotNum(gd.z), deg: [0, 90].includes(gd.deg) ? gd.deg : 0, beds, veg };
     // a coop's last treat (when, which): never ahead of now; none before the garden
     for (const c of out.coops) { const r = (Array.isArray(d.coops) ? d.coops : []).find(o => o && o.id === c.id), tr = r && r.treat;
-      if (tr && typeof tr === 'object' && Object.hasOwn(CROPS, tr.crop) && Number.isInteger(tr.t) && tr.t > 0 && tr.t <= now + TZ_SLACK) c.treat = { t: tr.t, crop: tr.crop }; }
+      if (tr && typeof tr === 'object' && Object.hasOwn(CROPS, tr.crop) && L >= cropLevel(tr.crop) && Number.isInteger(tr.t) && tr.t > 0 && tr.t <= now + TZ_SLACK) c.treat = { t: tr.t, crop: tr.crop }; }
   }
   return out;
 }
@@ -2066,7 +2074,7 @@ export class Game {
   // ---- the pantry
   pantryBag() { return this.data.pantry || (this.data.pantry = { eggs: 0, val: 0, honey: 0 }); }
   shelf(k) { return shelfSize(k, this.level, !!this.data.shelves); }
-  shelfOpen(k) { return k === 'eggs' ? true : k === 'honey' ? !!this.data.honey : k === 'grain' ? !!this.data.wheat || (this.data.grain || 0) > 0 : k === 'fish' ? this.fishOpen('pond') : this.gardenOpen(); }
+  shelfOpen(k) { return k === 'eggs' ? true : k === 'honey' ? !!this.data.honey : k === 'grain' ? !!this.data.wheat || (this.data.grain || 0) > 0 : k === 'fish' ? this.fishOpen('pond') : this.cropOpen(k) || !!(this.data.garden && this.data.garden.veg && this.data.garden.veg[k] > 0); }
   wantedOf(k) { if (!this.ordersOpen() || !this.data.orders) return 0; return Math.min(this.storeOf(k), this.data.orders.list.reduce((a, o) => a + Math.max(0, (o.items[k] || 0) - (o.got[k] || 0)), 0)); }      // (what the open orders still want of a shelf, of what's on it)
   // what n things off a shelf fetch (the eggs: their share of what they're worth; the fish: the biggest ones, the orders taking the smallest)
   shelfValue(k, n) {
@@ -2158,7 +2166,9 @@ export class Game {
   // basket, as much as there's room for, and XP); the beds ripe now; a treat for a coop (by day, one a day: its vegetables
   // from the basket, every bird there a little experience (strawberries, a pumpkin), its hens' extra eggs to come: dueLays)
   gardenOpen() { return this.level >= GARDEN.level; }
-  garden() { return this.data.garden || (this.data.garden = { x: null, z: null, deg: 0, beds: Array.from({ length: GARDEN.beds }, () => ({ crop: null, ripe: 0 })), veg: { carrot: 0, straw: 0, pump: 0 } }); }
+  cropOpen(k) { return this.gardenOpen() && Object.hasOwn(CROPS, k) && this.level >= cropLevel(k); }      // (a vegetable: from its own level)
+  cropNext() { const k = CROP_IDS.filter(c => !this.cropOpen(c)).sort((a, b) => cropLevel(a) - cropLevel(b))[0]; return k ? { crop: k, level: cropLevel(k) } : null; }
+  garden() { return this.data.garden || (this.data.garden = { x: null, z: null, deg: 0, beds: Array.from({ length: GARDEN.beds }, () => ({ crop: null, ripe: 0 })), veg: Object.fromEntries(CROP_IDS.map(k => [k, 0])) }); }
   vegBasket() { return this.garden().veg; }      // (the vegetables picked; basket(): the rare colours' birds)
   bedStage(i, now = Date.now()) {
     const b = this.garden().beds[i]; if (!b || !b.crop) return 'empty';
@@ -2167,7 +2177,7 @@ export class Game {
   }
   bedLeft(i, now = Date.now()) { const b = this.garden().beds[i]; return b && b.crop ? Math.max(0, b.ripe - now) : 0; }
   sowBed(i, crop, now = Date.now()) {
-    if (!this.gardenOpen() || !Object.hasOwn(CROPS, crop)) return null;
+    if (!this.cropOpen(crop)) return null;
     const b = this.garden().beds[i]; if (!b || b.crop) return null;
     const C = CROPS[crop]; if (this.data.coins < C.seed) return { broke: true };
     this.data.coins -= C.seed; b.crop = crop; b.ripe = Math.round(now + C.grow); this.save();

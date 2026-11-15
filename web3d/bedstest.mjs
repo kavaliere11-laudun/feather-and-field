@@ -66,7 +66,7 @@ const was = await S();
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); const said = await hintT();
 ok('bought: 400 coins less, four beds, said', s.coins === was.coins - 400 && s.beds === 4 && T.got.test(said), { coins: s.coins, beds: s.beds, said });
-ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.join() === 'true,true,true,true,false,false', { foot: s.foot, frames: s.frames });
+ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.slice(0, 6).join() === 'true,true,true,true,false,false' && !s.frames.slice(6).some(Boolean), { foot: s.foot, frames: s.frames });
 ok('still on your land, where it fits', s.st.at && s.st.owned, s.st.at);
 c = await sheet();
 ok('its card shows bed 4, and the fifth to come at level 14', (fr ? /Carré 4/ : /Bed 4/).test(c) && T.lv14.test(c), c.split('\n').slice(-8));
@@ -94,7 +94,7 @@ ok('level 14: the fifth bed for 900 coins; the sixth to come at level 20', s.bed
 await level(20);
 c = await card(); await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); c = await sheet();
-ok('level 20: the sixth for 2,000 coins; then no more is offered', s.beds === 6 && s.coins === 2100 && s.next === null && !(await buyBtn()) && s.frames.every(Boolean), { beds: s.beds, coins: s.coins, next: s.next });
+ok('level 20: the sixth for 2,000 coins; the seventh comes at level 22 (15 Nov 2026: up to ten)', s.beds === 6 && s.coins === 2100 && s.next && s.next.n === 7 && s.next.level === 22 && s.next.locked && !(await buyBtn()) && s.frames.slice(0, 6).every(Boolean), { beds: s.beds, coins: s.coins, next: s.next });
 await close(); await look(3.8); await run(1); s = await S();
 ok('a bubble for each of the six empty beds', s.st.bubs.filter(Boolean).length === 6, s.st.bubs);
 await shoot('3_six');

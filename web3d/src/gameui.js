@@ -939,7 +939,7 @@ export class GameUI {
   pantrySheet(h = {}) {
     const g = this.g, b = this.open('pantry', '🧺 ' + this.t('pantry_title')), fmt = n => n.toLocaleString(g.locale()), rows = g.pantry(), first = !g.pantryBag().seen;
     this.bird = null; g.pantrySeen(); this.refresh();
-    const icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' };
+    const icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', ...Object.fromEntries(CROP_IDS.map(k => [k, CROPS[k].e])) };
     if (h.note) b.append(el('p', 'gtext gpan-note', h.note));
     b.append(el('p', 'gnote', first && g.pantryBag().eggs ? this.t('pantry_first') : this.t('pantry_sub')));
     const list = el('div', 'gcatch gpan');
@@ -1012,7 +1012,7 @@ export class GameUI {
   ordersSheet(h = {}) {
     const g = this.g, b = this.open('orders', this.t('ord_title')), fmt = n => n.toLocaleString(g.locale());
     this.bird = null;
-    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', carrot: '🥕', straw: '🍓', pump: '🎃' }, store = k => k !== 'fish';      // (the grain and the vegetables come from their store when it goes)
+    const list = g.orders(), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', ...Object.fromEntries(CROP_IDS.map(k => [k, CROPS[k].e])) }, store = k => k !== 'fish';      // (the grain and the vegetables come from their store when it goes)
     b.append(el('p', 'gnote', this.t('ord_sub') + (g.gardenOpen() ? ' ' + this.t('ord_sub_veg') : '')));
     for (const o of list) {
       const ready = g.orderReady(o), P = g.orderPayOf(o), c = el('div', 'gcard gorder' + (ready ? ' gorder-ready' : '')), hd = el('div', 'gcard-h');
@@ -1371,11 +1371,13 @@ export class GameUI {
       if (st === 'empty') {
         c.append(el('p', 'gnote', this.t('bed_empty')));
         const row = el('div', 'gbed-sow');
-        for (const k of CROP_IDS) {
-          const C = CROPS[k], broke = g.data.coins < C.seed, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), C.e + ' ' + this.t('crop_' + k) + ' · ' + this.t('bed_sow', { c: C.seed, t: this.dur(C.grow) }));
+        for (const k of CROP_IDS.filter(k => g.cropOpen(k))) {      // (those its level has opened; the next one said under them)
+          const C = CROPS[k], broke = g.data.coins < C.seed, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), C.e + ' ' + this.t('crop_' + k));
+          go.append(el('small', '', this.t('bed_sow', { c: C.seed, t: this.dur(C.grow) })));      // (its seeds and its time on a line of their own: eight to a card)
           go.type = 'button'; go.disabled = broke; go.dataset.sow = k; go.addEventListener('click', () => { if (!go.disabled) h.sow(i, k); }); row.append(go);
         }
         c.append(row);
+        const cn = g.cropNext(); if (cn) { const nx = el('p', 'gnote gcropnext', CROPS[cn.crop].e + ' ' + this.t('crop_next', { crop: this.t('crop_' + cn.crop), l: cn.level })); nx.dataset.next = cn.crop; c.append(nx); }
       } else if (st === 'ripe') {
         c.append(el('p', 'gtext gfound', this.t('bed_ripe', { n: CROPS[bed.crop].n })));
         const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('bed_pick')); go.type = 'button'; go.dataset.pick = i; go.addEventListener('click', () => { if (!go.disabled) h.pick(i); }); c.append(go);
@@ -1386,7 +1388,7 @@ export class GameUI {
       b.append(c);
     });
     if (one === null) {
-    b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
+    b.append(el('p', 'gtext gbasket', '🧺 ' + this.t('basket_title') + ' · ' + CROP_IDS.filter(k => g.cropOpen(k) || B[k]).map(k => CROPS[k].e + ' ' + fmt(B[k] || 0)).join('   ')));
     b.append(el('p', 'gnote', this.t('basket_how')));
     } else { const all = el('button', 'glink', this.t('garden_all')); all.type = 'button'; all.dataset.all = '1'; all.addEventListener('click', () => h.all && h.all()); b.append(all); return; }
     // (a bed more, 12 Nov 2026, her choice "Buy more, by level": the next one, its price; before its level, when it comes)
@@ -1406,7 +1408,7 @@ export class GameUI {
     this.bird = null;
     b.append(el('p', 'gtext', this.t('treat_body')));
     if (g.treatToday(c)) { b.append(el('p', 'gtext gfound', this.t('treat_had'))); return; }
-    for (const k of CROP_IDS) {
+    for (const k of CROP_IDS.filter(k => g.cropOpen(k) || B[k])) {
       const C = CROPS[k], n = B[k] || 0, can = g.treatCan(c, k), card = el('div', 'gcard gtreatk'), hd = el('div', 'gcard-h'); card.dataset.crop = k;
       hd.append(el('span', 'gemoji', C.e), el('span', 'gcard-t', this.t('crop_' + k)));
       card.append(hd, el('p', 'gtext', this.t('treat_' + k)), el('p', 'gnote', this.t('treat_have', { n: fmt0(n), need: C.treat })));

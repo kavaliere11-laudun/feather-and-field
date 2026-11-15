@@ -8420,11 +8420,12 @@ function honeyTap() {
 // garden); by day the farmer sows (a handful of seed over the bed) or picks (crouched, the vegetables flying up into his
 // trug), in front of the bed. A treat from the basket for a coop: he goes into its pen and scatters it, and they rush over
 // to peck it up, hearts over them
-const GARDEN_UI = { loading: null, shown: [], hold: [null, null, null, null, null, null], work: null, bub: null, opening: false };
+const GARDEN_UI = { loading: null, shown: [], hold: [null, null, null, null, null, null, null, null, null, null], work: null, bub: null, opening: false };
 let VILLAGE_VEG = null;
-const GARDEN_BEDX = [-1.0, 0.0, 1.0, -1.0, 0.0, 1.0], GARDEN_ROW2 = -2.2, GARDEN_BEDZ = [0, 0, 0, GARDEN_ROW2, GARDEN_ROW2, GARDEN_ROW2], GARDEN_DEGS = [0, 90], GARDEN_FOOT = [-1.85, -0.8, 1.75, 0.8];      // (the beds' middles across it, and back for the second row's (the beds bought, 12 Nov 2026); its footprint, x and z (its front +z))
+const GARDEN_BEDX = [-1.0, 0.0, 1.0, -1.0, 0.0, 1.0, -1.5, -0.5, 0.5, 1.5], GARDEN_ROW2 = -2.2, GARDEN_ROW3 = -4.4, GARDEN_BEDZ = [0, 0, 0, GARDEN_ROW2, GARDEN_ROW2, GARDEN_ROW2, GARDEN_ROW3, GARDEN_ROW3, GARDEN_ROW3, GARDEN_ROW3];      // (15 Nov 2026: a third row of four, the beds from level 22)
+const GARDEN_DEGS = [0, 90], GARDEN_FOOT = [-1.85, -0.8, 1.75, 0.8];      // (the beds' middles across it, and back for the second row's (the beds bought, 12 Nov 2026); its footprint, x and z (its front +z))
 // its footprint with n beds: with a second row, that much deeper at the back (the same array, so everything that has it follows)
-function gardenFoot(n) { GARDEN_FOOT[1] = n > 3 ? GARDEN_ROW2 - 0.8 : -0.8; const it = DEC.items.garden; if (it) { it.d.box.min.z = GARDEN_FOOT[1]; it.d.wb = it.d.box.clone().applyMatrix4(it.d.m).expandByScalar(0.6); } BLOCKERS = null; decorSpots = null; }
+function gardenFoot(n) { GARDEN_FOOT[1] = n > 6 ? GARDEN_ROW3 - 0.8 : n > 3 ? GARDEN_ROW2 - 0.8 : -0.8; GARDEN_FOOT[0] = n > 6 ? -2.05 : -1.85; GARDEN_FOOT[2] = n > 6 ? 2.05 : 1.75; const it = DEC.items.garden; if (it) { it.d.box.min.z = GARDEN_FOOT[1]; it.d.box.min.x = GARDEN_FOOT[0]; it.d.box.max.x = GARDEN_FOOT[2]; it.d.wb = it.d.box.clone().applyMatrix4(it.d.m).expandByScalar(0.6); } BLOCKERS = null; decorSpots = null; }
 // one bed of the three alone (the middle one's boards, posts and soil out of the garden's model: no can, no trug), for the beds bought
 function gardenBedAlone() {
   if (GARDEN_UI.alone) return GARDEN_UI.alone;
@@ -8439,11 +8440,11 @@ function gardenBedAlone() {
   }
   return (GARDEN_UI.alone = out);
 }
-const CROP_COLOUR = { carrot: '#ef8a2c', straw: '#e0453a', pump: '#f0962e' };
+const CROP_COLOUR = { carrot: '#ef8a2c', straw: '#e0453a', pump: '#f0962e', lettuce: '#8fc65a', peas: '#7fbd4a', corn: '#f2c230', beet: '#9c2f5c', sunf: '#f6c221' };
 function loadGarden() {
   if (parts.garden) return Promise.resolve(true);
-  if (!GARDEN_UI.loading) GARDEN_UI.loading = loadGLB('garden.glb').then(glb => {
-    for (const child of [...glb.scene.children]) {
+  if (!GARDEN_UI.loading) GARDEN_UI.loading = Promise.all([loadGLB('garden.glb'), loadGLB('garden2.glb')]).then(glbs => {      // (garden2.glb: the five vegetables of 15 Nov 2026)
+    for (const child of glbs.flatMap(glb => [...glb.scene.children])) {
       child.updateMatrixWorld(true);
       for (const m of meshesOf(child)) { richer(m.geometry, SAT, 1); ambientShade(m.geometry); if (m.material) { m.material.vertexColors = true; m.material.needsUpdate = true; lightUp(m.material); } }
       parts[child.name] = child;
@@ -8552,7 +8553,7 @@ function gardenTap(bubble = false) {
   if (bubble && game.bedsRipe()) { const i = game.data.garden.beds.findIndex((_, k) => game.bedStage(k) === 'ripe'); if (i >= 0 && pickBed(i)) return; }
   holdBird(null); henOff(); gardenCard();
 }
-const BED_BUB_Y = [0.55, 0.55, 0.55, 0.55, 0.55, 0.55];      // (how high over its bed each bubble floats)
+const BED_BUB_Y = [0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55];      // (how high over its bed each bubble floats)
 function bedTap(i) { if (GARDEN_UI.one) { gardenTap(true); return; } if (game.bedStage(i) === 'ripe' && pickBed(i)) return; holdBird(null); henOff(); gardenCard(i); }      // (a bed's own bubble)
 function gardenCard(only) {
   gameUI.gardenSheet({ sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), all: () => gardenCard(), buy: () => buyBed(), move: () => { gameUI.close(); startDecor('garden'); } },
@@ -8563,11 +8564,11 @@ function gardenCard(only) {
 // none anywhere near: nothing bought, and said
 function buyBed() {
   const nx = game.bedNext(); if (!nx || !nx.can || !DEC.items.garden || GARDEN_UI.work || DMOVE.id) return false;
-  const G = game.garden(), grows = G.beds.length === 3; let moved = false;
+  const G = game.garden(), grows = G.beds.length === 3 || G.beds.length === 6; let moved = false;      // (a new row: the fourth bed, the seventh)
   if (grows) {
-    const was = [G.x, G.z, G.deg]; dropDecor('garden'); gardenFoot(4); rebuildNav();
+    const was = [G.x, G.z, G.deg], nWas = G.beds.length; dropDecor('garden'); gardenFoot(nWas + 1); rebuildNav();
     let f = decorSpot('garden', G.x, G.z, G.deg).ok && decorWayOk('garden', G.x, G.z, G.deg) ? { x: G.x, z: G.z, deg: G.deg } : decorFreeNear('garden', G.x, G.z, 40, true, GARDEN_DEGS);
-    if (!f) { gardenFoot(3); const it = addDecor('garden', was[0], was[1], was[2]); if (!decorList.includes(it.d)) decorList.push(it.d); rebuildNav(); GARDEN_UI.shown = []; tickGarden(); hint(game.t('bed_noroom')); return false; }
+    if (!f) { gardenFoot(nWas); const it = addDecor('garden', was[0], was[1], was[2]); if (!decorList.includes(it.d)) decorList.push(it.d); rebuildNav(); GARDEN_UI.shown = []; tickGarden(); hint(game.t('bed_noroom')); return false; }
     moved = f.x !== was[0] || f.z !== was[1] || f.deg !== was[2];
     G.x = f.x; G.z = f.z; G.deg = f.deg;
     const gone = new Set(game.data.cleared); for (const t of decorSpot('garden', G.x, G.z, G.deg).clear) if (!gone.has(t.id)) { gone.add(t.id); game.data.cleared.push(t.id); }
@@ -8742,7 +8743,7 @@ function fieldBubbles(w, h) {
   if (!GARDEN_UI.bubs) GARDEN_UI.bubs = GARDEN_BEDX.map((_, i) => mk('gwheat ggarden', () => bedTap(i)));
   // (how much each says goes by the room there is on the screen: its words; if two would touch, its picture alone; if
   // those would touch too (zoomed far out): one bubble for the garden, as before. Widths measured once a wording)
-  const bedTxt = (i, m) => { const bed = game.data.garden.beds[i], stg = game.bedStage(i), ico = { carrot: '🥕', straw: '🍓', pump: '🎃' }[bed.crop] || '🌱'; return stg === 'ripe' ? '🧺' + (m === 2 ? ' ' + game.t('bub_pick') : '') : !bed.crop ? '🌱' + (m === 2 ? ' ' + game.t('bub_sow') : '') : ico + (m === 2 ? ' ' + gameUI.dur(game.bedLeft(i)) : ''); };
+  const bedTxt = (i, m) => { const bed = game.data.garden.beds[i], stg = game.bedStage(i), ico = (CROPS[bed.crop] || {}).e || '🌱'; return stg === 'ripe' ? '🧺' + (m === 2 ? ' ' + game.t('bub_pick') : '') : !bed.crop ? '🌱' + (m === 2 ? ' ' + game.t('bub_sow') : '') : ico + (m === 2 ? ' ' + gameUI.dur(game.bedLeft(i)) : ''); };
   const bubW = t => { const C = GARDEN_UI.wide || (GARDEN_UI.wide = new Map()); if (!C.has(t)) { const M = GARDEN_UI.meas || (GARDEN_UI.meas = (() => { const e = document.createElement('span'); e.className = 'gbub gwheat ggarden'; e.style.cssText = 'visibility:hidden;pointer-events:none;left:-999px;top:-999px;transform:none'; document.body.append(e); return e; })()); M.textContent = t; C.set(t, M.offsetWidth); if (C.size > 200) C.clear(); } return C.get(t); };
   // (11 Nov 2026, 21:36, Audrey, three bubbles with pictures only: "Bug in the display of the growing fruits": each bed
   // always says its words now (what's growing and how long, Sow, Pick); where two would touch, the one further up the
@@ -8761,7 +8762,7 @@ function fieldBubbles(w, h) {
     if (mode === 0) {
       if (i !== 1) { B.hidden = true; return; }
       const gt = gardenBubble(); if (B.textContent !== gt.txt) { B.textContent = gt.txt; B.classList.toggle('ripe', gt.ripe); }
-      put(B, !gt.wait && !GARDEN_UI.work, bubV.set(0, 0.55, game.data.garden.beds.length > 3 ? GARDEN_ROW2 / 2 : 0).applyMatrix4(Gd.d.m)); return;
+      put(B, !gt.wait && !GARDEN_UI.work, bubV.set(0, 0.55, game.data.garden.beds.length > 6 ? GARDEN_ROW2 : game.data.garden.beds.length > 3 ? GARDEN_ROW2 / 2 : 0).applyMatrix4(Gd.d.m)); return;
     }
     const stg = game.bedStage(i), todo = stg === 'ripe' || !bed.crop, txt = bedTxt(i, mode);      // (growing: no bubble)
     if (B.textContent !== txt) { B.textContent = txt; B.classList.toggle('ripe', stg === 'ripe'); }
