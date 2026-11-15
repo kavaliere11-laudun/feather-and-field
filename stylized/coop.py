@@ -320,8 +320,8 @@ def stone_sink(objs, x, y, m):
 def village_well(objs, x, y, m):
     """A village well (the Deluxe Village Cottage's water, 15 Nov 2026): a round brick well under a little tiled roof on two
     oak posts, its bucket on the rim, behind a low stone basin of water for the hens."""
-    brick = [mat('fwell_b%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#b26148', '#a5563f', '#8f4633'))]; oak = mat('fwell_oak', '#5d3e28', rough=0.8, var=0.1)
-    tile = mat('fwell_tile', '#f0823f', rough=0.75, var=0.08); stone = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60); tin = mat('fwell_tin', '#c3c9ca', rough=0.5, metal=0.3)
+    brick = [mat('fwell_b%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#d9bf8a', '#cfb279', '#b39a66'))]; oak = mat('fwell_oak', '#5d3e28', rough=0.8, var=0.1)
+    tile = mat('fwell_tile', '#978e7a', rough=0.75, var=0.08); stone = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60); tin = mat('fwell_tin', '#c3c9ca', rough=0.5, metal=0.3)
     bx, by = x, y + 0.2; R = 0.17
     for row in range(3):
         for k in range(10):
@@ -332,9 +332,25 @@ def village_well(objs, x, y, m):
     objs.append(cyl('wellroller', 0.018, 2 * R + 0.1, (bx, by, 0.4), (0, math.radians(90), 0), m=oak, verts=8, bevel=0.0))
     for sy in (-1, 1):
         o = box('wellroof', (2 * R + 0.2, 0.22, 0.03), (bx, by + sy * 0.085, 0.57), (math.radians(-sy * 32), 0, 0), m=tile, bevel=0.006, segs=1); objs.append(o)
-    objs.append(cyl('wellridge', 0.025, 2 * R + 0.22, (bx, by, 0.63), (0, math.radians(90), 0), m=mat('fwell_ridge', '#a84e2c', rough=0.7), verts=8, bevel=0.0))
+    objs.append(cyl('wellridge', 0.025, 2 * R + 0.22, (bx, by, 0.63), (0, math.radians(90), 0), m=mat('fwell_ridge', '#8c8372', rough=0.7), verts=8, bevel=0.0))
     objs.append(cyl('wellbucket', 0.045, 0.08, (bx + R - 0.02, by - R + 0.03, 0.26), m=tin, verts=10, r2=0.038, bevel=0.004))
     objs.append(cyl('basin', 0.15, 0.07, (x, y - 0.08, 0.035), m=stone, verts=16, bevel=0.008))
+    objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.08, 0.068), m=m['water'], verts=16, bevel=0.0))
+
+
+def village_fountain(objs, x, y, m):
+    """A village fountain (the Deluxe French Farmhouse's water, 15 Nov 2026): a round basin of pale stone, a stone pillar
+    in the middle with a ball on top and two spouts, behind a low stone basin of water for the hens."""
+    stone = mat('ffont_stone', '#d6c49e', rough=0.85, var=0.06, bump=0.15, bump_scale=60); low = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60)
+    iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6); bx, by = x, y + 0.2; R = 0.19
+    objs.append(cyl('fbasin', R, 0.15, (bx, by, 0.075), m=stone, verts=8, bevel=0.012))
+    objs.append(cyl('frim', R + 0.015, 0.03, (bx, by, 0.155), m=stone, verts=8, bevel=0.006))
+    objs.append(cyl('wellwater', R - 0.035, 0.01, (bx, by, 0.166), m=m['water'], verts=8, bevel=0.0))
+    objs.append(cyl('fpillar', 0.045, 0.34, (bx, by, 0.33), m=stone, verts=8, bevel=0.006))
+    objs.append(cyl('fcap', 0.065, 0.03, (bx, by, 0.5), m=stone, verts=8, bevel=0.004))
+    objs.append(sphere('fball', 0.045, (bx, by, 0.55), m=stone, seg=10, rings=6))
+    for sx in (-1, 1): objs.append(cyl('fspout', 0.008, 0.08, (bx + sx * 0.07, by, 0.38), (0, math.radians(90), 0), m=iron, verts=6, bevel=0.0))
+    objs.append(cyl('basin', 0.15, 0.07, (x, y - 0.08, 0.035), m=low, verts=16, bevel=0.008))
     objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.08, 0.068), m=m['water'], verts=16, bevel=0.0))
 
 
@@ -569,6 +585,17 @@ def build_pen(root, m):
         objs.append(sphere('fball', 0.08, (fx, fy, 0.4), (1, 1, 0.45), m=red, seg=14, rings=8))
         objs.append(box('fslot', (0.075, 0.012, 0.014), (fx, fy - 0.078, 0.32), m=dark, bevel=0.0))
         objs.append(box('fplate', (0.06, 0.01, 0.06), (fx, fy - 0.079, 0.23), m=white, bevel=0.003, segs=1))
+    elif PEN.get('feeder_style') == 'dovecote':               # (the Deluxe French Farmhouse's, 15 Nov 2026: a little round dovecote over its tray of grain)
+        cream = mat('fd_dove', '#f3e8cf', rough=0.85); slate = mat('fd_slate', '#7d92ad', rough=0.55); stone = mat('ffont_stone', '#d6c49e', rough=0.85, var=0.06); dark = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=stone, verts=20, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.085, 0.28, (fx, fy, 0.2), m=cream, verts=14, bevel=0.006))
+        objs.append(cyl('fband', 0.095, 0.025, (fx, fy, 0.335), m=stone, verts=14, bevel=0.003))
+        objs.append(cyl('froof', 0.12, 0.17, (fx, fy, 0.43), m=slate, verts=12, r2=0.008, bevel=0.0))
+        objs.append(sphere('fball', 0.018, (fx, fy, 0.52), m=dark, seg=8, rings=5))
+        for k in range(5):
+            a = -math.pi / 2 + (k - 2) * 0.55
+            objs.append(box('fhole', (0.03, 0.012, 0.04), (fx + math.cos(a) * 0.083, fy + math.sin(a) * 0.083, 0.27), (0, 0, a + math.pi / 2), m=dark, bevel=0.004, segs=1))
     elif PEN.get('feeder_style') == 'cottage':                # (the Deluxe cottage's: a little barrel hopper under a cap of thatch)
         oak = mat('fd_oak', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
         thatch = mat('fd_thatch', '#c7a866', rough=0.9, var=0.07)
@@ -650,6 +677,7 @@ def build_pen(root, m):
     if PEN.get('fountain'): fountain(objs, wx, wy, m)
     elif PEN.get('water') == 'trough': trough(objs, wx, wy, m)
     elif PEN.get('water') == 'well': village_well(objs, wx, wy, m)
+    elif PEN.get('water') == 'fontaine': village_fountain(objs, wx, wy, m)
     elif PEN.get('water') == 'pond': koi_pond(objs, wx, wy, m)
     elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
