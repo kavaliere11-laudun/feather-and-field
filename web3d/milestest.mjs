@@ -82,8 +82,9 @@ ok('…he goes in once: the birds gather round him (all of them within reach), t
 ok('…no one is picked up: crouched among them, he turns to stroke each in turn, the others settled by him', Q0.home || (!lifted && ways.size >= 2 && sat >= 1), { lifted, ways: [...ways], sat });
 await shut();
 await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2);
-let Q1 = await p.evaluate(() => { document.querySelector('.gcuddleall').click(); return { queue: window.__farm.cuddleQueue().length, hint: document.getElementById('hint').textContent }; });
-ok('again straight after: nobody to cuddle, said kindly', Q1.queue === 0 && Q1.hint.length > 10, Q1);
+let Q1 = await p.evaluate(() => { const b = document.querySelector('.gsheet:not([hidden]) .gcuddleall'), w = document.querySelector('.gsheet:not([hidden]) .gcuddlewait'); return { btn: !!b, wait: w ? w.textContent : '' }; });
+ok('again straight after: no button to tap, the wait until the next cuddle said (15 Nov 2026)', !Q1.btn && /\d/.test(Q1.wait) && Q1.wait.length > 20, Q1);
+if (process.argv[2]) await p.screenshot({ path: `${process.argv[2]}/cuddlewait${process.env.LANG === 'fr' ? '_fr' : ''}.png` }).catch(() => {});
 // ---- How to fish: its three steps and the bar all in sight sideways, no scrolling
 await p.evaluate(() => window.__farm.gameUI().fishHelp(true)); await run(0.2);
 let H = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'), body = s.querySelector('.gbody') || s, r = s.getBoundingClientRect(); const inView = n => { const q = n.getBoundingClientRect(); return q.top >= r.top - 1 && q.bottom <= Math.min(innerHeight, r.bottom) + 1; }; const okTop = s.querySelector('[data-fhelp=ok]').getBoundingClientRect().top; return { steps: [...s.querySelectorAll('.gfstep')].map(inView), demo: inView(s.querySelector('.fishdemo')), ok: inView(s.querySelector('[data-fhelp=ok]')), scroll: s.querySelector('.fishdemo').getBoundingClientRect().bottom > okTop + 1 }; });

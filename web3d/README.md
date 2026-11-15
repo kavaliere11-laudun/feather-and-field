@@ -5535,3 +5535,6 @@ Five runs at 402x874, about ten days each, no page errors in any:
   Settings, always; (3) every money button blue (`.gbtn.gpay`); (4) more than one trio arriving: "Your 4 new trios have
   arrived…" (`pay_trios`, six languages); (5) `coinPile`: a last row that isn't full sits in the middle and a big pile
   is closer set, inside its picture. `paytest.mjs` (en, fr).
+- **"Don't let me click on cuddle them if I can't… say when it will be possible again"** (15 Nov, 11:26): a coop's card
+  with nobody due a cuddle shows no "Cuddle everyone here" button but "♥ Everyone here has had a cuddle. The next one in
+  {when}." (`cuddle_all_wait`, six languages; `.gcuddlewait`; the soonest of the birds). `milestest` updated.

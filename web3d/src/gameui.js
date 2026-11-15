@@ -667,7 +667,10 @@ export class GameUI {
     if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: this.g.andList(names) })));
     if (up && up.onInside) { const ib = el('button', 'gbtn galt', '🌙 ' + this.t('coop_inside')); ib.type = 'button'; ib.dataset.inside = '1'; ib.addEventListener('click', () => up.onInside()); body.append(ib); }
     if (up && up.asleep && g.birdsIn(coop.id).length > 1) body.append(el('p', 'gnote', this.t('cuddle_night')));      // (no cuddle button at night: said instead, Audrey 22:28)
-    if (up && up.onCuddleAll && g.birdsIn(coop.id).length > 1) { const ca = el('button', 'gbtn gcuddleall', this.t('cuddle_all')); ca.type = 'button'; ca.addEventListener('click', () => up.onCuddleAll()); body.append(ca); }
+    if (up && up.onCuddleAll && g.birdsIn(coop.id).length > 1) {      // (15 Nov 2026, Audrey: "Don't let me click on cuddle them if I can't… say when it will be possible again": nobody due: no button, the wait until the first of them said)
+      const lefts = g.birdsIn(coop.id).map(x => g.happyLeft(x));
+      if (lefts.every(l => l > 0)) { const w = el('p', 'gtext ghappy gcuddlewait', '♥ ' + this.t('cuddle_all_wait', { when: g.howLong(Math.min(...lefts)) })); body.append(w); }
+      else { const ca = el('button', 'gbtn gcuddleall', this.t('cuddle_all')); ca.type = 'button'; ca.addEventListener('click', () => up.onCuddleAll()); body.append(ca); } }
     const n = up && g.coopNext(coop);
     if (n) {
       const c = el('div', 'gcard gup'), hd = el('div', 'gcard-h');
