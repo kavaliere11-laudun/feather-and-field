@@ -13,16 +13,18 @@ const EXTRA = { call: 0.35, pea: 0.5 };              // (the ducks' pond and the
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 560, height: 560 }, deviceScaleFactor: 2 });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
+if (process.env.MOCKPAINT) await p.addInitScript(m => { globalThis.__FF_MOCK = m; }, JSON.parse(fs.readFileSync(process.env.MOCKPAINT, 'utf8')));      // (15 Nov 2026: a mock-up's birds, breedmock.mjs)
+if (process.env.CENTRE) await p.addInitScript(c => { window.__CENTRE = c; }, process.env.CENTRE);
 for (const breed of BREEDS) for (const t of LOOKS) {
   await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&coops=1&coopbreeds=${breed}&looks=${t}&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #tag, #foxbtn, #replaybtn, #farmerbtn, .vignette, #compass { display: none !important; }' });
   const info = await p.evaluate(([breed, sz]) => {
     const f = window.__farm, P = f.coopPlots()[0]; f.pause(true);
-    const c = P.frame.localToWorld(new f.THREE.Vector3(0.1, 0, 0.75));
+    const cc = (window.__CENTRE || '0.1,0.75').split(',').map(Number), c = P.frame.localToWorld(new f.THREE.Vector3(cc[0], 0, cc[1]));      // (CENTRE=x,z: where the picture looks, in the coop's own metres)
     f.lookFree(c.x, c.z, sz); f.step(1 / 30, 30); f.draw();
     return { breed: P.breed, tier: P.tier };
-  }, [breed, SIZE[t] + (EXTRA[breed] || 0)]);
+  }, [breed, (SIZE[t] + (EXTRA[breed] || 0)) * +(process.env.ZOOM || 1)]);      // (ZOOM=0.6: closer)
   await p.waitForTimeout(300);
   await p.screenshot({ path: `${OUT}/${breed}_${t}.png`, timeout: 180000 });
   console.log(breed, t, JSON.stringify(info));
