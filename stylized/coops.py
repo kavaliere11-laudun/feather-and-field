@@ -7956,10 +7956,13 @@ def winter_chalet(seed=77, name='theme_winter_rir', house='rir', FL=0.40, wx=0.4
 # cottage: warm red brick below, the gables hung with clay tiles, a steep clay-tile roof, a tall brick chimney, white
 # windows, a primrose-yellow door, a red pillar box by the corner. Its five looks in one function, as the Floating House's:
 # 0 Rustic (an old boarded hut on a brick footing, half its tiles gone, a tarpaulin), 1 Mended (new brick half way up,
-# new tiles on the front, a ladder), 2 Snug (the cottage), 3 Cosy (a tiled porch on white posts, roses, flower boxes,
-# a lantern), 4 Deluxe (a storey taller, hung with tiles upstairs, a dormer, two chimneys). NOT in HOUSES yet: mock-ups,
+# new tiles on the front, a ladder, bricks stacked for the chimney to come), 2 Snug (the cottage: brick, gables hung with
+# dark clay tiles, a chimney on the ridge), 3 Cosy (its gables boarded white, sage shutters, a pale band in the roof, a
+# tiled porch on white posts, roses, flower boxes, a lantern), 4 Deluxe (a storey taller, the upper storey hung with tiles
+# in two-tone bands, a big white dormer over the door, two chimneys). Each look to read differently at the game's distance
+# (Audrey, 15 Nov: "make sure each step is different enough"). NOT in HOUSES yet: mock-ups,
 # exported by extras/export_mock_coop.py under another breed's names; `key`: whose nest and blocks it writes.)
-SUS = dict(brick='#b26148', brick2='#a5563f', brickd='#8f4633', mortar='#cdbfa6', tile='#cf6d3e', tile2='#dc8048', tile3='#bd5c34', oldtile='#9a6248', oldtile2='#84604a', moss='#6f8a45',
+SUS = dict(brick='#b26148', brick2='#a5563f', brickd='#8f4633', mortar='#cdbfa6', tile='#cf6d3e', tile2='#dc8048', tile3='#bd5c34', oldtile='#9a6248', oldtile2='#84604a', moss='#6f8a45', rtile='#f0823f', rtile2='#f79a55', rtile3='#e06e36', pale='#f0c08a', hang='#b4573a', hang2='#c96a45',
            ridge='#a84e2c', white='#f4efe4', door='#e9bb3c', boards='#8c7a66', boards2='#7d6c59', newwood='#d2ab77', lead='#7d858c',
            post='#c8283c', postd='#2b2b2f', rose='#e25a7a', rose2='#f6c7d1', leaf='#4f8a3a', tarp='#4f7fae')
 
@@ -7967,7 +7970,7 @@ SUS = dict(brick='#b26148', brick2='#a5563f', brickd='#8f4633', mortar='#cdbfa6'
 def _sus(k, rough=0.8, **kw): return C('sus_' + k, SUS[k], rough=rough, **kw)
 
 
-def clay_roof(objs, eave, peak, tiles, barge_m, ridge_m, over=0.15, gable_over=0.12, rows_gap=0.07, skip=None, batten=None, barge=True):
+def clay_roof(objs, eave, peak, tiles, barge_m, ridge_m, over=0.15, gable_over=0.12, rows_gap=0.07, skip=None, batten=None, barge=True, band=None):
     """Two slopes of little clay tiles, three clays mixed (ridge along x). skip(sy, row, rows, x): a tile gone; batten: the
     dark boards showing where they are."""
     for sy in (-1, 1):
@@ -7988,7 +7991,7 @@ def clay_roof(objs, eave, peak, tiles, barge_m, ridge_m, over=0.15, gable_over=0
                 if abs(x) > W2 + gable_over + 0.01: continue
                 if skip and skip(sy, r, rows, x): continue
                 a = base + Vector((x, 0, 0)) - dn * 0.055; b = base + Vector((x, 0, 0)) + dn * 0.055
-                objs.append(plank('sh', a, b, w * 0.93, 0.02, nrm, random.choice(tiles), jitter=1.6, bevel=0.006))
+                objs.append(plank('sh', a, b, w * 0.93, 0.02, nrm, (band and band(r, rows, i)) or random.choice(tiles), jitter=1.6, bevel=0.006))
         if barge:
             for sx in (-1, 1):
                 objs.append(plank('barge', r0 + Vector((sx * (W2 + gable_over + 0.02), 0, 0.05)), e0 + Vector((sx * (W2 + gable_over + 0.02), 0, 0)), 0.085, 0.03, (sx, 0, 0), barge_m, jitter=0.2))
@@ -7998,7 +8001,7 @@ def clay_roof(objs, eave, peak, tiles, barge_m, ridge_m, over=0.15, gable_over=0
             objs.append(cyl('ridgecap', 0.05, L / n - 0.008, (-L / 2 + (i + 0.5) * L / n, 0, peak + 0.055), (0, math.radians(90), 0), ridge_m, verts=12, bevel=0.0))
 
 
-def tile_hang(objs, sx, z0, z1, top, tiles, half=None, gap=0.062):
+def tile_hang(objs, sx, z0, z1, top, tiles, half=None, gap=0.062, rows=None):
     """Clay tiles hung on a gable wall (x = sx * W2): rows from z0 up to z1, each row as wide as top(z) lets it."""
     half = half or D2; row = 0; z = z0
     while z < z1 - 0.02:
@@ -8006,11 +8009,11 @@ def tile_hang(objs, sx, z0, z1, top, tiles, half=None, gap=0.062):
         for i in range(n):
             y = -hw + (i + 0.5) * w + (w / 2 if row % 2 else 0)
             if abs(y) > hw - 0.01: continue
-            objs.append(plank('hang', (sx * (W2 + 0.018 + 0.004 * (row % 2)), y, z + gap + 0.012), (sx * (W2 + 0.018 + 0.004 * (row % 2)), y, z - 0.008), w * 0.92, 0.016, (sx, 0, 0), random.choice(tiles), jitter=1.2, bevel=0.005))
+            objs.append(plank('hang', (sx * (W2 + 0.018 + 0.004 * (row % 2)), y, z + gap + 0.012), (sx * (W2 + 0.018 + 0.004 * (row % 2)), y, z - 0.008), w * 0.92, 0.016, (sx, 0, 0), rows(row) if rows else random.choice(tiles), jitter=1.2, bevel=0.005))
         z += gap; row += 1
 
 
-def tile_band(objs, sy, z0, z1, tiles, gap=0.062):
+def tile_band(objs, sy, z0, z1, tiles, gap=0.062, rows=None):
     """The same along a long wall (the Deluxe's upper storey, front and back)."""
     row = 0; z = z0
     while z < z1 - 0.02:
@@ -8018,7 +8021,7 @@ def tile_band(objs, sy, z0, z1, tiles, gap=0.062):
         for i in range(n + 1):
             x = -W2 + i * w + (w / 2 if row % 2 else 0)
             if abs(x) > W2 - 0.005: continue
-            objs.append(plank('hang', (x, sy * (D2 + 0.018 + 0.004 * (row % 2)), z + gap + 0.012), (x, sy * (D2 + 0.018 + 0.004 * (row % 2)), z - 0.008), w * 0.92, 0.016, (0, sy, 0), random.choice(tiles), jitter=1.2, bevel=0.005))
+            objs.append(plank('hang', (x, sy * (D2 + 0.018 + 0.004 * (row % 2)), z + gap + 0.012), (x, sy * (D2 + 0.018 + 0.004 * (row % 2)), z - 0.008), w * 0.92, 0.016, (0, sy, 0), rows(row) if rows else random.choice(tiles), jitter=1.2, bevel=0.005))
         z += gap; row += 1
 
 
@@ -8035,9 +8038,8 @@ def brick_bits(objs, FL, top, bricks, n, seed, wx, skip_low=True):
             objs.append(box('brick', (0.125, 0.02, 0.066), (x, -D2 - 0.008, z), m=rnd.choice(bricks), bevel=0.007, segs=1, jitter=0.002))
         else:
             y = rnd.uniform(-D2 + 0.08, D2 - 0.08)
-            if abs(y + 0.06) < 0.26 and 0.4 < z < 0.75: continue                               # the side windows
+            if abs(y) < 0.3 and 0.4 < z < 0.75: continue                                      # the side windows and their shutters
             sx = rnd.choice((1, -1))
-            if sx < 0 and y > 0.1: continue                                                   # the chimney
             objs.append(box('brick', (0.02, 0.125, 0.066), (sx * (W2 + 0.008), y, z), m=rnd.choice(bricks), bevel=0.007, segs=1, jitter=0.002))
 
 
@@ -8068,6 +8070,8 @@ def sussex(look=2, name=None, key='sus', seed=121):
     random.seed(seed + look); objs = []
     bricks = [_sus('brick', rough=0.85, var=0.08), _sus('brick2', rough=0.85, var=0.08), _sus('brickd', rough=0.85, var=0.06)]
     tiles = [_sus('tile', rough=0.75, var=0.1, hue_var=0.012), _sus('tile2', rough=0.75, var=0.1, hue_var=0.012), _sus('tile3', rough=0.75, var=0.08)]
+    rt = [_sus('rtile', rough=0.75, var=0.08, hue_var=0.012), _sus('rtile2', rough=0.75, var=0.08, hue_var=0.012), _sus('rtile3', rough=0.75, var=0.08)]      # (the finished looks' roofs: steeper, so in less light: warmer and lighter)
+    pale = _sus('pale', rough=0.75, var=0.05); hang = [_sus('hang', rough=0.8, var=0.08), _sus('hang2', rough=0.8, var=0.08)]; sage = C('sus_sage', '#7fa487', rough=0.6, var=0.03)
     ridge = _sus('ridge', rough=0.7); white = _sus('white', rough=0.6, var=0.02); yellow = _sus('door', rough=0.55, var=0.04, grain=0.2, grain_scale=G)
     old = [_sus('boards', rough=0.9, var=0.1, grain=0.35, grain_scale=G), _sus('boards2', rough=0.9, var=0.1, grain=0.35, grain_scale=G)]
     new = _sus('newwood', rough=0.8, var=0.08, grain=0.3, grain_scale=G); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
@@ -8100,12 +8104,17 @@ def sussex(look=2, name=None, key='sus', seed=121):
         for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, old[1]))
         brick_bits(objs, FL, BR, bricks, 16 if look else 9, seed + 3, WX)
     else:
-        for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, tiles[2]))
+        for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, white if look == 3 else hang[0]))
         brick_bits(objs, FL, 0.86 if look == 4 else EAVE, bricks, 46, seed + 3, WX)
-        for sx in (-1, 1):                         # the gables hung with clay tiles (the +x one seen; the other the same)
-            tile_hang(objs, sx, EAVE - 0.02 if look < 4 else 0.86, PEAK - 0.1, gtop, tiles)
+        two = lambda row: (pale if (row // 2) % 2 else random.choice(hang))          # (the Deluxe's: two rows dark, two rows pale)
+        for sx in (-1, 1):                         # the gables: hung with dark clay tiles (Snug), boarded white (Cosy), hung in two-tone bands (Deluxe)
+            if look == 3:
+                z = EAVE - 0.02
+                while z < PEAK - 0.12:
+                    hw = min(D2, gtop(z + 0.03)); objs.append(plank('wboard', (sx * (W2 + 0.02), -hw, z + 0.03), (sx * (W2 + 0.02), hw, z + 0.03), 0.07, 0.02, (sx, 0, 0), white, jitter=0.3)); z += 0.062
+            else: tile_hang(objs, sx, EAVE - 0.02 if look < 4 else 0.86, PEAK - 0.1, gtop, hang, rows=two if look == 4 else None)
         if look == 4:                              # the upper storey hung with tiles all round, a white band where it begins
-            for sy in (-1, 1): tile_band(objs, sy, 0.86, EAVE - 0.02, tiles)
+            for sy in (-1, 1): tile_band(objs, sy, 0.86, EAVE - 0.02, hang, rows=two)
             for sy in (-1, 1): objs.append(plank('band', (-W2 - 0.02, sy * (D2 + 0.02), 0.86), (W2 + 0.02, sy * (D2 + 0.02), 0.86), 0.04, 0.03, (0, sy, 0), white, jitter=0.2))
             for sx in (-1, 1): objs.append(plank('band', (sx * (W2 + 0.02), -D2 - 0.02, 0.86), (sx * (W2 + 0.02), D2 + 0.02, 0.86), 0.04, 0.03, (sx, 0, 0), white, jitter=0.2))
     # ---- roof
@@ -8121,19 +8130,20 @@ def sussex(look=2, name=None, key='sus', seed=121):
         gone = lambda sy, r, rows, x: sy > 0 and (r < rows * 0.5 or x > 0.2)        # the front new and whole; the back half done
         clay_roof(objs, EAVE, PEAK, tiles, new, ridge, skip=gone, batten=C('sus_batten', '#4b4037', rough=0.95), over=0.13, gable_over=0.1)
     else:
-        clay_roof(objs, EAVE, PEAK, tiles, white, ridge)
-    # ---- chimneys: a tall brick stack on the -x gable (the Mended's half built), two pots; the Deluxe a second on the ridge
-    if look >= 1:
-        ch = (0.72 if look == 1 else PEAK + 0.2); CY = 0.24      # (towards the back of its gable: the hung tiles and the gable's window show in front of it)
-        for i in range(int(ch / 0.09)):
-            objs.append(box('chst', (0.2, 0.22, 0.085), (-W2 - 0.09, CY, 0.045 + i * 0.09), m=random.choice(bricks), bevel=0.01, segs=1, jitter=0.004))
-        if look >= 2:
-            objs.append(box('chimcap', (0.25, 0.27, 0.045), (-W2 - 0.09, CY, ch + 0.02), m=bricks[2], bevel=0.008, segs=1))
-            for dy in (-0.05, 0.055): objs.append(cyl('chimpot', 0.04, 0.13, (-W2 - 0.09, CY + dy, ch + 0.1), m=C('terra', '#b0603a', rough=0.8), verts=10, r2=0.034, bevel=0.0))
-    if look == 4:
-        for i in range(5): objs.append(box('chst', (0.19, 0.19, 0.085), (0.36, 0.1, PEAK - 0.12 + i * 0.09), m=random.choice(bricks), bevel=0.01, segs=1, jitter=0.004))
-        objs.append(box('chimcap', (0.24, 0.24, 0.04), (0.36, 0.1, PEAK + 0.33), m=bricks[2], bevel=0.008, segs=1))
-        objs.append(cyl('chimpot', 0.043, 0.12, (0.36, 0.1, PEAK + 0.4), m=C('terra', '#b0603a', rough=0.8), verts=10, r2=0.036, bevel=0.0))
+        band = (lambda r, rows, i: pale if r in (3, 4) else None) if look == 3 else (lambda r, rows, i: pale if (r in (2, 6) or (r in (3, 5) and i % 2 == 0)) else None) if look == 4 else None
+        clay_roof(objs, EAVE, PEAK, rt, white, ridge, band=band)
+    # ---- chimneys: a brick stack on the ridge towards the -x end, two pots (clear of the gable: its hung tiles and window
+    # show); the Deluxe a second towards the other end. The Mended's is still a pile of bricks by the wall
+    stacks = [(-0.36, 0.0, 6)] if look in (2, 3) else [(-0.4, 0.0, 6), (0.38, 0.0, 5)] if look == 4 else []
+    for (cx, cy, n) in stacks:
+        for i in range(n): objs.append(box('chst', (0.2, 0.2, 0.085), (cx, cy, PEAK - 0.16 + i * 0.09), m=random.choice(bricks), bevel=0.01, segs=1, jitter=0.004))
+        top = PEAK - 0.16 + n * 0.09
+        objs.append(box('chimcap', (0.25, 0.25, 0.04), (cx, cy, top - 0.02), m=bricks[2], bevel=0.008, segs=1))
+        for dx in (-0.05, 0.05): objs.append(cyl('chimpot', 0.038, 0.12, (cx + dx, cy, top + 0.06), m=C('terra', '#b0603a', rough=0.8), verts=10, r2=0.032, bevel=0.0))
+    if look == 1:
+        BX, BY = -W2 - 0.17, -0.12; block(key, BX, BY, 0.14)
+        for k in range(4):
+            for j in range(2 if k < 3 else 1): objs.append(box('bstack', (0.13, 0.065, 0.045), (BX + (j - 0.5) * 0.0 + random.uniform(-0.008, 0.008), BY + (j - 0.5) * 0.075, 0.024 + k * 0.047), m=random.choice(bricks), bevel=0.005, segs=1))
     # ---- the door, the nest window, the side window
     if look == 0:
         for i in range(3): objs.append(plank('door', (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.125), (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.7), 0.075, 0.03, (0, -1, 0), random.choice(old), jitter=1.2))
@@ -8143,19 +8153,25 @@ def sussex(look=2, name=None, key='sus', seed=121):
         objs.append(box('doorstep', (0.36, 0.14, 0.12), (0.045, -D2 - 0.08, 0.06), m=steps_m(), bevel=0.012, segs=1))
     nest_window(objs, key, FL, WX, white if look >= 2 else (new if look else old[1]), solids=solids, nest_floor=NF, door='drop', door_m=white if look >= 2 else (new if look else old[1]))
     if look >= 2:
-        for sx, wy in ((1, 0.0), (-1, -0.12)):      # (the -x one, the side the game's camera sees, in front of the chimney)
+        for sx, wy in ((1, 0.0), (-1, 0.0)):      # (the -x one is the side the game's camera sees)
             window(objs, sx * (W2 + 0.03), wy, 0.56, 0.24, 0.22, white, glass, normal=(sx, 0, 0), box_flowers=flw if look >= 3 else None)
+            if look >= 3:
+                for d in (-1, 1): objs.append(box('shutter', (0.02, 0.09, 0.24), (sx * (W2 + 0.03), wy + d * 0.19, 0.56), m=sage, bevel=0.004, segs=1))
             objs.append(box('sill', (0.05, 0.3, 0.03), (sx * (W2 + 0.035), wy, 0.43), m=white, bevel=0.006, segs=1))
     elif look == 1:
-        for sx, wy in ((1, 0.0), (-1, -0.12)): window(objs, sx * (W2 + 0.03), wy, 0.56, 0.2, 0.18, new, glass, normal=(sx, 0, 0), cross=False)
-    if look == 4:                                  # upstairs: a white window in the gable, a dormer on the front slope
-        for sx, wy in ((1, 0.0), (-1, -0.1)): window(objs, sx * (W2 + 0.045), wy, 1.22, 0.22, 0.2, white, glass, normal=(sx, 0, 0), box_flowers=flw)
-        dz = EAVE + 0.2; dy = -D2 + 0.07
-        objs.append(box('dormer', (0.32, 0.3, 0.3), (0.045, dy + 0.1, dz), m=white, bevel=0.01, segs=1))
-        window(objs, 0.045, dy - 0.055, dz - 0.01, 0.2, 0.18, white, glass)
-        for s in (-1, 1):
-            objs.append(plank('droof', (0.045, dy - 0.08, dz + 0.3), (0.045 + s * 0.23, dy - 0.08, dz + 0.13), 0.42, 0.03, (s * 0.6, 0, 1), tiles[0], jitter=0.2))
-            o = objs[-1]; o.location.y += 0.16
+        for sx, wy in ((1, 0.0), (-1, 0.0)): window(objs, sx * (W2 + 0.03), wy, 0.56, 0.2, 0.18, new, glass, normal=(sx, 0, 0), cross=False)
+    if look == 4:                                  # upstairs: a white window in each gable, a big white dormer over the door with its own little tiled roof
+        for sx in (1, -1):
+            window(objs, sx * (W2 + 0.045), 0.0, 1.2, 0.22, 0.2, white, glass, normal=(sx, 0, 0), box_flowers=flw)
+            for d in (-1, 1): objs.append(box('shutter', (0.02, 0.08, 0.22), (sx * (W2 + 0.045), d * 0.17, 1.2), m=sage, bevel=0.004, segs=1))
+        DX, DW, DZ0, DZ1 = 0.045, 0.21, EAVE - 0.08, EAVE + 0.4; DY = -D2 - 0.04
+        objs.append(box('dormer', (2 * DW, 0.5, DZ1 - DZ0), (DX, DY + 0.25, (DZ0 + DZ1) / 2), m=white, bevel=0.008, segs=1))
+        g_ = prism_gable(0, 0, 0.17, DW + 0.01, 0.03, white, name='dgable'); g_.rotation_euler = (0, 0, math.radians(90)); g_.location = (DX, DY + 0.015, DZ1); objs.append(g_)
+        window(objs, DX, DY - 0.01, DZ1 - 0.13, 0.22, 0.19, sage, glass)
+        for s_ in (-1, 1):
+            a_ = Vector((DX, DY - 0.05, DZ1 + 0.195)); b_ = Vector((DX + s_ * (DW + 0.07), DY - 0.05, DZ1 - 0.03))
+            o = plank('droof', a_, b_, 0.56, 0.03, (s_ * 0.65, 0, 1), rt[1], jitter=0.2); o.location.y += 0.25; objs.append(o)
+        objs.append(cyl('dridge', 0.03, 0.58, (DX, DY + 0.22, DZ1 + 0.205), (math.radians(90), 0, 0), ridge, verts=10, bevel=0.0))
     # ---- what stands by it
     if look == 0:
         weeds = [C('ivy1', '#3f6e30', rough=0.8), C('ivy2', '#55893d', rough=0.8)]
@@ -8177,7 +8193,7 @@ def sussex(look=2, name=None, key='sus', seed=121):
             objs.append(plank('ppost', (0.045 + s * 0.2, -D2 - 0.2, 0.0), (0.045 + s * 0.2, -D2 - 0.2, 0.78), 0.04, 0.04, (0, -1, 0), white, jitter=0.2))
             block(key, 0.045 + s * 0.2, -D2 - 0.2, 0.05)
             a = Vector((0.045, -D2 - 0.12, 1.0)); b = Vector((0.045 + s * 0.27, -D2 - 0.12, 0.76))
-            objs.append(plank('proof', a, b, 0.3, 0.03, (s * 0.65, 0, 1), tiles[1], jitter=0.2))
+            objs.append(plank('proof', a, b, 0.3, 0.03, (s * 0.65, 0, 1), rt[1], jitter=0.2))
             climbing_rose(objs, 0.045 + s * 0.2, -D2 - 0.22, 0.05, 0.8, (0, -1), seed + 7 + s, spread=0.05)
         objs.append(plank('pfascia', (0.045 - 0.25, -D2 - 0.27, 0.78), (0.045 + 0.25, -D2 - 0.27, 0.78), 0.04, 0.02, (0, -1, 0), white, jitter=0.2))
         climbing_rose(objs, -W2 + 0.12, -D2 - 0.02, 0.1, EAVE - 0.05, (0, -1), seed + 9, spread=0.1)
