@@ -8920,3 +8920,147 @@ def sand_batea(objs, x, y):
 
 
 def sand_rocks(objs, x, y): sand_boules(objs, x, y, rock=_ara('rock', rough=0.9, var=0.1))
+
+
+# ---- the Cochin's round yurt (15 Nov 2026; Audrey: "Carry on"): a DESIGN to show her, NOT in HOUSES. A felt tent of the
+# northern steppe: round walls, a cone of a roof with a crown ring, a painted door. Rustic: old grey felt, patched and
+# roped. Mended: the wooden lattice wall bare, a new plain roof, a roll of felt waiting. Snug: white felt, a blue band, a
+# red door. Cosy: a blue roof with white points, lanterns, a carpet. Deluxe: taller, a second little roof with a gold ball.
+YU = dict(felt='#f3eee2', felt2='#e7e0d0', old='#9d968a', old2='#8a8378', patch='#7a6650', patch2='#a9825a', lattice='#c99a62', latticed='#8e6238', blue='#2f62b5', blue2='#4b7fd0', red='#d2452f', redd='#a5301f',
+          gold='#e8b53a', rope='#6b5a48', carpet='#b8322c')
+
+
+def _yu(k, rough=0.8, **kw): return C('yu_' + k, YU[k], rough=rough, **kw)
+
+
+def round_box(name, w, d, h, r, m, z0=0.0, n=6):
+    """A box with its four upright corners rounded (radius r): a yurt's wall, seen from above a rounded square."""
+    pts = []
+    for (cx, cy, a0) in ((w / 2 - r, d / 2 - r, 0), (-w / 2 + r, d / 2 - r, 90), (-w / 2 + r, -d / 2 + r, 180), (w / 2 - r, -d / 2 + r, 270)):
+        for k in range(n + 1):
+            a = math.radians(a0 + 90 * k / n); pts.append((cx + math.cos(a) * r, cy + math.sin(a) * r))
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    lo = [bm.verts.new((x, y, z0)) for x, y in pts]; hi = [bm.verts.new((x, y, z0 + h)) for x, y in pts]
+    bm.faces.new(lo[::-1]); bm.faces.new(hi)
+    for i in range(len(pts)):
+        j = (i + 1) % len(pts); bm.faces.new((lo[i], lo[j], hi[j], hi[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:]); bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    return o
+
+
+def yurt_roof(objs, eave, peak, m, rx, ry, name='yroof', top=0.2, verts=24):
+    o = cyl(name, 1.0, peak - eave, (0, 0, (eave + peak) / 2), m=m, verts=verts, r2=top, bevel=0.0); o.scale = (rx, ry, 1); objs.append(o)
+    for md in list(o.modifiers): o.modifiers.remove(md)       # (flat faces: weighted normals would lean on its big underside and darken it)
+    for p_ in o.data.polygons: p_.use_smooth = False
+    return o
+
+
+def yurt(look=2, name=None, key='coc', seed=151):
+    """The Cochin's round yurt, look 0 (Rustic) .. 4 (Deluxe). Blender axes: front -y."""
+    name = name or ('box_', 'shed_', 'house_', 'cosy_', 'deluxe_')[look] + key
+    random.seed(seed + look); objs = []
+    felt = _yu('felt', rough=0.95, var=0.03); felt2 = _yu('felt2', rough=0.95, var=0.03); old = [_yu('old', rough=0.95, var=0.08), _yu('old2', rough=0.95, var=0.08)]
+    patch = [_yu('patch', rough=0.95, var=0.08), _yu('patch2', rough=0.95, var=0.08)]; lat = _yu('lattice', rough=0.8, var=0.08, grain=0.3, grain_scale=G); latd = _yu('latticed', rough=0.8, var=0.08)
+    blue = _yu('blue', rough=0.6, var=0.03); blue2 = _yu('blue2', rough=0.6, var=0.03); red = _yu('red', rough=0.55, var=0.04); redd = _yu('redd', rough=0.6)
+    gold = _yu('gold', rough=0.35, metal=0.6); rope = _yu('rope', rough=0.9); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    dark = C('darkwood', '#6d4a31', rough=0.8); wood = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G); iron = C('iron', '#2e2c2b', rough=0.5)
+    FL, WX, NF = 0.2, 0.415, 0.08; R = 0.22
+    EAVE, PEAK = ((0.6, 0.92), (0.7, 1.1), (0.76, 1.22), (0.76, 1.22), (0.98, 1.42))[look]
+    wall_m = old[0] if look == 0 else lat if look == 1 else felt
+    plinth = round_box('plinth', 2 * W2 + 0.06, 2 * D2 + 0.06, 0.1, R + 0.03, dark if look else old[1]); objs.append(plinth)
+    walls = round_box('walls', 2 * W2, 2 * D2, EAVE, R, wall_m); objs.append(walls)
+    solids = [walls, plinth]
+    ring = lambda nm, z, hgt, m, out=0.012: objs.append(round_box(nm, 2 * W2 + 2 * out, 2 * D2 + 2 * out, hgt, R + out, m, z0=z))
+    RX, RY = W2 + 0.15, D2 + 0.15
+    if look == 0:                                  # old grey felt, patched; two ropes round it; a saggy patched roof, stones on its edge
+        for z in (0.24, 0.46): ring('yrope', z, 0.022, rope)
+        for (x, z, w, h, k) in ((-0.2, 0.42, 0.16, 0.14, 0), (0.33, 0.5, 0.13, 0.12, 1)): objs.append(box('ypatch', (w, 0.016, h), (x, -D2 - 0.006, z), m=patch[k], bevel=0.004, segs=1, jitter=0.01))
+        for (y, z, w, h, k) in ((-0.08, 0.3, 0.16, 0.15, 1), (0.1, 0.48, 0.13, 0.1, 0)): objs.append(box('ypatch', (0.016, w, h), (-W2 - 0.006, y, z), m=patch[k], bevel=0.004, segs=1, jitter=0.01))
+        yurt_roof(objs, EAVE - 0.03, PEAK, old[1], RX, RY, top=0.16, verts=14)
+        for k, (a, t_) in enumerate(((200, 0.5), (250, 0.3), (300, 0.62), (160, 0.35), (330, 0.3))):
+            ar = math.radians(a); rr = 1 - t_ * (1 - 0.16); p = Vector((math.cos(ar) * RX * rr, math.sin(ar) * RY * rr, EAVE - 0.03 + t_ * (PEAK - EAVE + 0.03)))
+            o = box('ypatch', (0.17, 0.15, 0.016), tuple(p + Vector((0, 0, 0.012))), m=patch[k % 2], bevel=0.004, segs=1); o.rotation_euler = (math.radians(-28) * math.sin(ar), math.radians(28) * math.cos(ar), ar); objs.append(o)
+        for k in range(7):
+            ar = math.radians(180 + k * 30); objs.append(sphere('tstone', 0.035, (math.cos(ar) * RX * 0.93, math.sin(ar) * RY * 0.93, EAVE + 0.01), (1.2, 1, 0.7), m=steps_m(), ico=1, disp=0.2, seed=k + 60))
+        objs.append(cyl('ycrown', 0.13, 0.05, (0, 0, PEAK + 0.01), m=dark, verts=10, bevel=0.0))
+    elif look == 1:                                # the lattice wall bare: crossed laths on the sides you see; a new plain roof
+        for sgn in (-1, 1):
+            for i in range(9):
+                x0 = -W2 + R + (i - 2) * 0.14
+                a_ = Vector((x0, -D2 - 0.008, 0.12)); b_ = Vector((x0 + sgn * 0.42, -D2 - 0.008, EAVE - 0.04))
+                if min(a_.x, b_.x) < -W2 + 0.1 or max(a_.x, b_.x) > W2 - 0.1: continue
+                if (-0.5 < (a_.x + b_.x) / 2 < 0.62): continue                      # (not across the doors and the nest)
+                objs.append(plank('lath', a_, b_, 0.022, 0.012, (0, -1, 0), latd, jitter=0.2, bevel=0.0))
+            for i in range(7):
+                y0 = -D2 + 0.05 + i * 0.13 - (0.2 if sgn > 0 else -0.2)
+                a_ = Vector((-W2 - 0.008, y0, 0.12)); b_ = Vector((-W2 - 0.008, y0 + sgn * 0.4, EAVE - 0.04))
+                if min(a_.y, b_.y) < -D2 + R - 0.06 or max(a_.y, b_.y) > D2 - R + 0.06: continue
+                objs.append(plank('lath', a_, b_, 0.022, 0.012, (-1, 0, 0), latd, jitter=0.2, bevel=0.0))
+        ring('yrope', EAVE - 0.05, 0.03, latd)
+        yurt_roof(objs, EAVE - 0.02, PEAK, felt2, RX, RY, top=0.18)
+        objs.append(cyl('ycrown', 0.15, 0.05, (0, 0, PEAK + 0.01), m=lat, verts=12, bevel=0.0))
+        FX, FY = -W2 - 0.18, 0.0; block(key, FX, FY, 0.2)                           # a roll of new felt, tied, waiting by the wall
+        objs.append(cyl('feltroll', 0.085, 0.5, (FX, FY, 0.085), (math.radians(90), 0, 0), m=felt, verts=12, bevel=0.0))
+        for dy in (-0.15, 0.15): objs.append(cyl('rolltie', 0.088, 0.02, (FX, FY + dy, 0.085), (math.radians(90), 0, 0), m=rope, verts=12, bevel=0.0))
+        SX, SY = W2 + 0.16, -D2 + 0.1; block(key, SX, SY, 0.13)
+        for k in range(5): objs.append(cyl('poles', 0.014, 0.6, (SX + (k % 3 - 1) * 0.03, SY + 0.1, 0.02 + (k // 3) * 0.028), (math.radians(90), 0, 0), m=lat, verts=6, bevel=0.0))
+    else:
+        TALL = look == 4
+        ring('yband', EAVE - 0.11, 0.1, red if TALL else blue)                          # the band under the roof, a row of white points on it
+        for i in range(11):
+            x = -W2 + R + (i + 0.5) * (2 * W2 - 2 * R) / 11
+            objs.append(box('ypoint', (0.036, 0.012, 0.036), (x, -D2 - 0.02, EAVE - 0.06), (0, math.radians(45), 0), m=gold if TALL else felt, bevel=0.0))
+        for i in range(5):
+            y = -D2 + R + (i + 0.5) * (2 * D2 - 2 * R) / 5
+            objs.append(box('ypoint', (0.012, 0.036, 0.036), (-W2 - 0.02, y, EAVE - 0.06), (math.radians(45), 0, 0), m=gold if TALL else felt, bevel=0.0))
+        for z in ((0.3, 0.52) if not TALL else (0.3, 0.52, 0.74)): ring('yrope', z, 0.02, rope if look == 2 else redd, out=0.008)
+        roof_m = felt2 if look == 2 else blue
+        yurt_roof(objs, EAVE - 0.02, PEAK, roof_m, RX, RY, top=0.2)
+        n = 16
+        for k in range(n):                         # the ropes over the roof (the Cosy's and Deluxe's: white points round its edge too)
+            ar = k / n * math.tau; a_ = Vector((math.cos(ar) * RX * 0.215, math.sin(ar) * RY * 0.215, PEAK + 0.005)); b_ = Vector((math.cos(ar) * RX * 0.99, math.sin(ar) * RY * 0.99, EAVE - 0.012))
+            nrm = Vector((math.cos(ar), math.sin(ar), 1.6)).normalized()
+            objs.append(plank('roofrope', a_, b_, 0.014, 0.012, nrm, rope if look == 2 else gold, jitter=0.1, bevel=0.0))
+            if look >= 3:
+                c = a_.lerp(b_, 0.88) + nrm * 0.012; ar2 = ar + math.pi / n; c2 = Vector((math.cos(ar2) * RX * 0.9, math.sin(ar2) * RY * 0.9, EAVE + (PEAK - EAVE) * 0.115)) + Vector((math.cos(ar2), math.sin(ar2), 1.6)).normalized() * 0.012
+                o = box('ypoint', (0.07, 0.07, 0.012), tuple(c2), m=felt, bevel=0.0); o.rotation_euler = (math.radians(-26) * math.sin(ar2), math.radians(26) * math.cos(ar2), ar2 + math.radians(45)); objs.append(o)
+        objs.append(cyl('ycrown', 0.16, 0.06, (0, 0, PEAK + 0.01), m=red, verts=14, bevel=0.0))
+        if TALL:                                   # a second little roof over the crown, a gold ball on top
+            objs.append(cyl('ydrum', 0.13, 0.12, (0, 0, PEAK + 0.09), m=felt, verts=14, bevel=0.0))
+            objs.append(cyl('yroof2', 0.24, 0.2, (0, 0, PEAK + 0.24), m=red, verts=16, r2=0.02, bevel=0.0))
+            objs.append(cyl('yroof2rim', 0.25, 0.02, (0, 0, PEAK + 0.145), m=gold, verts=16, bevel=0.0))
+            objs.append(sphere('yball', 0.045, (0, 0, PEAK + 0.37), m=gold, seg=10, rings=6))
+        else:
+            objs.append(cyl('stovepipe', 0.035, 0.3, (0.05, 0.03, PEAK + 0.14), m=iron, verts=8, bevel=0.0))
+            objs.append(cyl('pipehat', 0.06, 0.04, (0.05, 0.03, PEAK + 0.31), m=iron, verts=8, r2=0.01, bevel=0.0))
+    # ---- the door, the nest window
+    if look == 0:
+        for i in range(3): objs.append(plank('door', (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.105), (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.54), 0.075, 0.03, (0, -1, 0), dark, jitter=1.2))
+    else:
+        dm = red if look >= 2 else lat; fm = gold if look >= 2 else latd; DH = 0.56
+        for i in range(3): objs.append(plank('door', (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.105), (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.1 + DH), 0.076, 0.03, (0, -1, 0), dm, jitter=0.3))
+        for s in (-1, 1): objs.append(plank('dframe', (0.045 + s * 0.14, -D2 - 0.03, 0.1), (0.045 + s * 0.14, -D2 - 0.03, 0.12 + DH), 0.04, 0.03, (0, -1, 0), fm, jitter=0.2))
+        objs.append(plank('dframe', (0.045 - 0.17, -D2 - 0.03, 0.13 + DH), (0.045 + 0.17, -D2 - 0.03, 0.13 + DH), 0.045, 0.03, (0, -1, 0), fm, jitter=0.2))
+        if look >= 2:
+            for dz in (0.2, 0.42): objs.append(box('dsun', (0.07, 0.012, 0.07), (0.045, -D2 - 0.04, 0.1 + dz), (0, math.radians(45), 0), m=gold, bevel=0.0))
+            objs.append(box('dsun', (0.04, 0.014, 0.04), (0.045, -D2 - 0.042, 0.3), (0, math.radians(45), 0), m=blue2, bevel=0.0))
+        objs.append(box('doorstep', (0.36, 0.12, 0.1), (0.045, -D2 - 0.07, 0.05), m=dark, bevel=0.01, segs=1))
+    trim = (gold if look >= 2 else latd if look else dark)
+    nest_window(objs, key, FL, WX, trim, solids=solids, nest_floor=NF, door='drop', door_m=red if look >= 2 else (lat if look else dark))
+    if look >= 3:                                  # a carpet out in front of the door, a lantern each side, bright cloths on a line
+        objs.append(box('carpet', (0.34, 0.3, 0.012), (0.045, -D2 - 0.3, 0.008), m=_yu('carpet', rough=0.9), bevel=0.0))
+        objs.append(box('carpet2', (0.24, 0.2, 0.014), (0.045, -D2 - 0.3, 0.009), m=gold, bevel=0.0))
+        objs.append(box('carpet3', (0.16, 0.12, 0.016), (0.045, -D2 - 0.3, 0.01), m=blue2, bevel=0.0))
+        for s in (-1, 1):
+            lx = 0.045 + s * 0.22; LZ = 0.6; light_at(name, lx, -D2 - 0.05, LZ)
+            objs.append(sphere('lamp', 0.04, (lx, -D2 - 0.05, LZ), (1, 1, 1.15), m=C('lamp_red', '#ff9a5a', rough=0.3), seg=10, rings=6))
+            objs.append(cyl('lcap', 0.022, 0.014, (lx, -D2 - 0.05, LZ + 0.048), m=gold, verts=8, bevel=0.0))
+        PX = -W2 - 0.2                              # a line of bright cloths between two poles, along the side
+        for py in (-0.36, 0.36):
+            objs.append(cyl('fpole', 0.014, 0.7, (PX, py, 0.35), m=dark, verts=6, bevel=0.0)); block(key, PX, py, 0.04)
+        objs.append(cyl('fline', 0.005, 0.72, (PX, 0, 0.68), (math.radians(90), 0, 0), m=rope, verts=4, bevel=0.0))
+        for k, c_ in enumerate(('#2f62b5', '#f3eee2', '#d2452f', '#4f9a4a', '#e8b53a')): objs.append(box('cloth', (0.008, 0.1, 0.12), (PX, -0.26 + k * 0.13, 0.61), m=C('yu_cloth%d' % k, c_, rough=0.8), bevel=0.0))
+    pop_door(objs, FL, trim, wood, dark)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18 if look < 3 else 10, 0.0)
+    return finish(objs, name)
