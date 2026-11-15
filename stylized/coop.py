@@ -338,16 +338,17 @@ def village_well(objs, x, y, m):
     objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.08, 0.068), m=m['water'], verts=16, bevel=0.0))
 
 
-def village_fountain(objs, x, y, m):
+def village_fountain(objs, x, y, m, tint=None):
     """A village fountain (the Deluxe French Farmhouse's water, 15 Nov 2026): a round basin of pale stone, a stone pillar
     in the middle with a ball on top and two spouts, behind a low stone basin of water for the hens."""
     stone = mat('ffont_stone', '#d6c49e', rough=0.85, var=0.06, bump=0.15, bump_scale=60); low = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60)
-    iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6); bx, by = x, y + 0.2; R = 0.19
-    objs.append(cyl('fbasin', R, 0.15, (bx, by, 0.075), m=stone, verts=8, bevel=0.012))
-    objs.append(cyl('frim', R + 0.015, 0.03, (bx, by, 0.155), m=stone, verts=8, bevel=0.006))
+    iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6); bx, by = x, y + 0.2; R = 0.19; rim = stone
+    if tint: stone = mat('ffont_china', tint[0], rough=0.25, spec=0.7); rim = mat('ffont_china2', tint[1], rough=0.3, spec=0.6)
+    objs.append(cyl('fbasin', R, 0.15, (bx, by, 0.075), m=stone, verts=8 if not tint else 16, bevel=0.012))
+    objs.append(cyl('frim', R + 0.015, 0.03, (bx, by, 0.155), m=rim, verts=8 if not tint else 16, bevel=0.006))
     objs.append(cyl('wellwater', R - 0.035, 0.01, (bx, by, 0.166), m=m['water'], verts=8, bevel=0.0))
     objs.append(cyl('fpillar', 0.045, 0.34, (bx, by, 0.33), m=stone, verts=8, bevel=0.006))
-    objs.append(cyl('fcap', 0.065, 0.03, (bx, by, 0.5), m=stone, verts=8, bevel=0.004))
+    objs.append(cyl('fcap', 0.065, 0.03, (bx, by, 0.5), m=rim, verts=8, bevel=0.004))
     objs.append(sphere('fball', 0.045, (bx, by, 0.55), m=stone, seg=10, rings=6))
     for sx in (-1, 1): objs.append(cyl('fspout', 0.008, 0.08, (bx + sx * 0.07, by, 0.38), (0, math.radians(90), 0), m=iron, verts=6, bevel=0.0))
     objs.append(cyl('basin', 0.15, 0.07, (x, y - 0.08, 0.035), m=low, verts=16, bevel=0.008))
@@ -598,8 +599,9 @@ def build_pen(root, m):
         objs.append(sphere('fball', 0.08, (fx, fy, 0.4), (1, 1, 0.45), m=red, seg=14, rings=8))
         objs.append(box('fslot', (0.075, 0.012, 0.014), (fx, fy - 0.078, 0.32), m=dark, bevel=0.0))
         objs.append(box('fplate', (0.06, 0.01, 0.06), (fx, fy - 0.079, 0.23), m=white, bevel=0.003, segs=1))
-    elif PEN.get('feeder_style') in ('dovecote', 'hut'):               # (the Deluxe French Farmhouse's, 15 Nov 2026: a little round dovecote over its tray of grain)
+    elif PEN.get('feeder_style') in ('dovecote', 'hut', 'yurt'):               # (the Deluxe French Farmhouse's, 15 Nov 2026: a little round dovecote over its tray of grain)
         cream = mat('fd_dove', '#f3e8cf', rough=0.85); slate = mat('fd_slate', '#7d92ad', rough=0.55); stone = mat('ffont_stone', '#d6c49e', rough=0.85, var=0.06); dark = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
+        if PEN.get('feeder_style') == 'yurt': cream = mat('fd_felt', '#f3eee2', rough=0.95); slate = mat('fd_yblue', '#2f62b5', rough=0.6); stone = mat('fd_yred', '#d2452f', rough=0.55); dark = mat('fd_ygold', '#e8b53a', rough=0.35, metal=0.6)
         if PEN.get('feeder_style') == 'hut': cream = mat('fd_teal', '#3fa7a0', rough=0.7); slate = mat('fd_shingle', '#8a5646', rough=0.8); stone = mat('fd_rock', '#6f6a66', rough=0.9, var=0.08); dark = mat('fd_red', '#c93a2e', rough=0.55)
         objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=stone, verts=20, bevel=0.01))
         objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
@@ -693,6 +695,7 @@ def build_pen(root, m):
     elif PEN.get('water') == 'well': village_well(objs, wx, wy, m)
     elif PEN.get('water') == 'fontaine': village_fountain(objs, wx, wy, m)
     elif PEN.get('water') == 'spring': mountain_spring(objs, wx, wy, m)
+    elif PEN.get('water') == 'porcelain': village_fountain(objs, wx, wy, m, tint=('#f3f1ea', '#2f62b5'))
     elif PEN.get('water') == 'pond': koi_pond(objs, wx, wy, m)
     elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
