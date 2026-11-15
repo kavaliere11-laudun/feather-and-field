@@ -537,7 +537,7 @@ export class GameUI {
     if (this.o.rare) body.append(this.rareChoice(e, () => this.close()));
   }
   // ---- a coop's feeder: how full, how long it lasts, fill it (main.js sends the farmer)
-  feederSheet(coop, onFill) {
+  feederSheet(coop, onFill, onFav) {
     const g = this.g, q = g.fillQuote(coop), left = g.feedLeft(coop), h = g.feedHours(coop);
     const b = this.open('feeder', this.t('feeder_title', { coop: g.coopName(coop) }));
     this.feederCoop = coop.id;
@@ -552,6 +552,23 @@ export class GameUI {
     go.type = 'button'; go.disabled = !!(q.full || q.broke); if (go.disabled) go.classList.add('galt');
     go.addEventListener('click', () => { if (!go.disabled) onFill(); });
     b.append(go);
+    // (its breed's own feed, 15 Nov 2026: three of its favourite vegetable mixed in, one more egg a day each for three days)
+    const fs = g.favState(coop);
+    if (fs && (g.gardenOpen() || fs.state === 'on')) {
+      const C = CROPS[fs.crop], name = this.t('crop_l_' + fs.crop), card = el('div', 'gcard gfav'), hd = el('div', 'gcard-h'); card.dataset.fav = fs.state;
+      hd.append(el('span', 'gemoji', C.e), el('span', 'gcard-t', this.t('fav_t', { crop: this.t('crop_' + fs.crop) }))); card.append(hd);
+      if (fs.state === 'on') card.append(el('p', 'gtext gfound', this.t('fav_on', { t: this.dur(fs.left) })));
+      else {
+        card.append(el('p', 'gnote', this.t('fav_how', { crop: name })));
+        if (fs.state === 'level') card.append(el('p', 'gnote', this.t('fav_lock', { crop: this.t('crop_' + fs.crop), l: fs.level })));
+        else {
+          card.append(el('p', 'gnote', C.e + ' ' + this.t('fav_have', { n: fs.have })));
+          const mix = el('button', 'gbtn gsmallbtn' + (fs.state === 'can' ? '' : ' galt'), this.t('fav_btn', { crop: name })); mix.type = 'button'; mix.disabled = fs.state !== 'can'; mix.dataset.mix = fs.crop;
+          mix.addEventListener('click', () => { if (!mix.disabled && onFav) onFav(); }); card.append(mix);
+        }
+      }
+      b.append(card);
+    }
   }
   // ---- eggs flying from the nest to the coins, then the coins counted up
   flyEggs(from, n, colour, done, cls = 'gegg') {

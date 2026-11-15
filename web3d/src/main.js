@@ -9021,7 +9021,15 @@ function saleBubble() {
 function feederCard(plot) {
   if (!plot.gc) return;
   holdBird(null); FEEDER_PLOT = plot;
-  gameUI.feederSheet(plot.gc, () => fillFeeder(plot));
+  gameUI.feederSheet(plot.gc, () => fillFeeder(plot), () => mixFav(plot));
+}
+// its breed's own feed mixed in (game.js FEEDS): said; the feeder filled as well if it isn't full (the farmer walks over with it)
+function mixFav(plot) {
+  const r = game.mixFav(plot.gc.id); if (!r) return null;
+  const q = fillFeeder(plot);
+  if (!q) { gameUI.close(); gameUI.refresh(); }
+  hint(game.t('fav_done', { farmer: farmerName(), crop: game.t('crop_l_' + r.crop) })); bubbleText(Date.now(), plot); wake(1000);
+  return r;
 }
 function fillFeeder(plot) {
   const c = plot.gc, before = game.feedLeft(c), q = game.fillFeeder(c.id);

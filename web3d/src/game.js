@@ -281,7 +281,7 @@ export const TEXT = {
     hunt_streak: '{n} days in a row', hunt_total: 'golden eggs found: {n}', hunt_lv_t: 'New: a golden egg to find every day', hunt_lv_b: 'Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.',
     // the vegetable garden (7 Nov 2026)
     garden_title: 'Your vegetable garden', garden_how: 'Sow a bed for a few coins and pick it when it’s ripe: carrots grow fastest, pumpkins slowest. Your birds love them as treats, and the villagers ask for them too.',
-    crop_carrot: 'Carrots', crop_lettuce: 'Lettuces', crop_l_lettuce: 'lettuces', ord_lettuce: 'Lettuces', treat_lettuce: 'An extra egg from each hen, soon after.', crop_peas: 'Peas', crop_l_peas: 'peas', ord_peas: 'Peas', treat_peas: 'An extra egg from each hen, and a little experience for every bird.', crop_corn: 'Sweetcorn', crop_l_corn: 'sweetcorn', ord_corn: 'Sweetcorn', treat_corn: 'An extra egg from each hen, and a little experience for every bird.', crop_beet: 'Beetroot', crop_l_beet: 'beetroot', ord_beet: 'Beetroot', treat_beet: 'An extra egg from each hen, and a little experience for every bird.', crop_sunf: 'Sunflower seeds', crop_l_sunf: 'sunflower seeds', ord_sunf: 'Sunflower seeds', treat_sunf: 'Two extra eggs from each hen, and a little experience for every bird.', crop_next: 'Next: {crop} from level {l}', crop_straw: 'Strawberries', crop_pump: 'Pumpkins', bed_n: 'Bed {n}', bed_empty: 'Ready to sow. What shall we grow?', bed_sow: '{c} coins · {t}',
+    crop_carrot: 'Carrots', fav_t: 'Their favourite: {crop}', fav_how: 'Mix 3 {crop} into their grain: for 3 days they each lay one more egg a day.', fav_btn: 'Mix it in · 3 {crop}', fav_have: 'In your pantry: {n}', fav_on: 'On their favourite feed for {t} more: one more egg a day each.', fav_lock: '{crop} come at level {l}.', fav_done: '{farmer} mixes in the {crop} · one more egg a day each, for 3 days', crop_lettuce: 'Lettuces', crop_l_lettuce: 'lettuces', ord_lettuce: 'Lettuces', treat_lettuce: 'An extra egg from each hen, soon after.', crop_peas: 'Peas', crop_l_peas: 'peas', ord_peas: 'Peas', treat_peas: 'An extra egg from each hen, and a little experience for every bird.', crop_corn: 'Sweetcorn', crop_l_corn: 'sweetcorn', ord_corn: 'Sweetcorn', treat_corn: 'An extra egg from each hen, and a little experience for every bird.', crop_beet: 'Beetroot', crop_l_beet: 'beetroot', ord_beet: 'Beetroot', treat_beet: 'An extra egg from each hen, and a little experience for every bird.', crop_sunf: 'Sunflower seeds', crop_l_sunf: 'sunflower seeds', ord_sunf: 'Sunflower seeds', treat_sunf: 'Two extra eggs from each hen, and a little experience for every bird.', crop_next: 'Next: {crop} from level {l}', crop_straw: 'Strawberries', crop_pump: 'Pumpkins', bed_n: 'Bed {n}', bed_empty: 'Ready to sow. What shall we grow?', bed_sow: '{c} coins · {t}',
     bed_sown: 'Just sown: the first shoots soon.', bed_shoots: 'The first little shoots.', bed_growing: 'Growing well.', bed_ripe: 'Ripe! {n} to pick.', bed_pick: 'Pick',
     basket_title: 'Your basket', basket_how: 'Tap one of your birds to give their coop a treat. Villagers’ orders take from your basket too.', garden_move: 'Move the garden',
     garden_sowing: '{farmer} is on the way to sow the {crop}', garden_sowed: '{e} {crop} sown · −{c} coins. Ripe in {t}.', garden_broke: 'Not enough coins for the seeds yet',
@@ -639,7 +639,7 @@ export const TEXT = {
     hunt_streak: '{n} jours de suite', hunt_total: 'œufs d’or trouvés : {n}', hunt_lv_t: 'Nouveau : un œuf d’or à trouver chaque jour', hunt_lv_b: 'Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite.',
     // le potager (7 nov. 2026)
     garden_title: 'Votre potager', garden_how: 'Semez un carré pour quelques pièces et récoltez-le quand il est mûr : les carottes poussent le plus vite, les citrouilles le plus lentement. Vos oiseaux en raffolent, et les villageois en demandent aussi.',
-    crop_carrot: 'Carottes', crop_lettuce: 'Laitues', crop_l_lettuce: 'laitues', ord_lettuce: 'Laitues', treat_lettuce: 'Un œuf de plus de chaque poule, peu après.', crop_peas: 'Petits pois', crop_l_peas: 'petits pois', ord_peas: 'Petits pois', treat_peas: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_corn: 'Maïs doux', crop_l_corn: 'épis de maïs', ord_corn: 'Maïs doux', treat_corn: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_beet: 'Betteraves', crop_l_beet: 'betteraves', ord_beet: 'Betteraves', treat_beet: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_sunf: 'Graines de tournesol', crop_l_sunf: 'graines de tournesol', ord_sunf: 'Graines de tournesol', treat_sunf: 'Deux œufs de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_next: 'Ensuite : {crop} au niveau {l}', crop_straw: 'Fraises', crop_pump: 'Citrouilles', bed_n: 'Carré {n}', bed_empty: 'Prêt à semer. Qu’allons-nous faire pousser ?', bed_sow: '{c} pièces · {t}',
+    crop_carrot: 'Carottes', fav_t: 'Leur préféré : {crop}', fav_how: 'Mélangez 3 {crop} à leur grain : pendant 3 jours, un œuf de plus par jour chacune.', fav_btn: 'Mélanger · 3 {crop}', fav_have: 'Dans votre garde-manger : {n}', fav_on: 'Leur mélange préféré, encore {t} : un œuf de plus par jour chacune.', fav_lock: '{crop} : à partir du niveau {l}.', fav_done: '{farmer} ajoute les {crop} · un œuf de plus par jour chacune, pendant 3 jours', crop_lettuce: 'Laitues', crop_l_lettuce: 'laitues', ord_lettuce: 'Laitues', treat_lettuce: 'Un œuf de plus de chaque poule, peu après.', crop_peas: 'Petits pois', crop_l_peas: 'petits pois', ord_peas: 'Petits pois', treat_peas: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_corn: 'Maïs doux', crop_l_corn: 'épis de maïs', ord_corn: 'Maïs doux', treat_corn: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_beet: 'Betteraves', crop_l_beet: 'betteraves', ord_beet: 'Betteraves', treat_beet: 'Un œuf de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_sunf: 'Graines de tournesol', crop_l_sunf: 'graines de tournesol', ord_sunf: 'Graines de tournesol', treat_sunf: 'Deux œufs de plus de chaque poule, et un peu d’expérience pour chaque oiseau.', crop_next: 'Ensuite : {crop} au niveau {l}', crop_straw: 'Fraises', crop_pump: 'Citrouilles', bed_n: 'Carré {n}', bed_empty: 'Prêt à semer. Qu’allons-nous faire pousser ?', bed_sow: '{c} pièces · {t}',
     bed_sown: 'Tout juste semé : les premières pousses bientôt.', bed_shoots: 'Les premières petites pousses.', bed_growing: 'Ça pousse bien.', bed_ripe: 'Mûr ! {n} à récolter.', bed_pick: 'Récolter',
     basket_title: 'Votre panier', basket_how: 'Touchez un de vos oiseaux pour offrir une friandise à son poulailler. Les commandes du village se servent aussi dans votre panier.', garden_move: 'Déplacer le potager',
     garden_sowing: '{farmer} va semer les {crop}', garden_sowed: '{e} {crop} semées · −{c} pièces. Mûres dans {t}.', garden_broke: 'Pas encore assez de pièces pour les graines',
@@ -1108,6 +1108,13 @@ export const CROPS = {
   beet: { grow: 5 * 3600e3, seed: 15, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🍠', level: 15 },
   sunf: { grow: 6 * 3600e3, seed: 18, n: 3, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🌻', level: 18 },
 };
+// ---- each breed's own feed (15 Nov 2026, Audrey: "The farmer will be able to create food adapted for each breed"; her
+// choice: "One more egg a day"): three of a breed's favourite vegetable mixed into its coop's grain: for three days each hen
+// there lays one more egg a day (in the afternoon; the feeder must have feed in it, as for any egg). Plain feed works as
+// ever. From level 6, and the vegetable's own level. Saved on the coop: fav { t: when mixed, crop }
+export const FEEDS = { level: 6, need: 3, ms: 3 * 86400e3, fav: { rir: 'carrot', orp: 'straw', sil: 'lettuce', aya: 'pump', call: 'peas', leg: 'corn', pol: 'sunf', bra: 'beet', pea: 'corn' } };
+export const favOf = breed => FEEDS.fav[baseBreed(breed)] || null;
+export const favEggAt = (henId, day) => Math.round(day + (14 + 3 * hash01('fav|' + henId + '|' + day)) * 3600e3);
 export const cropLevel = k => (CROPS[k] && CROPS[k].level) || GARDEN.level;
 export const CROP_IDS = Object.keys(CROPS);
 // a treat's extra egg k from a hen: 20 or 50 minutes after it (and a few minutes of her own)
@@ -1621,7 +1628,9 @@ export function checkFarm(d, now = Date.now()) {
     out.garden = { x: spotNum(gd.x), z: spotNum(gd.z), deg: [0, 90].includes(gd.deg) ? gd.deg : 0, beds, veg };
     // a coop's last treat (when, which): never ahead of now; none before the garden
     for (const c of out.coops) { const r = (Array.isArray(d.coops) ? d.coops : []).find(o => o && o.id === c.id), tr = r && r.treat;
-      if (tr && typeof tr === 'object' && Object.hasOwn(CROPS, tr.crop) && L >= cropLevel(tr.crop) && Number.isInteger(tr.t) && tr.t > 0 && tr.t <= now + TZ_SLACK) c.treat = { t: tr.t, crop: tr.crop }; }
+      if (tr && typeof tr === 'object' && Object.hasOwn(CROPS, tr.crop) && L >= cropLevel(tr.crop) && Number.isInteger(tr.t) && tr.t > 0 && tr.t <= now + TZ_SLACK) c.treat = { t: tr.t, crop: tr.crop };
+      const fv = r && r.fav;      // (its own feed: its breed's favourite only, mixed no later than now, from the level it opens)
+      if (fv && typeof fv === 'object' && L >= FEEDS.level && fv.crop === favOf(c.breed) && L >= cropLevel(fv.crop) && Number.isInteger(fv.t) && fv.t > 0 && fv.t <= now + TZ_SLACK) c.fav = { t: fv.t, crop: fv.crop }; }
   }
   return out;
 }
@@ -2621,6 +2630,8 @@ export class Game {
       if (f && f.hen === b.id && f.t > b.laid && f.t <= now) out.push({ hen: b.id, coop: b.coop, t: f.t, first: true });
       const c = this.coop(b.coop), tr = c && c.treat;      // (a treat from the garden: her extra eggs soon after, if she was there for it)
       if (tr && b.since <= tr.t) for (let k = 0; k < CROPS[tr.crop].eggs; k++) { const t = treatEggAt(tr.t, b.id, k); if (t > from && t <= now) out.push({ hen: b.id, coop: b.coop, t, treat: true }); }
+      const fv = c && c.fav;      // (her breed's own feed: one more egg a day while it lasts)
+      if (fv) for (let day = dayStart(Math.max(from, fv.t)); day <= now; day = nextDay(day)) { const t = favEggAt(b.id, day); if (t > from && t <= now && t > fv.t && t <= fv.t + FEEDS.ms) out.push({ hen: b.id, coop: b.coop, t, fav: true }); }
     }
     return out.sort((a, b) => a.t - b.t);
   }
@@ -2780,6 +2791,18 @@ export class Game {
     q.level = c.feed / cap;
     q.done = this.job('feed', 1, now);
     return q;
+  }
+  // a coop's own feed: its favourite vegetable; what mixing it in would take (state: 'on' while it lasts, 'level' before the
+  // level, 'short' without three of them, 'can'); mixed: three from the pantry, three days from now
+  favState(c, now = Date.now()) {
+    const crop = c ? favOf(c.breed) : null; if (!crop) return null;
+    const on = !!(c.fav && now < c.fav.t + FEEDS.ms), have = (this.data.garden && this.data.garden.veg && this.data.garden.veg[crop]) || 0, lv = Math.max(FEEDS.level, cropLevel(crop));
+    return { crop, have, need: FEEDS.need, level: lv, left: on ? c.fav.t + FEEDS.ms - now : 0, state: on ? 'on' : this.level < lv || !this.gardenOpen() ? 'level' : have < FEEDS.need ? 'short' : 'can' };
+  }
+  mixFav(coopId, now = Date.now()) {
+    const c = this.coop(coopId), s = this.favState(c, now); if (!s || s.state !== 'can') return null;
+    this.vegBasket()[s.crop] -= FEEDS.need; c.fav = { t: Math.round(now), crop: s.crop }; this.save();
+    return { crop: s.crop, until: c.fav.t + FEEDS.ms };
   }
   setLang(l) { this.lang = langOk(l); if (this.data) { this.data.lang = this.lang; this.save(); } }
   musicOn() { return !this.data || this.data.music !== false; }

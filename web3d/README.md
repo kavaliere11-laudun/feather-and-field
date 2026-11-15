@@ -2994,6 +2994,8 @@ the birds already had.
 
 ## Status (29 Oct 2026, 14:20)
 
+- 15 Nov 2026: **each breed's own feed** (vegetables plan, step 2): the feeder card's "Their favourite" (gameui.js `feederSheet(coop, onFill, onFav)`, `.gfav`; main.js `mixFav(plot)`); game.js `FEEDS`. Test: `favtest.mjs`.
+
 - 15 Nov 2026: **five new vegetables and beds up to ten** (claude/vegetables-plan.md, step 1). game.js `CROPS` (lettuce, peas, corn, beet, sunf, each with `level`; `cropLevel`, `cropOpen`, `cropNext`), `GARDEN.more` (seven entries), `PANTRY` (base, price, ids); gameui.js the bed's card (`.gbed-sow` a grid of two, `crop_next`); main.js `GARDEN_BEDX/Z` (ten; `GARDEN_ROW3`), `gardenFoot(n)` (deeper and wider with a third row), `loadGarden` loads `garden.glb` and `garden2.glb`; build.sh slims `garden2`. Texts in six languages. Test: `vegtest.mjs`.
 
 - 15 Nov 2026: the Rustic yard is as big as the Mended one for every breed (Audrey: "In the rustic the chickens can barely move"). Rebuilt with `stylized/extras/export_pens_t0.py` and spliced in.
