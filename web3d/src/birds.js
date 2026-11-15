@@ -175,8 +175,8 @@ export function initFlock(gltf, json) {
   }
 }
 
-// a pattern drawn on each feather (by the shader), chosen per vertex: 0 none, 1 bars across the feather, 2 a dark centre with light
-// edges (a Brahma's cape), 4 darker towards the feather's base, where the next feather overlaps it
+// a pattern drawn on each feather (by the shader), chosen per vertex: 0 none, 1 bars across the feather, 2 a white spot at the tip
+// with a black bar behind (a Speckled Sussex; once a dark centre with light edges, never used), 4 darker towards the feather's base, where the next feather overlaps it
 const FEAT = { c: new THREE.Color(), mode: 0, amt: 0 };
 // the colour of one vertex of a grown bird
 function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
@@ -235,8 +235,8 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
     } break;
     case 'splash': { const m = noise(x * 22 + 3, y * 22, z * 22); out.lerp(lin(S.spot), smooth(0.56, 0.66, m) * 0.9); } break;
     case 'paint': { const m = noise(x * 14 + 7, y * 14, z * 14 + 2); out.lerp(lin(S.spot), smooth(0.58, 0.64, m)); } break;
-    case 'speckle': if (key !== 'tail' && key !== 'prim' && !(key === 'body' && hw > 0.97)) {      // (15 Nov 2026, a Speckled Sussex: small white tips scattered over dark plumage, each with a darker edge)
-      const m = noise(x * 62 + 5, y * 62, z * 62 + 9); out.lerp(lin(S.dark || '#1a1210'), smooth(0.6, 0.66, m) * 0.7); out.lerp(lin(S.spot), smooth(0.68, 0.73, m)); } break;
+    case 'speckle': if (key !== 'tail' && key !== 'prim' && key !== 'saddle') {      // (15 Nov 2026, a Speckled Sussex, Audrey's choice for level 12: each feather tipped white with a black bar behind the tip, drawn feather by feather by the shader: mode 2; a hackle's only a small tip)
+      FEAT.mode = 2; FEAT.c.copy(lin(S.spot)); FEAT.amt = key === 'body' && hw > 0.04 ? 0.45 : 1; } break;
     case 'pencil': if (!(key === 'body' && hw > 0.04)) { const m = noise(x * 90, y * 90, z * 90); out.lerp(lin(S.dark), smooth(0.45, 0.75, m) * 0.7); } break;
   }
   const shade = 0.84 + 0.16 * smooth(0.15, 0.6, h) + (n - 0.5) * 0.07;      // a touch darker underneath, soft feather texture
@@ -754,7 +754,14 @@ function birdMaterial(indoor, goose) {
           float fpx = 1.0 / max(length(fwidth(pp)), 1e-4), boost = 1.0 - smoothstep(12.0, 40.0, fpx);
           float onTop = 1.0 + 0.8 * boost;
           if (vMode > 0.5 && vMode < 1.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(-0.35, 0.35, sin(along * 11.0 + abs(across) * 2.0)));
-          else if (vMode > 1.5 && vMode < 2.5) diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, onTop * vPat.a * smoothstep(0.5, 0.26, abs(across)) * smoothstep(-0.95, -0.4, along));
+          else if (vMode > 1.5 && vMode < 2.5) {     // (2, a Speckled Sussex, 15 Nov 2026; no bird used 2 before: most feathers with a white spot at the tip (vPat; a hackle's smaller), a black bar behind it, the overlap a little darker)
+            float on = step(0.3, fract(id * 7.31)), wob = 0.05 * sin(across * 5.0 + id * 31.0), big = mix(0.12, 0.0, vPat.a);
+            float tip = smoothstep(0.52 + big, 0.64 + big, along + wob) * smoothstep(1.02, 0.9, t) * smoothstep(0.8, 0.5, abs(across));
+            float bar = smoothstep(0.3 + big, 0.42 + big, along + wob) * (1.0 - tip) * smoothstep(0.9, 0.6, abs(across));
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.55, min(1.0, onTop * 0.3) * smoothstep(0.2, -0.7, along));
+            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012, 0.01, 0.009), on * 0.8 * bar);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, on * tip);
+          }
           else if (capeA > 0.0) {          // each cape feather black down its middle, edged white all round (its tip too)
             float w = clamp(vMode - 3.0, 0.1, 0.49), on = step(0.1 + 0.8 * fract(id * 5.37), capeA);
             diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, on * smoothstep(w + 0.09, w - 0.04, abs(across)) * smoothstep(0.9, 0.74, t) * smoothstep(-0.99, -0.7, along));
