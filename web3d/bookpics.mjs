@@ -28,6 +28,7 @@ mkdirSync(OUT, { recursive: true }); if (PREVIEW) mkdirSync(PREVIEW, { recursive
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 640, height: 640 }, deviceScaleFactor: 2 });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
+if (process.env.MOCKPAINT) { const { readFileSync } = await import('fs'); await p.addInitScript(m => { globalThis.__FF_MOCK = m; }, JSON.parse(readFileSync(process.env.MOCKPAINT, 'utf8'))); }      // (15 Nov 2026: mock-ups of new breeds, breedmock.mjs)
 await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&lineup${DUCKS ? '=ducks&call' : ''}&coops=0&time=12:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
 for (const breed of BREEDS) {

@@ -298,7 +298,11 @@ export function paintedGeometry(model, breed, colour) {
   if (chick) S = breed === 'sil' ? Object.assign({}, SIL_CHICK[colour] || SIL_CHICK.white) : CHICK[breed];
   else if (breed === 'sil') { const s = SIL[colour] || SIL.white; S = rooster && s.rooster ? Object.assign({}, s, s.rooster) : s; }
   else S = ADULT[base_];
-  const legHex = (chick && S.leg) || (breed === 'sil' ? '#55505c' : chick ? '#f0be42' : LEG[breed]);
+  // (15 Nov 2026, mock-ups of new breeds for Audrey to look at before any model is made: a test page may lend a model another
+  // paint, globalThis.__FF_MOCK = { orp_h: {...}, leg: { orp: '#...' } }; never set in the game)
+  const MK = typeof globalThis !== 'undefined' && globalThis.__FF_MOCK;
+  if (MK && !chick && MK[base_]) S = MK[base_];
+  const legHex = (MK && !chick && MK.leg && MK.leg[breed]) || (chick && S.leg) || (breed === 'sil' ? '#55505c' : chick ? '#f0be42' : LEG[breed]);
   const beakHex = (chick && S.beak) || (breed === 'sil' ? '#757688' : '#e9b24c');
   const k = base.normalized ? 1 / 255 : 1;
   const fpat = new Float32Array(n * 4), fmode = new Float32Array(n), feathered = !chick && breed !== 'sil';
