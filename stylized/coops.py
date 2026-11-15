@@ -4619,7 +4619,7 @@ def play_things(objs, t, k='rir'):
     P = PLAY_BY[k].get(t)
     if not P: return
     if WINTER in SWING_LOOK and t == 4: striped_swing(objs, *P['swing'], *SWING_LOOK[WINTER])
-    elif P.get('frame') == 'lych': (tonnelle_swing if P.get('arbour') else lych_swing)(objs, *P['swing'])
+    elif P.get('frame') == 'lych': (hut_swing if P.get('arbour') == 'hut' else tonnelle_swing if P.get('arbour') else lych_swing)(objs, *P['swing'])
     elif P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
     elif P.get('frame') == 'tree': tree_swing(objs, *P['swing'])
     elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
@@ -4627,10 +4627,10 @@ def play_things(objs, t, k='rir'):
     elif P.get('frame') == 'joglo': joglo_swing(objs, *P['swing'])
     elif P.get('frame') == 'jhula': jhula_swing(objs, *P['swing'])
     else: swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
-    (cabbage_lamp if P.get('holder') == 'lamp' else cabbage_signpost if P.get('holder') == 'signpost' else cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_post)(objs, *P['cabbage'])
+    (cabbage_redpost if P.get('holder') == 'redpost' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_signpost if P.get('holder') == 'signpost' else cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
-    if 'trug' in P: (sand_crate if P.get('sand') == 'fr' else sand_trug)(objs, *P['trug'])
-    if 'wagon' in P: (sand_boules if P.get('sand') == 'fr' else sand_wagon)(objs, *P['wagon'])
+    if 'trug' in P: (sand_batea if P.get('sand') == 'andes' else sand_crate if P.get('sand') == 'fr' else sand_trug)(objs, *P['trug'])
+    if 'wagon' in P: (sand_rocks if P.get('sand') == 'andes' else sand_boules if P.get('sand') == 'fr' else sand_wagon)(objs, *P['wagon'])
     if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
     if 'pit' in P: sand_pit(objs, *P['pit'])
     if 'sbowl' in P: sand_bowl(objs, *P['sbowl'])
@@ -4648,7 +4648,7 @@ def play_things(objs, t, k='rir'):
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
     if 'xylo' in P and WINTER in XYLO_LOOK: winter_xylophone(objs, *P['xylo'], XYLO_LOOK[WINTER])
-    elif 'xylo' in P: (bottle_xylophone if P.get('bars') == 'bottles' else milk_xylophone if P.get('bars') == 'milk' else bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
+    elif 'xylo' in P: (cane_xylophone if P.get('bars') == 'cane' else bottle_xylophone if P.get('bars') == 'bottles' else milk_xylophone if P.get('bars') == 'milk' else bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):
@@ -4819,7 +4819,7 @@ def pen_info(t, k='rir'):
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume', 'hauz') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan', 'well', 'fontaine') else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume', 'hauz') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan', 'well', 'fontaine', 'spring') else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
 
@@ -8238,9 +8238,9 @@ TRUG_W, TRUG_D = 0.64, 0.38                                     # the Cosy Villa
 WAGON_W, WAGON_D, WAGON_Y = 0.84, 0.46, 0.165                   # the Deluxe's wagon of sand (x, y; the sand's height)
 
 
-def lych_swing(objs, x, y):
+def lych_swing(objs, x, y, oak=None, tiles=None, ridge=None):
     """The Village Cottage's swing: under a little lych-gate, two oak posts and a roof of clay tiles."""
-    oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); tiles = [_sus('rtile', rough=0.75, var=0.08), _sus('rtile2', rough=0.75, var=0.08), _sus('rtile3', rough=0.75, var=0.08)]
+    oak = oak or C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); tiles = tiles or [_sus('rtile', rough=0.75, var=0.08), _sus('rtile2', rough=0.75, var=0.08), _sus('rtile3', rough=0.75, var=0.08)]
     H = SWING_TOP + 0.1
     for sx in (-1, 1):
         px = x + sx * (SWING_HALF + 0.05)
@@ -8258,12 +8258,12 @@ def lych_swing(objs, x, y):
                 up = Vector((0, -sy * 0.26, 0.2)).normalized(); nrm = Vector((0, sy * 0.2, 0.26)).normalized()
                 c = Vector((xx, a.y, a.z + 0.012 * (2 - r)))
                 objs.append(plank('sh', c + up * 0.06, c - up * 0.06, L / n * 0.93, 0.018, nrm, random.choice(tiles), jitter=1.4, bevel=0.005))
-    objs.append(cyl('lyridge', 0.035, L + 0.02, (x, y, RZ + 0.01), (0, math.radians(90), 0), m=_sus('ridge', rough=0.7), verts=10, bevel=0.0))
+    objs.append(cyl('lyridge', 0.035, L + 0.02, (x, y, RZ + 0.01), (0, math.radians(90), 0), m=ridge or _sus('ridge', rough=0.7), verts=10, bevel=0.0))
 
 
-def cabbage_signpost(objs, x, y):
+def cabbage_signpost(objs, x, y, white=None, dark=None):
     """The Village Cottage's way of hanging the cabbage: a white village signpost, the cabbage on a string from its finger."""
-    white = _sus('white', rough=0.6, var=0.02); dark = _sus('postd', rough=0.6)
+    white = white or _sus('white', rough=0.6, var=0.02); dark = dark or _sus('postd', rough=0.6)
     px, py = x, y + 0.28; H = CAB_TOP + 0.26
     objs.append(cyl('sgpost', 0.022, H, (px, py, H / 2), m=white, verts=10, bevel=0.0))
     objs.append(cyl('sgfoot', 0.04, 0.1, (px, py, 0.05), m=dark, verts=10, bevel=0.0))
@@ -8316,10 +8316,11 @@ def sand_wagon(objs, x, y):
         objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (W / 2 + 0.05), y + math.sin(a) * (D / 2 + 0.16), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 31))
 
 
-def milk_xylophone(objs, x, y, green=False):
+def milk_xylophone(objs, x, y, green=False, cane=False):
     """The Deluxe Village Cottage's xylophone: six milk bottles lying across a crate's two rails, each with its own coloured
     foil cap and band, shorter and shorter; a wooden spoon to ring them."""
     wood = coop.M()['wood']; milk = C('mar_bottle', '#4f8f63', rough=0.2, spec=0.8) if green else C('sus_milk', '#f6f3ea', rough=0.25, spec=0.6); glass = C('mar_bottle2', '#6aa67a', rough=0.15, spec=0.8) if green else C('sus_bottle', '#cfe3df', rough=0.15, spec=0.8)
+    if cane: milk = glass = C('ara_cane', '#dbbd7e', rough=0.6, var=0.06)
     cols = ['#e2453c', '#ff8c42', '#f4c430', '#5bb04a', '#3d7fd1', '#9b6bd1']
     for sx in (-1, 1): objs.append(box('xrail', (0.05, 0.42, 0.07), (x + sx * 0.09, y, 0.035), m=wood, bevel=0.006, segs=1))
     for sy in (-1, 1): objs.append(box('xend', (0.24, 0.03, 0.05), (x, y + sy * 0.2, 0.03), m=wood, bevel=0.004, segs=1))
@@ -8696,10 +8697,10 @@ def sand_crate(objs, x, y):
         objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (W / 2 + 0.08), y + math.sin(a) * (D / 2 + 0.07), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 23))
 
 
-def sand_boules(objs, x, y):
+def sand_boules(objs, x, y, rock=None):
     """The Deluxe French Farmhouse's sand bath: a raised bed of sand edged with pale stone, a game of boules left on it; a
     basket for the boules at its end."""
-    stone = _mar('quoin', rough=0.85, var=0.06); steel = C('mar_boule', '#b9bec4', rough=0.25, metal=0.9)
+    stone = rock or _mar('quoin', rough=0.85, var=0.06); steel = C('mar_boule', '#b9bec4', rough=0.25, metal=0.9)
     sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200); W, D, Z = WAGON_W, WAGON_D, WAGON_Y
     for sy in (-1, 1):
         for k in range(4): objs.append(box('bledge', (W / 4 - 0.006, 0.06, Z + 0.02), (x - W / 2 + (k + 0.5) * W / 4, y + sy * (D / 2 + 0.02), (Z + 0.02) / 2), m=stone, bevel=0.01, segs=1, jitter=0.003))
@@ -8707,6 +8708,9 @@ def sand_boules(objs, x, y):
         for k in range(2): objs.append(box('bledge', (0.06, D / 2 + 0.035, Z + 0.02), (x + sx * (W / 2 + 0.02), y + (k - 0.5) * (D / 2 + 0.03), (Z + 0.02) / 2), m=stone, bevel=0.01, segs=1, jitter=0.003))
     objs.append(box('bfill', (W, D, Z - 0.02), (x, y, (Z - 0.02) / 2), m=sand, bevel=0.0))
     o = sphere('tsand', 1.0, (x, y, Z - 0.005), ((W - 0.03) / 2, (D - 0.03) / 2, 0.022), m=sand, ico=3, disp=0.1, seed=29); objs.append(o)
+    if rock:
+        for (dx, dy, r_) in ((W / 2 + 0.2, 0.0, 0.1), (W / 2 + 0.16, 0.12, 0.06)): objs.append(sphere('boulder', r_, (x + dx, y + dy, r_ * 0.6), (1, 1, 0.75), m=rock, ico=1, disp=0.25, seed=int(r_ * 100)))
+        return
     for (dx, dy) in ((-0.3, 0.13), (-0.24, 0.05), (-0.33, -0.02)): objs.append(sphere('boule', 0.03, (x + dx, y + dy, Z + 0.035), m=steel, seg=10, rings=6))
     objs.append(sphere('jack', 0.014, (x - 0.2, y + 0.15, Z + 0.025), m=_mar('holly3', rough=0.5), seg=8, rings=5))
     bx = x + W / 2 + 0.2; wick = C('mar_wicker', '#b98a52', rough=0.85, var=0.08)
@@ -8878,3 +8882,41 @@ def andes(look=2, name=None, key='ara', seed=141):
     pop_door(objs, FL, white if look >= 2 else (new[1] if look else dark), wood, dark)
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18 if look < 3 else 10, 0.0)
     return finish(objs, name)
+
+
+# ---- the Mountain Hut's own garden (15 Nov 2026; Audrey: "Carry on"): the same yards and places. Cosy: the swing under a
+# little shingle roof on red posts, sand in a hollowed wooden trough, the cabbage hung from a red post with a woven band.
+# Deluxe: those again, a bed of sand ringed with mountain stones, a pan flute of six canes to ring, a little hut of a
+# feeder and a mountain spring among the rocks.
+PENS_BY['ara'] = {t_: dict(PENS_BY['sus'][t_]) for t_ in PENS_BY['sus']}
+PENS_BY['ara'][4].update(feeder_style='hut', water='spring')
+PLAY_BY['ara'] = {3: dict(PLAY_BY['sus'][3], arbour='hut', holder='redpost', sand='andes'),
+                  4: dict(PLAY_BY['sus'][4], arbour='hut', holder='redpost', sand='andes', bars='cane')}
+
+
+def cane_xylophone(objs, x, y): milk_xylophone(objs, x, y, cane=True)
+
+
+def hut_swing(objs, x, y):
+    lych_swing(objs, x, y, oak=_ara('red', rough=0.55, var=0.04), tiles=[_ara('roof', rough=0.8, var=0.08), _ara('roof2', rough=0.8, var=0.08), _ara('roof3', rough=0.8, var=0.08)], ridge=_ara('redd', rough=0.6))
+
+
+def cabbage_redpost(objs, x, y):
+    cabbage_signpost(objs, x, y, white=_ara('red', rough=0.55, var=0.04), dark=_ara('black', rough=0.6))
+    px, py = x, y + 0.28
+    for k, m_ in enumerate((_ara('white', rough=0.7), _ara('black', rough=0.7), _ara('white', rough=0.7))): objs.append(cyl('sgband', 0.026, 0.03, (px, py, 0.5 + k * 0.035), m=m_, verts=10, bevel=0.0))
+
+
+def sand_batea(objs, x, y):
+    """The Cosy Mountain Hut's sand bath: a long trough hollowed out of a log, full of sand."""
+    logw = C('ara_log', '#7a5a42', rough=0.85, var=0.1, grain=0.35, grain_scale=G); sy = TRUG_D / TRUG_W
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200)
+    o = cyl('batea', TRUG_W / 2, 0.11, (x, y, 0.06), m=logw, verts=20, r2=TRUG_W / 2 - 0.07, bevel=0.01); o.scale = (1, sy, 1); objs.append(o)
+    o = sphere('tsand', TRUG_W / 2 - 0.04, (x, y, 0.105), (1, sy, 0.035), m=sand, ico=3, disp=0.1, seed=17); objs.append(o)
+    for sx in (-1, 1): objs.append(box('bateafoot', (0.05, TRUG_D * 0.7, 0.03), (x + sx * 0.16, y, 0.012), m=logw, bevel=0.006, segs=1))
+    for k in range(6):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (TRUG_W / 2 + 0.08), y + math.sin(a) * (TRUG_D / 2 + 0.07), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 23))
+
+
+def sand_rocks(objs, x, y): sand_boules(objs, x, y, rock=_ara('rock', rough=0.9, var=0.1))

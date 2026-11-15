@@ -354,6 +354,19 @@ def village_fountain(objs, x, y, m):
     objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.08, 0.068), m=m['water'], verts=16, bevel=0.0))
 
 
+def mountain_spring(objs, x, y, m):
+    """A mountain spring (the Deluxe Mountain Hut's water, 15 Nov 2026): a pile of dark rocks, water running from a cane
+    spout into a pool among them for the hens."""
+    rock = [mat('fspring_r%d' % i, h, rough=0.9, var=0.1) for i, h in enumerate(('#6f6a66', '#5d5957', '#827c76'))]; cane = mat('fspring_cane', '#dbbd7e', rough=0.6)
+    bx, by = x, y + 0.2; rnd = random.Random(77)
+    for k, (dx, dy, r, h) in enumerate(((0, 0.02, 0.17, 0.3), (-0.16, 0.0, 0.12, 0.2), (0.15, 0.03, 0.13, 0.22), (0.03, 0.14, 0.12, 0.26))):
+        objs.append(sphere('srock', r, (bx + dx, by + dy, h * 0.5), (1, 1, h / r * 0.75), m=rock[k % 3], ico=1, disp=0.25, seed=k + 5))
+    objs.append(cyl('sspout', 0.014, 0.16, (bx, by - 0.16, 0.2), (math.radians(70), 0, 0), m=cane, verts=6, bevel=0.0))
+    for k in range(7):
+        a = k / 7 * math.tau; objs.append(sphere('srock', rnd.uniform(0.045, 0.06), (x + math.cos(a) * 0.16, y - 0.08 + math.sin(a) * 0.16, 0.03), (1, 1, 0.8), m=rock[k % 3], ico=1, disp=0.25, seed=k + 15))
+    objs.append(cyl('bwater', 0.14, 0.01, (x, y - 0.08, 0.05), m=m['water'], verts=14, bevel=0.0))
+
+
 def water_butt(objs, x, y, m):
     """A water butt (an oak barrel on a stone stand) behind a low stone basin, its brass tap dripping into it."""
     oak = mat('fbutt', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fbiron', '#2b2824', rough=0.5, metal=0.6)
@@ -585,8 +598,9 @@ def build_pen(root, m):
         objs.append(sphere('fball', 0.08, (fx, fy, 0.4), (1, 1, 0.45), m=red, seg=14, rings=8))
         objs.append(box('fslot', (0.075, 0.012, 0.014), (fx, fy - 0.078, 0.32), m=dark, bevel=0.0))
         objs.append(box('fplate', (0.06, 0.01, 0.06), (fx, fy - 0.079, 0.23), m=white, bevel=0.003, segs=1))
-    elif PEN.get('feeder_style') == 'dovecote':               # (the Deluxe French Farmhouse's, 15 Nov 2026: a little round dovecote over its tray of grain)
+    elif PEN.get('feeder_style') in ('dovecote', 'hut'):               # (the Deluxe French Farmhouse's, 15 Nov 2026: a little round dovecote over its tray of grain)
         cream = mat('fd_dove', '#f3e8cf', rough=0.85); slate = mat('fd_slate', '#7d92ad', rough=0.55); stone = mat('ffont_stone', '#d6c49e', rough=0.85, var=0.06); dark = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
+        if PEN.get('feeder_style') == 'hut': cream = mat('fd_teal', '#3fa7a0', rough=0.7); slate = mat('fd_shingle', '#8a5646', rough=0.8); stone = mat('fd_rock', '#6f6a66', rough=0.9, var=0.08); dark = mat('fd_red', '#c93a2e', rough=0.55)
         objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=stone, verts=20, bevel=0.01))
         objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
         objs.append(cyl('fbody', 0.085, 0.28, (fx, fy, 0.2), m=cream, verts=14, bevel=0.006))
@@ -678,6 +692,7 @@ def build_pen(root, m):
     elif PEN.get('water') == 'trough': trough(objs, wx, wy, m)
     elif PEN.get('water') == 'well': village_well(objs, wx, wy, m)
     elif PEN.get('water') == 'fontaine': village_fountain(objs, wx, wy, m)
+    elif PEN.get('water') == 'spring': mountain_spring(objs, wx, wy, m)
     elif PEN.get('water') == 'pond': koi_pond(objs, wx, wy, m)
     elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)
