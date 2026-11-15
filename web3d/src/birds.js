@@ -233,6 +233,8 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
     } break;
     case 'splash': { const m = noise(x * 22 + 3, y * 22, z * 22); out.lerp(lin(S.spot), smooth(0.56, 0.66, m) * 0.9); } break;
     case 'paint': { const m = noise(x * 14 + 7, y * 14, z * 14 + 2); out.lerp(lin(S.spot), smooth(0.58, 0.64, m)); } break;
+    case 'speckle': if (key !== 'tail' && key !== 'prim' && !(key === 'body' && hw > 0.97)) {      // (15 Nov 2026, a Speckled Sussex: small white tips scattered over dark plumage, each with a darker edge)
+      const m = noise(x * 62 + 5, y * 62, z * 62 + 9); out.lerp(lin(S.dark || '#1a1210'), smooth(0.6, 0.66, m) * 0.7); out.lerp(lin(S.spot), smooth(0.68, 0.73, m)); } break;
     case 'pencil': if (!(key === 'body' && hw > 0.04)) { const m = noise(x * 90, y * 90, z * 90); out.lerp(lin(S.dark), smooth(0.45, 0.75, m) * 0.7); } break;
   }
   const shade = 0.84 + 0.16 * smooth(0.15, 0.6, h) + (n - 0.5) * 0.07;      // a touch darker underneath, soft feather texture

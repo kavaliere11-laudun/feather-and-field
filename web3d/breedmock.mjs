@@ -24,6 +24,11 @@ const ALL = {
     // the fluff: an Araucana's muffs, beard and tuft soft and wispy (painted as its crest); a Cochin's deep and loose all over
     fur: { leg: { len: { body: 0.016, wing: 0.009, crest: 0.02, legfeather: 0.016 }, shells: 10, baseShells: 5, regions: { 5: { shells: 10, clump: 0.5, fine: 1.4, wave: 0.6, locks: 0.07, comb: 0.0 } } },
            bra: { len: { body: 0.03, wing: 0.013, legfeather: 0.03 }, shells: 7, comb: 0.6, fine: 1.1, under: 2.6, fluff: 0.06 } } } },
+  // Speckled Sussex: deep mahogany, every feather tipped white; the rooster darker, a green-black tail
+  5: { breeds: 'orp', paint: {
+    orp_h: { body: '#7c3a1f', top: '#86411f', hackle: '#8c4522', head: '#8a4321', wing: '#743519', prim: '#2a1c16', tail: '#211815', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle' },
+    orp_r: { body: '#6a2e19', top: '#7a371c', hackle: '#96481f', saddle: '#8e431e', head: '#93461f', wing: '#65290f', prim: '#201612', tail: '#12100f', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle', tailSheen: '#2f7d58' },
+    leg: { orp: '#f0dccf' } } },
   2: { breeds: 'pol', paint: {
     pol_h: { body: '#7e8aa0', top: '#8d98ad', hackle: '#8792a8', head: '#7e8aa0', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#79859b', prim: '#6b768c', tail: '#66718a' },   // White-crested Blue
     pol_r: { body: '#7a869c', top: '#8a95aa', hackle: '#929db2', saddle: '#8d98ad', head: '#7e8aa0', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#768298', prim: '#687389', tail: '#636e86' } } },
