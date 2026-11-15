@@ -216,7 +216,7 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
       FEAT.mode = 1; FEAT.c.copy(lin(S.bars)); FEAT.amt = hackle ? 0.35 : 0.85;
       if (!hackle) { const b = Math.sin((y + 0.012 * Math.sin(x * 40 + z * 30)) * 2 * Math.PI / 0.03); out.lerp(lin(S.bars), smooth(0.2, 0.7, b) * 0.2); }
     } break;
-    case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / 0.034); out.lerp(lin(S.bars), smooth(0.0, 0.8, b) * 0.75); } break;
+    case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / (S.period || 0.034)); out.lerp(lin(S.bars), smooth(S.edge ? S.edge[0] : 0.0, S.edge ? S.edge[1] : 0.8, b) * (S.barTone || 0.75)); } break;      // (period, edge, barTone: a mock-up's, 15 Nov 2026; the game's cuckoo as it was)
     case 'stripes': if (key === 'body') {
       // a Brahma's cape (Audrey's photos): from the nape down over the shoulders, its hackle feathers each black down the middle
       // with a white edge, the throat and breast white; a hen's tail coverts the same. Mode 3: long pointed hackle feathers
