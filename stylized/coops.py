@@ -8105,7 +8105,7 @@ def sussex(look=2, name=None, key='sus', seed=121):
         brick_bits(objs, FL, BR, bricks, 16 if look else 9, seed + 3, WX)
     else:
         for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.08, D2, 0.03, white if look == 3 else hang[0]))
-        brick_bits(objs, FL, 0.86 if look == 4 else EAVE, bricks, 46, seed + 3, WX)
+        brick_bits(objs, FL, 0.86 if look == 4 else 0.5 if look == 3 else EAVE, bricks, 46 if look != 3 else 26, seed + 3, WX)
         two = lambda row: (pale if (row // 2) % 2 else random.choice(hang))          # (the Deluxe's: two rows dark, two rows pale)
         for sx in (-1, 1):                         # the gables: hung with dark clay tiles (Snug), boarded white (Cosy), hung in two-tone bands (Deluxe)
             if look == 3:
@@ -8113,6 +8113,16 @@ def sussex(look=2, name=None, key='sus', seed=121):
                 while z < PEAK - 0.12:
                     hw = min(D2, gtop(z + 0.03)); objs.append(plank('wboard', (sx * (W2 + 0.02), -hw, z + 0.03), (sx * (W2 + 0.02), hw, z + 0.03), 0.07, 0.02, (sx, 0, 0), white, jitter=0.3)); z += 0.062
             else: tile_hang(objs, sx, EAVE - 0.02 if look < 4 else 0.86, PEAK - 0.1, gtop, hang, rows=two if look == 4 else None)
+        if look == 3:                              # (Audrey, 15 Nov: "Bolder cosy") the upper half of every wall boarded white too, over the brick: a white cottage on a brick base
+            WB = 0.5; z = WB
+            while z < EAVE - 0.03:
+                for sx in (-1, 1): objs.append(plank('wboard', (sx * (W2 + 0.02), -D2 - 0.02, z + 0.03), (sx * (W2 + 0.02), D2 + 0.02, z + 0.03), 0.07, 0.022, (sx, 0, 0), white, jitter=0.3))
+                objs.append(plank('wboard', (-W2 - 0.02, D2 + 0.02, z + 0.03), (W2 + 0.02, D2 + 0.02, z + 0.03), 0.07, 0.022, (0, 1, 0), white, jitter=0.3))
+                spans = [(-W2 - 0.02, W2 + 0.02)] if z > 0.76 else [(-W2 - 0.02, 0.045 - 0.165), (0.045 + 0.165, W2 + 0.02)]
+                for a_, b_ in spans: objs.append(plank('wboard', (a_, -D2 - 0.02, z + 0.03), (b_, -D2 - 0.02, z + 0.03), 0.07, 0.022, (0, -1, 0), white, jitter=0.3))
+                z += 0.062
+            for sy in (-1, 1): objs.append(plank('band', (-W2 - 0.03, sy * (D2 + 0.03), WB), (W2 + 0.03, sy * (D2 + 0.03), WB), 0.035, 0.03, (0, sy, 0), sage, jitter=0.2))
+            for sx in (-1, 1): objs.append(plank('band', (sx * (W2 + 0.03), -D2 - 0.03, WB), (sx * (W2 + 0.03), D2 + 0.03, WB), 0.035, 0.03, (sx, 0, 0), sage, jitter=0.2))
         if look == 4:                              # the upper storey hung with tiles all round, a white band where it begins
             for sy in (-1, 1): tile_band(objs, sy, 0.86, EAVE - 0.02, hang, rows=two)
             for sy in (-1, 1): objs.append(plank('band', (-W2 - 0.02, sy * (D2 + 0.02), 0.86), (W2 + 0.02, sy * (D2 + 0.02), 0.86), 0.04, 0.03, (0, sy, 0), white, jitter=0.2))
@@ -8154,10 +8164,11 @@ def sussex(look=2, name=None, key='sus', seed=121):
     nest_window(objs, key, FL, WX, white if look >= 2 else (new if look else old[1]), solids=solids, nest_floor=NF, door='drop', door_m=white if look >= 2 else (new if look else old[1]))
     if look >= 2:
         for sx, wy in ((1, 0.0), (-1, 0.0)):      # (the -x one is the side the game's camera sees)
-            window(objs, sx * (W2 + 0.03), wy, 0.56, 0.24, 0.22, white, glass, normal=(sx, 0, 0), box_flowers=flw if look >= 3 else None)
+            wo = 0.05 if look == 3 else 0.03          # (the Cosy's: out over its boards)
+            window(objs, sx * (W2 + wo), wy, 0.56 if look != 3 else 0.68, 0.24, 0.22, sage if look == 3 else white, glass, normal=(sx, 0, 0), box_flowers=flw if look >= 3 else None)
             if look >= 3:
-                for d in (-1, 1): objs.append(box('shutter', (0.02, 0.09, 0.24), (sx * (W2 + 0.03), wy + d * 0.19, 0.56), m=sage, bevel=0.004, segs=1))
-            objs.append(box('sill', (0.05, 0.3, 0.03), (sx * (W2 + 0.035), wy, 0.43), m=white, bevel=0.006, segs=1))
+                for d in (-1, 1): objs.append(box('shutter', (0.02, 0.09, 0.24), (sx * (W2 + wo), wy + d * 0.19, 0.56 if look != 3 else 0.68), m=sage, bevel=0.004, segs=1))
+            if look != 3: objs.append(box('sill', (0.05, 0.3, 0.03), (sx * (W2 + 0.035), wy, 0.43), m=white, bevel=0.006, segs=1))
     elif look == 1:
         for sx, wy in ((1, 0.0), (-1, 0.0)): window(objs, sx * (W2 + 0.03), wy, 0.56, 0.2, 0.18, new, glass, normal=(sx, 0, 0), cross=False)
     if look == 4:                                  # upstairs: a white window in each gable, a big white dormer over the door with its own little tiled roof
