@@ -14,6 +14,7 @@ const FIRST_SAVE = 'feather-field-save-v1';
 // looks: the elements themselves, the journey to buy them"): only with ?shopdemo, for her to see; it never charges anything
 // and never adds a coin or a bird (the real one comes with the stores' purchases, checked by a server). Its words here,
 // English and French, until it's chosen.
+const PAY_LEVEL = 3;      // (15 Nov 2026, the test players: the things for real money are offered from this level, once the first day's guide is behind; what's owned, and "Restore purchases" in Settings, always)
 const IAP_DEMO = typeof location !== 'undefined' && new URLSearchParams(location.search).has('shopdemo');
 const COIN_BAGS = [{ id: 'purse', coins: BAGS.purse, price: 0.99, pile: 2 }, { id: 'basket', coins: BAGS.basket, price: 2.99, pile: 5, tag: 'popular' }, { id: 'sack', coins: BAGS.sack, price: 4.99, pile: 8 }, { id: 'cart', coins: BAGS.cart, price: 9.99, pile: 12, tag: 'value' }];      // (the bags' sizes: game.js BAGS, 14 Nov 2026)
 const RARE_PRICE = 6.99, RARE_ALL = 19.99;
@@ -685,22 +686,25 @@ export class GameUI {
     // (themed buildings, 13 Nov 2026: this breed's, each bought in its season, then moved into or left whenever she likes)
     { const TH = up && up.onTheme ? g.themesFor(coop) : [], base = g.baseOf(coop.breed), fmtn = n => n.toLocaleString(g.locale());
       if (TH.length) { const c = el('div', 'gcard gtheme'); c.append(el('div', 'glabel', this.t('theme_t')));
+        // (15 Nov 2026, the test players: no room here for its Deluxe garden: said on the card too, with "Move this coop" right there; nothing is paid)
+        const why = el('div', 'gtheme-why'), wb = el('button', 'gbtn gsmallbtn', this.t('move_btn')); why.hidden = true; wb.type = 'button'; wb.dataset.thememove = '1'; wb.addEventListener('click', () => onMove()); why.append(el('p', 'gnote', this.t('theme_room')), wb);
+        const noRoom = () => { if (up.themeWhy && up.themeWhy() === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } };
         for (const T of TH) { const name = g.themeName(T.id, base), row = el('div', 'gtheme-r'); row.dataset.theme = T.id;
           row.append(el('p', 'gtext', (T.on ? '✓ ' : '') + name), el('p', 'gnote', this.t('themel_' + T.key)));
           if (T.owned) { const bt = el('button', 'gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.type = 'button'; bt.dataset.themego = T.on ? 'off' : 'on'; bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); row.append(bt); }
-          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) up.onTheme(T.id, true); }); row.append(bt);
-            const pr = up.pay ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
-            if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', this.t('pay_buy', { p: pr })); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.addEventListener('click', () => up.pay.onPay(T.id)); row.append(pb); } }
+          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); row.append(bt);
+            const pr = up.pay && g.level >= PAY_LEVEL ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
+            if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', this.t('pay_buy', { p: pr })); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.addEventListener('click', () => { up.pay.onPay(T.id); noRoom(); }); row.append(pb); } }
           else row.append(el('p', 'gnote', this.t('theme_when_' + T.id)));
           c.append(row); }
         if (coop.theme) c.append(el('p', 'gnote gtheme-own', this.t('theme_own', { look: g.lookName({ ...coop, theme: undefined, tier: g.ownLook(coop) }) })));
-        if (up.pay && up.pay.on) {                    // (the nine together, while some are still to buy; and Apple's "Restore purchases")
-          for (const T of TH) { const all = T.season && g.themeLeft(T.id) > 1 ? up.pay.all(T.id) : null; if (!all) continue;
+        if (up.pay && up.pay.on && (g.level >= PAY_LEVEL || TH.some(T => T.owned))) {                    // (the nine together, while some are still to buy; and Apple's "Restore purchases")
+          for (const T of TH) { const all = T.season && g.level >= PAY_LEVEL && g.themeLeft(T.id) > 1 ? up.pay.all(T.id) : null; if (!all) continue;
             const ab = el('button', 'gbtn gsmallbtn gpay', this.t('pay_all', { p: all })); ab.type = 'button'; ab.dataset.themego = 'all'; ab.addEventListener('click', () => up.pay.onAll(T.id)); c.append(ab); }
           c.append(el('p', 'gnote', this.t('pay_note')));
           const rb = el('button', 'gbtn gsmallbtn galt', this.t('pay_restore')); rb.type = 'button'; rb.dataset.themego = 'restore'; rb.addEventListener('click', () => up.pay.onRestore()); c.append(rb);
         }
-        c.append(el('p', 'gnote', this.t('theme_note'))); body.append(c); } }
+        c.append(why, el('p', 'gnote', this.t('theme_note'))); body.append(c); } }
     for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
       const on = coop.dress === id, name = g.dressName(id);
       if (on) body.append(el('p', 'gnote', this.t('dress_card', { name })));
@@ -787,7 +791,7 @@ export class GameUI {
   // picture a dark silhouette, and the level it comes at (or, its level come, waiting in Your coops: h.place(breed)). Its
   // eggs (h.egg: their colours, main.js) and its coop. Names set as text, never as HTML
   bookSheet(h = {}) {
-    const PAY = this.o.pay || null;                   // (the store app's shop for real money: store.js)
+    const PAY = this.payOn();                         // (the store app's shop for real money: store.js)
     const g = this.g, pages = g.bookPages(), found = pages.filter(x => x.found).length;
     const b = this.open('book', this.t('book_title'));
     this.bird = null; b.scrollTop = 0;
@@ -819,7 +823,7 @@ export class GameUI {
         allShown = true;
         const card = el('div', 'gcard gpage giap-all'), info = el('div', 'gpage-i');
         info.append(el('span', 'gcard-t', '✨ ' + this.dt('all_t')), el('p', 'gnote gpage-l', this.dt('all_l')));
-        const go = el('button', 'gbtn gsmallbtn gpage-go giap-adopt-all', this.dt('all', { p: PAY ? PAY.price('trios') : this.money(RARE_ALL) })); go.type = 'button';
+        const go = el('button', 'gbtn gsmallbtn gpage-go gpay giap-adopt-all', this.dt('all', { p: PAY ? PAY.price('trios') : this.money(RARE_ALL) })); go.type = 'button';
         go.addEventListener('click', () => this.payFor('trios', { what: this.dt('all_t'), price: RARE_ALL, done: () => this.thanksDemo(this.dt('thanks_all')) }));
         info.append(go); card.append(info); b.append(card);
       }
@@ -842,7 +846,7 @@ export class GameUI {
       info.append(eggs, coop);
       if (pg.waiting && h.place) { const go = el('button', 'gbtn gsmallbtn gpage-go', this.t('place_btn')); go.type = 'button'; go.addEventListener('click', () => h.place(pg.breed)); info.append(go); }
       if ((IAP_DEMO || (PAY && PAY.price('trio:' + pg.breed))) && pg.rare && !pg.found && TRIO_LINES.includes(pg.breed)) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go giap-adopt', this.dt('adopt', { p: PAY ? PAY.price('trio:' + pg.breed) : this.money(RARE_PRICE) })); go.type = 'button'; go.dataset.adopt = pg.breed;
+        const go = el('button', 'gbtn gsmallbtn gpage-go gpay giap-adopt', this.dt('adopt', { p: PAY ? PAY.price('trio:' + pg.breed) : this.money(RARE_PRICE) })); go.type = 'button'; go.dataset.adopt = pg.breed;
         go.addEventListener('click', () => this.payFor('trio:' + pg.breed, { what: g.bookName(pg.breed), price: RARE_PRICE, done: () => this.thanksDemo(this.dt('thanks_rare', { breed: g.bookName(pg.breed) })) }));
         info.append(go, el('p', 'gnote gpage-l', this.dt('adopt_note')));
       }
@@ -950,8 +954,8 @@ export class GameUI {
     }
     b.append(list);
     if (g.data.shelves) b.append(el('p', 'gnote gcenter', this.t('pantry_big_on')));
-    else if (IAP_DEMO || (this.o.pay && this.o.pay.price('shelves'))) {
-      const card = el('div', 'gcard giap'), go = el('button', 'gbtn gsmallbtn', this.t('pantry_big_t') + ' · ' + (this.o.pay ? this.o.pay.price('shelves') : this.money(1.99))); go.type = 'button'; go.dataset.shelves = '1';
+    else if (IAP_DEMO || (this.payOn() && this.o.pay.price('shelves'))) {
+      const card = el('div', 'gcard giap'), go = el('button', 'gbtn gsmallbtn gpay', this.t('pantry_big_t') + ' · ' + (this.o.pay ? this.o.pay.price('shelves') : this.money(1.99))); go.type = 'button'; go.dataset.shelves = '1';
       go.addEventListener('click', () => this.payFor('shelves', { what: this.t('pantry_big_t'), price: 1.99, done: () => this.thanksDemo(this.t('pantry_big_on')) }));
       card.append(el('span', 'gcard-t', '✨ ' + this.t('pantry_big_t')), el('p', 'gnote', this.t('pantry_big_d')), go); b.append(card);
     }
@@ -1075,14 +1079,14 @@ export class GameUI {
     top.append(el('p', 'gnote', this.t('shop_coins')), pill); b.append(top);
     if (h.outfits) {                                    // (four shelves: the decorations, the animals, the farmer's outfits, the seasons' dresses)
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label] of [...(IAP_DEMO || this.o.pay ? [['coins', '']] : []), ['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits'], ['seasons', 'shop_seasons']]) {
+      for (const [k, label] of [...(IAP_DEMO || this.payOn() ? [['coins', '']] : []), ['decor', 'shop_decor'], ['animals', 'shop_animals'], ['outfits', 'shop_outfits'], ['seasons', 'shop_seasons']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), k === 'coins' ? '🪙 ' + this.dt('tab') : this.t(label)); c.type = 'button'; c.dataset.tab = k;
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
         tabs.append(c);
       }
       b.append(tabs);
     }
-    if (tab === 'coins' && (IAP_DEMO || this.o.pay)) { this.coinCards(b); return; }
+    if (tab === 'coins' && (IAP_DEMO || this.payOn())) { this.coinCards(b); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
     if (tab === 'seasons') { this.dressCards(b, h, fmt); return; }
     if (tab === 'animals') { this.animalCards(b, h, fmt); return; }
@@ -1112,9 +1116,9 @@ export class GameUI {
   getCoins(go, h) { const gc = el('button', 'gbtn gsmallbtn giap-get', '🪙 ' + this.dt('get')); gc.type = 'button'; gc.addEventListener('click', () => this.shopSheet(h, 'coins')); queueMicrotask(() => go.after(gc)); }      // (beside its button, once that's on the card)
   dt(k, v = {}) { const T = DEMO_T[this.g.lang] || DEMO_T.en; return (T[k] || DEMO_T.en[k]).replace(/\{(\w+)\}/g, (m, x) => v[x] !== undefined ? v[x] : m); }
   money(p) { try { return new Intl.NumberFormat(this.g.locale(), { style: 'currency', currency: 'GBP' }).format(p); } catch (e) { return '£' + p; } }
-  coinPile(n) {
+  coinPile(n) {      // (15 Nov 2026: a last row that isn't full sits in the middle, and a big pile keeps inside its picture)
     const pic = el('div', 'gpic giap-pile');
-    for (let i = 0; i < n; i++) { const c = el('span', 'gcoin giap-c'), row = Math.floor(Math.sqrt(2 * i + 0.25) - 0.5), k = i - row * (row + 1) / 2; c.style.left = (50 + (k - row / 2) * 22 + (row % 2 ? 4 : 0)) + '%'; c.style.bottom = (18 + (n > 6 ? 6 : 10) * (Math.floor(Math.sqrt(2 * n) - 1) - row) + row * 2) + '%'; c.style.setProperty('--d', (i * 37 % 13) + 'deg'); pic.append(c); }
+    for (let i = 0; i < n; i++) { const c = el('span', 'gcoin giap-c'), row = Math.floor(Math.sqrt(2 * i + 0.25) - 0.5), k = i - row * (row + 1) / 2, inRow = Math.min(row + 1, n - row * (row + 1) / 2); c.style.left = (50 + (k - (inRow - 1) / 2) * (n > 8 ? 17 : 22)) + '%'; c.style.bottom = (18 + (n > 6 ? 6 : 10) * (Math.floor(Math.sqrt(2 * n) - 1) - row) + row * 2) + '%'; c.style.setProperty('--d', (i * 37 % 13) + 'deg'); pic.append(c); }
     return pic;
   }
   coinCards(b) {
@@ -1134,12 +1138,13 @@ export class GameUI {
       info.append(t);
       if (B.tag && !PAY) info.append(el('span', 'gbadge giap-tag giap-' + B.tag, this.dt(B.tag)));
       const amt = el('p', 'gpage-s gdec-p'); amt.append(el('span', 'gcoin gcoin-s'), document.createTextNode(this.dt('coins', { n: fmt(B.coins) }))); info.append(amt);
-      const go = el('button', 'gbtn gsmallbtn gpage-go giap-buy', PAY ? PAY.price('bag:' + B.id) : this.money(B.price)); go.type = 'button';
+      const go = el('button', 'gbtn gsmallbtn gpage-go gpay giap-buy', PAY ? PAY.price('bag:' + B.id) : this.money(B.price)); go.type = 'button';
       go.addEventListener('click', () => this.payFor('bag:' + B.id, { what: this.dt(B.id), price: B.price, done: () => this.thanksDemo(this.dt('thanks_coins', { n: fmt(B.coins) })) }));
       info.append(go); card.append(this.coinPile(B.pile), info); b.append(card);
     }
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in
+  payOn() { return this.o.pay && this.g.level >= PAY_LEVEL ? this.o.pay : null; }
   payFor(what, o) { if (this.o.pay) this.o.pay.buy(what, o.done); else this.payDemo(o); }
   payDemo(o) {
     const b = this.open('paydemo', '🔒 ' + this.dt('pay_t'));

@@ -29,7 +29,7 @@ const load = async () => {
 const close = () => p.evaluate(() => window.__farm.gameUI().close());
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; return { coins: g.data.coins, theme: c.theme || null, themes: g.data.themes || [], paid: g.data.paid || [], tier: c.tier, edited: g.edited, drawn: [...new Set(f.coopModels())] }; });
-const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].map(b => ({ t: b.textContent, go: b.dataset.themego, off: b.disabled }))); };
+const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].filter(b => !b.closest('.gtheme-why')).map(b => ({ t: b.textContent, go: b.dataset.themego, off: b.disabled }))); };
 const tap = go => p.evaluate(go => { const b = [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].find(b => b.dataset.themego === go); if (b) b.click(); return !!b; }, go);
 const view = z => p.evaluate(z => { const f = window.__farm, P = f.gamePlots()[0]; f.lookAt(P.gc.x, P.gc.z, z); f.draw(); }, z);
 const reload = async () => { await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1.2); };

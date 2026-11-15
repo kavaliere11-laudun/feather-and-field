@@ -5528,3 +5528,10 @@ Five runs at 402x874, about ten days each, no page errors in any:
 - Not tested here: Apple's real sheet (TestFlight, hers), an approval that comes later.
 - The Shop page (https://claude.ai/artifact/735V9Y6UcazkSPSpwdjzbq) now lists the twenty paid items with their
   pictures and prices.
+- **All five fixed the same night** (her choice: "All five"): (1) no room for a themed building's Deluxe garden: said
+  on its card too, with "Move this coop" there (main.js `themeWhy`, gameui.js `.gtheme-why`; for coins and for money;
+  nothing paid); (2) the things for real money are offered from level 3 (gameui.js `PAY_LEVEL`, `payOn()`: the Coins
+  shelf, Adopt, the shelves, a coop card's money buttons and its Restore); what's owned, and "Restore purchases" in
+  Settings, always; (3) every money button blue (`.gbtn.gpay`); (4) more than one trio arriving: "Your 4 new trios have
+  arrived…" (`pay_trios`, six languages); (5) `coinPile`: a last row that isn't full sits in the middle and a big pile
+  is closer set, inside its picture. `paytest.mjs` (en, fr).

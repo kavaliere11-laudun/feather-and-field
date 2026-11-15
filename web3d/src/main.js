@@ -83,7 +83,7 @@ function paidTrios(list) {
   if (document.getElementById('loading') !== null) { setTimeout(() => paidTrios(list), 1000); return; }
   const names = list.flatMap(x => x.names); if (!names.length) return;
   if (list.some(x => game.data.coops.some(c => c.breed === x.line))) { try { sessionStorage.setItem('ff3d.loaded', '1'); } catch (e) { /* */ } location.reload(); return; }
-  hint(game.t('pay_trio', { names: game.andList(names) })); if (gameUI) gameUI.refresh();
+  hint(names.length > 3 ? game.t('pay_trios', { n: list.length }) : game.t('pay_trio', { names: game.andList(names) })); if (gameUI) gameUI.refresh();      // (15 Nov 2026: several trios at once: not all their names in one word)
 }
 // the shop's other things for real money (store.js; gameui.js o.pay): a bag of coins ('bag:purse'), a rare trio
 // ('trio:sil_paint'), the four ('trios'), the Pantry's bigger shelves ('shelves')
@@ -7218,15 +7218,16 @@ let MOVE_WAIT = null;
 const nightAt = p => DAY.hour >= 21.8 || DAY.hour < 6.3 || (p.birds.length > 0 && p.birds.every(b => b.asleep));      // (no cuddles there now: the farmer in bed, or every bird of the coop asleep)
 function coopCard(p) {
   holdBird(null); henOff();
-  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onTheme: (t, buy) => themeCoop(p, t, buy), pay: store && store.on ? { on: true, price: k => store.price(k), all: t => store.priceAll(t), onPay: t => themeCoop(p, t, 'pay'), onAll: t => payAll(t), onRestore: () => payRestore() } : null, onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
+  gameUI.coopCard(p.gc, () => startMove(p), { onUpgrade: () => tryUpgrade(p), onDress: id => dressCoop(p, id), onTheme: (t, buy) => themeCoop(p, t, buy), themeWhy: () => themeWhy, pay: store && store.on ? { on: true, price: k => store.price(k), all: t => store.priceAll(t), onPay: t => themeCoop(p, t, 'pay'), onAll: t => payAll(t), onRestore: () => payRestore() } : null, onCuddleAll: nightAt(p) ? null : () => cuddleAll(p.gc.id), asleep: nightAt(p), onInside: anyAsleep(p) ? () => { gameUI.close(); openInside(p); } : null });
 }
 // ---- a seasonal dress (release 4: the Christmas dress) put on a coop, or taken off (id null): at once, its card closed
 // a themed building from a coop's card: bought (in its season: worn at once), moved into, or left for the coop's own look
+let themeWhy = '';
 function themeCoop(p, t, buy) {
   if (!p || !p.gc || MOVE.plot) return false;
   const gc = game.coop(p.gc.id); if (!gc) return false;
   const base = baseBreed(gc.breed), name = t ? game.themeName(t, base) : '';
-  let clear = [], flip = null, off = false;
+  let clear = [], flip = null, off = false; themeWhy = '';
   if (t && !gc.theme && gc.tier < 4) {               // (it comes with the Deluxe garden: room for it here, as for an upgrade)
     if (p.farmer || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return false; }
     if (buy === true && game.data.coins < ((game.themesFor(gc).find(x => x.id === t) || {}).price || 0)) { hint(game.t('dec_broke')); return false; }
@@ -7236,7 +7237,7 @@ function themeCoop(p, t, buy) {
       if (S1.ok) { S = S1; flip = other; }
       else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
     }
-    if (!S.ok) { hint(game.t('theme_room')); return false; }
+    if (!S.ok) { themeWhy = 'room'; hint(game.t('theme_room')); return false; }      // (15 Nov 2026: its card then offers "Move this coop" there and then)
     clear = S.clear;
   }
   const ids = clear.map(o => o.id);
