@@ -8339,3 +8339,308 @@ def milk_xylophone(objs, x, y):
         objs.append(cyl('xband', 0.0225, 0.03, (x - L * 0.2, yy, 0.094), (0, math.radians(90), 0), m=cm, verts=10, bevel=0.0))
     objs.append(cyl('xmallet', 0.007, 0.17, (x + 0.08, y + 0.26, 0.015), (math.radians(90), 0, math.radians(30)), m=wood, verts=6, bevel=0.0))
     objs.append(sphere('xmhead', 0.024, (x + 0.125, y + 0.335, 0.018), (1, 1.4, 0.5), m=wood, ico=1))
+
+
+# ---- the Black Copper Marans' French farmhouse (15 Nov 2026; Audrey: "Yes carry on"): a DESIGN to show her, NOT in HOUSES.
+# A little farmhouse of the Charente, where the breed comes from: cream render, corner stones, a low roof of round canal
+# tiles on a scalloped cornice, pale blue shutters and door, hollyhocks against the walls. Rustic: an old stone barn, tiles
+# gone, a sheet of rusty tin. Mended: being rendered from the top down, new tiles, a trestle. Snug: the farmhouse. Cosy: a
+# wisteria pergola across the front, a bread oven on the gable, lavender in pots. Deluxe: a storey taller with a dovecote
+# tower under a slate roof. The same floor, pop door and low nest window as the Thatched Cottage's (so the same yard).
+MAR = dict(stone='#bdae90', stone2='#a99a7e', stone3='#cdbf9f', stoned='#8f8168', render='#f3e8cf', render2='#eadcbd', quoin='#d6c49e',
+           tile='#e09064', tile2='#eba87e', tile3='#d17b50', tileu='#b5623e', oldtile='#a27a5e', oldtile2='#8b6c55', lichen='#a99c6c', newtile='#f08b4b', newtile2='#f7a062',
+           blue='#7ea8cc', blued='#5d86b0', oldpaint='#7d9188', newwood='#d2ab77', rust='#9c5a38', rust2='#b56f44', wist='#9a80d8', wist2='#bda9ec', leaf='#55893d',
+           slate='#7d92ad', slate2='#93a7bf', yellow='#f2c230', holly1='#e2557f', holly2='#f3a6c0', holly3='#b3283f', holly4='#fbf3e2', lav='#8a78c8', lavleaf='#8fa58c')
+
+
+def _mar(k, rough=0.8, **kw): return C('mar_' + k, MAR[k], rough=rough, **kw)
+
+
+def canal_roof(objs, eave, peak, tiles, under, ridge_m, over=0.1, gable_over=0.09, skip=None, col=0.075, piece=0.165):
+    """A low roof of round canal tiles (ridge along x): lines of half-round tiles running down each slope, on a bed of
+    darker ones. skip(sy, j, k, x): a tile gone (j: 0 at the ridge .. k-1 at the eave)."""
+    L = 2 * W2 + 2 * gable_over; n = int(L / col); w = L / n
+    for sy in (-1, 1):
+        e0 = Vector((0, sy * (D2 + over), eave - 0.05)); r0 = Vector((0, 0, peak + 0.02))
+        down = e0 - r0; slope = down.length; dn = down.normalized()
+        nrm = Vector((0, sy * (peak - eave + 0.07), D2 + over)).normalized()
+        o = box('underlay', (L - 0.01, slope, 0.03), (0, 0, 0), m=under, bevel=0.0)
+        o.rotation_euler = (-sy * math.atan2(peak - eave + 0.07, D2 + over), 0, 0); o.location = (e0 + r0) / 2 + nrm * 0.004; objs.append(o)
+        k = max(2, round(slope / piece)); pl = slope / k; ang = math.atan2(-dn.y, dn.z)
+        for i in range(n):
+            x = -L / 2 + (i + 0.5) * w
+            for j in range(k):
+                if skip and skip(sy, j, k, x): continue
+                c = r0 + down * ((j + 0.5) / k) + Vector((x, 0, 0)) + nrm * (0.02 + 0.005 * ((k - j) % 2))
+                objs.append(cyl('canal', w * 0.5, pl + 0.014, tuple(c), (ang + math.radians(random.uniform(-1.2, 1.2)), 0, 0), random.choice(tiles), verts=6, bevel=0.0))
+    if ridge_m:
+        nn = 9; LL = L + 0.04
+        for i in range(nn): objs.append(cyl('ridgecap', 0.052, LL / nn - 0.008, (-LL / 2 + (i + 0.5) * LL / nn, 0, peak + 0.05), (0, math.radians(90), 0), ridge_m, verts=12, bevel=0.0))
+
+
+def genoise(objs, eave, tile_m, white_m):
+    """The cornice under a French roof's eaves: a white band and a row of round tile ends, front and back."""
+    for sy in (-1, 1):
+        objs.append(box('genoise', (2 * W2 + 0.05, 0.06, 0.03), (0, sy * (D2 + 0.02), eave - 0.02), m=white_m, bevel=0.0))
+        if sy > 0: continue                       # (the round tile ends: the front's only, the back's are never seen)
+        n = 19
+        for i in range(n): objs.append(cyl('gentile', 0.026, 0.08, (-W2 + (i + 0.5) * 2 * W2 / n, sy * (D2 + 0.035), eave - 0.058), (math.radians(90), 0, 0), tile_m, verts=6, bevel=0.0))
+
+
+def quoins(objs, top, m, z0=0.12, half=None, cx=0.0, cy=0.0, hw=None):
+    """Corner stones, long and short in turn, up the four corners of a wall."""
+    hw = W2 if hw is None else hw; half = D2 if half is None else half; k = 0; z = z0
+    while z < top - 0.06:
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                if sx > 0 and sy > 0: continue      # (the far back corner: never seen)
+                lx, ly = ((0.14, 0.085) if (k + (sx * sy > 0)) % 2 else (0.085, 0.14))
+                objs.append(box('quoin', (lx, ly, 0.092), (cx + sx * (hw + 0.013 - lx / 2), cy + sy * (half + 0.013 - ly / 2), z + 0.047), m=m, bevel=0.008, segs=1, jitter=0.002))
+        z += 0.099; k += 1
+
+
+def stone_bits(objs, FL, eave, peak, stones, n, seed, wx, front=None, side=None):
+    """Rough stones standing a little proud of a stone wall (front and both gables): it reads as rubble stonework.
+    front(x, z) / side(sx, y, z): False where the wall is covered (rendered)."""
+    rnd = random.Random(seed)
+    for k in range(n):
+        w = rnd.uniform(0.07, 0.15); h = rnd.uniform(0.045, 0.085)
+        if rnd.random() < 0.45:
+            x = rnd.uniform(-W2 + 0.1, W2 - 0.1); z = rnd.uniform(0.07, eave - 0.06)
+            if abs(x + 0.31) < POP_W / 2 + 0.1 and z < FL + POP_H + 0.1: continue           # the pop door
+            if abs(x - 0.045) < 0.21 and z < 0.82: continue                                   # the door
+            if abs(x - wx) < WIN_W / 2 + 0.1 and z < 0.62: continue                           # the nest window
+            if front and not front(x, z): continue
+            objs.append(box('stone', (w, 0.024, h), (x, -D2 - 0.006, z), m=rnd.choice(stones), bevel=0.012, segs=1, jitter=0.004))
+        else:
+            y = rnd.uniform(-D2 + 0.09, D2 - 0.09); sx = rnd.choice((1, -1, -1, -1))
+            z = rnd.uniform(0.07, eave + (peak - 0.14 - eave) * (1 - abs(y) / D2) - 0.04)
+            if abs(y) < 0.17 and 0.4 < z < 0.72: continue                                     # the side window
+            if side and not side(sx, y, z): continue
+            objs.append(box('stone', (0.024, w, h), (sx * (W2 + 0.006), y, z), m=rnd.choice(stones), bevel=0.012, segs=1, jitter=0.004))
+
+
+def hollyhock(objs, x, y, h, seed, normal=(0, -1)):
+    """A hollyhock against a wall (they grow by every door in the Charente): a tall stalk, flowers all the way up."""
+    rnd = random.Random(seed); nx, ny = normal
+    col = _mar(rnd.choice(('holly1', 'holly2', 'holly3', 'holly4', 'holly1')), rough=0.6); leaf = _mar('leaf')
+    objs.append(cyl('hstalk', 0.009, h, (x, y, h / 2), m=leaf, verts=6, bevel=0.0))
+    for k in range(3):
+        objs.append(sphere('leafp', rnd.uniform(0.035, 0.05), (x + rnd.uniform(-0.04, 0.04) * (1 if ny else 0.3), y + rnd.uniform(-0.04, 0.04) * (1 if nx else 0.3), 0.04 + 0.05 * k), (1, 1, 0.6), m=leaf, ico=1, disp=0.25, seed=seed * 13 + k))
+    n = int((h - 0.16) / 0.055)
+    for k in range(n):
+        z = 0.2 + k * 0.055; s = (1 if k % 2 else -1) * 0.014; r = 0.031 * (1 - 0.45 * k / max(1, n))
+        objs.append(sphere('flower', r, (x + (s if ny else nx * 0.014), y + (ny * 0.014 if ny else s), z), ((1, 0.6, 1) if ny else (0.6, 1, 1)), m=col, ico=1))
+
+
+def wisteria(objs, a, b, seed, hang=0.15, n=None, often=0.62, top=False):
+    """Wisteria trained along a line from a to b: leaves on it, lilac flowers hanging under it."""
+    rnd = random.Random(seed); a, b = Vector(a), Vector(b); n = n or max(3, int((b - a).length / 0.05))
+    leaf = [_mar('leaf'), C('mar_leaf2', '#6f9e48', rough=0.8)]; pur = [_mar('wist', rough=0.6), _mar('wist2', rough=0.6)]
+    for k in range(n):
+        p = a.lerp(b, (k + rnd.random()) / n)
+        objs.append(sphere('leafp', rnd.uniform(0.035, 0.05), (p.x + rnd.uniform(-0.02, 0.02), p.y + rnd.uniform(-0.02, 0.02), p.z + 0.02), (1, 1, 0.7), m=rnd.choice(leaf), ico=1, disp=0.25, seed=seed * 17 + k))
+        if top and k % 2: objs.append(sphere('flower', 0.034, (p.x, p.y + 0.02, p.z + 0.05), (1.2, 1.2, 0.8), m=rnd.choice(pur), ico=1))      # (flowers lying on top too: lilac seen from above)
+        if hang and rnd.random() < often:
+            Lh = rnd.uniform(0.6, 1.0) * hang; m = rnd.choice(pur)
+            for i in range(2): objs.append(sphere('flower', 0.032 - i * 0.009, (p.x, p.y, p.z - 0.03 - i * Lh / 2), (1, 1, 1.5), m=m, ico=1))
+
+
+def lavender_pot(objs, x, y, key, seed):
+    rnd = random.Random(seed); block(key, x, y, 0.07)
+    objs.append(cyl('pot', 0.045, 0.085, (x, y, 0.0425), m=C('terra', '#b0603a', rough=0.8), verts=10, r2=0.058, bevel=0.0))
+    objs.append(sphere('leafp', 0.055, (x, y, 0.115), (1, 1, 0.75), m=_mar('lavleaf'), ico=1, disp=0.2, seed=seed))
+    for k in range(8):
+        a = k * 0.785 + rnd.uniform(-0.2, 0.2); r = rnd.uniform(0.015, 0.045)
+        objs.append(sphere('flower', 0.013, (x + math.cos(a) * r, y + math.sin(a) * r, 0.175 + rnd.uniform(0, 0.03)), (1, 1, 2.6), m=_mar('lav', rough=0.6), ico=1))
+
+
+def letter_box(objs, x, y, key):
+    """A yellow letter box on a post, as the French ones are."""
+    block(key, x, y, 0.07); wood = C('darkwood', '#6d4a31', rough=0.8)
+    objs.append(plank('lbpost', (x, y, 0.0), (x, y, 0.3), 0.035, 0.035, (0, -1, 0), wood, jitter=0.3))
+    objs.append(box('lbox', (0.12, 0.085, 0.09), (x, y, 0.34), m=_mar('yellow', rough=0.45), bevel=0.008, segs=1))
+    objs.append(box('lbroof', (0.14, 0.105, 0.012), (x, y, 0.39), m=_mar('yellow', rough=0.45), bevel=0.003, segs=1))
+    objs.append(box('lbslot', (0.075, 0.01, 0.012), (x, y - 0.043, 0.355), m=C('iron', '#2e2c2b', rough=0.5), bevel=0.0))
+
+
+def marans(look=2, name=None, key='mar', seed=131):
+    """The Black Copper Marans' French farmhouse, look 0 (Rustic) .. 4 (Deluxe). Blender axes: front -y, ridge along x."""
+    name = name or ('box_', 'shed_', 'house_', 'cosy_', 'deluxe_')[look] + key
+    random.seed(seed + look); objs = []
+    stones = [_mar('stone', rough=0.9, var=0.1), _mar('stone2', rough=0.9, var=0.1), _mar('stone3', rough=0.9, var=0.08), _mar('stoned', rough=0.9, var=0.08)]
+    render = _mar('render', rough=0.85, var=0.03); render2 = _mar('render2', rough=0.85, var=0.03); quoin = _mar('quoin', rough=0.85, var=0.06)
+    tiles = [_mar('tile', rough=0.75, var=0.1, hue_var=0.012), _mar('tile2', rough=0.75, var=0.1, hue_var=0.012), _mar('tile3', rough=0.75, var=0.08)]
+    newt = [_mar('newtile', rough=0.75, var=0.06), _mar('newtile2', rough=0.75, var=0.06)]
+    oldt = [_mar('oldtile', rough=0.9, var=0.1), _mar('oldtile', rough=0.9, var=0.1), _mar('oldtile2', rough=0.9, var=0.1), _mar('lichen', rough=0.95, var=0.1)]
+    under = _mar('tileu', rough=0.8, var=0.06); batten = C('sus_batten', '#4b4037', rough=0.95)
+    blue = _mar('blue', rough=0.55, var=0.03); blued = _mar('blued', rough=0.55, var=0.03); oldp = _mar('oldpaint', rough=0.9, var=0.12, grain=0.3, grain_scale=G)
+    new = _mar('newwood', rough=0.8, var=0.08, grain=0.3, grain_scale=G); glass = C('glass', '#34516b', rough=0.08, spec=0.9, coat=1.0)
+    brass = C('brass', '#c99a3c', rough=0.3, metal=0.9); dark = C('darkwood', '#6d4a31', rough=0.8); iron = C('iron', '#2e2c2b', rough=0.5)
+    wood = C('wood', '#a7744a', rough=0.75, var=0.13, grain=0.38, grain_scale=G)
+    FL, WX, NF = 0.2, 0.415, 0.08                 # (the Thatched Cottage's floor and low nest window: the same yard and nest)
+    EAVE, PEAK = ((0.64, 0.92), (0.76, 1.06), (0.86, 1.2), (0.86, 1.2), (1.16, 1.5))[look]
+    ger = [C('fbox', '#6d4a31', rough=0.85), C('fl_red', '#e2453c', rough=0.6), C('fl_red', '#e2453c', rough=0.6), C('fl_pink', '#f08bb0', rough=0.6)]
+    done = lambda x: x < 0.22                       # (the Mended's front: rendered from the left as far as here)
+    # ---- walls: rubble stone; rendered cream from the Snug on (the Mended's: half done, from the top down)
+    wall_m = stones[1] if look < 2 else render
+    plinth = box('plinth', (2 * W2 + 0.05, 2 * D2 + 0.05, 0.11), (0, 0, 0.055), m=stones[3] if look < 2 else quoin, bevel=0.015, segs=2); objs.append(plinth)
+    walls = box('walls', (2 * W2, 2 * D2, EAVE), (0, 0, EAVE / 2), m=wall_m, bevel=0.012, segs=2); objs.append(walls)
+    solids = [walls, plinth]
+    for sx in (-1, 1): objs.append(prism_gable(sx * W2, EAVE - 0.01, PEAK - 0.06, D2, 0.03, render if (look >= 2 or (look == 1 and sx < 0)) else stones[1]))
+    if look == 0:
+        stone_bits(objs, FL, EAVE, PEAK, [stones[0], stones[2], stones[2], stones[3]], 185, seed + 3, WX)
+    elif look == 1:
+        stone_bits(objs, FL, EAVE, PEAK, [stones[0], stones[2], stones[2], stones[3]], 150, seed + 3, WX, front=lambda x, z: not done(x - 0.1), side=lambda sx, y, z: sx > 0 or z < 0.4)
+        nb = 12
+        for i in range(nb):                        # the new render, strip by strip (each stops above what opens in the wall)
+            x = -W2 + (i + 0.5) * 2 * W2 / nb
+            if not done(x): break
+            z0 = 0.12
+            if abs(x + 0.31) < POP_W / 2 + 0.03: z0 = FL + POP_H + 0.05
+            if abs(x - 0.045) < 0.15: z0 = 0.74
+            if i >= 7: z0 = max(z0, (0.3, 0.52)[min(1, i - 7)])           # (the last strips: not down to the ground yet)
+            objs.append(box('render', (2 * W2 / nb + 0.004, 0.02, EAVE - 0.01 - z0), (x, -D2 - 0.008, (z0 + EAVE - 0.01) / 2), m=render, bevel=0.004, segs=1))
+        objs.append(box('render', (0.02, 2 * D2 + 0.01, EAVE - 0.42), (-W2 - 0.008, 0, (0.42 + EAVE) / 2), m=render, bevel=0.004, segs=1))
+    else:
+        quoins(objs, EAVE, quoin)
+        if look == 4:                              # a stone band where the upper storey begins
+            objs.append(plank('band', (-W2 - 0.02, -D2 - 0.015, 0.8), (W2 + 0.02, -D2 - 0.015, 0.8), 0.045, 0.03, (0, -1, 0), quoin, jitter=0.2))
+            objs.append(plank('band', (-W2 - 0.015, -D2 - 0.02, 0.8), (-W2 - 0.015, D2 + 0.02, 0.8), 0.045, 0.03, (-1, 0, 0), quoin, jitter=0.2))
+    # ---- roof: canal tiles, low
+    if look == 0:
+        gone = lambda sy, j, k, x: (sy < 0 and ((0.08 < x < 0.6 and j < k - 1) or random.random() < 0.14)) or (sy > 0 and random.random() < 0.3)
+        canal_roof(objs, EAVE, PEAK, oldt, batten, None, skip=gone, over=0.09, gable_over=0.06)
+        rust = [_mar('rust', rough=0.7, var=0.12), _mar('rust2', rough=0.7, var=0.12)]       # a sheet of rusty tin over the hole, a stone on it
+        e = Vector((0.34, -(D2 + 0.09), EAVE - 0.05)); r_ = Vector((0.34, 0, PEAK + 0.02)); nrm = Vector((0, -(PEAK - EAVE + 0.07), D2 + 0.09)).normalized()
+        a = r_.lerp(e, 0.05); b = r_.lerp(e, 0.78)
+        objs.append(plank('tin', a + nrm * 0.03, b + nrm * 0.03, 0.5, 0.012, nrm, rust[0], jitter=0.8, bevel=0.003))
+        for i in range(4): objs.append(plank('tinrib', a + nrm * 0.042 + Vector((-0.19 + i * 0.127, 0, 0)), b + nrm * 0.042 + Vector((-0.19 + i * 0.127, 0, 0)), 0.03, 0.014, nrm, rust[1], jitter=0.4, bevel=0.004))
+        objs.append(sphere('tstone', 0.04, tuple(a.lerp(b, 0.75) + nrm * 0.075 + Vector((0.1, 0, 0))), (1.2, 1, 0.7), m=steps_m(), ico=1, disp=0.2, seed=61))
+    elif look == 1:
+        gone = lambda sy, j, k, x: sy > 0 and (j >= k / 2 or x > 0.2)          # the front new and whole; the back half done
+        canal_roof(objs, EAVE, PEAK, newt, batten, newt[0], skip=gone)
+    else:
+        canal_roof(objs, EAVE, PEAK, tiles, under, tiles[2])
+        genoise(objs, EAVE, tiles[0], render2)
+    # ---- the chimney: on the -x gable's end of the ridge (the side the game's camera sees), rendered, two tiles leant over it
+    if look >= 2:
+        cx = -W2 + 0.12; top = PEAK + 0.3
+        objs.append(box('chimney', (0.19, 0.24, top - (PEAK - 0.2)), (cx, 0, (top + PEAK - 0.2) / 2), m=render2, bevel=0.01, segs=1))
+        objs.append(box('chimcap', (0.23, 0.28, 0.035), (cx, 0, top), m=quoin, bevel=0.008, segs=1))
+        for s in (-1, 1): objs.append(plank('chimtile', (cx, 0, top + 0.1), (cx, s * 0.12, top + 0.02), 0.2, 0.02, (0, s * 0.6, 1), tiles[2], jitter=0.3))
+    # ---- the door, the nest window, the side windows and their shutters
+    if look == 0:
+        for i in range(3): objs.append(plank('door', (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.125), (0.045 - 0.08 + i * 0.08, -D2 - 0.02, 0.62 - 0.03 * i), 0.075, 0.03, (0, -1, 0), oldp, jitter=1.4))
+        objs.append(plank('dbrace', (-0.06, -D2 - 0.04, 0.5), (0.15, -D2 - 0.04, 0.22), 0.05, 0.02, (0, -1, 0), oldp, jitter=0.6))
+        objs.append(box('lintel', (0.36, 0.03, 0.07), (0.045, -D2 - 0.012, 0.66), m=dark, bevel=0.008, segs=1))
+    else:
+        arched_door(objs, 0.045, -D2 - 0.012, 0.12, 0.25, 0.6, blue if look >= 2 else new, quoin, brass if look >= 2 else iron)
+        objs.append(box('doorstep', (0.36, 0.14, 0.12), (0.045, -D2 - 0.08, 0.06), m=steps_m(), bevel=0.012, segs=1))
+    trim = blue if look >= 2 else (new if look else oldp)
+    nest_window(objs, key, FL, WX, trim, solids=solids, nest_floor=NF, door='drop', door_m=trim)
+
+    def shuttered(sx, wy, z, w=0.22, h=0.24, flowers=None, out=0.03):
+        window(objs, sx * (W2 + out), wy, z, w, h, render2, glass, normal=(sx, 0, 0), box_flowers=flowers)
+        for d in (-1, 1):
+            objs.append(box('shutter', (0.022, w / 2 + 0.01, h + 0.02), (sx * (W2 + out), wy + d * (w * 0.75 + 0.03), z), m=blue, bevel=0.004, segs=1))
+            for dz in (-0.07, 0.07): objs.append(box('shbar', (0.028, w / 2 + 0.012, 0.022), (sx * (W2 + out), wy + d * (w * 0.75 + 0.03), z + dz), m=blued, bevel=0.0))
+        objs.append(box('sill', (0.05, w + 0.08, 0.03), (sx * (W2 + 0.035), wy, z - h / 2 - 0.03), m=quoin, bevel=0.006, segs=1))
+    if look >= 2:
+        for sx in (1, -1):
+            if look == 4 and sx > 0: continue       # (the Deluxe's tower stands on that end)
+            shuttered(sx, 0.0, 0.56, flowers=ger if look >= 3 else None)
+            if look == 4: shuttered(sx, 0.0, 1.0, w=0.2, h=0.2)
+            oz = EAVE + 0.13                        # a little round window up in the gable
+            objs.append(cyl('oeil', 0.075, 0.03, (sx * (W2 + 0.02), 0, oz), (0, math.radians(90), 0), quoin, verts=14, bevel=0.004))
+            objs.append(cyl('oeilglass', 0.05, 0.036, (sx * (W2 + 0.02), 0, oz), (0, math.radians(90), 0), glass, verts=12, bevel=0.0))
+    elif look == 1:
+        for sx in (1, -1): window(objs, sx * (W2 + 0.03), 0.0, 0.56, 0.2, 0.2, new, glass, normal=(sx, 0, 0), cross=False)
+    if look == 4:                                  # upstairs, the front: three shuttered windows, geraniums under them
+        for wx_, ww in ((-0.36, 0.15), (0.045, 0.17), (0.44, 0.15)):
+            objs.append(box('wsurround', (ww + 0.05, 0.02, 0.25), (wx_, -D2 - 0.012, 0.99), m=render2, bevel=0.0))        # (plain: they sit right under the eaves)
+            objs.append(box('glass', (ww, 0.02, 0.2), (wx_, -D2 - 0.02, 0.99), m=glass, bevel=0.0))
+            objs.append(box('flowerbox', (ww + 0.06, 0.08, 0.06), (wx_, -D2 - 0.06, 0.86), m=ger[0], bevel=0.006, segs=1))
+            for k in range(4):
+                u = wx_ - ww / 2 + k * ww / 3
+                objs.append(sphere('leafp', 0.03, (u, -D2 - 0.06, 0.895), (1, 1, 0.8), m=C('fleaf', '#4f8a3a', rough=0.8), ico=1, disp=0.2, seed=k))
+                objs.append(sphere('flower', 0.024, (u + 0.01, -D2 - 0.08, 0.915), m=ger[1], ico=1))
+            for d in (-1, 1): objs.append(box('shutter', (ww / 2, 0.022, 0.22), (wx_ + d * (ww * 0.75 + 0.012), -D2 - 0.03, 0.99), m=blue, bevel=0.004, segs=1))
+    # ---- what grows and stands by it
+    if look == 0:
+        weeds = [C('ivy1', '#3f6e30', rough=0.8), C('ivy2', '#55893d', rough=0.8)]
+        for k in range(22):
+            z = random.uniform(0.03, 0.5); x = W2 - random.uniform(-0.02, 0.24) * (1.1 - z)
+            objs.append(sphere('ivy', random.uniform(0.03, 0.05), (x, -D2 - 0.03, z), (1, 0.55, 1), m=random.choice(weeds), ico=1, disp=0.25, seed=k))
+        WR, wxp = 0.17, -W2 - 0.045               # an old cart wheel leant on the gable
+        for k in range(8):
+            a0, a1 = 2 * math.pi * k / 8, 2 * math.pi * (k + 1) / 8
+            objs.append(plank('wrim', (wxp, 0.14 + math.cos(a0) * WR, 0.18 + math.sin(a0) * WR), (wxp, 0.14 + math.cos(a1) * WR, 0.18 + math.sin(a1) * WR), 0.035, 0.03, (-1, 0, 0), dark, jitter=0.2, bevel=0.004))
+        for k in range(4):
+            a0 = math.pi * k / 4
+            objs.append(plank('wspoke', (wxp, 0.14 - math.cos(a0) * WR, 0.18 - math.sin(a0) * WR), (wxp, 0.14 + math.cos(a0) * WR, 0.18 + math.sin(a0) * WR), 0.022, 0.02, (-1, 0, 0), oldp, jitter=0.2, bevel=0.003))
+        objs.append(cyl('whub', 0.035, 0.05, (wxp, 0.14, 0.18), (0, math.radians(90), 0), dark, verts=10, bevel=0.003))
+    if look == 1:                                  # a mason's trestle along the gable, a bucket of lime on it; new tiles stacked by the corner
+        TXp = -W2 - 0.21
+        for ty in (-0.2, 0.2):
+            block(key, TXp, ty, 0.15)
+            for s in (-1, 1): objs.append(plank('trestle', (TXp + s * 0.09, ty, 0.0), (TXp + s * 0.02, ty, 0.3), 0.04, 0.03, (0, 1, 0), new, jitter=0.4))
+        objs.append(plank('tplank', (TXp, -0.34, 0.31), (TXp, 0.34, 0.31), 0.15, 0.025, (0, 0, 1), new, jitter=0.4))
+        objs.append(cyl('bucket', 0.045, 0.08, (TXp, 0.12, 0.365), m=C('lead', '#7d858c', rough=0.45, metal=0.6), verts=12, r2=0.055, bevel=0.003))
+        objs.append(cyl('lime', 0.05, 0.012, (TXp, 0.12, 0.4), m=render, verts=12, bevel=0.0))
+        SX, SY = W2 + 0.16, -D2 + 0.1; block(key, SX, SY, 0.13)
+        for k in range(4):
+            for j in range(2): objs.append(cyl('tstack', 0.035, 0.15, (SX + (j - 0.5) * 0.075, SY, 0.03 + k * 0.026), (math.radians(90), 0, 0), random.choice(newt), verts=8, bevel=0.0))
+    if look >= 2:
+        letter_box(objs, W2 + 0.1, -D2 - 0.17, key)
+        for k, (hx, hh) in enumerate(((0.235, 0.5), (-0.55, 0.62), (-0.6, 0.44))): hollyhock(objs, hx, -D2 - 0.035, hh, seed + 20 + k)
+        for k, (hy, hh) in enumerate(((-0.34, 0.6), (-0.27, 0.42), (0.3, 0.52))): hollyhock(objs, -W2 - 0.035, hy, hh, seed + 30 + k, normal=(-1, 0))
+    if look >= 3:                                  # a pergola across the front, wisteria all over it; lavender in pots; a lantern by the door
+        PY, PZ = -D2 - 0.32, 0.8
+        for px in (-0.57, 0.6):
+            objs.append(plank('pgpost', (px, PY, 0.0), (px, PY, PZ), 0.045, 0.045, (0, -1, 0), dark, jitter=0.2)); block(key, px, PY, 0.05)
+            lavender_pot(objs, px + (0.1 if px < 0 else -0.1), PY - 0.02, key, seed + 40 + int(px * 10))
+        objs.append(plank('pgbeam', (-0.66, PY, PZ + 0.02), (0.69, PY, PZ + 0.02), 0.05, 0.04, (0, -1, 0), dark, jitter=0.2))
+        for k in range(6):
+            x = -0.6 + k * 0.245
+            objs.append(box('pgraft', (0.035, 0.38, 0.03), (x, (PY - 0.07 - D2 - 0.01) / 2, PZ + 0.05), m=dark, bevel=0.0))
+        wisteria(objs, (-0.64, PY, PZ + 0.04), (0.67, PY, PZ + 0.04), seed + 50, hang=0.17, n=24, often=0.85)
+        wisteria(objs, (-0.6, PY + 0.2, PZ + 0.07), (0.64, PY + 0.2, PZ + 0.07), seed + 51, hang=0.0, n=16, top=True)
+        wisteria(objs, (-0.62, PY + 0.08, PZ + 0.07), (0.66, PY + 0.08, PZ + 0.07), seed + 53, hang=0.0, n=16, top=True)
+        wisteria(objs, (0.6, PY, 0.45), (0.6, PY, PZ), seed + 54, hang=0.0, n=4)
+        wisteria(objs, (-0.57, PY, 0.1), (-0.57, PY, PZ), seed + 52, hang=0.0, n=7)
+        LZ = 0.62; light_at(name, 0.245, -D2 - 0.06, LZ)
+        objs.append(box('lcap', (0.06, 0.06, 0.012), (0.245, -D2 - 0.06, LZ + 0.05), m=iron, bevel=0.003, segs=1))
+        objs.append(box('lamp', (0.045, 0.045, 0.07), (0.245, -D2 - 0.06, LZ), m=C('lamp', '#ffd98a', rough=0.3), bevel=0.004, segs=1))
+        OX, OY = -W2 - 0.17, 0.2; block(key, OX, OY, 0.2)       # a bread oven built on the gable: a stone base, a rendered dome, its little flue
+        objs.append(cyl('ovbase', 0.18, 0.16, (OX, OY, 0.08), m=stones[0], verts=14, bevel=0.01))
+        objs.append(sphere('ovdome', 0.175, (OX, OY, 0.16), (1, 1, 0.82), m=stones[2], seg=12, rings=7))
+        objs.append(box('ovmouth', (0.03, 0.11, 0.085), (OX - 0.165, OY, 0.2), m=C('soot', '#2a2522', rough=0.9), bevel=0.01, segs=1))
+        objs.append(box('ovlintel', (0.04, 0.16, 0.03), (OX - 0.165, OY, 0.255), m=quoin, bevel=0.006, segs=1))
+        objs.append(cyl('ovflue', 0.03, 0.14, (OX + 0.06, OY, 0.34), m=stones[1], verts=10, bevel=0.003))
+    if look == 4:                                  # the dovecote: a square tower on the +x end, through the roof, a slate roof with a kick, pigeon holes
+        TX, TH, TOP = W2 - 0.19, 0.21, 1.78
+        tower = box('tower', (2 * TH, 2 * TH, TOP), (TX, 0, TOP / 2), m=render, bevel=0.012, segs=2); objs.append(tower)
+        quoins(objs, TOP, quoin, z0=PEAK - 0.1, half=TH, cx=TX, hw=TH)
+        objs.append(box('tcornice', (2 * TH + 0.07, 2 * TH + 0.07, 0.035), (TX, 0, TOP), m=quoin, bevel=0.006, segs=1))
+        slates = [_mar('slate', rough=0.55, var=0.06), _mar('slate2', rough=0.55, var=0.06)]
+        r0_ = (TH + 0.09) * math.sqrt(2)
+        objs.append(cyl('troof', r0_, 0.42, (TX, 0, TOP + 0.225), (0, 0, math.radians(45)), slates[0], verts=4, r2=0.012, bevel=0.0))
+        objs.append(box('troofedge', (2 * TH + 0.2, 2 * TH + 0.2, 0.02), (TX, 0, TOP + 0.022), m=slates[1], bevel=0.0))
+        objs.append(sphere('tfinial', 0.028, (TX, 0, TOP + 0.45), m=brass, seg=10, rings=6))
+        objs.append(cyl('tspike', 0.008, 0.1, (TX, 0, TOP + 0.51), m=brass, verts=6, bevel=0.0))
+        HZ = TOP - 0.13
+        for u in (-0.1, 0.0, 0.1):                # pigeon holes under its cornice, front and towards the house; a ledge to land on
+            objs.append(box('phole', (0.045, 0.02, 0.065), (TX + u, -TH - 0.004, HZ), m=C('soot', '#2a2522', rough=0.9), bevel=0.006, segs=1))
+            objs.append(box('phole', (0.02, 0.045, 0.065), (TX - TH - 0.004, u, HZ), m=C('soot', '#2a2522', rough=0.9), bevel=0.006, segs=1))
+        objs.append(box('pledge', (2 * TH + 0.02, 0.05, 0.02), (TX, -TH - 0.02, HZ - 0.05), m=quoin, bevel=0.004, segs=1))
+        objs.append(box('pledge', (0.05, 2 * TH + 0.02, 0.02), (TX - TH - 0.02, 0, HZ - 0.05), m=quoin, bevel=0.004, segs=1))
+        dove = C('dove', '#fbf8f1', rough=0.6)
+        for (dx, dy) in ((-TH - 0.03, -0.09), (-0.12, -TH - 0.03)):         # two white doves on the ledges
+            objs.append(sphere('dove', 0.026, (TX + dx, dy, HZ - 0.018), (1.0, 1.0, 0.85), m=dove, seg=10, rings=6))
+            objs.append(sphere('dovehead', 0.015, (TX + dx - (0.012 if dy > -TH else 0), dy - (0.012 if dy <= -TH else 0), HZ + 0.012), m=dove, seg=8, rings=5))
+        wisteria(objs, (-W2 - 0.03, -D2 + 0.05, 0.1), (-W2 - 0.03, -D2 + 0.05, 0.84), seed + 60, hang=0.0, n=9)
+        wisteria(objs, (-W2 - 0.03, -D2 + 0.05, 0.84), (-W2 - 0.03, D2 - 0.1, 0.84), seed + 61, hang=0.12, n=10)
+    pop_door(objs, FL, trim, wood, dark)
+    straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18 if look < 3 else 10, 0.0)
+    return finish(objs, name)

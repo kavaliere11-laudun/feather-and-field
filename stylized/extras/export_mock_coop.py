@@ -13,7 +13,7 @@ exec(compile(head, 'export_coops_head', 'exec'), G)
 coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; write_glb = G['write_glb']
 names = []
 for look, pre in enumerate(('box_', 'shed_', 'house_', 'cosy_', 'deluxe_')):
-    n = pre + AS; BUDGET[n] = (15000, 16000, 17000, 20000, 24000)[look]
+    n = pre + AS; BUDGET[n] = [int(v) for v in os.environ.get('FF_BUDGETS', '15000,16000,17000,20000,24000').split(',')][look]
     one(n, lambda look=look, n=n: getattr(coops, os.environ.get('FF_FN', 'sussex'))(look=look, name=n, key=AS)); names.append(n)
 KEY = os.environ.get('FF_KEY', 'sus')            # (whose gardens: PENS_BY / PLAY_BY)
 for t in (0, 1, 3, 4):
