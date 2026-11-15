@@ -20,12 +20,34 @@ const UNTIL = +(process.env.UNTIL || 10), DAYS = +(process.env.DAYS || 16);
 // the orders; CARE=0: no cuddles; SEED: the dice)
 const VISITS = (process.env.VISITS || '8,19').split(',').map(Number), CASTS = +(process.env.CASTS ?? 2), HIT = +(process.env.HIT ?? 1), TIN = process.env.TIN === '1', ANYHOUR = process.env.ANYHOUR === '1', KEEPFISH = process.env.KEEPFISH === '1';
 let seed = +(process.env.SEED || 7); const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+// (15 Nov 2026, Audrey: "test the game end to end with our 3 persona again now that we have the money included": the app's
+// shop stood in for (window.__fakeStore, as storetest does) when MONEY is given: what the player buys with money and
+// when, "what@day[:how]" with commas: w (the first coop's winter building), wall (the nine), bag:purse|basket|sack|cart,
+// trio:paint|lavender|splash|cuckoo, trios (the four), shelves; how: bought (default), cancelled, pending (a parent's yes
+// awaited). Tried at each visit from that day until its button is there; each noted with its card, what was said, and the
+// farm before and after. PEEK=1: once a day, where the money buttons are to be seen (no purchase).)
+const MONEY = (process.env.MONEY || '').split(',').filter(Boolean).map(x => { const [what, r] = x.split('@'), [d, how] = (r || '0').split(':'); return { what, day: +d, how: how || 'bought', done: false, tries: 0 }; });
+const STORE = MONEY.length > 0 || process.env.PEEK === '1', bought = [];
 fs.mkdirSync(OUT, { recursive: true });
 const LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR' }[LANG];
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC, timezoneId: 'Europe/London', deviceScaleFactor: 2 });
 const T0 = new Date('2026-11-09T10:00:00+00:00').getTime();
 await ctx.addInitScript(t0 => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || t0); Date.now = () => window.__T; }, T0);
+if (STORE) await ctx.addInitScript(() => {
+  const get = (k, d) => { try { const v = sessionStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set = (k, v) => sessionStorage.setItem(k, JSON.stringify(v));
+  const price = id => /coins\.purse$/.test(id) ? '£0.99' : /coins\.basket$/.test(id) ? '£2.99' : /coins\.sack$/.test(id) ? '£4.99' : /coins\.cart$|winter\.all$/.test(id) ? '£9.99' : /silkie\.all$/.test(id) ? '£19.99' : /silkie\./.test(id) ? '£6.99' : '£1.99';
+  window.__fakeStore = {
+    products: async o => ({ products: o.ids.map(id => ({ id, price: price(id) })) }),
+    owned: async () => ({ ids: get('__owned', []) }),
+    buy: async o => { const how = get('__how', 'bought'), ids = get('__owned', []); if (how !== 'bought') return { state: how, ids };
+      if (/\.coins\./.test(o.id)) { const n = get('__n', 1000) + 1; set('__n', n); const tx = { id: String(n), productId: o.id }; set('__open', [...get('__open', []), tx]); return { state: 'bought', ids, tx }; }
+      ids.push(o.id); set('__owned', ids); return { state: 'bought', ids }; },
+    restore: async () => ({ ids: get('__owned', []) }),
+    pending: async () => ({ list: get('__open', []) }),
+    finish: async o => { set('__open', get('__open', []).filter(t => t.id !== o.id)); return {}; },
+  };
+});
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const log = [], seen = new Set(); let pic = 0, lastHint = '';
@@ -93,6 +115,53 @@ const placeIt = async (what) => {      // (a decoration or the kennel being plac
   return true;
 };
 const shopTab = async (tab) => { await p.evaluate(() => window.__farm.deco.shop()); await act(0.4); if (tab !== 'decor') { await click(`.gsheet .gchip[data-tab="${tab}"]`); await act(0.3); } await once('shop:' + tab, 'shop_' + tab); };
+const closeCard = () => p.evaluate(() => window.__farm.gameUI().close());
+const farmNow = () => p.evaluate(() => { const f = window.__farm, g = f.game(), d = g.data; return { coins: d.coins, level: g.level, paid: d.paid || [], trios: d.trios || [], gift: d.gift || [], shelves: !!d.shelves, birds: d.birds.length, coops: d.coops.map(c => c.breed + (c.theme ? '(' + c.theme + ')' : '') + ':' + c.tier), basket: g.basket().length, edited: !!g.edited }; });
+const moneyOpen = async (what) => {      // (the card its button is on, opened; the button's selector)
+  await closeCard();
+  if (what.startsWith('bag:')) { await p.evaluate(() => window.__farm.deco.shop()); await act(0.4); await click('.gsheet:not([hidden]) .gchip[data-tab="coins"]'); await act(0.3); return `.giap[data-bag="${what.slice(4)}"] .giap-buy`; }
+  if (what === 'trios' || what.startsWith('trio:')) { await p.evaluate(() => window.__farm.book()); await act(0.4); return what === 'trios' ? '.giap-adopt-all' : `.giap-adopt[data-adopt="sil_${what.slice(5)}"]`; }
+  if (what === 'shelves') { await p.evaluate(() => window.__farm.pantrySheet()); await act(0.3); return '[data-shelves]'; }
+  await waitFarmer(25); await p.evaluate(() => window.__farm.coopCard(0)); await act(0.4); return `.gtheme button[data-themego="${what === 'wall' ? 'all' : 'pay'}"]`;
+};
+const btnText = sel => p.evaluate(sel => { const b = document.querySelector('.gsheet:not([hidden]) ' + sel); return b ? b.textContent : null; }, sel);
+async function money() {
+  const s = await state();
+  for (const m of MONEY) { if (m.done || s.day < m.day) continue;
+    await safe('money ' + m.what, async () => {
+      await p.evaluate(h => sessionStorage.setItem('__how', JSON.stringify(h)), m.how);
+      const sel = await moneyOpen(m.what), bt = await btnText(sel), c = await cardNow();
+      if (bt === null) { if (!(m.tries++)) await note('money: no button yet for', `${m.what} (card ${c ? c.kind : 'none'})`); await closeCard(); return; }
+      const A = await farmNow();
+      await p.evaluate(sel => document.querySelector('.gsheet:not([hidden]) ' + sel).scrollIntoView({ block: 'center' }), sel); await p.waitForTimeout(300);
+      await note('money card (' + m.what + ')', c ? c.text : ''); await shoot('money_' + m.what.replace(':', '_') + '_1card');
+      await click('.gsheet:not([hidden]) ' + sel); await run(2);
+      const said = await p.evaluate(() => document.getElementById('hint').textContent), c2 = await cardNow(), B = await farmNow();
+      await note('money ' + m.how + ' (' + m.what + ')', `button "${bt}" · said "${said}" · card after: ${c2 ? c2.kind + ' "' + c2.text.replace(/\s*\n\s*/g, ' | ').slice(0, 260) + '"' : 'none'} · before ${JSON.stringify(A)} · after ${JSON.stringify(B)}`);
+      await shoot('money_' + m.what.replace(':', '_') + '_2' + m.how);
+      await closeCard(); await act(1);
+      m.done = true; if (m.how === 'bought') bought.push(bt);
+      if (m.how === 'bought' && (m.what === 'w' || m.what === 'wall')) await safe('money look', async () => { const P = await p.evaluate(() => { const q = window.__farm.gamePlots()[0].group.position; return [q.x, q.z]; }); await look(P[0], P[1], 2.4); await act(1.5); await shoot('money_' + m.what + '_3farm'); });
+    });
+  }
+  // a trio adopted waits in the basket by the fire: its Pagoda put down (yours already)
+  const rare = await p.evaluate(() => { const g = window.__farm.game(); return (g.data.gift || []).filter(b => g.rareCoops().includes(b)); });
+  for (const line of rare) await safe('pagoda ' + line, async () => {
+    await closeCard(); await p.evaluate(() => window.__farm.coopsSheet()); await act(0.4); const c = await cardNow(); if (c && !seen.has('coopsgift')) { seen.add('coopsgift'); await note('card coops (a trio waiting)', c.text); await shoot('money_trio_coops'); }
+    await closeCard(); await p.evaluate(b => window.__farm.place(b), line); await act(1.5);
+    for (let k = 0; k < 8 && !(await p.evaluate(() => window.__farm.move.state().ok)); k++) await p.evaluate(k => { const f = window.__farm, M = f.move.state(); f.move.to(M.at.x + [3, -3, 0, 0, 5, -5, 5, -5][k], M.at.z + [0, 0, 3, -3, 5, 5, -5, -5][k]); }, k).catch(() => {});
+    const ok = await p.evaluate(() => window.__farm.move.state().ok);
+    if (!ok) { await note('money: no room for the Pagoda', line + ' (the trio stays in the basket by the fire)'); await p.evaluate(() => window.__farm.move.cancel()); await act(0.5); return; }
+    await click('.gmove-go'); await act(3); const B = await farmNow();
+    await note('money: Pagoda put down', `${line} · ${JSON.stringify(B)}`);
+    const P = await p.evaluate(b => { const q = window.__farm.gamePlots().find(q => q.gc.breed === b); return q ? [q.group.position.x, q.group.position.z] : null; }, line); if (P) { await look(P[0], P[1], 2.4); await act(1.5); await shoot('money_pagoda_' + line); }
+  });
+}
+let peekDay = -1; const peeked = {};
+async function peek() {      // (once a day: which money buttons a player can see, and from when)
+  const s = await state(); if (s.day === peekDay) return; peekDay = s.day;
+  for (const w of ['bag:purse', 'trios', 'shelves', 'w']) { if (peeked[w]) continue; await safe('peek ' + w, async () => { const sel = await moneyOpen(w), bt = await btnText(sel); if (bt !== null) { peeked[w] = s.day; await note('money button first seen', `${w}: "${bt}" on day ${s.day}, level ${s.level}`); } await closeCard(); }); }
+}
 async function spend() {
   // the coops' next looks, the cheapest first
   const ups = await p.evaluate(() => { const f = window.__farm, g = f.game(); return f.gamePlots().map((q, i) => { const n = g.coopNext(g.coop(q.gc.id)); return n ? { i, price: n.price, look: n.look } : null; }).filter(Boolean).sort((a, b) => a.price - b.price); });
@@ -226,6 +295,7 @@ async function visit(first = false) {
   if (S.sale && S.coins >= S.sale.price + 60) await safe('land', async () => { await p.evaluate(() => window.__farm.landCard()); await act(0.4); await once('card:land', 'card_land'); const c = await cardNow(); if (c) await note('card land', c.text); await click('.gsheet .gbtn:not(.galt)'); await act(2); });
   // spending, as a keen player would (SHOP=0: not): the coops' next looks first, then the geese (once the fox has called),
   // the decorations, the farmer's outfits, the dog; always keeping some coins back for feed and seed
+  if (STORE) { await safe('peek', peek); await safe('money', money); }
   if (SHOP) await spend();
   // the shows: the best bird in each show with a fair chance (the village show anyway: it's cheap)
   if (SHOP) await safe('shows', enterShows);
@@ -303,5 +373,6 @@ for (const t of times) {
   await visit(false);
 }
 const s = await state();
+if (STORE) await note('MONEY', `bought: ${JSON.stringify(bought)} · never done: ${JSON.stringify(MONEY.filter(m => !m.done).map(m => m.what))} · first seen: ${JSON.stringify(peeked)} · farm ${JSON.stringify(await farmNow())}`);
 await note('DONE', `day ${s.day}, level ${s.level}, ${s.coins} coins; page errors: ${JSON.stringify(errs)}`);
 await b.close();

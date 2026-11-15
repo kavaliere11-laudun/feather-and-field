@@ -5502,3 +5502,29 @@ rare trios should remain 19,99"; "play the game and let me know the impact of th
   and a review picture each (`iapshots2.mjs`; the trios with a large picture of the birds over their Book page).
   Twenty products in all; nothing sent for review.
 - Not built: the rewarded advert (needs her own advert account).
+
+
+## The test players again, with money (15 Nov 2026; Audrey: "test the game end to end with our 3 persona again now that we have the money included. Create more persona if needed")
+`playthrough.mjs` can now pay: MONEY="what@day[:how],…" (w: the first coop's winter building, wall: the nine,
+bag:purse|basket|sack|cart, trio:paint|lavender|splash|cuckoo, trios, shelves; how: bought, cancelled, pending), the
+app's shop stood in for as in `storetest`; PEEK=1 notes the day each money button is first there. Each purchase is
+noted with its card, what was said and the farm before and after; an adopted trio's Pagoda is put down.
+Five runs at 402x874, about ten days each, no page errors in any:
+| Player | Visits | Paid | Where they got |
+|---|---|---|---|
+| Maya, 9 (bursts, fishing) | 16:00, 17:00, 18:00 | nothing: a Purse and a Basket cancelled, a building and a trio "waiting for approval" | level 8 on day 6; never out of worms now |
+| Claire, 41 (French) | 19:00 | Snow Chalet (day 4), shelves (day 6): £3.98 | level 8 on day 10 |
+| Sophie, 34 (new: a small spender) | 8:00, 19:00 | Purse (day 1), Lavender trio (day 2), shelves (day 3): £9.97; the building refused (no room), not paid | level 9 on day 8 |
+| Tom, 27 (to finish everything) | 8, 13, 19, 22 | Cart (day 2), the four trios (day 3), the nine and the shelves (day 4): £41.96 | level 10 on day 5, 12 on day 10 |
+| Tom without money | the same | nothing | level 10 on day 8 |
+- A Cart's 50,000 coins were spent in a day and a half (coops' looks mostly) and put Tom three days ahead; a Purse
+  lasted Sophie a day. Nobody was stuck without paying.
+- `storetest` and `store2test` in English and French: 70 checks pass. The shop's words are in all six languages.
+- Found, to put to Audrey: (1) "Or have it now" where the Deluxe garden doesn't fit says to move the coop first, with
+  no button to do it (nothing is paid: the room is looked at before Apple's sheet); (2) the money buttons are there
+  from the first minute, level 1, during the guide; (3) they're blue on a coop's card but red, like any other button,
+  in the shop, the Book and the Pantry; (4) four trios arriving name all twelve birds in one message; (5) the Cart's
+  coins are cut off on the left of its picture.
+- Not tested here: Apple's real sheet (TestFlight, hers), an approval that comes later.
+- The Shop page (https://claude.ai/artifact/735V9Y6UcazkSPSpwdjzbq) now lists the twenty paid items with their
+  pictures and prices.
