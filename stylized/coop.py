@@ -317,6 +317,27 @@ def stone_sink(objs, x, y, m):
     objs.append(sphere('smoss', 0.03, (x - L / 2 + 0.02, y + Wd / 2 - 0.02, H), (1.4, 1, 0.4), m=mat('fsmoss', '#6b7a46', rough=0.95), ico=1, disp=0.3, seed=3))
 
 
+def village_well(objs, x, y, m):
+    """A village well (the Deluxe Village Cottage's water, 15 Nov 2026): a round brick well under a little tiled roof on two
+    oak posts, its bucket on the rim, behind a low stone basin of water for the hens."""
+    brick = [mat('fwell_b%d' % i, h, rough=0.85, var=0.08) for i, h in enumerate(('#b26148', '#a5563f', '#8f4633'))]; oak = mat('fwell_oak', '#5d3e28', rough=0.8, var=0.1)
+    tile = mat('fwell_tile', '#f0823f', rough=0.75, var=0.08); stone = mat('fsink', '#a8a194', rough=0.85, var=0.06, bump=0.15, bump_scale=60); tin = mat('fwell_tin', '#c3c9ca', rough=0.5, metal=0.3)
+    bx, by = x, y + 0.2; R = 0.17
+    for row in range(3):
+        for k in range(10):
+            a = (k + 0.5 * (row % 2)) / 10 * math.tau
+            objs.append(box('wellbrick', (0.1, 0.06, 0.062), (bx + math.cos(a) * R, by + math.sin(a) * R, 0.034 + row * 0.066), (0, 0, a + math.pi / 2), m=brick[(k + row) % 3], bevel=0.008, segs=1))
+    objs.append(cyl('wellwater', R - 0.02, 0.01, (bx, by, 0.15), m=m['water'], verts=18, bevel=0.0))
+    for sx in (-1, 1): objs.append(box('wellpost', (0.035, 0.035, 0.52), (bx + sx * (R + 0.03), by, 0.26), m=oak, bevel=0.004, segs=1))
+    objs.append(cyl('wellroller', 0.018, 2 * R + 0.1, (bx, by, 0.4), (0, math.radians(90), 0), m=oak, verts=8, bevel=0.0))
+    for sy in (-1, 1):
+        o = box('wellroof', (2 * R + 0.2, 0.22, 0.03), (bx, by + sy * 0.085, 0.57), (math.radians(-sy * 32), 0, 0), m=tile, bevel=0.006, segs=1); objs.append(o)
+    objs.append(cyl('wellridge', 0.025, 2 * R + 0.22, (bx, by, 0.63), (0, math.radians(90), 0), m=mat('fwell_ridge', '#a84e2c', rough=0.7), verts=8, bevel=0.0))
+    objs.append(cyl('wellbucket', 0.045, 0.08, (bx + R - 0.02, by - R + 0.03, 0.26), m=tin, verts=10, r2=0.038, bevel=0.004))
+    objs.append(cyl('basin', 0.15, 0.07, (x, y - 0.08, 0.035), m=stone, verts=16, bevel=0.008))
+    objs.append(cyl('bwater', 0.125, 0.01, (x, y - 0.08, 0.068), m=m['water'], verts=16, bevel=0.0))
+
+
 def water_butt(objs, x, y, m):
     """A water butt (an oak barrel on a stone stand) behind a low stone basin, its brass tap dripping into it."""
     oak = mat('fbutt', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fbiron', '#2b2824', rough=0.5, metal=0.6)
@@ -539,6 +560,15 @@ def build_pen(root, m):
         bm.to_mesh(me); bm.free()
         o = link(bpy.data.objects.new('froof', me)); setmat(o, ink); so = o.modifiers.new('solid', 'SOLIDIFY'); so.thickness = 0.02; so.offset = -1; objs.append(o)
         objs.append(sphere('fball', 0.025, (fx, fy, 0.51), m=bronze, seg=10, rings=6))
+    elif PEN.get('feeder_style') == 'village':                # (the Deluxe Village Cottage's, 15 Nov 2026: a little red pillar box over its tray of grain)
+        red = mat('fd_pillar', '#c8283c', rough=0.45); dark = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6); white = mat('fd_plate', '#f4efe4', rough=0.6)
+        objs.append(cyl('tray', 0.165, 0.05, (fx, fy, 0.03), m=dark, verts=20, bevel=0.01))
+        objs.append(cyl('grain', 0.14, 0.01, (fx, fy, 0.052), m=m['grain_'], verts=28, bevel=0.0))
+        objs.append(cyl('fbody', 0.08, 0.3, (fx, fy, 0.22), m=red, verts=16, bevel=0.006))
+        objs.append(cyl('froof', 0.095, 0.035, (fx, fy, 0.385), m=red, verts=16, r2=0.085, bevel=0.004))
+        objs.append(sphere('fball', 0.08, (fx, fy, 0.4), (1, 1, 0.45), m=red, seg=14, rings=8))
+        objs.append(box('fslot', (0.075, 0.012, 0.014), (fx, fy - 0.078, 0.32), m=dark, bevel=0.0))
+        objs.append(box('fplate', (0.06, 0.01, 0.06), (fx, fy - 0.079, 0.23), m=white, bevel=0.003, segs=1))
     elif PEN.get('feeder_style') == 'cottage':                # (the Deluxe cottage's: a little barrel hopper under a cap of thatch)
         oak = mat('fd_oak', '#7a5536', rough=0.8, var=0.1, grain=0.3, grain_scale=(1.5, 26, 26)); iron = mat('fd_iron', '#2b2824', rough=0.5, metal=0.6)
         thatch = mat('fd_thatch', '#c7a866', rough=0.9, var=0.07)
@@ -619,6 +649,7 @@ def build_pen(root, m):
     wx, wy = PEN['dish']
     if PEN.get('fountain'): fountain(objs, wx, wy, m)
     elif PEN.get('water') == 'trough': trough(objs, wx, wy, m)
+    elif PEN.get('water') == 'well': village_well(objs, wx, wy, m)
     elif PEN.get('water') == 'pond': koi_pond(objs, wx, wy, m)
     elif PEN.get('water') == 'sink': stone_sink(objs, wx, wy, m)
     elif PEN.get('water') == 'butt': water_butt(objs, wx, wy, m)

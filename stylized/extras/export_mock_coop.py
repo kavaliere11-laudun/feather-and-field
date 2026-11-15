@@ -14,7 +14,12 @@ coops = G['coops']; one = G['one']; BUDGET = G['BUDGET']; STATS = G['STATS']; wr
 names = []
 for look, pre in enumerate(('box_', 'shed_', 'house_', 'cosy_', 'deluxe_')):
     n = pre + AS; BUDGET[n] = (15000, 16000, 17000, 20000, 24000)[look]
-    one(n, lambda look=look, n=n: coops.sussex(look=look, name=n, key=AS)); names.append(n)
+    one(n, lambda look=look, n=n: getattr(coops, os.environ.get('FF_FN', 'sussex'))(look=look, name=n, key=AS)); names.append(n)
+KEY = os.environ.get('FF_KEY', 'sus')            # (whose gardens: PENS_BY / PLAY_BY)
+for t in (0, 1, 3, 4):
+    n = 'pen_t%d_%s' % (t, AS); BUDGET[n] = (4200, 4600, 0, 9500, 12500)[t]
+    one(n, lambda t=t: coops.pen_tier(t, KEY)); names.append(n)
 write_glb(os.path.join(OUT, 'mock.glb'), names)
-json.dump(dict(names=names, stats={n: STATS[n] for n in names}), open(os.path.join(OUT, 'mock.json'), 'w'), indent=1)
+pens = {AS: {t: dict(coops.pen_info(t, KEY), play=coops.play_info(t, KEY)) for t in range(5)}}
+json.dump(dict(names=names, stats={n: STATS[n] for n in names}, pens=pens), open(os.path.join(OUT, 'mock.json'), 'w'), indent=1)
 print('MOCK', json.dumps({n: STATS[n] for n in names}))

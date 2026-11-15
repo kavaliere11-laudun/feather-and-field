@@ -4619,6 +4619,7 @@ def play_things(objs, t, k='rir'):
     P = PLAY_BY[k].get(t)
     if not P: return
     if WINTER in SWING_LOOK and t == 4: striped_swing(objs, *P['swing'], *SWING_LOOK[WINTER])
+    elif P.get('frame') == 'lych': lych_swing(objs, *P['swing'])
     elif P.get('frame') == 'torii': torii_swing(objs, *P['swing'])
     elif P.get('frame') == 'tree': tree_swing(objs, *P['swing'])
     elif P.get('frame') == 'logs': log_swing(objs, *P['swing'])
@@ -4626,8 +4627,10 @@ def play_things(objs, t, k='rir'):
     elif P.get('frame') == 'joglo': joglo_swing(objs, *P['swing'])
     elif P.get('frame') == 'jhula': jhula_swing(objs, *P['swing'])
     else: swing_frame(objs, *P['swing'], rustic=P.get('rustic', False))
-    (cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_post)(objs, *P['cabbage'])
+    (cabbage_signpost if P.get('holder') == 'signpost' else cabbage_tripod if P.get('tripod') else cabbage_bamboo if P.get('holder') == 'bamboo' else cabbage_crook if P.get('holder') == 'crook' else cabbage_stump if P.get('holder') == 'stump' else cabbage_mill if P.get('holder') == 'mill' else cabbage_kentongan if P.get('holder') == 'kentongan' else cabbage_lamp if P.get('holder') == 'lamp' else cabbage_post)(objs, *P['cabbage'])
     if 'tub' in P: dust_tub(objs, *P['tub'])
+    if 'trug' in P: sand_trug(objs, *P['trug'])
+    if 'wagon' in P: sand_wagon(objs, *P['wagon'])
     if 'tinbath' in P: tin_bath(objs, *P['tinbath'])
     if 'pit' in P: sand_pit(objs, *P['pit'])
     if 'sbowl' in P: sand_bowl(objs, *P['sbowl'])
@@ -4645,7 +4648,7 @@ def play_things(objs, t, k='rir'):
     if 'dust' in P: dust_bath(objs, *P['dust'])
     if 'ladder' in P: ladder(objs, *P['ladder'])
     if 'xylo' in P and WINTER in XYLO_LOOK: winter_xylophone(objs, *P['xylo'], XYLO_LOOK[WINTER])
-    elif 'xylo' in P: (bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
+    elif 'xylo' in P: (milk_xylophone if P.get('bars') == 'milk' else bamboo_xylophone if P.get('bars') == 'bamboo' else log_xylophone if P.get('bars') == 'logs' else tulip_xylophone if P.get('bars') == 'tulip' else gamelan if P.get('bars') == 'gamelan' else jaltarang if P.get('bars') == 'jaltarang' else xylophone)(objs, *P['xylo'])
 
 
 def play_info(t, k='rir'):
@@ -4655,6 +4658,8 @@ def play_info(t, k='rir'):
     g = lambda q: [q[0], round(-q[1], 3)]
     if 'tub' in P: dust = dict(at=g(P['tub']), r=0.235, y=0.075)
     elif 'pit' in P: dust = dict(at=g(P['pit']), r=PIT_R, y=0.085)
+    elif 'trug' in P: dust = dict(at=g(P['trug']), w=TRUG_W - 0.14, d=TRUG_D - 0.1, y=0.1)
+    elif 'wagon' in P: dust = dict(at=g(P['wagon']), w=WAGON_W - 0.14, d=WAGON_D - 0.12, y=WAGON_Y)
     elif 'tinbath' in P: dust = dict(at=g(P['tinbath']), w=TIN_W, d=TIN_D, y=0.105)
     elif 'sbowl' in P: dust = dict(at=g(P['sbowl']), r=SBOWL_R, y=0.09)
     elif 'zen' in P: dust = dict(at=g(P['zen']), w=ZEN_W, d=ZEN_D, y=0.062)
@@ -4674,6 +4679,8 @@ def play_info(t, k='rir'):
     if 'xylo' in P: out['xylo'] = dict(at=g(P['xylo']), bars=[round(0.13 - k * 0.052, 3) for k in range(6)])
     if 'tub' in P: sand = [g(P['tub']) + [0.29]]
     elif 'pit' in P: sand = [g(P['pit']) + [PIT_R + 0.07]]
+    elif 'trug' in P: sand = [g((P['trug'][0] + sx * (TRUG_W - TRUG_D) / 2, P['trug'][1])) + [TRUG_D / 2 + 0.08] for sx in (-1, 1)]
+    elif 'wagon' in P: sand = [g((P['wagon'][0] + sx * (WAGON_W - WAGON_D) / 2, P['wagon'][1])) + [WAGON_D / 2 + 0.14] for sx in (-1, 1)] + [g((P['wagon'][0] + WAGON_W / 2 + 0.2, P['wagon'][1])) + [0.14]]
     elif 'tinbath' in P: sand = [g((P['tinbath'][0] + sx * (TIN_W - TIN_D) / 2, P['tinbath'][1])) + [TIN_D / 2 + 0.08] for sx in (-1, 1)]
     elif 'sbowl' in P: sand = [g(P['sbowl']) + [SBOWL_R + 0.07]]
     elif 'zen' in P: sand = [g((P['zen'][0] + sx * (ZEN_W - ZEN_D) / 2, P['zen'][1])) + [ZEN_D / 2 + 0.08] for sx in (-1, 1)]
@@ -4693,6 +4700,7 @@ def play_info(t, k='rir'):
     if P.get('frame') == 'tree': keep.append(g((P['swing'][0] + TREE_DX, P['swing'][1])) + [0.12])          # (the apple tree's trunk)
     if P.get('frame') == 'logs': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.13] for sx in (-1, 1)]   # (its posts, braced)
     if P.get('frame') == 'joglo': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.1] for sx in (-1, 1)]   # (its posts)
+    if P.get('frame') == 'lych': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.08] for sx in (-1, 1)]   # (the lych-gate's posts)
     if P.get('frame') == 'jhula': keep += [g((P['swing'][0] + sx * (SWING_HALF + 0.05), P['swing'][1])) + [0.08] for sx in (-1, 1)]   # (its posts)
     if 'crib' in P: keep.append(g((P['crib'][0] + CRIB_PINE[0], P['crib'][1] + CRIB_PINE[1])) + [0.17])            # (the crib's young pine)
     if 'ladder' in P: keep.append(g(P['ladder']) + [0.38])
@@ -4811,7 +4819,7 @@ def pen_info(t, k='rir'):
     try:
         x0, x1, y0, y1 = coop.PEN['box']; hinge, gc = coop.gate_span()
         P = coop.PEN
-        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume', 'hauz') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan') else 0.22,
+        return dict(min=[x0, round(-y1, 3)], max=[x1, round(-y0, 3)], gate=round(gc, 3), feeder=[P['feeder'][0], -P['feeder'][1]], dish=[P['dish'][0], -P['dish'][1]], dish_r=0.36 if P.get('fountain') or P.get('water') in ('trough', 'flume', 'hauz') else 0.5 if P.get('water') in ('pond', 'canal') else 0.3 if P.get('water') in ('butt', 'padasan', 'well') else 0.22,
                     hay=[[P['hay'][0], -P['hay'][1]]] + [[b[0], -b[1]] for b in P.get('bales', [])] if P.get('hay') else [], sack=[P['sack'][0], -P['sack'][1]] if P.get('sack') else None)
     finally: coop.PEN = keep
 
@@ -8216,3 +8224,118 @@ def sussex(look=2, name=None, key='sus', seed=121):
     pop_door(objs, FL, white if look >= 2 else (new if look else old[1]), wood, dark)
     straw_bits(objs, (-0.31, -D2 - 0.04, FL + 0.01), 0.08, 18, 0.0)
     return finish(objs, name)
+
+
+# ---- the Village Cottage's own garden (15 Nov 2026; Audrey: "Yes carry on"): its yards (the same pens and gates, its things
+# in their own places), and its play things: in the Cosy a swing under a little tiled lych-gate, a Sussex trug full of sand
+# and the cabbage hung from a white village signpost; in the Deluxe the swing and the signpost again, a blue Sussex wagon
+# with red wheels full of sand, six milk bottles in a crate to ring, a pillar-box feeder and a brick well.
+PENS_BY['sus'] = {
+    0: dict(box=PENS[0]['box'], gate=PENS[0]['gate'], feeder=(0.62, -1.3), dish=(-0.7, -1.15), hay=None, hay_rot=0, sack=None,
+            straw=((-0.3, -1.0, 0.25, 22), (0.45, -1.45, 0.22, 18))),
+    1: dict(box=PENS[1]['box'], gate=PENS[1]['gate'], feeder=(-0.9, -1.25), dish=(0.9, -1.65), hay=None, hay_rot=0, sack=None,
+            straw=((0.6, -1.2, 0.3, 28), (-0.5, -1.7, 0.25, 22))),
+    3: dict(box=PENS[3]['box'], gate=PENS[3]['gate'], feeder=(0.8, -1.8), dish=(1.55, -2.3), bowl='enamel', hay=(1.75, 0.45), hay_rot=90, sack=None,
+            straw=((1.75, 0.45, 0.4, 35), (0.3, -1.5, 0.35, 35), (-0.8, -1.1, 0.3, 25))),
+    4: dict(box=PENS[4]['box'], gate=PENS[4]['gate'], feeder=(-0.6, -2.2), feeder_style='village', dish=(-1.8, -0.2), water='well', hay=(2.0, 0.5), hay_rot=90,
+            sack=None, pebbles=10, straw=((0.4, -1.35, 0.3, 25), (2.0, 0.5, 0.4, 35))),
+}
+PLAY_BY['sus'] = {3: dict(swing=(-1.4, -0.5), trug=(1.4, -1.3), cabbage=(-0.85, -2.3), frame='lych', holder='signpost'),
+                  4: dict(swing=(1.6, -0.4), wagon=(1.75, -1.6), cabbage=(-1.5, -2.6), xylo=(-1.55, -1.25), frame='lych', holder='signpost', bars='milk')}
+TRUG_W, TRUG_D = 0.64, 0.38                                     # the Cosy Village Cottage's trug of sand (x, y)
+WAGON_W, WAGON_D, WAGON_Y = 0.84, 0.46, 0.165                   # the Deluxe's wagon of sand (x, y; the sand's height)
+
+
+def lych_swing(objs, x, y):
+    """The Village Cottage's swing: under a little lych-gate, two oak posts and a roof of clay tiles."""
+    oak = C('oak', '#5d3e28', rough=0.8, var=0.1, grain=0.3, grain_scale=G); tiles = [_sus('rtile', rough=0.75, var=0.08), _sus('rtile2', rough=0.75, var=0.08), _sus('rtile3', rough=0.75, var=0.08)]
+    H = SWING_TOP + 0.1
+    for sx in (-1, 1):
+        px = x + sx * (SWING_HALF + 0.05)
+        objs.append(plank('lypost', (px, y, 0.0), (px, y, H), 0.055, 0.055, (sx, 0, 0), oak, jitter=0.3))
+        for sy in (-1, 1): objs.append(plank('lybrace', (px, y + sy * 0.17, H - 0.02), (px, y, H - 0.2), 0.035, 0.03, (sx, 0, 0), oak, jitter=0.3))
+        objs.append(plank('lytie', (px, y - 0.22, H), (px, y + 0.22, H), 0.045, 0.04, (sx, 0, 0), oak, jitter=0.2))
+    objs.append(cyl('swbar', 0.022, 2 * SWING_HALF + 0.14, (x, y, SWING_TOP), (0, math.radians(90), 0), m=oak, verts=10, bevel=0.0))
+    RZ = H + 0.2; L = 2 * SWING_HALF + 0.34
+    for sy in (-1, 1):                                             # two slopes of tiles, three rows each
+        for r in range(3):
+            t0 = r / 3; a = Vector((0, y + sy * (0.02 + 0.26 * (t0 + 1 / 3)), RZ - 0.2 * (t0 + 1 / 3))); n = 9
+            for i in range(n):
+                xx = x - L / 2 + (i + 0.5 + (0.5 if r % 2 else 0)) * L / n
+                if xx > x + L / 2: continue
+                up = Vector((0, -sy * 0.26, 0.2)).normalized(); nrm = Vector((0, sy * 0.2, 0.26)).normalized()
+                c = Vector((xx, a.y, a.z + 0.012 * (2 - r)))
+                objs.append(plank('sh', c + up * 0.06, c - up * 0.06, L / n * 0.93, 0.018, nrm, random.choice(tiles), jitter=1.4, bevel=0.005))
+    objs.append(cyl('lyridge', 0.035, L + 0.02, (x, y, RZ + 0.01), (0, math.radians(90), 0), m=_sus('ridge', rough=0.7), verts=10, bevel=0.0))
+
+
+def cabbage_signpost(objs, x, y):
+    """The Village Cottage's way of hanging the cabbage: a white village signpost, the cabbage on a string from its finger."""
+    white = _sus('white', rough=0.6, var=0.02); dark = _sus('postd', rough=0.6)
+    px, py = x, y + 0.28; H = CAB_TOP + 0.26
+    objs.append(cyl('sgpost', 0.022, H, (px, py, H / 2), m=white, verts=10, bevel=0.0))
+    objs.append(cyl('sgfoot', 0.04, 0.1, (px, py, 0.05), m=dark, verts=10, bevel=0.0))
+    objs.append(sphere('sgball', 0.03, (px, py, H + 0.02), m=dark, seg=10, rings=6))
+    objs.append(plank('sgfinger', (px, py + 0.02, CAB_TOP + 0.03), (px, y - 0.06, CAB_TOP + 0.03), 0.075, 0.018, (1, 0, 0), white, jitter=0.2))      # (over the cabbage)
+    objs.append(plank('sgfinger', (px - 0.02, py, CAB_TOP + 0.16), (px + 0.3, py, CAB_TOP + 0.16), 0.075, 0.018, (0, -1, 0), white, jitter=0.2))
+    for k in range(3): objs.append(box('sgword', (0.05, 0.004, 0.012), (px + 0.08 + k * 0.07, py - 0.012, CAB_TOP + 0.16), m=dark, bevel=0.0))
+
+
+def sand_trug(objs, x, y):
+    """The Cosy Village Cottage's sand bath: a big Sussex trug (a shallow basket of pale willow boards, a chestnut rim and
+    handle) full of sand, a little spilt round it."""
+    willow = C('sus_willow', '#e3d2ab', rough=0.8, var=0.06, grain=0.3, grain_scale=G); chest = C('sus_chestnut', '#7b5230', rough=0.75, var=0.08)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200); sy = TRUG_D / TRUG_W
+    o = cyl('trug', TRUG_W / 2 - 0.004, 0.1, (x, y, 0.06), m=willow, verts=24, r2=TRUG_W / 2 - 0.09, bevel=0.006); o.scale = (1, sy, 1); objs.append(o)
+    for k in range(7):                                             # its boards: thin dark lines along it
+        yy = y + (k - 3) * TRUG_D / 7.5; hw = (TRUG_W / 2 - 0.02) * math.sqrt(max(0.05, 1 - ((k - 3) / 3.6) ** 2))
+        objs.append(box('trugline', (2 * hw, 0.006, 0.006), (x, yy, 0.112), m=chest, bevel=0.0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=TRUG_W / 2 - 0.004, minor_radius=0.014, major_segments=28, minor_segments=6, location=(x, y, 0.112))
+    o = bpy.context.object; o.scale = (1, sy * 1.03, 1); setmat(o, chest); objs.append(o)
+    bpy.ops.mesh.primitive_torus_add(major_radius=TRUG_D / 2 + 0.006, minor_radius=0.012, major_segments=24, minor_segments=6, location=(x, y, 0.1), rotation=(0, math.radians(90), 0))
+    o = bpy.context.object; o.scale = (1, 1, 1.7); setmat(o, chest); objs.append(o)                      # the handle, high over the middle (a hen sits under it)
+    o = sphere('tsand', TRUG_W / 2 - 0.035, (x, y, 0.1), (1, sy, 0.035), m=sand, ico=3, disp=0.1, seed=17); objs.append(o)
+    for sx in (-1, 1): objs.append(box('trugfoot', (0.03, TRUG_D * 0.6, 0.02), (x + sx * 0.14, y, 0.01), m=chest, bevel=0.004, segs=1))
+    for k in range(6):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (TRUG_W / 2 + 0.08), y + math.sin(a) * (TRUG_D / 2 + 0.07), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 23))
+
+
+def sand_wagon(objs, x, y):
+    """The Deluxe Village Cottage's sand bath: a little Sussex wagon, blue with red wheels, its shafts on the ground, full of sand."""
+    blue = C('sus_wagon', '#3f6fa8', rough=0.6, var=0.05, grain=0.15, grain_scale=G); red = _sus('post', rough=0.5); dark = _sus('postd', rough=0.6)
+    sand = mat('dtsand', '#e8d29f', rough=0.95, var=0.06, bump=0.3, bump_scale=200); wood = coop.M()['wood']
+    W, D, Z0, Z1 = WAGON_W, WAGON_D, 0.06, 0.21
+    objs.append(box('wgfloor', (W, D, 0.025), (x, y, Z0), m=wood, bevel=0.004, segs=1))
+    for sy in (-1, 1):                                             # its sides: three boards each, raked out a little, a red rail on top
+        for k in range(3): objs.append(plank('wgside', (x - W / 2, y + sy * (D / 2 + 0.006 * k), Z0 + 0.03 + k * 0.05), (x + W / 2, y + sy * (D / 2 + 0.006 * k), Z0 + 0.03 + k * 0.05), 0.048, 0.02, (0, sy, 0), blue, jitter=0.3))
+        objs.append(plank('wgrail', (x - W / 2 - 0.02, y + sy * (D / 2 + 0.02), Z1), (x + W / 2 + 0.02, y + sy * (D / 2 + 0.02), Z1), 0.028, 0.026, (0, sy, 0), red, jitter=0.2))
+        for wx_ in (-W / 2 + 0.17, W / 2 - 0.17):                  # red wheels with dark tyres and a hub
+            c = (x + wx_, y + sy * (D / 2 + 0.05), 0.115)
+            objs.append(cyl('wgtyre', 0.115, 0.03, c, (math.radians(90), 0, 0), m=dark, verts=18, bevel=0.0))
+            objs.append(cyl('wgwheel', 0.098, 0.034, c, (math.radians(90), 0, 0), m=red, verts=18, bevel=0.0))
+            objs.append(cyl('wghub', 0.028, 0.05, c, (math.radians(90), 0, 0), m=dark, verts=10, bevel=0.0))
+    for sx in (-1, 1):
+        for k in range(3): objs.append(plank('wgend', (x + sx * W / 2, y - D / 2, Z0 + 0.03 + k * 0.05), (x + sx * W / 2, y + D / 2, Z0 + 0.03 + k * 0.05), 0.048, 0.02, (sx, 0, 0), blue, jitter=0.3))
+    o = sphere('tsand', 1.0, (x, y, WAGON_Y - 0.005), ((W - 0.05) / 2, (D - 0.05) / 2, 0.03), m=sand, ico=3, disp=0.1, seed=29); objs.append(o)
+    for sy in (-1, 1): objs.append(plank('wgshaft', (x + W / 2, y + sy * 0.12, Z0 + 0.03), (x + W / 2 + 0.36, y + sy * 0.1, 0.02), 0.03, 0.026, (0, 0, 1), red, jitter=0.2))
+    for k in range(5):
+        a = random.uniform(0, math.tau)
+        objs.append(sphere('dspill', random.uniform(0.04, 0.06), (x + math.cos(a) * (W / 2 + 0.05), y + math.sin(a) * (D / 2 + 0.16), 0.012), (1.4, 1, 0.12), (0, 0, a), m=sand, ico=2, disp=0.2, seed=k + 31))
+
+
+def milk_xylophone(objs, x, y):
+    """The Deluxe Village Cottage's xylophone: six milk bottles lying across a crate's two rails, each with its own coloured
+    foil cap and band, shorter and shorter; a wooden spoon to ring them."""
+    wood = coop.M()['wood']; milk = C('sus_milk', '#f6f3ea', rough=0.25, spec=0.6); glass = C('sus_bottle', '#cfe3df', rough=0.15, spec=0.8)
+    cols = ['#e2453c', '#ff8c42', '#f4c430', '#5bb04a', '#3d7fd1', '#9b6bd1']
+    for sx in (-1, 1): objs.append(box('xrail', (0.05, 0.42, 0.07), (x + sx * 0.09, y, 0.035), m=wood, bevel=0.006, segs=1))
+    for sy in (-1, 1): objs.append(box('xend', (0.24, 0.03, 0.05), (x, y + sy * 0.2, 0.03), m=wood, bevel=0.004, segs=1))
+    for k in range(6):
+        yy = y - 0.13 + k * 0.052; L = 0.28 - k * 0.025; cm = C('xbar%d' % k, cols[k], rough=0.35, metal=0.4)
+        objs.append(cyl('xbar', 0.021, L * 0.7, (x - L * 0.15, yy, 0.094), (0, math.radians(90), 0), m=milk, verts=10, bevel=0.0))
+        objs.append(cyl('xneck', 0.021, L * 0.2, (x + L * 0.3, yy, 0.094), (0, math.radians(90), 0), m=glass, verts=10, r2=0.012, bevel=0.0))
+        objs.append(cyl('xcap', 0.014, 0.022, (x + L * 0.41, yy, 0.094), (0, math.radians(90), 0), m=cm, verts=8, bevel=0.0))
+        objs.append(cyl('xband', 0.0225, 0.03, (x - L * 0.2, yy, 0.094), (0, math.radians(90), 0), m=cm, verts=10, bevel=0.0))
+    objs.append(cyl('xmallet', 0.007, 0.17, (x + 0.08, y + 0.26, 0.015), (math.radians(90), 0, math.radians(30)), m=wood, verts=6, bevel=0.0))
+    objs.append(sphere('xmhead', 0.024, (x + 0.125, y + 0.335, 0.018), (1, 1.4, 0.5), m=wood, ico=1))
