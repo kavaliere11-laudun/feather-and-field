@@ -29,6 +29,16 @@ const ALL = {
     orp_h: { body: '#7c3a1f', top: '#86411f', hackle: '#8c4522', head: '#8a4321', wing: '#743519', prim: '#2a1c16', tail: '#211815', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle' },
     orp_r: { body: '#6a2e19', top: '#7a371c', hackle: '#96481f', saddle: '#8e431e', head: '#93461f', wing: '#65290f', prim: '#201612', tail: '#12100f', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle', tailSheen: '#2f7d58' },
     leg: { orp: '#f0dccf' } } },
+  // the Cochin in other colours (15 Nov, the buff too like the Buff Orpington): partridge (a hen rich brown finely pencilled
+  // black, her neck gold; a rooster black with a fiery neck and saddle, red shoulders) and blue (slate, the neck darker)
+  6: { breeds: 'bra', paint: {
+    bra_h: { body: '#8f5c33', top: '#9a673a', hackle: '#c9953f', head: '#bd8a3c', wing: '#86552e', prim: '#4a2f1c', tail: '#2a1c14', legfeather: '#8a5932', dark: '#2e1c12', pattern: 'pencil', soft: true, overlap: 0.12 },
+    bra_r: { body: '#1b1715', top: '#7c2f16', hackle: '#d6802c', saddle: '#cc742a', head: '#cf7a2a', wing: '#8a3517', prim: '#17130f', tail: '#100e0d', legfeather: '#1d1917', tailSheen: '#2f7d58', soft: true },
+    leg: { bra: '#e3b548' }, fur: { bra: { len: { body: 0.03, wing: 0.013, legfeather: 0.03 }, shells: 7, comb: 0.6, fine: 1.1, under: 2.6, fluff: 0.06 } } } },
+  7: { breeds: 'bra', paint: {
+    bra_h: { body: '#7f8a9e', top: '#8893a7', hackle: '#6f7a90', head: '#69748a', wing: '#79849a', prim: '#667187', tail: '#5f6a80', legfeather: '#7d889c', soft: true, overlap: 0.16 },
+    bra_r: { body: '#788398', top: '#838ea3', hackle: '#56617a', saddle: '#5d6880', head: '#525d76', wing: '#727d93', prim: '#606b81', tail: '#4f5a72', legfeather: '#768196', tailSheen: '#aab6cc', soft: true, overlap: 0.16 },
+    leg: { bra: '#e3b548' }, fur: { bra: { len: { body: 0.03, wing: 0.013, legfeather: 0.03 }, shells: 7, comb: 0.6, fine: 1.1, under: 2.6, fluff: 0.06 } } } },
   2: { breeds: 'pol', paint: {
     pol_h: { body: '#7e8aa0', top: '#8d98ad', hackle: '#8792a8', head: '#7e8aa0', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#79859b', prim: '#6b768c', tail: '#66718a' },   // White-crested Blue
     pol_r: { body: '#7a869c', top: '#8a95aa', hackle: '#929db2', saddle: '#8d98ad', head: '#7e8aa0', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#768298', prim: '#687389', tail: '#636e86' } } },
