@@ -3978,7 +3978,7 @@ BARN = dict(grey='#9a8f80', grey2='#857a6c', grey3='#b0a48f', red='#9e5244', red
             stump='#6e5440', cut='#c9b18a', pine='#d6b47e', pine2='#c7a26b', felt='#3e3d3b', sage='#93b49a', pot='#c06a43',
             stone='#aba596', tinbowl='#9aa0a2', grass='#7da34f', grass2='#6a9444', cupola='#f1e9d8', louvre='#5b4a3a')
 PENS = {
-    0: dict(box=(-1.05, 1.1, -1.72, 0.62), gate=1, feeder=(0.66, -1.2), dish=(-0.78, -1.32), hay=None, hay_rot=0, sack=None,
+    0: dict(box=(-1.36, 1.46, -2.05, 0.7), gate=1, feeder=(0.66, -1.2), dish=(-0.78, -1.32), hay=None, hay_rot=0, sack=None,
             straw=((-0.6, -0.95, 0.25, 25), (0.3, -1.4, 0.25, 20))),
     1: dict(box=(-1.36, 1.46, -2.05, 0.7), gate=2, feeder=(0.98, -1.38), dish=(-0.9, -1.55), hay=None, hay_rot=0, sack=(1.08, 0.25),
             straw=((-0.8, -1.2, 0.3, 30), (0.4, -1.75, 0.3, 25))),
