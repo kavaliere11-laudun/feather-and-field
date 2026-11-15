@@ -57,6 +57,7 @@ def bake_bird(name, root, budget, small_cut=60, floor=0.06):
     H = piv['headc']; NB = piv['head']; nd = (H - NB).normalized(); reach = (H - NB).length
     P_, N_, C_, J_, W_, A_, F_ = [], [], [], [], [], [], []
     for o, me, n in meshes:
+        if not len(me.loops): print('EMPTY', name, o.name); continue      # (a part too small for its metaballs' grid: nothing to bake)
         part = o.get('part', 'body'); paint = int(o.get('paint', 0))
         j = JOINTS.index(part)
         mw = o.matrix_world; nm = mw.to_3x3().inverted().transposed()
@@ -145,13 +146,17 @@ CREST_EXTRA = {'h': 500, 'r': 500}        # (a Polish's crest: a round core the 
 BRA_EXTRA = {'h': 500, 'r': 500, 'lo': 150}     # (a Brahma's leg feathers and the black line along its wings: Audrey's photos, 29 Oct)
 SIL_BUDGET = {'h': 2300, 'r': 2600}     # Silkies: no long tail or bare-skin eyes, and their fluff shells multiply them      # a light version of each bird for when the view is zoomed far out
 names = []
-for b in ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil'):
+# (15 Nov 2026, mock-ups of new breeds: FF_ONLY=coc,sus exports only those; FF_AS=coc:bra,sus:orp names their models as
+# another breed's, so a test page shows them with no change to the browser's code. Never for the game's flock)
+ONLY = [x for x in os.environ.get('FF_ONLY', '').split(',') if x]; AS = dict(x.split(':') for x in os.environ.get('FF_AS', '').split(',') if x)
+for b0 in (ONLY or ('rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sil')):
+    b = AS.get(b0, b0)
     for sx in ('h', 'r'):
         for lo in (False, True):
-            fresh(); r = breeds.build(b, sx, seed=3, lo=lo); light(1)
+            fresh(); r = breeds.build(b0, sx, seed=3, lo=lo); light(1)
             nm = '%s_%s' % (b, sx) + ('_lo' if lo else '')
-            bake_bird(nm, r, (LOW[sx] + (BRA_EXTRA['lo'] if b == 'bra' else 0) if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx] + (CREST_EXTRA[sx] if b == 'pol' else BRA_EXTRA[sx] if b == 'bra' else 0))) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
-for lo in (False, True):
+            bake_bird(nm, r, (LOW[sx] + (BRA_EXTRA['lo'] if b0 in ('bra', 'coc') else 0) if lo else (SIL_BUDGET[sx] if b == 'sil' else BUDGET_BIRD[sx] + (CREST_EXTRA[sx] if b == 'pol' else BRA_EXTRA[sx] if b0 in ('bra', 'coc') else 0))) + (100 if b == 'sil' and lo else 0) - (300 if b == 'sil' and lo else 0), *((20, 0.02) if lo else ())); names.append(nm)
+for lo in (() if ONLY else (False, True)):
     fresh(); r = breeds.chick(seed=3); light(1)
     nm = 'chick' + ('_lo' if lo else ''); bake_bird(nm, r, LOW['chick'] if lo else BUDGET_BIRD['chick'], *((20, 0.02) if lo else ())); names.append(nm)
 write_bird_glb(os.path.join(OUT, 'flock.glb'), names)

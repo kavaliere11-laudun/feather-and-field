@@ -7,16 +7,20 @@ const OUT = process.argv[2], SET = process.env.SET || '1'; fs.mkdirSync(OUT, { r
 const bra = (o = {}) => ({ body: '#f0ece3', top: '#f4f1ea', hackle: '#f2eee6', stripe: '#1f1f23', head: '#f4f0e8', wing: '#ece7dd', prim: '#1e1d21', tail: '#19181b', pattern: 'stripes', capeW: 0.44, capeTone: 0.55, overlap: 0.05, wingLine: true, soft: true, ...o });
 const ALL = {
   1: { breeds: 'orp,rir,bra,leg,pol', paint: {
-    orp_h: bra(), orp_r: bra({ saddle: '#f2eee6', capeW: 0.22, capeTone: 0.28, prim: '#1c1b1f', tail: '#151417' }),                                   // Light Sussex
-    rir_h: { body: '#1c1b20', top: '#222126', hackle: '#b5632b', head: '#a85a27', wing: '#1e1d22', prim: '#151419', tail: '#111014' },               // Black Copper Marans
-    rir_r: { body: '#19181d', top: '#201f24', hackle: '#cf7630', saddle: '#c56b2b', head: '#c06a2c', wing: '#7c3d1e', prim: '#151419', tail: '#0f0e12' },
-    bra_h: { body: '#e0a650', top: '#e9b562', hackle: '#ecb960', head: '#e6b05a', wing: '#d89c46', prim: '#cf9442', tail: '#dba450', legfeather: '#e2a94f', soft: true },   // Buff Cochin
-    bra_r: { body: '#d99a42', top: '#e6ae58', hackle: '#eebb62', saddle: '#ebb65c', head: '#e6ac52', wing: '#d2903c', prim: '#c58838', tail: '#cf8f3e', legfeather: '#dba048', soft: true },
-    leg_h: { body: '#b9b4c6', top: '#c5c0d1', hackle: '#cbc6d7', head: '#c7c2d3', crest: '#c7c2d3', wing: '#b0abbe', prim: '#a39eb2', tail: '#aaa5b8' },               // Lavender Araucana
-    leg_r: { body: '#b4afc2', top: '#c2bdce', hackle: '#d0cbdb', saddle: '#cdc8d8', head: '#cbc6d6', crest: '#cbc6d6', wing: '#aca7ba', prim: '#9f9aae', tail: '#a6a1b4' },
+    // Light Sussex (her photos): white, a broad cape of black feathers edged white round the neck, a black tail
+    orp_h: bra({ wingLine: false, prim: '#ece7dd', capeW: 0.55, capeTone: 0.9, capeR: 0.72, capeFront: [0.45, 0.98] }), orp_r: bra({ wingLine: false, saddle: '#f2eee6', capeW: 0.34, capeTone: 0.6, capeR: 0.8, capeFront: [0.35, 0.95], prim: '#ece7dd', tail: '#151417' }),
+    // Black Copper Marans: the hen black with a dark copper neck; the rooster's neck and saddle blazing copper, red shoulders, a green-black tail
+    rir_h: { body: '#17161b', top: '#1b1a1f', hackle: '#6a3a1c', head: '#3a251b', wing: '#19181d', prim: '#131217', tail: '#0f0e12', legfeather: '#1a191e', sheen: '#2f5a4c', sheen2: '#3a4a6a', tailSheen: '#2f6d58' },
+    rir_r: { body: '#141318', top: '#7a2c16', hackle: '#d9772c', saddle: '#c9682a', head: '#d07028', wing: '#8a3016', prim: '#131217', tail: '#0d0c10', legfeather: '#17161b', tailSheen: '#2f7d58' },
+    // Buff Cochin: warm golden buff all over, soft
+    bra_h: { body: '#dba355', top: '#e3ae60', hackle: '#e6b264', head: '#e2ac5c', wing: '#d59a4a', prim: '#cc9044', tail: '#d9a052', legfeather: '#deaa5a', soft: true, overlap: 0.1 },
+    bra_r: { body: '#dd9638', top: '#e6a444', hackle: '#eeae4a', saddle: '#eaa846', head: '#e8a442', wing: '#d68c30', prim: '#c9822c', tail: '#d28a32', legfeather: '#dc9a3e', soft: true, overlap: 0.1 },
+    // Lavender Araucana: an even pale lavender grey
+    leg_h: { body: '#bcbcc8', top: '#c4c4cf', hackle: '#c6c6d1', head: '#c2c2cd', crest: '#c2c2cd', wing: '#b6b6c3', prim: '#adadbb', tail: '#b2b2bf', soft: true, overlap: 0.07 },
+    leg_r: { body: '#b8b8c5', top: '#c2c2ce', hackle: '#cacad5', saddle: '#c8c8d3', head: '#c6c6d1', crest: '#c6c6d1', wing: '#b2b2c0', prim: '#a9a9b8', tail: '#aeaebc', soft: true, overlap: 0.07 },
     pol_h: { body: '#c98a3a', top: '#d39644', hackle: '#cf9040', head: '#c98a3a', crest: '#d49a48', dark: '#241d16', wing: '#c48536', prim: '#3a2c1c', tail: '#3a2c1c', pattern: 'pencil' },   // Gold-laced Polish
     pol_r: { body: '#c48536', top: '#d09242', hackle: '#d9a04c', saddle: '#d39644', head: '#c98a3a', crest: '#dba652', dark: '#241d16', wing: '#bf8032', prim: '#30241a', tail: '#2a2018', pattern: 'pencil' },
-    leg: { orp: '#f0dccf', rir: '#c9b6ae', bra: '#efc24a', leg: '#8a927a', pol: '#6c7383' } } },
+    leg: { orp: '#f0dccf', rir: '#dccbc3', bra: '#efc24a', leg: '#7f8878', pol: '#6c7383' } } },
   2: { breeds: 'pol', paint: {
     pol_h: { body: '#7e8aa0', top: '#8d98ad', hackle: '#8792a8', head: '#7e8aa0', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#79859b', prim: '#6b768c', tail: '#66718a' },   // White-crested Blue
     pol_r: { body: '#7a869c', top: '#8a95aa', hackle: '#929db2', saddle: '#8d98ad', head: '#7e8aa0', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#768298', prim: '#687389', tail: '#636e86' } } },

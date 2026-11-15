@@ -224,8 +224,9 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
       const k = top / 0.55, ax = hc[0] - nb[0], ay = hc[1] - nb[1], az = hc[2] - nb[2], al = Math.hypot(ax, ay, az) || 1;
       const px = x - nb[0], py = y - nb[1], pz = z - nb[2], u = (px * ax + py * ay + pz * az) / (al * al);
       const ox = px - ax * u, oy = py - ay * u, oz = pz - az * u, front = oz / (Math.hypot(ox, oy, oz) || 1);
-      let cape = u > 0 ? 1 - smooth(0.7, 0.96, u) : 1 - smooth(0.075 * k, 0.135 * k, Math.hypot(px, py * 0.8, pz));      // (up to the nape)
-      cape *= 1 - 0.95 * smooth(0.0, 0.55, front);
+      const cr = S.capeR ?? 1;      // (15 Nov 2026, a Sussex's: capeR, how far it comes down over the shoulders; capeFront, how far it wraps round to the throat: a Brahma's 1 and [0, 0.55])
+      let cape = u > 0 ? 1 - smooth(0.7, 0.96, u) : 1 - smooth(0.075 * k * cr, 0.135 * k * cr, Math.hypot(px, py * 0.8, pz));      // (up to the nape)
+      cape *= 1 - 0.95 * smooth(S.capeFront ? S.capeFront[0] : 0.0, S.capeFront ? S.capeFront[1] : 0.55, front);
       if (!rooster && S.coverts && tp) cape = Math.max(cape, S.coverts * (1 - smooth(0.035 * k, 0.08 * k, Math.hypot(x - tp[0], (y - tp[1]) * 1.2, z - tp[2]))) * smooth(-0.03 * k, 0.0, y - tp[1]));
       if (rooster && c === S.saddle) cape = Math.max(cape, 0.55);
       if (cape > 0.01) { out.lerp(lin(S.stripe), (S.capeTone || 0.3) * cape); FEAT.mode = 3 + (S.capeW || 0.3); FEAT.c.copy(lin(S.stripe)); FEAT.amt = Math.min(1, cape); }
