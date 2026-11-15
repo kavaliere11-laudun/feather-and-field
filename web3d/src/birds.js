@@ -400,7 +400,8 @@ const FUR = {
 };
 // (the peafowl: sleek, glossy, no fluff over their feathers: Audrey, 31 Oct, "a weird blurry layer around his feathers")
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
-const furOf = (model, breed) => breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+const furOf = (model, breed) => (typeof globalThis !== 'undefined' && globalThis.__FF_MOCK && globalThis.__FF_MOCK.fur && !model.startsWith('chick') && globalThis.__FF_MOCK.fur[breed]) ? { ...FUR.hen, ...globalThis.__FF_MOCK.fur[breed], len: Object.fromEntries(Object.entries(globalThis.__FF_MOCK.fur[breed].len || {}).map(([k, v]) => [R[k], v])) } :      // (15 Nov 2026: a mock-up's fluff, by region name)
+  breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;

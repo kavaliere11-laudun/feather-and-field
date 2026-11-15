@@ -16,11 +16,14 @@ const ALL = {
     bra_h: { body: '#dba355', top: '#e3ae60', hackle: '#e6b264', head: '#e2ac5c', wing: '#d59a4a', prim: '#cc9044', tail: '#d9a052', legfeather: '#deaa5a', soft: true, overlap: 0.1 },
     bra_r: { body: '#dd9638', top: '#e6a444', hackle: '#eeae4a', saddle: '#eaa846', head: '#e8a442', wing: '#d68c30', prim: '#c9822c', tail: '#d28a32', legfeather: '#dc9a3e', soft: true, overlap: 0.1 },
     // Lavender Araucana: an even pale lavender grey
-    leg_h: { body: '#bcbcc8', top: '#c4c4cf', hackle: '#c6c6d1', head: '#c2c2cd', crest: '#c2c2cd', wing: '#b6b6c3', prim: '#adadbb', tail: '#b2b2bf', soft: true, overlap: 0.07 },
-    leg_r: { body: '#b8b8c5', top: '#c2c2ce', hackle: '#cacad5', saddle: '#c8c8d3', head: '#c6c6d1', crest: '#c6c6d1', wing: '#b2b2c0', prim: '#a9a9b8', tail: '#aeaebc', soft: true, overlap: 0.07 },
+    leg_h: { body: '#a9a9b8', top: '#b1b1bf', hackle: '#b4b4c2', head: '#b0b0be', crest: '#aeaebc', wing: '#a3a3b3', prim: '#9a9aab', tail: '#a0a0b0', soft: true, overlap: 0.09 },
+    leg_r: { body: '#a6a6b6', top: '#b0b0be', hackle: '#babac7', saddle: '#b7b7c4', head: '#b6b6c3', crest: '#b2b2c0', wing: '#a0a0b1', prim: '#9797a9', tail: '#a2a2b2', tailSheen: '#c9c9d6', soft: true, overlap: 0.09 },
     pol_h: { body: '#c98a3a', top: '#d39644', hackle: '#cf9040', head: '#c98a3a', crest: '#d49a48', dark: '#241d16', wing: '#c48536', prim: '#3a2c1c', tail: '#3a2c1c', pattern: 'pencil' },   // Gold-laced Polish
     pol_r: { body: '#c48536', top: '#d09242', hackle: '#d9a04c', saddle: '#d39644', head: '#c98a3a', crest: '#dba652', dark: '#241d16', wing: '#bf8032', prim: '#30241a', tail: '#2a2018', pattern: 'pencil' },
-    leg: { orp: '#f0dccf', rir: '#dccbc3', bra: '#efc24a', leg: '#7f8878', pol: '#6c7383' } } },
+    leg: { orp: '#f0dccf', rir: '#dccbc3', bra: '#efc24a', leg: '#7f8878', pol: '#6c7383' },
+    // the fluff: an Araucana's muffs, beard and tuft soft and wispy (painted as its crest); a Cochin's deep and loose all over
+    fur: { leg: { len: { body: 0.016, wing: 0.009, crest: 0.02, legfeather: 0.016 }, shells: 10, baseShells: 5, regions: { 5: { shells: 10, clump: 0.5, fine: 1.4, wave: 0.6, locks: 0.07, comb: 0.0 } } },
+           bra: { len: { body: 0.03, wing: 0.013, legfeather: 0.03 }, shells: 7, comb: 0.6, fine: 1.1, under: 2.6, fluff: 0.06 } } } },
   2: { breeds: 'pol', paint: {
     pol_h: { body: '#7e8aa0', top: '#8d98ad', hackle: '#8792a8', head: '#7e8aa0', crest: '#f4f1ea', crestFront: [0.62, -0.05], wing: '#79859b', prim: '#6b768c', tail: '#66718a' },   // White-crested Blue
     pol_r: { body: '#7a869c', top: '#8a95aa', hackle: '#929db2', saddle: '#8d98ad', head: '#7e8aa0', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#768298', prim: '#687389', tail: '#636e86' } } },

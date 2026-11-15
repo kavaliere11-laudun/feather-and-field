@@ -49,8 +49,8 @@ BREEDS = {
     # (15 Nov 2026, new breeds being designed with Audrey from her photos; not in the game's flock yet: mock-ups only)
     # the Buff Cochin: a great round ball of soft golden feathers, low to the ground, a deep full breast, a huge cushion that
     # swallows a tiny tail, fluff down to the toes so the legs hardly show, a small head with a single comb
-    'coc': dict(scale=1.1, body=(1.3, 1.06, 1.02), r=0.133, comb=0.7, tail='short', shank=0.062, lift=0.0, feathered=True, thigh=1.3, cochin=True, cushion=True,
-                head=(0.168, 0, 0.405), head_r=(0.166, 0, 0.44), head_s=0.92, tilt=-6, tail_up_h=4, tail_up=14, tail_len=0.55, tail_spread=0.5, sickle_len=0.36, saddle_len=1.25, wing_out=1.04,
+    'coc': dict(scale=1.1, body=(1.3, 1.06, 1.02), r=0.133, comb=0.75, head_e=(1.05, 0.88, 0.9), tail='short', shank=0.062, lift=0.0, feathered=True, thigh=1.3, cochin=True, cushion=True,
+                head=(0.18, 0, 0.424), head_r=(0.176, 0, 0.458), head_s=0.9, tilt=-6, tail_up_h=4, tail_up=14, tail_len=0.55, tail_spread=0.5, sickle_len=0.36, saddle_len=1.25, wing_out=1.04,
                 legs='#efc24a', beak='#e6b85a', eye='#d9742a', combc='#d8352b', plum='#dfa24c', wing='#d6963f', tailc='#cf8f3e'),
     # the Light Sussex: a broad, deep, tidy hen, white with a black-striped neck and a black tail, pale legs, a single comb
     'sus': dict(scale=1.05, body=(1.44, 0.88, 0.9), r=0.126, comb=0.95, fullneck=True, tail='fan', tail_len=0.95, tail_up=6, shank=0.1, lift=0.04, thigh=1.1,
@@ -61,7 +61,7 @@ BREEDS = {
                 legs='#dccbc3', beak='#b9a58f', eye='#d9742a', combc='#d8352b', plum='#17161b', wing='#1a191e', tailc='#0f0e12', saddle='#c5652a'),
     # the Lavender Araucana (British type, her photos: tailed): pale lavender grey all over, a little crest, muffs and a
     # beard round the face, a small pea comb, hardly any wattles, willow legs
-    'ara': dict(scale=0.95, body=(1.44, 0.8, 0.84), r=0.118, comb=0.5, pea=True, crest=True, muff=True, wattle=0.35, wattle_r=0.45, tail='fan', tail_up=14, tail_up_h=20, shank=0.11, lift=0.04,
+    'ara': dict(scale=0.95, body=(1.44, 0.8, 0.84), r=0.118, comb=0.5, pea=True, pea_r=0.0088, crest='tuft', muff=True, wattle=0.35, wattle_r=0.45, tail='fan', tail_up=14, tail_up_h=20, shank=0.11, lift=0.04,
                 legs='#7f8878', beak='#b9b3a8', eye='#c9622a', combc='#c9453b', plum='#b9b9c6', wing='#b0b0be', tailc='#a9a9b8'),
     'sil': dict(scale=0.86, silkie=True, shank=0.08,
                 legs='#5c5868', beak='#757688', eye='#2c2222', combc='#4b2032', lobe='#3fa6b8', plum='#f4f1ea', wing='#ece8df', tailc='#f4f1ea'),
@@ -196,7 +196,7 @@ def feathered(B, rooster, root, body_rig, seed):
         ('ELLIPSOID', (-0.12, 0, 0.27), R * 0.64 * K, (1.2, by * 1.08, 0.95), 2.0),     # back rising to the tail
         ('ELLIPSOID', (-0.19, 0, 0.33), 0.05 * K, (0.85, 0.9, 1.45), 2.0),              # tail cushion
         ('ELLIPSOID', tuple(neck), 0.042 * K, (1.0, 0.9, 1.9), 2.0),                    # neck
-        ('BALL', tuple(head), 0.058 * hs * K, None, 2.0),                               # head
+        ('ELLIPSOID', tuple(head), 0.058 * hs * K, B['head_e'], 2.0) if B.get('head_e') else ('BALL', tuple(head), 0.058 * hs * K, None, 2.0),      # head (head_e: longer than round, a Cochin's: Audrey, 15 Nov "a touch too round")
         ('BALL', (0.0, 0.055, 0.12), 0.05 * th * K, None, 1.6), ('BALL', (0.0, -0.055, 0.12), 0.05 * th * K, None, 1.6),   # thighs
     ]
     if B.get('cushion'): E.append(('ELLIPSOID', (-0.13, 0, 0.17), 0.085 * K, (1.1, by * 1.1, 0.9), 2.0))     # an Orpington's fluffy rear
@@ -226,18 +226,26 @@ def feathered(B, rooster, root, body_rig, seed):
     tag(cyl('beak', 0.019, 0.048, (0.07, 0, -0.008), (0, math.radians(90 + 12), 0), bk, verts=12, r2=0.002, bevel=0.002, parent=hd), 'head')
     for sd in (1, -1):
         natural_eye(hd, sd, B)
-        if B.get('muff'):         # an Araucana's muffs: a puff of feathers on each cheek
-            tag(keep(sphere('muff', 0.021, (0.026, sd * 0.04, -0.016), (1.15, 0.8, 1.05), m=pl, parent=hd, seg=12, rings=8)), 'head', 'body')
         if B.get('brahma'):       # a Brahma's beetle brow: a ridge of feathers over each eye
             tag(keep(sphere('brow', 0.014, (0.022, sd * 0.043, 0.027), (1.6, 0.55, 0.5), (math.radians(sd * 30), 0, 0), m=pl, parent=hd, seg=12, rings=8)), 'head', 'body')
         tag(sphere('lobe', 0.011, (0.004, sd * 0.045, -0.012), (1, 0.45, 1.2), m=flat('lobe_b', B['lobe']) if B.get('lobe') else cm if not B.get('pea') else flat('lobe_w', '#efe6da'), parent=hd, seg=12, rings=8), 'head')
-    if B.get('muff'): tag(keep(sphere('beard', 0.022, (0.04, 0, -0.036), (1.0, 1.15, 0.95), m=pl, parent=hd, seg=12, rings=8)), 'head', 'body')      # (and its beard under the beak)
+    if B.get('muff'):          # an Araucana's muffs and beard (Audrey, 15 Nov: "more detailed and reworked", her photos): tufts of
+        # feathers swept back over each cheek below the eye, and a fuller tuft under the beak, each of small soft lobes
+        mr = random.Random(seed * 17 + (3 if rooster else 0)); M = []
+        for sd in (1, -1):
+            c = (0.012, sd * 0.04, -0.016); M.append(('ELLIPSOID', c, 0.017 * K, (1.35, 0.8, 1.0), 2.0))
+            for (dx, dy, dz, r) in ((-0.022, 0.006, -0.004, 0.011), (-0.012, 0.01, -0.016, 0.0115), (0.004, 0.008, -0.018, 0.0105), (-0.028, 0.004, 0.008, 0.009), (0.016, 0.004, -0.008, 0.009), (-0.02, 0.008, -0.022, 0.009)):
+                M.append(('BALL', (c[0] + dx + mr.uniform(-0.002, 0.002), sd * (0.04 + dy + mr.uniform(-0.001, 0.002)), c[2] + dz + mr.uniform(-0.002, 0.002)), r * K, None, 1.5))
+        bc = (0.04, 0, -0.034); M.append(('ELLIPSOID', bc, 0.016 * K, (1.0, 1.3, 0.95), 2.0))
+        for (dx, dy, dz, r) in ((0.008, 0.0, -0.016, 0.011), (-0.004, 0.014, -0.013, 0.0105), (-0.004, -0.014, -0.013, 0.0105), (-0.016, 0.0, -0.018, 0.0105), (0.016, 0.01, -0.004, 0.008), (0.016, -0.01, -0.004, 0.008)):
+            M.append(('BALL', (bc[0] + dx, bc[1] + dy + mr.uniform(-0.0015, 0.0015), bc[2] + dz), r * K, None, 1.5))
+        tag(keep(metaball_mesh('muffs', M, res=0.0026, m=pl, parent=hd)), 'head', 'crest')      # (painted as the crest: the browser gives them its longer, wispy plumage)
     cs = (1.5 if rooster else 1.0) * B['comb']
     if B.get('polish'): pass   # (the Polish's tiny V comb is hidden in its crest)
     elif B.get('serrated'):      # an Ayam Cemani's single comb: a tall blade with clear points (Audrey's photos)
         serrated_comb(rooster, hd, cm)
     elif B.get('pea'):           # a Brahma's pea comb: three low ridges
-        pr = (0.0115 if rooster else 0.0085) if B.get('brahma') else 0.012 * (1.2 if rooster else 1.0)      # (a Brahma's tiny and low: Audrey's photos)
+        pr = (0.0115 if rooster else 0.0085) if B.get('brahma') else B.get('pea_r', 0.012) * (1.2 if rooster else 1.0)      # (a Brahma's tiny and low: Audrey's photos)
         el = [('BALL', (0.045 - i * 0.02, dy, 0.046 - (0.003 if B.get('brahma') else 0)), pr * K, None, 2.0) for i in range(3) for dy in (-0.008, 0, 0.008)]
         tag(metaball_mesh('comb', el, res=0.004, m=cm, parent=hd), 'head')
     else:
@@ -250,7 +258,12 @@ def feathered(B, rooster, root, body_rig, seed):
     elif B.get('polish'):      # (a Polish's two wattles hang apart, long and rounded: his photo)
         tag(keep(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.0125, -0.046), 0.011 * K * wk * (1.5 if rooster else 1), (0.75, 0.5, 1.6), 2.0) for sd in (1, -1)], res=0.0028, m=cm, parent=hd)), 'head')
     else: tag(metaball_mesh('wattles', [('ELLIPSOID', (0.05, sd * 0.009, -0.042), 0.013 * K * wk * (1.5 if rooster else 1), (0.8, 0.6, 1.3), 2.0) for sd in (1, -1)], res=0.004, m=cm, parent=hd), 'head')
-    if B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
+    if B.get('crest') == 'tuft':       # an Araucana's: a small rounded tuft at the back of the head
+        tr = random.Random(seed * 19); T_ = [('ELLIPSOID', (-0.034, 0, 0.04), 0.02 * K, (1.3, 0.95, 0.85), 2.0)]
+        for (dx, dy, dz, r) in ((-0.02, 0.0, 0.01, 0.011), (-0.01, 0.011, 0.006, 0.0095), (-0.01, -0.011, 0.006, 0.0095), (-0.028, 0.0, -0.002, 0.0095), (0.004, 0.0, 0.01, 0.0085)):
+            T_.append(('BALL', (-0.034 + dx, dy + tr.uniform(-0.001, 0.001), 0.04 + dz), r * K, None, 1.5))
+        tag(keep(metaball_mesh('tuft', T_, res=0.0026, m=pl, parent=hd)), 'head', 'crest')
+    elif B.get('crest'):         # a Legbar's little crest of feathers swept back behind the comb
         for i in range(5):
             a = math.radians(-50 + 25 * i)
             tag(feat_uv(paddle('crest', 0.06, 0.022, 0.008, pl, hd, (-0.03, 0.012 * math.sin(a), 0.035), (math.radians(20 * math.sin(a)), math.radians(-150), 0), curve=0.15), 0.06, 0.022), 'head', 'crest')

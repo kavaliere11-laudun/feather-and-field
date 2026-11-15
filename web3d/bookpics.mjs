@@ -23,6 +23,7 @@ const STAGE = { hen: { x: -0.07, z: 0.1, yaw: -1.0, look: 0.32, tilt: 0.05 }, ro
 const APART = { sil: { hen: { x: -0.125, z: 0.12 }, roo: { x: 0.14, z: -0.11 } },
   pea: { hen: { x: -0.36, z: 0.3, yaw: -0.95, look: 0.35, tilt: 0.04 }, roo: { x: 0.12, z: -0.2, yaw: -0.3, look: 0.15, tilt: 0, proud: 0.4, fan: 1 }, cam: { ...STAGE.cam, el: 11, fov: 20, at: [-0.02, 0.5, 0] } },      // (the peafowl: the peacock showing off his fan behind the peahen)
   cal: { hen: { x: -0.08, z: 0.09, yaw: -0.6, look: 0.45, up: 0.3 }, roo: { x: 0.09, z: -0.1, yaw: -0.4, look: 0.3, up: 0.45 }, cam: { ...STAGE.cam, fov: 6, at: [0.02, 0.13, 0] } } };
+if (process.env.CAM) Object.assign(STAGE.cam, JSON.parse(process.env.CAM));      // (15 Nov 2026: a closer look, e.g. CAM='{"fov":5,"at":[0.02,0.42,0]}' for the heads)
 const DUCKS = BREEDS.includes('call');
 mkdirSync(OUT, { recursive: true }); if (PREVIEW) mkdirSync(PREVIEW, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
