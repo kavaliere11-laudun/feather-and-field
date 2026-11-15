@@ -123,7 +123,9 @@ const SIL = {
                rooster: { body: '#2b2420', top: '#33291f', hackle: '#d08b3b', saddle: '#c87c32', head: '#cf8a3a', crest: '#b8742e', wing: '#a4592a', prim: '#2b2420', tail: '#2b2420', pattern: null } },
   grey: { body: '#a6a8a7', top: '#b3b5b4' },
   splash: { body: '#efede8', spot: '#7a879b', pattern: 'splash' },
-  cuckoo: { body: '#b1b3b6', bars: '#5d6067', pattern: 'cuckoo' },
+  // (15 Nov 2026, Audrey: "The cuckoo silky looks a bit too grey can you make her proper cuckoo please", then of the mock-up
+  // "I like your new cuckoo add and replace in the game please": near white with clear dark bars, a little wider apart)
+  cuckoo: { body: '#eeeeef', bars: '#34363c', pattern: 'cuckoo', period: 0.04, edge: [-0.1, 0.5], barTone: 0.95 },
   red: { body: '#b1501f', top: '#c4622a', hackle: '#c8662b' },
   paint: { body: '#f5f2eb', spot: '#26252b', pattern: 'paint' },
   lavender: { body: '#b8b2c5', top: '#c3bdd0' },
@@ -216,7 +218,7 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
       FEAT.mode = 1; FEAT.c.copy(lin(S.bars)); FEAT.amt = hackle ? 0.35 : 0.85;
       if (!hackle) { const b = Math.sin((y + 0.012 * Math.sin(x * 40 + z * 30)) * 2 * Math.PI / 0.03); out.lerp(lin(S.bars), smooth(0.2, 0.7, b) * 0.2); }
     } break;
-    case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / (S.period || 0.034)); out.lerp(lin(S.bars), smooth(S.edge ? S.edge[0] : 0.0, S.edge ? S.edge[1] : 0.8, b) * (S.barTone || 0.75)); } break;      // (period, edge, barTone: a mock-up's, 15 Nov 2026; the game's cuckoo as it was)
+    case 'cuckoo': { const b = Math.sin((y + 0.01 * Math.sin(x * 35 + z * 25)) * 2 * Math.PI / (S.period || 0.034)); out.lerp(lin(S.bars), smooth(S.edge ? S.edge[0] : 0.0, S.edge ? S.edge[1] : 0.8, b) * (S.barTone || 0.75)); } break;      // (period, edge, barTone: the Cuckoo Silkie's since 15 Nov 2026)
     case 'stripes': if (key === 'body') {
       // a Brahma's cape (Audrey's photos): from the nape down over the shoulders, its hackle feathers each black down the middle
       // with a white edge, the throat and breast white; a hen's tail coverts the same. Mode 3: long pointed hackle feathers
