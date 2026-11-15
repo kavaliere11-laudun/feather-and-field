@@ -1,11 +1,11 @@
 // The review pictures for the other in-app purchases (App Store Connect asks for one each): the Coins shelf at each bag,
 // the Breed Book at each rare trio and at the four together, the Pantry at its bigger shelves; an iPhone's size
-// (430x932 at 3x = 1290x2796). The app's shop stood in for (window.__fakeStore). ./withserver.sh node iapshots2.mjs OUT
+// (430x932 at 3x = 1290x2796; SIDE=1: sideways, as the game is played, 2796x1290: the bags' since 15 Nov 2026). The app's shop stood in for (window.__fakeStore). ./withserver.sh node iapshots2.mjs OUT
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2]; fs.mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const ctx = await b.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true, isMobile: true, locale: 'en-GB', timezoneId: 'Europe/London', deviceScaleFactor: 3 });
+const ctx = await b.newContext({ viewport: process.env.SIDE === '1' ? { width: 932, height: 430 } : { width: 430, height: 932 }, hasTouch: true, isMobile: true, locale: 'en-GB', timezoneId: 'Europe/London', deviceScaleFactor: 3 });
 ctx.setDefaultTimeout(180000); ctx.setDefaultNavigationTimeout(180000);
 await ctx.addInitScript(t0 => { window.__T = t0; Date.now = () => window.__T;
   const price = id => /coins\.purse$/.test(id) ? '£0.99' : /coins\.basket$/.test(id) ? '£2.99' : /coins\.sack$/.test(id) ? '£4.99' : /coins\.cart$|winter\.all$/.test(id) ? '£9.99' : /silkie\.all$/.test(id) ? '£19.99' : /silkie\./.test(id) ? '£6.99' : '£1.99';
