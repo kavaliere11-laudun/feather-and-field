@@ -297,7 +297,7 @@ export const TEXT = {
     // village orders (7 Nov 2026)
     ord_q: '“{l}”', ord_title: 'Village orders', ord_sub: 'Villagers ask for a basket. Fill it and deliver it for coins.',
     ord_eggs: 'Eggs', ord_fish: 'Fish', ord_honey: 'Jars of honey', ord_grain: 'Grain', ord_grain_have: '(in your pantry: {n})',
-    ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_decline: 'Not this one',
+    ord_pay: '{c} coins · {x} XP', ord_surprise: '🎁 A surprise inside!', ord_deliver: 'Deliver the basket', ord_mix: 'Mixed basket · pays half as much again', ord_decline: 'Not this one',
     ord_none: 'No orders just now.', ord_next: 'The next one comes in {t}.', ord_ready: '🧺 The basket for {name} is ready: tap the stall to deliver it', ord_readyb: 'Ready!',
     ord_new: '📜 A new order from {name}', ord_new2: '📜 {n} new village orders: tap the basket', ord_set: '🧺 {n} for {name}', ord_fish_set: 'For {name}’s order 🧺',
     ord_done: 'Delivered to {name}: +{c} coins, +{x} XP', ord_sp_worms: '🎁 Surprise: a tin of {n} worms!', ord_sp_grain: '🎁 Surprise: a sack of {n} grain!', ord_sp_coins: '🎁 Surprise: {c} coins more!',
@@ -655,7 +655,7 @@ export const TEXT = {
     // commandes du village (7 nov. 2026)
     ord_q: '« {l} »', ord_title: 'Commandes du village', ord_sub: 'Les villageois demandent un panier. Remplissez-le et livrez-le contre des pièces.',
     ord_eggs: 'Œufs', ord_fish: 'Poissons', ord_honey: 'Pots de miel', ord_grain: 'Grain', ord_grain_have: '(dans votre garde-manger\u00a0: {n})',
-    ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_decline: 'Pas celle-ci',
+    ord_pay: '{c} pièces · {x} XP', ord_surprise: '🎁 Une surprise dedans !', ord_deliver: 'Livrer le panier', ord_mix: 'Panier garni · payé moitié plus', ord_decline: 'Pas celle-ci',
     ord_none: 'Pas de commande pour l’instant.', ord_next: 'La prochaine arrive dans {t}.', ord_ready: '🧺 Le panier pour {name} est prêt : touchez l’étal pour le livrer', ord_readyb: 'Prêt !',
     ord_new: '📜 Une nouvelle commande à préparer pour {name}', ord_new2: '📜 {n} nouvelles commandes du village : touchez le panier', ord_set: '🧺 {n} pour {name}', ord_fish_set: 'Mis de côté pour {name} 🧺',
     ord_done: 'Panier livré pour {name} : +{c} pièces, +{x} XP', ord_sp_worms: '🎁 Surprise : une boîte de {n} vers !', ord_sp_grain: '🎁 Surprise : un sac de grain (+{n}) !', ord_sp_coins: '🎁 Surprise : {c} pièces de plus !',
@@ -1038,7 +1038,12 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // basket goes; delivered: paid more than selling it all (pay x its worth), and its XP, and one basket in four a surprise
 // (a tin of worms, a sack of grain or extra coins). A villager's order: one thing (or two) of what they like, as much as
 // the farm's level makes sense of. Never in a hurry: an order waits for you (or "Not this one": another comes in a while)
-export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 * 60e3, worth: { eggs: 6, fish: 22, honey: 15, grain: 1.5, carrot: 3, straw: 4, pump: 18 }, pay: 1.4, most: { eggs: 30, fish: 5, honey: 5, grain: 60, carrot: 18, straw: 18, pump: 4 } };
+export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 * 60e3, worth: { eggs: 6, fish: 22, honey: 15, grain: 1.5, carrot: 3, straw: 4, pump: 18, lettuce: 2, peas: 3, corn: 8, beet: 10, sunf: 14 }, pay: 1.4, most: { eggs: 30, fish: 5, honey: 5, grain: 60, carrot: 18, straw: 18, pump: 4, lettuce: 18, peas: 18, corn: 8, beet: 8, sunf: 6 },
+  more: { level: 12, max: 4 }, mix: { level: 8, chance: 0.22, pay: 1.5, part: 0.7 } };
+// (15 Nov 2026, Audrey: "a bigger diversity in the village orders": the five new vegetables asked for too; a fourth order at
+// a time from level 12; from level 8 a mixed basket now and then: three different things, a little less of each, paying
+// half as much again)
+export const ordersMax = L => L >= ORDERS.more.level ? ORDERS.more.max : ORDERS.max;
 // ---- the pantry (10 Nov 2026, Audrey: "I should be offered to keep it sell I need a storage"; "If the eggs are sold
 // instantly, how do I collect them for orders ? They should go to the storage too until u decide to sell or not"; her
 // choices: "One pantry", "Limited, bigger shelves can be bought in the shop with real money otherwise they will become
@@ -1049,19 +1054,21 @@ export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 *
 export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, lettuce: 30, peas: 30, corn: 16, beet: 16, sunf: 12, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18, lettuce: 2, peas: 3, corn: 8, beet: 10, sunf: 14 }, eggMax: 40 };
 export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf', 'fish'];
 const shelfSize = (k, level, big) => Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, level - PANTRY.from)) * (big ? PANTRY.bought : 1));      // (a shelf's size at a level; the save's check: no shelf holds more than its size at the save's own level)
-export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump'];
-const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
+export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf'];
+const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
 export const VILLAGERS = {
-  potts: { e: '🧁', wants: ['eggs', 'eggs', 'honey', 'carrot', 'pump'] }, finch: { e: '🐠', wants: ['fish'] }, lily: { e: '🫖', wants: ['eggs', 'honey', 'straw'] },
-  tom: { e: '🌾', wants: ['grain', 'grain', 'eggs'] }, amara: { e: '🩺', wants: ['eggs', 'fish', 'carrot'] }, clara: { e: '🏫', wants: ['eggs', 'straw', 'carrot'] },
-  marco: { e: '☕', wants: ['eggs', 'fish', 'straw'] }, fete: { e: '🎪', wants: ['eggs', 'fish', 'honey', 'grain', 'pump'] },
+  potts: { e: '🧁', wants: ['eggs', 'eggs', 'honey', 'carrot', 'pump', 'beet', 'sunf'] }, finch: { e: '🐠', wants: ['fish'] }, lily: { e: '🫖', wants: ['eggs', 'honey', 'straw', 'lettuce'] },
+  tom: { e: '🌾', wants: ['grain', 'grain', 'eggs', 'corn', 'sunf'] }, amara: { e: '🩺', wants: ['eggs', 'fish', 'carrot', 'lettuce', 'peas', 'beet'] }, clara: { e: '🏫', wants: ['eggs', 'straw', 'carrot', 'peas', 'corn'] },
+  marco: { e: '☕', wants: ['eggs', 'fish', 'straw', 'lettuce', 'corn'] }, fete: { e: '🎪', wants: ['eggs', 'fish', 'honey', 'grain', 'pump', 'corn', 'sunf'] },
 };
 // how much of a thing an order asks for at a level (r: 0..1, a little more or less)
 export function orderAmount(k, L, r = 0.5) {
   if (k === 'eggs') return Math.max(3, Math.min(ORDERS.most.eggs, Math.round((3 + L / 2) * (0.8 + 0.4 * r))));
   if (k === 'fish') return Math.min(ORDERS.most.fish, 1 + Math.floor(L / 6) + (r > 0.7 ? 1 : 0));
   if (k === 'honey') return Math.min(ORDERS.most.honey, 1 + Math.floor(L / 8) + (r > 0.7 ? 1 : 0));
-  if (k === 'carrot' || k === 'straw') return Math.max(3, Math.min(ORDERS.most[k], Math.round((3 + L / 4) * (0.8 + 0.4 * r))));
+  if (k === 'corn' || k === 'beet') return Math.min(ORDERS.most[k], 2 + Math.floor(L / 8) + (r > 0.6 ? 1 : 0));
+  if (k === 'sunf') return Math.min(ORDERS.most.sunf, 1 + Math.floor(L / 10) + (r > 0.7 ? 1 : 0));
+  if (k === 'carrot' || k === 'straw' || k === 'lettuce' || k === 'peas') return Math.max(3, Math.min(ORDERS.most[k], Math.round((3 + L / 4) * (0.8 + 0.4 * r))));
   if (k === 'pump') return Math.min(ORDERS.most.pump, 1 + Math.floor(L / 12) + (r > 0.75 ? 1 : 0));
   return Math.min(ORDERS.most.grain, 5 * Math.round((10 + 2 * L) * (0.8 + 0.4 * r) / 5));
 }
@@ -1069,7 +1076,8 @@ export function orderAmount(k, L, r = 0.5) {
 // so it's the same whenever it's looked at): 'worms', 'grain' or 'coins'
 export function orderPay(o) {
   let w = 0; for (const k of ORDER_ITEMS) w += (o.items[k] || 0) * ORDERS.worth[k];
-  return { coins: Math.round(ORDERS.pay * w) + 10, xp: Math.round(w / 12) + 2 };
+  const mix = Object.keys(o.items).length >= 3 ? ORDERS.mix.pay : 1;      // (a mixed basket: half as much again)
+  return { coins: Math.round(ORDERS.pay * w * mix) + 10, xp: Math.round(w * mix / 12) + 2 };
 }
 export function orderSurprise(o, fishing) {
   const h = hash01('order|' + o.id + '|' + o.t); if (h >= 0.25) return null;
@@ -1590,11 +1598,11 @@ export function checkFarm(d, now = Date.now()) {
   const od = d.orders && typeof d.orders === 'object' ? d.orders : null;
   if (od && L >= ORDERS.level) {
     const list = [], ids = new Set(), whos = new Set();
-    for (const o of Array.isArray(od.list) ? od.list.slice(0, ORDERS.max) : []) {
+    for (const o of Array.isArray(od.list) ? od.list.slice(0, ordersMax(L)) : []) {
       if (!o || typeof o !== 'object' || typeof o.id !== 'string' || !/^o\d{1,7}$/.test(o.id) || ids.has(o.id) || !Object.hasOwn(VILLAGERS, o.who) || whos.has(o.who)) continue;
       const items = {}, got = {}, it = o.items && typeof o.items === 'object' ? o.items : {}, gt = o.got && typeof o.got === 'object' ? o.got : {};
       for (const k of ORDER_ITEMS) if (Number.isInteger(it[k]) && it[k] >= 1 && it[k] <= ORDERS.most[k]) items[k] = it[k];
-      const n = Object.keys(items).length; if (!n || n > 2) continue;
+      const n = Object.keys(items).length; if (!n || n > 3 || (n === 3 && L < ORDERS.mix.level) || Object.keys(items).some(k => Object.hasOwn(CROPS, k) && L < cropLevel(k))) continue;      // (three: a mixed basket, from its level; no vegetable before its own)
       for (const k of ['eggs', 'fish', 'honey']) if (items[k] && Number.isInteger(gt[k]) && gt[k] >= 1) got[k] = Math.min(items[k], gt[k]);
       ids.add(o.id); whos.add(o.who); list.push({ id: o.id, who: o.who, t: int(o.t, 0, now + TZ_SLACK, now), items, got });
     }
@@ -2057,17 +2065,18 @@ export class Game {
   // grain in the store); one delivered (paid, the grain taken from the store, its surprise); one turned down (what was set
   // aside for it sold)
   ordersOpen() { return this.level >= ORDERS.level; }
+  ordersMost() { return ordersMax(this.level); }
   orderBook() { return this.data.orders || (this.data.orders = { list: [], next: 0, seq: 1, done: 0 }); }
   orders(now = Date.now()) { if (!this.ordersOpen()) return []; this.orderTick(now); return this.orderBook().list; }
   orderTick(now = Date.now(), r = Math.random) {
     if (!this.ordersOpen()) return 0;
     const B = this.orderBook(); let added = 0;
-    if (!B.next) { for (let i = 0; i < ORDERS.first && B.list.length < ORDERS.max; i++) if (this.newOrder(now, r)) added++; B.next = Math.round(now + ORDERS.every); }
-    while (B.list.length < ORDERS.max && now >= B.next) { if (!this.newOrder(Math.min(now, B.next), r)) break; B.next += ORDERS.every; added++; }
+    if (!B.next) { for (let i = 0; i < ORDERS.first && B.list.length < ordersMax(this.level); i++) if (this.newOrder(now, r)) added++; B.next = Math.round(now + ORDERS.every); }
+    while (B.list.length < ordersMax(this.level) && now >= B.next) { if (!this.newOrder(Math.min(now, B.next), r)) break; B.next += ORDERS.every; added++; }
     if (added) this.save();
     return added;
   }
-  orderCan(k) { return k === 'eggs' || k === 'grain' || (k === 'fish' ? this.fishOpen('pond') : k === 'honey' ? !!this.data.honey : CROP_IDS.includes(k) && this.gardenOpen()); }
+  orderCan(k) { return k === 'eggs' || k === 'grain' || (k === 'fish' ? this.fishOpen('pond') : k === 'honey' ? !!this.data.honey : this.cropOpen(k)); }
   storeOf(k) { return k === 'eggs' ? this.pantryBag().eggs : k === 'honey' ? this.pantryBag().honey : k === 'grain' ? Math.floor(this.data.grain || 0) : k === 'fish' ? this.fishBox().length : this.vegBasket()[k] || 0; }      // (what's in store for an order)
   newOrder(t, r = Math.random) {
     const B = this.orderBook(), L = this.level, busy = new Set(B.list.map(o => o.who));
@@ -2075,8 +2084,12 @@ export class Game {
     if (!who.length) return null;
     const v = who[Math.floor(r() * who.length) % who.length], wants = VILLAGERS[v].wants.filter(k => this.orderCan(k));
     const pick = [wants[Math.floor(r() * wants.length) % wants.length]], rest = wants.filter(k => k !== pick[0]);
-    if (rest.length && r() < 0.4) pick.push(rest[Math.floor(r() * rest.length) % rest.length]);
-    const items = {}; for (const k of ORDER_ITEMS) if (pick.includes(k)) items[k] = orderAmount(k, L, r());      // (in the save check's order: the same after a reload)
+    const kinds = [...new Set(wants)];
+    if (L >= ORDERS.mix.level && kinds.length >= 3 && r() < ORDERS.mix.chance) {      // (a mixed basket: three different things, a little less of each)
+      pick.length = 0; const pool = kinds.slice(); for (let i = 0; i < 3; i++) pick.push(pool.splice(Math.floor(r() * pool.length) % pool.length, 1)[0]);
+    } else if (rest.length && r() < 0.4) pick.push(rest[Math.floor(r() * rest.length) % rest.length]);
+    const part = pick.length >= 3 ? ORDERS.mix.part : 1;
+    const items = {}; for (const k of ORDER_ITEMS) if (pick.includes(k)) items[k] = Math.max(1, Math.round(orderAmount(k, L, r()) * part));      // (in the save check's order: the same after a reload)
     const o = { id: 'o' + B.seq++, who: v, t: Math.round(t), items, got: {} };
     B.list.push(o); return o;
   }

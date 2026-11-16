@@ -1035,7 +1035,8 @@ export class GameUI {
       const ready = g.orderReady(o), P = g.orderPayOf(o), c = el('div', 'gcard gorder' + (ready ? ' gorder-ready' : '')), hd = el('div', 'gcard-h');
       c.dataset.order = o.id;
       hd.append(el('span', 'gemoji', g.villagerEmoji(o.who)), el('span', 'gcard-t', g.villagerName(o.who) + ' · ' + this.t('vil_' + o.who + '_r')));
-      c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));      // (in the language's own quotation marks)
+      c.append(hd, el('p', 'gnote gorder-l', this.t('ord_q', { l: this.t('vil_' + o.who + '_l') })));
+      if (Object.keys(o.items).length >= 3) { const mx = el('p', 'gtext gfound gorder-mix', '🧺 ' + this.t('ord_mix')); c.append(mx); c.dataset.mix = '1'; }      // (a mixed basket, 15 Nov 2026)      // (in the language's own quotation marks)
       for (const k of ORDER_ITEMS) {
         if (!o.items[k]) continue;
         const n = o.items[k], have = k === 'fish' ? Math.min(n, (o.got.fish || 0) + g.fishBox().length) : store(k) ? Math.min(n, (o.got[k] || 0) + g.storeOf(k)) : Math.min(n, o.got[k] || 0);
@@ -1051,7 +1052,7 @@ export class GameUI {
       c.append(btns); b.append(c);
     }
     if (!list.length) b.append(el('p', 'gtext', this.t('ord_none')));
-    const next = g.orderNextIn(); if (next > 0 && list.length < 3) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
+    const next = g.orderNextIn(); if (next > 0 && list.length < g.ordersMost()) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
   }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
   showDayCard(show, onWatch, onSkip) {
