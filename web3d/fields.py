@@ -23,6 +23,7 @@ R2 = math.sqrt(0.5)
 B = V['bounds']
 CELL = 0.25
 N_FIELDS = 31                    # (two of them, the first coop's and the farmhouse's, make the home field: 30 in all)
+MEADOW = V.get('meadow')                 # (the East Meadow, 16 Nov 2026, meadow.py: the farm's far end carried on; its ten fields are shared out after the first thirty, which stay exactly as they were)
 cs = B['corners']; xs = [c[0] for c in cs]; zs = [c[2] for c in cs]
 X0, Z0 = min(xs) - 1, min(zs) - 1
 NX = int((max(xs) + 1 - X0) / CELL) + 1; NZ = int((max(zs) + 1 - Z0) / CELL) + 1
@@ -30,15 +31,19 @@ X = X0 + (np.arange(NX) + 0.5) * CELL; Z = Z0 + (np.arange(NZ) + 0.5) * CELL
 XX, ZZ = np.meshgrid(X, Z)
 U = (XX - ZZ) * R2; VV = (-ZZ - XX) * R2
 inside = (U > B['u'][0]) & (U < B['u'][1]) & (VV > B['v'][0]) & (VV < B['v'][1])
+inside0 = inside & (VV > MEADOW['v'][1]) if MEADOW else inside          # (the farm as it was)
 
 def segdist(px, pz, a, b):
     ax, az, bx, bz = a[0], a[2], b[0], b[2]; dx, dz = bx - ax, bz - az; L = dx * dx + dz * dz or 1
     t = np.clip(((px - ax) * dx + (pz - az) * dz) / L, 0, 1); return np.hypot(px - ax - dx * t, pz - az - dz * t)
 
 LANES = [l for l in V['paths'] if len(l) > 3]          # (the 3-point gate paths are left out)
-lane = np.zeros_like(inside)
-for l in LANES:
-    for i in range(1, len(l)): lane |= segdist(XX, ZZ, l[i - 1], l[i]) < V['pathHalf'] + 0.12
+NEW_LANES = 3 if MEADOW else 0                          # (meadow.py's: the last three)
+lane = np.zeros_like(inside); lane_all = np.zeros_like(inside)
+for n_, l in enumerate(LANES):
+    for i in range(1, len(l)):
+        m_ = segdist(XX, ZZ, l[i - 1], l[i]) < V['pathHalf'] + 0.12; lane_all |= m_
+        if n_ < len(LANES) - NEW_LANES: lane |= m_
 water = np.zeros_like(inside)
 for st in V['streams']:
     for i in range(1, len(st)): water |= segdist(XX, ZZ, st[i - 1], st[i]) < V['streamHalf'] + 0.28
@@ -46,7 +51,7 @@ P = V['pond']; c = P['center']; au = np.array([P['axisU'][0], P['axisU'][2]]); a
 lu = np.linalg.norm(au) * 1.12 + 0.3; lv = np.linalg.norm(av) * 1.12 + 0.3; au = au / np.linalg.norm(au); av = av / np.linalg.norm(av)
 dx = XX - c[0]; dz = ZZ - c[2]
 water |= ((dx * au[0] + dz * au[1]) / lu) ** 2 + ((dx * av[0] + dz * av[1]) / lv) ** 2 <= 1
-free = inside & ~lane & ~water
+free = inside0 & ~lane & ~water
 
 # the open stretches between the lanes and the water
 reg = -np.ones(free.shape, int); nreg = 0; area = []
@@ -145,6 +150,40 @@ hz0, hz1 = HOME[1] - FOOT4[2] - M, HOME[1] - FOOT4[0] + M
 took = (lab > 0) & (XX > hx0) & (XX < hx1) & (ZZ > hz0) & (ZZ < hz1)
 print('home garden: cells taken for the home field', int(took.sum()), 'from', sorted(set(lab[took].ravel().tolist())))
 lab[took] = 0
+# ---- the East Meadow's fields, after the thirty: the new ground between its lanes shared out the same way
+if MEADOW:
+    N_MEADOW = 10; nf0 = nf
+    free = inside & ~inside0 & ~lane_all & ~water
+    reg = -np.ones(free.shape, int); nreg = 0; area = []
+    for k in range(NZ):
+        for i in range(NX):
+            if free[k, i] and reg[k, i] < 0:
+                q = deque([(k, i)]); reg[k, i] = nreg; s = 0
+                while q:
+                    a, b = q.popleft(); s += 1
+                    for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        A, Bb = a + da, b + db
+                        if 0 <= A < NZ and 0 <= Bb < NX and free[A, Bb] and reg[A, Bb] < 0: reg[A, Bb] = nreg; q.append((A, Bb))
+                area.append(s * CELL * CELL); nreg += 1
+    area = np.array(area); big = [r for r in range(nreg) if area[r] >= 30]; total = sum(area[r] for r in big)
+    counts = {r: max(1, round(area[r] / total * N_MEADOW)) for r in big}
+    while sum(counts.values()) > N_MEADOW: counts[min((r for r in counts if counts[r] > 1), key=lambda r: area[r] / counts[r])] -= 1
+    while sum(counts.values()) < N_MEADOW: counts[max(counts, key=lambda r: area[r] / counts[r])] += 1
+    rng = np.random.default_rng(16); seeds = []
+    for r in big:
+        cells = np.argwhere(reg == r)
+        for _ in range(counts[r]): seeds.append((tuple(cells[rng.integers(len(cells))]), False))
+    for it in range(14):
+        ml = grow(seeds); new = []
+        for j, (s, fix) in enumerate(seeds):
+            cells = np.argwhere(ml == j)
+            if not len(cells): new.append((s, fix)); continue
+            m = cells.mean(0); new.append((tuple(cells[np.argmin(((cells - m) ** 2).sum(1))]), fix))
+        seeds = new
+    ml = grow(seeds)
+    cm = {j: np.argwhere(ml == j).mean(0) for j in range(len(seeds))}
+    for n_, j in enumerate(sorted(cm, key=lambda j: np.hypot(*(cm[j] - hc)))): lab[ml == j] = nf0 + n_      # (the nearest to home first)
+    nf = nf0 + len(seeds); lane = lane_all
 
 # each field's borders: the cell edges between it and what's next to it, joined into lines and simplified
 def kind_at(k, i):

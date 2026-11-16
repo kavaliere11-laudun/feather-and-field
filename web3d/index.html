@@ -350,7 +350,13 @@
   .gsmallbtn { margin: 0; padding: 9px 16px; font-size: 15px; flex: none; }
   .gbtn.gpay, .gtheme .gpay { background: #2f6fb5; color: #fff; }
   .gtheme-why { margin: 8px 0; padding: 10px 12px; border-radius: 14px; background: #fff3d6; } .gtheme-why .gnote { margin: 0 0 8px; color: var(--ink); }      /* (bought with real money, in the app: store.js) */
-  .gtheme .gtheme-r .gbtn + .gbtn, .gtheme > .gbtn { margin-top: 8px; }
+  .gtheme > .gbtn { margin-top: 8px; }
+  .gtheme-r { display: grid; grid-template-columns: minmax(0, 46%) 1fr; gap: 6px 12px; align-items: center; margin-top: 6px; }      /* (16 Nov 2026: a themed building: its picture, its name, short buttons) */
+  .gtheme-pic { all: unset; cursor: pointer; display: block; border-radius: 14px; overflow: hidden; line-height: 0; } .gtheme-pic img { width: 100%; height: auto; display: block; }
+  .gtheme-pic:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  .gtheme-s { display: grid; gap: 8px; } .gtheme-n { margin: 0; font-weight: 600; }
+  .gtheme-b { display: flex; flex-wrap: wrap; gap: 8px; } .gtheme-b .gbtn { margin: 0; } .gtheme-b .gnote { margin: 0; }
+  .gtheme-more { grid-column: 1 / -1; margin: 0; }
   /* fishing (release 5; fishing.js): the worms and Stop along the bottom; the line's pull while reeling (the green part to
      keep it in, the needle, how far the fish has come); a sheet of glass over the farm from the cast to the catch */
   .fishbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 12px); z-index: 16; display: flex; flex-direction: column; align-items: center; gap: 7px;

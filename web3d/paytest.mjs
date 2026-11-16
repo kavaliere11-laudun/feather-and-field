@@ -59,7 +59,7 @@ const look = async () => {
   await close(); await p.evaluate(() => window.__farm.deco.shop()); await run(0.3); o.tabs = await btns('.gchip');
   await close(); await p.evaluate(() => window.__farm.book()); await run(0.3); o.adopt = await btns('.giap-adopt, .giap-adopt-all');
   await close(); await p.evaluate(() => window.__farm.pantrySheet()); await run(0.2); o.shelves = await btns('[data-shelves]');
-  await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.3); o.coop = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].map(b => b.dataset.themego));
+  await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.3); o.coop = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button[data-themego]')].map(b => b.dataset.themego));
   await close(); await p.evaluate(() => window.__farm.gameUI().settings()); await run(0.2); o.restore = await btns('.giap-restore button');
   await close(); return o;
 };
@@ -93,7 +93,7 @@ const fits = await p.evaluate(() => {      // (the coop moved where it fits as i
 });
 await run(1); await close();
 await p.evaluate(() => window.__farm.coopCard(0)); await run(0.3);
-await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].find(b => b.dataset.themego === 'pay').click()); await run(1);
+await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button[data-themego]')].find(b => b.dataset.themego === 'pay').click()); await run(1);
 let w = await p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) .gtheme-why'); return e ? { hidden: e.hidden, text: e.innerText, btn: !!e.querySelector('button[data-thememove]') } : null; });
 let s2 = await p.evaluate(() => ({ paid: window.__farm.game().data.paid || [], owned: JSON.parse(sessionStorage.getItem('__owned') || '[]') }));
 if (fits) console.log('(the first coop\'s spot fits a Deluxe garden here: the no-room card not seen)');

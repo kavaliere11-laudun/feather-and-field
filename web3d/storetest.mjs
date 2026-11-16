@@ -29,8 +29,8 @@ const load = async () => {
 const close = () => p.evaluate(() => window.__farm.gameUI().close());
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; return { coins: g.data.coins, theme: c.theme || null, themes: g.data.themes || [], paid: g.data.paid || [], tier: c.tier, edited: g.edited, drawn: [...new Set(f.coopModels())] }; });
-const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].filter(b => !b.closest('.gtheme-why')).map(b => ({ t: b.textContent, go: b.dataset.themego, off: b.disabled }))); };
-const tap = go => p.evaluate(go => { const b = [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button')].find(b => b.dataset.themego === go); if (b) b.click(); return !!b; }, go);
+const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button[data-themego]')].filter(b => !b.closest('.gtheme-why')).map(b => ({ t: b.textContent, go: b.dataset.themego, off: b.disabled }))); };
+const tap = go => p.evaluate(go => { const b = [...document.querySelectorAll('.gsheet:not([hidden]) .gtheme button[data-themego]')].find(b => b.dataset.themego === go); if (b) b.click(); return !!b; }, go);
 const view = z => p.evaluate(z => { const f = window.__farm, P = f.gamePlots()[0]; f.lookAt(P.gc.x, P.gc.z, z); f.draw(); }, z);
 const reload = async () => { await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1.2); };
 const PRE = 'com.featherandfield.game.winter.';
@@ -74,7 +74,7 @@ ok('…a save claiming one bought with money: not believed (the coop in its own 
 await shop({ __shop: true, __owned: [], __how: 'cancelled' }); await reload();
 c = await card();
 const pay = c.find(b => b.go === 'pay'), all = c.find(b => b.go === 'all'), res = c.find(b => b.go === 'restore');
-ok('in the app: coins (too few: not to be tapped), "Or have it now" at Apple\'s price, the nine together, "Restore purchases"', c[0].go === 'buy' && c[0].off && pay && /£1\.99/.test(pay.t) && (fr ? /Ou tout de suite/ : /Or have it now/).test(pay.t) && all && /£9\.99/.test(all.t) && res && (fr ? /Restaurer les achats/ : /Restore purchases/).test(res.t), c);
+ok('in the app: coins (too few: not to be tapped), "Or have it now" at Apple\'s price, the nine together, "Restore purchases"', c[0].go === 'buy' && c[0].off && pay && /£1\.99/.test(pay.t) && pay.t.trim() === '£1.99' && all && /£9\.99/.test(all.t) && res && (fr ? /Restaurer les achats/ : /Restore purchases/).test(res.t), c);
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme').scrollIntoView({ block: 'center' })); await p.waitForTimeout(700); await shoot('1_card');
 await tap('pay'); await run(1); s = await S();
 ok('a purchase cancelled: nothing changes, nothing said wrong', !s.theme && s.paid.length === 0 && s.coins === 3000, { s, said: await hintT() });

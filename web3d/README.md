@@ -2994,6 +2994,9 @@ the birds already had.
 
 ## Status (29 Oct 2026, 14:20)
 
+- 16 Nov 2026: **the East Meadow**: forty fields (`meadow.py`, then `fields.py`; game.js `FIELDS`, `landLevel`, `landMost`). village.json made again by `stylized/village_layout.py` would lose it: run `meadow.py` again, then `fields.py` (it checks nothing by itself: compare the first thirty fields' cells with the old fields.json). Test: `meadowtest.mjs`.
+- 16 Nov 2026: a themed building on a coop's card: picture (`themes/<theme>_<breed>.webp`), name, short buttons (gameui.js `.gtheme-r`, `.gtheme-pic`, `.gtheme-b`).
+
 - 16 Nov 2026: **more varied village orders** (vegetables plan, step 3): the new vegetables asked for, the mixed basket (three things, pay x1.5), a fourth order from level 12. game.js `ORDERS.more`, `ORDERS.mix`, `ordersMax`. Test: `ordmixtest.mjs`.
 
 - 15 Nov 2026: **each breed's own feed** (vegetables plan, step 2): the feeder card's "Their favourite" (gameui.js `feederSheet(coop, onFill, onFav)`, `.gfav`; main.js `mixFav(plot)`); game.js `FEEDS`. Test: `favtest.mjs`.

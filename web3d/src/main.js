@@ -30,7 +30,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
-import { CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
+import { landLevel, CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
@@ -4887,7 +4887,7 @@ function tapAt(x, y) {
     if (GAME_MODE && FIELDS && game.data) {
       const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hitP), f = gp ? fieldAt(gp.x, gp.z) : -1;
       if (f >= 0 && f === SALE.field) { landCard(); return; }
-      if (f >= game.data.land.length) { tagBird = null; tag.textContent = game.t('land_wild', { n: f + 1 }); tagSpot.set(gp.x, 0.6, gp.z); tag.classList.add('on'); fieldTag = 2.4; return; }
+      if (f >= game.data.land.length) { tagBird = null; tag.textContent = game.t('land_wild', { n: landLevel(f) }); tagSpot.set(gp.x, 0.6, gp.z); tag.classList.add('on'); fieldTag = 2.4; return; }
     }
     // a decoration: its name over it
     const dc = decorAt(ray.ray);

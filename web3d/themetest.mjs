@@ -37,8 +37,8 @@ const close = () => p.evaluate(() => window.__farm.gameUI().close());
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 const sheet = () => p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden])'); return e ? e.innerText : ''; });
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; return { coins: g.data.coins, theme: c.theme || null, themes: g.data.themes || [], tier: c.tier, tier0: c.tier0, w: f.winterOf(c.id), eggs: c.eggs, kind: f.gameUI().kind, edited: g.edited, drawn: [...new Set(f.coopModels())] }; });
-const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gtheme-r'), b = r && r.querySelector('button'); return r ? { text: r.innerText, btn: b ? { t: b.textContent, off: b.disabled, go: b.dataset.themego } : null } : null; }); };
-const tap = () => p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme-r button').click());
+const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gtheme-r'), b = r && r.querySelector('button[data-themego]'); return r ? { text: r.innerText, btn: b ? { t: b.textContent, off: b.disabled, go: b.dataset.themego } : null } : null; }); };
+const tap = () => p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme-r button[data-themego]').click());
 const view = z => p.evaluate(z => { const f = window.__farm, P = f.gamePlots()[0]; f.lookAt(P.gc.x, P.gc.z, z); f.draw(); }, z);
 const T = fr ? { name: /Chalet des neiges/, back: /Revenir à son poulailler/, into: /Emménager/, when: /l’hiver/, own: /Son propre poulailler/ } : { name: /Snow Chalet/, back: /Back to its own coop/, into: /Move in:/, when: /in winter/, own: /Its own coop/ };
 

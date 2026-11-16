@@ -890,7 +890,13 @@ export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L +
 // fields.json, each field's number the order it comes up for sale). Field 0, the home field (the first coop and the
 // farmhouse), is the farm's from the start; one more can be bought at each level, nearest first (Audrey, 25 Oct: "For me
 // it's a full piece of land"; "Fields with natural borders", "One each level"), from 100 coins at level 2 to 10,000 at 30
-export const FIELDS = 30;
+export const FIELDS = 40;
+// (16 Nov 2026, the East Meadow, Audrey: "we need to extend the map... they should not be packed and we need space for
+// decoration"; her choice: "East Meadow, 10 new fields"; fields 30 to 39, web3d/meadow.py): forty fields in thirty levels, so
+// from level 12 the land comes a little faster than one field a level (field k: level k + 1 up to the twelfth, then
+// 12 + 18/28 of a level each, the last at level 29); the meadow's ten cost 11,000 to 20,000 coins)
+export const landLevel = k => k < 12 ? k + 1 : 12 + Math.floor((k - 12) * 18 / 28);
+export const landMost = L => { let n = 0; while (n < FIELDS && landLevel(n) <= L) n++; return Math.max(1, n); };
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
 // time); a new farm's first coop in the home field (where the village had its first plot)
 export const HOME_COOP = { x: -30, z: -13.75, deg: 90 };      // (13 Nov 2026: where its Deluxe garden fits from the start, fields.py HOME; -28 before)
@@ -910,7 +916,7 @@ const SHOW_BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 const SHOW_BREED_LEVEL_7 = { ...SHOW_BREED_LEVEL, pol: 26, aya: 29 }, SHOW_7_FROM = '20261030';
 const SHOW_BREED_LEVEL_8 = { rir: 1, orp: 3, sil: 5, aya: 7, leg: 15, pol: 18, bra: 24 }, SHOW_8_FROM = '20261031';
 const spotNum = v => Number.isFinite(v) && Math.abs(v) <= 200 ? Math.round(v * 4) / 4 : null;
-export function landPrice(k) { const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
+export function landPrice(k) { if (k >= 30) return 10000 + 1000 * (k - 29); const p = 100 * Math.pow(100, (k - 1) / 28); return p < 1000 ? Math.round(p / 10) * 10 : Math.round(p / 50) * 50; }      // the k-th field after the home field
 
 // ---- shows (release 1 step 9; the 2D game's shows made the forever birds' own, Audrey: "Shows (Recommended)", "Show day
 // on the farm", "Hours later"). Each day at 7:00 a Village show opens (from level 4 a County show too, from level 9 the
@@ -1380,7 +1386,7 @@ export function checkFarm(d, now = Date.now()) {
   if (fo.length) { out.farmer.outfits = fo; out.farmer.outfit = fo.includes(d.farmer.outfit) ? d.farmer.outfit : 'classic'; }
   // the land: the first fields in order, at most one a level (a farm's own purchases never go further)
   const land = Array.isArray(d.land) ? d.land : [];
-  out.land = Array.from({ length: Math.max(1, Math.min(land.length, levelOf(out.xp), FIELDS)) }, (_, i) => i);
+  out.land = Array.from({ length: Math.max(1, Math.min(land.length, landMost(levelOf(out.xp)), FIELDS)) }, (_, i) => i);
   out.lvSeen = int(d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
   out.coops = [];
   const seen = new Set();
@@ -1696,7 +1702,7 @@ export class Game {
   // seen: the coins for each new level since the last card (levelGift), with it; the coins given
   levelGiftDue() { let c = 0; for (let L = (this.data.lvSeen || 1) + 1; L <= this.level; L++) c += levelGift(L); return c; }
   seenLevel() { const c = this.levelGiftDue(); this.data.coins += c; this.data.lvSeen = this.level; this.save(); return c; }
-  landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: k + 1 } : null; }
+  landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: landLevel(k) } : null; }
   landForSale() { const n = this.landNext(); return n && this.level >= n.level ? n : null; }
   buyLand() {
     const n = this.landForSale(); if (!n) return null;
