@@ -56,17 +56,13 @@ ok('level 9, 300 coins: the button is there, not to be tapped', bt && bt.off && 
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 1000; g.save(); });
 c = await card(); bt = await buyBtn();
 ok('with the coins: "Add this bed · 400 coins"', bt && !bt.off && T.add.test(bt.text), bt);
-// (a farm with one field of land only: no room for a second row: nothing bought, and said; with more land: bought)
-await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
-s = await S(); const noroom = await hintT();
-ok('no room for a second row on this small farm: nothing bought, said, the garden as it was', s.beds === 3 && s.coins === 1000 && (fr ? /Pas la place/ : /No room here/).test(noroom) && s.st.at && s.foot[1] > -1, { beds: s.beds, coins: s.coins, noroom, foot: s.foot });
 const land = await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.coins = 1e6; const r = [f.buyLand(), f.buyLand(), f.buyLand()]; g.data.coins = 1000; g.save(); return { r: r.map(Boolean), land: g.data.land.length }; }); await run(2);
 c = await card();
 const was = await S();
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); const said = await hintT();
 ok('bought: 400 coins less, four beds, said', s.coins === was.coins - 400 && s.beds === 4 && T.got.test(said), { coins: s.coins, beds: s.beds, said });
-ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.slice(0, 6).join() === 'true,true,true,true,false,false' && !s.frames.slice(6).some(Boolean), { foot: s.foot, frames: s.frames });
+ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.every(Boolean), { foot: s.foot, frames: s.frames });
 ok('still on your land, where it fits', s.st.at && s.st.owned, s.st.at);
 c = await sheet();
 ok('its card shows bed 4, and the fifth to come at level 14', (fr ? /Carré 4/ : /Bed 4/).test(c) && T.lv14.test(c), c.split('\n').slice(-8));

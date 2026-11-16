@@ -185,6 +185,17 @@ if MEADOW:
     for n_, j in enumerate(sorted(cm, key=lambda j: np.hypot(*(cm[j] - hc)))): lab[ml == j] = nf0 + n_      # (the nearest to home first)
     nf = nf0 + len(seeds); lane = lane_all
 
+# the kitchen garden's and the two wheat fields' fixed places (16 Nov 2026, Audrey: "I would like the fields and beds to be
+# part of the initial map and the player just need to unlock them"; village.json 'fixed'): their ground is the home
+# field's, whatever field it was shared out to
+FX = V.get('fixed')
+if FX:
+    gx, gz = FX['garden'][:2]                 # (turned 90: its own x runs along -z, its own z along x; main.js GARDEN_FOOT)
+    rects = [(gx - 3.6, gx + 1.65, gz - 4.7, gz + 3.3)] + [(FX[k][0] - 2.25, FX[k][0] + 2.25, FX[k][1] - 1.25, FX[k][1] + 1.25) for k in ('wheat', 'wheat2')]
+    for (xa, xb, za, zb) in rects:
+        m_ = inside & ~lane & ~water & (XX > xa - 0.6) & (XX < xb + 0.6) & (ZZ > za - 0.6) & (ZZ < zb + 0.6)
+        print('fixed place: cells', int(m_.sum()), 'from', sorted(set(lab[m_].ravel().tolist()))); lab[m_] = 0
+
 # each field's borders: the cell edges between it and what's next to it, joined into lines and simplified
 def kind_at(k, i):
     if not (0 <= k < NZ and 0 <= i < NX) or not inside[k, i]: return 'edge'

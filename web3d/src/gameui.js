@@ -1375,7 +1375,7 @@ export class GameUI {
       else { const go = el('button', 'gbtn gsmallbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'wheat2_more_broke' : 'wheat2_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buywheat = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); c.append(go); }
       b.append(c);
     }
-    const mv = el('button', 'gbtn galt', this.t('wheat_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+
   }
   // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
   // or pumpkins, h.sow(i, crop); ripe: Pick, h.pick(i)); the basket; Move the garden (h.move). o.busy: the farmer's at work
@@ -1422,7 +1422,7 @@ export class GameUI {
       else { const go = el('button', 'gbtn gsmallbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'bed_more_broke' : 'bed_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buybed = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); c.append(go); }
       b.append(c);
     }
-    const mv = el('button', 'gbtn galt', this.t('garden_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move()); b.append(mv);
+
   }
   // ---- a treat from the garden for a coop's birds (7 Nov 2026): what each vegetable does, how many are in the basket,
   // Give (h.give(crop)); had today: tomorrow

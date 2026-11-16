@@ -44,7 +44,7 @@ await load();
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 60; g.data.lvSeen = 3; g.fishBag().gift = true; g.data.coins = 300; g.save(); f.gameUI().close(); });
 await run(2);
 let s = await S();
-ok('level 3: no garden', s.level === 3 && !s.garden && !s.st.at, s);
+ok('level 3: the garden is there in its fixed place, every bed still wild; nothing saved', s.level === 3 && !s.garden && s.st.at && s.st.at[0] === -33, s);
 // level 4
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(4) + 5; g.save(); });
 await run(1.5);

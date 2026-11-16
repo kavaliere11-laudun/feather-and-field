@@ -98,14 +98,8 @@ const q = await p.evaluate(() => { const g = window.__farm.game(); return g.fill
 const m3 = await money();
 ok('an empty feeder: "Fill it with your grain (free)"; filled from the grain, no coins', T.grainFill.test(fc) && m3.coins === m2.coins && Math.abs(m3.grain - (m2.grain - 9)) < 0.01 && q.grain === 9 && q.cost === 0, { fc: fc.slice(0, 300), m2, m3, q });
 await p.evaluate(() => window.__farm.gameUI().close());
-// move it and turn it
-s = await S();
-const mv = await p.evaluate(([x, z, deg]) => { const f = window.__farm; f.deco.wheat.move(); const turn = document.querySelector('.gmove .gmove-b'); const shown = !turn.hidden; turn.click(); const st = f.deco.state(); const fr2 = f.deco.free('wheat', x + 4, z - 3); return { shown, st, fr2 }; }, [s.at[0], s.at[1], s.deg]);
-await p.evaluate(() => { const f = window.__farm, st = f.deco.state(); let best = null; for (let r = 2; r < 12 && !best; r += 1) for (let a = 0; a < 6.28 && !best; a += 0.5) { const x = Math.round((st.at.x + Math.cos(a) * r) * 4) / 4, z = Math.round((st.at.z + Math.sin(a) * r) * 4) / 4; f.deco.to(x, z); if (f.deco.state().ok) best = [x, z]; } });
-const st2 = await p.evaluate(() => window.__farm.deco.state());
-await p.evaluate(() => window.__farm.deco.place()); await run(0.5);
-const saved2 = await p.evaluate(() => window.__farm.game().data.wheat);
-ok('Move the field: Turn there, turned and put somewhere else, saved so', mv.shown && st2.ok && saved2.deg !== s.deg && saved2.x === st2.at.x && saved2.z === st2.at.z && (await S()).deg === saved2.deg, { mv, st2, saved2 });
+const mvBtn = await p.evaluate(() => { const f = window.__farm; f.deco.wheat.tap(); const any = [...document.querySelectorAll('.gsheet:not([hidden]) button')].some(b => /Move the field|Déplacer le champ/.test(b.textContent)); f.gameUI().close(); return any; });
+ok('the field has its fixed place (16 Nov 2026): no Move button on its card', !mvBtn && (await S()).at.join() === '-25.25,-30.75');
 // the beehives and the honey
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(6) + 5; g.data.coins = 5000; g.data.lvSeen = g.level; g.save(); window.__farm.gameUI().refresh(); });
 await p.evaluate(() => { const f = window.__farm; f.deco.start('beehives'); f.deco.place(); }); await run(1);
@@ -133,7 +127,7 @@ if (process.env.DUMP) fs.writeFileSync(process.env.DUMP, JSON.stringify(await p.
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 const after = await p.evaluate(() => { const d = window.__farm.game().data; return JSON.stringify({ w: d.wheat, g: d.grain, h: d.honey }); });
 s = await S();
-ok('a reload: the field, the grain and the honey as they were, not flagged', before === after && !(await p.evaluate(() => window.__farm.game().edited)) && s.at && s.deg === saved2.deg, { before, after });
+ok('a reload: the field, the grain and the honey as they were, not flagged', before === after && !(await p.evaluate(() => window.__farm.game().edited)) && s.at && s.deg === 0, { before, after });
 // a field from before 6 Nov 2026, square to the screen (45 degrees): turned to lie with the farm's lines (0 or 90) where it
 // fits as it is (a spot found where both fit; the save changed here, so flagged by that), nothing else changed
 const old = await p.evaluate(() => { const f = window.__farm, w = f.game().data.wheat; for (let r = 0; r < 12; r += 0.5) for (let k = 0; k < 16; k++) { const x = Math.round((w.x + Math.cos(k / 16 * 6.283) * r) * 4) / 4, z = Math.round((w.z + Math.sin(k / 16 * 6.283) * r) * 4) / 4;
@@ -142,7 +136,7 @@ await p.evaluate(at => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
 { const g0 = await p.evaluate(() => JSON.parse(localStorage.getItem('ff3d.farm')).d.wheat);
   await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
   const r = await p.evaluate(() => { const g = window.__farm.game(); return { edited: g.edited, wheat: g.data.wheat }; });
-  ok('an old field at 45 degrees: turned to 0 or 90 where it fits, still where it was', old && [0, 90].includes(r.wheat.deg) && r.wheat.x === g0.x && r.wheat.z === g0.z && r.wheat.ripe === g0.ripe, { g0, r });
+  ok('an old field moved elsewhere and at 45 degrees: back in its fixed place', r.wheat.deg === 0 && r.wheat.x === -25.25 && r.wheat.z === -30.75 && r.wheat.ripe === g0.ripe, { g0, r });
   await p.evaluate(() => { const g = window.__farm.game(); g.edited = false; g.save(); }); }
 // a save changed outside
 for (const [what, edit, check] of [

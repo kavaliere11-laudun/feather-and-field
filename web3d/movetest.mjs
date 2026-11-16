@@ -33,7 +33,7 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 let s = await saved(), a = await at();
-ok('a new farm: the first coop on its home spot (no more than a bush cleared), not flagged', s.x === -30 && s.z === -13.75 && s.deg === 90 && a.join() === '-30,-13.75,90' && /^(b\d+)?$/.test(s.cleared) && !s.edited, { s, a });
+ok('a new farm: the first coop on its home spot (no more than a bush cleared), not flagged', s.x === -30 && s.z === -13.75 && s.deg === 90 && a.join() === '-30,-13.75,90' && /^([btr]\d+,?)*$/.test(s.cleared) && !s.edited, { s, a });
 const cleared0 = s.cleared ? s.cleared.split(',') : [];      // (a bush where today's home spot is: cleared as the farm begins)
 // a tap on the coop's house: its card
 const house = await p.evaluate(() => { const f = window.__farm, [x, z] = f.coopAt(0); f.lookAt(x, z); f.draw(); return f.screenOf(x - 0.6, z + 0.3, 1.0); });

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 const GEO = new THREE.SphereGeometry(1, 6, 4);
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
 // a treat from the vegetable garden (7 Nov 2026) scattered the same way: bits of carrot, strawberries, pumpkin, bigger
-const KIND = { corn: ['#efbd3f', 1], carrot: ['#ef8a2c', 1.9], straw: ['#d8352c', 2.1], pump: ['#f0962e', 2.2], lettuce: ['#8fc65a', 2.0], peas: ['#8fd04f', 1.2], corn: ['#f2c230', 1.6], beet: ['#9c2f5c', 2.0], sunf: ['#3a2f2a', 1.2] };
+const KIND = { corn: ['#efbd3f', 1], carrot: ['#ef8a2c', 1.9], straw: ['#d8352c', 2.1], pump: ['#f0962e', 2.2], lettuce: ['#8fc65a', 2.0], peas: ['#8fd04f', 1.2], beet: ['#9c2f5c', 2.0], sunf: ['#3a2f2a', 1.2] };
 
 export class Corn {
   // free(x, z): a spot in the yard a grain may land on (inside the fence, not on the feeder, the water or the hay)
