@@ -27,7 +27,7 @@ ok('Turn: an eighth of a turn at a time', (T[1] - T[0] + 360) % 360 === 45, T);
 await go('23:30'); await load();
 await p.evaluate(() => { const f = window.__farm; for (let i = 0; i < 90; i++) f.step(1 / 30, 1); });
 const N = await p.evaluate(() => { const f = window.__farm; f.coopCard(0); const u = f.gameUI(), s = document.querySelector('.gsheet:not([hidden])'); return { kind: u.isOpen && u.kind, inside: !!s.querySelector('[data-inside]'), cuddle: !!s.querySelector('.gcuddleall'), up: !!s.querySelector('.gup'), text: s.textContent }; });
-ok('at night the coop\'s card: its upgrade and price, "Look inside", no "Cuddle everyone here" but "everyone here is asleep"', N.kind === 'coop' && N.inside && !N.cuddle && N.up && (fr ? /tout le monde dort/ : /everyone here is asleep/).test(N.text), N);
+ok('at night the coop\'s card: its upgrade and price, "Look inside", no "Cuddle everyone here" but "everyone here is asleep"', N.kind === 'coop' && N.inside && !N.cuddle && N.up && (fr ? /Demain matin/ : /In the morning/).test(N.text), N);
 await p.evaluate(() => document.querySelector('[data-inside]').click()); await p.waitForTimeout(300);
 ok('"Look inside": inside the coop', await p.evaluate(() => document.body.classList.contains('inside') || !!window.__farm.insideOpen?.()), null);
 ok('no page errors', errs.length === 0, errs);

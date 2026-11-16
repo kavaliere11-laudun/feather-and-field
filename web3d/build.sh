@@ -23,6 +23,7 @@ rm -rf dist/book && cp -r book dist/book             # (the Breed Book's picture
 rm -rf dist/intro && cp -r intro dist/intro          # (the onboarding pictures, 1-4 and 3-fr: main.js ?intro, rendered by intropics.mjs)
 rm -rf dist/outfits && cp -r outfits dist/outfits        # (the shop's pictures of the farmer's outfits: the 2D game's own, game2/img/farmer)
 rm -rf dist/themes && cp -r themes dist/themes      # (the themed buildings' pictures on a coop's card, 16 Nov 2026: themes/<theme>_<breed>.webp)
+rm -rf dist/looks && cp -r looks dist/looks      # (each coop's next look on its card, 16 Nov 2026: looks/<breed>_<tier>.webp, from the Breeds page's pictures)
 rm -rf dist/decor && cp -r decor dist/decor          # (the shop's pictures of the decorations: the 2D game's own, game2/img/decor)
 rm -rf dist/fish && cp -r fish dist/fish              # (the fish pictures for their cards: fishpics.mjs BACKDROP=1, cropped)
 rm -rf dist/story && cp -r story dist/story            # (the story at the start: grandma's farm, four painted pictures by Audrey (Midjourney, 7 Nov 2026))

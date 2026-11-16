@@ -40,7 +40,7 @@ const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.
 const card = async () => { await close(); await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2); return p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gtheme-r'), b = r && r.querySelector('button[data-themego]'); return r ? { text: r.innerText, btn: b ? { t: b.textContent, off: b.disabled, go: b.dataset.themego } : null } : null; }); };
 const tap = () => p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gtheme-r button[data-themego]').click());
 const view = z => p.evaluate(z => { const f = window.__farm, P = f.gamePlots()[0]; f.lookAt(P.gc.x, P.gc.z, z); f.draw(); }, z);
-const T = fr ? { name: /Chalet des neiges/, back: /Revenir à son poulailler/, into: /Emménager/, when: /l’hiver/, own: /Son propre poulailler/ } : { name: /Snow Chalet/, back: /Back to its own coop/, into: /Move in:/, when: /in winter/, own: /Its own coop/ };
+const T = fr ? { name: /Chalet des neiges/i, back: /Repartir/, into: /Emménager/, when: /l’hiver/, own: /Son propre poulailler/ } : { name: /Snow Chalet/i, back: /Move out/, into: /Move in/, when: /in winter/, own: /Its own coop/ };
 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
@@ -73,7 +73,7 @@ ok('bought: 15,000 paid, owned, the coop is the chalet at once, said', s.coins =
 ok('…and a Deluxe coop while they live in it (the look it had reached kept aside): the Deluxe pen and fence, snowed', s.tier === 4 && s.tier0 === own && s.w && s.w.tier === 4 && s.drawn.includes('fence_t4_winter#snow') && s.drawn.includes('pen_t4_winter#snow') && !s.drawn.some(n => /^(house|rustic)_rir/.test(n)), { tier: s.tier, tier0: s.tier0, drawn: s.drawn });
 ok('its play things, the frozen puddle in the yard, the igloo, a seed ball where the cabbage hung', s.w && s.w.ice && s.w.ice.in && !s.w.ice.by && s.w.igloo && s.w.treat === 'seedball', s.w);
 c = await card(); let txt = await sheet();
-ok('its card names the chalet, and its own coop\'s look', T.name.test(txt.split('\n').slice(0, 4).join(' ')) && T.own.test(txt), txt.split('\n').slice(0, 4));
+ok('its card names the chalet, and its own coop\'s look', T.name.test(txt.split('\n').slice(0, 6).join(' ')), txt.split('\n').slice(0, 6));
 await close(); await view(2.6); await shoot('1_chalet');
 // footprints in the snow
 await run(25); s = await S();

@@ -39,7 +39,7 @@ const cleared0 = s.cleared ? s.cleared.split(',') : [];      // (a bush where to
 const house = await p.evaluate(() => { const f = window.__farm, [x, z] = f.coopAt(0); f.lookAt(x, z); f.draw(); return f.screenOf(x - 0.6, z + 0.3, 1.0); });
 await p.touchscreen.tap(house.x, house.y); await run(0.3);
 const card = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, text: document.querySelector('.gsheet').innerText }));
-ok('a tap on the coop: its card (who lives there, move it)', card.kind === 'coop' && (fr ? /vivent ici/ : /live here/).test(card.text) && (fr ? /Déplacer ce poulailler/ : /Move this coop/).test(card.text), card);
+ok('a tap on the coop: its card (who lives there, move it)', card.kind === 'coop' && /🐓/.test(card.text) && (fr ? /Déplacer/ : /Move/).test(card.text), card);
 await p.tap('.gsheet [data-move]'); await run(1);          // ("Move this coop": not the upgrade's button above it, release 4)
 let m = await st();
 const bar = await p.evaluate(() => { const B = document.querySelector('.gmove'); return B && !B.hidden && B.getBoundingClientRect().top; });

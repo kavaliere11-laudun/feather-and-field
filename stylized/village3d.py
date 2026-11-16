@@ -2439,21 +2439,35 @@ def lock_sign_v(name='lock_sign', s=1.0):
 
 
 def garden_wild_v(name='garden_wild', seed=171):
-    """A bed still to unlock, in its own frame (16 Nov 2026, Audrey: "it's not clear enough the beds that are still locked.
-    Can you change the herbs for something more obvious"): covered with a canvas sheet roped down, a big gold padlock lying
-    on top of it (it reads from above), a padlock sign at its front."""
+    """A bed still to unlock, in its own frame (16 Nov 2026, Audrey, of the canvas cover and its big padlock: "I don't like
+    the locked bed"; her choice: "Empty wooden frame"): no soil, the lawn inside the frame with a few tufts of grass and
+    two daisies, a padlock sign at its front."""
     random.seed(seed); objs = []; Z = GARDEN_SOIL; W, D = GARDEN_BED
-    canvas = C('gwcanvas', '#c9c2ad', rough=0.95, var=0.05); canvas2 = C('gwcanvas2', '#b8b09a', rough=0.95, var=0.05); rope = C('gwrope', '#7a6248', rough=0.9)
-    objs.append(box('gwsheet', (W + 0.06, D + 0.06, 0.05), (0, 0, Z + 0.075), m=canvas, bevel=0.02, segs=2))
-    objs.append(box('gwskirt', (W + 0.08, D + 0.08, 0.1), (0, 0, Z + 0.02), m=canvas2, bevel=0.01, segs=1))
-    for y in (-D / 4, D / 4): objs.append(box('gwrope', (W + 0.1, 0.022, 0.022), (0, y, Z + 0.105), m=rope, bevel=0.0))
-    objs.append(box('gwrope', (0.022, D + 0.1, 0.022), (0, 0, Z + 0.105), m=rope, bevel=0.0))
+    lawn = C('gwlawn', '#86b24a', rough=0.95, var=0.04); tuft = [C('gwtuft%d' % i, h, rough=0.9) for i, h in enumerate(('#6f9f3c', '#7dab43', '#93bd55'))]
+    objs.append(box('gwlawn', (W - 0.01, D - 0.01, 0.02), (0, 0, Z + 0.004), m=lawn, bevel=0.0))
+    for k in range(16):
+        x, y = random.uniform(-W / 2 + 0.07, W / 2 - 0.07), random.uniform(-D / 2 + 0.08, D / 2 - 0.08)
+        for b in range(3):
+            a = random.uniform(0, math.pi); h = random.uniform(0.05, 0.085)
+            objs.append(box('gwblade', (0.018, 0.006, h), (x + random.uniform(-0.02, 0.02), y + random.uniform(-0.02, 0.02), Z + 0.01 + h / 2), (random.uniform(-0.25, 0.25), random.uniform(-0.25, 0.25), a), m=random.choice(tuft), bevel=0.0))
+    white = C('gwdaisy', '#fbf6ee', rough=0.6); yel = C('gwdaisyc', '#f4c430', rough=0.6)
+    for (x, y) in ((-0.14, 0.3), (0.16, -0.2)):
+        objs.append(cyl('gwdaisy', 0.03, 0.008, (x, y, Z + 0.06), m=white, verts=8, bevel=0.0)); objs.append(cyl('gwdaisyc', 0.012, 0.012, (x, y, Z + 0.063), m=yel, verts=6, bevel=0.0))
+        objs.append(box('gwstem', (0.006, 0.006, 0.05), (x, y, Z + 0.035), m=tuft[0], bevel=0.0))
+    # the padlock sign, at the front of the bed (-y), bigger than a field's
+    S = 1.5; y0 = -D / 2 - 0.06
+    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03); edge = C('gsedge', '#6e4a2e', rough=0.85)
+    objs.append(box('lsstake', (0.03 * S, 0.03 * S, 0.25 * S), (0, y0 + 0.012, 0.125 * S), m=stake, bevel=0.0))
+    objs.append(box('lsboard', (0.2 * S, 0.016, 0.16 * S), (0, y0, 0.32 * S), m=board, bevel=0.005, segs=1))
+    for sz in (-1, 1): objs.append(box('lsedge', (0.21 * S, 0.02, 0.012 * S), (0, y0, 0.32 * S + sz * 0.08 * S), m=edge, bevel=0.0))
+    _padlock(objs, (0, y0 - 0.012, 0.32 * S), 1.25 * S, (0, -1, 0))
+    # (and on its back: the garden is seen from every side)
     gold = C('lkgold', '#e9b53a', rough=0.35, metal=0.5); steel = C('lksteel', '#9aa3aa', rough=0.3, metal=0.8); dark = C('lkdark', '#3a2f28', rough=0.8)
-    zt = Z + 0.125                                   # the padlock, flat on top: its body towards the front, its shackle behind
-    objs.append(box('lkbody', (0.3, 0.22, 0.05), (0, -0.1, zt), m=gold, bevel=0.012, segs=2))
-    for sx in (-1, 1): objs.append(box('lkarm', (0.045, 0.17, 0.04), (sx * 0.085, 0.09, zt), m=steel, bevel=0.0))
-    objs.append(box('lktop', (0.215, 0.045, 0.04), (0, 0.19, zt), m=steel, bevel=0.0))
-    objs.append(cyl('lkhole', 0.035, 0.012, (0, -0.08, zt + 0.026), m=dark, verts=10, bevel=0.0)); objs.append(box('lkhole2', (0.03, 0.07, 0.012), (0, -0.14, zt + 0.026), m=dark, bevel=0.0))
+    q = 1.25 * S; yb = y0 + 0.012; zc = 0.32 * S
+    objs.append(box('lkbody', (0.07 * q, 0.014, 0.055 * q), (0, yb + 0.002, zc - 0.012 * q), m=gold, bevel=0.004, segs=1))
+    for sx in (-1, 1): objs.append(box('lkarm', (0.012 * q, 0.01, 0.04 * q), (sx * 0.02 * q, yb, zc + 0.03 * q), m=steel, bevel=0.0))
+    objs.append(box('lktop', (0.052 * q, 0.01, 0.012 * q), (0, yb, zc + 0.05 * q), m=steel, bevel=0.0))
+    objs.append(box('lkhole', (0.012 * q, 0.006, 0.02 * q), (0, yb + 0.01, zc - 0.014 * q), m=dark, bevel=0.0))
     return finish(objs, name)
 
 

@@ -39,7 +39,7 @@ const card = async () => {
   await out();
   await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.coopCard(0); });
   await run(0.2);
-  return p.evaluate(() => { const s = document.querySelector('.gsheet'), u = s.querySelector('.gup'), bt = u && u.querySelector('.gbtn'), why = u && u.querySelector('.gup-why'); return { kind: window.__farm.gameUI().kind, text: s.innerText, up: u ? u.innerText : null, btn: bt ? bt.textContent : null, dis: bt ? bt.disabled : null, why: why && !why.hidden ? why.textContent : null }; });
+  return p.evaluate(() => { const s = document.querySelector('.gsheet'), u = s.querySelector('.gup'), bt = u && u.querySelector('.gbtn'), why = s.querySelector('.gup-why'); return { kind: window.__farm.gameUI().kind, text: s.innerText, up: u ? u.innerText : null, btn: bt ? bt.textContent : null, dis: bt ? bt.disabled : null, why: why && !why.hidden ? why.textContent : null }; });
 };
 const shoot = async n => {
   await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); const [x, z] = f.coopAt(0); f.lookAt(x, z, 2.6); f.step(1 / 30, 2); f.draw(); });
@@ -67,7 +67,7 @@ if (B !== 'rir') {                                 // a coop of that breed place
 let s = await state();
 ok('a new farm: its coop comes Rustic (a tiny pen), the farm marked as after the looks, unflagged', s.tier === 0 && s.house === LOOKS[0] && s.pen === PENN(0) && s.cv === 5 && !s.edited, s);
 let c = await card();
-ok('its card: Rustic; next Mended, what it brings, 300 coins; not enough coins yet: says so, the button off', c.kind === 'coop' && (fr ? /Rustique/ : /Rustic/).test(c.text) && (fr ? /style Rafistolé/ : /Upgrade to Mended/).test(c.up) && (fr ? /Pas assez de pièces \(300\)/ : /Not enough coins \(300\)/).test(c.btn) && c.dis === true, c);
+ok('its card: Rustic; next Mended, what it brings, 300 coins; not enough coins yet: says so, the button off', c.kind === 'coop' && (fr ? /Rustique/i : /Rustic/i).test(c.text) && (fr ? /Rafistolé/ : /Mended/).test(c.up) && /300/.test(c.btn) && c.dis === true, c);
 await shoot(0);
 // coins given (and the land round the home field, for the bigger pens)
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 20000; g.save(); });
@@ -100,7 +100,7 @@ for (let t = 1; t <= 4; t++) {
   await shoot(t);
 }
 c = await card();
-ok('Deluxe: the finest coop on the farm, no more upgrades', !c.up && (fr ? /Le plus beau poulailler/ : /The finest coop/).test(c.text), c);
+ok('Deluxe: the finest coop on the farm, no more upgrades', !c.up && (fr ? /DE LUXE/i : /DELUXE/i).test(c.text), c);
 // a reload keeps it
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await state(); const bd = await birds();

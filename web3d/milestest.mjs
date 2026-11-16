@@ -83,7 +83,7 @@ ok('…no one is picked up: crouched among them, he turns to stroke each in turn
 await shut();
 await p.evaluate(() => window.__farm.coopCard(0)); await run(0.2);
 let Q1 = await p.evaluate(() => { const b = document.querySelector('.gsheet:not([hidden]) .gcuddleall'), w = document.querySelector('.gsheet:not([hidden]) .gcuddlewait'); return { btn: !!b, wait: w ? w.textContent : '' }; });
-ok('again straight after: no button to tap, the wait until the next cuddle said (15 Nov 2026)', !Q1.btn && /\d/.test(Q1.wait) && Q1.wait.length > 20, Q1);
+ok('again straight after: no button to tap, the wait until the next cuddle said (15 Nov 2026)', !Q1.btn && /\d/.test(Q1.wait) && Q1.wait.length > 5, Q1);
 if (process.argv[2]) await p.screenshot({ path: `${process.argv[2]}/cuddlewait${process.env.LANG === 'fr' ? '_fr' : ''}.png` }).catch(() => {});
 // ---- How to fish: its three steps and the bar all in sight sideways, no scrolling
 await p.evaluate(() => window.__farm.gameUI().fishHelp(true)); await run(0.2);

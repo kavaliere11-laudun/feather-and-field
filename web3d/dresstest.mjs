@@ -86,7 +86,7 @@ ok('a reload: dressed still, unflagged', s.dress === 'xmas' && s.dresses === 'xm
 await out();
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.coopCard(0); }); await run(0.2);
 sh = await sheet();
-ok('its card: it wears the dress, "Take off the Christmas dress"', sh && (fr ? /Il porte la parure de Noël/ : /It wears the Christmas dress/).test(sh.text) && (fr ? /Retirer la parure de Noël/ : /Take off the Christmas dress/).test(sh.coopBtn), sh);
+ok('its card: it wears the dress, "Take off the Christmas dress"', sh && (fr ? /Retirer la parure de Noël/ : /Take off the Christmas dress/).test(sh.coopBtn), sh);
 await p.tap('.gsheet button[data-dress]'); await run(0.3);
 s = await state();
 ok('taken off: its everyday look again', !s.dress && !s.parts.some(n => n.startsWith('xmas')), s);

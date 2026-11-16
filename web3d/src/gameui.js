@@ -205,7 +205,7 @@ export class GameUI {
     this.sheet.classList.toggle('gbird', kind === 'bird'); document.body.classList.toggle('gbirdopen', kind === 'bird');      // (a bird's card: beside her, not over her: index.html, 13 Nov 2026)
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
-    this.sheet.classList.toggle('gintro', kind === 'intro');
+    this.sheet.classList.toggle('gintro', kind === 'intro'); this.sheet.classList.toggle('gcoop', kind === 'coop');
     this.sheet.classList.toggle('gcenter', CENTER_CARDS.includes(kind));      // (sideways: a message in the middle of the screen; a card about something on the farm on the right, beside it)
     return this.body;
   }
@@ -677,71 +677,82 @@ export class GameUI {
   // ---- a coop: who lives there; its next look (release 4: what it brings, its price; up.onUpgrade(): main.js tryUpgrade,
   // 'ok', or why not: 'room' (its bigger pen doesn't fit there: move it first), 'coins', 'busy'); move it (onMove:
   // main.js startMove)
+  // (16 Nov 2026, Audrey, of the card as it was (a list to scroll: who lives there, a long button, the next look in words,
+  // the themed buildings, a note, Move): "it's not clear too wordy and you don't get to the info you need straight away";
+  // of this one, as a mock-up: "The coop details are perfect": everything on one screen: its breed's picture and where it
+  // is on its five looks; each bird with its cuddle (ready, or how long); the next look and each themed building as a
+  // picture with its price (the words only when the picture is tapped); three buttons: Cuddle all, Look inside, Move)
   coopCard(coop, onMove, up) {
-    const g = this.g, body = this.open('coop', g.coopName(coop)), fmt = n => n.toLocaleString(g.locale());
+    const g = this.g, body = this.open('coop', g.coopName(coop)), fmt = n => n.toLocaleString(g.locale()), base = g.baseOf(coop.breed);
     this.bird = null;
-    body.append(el('p', 'gsub', g.breedName(coop.breed) + this.lookTag(coop)));
-    const names = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name);
-    if (names.length) body.append(el('p', 'gtext', this.t('coop_lives', { names: this.g.andList(names) })));
-    if (up && up.onInside) { const ib = el('button', 'gbtn galt', '🌙 ' + this.t('coop_inside')); ib.type = 'button'; ib.dataset.inside = '1'; ib.addEventListener('click', () => up.onInside()); body.append(ib); }
-    if (up && up.asleep && g.birdsIn(coop.id).length > 1) body.append(el('p', 'gnote', this.t('cuddle_night')));      // (no cuddle button at night: said instead, Audrey 22:28)
-    if (up && up.onCuddleAll && g.birdsIn(coop.id).length > 1) {      // (15 Nov 2026, Audrey: "Don't let me click on cuddle them if I can't… say when it will be possible again": nobody due: no button, the wait until the first of them said)
-      const lefts = g.birdsIn(coop.id).map(x => g.happyLeft(x));
-      if (lefts.every(l => l > 0)) { const w = el('p', 'gtext ghappy gcuddlewait', '♥ ' + this.t('cuddle_all_wait', { when: g.howLong(Math.min(...lefts)) })); body.append(w); }
-      else { const ca = el('button', 'gbtn gcuddleall', this.t('cuddle_all')); ca.type = 'button'; ca.addEventListener('click', () => up.onCuddleAll()); body.append(ca); } }
+    const btn = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
+    // its breed, its look
+    const top = el('div', 'gcoop-top'), tw = el('div', 'gcoop-tw'); top.append(this.breedPic(coop.breed), tw);
+    tw.append(el('p', 'gsub', g.breedName(coop.breed)));
+    if (UPGRADES.includes(base)) { const st = el('div', 'gcoop-steps'), own = g.ownLook(coop); for (let k = 0; k < 5; k++) st.append(el('i', k <= own ? 'on' : null)); st.append(el('span', null, coop.theme ? g.themeName(coop.theme, base) : g.lookName(coop))); tw.append(st); }
+    body.append(top);
+    // who lives there, and each one's cuddle
+    const birds = g.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')), kind = g.kindOf(coop.breed);
+    if (birds.length) { const row = el('div', 'gcoop-birds');
+      for (const b of birds) { const c = el('div', 'gcoop-bird'), left = g.happyLeft(b); c.dataset.bird = b.id;
+        c.append(el('span', 'gcoop-be', kind === 'pea' ? '🦚' : g.isDuck(coop.breed) ? '🦆' : b.sex === 'r' ? '🐓' : '🐔'), el('span', 'gcoop-bn', b.name), el('span', 'gcoop-bh' + (left > 0 ? ' wait' : ''), left > 0 ? '♥ ' + g.howLong(left) : '♥'));
+        row.append(c); }
+      body.append(row); }
+    // the next look, the themed buildings: pictures side by side
+    const tiles = el('div', 'gcoop-tiles'), notes = el('div', 'gcoop-notes');
+    const tile = (cls, src, label, name, more) => { const c = el('div', 'gcard gcoop-tile ' + cls), pic = btn('gtheme-pic'), img = el('img'), side = el('div', 'gcoop-ts'), m = el('p', 'gnote gcoop-more', more);
+      img.alt = name; img.loading = 'lazy'; img.src = src + (this.o.bust || ''); img.addEventListener('error', () => { pic.hidden = true; }); pic.append(img);
+      m.hidden = true; pic.addEventListener('click', () => { const was = m.hidden; for (const x of notes.querySelectorAll('.gcoop-more')) x.hidden = true; m.hidden = !was; if (was) m.scrollIntoView({ block: 'nearest' }); });
+      side.append(el('div', 'glabel', label), el('p', 'gtext gtheme-n', name)); c.append(pic, side); notes.append(m); tiles.append(c); return side; };
     const n = up && g.coopNext(coop);
     if (n) {
-      const c = el('div', 'gcard gup'), hd = el('div', 'gcard-h');
-      hd.append(el('span', 'gemoji', '✨'), el('span', 'gcard-t', this.t('up_next', { look: this.t('look_' + n.look) })));
-      c.append(hd, el('p', 'gtext', this.t('up_' + g.baseOf(coop.breed) + '_' + n.look)), el('p', 'gnote', this.t('upfx_' + n.look)));
-      const broke = g.data.coins < n.price, b = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
-      b.type = 'button'; b.disabled = broke;
-      const why = el('p', 'gnote gup-why'); why.hidden = true;
-      b.addEventListener('click', () => {
-        if (b.disabled) return;
-        const r = up.onUpgrade();
-        if (r === 'room') { why.textContent = this.t('up_room'); why.hidden = false; }
-      });
-      c.append(b, why); body.append(c);
-    } else if (up && UPGRADES.includes(g.baseOf(coop.breed))) body.append(el('p', 'gnote', this.t('up_top')));
-    // (themed buildings, 13 Nov 2026: this breed's, each bought in its season, then moved into or left whenever she likes)
-    { const TH = up && up.onTheme ? g.themesFor(coop) : [], base = g.baseOf(coop.breed), fmtn = n => n.toLocaleString(g.locale());
-      if (TH.length) { const c = el('div', 'gcard gtheme'); c.append(el('div', 'glabel', this.t('theme_t')));
-        // (15 Nov 2026, the test players: no room here for its Deluxe garden: said on the card too, with "Move this coop" right there; nothing is paid)
-        const why = el('div', 'gtheme-why'), wb = el('button', 'gbtn gsmallbtn', this.t('move_btn')); why.hidden = true; wb.type = 'button'; wb.dataset.thememove = '1'; wb.addEventListener('click', () => onMove()); why.append(el('p', 'gnote', this.t('theme_room')), wb);
-        const noRoom = () => { if (up.themeWhy && up.themeWhy() === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } };
-        for (const T of TH) { const name = g.themeName(T.id, base), row = el('div', 'gtheme-r'); row.dataset.theme = T.id;
-          // (16 Nov 2026, Audrey: "This is too wordy. Things should be simple and visual": its picture and its name; its
-          // description only when the picture is tapped; short buttons: the coins, the money)
-          const pic = el('button', 'gtheme-pic'), img = el('img'), more = el('p', 'gnote gtheme-more', this.t('themel_' + T.key)), side = el('div', 'gtheme-s'), btns = el('div', 'gtheme-b');
-          pic.type = 'button'; img.alt = name; img.loading = 'lazy'; img.src = 'themes/' + T.key + '.webp' + (this.o.bust || ''); img.addEventListener('error', () => { pic.hidden = true; more.hidden = false; }); pic.append(img);
-          more.hidden = true; pic.addEventListener('click', () => { more.hidden = !more.hidden; });
-          side.append(el('p', 'gtext gtheme-n', (T.on ? '✓ ' : '') + name), btns); row.append(pic, side, more);
-          const rowAdd = x => btns.append(x);
-          if (T.owned) { const bt = el('button', 'gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.type = 'button'; bt.dataset.themego = T.on ? 'off' : 'on'; bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); rowAdd(bt); }
-          else if (T.season) { const broke = g.data.coins < T.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), '🪙 ' + fmtn(T.price)); bt.type = 'button'; bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmtn(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); rowAdd(bt);
-            const pr = up.pay && g.level >= PAY_LEVEL ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
-            if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => { up.pay.onPay(T.id); noRoom(); }); rowAdd(pb); } }
-          else rowAdd(el('p', 'gnote', this.t('theme_when_' + T.id)));
-          c.append(row); }
-        if (coop.theme) c.append(el('p', 'gnote gtheme-own', this.t('theme_own', { look: g.lookName({ ...coop, theme: undefined, tier: g.ownLook(coop) }) })));
-        if (up.pay && up.pay.on && (g.level >= PAY_LEVEL || TH.some(T => T.owned))) {                    // (the nine together, while some are still to buy; and Apple's "Restore purchases")
-          for (const T of TH) { const all = T.season && g.level >= PAY_LEVEL && g.themeLeft(T.id) > 1 ? up.pay.all(T.id) : null; if (!all) continue;
-            const ab = el('button', 'gbtn gsmallbtn gpay', this.t('pay_all', { p: all })); ab.type = 'button'; ab.dataset.themego = 'all'; ab.addEventListener('click', () => up.pay.onAll(T.id)); c.append(ab); }
-          const rb = el('button', 'gbtn gsmallbtn galt', this.t('pay_restore')); rb.type = 'button'; rb.dataset.themego = 'restore'; rb.addEventListener('click', () => up.pay.onRestore()); c.append(rb);
-        }
-        c.append(why); body.append(c); } }
-    for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
-      const on = coop.dress === id, name = g.dressName(id);
-      if (on) body.append(el('p', 'gnote', this.t('dress_card', { name })));
-      const d = el('button', 'gbtn' + (on ? ' galt' : ''), this.t(on ? 'dress_off' : 'dress_on', { name })); d.type = 'button'; d.dataset.dress = id;
-      d.addEventListener('click', () => up.onDress(on ? null : id));
-      body.append(d);
+      const side = tile('gup', 'looks/' + base + '_' + n.tier + '.webp', this.t('up_next_l'), this.t('look_' + n.look), this.t('up_' + base + '_' + n.look) + ' ' + this.t('upfx_' + n.look));
+      side.append(el('p', 'gcoop-fx', this.t('upic_' + n.look)));
+      const broke = g.data.coins < n.price, b = btn('gbtn gsmallbtn' + (broke ? ' galt' : ''), '🪙 ' + fmt(n.price)); b.disabled = broke; b.setAttribute('aria-label', broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
+      const why = el('div', 'gcoop-why gup-why'); why.hidden = true; why.append(el('p', 'gnote', this.t('up_room')));
+      b.addEventListener('click', () => { if (b.disabled) return; const r = up.onUpgrade(); if (r === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } });
+      side.append(b); notes.append(why);
     }
-    body.append(el('p', 'gnote', this.t('move_body')));
-    const go = el('button', 'gbtn', this.t('move_btn')); go.type = 'button';
-    go.dataset.move = '1'; go.addEventListener('click', () => onMove());
-    body.append(go);
+    // (themed buildings, 13 Nov 2026: this breed's, each bought in its season, then moved into or left whenever she likes)
+    const TH = up && up.onTheme ? g.themesFor(coop) : [];
+    if (TH.length) {
+      // (15 Nov 2026, the test players: no room here for its Deluxe garden: said on the card too; nothing is paid)
+      const why = el('div', 'gcoop-why gtheme-why'); why.hidden = true; { const wb = btn('gbtn gsmallbtn', this.t('move_btn')); wb.dataset.thememove = '1'; wb.addEventListener('click', () => onMove()); why.append(el('p', 'gnote', this.t('theme_room')), wb); }
+      const noRoom = () => { if (up.themeWhy && up.themeWhy() === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } };
+      for (const T of TH) { const name = g.themeName(T.id, base), side = tile('gtheme gtheme-r', 'themes/' + T.key + '.webp', this.t('theme_' + T.id + '_l'), (T.on ? '✓ ' : '') + name, this.t('themel_' + T.key)), btns = el('div', 'gtheme-b'); side.parentNode.dataset.theme = T.id; side.append(btns);
+        if (T.owned) { const bt = btn('gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_out' : 'theme_in')); bt.dataset.themego = T.on ? 'off' : 'on'; bt.setAttribute('aria-label', this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); btns.append(bt); }
+        else if (T.season) { const broke = g.data.coins < T.price, bt = btn('gbtn gsmallbtn' + (broke ? ' galt' : ''), '🪙 ' + fmt(T.price)); bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); btns.append(bt);
+          const pr = up.pay && g.level >= PAY_LEVEL ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
+          if (pr) { const pb = btn('gbtn gsmallbtn gpay', pr); pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => { up.pay.onPay(T.id); noRoom(); }); btns.append(pb); } }
+        else btns.append(el('p', 'gnote', this.t('theme_when_' + T.id))); }
+      notes.append(why);
+    }
+    if (tiles.childNodes.length) body.append(tiles);
+    if (!n && up && UPGRADES.includes(base) && !TH.length) notes.append(el('p', 'gnote', this.t('up_top')));
+    body.append(notes);
+    // small extras: the nine together and Apple's "Restore purchases"; a seasonal dress owned
+    const extra = el('div', 'gcoop-extra');
+    if (TH.length && up.pay && up.pay.on && (g.level >= PAY_LEVEL || TH.some(T => T.owned))) {
+      for (const T of TH) { const all = T.season && g.level >= PAY_LEVEL && g.themeLeft(T.id) > 1 ? up.pay.all(T.id) : null; if (!all) continue;
+        const ab = btn('gbtn gsmallbtn gpay', this.t('pay_all', { p: all })); ab.dataset.themego = 'all'; ab.addEventListener('click', () => up.pay.onAll(T.id)); extra.append(ab); }
+      const rb = btn('gbtn gsmallbtn galt', this.t('pay_restore')); rb.dataset.themego = 'restore'; rb.addEventListener('click', () => up.pay.onRestore()); extra.append(rb);
+    }
+    for (const id of (up && up.onDress ? g.data.dresses || [] : [])) {         // (a seasonal dress owned: put on, or taken off)
+      const on = coop.dress === id, name = g.dressName(id), d = btn('gbtn gsmallbtn' + (on ? ' galt' : ''), this.t(on ? 'dress_off' : 'dress_on', { name })); d.dataset.dress = id;
+      d.addEventListener('click', () => up.onDress(on ? null : id)); extra.append(d);
+    }
+    if (extra.childNodes.length) body.append(extra);
+    // what to do: cuddle them all (or when: no button that can do nothing), look inside at night, move it
+    const acts = el('div', 'gcoop-acts gstick');
+    if (up && birds.length > 1) {
+      const lefts = birds.map(x => g.happyLeft(x));
+      if (up.asleep) acts.append(el('p', 'gcoop-wait gcuddlenight', this.t('cuddle_sleep')));      // (no cuddle button at night: said instead, Audrey 22:28)
+      else if (up.onCuddleAll && lefts.every(l => l > 0)) acts.append(el('p', 'gcoop-wait ghappy gcuddlewait', this.t('cuddle_in', { when: g.howLong(Math.min(...lefts)) })));      // (15 Nov 2026, Audrey: "Don't let me click on cuddle them if I can't… say when it will be possible again")
+      else if (up.onCuddleAll) { const ca = btn('gbtn gcuddleall', this.t('cuddle_short')); ca.addEventListener('click', () => up.onCuddleAll()); acts.append(ca); }
+    }
+    if (up && up.onInside) { const ib = btn('gbtn galt', '🌙 ' + this.t('inside_short')); ib.dataset.inside = '1'; ib.addEventListener('click', () => up.onInside()); acts.append(ib); }
+    const go = btn('gbtn galt', '✥ ' + this.t('move_short')); go.dataset.move = '1'; go.addEventListener('click', () => onMove()); acts.append(go);
+    body.append(acts);
   }
   // ---- moving a coop: what the spot's like, and Turn, Cancel, Put it here (h: { turn(), cancel(), place() })
   moveBar(on, h) {

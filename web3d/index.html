@@ -352,6 +352,20 @@
   .gtheme-why { margin: 8px 0; padding: 10px 12px; border-radius: 14px; background: #fff3d6; } .gtheme-why .gnote { margin: 0 0 8px; color: var(--ink); }      /* (bought with real money, in the app: store.js) */
   .gtheme > .gbtn { margin-top: 8px; }
   .gtheme-r { display: grid; grid-template-columns: minmax(0, 46%) 1fr; gap: 6px 12px; align-items: center; margin-top: 6px; }      /* (16 Nov 2026: a themed building: its picture, its name, short buttons) */
+  /* (16 Nov 2026, the coop's card on one screen: Audrey, of its mock-up: "The coop details are perfect") */
+  .gcoop-top { display: flex; align-items: center; gap: 10px; margin-top: -4px; } .gcoop-top .gbreed-i { width: 46px; height: 46px; margin: -6px 0; } .gcoop-top .gsub { margin: 0; }
+  .gcoop-steps { display: flex; gap: 5px; align-items: center; margin-top: 4px; } .gcoop-steps i { width: 22px; height: 7px; border-radius: 4px; background: var(--line); } .gcoop-steps i.on { background: var(--yolk); }
+  .gcoop-steps span { font: 600 12.5px var(--display); color: var(--yolk-deep); margin-left: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .gcoop-birds { display: flex; flex-wrap: wrap; gap: 6px; } .gcoop-bird { flex: 1 1 30%; min-width: 0; background: var(--sage); border-radius: 14px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; font: 600 15px var(--display); }
+  .gcoop-bn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .gcoop-bh { margin-left: auto; flex: none; font: 800 12.5px Nunito, sans-serif; color: #d9537a; white-space: nowrap; } .gcoop-bh.wait { color: var(--ink-2); }
+  .gcoop-tiles { display: flex; gap: 8px; } .gcoop-tile.gcard { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 10px; padding: 8px; margin: 0; }
+  .gcoop-tile .gtheme-pic { flex: none; width: 96px; height: 96px; } .gcoop-tile .gtheme-pic img { width: 96px; height: 96px; object-fit: cover; }
+  .gcoop-ts { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; } .gcoop-ts .gtheme-n { margin: 0; font: 600 17px/1.1 var(--display); } .gcoop-fx { margin: 0; font-size: 12.5px; font-weight: 800; color: #3c6b3f; line-height: 1.2; }
+  .gcoop-ts .gbtn { margin: 0; white-space: nowrap; } .gcoop-ts .gtheme-b { gap: 5px; } .gcoop-ts .gtheme-b .gbtn { padding: 7px 10px; font-size: 14px; } .gcoop-tile .gtheme-pic, .gcoop-tile .gtheme-pic img { width: 88px; height: 88px; } .gcoop-ts .gbtn:disabled { background: #dfe5d2; color: #8b977f; box-shadow: none; }
+  .gcoop-notes { display: flex; flex-direction: column; gap: 4px; } .gcoop-notes:empty { display: none; } .gcoop-notes .gnote { margin: 0; } .gcoop-why { display: flex; align-items: center; gap: 8px; } .gcoop-why[hidden] { display: none; }
+  .gcoop-extra { display: flex; flex-wrap: wrap; gap: 6px; } .gcoop-extra .gbtn { margin: 0; }
+  .gcoop-acts.gstick .gbtn { font-size: 16px; padding: 11px 8px; flex: 1; } .gcoop-wait { flex: 1; margin: 0; align-self: center; text-align: center; font: 600 15px var(--display); color: var(--ink-2); } .gcoop-wait.ghappy { color: #d9537a; }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gsheet.gcoop { width: min(580px, 68vw); top: max(12px, env(safe-area-inset-top)); max-height: calc(100% - 24px); } .gsheet.gcoop .gsheet-body { gap: 9px; } }
   .gtheme-pic { all: unset; cursor: pointer; display: block; border-radius: 14px; overflow: hidden; line-height: 0; } .gtheme-pic img { width: 100%; height: auto; display: block; }
   .gtheme-pic:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   .gtheme-s { display: grid; gap: 8px; } .gtheme-n { margin: 0; font-weight: 600; }
