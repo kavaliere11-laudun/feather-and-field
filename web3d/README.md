@@ -2994,6 +2994,8 @@ the birds already had.
 
 ## Status (29 Oct 2026, 14:20)
 
+- 16 Nov 2026: the phone's own music is left playing when the game's Music is off (sound.js `session()`: navigator.audioSession 'ambient' then, 'playback' with Music on; nothing woken with Music and Sounds both off). Untested on a device.
+
 - 16 Nov 2026: **fixed places for the kitchen garden and the two wheat fields** (game.js `FIXED`; village.json `fixed`; fields.py; main.js `settleGarden`, `wheatMarks`, `markerOf`, `GARDEN_YARD`, the nav's fence; models `garden3.glb` from `stylized/village3d.py` `garden_yard_v`, `potting_shed_v`, `garden_wild_v`, `garden_ready_v`, `garden_free_v`, `field_wild_v` via `export_village3d.py`). The beds' and fields' bubbles are hidden by `.gquiet`, not removed. Test: `fixedtest.mjs`.
 
 - 16 Nov 2026: **the East Meadow**: forty fields (`meadow.py`, then `fields.py`; game.js `FIELDS`, `landLevel`, `landMost`). village.json made again by `stylized/village_layout.py` would lose it: run `meadow.py` again, then `fields.py` (it checks nothing by itself: compare the first thirty fields' cells with the old fields.json). Test: `meadowtest.mjs`.

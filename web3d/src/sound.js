@@ -100,11 +100,20 @@ export class Sound {
   }
   now() { return performance.now() / 1000; }
   // the first tap (and every tap after, in case the phone stopped the sound meanwhile): the sound wakes
+  // (16 Nov 2026, Audrey: "When I play and listen to some music at the same time the music stops even when the sound of the
+  // app is off"): the phone's own music is only left alone by a page whose sound is 'ambient'; 'playback' (heard with the
+  // ring switch on silent too, 11 Nov) takes the speaker for itself. So: the game's Music on: 'playback', as before; its
+  // Music off: 'ambient' (her music plays on, the farm's sounds over it; the ring switch on silent then mutes them); Music
+  // and Sounds both off: the game makes no sound at all and never wakes its sound engine
+  wanted() { return (!this.o.music || this.o.music()) || (!this.o.sounds || this.o.sounds()); }
+  session() { try { if (navigator.audioSession) navigator.audioSession.type = (!this.o.music || this.o.music()) ? 'playback' : 'ambient'; } catch (e) { /* (older phones: their own way) */ } }
+  quiet() { this.session(); if (this.ctx && !this.wanted()) { try { if (this.el && !this.el.paused) this.el.pause(); this.ctx.suspend().catch(() => {}); } catch (e) { /* */ } } }
   unlock() {
     if (this.o.off) return;
+    if (!this.wanted()) { this.quiet(); return; }
     try {
-      if (!this.ctx) {
-        try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* (older phones: their own way) */ }      // (heard with the ring switch on silent too, 11 Nov 2026: Audrey, her volume up, three times: "No sounds"; it was 'ambient')
+      this.session();
+      if (!this.ctx) {      // (heard with the ring switch on silent too, 11 Nov 2026: Audrey, her volume up, three times: "No sounds"; it was 'ambient')
         const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
         this.ctx = new AC();
         this.master = this.ctx.createGain(); this.master.connect(this.ctx.destination);
@@ -230,7 +239,7 @@ export class Sound {
     s.onended = () => { if (H.src !== s) return; H.src = null; try { g.disconnect(); } catch (e) { /* */ } const gp = HENS.gap; H.nextAt = this.now() + gp[0] + Math.random() * (gp[1] - gp[0]); };
     s.start();
   }
-  soundsChanged() { if (this.ctx) { this.tickHens(); this.tickBeds(); } }
+  soundsChanged() { this.quiet(); if (this.wanted()) this.unlock(); if (this.ctx) { this.tickHens(); this.tickBeds(); } }
   // ---- the farm's sounds (audio/farm/farm.json): one-shots in groups (crow1, crow2 ... the 'crow' group), and the beds
   loadFarm() {
     const F = this.farm; if (F.loading) return; F.loading = true;
@@ -254,7 +263,7 @@ export class Sound {
   }
   // a one-shot from where it happens (at: {near 0-1, pan -1 to 1}, from main.js heardAt); kind: a group ('crow', 'egg_diva')
   play(kind, at, level) {
-    if (this.ctx && !this.hidden && this.ctx.state !== 'running') { try { this.ctx.resume().catch(() => {}); } catch (e) { /* */ } }      // (asleep, after a call or the app put away: woken for the next one)
+    if (this.ctx && !this.hidden && this.ctx.state !== 'running' && this.wanted()) { try { this.ctx.resume().catch(() => {}); } catch (e) { /* */ } }      // (asleep, after a call or the app put away: woken for the next one)
     if (!this.ctx || this.hidden || this.ctx.state !== 'running' || (this.o.sounds && !this.o.sounds()) || !at || at.near < 0.02) return null;
     const q = NIGHT_KINDS.includes(groupOf(kind).replace(/_.*/, '')) ? 1 : birdsLevel(this.o.hour()); if (q < 0.05) return null;      // (the birds quiet at night)
     const buf = this.pick(kind); if (!buf) return null;
@@ -289,12 +298,13 @@ export class Sound {
     }
   }
   // the music switch (gameui settings): off fades it now; on brings a track in a few seconds
-  musicChanged() { if (!this.ctx) return; if (this.o.music()) { if (this.state !== 'playing') this.nextAt = this.now() + 1.5; } else this.stop(0.8, 'switched off'); }
+  musicChanged() { this.quiet(); if (this.wanted()) this.unlock(); if (!this.ctx) return; if (this.o.music()) { if (this.state !== 'playing') this.nextAt = this.now() + 1.5; } else this.stop(0.8, 'switched off'); }
   // put away (another app, the phone locked): quiet; back: the music picks up where it was (a phone may want a tap first)
   visible(on) {
     this.hidden = !on;
     if (!this.ctx) return;
     if (!on) { if (this.state === 'playing' && this.mus.way === 'el' && this.el) { this.el.pause(); this.pausedPlaying = true; } this.ctx.suspend().catch(() => {}); return; }      // (decoded music stops and goes on with the engine)
+    if (!this.wanted()) return;
     this.ctx.resume().catch(() => {});
     if (this.pausedPlaying) { this.pausedPlaying = false; if (this.state === 'playing') this.playEl(); }
   }
