@@ -2556,8 +2556,11 @@ def garden_ready_v(name='garden_ready', s=1.0, y=None):
     for k in range(7):
         a = math.pi * k / 7; a1 = math.pi * (k + 1) / 7; r = 0.092 * s
         objs.append(plank('grhandle', (math.cos(a) * r, Y, 0.094 * s + math.sin(a) * r * 1.15), (math.cos(a1) * r, Y, 0.094 * s + math.sin(a1) * r * 1.15), 0.016 * s, 0.012 * s, (0, -1, 0), wickd, jitter=0.0, bevel=0.0))
-    for (dx, dz, r) in ((-0.13, 0.2, 0.028), (0.12, 0.27, 0.022), (0.02, 0.36, 0.034), (-0.07, 0.31, 0.016), (0.15, 0.15, 0.016)):
-        for rot in (0, math.radians(90)): objs.append(box('grspark', (r * 2.2 * s, 0.006, r * 0.5 * s), (dx * s, Y - 0.01, dz * s), (0, rot + math.radians(45) * 0, 0), m=gold, bevel=0.0))
+    gold = C('grspark', '#fff3a8', rough=0.2, emit=1.5) if 'emit' in C.__code__.co_varnames else C('grspark', '#fff3a8', rough=0.2)
+    for (dx, dz, r) in ((-0.16, 0.3, 0.05), (0.15, 0.42, 0.04), (0.0, 0.58, 0.06), (-0.1, 0.48, 0.028), (0.2, 0.24, 0.028)):      # (four-pointed stars, standing and lying, so they show from above too)
+        for rot in (0, math.radians(90)):
+            objs.append(box('grspark', (r * 2.4 * s, 0.012, r * 0.42 * s), (dx * s, Y - 0.01, dz * s), (0, rot, 0), m=gold, bevel=0.0))
+            objs.append(box('grspark', (r * 2.4 * s, r * 0.42 * s, 0.012), (dx * s, Y - 0.01, dz * s), (0, 0, rot), m=gold, bevel=0.0))
     return finish(objs, name)
 
 
@@ -2582,4 +2585,20 @@ def field_wild_v(name='field_wild', seed=177):
         ribbon_leaf(objs, 'gwblade', (x, y, 0.0), (math.cos(a) * 0.35, math.sin(a) * 0.35, 1), random.uniform(0.18, 0.42), 0.022, random.choice(grass), up=1.2)
     for k in range(14): objs.append(sphere('gwbramble', random.uniform(0.12, 0.2), (random.uniform(-2, 2), random.uniform(-1, 1), random.uniform(0.06, 0.12)), (1, 1, 0.7), m=bram, ico=1, disp=0.3, seed=k + 3))
     for k in range(16): objs.append(sphere('gwflower', 0.035, (random.uniform(-2, 2), random.uniform(-1, 1), random.uniform(0.2, 0.34)), (1, 1, 0.6), m=yel, ico=1))
+    # its outline: old furrows showing through, a weathered rail fence round it (a gap at the front), the padlock sign there
+    soil = C('fwsoil', '#7a5a40', rough=0.95, var=0.06); old = [C('fwrail%d' % i, h, rough=0.9, var=0.1) for i, h in enumerate(('#8c7a66', '#7d6c59'))]
+    for i in range(7): objs.append(box('fwfurrow', (4.3, 0.2, 0.05), (0, -1.05 + i * 0.35, 0.02), m=soil, bevel=0.0))
+    X, Y = 2.3, 1.3; pts = [(-X, -Y), (-X, Y), (X, Y), (X, -Y)]
+    for i, (a, b) in enumerate(((0, 1), (1, 2), (2, 3))):
+        pa, pb = pts[a], pts[b]; L = math.hypot(pb[0] - pa[0], pb[1] - pa[1]); n = max(1, round(L / 1.15))
+        for k in range(n + 1):
+            x = pa[0] + (pb[0] - pa[0]) * k / n; y = pa[1] + (pb[1] - pa[1]) * k / n
+            objs.append(box('fwpost', (0.07, 0.07, 0.42), (x, y, 0.21), (0, random.uniform(-0.06, 0.06), random.uniform(-0.2, 0.2)), m=old[1], bevel=0.0))
+        for z in (0.16, 0.32): objs.append(plank('fwrail', (pa[0], pa[1], z + random.uniform(-0.02, 0.02)), (pb[0], pb[1], z + random.uniform(-0.02, 0.02)), 0.05, 0.03, (0, 0, 1), random.choice(old), jitter=0.8, bevel=0.0))
+    for sx in (-1, 1):
+        objs.append(box('fwpost', (0.07, 0.07, 0.42), (sx * 0.9, -Y, 0.21), m=old[1], bevel=0.0))
+        for z in (0.16, 0.32): objs.append(plank('fwrail', (sx * X, -Y, z), (sx * 0.9, -Y, z), 0.05, 0.03, (0, 0, 1), random.choice(old), jitter=0.8, bevel=0.0))
+    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03)
+    objs.append(box('gwstake', (0.04, 0.04, 0.5), (0, -Y + 0.02, 0.25), m=stake, bevel=0.0)); objs.append(box('gwboard', (0.32, 0.02, 0.26), (0, -Y, 0.56), m=board, bevel=0.006, segs=1))
+    _padlock(objs, (0, -Y - 0.014, 0.56), 2.0, (0, -1, 0))
     return finish(objs, name)
