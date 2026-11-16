@@ -46,6 +46,7 @@ for _k in ('carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf')
     BUILD['garden_sign_' + _k] = ((lambda k=_k: village3d.garden_sign_v(k, 'garden_sign_' + k)), 1500)
     for _s, _b in ((1, 4000), (2, 9000), (3, 12000)):
         BUILD['garden_%s_%d' % (_k, _s)] = ((lambda k=_k, s=_s: village3d.garden_crop_v(k, s, 'garden_%s_%d' % (k, s))), _b)
+BUILD.update({'garden_yard': (village3d.garden_yard_v, 30000), 'potting_shed': (village3d.potting_shed_v, 6000), 'garden_wild': (village3d.garden_wild_v, 2500), 'lock_sign': (lambda: village3d.lock_sign_v(s=1.6), 400)})      # (the kitchen garden's fixed place, 16 Nov 2026)
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)

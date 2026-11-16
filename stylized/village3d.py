@@ -2407,3 +2407,139 @@ def garden_crop_v(kind, stage, name):
                 org = C('gppumpkin', '#e27d2a', rough=0.5, var=0.03)
                 for (x, y, r) in ((-0.17, -0.42, 0.105), (0.17, -0.02, 0.115), (-0.14, 0.46, 0.1)): _pumpkin(objs, (x, y, GARDEN_SOIL - 0.01), r, org, stalk=stalk, yaw=random.uniform(0, 1))
     return finish(objs, name)
+
+
+# ---- the kitchen garden's fixed place (16 Nov 2026, Audrey: "I would like the fields and beds to be part of the initial
+# map and the player just need to unlock them... there is definitely room to make something nice"; her choices: locked beds
+# "Overgrown, with a little sign", round it a low picket fence and a gate, a path between the rows, flowers and a
+# scarecrow, a potting shed). A DESIGN first: the yard (fence, gate, paths, flowers), the shed, a locked bed's weeds and
+# sign, a padlock sign for a locked field. A bed's own frame as garden_v's: the beds at x -2..2, rows at y 0 and 2.2.
+YARD = (-3.2, 4.6, -1.55, 3.5)                # x0, x1, y0, y1
+
+
+def _padlock(objs, c, s, facing):
+    """A little padlock on a board (its face towards `facing`, -y): a gold body, a steel shackle, a keyhole."""
+    gold = C('lkgold', '#e9b53a', rough=0.35, metal=0.5); steel = C('lksteel', '#9aa3aa', rough=0.3, metal=0.8); dark = C('lkdark', '#3a2f28', rough=0.8)
+    x, y, z = c
+    objs.append(box('lkbody', (0.07 * s, 0.014, 0.055 * s), (x, y - 0.002, z - 0.012 * s), m=gold, bevel=0.004, segs=1))
+    for sx in (-1, 1): objs.append(box('lkarm', (0.012 * s, 0.01, 0.04 * s), (x + sx * 0.02 * s, y, z + 0.03 * s), m=steel, bevel=0.0))
+    objs.append(box('lktop', (0.052 * s, 0.01, 0.012 * s), (x, y, z + 0.05 * s), m=steel, bevel=0.0))
+    objs.append(box('lkhole', (0.012 * s, 0.006, 0.02 * s), (x, y - 0.01, z - 0.014 * s), m=dark, bevel=0.0))
+
+
+def lock_sign_v(name='lock_sign', s=1.0):
+    """A little wooden sign with a padlock on it: this one is still to unlock."""
+    random.seed(sum(map(ord, name))); objs = []
+    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03); edge = C('gsedge', '#6e4a2e', rough=0.85)
+    objs.append(box('lsstake', (0.03 * s, 0.03 * s, 0.34 * s), (0, 0.012, 0.17 * s), m=stake, bevel=0.0))
+    objs.append(box('lsboard', (0.2 * s, 0.016, 0.16 * s), (0, 0, 0.36 * s), m=board, bevel=0.005, segs=1))
+    for sz in (-1, 1): objs.append(box('lsedge', (0.21 * s, 0.02, 0.012 * s), (0, 0, 0.36 * s + sz * 0.08 * s), m=edge, bevel=0.0))
+    _padlock(objs, (0, -0.012, 0.36 * s), 1.25 * s, (0, -1, 0))
+    return finish(objs, name)
+
+
+def garden_wild_v(name='garden_wild', seed=171):
+    """A bed still to unlock, in its own frame: gone to weeds (long grass, a dock, dandelions, a bramble), a padlock sign at its front."""
+    random.seed(seed); objs = []; Z = GARDEN_SOIL; W, D = GARDEN_BED
+    grass = [C('gwgrass%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#7fa64a', '#93b457', '#6c9440', '#a9b866'))]
+    for k in range(60):
+        x = random.uniform(-W / 2 + 0.07, W / 2 - 0.07); y = random.uniform(-D / 2 + 0.07, D / 2 - 0.07); a = random.uniform(0, math.tau)
+        ribbon_leaf(objs, 'gwblade', (x, y, Z), (math.cos(a) * 0.35, math.sin(a) * 0.35, 1), random.uniform(0.12, 0.3), 0.012, random.choice(grass), up=1.2)
+    dock = C('gwdock', '#4f7f3a', rough=0.75, var=0.05); yel = C('gwdand', '#f2c62e', rough=0.6); wht = C('gwclock', '#f4f1e6', rough=0.8); bram = C('gwbramble', '#3f6a33', rough=0.8, var=0.06)
+    for (x, y) in ((-0.18, 0.3), (0.2, -0.25)):
+        for k in range(6):
+            a = k / 6 * math.tau + random.uniform(-0.3, 0.3); q = Vector((math.cos(a), math.sin(a), 0.45)).normalized().to_track_quat('Y', 'Z')
+            objs.append(flat_leaf('gwdockleaf', (x, y, Z + 0.01), q, random.uniform(0.14, 0.2), 0.045, dock, shape='heart', both=True, fold=0.006))
+    for (x, y, m) in ((0.1, 0.45, yel), (-0.22, -0.1, yel), (0.24, 0.12, wht), (-0.05, -0.5, yel)):
+        h = random.uniform(0.1, 0.18); objs.append(cyl('gwstem', 0.005, h, (x, y, Z + h / 2), m=grass[2], verts=5, bevel=0.0))
+        objs.append(sphere('gwflower', 0.026, (x, y, Z + h + 0.01), (1, 1, 0.6 if m is yel else 1), m=m, ico=1))
+    for k in range(5): objs.append(sphere('gwbramble', random.uniform(0.06, 0.09), (random.uniform(-0.25, 0.25), 0.25 + random.uniform(-0.3, 0.35), Z + random.uniform(0.04, 0.1)), (1, 1, 0.7), m=bram, ico=1, disp=0.3, seed=k + 3))
+    # its sign, at the front
+    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03)
+    X, Y = 0.0, -D / 2 - 0.1
+    objs.append(box('gwstake', (0.022, 0.022, 0.3), (X, Y + 0.012, 0.15), m=stake, bevel=0.0))
+    objs.append(box('gwboard', (0.16, 0.014, 0.13), (X, Y, 0.32), m=board, bevel=0.004, segs=1))
+    _padlock(objs, (X, Y - 0.01, 0.32), 1.0, (0, -1, 0))
+    return finish(objs, name)
+
+
+def garden_yard_v(name='garden_yard', seed=173):
+    """The kitchen garden's yard: a low white picket fence round the ten beds with a gate (open) at the front right, paths
+    of pale gravel along the front, between the rows and up to the shed, flowers along the fence."""
+    random.seed(seed); objs = []; x0, x1, y0, y1 = YARD
+    white = [C('vpfwhite%d' % i, h_, rough=0.6, var=0.03) for i, h_ in enumerate(('#f3f0e6', '#ebe7db'))]
+    GX0, GX1 = 2.62, 3.38                           # the gate's gap, in the front fence
+    def run(a, b):
+        L = (Vector(b) - Vector(a)).length; n = max(2, int(L / 0.16)); d = (Vector(b) - Vector(a)) / n; ang = math.atan2(d.y, d.x)
+        for i in range(n + 1):
+            p = Vector(a) + d * i; hh = 0.34 + random.uniform(-0.01, 0.01)
+            objs.append(box('ypicket', (0.07, 0.022, hh), (p.x, p.y, hh / 2), (0, 0, ang), m=random.choice(white), bevel=0.0))
+        for z in (0.1, 0.26): objs.append(box('yrail', (L, 0.02, 0.04), ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, z), (0, 0, ang), m=white[1], bevel=0.0))
+        for p in (a, b):
+            objs.append(box('ypost', (0.07, 0.07, 0.42), (p[0], p[1], 0.21), m=white[0], bevel=0.006, segs=1)); objs.append(sphere('ypostcap', 0.045, (p[0], p[1], 0.44), m=white[0], seg=8, rings=5))
+    run((x0, y0), (GX0, y0)); run((GX1, y0), (x1, y0)); run((x1, y0), (x1, y1)); run((x1, y1), (x0, y1)); run((x0, y1), (x0, y0))
+    # the gate, open inwards
+    g0 = Vector((GX1, y0, 0)); gd = Vector((-0.55, 0.52, 0)).normalized(); ang = math.atan2(gd.y, gd.x)
+    for i in range(5): p = g0 + gd * (0.08 + i * 0.15); objs.append(box('ypicket', (0.07, 0.022, 0.32), (p.x, p.y, 0.17), (0, 0, ang), m=white[0], bevel=0.0))
+    for z in (0.1, 0.26): p = g0 + gd * 0.38; objs.append(box('yrail', (0.72, 0.02, 0.04), (p.x, p.y, z), (0, 0, ang), m=white[1], bevel=0.0))
+    # the paths: pale gravel, a few pebbles
+    grav = C('ygravel', '#dccdaa', rough=0.95, var=0.06); peb = [C('ypeb%d' % i, h, rough=0.9) for i, h in enumerate(('#c9b993', '#e8dcc0', '#b7a784'))]
+    strips = [(x0 + 0.15, x1 - 0.15, y0 + 0.12, -0.92), (x0 + 0.15, 3.4, 0.86, 1.34), (2.55, 3.45, -0.92, y1 - 0.9), (x0 + 0.15, x0 + 0.62, -0.92, 0.86)]
+    for (a, b, c_, d_) in strips:
+        objs.append(box('ypath', (b - a, d_ - c_, 0.016), ((a + b) / 2, (c_ + d_) / 2, 0.008), m=grav, bevel=0.0))
+        for k in range(int((b - a) * (d_ - c_) * 14)): objs.append(sphere('ypebble', random.uniform(0.012, 0.022), (random.uniform(a, b), random.uniform(c_, d_), 0.016), (1, 1, 0.5), m=random.choice(peb), ico=1, seed=k))
+    # flowers along the back fence and by the gate
+    leaf = C('yleaf', '#4f8a3a', rough=0.8, var=0.06); cols = [C('yfl%d' % i, h, rough=0.6) for i, h in enumerate(('#e2557f', '#f4c430', '#fbf6ee', '#9c82d6', '#f08a3c'))]
+    spots = [(x, y1 - 0.2) for x in np_range(x0 + 0.3, x1 - 1.6, 0.34)] + [(x, y0 - 0.18) for x in np_range(x0 + 0.3, GX0 - 0.3, 0.4)] + [(x1 - 0.2, y) for y in np_range(y0 + 0.3, 1.2, 0.36)]
+    for k, (x, y) in enumerate(spots):
+        x += random.uniform(-0.05, 0.05); objs.append(sphere('yleafp', random.uniform(0.07, 0.1), (x, y, 0.07), (1, 1, 0.8), m=leaf, ico=1, disp=0.25, seed=k))
+        m = random.choice(cols)
+        for j in range(3): objs.append(sphere('yflower', 0.03, (x + random.uniform(-0.06, 0.06), y + random.uniform(-0.05, 0.05), random.uniform(0.13, 0.19)), m=m, ico=1))
+    return finish(objs, name)
+
+
+def np_range(a, b, step):
+    out = []; x = a
+    while x < b: out.append(x); x += step
+    return out
+
+
+def potting_shed_v(name='potting_shed', seed=175):
+    """A little potting shed in the garden's back corner: sage boards, a tiled roof, a stable door ajar, a window with a
+    flower box, pots and a sack by it."""
+    random.seed(seed); objs = []
+    X, Y = 3.9, 2.62; W, D, H, PK = 1.1, 0.95, 0.95, 1.38
+    sage = [C('pssage%d' % i, h, rough=0.75, var=0.05) for i, h in enumerate(('#8fb08f', '#84a685', '#9bb99a'))]; white = C('pswhite', '#f3f0e6', rough=0.6)
+    tile = [C('pstile%d' % i, h, rough=0.75, var=0.08) for i, h in enumerate(('#c9683e', '#d67a4a', '#b85a34'))]; glass = C('psglass', '#34516b', rough=0.1, spec=0.9); dark = C('psdark', '#2e2622', rough=0.9)
+    objs.append(box('psbody', (W, D, H), (X, Y, H / 2), m=sage[1], bevel=0.01, segs=1))
+    n = 9
+    for i in range(n): objs.append(box('psboard', (W / n * 0.92, 0.02, H - 0.04), (X - W / 2 + (i + 0.5) * W / n, Y - D / 2 - 0.008, H / 2), m=random.choice(sage), bevel=0.0))
+    for i in range(8): objs.append(box('psboard', (0.02, D / 8 * 0.92, H - 0.04), (X - W / 2 - 0.008, Y - D / 2 + (i + 0.5) * D / 8, H / 2), m=random.choice(sage), bevel=0.0))
+    for sx in (-1, 1):                             # the gables
+        me = bpy.data.meshes.new('psgable'); bm = bmesh.new(); xx = X + sx * W / 2
+        vs = [bm.verts.new((xx, Y - D / 2, H)), bm.verts.new((xx, Y + D / 2, H)), bm.verts.new((xx, Y, PK - 0.05))]
+        bm.faces.new(vs if sx > 0 else vs[::-1]); bm.to_mesh(me); bm.free(); o = link(bpy.data.objects.new('psgable', me)); setmat(o, sage[0]); objs.append(o)
+    for sy in (-1, 1):                             # the roof: rows of tiles
+        for r in range(5):
+            t = (r + 0.5) / 5; y = Y + sy * (D / 2 + 0.1) * (1 - t) ; z = H - 0.04 + (PK - H + 0.04) * t
+            for i in range(8):
+                x = X - W / 2 - 0.08 + (i + 0.5 + (0.5 if r % 2 else 0)) * (W + 0.16) / 8
+                if x > X + W / 2 + 0.1: continue
+                o = box('pstile', ((W + 0.16) / 8 * 0.94, 0.17, 0.022), (x, y, z + 0.02), (math.radians(-sy * 40), 0, 0), m=random.choice(tile), bevel=0.0); objs.append(o)
+    objs.append(cyl('psridge', 0.035, W + 0.2, (X, Y, PK + 0.02), (0, math.radians(90), 0), m=tile[2], verts=8, bevel=0.0))
+    # the door (front, -y), its top half ajar; a window on the side that's seen (-x)
+    DX = X + 0.18
+    objs.append(box('psdoorway', (0.36, 0.02, 0.7), (DX, Y - D / 2 - 0.012, 0.36), m=dark, bevel=0.0))
+    objs.append(box('psdoor', (0.34, 0.025, 0.33), (DX, Y - D / 2 - 0.022, 0.185), m=white, bevel=0.004, segs=1))
+    objs.append(box('psdoor', (0.34, 0.025, 0.33), (DX - 0.14, Y - D / 2 - 0.13, 0.535), (0, 0, math.radians(-65)), m=white, bevel=0.004, segs=1))
+    objs.append(box('pswin', (0.02, 0.34, 0.3), (X - W / 2 - 0.02, Y, 0.58), m=glass, bevel=0.0))
+    for (dy, dz, sy_, sz_) in ((0, 0.16, 0.4, 0.03), (0, -0.16, 0.4, 0.03), (-0.185, 0, 0.03, 0.34), (0.185, 0, 0.03, 0.34), (0, 0, 0.02, 0.3)):
+        objs.append(box('pswframe', (0.03, sy_, sz_), (X - W / 2 - 0.028, Y + dy, 0.58 + dz), m=white, bevel=0.0))
+    objs.append(box('psbox', (0.09, 0.42, 0.07), (X - W / 2 - 0.06, Y, 0.37), m=C('psboxw', '#6d4a31', rough=0.85), bevel=0.006, segs=1))
+    leaf = C('yleaf', '#4f8a3a', rough=0.8, var=0.06)
+    for k in range(5):
+        y = Y - 0.16 + k * 0.08; objs.append(sphere('yleafp', 0.035, (X - W / 2 - 0.06, y, 0.42), m=leaf, ico=1, disp=0.2, seed=k)); objs.append(sphere('yflower', 0.024, (X - W / 2 - 0.07, y, 0.455), m=C('yfl%d' % (k % 2), ('#e2557f', '#f4c430')[k % 2], rough=0.6), ico=1))
+    terra = C('psterra', '#b0603a', rough=0.8)
+    for k, (dx, dy, r) in enumerate(((-0.42, -0.62, 0.06), (-0.3, -0.7, 0.045), (-0.5, -0.74, 0.04))): objs.append(cyl('pspot', r * 0.8, r * 1.6, (X + dx, Y + dy, r * 0.8), m=terra, verts=10, r2=r, bevel=0.0))
+    objs.append(sphere('pssack', 0.11, (X + 0.45, Y - 0.64, 0.1), (1, 0.8, 1.1), m=C('pssackc', '#cdb98a', rough=0.95, var=0.05), ico=1, disp=0.15, seed=4))
+    return finish(objs, name)
