@@ -8288,13 +8288,27 @@ function clearDecorWalkers(it) {
 // honey, and the jars fly to the coins, sold
 const FIELD = { f: [{ shown: '', hold: null, bub: null }, { shown: '', hold: null, bub: null }], work: null, hbub: null, frame: null, frameOn: false, honey: false };      // (f: each field's own, the second once bought, 12 Nov 2026)
 const WID = ['wheat', 'wheat2'];
+// (16 Nov 2026, Audrey, a ripe bed at night: "Lettuces are ready but don't glow"): gold stars that shine by themselves
+// (unlit, so by night too) and twinkle, floating over a ready bed or field; n of them over a patch w by d, at height y
+const GLOWS = []; let GLOW_TEX = null;
+function glowStars(n, w, d, y, size = 0.2) {
+  if (!GLOW_TEX) { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,250,200,1)'); g.addColorStop(0.25, 'rgba(255,225,110,0.75)'); g.addColorStop(1, 'rgba(255,210,80,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    x.fillStyle = '#fffbe0'; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, r = k % 2 ? 5 : 30; x.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r); } x.closePath(); x.fill();
+    GLOW_TEX = new THREE.CanvasTexture(c); GLOW_TEX.colorSpace = THREE.SRGBColorSpace; }
+  const g = new THREE.Group();
+  for (let k = 0; k < n; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW_TEX, transparent: true, depthWrite: false, toneMapped: false, fog: false }));
+    s.position.set((((k * 0.618) % 1) - 0.5) * w, y + ((k * 0.37) % 1) * 0.18, (((k * 0.414 + 0.2) % 1) - 0.5) * d); s.userData.g = [size * (0.75 + ((k * 0.53) % 1) * 0.5), k * 1.7]; s.renderOrder = 5; g.add(s); GLOWS.push(s); }
+  return g;
+}
+function tickGlows() { const t = performance.now() / 1000; for (const s of GLOWS) { const [z, ph] = s.userData.g, u = 0.5 + 0.5 * Math.sin(t * 2.6 + ph); s.material.opacity = 0.35 + 0.65 * u; s.scale.setScalar(z * (0.7 + 0.5 * u)); } }
 // a field's or a bed's little marker (garden3.glb): a model's meshes in a group
 function markerOf(name) { const g = new THREE.Group(); if (parts[name]) for (const m of meshesOf(parts[name])) { nightGrade(m.material); const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; g.add(k); } return g; }
 // the wheat fields' markers (a basket when ripe, a seed packet when free) and the second field's place while it's still wild
 function wheatMarks() {
   if (!parts.field_free) return;
   for (const k of [0, 1]) { const it = DEC.items[WID[k]]; if (!it) continue;
-    if (!it.group.userData.marks) { const M = it.group.userData.marks = { ripe: markerOf('field_ready'), soil: markerOf('field_free') }; it.group.add(M.ripe, M.soil); }
+    if (!it.group.userData.marks) { const M = it.group.userData.marks = { ripe: markerOf('field_ready'), soil: markerOf('field_free') }; M.ripe.add(glowStars(9, 4.0, 2.0, 0.75, 0.3)); it.group.add(M.ripe, M.soil); }
     const M = it.group.userData.marks, st = FIELD.f[k].hold || game.wheatStage(undefined, k); for (const [s, g] of Object.entries(M)) if (g.visible !== (st === s)) { g.visible = st === s; wake(300); } }
   const wild = !game.wheat(1);
   if (wild && !FIELD.wild) { const F = FIXED.wheat2, g = FIELD.wild = markerOf('field_wild'); g.matrixAutoUpdate = false; g.matrix.copy(place(F.x, 0, F.z, F.deg, 1)); scene.add(g); renderer.shadowMap.needsUpdate = true; wake(300); }
@@ -8483,7 +8497,7 @@ function gardenBeds(g) {
       for (const o of gardenBedAlone()) { nightGrade(o.material); const k = new THREE.Mesh(o.geometry, o.material); k.matrixAutoUpdate = false; k.matrix.copy(o.matrix); k.castShadow = true; k.receiveShadow = true; B.frame.add(k); }
     }
     for (const k of CROP_IDS) { B.sign[k] = gardenPiece('garden_sign_' + k, i, g); B.crop[k] = [1, 2, 3].map(st => gardenPiece('garden_' + k + '_' + st, i, g)); }
-    B.wild = gardenPiece('garden_wild', i, g); B.ready = gardenPiece('garden_ready', i, g); B.free = gardenPiece('garden_free', i, g);      // (not yours yet; ready to pick; free to sow)
+    B.wild = gardenPiece('garden_wild', i, g); B.ready = gardenPiece('garden_ready', i, g); B.free = gardenPiece('garden_free', i, g); B.ready.add(glowStars(5, 0.6, 1.2, 0.42));      // (not yours yet; ready to pick; free to sow)
     if (i === 0) for (const nm of ['garden_yard', 'potting_shed']) { const y = gardenPiece(nm, 0, g); y.position.set(0, 0, 0); y.visible = true; }
     return B;
   });
@@ -8699,6 +8713,7 @@ function honeyFrame() {
 }
 // the field's sign and the honey pot: placed each frame (game bubbles), their words when they change
 function fieldBubbles(w, h) {
+  tickGlows();
   const mk = (cls, onTap) => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub ' + cls; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); onTap(); }); document.body.append(e); return e; };
   for (const k of [0, 1]) if (!FIELD.f[k].bub) FIELD.f[k].bub = mk('gwheat gquiet', () => wheatTap(k));      // (16 Nov 2026, Audrey: "trop de notifications sur les parcelles": not shown any more; a basket or a seed packet stands at the field instead)
   if (!FIELD.hbub) FIELD.hbub = mk('ghoney', () => honeyTap());
