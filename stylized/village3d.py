@@ -2439,27 +2439,21 @@ def lock_sign_v(name='lock_sign', s=1.0):
 
 
 def garden_wild_v(name='garden_wild', seed=171):
-    """A bed still to unlock, in its own frame: gone to weeds (long grass, a dock, dandelions, a bramble), a padlock sign at its front."""
+    """A bed still to unlock, in its own frame (16 Nov 2026, Audrey: "it's not clear enough the beds that are still locked.
+    Can you change the herbs for something more obvious"): covered with a canvas sheet roped down, a big gold padlock lying
+    on top of it (it reads from above), a padlock sign at its front."""
     random.seed(seed); objs = []; Z = GARDEN_SOIL; W, D = GARDEN_BED
-    grass = [C('gwgrass%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#7fa64a', '#93b457', '#6c9440', '#a9b866'))]
-    for k in range(60):
-        x = random.uniform(-W / 2 + 0.07, W / 2 - 0.07); y = random.uniform(-D / 2 + 0.07, D / 2 - 0.07); a = random.uniform(0, math.tau)
-        ribbon_leaf(objs, 'gwblade', (x, y, Z), (math.cos(a) * 0.35, math.sin(a) * 0.35, 1), random.uniform(0.12, 0.3), 0.012, random.choice(grass), up=1.2)
-    dock = C('gwdock', '#4f7f3a', rough=0.75, var=0.05); yel = C('gwdand', '#f2c62e', rough=0.6); wht = C('gwclock', '#f4f1e6', rough=0.8); bram = C('gwbramble', '#3f6a33', rough=0.8, var=0.06)
-    for (x, y) in ((-0.18, 0.3), (0.2, -0.25)):
-        for k in range(6):
-            a = k / 6 * math.tau + random.uniform(-0.3, 0.3); q = Vector((math.cos(a), math.sin(a), 0.45)).normalized().to_track_quat('Y', 'Z')
-            objs.append(flat_leaf('gwdockleaf', (x, y, Z + 0.01), q, random.uniform(0.14, 0.2), 0.045, dock, shape='heart', both=True, fold=0.006))
-    for (x, y, m) in ((0.1, 0.45, yel), (-0.22, -0.1, yel), (0.24, 0.12, wht), (-0.05, -0.5, yel)):
-        h = random.uniform(0.1, 0.18); objs.append(cyl('gwstem', 0.005, h, (x, y, Z + h / 2), m=grass[2], verts=5, bevel=0.0))
-        objs.append(sphere('gwflower', 0.026, (x, y, Z + h + 0.01), (1, 1, 0.6 if m is yel else 1), m=m, ico=1))
-    for k in range(5): objs.append(sphere('gwbramble', random.uniform(0.06, 0.09), (random.uniform(-0.25, 0.25), 0.25 + random.uniform(-0.3, 0.35), Z + random.uniform(0.04, 0.1)), (1, 1, 0.7), m=bram, ico=1, disp=0.3, seed=k + 3))
-    # its sign, at the front
-    stake = C('gsstake', '#8a5d3a', rough=0.85); board = C('gsboard', '#efe4c8', rough=0.8, var=0.03)
-    X, Y = 0.0, -D / 2 - 0.1
-    objs.append(box('gwstake', (0.022, 0.022, 0.3), (X, Y + 0.012, 0.15), m=stake, bevel=0.0))
-    objs.append(box('gwboard', (0.16, 0.014, 0.13), (X, Y, 0.32), m=board, bevel=0.004, segs=1))
-    _padlock(objs, (X, Y - 0.01, 0.32), 1.0, (0, -1, 0))
+    canvas = C('gwcanvas', '#c9c2ad', rough=0.95, var=0.05); canvas2 = C('gwcanvas2', '#b8b09a', rough=0.95, var=0.05); rope = C('gwrope', '#7a6248', rough=0.9)
+    objs.append(box('gwsheet', (W + 0.06, D + 0.06, 0.05), (0, 0, Z + 0.075), m=canvas, bevel=0.02, segs=2))
+    objs.append(box('gwskirt', (W + 0.08, D + 0.08, 0.1), (0, 0, Z + 0.02), m=canvas2, bevel=0.01, segs=1))
+    for y in (-D / 4, D / 4): objs.append(box('gwrope', (W + 0.1, 0.022, 0.022), (0, y, Z + 0.105), m=rope, bevel=0.0))
+    objs.append(box('gwrope', (0.022, D + 0.1, 0.022), (0, 0, Z + 0.105), m=rope, bevel=0.0))
+    gold = C('lkgold', '#e9b53a', rough=0.35, metal=0.5); steel = C('lksteel', '#9aa3aa', rough=0.3, metal=0.8); dark = C('lkdark', '#3a2f28', rough=0.8)
+    zt = Z + 0.125                                   # the padlock, flat on top: its body towards the front, its shackle behind
+    objs.append(box('lkbody', (0.3, 0.22, 0.05), (0, -0.1, zt), m=gold, bevel=0.012, segs=2))
+    for sx in (-1, 1): objs.append(box('lkarm', (0.045, 0.17, 0.04), (sx * 0.085, 0.09, zt), m=steel, bevel=0.0))
+    objs.append(box('lktop', (0.215, 0.045, 0.04), (0, 0.19, zt), m=steel, bevel=0.0))
+    objs.append(cyl('lkhole', 0.035, 0.012, (0, -0.08, zt + 0.026), m=dark, verts=10, bevel=0.0)); objs.append(box('lkhole2', (0.03, 0.07, 0.012), (0, -0.14, zt + 0.026), m=dark, bevel=0.0))
     return finish(objs, name)
 
 

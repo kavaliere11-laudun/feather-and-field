@@ -1352,6 +1352,11 @@ export class GameUI {
   }
   // ---- the wheat field (tapped, not ripe): how far it's grown and when it's ripe, what it gives, the grain in store; Sow
   // (h.sow) or, ripe, Harvest (h.harvest); Move the field (h.move)
+  wheat2Sheet(h) {      // (the second wheat field, not yours yet, 16 Nov 2026: its own card)
+    const g = this.g, nx = g.wheatNext(), b = this.open('wheat', '🔒 ' + this.t('wheat2_more_t')), fmt = n => n.toLocaleString(g.locale()); this.bird = null; if (!nx) return;
+    if (nx.locked) b.append(el('p', 'gtext', this.t('bed_more_lv', { l: nx.level, c: fmt(nx.price) })));
+    else { const go = el('button', 'gbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'wheat2_more_broke' : 'wheat2_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buywheat = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); b.append(go); }
+  }
   wheatSheet(h, k = 0) {      // (k: 1 the second field, once bought, 12 Nov 2026)
     const g = this.g, st = g.wheatStage(undefined, k), b = this.open('wheat', this.t(k ? 'wheat2_title' : 'wheat_title'));
     this.bird = null;
@@ -1382,7 +1387,14 @@ export class GameUI {
   // there (the words for it)
   gardenSheet(h, o = {}) {
     // (o.only: one bed's own card, 12 Nov 2026, Audrey: "They are grouped under 1 entry while really it should be 1 per bed")
-    const g = this.g, one = Number.isInteger(o.only) && g.garden().beds[o.only] ? o.only : null, B = g.vegBasket(), fmt = n => n.toLocaleString(g.locale());
+    const g = this.g, nbeds = g.garden().beds.length, fmt = n => n.toLocaleString(g.locale());
+    if (Number.isInteger(o.only) && o.only >= nbeds && o.only < GARDEN.beds + GARDEN.more.length) {      // (a bed not yours yet, 16 Nov 2026: its own card: its level, its price; the next one: to buy)
+      const i = o.only, m = GARDEN.more[i - GARDEN.beds], b = this.open('garden', '🔒 ' + this.t('bed_n', { n: i + 1 })), nx = g.bedNext(); this.bird = null;
+      if (nx && nx.n === i + 1 && !nx.locked) { const go = el('button', 'gbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'bed_more_broke' : 'bed_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buybed = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); b.append(go); }
+      else b.append(el('p', 'gtext', this.t('bed_more_lv', { l: m.level, c: fmt(m.price) })));
+      return;
+    }
+    const one = Number.isInteger(o.only) && g.garden().beds[o.only] ? o.only : null, B = g.vegBasket();
     const b = this.open('garden', '🥕 ' + (one === null ? this.t('garden_title') : this.t('bed_n', { n: one + 1 })));
     this.bird = null;
     if (one === null) b.append(el('p', 'gnote', this.t('garden_how')));

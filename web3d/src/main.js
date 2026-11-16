@@ -4873,14 +4873,15 @@ function tapAt(x, y) {
     // decoration or the wheat field in front of it: theirs (the field's card, or the harvest; the hives' honey)
     const hd = GAME_MODE && game.data && farmhouseAt(ray.ray) ? farmhouseAt.dist : Infinity;
     if (GAME_MODE && game.data && game.ordersOpen() && stallAt(ray.ray) && stallAt.dist < hd && !(gdc && gdd < stallAt.dist)) { ordersSheet(); return; }      // (the farm stall: the village orders)
-    if (GAME_MODE && game.data && !game.data.wheat2 && !(gdc && gdd < hd)) { const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3()); if (gp && Math.abs(gp.x - FIXED.wheat2.x) < 2.3 && Math.abs(gp.z - FIXED.wheat2.z) < 1.3) { wheatTap(0); return; } }      // (the second wheat field, still wild: the first one's card offers it)
+    if (GAME_MODE && game.data && !game.data.wheat2 && !(gdc && gdd < hd)) { const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), new THREE.Vector3()); if (gp && Math.abs(gp.x - FIXED.wheat2.x) < 2.3 && Math.abs(gp.z - FIXED.wheat2.z) < 1.3) { holdBird(null); henOff(); gameUI.wheat2Sheet({ buy: () => buyWheat() }); return; } }      // (the second wheat field, still wild: the first one's card offers it)
     if (gdc && gdd < hd) {
       if (gdc.model === 'wheat' || gdc.model === 'wheat2') { wheatTap(gdc.model === 'wheat2' ? 1 : 0); return; }
       if (gdc.model === 'garden') {      // (the bed under the finger: its own card; between them or beside: the garden's)
         const it = DEC.items.garden, gp = it && ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.15), new THREE.Vector3());
-        let bi = -1; if (gp) { gp.applyMatrix4(new THREE.Matrix4().copy(it.d.m).invert()); let bd = 0.42; GARDEN_BEDX.forEach((x, i) => { const d = Math.abs(gp.x - x); if (d < bd && Math.abs(gp.z - GARDEN_BEDZ[i]) < 1.0) { bd = d; bi = i; } }); }
+        let bi = -1; if (gp) { gp.applyMatrix4(new THREE.Matrix4().copy(it.d.m).invert()); let bd = Infinity; GARDEN_BEDX.forEach((x, i) => { const d = Math.hypot(gp.x - x, (gp.z - GARDEN_BEDZ[i]) * 0.6); if (d < bd) { bd = d; bi = i; } }); }      // (the nearest bed, always: one bed's own card, never the whole garden's, 16 Nov 2026)
         if (!game.gardenOpen()) { hint(game.t('garden_wild', { n: GARDEN.level })); return; }
         if (bi >= 0 && game.data.garden && game.data.garden.beds[bi]) { if (game.bedStage(bi) === 'ripe' && pickBed(bi)) return; holdBird(null); henOff(); gardenCard(bi); return; }
+        if (bi >= 0) { holdBird(null); henOff(); gardenCard(bi); return; }      // (a bed not yours yet: its own card)
         gardenTap(); return;
       }
       if (gdc.model === 'bandstand' && decorLife) decorLife.play();
@@ -7362,7 +7363,7 @@ function startMove(p, grow) {
   // for one of yours being moved, the roomiest of the other spots: where it stands may be the only one with room for more,
   // and a coop that may only go where its bigger pen fits, 10 Nov 2026, could then never be moved at all)
   const near = placeSpots(p.gc.breed, 8, MOVE.at).map(o => o.t);
-  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : p.draft ? Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...near) : Math.max(t0, ...near));
+  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : p.draft ? Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...near) : Math.max(t0, ...near));      // (16 Nov 2026, Audrey: "I should not be able to put a coop on a place where there is not enough room for the deluxe from the start": tried (: 4), and held: of the forty fields, eleven have no spot at all where a Deluxe garden fits (_scan3.mjs), a new coop would have nowhere to go; the fields are to be made wider first)
   // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
   const ghost = new THREE.Group();
   for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
@@ -8497,7 +8498,10 @@ function gardenBeds(g) {
       for (const o of gardenBedAlone()) { nightGrade(o.material); const k = new THREE.Mesh(o.geometry, o.material); k.matrixAutoUpdate = false; k.matrix.copy(o.matrix); k.castShadow = true; k.receiveShadow = true; B.frame.add(k); }
     }
     for (const k of CROP_IDS) { B.sign[k] = gardenPiece('garden_sign_' + k, i, g); B.crop[k] = [1, 2, 3].map(st => gardenPiece('garden_' + k + '_' + st, i, g)); }
-    B.wild = gardenPiece('garden_wild', i, g); B.ready = gardenPiece('garden_ready', i, g); B.free = gardenPiece('garden_free', i, g); B.ready.add(glowStars(5, 0.6, 1.2, 0.42));      // (not yours yet; ready to pick; free to sow)
+    B.wild = gardenPiece('garden_wild', i, g); B.ready = gardenPiece('garden_ready', i, g); B.free = gardenPiece('garden_free', i, g); B.ready.add(glowStars(5, 0.6, 1.2, 0.42));
+    // (16 Nov 2026, Audrey: the little signs "a bit bigger so you immediately know what's in there. Same way, make it obvious when the bed is available and empty")
+    const big = (g, s, px, pz) => { g.scale.setScalar(s); g.position.set(GARDEN_BEDX[i] + px * (1 - s), 0.16 * (1 - s), GARDEN_BEDZ[i] + pz * (1 - s)); };
+    for (const k of CROP_IDS) big(B.sign[k], 2.0, 0.22, 0.65); big(B.free, 2.6, 0, 0.63);      // (not yours yet; ready to pick; free to sow)
     if (i === 0) for (const nm of ['garden_yard', 'potting_shed']) { const y = gardenPiece(nm, 0, g); y.position.set(0, 0, 0); y.visible = true; }
     return B;
   });
@@ -9786,7 +9790,7 @@ window.__farm = {
   turnView: deg => turnView(deg * DEG), viewAz: () => view.az / DEG, setViewAz: deg => setViewAz(deg * DEG), viewEl: () => view.el / DEG, tiltView: px => tiltView(px), viewTurning: () => !!viewTurn, compass: () => compassEl && !compassEl.hidden,
   tintCoop: (i, col) => { plots.filter(p => p.kind === 'coop')[i].col = col; batchCoops(); },       // (pictures: a test page coop in a Silkie colour)
   lookFree: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; applyGrass(); placeCamera(); wake(500); },      // (pictures: past the map's edge too)
-  plan: () => V, THREE,
+  plan: () => V, THREE, toScreen: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [(v.x + 1) / 2 * canvas.clientWidth, (1 - v.y) / 2 * canvas.clientHeight]; },      // (tests: where a place on the farm is on the screen)
   words: () => ({ text: { en: TEXT.en, fr: TEXT.fr }, textF: { en: TEXT_F.en, fr: TEXT_F.fr }, reg: registered(), pers: Object.fromEntries(Object.entries(PERS_WORDS).map(([k, v]) => [k, { name: v.name, line: v.line, ...(v.duck ? { duck: v.duck } : {}), ...(v.pea ? { pea: v.pea } : {}) }])) }),      // (the translation catalogue: lang/catalogue.mjs)
   sound: () => sound, henHeard: () => henHeard(),            // (the music and the hens: sound.info(), and tests may set its times)
   act: (type, left) => { for (const b of allBirds) { b.act = { type, left: left || 2, leg: 0 }; b.wait = Math.max(b.wait, left || 2); } },
