@@ -2484,7 +2484,7 @@ def garden_yard_v(name='garden_yard', seed=173):
     for z in (0.1, 0.26): p = g0 + gd * 0.38; objs.append(box('yrail', (0.72, 0.02, 0.04), (p.x, p.y, z), (0, 0, ang), m=white[1], bevel=0.0))
     # the paths: pale gravel, a few pebbles
     grav = C('ygravel', '#dccdaa', rough=0.95, var=0.06); peb = [C('ypeb%d' % i, h, rough=0.9) for i, h in enumerate(('#c9b993', '#e8dcc0', '#b7a784'))]
-    strips = [(x0 + 0.15, x1 - 0.15, y0 + 0.12, -0.92), (x0 + 0.15, 3.4, 0.86, 1.34), (2.55, 3.45, -0.92, y1 - 0.9), (x0 + 0.15, x0 + 0.62, -0.92, 0.86)]
+    strips = []                                   # (16 Nov, Audrey: "Les pavés sont pas consistants peut être juste les enlever": no paths, the grass)
     for (a, b, c_, d_) in strips:
         objs.append(box('ypath', (b - a, d_ - c_, 0.016), ((a + b) / 2, (c_ + d_) / 2, 0.008), m=grav, bevel=0.0))
         for k in range(int((b - a) * (d_ - c_) * 14)): objs.append(sphere('ypebble', random.uniform(0.012, 0.022), (random.uniform(a, b), random.uniform(c_, d_), 0.016), (1, 1, 0.5), m=random.choice(peb), ico=1, seed=k))
@@ -2542,4 +2542,44 @@ def potting_shed_v(name='potting_shed', seed=175):
     terra = C('psterra', '#b0603a', rough=0.8)
     for k, (dx, dy, r) in enumerate(((-0.42, -0.62, 0.06), (-0.3, -0.7, 0.045), (-0.5, -0.74, 0.04))): objs.append(cyl('pspot', r * 0.8, r * 1.6, (X + dx, Y + dy, r * 0.8), m=terra, verts=10, r2=r, bevel=0.0))
     objs.append(sphere('pssack', 0.11, (X + 0.45, Y - 0.64, 0.1), (1, 0.8, 1.1), m=C('pssackc', '#cdb98a', rough=0.95, var=0.05), ico=1, disp=0.15, seed=4))
+    return finish(objs, name)
+
+
+# (16 Nov 2026, Audrey: "Il faut trouver un truc subtil pour notifier que c'est prêt pour la récolte ou que le champ est dispo
+# pour être semé"; her choice: "Petits objets posés"): ready to pick: a little wicker basket at the bed's front, a few gold
+# sparkles over it; free to sow: a seed packet on a stick. In a bed's own frame; s: bigger for the wheat field's.
+def garden_ready_v(name='garden_ready', s=1.0, y=None):
+    random.seed(sum(map(ord, name))); objs = []; Y = (-GARDEN_BED[1] / 2 - 0.16) if y is None else y
+    wick = C('grwicker', '#c79a5b', rough=0.85, var=0.08); wickd = C('grwickerd', '#a67c43', rough=0.85); gold = C('grspark', '#ffd95a', rough=0.3, metal=0.3)
+    objs.append(cyl('grbasket', 0.075 * s, 0.09 * s, (0, Y, 0.045 * s), m=wick, verts=12, r2=0.095 * s, bevel=0.0))
+    objs.append(cyl('grrim', 0.1 * s, 0.016 * s, (0, Y, 0.094 * s), m=wickd, verts=12, bevel=0.0))
+    for k in range(7):
+        a = math.pi * k / 7; a1 = math.pi * (k + 1) / 7; r = 0.092 * s
+        objs.append(plank('grhandle', (math.cos(a) * r, Y, 0.094 * s + math.sin(a) * r * 1.15), (math.cos(a1) * r, Y, 0.094 * s + math.sin(a1) * r * 1.15), 0.016 * s, 0.012 * s, (0, -1, 0), wickd, jitter=0.0, bevel=0.0))
+    for (dx, dz, r) in ((-0.13, 0.2, 0.028), (0.12, 0.27, 0.022), (0.02, 0.36, 0.034), (-0.07, 0.31, 0.016), (0.15, 0.15, 0.016)):
+        for rot in (0, math.radians(90)): objs.append(box('grspark', (r * 2.2 * s, 0.006, r * 0.5 * s), (dx * s, Y - 0.01, dz * s), (0, rot + math.radians(45) * 0, 0), m=gold, bevel=0.0))
+    return finish(objs, name)
+
+
+def garden_free_v(name='garden_free', s=1.0, y=None):
+    random.seed(sum(map(ord, name))); objs = []; Y = (-GARDEN_BED[1] / 2 + 0.12) if y is None else y
+    stake = C('gsstake', '#8a5d3a', rough=0.85); paper = C('gfpaper', '#fbf3dc', rough=0.8); green = C('gfgreen', '#5fa544', rough=0.7); band = C('gfband', '#e9b53a', rough=0.6)
+    Z = GARDEN_SOIL if y is None else 0.0
+    objs.append(box('gfstake', (0.014 * s, 0.014 * s, 0.2 * s), (0, Y + 0.008, Z + 0.1 * s), m=stake, bevel=0.0))
+    objs.append(box('gfpacket', (0.09 * s, 0.012, 0.12 * s), (0, Y, Z + 0.2 * s), (math.radians(-10), 0, math.radians(4)), m=paper, bevel=0.003, segs=1))
+    objs.append(box('gfband', (0.092 * s, 0.014, 0.025 * s), (0, Y - 0.002, Z + 0.245 * s), (math.radians(-10), 0, math.radians(4)), m=band, bevel=0.0))
+    for sd in (-1, 1): objs.append(box('gfleaf', (0.03 * s, 0.014, 0.014 * s), (sd * 0.014 * s, Y - 0.006, Z + 0.2 * s), (0, sd * math.radians(-35), 0), m=green, bevel=0.0))
+    objs.append(box('gfstem', (0.008 * s, 0.014, 0.035 * s), (0, Y - 0.006, Z + 0.178 * s), m=green, bevel=0.0))
+    return finish(objs, name)
+
+
+def field_wild_v(name='field_wild', seed=177):
+    """A wheat field still to unlock (4.4 x 2.4 m): long grass, docks and brambles over it, a padlock sign at its front."""
+    random.seed(seed); objs = []
+    grass = [C('gwgrass%d' % i, h, rough=0.8, var=0.06) for i, h in enumerate(('#7fa64a', '#93b457', '#6c9440', '#a9b866'))]; bram = C('gwbramble', '#3f6a33', rough=0.8, var=0.06); yel = C('gwdand', '#f2c62e', rough=0.6)
+    for k in range(420):
+        x = random.uniform(-2.15, 2.15); y = random.uniform(-1.15, 1.15); a = random.uniform(0, math.tau)
+        ribbon_leaf(objs, 'gwblade', (x, y, 0.0), (math.cos(a) * 0.35, math.sin(a) * 0.35, 1), random.uniform(0.18, 0.42), 0.022, random.choice(grass), up=1.2)
+    for k in range(14): objs.append(sphere('gwbramble', random.uniform(0.12, 0.2), (random.uniform(-2, 2), random.uniform(-1, 1), random.uniform(0.06, 0.12)), (1, 1, 0.7), m=bram, ico=1, disp=0.3, seed=k + 3))
+    for k in range(16): objs.append(sphere('gwflower', 0.035, (random.uniform(-2, 2), random.uniform(-1, 1), random.uniform(0.2, 0.34)), (1, 1, 0.6), m=yel, ico=1))
     return finish(objs, name)
