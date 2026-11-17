@@ -53,7 +53,7 @@ const doJob = async k => p.evaluate(k => {
   if (k === 'eggs') { const c = g.data.coops[0]; c.eggs = 12; g.save(); f.collectAt(0); }
   if (k === 'cuddle') { for (const b of g.data.birds) { b.happy = 0; } g.save(); for (const b of g.data.birds.slice(0, 3)) { free(); f.gameUI().o.cuddle(b.id); } }
   if (k === 'feed') { const c = g.data.coops[0]; c.feed = 0; c.fedAt = window.__T; g.data.coins += 50; g.save(); f.fillFeeder(0); }
-  if (k === 'show') { f.showsSheet(); document.querySelector('.gshow .gbtn').click(); }
+  if (k === 'show') { f.showsSheet(); document.querySelector('.gshow .gbtn').click(); const sk = document.querySelector('.groom [data-groom=skip]'); if (sk) sk.click(); }      // (entered as she is: the grooming game skipped)
 }, k);
 const before = await jobs();
 for (const [k] of before.list) { await doJob(k); await run(0.3); }

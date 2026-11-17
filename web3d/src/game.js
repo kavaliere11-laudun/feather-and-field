@@ -104,6 +104,7 @@ export const TEXT = {
     up_pea_deluxe: 'White marble inlaid with flowers, a white and gold dome, four slender minarets, a marble pool with a fountain, a marble basin of sand, porcelain cups to ring and the biggest garden, with white pickets and roses.',
     up_next_l: 'Next look', upic_mended: '🥚 More eggs', upic_snug: '🥚 Eggs every day', upic_cosy: '🥚 Evening eggs · 🐣 better chicks', upic_deluxe: '🥚 More evening eggs · 🐣 better chicks', cuddle_short: '♥ Cuddle all', cuddle_in: '♥ in {when}', cuddle_sleep: '♥ In the morning', inside_short: 'Look inside', theme_winter_l: '❄️ Winter', theme_in: 'Move in', theme_out: 'Move out',
     fish_full: 'Bag full', tin_tomorrow: 'Tomorrow',
+    groom_title: 'Getting {name} ready', groom_wash: 'Wash', groom_brush: 'Brush', groom_shine: 'Shine', groom_tip_wash: 'Rub the feathers to wash', groom_tip_brush: 'Swipe from head to tail', groom_tip_shine: 'Tap the sparkles', groom_ready: 'Show-ready', groom_chance: 'Chance of a rosette', groom_go: 'Off to the show · {fee}', groom_skip: 'Enter without grooming', groom_done: 'All ready!',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -465,6 +466,7 @@ export const TEXT = {
     up_pea_deluxe: 'En marbre blanc incrusté de fleurs, un dôme blanc et or, quatre minarets élancés, un bassin de marbre et sa fontaine, une vasque de marbre pleine de sable, des tasses de porcelaine à faire chanter et le plus grand jardin, avec palissade blanche et roses.',
     up_next_l: 'Prochain style', upic_mended: '🥚 Plus d’œufs', upic_snug: '🥚 Des œufs chaque jour', upic_cosy: '🥚 Œufs du soir · 🐣 meilleurs poussins', upic_deluxe: '🥚 Plus d’œufs du soir · 🐣 meilleurs poussins', cuddle_short: '♥ Câliner tous', cuddle_in: '♥ dans {when}', cuddle_sleep: '♥ Demain matin', inside_short: 'À l’intérieur', theme_winter_l: '❄️ Hiver', theme_in: 'Emménager', theme_out: 'Repartir',
     fish_full: 'Sac plein', tin_tomorrow: 'Demain',
+    groom_title: 'On prépare {name}', groom_wash: 'Laver', groom_brush: 'Brosser', groom_shine: 'Faire briller', groom_tip_wash: 'Frottez les plumes pour laver', groom_tip_brush: 'Glissez de la tête à la queue', groom_tip_shine: 'Touchez les étincelles', groom_ready: 'Prête pour le concours', groom_chance: 'Chances de cocarde', groom_go: 'En route pour le concours · {fee}', groom_skip: 'Inscrire sans toilette', groom_done: 'Fin prête !',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -900,6 +902,7 @@ export const FIELDS = 40;
 // from level 12 the land comes a little faster than one field a level (field k: level k + 1 up to the twelfth, then
 // 12 + 18/28 of a level each, the last at level 29); the meadow's ten cost 11,000 to 20,000 coins)
 const TURNS = [0, 45, 90, 135, 180, 225, 270, 315];      // (the ways a coop can face: eighths of a turn since 10 Nov 2026 (main.js Turn); the save and the moves took quarter turns only till 16 Nov, so a coop turned an eighth was not kept)
+export const GROOM = { pts: 2, secs: 8 };      // (the grooming game before a show, 17 Nov 2026: up to 2 points (about ten in a hundred more chance at the most) in the judge's eyes for a bird perfectly got ready; each of its three parts lasts 8 seconds)
 export const landLevel = k => k < 12 ? k + 1 : 12 + Math.floor((k - 12) * 18 / 28);
 export const landMost = L => { let n = 0; while (n < FIELDS && landLevel(n) <= L) n++; return Math.max(1, n); };
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
@@ -1473,7 +1476,8 @@ export function checkFarm(d, now = Date.now()) {
     const T = SHOWS[e.id[0]], b = out.birds.find(x => x.id === e.bird), at = int(e.at, 0, now, -1), breed = showBreed(e.id);
     if (!b || L < T.level || at < showOpens(e.id) - TZ_SLACK || at >= showJudged(e.id) + TZ_SLACK || at < b.since || (breed && baseBreed(b.breed) !== breed)) continue;      // (a phone taken across time zones: a little slack)
     if (out.shows.in.some(x => x.id === e.id || x.bird === e.bird)) continue;
-    out.shows.in.push({ id: e.id, bird: e.bird, at });
+    const gr = int(e.g, 0, 100, 0);      // (how well she was groomed for it: 0 to 100)
+    out.shows.in.push({ id: e.id, bird: e.bird, at, ...(gr ? { g: gr } : {}) });
   }
   for (const r of Array.isArray(sh.res) ? sh.res.slice(-6) : []) {
     if (!r || typeof r.id !== 'string' || !showDay(r.id) || !out.birds.some(x => x.id === r.bird)) continue;
@@ -1819,11 +1823,12 @@ export class Game {
     return k === 'v' ? this.t(this.lang === 'fr' && /^[AEIOU]/.test(town) ? 'show_v2' : 'show_v', { town }) : k === 'c' ? this.t('show_c', { county: COUNTIES[Math.floor(hash01(id + '|county') * COUNTIES.length)] }) : this.t('show_n');
   }
   place(n, sexF = false) { return ordinal(this.lang, n, sexF); }
-  showScore(b, id) { const s = 50 + 9 * Math.min(MAX_STARS, this.expOf(b, showJudged(id)) / 100) + 2 * this.trustLevel(b); return b.pers === 'diva' ? s * 1.08 : s; }
+  // (17 Nov 2026, the grooming game: groom, 0 to 100, how well she was got ready: a few points more in the judge's eyes)
+  showScore(b, id, groom = 0) { const s = 50 + 9 * Math.min(MAX_STARS, this.expOf(b, showJudged(id)) / 100) + 2 * this.trustLevel(b) + GROOM.pts * Math.max(0, Math.min(100, groom || 0)) / 100; return b.pers === 'diva' ? s * 1.08 : s; }
   showLuck(id, birdId) { return (hash01(id + '|' + birdId + '|luck') * 2 - 1) * SHOW_LUCK; }
   // her chance of a rosette (and of 1st), over the luck of the day: each of the others beats her with the chance their spread gives
-  showChance(b, id) {
-    const T = SHOWS[id[0]], S = this.showScore(b, id), n = T.rivals; let ros = 0, win = 0;
+  showChance(b, id, groom = 0) {
+    const T = SHOWS[id[0]], S = this.showScore(b, id, groom), n = T.rivals; let ros = 0, win = 0;
     const C = (k) => { let c = 1; for (let i = 0; i < k; i++) c = c * (n - i) / (i + 1); return c; };
     for (let i = 0; i <= 40; i++) {
       const L = (i / 20 - 1) * SHOW_LUCK, p = 1 - normCdf((S + L - T.mean) / T.sd), q = 1 - p;
@@ -1846,11 +1851,12 @@ export class Game {
   }
   // the birds that could go in a show, best chance first
   showBirds(s) { return this.data.birds.filter(b => (!s.breed || baseBreed(b.breed) === s.breed) && !isDuck(b.breed) && !isPea(b.breed) && !this.showOf(b.id)).map(b => ({ b, ch: this.showChance(b, s.id) })).sort((x, y) => y.ch.rosette - x.ch.rosette || y.ch.win - x.ch.win); }
-  enterShow(id, birdId, now = Date.now()) {
+  enterShow(id, birdId, now = Date.now(), groom = 0) {
     const s = this.openShows(now).find(x => x.id === id), b = this.bird(birdId);
     if (!s || !b || this.canEnter(b, s) !== 'ok') return null;
     this.data.coins -= SHOWS[s.tier].fee;
-    this.shows().in.push({ id, bird: birdId, at: now });
+    const gr = Math.round(Math.max(0, Math.min(100, +groom || 0)));
+    this.shows().in.push({ id, bird: birdId, at: now, ...(gr ? { g: gr } : {}) });
     s.done = this.job('show', 1, now);
     return s;
   }
@@ -1861,7 +1867,7 @@ export class Game {
       const t = showJudged(e.id); if (t > now) continue;
       S.in.splice(S.in.indexOf(e), 1);
       const b = this.bird(e.bird); if (!b) continue;
-      const T = SHOWS[e.id[0]], score = this.showScore(b, e.id) + this.showLuck(e.id, e.bird), others = rivalScores(e.id);
+      const T = SHOWS[e.id[0]], score = this.showScore(b, e.id, e.g) + this.showLuck(e.id, e.bird), others = rivalScores(e.id);
       const place = 1 + others.filter(r => r > score).length, of = others.length + 1;
       const coins = place <= 3 ? T.prize[place - 1] : 0, xp = XP_SHOW + (place <= 3 ? T.xp[place - 1] : 0);
       const champ0 = this.champion(b);

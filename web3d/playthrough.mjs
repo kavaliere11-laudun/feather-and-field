@@ -215,7 +215,7 @@ const enterShows = async () => {
   await p.evaluate(() => window.__farm.showsSheet()); await act(0.4); await once('card:shows', 'card_shows');
   const c = await cardNow(); if (c && !seen.has('stext')) { seen.add('stext'); await note('card shows', c.text); }
   for (let k = 0; k < 3; k++) {
-    const r = await p.evaluate(() => { for (const c of document.querySelectorAll('.gsheet .gshow')) { const b = [...c.children].find(x => x.matches('button.gbtn') && !x.disabled); if (b && (!b.classList.contains('galt') || c.dataset.show[0] === 'v')) { const t = b.textContent; b.click(); return t; } } return null; });
+    const r = await p.evaluate(() => { for (const c of document.querySelectorAll('.gsheet .gshow')) { const b = [...c.children].find(x => x.matches('button.gbtn') && !x.disabled); if (b && (!b.classList.contains('galt') || c.dataset.show[0] === 'v')) { const t = b.textContent; b.click(); const G = window.__farm.groom.now(); if (G) { G.finish([0.8, 0.8, 0.7]); document.querySelector('.groom [data-groom=go]').click(); } return t; } } return null; });      // (17 Nov 2026: groomed fairly well each time)
     if (!r) break; await act(0.5);
   }
   if (await cardNow()) await p.evaluate(() => window.__farm.gameUI().close());

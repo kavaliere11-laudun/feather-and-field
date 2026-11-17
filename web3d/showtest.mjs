@@ -55,6 +55,7 @@ await shot('1_sheet');
 const best = await p.evaluate(() => { const g = window.__farm.game(), s = g.openShows()[0], x = g.showBirds(s)[0]; return { id: x.b.id, name: x.b.name, s: s.id }; });
 const c0 = await p.evaluate(() => window.__farm.game().data.coins);
 await p.tap('.gshow .gbtn'); await run(0.3);
+await p.tap('.groom [data-groom=skip]'); await run(0.3);      // (17 Nov 2026: "Enter" opens the grooming game (groomtest.mjs); here she goes as she is)
 t = await sheet();
 let st = await p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, in: g.data.shows.in, hint: document.getElementById('hint').textContent }; });
 ok('entered: the fee paid, a word, the sheet says she\'s in', st.coins === c0 - 10 && st.in.length === 1 && st.in[0].bird === best.id && T.entered.test(st.hint) && T.isIn.test(t) && !(await p.evaluate(() => !!document.querySelector('.gshow .gbtn'))), { st, t: t.slice(0, 300) });

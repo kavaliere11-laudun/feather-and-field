@@ -30,7 +30,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
-import { FIXED, GARDEN, landLevel, CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
+import { GROOM, SHOWS, FIXED, GARDEN, landLevel, CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
@@ -40,6 +40,7 @@ import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
+import { openGroom } from './groom.js';
 import { buildIntro } from './intro.js';
 import { initPlay, addToys, addWinter, removeWinter, winterGarden, printsLive, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
 import { LOOKS, lookChunks, lookGround, clumpGeo, lookPost } from './looks.js';
@@ -7568,12 +7569,78 @@ function coopsSheet() {
 function showsSheet(more) {
   holdBird(null); henOff();
   game.lookedAtShows(); gameUI.refresh();
-  gameUI.showsSheet({ enter: (id, bid) => {
-    const s = game.enterShow(id, bid), b = game.bird(bid);
-    if (!s || !b) return;
-    hint(game.t('show_entered', { name: b.name, show: game.showName(id) }, b.sex === 'h'));
-    gameUI.refresh(); gameUI.bumpCoins(); showsSheet(); jobsDone(s.done);
-  } }, more);
+  gameUI.showsSheet({ enter: (id, bid) => groomFor(id, bid) }, more);
+}
+function enterShowNow(id, bid, groom = 0) {
+  const s = game.enterShow(id, bid, Date.now(), groom), b = game.bird(bid);
+  if (!s || !b) return false;
+  hint(game.t('show_entered', { name: b.name, show: game.showName(id) }, b.sex === 'h'));
+  gameUI.refresh(); gameUI.bumpCoins(); showsSheet(); jobsDone(s.done);
+  return true;
+}
+// ---- getting her ready for the show (17 Nov 2026, groom.js): "Enter" opens the little game with her own picture; how well
+// it goes raises her chance a little; "Enter without grooming" as before. No picture to be had: entered as before
+let GROOMING = null;
+function groomFor(id, bid) {
+  const b = game.bird(bid), s = b && game.openShows().find(x => x.id === id);
+  if (!b || !s || game.canEnter(b, s) !== 'ok' || GROOMING) return;
+  let img = null; try { img = birdPortrait(b); } catch (e) { img = null; }
+  if (!img) { enterShowNow(id, bid); return; }
+  gameUI.close();
+  const pct = g => Math.round(game.showChance(b, id, g).rosette * 100), end = () => { GROOMING = null; document.body.classList.remove('grooming'); };
+  document.body.classList.add('grooming');
+  GROOMING = openGroom({ img, name: b.name, show: game.showName(id), fee: SHOWS[s.tier].fee, secs: (navigator.webdriver && window.__FF_GROOM_SECS) || GROOM.secs, t: (k, v) => game.t(k, v, b.sex === 'h'), chance: pct,
+    onGo: g => { end(); enterShowNow(id, bid, g); }, onSkip: () => { end(); enterShowNow(id, bid, 0); }, onClose: () => { end(); showsSheet(); } });
+}
+// a bird's picture, her alone, as she is on the farm (her breed, hen or rooster, her colour), see-through round her: one of
+// the game's own birds made for the moment, stood and posed, drawn at midday through a long lens with everything else
+// hidden, on black and then on white (the cut-out, as the Breed Book's pictures: bookpics.mjs); all within one frame, the
+// farm drawn again before the screen shows anything. A canvas, or null
+function birdPortrait(gb, SIZE = 560) {
+  const real = allBirds.find(x => x.gid === gb.id), hen = gb.sex === 'h';
+  const G = new THREE.Group(), from = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
+  G.position.set(view.target.x + 400, 0, view.target.z + 400); G.rotation.y = Math.atan2(from.x, from.z); scene.add(G);      // (far off the farm: out of reach of the farm's own shadows, which would fall across her)
+  const plot = { kind: 'lineup', frame: G, birds: [], centre: G.position.clone() };
+  const B = new Bird(plot, baseBreed(gb.breed), hen ? 'hen' : 'rooster', real ? real.colour : silColour(gb.breed), [0, 0, 0], -1.0, rng(5));
+  B.stay = true; plot.birds.push(B);
+  B.posterPose = A => Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, proud: hen ? 0.15 : 0.5, lookYaw: 0.32, lookTilt: 0.04 });
+  const hour = DAY.hour, bg = scene.background.clone(), hidden = [], keep = new Set();
+  let out = null;
+  try {
+    for (let i = 0; i < 3; i++) B.update(1 / 30);
+    B.root.position.set(0, 0.015, 0); B.root.rotation.y = -1.0; G.updateMatrixWorld(true);
+    B.root.traverse(o => keep.add(o));
+    scene.traverse(o => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && o.visible && !keep.has(o)) { o.visible = false; hidden.push(o); } });
+    applyDaylight(12.5);
+    const cv = renderer.domElement, W = cv.width, H = cv.height, tall = hen ? 0.36 : 0.44;
+    const cam = new THREE.PerspectiveCamera(8, W / H, 0.1, 200), at = G.localToWorld(new THREE.Vector3(0.02, tall / 2 + 0.02, 0)), el = 9 * DEG;
+    const dir = new THREE.Vector3(0, Math.sin(el), Math.cos(el)).applyAxisAngle(new THREE.Vector3(0, 1, 0), G.rotation.y);
+    cam.position.copy(at).addScaledVector(dir, 7); cam.lookAt(at); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    const shots = [];
+    for (const c of [0, 1]) {
+      scene.background = new THREE.Color(c, c, c); renderer.setRenderTarget(null); renderer.render(scene, cam);
+      const k = document.createElement('canvas'); k.width = W; k.height = H; const g = k.getContext('2d', { willReadFrequently: true }); g.drawImage(cv, 0, 0); shots.push(g.getImageData(0, 0, W, H).data);
+    }
+    const [K, Wt] = shots, img = new ImageData(W, H), px = img.data; let x0 = W, y0 = H, x1 = 0, y1 = 0;
+    for (let i = 0, n = 0; i < K.length; i += 4, n++) {
+      const a = Math.max(0, Math.min(1, 1 - ((Wt[i] - K[i]) + (Wt[i + 1] - K[i + 1]) + (Wt[i + 2] - K[i + 2])) / 765));
+      if (a < 1 / 255) continue;
+      px[i] = Math.min(255, K[i] / a); px[i + 1] = Math.min(255, K[i + 1] / a); px[i + 2] = Math.min(255, K[i + 2] / a); px[i + 3] = Math.round(a * 255);
+      if (a > 0.04) { const x = n % W, y = (n / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    }
+    if (x1 > x0 + 20 && y1 > y0 + 20) {
+      const full = document.createElement('canvas'); full.width = W; full.height = H; full.getContext('2d').putImageData(img, 0, 0);
+      const side = Math.min(Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.08), Math.max(W, H)), sx = Math.round((x0 + x1 - side) / 2), sy = Math.round((y0 + y1 - side) / 2);
+      out = document.createElement('canvas'); out.width = out.height = Math.min(SIZE, side);
+      const g = out.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(full, sx, sy, side, side, 0, 0, out.width, out.height);
+    }
+  } finally {
+    scene.background = bg; for (const o of hidden) o.visible = true;
+    B.root.removeFromParent(); G.removeFromParent(); if (B.rig && B.rig.dispose) B.rig.dispose();
+    applyDaylight(hour);
+    try { drawFarmerShadows(renderer); renderFarm(); } catch (e) { /* (the next frame draws it) */ }
+  }
+  return out;
 }
 // ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
 // the judging" (the view goes to the show tent on the green: the player's tap) or "Just the results". The scene, then the
@@ -9835,6 +9902,7 @@ window.__farm = {
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
+  groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(game.bird(bid)); return c ? (url ? c.toDataURL('image/png') : [c.width, c.height]) : null; } },      // (tests: the grooming game)
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   focus: (x, z, size) => focusOn(x, z, size),      // (tests: the view to a place)
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
