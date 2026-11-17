@@ -39,11 +39,13 @@ def segdist(px, pz, a, b):
 
 LANES = [l for l in V['paths'] if len(l) > 3]          # (the 3-point gate paths are left out)
 NEW_LANES = 3 if MEADOW else 0                          # (meadow.py's: the last three)
-lane = np.zeros_like(inside); lane_all = np.zeros_like(inside)
-for n_, l in enumerate(LANES):
+GONE = V.get('pathsGone', [])                           # (widen.py, 16 Nov 2026: side lanes taken out; the fields are still shared out with them, then given their ground)
+lane = np.zeros_like(inside); lane_all = np.zeros_like(inside); lane_now = np.zeros_like(inside)
+for n_, l in enumerate(LANES + GONE):
     for i in range(1, len(l)):
         m_ = segdist(XX, ZZ, l[i - 1], l[i]) < V['pathHalf'] + 0.12; lane_all |= m_
-        if n_ < len(LANES) - NEW_LANES: lane |= m_
+        if n_ < len(LANES): lane_now |= m_
+        if n_ < len(LANES) - NEW_LANES or n_ >= len(LANES): lane |= m_
 water = np.zeros_like(inside)
 for st in V['streams']:
     for i in range(1, len(st)): water |= segdist(XX, ZZ, st[i - 1], st[i]) < V['streamHalf'] + 0.28
@@ -150,6 +152,10 @@ hz0, hz1 = HOME[1] - FOOT4[2] - M, HOME[1] - FOOT4[0] + M
 took = (lab > 0) & (XX > hx0) & (XX < hx1) & (ZZ > hz0) & (ZZ < hz1)
 print('home garden: cells taken for the home field', int(took.sum()), 'from', sorted(set(lab[took].ravel().tolist())))
 lab[took] = 0
+# and room for the second coop's (the Buff Orpingtons at level 3: 17 Nov 2026, a coop only goes where its Deluxe garden fits,
+# and the home field with the first field to restore had one such place only, the first coop's): a second plot of the
+# same size beside the second wheat field, the home field's too (taken after the lanes that went, below: SECOND)
+SECOND = (-17.5, -25.0)
 # ---- the East Meadow's fields, after the thirty: the new ground between its lanes shared out the same way
 if MEADOW:
     N_MEADOW = 10; nf0 = nf
@@ -195,6 +201,21 @@ if FX:
     for (xa, xb, za, zb) in rects:
         m_ = inside & ~lane & ~water & (XX > xa - 0.6) & (XX < xb + 0.6) & (ZZ > za - 0.6) & (ZZ < zb + 0.6)
         print('fixed place: cells', int(m_.sum()), 'from', sorted(set(lab[m_].ravel().tolist()))); lab[m_] = 0
+
+# the ground of the lanes taken out (widen.py): each cell to the field nearest over the ground
+if GONE:
+    todo = inside & ~lane_now & ~water & (lab < 0)      # (and the slivers they had cut off)
+    q = deque(map(tuple, np.argwhere(lab >= 0))); n_ = 0
+    while q:
+        a_, b_ = q.popleft()
+        for da, db in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            A, Bb = a_ + da, b_ + db
+            if 0 <= A < NZ and 0 <= Bb < NX and todo[A, Bb]: todo[A, Bb] = False; lab[A, Bb] = lab[a_, b_]; q.append((A, Bb)); n_ += 1
+    print('lanes gone: cells given to the fields beside', n_); lane = lane_now
+    M2 = 0.9
+    sx0, sx1 = SECOND[0] + FOOT4[1] - M2, SECOND[0] + FOOT4[3] + M2 + 0.8; sz0, sz1 = SECOND[1] - FOOT4[2] - M2, SECOND[1] - FOOT4[0] + M2
+    took = (lab > 0) & (XX > sx0) & (XX < sx1) & (ZZ > sz0) & (ZZ < sz1)
+    print('second coop: cells taken for the home field', int(took.sum()), 'from', sorted(set(lab[took].ravel().tolist()))); lab[took] = 0
 
 # each field's borders: the cell edges between it and what's next to it, joined into lines and simplified
 def kind_at(k, i):

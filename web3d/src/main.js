@@ -1774,10 +1774,48 @@ function tagNature() {
   V.trees.forEach((t, i) => { t.id = 't' + i; t.model = t.kind === 'apple' ? 'tree_apple' : 'tree_' + 'abc'[i % 3]; t.yaw = r() * 360; });
   V.bushes.forEach((b, i) => { b.id = 'b' + i; b.model = i % 2 ? 'bush_b' : 'bush_a'; });
   V.rocks.forEach((k, i) => { k.id = 'r' + i; k.model = i % 2 ? 'rock_b' : 'rock_a'; });
+  BUSH0 = V.bushes.map(b => ({ ...b, pos: [...b.pos] }));      // (each bush's first place: replantBushes)
   for (const f of V.flowers) {
     const pick = [names[Math.floor(r() * 3)], names[Math.floor(r() * 3)]], n = 5 + Math.floor(r() * 5);
     f.pts = [];
     for (let k = 0; k < n; k++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * f.r; f.pts.push([pick[k % 2], f.pos[0] + Math.cos(a) * d, f.pos[2] + Math.sin(a) * d, r() * 360, 1.3 + r() * 0.6]); }
+  }
+}
+// ---- a bush in the way moves, it isn't lost (16 Nov 2026, Audrey: "the bushes should not go, just if a coop wants to go
+// where the bush is, the bush moves to the closest spot available"). The save still lists it as cleared from its first
+// place (game.data.cleared: nothing new saved); each cleared bush then stands at the nearest free spot to that place on
+// your land: clear of every coop's Deluxe garden and its gate, the decorations, the garden and the wheat fields, the
+// buildings, the lanes, the water and the other trees, bushes and rocks. Worked out again whenever the farm changes (the
+// same answer for the same farm), so a bush a coop is later put on moves once more. Trees and rocks are cleared as before.
+let BUSH0 = null;
+function replantBushes() {
+  if (!GAME_MODE || !game.data || !FIELDS || !BUSH0 || !DECOR_INFO) return;
+  V.bushes = V.bushes.filter(b => !b.moved);
+  const gone = new Set(game.data.cleared), here = new Set(V.bushes.map(b => b.id)), todo = BUSH0.filter(b => gone.has(b.id) && !here.has(b.id));
+  if (!todo.length) return;
+  const B = blockers(), v = new THREE.Vector3(), coops = game.data.coops.map(c => { const G = grownOf(c, 4) || c; return [c, footOf(G), apronOf(G)]; });
+  if (MOVE.plot && MOVE.at) { const G = grownOf(MOVE.plot.gc, 4) || MOVE.plot.gc; coops.push([MOVE.at, footOf(G), apronOf(G)]); }
+  const taken = [...V.trees.map(t => [t.pos[0], t.pos[2], 1.1]), ...V.bushes.map(b => [b.pos[0], b.pos[2], 0.5 * (b.s || 1) + 0.45]), ...V.rocks.map(k => [k.pos[0], k.pos[2], 0.6])];
+  const free = (x, z, r) => {
+    for (const [dx, dz] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r]]) if (!owned(fieldAt(x + dx, z + dz))) return false;
+    if (nearLines(V.paths, x, z, V.pathHalf + 0.5 + r) || nearLines(V.streams, x, z, V.streamHalf + 0.8 + r) || inPondAt(x, z, 0.8 + r)) return false;
+    for (const [c, F, A] of coops) { const [lx, lz] = inSpot(c, x, z); if (rectGap(F, lx, lz) < r + 0.3 || rectGap(A, lx, lz) < r + 0.6) return false; }
+    if (underDecor(x, z, r + 0.3)) return false;
+    for (const b of B) {
+      if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r + r + 0.3) return false; continue; }
+      v.set(x, 0, z).applyMatrix4(b.inv); const m = r + 0.3; if (v.x > b.x0 - m && v.x < b.x1 + m && v.z > b.z0 - m && v.z < b.z1 + m) return false;
+    }
+    for (const t of taken) if (Math.hypot(x - t[0], z - t[1]) < t[2] + r) return false;
+    return true;
+  };
+  for (const b of todo) {
+    const r = 0.46 * (b.s || 1); let at = null;
+    for (let d = 0.5; d <= 16 && !at; d += 0.5) for (let k = 0, n = Math.max(6, Math.round(d * 6)); k < n && !at; k++) {
+      const a = k / n * Math.PI * 2, x = b.pos[0] + Math.cos(a) * d, z = b.pos[2] + Math.sin(a) * d;
+      if (free(x, z, r)) at = [x, z];
+    }
+    if (!at) continue;                                      // (nowhere near: it waits till there's room)
+    V.bushes.push({ ...b, pos: [at[0], 0, at[1]], moved: true }); taken.push([at[0], at[1], r + 0.45]);
   }
 }
 const natureMatrix = o => o.id[0] === 't' ? place(o.pos[0], 0, o.pos[2], o.yaw, o.h / 2.1) : place(o.pos[0], 0, o.pos[2], o.rot, o.s * (o.id[0] === 'b' ? 1.1 : 1.2));
@@ -1796,6 +1834,7 @@ function natureContact() {
 }
 function dropMeshes(list) { for (const m of list) { m.removeFromParent(); if (m.userData.ownMat) m.material.dispose(); } list.length = 0; }
 function buildNature() {
+  replantBushes();
   dropMeshes(NATURE);
   const lists = {};
   for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
@@ -2565,6 +2604,7 @@ function buildNav(wild = false) {
   const nav = new NavGrid(Math.min(...xs) - 2, Math.min(...zs) - 2, Math.max(...xs) + 2, Math.max(...zs) + 2, 0.25);
   const GROW = 0.22, seg = (px, pz, a, b) => { const ax = a[0], az = a[2], dx = b[0] - ax, dz = b[2] - az, L = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };
   const nearLine = (lines, px, pz, r) => lines.some(l => { for (let i = 1; i < l.length; i++) if (seg(px, pz, l[i - 1], l[i]) < r) return true; return false; });
+  replantBushes();
   for (const t of V.trees) nav.circle(t.pos[0], t.pos[2], 0.3 + GROW);
   for (const b of V.bushes) nav.circle(b.pos[0], b.pos[2], 0.42 * (b.s || 1) + GROW);
   for (const k of V.rocks) nav.circle(k.pos[0], k.pos[2], 0.17 * k.s * 1.2 + GROW);
@@ -7362,8 +7402,7 @@ function startMove(p, grow) {
   // (the look it must have room for wherever it's put: for a new coop the roomiest there is, where it's offered or near;
   // for one of yours being moved, the roomiest of the other spots: where it stands may be the only one with room for more,
   // and a coop that may only go where its bigger pen fits, 10 Nov 2026, could then never be moved at all)
-  const near = placeSpots(p.gc.breed, 8, MOVE.at).map(o => o.t);
-  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : p.draft ? Math.max(roomTier(MOVE.at, p.gc.breed, p.gc.id, t0), ...near) : Math.max(t0, ...near));      // (16 Nov 2026, Audrey: "I should not be able to put a coop on a place where there is not enough room for the deluxe from the start": tried (: 4), and held: of the forty fields, eleven have no spot at all where a Deluxe garden fits (_scan3.mjs), a new coop would have nowhere to go; the fields are to be made wider first)
+  MOVE.grow = grow ?? (!grownOf(p.gc) ? t0 : 4);      // (16 Nov 2026, Audrey: "I should not be able to put a coop on a place where there is not enough room for the deluxe from the start, even if the coop is currently smaller": a coop is put, or moved, only where its Deluxe garden fits (was: the roomiest look that fits round there); on since the fields are wider (widen.py) and a new coop is offered a spot with that room, looked for over the whole farm)
   // its own copy while it moves (out of its style's batch), and its outline on the ground: green where it can go, red not
   const ghost = new THREE.Group();
   for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) {
@@ -7681,13 +7720,13 @@ function addGameBird(plot, gb) {
 }
 function startPlace(breed) {
   if (MOVE.plot || DMOVE.id || inside.open || !game.placeable(breed)) return false;
-  const spots = placeSpots(breed), at = spots[0]; if (!at) { hint(game.t('no_room')); return false; }
+  const all = placeSpots(breed), spots = hasLooks(baseBreed(breed)) ? all.filter(o => o.w) : all, at = spots[0]; if (!at) { hint(game.t('no_room')); return false; }      // (16 Nov 2026: only where its Deluxe garden fits; nowhere yet: it waits in Your coops for the next field)
   const d = game.draftCoop(breed, at); if (!d) return false;
   const p = makePlot(Math.max(-1, ...plots.map(q => q.index)) + 1, [at.x, 0, at.z], at.deg, d.coop, rng(97 + plots.length), 'coop', d.birds);
   p.draft = d;
   for (const b of p.birds) b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   rebuildDoors(); rebuildPools();
-  startMove(p, Math.max(0, ...spots.filter(o => o.g !== false).map(o => o.t || 0)));
+  startMove(p);
   // (offered only where "Put it here" will take it: its gate opening onto the farm with it there, as placeCoop checks; else
   // the next nearest. 1 Nov: the peafowl's pavilion at level 30 was offered a spot with its gate shut in)
   if (MOVE.plot === p && !gateOpen(p)) {
@@ -7741,18 +7780,24 @@ function placeSpots(breed, n = 8, near = null) {
   const PQ = hasLooks(breed) ? tierPen(breed, 0) : PEN, gl = [PQ.gate[0] + COOP_SHIFT.x, PQ.pen.max[2] + 0.6 + COOP_SHIFT.z], nav = navGrid(), R = farmReach();
   const gateOk = (x, z, deg) => { const c = Math.cos(deg * DEG), sn = Math.sin(deg * DEG); return !!nav.nearestIn(R, x + gl[0] * c + gl[1] * sn, z - gl[0] * sn + gl[1] * c, 0.6); };
   const found = []; let r0 = -1, open = 0, roomy = 0;      // (on till two spots with room for Deluxe, or well past the first good spot: the roomiest is wanted, 8 Nov 2026)
-  for (let r = 0; r < 40 && !(r0 >= 0 && (r > r0 + 24 || (roomy >= 2 && r > r0 + 1))); r += 1) for (let k = 0, m = Math.max(1, Math.round(r * 6)); k < m; k++) {
+  // (16 Nov 2026: a coop only goes where its Deluxe garden fits, so the search goes on over the whole farm till there's such a
+  // spot: past the first 24 m only spots with that room are looked at)
+  let rw = -1;
+  for (let r = 0; r < 130 && !(roomy >= 2 && r > r0 + 1) && !(rw >= 0 && r > rw + 10) && !(r0 >= 0 && r > r0 + 24 && roomy > 0); r += 1) for (let k = 0, m = Math.max(1, Math.round(r * 6)); k < m; k++) {
     const a = k / m * Math.PI * 2, x = Math.round((cx + Math.cos(a) * r) * 4) / 4, z = Math.round((cz + Math.sin(a) * r) * 4) / 4;
     if (!quick(x, z)) continue;
-    for (const deg of [90, 0]) {
-      const S = coopSpot({ x, z, deg }, self); if (!S.ok) continue;
+    for (const deg of [90, 0, 45, 315, 270, 180, 135, 225]) {      // (16 Nov 2026: every eighth of a turn, the two that face the usual view first: along the lanes there is far more room for a Deluxe garden)
+      if (r0 >= 0 && r > r0 + 24 && !roomToGrow({ x, z, deg }, breed)) continue;
+      if (!coopSpot({ x, z, deg }, self, true).ok) continue;      // (quickly first: the whole look, with what's to clear, only for the spots kept)
+      const S = { clear: [] };
       if (r0 < 0) r0 = r;
-      const g = gateOk(x, z, deg), t = g ? roomTier({ x, z, deg }, breed) : 0, w = t === 4; if (g) open++; if (w) roomy++;
+      const g = gateOk(x, z, deg), t = g && roomToGrow({ x, z, deg }, breed) ? 4 : 0, w = t === 4; if (g) open++; if (w) { roomy++; if (rw < 0) rw = r; }      // (Deluxe or not: nothing between counts any more)
       found.push({ x, z, deg, r, n: S.clear.length, g, t, w });
     }
   }
-  found.sort((a, b) => (b.g - a.g) || (b.t - a.t) || (a.r - b.r) || (a.n - b.n));      // (the roomiest to grow first: Deluxe where the farm has room for it, 8 Nov 2026)
-  return found.slice(0, n).map(o => ({ x: o.x, z: o.z, deg: o.deg, w: o.w, t: o.t }));
+  const far = o => o.r + (o.deg === 90 || o.deg === 0 ? 0 : o.deg === 45 || o.deg === 315 ? 3 : 6);
+  found.sort((a, b) => (b.g - a.g) || (b.t - a.t) || (far(a) - far(b)) || (a.n - b.n));      // (the roomiest to grow first: Deluxe where the farm has room for it, 8 Nov 2026)
+  return found.slice(0, n).map(o => ({ x: o.x, z: o.z, deg: o.deg, w: o.w, t: o.t, g: o.g }));
 }
 function dropPlot(p) {
   for (const b of [...p.birds]) removeBird(b);
@@ -9766,6 +9811,7 @@ window.__farm = {
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
+  focus: (x, z, size) => focusOn(x, z, size),      // (tests: the view to a place)
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
   garden: { bedCard: i => gardenCard(i), bedTap: i => bedTap(i), tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
     state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, bubs: (GARDEN_UI.bubs || []).map(B => B.hidden ? null : B.textContent), owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,
@@ -9854,7 +9900,7 @@ window.__farm = {
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
-  nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id) }), underCoop: (x, z, m) => underCoop(x, z, m),
+  nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id && !o.moved), moved: () => V.bushes.filter(b => b.moved).map(b => [b.id, b.pos[0], b.pos[2]]) }), underCoop: (x, z, m) => underCoop(x, z, m),
   screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },
   viewAbove: (x, z, size) => viewAbove(x, z, size),
   penOut: i => { const P = penSpec(gamePlots()[i]); return P && P.out; }, grassIn: i => { const c = game.data.coops[i], m = new THREE.Matrix4(), v = new THREE.Vector3(); let n = 0; for (const g of VGRASS) for (let k = 0; k < g.count; k++) { g.getMatrixAt(k, m); v.setFromMatrixPosition(m); const [lx, lz] = inSpot(c, v.x, v.z); if (rectGap(footOf(c), lx, lz) <= 0) n++; } return n; }, coopAt: i => { const g = gamePlots()[i].group; return [g.position.x, g.position.z, Math.round(g.rotation.y / DEG)]; }, navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),

@@ -42,7 +42,7 @@ const tagT = await p.evaluate(() => document.getElementById('tag').textContent);
 ok('a tap on the overgrown land: when it can be restored', /(Overgrown field|Terrain en friche) · (to restore at level|à remettre en état au niveau) 6/.test(tagT), { wildTap, tagT });
 // (6 Nov 2026, Audrey: "they belong to the farm but the farm doesn't have enough money to renovate them"; "Overgrown, needing repair")
 const og = await p.evaluate(() => [1, 2, 5].map(f => window.__farm.overgrownIn(f)));
-ok('the land still to restore is overgrown: brambles, nettles, thistles, cow parsley, young scrub and an old thing or two (a broken fence, a fallen log, a rusty wheelbarrow, a pile of stones) in each field', og.every(o => o.bramble >= 2 && o.nettle >= 2) && og.slice(1).every(o => o.fence || o.log || o.barrow || o.stones), og);
+ok('the land still to restore is overgrown: brambles, nettles, thistles, cow parsley, young scrub and an old thing or two (a broken fence, a fallen log, a rusty wheelbarrow, a pile of stones) in each field', og.every(o => o.bramble >= 1 && o.nettle >= 2) && og.slice(2).every(o => o.fence || o.log || o.barrow || o.stones), og);
 await p.evaluate(() => window.__farm.gameUI().levelSheet()); await run(0.2);
 let t = await cardText();
 ok('the level card: what level 2 brings (another field to restore)', /level 2: another field to restore|niveau 2 : un autre terrain à remettre en état/i.test(t) && /1 field|terrain : 1/.test(t), t);

@@ -51,9 +51,9 @@ await p.mouse.move(from.x, from.y); await p.mouse.down();
 for (let i = 1; i <= 10; i++) { await p.mouse.move(from.x + (to.x - from.x) * i / 10, from.y + (to.y - from.y) * i / 10); await run(0.03); }
 await p.mouse.up(); await run(0.2);
 a = await at(); m = await st();
-ok('a finger on the coop carries it along (on the quarter-metre)', Math.abs(a[0] - -28) < 0.6 && Math.abs(a[1] - -15.75) < 0.6 && a[0] * 4 === Math.round(a[0] * 4) && m.at.x === a[0], { a, m });
+ok('a finger on the coop carries it along (on the quarter-metre)', Math.hypot(a[0] - -28, a[1] - -15.75) < 3 && (a[0] !== -30 || a[1] !== -13.75) && a[0] * 4 === Math.round(a[0] * 4) && m.at.x === a[0], { a, m });      // (16 Nov 2026: let go where its Deluxe garden doesn't fit, it's nudged to the nearest place where it does)
 const wild = await p.evaluate(() => window.__farm.fields().fields[5].mid);
-for (const [what, x, z, re] of [['the wild meadow', wild[0], wild[1], T.bad], ['a lane', -27.5, -16.5, T.lane], ['the farmhouse', -26, -26, T.room]]) {
+for (const [what, x, z, re] of [['the wild meadow', wild[0], wild[1], T.bad], ['a lane', -21.1, -21.5, T.lane], ['the farmhouse', -26, -26, T.room]]) {
   await p.evaluate(([x, z]) => window.__farm.move.to(x, z), [x, z]); await run(0.1);
   m = await st(); const dis = await p.evaluate(() => document.querySelector('.gmove-go').disabled);
   ok('no good on ' + what + ': it says why, and it can\'t be put there', !m.ok && re.test(m.text) && dis, m);
@@ -74,12 +74,12 @@ let auto = false; for (let i = 0; i < 80 && !auto; i++) { await run(1); auto = a
 ok('…and it starts by itself once he\'s out', auto);
 await p.evaluate(() => window.__farm.move.cancel()); await run(0.5);
 // level 2, the next field bought: moved there, turned, put down
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 20; g.data.coins = 300; g.save(); }); await run(1.5);      // (level 2)
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(3) + 1; g.data.coins = 1000; g.save(); }); await run(1.5);      // (level 3: 16 Nov 2026, a coop only goes where its Deluxe garden fits, and the home field and the first to restore have one such place, where it stands)
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.2);
-await p.evaluate(() => window.__farm.buyLand()); await run(1.5);
+await p.evaluate(() => window.__farm.buyLand()); await run(1.5); await p.evaluate(() => window.__farm.gameUI().close()); await p.evaluate(() => window.__farm.buyLand()); await run(1.5); await p.evaluate(() => window.__farm.gameUI().close());
 await p.evaluate(() => window.__farm.move.start(0)); await run(0.5);
 // (a spot in the new field where its bigger pen fits too, a bush in its way: 10 Nov 2026, a coop is only put where it can grow)
-const spot = await p.evaluate(() => { const f = window.__farm; let best = null; let any = null; for (let r = 0; r < 26 && !best; r += 0.5) for (let k = 0; k < 24 && !best; k++) { const a = k / 24 * Math.PI * 2, x = -33 + Math.cos(a) * r, z = -23 + Math.sin(a) * r; for (const deg of [90, 0, 180, 270]) { f.move.to(x, z, deg); const s = f.move.state(); if (s.ok && s.clear.length && !best) best = [s.at.x, s.at.z, s.clear.join(), deg]; else if (s.ok && !any && Math.hypot(s.at.x - f.coopAt(0)[0], s.at.z - f.coopAt(0)[1]) > 2) any = [s.at.x, s.at.z, '', deg]; } } return best || any; });
+const spot = await p.evaluate(() => { const f = window.__farm, c0 = f.coopAt(0); let best = null, any = null; for (let z = -40; z <= 0 && !best; z += 0.5) for (let x = -45; x <= -5 && !best; x += 0.5) { if (Math.hypot(x - c0[0], z - c0[1]) < 6) continue; for (const deg of [90, 0, 45, 315, 180, 270, 135, 225]) { const r = f.move.room(0, { x, z, deg }); if (!r.now || !r.grow) continue; f.move.to(x, z, deg); const s = f.move.state(); if (!s.ok || s.at.x !== x || s.at.z !== z) continue; if (s.clear.length) { best = [x, z, s.clear.join(), deg]; break; } if (!any) any = [x, z, '', deg]; } } return best || any; });      // (17 Nov 2026: looked for over the land's grid, at every eighth of a turn: a coop only goes where its Deluxe garden fits)
 await p.evaluate(sp => window.__farm.move.to(sp[0], sp[1], sp[3]), spot); await run(0.1);
 m = await st();
 ok('in the new field: a spot where it and its bigger pen fit, something in its way to clear', m.ok && !m.small && m.clear.join() === spot[2], { m, spot });          // (a new farm's barn is Rustic, its pen small: release 4)
@@ -105,7 +105,7 @@ s = await saved(); a = await at();
 const good = await p.evaluate(([x, z, d]) => window.__farm.coopSpot(x, z, d).ok, [s.x, s.z, s.deg]);
 ok('a save changed outside (a coop on the wild meadow): flagged, and the coop put back on the farm\'s own land', s.edited && good && !(s.x === -20 && s.z === -20) && a[0] === s.x && a[1] === s.z, { s, a, good });
 // a farm from before coops could be moved (its coop on the village's first plot)
-await p.evaluate(() => { const g = window.__farm.game(), d = JSON.parse(JSON.stringify(g.data)); const c = d.coops[0]; delete c.x; delete c.z; delete c.deg; c.plot = 0; delete d.cleared; d.land = [0]; d.xp = 0; d.lvSeen = 1;
+await p.evaluate(() => { const g = window.__farm.game(), d = JSON.parse(JSON.stringify(g.data)); const c = d.coops[0]; delete c.x; delete c.z; delete c.deg; c.plot = 0; delete d.cleared;      // (its level and land kept: at level 1 the orders and the rest of level 3 would be taken out, and flagged)
   const body = JSON.stringify(d); let h = 0x811c9dc5; for (let i = 0; i < body.length; i++) { h ^= body.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
   localStorage.setItem('ff3d.farm', JSON.stringify({ d, s: ('0000000' + h.toString(16)).slice(-8) })); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();

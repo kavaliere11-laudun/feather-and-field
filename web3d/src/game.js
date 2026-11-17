@@ -897,6 +897,7 @@ export const FIELDS = 40;
 // decoration"; her choice: "East Meadow, 10 new fields"; fields 30 to 39, web3d/meadow.py): forty fields in thirty levels, so
 // from level 12 the land comes a little faster than one field a level (field k: level k + 1 up to the twelfth, then
 // 12 + 18/28 of a level each, the last at level 29); the meadow's ten cost 11,000 to 20,000 coins)
+const TURNS = [0, 45, 90, 135, 180, 225, 270, 315];      // (the ways a coop can face: eighths of a turn since 10 Nov 2026 (main.js Turn); the save and the moves took quarter turns only till 16 Nov, so a coop turned an eighth was not kept)
 export const landLevel = k => k < 12 ? k + 1 : 12 + Math.floor((k - 12) * 18 / 28);
 export const landMost = L => { let n = 0; while (n < FIELDS && landLevel(n) <= L) n++; return Math.max(1, n); };
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
@@ -1407,7 +1408,7 @@ export function checkFarm(d, now = Date.now()) {
     seen.add(c.id);
     // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
-    const x = spotNum(c.x), z = spotNum(c.z), deg = [0, 90, 180, 270].includes(c.deg) ? c.deg : null, at = x === null || z === null || deg === null ? HOME_COOP : { x, z, deg };
+    const x = spotNum(c.x), z = spotNum(c.z), deg = TURNS.includes(c.deg) ? c.deg : null, at = x === null || z === null || deg === null ? HOME_COOP : { x, z, deg };
     out.coops.push({ id: c.id, breed: c.breed, tier: typeof c.theme === 'string' ? (THEMES[c.theme] && owns(c.theme + '_' + baseBreed(c.breed)) ? 4 : int(c.tier0, 0, 4, 0)) : int(c.tier, 0, 4, 0),      // (in a themed building: Deluxe; one it doesn't own: back to its own look)
       x: at.x, z: at.z, deg: at.deg, ...(Number.isInteger(c.plot) ? { plot: c.plot } : {}), name: cleanName(c.name, 24),
       eggs: int(c.eggs, 0, NEST_MAX, 0), bonus: 0, feed: Number.isFinite(c.feed) ? c.feed : null, fedAt: int(c.fedAt, 0, now, now),
@@ -1720,7 +1721,7 @@ export class Game {
   // what was cleared there
   moveCoop(id, x, z, deg, clear = []) {
     const c = this.coop(id), X = spotNum(x), Z = spotNum(z);
-    if (!c || X === null || Z === null || ![0, 90, 180, 270].includes(deg)) return false;
+    if (!c || X === null || Z === null || !TURNS.includes(deg)) return false;
     c.x = X; c.z = Z; c.deg = deg; delete c.plot;
     for (const k of clear) if (typeof k === 'string' && /^[tbr]\d{1,4}$/.test(k) && !this.data.cleared.includes(k)) this.data.cleared.push(k);
     this.save();
@@ -1780,7 +1781,7 @@ export class Game {
   }
   placeCoop(draft, at, clear = []) {
     const c = draft && draft.coop, X = spotNum(at.x), Z = spotNum(at.z);
-    if (!c || !this.placeable(c.breed) || X === null || Z === null || ![0, 90, 180, 270].includes(at.deg)) return null;
+    if (!c || !this.placeable(c.breed) || X === null || Z === null || !TURNS.includes(at.deg)) return null;
     const now = Date.now(), rare = BREED_INFO[c.breed].rare;
     if (rare && !this.coopFree(c.breed) && this.data.coins < RARE.coop) return null;
     Object.assign(c, { x: X, z: Z, deg: at.deg, fedAt: now, checked: now }); c.feed = draft.birds.length * FEED_DAYS;       // (its feeder full)
