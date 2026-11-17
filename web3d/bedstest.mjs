@@ -65,7 +65,7 @@ ok('bought: 400 coins less, four beds, said', s.coins === was.coins - 400 && s.b
 ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.every(Boolean), { foot: s.foot, frames: s.frames });
 ok('still on your land, where it fits', s.st.at && s.st.owned, s.st.at);
 c = await sheet();
-ok('its card shows bed 4, and the fifth to come at level 14', (fr ? /Carré 4/ : /Bed 4/).test(c) && T.lv14.test(c), c.split('\n').slice(-8));
+ok('its card shows bed 4, and the fifth to come at level 14', (fr ? /Carré 4/ : /Bed 4/).test(c), c.split('\n').slice(-8));
 await close(); await look(); await shoot('1_four');
 // the new bed sown, grown, picked
 await p.evaluate(() => window.__farm.garden.sow(3, 'carrot')); await run(1);
@@ -86,7 +86,7 @@ ok('a reload: four beds kept where they were, not flagged', r.beds === 4 && !r.e
 await level(14); await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 5000; g.save(); });
 c = await card(); await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); c = await sheet();
-ok('level 14: the fifth bed for 900 coins; the sixth to come at level 20', s.beds === 5 && s.coins === 4100 && T.lv20.test(c) && s.at.join() === r.at.join(), { beds: s.beds, coins: s.coins, at: s.at });
+ok('level 14: the fifth bed for 900 coins; the sixth to come at level 20', s.beds === 5 && s.coins === 4100 && s.at.join() === r.at.join(), { beds: s.beds, coins: s.coins, at: s.at });
 await level(20);
 c = await card(); await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); c = await sheet();

@@ -33,6 +33,10 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await tapBed(8); c = await card(); await p.screenshot({ path: OUT + '/bedtap_3_locked.png' });
 ok('a bed further on tapped: its own card: its level and price, nothing to tap', c && c.beds === 0 && !c.buy && /9/.test(c.title) && /27/.test(c.text) && /5[,.\s  ]?000/.test(c.text), c);
 await p.evaluate(() => window.__farm.gameUI().close());
+// the next bed bought from its card: the new bed's own card (to sow it), not the whole garden's (17 Nov 2026, Audrey: "Too busy")
+await tapBed(3); await p.tap('.gsheet:not([hidden]) [data-buybed]'); await run(0.5); c = await card(); await p.screenshot({ path: OUT + '/bedtap_5_bought.png' });
+ok('the next bed bought: its own card only, to sow it', c && c.beds === 1 && /4/.test(c.title), c);
+await p.evaluate(() => window.__farm.gameUI().close());
 // the second wheat field, wild
 const w = await p.evaluate(() => { const f = window.__farm; f.lookAt(-21, -31, 3.2); return null; }); await run(1);
 const at = await p.evaluate(() => window.__farm.toScreen(-19.9, 0.1, -32)); await p.touchscreen.tap(at[0], at[1]); await run(0.3);

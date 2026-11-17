@@ -48,7 +48,7 @@ ok('an order for a fish: ready from the box; delivered: the box empty', ord.read
 // ---- a tin a day
 const tin = await p.evaluate(() => { const f = window.__farm, g = f.game(), a = g.buyWorms(), b2 = g.buyWorms(); f.dockCard(); const q = document.querySelector('.gsheet button[data-fish=tin]'), d = { a: !!a, b: b2, dis: q && q.disabled, text: q && q.textContent }; f.gameUI().close();
   window.__T += 24 * 3600e3; const c = g.buyWorms(); return { ...d, next: !!c, worms: g.worms() }; });
-ok('a tin a day: the second refused, the dock\'s button "another tomorrow"; the next day one more', tin.a && tin.b === null && tin.dis && (fr ? /demain/ : /tomorrow/).test(tin.text) && tin.next, tin);
+ok('a tin a day: the second refused, the dock\'s button "another tomorrow"; the next day one more', tin.a && tin.b === null && tin.dis && (fr ? /demain/i : /tomorrow/i).test(tin.text) && tin.next, tin);
 // ---- who bites when
 const bites = await p.evaluate(() => { const g = window.__farm.game(), f = g.fishBag(); const cast = (w, hour, n) => { const s = new Set(); for (let i = 0; i < n; i++) { f.worms = 5; const r = g.castWorm(w, window.__T, Math.random, hour); s.add(r.id); g.loseFish(); } return [...s]; };
   const noon = cast('pond', 12, 500), am = cast('pond', 7, 500), eve = cast('river', 19, 500);

@@ -31,6 +31,7 @@ const sheet = () => p.evaluate(() => { const e = document.querySelector('.gsheet
 const S = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, coins: g.data.coins, grain: g.data.grain, two: !!g.data.wheat2, next: g.wheatNext(), a: f.deco.wheat.state(0), b: f.deco.wheat.state(1), edited: g.edited, w2: g.data.wheat2 ? { ...g.data.wheat2 } : null, w1: { ...g.data.wheat } }; });
 const waitWork = async (max = 90) => { for (let i = 0; i < max && (await S()).a.work; i++) await run(1); };
 const level = async n => { await p.evaluate(n => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(n) + 5; g.data.lvSeen = n; g.save(); f.gameUI().close(); }, n); await run(1.5); await close(); await run(0.5); };
+const wild = async () => { await close(); await p.evaluate(() => window.__farm.deco.wheat.wild()); await run(0.3); return sheet(); };      // (17 Nov 2026: the second field's own card, from a tap on its wild ground; the first one's card no longer offers it)
 const card = async (k = 0) => { await close(); await p.evaluate(k => { const f = window.__farm; if (f.game().wheatStage(undefined, k) === 'ripe') throw new Error('ripe'); f.deco.wheat.tap(k); }, k); await run(0.3); return sheet(); };
 const buyBtn = () => p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) [data-buywheat]'); return e ? { text: e.textContent, off: e.disabled } : null; });
 const T = fr ? { lv: /partir du niveau 12/, add: /Ajouter ce champ/, got: /deuxième champ de blé est prêt/, t2: /deuxième champ de blé/, sow: /Semer/, cut: /Moissonner|Récolter/ } : { lv: /From level 12/, add: /Add this field/, got: /second wheat field is ready/, t2: /second wheat field/, sow: /Sow/, cut: /Harvest/ };
@@ -43,13 +44,13 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = {
 await run(2); await close();
 let s = await S();
 ok('level 11: one field; a second to come at level 12 for 1,200 coins', s.level === 11 && !s.two && s.next && s.next.locked && s.next.price === 1200 && !s.b.at, s.next);
-let c = await card();
+let c = await wild();
 ok('its card says when (no button yet)', T.lv.test(c) && /1[,.\s  ]?200/.test(c) && !(await buyBtn()), c.split('\n').slice(-5));
 await level(12);
-c = await card(); let bt = await buyBtn();
+c = await wild(); let bt = await buyBtn();
 ok('level 12, 300 coins: the button is there, not to be tapped', bt && bt.off, bt);
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.coins = 1e6; f.buyLand(); f.buyLand(); f.buyLand(); g.data.coins = 2000; g.save(); }); await run(2);      // (more land: room for it)
-c = await card(); bt = await buyBtn();
+c = await wild(); bt = await buyBtn();
 ok('with the coins: "Add this field · 1,200 coins"', bt && !bt.off && T.add.test(bt.text), bt);
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buywheat]').click()); await run(2);
 s = await S(); let said = await hintT();

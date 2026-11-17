@@ -71,7 +71,7 @@ await p.evaluate(() => window.__farm.riverCard()); await run(0.2);
 sh = await sheet();
 const props0 = await p.evaluate(() => { const F = window.__farm.fishers().river; return F && { rod: F.deckRod.visible, bucket: F.bucket.visible, by: F.bucket.position.y }; });
 ok('level 8: his rod lying on the footbridge and his bucket by it (up on its deck)', props0 && props0.rod && props0.bucket && props0.by > 0.15, props0);
-ok('level 8: the river\'s ten fish (none caught), 6 worms, Go fishing', sh && sh.go && sh.fish === 10 && sh.got === 0 && sh.water === 'river' && /6/.test(sh.text) && (fr ? /Vairons/ : /Minnows/).test(sh.text), sh);
+ok('level 8: the river\'s ten fish (none caught), 6 worms, Go fishing', sh && sh.go && sh.fish === 10 && sh.got === 0 && sh.water === 'river' && /6/.test(sh.text), sh);      // (17 Nov 2026: the card's words gone)
 await shoot('1_card');
 await settle(); await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();

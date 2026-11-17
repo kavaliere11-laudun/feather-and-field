@@ -1376,22 +1376,12 @@ export class GameUI {
       const left = g.wheatLeft(undefined, k), u = 1 - left / WHEAT.grow, bar = el('div', 'gbar-xp gfeedbar'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.max(0.03, u)) + '%'; bar.append(fill);
       b.append(bar, el('p', 'gtext', this.t('wheat_left', { t: this.dur(left) })));
     }
-    b.append(el('p', 'gnote', this.t('wheat_how', { c: WHEAT.sow, g: WHEAT.grain, xp: WHEAT.xp })));
+    // (17 Nov 2026, Audrey: "This popup is too wordy": how it works and the second field's card gone from here: the button says the price, the wild field has its own card)
     b.append(el('p', 'gnote gfound', '🌾 ' + this.t('wheat_store', { n: Math.floor(g.data.grain || 0), max: g.shelf('grain') })));
     if (st === 'soil') {
       const broke = g.data.coins < WHEAT.sow, go = el('button', 'gbtn' + (broke ? ' galt' : ''), broke ? this.t('wheat_broke') : this.t('wheat_sow', { c: WHEAT.sow })); go.type = 'button'; go.disabled = broke;
       go.addEventListener('click', () => { if (!go.disabled) h.sow(); }); b.append(go);
     } else if (st === 'ripe') { const go = el('button', 'gbtn', this.t('wheat_harvest')); go.type = 'button'; go.addEventListener('click', () => { if (!go.disabled) h.harvest(); }); b.append(go); }
-    // (a second field, her choice "Buy more, by level": on the first one's card: its price; before its level, when it comes)
-    const nx = k ? null : g.wheatNext();
-    if (nx) {
-      const c = el('div', 'gcard gbed gbedmore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🌾'), el('span', 'gcard-t', this.t('wheat2_more_t'))); c.append(hd);
-      const fmt = n => n.toLocaleString(g.locale());
-      if (nx.locked) c.append(el('p', 'gnote', this.t('bed_more_lv', { l: nx.level, c: fmt(nx.price) })));
-      else { const go = el('button', 'gbtn gsmallbtn' + (nx.broke ? ' galt' : ''), this.t(nx.broke ? 'wheat2_more_broke' : 'wheat2_more', { c: fmt(nx.price) })); go.type = 'button'; go.disabled = nx.broke; go.dataset.buywheat = '1'; go.addEventListener('click', () => { if (!go.disabled && h.buy) h.buy(); }); c.append(go); }
-      b.append(c);
-    }
-
   }
   // ---- the vegetable garden (7 Nov 2026): each bed, what's in it and how far it's grown (empty: sow carrots, strawberries
   // or pumpkins, h.sow(i, crop); ripe: Pick, h.pick(i)); the basket; Move the garden (h.move). o.busy: the farmer's at work
@@ -1481,19 +1471,22 @@ export class GameUI {
     this.bird = null;
     const row = el('div', 'gfishrow'); row.dataset.water = w;
     for (const id of FISH_IDS.filter(k => FISH_RULES[k].water === w)) { const src = 'fish/' + id + '.webp' + (this.o.bust || ''); if (g.fishGot(id)) { const im = el('img', 'got'); im.alt = ''; im.src = src; row.append(im); } else { const sl = el('span', 'gfishsil'), u = 'url("' + src + '")'; sl.style.webkitMaskImage = u; sl.style.maskImage = u; row.append(sl); } }
-    body.append(row, el('p', 'gtext', this.t(w === 'river' ? 'river_body' : 'dock_body')));
+    // (17 Nov 2026, Audrey: "This popup is too wordy": the fish, the worms in the bag (of what it holds) with the day's tin
+    // beside them, Go fishing; where worms come from only when there are none)
+    body.append(row);
     if (!o.open) { body.append(el('p', 'gnote', this.t('fish_level', { n: FISHING[w] }))); return; }
-    const n = o.worms;
-    body.append(el('p', 'gtext gfound', '🪱 ' + (n === 1 ? this.t('fish_worms1') : n ? this.t('fish_worms', { n }) : this.t('fish_worms0'))), el('p', 'gnote', this.t('fish_hens', { farmer })));
+    const n = o.worms, full = n >= FISHING.maxWorms, line = el('div', 'gdock-w');
+    line.append(el('p', 'gtext gfound', '🪱 ' + n + ' / ' + FISHING.maxWorms));
+    const T = FISHING.tin, broke = g.data.coins < T.price, had = g.tinToday();
+    const bb = el('button', 'gbtn gsmallbtn' + (n || broke || had || full ? ' galt' : ''), full ? this.t('fish_full') : had ? '🥫 ' + this.t('tin_tomorrow') : '🥫 +' + T.n + ' · 🪙 ' + T.price); bb.type = 'button'; bb.disabled = broke || had || full; bb.dataset.fish = 'tin';
+    bb.setAttribute('aria-label', had ? this.t('fish_tin_tomorrow') : this.t('fish_tin', { n: T.n }) + ' · ' + this.t('fish_tin_buy', { c: T.price }));
+    bb.addEventListener('click', () => { if (!bb.disabled) h.buy(); });
+    line.append(bb); body.append(line);
+    if (!n) body.append(el('p', 'gnote', this.t('fish_hens', { farmer })));
     if (o.state === 'night') body.append(el('p', 'gnote', this.t('fish_night', { farmer })));
     else if (o.state === 'on') body.append(el('p', 'gnote', this.t('fish_busy', { farmer }, g.data.farmer.look === 'f')));
     else if (n) { const b = el('button', 'gbtn', '🎣 ' + this.t('fish_go')); b.type = 'button'; b.dataset.fish = 'go'; b.addEventListener('click', () => { if (!b.disabled) h.go(); }); body.append(b); this.busyNote([b]); }
     if ((g.fishNet().length || g.fishBox().length) && h.net) { const nb = el('button', 'gbtn galt', this.t('dock_pantry', { n: g.fishNet().length + g.fishBox().length, max: g.shelf('fish') })); nb.type = 'button'; nb.dataset.fish = 'net'; nb.addEventListener('click', () => h.net()); body.append(nb); }
-    const T = FISHING.tin, tc = el('div', 'gcard'), th = el('div', 'gcard-h'), broke = g.data.coins < T.price;
-    th.append(el('span', 'gemoji', '🥫'), el('span', 'gcard-t', this.t('fish_tin', { n: T.n })));
-    const had = g.tinToday(), bb = el('button', 'gbtn' + (n ? ' galt' : '') + (broke || had ? ' galt' : ''), had ? this.t('fish_tin_tomorrow') : broke ? this.t('land_broke', { c: T.price }) : this.t('fish_tin_buy', { c: T.price })); bb.type = 'button'; bb.disabled = broke || had; bb.dataset.fish = 'tin';
-    bb.addEventListener('click', () => { if (!bb.disabled) h.buy(); });
-    tc.append(th, bb); body.append(tc);
   }
   // ---- how to fish (9 Nov 2026, Audrey: "there is no instruction as of how it works. I just tried and failed twice with
   // still no idea of what to do to get the fish out of the water"): cast, strike, reel in, the gauge drawn as it looks with

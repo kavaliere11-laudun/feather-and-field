@@ -36,6 +36,13 @@ for (let L = 2; L <= +(process.env.MAXL || 30); L++) {
 }
 ok('every new breed\'s coop is placed where the game first offers it, at its level', res.length >= 10 && res.every(r => r.placed), res.filter(r => !r.placed));
 ok('…and its Deluxe garden fits there', res.every(r => r.fit), res.filter(r => !r.fit));
+// a coop moved onto a bush: the bush hops to a new place in sight (17 Nov 2026, Audrey: "I moved a coop and it killed a bush")
+const hop = await p.evaluate(async () => { const f = window.__farm, g = f.game(); f.gameUI().close(); f.move.start(0); const c0 = f.coopAt(0);
+  for (let z = -40; z <= 0; z += 0.5) for (let x = -45; x <= -5; x += 0.5) { if (Math.hypot(x - c0[0], z - c0[1]) < 6) continue; for (const deg of [90, 0, 45, 315]) { const r = f.move.room(0, { x, z, deg }); if (!r.now || !r.grow) continue; f.move.to(x, z, deg); const s = f.move.state(); if (s.ok && s.at.x === x && s.at.z === z && s.clear.some(id => id[0] === 'b')) { const ids = s.clear.filter(id => id[0] === 'b'), n0 = f.nature().bushes; const placed = !!f.move.place(); return { ids, n0, placed, n1: f.nature().bushes, hops: f.nature().hops() }; } } }
+  f.move.cancel(); return null; });
+await run(2.5);
+const hop2 = hop && await p.evaluate(ids => { const f = window.__farm, mv = f.nature().moved(); return { hops: f.nature().hops(), there: ids.every(id => mv.some(m => m[0] === id)), n: f.nature().bushes }; }, hop.ids);
+ok('a coop moved onto a bush: the bush hops away (no puff), and stands at its new place when it lands; as many bushes as before', hop && hop.placed && hop.hops === hop.ids.length && hop2.hops === 0 && hop2.there && hop2.n === hop.n0, { hop, hop2 });
 // the bushes: moved, not lost
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.game().save(); }); 
 const bush = await p.evaluate(() => { const f = window.__farm, g = f.game(); const cl = g.data.cleared.filter(k => k[0] === 'b'), mv = f.nature().moved(); return { cleared: cl.length, moved: mv.length, mv }; });

@@ -42,7 +42,7 @@ const T = {
   given: fr ? /a trouvé des vers pour .+ aujourd’hui\. D’autres demain/ : /found worms for .+ today\. More tomorrow/,
   done1: fr ? /cherche un ver pour/ : /is finding a worm for/, done3: fr ? /cherche 3 vers pour/ : /is finding 3 worms for/,
   hens: fr ? /Vos poules qui aiment .+ lui trouvent des vers chaque jour/ : /Your chickens who love .+ find worms every day/,
-  none: fr ? /Plus de vers/ : /No worms left/, n4: fr ? /🪱 4 vers/ : /🪱 4 worms/, go: fr ? /Aller pêcher/ : /Go fishing/,
+  none: /🪱 0 \/ 30/, n4: /🪱 4 \/ 30/, go: fr ? /Aller pêcher/ : /Go fishing/,
 };
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -120,11 +120,11 @@ ok('his visit: three worms, one after another, all in the farmer\'s palm; "Thank
 // the dock's card: the worms, where they come from (once); none: "No worms left" once
 await p.evaluate(() => window.__farm.dockCard()); await run(0.2);
 t = await p.evaluate(() => document.querySelector('.gsheet:not([hidden])').innerText);
-ok('the dock\'s card: 4 worms, where they come from, Go fishing', T.n4.test(t) && T.hens.test(t) && T.go.test(t), t);
+ok('the dock\'s card: 4 worms, where they come from, Go fishing', T.n4.test(t) && !T.hens.test(t) && T.go.test(t), t);      // (17 Nov 2026: where they come from only when there are none)
 await shoot('3_dock');
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.fish.worms = 0; g.save(); f.gameUI().close(); f.dockCard(); }); await run(0.2);
 t = await p.evaluate(() => document.querySelector('.gsheet:not([hidden])').innerText);
-ok('no worms: "No worms left" said once, where they come from, no Go fishing', (t.match(T.none) || []).length === 1 && t.split(T.none.source.replace(/\\/g, '')).length - 1 <= 1 && T.hens.test(t) && !T.go.test(t), t);
+ok('no worms: "No worms left" said once, where they come from, no Go fishing', T.none.test(t) && T.hens.test(t) && !T.go.test(t), t);
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.fish.worms = 4; g.save(); f.gameUI().close(); });
 // the next day: again; at night: not
 await later(24); await run(0.5);

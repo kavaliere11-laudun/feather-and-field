@@ -107,8 +107,8 @@ const DEG = Math.PI / 180, R2 = Math.SQRT1_2;
 const QUALITY = [
   { dpr: 2, shadow: 2048, grass: 1.0, aa: true, fur: 1 },
   { dpr: 2, shadow: 1024, grass: 0.65, aa: true, fur: 0.67 },      // (14 Nov 2026, Audrey, the pond from far off: "See it's still a little blurry": the first step down keeps the sharpness and thins the grass, the shadows and the fluff instead; the picture never goes under 1.25)
-  { dpr: 1.5, shadow: 1024, grass: 0.45, aa: true, fur: 0.67 },
-  { dpr: 1.25, shadow: 1024, grass: 0.35, aa: false, fur: 0.34 },
+  { dpr: 2, shadow: 1024, grass: 0.4, aa: true, fur: 0.34 },       // (17 Nov 2026, Audrey: "Quality of the screen decreased as I was fishing": a second step that keeps the sharpness (less grass and fluff), and the last one no lower than 1.5, smoothed: it was 1.25, unsmoothed)
+  { dpr: 1.5, shadow: 1024, grass: 0.35, aa: true, fur: 0.34 },
 ];
 let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0', 10) || 0));
 
@@ -1810,7 +1810,7 @@ function replantBushes() {
   };
   for (const b of todo) {
     const r = 0.46 * (b.s || 1); let at = null;
-    for (let d = 0.5; d <= 16 && !at; d += 0.5) for (let k = 0, n = Math.max(6, Math.round(d * 6)); k < n && !at; k++) {
+    for (let d = 0.5; d <= 90 && !at; d += d < 16 ? 0.5 : 1) for (let k = 0, n = Math.max(6, Math.round(d * (d < 16 ? 6 : 3))); k < n && !at; k++) {      // (the whole farm if need be: a bush always has somewhere to go)
       const a = k / n * Math.PI * 2, x = b.pos[0] + Math.cos(a) * d, z = b.pos[2] + Math.sin(a) * d;
       if (free(x, z, r)) at = [x, z];
     }
@@ -1834,10 +1834,10 @@ function natureContact() {
 }
 function dropMeshes(list) { for (const m of list) { m.removeFromParent(); if (m.userData.ownMat) m.material.dispose(); } list.length = 0; }
 function buildNature() {
-  replantBushes();
+  replantBushes(); aimHops();
   dropMeshes(NATURE);
   const lists = {};
-  for (const o of [...V.trees, ...V.bushes, ...V.rocks]) (lists[o.model] = lists[o.model] || []).push(natureMatrix(o));
+  for (const o of [...V.trees, ...V.bushes, ...V.rocks]) { if (o.moved && LANDING.has(o.id)) continue; (lists[o.model] = lists[o.model] || []).push(natureMatrix(o)); }      // (a bush still hopping to its new place: drawn there when it lands)
   for (const name of ['tree_a', 'tree_b', 'tree_c', 'tree_apple', 'bush_a', 'bush_b', 'rock_a', 'rock_b']) {
     const crown = STORY_LOOK ? (name[0] === 't' ? { crown: [0.7, 1.95, 0.62, 7] } : name[0] === 'b' ? { crown: [0.0, 0.55, 0.5, 14] } : {}) : {};
     NATURE.push(...batch(name, lists[name] || [], name === 'tree_apple' ? { cast: true, wind: 0.007, foot: [1.98, 0.22], ...crown } : name[0] === 't' ? { cast: true, wind: 0.006, colorOf: natureShade, foot: [1.98, 0.22], ...crown } : name[0] === 'b' ? { cast: true, wind: 0.05, colorOf: natureShade, foot: [0.56, 0.38], ...crown } : {}));
@@ -7818,11 +7818,35 @@ function clearWalkers(p) {
 }
 // a tree, bush or rock cleared: it shrinks away in a puff of leaves (or dust)
 const CLEARING = [];
+const HOPS = [], LANDING = new Set();      // (bushes on their way to a new place; their ids, not drawn there till they land)
+// (from buildNature, once the save has what was cleared: where each hopping bush is going)
+function aimHops() {
+  for (const H of HOPS) { if (H.to) continue; const b = V.bushes.find(x => x.moved && x.id === H.o.id);
+    if (b) H.to = [b.pos[0], b.pos[2]]; else { H.dead = true; LANDING.delete(H.o.id); H.g.removeFromParent(); clearAway(H.o, true); } }
+  for (let i = HOPS.length - 1; i >= 0; i--) if (HOPS[i].dead) HOPS.splice(i, 1);
+}
+function tickHops(dt) {
+  if (!HOPS.length) return;
+  let landed = false;
+  for (let i = HOPS.length - 1; i >= 0; i--) {
+    const H = HOPS[i]; if (!H.to) { H.wait = (H.wait || 0) + dt; if (H.wait > 2) { LANDING.delete(H.o.id); H.g.removeFromParent(); HOPS.splice(i, 1); landed = true; } continue; }      // (never aimed: put down where it is to be)
+    const far = Math.hypot(H.to[0] - H.o.pos[0], H.to[1] - H.o.pos[2]), T = 0.55 + Math.min(0.6, far * 0.06);
+    H.t += dt; const k = Math.min(1, H.t / T), e = k * k * (3 - 2 * k), up = Math.sin(Math.PI * k) * (0.7 + Math.min(1.1, far * 0.12));
+    H.g.position.set(H.o.pos[0] + (H.to[0] - H.o.pos[0]) * e, up, H.o.pos[2] + (H.to[1] - H.o.pos[2]) * e);
+    const sq = k < 0.12 ? 1 - k * 1.6 : k > 0.9 ? 1 - (1 - k) * 2 * 0.25 : 1.06; H.g.scale.set(H.base.x * (2 - sq > 1.25 ? 1.25 : 2 - sq), H.base.y * sq, H.base.z * (2 - sq > 1.25 ? 1.25 : 2 - sq));
+    if (k >= 1) { H.g.removeFromParent(); LANDING.delete(H.o.id); HOPS.splice(i, 1); landed = true; bitsAt(new THREE.Vector3(H.to[0], 0.1, H.to[1]), 6, '#9fcf78', { speed: 0.9, up: 1.0, life: 0.7, size: 0.05 }); }
+  }
+  if (landed) { buildNature(); renderer.shadowMap.needsUpdate = true; }
+  wake(200);
+}
 let PUFF_TEX = null;
-function clearAway(o) {
+function clearAway(o, puff = false) {
   const g = new THREE.Group(), base = new THREE.Vector3();
   for (const m of meshesOf(parts[o.model])) { const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; g.add(k); }
   natureMatrix(o).decompose(g.position, g.quaternion, g.scale); base.copy(g.scale); scene.add(g);
+  // (17 Nov 2026, Audrey: "I moved a coop and it killed a bush. Better if the bush just moves": a bush isn't puffed away any
+  // more: it hops, in sight, to the place replantBushes gives it; only one with nowhere to go on the whole farm puffs)
+  if (GAME_MODE && o.id[0] === 'b' && !puff) { HOPS.push({ o, g, base, t: 0, to: null }); LANDING.add(o.id); wake(1500); return; }
   if (!PUFF_TEX) PUFF_TEX = fxTexture64(64, c => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(32, 32, 30, 0, Math.PI * 2); c.fill(); });
   const mat = new THREE.SpriteMaterial({ map: PUFF_TEX, color: o.id[0] === 'r' ? '#d8cfbf' : o.id[0] === 't' ? '#8cc26a' : '#9fcf78', transparent: true, depthWrite: false });
   const R = rng(o.pos[0] * 131 + o.pos[2] * 71), H = o.id[0] === 't' ? (o.h || 3) * 0.55 : o.id[0] === 'b' ? 0.45 : 0.2, bits = [];
@@ -7835,6 +7859,7 @@ function clearAway(o) {
   CLEARING.push({ g, base, t: 0, bits, mat });
 }
 function tickClearing(dt) {
+  tickHops(dt);
   for (let i = CLEARING.length - 1; i >= 0; i--) {
     const C = CLEARING[i]; C.t += dt;
     if (C.t < 0) continue;                             // (waiting its turn)
@@ -8621,7 +8646,7 @@ function buyBed() {
   const r = game.buyBed(); if (!r) return false;
   if (grows) { BLOCKERS = null; decorSpots = null; rebuildNav(); buildNature(); buildGrass(); hidePebbles(); clearDecorWalkers(DEC.items.garden); }
   GARDEN_UI.shown = []; tickGarden(); renderer.shadowMap.needsUpdate = true; wake(1000);
-  gardenCard(); hint(game.t(moved ? 'bed_bought_moved' : 'bed_bought', { n: r.n, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh();
+  gardenCard(game.data.garden.beds.length - 1); hint(game.t(moved ? 'bed_bought_moved' : 'bed_bought', { n: r.n, c: r.price.toLocaleString(game.locale()) })); gameUI.refresh();      // (17 Nov 2026, Audrey, of the whole garden's card after a bed bought: "Too busy can we have just the normal same message as for an existing bed": the new bed's own card, to sow it)
   return true;
 }
 // where the farmer stands to work at bed i: in front of it (or the nearest he can get to), facing it
@@ -9890,7 +9915,7 @@ window.__farm = {
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
-    wheat: { tap: (k = 0) => wheatTap(k), sow: (k = 0) => sowWheat(k), harvest: (k = 0) => harvestWheat(k), move: (k = 0) => startDecor(WID[k]), buy: () => buyWheat(),
+    wheat: { wild: () => gameUI.wheat2Sheet({ buy: () => buyWheat() }), tap: (k = 0) => wheatTap(k), sow: (k = 0) => sowWheat(k), harvest: (k = 0) => harvestWheat(k), move: (k = 0) => startDecor(WID[k]), buy: () => buyWheat(),
       state: (k = 0) => { const it = DEC.items[WID[k]], F = FIELD.f[k]; return { stage: game.wheatStage(undefined, k), shown: F.shown, hold: F.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: F.bub && !F.bub.hidden ? F.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },
     away: { at: t => { AWAY = { from: t }; newsFrom = 0; }, pending: () => !!AWAY, collectAll: () => collectAll() },
     turnTip: () => TURN, barTint: () => barTint,
@@ -9900,7 +9925,7 @@ window.__farm = {
   // tests (the Breed Book): open it; a point inside the farmhouse's box, up under its roof (x, y, z), to tap
   book: () => bookSheet(), farmhouseSpot: () => { farmhouseAt(new THREE.Ray()); const B = HOUSE_HIT.box, c = B.getCenter(new THREE.Vector3()); c.y = B.min.y + 0.72 * (B.max.y - B.min.y); c.applyMatrix4(HOUSE_HIT.m); return [c.x, c.y, c.z]; },
   coopSpot: (x, z, deg, i = 0) => { const S = coopSpot({ x, z, deg }, gamePlots()[i].gc); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; },
-  nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id && !o.moved), moved: () => V.bushes.filter(b => b.moved).map(b => [b.id, b.pos[0], b.pos[2]]) }), underCoop: (x, z, m) => underCoop(x, z, m),
+  nature: () => ({ trees: V.trees.length, bushes: V.bushes.length, rocks: V.rocks.length, has: id => [...V.trees, ...V.bushes, ...V.rocks].some(o => o.id === id && !o.moved), moved: () => V.bushes.filter(b => b.moved).map(b => [b.id, b.pos[0], b.pos[2]]), hops: () => HOPS.length }), underCoop: (x, z, m) => underCoop(x, z, m),
   screenOf: (x, z, y = 0) => { const v = new THREE.Vector3(x, y, z).project(camera); return { x: (v.x + 1) / 2 * canvas.clientWidth, y: (1 - v.y) / 2 * canvas.clientHeight }; },
   viewAbove: (x, z, size) => viewAbove(x, z, size),
   penOut: i => { const P = penSpec(gamePlots()[i]); return P && P.out; }, grassIn: i => { const c = game.data.coops[i], m = new THREE.Matrix4(), v = new THREE.Vector3(); let n = 0; for (const g of VGRASS) for (let k = 0; k < g.count; k++) { g.getMatrixAt(k, m); v.setFromMatrixPosition(m); const [lx, lz] = inSpot(c, v.x, v.z); if (rectGap(footOf(c), lx, lz) <= 0) n++; } return n; }, coopAt: i => { const g = gamePlots()[i].group; return [g.position.x, g.position.z, Math.round(g.rotation.y / DEG)]; }, navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),

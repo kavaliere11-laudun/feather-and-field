@@ -103,6 +103,7 @@ export const TEXT = {
     up_pea_cosy: 'Pink as Jaipur under a rose dome, marigold garlands, jasmine in brass pots, and a bigger garden with a swing under a little dome, a sandstone basin of sand and a cabbage on a brass lamp-post.',
     up_pea_deluxe: 'White marble inlaid with flowers, a white and gold dome, four slender minarets, a marble pool with a fountain, a marble basin of sand, porcelain cups to ring and the biggest garden, with white pickets and roses.',
     up_next_l: 'Next look', upic_mended: '🥚 More eggs', upic_snug: '🥚 Eggs every day', upic_cosy: '🥚 Evening eggs · 🐣 better chicks', upic_deluxe: '🥚 More evening eggs · 🐣 better chicks', cuddle_short: '♥ Cuddle all', cuddle_in: '♥ in {when}', cuddle_sleep: '♥ In the morning', inside_short: 'Look inside', theme_winter_l: '❄️ Winter', theme_in: 'Move in', theme_out: 'Move out',
+    fish_full: 'Bag full', tin_tomorrow: 'Tomorrow',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
     upfx_deluxe: 'An evening egg every other day. Better chicks. A cuddle counts again after 4 hours.',
@@ -463,6 +464,7 @@ export const TEXT = {
     up_pea_cosy: 'Rose comme Jaipur sous un dôme rose, des guirlandes de soucis, du jasmin en pots de laiton, et un jardin plus grand avec une balançoire sous un petit dôme, un bassin de grès plein de sable et un chou à un réverbère de laiton.',
     up_pea_deluxe: 'En marbre blanc incrusté de fleurs, un dôme blanc et or, quatre minarets élancés, un bassin de marbre et sa fontaine, une vasque de marbre pleine de sable, des tasses de porcelaine à faire chanter et le plus grand jardin, avec palissade blanche et roses.',
     up_next_l: 'Prochain style', upic_mended: '🥚 Plus d’œufs', upic_snug: '🥚 Des œufs chaque jour', upic_cosy: '🥚 Œufs du soir · 🐣 meilleurs poussins', upic_deluxe: '🥚 Plus d’œufs du soir · 🐣 meilleurs poussins', cuddle_short: '♥ Câliner tous', cuddle_in: '♥ dans {when}', cuddle_sleep: '♥ Demain matin', inside_short: 'À l’intérieur', theme_winter_l: '❄️ Hiver', theme_in: 'Emménager', theme_out: 'Repartir',
+    fish_full: 'Sac plein', tin_tomorrow: 'Demain',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
     upfx_deluxe: 'Un œuf le soir un jour sur deux. De meilleurs poussins. Un câlin compte de nouveau au bout de 4 heures.',
@@ -1164,7 +1166,7 @@ export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3,
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 999, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
+export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 30, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
 // (9 Nov 2026 night, Audrey: "It needs to take time to fish all the different species", "Introduce more fish species"; her
 // choices "Time of day + one tin a day", "Keep net, sell at the end"): twenty fish, ten a water: six common, three rare,
 // one legendary. when: the hours a rare one bites ([from, to), the game's clock: early morning or evening); a legendary one
@@ -2368,8 +2370,8 @@ export class Game {
   loseFish() { const had = !!this.bite; this.bite = null; return had; }
   buyWorms(now = Date.now()) {
     const T = FISHING.tin, f = this.fishBag();
-    if (this.data.coins < T.price || f.worms + T.n > FISHING.maxWorms || f.tin === dayKey(now)) return null;      // (one tin a day)
-    this.data.coins -= T.price; f.worms += T.n; f.tin = dayKey(now); this.save();
+    if (this.data.coins < T.price || f.worms >= FISHING.maxWorms || f.tin === dayKey(now)) return null;      // (one tin a day; none while the bag is full: 17 Nov 2026, Audrey: "Worms should not build up for ever": the bag holds 30)
+    this.data.coins -= T.price; f.worms = Math.min(FISHING.maxWorms, f.worms + T.n); f.tin = dayKey(now); this.save();
     return { n: T.n, price: T.price, worms: f.worms };
   }
   // ---- the first day's guide: the step now ('eggs', 'cuddle', …, or null: done or skipped); a step done (k: only if it's
@@ -2855,6 +2857,7 @@ export class Game {
     const sealed = raw.s === seal(JSON.stringify(raw.d));
     // (16 Nov 2026: a farm saved before the garden and the wheat fields had their fixed places: put there, not an edit)
     for (const [k, F] of [['wheat', FIXED.wheat], ['wheat2', FIXED.wheat2], ['garden', FIXED.garden]]) if (raw.d && raw.d[k] && typeof raw.d[k] === 'object') Object.assign(raw.d[k], F);
+    if (raw.d && raw.d.fish && typeof raw.d.fish === 'object' && raw.d.fish.worms > FISHING.maxWorms && raw.d.fish.worms <= 999) raw.d.fish.worms = FISHING.maxWorms;      // (17 Nov 2026: a bag from before it held 30 at most: not an edit)
     this.edited = !sealed || !fits(d, raw.d);
     for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
     if (d.fish && 'free' in d.fish) { d.fish.worms = Math.min(FISHING.maxWorms, d.fish.worms + d.fish.free); delete d.fish.free; delete d.fish.day; }      // (from when worms came free each morning: those left kept)
