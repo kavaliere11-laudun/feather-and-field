@@ -27,3 +27,19 @@ if (!builds.data.length) console.log('no builds yet');
 const groups = await api(`/v1/betaGroups?filter[app]=${app.id}`);
 for (const g of groups.data) console.log('tester group:', g.attributes.name, '| internal:', g.attributes.isInternalGroup, '| all builds automatically:', g.attributes.hasAccessToAllBuilds);
 if (!groups.data.length) console.log('no tester groups yet');
+// (18 Nov 2026, Audrey, the Coins shelf empty in TestFlight: "I thought the game was ready for me to test buying things ?":
+// what Apple says of each thing to buy: its state, and whether it has its words, its price and its review picture.
+// Read only: states, never the key.)
+try {
+  const iaps = await api(`/v1/apps/${app.id}/inAppPurchasesV2?limit=50`);
+  const by = {};
+  for (const p of iaps.data) {
+    const a = p.attributes; let loc = '?', price = '?', shot = '?';
+    try { loc = (await api(`/v2/inAppPurchases/${p.id}/inAppPurchaseLocalizations?limit=10`)).data.map(x => x.attributes.locale + ':' + x.attributes.state).join(','); } catch (e) { loc = 'error'; }
+    try { const s = await api(`/v2/inAppPurchases/${p.id}/iapPriceSchedule?include=manualPrices,baseTerritory`); price = (s.included || []).filter(x => x.type === 'inAppPurchasePrices').length + ' price(s), base ' + ((s.included || []).find(x => x.type === 'territories')?.id || '?'); } catch (e) { price = 'none'; }
+    try { const s = await api(`/v2/inAppPurchases/${p.id}/appStoreReviewScreenshot`); shot = s.data ? s.data.attributes.assetDeliveryState?.state : 'none'; } catch (e) { shot = 'none'; }
+    console.log('to buy:', a.productId, '|', a.inAppPurchaseType, '| state:', a.state, '| words:', loc, '| price:', price, '| review picture:', shot);
+    by[a.state] = (by[a.state] || 0) + 1;
+  }
+  console.log('things to buy:', iaps.data.length, JSON.stringify(by));
+} catch (e) { console.log('things to buy: could not be read:', e.message); }
