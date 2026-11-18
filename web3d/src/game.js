@@ -2138,9 +2138,12 @@ export class Game {
     return n;
   }
   // a shelf sold: all that the open orders don't want (all: those too); nothing to sell: null
-  sellShelf(k, all = false) {
+  // (18 Nov 2026, Audrey: "Would be good to sell just a certain number instead of everything or nothing": count: that many
+  // of them, no more than there are to sell)
+  sellShelf(k, all = false, count = null) {
     if (!PANTRY_IDS.includes(k)) return null;
-    const n = this.storeOf(k) - (all ? 0 : this.wantedOf(k)); if (!(n > 0)) return null;
+    const most = this.storeOf(k) - (all ? 0 : this.wantedOf(k)); if (!(most > 0)) return null;
+    const n = count === null || count === undefined ? most : Math.max(0, Math.min(most, Math.floor(+count) || 0)); if (!(n > 0)) return null;
     const coins = this.shelfValue(k, n); this.pantryTake(k, n); this.data.coins += coins; this.save();
     return { k, n, coins };
   }

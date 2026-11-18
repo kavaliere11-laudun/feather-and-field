@@ -7749,8 +7749,8 @@ function jobsSheet() {
 // ---- the pantry (10 Nov 2026; game.js pantry, gameui.js pantrySheet): a shelf sold: its coins, said; the card again
 function pantrySheet(note) {
   holdBird(null); henOff();
-  gameUI.pantrySheet({ note, sell: (k, all) => {
-    const r = game.sellShelf(k, all); if (!r) return;
+  gameUI.pantrySheet({ note, sell: (k, all, n) => {
+    const r = game.sellShelf(k, all, n); if (!r) return;
     hint(game.t('pantry_sold', { n: r.n.toLocaleString(game.locale()), c: r.coins.toLocaleString(game.locale()) })); gameUI.refresh(); gameUI.bumpCoins(); pantrySheet();
   } });
 }

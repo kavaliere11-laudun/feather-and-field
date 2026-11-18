@@ -984,7 +984,22 @@ export class GameUI {
       if (r.k === 'fish' && r.n) { const C = new Map(); for (const q of g.fishBox()) C.set(q[0], (C.get(q[0]) || 0) + 1); info.append(el('span', 'gcatch-w gpan-g gpan-fish', [...C].map(([id, n]) => g.fishName(id) + (n > 1 ? ' ×' + n : '')).join(', '))); }      // (which fish: Audrey 12 Nov 2026, "if I click sell I am not too sure what I am selling")
       row.append(el('span', 'gemoji gpan-e', icon[r.k]), info);
       const spare = r.n - r.kept;
-      if (spare > 0) { const sb = el('button', 'gbtn gsmallbtn', this.t('pantry_sell', { n: fmt(spare), c: fmt(r.coins) })); sb.type = 'button'; sb.dataset.sell = r.k; sb.addEventListener('click', () => h.sell && h.sell(r.k, false)); row.append(sb); }
+      if (spare > 0) {
+        // (18 Nov 2026, Audrey: "Would be good to sell just a certain number instead of everything or nothing": how many, less or
+        // more (held down: on and on, faster), all of them to begin with; the button says how many and what they fetch)
+        let n = spare; const sb = el('button', 'gbtn gsmallbtn'); sb.type = 'button'; sb.dataset.sell = r.k;
+        const q = el('span', 'gpan-q'), less = el('button', 'gpan-s', '−'), more = el('button', 'gpan-s', '+'), num = el('span', 'gpan-n');
+        const show = () => { num.textContent = fmt(n); sb.textContent = this.t('pantry_sell', { n: fmt(n), c: fmt(g.shelfValue(r.k, n)) }); sb.dataset.n = n; less.disabled = n <= 1; more.disabled = n >= spare; };
+        const step = d => { n = Math.max(1, Math.min(spare, n + d)); show(); };
+        for (const [bt, d] of [[less, -1], [more, 1]]) { bt.type = 'button'; bt.dataset.step = d; bt.setAttribute('aria-label', d < 0 ? '−1' : '+1');
+          let tm = 0, k = 0; const stop = () => { clearTimeout(tm); tm = 0; };
+          const again = () => { k++; step(d * (k > 25 ? 5 : 1)); if ((d < 0 ? n > 1 : n < spare)) tm = setTimeout(again, k > 8 ? 60 : 130); };
+          bt.addEventListener('pointerdown', e => { e.preventDefault(); stop(); k = 0; step(d); tm = setTimeout(again, 380); });
+          for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) bt.addEventListener(ev, stop);
+          bt.addEventListener('click', e => { if (e.detail === 0) step(d); }); }      // (a keyboard's press)
+        q.append(less, num, more); show();
+        sb.addEventListener('click', () => h.sell && h.sell(r.k, false, n));
+        const act = el('span', 'gpan-act'); if (spare > 1) act.append(q); act.append(sb); row.append(act); }
       else if (r.n > 0) { const sb = el('button', 'gbtn gsmallbtn galt', this.t('pantry_sell_kept', { c: fmt(r.all) })); sb.type = 'button'; sb.dataset.sell = r.k; sb.dataset.all = '1'; sb.addEventListener('click', () => h.sell && h.sell(r.k, true)); row.append(sb); }
       else row.append(el('span', 'gnote gpan-0', this.t('pantry_empty')));
       list.append(row);

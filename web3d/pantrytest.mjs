@@ -51,6 +51,16 @@ ok('carrots ripe, their shelf full: Pick opens the pantry with "No room left for
 await p.evaluate(() => document.querySelector('.gpan-r[data-shelf=carrot] [data-sell]').click()); await run(0.1);
 const G2 = await p.evaluate(() => { const f = window.__farm, g = f.game(); const c = g.vegBasket().carrot; f.gameUI().close(); const r = f.garden.pick(0); return { c, r, after: g.vegBasket().carrot }; });
 ok('the carrots sold from there (3 coins each): room again, and Pick picks', G2.c === 0 && G2.after > 0, G2);
+// ---- a certain number sold (18 Nov 2026, Audrey: "sell just a certain number instead of everything or nothing")
+const Q = await p.evaluate(async () => { const f = window.__farm, g = f.game(); f.gameUI().close(); g.garden().veg.carrot = 10; g.save(); f.pantrySheet();
+  const row = document.querySelector('.gpan-r[data-shelf=carrot]'), sell = row.querySelector('[data-sell]'), less = row.querySelector('.gpan-s[data-step="-1"]'), more = row.querySelector('.gpan-s[data-step="1"]');
+  const tap = b => { b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })); b.dispatchEvent(new PointerEvent('pointerup', { bubbles: true })); };
+  const t0 = sell.textContent, moreOff = more.disabled; for (let i = 0; i < 6; i++) tap(less); const t1 = sell.textContent, n1 = +sell.dataset.n; tap(more); const n2 = +sell.dataset.n;
+  const c0 = g.data.coins; sell.click(); await new Promise(r => setTimeout(r, 100));
+  return { t0, t1, n1, n2, moreOff, left: g.vegBasket().carrot, got: g.data.coins - c0, each: g.shelfValue('carrot', 1), hint: document.getElementById('hint').textContent, lessOff: (() => { const r2 = document.querySelector('.gpan-r[data-shelf=carrot]'); return r2 ? r2.querySelectorAll('.gpan-s').length : 0; })() }; });
+ok('ten carrots: all ten to begin with; six fewer with −, one more with +: five sold, five left, paid for five', /10/.test(Q.t0) && Q.moreOff && Q.n1 === 4 && Q.n2 === 5 && Q.left === 5 && Q.got === 5 * Q.each && /5/.test(Q.hint), Q);
+const Q2 = await p.evaluate(() => { const g = window.__farm.game(); const a = g.sellShelf('carrot', false, 999), b = g.sellShelf('carrot', false, -3), c = g.sellShelf('carrot', false, 'x'); return { a: a && a.n, b, c, left: g.vegBasket().carrot }; });
+ok('asked for more than there are: no more than there are sold; a number that makes no sense: nothing', Q2.a === 5 && Q2.b === null && Q2.c === null && Q2.left === 0, Q2);
 // ---- shelves grow with the level; the save's checks
 const Z = await p.evaluate(() => { const f = window.__farm, g = f.game(), at = lv => { g.data.xp = f.xpFor(lv) + 1; return g.shelf('eggs'); }; const a = at(5), b2 = at(10), c = at(30); g.data.shelves = true; const d = g.shelf('eggs'); delete g.data.shelves; at(4); return { a, b2, c, d }; });
 ok('the eggs\' shelf: 24 up to level 5, 30 at level 10, 54 at level 30; half as much again with the bigger shelves', Z.a === 24 && Z.b2 === 30 && Z.c === 54 && Z.d === 81, Z);
