@@ -26,6 +26,8 @@ for (let i = 0; i < 60 && await p.evaluate(() => !!window.__farm.garden.work());
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 await tapBed(1); let c = await card();
 ok('an empty bed tapped: its own card only', c && c.beds === 1 && /2/.test(c.title), c);
+{ const have = await p.evaluate(() => { const g = window.__farm.game(); return { badges: [...document.querySelectorAll('.gsheet:not([hidden]) .gbed-sow .gbtn')].map(x => [x.dataset.sow, +x.querySelector('.gbed-have').dataset.have]), veg: g.data.garden.veg }; });
+  ok('each vegetable to sow says how many the pantry holds already', have.badges.length >= 3 && have.badges.every(([k, n]) => n === (have.veg[k] || 0)) && have.badges.some(([, n]) => n > 0), have); await p.screenshot({ path: OUT + '/bedtap_1b_stock.png' }); }
 await p.evaluate(() => window.__farm.gameUI().close());
 await tapBed(3); c = await card(); await p.screenshot({ path: OUT + '/bedtap_2_next.png' });
 ok('the next bed to unlock tapped: its own card, with its price to buy', c && c.beds === 0 && c.buy && /4/.test(c.title) && /400/.test(c.text), c);

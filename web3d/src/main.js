@@ -92,7 +92,7 @@ const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.star
 const payUI = store && store.on ? {
   price: k => store.priceOf(payId(k)),
   buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { payEnd(); if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
-  restore: () => payRestore(),
+  restore: () => payRestore(), reload: () => store.load(),
 } : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)

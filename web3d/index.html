@@ -687,11 +687,12 @@
   .ginput { font: 700 17px Nunito, system-ui, sans-serif; padding: 11px 13px; border-radius: 14px; border: 2px solid var(--line); background: #fff; color: var(--ink);
             width: 100%; -webkit-user-select: text; user-select: text; }
   .ginput:focus { outline: none; border-color: var(--meadow); }
-  .gbed-sow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }      /* (a bed's vegetables to sow: side by side, as many as fit; eight of them since 15 Nov 2026) */
+  .gbed-sow { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 6px; }      /* (a bed's vegetables to sow: side by side, as many as fit; eight of them since 15 Nov 2026) */
   .gcropnext { margin-top: 6px; }
   .gbtn { font: 600 18px var(--display); padding: 14px 18px; border-radius: 999px; border: 0; background: var(--barn); color: #fff; cursor: pointer; margin-top: 6px;
           box-shadow: 0 4px 14px rgba(210, 70, 47, 0.35); }
   .gbed-sow .gbtn.gsmallbtn { padding: 8px 8px; font-size: 13px; margin: 0; width: auto; min-width: 0; border-radius: 16px; line-height: 1.2; }
+  .gbed-sow .gbtn { position: relative; } .gbed-have { position: absolute; top: -5px; right: -3px; background: var(--meringue); color: var(--ink); border-radius: 999px; padding: 1px 7px 1px 5px; font: 700 12px Nunito, sans-serif; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22); white-space: nowrap; } .gbed-have.none { opacity: 0.75; }
   .gbed-sow .gbtn small { display: block; font-size: 12px; font-weight: 500; opacity: 0.92; white-space: nowrap; }
   .gbtn.galt { background: var(--sage); color: var(--ink); box-shadow: none; font-size: 16px; }
   .gbtn.gdanger { background: var(--barn); color: #fff; }

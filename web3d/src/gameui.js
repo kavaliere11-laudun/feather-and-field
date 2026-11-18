@@ -1159,9 +1159,9 @@ export class GameUI {
     for (let i = 0; i < n; i++) { const c = el('span', 'gcoin giap-c'), row = Math.floor(Math.sqrt(2 * i + 0.25) - 0.5), k = i - row * (row + 1) / 2, inRow = Math.min(row + 1, n - row * (row + 1) / 2); c.style.left = (50 + (k - (inRow - 1) / 2) * (n > 8 ? 17 : 22)) + '%'; c.style.bottom = (18 + (n > 6 ? 6 : 10) * (Math.floor(Math.sqrt(2 * n) - 1) - row) + row * 2) + '%'; c.style.setProperty('--d', (i * 37 % 13) + 'deg'); pic.append(c); }
     return pic;
   }
-  coinCards(b) {
+  coinCards(b, again = false) {
     const fmt = n => n.toLocaleString(this.g.locale());
-    b.append(el('p', 'gnote', this.dt('note')));
+    if (!again) b.append(el('p', 'gnote', this.dt('note')));
     const PAY = this.o.pay || null;
     // free coins for a short video (chosen by the player, never forced): AD_DAY a day (the preview only: not built yet)
     if (!PAY) { const card = el('div', 'gcard gpage gdec giap giap-ad'), info = el('div', 'gpage-i'), pic = el('div', 'gpic giap-adpic', '🎬');
@@ -1180,6 +1180,11 @@ export class GameUI {
       go.addEventListener('click', () => this.payFor('bag:' + B.id, { what: this.dt(B.id), price: B.price, done: () => this.thanksDemo(this.dt('thanks_coins', { n: fmt(B.coins) })) }));
       info.append(go); const pic = el('div', 'gpic giap-bag'); pic.innerHTML = BAG_ART[B.id] || ''; card.append(BAG_ART[B.id] ? pic : this.coinPile(B.pile), info); b.append(card);
     }
+    // (18 Nov 2026, Audrey, the shelf empty in TestFlight: "I thought the game was ready for me to test buying things ?": Apple
+    // has given no prices: said, with a way to ask again, in place of an empty shelf)
+    if (PAY && !b.querySelector('.giap')) { const c = el('div', 'gcard giap-off'), go = el('button', 'gbtn gsmallbtn galt', this.t('shop_again')); go.type = 'button'; go.dataset.again = '1';
+      go.addEventListener('click', () => { go.disabled = true; Promise.resolve(PAY.reload ? PAY.reload() : null).then(() => { if (this.kind === 'shop' && go.isConnected) { c.remove(); this.coinCards(b, true); } }); });
+      c.append(el('p', 'gtext', this.t('shop_noapple')), go); b.append(c); }
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in
   payOn() { return this.o.pay && this.g.level >= PAY_LEVEL ? this.o.pay : null; }
@@ -1410,6 +1415,7 @@ export class GameUI {
         for (const k of CROP_IDS.filter(k => g.cropOpen(k))) {      // (those its level has opened; the next one said under them)
           const C = CROPS[k], broke = g.data.coins < C.seed, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), C.e + ' ' + this.t('crop_' + k));
           go.append(el('small', '', this.t('bed_sow', { c: C.seed, t: this.dur(C.grow) })));      // (its seeds and its time on a line of their own: eight to a card)
+          { const have = (g.data.garden && g.data.garden.veg && g.data.garden.veg[k]) || 0, bd = el('span', 'gbed-have' + (have ? '' : ' none'), '🧺 ' + have); bd.dataset.have = have; bd.setAttribute('aria-label', this.t('crop_' + k) + ': ' + have); go.append(bd); }      // (18 Nov 2026, Audrey: "It would be helpful to know how much I have in stock already here to help to know what to plant": what the pantry holds of it, in the button's corner)
           go.type = 'button'; go.disabled = broke; go.dataset.sow = k; go.addEventListener('click', () => { if (!go.disabled) h.sow(i, k); }); row.append(go);
         }
         c.append(row);
