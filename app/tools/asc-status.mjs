@@ -43,3 +43,12 @@ try {
   }
   console.log('things to buy:', iaps.data.length, JSON.stringify(by));
 } catch (e) { console.log('things to buy: could not be read:', e.message); }
+// (the app's own price and where it is sold: a thing to buy isn't handed to a phone while the app has neither)
+for (const [what, path] of [['app price', `/v1/apps/${app.id}/appPriceSchedule?include=manualPrices,baseTerritory`], ['app availability', `/v1/apps/${app.id}/appAvailabilityV2?include=territoryAvailabilities&limit[territoryAvailabilities]=50`], ['app versions', `/v1/apps/${app.id}/appStoreVersions?limit=5`], ['agreements/app info', `/v1/apps/${app.id}/appInfos?limit=3`]]) {
+  try { const s = await api(path);
+    if (what === 'app price') console.log(what + ':', (s.included || []).filter(x => x.type === 'appPrices').length, 'price(s), base', (s.included || []).find(x => x.type === 'territories')?.id || 'none');
+    else if (what === 'app availability') { const t = (s.included || []).filter(x => x.type === 'territoryAvailabilities'); console.log(what + ': new territories', s.data?.attributes?.availableInNewTerritories, '| listed', t.length, '| available', t.filter(x => x.attributes.available).length, '| e.g.', t.slice(0, 4).map(x => x.attributes.available + ':' + x.attributes.contentStatuses).join(' ')); }
+    else if (what === 'app versions') console.log(what + ':', s.data.map(v => v.attributes.versionString + ' ' + (v.attributes.appVersionState || v.attributes.appStoreState)).join(', ') || 'none');
+    else console.log(what + ':', s.data.map(v => (v.attributes.state || v.attributes.appStoreState) + ' age:' + v.attributes.appStoreAgeRating).join(', '));
+  } catch (e) { console.log(what + ': not set or not readable ·', e.message.slice(0, 160)); }
+}
