@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795016081") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795016081") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795027305") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795027305") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795016081") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795027305") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -394,6 +394,7 @@
   .groom-bar { height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; margin-top: -4px; } .groom-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #f0b93a, var(--yolk)); border-radius: 7px; transition: width 0.2s; }
   .groom-card .gbtn { margin: auto 0 0; } .groom-skip { align-self: center; margin: 0; padding: 2px 0; font-size: 13.5px; color: var(--ink-2); }
   @media (orientation: portrait) { .groom { flex-direction: column; } .groom-card { flex: none; } }
+  .gpan-act { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; } .gpan-act .gbtn { margin: 0; } .gpan-q { display: inline-flex; align-items: center; gap: 4px; flex: none; } .gpan-s { width: 34px; height: 34px; border-radius: 50%; border: 0; background: #fff; color: var(--ink); font: 600 20px/1 var(--display); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16); cursor: pointer; touch-action: manipulation; padding: 0; } .gpan-s:disabled { opacity: 0.35; } .gpan-n { min-width: 30px; text-align: center; font: 600 16px var(--display); font-variant-numeric: tabular-nums; }
   .gtheme-pic { all: unset; cursor: pointer; display: block; border-radius: 14px; overflow: hidden; line-height: 0; } .gtheme-pic img { width: 100%; height: auto; display: block; }
   .gtheme-pic:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   .gtheme-s { display: grid; gap: 8px; } .gtheme-n { margin: 0; font-weight: 600; }
@@ -858,6 +859,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795016081"></script>
+<script src="app.js?v=1795027305"></script>
 </body>
 </html>
