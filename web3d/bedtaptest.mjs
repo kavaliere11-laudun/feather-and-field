@@ -39,6 +39,22 @@ await p.evaluate(() => window.__farm.gameUI().close());
 await tapBed(3); await p.tap('.gsheet:not([hidden]) [data-buybed]'); await run(0.5); c = await card(); await p.screenshot({ path: OUT + '/bedtap_5_bought.png' });
 ok('the next bed bought: its own card only, to sow it', c && c.beds === 1 && /4/.test(c.title), c);
 await p.evaluate(() => window.__farm.gameUI().close());
+// (19 Nov 2026, Audrey: "I had 2 of them ready. I clicked on 1 it worked… The second one when I clicked nothing happened.
+// Had to click many times": the farmer at work at the first bed stood in the way of the next one's tap, and from further
+// off the "To restore" sign's bubble lay over the beds: a ripe bed is picked wherever on it the finger lands, near or far)
+{ const resow = () => p.evaluate(() => { const g = window.__farm.game(); for (const [i, k] of [[0, 'carrot'], [1, 'lettuce']]) { const b2 = g.data.garden.beds[i]; b2.crop = k; b2.ripe = Date.now() - 1; } g.data.garden.veg = { ...g.data.garden.veg, carrot: 0, lettuce: 0 }; window.__farm.gameUI().close(); });
+  const bad = [];
+  for (const size of [2.6, 4.2, 6]) { await p.evaluate(s => window.__farm.lookAt(-32.5, -23.5, s), size); await run(1);
+    for (const [dx, dy, dz] of [[0, 0.2, 0], [0.25, 0.2, 0.6], [-0.25, 0.2, -0.6], [0, 0.2, 0.55], [0, 0.45, 0.65]]) {
+      await resow(); await run(0.2); await tapBed(0); await run(2.5);      // (the farmer by the first bed now)
+      const at = await p.evaluate(([dx, dy, dz]) => { const f = window.__farm, m = f.garden.mid(1), a = f.garden.mid(0), b2 = f.garden.mid(2), ux = b2[0] - a[0], uz = b2[2] - a[2], L = Math.hypot(ux, uz), ex = ux / L, ez = uz / L; return f.toScreen(m[0] + ex * dx - ez * dz, dy, m[2] + ez * dx + ex * dz); }, [dx, dy, dz]);
+      await p.touchscreen.tap(at[0], at[1]); await run(0.3);
+      const r = await p.evaluate(() => { const f = window.__farm, g = f.game(), u = f.gameUI(); return { lettuce: g.data.garden.veg.lettuce, kind: u.isOpen && u.kind }; });
+      if (r.lettuce !== 6 || r.kind) bad.push({ size, off: [dx, dy, dz], r });
+    } }
+  ok('the farmer at the first bed, the second one ripe: picked at the first tap, wherever on it, from near and from far (no other card)', bad.length === 0, bad);
+  for (let i = 0; i < 60 && await p.evaluate(() => !!window.__farm.garden.work()); i++) await run(1);
+  await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.lookAt(-32.5, -23.5, 2.6); }); await run(1); }
 // the second wheat field, wild
 const w = await p.evaluate(() => { const f = window.__farm; f.lookAt(-21, -31, 3.2); return null; }); await run(1);
 const at = await p.evaluate(() => window.__farm.toScreen(-19.9, 0.1, -32)); await p.touchscreen.tap(at[0], at[1]); await run(0.3);

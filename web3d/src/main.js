@@ -4785,6 +4785,14 @@ function pan(dx, dy) {
 
 const tag = document.getElementById('tag');
 let tagBird = null, tagLeft = 0;
+// the garden bed under a tap's ray (the nearest of the ten), or -1 (not on the garden)
+function bedUnder(r) {
+  const it = GAME_MODE && DEC.items.garden; if (!it || decorAt(r) !== it.d) return -1;
+  const gp = r.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.15), new THREE.Vector3()); if (!gp) return -1;
+  gp.applyMatrix4(new THREE.Matrix4().copy(it.d.m).invert()); let bi = -1, bd = Infinity;
+  GARDEN_BEDX.forEach((x, i) => { const d = Math.hypot(gp.x - x, (gp.z - GARDEN_BEDZ[i]) * 0.6); if (d < bd) { bd = d; bi = i; } });
+  return bi;
+}
 function tapAt(x, y) {
   if (SHOWDAY) return;                                   // (the show day: watch, or Skip)
   if (huntTap(x, y)) return;                             // (today's golden egg: a tap on it, or near it)
@@ -4821,6 +4829,10 @@ function tapAt(x, y) {
     const hit = ray.ray.intersectSphere(s, new THREE.Vector3());
     if (hit) { const d = hit.distanceTo(ray.ray.origin); if (d < bestD) { bestD = d; best = b; } }
   }
+  // (19 Nov 2026, Audrey: "I had 2 of them ready. I clicked on 1 it worked… The second one when I clicked nothing happened":
+  // the farmer, at work at the first bed, stood in the way of the next one's tap: a bed with something to do under the
+  // finger comes before him)
+  if (GAME_MODE && best && farmLife && best === farmLife.f && game.data && game.gardenOpen()) { const bi = bedUnder(ray.ray), st = bi >= 0 && game.data.garden.beds[bi] ? game.bedStage(bi) : ''; if (st === 'ripe' || st === 'empty') best = null; }
   // the game: a peacock feather lying in his yard: picked up (sold)
   if (GAME_MODE) {      // (on it rather than on a bird standing over it: whichever the tap is nearer the middle of)
     const k0 = best && best.root ? (best.root.getWorldPosition(w), w.y += best.hitY || 0, ray.ray.distanceToPoint(w) / (best.hitR || 0.2)) : Infinity;
@@ -6808,7 +6820,11 @@ function saleSign(F) {
         const sx = ax + (bx - ax) * u + nx * 0.62, sz = az + (bz - az) * u + nz * 0.62;      // (just inside its fence)
         let room = fieldAt(sx, sz) === F.id && !V.trees.some(t => Math.hypot(t.pos[0] - sx, t.pos[2] - sz) < 2.3);     // (not under a tree)
         for (let a = 0; a < 8 && room; a++) room = nav.freeAt(sx + Math.cos(a * 0.785) * 0.3, sz + Math.sin(a * 0.785) * 0.3);
-        if (room) spots.push({ sx, sz, nx, nz, score: Math.min(len, 6) * (mine ? 3 : 1) * (1 - Math.abs(u - 0.5)) - 0.25 * Math.hypot(sx - home[0], sz - home[1]) });
+        // (19 Nov 2026, Audrey, a ripe bed that wouldn't be picked: the sign's "To restore" bubble lay over the beds from some views
+        // and took the taps meant for them: the sign keeps well away from the kitchen garden and the wheat fields)
+        const gd = Math.hypot(sx - FIXED.garden.x, sz - FIXED.garden.z), wd = Math.min(Math.hypot(sx - FIXED.wheat.x, sz - FIXED.wheat.z), Math.hypot(sx - FIXED.wheat2.x, sz - FIXED.wheat2.z));
+        const away = Math.max(0, 9 - gd) * 4 + Math.max(0, 5 - wd) * 4;
+        if (room) spots.push({ sx, sz, nx, nz, score: Math.min(len, 6) * (mine ? 3 : 1) * (1 - Math.abs(u - 0.5)) - 0.25 * Math.hypot(sx - home[0], sz - home[1]) - away });
       }
     }
   }
