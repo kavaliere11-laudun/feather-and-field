@@ -104,7 +104,7 @@ export const TEXT = {
     up_pea_deluxe: 'White marble inlaid with flowers, a white and gold dome, four slender minarets, a marble pool with a fountain, a marble basin of sand, porcelain cups to ring and the biggest garden, with white pickets and roses.',
     up_next_l: 'Next look', upic_mended: '🥚 More eggs', upic_snug: '🥚 Eggs every day', upic_cosy: '🥚 Evening eggs · 🐣 better chicks', upic_deluxe: '🥚 More evening eggs · 🐣 better chicks', cuddle_short: '♥ Cuddle all', cuddle_in: '♥ in {when}', cuddle_sleep: '♥ In the morning', inside_short: 'Look inside', theme_winter_l: '❄️ Winter', theme_in: 'Move in', theme_out: 'Move out',
     fish_full: 'Bag full', tin_tomorrow: 'Tomorrow',
-    groom_title: 'Getting {name} ready', groom_wash: 'Wash', groom_brush: 'Brush', groom_shine: 'Shine', groom_tip_wash: 'Rub the feathers to wash', groom_tip_brush: 'Swipe from head to tail', groom_tip_shine: 'Tap the sparkles', groom_ready: 'Show-ready', groom_chance: 'Chance of a rosette', groom_go: 'Off to the show · {fee}', groom_skip: 'Enter without grooming', groom_done: 'All ready!',
+    groom_title: 'Getting {name} ready', groom_wash: 'Wash', groom_brush: 'Brush', groom_shine: 'Shine', groom_tip_wash: 'Rub the muddy patches with the sponge', groom_tip_brush: 'Brush the ruffled feathers, head to tail', groom_tip_shine: 'Polish the dull spots with the cloth', groom_ready: 'Show-ready', groom_chance: 'Chance of a rosette', groom_go: 'Off to the show · {fee}', groom_skip: 'Enter without grooming', groom_done: 'All ready!',
     shop_noapple: 'The shop can’t reach Apple just now.', shop_again: 'Try again',
     upfx_mended: 'Fewer days without an afternoon egg.', upfx_snug: 'Two eggs a day, every day.',
     upfx_cosy: 'Now and then an evening egg too. Chicks a little better. A cuddle counts again after 5 hours.',
@@ -467,7 +467,7 @@ export const TEXT = {
     up_pea_deluxe: 'En marbre blanc incrusté de fleurs, un dôme blanc et or, quatre minarets élancés, un bassin de marbre et sa fontaine, une vasque de marbre pleine de sable, des tasses de porcelaine à faire chanter et le plus grand jardin, avec palissade blanche et roses.',
     up_next_l: 'Prochain style', upic_mended: '🥚 Plus d’œufs', upic_snug: '🥚 Des œufs chaque jour', upic_cosy: '🥚 Œufs du soir · 🐣 meilleurs poussins', upic_deluxe: '🥚 Plus d’œufs du soir · 🐣 meilleurs poussins', cuddle_short: '♥ Câliner tous', cuddle_in: '♥ dans {when}', cuddle_sleep: '♥ Demain matin', inside_short: 'À l’intérieur', theme_winter_l: '❄️ Hiver', theme_in: 'Emménager', theme_out: 'Repartir',
     fish_full: 'Sac plein', tin_tomorrow: 'Demain',
-    groom_title: 'On prépare {name}', groom_wash: 'Laver', groom_brush: 'Brosser', groom_shine: 'Faire briller', groom_tip_wash: 'Frottez les plumes pour laver', groom_tip_brush: 'Glissez de la tête à la queue', groom_tip_shine: 'Touchez les étincelles', groom_ready: 'Prête pour le concours', groom_chance: 'Chances de cocarde', groom_go: 'En route pour le concours · {fee}', groom_skip: 'Inscrire sans toilette', groom_done: 'Fin prête !',
+    groom_title: 'On prépare {name}', groom_wash: 'Laver', groom_brush: 'Brosser', groom_shine: 'Faire briller', groom_tip_wash: 'Frottez les taches de boue avec l’éponge', groom_tip_brush: 'Brossez les plumes ébouriffées, de la tête à la queue', groom_tip_shine: 'Faites briller les zones ternes avec le chiffon', groom_ready: 'Prête pour le concours', groom_chance: 'Chances de cocarde', groom_go: 'En route pour le concours · {fee}', groom_skip: 'Inscrire sans toilette', groom_done: 'Fin prête !',
     shop_noapple: 'La boutique n’arrive pas à joindre Apple pour l’instant.', shop_again: 'Réessayer',
     upfx_mended: 'Moins de jours sans l’œuf de l’après-midi.', upfx_snug: 'Deux œufs par jour, tous les jours.',
     upfx_cosy: 'De temps en temps, un œuf le soir aussi. Des poussins un peu meilleurs. Un câlin compte de nouveau au bout de 5 heures.',
@@ -904,7 +904,7 @@ export const FIELDS = 40;
 // from level 12 the land comes a little faster than one field a level (field k: level k + 1 up to the twelfth, then
 // 12 + 18/28 of a level each, the last at level 29); the meadow's ten cost 11,000 to 20,000 coins)
 const TURNS = [0, 45, 90, 135, 180, 225, 270, 315];      // (the ways a coop can face: eighths of a turn since 10 Nov 2026 (main.js Turn); the save and the moves took quarter turns only till 16 Nov, so a coop turned an eighth was not kept)
-export const GROOM = { pts: 2, secs: 8 };      // (the grooming game before a show, 17 Nov 2026: up to 2 points (about ten in a hundred more chance at the most) in the judge's eyes for a bird perfectly got ready; each of its three parts lasts 8 seconds)
+export const GROOM = { pts: 2, secs: 10 };      // (the grooming game before a show, 17 Nov 2026: up to 2 points (about ten in a hundred more chance at the most) in the judge's eyes for a bird perfectly got ready; each of its three parts lasts 8 seconds)
 export const landLevel = k => k < 12 ? k + 1 : 12 + Math.floor((k - 12) * 18 / 28);
 export const landMost = L => { let n = 0; while (n < FIELDS && landLevel(n) <= L) n++; return Math.max(1, n); };
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a

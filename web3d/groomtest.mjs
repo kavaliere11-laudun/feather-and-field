@@ -30,27 +30,36 @@ await p.evaluate(() => window.__farm.showsSheet()); await p.waitForTimeout(300);
 const s0 = await S();
 await p.evaluate(() => { const bt = [...document.querySelectorAll('.gsheet .gshow .gbtn')].find(x => !x.disabled); bt.click(); }); await p.waitForTimeout(500);
 let s = await S();
-ok('"Enter": the grooming game opens with her alone, nothing paid, not entered yet', s.open && s.st && s.st.step === 'wash' && s.st.on > 10 && s.coins === s0.coins && s.in.length === 0, s);
+ok('"Enter": the grooming game opens with her alone, nothing paid, not entered yet', s.open && s.st && s.st.step === 'wash' && s.st.on >= 5 && s.coins === s0.coins && s.in.length === 0, s);
 await p.screenshot({ path: OUT + '/groom_1_wash.png' });
 const filled = await p.evaluate(() => { const c = document.querySelector('.groom-img'), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data; let a = 0, n = 0; for (let i = 3; i < d.length; i += 4) { n++; if (d[i] > 128) a++; } return a / n; });
 ok('her picture: she fills a fair part of it, the rest see-through', filled > 0.15 && filled < 0.8, filled);
-// wash: rubbed all over
-let R = await pic();
-for (let j = 0; j < 24 && (await S()).st.step === 'wash'; j++) { const y = R[1] + R[3] * (0.06 + (j % 12) * 0.08); await drag([[R[0] + R[2] * (j % 2 ? 0.95 : 0.05), y], [R[0] + R[2] * (j % 2 ? 0.05 : 0.95), y]]); }
+// each part: its own tool in hand, five places on her to see to, a bar that fills as they're done (19 Nov 2026)
+const XY = async (u, v) => { const R = await pic(); return [R[0] + R[2] * u, R[1] + R[3] * v]; };
+const stroke = async (sp, dir = 1) => { const a = await XY(sp[0] - 0.075 * dir, sp[1]), b2 = await XY(sp[0] + 0.075 * dir, sp[1]); await drag([a, b2]); };
+const doStep = async (name, both) => { for (let k = 0; k < 14; k++) { const st = (await S()).st; if (st.step !== name) break; for (const sp of st.spots) { if (sp[2] >= 1) continue; await stroke(sp, 1); if (both && (await S()).st.step === name) await stroke(sp, -1); if ((await S()).st.step !== name) break; } } };
+s = await S();
+ok('washing: a sponge in hand, five muddy patches on her, the bar empty', s.st.tool === 'wash' && s.st.spots.length === 5 && s.st.spots.every(q => q[2] === 0) && (await p.evaluate(() => document.querySelectorAll('.groom-mud').length)) === 5 && (await p.evaluate(() => document.querySelector('.groom-time i').style.width)) === '0%', s.st);
+{ const far = [[0.03, 0.03], [0.97, 0.03], [0.03, 0.97], [0.97, 0.97]].sort((a, b2) => Math.min(...s.st.spots.map(q => Math.hypot(q[0] - b2[0], q[1] - b2[1]))) - Math.min(...s.st.spots.map(q => Math.hypot(q[0] - a[0], q[1] - a[1]))))[0]; await drag([await XY(far[0], far[1]), await XY(far[0] + (far[0] < 0.5 ? 0.06 : -0.06), far[1])]); }      // (the corner furthest from every patch)
+ok('rubbing where there is no mud does nothing', (await S()).st.scores[0] === 0 && !(await S()).st.started);
+await stroke(s.st.spots[0], 1); const half = (await S()).st;
+ok('a patch rubbed: it fades, the bar moves on', half.scores[0] > 0 && half.scores[0] < 1 && half.started, half.scores);
+await p.screenshot({ path: OUT + '/groom_1b_washing.png' });
+await doStep('wash', true);
 await p.waitForTimeout(300); s = await S();
-ok('washed: rubbed all over her, on to the brush', s.st.step === 'brush' && s.st.scores[0] > 0.6, s.st);
+ok('washed: every patch gone, on to the brush', s.st.step === 'brush' && s.st.scores[0] > 0.9, s.st);
+ok('brushing: a little brush in hand, five ruffled places', s.st.tool === 'brush' && s.st.spots.length === 5 && (await p.evaluate(() => document.querySelectorAll('.groom-tuft').length)) === 5, s.st.tool);
 await p.screenshot({ path: OUT + '/groom_2_brush.png' });
-// brush: against the feathers first (nothing counted), then from head to tail
-R = await pic(); const br0 = (await S()).st.scores[1]; await drag([[R[0] + R[2] * 0.8, R[1] + R[3] * 0.5], [R[0] + R[2] * 0.2, R[1] + R[3] * 0.5]]);
-const against = (await S()).st.scores[1] - br0;      // (the washing's last rub may have run on into the brushing: only this stroke is looked at)
-for (let k = 0; k < 14 && (await S()).st.step === 'brush'; k++) { const y = R[1] + R[3] * (0.3 + (k % 5) * 0.1); await drag([[R[0] + R[2] * 0.15, y], [R[0] + R[2] * 0.85, y]]); }
+const br0 = s.st.scores[1]; await stroke(s.st.spots[0], -1);
+const against = (await S()).st.scores[1] - br0;
+await doStep('brush', false);
 s = await S();
-ok('brushed: against the feathers counts for nothing, from head to tail does; on to the shine', against === 0 && s.st.step === 'shine' && s.st.scores[1] > 0.6, { against, st: s.st });
-// shine: the sparkles tapped as they come
-R = await pic(); await p.mouse.move(R[0] + R[2] * 0.5, R[1] + R[3] * 0.55); await p.mouse.down(); await p.mouse.up();      // (the first touch starts its clock)
-for (let i = 0; i < 300 && (await S()).st.step === 'shine'; i++) { await p.evaluate(() => { for (const e of document.querySelectorAll('.groom-spark:not([data-hit])')) e.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true })); }); await p.waitForTimeout(200); }
+ok('brushed: against the feathers counts for nothing, from head to tail does; on to the shine', against === 0 && s.st.step === 'shine' && s.st.scores[1] > 0.9, { against, st: s.st });
+ok('shining: a cloth in hand, five dull spots', s.st.tool === 'shine' && s.st.spots.length === 5 && (await p.evaluate(() => document.querySelectorAll('.groom-dull').length)) === 5, s.st.tool);
+await p.screenshot({ path: OUT + '/groom_2b_shine.png' });
+await doStep('shine', true);
 s = await S();
-ok('shone: the sparkles tapped; all three done, her score and her better chance shown', s.st.step === 'done' && s.st.scores[2] > 0.6 && s.st.score > 60, s.st);
+ok('shone: every spot polished; all three done, her score and her better chance shown', s.st.step === 'done' && s.st.scores[2] > 0.9 && s.st.score > 85, s.st);
 const txt = await p.evaluate(() => document.querySelector('.groom-card').innerText);
 ok('the card: show-ready, her chance going up', /\d+% → \d+%/.test(txt) || /100%/.test(txt), txt.replace(/\n+/g, ' | '));
 await p.screenshot({ path: OUT + '/groom_3_done.png' });
