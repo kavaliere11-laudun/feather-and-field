@@ -56,19 +56,21 @@ await p.touchscreen.tap(W.x, W.y); await run(0.3);
 st = await p.evaluate(() => window.__farm.fishing().state);
 ok('…a stuck finger, then a tap on the water in front of him: the line cast', /^(cast|wait|nibble|bite)$/.test(st) && W.top === 'CANVAS', { st, W });
 await p.evaluate(() => window.__farm.fishing().stop()); await run(8);
-// ---- a change of sharpness: drawn in the frame the picture's size changes
+// ---- a change of quality: drawn in the frame it changes, the picture as sharp as before
 await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); f.pause(false); });
 const Q = await p.evaluate(() => new Promise(res => {
   const f = window.__farm, c = document.querySelector('canvas'), q0 = f.quality(), w0 = c.width, t0 = performance.now(), probe = document.createElement('canvas'); probe.width = 32; probe.height = 16;
   const g = probe.getContext('2d', { willReadFrequently: true });
   f.wantQuality(q0 + 1);
   const tick = () => {      // (after the game's own frame, in the same screen refresh: what's on the canvas now)
-    if (c.width !== w0 || performance.now() - t0 > 60000) { g.drawImage(c, 0, 0, 32, 16); const d = g.getImageData(0, 0, 32, 16).data; let lit = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 24) lit++; res({ q0, q1: f.quality(), w0, w1: c.width, lit, of: 32 * 16 }); return; }
+    if (f.quality() !== q0 || performance.now() - t0 > 60000) { g.drawImage(c, 0, 0, 32, 16); const d = g.getImageData(0, 0, 32, 16).data; let lit = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 24) lit++; res({ q0, q1: f.quality(), w0, w1: c.width, lit, of: 32 * 16 }); return; }
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 }));
-ok('a change of sharpness: the picture smaller, and the farm on it in that very frame (not a blank screen)', Q.q1 === Q.q0 + 1 && Q.w1 < Q.w0 && Q.lit > Q.of * 0.9, Q);
+ok('a change of quality: the picture just as sharp (20 Nov 2026: "The whole farm getting blurry"), and the farm on it in that very frame (not a blank screen)', Q.q1 === Q.q0 + 1 && Q.w1 === Q.w0 && Q.lit > Q.of * 0.9, Q);
+const LOW = await p.evaluate(async () => { const f = window.__farm, w0 = document.querySelector('canvas').width; f.setQuality(3); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const out = { q: f.quality(), pr: f.renderer.getPixelRatio(), want: Math.min(devicePixelRatio, 2), w0, w1: document.querySelector('canvas').width }; f.setQuality(0); return out; });
+ok('the lowest quality still as sharp as the first (only grass, fluff and shadows thinner)', LOW.q === 3 && LOW.pr === LOW.want && LOW.w1 === LOW.w0, LOW);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close(); process.exit(fails ? 1 : 0);

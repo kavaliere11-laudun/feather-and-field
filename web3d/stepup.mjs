@@ -2,7 +2,7 @@
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 390, height: 760 }, deviceScaleFactor: 2 });
-await p.goto('http://localhost:8770/index.html?coops=0');
+await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?coops=0`);
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 120000 });
 const r = await p.evaluate(async () => {
   const f = window.__farm, out = [];

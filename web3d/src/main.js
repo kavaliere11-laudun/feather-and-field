@@ -109,7 +109,7 @@ const QUALITY = [
   { dpr: 2, shadow: 2048, grass: 1.0, aa: true, fur: 1 },
   { dpr: 2, shadow: 1024, grass: 0.65, aa: true, fur: 0.67 },      // (14 Nov 2026, Audrey, the pond from far off: "See it's still a little blurry": the first step down keeps the sharpness and thins the grass, the shadows and the fluff instead; the picture never goes under 1.25)
   { dpr: 2, shadow: 1024, grass: 0.4, aa: true, fur: 0.34 },       // (17 Nov 2026, Audrey: "Quality of the screen decreased as I was fishing": a second step that keeps the sharpness (less grass and fluff), and the last one no lower than 1.5, smoothed: it was 1.25, unsmoothed)
-  { dpr: 1.5, shadow: 1024, grass: 0.35, aa: true, fur: 0.34 },
+  { dpr: 2, shadow: 1024, grass: 0.28, aa: true, fur: 0.25 },     // (20 Nov 2026, Audrey: "The whole farm getting blurry please": the last step keeps the sharpness too (it was 1.5): a busy phone gets thinner grass and fluff, never a softer picture)
 ];
 let q = Math.max(0, Math.min(QUALITY.length - 1, parseInt(params.get('q') || '0', 10) || 0));
 
@@ -9891,7 +9891,7 @@ function frame(now) {
   }
 }
 
-// a slow stretch steps the quality down (lower resolution, fewer shadows, less grass and fur); it used to stay down for the
+// a slow stretch steps the quality down (fewer shadows, less grass and fur; the sharpness itself never drops); it used to stay down for the
 // rest of the visit, so one heavy zoomed-out look left everything blurry afterwards
 const START_Q = q;
 let slowAt = Infinity, stepUps = 0, upTries = 0;
@@ -9941,7 +9941,7 @@ window.__farm = {
   notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
-  setQuality: (n) => { while (q < n) stepDown(); },
+  setQuality: (n) => { n = Math.max(0, Math.min(QUALITY.length - 1, n)); if (n > q) slowAt = view.size; wantQ = null; setQuality(n); },      // (tests; it used to wait on stepDown, which only asks for the next frame: it never returned)
   groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(typeof bid === 'object' ? bid : game.bird(bid)); return c ? (url ? { url: c.toDataURL('image/png'), head: c.head || null } : [c.width, c.height]) : null; } },      // (tests: the grooming game)
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   focus: (x, z, size) => focusOn(x, z, size),      // (tests: the view to a place)
