@@ -9415,11 +9415,15 @@ function wormMats() { return RWORM_MAT || (RWORM_MAT = [new THREE.MeshStandardMa
 function makeWorm(x, z, yaw) {
   const M = wormMats(), g = new THREE.Group(); g.position.set(x, groundY(x, z), z); g.rotation.y = yaw; g.scale.setScalar(2.1);
   const segs = []; for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(RWORM_GEO, i === 7 ? M[1] : i === 5 ? M[2] : M[0]); const k = i === 0 ? 0.6 : i === 1 ? 0.8 : i === 7 ? 1.05 : 1; m.scale.setScalar(k); g.add(m); segs.push(m); }
+  // (a little glint over it now and then, as the golden egg's, so it's seen from the usual distance)
+  const gm = RAIN.glint || (RAIN.glint = (() => { const m = new THREE.SpriteMaterial({ map: huntGlintTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }); m.userData.noGrade = true; return m; })());
+  const gl = new THREE.Sprite(gm.clone()); gl.material.userData.noGrade = true; gl.position.set(0.02, 0.05, 0); gl.scale.setScalar(0.001); g.add(gl);
   scene.add(g);
-  return { g, segs, t: 0, life: 16 + Math.random() * 8, phase: Math.random() * 6, turn: (Math.random() - 0.5) * 0.4, pop: 0 };
+  return { g, segs, gl, t: 0, life: 16 + Math.random() * 8, phase: Math.random() * 6, turn: (Math.random() - 0.5) * 0.4, pop: 0 };
 }
 function wormPose(W) {
   const t = W.t, up = Math.min(1, t / 0.9), down = Math.max(0, Math.min(1, (t - W.life) / 1.1)), e = up * (1 - down);      // (how much of it is out)
+  const k = ((t + W.phase) % 2.6) / 2.6, tw = k < 0.2 && e > 0.9 ? Math.sin(k / 0.2 * Math.PI) : 0; W.gl.scale.setScalar(0.001 + 0.13 * tw); W.gl.material.opacity = tw; W.gl.material.rotation = t * 0.8;      // (its glint every 2.6 seconds)
   for (let i = 0; i < 8; i++) { const s = i / 7, out = 1 - s < e * 1.02; W.segs[i].position.set((s - 0.5) * 0.15, out ? 0.009 : -0.03, 0.012 * Math.sin(s * 7 - t * 7 + W.phase) * (0.4 + 0.6 * s)); }
 }
 function rainVisuals(on) { RAIN.on = on; if (on) { rainLines(); RAIN.pudTry = 0; RAIN.next = 1.2; RAIN.spawned = 0; } }
