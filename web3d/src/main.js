@@ -3014,7 +3014,7 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
       // (20 Nov 2026, Audrey: "Clipping while holding the hen": she sits on his forearms, both under her (the cuddle pose),
       // between his wrists and just above them, wherever they are; she had been held at a fixed spot, his arms through her)
       const h = Lf.heading, R = Lf.f.rig.B, wl = R.wristL.getWorldPosition(new THREE.Vector3()), wr = R.wristR.getWorldPosition(new THREE.Vector3());
-      const hold = v.set((wl.x + wr.x) / 2, Math.max(wl.y, wr.y) + STRAY_SEAT[0], (wl.z + wr.z) / 2).applyMatrix4(inv);
+      const hold = v.set((wl.x + wr.x) / 2 + Math.sin(h) * STRAY_SEAT[1], Math.max(wl.y, wr.y) + STRAY_SEAT[0], (wl.z + wr.z) / 2 + Math.cos(h) * STRAY_SEAT[1]).applyMatrix4(inv);
       const ground = C.from || (C.from = { x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y });
       const ry = (h + Math.PI / 2) - plot.group.rotation.y, dy = Math.atan2(Math.sin(ry - ground.yaw), Math.cos(ry - ground.yaw));
       const arc = Math.sin(k * Math.PI) * 0.06;
@@ -9248,7 +9248,7 @@ function strayStep(b, dt) {
 }
 // in his arms k of the way (0 on the ground .. 1): in front of his chest, across his arms, her head to his left, her eyes shut
 // once she's up; on the way down (at her gate), to the ground in front of him
-const STRAY_SEAT = [0.02, 0.0];      // (how far above his wrists her feet are when she sits on his forearms, how far ahead of them)
+const STRAY_SEAT = [0.02, 0.045];      // (how far above his wrists her feet are when she sits on his forearms, how far ahead of them)
 function strayLift(k, Lf) {
   const b = STRAY.bird; if (!b) return; const S = b.stray;
   if (!Lf || k <= 0) { if (S.carry) { b.root.position.set(S.carry.x, 0.015 + groundY(S.carry.x, S.carry.z), S.carry.z); } S.carry = null; b.shadowY = undefined; b.rig.sleepy(false); return; }
