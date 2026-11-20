@@ -54,17 +54,21 @@ for (let i = 0; i < 8 && !s.rain.worms.length; i++) { await run(1); s = await S(
 ok('worms come up where you\'re looking, on your land or a lane by it', s.rain.worms.length > 0 && s.onLand && s.rain.worms.every(w => w.x > 0 && w.x < W && w.y > 0 && w.y < H), s.rain.worms);
 await run(1.5); await shoot('1_raining');
 // a tap on one
-for (let i = 0; i < 8 && !(await S()).rain.worms.some(w => w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90); i++) await run(1);
-s = await S(); const w0 = s.rain.worms.find(w => w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90) || s.rain.worms[0], b0 = s.worms;
+for (let i = 0; i < 8 && !(await S()).rain.worms.some(w => !w.pen && w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90); i++) await run(1);
+s = await S(); const w0 = s.rain.worms.find(w => !w.pen && w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90) || s.rain.worms[0], b0 = s.worms;
 await p.evaluate(() => window.__farm.pause(false)); await p.touchscreen.tap(w0.x, w0.y); await p.waitForTimeout(250); await p.evaluate(() => window.__farm.pause(true));
 await run(0.1); await shoot('2_caught'); s = await S();
 ok('a tap on a worm: into the worm bag (+1), counted in the save', s.worms === b0 + 1 && s.moment.got === 1, { worms: s.worms, b0, got: s.moment.got });
 // a reload
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load(); await close(); await run(1); s = await S();
 ok('a reload: still raining, the worm caught kept', s.moment && s.moment.k === 'rain' && s.moment.got === 1 && s.rain.on && T.pill.test(s.pill || ''), s);
+// a worm in a pen: a hen there hurries over and pecks it up (20 Nov 2026, Audrey: "Will the chicken go and try to catch the worms?", "Worms in pens")
+const e0 = (await S()).rain.eaten, q = await p.evaluate(() => window.__farm.rain.penWorm());
+let pe = null; for (let i = 0; i < 24 && q; i++) { await run(0.5); s = await S(); if (s.rain.eaten > e0) { pe = s; break; } if (i === 5) await shoot('2b_pen'); }
+ok('a worm in a pen: a hen there hurries over and pecks it up before you', !!q && !!pe && pe.moment.got === 1, { q, eaten: pe && pe.rain.eaten, e0 });
 // the bag full
 await p.evaluate(() => { const g = window.__farm.game(); g.fishBag().worms = 30; g.save(); });
-const good = w => w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90;      // (out of the ground, clear of the buttons)
+const good = w => !w.pen && w.t > 1 && w.x > 150 && w.x < W - 150 && w.y > 90 && w.y < H - 90;      // (out of the ground, clear of the buttons)
 for (let i = 0; i < 14 && !(await S()).rain.worms.some(good); i++) await run(1);
 s = await S(); const c1 = s.coins, w1 = s.rain.worms.find(good) || s.rain.worms[0];
 await p.evaluate(() => window.__farm.pause(false)); await p.touchscreen.tap(w1.x, w1.y); await p.waitForTimeout(250); await p.evaluate(() => window.__farm.pause(true)); await run(0.2);

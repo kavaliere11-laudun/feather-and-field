@@ -284,7 +284,7 @@ export const TEXT = {
     mom_hen: '🐔 A hen is out!', mom_hen_hint: '{name} has slipped out of her pen. Find her on the farm and tap her!',
     mom_hen_found: '✨ You found {name}! {farmer} carries her home. +{c} coins, +{x} XP', mom_hen_back: '{name} went back to her pen by herself for the night.',
     busy_stray: '{farmer} is bringing {name} home.', next_stray: 'bring {name} home',
-    mom_rain: '🌧️ It’s raining!', mom_rain_hint: 'Worms are coming up in the rain. Tap them to fill your worm bag!',
+    mom_rain: '🌧️ It’s raining!', mom_rain_hint: 'Worms are coming up in the rain. Tap them before the hens do!',
     mom_rain_end: 'The rain has stopped. Worms caught: {n} 🪱', mom_rain_end0: 'The rain has stopped.', mom_rain_full: '🪱 Bag full · +{c} coins',
     // the daily egg hunt (7 Nov 2026)
     hunt_hint: '🥚✨ {hen} has hidden today’s golden egg somewhere on your farm. Can you find it?', hunt_found: '✨ You found {hen}’s golden egg! +{c} coins, +{x} XP',
@@ -652,7 +652,7 @@ export const TEXT = {
     mom_hen: '🐔 Une poule s’est échappée\u00a0!', mom_hen_hint: '{name} s’est échappée de son enclos. Trouvez-la sur la ferme et touchez-la\u00a0!',
     mom_hen_found: '✨ Vous avez retrouvé {name}\u00a0! {farmer} la ramène chez elle. +{c} pièces, +{x} XP', mom_hen_back: '{name} est rentrée toute seule dans son enclos pour la nuit.',
     busy_stray: '{farmer} ramène {name} chez elle.', next_stray: 'ramener {name}',
-    mom_rain: '🌧️ Il pleut\u00a0!', mom_rain_hint: 'Les vers sortent avec la pluie. Touchez-les pour remplir votre sac de vers\u00a0!',
+    mom_rain: '🌧️ Il pleut\u00a0!', mom_rain_hint: 'Les vers sortent avec la pluie. Touchez-les avant les poules\u00a0!',
     mom_rain_end: 'La pluie s’est arrêtée. Vers attrapés\u00a0: {n} 🪱', mom_rain_end0: 'La pluie s’est arrêtée.', mom_rain_full: '🪱 Sac plein · +{c} pièces',
     // la chasse à l’œuf du jour (7 nov. 2026)
     hunt_hint: '🥚✨ {hen} a caché l’œuf d’or du jour quelque part sur votre ferme. Saurez-vous le trouver ?', hunt_found: '✨ Vous avez trouvé l’œuf d’or de {hen} ! +{c} pièces, +{x} XP',

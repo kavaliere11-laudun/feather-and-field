@@ -3890,6 +3890,18 @@ class Bird {
     }
     if (this.feedIn > 0 && !this.busy() && !this.cuddle) { this.feedIn -= dt; if (this.feedIn <= 0) this.goEat(); }
   }
+  // a worm come up in the rain in her pen (farm moments): off to it in a hurry, a peck there; q: where it is (pen frame)
+  goWorm(W, q) {
+    if (this.busy() || this.cuddle || this.called || this.held) return false;
+    const p = this.root.position, dx = q[0] - p.x, dz = q[1] - p.z, d = Math.hypot(dx, dz), reach = 0.13 * this.rig.scale / 0.5;
+    this.eatAt = null; this.act = null; this.wait = 0; this.then = { type: 'peck', left: 0.9, worm: W };
+    if (d > reach + 0.05) {
+      let sx = q[0] - dx / d * reach, sz = q[1] - dz / d * reach;
+      if (!this.free(sx, sz)) { sx = q[0]; sz = q[1]; }
+      this.route = this.plan([[sx, sz]]); if (!this.route.length) this.route = [[sx, sz]]; this.pace = this.pers === 'glutton' ? 2.0 : 1.7; this.nextLeg();
+    } else { this.root.rotation.y = Math.atan2(dx, dz); this.route = null; this.act = this.then; this.then = null; this.wait = this.act.left + 0.1; }
+    return true;
+  }
   // corn on the ground: off to the nearest grains (hurrying; the glutton fastest), a good peck there, then the next
   goEat() {
     const C = this.plot.corn; if (!C || this.busy() || this.cuddle) return false;
@@ -4343,6 +4355,7 @@ class Bird {
       if (act.left <= 0) {
         this.act = null; this.wait = Math.min(this.wait, 0.2 + this.r() * 0.6); this.acted = true;
         if (act.eat) this.ate();
+        if (act.worm) wormEaten(act.worm, this);      // (a worm up in the rain, in her pen: hers, if it's still there)
         if (act.type === 'cuddle') { this.cuddle = null; this.act = { type: 'ruffle', left: 0.75 }; this.wait = 0.9; }      // a happy shake
         if (act.next) { this.act = act.next; this.wait = Math.max(this.wait, act.next.left); }      // (what comes after: the morning's fan after his call)
       }
@@ -9451,7 +9464,7 @@ function rainTap(x, y) {
   if (!RAIN.worms.length) return false;
   let best = null, bd = 40;
   for (const W of RAIN.worms) {
-    if (W.pop || W.t > W.life + 0.6) continue;
+    if (W.pop || W.eaten || W.t > W.life + 0.6) continue;
     W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()).project(camera);
     const d = Math.hypot((w.x + 1) / 2 * canvas.clientWidth - x, (1 - w.y) / 2 * canvas.clientHeight - y); if (w.z < 1 && d < bd) { bd = d; best = W; }
   }
@@ -9466,6 +9479,32 @@ function floatWord(t, x, y) {
   const e = document.createElement('div'); e.className = 'gfloat'; e.textContent = t; e.style.left = x + 'px'; e.style.top = y + 'px'; document.body.append(e);
   const a = e.animate ? e.animate([{ transform: 'translate(-50%, -50%) scale(0.7)', opacity: 0 }, { transform: 'translate(-50%, -120%) scale(1.1)', opacity: 1, offset: 0.25 }, { transform: 'translate(-50%, -260%) scale(1)', opacity: 0 }], { duration: 1100, easing: 'ease-out', fill: 'both' }) : null;
   if (a) a.onfinish = () => e.remove(); else setTimeout(() => e.remove(), 1100);
+}
+// a worm in a pen (in view, with its hens up and about, the farmer not in it): a clear spot in its yard
+function penWormSpot() {
+  const list = livePlots().filter(p => p.kind === 'coop' && p.gc && !p.farmer && !p.fw && p.birds.some(b => b.kind !== 'chick' && !b.busy()));
+  if (!list.length) return null;
+  const plot = list[Math.floor(Math.random() * list.length)], Y = penOf(plot).yard, h = plot.birds.find(b => b.kind !== 'chick'), v = new THREE.Vector3();
+  for (let k = 0; k < 20; k++) {
+    const x = Y.min[0] + 0.25 + Math.random() * (Y.max[0] - Y.min[0] - 0.5), z = Y.min[2] + 0.25 + Math.random() * (Y.max[2] - Y.min[2] - 0.5);
+    if (!h.free(x, z) || plot.birds.some(b => Math.hypot(b.root.position.x - x, b.root.position.z - z) < 0.35)) continue;
+    plot.frame.localToWorld(v.set(x, 0, z)); return { at: [v.x, v.z], plot, q: [x, z] };
+  }
+  return null;
+}
+// the hen (or rooster) nearest the worm, free just now, off to peck it up
+function penWormHen(W) {
+  const P = W.pen.plot; if (!plots.includes(P) || P.farmer) return null;
+  const free = P.birds.filter(b => b.kind !== 'chick' && !b.busy() && !b.cuddle && !b.called && !b.held && !(b.then && b.then.worm)).sort((a, b) => Math.hypot(a.root.position.x - W.pen.q[0], a.root.position.z - W.pen.q[1]) - Math.hypot(b.root.position.x - W.pen.q[0], b.root.position.z - W.pen.q[1]));
+  for (const b of free) if (b.goWorm(W, W.pen.q)) return b;
+  return null;
+}
+// her peck done: the worm hers if it's still there and under her beak (it goes; not one of yours)
+function wormEaten(W, b) {
+  if (!RAIN.worms.includes(W) || W.pop || W.eaten || W.t >= W.life) return;
+  const p = b.root.position, y = b.root.rotation.y, reach = 0.13 * b.rig.scale / 0.5;
+  if (Math.hypot(p.x + Math.sin(y) * reach - W.pen.q[0], p.z + Math.cos(y) * reach - W.pen.q[1]) > 0.3) return;
+  W.eaten = 0.001; RAIN.eaten = (RAIN.eaten || 0) + 1; wake(800);
 }
 // each frame: a saved shower back (or over, past its time), over when its time's up (a word), the rain fading in and out,
 // the drops, the puddles filling and drying, their rings, the worms coming and going
@@ -9507,13 +9546,18 @@ function tickRain(dt) {
   const got = raining ? m.got : MOMENTS.rain.worms, alive = RAIN.worms.filter(W => !W.pop && W.t < W.life).length;
   if (RAIN.on && RAIN.k > 0.6 && (RAIN.next -= dt) <= 0) {
     RAIN.next = 1.0 + Math.random() * 2.2;
-    if (alive < 6 && got + alive < MOMENTS.rain.worms && !inside.open) { const at = wormSpot(); if (at) { RAIN.worms.push(makeWorm(at[0], at[1], Math.random() * 6.28)); RAIN.spawned++; } }
+    if (alive < 6 && got + alive < MOMENTS.rain.worms && !inside.open) {
+      const pen = Math.random() < 0.4 ? penWormSpot() : null, at = pen ? pen.at : wormSpot();      // (now and then in a pen in view: its hens go for it, 20 Nov 2026, Audrey: "Will the chicken go and try to catch the worms?", "Worms in pens")
+      if (at) { const W = makeWorm(at[0], at[1], Math.random() * 6.28); if (pen) { W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3 + Math.random() * 1.2; } RAIN.worms.push(W); RAIN.spawned++; }
+    }
   }
   for (const W of [...RAIN.worms]) {
     W.t += dt;
     if (W.pop) { W.pop += dt; const u = Math.min(1, W.pop / 0.45); W.g.position.y = groundY(W.g.position.x, W.g.position.z) + Math.sin(u * Math.PI) * 0.12; W.g.scale.setScalar(2.1 * (1 - u * 0.9)); W.g.rotation.y += dt * 9; if (u >= 1) { W.g.removeFromParent(); RAIN.worms.splice(RAIN.worms.indexOf(W), 1); } continue; }
     if (W.t > W.life + 1.2 || (!RAIN.on && W.t < W.life)) { if (W.t > W.life + 1.2) { W.g.removeFromParent(); RAIN.worms.splice(RAIN.worms.indexOf(W), 1); continue; } W.life = W.t; }      // (the rain stopped: back down they go)
-    if (W.t > 0.9 && W.t < W.life) { W.g.rotation.y += W.turn * dt; const y = W.g.rotation.y, st = 0.012 * dt; W.g.position.x += Math.cos(y) * st; W.g.position.z -= Math.sin(y) * st; }      // (crawling on, head first)
+    if (W.eaten) { W.eaten += dt; const u = Math.min(1, W.eaten / 0.3); W.g.scale.setScalar(2.1 * (1 - u)); if (u >= 1) { W.g.removeFromParent(); RAIN.worms.splice(RAIN.worms.indexOf(W), 1); } continue; }      // (pecked up by a hen: gone into her beak)
+    if (W.t > 0.9 && W.t < W.life && !W.still) { W.g.rotation.y += W.turn * dt; const y = W.g.rotation.y, st = 0.012 * dt; W.g.position.x += Math.cos(y) * st; W.g.position.z -= Math.sin(y) * st; }      // (crawling on, head first)
+    if (W.pen && !W.hen && W.t < W.life && (W.henIn -= dt) <= 0) { W.henIn = 0.8; W.hen = penWormHen(W); }      // (a moment for you to be quicker, then the nearest hen there's off for it)
     wormPose(W);
   }
   wake(200);
@@ -10341,7 +10385,7 @@ window.__farm = {
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
-  rain: { start: () => rainStart(), state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t }; }), spawned: RAIN.spawned, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
+  rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
   moment: { seat: STRAY_SEAT, start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
