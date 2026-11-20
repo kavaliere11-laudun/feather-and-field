@@ -35,6 +35,7 @@ export const FARMER_TEXT = register('say', {
   treat: ['A treat for you!', 'Une friandise pour vous !'],              // (from the vegetable garden, 7 Nov 2026)
   there: ['There you are!', 'Vous voilà !'],
   wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
+  found: ['There you are!', 'Te voilà, toi !'], homego: ['Home you go!', 'Allez, à la maison !'],      // (a hen out, brought home: main.js farm moments)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 });
@@ -419,6 +420,42 @@ export class FarmLife {
     const run = seq.run.bind(seq); seq.run = (Lf, dt) => seq.aborted || run(Lf, dt); seq.job = { kind: 'cheer' };
     if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
     return true;
+  }
+  // ---- a hen out (main.js farm moments, 20 Nov 2026: "Find her and tap her", the farmer carries her home): he hurries over
+  // to her (o.at, where he stops in front of her; o.face(): towards her), crouches and scoops her up ("There you are!"),
+  // holds her a moment, carries her home in his arms (walking: she's held) to her pen's gate (o.P: penSpec), in, sets her
+  // down just inside ("Home you go!") and out again. o.lift(k, life): how far up she is (0 on the ground .. 1 in his arms);
+  // o.down(): she's set down in her pen (also if he never gets there, or is called away: she's let go where she is). Named
+  // 'pen': he isn't called away meanwhile; asked while he's coming out, going in or busy in a pen, straight after it
+  bringHome(o) {
+    if (this.home || this.running) return false;
+    const P = o.P, self = this, sm = u => u * u * (3 - 2 * u), step = (a, b, u) => Math.max(0, Math.min(1, (u - a) / (b - a)));
+    let held = false, down = false, heart = 0.4;
+    const put = () => { if (!down) { down = true; held = false; o.down(); } return null; };
+    const pen = on => () => { if (on) { self.pen = P; P.enter(); } else { P.leave(); self.pen = null; } return null; };
+    const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - o.at[0], Lf.pos.z - o.at[1]) > 0.8) { seq.aborted = true; put(); } return true; } };
+    const atGate = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - P.out[0], Lf.pos.z - P.out[1]) > 0.8) { seq.aborted = true; put(); } return true; } };
+    const L = [TK.path(o.at[0], o.at[1], 'hurry'), there, () => TK.face(o.face()),
+      TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; o.lift(0.32 * sm(step(0.45, 1.0, u)), Lf); }),
+      TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; o.lift(0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
+      TK.say('found'),
+      TK.act('hug', 2.2, (W, u, Lf) => { W.pose = 'hold'; W.face = 'cuddle'; W.hug = u; o.lift(1, Lf); if (u > heart) { heart += 0.7; if (o.heart) o.heart(); } }),
+      () => { held = true; return null; },
+      TK.path(P.out[0], P.out[1], 'walk'), atGate, TK.face(P.toGate), pen(true), TK.walk(P.in),
+      TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'hold' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; held = false; o.lift(1 - sm(step(0.2, 0.95, u)), Lf); }),
+      put, TK.say('homego'),
+      TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }),
+      () => TK.walk(P.back.slice(0, 3)), pen(false), TK.walk(P.back.slice(3))];
+    const seq = TK.seq('pen', L), run = seq.run.bind(seq);
+    seq.run = (Lf, dt) => {
+      if (seq.aborted) return true;
+      const r = run(Lf, dt);
+      if (held && !down) { const W = Lf.want; if (W.pose === 'turn' || W.pose === 'hips') { W.pose = 'hold'; W.keepArms = true; W.face = 'happy'; } o.lift(1, Lf); }      // (carrying her: in his arms all the way)
+      return r;
+    };
+    seq.job = { kind: 'stray', hen: o.hen }; seq.drop = put;
+    if (this.task && /^(out|home|pen)$/.test(this.task.name)) this.pending = seq; else this.task = seq;
+    return seq;
   }
   // ---- work about the farm (main.js: sowing and harvesting the wheat, the honey): he hurries to `at` ([x, z]), turns to
   // `face`, says `say`, then `acts` ([name, secs, set(want, u, life)], 'camera': turning to face the player, or 'done': done() there), then a moment's look

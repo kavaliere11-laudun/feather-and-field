@@ -37,7 +37,7 @@ import { Notes } from './notify.js';
 import { Store, productOf, setOf, bagOf, trioOf, TRIO_ALL, SHELVES } from './store.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
-import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS } from './game.js';
+import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS, MOMENTS } from './game.js';
 import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { openGroom } from './groom.js';
@@ -692,6 +692,7 @@ async function start() {
   setTimeout(() => loading.remove(), 600);
   if (GAME_MODE) {
     openedAt = Date.now(); newsFrom = performance.now() + 1500; gameUI.showBar(); if (!welcome) hint(game.t('hint_move'));
+    STRAY.roll = !navigator.webdriver || params.has('moments');      // (farm moments: one may begin as the farm opens; the automated checks only with ?moments)
     startFirstDay(!!welcome);                              // (a new farm: the pictures, then the first day's guide)
     try { if (sessionStorage.getItem('ff3d.loaded')) { sessionStorage.removeItem('ff3d.loaded'); hint(game.t('code_loaded', { n: game.level })); } } catch (e) { /* */ }      // (a farm code just loaded, or the farm from online)
     if (account) account.start();                          // (signed in here before: the farm kept in step with the one online)
@@ -2066,6 +2067,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     else if (gc) {                                        // the game: this coop's forever birds, each with its own name and personality
       const henAt = penOf(plot).hens.filter(h => h.model === 'hen'), rooAt = penOf(plot).hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
+        if (STRAY.gid === gb.id) continue;                // (out on the farm just now: farm moments)
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
         const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, r);      // (a Silkie in her own colour)
         b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
@@ -3799,7 +3801,7 @@ class Bird {
     else { this.act = { type: 'flap', left: 0.8 }; this.wait = Math.max(this.wait, 0.8); }
   }
   // ---- the farmer in the pen (farmlife.js visitPen, penvisit.js): plot.farmer is where he is in the pen's frame
-  busy() { return this.laying || this.roost || this.asleep || this.leaving || this.play || this.flight; }      // (the peacock: or fluttering over, flyOut)
+  busy() { return this.laying || this.roost || this.asleep || this.leaving || this.play || this.flight || this.stray; }      // (a hen out on the farm: farm moments)      // (the peacock: or fluttering over, flyOut)
   // grown and off to a new farm (main.js chicksGo, tickFarewell): to her place in the line just inside the gate ('gather'),
   // turning to face out, hopping for joy there ('party': tickFarewell's hops; the flaps here), then out of the gate along
   // the way out ('exit'), and gone down the lane ('fade')
@@ -4240,7 +4242,11 @@ class Bird {
     if (this.route) { this.legTime = (this.legTime || 0) + dt; if (this.legTime > 8) this.nextLeg(); }       // never stuck on a leg
     if (this.answerIn > 0) { this.answerIn -= dt; if (this.answerIn <= 0 && !this.act) { this.act = { type: 'crow', left: 2.0 }; this.wait = Math.max(this.wait, 2.0); } }
     const act = this.act;
-    if (this.laying) {
+    if (this.stray) {                                // (out of her pen, somewhere on the farm: farm moments, strayStep)
+      const o = strayStep(this, dt);
+      walking = o.walking; peckGoal = o.peck; kick = o.kick; sitGoal = o.sit; ruffle = o.ruffle; flap = o.flap;
+      if (kick) { A.kickLeg = o.leg; A.kickT += dt; }
+    } else if (this.laying) {
       song = this.layStep(dt);
       walking = song.walking; sitGoal = song.sit; flap = song.flap; ruffle = song.ruffle;
     } else if (this.roost) {
@@ -4798,6 +4804,7 @@ function tapAt(x, y) {
   if (huntTap(x, y)) return;                             // (today's golden egg: a tap on it, or near it)
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
+  if (GAME_MODE && strayHit(ray.ray, x, y)) return;      // (a hen out on the farm: found)
   if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond, or the river, casts there)
     const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -FISHING.o.waterY), new THREE.Vector3());
     if (gp && (FISHING.o.water === 'river' ? riverWater(gp.x, gp.z, -1.2) : fishWater(gp.x, gp.z, -1.2)) && FISHING.tapWater(gp.x, gp.z)) return;
@@ -5087,7 +5094,7 @@ function tickJobs() {
   const q = JOBQ.shift(); JOBQ.running = true; JOBQ.after = performance.now() + 400;
   try { q.run(); } catch (e) { console.error(e); } finally { JOBQ.running = false; }
 }
-const BUSY = { text: '', kinds: ['cuddle', 'worms', 'fill', 'treat', 'fish', 'geese', 'sow', 'harvest', 'honey', 'garden', 'order', 'cheer', 'fox', 'work'] };
+const BUSY = { text: '', kinds: ['cuddle', 'worms', 'fill', 'treat', 'fish', 'geese', 'sow', 'harvest', 'honey', 'garden', 'order', 'cheer', 'fox', 'work', 'stray'] };
 // the cards with a job's buttons, opened again when he's busy or free (their buttons waiting, or back)
 function tickBusy() {
   tickJobs();
@@ -9129,6 +9136,216 @@ function huntTap(x, y) {
   gameUI.refresh(); gameUI.bumpCoins(); farmSound('egg_mum', egg.position.x, egg.position.z, 1.3);      // (a hen's egg song)
   wake(1500); return true;
 }
+// ---- farm moments (17 Nov 2026, Audrey's pick: "Farm moments"; 20 Nov, the first, a hen out: "Find her and tap her", the
+// farmer carries her home; game.js MOMENTS, moment, momentDue, henOut, henFound, henBack). As the farm opens, or the game
+// comes back after half an hour or more, by day: now and then one of your hens (a Rebel first) has slipped out of her pen
+// and is somewhere on your land, by a bush, a tree or a rock: "🐔 A hen is out!" beside the coins (a tap: the word again),
+// and over her, when she's on the screen, her name. She potters about there (pecking, scratching, a few steps, a shake).
+// A tap on her (or her name): found (a few coins, a cuddle's worth of love); she stops and waits, the farmer hurries over,
+// scoops her up ("There you are!"), carries her home in his arms, in through her gate, sets her down ("Home you go!").
+// While she's out she isn't in her pen (STRAY.gid: the coop's build leaves her out): a bird of her own here, in the farm's
+// own frame. Not found by 20:30: she goes home by herself. The farmer busy: on his list; can't come at all: home by herself
+const STRAY = { plot: null, bird: null, gid: null, seq: null, roll: false, bub: null, pillOn: null };
+function strayPlot() {
+  if (STRAY.plot) return STRAY.plot;
+  const frame = new THREE.Group(); frame.name = 'stray'; scene.add(frame); frame.updateMatrixWorld(true);
+  return (STRAY.plot = { kind: 'stray', frame, group: frame, birds: [], centre: new THREE.Vector3() });
+}
+const strayHome = gb => gb && gamePlots().find(q => q.gc && q.gc.id === gb.coop && q.kind === 'coop');
+// where a hen out can be: by a bush, a tree or a rock still standing on your land, out in the open where the farmer can get
+// to her, well away from her own coop (5 to 30 m) and from today's golden egg
+function straySpot(home, r) {
+  const own = new Set(game.data.land), gone = new Set(game.data.cleared), nav = navGrid(), reach = farmReach(), pts = [];
+  const c = home.frame.localToWorld(new THREE.Vector3(0, 0, 1.2)), egg = HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null;
+  const ok = (x, z) => { const f = fieldAt(x, z), d = Math.hypot(x - c.x, z - c.z); return f >= 0 && own.has(f) && d > 5 && d < 30 && nav.freeAt(x + 0.25, z) && nav.freeAt(x - 0.25, z) && nav.freeAt(x, z + 0.25) && nav.freeAt(x, z - 0.25) && !!nav.nearestIn(reach, x, z, 0) && !(egg && Math.hypot(x - egg[0], z - egg[1]) < 2.5); };
+  for (const o of [...V.bushes, ...V.trees, ...V.rocks]) {
+    if (gone.has(o.id)) continue;
+    const R = o.id[0] === 't' ? 0.95 : o.id[0] === 'b' ? 0.75 : 0.6;
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4 + 0.2, x = o.pos[0] + Math.cos(a) * R, z = o.pos[2] + Math.sin(a) * R; if (ok(x, z)) pts.push([x, z]); }
+  }
+  for (let k = 0; pts.length < 3 && k < 300; k++) { const a = r() * 6.28, d = 6 + r() * 14, x = c.x + Math.sin(a) * d, z = c.z + Math.cos(a) * d; if (ok(x, z)) pts.push([x, z]); }      // (no bush or tree about: in the open)
+  return pts.length ? pts[Math.floor(r() * pts.length) % pts.length] : null;
+}
+// her bird out there (a reload: back where she was); her bird in the pen gone meanwhile
+function strayMake(gid, at) {
+  const gb = game.bird(gid), home = strayHome(gb); if (!gb || !home) return null;
+  const old = allBirds.find(x => x.gid === gid && x.plot && x.plot.kind === 'coop');
+  if (old) { if (heldBird === old) holdBird(null); removeBird(old); }
+  const SP = strayPlot(), r = rng(901 + allBirds.length);
+  const b = new Bird(SP, home.breed, 'hen', home.breed === 'sil' ? silColour(gb.breed) || 'white' : null, [at[0], 0, at[1]], r() * 6.28, r);
+  b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
+  b.root.position.y = 0.015 + groundY(at[0], at[1]);
+  b.stray = { at: [at[0], at[1]], t: 0.6, to: null, act: null, carry: null, called: false, fade: 0 };
+  SP.birds.length = 0; SP.birds.push(b); allBirds.push(b);
+  STRAY.bird = b; STRAY.gid = gid; STRAY.seq = null;
+  return b;
+}
+// a new one: a hen of yours who's free just now (a Rebel first), somewhere out on your land
+function startHenOut(id = null) {
+  if (STRAY.bird || game.moment()) return null;
+  const r = rng(Math.floor(Date.now() / 1000) % 100000), list = [];
+  for (const b of allBirds) {
+    if (!b.gid || b.kind !== 'hen' || !b.plot || b.plot.kind !== 'coop' || b.busy() || !b.root.visible || b.broody || b.mum || b.cuddle || b.called || b.plot.farmer || b.plot.fw) continue;
+    const gb = game.bird(b.gid); if (!gb || gb.sex !== 'h' || (id && gb.id !== id)) continue;
+    if (b.isGoose || b.rig.peafowl) continue;
+    for (let k = gb.pers === 'rebel' ? 3 : 1; k > 0; k--) list.push(b);
+  }
+  for (let tries = 0; tries < 4 && list.length; tries++) {
+    const b = list[Math.floor(r() * list.length) % list.length], at = straySpot(b.plot, r);
+    if (!at) continue;
+    if (!game.henOut(b.gid, at)) return null;
+    const m = game.moment(); strayMake(m.b, m.at);
+    hintNext(game.t('mom_hen_hint', { name: b.name }));      // (after the word showing, if there is one)
+    return m;
+  }
+  return null;
+}
+// what she does out there: a few steps about her spot, pecking, scratching, a shake; tapped, she stops and turns to the
+// farmer coming, settling down as he gets near; in his arms (carry); going home by herself (fade: a few steps off, smaller)
+function strayStep(b, dt) {
+  const S = b.stray, p = b.root.position, o = { walking: false, peck: 0, kick: 0, sit: 0, ruffle: 0, flap: 0, leg: 0 };
+  if (S.carry) { const K = S.carry; p.set(K.x, K.y, K.z); b.root.rotation.y = K.yaw; o.sit = 1; return o; }
+  if (S.fade > 0) {
+    S.fade = Math.max(0, S.fade - dt); const u = 1 - S.fade / 1.2; b.root.scale.setScalar(Math.max(0.01, 1 - u * u));
+    const y = b.root.rotation.y, st = b.speed * 1.3 * dt; p.x += Math.sin(y) * st; p.z += Math.cos(y) * st; p.y = 0.015 + groundY(p.x, p.z); o.walking = true;
+    if (!S.fade) strayPut(true);
+    return o;
+  }
+  if (S.called) {
+    const F = farmLife && !farmLife.home ? farmLife.pos : null;
+    if (F) { const t = b.turnTo(Math.atan2(F.x - p.x, F.z - p.z), dt * 0.7); o.walking = t.walking; o.sit = Math.hypot(F.x - p.x, F.z - p.z) < 1.4 ? 1 : 0; }
+    return o;
+  }
+  S.t -= dt;
+  if (S.to) {
+    const dx = S.to[0] - p.x, dz = S.to[1] - p.z, d = Math.hypot(dx, dz);
+    if (d < 0.03) { S.to = null; S.t = 0.3 + b.r() * 1.0; }
+    else {
+      const diff = wrapA(Math.atan2(dx, dz) - b.root.rotation.y), st = b.turn * dt;
+      b.root.rotation.y += Math.max(-st, Math.min(st, diff)); o.walking = true;
+      if (Math.abs(diff) < 0.5) { const s = Math.min(d, b.speed * 0.7 * dt); p.x += dx / d * s; p.z += dz / d * s; }
+      if (S.t < -6) S.to = null;
+    }
+  } else if (S.act) {
+    const A = S.act; A.left -= dt;
+    if (A.type === 'peck') o.peck = (A.left % 0.55) > 0.24 ? 1 : 0.3;
+    else if (A.type === 'scratch') { if (A.left > 0.9) { o.kick = 1; o.leg = A.leg; } else o.peck = (A.left % 0.45) > 0.2 ? 1 : 0.4; }
+    else if (A.type === 'ruffle') o.ruffle = Math.sin(Math.max(0, Math.min(1, 1 - A.left / 0.75)) * Math.PI);
+    if (A.left <= 0) { S.act = null; S.t = 0.3 + b.r() * 0.9; }
+  } else if (S.t <= 0) {
+    const x = b.r(), nav = navGrid();
+    if (x < 0.4) { for (let k = 0; k < 6; k++) { const a = b.r() * 6.28, d = 0.2 + b.r() * 0.7, q = [S.at[0] + Math.sin(a) * d, S.at[1] + Math.cos(a) * d]; if (nav.freeAt(q[0], q[1])) { S.to = q; S.t = 0; break; } } }
+    else if (x < 0.75) S.act = { type: 'peck', left: 1.2 + b.r() * 1.8 };
+    else if (x < 0.9) S.act = { type: 'scratch', left: 1.9, leg: b.r() < 0.5 ? 0 : 1 };
+    else S.act = { type: 'ruffle', left: 0.75 };
+    if (!S.to && !S.act) S.t = 0.5;
+  }
+  p.y = 0.015 + groundY(p.x, p.z);
+  return o;
+}
+// in his arms k of the way (0 on the ground .. 1): in front of his chest, across his arms, her head to his left, her eyes shut
+// once she's up; on the way down (at her gate), to the ground in front of him
+function strayLift(k, Lf) {
+  const b = STRAY.bird; if (!b) return; const S = b.stray;
+  if (!Lf || k <= 0) { if (S.carry) { b.root.position.set(S.carry.x, 0.015 + groundY(S.carry.x, S.carry.z), S.carry.z); } S.carry = null; b.shadowY = undefined; b.rig.sleepy(false); return; }
+  const h = Lf.heading, Lp = Lf.pos, gy = groundY(Lp.x, Lp.z), hold = [Lp.x + Math.sin(h) * 0.22, gy + 0.69, Lp.z + Math.cos(h) * 0.22], ry = h + Math.PI / 2;
+  if (k >= 1) S.up = true;
+  if (S.up && k < 1 && !S.lower) S.lower = { x: hold[0], z: hold[2], y: 0.015 + groundY(hold[0], hold[2]), yaw: ry };      // (set down in front of him)
+  const G = S.lower || S.from || (S.from = { x: b.root.position.x, z: b.root.position.z, y: b.root.position.y, yaw: b.root.rotation.y });
+  const dy = wrapA(ry - G.yaw), arc = Math.sin(k * Math.PI) * 0.06;
+  S.carry = { k, x: G.x + (hold[0] - G.x) * k, y: G.y + (hold[1] - G.y) * k + arc, z: G.z + (hold[2] - G.z) * k, yaw: G.yaw + dy * Math.min(1, k * 1.4) };
+  b.shadowY = 0.015 + groundY(S.carry.x, S.carry.z); b.rig.sleepy(k > 0.9);
+}
+// she's home: her bird out here gone, her own in her pen (where the farmer set her down, if that's in her yard; else her
+// usual place there), a hop and a heart; alone: by herself (from wherever she was)
+function strayPut(alone = false) {
+  const b = STRAY.bird; if (!b) return;
+  const w = b.root.position.clone(), gb = game.bird(b.gid), home = strayHome(gb), near = STRAY.seq && farmLife && home && Math.hypot(farmLife.pos.x - w.x, farmLife.pos.z - w.z) < 1.2;
+  removeBird(b); STRAY.bird = null; STRAY.gid = null; STRAY.seq = null; STRAY.plot.birds.length = 0; b.root.scale.setScalar(1);
+  if (!home || !gb) return;
+  const nb = addGameBird(home, gb);
+  if (!alone && near) { const v = home.frame.worldToLocal(new THREE.Vector3(w.x, 0, w.z)); if (nb.free(v.x, v.z)) { nb.root.position.set(v.x, 0.015, v.z); nb.target.copy(nb.root.position); } }
+  nb.hopT = 0; nb.wait = 0.8; placeBlob(nb); wake(1500);
+}
+// home by herself: a few steps off, smaller and gone, then in her pen
+function strayFade() { const b = STRAY.bird; if (!b || b.stray.fade > 0) return; const S = b.stray; S.carry = null; S.called = true; b.shadowY = undefined; b.rig.sleepy(false); S.fade = 1.2; }
+// found: paid, said; the farmer sent for her (or on his list; or, if he can't come, she goes home by herself)
+function strayTap() {
+  const b = STRAY.bird; if (!GAME_MODE || !b || b.stray.called || b.stray.fade) return false;
+  const r = game.henFound(); if (!r) return false;
+  b.stray.called = true; heartOver(b); farmSound('mum', b.root.position.x, b.root.position.z, 1.2);
+  hint(game.t('mom_hen_found', { name: r.name, farmer: farmerName(), c: r.coins, x: r.xp }));
+  gameUI.refresh(); gameUI.bumpCoins(); if (r.cuddle) { jobsDone(r.cuddle.done); if (r.cuddle.up) hintNext(game.t('trust_up' + r.cuddle.up, { name: r.name, farmer: farmerName(), xp: r.cuddle.xp })); }
+  strayPill(); strayFetch(); wake(1500);
+  return true;
+}
+function strayFetch() {
+  const b = STRAY.bird; if (!b || b.stray.fade) return;
+  if (!JOBQ.running && (farmerJob() || JOBQ.length)) {      // (he's busy: on his list, next)
+    if (JOBQ.length < 3 && !JOBQ.some(q => q.key === 'stray')) JOBQ.push({ key: 'stray', kind: 'stray', label: jobLabel('stray', b.name), run: () => strayFetch() }); else strayFade();
+    return;
+  }
+  const home = strayHome(game.bird(b.gid)), P = home && farmLife && !farmLife.home && !farmLife.running ? penSpec(home) : null;
+  if (!P) { strayFade(); return; }
+  const p = b.root.position, F = farmLife.pos, nav = navGrid(), reach = farmReach(), a0 = Math.atan2(F.x - p.x, F.z - p.z);
+  let at = null;
+  for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.14]) { const q = [p.x + Math.sin(a0 + da) * 0.42, p.z + Math.cos(a0 + da) * 0.42]; if (nav.nearestIn(reach, q[0], q[1], 0)) { at = q; break; } }
+  if (!at) at = nav.nearestIn(reach, p.x, p.z, 1.0);
+  const seq = at && farmLife.bringHome({ P, at, hen: b, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
+  if (!seq) { strayFade(); return; }
+  STRAY.seq = seq; wake(1500);
+}
+// a tap on the farm: on her, or near her (a thumb's width)
+function strayHit(rr, x, y) {
+  const b = STRAY.bird; if (!b || b.stray.called || b.stray.fade) return false;
+  const w = b.root.getWorldPosition(new THREE.Vector3()), sp = new THREE.Sphere(new THREE.Vector3(w.x, w.y + b.hitY, w.z), Math.max(0.3, b.hitR * 1.6));
+  let hit = !!rr.intersectSphere(sp, new THREE.Vector3());
+  if (!hit) { bubV.set(w.x, w.y + b.hitY, w.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight; hit = bubV.z < 1 && Math.hypot(sx - x, sy - y) < 30; }
+  return hit && strayTap();
+}
+// "🐔 A hen is out!" beside the coins while she's out and not found (a tap: the word again)
+function strayPill() {
+  const m = game.moment(), on = !!(m && STRAY.bird && !STRAY.bird.stray.called), key = on ? m.b + LANG : '';
+  if (STRAY.pillOn === key) return; STRAY.pillOn = key;
+  gameUI.momentPill(on ? game.t('mom_hen') : null, () => { const gb = m && game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); });
+}
+// each frame: a saved one back on the farm (or home, past its hour), her life out there, her name over her, a new one now
+// and then, his job lost (she's put down where she is, or goes home by herself)
+function tickStray(dt) {
+  if (!GAME_MODE || !game.data || !gamePlots().length) return;
+  const h = DAY.hour, m = game.moment();
+  if (m && !STRAY.bird && !MOVE.plot) {
+    if (h >= MOMENTS.home || h < 6) game.henBack();
+    else strayMake(m.b, m.at);
+  }
+  const b = STRAY.bird;
+  if (b) {
+    if (!frozen) { b.update(dt); placeBlob(b); }
+    const S = b.stray;
+    if (!S.called && !S.fade && (h >= MOMENTS.home || h < 6)) { const r = game.henBack(); if (r && !document.hidden) hintNext(game.t('mom_hen_back', { name: r.name })); strayFade(); }
+    else if (S.called && !S.fade) {
+      const mine = STRAY.seq && farmLife && (farmLife.task === STRAY.seq || farmLife.pending === STRAY.seq), queued = JOBQ.running || JOBQ.some(q => q.key === 'stray');
+      if (!mine && !queued) { if (S.carry && STRAY.seq) STRAY.seq.drop(); else strayFade(); }
+    }
+    wake(200);
+  }
+  // her name over her, while she's on the screen and not found yet
+  const B = STRAY.bub || (STRAY.bub = (() => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub gstraybub'; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); strayTap(); }); document.body.append(e); return e; })());
+  if (!b || b.stray.called || b.stray.fade || inside.open || gameUI.isOpen) B.hidden = true;
+  else {
+    const t = '❗ ' + b.name; if (B.textContent !== t) B.textContent = t;
+    const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.rig.scale * 1.15, w.z).project(camera);
+    const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight;
+    if (bubV.z > 1 || sx < -40 || sx > canvas.clientWidth + 40 || sy < 20 || sy > canvas.clientHeight + 40) B.hidden = true; else bubAt(B, sx, sy);
+  }
+  strayPill();
+  // a new one: as the farm opens or comes back after a while (a roll each time), by day, nothing else going on
+  if (STRAY.roll && !m && !b && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
+    STRAY.roll = false;
+    const due = game.momentDue(h);
+    if (due && (due.first || Math.random() < MOMENTS.chance)) startHenOut();
+  }
+}
 // ---- village orders (7 Nov 2026, Audrey: "Just feeding the chickens is not enough"; "Village orders"): the farm stall by
 // the farmhouse (the village's egg stall, the one nearest the farmhouse) is where they're kept: a tap on it (or the basket
 // button) opens them; a basket ready, "🧺 Ready!" over it. Delivered: the farmer takes the basket to the stall (the pail
@@ -9859,7 +10076,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
-  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
@@ -9924,6 +10141,7 @@ document.addEventListener('visibilitychange', () => {
   if (!GAME_MODE || !game || !game.data) return;
   if (document.hidden) hiddenAt = Date.now();               // (put away: the save keeps when it was last seen, to the minute)
   else if (hiddenAt && Date.now() - hiddenAt >= AWAY_MIN) { AWAY = { from: hiddenAt }; newsFrom = performance.now() + 1500; }      // (back after a while: the summary)
+  if (!document.hidden && hiddenAt && Date.now() - hiddenAt >= 1800e3 && (!navigator.webdriver || params.has('moments'))) STRAY.roll = true;      // (back after half an hour or more: a farm moment, maybe)
 });
 
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
@@ -9951,6 +10169,9 @@ window.__farm = {
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
+  moment: { start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
+    screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
+    tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
   orders: { stall: () => { const S = stallSpot(); return S && { top: S.top, mid: S.mid, front: [S.front.x, S.front.z] }; }, run: () => ORDER_RUN, sheet: () => ordersSheet(), deliver: id => deliverOrder(id), tick: () => tickOrders(), bubble: () => { const B = orderBub; return B && !B.hidden ? B.textContent : null; } },      // (tests: village orders)
   lookAt: (x, z, size) => { view.target.set(x, 0, z); if (size) view.size = size; clampView(); applyGrass(); placeCamera(); wake(500); },
@@ -9978,7 +10199,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
   spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }

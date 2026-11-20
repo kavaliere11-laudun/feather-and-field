@@ -280,6 +280,10 @@ export const TEXT = {
     worms_ask: 'Ask for worms · 🪱 {n}', worms_given: '🪱 {name} found worms for {farmer} today. More tomorrow!',
     worms_shy: '🪱 {name} is still shy: no worms for {farmer} yet. Cuddles help.', worms_how: 'Worms found each day: Friendly 1 · Trusting 2 · Best friend 3.',
     worms_done: '{name} is finding {n} worms for {farmer} 🪱', worms_done1: '{name} is finding a worm for {farmer} 🪱', worms_night: '{farmer} is asleep: worms in the morning', fish_level: 'Fishing opens at level {n}.',
+    // farm moments (20 Nov 2026): a hen out
+    mom_hen: '🐔 A hen is out!', mom_hen_hint: '{name} has slipped out of her pen. Find her on the farm and tap her!',
+    mom_hen_found: '✨ You found {name}! {farmer} carries her home. +{c} coins, +{x} XP', mom_hen_back: '{name} went back to her pen by herself for the night.',
+    busy_stray: '{farmer} is bringing {name} home.', next_stray: 'bring {name} home',
     // the daily egg hunt (7 Nov 2026)
     hunt_hint: '🥚✨ {hen} has hidden today’s golden egg somewhere on your farm. Can you find it?', hunt_found: '✨ You found {hen}’s golden egg! +{c} coins, +{x} XP',
     hunt_streak: '{n} days in a row', hunt_total: 'golden eggs found: {n}', hunt_lv_t: 'New: a golden egg to find every day', hunt_lv_b: 'Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.',
@@ -642,6 +646,10 @@ export const TEXT = {
     worms_ask: 'Demander des vers · 🪱 {n}', worms_given: '🪱 {name} a trouvé des vers pour {farmer} aujourd’hui. D’autres demain !',
     worms_shy: '🪱 {name} est encore farouche : pas de vers pour {farmer} pour l’instant. Les câlins aident.', worms_how: 'Vers trouvés chaque jour : Sociable 1 · En confiance 2 · Inséparable 3.',
     worms_done: '{name} cherche {n} vers pour {farmer} 🪱', worms_done1: '{name} cherche un ver pour {farmer} 🪱', worms_night: '{farmer} dort : les vers, ce sera demain matin', fish_level: 'La pêche ouvre au niveau {n}.',
+    // les surprises de la ferme (20 nov. 2026) : une poule échappée
+    mom_hen: '🐔 Une poule s’est échappée\u00a0!', mom_hen_hint: '{name} s’est échappée de son enclos. Trouvez-la sur la ferme et touchez-la\u00a0!',
+    mom_hen_found: '✨ Vous avez retrouvé {name}\u00a0! {farmer} la ramène chez elle. +{c} pièces, +{x} XP', mom_hen_back: '{name} est rentrée toute seule dans son enclos pour la nuit.',
+    busy_stray: '{farmer} ramène {name} chez elle.', next_stray: 'ramener {name}',
     // la chasse à l’œuf du jour (7 nov. 2026)
     hunt_hint: '🥚✨ {hen} a caché l’œuf d’or du jour quelque part sur votre ferme. Saurez-vous le trouver ?', hunt_found: '✨ Vous avez trouvé l’œuf d’or de {hen} ! +{c} pièces, +{x} XP',
     hunt_streak: '{n} jours de suite', hunt_total: 'œufs d’or trouvés : {n}', hunt_lv_t: 'Nouveau : un œuf d’or à trouver chaque jour', hunt_lv_b: 'Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite.',
@@ -1106,6 +1114,13 @@ export const SURPRISE = { worms: 10, grain: 20, coins: 0.5 };
 // and XP, more for each day in a row up to a week (20 + 10 a day: 30 .. 90 coins; 3 + 1 a day XP), and all of them
 // counted. Saved: the day the last was found, how many days in a row, how many in all
 export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 7 };
+// ---- farm moments (17 Nov 2026, Audrey's pick from the test players' ideas: "Farm moments"; the first one built 20 Nov,
+// "Carry on"): now and then, as the farm opens or the game comes back after a while, a little surprise. The first: a hen
+// out of her pen somewhere on the farm; found and tapped, the farmer carries her home (a cuddle's worth of love, a few
+// coins). By day (7:30 to 20:00, the farm's own clock), from level 2, one every 3 hours at most, about one time in two
+// (the very first time for sure); one not found by 20:30 goes home by herself. Saved: the one going on (which hen, where
+// she is, since when), when the last began, how many found
+export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 3 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 } };
 // ---- the vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which
 // grow at different speeds; treats the hens love"): from level 4, three raised beds on your land by the farmhouse (moved
 // like a decoration). Sow a bed (its seeds a few coins): carrots are ripe in an hour, strawberries in 3, pumpkins in 8 (also
@@ -1661,6 +1676,15 @@ export function checkFarm(d, now = Date.now()) {
       const fv = r && r.fav;      // (its own feed: its breed's favourite only, mixed no later than now, from the level it opens)
       if (fv && typeof fv === 'object' && L >= FEEDS.level && fv.crop === favOf(c.breed) && L >= cropLevel(fv.crop) && Number.isInteger(fv.t) && fv.t > 0 && fv.t <= now + TZ_SLACK) c.fav = { t: fv.t, crop: fv.crop }; }
   }
+  // farm moments (20 Nov 2026): the one going on, a hen out: one of the farm's own hens (not a duck or a peahen), where she
+  // is (two numbers on the farm), since when (never ahead of now), only from the level they come; when the last one began
+  // (never ahead of now), how many hens found (a whole number)
+  const mo = d.moment && typeof d.moment === 'object' ? d.moment : null;
+  if (mo && mo.k === 'hen' && L >= MOMENTS.level && typeof mo.b === 'string' && out.birds.some(b => b.id === mo.b && b.sex === 'h' && !kindOf(b.breed)) &&
+    Array.isArray(mo.at) && mo.at.length === 2 && mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK)
+    out.moment = { k: 'hen', b: mo.b, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
+  const ms = d.moments && typeof d.moments === 'object' ? d.moments : null;
+  if (ms) out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) };
   return out;
 }
 
@@ -2209,6 +2233,33 @@ export class Game {
     this.data.coins += P.coins; this.data.xp += P.xp; this.save();
     return { ...P, streak: T.streak, n: T.n + 1, hen: T.hen };
   }
+  // ---- farm moments: the one going on (a hen out: which, where, since when), if any; whether one may begin now (the farm's
+  // own hour): { first } the very first; a hen out (one of the farm's own hens, where she is); found (paid: a few coins, a
+  // little XP, and a cuddle's worth if she's due one); gone home by herself
+  moment() { const m = this.data && this.data.moment; return m && this.bird(m.b) ? m : null; }
+  momentDue(hour, now = Date.now()) {
+    if (!this.data || this.level < MOMENTS.level || this.data.moment || hour < MOMENTS.from || hour >= MOMENTS.to) return null;
+    const M = this.data.moments; if (M && now - M.last < MOMENTS.gap) return null;
+    return { first: !M };
+  }
+  henOut(id, at, now = Date.now()) {
+    const b = this.bird(id); if (!this.data || this.data.moment || !b || b.sex !== 'h' || kindOf(b.breed) || this.level < MOMENTS.level) return null;
+    if (!Array.isArray(at) || !at.every(v => Number.isFinite(v) && Math.abs(v) < 150)) return null;
+    this.data.moment = { k: 'hen', b: id, at: [Math.round(at[0] * 100) / 100, Math.round(at[1] * 100) / 100], t: now };
+    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now;
+    this.save();
+    return this.data.moment;
+  }
+  henFound(now = Date.now()) {
+    const m = this.moment(); if (!m || m.k !== 'hen') return null;
+    const b = this.bird(m.b), P = MOMENTS.hen, coins = P.coins + P.coinsL * this.level;
+    this.data.coins += coins; this.data.xp += P.xp;
+    const cud = this.cuddle(m.b, now), loved = cud && !cud.happy ? cud : null;      // (a cuddle's worth of love, if she's due one: her trust, the day's cuddles)
+    this.data.moment = null; const M = this.data.moments || (this.data.moments = { last: now, hen: 0 }); M.hen = (M.hen || 0) + 1;
+    this.save();
+    return { id: b.id, name: b.name, coins, xp: P.xp + (loved ? loved.xp : 0), cuddle: loved };
+  }
+  henBack() { const m = this.moment(); if (!m) { if (this.data && this.data.moment) { this.data.moment = null; this.save(); } return null; } const b = this.bird(m.b); this.data.moment = null; this.save(); return { id: b.id, name: b.name }; }
   // ---- the vegetable garden: open from level 4; it (its spot, its beds, the basket); a bed's stage ('empty', 'sown',
   // 'shoots', 'growing', 'ripe') and time left; one sown (its seeds paid: false, not enough coins), one picked (into the
   // basket, as much as there's room for, and XP); the beds ripe now; a treat for a coop (by day, one a day: its vegetables

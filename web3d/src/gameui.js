@@ -126,7 +126,9 @@ export class GameUI {
     // the pantry's (10 Nov 2026): a dot when a shelf is full, or eggs wait there and it has never been opened
     this.panBtn = el('button', 'gicon gpanbtn'); this.panBtn.type = 'button'; this.panBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16"/><circle cx="8.500" cy="6.700" r="1.100"/><path d="M12.500 13v-2h3v2M8 19v-2.200h2.500V19"/></svg>'; this.panLbl = el('span', 'gpan-l'); this.pdot = el('span', 'gdot'); this.pdot.hidden = true; this.panBtn.append(this.pdot);      // (shelves with things on them, her choice of four 10 Nov 2026 22:14 ("B · Shelves"), at the top right beside the gear: "Pantry icon should not be next to shopping one")
     this.panBtn.addEventListener('click', () => { if (this.o.pantry) this.o.pantry(); else this.pantrySheet({}); });
-    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins);
+    // a farm moment going on (20 Nov 2026: "🐔 A hen is out!"): beside the coins; a tap says it again (main.js strayPill)
+    this.mom = el('button', 'gpill gmom'); this.mom.type = 'button'; this.mom.hidden = true; this.mom.addEventListener('click', () => { if (this.momTap) this.momTap(); });
+    this.stat = el('div', 'gstat'); this.stat.append(this.lvl, this.coins, this.mom);
     this.bdot = el('span', 'gdot gcount'); this.bdot.hidden = true; this.bookBtn.append(this.bdot);      // (a milestone to collect)
     // (10 Nov 2026, Audrey: "Buttons are fine but messy come with a suggestion for them"; her choice "A · Two tidy sides": on the
     // left "my farm": Shop, Pantry, Book, Coops; on the right "today": Orders, Jobs, Shows; each with its name under it)
@@ -196,6 +198,7 @@ export class GameUI {
     this.ordBtn.hidden = !oo; this.odot.hidden = !orr; this.odot.textContent = orr ? String(orr) : ''; this.odot.classList.toggle('gnum1', orr > 0);
     this.ordBtn.setAttribute('aria-label', this.t('ord_aria') + (orr ? ' · ' + this.t('ord_readyb') : ''));
   }
+  momentPill(text, onTap) { if (text) { this.mom.textContent = text; this.mom.hidden = false; this.momTap = onTap; } else { this.mom.hidden = true; this.momTap = null; } }
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
   open(kind, title, modal = false) {
