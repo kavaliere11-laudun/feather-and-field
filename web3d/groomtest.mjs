@@ -23,7 +23,7 @@ const drag = async (pts) => { await p.mouse.move(pts[0][0], pts[0][1]); await p.
 // her picture: one bird, see-through round her
 const por = await p.evaluate(() => { const f = window.__farm, g = f.game(), hen = g.data.birds.find(x => x.sex === 'h'); return { size: f.groom.portrait(hen.id), id: hen.id }; });
 ok('her picture is made: a square with her in it', por.size && por.size[0] > 200 && por.size[0] === por.size[1], por);
-for (const id of await p.evaluate(() => window.__farm.game().data.birds.map(x => x.id))) { const u = await p.evaluate(id => window.__farm.groom.portrait(id, true), id); if (u) fs.writeFileSync(OUT + '/portrait_' + id + '.png', Buffer.from(u.split(',')[1], 'base64')); }
+for (const id of await p.evaluate(() => window.__farm.game().data.birds.map(x => x.id))) { const u = await p.evaluate(id => window.__farm.groom.portrait(id, true), id); if (u) fs.writeFileSync(OUT + '/portrait_' + id + '.png', Buffer.from(u.url.split(',')[1], 'base64')); }
 // Enter on the shows' card: the game, nothing paid yet
 await ctx.addInitScript(() => { window.__FF_GROOM_SECS = 45; }); await p.evaluate(() => { window.__FF_GROOM_SECS = 45; });      // (the test browser draws slowly: each part given the time a finger needs in eight seconds)
 await p.evaluate(() => window.__farm.showsSheet()); await p.waitForTimeout(300);
@@ -37,8 +37,11 @@ ok('her picture: she fills a fair part of it, the rest see-through', filled > 0.
 // each part: its own tool in hand, five places on her to see to, a bar that fills as they're done (19 Nov 2026)
 const XY = async (u, v) => { const R = await pic(); return [R[0] + R[2] * u, R[1] + R[3] * v]; };
 const stroke = async (sp, dir = 1) => { const a = await XY(sp[0] - 0.075 * dir, sp[1]), b2 = await XY(sp[0] + 0.075 * dir, sp[1]); await drag([a, b2]); };
+const offHead = st => !!st.head && st.spots.every(([u, v]) => !(v < st.head.v + 0.04 && u < st.head.u + 0.15));      // (20 Nov 2026, Audrey: "None of the 3 actions should be on the head")
+const heads = [];
 const doStep = async (name, both) => { for (let k = 0; k < 14; k++) { const st = (await S()).st; if (st.step !== name) break; for (const sp of st.spots) { if (sp[2] >= 1) continue; await stroke(sp, 1); if (both && (await S()).st.step === name) await stroke(sp, -1); if ((await S()).st.step !== name) break; } } };
 s = await S();
+heads.push(offHead(s.st));
 ok('washing: a sponge in hand, five muddy patches on her, the bar empty', s.st.tool === 'wash' && s.st.spots.length === 5 && s.st.spots.every(q => q[2] === 0) && (await p.evaluate(() => document.querySelectorAll('.groom-mud').length)) === 5 && (await p.evaluate(() => document.querySelector('.groom-time i').style.width)) === '0%', s.st);
 { const far = [[0.03, 0.03], [0.97, 0.03], [0.03, 0.97], [0.97, 0.97]].sort((a, b2) => Math.min(...s.st.spots.map(q => Math.hypot(q[0] - b2[0], q[1] - b2[1]))) - Math.min(...s.st.spots.map(q => Math.hypot(q[0] - a[0], q[1] - a[1]))))[0]; await drag([await XY(far[0], far[1]), await XY(far[0] + (far[0] < 0.5 ? 0.06 : -0.06), far[1])]); }      // (the corner furthest from every patch)
 ok('rubbing where there is no mud does nothing', (await S()).st.scores[0] === 0 && !(await S()).st.started);
@@ -48,6 +51,7 @@ await p.screenshot({ path: OUT + '/groom_1b_washing.png' });
 await doStep('wash', true);
 await p.waitForTimeout(300); s = await S();
 ok('washed: every patch gone, on to the brush', s.st.step === 'brush' && s.st.scores[0] > 0.9, s.st);
+heads.push(offHead(s.st));
 ok('brushing: a little brush in hand, five ruffled places', s.st.tool === 'brush' && s.st.spots.length === 5 && (await p.evaluate(() => document.querySelectorAll('.groom-tuft').length)) === 5, s.st.tool);
 await p.screenshot({ path: OUT + '/groom_2_brush.png' });
 const br0 = s.st.scores[1]; await stroke(s.st.spots[0], -1);
@@ -55,10 +59,12 @@ const against = (await S()).st.scores[1] - br0;
 await doStep('brush', false);
 s = await S();
 ok('brushed: against the feathers counts for nothing, from head to tail does; on to the shine', against === 0 && s.st.step === 'shine' && s.st.scores[1] > 0.9, { against, st: s.st });
+heads.push(offHead(s.st));
 ok('shining: a cloth in hand, five dull spots', s.st.tool === 'shine' && s.st.spots.length === 5 && (await p.evaluate(() => document.querySelectorAll('.groom-dull').length)) === 5, s.st.tool);
 await p.screenshot({ path: OUT + '/groom_2b_shine.png' });
 await doStep('shine', true);
 s = await S();
+ok('none of the marks on her head or neck, in any of the three parts', heads.length === 3 && heads.every(Boolean), heads);
 ok('shone: every spot polished; all three done, her score and her better chance shown', s.st.step === 'done' && s.st.scores[2] > 0.9 && s.st.score > 85, s.st);
 const txt = await p.evaluate(() => document.querySelector('.groom-card').innerText);
 ok('the card: show-ready, her chance going up', /\d+% → \d+%/.test(txt) || /100%/.test(txt), txt.replace(/\n+/g, ' | '));

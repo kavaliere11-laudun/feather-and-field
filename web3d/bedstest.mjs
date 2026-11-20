@@ -71,7 +71,7 @@ await close(); await look(); await shoot('1_four');
 await p.evaluate(() => window.__farm.garden.sow(3, 'carrot')); await run(1);
 const working = await p.evaluate(() => window.__farm.garden.work());
 await waitWork(); s = await S();
-ok('carrots sown in bed 4 (the farmer walks to it)', working === 'sow' && s.stages[3] !== 'empty' && s.coins === was.coins - 405, { working, stages: s.stages, coins: s.coins });
+ok('carrots sown in bed 4, at once', !working && s.stages[3] !== 'empty' && s.coins === was.coins - 405, { working, stages: s.stages, coins: s.coins });
 await jump(61 * 60e3); s = await S();
 ok('ripe an hour later, its carrots drawn in the second row', s.stages[3] === 'ripe' && s.st.visible[3].includes('carrot_3'), { stages: s.stages, v: s.st.visible[3] });
 await look(); await shoot('2_ripe');

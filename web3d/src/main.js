@@ -7611,16 +7611,18 @@ function groomFor(id, bid) {
 // a bird's picture, her alone, as she is on the farm (her breed, hen or rooster, her colour), see-through round her: one of
 // the game's own birds made for the moment, stood and posed, drawn at midday through a long lens with everything else
 // hidden, on black and then on white (the cut-out, as the Breed Book's pictures: bookpics.mjs); all within one frame, the
-// farm drawn again before the screen shows anything. A canvas, or null
-function birdPortrait(gb, SIZE = 560) {
+// farm drawn again before the screen shows anything. A canvas (with .head: where her head is in it, 0..1), or null.
+// (20 Nov 2026, Audrey: "the design of the chicken is a bit weird and not good enough": she was drawn at the screen's size
+// with the feathers the farm uses from far off; now in a big square of her own, with her finest feathers, as the Book's)
+function birdPortrait(gb, SIZE = 640) {
   const real = allBirds.find(x => x.gid === gb.id), hen = gb.sex === 'h';
   const G = new THREE.Group(), from = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
   G.position.set(view.target.x + 400, 0, view.target.z + 400); G.rotation.y = Math.atan2(from.x, from.z); scene.add(G);      // (far off the farm: out of reach of the farm's own shadows, which would fall across her)
   const plot = { kind: 'lineup', frame: G, birds: [], centre: G.position.clone() };
   const B = new Bird(plot, baseBreed(gb.breed), hen ? 'hen' : 'rooster', real ? real.colour : silColour(gb.breed), [0, 0, 0], -1.0, rng(5));
   B.stay = true; plot.birds.push(B);
-  B.posterPose = A => Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, proud: hen ? 0.15 : 0.5, lookYaw: 0.32, lookTilt: 0.04 });
-  const hour = DAY.hour, bg = scene.background.clone(), hidden = [], keep = new Set();
+  B.posterPose = A => Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, proud: hen ? 0.15 : 0.5, lookYaw: 0.32, lookTilt: 0.05 });
+  const hour = DAY.hour, bg = scene.background.clone(), hidden = [], keep = new Set(), pr = renderer.getPixelRatio();
   let out = null;
   try {
     for (let i = 0; i < 3; i++) B.update(1 / 30);
@@ -7628,15 +7630,26 @@ function birdPortrait(gb, SIZE = 560) {
     B.root.traverse(o => keep.add(o));
     scene.traverse(o => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && o.visible && !keep.has(o)) { o.visible = false; hidden.push(o); } });
     applyDaylight(12.5);
-    const cv = renderer.domElement, W = cv.width, H = cv.height, tall = hen ? 0.36 : 0.44;
-    const cam = new THREE.PerspectiveCamera(8, W / H, 0.1, 200), at = G.localToWorld(new THREE.Vector3(0.02, tall / 2 + 0.02, 0)), el = 9 * DEG;
+    // a big square of its own to draw in (the canvas's own size and look put back below), the full model, the finest fur
+    const N = Math.min(1280, renderer.capabilities.maxRenderbufferSize || 1280);
+    renderer.setPixelRatio(1); renderer.setSize(N, N, false);
+    // (framed by her own size: the box round her, as she stands, seen from the lens's side)
+    const box = new THREE.Box3(); try { box.setFromObject(B.rig.mesh, true); } catch (e) { box.makeEmpty(); }
+    if (box.isEmpty() || !isFinite(box.min.x)) box.setFromCenterAndSize(G.localToWorld(new THREE.Vector3(0, hen ? 0.2 : 0.25, 0)), new THREE.Vector3(0.5, hen ? 0.4 : 0.5, 0.5));
+    const sz = box.getSize(new THREE.Vector3()), dist = 7, span = Math.max(sz.y, Math.hypot(sz.x, sz.z) * 0.85) * 1.22, fov = 2 * Math.atan(span / 2 / dist) / DEG;
+    setFar(false); setFurDetail(N / span, 1);
+    const cam = new THREE.PerspectiveCamera(fov, 1, 0.1, 200), at = box.getCenter(new THREE.Vector3()), el = 9 * DEG;
     const dir = new THREE.Vector3(0, Math.sin(el), Math.cos(el)).applyAxisAngle(new THREE.Vector3(0, 1, 0), G.rotation.y);
-    cam.position.copy(at).addScaledVector(dir, 7); cam.lookAt(at); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
-    const shots = [];
+    cam.position.copy(at).addScaledVector(dir, dist); cam.lookAt(at); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    for (const m of [B.rig.mesh, B.rig.lo]) if (m) m.visible = m === B.rig.mesh;
+    const cv = renderer.domElement, W = cv.width, H = cv.height, shots = [];
     for (const c of [0, 1]) {
       scene.background = new THREE.Color(c, c, c); renderer.setRenderTarget(null); renderer.render(scene, cam);
       const k = document.createElement('canvas'); k.width = W; k.height = H; const g = k.getContext('2d', { willReadFrequently: true }); g.drawImage(cv, 0, 0); shots.push(g.getImageData(0, 0, W, H).data);
     }
+    // where her head is: the head bone (where it meets her body) and a little above it, seen through the same lens
+    const hb = B.rig.bones && B.rig.bones.head, hp = new THREE.Vector3(), up = new THREE.Vector3();
+    if (hb) { hb.getWorldPosition(hp); up.copy(hp).add(new THREE.Vector3(0, 0.07, 0)); hp.project(cam); up.project(cam); }
     const [K, Wt] = shots, img = new ImageData(W, H), px = img.data; let x0 = W, y0 = H, x1 = 0, y1 = 0;
     for (let i = 0, n = 0; i < K.length; i += 4, n++) {
       const a = Math.max(0, Math.min(1, 1 - ((Wt[i] - K[i]) + (Wt[i + 1] - K[i + 1]) + (Wt[i + 2] - K[i + 2])) / 765));
@@ -7646,14 +7659,21 @@ function birdPortrait(gb, SIZE = 560) {
     }
     if (x1 > x0 + 20 && y1 > y0 + 20) {
       const full = document.createElement('canvas'); full.width = W; full.height = H; full.getContext('2d').putImageData(img, 0, 0);
-      const side = Math.min(Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.08), Math.max(W, H)), sx = Math.round((x0 + x1 - side) / 2), sy = Math.round((y0 + y1 - side) / 2);
-      out = document.createElement('canvas'); out.width = out.height = Math.min(SIZE, side);
-      const g = out.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(full, sx, sy, side, side, 0, 0, out.width, out.height);
+      let side = Math.min(Math.ceil(Math.max(x1 - x0, y1 - y0) * 1.08), Math.max(W, H)); const sx = Math.round((x0 + x1 - side) / 2), sy = Math.round((y0 + y1 - side) / 2);
+      let src = full, rect = [sx, sy, side, side];
+      while (rect[2] / 2 >= SIZE * 1.3) {      // (shrunk in halves: smooth edges, as the Book's)
+        const h = document.createElement('canvas'); h.width = h.height = Math.round(rect[2] / 2);
+        const g = h.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, ...rect, 0, 0, h.width, h.height); src = h; rect = [0, 0, h.width, h.height];
+      }
+      out = document.createElement('canvas'); out.width = out.height = Math.min(SIZE, rect[2]);
+      const g = out.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, ...rect, 0, 0, out.width, out.height);
+      if (hb) { const toUV = p => [((p.x + 1) / 2 * W - sx) / side, ((1 - p.y) / 2 * H - sy) / side]; const a = toUV(hp), b = toUV(up); out.head = { u: a[0], v: a[1], top: b[1] }; }
     }
   } finally {
     scene.background = bg; for (const o of hidden) o.visible = true;
     B.root.removeFromParent(); G.removeFromParent(); if (B.rig && B.rig.dispose) B.rig.dispose();
     applyDaylight(hour);
+    renderer.setPixelRatio(pr); resize(); applyGrass();
     try { drawFarmerShadows(renderer); renderFarm(); } catch (e) { /* (the next frame draws it) */ }
   }
   return out;
@@ -8763,18 +8783,25 @@ function gardenWork(kind, i, crop, done) {
   GARDEN_UI.work = { kind, crop, seq, until: performance.now() + 100e3 };
   return true;
 }
+// a little burst over bed i: seeds as it's sown, its vegetables (and leaves) as it's picked
+function bedBurst(i, colour, n, leaf) {
+  const it = DEC.items.garden; if (!it) return;
+  const v = new THREE.Vector3(GARDEN_BEDX[i], 0.32, GARDEN_BEDZ[i]).applyMatrix4(it.d.m);
+  bitsAt(v, n, colour, { speed: 0.7, up: 1.8, life: 0.9, size: 0.045, g: 5 }); if (leaf) bitsAt(v, 5, leaf, { speed: 0.6, up: 1.5, life: 0.8, size: 0.035, g: 5 });
+  wake(1200);
+}
 function vegBits(hand, crop) { bitsAt(hand, 4, CROP_COLOUR[crop] || '#ef8a2c', { speed: 0.5, up: 1.7, life: 0.8, size: 0.04, g: 5 }); bitsAt(hand, 3, '#5b9440', { speed: 0.5, up: 1.5, life: 0.7, size: 0.03, g: 5 }); }
 function sowBed(i, crop) {
   if (GARDEN_UI.work) GARDEN_UI.work.seq.finish();      // (still at the garden's last job: that one done now)
   const r = game.sowBed(i, crop); if (!r) return false;
   if (r.broke) { hint(game.t('garden_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
-  GARDEN_UI.hold[i] = { stage: 'empty', crop: null };
-  const C = CROPS[crop], said = game.t('garden_sowed', { e: C.e, crop: game.t('crop_' + crop), c: C.seed, t: gameUI.dur(C.grow) });
-  const done = () => { GARDEN_UI.hold[i] = null; tickGarden(); hint(said); };
-  if (gardenWork('sow', i, crop, done)) hint(game.t('garden_sowing', { farmer: farmerName(), crop: game.t('crop_l_' + crop) }));
-  else done();
-  tickGarden();
+  // (20 Nov 2026, Audrey: "When I click on the 1st bed, it waits for the farmer… the other beds are not waiting so it seems
+  // that the 1st one is slow. Let's do the same as the field, instant harvest": sown and picked at once, a little burst
+  // from the bed itself; the farmer no longer walks over to do it)
+  const C = CROPS[crop];
+  GARDEN_UI.hold[i] = null; tickGarden(); bedBurst(i, '#d9c08a', 10);
+  hint(game.t('garden_sowed', { e: C.e, crop: game.t('crop_' + crop), c: C.seed, t: gameUI.dur(C.grow) }));
   return true;
 }
 function pickBed(i) {
@@ -8782,12 +8809,9 @@ function pickBed(i) {
   const was = game.data.garden.beds[i].crop, r = game.pickBed(i); if (!r) return false;
   if (r.kept) { pantrySheet(game.t('garden_full', { crop: game.t('crop_l_' + r.crop) })); return true; }      // (no room on that shelf: the pantry, to sell some or keep them; Audrey 10 Nov 2026: "I should be offered to keep it sell")
   gameUI.close(); gameUI.refresh();
-  GARDEN_UI.hold[i] = { stage: 'ripe', crop: was };
-  const C = CROPS[r.crop], said = game.t(r.full ? 'garden_part' : 'garden_picked', { e: C.e, n: r.n, crop: game.t('crop_l_' + r.crop), xp: r.xp });
-  const done = () => { GARDEN_UI.hold[i] = null; tickGarden(); hint(said); gameUI.refresh(); };
-  if (gardenWork('pick', i, r.crop, done)) hint(game.t('garden_picking', { farmer: farmerName(), crop: game.t('crop_l_' + r.crop) }));
-  else done();
-  tickGarden();
+  const C = CROPS[r.crop];
+  GARDEN_UI.hold[i] = null; tickGarden(); bedBurst(i, CROP_COLOUR[r.crop] || '#ef8a2c', 8, '#5b9440');      // (picked at once: 20 Nov 2026, as sowing)
+  hint(game.t(r.full ? 'garden_part' : 'garden_picked', { e: C.e, n: r.n, crop: game.t('crop_l_' + r.crop), xp: r.xp })); gameUI.refresh();
   return true;
 }
 // ---- a treat from the garden for a coop (its card, from a bird's): given, the farmer goes into the pen and scatters it
@@ -9918,7 +9942,7 @@ window.__farm = {
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { while (q < n) stepDown(); },
-  groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(game.bird(bid)); return c ? (url ? c.toDataURL('image/png') : [c.width, c.height]) : null; } },      // (tests: the grooming game)
+  groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(typeof bid === 'object' ? bid : game.bird(bid)); return c ? (url ? { url: c.toDataURL('image/png'), head: c.head || null } : [c.width, c.height]) : null; } },      // (tests: the grooming game)
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   focus: (x, z, size) => focusOn(x, z, size),      // (tests: the view to a place)
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)

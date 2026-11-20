@@ -15,21 +15,23 @@ function tex(draw, w = 64, h = 64) {
 }
 
 // ------------------------------------------------------------------ bees: out of a hive's slot, over to the lavender in front,
-// a hover at a flower or two, back in (or into another hive); a fuzzy striped body, wings a blur. (A little bigger than
-// life, to be seen.)
+// a hover at a flower or two, back in (or into another hive); a fuzzy striped body, wings a blur. (Bigger than life, to be
+// seen: 19 Nov 2026, Audrey: "We need to see bees around the beehive": they had been 3 cm long, out by day only; now about
+// twice that, more of them and busier, and from dusk to morning a few resting on each hive's landing board, wings still,
+// crawling a little now and then: the hives never look empty.)
 const HIVES = [-0.85, 0, 0.85].map(x => new THREE.Vector3(x, 0.3, 0.32));          // (each hive's slot)
 class Bees {
-  constructor(parent, grade, r, n = 14) {
+  constructor(parent, grade, r, n = 24) {
     this.r = r; this.b = [];
     const body = new THREE.SphereGeometry(1, 10, 8), col = [], P = body.attributes.position;
     for (let i = 0; i < P.count; i++) { const z = P.getZ(i), band = z < 0.6 && Math.sin(z * 8 + 0.6) > 0.25; col.push(...(band ? [0.14, 0.1, 0.05] : [0.98, 0.74, 0.14])); }
     body.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
     const bm = new THREE.MeshLambertMaterial({ vertexColors: true }); if (grade) grade(bm);
-    this.bodies = new THREE.InstancedMesh(body, bm, n); this.bodies.frustumCulled = false; this.bodies.count = 0;
+    this.n = n; this.bodies = new THREE.InstancedMesh(body, bm, n); this.bodies.frustumCulled = false; this.bodies.count = 0;
     const wm = new THREE.MeshBasicMaterial({ color: '#f4f8ff', transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide }); if (grade) grade(wm);
     this.wings = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 10), wm, n * 2); this.wings.frustumCulled = false; this.wings.count = 0;
     parent.add(this.bodies, this.wings);
-    for (let i = 0; i < n; i++) this.b.push({ st: 'in', t: r() * 4, p: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), mid: new THREE.Vector3(), at: new THREE.Vector3(), dur: 1, h: 0, seed: r() * 9 });
+    for (let i = 0; i < n; i++) this.b.push({ rest: i < 9, st: 'in', t: r() * 4, p: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), mid: new THREE.Vector3(), at: new THREE.Vector3(), dur: 1, h: 0, seed: r() * 9 });
     this._m = new THREE.Matrix4(); this._q = new THREE.Quaternion(); this._e = new THREE.Euler(0, 0, 0, 'YZX'); this._s = new THREE.Vector3(); this._v = new THREE.Vector3(); this._w = new THREE.Vector3();
   }
   flower(v) { return v.set(lerp(-1.2, 1.15, this.r()), 0.27 + this.r() * 0.07, lerp(0.5, 0.74, this.r())); }       // (a lavender spike)
@@ -42,8 +44,8 @@ class Bees {
     for (const b of this.b) {
       b.t += dt;
       if (b.st === 'in') {
-        if (b.t > 1.5 && day > 0.5 && this.r() < dt * 0.35) { b.p.copy(HIVES[Math.floor(this.r() * 3)]); this.fly(b, this.flower(this._v), 0.9 + this.r() * 0.8); b.st = 'out'; b.visits = 1 + Math.floor(this.r() * 3); }
-        else continue;
+        if (b.t > 0.8 && day > 0.5 && this.r() < dt * 0.9) { b.p.copy(HIVES[Math.floor(this.r() * 3)]); this.fly(b, this.flower(this._v), 0.9 + this.r() * 0.8); b.st = 'out'; b.visits = 1 + Math.floor(this.r() * 3); }
+        else { if (b.rest && day <= 0.5) this.restAt(b, k++, time, day); continue; }
       }
       if (b.st === 'out' || b.st === 'home') {                        // (a curving flight)
         const u = Math.min(1, b.t / b.dur), a = 1 - u;
@@ -59,19 +61,29 @@ class Bees {
           else { this.fly(b, this._v.copy(HIVES[Math.floor(this.r() * 3)]), 0.9 + this.r() * 0.7); b.st = 'home'; }
         }
       }
-      const s = 0.016;
+      const s = 0.035;
       this._q.setFromAxisAngle(UP, b.h);
       this.bodies.setMatrixAt(k, this._m.compose(b.p, this._q, this._s.set(s * 0.85, s * 0.8, s * 1.3)));
       const flap = 0.5 + 0.5 * Math.sin(time * 70 + b.seed * 7);
       for (const side of [-1, 1]) {                                    // (two little round wings, a blur of a beat)
         this._q.setFromEuler(this._e.set(-Math.PI / 2, b.h, side * (0.15 + 0.5 * flap)));
-        this._w.set(side * 0.017, 0.012, -0.004).applyAxisAngle(UP, b.h).add(b.p);
-        this.wings.setMatrixAt(k * 2 + (side > 0 ? 1 : 0), this._m.compose(this._w, this._q, this._s.set(0.016, 0.009, 1)));
+        this._w.set(side * 0.032, 0.022, -0.008).applyAxisAngle(UP, b.h).add(b.p);
+        this.wings.setMatrixAt(k * 2 + (side > 0 ? 1 : 0), this._m.compose(this._w, this._q, this._s.set(0.03, 0.017, 1)));
       }
       k++;
     }
     this.bodies.count = k; this.wings.count = k * 2;
     this.bodies.instanceMatrix.needsUpdate = true; this.wings.instanceMatrix.needsUpdate = true;
+  }
+  // a bee resting on a hive's landing board (dusk to morning; by day the ones in stay in): its own spot on the board, wings
+  // folded flat along its back, now and then a little crawl
+  restAt(b, k, time, day) {
+    if (day > 0.5) return;
+    const i = this.b.indexOf(b), H = HIVES[i % 3], j = Math.floor(i / 3), x = H.x + (j - 1) * 0.07 + Math.sin(time * 0.35 + b.seed) * 0.02, z = H.z + 0.09 + (j % 2) * 0.035;
+    const p = this._v.set(x, H.y - 0.025, z), h = b.seed + Math.sin(time * 0.3 + b.seed) * 0.6, s = 0.035;
+    this._q.setFromAxisAngle(UP, h);
+    this.bodies.setMatrixAt(k, this._m.compose(p, this._q, this._s.set(s * 0.85, s * 0.8, s * 1.3)));
+    for (const side of [-1, 1]) { this._q.setFromEuler(this._e.set(-Math.PI / 2, h, side * 0.08)); this._w.set(side * 0.012, 0.022, -0.02).applyAxisAngle(UP, h).add(p); this.wings.setMatrixAt(k * 2 + (side > 0 ? 1 : 0), this._m.compose(this._w, this._q, this._s.set(0.022, 0.012, 1))); }
   }
   get out() { return this.b.filter(b => b.st !== 'in').length; }
 }

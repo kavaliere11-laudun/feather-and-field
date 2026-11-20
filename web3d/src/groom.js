@@ -44,9 +44,14 @@ export function openGroom(o) {
     const d = g.getImageData(0, 0, c.width, c.height).data;
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { let a = 0; for (let y = 0; y < 4; y++) for (let q = 0; q < 4; q++) a += d[((j * 4 + y) * c.width + i * 4 + q) * 4 + 3]; cells.push(a / 16); }
   } catch (e) { /* (a picture that can't be read: the middle of it) */ }
-  let body = cells.map((a, k) => a > 200 ? k : -1).filter(k => k >= 0);                    // (cells full of her)
-  if (body.length < 8) body = cells.map((a, k) => a > 70 ? k : -1).filter(k => k >= 0);
-  if (body.length < 5) { body = []; for (let j = 3; j < 7; j++) for (let i = 3; i < 7; i++) body.push(j * N + i); }
+  // (20 Nov 2026, Audrey: "None of the 3 actions should be on the head": her head and neck left out; the picture says where
+  // her head is (main.js birdPortrait: o.img.head), else the top of the side she faces, her left)
+  const H = o.img.head, isHead = k => { const u = (k % N + 0.5) / N, v = (Math.floor(k / N) + 0.5) / N;
+    return H ? (v < H.v + 0.06 && u < H.u + 0.17) || Math.hypot(u - H.u, v - H.v) < 0.15 : v < 0.42 && u < 0.5; };
+  const fullOf = min => cells.map((a, k) => a > min && !isHead(k) ? k : -1).filter(k => k >= 0);
+  let body = fullOf(200);                                    // (cells full of her)
+  if (body.length < 8) body = fullOf(70);
+  if (body.length < 5) { body = []; for (let j = 5; j < 8; j++) for (let i = 3; i < 7; i++) body.push(j * N + i); }
   // each part's places on her: five, well apart (the same bird and show: the same places)
   let seed = 0; for (const ch of String(o.name) + String(o.show)) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -127,6 +132,6 @@ export function openGroom(o) {
   skip.addEventListener('click', () => { close(); o.onSkip(); });
   x.addEventListener('click', () => { close(); if (o.onClose) o.onClose(); });
   lay(); show();
-  return { el: root, close, state: () => ({ step: S.done ? 'done' : STEPS[S.step], scores: S.scores.slice(), score: score(), on: body.length, started: S.t >= 0, spots: S.spots.map(s => [s.u, s.v, s.p]), tool: tool.dataset.tool }),
+  return { el: root, close, state: () => ({ step: S.done ? 'done' : STEPS[S.step], scores: S.scores.slice(), score: score(), on: body.length, started: S.t >= 0, spots: S.spots.map(s => [s.u, s.v, s.p]), tool: tool.dataset.tool, head: H || null }),
     finish: (scores) => { S.scores = scores.slice(0, 3); S.step = 2; S.done = true; for (const e of fx.querySelectorAll('.groom-spot')) e.remove(); show(); } };      // (the tests: every part done, this well)
 }
