@@ -177,7 +177,12 @@ const rel = await p.evaluate(() => { const L = window.__farm.farmer(); return L.
 await shoot('7_release');
 ok('let go: he crouches at the edge and she slips back into the water', rel === 'release', rel);
 // Stop: back off the dock with the pail
-ok('then back along the dock and off, his rod left lying on the dock, the gate shut behind him, the bar gone', (await p.evaluate(() => window.__farm.fishing().deckRod.visible)) && await until(() => { const f = window.__farm; return !f.fishSeq() && f.fishing().state === 'off'; }, 60, 0.5) && (await run(1.5), (await st()).gate === 0) && !(await st()).bar && Math.hypot((await st()).pos[0] - (await st()).D.stand[0], (await st()).pos[2] - (await st()).D.stand[1]) > 2, await st());
+// (20 Nov 2026, Audrey: "The action of fishing should end after the farmer leaves the fishing bridge, currently it ends after
+// a little while": his fishing over as he steps off the dock, before he's out of the pond's field and its gate)
+const offDock = await until(() => { const f = window.__farm; return !f.fishSeq() && f.fishing().state === 'off'; }, 60, 0.25);
+const free = await p.evaluate(() => { const f = window.__farm, L = f.farmLife(), D = f.dock(), G = f.dockGate(); return { job: L.busyWith(), still: !!(L.task && L.task.free), gate: G ? +G.open.toFixed(2) : null, fromLand: D ? +Math.hypot(L.pos.x - D.land[0], L.pos.z - D.land[1]).toFixed(2) : null }; });
+ok('his fishing over as he steps off the dock: free for the next job while still on his way out of the field', offDock && !free.job && (free.gate === null || free.still || free.gate === 0), free);
+ok('then back along the dock and off, his rod left lying on the dock, the gate shut behind him, the bar gone', (await p.evaluate(() => window.__farm.fishing().deckRod.visible)) && offDock && await until(() => { const G = window.__farm.dockGate(); return !G || G.open < 0.01; }, 30, 0.5) && !(await st()).bar && Math.hypot((await st()).pos[0] - (await st()).D.stand[0], (await st()).pos[2] - (await st()).D.stand[1]) > 2, await st());
 // a reload
 const got = await p.evaluate(() => JSON.stringify(window.__farm.game().data.fish.got));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();

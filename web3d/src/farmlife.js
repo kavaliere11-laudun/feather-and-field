@@ -382,10 +382,12 @@ export class FarmLife {
           TK.act('stroke', 1.6, (W, u) => { W.pose = 'pet'; W.face = 'cuddle'; W.patting = true; W.look = [0, -0.4]; if (u > 0.5 && heart < 9) { heart = 9; P.heart(hen); } }),
         ]) : ready && ready() ? TK.seq('cuddling', [
           TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 0.32 * sm(step(0.45, 1.0, u)), Lf); }),
-          TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
+          // (20 Nov 2026, Audrey: "Clipping while holding the hen": cradled on both forearms, the cuddle pose, a gentle sway;
+          // his stroking hand had gone through her)
+          TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'happy'; if (P.lift) P.lift(hen, 0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
           TK.say('cuddle'),
-          TK.act('hug', 4.8, (W, u, Lf) => { W.pose = 'hold'; W.face = 'cuddle'; W.hug = u; if (P.lift) P.lift(hen, 1, Lf); if (u > heart) { heart += 0.55; P.heart(hen); } }),
-          TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'hold' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 1 - sm(step(0.2, 0.95, u)), Lf); }),
+          TK.act('hug', 4.8, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'cuddle'; W.hug = u; W.hugK = 0; if (P.lift) P.lift(hen, 1, Lf); if (u > heart) { heart += 0.55; P.heart(hen); } }),
+          TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'cuddle' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; if (P.lift) P.lift(hen, 1 - sm(step(0.2, 0.95, u)), Lf); }),
           () => { if (P.lift) P.lift(hen, 0, null); return null; },
         ]) : null,
         () => { P.letGo(hen); return null; },
@@ -423,7 +425,8 @@ export class FarmLife {
   }
   // ---- a hen out (main.js farm moments, 20 Nov 2026: "Find her and tap her", the farmer carries her home): he hurries over
   // to her (o.at, where he stops in front of her; o.face(): towards her), crouches and scoops her up ("There you are!"),
-  // holds her a moment, carries her home in his arms (walking: she's held) to her pen's gate (o.P: penSpec), in, sets her
+  // holds her a moment, carries her home in his arms (cradled: both forearms under her, the cuddle pose; she sits on them,
+  // main.js strayLift) (walking: she's held) to her pen's gate (o.P: penSpec), in, sets her
   // down just inside ("Home you go!") and out again. o.lift(k, life): how far up she is (0 on the ground .. 1 in his arms);
   // o.down(): she's set down in her pen (also if he never gets there, or is called away: she's let go where she is). Named
   // 'pen': he isn't called away meanwhile; asked while he's coming out, going in or busy in a pen, straight after it
@@ -437,12 +440,12 @@ export class FarmLife {
     const atGate = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - P.out[0], Lf.pos.z - P.out[1]) > 0.8) { seq.aborted = true; put(); } return true; } };
     const L = [TK.path(o.at[0], o.at[1], 'hurry'), there, () => TK.face(o.face()),
       TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; o.lift(0.32 * sm(step(0.45, 1.0, u)), Lf); }),
-      TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'hold'; W.face = 'happy'; o.lift(0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
+      TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'happy'; o.lift(0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
       TK.say('found'),
-      TK.act('hug', 2.2, (W, u, Lf) => { W.pose = 'hold'; W.face = 'cuddle'; W.hug = u; o.lift(1, Lf); if (u > heart) { heart += 0.7; if (o.heart) o.heart(); } }),
+      TK.act('hug', 2.2, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'cuddle'; W.hug = u; W.hugK = 0; o.lift(1, Lf); if (u > heart) { heart += 0.7; if (o.heart) o.heart(); } }),
       () => { held = true; return null; },
       TK.path(P.out[0], P.out[1], 'walk'), atGate, TK.face(P.toGate), pen(true), TK.walk(P.in),
-      TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'hold' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; held = false; o.lift(1 - sm(step(0.2, 0.95, u)), Lf); }),
+      TK.act('lower', 1.1, (W, u, Lf) => { W.pose = u < 0.35 ? 'cuddle' : 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; held = false; o.lift(1 - sm(step(0.2, 0.95, u)), Lf); }),
       put, TK.say('homego'),
       TK.act('up', 0.8, W => { W.pose = 'turn'; W.face = 'happy'; }),
       () => TK.walk(P.back.slice(0, 3)), pen(false), TK.walk(P.back.slice(3))];
@@ -450,7 +453,7 @@ export class FarmLife {
     seq.run = (Lf, dt) => {
       if (seq.aborted) return true;
       const r = run(Lf, dt);
-      if (held && !down) { const W = Lf.want; if (W.pose === 'turn' || W.pose === 'hips') { W.pose = 'hold'; W.keepArms = true; W.face = 'happy'; } o.lift(1, Lf); }      // (carrying her: in his arms all the way)
+      if (held && !down) { const W = Lf.want; if (W.pose === 'turn' || W.pose === 'hips') { W.pose = 'cuddle'; W.keepArms = true; W.face = 'happy'; } o.lift(1, Lf); }      // (carrying her: sitting on his forearms all the way, 20 Nov 2026, Audrey: "Clipping while holding the hen")
       return r;
     };
     seq.job = { kind: 'stray', hen: o.hen }; seq.drop = put;
@@ -571,9 +574,14 @@ export class FarmLife {
     const gate = on => () => { if (on) { self.pen = F; F.enter(); } else if (self.pen === F) { F.leave(); self.pen = null; } return null; };
     const L = [TK.path(F.start[0], F.start[1], 'hurry'), there, TK.face(F.toIn), gate(true)];
     if (F.gate) L.push(TK.act('open', 0.3, W => { W.pose = 'turn'; W.face = 'happy'; W.look = [0, -0.2]; }));
+    // (20 Nov 2026, Audrey: "The action of fishing should end after the farmer leaves the fishing bridge, currently it ends
+    // after a little while": his fishing over as he steps off the dock (F.offAt: that far along his way back), free for
+    // the next job; through the meadow's gate and out after it all the same, a job asked for straight after)
+    const off = Math.min(F.outPts.length, F.offAt || F.outPts.length);
     L.push(TK.walk(F.inPts, 'hurry'), TK.face(F.face), () => { F.arrived(); return null; },
       { name: 'fishing', run: (Lf, dt) => F.drive(Lf, dt) },
-      TK.walk(F.outPts), gate(false), () => { F.done(true); return null; });
+      TK.walk(F.outPts.slice(0, off)), () => { seq.free = true; F.done(true); return null; },
+      ...(off < F.outPts.length ? [TK.walk(F.outPts.slice(off))] : []), gate(false));
     const seq = TK.seq('pen', L), run = seq.run.bind(seq);
     seq.run = (Lf, dt) => seq.aborted || run(Lf, dt);
     seq.fishing = F; seq.job = { kind: 'fish' };
@@ -584,7 +592,7 @@ export class FarmLife {
   // off; or chasing Rusty), or is to do straight after: { kind, hen? }, or null (9 Nov 2026: one job at a time, main.js)
   busyWith() {
     if (this.running) return { kind: 'fox' };
-    const t = this.task && this.task.name === 'pen' ? this.task : null, q = this.pending;
+    const t = this.task && this.task.name === 'pen' && !this.task.free ? this.task : null, q = this.pending;      // (free: done, only on his way out of the pond's field)
     return (t && (t.job || { kind: 'work' })) || (q && (q.job || { kind: 'work' })) || null;
   }
   // his hat knocked off (the geese chasing him out): up off his head and down at `to` ([x, z]), tumbling; back on (hatHome

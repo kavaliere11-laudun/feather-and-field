@@ -3011,7 +3011,10 @@ function penSpec(plot, spotsOnly = false) {      // (spotsOnly: just where he go
     lift(b, k, Lf) {
       const C = b.cuddle; if (!C) return;
       if (!Lf || k <= 0) { C.carry = null; b.shadowY = undefined; if (!b.isGoose) { b.root.position.y = 0.015; if (b.rig.shut) b.rig.sleepy(false); } else if (C.from) { b.pos.x = C.from.x; b.pos.z = C.from.z; } return; }
-      const h = Lf.heading, Lp = Lf.pos, hold = v.set(Lp.x + Math.sin(h) * 0.22, 0.69, Lp.z + Math.cos(h) * 0.22).applyMatrix4(inv);
+      // (20 Nov 2026, Audrey: "Clipping while holding the hen": she sits on his forearms, both under her (the cuddle pose),
+      // between his wrists and just above them, wherever they are; she had been held at a fixed spot, his arms through her)
+      const h = Lf.heading, R = Lf.f.rig.B, wl = R.wristL.getWorldPosition(new THREE.Vector3()), wr = R.wristR.getWorldPosition(new THREE.Vector3());
+      const hold = v.set((wl.x + wr.x) / 2, Math.max(wl.y, wr.y) + STRAY_SEAT[0], (wl.z + wr.z) / 2).applyMatrix4(inv);
       const ground = C.from || (C.from = { x: b.root.position.x, z: b.root.position.z, yaw: b.root.rotation.y });
       const ry = (h + Math.PI / 2) - plot.group.rotation.y, dy = Math.atan2(Math.sin(ry - ground.yaw), Math.cos(ry - ground.yaw));
       const arc = Math.sin(k * Math.PI) * 0.06;
@@ -6541,7 +6544,7 @@ function fishRoute() {
   if (DGATE) {
     const way = nav.find(DGATE.gin[0], DGATE.gin[1], inl[0], inl[1]); if (!way) return null;
     const inPts = [DGATE.gin, ...way.slice(1).map(q => [q[0], q[1]]), deckIn, D.stand];
-    return { start: DGATE.out, toIn: DGATE.toIn, gate: DGATE.shared ? DGATE.gate : DGATE, inPts, outPts: [...inPts.slice(0, -1).reverse(), DGATE.out], face: D.face };
+    return { start: DGATE.out, toIn: DGATE.toIn, gate: DGATE.shared ? DGATE.gate : DGATE, inPts, outPts: [...inPts.slice(0, -1).reverse(), DGATE.out], offAt: 2, face: D.face };      // (offAt: off the dock after the first two: his fishing over there)
   }
   const st = nav.nearestIn(farmReach(), inl[0], inl[1], 3); if (!st) return null;
   return { start: st, toIn: Math.atan2(D.dir.x, D.dir.z), gate: null, inPts: [deckIn, D.stand], outPts: [deckIn, st], face: D.face };
@@ -9245,10 +9248,15 @@ function strayStep(b, dt) {
 }
 // in his arms k of the way (0 on the ground .. 1): in front of his chest, across his arms, her head to his left, her eyes shut
 // once she's up; on the way down (at her gate), to the ground in front of him
+const STRAY_SEAT = [0.02, 0.0];      // (how far above his wrists her feet are when she sits on his forearms, how far ahead of them)
 function strayLift(k, Lf) {
   const b = STRAY.bird; if (!b) return; const S = b.stray;
   if (!Lf || k <= 0) { if (S.carry) { b.root.position.set(S.carry.x, 0.015 + groundY(S.carry.x, S.carry.z), S.carry.z); } S.carry = null; b.shadowY = undefined; b.rig.sleepy(false); return; }
-  const h = Lf.heading, Lp = Lf.pos, gy = groundY(Lp.x, Lp.z), hold = [Lp.x + Math.sin(h) * 0.22, gy + 0.69, Lp.z + Math.cos(h) * 0.22], ry = h + Math.PI / 2;
+  // (20 Nov 2026, Audrey: "Clipping while holding the hen": she had been held at a fixed spot in front of him, his forearms
+  // through her; now she sits on them: between his wrists, just above the higher, a little ahead, wherever his arms are as
+  // he walks)
+  const h = Lf.heading, R = Lf.f.rig.B, wl = R.wristL.getWorldPosition(new THREE.Vector3()), wr = R.wristR.getWorldPosition(new THREE.Vector3());
+  const hold = [(wl.x + wr.x) / 2 + Math.sin(h) * STRAY_SEAT[1], Math.max(wl.y, wr.y) + STRAY_SEAT[0], (wl.z + wr.z) / 2 + Math.cos(h) * STRAY_SEAT[1]], ry = h + Math.PI / 2;
   if (k >= 1) S.up = true;
   if (S.up && k < 1 && !S.lower) S.lower = { x: hold[0], z: hold[2], y: 0.015 + groundY(hold[0], hold[2]), yaw: ry };      // (set down in front of him)
   const G = S.lower || S.from || (S.from = { x: b.root.position.x, z: b.root.position.z, y: b.root.position.y, yaw: b.root.rotation.y });
@@ -10169,7 +10177,7 @@ window.__farm = {
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
-  moment: { start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
+  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
