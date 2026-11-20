@@ -301,6 +301,11 @@
   /* the new level's gift of coins (7 Nov 2026) */
   .glvgift { align-self: center; margin: 2px 0 4px; padding: 6px 14px; border-radius: 999px; background: #fff3c4; color: #6b4300; font-size: 15px; font-weight: 700; text-align: center; }
   .gbub.gsale { background: #fff1c2; } .gbub.gsale::after { border-top-color: #fff1c2; }
+  /* (20 Nov 2026, farm moments: a hen out: her name over her, and "🐔 A hen is out!" beside the coins, a gentle pulse) */
+  .gbub.gstraybub { background: #fff; font-weight: 800; } .gbub.gstraybub::after { border-top-color: #fff; }
+  .gmom { padding: 0 14px; background: #fff1c2; font-weight: 700; font-size: 14px; animation: gmomp 2.4s ease-in-out infinite; }
+  .gmom[hidden] { display: none; }
+  @keyframes gmomp { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
   /* village orders (7 Nov 2026): the stall's "Ready!" bubble; an order's card */
   .gbub.gorderbub { background: #e8f4d6; } .gbub.gorderbub::after { border-top-color: #e8f4d6; }
   .gorder .gorder-l { margin: 2px 0 6px; font-style: italic; }
@@ -866,6 +871,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795187297"></script>
+<script src="app.js?v=1795190338"></script>
 </body>
 </html>
