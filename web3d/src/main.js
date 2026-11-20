@@ -5869,7 +5869,7 @@ function sitNow(b, secs) {                   // on the nest, sitting on her eggs
   const G = nestOf(b.plot); b.root.position.set(G.seat[0], G.floor + 0.005, G.seat[1]); b.root.rotation.y = 0; b.A.sit = 1; b.A.brood = 1;
 }
 // a brood's youngsters on the farm (chicks, then young hens and roosters), not yet on their way
-function gameChicks(plot) { return plot.birds.filter(b => b.gameChick && !b.leaving && !b.pendingId); }
+function gameChicks(plot) { const out = plot.birds.filter(b => b.gameChick && !b.leaving && !b.pendingId), s = STRAY.bird; if (s && s.lostFrom === plot) out.push(s); return out; }      // (a chick lost out on the farm still hers: farm moments)
 const kidRng = (plot) => rng(9001 + plots.indexOf(plot) * 31 + plot.birds.length * 7 + (Date.now() % 997));
 function addChick(plot, mum, x, z, asleep, i, kid) {
   const r = kidRng(plot), rare = kid && kid.rare;
@@ -9176,16 +9176,16 @@ function strayPlot() {
 const strayHome = gb => gb && gamePlots().find(q => q.gc && q.gc.id === gb.coop && q.kind === 'coop');
 // where a hen out can be: by a bush, a tree or a rock still standing on your land, out in the open where the farmer can get
 // to her, well away from her own coop (5 to 30 m) and from today's golden egg
-function straySpot(home, r) {
+function straySpot(home, r, near = 5, far = 30) {
   const own = new Set(game.data.land), gone = new Set(game.data.cleared), nav = navGrid(), reach = farmReach(), pts = [];
   const c = home.frame.localToWorld(new THREE.Vector3(0, 0, 1.2)), egg = HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null;
-  const ok = (x, z) => { const f = fieldAt(x, z), d = Math.hypot(x - c.x, z - c.z); return f >= 0 && own.has(f) && d > 5 && d < 30 && nav.freeAt(x + 0.25, z) && nav.freeAt(x - 0.25, z) && nav.freeAt(x, z + 0.25) && nav.freeAt(x, z - 0.25) && !!nav.nearestIn(reach, x, z, 0) && !(egg && Math.hypot(x - egg[0], z - egg[1]) < 2.5); };
+  const ok = (x, z) => { const f = fieldAt(x, z), d = Math.hypot(x - c.x, z - c.z); return f >= 0 && own.has(f) && d > near && d < far && nav.freeAt(x + 0.25, z) && nav.freeAt(x - 0.25, z) && nav.freeAt(x, z + 0.25) && nav.freeAt(x, z - 0.25) && !!nav.nearestIn(reach, x, z, 0) && !(egg && Math.hypot(x - egg[0], z - egg[1]) < 2.5); };
   for (const o of [...V.bushes, ...V.trees, ...V.rocks]) {
     if (gone.has(o.id)) continue;
     const R = o.id[0] === 't' ? 0.95 : o.id[0] === 'b' ? 0.75 : 0.6;
     for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4 + 0.2, x = o.pos[0] + Math.cos(a) * R, z = o.pos[2] + Math.sin(a) * R; if (ok(x, z)) pts.push([x, z]); }
   }
-  for (let k = 0; pts.length < 3 && k < 300; k++) { const a = r() * 6.28, d = 6 + r() * 14, x = c.x + Math.sin(a) * d, z = c.z + Math.cos(a) * d; if (ok(x, z)) pts.push([x, z]); }      // (no bush or tree about: in the open)
+  for (let k = 0; pts.length < 3 && k < 300; k++) { const a = r() * 6.28, d = near + 1 + r() * Math.min(14, far - near - 1), x = c.x + Math.sin(a) * d, z = c.z + Math.cos(a) * d; if (ok(x, z)) pts.push([x, z]); }      // (no bush or tree about: in the open)
   return pts.length ? pts[Math.floor(r() * pts.length) % pts.length] : null;
 }
 // her bird out there (a reload: back where she was); her bird in the pen gone meanwhile
@@ -9202,6 +9202,38 @@ function strayMake(gid, at) {
   STRAY.bird = b; STRAY.gid = gid; STRAY.seq = null;
   return b;
 }
+// the third farm moment (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Follow the peeps and bring the chick back to its
+// mum"): while a coop has chicks (their first day), one of them may wander off a few metres (3 to 12) to a bush, a tree or a
+// rock on your land, peeping ("peep!" floats up from it, its chirps heard from where it is: louder, and from that side, as
+// the view comes near it; "🐣 peep!" over it on the screen). Its own bird moves out here (the coop's count of its chicks
+// still has it: gameChicks); found and tapped, the farmer carries it back the same way and sets it down in the pen, its
+// mum hops and flaps for joy, hearts. Not found by 20:30: it finds its way back by itself
+function chickMake(plot, ch, at) {
+  if (heldBird === ch) holdBird(null);
+  const i = plot.birds.indexOf(ch); if (i >= 0) plot.birds.splice(i, 1);
+  const SP = strayPlot(); ch.lostFrom = plot; ch.plot = SP; SP.frame.add(ch.root);
+  ch.act = null; ch.route = null; ch.then = null; ch.eatAt = null; ch.cuddle = null; if (ch.asleep) ch.wakeUp();
+  ch.root.position.set(at[0], 0.015 + groundY(at[0], at[1]), at[1]); ch.root.rotation.y = Math.random() * 6.28;
+  ch.stray = { at: [at[0], at[1]], t: 0.6, to: null, act: null, carry: null, called: false, fade: 0, chick: true, peep: 1.5 };
+  SP.birds.length = 0; SP.birds.push(ch); STRAY.bird = ch; STRAY.gid = null; STRAY.seq = null;
+  return ch;
+}
+function startChickOut(coopId = null) {
+  if (STRAY.bird || game.moment()) return null;
+  const r = rng(Math.floor(Date.now() / 1000) % 100000);
+  const list = gamePlots().filter(p => p.kind === 'coop' && (!coopId || p.gc.id === coopId) && game.chicksIn(p.gc.id) && !p.farmer && !p.fw && !(inside.open && inside.plot === p));
+  for (const plot of list) {
+    const kids = gameChicks(plot).filter(ch => !ch.young && !ch.asleep && !ch.busy() && ch.root.visible && ch.appear >= 1); if (!kids.length) continue;
+    const ch = kids[Math.floor(r() * kids.length) % kids.length], at = straySpot(plot, r, 3, 12); if (!at) continue;
+    if (!game.chickOut(plot.gc.id, ch.kidI, at)) return null;
+    chickMake(plot, ch, at);
+    const mum = game.bird(game.coop(plot.gc.id).brood.hen);
+    hintNext(game.t('mom_chick_hint', { name: mum ? mum.name : '' }));
+    return game.moment();
+  }
+  return null;
+}
+const chickPlot = m => gamePlots().find(p => p.gc && p.gc.id === m.c && p.kind === 'coop');
 // a new one: a hen of yours who's free just now (a Rebel first), somewhere out on your land
 function startHenOut(id = null) {
   if (STRAY.bird || game.moment()) return null;
@@ -9228,7 +9260,7 @@ function strayStep(b, dt) {
   const S = b.stray, p = b.root.position, o = { walking: false, peck: 0, kick: 0, sit: 0, ruffle: 0, flap: 0, leg: 0 };
   if (S.carry) { const K = S.carry; p.set(K.x, K.y, K.z); b.root.rotation.y = K.yaw; o.sit = 1; return o; }
   if (S.fade > 0) {
-    S.fade = Math.max(0, S.fade - dt); const u = 1 - S.fade / 1.2; b.root.scale.setScalar(Math.max(0.01, 1 - u * u));
+    S.fade = Math.max(0, S.fade - dt); const u = 1 - S.fade / 1.2; b.root.scale.setScalar(Math.max(0.01, (b.size || 1) * (1 - u * u)));
     const y = b.root.rotation.y, st = b.speed * 1.3 * dt; p.x += Math.sin(y) * st; p.z += Math.cos(y) * st; p.y = 0.015 + groundY(p.x, p.z); o.walking = true;
     if (!S.fade) strayPut(true);
     return o;
@@ -9256,7 +9288,7 @@ function strayStep(b, dt) {
     if (A.left <= 0) { S.act = null; S.t = 0.3 + b.r() * 0.9; }
   } else if (S.t <= 0) {
     const x = b.r(), nav = navGrid();
-    if (x < 0.4) { for (let k = 0; k < 6; k++) { const a = b.r() * 6.28, d = 0.2 + b.r() * 0.7, q = [S.at[0] + Math.sin(a) * d, S.at[1] + Math.cos(a) * d]; if (nav.freeAt(q[0], q[1])) { S.to = q; S.t = 0; break; } } }
+    if (x < 0.4) { for (let k = 0; k < 6; k++) { const a = b.r() * 6.28, d = (0.2 + b.r() * 0.7) * (S.chick ? 0.55 : 1), q = [S.at[0] + Math.sin(a) * d, S.at[1] + Math.cos(a) * d]; if (nav.freeAt(q[0], q[1])) { S.to = q; S.t = 0; break; } } }
     else if (x < 0.75) S.act = { type: 'peck', left: 1.2 + b.r() * 1.8 };
     else if (x < 0.9) S.act = { type: 'scratch', left: 1.9, leg: b.r() < 0.5 ? 0 : 1 };
     else S.act = { type: 'ruffle', left: 0.75 };
@@ -9287,6 +9319,7 @@ function strayLift(k, Lf) {
 // usual place there), a hop and a heart; alone: by herself (from wherever she was)
 function strayPut(alone = false) {
   const b = STRAY.bird; if (!b) return;
+  if (b.stray.chick) return chickPut(b, alone);
   const w = b.root.position.clone(), gb = game.bird(b.gid), home = strayHome(gb), near = STRAY.seq && farmLife && home && Math.hypot(farmLife.pos.x - w.x, farmLife.pos.z - w.z) < 1.2;
   removeBird(b); STRAY.bird = null; STRAY.gid = null; STRAY.seq = null; STRAY.plot.birds.length = 0; b.root.scale.setScalar(1);
   if (!home || !gb) return;
@@ -9294,11 +9327,32 @@ function strayPut(alone = false) {
   if (!alone && near) { const v = home.frame.worldToLocal(new THREE.Vector3(w.x, 0, w.z)); if (nb.free(v.x, v.z)) { nb.root.position.set(v.x, 0.015, v.z); nb.target.copy(nb.root.position); } }
   nb.hopT = 0; nb.wait = 0.8; placeBlob(nb); wake(1500);
 }
+// a lost chick home: its own bird back in its pen, where the farmer set it down (or by its mum, by itself), off to her;
+// she hops and flaps for joy, hearts over them both
+function chickPut(ch, alone) {
+  const home = ch.lostFrom, w = ch.root.position.clone();
+  STRAY.bird = null; STRAY.seq = null; STRAY.plot.birds.length = 0; ch.stray = null; ch.lostFrom = null; ch.shadowY = undefined; ch.rig.sleepy(false);
+  if (!home || !plots.includes(home)) { removeBird(ch); return; }
+  ch.plot = home; home.frame.add(ch.root); home.birds.push(ch); ch.root.scale.setScalar(ch.size || 1);
+  const v = home.frame.worldToLocal(new THREE.Vector3(w.x, 0, w.z)), mum = ch.mum && home.birds.includes(ch.mum) ? ch.mum : null;
+  if (alone || !ch.free(v.x, v.z)) { const m = mum ? mum.root.position : null; if (m && ch.free(m.x + 0.25, m.z)) v.set(m.x + 0.25, 0, m.z); else { ch.pickTarget(); v.copy(ch.target); } }
+  ch.root.position.set(v.x, 0.015, v.z); ch.target.copy(ch.root.position); ch.wait = 0.2; ch.hopT = 0; ch.act = null; ch.route = null;
+  if (mum) { if (!mum.busy() && !mum.cuddle) { mum.act = { type: 'flap', left: 0.9 }; mum.wait = 1.2; mum.hopT = 0; } heartOver(mum); const r = ch.plan([[mum.root.position.x + 0.2, mum.root.position.z + 0.15]]); if (r.length) { ch.route = r; ch.pace = 1.4; ch.nextLeg(); } }
+  heartOver(ch); placeBlob(ch); wake(1500);
+}
 // home by herself: a few steps off, smaller and gone, then in her pen
 function strayFade() { const b = STRAY.bird; if (!b || b.stray.fade > 0) return; const S = b.stray; S.carry = null; S.called = true; b.shadowY = undefined; b.rig.sleepy(false); S.fade = 1.2; }
 // found: paid, said; the farmer sent for her (or on his list; or, if he can't come, she goes home by herself)
 function strayTap() {
   const b = STRAY.bird; if (!GAME_MODE || !b || b.stray.called || b.stray.fade) return false;
+  if (b.stray.chick) {      // (a lost chick: back to its mum)
+    const r = game.chickFound(); if (!r) return false;
+    b.stray.called = true; heartOver(b); farmSound('chicks', b.root.position.x, b.root.position.z, 1.2);
+    hint(game.t('mom_chick_found', { name: r.name, farmer: farmerName(), c: r.coins, x: r.xp }));
+    gameUI.refresh(); gameUI.bumpCoins(); if (r.cuddle) { jobsDone(r.cuddle.done); if (r.cuddle.up) hintNext(game.t('trust_up' + r.cuddle.up, { name: r.name, farmer: farmerName(), xp: r.cuddle.xp })); }
+    strayPill(); strayFetch(); wake(1500);
+    return true;
+  }
   const r = game.henFound(); if (!r) return false;
   b.stray.called = true; heartOver(b); farmSound('mum', b.root.position.x, b.root.position.z, 1.2);
   hint(game.t('mom_hen_found', { name: r.name, farmer: farmerName(), c: r.coins, x: r.xp }));
@@ -9312,11 +9366,11 @@ function strayFetch() {
     if (JOBQ.length < 3 && !JOBQ.some(q => q.key === 'stray')) JOBQ.push({ key: 'stray', kind: 'stray', label: jobLabel('stray', b.name), run: () => strayFetch() }); else strayFade();
     return;
   }
-  const home = strayHome(game.bird(b.gid)), P = home && farmLife && !farmLife.home && !farmLife.running ? penSpec(home) : null;
+  const home = b.stray.chick ? b.lostFrom : strayHome(game.bird(b.gid)), P = home && plots.includes(home) && farmLife && !farmLife.home && !farmLife.running ? penSpec(home) : null;
   if (!P) { strayFade(); return; }
-  const p = b.root.position, F = farmLife.pos, nav = navGrid(), reach = farmReach(), a0 = Math.atan2(F.x - p.x, F.z - p.z);
+  const p = b.root.position, F = farmLife.pos, nav = navGrid(), reach = farmReach(), a0 = Math.atan2(F.x - p.x, F.z - p.z), off = b.stray.chick ? 0.36 : 0.42;
   let at = null;
-  for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.14]) { const q = [p.x + Math.sin(a0 + da) * 0.42, p.z + Math.cos(a0 + da) * 0.42]; if (nav.nearestIn(reach, q[0], q[1], 0)) { at = q; break; } }
+  for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.14]) { const q = [p.x + Math.sin(a0 + da) * off, p.z + Math.cos(a0 + da) * off]; if (nav.nearestIn(reach, q[0], q[1], 0)) { at = q; break; } }
   if (!at) at = nav.nearestIn(reach, p.x, p.z, 1.0);
   const seq = at && farmLife.bringHome({ P, at, hen: b, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
   if (!seq) { strayFade(); return; }
@@ -9325,7 +9379,7 @@ function strayFetch() {
 // a tap on the farm: on her, or near her (a thumb's width)
 function strayHit(rr, x, y) {
   const b = STRAY.bird; if (!b || b.stray.called || b.stray.fade) return false;
-  const w = b.root.getWorldPosition(new THREE.Vector3()), sp = new THREE.Sphere(new THREE.Vector3(w.x, w.y + b.hitY, w.z), Math.max(0.3, b.hitR * 1.6));
+  const w = b.root.getWorldPosition(new THREE.Vector3()), sp = new THREE.Sphere(new THREE.Vector3(w.x, w.y + b.hitY, w.z), Math.max(b.stray.chick ? 0.24 : 0.3, b.hitR * 1.6));
   let hit = !!rr.intersectSphere(sp, new THREE.Vector3());
   if (!hit) { bubV.set(w.x, w.y + b.hitY, w.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight; hit = bubV.z < 1 && Math.hypot(sx - x, sy - y) < 30; }
   return hit && strayTap();
@@ -9336,6 +9390,7 @@ function strayPill() {
   const m = game.moment(); let key = '', text = null, tap = null;
   if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + LANG; text = game.t('mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); }; }
   else if (m && m.k === 'rain' && RAIN.on) { key = 'rain' + LANG; text = game.t('mom_rain'); tap = () => hint(game.t('mom_rain_hint')); }
+  else if (m && m.k === 'chick' && STRAY.bird && !STRAY.bird.stray.called) { key = 'chick' + m.c + m.i + LANG; text = game.t('mom_chick'); tap = () => { const c = game.coop(m.c), mum = c && c.brood && game.bird(c.brood.hen); hint(game.t('mom_chick_hint', { name: mum ? mum.name : '' })); }; }
   if (STRAY.pillOn === key) return; STRAY.pillOn = key;
   gameUI.momentPill(text, tap);
 }
@@ -9343,16 +9398,28 @@ function strayPill() {
 // and then, his job lost (she's put down where she is, or goes home by herself)
 function tickStray(dt) {
   if (!GAME_MODE || !game.data || !gamePlots().length) return;
-  const h = DAY.hour, m0 = game.moment(), m = m0 && m0.k === 'hen' ? m0 : null;
+  const h = DAY.hour, m0 = game.moment(), m = m0 && m0.k === 'hen' ? m0 : null, mc = m0 && m0.k === 'chick' ? m0 : null;
+  if (!m0 && game.data.moment && game.data.moment.k === 'chick') game.chickBack();      // (no longer a chick, or its brood gone: over)
   if (m && !STRAY.bird && !MOVE.plot) {
     if (h >= MOMENTS.home || h < 6) game.henBack();
     else strayMake(m.b, m.at);
   }
+  if (mc && !STRAY.bird && !MOVE.plot) {      // (a lost chick: once its brood's chicks are on the farm)
+    const P = chickPlot(mc), ch = P && P.birds.find(b => b.gameChick && b.kidI === mc.i && !b.young);
+    if (h >= MOMENTS.home || h < 6 || !P) game.chickBack();
+    else if (ch) chickMake(P, ch, mc.at);
+  }
   const b = STRAY.bird;
   if (b) {
     if (!frozen) { b.update(dt); placeBlob(b); }
-    const S = b.stray;
-    if (!S.called && !S.fade && (h >= MOMENTS.home || h < 6)) { const r = game.henBack(); if (r && !document.hidden) hintNext(game.t('mom_hen_back', { name: r.name })); strayFade(); }
+    const S = b.stray || { called: true, fade: 1 };      // (a chick just set down back home: nothing more here)
+    if (S.chick && !S.called && !S.fade && !mc) strayFade();      // (its moment over some other way: back by itself)
+    else if (!S.called && !S.fade && (h >= MOMENTS.home || h < 6)) { const r = S.chick ? game.chickBack() : game.henBack(); if (r && !document.hidden) hintNext(game.t(S.chick ? 'mom_chick_back' : 'mom_hen_back', { name: r.name })); strayFade(); }
+    else if (S.chick && !S.called && !S.fade && (S.peep -= dt) <= 0) {      // (its peeps: heard from where it is, and "peep!" floating up from it on the screen)
+      S.peep = 2.2 + Math.random() * 1.8; S.peeps = (S.peeps || 0) + 1; const w = b.root.getWorldPosition(new THREE.Vector3()); farmSound('chicks', w.x, w.z, 1.4);
+      bubV.set(w.x, w.y + 0.12, w.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight;
+      if (bubV.z < 1 && sx > 0 && sx < canvas.clientWidth && sy > 30 && sy < canvas.clientHeight && !gameUI.isOpen && !inside.open) floatWord(game.t('mom_peep'), sx + (Math.random() - 0.5) * 30, sy - 26, 'gpeep');
+    }
     else if (S.called && !S.fade) {
       const mine = STRAY.seq && farmLife && (farmLife.task === STRAY.seq || farmLife.pending === STRAY.seq), queued = JOBQ.running || JOBQ.some(q => q.key === 'stray');
       if (!mine && !queued) { if (S.carry && STRAY.seq) STRAY.seq.drop(); else strayFade(); }
@@ -9361,21 +9428,24 @@ function tickStray(dt) {
   }
   // her name over her, while she's on the screen and not found yet
   const B = STRAY.bub || (STRAY.bub = (() => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub gstraybub'; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); strayTap(); }); document.body.append(e); return e; })());
-  if (!b || b.stray.called || b.stray.fade || inside.open || gameUI.isOpen) B.hidden = true;
+  const bb = STRAY.bird;
+  if (!bb || !bb.stray || bb.stray.called || bb.stray.fade || inside.open || gameUI.isOpen) B.hidden = true;
   else {
-    const t = '❗ ' + b.name; if (B.textContent !== t) B.textContent = t;
-    const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.rig.scale * 1.15, w.z).project(camera);
+    const t = bb.stray.chick ? '🐣 ' + game.t('mom_peep') : '❗ ' + bb.name; if (B.textContent !== t) B.textContent = t;
+    const w = bb.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + bb.rig.scale * (bb.size || 1) * 1.15 + (bb.stray.chick ? 0.06 : 0), w.z).project(camera);
     const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight;
     if (bubV.z > 1 || sx < -40 || sx > canvas.clientWidth + 40 || sy < 20 || sy > canvas.clientHeight + 40) B.hidden = true; else bubAt(B, sx, sy);
   }
   strayPill();
   // a new one: as the farm opens or comes back after a while (a roll each time), by day, nothing else going on
-  if (STRAY.roll && !m0 && !b && !RAIN.on && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
+  if (STRAY.roll && !m0 && !STRAY.bird && !RAIN.on && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
     STRAY.roll = false;
     const due = game.momentDue(h);
-    // (which: the very first, a hen out; the first rainy day for sure the next time, once fishing's open; else, one time in two, either)
-    const kind = !due ? null : due.first ? 'hen' : due.firstRain ? 'rain' : Math.random() < MOMENTS.chance ? (due.rain && Math.random() < 0.5 ? 'rain' : 'hen') : null;
-    if (kind === 'rain') rainStart(); else if (kind === 'hen') startHenOut();
+    // (which: the very first, a hen out; the first rainy day for sure the next time, once fishing's open; the first lost chick
+    // for sure once there are chicks; else, one time in two, any of them there can be)
+    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), kinds = ['hen', ...(due && due.rain ? ['rain'] : []), ...(chicks ? ['chick'] : [])];
+    const kind = !due ? null : due.first ? 'hen' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
+    if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'hen') startHenOut();
   }
 }
 // ---- farm moments, the rainy day (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Worms come up in the rain. Tap them";
@@ -9475,8 +9545,8 @@ function rainTap(x, y) {
   wake(1200); return true;
 }
 // a few words that float up from (x, y) on the screen and fade
-function floatWord(t, x, y) {
-  const e = document.createElement('div'); e.className = 'gfloat'; e.textContent = t; e.style.left = x + 'px'; e.style.top = y + 'px'; document.body.append(e);
+function floatWord(t, x, y, cls = '') {
+  const e = document.createElement('div'); e.className = 'gfloat' + (cls ? ' ' + cls : ''); e.textContent = t; e.style.left = x + 'px'; e.style.top = y + 'px'; document.body.append(e);
   const a = e.animate ? e.animate([{ transform: 'translate(-50%, -50%) scale(0.7)', opacity: 0 }, { transform: 'translate(-50%, -120%) scale(1.1)', opacity: 1, offset: 0.25 }, { transform: 'translate(-50%, -260%) scale(1)', opacity: 0 }], { duration: 1100, easing: 'ease-out', fill: 'both' }) : null;
   if (a) a.onfinish = () => e.remove(); else setTimeout(() => e.remove(), 1100);
 }
@@ -10386,7 +10456,7 @@ window.__farm = {
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
   rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
-  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
+  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0 }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)

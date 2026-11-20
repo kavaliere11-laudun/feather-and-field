@@ -284,6 +284,8 @@ export const TEXT = {
     mom_hen: '🐔 A hen is out!', mom_hen_hint: '{name} has slipped out of her pen. Find her on the farm and tap her!',
     mom_hen_found: '✨ You found {name}! {farmer} carries her home. +{c} coins, +{x} XP', mom_hen_back: '{name} went back to her pen by herself for the night.',
     busy_stray: '{farmer} is bringing {name} home.', next_stray: 'bring {name} home',
+    mom_chick: '🐣 A chick is lost!', mom_chick_hint: 'One of {name}’s chicks has wandered off. Follow the peeps and tap it!', mom_peep: 'peep!',
+    mom_chick_found: '✨ You found the chick! {farmer} takes it back to {name}. +{c} coins, +{x} XP', mom_chick_back: 'The lost chick found its way back to {name} by itself.',
     mom_rain: '🌧️ It’s raining!', mom_rain_hint: 'Worms are coming up in the rain. Tap them before the hens do!',
     mom_rain_end: 'The rain has stopped. Worms caught: {n} 🪱', mom_rain_end0: 'The rain has stopped.', mom_rain_full: '🪱 Bag full · +{c} coins',
     // the daily egg hunt (7 Nov 2026)
@@ -652,6 +654,8 @@ export const TEXT = {
     mom_hen: '🐔 Une poule s’est échappée\u00a0!', mom_hen_hint: '{name} s’est échappée de son enclos. Trouvez-la sur la ferme et touchez-la\u00a0!',
     mom_hen_found: '✨ Vous avez retrouvé {name}\u00a0! {farmer} la ramène chez elle. +{c} pièces, +{x} XP', mom_hen_back: '{name} est rentrée toute seule dans son enclos pour la nuit.',
     busy_stray: '{farmer} ramène {name} chez elle.', next_stray: 'ramener {name}',
+    mom_chick: '🐣 Un poussin s’est perdu\u00a0!', mom_chick_hint: 'Un poussin de {name} s’est éloigné. Suivez les piou-piou et touchez-le\u00a0!', mom_peep: 'piou\u00a0!',
+    mom_chick_found: '✨ Vous avez retrouvé le poussin\u00a0! {farmer} le ramène à {name}. +{c} pièces, +{x} XP', mom_chick_back: 'Le poussin perdu a retrouvé {name} tout seul.',
     mom_rain: '🌧️ Il pleut\u00a0!', mom_rain_hint: 'Les vers sortent avec la pluie. Touchez-les avant les poules\u00a0!',
     mom_rain_end: 'La pluie s’est arrêtée. Vers attrapés\u00a0: {n} 🪱', mom_rain_end0: 'La pluie s’est arrêtée.', mom_rain_full: '🪱 Sac plein · +{c} pièces',
     // la chasse à l’œuf du jour (7 nov. 2026)
@@ -1127,7 +1131,10 @@ export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 
 // The second (20 Nov 2026, "Carry on"): a rainy day: a shower of two and a half minutes over the farm, puddles, and worms
 // coming up on your land to tap into the worm bag (12 at most a shower; the bag full: 3 coins each instead); the first
 // one for sure once fishing's open. One every 2 hours at most (it was 3)
-export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 }, rain: { secs: 150, worms: 12, full: 3 } };
+// The third (20 Nov 2026, "Carry on"): a lost chick: while a coop has chicks (their first day), one of them wanders off
+// a little way, peeping; found and tapped, the farmer carries it back to its mum (her happy hop; a cuddle's worth of love
+// for her, a few coins); the first one for sure once there are chicks
+export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 }, rain: { secs: 150, worms: 12, full: 3 }, chick: { coins: 10, coinsL: 2, xp: 3 } };
 // ---- the vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which
 // grow at different speeds; treats the hens love"): from level 4, three raised beds on your land by the farmhouse (moved
 // like a decoration). Sow a bed (its seeds a few coins): carrots are ripe in an hour, strawberries in 3, pumpkins in 8 (also
@@ -1695,8 +1702,12 @@ export function checkFarm(d, now = Date.now()) {
   const RN = MOMENTS.rain;
   if (mo && mo.k === 'rain' && L >= Math.max(MOMENTS.level, FISHING.pond) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK && Number.isInteger(mo.until) && mo.until > mo.t && mo.until <= mo.t + RN.secs * 1000 &&
     Number.isInteger(mo.got) && mo.got >= 0 && mo.got <= RN.worms) out.moment = { k: 'rain', t: mo.t, until: mo.until, got: mo.got };
+  // a lost chick: one of a hatched brood's (a chicken coop's, not a duck's or a peafowl's), where it is, since when
+  const mc = mo && mo.k === 'chick' ? out.coops.find(c => c.id === mo.c) : null;
+  if (mc && L >= MOMENTS.level && !kindOf(mc.breed) && mc.brood && mc.brood.hatched && Number.isInteger(mo.i) && mo.i >= 0 && mo.i < mc.brood.n && Array.isArray(mo.at) && mo.at.length === 2 &&
+    mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK) out.moment = { k: 'chick', c: mc.id, i: mo.i, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
   const ms = d.moments && typeof d.moments === 'object' ? d.moments : null;
-  if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; }
+  if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; const ck = int(ms.chick, 0, 1e6, 0); if (ck) out.moments.chick = ck; }
   return out;
 }
 
@@ -2248,11 +2259,16 @@ export class Game {
   // ---- farm moments: the one going on (a hen out: which, where, since when), if any; whether one may begin now (the farm's
   // own hour): { first } the very first; a hen out (one of the farm's own hens, where she is); found (paid: a few coins, a
   // little XP, and a cuddle's worth if she's due one); gone home by herself
-  moment() { const m = this.data && this.data.moment; return m && (m.k !== 'hen' || this.bird(m.b)) ? m : null; }
+  moment(now = Date.now()) {
+    const m = this.data && this.data.moment; if (!m) return null;
+    if (m.k === 'hen') return this.bird(m.b) ? m : null;
+    if (m.k === 'chick') { const c = this.coop(m.c), br = c && c.brood; return br && br.hatched && m.i < br.n && now < this.youngAt(c) ? m : null; }      // (still a chick of a brood still there)
+    return m;
+  }
   momentDue(hour, now = Date.now()) {
     if (!this.data || this.level < MOMENTS.level || this.data.moment || hour < MOMENTS.from || hour >= MOMENTS.to) return null;
     const M = this.data.moments; if (M && now - M.last < MOMENTS.gap) return null;
-    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond') };
+    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick };
   }
   // a rainy day (20 Nov 2026): it begins (its length from now; counted); a worm tapped (into the bag, or 3 coins if it's full;
   // null: none left to catch this shower, or it's over); over (its worms caught)
@@ -2290,6 +2306,26 @@ export class Game {
     return { id: b.id, name: b.name, coins, xp: P.xp + (loved ? loved.xp : 0), cuddle: loved };
   }
   henBack() { const m = this.data && this.data.moment; if (!m || m.k !== 'hen') return null; const b = this.bird(m.b); this.data.moment = null; this.save(); return b ? { id: b.id, name: b.name } : null; }
+  // a lost chick (20 Nov 2026): one of a coop's chicks (its first day, an hour of it left at least) out on the farm; found
+  // (a few coins, a little XP, a cuddle's worth of love for its mum if she's due one); back by itself (or no longer a chick)
+  chicksIn(coopId, now = Date.now()) { const c = this.coop(coopId), br = c && c.brood; return br && br.hatched && !kindOf(c.breed) && now < this.youngAt(c) - 3600e3 ? br.n : 0; }
+  chickOut(coopId, i, at, now = Date.now()) {
+    if (!this.data || this.data.moment || this.level < MOMENTS.level || !Number.isInteger(i) || i < 0 || i >= this.chicksIn(coopId, now)) return null;
+    if (!Array.isArray(at) || !at.every(v => Number.isFinite(v) && Math.abs(v) < 150)) return null;
+    this.data.moment = { k: 'chick', c: coopId, i, at: [Math.round(at[0] * 100) / 100, Math.round(at[1] * 100) / 100], t: now };
+    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now;
+    this.save(); return this.data.moment;
+  }
+  chickFound(now = Date.now()) {
+    const m = this.moment(now); if (!m || m.k !== 'chick') return null;
+    const c = this.coop(m.c), mum = this.bird(c.brood.hen), P = MOMENTS.chick, coins = P.coins + P.coinsL * this.level;
+    this.data.coins += coins; this.data.xp += P.xp;
+    const cud = mum ? this.cuddle(mum.id, now) : null, loved = cud && !cud.happy ? cud : null;
+    this.data.moment = null; const M = this.data.moments || (this.data.moments = { last: now, hen: 0 }); M.chick = (M.chick || 0) + 1;
+    this.save();
+    return { mum: mum ? mum.id : null, name: mum ? mum.name : '', coins, xp: P.xp + (loved ? loved.xp : 0), cuddle: loved };
+  }
+  chickBack() { const m = this.data && this.data.moment; if (!m || m.k !== 'chick') return null; const c = this.coop(m.c), mum = c && c.brood && this.bird(c.brood.hen); this.data.moment = null; this.save(); return { name: mum ? mum.name : '' }; }
   // ---- the vegetable garden: open from level 4; it (its spot, its beds, the basket); a bed's stage ('empty', 'sown',
   // 'shoots', 'growing', 'ripe') and time left; one sown (its seeds paid: false, not enough coins), one picked (into the
   // basket, as much as there's room for, and XP); the beds ripe now; a treat for a coop (by day, one a day: its vegetables
