@@ -262,6 +262,8 @@ const DAY_KEYS = [
   [24, '#8ea6ff', 1.6, 50, 15, '#31457f', '#151d20', 1.5, '#1c2b40', 1],
 ].map(k => STORY_LOOK && k[0] >= 7.5 && k[0] <= 17.2 ? [k[0], STORY_SUN[k[0]] || k[1], k[2] * 1.06, k[3], k[4], '#9db7e2', '#57603f', k[7] * 0.9, k[8], k[9]] : k)      // (the story look: a warmer sun, the shade cooler and a little deeper)
   .map(k => [k[0], new THREE.Color(k[1]), k[2], k[3], k[4], new THREE.Color(k[5]), new THREE.Color(k[6]), k[7], new THREE.Color(k[8]), k[9]]);
+// (farm moments' rainy day, below: how much it's raining now, 0..1, for the light; the rest of it with tickRain)
+const RAIN = { on: false, k: 0, wet: 0, lines: null, drops: null, pud: [], worms: [], next: 0, t: 0, spawned: 0, sky: new THREE.Color('#b9c6cf'), bg: new THREE.Color('#93a6b4') };
 const DAY = { hour: 12, glow: { value: 0 }, warm: { value: new THREE.Color('#ffc46e') }, shadowDir: SUN_DIR.clone(), shadowAt: 0 };
 const NOON_FROM = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize();                // where the midday sun is, seen from above
 const dayStart = (() => {                      // ?time=HH:MM and ?daylapse=minutes for a whole day
@@ -299,6 +301,8 @@ function applyDaylight(h) {
   const el = mix(3) * DEG, turn = mix(4) * DEG;
   _dir.copy(NOON_FROM).applyAxisAngle(new THREE.Vector3(0, 1, 0), turn).multiplyScalar(Math.cos(el)); _dir.y = Math.sin(el);
   SUN_DIR.copy(_dir).negate().normalize();
+  // (a rainy day: the sun half hidden, the sky light greyer, the sky behind the trees grey)
+  if (RAIN.k > 0) { const k = RAIN.k; sun.intensity *= 1 - 0.62 * k; hemi.color.lerp(RAIN.sky, 0.4 * k); hemi.intensity *= 1 + 0.1 * k; scene.background.lerp(RAIN.bg, 0.6 * k); GRADE.value = Math.max(GRADE.value, 0.16 * k); }      // (and a cool grey over it all, the night's tint a little)
   // the farmer's own shadow (farmer.js FarmerShadow): the sun's way, and as dark as the light it takes away (the sun's
   // share of what lights the ground; a little less, as the farm's soft-edged shadows are)
   FARMER_SHADOW.dir.copy(SUN_DIR);
@@ -3672,6 +3676,7 @@ class Bird {
   }
   // something to do while standing still
   chooseAct() {
+    if (RAIN.k > 0.5 && this.plot.kind === 'coop' && this.r() < 0.22) return { type: 'ruffle', left: 0.75 };      // (in the rain: a shake of the wet off, now and then)
     const x = this.r(), rooster = this.kind === 'rooster', chick = this.kind === 'chick';
     if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
     if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
@@ -4808,6 +4813,7 @@ function tapAt(x, y) {
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   if (GAME_MODE && strayHit(ray.ray, x, y)) return;      // (a hen out on the farm: found)
+  if (GAME_MODE && rainTap(x, y)) return;                // (a worm up in the rain: into the bag)
   if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond, or the river, casts there)
     const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -FISHING.o.waterY), new THREE.Vector3());
     if (gp && (FISHING.o.water === 'river' ? riverWater(gp.x, gp.z, -1.2) : fishWater(gp.x, gp.z, -1.2)) && FISHING.tapWater(gp.x, gp.z)) return;
@@ -9312,16 +9318,19 @@ function strayHit(rr, x, y) {
   return hit && strayTap();
 }
 // "🐔 A hen is out!" beside the coins while she's out and not found (a tap: the word again)
+// (or "🌧️ It's raining!" while it rains: farm moments' rainy day)
 function strayPill() {
-  const m = game.moment(), on = !!(m && STRAY.bird && !STRAY.bird.stray.called), key = on ? m.b + LANG : '';
+  const m = game.moment(); let key = '', text = null, tap = null;
+  if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + LANG; text = game.t('mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); }; }
+  else if (m && m.k === 'rain' && RAIN.on) { key = 'rain' + LANG; text = game.t('mom_rain'); tap = () => hint(game.t('mom_rain_hint')); }
   if (STRAY.pillOn === key) return; STRAY.pillOn = key;
-  gameUI.momentPill(on ? game.t('mom_hen') : null, () => { const gb = m && game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); });
+  gameUI.momentPill(text, tap);
 }
 // each frame: a saved one back on the farm (or home, past its hour), her life out there, her name over her, a new one now
 // and then, his job lost (she's put down where she is, or goes home by herself)
 function tickStray(dt) {
   if (!GAME_MODE || !game.data || !gamePlots().length) return;
-  const h = DAY.hour, m = game.moment();
+  const h = DAY.hour, m0 = game.moment(), m = m0 && m0.k === 'hen' ? m0 : null;
   if (m && !STRAY.bird && !MOVE.plot) {
     if (h >= MOMENTS.home || h < 6) game.henBack();
     else strayMake(m.b, m.at);
@@ -9348,11 +9357,162 @@ function tickStray(dt) {
   }
   strayPill();
   // a new one: as the farm opens or comes back after a while (a roll each time), by day, nothing else going on
-  if (STRAY.roll && !m && !b && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
+  if (STRAY.roll && !m0 && !b && !RAIN.on && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
     STRAY.roll = false;
     const due = game.momentDue(h);
-    if (due && (due.first || Math.random() < MOMENTS.chance)) startHenOut();
+    // (which: the very first, a hen out; the first rainy day for sure the next time, once fishing's open; else, one time in two, either)
+    const kind = !due ? null : due.first ? 'hen' : due.firstRain ? 'rain' : Math.random() < MOMENTS.chance ? (due.rain && Math.random() < 0.5 ? 'rain' : 'hen') : null;
+    if (kind === 'rain') rainStart(); else if (kind === 'hen') startHenOut();
   }
+}
+// ---- farm moments, the rainy day (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Worms come up in the rain. Tap them";
+// game.js MOMENTS.rain, rainOn, rainWorm, rainOver). A shower of two and a half minutes over the farm (saved: a reload goes
+// on with it): the light greyer, rain falling round the view, puddles here and there on your land and its lanes, rings
+// on them as it falls (they dry up after), the hens shaking the wet off now and then. Worms come up out of the grass where
+// you're looking, wriggle a while and go back down; a tap on one (or near it): into your worm bag (+1 over it), or, the bag
+// full, 3 coins. "🌧️ It's raining!" beside the coins while it lasts; a word when it stops
+const RAIN_N = 900;
+function rainLines() {
+  if (RAIN.lines) return RAIN.lines;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RAIN_N * 6), 3));
+  const m = new THREE.LineBasicMaterial({ color: 0xeef4f9, transparent: true, opacity: 0, depthWrite: false }); m.userData.noGrade = true;
+  const L = new THREE.LineSegments(g, m); L.frustumCulled = false; L.renderOrder = 8; L.visible = false; scene.add(L);
+  RAIN.drops = Array.from({ length: RAIN_N }, () => [Math.random(), Math.random(), Math.random()]);
+  return (RAIN.lines = L);
+}
+// the puddles: where (on your land or a lane beside it, open ground, apart), each an oval with a soft edge, and two rings
+// that spread on it as the rain falls
+let PUD_MAT = null, PUD_RING = null;
+function puddleMat() {
+  if (PUD_MAT) return PUD_MAT;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), G = c.createRadialGradient(64, 64, 20, 64, 64, 63);
+  G.addColorStop(0, '#fff'); G.addColorStop(0.72, '#fff'); G.addColorStop(1, '#000'); c.fillStyle = '#000'; c.fillRect(0, 0, 128, 128); c.fillStyle = G;
+  c.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, r = 54 + 8 * Math.sin(a * 3 + 1) + 5 * Math.sin(a * 5); c.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } c.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  PUD_MAT = new THREE.MeshStandardMaterial({ color: '#7a909f', roughness: 0.06, metalness: 0.3, transparent: true, opacity: 0, alphaMap: tex, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  PUD_RING = new THREE.MeshBasicMaterial({ color: '#e8f1f7', transparent: true, opacity: 0, depthWrite: false }); PUD_RING.userData.noGrade = true;
+  return PUD_MAT;
+}
+const PUD_GEO = new THREE.CircleGeometry(1, 28).rotateX(-Math.PI / 2), RING_GEO = new THREE.RingGeometry(0.8, 1, 24).rotateX(-Math.PI / 2);
+function rainPuddles() {
+  for (const P of RAIN.pud) P.g.removeFromParent(); RAIN.pud = [];
+  const own = new Set(game.data.land), nav = navGrid(), c = view.target, r = rng(Math.floor(Date.now() / 60000) % 100000), mat = puddleMat();
+  const ok = (x, z) => { const f = fieldAt(x, z); if (f >= 0) return own.has(f); for (const [dx, dz] of [[1.5, 0], [-1.5, 0], [0, 1.5], [0, -1.5]]) { const g = fieldAt(x + dx, z + dz); if (g >= 0 && own.has(g)) return true; } return false; };
+  for (let k = 0; RAIN.pud.length < 14 && k < 500; k++) {
+    const a = r() * 6.28, d = 0.8 + r() * 17, x = c.x + Math.sin(a) * d, z = c.z + Math.cos(a) * d, R = 0.28 + r() * 0.42;
+    if (!ok(x, z) || !nav.freeAt(x, z) || !nav.freeAt(x + R + 0.2, z) || !nav.freeAt(x - R - 0.2, z) || !nav.freeAt(x, z + R + 0.2) || !nav.freeAt(x, z - R - 0.2) || RAIN.pud.some(q => Math.hypot(q.x - x, q.z - z) < 2.2)) continue;
+    const g = new THREE.Group(); g.position.set(x, groundY(x, z) + 0.004, z); g.rotation.y = r() * 3.14;
+    const m = new THREE.Mesh(PUD_GEO, mat); m.scale.set(R * (1.2 + r() * 0.5), 1, R); m.renderOrder = 1; m.receiveShadow = true; g.add(m);
+    const rings = [0, 1].map(() => { const q = new THREE.Mesh(RING_GEO, PUD_RING.clone()); q.material.userData.noGrade = true; q.position.y = 0.002; q.visible = false; g.add(q); return { m: q, t: r() }; });
+    scene.add(g); RAIN.pud.push({ g, m, rings, x, z, R, e: m.scale.x / R });
+  }
+}
+// a worm: eight little round segments, pink, its head a little darker, wriggling as it crawls; it comes up head first and
+// goes back down tail last
+const RWORM_GEO = new THREE.SphereGeometry(0.011, 8, 6);
+let RWORM_MAT = null;
+function wormMats() { return RWORM_MAT || (RWORM_MAT = [new THREE.MeshStandardMaterial({ color: '#e08a8e', roughness: 0.38 }), new THREE.MeshStandardMaterial({ color: '#c46d77', roughness: 0.38 }), new THREE.MeshStandardMaterial({ color: '#efaaa5', roughness: 0.38 })]); }
+function makeWorm(x, z, yaw) {
+  const M = wormMats(), g = new THREE.Group(); g.position.set(x, groundY(x, z), z); g.rotation.y = yaw; g.scale.setScalar(2.1);
+  const segs = []; for (let i = 0; i < 8; i++) { const m = new THREE.Mesh(RWORM_GEO, i === 7 ? M[1] : i === 5 ? M[2] : M[0]); const k = i === 0 ? 0.6 : i === 1 ? 0.8 : i === 7 ? 1.05 : 1; m.scale.setScalar(k); g.add(m); segs.push(m); }
+  scene.add(g);
+  return { g, segs, t: 0, life: 16 + Math.random() * 8, phase: Math.random() * 6, turn: (Math.random() - 0.5) * 0.4, pop: 0 };
+}
+function wormPose(W) {
+  const t = W.t, up = Math.min(1, t / 0.9), down = Math.max(0, Math.min(1, (t - W.life) / 1.1)), e = up * (1 - down);      // (how much of it is out)
+  for (let i = 0; i < 8; i++) { const s = i / 7, out = 1 - s < e * 1.02; W.segs[i].position.set((s - 0.5) * 0.15, out ? 0.009 : -0.03, 0.012 * Math.sin(s * 7 - t * 7 + W.phase) * (0.4 + 0.6 * s)); }
+}
+function rainVisuals(on) { RAIN.on = on; if (on) { rainLines(); RAIN.pudTry = 0; RAIN.next = 1.2; RAIN.spawned = 0; } }
+function rainStart() {
+  if (RAIN.on || game.moment()) return null;
+  const m = game.rainOn(); if (!m) return null;
+  rainVisuals(true); hintNext(game.t('mom_rain_hint'));
+  return m;
+}
+// a new worm somewhere you're looking (on your land or a lane by it, open ground, not on another)
+const WRAY = new THREE.Raycaster(), WPLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function wormSpot() {
+  const own = new Set(game.data.land), nav = navGrid(), v = new THREE.Vector3(), n = new THREE.Vector2();
+  for (let k = 0; k < 30; k++) {
+    n.set((Math.random() * 2 - 1) * 0.72, -0.62 + Math.random() * 1.1); WRAY.setFromCamera(n, camera);
+    if (!WRAY.ray.intersectPlane(WPLANE, v)) continue;
+    const f = fieldAt(v.x, v.z); if (!(f >= 0 ? own.has(f) : [[1.2, 0], [-1.2, 0], [0, 1.2], [0, -1.2]].some(([dx, dz]) => { const g = fieldAt(v.x + dx, v.z + dz); return g >= 0 && own.has(g); }))) continue;
+    if (!nav.freeAt(v.x, v.z) || !nav.freeAt(v.x + 0.2, v.z) || !nav.freeAt(v.x - 0.2, v.z) || RAIN.worms.some(W => Math.hypot(W.g.position.x - v.x, W.g.position.z - v.z) < 0.7)) continue;
+    return [v.x, v.z];
+  }
+  return null;
+}
+// a tap on one (within a thumb's width of it): into the bag, "+1" over it; the bag full, 3 coins
+function rainTap(x, y) {
+  if (!RAIN.worms.length) return false;
+  let best = null, bd = 40;
+  for (const W of RAIN.worms) {
+    if (W.pop || W.t > W.life + 0.6) continue;
+    W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()).project(camera);
+    const d = Math.hypot((w.x + 1) / 2 * canvas.clientWidth - x, (1 - w.y) / 2 * canvas.clientHeight - y); if (w.z < 1 && d < bd) { bd = d; best = W; }
+  }
+  if (!best) return false;
+  const r = game.rainWorm(); if (!r) { best.t = Math.max(best.t, best.life); return true; }
+  best.pop = 0.001; floatWord(r.worm ? '🪱 +1' : '+' + r.coins + ' 🪙', x, y);
+  if (r.coins) { hintNext(game.t('mom_rain_full', { c: r.coins })); gameUI.refresh(); gameUI.bumpCoins(); }
+  wake(1200); return true;
+}
+// a few words that float up from (x, y) on the screen and fade
+function floatWord(t, x, y) {
+  const e = document.createElement('div'); e.className = 'gfloat'; e.textContent = t; e.style.left = x + 'px'; e.style.top = y + 'px'; document.body.append(e);
+  const a = e.animate ? e.animate([{ transform: 'translate(-50%, -50%) scale(0.7)', opacity: 0 }, { transform: 'translate(-50%, -120%) scale(1.1)', opacity: 1, offset: 0.25 }, { transform: 'translate(-50%, -260%) scale(1)', opacity: 0 }], { duration: 1100, easing: 'ease-out', fill: 'both' }) : null;
+  if (a) a.onfinish = () => e.remove(); else setTimeout(() => e.remove(), 1100);
+}
+// each frame: a saved shower back (or over, past its time), over when its time's up (a word), the rain fading in and out,
+// the drops, the puddles filling and drying, their rings, the worms coming and going
+function tickRain(dt) {
+  if (!GAME_MODE || !game.data) return;
+  const m = game.moment(), raining = !!(m && m.k === 'rain'), now = Date.now(), late = DAY.hour >= MOMENTS.home || DAY.hour < 6;
+  if (raining && !RAIN.on) { if (now >= m.until || late) game.rainOver(now, true); else rainVisuals(true); }
+  else if (RAIN.on && raining && (now >= m.until || late)) { const r = game.rainOver(now, true); RAIN.on = false; if (r && !document.hidden) hintNext(r.got ? game.t('mom_rain_end', { n: r.got }) : game.t('mom_rain_end0')); }
+  else if (RAIN.on && !raining) RAIN.on = false;
+  const want = RAIN.on ? 1 : 0; RAIN.k += Math.sign(want - RAIN.k) * Math.min(Math.abs(want - RAIN.k), dt / 4);
+  RAIN.wet = Math.max(0, Math.min(1, RAIN.wet + (RAIN.on ? dt / 25 : -dt / 45)));
+  if (!RAIN.k && !RAIN.wet && !RAIN.worms.length) { if (RAIN.lines) RAIN.lines.visible = false; if (RAIN.pud.length) { for (const P of RAIN.pud) P.g.removeFromParent(); RAIN.pud = []; } return; }
+  RAIN.t += dt;
+  if (RAIN.on && !RAIN.pud.length && (RAIN.pudTry -= dt) <= 0) { RAIN.pudTry = 2; rainPuddles(); }      // (the puddles: round where you're looking as it starts; again till there are some)
+  // the drops: round the view, falling, slanting a little in the wind, each in a new place every time round
+  const L = rainLines(); L.visible = RAIN.k > 0.01 && !inside.open; L.material.opacity = 0.55 * RAIN.k;
+  if (L.visible) {
+    const P = L.geometry.attributes.position.array, c = view.target, H = view.size * 2.4 + 2, top = 5, fall = 9, len = 0.42, wx = 0.07;
+    for (let i = 0; i < RAIN_N; i++) {
+      const d = RAIN.drops[i], h = d[2] * top + RAIN.t * fall, cyc = Math.floor(h / top), y = top - (h - cyc * top);
+      const rx = (d[0] + cyc * 0.618) % 1, rz = (d[1] + cyc * 0.382) % 1, x = c.x + (rx - 0.5) * 2 * H + wx * y, z = c.z + (rz - 0.5) * 2 * H, j = i * 6;
+      P[j] = x; P[j + 1] = y; P[j + 2] = z; P[j + 3] = x + wx * len; P[j + 4] = y + len; P[j + 5] = z;
+    }
+    L.geometry.attributes.position.needsUpdate = true;
+  }
+  // the puddles: filling as it rains, drying after; a ring spreading on each now and then while it rains
+  if (RAIN.pud.length) {
+    puddleMat().opacity = 0.62 * RAIN.wet;
+    for (const P of RAIN.pud) {
+      const s = 0.45 + 0.55 * RAIN.wet; P.m.scale.set(P.R * P.e * s, 1, P.R * s); P.g.visible = RAIN.wet > 0.01;
+      for (const Q of P.rings) {
+        Q.t += dt / 0.9;
+        if (Q.t >= 1) { Q.t = 0; const a = Math.random() * 6.28, rr = Math.random() * 0.6; Q.m.position.set(Math.cos(a) * rr * P.R * P.e * s, 0.002, Math.sin(a) * rr * P.R * s); Q.on = RAIN.k > 0.3 && Math.random() < 0.85; }
+        Q.m.visible = !!Q.on && RAIN.wet > 0.2; Q.m.scale.setScalar(0.03 + Q.t * 0.16); Q.m.material.opacity = 0.55 * (1 - Q.t) * RAIN.k;
+      }
+    }
+  }
+  // the worms: a new one every second or three while it rains (six at most at a time, no more than there are to catch)
+  const got = raining ? m.got : MOMENTS.rain.worms, alive = RAIN.worms.filter(W => !W.pop && W.t < W.life).length;
+  if (RAIN.on && RAIN.k > 0.6 && (RAIN.next -= dt) <= 0) {
+    RAIN.next = 1.0 + Math.random() * 2.2;
+    if (alive < 6 && got + alive < MOMENTS.rain.worms && !inside.open) { const at = wormSpot(); if (at) { RAIN.worms.push(makeWorm(at[0], at[1], Math.random() * 6.28)); RAIN.spawned++; } }
+  }
+  for (const W of [...RAIN.worms]) {
+    W.t += dt;
+    if (W.pop) { W.pop += dt; const u = Math.min(1, W.pop / 0.45); W.g.position.y = groundY(W.g.position.x, W.g.position.z) + Math.sin(u * Math.PI) * 0.12; W.g.scale.setScalar(2.1 * (1 - u * 0.9)); W.g.rotation.y += dt * 9; if (u >= 1) { W.g.removeFromParent(); RAIN.worms.splice(RAIN.worms.indexOf(W), 1); } continue; }
+    if (W.t > W.life + 1.2 || (!RAIN.on && W.t < W.life)) { if (W.t > W.life + 1.2) { W.g.removeFromParent(); RAIN.worms.splice(RAIN.worms.indexOf(W), 1); continue; } W.life = W.t; }      // (the rain stopped: back down they go)
+    if (W.t > 0.9 && W.t < W.life) { W.g.rotation.y += W.turn * dt; const y = W.g.rotation.y, st = 0.012 * dt; W.g.position.x += Math.cos(y) * st; W.g.position.z -= Math.sin(y) * st; }      // (crawling on, head first)
+    wormPose(W);
+  }
+  wake(200);
 }
 // ---- village orders (7 Nov 2026, Audrey: "Just feeding the chickens is not enough"; "Village orders"): the farm stall by
 // the farmhouse (the village's egg stall, the one nearest the farmhouse) is where they're kept: a tap on it (or the basket
@@ -10084,7 +10244,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
-  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
@@ -10177,6 +10337,7 @@ window.__farm = {
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
+  rain: { start: () => rainStart(), state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t }; }), spawned: RAIN.spawned, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
   moment: { seat: STRAY_SEAT, start: id => startHenOut(id), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
@@ -10207,7 +10368,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
   spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }
