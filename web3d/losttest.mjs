@@ -59,6 +59,12 @@ await p.evaluate(at => { const f = window.__farm; f.lookAt(at[0], at[1], 1.4); f
 s = await S();
 ok('it peeps; "🐣 peep!" over it on the screen', s.bird.peeps > 0 && T.peep.test(s.bub || ''), { peeps: s.bird.peeps, bub: s.bub });
 await shoot('1_lost');
+// (21 Nov 2026, Audrey: "The mum needs to be worried")
+const P0 = s.bird.at; await run(0.5); s = await S();
+await p.evaluate(([at, m]) => { const f = window.__farm; f.lookAt((at[0] + m[0]) / 2, (at[1] + m[1]) / 2, 4.2); f.draw(); }, [P0, s.bird.mum ? s.bird.mum.mid : P0]); await run(8); s = await S();      // (her pen and her chick both in view)
+const Mw = s.bird.mum, dm = Mw && Math.hypot(Mw.at[0] - P0[0], Mw.at[1] - P0[1]), dc = Mw && Math.hypot(Mw.mid[0] - P0[0], Mw.mid[1] - P0[1]);
+ok('its mum is worried: over by the fence on its side of her yard, calling', !!Mw && Mw.calls >= 1 && dm < dc - 0.4, { Mw, dm, dc });
+await shoot('1b_mum');
 // a reload
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load(); await close(); await run(1.5);
 s = await S();
@@ -73,7 +79,8 @@ ok('a tap on it: found (+10 + 2 a level coins), said, the pill gone, counted', !
 ok('the farmer on his way for it', s.job === 'stray', s.job);
 let home = false, k = 0, lifted = false;
 for (; k < 60 && !home; k++) { await run(2); s = await S(); if (s.bird && s.bird.carry >= 1) { lifted = true; if (!fs.existsSync(`${OUT}/lost_2_carried${fr ? '_fr' : ''}${side ? '_side' : ''}.png`)) { await p.evaluate(at => { const f = window.__farm; f.lookAt(at[0], at[1], 1.6); f.draw(); }, s.bird.at); await shoot('2_carried'); } } home = !s.bird && s.inPen.length === 3; }
-ok('he picked it up, carried it back and set it down in the pen ("There you are!", "Home you go!")', lifted && home && s.inPen.includes(kid) && s.said.includes('found') && s.said.includes('homego'), { lifted, home, inPen: s.inPen, said: s.said, k });
+const worriedAfter = await p.evaluate(() => window.__farm.allBirds.some(b => b.worry));
+ok('he picked it up, carried it back and set it down in the pen ("There you are!", "Home you go!"); its mum not worried any more', !worriedAfter && lifted && home && s.inPen.includes(kid) && s.said.includes('found') && s.said.includes('homego'), { lifted, home, inPen: s.inPen, said: s.said, k });
 await run(2); await shoot('3_home');
 // the save checks
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.moment = { k: 'chick', c: raw.d.coops[0].id, i: 9, at: [1, 2], t: window.__T - 1000 }; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
