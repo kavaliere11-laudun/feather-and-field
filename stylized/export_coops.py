@@ -190,6 +190,12 @@ BUDGET.update({'house_sus': 17000, 'box_sus': 15000, 'shed_sus': 16000, 'cosy_su
 _keep = dict(coops.NESTS['house_sus'])
 for look_, n_ in ((0, 'box_sus'), (1, 'shed_sus'), (3, 'cosy_sus'), (4, 'deluxe_sus')): one(n_, lambda look_=look_, n_=n_: coops.sussex(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_sus'] = dict(_keep)
 for t in (0, 1, 3, 4): one('pen_t%d_sus' % t, lambda t=t: coops.pen_tier(t, 'sus')); LOOKS.append('pen_t%d_sus' % t)
+# the Black Copper Marans' French Farmhouse (21 Nov 2026): its five looks and its own gardens (stylized/extras/export_mar_coop.py
+# exports just these to splice in)
+BUDGET.update({'house_mar': 17500, 'box_mar': 15000, 'shed_mar': 15500, 'cosy_mar': 21500, 'deluxe_mar': 24500, 'pen_t0_mar': 4200, 'pen_t1_mar': 4600, 'pen_t3_mar': 9500, 'pen_t4_mar': 13000})
+_keep = dict(coops.NESTS['house_mar'])
+for look_, n_ in ((0, 'box_mar'), (1, 'shed_mar'), (3, 'cosy_mar'), (4, 'deluxe_mar')): one(n_, lambda look_=look_, n_=n_: coops.marans(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_mar'] = dict(_keep)
+for t in (0, 1, 3, 4): one('pen_t%d_mar' % t, lambda t=t: coops.pen_tier(t, 'mar')); LOOKS.append('pen_t%d_mar' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

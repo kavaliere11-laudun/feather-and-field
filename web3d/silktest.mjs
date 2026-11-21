@@ -81,8 +81,8 @@ const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('
   return { n: pg.length, order: pg.map(x => x.dataset.breed).join(), mine: bl && { found: !bl.classList.contains('gpage-no'), text: bl.innerText, img: bl.querySelector('img').naturalWidth }, next: bu && { found: !bu.classList.contains('gpage-no'), text: bu.innerText } }; });
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_buff"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('4_book');
-ok('the Breed Book: sixteen pages (the rare colours last; the Partridge Silkies on the shelf), the Buff Silkies found with their names and picture, the Black Silkies at level 27',
-  book.n === 16 && book.order === 'rir,orp,sil,aya,call,sus,sil_buff,leg,pol,bra,sil_black,pea,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at27.test(book.next.text), book);
+ok('the Breed Book: seventeen pages (the rare colours last; the Partridge Silkies on the shelf; the Marans at 21), the Buff Silkies found with their names and picture, the Black Silkies at level 27',
+  book.n === 17 && book.order === 'rir,orp,sil,aya,call,sus,sil_buff,leg,pol,mar,bra,sil_black,pea,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at27.test(book.next.text), book);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a Silkies-only County show takes a buff Silkie
 const show = await p.evaluate(() => { const g = window.__farm.game(), hen = g.data.birds.find(b => b.breed === 'sil_buff' && b.sex === 'h'), s = { id: 'c20261026', tier: 'c', breed: 'sil', locked: false };

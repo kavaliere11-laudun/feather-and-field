@@ -227,7 +227,7 @@ function textures() {
   });
   return TEX;
 }
-const FEATHER_TINT = { rir: '#d2875c', orp: '#ecc488', leg: '#e6dfd0', bra: '#f6f3ec', pol: '#3a3940', aya: '#2a2930', sus: '#7c3a1f', sil: '#f8f5ee' };
+const FEATHER_TINT = { rir: '#d2875c', orp: '#ecc488', leg: '#e6dfd0', bra: '#f6f3ec', pol: '#3a3940', aya: '#2a2930', sus: '#7c3a1f', mar: '#1d1b20', sil: '#f8f5ee' };
 
 class Fx {
   constructor(scene, grade) {

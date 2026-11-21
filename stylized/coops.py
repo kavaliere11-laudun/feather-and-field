@@ -3544,8 +3544,8 @@ def red_barn(**kw):
 
 
 HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo, 'call': floating, 'pea': pavilion,
-          'sus': lambda: sussex(2)}                      # (the Speckled Sussex's Village Cottage, 21 Nov 2026: defined further down)
-LATER = ['pol', 'aya', 'call', 'pea', 'sus']             # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct; the Garden Pavilion, 31 Oct; the Village Cottage, 21 Nov)
+          'sus': lambda: sussex(2), 'mar': lambda: marans(2)}      # (the Speckled Sussex's Village Cottage, 21 Nov 2026; the Black Copper Marans' French Farmhouse, the same day: defined further down)
+LATER = ['pol', 'aya', 'call', 'pea', 'sus', 'mar']             # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct; the Garden Pavilion, 31 Oct; the Village Cottage, 21 Nov)
 
 
 def pop_slider(style):
@@ -3562,7 +3562,8 @@ def pop_slider(style):
                'aya': (C('jg_teakd', '#5e3a20', rough=0.8, var=0.06, grain=0.3, grain_scale=G), C('jg_gold', '#c9a24a', rough=0.35, metal=0.7)),
                'call': (C('fdoor_2', FLOAT_PAL['door'], rough=0.6, var=0.05), C('ftrim_2', FLOAT_PAL['trim'], rough=0.6)),
                'pea': (C('pv_red2', PV['red2'], rough=0.85, var=0.07), C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5)),
-               'sus': (C('sus_door', SUS['door'], rough=0.55, var=0.04, grain=0.2, grain_scale=G), C('sus_white', SUS['white'], rough=0.6, var=0.02))}[style]      # (the browser draws the ducks' k as big)
+               'sus': (C('sus_door', SUS['door'], rough=0.55, var=0.04, grain=0.2, grain_scale=G), C('sus_white', SUS['white'], rough=0.6, var=0.02)),
+               'mar': (C('mar_blue', MAR['blue'], rough=0.55, var=0.03), C('mar_quoin', MAR['quoin'], rough=0.85, var=0.06))}[style]      # (the browser draws the ducks' k as big)
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))

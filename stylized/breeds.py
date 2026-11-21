@@ -57,7 +57,7 @@ BREEDS = {
                 legs='#f0dccf', beak='#e9d6c2', eye='#d9742a', combc='#d8352b', plum='#f1ede3', wing='#ece7dc', tailc='#1d1b1a'),
     # the Black Copper Marans: black with a green gloss, the neck copper (a rooster's blazing, with copper saddle and red
     # shoulders), lightly feathered pale legs, the tail carried high
-    'mar': dict(scale=1.03, body=(1.42, 0.84, 0.87), r=0.123, comb=1.0, tail='fan', tail_up=12, tail_up_h=20, shank=0.11, lift=0.04, feathered=True,
+    'mar': dict(scale=1.03, body=(1.42, 0.84, 0.87), r=0.123, comb=1.0, tail='fan', tail_up=12, tail_up_h=20, shank=0.11, lift=0.04, feathered=True, light_feather=True,
                 legs='#dccbc3', beak='#b9a58f', eye='#d9742a', combc='#d8352b', plum='#17161b', wing='#1a191e', tailc='#0f0e12', saddle='#c5652a'),
     # the Lavender Araucana (British type, her photos: tailed): pale lavender grey all over, a little crest, muffs and a
     # beard round the face, a small pea comb, hardly any wattles, willow legs
@@ -323,7 +323,10 @@ def feathered(B, rooster, root, body_rig, seed):
             rnd = random.Random(seed * 11 + (1 if sd > 0 else 2))
             F = [('ELLIPSOID', (-0.004, sd * 0.012, sh * 0.55), 0.016 * K, (1.0, 0.9, 2.2), 2.0), ('ELLIPSOID', (0.012, sd * 0.022, 0.012), 0.012 * K, (1.8, 1.0, 0.7), 2.0)]
             if B.get('brahma') or B.get('cochin'): F = [('ELLIPSOID', (-0.008, sd * 0.014, sh * 0.5), 0.021 * K, (1.1, 1.0, 2.0), 2.0), ('ELLIPSOID', (0.006, sd * 0.026, 0.016), 0.016 * K, (1.9, 1.2, 0.8), 2.0)]      # (a thick feathered boot)
-            F += bumps(rnd, (-0.004, sd * 0.014, sh * 0.5), (0.014, 0.016, 0.03), 5, 0.009, 0.012)
+            if B.get('light_feather'):      # (the Marans, 21 Nov 2026: a few feathers down the outside of the shank only, no boot over the toes)
+                F = [('ELLIPSOID', (-0.003, sd * 0.011, sh * 0.62), 0.0105 * K, (0.75, 0.62, 2.5), 2.0)]
+                F += bumps(rnd, (-0.003, sd * 0.012, sh * 0.6), (0.008, 0.008, 0.024), 3, 0.005, 0.007)
+            else: F += bumps(rnd, (-0.004, sd * 0.014, sh * 0.5), (0.014, 0.016, 0.03), 5, 0.009, 0.012)
             tag(metaball_mesh('legfluff', F, res=0.0045, m=pl, parent=lg_), nm, 'legfeather')
             if B.get('brahma') or B.get('cochin'): brahma_legs(sd, nm, sh, lg_, pl)
     return True
