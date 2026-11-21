@@ -75,8 +75,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795273843") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795273843") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795277680") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795277680") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -127,7 +127,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795273843") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795277680") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -369,6 +369,7 @@
   .gcoop-steps span { font: 600 12.5px var(--display); color: var(--yolk-deep); margin-left: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
   .gcoop-birds { display: flex; flex-wrap: wrap; gap: 6px; } .gcoop-bird { flex: 1 1 30%; min-width: 0; background: var(--sage); border-radius: 14px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; font: 600 15px var(--display); }
   .gcoop-bn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .gcoop-bh { margin-left: auto; flex: none; font: 800 12.5px Nunito, sans-serif; color: #d9537a; white-space: nowrap; } .gcoop-bh.wait { color: var(--ink-2); }
+  .gcshelf { flex-wrap: wrap; justify-content: center; margin: 4px 0 10px; padding: 8px 8px 10px; border-radius: 12px; background: linear-gradient(#f3e3c4, #e9d3a8); border-bottom: 5px solid #b98a52; } .gcshelf .gcoop-tile.gcard { flex: 1 1 calc(50% - 4px); } .gcshelf .gtheme-n { -webkit-hyphens: auto; hyphens: auto; overflow-wrap: break-word; min-width: 0; max-width: 100%; } .gshelf-h { margin: 2px 0 0; } .gshelf-l { margin: -2px 0 6px; } .gshelf-lv { margin: 0; font-weight: 800; color: var(--ink-2); } .gshelf-t.glocked .gtheme-pic img { opacity: 0.6; filter: saturate(0.5); } .gshelf-more { margin-top: 6px; }      /* (the collector's shelf, 21 Nov 2026: two tiles a row) */
   .gcoop-tiles { display: flex; gap: 8px; } .gcoop-tile.gcard { flex: 1 1 0; min-width: 0; flex-direction: row; align-items: center; gap: 10px; padding: 8px; margin: 0; }
   .gcoop-tile .gtheme-pic { flex: none; width: 96px; height: 96px; } .gcoop-tile .gtheme-pic img { width: 96px; height: 96px; object-fit: cover; }
   .gcoop-ts { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; } .gcoop-ts .gtheme-n { margin: 0; font: 600 17px/1.1 var(--display); } .gcoop-fx { margin: 0; font-size: 12.5px; font-weight: 800; color: #3c6b3f; line-height: 1.2; }
@@ -502,7 +503,7 @@
   .gpage-c svg { width: 15px; height: 15px; display: block; }
   .gpage-go { align-self: flex-start; margin-top: 4px; }
   .gbooktabs { display: flex; gap: 8px; margin: 0 0 4px; }
-  .gbooktabs .gbtn { flex: 1; margin: 0; }
+  .gbooktabs .gbtn { flex: 1 1 auto; margin: 0; }      /* (four tabs since the collector's shelf, 21 Nov 2026: each as wide as its words, so a long one (Meilensteine) isn't cut) */
   .gbookwater { margin: 10px 2px 0; }
   .gfishpage .gpic { background: radial-gradient(circle at 50% 60%, #fbf7ec 0, #eef0e4 100%); padding: 4px; box-sizing: border-box; }
   .gfishrare { color: var(--ink-2); font-weight: 700; }
@@ -877,6 +878,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795273843"></script>
+<script src="app.js?v=1795277680"></script>
 </body>
 </html>
