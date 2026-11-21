@@ -2755,7 +2755,8 @@ function buildFarmer() {
   };
   farmLife = new FarmLife(scene, { ownBubble: true, onScreen: (x, z, m = 0) => { if (inside.open || (replay && replay.on) || SHOWDAY) return true; const v = new THREE.Vector3(x, 0.9, z).project(camera), mx = m / (view.size * (canvas.clientWidth / Math.max(1, canvas.clientHeight))), my = m / view.size; return Math.abs(v.x) < 1 + mx && Math.abs(v.y) < 1 + my * 1.6; }, look: FARMER_LOOK, name: farmerName(), nav, door, groundY, spots, pond, grade: nightGrade, lang: LANG, onBridge, greet: greetFarmer, geeseFence, greetGeese,
     kennel: kd && (HAS_DOG || (GAME_MODE && farmDog)) ? [kd[0], kd[1]] : null, dog: () => farmDog, visit: () => nightVisit, dogName: () => dogName,
-    others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : [])],
+    others: () => [...(geeseFlock ? geeseFlock.geese : []), ...(duckFlock ? duckFlock.ducks.filter(d => d.wet < 0.3) : []), ...(farmDog && farmDog.group.visible ? [farmDog.dog] : []),
+      ...(VISIT.f && VISIT.f.root.visible && VISIT.phase ? [{ pos: VISIT.f.pos, root: VISIT.f.root, R: 0.5, noPush: true }] : [])],      // (a visitor: he goes round her)
     toCamera: (x, z) => Math.atan2(camera.position.x - x, camera.position.z - z), inView: (x, z) => inView(x, z, 2.2) }, rng(71));
   farmLife.f.ownShadow();                      // (his own shadow, following him: the farm's are kept, drawn only now and then)
 }
@@ -9691,7 +9692,7 @@ function tickRain(dt) {
 const VISIT = { f: null, load: null, ok: false, way: null, cum: null, s: 0, phase: null, t: 0, spot: null, face: 0, bub: null, say: null, sayT: 0, sayText: '', wave: 4, seq: null, handed: false, heart: 0 };
 const VISIT_SPEED = 0.8;
 function visitLoad() {
-  if (!VISIT.load) VISIT.load = Promise.all([loadGLB('villager.glb'), loadJSON('villager.json')]).then(([g, j]) => { addLook(g, j); VISIT.ok = true; return true; }).catch(() => { VISIT.load = null; return false; });
+  if (!VISIT.load && performance.now() > (VISIT.retry || 0)) VISIT.load = Promise.all([loadGLB('villager.glb'), loadJSON('villager.json')]).then(([g, j]) => { addLook(g, j); VISIT.ok = true; return true; }).catch(() => { VISIT.load = null; VISIT.retry = performance.now() + 15e3; return false; });      // (no connection: again in a while; her card still opens from the pill)
   return VISIT.load;
 }
 // where she waits: beside the stall's front, out in the open where the farmer can get to her; her way there, along the farm's
@@ -9743,7 +9744,7 @@ const visitFaceOut = () => { const q = VISIT.spot; return Math.atan2(camera.posi
 function visitSay(key, secs = 2.8) { VISIT.sayText = game.t(key); VISIT.sayT = secs; }
 // her card: what she'd like (gameui.js visitCard); given her, not today
 function visitCard() {
-  const m = game.moment(); if (!GAME_MODE || !m || m.k !== 'visit' || !VISIT.f || !/^(come|wait)$/.test(VISIT.phase)) return false;
+  const m = game.moment(); if (!GAME_MODE || !m || m.k !== 'visit' || !(/^(come|wait)$/.test(VISIT.phase) || (!VISIT.phase && !VISIT.ok))) return false;      // (her model not loaded yet: the card all the same)
   holdBird(null); henOff();
   gameUI.visitCard(m, { give: () => visitGive(), no: () => visitNo() });
   return true;
@@ -9753,6 +9754,7 @@ function visitGive() {
   gameUI.close();
   hint(game.t('vis_given', { e: game.villagerEmoji(r.who), name: game.villagerName(r.who), c: r.coins, x: r.xp }));
   gameUI.refresh(); gameUI.bumpCoins(); strayPill();
+  if (!VISIT.f || !VISIT.phase) { wake(1500); return true; }      // (her model not loaded: paid, nothing to see)
   VISIT.phase = 'paid'; VISIT.t = 0; VISIT.handed = false;
   // (the farmer brings it over in the pail; he can't come: she takes it from the stall herself)
   const f = VISIT.f, nav = navGrid(), reach = farmReach(), a0 = visitFaceOut();
@@ -9766,7 +9768,8 @@ function visitGive() {
 function visitNo() {
   const r = game.visitGone(Date.now(), true); gameUI.close(); if (!r) return false;
   hint(game.t('vis_bye_no', { name: game.villagerName(r.who) })); strayPill();
-  VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); wake(1500); return true;
+  if (VISIT.f && VISIT.phase) { VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); }
+  wake(1500); return true;
 }
 // a tap on the farm: on her (or near her, a thumb's width)
 function visitHit(rr, x, y) {
@@ -9780,19 +9783,22 @@ function visitHit(rr, x, y) {
 function tickVisit(dt) {
   if (!GAME_MODE || !game.data) return;
   const m0 = game.moment(), m = m0 && m0.k === 'visit' ? m0 : null, now = Date.now();
-  if (m && !VISIT.phase) {
+  if (m && now >= m.until && (!VISIT.phase || /^(come|wait)$/.test(VISIT.phase))) {      // (her ten minutes up)
+    const r = game.visitGone(now); if (r) { if (gameUI.kind === 'visit') gameUI.close(); hintNext(game.t('vis_bye', { name: game.villagerName(r.who) })); strayPill(); if (VISIT.f && VISIT.phase) { VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); } }
+  }
+  if (m && !VISIT.phase && game.moment()) {
     if (!stallSpot() || (VISIT.ok && !visitPlace())) game.visitGone(now, true);      // (nowhere for her to come to: over)
     else if (!VISIT.ok) visitLoad();
     else visitMake(m, now);
-  }
-  if (m && now >= m.until && /^(come|wait)$/.test(VISIT.phase)) {      // (her ten minutes up)
-    const r = game.visitGone(now); if (r) { if (gameUI.kind === 'visit') gameUI.close(); hintNext(game.t('vis_bye', { name: game.villagerName(r.who) })); strayPill(); VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); }
   }
   const f = VISIT.f; if (!f || !VISIT.phase) { if (VISIT.bub) VISIT.bub.hidden = true; if (VISIT.say) VISIT.say.hidden = true; return; }
   const len = VISIT.cum[VISIT.cum.length - 1], W = f.want, ph = VISIT.phase; VISIT.t += dt;
   W.walk = 0; W.anim = null; W.keepArms = null; W.pose = 'basket'; W.face = 'happy'; W.props = { basket: true };
   const turnTo = (a, k = 6) => { const d = Math.atan2(Math.sin(a - f.root.rotation.y), Math.cos(a - f.root.rotation.y)); f.root.rotation.y += d * Math.min(1, dt * k); };
   const walk = dir => {
+    const F = farmLife && !farmLife.home && farmLife.pos, q = visitAlong(Math.max(0, Math.min(len, VISIT.s + dir * 0.3)));
+    if (F) { const rx = F.x - f.pos.x, rz = F.z - f.pos.z, rd = Math.hypot(rx, rz), ax = q[0] - f.pos.x, az = q[1] - f.pos.z, al = Math.hypot(ax, az) || 1;
+      if (rd < 0.75 && (rx * ax + rz * az) / (rd * al || 1) > 0.25) { W.walk = 0; return; } }      // (the farmer in her way: she waits for him to pass)
     VISIT.s = Math.max(0, Math.min(len, VISIT.s + dir * VISIT_SPEED * dt));
     const p = visitAlong(VISIT.s); f.pos.set(p[0], groundY(p[0], p[1]), p[1]); turnTo(dir > 0 ? p[2] : p[2] + Math.PI, 8);
     W.walk = 1; W.phase = VISIT.s * 6.6; W.keepArms = 'L';
