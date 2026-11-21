@@ -9219,8 +9219,10 @@ function worryStep(b, dt) {
   const W = b.worry, p = b.root.position, o = { walking: false, up: 0, flap: 0 };
   const to = b.plot.frame.worldToLocal(WORRY_V.set(W.at[0], 0, W.at[1])), a = Math.atan2(to.x - p.x, to.z - p.z);
   W.t -= dt; if (W.fl > 0) { W.fl -= dt; o.flap = Math.sin(Math.max(0, Math.min(1, 1 - W.fl / 0.8)) * Math.PI); }
-  if (W.to) {      // (round what's in her yard, her own chicks at her heels not in her way)
-    const q = W.way && W.way.length ? W.way[0] : W.to, r = b.stepToward(q[0], q[1], dt, 1.3, false); o.walking = r.walking;
+  const grown = b.plot.birds.filter(x => x !== b && x.kind !== 'chick' && x.root.visible);      // (the others of her coop: never into them; her own chicks at her heels don't hold her up)
+  if (W.to) {      // (round what's in her yard)
+    const q = W.way && W.way.length ? W.way[0] : W.to, x0 = p.x, z0 = p.z, r = b.stepToward(q[0], q[1], dt, 1.3, false); o.walking = r.walking;
+    if (grown.some(x => { const d = Math.hypot(x.root.position.x - p.x, x.root.position.z - p.z); return d < 0.36 && d < Math.hypot(x.root.position.x - x0, x.root.position.z - z0); })) { p.x = x0; p.z = z0; W.to = null; W.way = null; W.t = 1.0 + b.r(); W.called = false; return o; }      // (someone in the way: she stops there)
     if (r.arrived && W.way && W.way.length) W.way.shift();
     else if (r.arrived || W.t < -5) { W.to = null; W.way = null; W.t = 1.4 + b.r() * 1.6; W.called = false; }
   } else if (W.t > 0) {      // (stopped by the fence: round to face her chick's way, up on her toes, a call)
@@ -9235,7 +9237,7 @@ function worryStep(b, dt) {
     const Y = penOf(b.plot).yard, m = 0.3, cl = (v, lo, hi) => Math.max(lo + m, Math.min(hi - m, v));
     for (let k = 0; k < 8; k++) {
       const j = (b.r() - 0.5) * 1.4, q = [cl(to.x + Math.cos(a) * j, Y.min[0], Y.max[0]), cl(to.z - Math.sin(a) * j, Y.min[2], Y.max[2])];
-      if (b.free(q[0], q[1]) && Math.hypot(q[0] - p.x, q[1] - p.z) > 0.25) { W.to = q; W.way = b.plan([q]); if (!W.way.length) W.way = [q]; break; }
+      if (b.free(q[0], q[1]) && Math.hypot(q[0] - p.x, q[1] - p.z) > 0.25 && !grown.some(x => Math.hypot(x.root.position.x - q[0], x.root.position.z - q[1]) < 0.5)) { W.to = q; W.way = b.plan([q]); if (!W.way.length) W.way = [q]; break; }
     }
     if (!W.to) W.t = 0.8 + b.r();
   }

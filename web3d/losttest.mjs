@@ -65,6 +65,8 @@ await p.evaluate(([at, m]) => { const f = window.__farm; f.lookAt((at[0] + m[0])
 const Mw = s.bird.mum, dm = Mw && Math.hypot(Mw.at[0] - P0[0], Mw.at[1] - P0[1]), dc = Mw && Math.hypot(Mw.mid[0] - P0[0], Mw.mid[1] - P0[1]);
 ok('its mum is worried: over by the fence on its side of her yard, calling', !!Mw && Mw.calls >= 1 && dm < dc - 0.4, { Mw, dm, dc });
 await shoot('1b_mum');
+let minD = 9; for (let i = 0; i < 16; i++) { await run(0.5); const d = await p.evaluate(() => { const f = window.__farm, m = f.allBirds.find(b => b.worry); if (!m) return 9; return Math.min(9, ...m.plot.birds.filter(x => x !== m && x.kind !== 'chick').map(x => Math.hypot(x.root.position.x - m.root.position.x, x.root.position.z - m.root.position.z))); }); minD = Math.min(minD, d); }
+ok('as she paces she never walks into the others of her coop', minD > 0.24, minD);
 // a reload
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load(); await close(); await run(1.5);
 s = await S();
