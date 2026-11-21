@@ -96,6 +96,7 @@ export const TEXT = {
     up_aya_mended: 'Walls of woven bamboo on a stone base and new clay tiles half laid, in a bigger pen.', up_aya_snug: 'The Javanese House, in a roomier pen.',
     up_aya_cosy: 'Green glazed tiles, a frangipani in flower, a banana plant and orchids, and a bigger garden with a swing under a tiled roof, a woven tray of sand and a cabbage to peck.',
     up_aya_deluxe: 'Taller, black and gold, with cream walls, red posts and ceremonial umbrellas, a sand pit of temple stone, a water jar, a little gamelan and the biggest garden, with white pickets and roses.',
+    up_ara_mended: 'New bare wooden shingles going up and a sawhorse by the wall, in a bigger pen.', up_ara_snug: 'The Mountain Hut: shingle walls the blue-green of her eggs, a red door and a woven band under the eaves, in a roomier pen.', up_ara_cosy: 'A veranda on red posts with peppers drying, a blanket and clay pots, a monkey puzzle tree, and a bigger garden with a swing under a little shingle roof, a log trough of sand and a cabbage on a red post.', up_ara_deluxe: 'A storey taller with a balcony and white diamonds in the shingles, a mountain spring, sand ringed with stones, a pan flute of canes to play, a little hut of a feeder and the biggest garden, with white pickets and roses.',
     up_mar_mended: 'The walls being rendered cream from the top down and a new roof of bright round tiles, a mason’s trestle and a bucket of lime, in a bigger pen.', up_mar_snug: 'The French Farmhouse: cream walls, pale blue shutters and a roof of round tiles, in a roomier pen.', up_mar_cosy: 'A wisteria pergola across the front, a bread oven, geraniums and lavender, and a bigger garden with a swing under a blue arbour, a wine crate full of sand and a cabbage hung from a street lamp.', up_mar_deluxe: 'A storey taller with a dovecote tower and two white doves, a stone fountain, a game of boules in the sand, green bottles to ring, a dovecote feeder and the biggest garden, with white pickets and roses.',
     up_sus_mended: 'New boards half painted and a new roof of stone slates, the ladder still up, in a bigger pen.', up_sus_snug: 'The Village Cottage of honey-coloured stone, in a roomier pen.', up_sus_cosy: 'A stone porch with climbing roses, window boxes and a lantern, and a bigger garden with a swing under a little lych-gate, a trug full of sand and a cabbage on a signpost.', up_sus_deluxe: 'A storey taller with a dormer and two chimneys, a village well, a blue wagon of sand, milk bottles to ring, a pillar-box feeder and the biggest garden, with white pickets and roses.',
     up_call_mended: 'New pine boards half painted duck-egg blue, half a roof of new shingles, its pond cleaned and stones being laid, in a bigger pen.', up_call_snug: 'The Floating House on its raft, in a roomier pen.',
@@ -213,7 +214,7 @@ export const TEXT = {
     showday_title: 'Show day!', showday_body: 'The results of the {show} are in: the judge is looking at the birds.', showday_watch: 'Watch the judging', showday_results: 'Just the results', skip: 'Skip',
     sd_arrive: '{farmer} brings {name} to the show…', sd_judge: 'The judge looks at every bird…', sd_rosettes: 'And now, the rosettes!',
     champ_c: 'County champion', champ_n: 'National champion', show_new_c: 'The County show: entry {f}, 1st prize {p} coins', show_new_n: 'The National Championship: entry {f}, 1st prize {p} coins',
-    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs', egg_pol: 'White eggs', egg_aya: 'Cream eggs', egg_sus: 'Cream eggs', egg_mar: 'Chocolate-brown eggs', egg_call: 'Pale green duck eggs', egg_pea: 'Big cream peafowl eggs',
+    book_sil: 'White Silkie', egg_rir: 'Brown eggs', egg_orp: 'Light brown eggs', egg_sil: 'Cream-tinted eggs', egg_leg: 'Blue eggs', egg_bra: 'Light brown eggs', egg_pol: 'White eggs', egg_aya: 'Cream eggs', egg_sus: 'Cream eggs', egg_mar: 'Chocolate-brown eggs', egg_ara: 'Turquoise eggs', egg_call: 'Pale green duck eggs', egg_pea: 'Big cream peafowl eggs',
     coins_body: 'Coins come from your eggs and your grown chicks. You’ll spend them on feed, land, coops and more.',
     settings_music: 'Music', settings_sounds: 'Sounds', music_on: 'On', music_off: 'Off', settings_music_note: 'The music comes now and then, by day and of an evening.',
     settings_lang: 'Language', settings_new: 'Start a new farm', settings_new_sure: 'Tap again to start again from nothing',
@@ -356,6 +357,7 @@ export const TEXT = {
     hist_orp: 'Created in 1886 by William Cook in the village of Orpington, in Kent, England. He wanted a bird that laid well and looked handsome too. Big, fluffy and gentle, Orpingtons soon won hearts all over the world.',
     hist_sil: 'A very old breed from Asia, most likely China. In the 1200s the traveller Marco Polo wrote of hens with “hair like cats”. Under the fluff, Silkies have dark skin and five toes on each foot, and they make devoted mothers.',
     hist_aya: 'From the island of Java, in Indonesia, where “ayam” simply means chicken. It is black all over: feathers, beak, skin and even bones. In Java it has long been thought to bring good luck.',
+    hist_ara: 'From the south of Chile, where the Mapuche people kept hens that lay blue eggs. Its British cousin keeps its tail, with tufts of feathers on its cheeks and a beard; the Lavender is a soft, even grey with a hint of lilac.',
     hist_mar: 'From the little town of Marans, near La Rochelle in the west of France, where it was bred more than a hundred years ago. Famous for its very dark, chocolate-brown eggs; the Black Copper is black with a green sheen and a copper neck.',
     hist_sus: 'From the county of Sussex, in the south of England, where it has been raised for more than a hundred years. A calm, friendly hen and a good layer; the Speckled is deep mahogany, each feather tipped with white.',
     hist_call: 'A tiny duck bred in the Netherlands, probably from birds that first came from Asia. Hunters once used its loud, clear call to draw wild ducks closer, which is how it got its name. Today it is kept for its charm.',
@@ -476,6 +478,7 @@ export const TEXT = {
     up_aya_mended: 'Des murs de bambou tressé sur un socle de pierre et des tuiles neuves à moitié posées, dans un enclos plus grand.', up_aya_snug: 'La Maison javanaise, dans un enclos plus spacieux.',
     up_aya_cosy: 'Des tuiles vernissées vertes, un frangipanier en fleurs, un bananier et des orchidées, et un jardin plus grand avec une balançoire sous un petit toit de tuiles, un plateau tressé plein de sable et un chou à picorer.',
     up_aya_deluxe: 'Plus haute, noire et or, aux murs crème, aux piliers rouges et aux ombrelles d’apparat, un bac à sable en pierre de temple, une jarre à eau, un petit gamelan et le plus grand jardin, avec palissade blanche et roses.',
+    up_ara_mended: 'Des bardeaux de bois neufs qu’on pose et un chevalet contre le mur, dans un enclos plus grand.', up_ara_snug: 'La Cabane des Andes\u00a0: des murs de bardeaux du bleu-vert de ses œufs, une porte rouge et une bande tissée sous l’avant-toit, dans un enclos plus spacieux.', up_ara_cosy: 'Une véranda sur poteaux rouges où sèchent des piments, une couverture et des pots en terre, un désespoir des singes, et un jardin plus grand avec une balançoire sous un petit toit de bardeaux, une auge en rondin pleine de sable et un chou sur un poteau rouge.', up_ara_deluxe: 'Un étage de plus avec un balcon et des losanges blancs dans les bardeaux, une source de montagne, du sable cerclé de pierres, une flûte de Pan en roseaux, une mangeoire en petite cabane et le plus grand jardin, avec des piquets blancs et des roses.',
     up_mar_mended: 'Les murs enduits de crème depuis le haut et un toit neuf de tuiles rondes bien vives, un tréteau de maçon et un seau de chaux, dans un enclos plus grand.', up_mar_snug: 'La Ferme charentaise\u00a0: murs crème, volets bleu pâle et toit de tuiles rondes, dans un enclos plus spacieux.', up_mar_cosy: 'Une pergola de glycine sur la façade, un four à pain, des géraniums et de la lavande, et un jardin plus grand avec une balançoire sous une tonnelle bleue, une caisse à vin pleine de sable et un chou accroché à un réverbère.', up_mar_deluxe: 'Un étage de plus avec un pigeonnier et deux colombes blanches, une fontaine de pierre, une partie de boules dans le sable, des bouteilles vertes à faire tinter, une mangeoire pigeonnier et le plus grand jardin, avec des piquets blancs et des roses.',
     up_sus_mended: 'Des planches neuves à moitié peintes et un toit neuf en lauzes, l’échelle encore posée, dans un enclos plus grand.', up_sus_snug: 'Le Cottage du village en pierre couleur miel, dans un enclos plus spacieux.', up_sus_cosy: 'Un porche de pierre aux roses grimpantes, des jardinières et une lanterne, et un jardin plus grand avec une balançoire sous un petit portail couvert, un panier plein de sable et un chou accroché à un poteau indicateur.', up_sus_deluxe: 'Un étage de plus avec une lucarne et deux cheminées, un puits de village, une charrette bleue pleine de sable, des bouteilles de lait à faire tinter, une mangeoire en boîte aux lettres et le plus grand jardin, avec des piquets blancs et des roses.',
     up_call_mended: 'Des planches de pin neuves à moitié peintes en bleu œuf de cane, la moitié du toit en bardeaux neufs, la mare nettoyée et des pierres qu’on pose, dans un enclos plus grand.', up_call_snug: 'La Maison flottante sur son radeau, dans un enclos plus spacieux.',
@@ -593,7 +596,7 @@ export const TEXT = {
     showday_title: 'Jour de concours !', showday_body: 'Les résultats du {show} sont arrivés : le juge regarde les volailles.', showday_watch: 'Regarder le jugement', showday_results: 'Juste les résultats', skip: 'Passer',
     sd_arrive: '{farmer} amène {name} au concours…', sd_judge: 'Le juge regarde chaque volaille…', sd_rosettes: 'Et maintenant, les cocardes !',
     champ_c: 'Champion régional', champ_n: 'Champion national', show_new_c: 'Le concours régional : inscription {f}, 1er prix {p} pièces', show_new_n: 'Le championnat national : inscription {f}, 1er prix {p} pièces',
-    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair', egg_pol: 'Œufs blancs', egg_aya: 'Œufs crème', egg_sus: 'Œufs crème', egg_mar: 'Œufs brun chocolat', egg_call: 'Œufs de cane vert pâle', egg_pea: 'Gros œufs de paonne crème',
+    book_sil: 'Poule soie blanche', egg_rir: 'Œufs bruns', egg_orp: 'Œufs brun clair', egg_sil: 'Œufs teintés crème', egg_leg: 'Œufs bleus', egg_bra: 'Œufs brun clair', egg_pol: 'Œufs blancs', egg_aya: 'Œufs crème', egg_sus: 'Œufs crème', egg_mar: 'Œufs brun chocolat', egg_ara: 'Œufs turquoise', egg_call: 'Œufs de cane vert pâle', egg_pea: 'Gros œufs de paonne crème',
     coins_body: 'Les pièces viennent de vos œufs et de vos poussins devenus grands. Elles servent à acheter du grain, des terrains, des poulaillers et plus encore.',
     settings_music: 'Musique', settings_sounds: 'Sons', music_on: 'Oui', music_off: 'Non', settings_music_note: 'La musique vient de temps en temps, le jour et le soir.',
     settings_lang: 'Langue', settings_new: 'Commencer une nouvelle ferme', settings_new_sure: 'Touchez encore pour tout recommencer',
@@ -733,6 +736,7 @@ export const TEXT = {
     hist_orp: 'Créée en 1886 par William Cook dans le village d’Orpington, dans le Kent, en Angleterre. Il voulait une poule qui ponde bien et qui soit belle aussi. Grandes, toutes rondes et douces, les Orpington ont vite conquis le monde entier.',
     hist_sil: 'Une race très ancienne venue d’Asie, sans doute de Chine. Au XIIIe siècle, le voyageur Marco Polo parlait de poules au «\u00a0poil comme celui des chats\u00a0». Sous leur duvet, les Soies ont la peau sombre et cinq doigts à chaque patte, et ce sont des mères dévouées.',
     hist_aya: 'Elle vient de l’île de Java, en Indonésie, où «\u00a0ayam\u00a0» veut simplement dire poulet. Elle est noire de partout\u00a0: plumes, bec, peau et même les os. À Java, on dit depuis longtemps qu’elle porte bonheur.',
+    hist_ara: 'Elle vient du sud du Chili, où le peuple mapuche élevait des poules aux œufs bleus. Sa cousine anglaise garde sa queue, avec des touffes de plumes sur les joues et une barbe\u00a0; la lavande est d’un gris doux et uniforme, à peine lilas.',
     hist_mar: 'Elle vient de la petite ville de Marans, près de La Rochelle, dans l’ouest de la France, où elle a été sélectionnée il y a plus de cent ans. Célèbre pour ses œufs très foncés, brun chocolat\u00a0; la noir cuivré est noire aux reflets verts, le cou cuivré.',
     hist_sus: 'Elle vient du comté de Sussex, dans le sud de l’Angleterre, où on l’élève depuis plus de cent ans. Une poule calme et familière, bonne pondeuse\u00a0; la tachetée est acajou foncé, chaque plume terminée de blanc.',
     hist_call: 'Un tout petit canard élevé aux Pays-Bas, sans doute à partir d’oiseaux venus d’Asie. Les chasseurs se servaient autrefois de son cri fort et clair pour attirer les canards sauvages\u00a0: c’est de là que vient son nom de canard d’appel. Aujourd’hui, on l’élève pour son charme.',
@@ -828,6 +832,8 @@ export const BREED_INFO = {
   sus: { name: ['Speckled Sussex', 'Sussex tachetée'], coop: ['Village Cottage', 'Cottage du village'] },
   // (21 Nov 2026, Audrey: "The Marans (Recommended)", its look "Yes, put it in": free at level 21, its French Farmhouse)
   mar: { name: ['Black Copper Marans', 'Marans noir cuivré'], coop: ['French Farmhouse', 'Ferme charentaise'] },
+  // (21 Nov 2026, Audrey: "Carry on", its look "Yes, put it in": on the collector's shelf, its Mountain Hut)
+  ara: { name: ['Lavender Araucana', 'Araucana lavande'], coop: ['Mountain Hut', 'Cabane des Andes'] },
   // (30 Oct 2026, Audrey's call ducks: "call duck (new type of eggs!)", at level 10 in her own order; their Floating House:
   // "a little wooden house on a raft in the middle of their pond". A drake and two ducks; duck eggs. `duck`: not chickens:
   // no chicken shows (their ducklings: as the hens' chicks, 30 Oct), and Rusty can't reach a house out on a pond)
@@ -961,7 +967,7 @@ export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sus: 12, 
 // (money: £2.99 a trio); each a forever trio with its own coop, as a level's. `came`: the level it came at on the level
 // path before (a farm from before that had reached it keeps the breed, free). The Araucana, the Cochin and the Polish's
 // new colours are to join it
-export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 } };
+export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, ara: { level: 10, price: 8000, money: 3.99 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 } };      // (in level order: the shelf's tiles; the Lavender Araucana joined the same day, never on the level path)
 export const SHELF_IDS = Object.keys(SHELF);
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
@@ -1198,7 +1204,7 @@ export const CROPS = {
 // choice: "One more egg a day"): three of a breed's favourite vegetable mixed into its coop's grain: for three days each hen
 // there lays one more egg a day (in the afternoon; the feeder must have feed in it, as for any egg). Plain feed works as
 // ever. From level 6, and the vegetable's own level. Saved on the coop: fav { t: when mixed, crop }
-export const FEEDS = { level: 6, need: 3, ms: 3 * 86400e3, fav: { rir: 'carrot', orp: 'straw', sil: 'lettuce', aya: 'pump', call: 'peas', leg: 'corn', pol: 'sunf', bra: 'beet', pea: 'corn', sus: 'peas', mar: 'pump' } };
+export const FEEDS = { level: 6, need: 3, ms: 3 * 86400e3, fav: { rir: 'carrot', orp: 'straw', sil: 'lettuce', aya: 'pump', call: 'peas', leg: 'corn', pol: 'sunf', bra: 'beet', pea: 'corn', sus: 'peas', mar: 'pump', ara: 'corn' } };
 export const favOf = breed => FEEDS.fav[baseBreed(breed)] || null;
 export const favEggAt = (henId, day) => Math.round(day + (14 + 3 * hash01('fav|' + henId + '|' + day)) * 3600e3);
 // (16 Nov 2026, Audrey: "I would like the fields and beds to be part of the initial map and the player just need to unlock
@@ -1359,7 +1365,7 @@ const num = (v, lo, hi, d = lo) => Number.isFinite(v) ? Math.max(lo, Math.min(hi
 
 // ---- eggs and feed (starting values; the year-long balance comes with step 11)
 export const NEST_MAX = 12;                           // eggs a nest holds: full, the hens wait for you to collect
-export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 8, call: 10, pea: 14, sus: 8, mar: 10 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range)
+export const EGG_PRICE = { rir: 6, orp: 7, sil: 8, leg: 9, bra: 7, pol: 9, aya: 8, call: 10, pea: 14, sus: 8, mar: 10, ara: 10 };        // coins an egg sells for (the Legbar's blue eggs dear; since 30 Oct the Ayam Cemani's, now early, mid-range)
 // XP for each egg collected, a feeder filled from empty, a brood hatched, each grown chick (and for each of its stars), and
 // each day's job (base and per level); one place for the balance (balsim.mjs can try others: BAL='{"chick":4}')
 export const XPV = { egg: 1, fill: 2, hatch: 2, chick: 3, star: 0.5, job: 3.5, jobL: 0.3 };      // (26 Oct, with the Silkie colours and the rare ones' coops: a year to level 30 once a day still)
@@ -1403,7 +1409,7 @@ export const UPGRADE = { price: [0, 300, 1000, 3000, 8000], xp: [0, 8, 20, 45, 1
 // changes for it); the Red Barn's first (26 Oct), the Thatched Cottage's (27 Oct), the Pagoda's (27 Oct: every Silkie colour's),
 // the Stone Cottage's (27 Oct)
 // (release 7's breeds came with their looks: no farm can have one of their coops from before, so nothing to change: 1)
-export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5, pol: 1, aya: 1, call: 1, pea: 1, sus: 1, mar: 1 }, CV = 5;
+export const LOOKS_CV = { rir: 1, orp: 2, sil: 3, leg: 4, bra: 5, pol: 1, aya: 1, call: 1, pea: 1, sus: 1, mar: 1, ara: 1 }, CV = 5;
 export const UPGRADES = Object.keys(LOOKS_CV);
 export const lookOf = c => c && UPGRADES.includes(baseBreed(c.breed)) ? c.tier : 2;      // (what a coop's look does: Snug till its looks are made)
 export const FEED_PRICE = 2;                          // coins a unit of feed
@@ -1411,7 +1417,7 @@ export const CATCH_UP = 2 * 86400e3;                  // away longer than two da
 const DAY_MS = 86400e3;
 // ---- chicks (starting values)
 export const SIT_MS = 24 * 3600e3, GROW_MS = 52 * 3600e3;          // sitting on her eggs (they hatch the next morning); the chicks growing up (grown at 11 two days on)
-export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 28, call: 32, pea: 45, sus: 28, mar: 30 };   // coins for each grown chick
+export const CHICK_PRICE = { rir: 22, orp: 26, sil: 30, leg: 28, bra: 26, pol: 30, aya: 28, call: 32, pea: 45, sus: 28, mar: 30, ara: 30 };   // coins for each grown chick
 export const YOUNG_MS = 24 * 3600e3;                                 // a day after hatching, the chicks are young hens and roosters
 export const EXP_MUM = 60, EXP_DAD = 30;                             // experience for raising a brood (100 a star)
 export const kidPrice = (base, stars) => Math.round(base * (0.375 + 0.425 * stars));    // 1 star: 0.8 of the price; 5 stars: 2.5 (1.6 before 13 Nov 2026)
@@ -1862,8 +1868,8 @@ export class Game {
   // it, at its old place in the order)
   bookPages() {
     const has = b => this.data.coops.some(c => c.breed === b) || this.basket().some(x => x.breed === b) || this.shelfHad().includes(b);      // (a shelf breed: its page once had)
-    const lv = b => BREED_LEVEL[b] ?? BREED_LEVEL_29OCT[b];
-    const breeds = [...new Set([...Object.keys(BREED_LEVEL), ...Object.keys(BREED_LEVEL_29OCT)])].filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));      // (the call ducks' too)
+    const lv = b => BREED_LEVEL[b] ?? BREED_LEVEL_29OCT[b] ?? SHELF[b].level;      // (a shelf breed never on the level path: its shelf level)
+    const breeds = [...new Set([...Object.keys(BREED_LEVEL), ...Object.keys(BREED_LEVEL_29OCT), ...SHELF_IDS])].filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));      // (the call ducks' too)
     const from = [...breeds, ...SHELF_IDS.filter(b => !breeds.includes(b))].sort((a, b) => lv(a) - lv(b));      // (who a rare colour hatches from: the shelf's breeds too, had or not, 21 Nov 2026)
     return breeds.map(breed => {
       const coop = this.data.coops.find(c => c.breed === breed);

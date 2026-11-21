@@ -91,6 +91,25 @@ pages = await p.evaluate(() => window.__farm.game().bookPages().filter(x => x.br
 ok('the Book\'s breeds: the Buff Silkies\' page, found, three names', pages.length === 1 && pages[0].found && pages[0].n === 3, pages);
 await reload(); s = await st();
 ok('a reload keeps it all, unflagged', s.shelf === 'sil_buff' && /sil_buff/.test(s.coops) && !s.edited && s.coins === c0 - 5000, s);
+// level 10: the Lavender Araucana comes onto the shelf (its card); bought for 8,000 coins, its Mountain Hut placed, a lavender trio
+await close();
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.coins = 9000; g.data.land = Array.from({ length: 10 }, (_, i) => i); g.save(); }, xpAt(10)); await run(1.6);
+s = await st(); t = await sheet();
+ok('level 10: its card says the Lavender Araucana is on the shelf', s.level === 10 && s.card === 'levelup' && (fr ? /Dans la vitrine du collectionneur\s*:\s*Araucana lavande/ : /On the collector’s shelf: Lavender Araucana/).test(t), { s, t: t.slice(0, 300) });
+await p.evaluate(() => document.querySelector('.gsheet [data-shelfsee]').click()); await run(0.4);
+const ta = await tile('ara');
+ok('the shelf at 10: the Araucana "🪙 8,000", ready; the Partridge still locked', ta && ta.btns.length === 1 && ta.btns[0].go === 'coins' && !ta.btns[0].off && /8[\s,.\u202f\u00a0]?000/.test(ta.btns[0].t) && !(await tile('sil_partridge')).btns.length, ta);
+const c1 = (await st()).coins;
+await p.evaluate(() => document.querySelector('.gsheet .gshelf-t[data-shelf="ara"] [data-shelfgo="coins"]').click());
+await p.waitForFunction(() => window.__farm.move.state().on, null, { timeout: 15000 }).catch(() => {}); await run(0.4);
+await p.tap('.gmove-go'); await run(1.5);
+s = await st();
+const arc = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'ara'); return c && { breeds: g.birdsIn(c.id).map(b => b.breed).join(), models: f.coopModels().filter(m => /_ara$/.test(m)), tier: c.tier }; });
+ok('bought for 8,000 coins and placed: a rustic Mountain Hut with its lavender trio', s.coins === c1 - 8000 && s.shelf === 'sil_buff,ara' && arc && arc.breeds === 'ara,ara,ara' && arc.models.includes('box_ara') && arc.tier === 0 && !s.move, { s, arc });
+pages = await p.evaluate(() => window.__farm.game().bookPages().filter(x => x.breed === 'ara').map(x => ({ found: x.found, n: x.names.length })));
+ok('the Book\'s breeds: the Araucana\'s page, found', pages.length === 1 && pages[0].found && pages[0].n === 3, pages);
+await reload(); s = await st();
+ok('a reload keeps it, unflagged', /ara/.test(s.coops) && s.shelf === 'sil_buff,ara' && !s.edited, s);
 // level 12: the Partridge Silkies, 9,000 coins (too few: greyed); in the app, Apple's price
 await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 12; g.data.coins = 3000; g.data.land = Array.from({ length: 12 }, (_, i) => i); g.save(); }, xpAt(12));
 await p.evaluate(() => sessionStorage.setItem('__shop', 'true')); await reload();
@@ -100,11 +119,11 @@ ok('level 12, 3,000 coins: the Partridge Silkies "🪙 9,000" greyed, "£2.99" b
 await p.evaluate(() => document.querySelector('.gsheet .gshelf-t[data-shelf="sil_partridge"] [data-shelfgo="pay"]').click());
 await p.waitForFunction(() => window.__farm.move.state().on, null, { timeout: 15000 }).catch(() => {}); await run(0.6);
 s = await st(); const h2 = await p.evaluate(() => document.getElementById('hint').textContent);
-ok('bought for money (Apple stood in for): theirs, said, coins untouched, their coop to place', s.shelf === 'sil_buff,sil_partridge' && s.coins === 3000 && s.move && T.paid.test(h2), { s, h2 });
+ok('bought for money (Apple stood in for): theirs, said, coins untouched, their coop to place', s.shelf === 'sil_buff,ara,sil_partridge' && s.coins === 3000 && s.move && T.paid.test(h2), { s, h2 });
 await p.tap('.gmove-go'); await run(1.5); s = await st();
 ok('placed: the Partridge Silkies\' Pagoda on the farm', /sil_partridge/.test(s.coops) && !s.move, s);
 await reload(); s = await st();
-ok('a reload: kept, unflagged', s.shelf === 'sil_buff,sil_partridge' && /sil_partridge/.test(s.coops) && !s.edited, s);
+ok('a reload: kept, unflagged', s.shelf === 'sil_buff,ara,sil_partridge' && /sil_partridge/.test(s.coops) && !s.edited, s);
 await p.evaluate(() => sessionStorage.removeItem('__shop'));
 // saves changed outside: a shelf breed before its level; a shelf breed's coop not had
 const edit = async fn => { await p.evaluate(fn); await reload(); return st(); };

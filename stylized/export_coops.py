@@ -196,6 +196,12 @@ BUDGET.update({'house_mar': 17500, 'box_mar': 15000, 'shed_mar': 15500, 'cosy_ma
 _keep = dict(coops.NESTS['house_mar'])
 for look_, n_ in ((0, 'box_mar'), (1, 'shed_mar'), (3, 'cosy_mar'), (4, 'deluxe_mar')): one(n_, lambda look_=look_, n_=n_: coops.marans(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_mar'] = dict(_keep)
 for t in (0, 1, 3, 4): one('pen_t%d_mar' % t, lambda t=t: coops.pen_tier(t, 'mar')); LOOKS.append('pen_t%d_mar' % t)
+# the Lavender Araucana's Mountain Hut (21 Nov 2026, on the collector's shelf): its five looks and its own gardens
+# (stylized/extras/export_ara_coop.py exports just these to splice in)
+BUDGET.update({'house_ara': 16500, 'box_ara': 14000, 'shed_ara': 15000, 'cosy_ara': 20000, 'deluxe_ara': 24000, 'pen_t0_ara': 4200, 'pen_t1_ara': 4600, 'pen_t3_ara': 9500, 'pen_t4_ara': 13000})
+_keep = dict(coops.NESTS['house_ara'])
+for look_, n_ in ((0, 'box_ara'), (1, 'shed_ara'), (3, 'cosy_ara'), (4, 'deluxe_ara')): one(n_, lambda look_=look_, n_=n_: coops.andes(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_ara'] = dict(_keep)
+for t in (0, 1, 3, 4): one('pen_t%d_ara' % t, lambda t=t: coops.pen_tier(t, 'ara')); LOOKS.append('pen_t%d_ara' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

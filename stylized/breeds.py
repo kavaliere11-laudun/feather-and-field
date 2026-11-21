@@ -239,7 +239,8 @@ def feathered(B, rooster, root, body_rig, seed):
         bc = (0.04, 0, -0.034); M.append(('ELLIPSOID', bc, 0.016 * K, (1.0, 1.3, 0.95), 2.0))
         for (dx, dy, dz, r) in ((0.008, 0.0, -0.016, 0.011), (-0.004, 0.014, -0.013, 0.0105), (-0.004, -0.014, -0.013, 0.0105), (-0.016, 0.0, -0.018, 0.0105), (0.016, 0.01, -0.004, 0.008), (0.016, -0.01, -0.004, 0.008)):
             M.append(('BALL', (bc[0] + dx, bc[1] + dy + mr.uniform(-0.0015, 0.0015), bc[2] + dz), r * K, None, 1.5))
-        tag(keep(metaball_mesh('muffs', M, res=0.0026, m=pl, parent=hd)), 'head', 'crest')      # (painted as the crest: the browser gives them its longer, wispy plumage)
+        mf = metaball_mesh('muffs', M, res=0.0026 if not LO else 0.0042, m=pl, parent=hd)      # (the far-off model's coarser and simplified with the rest, 21 Nov 2026: kept fine it was 3,000 triangles of a 4,500 bird)
+        tag(mf if LO else keep(mf), 'head', 'crest')      # (painted as the crest: the browser gives them its longer, wispy plumage)
     cs = (1.5 if rooster else 1.0) * B['comb']
     if B.get('polish'): pass   # (the Polish's tiny V comb is hidden in its crest)
     elif B.get('serrated'):      # an Ayam Cemani's single comb: a tall blade with clear points (Audrey's photos)
