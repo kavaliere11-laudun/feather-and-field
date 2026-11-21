@@ -110,7 +110,7 @@ function dressed(look, id) {
   return (DRESSED[key] = g);
 }
 const LANG = urlLang();                 // (the test page's language: ?lang=; the game names its farmer itself)
-export const FARMER_NAME = register('name', { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'] });
+export const FARMER_NAME = register('name', { m: ['Arthur', 'Arthur'], f: ['Rosie', 'Rose'], j: ['The judge', 'Le juge'], p: ['Mrs Potts', 'Mme Potts'] });
 const DEG = Math.PI / 180;
 const ease = (a, b, k) => a + (b - a) * k;
 
@@ -157,6 +157,9 @@ export const POSES = {
   judge_pin: { chest: [0, 10, 0], head: [0, 4, 0], shR: [-6, -82, 0], elR: -10, wrR: [0, -8, 0], shL: [10, -4, 0], elL: -14, hand: ['relax', 'hold'], hipR: [0, -14, 0], kneeR: 8 },
   clap: { head: [0, -8, 0], chest: [0, -3, 0], shL: [-8, -44, -30], elL: [0, -80, 0], shR: [8, -44, 30], elR: [0, -80, 0], hand: ['open', 'open'] },
   judge_carry: { shL: [0, -15, -40], elL: [0, -100, 0], wrL: [-90, 0, 90], hand: ['hold', 'relax'] },
+  // (3D only) a villager's basket over her left forearm, the elbow bent, the hand relaxed (farmer.py's 'basket'; Mrs Potts)
+  basket: { shL: [16, -12, 0], elL: -92, wrL: [0, 0, 0], hand: ['relax', 'relax'] },
+  basketWave: { shL: [16, -12, 0], elL: -92, wrL: [0, 0, 0], shR: [-128, -18, 0], elR: -28, wrR: [0, 0, 0], hand: ['relax', 'open'], chest: [-3, 0, 0], head: [-6, -2, 0] },      // (and a wave with the other hand)
   // (3D only) fishing (release 5): the rod held up and out in the right hand, the left by its reel; drawn back over the
   // shoulder to cast; leaning back reeling in, the left hand winding; a fish held out in both hands (cradled on the palms) to
   // look at; hooray, a new fish: held out on the left palm, the right fist punching the air; crouched at the edge, letting
@@ -411,6 +414,7 @@ export class FarmerRig {
     if (props.rod) this.ensureRod();                                  // (the fishing rod: made the first time it's wanted)
     if (this.rod) { this.rod.visible = !!props.rod; const k = props.rodBend || 0; this.rod.userData.segs.forEach((j, i) => { j.rotation.x = k * [0.1, 0.2, 0.32][i]; }); }
     if (B.clipboard) { B.clipboard.scale.setScalar(props.clipboard ? 1 : 1e-4); B.pencil.scale.setScalar(props.pencil ? 1 : 1e-4); }     // (the judge's)
+    if (B.basket) B.basket.scale.setScalar(props.basket ? 1 : 1e-4);          // (a villager's)
     // the hat pushed back on the head, so the face shows from up where the game looks down (the 2D game's map does the same)
     const ht = (typeof window !== 'undefined' && window.__HAT) || {}, hs = this.hatSit;          // (each outfit's hat its own way: HAT_SIT)
     this.turn('hat', [0, ht.tilt ?? hs.tilt, 0]); B.hat.position.copy(R.hat.p).add(new THREE.Vector3(0, ht.up ?? hs.up, ht.back ?? hs.back));

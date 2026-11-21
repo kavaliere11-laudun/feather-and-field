@@ -288,6 +288,11 @@ export const TEXT = {
     mom_chick_found: '✨ You found the chick! {farmer} takes it back to {name}. +{c} coins, +{x} XP', mom_chick_back: 'The lost chick found its way back to {name} by itself.',
     mom_rain: '🌧️ It’s raining!', mom_rain_hint: 'Worms are coming up in the rain. Tap them before the hens do!',
     mom_rain_end: 'The rain has stopped. Worms caught: {n} 🪱', mom_rain_end0: 'The rain has stopped.', mom_rain_full: '🪱 Bag full · +{c} coins',
+    mom_visit: '{e} {name} is here!', mom_visit_hint: '{name} is at your farm stall by the farmhouse with a quick order. Tap her!',
+    vis_ask: '“Could I have these, dear? I’m in a hurry, so I’ll pay double!”', vis_have: 'you have {n}', vis_pay: '🪙 +{c} coins (double!) · +{x} XP',
+    vis_wait: '⏱ She can wait {t} more', vis_give: 'Give her {n} {i}', vis_need: '{n} more {i} needed: collect them while she waits.', vis_no: 'Not today',
+    vis_given: '{e} {name} paid you double! +{c} coins, +{x} XP', vis_bye: '{name} couldn’t wait any longer. She’ll come again another day.', vis_bye_no: '{name} will come again another day.',
+    vis_say_hi: 'Yoo-hoo! Anyone home?', vis_say_thanks: 'Thank you, dear!', vis_say_bye: 'Never mind, dear. Another time!',
     // the daily egg hunt (7 Nov 2026)
     hunt_hint: '🥚✨ {hen} has hidden today’s golden egg somewhere on your farm. Can you find it?', hunt_found: '✨ You found {hen}’s golden egg! +{c} coins, +{x} XP',
     hunt_streak: '{n} days in a row', hunt_total: 'golden eggs found: {n}', hunt_lv_t: 'New: a golden egg to find every day', hunt_lv_b: 'Each day one of your hens hides a golden egg somewhere on your farm. Find it for coins and XP, more for each day in a row.',
@@ -658,6 +663,11 @@ export const TEXT = {
     mom_chick_found: '✨ Vous avez retrouvé le poussin\u00a0! {farmer} le ramène à {name}. +{c} pièces, +{x} XP', mom_chick_back: 'Le poussin perdu a retrouvé {name} tout seul.',
     mom_rain: '🌧️ Il pleut\u00a0!', mom_rain_hint: 'Les vers sortent avec la pluie. Touchez-les avant les poules\u00a0!',
     mom_rain_end: 'La pluie s’est arrêtée. Vers attrapés\u00a0: {n} 🪱', mom_rain_end0: 'La pluie s’est arrêtée.', mom_rain_full: '🪱 Sac plein · +{c} pièces',
+    mom_visit: '{e} {name} est là\u00a0!', mom_visit_hint: '{name} attend à votre étal, près de la ferme, avec une commande express. Touchez-la\u00a0!',
+    vis_ask: '«\u00a0Pourriez-vous me donner ceci, mon petit\u00a0? Je suis pressée, alors je paie le double\u00a0!\u00a0»', vis_have: 'vous en avez {n}', vis_pay: '🪙 +{c} pièces (le double\u00a0!) · +{x} XP',
+    vis_wait: '⏱ Elle peut attendre encore {t}', vis_give: 'Lui donner {n} {i}', vis_need: 'Encore {n} {i}\u00a0: récoltez-les pendant qu’elle attend.', vis_no: 'Pas aujourd’hui',
+    vis_given: '{e} {name} vous a payé le double\u00a0! +{c} pièces, +{x} XP', vis_bye: '{name} ne pouvait plus attendre. Elle reviendra un autre jour.', vis_bye_no: '{name} reviendra un autre jour.',
+    vis_say_hi: 'Ohé\u00a0! Il y a quelqu’un\u00a0?', vis_say_thanks: 'Merci, mon petit\u00a0!', vis_say_bye: 'Tant pis, mon petit. Une autre fois\u00a0!',
     // la chasse à l’œuf du jour (7 nov. 2026)
     hunt_hint: '🥚✨ {hen} a caché l’œuf d’or du jour quelque part sur votre ferme. Saurez-vous le trouver ?', hunt_found: '✨ Vous avez trouvé l’œuf d’or de {hen} ! +{c} pièces, +{x} XP',
     hunt_streak: '{n} jours de suite', hunt_total: 'œufs d’or trouvés : {n}', hunt_lv_t: 'Nouveau : un œuf d’or à trouver chaque jour', hunt_lv_b: 'Chaque jour, une de vos poules cache un œuf d’or quelque part sur votre ferme. Trouvez-le pour des pièces et de l’XP, davantage chaque jour de suite.',
@@ -1134,7 +1144,8 @@ export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 
 // The third (20 Nov 2026, "Carry on"): a lost chick: while a coop has chicks (their first day), one of them wanders off
 // a little way, peeping; found and tapped, the farmer carries it back to its mum (her happy hop; a cuddle's worth of love
 // for her, a few coins); the first one for sure once there are chicks
-export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 }, rain: { secs: 150, worms: 12, full: 3 }, chick: { coins: 10, coinsL: 2, xp: 3 } };
+export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 }, rain: { secs: 150, worms: 12, full: 3 }, chick: { coins: 10, coinsL: 2, xp: 3 },
+  visit: { who: 'potts', mins: 10, pay: 2, part: 0.6 } };      // (a visitor, 21 Nov 2026: who comes, how long she waits, double pay, a little of what an order of it asks)
 // ---- the vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which
 // grow at different speeds; treats the hens love"): from level 4, three raised beds on your land by the farmhouse (moved
 // like a decoration). Sow a bed (its seeds a few coins): carrots are ripe in an hour, strawberries in 3, pumpkins in 8 (also
@@ -1706,8 +1717,14 @@ export function checkFarm(d, now = Date.now()) {
   const mc = mo && mo.k === 'chick' ? out.coops.find(c => c.id === mo.c) : null;
   if (mc && L >= MOMENTS.level && !kindOf(mc.breed) && mc.brood && mc.brood.hatched && Number.isInteger(mo.i) && mo.i >= 0 && mo.i < mc.brood.n && Array.isArray(mo.at) && mo.at.length === 2 &&
     mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK) out.moment = { k: 'chick', c: mc.id, i: mo.i, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
+  // a visitor at the farm stall: a villager who asks for that thing in her orders, from the level the orders open; how many
+  // (a whole number, no more than an order of it asks at most); begun no later than now, waiting no longer than her time
+  const VS = MOMENTS.visit, vw = mo && mo.k === 'visit' && typeof mo.who === 'string' && Object.hasOwn(VILLAGERS, mo.who) ? VILLAGERS[mo.who] : null;
+  if (vw && L >= ORDERS.level && typeof mo.item === 'string' && vw.wants.includes(mo.item) && Number.isInteger(mo.n) && mo.n >= 1 && mo.n <= (ORDERS.most[mo.item] || 0) &&
+    Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK && Number.isInteger(mo.until) && mo.until > mo.t && mo.until <= mo.t + VS.mins * 60e3)
+    out.moment = { k: 'visit', who: mo.who, item: mo.item, n: mo.n, t: mo.t, until: mo.until };
   const ms = d.moments && typeof d.moments === 'object' ? d.moments : null;
-  if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; const ck = int(ms.chick, 0, 1e6, 0); if (ck) out.moments.chick = ck; }
+  if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; const ck = int(ms.chick, 0, 1e6, 0); if (ck) out.moments.chick = ck; const vi = int(ms.visit, 0, 1e6, 0); if (vi) out.moments.visit = vi; }
   return out;
 }
 
@@ -2268,7 +2285,39 @@ export class Game {
   momentDue(hour, now = Date.now()) {
     if (!this.data || this.level < MOMENTS.level || this.data.moment || hour < MOMENTS.from || hour >= MOMENTS.to) return null;
     const M = this.data.moments; if (M && now - M.last < MOMENTS.gap) return null;
-    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick };
+    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick, visit: this.ordersOpen(), firstVisit: !!M && !M.visit && this.ordersOpen() };
+  }
+  // a visitor (21 Nov 2026, the 17 Nov mock-up: "a villager at the gate with a quick order, double pay, ten minutes"): Mrs
+  // Potts at the farm stall, from the level the village orders open. What she'd like: one of the things she asks for in
+  // her orders that this farm has (something you've enough of now, if there's one; else eggs), a little of it (part of
+  // what an order of it asks; eggs two at least); she pays double what an order of it pays; she waits ten minutes. Begun
+  // (counted); given her (taken from the pantry, the basket or the fish box; paid); gone (not today, or her time's up)
+  visitAsk(who = MOMENTS.visit.who, r = Math.random) {
+    const V = VILLAGERS[who]; if (!V || !this.ordersOpen()) return null;
+    const kinds = [...new Set(V.wants)].filter(k => this.orderCan(k)); if (!kinds.length) return null;
+    const ask = kinds.map(k => ({ k, n: Math.max(k === 'eggs' ? 2 : 1, Math.min(ORDERS.most[k], Math.round(orderAmount(k, this.level, r()) * MOMENTS.visit.part))) }));
+    const have = ask.filter(a => this.storeOf(a.k) >= a.n), pool = have.length ? have : ask.filter(a => a.k === 'eggs');
+    const a = (pool.length ? pool : ask)[Math.floor(r() * (pool.length || ask.length)) % (pool.length || ask.length)];
+    return { who, item: a.k, n: a.n };
+  }
+  visitPay(m) { const P = orderPay({ items: { [m.item]: m.n } }); return { coins: P.coins * MOMENTS.visit.pay, xp: P.xp }; }
+  visitOn(ask, now = Date.now()) {
+    const V = ask && VILLAGERS[ask.who]; if (!this.data || this.data.moment || !V || !this.ordersOpen() || !V.wants.includes(ask.item) || !this.orderCan(ask.item)) return null;
+    if (!Number.isInteger(ask.n) || ask.n < 1 || ask.n > (ORDERS.most[ask.item] || 0)) return null;
+    this.data.moment = { k: 'visit', who: ask.who, item: ask.item, n: ask.n, t: now, until: now + MOMENTS.visit.mins * 60e3 };
+    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now; M.visit = (M.visit || 0) + 1;
+    this.save(); return this.data.moment;
+  }
+  visitGive(now = Date.now()) {
+    const m = this.moment(); if (!m || m.k !== 'visit' || now >= m.until || this.storeOf(m.item) < m.n) return null;
+    this.pantryTake(m.item, m.n);
+    const P = this.visitPay(m); this.data.coins += P.coins; this.data.xp += P.xp;
+    this.data.moment = null; this.save();
+    return { who: m.who, item: m.item, n: m.n, coins: P.coins, xp: P.xp };
+  }
+  visitGone(now = Date.now(), force = false) {
+    const m = this.moment(); if (!m || m.k !== 'visit' || (now < m.until && !force)) return null;
+    this.data.moment = null; this.save(); return { who: m.who, late: now >= m.until };
   }
   // a rainy day (20 Nov 2026): it begins (its length from now; counted); a worm tapped (into the bag, or 3 coins if it's full;
   // null: none left to catch this shower, or it's over); over (its worms caught)

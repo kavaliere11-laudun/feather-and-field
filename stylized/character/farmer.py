@@ -21,10 +21,11 @@ LOOKS = {
               jshirt='#f5f0e4', tie='#8c2433', square='#e7b53c', stache='#efebe3', rims='#3b2a1c', lapel='#6a6349'),
     # Mrs Potts, the village baker (3D farm moments: the visitor at the gate, 21 Nov 2026): an older lady on the farmers' own
     # body and face rig. White hair set in soft curls with a bun on top, a lavender dress to below the knee, a sage-green
-    # cardigan, a white apron with a pink trim, pearl earrings, stockings and burgundy shoes; her wicker basket on her arm.
+    # cardigan, a white apron with a pink trim, little round gold glasses (Audrey's pick, "2: with glasses"), pearl earrings,
+    # stockings and burgundy shoes; her wicker basket on her arm.
     # ('shirt' is the cardigan, 'denim' the stockings, 'boots' the shoes: the names the browser's colours go by)
     'p': dict(skin='#f4cbab', blush='#ee8274', hair='#f2eee8', iris='#5f8fc0', shirt=('#8faa7f', '#8faa7f', '#8faa7f'), denim='#e3bca0',
-              boots='#8c3247', band='#e57f98', hat='#c48f52', beard=False, lashes=True, villager=True, brow='#c9bfb4',
+              boots='#8c3247', band='#e57f98', hat='#c48f52', beard=False, lashes=True, villager=True, brow='#c9bfb4', glasses=True,
               dress='#9b80c6', cardi='#8faa7f', rib='#7b9669', apron='#fdf9f2', trim='#e57f98', pearl='#f7f1e6', basket='#c48f52', cloth='#e46b6b'),
 }
 _F = {}
@@ -394,8 +395,8 @@ def snap(a):
 
 
 def potts_face(hd, hr, surf, Mt):
-    """Pearl earrings below her ear lobes; (GLASSES=1, to show) little round gold glasses."""
-    if os.environ.get('GLASSES') == '1':
+    """Pearl earrings below her ear lobes; little round gold glasses (GLASSES=0: none, to compare)."""
+    if LOOKS['p'].get('glasses') and os.environ.get('GLASSES') != '0':
         R = 0.037; rim = mat('fm_vrims', '#c9a14a', rough=0.3, metal=0.7, spec=0.6); ends = {}
         for s in (1, -1):
             n = Vector((0.9, s * 0.36, 0.06)).normalized(); sp_, _ = surf(n); ic = sp_ - n * 0.014
@@ -431,7 +432,8 @@ def potts_hair(hd, hr, surf, Mt):
     p, nm = surf((0.0, 0.0, 1.0)); E.append(('BALL', tuple(p - nm * 0.02), 0.045 * K, None, 2.0))
     for x, z in ((0.0, 0.62), (-0.32, 0.56), (0.32, 0.56), (-0.6, 0.45), (0.6, 0.45), (-0.16, 0.66), (0.16, 0.66), (-0.45, 0.55), (0.45, 0.55)):      # (curls along the hairline, off the forehead)
         p, nm = surf((0.8, x, z)); E.append(('BALL', tuple(p - nm * 0.006), 0.03 * K, None, 2.0))
-    metaball_mesh('hair', E, res=0.006, m=Mt['hair'], parent=hd)
+    metaball_mesh('vhair', E, res=0.006, m=Mt['hair'], parent=hd)
+    empty('hat', (-0.012, 0, hr * 0.64), (0, 0, 0), hd)              # (no hat: its joint kept, empty, so the farmers' rig drives her the same)
     bp, bn = surf((-0.35, 0.0, 1.0))                                  # the bun
     c = bp + bn * 0.045
     sphere('bun', 1.0, tuple(c), (0.068, 0.07, 0.058), m=Mt['hair'], parent=hd, seg=24, rings=14, disp=0.08, disp_scale=3.0, seed=4)

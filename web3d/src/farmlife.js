@@ -36,6 +36,7 @@ export const FARMER_TEXT = register('say', {
   there: ['There you are!', 'Vous voilà !'],
   wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
   found: ['There you are!', 'Te voilà, toi !'], homego: ['Home you go!', 'Allez, à la maison !'],      // (a hen out, brought home: main.js farm moments)
+  visit: ['Here you are!', 'Et voilà !'],      // (a visitor at the stall, given what she'd like: main.js farm moments)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
 });

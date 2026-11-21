@@ -40,7 +40,7 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 await p.tap('.gsheet .gbtn');
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(3) + 5; g.data.lvSeen = 3; g.fishBag().gift = true; g.fishBag().worms = 5; g.data.moments = { last: 0, hen: 1 }; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(3) + 5; g.data.lvSeen = 3; g.fishBag().gift = true; g.fishBag().worms = 5; g.data.moments = { last: 0, hen: 1, visit: 1 }; g.save(); f.gameUI().close(); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();
 for (let i = 0; i < 12; i++) { await close(); await run(1); if ((await S()).moment) break; }
 let s = await S();

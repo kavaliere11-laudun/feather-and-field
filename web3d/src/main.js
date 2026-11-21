@@ -26,7 +26,7 @@ import { FishLineup } from './fish.js';
 import { Fishing } from './fishing.js';
 import { DuckFlock } from './ducks.js';
 import { CallPen } from './callpen.js';
-import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded, drawFarmerShadows, SHADOW as FARMER_SHADOW } from './farmer.js';
+import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded, drawFarmerShadows, SHADOW as FARMER_SHADOW, addLook } from './farmer.js';
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
@@ -4829,6 +4829,7 @@ function tapAt(x, y) {
   ndc.set(x / canvas.clientWidth * 2 - 1, -(y / canvas.clientHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   if (GAME_MODE && strayHit(ray.ray, x, y)) return;      // (a hen out on the farm: found)
+  if (GAME_MODE && visitHit(ray.ray, x, y)) return;      // (a visitor at the stall: her card)
   if (GAME_MODE && rainTap(x, y)) return;                // (a worm up in the rain: into the bag)
   if (FISHING && FISHING.state === 'ready') {            // (fishing: a tap on the pond, or the river, casts there)
     const gp = ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -FISHING.o.waterY), new THREE.Vector3());
@@ -9434,6 +9435,7 @@ function strayPill() {
   if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + LANG; text = game.t('mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); }; }
   else if (m && m.k === 'rain' && RAIN.on) { key = 'rain' + LANG; text = game.t('mom_rain'); tap = () => hint(game.t('mom_rain_hint')); }
   else if (m && m.k === 'chick' && STRAY.bird && !STRAY.bird.stray.called) { key = 'chick' + m.c + m.i + LANG; text = game.t('mom_chick'); tap = () => { const c = game.coop(m.c), mum = c && c.brood && game.bird(c.brood.hen); hint(game.t('mom_chick_hint', { name: mum ? mum.name : '' })); }; }
+  else if (m && m.k === 'visit') { key = 'visit' + m.who + m.t + LANG; text = game.t('mom_visit', { e: game.villagerEmoji(m.who), name: game.villagerName(m.who) }); tap = () => { if (!visitCard()) hint(game.t('mom_visit_hint', { name: game.villagerName(m.who) })); }; }      // (a visitor: her card)
   if (STRAY.pillOn === key) return; STRAY.pillOn = key;
   gameUI.momentPill(text, tap);
 }
@@ -9488,9 +9490,10 @@ function tickStray(dt) {
     const due = game.momentDue(h);
     // (which: the very first, a hen out; the first rainy day for sure the next time, once fishing's open; the first lost chick
     // for sure once there are chicks; else, one time in two, any of them there can be)
-    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), kinds = ['hen', ...(due && due.rain ? ['rain'] : []), ...(chicks ? ['chick'] : [])];
-    const kind = !due ? null : due.first ? 'hen' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
-    if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'hen') startHenOut();
+    // (21 Nov 2026: a visitor at the farm stall, once the village orders are open; her first visit straight after the first hen out)
+    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), visit = due && due.visit && !!stallSpot(), kinds = ['hen', ...(due && due.rain ? ['rain'] : []), ...(chicks ? ['chick'] : []), ...(visit ? ['visit'] : [])];
+    const kind = !due ? null : due.first ? 'hen' : due.firstVisit && visit ? 'visit' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
+    if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'visit') { if (!visitStart()) startHenOut(); } else if (kind === 'hen') startHenOut();
   }
 }
 // ---- farm moments, the rainy day (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Worms come up in the rain. Tap them";
@@ -9676,6 +9679,168 @@ function tickRain(dt) {
     wormPose(W);
   }
   wake(200);
+}
+// ---- farm moments, a visitor (21 Nov 2026, "Ok carry on"; the 17 Nov mock-up: "a villager at the gate with a quick order,
+// double pay, ten minutes"; her look Audrey's pick, "2: with glasses"; game.js MOMENTS.visit, visitAsk, visitOn, visitGive,
+// visitGone). Mrs Potts, the village baker, comes up the lane to the farm stall by the farmhouse, her basket on her arm, and
+// waits beside it ("Yoo-hoo! Anyone home?"), now and then waving: "🧁 Mrs Potts is here!" beside the coins (a tap: her card),
+// over her what she'd like ("🧁 3 🥚"). A tap on her: her card (gameui.js visitCard). Given her: paid at once (double); the
+// farmer comes over with it in the pail ("Here you are!"), she puts it in her basket, "Thank you, dear!", hearts, and off
+// she goes back down the lane. Not today, or her ten minutes up: "Never mind, dear. Another time!", and off she goes. A
+// reload while she's here: back beside the stall. Her model (villager.glb) is loaded the first time she comes.
+const VISIT = { f: null, load: null, ok: false, way: null, cum: null, s: 0, phase: null, t: 0, spot: null, face: 0, bub: null, say: null, sayT: 0, sayText: '', wave: 4, seq: null, handed: false, heart: 0 };
+const VISIT_SPEED = 0.8;
+function visitLoad() {
+  if (!VISIT.load) VISIT.load = Promise.all([loadGLB('villager.glb'), loadJSON('villager.json')]).then(([g, j]) => { addLook(g, j); VISIT.ok = true; return true; }).catch(() => { VISIT.load = null; return false; });
+  return VISIT.load;
+}
+// where she waits: beside the stall's front, out in the open where the farmer can get to her; her way there, along the farm's
+// paths (from the end of one a good walk off, so she's seen coming up the path: not across a field)
+function visitPlace() {
+  if (VISIT.spot) return VISIT.spot;
+  const S = stallSpot(); if (!S) return null;
+  const nav = navGrid(), reach = farmReach(), hw = (S.box.max.x - S.box.min.x) / 2, cx = (S.box.max.x + S.box.min.x) / 2, z = S.box.max.z + 0.4;
+  pathCosts(nav);
+  const wayLen = w => { let l = 0; for (let i = 1; i < w.length; i++) l += Math.hypot(w[i][0] - w[i - 1][0], w[i][1] - w[i - 1][1]); return l; };
+  let best = null;
+  for (const side of [1, -1]) {
+    let q = null;
+    for (const dx of [0.4, 0.65, 0.9]) { const v = new THREE.Vector3(cx + side * (hw + dx), 0, z).applyMatrix4(S.m); q = nav.nearestIn(reach, v.x, v.z, 0.25); if (q) break; }
+    if (!q) continue;
+    const ends = [];
+    for (const l of V.paths) for (const e of [l[0], l[l.length - 1]]) { const d = Math.hypot(e[0] - q[0], e[2] - q[1]); if (d > 7 && d < 30 && nav.nearestIn(reach, e[0], e[2], 0.6)) ends.push([e[0], e[2]]); }
+    for (const e of ends) {
+      const way = nav.find(e[0], e[1], q[0], q[1], true); if (!way || way.length < 2) continue;
+      const len = wayLen(way), score = Math.abs(len - 18);
+      if (!best || score < best.score) best = { at: q, way: way.map(p => [p[0], p[1]]), len, score };
+    }
+    if (!ends.length && !best) { const way = farmExit(q[0], q[1]); if (way.length > 1) best = { at: q, way: way.map(p => [p[0], p[1]]).reverse(), len: wayLen(way), score: 99 }; }      // (no path about: in from off the farm)
+  }
+  if (!best) return null;
+  best.way[best.way.length - 1] = best.at.slice();
+  const cum = [0]; for (let i = 1; i < best.way.length; i++) cum.push(cum[i - 1] + Math.hypot(best.way[i][0] - best.way[i - 1][0], best.way[i][1] - best.way[i - 1][1]));
+  VISIT.way = best.way; VISIT.cum = cum;
+  return (VISIT.spot = best.at);
+}
+function visitAlong(s) {
+  const W = VISIT.way, C = VISIT.cum; let i = 1; while (i < W.length - 1 && C[i] < s) i++;
+  const a = W[i - 1], b = W[i], u = Math.max(0, Math.min(1, (s - C[i - 1]) / Math.max(1e-6, C[i] - C[i - 1])));
+  return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, Math.atan2(b[0] - a[0], b[1] - a[1])];
+}
+// her: made once (then kept, hidden between visits), on her way in (or, a reload, already at the stall)
+function visitMake(m, now) {
+  if (!VISIT.ok || !visitPlace()) return false;
+  if (!VISIT.f) { VISIT.f = new Farmer(scene, 'p', nightGrade, rng(77)); VISIT.f.ownShadow(); VISIT.f.label = game.villagerName('potts'); }
+  const f = VISIT.f, len = VISIT.cum[VISIT.cum.length - 1], gone = (now - m.t) / 1000 * VISIT_SPEED;
+  f.root.visible = true; VISIT.s = Math.min(len, Math.max(0, gone)); VISIT.handed = false; VISIT.seq = null; VISIT.wave = 4;
+  VISIT.phase = VISIT.s >= len ? 'wait' : 'come'; VISIT.t = 0;
+  const p = visitAlong(VISIT.s); f.pos.set(p[0], groundY(p[0], p[1]), p[1]); f.root.rotation.y = VISIT.phase === 'wait' ? visitFaceOut() : p[2];
+  f.fade(VISIT.phase === 'wait' ? 1 : 0);
+  f.want = { pose: 'basket', face: 'happy', walk: 0, props: { basket: true } };
+  return true;
+}
+const visitFaceOut = () => { const q = VISIT.spot; return Math.atan2(camera.position.x - q[0], camera.position.z - q[1]); };
+function visitSay(key, secs = 2.8) { VISIT.sayText = game.t(key); VISIT.sayT = secs; }
+// her card: what she'd like (gameui.js visitCard); given her, not today
+function visitCard() {
+  const m = game.moment(); if (!GAME_MODE || !m || m.k !== 'visit' || !VISIT.f || !/^(come|wait)$/.test(VISIT.phase)) return false;
+  holdBird(null); henOff();
+  gameUI.visitCard(m, { give: () => visitGive(), no: () => visitNo() });
+  return true;
+}
+function visitGive() {
+  const r = game.visitGive(); if (!r) return false;
+  gameUI.close();
+  hint(game.t('vis_given', { e: game.villagerEmoji(r.who), name: game.villagerName(r.who), c: r.coins, x: r.xp }));
+  gameUI.refresh(); gameUI.bumpCoins(); strayPill();
+  VISIT.phase = 'paid'; VISIT.t = 0; VISIT.handed = false;
+  // (the farmer brings it over in the pail; he can't come: she takes it from the stall herself)
+  const f = VISIT.f, nav = navGrid(), reach = farmReach(), a0 = visitFaceOut();
+  let at = null; for (const da of [1.4, -1.4, 1.0, -1.0, 1.9, -1.9, 0.6, -0.6, 2.5, -2.5]) { const q = nav.nearestIn(reach, f.pos.x + Math.sin(a0 + da) * 0.85, f.pos.z + Math.cos(a0 + da) * 0.85, 0.15); if (q && Math.hypot(q[0] - f.pos.x, q[1] - f.pos.z) > 0.6) { at = q; break; } }      // (beside her, not between her and the player)
+  const seq = at && farmLife && !farmLife.pending && !farmLife.home && !farmLife.running && farmLife.workAt(at, Math.atan2(f.pos.x - at[0], f.pos.z - at[1]), [
+    ['give', 1.6, (W, u) => { W.pose = u < 0.6 ? 'feed' : 'turn'; W.face = 'happy'; W.look = [0, -0.1]; W.props.pail = u < 0.6; if (u > 0.55) VISIT.handed = true; }], 'done',
+    ['wave', 1.4, W => { W.pose = 'wave'; W.face = 'happy'; W.waving = true; }]], () => { VISIT.handed = true; }, { pail: true, say: 'visit', job: { kind: 'order' } });      // (busy: "taking a basket to the stall")
+  if (seq) VISIT.seq = seq; else VISIT.handed = true;
+  wake(1500); return true;
+}
+function visitNo() {
+  const r = game.visitGone(Date.now(), true); gameUI.close(); if (!r) return false;
+  hint(game.t('vis_bye_no', { name: game.villagerName(r.who) })); strayPill();
+  VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); wake(1500); return true;
+}
+// a tap on the farm: on her (or near her, a thumb's width)
+function visitHit(rr, x, y) {
+  const f = VISIT.f; if (!f || !f.root.visible || !/^(come|wait)$/.test(VISIT.phase)) return false;
+  const p = f.pos, sp = new THREE.Sphere(new THREE.Vector3(p.x, p.y + 0.7, p.z), 0.42);
+  let hit = !!rr.intersectSphere(sp, new THREE.Vector3());
+  if (!hit) { bubV.set(p.x, p.y + 0.7, p.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight; hit = bubV.z < 1 && Math.hypot(sx - x, sy - y) < 34; }
+  return hit && visitCard();
+}
+// each frame: her come (or back after a reload), waiting, thanking, going; her words and what she'd like over her
+function tickVisit(dt) {
+  if (!GAME_MODE || !game.data) return;
+  const m0 = game.moment(), m = m0 && m0.k === 'visit' ? m0 : null, now = Date.now();
+  if (m && !VISIT.phase) {
+    if (!stallSpot() || (VISIT.ok && !visitPlace())) game.visitGone(now, true);      // (nowhere for her to come to: over)
+    else if (!VISIT.ok) visitLoad();
+    else visitMake(m, now);
+  }
+  if (m && now >= m.until && /^(come|wait)$/.test(VISIT.phase)) {      // (her ten minutes up)
+    const r = game.visitGone(now); if (r) { if (gameUI.kind === 'visit') gameUI.close(); hintNext(game.t('vis_bye', { name: game.villagerName(r.who) })); strayPill(); VISIT.phase = 'bye'; VISIT.t = 0; visitSay('vis_say_bye'); }
+  }
+  const f = VISIT.f; if (!f || !VISIT.phase) { if (VISIT.bub) VISIT.bub.hidden = true; if (VISIT.say) VISIT.say.hidden = true; return; }
+  const len = VISIT.cum[VISIT.cum.length - 1], W = f.want, ph = VISIT.phase; VISIT.t += dt;
+  W.walk = 0; W.anim = null; W.keepArms = null; W.pose = 'basket'; W.face = 'happy'; W.props = { basket: true };
+  const turnTo = (a, k = 6) => { const d = Math.atan2(Math.sin(a - f.root.rotation.y), Math.cos(a - f.root.rotation.y)); f.root.rotation.y += d * Math.min(1, dt * k); };
+  const walk = dir => {
+    VISIT.s = Math.max(0, Math.min(len, VISIT.s + dir * VISIT_SPEED * dt));
+    const p = visitAlong(VISIT.s); f.pos.set(p[0], groundY(p[0], p[1]), p[1]); turnTo(dir > 0 ? p[2] : p[2] + Math.PI, 8);
+    W.walk = 1; W.phase = VISIT.s * 6.6; W.keepArms = 'L';
+    f.fade(Math.min(1, (dir > 0 ? VISIT.s : VISIT.s) / 1.5));
+  };
+  if (ph === 'come') { walk(1); if (VISIT.s >= len) { VISIT.phase = 'wait'; VISIT.t = 0; visitSay('vis_say_hi'); } }
+  else if (ph === 'wait') {
+    turnTo(visitFaceOut(), 3);
+    if ((VISIT.wave -= dt) <= 0) VISIT.wave = 7 + Math.random() * 3;
+    if (VISIT.wave > 5.4 && VISIT.t > 0.5) { W.pose = 'basketWave'; W.anim = (P, F, t) => { P.shR[0] += 10 * Math.sin(t * 7); P.wrR[0] += 18 * Math.sin(t * 7 + 0.6); }; }      // (a wave now and then)
+  }
+  else if (ph === 'paid') {      // (the farmer on his way with it: she watches him come)
+    const F = farmLife && farmLife.pos; if (F && VISIT.seq) turnTo(Math.atan2(F.x - f.pos.x, F.z - f.pos.z), 4); else turnTo(visitFaceOut(), 3);
+    const mine = VISIT.seq && farmLife && (farmLife.task === VISIT.seq || farmLife.pending === VISIT.seq);
+    if (VISIT.handed || !mine || VISIT.t > 40) { VISIT.phase = 'thanks'; VISIT.t = 0; visitSay('vis_say_thanks'); VISIT.heart = 0; }
+  }
+  else if (ph === 'thanks') {
+    const F = farmLife && farmLife.pos; if (F && Math.hypot(F.x - f.pos.x, F.z - f.pos.z) < 2) turnTo(Math.atan2(F.x - f.pos.x, F.z - f.pos.z), 4); else turnTo(visitFaceOut(), 3);      // (to him, if he's brought it)
+    W.face = 'cuddle'; if (VISIT.t > 1.2 && VISIT.t < 2.6) { W.pose = 'basketWave'; W.anim = (P, F, t) => { P.shR[0] += 10 * Math.sin(t * 7); }; }
+    if (VISIT.t > VISIT.heart && VISIT.heart < 1.6) { VISIT.heart += 0.55; spawnHeart(new THREE.Vector3(f.pos.x, f.pos.y + 1.45, f.pos.z)); }
+    if (VISIT.t > 3) { VISIT.phase = 'go'; VISIT.t = 0; }
+  }
+  else if (ph === 'bye') { W.face = 'neutral'; if (VISIT.t > 2.4) { VISIT.phase = 'go'; VISIT.t = 0; } }
+  else if (ph === 'go') { walk(-1); if (VISIT.s <= 0) { VISIT.phase = null; f.root.visible = false; f.fade(0); } }
+  if (VISIT.sayT > 0) { VISIT.sayT -= dt; W.anim = W.anim || null; const a0 = W.anim; W.anim = (P, F, t) => { if (a0) a0(P, F, t); F.mouth = Math.sin(t * 13) > 0 ? 'talk' : 'smile'; }; }
+  if (!frozen) f.update(dt);
+  // what she'd like over her (on her way and waiting), her words
+  const B = VISIT.bub || (VISIT.bub = (() => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub gstraybub gvisitbub'; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); visitCard(); }); document.body.append(e); return e; })());
+  const icon = m ? ({ eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', ...Object.fromEntries(CROP_IDS.map(k => [k, CROPS[k].e])) }[m.item] || '🧺') : '';
+  const T = m ? game.villagerEmoji(m.who) + ' ' + m.n + ' ' + icon : '';
+  bubV.set(f.pos.x, f.pos.y + 1.74, f.pos.z).project(camera);
+  const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight, off = bubV.z > 1 || sx < -40 || sx > canvas.clientWidth + 40 || sy < 20 || sy > canvas.clientHeight + 60;
+  if (!m || !/^(come|wait)$/.test(VISIT.phase) || VISIT.sayT > 0 || inside.open || gameUI.isOpen || off || f.opacity < 0.5) B.hidden = true;
+  else { if (B.textContent !== T) B.textContent = T; bubAt(B, sx, sy); }
+  const SY = VISIT.say || (VISIT.say = (() => { const e = document.createElement('div'); e.className = 'fsay'; e.hidden = true; document.body.append(e); return e; })());
+  if (VISIT.sayT > 0 && !inside.open && !off && f.opacity > 0.5) {
+    if (SY.textContent !== VISIT.sayText) SY.textContent = VISIT.sayText;
+    SY.hidden = false; SY.style.transform = `translate(${sx.toFixed(1)}px, ${(sy - 4).toFixed(1)}px) translate(-50%, -100%)`; SY.style.opacity = Math.min(1, VISIT.sayT * 3).toFixed(2);
+  } else SY.hidden = true;
+  wake(200);
+}
+// a visit begins (the moments' roll): what she'd like, saved; she's on her way (her model first, if it's not loaded yet)
+function visitStart() {
+  if (game.moment() || VISIT.phase || !stallSpot()) return null;
+  const ask = game.visitAsk(); if (!ask) return null;
+  const m = game.visitOn(ask); if (!m) return null;
+  visitLoad(); strayPill(); wake(1500);
+  return m;
 }
 // ---- village orders (7 Nov 2026, Audrey: "Just feeding the chickens is not enough"; "Village orders"): the farm stall by
 // the farmhouse (the village's egg stall, the one nearest the farmhouse) is where they're kept: a tap on it (or the basket
@@ -10407,7 +10572,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
-  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
   if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
@@ -10500,6 +10665,10 @@ window.__farm = {
       visible: it ? it.group.userData.beds.map(B => CROP_IDS.flatMap(k => [B.sign[k].visible ? 'sign_' + k : null, ...B.crop[k].map((g, j) => g.visible ? k + '_' + (j + 1) : null)]).filter(Boolean)) : null }; },
     spot: i => { const S = bedSpot(i); return S && S.at; }, mid: i => { const it = DEC.items.garden; if (!it) return null; const v = new THREE.Vector3(GARDEN_BEDX[i], 0.2, GARDEN_BEDZ[i]).applyMatrix4(it.d.m); return [v.x, v.y, v.z]; }, buyBed: () => buyBed(), foot: () => GARDEN_FOOT.slice(), frames: () => { const it = DEC.items.garden; return it ? it.group.userData.beds.map(B => B.frame ? B.frame.visible : true) : null; } },
   treat: { card: id => treatCard(id), give: (id, k) => giveTreat(id, k), corn: i => { const C = gamePlots()[i].corn; return C ? C.g.filter(q => !q.eaten).map(q => q.kind) : []; } },
+  visitor: { start: () => visitStart(), state: () => { const f = VISIT.f, m = game.moment(), p = f ? f.pos : null; let sc = null; if (p) { bubV.set(p.x, p.y + 0.7, p.z).project(camera); sc = { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; }
+    return { phase: VISIT.phase, ok: VISIT.ok, at: p ? [+p.x.toFixed(2), +p.z.toFixed(2)] : null, spot: VISIT.spot, s: +VISIT.s.toFixed(2), len: VISIT.cum ? +VISIT.cum[VISIT.cum.length - 1].toFixed(2) : 0, visible: !!(f && f.root.visible), opacity: f ? f.opacity : 0, screen: sc,
+      bub: VISIT.bub && !VISIT.bub.hidden ? VISIT.bub.textContent : null, say: VISIT.say && !VISIT.say.hidden ? VISIT.say.textContent : null, words: VISIT.sayT > 0 ? VISIT.sayText : null, handed: VISIT.handed, basket: !!(f && f.rig.B.basket && f.rig.B.basket.scale.x > 0.5), pose: f ? f.want.pose : null, moment: m && m.k === 'visit' ? { ...m } : null }; },
+    way: () => VISIT.way, card: () => visitCard(), give: () => visitGive(), no: () => visitNo(), tap: () => { const f = VISIT.f; if (!f) return null; bubV.set(f.pos.x, f.pos.y + 0.7, f.pos.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; } },
   rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
   moment: { seat: STRAY_SEAT, start: id => startHenOut(id), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
@@ -10531,7 +10700,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickVisit(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
   spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }

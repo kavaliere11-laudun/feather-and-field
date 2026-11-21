@@ -98,6 +98,14 @@ def build(look):
         info['hold'] = dict(palm=to_gl(Vector((0.0, 0.0, -0.059))), pinch=to_gl(Vector((0.045, 0.0, -0.105))))
         info['mouth'] = to_gl(hd.matrix_world @ mp); info['blush'] = [to_gl(hd.matrix_world @ surf((0.75, sd * 0.55, -0.3))[0]) for sd in (1, -1)]
         return root, hd, info
+    if FM.LOOKS[look].get('villager'):
+        # a villager (Mrs Potts): her basket on the left wrist, over the forearm as in the 'basket' pose (hidden until wanted);
+        # the torch's and the pail's bones kept, with nothing on them
+        for nm, w in (('torch', wR), ('pail', wL)): empty(nm, (0, 0, 0), (0, 0, 0), w)
+        bk = FM.basket_prop(wL.matrix_world.copy(), look); reparent(bk, wL)
+        bpy.context.view_layer.update()
+        info['mouth'] = to_gl(hd.matrix_world @ mp); info['blush'] = [to_gl(hd.matrix_world @ surf((0.75, sd * 0.55, -0.3))[0]) for sd in (1, -1)]
+        return root, hd, info
     t = FM.torch_prop(wR.matrix_world @ Vector((0, 0, -0.06)), Vector((1.0, 0.0, -0.05)))
     for o in list(t.children):
         if o.name.startswith('tbeam'): bpy.data.objects.remove(o)
@@ -154,7 +162,8 @@ def bake(look, root, budget, info, only=None, store=None, keep=()):
     KEEP = ('m', 'mline', 'mouth', 'teeth', 'tongue', 'lip', 'lipline', 'shine', 'lashline', 'flick', 'brow',
             'glassrim', 'glassarm', 'glassbridge', 'cline', 'ctick', 'lapel')          # (the judge's: thin lines)
     TARGET = dict(torso=2600, beard=1300, headm=3000, hair=1600, plait=700, plaitend=120, brim=800, crown=600, cuff=180, eyeball=360, lidup=420, lidlo=420, iris=260, pupil=200,
-                  moustache=700, scuff=120, capcrown=1000, beaniecrown=1000, hairtop=1200)          # (the outfits' cap and bobble hat, Rosie's hair under them: export_outfits)
+                  moustache=700, scuff=120, capcrown=1000, beaniecrown=1000, hairtop=1200,
+                  vhair=2600, bun=500, skirt=1800, apskirt=700, petti=400)          # (Mrs Potts': her curls, her skirt, the apron's, the petticoat's edge)          # (the outfits' cap and bobble hat, Rosie's hair under them: export_outfits)
     total = 0
     for rec in meshes:
         o, me, n = rec; k = o.name.split('.')[0]
@@ -341,7 +350,8 @@ for look in looks:
     bake(look, root, 0, info)
 # the farmers (Arthur, Rosie) in farmer.glb; the show judge ('j') in his own judge.glb + judge.json (same layout, loaded
 # only for a show day: farmer.js addLook)
-for fname, group in (('farmer', [k for k in looks if k != 'j']), ('judge', [k for k in looks if k == 'j'])):
+VIL = [k for k in looks if FM.LOOKS[k].get('villager')]          # (the villagers, Mrs Potts first: villager.glb + villager.json, loaded when one comes)
+for fname, group in (('farmer', [k for k in looks if k != 'j' and k not in VIL]), ('judge', [k for k in looks if k == 'j']), ('villager', VIL)):
     if not group: continue
     write(os.path.join(OUT, fname + '.glb'), group)
     plaid = {k: [FM.LOOKS[k]['shirt'][i] for i in range(3)] for k in group}

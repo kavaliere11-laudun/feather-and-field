@@ -1088,6 +1088,25 @@ export class GameUI {
     if (!list.length) b.append(el('p', 'gtext', this.t('ord_none')));
     const next = g.orderNextIn(); if (next > 0 && list.length < g.ordersMost()) b.append(el('p', 'gnote gcenter', this.t('ord_next', { t: this.dur(next) })));
   }
+  // ---- a visitor at the farm stall (farm moments, 21 Nov 2026): who, what she'd like and how much of it you have, the pay
+  // (double), how long she can wait; Give her it (only when you have it all; else how many more are needed: no button that
+  // can't do anything), Not today
+  visitCard(m, h = {}) {
+    const g = this.g, fmt = n => n.toLocaleString(g.locale()), icon = { eggs: '🥚', fish: '🐟', honey: '🍯', grain: '🌾', ...Object.fromEntries(CROP_IDS.map(k => [k, CROPS[k].e])) }[m.item] || '🧺';
+    const b = this.open('visit', g.villagerEmoji(m.who) + ' ' + g.villagerName(m.who) + ' · ' + this.t('vil_' + m.who + '_r'));
+    this.bird = null;
+    const have = g.storeOf(m.item), P = g.visitPay(m), c = el('div', 'gcard gvisit');
+    c.append(el('p', 'gtext', this.t('vis_ask')));
+    const row = el('div', 'gorder-i'), bar = el('div', 'gbar-xp'), fill = el('div', 'gbar-fill'); fill.style.width = Math.round(100 * Math.min(1, have / m.n)) + '%'; bar.append(fill);
+    row.append(el('span', 'gtext gvisit-i', icon + ' ' + this.t('ord_' + m.item) + ' × ' + fmt(m.n) + ' · ' + this.t('vis_have', { n: fmt(have) })), bar);
+    c.append(row, el('p', 'gnote', this.t('vis_pay', { c: fmt(P.coins), x: P.xp })), el('p', 'gnote gvisit-t', this.t('vis_wait', { t: this.dur(m.until - Date.now()) })));
+    b.append(c);
+    if (have < m.n) b.append(el('p', 'gtext gfound gvisit-need', this.t('vis_need', { n: fmt(m.n - have), i: icon })));
+    const btns = el('div', 'gvisit-b');
+    if (have >= m.n) { const go = el('button', 'gbtn gsmallbtn', '🧺 ' + this.t('vis_give', { n: fmt(m.n), i: icon })); go.type = 'button'; go.dataset.visit = 'give'; go.addEventListener('click', () => h.give && h.give()); btns.append(go); }
+    const no = el('button', 'gbtn galt gsmallbtn gorder-no', this.t('vis_no')); no.type = 'button'; no.dataset.visit = 'no'; no.addEventListener('click', () => h.no && h.no()); btns.append(no);
+    b.append(btns);
+  }
   // ---- show day: the results are in; watch the judging (onWatch: the scene) or just the results (onSkip)
   showDayCard(show, onWatch, onSkip) {
     const body = this.open('showday', '🎀 ' + this.t('showday_title'));
