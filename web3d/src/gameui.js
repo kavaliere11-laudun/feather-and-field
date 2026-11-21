@@ -3,7 +3,7 @@
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { BAG_ART } from './bagart.js';
 import { READY, LANG_NAME } from './lang.js';
-import { BAGS, TRIO_LINES, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
+import { BAGS, TRIO_LINES, SHELF, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -621,6 +621,12 @@ export class GameUI {
       c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
       body.append(c);
     }
+    for (const b of this.g.shelfNew(L, from)) {        // (a breed come onto the collector's shelf: a look at it in the Book)
+      const c = el('div', 'gcard gnewcoop gshelfnew'), hd = el('div', 'gcard-h'); c.dataset.shelf = b;
+      hd.append(this.breedPic(b), el('span', 'gcard-t', this.t('shelf_new', { breed: this.g.bookName(b) }))); c.append(hd);
+      if (this.o.shelf) { const go = el('button', 'gbtn galt gsmallbtn', this.t('shelf_see')); go.type = 'button'; go.dataset.shelfsee = b; go.addEventListener('click', () => { this.close(); this.o.shelf(); }); c.append(go); }
+      body.append(c);
+    }
     const decs = Object.keys(DECOR).filter(id => since(DECOR[id].level));      // (a decoration to buy now: the shop, the coins at the top)
     if (decs.length) { const c = el('div', 'gcard gdecnew'), hd = el('div', 'gcard-h'), ic = el('img', 'gdec-i'); ic.alt = ''; ic.src = 'decor/' + decs[0] + '.webp' + (this.o.bust || ''); hd.append(ic, el('span', 'gcard-t', this.t('dec_new', { names: decs.map(id => this.g.decorName(id)).join(', ') }))); c.append(hd, el('p', 'gnote', this.t('dec_new_where'))); body.append(c); }
     for (const id of Object.keys(ANIMALS).filter(k => since(ANIMALS[k].level) && !this.g.animalOwned(k))) {      // (an animal to buy now: the shop's Animals shelf)
@@ -839,8 +845,10 @@ export class GameUI {
     {
       const tabs = el('div', 'gbooktabs'), tab = (k, label, dot) => { const t = el('button', 'gbtn gsmallbtn' + ((this.bookTab || 'birds') === k ? ' gon' : ' galt'), label); t.type = 'button'; t.dataset.tab = k; if (dot) { const d = el('span', 'gdot'); t.append(d); } t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
       tabs.append(tab('birds', '🐔 ' + this.t('book_tab_birds')));
+      if (g.level >= PAY_LEVEL) tabs.append(tab('shelf', '✨ ' + this.t('book_tab_shelf')));      // (the collector's shelf, 21 Nov 2026: from level 3, its first breed at 8)
       if (g.fishOpen('pond')) tabs.append(tab('fish', '🐟 ' + this.t('book_tab_fish')));
       tabs.append(tab('miles', '🏅 ' + this.t('mile_tab'), g.milesReady() > 0)); b.append(tabs);
+      if (this.bookTab === 'shelf' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); return; }
       if (this.bookTab === 'fish' && g.fishOpen('pond')) { this.fishPages(b); return; }
       if (this.bookTab === 'miles') { this.milePages(b, h); return; }
     }
@@ -901,6 +909,36 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
     b.append(el('p', 'gnote gcenter', this.t('book_more')));
+  }
+  // ---- the collector's shelf (21 Nov 2026, Audrey: "The collector's shelf"; simple and visual): its breeds side by side, each
+  // its picture (the Book's: the trio as it is), its name, and from its level the coins (greyed when there aren't enough:
+  // h.shelf(breed)) and, in the app, Apple's price (h.got(breed) once bought); had: on the farm, or its coop to place. Before
+  // its level: the level and no button (her rule: never a button that can't do anything). Its eggs and coop: a tap on it
+  shelfPages(b, h) {
+    const g = this.g, PAY = this.payOn(), fmt = n => n.toLocaleString(g.locale());
+    b.append(el('p', 'gsub gshelf-h', this.t('shelf_t')), el('p', 'gnote gshelf-l', this.t('shelf_l')));
+    const tiles = el('div', 'gcoop-tiles gcshelf'), notes = el('div', 'gcoop-notes');      // (gcshelf: the milestones' keepsake shelf has .gshelf)
+    for (const S of g.shelfList()) {
+      const name = g.bookName(S.breed), c = el('div', 'gcard gcoop-tile gshelf-t' + (S.open || S.had ? '' : ' glocked')), pic = el('button', 'gtheme-pic'), img = el('img'), side = el('div', 'gcoop-ts');
+      c.dataset.shelf = S.breed; pic.type = 'button'; img.alt = name; img.decoding = 'async'; img.src = 'book/' + S.breed + '.webp' + (this.o.bust || ''); pic.append(img);
+      const m = el('p', 'gnote gcoop-more', this.t('egg_' + g.baseOf(S.breed)) + ' · ' + this.t('book_coop', { coop: g.coopName({ breed: S.breed, name: '' }) })); m.hidden = true;
+      pic.addEventListener('click', () => { const was = m.hidden; for (const x of notes.querySelectorAll('.gcoop-more')) x.hidden = true; m.hidden = !was; });
+      side.append(el('p', 'gtext gtheme-n', name));
+      if (S.placed) side.append(el('p', 'gcoop-fx', '✓ ' + this.t('shelf_had')));
+      else if (S.had) { const go = el('button', 'gbtn gsmallbtn', this.t('place_btn')); go.type = 'button'; go.dataset.place = S.breed; go.addEventListener('click', () => h.place && h.place(S.breed)); side.append(go); }
+      else if (!S.open) side.append(el('p', 'gnote gshelf-lv', '🔒 ' + this.t('shelf_lv', { n: S.level })));
+      else {
+        const btns = el('div', 'gtheme-b'), broke = g.data.coins < S.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), '🪙 ' + fmt(S.price));
+        bt.type = 'button'; bt.disabled = broke; bt.dataset.shelfgo = 'coins'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(S.price) }));
+        bt.addEventListener('click', () => { if (!bt.disabled && h.shelf) h.shelf(S.breed); }); btns.append(bt);
+        const pr = IAP_DEMO ? this.money(SHELF[S.breed].money) : PAY ? PAY.price('shelf:' + S.breed) : null;      // (in the app: for money too, at Apple's price in the player's own money)
+        if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.shelfgo = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr }));
+          pb.addEventListener('click', () => this.payFor('shelf:' + S.breed, { what: name, price: SHELF[S.breed].money, done: () => { if (h.got) h.got(S.breed); else this.thanksDemo(this.t('shelf_paid', { breed: name })); } })); btns.append(pb); }
+        side.append(btns);
+      }
+      c.append(pic, side); tiles.append(c); notes.append(m);
+    }
+    b.append(tiles, notes, el('p', 'gnote gcenter gshelf-more', this.t('shelf_more')));
   }
   // ---- the Book's fish pages (release 5): the pond's seven and the river's, each its picture (dark till you've caught one),
   // its name, how rare it is, how many you've caught and your biggest (or where and from what level), its sizes, its price

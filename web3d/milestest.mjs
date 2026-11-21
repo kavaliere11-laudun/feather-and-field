@@ -22,7 +22,7 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1); a
 // ---- the Book: a Milestones tab, 15 of them, the secret one unnamed
 await p.evaluate(() => window.__farm.bookOpen('miles')); await run(0.2);
 let M = await p.evaluate(() => ({ tabs: [...document.querySelectorAll('.gbooktabs [data-tab]')].map(x => x.dataset.tab), cards: [...document.querySelectorAll('.gmile')].map(c => ({ id: c.dataset.mile, t: c.querySelector('.gcard-t').textContent, stars: c.querySelectorAll('.gmile-stars span').length, on: c.querySelectorAll('.gmile-stars .on').length, go: !!c.querySelector('[data-collect]'), note: c.querySelector('.gnote').textContent })), keeps: document.querySelectorAll('.gkeep').length, on: document.querySelectorAll('.gkeep.on').length, sub: document.querySelector('.gsheet .gsub').textContent }));
-ok('the Book: tabs for the breeds, the fish and the milestones', M.tabs.join() === 'birds,fish,miles', M.tabs);
+ok('the Book: tabs for the breeds, the collector\'s shelf, the fish and the milestones', M.tabs.join() === 'birds,shelf,fish,miles', M.tabs);
 ok('15 milestones, none to collect on a new farm; a shelf of 15 empty places', M.cards.length === 15 && M.cards.every(c => !c.go && c.on === 0) && M.keeps === 15 && M.on === 0, M);
 const sec = M.cards.find(c => c.id === 'love'), coinsCard = M.cards.find(c => c.id === 'coins');
 ok('the secret one: "???", nothing about a salmon or a frog', sec && sec.t === '???' && !/salmon|saumon|frog|grenouille/i.test(sec.note), sec);

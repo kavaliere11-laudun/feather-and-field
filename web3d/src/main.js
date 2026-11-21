@@ -34,7 +34,7 @@ import { GROOM, SHOWS, FIXED, GARDEN, landLevel, CROPS, CROP_IDS, xpFor, Game, N
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
-import { Store, productOf, setOf, bagOf, trioOf, TRIO_ALL, SHELVES } from './store.js';
+import { Store, productOf, setOf, bagOf, trioOf, shelfOf, TRIO_ALL, SHELVES } from './store.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS, MOMENTS } from './game.js';
@@ -87,8 +87,8 @@ function paidTrios(list) {
   hint(names.length > 3 ? game.t('pay_trios', { n: list.length }) : game.t('pay_trio', { names: game.andList(names) })); if (gameUI) gameUI.refresh();      // (15 Nov 2026: several trios at once: not all their names in one word)
 }
 // the shop's other things for real money (store.js; gameui.js o.pay): a bag of coins ('bag:purse'), a rare trio
-// ('trio:sil_paint'), the four ('trios'), the Pantry's bigger shelves ('shelves')
-const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : null;
+// ('trio:sil_paint'), the four ('trios'), the Pantry's bigger shelves ('shelves'), a collector's shelf breed ('shelf:sil_buff')
+const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : k.startsWith('shelf:') ? shelfOf(k.slice(6)) : null;
 const payUI = store && store.on ? {
   price: k => store.priceOf(payId(k)),
   buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { payEnd(); if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
@@ -591,7 +591,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, pay: payUI, busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, pay: payUI, shelf: () => shelfSheet(), busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -7828,12 +7828,25 @@ function pantrySheet(note) {
 function bookSheet(fromButton = false) {
   holdBird(null); henOff();
   if (fromButton && (game.waitingCoops().length || game.rareWaiting().length)) gameUI.bookTab = 'birds';      // (something waiting there: the breeds first)
-  gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); }, coops: () => coopsSheet(), mile: id => {      // (a milestone's step collected: its coins, XP, and at the last its keepsake)
+  gameUI.bookSheet({ egg: EGG_COLOUR, place: b => { gameUI.close(); startPlace(b); }, coops: () => coopsSheet(), shelf: b => shelfBuy(b), got: b => shelfGot(b, null), mile: id => {      // (a milestone's step collected: its coins, XP, and at the last its keepsake)
     const r = game.claimMile(id); if (!r) return;
     hint(game.t(r.keepsake ? 'mile_keep' : 'mile_got', { name: game.t('mile_' + id), c: r.coins.toLocaleString(game.locale()), xp: r.xp }));
     gameUI.refresh(); gameUI.bumpCoins(); bookSheet();
   } });
 }
+// ---- the collector's shelf (21 Nov 2026; game.js SHELF, gameui.js shelfPages): a breed had with coins, or with money (Apple's
+// record says so: store.js), said, and its coop straight to place (where its Deluxe garden fits; nowhere yet: it waits in
+// the Book, said)
+function shelfBuy(b) {
+  const r = game.buyShelf(b); if (!r || r.broke) return;
+  shelfGot(b, r.price); gameUI.bumpCoins();
+}
+function shelfGot(b, price) {
+  gameUI.close(); gameUI.refresh();
+  hint(price === null ? game.t('shelf_paid', { breed: game.bookName(b) }) : game.t('shelf_got', { breed: game.bookName(b), c: price.toLocaleString(game.locale()) }));
+  setTimeout(() => startPlace(b), 300);
+}
+function shelfSheet() { gameUI.bookTab = 'shelf'; bookSheet(); }
 // whether a ray meets the farmhouse (its model's box, where the village has it)
 let HOUSE_HIT = null;
 function farmhouseAt(r) {

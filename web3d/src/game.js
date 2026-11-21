@@ -271,7 +271,7 @@ export const TEXT = {
     fish_netted: 'Into the keep net 🧺 · worth {c} coins', catch_title: 'Your keep net', catch_sub: 'Sell your catch, or keep some in the fish box for the villagers’ orders.', catch_keep: 'Keep', catch_kept: 'Kept ✓', catch_sell: 'Sell · +{c} coins', catch_sell0: 'Put them in the fish box', catch_box: 'Fish box: {n} of {max}', catch_box_note: 'Fish in the box go to the villagers’ orders that ask for fish.', catch_box_sell: 'Sell the box · +{c} coins', catch_sold: '{n} fish sold · +{c} coins', catch_sold1: '{n} fish sold · +{c} coins', catch_boxed: '{n} in the fish box', catch_open: '🧺 Keep net: {n} to sell', catch_none: 'Your keep net is empty.', fish_tin_tomorrow: 'One tin a day: another tomorrow', book_fish_am: 'Bites early in the morning (6 to 10)', book_fish_noon: 'Bites around midday (11 to 3)', book_fish_eve: 'Bites in the evening (from 5)', book_fish_legend: 'Only once every other fish here is caught',
     fish_minnow: 'Minnow', fish_gudgeon: 'Gudgeon', fish_dace: 'Dace', fish_chub: 'Chub', fish_brown_trout: 'Brown trout', fish_grayling: 'Grayling', fish_old_snapjaw: 'Old Snapjaw',
     fish_new: 'Fishing at the pond: tap its dock', fish_new_river: 'Fishing in the river: tap its footbridge', fish_show_river: 'Show me the river',
-    book_tab_birds: 'Breeds', book_tab_fish: 'Fish', book_fish_found: '{n} of {all} fish caught', book_fish_pond: 'The pond', book_fish_river: 'The river',
+    book_tab_birds: 'Breeds', book_tab_shelf: 'Shelf', shelf_t: 'The collector’s shelf', shelf_l: 'Special breeds, yours for good with their own coop.', shelf_lv: 'Level {n}', shelf_had: 'On your farm', shelf_more: 'More breeds are coming to the shelf.', shelf_new: 'On the collector’s shelf: {breed}', shelf_see: 'See the shelf', shelf_got: '✨ {breed}: yours for good · −{c} coins. Place their coop!', shelf_paid: '✨ {breed}: yours for good. Thank you! Place their coop!', book_tab_fish: 'Fish', book_fish_found: '{n} of {all} fish caught', book_fish_pond: 'The pond', book_fish_river: 'The river',
     fish_rare0: 'Common', fish_rare1: '✦ Rare', fish_rare2: '✦✦ Legendary', book_fish_caught: 'Caught {n} times · your biggest {cm} cm', book_fish_caught1: 'Caught once · {cm} cm',
     book_fish_not: 'Not caught yet', book_fish_level: 'Fishing here opens at level {n}', book_fish_size: '{a} to {b} cm', book_fish_price: 'about {c} coins', book_fish_photo: 'its photo {c} coins', fish_going_river: '{farmer} is off to the footbridge',
     river_title: 'Fishing in the river', river_body: 'Minnows, gudgeon, dace and chub live in the river, and rarer fish that bite only at certain hours. Your catch goes into a keep net: sell it when you stop, or keep some for the villagers’ orders.', fish_show: 'Show me the pond',
@@ -648,7 +648,7 @@ export const TEXT = {
     fish_netted: 'Dans la bourriche 🧺 · vaut {c} pièces', catch_title: 'Votre bourriche', catch_sub: 'Vendez votre pêche, ou gardez-en dans le vivier pour les commandes du village.', catch_keep: 'Garder', catch_kept: 'Gardé ✓', catch_sell: 'Vendre · +{c} pièces', catch_sell0: 'Mettre dans le vivier', catch_box: 'Vivier\u00a0: {n} sur {max}', catch_box_note: 'Les poissons du vivier partent dans les commandes du village qui en demandent.', catch_box_sell: 'Vendre le vivier · +{c} pièces', catch_sold: '{n} poissons vendus · +{c} pièces', catch_sold1: '{n} poisson vendu · +{c} pièces', catch_boxed: '{n} dans le vivier', catch_open: '🧺 Bourriche\u00a0: {n} à vendre', catch_none: 'Votre bourriche est vide.', fish_tin_tomorrow: 'Une boîte par jour\u00a0: une autre demain', book_fish_am: 'Mord tôt le matin (6 h à 10 h)', book_fish_noon: 'Mord vers midi (11 h à 15 h)', book_fish_eve: 'Mord le soir (dès 17 h)', book_fish_legend: 'Seulement quand tous les autres poissons d’ici sont pris',
     fish_minnow: 'Vairon', fish_gudgeon: 'Goujon', fish_dace: 'Vandoise', fish_chub: 'Chevesne', fish_brown_trout: 'Truite fario', fish_grayling: 'Ombre', fish_old_snapjaw: 'Vieux Claquemâchoire',
     fish_new: 'La pêche à l’étang : touchez son ponton', fish_new_river: 'La pêche à la rivière : touchez sa passerelle', fish_show_river: 'Voir la rivière',
-    book_tab_birds: 'Races', book_tab_fish: 'Poissons', book_fish_found: '{n} poissons pêchés sur {all}', book_fish_pond: 'L’étang', book_fish_river: 'La rivière',
+    book_tab_birds: 'Races', book_tab_shelf: 'Vitrine', shelf_t: 'La vitrine du collectionneur', shelf_l: 'Des races à part, à vous pour toujours avec leur poulailler.', shelf_lv: 'Niveau {n}', shelf_had: 'Dans votre ferme', shelf_more: 'D’autres races arrivent bientôt dans la vitrine.', shelf_new: 'Dans la vitrine du collectionneur\u00a0: {breed}', shelf_see: 'Voir la vitrine', shelf_got: '✨ {breed}\u00a0: à vous pour toujours · −{c} pièces. Installez leur poulailler\u00a0!', shelf_paid: '✨ {breed}\u00a0: à vous pour toujours. Merci\u00a0! Installez leur poulailler\u00a0!', book_tab_fish: 'Poissons', book_fish_found: '{n} poissons pêchés sur {all}', book_fish_pond: 'L’étang', book_fish_river: 'La rivière',
     fish_rare0: 'Commun', fish_rare1: '✦ Rare', fish_rare2: '✦✦ Légendaire', book_fish_caught: 'Pêché {n} fois · votre plus gros : {cm} cm', book_fish_caught1: 'Pêché une fois · {cm} cm',
     book_fish_not: 'Pas encore pêché', book_fish_level: 'La pêche ici ouvre au niveau {n}', book_fish_size: 'De {a} à {b} cm', book_fish_price: 'environ {c} pièces', book_fish_photo: 'sa photo {c} pièces', fish_going_river: '{farmer} part à la passerelle',
     river_title: 'La pêche à la rivière', river_body: 'Vairons, goujons, vandoises et chevesnes vivent dans la rivière, et des poissons plus rares qui ne mordent qu’à certaines heures. Votre pêche va dans une bourriche\u00a0: vendez-la en partant, ou gardez-en pour les commandes du village.', fish_show: 'Voir l’étang',
@@ -947,9 +947,16 @@ export const HOME_COOP = { x: -30, z: -13.75, deg: 90 };      // (13 Nov 2026: w
 // come, "we might have too many silkies"; then her own order: "1 Rhode Island Red, 3 Buff Orpington, 5 White Silkie, 7 Ayam
 // Cemani, 10 Call ducks, 12 Buff Silkie, 15 Cream Legbar, 18 Polish, 21 Partridge Silkie, 24 Light Brahma, 27 Black Silkie,
 // 30 Peacock"; the call ducks and the peacock to come)
-// (21 Nov 2026: the Speckled Sussex at 12, Audrey's first new free breed; the Buff Silkies still come at 12 too until the
-// collector's shelf is built, her choice "Both arrive", then they move to it)
-export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sus: 12, sil_buff: 12, leg: 15, pol: 18, sil_partridge: 21, bra: 24, sil_black: 27, pea: 30 };
+// (21 Nov 2026: the Speckled Sussex at 12, Audrey's first new free breed. The same day the collector's shelf (SHELF, her
+// choice): the Buff and Partridge Silkies leave the level path for it; a farm that had already reached 12 or 21 keeps them)
+export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sus: 12, leg: 15, pol: 18, bra: 24, sil_black: 27, pea: 30 };
+// the collector's shelf (21 Nov 2026, Audrey: "The collector's shelf", her prices "As proposed"): breeds had whenever the
+// player likes from their level, for coins (every breed can be had without real money) or at Apple's price in the app
+// (money: £2.99 a trio); each a forever trio with its own coop, as a level's. `came`: the level it came at on the level
+// path before (a farm from before that had reached it keeps the breed, free). The Araucana, the Cochin and the Polish's
+// new colours are to join it
+export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 } };
+export const SHELF_IDS = Object.keys(SHELF);
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
 const breedCame = b => Math.min(BREED_LEVEL[b] ?? Infinity, BREED_LEVEL_29OCT[b] ?? Infinity);
@@ -1451,6 +1458,12 @@ export function checkFarm(d, now = Date.now()) {
   const land = Array.isArray(d.land) ? d.land : [];
   out.land = Array.from({ length: Math.max(1, Math.min(land.length, landMost(levelOf(out.xp)), FIELDS)) }, (_, i) => i);
   out.lvSeen = int(d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
+  // the collector's shelf's breeds had (bought with coins or money, in the order bought; each from its level); a farm from
+  // before the shelf (no shelfV): the ones it had already come to on the level path, or whose coop it has, kept, free
+  const lvNow = levelOf(out.xp);
+  let shelf = Array.isArray(d.shelf) ? d.shelf.filter((b, i, a) => typeof b === 'string' && SHELF[b] && a.indexOf(b) === i && lvNow >= SHELF[b].level) : [];
+  if (d.shelfV !== 1) shelf = shelf.concat(SHELF_IDS.filter(b => !shelf.includes(b) && (lvNow >= SHELF[b].came || (Array.isArray(d.coops) && d.coops.some(c => c && c.breed === b)))));
+  out.shelf = shelf; out.shelfV = 1;
   out.coops = [];
   const seen = new Set();
   const themes = Array.isArray(d.themes) ? d.themes.filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i && Object.keys(THEMES).some(t => THEMES[t].breeds.some(b => x === t + '_' + b))) : [];      // (the themed buildings owned: real ones, once each)
@@ -1460,7 +1473,7 @@ export function checkFarm(d, now = Date.now()) {
   const dresses = Array.isArray(d.dresses) ? d.dresses.filter((x, i, a) => typeof x === 'string' && DRESSES[x] && a.indexOf(x) === i) : [];       // (the seasonal dresses owned: known ones, once each)
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed] || levelOf(out.xp) < (BREED_INFO[c.breed].rare ? breedCame('sil') : breedCame(c.breed)) || out.coops.some(o => o.breed === c.breed)) continue;      // (a breed's coop once it's come (by this order or the one before), one each; a rare colour's once the Silkies have)
+    if (!BREED_INFO[c.breed] || (SHELF[c.breed] ? !shelf.includes(c.breed) : levelOf(out.xp) < (BREED_INFO[c.breed].rare ? breedCame('sil') : breedCame(c.breed))) || out.coops.some(o => o.breed === c.breed)) continue;      // (a shelf breed's: once had from the shelf)      // (a breed's coop once it's come (by this order or the one before), one each; a rare colour's once the Silkies have)
     seen.add(c.id);
     // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
@@ -1822,7 +1835,18 @@ export class Game {
   }
   lookName(c) { return this.t('look_' + COOP_LOOKS[Math.max(0, Math.min(4, c.tier))]); }
   // ---- new breeds: the coops waiting to be placed (their level come, none yet on the farm), the next to come
-  waitingCoops() { return Object.keys(BREED_LEVEL).filter(b => this.level >= BREED_LEVEL[b] && !this.data.coops.some(c => c.breed === b)).sort((a, b) => BREED_LEVEL[a] - BREED_LEVEL[b]); }
+  waitingCoops() { const lv = b => BREED_LEVEL[b] ?? SHELF[b].level; return [...Object.keys(BREED_LEVEL).filter(b => this.level >= BREED_LEVEL[b]), ...this.shelfHad()].filter(b => !this.data.coops.some(c => c.breed === b)).sort((a, b) => lv(a) - lv(b)); }      // (a shelf breed's too, once had)
+  // ---- the collector's shelf (21 Nov 2026): the breeds had from it; each with its level, its price, whether it's had (and its
+  // coop on the farm), whether its level has come; bought with coins (Apple's purchases: setPaid)
+  shelfHad() { return (this.data.shelf || []).filter(b => SHELF[b]); }
+  shelfList() { return SHELF_IDS.map(b => ({ breed: b, level: SHELF[b].level, price: SHELF[b].price, had: this.shelfHad().includes(b), placed: this.data.coops.some(c => c.breed === b), open: this.level >= SHELF[b].level })); }
+  shelfNew(L, from) { return SHELF_IDS.filter(b => SHELF[b].level > from && SHELF[b].level <= L && !this.shelfHad().includes(b)); }      // (come onto the shelf with these levels: the level card says so)
+  buyShelf(b) {
+    const S = SHELF[b], d = this.data; if (!S || this.level < S.level || this.shelfHad().includes(b)) return null;
+    if (d.coins < S.price) return { broke: true, price: S.price };
+    d.coins -= S.price; (d.shelf = d.shelf || []).push(b);
+    this.save(); return { price: S.price };
+  }
   nextBreed() { const b = Object.keys(BREED_LEVEL).filter(k => BREED_LEVEL[k] > this.level).sort((a, c) => BREED_LEVEL[a] - BREED_LEVEL[c])[0]; return b ? { breed: b, level: BREED_LEVEL[b], breeds: Object.keys(BREED_LEVEL).filter(k => BREED_LEVEL[k] === BREED_LEVEL[b]) } : null; }      // (breeds: all that come at that level: the Sussex and the Buff Silkies at 12)
   newAt(L, from) { return Object.keys(BREED_LEVEL).filter(b => BREED_LEVEL[b] > from && BREED_LEVEL[b] <= L && !this.data.coops.some(c => c.breed === b)); }
   // ---- the Breed Book (release 1 step 8): a page for each breed in level order, found once its coop is on the farm (its
@@ -1831,16 +1855,17 @@ export class Game {
   // (a breed or colour that no longer comes (the Blue and Grey Silkies, the Red: 30 Oct 2026) keeps its page on a farm that has
   // it, at its old place in the order)
   bookPages() {
-    const has = b => this.data.coops.some(c => c.breed === b) || this.basket().some(x => x.breed === b);
+    const has = b => this.data.coops.some(c => c.breed === b) || this.basket().some(x => x.breed === b) || this.shelfHad().includes(b);      // (a shelf breed: its page once had)
     const lv = b => BREED_LEVEL[b] ?? BREED_LEVEL_29OCT[b];
     const breeds = [...new Set([...Object.keys(BREED_LEVEL), ...Object.keys(BREED_LEVEL_29OCT)])].filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));      // (the call ducks' too)
+    const from = [...breeds, ...SHELF_IDS.filter(b => !breeds.includes(b))].sort((a, b) => lv(a) - lv(b));      // (who a rare colour hatches from: the shelf's breeds too, had or not, 21 Nov 2026)
     return breeds.map(breed => {
       const coop = this.data.coops.find(c => c.breed === breed);
       const names = coop ? this.birdsIn(coop.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name) : [];
-      return { breed, base: baseBreed(breed), level: lv(breed), found: !!coop, names, waiting: !coop && !!BREED_LEVEL[breed] && this.level >= BREED_LEVEL[breed], price: EGG_PRICE[baseBreed(breed)] || 6 };
-    }).concat(RARE_LINES.filter(l => breeds.some(b => RARE_FROM[b] === l) || has(l)).map(breed => {      // (the rare colours: from breeding; found once one's yours)
+      return { breed, base: baseBreed(breed), level: lv(breed), found: !!coop, names, waiting: !coop && ((!!BREED_LEVEL[breed] && this.level >= BREED_LEVEL[breed]) || this.shelfHad().includes(breed)), price: EGG_PRICE[baseBreed(breed)] || 6 };
+    }).concat(RARE_LINES.filter(l => from.some(b => RARE_FROM[b] === l) || has(l)).map(breed => {      // (the rare colours: from breeding; found once one's yours)
       const coop = this.data.coops.find(c => c.breed === breed), mine = [...(coop ? this.birdsIn(coop.id) : []), ...this.basket().filter(b => b.breed === breed)];
-      return { breed, base: 'sil', rare: true, from: breeds.filter(k => RARE_FROM[k] === breed), found: mine.length > 0, names: mine.sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name), waiting: false, price: EGG_PRICE.sil };
+      return { breed, base: 'sil', rare: true, from: from.filter(k => RARE_FROM[k] === breed), found: mine.length > 0, names: mine.sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name), waiting: false, price: EGG_PRICE.sil };
     }));
   }
   bookName(b) { return this.breedName(b); }
@@ -2618,13 +2643,14 @@ export class Game {
   // elsewhere) goes back to its own look. Returns the coops put back (their ids), for the farm to redraw
   setPaid(keys, o = {}) {
     const real = [...new Set((Array.isArray(keys) ? keys : []).filter(x => typeof x === 'string' && Object.keys(THEMES).some(t => THEMES[t].breeds.some(b => x === t + '_' + b))))].sort();
-    this.paidNow = { keys: real, shelves: o.shelves === true, trios: TRIO_LINES.filter(l => Array.isArray(o.trios) && o.trios.includes(l)) };      // (Apple's last answer: a farm opened or started again after it is put right by it too)
+    this.paidNow = { keys: real, shelves: o.shelves === true, trios: TRIO_LINES.filter(l => Array.isArray(o.trios) && o.trios.includes(l)), breeds: SHELF_IDS.filter(b => Array.isArray(o.breeds) && o.breeds.includes(b)) };      // (Apple's last answer: a farm opened or started again after it is put right by it too)
     return this.applyPaid();
   }
   applyPaid() {
     if (!this.data || !this.paidNow) return [];
     const r = putPaid(this.data, this.paidNow); let changed = r.changed;
     for (const l of this.paidNow.trios) if (this.adoptTrio(l)) changed = true;
+    for (const b of this.paidNow.breeds || []) if (this.level >= SHELF[b].level && !this.shelfHad().includes(b)) { (this.data.shelf = this.data.shelf || []).push(b); changed = true; }      // (a shelf breed bought with money: had for good, as one bought with coins (a kind game: never taken back); from its level, so on a younger farm once it gets there)
     if (changed) this.save();
     return r.back;
   }
@@ -2805,7 +2831,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = langOk(lang);
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, coops: [], birds: [], cleared: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, shelf: [], shelfV: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
