@@ -47,9 +47,10 @@ BREEDS = {
     'pea': dict(scale=1.0, peafowl=True, shank=0.17, lift=0.0, legs='#a99a8a', beak='#8f8578', eye='#2a1d16', face='#f3f0e8', lid='#e9e5dc',
                 plum='#1f45a8', wing='#c9b08a', tailc='#2b6a36', plum_h='#8a7b6a', wing_h='#7f705f', tailc_h='#6e5f4f'),
     # (15 Nov 2026, new breeds being designed with Audrey from her photos; not in the game's flock yet: mock-ups only)
+    # (21 Nov 2026, Audrey: "the cochin should be smaller" than the Brahma: scale 0.98, was 1.1: about a ninth smaller)
     # the Buff Cochin: a great round ball of soft golden feathers, low to the ground, a deep full breast, a huge cushion that
     # swallows a tiny tail, fluff down to the toes so the legs hardly show, a small head with a single comb
-    'coc': dict(scale=1.1, body=(1.3, 1.06, 1.02), r=0.133, comb=0.75, head_e=(1.05, 0.88, 0.9), tail='short', shank=0.062, lift=0.0, feathered=True, thigh=1.3, cochin=True, cushion=True,
+    'coc': dict(scale=0.98, body=(1.3, 1.06, 1.02), r=0.133, comb=0.75, head_e=(1.05, 0.88, 0.9), tail='short', shank=0.062, lift=0.0, feathered=True, thigh=1.3, cochin=True, cushion=True,
                 head=(0.18, 0, 0.424), head_r=(0.176, 0, 0.458), head_s=0.9, tilt=-6, tail_up_h=4, tail_up=14, tail_len=0.55, tail_spread=0.5, sickle_len=0.36, saddle_len=1.25, wing_out=1.04,
                 legs='#efc24a', beak='#e6b85a', eye='#d9742a', combc='#d8352b', plum='#dfa24c', wing='#d6963f', tailc='#cf8f3e'),
     # the Light Sussex: a broad, deep, tidy hen, white with a black-striped neck and a black tail, pale legs, a single comb
