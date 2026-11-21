@@ -184,6 +184,12 @@ for n_, fn in (('box_pea', coops.box_pea), ('shed_pea', coops.shed_pea), ('cosy_
 assert coops.NESTS['house_pea'] == _keep, "the looks must keep the Garden Pavilion's nest"
 for t in (0, 1, 3, 4): one('pen_t%d_pea' % t, lambda t=t: coops.pen_tier(t, 'pea')); LOOKS.append('pen_t%d_pea' % t)
 for t in (0, 1): one('fence_t%d_pea' % t, lambda t=t: coops.fence_tier(t, bk='pea')); LOOKS.append('fence_t%d_pea' % t)
+# the Speckled Sussex's Village Cottage (21 Nov 2026): its five looks (Rustic box_sus, Mended shed_sus, Snug house_sus, Cosy
+# cosy_sus, Deluxe deluxe_sus) and its own gardens. (stylized/extras/export_sus_coop.py exports just these to splice in)
+BUDGET.update({'house_sus': 17000, 'box_sus': 15000, 'shed_sus': 16000, 'cosy_sus': 20000, 'deluxe_sus': 24000, 'pen_t0_sus': 4200, 'pen_t1_sus': 4600, 'pen_t3_sus': 9500, 'pen_t4_sus': 12500})
+_keep = dict(coops.NESTS['house_sus'])
+for look_, n_ in ((0, 'box_sus'), (1, 'shed_sus'), (3, 'cosy_sus'), (4, 'deluxe_sus')): one(n_, lambda look_=look_, n_=n_: coops.sussex(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_sus'] = dict(_keep)
+for t in (0, 1, 3, 4): one('pen_t%d_sus' % t, lambda t=t: coops.pen_tier(t, 'sus')); LOOKS.append('pen_t%d_sus' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

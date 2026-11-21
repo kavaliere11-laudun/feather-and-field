@@ -4,9 +4,9 @@
 import * as THREE from 'three';
 
 export const BREEDS = ['rir', 'orp', 'leg', 'bra', 'sil'];
-export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'pea', 'sil'];      // (the peafowl, 31 Oct: in the line-up)      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
+export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sus', 'pea', 'sil'];      // (the Speckled Sussex, 21 Nov 2026)      // (the peafowl, 31 Oct: in the line-up)      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
 export const SILKIE = ['white', 'black', 'blue', 'buff', 'partridge', 'grey', 'splash', 'cuckoo', 'red', 'paint', 'lavender'];
-export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', pea: 'Indian blue peafowl', sil: 'Silkie' };
+export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', sus: 'Speckled Sussex', pea: 'Indian blue peafowl', sil: 'Silkie' };
 const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
@@ -22,7 +22,7 @@ export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
 // roosters' the same (Audrey, 1 Nov: "Same walk for hens and roosters"): every grown bird's but the Silkies' (theirs as
 // they are, hidden in their fluff) and the chicks'; a hen's ankle just under her feathers, as a real hen's is
 const FOOT_Y = 0.025, ANKLE = 0.46, ankleY = hip => hip - ANKLE * (hip - FOOT_Y);
-export const bendsLegs = model => /^(rir|orp|leg|bra|pol|aya|pea)_[hr](_lo)?$/.test(model);
+export const bendsLegs = model => /^(rir|orp|leg|bra|pol|aya|sus|pea)_[hr](_lo)?$/.test(model);
 const isPea = model => /^pea_[hr]/.test(model);
 // a rig's bones, in order: every bird's, then the peacock's train's two (on the peahens too, unused: the same for both), then
 // the ankles and toes of the birds whose legs bend
@@ -107,6 +107,10 @@ const ADULT = {
   pol_r: { body: '#1b1a1f', top: '#232228', hackle: '#242329', saddle: '#232228', head: '#1d1c21', crest: '#f6f3ec', crestFront: [-0.1, 0.6], wing: '#1f1e24', prim: '#151419', tail: '#100f13' },
   aya_h: { body: '#141318', top: '#18171d', hackle: '#17161b', head: '#18171d', wing: '#15141a', prim: '#101014', tail: '#0d0c10', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
   aya_r: { body: '#121116', top: '#17161c', hackle: '#19181e', saddle: '#18171d', head: '#18171d', wing: '#141319', prim: '#0f0e13', tail: '#0c0b0f', sheen: '#3b5873', sheen2: '#4a4c88', tailSheen: '#36476e' },
+  // the Speckled Sussex (21 Nov 2026; Audrey's choice for level 12, "Speckled", from her photos): deep mahogany, every
+  // feather tipped white with a black bar behind the tip (pattern 'speckle'); the rooster darker, his tail green-black
+  sus_h: { body: '#7c3a1f', top: '#86411f', hackle: '#8c4522', head: '#8a4321', wing: '#743519', prim: '#2a1c16', tail: '#211815', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle' },
+  sus_r: { body: '#6a2e19', top: '#7a371c', hackle: '#96481f', saddle: '#8e431e', head: '#93461f', wing: '#65290f', prim: '#201612', tail: '#12100f', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle', tailSheen: '#2f7d58' },
   // the Indian blue peafowl (Audrey's photos, 31 Oct): the peacock's neck, head and breast shining cobalt blue, his back of
   // bronze-green scales, his wings barred buff and black, rusty flight feathers, a dark belly, his long green train with its
   // eyes (peacock: mode 9 on the train, birds' shader); the peahen grey-brown and scaled, her lower neck metallic green, her
@@ -137,6 +141,7 @@ const CHICK = {
   bra: { down: '#f0e8cc', top: '#e8e0c4', face: '#f5efd9', wing: '#d6d2c6' },
   pol: { down: '#2b2a30', top: '#2b2a30', face: '#ebe5d5', wing: '#25242a', leg: '#7a8090', beak: '#6a6670' },      // (dark down, a pale crest bump)
   aya: { down: '#1c1b21', face: '#232228', wing: '#18171d', leg: '#232228', beak: '#2c2a32' },
+  sus: { down: '#a8693a', top: '#8f5530', face: '#dcae78', wing: '#8a522c', stripe: '#4f2e19', pattern: 'chipmunk', leg: '#efd9c4', beak: '#e0c3a3' },      // (brown, striped down)
   pea: { down: '#b48a5c', top: '#9c7448', face: '#e8d3a8', wing: '#8f6a43', stripe: '#6a4a2c', pattern: 'chipmunk', leg: '#b8a898', beak: '#9a8f82' },      // (the peachicks: buff, striped: her photo)
 };
 const SIL_CHICK = {
@@ -145,7 +150,7 @@ const SIL_CHICK = {
   splash: { down: '#ebe9e3', spot: '#8a96a8', pattern: 'splash' }, cuckoo: { down: '#8e9095', spot: '#d8d8d4', pattern: 'splash' },
   red: { down: '#c56a33' }, paint: { down: '#f4f1e8', spot: '#2a2a30', pattern: 'paint' }, lavender: { down: '#c1bbcb' },
 };
-const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', pea: '#a99a8a', sil: '#5c5868' };
+const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sus: '#f0dccf', pea: '#a99a8a', sil: '#5c5868' };
 
 // ------------------------------------------------------------------ a little value noise for patterns (splashes, spots, mottling)
 function hash(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
@@ -405,7 +410,7 @@ const FUR = {
 // (the peafowl: sleek, glossy, no fluff over their feathers: Audrey, 31 Oct, "a weird blurry layer around his feathers")
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => (typeof globalThis !== 'undefined' && globalThis.__FF_MOCK && globalThis.__FF_MOCK.fur && !model.startsWith('chick') && globalThis.__FF_MOCK.fur[breed]) ? { ...FUR.hen, ...globalThis.__FF_MOCK.fur[breed], len: Object.fromEntries(Object.entries(globalThis.__FF_MOCK.fur[breed].len || {}).map(([k, v]) => [R[k], v])) } :      // (15 Nov 2026: a mock-up's fluff, by region name)
-  breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+  breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' || breed === 'sus' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;

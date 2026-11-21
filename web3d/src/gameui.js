@@ -822,7 +822,7 @@ export class GameUI {
       row.append(info, mv); b.append(row);
     }
     const nx = g.nextBreed();
-    b.append(el('p', 'gnote', nx ? this.t('coops_next', { n: nx.level, breed: g.breedName(nx.breed) }) : this.t('coops_all')));
+    b.append(el('p', 'gnote', nx ? this.t('coops_next', { n: nx.level, breed: nx.breeds.map(k => g.breedName(k)).join(', ') }) : this.t('coops_all')));
     if (h.book) { const bk = el('button', 'gbtn galt gbookbtn', this.t('book_btn')); bk.type = 'button'; bk.addEventListener('click', () => h.book()); b.append(bk); }
   }
 

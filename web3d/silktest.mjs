@@ -1,7 +1,8 @@
 // Release 2 step 1 (the Silkie colours by level; their order since 30 Oct 2026: White 5, Buff 12, Partridge 21, Black 27, no
 // Blue or Grey): node silktest.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402)
-// A farm at level 11: Your coops says what level 12 brings (the Buff Silkies). Level 12: its card says a new Silkie colour
-// has come ("New Silkie colour: Buff!"), "Place their coop now": a rustic Pagoda in buff with a buff trio, "Welcome, ...!";
+// A farm at level 11: Your coops says what level 12 brings (the Speckled Sussex and the Buff Silkies, since 21 Nov 2026). Level 12:
+// its card says a new Silkie colour has come ("New Silkie colour: Buff!"), "Place their coop now" (the Sussex's first), then from
+// Your coops the Buff Silkies': a rustic Pagoda in buff with a buff trio, "Welcome, ...!";
 // a buff hen's card says "Buff Silkie"; the Breed Book has sixteen pages, the Buff Silkies found with their names and
 // picture, the Black Silkies at level 27; a Silkies-only County show takes a buff Silkie; a reload keeps it all, unflagged;
 // the Partridge Silkies' coop at level 12 or the Buff Silkies twice, put in from outside: checked and flagged. A farm
@@ -32,7 +33,7 @@ const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.d
 const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: src/game.js, quicker at first since 7 Nov 2026)
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, waiting: g.waitingCoops().join(), coops: g.data.coops.map(c => c.breed).join(), birds: g.data.birds.length, card: f.gameUI().kind, edited: g.edited, move: f.move.state().on }; });
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
-const T = { next: fr ? /Au niveau 12 : Poule soie fauve/ : /At level 12: Buff Silkie/, col: fr ? /Nouvelle couleur de poule soie : fauve !/ : /New Silkie colour: Buff!/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
+const T = { next: fr ? /Au niveau 12 : Sussex tachetée, Poule soie fauve/ : /At level 12: Speckled Sussex, Buff Silkie/, col: fr ? /Nouvelle couleur de poule soie : fauve !/ : /New Silkie colour: Buff!/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
   welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, buff: fr ? /Poule soie fauve/ : /Buff Silkie/, at27: fr ? /niveau 27/ : /level 27/,
   splash: fr ? /Poule soie fauve.*Poule soie bleue/ : /Buff Silkie.*Blue Silkie/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -52,9 +53,13 @@ await p.evaluate(L12 => { const g = window.__farm.game(); g.data.xp = L12; g.dat
 let s = await st(); t = await sheet();
 await shot('1_level12');
 ok('level 12: its card says a new Silkie colour has come, "Place their coop now"', s.level === 12 && s.card === 'levelup' && T.col.test(t) && T.place.test(t), { s, t: t.slice(0, 300) });
-await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
-let m = await p.evaluate(() => window.__farm.move.state());
-if (!m.ok) { await p.evaluate(() => window.__farm.move.to(-33, -23, 90)); await run(0.1); m = await p.evaluate(() => window.__farm.move.state()); }
+await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);      // (the Speckled Sussex's first: both came at 12 since 21 Nov 2026)
+await p.tap('.gmove-go'); await run(1.5);
+s = await st();
+ok('level 12: the Speckled Sussex placed first, the Buff Silkies still waiting in Your coops', /sus/.test(s.coops) && /sil_buff/.test(s.waiting) && !s.move, s);
+await p.evaluate(() => window.__farm.gameUI().close());
+await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
+await p.evaluate(() => { const c = [...document.querySelectorAll('.gsheet .gnewcoop')].pop(); c.querySelector('.gbtn').click(); }); await run(0.6);
 await p.tap('.gmove-go'); await run(1.5);
 s = await st();
 const bfc = await p.evaluate(() => { const f = window.__farm, g = f.game(), P = f.coopPlots().find(q => q.line === 'sil_buff'), c = g.data.coops.find(x => x.breed === 'sil_buff');
@@ -76,7 +81,7 @@ const book = await p.evaluate(() => { const pg = [...document.querySelectorAll('
 if (SHOTS) { await p.evaluate(() => document.querySelector('.gpage[data-breed="sil_buff"]').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300); }
 await shot('4_book');
 ok('the Breed Book: sixteen pages (the rare colours last), the Buff Silkies found with their names and picture, the Black Silkies at level 27',
-  book.n === 16 && book.order === 'rir,orp,sil,aya,call,sil_buff,leg,pol,sil_partridge,bra,sil_black,pea,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at27.test(book.next.text), book);
+  book.n === 17 && book.order === 'rir,orp,sil,aya,call,sus,sil_buff,leg,pol,sil_partridge,bra,sil_black,pea,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && book.mine.found && T.buff.test(book.mine.text) && book.mine.img > 0 && !book.next.found && T.at27.test(book.next.text), book);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a Silkies-only County show takes a buff Silkie
 const show = await p.evaluate(() => { const g = window.__farm.game(), hen = g.data.birds.find(b => b.breed === 'sil_buff' && b.sex === 'h'), s = { id: 'c20261026', tier: 'c', breed: 'sil', locked: false };
