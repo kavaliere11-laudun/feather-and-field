@@ -1,6 +1,7 @@
 // What App Store Connect says about the app's builds and TestFlight (5 Nov 2026: "I haven't had any email"): run in the
 // workflow's asc-status job with the key from the repository's secrets; prints only states, never the key.
 //   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 from the environment; node asc-status.mjs
+// (21 Nov 2026: run again after Audrey's app was set free and available in the UK and the US in App Store Connect.)
 import crypto from 'node:crypto';
 const { ASC_KEY_ID: kid, ASC_ISSUER_ID: iss, ASC_KEY_P8: p8 } = process.env;
 const b64 = o => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
