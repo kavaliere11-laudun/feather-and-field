@@ -2114,6 +2114,7 @@ const TIER_LOOK = { rir: [['box_rir', 'fence_t0', 'pen_t0'], ['shed_rir', 'fence
   pol: [['box_pol', 'fence_t0', 'pen_t0_pol'], ['shed_pol', 'fence_t1', 'pen_t1_pol'], ['house_pol', 'fence', 'pen_base'], ['cosy_pol', 'fence_t3', 'pen_t3_pol'], ['deluxe_pol', 'fence_t4', 'pen_t4_pol']],      // (release 7: the Little Windmill's)
   aya: [['box_aya', 'fence_t0', 'pen_t0_aya'], ['shed_aya', 'fence_t1', 'pen_t1_aya'], ['house_aya', 'fence', 'pen_base'], ['cosy_aya', 'fence_t3', 'pen_t3_aya'], ['deluxe_aya', 'fence_t4', 'pen_t4_aya']],
   sus: [['box_sus', 'fence_t0', 'pen_t0_sus'], ['shed_sus', 'fence_t1', 'pen_t1_sus'], ['house_sus', 'fence', 'pen_base'], ['cosy_sus', 'fence_t3', 'pen_t3_sus'], ['deluxe_sus', 'fence_t4', 'pen_t4_sus']],      // (the Speckled Sussex's Village Cottage, 21 Nov 2026)
+  coc: [['box_coc', 'fence_t0', 'pen_t0_coc'], ['shed_coc', 'fence_t1', 'pen_t1_coc'], ['house_coc', 'fence', 'pen_base'], ['cosy_coc', 'fence_t3', 'pen_t3_coc'], ['deluxe_coc', 'fence_t4', 'pen_t4_coc']],      // (the Partridge Cochin's Round Yurt, 21 Nov 2026)
   ara: [['box_ara', 'fence_t0', 'pen_t0_ara'], ['shed_ara', 'fence_t1', 'pen_t1_ara'], ['house_ara', 'fence', 'pen_base'], ['cosy_ara', 'fence_t3', 'pen_t3_ara'], ['deluxe_ara', 'fence_t4', 'pen_t4_ara']],      // (the Lavender Araucana's Mountain Hut, 21 Nov 2026)
   mar: [['box_mar', 'fence_t0', 'pen_t0_mar'], ['shed_mar', 'fence_t1', 'pen_t1_mar'], ['house_mar', 'fence', 'pen_base'], ['cosy_mar', 'fence_t3', 'pen_t3_mar'], ['deluxe_mar', 'fence_t4', 'pen_t4_mar']],      // (the Black Copper Marans' French Farmhouse, 21 Nov 2026)
   // (the call ducks' Floating House, 30 Oct: its five looks from the start, its own Snug yard: the pond where the shared one has straw)
@@ -2243,7 +2244,7 @@ function batchCoops() {
 // where the eggs lie, from her seat: under her breast, towards the window (further in, the window's top would hide them)
 const NEST_SLOTS = [[0, 0.08], [0.06, 0.06], [-0.06, 0.07], [0.045, 0.12], [-0.045, 0.12], [0.0, 0.03]];
 const nestOf = plot => COOPS.nests['house_' + plot.breed];
-const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sus: '#e8d6b6', mar: '#6e3f26', ara: '#8fd0c8', sil: '#efe4cf', call: '#d3e8de', pea: '#eadcbc' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
+const EGG_COLOUR = { rir: '#b97a4f', orp: '#dcae7f', leg: '#a9d4ca', bra: '#d9b48c', pol: '#f3f0e9', aya: '#ecdcc3', sus: '#e8d6b6', mar: '#6e3f26', ara: '#8fd0c8', coc: '#d9b48c', sil: '#efe4cf', call: '#d3e8de', pea: '#eadcbc' };      // (the call ducks': a pale green-blue duck egg)      // (a Polish's white; an Ayam Cemani's cream, not black)
 const EGG_MATS = {}, EGG_GEO = new THREE.SphereGeometry(0.5, 10, 8);
 const GRAIN = new THREE.MeshLambertMaterial({ color: '#d9b45a' }), GRAIN_GEO = new THREE.CylinderGeometry(0.135, 0.135, 0.02, 20);
 // the call ducks in their pen (callpen.js): their pond (coops.json ponds), the Deluxe's way over its bridge (paths), the
@@ -10080,7 +10081,7 @@ function jobsDone(done) { if (!done || !done.length) return; for (const j of don
 // asleep in a row on the perch, heads tucked in, the chicks curled up in the straw by the nest boxes, a lantern turned low,
 // the night sky in the window, the odd "z" floating up. Tap a bird and she wakes for a cuddle (hearts), then dozes off
 // again; tap the nest boxes to collect the eggs. "Back to the farm", or the time to get up, brings you out again.
-const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House', call: 'Floating House', pea: 'Garden Pavilion', sus: 'Village Cottage', mar: 'French Farmhouse', ara: 'Mountain Hut' };
+const STYLE_NAMES = { rir: 'Red Barn', orp: 'Thatched Cottage', leg: 'Stone Cottage', bra: 'Timber Lodge', sil: 'Pagoda Coop', pol: 'Little Windmill', aya: 'Javanese House', call: 'Floating House', pea: 'Garden Pavilion', sus: 'Village Cottage', mar: 'French Farmhouse', ara: 'Mountain Hut', coc: 'Round Yurt' };
 const inside = { open: false, busy: false, plot: null, scene: null, camera: null, rooms: null, rooms3d: {}, birds: [], saved: [], eggs: null, fx: [], zIn: 0.6, pan: 0, panMax: 0, mPerPx: 0.002, hinted: false };
 const insideEls = { top: document.getElementById('inside-top'), title: document.getElementById('inside-title'), back: document.getElementById('inside-back'), fade: document.getElementById('fade') };
 insideEls.back.addEventListener('click', () => closeInside());
@@ -10123,7 +10124,7 @@ const inForNight = b => b.asleep || !!(b.laying && b.laying.broody && b.laying.i
 // the room a coop's inside is drawn as at night: the five first styles have their own (interiors.glb); the later coops borrow
 // the nearest in feel (21 Nov 2026: a Little Windmill, a Javanese House, the Floating House, the Garden Pavilion or a Village
 // Cottage tapped at night looked for a room of their own that isn't there)
-const ROOM_AS = { pol: 'orp', aya: 'sil', call: 'orp', pea: 'sil', sus: 'leg', mar: 'leg', ara: 'bra' };
+const ROOM_AS = { pol: 'orp', aya: 'sil', call: 'orp', pea: 'sil', sus: 'leg', mar: 'leg', ara: 'bra', coc: 'orp' };
 const roomStyle = b => (inside.rooms && inside.rooms[b]) ? b : ROOM_AS[b] || 'rir';
 function openInside(plot) {
   if (inside.open || inside.busy) return;

@@ -4,9 +4,9 @@
 import * as THREE from 'three';
 
 export const BREEDS = ['rir', 'orp', 'leg', 'bra', 'sil'];
-export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sus', 'mar', 'ara', 'pea', 'sil'];      // (the Black Copper Marans, 21 Nov 2026)      // (the Speckled Sussex, 21 Nov 2026)      // (the peafowl, 31 Oct: in the line-up)      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
+export const ALL_BREEDS = ['rir', 'orp', 'leg', 'bra', 'pol', 'aya', 'sus', 'mar', 'ara', 'coc', 'pea', 'sil'];      // (the Black Copper Marans, 21 Nov 2026)      // (the Speckled Sussex, 21 Nov 2026)      // (the peafowl, 31 Oct: in the line-up)      // (with the Polish and the Ayam Cemani, 29 Oct: in the line-up; BREEDS: those with coops in the test village)
 export const SILKIE = ['white', 'black', 'blue', 'buff', 'partridge', 'grey', 'splash', 'cuckoo', 'red', 'paint', 'lavender'];
-export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', sus: 'Speckled Sussex', mar: 'Black Copper Marans', ara: 'Lavender Araucana', pea: 'Indian blue peafowl', sil: 'Silkie' };
+export const BREED_NAMES = { rir: 'Rhode Island Red', orp: 'Buff Orpington', leg: 'Cream Legbar', bra: 'Light Brahma', pol: 'Polish', aya: 'Ayam Cemani', sus: 'Speckled Sussex', mar: 'Black Copper Marans', ara: 'Lavender Araucana', coc: 'Partridge Cochin', pea: 'Indian blue peafowl', sil: 'Silkie' };
 const R = { keep: 0, body: 1, wing: 2, prim: 3, tail: 4, crest: 5, legfeather: 6, down: 7, cwing: 8, cleg: 9, cbeak: 10, saddle: 11 };
 const JOINTS = ['root', 'body', 'head', 'wingL', 'wingR', 'tail', 'legL', 'legR'];
 const PARENT = { root: null, body: 'root', head: 'body', wingL: 'body', wingR: 'body', tail: 'body', legL: 'root', legR: 'root' };
@@ -22,7 +22,7 @@ export const TRAIN_J = [0.3, 0.62], TRAIN_SPLIT = [0.3, 0.35, 0.35];
 // roosters' the same (Audrey, 1 Nov: "Same walk for hens and roosters"): every grown bird's but the Silkies' (theirs as
 // they are, hidden in their fluff) and the chicks'; a hen's ankle just under her feathers, as a real hen's is
 const FOOT_Y = 0.025, ANKLE = 0.46, ankleY = hip => hip - ANKLE * (hip - FOOT_Y);
-export const bendsLegs = model => /^(rir|orp|leg|bra|pol|aya|sus|mar|ara|pea)_[hr](_lo)?$/.test(model);
+export const bendsLegs = model => /^(rir|orp|leg|bra|pol|aya|sus|mar|ara|coc|pea)_[hr](_lo)?$/.test(model);
 const isPea = model => /^pea_[hr]/.test(model);
 // a rig's bones, in order: every bird's, then the peacock's train's two (on the peahens too, unused: the same for both), then
 // the ankles and toes of the birds whose legs bend
@@ -89,7 +89,7 @@ function peacockTrain(g, src, tailZ) {
 // ------------------------------------------------------------------ colours (sRGB, as a painter would mix them)
 // body: main plumage; top: lighter back; hackle: neck feathers; head; saddle: a rooster's back by the tail; breast;
 // wing, prim (flight feathers), tail, crest, legfeather. pattern: bars (barring), stripes (a Brahma's striped hackle),
-// splash, paint, pencil (partridge), cuckoo.
+// splash, paint, pencil (partridge), pencilled (a partridge hen's rings, drawn per feather: mode 10), cuckoo.
 const ADULT = {
   rir_h: { body: '#8a3517', top: '#a3461f', hackle: '#b1552a', head: '#9a4220', wing: '#7a2c14', prim: '#3a180c', tail: '#2a1a13' },
   rir_r: { body: '#73230f', top: '#952f12', hackle: '#d06b2b', saddle: '#c55b24', head: '#b04d1f', wing: '#922f12', prim: '#211d18', tail: '#15120f' },
@@ -119,6 +119,11 @@ const ADULT = {
   // lavender grey, soft; its muffs, beard and little tuft painted as its crest (long, wispy plumage: FUR.ara)
   ara_h: { body: '#a9a9b8', top: '#b1b1bf', hackle: '#b4b4c2', head: '#b0b0be', crest: '#aeaebc', wing: '#a3a3b3', prim: '#9a9aab', tail: '#a0a0b0', soft: true, overlap: 0.09 },
   ara_r: { body: '#a6a6b6', top: '#b0b0be', hackle: '#babac7', saddle: '#b7b7c4', head: '#b6b6c3', crest: '#b2b2c0', wing: '#a0a0b1', prim: '#9797a9', tail: '#a2a2b2', tailSheen: '#c9c9d6', soft: true, overlap: 0.09 },
+  // the Partridge Cochin (21 Nov 2026; Audrey's choice on 15 Nov: "Partridge"): the hen rich brown, every feather finely
+  // pencilled black (pattern 'bars': bands following each feather, drawn by the shader), her neck gold striped black; the
+  // rooster black with a fiery neck and saddle and red shoulders; soft, loose plumage (FUR.coc) down to the toes
+  coc_h: { body: '#8e5b33', top: '#986438', hackle: '#cf9a44', head: '#c08c3e', wing: '#855330', prim: '#4a2f1c', tail: '#2a1c14', legfeather: '#9a6538', dark: '#2a180d', pattern: 'pencilled', overlap: 0.12 },
+  coc_r: { body: '#1b1715', top: '#7c2f16', hackle: '#d6802c', saddle: '#cc742a', head: '#cf7a2a', wing: '#8a3517', prim: '#17130f', tail: '#100e0d', legfeather: '#1d1917', tailSheen: '#2f7d58', soft: true },
   sus_r: { body: '#6a2e19', top: '#7a371c', hackle: '#96481f', saddle: '#8e431e', head: '#93461f', wing: '#65290f', prim: '#201612', tail: '#12100f', spot: '#f4efe6', dark: '#1c1210', pattern: 'speckle', tailSheen: '#2f7d58' },
   // the Indian blue peafowl (Audrey's photos, 31 Oct): the peacock's neck, head and breast shining cobalt blue, his back of
   // bronze-green scales, his wings barred buff and black, rusty flight feathers, a dark belly, his long green train with its
@@ -150,6 +155,7 @@ const CHICK = {
   bra: { down: '#f0e8cc', top: '#e8e0c4', face: '#f5efd9', wing: '#d6d2c6' },
   pol: { down: '#2b2a30', top: '#2b2a30', face: '#ebe5d5', wing: '#25242a', leg: '#7a8090', beak: '#6a6670' },      // (dark down, a pale crest bump)
   aya: { down: '#1c1b21', face: '#232228', wing: '#18171d', leg: '#232228', beak: '#2c2a32' },
+  coc: { down: '#e3c48a', top: '#a0703f', face: '#efd9a8', wing: '#c9a46a', stripe: '#6a4425', pattern: 'chipmunk', leg: '#e3b548', beak: '#d9b066' },      // (partridge chicks: buff with brown stripes)
   ara: { down: '#cfcbd6', top: '#c2bdcb', face: '#ded9e2', wing: '#bab5c4', leg: '#8b9384', beak: '#b9b3a8' },      // (pale lavender down)
   mar: { down: '#27231f', top: '#1d1a18', face: '#e0cc8c', wing: '#2b2621', leg: '#cdbdae', beak: '#9a8b7c' },      // (dark down, a cream face and front)
   sus: { down: '#a8693a', top: '#8f5530', face: '#dcae78', wing: '#8a522c', stripe: '#4f2e19', pattern: 'chipmunk', leg: '#efd9c4', beak: '#e0c3a3' },      // (brown, striped down)
@@ -161,7 +167,7 @@ const SIL_CHICK = {
   splash: { down: '#ebe9e3', spot: '#8a96a8', pattern: 'splash' }, cuckoo: { down: '#8e9095', spot: '#d8d8d4', pattern: 'splash' },
   red: { down: '#c56a33' }, paint: { down: '#f4f1e8', spot: '#2a2a30', pattern: 'paint' }, lavender: { down: '#c1bbcb' },
 };
-const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sus: '#f0dccf', mar: '#dccbc3', ara: '#7f8878', pea: '#a99a8a', sil: '#5c5868' };
+const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sus: '#f0dccf', mar: '#dccbc3', ara: '#7f8878', coc: '#e3b548', pea: '#a99a8a', sil: '#5c5868' };
 
 // ------------------------------------------------------------------ a little value noise for patterns (splashes, spots, mottling)
 function hash(x, y, z) { let h = (x * 374761393 + y * 668265263 + z * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
@@ -253,6 +259,7 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
     case 'paint': { const m = noise(x * 14 + 7, y * 14, z * 14 + 2); out.lerp(lin(S.spot), smooth(0.58, 0.64, m)); } break;
     case 'speckle': if (key !== 'tail' && key !== 'prim' && key !== 'saddle') {      // (15 Nov 2026, a Speckled Sussex, Audrey's choice for level 12: each feather tipped white with a black bar behind the tip, drawn feather by feather by the shader: mode 2; a hackle's only a small tip)
       FEAT.mode = 2; FEAT.c.copy(lin(S.spot)); FEAT.amt = key === 'body' && hw > 0.04 ? 0.45 : 1; } break;
+    case 'pencilled': if (key === 'body' || key === 'wing' || key === 'legfeather') { FEAT.mode = 10; FEAT.c.copy(lin(S.dark)); FEAT.amt = key === 'body' && hw > 0.04 ? 0.4 : 0.7; } break;      // (a partridge hen's, drawn by the shader: mode 10)
     case 'pencil': if (!(key === 'body' && hw > 0.04)) { const m = noise(x * 90, y * 90, z * 90); out.lerp(lin(S.dark), smooth(0.45, 0.75, m) * 0.7); } break;
   }
   const shade = 0.84 + 0.16 * smooth(0.15, 0.6, h) + (n - 0.5) * 0.07;      // a touch darker underneath, soft feather texture
@@ -419,13 +426,15 @@ const FUR = {
            regions: { [R.crest]: { shells: 18, clump: 0.55, fine: 1.5, wave: 0.9, locks: 0.085, comb: 0.12 } } },
   // the Lavender Araucana (21 Nov 2026, as its mock-up of 15 Nov): a hen's short fluff, and on its muffs, beard and tuft
   // (painted as crest) longer, wispy plumage
+  // the Partridge Cochin (21 Nov 2026, as its mock-up of 15 Nov): the deepest, loosest fluff of all, above all underneath
+  coc: { len: { [R.body]: 0.026, [R.wing]: 0.012, [R.legfeather]: 0.022 }, shells: 7, comb: 0.65, fine: 1.15, under: 1.9, fluff: 0.06 },      // (less underneath than the mock-up's 2.6: dark fluff hanging to the ground looked heavy and hid the feet)
   ara: { len: { [R.body]: 0.016, [R.wing]: 0.009, [R.crest]: 0.02, [R.legfeather]: 0.016 }, shells: 10, baseShells: 5, comb: 0.9, fine: 1.25, under: 1.5, fluff: 0.06,
          regions: { [R.crest]: { shells: 10, clump: 0.5, fine: 1.4, wave: 0.6, locks: 0.07, comb: 0.0 } } },
 };
 // (the peafowl: sleek, glossy, no fluff over their feathers: Audrey, 31 Oct, "a weird blurry layer around his feathers")
 const FEATHER = { [R.body]: 3.1, [R.wing]: 2.4, [R.crest]: 1.3, [R.legfeather]: 1.3 };     // feather widths, cm (flight and tail feathers are modelled)
 const furOf = (model, breed) => (typeof globalThis !== 'undefined' && globalThis.__FF_MOCK && globalThis.__FF_MOCK.fur && !model.startsWith('chick') && globalThis.__FF_MOCK.fur[breed]) ? { ...FUR.hen, ...globalThis.__FF_MOCK.fur[breed], len: Object.fromEntries(Object.entries(globalThis.__FF_MOCK.fur[breed].len || {}).map(([k, v]) => [R[k], v])) } :      // (15 Nov 2026: a mock-up's fluff, by region name)
-  breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' || breed === 'sus' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'ara' ? FUR.ara : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
+  breed === 'pea' && !model.startsWith('chick') ? null : model.startsWith('chick') ? FUR.chick : breed === 'sil' ? FUR.sil : breed === 'orp' || breed === 'sus' ? FUR.orp : breed === 'bra' ? FUR.bra : breed === 'ara' ? FUR.ara : breed === 'coc' ? FUR.coc : breed === 'pol' ? (/_r(_lo)?$/.test(model) ? FUR.pol_r : FUR.pol) : FUR.hen;
 
 function addFur(g, src, spec, headc, eyes) {
   const n = src.attributes.position.count, paint = src.attributes._paint.array, idx = src.index.array;
@@ -781,6 +790,10 @@ function birdMaterial(indoor, goose) {
             diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.55, min(1.0, onTop * 0.3) * smoothstep(0.2, -0.7, along));
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012, 0.01, 0.009), on * 0.8 * bar);
             diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, on * tip);
+          }
+          else if (vMode > 9.5 && vMode < 10.5) {     // (10, a partridge hen's fine pencilling, 21 Nov 2026: two or three dark rings in each feather following its outline, the tip clear)
+            float rings = smoothstep(0.3, 0.8, sin(t * 26.0 + 0.6 + id * 2.0)) * smoothstep(0.98, 0.86, t);
+            diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, vPat.a * (1.0 - 0.5 * boost) * rings);      // (fainter when the feathers are small on screen: from the farm's usual distance the rings read as a fine texture, not a busy pattern)
           }
           else if (capeA > 0.0) {          // each cape feather black down its middle, edged white all round (its tip too)
             float w = clamp(vMode - 3.0, 0.1, 0.49), on = step(0.1 + 0.8 * fract(id * 5.37), capeA);

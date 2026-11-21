@@ -115,6 +115,8 @@ await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lv
 await p.evaluate(() => sessionStorage.setItem('__shop', 'true')); await reload();
 await shelfTab(); tp = await tile('sil_partridge'); t = await sheet();
 await shot('4_level12');
+const tc = await tile('coc');
+ok('level 12: the Partridge Cochin on the shelf, "Level 14", no button', tc && tc.img && (fr ? /Niveau 14/ : /Level 14/).test(tc.text) && !tc.btns.length, tc);
 ok('level 12, 3,000 coins: the Partridge Silkies "🪙 9,000" greyed, "£2.99" beside it', tp && tp.btns.length === 2 && tp.btns[0].go === 'coins' && tp.btns[0].off && /9[\s,.  ]?000/.test(tp.btns[0].t) && tp.btns[1].go === 'pay' && tp.btns[1].t === '£2.99', { tp });
 await p.evaluate(() => document.querySelector('.gsheet .gshelf-t[data-shelf="sil_partridge"] [data-shelfgo="pay"]').click());
 await p.waitForFunction(() => window.__farm.move.state().on, null, { timeout: 15000 }).catch(() => {}); await run(0.6);

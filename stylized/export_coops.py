@@ -202,6 +202,12 @@ BUDGET.update({'house_ara': 16500, 'box_ara': 14000, 'shed_ara': 15000, 'cosy_ar
 _keep = dict(coops.NESTS['house_ara'])
 for look_, n_ in ((0, 'box_ara'), (1, 'shed_ara'), (3, 'cosy_ara'), (4, 'deluxe_ara')): one(n_, lambda look_=look_, n_=n_: coops.andes(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_ara'] = dict(_keep)
 for t in (0, 1, 3, 4): one('pen_t%d_ara' % t, lambda t=t: coops.pen_tier(t, 'ara')); LOOKS.append('pen_t%d_ara' % t)
+# the Partridge Cochin's Round Yurt (21 Nov 2026, on the collector's shelf): its five looks and its own gardens
+# (stylized/extras/export_coc_coop.py exports just these to splice in)
+BUDGET.update({'house_coc': 12000, 'box_coc': 10000, 'shed_coc': 11000, 'cosy_coc': 15000, 'deluxe_coc': 18000, 'pen_t0_coc': 4200, 'pen_t1_coc': 4600, 'pen_t3_coc': 9500, 'pen_t4_coc': 13000})
+_keep = dict(coops.NESTS['house_coc'])
+for look_, n_ in ((0, 'box_coc'), (1, 'shed_coc'), (3, 'cosy_coc'), (4, 'deluxe_coc')): one(n_, lambda look_=look_, n_=n_: coops.yurt(look_, name=n_)); LOOKS.append(n_); coops.NESTS['house_coc'] = dict(_keep)
+for t in (0, 1, 3, 4): one('pen_t%d_coc' % t, lambda t=t: coops.pen_tier(t, 'coc')); LOOKS.append('pen_t%d_coc' % t)
 # the Christmas dress (seasonal, release 4): each pen's garland, lights, bows and wreaths, the tree, the star on the roof
 GLOWC.update({'xlight%d' % i for i in range(len(coops.XLIGHTS))}); GLOW.add('xm_star')
 BUDGET.update({'xmas_fence_t%d' % t: 7000 for t in range(5)}); BUDGET.update({'xmas_tree': 3200, 'xmas_star': 300})

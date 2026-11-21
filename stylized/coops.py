@@ -3544,8 +3544,8 @@ def red_barn(**kw):
 
 
 HOUSES = {'rir': red_barn, 'orp': thatched, 'leg': stone, 'sil': pagoda, 'bra': lodge, 'pol': windmill, 'aya': joglo, 'call': floating, 'pea': pavilion,
-          'sus': lambda: sussex(2), 'mar': lambda: marans(2), 'ara': lambda: andes(2)}      # (the Speckled Sussex's Village Cottage, 21 Nov 2026; the Black Copper Marans' French Farmhouse and the Lavender Araucana's Mountain Hut, the same day: defined further down)
-LATER = ['pol', 'aya', 'call', 'pea', 'sus', 'mar', 'ara']             # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct; the Garden Pavilion, 31 Oct; the Village Cottage, 21 Nov)
+          'sus': lambda: sussex(2), 'mar': lambda: marans(2), 'ara': lambda: andes(2), 'coc': lambda: yurt(2)}      # (the Speckled Sussex's Village Cottage, 21 Nov 2026; the Black Copper Marans' French Farmhouse and the Lavender Araucana's Mountain Hut, the same day: defined further down)
+LATER = ['pol', 'aya', 'call', 'pea', 'sus', 'mar', 'ara', 'coc']             # (release 7's coops: exported after the rest; the call ducks' Floating House, 30 Oct; the Garden Pavilion, 31 Oct; the Village Cottage, 21 Nov)
 
 
 def pop_slider(style):
@@ -3564,7 +3564,8 @@ def pop_slider(style):
                'pea': (C('pv_red2', PV['red2'], rough=0.85, var=0.07), C('pv_marble', PV['marble'], rough=0.35, var=0.02, spec=0.5)),
                'sus': (C('sus_door', SUS['door'], rough=0.55, var=0.04, grain=0.2, grain_scale=G), C('sus_white', SUS['white'], rough=0.6, var=0.02)),
                'mar': (C('mar_blue', MAR['blue'], rough=0.55, var=0.03), C('mar_quoin', MAR['quoin'], rough=0.85, var=0.06)),
-               'ara': (C('ara_red', ARA['red'], rough=0.55, var=0.04), C('ara_white', ARA['white'], rough=0.6, var=0.02))}[style]      # (the browser draws the ducks' k as big)
+               'ara': (C('ara_red', ARA['red'], rough=0.55, var=0.04), C('ara_white', ARA['white'], rough=0.6, var=0.02)),
+               'coc': (C('yu_red', YU['red'], rough=0.55, var=0.04), C('yu_felt', YU['felt'], rough=0.95, var=0.03))}[style]      # (the browser draws the ducks' k as big)
     iron = C('iron', '#26231f', rough=0.5, metal=0.6)
     w, h, th = POP_W - 0.008, POP_H - 0.004, 0.022
     out = Vector((0, -1, 0))

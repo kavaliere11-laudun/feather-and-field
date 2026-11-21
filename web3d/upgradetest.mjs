@@ -54,7 +54,7 @@ if (B !== 'rir') {                                 // a coop of that breed place
   const ok_ = await p.evaluate(B => {
     window.__T = Math.round(window.__T);           // (whole milliseconds, as a real clock: the save keeps them so)
     const f = window.__farm, g = f.game(); g.data.xp = 70000; g.data.lvSeen = 29; g.data.land = [0, 1, 2, 3, 4, 5]; g.data.guide = { step: 5, done: true }; g.data.first = null;
-    if (B === 'ara' || /^sil_(buff|partridge)$/.test(B)) g.data.shelf = [...(g.data.shelf || []), B];      // (a collector's shelf breed: had from the shelf first, 21 Nov 2026)
+    if (B === 'ara' || B === 'coc' || /^sil_(buff|partridge)$/.test(B)) g.data.shelf = [...(g.data.shelf || []), B];      // (a collector's shelf breed: had from the shelf first, 21 Nov 2026)
     const c = g.data.coops[0];
     for (let r = 6; r < 30; r += 0.5) for (let k = 0; k < r * 6; k++) { const a = k / (r * 6) * 6.28, at = { x: Math.round((c.x + Math.cos(a) * r) * 4) / 4, z: Math.round((c.z + Math.sin(a) * r) * 4) / 4, deg: 90 };
       const S = f.coopSpotAt(at, 0); if (!S || !S.ok) continue;

@@ -13,7 +13,7 @@ import { Farmer } from './farmer.js';
 
 const RIVALS = [['rir', 'hen'], ['orp', 'hen'], ['leg', 'hen'], ['bra', 'hen'], ['rir', 'rooster'], ['orp', 'rooster'], ['leg', 'rooster'], ['bra', 'rooster'],
   ['sil', 'hen', 'white'], ['sil', 'hen', 'black'], ['sil', 'hen', 'buff'], ['sil', 'rooster', 'partridge'],      // (no Blue or Grey since 30 Oct)
-  ['pol', 'hen'], ['pol', 'rooster'], ['aya', 'hen'], ['aya', 'rooster'], ['sus', 'hen'], ['sus', 'rooster'], ['mar', 'hen'], ['mar', 'rooster'], ['ara', 'hen'], ['ara', 'rooster']];      // (release 7's breeds too; the Speckled Sussex, 21 Nov 2026)
+  ['pol', 'hen'], ['pol', 'rooster'], ['aya', 'hen'], ['aya', 'rooster'], ['sus', 'hen'], ['sus', 'rooster'], ['mar', 'hen'], ['mar', 'rooster'], ['ara', 'hen'], ['ara', 'rooster'], ['coc', 'hen'], ['coc', 'rooster']];      // (release 7's breeds too; the Speckled Sussex, 21 Nov 2026)
 const KINDS = ['first', 'second', 'third'];
 const sm = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
 
