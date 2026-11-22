@@ -949,7 +949,7 @@ export const TOP_LEVEL = 30;
 const XP_AT = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10550, 13050, 16000, 19350, 23200, 27400, 32100, 37250, 43000, 47450, 56250, 63850, 72100, 81150, 90850];      // (levels 16 to 30 a little further since the vegetable garden, 7 Nov 2026: up to 9% at 30; to 25 never more than before)
 export function xpFor(level) { return level <= 1 ? 0 : XP_AT[Math.min(TOP_LEVEL, level)]; }
 // a gift of coins for each new level up to 10 (the same day: the first fields, the breeds and the shop come quicker now)
-export const levelGift = L => L >= 2 && L <= 10 ? 25 * L : 0;
+export const levelGift = L => L >= 2 && L <= 15 ? 150 * L : 0;      // (22 Nov 2026, Audrey: "money is a bit slow to get ... I never reached 3K"; her choice "Coins now, levels next": a bigger gift at each level to 15, was 25 a level to 10: the first weeks' coins about doubled, the year's a little more)
 export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
 
 // ---- land (release 1 step 5): the farm is split into 30 fields along its lanes and the stream (fields.py: models/
@@ -1049,7 +1049,7 @@ export const JOBS = {
   feed: { n: () => 1 },                                            // fill a feeder
   show: { n: () => 1 },                                            // enter a bird in a show
 };
-export const jobReward = L => ({ coins: 15 + 5 * L, xp: Math.round(XPV.job + XPV.jobL * L) });
+export const jobReward = L => ({ coins: 30 + 6 * L, xp: Math.round(XPV.job + XPV.jobL * L) });      // (22 Nov 2026: was 15 + 5 a level: the day's jobs about twice what they paid at first)
 const dayKey = t => { const d = new Date(t); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); };
 // the day's three jobs: one easy, two others, all different (the same for that day and level, from the day's own numbers)
 function jobsFor(day, lv) {

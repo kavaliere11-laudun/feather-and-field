@@ -29,7 +29,7 @@ const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.d
 const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText);
 const dot = () => p.evaluate(() => { const d = document.querySelector('.gjobs .gdot'); return d.hidden ? null : d.textContent || 'dot'; });
 const jobs = () => p.evaluate(() => { const g = window.__farm.game(), J = g.jobs(); return { day: J.day, lv: J.lv, list: J.list.map(j => [j.k, j.got, j.n, j.paid]), coins: g.data.coins, xp: g.data.xp }; });
-const T = { title: fr ? /Les tâches du jour/ : /Today’s jobs/, reward: fr ? /\+20 pièces · \+4 XP/ : /\+20 coins · \+4 XP/, note: fr ? /De nouvelles tâches chaque jour à minuit/ : /New jobs every day at midnight/,
+const T = { title: fr ? /Les tâches du jour/ : /Today’s jobs/, reward: fr ? /\+36 pièces · \+4 XP/ : /\+36 coins · \+4 XP/, note: fr ? /De nouvelles tâches chaque jour à minuit/ : /New jobs every day at midnight/,
   done: fr ? /Tâche faite : .+ ! Récupérez la récompense/ : /Job done: .+! Collect your reward/, claim: fr ? /Récupérer/ : /Collect/, paid: fr ? /Fait ✓/ : /Done ✓/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -69,7 +69,7 @@ await shot('2_done');
 const c0 = await jobs();
 await p.evaluate(() => document.querySelector('.gjob .gbtn').click()); await run(0.3);
 J = await jobs(); t = await sheet();
-ok('Collect: the coins and XP in (+20 and +4 at level 1), "Done ✓", the number down to 2', J.coins === c0.coins + 20 && J.xp === c0.xp + 4 && J.list[0][3] && T.paid.test(t) && (await dot()) === '2', { J, c0 });
+ok('Collect: the coins and XP in (+36 and +4 at level 1: 22 Nov 2026, the jobs pay more), "Done ✓", the number down to 2', J.coins === c0.coins + 36 && J.xp === c0.xp + 4 && J.list[0][3] && T.paid.test(t) && (await dot()) === '2', { J, c0 });
 const twice = await p.evaluate(() => window.__farm.game().claimJob(0));
 ok('not twice', twice === null && (await jobs()).coins === J.coins);
 await shot('3_paid');

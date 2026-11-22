@@ -31,7 +31,7 @@ function simulate(name, seed) {
   let treats = 0, favs = 0;
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0, orders: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
-  const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
+  const levelDay = {}, xpDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
   const start = NOW, hours = PROFILES[name];
   let spot = 0; const bought = [];
   for (let d = 0; d < DAYS; d++) {
@@ -96,7 +96,7 @@ function simulate(name, seed) {
       // the jobs
       const J = g.jobs(NOW); J.list.forEach((j, i) => { if (j.got >= j.n && !j.paid) { const r = track('jobs', () => g.claimJob(i, NOW)); if (r) earn.jobs += r.coins; } });
       // a new level: seen; the next field when it can; a new breed's coop placed
-      if (g.levelNews()) g.seenLevel();
+      if (g.levelNews()) { const c = g.seenLevel(); if (c) earn.gifts = (earn.gifts || 0) + c; }      // (the level's gift of coins: counted, 22 Nov 2026)
       const sale = g.landForSale();
       if (sale && g.data.coins >= sale.price) { const r = track('land', () => g.buyLand()); if (r && !r.broke) spend.land += sale.price; }
       for (const breed of g.waitingCoops()) { spot++; const dft = g.draftCoop(breed, { x: spot * 6, z: 0, deg: 90 }); if (dft) track('coops', () => g.placeCoop(dft, { x: spot * 6, z: 0, deg: 90 })); }
@@ -113,10 +113,11 @@ function simulate(name, seed) {
       if (process.env.THEMES !== '0') for (const c of g.data.coops) for (const t of g.themesFor(c, NOW)) if (!t.owned && t.season && g.data.coins - t.price >= keep + 2000) { const r = g.buyTheme(c.id, t.id, NOW); if (r && !r.broke) { spend.themes = (spend.themes || 0) + t.price; bought.push([d + 1, 'theme ' + t.key]); } }
       if (process.env.SHOPFIRST) for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; bought.push([d + 1, c.breed + ' ' + ['', 'mended', 'snug', 'cosy', 'deluxe'][n.tier]]); } }      // (SHOPFIRST: the shop before the coops' looks)
       const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
+      if (h === hours[hours.length - 1]) (xpDay[d + 1] = g.data.xp);      // (XPDAYS=1: the experience at the end of each day)
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { earned: Object.values(earn).reduce((x, y) => x + y, 0), level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { bought, levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, favs, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
+  return { bought, levelDay, xpDay, at, earn, spend, xp: g.data.xp, xpBy, treats, favs, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -126,6 +127,7 @@ for (const name of Object.keys(PROFILES)) {
   for (const d of [7, 30, 90, 180, 365]) if (runs[0].at[d]) console.log(`day ${String(d).padStart(3)}: level ${avg(runs, r => r.at[d].level).toFixed(1)}, coins ${Math.round(avg(runs, r => r.at[d].coins))}, earned so far ${Math.round(avg(runs, r => r.at[d].earned))}, birds ${avg(runs, r => r.at[d].birds).toFixed(0)}, coops ${avg(runs, r => r.at[d].coops).toFixed(1)}, fields ${avg(runs, r => r.at[d].land).toFixed(1)}, decorations ${avg(runs, r => r.at[d].decor).toFixed(1)}`);
   const lv = [2, 3, 5, 6, 8, 10, 11, 13, 15, 17, 20, 23, 25, 30].map(L => `L${L}:${runs.every(r => r.levelDay[L]) ? Math.round(avg(runs, r => r.levelDay[L])) : '-'}`);
   console.log('the day each level comes: ' + lv.join(' '));
+  if (process.env.XPDAYS) console.log('XP by day: ' + JSON.stringify(Array.from({ length: DAYS }, (_, i) => Math.round(avg(runs, r => r.xpDay[i + 1] || 0)))));
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
   console.log('XP from: ' + Object.keys(runs[0].xpBy).map(k => `${k} ${Math.round(avg(runs, r => r.xpBy[k] || 0))}`).join(', '));
   console.log('treats given: ' + Math.round(avg(runs, r => r.treats)));
