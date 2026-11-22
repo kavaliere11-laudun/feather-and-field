@@ -13,7 +13,9 @@ ctx.setDefaultTimeout(120000);
 await ctx.addInitScript(() => {
   const how = sessionStorage.getItem('__how') || 'none';
   window.__fakeStore = {
-    products: async o => { if (how === 'fail') throw new Error('products: StoreKitError.networkError · FRA'); if (how === 'hang') return new Promise(() => {}); return { products: [], store: 'FRA', asked: o.ids.length }; },
+    products: async o => { if (how === 'fail') throw new Error('products: StoreKitError.networkError'); if (how === 'hang' || how === 'deaf') return new Promise(() => {}); return { products: [], asked: o.ids.length }; },
+    hello: async () => how === 'deaf' ? new Promise(() => {}) : { v: 1 },
+    storefront: async () => how === 'deaf' ? new Promise(() => {}) : { store: 'FRA' },
     owned: async () => ({ ids: [] }), buy: async () => ({ state: 'failed', ids: [] }), restore: async () => ({ ids: [] }), pending: async () => ({ list: [] }), finish: async () => ({}),
   };
 });
@@ -33,16 +35,19 @@ await load();
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 5; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await openShop(); let c = await card();
-ok('Apple gives none of the products: the shop says it can\'t reach Apple, and "Apple: 0 / N · FRA" under it', c && (fr ? /joindre Apple/ : /reach Apple/).test(c.text) && /^Apple: 0 \/ \d+ · FRA$/.test(c.diag || ''), c);
+ok('Apple gives none of the products: the shop says it can\'t reach Apple, and "Apple: 0 / N · FRA" under it', c && (fr ? /joindre Apple/ : /reach Apple/).test(c.text) && /^Apple: 0 \/ \d+ · FRA · app ok$/.test(c.diag || ''), c);
 await p.screenshot({ path: `${OUT}/noapple${fr ? '_fr' : ''}.png` }).catch(() => {});
 await p.evaluate(() => sessionStorage.setItem('__how', 'fail')); await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await openShop(); c = await card();
-ok('Apple doesn\'t answer: what it said, under it', c && /^Apple: products: StoreKitError\.networkError · FRA$/.test(c.diag || ''), c);
+ok('Apple doesn\'t answer: what it said, under it', c && /^Apple: products: StoreKitError\.networkError · FRA · app ok$/.test(c.diag || ''), c);
 await p.evaluate(() => sessionStorage.setItem('__how', 'hang')); await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await openShop(); c = await card();
-ok('Apple not answering: "waiting for an answer…" at first', c && /^Apple: waiting for an answer…$/.test(c.diag || ''), c);
+ok('Apple not answering: "waiting for an answer…" at first', c && /^Apple: waiting for an answer… · FRA · app ok$/.test(c.diag || ''), c);
 await p.waitForTimeout(21000); await openShop(); c = await card();
-ok('…then, after 20 seconds, "no answer in 20 s"', c && /^Apple: no answer in 20 s$/.test(c.diag || ''), c);
+ok('…then, after 20 seconds, "no answer in 20 s"', c && /^Apple: no answer in 20 s · FRA · app ok$/.test(c.diag || ''), c);
+await p.evaluate(() => sessionStorage.setItem('__how', 'deaf')); await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+await p.waitForTimeout(21000); await openShop(); c = await card();
+ok('the app\'s own part not answering either: "no answer in 20 s · no answer · app no answer"', c && /^Apple: no answer in 20 s · no answer · app no answer$/.test(c.diag || ''), c);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

@@ -1264,7 +1264,7 @@ export class GameUI {
       go.addEventListener('click', () => { go.disabled = true; Promise.resolve(PAY.reload ? PAY.reload() : null).then(() => { if (this.kind === 'shop' && go.isConnected) { c.remove(); this.coinCards(b, true); } }); });
       c.append(el('p', 'gtext', this.t('shop_noapple')), go);
       const D = PAY.diag ? PAY.diag() : null;      // (22 Nov 2026: what Apple answered, small, to find why: "Apple: 0 / 28 · GBR")
-      c.append(el('p', 'gnote giap-diag', 'Apple: ' + (!D ? 'not asked' : D.wait ? 'waiting for an answer…' : D.err ? D.err : D.found + ' / ' + D.asked + (D.store ? ' · ' + D.store : ''))));
+      c.append(el('p', 'gnote giap-diag', 'Apple: ' + (!D ? 'not asked' : (D.wait ? 'waiting for an answer…' : D.err ? D.err : D.found + ' / ' + D.asked) + (D.store ? ' · ' + D.store : '') + (D.app ? ' · app ' + D.app : ''))));
       b.append(c); }
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in

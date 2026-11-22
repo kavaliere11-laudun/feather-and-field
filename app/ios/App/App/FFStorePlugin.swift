@@ -17,7 +17,9 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "buy", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "restore", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hello", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "storefront", returnType: CAPPluginReturnPromise)
     ]
     private var updates: Task<Void, Never>?
 
@@ -46,14 +48,11 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
     @objc func products(_ call: CAPPluginCall) {
         let ids = (call.getArray("ids") ?? []).compactMap { $0 as? String }
         Task {
-            // (22 Nov 2026, Audrey's shop empty in TestFlight: which country's App Store the phone uses, said with the answer,
-            // so the game can show what Apple gave when it gives nothing)
-            let store = await Storefront.current?.countryCode ?? ""
             do {
                 let list = try await Product.products(for: Set(ids))
-                call.resolve(["products": list.map { ["id": $0.id, "price": $0.displayPrice] }, "store": store, "asked": ids.count])
+                call.resolve(["products": list.map { ["id": $0.id, "price": $0.displayPrice] }, "asked": ids.count])
             } catch {
-                call.reject("products: \(String(String(describing: error).prefix(120))) · \(store)")
+                call.reject("products: \(String(String(describing: error).prefix(120)))")
             }
         }
     }
@@ -119,6 +118,16 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
         }
     }
 
+    // (22 Nov 2026, Audrey's shop empty in TestFlight, Apple silent: is the plugin reached at all, and which country's App
+    // Store the phone uses, each on its own so one that never answers can't hide the other)
+    @objc func hello(_ call: CAPPluginCall) { call.resolve(["v": 1]) }
+
+    @objc func storefront(_ call: CAPPluginCall) {
+        let once = Once()
+        Task { let code = (await Storefront.current)?.countryCode ?? "none"; if once.first() { call.resolve(["store": code]) } }
+        Task { try? await Task.sleep(nanoseconds: 5_000_000_000); if once.first() { call.resolve(["store": "?"]) } }
+    }
+
     @objc func restore(_ call: CAPPluginCall) {
         Task {
             do {
@@ -129,4 +138,11 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
             }
         }
     }
+}
+
+// the first of two answers wins (the storefront's, or its time running out)
+final class Once: @unchecked Sendable {
+    private var done = false
+    private let lock = NSLock()
+    func first() -> Bool { lock.lock(); defer { lock.unlock() }; if done { return false }; done = true; return true }
 }

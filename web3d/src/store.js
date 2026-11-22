@@ -38,7 +38,7 @@ function plugin() {
   const C = window.Capacitor;
   if (window.__ffApp !== true || !C || !C.isNativePlatform || !C.isNativePlatform() || !C.nativePromise) return null;
   const call = m => o => C.nativePromise('FFStore', m, o || {});
-  return { products: call('products'), owned: call('owned'), buy: call('buy'), restore: call('restore'), pending: call('pending'), finish: call('finish') };
+  return { products: call('products'), owned: call('owned'), buy: call('buy'), restore: call('restore'), pending: call('pending'), finish: call('finish'), hello: call('hello'), storefront: call('storefront') };
 }
 
 export class Store {
@@ -68,11 +68,16 @@ export class Store {
   }
   async pending() { try { const r = await this.S.pending(); if (r && Array.isArray(r.list) && r.list.length) await this.settle(r.list); } catch (e) { /* */ } }
   async load() {                                     // (the prices as Apple gives them, in the player's own money)
-    this.diag = { wait: true };
-    try { const r = await Promise.race([this.S.products({ ids: this.ids() }), new Promise((ok, no) => setTimeout(() => no(new Error('no answer in 20 s')), 20000))]), known = new Set(this.ids());      // (22 Nov 2026: Apple not answering at all, said so after 20 seconds)
+    // (22 Nov 2026, Audrey's shop empty in TestFlight: what happened, kept to show under "Try again": whether the app's
+    // plugin answers at all, which country's App Store the phone uses, and how many of the products Apple gave, or its error)
+    const within = (p, ms, what) => Promise.race([p, new Promise((ok, no) => setTimeout(() => no(new Error(what)), ms))]);
+    const D = this.diag = { wait: true, app: '…', store: '' };
+    if (this.S.hello) within(this.S.hello(), 5000, 'x').then(() => { D.app = 'ok'; }, () => { D.app = 'no answer'; });
+    if (this.S.storefront) within(this.S.storefront(), 8000, 'x').then(r => { D.store = r && typeof r.store === 'string' ? r.store.slice(0, 8) : '?'; }, () => { D.store = 'no answer'; });
+    try { const r = await within(this.S.products({ ids: this.ids() }), 20000, 'no answer in 20 s'), known = new Set(this.ids());
       for (const p of (r && Array.isArray(r.products) ? r.products : [])) if (p && known.has(p.id) && typeof p.price === 'string' && p.price.length < 24) this.prices[p.id] = p.price;
-      this.diag = { found: Object.keys(this.prices).length, asked: known.size, store: r && typeof r.store === 'string' ? r.store.slice(0, 8) : '' };      // (22 Nov 2026: what Apple gave, shown when it gives nothing)
-    } catch (e) { this.diag = { err: String(e && e.message || e || '').slice(0, 140) || 'no answer' }; /* (no prices: no money buttons) */ }
+      Object.assign(D, { wait: false, found: Object.keys(this.prices).length, asked: known.size });
+    } catch (e) { Object.assign(D, { wait: false, err: String(e && e.message || e || '').slice(0, 140) || 'no answer' }); /* (no prices: no money buttons) */ }
     if (this.o.onChange) this.o.onChange();
   }
   async refresh() { try { const r = await this.S.owned(); if (r && Array.isArray(r.ids)) this.apply(r.ids); } catch (e) { /* (Apple not heard: the last answer stands) */ } }
