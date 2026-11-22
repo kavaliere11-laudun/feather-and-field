@@ -39,7 +39,9 @@ try {
     try { loc = (await api(`/v2/inAppPurchases/${p.id}/inAppPurchaseLocalizations?limit=10`)).data.map(x => x.attributes.locale + ':' + x.attributes.state).join(','); } catch (e) { loc = 'error'; }
     try { const s = await api(`/v2/inAppPurchases/${p.id}/iapPriceSchedule?include=manualPrices,baseTerritory`); price = (s.included || []).filter(x => x.type === 'inAppPurchasePrices').length + ' price(s), base ' + ((s.included || []).find(x => x.type === 'territories')?.id || '?'); } catch (e) { price = 'none'; }
     try { const s = await api(`/v2/inAppPurchases/${p.id}/appStoreReviewScreenshot`); shot = s.data ? s.data.attributes.assetDeliveryState?.state : 'none'; } catch (e) { shot = 'none'; }
-    console.log('to buy:', a.productId, '|', a.inAppPurchaseType, '| state:', a.state, '| words:', loc, '| price:', price, '| review picture:', shot);
+    let where = '?';      // (22 Nov 2026, the TestFlight shop empty: where each is sold, the UK, the US and France in particular)
+    try { const s = await api(`/v2/inAppPurchases/${p.id}/inAppPurchaseAvailability?include=availableTerritories&limit[availableTerritories]=200`); const t = (s.included || []).filter(x => x.type === 'territories').map(x => x.id); where = t.length + ' countries' + (s.data?.attributes?.availableInNewTerritories ? ' +new' : '') + ' (GBR ' + t.includes('GBR') + ', USA ' + t.includes('USA') + ', FRA ' + t.includes('FRA') + ')'; } catch (e) { where = 'none · ' + e.message.slice(0, 80); }
+    console.log('to buy:', a.productId, '|', a.inAppPurchaseType, '| state:', a.state, '| words:', loc, '| price:', price, '| review picture:', shot, '| where:', where, '| family sharing:', a.familySharable);
     by[a.state] = (by[a.state] || 0) + 1;
   }
   console.log('things to buy:', iaps.data.length, JSON.stringify(by));
