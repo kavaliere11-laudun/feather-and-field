@@ -609,9 +609,10 @@ export class GameUI {
     this.bird = null; this.levelShown = L;
     // (what each level since the last card brings, not only this one's: since 7 Nov 2026 the first levels come quickly,
     // two at once at times, and the pond's fishing at 2 mustn't be missed by a card for 3)
-    const from = Math.min(L - 1, this.g.data.lvSeen || 1), since = n => n > from && n <= L;
+    const road = !!this.g.data.roadNew, from = road && (this.g.data.lvSeen || 1) >= L ? L : Math.min(L - 1, this.g.data.lvSeen || 1), since = n => n > from && n <= L;      // (a farm just moved onto the road of 50 with no new level: its card says so, and nothing as new)
     body.append(el('p', 'gsub', this.t('level_up_sub')));
     const ring = el('div', 'glevelbig'); ring.append(el('span', null, String(L))); body.append(ring);
+    if (road) body.append(el('p', 'gnote gcenter groad50', '✨ ' + this.t('road50')));
     const gift = this.g.levelGiftDue();                // (coins for the new level: given as the card closes)
     if (gift) body.append(el('p', 'glvgift', '🎁 ' + this.t('level_gift', { c: gift.toLocaleString(this.g.locale()) })));
     this.giftSaid = false;

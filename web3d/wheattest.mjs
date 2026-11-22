@@ -101,7 +101,7 @@ await p.evaluate(() => window.__farm.gameUI().close());
 const mvBtn = await p.evaluate(() => { const f = window.__farm; f.deco.wheat.tap(); const any = [...document.querySelectorAll('.gsheet:not([hidden]) button')].some(b => /Move the field|Déplacer le champ/.test(b.textContent)); f.gameUI().close(); return any; });
 ok('the field has its fixed place (16 Nov 2026): no Move button on its card', !mvBtn && (await S()).at.join() === '-25.25,-30.75');
 // the beehives and the honey
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(6) + 5; g.data.coins = 5000; g.data.lvSeen = g.level; g.save(); window.__farm.gameUI().refresh(); });
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = window.__farm.xpFor(7) + 5; g.data.coins = 5000; g.data.lvSeen = g.level; g.save(); window.__farm.gameUI().refresh(); });
 await p.evaluate(() => { const f = window.__farm; f.deco.start('beehives'); f.deco.place(); }); await run(1);
 let hs = await HS();
 ok('the beehives bought: no honey yet', hs.n === 0 && !hs.bub, hs);

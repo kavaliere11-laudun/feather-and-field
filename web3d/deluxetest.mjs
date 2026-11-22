@@ -21,8 +21,8 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.guide = { step: 
 const fit0 = await p.evaluate(() => { const f = window.__farm, c = f.game().data.coops[0], S = f.coopSpotAt({ x: c.x, z: c.z, deg: c.deg }, 4, 0); return !!(S && S.ok); });
 ok('the first coop stands where its Deluxe garden fits', fit0);
 const res = [];
-for (let L = 2; L <= +(process.env.MAXL || 30); L++) {
-  const wait = await p.evaluate(L => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(L) + 1; g.data.lvSeen = L; g.data.coins = 9e6; let n = 0; while (n < 40 && (n < 12 ? n + 1 : 12 + Math.floor((n - 12) * 18 / 28)) <= L) n++; g.data.land = [...Array(Math.max(1, n)).keys()]; g.save(); return { wait: g.waitingCoops(), land: g.data.land.length }; }, L);
+for (let L = 2; L <= +(process.env.MAXL || 50); L++) {      // (the road of 50 levels, 22 Nov 2026)
+  const wait = await p.evaluate(L => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(L) + 1; g.data.lvSeen = L; g.data.coins = 9e6; let n = 0; while (n < 40 && n + 1 <= L) n++; g.data.land = [...Array(Math.max(1, n)).keys()]; g.save(); return { wait: g.waitingCoops(), land: g.data.land.length }; }, L);
   if (!wait.wait.length) continue;
   await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(0.5);
   for (const breed of wait.wait) {

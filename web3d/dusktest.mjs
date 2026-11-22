@@ -25,7 +25,7 @@ const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < 
 const at = (iso, h) => p.evaluate(([iso, h]) => { window.__T = new Date(iso).getTime(); sessionStorage.setItem('__T', window.__T); window.__farm.setHour(h); }, [iso, h]);
 const tap = async () => { await p.evaluate(() => window.__farm.doorTapAt(0)); await run(0.2); return p.evaluate(() => document.getElementById('tag').textContent); };
 const door = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; return { ...f.doorOf(0), booked: g.doorBooked(c), shut: g.doorShut(c), saved: c.shut || null }; });
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(4) + 5; g.data.lvSeen = 4; g.fishBag().gift = true; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 4; g.fishBag().gift = true; g.save(); });
 await run(2); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); });
 // the afternoon
 await at('2026-11-09T15:00:00Z', 15); await run(1);

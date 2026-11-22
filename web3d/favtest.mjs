@@ -35,13 +35,13 @@ const st = () => p.evaluate(() => { const g = window.__farm.game(), c = g.data.c
 const sheet = () => p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; f.gameUI().feederSheet(c, () => {}, () => { g.mixFav(c.id); f.gameUI().close(); }); const k = document.querySelector('.gsheet:not([hidden]) .gfav'); return k ? { state: k.dataset.fav, text: k.innerText, btn: !!k.querySelector('[data-mix]'), off: k.querySelector('[data-mix]') ? k.querySelector('[data-mix]').disabled : null } : null; });
 await setLevel(3, 500); await run(2);
 ok('level 3 (no garden yet): the feeder card says nothing of it', (await sheet()) === null);
-await setLevel(5, 500); await run(2);
-let s = await st(), c = await sheet();
-ok('level 5: the Rhode Island Reds’ favourite is carrots; mixing comes at level 6, and the card says so', s.crop === 'carrot' && s.state === 'level' && s.level === 6 && c && c.state === 'level' && !c.btn && /6/.test(c.text), { s, c });
-await shoot('1_level5');
 await setLevel(6, 500); await run(2);
+let s = await st(), c = await sheet();
+ok('level 6: the Rhode Island Reds’ favourite is carrots; mixing comes at level 7 (the road of 50 levels), and the card says so', s.crop === 'carrot' && s.state === 'level' && s.level === 7 && c && c.state === 'level' && !c.btn && /7/.test(c.text), { s, c });
+await shoot('1_level5');
+await setLevel(7, 500); await run(2);
 s = await st(); c = await sheet();
-ok('level 6, no carrots: the button is there, not to be tapped', s.state === 'short' && c.btn && c.off, { s, c });
+ok('level 7, no carrots: the button is there, not to be tapped', s.state === 'short' && c.btn && c.off, { s, c });
 await p.evaluate(() => { const g = window.__farm.game(); g.vegBasket().carrot = 7; g.save(); });
 c = await sheet(); await shoot('2_can');
 ok('with 7 carrots: "Mix it in · 3 carrots"', c.state === 'can' && c.btn && !c.off && (fr ? /Mélanger · 3 carottes/ : /Mix it in · 3 carrots/).test(c.text), c);

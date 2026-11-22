@@ -86,7 +86,7 @@ ok('restored: puffs where its brambles and old things were, all of it cleared wi
 const reach1 = await p.evaluate(m => window.__farm.farmerCanReach(m[0], m[1]), inside1), wild1 = await p.evaluate(() => window.__farm.wildIn(1));
 ok('bought: 100 coins paid, the field yours (its long grass cut, no fence, the farmer can walk there), nothing more for sale at level 2', s.coins === 50 && s.land === '0,1' && s.owned === 2 && s.sale === -1 && s.bub === null && !s.card && wild0 > 50 && wild1 === 0 && s.fence === 0 && !reach0 && reach1, { s, wild0, wild1, reach0, reach1 });
 // level 4 at once: one card, the next patch for sale
-await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 130; g.save(); });      // (level 4: 120)
+await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 75; g.save(); });      // (level 4: 70 on the road of 50 levels, 22 Nov 2026)
 await run(1.5);
 s = await state(); t = await cardText();
 await look(); await run(0.1); s = await state();

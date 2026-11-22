@@ -34,7 +34,7 @@ const later = h => p.evaluate(h => { window.__T += h * 3600e3; sessionStorage.se
 const T = { title: fr ? /Concours/ : /Shows/, village: fr ? /Concours d(e |’)[A-Z]/ : /[A-Z][a-z]+.* Village Show/, any: fr ? /Toutes les races/ : /Any breed can enter/,
   when: fr ? /Résultats à 7 h, dans/ : /Results at 7:00, in/, prizes: fr ? /Prix : 1er 40 · 2e 20 · 3e 10 pièces/ : /Prizes: 1st 40 · 2nd 20 · 3rd 10 coins/,
   chance: fr ? /chances de cocarde : (faibles|moyennes|bonnes|excellentes) \(\d+\u202f%\)/ : /chance of a rosette: (slim|fair|good|great) \(\d+%\)/, enter: fr ? /^Inscrire .+ · 10$/ : /^Enter .+ · 10$/,
-  lock4: fr ? /À partir du niveau 4/ : /From level 4/, lock9: fr ? /À partir du niveau 9/ : /From level 9/, entered: fr ? /est inscrite? au Concours d(e |’)/ : /is entered in the .+ Village Show!/,
+  lock4: fr ? /À partir du niveau 5/ : /From level 5/, lock9: fr ? /À partir du niveau 11/ : /From level 11/, entered: fr ? /est inscrite? au Concours d(e |’)/ : /is entered in the .+ Village Show!/,
   isIn: fr ? /est inscrite? : résultats à 7 h/ : /is entered: results at 7:00/, cardIn: fr ? /Au Concours d(e |’).+ : résultats à 7 h/ : /In the .+ Village Show: results at 7:00/,
   results: fr ? /Résultats des concours/ : /Show results/, placed: fr ? /prend la 1re place au Concours d(e |’)/ : /came 1st in the .+ Village Show!/, ros: fr ? /Cocardes/i : /Rosettes/i,
   county: fr ? /Le concours régional : inscription 30/ : /The County show: entry 30/, broke: fr ? /Pas assez de pièces : l’inscription coûte 30/ : /Not enough coins: the entry is 30/ };
@@ -93,7 +93,7 @@ ok('the results card doesn\'t come back', (await kind()) !== 'showres', await ki
 // level 4: the County show
 await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 130; g.data.lvSeen = 3; g.save(); }); await run(1.6);      // (level 4)
 t = await sheet();
-ok('level 4: its card brings the County show', (await kind()) === 'levelup' && T.county.test(t), t.slice(0, 400));
+ok('level 5: its card brings the County show', (await kind()) === 'levelup' && T.county.test(t), t.slice(0, 400));
 await shot('6_level4');
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 20; g.save(); window.__farm.showsSheet(); }); await run(0.3);

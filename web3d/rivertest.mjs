@@ -55,14 +55,14 @@ await p.evaluate(() => window.__farm.gameUI().close()); await run(0.5);
 // level 7: not yet
 await p.evaluate(() => window.__farm.riverCard()); await run(0.2);
 let sh = await sheet();
-ok('level 7: the footbridge\'s card: the river\'s fish, it opens at level 8, no button', sh && sh.kind === 'dock' && sh.water === 'river' && (fr ? /niveau 8/ : /level 8/).test(sh.text) && !sh.go && sh.fish === 10, sh);
-ok('level 7: no rod or bucket on the footbridge yet', !(await p.evaluate(() => !!window.__farm.fishers().river)));
+ok('level 8: the footbridge\'s card: the river\'s fish, it opens at level 9 (the road of 50 levels), no button', sh && sh.kind === 'dock' && sh.water === 'river' && (fr ? /niveau 9/ : /level 9/).test(sh.text) && !sh.go && sh.fish === 10, sh);
+ok('level 8: no rod or bucket on the footbridge yet', !(await p.evaluate(() => !!window.__farm.fishers().river)));
 // level 8: its card says the river's open, with a look at it
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 900; g.data.orders = { list: [], next: Math.round(window.__T + 3 * 3600e3), seq: 1, done: 0 }; g.save(); f.gameUI().close(); }); await run(1.5);      // (level 8: since 7 Nov 2026, 880 XP; no village orders waiting for a fish, so it's sold)
 await p.waitForTimeout(1600); await p.evaluate(() => window.__farm.showNews()); await run(0.2);
 sh = await sheet();
 const lvl = await p.evaluate(() => { const c = [...document.querySelectorAll('.gsheet:not([hidden]) .gfishnew')].map(x => x.innerText).join(' | '); return c; });
-ok('level 8: its card: fishing in the river, tap its footbridge, a look at it', sh && sh.kind === 'levelup' && (fr ? /pêche à la rivière : touchez sa passerelle/ : /Fishing in the river: tap its footbridge/).test(lvl) && (fr ? /Voir la rivière/ : /Show me the river/).test(lvl), { kind: sh && sh.kind, lvl });
+ok('level 9: its card: fishing in the river, tap its footbridge, a look at it', sh && sh.kind === 'levelup' && (fr ? /pêche à la rivière : touchez sa passerelle/ : /Fishing in the river: tap its footbridge/).test(lvl) && (fr ? /Voir la rivière/ : /Show me the river/).test(lvl), { kind: sh && sh.kind, lvl });
 await settle(); await p.evaluate(() => [...document.querySelectorAll('.gsheet button[data-fish=show]')].pop().click()); await run(1.2);
 const va = await p.evaluate(() => { const f = window.__farm, v = f.viewAt(), R = f.river(); return { v, d: Math.hypot(v[0] - R.mid[0], v[1] - R.mid[1]) }; });
 ok('"Show me the river": the view over to the footbridge', va.d < 0.5 && !(await sheet()), va);
@@ -70,8 +70,8 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 
 await p.evaluate(() => window.__farm.riverCard()); await run(0.2);
 sh = await sheet();
 const props0 = await p.evaluate(() => { const F = window.__farm.fishers().river; return F && { rod: F.deckRod.visible, bucket: F.bucket.visible, by: F.bucket.position.y }; });
-ok('level 8: his rod lying on the footbridge and his bucket by it (up on its deck)', props0 && props0.rod && props0.bucket && props0.by > 0.15, props0);
-ok('level 8: the river\'s ten fish (none caught), 6 worms, Go fishing', sh && sh.go && sh.fish === 10 && sh.got === 0 && sh.water === 'river' && /6/.test(sh.text), sh);      // (17 Nov 2026: the card's words gone)
+ok('level 9: his rod lying on the footbridge and his bucket by it (up on its deck)', props0 && props0.rod && props0.bucket && props0.by > 0.15, props0);
+ok('level 9: the river\'s ten fish (none caught), 6 worms, Go fishing', sh && sh.go && sh.fish === 10 && sh.got === 0 && sh.water === 'river' && /6/.test(sh.text), sh);      // (17 Nov 2026: the card's words gone)
 await shoot('1_card');
 await settle(); await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();

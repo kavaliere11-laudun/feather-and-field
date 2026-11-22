@@ -44,7 +44,7 @@ const pen = () => p.evaluate(() => { const f = window.__farm, g = f.game(), i = 
 });
 // the farmer's task, down to the step he's on
 const doing = () => p.evaluate(() => { const L = window.__farm.farmer(); const n = []; let t = L && L.task; while (t) { n.push(t.name); t = t.list ? t.list[t.i] : null; } return n.join('/'); });
-const T = { next: fr ? /Au niveau 30 : Paon bleu/ : /At level 30: Indian Blue peafowl/, breed: fr ? /Nouvelle race : Paon bleu/ : /New breed: Indian Blue peafowl/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
+const T = { next: fr ? /Au niveau 50 : Paon bleu/ : /At level 50: Indian Blue peafowl/, breed: fr ? /Nouvelle race : Paon bleu/ : /New breed: Indian Blue peafowl/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
   welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, hen: fr ? /Paon bleu · Paonne/ : /Indian Blue peafowl · Peahen/, cock: fr ? /Paon bleu · Paon/ : /Indian Blue peafowl · Peacock/,
   chicks: fr ? /ses paonneaux/ : /her peachicks/, feed: fr ? /Vos paonnes pondent/ : /Your peahens lay/,
   feather: fr ? /Une plume de paon vendue · \+40 pièces/ : /A peacock feather sold · \+40 coins/,
@@ -54,18 +54,18 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 // level 29, all its fields
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 29; g.data.coins = 50000; g.data.land = Array.from({ length: 29 }, (_, i) => i); g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(29));
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 49; g.data.coins = 50000; g.data.land = Array.from({ length: 29 }, (_, i) => i); g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(49));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
-ok('level 29, Your coops: what level 30 brings, the peafowl', T.next.test(t), t.slice(-300));
+ok('level 49, Your coops: what level 50 brings, the peafowl', T.next.test(t), t.slice(-300));
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 30: its card, then "Place their coop now"
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(29); g.save(); }, xpAt(30)); await run(1.6);
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(29); g.save(); }, xpAt(50)); await run(1.6);
 let s = await st(); t = await sheet();
 await shot('1_level30');
-ok('level 30: its card says a new breed has come (the peafowl), "Place their coop now"', s.level === 30 && s.card === 'levelup' && T.breed.test(t) && T.place.test(t), { s, t: t.slice(0, 300) });
+ok('level 50: its card says a new breed has come (the peafowl), "Place their coop now"', s.level === 50 && s.card === 'levelup' && T.breed.test(t) && T.place.test(t), { s, t: t.slice(0, 300) });
 await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
 let m = await p.evaluate(() => window.__farm.move.state());
 if (!m.ok) m = await p.evaluate(() => { const f = window.__farm; for (const deg of [90, 0]) for (let x = -40; x <= 40; x += 3) for (let z = -40; z <= 40; z += 3) { f.move.to(x, z, deg); const s = f.move.state(); if (s.ok) return s; } return f.move.state(); });
@@ -236,10 +236,10 @@ await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load()
 const F4 = await fe(), s4 = await st();
 ok('his feathers put up from outside: three at most, not ahead of now, flagged', F4.n === 3 && F4.fe.n === 3 && F4.fe.at <= await p.evaluate(() => window.__T) && s4.edited, { F4, edited: s4.edited });
 // a pea coop at level 29, put in from outside: flagged
-await p.evaluate(L => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = L; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, xpAt(29));
+await p.evaluate(L => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = L; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, xpAt(49));
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 s = await st();
-ok('a pea coop at level 29, put in from outside: checked and flagged', s.edited, s);
+ok('a pea coop at level 49, put in from outside: checked and flagged', s.edited, s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

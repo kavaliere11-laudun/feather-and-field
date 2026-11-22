@@ -38,13 +38,13 @@ const sample = n => p.evaluate(n => { const g = window.__farm.game(); let s = 12
     most = Math.max(most, g.orderBook().list.length);
     for (const o of g.orderBook().list) { const ks = Object.keys(o.items); sizes[ks.length] = (sizes[ks.length] || 0) + 1; for (const k of ks) { seen[k] = (seen[k] || 0) + 1; if (!g.orderCan(k)) bad.push(k); } } }
   g.data.orders = null; return { seen, sizes, bad, most }; }, n);
-await setLevel(5, 500); await run(2);
+await setLevel(6, 500); await run(2);
 let s = await sample(120);
 ok('level 5: three orders at most, one or two things each, none of the new vegetables', s.most === 3 && !s.sizes[3] && !['lettuce', 'peas', 'corn', 'beet', 'sunf'].some(k => s.seen[k]) && !s.bad.length, s);
-await setLevel(9, 500); await run(1);
+await setLevel(11, 500); await run(1);
 s = await sample(120);
 ok('level 9: lettuce and peas asked for, a mixed basket now and then; still three orders', s.most === 3 && s.seen.lettuce > 0 && s.seen.peas > 0 && s.sizes[3] > 0 && !s.seen.corn && !s.seen.sunf && !s.bad.length, s);
-await setLevel(30, 500); await run(1);
+await setLevel(50, 500); await run(1);
 s = await sample(160);
 ok('level 30: four orders at a time; every one of the five new vegetables asked for; mixed baskets about one in five', s.most === 4 && ['lettuce', 'peas', 'corn', 'beet', 'sunf'].every(k => s.seen[k] > 0) && s.sizes[3] / (s.sizes[1] + s.sizes[2] + s.sizes[3]) > 0.08 && s.sizes[3] / (s.sizes[1] + s.sizes[2] + s.sizes[3]) < 0.35 && !s.bad.length, s);
 // a mixed basket: its pay, its card, delivered from the pantry
@@ -59,7 +59,7 @@ await shoot('1_mixed'); await p.evaluate(() => window.__farm.gameUI().close());
 const del = await p.evaluate(() => { const g = window.__farm.game(), c0 = g.data.coins; const r = g.deliverOrder ? g.deliverOrder('o1') : null; return { r: !!r, coins: g.data.coins - c0, veg: { ...g.data.garden.veg }, left: g.orderBook().list.map(o => o.id) }; });
 ok('delivered from the pantry: its vegetables gone, its coins paid', del.r && del.coins >= 98 && del.veg.carrot === 6 && del.veg.lettuce === 4 && del.veg.beet === 1 && !del.left.includes('o1'), del);
 // ---- the save's checks
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.save(); const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = f.xpFor(5) + 1; raw.d.lvSeen = 5;
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.save(); const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = f.xpFor(6) + 1; raw.d.lvSeen = 5;
   raw.d.orders = { list: [{ id: 'o7', who: 'amara', t: Date.now() - 1000, items: { eggs: 4, carrot: 4, fish: 1 }, got: {} }, { id: 'o8', who: 'potts', t: Date.now() - 1000, items: { sunf: 2 }, got: {} }, { id: 'o9', who: 'tom', t: Date.now() - 1000, items: { grain: 20 }, got: {} }, { id: 'o10', who: 'clara', t: Date.now() - 1000, items: { eggs: 5 }, got: {} }, { id: 'o11', who: 'lily', t: Date.now() - 1000, items: { eggs: 5 }, got: {} }], next: Date.now() + 3600e3, seq: 12, done: 0 }; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load(); await p.evaluate(() => window.__farm.gameUI().close());
 const kept = await p.evaluate(() => window.__farm.game().data.orders.list.map(o => o.id));

@@ -125,7 +125,7 @@ for (const name of Object.keys(PROFILES)) {
   const runs = []; for (let s = 1; s <= SEEDS; s++) runs.push(simulate(name, s));
   console.log(`\n== ${name} (${PROFILES[name].length} visit${PROFILES[name].length > 1 ? 's' : ''} a day, ${SEEDS} farms)`);
   for (const d of [7, 30, 90, 180, 365]) if (runs[0].at[d]) console.log(`day ${String(d).padStart(3)}: level ${avg(runs, r => r.at[d].level).toFixed(1)}, coins ${Math.round(avg(runs, r => r.at[d].coins))}, earned so far ${Math.round(avg(runs, r => r.at[d].earned))}, birds ${avg(runs, r => r.at[d].birds).toFixed(0)}, coops ${avg(runs, r => r.at[d].coops).toFixed(1)}, fields ${avg(runs, r => r.at[d].land).toFixed(1)}, decorations ${avg(runs, r => r.at[d].decor).toFixed(1)}`);
-  const lv = [2, 3, 5, 6, 8, 10, 11, 13, 15, 17, 20, 23, 25, 30].map(L => `L${L}:${runs.every(r => r.levelDay[L]) ? Math.round(avg(runs, r => r.levelDay[L])) : '-'}`);
+  const lv = [2, 3, 5, 6, 8, 10, 11, 13, 15, 17, 20, 23, 25, 28, 30, 35, 40, 45, 50].map(L => `L${L}:${runs.every(r => r.levelDay[L]) ? Math.round(avg(runs, r => r.levelDay[L])) : '-'}`);
   console.log('the day each level comes: ' + lv.join(' '));
   if (process.env.XPDAYS) console.log('XP by day: ' + JSON.stringify(Array.from({ length: DAYS }, (_, i) => Math.round(avg(runs, r => r.xpDay[i + 1] || 0)))));
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));

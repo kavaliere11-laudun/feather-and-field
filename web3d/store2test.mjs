@@ -56,7 +56,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(12) + 5; g.data.lvSeen = g.level; for (let i = 0; i < 4; i++) { g.data.coins = 300000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 500; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(15) + 5; g.data.lvSeen = g.level; for (let i = 0; i < 4; i++) { g.data.coins = 300000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 500; g.save(); f.gameUI().close(); });
 await run(2); await close();
 let s = await S(); const eggs0 = s.eggsMax;
 // outside the app

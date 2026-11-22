@@ -14,7 +14,7 @@ const load = async () => { await p.waitForFunction(() => window.__farm && docume
 const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { f.step(1 / 30, 1); f.gameTick(Date.now(), false); } }, s);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:30`, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])'); await p.evaluate(() => document.querySelector('.gsheet .gbtn').click()); await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(30) + 5; g.data.lvSeen = g.level; g.data.land = [...Array(30).keys()]; g.data.coins = 9e6; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(50) + 5; g.data.lvSeen = g.level; g.data.land = [...Array(30).keys()]; g.data.coins = 9e6; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1);
 const info = await p.evaluate(() => { const f = window.__farm, g = f.game(); return { level: g.level, land: g.data.land.length, wait: g.waitingCoops() }; });
 console.log(JSON.stringify(info));

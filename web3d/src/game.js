@@ -66,7 +66,7 @@ export const TEXT = {
     coop_rustic: '{coop} (rustic)',
     level_title: 'Level {n}', level_xp: '{xp} of {need} XP to level {next}', level_top: 'Top level!',
     level_how: 'Look after your birds to earn XP.',
-    level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', level_new: 'New at this level', level_gift: 'A gift for your new level: +{c} coins',
+    level_up: 'Level {n}!', level_up_sub: 'Your farm is growing.', road50: 'Now 50 levels: a new level comes more often.', level_new: 'New at this level', level_gift: 'A gift for your new level: +{c} coins',
     land_new: 'A field is ready to restore: {c} coins', land_show: 'See the field', level_next_land: 'At level {n}: another field to restore',
     land_count: 'Your land: {n} fields', land_count1: 'Your land: 1 field', land_all: 'All the land is yours!',
     land_title: 'An overgrown field', land_body: 'This field is part of your farm, but it has gone wild: brambles, nettles and old odds and ends. Restore it and it’s ready for your coops, for good.',
@@ -194,7 +194,7 @@ export const TEXT = {
     intro_2: 'Eggs and chicks', intro_2b: 'Each hen lays about two eggs a day: collect them to sell. Now and then a hen raises chicks; grown up, they leave for a new farm and you earn coins.',
     intro_3: 'Land and new breeds', intro_3b: 'Each level, another field of the farm can be restored, and new breeds arrive as trios with their own coop. Put everything where you like.',
     intro_4: 'Shows, honey and more', intro_4b: 'Win rosettes at shows, go fishing in the pond and the river, grow wheat for the feeders, decorate your farm and sell honey. At your own pace: a little each day.',
-    intro_5: 'Rusty the fox', intro_5b: 'From level 4, Rusty may come by at night for the eggs; he never harms a bird. Shut the coops’ doors at dusk, or let a Brave hen, the geese or your dog chase him off.',
+    intro_5: 'Rusty the fox', intro_5b: 'From level 5, Rusty may come by at night for the eggs; he never harms a bird. Shut the coops’ doors at dusk, or let a Brave hen, the geese or your dog chase him off.',
     intro_next: 'Next', intro_go: 'Let’s go!', intro_skip: 'Skip',
     story_1: 'Grandma has left you her farm, with a letter: “Look after my hens. The rest will come, one step at a time.”',
     story_2: 'Feather & Field is yours now. Her three Rhode Island Reds are waiting at the gate.',
@@ -450,7 +450,7 @@ export const TEXT = {
     coop_rustic: '{coop} (rustique)',
     level_title: 'Niveau {n}', level_xp: '{xp} sur {need} XP pour le niveau {next}', level_top: 'Niveau maximum !',
     level_how: 'Prenez soin de vos volailles pour gagner de l’XP.',
-    level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', level_new: 'Nouveau à ce niveau', level_gift: 'Un cadeau pour votre nouveau niveau : +{c} pièces',
+    level_up: 'Niveau {n} !', level_up_sub: 'Votre ferme s’agrandit.', road50: 'Maintenant 50 niveaux : un nouveau niveau arrive plus souvent.', level_new: 'Nouveau à ce niveau', level_gift: 'Un cadeau pour votre nouveau niveau : +{c} pièces',
     land_new: 'Un terrain est prêt à être remis en état : {c} pièces', land_show: 'Voir le terrain', level_next_land: 'Au niveau {n} : un autre terrain à remettre en état',
     land_count: 'Vos terrains : {n}', land_count1: 'Votre terrain : 1', land_all: 'Tous les terrains sont à vous !',
     land_title: 'Un terrain en friche', land_body: 'Ce terrain fait partie de votre ferme, mais il est retourné à l’état sauvage : ronces, orties et vieux bric-à-brac. Remettez-le en état et il sera prêt pour vos poulaillers, pour toujours.',
@@ -578,7 +578,7 @@ export const TEXT = {
     intro_2: 'Œufs et poussins', intro_2b: 'Chaque poule pond environ deux œufs par jour : ramassez-les pour les vendre. De temps en temps, une poule élève des poussins ; une fois grands, ils partent pour une nouvelle ferme et vous gagnez des pièces.',
     intro_3: 'Terres et nouvelles races', intro_3b: 'À chaque niveau, un autre terrain de la ferme peut être remis en état, et de nouvelles races arrivent par trio avec leur poulailler. Placez tout où vous voulez.',
     intro_4: 'Concours, miel et plus encore', intro_4b: 'Gagnez des cocardes aux concours, pêchez dans l’étang et la rivière, cultivez du blé pour les mangeoires, décorez votre ferme et vendez du miel. À votre rythme : un peu chaque jour.',
-    intro_5: 'Rusty le renard', intro_5b: 'Dès le niveau 4, Rusty peut venir la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser.',
+    intro_5: 'Rusty le renard', intro_5b: 'Dès le niveau 5, Rusty peut venir la nuit chercher les œufs ; il ne fait jamais de mal aux volailles. Fermez les portes des poulaillers à la tombée du jour, ou laissez une poule Courageuse, les oies ou votre chien le chasser.',
     intro_next: 'Suivant', intro_go: 'C’est parti !', intro_skip: 'Passer',
     story_1: 'Mamie vous a laissé sa ferme, avec une lettre : « Prends soin de mes poules. Le reste viendra, pas à pas. »',
     story_2: 'Feather & Field est à vous maintenant. Ses trois Rhode Island Red vous attendent au portail.',
@@ -945,12 +945,33 @@ export const STAR_EGG = 3;
 // after about a year once a day, with the village orders too (balsim.mjs: day 335; 268 twice a day). Up to level 25 it
 // never asks more than the curve before (60 x (level - 1)^2.1), so no farm goes down a level (or loses a field): none
 // could be past 25 yet
-export const TOP_LEVEL = 30;
-const XP_AT = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10550, 13050, 16000, 19350, 23200, 27400, 32100, 37250, 43000, 47450, 56250, 63850, 72100, 81150, 90850];      // (levels 16 to 30 a little further since the vegetable garden, 7 Nov 2026: up to 9% at 30; to 25 never more than before)
+// (22 Nov 2026, Audrey: "I feel that maybe the game is too slow. wanting to fit 30 levels in a year might not be the right
+// approach; also why shouldn't we have more levels?"; her choice "Yes, as drawn" for the plan of 50 levels (the artifact
+// "Feather & Field 50 levels"; tools/levels50/plan.py): the same experience to the top (level 50 where level 30 was:
+// about day 270 once a day, 215 twice), cut into 50 levels: a level a day the first week, every 2 to 3 days to day 30,
+// then about every week (every 9 or 10 days at the very end; every 2 to 3 weeks before). Everything the levels bring comes
+// on the same day as before or sooner, never later (each thing at the last new level whose experience is no more than its
+// old level's, or a level before it to share out a busy one)
+export const TOP_LEVEL = 50;
+const XP_AT = [0,  0,  15,  45,  70,  100,  150,  240,  410,  630,  910,  1250,  1650,  2250,  2900,  3650,  4450,  5300,  6300,  7350,  8600,  9750,  11000,  12250,  13750,  15500,  17000,  18750,  20500,  22500,  24250,  26500,  28500,  31000,  33250,  35750,  38250,  41250,  44000,  47000,  50250,  53750,  57250,  60750,  64500,  68500,  73000,  77000,  81500,  86000,  90750];
 export function xpFor(level) { return level <= 1 ? 0 : XP_AT[Math.min(TOP_LEVEL, level)]; }
-// a gift of coins for each new level up to 10 (the same day: the first fields, the breeds and the shop come quicker now)
-export const levelGift = L => L >= 2 && L <= 15 ? 150 * L : 0;      // (22 Nov 2026, Audrey: "money is a bit slow to get ... I never reached 3K"; her choice "Coins now, levels next": a bigger gift at each level to 15, was 25 a level to 10: the first weeks' coins about doubled, the year's a little more)
 export function levelOf(xp) { let L = 1; while (L < TOP_LEVEL && xp >= xpFor(L + 1)) L++; return L; }
+// the road of 30 levels before (7 Nov to 22 Nov 2026): to read a farm saved on it (its last level card, its day's jobs,
+// the breeds and shelf of the orders before), and as the pace the game's growing things keep (`pace`)
+const XP_AT_30 = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10550, 13050, 16000, 19350, 23200, 27400, 32100, 37250, 43000, 47450, 56250, 63850, 72100, 81150, 90850];
+export function levelOf30(xp) { let L = 1; while (L < 30 && xp >= XP_AT_30[L + 1]) L++; return L; }
+export const at30 = L30 => L30 <= 1 ? 1 : levelOf(XP_AT_30[Math.min(30, L30)]);      // (an old level on the new road: the level its experience is now)
+// where a level of the new road stands on the old one, in fractions of a level: the day's jobs, the villagers' orders,
+// the Pantry's shelves and a moment's coins grow with it as they grew with the old levels (never less than the old level
+// any farm at this level could have been at: no shelf or job smaller for a farm moved onto the new road)
+export const pace = L => {
+  L = Math.max(1, Math.min(TOP_LEVEL, L | 0)); if (L >= TOP_LEVEL) return 30;
+  const x = xpFor(L), l = levelOf30(x), f = l >= 30 ? 30 : l + (x - XP_AT_30[l]) / (XP_AT_30[l + 1] - XP_AT_30[l]);
+  return Math.max(f, levelOf30(xpFor(L + 1) - 1));
+};
+// a gift of coins at each new level up to 20 (22 Nov 2026: 150 a level to 15 for the old road's level 15, Audrey's
+// "Coins now"; on the new road 100 a level to 20, about the same coins by the same day)
+export const levelGift = L => L >= 2 && L <= 20 ? 100 * L : 0;
 
 // ---- land (release 1 step 5): the farm is split into 30 fields along its lanes and the stream (fields.py: models/
 // fields.json, each field's number the order it comes up for sale). Field 0, the home field (the first coop and the
@@ -963,7 +984,7 @@ export const FIELDS = 40;
 // 12 + 18/28 of a level each, the last at level 29); the meadow's ten cost 11,000 to 20,000 coins)
 const TURNS = [0, 45, 90, 135, 180, 225, 270, 315];      // (the ways a coop can face: eighths of a turn since 10 Nov 2026 (main.js Turn); the save and the moves took quarter turns only till 16 Nov, so a coop turned an eighth was not kept)
 export const GROOM = { pts: 2, secs: 10 };      // (the grooming game before a show, 17 Nov 2026: up to 2 points (about ten in a hundred more chance at the most) in the judge's eyes for a bird perfectly got ready; each of its three parts lasts 8 seconds)
-export const landLevel = k => k < 12 ? k + 1 : 12 + Math.floor((k - 12) * 18 / 28);
+export const landLevel = k => k + 1;      // (the road of 50 levels, 22 Nov 2026: one field a level, the last (field 39) at level 40; before, forty fields in thirty levels)
 export const landMost = L => { let n = 0; while (n < FIELDS && landLevel(n) <= L) n++; return Math.max(1, n); };
 // where a coop stands: its middle on the farm (metres, on a quarter-metre grid) and which way it faces (a quarter turn at a
 // time); a new farm's first coop in the home field (where the village had its first plot)
@@ -975,18 +996,18 @@ export const HOME_COOP = { x: -30, z: -13.75, deg: 90 };      // (13 Nov 2026: w
 // 30 Peacock"; the call ducks and the peacock to come)
 // (21 Nov 2026: the Speckled Sussex at 12, Audrey's first new free breed. The same day the collector's shelf (SHELF, her
 // choice): the Buff and Partridge Silkies leave the level path for it; a farm that had already reached 12 or 21 keeps them)
-export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sus: 12, leg: 15, pol: 18, mar: 21, bra: 24, sil_black: 27, pea: 30 };      // (the Black Copper Marans at 21, 21 Nov 2026: the Partridge Silkies' old level)
+export const BREED_LEVEL = { rir: 1, orp: 3, sil: 6, aya: 8, call: 12, sus: 15, leg: 19, pol: 25, mar: 31, bra: 37, sil_black: 43, pea: 50 };      // (the road of 50 levels, 22 Nov 2026; on the old road: 1, 3, 5, 7, 10, 12, 15, 18, 21, 24, 27, 30)      // (the Black Copper Marans at 21, 21 Nov 2026: the Partridge Silkies' old level)
 // the collector's shelf (21 Nov 2026, Audrey: "The collector's shelf", her prices "As proposed"): breeds had whenever the
 // player likes from their level, for coins (every breed can be had without real money) or at Apple's price in the app
 // (money: £2.99 a trio); each a forever trio with its own coop, as a level's. `came`: the level it came at on the level
 // path before (a farm from before that had reached it keeps the breed, free). The Araucana, the Cochin and the Polish's
 // new colours are to join it
-export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, ara: { level: 10, price: 8000, money: 3.99 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 }, coc: { level: 14, price: 15000, money: 3.99 },
-  pol_gold: { level: 18, price: 20000, money: 3.99 }, pol_blue: { level: 18, price: 20000, money: 3.99 }, pol_buff: { level: 20, price: 28000, money: 3.99 }, pol_silver: { level: 22, price: 40000, money: 4.99 } };      // (22 Nov 2026, Audrey: the Polish's four laced colours, "Yes, all four", "As proposed")      // (in level order: the shelf's tiles; the Lavender Araucana joined the same day, never on the level path)
+export const SHELF = { sil_buff: { level: 9, price: 5000, money: 2.99, came: 12 }, ara: { level: 12, price: 8000, money: 3.99 }, sil_partridge: { level: 15, price: 9000, money: 2.99, came: 21 }, coc: { level: 17, price: 15000, money: 3.99 },
+  pol_gold: { level: 25, price: 20000, money: 3.99 }, pol_blue: { level: 25, price: 20000, money: 3.99 }, pol_buff: { level: 29, price: 28000, money: 3.99 }, pol_silver: { level: 33, price: 40000, money: 4.99 } };      // (the road of 50 levels, 22 Nov 2026; on the old road 8, 10, 12, 14, 18, 18, 20, 22; `came` stays an old road's level, read with levelOf30)      // (22 Nov 2026, Audrey: the Polish's four laced colours, "Yes, all four", "As proposed")      // (in level order: the shelf's tiles; the Lavender Araucana joined the same day, never on the level path)
 export const SHELF_IDS = Object.keys(SHELF);
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };
-const breedCame = b => Math.min(BREED_LEVEL[b] ?? Infinity, BREED_LEVEL_29OCT[b] ?? Infinity);
+const breedCame = (b, xp) => levelOf(xp) >= (BREED_LEVEL[b] ?? Infinity) || levelOf30(xp) >= (BREED_LEVEL_29OCT[b] ?? Infinity);      // (come by the level path now, or by the order before on the old road's levels)
 // (the County show's breed of the day: from the breeds themselves, as before the Silkie colours, so a day's show is the same)
 const SHOW_BREED_LEVEL = { rir: 1, orp: 5, sil: 6, leg: 11, bra: 17 };
 // (and from the day after the Polish and the Ayam Cemani came, release 7, with them: the shows of the days before as they were;
@@ -1007,8 +1028,8 @@ export function landPrice(k) { if (k >= 30) return 10000 + 1000 * (k - 29); cons
 export const SHOW_HOUR = 7;
 export const SHOWS = {
   v: { level: 1, fee: 10, prize: [40, 20, 10], xp: [5, 3, 1], rivals: 5, mean: 52, sd: 7 },
-  c: { level: 4, fee: 30, prize: [120, 60, 30], xp: [15, 8, 4], rivals: 7, mean: 66, sd: 7 },
-  n: { level: 9, fee: 100, prize: [300, 150, 75], xp: [35, 18, 9], rivals: 9, mean: 80, sd: 6 },
+  c: { level: 5, fee: 30, prize: [120, 60, 30], xp: [15, 8, 4], rivals: 7, mean: 66, sd: 7 },
+  n: { level: 11, fee: 100, prize: [300, 150, 75], xp: [35, 18, 9], rivals: 9, mean: 80, sd: 6 },
 };
 export const SHOW_TIERS = ['v', 'c', 'n'];
 // (the prizes and XP before the balance of 26 Oct (release 1 step 11): a result saved then keeps what it said, unflagged)
@@ -1044,12 +1065,12 @@ const normCdf = x => { const t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.398942
 // reward. What they can be grows with the game (the wheat field, the decorations... when they come). Targets and rewards
 // grow a little with the level the day's jobs were set at (`lv`). Starting values (the balance is step 11)
 export const JOBS = {
-  eggs: { easy: true, n: L => Math.min(30, 4 + 2 * L) },          // collect eggs
-  cuddle: { easy: true, n: L => Math.min(6, 1 + Math.floor(L / 3)) },      // give cuddles (each bird once every 6 hours)
+  eggs: { easy: true, n: L => Math.min(30, 4 + 2 * Math.floor(pace(L))) },          // collect eggs (the level's `pace`: as on the old road)
+  cuddle: { easy: true, n: L => Math.min(6, 1 + Math.floor(pace(L) / 3)) },      // give cuddles (each bird once every 6 hours)
   feed: { n: () => 1 },                                            // fill a feeder
   show: { n: () => 1 },                                            // enter a bird in a show
 };
-export const jobReward = L => ({ coins: 30 + 6 * L, xp: Math.round(XPV.job + XPV.jobL * L) });      // (22 Nov 2026: was 15 + 5 a level: the day's jobs about twice what they paid at first)
+export const jobReward = L => ({ coins: Math.round(30 + 6 * pace(L)), xp: Math.round(XPV.job + XPV.jobL * pace(L)) });      // (at the old road's pace)      // (22 Nov 2026: was 15 + 5 a level: the day's jobs about twice what they paid at first)
 const dayKey = t => { const d = new Date(t); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); };
 // the day's three jobs: one easy, two others, all different (the same for that day and level, from the day's own numbers)
 function jobsFor(day, lv) {
@@ -1063,8 +1084,8 @@ function jobsFor(day, lv) {
 // coins from the level each comes at, put anywhere on your land (the duck house on the pond), moved later. They only change
 // how the farm looks. XP a fiftieth of the price (the 2D game's half). Starting values (the balance is step 11)
 export const DECOR = {
-  flowers: { level: 3, price: 400 }, birdbath: { level: 4, price: 800 }, beehives: { level: 6, price: 1800 }, duckhouse: { level: 8, price: 3000, pond: true },
-  greenhouse: { level: 10, price: 6000 }, windmill: { level: 13, price: 12000 }, bandstand: { level: 16, price: 20000 }, statue: { level: 20, price: 40000 },
+  flowers: { level: 3, price: 400 }, birdbath: { level: 5, price: 800 }, beehives: { level: 7, price: 1800 }, duckhouse: { level: 9, price: 3000, pond: true },
+  greenhouse: { level: 12, price: 6000 }, windmill: { level: 16, price: 12000 }, bandstand: { level: 21, price: 20000 }, statue: { level: 28, price: 40000 },      // (levels on the road of 50, 22 Nov 2026: 3, 4, 6, 8, 10, 13, 16, 20 before)
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
 // ---- the guardians (release 3, Audrey: "The guardians"): animals bought with coins from their level. The geese first
@@ -1072,7 +1093,7 @@ export const decorXp = id => Math.round(DECOR[id].price / 50);
 // Border Collie with his kennel, placed where you like on your land like a decoration (turned to face you a little to
 // the right, as the village's), and named by the player (Audrey, 23 Oct: "People should be able to choose the name of
 // the dog, the default can be biscuit"). XP a fiftieth of the price, as the decorations
-export const ANIMALS = { geese: { level: 4, price: 1200 }, dog: { level: 9, price: 4000, kennel: true } };
+export const ANIMALS = { geese: { level: 5, price: 1200 }, dog: { level: 10, price: 4000, kennel: true } };      // (the road of 50 levels: 4 and 9 before)
 export const DOG_NAME = 'Biscuit', KENNEL_DEG = -20;
 // ---- Rusty's night visits (release 3; Audrey: "He takes the nest's eggs", "About twice a week"): from level 4, on about two
 // nights in seven (the night's own luck, the same on every phone), between 11 pm and 2:30 am, Rusty slips out of his den
@@ -1080,7 +1101,7 @@ export const DOG_NAME = 'Biscuit', KENNEL_DEG = -20;
 // open door: with the geese or the dog on the farm they hear him and chase him home first; without them he takes the
 // nest's eggs (an empty nest: a peck on the nose). No bird is ever hurt. The doors: shut for the night by the player (the
 // moon over each door), open again in the morning
-export const FOX = { level: 4, chance: 2 / 7, from: 23, hours: 3.5 };
+export const FOX = { level: 5, chance: 2 / 7, from: 23, hours: 3.5 };
 // a night: the evening's date (a time before noon belongs to the night before)
 export const nightKey = t => dayKey(t - 12 * 3600e3);
 const prevNight = k => nightKey(nightStart(k) - 1);
@@ -1112,7 +1133,7 @@ const geeseLevel = n => GEESE_TRUST.at.filter(k => n >= k).length - 1;
 // unit of feed) and XP. Starting values (the balance is step 11)
 // A second field (12 Nov 2026, Audrey's choice "Buy more, by level"): from level 12, for 1,200 coins (the level and the
 // coins both); sown, grown and harvested on its own, like the first. Saved as wheat2 (not there: not bought)
-export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120, second: { level: 12, price: 1200 } };
+export const WHEAT = { sow: 20, grow: 4 * 3600e3, grain: 20, xp: 12, max: 120, second: { level: 14, price: 1200 } };      // (the second field at 14 on the road of 50: 12 before)
 // ---- honey (Audrey, 25 Oct: "Bees are great idea, let’s make sure the farmer can harvest the honey and sell it !"): the
 // beehives (a decoration) fill a jar every 8 hours, up to 6; harvested, the jars are sold like eggs
 export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
@@ -1124,7 +1145,7 @@ export const HONEY = { every: 8 * 3600e3, max: 6, price: 15, xp: 3 };
 // (a tin of worms, a sack of grain or extra coins). A villager's order: one thing (or two) of what they like, as much as
 // the farm's level makes sense of. Never in a hurry: an order waits for you (or "Not this one": another comes in a while)
 export const ORDERS = { level: 3, max: 3, every: 3 * 3600e3, first: 2, gap: 30 * 60e3, worth: { eggs: 6, fish: 22, honey: 15, grain: 1.5, carrot: 3, straw: 4, pump: 18, lettuce: 2, peas: 3, corn: 8, beet: 10, sunf: 14 }, pay: 1.4, most: { eggs: 30, fish: 5, honey: 5, grain: 60, carrot: 18, straw: 18, pump: 4, lettuce: 18, peas: 18, corn: 8, beet: 8, sunf: 6 },
-  more: { level: 12, max: 4 }, mix: { level: 8, chance: 0.22, pay: 1.5, part: 0.7 } };
+  more: { level: 15, max: 4 }, mix: { level: 9, chance: 0.22, pay: 1.5, part: 0.7 } };      // (a fourth order at 15, mixed baskets at 9 on the road of 50: 12 and 8 before)
 // (15 Nov 2026, Audrey: "a bigger diversity in the village orders": the five new vegetables asked for too; a fourth order at
 // a time from level 12; from level 8 a mixed basket now and then: three different things, a little less of each, paying
 // half as much again)
@@ -1138,7 +1159,7 @@ export const ordersMax = L => L >= ORDERS.more.level ? ORDERS.more.max : ORDERS.
 // there, a shelf at a time (what the open orders still want is kept unless asked); the orders take from it when they go
 export const PANTRY = { base: { eggs: 24, honey: 6, grain: 120, carrot: 30, straw: 30, pump: 10, lettuce: 30, peas: 30, corn: 16, beet: 16, sunf: 12, fish: 12 }, grow: 0.05, from: 5, bought: 1.5, price: { honey: 15, grain: 1, carrot: 3, straw: 4, pump: 18, lettuce: 2, peas: 3, corn: 8, beet: 10, sunf: 14 }, eggMax: 40 };
 export const PANTRY_IDS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf', 'fish'];
-const shelfSize = (k, level, big) => Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, level - PANTRY.from)) * (big ? PANTRY.bought : 1));      // (a shelf's size at a level; the save's check: no shelf holds more than its size at the save's own level)
+const shelfSize = (k, level, big) => Math.round(PANTRY.base[k] * (1 + PANTRY.grow * Math.max(0, pace(level) - PANTRY.from)) * (big ? PANTRY.bought : 1));      // (grows at the old road's pace: `pace`)      // (a shelf's size at a level; the save's check: no shelf holds more than its size at the save's own level)
 export const ORDER_ITEMS = ['eggs', 'fish', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf'];
 const STORE_ITEMS = ['eggs', 'honey', 'grain', 'carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf'];      // (an order's that come from a store when it goes: the grain store, the garden's basket)
 export const VILLAGERS = {
@@ -1148,6 +1169,7 @@ export const VILLAGERS = {
 };
 // how much of a thing an order asks for at a level (r: 0..1, a little more or less)
 export function orderAmount(k, L, r = 0.5) {
+  L = pace(L);      // (the amounts grow at the old road's pace)
   if (k === 'eggs') return Math.max(3, Math.min(ORDERS.most.eggs, Math.round((3 + L / 2) * (0.8 + 0.4 * r))));
   if (k === 'fish') return Math.min(ORDERS.most.fish, 1 + Math.floor(L / 6) + (r > 0.7 ? 1 : 0));
   if (k === 'honey') return Math.min(ORDERS.most.honey, 1 + Math.floor(L / 8) + (r > 0.7 ? 1 : 0));
@@ -1201,7 +1223,7 @@ export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e
 // Needs to be relevant as the game cannot become too easy either"; her choice: "Buy more, by level"): a fourth bed from
 // level 9 for 400 coins, a fifth from level 14 for 900, a sixth from level 20 for 2,000 (the level and the coins both), in a
 // second row behind the first three. Saved: simply how many beds the garden has (never more than the level allows)
-export const GARDEN = { level: 4, beds: 3, more: [{ level: 9, price: 400 }, { level: 14, price: 900 }, { level: 20, price: 2000 }, { level: 22, price: 3000 }, { level: 24, price: 4000 }, { level: 27, price: 5000 }, { level: 30, price: 6000 }], max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
+export const GARDEN = { level: 4, beds: 3, more: [{ level: 11, price: 400 }, { level: 18, price: 900 }, { level: 29, price: 2000 }, { level: 32, price: 3000 }, { level: 37, price: 4000 }, { level: 43, price: 5000 }, { level: 50, price: 6000 }], max: { carrot: 30, straw: 30, pump: 10 }, eggAt: [20, 50], eggSpread: 10 };
 export const bedsMost = level => GARDEN.beds + GARDEN.more.filter(m => level >= m.level).length;
 export const CROPS = {
   carrot: { grow: 1 * 3600e3, seed: 5, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥕' },
@@ -1209,17 +1231,17 @@ export const CROPS = {
   pump: { grow: 8 * 3600e3, seed: 20, n: 2, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🎃' },
   // (15 Nov 2026, Audrey: "extend the fields to grow vegetables. Introduce new ones and it becomes a real part of the game":
   // five more, each from its own level (the first three with the garden); claude/vegetables-plan.md)
-  lettuce: { grow: 0.5 * 3600e3, seed: 3, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥬', level: 6 },
-  peas: { grow: 2 * 3600e3, seed: 8, n: 8, xp: 2, treat: 3, eggs: 1, exp: 8, e: '🫛', level: 9 },
-  corn: { grow: 4 * 3600e3, seed: 12, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🌽', level: 12 },
-  beet: { grow: 5 * 3600e3, seed: 15, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🍠', level: 15 },
-  sunf: { grow: 6 * 3600e3, seed: 18, n: 3, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🌻', level: 18 },
+  lettuce: { grow: 0.5 * 3600e3, seed: 3, n: 6, xp: 1, treat: 3, eggs: 1, exp: 0, e: '🥬', level: 7 },
+  peas: { grow: 2 * 3600e3, seed: 8, n: 8, xp: 2, treat: 3, eggs: 1, exp: 8, e: '🫛', level: 11 },
+  corn: { grow: 4 * 3600e3, seed: 12, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🌽', level: 14 },
+  beet: { grow: 5 * 3600e3, seed: 15, n: 4, xp: 3, treat: 2, eggs: 1, exp: 8, e: '🍠', level: 19 },
+  sunf: { grow: 6 * 3600e3, seed: 18, n: 3, xp: 4, treat: 2, eggs: 2, exp: 8, e: '🌻', level: 24 },
 };
 // ---- each breed's own feed (15 Nov 2026, Audrey: "The farmer will be able to create food adapted for each breed"; her
 // choice: "One more egg a day"): three of a breed's favourite vegetable mixed into its coop's grain: for three days each hen
 // there lays one more egg a day (in the afternoon; the feeder must have feed in it, as for any egg). Plain feed works as
 // ever. From level 6, and the vegetable's own level. Saved on the coop: fav { t: when mixed, crop }
-export const FEEDS = { level: 6, need: 3, ms: 3 * 86400e3, fav: { rir: 'carrot', orp: 'straw', sil: 'lettuce', aya: 'pump', call: 'peas', leg: 'corn', pol: 'sunf', bra: 'beet', pea: 'corn', sus: 'peas', mar: 'pump', ara: 'corn', coc: 'lettuce' } };
+export const FEEDS = { level: 7, need: 3, ms: 3 * 86400e3, fav: { rir: 'carrot', orp: 'straw', sil: 'lettuce', aya: 'pump', call: 'peas', leg: 'corn', pol: 'sunf', bra: 'beet', pea: 'corn', sus: 'peas', mar: 'pump', ara: 'corn', coc: 'lettuce' } };
 export const favOf = breed => FEEDS.fav[baseBreed(breed)] || null;
 export const favEggAt = (henId, day) => Math.round(day + (14 + 3 * hash01('fav|' + henId + '|' + day)) * 3600e3);
 // (16 Nov 2026, Audrey: "I would like the fields and beds to be part of the initial map and the player just need to unlock
@@ -1254,7 +1276,7 @@ export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3,
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
-export const FISHING = { pond: 2, river: 8, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 30, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
+export const FISHING = { pond: 2, river: 9, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 30, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
 // (9 Nov 2026 night, Audrey: "It needs to take time to fish all the different species", "Introduce more fish species"; her
 // choices "Time of day + one tin a day", "Keep net, sell at the end"): twenty fish, ten a water: six common, three rare,
 // one legendary. when: the hours a rare one bites ([from, to), the game's clock: early morning or evening); a legendary one
@@ -1313,7 +1335,7 @@ export function inSeason(id, now = Date.now()) {
   return a <= b ? k >= a && k <= b : k >= a || k <= b;         // (Christmas runs over the new year)
 }
 // the farmer's outfits (the 2D game's six; the classic one from the start): bought from their level, worn one at a time
-export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 5, price: 1200 }, garden: { level: 9, price: 3500 }, winter: { level: 12, price: 6000 }, rodeo: { level: 15, price: 10000 }, show: { level: 18, price: 16000 } };
+export const OUTFITS = { classic: { level: 1, price: 0 }, market: { level: 6, price: 1200 }, garden: { level: 11, price: 3500 }, winter: { level: 15, price: 6000 }, rodeo: { level: 19, price: 10000 }, show: { level: 25, price: 16000 } };      // (the road of 50 levels: 5, 9, 12, 15, 18 before)
 export const outfitXp = id => Math.round(OUTFITS[id].price / 50);
 
 // ---- the farm code (release 1 step 9g; the 2D game's, made the new game's own): the whole save as it's kept on the phone
@@ -1484,12 +1506,18 @@ export function checkFarm(d, now = Date.now()) {
   // the land: the first fields in order, at most one a level (a farm's own purchases never go further)
   const land = Array.isArray(d.land) ? d.land : [];
   out.land = Array.from({ length: Math.max(1, Math.min(land.length, landMost(levelOf(out.xp)), FIELDS)) }, (_, i) => i);
-  out.lvSeen = int(d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
+  // a farm saved on the road of 30 levels (before 22 Nov 2026, no `road`): its level numbers moved onto the road of 50 once
+  // (its experience is kept: the level it shows now is the level that experience is on the new road); `roadNew`: the next
+  // level card says the road is longer now (then forgotten)
+  const old30 = d.road !== 50;
+  out.lvSeen = int(old30 && Number.isInteger(d.lvSeen) ? at30(d.lvSeen) : d.lvSeen, 1, levelOf(out.xp), levelOf(out.xp));            // (the last level-up card shown; before step 5: none owed)
+  out.road = 50;
+  if ((old30 && out.xp > 0) || d.roadNew === 1) out.roadNew = 1;
   // the collector's shelf's breeds had (bought with coins or money, in the order bought; each from its level); a farm from
   // before the shelf (no shelfV): the ones it had already come to on the level path, or whose coop it has, kept, free
   const lvNow = levelOf(out.xp);
   let shelf = Array.isArray(d.shelf) ? d.shelf.filter((b, i, a) => typeof b === 'string' && SHELF[b] && a.indexOf(b) === i && lvNow >= SHELF[b].level) : [];
-  if (d.shelfV !== 1) shelf = shelf.concat(SHELF_IDS.filter(b => !shelf.includes(b) && (lvNow >= SHELF[b].came || (Array.isArray(d.coops) && d.coops.some(c => c && c.breed === b)))));
+  if (d.shelfV !== 1) shelf = shelf.concat(SHELF_IDS.filter(b => !shelf.includes(b) && (levelOf30(out.xp) >= SHELF[b].came || (Array.isArray(d.coops) && d.coops.some(c => c && c.breed === b)))));
   out.shelf = shelf; out.shelfV = 1;
   out.coops = [];
   const seen = new Set();
@@ -1500,7 +1528,7 @@ export function checkFarm(d, now = Date.now()) {
   const dresses = Array.isArray(d.dresses) ? d.dresses.filter((x, i, a) => typeof x === 'string' && DRESSES[x] && a.indexOf(x) === i) : [];       // (the seasonal dresses owned: known ones, once each)
   for (const c of Array.isArray(d.coops) ? d.coops.slice(0, 40) : []) {
     if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !/^c\d{1,4}$/.test(c.id) || seen.has(c.id)) continue;
-    if (!BREED_INFO[c.breed] || (SHELF[c.breed] ? !shelf.includes(c.breed) : levelOf(out.xp) < (BREED_INFO[c.breed].rare ? breedCame('sil') : breedCame(c.breed))) || out.coops.some(o => o.breed === c.breed)) continue;      // (a shelf breed's: once had from the shelf)      // (a breed's coop once it's come (by this order or the one before), one each; a rare colour's once the Silkies have)
+    if (!BREED_INFO[c.breed] || (SHELF[c.breed] ? !shelf.includes(c.breed) : !breedCame(BREED_INFO[c.breed].rare ? 'sil' : c.breed, out.xp)) || out.coops.some(o => o.breed === c.breed)) continue;      // (a shelf breed's: once had from the shelf)      // (a breed's coop once it's come (by this order or the one before), one each; a rare colour's once the Silkies have)
     seen.add(c.id);
     // where it stands (a farm from before coops could be moved: on the village's first plot, the home field's coop; the
     // farm (main.js) then makes sure it's on the farm's own land, clear of everything, and nowhere near another coop)
@@ -1632,9 +1660,10 @@ export function checkFarm(d, now = Date.now()) {
   // the day's jobs: a day not ahead of today, set at a level the farm has had, the jobs that day's numbers give, each
   // done at most as far as its target and paid only once done
   const jb = d.jobs && typeof d.jobs === 'object' ? d.jobs : null;
-  if (jb && typeof jb.day === 'string' && /^\d{8}$/.test(jb.day) && jb.day <= dayKey(now) && Number.isInteger(jb.lv) && jb.lv >= 1 && jb.lv <= L && Array.isArray(jb.list)) {
-    const want = jobsFor(jb.day, jb.lv);
-    out.jobs = { day: jb.day, lv: jb.lv, seen: jb.seen === true, list: want.map((w, i) => { const r = jb.list[i] || {}, got = r.k === w.k ? int(r.got, 0, w.n, 0) : 0; return { k: w.k, n: w.n, got, paid: r.paid === true && got >= w.n }; }) };
+  const jbLv = jb && Number.isInteger(jb.lv) && old30 ? at30(jb.lv) : jb && jb.lv;      // (the day's jobs set on the old road: their level on the new)
+  if (jb && typeof jb.day === 'string' && /^\d{8}$/.test(jb.day) && jb.day <= dayKey(now) && Number.isInteger(jbLv) && jbLv >= 1 && jbLv <= L && Array.isArray(jb.list)) {
+    const want = jobsFor(jb.day, jbLv);
+    out.jobs = { day: jb.day, lv: jbLv, seen: jb.seen === true, list: want.map((w, i) => { const r = jb.list[i] || {}, got = r.k === w.k ? int(r.got, 0, w.n, 0) : 0; return { k: w.k, n: w.n, got, paid: r.paid === true && got >= w.n }; }) };
     if (jb.bonus === true && out.jobs.list.every(j => j.paid)) out.jobs.bonus = true;      // (the worms for all three done: given)
   } else out.jobs = null;
   if (!('first' in d)) {                             // a farm from before eggs: its good mum's first egg too
@@ -1826,10 +1855,10 @@ export class Game {
   trustLevel(b) { return TRUST_AT.filter(n => b.trust >= n).length - 1; }
   // ---- levels and land: a new level's card once (lvSeen); the next patch of land (at the level it comes with), for sale
   // once the level allows; bought with coins
-  levelNews() { return this.level > (this.data.lvSeen || 1) ? this.level : 0; }
+  levelNews() { return this.level > (this.data.lvSeen || 1) || this.data.roadNew ? this.level : 0; }      // (a farm moved onto the road of 50: its card once, even with no new level)
   // seen: the coins for each new level since the last card (levelGift), with it; the coins given
   levelGiftDue() { let c = 0; for (let L = (this.data.lvSeen || 1) + 1; L <= this.level; L++) c += levelGift(L); return c; }
-  seenLevel() { const c = this.levelGiftDue(); this.data.coins += c; this.data.lvSeen = this.level; this.save(); return c; }
+  seenLevel() { const c = this.levelGiftDue(); this.data.coins += c; this.data.lvSeen = this.level; delete this.data.roadNew; this.save(); return c; }
   landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: landLevel(k) } : null; }
   landForSale() { const n = this.landNext(); return n && this.level >= n.level ? n : null; }
   buyLand() {
@@ -1883,7 +1912,7 @@ export class Game {
   // it, at its old place in the order)
   bookPages() {
     const has = b => this.data.coops.some(c => c.breed === b) || this.basket().some(x => x.breed === b) || this.shelfHad().includes(b);      // (a shelf breed: its page once had)
-    const lv = b => BREED_LEVEL[b] ?? BREED_LEVEL_29OCT[b] ?? SHELF[b].level;      // (a shelf breed never on the level path: its shelf level)
+    const lv = b => BREED_LEVEL[b] ?? (BREED_LEVEL_29OCT[b] ? at30(BREED_LEVEL_29OCT[b]) : SHELF[b].level);      // (a shelf breed never on the level path: its shelf level)
     const breeds = [...new Set([...Object.keys(BREED_LEVEL), ...Object.keys(BREED_LEVEL_29OCT), ...SHELF_IDS])].filter(b => BREED_LEVEL[b] || has(b)).sort((a, b) => lv(a) - lv(b));      // (the call ducks' too)
     const from = [...breeds, ...SHELF_IDS.filter(b => !breeds.includes(b))].sort((a, b) => lv(a) - lv(b));      // (who a rare colour hatches from: the shelf's breeds too, had or not, 21 Nov 2026)
     return breeds.map(breed => {
@@ -2408,7 +2437,7 @@ export class Game {
   }
   henFound(now = Date.now()) {
     const m = this.moment(); if (!m || m.k !== 'hen') return null;
-    const b = this.bird(m.b), P = MOMENTS.hen, coins = P.coins + P.coinsL * this.level;
+    const b = this.bird(m.b), P = MOMENTS.hen, coins = P.coins + Math.round(P.coinsL * pace(this.level));
     this.data.coins += coins; this.data.xp += P.xp;
     const cud = this.cuddle(m.b, now), loved = cud && !cud.happy ? cud : null;      // (a cuddle's worth of love, if she's due one: her trust, the day's cuddles)
     this.data.moment = null; const M = this.data.moments || (this.data.moments = { last: now, hen: 0 }); M.hen = (M.hen || 0) + 1;
@@ -2428,7 +2457,7 @@ export class Game {
   }
   chickFound(now = Date.now()) {
     const m = this.moment(now); if (!m || m.k !== 'chick') return null;
-    const c = this.coop(m.c), mum = this.bird(c.brood.hen), P = MOMENTS.chick, coins = P.coins + P.coinsL * this.level;
+    const c = this.coop(m.c), mum = this.bird(c.brood.hen), P = MOMENTS.chick, coins = P.coins + Math.round(P.coinsL * pace(this.level));
     this.data.coins += coins; this.data.xp += P.xp;
     const cud = mum ? this.cuddle(mum.id, now) : null, loved = cud && !cud.happy ? cud : null;
     this.data.moment = null; const M = this.data.moments || (this.data.moments = { last: now, hen: 0 }); M.chick = (M.chick || 0) + 1;
@@ -2858,7 +2887,7 @@ export class Game {
   newFarm({ lang, look, name }) {
     const now = Date.now();
     this.lang = langOk(lang);
-    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, shelf: [], shelfV: 1, coops: [], birds: [], cleared: [], next: 1 };
+    this.data = { v: SAVE_V, made: now, lang: this.lang, coins: 100, xp: 0, cv: CV, farmer: { look: look === 'f' ? 'f' : 'm', name: cleanName(name) }, land: [0], lvSeen: 1, road: 50, shelf: [], shelfV: 1, coops: [], birds: [], cleared: [], next: 1 };
     const coop = { id: this.id('c'), breed: 'rir', tier: 0, ...HOME_COOP, name: '', eggs: 0, bonus: 0, feed: 3 * FEED_DAYS, fedAt: now, brood: null, lastBrood: 0, checked: now };
     this.data.coops.push(coop);
     this.data.birds.push(...this.trio('rir', coop.id, true));
@@ -3097,6 +3126,11 @@ export class Game {
     // (16 Nov 2026: a farm saved before the garden and the wheat fields had their fixed places: put there, not an edit)
     for (const [k, F] of [['wheat', FIXED.wheat], ['wheat2', FIXED.wheat2], ['garden', FIXED.garden]]) if (raw.d && raw.d[k] && typeof raw.d[k] === 'object') Object.assign(raw.d[k], F);
     if (raw.d && raw.d.fish && typeof raw.d.fish === 'object' && raw.d.fish.worms > FISHING.maxWorms && raw.d.fish.worms <= 999) raw.d.fish.worms = FISHING.maxWorms;      // (17 Nov 2026: a bag from before it held 30 at most: not an edit)
+    if (raw.d && typeof raw.d === 'object' && raw.d.road !== 50) {      // (22 Nov 2026: a farm saved on the road of 30 levels, its level numbers moved onto the road of 50 as it was checked: not an edit)
+      if (Number.isInteger(raw.d.lvSeen) && raw.d.lvSeen >= 1) raw.d.lvSeen = at30(raw.d.lvSeen);
+      const J = raw.d.jobs;
+      if (J && typeof J === 'object' && Number.isInteger(J.lv) && J.lv >= 1) { J.lv = at30(J.lv); if (d.jobs && Array.isArray(J.list)) J.list.forEach((r, i) => { const w = d.jobs.list[i]; if (r && typeof r === 'object' && w && r.k === w.k && Number.isInteger(r.n)) { r.n = w.n; if (Number.isInteger(r.got)) r.got = Math.min(r.got, w.n); if (r.paid === true && r.got < w.n) r.paid = w.paid; } }); }      // (a job's target follows its level: only that)
+    }
     this.edited = !sealed || !fits(d, raw.d);
     for (const c of d.coops) delete c.plot;            // (a farm from before coops could be moved: their place now)
     if (d.fish && 'free' in d.fish) { d.fish.worms = Math.min(FISHING.maxWorms, d.fish.worms + d.fish.free); delete d.fish.free; delete d.fish.day; }      // (from when worms came free each morning: those left kept)

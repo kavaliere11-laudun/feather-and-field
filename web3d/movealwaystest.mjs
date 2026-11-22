@@ -15,7 +15,7 @@ const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < 
 const load = async () => { await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 }); await p.evaluate(() => { const f = window.__farm; f.pause(true); if (f.gameUI().isOpen) f.gameUI().close(); }); };
 const go = t => p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${L}&time=${t}`, { waitUntil: 'domcontentloaded' });
 await go('10:00'); await p.waitForSelector('.gsheet:not([hidden])'); await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(4) + 5; g.data.lvSeen = 4; g.data.land = [0, 1, 2, 3]; g.data.coins = 5000; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 4; g.data.land = [0, 1, 2, 3]; g.data.coins = 5000; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1);
 // a second coop: the Orpingtons', placed where it's offered
 const placed = await p.evaluate(() => { const f = window.__farm, g = f.game(); if (f.gameUI().isOpen) f.gameUI().close(); const w = g.waitingCoops()[0]; if (!w) return { w: null }; f.place(w); for (let i = 0; i < 8 && !f.move.state().ok; i++) f.move.settle(); const ok2 = f.move.state().ok; if (ok2) f.move.place(); return { w, ok: ok2, n: g.data.coops.length }; });

@@ -36,7 +36,7 @@ const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText
 const pen = () => p.evaluate(() => { const f = window.__farm, g = f.game(), P = f.coopPlots().find(q => q.breed === 'call'); if (!P || !P.callPen) return null;
   const c = g.data.coops.find(x => x.breed === 'call');
   return { ducks: P.callPen.ducks.map(d => ({ kind: d.kind, name: d.name, gid: d.gid, game: (g.bird(d.gid) || {}).name, task: d.task && d.task.name, seen: d.root.visible, x: +d.pos.x.toFixed(2), z: +d.pos.z.toFixed(2) })), eggs: c && c.eggs, nest: P.nest.count, shown: P.nest.eggs.count, tier: c && c.tier, house: f.coopLook(f.coopPlots().filter(q => q.gc).indexOf(P)).house, group: !!P.callPen.group.parent }; });
-const T = { next: fr ? /Au niveau 10 : Canard Call/ : /At level 10: Call duck/, breed: fr ? /Nouvelle race : Canard Call/ : /New breed: Call duck/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
+const T = { next: fr ? /Au niveau 12 : Canard Call/ : /At level 12: Call duck/, breed: fr ? /Nouvelle race : Canard Call/ : /New breed: Call duck/, place: fr ? /Installer leur poulailler/ : /Place their coop now/,
   welcome: fr ? /Bienvenue, .+ et .+ !/ : /Welcome, .+ and .+!/, card: fr ? /Canard Call · Cane/ : /Call duck · Duck/, ducklings: fr ? /ses canetons/ : /her ducklings/, feed: fr ? /Vos canes pondent/ : /Your ducks lay/,
   coop: fr ? /Maison flottante/ : /Floating House/, egg: fr ? /Œufs de cane vert pâle/ : /Pale green duck eggs/ };
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -44,18 +44,18 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 // level 9, nine fields
-await p.evaluate(L9 => { const g = window.__farm.game(); g.data.xp = L9; g.data.lvSeen = 9; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7, 8]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(9));
+await p.evaluate(L9 => { const g = window.__farm.game(); g.data.xp = L9; g.data.lvSeen = 11; g.data.coins = 5000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7, 8]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(11));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 await p.evaluate(() => window.__farm.coopsSheet()); await run(0.3);
 let t = await sheet();
-ok('level 9, Your coops: what level 10 brings, the call ducks', T.next.test(t), t.slice(-300));
+ok('level 11, Your coops: what level 12 brings, the call ducks', T.next.test(t), t.slice(-300));
 await p.evaluate(() => window.__farm.gameUI().close());
 // level 10: its card, then "Place their coop now"
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(9); g.save(); }, xpAt(10)); await run(1.6);
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(9); g.save(); }, xpAt(12)); await run(1.6);
 let s = await st(); t = await sheet();
 await shot('1_level10');
-ok('level 10: its card says a new breed has come (the call ducks), "Place their coop now"', s.level === 10 && s.card === 'levelup' && T.breed.test(t) && T.place.test(t), { s, t: t.slice(0, 300) });
+ok('level 12: its card says a new breed has come (the call ducks), "Place their coop now"', s.level === 12 && s.card === 'levelup' && T.breed.test(t) && T.place.test(t), { s, t: t.slice(0, 300) });
 await p.tap('.gsheet .gstick .gbtn:first-child'); await run(0.6);
 let m = await p.evaluate(() => window.__farm.move.state());
 if (!m.ok) { await p.evaluate(() => window.__farm.move.to(-33, -23, 90)); await run(0.1); m = await p.evaluate(() => window.__farm.move.state()); }

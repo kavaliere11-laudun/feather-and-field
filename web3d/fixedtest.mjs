@@ -19,7 +19,7 @@ ok('a new farm: the garden in its fixed place at level 1, every bed wild, nothin
 ok('the wheat field in its fixed place; no bubbles shown on the beds or the fields', s.wheat.x === -25.25 && s.wheat.z === -30.75 && s.quiet && !s.w2, s.wheat);
 await p.evaluate(() => window.__farm.lookAt(-27.5, -27, 6.6)); await run(0.5); await p.screenshot({ path: OUT + '/fixed_1_new.png' });
 // an old farm
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(13) + 5; g.data.lvSeen = 13; g.data.coins = 1e6; for (let i = 0; i < 12; i++) f.buyLand(); g.garden(); g.sowBed(0, 'carrot'); g.save();
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(16) + 5; g.data.lvSeen = 13; g.data.coins = 1e6; for (let i = 0; i < 12; i++) f.buyLand(); g.garden(); g.sowBed(0, 'carrot'); g.save();
   const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.garden.x = -20; raw.d.garden.z = -15; raw.d.garden.deg = 0; raw.d.wheat.x = -15; raw.d.wheat.z = -20; raw.d.wheat2 = { x: -10, z: -20, deg: 90, ripe: 0 }; raw.d.coops[0].x = -33; raw.d.coops[0].z = -23; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 300000 }); await load();
 s = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; return { garden: [g.data.garden.x, g.data.garden.z, g.data.garden.deg], bed0: g.data.garden.beds[0].crop, wheat: [g.data.wheat.x, g.data.wheat.z, g.data.wheat.deg], w2: [g.data.wheat2.x, g.data.wheat2.z, g.data.wheat2.deg], coop: [c.x, c.z], birds: g.birdsIn(c.id).length }; });

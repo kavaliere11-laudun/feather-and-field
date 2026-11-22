@@ -38,7 +38,7 @@ await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(6) + 5; g.data.lvSeen = 6; for (let i = 0; i < 4; i++) { g.data.coins = 30000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 60000; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(7) + 5; g.data.lvSeen = 6; for (let i = 0; i < 4; i++) { g.data.coins = 30000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 60000; g.save(); f.gameUI().close(); });
 await run(2); await close();
 const placed = await p.evaluate(() => { const f = window.__farm; const r = f.place('orp'); const s = f.move.state(); return { r, ok: s.ok, grow: s.grow, put: f.move.place() }; });
 await run(2); await close();

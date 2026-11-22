@@ -34,21 +34,21 @@ const level = async n => { await p.evaluate(n => { const f = window.__farm, g = 
 const wild = async () => { await close(); await p.evaluate(() => window.__farm.deco.wheat.wild()); await run(0.3); return sheet(); };      // (17 Nov 2026: the second field's own card, from a tap on its wild ground; the first one's card no longer offers it)
 const card = async (k = 0) => { await close(); await p.evaluate(k => { const f = window.__farm; if (f.game().wheatStage(undefined, k) === 'ripe') throw new Error('ripe'); f.deco.wheat.tap(k); }, k); await run(0.3); return sheet(); };
 const buyBtn = () => p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) [data-buywheat]'); return e ? { text: e.textContent, off: e.disabled } : null; });
-const T = fr ? { lv: /partir du niveau 12/, add: /Ajouter ce champ/, got: /deuxième champ de blé est prêt/, t2: /deuxième champ de blé/, sow: /Semer/, cut: /Moissonner|Récolter/ } : { lv: /From level 12/, add: /Add this field/, got: /second wheat field is ready/, t2: /second wheat field/, sow: /Sow/, cut: /Harvest/ };
+const T = fr ? { lv: /partir du niveau 14/, add: /Ajouter ce champ/, got: /deuxième champ de blé est prêt/, t2: /deuxième champ de blé/, sow: /Semer/, cut: /Moissonner|Récolter/ } : { lv: /From level 14/, add: /Add this field/, got: /second wheat field is ready/, t2: /second wheat field/, sow: /Sow/, cut: /Harvest/ };
 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=09:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(11) + 5; g.data.lvSeen = 11; g.fishBag().gift = true; g.data.coins = 300; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(13) + 5; g.data.lvSeen = 13; g.fishBag().gift = true; g.data.coins = 300; g.save(); f.gameUI().close(); });
 await run(2); await close();
 let s = await S();
-ok('level 11: one field; a second to come at level 12 for 1,200 coins', s.level === 11 && !s.two && s.next && s.next.locked && s.next.price === 1200 && !s.b.at, s.next);
+ok('level 13: one field; a second to come at level 14 for 1,200 coins (the road of 50 levels)', s.level === 13 && !s.two && s.next && s.next.locked && s.next.price === 1200 && !s.b.at, s.next);
 let c = await wild();
 ok('its card says when (no button yet)', T.lv.test(c) && /1[,.\s  ]?200/.test(c) && !(await buyBtn()), c.split('\n').slice(-5));
-await level(12);
+await level(14);
 c = await wild(); let bt = await buyBtn();
-ok('level 12, 300 coins: the button is there, not to be tapped', bt && bt.off, bt);
+ok('level 14, 300 coins: the button is there, not to be tapped', bt && bt.off, bt);
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.coins = 1e6; f.buyLand(); f.buyLand(); f.buyLand(); g.data.coins = 2000; g.save(); }); await run(2);      // (more land: room for it)
 c = await wild(); bt = await buyBtn();
 ok('with the coins: "Add this field · 1,200 coins"', bt && !bt.off && T.add.test(bt.text), bt);
@@ -80,10 +80,10 @@ const moving = await p.evaluate(() => window.__farm.deco.moving ? window.__farm.
 s = await S();
 ok('"Move the field" from its card starts its move; cancelled: back where it was', mv.ok !== false && s.b.at && s.b.at.join() === r.b.at.join(), { mv, at: s.b.at });
 // a save changed outside the game
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(5) + 5; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(6) + 5; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1);
 s = await S();
-ok('a second field at level 5: gone, and flagged', s.level === 5 && !s.two && !s.b.at && s.edited === true, { level: s.level, two: s.two, edited: s.edited });
+ok('a second field at level 6: gone, and flagged', s.level === 6 && !s.two && !s.b.at && s.edited === true, { level: s.level, two: s.two, edited: s.edited });
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? `${fails} FAILED` : 'ALL PASS');
 await b.close();

@@ -16,7 +16,7 @@ const shut = () => p.evaluate(() => { const u = window.__farm.gameUI(); if (u.is
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${L}&time=10:00`, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])'); await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(4) + 5; g.data.lvSeen = 4; g.orders(); g.data.orders.list = []; g.data.orders.next = Date.now() + 9e8; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 4; g.orders(); g.data.orders.list = []; g.data.orders.next = Date.now() + 9e8; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1); await shut();
 // ---- eggs collected: to the pantry, no coins yet, XP at once; the Pantry button has a dot
 const c0 = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; c.eggs = 5; c.bonus = 4; c.lt = []; g.save(); return { coins: g.data.coins, xp: g.data.xp, price: g.eggPrice(c) }; });
@@ -62,8 +62,8 @@ ok('ten carrots: all ten to begin with; six fewer with −, one more with +: fiv
 const Q2 = await p.evaluate(() => { const g = window.__farm.game(); const a = g.sellShelf('carrot', false, 999), b = g.sellShelf('carrot', false, -3), c = g.sellShelf('carrot', false, 'x'); return { a: a && a.n, b, c, left: g.vegBasket().carrot }; });
 ok('asked for more than there are: no more than there are sold; a number that makes no sense: nothing', Q2.a === 5 && Q2.b === null && Q2.c === null && Q2.left === 0, Q2);
 // ---- shelves grow with the level; the save's checks
-const Z = await p.evaluate(() => { const f = window.__farm, g = f.game(), at = lv => { g.data.xp = f.xpFor(lv) + 1; return g.shelf('eggs'); }; const a = at(5), b2 = at(10), c = at(30); g.data.shelves = true; const d = g.shelf('eggs'); delete g.data.shelves; at(4); return { a, b2, c, d }; });
-ok('the eggs\' shelf: 24 up to level 5, 30 at level 10, 54 at level 30; half as much again with the bigger shelves', Z.a === 24 && Z.b2 === 30 && Z.c === 54 && Z.d === 81, Z);
+const Z = await p.evaluate(() => { const f = window.__farm, g = f.game(), at = lv => { g.data.xp = f.xpFor(lv) + 1; return g.shelf('eggs'); }; const a = at(6), b2 = at(12), c = at(50); g.data.shelves = true; const d = g.shelf('eggs'); delete g.data.shelves; at(4); return { a, b2, c, d }; });
+ok('the eggs\' shelf: 24 up to level 6, 30 at level 12, 54 at level 50 (the road of 50 levels, at the old pace); half as much again with the bigger shelves', Z.a === 24 && Z.b2 === 30 && Z.c === 54 && Z.d === 81, Z);
 await p.evaluate(() => { const g = window.__farm.game(); g.data.pantry = { eggs: 1e6, val: 1e9, honey: -4, seen: 'yes', x: 1 }; g.data.shelves = 'yes'; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 const V = await p.evaluate(() => { const d = window.__farm.game().data; return { p: d.pantry, sh: d.shelves }; });

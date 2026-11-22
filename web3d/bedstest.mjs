@@ -7,6 +7,7 @@
 // walks to it), ripe, picked. A reload: all kept, not flagged. Level 14 and 20: the fifth and sixth; then no more is
 // offered. A save changed outside the game (six beds at level 9) is cut back to what the level allows and flagged. No page
 // errors. Pictures in OUT.
+// (22 Nov 2026, the road of 50 levels: the fourth bed at 11, the fifth at 18, the sixth at 29, the seventh at 32)
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/bedstest', fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402);
@@ -37,22 +38,22 @@ const look = async (z = 3.4) => { await p.evaluate(z => { const f = window.__far
 const level = async n => { await p.evaluate(n => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(n) + 5; g.data.lvSeen = n; g.save(); f.gameUI().close(); }, n); await run(1.5); await close(); await run(0.5); };
 const card = async () => { await close(); await p.evaluate(() => window.__farm.garden.tap()); await run(0.3); return sheet(); };
 const buyBtn = () => p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) [data-buybed]'); return e ? { text: e.textContent, off: e.disabled } : null; });
-const T = fr ? { lv9: /partir du niveau 9/, lv14: /partir du niveau 14/, lv20: /partir du niveau 20/, add: /Ajouter ce carré/, got: /Le carré 4 est à vous/ } : { lv9: /From level 9/, lv14: /From level 14/, lv20: /From level 20/, add: /Add this bed/, got: /Bed 4 is yours/ };
+const T = fr ? { lv9: /partir du niveau 11/, lv14: /partir du niveau 18/, lv20: /partir du niveau 29/, add: /Ajouter ce carré/, got: /Le carré 4 est à vous/ } : { lv9: /From level 11/, lv14: /From level 18/, lv20: /From level 29/, add: /Add this bed/, got: /Bed 4 is yours/ };
 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=09:30`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });
 await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
 await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(8) + 5; g.data.lvSeen = 8; g.fishBag().gift = true; g.data.coins = 300; g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(10) + 5; g.data.lvSeen = 10; g.fishBag().gift = true; g.data.coins = 300; g.save(); f.gameUI().close(); });
 await run(2); await close();
 for (let i = 0; i < 30 && !(await S()).st.at; i++) await run(1);
 let s = await S();
-ok('level 8: the garden with its three beds, the fourth to come at level 9', s.level === 8 && s.beds === 3 && s.next && s.next.n === 4 && s.next.locked && s.next.price === 400, s.next);
+ok('level 10: the garden with its three beds, the fourth to come at level 11 (the road of 50 levels)', s.level === 10 && s.beds === 3 && s.next && s.next.n === 4 && s.next.locked && s.next.price === 400, s.next);
 let c = await card();
 ok('its card says when the fourth bed comes (no button yet)', T.lv9.test(c) && /400/.test(c) && !(await buyBtn()), c.split('\n').slice(-6));
-await level(9);
+await level(11);
 c = await card(); let bt = await buyBtn();
-ok('level 9, 300 coins: the button is there, not to be tapped', bt && bt.off && /400/.test(bt.text), bt);
+ok('level 11, 300 coins: the button is there, not to be tapped', bt && bt.off && /400/.test(bt.text), bt);
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 1000; g.save(); });
 c = await card(); bt = await buyBtn();
 ok('with the coins: "Add this bed · 400 coins"', bt && !bt.off && T.add.test(bt.text), bt);
@@ -65,7 +66,7 @@ ok('bought: 400 coins less, four beds, said', s.coins === was.coins - 400 && s.b
 ok('the garden a second row deep, the new bed drawn (the fifth and sixth not)', s.foot[1] < -2.5 && s.frames.every(Boolean), { foot: s.foot, frames: s.frames });
 ok('still on your land, where it fits', s.st.at && s.st.owned, s.st.at);
 c = await sheet();
-ok('its card shows bed 4, and the fifth to come at level 14', (fr ? /Carré 4/ : /Bed 4/).test(c), c.split('\n').slice(-8));
+ok('its card shows bed 4, and the fifth to come at level 18', (fr ? /Carré 4/ : /Bed 4/).test(c), c.split('\n').slice(-8));
 await close(); await look(); await shoot('1_four');
 // the new bed sown, grown, picked
 await p.evaluate(() => window.__farm.garden.sow(3, 'carrot')); await run(1);
@@ -83,22 +84,22 @@ for (let i = 0; i < 30 && !(await S()).st.at; i++) await run(1);
 const r = await S();
 ok('a reload: four beds kept where they were, not flagged', r.beds === 4 && !r.edited && r.at.join() === s.at.join() && r.foot[1] < -2.5 && r.frames[3] === true, { beds: r.beds, edited: r.edited, at: r.at, was: s.at });
 // the fifth and sixth
-await level(14); await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 5000; g.save(); });
+await level(18); await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 5000; g.save(); });
 c = await card(); await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); c = await sheet();
-ok('level 14: the fifth bed for 900 coins; the sixth to come at level 20', s.beds === 5 && s.coins === 4100 && s.at.join() === r.at.join(), { beds: s.beds, coins: s.coins, at: s.at });
-await level(20);
+ok('level 18: the fifth bed for 900 coins; the sixth to come at level 29', s.beds === 5 && s.coins === 4100 && s.at.join() === r.at.join(), { beds: s.beds, coins: s.coins, at: s.at });
+await level(29);
 c = await card(); await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-buybed]').click()); await run(1);
 s = await S(); c = await sheet();
-ok('level 20: the sixth for 2,000 coins; the seventh comes at level 22 (15 Nov 2026: up to ten)', s.beds === 6 && s.coins === 2100 && s.next && s.next.n === 7 && s.next.level === 22 && s.next.locked && !(await buyBtn()) && s.frames.slice(0, 6).every(Boolean), { beds: s.beds, coins: s.coins, next: s.next });
+ok('level 29: the sixth for 2,000 coins; the seventh comes at level 32 (15 Nov 2026: up to ten)', s.beds === 6 && s.coins === 2100 && s.next && s.next.n === 7 && s.next.level === 32 && s.next.locked && !(await buyBtn()) && s.frames.slice(0, 6).every(Boolean), { beds: s.beds, coins: s.coins, next: s.next });
 await close(); await look(3.8); await run(1); s = await S();
 ok('a bubble for each of the six empty beds', s.st.bubs.filter(Boolean).length === 6, s.st.bubs);
 await shoot('3_six');
 // a save changed outside the game
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(9) + 5; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(11) + 5; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(1);
 s = await S();
-ok('six beds at level 9: cut back to four, and flagged', s.level === 9 && s.beds === 4 && s.edited === true, { level: s.level, beds: s.beds, edited: s.edited });
+ok('six beds at level 11: cut back to four, and flagged', s.level === 11 && s.beds === 4 && s.edited === true, { level: s.level, beds: s.beds, edited: s.edited });
 ok('no page errors', errs.length === 0, errs.slice(0, 3));
 console.log(fails ? `${fails} FAILED` : 'ALL PASS');
 await b.close();

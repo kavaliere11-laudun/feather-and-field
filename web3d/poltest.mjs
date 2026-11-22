@@ -55,24 +55,24 @@ await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
 // level 17: the four on the shelf, locked
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 17; g.data.coins = 25000; g.data.land = Array.from({ length: 17 }, (_, i) => i); g.data.guide = { step: 5, done: true }; g.data.first = null; g.save(); }, xpAt(17));
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 24; g.data.coins = 25000; g.data.land = Array.from({ length: 17 }, (_, i) => i); g.data.guide = { step: 5, done: true }; g.data.first = null; g.save(); }, xpAt(24));
 await reload();
 let pages = await p.evaluate(() => window.__farm.game().bookPages().map(x => x.breed));
-ok('level 17: no Polish colour in the Book\'s breeds', !pages.some(x => x.startsWith('pol_')), pages);
+ok('level 24 (the road of 50 levels): no Polish colour in the Book\'s breeds', !pages.some(x => x.startsWith('pol_')), pages);
 await shelfTab();
 const tl = {}; for (const c of ['gold', 'blue', 'buff', 'silver']) tl[c] = await tile('pol_' + c);
 const into = sel => p.evaluate(sel => { const e = document.querySelector(sel); if (e) e.scrollIntoView({ block: 'center' }); }, sel);
 await into('.gsheet .gshelf-t[data-shelf="pol_blue"]'); await shot('1_level17');
-ok('level 17: the shelf shows the four with their pictures, "Level 18", "18", "20", "22", no button', ['gold', 'blue', 'buff', 'silver'].every(c => tl[c] && tl[c].img && !tl[c].btns.length) && lv(18).test(tl.gold.text) && lv(18).test(tl.blue.text) && lv(20).test(tl.buff.text) && lv(22).test(tl.silver.text), tl);
+ok('level 24: the shelf shows the four with their pictures, "Level 25", "25", "29", "33", no button', ['gold', 'blue', 'buff', 'silver'].every(c => tl[c] && tl[c].img && !tl[c].btns.length) && lv(25).test(tl.gold.text) && lv(25).test(tl.blue.text) && lv(29).test(tl.buff.text) && lv(33).test(tl.silver.text), tl);
 const order = await p.evaluate(() => [...document.querySelectorAll('.gsheet .gshelf-t')].map(t => t.dataset.shelf).join());
 ok('the shelf in level order', order === 'sil_buff,ara,sil_partridge,coc,pol_gold,pol_blue,pol_buff,pol_silver', order);
 // level 18: its card, then the Gold-laced for 20,000 coins
 await close();
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(17); g.save(); }, xpAt(18)); await run(1.6);
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.land.push(17); g.save(); }, xpAt(25)); await run(1.6);
 let s = await st(), t = await sheet();
 await into('.gsheet .gshelfnew'); await shot('2_level18');
 const sees = await p.evaluate(() => document.querySelectorAll('.gsheet [data-shelfsee]').length);
-ok('level 18: its card names the Gold-laced and the White-crested Blue on the shelf, in one line, one "See the shelf"', s.level === 18 && s.card === 'levelup' && t.includes(N.gold + ', ' + N.blue) && !t.includes(N.silver) && sees === 1, { s, sees, t: t.slice(0, 500) });
+ok('level 25: its card names the Gold-laced and the White-crested Blue on the shelf, in one line, one "See the shelf"', s.level === 25 && s.card === 'levelup' && t.includes(N.gold + ', ' + N.blue) && !t.includes(N.silver) && sees === 1, { s, sees, t: t.slice(0, 500) });
 await p.evaluate(() => document.querySelector('.gsheet [data-shelfsee]').click()); await run(0.4);
 const tg = await tile('pol_gold');
 ok('the shelf at 18: the Gold-laced "🪙 20,000", ready; the Silver-laced still locked', tg && tg.btns.length === 1 && tg.btns[0].go === 'coins' && !tg.btns[0].off && /20[\s,.  ]?000/.test(tg.btns[0].t) && !(await tile('pol_silver')).btns.length, tg);
@@ -98,11 +98,11 @@ ok('a brood hatched there: gold-laced chicks', pc && pc.chicks && pc.chicks.spli
 s = await st();
 ok('a reload keeps it, unflagged', s.shelf === 'pol_gold' && /pol_gold/.test(s.coops) && !s.edited, s);
 // level 22, in the app: the Silver-laced for £4.99
-await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 22; g.data.coins = 3000; g.data.land = Array.from({ length: 22 }, (_, i) => i); g.save(); }, xpAt(22));
+await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.lvSeen = 33; g.data.coins = 3000; g.data.land = Array.from({ length: 22 }, (_, i) => i); g.save(); }, xpAt(33));
 await p.evaluate(() => sessionStorage.setItem('__shop', 'true')); await reload();
 await shelfTab(); const ts = await tile('pol_silver');
 await into('.gsheet .gshelf-t[data-shelf="pol_buff"]'); await shot('4_level22');
-ok('level 22, 3,000 coins: the Silver-laced "🪙 40,000" greyed, "£4.99" beside it', ts && ts.btns.length === 2 && ts.btns[0].go === 'coins' && ts.btns[0].off && /40[\s,.  ]?000/.test(ts.btns[0].t) && ts.btns[1].go === 'pay' && ts.btns[1].t === '£4.99', ts);
+ok('level 33, 3,000 coins: the Silver-laced "🪙 40,000" greyed, "£4.99" beside it', ts && ts.btns.length === 2 && ts.btns[0].go === 'coins' && ts.btns[0].off && /40[\s,.  ]?000/.test(ts.btns[0].t) && ts.btns[1].go === 'pay' && ts.btns[1].t === '£4.99', ts);
 await p.evaluate(() => document.querySelector('.gsheet .gshelf-t[data-shelf="pol_silver"] [data-shelfgo="pay"]').click());
 await p.waitForFunction(() => window.__farm.move.state().on, null, { timeout: 15000 }).catch(() => {}); await run(0.6);
 s = await st();
@@ -114,9 +114,9 @@ await reload(); s = await st();
 ok('a reload: kept, unflagged', s.shelf === 'pol_gold,pol_silver' && /pol_silver/.test(s.coops) && !s.edited, s);
 await p.evaluate(() => sessionStorage.removeItem('__shop'));
 // a save changed outside: the Silver-laced at level 21
-await p.evaluate(() => { const f = window.__farm, g = f.game(), d = g.data, c = d.coops.find(x => x.breed === 'pol_silver'); d.birds = d.birds.filter(b => b.coop !== c.id); d.coops = d.coops.filter(x => x !== c); d.xp = f.xpFor(21) + 5; d.lvSeen = 21; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(), d = g.data, c = d.coops.find(x => x.breed === 'pol_silver'); d.birds = d.birds.filter(b => b.coop !== c.id); d.coops = d.coops.filter(x => x !== c); d.xp = f.xpFor(32) + 5; d.lvSeen = 32; g.save(); });
 await reload(); s = await st();
-ok('a save changed outside (the Silver-laced on the shelf at level 21): checked and flagged; the Gold-laced kept', s.edited && s.shelf === 'pol_gold', s);
+ok('a save changed outside (the Silver-laced on the shelf at level 32): checked and flagged; the Gold-laced kept', s.edited && s.shelf === 'pol_gold', s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

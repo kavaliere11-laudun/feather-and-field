@@ -67,7 +67,7 @@ ok('a real tap on the farmhouse opens the Breed Book', k.kind === 'book' && k.ti
 ok('"1 of 16 breeds found" (the breeds and Silkie colours in level order, the shelf\'s not among them since 21 Nov 2026, the Marans at 21, then the rare ones), a page for each in order, each picture loaded', k.sub === L.found(1) && k.pages.map(x => x.breed).join() === 'rir,orp,sil,aya,call,sus,leg,pol,mar,bra,sil_black,pea,sil_paint,sil_lavender,sil_splash,sil_cuckoo' && k.pages.every(x => x.w === 320) && k.imgs === 16, { sub: k.sub, pages: k.pages.map(x => [x.breed, x.w]) });
 const rir = k.pages[0];
 ok('the Rhode Island Reds found: the Red Barn\'s trio named (the rooster first), their picture in colour', rir.status === L.farm + trio[0] + ', ' + trio[1] + L.and + trio[2] && !rir.dark && !rir.go, rir);
-ok('the others not yet: "Comes at level N" (the rare ones: "Rare: hatched by a ..."), a dark silhouette', k.pages.slice(1, 12).every((x, i) => x.status === L.at([3, 5, 7, 10, 12, 15, 18, 21, 24, 27, 30][i]) && x.dark && !x.go) && k.pages.slice(12).every(x => (fr ? /^Rare : naît d’une / : /^Rare: hatched by a /).test(x.status) && x.dark && !x.go), k.pages.slice(1).map(x => [x.breed, x.status, x.dark]));
+ok('the others not yet: "Comes at level N" (the rare ones: "Rare: hatched by a ..."), a dark silhouette', k.pages.slice(1, 12).every((x, i) => x.status === L.at([3, 6, 8, 12, 15, 19, 25, 31, 37, 43, 50][i]) && x.dark && !x.go) && k.pages.slice(12).every(x => (fr ? /^Rare : naît d’une / : /^Rare: hatched by a /).test(x.status) && x.dark && !x.go), k.pages.slice(1).map(x => [x.breed, x.status, x.dark]));
 ok('each page\'s eggs and coop: brown, 6 coins and a coin a star; the Red Barn, rustic to start; the Silkies\' page the white one\'s', rir.lines[0] === L.eggs + ' · ' + L.price && rir.lines[1] === L.coop && k.pages[2].name === L.sil && k.pages.every(x => x.lines.length === 2 && /\d/.test(x.lines[0])) && k.pages[3].egg !== k.pages[0].egg, k.pages.map(x => [x.name, ...x.lines, x.egg]));
 ok('"More pages to come"', k.more === L.more, k.more);
 ok('all in sight: the sheet under the top bar, its close button on screen, no text cut off', inSight(k), { sheet: k.sheet, bar: k.barBottom, x: k.x, wide: k.wide, cut: k.cut });
@@ -96,7 +96,7 @@ await p.evaluate(() => { const g = window.__farm.game(); g.data.xp = 60; g.data.
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.book()); await run(0.3);
 k = await book();
-ok('level 3: the Orpingtons waiting in Your coops ("Place it"), still a silhouette, the Silkies at level 5', k.sub === L.found(1) && k.pages[1].status === L.waiting && k.pages[1].go && k.pages[1].dark && k.pages[2].status === L.at(5), k.pages.slice(1, 3));
+ok('level 3: the Orpingtons waiting in Your coops ("Place it"), still a silhouette, the Silkies at level 6 (the road of 50 levels)', k.sub === L.found(1) && k.pages[1].status === L.waiting && k.pages[1].go && k.pages[1].dark && k.pages[2].status === L.at(6), k.pages.slice(1, 3));
 ok('level 3: all in sight', inSight(k), { sheet: k.sheet, cut: k.cut });
 await p.evaluate(() => { const c = document.querySelector('.gpage[data-breed="orp"]'); c.scrollIntoView({ block: 'center' }); });
 await shot('5_waiting');
