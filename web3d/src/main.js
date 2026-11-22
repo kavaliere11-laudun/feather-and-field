@@ -520,7 +520,7 @@ const SIL_MODELS = { house_sil: 'house', cosy_sil: 'house', deluxe_sil: 'house',
 // the Polish's shelf colours' Little Windmills (22 Nov 2026, Audrey: "In their colour"): the Rustic mill an old one like any
 // other; the Mended its roof and new paint in the colour; the Snug its cap in the colour, its door and pop door in the trim; the Cosy
 // its Dutch green; the Deluxe its copper roof and cap in the colour, its Delft blue in the trim. Each colour: [main, trim]
-const POL_TINT = { gold: ['#a8782c', '#2b2420'], blue: ['#566890', '#2f3a58'], buff: ['#c99a52', '#6e4624'], silver: ['#9aa0a8', '#25252b'] };
+const POL_TINT = { gold: ['#a8782c', '#2b2420'], blue: ['#566890', '#2f3a58'], buff: ['#b39573', '#6e4624'], silver: ['#9aa0a8', '#25252b'] };
 const POL_FROM = { shed: [[['#403d3d'], 0, false], [['#efeadf', '#f2ede2', '#f5f0e5'], 0, false]],
   house: [[['#353b45', '#494f5a', '#454b56', '#424953'], 0, false], [['#2e6a4f', '#326c51', '#2e684d'], 1, false]],
   cosy: [[['#609669', '#5d9266', '#5f9468'], 0, false], [['#2e6a4f'], 1, false]], deluxe: [[['#5c9a86', '#4d8575', '#589480', '#60a08b', '#77b29e'], 0, false], [['#2e5aa8', '#2e58a4'], 1, false]],
